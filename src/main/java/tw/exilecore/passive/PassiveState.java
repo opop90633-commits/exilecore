@@ -37,6 +37,24 @@ public final class PassiveState {
         return plugin.players().get(player);
     }
 
+    /** 2026-10-26 照 PoE2：昇華給的配點規則（觀星專屬節點、開路者別的起點、虛實交織）；沒昇華系統時是空的。 */
+    public static java.util.Set<String> rules(final ExileCore plugin, final PlayerState state) {
+        return plugin.ascendancy() == null ? java.util.Set.of() : plugin.ascendancy().treeRules(state);
+    }
+
+    /** 2026-10-26：這個角色選的昇華代號（沒選、沒昇華系統是 null；天賦樹藏觀星專屬節點用）。 */
+    public static String ascendancyId(final ExileCore plugin, final PlayerState state) {
+        if (plugin.ascendancy() == null || !state.hasCharacter()) {
+            return null;
+        }
+        final tw.exilecore.ascendancy.AscendancyConfig.Ascendancy chosen = plugin.ascendancy().ascension(state).chosen();
+        return chosen == null ? null : chosen.id();
+    }
+
+    private java.util.Set<String> rules() {
+        return rules(plugin, state());
+    }
+
     /** 這個角色的起點節點；沒角色為 null。 */
     public PassiveNode start() {
         final CharacterRecord character = state().character();
@@ -52,7 +70,7 @@ public final class PassiveState {
         if (state.passives().contains(node.id())) {
             return Result.fail("已經配過了");
         }
-        if (!tree.canAllocate(state.passives(), start, node)) {
+        if (!tree.canAllocate(state.passives(), start, node, rules())) {
             return Result.fail("要先連到旁邊的節點");
         }
         if (plugin.players().availablePoints(state) <= 0) {
@@ -112,7 +130,7 @@ public final class PassiveState {
         if (!state.passives().contains(node.id())) {
             return Result.fail("這個節點沒有配置");
         }
-        if (!tree.canRefund(state.passives(), start, node)) {
+        if (!tree.canRefund(state.passives(), start, node, rules())) {
             return Result.fail("退掉會讓其他節點斷線，先退外面的");
         }
         final long cost = refundCost();
@@ -156,7 +174,7 @@ public final class PassiveState {
             return Result.fail("要 " + path.size() + " 點，你有 " + points + " 點");
         }
         for (final PassiveNode node : path) {
-            if (!tree.canAllocate(state.passives(), start, node)) {
+            if (!tree.canAllocate(state.passives(), start, node, rules())) {
                 state.markDirty();
                 plugin.players().sheet(player);
                 return Result.fail("路徑中途接不上（樹可能改版了），已配到能配的地方");
@@ -205,7 +223,7 @@ public final class PassiveState {
         if (plugin.players().availablePoints(state) + plan.removed().size() < plan.added().size()) {
             return Result.fail("天賦點不夠");
         }
-        if (tree.reachable(plan.result(), start).size() != plan.result().size()) {
+        if (tree.reachable(plan.result(), start, rules()).size() != plan.result().size()) {
             return Result.fail("規劃連不到起點");
         }
         final long cost = planCost(plan);

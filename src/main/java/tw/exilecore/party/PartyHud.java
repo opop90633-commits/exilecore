@@ -20,7 +20,8 @@ import java.util.UUID;
 
 /**
  * 畫面左邊的隊伍框（2026-10-18，像 PoE）：每個隊友一格——頭像、名字（隊長前面金色的 ★）、等級，
- * 血條（護盾是血條上面薄薄的一層）、魔力條；死了名字變紅、離線變灰。自己不列（自己的看動作列）。
+ * 血條（護盾是血條上面薄薄的一層）、魔力條；死了名字變紅、離線變灰、範圍外（2026-10-26：不分經驗、掉落）名字變灰、寫「遠」。
+ * 自己不列（自己的看動作列）。
  * <p>
  * 接在動作列最後面（淨寬 0，不會把動作列推歪），由資源包的文字著色器搬到畫面左上角——原理見 {@link PartyFont}。
  * 沒套資源包的人不畫；選單的「設定」可以關（{@link PlayerSettings#PARTY_FRAMES}）。
@@ -66,16 +67,19 @@ public final class PartyHud {
             if (index >= MAX_SHOWN) {
                 break;
             }
-            frame(out, index++, member, member.equals(party.leader()), service);
+            frame(out, index++, member, member.equals(party.leader()), service, viewer);
         }
         return index == 0 ? null : out.build();
     }
 
-    private void frame(final Frames out, final int slot, final UUID id, final boolean leader, final PartyService service) {
+    private void frame(final Frames out, final int slot, final UUID id, final boolean leader, final PartyService service, final Player viewer) {
         final Player player = plugin.getServer().getPlayer(id);
         final PlayerState state = player == null || plugin.players() == null ? null : plugin.players().all().get(id);
         final boolean offline = player == null || !player.isOnline() || state == null;
         final boolean dead = !offline && (player.isDead() || state.isDead());
+        // 2026-10-26：範圍外（不在 nearby_radius 內、在城鎮、不同世界…）的隊友不分經驗、掉落：名字變灰、右邊寫「遠」
+        final boolean far = !offline && !dead
+                && !(service.nearby(player, viewer.getLocation()) && service.nearby(viewer, player.getLocation()));
 
         // 頭像
         out.head(slot, id, offline ? PartyFont.HEAD_DIM : PartyFont.HEAD, skin(id, player));
@@ -106,6 +110,9 @@ public final class PartyHud {
         } else if (dead) {
             tag = "陣亡";
             tagKind = PartyFont.TEXT_RED;
+        } else if (far) {
+            tag = "遠" + (state.hasCharacter() ? " Lv" + state.level() : "");
+            tagKind = PartyFont.TEXT_DIM;
         } else {
             tag = state.hasCharacter() ? "Lv" + state.level() : "";
             tagKind = PartyFont.TEXT_GRAY;
@@ -120,7 +127,7 @@ public final class PartyHud {
         }
         final double room = RIGHT - tagWidth - 4 - x;
         final String name = fit(service.name(id), room);
-        out.text(slot, offline ? PartyFont.TEXT_DIM : dead ? PartyFont.TEXT_RED : PartyFont.TEXT, x, name);
+        out.text(slot, offline || far ? PartyFont.TEXT_DIM : dead ? PartyFont.TEXT_RED : PartyFont.TEXT, x, name);
     }
 
     /** 0..BAR_W，以半格為單位。 */

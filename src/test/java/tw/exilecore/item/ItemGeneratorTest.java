@@ -52,7 +52,7 @@ class ItemGeneratorTest {
     void currencyDropRatesFollowPoe2() {
         assertEquals(1500, currencies.get("glimmer_orb").dropWeight());
         assertEquals(1250, currencies.get("lustre_orb").dropWeight());
-        assertEquals(750, currencies.get("whetstone").dropWeight());
+        assertEquals(1000, currencies.get("whetstone").dropWeight()); // 2026-10-27 照站長併入星紋蝕刻器（750＋250）
         assertEquals(80, currencies.get("zenith_orb").dropWeight());
         assertEquals(300, currencies.get("bounty_orb").dropWeight());
         assertEquals(24, currencies.get("lesser_socket_orb").dropWeight());
@@ -66,7 +66,7 @@ class ItemGeneratorTest {
         }
         // 2026-10 第五次：神諭石跟大鑿星石一樣少（權重都是 1，最小的整數）
         assertEquals(currencies.get("oracle_orb").dropWeight(), currencies.get("greater_socket_orb").dropWeight());
-        assertEquals(currencies.get("whetstone").dropWeight(), currencies.get("armour_scrap").dropWeight());
+        assertEquals(currencies.get("whetstone").dropWeight(), currencies.get("armour_scrap").dropWeight() + 250); // 2026-10-27：礪鋒石多了蝕刻器那 250
         final double exaltedPerDivine = (double) currencies.get("zenith_orb").dropWeight() / currencies.get("oracle_orb").dropWeight();
         assertTrue(exaltedPerDivine > 60 && exaltedPerDivine < 100, "崇高：神聖 " + exaltedPerDivine); // 2026-10 第五次：40 → 80
         // 掉落等級：蛻變、增幅 1；崇高、富豪、點金 5；混沌、機會 12；神聖、剝離 35
@@ -87,15 +87,21 @@ class ItemGeneratorTest {
     @Test
     void dataFilesLoad() {
         // 2026-10 PoE2 改版：裝備換成照 PoE2 分階的基底，舊的（retired）留著讓舊物品照常能用；藥劑、護符的基底也算在裡面
-        assertEquals(940, repository.baseCount(), "現役 168 + 退役 737 + 藥劑與護符 35");
-        assertEquals(168, repository.bases().size(), "現役的裝備基底（含 14 張地圖、8 種珠寶）");
+        // 2026-10-26：＋照 PoE2 的法杖 14、長杖 17、權杖 16（bases/casters.yml），舊的 wand_14、staff_17、sceptre_16 退役
+        // 2026-10-26：＋照 PoE2 補上的腰帶 8、戒指 10、項鍊 10 與淨化護符 1（熔星、星骸藥劑與續命護符停用但定義留著，照樣算）；這次之前 987
+        assertEquals(1018, repository.baseCount(), "現役 238 + 退役 744 + 藥劑與護符 36（2026-10-27：＋傳奇專用的素面指環 jring_plain，這次之前 1017；2026-10-26：＋永恆珠寶基底 timeless_jewel）");
+        assertEquals(238, repository.bases().size(), "現役的裝備基底（含 14 張地圖、9 種珠寶；2026-10-26 ＋25 種飾品、＋永恆珠寶，這次之前 212）");
         assertEquals(14, repository.bases().stream().filter(ItemBase::isMap).count());
-        assertEquals(8, repository.bases().stream().filter(ItemBase::isJewel).count(), "4 種珠寶 + 4 種半徑珠寶");
-        assertEquals(940 - 168 - 35, repository.baseCount() - repository.bases().size() - repository.flaskLikeBases().size());
+        assertEquals(9, repository.bases().stream().filter(ItemBase::isJewel).count(), "4 種珠寶 + 4 種半徑珠寶 + 永恆珠寶（2026-10-26）");
+        // 2026-10-26：停用的藥劑（4）與護符（1）不在 flaskLikeBases，算在「退役」裡（這次之前 987 - 212 - 35）
+        assertEquals(1018 - 238 - 31, repository.baseCount() - repository.bases().size() - repository.flaskLikeBases().size());
         assertTrue(repository.affixCount() >= 30, "詞綴數 " + repository.affixCount());
-        assertEquals(35 + 16 + 10 + 6 + 4 + 21 + 3 + 4 + 1 + 7 + 29 + 1 + 9 + 2 + 2, currencies.size(), // 2026-10-23：＋琢星稜鏡、凝露琉璃；2026-10-18：＋共鳴石、＋7 張事件巔峰的入場券；2026-10-19：＋29 張星諭卡、＋星諭牌堆；2026-10-21：＋9 種先驅石板、＋蝕變石、定星石
-                "12 種改造通貨 + 3 種鑿星石 + 星盤刻刀 + 天穹碎片 + 僥倖石 + 6 種符文 + 2 種開服活動素材 + 2 種萬燈夜素材（2026-10）+ 傳奇兌換券 + 劫盜 6 種（含深淵星核），"
-                        + "加上地圖機制的 16 星魄（2026-10：＋能盾星魄；2026-10-15：＋炎擊、霜擊、雷擊）、10 催化劑、6 星籤、4 蒸餾情緒，"
+        // 2026-10-26 照 PoE2 0.5：星魄 16 → 75（分階＋新的精髓）、催化劑 10 → 17（13 種＋4 種舊的）、星籤 6 → 26、
+        //   ＋10 種高階／完美通貨、星紋蝕刻器、工匠石、預見鎖；2026-10-26（第二次）：工匠石照站長拿掉（－1）
+        // 2026-10-27 照 PoE2：蒸餾情緒 4 → 13（十種＋三種強效，＋9）
+        assertEquals(35 + 75 + 17 + 26 + 4 + 21 + 3 + 4 + 1 + 7 + 29 + 1 + 9 + 2 + 2 + 13 + 46 - 1 + 9, currencies.size(), // 2026-10-23：＋琢星稜鏡、凝露琉璃；2026-10-18：＋共鳴石、＋7 張事件巔峰的入場券；2026-10-19：＋29 張星諭卡、＋星諭牌堆；2026-10-21：＋9 種先驅石板、＋蝕變石、定星石
+                "12 種改造通貨 + 3 種鑿星石 + 星盤刻刀 + 天穹碎片 + 僥倖石 + 52 種符文（2026-10-26 照 PoE2 13 家族 × 4 階，＋46） + 2 種開服活動素材 + 2 種萬燈夜素材（2026-10）+ 傳奇兌換券 + 劫盜 6 種（含深淵星核），"
+                        + "加上地圖機制的 16 星魄（2026-10：＋能盾星魄；2026-10-15：＋炎擊、霜擊、雷擊）、10 催化劑、6 星籤、13 蒸餾情緒（2026-10-27：4 → 13），"
                         + "還有未切割寶石（技能 1–21 級、輔助 1–3 階，2026-10 算通貨），巔峰的 4 種碎片，共鳴石（2026-10-18），7 張事件巔峰的入場券（2026-10-18），29 張星諭卡與星諭牌堆（2026-10-19），9 種先驅石板、蝕變石、定星石（2026-10-21），琢星稜鏡、凝露琉璃（2026-10-23）");
         // 鑿星石：開技能的第 3、4、5 個輔助孔，不能用在裝備上，高階的要高等級的怪才掉
         int previousLevel = 0;
@@ -147,7 +153,11 @@ class ItemGeneratorTest {
                 assertTrue(data.identified(), "生成器做出來是已鑑定的；掉落表才會設成未鑑定");
             }
             if (rarity == Rarity.MAGIC) {
-                assertTrue(data.affixes().size() >= 1 && data.affixes().size() <= 2);
+                // 2026-10-26：PoE2 的空無墜飾（前綴、後綴各少 1 條）魔法的沒有空位，0 條是對的；這次之前一律至少 1 條
+                // 2026-10-26：永恆珠寶（timeless_jewel）只有傳奇，沒有詞綴池，魔法的也是 0 條
+                final boolean room = generator.maxAffixes(data, AffixType.PREFIX) + generator.maxAffixes(data, AffixType.SUFFIX) > 0
+                        && !(generator.eligible(data, AffixType.PREFIX).isEmpty() && generator.eligible(data, AffixType.SUFFIX).isEmpty());
+                assertTrue(data.affixes().size() >= (room ? 1 : 0) && data.affixes().size() <= 2, base.id() + " " + data.affixes().size());
                 assertTrue(data.identified());
             }
             if (rarity == Rarity.NORMAL) {
@@ -179,8 +189,9 @@ class ItemGeneratorTest {
                 suffixes++;
             }
         }
-        assertTrue(prefixes <= data.rarity().maxPrefixes(), "前綴超過上限");
-        assertTrue(suffixes <= data.rarity().maxSuffixes(), "後綴超過上限");
+        // 2026-10-26：上限照 generator（PoE2 的暮光／半影這類基底可以多／少幾條前綴、後綴）；這次之前直接比稀有度的上限
+        assertTrue(prefixes <= generator.maxAffixes(data, AffixType.PREFIX), "前綴超過上限");
+        assertTrue(suffixes <= generator.maxAffixes(data, AffixType.SUFFIX), "後綴超過上限");
         if (base.implicit() != null) {
             assertEquals(base.implicit().vars().keySet(), data.implicitVars().keySet());
         }
@@ -192,8 +203,17 @@ class ItemGeneratorTest {
         final ItemBase base = repository.base("plate_body");
         int t1 = 0;
         int t6 = 0;
-        // 2026-10-22：T1 的權重只有 20（T6 118）：2000 件裡 T1 期望只有 3 條，固定的種子剛好抽到 0 → 抽 10000 件
-        for (int i = 0; i < 10000; i++) {
+        // 2026-10-26：權重照 poe2db（生命每一階都是 1000），高階靠物品等級擋：T1 要 80、T6 要 54
+        int t1Low = 0;
+        for (int i = 0; i < 3000; i++) {
+            for (final RolledAffix rolled : generator.generate(base, Rarity.RARE, 79, random).affixes()) {
+                if (rolled.id().equals("life_flat_body") && rolled.tier() == 1) {
+                    t1Low++;
+                }
+            }
+        }
+        assertEquals(0, t1Low, "物品等級 79 出不了 T1");
+        for (int i = 0; i < 3000; i++) {
             final ItemData data = generator.generate(base, Rarity.RARE, 80, random);
             for (final RolledAffix rolled : data.affixes()) {
                 if (rolled.id().equals("life_flat_body")) { // 2026-10 PoE2：胸甲的生命詞綴是 life_flat_body（13 階）
@@ -205,7 +225,7 @@ class ItemGeneratorTest {
                 }
             }
         }
-        assertTrue(t1 > 0 && t6 > t1 * 2, "T1=" + t1 + " T6=" + t6);
+        assertTrue(t1 > 0 && t6 > 0, "T1=" + t1 + " T6=" + t6);
 
         final ItemData lowLevel = generator.generate(base, Rarity.RARE, 5, random);
         for (final RolledAffix rolled : lowLevel.affixes()) {
@@ -279,8 +299,8 @@ class ItemGeneratorTest {
         CurrencyOperation.UPGRADE_TO_RARE.apply(alchemy, generator, random);
         assertEquals(Rarity.RARE, alchemy.rarity());
         assertEquals(4, alchemy.affixes().size());
-        // 品質不分稀有度每次 +5，上限 20
-        for (int i = 0; i < 6; i++) {
+        // 2026-10-27 照 PoE2：稀有物品每次 +1，上限 20（這次之前不分稀有度每次 +5，6 次到 20）
+        for (int i = 0; i < 25; i++) {
             if (CurrencyOperation.QUALITY_WEAPON.canApply(alchemy, generator)) {
                 CurrencyOperation.QUALITY_WEAPON.apply(alchemy, generator, random);
             }
@@ -311,7 +331,9 @@ class ItemGeneratorTest {
         final ItemData high = generator.generate(base, Rarity.NORMAL, 60, random);
         final ItemStats.Snapshot snapshot = ItemStats.snapshot(repository, base, high);
         assertTrue(snapshot.damage().get(tw.exilecore.stats.DamageType.PHYSICAL)[1] > 40, "等級 60 的武器要明顯更強");
-        assertEquals(54, snapshot.requirements().level());
+        // 2026-10-26 照 PoE2：需求是基底固定的（短劍寫 1 級），不再是物品等級 × 0.9（這次之前 54）
+        assertEquals(base.requirements(), snapshot.requirements());
+        assertEquals(1, snapshot.requirements().level());
 
         final ItemData magic = generator.generate(base, Rarity.MAGIC, 30, random);
         magic.setIdentified(true);
@@ -367,5 +389,21 @@ class ItemGeneratorTest {
         assertTrue(ring.identified());
         assertFalse(ring.affixes().isEmpty());
         assertTrue(ring.affixes().stream().allMatch(affix -> affix.id().startsWith(UniqueItem.AFFIX_PREFIX)));
+    }
+
+    /** 2026-10-27：僥倖石（含遠古星籤換成孔比較少的基底）變成傳奇後，符文不會比孔多（多的毀掉）。 */
+    @Test
+    void chanceTrimsRunesToSockets() {
+        final UniqueItem unique = repository.uniques().stream()
+                .filter(u -> repository.base(u.base()) != null && Runes.slots(repository, repository.base(u.base()), null) == 1
+                        && repository.uniqueRuneSockets(u.id()) < 0)
+                .findFirst().orElseThrow();
+        final String rune = repository.runes().iterator().next().id();
+        final ItemData data = new ItemData(unique.base(), Rarity.NORMAL, 80);
+        data.addRune(rune);
+        data.addRune(rune);
+        data.addRune(rune);
+        generator.makeUnique(data, unique, new Random(1));
+        assertEquals(1, data.runes().size());
     }
 }

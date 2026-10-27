@@ -375,7 +375,7 @@ public final class BalanceExport {
         root.add("skills", json);
     }
 
-    /** 角色裝著的技能：{技能代號, "輔助代號,輔助代號…"}（calc.skills；共鳴的 ~、宿主第 1 孔的 @… 去掉）。 */
+    /** 角色裝著的技能：{技能代號, "輔助代號,輔助代號…"}（calc.skills；共鳴的 ~、宿主孔裡的 @… 去掉）。 */
     private static List<String[]> equippedSkills(final Character c) {
         final List<String[]> list = new ArrayList<>();
         if (!c.data().has("calc") || !c.data().getAsJsonObject("calc").has("skills")) {
@@ -912,9 +912,12 @@ public final class BalanceExport {
                 s.add("tags", GSON.toJsonTree(d.tags()));
                 final String[] p = poe2.get(d.id());
                 if (p != null) {
+                    // 2026-10-26：攻擊比傷害效益 %；法術比 20 級的平均基礎傷害（CSV 的法術一直填的是平均傷害，以前誤拿效益去除）
+                    final double ours = d.isAttack() ? d.effectiveness().at(20) * 100 : spellAverage(d, 20);
+                    s.addProperty("ours20", ours);
                     s.addProperty("poe2Name", p[0]);
                     s.addProperty("poe2Lv20", Double.parseDouble(p[1]));
-                    s.addProperty("ratioToPoe2", d.effectiveness().at(20) * 100 / Double.parseDouble(p[1]));
+                    s.addProperty("ratioToPoe2", ours / Double.parseDouble(p[1]));
                     if (!p[2].isBlank()) {
                         s.addProperty("poe2Note", p[2]);
                     }
@@ -951,6 +954,12 @@ public final class BalanceExport {
         return json;
     }
 
+    /** 法術在這個等級的平均基礎傷害（沒有 damage 的回傳 0）。 */
+    private double spellAverage(final SkillDefinition d, final int level) {
+        final double[] range = tw.exilecore.skill.SkillProfiles.spellDamage(plugin.skills().config(), d, level);
+        return (range[0] + range[1]) / 2;
+    }
+
     /** balance/poe2_skills.csv：技能代號 → {PoE2 名字, 20 級數值, 備註}。 */
     private Map<String, String[]> poe2() {
         final Map<String, String[]> map = new HashMap<>();
@@ -978,10 +987,12 @@ public final class BalanceExport {
             return;
         }
         md.add("");
-        md.add("## 8. 技能係數 vs 對照表（20 級；我們的效益 % ÷ 對照的 %；沒有對照的不列）"); // 對照 = 設計參考的原作數值；字串不寫遊戲名（PlayerTextTest）
+        // 對照 = 設計參考的原作數值；字串不寫遊戲名（PlayerTextTest）
+        // 2026-10-26：法術改比 20 級平均基礎傷害；武器基底已改成原作數值，拿掉「×0.75」那一欄
+        md.add("## 8. 技能係數 vs 對照表（20 級；攻擊比傷害效益 %、法術比平均基礎傷害；1.00 = 跟對照一樣；沒有對照的不列）");
         md.add("");
-        md.add("| 技能 | 類型 | 我們 | 對照 | 比值 | 對照 ×0.75 的比值 |");
-        md.add("|---|---|---|---|---|---|");
+        md.add("| 技能 | 類型 | 我們 | 對照 | 比值 |");
+        md.add("|---|---|---|---|---|");
         final List<Map.Entry<String, JsonElement>> rows = new ArrayList<>(statics.getAsJsonObject("skills").entrySet());
         rows.removeIf(e -> !e.getValue().getAsJsonObject().has("ratioToPoe2"));
         rows.sort((a, b) -> Double.compare(a.getValue().getAsJsonObject().get("ratioToPoe2").getAsDouble(),
@@ -989,9 +1000,11 @@ public final class BalanceExport {
         for (final Map.Entry<String, JsonElement> e : rows) {
             final JsonObject s = e.getValue().getAsJsonObject();
             final double ratio = s.get("ratioToPoe2").getAsDouble();
-            md.add("| " + s.get("name").getAsString() + " | " + ("attack".equals(s.get("type").getAsString()) ? "攻擊" : "法術") + " | "
-                    + Math.round(s.get("effectiveness20").getAsDouble() * 100) + "% | " + Math.round(s.get("poe2Lv20").getAsDouble()) + "% | "
-                    + String.format(Locale.ROOT, "%.2f", ratio) + " | " + String.format(Locale.ROOT, "%.2f", ratio / 0.75) + " |");
+            final boolean attack = "attack".equals(s.get("type").getAsString());
+            final String unit = attack ? "%" : "";
+            md.add("| " + s.get("name").getAsString() + " | " + (attack ? "攻擊" : "法術") + " | "
+                    + Math.round(s.get("ours20").getAsDouble()) + unit + " | " + Math.round(s.get("poe2Lv20").getAsDouble()) + unit + " | "
+                    + String.format(Locale.ROOT, "%.2f", ratio) + " |");
         }
     }
 

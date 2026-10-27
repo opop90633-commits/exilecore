@@ -5,6 +5,7 @@ data/currencies.yml
 data/monsters.yml
 data/drops.yml
 data/bases/weapons.yml
+data/bases/weapons_casters.yml
 data/bases/armour.yml
 data/bases/shields.yml
 data/bases/quivers.yml
@@ -26,8 +27,11 @@ data/world.yml
 data/skills.yml
 data/boss_skills.yml
 data/supports.yml
+data/supports_lineage.yml
+data/gem_colours.yml
 data/flasks.yml
 data/runes.yml
+data/instil.yml
 data/loot.yml
 data/ailments.yml
 data/balance.yml

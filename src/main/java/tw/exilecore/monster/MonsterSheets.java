@@ -25,6 +25,14 @@ public final class MonsterSheets {
     private MonsterSheets() {
     }
 
+    /**
+     * 2026-10-26（PoE2）：怪物效能的倍率（1 = 沒有）：(1 + 增加) × 更多。受到的傷害除以這個（韌性）；
+     * 經驗、物品數量多 (倍率 − 1) ÷ 2。
+     */
+    public static double effectiveness(final StatSheet sheet) {
+        return sheet == null ? 1.0 : Math.max(1.0, sheet.apply(StatKeys.EFFECTIVENESS, 1.0, Set.of()));
+    }
+
     /** 我們的生命值對原版血量的比例（生命 ≤ 1024 時為 1）。 */
     public static double healthScale(final double life) {
         return life <= VANILLA_HEALTH_CAP ? 1.0 : VANILLA_HEALTH_CAP / life;
@@ -41,6 +49,25 @@ public final class MonsterSheets {
         sheet.setBase(StatKeys.EVASION, config.evasionAt(level));
         sheet.setBase(StatKeys.ARMOUR, config.armourAt(level));
         sheet.setBase(StatKeys.RESIST_MAX, 75);
+        final double resist = config.rarityResist(data.rarity()); // 2026-10-26 照 PoE2：Boss 元素抗性 30%
+        if (resist != 0) {
+            for (final DamageType element : new DamageType[] {DamageType.FIRE, DamageType.COLD, DamageType.LIGHTNING}) {
+                sheet.setBase(element.mitigationStat(), resist);
+            }
+        }
+        final double curse = config.rarityCurseEffect(data.rarity()); // 2026-10-26 照 PoE2：魔法、稀有、傳奇身上的詛咒效果更少
+        if (curse != 0) {
+            sheet.add(Modifier.more(StatKeys.CURSE_EFFECT_ON_SELF, curse / 100.0, "稀有度"));
+        }
+        // 2026-10-26 照 PoE2 0.5：魔法、稀有、傳奇身上的緩速（冰緩、阻礙、癱瘓…）與曝露效果更少（這次之前不分稀有度）
+        final double slow = config.raritySlowEffect(data.rarity());
+        if (slow != 0) {
+            sheet.add(Modifier.more(StatKeys.SLOW_TAKEN, slow / 100.0, "稀有度"));
+        }
+        final double exposure = config.rarityExposureEffect(data.rarity());
+        if (exposure != 0) {
+            sheet.add(Modifier.more(tw.exilecore.ailment.AilmentKeys.EXPOSURE_EFFECT_ON_SELF, exposure / 100.0, "稀有度"));
+        }
         sheet.setBase(StatKeys.CRIT_MULTI, 130); // PoE2：怪物的暴擊傷害加成只有 +30%
         sheet.setBase(StatKeys.WEAPON_APS, 1.0);
         sheet.setBase(StatKeys.WEAPON_CRIT, config.critChance());

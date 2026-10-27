@@ -38,7 +38,7 @@ class CatalystCoverageTest {
         assertTrue(Catalyst.DEFENCE.matches(mod(StatKeys.ES_RECHARGE)));
         assertTrue(Catalyst.DEFENCE.matches(mod("evasion@nohit")), "有條件的版本照本來的屬性算");
         assertTrue(Catalyst.LIFE.matches(mod(StatKeys.LIFE_PER_KILL)));
-        assertTrue(Catalyst.LIFE.matches(mod(StatKeys.MANA_PER_KILL)));
+        assertTrue(Catalyst.MANA.matches(mod(StatKeys.MANA_PER_KILL)), "2026-10-26：魔力改成魔力催化劑（PoE2 的 Neural）；這次之前算生命催化劑");
         assertTrue(Catalyst.ATTACK.matches(mod(StatKeys.ACCURACY)));
         assertFalse(Catalyst.RESIST.matches(mod("avoid.ignite")), "避免點燃不是抗性");
         assertFalse(Catalyst.ELEMENTAL.matches(mod("avoid.ignite")));

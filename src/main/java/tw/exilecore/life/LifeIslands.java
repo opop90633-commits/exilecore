@@ -805,7 +805,8 @@ final class LifeIslands {
             got.append("、<#ff9be0>").append(service.materialName("horn_shard")).append(" +1<white>");
         }
         if (!def.currencies().isEmpty() && random.nextDouble() < def.currencyChance() && service.takeCurrencyQuota(profile)) {
-            final String id = def.currencies().get(random.nextInt(def.currencies().size()));
+            // 2026-10-27：照 life.yml 寫的權重抽（高價的神諭石、深淵星核、大鑿星石約 2%）；這次之前每種一樣機率
+            final String id = def.pickCurrency(random.nextDouble());
             service.giveCurrency(player, id, 1);
             got.append("、").append(service.currencyName(id));
         }

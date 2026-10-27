@@ -18,7 +18,9 @@ import java.util.UUID;
 
 /**
  * 閃避翻滾（2026-10，PoE2）：按 Ctrl（原版的「衝刺」鍵）往移動的方向翻滾約 3～4 格；沒按方向鍵就往面向翻。
- * 翻滾的前 {@value #INVULNERABLE_TICKS} tick 怪物的擊中打不到你（環境傷害、持續傷害照算）。
+ * 翻滾的前 {@value #INVULNERABLE_TICKS} tick 躲開近戰攻擊與投射物的擊中（環境傷害、持續傷害照算）。
+ * 2026-10-27 照 PoE2（poe2db Dodge Roll：「不給無敵」「翻滾開始時躲開投射物與近戰攻擊」）：法術、範圍、地面的擊中照樣打得到
+ * （{@link #avoids}）；這次之前前 6 tick 全部的擊中都打不到（等於無敵時間）。
  * 沒有冷卻，但一次翻滾的動作要 {@value #ROLL_TICKS} tick，做完才能再翻。被凍結、暈眩時不能翻；營地裡也能翻（2026-10）。
  */
 public final class DodgeRoll implements Listener {
@@ -27,10 +29,12 @@ public final class DodgeRoll implements Listener {
     public static final long ROLL_TICKS = 12;
     /** 技能標籤：有這個的擊中翻滾躲不掉（Boss 的全場大招，2026-10）。 */
     public static final String UNDODGEABLE_TAG = "undodgeable";
-    /** 翻滾開始後多少 tick 打不到。 */
+    /** 翻滾開始後多少 tick 躲得開近戰攻擊與投射物。 */
     public static final long INVULNERABLE_TICKS = 6;
     /** 水平速度（方塊／tick；地面摩擦下大約滑 3～4 格）。 */
     private static final double SPEED = 1.15;
+    /** 2026-10-26：一次翻滾大約幾格（「翻滾距離 +x 公尺」換算成倍率用）。 */
+    public static final double BASE_METRES = 3.5;
 
     private final ExileCore plugin;
     private final Map<UUID, Long> rolledAt = new HashMap<>();
@@ -44,7 +48,17 @@ public final class DodgeRoll implements Listener {
         return plugin.getServer().getCurrentTick();
     }
 
-    /** 正在翻滾的無敵時間內（怪物、其他玩家的擊中打不到）。 */
+    /**
+     * 2026-10-27 照 PoE2：翻滾躲得開的擊中只有近戰攻擊與投射物（PoE2 沒有無敵時間）；法術、範圍、地面躲不開。
+     *
+     * @param melee      這一下是近戰攻擊
+     * @param projectile 這一下是投射物
+     */
+    public static boolean avoids(final boolean melee, final boolean projectile) {
+        return melee || projectile;
+    }
+
+    /** 正在翻滾的開頭（躲得開近戰攻擊與投射物的那段；見 {@link #avoids}）。 */
     public boolean invulnerable(final Player player) {
         if (tw.exilecore.stats.StatKeys.flag(plugin.players().sheet(player), tw.exilecore.stats.StatKeys.FLAG_BULWARK)) {
             return false; // 壁壘：翻滾不能躲傷害（改成受到的傷害更少）
@@ -57,6 +71,13 @@ public final class DodgeRoll implements Listener {
     public boolean rolling(final Player player) {
         final Long at = rolledAt.get(player.getUniqueId());
         return at != null && now() - at < ROLL_TICKS;
+    }
+
+    /**
+     * 2026-10-26（天賦樹「衝刺時」）：衝刺中＝按住翻滾鍵（Ctrl）而且不在翻滾動作裡（PoE2 翻滾後按住繼續跑；移動與否由呼叫的人看）。
+     */
+    public boolean sprinting(final Player player) {
+        return Boolean.TRUE.equals(sprintHeld.get(player.getUniqueId())) && !rolling(player);
     }
 
     @EventHandler
@@ -97,7 +118,14 @@ public final class DodgeRoll implements Listener {
             return;
         }
         // 2026-10：翻滾距離（PoE2 鞋子的褻瀆詞綴）：衝刺的速度照比例放大，最多兩倍
-        final double distance = Math.max(0.5, Math.min(2, 1 + plugin.players().sheet(player).increased(tw.exilecore.stats.StatKeys.DODGE_DISTANCE, java.util.Set.of())));
+        // 2026-10-26（鷹師之弓）：「翻滾距離 +x 公尺」照一次翻滾約 BASE_METRES 格換算；（相位之履）翻滾時穿過敵人
+        final tw.exilecore.stats.StatSheet rollSheet = plugin.players().sheet(player);
+        final double distance = Math.max(0.5, Math.min(2, 1 + rollSheet.increased(tw.exilecore.stats.StatKeys.DODGE_DISTANCE, java.util.Set.of())
+                + rollSheet.flat(tw.exilecore.item.unique.UniqueStats.DODGE_METRES, java.util.Set.of()) / BASE_METRES));
+        if (tw.exilecore.stats.StatKeys.flag(rollSheet, tw.exilecore.item.unique.UniqueStats.DODGE_PHASE) && player.isCollidable()) {
+            player.setCollidable(false);
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> player.setCollidable(true), ROLL_TICKS);
+        }
         direction.normalize().multiply((player.isOnGround() ? SPEED : SPEED * 0.6) * distance);
         direction.setY(player.isOnGround() ? 0.12 : Math.max(-0.2, player.getVelocity().getY()));
         player.setVelocity(direction);
@@ -108,7 +136,8 @@ public final class DodgeRoll implements Listener {
         player.getWorld().spawnParticle(Particle.CLOUD, at, 8, 0.3, 0.1, 0.3, 0.02);
         player.getWorld().playSound(at, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.5f, 1.6f);
         if (plugin.skills() != null && plugin.skills().triggers() != null) {
-            plugin.skills().triggers().dodge(player); // 2026-10：翻滾觸發
+            plugin.skills().triggers().dodge(player, BASE_METRES * distance); // 2026-10：翻滾觸發（2026-10-26：帶翻滾距離，翻滾引星照公尺給能量）
+            plugin.skills().supportMechanics().lineage().dodged(player); // 2026-10-27 照 PoE2 連膛：翻滾時裝子彈
         }
     }
 

@@ -70,6 +70,7 @@ public final class OpsModule implements Module, Listener {
         transfer = new AccountTransfer(plugin);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         plugin.getServer().getPluginManager().registerEvents(new StartupGate(plugin), plugin); // 2026-10-23：剛開機先擋一下登入
+        plugin.getServer().getPluginManager().registerEvents(new EventSpans(plugin.perf()), plugin); // 2026-10-27：死亡、互打事件總共花多久（/ec perf）
         rollTask = plugin.getServer().getScheduler().runTaskTimer(plugin, plugin.perf()::roll, 20, 20);
         backupTask = plugin.getServer().getScheduler().runTaskTimer(plugin, backups::tick, 20L * 60, 20L * 60);
     }
@@ -313,7 +314,7 @@ public final class OpsModule implements Module, Listener {
             sender.sendMessage(plugin.text().parse("<gray>還在收集資料，過幾秒再看"));
         } else {
             sender.sendMessage(plugin.text().parse("<gray>最近 10 秒，ExileCore 各部分（每 tick 毫秒｜每秒次數｜最慢一次）："));
-            for (final Perf.Stat stat : stats.subList(0, Math.min(12, stats.size()))) {
+            for (final Perf.Stat stat : stats.subList(0, Math.min(16, stats.size()))) { // 2026-10-27：區段變多（map.xxx、fx.xxx…），多列幾行；這次之前 12
                 sender.sendMessage(plugin.text().parse(String.format(Locale.ROOT, "  <white>%-14s</white> <gray>%.2f ms｜%.0f 次｜%.1f ms",
                         stat.name(), stat.msPerTick(), stat.callsPerSecond(), stat.maxMs())));
             }

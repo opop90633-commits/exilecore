@@ -19,8 +19,6 @@ import java.util.Set;
  * @param effects     光環的效果（隨技能等級變）
  * @param onKill      擊殺時從屍體的位置放的隱藏技能代號（捷；null = 沒有）
  * @param onKillChance 擊殺時觸發的機率（百分比）
- * @param burn        焚燒光環（2026-10，焚心業火）：開著的時候每半秒用技能自己的 damage 打一下周圍 radius 內的敵人
- * @param selfBurn    焚燒光環：自己每秒受到最大生命（＋能量護盾）這個百分比的火焰傷害（火焰抗性減免；在營地不燒）
  * @param enemy       2026-10：範圍內的敵人受到的傷害增加（威壓那種）；null = 沒有
  * @param perMinion   2026-10（照 PoE2）：精魂召喚「每一隻」保留多少精魂（隨技能等級，1 級 → 20 級）；null = 不是照隻數算
  * @param freeMinions 前幾隻不用精魂（骸骨兵：2）
@@ -29,7 +27,7 @@ import java.util.Set;
  * @param fury        2026-10（照 PoE2 的 Savage Fury）：攻擊累積獸性，滿了爆發成一段時間的狂暴；null = 沒有
  */
 public record AuraSpec(double reserve, double radius, boolean allies, List<ScaledMod> effects, String onKill, double onKillChance,
-                       boolean burn, double selfBurn, Enemy enemy, Scaled perMinion, int freeMinions,
+                       Enemy enemy, Scaled perMinion, int freeMinions,
                        KillCondition condition, LifeCost lifeCost, Fury fury) {
 
     /**
@@ -183,7 +181,20 @@ public record AuraSpec(double reserve, double radius, boolean allies, List<Scale
      * 對敵人的光環（2026-10）：範圍內的敵人受到的傷害增加 taken%（隨等級），在範圍內待滿 rampSeconds 秒提升到 rampTaken%。
      * tag：只有帶這個標籤的擊中才算（physical = 物理：攻擊與物理技能）；null = 全部。
      */
-    public record Enemy(Scaled taken, Scaled rampTaken, double rampSeconds, String tag) {
+    public record Enemy(Scaled taken, Scaled rampTaken, double rampSeconds, String tag, Scaled weaknessEvery,
+                        Scaled witheredEvery, List<ScaledMod> effects) {
+
+        public Enemy {
+            effects = effects == null ? List.of() : List.copyOf(effects);
+        }
+
+        public Enemy(final Scaled taken, final Scaled rampTaken, final double rampSeconds, final String tag) {
+            this(taken, rampTaken, rampSeconds, tag, null);
+        }
+
+        public Enemy(final Scaled taken, final Scaled rampTaken, final double rampSeconds, final String tag, final Scaled weaknessEvery) {
+            this(taken, rampTaken, rampSeconds, tag, weaknessEvery, null, List.of());
+        }
     }
 
     public AuraSpec {
@@ -193,14 +204,8 @@ public record AuraSpec(double reserve, double radius, boolean allies, List<Scale
 
     /** 沒有觸發條件、代價、獸性的光環（2026-10 以前的寫法）。 */
     public AuraSpec(final double reserve, final double radius, final boolean allies, final List<ScaledMod> effects, final String onKill,
-                    final double onKillChance, final boolean burn, final double selfBurn, final Enemy enemy, final Scaled perMinion,
-                    final int freeMinions) {
-        this(reserve, radius, allies, effects, onKill, onKillChance, burn, selfBurn, enemy, perMinion, freeMinions, null, null, null);
-    }
-
-    public AuraSpec(final double reserve, final double radius, final boolean allies, final List<ScaledMod> effects, final String onKill,
-                    final double onKillChance, final boolean burn, final double selfBurn) {
-        this(reserve, radius, allies, effects, onKill, onKillChance, burn, selfBurn, null, null, 0);
+                    final double onKillChance, final Enemy enemy, final Scaled perMinion, final int freeMinions) {
+        this(reserve, radius, allies, effects, onKill, onKillChance, enemy, perMinion, freeMinions, null, null, null);
     }
 
     /** 精魂是照隻數算的召喚（2026-10）。 */
@@ -208,20 +213,10 @@ public record AuraSpec(double reserve, double radius, boolean allies, List<Scale
         return perMinion != null;
     }
 
-    /** 沒有焚燒的光環。 */
+    /** 一般的光環（2026-10-26：焚心業火拿掉，焚燒光環 burn 跟著拿掉；這次之前這裡是「沒有焚燒的光環」）。 */
     public AuraSpec(final double reserve, final double radius, final boolean allies, final List<ScaledMod> effects, final String onKill,
                     final double onKillChance) {
-        this(reserve, radius, allies, effects, onKill, onKillChance, false, 0);
-    }
-
-    /** 焚燒光環：每半秒打周圍的敵人（技能要寫 damage、damage_types）。 */
-    public boolean burns() {
-        return burn;
-    }
-
-    /** 常駐技能（2026-10）：焚燒的（焚心業火）不算光環——不保留魔力、不吃光環的加成，腳下也不畫光環的法陣。 */
-    public boolean persistent() {
-        return burn;
+        this(reserve, radius, allies, effects, onKill, onKillChance, null, null, 0);
     }
 
     /** 是不是「捷」：擊殺時觸發效果的光環。 */
@@ -248,32 +243,34 @@ public record AuraSpec(double reserve, double radius, boolean allies, List<Scale
         }
         final LifeCost lifeCost = node.has("life_cost") ? LifeCost.parse(node.node("life_cost")) : null;
         final Fury fury = node.has("fury") ? Fury.parse(node.node("fury")) : null;
-        final boolean burn = node.has("burn");
-        double selfBurn = 0;
-        if (burn) {
-            selfBurn = check(node.node("burn").path(), "self", node.node("burn").decimal("self", 0), 0, 100);
+        if (node.has("burn")) { // 2026-10-26：焚燒光環（焚心業火）拿掉了
+            throw new IllegalArgumentException(where + ".burn：焚燒光環已經拿掉了");
         }
         Enemy enemy = null;
         if (node.has("enemy")) {
             final YamlNode e = node.node("enemy");
             final Scaled taken = Scaled.parse(e.path() + ".taken", e.raw("taken"), 0);
             enemy = new Enemy(taken, e.has("ramp_taken") ? Scaled.parse(e.path() + ".ramp_taken", e.raw("ramp_taken"), 0) : taken,
-                    check(e.path(), "ramp", e.decimal("ramp", 0), 0, 60), e.has("tag") ? e.string("tag", "").trim().toLowerCase(Locale.ROOT) : null);
+                    check(e.path(), "ramp", e.decimal("ramp", 0), 0, 60), e.has("tag") ? e.string("tag", "").trim().toLowerCase(Locale.ROOT) : null,
+                    // 2026-10-26：每幾秒給範圍內的敵人 1 層暴擊弱點（PoE2 的惡意 Malice）
+                    e.has("crit_weakness_every") ? Scaled.parse(e.path() + ".crit_weakness_every", e.raw("crit_weakness_every"), 0) : null,
+                    // 2026-10-26（照 PoE2 的凋息 Withering Presence）：每幾秒給範圍內的敵人 1 層凋零
+                    e.has("withered_every") ? Scaled.parse(e.path() + ".withered_every", e.raw("withered_every"), 0) : null,
+                    // 2026-10-26（照 PoE2 的鎮懾 Overwhelming Presence）：疊在範圍內敵人身上的修飾器（暈眩門檻、異常門檻降低）
+                    ScaledMod.parseList(e, "effects"));
         }
-        if (effects.isEmpty() && onKill == null && !burn && enemy == null && fury == null && !skill.has("summon") && !skill.has("meta")) { // 2026-10：夥伴（aura ＋ summon）、主要寶石（只保留精魂）可以沒有效果
-            throw new IllegalArgumentException(where + "：光環至少要有 effects、enemy、on_kill、fury 或 burn");
-        }
-        if (burn && lifeCost != null) {
-            throw new IllegalArgumentException(where + "：burn（焚燒自己）跟 life_cost 不能一起寫");
+        if (effects.isEmpty() && onKill == null && enemy == null && fury == null && !skill.has("summon") && !skill.has("meta")
+                && !skill.has("level_modifiers")) { // 2026-10-26：雷霆共鳴、折光之鏡、鴉群密謀的效果寫在程式裡（GrantedAuras），逐級數值在 level_modifiers // 2026-10：夥伴（aura ＋ summon）、主要寶石（只保留精魂）可以沒有效果
+            throw new IllegalArgumentException(where + "：光環至少要有 effects、enemy、on_kill 或 fury");
         }
         final Scaled perMinion = node.has("per_minion") ? Scaled.parse(where + ".per_minion", node.raw("per_minion"), 0) : null;
         if (perMinion != null && (!skill.has("summon") || perMinion.at(1) <= 0)) {
             throw new IllegalArgumentException(where + ".per_minion：只有精魂召喚（有 summon）能寫，而且要大於 0");
         }
         final int free = (int) check(where, "free", node.integer("free", 0), 0, 20);
-        return new AuraSpec(burn ? 0 : check(where, "reserve", node.decimal("reserve", perMinion != null ? 0 : 35), 0, 100),
+        return new AuraSpec(check(where, "reserve", node.decimal("reserve", perMinion != null ? 0 : 35), 0, 100),
                 check(where, "radius", node.decimal("radius", 8), 2, 24),
-                node.bool("allies", !burn), effects, onKill, chance, burn, selfBurn, enemy, perMinion, free, condition, lifeCost, fury);
+                node.bool("allies", true), effects, onKill, chance, enemy, perMinion, free, condition, lifeCost, fury);
     }
 
     private static double check(final String where, final String key, final double value, final double min, final double max) {

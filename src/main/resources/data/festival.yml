@@ -46,11 +46,11 @@ boss:
   duration_minutes: 15
   empty_close_seconds: 180
   level: 88
-  life: 5233                # 一個人的份（2026-10-21 晚：跟開天者一樣照打 Boss 每秒 100 萬、單人 3 分半，約 2.1 億生命；凋零骷髏本身生命 ×1.4，所以比開天者的 7333 少；不遞減）
+  life: 44.36   # 2026-10-26：比照極境（照原作超難版），一個人的份；這次之前 5233
   life_per_player: 1.0
   count_level: 80
   max_counted_players: 0
-  damage: 2.6
+  damage: 4.5   # 2026-10-26 照 PoE2（這次之前 2.6）
   scale: 1.8
   mods: [armoured]
   intro: "「點了燈的人……都要留下來陪我。」"

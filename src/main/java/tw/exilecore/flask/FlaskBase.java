@@ -11,9 +11,15 @@ import tw.exilecore.core.config.YamlNode;
  * @param duration 回復時間（秒）
  * @param charges  充能上限
  * @param perUse   每喝一次用掉幾點充能
+ * @param retired  2026-10-26：拿掉的基底（retired: true）：已經在玩家身上的照常能喝，不掉落、不出現在商人與清單
  */
 public record FlaskBase(String id, String name, FlaskKind kind, String model, int level, double recovery, double duration,
-                        int charges, int perUse) {
+                        int charges, int perUse, boolean retired) {
+
+    public FlaskBase(final String id, final String name, final FlaskKind kind, final String model, final int level, final double recovery,
+                     final double duration, final int charges, final int perUse) {
+        this(id, name, kind, model, level, recovery, duration, charges, perUse, false);
+    }
 
     /** 喝一次最多幾次（充能滿的時候）。 */
     public int uses() {
@@ -32,6 +38,6 @@ public record FlaskBase(String id, String name, FlaskKind kind, String model, in
             throw new IllegalArgumentException(where + "：level ≥ 1、recovery > 0、duration 0.1 到 30 秒、1 ≤ per_use ≤ charges");
         }
         return new FlaskBase(id, node.requireString("name"), kind, node.string("model", null), level, recovery, duration,
-                charges, perUse);
+                charges, perUse, node.bool("retired", false));
     }
 }

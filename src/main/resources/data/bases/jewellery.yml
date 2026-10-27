@@ -122,6 +122,484 @@ chain_belt:
     mods:
       - { stat: es.max, type: FLAT, value: "{value}" }
 
+# ---- 2026-10-26 照 PoE2 0.5 補上的飾品基底（手寫，不是 tools/gen_poe2_bases.py 產生的，重跑產生器不會動到這段）----
+# 等級需求、掉落等級照原作（數值不跟物品等級縮放）。需要新機制的固定詞綴：
+#   「可以多／少 x 條前綴／後綴」用 local.max_prefixes／local.max_suffixes（ItemGenerator 照這個算上限）；
+#   還沒有的機制先略過那一行（見各基底的註解）：戒指的技能欄位、品質上限、深淵消蝕、當作手套／頭盔／鞋子的嵌入物、
+#   項鍊賦予的技能。只剩略過那一行的基底一樣會掉（像原作沒有固定詞綴的戒指）；悲歌、兆示、空無墜飾只剩缺點，先停用（retired，不掉落、商人不賣）。
+
+jbelt_wide:
+  # PoE2 Wide Belt
+  name: 寬幅束帶
+  family: jbelt
+  drop_weight: 20
+  material: SADDLE
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 14
+  requirements: { level: 14 }
+  implicit:
+    text: "有 {slots} 個護符欄位，增加 {value}% 藥劑充能獲得"
+    slots: [1, 3]
+    value: [20, 30]
+    mods:
+      - { stat: charm.slots, type: FLAT, value: "{slots}" }
+      - { stat: flask.charges_gained, type: INCREASED, value: "{value}" }
+
+jbelt_long:
+  # PoE2 Long Belt
+  name: 長結束帶
+  family: jbelt
+  drop_weight: 20
+  material: TRIPWIRE_HOOK
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 20
+  requirements: { level: 20 }
+  implicit:
+    text: "有 {slots} 個護符欄位，增加 {value}% 護符效果持續時間"
+    slots: [1, 3]
+    value: [15, 20]
+    mods:
+      - { stat: charm.slots, type: FLAT, value: "{slots}" }
+      - { stat: charm.duration, type: INCREASED, value: "{value}" }
+
+jbelt_ornate:
+  # PoE2 Ornate Belt
+  name: 紋飾束帶
+  family: jbelt
+  drop_weight: 20
+  material: HONEYCOMB
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 31
+  requirements: { level: 31 }
+  implicit:
+    text: "有 {slots} 個護符欄位，減少 {value}% 護符每次消耗的充能"
+    slots: [1, 3]
+    value: [10, 15]
+    mods:
+      - { stat: charm.slots, type: FLAT, value: "{slots}" }
+      - { stat: charm.charges_used, type: INCREASED, value: "-{value}" }
+
+jbelt_mail:
+  # PoE2 Mail Belt
+  name: 環鏈束帶
+  family: jbelt
+  drop_weight: 20
+  material: IRON_BARS
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 40
+  requirements: { level: 40 }
+  implicit:
+    text: "有 {slots} 個護符欄位，減少 {value}% 藥劑每次消耗的充能"
+    slots: [1, 3]
+    value: [10, 15]
+    mods:
+      - { stat: charm.slots, type: FLAT, value: "{slots}" }
+      - { stat: flask.charges_used, type: INCREASED, value: "-{value}" }
+
+jbelt_double:
+  # PoE2 Double Belt
+  name: 雙扣束帶
+  family: jbelt
+  drop_weight: 20
+  material: LEATHER_HORSE_ARMOR
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 44
+  requirements: { level: 44 }
+  implicit:
+    text: "有 {slots} 個護符欄位，增加 {value}% 護符充能獲得"
+    slots: [1, 3]
+    value: [20, 30]
+    mods:
+      - { stat: charm.slots, type: FLAT, value: "{slots}" }
+      - { stat: charm.charges_gained, type: INCREASED, value: "{value}" }
+
+jbelt_stalking:
+  # PoE2 Stalking Belt：「嵌入物的加成當作鞋子」那一行先略過（腰帶沒有符文孔）
+  name: 潛獵束帶
+  family: jbelt
+  drop_weight: 20
+  material: PHANTOM_MEMBRANE
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 50
+  requirements: { level: 50 }
+  implicit:
+    text: "有 1 個護符欄位"
+    mods:
+      - { stat: charm.slots, type: FLAT, value: 1 }
+
+jbelt_utility:
+  # PoE2 Utility Belt
+  name: 百用束帶
+  family: jbelt
+  drop_weight: 20
+  material: BUNDLE
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 55
+  requirements: { level: 55 }
+  implicit:
+    text: "有 {slots} 個護符欄位，藥劑回復有 20% 立即生效"
+    slots: [1, 3]
+    mods:
+      - { stat: charm.slots, type: FLAT, value: "{slots}" }
+      - { stat: flask.instant, type: FLAT, value: 20 }
+
+jbelt_fine:
+  # PoE2 Fine Belt（每秒 0.17 = 每分鐘 10 點，生命、魔力藥劑都有）
+  name: 精工束帶
+  family: jbelt
+  drop_weight: 20
+  material: GLOW_INK_SAC
+  model: exilecore:jewellery/leather_belt
+  slot: BELT
+  tags: [jewellery, belt]
+  drop_level: 62
+  requirements: { level: 62 }
+  implicit:
+    text: "有 {slots} 個護符欄位，藥劑每秒獲得 0.17 充能"
+    slots: [1, 3]
+    mods:
+      - { stat: charm.slots, type: FLAT, value: "{slots}" }
+      - { stat: flask.charges_per_minute.life, type: FLAT, value: 10 }
+      - { stat: flask.charges_per_minute.mana, type: FLAT, value: 10 }
+
+jring_biostatic:
+  # PoE2 Biostatic Ring
+  name: 恆息指環
+  family: jring
+  drop_weight: 40
+  material: HEART_OF_THE_SEA
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 52
+  requirements: { level: 52 }
+  implicit:
+    text: "+1% 全部抗性上限"
+    mods:
+      - { stat: resist.max.fire, type: FLAT, value: 1 }
+      - { stat: resist.max.cold, type: FLAT, value: 1 }
+      - { stat: resist.max.lightning, type: FLAT, value: 1 }
+      - { stat: resist.max.chaos, type: FLAT, value: 1 }
+
+jring_unset:
+  # PoE2 Unset Ring：「多 1 個技能欄位」先略過（還沒有這個機制）
+  name: 空座指環
+  family: jring_special
+  drop_weight: 4
+  material: QUARTZ
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 44
+  requirements: { level: 44 }
+
+jring_breach:
+  # PoE2 Breach Ring：「+20% 品質上限」先略過（還沒有這個機制）
+  name: 裂隙指環
+  family: jring_special
+  drop_weight: 4
+  material: FERMENTED_SPIDER_EYE
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 40
+  requirements: { level: 40 }
+
+jring_breach_refined:
+  # PoE2 Refined Breach Ring：「+25% 品質上限」先略過（還沒有這個機制）
+  name: 精煉裂隙指環
+  family: jring_special
+  drop_weight: 4
+  material: BLAZE_POWDER
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 40
+  requirements: { level: 40 }
+
+jring_abyssal:
+  # PoE2 Abyssal Signet：「擊中時造成深淵消蝕」先略過（還沒有這個機制）
+  name: 淵印指環
+  family: jring_special
+  drop_weight: 4
+  material: INK_SAC
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 40
+  requirements: { level: 40 }
+
+jring_plain:
+  # PoE2 Ring（2026-10-27：沒有固定詞綴的素面戒指，原作只有傳奇「映鏡指環」用；不掉落、商人不賣）
+  name: 素面指環
+  retired: true        # 2026-10-27：傳奇專用的基底
+  family: jring_special
+  drop_weight: 4
+  material: IRON_NUGGET
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+
+jring_grasping:
+  # PoE2 Grasping Ring：「嵌入物的加成當作手套」先略過（戒指沒有符文孔）
+  name: 攫握指環
+  family: jring_special
+  drop_weight: 4
+  material: TURTLE_EGG
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 40
+  requirements: { level: 40 }
+
+jring_dusk:
+  # PoE2 Dusk Ring
+  name: 暮光指環
+  family: jring_special
+  drop_weight: 4
+  material: FIRE_CHARGE
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "可以多 1 條前綴、少 1 條後綴"
+    mods:
+      - { stat: local.max_prefixes, type: FLAT, value: 1 }
+      - { stat: local.max_suffixes, type: FLAT, value: -1 }
+
+jring_gloam:
+  # PoE2 Gloam Ring
+  name: 幽微指環
+  family: jring_special
+  drop_weight: 4
+  material: GLOWSTONE_DUST
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "可以少 1 條前綴、多 1 條後綴"
+    mods:
+      - { stat: local.max_prefixes, type: FLAT, value: -1 }
+      - { stat: local.max_suffixes, type: FLAT, value: 1 }
+
+jring_penumbra:
+  # PoE2 Penumbra Ring
+  name: 半影指環
+  family: jring_special
+  drop_weight: 4
+  material: COAL
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "可以多 2 條前綴、少 2 條後綴"
+    mods:
+      - { stat: local.max_prefixes, type: FLAT, value: 2 }
+      - { stat: local.max_suffixes, type: FLAT, value: -2 }
+
+jring_tenebrous:
+  # PoE2 Tenebrous Ring
+  name: 冥暗指環
+  family: jring_special
+  drop_weight: 4
+  material: OBSIDIAN
+  model: exilecore:jewellery/iron_ring
+  slot: RING
+  tags: [jewellery, ring]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "可以少 2 條前綴、多 2 條後綴"
+    mods:
+      - { stat: local.max_prefixes, type: FLAT, value: -2 }
+      - { stat: local.max_suffixes, type: FLAT, value: 2 }
+
+jamulet_twisted:
+  # PoE2 Twisted Amulet
+  name: 扭曲墜飾
+  family: jamulet_special
+  drop_weight: 2
+  material: CHORUS_FRUIT
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "可以少 1 條前綴"
+    mods:
+      - { stat: local.max_prefixes, type: FLAT, value: -1 }
+
+jamulet_distorted:
+  # PoE2 Distorted Amulet
+  name: 歪斜墜飾
+  family: jamulet_special
+  drop_weight: 2
+  material: ENDER_PEARL
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "可以少 1 條後綴"
+    mods:
+      - { stat: local.max_suffixes, type: FLAT, value: -1 }
+
+jamulet_dusk:
+  # PoE2 Dusk Amulet
+  name: 暮光墜飾
+  family: jamulet_special
+  drop_weight: 2
+  material: MAGMA_CREAM
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "可以多 1 條前綴、少 1 條後綴"
+    mods:
+      - { stat: local.max_prefixes, type: FLAT, value: 1 }
+      - { stat: local.max_suffixes, type: FLAT, value: -1 }
+
+jamulet_gloam:
+  # PoE2 Gloam Amulet
+  name: 幽微墜飾
+  family: jamulet_special
+  drop_weight: 2
+  material: GLOW_BERRIES
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "可以少 1 條前綴、多 1 條後綴"
+    mods:
+      - { stat: local.max_prefixes, type: FLAT, value: -1 }
+      - { stat: local.max_suffixes, type: FLAT, value: 1 }
+
+jamulet_penumbra:
+  # PoE2 Penumbra Amulet
+  name: 半影墜飾
+  family: jamulet_special
+  drop_weight: 2
+  material: CHARCOAL
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "可以多 2 條前綴、少 2 條後綴"
+    mods:
+      - { stat: local.max_prefixes, type: FLAT, value: 2 }
+      - { stat: local.max_suffixes, type: FLAT, value: -2 }
+
+jamulet_tenebrous:
+  # PoE2 Tenebrous Amulet
+  name: 冥暗墜飾
+  family: jamulet_special
+  drop_weight: 2
+  material: CRYING_OBSIDIAN
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 1
+  requirements: { level: 1 }
+  implicit:
+    text: "可以少 2 條前綴、多 2 條後綴"
+    mods:
+      - { stat: local.max_prefixes, type: FLAT, value: -2 }
+      - { stat: local.max_suffixes, type: FLAT, value: 2 }
+
+jamulet_lament:
+  # PoE2 Lament Amulet：「賦予一個隨機技能」先略過（還沒有這個機制），只剩缺點，先不掉落
+  retired: true        # 2026-10-26：賦予技能的機制還沒有，只剩缺點；先停用（定義留著，不掉落、商人不賣），做了技能再打開
+  name: 悲歌墜飾
+  family: jamulet_special
+  drop_weight: 0
+  material: SKELETON_SKULL
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 42
+  requirements: { level: 42 }
+  implicit:
+    text: "可以少 1 條前綴"
+    mods:
+      - { stat: local.max_prefixes, type: FLAT, value: -1 }
+
+jamulet_portent:
+  # PoE2 Portent Amulet：「賦予一個隨機技能」先略過（還沒有這個機制），只剩缺點，先不掉落
+  retired: true        # 2026-10-26：賦予技能的機制還沒有，只剩缺點；先停用（定義留著，不掉落、商人不賣），做了技能再打開
+  name: 兆示墜飾
+  family: jamulet_special
+  drop_weight: 0
+  material: SPYGLASS
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 42
+  requirements: { level: 42 }
+  implicit:
+    text: "可以少 1 條後綴"
+    mods:
+      - { stat: local.max_suffixes, type: FLAT, value: -1 }
+
+jamulet_absent:
+  # PoE2 Absent Amulet：「賦予一個隨機技能」先略過（還沒有這個機制），只剩缺點，先不掉落
+  retired: true        # 2026-10-26：賦予技能的機制還沒有，只剩缺點；先停用（定義留著，不掉落、商人不賣），做了技能再打開
+  name: 空無墜飾
+  family: jamulet_special
+  drop_weight: 0
+  material: GLASS_BOTTLE
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 50
+  requirements: { level: 50 }
+  implicit:
+    text: "可以少 1 條前綴、少 1 條後綴"
+    mods:
+      - { stat: local.max_prefixes, type: FLAT, value: -1 }
+      - { stat: local.max_suffixes, type: FLAT, value: -1 }
+
+jamulet_corona:
+  # PoE2 Corona Amulet：「嵌入物的加成當作頭盔」先略過（項鍊沒有符文孔）
+  name: 日冕墜飾
+  family: jamulet_special
+  drop_weight: 2
+  material: SUNFLOWER
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 40
+  requirements: { level: 40 }
+
 # ---- PoE2 分階基底（tools/gen_poe2_bases.py 產生；重跑會整段換掉）----
 jring_01:
   name: 鍛環指環
@@ -653,10 +1131,13 @@ jbelt_01:
   tags: [jewellery, belt]
   drop_level: 1
   requirements: { level: 1 }
+  # 2026-10-26 照 PoE2：每條腰帶「有 (1–3) 個護符欄位」（Has (1–3) Charm Slots，角色本身 0 格）；這次之前沒有
   implicit:
-    text: "增加 {value}% 藥劑的生命回復"
+    text: "有 {slots} 個護符欄位，增加 {value}% 藥劑的生命回復"
+    slots: [1, 3]
     value: [20, 30]
     mods:
+      - { stat: charm.slots, type: FLAT, value: "{slots}" }
       - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
 
 jbelt_02:
@@ -671,10 +1152,13 @@ jbelt_02:
   tags: [jewellery, belt]
   drop_level: 1
   requirements: { level: 1 }
+  # 2026-10-26 照 PoE2：每條腰帶「有 (1–3) 個護符欄位」（Has (1–3) Charm Slots，角色本身 0 格）；這次之前沒有
   implicit:
-    text: "增加 {value}% 藥劑的魔力回復"
+    text: "有 {slots} 個護符欄位，增加 {value}% 藥劑的魔力回復"
+    slots: [1, 3]
     value: [20, 30]
     mods:
+      - { stat: charm.slots, type: FLAT, value: "{slots}" }
       - { stat: flask.mana_recovery, type: INCREASED, value: "{value}" }
 
 jbelt_03:
@@ -689,10 +1173,13 @@ jbelt_03:
   tags: [jewellery, belt]
   drop_level: 1
   requirements: { level: 1 }
+  # 2026-10-26 照 PoE2：每條腰帶「有 (1–3) 個護符欄位」（Has (1–3) Charm Slots，角色本身 0 格）；這次之前沒有
   implicit:
-    text: "+{value} 護甲"
+    text: "有 {slots} 個護符欄位，+{value} 護甲"
+    slots: [1, 3]
     value: [140, 180]
     mods:
+      - { stat: charm.slots, type: FLAT, value: "{slots}" }
       - { stat: armour, type: FLAT, value: "{value}" }
 
 jbelt_04:
@@ -707,10 +1194,12 @@ jbelt_04:
   tags: [jewellery, belt]
   drop_level: 1
   requirements: { level: 1 }
+  # 2026-10-26 照 PoE2：固定詞綴加上「有 1 個護符欄位」（Has 1 Charm Slot）；這次之前沒有
   implicit:
-    text: "增加 {value}% 施法速度"
+    text: "有 1 個護符欄位，增加 {value}% 施法速度"
     value: [8, 12]
     mods:
+      - { stat: charm.slots, type: FLAT, value: 1 }
       - { stat: cast.speed, type: INCREASED, value: "{value}" }
 
 jbelt_05:
@@ -725,10 +1214,12 @@ jbelt_05:
   tags: [jewellery, belt]
   drop_level: 1
   requirements: { level: 1 }
+  # 2026-10-26 照 PoE2：固定詞綴加上「有 1 個護符欄位」（Has 1 Charm Slot）；這次之前沒有
   implicit:
-    text: "+{value} 力量"
+    text: "有 1 個護符欄位，+{value} 力量"
     value: [15, 20]
     mods:
+      - { stat: charm.slots, type: FLAT, value: 1 }
       - { stat: attr.str, type: FLAT, value: "{value}" }
 
 jbelt_06:
@@ -743,11 +1234,13 @@ jbelt_06:
   tags: [jewellery, belt]
   drop_level: 1
   requirements: { level: 1 }
+  # 2026-10-26 照 PoE2：固定詞綴加上「有 1 個護符欄位」（Has 1 Charm Slot）；這次之前沒有
   implicit:
-    text: "攻擊附加 {min} 到 {max} 閃電傷害"
+    text: "有 1 個護符欄位，攻擊附加 {min} 到 {max} 閃電傷害"
     min: [1, 1]
     max: [20, 30]
     mods:
+      - { stat: charm.slots, type: FLAT, value: 1 }
       - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, lightning] }
       - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, lightning] }
 
@@ -763,8 +1256,11 @@ jbelt_07:
   tags: [jewellery, belt]
   drop_level: 1
   requirements: { level: 1 }
+  # 2026-10-26 照 PoE2：每條腰帶「有 (1–3) 個護符欄位」（Has (1–3) Charm Slots，角色本身 0 格）；這次之前沒有
   implicit:
-    text: "增加 {value}% 暈眩門檻"
+    text: "有 {slots} 個護符欄位，增加 {value}% 暈眩門檻"
+    slots: [1, 3]
     value: [20, 30]
     mods:
+      - { stat: charm.slots, type: FLAT, value: "{slots}" }
       - { stat: stun.threshold, type: INCREASED, value: "{value}" }

@@ -53,6 +53,17 @@ public final class ItemData {
     private String fractured;
     /** 蝕變石多開的符文孔（2026-10-21，PoE2 的瓦爾寶珠：可以超過上限）；null = 沒有（不寫進 JSON）。 */
     private Integer corruptSockets;
+    /**
+     * 2026-10-26 照 PoE2 的工匠石（Artificer's Orb）：這件現在有幾個符文孔（不算蝕變石多開的）；
+     * null = 舊物品（這次之前做出來的），照基底的孔數全開。新做出來的裝備從 0 開始，用工匠石一個一個加到基底的上限。
+     */
+    private Integer runeSockets;
+    /** 2026-10-26 照 PoE2 的 Hinekora's Lock（預見鎖）：下一顆通貨的結果用這個種子擲，先看得到；改過就拿掉。null = 沒有。 */
+    private Long foresight;
+    /** 2026-10-26 照 PoE2 的聖化（Omen of Sanctification＋神聖石）：數值變動過、之後不能再改造。null = 沒有。 */
+    private Boolean sanctified;
+    /** 2026-10-26：固有詞綴擲出（或上次換算）時的範圍（{@link AffixRescale}）；null = 舊物品沒記（不寫進 JSON）。 */
+    private Map<String, int[]> implicitRanges;
 
     public ItemData() {
     }
@@ -74,6 +85,11 @@ public final class ItemData {
 
     public String base() {
         return base;
+    }
+
+    /** 2026-10-26：換基底（PoE2 的 Omen of the Ancients：僥倖石變成同一類的別件傳奇）。 */
+    public void setBase(final String base) {
+        this.base = base;
     }
 
     public Rarity rarity() {
@@ -126,6 +142,15 @@ public final class ItemData {
 
     public void setImplicitVars(final Map<String, Integer> vars) {
         this.implicitVars = new LinkedHashMap<>(vars);
+    }
+
+    /** 2026-10-26：固有詞綴上次記下的範圍；沒記回傳 null。 */
+    public Map<String, int[]> implicitRanges() {
+        return implicitRanges;
+    }
+
+    public void setImplicitRanges(final Map<String, int[]> ranges) {
+        this.implicitRanges = RolledAffix.copyRanges(ranges);
     }
 
     public List<RolledAffix> affixes() {
@@ -192,6 +217,33 @@ public final class ItemData {
 
     public void setCorruptSockets(final int count) {
         this.corruptSockets = count <= 0 ? null : count;
+    }
+
+    /** 2026-10-26：工匠石開過的符文孔數；舊物品（沒記）回傳 null。 */
+    public Integer runeSockets() {
+        return runeSockets;
+    }
+
+    public void setRuneSockets(final Integer count) {
+        this.runeSockets = count == null ? null : Math.max(0, count);
+    }
+
+    /** 2026-10-26：預見鎖的種子；沒有回傳 null。 */
+    public Long foresight() {
+        return foresight;
+    }
+
+    public void setForesight(final Long seed) {
+        this.foresight = seed;
+    }
+
+    /** 2026-10-26：聖化過（不能再改造）。 */
+    public boolean sanctified() {
+        return Boolean.TRUE.equals(sanctified);
+    }
+
+    public void setSanctified(final boolean sanctified) {
+        this.sanctified = sanctified ? Boolean.TRUE : null;
     }
 
     public void setLocked(final boolean locked) {
@@ -264,6 +316,19 @@ public final class ItemData {
         runes.add(rune);
     }
 
+    /** 2026-10-27：符文只留前 max 個（孔變少時多出來的符文毀掉；這次之前孔變少符文照留、照樣生效）。 */
+    public void trimRunes(final int max) {
+        if (runes == null) {
+            return;
+        }
+        while (runes.size() > Math.max(0, max)) {
+            runes.removeLast();
+        }
+        if (runes.isEmpty()) {
+            runes = null;
+        }
+    }
+
     /** 把第 index 個孔的符文換成新的（2026-10：符文孔滿了時選一個覆蓋）。 */
     public void replaceRune(final int index, final String rune) {
         if (runes != null && index >= 0 && index < runes.size()) {
@@ -304,6 +369,10 @@ public final class ItemData {
         copy.mirrored = mirrored;
         copy.fractured = fractured;
         copy.corruptSockets = corruptSockets;
+        copy.runeSockets = runeSockets;
+        copy.foresight = foresight;
+        copy.sanctified = sanctified;
+        copy.implicitRanges = RolledAffix.copyRanges(implicitRanges);
         return copy;
     }
 }

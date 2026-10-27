@@ -27,6 +27,8 @@ public final class SkillConfig {
 
     public static final String FILE = "skills.yml";
     public static final String SUPPORTS_FILE = "supports.yml";
+    /** 2026-10-27 照 PoE2：血脈輔助寶石（跟 supports.yml 分開寫，讀完 supports.yml 再讀；代號不能重複）。 */
+    public static final String LINEAGE_FILE = "supports_lineage.yml";
 
     /** 外觀代號（粒子與音效寫在 SkillVisuals）。 */
     public static final Set<String> VISUALS = Set.of("slash", "heavy_strike", "cleave", "slam", "leap",
@@ -68,6 +70,67 @@ public final class SkillConfig {
     public static final double DEFAULT_EXTRA_LEVEL_DAMAGE = 13;
 
     private int[] requirements = new int[SkillLoadout.MAX_LEVEL];
+    /** 2026-10-26：弩技能的彈匣大小（skills.yml 的 clip）。 */
+    private Map<String, Scaled> clips = Map.of();
+    /** 2026-10-26：逐級的技能修飾器（level_modifiers：凍結累積、穿透、破甲這些照 PoE2 每一級不同的）。 */
+    private Map<String, java.util.List<ScaledMod>> levelModifiers = Map.of();
+    /** 2026-10-26：落地後留在地上的彈（PoE2 的伏霆彈要被引爆、寒凝彈的冰晶地雷）。 */
+    private Map<String, LodgeSpec> lodges = Map.of();
+    /** 2026-10-26：一次把彈匣全部射出去、落在一片範圍裡（PoE2 的 Hailstorm Rounds）。 */
+    private Map<String, RainSpec> rains = Map.of();
+
+    /**
+     * 留在地上的彈（skills.yml 的 lodge）。
+     *
+     * @param skill     炸開時用的隱藏技能（nova）
+     * @param count     一次落下幾顆（散在準心周圍 scatter 格內）
+     * @param duration  留幾秒（沒被引爆就消失）
+     * @param max       同時最多幾顆（多的先消失最舊的）
+     * @param proximity true = 地雷：武裝之後敵人走進 trigger 格內就炸；false = 要被你別的技能打到（引爆）才炸
+     * @param arm       放下後幾秒才武裝（地雷）
+     * @param rampMore  武裝後越久越痛：最多更多 x%（rampSeconds 秒到滿）
+     */
+    public record LodgeSpec(String skill, int count, double scatter, double duration, int max, boolean proximity, double arm,
+                            double trigger, double rampMore, double rampSeconds, boolean expire) {
+        /** 2026-10-26：expire = 時間到自己引爆（PoE2 瘴苞雨的 15 秒引爆）；這次之前時間到就消失。 */
+        public LodgeSpec(final String skill, final int count, final double scatter, final double duration, final int max, final boolean proximity,
+                         final double arm, final double trigger, final double rampMore, final double rampSeconds) {
+            this(skill, count, scatter, duration, max, proximity, arm, trigger, rampMore, rampSeconds, false);
+        }
+    }
+
+    /**
+     * 一次射出存著的全部彈（skills.yml 的 rain，PoE2 的 Hailstorm Rounds）：平常每 interval 秒存一發、最多 store（逐級）發；
+     * 放的時候全部落在準心 area 格內，每一發半徑 radius，seconds 秒內陸續落下。
+     */
+    public record RainSpec(double area, double radius, double seconds, Scaled store, double interval) {
+    }
+
+    /** 2026-10-26：放技能要消耗的戰星（PoE2 的英靈圖騰：3 顆磐星）。 */
+    public record ChargeCost(String charge, int count) {
+    }
+
+    private Map<String, ChargeCost> chargeCosts = Map.of();
+
+    public ChargeCost chargeCost(final String skillId) {
+        return chargeCosts.get(skillId);
+    }
+
+    public java.util.List<ScaledMod> levelModifiers(final String skillId) {
+        return levelModifiers.getOrDefault(skillId, java.util.List.of());
+    }
+
+    public LodgeSpec lodge(final String skillId) {
+        return lodges.get(skillId);
+    }
+
+    public RainSpec rain(final String skillId) {
+        return rains.get(skillId);
+    }
+    /** 2026-10-26：冷卻可以存幾次（skills.yml 的 cooldown_uses）。 */
+    private Map<String, Integer> cooldownUses = Map.of();
+    /** 2026-10-26：技能等級 → 怪物等級多少起會掉（也是沒寫逐級表的法術用的成長曲線）；跟需求等級分開。 */
+    private int[] dropLevels = new int[SkillLoadout.MAX_LEVEL];
     private NavigableMap<Integer, Double> growth = new TreeMap<>(Map.of(1, 1.0));
     /** 超過 20 級（裝備的 +技能等級）每多一級，法術基礎傷害的倍率（skills.yml 的 extra_level_damage，預設 13%）。 */
     private double extraLevelGrowth = 1.0 + DEFAULT_EXTRA_LEVEL_DAMAGE / 100.0;
@@ -81,6 +144,8 @@ public final class SkillConfig {
     private Map<String, java.util.List<String>> commands = Map.of();
     /** 2026-10：照觸發它的技能出傷害的隱藏技能（parent_damage：餘震這類＝原技能一下的幾成）。 */
     private Map<String, Double> parentDamage = Map.of();
+    /** 2026-10-26 照 PoE2：傷害照敵人最大生命的隱藏技能（life_damage：焚亡爆 10%、寒殞片 10%、碎骨爆 25%）。 */
+    private Map<String, Double> lifeDamage = Map.of();
     /** 坐騎技能（2026-10）：技能代號 → 坐騎；要騎著才能放的技能。 */
     private Map<String, Mounts.Spec> mountSpecs = Map.of();
     /** 連珠（2026-10）：技能代號 → 「下一次弓／矛的投射物攻擊重複」的設定（skills.yml 的 barrage 區塊）。 */
@@ -90,18 +155,34 @@ public final class SkillConfig {
     /** 專屬機制（2026-10，PoE2）：技能代號 → whirl（旋矛擊的旋風）、lance（霆落矛插地放電）、ember（星火連珠懸浮）。 */
     private Map<String, String> signatures = Map.of();
     /** signature 可以寫的值。 */
-    static final java.util.Set<String> SIGNATURES = java.util.Set.of("whirl", "lance", "ember", "bolt_spear"); // 2026-10-15：bolt_spear（擲雷槍）
+    static final java.util.Set<String> SIGNATURES = union(java.util.Set.of("whirl", "lance", "ember", "bolt_spear", "hexblast", "sunder"), // 2026-10-15：bolt_spear（擲雷槍）；2026-10-26：hexblast（蝕咒裂）、sunder（稜光裂）
+            union(OriginalSkills.SIGNATURES, SpearMechanics.SIGNATURES)); // 2026-10-26：照 PoE2 原作機制的（OriginalSkills）；2026-10-27：擲矛、炎爆矛（SpearMechanics）
+
+    private static java.util.Set<String> union(final java.util.Set<String> a, final java.util.Set<String> b) {
+        final java.util.Set<String> all = new java.util.HashSet<>(a);
+        all.addAll(b);
+        return java.util.Set.copyOf(all);
+    }
     /** 主要寶石（2026-10，照 PoE2 的 Meta Gem）：技能代號 → skills.yml 的 meta 區塊（{@link MetaSpec}）。 */
     private Map<String, MetaSpec> metas = Map.of();
     /** 龍捲風（2026-10，照 PoE2 的龍捲射擊）：技能代號 → skills.yml 的 tornado 區塊。 */
     private Map<String, TornadoSpec> tornados = Map.of();
-    private Set<String> mountOnly = Set.of();
     /** 異質技能（variant_of）→ 原本的技能（2026-10：同一系列的技能面板上只能放一個）。 */
     private Map<String, String> variants = Map.of();
     /** skills.yml 裡沒有的新武器普攻（自己改過的檔案）。 */
     private List<String> missingDefaults = List.of();
     private Map<String, SupportDefinition> supports = Map.of();
+    /** 2026-10-27：血脈輔助的掉落設定（supports_lineage.yml 的 drops）。 */
+    private LineageRules.Drops lineageDrops = LineageRules.Drops.DEFAULT;
     private Map<String, Integer> retiredSupports = Map.of();
+    /** 2026-10-26：併入同系列最高階的輔助（supports.yml 的 merged：舊代號 → 併入的輔助代號；舊寶石、面板上掛著的直接換過去）。 */
+    private Map<String, String> mergedSupports = Map.of();
+    /** 2026-10-26：併入的輔助的舊名稱（通知用）。 */
+    private Map<String, String> mergedSupportNames = Map.of();
+    /** 2026-10-26：拿掉的技能（skills.yml 的 retired：代號 → 名稱；舊寶石換成未切割技能寶石時的通知用）。 */
+    private Map<String, String> retiredSkills = Map.of();
+    /** 2026-10-26：併入別的技能的技能（skills.yml 的 merged：舊代號 → 併入的技能代號；舊寶石直接換成那個技能，等級、品質、輔助保留）。 */
+    private Map<String, String> mergedSkills = Map.of();
     /** 各階級的未切割輔助寶石從幾級的怪物開始掉（索引 0 = 階級 1）。 */
     private int[] supportTierLevels = {1, 15, 35};
     /**
@@ -122,7 +203,9 @@ public final class SkillConfig {
 
     public void load(final Path dataFolder) throws IOException {
         final YamlNode root = YamlNode.load(dataFolder.resolve(FILE));
-        final int[] parsedRequirements = parseRequirements(root);
+        final int[] parsedRequirements = parseRequirements(root, "level_requirements");
+        // 2026-10-26：需求等級照 PoE2（20 級要 90 級）；掉落與法術成長照原本的曲線（uncut_drop_levels，沒寫就跟需求一樣）
+        final int[] parsedDropLevels = root.has("uncut_drop_levels") ? parseRequirements(root, "uncut_drop_levels") : parsedRequirements;
         final NavigableMap<Integer, Double> parsedGrowth = parseGrowth(root.node("spell_damage_growth"));
         final double[] parsedUncutWeights = parseUncutWeights(root);
         final java.util.Map<Integer, Double> parsedUncutScale = parseUncutScale(root);
@@ -135,16 +218,22 @@ public final class SkillConfig {
             throw new IllegalArgumentException(FILE + ".minion_extra_level_damage：要在 0 到 100 之間（百分比）");
         }
         final Map<String, SkillDefinition> parsed = new LinkedHashMap<>();
+        final Map<String, Scaled> parsedClips = new HashMap<>();
+        final Map<String, java.util.List<ScaledMod>> parsedLevelMods = new HashMap<>();
+        final Map<String, LodgeSpec> parsedLodges = new HashMap<>();
+        final Map<String, RainSpec> parsedRains = new HashMap<>();
+        final Map<String, ChargeCost> parsedChargeCosts = new HashMap<>();
+        final Map<String, Integer> parsedUses = new HashMap<>();
         final Map<String, ResourceSpec> parsedResources = new HashMap<>();
         final Map<String, java.util.List<String>> parsedCommands = new HashMap<>(); // 2026-10：指令型召喚物技能
         final Map<String, Double> parsedParent = new HashMap<>();
+        final Map<String, Double> parsedLife = new HashMap<>();
         final Map<String, Mounts.Spec> parsedMounts = new HashMap<>();
         final Map<String, BarrageSpec> parsedBarrages = new HashMap<>();
         final Map<String, ChargeSpec> parsedCharges = new HashMap<>();
         final Map<String, String> parsedSignatures = new HashMap<>();
         final Map<String, MetaSpec> parsedMetas = new HashMap<>();
         final Map<String, TornadoSpec> parsedTornados = new HashMap<>();
-        final Set<String> parsedMountOnly = new java.util.HashSet<>();
         final YamlNode section = root.node("skills");
         final Map<String, String> starters = new HashMap<>();
         final Map<String, String> variantMap = new HashMap<>();
@@ -167,6 +256,44 @@ public final class SkillConfig {
                 }
             }
             parsed.put(id, definition);
+            if (node.has("cooldown_uses")) {
+                // 2026-10-26（PoE2）：冷卻可以存幾次（榴彈「5 秒（3 次）」）
+                final int uses = node.integer("cooldown_uses", 1);
+                if (uses < 1 || uses > 10) {
+                    throw new IllegalArgumentException(node.path() + ".cooldown_uses：要在 1 到 10 之間");
+                }
+                parsedUses.put(id, uses);
+            }
+            if (node.has("level_modifiers")) {
+                parsedLevelMods.put(id, ScaledMod.parseList(node, "level_modifiers"));
+            }
+            if (node.has("lodge")) {
+                final YamlNode l = node.node("lodge");
+                final String sub = l.requireString("skill").trim();
+                parsedLodges.put(id, new LodgeSpec(sub, Math.max(1, l.integer("count", 1)), Math.max(0, l.decimal("scatter", 0)),
+                        Math.max(0.5, l.decimal("duration", 10)), Math.max(1, l.integer("max", 30)), l.bool("proximity", false),
+                        Math.max(0, l.decimal("arm", 0)), Math.max(0.3, l.decimal("trigger", 1.0)), Math.max(0, l.decimal("ramp_more", 0)),
+                        Math.max(0.05, l.decimal("ramp_seconds", 1)), l.bool("expire", false)));
+            }
+            if (node.has("charge_cost")) {
+                final YamlNode c = node.node("charge_cost");
+                parsedChargeCosts.put(id, new ChargeCost(c.requireString("charge").trim().toLowerCase(java.util.Locale.ROOT),
+                        Math.max(1, c.integer("count", 1))));
+            }
+            if (node.has("rain")) {
+                final YamlNode r = node.node("rain");
+                parsedRains.put(id, new RainSpec(Math.max(0.5, r.decimal("area", 4)), Math.max(0.3, r.decimal("radius", 1)),
+                        Math.max(0, r.decimal("seconds", 1)), Scaled.parse(r.path() + ".store", r.raw("store"), 1),
+                        Math.max(0.05, r.decimal("interval", 0.4))));
+            }
+            if (node.has("clip")) {
+                // 2026-10-26（PoE2）：弩技能自己的彈匣大小（可以逐級），沒寫是 1 發
+                final Scaled clip = Scaled.parse(node.path() + ".clip", node.raw("clip"), 1);
+                if (clip.min() < 1) {
+                    throw new IllegalArgumentException(node.path() + ".clip：至少 1 發");
+                }
+                parsedClips.put(id, clip);
+            }
             if (node.has("mount")) {
                 final YamlNode m = node.node("mount");
                 final String kind = m.string("kind", "HORSE").trim().toUpperCase(java.util.Locale.ROOT);
@@ -179,8 +306,8 @@ public final class SkillConfig {
                 }
                 parsedMounts.put(id, new Mounts.Spec(kind, speed));
             }
-            if (node.bool("requires_mount", false)) {
-                parsedMountOnly.add(id);
+            if (node.has("requires_mount")) { // 2026-10-26：照站長拿掉鐵蹄踐踏，「要騎著才能放」跟著拿掉
+                throw new IllegalArgumentException(node.path() + ".requires_mount：已經拿掉了");
             }
             final ChargeSpec charge = ChargeSpec.parse(node);
             if (charge != null) {
@@ -216,12 +343,23 @@ public final class SkillConfig {
             } else if (definition.mechanic() == Mechanic.META) {
                 throw new IllegalArgumentException(node.path() + "：mechanic: meta 要寫 meta 區塊");
             }
-            if (node.has("parent_damage")) {
+            if (node.has("parent_damage") && "own".equals(String.valueOf(node.raw("parent_damage")).trim())) {
+                // 2026-10-26 照 PoE2：觸發的那一下有自己的傷害表（effectiveness 逐級），照觸發它的那一下（含輔助）換算：
+                // 倍數 = 自己這一級的 effectiveness ÷ 原技能這一級的 effectiveness
+                parsedParent.put(id, PARENT_OWN_TABLE);
+            } else if (node.has("parent_damage")) {
                 final double share = node.decimal("parent_damage", 0);
                 if (share <= 0 || share > 5) {
                     throw new IllegalArgumentException(node.path() + ".parent_damage：要在 0 到 5 之間（原技能一下的倍數）");
                 }
                 parsedParent.put(id, share);
+            }
+            if (node.has("life_damage")) {
+                final double percent = node.decimal("life_damage", 0);
+                if (percent <= 0 || percent > 100) {
+                    throw new IllegalArgumentException(node.path() + ".life_damage：要在 0 到 100 之間（敵人最大生命的幾 %）");
+                }
+                parsedLife.put(id, percent);
             }
             if (node.has("command")) {
                 final java.util.List<String> who = new java.util.ArrayList<>();
@@ -249,10 +387,11 @@ public final class SkillConfig {
             if (sub == null) {
                 throw new IllegalArgumentException(FILE + "：" + definition.id() + " 的 aura.on_kill 指到不存在的技能 " + definition.aura().onKill());
             }
-            if (!sub.hidden() || sub.isAttack() || !Set.of(Mechanic.STRIKE, Mechanic.PROJECTILE, Mechanic.NOVA, Mechanic.CONE,
+            // 2026-10-26 照 PoE2：雷使、霜使的擊殺效果是攻擊（吃武器傷害），隱藏的攻擊也可以
+            if (!sub.hidden() || !Set.of(Mechanic.STRIKE, Mechanic.PROJECTILE, Mechanic.NOVA, Mechanic.CONE,
                     Mechanic.CHAIN, Mechanic.IMPACT, Mechanic.ZONE).contains(sub.mechanic())) {
                 throw new IllegalArgumentException(FILE + "：" + definition.id() + " 的 aura.on_kill 技能 " + sub.id()
-                        + " 要是 hidden: true 的法術，運作方式是 strike、projectile、nova、cone、chain、impact 或 zone");
+                        + " 要是 hidden: true 的技能，運作方式是 strike、projectile、nova、cone、chain、impact 或 zone");
             }
         }
         final List<String> missing = new ArrayList<>();
@@ -271,6 +410,8 @@ public final class SkillConfig {
         }
         final Map<String, SupportDefinition> parsedSupports = new LinkedHashMap<>();
         final Map<String, Integer> parsedRetired = new HashMap<>();
+        final Map<String, String> parsedMergedSupports = new HashMap<>();
+        final Map<String, String> parsedMergedSupportNames = new HashMap<>();
         int[] tierLevels = {1, 15, 35};
         boolean oncePerCharacter = false;
         final Path supportsFile = dataFolder.resolve(SUPPORTS_FILE);
@@ -289,6 +430,35 @@ public final class SkillConfig {
                 }
                 parsedSupports.put(id, SupportDefinition.parse(id, supportSection.node(id)));
             }
+            // 2026-10-26：照站長「輔助寶石有分 I II III 的一律保留最高的」：較低階的併入同系列最高階
+            //   （merged：舊代號: { into: 新代號, name: 舊名稱 }，或只寫新代號）
+            final YamlNode mergedNode = supportRoot.node("merged");
+            for (final String id : mergedNode.keys()) {
+                final String into;
+                if (mergedNode.raw(id) instanceof Map<?, ?>) {
+                    final YamlNode one = mergedNode.node(id);
+                    into = one.string("into", "").trim();
+                    parsedMergedSupportNames.put(id, one.string("name", id).trim());
+                } else {
+                    into = mergedNode.string(id, "").trim();
+                }
+                if (parsedSupports.containsKey(id)) {
+                    throw new IllegalArgumentException(SUPPORTS_FILE + " merged." + id + "：這個輔助還在 supports 裡（併入別的輔助要把定義刪掉）");
+                }
+                if (!parsedSupports.containsKey(into)) {
+                    throw new IllegalArgumentException(SUPPORTS_FILE + " merged." + id + "：併入的輔助「" + into + "」不在 supports 裡");
+                }
+                if (parsedRetired.containsKey(id)) {
+                    throw new IllegalArgumentException(SUPPORTS_FILE + " merged." + id + "：同時列在 retired（只能擇一）");
+                }
+                parsedMergedSupports.put(id, into);
+            }
+        }
+        // 2026-10-27 照 PoE2：血脈輔助（supports_lineage.yml）：新的血脈輔助加進來，supports.yml 裡已有的標成血脈掉落
+        LineageRules.Drops parsedLineageDrops = LineageRules.Drops.DEFAULT;
+        final Path lineageFile = dataFolder.resolve(LINEAGE_FILE);
+        if (Files.exists(lineageFile)) {
+            parsedLineageDrops = LineageRules.load(YamlNode.load(lineageFile), parsedSupports, parsed.keySet());
         }
         // 2026-10-18：驗證移到任何欄位指定之前（以前先換掉一半才驗證，失敗時新舊混用）；Boss 招式也在換之前載入（它自己解析好才換）
         for (final Map.Entry<String, java.util.List<String>> entry : parsedCommands.entrySet()) {
@@ -300,22 +470,31 @@ public final class SkillConfig {
         }
         bossSkills.load(dataFolder);
         this.requirements = parsedRequirements;
+        this.dropLevels = parsedDropLevels;
         this.uncutLevelWeights = parsedUncutWeights;
         this.uncutLevelScale = parsedUncutScale;
         this.extraLevelGrowth = 1.0 + extraLevelDamage / 100.0;
         this.minionExtraLevelGrowth = 1.0 + minionExtraLevelDamage / 100.0;
         this.growth = parsedGrowth;
         this.skills = parsed;
+        this.clips = parsedClips;
+        this.levelModifiers = Map.copyOf(parsedLevelMods);
+        this.lodges = Map.copyOf(parsedLodges);
+        this.rains = Map.copyOf(parsedRains);
+        this.chargeCosts = Map.copyOf(parsedChargeCosts);
+        this.cooldownUses = parsedUses;
         this.resources = parsedResources;
+        // 2026-10-27：輔助的防呆要看的（有使用條件、會留殘骸的技能）；要在 resources 換好之後（這次之前在前一行，第一次讀設定時看不到 resource.combo、resource.remnant）
+        SupportGuards.index(this);
         this.commands = Map.copyOf(parsedCommands);
         this.parentDamage = Map.copyOf(parsedParent);
+        this.lifeDamage = Map.copyOf(parsedLife);
         this.mountSpecs = Map.copyOf(parsedMounts);
         this.barrages = Map.copyOf(parsedBarrages);
         this.charges = Map.copyOf(parsedCharges);
         this.signatures = Map.copyOf(parsedSignatures);
         this.metas = Map.copyOf(parsedMetas);
         this.tornados = Map.copyOf(parsedTornados);
-        this.mountOnly = Set.copyOf(parsedMountOnly);
         this.variants = Map.copyOf(variantMap);
         this.missingDefaults = List.copyOf(missing);
         // 2026-10：輔助照階級排（第 1 階全部在前、再第 2 階…；同一階照 supports.yml 的順序），後來加的不會都擠在最後面
@@ -326,7 +505,45 @@ public final class SkillConfig {
             ordered.put(support.id(), support);
         }
         this.supports = ordered;
+        this.lineageDrops = parsedLineageDrops;
         this.retiredSupports = Map.copyOf(parsedRetired);
+        this.mergedSupports = Map.copyOf(parsedMergedSupports);
+        this.mergedSupportNames = Map.copyOf(parsedMergedSupportNames);
+        final Map<String, String> parsedRetiredSkills = new HashMap<>();
+        final YamlNode retiredSkillNode = root.node("retired");
+        for (final String id : retiredSkillNode.keys()) {
+            if (parsed.containsKey(id)) {
+                throw new IllegalArgumentException("skills.yml retired." + id + "：這個技能還在 skills 裡（拿掉的技能要把定義刪掉）");
+            }
+            parsedRetiredSkills.put(id, retiredSkillNode.string(id, id).trim());
+        }
+        // 2026-10-26：併入別的技能（merged：舊代號: { into: 新代號, name: 舊名稱 }，或只寫新代號）；舊名稱跟 retired 一樣放進通知用的名稱表
+        final Map<String, String> parsedMerged = new HashMap<>();
+        final YamlNode mergedNode = root.node("merged");
+        for (final String id : mergedNode.keys()) {
+            final String into;
+            if (mergedNode.raw(id) instanceof Map<?, ?>) {
+                final YamlNode one = mergedNode.node(id);
+                into = one.string("into", "").trim();
+                if (one.has("name")) {
+                    parsedRetiredSkills.put(id, one.string("name", id).trim());
+                }
+            } else {
+                into = mergedNode.string(id, "").trim();
+            }
+            if (parsed.containsKey(id)) {
+                throw new IllegalArgumentException("skills.yml merged." + id + "：這個技能還在 skills 裡（併入別的技能要把定義刪掉）");
+            }
+            if (!parsed.containsKey(into)) {
+                throw new IllegalArgumentException("skills.yml merged." + id + "：併入的技能「" + into + "」不在 skills 裡");
+            }
+            if (retiredSkillNode.has(id)) {
+                throw new IllegalArgumentException("skills.yml merged." + id + "：同時列在 retired（只能擇一：換成未切割寶石，或併入別的技能）");
+            }
+            parsedMerged.put(id, into);
+        }
+        this.mergedSkills = Map.copyOf(parsedMerged);
+        this.retiredSkills = Map.copyOf(parsedRetiredSkills);
         this.supportTierLevels = tierLevels;
         this.supportOncePerCharacter = oncePerCharacter;
         final Map<String, String> names = new java.util.HashMap<>();
@@ -455,19 +672,19 @@ public final class SkillConfig {
         return weights;
     }
 
-    private static int[] parseRequirements(final YamlNode root) {
-        final Object raw = root.raw("level_requirements");
+    private static int[] parseRequirements(final YamlNode root, final String key) {
+        final Object raw = root.raw(key);
         if (!(raw instanceof List<?> list) || list.size() != SkillLoadout.MAX_LEVEL) {
-            throw new IllegalArgumentException(FILE + ".level_requirements：要寫 " + SkillLoadout.MAX_LEVEL + " 個角色等級（技能等級 1 到 20）");
+            throw new IllegalArgumentException(FILE + "." + key + "：要寫 " + SkillLoadout.MAX_LEVEL + " 個角色等級（技能等級 1 到 20）");
         }
         final int[] result = new int[SkillLoadout.MAX_LEVEL];
         for (int i = 0; i < result.length; i++) {
             if (!(list.get(i) instanceof Number number)) {
-                throw new IllegalArgumentException(FILE + ".level_requirements[" + i + "]：應該是整數");
+                throw new IllegalArgumentException(FILE + "." + key + "[" + i + "]：應該是整數");
             }
             result[i] = number.intValue();
             if (result[i] < 1 || (i > 0 && result[i] < result[i - 1])) {
-                throw new IllegalArgumentException(FILE + ".level_requirements：要從 1 以上遞增");
+                throw new IllegalArgumentException(FILE + "." + key + "：要從 1 以上遞增");
             }
         }
         return result;
@@ -506,7 +723,7 @@ public final class SkillConfig {
     public int familyConflict(final tw.exilecore.character.SkillLoadout loadout, final String skillId, final int ignore) {
         final String family = family(skillId);
         for (int i = 0; i < tw.exilecore.character.SkillLoadout.MAX_SKILLS; i++) {
-            final tw.exilecore.character.SkillLoadout.Entry other = loadout.skill(i);
+            final SkillLoadout.Entry other = loadout.skill(i);
             if (i != ignore && other != null && !other.skillId().equals(skillId) && family.equals(family(other.skillId()))) {
                 return i;
             }
@@ -545,14 +762,37 @@ public final class SkillConfig {
         return id == null ? null : barrages.get(id);
     }
 
-    /** 要騎在坐騎上才能放的技能。 */
-    public boolean requiresMount(final String id) {
-        return id != null && mountOnly.contains(id);
-    }
-
     /** 隱藏技能照觸發它的技能出傷害的倍數（0 = 不是，照自己的傷害效益）。 */
     public double parentDamage(final String id) {
         return id == null ? 0 : parentDamage.getOrDefault(id, 0.0);
+    }
+
+    /** parent_damage: own（2026-10-26）：記成這個值。 */
+    public static final double PARENT_OWN_TABLE = -1;
+
+    /**
+     * 2026-10-26：觸發的隱藏技能這一級實際是原技能一下的幾倍（0 = 不照原技能）。
+     * parent_damage 寫數字就是那個數字；寫 own 就是「自己的 effectiveness ÷ 原技能的 effectiveness」（同一個等級）。
+     */
+    public double lifeDamage(final String id) {
+        return lifeDamage.getOrDefault(id, 0.0);
+    }
+
+    /**
+     * 2026-10-26：觸發的隱藏技能的傷害照敵人最大生命的幾 %（skills.yml 的 life_damage；0 = 照自己的傷害表）。
+     * 上面那個：觸發的隱藏技能這一級實際是原技能一下的幾倍（見下面）。
+     */
+    public double parentShare(final String subId, final SkillDefinition parent, final int level) {
+        final double raw = parentDamage(subId);
+        if (raw >= 0) {
+            return raw;
+        }
+        final SkillDefinition sub = skill(subId);
+        if (sub == null || parent == null) {
+            return 0;
+        }
+        final double base = parent.effectiveness().at(level);
+        return base <= 0 ? 0 : sub.effectiveness().at(level) / base;
     }
 
     /** 指令型召喚物技能聽命的召喚物技能（不是指令技能回傳 null）。 */
@@ -617,6 +857,17 @@ public final class SkillConfig {
         return problems;
     }
 
+    /** 這個技能的冷卻可以存幾次（沒寫是 1）。 */
+    public int cooldownUses(final String skillId) {
+        return cooldownUses.getOrDefault(skillId, 1);
+    }
+
+    /** 弩技能這個等級的彈匣大小（沒寫是 1 發，照 PoE2）。 */
+    public int clip(final String skillId, final int level) {
+        final Scaled clip = clips.get(skillId);
+        return clip == null ? 1 : Math.max(1, clip.intAt(level));
+    }
+
     /** 技能等級需要的角色等級。 */
     public int requiredLevel(final int skillLevel) {
         return requirements[Math.max(1, Math.min(SkillLoadout.MAX_LEVEL, skillLevel)) - 1];
@@ -649,7 +900,7 @@ public final class SkillConfig {
      */
     public double spellGrowthAt(final int skillLevel) {
         final int capped = Math.min(SkillLoadout.MAX_LEVEL, Math.max(1, skillLevel));
-        final double base = spellGrowth(requiredLevel(capped));
+        final double base = spellGrowth(dropLevel(capped)); // 2026-10-26：照原本的曲線（需求等級改成 PoE2 之後不跟著變）
         return skillLevel > SkillLoadout.MAX_LEVEL ? base * Math.pow(extraLevelGrowth, skillLevel - SkillLoadout.MAX_LEVEL) : base;
     }
 
@@ -695,8 +946,92 @@ public final class SkillConfig {
         return id == null ? 1 : retiredSupports.getOrDefault(id, 1);
     }
 
+    /** 2026-10-26：輔助併入哪一顆（supports.yml 的 merged，同系列較低階的 I／II 併入最高階）；沒有併入回傳 null。 */
+    public String supportMergedInto(final String id) {
+        return id == null ? null : mergedSupports.get(id);
+    }
+
+    /** 2026-10-26：併入的輔助的通知文字（例如「割裂已經併入割裂 III」）；沒有併入回傳 null。 */
+    public String supportMergeNotice(final String id) {
+        final SupportDefinition target = support(supportMergedInto(id));
+        return target == null ? null : mergedSupportNames.getOrDefault(id, id) + "已經併入" + target.name();
+    }
+
+    /**
+     * 2026-10-26：技能寶石（含放在宿主孔裡的技能）上掛著併入別的輔助的舊輔助：原孔換成併入的那顆（共鳴保留）。
+     * 同一個技能已經掛著那顆（同一個技能不能掛兩顆一樣的）就從孔上拿下來，做成輔助寶石放進 detached。
+     * 不用換回傳原本的 entry（同一個物件）。
+     */
+    public SkillLoadout.Entry mergeSupports(final SkillLoadout.Entry entry, final List<GemData> detached) {
+        if (entry == null) {
+            return null;
+        }
+        SkillLoadout.Entry result = entry;
+        for (int i = 0; i < result.sockets(); i++) {
+            final String into = supportMergedInto(result.support(i));
+            if (into == null) {
+                continue;
+            }
+            final boolean resonantMark = result.resonant(i);
+            if (result.supportIds().contains(into)) {
+                detached.add(GemData.support(into, resonantMark));
+                result = result.withSupport(i, null);
+            } else {
+                result = result.withSupport(i, into, resonantMark);
+            }
+        }
+        final SkillLoadout.Entry inner = result.inner() == null ? null : mergeSupports(result.inner(), detached);
+        return inner == result.inner() ? result : result.withInner(inner);
+    }
+
+    /** 2026-10-26：拿掉的技能（skills.yml 的 retired）。 */
+    public boolean retiredSkill(final String id) {
+        return id != null && retiredSkills.containsKey(id) && !mergedSkills.containsKey(id); // 2026-10-26：併入別的技能的名稱也放在這張表，不算拿掉
+    }
+
+    /** 2026-10-26：併入哪個技能（skills.yml 的 merged）；沒有併入回傳 null。 */
+    public String mergedInto(final String id) {
+        return id == null ? null : mergedSkills.get(id);
+    }
+
+    /** 2026-10-26：併入別的技能的通知文字（例如「矢幕已經併入連珠」）；沒有併入回傳 null。 */
+    public String mergeNotice(final String id) {
+        final String into = mergedInto(id);
+        final SkillDefinition target = into == null ? null : skill(into);
+        return target == null ? null : retiredSkillName(id) + "已經併入" + target.name();
+    }
+
+    /**
+     * 2026-10-26：技能寶石（或放在宿主孔裡的技能）是併入別的技能的舊技能：換成併入的技能，等級、孔數、品質、腐化、輔助都保留。
+     * 不用換回傳 null。
+     */
+    public SkillLoadout.Entry merge(final SkillLoadout.Entry entry) {
+        if (entry == null) {
+            return null;
+        }
+        final String into = mergedInto(entry.skillId());
+        final SkillLoadout.Entry inner = entry.inner() == null ? null : merge(entry.inner());
+        if (into == null && inner == null) {
+            return null;
+        }
+        final SkillLoadout.Entry renamed = into == null ? entry
+                : new SkillLoadout.Entry(into, entry.level(), entry.sockets(), entry.supports(), entry.resonant(),
+                        entry.inner(), entry.corrupted(), entry.quality(), entry.granted());
+        return inner == null ? renamed : renamed.withInner(inner);
+    }
+
+    /** 2026-10-26：拿掉的技能的名稱（通知用；併入別的技能的也算）；不在 skills.yml 的 retired、merged 裡就回傳代號。 */
+    public String retiredSkillName(final String id) {
+        return id == null ? "" : retiredSkills.getOrDefault(id, id);
+    }
+
     public SupportDefinition support(final String id) {
         return id == null ? null : supports.get(id);
+    }
+
+    /** 2026-10-27：血脈輔助的掉落設定（supports_lineage.yml 的 drops）。 */
+    public LineageRules.Drops lineageDrops() {
+        return lineageDrops;
     }
 
     public Collection<SupportDefinition> supports() {
@@ -749,7 +1084,22 @@ public final class SkillConfig {
 
     /** 這個等級的怪物掉的未切割技能寶石最高幾級（= 這個角色等級能用的最高技能等級）。 */
     public int uncutLevelFor(final int monsterLevel) {
-        return maxLevelFor(monsterLevel);
+        return highestAt(dropLevels, monsterLevel);
+    }
+
+    /** 掉落用的等級表：技能等級 → 怪物等級多少起會掉。 */
+    public int dropLevel(final int skillLevel) {
+        return dropLevels[Math.max(1, Math.min(SkillLoadout.MAX_LEVEL, skillLevel)) - 1];
+    }
+
+    private static int highestAt(final int[] table, final int level) {
+        int best = 1;
+        for (int i = 1; i <= table.length; i++) {
+            if (table[i - 1] <= level) {
+                best = i;
+            }
+        }
+        return best;
     }
 
     /**

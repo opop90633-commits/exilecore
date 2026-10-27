@@ -1,0 +1,40 @@
+Adhesive_Grenades_I	2	100%	-	Grenade skills	Supported Grenade Skills deal 10% less Damage || Supported Grenade Skills stop where they initially land
+Ammo_Conservation_I	2	100%	-	Crossbow Ammo / Crossbow skills	Bolts fired by Supported Crossbow Attacks have 20% chance to not expend Ammunition
+Double_Barrel_I	1	110%	-	Crossbow Ammo / Crossbow skills	Supported Skills load 1 additional bolts || Supported Skills have 30% less Reload Speed
+Streamlined_Rounds	3	120%	-	Crossbow / Crossbow Ammo skills	Supported Skills have 50% more Attack speed || Supported Skills deal 60% less Damage || Supported Skills have 50% less reload speed || Supported Skills load 5 additional bolts
+Nimble_Reload	4	100%	-	Crossbow Ammo / Crossbow skills	Supported Skills have 60% increased Crossbow Reload Speed
+Auto_Reload	? (not listed)	100%	-	Crossbow Ammo / Crossbow skills	Supported Skills reload automatically when Heavy Stunning an enemy with them
+Overabundance_I	1	100%	-	Skills with a Limit	Supported Skills have +1 to Limit || Supported Skills have 50% less Skill Effect Duration
+Bounty_I	2	100%	-	Attack / Damage / Crossbow Ammo skills (hitting)	Enemies killed by Hits from Supported Skills grant 50% more Charm charges || Enemies killed by Hits from Supported Skills grant 50% more Life Flask Charges || Enemies killed by Hits from Supported Skills grant 50% more Mana Flask Charges
+Life_Bounty	? (not listed)	100%	-	Attack / Damage / Crossbow Ammo skills (hitting)	Enemies killed by Hits from Supported Skills grant 100% more Life Flask Charges
+Mana_Bounty	? (not listed)	100%	-	Attack / Damage / Crossbow Ammo skills (hitting)	Enemies killed by Hits from Supported Skills grant 100% more Mana Flask Charges
+Lifetap	2	100%	- (cannot support Spirit-reserving skills)	Any skill except Blessing/Persistent	Supported Skills have Mana Costs Converted to Life Costs
+Fluke	3	120%	-	Trigger skills (Allow: Triggers)	Skills Triggered by Supported Skills deal between 40% less and 60% more Damage || Skills Triggered by Supported Skills recover between [blank on page]% and 20% of cost on use
+Supercritical	3	100%	-	Damage / Attack / Crossbow Ammo skills	Supported Skills have 100% increased Critical Damage Bonus || Supported Skills have 20% less Critical Hit chance
+Inexorable_Critical_I	3	120%	-	Attack / Damage / Crossbow Ammo (excl. proxy/triggered/persistent)	Supported Skills gain 10% increased Critical Hit Chance each second, up to 100%. || This Critical Hit Chance is lost whenever a skill supported by Inexorable Critical Critically Hits
+Feeding_Frenzy_I	3	100%	-	Minion-creating skills (excl. undamageable minions)	Minions from Supported Skills deal 30% more Damage || Minions from Supported Skills take 20% more Damage
+Minion_Pact_I	1	100%	-	Damage / Attack / DoT / Crossbow Ammo (excl. proxy/triggered/persistent)	Supported Skills remove 100% of your maximum Life from a nearby Minion on use to deal 30% more damage
+Crazed_Minions	4	115%	-	Persistent Minion skills (excl. undamageable)	Supported Minions deal 30% more Damage if they have Revived Recently
+Bidding_I	2	130%	-	Commandable minion / Command skills	Supported Minions' Command Skills deal 20% more Damage || Supported Minions have 20% increased Cooldown Recovery Rate for Command Skills
+Essence_Harvest	3	100%	110% reservation multiplier	Persistent Minion skills (excl. Buff/Ongoing/undamageable)	Recoup 8% of your maximum Mana when a Persistent Reviving Minion created by Supported Skill dies
+Deathmarch	2	100%	-	Persistent Minion skills (excl. undamageable)	Supported Minions will restore Life to nearby Allied Minions on death, as well as removing Ailments from those Minions. || Minions from Supported Skills heal Allied Minions within 3 metres for 25% of Supported Minions' life on death, removing all Ailments from those Minions
+Window_of_Opportunity_I	1	100%	-	Perfect Timing skills	Supported Skills have a 35% shorter Perfect Timing window || Supported Skills deal 35% more Damage when released with Perfect Timing
+Thrill_of_the_Kill	1	100%	-	Attack / Damage / Crossbow Ammo (excl. proxy/triggered/persistent)	Attacks Gain 25% of Damage as Lightning Damage for 8 seconds on Culling an enemy with Supported Skills
+Momentum	2	120%	-	Damage / Attack / Crossbow Ammo (excl. proxy/triggered/persistent)	After moving at least 2 metres during a single use of a Supported Skill, the rest of that use deals 40% more Damage
+Blindside	1	120%	-	Attack / Damage / Crossbow skills	Supported Skills cannot inflict Blind || Supported Skills have 15% more Critical Damage Bonus with Hits against Blinded Enemies || Supported Skills have 15% more chance to Critically Hit Blinded Enemies
+Exploit_Weakness	2	130%	-	Damage / Attack / Crossbow Ammo skills	Supported Skills Consume Enemy Fully Broken Armour to deal 40% more Damage || Supported Skills cannot Break Armour
+Biting_Frost_I	3	120%	-	Attack / Damage / Crossbow Ammo skills	Supported Skills cannot cause Freeze buildup || Supported Skills deal 20% more damage to Frozen Unique enemies || Supported Skills Consume Freeze on enemies to deal 40% more Damage
+Wildfire	2	120%	-	Damage / Attack / Crossbow Ammo skills	Ignites inflicted by Supported Skills Spread to other enemies that stay within 1.5 metres for 1 second
+Withering_Touch	1	100%	-	Damage / Attack / Crossbow Ammo skills	Supported Skills deal 25% less Damage || Withered lasts 4 seconds || Chance to inflict Withered on Hit with Supported Skills can Surpass 100% || Supported Skills have 1% chance to inflict Withered on Hit for every 0.57142857142857% of enemy Ailment Threshold dealt as Chaos damage
+Murderous_Intent	? (not listed)	120%	-	Skills that Empower other skills	Skills Empowered by Supported Skills have Culling Strike
+Raging_Cry	2	100%	-	Warcry skills	Supported Skills grant 4 Rage per 5 Power of counted Enemies in range
+Sacrificial_Offering	3	100%	-	Offering skills	Supported Offering Skills deal 30% more Damage || Supported Offering Skills have 30% increased Buff effect || Supported Skills Sacrifice 15% of Life on use
+Elemental_Discharge	3	100%	-	Spell skills that Hit (excl. ailment-consuming)	Supported Skills Cannot inflict Freeze, Shock or Ignite || Supported Skills Consume Freeze, Shock and Ignite on hit to trigger Elemental Discharge || 40% to 60% of your Intelligence as Fire Damage || 80% to 120% of your Intelligence as Cold Damage || 1% to 120% of your Intelligence as Lightning Damage || Discharge radius is 2 metres || Only deals Damage of Elements matching Consumed Ailments || Deals no Damage of other Damage Types
+Durability	2	100%	110% reservation multiplier	Object-creating skills (ObjectDurability)	Objects created by Supported Skills can be Hit +2 times
+Efficiency_I	1	100%	- (cannot support Spirit-reserving skills)	Any skill	Supported Skills have 30% less Cost
+Retaliate_I	2	115%	-	Melee skills (excl. proxy/triggered/persistent)	Supported Skills deal up to 40% more Attack Damage, scaling up as your Stun Bar increases
+Defy_I	2	100%	-	Attack skills (excl. proxy/triggered/persistent)	Attack Damage with Hits with Supported Skills is Lucky while you are Surrounded
+Tireless	1	120%	-	Warcry skills	Supported Skills have 25% chance to not count Attacks they Empower
+Vanguard_I	1	110%	-	Attack skills requiring a Shield	Gain 2 Guard per ten Strength when you Stun an Enemy || Gain an additional 4 Guard per ten Strength if Heavily Stunning || Guard duration is 4 seconds
+Upheaval_I	1	100%	-	Fissure-creating skills	Supported Skills create 1 additional fissures || Supported Skills deal 20% less Damage || Supported Skills have 20% less Skill Speed
+Direstrike_I	2	"Mana: 20" (page; no %)	20 Spirit (additional reservation)	Persistent Buff skills	Deal 50% increased Attack Damage while on Low Life while a Supported Skill is active

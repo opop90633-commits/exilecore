@@ -2,7 +2,7 @@
 # ilvl 是需要的最低物品等級，weight 是權重。text 裡的 {value} / {min} / {max} 是 tiers 裡的變數；mods 的 value 用同名變數。
 #
 # 2026-10 PoE2 改版：可以擲出的詞綴全部照 PoE2（0.5）的詞綴池、部位與數值（tools 產生，資料來源 RePoE poe2 mods.json）。
-# 2026-10-22：階級權重從「每高一階 ×0.8」改成「×0.7」（高階更難出：9 階的 T1 從約 3.9% 降到約 1.8%）；每條詞綴的權重總和不變（出現哪一條的機率不變，只改出哪一階）。
+# 2026-10-26：階數、需求等級、權重、數值全部改成 poe2db 的原值（權重就是 PoE2 的 spawn weight，不再用 ×0.7 等比）；PoE2 這個部位沒有的詞綴停用。
 # 防具、盾身上的護甲／閃避／能量護盾詞綴是本地的（只加這件的防禦）；武器的物理、附加傷害、攻速、暴擊率是本地的。
 # 同一族在不同部位的階級不一樣時拆成好幾條（同一個 group，一件物品只會有一條）。
 # 原本的詞綴改成 spawn_tags: [retired]：不會再擲出來，已經在物品上的照常生效。
@@ -16,15 +16,16 @@ minion_added_cold:
   names: [星骸王的, 亡靈君主的, 統御的, 指揮的, 召喚師的, 驅使的, 牧者的, 馴者的, 引導的]
   text: "召喚物的攻擊附加 {min} 到 {max} 冰冷傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 78, min: [21, 24], max: [32, 37] }
-    - { tier: 2, ilvl: 65, weight: 111, min: [16, 20], max: [25, 31] }
-    - { tier: 3, ilvl: 60, weight: 159, min: [14, 15], max: [22, 24] }
-    - { tier: 4, ilvl: 54, weight: 228, min: [11, 13], max: [18, 21] }
-    - { tier: 5, ilvl: 46, weight: 325, min: [9, 10], max: [15, 17] }
-    - { tier: 6, ilvl: 33, weight: 464, min: [7, 8], max: [12, 14] }
-    - { tier: 7, ilvl: 16, weight: 663, min: [5, 6], max: [9, 11] }
-    - { tier: 8, ilvl: 8, weight: 948, min: [3, 4], max: [5, 8] }
-    - { tier: 9, ilvl: 1, weight: 1354, min: [1, 2], max: [3, 4] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 75, weight: 200, min: [21, 24], max: [32, 37] }
+    - { tier: 2, ilvl: 65, weight: 300, min: [16, 20], max: [25, 31] }
+    - { tier: 3, ilvl: 60, weight: 400, min: [14, 15], max: [22, 24] }
+    - { tier: 4, ilvl: 54, weight: 500, min: [11, 13], max: [18, 21] }
+    - { tier: 5, ilvl: 46, weight: 500, min: [9, 10], max: [15, 17] }
+    - { tier: 6, ilvl: 33, weight: 500, min: [7, 8], max: [12, 14] }
+    - { tier: 7, ilvl: 16, weight: 500, min: [5, 6], max: [9, 11] }
+    - { tier: 8, ilvl: 8, weight: 500, min: [3, 4], max: [5, 8] }
+    - { tier: 9, ilvl: 1, weight: 500, min: [1, 2], max: [3, 4] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [minion, attack, cold] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [minion, attack, cold] }
@@ -36,15 +37,16 @@ minion_added_fire:
   names: [星骸王的, 亡靈君主的, 統御的, 指揮的, 召喚師的, 驅使的, 牧者的, 馴者的, 引導的]
   text: "召喚物的攻擊附加 {min} 到 {max} 火焰傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 78, min: [25, 29], max: [39, 45] }
-    - { tier: 2, ilvl: 65, weight: 111, min: [20, 24], max: [31, 38] }
-    - { tier: 3, ilvl: 60, weight: 159, min: [17, 19], max: [27, 30] }
-    - { tier: 4, ilvl: 54, weight: 228, min: [14, 16], max: [21, 26] }
-    - { tier: 5, ilvl: 46, weight: 325, min: [12, 13], max: [18, 20] }
-    - { tier: 6, ilvl: 33, weight: 464, min: [9, 11], max: [14, 17] }
-    - { tier: 7, ilvl: 16, weight: 663, min: [6, 8], max: [10, 13] }
-    - { tier: 8, ilvl: 8, weight: 948, min: [3, 5], max: [6, 9] }
-    - { tier: 9, ilvl: 1, weight: 1354, min: [1, 2], max: [3, 4] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 75, weight: 200, min: [25, 29], max: [39, 45] }
+    - { tier: 2, ilvl: 65, weight: 300, min: [20, 24], max: [31, 38] }
+    - { tier: 3, ilvl: 60, weight: 400, min: [17, 19], max: [27, 30] }
+    - { tier: 4, ilvl: 54, weight: 500, min: [14, 16], max: [21, 26] }
+    - { tier: 5, ilvl: 46, weight: 500, min: [12, 13], max: [18, 20] }
+    - { tier: 6, ilvl: 33, weight: 500, min: [9, 11], max: [14, 17] }
+    - { tier: 7, ilvl: 16, weight: 500, min: [6, 8], max: [10, 13] }
+    - { tier: 8, ilvl: 8, weight: 500, min: [3, 5], max: [6, 9] }
+    - { tier: 9, ilvl: 1, weight: 500, min: [1, 2], max: [3, 4] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [minion, attack, fire] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [minion, attack, fire] }
@@ -56,15 +58,16 @@ minion_added_lightning:
   names: [星骸王的, 亡靈君主的, 統御的, 指揮的, 召喚師的, 驅使的, 牧者的, 馴者的, 引導的]
   text: "召喚物的攻擊附加 {min} 到 {max} 閃電傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 78, min: [1, 4], max: [60, 71] }
-    - { tier: 2, ilvl: 65, weight: 111, min: [1, 3], max: [48, 59] }
-    - { tier: 3, ilvl: 60, weight: 159, min: [1, 2], max: [41, 47] }
-    - { tier: 4, ilvl: 54, weight: 228, min: [1, 2], max: [33, 40] }
-    - { tier: 5, ilvl: 46, weight: 325, min: [1, 1], max: [28, 32] }
-    - { tier: 6, ilvl: 33, weight: 464, min: [1, 1], max: [23, 27] }
-    - { tier: 7, ilvl: 16, weight: 663, min: [1, 1], max: [16, 22] }
-    - { tier: 8, ilvl: 8, weight: 948, min: [1, 1], max: [10, 15] }
-    - { tier: 9, ilvl: 1, weight: 1354, min: [1, 1], max: [5, 7] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 75, weight: 200, min: [1, 4], max: [60, 71] }
+    - { tier: 2, ilvl: 65, weight: 300, min: [1, 3], max: [48, 59] }
+    - { tier: 3, ilvl: 60, weight: 400, min: [1, 2], max: [41, 47] }
+    - { tier: 4, ilvl: 54, weight: 500, min: [1, 2], max: [33, 40] }
+    - { tier: 5, ilvl: 46, weight: 500, min: [1, 1], max: [28, 32] }
+    - { tier: 6, ilvl: 33, weight: 500, min: [1, 1], max: [23, 27] }
+    - { tier: 7, ilvl: 16, weight: 500, min: [1, 1], max: [16, 22] }
+    - { tier: 8, ilvl: 8, weight: 500, min: [1, 1], max: [10, 15] }
+    - { tier: 9, ilvl: 1, weight: 500, min: [1, 1], max: [5, 7] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [minion, attack, lightning] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [minion, attack, lightning] }
@@ -76,15 +79,16 @@ minion_added_phys:
   names: [星骸王的, 亡靈君主的, 統御的, 指揮的, 召喚師的, 驅使的, 牧者的, 馴者的, 引導的]
   text: "召喚物的攻擊附加 {min} 到 {max} 物理傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 78, min: [12, 19], max: [22, 32] }
-    - { tier: 2, ilvl: 65, weight: 111, min: [10, 15], max: [18, 26] }
-    - { tier: 3, ilvl: 60, weight: 159, min: [7, 11], max: [14, 20] }
-    - { tier: 4, ilvl: 54, weight: 228, min: [6, 10], max: [12, 17] }
-    - { tier: 5, ilvl: 46, weight: 325, min: [5, 7], max: [9, 13] }
-    - { tier: 6, ilvl: 33, weight: 464, min: [4, 6], max: [8, 11] }
-    - { tier: 7, ilvl: 16, weight: 663, min: [2, 4], max: [5, 8] }
-    - { tier: 8, ilvl: 8, weight: 948, min: [2, 3], max: [4, 6] }
-    - { tier: 9, ilvl: 1, weight: 1354, min: [1, 2], max: [3, 4] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 75, weight: 200, min: [12, 19], max: [22, 32] }
+    - { tier: 2, ilvl: 65, weight: 300, min: [10, 15], max: [18, 26] }
+    - { tier: 3, ilvl: 60, weight: 400, min: [7, 11], max: [14, 20] }
+    - { tier: 4, ilvl: 54, weight: 500, min: [6, 10], max: [12, 17] }
+    - { tier: 5, ilvl: 46, weight: 500, min: [5, 7], max: [9, 13] }
+    - { tier: 6, ilvl: 33, weight: 500, min: [4, 6], max: [8, 11] }
+    - { tier: 7, ilvl: 16, weight: 500, min: [2, 4], max: [5, 8] }
+    - { tier: 8, ilvl: 8, weight: 500, min: [2, 3], max: [4, 6] }
+    - { tier: 9, ilvl: 1, weight: 500, min: [1, 2], max: [3, 4] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [minion, attack, physical] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [minion, attack, physical] }
@@ -96,14 +100,15 @@ minion_inc:
   names: [星骸王的, 亡靈君主的, 統御的, 指揮的, 召喚師的, 驅使的, 牧者的, 馴者的]
   text: "增加 {value}% 召喚物傷害"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 109, value: [105, 119] }
-    - { tier: 2, ilvl: 70, weight: 156, value: [90, 104] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [75, 89] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [65, 74] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [55, 64] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [45, 54] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [35, 44] }
-    - { tier: 8, ilvl: 1, weight: 1325, value: [25, 34] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 82, weight: 50, value: [105, 119] }
+    - { tier: 2, ilvl: 70, weight: 100, value: [90, 104] }
+    - { tier: 3, ilvl: 60, weight: 200, value: [75, 89] }
+    - { tier: 4, ilvl: 46, weight: 400, value: [65, 74] }
+    - { tier: 5, ilvl: 33, weight: 600, value: [55, 64] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [45, 54] }
+    - { tier: 7, ilvl: 8, weight: 1000, value: [35, 44] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [25, 34] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -114,14 +119,15 @@ spirit_flat:
   names: [星魄的, 天魂的, 神魄的, 聖魂的, 英靈的, 魂火的, 靈魄的, 微魂的]
   text: "+{value} 最大精魂"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 109, value: [57, 61] }
-    - { tier: 2, ilvl: 65, weight: 156, value: [54, 56] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [51, 53] }
-    - { tier: 4, ilvl: 54, weight: 318, value: [47, 50] }
-    - { tier: 5, ilvl: 46, weight: 454, value: [43, 46] }
-    - { tier: 6, ilvl: 33, weight: 649, value: [38, 42] }
-    - { tier: 7, ilvl: 25, weight: 927, value: [34, 37] }
-    - { tier: 8, ilvl: 16, weight: 1325, value: [30, 33] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 78, weight: 100, value: [57, 61] }
+    - { tier: 2, ilvl: 65, weight: 200, value: [54, 56] }
+    - { tier: 3, ilvl: 60, weight: 300, value: [51, 53] }
+    - { tier: 4, ilvl: 54, weight: 400, value: [47, 50] }
+    - { tier: 5, ilvl: 46, weight: 500, value: [43, 46] }
+    - { tier: 6, ilvl: 33, weight: 500, value: [38, 42] }
+    - { tier: 7, ilvl: 25, weight: 500, value: [34, 37] }
+    - { tier: 8, ilvl: 16, weight: 500, value: [30, 33] }
   mods:
     - { stat: spirit.max, type: FLAT, value: "{value}" }
 
@@ -132,11 +138,12 @@ spirit_flat_amulet:
   names: [星魄的, 天魂的, 神魄的, 聖魂的, 英靈的]
   text: "+{value} 最大精魂"
   tiers:
-    - { tier: 1, ilvl: 54, weight: 291, value: [47, 50] }
-    - { tier: 2, ilvl: 46, weight: 416, value: [43, 46] }
-    - { tier: 3, ilvl: 33, weight: 594, value: [38, 42] }
-    - { tier: 4, ilvl: 25, weight: 849, value: [34, 37] }
-    - { tier: 5, ilvl: 16, weight: 1212, value: [30, 33] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（5 階 → 5 階）
+    - { tier: 1, ilvl: 54, weight: 400, value: [47, 50] }
+    - { tier: 2, ilvl: 46, weight: 500, value: [43, 46] }
+    - { tier: 3, ilvl: 33, weight: 500, value: [38, 42] }
+    - { tier: 4, ilvl: 25, weight: 500, value: [34, 37] }
+    - { tier: 5, ilvl: 16, weight: 500, value: [30, 33] }
   mods:
     - { stat: spirit.max, type: FLAT, value: "{value}" }
 
@@ -148,12 +155,13 @@ flask_life_recovery:
   text: "增加 {value}% 生命藥劑回復量"
   chips: [life, flask]   # PoE2 的標籤（BeltFlaskLifeRecoveryRate）
   tiers:
-    - { tier: 1, ilvl: 75, weight: 211, value: [35, 40] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [29, 34] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [23, 28] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [17, 22] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [11, 16] }
-    - { tier: 6, ilvl: 1, weight: 1255, value: [5, 10] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 75, weight: 800, value: [35, 40] }
+    - { tier: 2, ilvl: 60, weight: 800, value: [29, 34] }
+    - { tier: 3, ilvl: 46, weight: 800, value: [23, 28] }
+    - { tier: 4, ilvl: 33, weight: 800, value: [17, 22] }
+    - { tier: 5, ilvl: 16, weight: 800, value: [11, 16] }
+    - { tier: 6, ilvl: 1, weight: 800, value: [5, 10] }
   mods:
     - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
 
@@ -165,12 +173,13 @@ flask_mana_recovery:
   text: "增加 {value}% 魔力藥劑回復量"
   chips: [mana, flask]   # PoE2 的標籤（BeltFlaskManaRecoveryRate）
   tiers:
-    - { tier: 1, ilvl: 63, weight: 211, value: [35, 40] }
-    - { tier: 2, ilvl: 54, weight: 301, value: [29, 34] }
-    - { tier: 3, ilvl: 36, weight: 430, value: [23, 28] }
-    - { tier: 4, ilvl: 26, weight: 615, value: [17, 22] }
-    - { tier: 5, ilvl: 11, weight: 878, value: [11, 16] }
-    - { tier: 6, ilvl: 5, weight: 1255, value: [5, 10] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 63, weight: 800, value: [35, 40] }
+    - { tier: 2, ilvl: 54, weight: 800, value: [29, 34] }
+    - { tier: 3, ilvl: 36, weight: 800, value: [23, 28] }
+    - { tier: 4, ilvl: 26, weight: 800, value: [17, 22] }
+    - { tier: 5, ilvl: 11, weight: 800, value: [11, 16] }
+    - { tier: 6, ilvl: 5, weight: 800, value: [5, 10] }
   mods:
     - { stat: flask.mana_recovery, type: INCREASED, value: "{value}" }
 
@@ -182,12 +191,13 @@ chaos_inc_weapon:
   names: [星蝕的, 深淵的, 虛空的, 墮落的, 腐化的, 汙穢的]
   text: "增加 {value}% 混沌傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 211, value: [75, 89] }
-    - { tier: 2, ilvl: 46, weight: 301, value: [65, 74] }
-    - { tier: 3, ilvl: 33, weight: 430, value: [55, 64] }
-    - { tier: 4, ilvl: 16, weight: 615, value: [45, 54] }
-    - { tier: 5, ilvl: 8, weight: 878, value: [35, 44] }
-    - { tier: 6, ilvl: 2, weight: 1255, value: [25, 34] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 60, weight: 200, value: [75, 89] }
+    - { tier: 2, ilvl: 46, weight: 300, value: [65, 74] }
+    - { tier: 3, ilvl: 33, weight: 400, value: [55, 64] }
+    - { tier: 4, ilvl: 16, weight: 500, value: [45, 54] }
+    - { tier: 5, ilvl: 8, weight: 500, value: [35, 44] }
+    - { tier: 6, ilvl: 2, weight: 500, value: [25, 34] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
 
@@ -198,14 +208,15 @@ chaos_inc_weapon_wand:
   names: [星蝕的, 深淵的, 虛空的, 墮落的, 腐化的, 汙穢的, 惡毒的, 汙濁的]
   text: "增加 {value}% 混沌傷害"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 109, value: [105, 119] }
-    - { tier: 2, ilvl: 70, weight: 156, value: [90, 104] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [75, 89] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [65, 74] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [55, 64] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [45, 54] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [35, 44] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [25, 34] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 81, weight: 50, value: [105, 119] }
+    - { tier: 2, ilvl: 70, weight: 100, value: [90, 104] }
+    - { tier: 3, ilvl: 60, weight: 200, value: [75, 89] }
+    - { tier: 4, ilvl: 46, weight: 300, value: [65, 74] }
+    - { tier: 5, ilvl: 33, weight: 400, value: [55, 64] }
+    - { tier: 6, ilvl: 16, weight: 500, value: [45, 54] }
+    - { tier: 7, ilvl: 8, weight: 500, value: [35, 44] }
+    - { tier: 8, ilvl: 2, weight: 500, value: [25, 34] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
 
@@ -216,14 +227,15 @@ chaos_inc_weapon_staff:
   names: [星蝕的, 深淵的, 虛空的, 墮落的, 腐化的, 汙穢的, 惡毒的, 汙濁的]
   text: "增加 {value}% 混沌傷害"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 109, value: [209, 238] }
-    - { tier: 2, ilvl: 70, weight: 156, value: [189, 208] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [149, 188] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [129, 148] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [109, 128] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [89, 108] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [69, 88] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [50, 68] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 81, weight: 50, value: [209, 238] }
+    - { tier: 2, ilvl: 70, weight: 100, value: [189, 208] }
+    - { tier: 3, ilvl: 60, weight: 200, value: [149, 188] }
+    - { tier: 4, ilvl: 46, weight: 300, value: [129, 148] }
+    - { tier: 5, ilvl: 33, weight: 400, value: [109, 128] }
+    - { tier: 6, ilvl: 16, weight: 500, value: [89, 108] }
+    - { tier: 7, ilvl: 8, weight: 500, value: [69, 88] }
+    - { tier: 8, ilvl: 2, weight: 500, value: [50, 68] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
 
@@ -234,15 +246,16 @@ added_cold:
   names: [星凍的, 永凍的, 冰河的, 嚴寒的, 冰封的, 霜咬的, 冰冷的, 寒涼的, 冷冽的]
   text: "攻擊附加 {min} 到 {max} 冰冷傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 78, min: [21, 24], max: [32, 37] }
-    - { tier: 2, ilvl: 65, weight: 111, min: [16, 20], max: [25, 31] }
-    - { tier: 3, ilvl: 60, weight: 159, min: [14, 15], max: [22, 24] }
-    - { tier: 4, ilvl: 54, weight: 228, min: [11, 13], max: [18, 21] }
-    - { tier: 5, ilvl: 46, weight: 325, min: [9, 10], max: [15, 17] }
-    - { tier: 6, ilvl: 33, weight: 464, min: [7, 8], max: [12, 14] }
-    - { tier: 7, ilvl: 16, weight: 663, min: [5, 6], max: [9, 11] }
-    - { tier: 8, ilvl: 8, weight: 948, min: [3, 4], max: [5, 8] }
-    - { tier: 9, ilvl: 1, weight: 1354, min: [1, 1], max: [2, 3] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 75, weight: 200, min: [21, 24], max: [32, 37] }
+    - { tier: 2, ilvl: 65, weight: 300, min: [16, 20], max: [25, 31] }
+    - { tier: 3, ilvl: 60, weight: 400, min: [14, 15], max: [22, 24] }
+    - { tier: 4, ilvl: 54, weight: 500, min: [11, 13], max: [18, 21] }
+    - { tier: 5, ilvl: 46, weight: 500, min: [9, 10], max: [15, 17] }
+    - { tier: 6, ilvl: 33, weight: 500, min: [7, 8], max: [12, 14] }
+    - { tier: 7, ilvl: 16, weight: 500, min: [5, 6], max: [9, 11] }
+    - { tier: 8, ilvl: 8, weight: 500, min: [3, 4], max: [5, 8] }
+    - { tier: 9, ilvl: 1, weight: 500, min: [1, 1], max: [2, 3] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, cold] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, cold] }
@@ -254,12 +267,13 @@ cold_inc:
   names: [星凍的, 永凍的, 冰河的, 嚴寒的, 冰封的, 霜咬的]
   text: "增加 {value}% 冰冷傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 211, value: [27, 30] }
-    - { tier: 2, ilvl: 65, weight: 301, value: [23, 26] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [18, 22] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [13, 17] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [8, 12] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [3, 7] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 75, weight: 500, value: [27, 30] }
+    - { tier: 2, ilvl: 65, weight: 500, value: [23, 26] }
+    - { tier: 3, ilvl: 46, weight: 500, value: [18, 22] }
+    - { tier: 4, ilvl: 33, weight: 500, value: [13, 17] }
+    - { tier: 5, ilvl: 16, weight: 500, value: [8, 12] }
+    - { tier: 6, ilvl: 8, weight: 500, value: [3, 7] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
 
@@ -271,12 +285,13 @@ cold_inc_weapon:
   names: [星凍的, 永凍的, 冰河的, 嚴寒的, 冰封的, 霜咬的]
   text: "增加 {value}% 冰冷傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 211, value: [75, 89] }
-    - { tier: 2, ilvl: 46, weight: 301, value: [65, 74] }
-    - { tier: 3, ilvl: 33, weight: 430, value: [55, 64] }
-    - { tier: 4, ilvl: 16, weight: 615, value: [45, 54] }
-    - { tier: 5, ilvl: 8, weight: 878, value: [35, 44] }
-    - { tier: 6, ilvl: 2, weight: 1255, value: [25, 34] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 60, weight: 200, value: [75, 89] }
+    - { tier: 2, ilvl: 46, weight: 300, value: [65, 74] }
+    - { tier: 3, ilvl: 33, weight: 400, value: [55, 64] }
+    - { tier: 4, ilvl: 16, weight: 500, value: [45, 54] }
+    - { tier: 5, ilvl: 8, weight: 500, value: [35, 44] }
+    - { tier: 6, ilvl: 2, weight: 500, value: [25, 34] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
 
@@ -287,14 +302,15 @@ cold_inc_weapon_wand:
   names: [星凍的, 永凍的, 冰河的, 嚴寒的, 冰封的, 霜咬的, 冰冷的, 寒涼的]
   text: "增加 {value}% 冰冷傷害"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 109, value: [105, 119] }
-    - { tier: 2, ilvl: 70, weight: 156, value: [90, 104] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [75, 89] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [65, 74] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [55, 64] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [45, 54] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [35, 44] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [25, 34] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 81, weight: 50, value: [105, 119] }
+    - { tier: 2, ilvl: 70, weight: 100, value: [90, 104] }
+    - { tier: 3, ilvl: 60, weight: 200, value: [75, 89] }
+    - { tier: 4, ilvl: 46, weight: 300, value: [65, 74] }
+    - { tier: 5, ilvl: 33, weight: 400, value: [55, 64] }
+    - { tier: 6, ilvl: 16, weight: 500, value: [45, 54] }
+    - { tier: 7, ilvl: 8, weight: 500, value: [35, 44] }
+    - { tier: 8, ilvl: 2, weight: 500, value: [25, 34] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
 
@@ -305,14 +321,15 @@ cold_inc_weapon_staff:
   names: [星凍的, 永凍的, 冰河的, 嚴寒的, 冰封的, 霜咬的, 冰冷的, 寒涼的]
   text: "增加 {value}% 冰冷傷害"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 109, value: [209, 238] }
-    - { tier: 2, ilvl: 70, weight: 156, value: [189, 208] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [149, 188] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [129, 148] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [109, 128] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [89, 108] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [69, 88] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [50, 68] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 81, weight: 50, value: [209, 238] }
+    - { tier: 2, ilvl: 70, weight: 100, value: [189, 208] }
+    - { tier: 3, ilvl: 60, weight: 200, value: [149, 188] }
+    - { tier: 4, ilvl: 46, weight: 300, value: [129, 148] }
+    - { tier: 5, ilvl: 33, weight: 400, value: [109, 128] }
+    - { tier: 6, ilvl: 16, weight: 500, value: [89, 108] }
+    - { tier: 7, ilvl: 8, weight: 500, value: [69, 88] }
+    - { tier: 8, ilvl: 2, weight: 500, value: [50, 68] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
 
@@ -323,12 +340,13 @@ extra_cold:
   names: [星凍的, 永凍的, 冰河的, 嚴寒的, 冰封的, 霜咬的]
   text: "獲得 {value}% 傷害為額外冰冷傷害"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 211, value: [28, 30] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [25, 27] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [22, 24] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [19, 21] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [16, 18] }
-    - { tier: 6, ilvl: 5, weight: 1255, value: [13, 15] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 80, weight: 500, value: [28, 30] }
+    - { tier: 2, ilvl: 60, weight: 500, value: [25, 27] }
+    - { tier: 3, ilvl: 46, weight: 500, value: [22, 24] }
+    - { tier: 4, ilvl: 33, weight: 500, value: [19, 21] }
+    - { tier: 5, ilvl: 16, weight: 500, value: [16, 18] }
+    - { tier: 6, ilvl: 5, weight: 500, value: [13, 15] }
   mods:
     - { stat: damage.extra.cold, type: FLAT, value: "{value}" }
 
@@ -339,12 +357,13 @@ extra_cold_staff:
   names: [星凍的, 永凍的, 冰河的, 嚴寒的, 冰封的, 霜咬的]
   text: "獲得 {value}% 傷害為額外冰冷傷害"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 211, value: [55, 60] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [49, 54] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [43, 48] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [37, 42] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [31, 36] }
-    - { tier: 6, ilvl: 5, weight: 1255, value: [26, 30] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 80, weight: 500, value: [55, 60] }
+    - { tier: 2, ilvl: 60, weight: 500, value: [49, 54] }
+    - { tier: 3, ilvl: 46, weight: 500, value: [43, 48] }
+    - { tier: 4, ilvl: 33, weight: 500, value: [37, 42] }
+    - { tier: 5, ilvl: 16, weight: 500, value: [31, 36] }
+    - { tier: 6, ilvl: 5, weight: 500, value: [26, 30] }
   mods:
     - { stat: damage.extra.cold, type: FLAT, value: "{value}" }
 
@@ -355,12 +374,13 @@ extra_fire:
   names: [星焚的, 焚天的, 熔岩的, 烈火的, 焦炎的, 火咒的]
   text: "獲得 {value}% 傷害為額外火焰傷害"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 211, value: [28, 30] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [25, 27] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [22, 24] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [19, 21] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [16, 18] }
-    - { tier: 6, ilvl: 5, weight: 1255, value: [13, 15] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 80, weight: 500, value: [28, 30] }
+    - { tier: 2, ilvl: 60, weight: 500, value: [25, 27] }
+    - { tier: 3, ilvl: 46, weight: 500, value: [22, 24] }
+    - { tier: 4, ilvl: 33, weight: 500, value: [19, 21] }
+    - { tier: 5, ilvl: 16, weight: 500, value: [16, 18] }
+    - { tier: 6, ilvl: 5, weight: 500, value: [13, 15] }
   mods:
     - { stat: damage.extra.fire, type: FLAT, value: "{value}" }
 
@@ -371,12 +391,13 @@ extra_fire_staff:
   names: [星焚的, 焚天的, 熔岩的, 烈火的, 焦炎的, 火咒的]
   text: "獲得 {value}% 傷害為額外火焰傷害"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 211, value: [55, 60] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [49, 54] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [43, 48] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [37, 42] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [31, 36] }
-    - { tier: 6, ilvl: 5, weight: 1255, value: [26, 30] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 80, weight: 500, value: [55, 60] }
+    - { tier: 2, ilvl: 60, weight: 500, value: [49, 54] }
+    - { tier: 3, ilvl: 46, weight: 500, value: [43, 48] }
+    - { tier: 4, ilvl: 33, weight: 500, value: [37, 42] }
+    - { tier: 5, ilvl: 16, weight: 500, value: [31, 36] }
+    - { tier: 6, ilvl: 5, weight: 500, value: [26, 30] }
   mods:
     - { stat: damage.extra.fire, type: FLAT, value: "{value}" }
 
@@ -387,12 +408,13 @@ extra_lightning:
   names: [星雷的, 天雷的, 雷霆的, 狂雷的, 電光的, 閃耀的]
   text: "獲得 {value}% 傷害為額外閃電傷害"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 211, value: [28, 30] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [25, 27] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [22, 24] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [19, 21] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [16, 18] }
-    - { tier: 6, ilvl: 5, weight: 1255, value: [13, 15] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 80, weight: 500, value: [28, 30] }
+    - { tier: 2, ilvl: 60, weight: 500, value: [25, 27] }
+    - { tier: 3, ilvl: 46, weight: 500, value: [22, 24] }
+    - { tier: 4, ilvl: 33, weight: 500, value: [19, 21] }
+    - { tier: 5, ilvl: 16, weight: 500, value: [16, 18] }
+    - { tier: 6, ilvl: 5, weight: 500, value: [13, 15] }
   mods:
     - { stat: damage.extra.lightning, type: FLAT, value: "{value}" }
 
@@ -403,12 +425,13 @@ extra_lightning_staff:
   names: [星雷的, 天雷的, 雷霆的, 狂雷的, 電光的, 閃耀的]
   text: "獲得 {value}% 傷害為額外閃電傷害"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 211, value: [55, 60] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [49, 54] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [43, 48] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [37, 42] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [31, 36] }
-    - { tier: 6, ilvl: 5, weight: 1255, value: [26, 30] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 80, weight: 500, value: [55, 60] }
+    - { tier: 2, ilvl: 60, weight: 500, value: [49, 54] }
+    - { tier: 3, ilvl: 46, weight: 500, value: [43, 48] }
+    - { tier: 4, ilvl: 33, weight: 500, value: [37, 42] }
+    - { tier: 5, ilvl: 16, weight: 500, value: [31, 36] }
+    - { tier: 6, ilvl: 5, weight: 500, value: [26, 30] }
   mods:
     - { stat: damage.extra.lightning, type: FLAT, value: "{value}" }
 
@@ -420,12 +443,13 @@ bow_inc:
   text: "增加 {value}% 弓技能傷害"
   chips: [damage]   # PoE2（DamageWithBows1–6）的標籤只有「傷害」；下面的 attack、bow 是讓它只對拿弓放的攻擊技能有效
   tiers:
-    - { tier: 1, ilvl: 81, weight: 211, value: [51, 59] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [43, 50] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [37, 42] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [31, 36] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [21, 30] }
-    - { tier: 6, ilvl: 1, weight: 1255, value: [11, 20] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 81, weight: 500, value: [51, 59] }
+    - { tier: 2, ilvl: 60, weight: 500, value: [43, 50] }
+    - { tier: 3, ilvl: 46, weight: 500, value: [37, 42] }
+    - { tier: 4, ilvl: 33, weight: 500, value: [31, 36] }
+    - { tier: 5, ilvl: 16, weight: 500, value: [21, 30] }
+    - { tier: 6, ilvl: 1, weight: 500, value: [11, 20] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [attack, bow] }
 
@@ -436,16 +460,17 @@ es_flat:
   names: [星輝的, 神聖的, 聖靈的, 光耀的, 靈光的, 微光的, 幽光的, 薄光的, 淡光的, 初光的]
   text: "+{value} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 56, value: [80, 89] }
-    - { tier: 2, ilvl: 70, weight: 79, value: [71, 79] }
-    - { tier: 3, ilvl: 65, weight: 113, value: [62, 70] }
-    - { tier: 4, ilvl: 54, weight: 162, value: [52, 61] }
-    - { tier: 5, ilvl: 46, weight: 232, value: [42, 51] }
-    - { tier: 6, ilvl: 33, weight: 331, value: [34, 41] }
-    - { tier: 7, ilvl: 25, weight: 473, value: [25, 33] }
-    - { tier: 8, ilvl: 16, weight: 675, value: [21, 24] }
-    - { tier: 9, ilvl: 11, weight: 965, value: [15, 20] }
-    - { tier: 10, ilvl: 1, weight: 1378, value: [8, 14] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（10 階 → 10 階）
+    - { tier: 1, ilvl: 80, weight: 1000, value: [80, 89] }
+    - { tier: 2, ilvl: 70, weight: 1000, value: [71, 79] }
+    - { tier: 3, ilvl: 65, weight: 1000, value: [62, 70] }
+    - { tier: 4, ilvl: 54, weight: 1000, value: [52, 61] }
+    - { tier: 5, ilvl: 46, weight: 1000, value: [42, 51] }
+    - { tier: 6, ilvl: 33, weight: 1000, value: [34, 41] }
+    - { tier: 7, ilvl: 25, weight: 1000, value: [25, 33] }
+    - { tier: 8, ilvl: 16, weight: 1000, value: [21, 24] }
+    - { tier: 9, ilvl: 11, weight: 1000, value: [15, 20] }
+    - { tier: 10, ilvl: 1, weight: 1000, value: [8, 14] }
   mods:
     - { stat: es.max, type: FLAT, value: "{value}" }
 
@@ -456,15 +481,16 @@ evasion_global:
   names: [星影的, 幻影的, 鬼魅的, 疾風的, 輕靈的, 敏捷的, 靈巧的, 柔韌的, 輕巧的]
   text: "+{value} 閃避"
   tiers:
-    - { tier: 1, ilvl: 70, weight: 78, value: [203, 233] }
-    - { tier: 2, ilvl: 65, weight: 111, value: [175, 202] }
-    - { tier: 3, ilvl: 54, weight: 159, value: [142, 174] }
-    - { tier: 4, ilvl: 46, weight: 228, value: [108, 141] }
-    - { tier: 5, ilvl: 33, weight: 325, value: [80, 107] }
-    - { tier: 6, ilvl: 25, weight: 464, value: [52, 79] }
-    - { tier: 7, ilvl: 16, weight: 663, value: [39, 51] }
-    - { tier: 8, ilvl: 11, weight: 948, value: [18, 38] }
-    - { tier: 9, ilvl: 1, weight: 1354, value: [8, 17] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 70, weight: 1000, value: [203, 233] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [175, 202] }
+    - { tier: 3, ilvl: 54, weight: 1000, value: [142, 174] }
+    - { tier: 4, ilvl: 46, weight: 1000, value: [108, 141] }
+    - { tier: 5, ilvl: 33, weight: 1000, value: [80, 107] }
+    - { tier: 6, ilvl: 25, weight: 1000, value: [52, 79] }
+    - { tier: 7, ilvl: 16, weight: 1000, value: [39, 51] }
+    - { tier: 8, ilvl: 11, weight: 1000, value: [18, 38] }
+    - { tier: 9, ilvl: 1, weight: 1000, value: [8, 17] }
   mods:
     - { stat: evasion, type: FLAT, value: "{value}" }
 
@@ -475,15 +501,16 @@ added_fire:
   names: [星焚的, 焚天的, 熔岩的, 烈火的, 焦炎的, 火咒的, 炙熱的, 溫熱的, 火花的]
   text: "攻擊附加 {min} 到 {max} 火焰傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 78, min: [25, 29], max: [37, 45] }
-    - { tier: 2, ilvl: 65, weight: 111, min: [20, 24], max: [33, 36] }
-    - { tier: 3, ilvl: 60, weight: 159, min: [13, 19], max: [27, 32] }
-    - { tier: 4, ilvl: 54, weight: 228, min: [11, 16], max: [21, 26] }
-    - { tier: 5, ilvl: 46, weight: 325, min: [12, 13], max: [18, 20] }
-    - { tier: 6, ilvl: 33, weight: 464, min: [9, 11], max: [14, 17] }
-    - { tier: 7, ilvl: 16, weight: 663, min: [6, 8], max: [10, 13] }
-    - { tier: 8, ilvl: 8, weight: 948, min: [3, 5], max: [6, 9] }
-    - { tier: 9, ilvl: 1, weight: 1354, min: [1, 2], max: [3, 3] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 75, weight: 200, min: [25, 29], max: [37, 45] }
+    - { tier: 2, ilvl: 65, weight: 300, min: [20, 24], max: [33, 36] }
+    - { tier: 3, ilvl: 60, weight: 400, min: [13, 19], max: [27, 32] }
+    - { tier: 4, ilvl: 54, weight: 500, min: [11, 16], max: [21, 26] }
+    - { tier: 5, ilvl: 46, weight: 500, min: [12, 13], max: [18, 20] }
+    - { tier: 6, ilvl: 33, weight: 500, min: [9, 11], max: [14, 17] }
+    - { tier: 7, ilvl: 16, weight: 500, min: [6, 8], max: [10, 13] }
+    - { tier: 8, ilvl: 8, weight: 500, min: [3, 5], max: [6, 9] }
+    - { tier: 9, ilvl: 1, weight: 500, min: [1, 2], max: [3, 3] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, fire] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, fire] }
@@ -495,12 +522,13 @@ fire_inc:
   names: [星焚的, 焚天的, 熔岩的, 烈火的, 焦炎的, 火咒的]
   text: "增加 {value}% 火焰傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 211, value: [27, 30] }
-    - { tier: 2, ilvl: 65, weight: 301, value: [23, 26] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [18, 22] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [13, 17] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [8, 12] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [3, 7] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 75, weight: 500, value: [27, 30] }
+    - { tier: 2, ilvl: 65, weight: 500, value: [23, 26] }
+    - { tier: 3, ilvl: 46, weight: 500, value: [18, 22] }
+    - { tier: 4, ilvl: 33, weight: 500, value: [13, 17] }
+    - { tier: 5, ilvl: 16, weight: 500, value: [8, 12] }
+    - { tier: 6, ilvl: 8, weight: 500, value: [3, 7] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
 
@@ -512,12 +540,13 @@ fire_inc_weapon:
   names: [星焚的, 焚天的, 熔岩的, 烈火的, 焦炎的, 火咒的]
   text: "增加 {value}% 火焰傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 211, value: [75, 89] }
-    - { tier: 2, ilvl: 46, weight: 301, value: [65, 74] }
-    - { tier: 3, ilvl: 33, weight: 430, value: [55, 64] }
-    - { tier: 4, ilvl: 16, weight: 615, value: [45, 54] }
-    - { tier: 5, ilvl: 8, weight: 878, value: [35, 44] }
-    - { tier: 6, ilvl: 2, weight: 1255, value: [25, 34] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 60, weight: 200, value: [75, 89] }
+    - { tier: 2, ilvl: 46, weight: 300, value: [65, 74] }
+    - { tier: 3, ilvl: 33, weight: 400, value: [55, 64] }
+    - { tier: 4, ilvl: 16, weight: 500, value: [45, 54] }
+    - { tier: 5, ilvl: 8, weight: 500, value: [35, 44] }
+    - { tier: 6, ilvl: 2, weight: 500, value: [25, 34] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
 
@@ -528,14 +557,15 @@ fire_inc_weapon_wand:
   names: [星焚的, 焚天的, 熔岩的, 烈火的, 焦炎的, 火咒的, 炙熱的, 溫熱的]
   text: "增加 {value}% 火焰傷害"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 109, value: [105, 119] }
-    - { tier: 2, ilvl: 70, weight: 156, value: [90, 104] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [75, 89] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [65, 74] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [55, 64] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [45, 54] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [35, 44] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [25, 34] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 81, weight: 50, value: [105, 119] }
+    - { tier: 2, ilvl: 70, weight: 100, value: [90, 104] }
+    - { tier: 3, ilvl: 60, weight: 200, value: [75, 89] }
+    - { tier: 4, ilvl: 46, weight: 300, value: [65, 74] }
+    - { tier: 5, ilvl: 33, weight: 400, value: [55, 64] }
+    - { tier: 6, ilvl: 16, weight: 500, value: [45, 54] }
+    - { tier: 7, ilvl: 8, weight: 500, value: [35, 44] }
+    - { tier: 8, ilvl: 2, weight: 500, value: [25, 34] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
 
@@ -546,14 +576,15 @@ fire_inc_weapon_staff:
   names: [星焚的, 焚天的, 熔岩的, 烈火的, 焦炎的, 火咒的, 炙熱的, 溫熱的]
   text: "增加 {value}% 火焰傷害"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 109, value: [209, 238] }
-    - { tier: 2, ilvl: 70, weight: 156, value: [189, 208] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [149, 188] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [129, 148] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [109, 128] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [89, 108] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [69, 88] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [50, 68] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 81, weight: 50, value: [209, 238] }
+    - { tier: 2, ilvl: 70, weight: 100, value: [189, 208] }
+    - { tier: 3, ilvl: 60, weight: 200, value: [149, 188] }
+    - { tier: 4, ilvl: 46, weight: 300, value: [129, 148] }
+    - { tier: 5, ilvl: 33, weight: 400, value: [109, 128] }
+    - { tier: 6, ilvl: 16, weight: 500, value: [89, 108] }
+    - { tier: 7, ilvl: 8, weight: 500, value: [69, 88] }
+    - { tier: 8, ilvl: 2, weight: 500, value: [50, 68] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
 
@@ -564,13 +595,14 @@ es_inc_global:
   names: [星輝的, 神聖的, 聖靈的, 光耀的, 靈光的, 微光的, 幽光的]
   text: "增加 {value}% 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 152, value: [45, 50] }
-    - { tier: 2, ilvl: 65, weight: 217, value: [39, 44] }
-    - { tier: 3, ilvl: 54, weight: 310, value: [33, 38] }
-    - { tier: 4, ilvl: 46, weight: 443, value: [27, 32] }
-    - { tier: 5, ilvl: 33, weight: 633, value: [21, 26] }
-    - { tier: 6, ilvl: 16, weight: 904, value: [15, 20] }
-    - { tier: 7, ilvl: 2, weight: 1292, value: [10, 14] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 75, weight: 1000, value: [45, 50] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [39, 44] }
+    - { tier: 3, ilvl: 54, weight: 1000, value: [33, 38] }
+    - { tier: 4, ilvl: 46, weight: 1000, value: [27, 32] }
+    - { tier: 5, ilvl: 33, weight: 1000, value: [21, 26] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [15, 20] }
+    - { tier: 7, ilvl: 2, weight: 1000, value: [10, 14] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
 
@@ -581,13 +613,14 @@ evasion_inc_global:
   names: [星影的, 幻影的, 鬼魅的, 疾風的, 輕靈的, 敏捷的, 靈巧的]
   text: "增加 {value}% 閃避"
   tiers:
-    - { tier: 1, ilvl: 77, weight: 152, value: [45, 50] }
-    - { tier: 2, ilvl: 70, weight: 217, value: [39, 44] }
-    - { tier: 3, ilvl: 54, weight: 310, value: [33, 38] }
-    - { tier: 4, ilvl: 46, weight: 443, value: [27, 32] }
-    - { tier: 5, ilvl: 33, weight: 633, value: [21, 26] }
-    - { tier: 6, ilvl: 16, weight: 904, value: [15, 20] }
-    - { tier: 7, ilvl: 2, weight: 1292, value: [10, 14] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 77, weight: 1000, value: [45, 50] }
+    - { tier: 2, ilvl: 70, weight: 1000, value: [39, 44] }
+    - { tier: 3, ilvl: 54, weight: 1000, value: [33, 38] }
+    - { tier: 4, ilvl: 46, weight: 1000, value: [27, 32] }
+    - { tier: 5, ilvl: 33, weight: 1000, value: [21, 26] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [15, 20] }
+    - { tier: 7, ilvl: 2, weight: 1000, value: [10, 14] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
 
@@ -598,13 +631,14 @@ armour_inc_global:
   names: [星鐵的, 不破的, 堡壘的, 鐵壁的, 重甲的, 鋼鑄的, 鐵皮的]
   text: "增加 {value}% 護甲"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 152, value: [45, 50] }
-    - { tier: 2, ilvl: 65, weight: 217, value: [39, 44] }
-    - { tier: 3, ilvl: 54, weight: 310, value: [33, 38] }
-    - { tier: 4, ilvl: 46, weight: 443, value: [27, 32] }
-    - { tier: 5, ilvl: 33, weight: 633, value: [21, 26] }
-    - { tier: 6, ilvl: 16, weight: 904, value: [15, 20] }
-    - { tier: 7, ilvl: 2, weight: 1292, value: [10, 14] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 75, weight: 1000, value: [45, 50] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [39, 44] }
+    - { tier: 3, ilvl: 54, weight: 1000, value: [33, 38] }
+    - { tier: 4, ilvl: 46, weight: 1000, value: [27, 32] }
+    - { tier: 5, ilvl: 33, weight: 1000, value: [21, 26] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [15, 20] }
+    - { tier: 7, ilvl: 2, weight: 1000, value: [10, 14] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
 
@@ -615,15 +649,16 @@ accuracy:
   names: [星芒的, 神匠的, 大師的, 名家的, 精良的, 優質的, 普通的, 簡單的, 樸素的]
   text: "+{value} 命中"
   tiers:
-    - { tier: 1, ilvl: 76, weight: 78, value: [451, 550] }
-    - { tier: 2, ilvl: 67, weight: 111, value: [347, 450] }
-    - { tier: 3, ilvl: 58, weight: 159, value: [237, 346] }
-    - { tier: 4, ilvl: 48, weight: 228, value: [168, 236] }
-    - { tier: 5, ilvl: 36, weight: 325, value: [124, 167] }
-    - { tier: 6, ilvl: 26, weight: 464, value: [85, 123] }
-    - { tier: 7, ilvl: 18, weight: 663, value: [61, 84] }
-    - { tier: 8, ilvl: 11, weight: 948, value: [33, 60] }
-    - { tier: 9, ilvl: 1, weight: 1354, value: [11, 32] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 76, weight: 200, value: [451, 550] }
+    - { tier: 2, ilvl: 67, weight: 400, value: [347, 450] }
+    - { tier: 3, ilvl: 58, weight: 800, value: [237, 346] }
+    - { tier: 4, ilvl: 48, weight: 800, value: [168, 236] }
+    - { tier: 5, ilvl: 36, weight: 800, value: [124, 167] }
+    - { tier: 6, ilvl: 26, weight: 800, value: [85, 123] }
+    - { tier: 7, ilvl: 18, weight: 800, value: [61, 84] }
+    - { tier: 8, ilvl: 11, weight: 800, value: [33, 60] }
+    - { tier: 9, ilvl: 1, weight: 800, value: [11, 32] }
   mods:
     - { stat: accuracy, type: FLAT, value: "{value}" }
 
@@ -634,14 +669,15 @@ accuracy_amulet:
   names: [星芒的, 神匠的, 大師的, 名家的, 精良的, 優質的, 普通的, 簡單的]
   text: "+{value} 命中"
   tiers:
-    - { tier: 1, ilvl: 67, weight: 109, value: [347, 450] }
-    - { tier: 2, ilvl: 58, weight: 156, value: [237, 346] }
-    - { tier: 3, ilvl: 48, weight: 223, value: [168, 236] }
-    - { tier: 4, ilvl: 36, weight: 318, value: [124, 167] }
-    - { tier: 5, ilvl: 26, weight: 454, value: [85, 123] }
-    - { tier: 6, ilvl: 18, weight: 649, value: [61, 84] }
-    - { tier: 7, ilvl: 11, weight: 927, value: [33, 60] }
-    - { tier: 8, ilvl: 1, weight: 1325, value: [11, 32] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 67, weight: 400, value: [347, 450] }
+    - { tier: 2, ilvl: 58, weight: 800, value: [237, 346] }
+    - { tier: 3, ilvl: 48, weight: 800, value: [168, 236] }
+    - { tier: 4, ilvl: 36, weight: 800, value: [124, 167] }
+    - { tier: 5, ilvl: 26, weight: 800, value: [85, 123] }
+    - { tier: 6, ilvl: 18, weight: 800, value: [61, 84] }
+    - { tier: 7, ilvl: 11, weight: 800, value: [33, 60] }
+    - { tier: 8, ilvl: 1, weight: 800, value: [11, 32] }
   mods:
     - { stat: accuracy, type: FLAT, value: "{value}" }
 
@@ -652,12 +688,13 @@ chaos_inc:
   names: [星蝕的, 深淵的, 虛空的, 墮落的, 腐化的, 汙穢的]
   text: "增加 {value}% 混沌傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 211, value: [27, 30] }
-    - { tier: 2, ilvl: 65, weight: 301, value: [23, 26] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [18, 22] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [13, 17] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [8, 12] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [3, 7] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 75, weight: 500, value: [27, 30] }
+    - { tier: 2, ilvl: 65, weight: 500, value: [23, 26] }
+    - { tier: 3, ilvl: 46, weight: 500, value: [18, 22] }
+    - { tier: 4, ilvl: 33, weight: 500, value: [13, 17] }
+    - { tier: 5, ilvl: 16, weight: 500, value: [8, 12] }
+    - { tier: 6, ilvl: 8, weight: 500, value: [3, 7] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
 
@@ -668,15 +705,16 @@ life_flat:
   names: [星骸的, 天賜的, 神軀的, 不朽的, 雄壯的, 壯碩的, 強健的, 健康的, 結實的]
   text: "+{value} 最大生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 78, value: [120, 149] }
-    - { tier: 2, ilvl: 54, weight: 111, value: [100, 119] }
-    - { tier: 3, ilvl: 46, weight: 159, value: [85, 99] }
-    - { tier: 4, ilvl: 38, weight: 228, value: [70, 84] }
-    - { tier: 5, ilvl: 33, weight: 325, value: [60, 69] }
-    - { tier: 6, ilvl: 24, weight: 464, value: [40, 59] }
-    - { tier: 7, ilvl: 16, weight: 663, value: [30, 39] }
-    - { tier: 8, ilvl: 6, weight: 948, value: [20, 29] }
-    - { tier: 9, ilvl: 1, weight: 1354, value: [10, 19] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 60, weight: 1000, value: [120, 149] }
+    - { tier: 2, ilvl: 54, weight: 1000, value: [100, 119] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [85, 99] }
+    - { tier: 4, ilvl: 38, weight: 1000, value: [70, 84] }
+    - { tier: 5, ilvl: 33, weight: 1000, value: [60, 69] }
+    - { tier: 6, ilvl: 24, weight: 1000, value: [40, 59] }
+    - { tier: 7, ilvl: 16, weight: 1000, value: [30, 39] }
+    - { tier: 8, ilvl: 6, weight: 1000, value: [20, 29] }
+    - { tier: 9, ilvl: 1, weight: 1000, value: [10, 19] }
   mods:
     - { stat: life.max, type: FLAT, value: "{value}" }
 
@@ -687,16 +725,17 @@ life_flat_belt:
   names: [星骸的, 天賜的, 神軀的, 不朽的, 雄壯的, 壯碩的, 強健的, 健康的, 結實的, 活力的]
   text: "+{value} 最大生命"
   tiers:
-    - { tier: 1, ilvl: 65, weight: 56, value: [150, 174] }
-    - { tier: 2, ilvl: 60, weight: 79, value: [120, 149] }
-    - { tier: 3, ilvl: 54, weight: 113, value: [100, 119] }
-    - { tier: 4, ilvl: 46, weight: 162, value: [85, 99] }
-    - { tier: 5, ilvl: 38, weight: 232, value: [70, 84] }
-    - { tier: 6, ilvl: 33, weight: 331, value: [60, 69] }
-    - { tier: 7, ilvl: 24, weight: 473, value: [40, 59] }
-    - { tier: 8, ilvl: 16, weight: 675, value: [30, 39] }
-    - { tier: 9, ilvl: 6, weight: 965, value: [20, 29] }
-    - { tier: 10, ilvl: 1, weight: 1378, value: [10, 19] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（10 階 → 10 階）
+    - { tier: 1, ilvl: 65, weight: 1000, value: [150, 174] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [120, 149] }
+    - { tier: 3, ilvl: 54, weight: 1000, value: [100, 119] }
+    - { tier: 4, ilvl: 46, weight: 1000, value: [85, 99] }
+    - { tier: 5, ilvl: 38, weight: 1000, value: [70, 84] }
+    - { tier: 6, ilvl: 33, weight: 1000, value: [60, 69] }
+    - { tier: 7, ilvl: 24, weight: 1000, value: [40, 59] }
+    - { tier: 8, ilvl: 16, weight: 1000, value: [30, 39] }
+    - { tier: 9, ilvl: 6, weight: 1000, value: [20, 29] }
+    - { tier: 10, ilvl: 1, weight: 1000, value: [10, 19] }
   mods:
     - { stat: life.max, type: FLAT, value: "{value}" }
 
@@ -707,19 +746,20 @@ life_flat_body:
   names: [星骸的, 天賜的, 神軀的, 不朽的, 雄壯的, 壯碩的, 強健的, 健康的, 結實的, 活力的, 紅潤的, 平凡的, 粗糙的]
   text: "+{value} 最大生命"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 20, value: [200, 214] }
-    - { tier: 2, ilvl: 75, weight: 28, value: [190, 199] }
-    - { tier: 3, ilvl: 70, weight: 40, value: [175, 189] }
-    - { tier: 4, ilvl: 65, weight: 58, value: [150, 174] }
-    - { tier: 5, ilvl: 60, weight: 83, value: [120, 149] }
-    - { tier: 6, ilvl: 54, weight: 118, value: [100, 119] }
-    - { tier: 7, ilvl: 46, weight: 168, value: [85, 99] }
-    - { tier: 8, ilvl: 38, weight: 241, value: [70, 84] }
-    - { tier: 9, ilvl: 33, weight: 344, value: [60, 69] }
-    - { tier: 10, ilvl: 24, weight: 491, value: [40, 59] }
-    - { tier: 11, ilvl: 16, weight: 702, value: [30, 39] }
-    - { tier: 12, ilvl: 6, weight: 1002, value: [20, 29] }
-    - { tier: 13, ilvl: 1, weight: 1432, value: [10, 19] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（13 階 → 13 階）
+    - { tier: 1, ilvl: 80, weight: 1000, value: [200, 214] }
+    - { tier: 2, ilvl: 75, weight: 1000, value: [190, 199] }
+    - { tier: 3, ilvl: 70, weight: 1000, value: [175, 189] }
+    - { tier: 4, ilvl: 65, weight: 1000, value: [150, 174] }
+    - { tier: 5, ilvl: 60, weight: 1000, value: [120, 149] }
+    - { tier: 6, ilvl: 54, weight: 1000, value: [100, 119] }
+    - { tier: 7, ilvl: 46, weight: 1000, value: [85, 99] }
+    - { tier: 8, ilvl: 38, weight: 1000, value: [70, 84] }
+    - { tier: 9, ilvl: 33, weight: 1000, value: [60, 69] }
+    - { tier: 10, ilvl: 24, weight: 1000, value: [40, 59] }
+    - { tier: 11, ilvl: 16, weight: 1000, value: [30, 39] }
+    - { tier: 12, ilvl: 6, weight: 1000, value: [20, 29] }
+    - { tier: 13, ilvl: 1, weight: 1000, value: [10, 19] }
   mods:
     - { stat: life.max, type: FLAT, value: "{value}" }
 
@@ -731,17 +771,18 @@ life_flat_shield:
   names: [星骸的, 天賜的, 神軀的, 不朽的, 雄壯的, 壯碩的, 強健的, 健康的, 結實的, 活力的, 紅潤的]
   text: "+{value} 最大生命"
   tiers:
-    - { tier: 1, ilvl: 70, weight: 40, value: [175, 189] }
-    - { tier: 2, ilvl: 65, weight: 56, value: [150, 174] }
-    - { tier: 3, ilvl: 60, weight: 81, value: [120, 149] }
-    - { tier: 4, ilvl: 54, weight: 115, value: [100, 119] }
-    - { tier: 5, ilvl: 46, weight: 165, value: [85, 99] }
-    - { tier: 6, ilvl: 38, weight: 235, value: [70, 84] }
-    - { tier: 7, ilvl: 33, weight: 336, value: [60, 69] }
-    - { tier: 8, ilvl: 24, weight: 480, value: [40, 59] }
-    - { tier: 9, ilvl: 16, weight: 685, value: [30, 39] }
-    - { tier: 10, ilvl: 6, weight: 979, value: [20, 29] }
-    - { tier: 11, ilvl: 1, weight: 1399, value: [10, 19] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（11 階 → 11 階）
+    - { tier: 1, ilvl: 70, weight: 1000, value: [175, 189] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [150, 174] }
+    - { tier: 3, ilvl: 60, weight: 1000, value: [120, 149] }
+    - { tier: 4, ilvl: 54, weight: 1000, value: [100, 119] }
+    - { tier: 5, ilvl: 46, weight: 1000, value: [85, 99] }
+    - { tier: 6, ilvl: 38, weight: 1000, value: [70, 84] }
+    - { tier: 7, ilvl: 33, weight: 1000, value: [60, 69] }
+    - { tier: 8, ilvl: 24, weight: 1000, value: [40, 59] }
+    - { tier: 9, ilvl: 16, weight: 1000, value: [30, 39] }
+    - { tier: 10, ilvl: 6, weight: 1000, value: [20, 29] }
+    - { tier: 11, ilvl: 1, weight: 1000, value: [10, 19] }
   mods:
     - { stat: life.max, type: FLAT, value: "{value}" }
 
@@ -752,14 +793,15 @@ life_flat_ring:
   names: [星骸的, 天賜的, 神軀的, 不朽的, 雄壯的, 壯碩的, 強健的, 健康的]
   text: "+{value} 最大生命"
   tiers:
-    - { tier: 1, ilvl: 54, weight: 109, value: [100, 119] }
-    - { tier: 2, ilvl: 46, weight: 156, value: [85, 99] }
-    - { tier: 3, ilvl: 38, weight: 223, value: [70, 84] }
-    - { tier: 4, ilvl: 33, weight: 318, value: [60, 69] }
-    - { tier: 5, ilvl: 24, weight: 454, value: [40, 59] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [30, 39] }
-    - { tier: 7, ilvl: 6, weight: 927, value: [20, 29] }
-    - { tier: 8, ilvl: 1, weight: 1325, value: [10, 19] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 54, weight: 1000, value: [100, 119] }
+    - { tier: 2, ilvl: 46, weight: 1000, value: [85, 99] }
+    - { tier: 3, ilvl: 38, weight: 1000, value: [70, 84] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [60, 69] }
+    - { tier: 5, ilvl: 24, weight: 1000, value: [40, 59] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [30, 39] }
+    - { tier: 7, ilvl: 6, weight: 1000, value: [20, 29] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [10, 19] }
   mods:
     - { stat: life.max, type: FLAT, value: "{value}" }
 
@@ -770,15 +812,16 @@ mana_flat:
   names: [星海的, 神諭的, 天啟的, 通靈的, 睿智的, 清明的, 聰慧的, 學徒的, 靈光的]
   text: "+{value} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 78, value: [105, 124] }
-    - { tier: 2, ilvl: 54, weight: 111, value: [90, 104] }
-    - { tier: 3, ilvl: 46, weight: 159, value: [80, 89] }
-    - { tier: 4, ilvl: 38, weight: 228, value: [65, 79] }
-    - { tier: 5, ilvl: 33, weight: 325, value: [55, 64] }
-    - { tier: 6, ilvl: 25, weight: 464, value: [35, 54] }
-    - { tier: 7, ilvl: 16, weight: 663, value: [25, 34] }
-    - { tier: 8, ilvl: 6, weight: 948, value: [15, 24] }
-    - { tier: 9, ilvl: 1, weight: 1354, value: [10, 14] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 60, weight: 1000, value: [105, 124] }
+    - { tier: 2, ilvl: 54, weight: 1000, value: [90, 104] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [80, 89] }
+    - { tier: 4, ilvl: 38, weight: 1000, value: [65, 79] }
+    - { tier: 5, ilvl: 33, weight: 1000, value: [55, 64] }
+    - { tier: 6, ilvl: 25, weight: 1000, value: [35, 54] }
+    - { tier: 7, ilvl: 16, weight: 1000, value: [25, 34] }
+    - { tier: 8, ilvl: 6, weight: 1000, value: [15, 24] }
+    - { tier: 9, ilvl: 1, weight: 1000, value: [10, 14] }
   mods:
     - { stat: mana.max, type: FLAT, value: "{value}" }
 
@@ -789,16 +832,17 @@ mana_flat_helmet:
   names: [星海的, 神諭的, 天啟的, 通靈的, 睿智的, 清明的, 聰慧的, 學徒的, 靈光的, 微明的]
   text: "+{value} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 65, weight: 56, value: [125, 149] }
-    - { tier: 2, ilvl: 60, weight: 79, value: [105, 124] }
-    - { tier: 3, ilvl: 54, weight: 113, value: [90, 104] }
-    - { tier: 4, ilvl: 46, weight: 162, value: [80, 89] }
-    - { tier: 5, ilvl: 38, weight: 232, value: [65, 79] }
-    - { tier: 6, ilvl: 33, weight: 331, value: [55, 64] }
-    - { tier: 7, ilvl: 25, weight: 473, value: [35, 54] }
-    - { tier: 8, ilvl: 16, weight: 675, value: [25, 34] }
-    - { tier: 9, ilvl: 6, weight: 965, value: [15, 24] }
-    - { tier: 10, ilvl: 1, weight: 1378, value: [10, 14] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（10 階 → 10 階）
+    - { tier: 1, ilvl: 65, weight: 1000, value: [125, 149] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [105, 124] }
+    - { tier: 3, ilvl: 54, weight: 1000, value: [90, 104] }
+    - { tier: 4, ilvl: 46, weight: 1000, value: [80, 89] }
+    - { tier: 5, ilvl: 38, weight: 1000, value: [65, 79] }
+    - { tier: 6, ilvl: 33, weight: 1000, value: [55, 64] }
+    - { tier: 7, ilvl: 25, weight: 1000, value: [35, 54] }
+    - { tier: 8, ilvl: 16, weight: 1000, value: [25, 34] }
+    - { tier: 9, ilvl: 6, weight: 1000, value: [15, 24] }
+    - { tier: 10, ilvl: 1, weight: 1000, value: [10, 14] }
   mods:
     - { stat: mana.max, type: FLAT, value: "{value}" }
 
@@ -810,17 +854,18 @@ mana_flat_sceptre:
   names: [星海的, 神諭的, 天啟的, 通靈的, 睿智的, 清明的, 聰慧的, 學徒的, 靈光的, 微明的, 初醒的]
   text: "+{value} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 70, weight: 40, value: [150, 164] }
-    - { tier: 2, ilvl: 65, weight: 56, value: [125, 149] }
-    - { tier: 3, ilvl: 60, weight: 81, value: [105, 124] }
-    - { tier: 4, ilvl: 54, weight: 115, value: [90, 104] }
-    - { tier: 5, ilvl: 46, weight: 165, value: [80, 89] }
-    - { tier: 6, ilvl: 38, weight: 235, value: [65, 79] }
-    - { tier: 7, ilvl: 33, weight: 336, value: [55, 64] }
-    - { tier: 8, ilvl: 25, weight: 480, value: [35, 54] }
-    - { tier: 9, ilvl: 16, weight: 685, value: [25, 34] }
-    - { tier: 10, ilvl: 6, weight: 979, value: [15, 24] }
-    - { tier: 11, ilvl: 1, weight: 1399, value: [10, 14] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（11 階 → 11 階）
+    - { tier: 1, ilvl: 70, weight: 1000, value: [150, 164] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [125, 149] }
+    - { tier: 3, ilvl: 60, weight: 1000, value: [105, 124] }
+    - { tier: 4, ilvl: 54, weight: 1000, value: [90, 104] }
+    - { tier: 5, ilvl: 46, weight: 1000, value: [80, 89] }
+    - { tier: 6, ilvl: 38, weight: 1000, value: [65, 79] }
+    - { tier: 7, ilvl: 33, weight: 1000, value: [55, 64] }
+    - { tier: 8, ilvl: 25, weight: 1000, value: [35, 54] }
+    - { tier: 9, ilvl: 16, weight: 1000, value: [25, 34] }
+    - { tier: 10, ilvl: 6, weight: 1000, value: [15, 24] }
+    - { tier: 11, ilvl: 1, weight: 1000, value: [10, 14] }
   mods:
     - { stat: mana.max, type: FLAT, value: "{value}" }
 
@@ -831,19 +876,20 @@ mana_flat_amulet:
   names: [星海的, 神諭的, 天啟的, 通靈的, 睿智的, 清明的, 聰慧的, 學徒的, 靈光的, 微明的, 初醒的, 平凡的, 粗糙的]
   text: "+{value} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 20, value: [180, 189] }
-    - { tier: 2, ilvl: 75, weight: 28, value: [165, 179] }
-    - { tier: 3, ilvl: 70, weight: 40, value: [150, 164] }
-    - { tier: 4, ilvl: 65, weight: 58, value: [125, 149] }
-    - { tier: 5, ilvl: 60, weight: 83, value: [105, 124] }
-    - { tier: 6, ilvl: 54, weight: 118, value: [90, 104] }
-    - { tier: 7, ilvl: 46, weight: 168, value: [80, 89] }
-    - { tier: 8, ilvl: 38, weight: 241, value: [65, 79] }
-    - { tier: 9, ilvl: 33, weight: 344, value: [55, 64] }
-    - { tier: 10, ilvl: 25, weight: 491, value: [35, 54] }
-    - { tier: 11, ilvl: 16, weight: 702, value: [25, 34] }
-    - { tier: 12, ilvl: 6, weight: 1002, value: [15, 24] }
-    - { tier: 13, ilvl: 1, weight: 1432, value: [10, 14] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（13 階 → 13 階）
+    - { tier: 1, ilvl: 82, weight: 1000, value: [180, 189] }
+    - { tier: 2, ilvl: 75, weight: 1000, value: [165, 179] }
+    - { tier: 3, ilvl: 70, weight: 1000, value: [150, 164] }
+    - { tier: 4, ilvl: 65, weight: 1000, value: [125, 149] }
+    - { tier: 5, ilvl: 60, weight: 1000, value: [105, 124] }
+    - { tier: 6, ilvl: 54, weight: 1000, value: [90, 104] }
+    - { tier: 7, ilvl: 46, weight: 1000, value: [80, 89] }
+    - { tier: 8, ilvl: 38, weight: 1000, value: [65, 79] }
+    - { tier: 9, ilvl: 33, weight: 1000, value: [55, 64] }
+    - { tier: 10, ilvl: 25, weight: 1000, value: [35, 54] }
+    - { tier: 11, ilvl: 16, weight: 1000, value: [25, 34] }
+    - { tier: 12, ilvl: 6, weight: 1000, value: [15, 24] }
+    - { tier: 13, ilvl: 1, weight: 1000, value: [10, 14] }
   mods:
     - { stat: mana.max, type: FLAT, value: "{value}" }
 
@@ -854,18 +900,19 @@ mana_flat_ring:
   names: [星海的, 神諭的, 天啟的, 通靈的, 睿智的, 清明的, 聰慧的, 學徒的, 靈光的, 微明的, 初醒的, 平凡的]
   text: "+{value} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 28, value: [165, 179] }
-    - { tier: 2, ilvl: 70, weight: 40, value: [150, 164] }
-    - { tier: 3, ilvl: 65, weight: 57, value: [125, 149] }
-    - { tier: 4, ilvl: 60, weight: 82, value: [105, 124] }
-    - { tier: 5, ilvl: 54, weight: 117, value: [90, 104] }
-    - { tier: 6, ilvl: 46, weight: 167, value: [80, 89] }
-    - { tier: 7, ilvl: 38, weight: 238, value: [65, 79] }
-    - { tier: 8, ilvl: 33, weight: 340, value: [55, 64] }
-    - { tier: 9, ilvl: 25, weight: 486, value: [35, 54] }
-    - { tier: 10, ilvl: 16, weight: 694, value: [25, 34] }
-    - { tier: 11, ilvl: 6, weight: 992, value: [15, 24] }
-    - { tier: 12, ilvl: 1, weight: 1417, value: [10, 14] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（12 階 → 12 階）
+    - { tier: 1, ilvl: 75, weight: 1000, value: [165, 179] }
+    - { tier: 2, ilvl: 70, weight: 1000, value: [150, 164] }
+    - { tier: 3, ilvl: 65, weight: 1000, value: [125, 149] }
+    - { tier: 4, ilvl: 60, weight: 1000, value: [105, 124] }
+    - { tier: 5, ilvl: 54, weight: 1000, value: [90, 104] }
+    - { tier: 6, ilvl: 46, weight: 1000, value: [80, 89] }
+    - { tier: 7, ilvl: 38, weight: 1000, value: [65, 79] }
+    - { tier: 8, ilvl: 33, weight: 1000, value: [55, 64] }
+    - { tier: 9, ilvl: 25, weight: 1000, value: [35, 54] }
+    - { tier: 10, ilvl: 16, weight: 1000, value: [25, 34] }
+    - { tier: 11, ilvl: 6, weight: 1000, value: [15, 24] }
+    - { tier: 12, ilvl: 1, weight: 1000, value: [10, 14] }
   mods:
     - { stat: mana.max, type: FLAT, value: "{value}" }
 
@@ -876,17 +923,18 @@ mana_flat_staff:
   names: [星海的, 神諭的, 天啟的, 通靈的, 睿智的, 清明的, 聰慧的, 學徒的, 靈光的, 微明的, 初醒的]
   text: "+{value} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 70, weight: 40, value: [299, 328] }
-    - { tier: 2, ilvl: 65, weight: 56, value: [249, 298] }
-    - { tier: 3, ilvl: 60, weight: 81, value: [209, 248] }
-    - { tier: 4, ilvl: 54, weight: 115, value: [179, 208] }
-    - { tier: 5, ilvl: 46, weight: 165, value: [159, 178] }
-    - { tier: 6, ilvl: 38, weight: 235, value: [129, 158] }
-    - { tier: 7, ilvl: 33, weight: 336, value: [109, 128] }
-    - { tier: 8, ilvl: 25, weight: 480, value: [69, 108] }
-    - { tier: 9, ilvl: 16, weight: 685, value: [49, 68] }
-    - { tier: 10, ilvl: 6, weight: 979, value: [29, 48] }
-    - { tier: 11, ilvl: 1, weight: 1399, value: [20, 28] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（11 階 → 11 階）
+    - { tier: 1, ilvl: 70, weight: 1000, value: [299, 328] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [249, 298] }
+    - { tier: 3, ilvl: 60, weight: 1000, value: [209, 248] }
+    - { tier: 4, ilvl: 54, weight: 1000, value: [179, 208] }
+    - { tier: 5, ilvl: 46, weight: 1000, value: [159, 178] }
+    - { tier: 6, ilvl: 38, weight: 1000, value: [129, 158] }
+    - { tier: 7, ilvl: 33, weight: 1000, value: [109, 128] }
+    - { tier: 8, ilvl: 25, weight: 1000, value: [69, 108] }
+    - { tier: 9, ilvl: 16, weight: 1000, value: [49, 68] }
+    - { tier: 10, ilvl: 6, weight: 1000, value: [29, 48] }
+    - { tier: 11, ilvl: 1, weight: 1000, value: [20, 28] }
   mods:
     - { stat: mana.max, type: FLAT, value: "{value}" }
 
@@ -898,12 +946,13 @@ attack_ele_inc:
   text: "增加 {value}% 攻擊的元素傷害"
   chips: [damage, elemental, fire, cold, lightning, attack]   # PoE2 的標籤（IncreasedWeaponElementalDamagePercent）；2026-10-17 補攻擊
   tiers:
-    - { tier: 1, ilvl: 81, weight: 211, value: [87, 100] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [73, 86] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [63, 72] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [53, 62] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [36, 52] }
-    - { tier: 6, ilvl: 4, weight: 1255, value: [19, 35] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 81, weight: 500, value: [87, 100] }
+    - { tier: 2, ilvl: 60, weight: 500, value: [73, 86] }
+    - { tier: 3, ilvl: 46, weight: 500, value: [63, 72] }
+    - { tier: 4, ilvl: 33, weight: 500, value: [53, 62] }
+    - { tier: 5, ilvl: 16, weight: 500, value: [36, 52] }
+    - { tier: 6, ilvl: 4, weight: 500, value: [19, 35] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [attack, elemental] }
 
@@ -915,12 +964,13 @@ attack_ele_inc_crossbow:
   text: "增加 {value}% 攻擊的元素傷害"
   chips: [damage, elemental, fire, cold, lightning, attack]   # PoE2 的標籤（IncreasedWeaponElementalDamagePercent）；2026-10-17 補攻擊
   tiers:
-    - { tier: 1, ilvl: 81, weight: 211, value: [120, 139] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [100, 119] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [86, 99] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [72, 85] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [48, 71] }
-    - { tier: 6, ilvl: 4, weight: 1255, value: [34, 47] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 81, weight: 500, value: [120, 139] }
+    - { tier: 2, ilvl: 60, weight: 500, value: [100, 119] }
+    - { tier: 3, ilvl: 46, weight: 500, value: [86, 99] }
+    - { tier: 4, ilvl: 33, weight: 500, value: [72, 85] }
+    - { tier: 5, ilvl: 16, weight: 500, value: [48, 71] }
+    - { tier: 6, ilvl: 4, weight: 500, value: [34, 47] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [attack, elemental] }
 
@@ -931,9 +981,10 @@ rarity_inc:
   names: [星運的, 財運的, 好運的]
   text: "增加 {value}% 物品掉落稀有度"
   tiers:
-    - { tier: 1, ilvl: 47, weight: 546, value: [16, 19] }
-    - { tier: 2, ilvl: 29, weight: 780, value: [12, 15] }
-    - { tier: 3, ilvl: 10, weight: 1114, value: [8, 11] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（3 階 → 3 階）
+    - { tier: 1, ilvl: 47, weight: 1000, value: [16, 19] }
+    - { tier: 2, ilvl: 29, weight: 1000, value: [12, 15] }
+    - { tier: 3, ilvl: 10, weight: 1000, value: [8, 11] }
   mods:
     - { stat: drop.rarity, type: INCREASED, value: "{value}" }
 
@@ -944,15 +995,16 @@ added_lightning:
   names: [星雷的, 天雷的, 雷霆的, 狂雷的, 電光的, 閃耀的, 帶電的, 靜電的, 微電的]
   text: "攻擊附加 {min} 到 {max} 閃電傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 78, min: [1, 4], max: [60, 71] }
-    - { tier: 2, ilvl: 65, weight: 111, min: [1, 3], max: [48, 59] }
-    - { tier: 3, ilvl: 60, weight: 159, min: [1, 2], max: [41, 47] }
-    - { tier: 4, ilvl: 54, weight: 228, min: [1, 2], max: [33, 40] }
-    - { tier: 5, ilvl: 46, weight: 325, min: [1, 1], max: [28, 32] }
-    - { tier: 6, ilvl: 33, weight: 464, min: [1, 1], max: [23, 27] }
-    - { tier: 7, ilvl: 16, weight: 663, min: [1, 1], max: [16, 22] }
-    - { tier: 8, ilvl: 8, weight: 948, min: [1, 1], max: [10, 15] }
-    - { tier: 9, ilvl: 1, weight: 1354, min: [1, 1], max: [4, 6] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 75, weight: 200, min: [1, 4], max: [60, 71] }
+    - { tier: 2, ilvl: 65, weight: 300, min: [1, 3], max: [48, 59] }
+    - { tier: 3, ilvl: 60, weight: 400, min: [1, 2], max: [41, 47] }
+    - { tier: 4, ilvl: 54, weight: 500, min: [1, 2], max: [33, 40] }
+    - { tier: 5, ilvl: 46, weight: 500, min: [1, 1], max: [28, 32] }
+    - { tier: 6, ilvl: 33, weight: 500, min: [1, 1], max: [23, 27] }
+    - { tier: 7, ilvl: 16, weight: 500, min: [1, 1], max: [16, 22] }
+    - { tier: 8, ilvl: 8, weight: 500, min: [1, 1], max: [10, 15] }
+    - { tier: 9, ilvl: 1, weight: 500, min: [1, 1], max: [4, 6] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, lightning] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, lightning] }
@@ -964,12 +1016,13 @@ lightning_inc:
   names: [星雷的, 天雷的, 雷霆的, 狂雷的, 電光的, 閃耀的]
   text: "增加 {value}% 閃電傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 211, value: [27, 30] }
-    - { tier: 2, ilvl: 65, weight: 301, value: [23, 26] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [18, 22] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [13, 17] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [8, 12] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [3, 7] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 75, weight: 500, value: [27, 30] }
+    - { tier: 2, ilvl: 65, weight: 500, value: [23, 26] }
+    - { tier: 3, ilvl: 46, weight: 500, value: [18, 22] }
+    - { tier: 4, ilvl: 33, weight: 500, value: [13, 17] }
+    - { tier: 5, ilvl: 16, weight: 500, value: [8, 12] }
+    - { tier: 6, ilvl: 8, weight: 500, value: [3, 7] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
 
@@ -981,12 +1034,13 @@ lightning_inc_weapon:
   names: [星雷的, 天雷的, 雷霆的, 狂雷的, 電光的, 閃耀的]
   text: "增加 {value}% 閃電傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 211, value: [75, 89] }
-    - { tier: 2, ilvl: 46, weight: 301, value: [65, 74] }
-    - { tier: 3, ilvl: 33, weight: 430, value: [55, 64] }
-    - { tier: 4, ilvl: 16, weight: 615, value: [45, 54] }
-    - { tier: 5, ilvl: 8, weight: 878, value: [35, 44] }
-    - { tier: 6, ilvl: 2, weight: 1255, value: [25, 34] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 60, weight: 200, value: [75, 89] }
+    - { tier: 2, ilvl: 46, weight: 300, value: [65, 74] }
+    - { tier: 3, ilvl: 33, weight: 400, value: [55, 64] }
+    - { tier: 4, ilvl: 16, weight: 500, value: [45, 54] }
+    - { tier: 5, ilvl: 8, weight: 500, value: [35, 44] }
+    - { tier: 6, ilvl: 2, weight: 500, value: [25, 34] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
 
@@ -997,14 +1051,15 @@ lightning_inc_weapon_wand:
   names: [星雷的, 天雷的, 雷霆的, 狂雷的, 電光的, 閃耀的, 帶電的, 靜電的]
   text: "增加 {value}% 閃電傷害"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 109, value: [105, 119] }
-    - { tier: 2, ilvl: 70, weight: 156, value: [90, 104] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [75, 89] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [65, 74] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [55, 64] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [45, 54] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [35, 44] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [25, 34] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 81, weight: 50, value: [105, 119] }
+    - { tier: 2, ilvl: 70, weight: 100, value: [90, 104] }
+    - { tier: 3, ilvl: 60, weight: 200, value: [75, 89] }
+    - { tier: 4, ilvl: 46, weight: 300, value: [65, 74] }
+    - { tier: 5, ilvl: 33, weight: 400, value: [55, 64] }
+    - { tier: 6, ilvl: 16, weight: 500, value: [45, 54] }
+    - { tier: 7, ilvl: 8, weight: 500, value: [35, 44] }
+    - { tier: 8, ilvl: 2, weight: 500, value: [25, 34] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
 
@@ -1015,14 +1070,15 @@ lightning_inc_weapon_staff:
   names: [星雷的, 天雷的, 雷霆的, 狂雷的, 電光的, 閃耀的, 帶電的, 靜電的]
   text: "增加 {value}% 閃電傷害"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 109, value: [209, 238] }
-    - { tier: 2, ilvl: 70, weight: 156, value: [189, 208] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [149, 188] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [129, 148] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [109, 128] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [89, 108] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [69, 88] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [50, 68] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 81, weight: 50, value: [209, 238] }
+    - { tier: 2, ilvl: 70, weight: 100, value: [189, 208] }
+    - { tier: 3, ilvl: 60, weight: 200, value: [149, 188] }
+    - { tier: 4, ilvl: 46, weight: 300, value: [129, 148] }
+    - { tier: 5, ilvl: 33, weight: 400, value: [109, 128] }
+    - { tier: 6, ilvl: 16, weight: 500, value: [89, 108] }
+    - { tier: 7, ilvl: 8, weight: 500, value: [69, 88] }
+    - { tier: 8, ilvl: 2, weight: 500, value: [50, 68] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
 
@@ -1033,15 +1089,16 @@ accuracy_weapon:
   names: [星芒的, 神匠的, 大師的, 名家的, 精良的, 優質的, 普通的, 簡單的, 樸素的]
   text: "+{value} 命中"
   tiers:
-    - { tier: 1, ilvl: 76, weight: 78, value: [451, 550] }
-    - { tier: 2, ilvl: 67, weight: 111, value: [347, 450] }
-    - { tier: 3, ilvl: 58, weight: 159, value: [237, 346] }
-    - { tier: 4, ilvl: 48, weight: 228, value: [168, 236] }
-    - { tier: 5, ilvl: 36, weight: 325, value: [124, 167] }
-    - { tier: 6, ilvl: 26, weight: 464, value: [85, 123] }
-    - { tier: 7, ilvl: 18, weight: 663, value: [61, 84] }
-    - { tier: 8, ilvl: 13, weight: 948, value: [33, 60] }
-    - { tier: 9, ilvl: 8, weight: 1354, value: [11, 32] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 76, weight: 200, value: [451, 550] }
+    - { tier: 2, ilvl: 67, weight: 300, value: [347, 450] }
+    - { tier: 3, ilvl: 58, weight: 600, value: [237, 346] }
+    - { tier: 4, ilvl: 48, weight: 600, value: [168, 236] }
+    - { tier: 5, ilvl: 36, weight: 800, value: [124, 167] }
+    - { tier: 6, ilvl: 26, weight: 800, value: [85, 123] }
+    - { tier: 7, ilvl: 18, weight: 800, value: [61, 84] }
+    - { tier: 8, ilvl: 13, weight: 800, value: [33, 60] }
+    - { tier: 9, ilvl: 8, weight: 800, value: [11, 32] }
   mods:
     - { stat: accuracy, type: FLAT, value: "{value}" }
 
@@ -1052,16 +1109,17 @@ accuracy_weapon_bow:
   names: [星芒的, 神匠的, 大師的, 名家的, 精良的, 優質的, 普通的, 簡單的, 樸素的, 粗糙的]
   text: "+{value} 命中"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 56, value: [551, 650] }
-    - { tier: 2, ilvl: 76, weight: 79, value: [451, 550] }
-    - { tier: 3, ilvl: 67, weight: 113, value: [347, 450] }
-    - { tier: 4, ilvl: 58, weight: 162, value: [237, 346] }
-    - { tier: 5, ilvl: 48, weight: 232, value: [168, 236] }
-    - { tier: 6, ilvl: 36, weight: 331, value: [124, 167] }
-    - { tier: 7, ilvl: 26, weight: 473, value: [85, 123] }
-    - { tier: 8, ilvl: 18, weight: 675, value: [61, 84] }
-    - { tier: 9, ilvl: 13, weight: 965, value: [33, 60] }
-    - { tier: 10, ilvl: 8, weight: 1378, value: [11, 32] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（10 階 → 10 階）
+    - { tier: 1, ilvl: 82, weight: 100, value: [551, 650] }
+    - { tier: 2, ilvl: 76, weight: 200, value: [451, 550] }
+    - { tier: 3, ilvl: 67, weight: 300, value: [347, 450] }
+    - { tier: 4, ilvl: 58, weight: 600, value: [237, 346] }
+    - { tier: 5, ilvl: 48, weight: 600, value: [168, 236] }
+    - { tier: 6, ilvl: 36, weight: 800, value: [124, 167] }
+    - { tier: 7, ilvl: 26, weight: 800, value: [85, 123] }
+    - { tier: 8, ilvl: 18, weight: 800, value: [61, 84] }
+    - { tier: 9, ilvl: 13, weight: 800, value: [33, 60] }
+    - { tier: 10, ilvl: 8, weight: 800, value: [11, 32] }
   mods:
     - { stat: accuracy, type: FLAT, value: "{value}" }
 
@@ -1073,13 +1131,14 @@ armour_evasion_inc:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的, 匠人的]
   text: "增加 {value}% 護甲與閃避"
   tiers:
-    - { tier: 1, ilvl: 65, weight: 152, value: [92, 100] }
-    - { tier: 2, ilvl: 60, weight: 217, value: [80, 91] }
-    - { tier: 3, ilvl: 54, weight: 310, value: [68, 79] }
-    - { tier: 4, ilvl: 46, weight: 443, value: [56, 67] }
-    - { tier: 5, ilvl: 33, weight: 633, value: [43, 55] }
-    - { tier: 6, ilvl: 16, weight: 904, value: [27, 42] }
-    - { tier: 7, ilvl: 2, weight: 1292, value: [15, 26] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 65, weight: 1000, value: [92, 100] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [80, 91] }
+    - { tier: 3, ilvl: 54, weight: 1000, value: [68, 79] }
+    - { tier: 4, ilvl: 46, weight: 1000, value: [56, 67] }
+    - { tier: 5, ilvl: 33, weight: 1000, value: [43, 55] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [27, 42] }
+    - { tier: 7, ilvl: 2, weight: 1000, value: [15, 26] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: evasion, type: INCREASED, value: "{value}" }
@@ -1092,14 +1151,15 @@ armour_evasion_inc_body:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的, 匠人的, 學徒的]
   text: "增加 {value}% 護甲與閃避"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 109, value: [101, 110] }
-    - { tier: 2, ilvl: 65, weight: 156, value: [92, 100] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [80, 91] }
-    - { tier: 4, ilvl: 54, weight: 318, value: [68, 79] }
-    - { tier: 5, ilvl: 46, weight: 454, value: [56, 67] }
-    - { tier: 6, ilvl: 33, weight: 649, value: [43, 55] }
-    - { tier: 7, ilvl: 16, weight: 927, value: [27, 42] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [15, 26] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 75, weight: 1000, value: [101, 110] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [92, 100] }
+    - { tier: 3, ilvl: 60, weight: 1000, value: [80, 91] }
+    - { tier: 4, ilvl: 54, weight: 1000, value: [68, 79] }
+    - { tier: 5, ilvl: 46, weight: 1000, value: [56, 67] }
+    - { tier: 6, ilvl: 33, weight: 1000, value: [43, 55] }
+    - { tier: 7, ilvl: 16, weight: 1000, value: [27, 42] }
+    - { tier: 8, ilvl: 2, weight: 1000, value: [15, 26] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: evasion, type: INCREASED, value: "{value}" }
@@ -1113,12 +1173,13 @@ armour_evasion_stun:
   text: "增加 {value}% 護甲與閃避、+{stun} 暈眩門檻"
   chips: [armour, evasion]   # PoE2 的標籤（防禦＋暈眩門檻：PoE2 沒有標籤，暈眩不算異常）
   tiers:
-    - { tier: 1, ilvl: 74, weight: 211, value: [39, 42], stun: [95, 136] }
-    - { tier: 2, ilvl: 63, weight: 301, value: [33, 38], stun: [64, 94] }
-    - { tier: 3, ilvl: 48, weight: 430, value: [27, 32], stun: [41, 63] }
-    - { tier: 4, ilvl: 38, weight: 615, value: [21, 26], stun: [25, 40] }
-    - { tier: 5, ilvl: 19, weight: 878, value: [14, 20], stun: [14, 24] }
-    - { tier: 6, ilvl: 10, weight: 1255, value: [6, 13], stun: [8, 13] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 74, weight: 1000, value: [39, 42], stun: [95, 136] }
+    - { tier: 2, ilvl: 63, weight: 1000, value: [33, 38], stun: [64, 94] }
+    - { tier: 3, ilvl: 48, weight: 1000, value: [27, 32], stun: [41, 63] }
+    - { tier: 4, ilvl: 38, weight: 1000, value: [21, 26], stun: [25, 40] }
+    - { tier: 5, ilvl: 19, weight: 1000, value: [14, 20], stun: [14, 24] }
+    - { tier: 6, ilvl: 10, weight: 1000, value: [6, 13], stun: [8, 13] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: evasion, type: INCREASED, value: "{value}" }
@@ -1133,12 +1194,13 @@ armour_stun:
   text: "增加 {value}% 護甲、+{stun} 暈眩門檻"
   chips: [armour]   # PoE2 的標籤（防禦＋暈眩門檻：PoE2 沒有標籤，暈眩不算異常）
   tiers:
-    - { tier: 1, ilvl: 74, weight: 211, value: [39, 42], stun: [95, 136] }
-    - { tier: 2, ilvl: 63, weight: 301, value: [33, 38], stun: [64, 94] }
-    - { tier: 3, ilvl: 48, weight: 430, value: [27, 32], stun: [41, 63] }
-    - { tier: 4, ilvl: 38, weight: 615, value: [21, 26], stun: [25, 40] }
-    - { tier: 5, ilvl: 19, weight: 878, value: [14, 20], stun: [14, 24] }
-    - { tier: 6, ilvl: 10, weight: 1255, value: [6, 13], stun: [8, 13] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 74, weight: 1000, value: [39, 42], stun: [95, 136] }
+    - { tier: 2, ilvl: 63, weight: 1000, value: [33, 38], stun: [64, 94] }
+    - { tier: 3, ilvl: 48, weight: 1000, value: [27, 32], stun: [41, 63] }
+    - { tier: 4, ilvl: 38, weight: 1000, value: [21, 26], stun: [25, 40] }
+    - { tier: 5, ilvl: 19, weight: 1000, value: [14, 20], stun: [14, 24] }
+    - { tier: 6, ilvl: 10, weight: 1000, value: [6, 13], stun: [8, 13] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: stun.threshold, type: FLAT, value: "{stun}" }
@@ -1151,10 +1213,11 @@ armour_evasion_flat:
   names: [星紋的, 神工的, 大師的, 名匠的]
   text: "+{armour} 護甲、+{evasion} 閃避"
   tiers:
-    - { tier: 1, ilvl: 46, weight: 400, armour: [72, 85], evasion: [65, 78] }
-    - { tier: 2, ilvl: 33, weight: 571, armour: [47, 71], evasion: [42, 64] }
-    - { tier: 3, ilvl: 16, weight: 816, armour: [17, 46], evasion: [11, 41] }
-    - { tier: 4, ilvl: 1, weight: 1165, armour: [9, 16], evasion: [6, 10] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（4 階 → 4 階）
+    - { tier: 1, ilvl: 46, weight: 1000, armour: [72, 85], evasion: [65, 78] }
+    - { tier: 2, ilvl: 33, weight: 1000, armour: [47, 71], evasion: [42, 64] }
+    - { tier: 3, ilvl: 16, weight: 1000, armour: [17, 46], evasion: [11, 41] }
+    - { tier: 4, ilvl: 1, weight: 1000, armour: [9, 16], evasion: [6, 10] }
   mods:
     - { stat: armour, type: FLAT, value: "{armour}" }
     - { stat: evasion, type: FLAT, value: "{evasion}" }
@@ -1167,14 +1230,15 @@ armour_evasion_flat_body:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的, 匠人的, 學徒的]
   text: "+{armour} 護甲、+{evasion} 閃避"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 109, armour: [150, 170], evasion: [142, 161] }
-    - { tier: 2, ilvl: 65, weight: 156, armour: [128, 149], evasion: [120, 141] }
-    - { tier: 3, ilvl: 60, weight: 223, armour: [103, 127], evasion: [95, 119] }
-    - { tier: 4, ilvl: 54, weight: 318, armour: [86, 102], evasion: [79, 94] }
-    - { tier: 5, ilvl: 46, weight: 454, armour: [72, 85], evasion: [65, 78] }
-    - { tier: 6, ilvl: 33, weight: 649, armour: [47, 71], evasion: [42, 64] }
-    - { tier: 7, ilvl: 16, weight: 927, armour: [17, 46], evasion: [11, 41] }
-    - { tier: 8, ilvl: 1, weight: 1325, armour: [9, 16], evasion: [6, 10] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 75, weight: 1000, armour: [150, 170], evasion: [142, 161] }
+    - { tier: 2, ilvl: 65, weight: 1000, armour: [128, 149], evasion: [120, 141] }
+    - { tier: 3, ilvl: 60, weight: 1000, armour: [103, 127], evasion: [95, 119] }
+    - { tier: 4, ilvl: 54, weight: 1000, armour: [86, 102], evasion: [79, 94] }
+    - { tier: 5, ilvl: 46, weight: 1000, armour: [72, 85], evasion: [65, 78] }
+    - { tier: 6, ilvl: 33, weight: 1000, armour: [47, 71], evasion: [42, 64] }
+    - { tier: 7, ilvl: 16, weight: 1000, armour: [17, 46], evasion: [11, 41] }
+    - { tier: 8, ilvl: 1, weight: 1000, armour: [9, 16], evasion: [6, 10] }
   mods:
     - { stat: armour, type: FLAT, value: "{armour}" }
     - { stat: evasion, type: FLAT, value: "{evasion}" }
@@ -1187,11 +1251,12 @@ armour_evasion_flat_helmet:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的]
   text: "+{armour} 護甲、+{evasion} 閃避"
   tiers:
-    - { tier: 1, ilvl: 54, weight: 291, armour: [86, 102], evasion: [79, 94] }
-    - { tier: 2, ilvl: 46, weight: 416, armour: [72, 85], evasion: [65, 78] }
-    - { tier: 3, ilvl: 33, weight: 594, armour: [47, 71], evasion: [42, 64] }
-    - { tier: 4, ilvl: 16, weight: 849, armour: [17, 46], evasion: [11, 41] }
-    - { tier: 5, ilvl: 1, weight: 1212, armour: [9, 16], evasion: [6, 10] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（5 階 → 5 階）
+    - { tier: 1, ilvl: 54, weight: 1000, armour: [86, 102], evasion: [79, 94] }
+    - { tier: 2, ilvl: 46, weight: 1000, armour: [72, 85], evasion: [65, 78] }
+    - { tier: 3, ilvl: 33, weight: 1000, armour: [47, 71], evasion: [42, 64] }
+    - { tier: 4, ilvl: 16, weight: 1000, armour: [17, 46], evasion: [11, 41] }
+    - { tier: 5, ilvl: 1, weight: 1000, armour: [9, 16], evasion: [6, 10] }
   mods:
     - { stat: armour, type: FLAT, value: "{armour}" }
     - { stat: evasion, type: FLAT, value: "{evasion}" }
@@ -1204,13 +1269,14 @@ armour_evasion_flat_shield:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的, 匠人的]
   text: "+{armour} 護甲、+{evasion} 閃避"
   tiers:
-    - { tier: 1, ilvl: 65, weight: 152, armour: [128, 149], evasion: [120, 141] }
-    - { tier: 2, ilvl: 60, weight: 217, armour: [103, 127], evasion: [95, 119] }
-    - { tier: 3, ilvl: 54, weight: 310, armour: [86, 102], evasion: [79, 94] }
-    - { tier: 4, ilvl: 46, weight: 443, armour: [72, 85], evasion: [65, 78] }
-    - { tier: 5, ilvl: 33, weight: 633, armour: [47, 71], evasion: [42, 64] }
-    - { tier: 6, ilvl: 16, weight: 904, armour: [17, 46], evasion: [11, 41] }
-    - { tier: 7, ilvl: 1, weight: 1292, armour: [9, 16], evasion: [6, 10] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 65, weight: 1000, armour: [128, 149], evasion: [120, 141] }
+    - { tier: 2, ilvl: 60, weight: 1000, armour: [103, 127], evasion: [95, 119] }
+    - { tier: 3, ilvl: 54, weight: 1000, armour: [86, 102], evasion: [79, 94] }
+    - { tier: 4, ilvl: 46, weight: 1000, armour: [72, 85], evasion: [65, 78] }
+    - { tier: 5, ilvl: 33, weight: 1000, armour: [47, 71], evasion: [42, 64] }
+    - { tier: 6, ilvl: 16, weight: 1000, armour: [17, 46], evasion: [11, 41] }
+    - { tier: 7, ilvl: 1, weight: 1000, armour: [9, 16], evasion: [6, 10] }
   mods:
     - { stat: armour, type: FLAT, value: "{armour}" }
     - { stat: evasion, type: FLAT, value: "{evasion}" }
@@ -1223,10 +1289,11 @@ evasion_es_flat:
   names: [星紋的, 神工的, 大師的, 名匠的]
   text: "+{evasion} 閃避、+{es} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 46, weight: 400, evasion: [65, 78], es: [22, 25] }
-    - { tier: 2, ilvl: 33, weight: 571, evasion: [42, 64], es: [16, 21] }
-    - { tier: 3, ilvl: 16, weight: 816, evasion: [11, 41], es: [9, 15] }
-    - { tier: 4, ilvl: 1, weight: 1165, evasion: [6, 10], es: [5, 8] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（4 階 → 4 階）
+    - { tier: 1, ilvl: 46, weight: 1000, evasion: [65, 78], es: [22, 25] }
+    - { tier: 2, ilvl: 33, weight: 1000, evasion: [42, 64], es: [16, 21] }
+    - { tier: 3, ilvl: 16, weight: 1000, evasion: [11, 41], es: [9, 15] }
+    - { tier: 4, ilvl: 1, weight: 1000, evasion: [6, 10], es: [5, 8] }
   mods:
     - { stat: evasion, type: FLAT, value: "{evasion}" }
     - { stat: es.max, type: FLAT, value: "{es}" }
@@ -1239,14 +1306,15 @@ evasion_es_flat_body:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的, 匠人的, 學徒的]
   text: "+{evasion} 閃避、+{es} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 109, evasion: [142, 161], es: [43, 48] }
-    - { tier: 2, ilvl: 65, weight: 156, evasion: [120, 141], es: [37, 42] }
-    - { tier: 3, ilvl: 60, weight: 223, evasion: [95, 119], es: [30, 36] }
-    - { tier: 4, ilvl: 54, weight: 318, evasion: [79, 94], es: [26, 29] }
-    - { tier: 5, ilvl: 46, weight: 454, evasion: [65, 78], es: [22, 25] }
-    - { tier: 6, ilvl: 33, weight: 649, evasion: [42, 64], es: [16, 21] }
-    - { tier: 7, ilvl: 16, weight: 927, evasion: [11, 41], es: [9, 15] }
-    - { tier: 8, ilvl: 1, weight: 1325, evasion: [6, 10], es: [5, 8] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 75, weight: 1000, evasion: [142, 161], es: [43, 48] }
+    - { tier: 2, ilvl: 65, weight: 1000, evasion: [120, 141], es: [37, 42] }
+    - { tier: 3, ilvl: 60, weight: 1000, evasion: [95, 119], es: [30, 36] }
+    - { tier: 4, ilvl: 54, weight: 1000, evasion: [79, 94], es: [26, 29] }
+    - { tier: 5, ilvl: 46, weight: 1000, evasion: [65, 78], es: [22, 25] }
+    - { tier: 6, ilvl: 33, weight: 1000, evasion: [42, 64], es: [16, 21] }
+    - { tier: 7, ilvl: 16, weight: 1000, evasion: [11, 41], es: [9, 15] }
+    - { tier: 8, ilvl: 1, weight: 1000, evasion: [6, 10], es: [5, 8] }
   mods:
     - { stat: evasion, type: FLAT, value: "{evasion}" }
     - { stat: es.max, type: FLAT, value: "{es}" }
@@ -1259,11 +1327,12 @@ evasion_es_flat_helmet:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的]
   text: "+{evasion} 閃避、+{es} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 54, weight: 291, evasion: [79, 94], es: [26, 29] }
-    - { tier: 2, ilvl: 46, weight: 416, evasion: [65, 78], es: [22, 25] }
-    - { tier: 3, ilvl: 33, weight: 594, evasion: [42, 64], es: [16, 21] }
-    - { tier: 4, ilvl: 16, weight: 849, evasion: [11, 41], es: [9, 15] }
-    - { tier: 5, ilvl: 1, weight: 1212, evasion: [6, 10], es: [5, 8] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（5 階 → 5 階）
+    - { tier: 1, ilvl: 54, weight: 1000, evasion: [79, 94], es: [26, 29] }
+    - { tier: 2, ilvl: 46, weight: 1000, evasion: [65, 78], es: [22, 25] }
+    - { tier: 3, ilvl: 33, weight: 1000, evasion: [42, 64], es: [16, 21] }
+    - { tier: 4, ilvl: 16, weight: 1000, evasion: [11, 41], es: [9, 15] }
+    - { tier: 5, ilvl: 1, weight: 1000, evasion: [6, 10], es: [5, 8] }
   mods:
     - { stat: evasion, type: FLAT, value: "{evasion}" }
     - { stat: es.max, type: FLAT, value: "{es}" }
@@ -1275,16 +1344,17 @@ added_cold_local:
   names: [星凍的, 永凍的, 冰河的, 嚴寒的, 冰封的, 霜咬的, 冰冷的, 寒涼的, 冷冽的, 清涼的]
   text: "附加 {min} 到 {max} 冰冷傷害"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 56, min: [72, 81], max: [110, 123] }
-    - { tier: 2, ilvl: 75, weight: 79, min: [55, 69], max: [83, 106] }
-    - { tier: 3, ilvl: 65, weight: 113, min: [40, 53], max: [62, 80] }
-    - { tier: 4, ilvl: 60, weight: 162, min: [31, 38], max: [47, 59] }
-    - { tier: 5, ilvl: 54, weight: 232, min: [22, 29], max: [34, 44] }
-    - { tier: 6, ilvl: 46, weight: 331, min: [17, 20], max: [26, 32] }
-    - { tier: 7, ilvl: 33, weight: 473, min: [11, 15], max: [17, 24] }
-    - { tier: 8, ilvl: 16, weight: 675, min: [6, 9], max: [10, 16] }
-    - { tier: 9, ilvl: 8, weight: 965, min: [3, 5], max: [6, 9] }
-    - { tier: 10, ilvl: 1, weight: 1378, min: [1, 2], max: [3, 4] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（10 階 → 10 階）
+    - { tier: 1, ilvl: 81, weight: 80, min: [72, 81], max: [110, 123] }
+    - { tier: 2, ilvl: 75, weight: 200, min: [55, 69], max: [83, 106] }
+    - { tier: 3, ilvl: 65, weight: 320, min: [40, 53], max: [62, 80] }
+    - { tier: 4, ilvl: 60, weight: 480, min: [31, 38], max: [47, 59] }
+    - { tier: 5, ilvl: 54, weight: 800, min: [22, 29], max: [34, 44] }
+    - { tier: 6, ilvl: 46, weight: 800, min: [17, 20], max: [26, 32] }
+    - { tier: 7, ilvl: 33, weight: 800, min: [11, 15], max: [17, 24] }
+    - { tier: 8, ilvl: 16, weight: 800, min: [6, 9], max: [10, 16] }
+    - { tier: 9, ilvl: 8, weight: 800, min: [3, 5], max: [6, 9] }
+    - { tier: 10, ilvl: 1, weight: 800, min: [1, 2], max: [3, 4] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, cold] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, cold] }
@@ -1296,16 +1366,17 @@ added_cold_local_crossbow:
   names: [星凍的, 永凍的, 冰河的, 嚴寒的, 冰封的, 霜咬的, 冰冷的, 寒涼的, 冷冽的, 清涼的]
   text: "附加 {min} 到 {max} 冰冷傷害"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 56, min: [112, 124], max: [168, 189] }
-    - { tier: 2, ilvl: 75, weight: 79, min: [84, 107], max: [126, 161] }
-    - { tier: 3, ilvl: 65, weight: 113, min: [60, 80], max: [92, 121] }
-    - { tier: 4, ilvl: 60, weight: 162, min: [46, 57], max: [70, 88] }
-    - { tier: 5, ilvl: 54, weight: 232, min: [32, 43], max: [49, 66] }
-    - { tier: 6, ilvl: 46, weight: 331, min: [25, 30], max: [38, 46] }
-    - { tier: 7, ilvl: 33, weight: 473, min: [16, 23], max: [25, 35] }
-    - { tier: 8, ilvl: 16, weight: 675, min: [10, 14], max: [15, 23] }
-    - { tier: 9, ilvl: 8, weight: 965, min: [5, 8], max: [9, 14] }
-    - { tier: 10, ilvl: 1, weight: 1378, min: [2, 3], max: [4, 6] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（10 階 → 10 階）
+    - { tier: 1, ilvl: 81, weight: 80, min: [112, 124], max: [168, 189] }
+    - { tier: 2, ilvl: 75, weight: 200, min: [84, 107], max: [126, 161] }
+    - { tier: 3, ilvl: 65, weight: 320, min: [60, 80], max: [92, 121] }
+    - { tier: 4, ilvl: 60, weight: 480, min: [46, 57], max: [70, 88] }
+    - { tier: 5, ilvl: 54, weight: 800, min: [32, 43], max: [49, 66] }
+    - { tier: 6, ilvl: 46, weight: 800, min: [25, 30], max: [38, 46] }
+    - { tier: 7, ilvl: 33, weight: 800, min: [16, 23], max: [25, 35] }
+    - { tier: 8, ilvl: 16, weight: 800, min: [10, 14], max: [15, 23] }
+    - { tier: 9, ilvl: 8, weight: 800, min: [5, 8], max: [9, 14] }
+    - { tier: 10, ilvl: 1, weight: 800, min: [2, 3], max: [4, 6] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, cold] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, cold] }
@@ -1318,13 +1389,14 @@ es_local:
   names: [星輝的, 神聖的, 聖靈的, 光耀的, 靈光的, 微光的, 幽光的]
   text: "+{value} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 54, weight: 152, value: [48, 60] }
-    - { tier: 2, ilvl: 46, weight: 217, value: [42, 47] }
-    - { tier: 3, ilvl: 33, weight: 310, value: [36, 41] }
-    - { tier: 4, ilvl: 25, weight: 443, value: [31, 35] }
-    - { tier: 5, ilvl: 16, weight: 633, value: [25, 30] }
-    - { tier: 6, ilvl: 8, weight: 904, value: [18, 24] }
-    - { tier: 7, ilvl: 1, weight: 1292, value: [10, 17] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 54, weight: 1000, value: [48, 60] }
+    - { tier: 2, ilvl: 46, weight: 1000, value: [42, 47] }
+    - { tier: 3, ilvl: 33, weight: 1000, value: [36, 41] }
+    - { tier: 4, ilvl: 25, weight: 1000, value: [31, 35] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [25, 30] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [18, 24] }
+    - { tier: 7, ilvl: 1, weight: 1000, value: [10, 17] }
   mods:
     - { stat: es.max, type: FLAT, value: "{value}" }
 
@@ -1336,17 +1408,18 @@ es_local_body:
   names: [星輝的, 神聖的, 聖靈的, 光耀的, 靈光的, 微光的, 幽光的, 薄光的, 淡光的, 初光的, 螢光的]
   text: "+{value} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 79, weight: 40, value: [91, 96] }
-    - { tier: 2, ilvl: 70, weight: 56, value: [81, 90] }
-    - { tier: 3, ilvl: 65, weight: 81, value: [74, 80] }
-    - { tier: 4, ilvl: 60, weight: 115, value: [61, 73] }
-    - { tier: 5, ilvl: 54, weight: 165, value: [48, 60] }
-    - { tier: 6, ilvl: 46, weight: 235, value: [42, 47] }
-    - { tier: 7, ilvl: 33, weight: 336, value: [36, 41] }
-    - { tier: 8, ilvl: 25, weight: 480, value: [31, 35] }
-    - { tier: 9, ilvl: 16, weight: 685, value: [25, 30] }
-    - { tier: 10, ilvl: 8, weight: 979, value: [18, 24] }
-    - { tier: 11, ilvl: 1, weight: 1399, value: [10, 17] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（11 階 → 11 階）
+    - { tier: 1, ilvl: 79, weight: 1000, value: [91, 96] }
+    - { tier: 2, ilvl: 70, weight: 1000, value: [81, 90] }
+    - { tier: 3, ilvl: 65, weight: 1000, value: [74, 80] }
+    - { tier: 4, ilvl: 60, weight: 1000, value: [61, 73] }
+    - { tier: 5, ilvl: 54, weight: 1000, value: [48, 60] }
+    - { tier: 6, ilvl: 46, weight: 1000, value: [42, 47] }
+    - { tier: 7, ilvl: 33, weight: 1000, value: [36, 41] }
+    - { tier: 8, ilvl: 25, weight: 1000, value: [31, 35] }
+    - { tier: 9, ilvl: 16, weight: 1000, value: [25, 30] }
+    - { tier: 10, ilvl: 8, weight: 1000, value: [18, 24] }
+    - { tier: 11, ilvl: 1, weight: 1000, value: [10, 17] }
   mods:
     - { stat: es.max, type: FLAT, value: "{value}" }
 
@@ -1358,14 +1431,15 @@ es_local_helmet:
   names: [星輝的, 神聖的, 聖靈的, 光耀的, 靈光的, 微光的, 幽光的, 薄光的]
   text: "+{value} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 109, value: [61, 73] }
-    - { tier: 2, ilvl: 54, weight: 156, value: [48, 60] }
-    - { tier: 3, ilvl: 46, weight: 223, value: [42, 47] }
-    - { tier: 4, ilvl: 33, weight: 318, value: [36, 41] }
-    - { tier: 5, ilvl: 25, weight: 454, value: [31, 35] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [25, 30] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [18, 24] }
-    - { tier: 8, ilvl: 1, weight: 1325, value: [10, 17] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 60, weight: 1000, value: [61, 73] }
+    - { tier: 2, ilvl: 54, weight: 1000, value: [48, 60] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [42, 47] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [36, 41] }
+    - { tier: 5, ilvl: 25, weight: 1000, value: [31, 35] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [25, 30] }
+    - { tier: 7, ilvl: 8, weight: 1000, value: [18, 24] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [10, 17] }
   mods:
     - { stat: es.max, type: FLAT, value: "{value}" }
 
@@ -1377,16 +1451,17 @@ es_local_focus:
   names: [星輝的, 神聖的, 聖靈的, 光耀的, 靈光的, 微光的, 幽光的, 薄光的, 淡光的, 初光的]
   text: "+{value} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 70, weight: 56, value: [81, 90] }
-    - { tier: 2, ilvl: 65, weight: 79, value: [74, 80] }
-    - { tier: 3, ilvl: 60, weight: 113, value: [61, 73] }
-    - { tier: 4, ilvl: 54, weight: 162, value: [48, 60] }
-    - { tier: 5, ilvl: 46, weight: 232, value: [42, 47] }
-    - { tier: 6, ilvl: 33, weight: 331, value: [36, 41] }
-    - { tier: 7, ilvl: 25, weight: 473, value: [31, 35] }
-    - { tier: 8, ilvl: 16, weight: 675, value: [25, 30] }
-    - { tier: 9, ilvl: 8, weight: 965, value: [18, 24] }
-    - { tier: 10, ilvl: 1, weight: 1378, value: [10, 17] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（10 階 → 10 階）
+    - { tier: 1, ilvl: 70, weight: 1000, value: [81, 90] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [74, 80] }
+    - { tier: 3, ilvl: 60, weight: 1000, value: [61, 73] }
+    - { tier: 4, ilvl: 54, weight: 1000, value: [48, 60] }
+    - { tier: 5, ilvl: 46, weight: 1000, value: [42, 47] }
+    - { tier: 6, ilvl: 33, weight: 1000, value: [36, 41] }
+    - { tier: 7, ilvl: 25, weight: 1000, value: [31, 35] }
+    - { tier: 8, ilvl: 16, weight: 1000, value: [25, 30] }
+    - { tier: 9, ilvl: 8, weight: 1000, value: [18, 24] }
+    - { tier: 10, ilvl: 1, weight: 1000, value: [10, 17] }
   mods:
     - { stat: es.max, type: FLAT, value: "{value}" }
 
@@ -1399,12 +1474,13 @@ es_stun:
   text: "增加 {value}% 能量護盾、+{stun} 暈眩門檻"
   chips: [energy_shield]   # PoE2 的標籤（防禦＋暈眩門檻：PoE2 沒有標籤，暈眩不算異常）
   tiers:
-    - { tier: 1, ilvl: 74, weight: 211, value: [39, 42], stun: [95, 136] }
-    - { tier: 2, ilvl: 63, weight: 301, value: [33, 38], stun: [64, 94] }
-    - { tier: 3, ilvl: 48, weight: 430, value: [27, 32], stun: [41, 63] }
-    - { tier: 4, ilvl: 38, weight: 615, value: [21, 26], stun: [25, 40] }
-    - { tier: 5, ilvl: 19, weight: 878, value: [14, 20], stun: [14, 24] }
-    - { tier: 6, ilvl: 10, weight: 1255, value: [6, 13], stun: [8, 13] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 74, weight: 1000, value: [39, 42], stun: [95, 136] }
+    - { tier: 2, ilvl: 63, weight: 1000, value: [33, 38], stun: [64, 94] }
+    - { tier: 3, ilvl: 48, weight: 1000, value: [27, 32], stun: [41, 63] }
+    - { tier: 4, ilvl: 38, weight: 1000, value: [21, 26], stun: [25, 40] }
+    - { tier: 5, ilvl: 19, weight: 1000, value: [14, 20], stun: [14, 24] }
+    - { tier: 6, ilvl: 10, weight: 1000, value: [6, 13], stun: [8, 13] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
     - { stat: stun.threshold, type: FLAT, value: "{stun}" }
@@ -1417,13 +1493,14 @@ es_inc:
   names: [星輝的, 神聖的, 聖靈的, 光耀的, 靈光的, 微光的, 幽光的]
   text: "增加 {value}% 能量護盾"
   tiers:
-    - { tier: 1, ilvl: 65, weight: 152, value: [92, 100] }
-    - { tier: 2, ilvl: 60, weight: 217, value: [80, 91] }
-    - { tier: 3, ilvl: 54, weight: 310, value: [68, 79] }
-    - { tier: 4, ilvl: 46, weight: 443, value: [56, 67] }
-    - { tier: 5, ilvl: 33, weight: 633, value: [43, 55] }
-    - { tier: 6, ilvl: 16, weight: 904, value: [27, 42] }
-    - { tier: 7, ilvl: 2, weight: 1292, value: [15, 26] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 65, weight: 1000, value: [92, 100] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [80, 91] }
+    - { tier: 3, ilvl: 54, weight: 1000, value: [68, 79] }
+    - { tier: 4, ilvl: 46, weight: 1000, value: [56, 67] }
+    - { tier: 5, ilvl: 33, weight: 1000, value: [43, 55] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [27, 42] }
+    - { tier: 7, ilvl: 2, weight: 1000, value: [15, 26] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
 
@@ -1435,14 +1512,15 @@ es_inc_body:
   names: [星輝的, 神聖的, 聖靈的, 光耀的, 靈光的, 微光的, 幽光的, 薄光的]
   text: "增加 {value}% 能量護盾"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 109, value: [101, 110] }
-    - { tier: 2, ilvl: 65, weight: 156, value: [92, 100] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [80, 91] }
-    - { tier: 4, ilvl: 54, weight: 318, value: [68, 79] }
-    - { tier: 5, ilvl: 46, weight: 454, value: [56, 67] }
-    - { tier: 6, ilvl: 33, weight: 649, value: [43, 55] }
-    - { tier: 7, ilvl: 16, weight: 927, value: [27, 42] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [15, 26] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 75, weight: 1000, value: [101, 110] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [92, 100] }
+    - { tier: 3, ilvl: 60, weight: 1000, value: [80, 91] }
+    - { tier: 4, ilvl: 54, weight: 1000, value: [68, 79] }
+    - { tier: 5, ilvl: 46, weight: 1000, value: [56, 67] }
+    - { tier: 6, ilvl: 33, weight: 1000, value: [43, 55] }
+    - { tier: 7, ilvl: 16, weight: 1000, value: [27, 42] }
+    - { tier: 8, ilvl: 2, weight: 1000, value: [15, 26] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
 
@@ -1454,13 +1532,14 @@ evasion_es_inc:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的, 匠人的]
   text: "增加 {value}% 閃避與能量護盾"
   tiers:
-    - { tier: 1, ilvl: 65, weight: 152, value: [92, 100] }
-    - { tier: 2, ilvl: 60, weight: 217, value: [80, 91] }
-    - { tier: 3, ilvl: 54, weight: 310, value: [68, 79] }
-    - { tier: 4, ilvl: 46, weight: 443, value: [56, 67] }
-    - { tier: 5, ilvl: 33, weight: 633, value: [43, 55] }
-    - { tier: 6, ilvl: 16, weight: 904, value: [27, 42] }
-    - { tier: 7, ilvl: 2, weight: 1292, value: [15, 26] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 65, weight: 1000, value: [92, 100] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [80, 91] }
+    - { tier: 3, ilvl: 54, weight: 1000, value: [68, 79] }
+    - { tier: 4, ilvl: 46, weight: 1000, value: [56, 67] }
+    - { tier: 5, ilvl: 33, weight: 1000, value: [43, 55] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [27, 42] }
+    - { tier: 7, ilvl: 2, weight: 1000, value: [15, 26] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -1473,14 +1552,15 @@ evasion_es_inc_body:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的, 匠人的, 學徒的]
   text: "增加 {value}% 閃避與能量護盾"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 109, value: [101, 110] }
-    - { tier: 2, ilvl: 65, weight: 156, value: [92, 100] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [80, 91] }
-    - { tier: 4, ilvl: 54, weight: 318, value: [68, 79] }
-    - { tier: 5, ilvl: 46, weight: 454, value: [56, 67] }
-    - { tier: 6, ilvl: 33, weight: 649, value: [43, 55] }
-    - { tier: 7, ilvl: 16, weight: 927, value: [27, 42] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [15, 26] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 75, weight: 1000, value: [101, 110] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [92, 100] }
+    - { tier: 3, ilvl: 60, weight: 1000, value: [80, 91] }
+    - { tier: 4, ilvl: 54, weight: 1000, value: [68, 79] }
+    - { tier: 5, ilvl: 46, weight: 1000, value: [56, 67] }
+    - { tier: 6, ilvl: 33, weight: 1000, value: [43, 55] }
+    - { tier: 7, ilvl: 16, weight: 1000, value: [27, 42] }
+    - { tier: 8, ilvl: 2, weight: 1000, value: [15, 26] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -1494,12 +1574,13 @@ evasion_es_stun:
   text: "增加 {value}% 閃避與能量護盾、+{stun} 暈眩門檻"
   chips: [evasion, energy_shield]   # PoE2 的標籤（防禦＋暈眩門檻：PoE2 沒有標籤，暈眩不算異常）
   tiers:
-    - { tier: 1, ilvl: 74, weight: 211, value: [39, 42], stun: [95, 136] }
-    - { tier: 2, ilvl: 63, weight: 301, value: [33, 38], stun: [64, 94] }
-    - { tier: 3, ilvl: 48, weight: 430, value: [27, 32], stun: [41, 63] }
-    - { tier: 4, ilvl: 38, weight: 615, value: [21, 26], stun: [25, 40] }
-    - { tier: 5, ilvl: 19, weight: 878, value: [14, 20], stun: [14, 24] }
-    - { tier: 6, ilvl: 10, weight: 1255, value: [6, 13], stun: [8, 13] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 74, weight: 1000, value: [39, 42], stun: [95, 136] }
+    - { tier: 2, ilvl: 63, weight: 1000, value: [33, 38], stun: [64, 94] }
+    - { tier: 3, ilvl: 48, weight: 1000, value: [27, 32], stun: [41, 63] }
+    - { tier: 4, ilvl: 38, weight: 1000, value: [21, 26], stun: [25, 40] }
+    - { tier: 5, ilvl: 19, weight: 1000, value: [14, 20], stun: [14, 24] }
+    - { tier: 6, ilvl: 10, weight: 1000, value: [6, 13], stun: [8, 13] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -1514,12 +1595,13 @@ evasion_stun:
   text: "增加 {value}% 閃避、+{stun} 暈眩門檻"
   chips: [evasion]   # PoE2 的標籤（防禦＋暈眩門檻：PoE2 沒有標籤，暈眩不算異常）
   tiers:
-    - { tier: 1, ilvl: 74, weight: 211, value: [39, 42], stun: [95, 136] }
-    - { tier: 2, ilvl: 63, weight: 301, value: [33, 38], stun: [64, 94] }
-    - { tier: 3, ilvl: 48, weight: 430, value: [27, 32], stun: [41, 63] }
-    - { tier: 4, ilvl: 38, weight: 615, value: [21, 26], stun: [25, 40] }
-    - { tier: 5, ilvl: 19, weight: 878, value: [14, 20], stun: [14, 24] }
-    - { tier: 6, ilvl: 10, weight: 1255, value: [6, 13], stun: [8, 13] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 74, weight: 1000, value: [39, 42], stun: [95, 136] }
+    - { tier: 2, ilvl: 63, weight: 1000, value: [33, 38], stun: [64, 94] }
+    - { tier: 3, ilvl: 48, weight: 1000, value: [27, 32], stun: [41, 63] }
+    - { tier: 4, ilvl: 38, weight: 1000, value: [21, 26], stun: [25, 40] }
+    - { tier: 5, ilvl: 19, weight: 1000, value: [14, 20], stun: [14, 24] }
+    - { tier: 6, ilvl: 10, weight: 1000, value: [6, 13], stun: [8, 13] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: stun.threshold, type: FLAT, value: "{stun}" }
@@ -1532,13 +1614,14 @@ evasion_flat:
   names: [星影的, 幻影的, 鬼魅的, 疾風的, 輕靈的, 敏捷的, 靈巧的]
   text: "+{value} 閃避"
   tiers:
-    - { tier: 1, ilvl: 54, weight: 152, value: [147, 176] }
-    - { tier: 2, ilvl: 46, weight: 217, value: [117, 146] }
-    - { tier: 3, ilvl: 33, weight: 310, value: [88, 116] }
-    - { tier: 4, ilvl: 25, weight: 443, value: [67, 87] }
-    - { tier: 5, ilvl: 16, weight: 633, value: [47, 66] }
-    - { tier: 6, ilvl: 8, weight: 904, value: [19, 46] }
-    - { tier: 7, ilvl: 1, weight: 1292, value: [11, 18] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 54, weight: 1000, value: [147, 176] }
+    - { tier: 2, ilvl: 46, weight: 1000, value: [117, 146] }
+    - { tier: 3, ilvl: 33, weight: 1000, value: [88, 116] }
+    - { tier: 4, ilvl: 25, weight: 1000, value: [67, 87] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [47, 66] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [19, 46] }
+    - { tier: 7, ilvl: 1, weight: 1000, value: [11, 18] }
   mods:
     - { stat: evasion, type: FLAT, value: "{value}" }
 
@@ -1550,17 +1633,18 @@ evasion_flat_body:
   names: [星影的, 幻影的, 鬼魅的, 疾風的, 輕靈的, 敏捷的, 靈巧的, 柔韌的, 輕巧的, 靈動的, 新手的]
   text: "+{value} 閃避"
   tiers:
-    - { tier: 1, ilvl: 79, weight: 40, value: [262, 300] }
-    - { tier: 2, ilvl: 75, weight: 56, value: [235, 261] }
-    - { tier: 3, ilvl: 65, weight: 81, value: [208, 234] }
-    - { tier: 4, ilvl: 60, weight: 115, value: [177, 207] }
-    - { tier: 5, ilvl: 54, weight: 165, value: [147, 176] }
-    - { tier: 6, ilvl: 46, weight: 235, value: [117, 146] }
-    - { tier: 7, ilvl: 33, weight: 336, value: [88, 116] }
-    - { tier: 8, ilvl: 25, weight: 480, value: [67, 87] }
-    - { tier: 9, ilvl: 16, weight: 685, value: [47, 66] }
-    - { tier: 10, ilvl: 8, weight: 979, value: [19, 46] }
-    - { tier: 11, ilvl: 1, weight: 1399, value: [11, 18] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（11 階 → 11 階）
+    - { tier: 1, ilvl: 79, weight: 1000, value: [262, 300] }
+    - { tier: 2, ilvl: 75, weight: 1000, value: [235, 261] }
+    - { tier: 3, ilvl: 65, weight: 1000, value: [208, 234] }
+    - { tier: 4, ilvl: 60, weight: 1000, value: [177, 207] }
+    - { tier: 5, ilvl: 54, weight: 1000, value: [147, 176] }
+    - { tier: 6, ilvl: 46, weight: 1000, value: [117, 146] }
+    - { tier: 7, ilvl: 33, weight: 1000, value: [88, 116] }
+    - { tier: 8, ilvl: 25, weight: 1000, value: [67, 87] }
+    - { tier: 9, ilvl: 16, weight: 1000, value: [47, 66] }
+    - { tier: 10, ilvl: 8, weight: 1000, value: [19, 46] }
+    - { tier: 11, ilvl: 1, weight: 1000, value: [11, 18] }
   mods:
     - { stat: evasion, type: FLAT, value: "{value}" }
 
@@ -1572,14 +1656,15 @@ evasion_flat_helmet:
   names: [星影的, 幻影的, 鬼魅的, 疾風的, 輕靈的, 敏捷的, 靈巧的, 柔韌的]
   text: "+{value} 閃避"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 109, value: [177, 207] }
-    - { tier: 2, ilvl: 54, weight: 156, value: [147, 176] }
-    - { tier: 3, ilvl: 46, weight: 223, value: [117, 146] }
-    - { tier: 4, ilvl: 33, weight: 318, value: [88, 116] }
-    - { tier: 5, ilvl: 25, weight: 454, value: [67, 87] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [47, 66] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [19, 46] }
-    - { tier: 8, ilvl: 1, weight: 1325, value: [11, 18] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 60, weight: 1000, value: [177, 207] }
+    - { tier: 2, ilvl: 54, weight: 1000, value: [147, 176] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [117, 146] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [88, 116] }
+    - { tier: 5, ilvl: 25, weight: 1000, value: [67, 87] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [47, 66] }
+    - { tier: 7, ilvl: 8, weight: 1000, value: [19, 46] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [11, 18] }
   mods:
     - { stat: evasion, type: FLAT, value: "{value}" }
 
@@ -1591,16 +1676,17 @@ evasion_flat_shield:
   names: [星影的, 幻影的, 鬼魅的, 疾風的, 輕靈的, 敏捷的, 靈巧的, 柔韌的, 輕巧的, 靈動的]
   text: "+{value} 閃避"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 56, value: [235, 261] }
-    - { tier: 2, ilvl: 65, weight: 79, value: [208, 234] }
-    - { tier: 3, ilvl: 60, weight: 113, value: [177, 207] }
-    - { tier: 4, ilvl: 54, weight: 162, value: [147, 176] }
-    - { tier: 5, ilvl: 46, weight: 232, value: [117, 146] }
-    - { tier: 6, ilvl: 33, weight: 331, value: [88, 116] }
-    - { tier: 7, ilvl: 25, weight: 473, value: [67, 87] }
-    - { tier: 8, ilvl: 16, weight: 675, value: [47, 66] }
-    - { tier: 9, ilvl: 8, weight: 965, value: [19, 46] }
-    - { tier: 10, ilvl: 1, weight: 1378, value: [11, 18] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（10 階 → 10 階）
+    - { tier: 1, ilvl: 75, weight: 1000, value: [235, 261] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [208, 234] }
+    - { tier: 3, ilvl: 60, weight: 1000, value: [177, 207] }
+    - { tier: 4, ilvl: 54, weight: 1000, value: [147, 176] }
+    - { tier: 5, ilvl: 46, weight: 1000, value: [117, 146] }
+    - { tier: 6, ilvl: 33, weight: 1000, value: [88, 116] }
+    - { tier: 7, ilvl: 25, weight: 1000, value: [67, 87] }
+    - { tier: 8, ilvl: 16, weight: 1000, value: [47, 66] }
+    - { tier: 9, ilvl: 8, weight: 1000, value: [19, 46] }
+    - { tier: 10, ilvl: 1, weight: 1000, value: [11, 18] }
   mods:
     - { stat: evasion, type: FLAT, value: "{value}" }
 
@@ -1612,13 +1698,14 @@ evasion_inc:
   names: [星影的, 幻影的, 鬼魅的, 疾風的, 輕靈的, 敏捷的, 靈巧的]
   text: "增加 {value}% 閃避"
   tiers:
-    - { tier: 1, ilvl: 65, weight: 152, value: [92, 100] }
-    - { tier: 2, ilvl: 60, weight: 217, value: [80, 91] }
-    - { tier: 3, ilvl: 54, weight: 310, value: [68, 79] }
-    - { tier: 4, ilvl: 46, weight: 443, value: [56, 67] }
-    - { tier: 5, ilvl: 33, weight: 633, value: [43, 55] }
-    - { tier: 6, ilvl: 16, weight: 904, value: [27, 42] }
-    - { tier: 7, ilvl: 2, weight: 1292, value: [15, 26] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 65, weight: 1000, value: [92, 100] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [80, 91] }
+    - { tier: 3, ilvl: 54, weight: 1000, value: [68, 79] }
+    - { tier: 4, ilvl: 46, weight: 1000, value: [56, 67] }
+    - { tier: 5, ilvl: 33, weight: 1000, value: [43, 55] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [27, 42] }
+    - { tier: 7, ilvl: 2, weight: 1000, value: [15, 26] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
 
@@ -1630,14 +1717,15 @@ evasion_inc_body:
   names: [星影的, 幻影的, 鬼魅的, 疾風的, 輕靈的, 敏捷的, 靈巧的, 柔韌的]
   text: "增加 {value}% 閃避"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 109, value: [101, 110] }
-    - { tier: 2, ilvl: 65, weight: 156, value: [92, 100] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [80, 91] }
-    - { tier: 4, ilvl: 54, weight: 318, value: [68, 79] }
-    - { tier: 5, ilvl: 46, weight: 454, value: [56, 67] }
-    - { tier: 6, ilvl: 33, weight: 649, value: [43, 55] }
-    - { tier: 7, ilvl: 16, weight: 927, value: [27, 42] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [15, 26] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 75, weight: 1000, value: [101, 110] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [92, 100] }
+    - { tier: 3, ilvl: 60, weight: 1000, value: [80, 91] }
+    - { tier: 4, ilvl: 54, weight: 1000, value: [68, 79] }
+    - { tier: 5, ilvl: 46, weight: 1000, value: [56, 67] }
+    - { tier: 6, ilvl: 33, weight: 1000, value: [43, 55] }
+    - { tier: 7, ilvl: 16, weight: 1000, value: [27, 42] }
+    - { tier: 8, ilvl: 2, weight: 1000, value: [15, 26] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
 
@@ -1648,16 +1736,17 @@ added_fire_local:
   names: [星焚的, 焚天的, 熔岩的, 烈火的, 焦炎的, 火咒的, 炙熱的, 溫熱的, 火花的, 餘燼的]
   text: "附加 {min} 到 {max} 火焰傷害"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 56, min: [88, 101], max: [133, 154] }
-    - { tier: 2, ilvl: 75, weight: 79, min: [62, 85], max: [101, 129] }
-    - { tier: 3, ilvl: 65, weight: 113, min: [47, 59], max: [74, 97] }
-    - { tier: 4, ilvl: 60, weight: 162, min: [35, 44], max: [56, 71] }
-    - { tier: 5, ilvl: 54, weight: 232, min: [25, 33], max: [38, 54] }
-    - { tier: 6, ilvl: 46, weight: 331, min: [20, 24], max: [32, 37] }
-    - { tier: 7, ilvl: 33, weight: 473, min: [13, 19], max: [21, 29] }
-    - { tier: 8, ilvl: 16, weight: 675, min: [7, 11], max: [13, 19] }
-    - { tier: 9, ilvl: 8, weight: 965, min: [4, 6], max: [7, 10] }
-    - { tier: 10, ilvl: 1, weight: 1378, min: [1, 2], max: [3, 5] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（10 階 → 10 階）
+    - { tier: 1, ilvl: 81, weight: 80, min: [88, 101], max: [133, 154] }
+    - { tier: 2, ilvl: 75, weight: 200, min: [62, 85], max: [101, 129] }
+    - { tier: 3, ilvl: 65, weight: 320, min: [47, 59], max: [74, 97] }
+    - { tier: 4, ilvl: 60, weight: 480, min: [35, 44], max: [56, 71] }
+    - { tier: 5, ilvl: 54, weight: 800, min: [25, 33], max: [38, 54] }
+    - { tier: 6, ilvl: 46, weight: 800, min: [20, 24], max: [32, 37] }
+    - { tier: 7, ilvl: 33, weight: 800, min: [13, 19], max: [21, 29] }
+    - { tier: 8, ilvl: 16, weight: 800, min: [7, 11], max: [13, 19] }
+    - { tier: 9, ilvl: 8, weight: 800, min: [4, 6], max: [7, 10] }
+    - { tier: 10, ilvl: 1, weight: 800, min: [1, 2], max: [3, 5] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, fire] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, fire] }
@@ -1669,16 +1758,17 @@ added_fire_local_crossbow:
   names: [星焚的, 焚天的, 熔岩的, 烈火的, 焦炎的, 火咒的, 炙熱的, 溫熱的, 火花的, 餘燼的]
   text: "附加 {min} 到 {max} 火焰傷害"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 56, min: [135, 156], max: [205, 236] }
-    - { tier: 2, ilvl: 75, weight: 79, min: [102, 130], max: [155, 198] }
-    - { tier: 3, ilvl: 65, weight: 113, min: [73, 97], max: [112, 149] }
-    - { tier: 4, ilvl: 60, weight: 162, min: [56, 70], max: [84, 107] }
-    - { tier: 5, ilvl: 54, weight: 232, min: [39, 53], max: [59, 80] }
-    - { tier: 6, ilvl: 46, weight: 331, min: [30, 37], max: [45, 56] }
-    - { tier: 7, ilvl: 33, weight: 473, min: [19, 27], max: [30, 42] }
-    - { tier: 8, ilvl: 16, weight: 675, min: [11, 17], max: [19, 28] }
-    - { tier: 9, ilvl: 8, weight: 965, min: [6, 9], max: [10, 16] }
-    - { tier: 10, ilvl: 1, weight: 1378, min: [2, 4], max: [5, 7] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（10 階 → 10 階）
+    - { tier: 1, ilvl: 81, weight: 100, min: [135, 156], max: [205, 236] }
+    - { tier: 2, ilvl: 75, weight: 250, min: [102, 130], max: [155, 198] }
+    - { tier: 3, ilvl: 65, weight: 400, min: [73, 97], max: [112, 149] }
+    - { tier: 4, ilvl: 60, weight: 600, min: [56, 70], max: [84, 107] }
+    - { tier: 5, ilvl: 54, weight: 1000, min: [39, 53], max: [59, 80] }
+    - { tier: 6, ilvl: 46, weight: 1000, min: [30, 37], max: [45, 56] }
+    - { tier: 7, ilvl: 33, weight: 1000, min: [19, 27], max: [30, 42] }
+    - { tier: 8, ilvl: 16, weight: 1000, min: [11, 17], max: [19, 28] }
+    - { tier: 9, ilvl: 8, weight: 1000, min: [6, 9], max: [10, 16] }
+    - { tier: 10, ilvl: 1, weight: 1000, min: [2, 4], max: [5, 7] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, fire] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, fire] }
@@ -1691,12 +1781,13 @@ armour_inc_flat:
   names: [星鐵的, 不破的, 堡壘的, 鐵壁的, 重甲的, 鋼鑄的]
   text: "增加 {value}% 護甲、+{armour} 護甲"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], armour: [76, 95] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], armour: [58, 75] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], armour: [42, 57] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], armour: [30, 41] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], armour: [10, 29] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], armour: [5, 9] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], armour: [76, 95] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], armour: [58, 75] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], armour: [42, 57] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], armour: [30, 41] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], armour: [10, 29] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], armour: [5, 9] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: armour, type: FLAT, value: "{armour}" }
@@ -1709,12 +1800,13 @@ armour_evasion_inc_flat:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的]
   text: "增加 {value}% 護甲與閃避、+{armour} 護甲、+{evasion} 閃避"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], armour: [42, 52], evasion: [40, 50] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], armour: [33, 41], evasion: [30, 39] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], armour: [24, 32], evasion: [22, 29] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], armour: [17, 23], evasion: [15, 21] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], armour: [6, 16], evasion: [4, 14] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], armour: [3, 5], evasion: [2, 3] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], armour: [42, 52], evasion: [40, 50] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], armour: [33, 41], evasion: [30, 39] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], armour: [24, 32], evasion: [22, 29] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], armour: [17, 23], evasion: [15, 21] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], armour: [6, 16], evasion: [4, 14] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], armour: [3, 5], evasion: [2, 3] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: evasion, type: INCREASED, value: "{value}" }
@@ -1729,12 +1821,13 @@ armour_evasion_life:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的]
   text: "增加 {value}% 護甲與閃避、+{life} 最大生命"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], life: [42, 49] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], life: [33, 41] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], life: [26, 32] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], life: [20, 25] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], life: [11, 19] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], life: [7, 10] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], life: [42, 49] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], life: [33, 41] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], life: [26, 32] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], life: [20, 25] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], life: [11, 19] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], life: [7, 10] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: evasion, type: INCREASED, value: "{value}" }
@@ -1748,12 +1841,13 @@ armour_evasion_mana:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的]
   text: "增加 {value}% 護甲與閃避、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], mana: [33, 39] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], mana: [27, 32] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], mana: [21, 26] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], mana: [17, 20] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], mana: [9, 16] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], mana: [6, 8] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], mana: [33, 39] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], mana: [27, 32] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], mana: [21, 26] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], mana: [17, 20] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], mana: [9, 16] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], mana: [6, 8] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: evasion, type: INCREASED, value: "{value}" }
@@ -1767,12 +1861,13 @@ armour_life:
   names: [星鐵的, 不破的, 堡壘的, 鐵壁的, 重甲的, 鋼鑄的]
   text: "增加 {value}% 護甲、+{life} 最大生命"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], life: [42, 49] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], life: [33, 41] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], life: [26, 32] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], life: [20, 25] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], life: [11, 19] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], life: [7, 10] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], life: [42, 49] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], life: [33, 41] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], life: [26, 32] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], life: [20, 25] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], life: [11, 19] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], life: [7, 10] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: life.max, type: FLAT, value: "{life}" }
@@ -1785,12 +1880,13 @@ armour_mana:
   names: [星鐵的, 不破的, 堡壘的, 鐵壁的, 重甲的, 鋼鑄的]
   text: "增加 {value}% 護甲、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], mana: [33, 39] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], mana: [27, 32] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], mana: [21, 26] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], mana: [17, 20] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], mana: [9, 16] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], mana: [6, 8] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], mana: [33, 39] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], mana: [27, 32] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], mana: [21, 26] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], mana: [17, 20] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], mana: [9, 16] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], mana: [6, 8] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: mana.max, type: FLAT, value: "{mana}" }
@@ -1803,9 +1899,10 @@ block_inc:
   names: [星鐵的, 不破的, 堡壘的]
   text: "增加 {value}% 格擋率"
   tiers:
-    - { tier: 1, ilvl: 65, weight: 546, value: [25, 30] }
-    - { tier: 2, ilvl: 33, weight: 780, value: [20, 24] }
-    - { tier: 3, ilvl: 1, weight: 1114, value: [15, 19] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（3 階 → 3 階）
+    - { tier: 1, ilvl: 65, weight: 1000, value: [25, 30] }
+    - { tier: 2, ilvl: 33, weight: 1000, value: [20, 24] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 19] }
   mods:
     - { stat: block.chance, type: INCREASED, value: "{value}" }
 
@@ -1817,12 +1914,13 @@ es_inc_flat:
   names: [星輝的, 神聖的, 聖靈的, 光耀的, 靈光的, 微光的]
   text: "增加 {value}% 能量護盾、+{es} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], es: [26, 30] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], es: [21, 25] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], es: [17, 20] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], es: [14, 16] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], es: [8, 13] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], es: [4, 7] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], es: [26, 30] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], es: [21, 25] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], es: [17, 20] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], es: [14, 16] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], es: [8, 13] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], es: [4, 7] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: FLAT, value: "{es}" }
@@ -1835,12 +1933,13 @@ es_life:
   names: [星輝的, 神聖的, 聖靈的, 光耀的, 靈光的, 微光的]
   text: "增加 {value}% 能量護盾、+{life} 最大生命"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], life: [42, 49] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], life: [33, 41] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], life: [26, 32] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], life: [20, 25] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], life: [11, 19] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], life: [7, 10] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], life: [42, 49] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], life: [33, 41] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], life: [26, 32] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], life: [20, 25] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], life: [11, 19] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], life: [7, 10] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
     - { stat: life.max, type: FLAT, value: "{life}" }
@@ -1853,12 +1952,13 @@ es_mana:
   names: [星輝的, 神聖的, 聖靈的, 光耀的, 靈光的, 微光的]
   text: "增加 {value}% 能量護盾、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], mana: [33, 39] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], mana: [27, 32] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], mana: [21, 26] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], mana: [17, 20] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], mana: [9, 16] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], mana: [6, 8] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], mana: [33, 39] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], mana: [27, 32] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], mana: [21, 26] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], mana: [17, 20] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], mana: [9, 16] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], mana: [6, 8] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
     - { stat: mana.max, type: FLAT, value: "{mana}" }
@@ -1871,12 +1971,13 @@ evasion_inc_flat:
   names: [星影的, 幻影的, 鬼魅的, 疾風的, 輕靈的, 敏捷的]
   text: "增加 {value}% 閃避、+{evasion} 閃避"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], evasion: [71, 90] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], evasion: [54, 70] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], evasion: [39, 53] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], evasion: [27, 38] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], evasion: [7, 26] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], evasion: [4, 6] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], evasion: [71, 90] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], evasion: [54, 70] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], evasion: [39, 53] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], evasion: [27, 38] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], evasion: [7, 26] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], evasion: [4, 6] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: evasion, type: FLAT, value: "{evasion}" }
@@ -1889,12 +1990,13 @@ evasion_es_inc_flat:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的]
   text: "增加 {value}% 閃避與能量護盾、+{evasion} 閃避、+{es} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], evasion: [40, 50], es: [13, 15] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], evasion: [30, 39], es: [11, 12] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], evasion: [22, 29], es: [9, 10] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], evasion: [15, 21], es: [7, 8] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], evasion: [4, 14], es: [5, 6] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], evasion: [2, 3], es: [2, 4] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], evasion: [40, 50], es: [13, 15] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], evasion: [30, 39], es: [11, 12] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], evasion: [22, 29], es: [9, 10] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], evasion: [15, 21], es: [7, 8] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], evasion: [4, 14], es: [5, 6] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], evasion: [2, 3], es: [2, 4] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -1909,12 +2011,13 @@ evasion_es_life:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的]
   text: "增加 {value}% 閃避與能量護盾、+{life} 最大生命"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], life: [42, 49] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], life: [33, 41] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], life: [26, 32] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], life: [20, 25] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], life: [11, 19] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], life: [7, 10] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], life: [42, 49] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], life: [33, 41] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], life: [26, 32] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], life: [20, 25] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], life: [11, 19] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], life: [7, 10] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -1928,12 +2031,13 @@ evasion_es_mana:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的]
   text: "增加 {value}% 閃避與能量護盾、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], mana: [33, 39] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], mana: [27, 32] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], mana: [21, 26] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], mana: [17, 20] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], mana: [9, 16] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], mana: [6, 8] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], mana: [33, 39] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], mana: [27, 32] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], mana: [21, 26] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], mana: [17, 20] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], mana: [9, 16] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], mana: [6, 8] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -1947,12 +2051,13 @@ evasion_life:
   names: [星影的, 幻影的, 鬼魅的, 疾風的, 輕靈的, 敏捷的]
   text: "增加 {value}% 閃避、+{life} 最大生命"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], life: [42, 49] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], life: [33, 41] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], life: [26, 32] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], life: [20, 25] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], life: [11, 19] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], life: [7, 10] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], life: [42, 49] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], life: [33, 41] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], life: [26, 32] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], life: [20, 25] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], life: [11, 19] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], life: [7, 10] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: life.max, type: FLAT, value: "{life}" }
@@ -1965,12 +2070,13 @@ evasion_mana:
   names: [星影的, 幻影的, 鬼魅的, 疾風的, 輕靈的, 敏捷的]
   text: "增加 {value}% 閃避、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], mana: [33, 39] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], mana: [27, 32] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], mana: [21, 26] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], mana: [17, 20] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], mana: [9, 16] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], mana: [6, 8] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], mana: [33, 39] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], mana: [27, 32] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], mana: [21, 26] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], mana: [17, 20] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], mana: [9, 16] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], mana: [6, 8] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: mana.max, type: FLAT, value: "{mana}" }
@@ -1982,14 +2088,15 @@ local_phys_accuracy:
   names: [星骸的, 暴君的, 屠戮的, 殘暴的, 兇猛的, 銳利的, 鋒利的, 磨光的]
   text: "增加 {value}% 物理傷害、+{acc} 命中"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 109, value: [75, 79], acc: [175, 200] }
-    - { tier: 2, ilvl: 70, weight: 156, value: [65, 74], acc: [150, 174] }
-    - { tier: 3, ilvl: 65, weight: 223, value: [55, 64], acc: [124, 149] }
-    - { tier: 4, ilvl: 54, weight: 318, value: [45, 54], acc: [98, 123] }
-    - { tier: 5, ilvl: 38, weight: 454, value: [35, 44], acc: [73, 97] }
-    - { tier: 6, ilvl: 23, weight: 649, value: [25, 34], acc: [47, 72] }
-    - { tier: 7, ilvl: 14, weight: 927, value: [20, 24], acc: [21, 46] }
-    - { tier: 8, ilvl: 8, weight: 1325, value: [15, 19], acc: [16, 20] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 81, weight: 100, value: [75, 79], acc: [175, 200] }
+    - { tier: 2, ilvl: 70, weight: 200, value: [65, 74], acc: [150, 174] }
+    - { tier: 3, ilvl: 65, weight: 400, value: [55, 64], acc: [124, 149] }
+    - { tier: 4, ilvl: 54, weight: 600, value: [45, 54], acc: [98, 123] }
+    - { tier: 5, ilvl: 38, weight: 1000, value: [35, 44], acc: [73, 97] }
+    - { tier: 6, ilvl: 23, weight: 1000, value: [25, 34], acc: [47, 72] }
+    - { tier: 7, ilvl: 14, weight: 1000, value: [20, 24], acc: [21, 46] }
+    - { tier: 8, ilvl: 8, weight: 1000, value: [15, 19], acc: [16, 20] }
   mods:
     - { stat: local.physical, type: INCREASED, value: "{value}" }
     - { stat: accuracy, type: FLAT, value: "{acc}" }
@@ -2001,13 +2108,14 @@ spirit_mana:
   names: [星魄的, 天魂的, 神魄的, 聖魂的, 英靈的, 魂火的, 靈魄的]
   text: "增加 {value}% 精魂、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 70, weight: 152, value: [35, 38], mana: [42, 45] }
-    - { tier: 2, ilvl: 58, weight: 217, value: [31, 34], mana: [38, 41] }
-    - { tier: 3, ilvl: 48, weight: 310, value: [27, 30], mana: [34, 37] }
-    - { tier: 4, ilvl: 36, weight: 443, value: [23, 26], mana: [29, 33] }
-    - { tier: 5, ilvl: 26, weight: 633, value: [19, 22], mana: [25, 28] }
-    - { tier: 6, ilvl: 11, weight: 904, value: [15, 18], mana: [21, 24] }
-    - { tier: 7, ilvl: 2, weight: 1292, value: [10, 14], mana: [17, 20] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 70, weight: 100, value: [35, 38], mana: [42, 45] }
+    - { tier: 2, ilvl: 58, weight: 200, value: [31, 34], mana: [38, 41] }
+    - { tier: 3, ilvl: 48, weight: 400, value: [27, 30], mana: [34, 37] }
+    - { tier: 4, ilvl: 36, weight: 600, value: [23, 26], mana: [29, 33] }
+    - { tier: 5, ilvl: 26, weight: 1000, value: [19, 22], mana: [25, 28] }
+    - { tier: 6, ilvl: 11, weight: 1000, value: [15, 18], mana: [21, 24] }
+    - { tier: 7, ilvl: 2, weight: 1000, value: [10, 14], mana: [17, 20] }
   mods:
     - { stat: spirit.max, type: INCREASED, value: "{value}" }
     - { stat: mana.max, type: FLAT, value: "{mana}" }
@@ -2019,14 +2127,15 @@ spirit_increased:
   names: [星魄的, 天魂的, 神魄的, 聖魂的, 英靈的, 魂火的, 靈魄的, 微魂的]
   text: "增加 {value}% 精魂"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 109, value: [61, 65] }
-    - { tier: 2, ilvl: 75, weight: 156, value: [56, 60] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [51, 55] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [45, 50] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [39, 44] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [33, 38] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [27, 32] }
-    - { tier: 8, ilvl: 1, weight: 1325, value: [20, 26] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 82, weight: 50, value: [61, 65] }
+    - { tier: 2, ilvl: 75, weight: 100, value: [56, 60] }
+    - { tier: 3, ilvl: 60, weight: 200, value: [51, 55] }
+    - { tier: 4, ilvl: 46, weight: 400, value: [45, 50] }
+    - { tier: 5, ilvl: 33, weight: 600, value: [39, 44] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [33, 38] }
+    - { tier: 7, ilvl: 8, weight: 1000, value: [27, 32] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [20, 26] }
   mods:
     - { stat: spirit.max, type: INCREASED, value: "{value}" }
 
@@ -2037,16 +2146,17 @@ added_lightning_local:
   names: [星雷的, 天雷的, 雷霆的, 狂雷的, 電光的, 閃耀的, 帶電的, 靜電的, 微電的, 火花的]
   text: "附加 {min} 到 {max} 閃電傷害"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 56, min: [1, 12], max: [202, 234] }
-    - { tier: 2, ilvl: 75, weight: 79, min: [1, 10], max: [157, 196] }
-    - { tier: 3, ilvl: 65, weight: 113, min: [1, 8], max: [111, 152] }
-    - { tier: 4, ilvl: 60, weight: 162, min: [1, 6], max: [85, 107] }
-    - { tier: 5, ilvl: 54, weight: 232, min: [1, 4], max: [63, 82] }
-    - { tier: 6, ilvl: 46, weight: 331, min: [1, 3], max: [55, 60] }
-    - { tier: 7, ilvl: 33, weight: 473, min: [1, 2], max: [36, 52] }
-    - { tier: 8, ilvl: 16, weight: 675, min: [1, 2], max: [20, 30] }
-    - { tier: 9, ilvl: 8, weight: 965, min: [1, 1], max: [13, 19] }
-    - { tier: 10, ilvl: 1, weight: 1378, min: [1, 1], max: [4, 6] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（10 階 → 10 階）
+    - { tier: 1, ilvl: 81, weight: 120, min: [1, 12], max: [202, 234] }
+    - { tier: 2, ilvl: 75, weight: 300, min: [1, 10], max: [157, 196] }
+    - { tier: 3, ilvl: 65, weight: 480, min: [1, 8], max: [111, 152] }
+    - { tier: 4, ilvl: 60, weight: 720, min: [1, 6], max: [85, 107] }
+    - { tier: 5, ilvl: 54, weight: 1200, min: [1, 4], max: [63, 82] }
+    - { tier: 6, ilvl: 46, weight: 1200, min: [1, 3], max: [55, 60] }
+    - { tier: 7, ilvl: 33, weight: 1200, min: [1, 2], max: [36, 52] }
+    - { tier: 8, ilvl: 16, weight: 1200, min: [1, 2], max: [20, 30] }
+    - { tier: 9, ilvl: 8, weight: 1200, min: [1, 1], max: [13, 19] }
+    - { tier: 10, ilvl: 1, weight: 1200, min: [1, 1], max: [4, 6] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, lightning] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, lightning] }
@@ -2058,16 +2168,17 @@ added_lightning_local_crossbow:
   names: [星雷的, 天雷的, 雷霆的, 狂雷的, 電光的, 閃耀的, 帶電的, 靜電的, 微電的, 火花的]
   text: "附加 {min} 到 {max} 閃電傷害"
   tiers:
-    - { tier: 1, ilvl: 81, weight: 56, min: [1, 19], max: [310, 358] }
-    - { tier: 2, ilvl: 75, weight: 79, min: [1, 16], max: [239, 300] }
-    - { tier: 3, ilvl: 65, weight: 113, min: [1, 13], max: [168, 231] }
-    - { tier: 4, ilvl: 60, weight: 162, min: [1, 8], max: [128, 162] }
-    - { tier: 5, ilvl: 54, weight: 232, min: [1, 6], max: [93, 122] }
-    - { tier: 6, ilvl: 46, weight: 331, min: [1, 4], max: [80, 88] }
-    - { tier: 7, ilvl: 33, weight: 473, min: [1, 4], max: [53, 76] }
-    - { tier: 8, ilvl: 16, weight: 675, min: [1, 3], max: [31, 43] }
-    - { tier: 9, ilvl: 8, weight: 965, min: [1, 2], max: [19, 27] }
-    - { tier: 10, ilvl: 1, weight: 1378, min: [1, 1], max: [7, 10] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（10 階 → 10 階）
+    - { tier: 1, ilvl: 81, weight: 100, min: [1, 19], max: [310, 358] }
+    - { tier: 2, ilvl: 75, weight: 250, min: [1, 16], max: [239, 300] }
+    - { tier: 3, ilvl: 65, weight: 400, min: [1, 13], max: [168, 231] }
+    - { tier: 4, ilvl: 60, weight: 600, min: [1, 8], max: [128, 162] }
+    - { tier: 5, ilvl: 54, weight: 1000, min: [1, 6], max: [93, 122] }
+    - { tier: 6, ilvl: 46, weight: 1000, min: [1, 4], max: [80, 88] }
+    - { tier: 7, ilvl: 33, weight: 1000, min: [1, 4], max: [53, 76] }
+    - { tier: 8, ilvl: 16, weight: 1000, min: [1, 3], max: [31, 43] }
+    - { tier: 9, ilvl: 8, weight: 1000, min: [1, 2], max: [19, 27] }
+    - { tier: 10, ilvl: 1, weight: 1000, min: [1, 1], max: [7, 10] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, lightning] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, lightning] }
@@ -2079,15 +2190,16 @@ added_phys_local:
   names: [星骸的, 暴君的, 屠戮的, 殘暴的, 兇猛的, 銳利的, 鋒利的, 磨光的, 粗糙的]
   text: "附加 {min} 到 {max} 物理傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 78, min: [26, 39], max: [44, 66] }
-    - { tier: 2, ilvl: 65, weight: 111, min: [21, 31], max: [36, 53] }
-    - { tier: 3, ilvl: 60, weight: 159, min: [16, 24], max: [28, 42] }
-    - { tier: 4, ilvl: 54, weight: 228, min: [13, 20], max: [23, 35] }
-    - { tier: 5, ilvl: 46, weight: 325, min: [10, 15], max: [18, 26] }
-    - { tier: 6, ilvl: 33, weight: 464, min: [8, 12], max: [14, 21] }
-    - { tier: 7, ilvl: 16, weight: 663, min: [6, 9], max: [11, 16] }
-    - { tier: 8, ilvl: 8, weight: 948, min: [4, 6], max: [7, 11] }
-    - { tier: 9, ilvl: 1, weight: 1354, min: [1, 2], max: [4, 5] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 75, weight: 100, min: [26, 39], max: [44, 66] }
+    - { tier: 2, ilvl: 65, weight: 200, min: [21, 31], max: [36, 53] }
+    - { tier: 3, ilvl: 60, weight: 400, min: [16, 24], max: [28, 42] }
+    - { tier: 4, ilvl: 54, weight: 600, min: [13, 20], max: [23, 35] }
+    - { tier: 5, ilvl: 46, weight: 1000, min: [10, 15], max: [18, 26] }
+    - { tier: 6, ilvl: 33, weight: 1000, min: [8, 12], max: [14, 21] }
+    - { tier: 7, ilvl: 16, weight: 1000, min: [6, 9], max: [11, 16] }
+    - { tier: 8, ilvl: 8, weight: 1000, min: [4, 6], max: [7, 11] }
+    - { tier: 9, ilvl: 1, weight: 1000, min: [1, 2], max: [4, 5] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
@@ -2099,15 +2211,16 @@ added_phys_local_crossbow:
   names: [星骸的, 暴君的, 屠戮的, 殘暴的, 兇猛的, 銳利的, 鋒利的, 磨光的, 粗糙的]
   text: "附加 {min} 到 {max} 物理傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 78, min: [37, 55], max: [63, 94] }
-    - { tier: 2, ilvl: 65, weight: 111, min: [29, 44], max: [50, 75] }
-    - { tier: 3, ilvl: 60, weight: 159, min: [23, 35], max: [39, 59] }
-    - { tier: 4, ilvl: 54, weight: 228, min: [19, 29], max: [33, 49] }
-    - { tier: 5, ilvl: 46, weight: 325, min: [14, 21], max: [25, 37] }
-    - { tier: 6, ilvl: 33, weight: 464, min: [11, 17], max: [20, 30] }
-    - { tier: 7, ilvl: 16, weight: 663, min: [8, 12], max: [15, 22] }
-    - { tier: 8, ilvl: 8, weight: 948, min: [5, 8], max: [10, 15] }
-    - { tier: 9, ilvl: 1, weight: 1354, min: [2, 3], max: [5, 7] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 75, weight: 100, min: [37, 55], max: [63, 94] }
+    - { tier: 2, ilvl: 65, weight: 200, min: [29, 44], max: [50, 75] }
+    - { tier: 3, ilvl: 60, weight: 400, min: [23, 35], max: [39, 59] }
+    - { tier: 4, ilvl: 54, weight: 600, min: [19, 29], max: [33, 49] }
+    - { tier: 5, ilvl: 46, weight: 1000, min: [14, 21], max: [25, 37] }
+    - { tier: 6, ilvl: 33, weight: 1000, min: [11, 17], max: [20, 30] }
+    - { tier: 7, ilvl: 16, weight: 1000, min: [8, 12], max: [15, 22] }
+    - { tier: 8, ilvl: 8, weight: 1000, min: [5, 8], max: [10, 15] }
+    - { tier: 9, ilvl: 1, weight: 1000, min: [2, 3], max: [5, 7] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
@@ -2119,14 +2232,15 @@ phys_inc:
   names: [星骸的, 暴君的, 屠戮的, 殘暴的, 兇猛的, 銳利的, 鋒利的, 磨光的]
   text: "增加 {value}% 物理傷害"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 109, value: [170, 179] }
-    - { tier: 2, ilvl: 75, weight: 156, value: [155, 169] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [135, 154] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [110, 134] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [85, 109] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [65, 84] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [50, 64] }
-    - { tier: 8, ilvl: 1, weight: 1325, value: [40, 49] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 82, weight: 25, value: [170, 179] }
+    - { tier: 2, ilvl: 75, weight: 50, value: [155, 169] }
+    - { tier: 3, ilvl: 60, weight: 100, value: [135, 154] }
+    - { tier: 4, ilvl: 46, weight: 200, value: [110, 134] }
+    - { tier: 5, ilvl: 33, weight: 400, value: [85, 109] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [65, 84] }
+    - { tier: 7, ilvl: 8, weight: 1000, value: [50, 64] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [40, 49] }
   mods:
     - { stat: local.physical, type: INCREASED, value: "{value}" }
 
@@ -2138,13 +2252,14 @@ armour_flat:
   names: [星鐵的, 不破的, 堡壘的, 鐵壁的, 重甲的, 鋼鑄的, 鐵皮的]
   text: "+{value} 護甲"
   tiers:
-    - { tier: 1, ilvl: 54, weight: 152, value: [160, 190] }
-    - { tier: 2, ilvl: 46, weight: 217, value: [128, 159] }
-    - { tier: 3, ilvl: 33, weight: 310, value: [99, 127] }
-    - { tier: 4, ilvl: 25, weight: 443, value: [78, 98] }
-    - { tier: 5, ilvl: 16, weight: 633, value: [57, 77] }
-    - { tier: 6, ilvl: 8, weight: 904, value: [28, 56] }
-    - { tier: 7, ilvl: 1, weight: 1292, value: [16, 27] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 54, weight: 1000, value: [160, 190] }
+    - { tier: 2, ilvl: 46, weight: 1000, value: [128, 159] }
+    - { tier: 3, ilvl: 33, weight: 1000, value: [99, 127] }
+    - { tier: 4, ilvl: 25, weight: 1000, value: [78, 98] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [57, 77] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [28, 56] }
+    - { tier: 7, ilvl: 1, weight: 1000, value: [16, 27] }
   mods:
     - { stat: armour, type: FLAT, value: "{value}" }
 
@@ -2156,17 +2271,18 @@ armour_flat_body:
   names: [星鐵的, 不破的, 堡壘的, 鐵壁的, 重甲的, 鋼鑄的, 鐵皮的, 硬皮的, 結實的, 粗製的, 木片的]
   text: "+{value} 護甲"
   tiers:
-    - { tier: 1, ilvl: 79, weight: 40, value: [278, 310] }
-    - { tier: 2, ilvl: 75, weight: 56, value: [249, 277] }
-    - { tier: 3, ilvl: 65, weight: 81, value: [222, 248] }
-    - { tier: 4, ilvl: 60, weight: 115, value: [191, 221] }
-    - { tier: 5, ilvl: 54, weight: 165, value: [160, 190] }
-    - { tier: 6, ilvl: 46, weight: 235, value: [128, 159] }
-    - { tier: 7, ilvl: 33, weight: 336, value: [99, 127] }
-    - { tier: 8, ilvl: 25, weight: 480, value: [78, 98] }
-    - { tier: 9, ilvl: 16, weight: 685, value: [57, 77] }
-    - { tier: 10, ilvl: 8, weight: 979, value: [28, 56] }
-    - { tier: 11, ilvl: 1, weight: 1399, value: [16, 27] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（11 階 → 11 階）
+    - { tier: 1, ilvl: 79, weight: 1000, value: [278, 310] }
+    - { tier: 2, ilvl: 75, weight: 1000, value: [249, 277] }
+    - { tier: 3, ilvl: 65, weight: 1000, value: [222, 248] }
+    - { tier: 4, ilvl: 60, weight: 1000, value: [191, 221] }
+    - { tier: 5, ilvl: 54, weight: 1000, value: [160, 190] }
+    - { tier: 6, ilvl: 46, weight: 1000, value: [128, 159] }
+    - { tier: 7, ilvl: 33, weight: 1000, value: [99, 127] }
+    - { tier: 8, ilvl: 25, weight: 1000, value: [78, 98] }
+    - { tier: 9, ilvl: 16, weight: 1000, value: [57, 77] }
+    - { tier: 10, ilvl: 8, weight: 1000, value: [28, 56] }
+    - { tier: 11, ilvl: 1, weight: 1000, value: [16, 27] }
   mods:
     - { stat: armour, type: FLAT, value: "{value}" }
 
@@ -2178,14 +2294,15 @@ armour_flat_helmet:
   names: [星鐵的, 不破的, 堡壘的, 鐵壁的, 重甲的, 鋼鑄的, 鐵皮的, 硬皮的]
   text: "+{value} 護甲"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 109, value: [191, 221] }
-    - { tier: 2, ilvl: 54, weight: 156, value: [160, 190] }
-    - { tier: 3, ilvl: 46, weight: 223, value: [128, 159] }
-    - { tier: 4, ilvl: 33, weight: 318, value: [99, 127] }
-    - { tier: 5, ilvl: 25, weight: 454, value: [78, 98] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [57, 77] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [28, 56] }
-    - { tier: 8, ilvl: 1, weight: 1325, value: [16, 27] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 60, weight: 1000, value: [191, 221] }
+    - { tier: 2, ilvl: 54, weight: 1000, value: [160, 190] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [128, 159] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [99, 127] }
+    - { tier: 5, ilvl: 25, weight: 1000, value: [78, 98] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [57, 77] }
+    - { tier: 7, ilvl: 8, weight: 1000, value: [28, 56] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [16, 27] }
   mods:
     - { stat: armour, type: FLAT, value: "{value}" }
 
@@ -2197,16 +2314,17 @@ armour_flat_shield:
   names: [星鐵的, 不破的, 堡壘的, 鐵壁的, 重甲的, 鋼鑄的, 鐵皮的, 硬皮的, 結實的, 粗製的]
   text: "+{value} 護甲"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 56, value: [249, 277] }
-    - { tier: 2, ilvl: 65, weight: 79, value: [222, 248] }
-    - { tier: 3, ilvl: 60, weight: 113, value: [191, 221] }
-    - { tier: 4, ilvl: 54, weight: 162, value: [160, 190] }
-    - { tier: 5, ilvl: 46, weight: 232, value: [128, 159] }
-    - { tier: 6, ilvl: 33, weight: 331, value: [99, 127] }
-    - { tier: 7, ilvl: 25, weight: 473, value: [78, 98] }
-    - { tier: 8, ilvl: 16, weight: 675, value: [57, 77] }
-    - { tier: 9, ilvl: 8, weight: 965, value: [28, 56] }
-    - { tier: 10, ilvl: 1, weight: 1378, value: [16, 27] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（10 階 → 10 階）
+    - { tier: 1, ilvl: 75, weight: 1000, value: [249, 277] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [222, 248] }
+    - { tier: 3, ilvl: 60, weight: 1000, value: [191, 221] }
+    - { tier: 4, ilvl: 54, weight: 1000, value: [160, 190] }
+    - { tier: 5, ilvl: 46, weight: 1000, value: [128, 159] }
+    - { tier: 6, ilvl: 33, weight: 1000, value: [99, 127] }
+    - { tier: 7, ilvl: 25, weight: 1000, value: [78, 98] }
+    - { tier: 8, ilvl: 16, weight: 1000, value: [57, 77] }
+    - { tier: 9, ilvl: 8, weight: 1000, value: [28, 56] }
+    - { tier: 10, ilvl: 1, weight: 1000, value: [16, 27] }
   mods:
     - { stat: armour, type: FLAT, value: "{value}" }
 
@@ -2218,13 +2336,14 @@ armour_inc:
   names: [星鐵的, 不破的, 堡壘的, 鐵壁的, 重甲的, 鋼鑄的, 鐵皮的]
   text: "增加 {value}% 護甲"
   tiers:
-    - { tier: 1, ilvl: 65, weight: 152, value: [92, 100] }
-    - { tier: 2, ilvl: 60, weight: 217, value: [80, 91] }
-    - { tier: 3, ilvl: 54, weight: 310, value: [68, 79] }
-    - { tier: 4, ilvl: 46, weight: 443, value: [56, 67] }
-    - { tier: 5, ilvl: 35, weight: 633, value: [43, 55] }
-    - { tier: 6, ilvl: 16, weight: 904, value: [27, 42] }
-    - { tier: 7, ilvl: 2, weight: 1292, value: [15, 26] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 65, weight: 1000, value: [92, 100] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [80, 91] }
+    - { tier: 3, ilvl: 54, weight: 1000, value: [68, 79] }
+    - { tier: 4, ilvl: 46, weight: 1000, value: [56, 67] }
+    - { tier: 5, ilvl: 35, weight: 1000, value: [43, 55] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [27, 42] }
+    - { tier: 7, ilvl: 2, weight: 1000, value: [15, 26] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
 
@@ -2236,14 +2355,15 @@ armour_inc_body:
   names: [星鐵的, 不破的, 堡壘的, 鐵壁的, 重甲的, 鋼鑄的, 鐵皮的, 硬皮的]
   text: "增加 {value}% 護甲"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 109, value: [101, 110] }
-    - { tier: 2, ilvl: 65, weight: 156, value: [92, 100] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [80, 91] }
-    - { tier: 4, ilvl: 54, weight: 318, value: [68, 79] }
-    - { tier: 5, ilvl: 46, weight: 454, value: [56, 67] }
-    - { tier: 6, ilvl: 35, weight: 649, value: [43, 55] }
-    - { tier: 7, ilvl: 16, weight: 927, value: [27, 42] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [15, 26] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 75, weight: 1000, value: [101, 110] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [92, 100] }
+    - { tier: 3, ilvl: 60, weight: 1000, value: [80, 91] }
+    - { tier: 4, ilvl: 54, weight: 1000, value: [68, 79] }
+    - { tier: 5, ilvl: 46, weight: 1000, value: [56, 67] }
+    - { tier: 6, ilvl: 35, weight: 1000, value: [43, 55] }
+    - { tier: 7, ilvl: 16, weight: 1000, value: [27, 42] }
+    - { tier: 8, ilvl: 2, weight: 1000, value: [15, 26] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
 
@@ -2254,9 +2374,10 @@ life_inc:
   names: [星骸的, 天賜的, 神軀的]
   text: "增加 {value}% 最大生命"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 546, value: [7, 8] }
-    - { tier: 2, ilvl: 60, weight: 780, value: [5, 6] }
-    - { tier: 3, ilvl: 33, weight: 1114, value: [3, 4] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（3 階 → 3 階）
+    - { tier: 1, ilvl: 75, weight: 300, value: [7, 8] }
+    - { tier: 2, ilvl: 60, weight: 300, value: [5, 6] }
+    - { tier: 3, ilvl: 33, weight: 300, value: [3, 4] }
   mods:
     - { stat: life.max, type: INCREASED, value: "{value}" }
 
@@ -2267,9 +2388,10 @@ mana_inc:
   names: [星海的, 神諭的, 天啟的]
   text: "增加 {value}% 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 546, value: [7, 8] }
-    - { tier: 2, ilvl: 60, weight: 780, value: [5, 6] }
-    - { tier: 3, ilvl: 33, weight: 1114, value: [3, 4] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（3 階 → 3 階）
+    - { tier: 1, ilvl: 75, weight: 300, value: [7, 8] }
+    - { tier: 2, ilvl: 60, weight: 300, value: [5, 6] }
+    - { tier: 3, ilvl: 33, weight: 300, value: [3, 4] }
   mods:
     - { stat: mana.max, type: INCREASED, value: "{value}" }
 
@@ -2280,12 +2402,13 @@ movement_speed:
   names: [之星骸, 之神速, 之疾風, 之迅捷, 之敏捷, 之快手]
   text: "增加 {value}% 移動速度"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 211, value: [35, 35] }
-    - { tier: 2, ilvl: 65, weight: 301, value: [30, 30] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [25, 25] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [20, 20] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [15, 15] }
-    - { tier: 6, ilvl: 1, weight: 1255, value: [10, 10] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 82, weight: 1000, value: [35, 35] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [30, 30] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [25, 25] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [20, 20] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [15, 15] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [10, 10] }
   mods:
     - { stat: movement.speed, type: INCREASED, value: "{value}" }
 
@@ -2296,15 +2419,16 @@ added_phys:
   names: [星骸的, 暴君的, 屠戮的, 殘暴的, 兇猛的, 銳利的, 鋒利的, 磨光的, 粗糙的]
   text: "攻擊附加 {min} 到 {max} 物理傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 78, min: [12, 19], max: [22, 32] }
-    - { tier: 2, ilvl: 65, weight: 111, min: [10, 15], max: [18, 26] }
-    - { tier: 3, ilvl: 60, weight: 159, min: [7, 11], max: [14, 20] }
-    - { tier: 4, ilvl: 54, weight: 228, min: [6, 10], max: [12, 17] }
-    - { tier: 5, ilvl: 46, weight: 325, min: [5, 7], max: [9, 13] }
-    - { tier: 6, ilvl: 33, weight: 464, min: [4, 6], max: [8, 11] }
-    - { tier: 7, ilvl: 16, weight: 663, min: [2, 4], max: [5, 8] }
-    - { tier: 8, ilvl: 8, weight: 948, min: [2, 3], max: [4, 6] }
-    - { tier: 9, ilvl: 1, weight: 1354, min: [1, 2], max: [3, 3] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（9 階 → 9 階）
+    - { tier: 1, ilvl: 75, weight: 400, min: [12, 19], max: [22, 32] }
+    - { tier: 2, ilvl: 65, weight: 600, min: [10, 15], max: [18, 26] }
+    - { tier: 3, ilvl: 60, weight: 800, min: [7, 11], max: [14, 20] }
+    - { tier: 4, ilvl: 54, weight: 1000, min: [6, 10], max: [12, 17] }
+    - { tier: 5, ilvl: 46, weight: 1000, min: [5, 7], max: [9, 13] }
+    - { tier: 6, ilvl: 33, weight: 1000, min: [4, 6], max: [8, 11] }
+    - { tier: 7, ilvl: 16, weight: 1000, min: [2, 4], max: [5, 8] }
+    - { tier: 8, ilvl: 8, weight: 1000, min: [2, 3], max: [4, 6] }
+    - { tier: 9, ilvl: 1, weight: 1000, min: [1, 2], max: [3, 3] }
   mods:
     - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
     - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
@@ -2316,16 +2440,17 @@ armour_global:
   names: [星鐵的, 不破的, 堡壘的, 鐵壁的, 重甲的, 鋼鑄的, 鐵皮的, 硬皮的, 結實的, 粗製的]
   text: "+{value} 護甲"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 56, value: [312, 351] }
-    - { tier: 2, ilvl: 70, weight: 79, value: [268, 311] }
-    - { tier: 3, ilvl: 65, weight: 113, value: [226, 267] }
-    - { tier: 4, ilvl: 54, weight: 162, value: [187, 225] }
-    - { tier: 5, ilvl: 46, weight: 232, value: [141, 186] }
-    - { tier: 6, ilvl: 33, weight: 331, value: [108, 140] }
-    - { tier: 7, ilvl: 25, weight: 473, value: [69, 107] }
-    - { tier: 8, ilvl: 16, weight: 675, value: [52, 68] }
-    - { tier: 9, ilvl: 11, weight: 965, value: [23, 51] }
-    - { tier: 10, ilvl: 1, weight: 1378, value: [12, 22] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（10 階 → 10 階）
+    - { tier: 1, ilvl: 80, weight: 1000, value: [312, 351] }
+    - { tier: 2, ilvl: 70, weight: 1000, value: [268, 311] }
+    - { tier: 3, ilvl: 65, weight: 1000, value: [226, 267] }
+    - { tier: 4, ilvl: 54, weight: 1000, value: [187, 225] }
+    - { tier: 5, ilvl: 46, weight: 1000, value: [141, 186] }
+    - { tier: 6, ilvl: 33, weight: 1000, value: [108, 140] }
+    - { tier: 7, ilvl: 25, weight: 1000, value: [69, 107] }
+    - { tier: 8, ilvl: 16, weight: 1000, value: [52, 68] }
+    - { tier: 9, ilvl: 11, weight: 1000, value: [23, 51] }
+    - { tier: 10, ilvl: 1, weight: 1000, value: [12, 22] }
   mods:
     - { stat: armour, type: FLAT, value: "{value}" }
 
@@ -2338,12 +2463,13 @@ spell_phys_inc:
   text: "增加 {value}% 法術物理傷害"
   chips: [damage, physical, caster]   # PoE2 的標籤（PhysicalSpellDamageWeaponPrefix）；2026-10-17 補法術
   tiers:
-    - { tier: 1, ilvl: 60, weight: 211, value: [75, 89] }
-    - { tier: 2, ilvl: 46, weight: 301, value: [65, 74] }
-    - { tier: 3, ilvl: 33, weight: 430, value: [55, 64] }
-    - { tier: 4, ilvl: 16, weight: 615, value: [45, 54] }
-    - { tier: 5, ilvl: 8, weight: 878, value: [35, 44] }
-    - { tier: 6, ilvl: 2, weight: 1255, value: [25, 34] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 60, weight: 200, value: [75, 89] }
+    - { tier: 2, ilvl: 46, weight: 300, value: [65, 74] }
+    - { tier: 3, ilvl: 33, weight: 400, value: [55, 64] }
+    - { tier: 4, ilvl: 16, weight: 500, value: [45, 54] }
+    - { tier: 5, ilvl: 8, weight: 500, value: [35, 44] }
+    - { tier: 6, ilvl: 2, weight: 500, value: [25, 34] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [spell, physical] }
 
@@ -2355,14 +2481,15 @@ spell_phys_inc_wand:
   text: "增加 {value}% 法術物理傷害"
   chips: [damage, physical, caster]   # PoE2 的標籤（PhysicalSpellDamageWeaponPrefix）；2026-10-17 補法術
   tiers:
-    - { tier: 1, ilvl: 81, weight: 109, value: [105, 119] }
-    - { tier: 2, ilvl: 70, weight: 156, value: [90, 104] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [75, 89] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [65, 74] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [55, 64] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [45, 54] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [35, 44] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [25, 34] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 81, weight: 50, value: [105, 119] }
+    - { tier: 2, ilvl: 70, weight: 100, value: [90, 104] }
+    - { tier: 3, ilvl: 60, weight: 200, value: [75, 89] }
+    - { tier: 4, ilvl: 46, weight: 300, value: [65, 74] }
+    - { tier: 5, ilvl: 33, weight: 400, value: [55, 64] }
+    - { tier: 6, ilvl: 16, weight: 500, value: [45, 54] }
+    - { tier: 7, ilvl: 8, weight: 500, value: [35, 44] }
+    - { tier: 8, ilvl: 2, weight: 500, value: [25, 34] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [spell, physical] }
 
@@ -2374,14 +2501,15 @@ spell_phys_inc_staff:
   text: "增加 {value}% 法術物理傷害"
   chips: [damage, physical, caster]   # PoE2 的標籤（PhysicalSpellDamageWeaponPrefix）；2026-10-17 補法術
   tiers:
-    - { tier: 1, ilvl: 81, weight: 109, value: [209, 238] }
-    - { tier: 2, ilvl: 70, weight: 156, value: [189, 208] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [149, 188] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [129, 148] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [109, 128] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [89, 108] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [69, 88] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [50, 68] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 81, weight: 50, value: [209, 238] }
+    - { tier: 2, ilvl: 70, weight: 100, value: [189, 208] }
+    - { tier: 3, ilvl: 60, weight: 200, value: [149, 188] }
+    - { tier: 4, ilvl: 46, weight: 300, value: [129, 148] }
+    - { tier: 5, ilvl: 33, weight: 400, value: [109, 128] }
+    - { tier: 6, ilvl: 16, weight: 500, value: [89, 108] }
+    - { tier: 7, ilvl: 8, weight: 500, value: [69, 88] }
+    - { tier: 8, ilvl: 2, weight: 500, value: [50, 68] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [spell, physical] }
 
@@ -2392,11 +2520,12 @@ projectile_speed:
   names: [星芒的, 神匠的, 大師的, 名家的, 精良的]
   text: "增加 {value}% 投射物速度"
   tiers:
-    - { tier: 1, ilvl: 82, weight: 291, value: [42, 46] }
-    - { tier: 2, ilvl: 55, weight: 416, value: [34, 41] }
-    - { tier: 3, ilvl: 41, weight: 594, value: [26, 33] }
-    - { tier: 4, ilvl: 27, weight: 849, value: [18, 25] }
-    - { tier: 5, ilvl: 14, weight: 1212, value: [10, 17] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（5 階 → 5 階）
+    - { tier: 1, ilvl: 82, weight: 1000, value: [42, 46] }
+    - { tier: 2, ilvl: 55, weight: 1000, value: [34, 41] }
+    - { tier: 3, ilvl: 41, weight: 1000, value: [26, 33] }
+    - { tier: 4, ilvl: 27, weight: 1000, value: [18, 25] }
+    - { tier: 5, ilvl: 14, weight: 1000, value: [10, 17] }
   mods:
     - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
 
@@ -2407,12 +2536,13 @@ spell_inc:
   names: [星咒的, 大法師的, 咒術大師的, 秘術的, 法師的, 術士的]
   text: "增加 {value}% 法術傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 211, value: [27, 30] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [23, 26] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [18, 22] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [13, 17] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [8, 12] }
-    - { tier: 6, ilvl: 1, weight: 1255, value: [3, 7] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 75, weight: 1000, value: [27, 30] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [23, 26] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [18, 22] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [13, 17] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [8, 12] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -2425,13 +2555,14 @@ thorns:
   text: "荊棘：被近戰擊中時反彈 {min} 到 {max} 物理傷害"
   chips: [damage, physical]   # PoE2 的標籤（ThornsPhysicalDamage）
   tiers:
-    - { tier: 1, ilvl: 74, weight: 152, min: [101, 151], max: [152, 220] }
-    - { tier: 2, ilvl: 63, weight: 217, min: [64, 97], max: [98, 145] }
-    - { tier: 3, ilvl: 48, weight: 310, min: [40, 60], max: [61, 92] }
-    - { tier: 4, ilvl: 38, weight: 443, min: [24, 35], max: [36, 53] }
-    - { tier: 5, ilvl: 19, weight: 633, min: [11, 16], max: [17, 23] }
-    - { tier: 6, ilvl: 10, weight: 904, min: [5, 7], max: [7, 10] }
-    - { tier: 7, ilvl: 1, weight: 1292, min: [1, 2], max: [3, 4] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 74, weight: 1000, min: [101, 151], max: [152, 220] }
+    - { tier: 2, ilvl: 63, weight: 1000, min: [64, 97], max: [98, 145] }
+    - { tier: 3, ilvl: 48, weight: 1000, min: [40, 60], max: [61, 92] }
+    - { tier: 4, ilvl: 38, weight: 1000, min: [24, 35], max: [36, 53] }
+    - { tier: 5, ilvl: 19, weight: 1000, min: [11, 16], max: [17, 23] }
+    - { tier: 6, ilvl: 10, weight: 1000, min: [5, 7], max: [7, 10] }
+    - { tier: 7, ilvl: 1, weight: 1000, min: [1, 2], max: [3, 4] }
   mods:
     - { stat: thorns.min, type: FLAT, value: "{min}" }
     - { stat: thorns.max, type: FLAT, value: "{max}" }
@@ -2444,12 +2575,13 @@ spell_inc_weapon:
   names: [星咒的, 大法師的, 咒術大師的, 秘術的, 法師的, 術士的]
   text: "增加 {value}% 法術傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 211, value: [75, 89] }
-    - { tier: 2, ilvl: 46, weight: 301, value: [65, 74] }
-    - { tier: 3, ilvl: 33, weight: 430, value: [55, 64] }
-    - { tier: 4, ilvl: 16, weight: 615, value: [45, 54] }
-    - { tier: 5, ilvl: 8, weight: 878, value: [35, 44] }
-    - { tier: 6, ilvl: 1, weight: 1255, value: [25, 34] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 60, weight: 200, value: [75, 89] }
+    - { tier: 2, ilvl: 46, weight: 400, value: [65, 74] }
+    - { tier: 3, ilvl: 33, weight: 600, value: [55, 64] }
+    - { tier: 4, ilvl: 16, weight: 1000, value: [45, 54] }
+    - { tier: 5, ilvl: 8, weight: 1000, value: [35, 44] }
+    - { tier: 6, ilvl: 1, weight: 1000, value: [25, 34] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -2460,14 +2592,15 @@ spell_inc_weapon_wand:
   names: [星咒的, 大法師的, 咒術大師的, 秘術的, 法師的, 術士的, 咒語的, 學者的]
   text: "增加 {value}% 法術傷害"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 109, value: [105, 119] }
-    - { tier: 2, ilvl: 70, weight: 156, value: [90, 104] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [75, 89] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [65, 74] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [55, 64] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [45, 54] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [35, 44] }
-    - { tier: 8, ilvl: 1, weight: 1325, value: [25, 34] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 80, weight: 50, value: [105, 119] }
+    - { tier: 2, ilvl: 70, weight: 100, value: [90, 104] }
+    - { tier: 3, ilvl: 60, weight: 200, value: [75, 89] }
+    - { tier: 4, ilvl: 46, weight: 400, value: [65, 74] }
+    - { tier: 5, ilvl: 33, weight: 600, value: [55, 64] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [45, 54] }
+    - { tier: 7, ilvl: 8, weight: 1000, value: [35, 44] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [25, 34] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -2478,14 +2611,15 @@ spell_inc_weapon_staff:
   names: [星咒的, 大法師的, 咒術大師的, 秘術的, 法師的, 術士的, 咒語的, 學者的]
   text: "增加 {value}% 法術傷害"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 109, value: [209, 238] }
-    - { tier: 2, ilvl: 70, weight: 156, value: [189, 208] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [149, 188] }
-    - { tier: 4, ilvl: 46, weight: 318, value: [129, 148] }
-    - { tier: 5, ilvl: 33, weight: 454, value: [109, 128] }
-    - { tier: 6, ilvl: 16, weight: 649, value: [89, 108] }
-    - { tier: 7, ilvl: 8, weight: 927, value: [69, 88] }
-    - { tier: 8, ilvl: 1, weight: 1325, value: [50, 68] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 80, weight: 50, value: [209, 238] }
+    - { tier: 2, ilvl: 70, weight: 100, value: [189, 208] }
+    - { tier: 3, ilvl: 60, weight: 200, value: [149, 188] }
+    - { tier: 4, ilvl: 46, weight: 400, value: [129, 148] }
+    - { tier: 5, ilvl: 33, weight: 600, value: [109, 128] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [89, 108] }
+    - { tier: 7, ilvl: 8, weight: 1000, value: [69, 88] }
+    - { tier: 8, ilvl: 1, weight: 1000, value: [50, 68] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -2496,13 +2630,14 @@ spell_mana:
   names: [星咒的, 大法師的, 咒術大師的, 秘術的, 法師的, 術士的, 咒語的]
   text: "增加 {value}% 法術傷害、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 80, weight: 152, value: [45, 49], mana: [42, 45] }
-    - { tier: 2, ilvl: 60, weight: 217, value: [40, 44], mana: [38, 41] }
-    - { tier: 3, ilvl: 46, weight: 310, value: [35, 39], mana: [34, 37] }
-    - { tier: 4, ilvl: 38, weight: 443, value: [30, 34], mana: [29, 33] }
-    - { tier: 5, ilvl: 23, weight: 633, value: [25, 29], mana: [25, 28] }
-    - { tier: 6, ilvl: 11, weight: 904, value: [20, 24], mana: [21, 24] }
-    - { tier: 7, ilvl: 2, weight: 1292, value: [15, 19], mana: [17, 20] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 80, weight: 100, value: [45, 49], mana: [42, 45] }
+    - { tier: 2, ilvl: 60, weight: 200, value: [40, 44], mana: [38, 41] }
+    - { tier: 3, ilvl: 46, weight: 400, value: [35, 39], mana: [34, 37] }
+    - { tier: 4, ilvl: 38, weight: 600, value: [30, 34], mana: [29, 33] }
+    - { tier: 5, ilvl: 23, weight: 1000, value: [25, 29], mana: [25, 28] }
+    - { tier: 6, ilvl: 11, weight: 1000, value: [20, 24], mana: [21, 24] }
+    - { tier: 7, ilvl: 2, weight: 1000, value: [15, 19], mana: [17, 20] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
     - { stat: mana.max, type: FLAT, value: "{mana}" }
@@ -2514,13 +2649,14 @@ spell_mana_staff:
   names: [星咒的, 大法師的, 咒術大師的, 秘術的, 法師的, 術士的, 咒語的]
   text: "增加 {value}% 法術傷害、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 79, weight: 152, value: [89, 98], mana: [83, 90] }
-    - { tier: 2, ilvl: 63, weight: 217, value: [79, 88], mana: [75, 82] }
-    - { tier: 3, ilvl: 48, weight: 310, value: [69, 78], mana: [67, 74] }
-    - { tier: 4, ilvl: 38, weight: 443, value: [59, 68], mana: [57, 66] }
-    - { tier: 5, ilvl: 23, weight: 633, value: [49, 58], mana: [49, 56] }
-    - { tier: 6, ilvl: 11, weight: 904, value: [39, 48], mana: [41, 48] }
-    - { tier: 7, ilvl: 2, weight: 1292, value: [30, 38], mana: [34, 40] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 79, weight: 100, value: [89, 98], mana: [83, 90] }
+    - { tier: 2, ilvl: 63, weight: 200, value: [79, 88], mana: [75, 82] }
+    - { tier: 3, ilvl: 48, weight: 400, value: [69, 78], mana: [67, 74] }
+    - { tier: 4, ilvl: 38, weight: 600, value: [59, 68], mana: [57, 66] }
+    - { tier: 5, ilvl: 23, weight: 1000, value: [49, 58], mana: [49, 56] }
+    - { tier: 6, ilvl: 11, weight: 1000, value: [39, 48], mana: [41, 48] }
+    - { tier: 7, ilvl: 2, weight: 1000, value: [30, 38], mana: [34, 40] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
     - { stat: mana.max, type: FLAT, value: "{mana}" }
@@ -2916,13 +3052,14 @@ armour_es_inc:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的, 匠人的]
   text: "增加 {value}% 護甲與能量護盾"
   tiers:
-    - { tier: 1, ilvl: 65, weight: 152, value: [92, 100] }
-    - { tier: 2, ilvl: 60, weight: 217, value: [80, 91] }
-    - { tier: 3, ilvl: 54, weight: 310, value: [68, 79] }
-    - { tier: 4, ilvl: 46, weight: 443, value: [56, 67] }
-    - { tier: 5, ilvl: 33, weight: 633, value: [43, 55] }
-    - { tier: 6, ilvl: 16, weight: 904, value: [27, 42] }
-    - { tier: 7, ilvl: 2, weight: 1292, value: [15, 26] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 65, weight: 1000, value: [92, 100] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [80, 91] }
+    - { tier: 3, ilvl: 54, weight: 1000, value: [68, 79] }
+    - { tier: 4, ilvl: 46, weight: 1000, value: [56, 67] }
+    - { tier: 5, ilvl: 33, weight: 1000, value: [43, 55] }
+    - { tier: 6, ilvl: 16, weight: 1000, value: [27, 42] }
+    - { tier: 7, ilvl: 2, weight: 1000, value: [15, 26] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -2935,14 +3072,15 @@ armour_es_inc_body:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的, 匠人的, 學徒的]
   text: "增加 {value}% 護甲與能量護盾"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 109, value: [101, 110] }
-    - { tier: 2, ilvl: 65, weight: 156, value: [92, 100] }
-    - { tier: 3, ilvl: 60, weight: 223, value: [80, 91] }
-    - { tier: 4, ilvl: 54, weight: 318, value: [68, 79] }
-    - { tier: 5, ilvl: 46, weight: 454, value: [56, 67] }
-    - { tier: 6, ilvl: 33, weight: 649, value: [43, 55] }
-    - { tier: 7, ilvl: 16, weight: 927, value: [27, 42] }
-    - { tier: 8, ilvl: 2, weight: 1325, value: [15, 26] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 75, weight: 1000, value: [101, 110] }
+    - { tier: 2, ilvl: 65, weight: 1000, value: [92, 100] }
+    - { tier: 3, ilvl: 60, weight: 1000, value: [80, 91] }
+    - { tier: 4, ilvl: 54, weight: 1000, value: [68, 79] }
+    - { tier: 5, ilvl: 46, weight: 1000, value: [56, 67] }
+    - { tier: 6, ilvl: 33, weight: 1000, value: [43, 55] }
+    - { tier: 7, ilvl: 16, weight: 1000, value: [27, 42] }
+    - { tier: 8, ilvl: 2, weight: 1000, value: [15, 26] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -2956,12 +3094,13 @@ armour_es_stun:
   text: "增加 {value}% 護甲與能量護盾、+{stun} 暈眩門檻"
   chips: [armour, energy_shield]   # PoE2 的標籤（防禦＋暈眩門檻：PoE2 沒有標籤，暈眩不算異常）
   tiers:
-    - { tier: 1, ilvl: 74, weight: 211, value: [39, 42], stun: [95, 136] }
-    - { tier: 2, ilvl: 63, weight: 301, value: [33, 38], stun: [64, 94] }
-    - { tier: 3, ilvl: 48, weight: 430, value: [27, 32], stun: [41, 63] }
-    - { tier: 4, ilvl: 38, weight: 615, value: [21, 26], stun: [25, 40] }
-    - { tier: 5, ilvl: 19, weight: 878, value: [14, 20], stun: [14, 24] }
-    - { tier: 6, ilvl: 10, weight: 1255, value: [6, 13], stun: [8, 13] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 74, weight: 1000, value: [39, 42], stun: [95, 136] }
+    - { tier: 2, ilvl: 63, weight: 1000, value: [33, 38], stun: [64, 94] }
+    - { tier: 3, ilvl: 48, weight: 1000, value: [27, 32], stun: [41, 63] }
+    - { tier: 4, ilvl: 38, weight: 1000, value: [21, 26], stun: [25, 40] }
+    - { tier: 5, ilvl: 19, weight: 1000, value: [14, 20], stun: [14, 24] }
+    - { tier: 6, ilvl: 10, weight: 1000, value: [6, 13], stun: [8, 13] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -2975,10 +3114,11 @@ armour_es_flat:
   names: [星紋的, 神工的, 大師的, 名匠的]
   text: "+{armour} 護甲、+{es} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 46, weight: 400, armour: [72, 85], es: [23, 27] }
-    - { tier: 2, ilvl: 33, weight: 571, armour: [47, 71], es: [15, 22] }
-    - { tier: 3, ilvl: 16, weight: 816, armour: [17, 46], es: [4, 14] }
-    - { tier: 4, ilvl: 1, weight: 1165, armour: [9, 16], es: [2, 4] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（4 階 → 4 階）
+    - { tier: 1, ilvl: 46, weight: 1000, armour: [72, 85], es: [22, 25] }
+    - { tier: 2, ilvl: 33, weight: 1000, armour: [47, 71], es: [16, 21] }
+    - { tier: 3, ilvl: 16, weight: 1000, armour: [17, 46], es: [9, 15] }
+    - { tier: 4, ilvl: 1, weight: 1000, armour: [9, 16], es: [5, 8] }
   mods:
     - { stat: armour, type: FLAT, value: "{armour}" }
     - { stat: es.max, type: FLAT, value: "{es}" }
@@ -2991,14 +3131,15 @@ armour_es_flat_body:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的, 匠人的, 學徒的]
   text: "+{armour} 護甲、+{es} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 109, armour: [150, 170], es: [50, 56] }
-    - { tier: 2, ilvl: 65, weight: 156, armour: [128, 149], es: [42, 49] }
-    - { tier: 3, ilvl: 60, weight: 223, armour: [103, 127], es: [33, 42] }
-    - { tier: 4, ilvl: 54, weight: 318, armour: [86, 102], es: [28, 33] }
-    - { tier: 5, ilvl: 46, weight: 454, armour: [72, 85], es: [23, 27] }
-    - { tier: 6, ilvl: 33, weight: 649, armour: [47, 71], es: [15, 22] }
-    - { tier: 7, ilvl: 16, weight: 927, armour: [17, 46], es: [4, 14] }
-    - { tier: 8, ilvl: 1, weight: 1325, armour: [9, 16], es: [2, 4] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（8 階 → 8 階）
+    - { tier: 1, ilvl: 75, weight: 1000, armour: [150, 170], es: [43, 48] }
+    - { tier: 2, ilvl: 65, weight: 1000, armour: [128, 149], es: [37, 42] }
+    - { tier: 3, ilvl: 60, weight: 1000, armour: [103, 127], es: [30, 36] }
+    - { tier: 4, ilvl: 54, weight: 1000, armour: [86, 102], es: [26, 29] }
+    - { tier: 5, ilvl: 46, weight: 1000, armour: [72, 85], es: [22, 25] }
+    - { tier: 6, ilvl: 33, weight: 1000, armour: [47, 71], es: [16, 21] }
+    - { tier: 7, ilvl: 16, weight: 1000, armour: [17, 46], es: [9, 15] }
+    - { tier: 8, ilvl: 1, weight: 1000, armour: [9, 16], es: [5, 8] }
   mods:
     - { stat: armour, type: FLAT, value: "{armour}" }
     - { stat: es.max, type: FLAT, value: "{es}" }
@@ -3011,11 +3152,12 @@ armour_es_flat_helmet:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的]
   text: "+{armour} 護甲、+{es} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 54, weight: 291, armour: [86, 102], es: [28, 33] }
-    - { tier: 2, ilvl: 46, weight: 416, armour: [72, 85], es: [23, 27] }
-    - { tier: 3, ilvl: 33, weight: 594, armour: [47, 71], es: [15, 22] }
-    - { tier: 4, ilvl: 16, weight: 849, armour: [17, 46], es: [4, 14] }
-    - { tier: 5, ilvl: 1, weight: 1212, armour: [9, 16], es: [2, 4] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（5 階 → 5 階）
+    - { tier: 1, ilvl: 54, weight: 1000, armour: [86, 102], es: [26, 29] }
+    - { tier: 2, ilvl: 46, weight: 1000, armour: [72, 85], es: [22, 25] }
+    - { tier: 3, ilvl: 33, weight: 1000, armour: [47, 71], es: [16, 21] }
+    - { tier: 4, ilvl: 16, weight: 1000, armour: [17, 46], es: [9, 15] }
+    - { tier: 5, ilvl: 1, weight: 1000, armour: [9, 16], es: [5, 8] }
   mods:
     - { stat: armour, type: FLAT, value: "{armour}" }
     - { stat: es.max, type: FLAT, value: "{es}" }
@@ -3028,13 +3170,14 @@ armour_es_flat_shield:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的, 匠人的]
   text: "+{armour} 護甲、+{es} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 65, weight: 152, armour: [128, 149], es: [42, 49] }
-    - { tier: 2, ilvl: 60, weight: 217, armour: [103, 127], es: [33, 42] }
-    - { tier: 3, ilvl: 54, weight: 310, armour: [86, 102], es: [28, 33] }
-    - { tier: 4, ilvl: 46, weight: 443, armour: [72, 85], es: [23, 27] }
-    - { tier: 5, ilvl: 33, weight: 633, armour: [47, 71], es: [15, 22] }
-    - { tier: 6, ilvl: 16, weight: 904, armour: [17, 46], es: [4, 14] }
-    - { tier: 7, ilvl: 1, weight: 1292, armour: [9, 16], es: [2, 4] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（7 階 → 7 階）
+    - { tier: 1, ilvl: 65, weight: 1000, armour: [128, 149], es: [37, 42] }
+    - { tier: 2, ilvl: 60, weight: 1000, armour: [103, 127], es: [30, 36] }
+    - { tier: 3, ilvl: 54, weight: 1000, armour: [86, 102], es: [26, 29] }
+    - { tier: 4, ilvl: 46, weight: 1000, armour: [72, 85], es: [22, 25] }
+    - { tier: 5, ilvl: 33, weight: 1000, armour: [47, 71], es: [16, 21] }
+    - { tier: 6, ilvl: 16, weight: 1000, armour: [17, 46], es: [9, 15] }
+    - { tier: 7, ilvl: 1, weight: 1000, armour: [9, 16], es: [5, 8] }
   mods:
     - { stat: armour, type: FLAT, value: "{armour}" }
     - { stat: es.max, type: FLAT, value: "{es}" }
@@ -3047,12 +3190,13 @@ armour_es_inc_flat:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的]
   text: "增加 {value}% 護甲與能量護盾、+{armour} 護甲、+{es} 最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], armour: [42, 52], es: [14, 18] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], armour: [33, 41], es: [10, 14] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], armour: [24, 32], es: [8, 10] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], armour: [17, 23], es: [5, 7] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], armour: [6, 16], es: [1, 5] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], armour: [3, 5], es: [1, 1] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], armour: [42, 52], es: [13, 15] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], armour: [33, 41], es: [11, 12] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], armour: [24, 32], es: [9, 10] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], armour: [17, 23], es: [7, 8] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], armour: [6, 16], es: [5, 6] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], armour: [3, 5], es: [2, 4] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -3067,12 +3211,13 @@ armour_es_life:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的]
   text: "增加 {value}% 護甲與能量護盾、+{life} 最大生命"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], life: [42, 49] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], life: [33, 41] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], life: [26, 32] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], life: [20, 25] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], life: [11, 19] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], life: [7, 10] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], life: [42, 49] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], life: [33, 41] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], life: [26, 32] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], life: [20, 25] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], life: [11, 19] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], life: [7, 10] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -3086,12 +3231,13 @@ armour_es_mana:
   names: [星紋的, 神工的, 大師的, 名匠的, 精工的, 巧手的]
   text: "增加 {value}% 護甲與能量護盾、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 211, value: [39, 42], mana: [33, 39] }
-    - { tier: 2, ilvl: 60, weight: 301, value: [33, 38], mana: [27, 32] }
-    - { tier: 3, ilvl: 46, weight: 430, value: [27, 32], mana: [21, 26] }
-    - { tier: 4, ilvl: 33, weight: 615, value: [21, 26], mana: [17, 20] }
-    - { tier: 5, ilvl: 16, weight: 878, value: [14, 20], mana: [9, 16] }
-    - { tier: 6, ilvl: 8, weight: 1255, value: [6, 13], mana: [6, 8] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（6 階 → 6 階）
+    - { tier: 1, ilvl: 78, weight: 1000, value: [39, 42], mana: [33, 39] }
+    - { tier: 2, ilvl: 60, weight: 1000, value: [33, 38], mana: [27, 32] }
+    - { tier: 3, ilvl: 46, weight: 1000, value: [27, 32], mana: [21, 26] }
+    - { tier: 4, ilvl: 33, weight: 1000, value: [21, 26], mana: [17, 20] }
+    - { tier: 5, ilvl: 16, weight: 1000, value: [14, 20], mana: [9, 16] }
+    - { tier: 6, ilvl: 8, weight: 1000, value: [6, 13], mana: [6, 8] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -3103,13 +3249,14 @@ charm_duration_belt:
   type: prefix
   group: belt_charm_duration
   spawn_tags: [belt]
-  names: [星骸的, 革新的, 創新的, 進取的, 蛻變的, 守成的]
+  names: [星骸的, 革新的, 創新的, 蛻變的, 守成的]
   text: "增加 {value}% 護符效果持續時間"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 284, value: [28, 33] }
-    - { tier: 2, ilvl: 60, weight: 405, value: [22, 27] }
-    - { tier: 3, ilvl: 46, weight: 593, value: [16, 21] }
-    - { tier: 4, ilvl: 33, weight: 847, value: [10, 15] }
-    - { tier: 5, ilvl: 8, weight: 1210, value: [4, 9] }
+    # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（5 階 → 5 階）
+    - { tier: 1, ilvl: 75, weight: 800, value: [28, 33] }
+    - { tier: 2, ilvl: 60, weight: 800, value: [22, 27] }
+    - { tier: 3, ilvl: 46, weight: 800, value: [16, 21] }
+    - { tier: 4, ilvl: 33, weight: 800, value: [10, 15] }
+    - { tier: 5, ilvl: 8, weight: 800, value: [4, 9] }
   mods:
     - { stat: charm.duration, type: INCREASED, value: "{value}" }

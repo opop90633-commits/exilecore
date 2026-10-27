@@ -130,7 +130,10 @@ class MapEventConfigTest {
         assertEquals(7, ritual.rewards());
         assertEquals(0.2, ritual.rerollCost(), 1e-9);
         assertEquals(1.5, ritual.rerollGrowth(), 1e-9);
-        assertEquals(30, ritual.rewardWeights().get(MapEventConfig.Reward.OMEN), "祭壇以星籤為主");
+        assertEquals(65, ritual.rewardWeights().get(MapEventConfig.Reward.OMEN), "祭壇以星籤為主（2026-10-27：30 → 65）");
+        // 2026-10-27 照 PoE2 0.5：只有星籤與傳奇
+        assertEquals(java.util.Set.of(MapEventConfig.Reward.OMEN, MapEventConfig.Reward.UNIQUE), ritual.rewardWeights().keySet());
+        assertEquals(10000, config.ritualBankThreshold(), "剩下的貢品存滿 10000 換一張入場券");
         for (final MapEventConfig.Reward kind : ritual.rewardWeights().keySet()) {
             assertNotNull(ritual.prices().get(kind), kind + " 要有價格");
             assertTrue(ritual.prices().get(kind)[0] <= ritual.prices().get(kind)[1]);
@@ -152,8 +155,10 @@ class MapEventConfigTest {
         assertEquals(40, delirium.rewardWeights().get(MapEventConfig.Reward.EMOTION));
         assertEquals("distilled_ire", delirium.emotion(1));
         assertEquals("distilled_paranoia", delirium.emotion(4));
-        assertEquals("distilled_paranoia", delirium.emotion(9), "沒有這一階用最後一個");
-        assertEquals(4, delirium.emotionWeights().size());
+        // 2026-10-27 照 PoE2：十種情緒（這次之前四種，第 9 階用最後一個＝妄想）
+        assertEquals("distilled_isolation", delirium.emotion(10));
+        assertEquals("distilled_contempt", delirium.emotion(20), "沒有這一階用最後一個");
+        assertEquals(13, delirium.emotionWeights().size(), "十種＋三種強效（塗油限定核心用）");
         // 蒸餾情緒真的在 currencies.yml 裡，而且是注入用的
         final tw.exilecore.currency.CurrencyRepository currencies = new tw.exilecore.currency.CurrencyRepository();
         currencies.load(DATA);

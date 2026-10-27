@@ -51,28 +51,25 @@ class StarterKitTest {
 
     @Test
     void everyWeaponTheStartingAttributesAllowIsOfferedRecommendedFirst() {
-        // 2026-10：劍、斧、匕首、爪拿掉了；推薦的分階換成合併後的基底；每一類只列一把（物品等級 1 的屬性需求）
-        // 重甲鬥士 32/14/14：單手錘、雙手錘推薦；長棍、弓、長杖、權杖拿不動
-        assertEquals(List.of("mace1_23*", "mace2_26*", "spear_16", "talis_15", "xbow_06", "wand_14"),
+        // 2026-10-26：法杖、長杖、權杖換成 PoE2 的（沒有屬性需求的第 1 把，誰都拿得動，排在最後）；2026-10：劍、斧、匕首、爪拿掉了；推薦的分階換成合併後的基底；每一類只列一把（物品等級 1 的屬性需求）
+        // 2026-10-26 照 PoE2：每一類最低那一階（物品等級 1）都沒有屬性需求，起始屬性 29 點每一類都拿得動（這次之前照職業屬性有些拿不動）
+        assertEquals(List.of("mace1_23*", "mace2_26*", "spear_16", "qstaff_21", "talis_15", "bow_14", "xbow_06", "cwand_01", "cstaff_01", "csceptre_01"),
                 ids(CharacterClass.MARAUDER));
-        // 重弩手 23/23/14：弩推薦；長杖、權杖拿不動
-        assertEquals(List.of("xbow_23*", "mace1_09", "mace2_09", "spear_16", "qstaff_21", "talis_15", "bow_14", "wand_14"),
+        assertEquals(List.of("xbow_23*", "mace1_09", "mace2_09", "spear_16", "qstaff_21", "talis_15", "bow_14", "cwand_01", "cstaff_01", "csceptre_01"),
                 ids(CharacterClass.MERCENARY));
-        // 長矛獵手 18/28/14：矛推薦；雙手錘拿不動
-        assertEquals(List.of("spear_26*", "mace1_09", "qstaff_21", "talis_15", "bow_14", "xbow_06", "wand_14"),
+        assertEquals(List.of("spear_26*", "mace1_09", "mace2_09", "qstaff_21", "talis_15", "bow_14", "xbow_06", "cwand_01", "cstaff_01", "csceptre_01"),
                 ids(CharacterClass.HUNTRESS));
-        // 弓箭手 14/32/14：錘（力量）、長杖、權杖拿不動
-        assertEquals(List.of("bow_23*", "spear_16", "qstaff_21", "talis_15", "xbow_06", "wand_14"), ids(CharacterClass.RANGER));
-        // 棍僧 14/23/23：長棍推薦
-        assertEquals(List.of("qstaff_25*", "spear_16", "talis_15", "bow_20", "xbow_06", "wand_14", "staff_17", "sceptre_16"),
+        assertEquals(List.of("bow_23*", "mace1_09", "mace2_09", "spear_16", "qstaff_21", "talis_15", "xbow_06", "cwand_01", "cstaff_01", "csceptre_01"),
+                ids(CharacterClass.RANGER));
+        assertEquals(List.of("qstaff_25*", "mace1_09", "mace2_09", "spear_16", "talis_15", "bow_14", "xbow_06", "cwand_01", "cstaff_01", "csceptre_01"),
                 ids(CharacterClass.MONK));
-        // 元素法師、混沌術士 14/14/32：推薦的順序不一樣
-        assertEquals(List.of("staff_17*", "wand_14*", "spear_16", "talis_15", "xbow_06", "sceptre_16"),
+        // 元素法師、混沌術士：推薦的順序不一樣
+        assertEquals(List.of("cstaff_01*", "cwand_01*", "mace1_09", "mace2_09", "spear_16", "qstaff_21", "talis_15", "bow_14", "xbow_06", "csceptre_01"),
                 ids(CharacterClass.SORCERESS));
-        assertEquals(List.of("wand_14*", "staff_17*", "spear_16", "talis_15", "xbow_06", "sceptre_16"),
+        assertEquals(List.of("cwand_01*", "cstaff_01*", "mace1_09", "mace2_09", "spear_16", "qstaff_21", "talis_15", "bow_14", "xbow_06", "csceptre_01"),
                 ids(CharacterClass.WITCH));
-        // 德魯伊 23/14/23：獸魂符推薦
-        assertEquals(List.of("talis_18*", "mace1_09", "mace2_09", "spear_16", "xbow_06", "wand_14", "staff_17", "sceptre_16"),
+        // 德魯伊：獸魂符推薦
+        assertEquals(List.of("talis_18*", "mace1_09", "mace2_09", "spear_16", "qstaff_21", "bow_14", "xbow_06", "cwand_01", "cstaff_01", "csceptre_01"),
                 ids(CharacterClass.DRUID));
     }
 
@@ -102,10 +99,11 @@ class StarterKitTest {
     @Test
     void starterSkillFollowsTheWeapon() {
         final CharacterClass marauder = CharacterClass.MARAUDER;
-        // 錘（含權杖）送碎骨擊；其他近戰武器（例如拿掉的斧）送地震
+        // 錘送碎骨擊；其他近戰武器（例如拿掉的斧）送地震
         assertEquals("boneshatter", StarterKits.skill(config, marauder, items.base("mace1_23")));
         assertEquals("boneshatter", StarterKits.skill(config, marauder, items.base("mace2_26")));
-        assertEquals("boneshatter", StarterKits.skill(config, marauder, items.base("sceptre_16")));
+        assertEquals("fireball", StarterKits.skill(config, marauder, items.base("csceptre_01")), "2026-10-26：權杖照 PoE2 沒有傷害（不是錘），送法術");
+        assertEquals("essence_drain", StarterKits.skill(config, CharacterClass.WITCH, items.base("csceptre_01")));
         assertEquals("earthquake", StarterKits.skill(config, marauder, items.base("hand_axe")));
         assertEquals("lightning_arrow", StarterKits.skill(config, CharacterClass.RANGER, items.base("bow_23")));
         assertEquals("explosive_bolt", StarterKits.skill(config, CharacterClass.MERCENARY, items.base("xbow_23")));
@@ -161,9 +159,9 @@ class StarterKitTest {
     @Test
     void resolveFallsBackWhenTheChoiceIsNotAllowed() {
         // 選了拿不動的武器（例如設定重載後）：改送第一個能選的
-        assertEquals("mace1_23", StarterKits.resolveWeapon(items, config, CharacterClass.MARAUDER, "staff_17").id());
+        assertEquals("mace1_23", StarterKits.resolveWeapon(items, config, CharacterClass.MARAUDER, "cstaff_14").id());
         assertEquals("bow_23", StarterKits.resolveWeapon(items, config, CharacterClass.RANGER, "nope").id());
-        assertEquals("staff_17", StarterKits.resolveWeapon(items, config, CharacterClass.WITCH, "staff_17").id());
+        assertEquals("cstaff_01", StarterKits.resolveWeapon(items, config, CharacterClass.WITCH, "cstaff_01").id());
     }
 
     @Test
@@ -180,14 +178,14 @@ class StarterKitTest {
         Files.writeString(dir.resolve("character.yml"), """
                 starter:
                   classes:
-                    witch: { recommended: [ sceptre_16 ], shield: none }
+                    witch: { recommended: [ csceptre_01 ], shield: none }
                     ranger: { armour: [scale_helmet] }
                   skills:
                     - { weapon: mace, skill: cleave }
                 """);
         final CharacterConfig custom = new CharacterConfig();
         custom.load(dir);
-        assertEquals(List.of("sceptre_16"), custom.starter(CharacterClass.WITCH).recommended());
+        assertEquals(List.of("csceptre_01"), custom.starter(CharacterClass.WITCH).recommended());
         assertEquals(config.starter(CharacterClass.WITCH).armour(), custom.starter(CharacterClass.WITCH).armour(), "沒寫的項目用預設");
         assertNull(custom.starter(CharacterClass.WITCH).shield(), "none = 不送盾");
         assertEquals(List.of("scale_helmet"), custom.starter(CharacterClass.RANGER).armour());
@@ -195,7 +193,7 @@ class StarterKitTest {
         assertEquals("tshield_01", custom.starter(CharacterClass.MARAUDER).shield(), "沒列的職業用預設");
         assertEquals("cleave", custom.starterSkill(CharacterClass.MARAUDER, Set.of("weapon", "one_hand", "mace", "melee")));
         assertNull(custom.starterSkill(CharacterClass.RANGER, Set.of("bow")));
-        assertEquals("sceptre_16", StarterKits.weapons(items, custom, CharacterClass.WITCH).get(0).base().id());
+        assertEquals("csceptre_01", StarterKits.weapons(items, custom, CharacterClass.WITCH).get(0).base().id());
         assertNull(StarterKits.shield(items, custom, CharacterClass.WITCH, items.base("wand_14")));
 
         // 重載成沒有 starter 的檔案：回到預設，不留上一次的自訂
@@ -209,7 +207,7 @@ class StarterKitTest {
     void defaultDataHasNoStarterProblems() {
         assertEquals(List.of(), StarterKits.problems(items, config));
         assertEquals(List.of(), StarterKits.skillProblems(config, id -> skills.skill(id) != null && !skills.skill(id).hidden()));
-        assertEquals(2, StarterKits.skillProblems(config, id -> !id.equals("fireball")).size(), "法杖、長杖兩條規則都指到熾星彈");
+        assertEquals(3, StarterKits.skillProblems(config, id -> !id.equals("fireball")).size(), "法杖、長杖、權杖三條規則都指到熾星彈");
     }
 
     @Test
@@ -217,17 +215,19 @@ class StarterKitTest {
         Files.writeString(dir.resolve("character.yml"), """
                 starter:
                   classes:
-                    marauder: { recommended: [staff_17, hand_axee], armour: [body_int_20, buckler_23], shield: focus_23 }
+                    marauder: { recommended: [cstaff_14, hand_axee], armour: [helm_str_dex_01, buckler_23], shield: cstaff_14 }
                 """);
+        // 2026-10-26 照 PoE2 需求：法袍、法器最低那一階沒有屬性需求，重甲鬥士也穿得上；改用 1 級穿不上的力敏頭盔（最低那一階要 5 級）、
+        // 副手寫不是盾的東西（這次之前 armour: [body_int_20, ...]、shield: focus_23）
         final CharacterConfig custom = new CharacterConfig();
         custom.load(dir);
         final List<String> problems = StarterKits.problems(items, custom);
         assertEquals(5, problems.size(), String.join("\n", problems));
-        assertTrue(problems.get(0).contains("staff_17") && problems.get(0).contains("拿不動"));
+        assertTrue(problems.get(0).contains("cstaff_14") && problems.get(0).contains("拿不動"));
         assertTrue(problems.get(1).contains("hand_axee"));
-        assertTrue(problems.get(2).contains("body_int_20") && problems.get(2).contains("穿不上"));
+        assertTrue(problems.get(2).contains("helm_str_dex_01") && problems.get(2).contains("穿不上"));
         assertTrue(problems.get(3).contains("buckler_23") && problems.get(3).contains("不是防具"));
-        assertTrue(problems.get(4).contains("focus_23"));
+        assertTrue(problems.get(4).contains("cstaff_14"));
         // 推薦的武器全部不能用時，照基底順序列出能用的（每一類第一把）
         assertEquals("mace1_09", StarterKits.weapons(items, custom, CharacterClass.MARAUDER).get(0).base().id());
     }

@@ -20,7 +20,7 @@ import java.util.Map;
  * 都是乘在 flasks.yml 基底數值上的倍率；沒有詞綴就是 {@link #NONE}。
  *
  * @param recovery      回復量倍率（1.45 = 增加 45%）
- * @param recoveryLow   生命／魔力低於 35% 時另外再乘的倍率
+ * @param recoveryLow   生命／魔力低於 35% 時另外再乘的倍率（PoE2 的「更多」：跟回復量增加相乘）
  * @param speed         回復速度倍率（時間 ÷ 這個）
  * @param instant       回復量的幾成立即回復（0–1）
  * @param minionHeal    召喚物也回復回復量的幾成（0–1）
@@ -70,13 +70,20 @@ public record FlaskMods(double recovery, double recoveryLow, double speed, doubl
 
     /** 從修飾器算（測試、說明用）。 */
     public static FlaskMods of(final List<Modifier> modifiers) {
+        double lowMore = 1; // 2026-10-26 照 PoE2：低生命／低魔力的藥劑前綴是「更多」回復（MORE，各自相乘）；這次之前寫成 INCREASED 但也是另外乘
         double recovery = 0, recoveryLow = 0, speed = 0, instant = 0, minionHeal = 0, gained = 0, used = 0, max = 0, onKill = 0, perMinute = 0,
                 costOther = 0, duration = 0, guard = 0, life = 0, mana = 0;
         for (final Modifier m : modifiers) {
             final double v = m.value();
             switch (m.stat()) {
                 case StatKeys.FLASK_LOCAL_RECOVERY -> recovery += pct(m);
-                case StatKeys.FLASK_LOCAL_RECOVERY_LOW -> recoveryLow += pct(m);
+                case StatKeys.FLASK_LOCAL_RECOVERY_LOW -> {
+                    if (m.type() == ModType.MORE) {
+                        lowMore *= Math.max(0, 1 + v);
+                    } else {
+                        recoveryLow += pct(m);
+                    }
+                }
                 case StatKeys.FLASK_LOCAL_SPEED -> speed += pct(m);
                 case StatKeys.FLASK_LOCAL_INSTANT -> instant += v;
                 case StatKeys.FLASK_LOCAL_MINION_HEAL -> minionHeal += v;
@@ -94,7 +101,7 @@ public record FlaskMods(double recovery, double recoveryLow, double speed, doubl
                 }
             }
         }
-        return new FlaskMods(Math.max(0, 1 + recovery), Math.max(0, 1 + recoveryLow), Math.max(0.1, 1 + speed),
+        return new FlaskMods(Math.max(0, 1 + recovery), Math.max(0, (1 + recoveryLow) * lowMore), Math.max(0.1, 1 + speed),
                 Math.max(0, Math.min(1, instant / 100.0)), Math.max(0, Math.min(1, minionHeal / 100.0)),
                 Math.max(0, 1 + gained), Math.max(0, 1 + used), Math.max(0.1, 1 + max), Math.max(0, Math.min(1, onKill / 100.0)),
                 Math.max(0, perMinute), Math.max(0, Math.min(1, costOther / 100.0)), Math.max(0.1, 1 + duration),

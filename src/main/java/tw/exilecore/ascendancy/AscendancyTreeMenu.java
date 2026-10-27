@@ -28,9 +28,15 @@ final class AscendancyTreeMenu extends Menu {
     private static final int SLOT_CLOSE = 53;
     /** 月卡福利（2026-10）：隨時更換昇華職業（主選單拿掉「昇華」之後，這裡也要能換）。 */
     private static final int SLOT_RESPEC = 51;
+    /** 2026-10-27 照 PoE2 昇華・晶化護符：命匣（昇華天賦上的珠寶孔）。 */
+    private static final int SLOT_PHYLACTERY = 46;
+    /** 2026-10-27 照 PoE2 昇華・符文子午線：紋在身上的符文。 */
+    private static final int SLOT_MERIDIANS = 52;
 
     private final AscendancyService service;
     private final Map<Integer, AscendancyConfig.Node> nodes = new HashMap<>();
+    /** 2026-10-26：樹從第幾排開始看（▲ ▼ 捲動）。 */
+    private int offset;
 
     AscendancyTreeMenu(final ExileCore plugin, final Player player, final AscendancyService service) {
         super(plugin, player, 6, "<dark_gray>昇華天賦");
@@ -58,28 +64,20 @@ final class AscendancyTreeMenu extends Menu {
                         + "</white>，可配 <white>" + ascension.available(),
                 "<dark_gray>每個試煉第一次完成給昇華點")));
 
-        // 2026-10：每條分支最左邊是標籤（整條在做什麼），天賦之間用鏈子連（以前灰色玻璃跟背景分不出來）
-        final List<List<AscendancyConfig.Node>> branches = chosen.branches();
-        for (int b = 0; b < branches.size() && b < AscendancyConfig.MAX_BRANCHES; b++) {
-            final int row = AscendancyLayout.FIRST_ROW + b;
-            final List<AscendancyConfig.Node> branch = branches.get(b);
-            int owned = 0;
-            for (final AscendancyConfig.Node node : branch) {
-                if (ascension.isAllocated(node)) {
-                    owned++;
-                }
-            }
-            set(row * 9, AscendancyLayout.branchLabel(chosen, b, branch, owned));
-            set(row * 9 + 1, AscendancyLayout.link(!branch.isEmpty() && ascension.isAllocated(branch.getFirst())));
-            for (int i = 0; i < branch.size() && i < AscendancyLayout.NODE_COLUMNS.length; i++) {
-                final AscendancyConfig.Node node = branch.get(i);
-                final int slot = row * 9 + AscendancyLayout.NODE_COLUMNS[i];
-                nodes.put(slot, node);
-                set(slot, node(branch, i, ascension));
-                if (i + 1 < branch.size() && i + 1 < AscendancyLayout.NODE_COLUMNS.length) {
-                    set(slot + 1, AscendancyLayout.link(ascension.isAllocated(branch.get(i + 1))));
-                }
-            }
+        // 2026-10-26：照 PoE2 的昇華樹畫成往右長的樹（會分岔，樹太高的時候 ▲ ▼ 捲動）；這次之前每條分支一排
+        offset = AscendancyLayout.clampOffset(offset, chosen.rows());
+        final AscendancyLayout.Page page = AscendancyLayout.page(chosen, offset, node -> node(chosen, node, ascension), ascension::isAllocated);
+        for (final Map.Entry<Integer, ItemStack> entry : page.items().entrySet()) {
+            set(entry.getKey(), entry.getValue());
+        }
+        nodes.putAll(page.nodes());
+        final ItemStack up = AscendancyLayout.scroll(true, offset, page.rows());
+        final ItemStack down = AscendancyLayout.scroll(false, offset, page.rows());
+        if (up != null) {
+            set(AscendancyLayout.SLOT_UP, up);
+        }
+        if (down != null) {
+            set(AscendancyLayout.SLOT_DOWN, down);
         }
 
         final boolean card = plugin.sponsors() != null && plugin.sponsors().cardActive(player);
@@ -88,29 +86,94 @@ final class AscendancyTreeMenu extends Menu {
                 "<gray>重新選這個職業的昇華",
                 card ? "<green>月卡：隨時可以換，不花錢" : "<dark_gray>要有月卡才能換（沒有月卡選了就不能換）",
                 "", card ? "<yellow>Shift＋左鍵：更換" : ""));
+        drawPhylactery(chosen);
+        drawMeridians(chosen);
         set(SLOT_PREVIEW, icon(Material.SPYGLASS, "<white>昇華預覽", "<gray>看其他昇華職業的天賦樹（也可以看別的職業的）",
                 "", "<yellow>左鍵：打開預覽"));
         final long cost = plugin.players().config().respecCost(plugin.players().get(player).level());
         set(SLOT_INFO, icon(Material.WRITABLE_BOOK, "<white>怎麼配",
-                "<gray>左鍵配點：每條分支從第一個配起",
-                "<gray>右鍵退點：要從分支的最後面退",
+                "<gray>左鍵配點：要跟已配的天賦相連（第一欄的直接接在起點）",
+                "<gray>分岔的往下一排；「選一個」的天賦配了之後從選項挑一個",
+                "<gray>右鍵退點：退掉之後剩下的要都還接得到起點",
                 cost <= 0 ? "<gray>退點免費" : String.format(Locale.ROOT, "<gray>退點花金幣：每 1 點 <#f5b942>%,d<gray>（跟天賦樹一樣）", cost),
                 String.format(Locale.ROOT, "<gray>你有 <#f5b942>%,d<gray> 金幣", plugin.players().get(player).gold())));
     }
 
-    private ItemStack node(final List<AscendancyConfig.Node> branch, final int i, final Ascension ascension) {
-        final AscendancyConfig.Node node = branch.get(i);
+    /** 2026-10-27：這個昇華有命匣（有晶化護符那種天賦），或命匣裡還放著珠寶（退掉之後拿回來用）才畫。 */
+    private void drawPhylactery(final AscendancyConfig.Ascendancy chosen) {
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        final ItemStack held = state.jewel(tw.exilecore.passive.JewelSockets.PHYLACTERY);
+        boolean has = false;
+        for (final AscendancyConfig.Node node : chosen.nodes()) {
+            for (final tw.exilecore.stats.Modifier mod : node.stats()) {
+                has |= AscKeys.PHYLACTERY.equals(mod.stat());
+            }
+        }
+        if (!has && held == null) {
+            return;
+        }
+        final boolean active = AscBuild.ascFlat(plugin, state, AscKeys.PHYLACTERY) > 0;
+        final List<String> lore = new ArrayList<>();
+        lore.add("<gray>可以鑲嵌一顆非傳奇的基礎珠寶，效果增加 100%");
+        lore.add(active ? "<green>晶化護符已配置" : "<red>要先配「晶化護符」才有效果");
+        lore.add("");
+        if (held == null) {
+            lore.add("<dark_gray>（空的）");
+            if (active) {
+                lore.add("<yellow>左鍵：選一顆珠寶放進去");
+            }
+            set(SLOT_PHYLACTERY, icon(Material.GLASS_BOTTLE, "<#bcd4ff>命匣", lore));
+            return;
+        }
+        lore.addAll(tw.exilecore.passive.JewelSockets.describe(plugin, held));
+        lore.add("");
+        lore.add("<yellow>左鍵：拿回背包");
+        set(SLOT_PHYLACTERY, glowing(icon(Material.EXPERIENCE_BOTTLE, "<#bcd4ff>命匣", lore)));
+    }
+
+    /** 2026-10-27：這個昇華有符文子午線那種天賦才畫。 */
+    private void drawMeridians(final AscendancyConfig.Ascendancy chosen) {
+        boolean has = false;
+        for (final AscendancyConfig.Node node : chosen.nodes()) {
+            for (final tw.exilecore.stats.Modifier mod : node.stats()) {
+                has |= AscKeys.MERIDIANS.equals(mod.stat());
+            }
+        }
+        if (!has) {
+            return;
+        }
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        final boolean active = AscBuild.ascFlat(plugin, state, AscKeys.MERIDIANS) > 0;
+        int count = 0;
+        for (final String rune : AscBuild.meridianRunes(state)) {
+            count += rune.isEmpty() ? 0 : 1;
+        }
+        final ItemStack stack = icon(Material.PAPER, "<#d9b44a>符文子午線",
+                "<gray>把符文紋在身上：頭盔 1、胸甲 2、腿甲 1、鞋子 1 孔",
+                active ? "<green>符文子午線已配置" : "<red>要先配「符文子午線」才有效果",
+                "<gray>已紋 <white>" + count + "</white>／5",
+                "", "<yellow>左鍵：打開");
+        set(SLOT_MERIDIANS, active ? glowing(stack) : stack);
+    }
+
+    private void phylactery() {
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        if (state.jewel(tw.exilecore.passive.JewelSockets.PHYLACTERY) != null) {
+            final tw.exilecore.passive.PassiveState.Result result = tw.exilecore.passive.JewelSockets.unsocketPhylactery(plugin, player);
+            result(result.ok() ? null : result.message(), Sound.BLOCK_AMETHYST_BLOCK_BREAK);
+            return;
+        }
+        if (AscBuild.ascFlat(plugin, state, AscKeys.PHYLACTERY) <= 0) {
+            result("要先配昇華天賦「晶化護符」", null);
+            return;
+        }
+        new PhylacteryMenu(plugin, player, service).open();
+    }
+
+    private ItemStack node(final AscendancyConfig.Ascendancy chosen, final AscendancyConfig.Node node, final Ascension ascension) {
         final boolean owned = ascension.isAllocated(node);
         final String problem = owned ? null : ascension.allocateProblem(node);
-        final List<String> lore = new ArrayList<>();
-        for (final String line : StatLines.describeAll(node.stats())) {
-            lore.add((owned || problem == null ? "<white>" : "<gray>") + AscendancyService.escape(line));
-        }
-        if (node.note() != null) {
-            lore.add("<dark_gray><i>" + AscendancyService.escape(node.note()));
-        }
-        lore.add("");
-        lore.add("<gray>" + node.cost() + " 點<dark_gray>　" + AscendancyLayout.position(branch, i));
+        final List<String> lore = AscendancyLayout.describe(chosen, node, owned || problem == null, service.skillLookup());
         final Material material = Menu.material(node.icon(), Material.AMETHYST_SHARD);
         if (owned) {
             final String refund = ascension.refundProblem(node);
@@ -121,14 +184,15 @@ final class AscendancyTreeMenu extends Menu {
                 lore.add(cost <= 0 ? "<yellow>右鍵：退掉（免費）"
                         : String.format(Locale.ROOT, "<yellow>右鍵：退掉（<#f5b942>%,d<yellow> 金幣）", cost));
             }
-            return glowing(icon(material, "<green>✔ " + ascensionColor(ascension) + AscendancyService.escape(node.name()), lore));
+            return glowing(icon(material, "<green>✔ " + ascensionColor(ascension) + (node.notable() ? "<b>" : "")
+                    + AscendancyService.escape(node.name()), lore));
         }
         if (problem == null) {
-            lore.add("<yellow>左鍵：配點");
-            return highlight(icon(material, "<yellow>" + AscendancyService.escape(node.name()), lore));
+            lore.add(node.option() ? "<yellow>左鍵：選這個" : "<yellow>左鍵：配點");
+            return highlight(icon(material, "<yellow>" + (node.notable() ? "<b>" : "") + AscendancyService.escape(node.name()), lore));
         }
         lore.add("<red>" + AscendancyService.escape(problem));
-        return icon(material, "<gray>" + AscendancyService.escape(node.name()), lore);
+        return icon(material, (node.notable() ? "<white>" : "<gray>") + AscendancyService.escape(node.name()), lore);
     }
 
     private static String ascensionColor(final Ascension ascension) {
@@ -145,6 +209,21 @@ final class AscendancyTreeMenu extends Menu {
             case SLOT_BACK -> service.open(player);
             case SLOT_CLOSE -> goBack();
             case SLOT_PREVIEW -> service.openPreview(player, null, true);
+            case SLOT_PHYLACTERY -> {
+                if (click.isLeftClick() && service.ascension(player).chosen() != null) {
+                    phylactery();
+                }
+            }
+            case SLOT_MERIDIANS -> {
+                if (click.isLeftClick() && service.ascension(player).chosen() != null) {
+                    new MeridiansMenu(plugin, player, service).open();
+                }
+            }
+            case AscendancyLayout.SLOT_UP, AscendancyLayout.SLOT_DOWN -> {
+                offset += slot == AscendancyLayout.SLOT_UP ? -AscendancyLayout.STEP : AscendancyLayout.STEP;
+                player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.6f, 1.0f);
+                redraw();
+            }
             case SLOT_RESPEC -> {
                 if (click != ClickType.SHIFT_LEFT) {
                     return;
@@ -164,6 +243,11 @@ final class AscendancyTreeMenu extends Menu {
             default -> {
                 final AscendancyConfig.Node node = nodes.get(slot);
                 if (node == null || !acceptAction(click)) {
+                    return;
+                }
+                if (click.isShiftClick()) {
+                    // 2026-10-27 照站長：Shift＋點擊看賦予的技能（不配點、不退點）
+                    service.openSkillPreview(player, node, () -> new AscendancyTreeMenu(plugin, player, service).open());
                     return;
                 }
                 if (click.isRightClick()) {

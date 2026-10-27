@@ -375,6 +375,64 @@ class LootTest {
         assertEquals(custom, LootFilter.decode(custom.encode(), config));
     }
 
+    /** 2026-10-26：「只撿的基底也要好詞綴」：只撿的基底跟保留好詞綴一起算。 */
+    @Test
+    void keepBasesCanRequireGoodAffix() {
+        final java.util.Map<String, Set<String>> bases = java.util.Map.of(
+                "long_bow", Set.of("weapon", "two_hand", "bow", "ranged"),
+                "short_bow", Set.of("weapon", "two_hand", "bow", "ranged"));
+        final LootFilter filter = new LootFilter().withBaseTags(id -> bases.getOrDefault(id, Set.of()));
+        filter.toggleKeepBase("long_bow");
+        filter.toggleKeepBase("short_bow");
+        filter.cycleKeepAffixTier(false); // T1
+        assertEquals(1, filter.rules().keepAffixTier());
+        final LootFilter.Viewer nobody = LootFilter.Viewer.NONE;
+        final String[] bow = {"weapon", "two_hand", "bow", "ranged"};
+        final String[] helmet = {"armour", "helmet", "dex_armour"};
+        // 關著：照舊，清單內沒有 T1 也撿
+        assertFalse(filter.keepBasesNeedAffix());
+        assertFalse(filter.hides(ranked(Rarity.RARE, "long_bow", 3, bow), nobody));
+        assertTrue(filter.hides(ranked(Rarity.RARE, "crude_bow", 1, bow), nobody));
+        assertFalse(filter.hides(ranked(Rarity.MAGIC, "leather_hood", 0, helmet), nobody));
+        // 開了：清單內也要有 T1
+        filter.toggleKeepBasesNeedAffix();
+        assertTrue(filter.keepBasesNeedAffixActive());
+        assertTrue(filter.hides(ranked(Rarity.RARE, "long_bow", 3, bow), nobody), "清單內沒有 T1 不撿");
+        assertTrue(filter.hides(ranked(Rarity.NORMAL, "long_bow", 0, bow), nobody), "清單內沒有詞綴不撿");
+        assertFalse(filter.hides(ranked(Rarity.RARE, "long_bow", 1, bow), nobody), "清單內有 T1 撿");
+        assertFalse(filter.hides(ranked(Rarity.MAGIC, "short_bow", 1, bow), nobody), "清單內有 T1 撿");
+        assertTrue(filter.hides(ranked(Rarity.RARE, "crude_bow", 1, bow), nobody), "清單外有 T1 也不撿");
+        assertFalse(filter.hides(ranked(Rarity.MAGIC, "leather_hood", 0, helmet), nobody), "沒挑的類別照原本的規則");
+        filter.toggleEquipment(Rarity.MAGIC);
+        assertTrue(filter.hides(ranked(Rarity.MAGIC, "leather_hood", 0, helmet), nobody), "沒挑的類別照稀有度");
+        assertFalse(filter.hides(ranked(Rarity.MAGIC, "leather_hood", 1, helmet), nobody), "沒挑的類別照舊有好詞綴救回");
+        assertFalse(filter.hides(ranked(Rarity.MAGIC, "long_bow", 1, bow), nobody), "清單內有 T1 的不管稀有度都撿");
+        assertFalse(filter.hides(ranked(Rarity.UNIQUE, "long_bow", 0, bow), nobody), "傳奇不管");
+        // 門檻是關：組合不生效（照舊只看清單）
+        final LootFilter noTier = filter.copy();
+        noTier.cycleKeepAffixTier(true); // T1 → 關
+        assertEquals(0, noTier.rules().keepAffixTier());
+        assertTrue(noTier.keepBasesNeedAffix());
+        assertFalse(noTier.keepBasesNeedAffixActive());
+        assertFalse(noTier.hides(ranked(Rarity.RARE, "long_bow", 3, bow), nobody));
+        // 存檔：來回一樣；舊存檔沒有這欄是關；換預設組合也留著
+        final LootFilter back = LootFilter.decode(filter.encode(), config);
+        assertTrue(back.keepBasesNeedAffix());
+        assertEquals(filter, back);
+        assertFalse(LootFilter.decode("p=custom;eq=;cur=;sg=0;ug=0;fl=all;kb=long_bow", config).keepBasesNeedAffix(), "舊存檔讀進來是關");
+        final LootFilter standard = LootFilter.decode("p=standard", config);
+        standard.toggleKeepBasesNeedAffix();
+        assertEquals("standard", standard.preset());
+        assertTrue(LootFilter.decode(standard.encode(), config).keepBasesNeedAffix());
+        assertTrue(LootFilter.of(config.preset("strict")).withExtras(standard).keepBasesNeedAffix());
+        standard.showEverything();
+        assertFalse(standard.keepBasesNeedAffix());
+    }
+
+    private static LootFilter.Candidate ranked(final Rarity rarity, final String baseId, final int bestRank, final String... tags) {
+        return new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, rarity, null, false, 70, Set.of(tags), 0, 0, bestRank, baseId);
+    }
+
     private static LootFilter.Candidate base(final Rarity rarity, final String baseId, final String... tags) {
         return new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, rarity, null, false, 70, Set.of(tags), 0, 0, 0, baseId);
     }

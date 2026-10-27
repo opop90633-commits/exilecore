@@ -85,7 +85,7 @@ public final class MapRewards {
     }
 
     private static int weight(final CurrencyType type) {
-        return type.omen() == null ? 1 : type.omen().weight();
+        return type.pickWeight(); // 2026-10-26：星籤照 omen.weight、星魄照階級（次級多、完美少）；以前星籤以外都是 1
     }
 
     /**
@@ -117,7 +117,10 @@ public final class MapRewards {
                         : new Bundle(kind, List.of(plugin.currencies().create(catalyst, 1)));
             }
             case EMOTION -> {
-                final String id = delirium == null ? null : delirium.emotion(pickTier(delirium.emotionWeights(), random));
+                // 2026-10-27 照 PoE2：情緒有掉落等級（恐懼 69、苦難 73、孤寂 77），地圖等級不夠的那幾種不抽
+                final String id = delirium == null ? null
+                        : delirium.emotion(pickTier(tw.exilecore.currency.Crafting.emotionWeightsAt(delirium.emotions(), delirium.emotionWeights(),
+                                level, plugin.currencies().repository()::get), random));
                 final CurrencyType emotion = id == null ? null : plugin.currencies().repository().get(id);
                 return emotion == null ? roll(plugin, service, MapEventConfig.Reward.CURRENCY, instance, player, delirium, uniques, random)
                         : new Bundle(kind, List.of(plugin.currencies().create(emotion, 1)));

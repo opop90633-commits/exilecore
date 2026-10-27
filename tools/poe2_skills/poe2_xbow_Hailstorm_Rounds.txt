@@ -1,0 +1,48 @@
+Hailstorm Rounds (poe2db.tw/us/Hailstorm_Rounds) - Cold crossbow ammunition. (Text paraphrased by WebFetch.)
+Mechanic: Passively creates ice bolts at a rate tied to reload time, up to a storage cap. Activating loads all stored bolts which fire together and rain down on the target area.
+Ammunition: 150% more reload speed; stores 32-50 bolts (lv1-20); quality +0-5 bolt storage, 0-60% cold res penetration.
+Impact: 55% attack speed; attack dmg 63-228%; projectile speed 14 m/s; 80% phys->cold; 100-157% more Freeze Buildup; 100-157% more Chill Magnitude; fires +1 projectile; each enemy hit at most once per 0.2 s; impact radius 1 m; rain radius 4 m.
+Hidden: 300 ms siege cascade fall time; 1000 ms queue override; 90 deg facing; -70% move speed, +160%/s accel, 50% locked duration.
+Note: lv31-40 values re-verified as printed on page (bolt storage jumps 60->70 at lv32; buildup step drops to ~1.5/level).
+
+level	bolts_stored	more_freeze_buildup_pct	more_chill_magnitude_pct
+1	32	100	100
+2	32	103	103
+3	34	106	106
+4	34	109	109
+5	36	112	112
+6	36	115	115
+7	36	118	118
+8	38	121	121
+9	38	124	124
+10	40	127	127
+11	40	130	130
+12	42	133	133
+13	42	136	136
+14	44	139	139
+15	44	142	142
+16	46	145	145
+17	46	148	148
+18	48	151	151
+19	48	154	154
+20	50	157	157
+21	50	160	160
+22	52	163	163
+23	52	166	166
+24	54	169	169
+25	54	172	172
+26	56	175	175
+27	56	178	178
+28	58	181	181
+29	58	184	184
+30	60	187	187
+31	60	188	188
+32	70	190	190
+33	72	191	191
+34	72	193	193
+35	74	194	194
+36	74	196	196
+37	76	197	197
+38	76	199	199
+39	78	200	200
+40	78	202	202

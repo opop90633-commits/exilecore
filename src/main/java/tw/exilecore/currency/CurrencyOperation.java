@@ -79,11 +79,11 @@ public enum CurrencyOperation {
         }
     },
 
-    /** 普通 → 稀有。 */
+    /** 普通或魔法 → 稀有（2026-10-26 照 PoE2 0.5 的點金石：魔法物品也能用，詞綴整個重擲成 4 條；這次之前只有普通）。 */
     UPGRADE_TO_RARE {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
-            return data.rarity() == Rarity.NORMAL;
+            return data.rarity() == Rarity.NORMAL || data.rarity() == Rarity.MAGIC && data.identified();
         }
 
         @Override
@@ -213,7 +213,10 @@ public enum CurrencyOperation {
         @Override
         public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
             data.setCorrupted(true);
-            final int outcome = random.nextInt(4);
+            // 2026-10-26 照 PoE2 的 Omen of Corruption：一定有變化（沒變化的那幾格不會抽到）
+            final boolean always = ALWAYS_CHANGE.get();
+            final int rolled = random.nextInt(4);
+            final int outcome = always && rolled == 0 ? 1 + random.nextInt(3) : rolled;
             final var base = generator.repository().base(data.base());
             final boolean unique = data.rarity() == Rarity.UNIQUE;
             if (base != null && base.isMap()) {
@@ -221,14 +224,14 @@ public enum CurrencyOperation {
                 return;
             }
             if (base != null && base.isFlaskLike()) {
-                if (outcome >= 2) {
+                if (always || outcome >= 2) {
                     data.setCorruptedQuality(data.quality() + 1 + random.nextInt(5));
                 }
                 return;
             }
             if (base != null && base.isJewel()) {
                 if (unique) {
-                    switch (outcome) {
+                    switch (always && outcome < 2 ? 2 + random.nextInt(2) : outcome) {
                         case 2 -> generator.corruptUniqueValues(data, random);
                         case 3 -> generator.addCorruptionEnchant(data, random);
                         default -> {
@@ -275,7 +278,9 @@ public enum CurrencyOperation {
                     if (base.hasTag("caster")) {
                         // 法杖、長杖（PoE2：品質增加，最多 23%）
                         data.setCorruptedQuality(data.quality() + 1 + random.nextInt(5));
-                    } else if (tw.exilecore.item.Runes.slots(generator.repository(), base, data) > 0) {
+                    } else if (tw.exilecore.item.Runes.slots(base) > 0 || tw.exilecore.item.Runes.slots(generator.repository(), base, data) > 0) {
+                        // 2026-10-26：看基底能不能有孔（符文孔照基底全開，見 Runes.slots；基底沒有孔的不加）。
+                        // 2026-10-27 修註解：之前寫「工匠石之後新裝備從 0 孔開始」——Runes.slots 不看 runeSockets，裝備一律照基底全開
                         data.setCorruptSockets(data.corruptSockets() + 1);
                     }
                     // 戒指、項鍊、腰帶（PoE2：不能開孔）沒有變化
@@ -303,11 +308,12 @@ public enum CurrencyOperation {
         }
     },
 
-    /** 武器品質 +1（上限 20）。 */
+    /** 礪鋒石：武器品質 +5／+2／+1（照稀有度，上限 20；2026-10-27 之前一律 +5）。2026-10-26 照 PoE2 的 Blacksmith's Whetstone：只有攻擊武器（法杖、長杖、權杖改用工匠蝕刻器）。 */
     QUALITY_WEAPON {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
             final var base = generator.repository().base(data.base());
+            // 2026-10-27 照站長：礪鋒石跟以前一樣所有武器都能用（法杖、長杖、權杖也可以；原作分給工匠蝕刻器）；這次之前排除法杖類
             return base != null && base.isWeapon() && data.quality() < 20;
         }
 
@@ -317,7 +323,59 @@ public enum CurrencyOperation {
         }
     },
 
-    /** 防具品質 +1（上限 20）。 */
+    /** 2026-10-26 照 PoE2 的工匠蝕刻器（Arcanist's Etcher）：法杖、長杖、權杖品質 +5／+2／+1（照稀有度，上限 20；2026-10-27 之前一律 +5）。 */
+    QUALITY_CASTER {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            final var base = generator.repository().base(data.base());
+            // 2026-10-27 照站長：星紋蝕刻器併進礪鋒石，不再掉落；手上剩下的照樣能用，效果跟礪鋒石一樣（所有武器）
+            return base != null && base.isWeapon() && data.quality() < 20;
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            data.setQuality(data.quality() + qualityStep(data));
+        }
+    },
+
+    /**
+     * 2026-10-26 照 PoE2 的工匠石（Artificer's Orb）：攻擊武器、法杖、長杖、防具多開一個符文孔（到基底的上限：雙手武器、胸甲 2 個，其他 1 個）。
+     * 2026-10-27 修註解：符文孔現在照基底全開（{@link tw.exilecore.item.Runes#slots}，2026-10-26 起），新裝備不記 runeSockets，
+     * 所以這個操作實際上用不到（只對記著孔數、還沒開滿的舊物品有用）；之前寫「新做的裝備從 0 孔開始」已經不對。
+     */
+    ADD_SOCKET {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            final var base = generator.repository().base(data.base());
+            return base != null && data.identified() && data.unique() == null && tw.exilecore.item.Runes.artificerTarget(base)
+                    && data.runeSockets() != null && data.runeSockets() < tw.exilecore.item.Runes.slots(base);
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            data.setRuneSockets(data.runeSockets() + 1);
+        }
+    },
+
+    /**
+     * 2026-10-26 照 PoE2 的 Hinekora's Lock（預見鎖）：物品記一個種子，下一顆用在它身上的通貨照這個種子擲——
+     * 拿通貨點它會先顯示結果，再點一次才真的用（{@link CurrencyListener}）。物品被改過（用了任何通貨）就拿掉。
+     */
+    FORESEE {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            final var base = generator.repository().base(data.base());
+            return base != null && data.identified() && data.foresight() == null;
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            long seed = random.nextLong();
+            data.setForesight(seed == 0 ? 1 : seed);
+        }
+    },
+
+    /** 防具品質 +5／+2／+1（照稀有度，上限 20；2026-10-27 之前一律 +5）。 */
     QUALITY_ARMOUR {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
@@ -331,7 +389,7 @@ public enum CurrencyOperation {
         }
     },
 
-    /** 2026-10-23：凝露琉璃（PoE2 的 Glassblower's Bauble）：藥劑、護符品質 +5（上限 20）；藥劑加回復量、護符加持續時間。 */
+    /** 2026-10-23：凝露琉璃（PoE2 的 Glassblower's Bauble）：藥劑、護符品質 +5／+2／+1（照稀有度，上限 20；2026-10-27 之前一律 +5）；藥劑加回復量、護符加持續時間。 */
     QUALITY_FLASK {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
@@ -355,7 +413,7 @@ public enum CurrencyOperation {
 
         @Override
         public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
-            data.setQuality(data.quality() + qualityStep(data));
+            data.setQuality(data.quality() + Math.min(5, 20 - data.quality())); // 2026-10-27：地圖品質原作沒有這種通貨，維持每次 +5
         }
     },
 
@@ -385,7 +443,8 @@ public enum CurrencyOperation {
     ESSENCE {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
-            return (data.rarity() == Rarity.NORMAL || data.rarity() == Rarity.MAGIC) && data.identified() && !data.starter();
+            // 2026-10-26：次級、一般、高階只能用在魔法、完美與腐化只能用在稀有（Crafting.problem 照星魄的階級擋）；舊的普通、魔法
+            return data.rarity() != Rarity.UNIQUE && data.identified() && !data.starter();
         }
 
         @Override
@@ -394,7 +453,7 @@ public enum CurrencyOperation {
         }
     },
 
-    /** 催化劑（PoE2）：飾品的品質 +5（上限 20），品質變成某一類詞綴的加成（currencies.yml 的 catalyst）。細節在 {@link Crafting}。 */
+    /** 催化劑（PoE2）：飾品的品質照稀有度 +5／+2／+1（上限 20；2026-10-27 之前一律 +5），品質變成某一類詞綴的加成（currencies.yml 的 catalyst）。細節在 {@link Crafting}。 */
     CATALYST {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
@@ -422,12 +481,15 @@ public enum CurrencyOperation {
         }
     },
 
-    /** 星籤（PoE2）：掛在一件魔法／稀有物品上，下一顆對應的通貨照星籤的規則用（currencies.yml 的 omen）。細節在 {@link Crafting}。 */
+    /**
+     * 星籤（PoE2）：掛在一件物品上，下一顆對應的通貨照星籤的規則用（currencies.yml 的 omen）。細節在 {@link Crafting}。
+     * 2026-10-26：普通物品、傳奇也可以掛（點金、僥倖、蝕變石的星籤；每種星籤能掛在哪些稀有度看 applies_to）；這次之前只有魔法、稀有。
+     */
     OMEN {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
             final var base = generator.repository().base(data.base());
-            return base != null && !base.isMap() && (data.rarity() == Rarity.MAGIC || data.rarity() == Rarity.RARE) && data.identified();
+            return base != null && !base.isMap() && data.identified();
         }
 
         @Override
@@ -437,8 +499,9 @@ public enum CurrencyOperation {
     },
 
     /**
-     * 蒸餾情緒（PoE2 的 Delirium 獎勵）：拿著它點一條項鍊會打開「注入」的選單，選一個天賦樹的核心，花 3 顆同一種情緒把那個核心的效果注入項鍊
-     * （一條項鍊只能注入一個，再注入就換掉）。哪一種情緒看核心離天賦樹中心多遠（{@link Crafting#instilTier}）。細節在 {@link Crafting}。
+     * 蒸餾情緒（PoE2 的 Delirium 獎勵）：拿著它點一條項鍊會打開「注入」的選單，選一個天賦樹的核心，照那個核心的配方花三顆情緒
+     * 把那個核心的效果注入項鍊（一條項鍊只能注入一個，再注入就換掉）。2026-10-27 照 PoE2：每個核心固定的三種情緒（{@link InstilRecipes}）；
+     * 這次之前花 3 顆同一種、哪一種看核心離天賦樹中心多遠。細節在 {@link Crafting}。
      */
     INSTIL {
         @Override
@@ -472,15 +535,17 @@ public enum CurrencyOperation {
 
     /**
      * 映星鏡（2026-10；PoE2 的卡蘭德的魔鏡）：複製一件裝備，原本那件不變，多出來的那件是「鏡像複製品」——
-     * 不能再改造（通貨、符文、注入、揭露都不行）、也不能再被複製。傳奇、地圖、藥劑與護符、新手裝備、已腐化、未鑑定的都不能複製。
+     * 不能再改造（通貨、符文、注入、揭露都不行）、也不能再被複製。地圖、藥劑與護符、新手裝備、已腐化、未鑑定的都不能複製
+     * （2026-10-26 照 PoE2：傳奇可以；這次之前不行）。
      * 會多出一件物品，所以不走 {@link #apply}：{@link CurrencyService#mirror} 做出複製品、{@link CurrencyListener} 確認後交給玩家。
      */
     MIRROR {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
             final var base = generator.repository().base(data.base());
-            return base != null && !base.isMap() && !base.isFlaskLike() && data.identified() && data.rarity() != Rarity.UNIQUE
-                    && data.unique() == null && !data.starter() && !data.corrupted() && !data.mirrored();
+            // 2026-10-26 照 PoE2：卡蘭德的魔鏡也能複製傳奇（這次之前傳奇不行）
+            return base != null && !base.isMap() && !base.isFlaskLike() && data.identified()
+                    && !data.starter() && !data.corrupted() && !data.mirrored();
         }
 
         @Override
@@ -552,6 +617,24 @@ public enum CurrencyOperation {
 
     /** 執行。呼叫前必須先確認 {@link #canApply}。 */
     public abstract void apply(ItemData data, ItemGenerator generator, RandomGenerator random);
+
+    /** 2026-10-26：這條執行緒上的蝕變石一定有變化（Omen of Corruption；{@link #corruptAlways}）。 */
+    private static final ThreadLocal<Boolean> ALWAYS_CHANGE = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
+    /** 2026-10-26：蝕變石，一定有變化（PoE2 的 Omen of Corruption）。 */
+    static void corruptAlways(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+        ALWAYS_CHANGE.set(Boolean.TRUE);
+        try {
+            CORRUPT.apply(data, generator, random);
+        } finally {
+            ALWAYS_CHANGE.set(Boolean.FALSE);
+        }
+    }
+
+    /** 2026-10-26：法杖、長杖、權杖（PoE2 用工匠蝕刻器加品質，不是礪鋒石）。 */
+    static boolean casterWeapon(final tw.exilecore.item.ItemBase base) {
+        return base.tags().contains("caster") || base.tags().contains("sceptre");
+    }
 
     /** 定星石至少要幾條詞綴（PoE2：4 條）。 */
     public static final int MIN_FRACTURE_AFFIXES = 4;
@@ -661,9 +744,21 @@ public enum CurrencyOperation {
         return list;
     }
 
-    /** 與 PoE2 相同：不分稀有度每次 +5，上限 20。 */
+    /**
+     * 2026-10-27 照 PoE2：品質通貨照稀有度加——普通 +5、魔法 +2、稀有與傳奇 +1，上限 20。
+     * 這次之前不分稀有度每次 +5。
+     */
     static int qualityStep(final ItemData data) {
-        return Math.min(5, 20 - data.quality());
+        return Math.min(qualityByRarity(data), 20 - data.quality());
+    }
+
+    /** 2026-10-27 照 PoE2：品質通貨（含催化劑）每顆加多少，看稀有度。 */
+    public static int qualityByRarity(final ItemData data) {
+        final tw.exilecore.item.Rarity rarity = data.rarity();
+        if (rarity == null || rarity == tw.exilecore.item.Rarity.NORMAL) {
+            return 5;
+        }
+        return rarity == tw.exilecore.item.Rarity.MAGIC ? 2 : 1;
     }
 
     /** 偶爾也需要知道某個型態還有沒有空位（給 GUI 提示用）。 */

@@ -118,9 +118,10 @@ class JewelTest {
     void jewelAffixCapsAlsoApplyToCurrency() {
         final ItemData jewel = generator.generate(repository.base("sapphire_jewel"), Rarity.NORMAL, 60, new SplittableRandom(4));
         generator.upgradeToRare(jewel, new SplittableRandom(5));
-        assertEquals(3, jewel.affixes().size(), "星火石做出來的稀有珠寶 3 條");
-        assertTrue(generator.addAffix(jewel, null, new SplittableRandom(6)), "至臻石可以加到第 4 條");
+        // 2026-10-27 照 PoE2：星火石做出來的稀有珠寶 4 條（這次之前 3 條，至臻石再加到第 4 條）
+        assertEquals(4, jewel.affixes().size(), "星火石做出來的稀有珠寶 4 條");
         assertFalse(generator.canAddAffix(jewel, null), "第 5 條加不上（前後綴各 2）");
+        assertFalse(generator.addAffix(jewel, null, new SplittableRandom(6)));
         assertEquals(4, jewel.affixes().size());
         // 珠寶的修飾器就是詞綴的修飾器（沒有基底數值、沒有固定詞綴）
         final List<Modifier> mods = ItemStats.modifiers(repository, jewel);

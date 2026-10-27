@@ -66,6 +66,53 @@ public final class Perf {
         if (nanos > section.max[current]) {
             section.max[current] = nanos;
         }
+        if (nanos >= spikeNanos && spikeListener != null) {
+            spike(name, section, nanos);
+        }
+    }
+
+    // ---- 2026-10-27：單次太慢（瞬間掉 TPS）的警告：每個區段 30 秒內最多寫一次 log，期間另外幾次一起報 ----
+
+    /** 單次超過幾毫秒算「卡頓」。 */
+    public static final double SPIKE_MS = 20;
+    /** 同一個區段多久最多警告一次（奈秒）。 */
+    static final long SPIKE_QUIET_NANOS = 30_000_000_000L;
+
+    /** 一次卡頓警告：區段、這次幾毫秒、上次警告之後另外又超過幾次（沒寫進 log 的）。 */
+    public record Spike(String name, double ms, int suppressed) {
+    }
+
+    private long spikeNanos = Math.round(SPIKE_MS * 1_000_000);
+    private java.util.function.Consumer<Spike> spikeListener;
+    private java.util.function.LongSupplier clock = System::nanoTime;
+    private final Map<String, long[]> spikeState = new java.util.HashMap<>();
+
+    /** 卡頓時通知誰（ExileCore 寫 log）；thresholdMs：單次超過幾毫秒。 */
+    public void onSpike(final double thresholdMs, final java.util.function.Consumer<Spike> listener) {
+        this.spikeNanos = Math.max(1, Math.round(thresholdMs * 1_000_000));
+        this.spikeListener = listener;
+    }
+
+    /** 測試用：換時鐘。 */
+    void clock(final java.util.function.LongSupplier clock) {
+        this.clock = clock;
+    }
+
+    private void spike(final String name, final Section section, final long nanos) {
+        final long[] state = spikeState.computeIfAbsent(name, key -> new long[] {Long.MIN_VALUE, 0}); // {上次警告的時間, 期間略過幾次}
+        final long now = clock.getAsLong();
+        if (state[0] != Long.MIN_VALUE && now - state[0] < SPIKE_QUIET_NANOS) {
+            state[1]++;
+            return;
+        }
+        final int suppressed = (int) state[1];
+        state[0] = now;
+        state[1] = 0;
+        try {
+            spikeListener.accept(new Spike(name, nanos / 1e6, suppressed));
+        } catch (final RuntimeException ignored) {
+            // 寫 log 出錯不能影響計時
+        }
     }
 
     /** 每秒呼叫一次：換到下一格（清掉 60 秒前的資料）。 */

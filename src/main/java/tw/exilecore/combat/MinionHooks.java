@@ -34,4 +34,13 @@ public interface MinionHooks {
 
     /** 回復召喚物的生命（我們的單位；擊中回復生命輔助）。 */
     void heal(LivingEntity minion, double amount);
+
+    /** 2026-10-26 照 PoE2：召喚物目前的能量護盾（我們的單位；沒有回傳 0）。擊中先扣護盾再扣生命。 */
+    default double energyShield(final LivingEntity minion) {
+        return 0;
+    }
+
+    /** 2026-10-26：召喚物被擊中了（esDamage = 護盾吸收的部分）：扣護盾、重新算回充的 4 秒，冰甲反擊 attacker。 */
+    default void damaged(final LivingEntity minion, final double esDamage, final LivingEntity attacker) {
+    }
 }

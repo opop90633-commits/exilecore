@@ -292,8 +292,21 @@ public final class CardService {
                     return null;
                 }
                 final List<String> names = new ArrayList<>();
+                int total = 0;
+                for (final CurrencyType type : essences) {
+                    total += Math.max(1, type.pickWeight());
+                }
                 for (int i = 0; i < reward.amount(); i++) {
-                    final CurrencyType type = essences.get(random().nextInt(essences.size()));
+                    // 2026-10-26：照星魄的階級抽（次級多、完美與腐化少；currencies.yml 的 pick_weight），以前每一種一樣
+                    int pick = random().nextInt(total);
+                    CurrencyType type = essences.getLast();
+                    for (final CurrencyType each : essences) {
+                        pick -= Math.max(1, each.pickWeight());
+                        if (pick < 0) {
+                            type = each;
+                            break;
+                        }
+                    }
                     giveCurrency(player, type, 1);
                     names.add(type.name());
                 }

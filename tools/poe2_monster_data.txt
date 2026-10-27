@@ -1,0 +1,255 @@
+PATH OF EXILE 2 - MONSTER BASE STAT DATA
+Collected 2026-10-26. Values copied verbatim from sources unless marked [INFERRED].
+
+SOURCES
+ [PoB]   PathOfBuilding-PoE2 dev branch, src/Data/Misc.lua (auto-generated from DefaultMonsterStats.dat,
+         Monster.ot, MonsterVarieties.dat, MonsterMapDifficulty.dat, MonsterMapBossDifficulty.dat)
+         https://raw.githubusercontent.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/dev/src/Data/Misc.lua
+         plus src/Modules/Data.lua, src/Modules/ConfigOptions.lua, src/Data/Bosses.lua, src/Data/ModMap.lua
+ [P2DB]  https://poe2db.tw/us/Monster and individual boss pages (read via WebFetch summarizer;
+         poe2db is blocked for direct download, so boss numbers passed through a summarizer - spot-checked
+         against the life table where possible, see checks below).
+ Blocked/unavailable: poe2wiki.net (Anubis bot block), direct shell access to poe2db.tw (proxy 403).
+
+==========================================================================================
+1. PER-LEVEL TABLE (levels 1..100; 100 entries exist in every PoB table)
+==========================================================================================
+Columns from [PoB] Misc.lua: Life=monsterLifeTable, Damage=monsterDamageTable (rounded to 2 dp; raw values
+are float32 e.g. 9.1599998474121), Evasion=monsterEvasionTable, Accuracy=monsterAccuracyTable,
+Armour(PoB)=monsterArmourTable, AilmentThr=monsterAilmentThresholdTable, PoiseThr=monsterPoiseThresholdTable,
+AllyLife=monsterAllyLifeTable, AllyDamage=monsterAllyDamageTable.
+Armour(poe2db) and Experience come from [P2DB] /us/Monster table (columns there: Monster Level, Damage,
+Evasion, Accuracy, Life, Armour, Experience, Minion Life, Minion Damage). poe2db's Damage/Evasion/Accuracy/
+Life/Minion Life/Minion Damage match PoB exactly at every level checked (1,10,20,...,100).
+!! Armour DIFFERS: poe2db per-level Armour column is higher than PoB monsterArmourTable (e.g. L80 6867 vs 4803).
+   However poe2db's own boss pages compute armour from the PoB values (Xesht L80 armour 4,803 = PoB L80;
+   Arbiter L74 4,099 = 3416*1.20). So PoB monsterArmourTable appears to be what the game/boss pages use;
+   the poe2db per-level Armour column origin is unclear.
+Levels > 83 exist in the data (table goes to 100). poe2db notes waystone area levels run 65 (Tier 1) to
+80 (Tier 16); PoB caps enemy level at MaxEnemyLevel = 85, and pinnacle default level is 82.
+Note the big life jumps at L70 (8918->11148), L75 (14887->18609), L80 (24852->31065): endgame step-ups.
+Ailment threshold == life for L1-~30 then diverges; it also jumps at 70/75/80.
+
+Lvl	Life	Damage	Evasion	Accuracy	Armour(PoB)	Armour(poe2db)	AilmentThr	PoiseThr	AllyLife	AllyDamage	Experience(poe2db)
+1	15	9.16	24	32	3	5	15	30	51	3.11	17
+2	20	10.26	30	35	6	8	20	40	83	4.42	18
+3	24	11.39	36	39	8	11	24	48	116	5.82	20
+4	28	12.57	43	43	10	15	28	57	150	7.31	24
+5	33	13.78	49	48	13	19	34	67	186	8.92	31
+6	38	15.03	56	52	16	23	39	79	223	10.63	43
+7	45	16.32	63	57	19	27	46	93	261	12.46	57
+8	50	17.65	70	62	22	32	52	106	300	14.42	75
+9	58	19.02	77	67	26	37	60	122	341	16.51	96
+10	67	20.44	84	72	30	43	70	142	382	18.73	120
+11	78	21.90	91	78	34	49	81	165	426	21.10	150
+12	89	23.41	98	84	39	55	95	192	471	23.62	181
+13	103	24.97	105	90	43	62	110	220	517	26.31	219
+14	118	26.57	113	96	49	70	126	254	565	29.16	261
+15	134	28.23	120	103	54	78	144	290	614	32.19	308
+16	158	29.93	128	110	60	86	171	344	665	35.42	358
+17	178	31.69	136	117	67	96	193	390	718	38.83	416
+18	200	33.50	144	124	73	106	218	437	772	42.46	482
+19	224	35.37	152	132	81	116	245	488	828	46.31	549
+20	249	37.29	160	140	89	127	275	542	886	50.39	623
+21	276	39.27	168	149	97	139	306	599	945	54.71	704
+22	305	41.31	176	158	106	152	340	659	1007	59.29	796
+23	335	43.41	185	167	116	166	376	724	1070	64.14	881
+24	366	45.57	193	176	126	181	413	791	1135	69.27	968
+25	400	47.80	202	186	137	196	455	862	1203	74.69	1058
+26	434	50.09	211	196	149	213	497	937	1272	80.43	1153
+27	472	52.45	220	207	161	231	543	1015	1344	86.50	1252
+28	510	54.88	229	218	174	250	590	1097	1417	92.91	1407
+29	551	57.37	238	230	189	270	641	1183	1493	99.69	1573
+30	593	59.94	247	242	204	292	695	1273	1571	106.84	1750
+31	637	62.59	257	254	220	315	752	1367	1652	114.40	1941
+32	683	65.31	266	267	237	339	812	1464	1734	122.37	2142
+33	731	68.10	276	281	255	365	874	1567	1820	130.79	2361
+34	790	70.98	286	295	274	393	950	1660	1907	139.67	2587
+35	853	73.94	296	309	295	422	1033	1758	1998	149.04	2831
+36	921	76.98	306	325	317	453	1123	1864	2091	158.91	3092
+37	995	80.11	316	340	340	486	1220	1976	2186	169.32	3360
+38	1074	83.32	326	356	364	521	1326	2093	2285	180.29	3646
+39	1160	86.63	337	373	391	559	1442	2219	2386	191.86	3958
+40	1253	90.02	347	391	418	599	1568	2352	2490	204.04	4259
+41	1353	93.51	358	409	448	641	1705	2494	2598	216.86	4586
+42	1462	97.10	369	428	479	685	1854	2644	2708	230.37	4940
+43	1578	100.79	380	447	512	733	2015	2804	2821	244.60	5279
+44	1705	104.57	391	468	547	783	2192	2971	2938	259.57	5652
+45	1841	108.46	403	489	585	837	2384	3150	3058	275.32	6045
+46	1967	112.46	414	511	624	893	2564	3369	3181	291.90	6466
+47	2101	116.57	426	533	666	953	2757	3598	3307	309.34	6909
+48	2244	120.78	438	557	711	1017	2966	3846	3438	327.69	7390
+49	2395	125.12	449	581	758	1084	3188	4109	3571	346.98	7894
+50	2556	129.56	462	606	808	1156	3426	4387	3709	367.27	8439
+51	2726	134.13	474	632	861	1231	3681	4685	3850	388.59	9018
+52	2909	138.82	486	659	917	1311	3955	5002	3995	411.01	9641
+53	3102	143.64	499	688	976	1396	4247	5338	4144	434.57	10300
+54	3307	148.58	511	717	1039	1486	4560	5697	4298	459.32	10997
+55	3525	153.66	524	747	1105	1581	4895	6078	4455	485.33	11751
+56	3756	158.87	537	778	1176	1682	5254	6485	4617	512.66	12546
+57	4002	164.21	551	810	1250	1788	5638	6915	4783	541.35	13393
+58	4264	169.70	564	844	1329	1901	6049	7377	4953	571.49	14302
+59	4540	175.34	578	878	1412	2020	6489	7866	5128	603.14	15267
+60	4834	181.12	591	914	1500	2146	6959	8386	5308	636.37	16300
+61	5147	187.05	605	951	1594	2279	7462	8940	5493	671.26	17402
+62	5478	193.14	619	990	1692	2420	8001	9528	5682	707.87	18576
+63	5829	199.38	634	1030	1796	2569	8576	10153	5877	746.30	19825
+64	6203	205.79	648	1071	1906	2726	9193	10819	6077	786.63	21161
+65	6555	212.36	663	1114	2023	2893	9649	26703	6282	828.94	21507
+66	7079	219.11	677	1158	2146	3068	10228	28651	6492	873.34	23667
+67	7646	226.03	692	1204	2276	3254	10841	30662	6708	919.91	26020
+68	8257	233.12	708	1251	2413	3451	11492	32890	6930	968.76	28634
+69	8918	240.40	723	1300	2558	3658	12181	35192	7157	1019.99	31491
+70	11148	247.86	738	1351	2712	3877	18272	53405	7391	1073.72	34639
+71	11984	255.52	754	1403	2874	4108	19369	57263	7630	1130.06	38100
+72	12882	263.37	770	1457	3044	4353	20531	61392	7876	1189.13	41931
+73	13849	271.42	786	1514	3225	4611	21763	65810	8128	1251.06	46103
+74	14887	279.68	803	1572	3416	4883	23068	70537	8387	1315.98	50688
+75	18609	288.14	819	1632	3617	5171	34602	106973	8652	1384.03	55765
+76	20005	296.82	836	1694	3829	5475	36679	114630	8924	1455.34	61373
+77	21505	305.72	853	1758	4053	5795	38879	122820	9203	1530.08	67522
+78	23118	314.84	870	1824	4290	6133	41212	131580	9489	1608.40	74226
+79	24852	324.19	887	1893	4540	6490	43685	140949	9783	1690.46	81664
+80	31065	333.78	905	1964	4803	6867	65527	213635	10084	1776.43	100000
+81	31997	343.60	923	2038	5081	7264	68415	225270	10393	1866.50	100000
+82	32956	353.67	941	2114	5375	7684	71303	236905	10710	1960.84	100000
+83	33945	364.00	959	2192	5684	8126	74191	248540	11034	2059.66	100000
+84	34963	374.58	977	2273	6011	8593	77079	260175	11367	2163.16	100000
+85	36012	385.42	996	2357	6355	9085	79967	271810	11708	2271.56	100000
+86	37093	396.53	1015	2444	6718	9604	82855	283445	12058	2385.06	100000
+87	38206	407.92	1034	2534	7101	10151	85743	295080	12417	2503.91	100000
+88	39352	419.58	1053	2626	7505	10728	88631	306715	12785	2628.36	100000
+89	40532	431.54	1073	2722	7930	11336	91519	318350	13161	2758.64	100000
+90	41748	443.79	1093	2821	8379	11978	94407	329985	13548	2895.03	100000
+91	43001	456.34	1113	2923	8852	12654	97295	341620	13944	3037.80	100000
+92	44291	469.20	1133	3029	9351	13367	100183	353255	14350	3187.24	100000
+93	45619	482.38	1154	3138	9877	14119	103071	364890	14766	3343.66	100000
+94	46988	495.87	1174	3251	10431	14911	105959	376525	15192	3507.35	100000
+95	48398	509.70	1195	3368	11015	15745	108847	388160	15629	3678.66	100000
+96	49850	523.86	1217	3488	11630	16625	111735	399795	16076	3857.93	100000
+97	51345	538.37	1238	3613	12279	17552	114623	411430	16535	4045.51	100000
+98	52885	553.23	1260	3741	12962	18528	117511	423065	17005	4241.77	100000
+99	54472	568.46	1282	3874	13682	19557	120399	434700	17486	4447.11	100000
+100	56106	584.05	1304	4011	14441	20641	123287	446335	17980	4661.93	0
+
+Raw float values of the two damage tables are in Misc.lua; e.g. monsterDamageTable[1]=9.1599998474121,
+[83]=364, [100]=584.04998779297; monsterAllyDamageTable[100]=4661.9301757812.
+
+==========================================================================================
+2. RARITY MULTIPLIERS  [P2DB /us/Monster, "Monster Magic/Rare/Unique Stats" tables, game data]
+==========================================================================================
+stat                                             Magic   Rare   Unique
+monster_life_+%_final_from_rarity                148     700    2800
+monster_energy_shield_+%_final_from_rarity       21      100    400
+poise_threshold_+%_final_from_rarity             26      125    500
+monster_rarity_damage_+%_final                   0       0      -35
+monster_slain_experience_+%                      250     400    750
+monster_dropped_item_quantity_+%                 400     1980   2400
+monster_dropped_item_rarity_+%                   25      167    1500
+slow_potency_+%_final_from_rarity                -15     -30    -50
+curse_effect_on_self_+%_final_from_rarity        -15     -30    -50
+exposure_effect_on_self_+%_final_from_rarity     -15     -30    -50
+knockback_distance_+%_final_from_rarity          -       -50    -75
+maximum_life_+%_final_per_additional_player      10      30     85
+base_movement_velocity_+%                        0       10     -
+base_actor_scale_+%                              -       10     -
+monster_base_flask_charges_percent_of_monster_power 50   150    150
+gain_x_vaal_souls_at_2%_life_thresholds          0       1      6
+monster_minimum_movement_velocity_+%_excluding_stance -90 -80  -80
+monster_drop_higher_level_gear                   0       1      2
+[INFERRED] effective life multiplier vs normal (same level & variety): Magic x2.48, Rare x8.00, Unique x29.00.
+ Caveat: could not cross-verify these against a second source (poe2wiki blocked; Rarity page has no numbers).
+ The 2800% for Unique is unusually large; poe2db boss pages' "Life" totals do NOT include it
+ (they equal LifeTable[level] * Life% exactly, see section 4), so whether a boss's real HP = page Life x29
+ is [UNVERIFIED].
+Monster default (Monster.ot, both sources agree): base_maximum_all_resistances_% 75,
+ maximum_physical_damage_reduction_% 75, energy_shield_recharge_rate_per_minute_% 750, base_maximum_mana 200,
+ base_critical_hit_damage_bonus 30, maximum_life_+%_final_per_additional_player 50 (and ES/poise 50),
+ slow_potency_+%_final_per_additional_player -10, base_heavy_stun_duration_ms 2000, poise_decay_delay_ms 8000,
+ poise_decay_%_per_second 5, melee_hit_damage_stun_multiplier_+%_final_from_ot 33,
+ physical_hit_damage_stun_multiplier_+%_final_from_ot 100, stun_base_duration_override_ms 500.
+ bleeding_moving_damage_%_of_base_override: poe2db 200, PoB 1 (differs).
+ gameConstants: MonsterIntRatioCovertLifeToEnergyShield = 100.
+ gameConstants MonsterAccuracyBase 28 / Incremental 280 / Improvement 2.6; MonsterArmourBase 2 /
+ Incremental 1.75 / StrengthRatioMultiplier 3 / Improvement 4.5; MonsterEvasionBase 18 / Incremental 6 /
+ DexterityRatioMultiplier 2 / Improvement 0.75.
+ CullingStrike thresholds: Magic 20, Rare 10, Unique 5. PartyUniqueBonusPerAdditionalPlayer 0.3.
+ NOTE: gameConstants Unidentified/IdentifiedMagicMultiplier (1.5/1) and Rare (6/2) are ITEM value constants,
+ not monster rarity multipliers.
+Warcry/Monster Power (PoB ConfigOptions tooltip): Normal 1, Magic 2, Rare 10, Unique 20 power.
+ (mobalytics monster-power guide says rarity multipliers Normal 1, Magic 2, Rare 5; Unique bosses always 20.)
+
+==========================================================================================
+3. PoB MULTIPLIER TABLES / BOSS ASSUMPTIONS
+==========================================================================================
+data.mapLevelLifeMult (MonsterMapDifficulty.dat): levels 66..90 all = 1
+data.mapLevelBossLifeMult (MonsterMapBossDifficulty.dat): levels 1..90 all = 1
+data.mapLevelBossAilmentMult: levels 1..90 all = 1
+  => in PoE2 there is NO extra map-level life scaling for monsters or map bosses beyond the base table.
+data.totemLifeMult = { [1]=1,[2]=1,[3]=1,[5]=1,[12]=1,[18]=1,[19]=1,[22]=1,[15]=1.2,[23]=1,[24]=1,[25]=1,[26]=1 }
+data.monsterVarietyLifeMult (selection, verbatim): Vile Imp 0.65, Unearthed Urchin 0.65, Eaten Rat 0.9,
+ Decrepit Mercenary 1.2, Prowling Skeleton 1.25, Risen Arbalest 1.35, Dread Servant 1.5, Desiccated Lich 1.5,
+ Rattling Gibbet 2, Rotting Hulk 2.5, Bog Hulk 2.5; all other listed varieties (Drowned, Lumbering Dead, Rust
+ Skeleton, Sandflesh *, Vaal Skeletal *, etc.) = 1.
+
+PoB "Is the enemy a Boss?" config defaults (ConfigOptions.lua / Data.lua) - these are PoB ASSUMPTIONS, not game data:
+ None (normal):   resist placeholder "" (=0), damage = monsterDamageTable[lvl]*1.5*(1/4.40) per type,
+                  armour/evasion = table values at enemy level (defaults to character level).
+ Standard Boss:   +30% Fire/Cold/Lightning resist, 0% Chaos; damage *1.5*(4/4.40); armour/evasion table;
+                  flags Unique: CurseEffectOnSelf -50% more, ExposureEffectOnSelf -50%, Knockback -75%,
+                  SlowEffectOnSelf -50%, MinimumMovementSpeed 20, PoiseThreshold +500% more (MonsterUnique2)
+                  and +213% more ("Map Boss").
+ Guardian/Pinnacle: +50% ele resist, 0% chaos; level min/default 82; damage *1.5*(8/4.40);
+                  pen 15/5 = 3% per element; PoiseThreshold +500% & +838% more ("Xesht");
+                  armour/evasion * bossStats mean (from Data/Bosses.lua).
+ Uber Pinnacle:   +50% ele resist, 0% chaos; 70% less damage taken; damage *1.5*(10/4.25); pen 40/5 = 8%.
+ Tooltip: "The maximum level for normal enemies and all bosses is 85 ... default and minimum level for
+  pinnacle bosses and uber pinnacle bosses is 82."
+ !! Data/Bosses.lua in PoB-PoE2 still contains PoE1 bosses (Venarius, Eater/Exarch, Maven, Sirus, Shaper,
+  Elder, Atziri, Phoenix, Hydra, Minotaur, Chimera...) with armourMult/evasionMult - PoE1 carry-over.
+ !! Data/ModMap.lua header: "currently made by hand"; its map mods look like PoE1 carry-overs (e.g. "Suppress
+  Spell Damage"): Resistant +20/30/40% ele & +15/20/25% chaos; Fecund (20-29)/(30-39)/(40-49)% more life;
+  Unwavering (15-19)/(20-24)/(25-30)% more life; Titan's "Unique Boss has 25/30/35% increased Life";
+  Overlord's "Unique Boss deals 15/20/25% increased Damage". NOT reliable for PoE2 waystones.
+
+==========================================================================================
+4. BOSSES  [P2DB individual pages, via summarizer]. "Life" on poe2db = LifeTable[Level] * Life%
+   (checked: Arbiter 14887*9.90=147381 OK; King MAP 31065*3.75=116494 OK; Trialmaster L38 1074*7.5=8055 OK;
+   Zarokh L68 8257*7.5=61928 OK). Pages state values exclude map affixes/buffs/altars/atlas passives,
+   and they do NOT include the Unique +2800% rarity life.
+==========================================================================================
+Boss (variety id)                          Lvl  Life%  Dmg%  Arm/Eva/ES      Res F/C/L/Ch     Life     Armour Evasion Damage
+The Arbiter of Ash (DemonClawBoss)         74   990%   450%  Arm +20%        45/-15/0/0       147,381  4,099  803     1,259
+  (also Accuracy 3,144; Attack Time 2.13; Experience 202,752)
+Xesht, We That Are One (ItThatReturned)    80   750%   300%  ES from life 5% "75 75 75 0"(page) 117,068  4,803  905     1,001
+  !! 117,068 != 31065*7.5 (=232,988); ratio 3.77. Resist line "75 75 75 0" unlabeled; PoB Spectres says 0/0/0/0.
+     Treat Xesht numbers as UNVERIFIED (possible summarizer/page-layout issue).
+The King in the Mists (VoodooKingBoss2MAP) 80   375%   188%  +20%/+40%/ES10% 0/0/0/0          116,494  5,764  1,267   628  (ES 11,649)
+The King in the Mists (VoodooKingBoss2)    11   175%   156%  +20%/+40%/ES10% 0/0/0/60         137      41     127     34   (campaign)
+  (other varieties VoodooKingBoss3 / 3MAP / 3Standalone listed without stats)
+Zarokh, the Temporal (SilentSpiresApparitionSTANDALONE) 68 750% 150% ES from life 7% 15/15/15/0 61,928 2,413 708 350
+Zarokh, the Temporal (SilentSpiresApparition)           22 750% 150% ES 7%          15/15/15/0 2,288  106   176  62
+The Trialmaster (TheTrialmasterSTANDALONE) 68   750%   372%  Arm +50%        30/30/30/0       61,928   3,620  708     867
+The Trialmaster (TheTrialmaster_)          38   750%   372%  Arm +50%        30/30/30/0       8,055    546    326     310
+Map boss: Morwyn, the Kinslayer (ViperNapuatziAzmeriMap_) 65 250% 250% +40%/+40%/ES10% 30/30/30/0 16,283 2,832 928 531
+   stats "i am boss of tier [2]", "monster dropped item rarity +% [1600]"
+Map boss: Morwyn (ViperNapuatziAzmeriStandalone)          68 250% 250% -            0/0/0/0    19,393 2,413 708 583
+Map boss: Vorrik, The Infernal Engineer (RudjaDreadEngineerMAP) 65 250% 275% Arm +50% 0/0/0/0* 16,283 3,035 663 584
+Map boss: Vorrik (RudjaDreadEngineerSTANDALONE)           68 250% 275% Arm +50%     0/0/0/0*   19,393 3,620 708 641
+  *Vorrik page also shows unlabeled "75 -50 0 0"; summarizer used PoB Spectres values.
+  !! Morwyn/Vorrik life 16,283 at L65 != 6555*2.5 (16,388) and 19,393 at L68 != 8257*2.5 (20,643) -
+     small mismatch, unexplained; Armour does match PoB table (Vorrik L65 2023*1.5=3035).
+[INFERRED] If Unique rarity +2800% applies multiplicatively: Arbiter L74 ~4.27M, King MAP L80 ~3.38M,
+  Trialmaster/Zarokh L68 ~1.80M, map bosses L65 ~0.47M. Unverified.
+
+Not found / gaps:
+ - Atziri (v0.4, Atziri's Temple): poe2db temple page links no Atziri monster page; no stats obtained.
+ - Simulacrum / Delirium pinnacle, Breach queen, Sekhema bosses other than Zarokh: not retrieved.
+ - Pinnacle bosses' level in the actual endgame encounter (pages show a default level, e.g. Arbiter 74).
+ - Map monster resistances by waystone tier: no inherent per-tier monster resist found. poe2db Waystones
+   page lists area levels 65 (T1)..80 (T16) and "higher tiers ... more difficult monsters" with no stat
+   bonuses; its waystone-mod table was truncated (only Level 1 mods visible: Monsters deal (5-9)..(20-24)%
+   of Damage as Extra Fire/Cold/Lightning, "Monsters have 16% more Effectiveness", etc.). Resist-adding
+   waystone mods could not be confirmed. Normal monsters' default resist in PoB = 0; Monster.ot has no
+   base resist stat besides the 75% max.
+ - Rarity life numbers have a single source (poe2db).

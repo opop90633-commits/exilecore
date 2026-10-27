@@ -113,8 +113,12 @@ public final class MeritShop {
         return owned;
     }
 
-    /** 存得下的長度（account_progress.progress_value 是 255 字）。 */
-    static final int VALUE_MAX = 250;
+    /**
+     * 存得下的長度。2026-10-26：account_progress.progress_value 在第 20 版資料庫已經加長到 4096 字，這裡卻還是 250——
+     * 商店、活動、擊殺稱號（光擊殺稱號的代號就兩百多字）拿多了，新的稱號記不下，發不出去（「達成目標沒有發放」）；
+     * 這次之前 250。
+     */
+    static final int VALUE_MAX = 4000;
 
     public static String titlesValue(final Set<String> owned) {
         return String.join(",", owned);

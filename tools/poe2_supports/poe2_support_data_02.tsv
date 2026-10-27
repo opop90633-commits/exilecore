@@ -1,0 +1,41 @@
+Muster	3	100%	-	Minion-creating skills (CreatesMinion)	Supported Minions deal 7% more damage for each different type of Reviving Minion you have summoned
+Infernal_Legion_I	2	100%	-	Minion-creating skills (excl. MinionsAreUndamagable)	Minions from supported skills take 10% of their maximum Life as Fire Damage per second || Minions from supported skills Ignite enemies within a radius of 1.5 metres, as though dealing Base Fire Damage equal to 10% of the Minion's Maximum Life
+Urgent_Totems_I	2	100%	-	Totem skills (SummonsTotem, UsedByTotem)	Supported Skills have 80% increased Totem Placement speed
+Ambush	1	100%	-	Attack/Damage, CrossbowAmmoSkill	Supported Skill has 100% more Critical Hit Chance against Enemies that are on Full Life
+Zenith_I	1	120%	-	Damaging spells	Supported Spells deal 30% more Damage while you are above 90% of your Maximum Mana
+Clash	3	120%	-	Melee attacks (excl. Minion, Totem)	Supported Skills deal 40% more Melee Damage against enemies with a higher percentage of their Life remaining than you || Supported Skills deal 20% less Melee Damage against enemies with a lower percentage of their Life remaining than you
+Elemental_Armament_I	1	120%	-	Attacks, CrossbowAmmoSkill	Supported Skills deal 20% more Elemental Attack damage
+Rising_Tempest	2	120%	-	Damaging attacks, CrossbowAmmoSkill (excl. Minion, Persistent)	Supported Skills deal 12% more Elemental Damage for each Skill used Recently of a different Elemental type
+Knockback	3	100%	-	Damaging attacks, CrossbowAmmoSkill	Supported Skills have 40% more Knockback Distance || Supported Skills Knock Enemies Back on Hit
+Overextend	? (page only shows Tier 3 under Skill Gems; no longer obtainable since 0.5.0)	115%	-	Attacks (excl. UsedByProxy, Triggered, Persistent)	Supported Skills have 30% more Critical Damage Bonus || You are Dazed for 5 seconds on Critically Striking with Supported Skill
+Clarity_I	1	-	10 Spirit	Persistent Buff skills	30% Increased Mana Regeneration Rate while a Supported Skill is active
+Vitality_I	1	-	20 Spirit	Persistent Buff skills	Regenerate 1% of maximum Life per second while a Supported Skill is active
+Cannibalism_I	3	-	15 Spirit	Persistent Buff skills	2% of maximum Life recovered on kill while a Supported Skill is active
+Thornskin_I	2	-	20 Spirit	Persistent Buff skills	Deal 40% increased Thorns Damage while a Supported Skill is active
+Cool_Headed	3	-	15 Spirit	Persistent Buff skills	50% less Ignite duration on you while a Supported Skill is active
+Strong_Hearted	3	-	15 Spirit	Persistent Buff skills	50% less Shock duration on you while a Supported Skill is active
+Warm_Blooded	3	-	15 Spirit	Persistent Buff skills	50% less Freeze duration on you while a Supported Skill is active
+Herbalism_I	2	-	15 Spirit	Persistent Buff skills	30% Increased Recovery from Life Flasks while a Supported Skill is active
+Armour_Demolisher_I	1	100%	-	Any skill	Supported Skills Break 50% more Armour
+Eternal_Flame_I	1	120%	-	Damaging attacks, CrossbowAmmoSkill	Supported Skills have 100% increased Ignite Duration on Enemies || Supported Skills have 25% less Flammability Magnitude
+Extraction	3	100%	-	Damaging spells (excl. Reservation, Persistent, Triggered, Attack, Minion)	Supported Skills gain 35% of Damage as extra Chaos Damage || Supported Skills sacrifice 10% of Life on use
+Longshot_I	2	120%	-	Attacks, CrossbowAmmoSkill	Supported skills deal 25% more Attack Damage to enemies further than 7 metres away (scales down to none at 3.5 metres or closer)
+Projectile_Deceleration_I	1	100%	-	Projectile skills (excl. FixedSpeedProjectile)	Supported Skills have 25% less Projectile Speed
+Compressed_Duration_I	1	100%	-	Duration skills	Supported Skills have 30% less Skill Effect Duration
+Deadly_Herald	3	-	20 Spirit	Herald skills	Supported Skills deal 30% more Damage
+Ice_Bite_I	1	100%	-	Attacks, CrossbowAmmoSkill, Warcry, Damage (excl. UsedByProxy, Triggered, Persistent)	Gain 25% of Damage as Cold Damage for 5 seconds when you Freeze an enemy with Supported Skills
+Nova_Projectiles_I	2	100%	-	Projectile skills, Crossbow (excl. Rain)	Supported Skills fire Projectiles in a circle
+Life_Drain	1	100%	-	Damaging attacks, CrossbowAmmoSkill	Recover 12% of maximum Life over four seconds when Supported Skills Cull an Enemy
+Soul_Drain	3	100%	-	Damaging attacks, CrossbowAmmoSkill	Recover 12% of maximum Mana over four seconds when Supported Skills Cull an Enemy
+Admixture	2	120%	-	Damaging hits (Attack/Damage/Crossbow)	20% more Magnitude of Bleeding inflicted by Supported Skills against Poisoned enemies || 20% more Magnitude of Poison inflicted by Supported Skills against Bleeding enemies
+Cold_Attunement	1	100%	-	Damaging attacks, CrossbowAmmoSkill	Gain 25% of Damage as Extra Cold Damage || Supported Skills deal 50% less Fire and Lightning Damage
+Lightning_Attunement	1	100%	-	Damaging attacks, CrossbowAmmoSkill	Gain 25% of Damage as Extra Lightning Damage || Supported Skills deal 50% less Cold and Fire Damage
+Fire_Attunement	1	100%	-	Damaging attacks, CrossbowAmmoSkill	Gain 25% of Damage as Extra Fire Damage || Supported Skills deal 50% less Cold and Lightning Damage
+Chaos_Attunement	3	120%	-	Damaging attacks, CrossbowAmmoSkill	Supported Skills gain 25% of Damage as extra Chaos Damage || Supported Skills deal 50% less non-Chaos Damage
+Danse_Macabre	2	100%	-	Offering skills	Supported Offering Skills have 30% increased Buff effect || Supported Offering Skills target an additional skeletal Minion (support effects only apply if an additional skeletal Minion is targeted) || Supported Offering Skills deal 30% more Damage
+Pinpoint_Critical	2	100%	-	Damaging attacks, CrossbowAmmoSkill	Supported Skills have 60% more Critical Hit Chance || Supported Skills have 30% less Critical Damage Bonus
+Potent_Exposure	2	100%	-	Damaging spells/attacks, CrossbowAmmoSkill	Exposure applied by Supported Skills has 20% increased effect
+Mysticism_I	2	-	15 Spirit	Persistent Buff skills	Deal 30% increased Spell Damage while on full Energy Shield while a Supported Skill is active
+Upwelling_I	2	-	15 Spirit	Persistent Buff skills	Your Minions deal 30% increased Damage while you are not on full Mana while a Supported Skill is active
+Long_Fuse_I	4	100%	-	Skills with Detonation Time (DetonatesAfterTime)	Supported Skills have 50% increased Detonation Time || Detonations from supported Skills deal 30% more Damage || Grenades from Supported Skills cannot explode before the end of their Detonation Time
+Short_Fuse_I	2	115%	-	Skills with Detonation Time (DetonatesAfterTime)	Supported Skills have 40% less Detonation Time

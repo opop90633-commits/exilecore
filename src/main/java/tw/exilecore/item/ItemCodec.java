@@ -24,12 +24,15 @@ public final class ItemCodec {
     private final NamespacedKey rarityKey;
     /** 傳奇：上次照 uniques.yml 檢查（補正）時的定義指紋（{@link ItemRepository#uniqueRevision()}）。 */
     private final NamespacedKey uniqueRevisionKey;
+    /** 2026-10-26：上次照詞綴資料換算時的指紋（{@link ItemRepository#affixRevision()}、{@link AffixRescale}）。 */
+    private final NamespacedKey affixRevisionKey;
 
     public ItemCodec(final Plugin plugin) {
         this.dataKey = new NamespacedKey(plugin, "data");
         this.baseKey = new NamespacedKey(plugin, "base");
         this.rarityKey = new NamespacedKey(plugin, "rarity");
         this.uniqueRevisionKey = new NamespacedKey(plugin, "unique_rev");
+        this.affixRevisionKey = new NamespacedKey(plugin, "affix_rev");
     }
 
     /** 這個物品是不是 ExileCore 的裝備。 */
@@ -41,7 +44,19 @@ public final class ItemCodec {
         if (stack == null || stack.isEmpty()) {
             return Optional.empty();
         }
-        final String json = stack.getPersistentDataContainer().get(dataKey, PersistentDataType.STRING);
+        return parse(rawJson(stack));
+    }
+
+    /** 2026-10-27：PDC 裡原樣的資料 JSON（沒有回傳 null）。 */
+    public String rawJson(final ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return null;
+        }
+        return stack.getPersistentDataContainer().get(dataKey, PersistentDataType.STRING);
+    }
+
+    /** 2026-10-27：把資料 JSON 解回物品資料（舊格式照樣轉換）。 */
+    public Optional<ItemData> parse(final String json) {
         if (json == null) {
             return Optional.empty();
         }
@@ -51,6 +66,14 @@ public final class ItemCodec {
         } catch (final JsonSyntaxException e) {
             return Optional.empty();
         }
+    }
+
+    /** 2026-10-27 效能：基底代號（只看 PDC，不解 JSON）；沒有回傳 null。 */
+    public String baseId(final ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return null;
+        }
+        return stack.getPersistentDataContainer().get(baseKey, PersistentDataType.STRING);
     }
 
     /** 是不是傳奇（只看 PDC 的稀有度，不解 JSON）。 */
@@ -70,6 +93,15 @@ public final class ItemCodec {
         stack.editPersistentDataContainer(container -> container.set(uniqueRevisionKey, PersistentDataType.INTEGER, revision));
     }
 
+    /** 2026-10-26：上次照詞綴資料換算時的指紋（沒有 = null，這次之前做的舊物品）。 */
+    public Integer affixRevision(final ItemStack stack) {
+        return stack == null || stack.isEmpty() ? null : stack.getPersistentDataContainer().get(affixRevisionKey, PersistentDataType.INTEGER);
+    }
+
+    public void stampAffixRevision(final ItemStack stack, final int revision) {
+        stack.editPersistentDataContainer(container -> container.set(affixRevisionKey, PersistentDataType.INTEGER, revision));
+    }
+
     public void write(final ItemStack stack, final ItemData data) {
         stack.editPersistentDataContainer(container -> write(container, data));
     }
@@ -84,7 +116,11 @@ public final class ItemCodec {
         return GSON.toJson(data);
     }
 
-    /** 舊版資料格式的轉換；目前只有版本 1。 */
+    /**
+     * 舊版資料格式的轉換；目前只有版本 1。
+     * 2026-10-26：詞綴範圍、拿掉的詞綴跟著新資料換算不在這裡做（這裡拿不到詞綴資料），在 {@link ItemService#read}／{@link ItemService#refresh}
+     * 做（{@link AffixRescale}），refresh 寫回物品並記下指紋。
+     */
     private static ItemData migrate(final ItemData data) {
         if (data == null || data.base() == null) {
             return null;

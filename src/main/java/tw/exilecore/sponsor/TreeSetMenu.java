@@ -185,13 +185,14 @@ public final class TreeSetMenu extends Menu {
             fail("第 " + (set + 1) + " 組配了 " + nodes.size() + " 點，你現在只有 " + total + " 點");
             return;
         }
-        if (tree.reachable(nodes, start).size() != nodes.size()) {
+        if (tree.reachable(nodes, start, tw.exilecore.passive.PassiveState.rules(plugin, state)).size() != nodes.size()) {
             fail("第 " + (set + 1) + " 組的配點連不到起點（天賦樹改版？）");
             return;
         }
         // 現在的收進原本那一組
         store(state, active, TreeCode.encode(tree, character.characterClass().id(), state.passives()));
         final Map<String, ItemStack> current = new LinkedHashMap<>(state.jewels());
+        final ItemStack phylactery = current.remove(JewelSockets.PHYLACTERY); // 2026-10-27：命匣是昇華天賦的孔，不跟著天賦組換
         state.jewels().clear();
         state.treeJewels(active).clear();
         state.treeJewels(active).putAll(current);
@@ -200,6 +201,9 @@ public final class TreeSetMenu extends Menu {
         state.passives().addAll(nodes);
         state.jewels().putAll(state.treeJewels(set));
         state.treeJewels(set).clear();
+        if (phylactery != null) {
+            state.jewels().put(JewelSockets.PHYLACTERY, phylactery);
+        }
         plugin.characters().setProgress(player, PlayerState.TREE_SET_KEY, String.valueOf(set));
         JewelSockets.reclaim(plugin, player, state, tree, "那一組的珠寶孔沒有配置");
         state.markDirty();

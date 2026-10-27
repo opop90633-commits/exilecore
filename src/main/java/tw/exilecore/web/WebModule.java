@@ -97,6 +97,9 @@ public final class WebModule implements Module, Listener {
     private volatile boolean cloudflareProxy = true;
     private volatile byte[] codexPage = new byte[0];
     private volatile byte[] codexData = "{}".getBytes(StandardCharsets.UTF_8);
+    /** 2026-10-26：圖鑑的完整數值頁（web/codex_values.html）與它的資料（{@link CodexValues}，全部從設定讀）。 */
+    private volatile byte[] codexValuesPage = new byte[0];
+    private volatile byte[] codexValues = CodexValues.gzip("{}".getBytes(StandardCharsets.UTF_8));
     /** 2026-10-21：星圖天賦的網頁規劃器（web/atlas.html）與它的資料（atlas_tree.yml 轉成 JSON）。 */
     private volatile byte[] atlasPage = new byte[0];
     private volatile byte[] atlasData = "{}".getBytes(StandardCharsets.UTF_8);
@@ -127,6 +130,8 @@ public final class WebModule implements Module, Listener {
             }
             // 2026-10-20：快捷欄左邊的增益倒數（護符、神龕、擊殺後、疾速……）
             names.addAll(tw.exilecore.skill.SkillService.HUD_BUFF_TEXTS);
+            names.addAll(tw.exilecore.skill.TreeMechanics.HUD_TEXTS); // 2026-10-26：天賦樹新機制的增益名稱
+            names.addAll(tw.exilecore.skill.TreeLeftovers.HUD_TEXTS); // 2026-10-27：天賦樹最後一批的增益名稱
             if (plugin.flasks() != null && plugin.flasks().charms() != null) {
                 names.addAll(plugin.flasks().charms().names());
             }
@@ -180,7 +185,8 @@ public final class WebModule implements Module, Listener {
         ladderPage = loadResource("web/ladder.html");
         buildsPage = loadResource("web/builds.html");
         homePage = loadResource("web/home.html");
-        codexPage = loadResource("web/codex.html");
+        codexPage = CodexValues.injectLink(loadResource("web/codex.html")); // 2026-10-26：圖鑑上加「完整數值」的入口
+        codexValuesPage = loadResource("web/codex_values.html"); // 2026-10-26
         atlasPage = loadResource("web/atlas.html"); // 2026-10-21
         if (profiles == null) {
             profiles = new Profiles(plugin);
@@ -272,6 +278,11 @@ public final class WebModule implements Module, Listener {
                 java.util.Map.of("Cache-Control", "no-cache")));
         server.route("/codex", path -> WebServer.Response.of("text/html; charset=utf-8", codexPage));
         server.route("/codex/", path -> WebServer.Response.redirect("../codex"));
+        // 2026-10-26：圖鑑的完整數值（所有類別、逐級數值、詞綴各階）
+        server.route("/codex/values", path -> WebServer.Response.of("text/html; charset=utf-8", codexValuesPage));
+        // 資料大（技能 1～40 級的逐級表），先壓成 gzip 再送（瀏覽器都吃 gzip）
+        server.route("/codex/values.json", path -> new WebServer.Response(200, "application/json; charset=utf-8", codexValues,
+                java.util.Map.of("Cache-Control", "no-cache", "Content-Encoding", "gzip", "Vary", "Accept-Encoding")));
         server.route("/codex/data.json", path -> new WebServer.Response(200, "application/json; charset=utf-8", codexData,
                 java.util.Map.of("Cache-Control", "no-cache")));
         server.route("/tree", path -> WebServer.Response.of("text/html; charset=utf-8", plannerPage));
@@ -286,6 +297,8 @@ public final class WebModule implements Module, Listener {
         // 2026-10-18：次數限制看真實 IP（代理後面不會全服共用一個桶）
         final BuildCalc calc = new BuildCalc(plugin, request -> ClientIp.of(request, trustProxy, cloudflareProxy));
         server.endpoint("/tree/calc", calc::handle, "POST");
+        // 2026-10-26：永恆珠寶征服的節點（網頁天賦樹即時換名稱與說明；種子的雜湊在伺服器算）
+        server.endpoint("/tree/timeless", calc::handleTimeless, "POST");
         // 市場報告：全服通貨與金幣的產出、消耗、存量、參考價值（只有加總，沒有個人資料）；關掉時整頁 404
         server.route("/economy", path -> economyEnabled ? WebServer.Response.of("text/html; charset=utf-8", economyPage) : null);
         server.route("/economy/", path -> economyEnabled ? WebServer.Response.redirect("../economy") : null);
@@ -396,6 +409,11 @@ public final class WebModule implements Module, Listener {
             plugin.getSLF4JLogger().warn("圖鑑的資料做不出來：{}", e.toString());
         }
         try {
+            codexValues = CodexValues.gzip(CodexValues.json(CodexValues.sources(plugin))); // 2026-10-26：圖鑑的完整數值
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().warn("圖鑑的數值資料做不出來：{}", e.toString());
+        }
+        try {
             if (plugin.maps() != null) {
                 atlasData = AtlasPlannerData.json(plugin.maps().tree()); // 2026-10-21：星圖天賦樹
             }
@@ -418,14 +436,25 @@ public final class WebModule implements Module, Listener {
             final tw.exilecore.ascendancy.AscendancyConfig config = plugin.ascendancy().config();
             ascendancyPoints = config.totalPoints();
             for (final tw.exilecore.ascendancy.AscendancyConfig.Ascendancy ascendancy : config.ascendancies()) {
+                // 2026-10-26：照 PoE2 會分岔：branches 是選單上的每一排，每個天賦另外帶 requires、depth、row（畫得出分岔）
                 final List<List<PlannerData.AscendancyNode>> branches = new ArrayList<>();
-                for (final List<tw.exilecore.ascendancy.AscendancyConfig.Node> branch : ascendancy.branches()) {
-                    final List<PlannerData.AscendancyNode> nodes = new ArrayList<>();
-                    for (final tw.exilecore.ascendancy.AscendancyConfig.Node node : branch) {
-                        nodes.add(new PlannerData.AscendancyNode(node.name(), node.cost(),
-                                tw.exilecore.ascendancy.StatLines.describeAll(node.stats()), node.note(), node.id()));
+                for (final tw.exilecore.ascendancy.AscendancyConfig.Cell cell : ascendancy.layout()) {
+                    while (branches.size() <= cell.row()) {
+                        branches.add(new ArrayList<>());
                     }
-                    branches.add(nodes);
+                    final tw.exilecore.ascendancy.AscendancyConfig.Node node = cell.node();
+                    // 2026-10-27 照站長：賦予的技能帶技能預覽（跟寶石圖鑑同一份資料）
+                    final List<com.google.gson.JsonObject> skills = new ArrayList<>();
+                    if (plugin.skills() != null) {
+                        for (final String skillId : node.grantedSkills()) {
+                            final tw.exilecore.skill.SkillDefinition skill = plugin.skills().config().skill(skillId);
+                            if (skill != null) {
+                                skills.add(CodexData.skillJson(plugin, skill, plugin.skills().config().supports(), null));
+                            }
+                        }
+                    }
+                    branches.get(cell.row()).add(new PlannerData.AscendancyNode(node.name(), node.cost(), node.display(), node.shownNote(), node.id(),
+                            node.requires(), cell.depth(), cell.row(), node.optionOf(), node.choice(), node.notable(), skills));
                 }
                 final String color = ascendancy.color() != null && ascendancy.color().startsWith("#") ? ascendancy.color() : "#f5c04a";
                 ascendancies.add(new PlannerData.AscendancyInfo(ascendancy.id(), ascendancy.classId(), ascendancy.name(), color,
@@ -867,7 +896,10 @@ public final class WebModule implements Module, Listener {
                 // 只掛在有附原版物品定義（web/vanilla_items/）的物品上：沒有的話改寫後的定義會用錯模型，
                 // 那個物品在所有地方都會壞掉（例如方塊類的鐵砧、標靶）
                 if (item != null && WebModule.class.getResource("/web/vanilla_items/" + item + ".json") != null) {
-                    skins.add(new UiPack.CurrencySkin(art, item, !definition.engravable())); // 專屬的：傳奇外框
+                    // 2026-10-26：一般的技能寶石照屬性畫紅／綠／藍的外框（混色的照主要的那個；隱藏、武器賦予的不畫）
+                    final int outline = !tw.exilecore.skill.GemAttributes.isGem(definition) ? 0
+                            : tw.exilecore.skill.GemAttributes.rgb(tw.exilecore.skill.GemAttributes.weights(definition).primary());
+                    skins.add(new UiPack.CurrencySkin(art, item, !definition.engravable(), outline)); // 專屬的：傳奇外框
                 }
             }
         }
@@ -877,9 +909,12 @@ public final class WebModule implements Module, Listener {
             if (art == null) {
                 continue;
             }
-            for (final String item : java.util.Arrays.asList("ghast_tear", tw.exilecore.skill.SkillArt.vanillaItem(support.icon()))) {
+            // 2026-10-26：輔助寶石照顏色換成紅／綠／藍的染料（GemService：沒套資源包也看得出顏色），圖也掛在那個染料上，格子裡畫同色外框
+            final char colour = tw.exilecore.skill.SupportColours.colour(support.id());
+            final String dye = tw.exilecore.skill.GemAttributes.dyeModel(colour);
+            for (final String item : java.util.Arrays.asList("ghast_tear", dye, tw.exilecore.skill.SkillArt.vanillaItem(support.icon()))) {
                 if (item != null && WebModule.class.getResource("/web/vanilla_items/" + item + ".json") != null) {
-                    skins.add(new UiPack.CurrencySkin(art, item, !support.cuttable())); // 專屬的：傳奇外框
+                    skins.add(new UiPack.CurrencySkin(art, item, !support.cuttable(), tw.exilecore.skill.GemAttributes.rgb(colour))); // 專屬的：傳奇外框
                 }
             }
         }

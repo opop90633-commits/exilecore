@@ -23,7 +23,7 @@ class ExclusiveSupportTest {
         final List<SupportDefinition> exclusive = new ArrayList<>();
         SupportDefinition normal = null;
         for (final SupportDefinition support : config.supports()) {
-            if (!support.cuttable()) {
+            if (!support.cuttable() && !support.lineage()) { // 2026-10-27：血脈輔助（切不出來，但不算專屬）另外測（LineageSupportTest）
                 exclusive.add(support);
             } else if (normal == null) {
                 normal = support;

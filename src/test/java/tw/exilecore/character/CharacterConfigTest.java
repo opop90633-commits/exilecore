@@ -186,11 +186,14 @@ class CharacterConfigTest {
 
     @Test
     void classesHaveDistinctPrimaryAttributes() {
-        assertEquals(32, CharacterClass.MARAUDER.strength());
-        assertEquals(32, CharacterClass.RANGER.dexterity());
-        assertEquals(32, CharacterClass.WITCH.intelligence());
+        // 2026-10-26 照 PoE2 的起始屬性（加起來 29）；這次之前 32 與總和 60
+        assertEquals(15, CharacterClass.MARAUDER.strength());
+        assertEquals(15, CharacterClass.RANGER.dexterity());
+        assertEquals(15, CharacterClass.WITCH.intelligence());
+        assertEquals(11, CharacterClass.DRUID.strength());
+        assertEquals(11, CharacterClass.DRUID.intelligence());
         for (final CharacterClass value : CharacterClass.values()) {
-            assertEquals(60, value.strength() + value.dexterity() + value.intelligence());
+            assertEquals(29, value.strength() + value.dexterity() + value.intelligence());
         }
         assertEquals(CharacterClass.WITCH, CharacterClass.parse("witch", null));
         assertEquals(CharacterClass.RANGER, CharacterClass.parse("弓箭手", null));

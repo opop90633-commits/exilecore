@@ -301,6 +301,19 @@ public final class MonthlyEventService {
     /** 登入（帳號載入好）：這個月的主題與進度一行。 */
     public void greet(final Player player) {
         final EventConfig.Theme theme = theme();
+        // 2026-10-26：挑戰全部完成時先記「發過了」才發稱號，稱號發失敗（以前稱號清單超過 250 字記不下）就永遠拿不到；
+        // 登入時補發這個月的（這次之前沒有補發）
+        final EventProgress finished = theme == null || theme.title() == null ? null : progress(player);
+        if (finished != null && finished.titleGiven() && !plugin.bounties().ownedTitles(player).contains(theme.titleId())
+                && !plugin.bounties().titleRevoked(player, theme.titleId())) { // 2026-10-27：管理員拿掉的不補發
+            final String problem = plugin.bounties().grantTitle(player, theme.titleId());
+            if (problem == null) {
+                player.sendMessage(plugin.text().prefixed(themeName(theme) + " <green>限定稱號 <" + theme.title().color() + ">【"
+                        + ItemRenderer.escape(theme.title().name()) + "】</" + theme.title().color() + "><green>補發給你了"));
+            } else if (!problem.startsWith("已經有")) {
+                plugin.getSLF4JLogger().warn("補發每月活動稱號給 {} 失敗：{}", player.getName(), problem);
+            }
+        }
         if (theme == null || !config.announce() || !greeted.add(player.getUniqueId())) {
             return;
         }

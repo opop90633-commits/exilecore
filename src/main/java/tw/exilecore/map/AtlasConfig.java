@@ -34,11 +34,12 @@ public final class AtlasConfig {
      * @param monsterLevel 怪物等級加成
      * @param pack         怪物群 +%
      * @param rare         稀有怪 +%
-     * @param quantity     物品數量 +%
-     * @param rarity       稀有度 +%
+     * @param quantity     物品數量 +%（路上的怪；2026-10-27 照 PoE2 出貨是 0）
+     * @param rarity       稀有度 +%（只加 Boss）
+     * @param monsterRarity 稀有度 +%（路上的怪；2026-10-27 取代原本的物品數量 20%）
      */
     public record Corruption(int minDistance, double chance, int patch, int monsterLevel, double pack, double rare, double quantity,
-                             double rarity) {
+                             double rarity, double monsterRarity) {
     }
 
     /**
@@ -77,7 +78,7 @@ public final class AtlasConfig {
     private double hiddenChance = 0.03;
     private Tower tower = new Tower(35, 3, 3, 2);
     private Citadels citadels = new Citadels(150, 8, 2);
-    private Corruption corruption = new Corruption(6, 0.2, 12, 1, 30, 50, 20, 30);
+    private Corruption corruption = new Corruption(6, 0.2, 12, 1, 30, 50, 0, 30, 40); // 2026-10-27：這次之前數量 20、沒有路上怪的稀有度
     /** 腐化區第一次打倒 Boss 時，每個有份的人掉一顆蝕變石的機率（2026-10-21，corruption.vaal_chance）。 */
     private double vaalChance = 0.35;
     private Purification purification = new Purification(6, 0.12, 12, 0.08);
@@ -140,8 +141,8 @@ public final class AtlasConfig {
         final YamlNode k = root.node("corruption");
         corruption = new Corruption(Math.max(1, k.integer("min_distance", 6)), clamp(k.decimal("chance", 0.2), 0, 1, "corruption.chance", found),
                 (int) clamp(k.integer("patch", 12), 1, 100, "corruption.patch", found), Math.max(0, k.integer("monster_level", 1)),
-                Math.max(0, k.decimal("pack", 30)), Math.max(0, k.decimal("rare", 50)), Math.max(0, k.decimal("quantity", 20)),
-                Math.max(0, k.decimal("rarity", 30)));
+                Math.max(0, k.decimal("pack", 30)), Math.max(0, k.decimal("rare", 50)), Math.max(0, k.decimal("quantity", 0)),
+                Math.max(0, k.decimal("rarity", 30)), Math.max(0, k.decimal("monster_rarity", 40)));
         vaalChance = clamp(k.decimal("vaal_chance", 0.35), 0, 1, "corruption.vaal_chance", found);
         final YamlNode pu = root.node("purification");
         purification = new Purification(Math.max(1, pu.integer("min_distance", 6)), clamp(pu.decimal("chance", 0.12), 0, 1, "purification.chance", found),

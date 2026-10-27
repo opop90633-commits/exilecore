@@ -1,0 +1,9 @@
+Stormblast Bolts (poe2db.tw/us/Stormblast_Bolts) - Tier 9; tags AoE, Ammunition, Projectile, Lightning, Duration; requires Crossbow. (Text paraphrased by WebFetch.)
+Mechanic: Loads charged bolts that land around the target area and lodge in the ground; Detonator skills make them explode. Using the skill again reloads.
+Impact: 0 mana; attack dmg 20-72%; 5 bolts per clip (+0-2 from quality); fires 3 bolts; impact radius 0.8 m; bolt duration 10 s; max 30 active bolts; projectile speed 20 m/s; 60% phys->lightning.
+Explosion: attack dmg 115-470%; 100% phys->lightning; explosion radius 1.6 m; max 30 active bolts.
+Quality: 0-20% lightning resistance penetration.
+Hidden: 90 deg facing tolerance; requires upward aiming stance; secondary AoE radius 35 (units); usable while moving; -70% move speed while performing; +160%/s accel; 50% locked movement duration; 150 ms fall time; 1000 ms action queue override.
+History: 0.3.0 explosion dmg raised lv9-20, duration 8->10 s; 0.2.0 removed 30% reload penalty; 0.1.0e active max 9->30, clip 3->5, reload penalty 50%->30%.
+
+Per-level columns (excluding damage/mana): no other per-level columns (only Requires Level/Str/Dex, 4/4 at lv1 to 86/86 at lv20).

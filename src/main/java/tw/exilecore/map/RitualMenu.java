@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * 祭壇的獎勵（PoE2 的 Ritual）：你這組的每一件寫著要幾貢品，買得起的有綠框；點一件就買走。
- * 「重擲」把整組換成新的（花貢品，每次更貴）。貢品只在這張圖有效，離開前花掉。
+ * 「重擲」把整組換成新的（花貢品，每次更貴）。2026-10-27：剩下的貢品在地圖關閉時存進帳號，滿了換祭壇的入場券。
  */
 final class RitualMenu extends Menu {
 
@@ -63,7 +63,8 @@ final class RitualMenu extends Menu {
         final int rerollPrice = rituals.rerollPrice(ritual, player);
         set(SLOT_INFO, glowing(icon(Material.REDSTONE, "<#ff5c6a>貢品 <white>" + tribute,
                 "<gray>這張圖總共拿到 <white>" + ritual.earned.getOrDefault(player.getUniqueId(), 0),
-                "<gray>貢品只在這張圖有效，離開前花掉",
+                "<gray>剩下的貢品在地圖關閉時存進帳號（現在 " + rituals.bank(player) + "／" + rituals.bankThreshold() + "）",
+                "<gray>存滿換一把祭壇的鑰匙（事件巔峰用）",
                 "<dark_gray>每個人的獎勵各自一組，別人換走的不影響你")));
         set(SLOT_REROLL, icon(Material.NETHER_STAR, "<#c48bff>重擲整組",
                 tribute >= rerollPrice ? "<yellow>左鍵：花 " + rerollPrice + " 貢品換一組新的" : "<red>要 " + rerollPrice + " 貢品（你有 " + tribute + "）",

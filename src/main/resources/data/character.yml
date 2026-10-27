@@ -25,6 +25,8 @@ passive_points_per_level: 1
 experience_bonus: 2
 
 # 升到下一級需要的經驗（等級 → 經驗）：跟 PoE2 一樣的經驗表，1 到 100 級總共 4,250,334,444。
+# 2026-10-27（站長：整體經驗 = PoE2 的 2 倍）：monsters.yml 的 experience_multiplier 2 → 1、稀有度的經驗照 PoE2（魔法 3.5、稀有 5），
+#   全服經驗 ×2 是唯一的倍數，同樣的怪剛好是 PoE2 的 2 倍。下面的隻數是 ×1 時的一半（全服 ×2 之後剛好是這些數字；稀有怪現在算 5 隻）。
 # 每隻怪給的經驗在 monsters.yml（PoE 的怪物經驗表 × 2），所以每一級要殺的同等級普通怪（魔法怪算 3 隻、稀有怪算 12 隻）：
 #   1 級 13 隻、10 級 70 隻、30 級約 210 隻、60 級約 870 隻、80 級約 2,900 隻；
 #   85 級以後地圖的怪最高 84 級（T16），再加上下面的等級差懲罰：90 級約 6,600 隻、95 級約 3.6 萬隻、99 級約 20 萬隻。
@@ -213,7 +215,8 @@ starter:
       shield: tshield_01
     mercenary:
       recommended: [xbow_01]
-      armour: [helm_str_dex_01, body_str_dex_01, legs_str_dex_01, boots_str_dex_01]
+      # 2026-10-26 照 PoE2 需求：力敏的頭盔、手套、鞋子最低那一階要 5–6 級，1 級穿不上，改送單屬性的；這次之前 [helm_str_dex_01, body_str_dex_01, legs_str_dex_01, boots_str_dex_01]
+      armour: [helm_str_01, body_str_dex_01, legs_dex_01, boots_dex_01]
       shield: kshield_01
     huntress:
       recommended: [spear_01]
@@ -225,7 +228,8 @@ starter:
       shield: buckler_01
     monk:
       recommended: [qstaff_01]
-      armour: [helm_dex_int_01, body_dex_int_01, legs_dex_int_01, boots_dex_int_01]
+      # 2026-10-26 照 PoE2 需求：敏智的頭盔、手套、鞋子最低那一階要 4–5 級，1 級穿不上，改送單屬性的；這次之前 [helm_dex_int_01, body_dex_int_01, legs_dex_int_01, boots_dex_int_01]
+      armour: [helm_dex_01, body_dex_int_01, legs_int_01, boots_dex_01]
       shield: buckler_01
     sorceress:
       recommended: [staff_01, wand_01]
@@ -248,6 +252,8 @@ starter:
     - { weapon: staff, skill: essence_drain, class: witch }
     - { weapon: wand, skill: fireball }
     - { weapon: staff, skill: fireball }
+    - { weapon: sceptre, skill: essence_drain, class: witch }   # 2026-10-26：權杖照 PoE2 沒有傷害（賦予骸骨戰士等），送法術
+    - { weapon: sceptre, skill: fireball }
     - { weapon: talisman, skill: bear_maul }   # 2026-10：德魯伊
     - { weapon: mace, skill: boneshatter }
     - { weapon: melee, skill: earthquake }

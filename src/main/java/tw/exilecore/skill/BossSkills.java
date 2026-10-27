@@ -1185,8 +1185,10 @@ public final class BossSkills implements Listener {
             if (!(entity instanceof LivingEntity living) || living == brain.boss) {
                 continue;
             }
+            // 2026-10-26 照 PoE2：圖騰也會被招式打到（hurt 裡改扣圖騰的生命）
             final boolean ok = living instanceof Player player ? validPlayer(player, center.getWorld())
-                    : minions != null && minions.isMinion(living) && living.isValid() && !living.isDead();
+                    : (minions != null && minions.isMinion(living) && living.isValid() && !living.isDead())
+                    || (plugin.skills() != null && plugin.skills().isTotem(living));
             if (!ok) {
                 continue;
             }
@@ -2179,6 +2181,9 @@ public final class BossSkills implements Listener {
                 // 2026-10（賽勒斯的風暴牆）：這塊是牆——站進來的人每 tick 往外推（從中心往外），穿不過去，只能找缺口
                 // 2026-10-17：不彈開，只是擋住——走進牆裡就放回牆邊（貼著牆滑），騎著坐騎的連坐騎一起擋
                 for (final LivingEntity victim : victims(brain, zone.center, zone.skill.radius())) {
+                    if (plugin.skills() != null && plugin.skills().isTotem(victim)) {
+                        continue; // 2026-10-26：圖騰不會被牆推開
+                    }
                     blockAtWall(victim, zone.center, zone.skill.radius());
                 }
             }
@@ -2447,6 +2452,9 @@ public final class BossSkills implements Listener {
         flash(cast.mark, skill, 1, now);
         warnInside(brain, skill, cast.mark, now);
         for (final LivingEntity victim : victims(brain, feet, skill.radius())) {
+            if (plugin.skills() != null && plugin.skills().isTotem(victim)) {
+                continue; // 2026-10-26：圖騰拉不動
+            }
             final Location at = victim.getLocation();
             final double[] step = BossGeometry.pullStep(feet.getX(), feet.getZ(), at.getX(), at.getZ(), skill.speed());
             if (step[0] == 0 && step[1] == 0) {
@@ -3178,6 +3186,10 @@ public final class BossSkills implements Listener {
         }
         if (!brain.gate.allow(skill.id(), victim.getUniqueId(), skill.hitGapTicks(), now())) {
             return; // 同一招剛打過這個人（齊射的另一發、另一顆光球、疊在一起的地面效果）：只算一下
+        }
+        if (plugin.skills() != null && plugin.skills().isTotem(victim)) {
+            plugin.skills().totemHitByMonster(victim, brain.boss, profile(skill, shapeTag)); // 2026-10-26 照 PoE2：圖騰被招式打到
+            return;
         }
         damage.hitAs(brain.boss, victim, profile(skill, shapeTag), null);
         if (skill.ruin() > 0 && victim instanceof Player player && player.isOnline()) {

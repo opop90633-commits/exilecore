@@ -160,7 +160,17 @@ safe:
 # 地圖裡放 altars 座祭壇（哭泣黑曜石＋紅蠟燭，各在不同房間）。右鍵一座開始儀式：地上一個 radius 格的圓，怪一波一波在圓裡出現
 # （照這張圖的怪物與魔法／稀有群比例），圓裡的人每殺一隻拿貢品（tribute；後面的祭壇多 altar_bonus）。
 # 全部做完後右鍵任何一座祭壇：用貢品換獎勵（每個人各自一組 rewards 件，價格照 prices），可以花貢品重擲一整組（reroll）。
-# 貢品只在這張圖有效（PoE 的做法）。
+# 2026-10-27 照 PoE2 0.5：
+#   - 獎勵只有傳奇與星籤（星圖天賦沒有改這個的節點）。傳奇大多是共通傳奇（map_boss 池），exclusive_chance 的機率是祭壇專屬傳奇
+#     （價格照 exclusive_price）。一組 7 件、傳奇權重 35%、專屬 3%：平均一組 0.07 件專屬，跟以前（權重 1/99）一樣。
+#     這次之前 reward_weights { omen 30, currency 25, rare 15, essence 10, jewel 8, map 6, catalyst 4, unique 1 }，
+#     prices 另外有 currency 40–160、rare 140–260、essence 110–190、jewel 180–320、map 150–260、catalyst 120–200、unique 520–880。
+#   - 剩下的貢品不再浪費：地圖關閉時（人要在線上）存進帳號（tribute_bank），滿 threshold 換一張祭壇之鑰（ticket 的 currency），
+#     用它在地圖裝置的「事件巔峰」開祭壇的巔峰 Boss——原作剩下的貢品累積去見迷霧之王，這裡沒有那隻 Boss，換成我們自己的祭壇巔峰。
+#     一場祭壇大約拿 1300 貢品（每波平均約 100、每座 3.5 波、三座 ×1／1.25／1.5；點滿貢品天賦約 2300），全部存起來約 7.5 場（4.3 場）一張；
+#     平常買完剩 300 左右，大約 33 場一張。
+#     所以祭壇做完時直接掉券的機率 0.056 → 0.03，兩個加起來一張圖的券跟以前差不多（約 0.06）。
+#   - 重擲（reroll）照舊。
 ritual:
   chance: 0.3
   altars: 3
@@ -173,9 +183,12 @@ ritual:
   altar_bonus: 0.25                 # 第二座 +25%、第三座 +50%…
   rewards: 7
   reroll: { cost: 0.2, growth: 1.5 }   # 重擲花「總共拿到的貢品」的幾成，每次乘 growth
-  reward_weights: { omen: 30, currency: 25, rare: 15, essence: 10, jewel: 8, map: 6, catalyst: 4, unique: 1 }   # unique：祭壇的專屬傳奇（2026-10：2 → 1）
-  prices: { omen: [260, 420], currency: [40, 160], rare: [140, 260], essence: [110, 190], jewel: [180, 320], map: [150, 260], catalyst: [120, 200], unique: [520, 880] }
-  ticket: { currency: ticket_ritual, chance: 0.056 }       # 2026-10-18：入場券（祭壇全部完成時，這張圖裡的每個人各擲一次）
+  reward_weights: { omen: 65, unique: 35 }   # 2026-10-27 照 PoE2 0.5：只有星籤與傳奇（上面寫了這次之前的）
+  prices: { omen: [260, 420], unique: [280, 520] }   # 2026-10-27：unique 是共通傳奇的價格（這次之前 520–880，那時候全是專屬）
+  exclusive_chance: 0.03            # 2026-10-27：傳奇獎勵是祭壇專屬傳奇的機率（其他是共通傳奇）
+  exclusive_price: [520, 880]       # 2026-10-27：專屬傳奇的價格（跟以前的傳奇一樣）
+  tribute_bank: { threshold: 10000 }   # 2026-10-27：剩下的貢品存進帳號，滿 10000 換一張祭壇之鑰（0 = 不存）
+  ticket: { currency: ticket_ritual, chance: 0.03 }       # 2026-10-18：入場券（祭壇全部完成時，這張圖裡的每個人各擲一次）；2026-10-27：0.056 → 0.03（貢品存起來也換得到）
 
 # ---- 幻霧（PoE2 的 Delirium）----
 # 地圖裡放一面鏡子（染色玻璃）。走過去，霧就跟著這張圖裡的每個人 duration 秒：越久越難（之後刷出來的怪與幻霧怪的生命、傷害
@@ -193,8 +206,13 @@ delirium:
   rewards: 2
   thresholds: [20, 50, 100, 170]
   reward_weights: { emotion: 40, currency: 25, essence: 10, jewel: 10, map: 10, catalyst: 5, unique: 1 }   # unique：幻霧的專屬傳奇（2026-10：2 → 1）
-  emotions: [distilled_ire, distilled_guilt, distilled_greed, distilled_paranoia]
-  emotion_weights: [50, 30, 15, 5]
+  # 2026-10-27 照 PoE2：十種蒸餾情緒（照 poe2db 的價值排序，便宜 → 稀有）；恐懼、苦難、孤寂照 currencies.yml 的 drop_level
+  #   （69／73／77）只在夠高的地圖掉。權重 poe2db 沒有公開，照前四種的比例往下延伸（每一階約 ×0.6）。
+  #   這次之前：emotions [distilled_ire, distilled_guilt, distilled_greed, distilled_paranoia]、emotion_weights [50, 30, 15, 5]
+  emotions: [distilled_ire, distilled_guilt, distilled_greed, distilled_paranoia, distilled_envy, distilled_disgust, distilled_despair,
+             distilled_fear, distilled_suffering, distilled_isolation, distilled_melancholy, distilled_ferocity, distilled_contempt]
+  # 最後三種是強效情緒（塗油限定核心用，65 級起；poe2db 沒有權重，比孤寂再少一點）
+  emotion_weights: [500, 300, 180, 108, 65, 39, 23, 14, 8, 5, 3, 3, 3]
   ticket: { currency: ticket_delirium, chance: 0.056 }     # 2026-10-18：入場券（幻霧結束時拿到獎勵的人各擲一次）
 
 # 地圖變化（2026-10）：讓同一張圖每次打起來不一樣。每一種各自照機率出現，機率寫 0 就關掉。

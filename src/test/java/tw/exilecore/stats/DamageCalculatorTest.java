@@ -114,6 +114,10 @@ class DamageCalculatorTest {
         }
         // 堆到 140% 也只擋 50%（PoE2）：4000 次大約 2000 次
         assertEquals(50, StatKeys.BLOCK_CAP, 1e-9);
+        // 2026-10-27 照 PoE2：上限再怎麼提高最多 90%
+        assertEquals(50, DamageCalculator.blockCap(defender), 1e-9);
+        assertEquals(90, DamageCalculator.blockCap(new StatSheet().setBase(StatKeys.BLOCK_MAX, 75)), 1e-9);
+        assertEquals(70, Formulas.blockCap(20), 1e-9);
         assertTrue(blocked > 1850 && blocked < 2150, "擋下 " + blocked);
     }
 
@@ -151,11 +155,14 @@ class DamageCalculatorTest {
         assertEquals(1.0, Formulas.hitChance(100, 0), 1e-9);
         assertEquals(13, Formulas.attackIntervalTicks(1.55));
         assertEquals(0.75, Formulas.resistReduction(120, 75), 1e-9);
-        assertEquals(-0.6, Formulas.resistReduction(-90, 75), 1e-9);
+        assertEquals(-0.9, Formulas.resistReduction(-90, 75), 1e-9); // 2026-10-26 照 PoE2：抗性下限 −200
+        assertEquals(-2.0, Formulas.resistReduction(-250, 75), 1e-9);
+        assertEquals(0.9, Formulas.resistReduction(95, 95), 1e-9, "最大抗性最多 90%");
     }
 
     @Test
-    void physicalConversionUsesModifiersOfBothTypes() {
+    void physicalConversionOnlyUsesModifiersOfTheFinalType() {
+        // 2026-10-27 照 PoE2（PoB calcDamage typeFlags = 0）：轉換在基礎上算，轉過去的只吃新類型的修飾器；這次之前兩種都吃（火焰 125、冰冷 150）
         final StatSheet attacker = new StatSheet();
         attacker.add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, 100, Set.of(Tags.PHYSICAL), "武器"));
         attacker.add(new Modifier(StatKeys.WEAPON_MAX, ModType.FLAT, 100, Set.of(Tags.PHYSICAL), "武器"));
@@ -165,18 +172,18 @@ class DamageCalculatorTest {
                 null, null, java.util.Map.of(DamageType.FIRE, 0.5));
         final DamagePacket expected = DamageCalculator.expectedOutgoing(attacker, burning);
         assertEquals(50 * 1.5, expected.get(DamageType.PHYSICAL), 1e-9, "剩下的物理只吃物理修飾器");
-        assertEquals(50 * (1 + 0.5 + 1.0), expected.get(DamageType.FIRE), 1e-9, "轉換出來的火焰同時吃物理與火焰修飾器");
+        assertEquals(50 * (1 + 1.0), expected.get(DamageType.FIRE), 1e-9, "轉換出來的火焰只吃火焰修飾器");
 
         // 全部轉換：沒有物理
         final SkillProfile full = new SkillProfile("x", Set.of(Tags.ATTACK), 1.0, null, null, java.util.Map.of(DamageType.COLD, 1.0));
         final DamagePacket allCold = DamageCalculator.expectedOutgoing(attacker, full);
         assertEquals(0, allCold.get(DamageType.PHYSICAL), 1e-9);
-        assertEquals(100 * 1.5, allCold.get(DamageType.COLD), 1e-9);
+        assertEquals(100, allCold.get(DamageType.COLD), 1e-9, "增加物理傷害不再加到轉成冰冷的部分");
     }
 
     @Test
-    void blackflameFireSpellsUseFireAndChaosModifiers() {
-        // 2026-10：墨焰誓的火焰法術轉成混沌，火焰與混沌的「增加」都吃（以前只吃火焰的）
+    void blackflameFireSpellsUseOnlyChaosModifiers() {
+        // 2026-10-27 照 PoE2：墨焰誓的火焰法術轉成混沌，只吃混沌的「增加」（這次之前火焰與混沌都吃：250）
         final SkillProfile blast = new SkillProfile("inferno_blast", Set.of(Tags.SPELL, Tags.FIRE), 1.0,
                 new DamagePacket().set(DamageType.FIRE, 100));
         final StatSheet caster = new StatSheet()
@@ -185,7 +192,7 @@ class DamageCalculatorTest {
                 .add(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 1.0, Set.of(Tags.CHAOS), "混沌"));
         final DamagePacket out = DamageCalculator.expectedOutgoing(caster, blast);
         assertEquals(0, out.get(DamageType.FIRE), 1e-9);
-        assertEquals(250, out.get(DamageType.CHAOS), 1e-9, "100 × (1 + 50% + 100%)");
+        assertEquals(200, out.get(DamageType.CHAOS), 1e-9, "100 × (1 + 100%)");
         // 沒有墨焰誓：混沌的增加吃不到
         final StatSheet plain = new StatSheet()
                 .add(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 0.5, Set.of(Tags.FIRE), "火焰"))
@@ -271,8 +278,9 @@ class DamageCalculatorTest {
                         new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 1.0, Set.of(Tags.FIRE), "測試")));
         final DamagePacket boosted = DamageCalculator.expectedOutgoing(attacker, supported);
         assertEquals(14, boosted.get(DamageType.PHYSICAL), 1e-9, "40% 更多近戰物理");
-        // 額外獲得的火焰：10 × 25% = 2.5，吃火焰的增加（×2）也吃物理的更多（×1.4）
-        assertEquals(2.5 * 2 * 1.4, boosted.get(DamageType.FIRE), 1e-9);
+        // 額外獲得的火焰：10 × 25% = 2.5，只吃火焰的增加（×2）
+        // 2026-10-27 照 PoE2：不再吃物理的更多（這次之前 2.5 × 2 × 1.4）
+        assertEquals(2.5 * 2, boosted.get(DamageType.FIRE), 1e-9);
         assertEquals(10, DamageCalculator.expectedOutgoing(attacker, plain).get(DamageType.PHYSICAL), 1e-9,
                 "輔助寶石只對掛著它的技能有效，玩家的屬性表不變");
         final HitResult hit = DamageCalculator.calculate(attacker, supported, new StatSheet().setBase(StatKeys.RESIST_MAX, 75), 0, new Random(3));

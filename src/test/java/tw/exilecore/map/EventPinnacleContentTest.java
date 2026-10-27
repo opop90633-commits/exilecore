@@ -151,8 +151,9 @@ class EventPinnacleContentTest {
             final MapConfig.Boss boss = map.boss();
             assertTrue(boss.named(), id);
             assertEquals(3, boss.phases().size(), id);
-            assertTrue(boss.life() >= 1150 && boss.life() <= 1400, id + "：巔峰級生命（2026-10-21 晚：照打 Boss 每秒 200 萬，跟虛星同一級）");
-            assertTrue(boss.damage() >= 2.8 && boss.damage() <= 3.3, id + "：巔峰級傷害（2026-10-18 提高到 3.2）");
+            assertTrue(boss.life() >= 80 && boss.life() <= 100, id + "：巔峰級生命（2026-10-26：極境的兩倍，跟虛星同一級）");
+            assertTrue(boss.damage() >= 4 && boss.damage() <= 4.6, id + "：巔峰級傷害（2026-10-26 照 PoE2 450%）");
+            assertTrue(boss.mods().contains("pinnacle_resist"), id + "：巔峰元素抗性 50%");
             assertNotNull(boss.enrage(), id);
             assertEquals(1, boss.hazards().size(), id);
             final List<String> problems = new ArrayList<>();
@@ -170,7 +171,7 @@ class EventPinnacleContentTest {
             final MapConfig.Pinnacle pinnacle = maps.pinnacle(id);
             assertNotNull(pinnacle, id + "：是巔峰");
             assertEquals(2, pinnacle.attempts(), id);
-            assertEquals(4000000, pinnacle.dpsCap(), 1e-9, id); // 2026-10-21 晚：一律 400 萬起遞減
+            assertEquals(2000000, pinnacle.dpsCap(), 1e-9, id); // 2026-10-27 照站長：每秒 200 萬起遞減（這次之前 100 萬）
             assertEquals(2, pinnacle.drops().maps(), id);
             assertEquals(0.02, pinnacle.drops().uniqueChance(), 1e-9, id);
             int own = 0;

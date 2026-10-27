@@ -146,6 +146,7 @@ public final class MonsterService {
         final double ratio = health == null || health.getValue() <= 0 ? 1 : Math.max(0, Math.min(1, entity.getHealth() / health.getValue()));
         entity.getPersistentDataContainer().set(lifeMultiplierKey, PersistentDataType.DOUBLE, multiplier);
         sheets.remove(entity.getUniqueId());
+        dataCache.remove(entity.getUniqueId());
         final Optional<MonsterData> data = data(entity);
         if (data.isEmpty()) {
             return false;
@@ -211,7 +212,23 @@ public final class MonsterService {
         return !(entity instanceof Player) && entity.getPersistentDataContainer().has(levelKey);
     }
 
+    /**
+     * 2026-10-27 效能：怪物資料的快取（每次讀都要從 PDC 讀七個值、切詞綴字串；條件檢查、圖騰、爆炸每秒讀幾千次）。
+     * 只有這個類別會寫那幾個值（{@link #apply}、{@link #setLifeMultiplier}），寫的時候清掉；死亡、移除時跟屬性表一起清（{@link #forget}）。
+     */
+    private final Map<UUID, MonsterData> dataCache = new HashMap<>();
+
     public Optional<MonsterData> data(final LivingEntity entity) {
+        final MonsterData cached = dataCache.get(entity.getUniqueId());
+        if (cached != null) {
+            return Optional.of(cached);
+        }
+        final Optional<MonsterData> read = readData(entity);
+        read.ifPresent(data -> dataCache.put(entity.getUniqueId(), data));
+        return read;
+    }
+
+    private Optional<MonsterData> readData(final LivingEntity entity) {
         final PersistentDataContainer container = entity.getPersistentDataContainer();
         final Integer level = container.get(levelKey, PersistentDataType.INTEGER);
         if (level == null) {
@@ -247,6 +264,7 @@ public final class MonsterService {
 
     public void forget(final UUID uuid) {
         sheets.remove(uuid);
+        dataCache.remove(uuid);
     }
 
     /**
@@ -384,6 +402,7 @@ public final class MonsterService {
             container.remove(bossKey);
         }
         sheets.remove(entity.getUniqueId());
+        dataCache.remove(entity.getUniqueId());
 
         final StatSheet sheet = sheet(entity, data);
         applyVanilla(entity, data, sheet);
@@ -488,6 +507,24 @@ public final class MonsterService {
     /** 依稀有度的詞綴數量抽一組詞綴（只有基本詞綴）。 */
     public List<String> rollMods(final MonsterRarity rarity) {
         return rollMods(rarity, 1);
+    }
+
+    /**
+     * 2026-10-26（PoE2 換界石「稀有怪的詞綴機率更多 x%」）：詞綴數照 min～max 擲，但偏向多的那邊：
+     * 每多一條的機率乘 1 + more（more = 0.25 → 機率更多 25%），最多 max 條。
+     */
+    public List<String> rollModsBoosted(final MonsterRarity rarity, final int level, final double more) {
+        final MonsterConfig.RaritySettings settings = config.rarity(rarity);
+        if (more <= 0 || settings.maxMods() <= settings.minMods()) {
+            return rollMods(settings.minMods(), settings.maxMods(), level);
+        }
+        final int range = settings.maxMods() - settings.minMods();
+        final double step = Math.min(1.0, 0.5 * (1 + more)); // 平常每多一條大約一半的機會
+        int count = settings.minMods();
+        for (int i = 0; i < range && random.nextDouble() < step; i++) {
+            count++;
+        }
+        return rollMods(count, count, level);
     }
 
     /** 依稀有度的詞綴數量抽一組這個等級能出現的詞綴。 */

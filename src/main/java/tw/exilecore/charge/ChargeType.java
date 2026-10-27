@@ -22,7 +22,7 @@ import java.util.Set;
  *   color: "#ff8fe8"
  *   trigger: crit         # crit = 你暴擊時、kill = 你擊殺時、hit = 你被敵人打中時
  *   max: 3                # 基礎最多幾顆（詞綴可以加：charge.max.power）
- *   duration: 10          # 每顆撐幾秒
+ *   duration: 15          # 撐幾秒（2026-10-27 照 PoE2：同一種共用，獲得一顆全部刷新；這次之前 10、各自倒數）
  *   per_charge: []        # 每一顆給的屬性（引擎乘上顆數）；2026-10 照 PoE2 預設不給（只算顆數）
  * </pre>
  *
@@ -66,7 +66,7 @@ public record ChargeType(String id, String name, String symbol, String color, Tr
         if (max < 1) {
             throw new IllegalArgumentException(node.path() + ".max：至少 1，卻是 " + max);
         }
-        final double duration = node.decimal("duration", 10);
+        final double duration = node.decimal("duration", 15); // 2026-10-27 照 PoE2（這次之前預設 10）
         if (duration <= 0) {
             throw new IllegalArgumentException(node.path() + ".duration：要大於 0 秒，卻是 " + duration);
         }
@@ -111,9 +111,12 @@ public record ChargeType(String id, String name, String symbol, String color, Tr
         return Math.max(0, (int) Math.floor(baseMax + sheet.flat(StatKeys.chargeMax(id), Set.of())));
     }
 
-    /** 這張屬性表這種球每顆撐幾 tick：基礎秒數 × 20 ×（1 + 增加球的持續時間），最短是基礎的 10%。 */
+    /**
+     * 這張屬性表這種球每顆撐幾 tick：基礎秒數 × 20 ×（1 + 增加球的持續時間），最短是基礎的 10%。
+     * 2026-10-27（王衛全鎧「減少 25% 磐星的持續時間」）：標籤寫球的代號的只算那一種（這次之前只看沒標籤的）。
+     */
     public long durationTicksFor(final StatSheet sheet) {
-        return Math.round(durationSeconds * 20 * Math.max(0.1, 1 + sheet.increased(StatKeys.CHARGE_DURATION, Set.of())));
+        return Math.round(durationSeconds * 20 * Math.max(0.1, 1 + sheet.increased(StatKeys.CHARGE_DURATION, Set.of(id))));
     }
 
     /** 這張屬性表每次觸發獲得一顆的機率（0–1）：{@code charge.chance.代號} 是百分比點數。 */

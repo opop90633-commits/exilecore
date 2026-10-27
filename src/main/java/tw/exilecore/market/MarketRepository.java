@@ -82,6 +82,17 @@ public final class MarketRepository {
         }
     }
 
+    /** 2026-10-26：上架中的物品照新資料補正（詞綴換算、重畫）後寫回。 */
+    public void updateItem(final Connection connection, final String id, final byte[] item, final String searchText) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "UPDATE market_listings SET item = ?, search_text = ? WHERE listing_id = ?")) {
+            statement.setBytes(1, item);
+            statement.setString(2, searchText);
+            statement.setString(3, id);
+            statement.executeUpdate();
+        }
+    }
+
     public void updatePrice(final Connection connection, final String id, final String currency, final int amount,
                             final Instant listedAt) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(

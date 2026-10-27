@@ -50,12 +50,12 @@ class SupportAndGemTest {
         // 2026-10 PoE2 改版：輔助寶石 290 顆（第 1 階 81、第 2 階 166、第 3 階 43，其中 13 顆專屬掉落：終局 4、極境 2、巔峰 7）；
         // 2026-10：圖騰施法與 6 顆觸發改成主要寶石（拿掉 7 顆），加了 2 顆戰星來源（滿星、斷命聚怒）
         final List<String> ids = config.supports().stream().map(SupportDefinition::id).toList();
-        assertEquals(293 + 21 + 2 + 10 + 3, ids.size()); // 2026-10-25：＋3 顆能量輔助（湧能、返能、擴能） // 2026-10：＋怒嘯；2026-10-15：＋碎界擴散（虛星專屬）；＋潮汐共鳴（淵鯨專屬）；2026-10-18：＋七隻事件巔峰 Boss 各 3 顆專屬、淵鯨再 2 顆；2026-10-24：＋10 顆戰星輔助（恆星、倍星、抑星…；磐震、磐破、雷星只留最強的那一級）
+        assertEquals(293 + 21 + 2 + 10 + 3 + 24 - 19 + 1 + 120 + 68 - 17 - 3 - 4, ids.size()); // 2026-10-27 照站長刪掉箭幕、跛行、活雷 II、衝勢（－4） // 2026-10-27：照站長只留最高階，再併掉持久、速冷、分矢（−3） // 2026-10-27：照站長刪掉原作沒有的 17 顆（supports.yml 的 retired） // 2026-10-27：＋68 顆血脈輔助（supports_lineage.yml） // 2026-10-27：＋120 顆照 PoE2 0.5 補上的一般輔助（tools/poe2_supports/missing_0.5.tsv） // 2026-10-27：照 PoE2 0.5 恢復節流（Efficiency） // 2026-10-26：照站長 I／II／III 只留最高階（刪 19 顆，併入最高階）； 2026-10-26：照 PoE2 把 I／II／III 拆成不同寶石（＋18 顆）、新增 6 顆戰吼輔助（不竭嘯、霜仇嘯、契血嘯、血譽、碎晶嘯、怒嘯 II） // 2026-10-25：＋3 顆能量輔助（湧能、返能、擴能） // 2026-10：＋怒嘯；2026-10-15：＋碎界擴散（虛星專屬）；＋潮汐共鳴（淵鯨專屬）；2026-10-18：＋七隻事件巔峰 Boss 各 3 顆專屬、淵鯨再 2 顆；2026-10-24：＋10 顆戰星輔助（恆星、倍星、抑星…；磐震、磐破、雷星只留最強的那一級）
         assertEquals(List.of("increased_area", "faster_projectiles", "pierce", "faster_attacks", "faster_casting", "added_fire",
-                "increased_duration", "critical_strikes", "lingering", "minion_damage"), ids.subList(0, 10), "照檔案裡的順序");
-        assertTrue(ids.containsAll(List.of("concentrated_effect", "chain", "life_leech", "searing", "lacerate", "envenom", "concussive",
-                "electrocute", "glacial", "static_charge", "cooldown_recovery", "burst", "fork", "critical_damage", "added_chaos",
-                "charge_profusion", "cull_frenzy", "minion_life", "warcry_power", "minion_speed", "charge_frenzy", "charge_power", "charge_endurance",
+                "critical_strikes", "lingering", "minion_damage", "concentrated_effect"), ids.subList(0, 10), "照檔案裡的順序（2026-10-27：持久併入長留，拿掉）");
+        assertTrue(ids.containsAll(List.of("concentrated_effect", "chain", "life_leech", "searing_ii", "lacerate_iii", "envenom_iii", "concussive",
+                "electrocute", "glacial", "static_charge", "swift_cooldown", "burst", "fork", "critical_damage", "added_chaos",
+                "charge_profusion", "cull_frenzy", "minion_life", "minion_speed", "charge_endurance",
                 "spell_echo", "multiple_projectiles", "elemental_focus",
                 "starfall_resonance", "permafrost_heart", "styx_ferry", "skyburn_fury", "abyssal_touch", "myriad_stars",
                 "oblivion_focus", "storm_maze_heart", "rift_echo", "starfall_core", "phantom_double", "world_collapse", "void_legion", "shattering_strike")));
@@ -67,13 +67,13 @@ class SupportAndGemTest {
         }
         assertEquals(3, config.retiredSupportTier("multistrike"));
         assertEquals(2, config.retiredSupportTier("melee_physical"));
-        assertEquals(83, config.supportsUpTo(1).size()); // 2026-10-24：＋恆星、蔓寒
-        assertEquals(252, config.supportsUpTo(2).size()); // 2026-10：＋怒嘯；2026-10-24：＋倍星、抑星、狂速、碎地，磐震、磐破改第 3 階
-        assertEquals(291, config.supportsUpTo(3).size(), "專屬掉落的 13 顆切不出來（2026-10-24：＋10 顆戰星輔助）");
+        assertEquals(76 + 6 - 1 - 3, config.supportsUpTo(1).size()); // 2026-10-27：持久、分矢併入第 2 階的長留、分光，初裂改成 Bleed II（第 2 階），第 1 階 −3 // 2026-10-27：刪掉原作沒有的凝凍 // 2026-10-27：＋6 顆第 1 階的新輔助 // 2026-10-27 照 PoE2 對照 79 顆輔助的階級（回震 II、目眩 II、殘肢、熟招、厚晶、脆晶、撒蒺升階；這次之前 80） // 2026-10-26：I／II／III 只留最高階，第 1 階少了割裂、淬毒、釘地、急蝕、冰嚙（這次之前 85）； 2026-10-26：照 PoE2 的階級（I／II／III 拆開、新增戰吼輔助）；這次之前 79 // 2026-10-26：照 PoE2 的階級改了一些；2026-10-24：＋恆星、蔓寒
+        assertEquals(239 + 76 - 16 - 3 - 3, config.supportsUpTo(2).size()); // 2026-10-27 照站長刪掉第 2 階的箭幕、跛行、衝勢（－3） // 2026-10-27：持久、速冷、分矢併入最高階（−3） // 2026-10-27：刪掉原作沒有的 16 顆第 1–2 階 // 2026-10-27：＋76 顆第 1–2 階的新輔助 // 2026-10-27 照 PoE2：巨魄、腐蝕嘯、電印地、累勢、漸熾、播火、節流是第 3 階（這次之前 245） // 2026-10-26：I／II／III 只留最高階（第 1–2 階少 17 顆；這次之前 262）； 2026-10-26：同上；這次之前 255 // 2026-10：＋怒嘯；2026-10-24：＋倍星、抑星、狂速、碎地，磐震、磐破改第 3 階
+        assertEquals(297 - 8 + 120 - 17 - 3 - 4, config.supportsUpTo(3).size(), "2026-10-27 照站長刪掉箭幕、跛行、活雷 II、衝勢（－4）；2026-10-27：持久、速冷、分矢併入最高階（−3）；2026-10-27：刪掉原作沒有的 17 顆；專屬掉落的 13 顆切不出來（2026-10-27：supports.yml 原本的 8 顆血脈輔助改成切不出來，−8；2026-10-27：＋120 顆照 PoE2 0.5 補上的；2026-10-27：＋節流；2026-10-24：＋10 顆戰星輔助；2026-10-26：＋24 顆照 PoE2 拆開與新增的；2026-10-26：I／II／III 只留最高階，−19 顆，這次之前 315）");
         for (final SupportDefinition support : config.supports()) {
             assertFalse(support.name().isBlank(), support.id());
             assertFalse(support.modifiers().isEmpty(), support.id());
-            assertTrue(support.manaMultiplier() >= 1.0, support.id() + " 輔助寶石都會讓魔力變貴");
+            assertTrue(support.manaMultiplier() >= 1.0 || support.lineage(), support.id() + " 輔助寶石都會讓魔力變貴（2026-10-27：血脈的願晶照 PoE2 是 90%）");
         }
     }
 
@@ -91,7 +91,7 @@ class SupportAndGemTest {
         assertFalse(support("faster_casting").supports(skill("boneshatter")));
         assertTrue(support("increased_area").supports(skill("earthquake")));
         assertTrue(support("increased_area").supports(skill("fireball")), "熾星彈的爆炸是範圍");
-        assertFalse(support("increased_area").supports(skill("boneshatter")));
+        assertTrue(support("increased_area").supports(skill("boneshatter")), "2026-10-26 照 PoE2：碎脊擊是範圍打擊");
         assertTrue(support("life_leech").supports(skill("lightning_arrow")));
         assertFalse(support("life_leech").supports(skill("frost_nova")), "2026-10：生命偷取只輔助攻擊");
         for (final SupportDefinition support : config.supports()) {
@@ -116,7 +116,7 @@ class SupportAndGemTest {
         assertEquals("捷光環技能不行", surge.refusal(skill("herald_of_ash")));
         assertEquals(null, surge.refusal(skill("fireball")));
         assertEquals("要法術技能", surge.refusal(skill("boneshatter")));
-        final SupportDefinition power = support("charge_power");
+        final SupportDefinition power = support("charge_endurance");
         assertEquals("攻擊技能或法術技能（召喚物、不會造成傷害的技能除外）", power.supportsText(config.all()));
         assertEquals("召喚物技能不行", power.refusal(skill("raise_zombie")));
         assertEquals(null, power.refusal(skill("fireball")));
@@ -164,14 +164,14 @@ class SupportAndGemTest {
         assertEquals(4, supported.supports().size(), "怒火（要近戰）不能輔助法術，掛了也不算");
         assertEquals(3, supported.projectiles());
         assertEquals(24, supported.spread(), 1e-9, "本來一發的技能多了投射物：排成扇形");
-        assertEquals(2, supported.pierce());
-        assertEquals(Math.sqrt(1.4), supported.areaScale(), 1e-9, "增加 40% 範圍 → 半徑 ×√1.4");
-        assertEquals(plain.explode() * Math.sqrt(1.4), supported.explode(), 1e-9);
-        assertEquals(plain.speed() * 1.5, supported.speed(), 1e-9);
-        assertEquals(Math.round(fireball.mana().at(10) * 1.4 * 1.2 * 1.2 * 1.15), supported.manaCost(), "魔力倍率相乘");
+        assertEquals(1, supported.pierce(), "2026-10-26 照 PoE2 Pierce I：穿透 1");
+        assertEquals(Math.sqrt(1.35), supported.areaScale(), 1e-9, "增加 35% 範圍 → 半徑 ×√1.35");
+        assertEquals(plain.explode() * Math.sqrt(1.35), supported.explode(), 1e-9);
+        assertEquals(plain.speed() * 1.4, supported.speed(), 1e-9);
+        assertEquals(Math.round(fireball.mana().at(10) * 1.0 * 1.0 * 1.3 * 1.2), supported.manaCost(), "魔力倍率相乘");
 
         final SkillBuild concentrated = SkillBuild.of(config, skill("frost_nova"), 1, 60, false, List.of(support("concentrated_effect")), Set.of(), sheet);
-        assertEquals(skill("frost_nova").params().radius().at(1) * Math.sqrt(0.7), concentrated.radius(), 1e-9);
+        assertEquals(skill("frost_nova").params().radius().at(1) * Math.sqrt(0.5), concentrated.radius(), 1e-9);
 
         final SkillBuild arc = SkillBuild.of(config, skill("arc"), 1, 60, false, List.of(support("chain")), Set.of(), sheet);
         assertEquals(skill("arc").params().chains().intAt(1) + 1, arc.chains(), "鏈雷多連鎖一次");
@@ -197,12 +197,12 @@ class SupportAndGemTest {
         }
         assertTrue(skill("flicker_strike").tags().contains(Tags.MOVEMENT) && !skill("flicker_strike").tags().contains(Tags.TRAVEL),
                 "瞬影擊是瞬移到敵人身邊，不算突進");
-        assertTrue(skill("lunge").tags().contains(Tags.TRAVEL) && skill("leap_slam").tags().contains(Tags.TRAVEL));
+        assertTrue(skill("rake").tags().contains(Tags.TRAVEL) && skill("leap_slam").tags().contains(Tags.TRAVEL));
         // 就算別的地方給了 skill.repeats，也只有自己放的打擊、扇形、繞身一圈的攻擊會重複
         final StatSheet repeating = new StatSheet().add(new Modifier(StatKeys.SKILL_REPEATS, ModType.FLAT, 9, Set.of(), "測試"));
         assertEquals(SkillBuild.MAX_REPEATS, SkillBuild.of(config, skill("boneshatter"), 1, 60, false, List.of(), Set.of(), repeating).repeats(),
                 "最多 4 下");
-        for (final String id : List.of("fireball", "permafrost_bolts", "leap_slam", "lunge", "ancestral_totem", "rain_of_arrows",
+        for (final String id : List.of("fireball", "permafrost_bolts", "leap_slam", "rake", "ancestral_totem", "rain_of_arrows",
                 "raise_zombie")) {
             assertEquals(0, SkillBuild.of(config, skill(id), 1, 60, false, List.of(), Set.of(), repeating).repeats(), id);
         }
@@ -246,9 +246,10 @@ class SupportAndGemTest {
                 List.of(support("heft"), support("faster_attacks"), support("added_fire")), Set.of(Tags.MACE), sheet);
         final double basePhysical = DamageCalculator.expectedOutgoing(sheet, base.profile()).get(DamageType.PHYSICAL);
         final double strongPhysical = DamageCalculator.expectedOutgoing(sheet, strong.profile()).get(DamageType.PHYSICAL);
-        assertEquals(basePhysical * 1.25 * 0.9, strongPhysical, 1e-9, "25% 更多物理（重擊）× 10% 更少（迅擊）");
+        // 2026-10-26 照 PoE2 的沉重（Heft）：只有最大傷害更多 30%（武器 10–10：最大 13，平均 11.5）；這次之前物理一律更多 25%、攻速更少 5%
+        assertEquals(basePhysical * 1.15, strongPhysical, 1e-9, "最大物理傷害更多 30%（沉重）；迅擊 2026-10-26 照 PoE2 不再減傷");
         assertTrue(DamageCalculator.expectedOutgoing(sheet, strong.profile()).get(DamageType.FIRE) > 0, "引火：物理的 25% 額外附加為火焰");
-        assertEquals(base.intervalTicks(sheet) / (1.25 * 0.95), strong.intervalTicks(sheet), 1e-9, "25% 更多攻擊速度（迅擊）× 5% 更少（重擊）");
+        assertEquals(base.intervalTicks(sheet) / 1.15, strong.intervalTicks(sheet), 1e-9, "增加 15% 攻擊速度（迅擊）；2026-10-26 沉重不再減攻速");
         assertEquals(basePhysical, DamageCalculator.expectedOutgoing(sheet, base.profile()).get(DamageType.PHYSICAL), 1e-9);
     }
 
@@ -270,11 +271,93 @@ class SupportAndGemTest {
         assertEquals(20, GemData.uncutSkill(3).maxStack());
     }
 
+    /** 2026-10-26：照站長拿掉的技能：定義刪掉、列在 skills.yml 的 retired；玩家手上的舊寶石換成同等級的未切割技能寶石。 */
+    @Test
+    void removedSkillGemsBecomeUncutGemsOfTheSameLevel() {
+        final java.util.Map<String, String> removed = new java.util.LinkedHashMap<>();
+        removed.put("frost_snap", "霜綻");
+        removed.put("storm_spin", "斬風旋");
+        removed.put("prismatic_strike", "幻元擊");
+        removed.put("prismatic_arrow", "幻元箭");
+        removed.put("ember_nest_totem", "焰巢圖騰");
+        removed.put("frost_pulse_totem", "霜脈圖騰");
+        removed.put("storm_pylon_totem", "雷樁圖騰");
+        removed.put("bulwark_totem", "磐守圖騰");
+        removed.put("bone_steed", "骨駒");
+        removed.put("hoof_trample", "鐵蹄踐踏");
+        removed.put("frost_stream", "霜流");
+        removed.put("storm_lash", "雷鞭");
+        removed.put("star_cadence", "星律");
+        removed.put("phantom_step", "幻身步");
+        int level = 3;
+        for (final java.util.Map.Entry<String, String> entry : removed.entrySet()) {
+            final String id = entry.getKey();
+            assertNull(config.skill(id), id + " 拿掉了");
+            assertTrue(config.retiredSkill(id), id);
+            assertEquals(entry.getValue(), config.retiredSkillName(id), "通知用的名稱");
+            // 存在物品裡的舊寶石（插了輔助、開過孔）照樣讀得出來，換成同等級的未切割技能寶石
+            final GemData old = GemData.decode(GemData.skill(new SkillLoadout.Entry(id, level, 4, List.of("pierce", "", "chain"))).encode()).orElseThrow();
+            assertEquals(GemData.uncutSkill(level), old.removedSkillReplacement(config), id);
+            level += 2;
+        }
+        assertNull(config.skill("proc_cold_snap_ground"), "霜綻的冰地（隱藏技能）一起拿掉");
+        assertNull(config.skill("proc_phantom_decoy"), "幻身步的殘影（隱藏技能）一起拿掉");
+        // 2026-10-26：矢幕、爆破矢、焚燼併入別的技能（merged，見下一個測試）；這次之前列在留著的
+        for (final String kept : List.of("lingering_illusion", "summon_mount", "linked_volley", "blast_arrow", "flame_stream")) {
+            assertTrue(config.skill(kept) != null && !config.retiredSkill(kept), kept + " 留著");
+        }
+        assertEquals("some_old_skill", config.retiredSkillName("some_old_skill"), "沒列在 retired 的顯示代號");
+        assertNull(GemData.skill(new SkillLoadout.Entry("fireball", 5)).removedSkillReplacement(config), "還在的技能不換");
+        assertNull(GemData.uncutSkill(5).removedSkillReplacement(config));
+        assertNull(GemData.support("pierce").removedSkillReplacement(config));
+    }
+
+    /** 2026-10-26：照站長併入別的技能（skills.yml 的 merged）：舊寶石直接換成併入的技能寶石，等級、孔、品質、腐化、輔助都保留。 */
+    @Test
+    void mergedSkillGemsBecomeTheSkillTheyMergedInto() {
+        final java.util.Map<String, String[]> merged = new java.util.LinkedHashMap<>();
+        merged.put("arrow_barrage", new String[] {"linked_volley", "矢幕已經併入連珠"});
+        merged.put("charged_shot", new String[] {"blast_arrow", "爆破矢已經併入爆焰矢"});
+        merged.put("scorch_breath", new String[] {"flame_stream", "焚燼已經併入焚流"});
+        int level = 7;
+        for (final java.util.Map.Entry<String, String[]> entry : merged.entrySet()) {
+            final String id = entry.getKey();
+            final String into = entry.getValue()[0];
+            assertNull(config.skill(id), id + " 定義刪掉了");
+            assertFalse(config.retiredSkill(id), id + " 不是換成未切割寶石");
+            assertEquals(into, config.mergedInto(id));
+            assertEquals(entry.getValue()[1], config.mergeNotice(id), "通知");
+            // 存在物品裡的舊寶石：插了輔助、開過孔、有品質、腐化過
+            final SkillLoadout.Entry oldEntry = new SkillLoadout.Entry(id, level, 4, List.of("pierce", "", "chain~"), null, null, true, 13);
+            final GemData old = GemData.decode(GemData.skill(oldEntry).encode()).orElseThrow();
+            final GemData replaced = old.removedSkillReplacement(config);
+            assertEquals(GemData.Kind.SKILL, replaced.kind(), id);
+            final SkillLoadout.Entry now = replaced.entry();
+            assertEquals(into, now.skillId());
+            assertEquals(level, now.level(), "等級保留");
+            assertEquals(4, now.sockets(), "開過的孔保留");
+            assertEquals(13, now.quality(), "品質保留");
+            assertTrue(now.corrupted(), "腐化保留");
+            assertEquals(List.of("pierce", "", "chain"), List.of(now.support(0), now.support(1), now.support(2)), "輔助保留");
+            assertTrue(now.resonant(2), "共鳴保留");
+            // 放在宿主寶石第 1 孔的也換
+            final SkillLoadout.Entry host = new SkillLoadout.Entry("fireball", 5).withInner(new SkillLoadout.Entry(id, level));
+            assertEquals(into, config.merge(host).inner().skillId(), "宿主第 1 孔裡的");
+            assertEquals("fireball", config.merge(host).skillId());
+            level += 3;
+        }
+        assertNull(config.mergedInto("fireball"));
+        assertNull(config.merge(new SkillLoadout.Entry("fireball", 5)), "沒併入的不換");
+        assertNull(config.mergeNotice("frost_snap"), "換成未切割寶石的不算併入");
+    }
+
     @Test
     void uncutGemsDropByMonsterLevel() {
         final Random random = new Random(5);
         final int max = config.uncutLevelFor(30);
-        assertEquals(config.maxLevelFor(30), max);
+        // 2026-10-26：需求等級照 PoE2 之後，掉落改看 uncut_drop_levels（30 級的怪最高掉 11 級；30 級的角色只能用到 8 級）
+        assertEquals(11, max);
+        assertEquals(8, config.maxLevelFor(30));
         int top = 0;
         int lower = 0;
         for (int i = 0; i < 2000; i++) {
@@ -301,9 +384,15 @@ class SupportAndGemTest {
             final int tier = config.rollSupportTier(40, random);
             assertTrue(tier >= 1 && tier <= 3);
         }
-        assertEquals(List.of("escape_shot", "raise_guard", "explosive_bolt", "rapid_fire", "tempest_flurry", "lightning_spear", "fireball",
-                "spark", "raise_zombie", "armour_piercing_bolt", "fortifying_cry", "frostbolt", "essence_drain", "bear_maul", "wolf_shred",
-                "disengage", "parry", "frozen_locus", "lightning_rod", "fragmentation_rounds"), // 2026-10-24：＋招架
+        // 2026-10-27 照 PoE2 0.5 的寶石階級（poe2db Uncut_Skill_Gem；tools/apply_poe2_gem_tiers.py）：第 1 階的技能換了一批
+        //   （這次之前 escape_shot, raise_guard, explosive_bolt, rapid_fire, tempest_flurry, lightning_spear, fireball, spark, raise_zombie,
+        //   armour_piercing_bolt, frostbolt, essence_drain, bear_maul, wolf_shred, lunar_assault, wyvern_rend, disengage, parry, frozen_locus,
+        //   lightning_rod, fragmentation_rounds）
+        assertEquals(List.of("earthquake", "boneshatter", "lightning_arrow", "escape_shot", "raise_guard", "permafrost_bolts", "explosive_grenade",
+                "killing_palm", "whirling_slash", "frost_nova", "spark", "flame_wall", "armour_piercing_bolt", "rolling_slam", "skeletal_archers",
+                "venom_burst_arrow", "gale_spear", "frost_mine", "bone_spikes", "falling_thunder", "glacial_cascade", "explosive_spear", "contagion",
+                "bear_maul", "bear_slam", "wolf_shred", "lunar_assault", "wyvern_rend", "volcano", "entangle", "disengage", "parry", "frozen_locus",
+                "lightning_rod", "fragmentation_rounds"),
                 config.engravable(1).stream().map(SkillDefinition::id).toList(), "Lv.1 的未切割寶石能雕的技能（第 1 階的技能）");
         assertTrue(config.engravable(13).size() < config.visible().size());
         // 2026-10：巔峰 Boss 的專屬技能寶石（source: awakener）雕不出來，其他的 Lv.14 起全部都能雕（最高第 14 階）
@@ -313,7 +402,11 @@ class SupportAndGemTest {
         // 2026-10：星骸之海的淵鯨的專屬（source: abyss_whale）也雕不出來
         assertEquals(List.of("tide_call", "abyssal_pull"), config.skillsFrom("abyss_whale").stream().map(SkillDefinition::id).toList()); // 2026-10-18：＋鯨吞漩渦
         assertFalse(config.skill("tide_call").engravable());
-        assertEquals(config.visible().size() - exclusive.size() - 2 - 14, config.engravable(14).size(), "Lv.14 起全部都能雕（專屬的除外；2026-10-18：事件巔峰的 14 顆、淵鯨的 2 顆也除外）");
+        final int granted = config.skillsFrom("weapon").size(); // 2026-10-26：法杖、長杖、權杖賦予的（27 個＋骸骨戰士）沒有寶石
+        assertEquals(33 + 1, granted); // 2026-10-27 照 PoE2：＋每把矛賦予的擲矛；2026-10-26：＋咒擲、封釋、雷霆共鳴、折光之鏡、鴉群密謀
+        final int ascendancy = config.skillsFrom("ascendancy").size(); // 2026-10-26 照 PoE2：昇華天賦賦予的（看得到的 44 個）沒有寶石
+        assertEquals(44 + 7, ascendancy); // 2026-10-27 照 PoE2 0.5：＋靈狩者、鳴鐘武師、淵井骸主賦予的 7 個
+        assertEquals(config.visible().size() - exclusive.size() - 2 - 14 - granted - ascendancy, config.engravable(14).size(), "Lv.14 起全部都能雕（專屬的除外；2026-10-18：事件巔峰的 14 顆、淵鯨的 2 顆也除外；2026-10-26：武器賦予的、昇華天賦賦予的也除外）");
         assertEquals(config.engravable(14).size(), config.engravable(20).size());
         for (final SkillDefinition skill : exclusive) {
             assertFalse(skill.engravable(), skill.id());

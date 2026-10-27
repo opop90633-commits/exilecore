@@ -299,7 +299,8 @@ class CorruptFractureTest {
                 .findFirst().orElseThrow();
         final ItemData flask = generator.generate(flaskBase, Rarity.MAGIC, 80, random);
         flask.setQuality(0);
-        for (int i = 0; i < 4; i++) {
+        // 2026-10-27 照 PoE2：魔法藥劑每顆 +2（這次之前一律 +5，4 顆到 20）
+        for (int i = 0; i < 10; i++) {
             assertNull(Crafting.problem(bauble, flask, generator), "第 " + (i + 1) + " 顆");
             bauble.operation().apply(flask, generator, random);
         }

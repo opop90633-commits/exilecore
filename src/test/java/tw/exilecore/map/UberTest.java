@@ -142,7 +142,9 @@ class UberTest {
         assertEquals(base.hazards().size() + uber.hazards().size(), merged.hazards().size());
         assertEquals(uber.intro(), merged.intro());
         assertEquals(base.defeat(), merged.defeat());
-        assertEquals(new HashSet<>(base.mods()), new HashSet<>(merged.mods()), "沒有多的詞綴");
+        final Set<String> mods = new HashSet<>(base.mods());
+        mods.add("pinnacle_resist"); // 2026-10-26 照 PoE2：極境多 20% 元素抗性
+        assertEquals(mods, new HashSet<>(merged.mods()), "極境只多巔峰抗性");
         // 沒寫的極境：照原本的
         final MapConfig.Uber bare = MapConfig.parseUber(yaml("name: 測試極境\n"));
         final MapConfig.Boss same = bare.merge(base);
@@ -185,10 +187,10 @@ class UberTest {
         assertEquals(1.0, MapConfig.shieldLifeMultiplier(7.8, 0.0), 1e-9, "0 = 不變硬");
         assertEquals(7.8, MapConfig.shieldLifeMultiplier(7.8, 3.0), 1e-9, "超過 1 當 1");
         assertEquals(1.0, MapConfig.shieldLifeMultiplier(0.5, 0.5), 1e-9, "不會比原本的少");
-        // 出貨的設定：一半
+        // 出貨的設定：一半（2026-10-26 照 PoE2 拿掉階級倍率，最高階也是 ×1，結晶跟著不變）
         final double top = config.finalLifeMultiplier(config.tiers().max());
         assertEquals(1 + (top - 1) * 0.5, config.shieldLifeMultiplier(top), 1e-9);
-        assertTrue(config.shieldLifeMultiplier(top) > 1 && config.shieldLifeMultiplier(top) < top);
+        assertEquals(1.0, config.shieldLifeMultiplier(top), 1e-9);
     }
 
     @Test
@@ -203,29 +205,22 @@ class UberTest {
         assertEquals(1.0, MapConfig.finalLifeMultiplier(16, 5, 1, 16), 1e-9, "max 寫 1：關掉");
         assertEquals(1.0, MapConfig.finalLifeMultiplier(16, 16, 2.5, 16), 1e-9, "from 寫到最高階：關掉（不會除以 0）");
 
-        // 出貨的 maps.yml：T5 以下 ×1、T16 ×11.7（2026-10 照頂裝單體 15 萬 DPS 重調，原 ×2.5），中間一階比一階多
+        // 2026-10-26 照 PoE2：原作沒有照地圖階級再乘的 Boss 生命（MonsterMapBossDifficulty 全部 1），tier_life 拿掉
+        // 2026-10-27 照站長：一般終局恢復 tier_life_table（T10 以下 ×1，T11 起往上到 T16 建議每秒 25 萬）；這次之前全部 ×1
         final int max = config.tiers().max();
-        assertEquals(1.0, config.finalLifeMultiplier(1), 1e-9);
-        assertEquals(1.0, config.finalLifeMultiplier(5), 1e-9, "剛進終局的人照原本的時間打");
-        assertEquals(11.7, config.finalLifeMultiplier(max), 1e-9);
-        for (int tier = 6; tier <= max; tier++) {
-            assertTrue(config.finalLifeMultiplier(tier) > config.finalLifeMultiplier(tier - 1), "T" + tier + " 比前一階多");
-        }
-        // 極境開在最高階（也吃 ×11.7），再乘自己的倍率（2026-10 每個極境各自重調，原本都是 ×4）：比 T16 終局更硬
-        final java.util.Map<String, Double> uberLife = java.util.Map.of(
-                "sky_crucible", 31.7, "frost_throne", 31.7, "bone_throne", 31.7, "ember_citadel", 31.7); // 2026-10-21 晚：照打 Boss 每秒 100 萬打 3 分半
-        // 2026-10-21 晚：一般終局照 tier_life_table（T16 ×195 = 打 Boss 每秒 50 萬打 3 分半），T10 以下跟 tier_life 一樣
-        assertEquals(195, config.finalBossLifeMultiplier(max), 1e-9);
-        for (int tier = 1; tier <= 10; tier++) {
-            assertEquals(config.finalLifeMultiplier(tier), config.finalBossLifeMultiplier(tier), 0.01, "T" + tier);
-        }
-        for (int tier = 11; tier <= max; tier++) {
-            assertTrue(config.finalBossLifeMultiplier(tier) > config.finalBossLifeMultiplier(tier - 1), "T" + tier + " 比前一階多");
+        for (int tier = 1; tier <= max; tier++) {
+            assertEquals(1.0, config.finalLifeMultiplier(tier), 1e-9, "T" + tier);
+            if (tier <= 10) {
+                assertEquals(1.0, config.finalBossLifeMultiplier(tier), 1e-9, "T" + tier + "：跟以前一樣");
+            } else {
+                assertTrue(config.finalBossLifeMultiplier(tier) > config.finalBossLifeMultiplier(tier - 1), "T" + tier + "：一階比一階多");
+            }
         }
         for (final MapConfig.MapDef map : config.regularFinals()) {
             final MapConfig.Uber uber = config.uber(map.id());
-            assertEquals(uberLife.get(map.id()), uber.life(), 1e-9, map.id() + "：極境的生命倍率");
-            assertTrue(uber.life() * config.finalLifeMultiplier(max) > config.finalBossLifeMultiplier(max), map.id() + "：極境比 T16 終局硬");
+            assertEquals(5.914, uber.life(), 0.001, map.id() + "：極境 = 原作超難版（一般版 ×4.48）：990% × 4.48 ÷ 終局 750%");
+            assertEquals(1.8, uber.damage(), 0.001, map.id() + "：極境傷害 450% ÷ 250%");
+            assertTrue(uber.mods().contains("pinnacle_resist"), map.id() + "：極境元素抗性 50%");
             assertEquals(max, config.uberStats(map.id(), uber).tier(), map.id() + "：極境開在最高階");
         }
     }
@@ -280,7 +275,7 @@ class UberTest {
 
             final MapConfig.Uber uber = config.uber(map.id());
             assertNotNull(uber, map.id() + "：有極境");
-            assertTrue(uber.life() > 1.5 && uber.damage() >= 1.3 && uber.cooldown() < 1, map.id() + "：極境更硬、更痛、更快");
+            assertTrue(uber.life() > 4 && uber.damage() >= 1.3 && uber.cooldown() < 1, map.id() + "：極境更硬、更痛、更快"); // 2026-10-26：照 PoE2 ×1.32
             assertFalse(uber.skills().isEmpty(), map.id() + "：極境專屬的招式");
             for (final BossSkillUse use : uber.skills()) {
                 assertTrue(use.id().startsWith("uber_"), map.id() + "：極境的招式代號 " + use.id());
@@ -351,22 +346,22 @@ class UberTest {
         // 2026-10：每秒傷害上限統一 15 萬（血量照終局 5 萬、極境 10 萬、巔峰 15 萬打 3 分半）；超過的部分遞減（上限～2 倍算 30%、2～3 倍算 10%、3～4 倍算 5%、4 倍以上算 1%）
         for (final MapConfig.MapDef map : config.regularFinals()) {
             final MapConfig.Uber uber = config.uber(map.id());
-            assertEquals(4000000, uber.dpsCap(), 1e-9, map.id()); // 2026-10-21 晚：一律 400 萬起遞減
-            assertEquals(List.of(new MapConfig.DpsTier(4000000, 0.8), new MapConfig.DpsTier(7000000, 0.55), new MapConfig.DpsTier(10000000, 0.3), new MapConfig.DpsTier(13000000, 0.15), new MapConfig.DpsTier(16000000, 0.05)), uber.dpsOver(), map.id());
+            assertEquals(2000000, uber.dpsCap(), 1e-9, map.id()); // 2026-10-27 照站長：每秒 200 萬起遞減（這次之前 100 萬）
         }
         // 2026-10-21 晚：終局、極境、巔峰、金庫之主、淵鯨一律 400 萬起遞減（開天者、南瓜王、潮汐統帥不遞減）
-        assertEquals(4000000, config.finalDpsCap(), 1e-9, "一般終局");
-        assertEquals(List.of(new MapConfig.DpsTier(4000000, 0.8), new MapConfig.DpsTier(7000000, 0.55), new MapConfig.DpsTier(10000000, 0.3), new MapConfig.DpsTier(13000000, 0.15), new MapConfig.DpsTier(16000000, 0.05)), config.finalDpsOver());
-        assertEquals(4000000, config.pinnacle("awakener").dpsCap(), 1e-9, "巔峰");
-        assertEquals(4000000, config.heistDpsCap(), 1e-9, "金庫之主");
-        assertEquals(List.of(new MapConfig.DpsTier(4000000, 0.8), new MapConfig.DpsTier(7000000, 0.55), new MapConfig.DpsTier(10000000, 0.3), new MapConfig.DpsTier(13000000, 0.15), new MapConfig.DpsTier(16000000, 0.05)), config.heistDpsOver());
-        assertEquals(4000000, config.whaleDpsCap(), 1e-9, "淵鯨");
-        assertEquals(List.of(new MapConfig.DpsTier(4000000, 0.8), new MapConfig.DpsTier(7000000, 0.55), new MapConfig.DpsTier(10000000, 0.3), new MapConfig.DpsTier(13000000, 0.15), new MapConfig.DpsTier(16000000, 0.05)), config.whaleDpsOver());
-        // 終局 19.1（T16 再 ×195）、極境再 ×31.7、巔峰 1195.7（再 ×11.7）：打 Boss 每秒 50／100／200 萬打 3 分半
+        // 2026-10-27 照站長：全部 200 萬起遞減（這次之前 100 萬），分段整個往上移 100 萬
+        assertEquals(2000000, config.finalDpsCap(), 1e-9, "一般終局");
+        assertEquals(2000000, config.pinnacle("awakener").dpsCap(), 1e-9, "巔峰");
+        assertEquals(2000000, config.heistDpsCap(), 1e-9, "金庫之主");
+        assertEquals(2000000, config.whaleDpsCap(), 1e-9, "淵鯨");
+        assertEquals(List.of(new MapConfig.DpsTier(2000000, 0.8), new MapConfig.DpsTier(2750000, 0.55), new MapConfig.DpsTier(3500000, 0.3),
+                new MapConfig.DpsTier(4250000, 0.15), new MapConfig.DpsTier(5000000, 0.05)), config.finalDpsOver());
+        assertEquals(200, MapService.OPENING_INVULNERABLE_TICKS, "開天者、南瓜王、潮汐統帥開場無敵 10 秒");
+        // 2026-10-26 照 PoE2：終局 = 原作 Trialmaster／Zarokh 750%、巔峰 = Arbiter of Ash 990%（都是比傳奇怪，傳奇怪 ×29）
         for (final MapConfig.MapDef map : config.regularFinals()) {
-            assertEquals(19.1, map.boss().life(), 1e-9, map.id());
+            assertEquals(7.5, map.boss().life(), 1e-9, map.id());
         }
-        assertEquals(1195.7, config.find("awakener").boss().life(), 1e-9);
+        assertEquals(86.79, config.find("awakener").boss().life(), 0.001); // 2026-10-26：巔峰 = 極境的兩倍
         final MapConfig.Uber bare = MapConfig.parseUber(YamlNode.load("test.yml", new java.io.StringReader("name: x\n")));
         assertEquals(0, bare.dpsCap(), 1e-9, "沒寫就不限");
     }

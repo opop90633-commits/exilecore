@@ -151,17 +151,52 @@ class PartyTest {
         config.load(DATA);
         assertEquals(6, config.maxSize());
         assertEquals(0.05, config.shareThreshold(), 1e-9);
-        // 2 到 6 人：普通、魔法、稀有 +50% … +250%，傳奇 +100% … +500%
-        for (final MonsterRarity rarity : new MonsterRarity[] {MonsterRarity.NORMAL, MonsterRarity.MAGIC, MonsterRarity.RARE}) {
-            assertEquals(1.0, config.lifeFactor(rarity, 1), 1e-9);
-            assertEquals(1.5, config.lifeFactor(rarity, 2), 1e-9);
-            assertEquals(3.5, config.lifeFactor(rarity, 6), 1e-9);
-            assertEquals(3.5, config.lifeFactor(rarity, 9), 1e-9, "最多算 6 人");
+        // 2026-10-27 照 PoE2：每多一人 基本 +50% ＋ 稀有度 魔法 10／稀有 30／傳奇 85（相加）
+        //   這次之前普通、魔法、稀有都 +50%（6 人 ×3.5）、傳奇 +100%（6 人 ×6）
+        final double[][] expected = {{1.5, 3.5}, {1.6, 4.0}, {1.8, 5.0}};
+        final MonsterRarity[] rarities = {MonsterRarity.NORMAL, MonsterRarity.MAGIC, MonsterRarity.RARE};
+        for (int i = 0; i < rarities.length; i++) {
+            assertEquals(1.0, config.lifeFactor(rarities[i], 1), 1e-9);
+            assertEquals(expected[i][0], config.lifeFactor(rarities[i], 2), 1e-9);
+            assertEquals(expected[i][1], config.lifeFactor(rarities[i], 6), 1e-9);
+            assertEquals(expected[i][1], config.lifeFactor(rarities[i], 9), 1e-9, "最多算 6 人");
         }
-        assertEquals(2.0, config.lifeFactor(MonsterRarity.UNIQUE, 2), 1e-9);
-        assertEquals(6.0, config.lifeFactor(MonsterRarity.UNIQUE, 6), 1e-9);
+        assertEquals(2.35, config.lifeFactor(MonsterRarity.UNIQUE, 2), 1e-9);
+        assertEquals(7.75, config.lifeFactor(MonsterRarity.UNIQUE, 6), 1e-9);
+        final PartyConfig defaults = new PartyConfig();
+        for (final MonsterRarity rarity : MonsterRarity.values()) {
+            assertEquals(defaults.lifeFactor(rarity, 6), config.lifeFactor(rarity, 6), 1e-9, "程式的預設值跟出貨的 party.yml 一樣：" + rarity);
+        }
         assertEquals(1.0, config.lifeFactor(MonsterRarity.UNIQUE, 0), 1e-9, "至少算 1 人");
         assertEquals(1.2, config.partyBonus(3), 1e-9);
+    }
+
+    @Test
+    void onlyNearbyMembersCount() throws IOException {
+        // 2026-10-26：「附近」＝水平 40 格（一間 Boss 房的直徑）；2026-10-27 起上下也要在 24 格內
+        final PartyConfig config = new PartyConfig();
+        config.load(DATA);
+        assertEquals(40, config.nearbyRadius(), 1e-9);
+        assertTrue(config.withinNearby(0, 0));
+        assertTrue(config.withinNearby(24, 32), "剛好 40 格算");
+        assertFalse(config.withinNearby(30, 30), "42 格不算");
+        assertFalse(config.withinNearby(64, 0), "以前經驗的 64 格現在不算");
+        // 2026-10-27：上下差超過 24 格不算（這次之前高度不管）
+        assertTrue(config.withinNearby(10, 24, 10), "上下剛好 24 格算");
+        assertTrue(config.withinNearby(10, -24, 10));
+        assertFalse(config.withinNearby(0, 25, 0), "正上方 25 格不算");
+        assertFalse(config.withinNearby(0, -40, 0), "正下方很深的洞不算");
+        assertFalse(config.withinNearby(30, 0, 30), "水平還是照 40 格");
+        // 經驗的多人倍率：刷怪時 4 人，倒下時附近只剩 2 人 → 算 2 人；附近沒人也至少 1 人
+        assertEquals(2, PartyConfig.experiencePlayers(4, 2));
+        assertEquals(3, PartyConfig.experiencePlayers(3, 5), "後來才走進來的人不算（生命沒有照他加）");
+        assertEquals(1, PartyConfig.experiencePlayers(4, 0));
+        // 範圍可以在 party.yml 改；0 或負的不行
+        final PartyConfig custom = PartyConfig.of(tw.exilecore.core.config.YamlNode.load("party.yml",
+                new java.io.StringReader("party:\n  nearby_radius: 48\n")));
+        assertEquals(48, custom.nearbyRadius(), 1e-9);
+        assertThrows(IllegalArgumentException.class, () -> PartyConfig.of(tw.exilecore.core.config.YamlNode.load("party.yml",
+                new java.io.StringReader("party:\n  nearby_radius: 0\n"))));
     }
 
     @Test

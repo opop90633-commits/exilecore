@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>數值圖鑑</title>
+<!-- 2026-10-26：圖鑑的完整數值（所有類別、技能 1～40 級、詞綴各階、基底、昇華、天賦…）。數值全部從 values.json 來（伺服器照設定檔算），這頁不寫死任何數字。 -->
+<style>
+:root {
+  --bg: #0f0d0b; --panel: #1a1612; --panel2: #221c16; --line: #3a2f24; --text: #e8dcc8; --dim: #9a8b76; --faint: #6d604f;
+  --gold: #f5b942; --unique: #af6025; --uniqueText: #e0a86a; --magic: #8888ff; --rare: #ffff77; --gem: #1ba29b; --support: #8fd3ff;
+  --fire: #ff7a45; --cold: #6ec6ff; --lightning: #ffe066; --chaos: #c77dff; --phys: #d6cfc4; --good: #7bd88f; --bad: #ff6b6b;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif; }
+a { color: var(--gold); }
+header { position: sticky; top: 0; z-index: 10; background: linear-gradient(#17130fee, #0f0d0bf2); border-bottom: 1px solid var(--line); backdrop-filter: blur(4px); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; }
+.top { display: flex; align-items: center; gap: 12px; padding: 10px 0 6px; flex-wrap: wrap; }
+.top h1 { margin: 0; font-size: 20px; color: var(--gold); letter-spacing: .05em; }
+.top .nav { margin-left: auto; display: flex; gap: 12px; font-size: 14px; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
+.tab { flex: none; padding: 6px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--dim); cursor: pointer; font: inherit; font-size: 14px; }
+.tab[aria-selected="true"] { color: #1a1206; background: var(--gold); border-color: var(--gold); font-weight: 700; }
+.tab .n { font-size: 11px; opacity: .75; margin-left: 4px; }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 0 10px; align-items: center; }
+.tools input[type=search] { flex: 1 1 220px; min-width: 0; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line); background: #0b0907; color: var(--text); font: inherit; }
+.chips { display: flex; gap: 4px; flex-wrap: wrap; }
+.chip { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--dim); cursor: pointer; font: inherit; font-size: 13px; }
+.chip .ci { margin-right: 2px; font-size: 11px; }
+.chip[aria-pressed="true"] { color: var(--text); border-color: var(--gold); background: #3a2b14; }
+main { padding: 12px 0 60px; }
+.count { color: var(--faint); font-size: 13px; margin: 0 0 8px; }
+.list { display: grid; gap: 6px; }
+details.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+details.card[open] { background: var(--panel2); border-color: #5a4630; }
+details.card > summary { list-style: none; cursor: pointer; padding: 8px 12px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+details.card > summary::-webkit-details-marker { display: none; }
+details.card > summary::before { content: "▸"; color: var(--faint); width: 10px; flex: none; }
+details.card[open] > summary::before { content: "▾"; }
+.name { font-weight: 700; }
+.name.gem { color: var(--gem); } .name.sup { color: var(--support); } .name.uni { color: var(--uniqueText); } .name.cur { color: #d9c8a0; }
+.sub { color: var(--dim); font-size: 13px; }
+.kv { color: var(--dim); font-size: 13px; margin-left: auto; text-align: right; }
+.kv b { color: var(--text); font-weight: 600; }
+.body { padding: 2px 14px 12px 32px; }
+.body p { margin: 4px 0; }
+.mods { margin: 6px 0; padding: 0; list-style: none; }
+.mods li { color: var(--support); padding: 1px 0; }
+.mods.uni li { color: #9fb4ff; }
+.mods.dim li { color: var(--dim); }
+.flavour { color: var(--unique); font-style: italic; }
+.tag { display: inline-block; padding: 0 7px; margin: 1px 2px 1px 0; border-radius: 4px; background: #2c241b; border: 1px solid var(--line); color: var(--dim); font-size: 12px; }
+.tablebox { overflow-x: auto; margin: 6px 0; border: 1px solid var(--line); border-radius: 6px; max-width: 100%; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { padding: 4px 8px; border-bottom: 1px solid #2a221a; text-align: right; white-space: nowrap; }
+th { background: #241d16; color: var(--dim); font-weight: 600; position: sticky; top: 0; }
+td.l, th.l { text-align: left; white-space: normal; min-width: 180px; }
+tr:hover td { background: #2a2219; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; margin: 6px 0 2px; }
+.seg button { border: 0; background: var(--panel); color: var(--dim); padding: 4px 12px; cursor: pointer; font: inherit; font-size: 13px; }
+.seg button[aria-pressed="true"] { background: var(--gold); color: #1a1206; font-weight: 700; }
+h3 { margin: 18px 0 6px; font-size: 16px; color: var(--gold); }
+h4 { margin: 10px 0 4px; font-size: 14px; color: var(--text); }
+.grid2 { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+.muted { color: var(--faint); }
+.fire { color: var(--fire); } .cold { color: var(--cold); } .lightning { color: var(--lightning); } .chaos { color: var(--chaos); } .phys { color: var(--phys); }
+.empty, .err { padding: 30px; text-align: center; color: var(--dim); }
+.err, .bad { color: var(--bad); }
+.more { display: block; margin: 10px auto; padding: 8px 18px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--text); cursor: pointer; font: inherit; }
+@media (max-width: 640px) {
+  header { position: static; }
+  .kv { margin-left: 22px; text-align: left; width: 100%; }
+  .body { padding: 2px 10px 10px 14px; }
+  td.l, th.l { min-width: 140px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <h1>數值圖鑑</h1>
+      <span class="sub" id="status">讀取中…</span>
+      <nav class="nav"><a href="../codex">← 圖鑑</a><a href="../">首頁</a></nav>
+    </div>
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <div class="tools">
+      <input type="search" id="q" placeholder="搜尋名稱、效果、標籤…" autocomplete="off">
+      <div class="chips" id="chips"></div>
+    </div>
+  </div>
+</header>
+<main class="wrap" id="main"><div class="empty">讀取中…</div></main>
+<script>
+"use strict";
+// 2026-10-26：全部的數字都從 values.json 來；這裡只決定怎麼排版。
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;"}[c]));
+const num = v => v === undefined || v === null ? "" : (typeof v === "number" ? (Number.isInteger(v) ? String(v) : String(Math.round(v * 100) / 100)) : String(v));
+const ul = (lines, cls = "") => lines && lines.length ? `<ul class="mods ${cls}">${lines.map(l => `<li>${esc(l)}</li>`).join("")}</ul>` : "";
+const PAGE = 120;
+let DATA = null, tab = "skills", chip = "", query = "", shown = PAGE;
+
+const DMG_CLASS = {"火焰": "fire", "冰冷": "cold", "閃電": "lightning", "混沌": "chaos", "物理": "phys"};
+const BASE_GROUPS = [["weapon", "武器"], ["caster", "法杖類"], ["armour", "護甲"], ["shield", "盾"], ["quiver", "箭袋"], ["offhand", "副手"],
+  ["jewellery", "飾品"], ["jewel", "珠寶"], ["map", "換界石"], ["flask", "藥劑"], ["charm", "護符"]];
+const AFFIX_CATS = [["prefix", "前綴"], ["suffix", "後綴"], ["jewel", "珠寶"], ["flask", "藥劑"], ["charm", "護符"], ["map", "地圖／換界石"], ["corrupted", "腐化"], ["unveiled", "揭露（隱匿）"]];
+// 2026-10-27：珠寶、藥劑、護符的篩選鈕加小圖示分得出來（珠寶紅綠藍三顆菱形、藥劑紅藍兩瓶、護符紫色星芒）；這次之前只有字
+const CHIP_ICON = {
+  jewel: `<span class="ci" style="color:#e05050">◆</span><span class="ci" style="color:#50c060">◆</span><span class="ci" style="color:#5080ff">◆</span>`,
+  flask: `<span class="ci" style="color:#d7263d">⬮</span><span class="ci" style="color:#2f6bff">⬮</span>`,
+  charm: `<span class="ci" style="color:#c9a0ff">✧</span>`
+};
+const groupName = g => (BASE_GROUPS.find(x => x[0] === g) || [g, g])[1];
+
+function tagChips(ids) {
+  return (ids || []).map(t => `<span class="tag">${esc(DATA.tagNames[t] || t)}</span>`).join("");
+}
+function req(r) {
+  if (!r) return "";
+  const parts = [`等級 ${r.level}`];
+  if (r.str) parts.push(`力量 ${r.str}`);
+  if (r.dex) parts.push(`敏捷 ${r.dex}`);
+  if (r.int) parts.push(`智慧 ${r.int}`);
+  return parts.join("、");
+}
+function damageText(d) {
+  if (!d) return "";
+  return Object.entries(d).map(([k, v]) => `<span class="${DMG_CLASS[k] || ""}">${esc(k)} ${v[0]}–${v[1]}</span>`).join("、");
+}
+function statTable(rows) {
+  const body = rows.filter(r => r[1] !== undefined && r[1] !== null && r[1] !== "")
+    .map(r => `<tr><th class="l">${esc(r[0])}</th><td class="l">${r[2] ? r[1] : esc(r[1])}</td></tr>`).join("");
+  return body ? `<div class="tablebox"><table>${body}</table></div>` : "";
+}
+
+// ---- 每一類 ----
+const CATS = {
+  skills: {
+    title: "技能", items: () => DATA.skills.filter(s => !s.granted),
+    chips: () => [["", "全部"], ["attack", "攻擊"], ["spell", "法術"], ["minion", "召喚物"], ["aura", "光環／常駐"], ["warcry", "戰吼"], ["src", "專屬掉落"]],
+    match: (s, c) => !c || (c === "src" ? !!s.source : c === "minion" ? s.tags.includes("minion") : c === "aura" ? s.mechanic === "aura" : c === "warcry" ? s.mechanic === "warcry" : s.type === c),
+    head: s => skillHead(s), body: s => skillBody(s)
+  },
+  granted: {
+    title: "賦予技能", items: () => DATA.skills.filter(s => s.granted),
+    head: s => skillHead(s), body: s => skillBody(s)
+  },
+  supports: {
+    title: "輔助", items: () => DATA.supports,
+    chips: () => [["", "全部"], ["1", "第 1 階"], ["2", "第 2 階"], ["3", "第 3 階"], ["src", "專屬掉落"], ["spirit", "精魂"]],
+    match: (s, c) => !c || (c === "src" ? !!s.source : c === "spirit" ? !!s.spirit : String(s.tier) === c),
+    head: s => `<span class="name sup">${esc(s.name)}</span><span class="sub">第 ${s.tier} 階・${esc(s.requires)}</span>
+      <span class="kv">魔耗 <b>×${num(s.mana)}</b>・可掛 <b>${s.skillCount}</b> 種技能</span>`,
+    body: s => `${s.text ? `<p>${esc(s.text)}</p>` : ""}${ul(s.lines)}
+      ${statTable([["可以輔助", s.requires], ["要有的標籤", tagChips(s.requireTags) || "（不限）", true], ["不能有的標籤", tagChips(s.excludeTags) || "—", true],
+        ["魔力消耗倍率", "×" + num(s.mana)], ["來源", s.source || "未切割輔助寶石"]])}
+      ${supportedSkills(s)}`
+  },
+  uniques: {
+    title: "傳奇", items: () => DATA.uniques,
+    chips: () => [["", "全部"], ...BASE_GROUPS.filter(g => DATA.uniques.some(u => u.group === g[0])), ["chase", "追逐級"]],
+    match: (u, c) => !c || (c === "chase" ? !!u.chase : u.group === c),
+    head: u => `<span class="name uni">${esc(u.name)}${u.chase ? " ✦" : ""}</span><span class="sub">${esc(u.baseName)}・${esc(u.slot)}</span>
+      <span class="kv">物品等級 <b>${u.level}</b>${u.req ? `・需求 <b>${esc(req(u.req))}</b>` : ""}</span>`,
+    body: u => `${baseStats(u)}${ul(u.mods, "uni")}${u.veiled ? `<p class="sub">${esc(u.veiled)}</p>` : ""}
+      ${u.sources && u.sources.length ? `<p class="sub">掉落：${esc(u.sources.join("、"))}</p>` : ""}
+      ${(u.flavour || []).map(f => `<p class="flavour">${esc(f)}</p>`).join("")}`
+  },
+  bases: {
+    title: "裝備基底", items: () => DATA.bases,
+    chips: () => [["", "全部"], ...BASE_GROUPS.filter(g => DATA.bases.some(b => b.group === g[0]))],
+    match: (b, c) => !c || b.group === c,
+    head: b => `<span class="name">${esc(b.name)}</span><span class="sub">${esc(groupName(b.group))}・${esc(b.slot)}</span><span class="kv">${baseSummary(b)}</span>`,
+    body: b => `${baseStats(b)}${b.grants ? `<p>賦予技能：<b class="name gem">${esc(b.grants)}</b></p>` : ""}${ul(b.lines)}
+      <p>${tagChips((b.tags || []).filter(t => DATA.tagNames[t]))}</p>`
+  },
+  affixes: {
+    title: "詞綴", items: () => DATA.affixes,
+    chips: () => [["", "全部"], ...AFFIX_CATS.filter(c => DATA.affixes.some(a => a.cat === c[0]))],
+    match: (a, c) => !c || a.cat === c,
+    head: a => `<span class="name" style="color:${a.cat === "corrupted" ? "#d20000" : a.cat === "unveiled" ? "#c48bff" : a.type === "前綴" ? "#8888ff" : "#ffd27f"}">${esc(a.name)}</span>
+      <span class="sub">${esc((AFFIX_CATS.find(c => c[0] === a.cat) || ["", a.cat])[1])}・${esc(a.type)}・${esc(a.slots.join("、"))}</span>
+      <span class="kv"><b>${a.tiers.length}</b> 階・總權重 <b>${a.weight}</b></span>`,
+    body: a => `<div class="tablebox"><table><tr><th>階</th><th>物品等級</th><th>權重</th><th class="l">名稱</th><th class="l">數值</th></tr>
+      ${a.tiers.map(t => `<tr><td>T${t.t}</td><td>${t.ilvl}</td><td>${t.weight}</td><td class="l">${esc(t.name || "")}</td><td class="l">${esc(t.text)}</td></tr>`).join("")}
+      </table></div><p class="sub">出現在 ${a.baseCount} 種基底（${esc(a.groups.map(groupName).join("、"))}）・群組 ${esc(a.group)}</p>`
+  },
+  currencies: {
+    title: "通貨", items: () => DATA.currencies,
+    head: c => `<span class="name cur">${esc(c.name)}</span><span class="sub">${esc(c.text)}</span>`,
+    body: c => `${statTable([["效果", c.text], ["保證詞綴", c.affix], ["成功率", c.success ? num(c.success * 100) + "%" : ""],
+      ["開到第幾孔", c.sockets || ""], ["可用的稀有度", c.rarities ? c.rarities.join("、") : "不限"], ["堆疊", c.stack],
+      ["掉落權重", c.weight || "不從怪物掉落"], ["最低怪物等級", c.level]])}${c.flavor ? `<p class="flavour">${esc(c.flavor)}</p>` : ""}`
+  },
+  runes: {
+    title: "符文", items: () => DATA.runes,
+    head: r => `<span class="name cur">${esc(r.name)}</span>`,
+    body: r => `<h4>武器</h4>${ul(r.weapon)}<h4>防具、副手</h4>${ul(r.armour)}`
+  },
+  ascendancies: {
+    title: "昇華", items: () => DATA.ascendancies,
+    chips: () => [["", "全部"], ...[...new Set(DATA.ascendancies.map(a => a.className))].map(n => [n, n])],
+    match: (a, c) => !c || a.className === c,
+    head: a => `<span class="name" style="color:${esc(a.color)}">${esc(a.name)}</span><span class="sub">${esc(a.className)}</span><span class="kv"><b>${a.nodeCount}</b> 個天賦</span>`,
+    body: a => `<p class="sub">${esc(a.summary)}</p>${a.branches.map((b, i) => `<h4>分支 ${i + 1}</h4><div class="tablebox"><table>
+      <tr><th class="l">天賦</th><th>點數</th><th class="l">效果</th></tr>${b.map(n => `<tr><td class="l">${esc(n.name)}</td><td>${n.cost}</td>
+      <td class="l">${n.lines.map(esc).join("<br>")}${n.note ? `<br><span class="muted">${esc(n.note)}</span>` : ""}</td></tr>`).join("")}</table></div>`).join("")}`
+  },
+  passives: { title: "天賦樹", custom: () => passivesPage() },
+  atlas: {
+    title: "星圖天賦", items: () => DATA.atlas.nodes,
+    chips: () => [["", "全部"], ["keystone", "基石"], ["notable", "核心"], ["small", "小點"]],
+    match: (n, c) => !c || n.kind === c,
+    head: n => `<span class="name">${esc(n.name)}</span><span class="sub">${esc(n.trunk)}・${n.kind === "keystone" ? "基石" : n.kind === "notable" ? "核心" : "小點"}</span><span class="kv">${n.cost} 點</span>`,
+    body: n => ul(n.lines)
+  },
+  monsters: { title: "怪物", custom: () => monstersPage() },
+  maps: { title: "地圖與 Boss", custom: () => mapsPage() },
+  events: { title: "事件", custom: () => eventsPage() }
+};
+
+// ---- 技能 ----
+function skillHead(s) {
+  const lv20 = s.levels[19] || s.levels[s.levels.length - 1] || {};
+  const bits = [];
+  if (lv20.min !== undefined) bits.push(`傷害 <b>${lv20.min}–${lv20.max}</b>`);
+  else if (lv20.eff !== undefined) bits.push(`效益 <b>${lv20.eff}%</b>`);
+  if (lv20.spirit) bits.push(`精魂 <b>${lv20.spirit}</b>`);
+  if (lv20.mana) bits.push(`魔耗 <b>${lv20.mana}</b>`);
+  return `<span class="name gem">${esc(s.name)}</span><span class="sub">${esc(s.headline)}</span>
+    <span class="kv">${bits.length ? "Lv.20：" + bits.join("・") : ""}</span>`;
+}
+function skillBody(s) {
+  const top = statTable([
+    ["種類", s.typeName], ["標籤", tagChips(s.tags), true], ["武器", s.weapons.length ? tagChips(s.weapons) : "", true],
+    ["施法時間", s.castTime !== undefined ? num(s.castTime) + " 秒" : ""], ["攻擊速度", s.attackSpeed !== undefined ? s.attackSpeed + "%" : ""],
+    ["冷卻", s.cooldown ? num(s.cooldown) + " 秒" : ""],
+    ["傷害類型", s.damageTypes ? Object.entries(s.damageTypes).map(([k, v]) => `<span class="${DMG_CLASS[k] || ""}">${esc(k)} ${v}%</span>`).join("、") : "", true],
+    ["寶石階級", s.granted ? "" : "第 " + s.tier + " 階"], ["來源", s.source || ""], ["賦予的基底", s.grantedBy ? s.grantedBy.join("、") : ""]]);
+  return `<p>${esc(s.text)}</p>${top}${ul(s.mods)}${ul(s.info, "dim")}${ul(s.conversion, "dim")}
+    <div class="seg" data-skill="${esc(s.id)}"><button data-range="1" aria-pressed="true">Lv.1–20</button><button data-range="21" aria-pressed="false">Lv.21–40</button></div>
+    <div class="lvtable">${levelTable(s, 1)}</div>
+    <p class="muted">Lv.21–40 是 20 級寶石再加裝備的「+x 技能等級」。數值是沒有輔助、沒有裝備加成的基礎值。</p>
+    ${s.supports.length ? `<details><summary class="sub">能掛的輔助（${s.supports.length}）</summary><p>${s.supports.map(id => {
+      const sup = DATA.supports.find(x => x.id === id); return `<span class="tag">${esc(sup ? sup.name : id)}</span>`; }).join("")}</p></details>` : ""}`;
+}
+const LEVEL_COLS = [["req", "需求等級"], ["mana", "魔耗"], ["dmg", "基礎傷害"], ["eff", "效益"], ["time", "施法時間"], ["cd", "冷卻"],
+  ["spirit", "精魂"], ["spiritEach", "每隻精魂"], ["minions", "召喚上限"]];
+function levelTable(s, from) {
+  const rows = s.levels.filter(r => r.lv >= from && r.lv < from + 20);
+  const cols = LEVEL_COLS.filter(([k]) => rows.some(r => k === "dmg" ? r.min !== undefined : r[k] !== undefined));
+  const special = rows.some(r => r.l);
+  const cell = (r, k) => k === "dmg" ? (r.min !== undefined ? `${r.min}–${r.max}` : "") : k === "eff" ? (r.eff !== undefined ? r.eff + "%" : "")
+    : (k === "time" || k === "cd") ? (r[k] !== undefined ? num(r[k]) + " 秒" : "") : num(r[k]);
+  return `<div class="tablebox"><table><tr><th>等級</th>${cols.map(c => `<th>${c[1]}</th>`).join("")}${special ? `<th class="l">效果</th>` : ""}</tr>
+    ${rows.map(r => `<tr><td>${r.lv}</td>${cols.map(([k]) => `<td>${cell(r, k)}</td>`).join("")}${special ? `<td class="l">${(r.l || []).map(i => esc(s.lines[i])).join("<br>")}</td>` : ""}</tr>`).join("")}
+    </table></div>`;
+}
+function supportedSkills(s) {
+  const names = DATA.skills.filter(k => k.supports.includes(s.id)).map(k => `<span class="tag">${esc(k.name)}</span>`);
+  return names.length ? `<details><summary class="sub">能掛的技能（${names.length}）</summary><p>${names.join("")}</p></details>` : "";
+}
+
+// ---- 基底 ----
+function baseSummary(b) {
+  const bits = [];
+  if (b.damage) bits.push(damageText(b.damage));
+  if (b.aps) bits.push(`攻速 <b>${num(b.aps)}</b>`);
+  if (b.armour) bits.push(`護甲 <b>${b.armour}</b>`);
+  if (b.evasion) bits.push(`閃避 <b>${b.evasion}</b>`);
+  if (b.es) bits.push(`能量護盾 <b>${b.es}</b>`);
+  if (b.block) bits.push(`格擋 <b>${num(b.block)}%</b>`);
+  if (b.recovery) bits.push(`回復 <b>${num(b.recovery)}</b>`);
+  if (b.mapTier) bits.push(`T<b>${b.mapTier}</b>`);
+  if (b.req) bits.push(`需求等級 <b>${b.req.level}</b>`);
+  else if (b.reqLevel) bits.push(`需求等級 <b>${b.reqLevel}</b>`);
+  return bits.join("・");
+}
+function baseStats(b) {
+  return statTable([
+    ["傷害", damageText(b.damage), true], ["每秒攻擊次數", num(b.aps)], ["暴擊率", b.crit !== undefined ? num(b.crit) + "%" : ""], ["每秒傷害", num(b.dps)],
+    ["護甲", num(b.armour)], ["閃避", num(b.evasion)], ["能量護盾", num(b.es)], ["格擋", b.block ? num(b.block) + "%" : ""],
+    ["需求", req(b.req)], ["隱含", b.implicit], ["符文孔", num(b.runeSockets)], ["裝填時間", b.reload ? num(b.reload) + " 秒" : ""],
+    ["回復量", num(b.recovery)], ["持續", b.duration ? num(b.duration) + " 秒" : ""], ["充能", b.charges ? `${b.charges}（每次用 ${b.perUse}）` : ""],
+    ["觸發", b.trigger], ["需求等級", b.req ? "" : num(b.reqLevel)], ["換界石階級", b.mapTier ? "T" + b.mapTier : ""],
+    ["數值的物品等級", b.ilvl && !b.mapTier ? b.ilvl : ""]]);
+}
+
+// ---- 天賦樹、怪物、地圖、事件（整頁） ----
+function filterLines(list, f) {
+  return list.filter(x => !query || JSON.stringify(x).toLowerCase().includes(query));
+}
+function passivesPage() {
+  const p = DATA.passives;
+  const node = n => `<div class="box"><b>${esc(n.name)}</b>${ul(n.lines)}</div>`;
+  return `<p class="count">共 ${p.total} 個節點（珠寶孔 ${p.sockets} 個）</p>
+    <h3>基石（${p.keystones.length}）</h3><div class="grid2">${filterLines(p.keystones).map(node).join("")}</div>
+    <h3>核心（${p.notables.length}）</h3><div class="grid2">${filterLines(p.notables).map(node).join("")}</div>
+    <h3>小點（同樣效果合在一起）</h3><div class="tablebox"><table><tr><th class="l">效果</th><th>數量</th></tr>
+    ${filterLines(p.small).map(s => `<tr><td class="l">${esc(s.text)}</td><td>${s.count}</td></tr>`).join("")}</table></div>`;
+}
+function monstersPage() {
+  const m = DATA.monsters;
+  return `<h3>稀有度</h3><div class="tablebox"><table><tr><th class="l">稀有度</th><th>權重</th><th>生命倍率</th><th>傷害倍率</th><th>詞綴</th><th>物品數量</th><th>稀有度</th><th>經驗倍率</th><th>元素抗性</th><th>身上的詛咒效果</th></tr>
+    ${m.rarities.map(r => `<tr><td class="l">${esc(r.name)}</td><td>${r.weight}</td><td>×${num(r.life)}</td><td>×${num(r.damage)}</td><td>${esc(r.mods)}</td><td>+${r.quantity}%</td><td>+${r.rarity}%</td><td>×${num(r.experience)}</td><td>${num(r.resist)}%</td><td>${num(r.curse)}%</td></tr>`).join("")}
+    </table></div><p class="muted">基礎暴擊率 ${num(m.crit)}%</p>
+    <h3>等級表（普通怪）</h3><div class="tablebox" style="max-height:420px"><table><tr><th>等級</th><th>生命</th><th>每下傷害</th><th>經驗</th><th>命中</th><th>閃避</th><th>護甲</th></tr>
+    ${m.levels.map(l => `<tr><td>${l.lv}</td><td>${l.life}</td><td>${esc(l.dmg)}</td><td>${l.exp}</td><td>${l.acc}</td><td>${l.eva}</td><td>${l.arm}</td></tr>`).join("")}</table></div>
+    <h3>種類</h3><div class="tablebox"><table><tr><th class="l">生物</th><th>生命倍率</th><th>傷害倍率</th><th class="l">招式</th></tr>
+    ${filterLines(m.types).map(t => `<tr><td class="l">${esc(t.name)}</td><td>×${num(t.life)}</td><td>×${num(t.damage)}</td><td class="l">${esc(t.skills.join("、"))}${t.skillChance ? `（${t.skillChance}% 的怪帶）` : ""}</td></tr>`).join("")}</table></div>
+    <h3>怪物詞綴（${m.mods.length}）</h3><div class="grid2">${filterLines(m.mods).map(x => `<div class="box"><b>${esc(x.name)}</b>${x.minLevel ? `<span class="muted">（${x.minLevel} 級起）</span>` : ""}${ul(x.lines)}${x.skills.length ? `<p class="sub">招式：${esc(x.skills.join("、"))}</p>` : ""}</div>`).join("")}</div>`;
+}
+function bossBox(b) {
+  if (!b) return "";
+  return `<b>${esc(b.name)}</b>${b.named ? " <span class=\"tag\">具名</span>" : ""}<br><span class="sub">生命 ×${num(b.life)}・傷害 ×${num(b.damage)}${b.phases ? `・${b.phases} 個階段` : ""}</span>
+    ${b.mods && b.mods.length ? `<br><span class="sub">詞綴：${esc(b.mods.join("、"))}</span>` : ""}${b.skills && b.skills.length ? `<br><span class="sub">招式：${esc(b.skills.join("、"))}</span>` : ""}
+    ${b.enrage ? `<br><span class="sub">${esc(b.enrage)}</span>` : ""}`;
+}
+function mapsPage() {
+  const m = DATA.maps;
+  return `<h3>階級</h3><div class="tablebox"><table><tr><th>階級</th><th>怪物等級</th><th>怪物生命</th><th>怪物傷害</th><th>Boss 生命</th></tr>
+    ${m.tiers.map(t => `<tr><td>T${t.tier}</td><td>${t.level}</td><td>×${num(t.life)}</td><td>×${num(t.damage)}</td><td>×${num(t.bossLife)}</td></tr>`).join("")}</table></div>
+    <h3>地圖（${m.maps.length}）</h3><div class="grid2">${filterLines(m.maps).map(x => `<div class="box"><b class="name">${esc(x.name)}</b> <span class="muted">${x.tier ? "T" + x.tier : ""}</span>
+      ${x.lore ? `<p class="flavour">${esc(x.lore)}</p>` : ""}<p>${bossBox(x.boss)}</p></div>`).join("")}</div>
+    <h3>終局與巔峰（${m.finals.length}）</h3><div class="grid2">${filterLines(m.finals).map(x => `<div class="box"><b class="name">${esc(x.name)}</b> <span class="tag">${esc(x.kind)}</span>
+      ${x.lore ? `<p class="flavour">${esc(x.lore)}</p>` : ""}<p>${bossBox(x.boss)}</p>
+      ${x.points !== undefined ? `<p class="sub">首殺天賦點 ${x.points}・怪物等級 +${x.levelBonus}</p>` : ""}
+      ${x.uber ? `<p><b class="bad">${esc(x.uber.name)}</b><br><span class="sub">生命 ×${num(x.uber.life)}・傷害 ×${num(x.uber.damage)}・等級 +${x.uber.levelBonus}${x.uber.phases ? `・${x.uber.phases} 個階段` : ""}</span>
+        ${x.uber.skills.length ? `<br><span class="sub">招式：${esc(x.uber.skills.join("、"))}</span>` : ""}${ul(x.uber.lines, "dim")}</p>` : ""}</div>`).join("")}</div>`;
+}
+function eventsPage() {
+  const e = DATA.events;
+  return `<h3>地圖事件</h3><div class="tablebox"><table><tr><th class="l">事件</th><th>權重</th><th>佔比</th><th>專屬傳奇機率</th></tr>
+    ${e.map.map(x => `<tr><td class="l">${esc(x.name)}</td><td>${x.weight}</td><td>${num(x.share)}%</td><td>${num(x.unique * 100)}%</td></tr>`).join("")}</table></div>
+    ${e.shrines ? `<h3>神龕</h3><div class="grid2">${e.shrines.map(s => `<div class="box"><b>${esc(s.name)}</b>${ul(s.lines)}</div>`).join("")}</div>` : ""}
+    ${e.boxes ? `<h3>寶箱</h3><div class="tablebox"><table><tr><th class="l">寶箱</th><th>權重</th><th>擲幾次</th><th>物品數量</th><th>稀有度</th><th>通貨</th><th>地圖</th><th>星魄</th></tr>
+      ${e.boxes.map(b => `<tr><td class="l">${esc(b.name)}</td><td>${b.weight}</td><td>${b.rolls}</td><td>+${b.quantity}%</td><td>+${b.rarity}%</td><td>${esc(b.currency)}</td><td>${esc(b.maps)}</td><td>${esc(b.essences)}</td></tr>`).join("")}</table></div>` : ""}
+    <h3>世界事件</h3><div class="grid2">${e.world.map(w => `<div class="box"><span class="tag">${esc(w.kind)}</span> <b>${esc(w.name)}</b>${ul(w.lines, "dim")}</div>`).join("")}</div>
+    <h3>每月活動</h3><div class="grid2">${filterLines(e.monthly).map(t => `<div class="box"><b style="color:${esc(t.color)}">${esc(t.name)}</b>
+      <p class="sub">地圖物品數量 +${num(t.quantity)}%・稀有度 +${num(t.rarity)}%</p>${t.lore ? `<p class="flavour">${esc(t.lore)}</p>` : ""}
+      ${ul(t.challenges, "dim")}${t.title ? `<p>限定稱號：<b>${esc(t.title)}</b></p>${ul(t.titleStats)}` : ""}</div>`).join("")}</div>`;
+}
+
+// ---- 畫面 ----
+const searchText = new WeakMap();
+function textOf(item) {
+  let t = searchText.get(item);
+  if (!t) { t = JSON.stringify(item).toLowerCase(); searchText.set(item, t); }
+  return t;
+}
+function itemsOf(key) {
+  const cat = CATS[key];
+  if (!cat.items) return null;
+  return cat.items().filter(x => (!cat.match || cat.match(x, chip)) && (!query || textOf(x).includes(query)));
+}
+function drawTabs() {
+  $("#tabs").innerHTML = Object.entries(CATS).map(([k, c]) => {
+    const n = c.items ? c.items().length : "";
+    return `<button class="tab" role="tab" data-tab="${k}" aria-selected="${k === tab}">${esc(c.title)}${n !== "" ? `<span class="n">${n}</span>` : ""}</button>`;
+  }).join("");
+  const active = document.querySelector(".tab[aria-selected=\"true\"]");
+  if (active && active.scrollIntoView) active.scrollIntoView({block: "nearest", inline: "nearest"});
+}
+function drawChips() {
+  const cat = CATS[tab];
+  const list = cat.chips ? cat.chips() : [];
+  $("#chips").innerHTML = list.map(([k, n]) => `<button class="chip" data-chip="${esc(k)}" aria-pressed="${k === chip}">${CHIP_ICON[k] || ""}${esc(n)}</button>`).join("");
+}
+function draw() {
+  const cat = CATS[tab];
+  const main = $("#main");
+  if (cat.custom) {
+    main.innerHTML = cat.custom();
+    return;
+  }
+  const items = itemsOf(tab);
+  if (!items.length) {
+    main.innerHTML = `<div class="empty">沒有符合的項目</div>`;
+    return;
+  }
+  const slice = items.slice(0, shown);
+  main.innerHTML = `<p class="count">${items.length} 項${items.length > shown ? `（先列 ${shown} 項）` : ""}</p>
+    <div class="list">${slice.map((x, i) => `<details class="card" data-i="${i}"><summary>${cat.head(x)}</summary><div class="body"></div></details>`).join("")}</div>
+    ${items.length > shown ? `<button class="more" id="more">再列 ${Math.min(PAGE, items.length - shown)} 項</button>` : ""}`;
+  main._items = slice;
+}
+document.addEventListener("toggle", ev => {
+  const card = ev.target;
+  if (!(card instanceof HTMLDetailsElement) || !card.classList.contains("card") || !card.open) return;
+  const body = card.querySelector(":scope > .body");
+  if (body.dataset.done) return;
+  body.innerHTML = CATS[tab].body($("#main")._items[Number(card.dataset.i)]);
+  body.dataset.done = "1";
+}, true);
+document.addEventListener("click", ev => {
+  const t = ev.target.closest("button");
+  if (!t) return;
+  if (t.dataset.tab) { tab = t.dataset.tab; chip = ""; shown = PAGE; save(); drawTabs(); drawChips(); draw(); }
+  else if (t.dataset.chip !== undefined) { chip = t.dataset.chip; shown = PAGE; save(); drawChips(); draw(); }
+  else if (t.id === "more") { shown += PAGE; draw(); }
+  else if (t.dataset.range) {
+    const seg = t.parentElement;
+    const skill = DATA.skills.find(s => s.id === seg.dataset.skill);
+    seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b === t)));
+    seg.nextElementSibling.innerHTML = levelTable(skill, Number(t.dataset.range));
+  }
+});
+let timer = 0;
+$("#q").addEventListener("input", ev => {
+  clearTimeout(timer);
+  timer = setTimeout(() => { query = ev.target.value.trim().toLowerCase(); shown = PAGE; draw(); }, 180);
+});
+function save() {
+  try { localStorage.setItem("codexValues.tab", tab); } catch (e) { /* 沒有也沒關係 */ }
+}
+(async () => {
+  try {
+    const hash = decodeURIComponent(location.hash.slice(1));
+    let saved = null;
+    try { saved = localStorage.getItem("codexValues.tab"); } catch (e) { /* 私密視窗 */ }
+    const res = await fetch("values.json", {cache: "no-cache"});
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    DATA = await res.json();
+    if (CATS[hash]) tab = hash; else if (saved && CATS[saved]) tab = saved;
+    const counts = Object.entries(CATS).filter(([, c]) => c.items).map(([, c]) => c.items().length).reduce((a, b) => a + b, 0);
+    $("#status").textContent = `共 ${counts} 項（跟伺服器設定同步）`;
+    drawTabs(); drawChips(); draw();
+  } catch (e) {
+    $("#main").innerHTML = `<div class="err">讀不到圖鑑資料：${esc(e.message)}</div>`;
+    $("#status").textContent = "";
+  }
+})();
+</script>
+</body>
+</html>

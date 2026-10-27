@@ -33,7 +33,9 @@ public final class TreeActions {
         body.add("<gray>" + character.characterClass().displayName() + " Lv." + character.level() + "　已配置 <white>" + owned.size()
                 + "</white> 點，還能配 <white>" + plugin.players().availablePoints(state) + "</white> 點");
         body.add("");
-        final List<String> totals = PassiveSummary.sum(owned);
+        // 2026-10-26：永恆珠寶征服的節點照征服後的效果加
+        final java.util.Map<String, PassiveNode> conquered = TimelessJewels.conquered(plugin, state, tree);
+        final List<String> totals = PassiveSummary.sum(owned.stream().map(node -> conquered.getOrDefault(node.id(), node)).toList());
         if (totals.isEmpty()) {
             body.add("<dark_gray>還沒有配任何天賦");
         } else {
@@ -225,7 +227,7 @@ public final class TreeActions {
                 return;
             }
             plan = TreePlan.compute(tree, start, Set.copyOf(state.passives()), decoded.nodes(),
-                    plugin.players().availablePoints(state));
+                    plugin.players().availablePoints(state), PassiveState.rules(plugin, state));
         } catch (final TreeCode.InvalidCode | TreePlan.InvalidPlan e) {
             fail(plugin, player, e.getMessage(), back);
             return;

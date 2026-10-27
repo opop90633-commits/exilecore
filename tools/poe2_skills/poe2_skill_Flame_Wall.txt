@@ -1,0 +1,52 @@
+Flame Wall (poe2db.tw/us/Flame_Wall)
+Type: Spell (Tier 1). Tags: Spell, AoE, Fire, Duration, Repeatable
+Cast time: 1.00 sec | Base crit: 5.00% | Cooldown: none listed | Weapon req: none
+Requirements L1-20: char level 1-90, Int 4-157. Mana 10-111 (L1-20).
+Mechanic: Creates a short-lived wall of fire in front of you that deals Fire damage over time to enemies inside it and Ignites them. Projectiles fired through the wall by you or allies gain added Fire damage; if a Lightning Infusion is available it is consumed (Infused wall) and projectiles also gain added Lightning damage.
+Stats (L1-20): wall deals 1.8-59.6 Fire damage per second; wall duration 4.5-6.4 s; Ignites as though dealing 5-8 to 181-271 Fire damage; wall length 5-6.9 m; projectiles through wall gain 2-3 to 27-41 added Fire damage; through Infused wall 1-4 to 3-65 added Lightning damage.
+Hidden: active skill energy generated -50%; number of allowed firewalls 3; movement speed -70% while performing action (+160%/s acceleration, locked 50% duration); custom cast range 15.
+Quality (0-20): 0-20% more Flammability Magnitude; 0-40% more Fire Damage.
+Base Damage column: 100% x5 at every level.
+
+# TSV (source: https://poe2db.tw/us/Flame_Wall; req level/attr blank for 21-40 on page)
+level	wall_fire_dot_per_sec	mana	ignite_as_if_dealing(min-max)	wall_length_m	wall_duration_s	proj_added_fire(min-max)	proj_added_lightning_infused(min-max)
+1	1.8/s	10	5-8	5	4.5	2-3	1-4
+2	2.4/s	12	7-11	5.1	4.6	2-4	1-6
+3	3.2/s	15	10-15	5.2	4.7	3-5	1-8
+4	4.2/s	17	13-19	5.3	4.8	4-6	1-10
+5	5.3/s	20	16-24	5.4	4.9	5-7	1-12
+6	6.6/s	23	20-30	5.5	5	6-9	1-14
+7	8.1/s	26	24-37	5.6	5.1	7-10	1-16
+8	9.7/s	30	29-44	5.7	5.2	8-12	1-19
+9	11.5/s	34	35-52	5.8	5.3	9-14	1-22
+10	13.7/s	38	41-62	5.9	5.4	10-15	1-24
+11	16/s	43	49-73	6	5.5	12-17	1-28
+12	18.8/s	48	57-85	6.1	5.6	13-19	2-31
+13	21.9/s	54	66-99	6.2	5.7	14-22	2-34
+14	25.4/s	60	77-115	6.3	5.8	16-24	2-38
+15	29.4/s	67	89-134	6.4	5.9	18-26	2-42
+16	33.9/s	74	103-154	6.5	6	19-29	2-46
+17	39.1/s	82	119-178	6.6	6.1	21-32	3-50
+18	45.1/s	91	137-205	6.7	6.2	23-35	3-55
+19	51.8/s	101	157-236	6.8	6.3	25-38	3-59
+20	59.6/s	111	181-271	6.9	6.4	27-41	3-65
+21	68.5/s	123	208-311	7	6.5	29-44	4-70
+22	78.6/s	135	238-358	7.1	6.6	32-48	4-75
+23	90.3/s	149	274-411	7.2	6.7	34-51	4-81
+24	103.7/s	164	314-472	7.3	6.8	37-55	5-87
+25	119.2/s	180	361-542	7.4	6.9	40-59	5-94
+26	136.9/s	198	415-623	7.5	7	42-64	5-101
+27	157.4/s	217	477-716	7.6	7.1	45-68	6-108
+28	181/s	237	549-823	7.7	7.2	49-73	6-115
+29	208.3/s	260	632-947	7.8	7.3	52-78	6-123
+30	239.9/s	284	727-1091	7.9	7.4	55-83	7-132
+31	276.6/s	311	838-1258	8	7.45	59-89	7-140
+32	319/s	339	967-1451	8.1	7.5	63-95	8-150
+33	368.4/s	370	1117-1675	8.2	7.55	67-101	8-159
+34	425.8/s	404	1291-1936	8.3	7.6	71-107	9-169
+35	492.7/s	441	1494-2241	8.4	7.65	76-114	9-180
+36	570.8/s	480	1730-2596	8.5	7.7	80-121	10-191
+37	662/s	523	2007-3010	8.6	7.75	85-128	11-203
+38	768.6/s	570	2330-3495	8.7	7.8	91-136	11-215
+39	893.6/s	620	2709-4064	8.8	7.85	96-144	12-228
+40	1040.3/s	674	3154-4730	8.9	7.9	102-153	13-242

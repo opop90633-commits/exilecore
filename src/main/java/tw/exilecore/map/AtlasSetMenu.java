@@ -19,7 +19,8 @@ import java.util.List;
  * 切換時現在的配點收回原本那一組、換上那一組的（免費）。只有正在用的那一組有效果（之後開的地圖照它）。
  * 沒有月卡也能切回第 1 組。
  * <p>
- * 配點存在角色進度 atlasset.組.段（逗號隔開的代號，一段最多 {@value #CHUNK} 字）；正在用第幾組存在 {@value #ACTIVE_KEY}。
+ * 配點存在星圖進度 atlasset.組.段（逗號隔開的代號，一段最多 {@value #CHUNK} 字）；正在用第幾組存在 {@value #ACTIVE_KEY}。
+ * 2026-10-27 起星圖帳號共用：存在帳號進度（{@link MapService#atlasData}），帳號裡每個角色同一套。
  */
 public final class AtlasSetMenu extends Menu {
 
@@ -46,8 +47,8 @@ public final class AtlasSetMenu extends Menu {
     }
 
     /** 正在用第幾組（從 0 起）。 */
-    public static int activeSet(final PlayerState state) {
-        final String value = state.progress().get(ACTIVE_KEY);
+    public static int activeSet(final java.util.Map<String, String> atlas) {
+        final String value = atlas.get(ACTIVE_KEY);
         try {
             return value == null ? 0 : Math.max(0, Math.min(PlayerState.GEAR_SETS - 1, Integer.parseInt(value.trim())));
         } catch (final NumberFormatException e) {
@@ -59,7 +60,7 @@ public final class AtlasSetMenu extends Menu {
     private List<String> stored(final PlayerState state, final int set) {
         final StringBuilder code = new StringBuilder();
         for (int chunk = 0; chunk < MAX_CHUNKS; chunk++) {
-            final String part = state.progress().get(chunkKey(set, chunk));
+            final String part = service.atlasData(player).get(chunkKey(set, chunk));
             if (part == null) {
                 break;
             }
@@ -72,11 +73,11 @@ public final class AtlasSetMenu extends Menu {
         final String code = AtlasTree.joinAllocation(allocated);
         int chunk = 0;
         for (int from = 0; from < code.length() && chunk < MAX_CHUNKS; from += CHUNK, chunk++) {
-            plugin.characters().setProgress(player, chunkKey(set, chunk), code.substring(from, Math.min(code.length(), from + CHUNK)));
+            service.atlasPut(player, chunkKey(set, chunk), code.substring(from, Math.min(code.length(), from + CHUNK)));
         }
         for (; chunk < MAX_CHUNKS; chunk++) {
-            if (state.progress().containsKey(chunkKey(set, chunk))) {
-                plugin.characters().removeProgress(player, chunkKey(set, chunk));
+            if (service.atlasData(player).containsKey(chunkKey(set, chunk))) {
+                service.atlasRemove(player, chunkKey(set, chunk));
             }
         }
     }
@@ -87,7 +88,7 @@ public final class AtlasSetMenu extends Menu {
             set(i, filler());
         }
         final PlayerState state = plugin.players().get(player);
-        final int active = activeSet(state);
+        final int active = activeSet(service.atlasData(player));
         final boolean card = card();
         final AtlasTree tree = service.tree();
         final int budget = service.atlasEarned(player).total();
@@ -139,7 +140,12 @@ public final class AtlasSetMenu extends Menu {
         if (!state.hasCharacter()) {
             return;
         }
-        final int active = activeSet(state);
+        final String wait = service.atlasWaitProblem(player); // 2026-10-27：帳號還沒載入好
+        if (wait != null) {
+            fail(wait);
+            return;
+        }
+        final int active = activeSet(service.atlasData(player));
         if (set == active) {
             return;
         }
@@ -152,7 +158,7 @@ public final class AtlasSetMenu extends Menu {
         // 現在的收進原本那一組，換上那一組（存的照點的順序；點數不夠或樹改了的從最後點的開始不算）
         store(state, active, service.atlasAllocated(player));
         service.replaceAtlas(player, effective);
-        plugin.characters().setProgress(player, ACTIVE_KEY, String.valueOf(set));
+        service.atlasPut(player, ACTIVE_KEY, String.valueOf(set));
         player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.6f, 1.4f);
         player.sendMessage(plugin.text().prefixed("<#bcd4ff>星圖天賦換成第 " + (set + 1) + " 組<gray>（" + effective.size() + " 個天賦"
                 + (effective.size() < target.size() ? "；有 " + (target.size() - effective.size()) + " 個點數不夠或樹改了，沒算" : "") + "）"));

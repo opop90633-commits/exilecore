@@ -162,6 +162,11 @@ public final class KillEffects implements Listener {
      * 「附加 X% 物理為火焰」變成你的額外獲得，極速的變成增加移動速度，光環的詞綴給光環裡的數值；只有招式的詞綴沒有東西可拿。
      */
     private void stealMods(final Player killer, final LivingEntity victim, final double seconds) {
+        stealMods(killer, victim, seconds, Integer.MAX_VALUE);
+    }
+
+    /** 2026-10-27 照 PoE2 Behead（斬首輔助）：只偷 max 條（隨機挑）；這次之前只有斬獲腰環（全部偷）。 */
+    public void stealMods(final Player killer, final LivingEntity victim, final double seconds, final int max) {
         if (plugin.skills() == null || plugin.monsters() == null) {
             return;
         }
@@ -171,7 +176,14 @@ public final class KillEffects implements Listener {
         }
         final int ticks = (int) Math.round(seconds * 20);
         int stolen = 0;
-        for (final String modId : data.mods()) {
+        final List<String> picked = new java.util.ArrayList<>(data.mods());
+        if (picked.size() > max) {
+            java.util.Collections.shuffle(picked, new java.util.Random(plugin.items().random().nextLong()));
+        }
+        for (final String modId : picked) {
+            if (stolen >= max) {
+                break;
+            }
             final tw.exilecore.monster.MonsterConfig.MonsterMod mod = plugin.monsters().config().mod(modId);
             if (mod == null) {
                 continue;
@@ -206,7 +218,8 @@ public final class KillEffects implements Listener {
         }
     }
 
-    private void grantOnslaught(final Player player) {
+    /** 2026-10-26：改成 public（天賦「用斧擊殺時疾速」TreeMechanics 也給）。 */
+    public void grantOnslaught(final Player player) {
         final UUID uuid = player.getUniqueId();
         final long now = plugin.getServer().getCurrentTick();
         final boolean wasActive = hasOnslaught(player);
@@ -230,13 +243,52 @@ public final class KillEffects implements Listener {
         }, ONSLAUGHT_TICKS + 1);
     }
 
+    /** 2026-10-26：天賦樹（強化攻擊擊殺的敵人爆炸）：下一個 tick 在這裡爆炸。 */
+    public void explodeAt(final Player killer, final Location at, final double amount, final DamageType type) {
+        explode(killer.getUniqueId(), at, amount, type);
+    }
+
     /** 下一個 tick 在這裡爆炸：打周圍的怪物（不打玩家），傷害算殺死牠的那個玩家的。 */
     private void explode(final UUID killerId, final Location at, final double amount) {
         explode(killerId, at, amount, DamageType.FIRE);
     }
 
+    /**
+     * 2026-10-27 效能：一個 tick 最多炸幾次。一大群怪連鎖爆炸時（每一次炸死好幾隻、每隻再炸）以前同一個 tick 全部炸完，
+     * 次數 × 範圍內的怪 = 一次幾千下傷害計算；現在超過的排到下一個 tick 接著炸，每一次的傷害、範圍都一樣，只是晚一點。
+     */
+    static final int EXPLOSIONS_PER_TICK = 20;
+
+    /** 等著爆炸的。 */
+    record Blast(UUID killer, Location at, double amount, DamageType type) {
+    }
+
+    private final tw.exilecore.core.TickCapQueue<Blast> blasts = new tw.exilecore.core.TickCapQueue<>(EXPLOSIONS_PER_TICK);
+
     private void explode(final UUID killerId, final Location at, final double amount, final DamageType type) {
-        plugin.getServer().getScheduler().runTask(plugin, () -> {
+        if (blasts.add(new Blast(killerId, at.clone(), amount, type))) {
+            plugin.getServer().getScheduler().runTask(plugin, this::drainBlasts);
+        }
+    }
+
+    /** 下一個 tick：最多炸 {@link #EXPLOSIONS_PER_TICK} 次，還有剩再排下一個 tick（計時給 /ec perf 的 kill.explode）。 */
+    private void drainBlasts() {
+        final boolean more = plugin.perf().time("kill.explode", () -> blasts.drain(this::blast));
+        final RuntimeException error = blasts.takeError();
+        if (error != null) {
+            plugin.getSLF4JLogger().warn("擊殺爆炸出錯", error);
+        }
+        if (more) {
+            plugin.getServer().getScheduler().runTask(plugin, this::drainBlasts);
+        }
+    }
+
+    private void blast(final Blast blast) {
+        final UUID killerId = blast.killer();
+        final Location at = blast.at();
+        final double amount = blast.amount();
+        final DamageType type = blast.type();
+        {
             final Player killer = plugin.getServer().getPlayer(killerId);
             final World world = at.getWorld();
             if (killer == null || world == null || !killer.getWorld().equals(world)) {
@@ -257,7 +309,7 @@ public final class KillEffects implements Listener {
             tw.exilecore.skill.Fx.spawn(world, type == DamageType.FIRE ? Particle.FLAME : Particle.CRIT, at, 24, EXPLODE_RADIUS / 2, 0.4,
                     EXPLODE_RADIUS / 2, 0.04);
             world.playSound(at, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.6f, 1.3f);
-        });
+        }
     }
 
     @EventHandler

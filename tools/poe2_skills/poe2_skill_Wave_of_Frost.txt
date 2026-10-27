@@ -1,0 +1,50 @@
+Wave of Frost (poe2db.tw/us/Wave_of_Frost)
+Type: Attack. Tags: AoE, Melee, Cold (type list also: Attack, Area, Movement, Jumping, CanCancelActions)
+Attack speed: 55% of base | Base crit: not listed (weapon) | Cooldown: none listed | Weapon req: Quarterstaves
+Requirements L1-20: char level 1-90, Dex 4-86, Int 4-86. Mana 14-100 (L1-20).
+Mechanic: Flips backward and sends a freezing wave forward; enemies that are Primed for Freeze are Frozen immediately.
+Stats: Attack damage 65%-235% (L1-20); converts 80% Physical to Cold; 300-585% more Magnitude of Chill inflicted; 300-585% more Freeze Buildup (L1-20); wave length 6 m.
+Quality: up to 20% Cold Resistance Penetration; up to 40% increased damage vs Frozen enemies.
+
+# TSV (source: https://poe2db.tw/us/Wave_of_Frost; req level/attr blank for 21-40 on page)
+level	attack_damage%	mana	more_freeze_buildup%	more_chill_magnitude%
+1	65%	14	300	300
+2	71%	17	315	315
+3	79%	19	330	330
+4	86%	22	345	345
+5	93%	25	360	360
+6	100%	28	375	375
+7	108%	31	390	390
+8	115%	35	405	405
+9	121%	38	420	420
+10	128%	42	435	435
+11	136%	47	450	450
+12	144%	51	465	465
+13	153%	56	480	480
+14	162%	61	495	495
+15	172%	67	510	510
+16	183%	73	525	525
+17	195%	79	540	540
+18	207%	86	555	555
+19	221%	93	570	570
+20	235%	100	585	585
+21	251%	108	600	600
+22	268%	116	615	615
+23	286%	125	630	630
+24	305%	135	645	645
+25	325%	145	660	660
+26	347%	156	675	675
+27	370%	167	690	690
+28	394%	179	705	705
+29	421%	192	720	720
+30	449%	205	735	735
+31	479%	219	742	742
+32	510%	235	750	750
+33	544%	251	757	757
+34	581%	267	765	765
+35	619%	285	772	772
+36	661%	304	780	780
+37	705%	324	787	787
+38	752%	345	795	795
+39	802%	368	802	802
+40	855%	391	810	810

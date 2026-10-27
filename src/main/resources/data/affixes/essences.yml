@@ -1,0 +1,387 @@
+# 星魄專屬的詞綴（2026-10-26，照 PoE2 0.5 的完美精髓與腐化精髓 Essence of Hysteria；數值照 poe2db 的 Essence 頁）：
+# spawn_tags 寫 [essence, 出在哪些裝備…]：不會自然擲出、一般通貨也加不上（ItemGenerator 的詞綴池排除 essence），只有 currencies.yml 的
+# 完美星魄、狂亂星魄給得了（稀有物品隨機移除一條，再加這條）。一階、數值照 PoE2。格式同 prefixes.yml。
+# 注意：PoE2 有、我們還沒有對應屬性的沒做：完美混抗（物理傷害的 x% 視為混沌）、完美火抗／冰抗／電抗（那種元素的傷害回復為生命）。
+# 近似的：完美施速星魄 PoE2 是「魔力消耗效率 18～20%／28～32%」，這裡寫成技能魔力消耗減少同樣的數字；
+#   完美統御星魄的「光環效果」照 PoE2 的 Aura Magnitudes；統御星魄的「召喚物傷害」是 PoE2「存在範圍內的友軍傷害」（跟權杖的詞綴同一個做法）。
+
+# ---- 完美星魄 ----
+ess_life_pct:
+  type: prefix
+  group: maximum_life_increased_percent
+  spawn_tags: [essence, body]
+  names: [星魄的]
+  text: "增加 {value}% 最大生命"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [8, 10] }
+  mods:
+    - { stat: life.max, type: INCREASED, value: "{value}" }
+
+ess_mana_pct:
+  type: prefix
+  group: maximum_mana_increased_percent
+  spawn_tags: [essence, ring]
+  names: [星魄的]
+  text: "增加 {value}% 最大魔力"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [4, 6] }
+  mods:
+    - { stat: mana.max, type: INCREASED, value: "{value}" }
+
+ess_global_def:
+  type: prefix
+  group: global_defences_percent
+  spawn_tags: [essence, amulet]
+  names: [星魄的]
+  text: "增加 {value}% 護甲、閃避、能量護盾"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [20, 30] }
+  mods:
+    - { stat: armour, type: INCREASED, value: "{value}" }
+    - { stat: evasion, type: INCREASED, value: "{value}" }
+    - { stat: es.max, type: INCREASED, value: "{value}" }
+
+ess_str_pct:
+  type: suffix
+  group: percent_attribute
+  spawn_tags: [essence, amulet]
+  names: [之星魄]
+  text: "增加 {value}% 力量"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [7, 10] }
+  mods:
+    - { stat: attr.str, type: INCREASED, value: "{value}" }
+
+ess_dex_pct:
+  type: suffix
+  group: percent_attribute
+  spawn_tags: [essence, amulet]
+  names: [之星魄]
+  text: "增加 {value}% 敏捷"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [7, 10] }
+  mods:
+    - { stat: attr.dex, type: INCREASED, value: "{value}" }
+
+ess_int_pct:
+  type: suffix
+  group: percent_attribute
+  spawn_tags: [essence, amulet]
+  names: [之星魄]
+  text: "增加 {value}% 智慧"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [7, 10] }
+  mods:
+    - { stat: attr.int, type: INCREASED, value: "{value}" }
+
+ess_gold:
+  type: suffix
+  group: gold_found
+  spawn_tags: [essence, leggings]
+  names: [之星魄]
+  text: "增加 {value}% 怪物掉落金幣"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [10, 15] }
+  mods:
+    - { stat: gold.find, type: INCREASED, value: "{value}" }
+
+ess_extra_phys_1h:
+  type: prefix
+  group: damage_gained_as_physical
+  spawn_tags: [essence, melee_1h, bow, spear]
+  names: [星魄的]
+  text: "獲得 {value}% 傷害為額外物理傷害"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [15, 20] }
+  mods:
+    - { stat: damage.extra.physical, type: FLAT, value: "{value}" }
+
+ess_extra_phys_2h:
+  type: prefix
+  group: damage_gained_as_physical
+  spawn_tags: [essence, melee_2h, crossbow, quarterstaff]
+  names: [星魄的]
+  text: "獲得 {value}% 傷害為額外物理傷害"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [25, 33] }
+  mods:
+    - { stat: damage.extra.physical, type: FLAT, value: "{value}" }
+
+ess_extra_fire_1h:
+  type: prefix
+  group: damage_gained_as_fire
+  spawn_tags: [essence, melee_1h, bow, spear]
+  names: [星魄的]
+  text: "獲得 {value}% 傷害為額外火焰傷害"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [15, 20] }
+  mods:
+    - { stat: damage.extra.fire, type: FLAT, value: "{value}" }
+
+ess_extra_fire_2h:
+  type: prefix
+  group: damage_gained_as_fire
+  spawn_tags: [essence, melee_2h, crossbow, quarterstaff]
+  names: [星魄的]
+  text: "獲得 {value}% 傷害為額外火焰傷害"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [25, 33] }
+  mods:
+    - { stat: damage.extra.fire, type: FLAT, value: "{value}" }
+
+ess_extra_cold_1h:
+  type: prefix
+  group: damage_gained_as_cold
+  spawn_tags: [essence, melee_1h, bow, spear]
+  names: [星魄的]
+  text: "獲得 {value}% 傷害為額外冰冷傷害"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [15, 20] }
+  mods:
+    - { stat: damage.extra.cold, type: FLAT, value: "{value}" }
+
+ess_extra_cold_2h:
+  type: prefix
+  group: damage_gained_as_cold
+  spawn_tags: [essence, melee_2h, crossbow, quarterstaff]
+  names: [星魄的]
+  text: "獲得 {value}% 傷害為額外冰冷傷害"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [25, 33] }
+  mods:
+    - { stat: damage.extra.cold, type: FLAT, value: "{value}" }
+
+ess_extra_lightning_1h:
+  type: prefix
+  group: damage_gained_as_lightning
+  spawn_tags: [essence, melee_1h, bow, spear]
+  names: [星魄的]
+  text: "獲得 {value}% 傷害為額外閃電傷害"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [15, 20] }
+  mods:
+    - { stat: damage.extra.lightning, type: FLAT, value: "{value}" }
+
+ess_extra_lightning_2h:
+  type: prefix
+  group: damage_gained_as_lightning
+  spawn_tags: [essence, melee_2h, crossbow, quarterstaff]
+  names: [星魄的]
+  text: "獲得 {value}% 傷害為額外閃電傷害"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [25, 33] }
+  mods:
+    - { stat: damage.extra.lightning, type: FLAT, value: "{value}" }
+
+ess_attack_level_1h:
+  type: suffix
+  group: global_increase_melee_skill_gem_level_weapon
+  spawn_tags: [essence, melee_1h, bow, spear]
+  names: [之星魄]
+  text: "+{value} 全部攻擊技能等級"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [2, 2] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [attack] }
+
+ess_attack_level_2h:
+  type: suffix
+  group: global_increase_melee_skill_gem_level_weapon
+  spawn_tags: [essence, melee_2h, crossbow, quarterstaff]
+  names: [之星魄]
+  text: "+{value} 全部攻擊技能等級"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [3, 3] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [attack] }
+
+ess_onslaught:
+  type: suffix
+  group: onslaught_on_kill
+  spawn_tags: [essence, melee_1h, melee_2h, bow, crossbow, quarterstaff, spear]
+  names: [之星魄]
+  text: "擊殺時 {value}% 機率獲得疾速"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [20, 25] }
+  mods:
+    - { stat: onslaught.on_kill, type: FLAT, value: "{value}" }
+
+ess_crit_taken:
+  type: suffix
+  group: reduced_extra_damage_from_crits
+  spawn_tags: [essence, body]
+  names: [之星魄]
+  text: "擊中你的暴擊傷害加成減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [40, 50] }
+  mods:
+    - { stat: crit.bonus_taken, type: INCREASED, value: "-{value}" }
+
+ess_spell_level_wand:
+  type: suffix
+  group: global_increase_spell_skill_gem_level_weapon
+  spawn_tags: [essence, wand]
+  names: [之星魄]
+  text: "+{value} 全部法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [3, 3] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell] }
+
+ess_spell_level_staff:
+  type: suffix
+  group: global_increase_spell_skill_gem_level_weapon
+  spawn_tags: [essence, staff]
+  names: [之星魄]
+  text: "+{value} 全部法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [5, 5] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [spell] }
+
+ess_cost_wand:
+  type: suffix
+  group: mana_cost_efficiency
+  spawn_tags: [essence, wand, focus]
+  names: [之星魄]
+  text: "技能魔力消耗減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [18, 20] }
+  mods:
+    - { stat: skill.cost, type: INCREASED, value: "-{value}" }
+
+ess_cost_staff:
+  type: suffix
+  group: mana_cost_efficiency
+  spawn_tags: [essence, staff]
+  names: [之星魄]
+  text: "技能魔力消耗減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [28, 32] }
+  mods:
+    - { stat: skill.cost, type: INCREASED, value: "-{value}" }
+
+ess_aura:
+  type: suffix
+  group: aura_magnitude
+  spawn_tags: [essence, sceptre]
+  names: [之星魄]
+  text: "增加 {value}% 光環效果"
+  tiers:
+    - { tier: 1, ilvl: 72, weight: 1, value: [15, 20] }
+  mods:
+    - { stat: aura.effect, type: INCREASED, value: "{value}" }
+
+# ---- 狂亂星魄（腐化；PoE2 的 Essence of Hysteria，照部位一條）----
+ess_hys_es_recharge:
+  type: suffix
+  group: energy_shield_regeneration
+  spawn_tags: [essence, focus]
+  names: [之狂亂]
+  text: "增加 {value}% 能量護盾回充速度"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 1, value: [20, 23] }
+  mods:
+    - { stat: es.recharge, type: INCREASED, value: "{value}" }
+
+ess_hys_minion_level:
+  type: suffix
+  group: global_increase_minion_spell_skill_gem_level
+  spawn_tags: [essence, helmet]
+  names: [之狂亂]
+  text: "+{value} 全部召喚物技能等級"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 1, value: [1, 1] }
+  mods:
+    - { stat: skill.level, type: FLAT, value: "{value}", tags: [minion] }
+
+ess_hys_thorns:
+  type: prefix
+  group: thorns_physical_damage
+  spawn_tags: [essence, body]
+  names: [狂亂的]
+  text: "{min} 到 {max} 物理荊棘傷害"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 1, min: [64, 97], max: [98, 145] }
+  mods:
+    - { stat: thorns.min, type: FLAT, value: "{min}" }
+    - { stat: thorns.max, type: FLAT, value: "{max}" }
+
+ess_hys_crit_bonus:
+  type: suffix
+  group: critical_strike_multiplier
+  spawn_tags: [essence, leggings]
+  names: [之狂亂]
+  text: "增加 {value}% 暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 1, value: [25, 29] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}" }
+
+ess_hys_ms:
+  type: prefix
+  group: movement_velocity
+  spawn_tags: [essence, boots]
+  names: [狂亂的]
+  text: "增加 {value}% 移動速度"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 1, value: [30, 30] }
+  mods:
+    - { stat: movement.speed, type: INCREASED, value: "{value}" }
+
+ess_hys_mana_regen:
+  type: suffix
+  group: mana_regeneration
+  spawn_tags: [essence, ring]
+  names: [之狂亂]
+  text: "增加 {value}% 魔力回復速度"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 1, value: [50, 59] }
+  mods:
+    - { stat: mana.regen, type: INCREASED, value: "{value}" }
+
+ess_hys_recoup:
+  type: suffix
+  group: damage_taken_gained_as_life
+  spawn_tags: [essence, amulet]
+  names: [之狂亂]
+  text: "受到的傷害有 {value}% 在 4 秒內回復為生命"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 1, value: [19, 21] }
+  mods:
+    - { stat: life.recoup, type: FLAT, value: "{value}" }
+
+ess_hys_stun:
+  type: suffix
+  group: stun_threshold
+  spawn_tags: [essence, belt]
+  names: [之狂亂]
+  text: "+{value} 暈眩門檻"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 1, value: [254, 304] }
+  mods:
+    - { stat: stun.threshold, type: FLAT, value: "{value}" }
+
+ess_hys_block:
+  type: prefix
+  group: local_increased_block_percentage
+  spawn_tags: [essence, shield]
+  exclude_tags: [focus]
+  names: [狂亂的]
+  text: "增加 {value}% 格擋率"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 1, value: [20, 24] }
+  mods:
+    - { stat: block.chance, type: INCREASED, value: "{value}" }
+
+ess_hys_bow:
+  type: prefix
+  group: damage_with_bow_skills
+  spawn_tags: [essence, quiver]
+  names: [狂亂的]
+  text: "增加 {value}% 弓技能傷害"
+  chips: [damage]
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 1, value: [43, 50] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [attack, bow] }

@@ -39,7 +39,7 @@ public final class MapConfig {
     }
 
     /**
-     * @param tiers             地圖的階級表：每一階的怪物等級、每高一階多的物品數量與稀有度
+     * @param tiers             地圖的階級表：每一階的怪物等級、每高一階多的物品數量與稀有度（2026-10-27 照 PoE2 都是 0）
      * @param instanceCap       同時最多幾個實例
      * @param portals           每張圖可以進入幾次
      * @param idleMinutes       裡面沒人多久就關閉
@@ -261,6 +261,13 @@ public final class MapConfig {
     private List<DpsTier> whaleDpsOver = List.of();
     /** 一般終局每一階的生命倍率（2026-10-21，final.tier_life_table；null = 照 tier_life）。 */
     private double[] finalTierLifeTable;
+    /**
+     * 2026-10-27 照站長：極境、金庫之主、各巔峰的生命再乘（maps.yml 的 boss_life；照「單人 3 分半打完要技能面板每秒多少」對準
+     * 極境 50 萬、巔峰 100 萬）；這次之前沒有（只照 final.tier_life 的最高階，現在 ×1）。
+     */
+    private double uberLifeScale = 1.0;
+    private double heistLifeScale = 1.0;
+    private final Map<String, Double> pinnacleLifeScale = new LinkedHashMap<>();
     private final Map<String, MapDef> maps = new LinkedHashMap<>();
     private MapDef finalMap;
     private int finalLevelBonus = DEFAULT_FINAL_LEVEL_BONUS;
@@ -572,6 +579,10 @@ public final class MapConfig {
         whaleDpsCap = fresh.whaleDpsCap;
         whaleDpsOver = fresh.whaleDpsOver;
         finalTierLifeTable = fresh.finalTierLifeTable;
+        uberLifeScale = fresh.uberLifeScale; // 2026-10-27
+        heistLifeScale = fresh.heistLifeScale;
+        pinnacleLifeScale.clear();
+        pinnacleLifeScale.putAll(fresh.pinnacleLifeScale);
         maps.clear();
         maps.putAll(fresh.maps);
         finalMap = fresh.finalMap;
@@ -610,6 +621,9 @@ public final class MapConfig {
         whaleDpsCap = 0;
         whaleDpsOver = List.of();
         finalTierLifeTable = null;
+        uberLifeScale = 1.0;
+        heistLifeScale = 1.0;
+        pinnacleLifeScale.clear();
         final Path file = dataFolder.resolve("maps.yml");
         if (!Files.exists(file)) {
             MapStats.setTiers(settings.tiers());
@@ -681,6 +695,16 @@ public final class MapConfig {
         } else {
             whaleDpsCap = finalDpsCap;
             whaleDpsOver = finalDpsOver;
+        }
+        if (root.has("boss_life")) {
+            // 2026-10-27 照站長：極境、金庫之主、各巔峰的生命再乘（0.1–20）
+            final YamlNode bossLife = root.node("boss_life");
+            uberLifeScale = lifeScale(bossLife, "uber");
+            heistLifeScale = lifeScale(bossLife, "heist_finale");
+            final YamlNode pinnacles = bossLife.node("pinnacle");
+            for (final String id : pinnacles.keys()) {
+                pinnacleLifeScale.put(id, lifeScale(pinnacles, id));
+            }
         }
         final YamlNode f = root.node("first_kill");
         firstKill = new FirstKill(Math.max(0, f.integer("map_points", 0)), Math.max(0, f.integer("named_points", 1)),
@@ -1267,6 +1291,39 @@ public final class MapConfig {
             return finalLifeMultiplier(tier);
         }
         return table[Math.max(1, Math.min(table.length, tier)) - 1];
+    }
+
+    /** boss_life 底下一個倍率（0.1–20；沒寫 = 1）。 */
+    private static double lifeScale(final YamlNode node, final String key) {
+        final double value = node.decimal(key, 1.0);
+        if (value < 0.1 || value > 20) {
+            throw new IllegalArgumentException(node.path() + "." + key + "：要在 0.1 到 20 之間（Boss 生命再乘幾倍）");
+        }
+        return value;
+    }
+
+    /**
+     * 極境 Boss 的生命再乘幾倍（開在最高階）：final.tier_life 的最高階倍率 × boss_life.uber。
+     * 2026-10-27 照站長：極境建議每秒 50 萬（技能面板、單人 3 分半）；這次之前只有 final.tier_life（×1，52.7 萬）。
+     */
+    public double uberLifeMultiplier() {
+        return finalLifeMultiplier(tiers().max()) * uberLifeScale;
+    }
+
+    /**
+     * 這隻巔峰（含事件巔峰）的生命再乘幾倍：final.tier_life 的最高階倍率 × boss_life.pinnacle.代號（沒寫 = 1）。
+     * 2026-10-27 照站長：巔峰建議每秒 100 萬；這次之前只有 final.tier_life（×1，106～119 萬）。
+     */
+    public double pinnacleLifeMultiplier(final String id) {
+        return finalLifeMultiplier(tiers().max()) * pinnacleLifeScale.getOrDefault(id, 1.0);
+    }
+
+    /**
+     * 金庫之主（劫盜終局）的生命再乘幾倍：照開的人打過的最高階的 final.tier_life × boss_life.heist_finale。
+     * 2026-10-27 照站長：比照極境（極境 52.7 萬 → 50 萬，金庫之主跟著乘一樣的倍率）；這次之前只有 final.tier_life。
+     */
+    public double heistFinaleLifeMultiplier(final int tier) {
+        return finalLifeMultiplier(tier) * heistLifeScale;
     }
 
     /** 金庫之主的每秒傷害上限（2026-10-21，heist_dps）。 */

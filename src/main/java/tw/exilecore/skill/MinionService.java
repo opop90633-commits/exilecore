@@ -83,8 +83,8 @@ public final class MinionService implements Listener, MinionHooks {
     static final long FOCUS_TICKS = 60;
     /** 焚魂飛行速度（格／tick）。 */
     static final double FLY_SPEED = 0.32;
-    /** 一個玩家全部的召喚物最多幾隻（各技能的上限另外算；2026-10-16：40 → 50）。 */
-    static final int MAX_PER_PLAYER = 50;
+    /** 一個玩家全部的召喚物最多幾隻（各技能的上限另外算；2026-10-16：40 → 50；2026-10-27 照站長：50 → 40）。 */
+    static final int MAX_PER_PLAYER = 40;
 
     /** 一隻召喚物。 */
     static final class Minion {
@@ -123,10 +123,50 @@ public final class MinionService implements Listener, MinionHooks {
         /** 祭品（2026-10）給的增益與到期的 tick。 */
         List<Modifier> offering = List.of();
         long offeringUntil;
+        /** 2026-10-26（天賦樹：夥伴擊殺時疾速）：額外的增益與到期的 tick。 */
+        List<Modifier> treeBuff = List.of();
+        long treeBuffUntil;
         /** 強化（2026-10 PoE2 喚屍：吃銳星叫出來的那隻）：一直有效的修飾器。 */
         List<Modifier> empowered = List.of();
         /** 殘影（2026-10）：站著不動、不打人，只負責嘲諷；不算數量上限、不顯示在快捷欄、死了不觸發。 */
         boolean decoy;
+        // ---- 2026-10-26 照 PoE2 ----
+        /** 能量護盾（我們的單位）與上限；最後一次受傷的 tick（4 秒後開始回充）。 */
+        double es;
+        double esMax;
+        long lastHurt;
+        /** PoE2 的傷害、生命換成我們的要乘多少（{@link MinionSheets#poe2Factors}）。 */
+        double[] factors = {1, 1};
+        /** 自己的技能、指令的冷卻：代號 → 好了的 tick。 */
+        final Map<String, Long> ready = new HashMap<>();
+        /** 狂卒：怒氣、上次獲得怒氣的 tick、激怒中（從哪個 tick 開始）。 */
+        int rage;
+        long rageGainedAt;
+        long enragedAt = -1;
+        /** 祭司的治療給的生命回復（每秒，我們的單位）到哪個 tick。 */
+        double regenPerSecond;
+        long regenUntil;
+        /** 霜術士的冰甲到哪個 tick、被打時反擊的冰冷傷害 {最小, 最大}。 */
+        long iceArmourUntil;
+        double[] iceArmourCold = {0, 0};
+        /** 狼的躍擊：落地的 tick（0 = 沒在跳）。 */
+        long leapLandAt;
+        /** 這一下用的屬性表與技能描述（召喚物自己的技能：碎骨、電弧…）；null = 普攻。 */
+        Attack override;
+        /** 附身的那種怪物（原版生物代號）；不是附身是 null。 */
+        String spectreType;
+
+        boolean onCooldown(final String ability, final long now) {
+            return ready.getOrDefault(ability, 0L) > now;
+        }
+
+        void startCooldown(final String ability, final long now, final double seconds) {
+            // 2026-10-26 照 PoE2：召喚物的冷卻回復速度（主人的「召喚物的冷卻回復速度」）；這次之前不吃
+            // 2026-10-27 照 PoE2 Commandment：掛了號令的召喚物，指令的冷卻回復速度另外增加 100%
+            final double recovery = (sheet == null ? 0 : sheet.increased(tw.exilecore.stats.StatKeys.COOLDOWN_RECOVERY, Set.of()))
+                    + (COMMAND.equals(ability) && commandment(this) ? tw.exilecore.stats.SupportExtraKeys.COMMANDMENT_RECOVERY : 0);
+            ready.put(ability, now + Math.round(seconds * 20 / Math.max(0.1, 1 + recovery)));
+        }
 
         Minion(final UUID owner, final SkillBuild build, final SummonSpec spec, final Mob mob, final String name, final long now,
                final long untilTick) {
@@ -147,6 +187,34 @@ public final class MinionService implements Listener, MinionHooks {
 
     /** 主人剛打過的怪。 */
     private record Focus(UUID target, long tick) {
+    }
+
+    /** 2026-10-27 照 PoE2 Commandment：這隻召喚物掛了號令（指令以外的技能不造成傷害、指令冷卻回復快 100%）。 */
+    static boolean commandment(final Minion minion) {
+        for (final SupportDefinition support : minion.build.supports()) {
+            if (support.flags(tw.exilecore.stats.SupportExtraKeys.FLAG_COMMANDMENT)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 2026-10-27：指令放出來的那幾招（震地咆哮、毒氣箭、爆裂殉身、死亡風暴、冰甲、從天而降）的技能描述代號結尾。 */
+    static final Set<String> COMMAND_PROFILES = Set.of("shattering_roar", "gas_arrow", "gas_cloud", "gas_explosion", "explosive_demise",
+            "death_storm", "ice_armour", "death_from_above");
+
+    /** 這一招是不是指令放的（技能描述代號是「召喚技能.招式」）。 */
+    static boolean commandProfile(final String profileId) {
+        final int dot = profileId == null ? -1 : profileId.lastIndexOf('.');
+        return dot >= 0 && COMMAND_PROFILES.contains(profileId.substring(dot + 1));
+    }
+
+    /** Commandment：指令以外的招式更少 100% 傷害。 */
+    private static SkillProfile commanded(final Minion minion, final SkillProfile profile) {
+        if (profile == null || commandProfile(profile.id()) || !commandment(minion)) {
+            return profile;
+        }
+        return profile.withLocal(List.of(Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, -1.0, "號令")));
     }
 
     private final ExileCore plugin;
@@ -195,6 +263,18 @@ public final class MinionService implements Listener, MinionHooks {
     // ---- 查詢 ----
 
     /** 這個玩家某個技能目前有幾隻（說明用）。 */
+    /** 2026-10-27（塗油限定 狂颮之主）：owner 用 skillId 叫出來、最新的那一隻（剛復活的）；沒有回傳 null。 */
+    UUID newest(final UUID owner, final String skillId) {
+        Minion newest = null;
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner) && minion.skillId().equals(skillId) && !minion.decoy
+                    && (newest == null || minion.bornTick >= newest.bornTick)) {
+                newest = minion;
+            }
+        }
+        return newest == null ? null : newest.mob.getUniqueId();
+    }
+
     int count(final UUID owner, final String skillId) {
         int count = 0;
         for (final Minion minion : minions) {
@@ -203,6 +283,40 @@ public final class MinionService implements Listener, MinionHooks {
             }
         }
         return count;
+    }
+
+    /**
+     * 2026-10-27：某個技能最多能有幾隻才不會超過一個人的總上限（{@link #MAX_PER_PLAYER} 減掉其他技能的召喚物）。
+     * 精魂召喚照這個夾住上限；這次之前單一技能上限 41～50，或好幾種加起來超過 40，會每 0.5 秒叫一隻、擠掉最舊的一直輪替。
+     */
+    int room(final UUID owner, final String skillId) {
+        int others = 0;
+        for (final Minion minion : minions) {
+            // 2026-10-27：殘影（分身）不算召喚物上限（這次之前算進去，放一個殘影精魂召喚的上限就少一隻、被收掉一隻）
+            if (minion.owner.equals(owner) && !minion.decoy && !minion.skillId().equals(skillId)) {
+                others++;
+            }
+        }
+        return clampToRoom(Integer.MAX_VALUE, others);
+    }
+
+    /** 2026-10-27：上限 wanted 夾在總上限剩下的空間裡（測試用）。 */
+    static int clampToRoom(final int wanted, final int others) {
+        return Math.max(0, Math.min(wanted, MAX_PER_PLAYER - others));
+    }
+
+    /** 2026-10-27：真的被打死（不是被新叫的擠掉、時間到、收起來）的隻數，拿了就歸零（天賦樹「召喚物復活時回復生命」用）。 */
+    int takeDeaths(final UUID owner, final String skillId) {
+        final Integer died = deaths.remove(owner + ":" + skillId);
+        return died == null ? 0 : died;
+    }
+
+    /**
+     * 2026-10-27：這個玩家還沒被拿走的死亡數全部丟掉（精魂召喚每次同步完呼叫）：不是精魂召喚的（一般召喚、每隔幾秒叫一隻的）
+     * 沒人拿，這次之前會一直累積到登出，那個技能之後開成精魂召喚時一次算成好幾隻「等著復活」。
+     */
+    void clearDeaths(final UUID owner) {
+        deaths.keySet().removeIf(key -> key.startsWith(owner + ":"));
     }
 
     /** 這個玩家全部有幾隻。 */
@@ -224,13 +338,24 @@ public final class MinionService implements Listener, MinionHooks {
     List<Modifier> modifiers(final Player player) {
         List<Modifier> list = null;
         final Set<String> counted = new HashSet<>();
+        double undeadPower = 0; // 2026-10-26 照 PoE2 忠誠獻祭：不死召喚物的強度總值（ConquestEffects 換成更多傷害）
         for (final Minion minion : minions) {
+            if (minion.owner.equals(player.getUniqueId()) && !minion.decoy && minion.mob.isValid()
+                    && tw.exilecore.passive.ConquestEffects.undead(minion.mob.getType().name())) {
+                undeadPower += tw.exilecore.passive.ConquestEffects.minionPower(minion.spec.life());
+            }
             if (minion.owner.equals(player.getUniqueId()) && !minion.spec.buff().isEmpty() && counted.add(minion.skillId())) {
                 if (list == null) {
                     list = new ArrayList<>();
                 }
                 list.addAll(minion.spec.buff());
             }
+        }
+        if (undeadPower > 0) {
+            if (list == null) {
+                list = new ArrayList<>();
+            }
+            list.add(Modifier.flat(tw.exilecore.passive.ConquestEffects.UNDEAD_POWER, undeadPower, "不死召喚物"));
         }
         return list == null ? List.of() : list;
     }
@@ -273,12 +398,18 @@ public final class MinionService implements Listener, MinionHooks {
     }
 
     int offer(final Player player, final double radius, final int ticks, final List<Modifier> mods) {
+        return offer(player, radius, ticks, mods, List.of());
+    }
+
+    /** 2026-10-26：同上，只給這些技能叫出來的召喚物（空的 = 全部；銀月庇照 PoE2 只給狼）。 */
+    int offer(final Player player, final double radius, final int ticks, final List<Modifier> mods, final List<String> skills) {
         final long now = now();
         final Location at = player.getLocation();
         int count = 0;
         for (final Minion minion : minions) {
             if (!minion.owner.equals(player.getUniqueId()) || !minion.mob.isValid() || !minion.mob.getWorld().equals(at.getWorld())
-                    || minion.mob.getLocation().distanceSquared(at) > radius * radius) {
+                    || minion.mob.getLocation().distanceSquared(at) > radius * radius
+                    || (!skills.isEmpty() && !skills.contains(minion.skillId()))) {
                 continue;
             }
             minion.offering = List.copyOf(mods);
@@ -295,11 +426,18 @@ public final class MinionService implements Listener, MinionHooks {
      * 回傳每隻的位置（腳）與牠現在的目標（沒有就 null）。
      */
     java.util.List<java.util.Map.Entry<Location, LivingEntity>> commandable(final Player owner, final java.util.List<String> who, final int max) {
+        return commandable(owner, who, max, true);
+    }
+
+    /** 2026-10-26：obey = false 只是看有沒有聽命的（放之前的檢查），不算「聽從指令」。 */
+    java.util.List<java.util.Map.Entry<Location, LivingEntity>> commandable(final Player owner, final java.util.List<String> who, final int max,
+                                                                             final boolean obey) {
         final java.util.List<Minion> list = new ArrayList<>();
         final Location at = owner.getLocation();
         for (final Minion minion : minions) {
             if (minion.owner.equals(owner.getUniqueId()) && !minion.decoy && minion.mob.isValid() && minion.mob.getWorld().equals(at.getWorld())
-                    && minion.mob.getLocation().distanceSquared(at) <= 20 * 20 && (who.contains("any") || who.contains(minion.skillId()))) {
+                    && minion.mob.getLocation().distanceSquared(at) <= 20 * 20
+                    && (who.contains("any") && !MinionAbilities.commandOnly(minion.skillId()) || who.contains(minion.skillId()))) { // 2026-10-27：砲手、巨靈只聽自己的指令
                 list.add(minion);
             }
         }
@@ -310,6 +448,9 @@ public final class MinionService implements Listener, MinionHooks {
                 break;
             }
             minion.mob.swingMainHand();
+            if (obey) {
+                obeyed(owner, minion);
+            }
             final LivingEntity target = minion.target == null ? null : living(minion.target);
             // 2026-10：Map.entry 不收 null——召喚物沒有目標時整個指令技能丟 NullPointerException（魔力、冷卻扣了卻沒放出來）
             out.add(new java.util.AbstractMap.SimpleImmutableEntry<>(minion.mob.getLocation(), target));
@@ -343,6 +484,7 @@ public final class MinionService implements Listener, MinionHooks {
         Minion pick = null;
         for (final Minion minion : minions) {
             if (minion.owner.equals(owner.getUniqueId()) && !minion.decoy && minion.mob.isValid() && minion.mob.getWorld().equals(near.getWorld())
+                    && !MinionAbilities.commandOnly(minion.skillId()) // 2026-10-27：不會受傷的砲手、巨靈不能獻祭
                     && minion.mob.getLocation().distanceSquared(near) <= search * search && (pick == null || minion.bornTick < pick.bornTick)) {
                 pick = minion;
             }
@@ -353,6 +495,60 @@ public final class MinionService implements Listener, MinionHooks {
         final Location at = pick.mob.getLocation();
         remove(pick, Gone.EXPIRED);
         return at;
+    }
+
+    /** 2026-10-26（骸舞，PoE2 Danse Macabre）：多獻祭一隻附近的骷髏（技能代號有 skeleton 的召喚物，最舊的那隻）；有獻祭到回傳 true。 */
+    boolean sacrificeSkeleton(final Player owner, final Location near, final double search) {
+        Minion pick = null;
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner.getUniqueId()) && !minion.decoy && minion.mob.isValid() && minion.skillId().contains("skelet")
+                    && minion.mob.getWorld().equals(near.getWorld()) && minion.mob.getLocation().distanceSquared(near) <= search * search
+                    && (pick == null || minion.bornTick < pick.bornTick)) {
+                pick = minion;
+            }
+        }
+        if (pick == null) {
+            return false;
+        }
+        pick.mob.getWorld().spawnParticle(org.bukkit.Particle.SOUL, pick.mob.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.03);
+        remove(pick, Gone.EXPIRED);
+        return true;
+    }
+
+    /** 2026-10-26：全部的召喚物（燃僕每秒燒自己、點燃身邊；殘影不算）。 */
+    List<Minion> all() {
+        final List<Minion> list = new ArrayList<>();
+        for (final Minion minion : minions) {
+            if (!minion.decoy) {
+                list.add(minion);
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 2026-10-26（群鋒，PoE2 Muster）：掛了群鋒的召喚物，主人每有一種不同的復活型召喚物（永久的召喚物），更多 x% 傷害。
+     */
+    private SkillProfile musterProfile(final Minion minion) {
+        double per = 0;
+        for (final SupportDefinition support : minion.build.supports()) {
+            for (final Modifier modifier : support.modifiers()) {
+                if (modifier.stat().equals(tw.exilecore.stats.SupportKeys.MUSTER)) {
+                    per += modifier.value();
+                }
+            }
+        }
+        if (per <= 0) {
+            return minion.profile;
+        }
+        final Set<String> kinds = new java.util.HashSet<>();
+        for (final Minion other : minions) {
+            if (other.owner.equals(minion.owner) && !other.decoy && other.spec.permanent() && other.mob.isValid()) {
+                kinds.add(other.skillId());
+            }
+        }
+        return kinds.isEmpty() ? minion.profile
+                : minion.profile.withLocal(List.of(Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, per * kinds.size() / 100.0, "群鋒")));
     }
 
     /** 祭柱：附近有沒有自己的召喚物可以獻祭（花魔力之前看）。 */
@@ -374,6 +570,61 @@ public final class MinionService implements Listener, MinionHooks {
             }
         }
         return false;
+    }
+
+    /** 2026-10-26（天賦樹「夥伴在你的臨在範圍內時」）：有沒有活著的夥伴（技能帶 companion 標籤）在 radius 格內。 */
+    public boolean companionNear(final org.bukkit.entity.Player owner, final double radius) {
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner.getUniqueId()) && !minion.decoy && minion.mob.isValid() && !minion.mob.isDead()
+                    && minion.build.definition().tags().contains(tw.exilecore.stats.TreeMechanicKeys.COMPANION)
+                    && near(owner, minion, radius)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 2026-10-26（天賦樹「臨在範圍內每有一個召喚物」）：radius 格內活著的召喚物數（幻身不算）。 */
+    public int countNear(final org.bukkit.entity.Player owner, final double radius) {
+        int count = 0;
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner.getUniqueId()) && !minion.decoy && minion.mob.isValid() && !minion.mob.isDead()
+                    && near(owner, minion, radius)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /** 2026-10-27（天賦樹「你的召喚物全部都是夥伴時」）：至少一隻、而且每一隻活著的召喚物都是夥伴（幻身不算）。 */
+    public boolean allCompanions(final UUID owner) {
+        boolean any = false;
+        for (final Minion minion : minions) {
+            if (!minion.owner.equals(owner) || minion.decoy || !minion.mob.isValid() || minion.mob.isDead()) {
+                continue;
+            }
+            if (!isCompanion(minion)) {
+                return false;
+            }
+            any = true;
+        }
+        return any;
+    }
+
+    /** 2026-10-27（天賦樹「存在範圍內的夥伴有疾速」）：radius 格內活著的夥伴。 */
+    List<UUID> companionsNear(final org.bukkit.entity.Player owner, final double radius) {
+        final List<UUID> list = new ArrayList<>();
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner.getUniqueId()) && isCompanion(minion) && minion.mob.isValid() && !minion.mob.isDead()
+                    && near(owner, minion, radius)) {
+                list.add(minion.mob.getUniqueId());
+            }
+        }
+        return list;
+    }
+
+    private static boolean near(final org.bukkit.entity.Player owner, final Minion minion, final double radius) {
+        return owner.getWorld().equals(minion.mob.getWorld()) && owner.getLocation().distanceSquared(minion.mob.getLocation()) <= radius * radius;
     }
 
     /** 精魂召喚（2026-10，照 PoE2 每隻算精魂）：這個技能超過 keep 隻的收掉（精魂變少了）。 */
@@ -433,11 +684,21 @@ public final class MinionService implements Listener, MinionHooks {
         return plugin.combat() == null || plugin.combat().charges() == null ? 0 : plugin.combat().charges().count(player, "power");
     }
 
-    /** 強化殭屍的加成：更耐打（生命更多 40%）、傷害更多 100%、移動更快 25%。 */
-    static final List<Modifier> EMPOWERED = List.of(
-            Modifier.more(tw.exilecore.stats.StatKeys.LIFE_MAX, 0.4, "強化"),
-            Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, 1.0, "強化"),
-            Modifier.increased(tw.exilecore.stats.StatKeys.MOVEMENT_SPEED, 0.25, "強化"));
+    /** PoE2 強化殭屍「擊中傷害更多 x%」（寶石 1～40 級）。 */
+    static final double[] EMPOWERED_DAMAGE = {100, 105, 110, 116, 122, 128, 134, 141, 148, 155, 163, 171, 180, 189, 198, 208, 218, 229, 241, 253,
+            265, 279, 293, 307, 323, 339, 356, 373, 392, 412, 432, 454, 476, 500, 525, 552, 579, 608, 639, 670};
+
+    /**
+     * 強化殭屍的加成（2026-10-26 照 PoE2）：受到的傷害更少 30%（這裡用生命更多 43% 代替，耐打程度一樣）、
+     * 擊中傷害更多 100%～253%（隨寶石等級）、移動速度更多 25%。
+     */
+    static List<Modifier> empowered(final int level) {
+        final double more = EMPOWERED_DAMAGE[Math.max(1, Math.min(EMPOWERED_DAMAGE.length, level)) - 1] / 100.0;
+        return List.of(
+                Modifier.more(tw.exilecore.stats.StatKeys.LIFE_MAX, 1 / 0.7 - 1, "強化"),
+                Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, more, "強化"),
+                Modifier.more(tw.exilecore.stats.StatKeys.MOVEMENT_SPEED, 0.25, "強化"));
+    }
 
     /** 召出來（超過上限就把同一個技能最舊的收掉）。 */
     void summon(final Player player, final SkillBuild build) {
@@ -445,13 +706,16 @@ public final class MinionService implements Listener, MinionHooks {
         if (spec == null) {
             return;
         }
+        if (tw.exilecore.ascendancy.AscendancyEffects.umbral(player, build)) {
+            return; // 2026-10-27 照 PoE2（昇華・幽影之井）：骷髏改成幽影之魂，不叫出來
+        }
         if (spec.corpse() && powerRaise(build) && corpseNear(player, spec) == null && powerCharges(player) > 0) {
             // 2026-10-24：戰星輔助（恆星不扣、倍星叫兩批）
             final int benefit = plugin.combat().charges().spend(player, "power", build.profile().effective(plugin.players().sheet(player)),
                     build.profile().tags());
             if (benefit > 0) {
                 for (int i = 0; i < benefit; i++) {
-                    summon(player, build, 3, false, EMPOWERED); // 吃一顆銳星：一隻強化的加兩隻一般的，從面前爬出來
+                    summon(player, build, 3, false, empowered(build.level())); // 吃一顆銳星：一隻強化的加兩隻一般的，從面前爬出來
                 }
                 return;
             }
@@ -470,9 +734,9 @@ public final class MinionService implements Listener, MinionHooks {
             summon(player, build);
             return;
         }
-        final int limit = Math.max(1, build.minions());
         final UUID owner = player.getUniqueId();
         final String skillId = build.definition().id();
+        final int limit = Math.max(1, Math.min(build.minions(), room(owner, skillId))); // 2026-10-27：夾在總上限剩下的空間（不然滿 40 之後每次都叫新的擠掉舊的）
         int alive = 0;
         Minion oldest = null;
         for (final Minion minion : minions) {
@@ -497,7 +761,22 @@ public final class MinionService implements Listener, MinionHooks {
         syncName(oldest, now);
     }
 
+    /**
+     * 2026-10-27 照 PoE2 Unearth（掘骸）：在這幾個點各叫一隻（屍體已經由呼叫的人用掉；超過上限照樣收掉最舊的）。
+     */
+    void summonAt(final Player player, final SkillBuild build, final List<Location> points) {
+        if (build.definition().summon() == null || points.isEmpty()) {
+            return;
+        }
+        summon(player, build, points.size(), false, List.of(), points);
+    }
+
     private void summon(final Player player, final SkillBuild build, final int count, final boolean useCorpse, final List<Modifier> first) {
+        summon(player, build, count, useCorpse, first, null);
+    }
+
+    private void summon(final Player player, final SkillBuild build, final int count, final boolean useCorpse, final List<Modifier> first,
+                        final List<Location> fixed) {
         final SummonSpec spec = build.definition().summon();
         final long now = now();
         final UUID owner = player.getUniqueId();
@@ -510,12 +789,16 @@ public final class MinionService implements Listener, MinionHooks {
         for (int i = 0; i < count; i++) {
             Location at;
             String spectreKind = null;
-            if (useCorpse) {
+            if (fixed != null) {
+                at = ground(fixed.get(i).clone()); // 2026-10-27 掘骸：屍體的位置
+            } else if (useCorpse) {
                 final Corpses.Corpse corpse = corpseNear(player, spec);
                 if (corpse == null) {
                     break; // 第二隻沒屍體就算了
                 }
-                plugin.combat().corpses().remove(corpse);
+                if (!tw.exilecore.stats.TreeEffectKeys.corpseSaved(plugin.players().sheet(player), plugin.random())) { // 2026-10-26 照 PoE2 天賦樹：x% 機率不毀掉屍體
+                    plugin.combat().corpses().remove(corpse);
+                }
                 at = ground(new Location(player.getWorld(), corpse.x(), corpse.y(), corpse.z()));
                 if (spec.spectre()) {
                     // 附身（2026-10）：屍體原本是什麼怪就用什麼當身體（不能用的照技能寫的種類）
@@ -530,6 +813,9 @@ public final class MinionService implements Listener, MinionHooks {
             if (at == null) {
                 at = player.getLocation();
             }
+            if (spec.spectre() && !useCorpse) {
+                spectreKind = boundSpectre(player); // 2026-10-26 附魂術（精魂召喚）：叫附身的那種怪
+            }
             if (spec.flying()) {
                 at.add(0, 1.2, 0);
             }
@@ -538,7 +824,7 @@ public final class MinionService implements Listener, MinionHooks {
             final List<Minion> mine = new ArrayList<>();
             final List<Minion> all = new ArrayList<>();
             for (final Minion minion : minions) {
-                if (minion.owner.equals(owner)) {
+                if (minion.owner.equals(owner) && !minion.decoy) { // 2026-10-27：殘影不算總上限（跟 room 一樣）
                     all.add(minion);
                     if (minion.skillId().equals(build.definition().id())) {
                         mine.add(minion);
@@ -557,7 +843,10 @@ public final class MinionService implements Listener, MinionHooks {
             if (mob == null) {
                 continue;
             }
-            final Minion minion = new Minion(owner, build, spec, mob, name, now, spec.permanent() ? 0 : now + build.durationTicks(spec.duration()));
+            // 2026-10-26 照 PoE2 附魂術：附身的召喚物用那種怪物原本的倍率（monsters.yml 的 types；生命、傷害）
+            final SummonSpec own = spec.spectre() && spectreKind != null ? spectreSpec(spec, spectreKind) : spec;
+            final Minion minion = new Minion(owner, build, own, mob, name, now, spec.permanent() ? 0 : now + build.durationTicks(spec.duration()));
+            minion.spectreType = spec.spectre() ? spectreKind : null;
             if (i == 0 && !first.isEmpty()) {
                 minion.empowered = first;
                 mob.setGlowing(true); // 強化的那隻發光，好認
@@ -693,6 +982,9 @@ public final class MinionService implements Listener, MinionHooks {
             mob.setCustomNameVisible(true);
             mob.getPersistentDataContainer().set(key, PersistentDataType.STRING, player.getUniqueId().toString());
             mob.getPersistentDataContainer().set(skillKey, PersistentDataType.STRING, build.definition().id());
+            if (MinionAbilities.commandOnly(build.definition().id())) {
+                mob.setInvulnerable(true); // 2026-10-27 照 PoE2：砲手、巨靈不會受傷
+            }
             if (mob instanceof Zombie zombie) {
                 zombie.setShouldBurnInDay(false);
                 zombie.setCanBreakDoors(false);
@@ -800,31 +1092,63 @@ public final class MinionService implements Listener, MinionHooks {
     private void rebuild(final Minion minion, final StatSheet ownerSheet, final boolean fresh) {
         final MonsterConfig monsters = plugin.monsters().config();
         final org.bukkit.entity.Player ownerPlayer = plugin.getServer().getPlayer(minion.owner);
-        final int level = MinionSheets.monsterLevel(config, minion.build.level(),
-                ownerPlayer == null ? 0 : plugin.players().get(ownerPlayer).level());
-        final double[] damage = monsters.damageAt(level);
-        final double scale = MinionSheets.extraScale(config, minion.build.level()); // 2026-10：超過 20 級的技能等級
-        final MinionSheets.Base base = new MinionSheets.Base(monsters.lifeAt(level) * scale, monsters.accuracyAt(level), monsters.evasionAt(level),
-                monsters.armourAt(level), damage[0] * scale, damage[1] * scale, monsters.critChance());
-        final List<Modifier> ownerModifiers = new ArrayList<>(MinionSheets.ownerModifiers(ownerSheet));
+        // 2026-10-26：照 PoE2 的召喚物（summon.ally）用召喚物表換算；超過 20 級的技能等級照 extraScale
+        final MinionSheets.Base base = MinionSheets.base(config, minion.spec, minion.build.level(),
+                ownerPlayer == null ? 0 : plugin.players().get(ownerPlayer).level(), monsters::lifeAt, monsters::damageAt,
+                monsters::accuracyAt, monsters::evasionAt, monsters::armourAt, monsters.critChance());
+        // 2026-10-26 照 PoE2：「夥伴…」只給夥伴、「存在範圍內的友軍…」只給在主人存在範圍內的（每 2 秒看一次距離）
+        final boolean inPresence = ownerPlayer != null && ownerPlayer.getWorld().equals(minion.mob.getWorld())
+                && ownerPlayer.getLocation().distanceSquared(minion.mob.getLocation())
+                <= Math.pow(tw.exilecore.combat.Presence.radius(ownerSheet), 2);
+        final List<Modifier> ownerModifiers = new ArrayList<>(MinionSheets.forMinion(MinionSheets.ownerModifiers(ownerSheet),
+                MinionSheets.conditions(minion.build.definition(), inPresence)));
         if (auras != null) {
             ownerModifiers.addAll(auras.effectsFor(minion.owner)); // 光環給召喚物的是完整效果（PoE 的規矩）
         }
         ownerModifiers.addAll(minion.empowered);
+        if (tw.exilecore.ascendancy.AscendancyEffects.get() != null) {
+            ownerModifiers.addAll(tw.exilecore.ascendancy.AscendancyEffects.get().minionWeapon(minion.owner, minion.mob.getLocation())); // 2026-10-27 照 PoE2：看看我怎麼辦事的（友軍含召喚物）
+        }
+        if (plugin.skills() != null) {
+            ownerModifiers.addAll(plugin.skills().supportMechanics().lineage().minionModifiers(minion, ownerSheet)); // 2026-10-27 照 PoE2：巨伴、縛魔、殘戰
+        }
         final boolean offered = minion.offeringUntil > now();
         if (offered) {
             ownerModifiers.addAll(minion.offering); // 祭品（2026-10）
         }
+        final boolean armoured = minion.iceArmourUntil > now();
+        if (armoured) {
+            ownerModifiers.addAll(ICE_ARMOUR); // 2026-10-26 霜術士的冰甲：受到的擊中傷害更少 40%
+        }
+        final boolean treeBuffed = minion.treeBuffUntil > now();
+        if (treeBuffed) {
+            ownerModifiers.addAll(minion.treeBuff); // 2026-10-26 天賦樹：夥伴擊殺時的疾速
+        }
+        // 2026-10-27 照 PoE2 Crazed Minions：最近復活過的召喚物更多傷害（到期那一刻重算）
+        final java.util.Map.Entry<List<Modifier>, Long> crazed = plugin.skills() == null ? null
+                : plugin.skills().supportMechanics().extras().crazed(minion);
+        if (crazed != null) {
+            ownerModifiers.addAll(crazed.getKey());
+        }
+        // 2026-10-26 照 PoE2 天賦「夥伴獲得你的力量」：力量給的生命（每點 2，換成召喚物的單位）；2026-10-27 巨伴的閃避、偏斜也在這裡
+        // （跟召喚物說明、召喚物每秒傷害共用 MinionEstimates；生命換算照這次的係數，這次之前用上一次重算的，第一次是 1）
+        final double[] factors = MinionSheets.poe2Factors(config, minion.build.level(),
+                ownerPlayer == null ? 0 : plugin.players().get(ownerPlayer).level(), monsters::lifeAt, monsters::damageAt);
+        ownerModifiers.addAll(MinionEstimates.ownerDerived(minion.build, ownerSheet, factors[1], !minion.decoy));
+        final long expiry = Math.min(Math.min(Math.min(offered ? minion.offeringUntil + 1 : Long.MAX_VALUE, armoured ? minion.iceArmourUntil + 1 : Long.MAX_VALUE),
+                treeBuffed ? minion.treeBuffUntil + 1 : Long.MAX_VALUE), crazed != null ? crazed.getValue() + 1 : Long.MAX_VALUE);
         // 2026-10：每 2 秒看一次，主人的屬性、光環、技能都沒變就不用重算（以前每隻每 2 秒整個重算、重送血量與移動速度給附近的人）
         if (!fresh && minion.sheet != null && minion.builtFor == minion.build && base.equals(minion.builtBase)
                 && ownerModifiers.equals(minion.builtModifiers)) {
-            minion.nextRebuild = offered ? Math.min(now() + 40, minion.offeringUntil + 1) : now() + 40;
+            minion.nextRebuild = Math.min(now() + 40, expiry);
             return;
         }
+        minion.factors = factors;
         minion.builtFor = minion.build;
         minion.builtBase = base;
         minion.builtModifiers = ownerModifiers;
         minion.sheet = MinionSheets.build(minion.spec, base, ownerModifiers);
+        tw.exilecore.item.unique.UniqueDerived.mirrorResists(ownerSheet, minion.sheet); // 2026-10-26（冥河之衛）：召喚物的抗性等於你的
         minion.profile = MinionSheets.profile(minion.build);
         minion.effective = minion.profile.local().isEmpty() ? minion.sheet // 2026-10：輔助寶石給召喚物的也拿掉 minion 標籤（防禦類才讀得到）
                 : minion.sheet.overlay(MinionSheets.stripMinion(minion.profile.local()));
@@ -833,7 +1157,22 @@ public final class MinionService implements Listener, MinionHooks {
         final double life = MinionSheets.life(minion.effective);
         minion.healthScale = MonsterSheets.healthScale(life);
         syncVanilla(minion, life, fresh);
-        minion.nextRebuild = offered ? Math.min(now() + 40, minion.offeringUntil + 1) : now() + 40;
+        // 2026-10-26 照 PoE2：能量護盾（剛出來是滿的；上限變了照比例）
+        final double esMax = MinionSheets.energyShield(minion.effective);
+        minion.es = fresh || minion.esMax <= 0 ? esMax : Math.min(esMax, minion.es / minion.esMax * esMax);
+        minion.esMax = esMax;
+        minion.nextRebuild = Math.min(now() + 40, expiry);
+    }
+
+    /** 冰甲：受到的擊中傷害更少 40%（每一種傷害類型都少 40%）。 */
+    private static final List<Modifier> ICE_ARMOUR = iceArmour();
+
+    private static List<Modifier> iceArmour() {
+        final List<Modifier> list = new ArrayList<>();
+        for (final tw.exilecore.stats.DamageType type : tw.exilecore.stats.DamageType.values()) {
+            list.add(Modifier.flat(tw.exilecore.stats.StatKeys.DEBUFF_TAKEN + type.tag(), -MinionAbilities.ARMOUR_LESS, "冰甲"));
+        }
+        return List.copyOf(list);
     }
 
     private void syncVanilla(final Minion minion, final double life, final boolean fresh) {
@@ -862,6 +1201,10 @@ public final class MinionService implements Listener, MinionHooks {
 
     void tick() {
         final long now = now();
+        tickClouds(now); // 2026-10-26：射手的毒雲
+        if (now % 200 == 0) {
+            fallen.removeIf(down -> down.until() <= now);
+        }
         if (minions.isEmpty()) {
             if (now % 200 == 0) {
                 focus.clear();
@@ -949,6 +1292,13 @@ public final class MinionService implements Listener, MinionHooks {
             }
             return;
         }
+        if (owner.isDead()) {
+            // 2026-10-27：主人死了（還沒重生）召喚物停手（不搶擊殺、不觸發主人的回復）；這次之前照打
+            if (mob.getTarget() != null) {
+                mob.setTarget(null);
+            }
+            return;
+        }
         if (now >= minion.nextRebuild) {
             rebuild(minion, plugin.players().sheet(owner), false);
         }
@@ -966,6 +1316,29 @@ public final class MinionService implements Listener, MinionHooks {
         if (minion.spec.heal() > 0 && now % 20 == minion.bornTick % 20) {
             healAllies(minion, owner); // 治療的召喚物（2026-10）
         }
+        poe2Tick(minion, now); // 2026-10-26：能量護盾回充、祭司的回復、怒氣、激怒失血、躍擊落地
+        if (!mob.isValid() || mob.isDead() || !byEntity.containsKey(mob.getUniqueId())) {
+            return;
+        }
+        if (MinionAbilities.CLERIC.equals(minion.skillId())) {
+            // 2026-10-26 照 PoE2：祭司不打人，只治療受傷的召喚物、復活倒下的骷髏，跟著你走
+            cleric(minion, owner, now);
+            if (now % 20 == minion.bornTick % 20) {
+                syncName(minion, now);
+            }
+            idle(minion, owner, now);
+            watchStuck(minion, owner, mob.getLocation().distanceSquared(owner.getLocation()) > FOLLOW_START * FOLLOW_START, now);
+            return;
+        }
+        if (MinionAbilities.commandOnly(minion.skillId())) {
+            // 2026-10-27 照 PoE2：砲手、巨靈只在你下指令時行動，平常跟著你（砲手站在你身後），不會受傷
+            if (now % 20 == minion.bornTick % 20) {
+                syncName(minion, now);
+                healFraction(mob, 1.0);
+            }
+            standBy(minion, owner, now);
+            return;
+        }
         if (now % 20 == minion.bornTick % 20) {
             syncName(minion, now);
         }
@@ -975,7 +1348,7 @@ public final class MinionService implements Listener, MinionHooks {
 
         // 目標
         LivingEntity target = minion.target == null ? null : living(minion.target);
-        if (target != null && !validTarget(target, owner, mob)) {
+        if (target != null && (!validTarget(target, owner, mob) || !withinSwarm(minion, owner, target))) {
             target = null;
             minion.target = null;
         }
@@ -1019,17 +1392,22 @@ public final class MinionService implements Listener, MinionHooks {
         if (!minion.spec.flying()) {
             watchStuck(minion, owner, !inReach || !seesTarget, now);
         }
-        if (inReach && now >= minion.nextAttack && seesTarget) {
-            minion.nextAttack = now + minion.attackTicks;
-            attack(minion, target);
+        if (minion.leapLandAt > 0) {
+            return; // 躍擊在空中：落地才打
+        }
+        if (wolf(minion) && now >= minion.nextAttack && !minion.onCooldown(LEAP, now) && distance >= MinionAbilities.LEAP_MIN
+                && distance <= MinionAbilities.LEAP_MAX && mob.isOnGround() && mob.hasLineOfSight(target)) {
+            minion.nextAttack = now + leap(minion, target, distance, now); // 2026-10-26 照 PoE2：狼的躍擊（冷卻 7 秒）
+        } else if (inReach && now >= minion.nextAttack && seesTarget) {
+            minion.nextAttack = now + act(minion, target, owner, now); // 2026-10-26：照 PoE2 各自的技能（碎骨、火彈、電弧、冰箭…）
         }
         // 魔像：每隔幾秒吼一聲，把附近的怪引過來打它
         if (minion.spec.taunt() > 0 && now >= minion.nextTaunt) {
             minion.nextTaunt = now + Math.round(minion.spec.taunt() * 20);
             taunt(minion, minion.spec.tauntRadius(), true);
             visuals.taunt(minion.build.definition().visual(), mob.getLocation(), minion.spec.tauntRadius());
-        } else if (now % 20 == minion.bornTick % 20) {
-            taunt(minion, PASSIVE_TAUNT, false); // 附近還沒有目標的怪先打召喚物
+        } else if (now % 20 == minion.bornTick % 20 && !ignoredByEnemies(minion)) {
+            taunt(minion, PASSIVE_TAUNT, false); // 附近還沒有目標的怪先打召喚物（焚魂、蟲群敵人不理，照 PoE2）
         }
     }
 
@@ -1052,9 +1430,16 @@ public final class MinionService implements Listener, MinionHooks {
                 }
             }
         }
+        // 2026-10-26 照 PoE2：狂卒每點怒氣攻擊傷害更多 1%
+        final Attack raged = minion.rage > 0 && minion.profile != null ? with(minion, minion.profile.withLocal(List.of(Modifier.more(
+                tw.exilecore.stats.StatKeys.DAMAGE, MinionAbilities.RAGE_DAMAGE * minion.rage, "怒氣")))) : null;
         for (final LivingEntity hit : hits) {
             if (hit.isValid() && !hit.isDead()) {
-                hit.damage(1.0, mob); // 數字由 CombatListener 換掉（MinionHooks），這裡的 1 只是觸發
+                if (raged != null) {
+                    strike(minion, hit, raged);
+                } else {
+                    hit.damage(1.0, mob); // 數字由 CombatListener 換掉（MinionHooks），這裡的 1 只是觸發
+                }
             }
         }
     }
@@ -1236,7 +1621,7 @@ public final class MinionService implements Listener, MinionHooks {
         final Focus focused = focus.get(owner.getUniqueId());
         if (focused != null && now() - focused.tick() <= FOCUS_TICKS) {
             final LivingEntity target = living(focused.target());
-            if (target != null && validTarget(target, owner, minion.mob)) {
+            if (target != null && validTarget(target, owner, minion.mob) && withinSwarm(minion, owner, target)) {
                 return target;
             }
         }
@@ -1249,7 +1634,7 @@ public final class MinionService implements Listener, MinionHooks {
                 continue; // 清單是幾 tick 前掃的：這段時間死掉、傳走的不算
             }
             final double distance = candidate.getLocation().distanceSquared(at);
-            if (distance < bestDistance) {
+            if (distance < bestDistance && withinSwarm(minion, owner, candidate)) {
                 bestDistance = distance;
                 best = candidate;
             }
@@ -1320,6 +1705,9 @@ public final class MinionService implements Listener, MinionHooks {
             final long seconds = Math.max(0, (minion.untilTick - now + 19) / 20);
             text.append(" <white>").append(seconds).append("</white><gray> 秒");
         }
+        if (minion.esMax > 0 && minion.es < minion.esMax * 0.995) {
+            text.append(" <aqua>盾 ").append((int) Math.round(100 * Math.max(0, minion.es) / minion.esMax)).append('%'); // 2026-10-26 能量護盾
+        }
         if (percent < 100) {
             text.append(" <red>").append(percent).append('%');
         }
@@ -1334,11 +1722,954 @@ public final class MinionService implements Listener, MinionHooks {
         mob.setHealth(Math.min(health.getValue(), mob.getHealth() + health.getValue() * fraction));
     }
 
+    // ---- 2026-10-26 照 PoE2 0.5：召喚物自己的技能與指令（數值見 MinionAbilities）----
+
+    private static final String LEAP = "leap";
+    private static final String BONEBREAKER = "bonebreaker";
+    private static final String HEAL = "heal";
+    private static final String REVIVE = "revive";
+    private static final String COMMAND = "command";
+    /**
+     * 2026-10-27：指令的冷卻另外記在這裡（主人＋技能 → 好了的 tick）：重新召喚（拔掉再裝技能、重新登入）不會重設冷卻。
+     * 這次之前只記在每一隻召喚物身上，叫一批新的就能馬上再下指令。
+     */
+    private final Map<String, Long> commandReady = new HashMap<>();
+    /** 會自己復活的骷髏（死亡風暴打倒下的骷髏、祭司復活的對象）。 */
+    static final Set<String> SKELETONS = Set.of(MinionAbilities.WARRIOR, MinionAbilities.BRUTE, MinionAbilities.SNIPER,
+            MinionAbilities.ARSONIST, MinionAbilities.STORM, MinionAbilities.FROST, MinionAbilities.CLERIC, MinionAbilities.REAVER);
+    /** 附魂術附身的那種怪（角色進度）。 */
+    static final String SPECTRE_KEY = "spectre.bound";
+    /** 死亡風暴的感電地面（隱藏技能，skills.yml）。 */
+    static final String SHOCKED_GROUND = "proc_minion_shocked_ground";
+    /** 指令找多遠內的召喚物。 */
+    static final double COMMAND_RANGE = 20;
+
+    /** 倒下的骷髏（等 12 秒復活）。 */
+    private record Fallen(UUID owner, Location at, long until) {
+    }
+
+    private final List<Fallen> fallen = new ArrayList<>();
+
+    /** 射手的毒雲。 */
+    private static final class Cloud {
+        final UUID owner;
+        final Minion sniper;
+        final Location at;
+        final long born;
+        final long until;
+        final double baseRadius;
+        final double poisonBase;
+        final StatSheet sheet;
+        final SkillProfile explosion;
+
+        Cloud(final UUID owner, final Minion sniper, final Location at, final long born, final double baseRadius, final double poisonBase,
+              final StatSheet sheet, final SkillProfile explosion) {
+            this.owner = owner;
+            this.sniper = sniper;
+            this.at = at;
+            this.born = born;
+            this.until = born + Math.round(MinionAbilities.GAS_SECONDS * 20);
+            this.baseRadius = baseRadius;
+            this.poisonBase = poisonBase;
+            this.sheet = sheet;
+            this.explosion = explosion;
+        }
+
+        double radius(final long now) {
+            final double seconds = Math.max(0, now - born) / 20.0;
+            return baseRadius * (1 + Math.min(MinionAbilities.GAS_GROWTH_MAX, MinionAbilities.GAS_GROWTH * seconds));
+        }
+    }
+
+    private final List<Cloud> clouds = new ArrayList<>();
+
+    private static boolean wolf(final Minion minion) {
+        return MinionAbilities.WOLVES.equals(minion.skillId()) || MinionAbilities.BEAST.equals(minion.skillId());
+    }
+
+    /** 焚魂、蟲群：敵人不會主動去打（PoE2）。 */
+    private static boolean ignoredByEnemies(final Minion minion) {
+        return MinionAbilities.SPIRITS.equals(minion.skillId()) || MinionAbilities.SWARM.equals(minion.skillId())
+                || MinionAbilities.commandOnly(minion.skillId()); // 2026-10-27：砲手、巨靈不會受傷（敵人也不去打）
+    }
+
+    /** 蟲群只打主人身邊 4 公尺內的敵人；其他召喚物都算。 */
+    private static boolean withinSwarm(final Minion minion, final Player owner, final LivingEntity target) {
+        if (!MinionAbilities.SWARM.equals(minion.skillId())) {
+            return true;
+        }
+        final double radius = MinionAbilities.SWARM_RADIUS * areaScale(minion) + target.getWidth() / 2;
+        return target.getWorld().equals(owner.getWorld()) && target.getLocation().distanceSquared(owner.getLocation()) <= radius * radius;
+    }
+
+    /** 範圍倍率換成半徑倍率（√）。 */
+    private static double areaScale(final Minion minion) {
+        return minion.effective == null || minion.profile == null ? 1.0
+                : Math.sqrt(Math.max(0.05, minion.effective.apply(tw.exilecore.stats.StatKeys.SKILL_AREA, 1.0, minion.profile.tags())));
+    }
+
+    /** 法術（電弧、冰箭、治療）施放幾 tick（吃召喚物的施法速度）。 */
+    private static long castTicks(final Minion minion, final double seconds) {
+        final double speed = minion.effective == null ? 1.0
+                : Math.max(0.2, minion.effective.apply(tw.exilecore.stats.StatKeys.CAST_SPEED, 1.0, Set.of(tw.exilecore.stats.Tags.SPELL)));
+        return Math.max(4, Math.round(20 * seconds / speed));
+    }
+
+    /** 每 tick：能量護盾回充、祭司的回復、怒氣消退、激怒失血、躍擊落地、冰甲的樣子。 */
+    private void poe2Tick(final Minion minion, final long now) {
+        final boolean second = now % 20 == minion.bornTick % 20;
+        if (minion.esMax > 0 && minion.es < minion.esMax && now - minion.lastHurt >= MinionAbilities.ES_DELAY_TICKS && now % 5 == 0) {
+            final double rate = MinionAbilities.ES_RECHARGE_PER_SECOND
+                    * Math.max(0, 1 + minion.effective.increased(tw.exilecore.stats.StatKeys.ES_RECHARGE, MinionSheets.CONTEXT));
+            minion.es = Math.min(minion.esMax, minion.es + minion.esMax * rate * 0.25);
+        }
+        if (minion.regenUntil > now && second) {
+            heal(minion.mob, minion.regenPerSecond);
+        }
+        if (minion.rage > 0 && second && now - minion.rageGainedAt >= MinionAbilities.RAGE_DECAY_DELAY) {
+            minion.rage = Math.max(0, minion.rage - (int) MinionAbilities.RAGE_DECAY_PER_SECOND);
+        }
+        if (minion.enragedAt >= 0 && second && now > minion.enragedAt) {
+            // 激怒：每秒失去最大生命 1%，每過一秒失去的速度更多 20%
+            final double loss = MinionSheets.life(minion.effective) * MinionAbilities.enrageDegen((now - minion.enragedAt) / 20.0 - 1)
+                    * minion.healthScale;
+            final double left = minion.mob.getHealth() - loss;
+            minion.mob.setHealth(Math.max(0, left));
+            if (left <= 0) {
+                return;
+            }
+        }
+        if (minion.leapLandAt > 0 && now >= minion.leapLandAt) {
+            land(minion, now);
+        }
+        if (minion.iceArmourUntil > now && now % 10 == 0) {
+            Fx.spawn(minion.mob.getWorld(), org.bukkit.Particle.SNOWFLAKE, minion.mob.getLocation().add(0, 1, 0), 2, 0.3, 0.5, 0.3, 0);
+        }
+    }
+
+    /** 這一下用 with（屬性表與技能描述）打 target：召喚物自己的技能。 */
+    private void strike(final Minion minion, final LivingEntity target, final Attack with) {
+        if (!target.isValid() || target.isDead() || !minion.mob.isValid()) {
+            return;
+        }
+        final Attack previous = minion.override;
+        minion.override = with;
+        try {
+            target.damage(1.0, minion.mob); // 數字由 CombatListener 換掉（MinionHooks.attack 回傳 override）
+        } finally {
+            minion.override = previous;
+        }
+    }
+
+    /** 召喚物的攻擊技能：普攻的描述乘 factor（碎骨 180%、毒氣箭 80%…），加幾個標籤；conversion 不是 null 就換掉物理轉換。 */
+    private static SkillProfile attackProfile(final Minion minion, final String id, final double factor, final Set<String> extraTags,
+                                              final Map<tw.exilecore.stats.DamageType, Double> conversion, final List<Modifier> extra) {
+        final SkillProfile base = minion.profile;
+        final Set<String> tags = new HashSet<>(base.tags());
+        tags.addAll(extraTags);
+        final List<Modifier> local = new ArrayList<>(base.local());
+        if (Math.abs(factor - 1) > 1e-9) {
+            local.add(Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, factor - 1, id));
+        }
+        local.addAll(extra);
+        return new SkillProfile(base.id() + "." + id, tags, base.effectiveness(), null, null,
+                conversion == null ? base.conversion() : conversion, local);
+    }
+
+    /**
+     * 召喚物的法術（電弧、冰箭、死亡風暴、震地咆哮的冰爆…）：傷害照 PoE2 的表（寶石等級）換成我們的單位，
+     * 不吃召喚物的武器傷害與傷害倍率（PoB 也是），基礎暴擊率照技能。
+     */
+    private static SkillProfile spellProfile(final Minion minion, final String id, final tw.exilecore.stats.DamageType type,
+                                             final double[] poe2, final double crit, final Set<String> extraTags, final List<Modifier> extra) {
+        final SkillProfile base = minion.profile;
+        final Set<String> tags = new HashSet<>(base.tags());
+        tags.remove(tw.exilecore.stats.Tags.ATTACK);
+        tags.remove(tw.exilecore.stats.Tags.MELEE);
+        tags.remove(tw.exilecore.stats.Tags.PROJECTILE);
+        tags.remove(tw.exilecore.stats.Tags.PHYSICAL);
+        tags.add(type.tag());
+        tags.addAll(extraTags);
+        final double factor = minion.factors[0];
+        final tw.exilecore.stats.DamagePacket min = new tw.exilecore.stats.DamagePacket().set(type, poe2[0] * factor);
+        final tw.exilecore.stats.DamagePacket max = new tw.exilecore.stats.DamagePacket().set(type, Math.max(poe2[0], poe2[1]) * factor);
+        final List<Modifier> local = new ArrayList<>(base.local());
+        local.add(Modifier.flat(tw.exilecore.stats.StatKeys.SPELL_BASE_CRIT, crit, id));
+        local.addAll(extra);
+        return new SkillProfile(base.id() + "." + id, tags, 1.0, min, max, Map.of(), local);
+    }
+
+    private Attack with(final Minion minion, final SkillProfile profile) {
+        final Player owner = plugin.getServer().getPlayer(minion.owner);
+        return new Attack(owner, minion.sheet, commanded(minion, profile)); // 2026-10-27 照 PoE2 Commandment
+    }
+
+    /** 碰得到目標時出手（照 PoE2 每一種自己的技能）；回傳幾 tick 後再出手。 */
+    private long act(final Minion minion, final LivingEntity target, final Player owner, final long now) {
+        switch (minion.skillId()) {
+            case MinionAbilities.STORM -> {
+                arc(minion, target, owner);
+                return castTicks(minion, MinionAbilities.ARC_CAST);
+            }
+            case MinionAbilities.FROST -> {
+                iceShard(minion, target, owner);
+                return castTicks(minion, MinionAbilities.SHARD_CAST);
+            }
+            case MinionAbilities.BRUTE -> {
+                if (!minion.onCooldown(BONEBREAKER, now)) {
+                    bonebreaker(minion, target, owner, now);
+                    return Math.max(4, Math.round(minion.attackTicks / MinionAbilities.BONEBREAKER_SPEED));
+                }
+            }
+            case MinionAbilities.ARSONIST -> {
+                attack(minion, target); // 火彈：1.6 公尺、70% 轉火焰（summon 的 radius、convert）
+                detonate(minion.owner, target.getLocation(), MinionAbilities.FIRE_BOMB_RADIUS * areaScale(minion), minion);
+                return minion.attackTicks;
+            }
+            case MinionAbilities.REAVER -> {
+                attack(minion, target);
+                if (minion.enragedAt >= 0) {
+                    minion.rage = Math.min(MinionAbilities.RAGE_MAX, minion.rage + MinionAbilities.RAGE_ON_HIT); // 激怒：擊中獲得 2 點怒氣
+                    minion.rageGainedAt = now;
+                }
+                return Math.max(4, Math.round(minion.attackTicks / (1 + MinionAbilities.RAGE_SPEED * minion.rage)));
+            }
+            default -> {
+            }
+        }
+        attack(minion, target);
+        return minion.attackTicks;
+    }
+
+    /** 碎骨：180%，重暈蓄勢待暈的敵人時接震波（480%、2 公尺）。 */
+    private void bonebreaker(final Minion minion, final LivingEntity target, final Player owner, final long now) {
+        minion.startCooldown(BONEBREAKER, now, MinionAbilities.BONEBREAKER_COOLDOWN);
+        minion.mob.swingMainHand();
+        final boolean primed = plugin.ailments() != null && plugin.ailments().isPrimed(target);
+        strike(minion, target, with(minion, attackProfile(minion, "bonebreaker", MinionAbilities.BONEBREAKER_DAMAGE,
+                Set.of(tw.exilecore.stats.Tags.AREA), null, List.of())));
+        Fx.spawn(target.getWorld(), org.bukkit.Particle.BLOCK_CRUMBLE, target.getLocation(), 12, 0.4, 0.1, 0.4, 0,
+                Material.BONE_BLOCK.createBlockData());
+        if (primed && plugin.ailments().heavyStunned(target)) {
+            final Location at = target.getLocation();
+            final double radius = MinionAbilities.SHOCKWAVE_RADIUS * areaScale(minion);
+            final Attack wave = with(minion, attackProfile(minion, "shockwave", MinionAbilities.SHOCKWAVE_DAMAGE,
+                    Set.of(tw.exilecore.stats.Tags.AREA), null, List.of()));
+            for (final LivingEntity near : targets.around(at, radius, owner)) {
+                strike(minion, near, wave);
+            }
+            Fx.spawn(at.getWorld(), org.bukkit.Particle.EXPLOSION, at.clone().add(0, 0.3, 0), 1, 0, 0, 0, 0);
+        }
+    }
+
+    /** 電弧：打目標再連鎖 2 次（3.5 公尺）。 */
+    private void arc(final Minion minion, final LivingEntity target, final Player owner) {
+        final int level = minion.build.level();
+        final Attack hit = with(minion, spellProfile(minion, "arc", tw.exilecore.stats.DamageType.LIGHTNING,
+                MinionAbilities.range(MinionAbilities.ARC_LIGHTNING, level), MinionAbilities.ARC_CRIT, Set.of(),
+                List.of(Modifier.more(tw.exilecore.stats.StatKeys.SHOCK_CHANCE, 1.0, "電弧"))));
+        final List<LivingEntity> chain = new ArrayList<>();
+        chain.add(target);
+        LivingEntity last = target;
+        for (int i = 0; i < MinionAbilities.ARC_CHAINS; i++) {
+            LivingEntity next = null;
+            for (final LivingEntity near : targets.around(last.getLocation(), MinionAbilities.ARC_CHAIN_RANGE, owner)) {
+                if (!chain.contains(near)) {
+                    next = near;
+                    break;
+                }
+            }
+            if (next == null) {
+                break;
+            }
+            chain.add(next);
+            last = next;
+        }
+        bolt(minion.mob, target, "lightning");
+        for (int i = 0; i < chain.size(); i++) {
+            if (i > 0) {
+                line(chain.get(i - 1), chain.get(i));
+            }
+            strike(minion, chain.get(i), hit);
+        }
+    }
+
+    private static void line(final LivingEntity from, final LivingEntity to) {
+        final Location a = SkillTargets.center(from);
+        final Location b = SkillTargets.center(to);
+        final Vector step = b.toVector().subtract(a.toVector());
+        final double length = step.length();
+        if (length < 0.1) {
+            return;
+        }
+        step.multiply(0.5 / length);
+        final Location at = a.clone();
+        for (double d = 0; d < length; d += 0.5) {
+            Fx.spawn(at.getWorld(), org.bukkit.Particle.ELECTRIC_SPARK, at, 1, 0, 0, 0, 0);
+            at.add(step);
+        }
+    }
+
+    /** 冰箭：投射物打目標，再炸開 0.8 公尺；必定凍結累積、凍結累積更多 100%。 */
+    private void iceShard(final Minion minion, final LivingEntity target, final Player owner) {
+        final int level = minion.build.level();
+        final List<Modifier> freeze = List.of(Modifier.more(tw.exilecore.stats.StatKeys.FREEZE_BUILDUP, 1.0, "冰箭"));
+        bolt(minion.mob, target, "cold");
+        strike(minion, target, with(minion, spellProfile(minion, "ice_shard", tw.exilecore.stats.DamageType.COLD,
+                MinionAbilities.range(MinionAbilities.SHARD_COLD, level), MinionAbilities.SHARD_CRIT, Set.of(tw.exilecore.stats.Tags.PROJECTILE), freeze)));
+        final Attack explosion = with(minion, spellProfile(minion, "ice_shard_explosion", tw.exilecore.stats.DamageType.COLD,
+                MinionAbilities.range(MinionAbilities.SHARD_EXPLOSION_COLD, level), MinionAbilities.SHARD_EXPLOSION_CRIT,
+                Set.of(tw.exilecore.stats.Tags.AREA), freeze));
+        final Location at = target.getLocation();
+        for (final LivingEntity near : targets.around(at, MinionAbilities.SHARD_RADIUS * areaScale(minion) + target.getWidth() / 2, owner)) {
+            strike(minion, near, explosion);
+        }
+        Fx.spawn(at.getWorld(), org.bukkit.Particle.SNOWFLAKE, at.clone().add(0, 1, 0), 8, 0.3, 0.3, 0.3, 0.02);
+    }
+
+    /** 躍擊：往目標跳過去，落地時打 1 公尺內的敵人並擊退；回傳幾 tick 後再出手。 */
+    private long leap(final Minion minion, final LivingEntity target, final double distance, final long now) {
+        minion.startCooldown(LEAP, now, MinionAbilities.LEAP_COOLDOWN);
+        final Vector direction = target.getLocation().toVector().subtract(minion.mob.getLocation().toVector()).setY(0);
+        if (direction.lengthSquared() < 1e-4) {
+            return minion.attackTicks;
+        }
+        minion.mob.getPathfinder().stopPathfinding();
+        // 空中每 tick 水平速度 × 0.91：十 tick 大約走 6.7 倍的初速
+        direction.normalize().multiply(Math.max(0, distance - 0.6) / 6.7);
+        minion.mob.setVelocity(direction.setY(0.42));
+        minion.leapLandAt = now + 10;
+        final long extra = Math.round(MinionAbilities.LEAP_MAX_EXTRA * 20 * Math.min(1, distance / MinionAbilities.LEAP_MAX));
+        return 10 + Math.max(4, Math.round(minion.attackTicks / MinionAbilities.LEAP_SPEED)) + extra;
+    }
+
+    private void land(final Minion minion, final long now) {
+        minion.leapLandAt = 0;
+        final Player owner = plugin.getServer().getPlayer(minion.owner);
+        if (owner == null) {
+            return;
+        }
+        final Location at = minion.mob.getLocation();
+        final double radius = MinionAbilities.LEAP_RADIUS * areaScale(minion) + minion.mob.getWidth() / 2;
+        final Attack slam = with(minion, attackProfile(minion, "leap", 1.0, Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.SLAM), null, List.of()));
+        final List<LivingEntity> hits = new ArrayList<>(targets.around(at, radius, owner));
+        final LivingEntity aimed = minion.target == null ? null : living(minion.target);
+        if (aimed != null && !hits.contains(aimed) && Math.sqrt(SkillTargets.boxDistanceSquared(at, aimed.getBoundingBox())) <= radius) {
+            hits.add(aimed);
+        }
+        for (final LivingEntity near : hits) {
+            strike(minion, near, slam);
+            if (near.isValid() && !near.isDead() && plugin.monsters() != null
+                    && !plugin.monsters().data(near).map(data -> data.boss()).orElse(false)) {
+                final Vector push = near.getLocation().toVector().subtract(at.toVector()).setY(0);
+                if (push.lengthSquared() > 1e-4) {
+                    near.setVelocity(push.normalize().multiply(0.5).setY(0.2)); // 擊退、推出落點
+                }
+            }
+        }
+        Fx.spawn(at.getWorld(), org.bukkit.Particle.CLOUD, at.clone().add(0, 0.2, 0), 8, 0.4, 0.05, 0.4, 0.02);
+    }
+
+    /** 祭司：治療一隻受傷的召喚物（4 秒的固定生命回復）、復活一隻倒下的骷髏（冷卻 5 秒）。 */
+    private void cleric(final Minion cleric, final Player owner, final long now) {
+        if (!cleric.onCooldown(HEAL, now)) {
+            Minion pick = null;
+            double lowest = 1;
+            final Location at = cleric.mob.getLocation();
+            for (final Minion other : minions) {
+                if (!other.owner.equals(cleric.owner) || other.decoy || !other.mob.isValid() || other.mob.isDead()
+                        || ignoredByEnemies(other) || !other.mob.getWorld().equals(at.getWorld())
+                        || other.mob.getLocation().distanceSquared(at) > MinionAbilities.HEAL_RANGE * MinionAbilities.HEAL_RANGE) {
+                    continue;
+                }
+                final AttributeInstance health = other.mob.getAttribute(Attribute.MAX_HEALTH);
+                final double fraction = health == null || health.getValue() <= 0 ? 1 : other.mob.getHealth() / health.getValue();
+                if (fraction < lowest - 1e-6 && other.regenUntil <= now) {
+                    lowest = fraction;
+                    pick = other;
+                }
+            }
+            if (pick != null) {
+                cleric.mob.swingMainHand();
+                pick.regenUntil = now + Math.round(MinionAbilities.HEAL_SECONDS * 20);
+                pick.regenPerSecond = MinionAbilities.HEAL_PER_MINUTE[MinionAbilities.row(cleric.build.level())] / 60.0 * cleric.factors[1];
+                Fx.spawn(pick.mob.getWorld(), org.bukkit.Particle.HAPPY_VILLAGER, pick.mob.getLocation().add(0, 1.2, 0), 6, 0.4, 0.4, 0.4, 0);
+                cleric.ready.put(HEAL, now + castTicks(cleric, MinionAbilities.HEAL_CAST));
+            }
+        }
+        if (!cleric.onCooldown(REVIVE, now) && auras != null && auras.reviveSkeleton(cleric.owner, now)) {
+            cleric.startCooldown(REVIVE, now, MinionAbilities.REVIVE_COOLDOWN);
+            Fx.spawn(cleric.mob.getWorld(), org.bukkit.Particle.TOTEM_OF_UNDYING, cleric.mob.getLocation().add(0, 1.2, 0), 10, 0.3, 0.5, 0.3, 0.1);
+        }
+    }
+
+    /** 冰甲：打牠的敵人受到冰冷傷害（從這隻召喚物身上打出去）。 */
+    private void retaliate(final Minion minion, final LivingEntity attacker) {
+        if (!byEntity.containsKey(minion.mob.getUniqueId()) || !attacker.isValid() || attacker.isDead() || minion.profile == null) {
+            return;
+        }
+        strike(minion, attacker, with(minion, spellProfile(minion, "ice_armour", tw.exilecore.stats.DamageType.COLD,
+                new double[] {minion.iceArmourCold[0] / Math.max(1e-9, minion.factors[0]), minion.iceArmourCold[1] / Math.max(1e-9, minion.factors[0])},
+                5, Set.of(), List.of())));
+    }
+
+    // ---- 毒雲 ----
+
+    /** 每 tick：毒雲變大、每秒讓裡面的敵人中毒；碰到點燃中的敵人就炸開；時間到消失。 */
+    private void tickClouds(final long now) {
+        if (clouds.isEmpty()) {
+            return;
+        }
+        for (final Cloud cloud : new ArrayList<>(clouds)) {
+            final Player owner = plugin.getServer().getPlayer(cloud.owner);
+            if (now >= cloud.until || owner == null || !owner.isOnline() || !clouds.contains(cloud)) {
+                clouds.remove(cloud);
+                continue;
+            }
+            final double radius = cloud.radius(now);
+            if (now % 4 == 0) {
+                final double angle = (now * 0.4) % (Math.PI * 2);
+                Fx.as(cloud.owner, () -> Fx.spawn(cloud.at.getWorld(), org.bukkit.Particle.DUST_COLOR_TRANSITION,
+                        cloud.at.clone().add(Math.cos(angle) * radius * 0.6, 0.4, Math.sin(angle) * radius * 0.6), 3, radius * 0.4, 0.2, radius * 0.4, 0,
+                        new org.bukkit.Particle.DustTransition(org.bukkit.Color.fromRGB(0x6a, 0xb0, 0x3c), org.bukkit.Color.fromRGB(0x3c, 0x5a, 0x20), 1.4f)));
+            }
+            if ((now - cloud.born) % 20 != 0) {
+                continue;
+            }
+            boolean ignited = false;
+            for (final LivingEntity near : targets.around(cloud.at, radius, owner)) {
+                if (plugin.ailments() != null && plugin.ailments().has(near, tw.exilecore.ailment.AilmentType.IGNITE)) {
+                    ignited = true;
+                }
+                if (plugin.ailments() != null) {
+                    plugin.ailments().poisonFrom(owner, near, cloud.poisonBase, cloud.sheet); // 不擊中，像 220% 的擊中一樣中毒
+                }
+            }
+            if (ignited) {
+                explode(cloud, null, now); // 碰到點燃中的敵人
+            }
+        }
+    }
+
+    /** 引爆器（火彈、爆裂殉身）：at 附近 radius 內 owner 的毒雲炸開。 */
+    private void detonate(final UUID owner, final Location at, final double radius, final Minion by) {
+        if (clouds.isEmpty()) {
+            return;
+        }
+        final long now = now();
+        for (final Cloud cloud : new ArrayList<>(clouds)) {
+            if (cloud.owner.equals(owner) && cloud.at.getWorld().equals(at.getWorld())) {
+                final double reach = radius + cloud.radius(now);
+                if (cloud.at.distanceSquared(at) <= reach * reach) {
+                    explode(cloud, by, now);
+                }
+            }
+        }
+    }
+
+    private void explode(final Cloud cloud, final Minion by, final long now) {
+        if (!clouds.remove(cloud)) {
+            return;
+        }
+        final Player owner = plugin.getServer().getPlayer(cloud.owner);
+        final Minion source = byEntity.containsKey(cloud.sniper.mob.getUniqueId()) ? cloud.sniper
+                : by != null && byEntity.containsKey(by.mob.getUniqueId()) ? by : null;
+        Fx.spawn(cloud.at.getWorld(), org.bukkit.Particle.EXPLOSION, cloud.at.clone().add(0, 0.5, 0), 2, 0.4, 0.2, 0.4, 0);
+        Fx.spawn(cloud.at.getWorld(), org.bukkit.Particle.FLAME, cloud.at.clone().add(0, 0.5, 0), 30, cloud.radius(now) * 0.5, 0.3,
+                cloud.radius(now) * 0.5, 0.05);
+        if (owner == null || source == null) {
+            return; // 射手、引爆的都不在了：只有樣子
+        }
+        final Attack blast = new Attack(owner, cloud.sheet, cloud.explosion);
+        for (final LivingEntity near : targets.around(cloud.at, cloud.radius(now), owner)) {
+            strike(source, near, blast);
+        }
+    }
+
+    // ---- 指令 ----
+
+    /** 準心指的點（有鎖定的敵人就是牠腳下）。 */
+    private Location aim(final Player player, final LivingEntity preferred) {
+        if (preferred != null && preferred.getWorld().equals(player.getWorld())) {
+            return preferred.getLocation();
+        }
+        return targets.aimPoint(Origin.of(player), 24);
+    }
+
+    /**
+     * 按下精魂召喚的按鍵：對那種召喚物下指令（PoE2 的 Command）。範圍內每一隻冷卻好了的各放一次（冰甲只要一隻），
+     * 花指令的魔力。這個技能沒有指令回傳 null（照舊提示「一直開著」）；其他情況回傳要給玩家看的一句話。
+     */
+    String command(final Player player, final SkillBuild build, final LivingEntity preferred) {
+        final String skillId = build.definition().id();
+        final MinionAbilities.Command command = MinionAbilities.command(skillId);
+        if (command == null || MinionAbilities.RAVENS.equals(skillId)) {
+            return null;
+        }
+        if (ownerInTown(player)) {
+            return "<red>營地裡不能下指令";
+        }
+        final long now = now();
+        final Location at = player.getLocation();
+        final String commandKey = player.getUniqueId() + ":" + skillId;
+        final long skillReady = commandReady.getOrDefault(commandKey, 0L);
+        final List<Minion> mine = new ArrayList<>();
+        final List<Minion> ready = new ArrayList<>();
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(player.getUniqueId()) && !minion.decoy && minion.skillId().equals(skillId) && minion.mob.isValid()
+                    && minion.mob.getWorld().equals(at.getWorld()) && minion.mob.getLocation().distanceSquared(at) <= COMMAND_RANGE * COMMAND_RANGE
+                    && minion.profile != null) {
+                mine.add(minion);
+                if (!minion.onCooldown(COMMAND, now) && skillReady <= now) {
+                    ready.add(minion);
+                }
+            }
+        }
+        final String name = tw.exilecore.item.ItemRenderer.escape(command.name());
+        if (mine.isEmpty()) {
+            return "<red>附近沒有聽「" + name + "」的召喚物";
+        }
+        if (ready.isEmpty()) {
+            long left = Long.MAX_VALUE;
+            for (final Minion minion : mine) {
+                left = Math.min(left, Math.max(skillReady, minion.ready.getOrDefault(COMMAND, now)) - now);
+            }
+            return String.format(java.util.Locale.ROOT, "<gray>%s冷卻中（%.1f 秒）", name, left / 20.0);
+        }
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        final int mana = command.manaAt(build.level());
+        if (state.mana() < mana) {
+            return "<red>魔力不夠（" + name + "要 " + mana + " 點）";
+        }
+        final Location target = aim(player, preferred);
+        final int used = switch (skillId) {
+            case MinionAbilities.BRUTE -> each(ready, now, command, minion -> roar(minion, player, now));
+            case MinionAbilities.SNIPER -> each(ready, now, command, minion -> gasArrow(minion, player, target, now));
+            case MinionAbilities.ARSONIST -> demise(ready, player, target, command, now);
+            case MinionAbilities.STORM -> each(ready, now, command, minion -> deathStorm(minion, player, target));
+            case MinionAbilities.FROST -> each(List.of(nearest(ready, target)), now, command, minion -> iceArmour(minion, player, target));
+            case MinionAbilities.REAVER -> enrage(mine, now, command);
+            case MinionAbilities.ARTILLERY -> each(ready, now, command, minion -> deathFromAbove(minion, player, target)); // 2026-10-27 照 PoE2
+            default -> 0;
+        };
+        if (used <= 0) {
+            return MinionAbilities.ARSONIST.equals(skillId) ? "<red>目標附近沒有生命夠低、能引爆的召喚物" : "<red>" + name + "沒有放出來";
+        }
+        if (mana > 0) {
+            state.setMana(state.mana() - mana);
+        }
+        long until = now;
+        for (final Minion minion : mine) {
+            until = Math.max(until, minion.ready.getOrDefault(COMMAND, now));
+        }
+        if (commandReady.size() > 256) {
+            commandReady.values().removeIf(tick -> tick <= now);
+        }
+        commandReady.put(commandKey, until);
+        return "<#8fd3ff>指令：" + name + "（" + used + " 隻）";
+    }
+
+    /** 2026-10-26 照 PoE2（矛盾命令）：召喚物聽從指令時失去最大生命的 x%（主人的 minion.command_life_loss；扣不死）。 */
+    private void obeyed(final Minion minion) {
+        final Player owner = plugin.getServer().getPlayer(minion.owner);
+        if (owner != null) {
+            obeyed(owner, minion);
+        }
+    }
+
+    private void obeyed(final Player owner, final Minion minion) {
+        final double percent = plugin.players().sheet(owner).flat(tw.exilecore.passive.ConquestEffects.COMMAND_LIFE_LOSS, MinionSheets.CONTEXT);
+        if (percent <= 0 || !minion.mob.isValid()) {
+            return;
+        }
+        final AttributeInstance max = minion.mob.getAttribute(Attribute.MAX_HEALTH);
+        final double full = max == null ? minion.mob.getHealth() : max.getValue();
+        minion.mob.setHealth(Math.max(1, Math.min(full, minion.mob.getHealth() - full * percent / 100.0)));
+    }
+
+    private static Minion nearest(final List<Minion> list, final Location at) {
+        Minion best = list.getFirst();
+        for (final Minion minion : list) {
+            if (minion.mob.getLocation().distanceSquared(at) < best.mob.getLocation().distanceSquared(at)) {
+                best = minion;
+            }
+        }
+        return best;
+    }
+
+    private int each(final List<Minion> list, final long now, final MinionAbilities.Command command, final Consumer<Minion> action) {
+        for (final Minion minion : list) {
+            obeyed(minion);
+            minion.startCooldown(COMMAND, now, command.cooldown());
+            minion.mob.swingMainHand();
+            action.accept(minion);
+        }
+        return list.size();
+    }
+
+    /** 震地咆哮：恫嚇 4 公尺內的敵人 4 秒；範圍內凍結中的敵人與冰甲中的召喚物各炸一次冰冷傷害（2.4 公尺），用掉凍結。 */
+    private void roar(final Minion brute, final Player owner, final long now) {
+        final Location at = brute.mob.getLocation();
+        final double radius = MinionAbilities.ROAR_RADIUS * areaScale(brute);
+        brute.mob.getWorld().playSound(at, org.bukkit.Sound.ENTITY_RAVAGER_ROAR, 0.8f, 1.2f);
+        Fx.spawn(at.getWorld(), org.bukkit.Particle.SWEEP_ATTACK, at.clone().add(0, 1, 0), 8, radius * 0.4, 0.2, radius * 0.4, 0);
+        final Attack blast = with(brute, spellProfile(brute, "shattering_roar", tw.exilecore.stats.DamageType.COLD,
+                MinionAbilities.range(MinionAbilities.ROAR_COLD, brute.build.level()), MinionAbilities.ROAR_CRIT,
+                Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.WARCRY), List.of()));
+        final List<Location> bursts = new ArrayList<>();
+        for (final LivingEntity near : targets.around(at, radius, owner)) {
+            if (plugin.combat() != null) {
+                plugin.combat().debuffs().apply(near.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff("minion_intimidate", owner.getUniqueId(),
+                        now + Math.round(MinionAbilities.ROAR_SECONDS * 20), MinionAbilities.INTIMIDATE_TAKEN, false));
+            }
+            if (plugin.ailments() != null && plugin.ailments().isFrozen(near)) {
+                plugin.ailments().cure(near, tw.exilecore.ailment.AilmentType.FREEZE);
+                bursts.add(near.getLocation());
+            }
+        }
+        for (final Minion ally : List.copyOf(minions)) {
+            if (ally.owner.equals(brute.owner) && ally.iceArmourUntil > now && ally.mob.isValid() && ally.mob.getWorld().equals(at.getWorld())
+                    && ally.mob.getLocation().distanceSquared(at) <= radius * radius) {
+                ally.iceArmourUntil = 0; // 冰甲算凍結：被消耗
+                ally.nextRebuild = 0;
+                bursts.add(ally.mob.getLocation());
+            }
+        }
+        final double burst = MinionAbilities.ROAR_EXPLOSION * areaScale(brute);
+        for (final Location point : bursts) {
+            Fx.spawn(point.getWorld(), org.bukkit.Particle.ITEM_SNOWBALL, point.clone().add(0, 0.8, 0), 20, burst * 0.4, 0.4, burst * 0.4, 0.1);
+            for (final LivingEntity near : targets.around(point, burst, owner)) {
+                strike(brute, near, blast);
+            }
+        }
+    }
+
+    /** 毒氣箭：射到目標點（80%、1.4 公尺），留下 8 秒的毒雲。 */
+    /**
+     * 2026-10-27 照 PoE2 昇華：只聽指令的召喚物（砲手、巨靈）平常的位置：砲手站在你身後 2.5 公尺（PoE2：take up positions behind you），
+     * 巨靈飄在你頭上（會飛的照 {@link #idle}）。
+     */
+    private void standBy(final Minion minion, final Player owner, final long now) {
+        final Mob mob = minion.mob;
+        if (mob.getTarget() != null) {
+            mob.setTarget(null);
+        }
+        if (!MinionAbilities.ARTILLERY.equals(minion.skillId())) {
+            idle(minion, owner, now);
+            return;
+        }
+        if (!(mob instanceof Vex)) {
+            mob.setAggressive(false);
+        }
+        final Vector facing = SkillTargets.facing(owner);
+        final Location spot = owner.getLocation().subtract(facing.multiply(MinionAbilities.ARTILLERY_BEHIND));
+        final double distance = mob.getLocation().distance(spot);
+        if (distance > 1.2 && now >= minion.nextPath) {
+            minion.nextPath = now + 10;
+            mob.getPathfinder().moveTo(spot, distance > 8 ? 1.5 : 1.15);
+        } else if (distance <= 0.8) {
+            mob.getPathfinder().stopPathfinding();
+        }
+        if (now % 20 == minion.bornTick % 20) {
+            mob.lookAt(owner.getLocation().add(facing.multiply(10)));
+        }
+        watchStuck(minion, owner, distance > FOLLOW_START, now);
+    }
+
+    /** 2026-10-27：owner 那個技能叫的（只聽指令的）召喚物在哪裡；沒有（或 20 格外、不同世界）回傳 null。 */
+    public Location locate(final Player owner, final String skillId) {
+        final Minion minion = commandOnlyMinion(owner, skillId);
+        return minion == null ? null : minion.mob.getLocation();
+    }
+
+    /** 2026-10-27：巨靈聽指令瞬移到 at（PoE2：克拉里的欺瞞、魯兹安的清算會瞬移過去），之後再回到你身邊。回傳有沒有這隻。 */
+    public boolean relocate(final Player owner, final String skillId, final Location at) {
+        final Minion minion = commandOnlyMinion(owner, skillId);
+        if (minion == null || at == null || at.getWorld() == null || !at.getWorld().equals(minion.mob.getWorld())) {
+            return false;
+        }
+        final Location spot = at.clone();
+        if (minion.spec.flying()) {
+            spot.add(0, 1.0, 0);
+        }
+        spot.setYaw(minion.mob.getLocation().getYaw());
+        minion.mob.teleport(spot);
+        minion.mob.swingMainHand();
+        minion.idleStopped = false;
+        minion.nextPath = now() + 20;
+        visuals.minionBlink(spot);
+        return true;
+    }
+
+    private Minion commandOnlyMinion(final Player owner, final String skillId) {
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner.getUniqueId()) && minion.skillId().equals(skillId) && !minion.decoy && minion.mob.isValid()
+                    && minion.mob.getWorld().equals(owner.getWorld())
+                    && minion.mob.getLocation().distanceSquared(owner.getLocation()) <= COMMAND_RANGE * COMMAND_RANGE) {
+                return minion;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 2026-10-27 照 PoE2 0.5（Supporting Fire 的 Command: Death From Above）：砲手朝目標射一發信號彈，之後每 0.75 秒一輪箭雨，共 6 輪，
+     * 每一輪打 14 × 14 公尺（半徑 7.9 公尺的圓）內的敵人 763% 傷害。砲手每 1 點主人的力量增加 1% 傷害、每 3 點敏捷增加 1% 範圍。
+     */
+    private void deathFromAbove(final Minion artillery, final Player owner, final Location point) {
+        final Location at = point.clone();
+        final StatSheet ownerSheet = plugin.players().sheet(owner);
+        final double str = Math.max(0, ownerSheet.get(tw.exilecore.stats.StatKeys.STR));
+        final double dex = Math.max(0, ownerSheet.get(tw.exilecore.stats.StatKeys.DEX));
+        final double radius = MinionAbilities.VOLLEY_RADIUS * areaScale(artillery) * Math.sqrt(1 + dex / MinionAbilities.DEX_PER_AREA / 100.0);
+        final SkillProfile volley = attackProfile(artillery, "death_from_above", MinionAbilities.VOLLEY_DAMAGE,
+                Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.PROJECTILE), null,
+                List.of(Modifier.increased(tw.exilecore.stats.StatKeys.DAMAGE, str / MinionAbilities.STR_PER_DAMAGE / 100.0, "支援火力：力量")));
+        final Attack hit = with(artillery, volley);
+        Fx.spawn(at.getWorld(), org.bukkit.Particle.FIREWORK, at.clone().add(0, 0.5, 0), 12, 0.2, 0.6, 0.2, 0.05);
+        for (int i = 0; i < MinionAbilities.VOLLEYS; i++) {
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (!byEntity.containsKey(artillery.mob.getUniqueId()) || !owner.isOnline() || !owner.getWorld().equals(at.getWorld())) {
+                    return;
+                }
+                Fx.spawn(at.getWorld(), org.bukkit.Particle.CRIT, at.clone().add(0, 4, 0), 40, radius * 0.5, 0.5, radius * 0.5, 0.0);
+                at.getWorld().playSound(at, org.bukkit.Sound.ENTITY_ARROW_HIT, 0.6f, 0.8f);
+                for (final LivingEntity near : targets.around(at, radius, owner)) {
+                    strike(artillery, near, hit);
+                }
+            }, MinionAbilities.VOLLEY_DELAY + i * MinionAbilities.VOLLEY_TICKS);
+        }
+    }
+
+    private void gasArrow(final Minion sniper, final Player owner, final Location point, final long now) {
+        final Location at = point.clone();
+        Fx.spawn(at.getWorld(), org.bukkit.Particle.CRIT, at.clone().add(0, 1.5, 0), 6, 0.1, 0.6, 0.1, 0);
+        final double area = areaScale(sniper);
+        final Attack impact = with(sniper, attackProfile(sniper, "gas_arrow", MinionAbilities.GAS_IMPACT, Set.of(tw.exilecore.stats.Tags.AREA), null, List.of()));
+        for (final LivingEntity near : targets.around(at, MinionAbilities.GAS_RADIUS * area, owner)) {
+            strike(sniper, near, impact);
+        }
+        // 毒雲：像 220% 傷害的擊中一樣中毒（照召喚物這一下的物理傷害，吃傷害加成）；被引爆時 630%、全部轉火焰
+        final SkillProfile poison = attackProfile(sniper, "gas_cloud", MinionAbilities.GAS_POISON, Set.of(tw.exilecore.stats.Tags.AREA), null, List.of());
+        final StatSheet effective = poison.effective(sniper.sheet);
+        final Set<String> context = poison.contextFor(tw.exilecore.stats.DamageType.PHYSICAL);
+        final double weapon = (effective.flat(tw.exilecore.stats.StatKeys.WEAPON_MIN, context) + effective.flat(tw.exilecore.stats.StatKeys.WEAPON_MAX, context)) / 2;
+        final double base = weapon * Math.max(0, 1 + effective.increased(tw.exilecore.stats.StatKeys.DAMAGE, context))
+                * effective.more(tw.exilecore.stats.StatKeys.DAMAGE, context);
+        final SkillProfile explosion = attackProfile(sniper, "gas_explosion", MinionAbilities.GAS_EXPLOSION,
+                Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.FIRE), Map.of(tw.exilecore.stats.DamageType.FIRE, 1.0), List.of());
+        clouds.add(new Cloud(sniper.owner, sniper, at, now, MinionAbilities.GAS_RADIUS * area, base, sniper.sheet, explosion));
+    }
+
+    /** 爆裂殉身：每一隻焰術士各引爆目標 3 公尺內一隻生命低於門檻的自己的召喚物。 */
+    private int demise(final List<Minion> arsonists, final Player owner, final Location point, final MinionAbilities.Command command, final long now) {
+        int used = 0;
+        final Set<Minion> taken = new HashSet<>();
+        for (final Minion arsonist : arsonists) {
+            final double threshold = MinionAbilities.DEMISE_THRESHOLD[MinionAbilities.row(arsonist.build.level())] * arsonist.factors[1];
+            Minion victim = null;
+            for (final Minion other : minions) {
+                if (other == arsonist || taken.contains(other) || !other.owner.equals(arsonist.owner) || other.decoy || !other.mob.isValid()
+                        || other.mob.isDead() || MinionAbilities.SWARM.equals(other.skillId()) || MinionAbilities.commandOnly(other.skillId())
+                        || !other.mob.getWorld().equals(point.getWorld())
+                        || other.mob.getLocation().distanceSquared(point) > MinionAbilities.DEMISE_SEARCH * MinionAbilities.DEMISE_SEARCH
+                        || other.mob.getHealth() / other.healthScale >= threshold) {
+                    continue;
+                }
+                if (victim == null || other.mob.getLocation().distanceSquared(point) < victim.mob.getLocation().distanceSquared(point)) {
+                    victim = other;
+                }
+            }
+            if (victim == null) {
+                continue;
+            }
+            taken.add(victim);
+            obeyed(arsonist);
+            arsonist.startCooldown(COMMAND, now, command.cooldown());
+            arsonist.mob.swingMainHand();
+            final Location at = victim.mob.getLocation();
+            final double extra = MinionSheets.life(victim.effective) * MinionAbilities.DEMISE_LIFE_PERCENT / 100.0 / MinionAbilities.DEMISE_DAMAGE;
+            final Set<String> fire = Set.of(tw.exilecore.stats.Tags.FIRE);
+            final Attack blast = with(arsonist, attackProfile(arsonist, "explosive_demise", MinionAbilities.DEMISE_DAMAGE,
+                    Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.FIRE), Map.of(tw.exilecore.stats.DamageType.FIRE, 1.0),
+                    List.of(new Modifier(tw.exilecore.stats.StatKeys.DAMAGE_ADDED_MIN, tw.exilecore.stats.ModType.FLAT, extra, fire, "爆裂殉身"),
+                            new Modifier(tw.exilecore.stats.StatKeys.DAMAGE_ADDED_MAX, tw.exilecore.stats.ModType.FLAT, extra, fire, "爆裂殉身"))));
+            final double radius = MinionAbilities.DEMISE_RADIUS * areaScale(arsonist);
+            victim.mob.setHealth(0); // 被引爆的召喚物死掉（會復活的照常復活）
+            Fx.spawn(at.getWorld(), org.bukkit.Particle.EXPLOSION_EMITTER, at.clone().add(0, 0.5, 0), 1, 0, 0, 0, 0);
+            Fx.spawn(at.getWorld(), org.bukkit.Particle.FLAME, at.clone().add(0, 0.5, 0), 30, radius * 0.4, 0.4, radius * 0.4, 0.08);
+            for (final LivingEntity near : targets.around(at, radius, owner)) {
+                strike(arsonist, near, blast);
+            }
+            detonate(arsonist.owner, at, radius, arsonist);
+            used++;
+        }
+        return used;
+    }
+
+    /** 死亡風暴：施放 2 秒後，目標區域裡每一具倒下的骷髏、屍體落雷（2 公尺）並留下感電地面。 */
+    private void deathStorm(final Minion mage, final Player owner, final Location point) {
+        final long delay = castTicks(mage, MinionAbilities.STORM_CAST);
+        Fx.spawn(point.getWorld(), org.bukkit.Particle.ELECTRIC_SPARK, point.clone().add(0, 0.3, 0), 20, 2, 0.1, 2, 0);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (!byEntity.containsKey(mage.mob.getUniqueId()) || !owner.isOnline() || !owner.getWorld().equals(point.getWorld())) {
+                return;
+            }
+            final long now = now();
+            final double area = MinionAbilities.STORM_AREA * areaScale(mage);
+            final List<Location> strikes = new ArrayList<>();
+            fallen.removeIf(down -> down.until() <= now);
+            for (final Fallen down : fallen) {
+                if (down.owner().equals(mage.owner) && down.at().getWorld().equals(point.getWorld()) && down.at().distanceSquared(point) <= area * area) {
+                    strikes.add(down.at());
+                }
+            }
+            if (plugin.combat() != null) {
+                for (final tw.exilecore.combat.Corpses.Corpse corpse : plugin.combat().corpses().near(point.getWorld().getUID(), point.getX(), point.getZ(),
+                        area, now)) {
+                    strikes.add(new Location(point.getWorld(), corpse.x(), corpse.y(), corpse.z()));
+                }
+            }
+            final Attack bolt = with(mage, spellProfile(mage, "death_storm", tw.exilecore.stats.DamageType.LIGHTNING,
+                    MinionAbilities.range(MinionAbilities.STORM_LIGHTNING, mage.build.level()), MinionAbilities.STORM_CRIT,
+                    Set.of(tw.exilecore.stats.Tags.AREA), List.of()));
+            final double radius = MinionAbilities.STORM_RADIUS * areaScale(mage);
+            final SkillDefinition ground = config.skill(SHOCKED_GROUND);
+            for (final Location at : strikes) {
+                Fx.spawn(at.getWorld(), org.bukkit.Particle.ELECTRIC_SPARK, at.clone().add(0, 1, 0), 30, 0.2, 2.0, 0.2, 0.1);
+                at.getWorld().playSound(at, org.bukkit.Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 0.5f, 1.4f);
+                for (final LivingEntity near : targets.around(at, radius, owner)) {
+                    strike(mage, near, bolt);
+                }
+                if (ground != null && plugin.skills() != null) {
+                    final tw.exilecore.character.PlayerState state = plugin.players().get(owner);
+                    final SkillBuild build = SkillBuild.of(config, ground, mage.build.level(), state.level(), false, List.of(), state.weaponTags(),
+                            plugin.players().sheet(owner));
+                    plugin.skills().procCast(Origin.at(owner, at.clone().add(0, 0.2, 0), SkillTargets.facing(owner)), build, null);
+                }
+            }
+        }, delay);
+    }
+
+    /** 冰甲：施放 1 秒後，目標 4 公尺內自己的召喚物得到 6 秒的冰甲。 */
+    private void iceArmour(final Minion mage, final Player owner, final Location point) {
+        final long delay = castTicks(mage, 1.0);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (!byEntity.containsKey(mage.mob.getUniqueId()) || !owner.isOnline()) {
+                return;
+            }
+            final long now = now();
+            final double radius = MinionAbilities.ARMOUR_RADIUS * areaScale(mage);
+            final double[] cold = MinionAbilities.range(MinionAbilities.ARMOUR_COLD, mage.build.level());
+            for (final Minion ally : List.copyOf(minions)) {
+                if (!ally.owner.equals(mage.owner) || ally.decoy || !ally.mob.isValid() || !ally.mob.getWorld().equals(point.getWorld())
+                        || ally.mob.getLocation().distanceSquared(point) > radius * radius) {
+                    continue;
+                }
+                ally.iceArmourUntil = now + Math.round(MinionAbilities.ARMOUR_SECONDS * 20);
+                ally.iceArmourCold = new double[] {cold[0] * mage.factors[0], cold[1] * mage.factors[0]};
+                rebuild(ally, plugin.players().sheet(owner), false);
+                Fx.spawn(ally.mob.getWorld(), org.bukkit.Particle.SNOWFLAKE, ally.mob.getLocation().add(0, 1, 0), 12, 0.4, 0.6, 0.4, 0.02);
+            }
+        }, delay);
+    }
+
+    /** 激怒：全部的狂卒一直激怒（擊中獲得怒氣、慢慢失去生命）。 */
+    private int enrage(final List<Minion> reavers, final long now, final MinionAbilities.Command command) {
+        for (final Minion reaver : reavers) {
+            obeyed(reaver);
+            reaver.startCooldown(COMMAND, now, command.cooldown());
+            reaver.enragedAt = now;
+            reaver.mob.swingMainHand();
+            Fx.spawn(reaver.mob.getWorld(), org.bukkit.Particle.ANGRY_VILLAGER, reaver.mob.getLocation().add(0, 1.6, 0), 3, 0.3, 0.2, 0.3, 0);
+        }
+        return reavers.size();
+    }
+
+    // ---- 附魂術 ----
+
+    /** 附身的那種怪（角色進度；沒有或不能用回傳 null = 照技能寫的殭屍）。 */
+    String boundSpectre(final Player player) {
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        return state == null ? null : boundSpectre(state);
+    }
+
+    static String boundSpectre(final tw.exilecore.character.PlayerState state) {
+        final String kind = state.progress().get(SPECTRE_KEY);
+        return kind != null && SummonSpec.SPECTRES.contains(kind) ? kind : null;
+    }
+
+    /** 附身的那種怪的強度 P（monsters.yml 的生命倍率；沒附身 = 1）。 */
+    static double spectrePower(final tw.exilecore.character.PlayerState state, final MonsterConfig monsters) {
+        final String kind = boundSpectre(state);
+        return kind == null || monsters == null ? 1.0 : Math.max(0.05, monsters.type(kind).lifeMultiplier());
+    }
+
+    /** 附身那種怪的名字（monsters.yml 沒寫名字的用代號；沒附身是殭屍）。 */
+    static String spectreName(final MonsterConfig monsters, final String kind) {
+        if (kind == null) {
+            return "殭屍";
+        }
+        final String name = monsters == null ? null : monsters.type(kind).name();
+        return name == null || name.isBlank() ? kind : name;
+    }
+
+    private SummonSpec spectreSpec(final SummonSpec spec, final String kind) {
+        final MonsterConfig.TypeSettings type = plugin.monsters().config().type(kind);
+        return type == null ? spec : spec.withMultipliers(spec.life() * type.lifeMultiplier(), spec.damage() * type.damageMultiplier());
+    }
+
+    /** 按附魂術的鍵：附身附近一具屍體（之後一直叫那種怪，每隻精魂照牠的強度）。 */
+    String bindSpectre(final Player player, final SkillBuild build) {
+        if (ownerInTown(player)) {
+            return "<red>營地裡不能附身";
+        }
+        final SummonSpec spec = build.definition().summon();
+        final Location at = player.getLocation();
+        Corpses.Corpse pick = null;
+        if (plugin.combat() != null && spec != null) {
+            double best = Double.MAX_VALUE;
+            for (final Corpses.Corpse corpse : plugin.combat().corpses().near(at.getWorld().getUID(), at.getX(), at.getZ(), spec.search(), now())) {
+                final double distance = Math.pow(corpse.x() - at.getX(), 2) + Math.pow(corpse.z() - at.getZ(), 2);
+                if (corpse.type() != null && SummonSpec.SPECTRES.contains(corpse.type()) && distance < best) {
+                    best = distance;
+                    pick = corpse;
+                }
+            }
+        }
+        final MonsterConfig monsters = plugin.monsters().config();
+        if (pick == null) {
+            final String now = boundSpectre(player);
+            return "<gray>附近沒有能附身的屍體（現在附身的是" + tw.exilecore.item.ItemRenderer.escape(spectreName(monsters, now)) + "）";
+        }
+        if (!tw.exilecore.stats.TreeEffectKeys.corpseSaved(plugin.players().sheet(player), plugin.random())) { // 2026-10-26 照 PoE2 天賦樹：x% 機率不毀掉屍體
+            plugin.combat().corpses().remove(pick);
+        }
+        if (plugin.characters() != null) {
+            plugin.characters().setProgress(player, SPECTRE_KEY, pick.type());
+        }
+        trim(player.getUniqueId(), MinionAbilities.SPECTRE, 0);
+        if (auras != null) {
+            auras.resummonNow(player.getUniqueId(), MinionAbilities.SPECTRE);
+        }
+        plugin.players().markDirty(player);
+        Fx.spawn(player.getWorld(), org.bukkit.Particle.SOUL, new Location(player.getWorld(), pick.x(), pick.y() + 0.5, pick.z()), 20, 0.4, 0.5, 0.4, 0.03);
+        final double power = Math.max(0.05, monsters.type(pick.type()).lifeMultiplier());
+        return "<#c7a6ff>附身：" + tw.exilecore.item.ItemRenderer.escape(spectreName(monsters, pick.type()))
+                + "（每隻保留 " + MinionAbilities.spectreSpirit(power) + " 精魂）";
+    }
+
     // ---- 收掉 ----
 
     private enum Gone { EXPIRED, REPLACED, DIED, QUIET }
 
+    /** 2026-10-27：主人＋技能 → 被打死還沒算過的隻數（{@link #takeDeaths}）。 */
+    private final Map<String, Integer> deaths = new HashMap<>();
+
     private void remove(final Minion minion, final Gone why) {
+        if (why == Gone.DIED && !minion.decoy && minions.contains(minion)) {
+            deaths.merge(minion.owner + ":" + minion.skillId(), 1, Integer::sum);
+        }
         minions.remove(minion);
         byEntity.remove(minion.mob.getUniqueId());
         MinionCollision.remove(plugin, minion.mob.getUniqueId());
@@ -1368,6 +2699,9 @@ public final class MinionService implements Listener, MinionHooks {
             }
         }
         focus.remove(owner);
+        deaths.keySet().removeIf(key -> key.startsWith(owner + ":")); // 2026-10-27
+        clouds.removeIf(cloud -> cloud.owner.equals(owner)); // 2026-10-26
+        fallen.removeIf(down -> down.owner().equals(owner));
     }
 
     /** 全部收掉（插件停用）；也清掉上次沒收乾淨的。 */
@@ -1375,6 +2709,8 @@ public final class MinionService implements Listener, MinionHooks {
         for (final Minion minion : new ArrayList<>(minions)) {
             remove(minion, Gone.QUIET);
         }
+        clouds.clear(); // 2026-10-26
+        fallen.clear();
         sweep();
     }
 
@@ -1404,7 +2740,33 @@ public final class MinionService implements Listener, MinionHooks {
             return null;
         }
         final Player owner = plugin.getServer().getPlayer(minion.owner);
-        return owner == null ? null : new Attack(owner, minion.sheet, minion.profile);
+        if (owner != null && minion.override != null) {
+            return minion.override; // 2026-10-26：召喚物自己的技能（碎骨、電弧、冰箭…）這一下的屬性表與技能描述
+        }
+        return owner == null ? null : new Attack(owner, minion.sheet, commanded(minion, musterProfile(minion))); // 2026-10-26：群鋒；2026-10-27：號令
+    }
+
+    @Override
+    public double energyShield(final LivingEntity entity) {
+        final Minion minion = byEntity.get(entity.getUniqueId());
+        return minion == null ? 0 : Math.max(0, minion.es);
+    }
+
+    @Override
+    public void damaged(final LivingEntity entity, final double esDamage, final LivingEntity attacker) {
+        final Minion minion = byEntity.get(entity.getUniqueId());
+        if (minion == null) {
+            return;
+        }
+        final long now = now();
+        minion.lastHurt = now;
+        if (esDamage > 0) {
+            minion.es = Math.max(0, minion.es - esDamage);
+        }
+        if (minion.iceArmourUntil > now && attacker != null && !(attacker instanceof Player) && !isMinion(attacker)) {
+            // 冰甲：打牠的敵人受到冰冷傷害（下一 tick 才打，不在這一下的傷害結算裡面再開一次結算）
+            plugin.getServer().getScheduler().runTask(plugin, () -> retaliate(minion, attacker));
+        }
     }
 
     @Override
@@ -1419,6 +2781,12 @@ public final class MinionService implements Listener, MinionHooks {
         return minion == null ? null : minion.effective;
     }
 
+    /** 2026-10-26：這隻召喚物是哪個技能叫的（不是召喚物回傳 null）。 */
+    String skillOf(final LivingEntity entity) {
+        final Minion minion = byEntity.get(entity.getUniqueId());
+        return minion == null ? null : minion.skillId();
+    }
+
     @Override
     public double healthScale(final LivingEntity entity) {
         final Minion minion = byEntity.get(entity.getUniqueId());
@@ -1426,6 +2794,64 @@ public final class MinionService implements Listener, MinionHooks {
     }
 
     /** owner 的召喚物（殘影不算）每隻回復 amount（2026-10：藥劑的「召喚物也回復」詞綴）。 */
+    private static boolean isCompanion(final Minion minion) {
+        return !minion.decoy && minion.build.definition().tags().contains(tw.exilecore.stats.TreeMechanicKeys.COMPANION);
+    }
+
+    /** 2026-10-26（天賦樹）：這隻是不是夥伴；是的話回傳主人，不是回傳 null。 */
+    UUID companionOwner(final UUID entity) {
+        final Minion minion = byEntity.get(entity);
+        return minion != null && isCompanion(minion) ? minion.owner : null;
+    }
+
+    /** 2026-10-26（天賦樹）：給一隻召喚物一段時間的增益（夥伴擊殺時疾速）。 */
+    void buffMinion(final UUID entity, final List<Modifier> mods, final int ticks) {
+        final Minion minion = byEntity.get(entity);
+        final org.bukkit.entity.Player owner = minion == null ? null : plugin.getServer().getPlayer(minion.owner);
+        if (owner == null || !minion.mob.isValid()) {
+            return;
+        }
+        minion.treeBuff = List.copyOf(mods);
+        minion.treeBuffUntil = now() + ticks;
+        rebuild(minion, plugin.players().sheet(owner), false);
+    }
+
+    /** 2026-10-26（天賦樹）：主人的夥伴回復 amount 生命（我們的單位；藥劑、偷取也給夥伴）。 */
+    void healCompanions(final Player owner, final double amount) {
+        if (amount <= 0) {
+            return;
+        }
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner.getUniqueId()) && isCompanion(minion) && minion.mob.isValid()) {
+                heal(minion.mob, amount);
+            }
+        }
+    }
+
+    /**
+     * 2026-10-26（天賦樹「擊中傷害的 x% 先由你的夥伴的生命承受」）：從主人的一隻夥伴身上扣最多 amount 生命（我們的單位，夥伴至少留 1 點），
+     * 回傳真的扣了多少（沒有夥伴是 0）。
+     */
+    double absorbForOwner(final UUID owner, final double amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        for (final Minion minion : minions) {
+            if (!minion.owner.equals(owner) || !isCompanion(minion) || !minion.mob.isValid() || minion.mob.isDead()) {
+                continue;
+            }
+            final double life = minion.mob.getHealth() / Math.max(1e-6, minion.healthScale);
+            final double taken = Math.min(amount, Math.max(0, life - 1));
+            if (taken <= 0) {
+                continue;
+            }
+            minion.mob.setHealth(Math.max(1e-3, minion.mob.getHealth() - taken * minion.healthScale));
+            minion.lastHurt = now();
+            return taken;
+        }
+        return 0;
+    }
+
     public void healOwned(final Player owner, final double amount) {
         if (amount <= 0) {
             return;
@@ -1494,13 +2920,21 @@ public final class MinionService implements Listener, MinionHooks {
         }
         event.getDrops().clear();
         event.setDroppedExp(0);
+        if (!minion.decoy && SKELETONS.contains(minion.skillId())) {
+            // 2026-10-26：倒下的骷髏（12 秒後才回來）：雷術士的死亡風暴打這裡
+            fallen.add(new Fallen(minion.owner, event.getEntity().getLocation(), now() + MinionAbilities.RESUMMON_TICKS));
+        }
         remove(minion, Gone.DIED);
         final Player owner = plugin.getServer().getPlayer(minion.owner);
         if (owner != null && minion.decoy && ChargeEffects.ILLUSION.equals(minion.skillId()) && plugin.skills() != null) {
             plugin.skills().chargeEffects().illusionDied(owner, minion.build, event.getEntity().getLocation()); // 2026-10-24：幻身被打掉留下殘影
         }
         if (owner != null && !minion.decoy && plugin.skills() != null && plugin.skills().triggers() != null) {
-            plugin.skills().triggers().minionDeath(owner, event.getEntity().getLocation()); // 2026-10：召喚物死亡觸發
+            // 2026-10：召喚物死亡觸發（2026-10-26 照 PoE2：只算持續型；乘召喚物強度＝相對生命，等級比區域低太多打折）
+            plugin.skills().triggers().minionDeath(owner, event.getEntity().getLocation(), minion.untilTick <= 0,
+                    tw.exilecore.skill.SkillTriggers.minionPower(minion.spec.life(),
+                            MinionSheets.monsterLevel(config, minion.build.level(), plugin.players().get(owner).level()),
+                            plugin.monsters() == null ? 0 : plugin.monsters().levelFor(event.getEntity().getLocation())));
             minionDied(owner, minion, event.getEntity().getLocation());
         }
     }
@@ -1510,6 +2944,9 @@ public final class MinionService implements Listener, MinionHooks {
         final SkillService skills = plugin.skills();
         final String skillId = minion.skillId();
         skills.procEvent(owner, skillId, "minion_death", at, null);
+        if (skills.treeMechanics() != null) {
+            skills.treeMechanics().minionDied(owner, minion.build.definition()); // 2026-10-26 照 PoE2 天賦：會復活的常駐召喚物被擊殺時獲得易爆
+        }
         final double mana = skills.supportFlat(owner, skillId, tw.exilecore.stats.StatKeys.MANA_ON_MINION_DEATH);
         if (mana > 0) {
             final tw.exilecore.character.PlayerState state = plugin.players().get(owner);
@@ -1557,6 +2994,21 @@ public final class MinionService implements Listener, MinionHooks {
     public void onTarget(final EntityTargetLivingEntityEvent event) {
         if (isMinion(event.getEntity()) && (event.getTarget() instanceof Player || isMinion(event.getTarget()))) {
             event.setCancelled(true);
+            return;
+        }
+        // 2026-10-26 照 PoE2：敵人不會主動去打焚魂（Enemies will not directly engage these Minions）、蟲群（不能被選為目標）
+        final Minion target = event.getTarget() == null ? null : byEntity.get(event.getTarget().getUniqueId());
+        if (target != null && ignoredByEnemies(target)) {
+            event.setCancelled(true);
+        }
+    }
+
+    /** 2026-10-26 照 PoE2：蟲群不能被選為目標（打不到）。 */
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onSwarmHit(final EntityDamageByEntityEvent event) {
+        final Minion target = byEntity.get(event.getEntity().getUniqueId());
+        if (target != null && (MinionAbilities.SWARM.equals(target.skillId()) || MinionAbilities.commandOnly(target.skillId()))) {
+            event.setCancelled(true); // 2026-10-27：砲手、巨靈也不會受傷（PoE2 MinionsAreUndamagable）
         }
     }
 

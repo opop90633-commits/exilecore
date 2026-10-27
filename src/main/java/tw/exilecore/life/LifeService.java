@@ -950,6 +950,8 @@ public final class LifeService {
         guests.remove(player.getUniqueId());
         if (!hasHook(player)) {
             giveItem(player, hookItem(player));
+        } else {
+            refreshHooks(player); // 2026-10-27：舊的鉤子換成新的名字、說明（不寫階級）
         }
         player.showTitle(Title.title(plugin.text().parse("<" + config.color() + ">" + ItemRenderer.escape(config.name())),
                 plugin.text().parse("<gray>拿著星索鉤，對準漂過來的東西按右鍵"),
@@ -1777,15 +1779,14 @@ public final class LifeService {
     }
 
     private void decorateHook(final ItemStack stack, final Player owner) {
-        final LifeConfig.Hook hook = owner == null ? config.hook(0) : config.hook(hookTier(owner));
+        // 2026-10-27 照站長：名字、說明不寫階級（鉤子可以交易，效果看用的人帳號的階級；這次之前寫領取的人當時的階級）
         stack.editMeta(meta -> {
-            meta.displayName(ItemRenderer.line("<" + config.color() + ">星索鉤<gray>・" + ItemRenderer.escape(hook.name())));
+            meta.displayName(ItemRenderer.line("<" + config.color() + ">星索鉤"));
             final List<net.kyori.adventure.text.Component> lore = new ArrayList<>();
             lore.add(ItemRenderer.line("<gray>在" + ItemRenderer.escape(config.name()) + "：對準漂流物按右鍵撈起來"));
-            lore.add(ItemRenderer.line("<gray>撈得到 <white>" + trim(hook.range()) + "<gray> 格內的東西"
-                    + (hook.doubleChance() > 0 ? String.format(Locale.ROOT, "、<white>%.0f%%<gray> 多撈一份", hook.doubleChance() * 100) : "")));
-            lore.add(ItemRenderer.line("<gray>鉤子的階級記在帳號裡（選單 /sea 升級）"));
+            lore.add(ItemRenderer.line("<gray>階級看帳號：範圍、多撈機率照使用者帳號的鉤子階級（選單 /sea 查看、升級）"));
             lore.add(ItemRenderer.line("<dark_gray>生活工具"));
+            lore.add(ItemRenderer.line("<dark_gray>不能丟、不能放公會倉庫、不能上架（身上沒有可以在選單再領）")); // 2026-10-27
             meta.lore(lore);
             meta.setUnbreakable(true);
             meta.getPersistentDataContainer().set(itemKey, PersistentDataType.STRING, HOOK_ITEM);
@@ -1813,7 +1814,7 @@ public final class LifeService {
                 lore.add(ItemRenderer.line("<gray>" + ItemRenderer.escape(item.description())));
             }
             lore.add(ItemRenderer.line("<dark_gray>只能蓋在" + ItemRenderer.escape(config.name()) + "自己的筏上"));
-            meta.lore(lore);
+            meta.lore(tw.exilecore.core.text.TextWrap.lore(lore)); // 2026-10-26：長行自動換行
             meta.getPersistentDataContainer().set(itemKey, PersistentDataType.STRING, item.id());
         });
         return stack;
@@ -1825,6 +1826,18 @@ public final class LifeService {
             return null;
         }
         return stack.getItemMeta().getPersistentDataContainer().get(itemKey, PersistentDataType.STRING);
+    }
+
+    /** 生活物品的標記（跟 {@code itemKey} 一樣：外掛名 ExileCore → exilecore:life_item）。 */
+    private static final NamespacedKey LIFE_ITEM_KEY = new NamespacedKey("exilecore", "life_item");
+
+    /**
+     * 2026-10-27：是不是星索鉤（帳號綁定、身上沒有就能再領）。公會倉庫、市集、丟在地上都擋掉——
+     * 這次之前可以放進公會倉庫／上架／丟地上，再到選單領一把新的，一直複製。
+     */
+    public static boolean isHook(final ItemStack stack) {
+        return stack != null && !stack.isEmpty() && stack.hasItemMeta()
+                && HOOK_ITEM.equals(stack.getItemMeta().getPersistentDataContainer().get(LIFE_ITEM_KEY, PersistentDataType.STRING));
     }
 
     /**
@@ -2924,7 +2937,7 @@ public final class LifeService {
             if (!food.description().isBlank()) {
                 lore.add(ItemRenderer.line("<dark_gray>" + ItemRenderer.escape(food.description())));
             }
-            meta.lore(lore);
+            meta.lore(tw.exilecore.core.text.TextWrap.lore(lore)); // 2026-10-26：長行自動換行
             meta.getPersistentDataContainer().set(itemKey, PersistentDataType.STRING, "food:" + food.id());
         });
         return stack;

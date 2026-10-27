@@ -527,7 +527,17 @@ final class MapBosses {
         if (instance.map().isFinal() && instance.special() == null && !instance.isUber() && !instance.isPinnacle()) {
             return service.config().finalBossLifeMultiplier(instance.stats().tier()); // 2026-10-21：一般終局照 tier_life_table
         }
-        return instance.map().isFinal() && instance.special() == null || heistFinale
+        // 2026-10-27 照站長：極境、巔峰、金庫之主再乘 maps.yml 的 boss_life（極境 50 萬、巔峰 100 萬）；這次之前只照 tier_life
+        if (instance.map().isFinal() && instance.special() == null && instance.isPinnacle()) {
+            return service.config().pinnacleLifeMultiplier(instance.map().id());
+        }
+        if (instance.map().isFinal() && instance.special() == null && instance.isUber()) {
+            return service.config().uberLifeMultiplier();
+        }
+        if (heistFinale) {
+            return service.config().heistFinaleLifeMultiplier(instance.stats().tier());
+        }
+        return instance.map().isFinal() && instance.special() == null
                 ? service.config().finalLifeMultiplier(instance.stats().tier())
                 : instance.special() == null && !instance.isUber() ? service.config().bossLifeMultiplier(instance.stats().tier()) : 1.0;
     }
@@ -778,13 +788,17 @@ final class MapBosses {
         // 2026-10-21：新星圖的 Boss 格（或首領石板罩到的格子）：必掉 atlas.yml 的 boss_maps 張、傳奇機率 ×boss_unique；核心「魔王的宴席」再 ×1.5
         final AtlasGrid.Cell cell = instance.atlasCell();
         final boolean bossCell = instance.atlasBossCell(); // 2026-10-21 修正：以前看 bossPower > 0，岔路「王道」、詛咒寶匣也會被當成 Boss 格
-        final double cellUnique = (bossCell ? service.atlasConfig().bossUnique() : 1.0) * (atlas.get("atlas.boss_double") > 0 ? AtlasBonus.BOSS_FEAST : 1.0)
-                * Math.max(0, 1 - atlas.increased("atlas.unique_less")); // 核心「尋星者」的代價：其他傳奇少
+        // 2026-10-27 照 PoE2（increased 的加成彼此相加）：Boss 格（×2 → +100%）、魔王的宴席（×1.5 → +50%）、星圖天賦 atlas.boss_unique、
+        //   物品稀有度加成一項：機率 = 基礎 ×（1 + 這些相加）× 尋星者的代價。這次之前全部相乘：5% × 2 × 1.5 × 1.7 ×（1 + 稀有度）在 Boss 格可以到 100%
+        final double uniqueIncreased = (bossCell ? service.atlasConfig().bossUnique() - 1 : 0) + (atlas.get("atlas.boss_double") > 0 ? AtlasBonus.BOSS_FEAST - 1 : 0)
+                + atlas.increased("atlas.boss_unique") + Math.max(0, bonus.rarity());
+        final double uniqueLess = Math.max(0, 1 - atlas.increased("atlas.unique_less")); // 核心「尋星者」的代價：其他傳奇少
         final int baseMaps = bossCell ? Math.max(config.drops().bossMaps(), service.atlasConfig().bossMaps()) : config.drops().bossMaps();
         // 2026-10-21：魔王的宴席 ×1.5：小數的部分照機率（1 張 → 50% 機率 2 張）
         final double feastMaps = (baseMaps + atlas.bossMaps()) * (atlas.get("atlas.boss_double") > 0 ? AtlasBonus.BOSS_FEAST : 1.0);
         final int wholeMaps = (int) Math.floor(feastMaps) + (random.nextDouble() < feastMaps - Math.floor(feastMaps) ? 1 : 0);
-        final int mapCount = bonus.amount(wholeMaps, random); // 2026-10：吃物品數量
+        // 2026-10-27：Boss 必掉的地圖張數不吃物品數量（這次之前 bonus.amount：地圖數量＋Boss 數量＋岔路的 Boss 掉落都把張數放大）
+        final int mapCount = wholeMaps;
         if (cell != null && !instance.map().isFinal() && instance.special() == null && plugin.currencies() != null
                 && random.nextDouble() < AtlasTablets.BOSS_DROP_CHANCE * (1 + atlas.increased("atlas.tablet.drop"))) {
             final tw.exilecore.currency.CurrencyType tablet = plugin.currencies().repository().get(AtlasTablets.Kind.BOSS.currencyId());
@@ -820,14 +834,15 @@ final class MapBosses {
         if (instance.map().isFinal()) {
             // 終局：寫著這個終局代號的傳奇（其他終局 Boss 各自的），沒有就用 final（天穹熔爐的）——2026-10-16：每一件各自擲
             eachUnique(drops, ownFinalPool(instance.map().id(), itemLevel), config.drops().finalUniqueChance(), itemLevel, random, bonus);
-        } else if (definition.named() && random.nextDouble() < bonus.rare(config.drops().namedUniqueChance() * cellUnique * (1 + atlas.increased("atlas.boss_unique")))) {
+            rollFixed(drops, ownSource(instance.map().id(), itemLevel), itemLevel, random); // 2026-10-26：固定機率的（永恆珠寶）
+        } else if (definition.named() && random.nextDouble() < Math.min(1, config.drops().namedUniqueChance() * (1 + uniqueIncreased) * uniqueLess)) { // 2026-10-27：加法
             addUnique(drops, MapDrops.unique(generator, instance.map().id(), itemLevel, random));
         }
         // 共通傳奇（map_boss 池，賭博也賭得到）：擲一次、中了抽一件。一般地圖 Boss（含具名）照 boss_unique_chance（5%，星圖天賦可以增加；
         // 跟賭博一起校準，2026-10-16 維持擲一次），終局照 final_common_chance
         final double common = instance.map().isFinal() ? config.drops().finalCommonChance()
-                : config.drops().bossUniqueChance() * cellUnique * (1 + atlas.increased("atlas.boss_unique"));
-        if (random.nextDouble() < bonus.rare(common)) {
+                : Math.min(1, config.drops().bossUniqueChance() * (1 + uniqueIncreased) * uniqueLess); // 2026-10-27：加法（稀有度已經在裡面）
+        if (random.nextDouble() < (instance.map().isFinal() ? bonus.rare(common) : common)) {
             addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
         }
         rollChase(drops, itemLevel, random, 1 + atlas.increased("atlas.chase_unique")); // 追逐級傳奇：所有地圖 Boss 一樣的固定機率（核心「尋星者」×2）
@@ -924,6 +939,7 @@ final class MapBosses {
         final int itemLevel = instance.level();
         // 2026-10-16：自己的傳奇、極境專屬每一件各自擲；共通傳奇擲一次（common_chance，沒寫照 final_common_chance）
         eachUnique(drops, ownFinalPool(instance.map().id(), itemLevel), uberDrops.uniqueChance(), itemLevel, random, bonus);
+        rollFixed(drops, ownSource(instance.map().id(), itemLevel), itemLevel, random); // 2026-10-26：固定機率的（永恆珠寶）
         rollChase(drops, itemLevel, random); // 追逐級傳奇：跟一般 Boss 一樣的固定機率
         if (random.nextDouble() < bonus.rare(uberDrops.commonChance(config.drops().finalCommonChance()))) {
             addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
@@ -977,6 +993,7 @@ final class MapBosses {
                 }
             }
         }
+        rollFixed(drops, ownSource(instance.map().id(), itemLevel), itemLevel, random); // 2026-10-26：固定機率的（永恆珠寶）
         rollChase(drops, itemLevel, random);
         if (random.nextDouble() < bonus.rare(pinnacleDrops.commonChance(config.drops().finalCommonChance()))) {
             addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
@@ -994,6 +1011,25 @@ final class MapBosses {
     private List<tw.exilecore.item.UniqueItem> ownFinalPool(final String mapId, final int itemLevel) {
         final List<tw.exilecore.item.UniqueItem> own = plugin.items().repository().uniquesFor(mapId, itemLevel);
         return own.isEmpty() ? plugin.items().repository().uniquesFor("final", itemLevel) : own;
+    }
+
+    /** 2026-10-26：這個終局／巔峰的傳奇來源代號：有自己的傳奇（權重池或固定機率）就是地圖代號，沒有就是 final。 */
+    private String ownSource(final String mapId, final int itemLevel) {
+        final var repository = plugin.items().repository();
+        return repository.uniquesFor(mapId, itemLevel).isEmpty() && repository.fixedChanceUniques(mapId, itemLevel).isEmpty() ? "final" : mapId;
+    }
+
+    /**
+     * 2026-10-26 照 PoE2：固定機率的傳奇（uniques.yml 的 drop_chance，永恆珠寶 1%）——來源 Boss 每次擊殺、每個有份的人各自擲，
+     * 不跟那個來源的其他傳奇搶權重池（{@link tw.exilecore.item.ItemRepository#uniquesFor} 不含它們），也不吃物品稀有度。
+     */
+    void rollFixed(final List<DropTable.Drop> drops, final String source, final int itemLevel, final java.util.random.RandomGenerator random) {
+        final var repository = plugin.items().repository();
+        for (final tw.exilecore.item.UniqueItem unique : repository.fixedChanceUniques(source, itemLevel)) {
+            if (random.nextDouble() < repository.dropChance(unique.id())) {
+                addUnique(drops, plugin.items().generator().generateUnique(unique, itemLevel, random));
+            }
+        }
     }
 
     /** 每一件各自擲 chance（吃物品稀有度；終局以上 bonus 是 NONE）。 */
@@ -1054,7 +1090,8 @@ final class MapBosses {
 
     /**
      * 這個人在這張圖拿 Boss 特殊掉落時的物品數量、稀有度（2026-10：全域）：自己的＋全服＋這個月的主題＋地圖本身的＋星圖天賦的 Boss 加成。
-     * 怪物稀有度（傳奇怪 +300% 數量）不算：那是一般掉落表專用的。
+     * 怪物稀有度（傳奇怪 +2400% 數量，2026-10-27 照 PoE2；之前 +300%）不算：那是一般掉落表專用的。
+     * 2026-10-27：腐化區的稀有度（twist.bossRarity）只加稀有度。
      */
     private tw.exilecore.loot.LootBonus.Bonus bonus(final MapInstance instance, final Player player) {
         if (instance.usesAttempts()) {
@@ -1062,7 +1099,7 @@ final class MapBosses {
         }
         return tw.exilecore.loot.LootBonus.of(plugin, player).plus(
                 instance.stats().quantity() / 100.0 + instance.atlas().increased("atlas.boss_quantity") + instance.twist().bossLoot,
-                instance.stats().rarity() / 100.0 + instance.atlas().increased("atlas.boss_rarity") + instance.twist().bossLoot);
+                instance.stats().rarity() / 100.0 + instance.atlas().increased("atlas.boss_rarity") + instance.twist().bossLoot + instance.twist().bossRarity);
     }
 
     /** 從某個來源的專屬輔助寶石裡抽一顆（supports.yml 的 source）；沒有就不掉。 */
@@ -1119,16 +1156,22 @@ final class MapBosses {
         service.complete(instance, at, damagers);
         boss.getWorld().playSound(boss.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);
         // 擊殺稱號（2026-10）：極境 Boss（照終局代號）與金庫之主，倒下時在 Boss 32 格內、活著、不是觀戰的人各記一次
+        // 2026-10-27：還要對 Boss 打到傷害門檻（跟掉落、星圖一樣）；這次之前站在旁邊沒打也拿得到稱號與永久加成
         final String killKey = instance.special() != null && "heist_finale".equals(instance.special().kind()) ? "heist_finale"
                 : instance.isUber() || instance.isPinnacle() ? instance.map().id() : null;
         if (killKey != null && plugin.bounties() != null) {
             for (final java.util.UUID uuid : instance.inside()) {
                 final org.bukkit.entity.Player player = plugin.getServer().getPlayer(uuid);
-                if (player != null && instance.contains(player.getLocation()) && service.atBoss(player, at)) {
+                if (player != null && earnsKillCredit(damagers, uuid, instance.contains(player.getLocation()) && service.atBoss(player, at))) {
                     plugin.bounties().recordBossKill(player, killKey);
                 }
             }
         }
+    }
+
+    /** 2026-10-27：Boss 倒下時這個人能不能記擊殺（稱號、永久加成）：在 Boss 旁邊，而且打到傷害門檻。 */
+    static boolean earnsKillCredit(final java.util.Set<java.util.UUID> damagers, final java.util.UUID uuid, final boolean nearBoss) {
+        return nearBoss && damagers.contains(uuid);
     }
 
     private static void addUnique(final List<DropTable.Drop> drops, final ItemData unique) {

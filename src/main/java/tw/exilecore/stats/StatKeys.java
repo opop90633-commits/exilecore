@@ -39,6 +39,7 @@ public final class StatKeys {
     public static final String WEAPON_MAX = "weapon.max";
     public static final String WEAPON_APS = "weapon.aps";          // 每秒攻擊次數
     public static final String WEAPON_CRIT = "weapon.crit";        // 百分比點數
+    public static final String WEAPON_RELOAD = "weapon.reload";    // 2026-10-26：弩的裝填時間（秒，照 PoE2 每把基底不同）
 
     // 速度與暴擊
     public static final String ATTACK_SPEED = "attack.speed";      // 只用 INCREASED／MORE
@@ -78,6 +79,10 @@ public final class StatKeys {
     public static final String SKILL_DURATION = "skill.duration";
     /** INCREASED／MORE：冷卻時間（負的 = 更短）。 */
     public static final String SKILL_COOLDOWN = "skill.cooldown";
+    /** 2026-10-26（PoE2）：冷卻回復速度（INCREASED／MORE；冷卻時間 ÷ 這個倍率）。換界石「玩家冷卻回復速度更少」用它。 */
+    public static final String COOLDOWN_RECOVERY = "cooldown.recovery";
+    /** 2026-10-26（PoE2）：身上受到的詛咒效果（INCREASED／MORE，看被詛咒的那一方；換界石「怪物受到的詛咒效果更少」、稀有度）。 */
+    public static final String CURSE_EFFECT_ON_SELF = "curse.effect_on_self";
     /** 2026-10：沒有冷卻的技能多出 x 秒冷卻（FLAT；蓄域、蓄鋒這類輔助）。 */
     public static final String SKILL_ADDED_COOLDOWN = "skill.added_cooldown";
     /** FLAT：投射物第一次打中時分裂成幾發（歧射輔助）。 */
@@ -168,7 +173,7 @@ public final class StatKeys {
     // ---- 偷取（2026-10，照 PoE）----
     /** 偷取有 x% 立即生效（FLAT 百分比點數；其餘照常慢慢回）。 */
     public static final String LEECH_INSTANT = "leech.instant";
-    /** 最大偷取速度（INCREASED：每秒最多回 10% 最大生命／魔力的那個上限）。 */
+    /** 最大偷取速度（INCREASED：每秒最多回 20% 最大生命／魔力的那個上限；2026-10-27 照 PoE2，這次之前 10%）。 */
     public static final String LEECH_RATE = "leech.rate";
     /** 偷取的量（INCREASED；地圖詞綴可以是負的）。 */
     public static final String LEECH_EFFECT = "leech.effect";
@@ -209,7 +214,7 @@ public final class StatKeys {
 
     /** 2026-10：物理傷害的 x% 轉換為某個類型（百分比點數，FLAT；跟技能自己的轉換加總，最多 100%）；例如 damage.convert.lightning。 */
     public static final String DAMAGE_CONVERT = "damage.convert.";
-    /** 2026-10：FLAT 1 = 這個技能只造成這個類型的傷害，其他類型都不算（幻元箭）；例如 damage.only.fire。 */
+    /** 2026-10：FLAT 1 = 這個技能只造成這個類型的傷害，其他類型都不算（隨機元素的稜光裂）；例如 damage.only.fire。 */
     public static final String DAMAGE_ONLY = "damage.only.";
     /** 2026-10：FLAT：穿透 x% 抗性（tags 限定類型，例如 [elemental]、[fire]）；在抗性上限之後扣。 */
     public static final String PENETRATION = "penetration";
@@ -231,13 +236,17 @@ public final class StatKeys {
     public static final String FLAG_MAGMA_BARRIER = "flag.magma_barrier";
     /** 2026-10：FLAT：每顆怒星讓這個技能更多 x% 攻擊傷害與 x% 攻擊速度（怒星箭）。 */
     public static final String PER_FRENZY = "skill.per_frenzy";
-    /** 2026-10：FLAT 1：每次施放隨機選一種元素（火焰、冰冷、閃電），物理全部轉成它、只造成那種傷害（幻元箭）。 */
+    /** 2026-10：FLAT 1：每次施放隨機選一種元素（火焰、冰冷、閃電），物理全部轉成它、只造成那種傷害（稜光裂）。 */
     public static final String FLAG_RANDOM_ELEMENT = "flag.random_element";
     /** 2026-10：FLAT 1：三相輔助（元素共鳴）。 */
     public static final String FLAG_TRINITY = "flag.trinity";
 
     /** 2026-10：INCREASED／MORE：圖騰的生命（圖騰的生命 = 施放者最大生命的一半，被替身圖騰引過來的怪會打它）。 */
     public static final String TOTEM_LIFE = "totem.life";
+    /** 2026-10-26：FLAT：圖騰的元素抗性（PoE2 的英靈圖騰 0→75%）。 */
+    public static final String TOTEM_RESIST_ELEMENTAL = "totem.resist_elemental";
+    /** 2026-10-26：FLAT：圖騰的混沌抗性（PoE2 的英靈圖騰 0→35%）。 */
+    public static final String TOTEM_RESIST_CHAOS = "totem.resist_chaos";
     /** 2026-10：FLAT 1：圖騰不施法，改成嘲諷附近的怪物來打它（替身圖騰）。 */
     public static final String FLAG_TOTEM_TAUNT = "flag.totem_taunt";
     /** 2026-10：FLAT 1：圖騰不施法，改成你與圖騰之間連起焚燒的火鏈（焚鏈圖騰）。 */
@@ -305,6 +314,8 @@ public final class StatKeys {
     public static final String STUN_BUILDUP = "stun.buildup";
     /** FLAT：破甲，擊中時破掉「減免前物理傷害 × x%」的護甲（2026-10 PoE2；對普通怪 ×3、魔法 ×2）。 */
     public static final String ARMOUR_BREAK = "armour.break";
+    /** 2026-10-26：FLAT：擊中時另外破掉固定這麼多護甲（PoE2 的 Armour Piercing Rounds「Break X Armour」；「增加破甲」也乘）。 */
+    public static final String ARMOUR_BREAK_FLAT = "armour.break_flat";
     // ---- 2026-10 PoE2 裝備詞綴 ----
     /** INCREASED：暴擊傷害加成（PoE2「增加 x% 暴擊傷害加成」：只乘加成的部分，200% 暴擊 → 加成 100% × (1 + x)）。 */
     public static final String CRIT_BONUS = "crit.bonus";
@@ -420,6 +431,8 @@ public final class StatKeys {
     // 特殊效果（傳奇裝備）：一律用 FLAT
     /** 每次擊中敵人回復幾點生命。 */
     public static final String LIFE_ON_HIT = "life.on_hit";
+    /** 2026-10-26：FLAT：擊中每個敵人回復多少魔力（PoE2 的魔力吸取）。 */
+    public static final String MANA_ON_HIT = "mana.on_hit";
     /** 擊殺時回復最大生命的 x%。 */
     public static final String LIFE_ON_KILL = "life.on_kill";
     /** 擊殺時回復最大魔力的 x%。 */
@@ -496,8 +509,6 @@ public final class StatKeys {
     public static final String CROSSBOW_CLIP = "crossbow.clip";
     /** 2026-10：蒺藜步（翻滾時在腳下撒鐵蒺）、幻弓影（弓的攻擊過一下由幻影再射一次）。 */
     public static final String FLAG_DODGE_CALTROPS = "flag.dodge_caltrops";
-    /** FLAT（開關）：翻滾時在起點留下嘲諷的殘影（2026-10）。 */
-    public static final String FLAG_DODGE_DECOY = "flag.dodge_decoy";
     // ---- 元素灌注（2026-10）：直接疊在身上，火、冰、電各自算層數 ----
     /** FLAT：放這個技能後獲得幾層「跟技能同元素」的灌注（技能有火焰標籤就是火焰灌注，好幾種元素各一層）。 */
     public static final String INFUSION_GAIN = "infusion.gain";
@@ -576,6 +587,14 @@ public final class StatKeys {
     public static final String FLAG_MARK_CRIT = "flag.mark_consume_crit";
     /** 技能用（2026-10）：開關，英靈圖騰：圖騰不自己打，改成叫出英靈用面板上下一格的錘子攻擊技能。 */
     public static final String FLAG_TOTEM_LINKED = "flag.totem_linked_mace";
+    /** 2026-10-26（PoE2 的 Lightning Warp）：瞄準敵人；生命低到可以撲殺就瞬移進去炸開，不然掛 4 秒標記、期間掉到門檻就自動瞬移。 */
+    public static final String FLAG_LIGHTNING_WARP = "flag.lightning_warp";
+    /** 2026-10-26：雷霆共鳴多打的那幾下更少幾 %（逐級，寫在 level_modifiers）。 */
+    public static final String FULMINATION_LESS = "fulmination.less";
+    /** 2026-10-26：折光之鏡每幾秒出現一面（逐級）。 */
+    public static final String MIRROR_INTERVAL = "mirror.interval";
+    /** 2026-10-26：鴉群密謀身邊有稀有、傳奇敵人時每幾秒加入一隻烏鴉（逐級）。 */
+    public static final String RAVEN_INTERVAL = "raven.interval";
     /** 技能用（2026-10）：開關，喚屍：附近沒屍體時吃一顆銳星，叫出一隻強化殭屍加兩隻一般的。 */
     public static final String FLAG_POWER_RAISE = "flag.raise_with_power_charge";
     /** 技能用（2026-10）：FLAT，放完往後跳的力道（×0.01 = 每 tick 幾格；躍退射）。 */
@@ -700,6 +719,19 @@ public final class StatKeys {
     public static final String MAIM_CHANCE = "maim.chance";
     /** 2026-10-23：FLAT：怪物打中玩家 x% 機率阻礙（4 秒內移動速度變慢 30%；PoE2）。 */
     public static final String HINDER_CHANCE = "hinder.chance";
+    /** 2026-10-26：FLAT：玩家擊中敵人時 x% 機率阻礙（4 秒內移動速度變慢 30%；PoE2 的 Hinder，例如魔力吸取、靈體撕裂）。 */
+    public static final String HINDER_ON_HIT = "hinder.on_hit";
+    /** 2026-10-26：FLAT：擊中時給敵人幾層凋零（PoE2 的 Withered：每層受到的混沌傷害增加 5%，最多 10 層，4 秒；混沌弩箭）。 */
+    public static final String WITHERED_ON_HIT = "withered.on_hit";
+    /** 2026-10-26：FLAT：擊中時給敵人幾層暴擊弱點（PoE2 的 Critical Weakness：每層擊中牠的暴擊率 +0.5%，最多 20 層，4 秒；收割）。 */
+    public static final String CRIT_WEAKNESS_ON_HIT = "crit_weakness.on_hit";
+    /** 2026-10-26：FLAT（在敵人身上）：擊中牠的暴擊率加幾個百分點（暴擊弱點）。 */
+    public static final String CRIT_CHANCE_TAKEN = "crit.chance_taken";
+    /**
+     * 2026-10-26（PoE2 Monster Effectiveness，怪物效能）：INCREASED／MORE。每 2% 效能 = 2% 更多韌性（受到的傷害 ÷ 效能倍率）、
+     * 1% 更多經驗、1% 更多物品數量。地圖詞綴（monster:effectiveness，MORE）與星圖天賦（atlas.monster_effectiveness，INCREASED）給。
+     */
+    public static final String EFFECTIVENESS = "effectiveness";
     /** 2026-10-23：FLAT：怪物打中玩家 x% 機率上一層腐化之血（物理持續傷害，最多 10 層，每次打中重新計時；PoE2）。 */
     public static final String CORRUPTED_BLOOD_CHANCE = "corrupted_blood.chance";
     /** 2026-10-23：開關（珠寶的腐化詞綴，PoE2）：免疫癱瘓、不會被阻礙、不會被致盲、免疫腐化之血。 */

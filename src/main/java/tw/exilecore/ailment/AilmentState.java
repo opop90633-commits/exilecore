@@ -9,11 +9,13 @@ import java.util.UUID;
  * 一隻怪物（或一個玩家）身上的異常狀態。時間都用伺服器 tick。純資料，不依賴 Bukkit。
  * <ul>
  *   <li>點燃：可以同時有好幾個，但只有傷害最高的那個在燒（PoE2）；它結束後下一個接著燒。流血一樣（只有最強的在流）。</li>
- *   <li>中毒：全部一起算（可以疊加）。疊加上限<b>每個來源各自算</b>（2026-10-19：組隊時不會互相擠掉），
- *   同一個來源最多 {@link #MAX_POISONS} 個、整隻最多 {@link #MAX_POISONS_TOTAL} 個，太多時丟掉最弱的。</li>
+ *   <li>中毒：上限<b>每個來源各自算</b>（2026-10-19：組隊時不會互相擠掉）：同一個來源只有最強的 N 層生效（2026-10-26 照 PoE2：預設 1 層，
+ *   弱的記著，等強的結束再接著毒；這次之前超過上限直接丟掉）。同一個來源最多記 {@link #MAX_POISONS} 個、整隻最多 {@link #MAX_POISONS_TOTAL} 個。</li>
+ *   <li>易燃（2026-10-26 照 PoE2）：每一下火焰傷害疊一層，加起來是點燃的機率。</li>
  *   <li>冰緩、感電：只留最強的；比較弱的新效果不會蓋掉還沒結束的強效果。</li>
  *   <li>凍結：冰冷傷害累積到 100% 就凍結；凍結中不累積，傳奇怪凍結結束後還有一段時間不能累積。</li>
- *   <li>暈眩、電擊（PoE2）：跟凍結一樣是累積條（{@link Meter}）：滿了就暈眩／電擊一段時間，之後一段時間免疫。</li>
+ *   <li>暈眩、電擊、釘地（PoE2）：跟凍結一樣是累積條（{@link Meter}）：滿了就觸發一段時間；2026-10-26 照 PoE2 觸發後門檻暫時提高
+ *   （{@link Meter#thresholdMultiplier}），取代以前的免疫時間（免疫參數還在，呼叫端給 0）。</li>
  * </ul>
  */
 public final class AilmentState {
@@ -28,6 +30,10 @@ public final class AilmentState {
         private long decayedTo;
         private long activeUntil;
         private long immuneUntil;
+        /** 2026-10-26 照 PoE2：觸發後門檻提高多少（小數）、從哪個 tick 開始、幾 tick 直線降回 0。 */
+        private double after;
+        private long afterFrom;
+        private long afterTicks;
 
         /**
          * 加累積（先把該消退的消退掉）。觸發中或免疫期間不累積。
@@ -73,6 +79,24 @@ public final class AilmentState {
             buildup = 0;
         }
 
+        /** 2026-10-26 照 PoE2：觸發後門檻暫時提高 bonus（5 = +500%），ticks 個 tick 內直線降回來。 */
+        public void raiseThreshold(final double bonus, final long ticks, final long now) {
+            if (bonus <= 0 || ticks <= 0) {
+                return;
+            }
+            after = bonus;
+            afterFrom = now;
+            afterTicks = ticks;
+        }
+
+        /** 現在的門檻倍率（1 ＋ 剩下的提高量）。 */
+        public double thresholdMultiplier(final long now) {
+            if (after <= 0 || afterTicks <= 0 || now >= afterFrom + afterTicks) {
+                return 1.0;
+            }
+            return 1.0 + after * (1.0 - (double) Math.max(0, now - afterFrom) / afterTicks);
+        }
+
         public boolean active(final long now) {
             return now < activeUntil;
         }
@@ -88,7 +112,7 @@ public final class AilmentState {
 
         /** 沒有任何要追蹤的東西。 */
         public boolean idle(final long now) {
-            return buildup <= 0 && !active(now) && now >= immuneUntil;
+            return buildup <= 0 && !active(now) && now >= immuneUntil && thresholdMultiplier(now) <= 1.0;
         }
 
         /** 2026-10-23：時間泡泡：觸發中的晚 extra tick 結束（免疫期跟著往後）。 */
@@ -105,6 +129,9 @@ public final class AilmentState {
             immuneUntil = 0;
             lastBuildupTick = 0;
             decayedTo = 0;
+            after = 0;
+            afterFrom = 0;
+            afterTicks = 0;
         }
     }
 
@@ -124,10 +151,14 @@ public final class AilmentState {
      * @param endTick 結束的 tick
      * @param source  造成的玩家（死時算他殺的；怪物造成的是 null）
      */
-    public record Ignite(double dps, long endTick, UUID source, boolean aggravated) {
+    public record Ignite(double dps, long endTick, UUID source, boolean aggravated, int limit) {
 
         public Ignite(final double dps, final long endTick, final UUID source) {
             this(dps, endTick, source, false);
+        }
+
+        public Ignite(final double dps, final long endTick, final UUID source, final boolean aggravated) {
+            this(dps, endTick, source, aggravated, 0);
         }
     }
 
@@ -151,6 +182,9 @@ public final class AilmentState {
     private final Meter freeze = new Meter();
     private final Meter stun = new Meter();
     private final Meter electrocute = new Meter();
+    private final Meter pin = new Meter();
+    /** 2026-10-26 照 PoE2：易燃（每層 {百分比, 結束 tick}）。 */
+    private final List<double[]> flammability = new ArrayList<>();
 
     // ---- 點燃 ----
 
@@ -193,6 +227,22 @@ public final class AilmentState {
         }
     }
 
+    /**
+     * 2026-10-26（叛徒之矛）：把這個來源造成、還沒加劇的流血加劇（每秒傷害乘上移動時的倍率，之後不再看有沒有在動）。
+     * 回傳加劇了幾條。
+     */
+    public int aggravateBleeds(final UUID source, final long now, final double movingMultiplier) {
+        int count = 0;
+        for (int i = 0; i < bleeds.size(); i++) {
+            final Ignite bleed = bleeds.get(i);
+            if (!bleed.aggravated() && bleed.endTick() > now && source != null && source.equals(bleed.source())) {
+                bleeds.set(i, new Ignite(bleed.dps() * movingMultiplier, bleed.endTick(), bleed.source(), true));
+                count++;
+            }
+        }
+        return count;
+    }
+
     /** 現在在流的流血（最強的那個；沒有回傳 null）。順便丟掉結束的。 */
     public Ignite bleed(final long now) {
         bleeds.removeIf(bleed -> bleed.endTick() <= now);
@@ -207,17 +257,22 @@ public final class AilmentState {
 
     // ---- 中毒 ----
 
+    // 2026-10-27：生效層數記在每一個中毒自己身上（Ignite.limit）；這次之前整個來源共用「最後一次上毒時的設定」，
+    // 傳染（瘟疫之使）或召喚物的毒氣用另一個上限蓋掉玩家自己的，1 層上限也會 20 層全部生效；那張表也不會清（每個來源留一筆）
+    private static final UUID NO_SOURCE = new UUID(0, 0);
+
     /**
-     * 加一個中毒。上限是<b>同一個來源</b>的（2026-10-19：以前全部來源共用，組隊時強的把弱的毒全部擠掉）：
-     * 同一個來源超過 maxStacks 時丟掉他自己最弱的那個；全部加起來超過 {@link #MAX_POISONS_TOTAL} 時丟掉最弱的。
+     * 加一個中毒。生效層數是<b>同一個來源</b>的（2026-10-19：以前全部來源共用，組隊時強的把弱的毒全部擠掉）：
+     * 同一個來源只有最強的 maxStacks 層生效（2026-10-26 照 PoE2，弱的留著等強的結束）；同一個來源最多記 {@link #MAX_POISONS} 個、
+     * 全部加起來超過 {@link #MAX_POISONS_TOTAL} 時丟掉最弱的。
      */
     public void addPoison(final double dps, final long endTick, final UUID source, final int maxStacks) {
         if (dps <= 0) {
             return;
         }
-        poisons.add(new Ignite(dps, endTick, source));
-        final int cap = Math.max(1, Math.min(MAX_POISONS, maxStacks));
-        while (poisons.stream().filter(poison -> java.util.Objects.equals(poison.source(), source)).count() > cap) {
+        poisonVersion++;
+        poisons.add(new Ignite(dps, endTick, source, false, Math.max(1, Math.min(MAX_POISONS, maxStacks))));
+        while (poisons.stream().filter(poison -> java.util.Objects.equals(poison.source(), source)).count() > MAX_POISONS) {
             poisons.remove(poisons.stream().filter(poison -> java.util.Objects.equals(poison.source(), source))
                     .min(Comparator.comparingDouble(Ignite::dps)).orElseThrow());
         }
@@ -241,11 +296,42 @@ public final class AilmentState {
         return sorted;
     }
 
-    /** 還在的中毒（丟掉結束的）。 */
+    /**
+     * 正在生效的中毒（丟掉結束的；每個來源只算最強的那幾層，2026-10-26 照 PoE2）。
+     * 2026-10-27：同一個來源由強到弱排，第 i 強（從 0 數）的毒只有在 i 小於它自己的層數上限時生效。
+     */
     public List<Ignite> poisons(final long now) {
-        poisons.removeIf(poison -> poison.endTick() <= now);
-        return List.copyOf(poisons);
+        // 2026-10-27 效能：同一個 tick、中毒沒變過就直接回傳上次的結果（每秒傷害、異常圖示、條件檢查一個 tick 會讀好幾次；這次之前每次都分組、排序）
+        if (now == poisonCacheTick && poisonVersion == poisonCacheVersion && poisonCache != null) {
+            return poisonCache;
+        }
+        if (poisons.removeIf(poison -> poison.endTick() <= now)) {
+            poisonVersion++;
+        }
+        final java.util.Map<UUID, List<Ignite>> bySource = new java.util.LinkedHashMap<>();
+        for (final Ignite poison : poisons) {
+            bySource.computeIfAbsent(poison.source() == null ? NO_SOURCE : poison.source(), key -> new ArrayList<>()).add(poison);
+        }
+        final List<Ignite> active = new ArrayList<>();
+        for (final List<Ignite> list : bySource.values()) {
+            list.sort(Comparator.comparingDouble(Ignite::dps).reversed());
+            for (int i = 0; i < list.size(); i++) {
+                if (i < Math.max(1, list.get(i).limit())) {
+                    active.add(list.get(i));
+                }
+            }
+        }
+        poisonCache = List.copyOf(active);
+        poisonCacheTick = now;
+        poisonCacheVersion = poisonVersion;
+        return poisonCache;
     }
+
+    /** 2026-10-27：中毒清單改過幾次（快取 {@link #poisons} 的結果用）。 */
+    private int poisonVersion;
+    private int poisonCacheVersion = -1;
+    private long poisonCacheTick = Long.MIN_VALUE;
+    private List<Ignite> poisonCache;
 
     /** 所有中毒加起來每秒多少傷害（沒有是 0）。 */
     public double poisonDps(final long now) {
@@ -256,10 +342,11 @@ public final class AilmentState {
         return total;
     }
 
-    /** 最晚結束的中毒還剩幾 tick（沒有是 0）。 */
+    /** 最晚結束的中毒還剩幾 tick（沒有是 0；還沒輪到的弱毒也算）。 */
     public long poisonRemaining(final long now) {
+        poisons(now);
         long end = 0;
-        for (final Ignite poison : poisons(now)) {
+        for (final Ignite poison : poisons) {
             end = Math.max(end, poison.endTick());
         }
         return Math.max(0, end - now);
@@ -284,8 +371,12 @@ public final class AilmentState {
      * @param spread  死掉時會不會傳染給附近的敵人（疫潮）
      * @param spreads 已經傳了幾手（每傳一手傷害更多，有上限）
      * @param base    第一手的每秒傷害（傳染時照它算，不會越傳越大到沒上限）
+     * @param length  2026-10-26：掛上時的完整持續時間（tick，已經算過技能持續時間的加成；傳染出去照這個重新算，0 = 舊的 5 秒）
      */
-    public record Debuff(double dps, long endTick, UUID source, boolean spread, int spreads, double base) {
+    public record Debuff(double dps, long endTick, UUID source, boolean spread, int spreads, double base, long length) {
+        public Debuff(final double dps, final long endTick, final UUID source, final boolean spread, final int spreads, final double base) {
+            this(dps, endTick, source, spread, spreads, base, 0);
+        }
     }
 
     /** 加一個減益：同一種已經有的話，留每秒傷害高的那個、結束時間取比較晚的。 */
@@ -296,9 +387,9 @@ public final class AilmentState {
         final Debuff old = debuffs.get(key);
         if (old == null || debuff.dps() >= old.dps()) {
             debuffs.put(key, old == null || debuff.endTick() >= old.endTick() ? debuff
-                    : new Debuff(debuff.dps(), old.endTick(), debuff.source(), debuff.spread(), debuff.spreads(), debuff.base()));
+                    : new Debuff(debuff.dps(), old.endTick(), debuff.source(), debuff.spread(), debuff.spreads(), debuff.base(), debuff.length()));
         } else if (debuff.endTick() > old.endTick()) {
-            debuffs.put(key, new Debuff(old.dps(), debuff.endTick(), old.source(), old.spread(), old.spreads(), old.base()));
+            debuffs.put(key, new Debuff(old.dps(), debuff.endTick(), old.source(), old.spread(), old.spreads(), old.base(), Math.max(old.length(), debuff.length())));
         }
     }
 
@@ -429,6 +520,36 @@ public final class AilmentState {
         return electrocute;
     }
 
+    /** 2026-10-26 照 PoE2：釘地的累積條（不能移動，照樣能攻擊；不算進 {@link #incapacitated}）。 */
+    public Meter pin() {
+        return pin;
+    }
+
+    /** 凍結的累積條。 */
+    public Meter freezeMeter() {
+        return freeze;
+    }
+
+    // ---- 易燃（2026-10-26 照 PoE2）----
+
+    /** 加一層易燃（百分比點數），回傳身上全部易燃加起來（含這一層）。 */
+    public double addFlammability(final double percent, final long endTick, final long now) {
+        if (percent > 0) {
+            flammability.add(new double[] {percent, endTick});
+        }
+        return flammability(now);
+    }
+
+    /** 身上的易燃加起來（百分比點數）。順便丟掉結束的。 */
+    public double flammability(final long now) {
+        flammability.removeIf(one -> one[1] <= now);
+        double total = 0;
+        for (final double[] one : flammability) {
+            total += one[0];
+        }
+        return total;
+    }
+
     /** 不能動也不能攻擊、施放：凍結、暈眩或電擊中。 */
     public boolean incapacitated(final long now) {
         return freeze.active(now) || stun.active(now) || electrocute.active(now) || lightStunUntil > now;
@@ -448,6 +569,27 @@ public final class AilmentState {
 
     public boolean lightStunned(final long now) {
         return lightStunUntil > now;
+    }
+
+    /** 2026-10-27 照 PoE2 Character.ot：最近被暈眩（輕暈或重暈）的時間（tick），給玩家「4 秒內每被暈眩一次輕暈門檻更多 50%」用。 */
+    private final java.util.ArrayDeque<Long> recentStuns = new java.util.ArrayDeque<>();
+    /** 記幾秒內的暈眩（x_ms_for_number_of_times_stunned_in_past_duration_from_ot 4000）。 */
+    public static final long STUN_HISTORY_TICKS = 80;
+
+    /** 記一次被暈眩。 */
+    public void noteStunned(final long now) {
+        recentStuns.addLast(now);
+        while (recentStuns.size() > 16) {
+            recentStuns.removeFirst();
+        }
+    }
+
+    /** 最近 4 秒內被暈眩幾次。 */
+    public int stunsRecently(final long now) {
+        while (!recentStuns.isEmpty() && recentStuns.peekFirst() <= now - STUN_HISTORY_TICKS) {
+            recentStuns.removeFirst();
+        }
+        return recentStuns.size();
     }
 
     /**
@@ -479,6 +621,13 @@ public final class AilmentState {
 
     public boolean fullyBroken(final long now) {
         return now < fullyBrokenUntil;
+    }
+
+    /** 2026-10-27 照 PoE2 Exploit Weakness（用掉完全破甲）：護甲恢復原狀。 */
+    public void restoreArmour() {
+        fullyBrokenUntil = 0;
+        armourBroken = 0;
+        armourUntil = 0;
     }
 
     // ---- 2026-10-23：怪物對玩家的癱瘓、阻礙、致盲、腐化之血（PoE2） ----
@@ -581,6 +730,7 @@ public final class AilmentState {
         boolean changed = ignites.removeIf(dot -> source.equals(dot.source()));
         changed |= bleeds.removeIf(dot -> source.equals(dot.source()));
         changed |= poisons.removeIf(dot -> source.equals(dot.source()));
+        poisonVersion++;
         changed |= debuffs.values().removeIf(debuff -> source.equals(debuff.source()));
         return changed;
     }
@@ -593,11 +743,12 @@ public final class AilmentState {
         if (extra <= 0) {
             return;
         }
+        poisonVersion++;
         for (final List<Ignite> list : List.of(ignites, bleeds, poisons)) {
-            list.replaceAll(dot -> dot.endTick() > now ? new Ignite(dot.dps(), dot.endTick() + extra, dot.source(), dot.aggravated()) : dot);
+            list.replaceAll(dot -> dot.endTick() > now ? new Ignite(dot.dps(), dot.endTick() + extra, dot.source(), dot.aggravated(), dot.limit()) : dot);
         }
         debuffs.replaceAll((key, debuff) -> debuff.endTick() > now
-                ? new Debuff(debuff.dps(), debuff.endTick() + extra, debuff.source(), debuff.spread(), debuff.spreads(), debuff.base()) : debuff);
+                ? new Debuff(debuff.dps(), debuff.endTick() + extra, debuff.source(), debuff.spread(), debuff.spreads(), debuff.base(), debuff.length()) : debuff);
         if (chillEnd > now) {
             chillEnd += extra;
         }
@@ -620,6 +771,7 @@ public final class AilmentState {
         freeze.extend(extra, now);
         stun.extend(extra, now);
         electrocute.extend(extra, now);
+        pin.extend(extra, now);
         if (lightStunUntil > now) {
             lightStunUntil += extra;
         }
@@ -630,21 +782,37 @@ public final class AilmentState {
     /** 還有沒有要追蹤的東西（沒有就可以丟掉這份狀態）。 */
     public boolean isEmpty(final long now) {
         return ignite(now) == null && bleed(now) == null && poisons(now).isEmpty() && debuffs(now).isEmpty() && chill(now) <= 0 && shock(now) <= 0
-                && freeze.idle(now) && stun.idle(now) && electrocute.idle(now)
-                && lightStunUntil <= now && armourBroken(now) <= 0 && !fullyBroken(now)
+                && freeze.idle(now) && stun.idle(now) && electrocute.idle(now) && pin.idle(now) && flammability(now) <= 0
+                && lightStunUntil <= now && armourBroken(now) <= 0 && !fullyBroken(now) && stunsRecently(now) == 0
                 && maimUntil <= now && hinderUntil <= now && groundSlowUntil <= now && blindUntil <= now && corruptedBloodStacks(now) == 0;
+    }
+
+    /** 2026-10-26：清掉所有緩速（冰緩、癱瘓、阻礙、減速地面；PoE2 銀護符）。 */
+    public void clearSlows() {
+        chill = 0;
+        chillEnd = 0;
+        maimUntil = 0;
+        hinderUntil = 0;
+        groundSlow = 0;
+        groundSlowUntil = 0;
     }
 
     /** 只清掉一種異常（護符解除，2026-10）。 */
     public void cure(final AilmentType type) {
         switch (type) {
-            case IGNITE -> ignites.clear();
+            case IGNITE -> {
+                ignites.clear();
+                flammability.clear();
+            }
             case BLEED -> {
                 bleeds.clear();
                 corruptedStacks = 0; // 2026-10-23：腐化之血跟流血一起解
                 corruptedUntil = 0;
             }
-            case POISON -> poisons.clear();
+            case POISON -> {
+                poisons.clear();
+                poisonVersion++;
+            }
             case CHILL -> {
                 chill = 0;
                 chillEnd = 0;
@@ -667,6 +835,9 @@ public final class AilmentState {
         ignites.clear();
         bleeds.clear();
         poisons.clear();
+        poisonVersion++;
+        flammability.clear();
+        pin.clear();
         debuffs.clear();
         chill = 0;
         chillEnd = 0;

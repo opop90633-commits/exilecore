@@ -115,13 +115,75 @@ public final class Debuffs {
      * @param skill 這個詛咒的技能代號（同一次施放的幾條減益用同一個）
      */
     public void applyCurse(final UUID target, final Debuff curse, final String skill) {
+        applyCurse(target, curse, skill, 1);
+    }
+
+    /**
+     * 2026-10-26 照 PoE2 基石（滅世之語：可以額外施加 1 個詛咒）：同一個施放者在一隻敵人身上最多 allowed 種詛咒，
+     * 超過的話最早結束的那一種拿掉。
+     */
+    public void applyCurse(final UUID target, final Debuff curse, final String skill, final int allowed) {
+        if (curseImmunity.test(target)) {
+            return; // 2026-10-26：免疫詛咒（PoE2 淨化護符）
+        }
         curseSkills.put(curse.id(), skill);
+        // 2026-10-26（昇華・不斷爭吵，PoE2）：你施加的詛咒持續時間無限、可以額外施加 1 個詛咒
+        final int[] rules = tw.exilecore.ascendancy.AscendancyEffects.curseRules(curse.source());
+        final Debuff placed = placedCurse(curse, rules[1] > 0, playerTarget.test(target));
         final List<Debuff> list = entries.get(target);
         if (list != null) {
-            list.removeIf(existing -> existing.source().equals(curse.source()) && curseSkills.containsKey(existing.id())
-                    && !curseSkills.get(existing.id()).equals(skill));
+            while (true) {
+                final Map<String, Long> others = new HashMap<>(); // 其他詛咒技能 → 最晚結束的 tick
+                for (final Debuff existing : list) {
+                    final String other = curseSkills.get(existing.id());
+                    if (existing.source().equals(curse.source()) && other != null && !other.equals(skill)) {
+                        others.merge(other, existing.untilTick(), Math::max);
+                    }
+                }
+                if (others.size() <= Math.max(0, allowed - 1 + rules[0])) { // 2026-10-26：昇華・不斷爭吵多 1 個
+                    break;
+                }
+                final String oldest = others.entrySet().stream().min(Map.Entry.comparingByValue()).orElseThrow().getKey();
+                list.removeIf(existing -> existing.source().equals(curse.source()) && oldest.equals(curseSkills.get(existing.id())));
+            }
         }
-        apply(target, curse);
+        apply(target, placed);
+    }
+
+    /**
+     * 實際放上去的詛咒：持續時間無限（昇華・不斷爭吵）只對非玩家的目標。
+     * 2026-10-27：這次之前競技場裡對玩家也是無限，對手整場都帶著詛咒；對玩家照原本的持續時間。純函式（測試用）。
+     */
+    static Debuff placedCurse(final Debuff curse, final boolean infinite, final boolean targetIsPlayer) {
+        if (!infinite || targetIsPlayer) {
+            return curse;
+        }
+        return new Debuff(curse.id(), curse.source(), Long.MAX_VALUE / 4, curse.taken(), curse.selfOnly(), curse.tag(), curse.mods(), curse.slow());
+    }
+
+    /** 2026-10-27：目標是不是玩家（伺服器沒啟動時——單元測試——一律不是）。 */
+    private final java.util.function.Predicate<UUID> playerTarget = target -> org.bukkit.Bukkit.getServer() != null
+            && org.bukkit.Bukkit.getPlayer(target) != null;
+
+    /** 2026-10-26：誰免疫詛咒（藥劑模組的淨化護符掛上來；預設沒有人）。 */
+    private java.util.function.Predicate<UUID> curseImmunity = target -> false;
+
+    public void setCurseImmunity(final java.util.function.Predicate<UUID> immunity) {
+        this.curseImmunity = immunity == null ? target -> false : immunity;
+    }
+
+    /** 2026-10-26：拿掉這個目標身上所有的詛咒（PoE2 淨化護符）；回傳拿掉幾條。 */
+    public int removeCurses(final UUID target) {
+        final List<Debuff> list = entries.get(target);
+        if (list == null) {
+            return 0;
+        }
+        final int before = list.size();
+        list.removeIf(debuff -> debuff.id().contains("_curse") || curseSkills.containsKey(debuff.id()));
+        if (list.isEmpty()) {
+            entries.remove(target);
+        }
+        return before - list.size();
     }
 
     /** 攻擊方打這個目標時，受到的傷害倍率（1.25 = 增加 25%；好幾條相加）。 */
@@ -198,6 +260,21 @@ public final class Debuffs {
             result.addAll(debuff.mods());
         }
         return result == null ? List.of() : result;
+    }
+
+    /** 2026-10-26：這個減益代號是不是印記（天賦樹「被你標記的敵人附近的敵人被致盲」）。 */
+    public boolean isMark(final String id) {
+        return markIds.contains(id);
+    }
+
+    /** 2026-10-26：身上有沒有印記（任何人放的；天賦樹「對被標記的敵人」）。 */
+    public boolean marked(final UUID target, final long now) {
+        for (final Debuff debuff : active(target, now)) {
+            if (markIds.contains(debuff.id())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 身上有沒有詛咒（2026-10：詛咒技能的代號都以 _curse 結尾）。 */

@@ -24,9 +24,27 @@ import java.util.Map;
  * @param rings    鐘：最多響幾次
  * @param head     放出來的東西頭上戴什麼（原版物品名稱，顯示用）
  * @param buff     圖騰在的時候加在你身上的修飾器（英靈圖騰的攻擊速度）
+ * @param place    2026-10-26 照 PoE2：圖騰的放置時間（秒；原作是技能寶石的施放時間，只吃「放圖騰的速度」，不吃攻擊、施法速度）。
+ *                 0 = 照舊（攻擊照武器攻速、法術照施法時間放）
+ * @param fixedMax 2026-10-26 照 PoE2：上限不能被改（英靈圖騰的 non_modifiable_totem_limit 10：不吃 +x 圖騰上限、先祖魂約的加倍）
+ * @param weaponSpeed 2026-10-26 照 PoE2：圖騰攻擊的頻率照你的武器攻速 × 技能的 attack_speed（崩震圖騰：你的攻擊速度的一半），
+ *                 不照 interval（interval 只在拿不到武器攻速時用）
  */
 public record DeploySpec(Kind kind, double duration, double interval, double range, int max, double arm, double trigger,
-                         double root, int rings, String head, List<Modifier> buff) {
+                         double root, int rings, String head, List<Modifier> buff, double place, boolean fixedMax, boolean weaponSpeed) {
+
+    /** 頻率照 interval 的寫法。 */
+    public DeploySpec(final Kind kind, final double duration, final double interval, final double range, final int max, final double arm,
+                      final double trigger, final double root, final int rings, final String head, final List<Modifier> buff,
+                      final double place, final boolean fixedMax) {
+        this(kind, duration, interval, range, max, arm, trigger, root, rings, head, buff, place, fixedMax, false);
+    }
+
+    /** 舊的寫法（沒有放置時間、上限可以改）。 */
+    public DeploySpec(final Kind kind, final double duration, final double interval, final double range, final int max, final double arm,
+                      final double trigger, final double root, final int rings, final String head, final List<Modifier> buff) {
+        this(kind, duration, interval, range, max, arm, trigger, root, rings, head, buff, 0, false);
+    }
 
     public enum Kind {
         TOTEM("圖騰"), TRAP("陷阱"), BELL("鐘");
@@ -52,7 +70,7 @@ public record DeploySpec(Kind kind, double duration, double interval, double ran
 
     /** 2026-10-22：換一個持續時間（星咒圖騰上的持久、久地只讓圖騰撐更久）。 */
     public DeploySpec withDuration(final double seconds) {
-        return new DeploySpec(kind, seconds, interval, range, max, arm, trigger, root, rings, head, buff);
+        return new DeploySpec(kind, seconds, interval, range, max, arm, trigger, root, rings, head, buff, place, fixedMax, weaponSpeed);
     }
 
     /** 圖騰施法輔助套在一般法術上的預設值。 */
@@ -86,8 +104,10 @@ public record DeploySpec(Kind kind, double duration, double interval, double ran
                         check(where, "duration", node.decimal("duration", 8), 1, 60),
                         check(where, "interval", node.decimal("interval", 1.0), 0.2, 10),
                         check(where, "range", node.decimal("range", 10), 1, 30),
-                        (int) check(where, "max", node.integer("max", 1), 1, 6), 0, 0, 0, 0,
-                        node.string("head", "TOTEM_OF_UNDYING").trim().toUpperCase(Locale.ROOT), buff);
+                        (int) check(where, "max", node.integer("max", 1), 1, 10), 0, 0, 0, 0,
+                        node.string("head", "TOTEM_OF_UNDYING").trim().toUpperCase(Locale.ROOT), buff,
+                        check(where, "place", node.decimal("place", 0), 0, 5), node.bool("fixed_max", false),
+                        node.bool("weapon_speed", false)); // 2026-10-26 照 PoE2（崩震圖騰）
                 case TRAP -> new DeploySpec(kind,
                         check(where, "duration", node.decimal("duration", 16), 1, 120), 0, 0,
                         (int) check(where, "max", node.integer("max", 3), 1, 10),

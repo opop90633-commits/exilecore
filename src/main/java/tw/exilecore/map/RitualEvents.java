@@ -46,7 +46,9 @@ import java.util.random.RandomGenerator;
 /**
  * 祭壇（PoE2 的 Ritual）：地圖裡幾座祭壇，各在不同房間。右鍵一座開始儀式——地上一個血色的圓，怪一波一波在圓裡出現，
  * 圓裡的人每殺一隻拿貢品（後面的祭壇給更多）。全部做完後右鍵任何一座祭壇，用貢品換獎勵（{@link RitualMenu}；每個人各自一組，可以重擲）。
- * 貢品只在這張圖有效。設定在 {@code map_events.yml} 的 {@code ritual}。
+ * 2026-10-27 照 PoE2 0.5：獎勵只有星籤與傳奇（傳奇大多是共通的，少數是祭壇專屬）；剩下的貢品在地圖關閉時存進帳號
+ * （{@link #BANK_KEY}），滿 {@code ritual.tribute_bank.threshold} 換一張祭壇的入場券（原作是累積去見迷霧裡的王，這裡換成自己的祭壇巔峰）。
+ * 這次之前貢品只在這張圖有效。設定在 {@code map_events.yml} 的 {@code ritual}。
  */
 final class RitualEvents implements Listener {
 
@@ -54,6 +56,10 @@ final class RitualEvents implements Listener {
     private static final Particle.DustOptions BLOOD_DARK = new Particle.DustOptions(Color.fromRGB(0x6A1018), 1.6f);
     /** 碰得到祭壇：離中心幾格內右鍵（蠟燭或底座）。 */
     private static final double SHARE_MARGIN = 4;
+    /** 2026-10-27：帳號存下的貢品（星圖進度，跟星圖一樣整個帳號共用）。 */
+    static final String BANK_KEY = "ritualbank";
+    /** 祭壇的傳奇獎勵不是專屬時用的池（共通傳奇，跟地圖 Boss 一樣）。 */
+    private static final String COMMON_UNIQUES = "map_boss";
 
     /** 一座祭壇。 */
     final class Altar {
@@ -551,12 +557,84 @@ final class RitualEvents implements Listener {
             if (kind == null) {
                 break;
             }
-            final MapRewards.Bundle bundle = MapRewards.roll(plugin, service, kind, ritual.instance, player, config.delirium(), MapEventConfig.RITUAL_SOURCE, random);
+            // 2026-10-27 照 PoE2：傳奇大多是共通傳奇，exclusive_chance 的機率才是祭壇專屬（這次之前傳奇全是專屬，權重 1/99）
+            final boolean exclusive = kind == MapEventConfig.Reward.UNIQUE && random.nextDouble() < config.ritualExclusiveChance();
+            final String pool = kind == MapEventConfig.Reward.UNIQUE && !exclusive ? COMMON_UNIQUES : MapEventConfig.RITUAL_SOURCE;
+            final MapRewards.Bundle bundle = MapRewards.roll(plugin, service, kind, ritual.instance, player, config.delirium(), pool, random);
             if (bundle != null) {
-                list.add(new Offer(bundle, MapRewards.price(settings, bundle.kind(), random)));
+                final int price = exclusive && bundle.kind() == MapEventConfig.Reward.UNIQUE
+                        ? priceIn(config.ritualExclusivePrice(), random) : MapRewards.price(settings, bundle.kind(), random);
+                list.add(new Offer(bundle, price));
             }
         }
         return list;
+    }
+
+    private static int priceIn(final int[] range, final RandomGenerator random) {
+        return range[0] + (range[1] > range[0] ? random.nextInt(range[1] - range[0] + 1) : 0);
+    }
+
+    // ---- 存下的貢品（2026-10-27）----
+
+    /** 這個帳號存下的貢品（沒存過 0）。 */
+    int bank(final Player player) {
+        final String stored = service.atlasData(player).get(BANK_KEY);
+        if (stored == null) {
+            return 0;
+        }
+        try {
+            return Math.max(0, Integer.parseInt(stored.trim()));
+        } catch (final NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    /** 換一張券要存多少（0 = 不存）。 */
+    int bankThreshold() {
+        return config.ritualBankThreshold();
+    }
+
+    /** 這張圖關了：在線上的人剩下的貢品存進帳號（離線的人那份就沒了）。 */
+    private void bankLeftovers(final Ritual ritual) {
+        if (config.ritualBankThreshold() <= 0) {
+            return;
+        }
+        for (final Map.Entry<UUID, Integer> entry : ritual.tribute.entrySet()) {
+            final int left = entry.getValue();
+            final Player player = plugin.getServer().getPlayer(entry.getKey());
+            if (left <= 0 || player == null || !player.isConnected()) {
+                continue;
+            }
+            try {
+                deposit(player, left);
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().error("{} 的 {} 貢品存進帳號時出錯", player.getName(), left, e);
+            }
+        }
+        ritual.tribute.clear();
+    }
+
+    /** 存 amount 貢品；滿門檻換入場券（ticket 的通貨），剩下的留著。 */
+    void deposit(final Player player, final int amount) {
+        final int threshold = config.ritualBankThreshold();
+        int total = bank(player) + Math.max(0, amount);
+        final int tickets = threshold <= 0 ? 0 : total / threshold;
+        final MapEventConfig.Ticket ticket = config.ticket(MapEventConfig.RITUAL_SOURCE);
+        final tw.exilecore.currency.CurrencyType type = ticket == null || plugin.currencies() == null ? null
+                : plugin.currencies().repository().get(ticket.currency());
+        if (tickets > 0 && type != null) {
+            total -= tickets * threshold;
+            final boolean dropped = MapRewards.give(plugin, player, List.of(plugin.currencies().create(type, tickets)));
+            player.sendMessage(plugin.text().prefixed("<#ff5c6a>存下的貢品滿 " + threshold + "：換到 <white>" + tickets + "</white> 個 "
+                    + tw.exilecore.item.ItemRenderer.escape(type.name()) + "<gray>（在地圖裝置的「事件巔峰」用）"
+                    + (dropped ? "<yellow>；背包滿了，掉在腳下" : "")));
+            plugin.getSLF4JLogger().info("[ritual] {} 存下的貢品換了 {} 個 {}", player.getName(), tickets, type.id());
+        } else if (tickets > 0) {
+            plugin.getSLF4JLogger().warn("map_events.yml：祭壇的入場券不在 currencies.yml 裡，貢品先存著（{}）", player.getName());
+        }
+        service.atlasPut(player, BANK_KEY, String.valueOf(total));
+        player.sendMessage(plugin.text().prefixed("<#ff5c6a>祭壇剩下的 <white>" + amount + "</white> 貢品存進帳號<gray>（累積 "
+                + total + "／" + threshold + "）"));
     }
 
     /** 重擲這個人的那組要幾貢品（總共拿到的 × cost × growth^次數）。 */
@@ -623,7 +701,7 @@ final class RitualEvents implements Listener {
             return plugin.text().parse("<dark_gray>祭壇 " + (altar.index + 1) + "/" + ritual.altars.size() + "（已完成）");
         }
         return plugin.text().parse("<#ff5c6a>祭壇 " + (altar.index + 1) + "/" + ritual.altars.size()
-                + "<newline><gray>右鍵開始儀式：圓裡會一波一波出現怪，殺了拿貢品<newline><dark_gray>全部做完後用貢品換獎勵（星籤、傳奇…）");
+                + "<newline><gray>右鍵開始儀式：圓裡會一波一波出現怪，殺了拿貢品<newline><dark_gray>全部做完後用貢品換獎勵（星籤、傳奇）");
     }
 
     private void dispose(final Ritual ritual) {
@@ -655,12 +733,14 @@ final class RitualEvents implements Listener {
     void clear(final MapInstance instance) {
         final Ritual ritual = byInstance.remove(instance.id());
         if (ritual != null) {
+            bankLeftovers(ritual); // 2026-10-27：剩下的貢品存進帳號
             dispose(ritual);
         }
     }
 
     void clearAll() {
         for (final Ritual ritual : byInstance.values()) {
+            bankLeftovers(ritual); // 2026-10-27：關伺服器、重載也存
             dispose(ritual);
         }
         byInstance.clear();

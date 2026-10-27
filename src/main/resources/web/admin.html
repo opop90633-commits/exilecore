@@ -410,6 +410,7 @@
         <input type="text" id="dps-name" placeholder="找玩家或角色" aria-label="找玩家或角色" size="16">
         <label>每一筆 <select id="dps-view"><option value="best" selected>每個人最高</option><option value="all">全部紀錄</option></select></label>
         <button type="button" id="dps-refresh">重新整理</button>
+        <button type="button" id="dps-clear-all" class="danger">清除全部輸出紀錄</button>
       </div>
       <h3>依主技能（流派平衡用；只算 Boss，照上面選的範圍）</h3>
       <p class="note">主技能＝那一場打最多傷害的技能（點燃、流血、中毒不算，另外列「持續佔比」）。<b>中位數</b>比平均可靠：不會被一兩個特別強的人拉高。
@@ -426,7 +427,7 @@
         <thead><tr><th data-sort="player">玩家</th><th data-sort="character">角色</th><th data-sort="className">職業</th>
           <th class="num" data-sort="level">等級</th><th class="num" data-sort="fights">Boss 場數</th>
           <th class="num" data-sort="avg">Boss 平均每秒</th><th class="num" data-sort="best">Boss 最高每秒</th>
-          <th class="num" data-sort="dummyLast">假人最近（換算一般靶）</th><th class="num" data-sort="dummyBest">假人最高（換算一般靶）</th></tr></thead>
+          <th class="num" data-sort="dummyLast">假人最近（換算一般靶）</th><th class="num" data-sort="dummyBest">假人最高（換算一般靶）</th><th>管理</th></tr></thead>
         <tbody></tbody>
       </table></div>
       <h3>紀錄（點標題排序；預設每個人最高的那筆、高的在前：Boss、假人各一筆，假人照換算一般靶比）</h3>
@@ -1484,7 +1485,8 @@
         } }), ' ',
         p.muted ? h('button', { type: 'button', cls: 'small', text: '解除禁言', onclick: function () { playerDo(p, { action: 'unmute' }, '解除 ' + p.name + ' 的禁言？', []); } })
           : h('button', { type: 'button', cls: 'small', text: '禁言', onclick: function () { mutePlayer(p); } }), ' ',
-        h('button', { type: 'button', cls: 'small danger', text: '踢出', onclick: function () { kickPlayer(p); } }))));
+        h('button', { type: 'button', cls: 'small danger', text: '踢出', onclick: function () { kickPlayer(p); } }), ' ',
+        h('button', { type: 'button', cls: 'small danger', text: '清除輸出紀錄', onclick: function () { clearDps(p.uuid, p.name); } }))));
     });
     $('player-empty').hidden = state.players.length > 0;
   }
@@ -1782,7 +1784,7 @@
       p.dummyBestTitle = s.dummyBest ? '原始每秒 ' + wan(s.dummyBestRaw) + '（' + (s.dummyBestTarget || '') + '）'
         + (s.dummyBestCharacter ? '・角色 ' + s.dummyBestCharacter : '') + (s.dummyBestAt ? '・' + time(s.dummyBestAt) : '') : '';
     });
-    var players = Object.keys(by).map(function (k) { return by[k]; });
+    var players = Object.keys(by).map(function (k) { by[k].uuid = k; return by[k]; });
     players.sort(dpsCompare('players'));
     var pb = clear($('dps-players').querySelector('tbody'));
     players.forEach(function (p) {
@@ -1790,7 +1792,8 @@
         h('td', { cls: 'num', text: p.level || '' }), h('td', { cls: 'num', text: p.fights || '' }),
         h('td', { cls: 'num', text: p.sec > 0 ? wan(p.dmg / p.sec) : '' }), h('td', { cls: 'num', text: p.best ? wan(p.best) : '' }),
         h('td', { cls: 'num', text: p.dummyLast !== null ? wan(p.dummyLast) : '' }),
-        h('td', { cls: 'num', text: p.dummyBest ? wan(p.dummyBest) : '', title: p.dummyBestTitle || '' })));
+        h('td', { cls: 'num', text: p.dummyBest ? wan(p.dummyBest) : '', title: p.dummyBestTitle || '' }),
+        h('td', null, h('button', { type: 'button', cls: 'small danger', text: '清除紀錄', onclick: function () { clearDps(p.uuid, p.player); } }))));
     });
     var rb = clear($('dps-rows').querySelector('tbody'));
     var listed = shown;
@@ -2013,6 +2016,25 @@
   $('transfer-from').addEventListener('input', function () { transferPreviewed = null; $('transfer-result').hidden = true; });
   $('transfer-to').addEventListener('input', function () { transferPreviewed = null; $('transfer-result').hidden = true; });
   $('dps-refresh').addEventListener('click', loadDps);
+  // ---- 2026-10-27：清除輸出紀錄（一位玩家的全部角色，或全部玩家；POST admin/api/dps/clear） ----
+  function clearDps(uuid, name) {
+    var body = uuid ? { uuid: uuid } : { all: true };
+    var title = uuid ? '清除 ' + name + ' 的輸出紀錄？' : '清除「全部玩家」的輸出紀錄？';
+    var lines = uuid ? ['這位玩家所有角色的 Boss、假人紀錄都會刪掉', '刪掉就救不回來']
+      : ['排行榜、流派統計、平衡報表用的資料都會一起清掉', '刪掉就救不回來'];
+    return confirmBox(title, lines, '清除').then(function (yes) {
+      if (!yes) { return; }
+      if (!uuid && (window.prompt('再確認一次：請輸入「全部清除」四個字', '') || '').trim() !== '全部清除') {
+        toast('輸入的字不對，沒有清除', true);
+        return;
+      }
+      return api('POST', 'admin/api/dps/clear', body).then(function (json) {
+        toast((json.message || '清掉了') + '（目前還有 ' + (json.total || 0) + ' 筆）');
+        return loadDps();
+      }).catch(fail);
+    });
+  }
+  $('dps-clear-all').addEventListener('click', function () { clearDps(null, null); });
   $('dps-days').addEventListener('change', loadDps);
   $('dps-where').addEventListener('change', renderDps);
   $('dps-view').addEventListener('change', renderDps);

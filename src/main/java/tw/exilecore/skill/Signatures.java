@@ -31,39 +31,46 @@ import java.util.UUID;
  * 照 PoE2 做的幾個技能的專屬機制（2026-10）：
  * <ul>
  *   <li>蓄力放開（{@link ChargeSpec}）：穿雲箭、蓄勁一擊的完美時機，炎核爆的疊層</li>
- *   <li>whirl：旋矛擊每揮一次讓旋風升一階（最多 3 階），離開旋風範圍或 3 秒沒再揮就崩散，階數越高越痛</li>
+ *   <li>whirl：旋矛擊每揮一次讓旋風升一階（最多 3 階），離開旋風範圍就崩散，階數越高越痛</li>
  *   <li>lance：霆落矛插在落點 6 秒，每 0.8 秒朝附近的敵人放一道連鎖閃電，時間到炸開並留下帶電地；同時最多 3 支（第 4 支讓最舊的提早炸開）。
  *       2026-10-15 照 PoE2 的風暴之槍：有怒星就消耗一顆，這支只插 1.5 秒但每 0.2 秒放電、物理全部轉閃電；
  *       你的其他技能打在矛附近（2.5 格）會把它提早引爆</li>
  *   <li>bolt_spear：擲雷槍（PoE2 的閃電長矛）有怒星就消耗一顆，矛分裂成 3 支</li>
- *   <li>ember：星火連珠每放一次在頭上叫出一顆火星（最多 6～10 顆），最後一次施放 1.3 秒後一顆接一顆射向敵人，每一顆更多 5% 傷害</li>
+ *   <li>ember：星火連珠每放一次在頭上叫出一顆火星（最多 6～16 顆），最後一次施放 1.3 秒後一顆接一顆射向敵人，每一顆更多 5% 傷害</li>
  * </ul>
  */
 final class Signatures {
 
     /** 旋風最多幾階。 */
     static final int WHIRL_MAX = 3;
-    /** 旋風幾 tick 沒再揮就崩散。 */
-    static final long WHIRL_LIFE = 60;
-    /** 旋風一階的半徑（格）與每多一階加多少。 */
-    static final double WHIRL_RADIUS = 2.2;
-    static final double WHIRL_RADIUS_PER_STAGE = 0.6;
-    /** 崩散傷害：原技能一下的幾成，每多一階更多 150%（PoE2）。 */
+    /** 旋風幾 tick 沒再揮就崩散。2026-10-26 照 PoE2：旋風不會自己散掉，離開它才崩散（這次之前 60 tick＝3 秒）。 */
+    static final long WHIRL_LIFE = Long.MAX_VALUE / 4;
+    /** 旋風一階的半徑（格）與每多一階加多少。2026-10-26 照 PoE2：1.8 公尺、每多一階 +0.3（這次之前 2.2、+0.6）。 */
+    static final double WHIRL_RADIUS = 1.8;
+    static final double WHIRL_RADIUS_PER_STAGE = 0.3;
+    /** 崩散傷害：原技能一下的幾成（skills.yml 的 whirling_slash_collapse 寫 parent_damage: own 時照它自己的傷害表），每多一階更多 150%（PoE2）。 */
     static final double WHIRL_SHARE = 0.6;
+    /** 2026-10-26 照 PoE2：崩散擊退 2.5 公尺、每多一階 +10%（這次之前 0.5 ＋ 每階 0.15 的速度）。 */
+    static final double WHIRL_KNOCKBACK = 0.5;
+    static final double WHIRL_KNOCKBACK_PER_STAGE = 0.1;
     static final double WHIRL_MORE_PER_STAGE = 1.5;
 
     /** 霆落矛插多久、多久放電一次、同時幾支、放電與炸開是原技能一下的幾成。 */
     static final long LANCE_LIFE = 120;
     static final long LANCE_ZAP = 16;
     static final int LANCE_MAX = 3;
-    static final double LANCE_ZAP_RANGE = 6;
+    static final double LANCE_ZAP_RANGE = 2;   // 2026-10-26 照 PoE2：放電打 2 公尺內的敵人（這次之前 6）
     static final double LANCE_ZAP_SHARE = 0.25;
     static final double LANCE_BURST_SHARE = 0.8;
     /** 2026-10-15：消耗怒星的那一支：插多久、多久放電一次；炸開留下的帶電地是原技能一下的幾成；其他技能打在幾格內會引爆。 */
     static final long LANCE_CHARGED_LIFE = 30;
     static final long LANCE_CHARGED_ZAP = 4;
     static final double LANCE_GROUND_SHARE = 0.2;
-    static final double LANCE_DETONATE_RANGE = 2.5;
+    static final double LANCE_DETONATE_RANGE = 3;   // 2026-10-26 照 PoE2：3 公尺（這次之前 2.5）
+    /** 2026-10-26 照 PoE2：消耗怒星的那一支放電打 3 公尺內；炸開時往 3 公尺內的敵人射 16 道閃電（隨機分給每個敵人）。 */
+    static final double LANCE_CHARGED_ZAP_RANGE = 3;
+    static final int LANCE_BURST_BOLTS = 16;
+    static final double LANCE_BURST_RANGE = 3;
     /** 擲雷槍消耗怒星時分裂成幾支。 */
     static final int BOLT_SPEAR_COPIES = 3;
 
@@ -127,8 +134,9 @@ final class Signatures {
     /**
      * 按了一下（或按住中又收到一次）蓄力技能：還沒在蓄就開始蓄；同一招按住中就記下最後一次收到的時間。
      * 數字鍵沒辦法按住：按一下開始、再按一下放出。
+     * 2026-10-26：回傳這一下是不是「開始新的引導」（SkillService 接著扣引導的第一次消耗）。
      */
-    void press(final Player player, final SkillRuntime runtime, final PlayerState state, final int key, final SkillDefinition definition,
+    boolean press(final Player player, final SkillRuntime runtime, final PlayerState state, final int key, final SkillDefinition definition,
                final SkillBuild build, final ChargeSpec spec, final LivingEntity preferred, final StatSheet sheet, final long now) {
         final SkillRuntime.Charging charging = runtime.charging;
         if (charging != null && charging.skillId.equals(definition.id()) && charging.key == key) {
@@ -136,18 +144,21 @@ final class Signatures {
                 charging.releaseNow = true; // 數字鍵：再按一下放出
             }
             charging.last = now;
-            return;
+            return false;
         }
         final double interval = build.intervalTicks(sheet);
         final SkillRuntime.Charging started = new SkillRuntime.Charging(definition.id(), key, now,
                 spec.perfect() ? spec.perfectTick(interval) : -1, preferred == null ? null : preferred.getUniqueId());
         started.interval = interval;
-        started.speed = speed(definition, interval);
+        // 2026-10-26 照 PoE2（爆焰矢的 GainsStages）：每一層是一次攻擊時間，吃攻擊速度
+        started.speed = spec.channel().perAttack() && interval > 0 ? spec.stageTime() * 20 / interval : speed(definition, interval);
         runtime.charging = started;
-        state.notice("<#ffd27f>" + ItemRenderer.escape(definition.name()) + " 蓄力中…" + (SkillLoadout.mouseKey(key)
-                ? "（放開出手）" : "（再按一次出手）"), now + 20);
+        final boolean channel = spec.mode() != ChargeSpec.Mode.RELEASE;
+        state.notice("<#ffd27f>" + ItemRenderer.escape(definition.name()) + (channel ? " 引導中…" : " 蓄力中…") + (SkillLoadout.mouseKey(key)
+                ? (channel ? "（放開結束）" : "（放開出手）") : (channel ? "（再按一次結束）" : "（再按一次出手）")), now + 20);
         plugin.players().display(player, state);
         player.playSound(player.getLocation(), Sound.ITEM_CROSSBOW_LOADING_START, SoundCategory.PLAYERS, 0.6f, 1.2f);
+        return true;
     }
 
     /** 每 tick：蓄力中的提示、完美時機的叮一聲、放開的偵測。 */
@@ -164,7 +175,21 @@ final class Signatures {
         final long held = now - charging.start;
         final boolean left = charging.key == SkillLoadout.KEY_LEFT || charging.key == SkillLoadout.KEY_SNEAK_LEFT;
         final boolean mouse = SkillLoadout.mouseKey(charging.key);
-        boolean released = charging.releaseNow || mouse && now - charging.last > (left ? 3 : 7);
+        final boolean pressedAgain = charging.releaseNow;
+        charging.releaseNow = false;
+        boolean released = pressedAgain || mouse && now - charging.last > (left ? 3 : 7);
+        if (spec.mode() != ChargeSpec.Mode.RELEASE) {
+            // 2026-10-26 照 PoE2：衝鋒（盾衝、蠻衝）、持續作用（凋蝕術）：按住期間一直有效，放開（過了最短引導時間）結束
+            if (service.channelling().tick(player, charging, spec, released, now)) {
+                runtime.charging = null;
+                service.buffs().remove(player, "channel_block");
+                service.buffs().remove(player, "channel_slow");
+            }
+            return;
+        }
+        if (!released && !service.channelling().drain(player, charging, spec, held)) {
+            released = true; // 2026-10-26：魔力不夠撐下一秒，照現在的蓄力放出
+        }
         final long limit = spec.perfect() ? charging.perfectAt + ChargeSpec.OVERHOLD
                 : Math.round(spec.stageTicks(charging.speed) * spec.stages()) + ChargeSpec.OVERHOLD;
         if (held > limit) {
@@ -200,8 +225,14 @@ final class Signatures {
             return;
         }
         runtime.charging = null;
-        final long releaseHeld = (charging.releaseNow ? now : Math.min(now, charging.last + 1)) - charging.start;
-        final boolean perfect = spec.isPerfect(releaseHeld, charging.interval);
+        final long releaseHeld = (pressedAgain ? now : Math.min(now, charging.last + 1)) - charging.start;
+        final boolean perfect = spec.isPerfect(releaseHeld, charging.interval, Math.max(0.05, 1 + plugin.players().sheet(player)
+                .increased(tw.exilecore.item.unique.UniqueStats.PERFECT_WINDOW, java.util.Set.of()) // 2026-10-26（虛望之盔）
+                - service.supportFlat(player, charging.skillId, tw.exilecore.stats.SupportExtraKeys.PERFECT_WINDOW_SHORTER) / 100.0) // 2026-10-27 照 PoE2 良機：區間更短 35%
+                * service.supportMechanics().lineage().perfectWindow(player, charging.skillId)); // 2026-10-27 照 PoE2 律勁：區間長 100%、每層更短 30%
+        if (spec.perfect()) {
+            service.supportMechanics().lineage().perfectResult(player, charging.skillId, perfect); // 2026-10-27 照 PoE2 律勁：成功疊一層、失敗全部失去
+        }
         runtime.releasing = new SkillRuntime.Release(charging.skillId, releaseHeld, perfect, charging.speed);
         final LivingEntity target = charging.target == null ? null
                 : plugin.getServer().getEntity(charging.target) instanceof LivingEntity living && living.isValid() ? living : null;
@@ -251,8 +282,32 @@ final class Signatures {
             if (area > 0) {
                 result = result.withAreaAndProjectiles(result.areaScale() * Math.sqrt(1 + area), result.projectiles());
             }
+            if (spec.stageProjectiles() > 0 && stages > 1) { // 2026-10-26：引導越久骨刺越多（Bonestorm）
+                result = result.withAreaAndProjectiles(result.areaScale(),
+                        Math.min(SkillBuild.MAX_PROJECTILES, result.projectiles() + spec.stageProjectiles() * (stages - 1)));
+            }
+            // 2026-10-26 照 PoE2 的引導：每一層給的屬性（爆焰矢每層額外獲得 120% 火焰）、只有疊滿才爆炸（爆焰矢）
+            final ChargeSpec.Channel channel = spec.channel();
+            if (channel.stageStat() != null && channel.stageValue() != 0) {
+                result = result.withProfile(result.profile().withLocal(List.of(Modifier.flat(channel.stageStat(), channel.stageValue() * stages, "引導層數"))));
+            }
+            if (channel.explodeAtMax() && stages < spec.stages()) {
+                result = result.withExplodeAndRange(0, result.range());
+            }
             state.notice(String.format(Locale.ROOT, "<#ff9a4d>%s 放出：%d／%d 層", name, stages, spec.stages()), now + 30);
         }
+        // 2026-10-26 照 PoE2（引霆突）：完美時機放開衝得比較遠、轉換比較多閃電
+        if (spec.perfect() && release.perfect()) {
+            final ChargeSpec.Channel channel = spec.channel();
+            if (channel.perfectRange() > 0) {
+                result = result.withExplodeAndRange(result.explode(), channel.perfectRange());
+            }
+            if (channel.perfectStat() != null && channel.perfectValue() != 0) {
+                result = result.withProfile(result.profile().withLocal(List.of(Modifier.flat(channel.perfectStat(), channel.perfectValue(), "完美時機"))));
+            }
+        }
+        // 2026-10-27 照 PoE2 Burgeon（漸熾）：引導越久越痛（放開型照按住多久；連續出手型照從開始引導到這一下）
+        result = Burgeon.apply(result, state.sheet(), release.held() / 20.0);
         plugin.players().display(player, state);
         return result;
     }
@@ -340,7 +395,7 @@ final class Signatures {
 
     /** 旋風崩散：在中心炸一圈（階數越高越痛、越大），把敵人往外推。 */
     private void collapse(final Player player, final Whirl whirl) {
-        final double share = WHIRL_SHARE * (1 + WHIRL_MORE_PER_STAGE * (whirl.stage - 1));
+        final double share = share("whirling_slash_collapse", whirl.build, WHIRL_SHARE) * (1 + WHIRL_MORE_PER_STAGE * (whirl.stage - 1));
         final SkillBuild sub = subBuild(player, "whirling_slash_collapse", whirl.build, share);
         if (sub == null) {
             return;
@@ -353,7 +408,8 @@ final class Signatures {
         for (final LivingEntity target : service.targets().around(whirl.center, radius, player)) {
             final Vector push = target.getLocation().toVector().subtract(whirl.center.toVector()).setY(0);
             if (push.lengthSquared() > 1e-4) {
-                target.setVelocity(target.getVelocity().add(push.normalize().multiply(0.5 + 0.15 * whirl.stage).setY(0.25)));
+                target.setVelocity(target.getVelocity().add(push.normalize()
+                        .multiply(WHIRL_KNOCKBACK * (1 + WHIRL_KNOCKBACK_PER_STAGE * (whirl.stage - 1))).setY(0.25)));
             }
         }
         whirl.center.getWorld().spawnParticle(Particle.SWEEP_ATTACK, whirl.center.clone().add(0, 1, 0), 6 * whirl.stage, radius / 2, 0.4,
@@ -378,16 +434,37 @@ final class Signatures {
         if (lance == null) {
             return;
         }
-        final SkillBuild sub = subBuild(player, "storm_lance_burst", lance.build(), LANCE_BURST_SHARE);
+        final SkillBuild sub = subBuild(player, "storm_lance_burst", lance.build(), share("storm_lance_burst", lance.build(), LANCE_BURST_SHARE));
         if (sub != null) {
-            service.procCast(Origin.at(player, lance.at().clone().add(0, 0.2, 0), SkillTargets.facing(player)), sub, null);
+            // 2026-10-26 照 PoE2：不是一圈爆炸，是往 3 公尺內的敵人射 16 道閃電（每道隨機挑一個敵人；這次之前是一圈 nova）
+            final List<LivingEntity> near = new java.util.ArrayList<>(service.targets().around(lance.at(), LANCE_BURST_RANGE, player));
+            final Location from = lance.at().clone().add(0, 1.0, 0);
+            for (int i = 0; i < LANCE_BURST_BOLTS && !near.isEmpty(); i++) {
+                final LivingEntity target = near.get(plugin.random().nextInt(near.size()));
+                if (!target.isValid() || target.isDead()) {
+                    near.remove(target);
+                    i--;
+                    continue;
+                }
+                final Vector direction = SkillTargets.center(target).toVector().subtract(from.toVector());
+                service.procCast(Origin.at(player, from, direction.lengthSquared() < 1e-6 ? SkillTargets.facing(player) : direction.normalize()),
+                        sub, target);
+            }
         }
-        // 2026-10-15（PoE2）：炸開的地方留下帶電地
-        final SkillBuild ground = subBuild(player, "storm_lance_ground", lance.build(), LANCE_GROUND_SHARE);
+        // 2026-10-15（PoE2）：炸開的地方留下帶電地。2026-10-26 照 PoE2：只有消耗怒星的那一支炸開才留（感電地面，不造成傷害）
+        final SkillBuild ground = lance.zapEvery() >= LANCE_ZAP ? null : subBuild(player, "storm_lance_ground", lance.build(), LANCE_GROUND_SHARE);
         if (ground != null) {
             service.procCast(Origin.at(player, lance.at().clone().add(0, 0.1, 0), SkillTargets.facing(player)), ground, null);
         }
         lance.at().getWorld().playSound(lance.at(), Sound.ENTITY_LIGHTNING_BOLT_IMPACT, SoundCategory.PLAYERS, 0.6f, 1.4f);
+    }
+
+    /** 星火連珠最多幾顆火星（2026-10-26 照 PoE2 逐級：6→10→16 顆）；這次之前 6～10 內插。 */
+    private static final int[] EMBER_MAX = {6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 9, 9, 9, 9, 10,
+            10, 10, 10, 11, 11, 11, 12, 12, 12, 13, 13, 13, 14, 14, 14, 15, 15, 15, 16, 16};
+
+    static int emberMax(final int level) {
+        return EMBER_MAX[Math.max(1, Math.min(EMBER_MAX.length, level)) - 1];
     }
 
     /** 星火連珠：叫出一顆火星懸在頭上（取代原本直接射出）；所有火星的懸浮時間重算。 */
@@ -396,7 +473,7 @@ final class Signatures {
         if (mine.fired > 0) {
             mine.fired = 0; // 上一輪還在射：新的一輪重新算
         }
-        final int max = (int) Math.round(6 + 4 * (Math.min(SkillLoadout.MAX_LEVEL, build.level()) - 1) / (double) (SkillLoadout.MAX_LEVEL - 1));
+        final int max = emberMax(build.level());
         if (mine.queue.size() < max) {
             mine.queue.addLast(build);
         }
@@ -482,9 +559,10 @@ final class Signatures {
             }
             if (now >= lance.nextZap()[0]) {
                 lance.nextZap()[0] = now + lance.zapEvery();
-                final List<LivingEntity> near = service.targets().around(lance.at(), LANCE_ZAP_RANGE, player);
+                final List<LivingEntity> near = service.targets().around(lance.at(),
+                        lance.zapEvery() < LANCE_ZAP ? LANCE_CHARGED_ZAP_RANGE : LANCE_ZAP_RANGE, player);
                 if (!near.isEmpty()) {
-                    final SkillBuild sub = subBuild(player, "storm_lance_bolt", lance.build(), LANCE_ZAP_SHARE);
+                    final SkillBuild sub = subBuild(player, "storm_lance_bolt", lance.build(), share("storm_lance_bolt", lance.build(), LANCE_ZAP_SHARE));
                     if (sub != null) {
                         final Location from = lance.at().clone().add(0, 1.5, 0);
                         final LivingEntity target = near.get(0);
@@ -532,6 +610,15 @@ final class Signatures {
         final SkillBuild shot = index > 0 ? build.withProfile(build.profile().scaled(1 + EMBER_MORE_PER * index, "火星連射")) : build;
         service.procCast(Origin.at(player, from, direction.lengthSquared() < 1e-6 ? SkillTargets.facing(player) : direction.normalize()),
                 shot, target);
+    }
+
+    /** 2026-10-26：隱藏技能寫了 parent_damage: own 就照它自己的傷害表換算成原技能一下的倍數，沒寫用 fallback（舊的固定倍數）。 */
+    private double share(final String subId, final SkillBuild parent, final double fallback) {
+        if (service.config().parentDamage(subId) >= 0) {
+            return fallback;
+        }
+        final double own = service.config().parentShare(subId, parent.definition(), parent.level());
+        return own > 0 ? own : fallback;
     }
 
     /** 隱藏技能的數值：用原技能那一下的傷害（含輔助、武器）乘 share，範圍、形狀照隱藏技能。 */

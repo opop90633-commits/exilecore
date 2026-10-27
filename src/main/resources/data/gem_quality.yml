@@ -1,0 +1,283 @@
+# 技能寶石的品質效果（2026-10-26 照 PoE2 0.5；資料來源 RePoE poe2 skills.json 的 quality_stats，琢星稜鏡加的品質用這個）：
+# 每一行是「每 1% 品質給多少」：INCREASED／MORE 的 per 是百分點（1 = 每 1% 品質 1%），FLAT 照屬性本身的單位（投射物、連鎖是個數）。
+# 只寫了 PoE2 的品質效果我們的引擎有對應屬性的技能（攻速、冷卻回復、施法速度、暴擊、投射物速度與數量、連鎖、範圍、點燃／冰緩／感電／中毒／凍結）；
+# 沒寫在這裡的技能照舊（SkillService.qualityModifiers：光環、戰吼、詛咒每 1% 增加 0.5% 效果，召喚物每 1% 增加 1% 傷害，其他每 1% 增加 1% 傷害）。
+# 範圍：PoE2 寫的是半徑 +x（0.1 公尺一單位），這裡照「+0.1 公尺 ≈ +10% 範圍」換算。
+# 這次之前（2026-10-23～2026-10-25）所有技能都照上面的通用規則。
+# 2026-10-27 照 PoE2 0.5：戰吼照 poe2db 寶石頁的 Quality 寫（每條 (0—x) 是 0%～20% 品質；屬性鍵見 stats/WarcryKeys.java，吼的時候 Warcries 讀）；
+#   這次之前戰吼照通用規則每 1% 增加 0.5% 戰吼效果。神龕祝禱（原作沒有）照舊用通用規則。
+
+ancestral_cry:   # Ancestral Cry（2026-10-27 照 PoE2：每用掉一顆磐星戰吼持續時間 +(0—20)%、增益給 (0—10)% 更多火焰傷害）
+  - { stat: warcry.duration_per_endurance, type: FLAT, per: 1.0 }   # 每顆磐星持續時間增加 x%（Warcries）
+ancestral_totem:   # Ancestral Warrior Totem（2026-10-26 照 PoE2：+(0—2) 秒圖騰持續時間、(0—50)% 增加圖騰生命；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: totem.duration_flat, type: FLAT, per: 0.1 }   # 圖騰持續時間 +秒
+arc:   # Arc
+  - { stat: skill.chains, type: FLAT, per: 0.1 }   # 連鎖次數
+arctic_howl:   # Arctic Howl（2026-10-27 照 PoE2：給隊友的增益 (0—20)% 增加凍結累積、(0—20)% 機率不算強化次數）
+  - { stat: warcry.ally_freeze_buildup, type: FLAT, per: 1.0 }   # 給隊友的增益：增加 x% 凍結累積（Warcries）
+  - { stat: warcry.tireless, type: FLAT, per: 1.0 }   # x% 機率不算強化次數（跟不竭嘯同一條）
+ball_lightning:   # Ball Lightning
+  - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 公尺 ≈ +10% 範圍）
+blood_harvest:   # Blood Hunt
+  - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 公尺 ≈ +10% 範圍）
+bone_blast:   # Bone Blast
+  - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 公尺 ≈ +10% 範圍）
+bone_storm:   # Bonestorm
+  - { stat: cast.speed, type: MORE, per: 0.5 }   # 施法速度（更多）
+boneshatter:   # Boneshatter
+  - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
+caustic_arrow:   # Gas Arrow
+  - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 公尺 ≈ +10% 範圍）
+chaos_bolt:   # Chaos Bolt
+  - { stat: skill.projectile_speed, type: INCREASED, per: 2.0 }   # 投射物速度
+cluster_grenade:   # Cluster Grenade
+  - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
+concussion_grenade:   # Flash Grenade
+  - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
+detonate_dead:   # Detonate Dead
+  - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 公尺 ≈ +10% 範圍）
+ember_seed:   # Living Bomb
+  - { stat: ignite.chance, type: MORE, per: 1.0 }   # 易燃（點燃機率，更多）
+emergency_reload:   # Emergency Reload
+  - { stat: cooldown.recovery, type: INCREASED, per: 0.5 }   # 冷卻回復速度
+escape_shot:   # Escape Shot
+  - { stat: freeze.buildup, type: MORE, per: 6.0 }   # 凍結累積（更多）
+explosive_grenade:   # Explosive Grenade
+  - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
+explosive_spear:   # Explosive Spear
+  - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 公尺 ≈ +10% 範圍）
+ferocious_roar:   # Ferocious Roar（2026-10-27 照 PoE2：每點強度 +(0—1) 怒氣；插槽戰吼：被它強化的攻擊 (0—30)% 增加傷害、(0—40)% 增加冷卻回復速度）
+  - { stat: warcry.rage_per_power, type: FLAT, per: 0.05 }   # 每 1 點強度多 x 點怒氣（Warcries）
+  - { stat: socketed_warcry.empowered_damage, type: FLAT, per: 1.5 }   # 插槽戰吼強化的攻擊增加 x% 傷害（SocketedWarcry）
+firebolt:   # Firebolt
+  - { stat: ignite.chance, type: MORE, per: 1.0 }   # 易燃（點燃機率，更多）
+firestorm:   # Firestorm
+  - { stat: skill.area, type: INCREASED, per: 1.0 }   # 範圍（半徑 +0.1 公尺 ≈ +10% 範圍）
+flicker_strike:   # Flicker Strike
+  - { stat: crit.chance, type: MORE, per: 1.0 }   # 暴擊率（更多）
+forge_hammer:   # Forge Hammer
+  - { stat: cooldown.recovery, type: INCREASED, per: 0.5 }   # 冷卻回復速度
+fortifying_cry:   # Fortifying Cry（2026-10-27 照 PoE2：(0—20)% 更多守護、盾波半徑 +(0—0.4) 公尺；另一條沒有文字的 base secondary skill effect duration [0,40] 單位不明，沒做）
+  - { stat: warcry.trigger_radius_flat, type: FLAT, per: 0.02 }   # 盾波半徑 +公尺（SupportMechanics）
+freezing_shards:   # Freezing Shards
+  - { stat: skill.projectiles, type: FLAT, per: 0.05 }   # 投射物數量
+frost_volley:   # Freezing Salvo
+  - { stat: freeze.buildup, type: MORE, per: 2.0 }   # 凍結累積（更多）
+frozen_locus:   # Frozen Locus
+  - { stat: chill.effect, type: MORE, per: 1.0 }   # 冰緩效果（更多）
+galvanic_field:   # Galvanic Field
+  - { stat: skill.chains, type: FLAT, per: 0.1 }   # 連鎖次數
+gas_grenade:   # Gas Grenade
+  - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
+glacial_lance:   # Glacial Lance
+  - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 公尺 ≈ +10% 範圍）
+hammer_of_gods:   # Hammer of the Gods
+  - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 公尺 ≈ +10% 範圍）
+ice_shot:   # Ice Shot
+  - { stat: chill.effect, type: MORE, per: 1.5 }   # 冰緩效果（更多）
+ice_strike:   # Ice Strike
+  - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
+ice_wall:   # Frost Wall
+  - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
+infernal_cry:   # Infernal Cry（2026-10-27 照 PoE2：強化攻擊獲得 (0—10)% 傷害為額外火焰、戰吼半徑 (0—3) 公尺（照頁面原文，加在 4 公尺上））
+  - { stat: warcry.empower_gain_fire, type: FLAT, per: 0.5 }   # 強化攻擊獲得 x% 傷害為額外火焰（Warcries → SupportMechanics）
+inferno_blast:   # Flameblast
+  - { stat: cast.speed, type: MORE, per: 1.0 }   # 施法速度（更多）
+lightning_arrow:   # Lightning Arrow
+  - { stat: shock.chance, type: MORE, per: 2.0 }   # 感電機率（更多）
+lightning_pillar:   # Lightning Conduit
+  - { stat: damage, type: MORE, per: 1.0, tags: [lightning] }   # 閃電傷害（更多）
+lightning_spear:   # Lightning Spear
+  - { stat: skill.projectiles, type: FLAT, per: 0.1 }   # 投射物數量
+lunar_blessing:   # Lunar Blessing（2026-10-27 照 PoE2：增益另外獲得 (0—10)% 傷害為冰冷、(0—40)% 增加冷卻回復速度）
+  - { stat: grant.damage.extra.cold, type: FLAT, per: 0.5 }   # 增益（你與狼群）獲得 x% 傷害為額外冰冷（SkillBuild.qualityGrants）
+  - { stat: cooldown.recovery, type: INCREASED, per: 2.0 }   # 冷卻回復速度
+magnetic_salvo:   # Magnetic Salvo
+  - { stat: skill.projectiles, type: FLAT, per: 0.2 }   # 投射物數量
+oil_grenade:   # Oil Grenade
+  - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
+primal_strikes:   # Primal Strikes
+  - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
+prism_rend:   # Elemental Sundering
+  - { stat: skill.area, type: INCREASED, per: 1.0 }   # 範圍（半徑 +0.1 公尺 ≈ +10% 範圍）
+seismic_cry:   # Seismic Cry（2026-10-27 照 PoE2：強化攻擊的餘震 (0—10)% 更多傷害、獲得 (0—20)% 物理傷害為火焰）
+  - { stat: warcry.aftershock_more, type: FLAT, per: 0.5 }   # 餘震更多 x%（SupportMechanics）
+shockwave_totem:   # Shockwave Totem（2026-10-26 照 PoE2：+(0—4) 秒圖騰持續時間、+(0—1) 圖騰上限；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: totem.duration_flat, type: FLAT, per: 0.2 }   # 圖騰持續時間 +秒
+snap:   # Snap（2026-10-27 照 PoE2：(0—10)% 機率多一個灌注殘骸、(0—100)% 增加冷卻回復速度；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: snap.extra_remnant, type: FLAT, per: 0.5 }   # 多一個灌注殘骸的機率（Snap.java）
+snipe:   # Snipe
+  - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 公尺 ≈ +10% 範圍）
+spark:   # Spark
+  - { stat: skill.projectile_speed, type: INCREASED, per: 1.5 }   # 投射物速度
+spiral_volley:   # Spiral Volley
+  - { stat: skill.projectiles, type: FLAT, per: 0.2 }   # 投射物數量
+storm_blink:   # Lightning Warp
+  - { stat: shock.effect, type: INCREASED, per: 0.5 }   # 感電效果
+storm_orb:   # Orb of Storms
+  - { stat: skill.chains, type: FLAT, per: 0.15 }   # 連鎖次數
+thrashing_vines:   # Thrashing Vines
+  - { stat: skill.area, type: INCREASED, per: 2.5 }   # 範圍（半徑 +0.1 公尺 ≈ +10% 範圍）
+thunder_arrow:   # Stormcaller Arrow
+  - { stat: shock.duration, type: INCREASED, per: 1.5 }   # 感電持續時間
+totem_casting:   # Spell Totem（2026-10-26 照 PoE2：+(0—4) 秒圖騰持續時間、每根召喚中的圖騰讓圖騰施放的法術增加 (0—10)% 施法速度；這次之前品質對圖騰沒有作用）
+  - { stat: totem.duration_flat, type: FLAT, per: 0.2 }   # 圖騰持續時間 +秒
+toxic_domain:   # Toxic Domain
+  - { stat: skill.area, type: INCREASED, per: 1.5 }   # 範圍（半徑 +0.1 公尺 ≈ +10% 範圍）
+toxic_growth:   # Toxic Growth
+  - { stat: skill.projectiles, type: FLAT, per: 0.05 }   # 投射物數量
+true_strike:   # Perfect Strike
+  - { stat: ignite.chance, type: MORE, per: 1.0 }   # 易燃（點燃機率，更多）
+venom_burst_arrow:   # Poisonburst Arrow
+  - { stat: poison.magnitude, type: MORE, per: 0.5 }   # 中毒幅度（更多）
+volcano:   # Volcano
+  - { stat: skill.area, type: INCREASED, per: 1.0 }   # 範圍（半徑 +0.1 公尺 ≈ +10% 範圍）
+voltaic_grenade:   # Voltaic Grenade
+  - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
+whirling_rush:   # Whirling Assault
+  - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
+winter_eye:   # Eye of Winter
+  - { stat: skill.projectile_speed, type: INCREASED, per: 1.5 }   # 投射物速度
+wolf_shred:   # Shred
+  - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
+
+# ---- 2026-10-27 照 PoE2 0.5：額外的品質效果（advanced）----
+# 原作每顆寶石除了一般的品質效果，還有一條「額外的品質效果」（poe2db 寶石頁 Additional Effects From Quality 的第二條；
+# poe2db.tw/us/Advanced_Thaumaturgy 列了每一顆的）。只有昇華・嵌晶的進階奇術（Gem Quality grants Socketed Skills an additional effect）才有，
+# 寫法跟上面一樣（每 1% 品質給 per）。這裡只寫我們的引擎有對應屬性的技能；沒寫的技能（額外效果的機制還沒有：例如火球的環射、
+# 連鎖剩幾次更多傷害）有進階奇術時照舊把一般的品質效果再算一次（平衡等效，AscBuild.advanced）。
+# 這次之前（2026-10-26～2026-10-27）沒有這個區塊，進階奇術一律是品質效果再算一次；下面標「從一般品質移過來」的那幾條這次之前算在一般品質裡。
+advanced:
+  ancestral_cry:   # Ancestral Cry：增益給 (0—10)% 更多火焰傷害
+    - { stat: grant.damage, type: MORE, per: 0.5, tags: [fire] }   # 增益：更多火焰傷害（grant.＝給你自己的增益；SkillBuild.qualityGrants）（2026-10-27 照 PoE2：這次之前是一般品質效果）
+  ancestral_totem:   # Ancestral Warrior Totem：(0—50)% 增加圖騰生命
+    - { stat: totem.life, type: INCREASED, per: 2.5 }   # 圖騰生命（2026-10-27 照 PoE2：這次之前是一般品質效果）
+  ferocious_roar:   # Ferocious Roar：插槽戰吼 (0—40)% 增加冷卻回復速度
+    - { stat: socketed_warcry.cooldown_recovery, type: INCREASED, per: 2.0 }   # 插槽戰吼的冷卻回復速度（SocketedWarcry）（2026-10-27 照 PoE2：這次之前是一般品質效果）
+  fortifying_cry:   # Fortifying Cry：(0—20)% 更多守護（另一條沒有文字的 base secondary skill effect duration 沒做）
+    - { stat: warcry.guard_more, type: FLAT, per: 1.0 }   # 守護更多 x%（Warcries）（2026-10-27 照 PoE2：這次之前是一般品質效果）
+  infernal_cry:   # Infernal Cry：戰吼半徑 (0—3) 公尺
+    - { stat: warcry.radius_flat, type: FLAT, per: 0.15 }   # 戰吼半徑 +公尺（Warcries）（2026-10-27 照 PoE2：這次之前是一般品質效果）
+  seismic_cry:   # Seismic Cry：獲得 (0—20)% 物理傷害為火焰
+    - { stat: damage.gain.fire, type: FLAT, per: 1.0 }   # 物理傷害的 x% 額外獲得為火焰（震波的傷害）（2026-10-27 照 PoE2：這次之前是一般品質效果）
+  shockwave_totem:   # Shockwave Totem：+(0—1) 圖騰上限
+    - { stat: skill.totems, type: FLAT, per: 0.05 }   # 圖騰上限（SkillBuild 無條件捨去：20% 品質才 +1）（2026-10-27 照 PoE2：這次之前是一般品質效果）
+  snap:   # Snap：(0—100)% 增加冷卻回復速度
+    - { stat: cooldown.recovery, type: INCREASED, per: 5.0 }   # 冷卻回復速度（2026-10-27 照 PoE2：這次之前是一般品質效果）
+  totem_casting:   # Spell Totem：每根召喚中的圖騰讓圖騰施放的法術增加 (0—10)% 施法速度
+    - { stat: totem.cast_speed_per_totem, type: FLAT, per: 0.5 }   # 每根圖騰增加 x% 施法速度（2026-10-27 照 PoE2：這次之前是一般品質效果）
+  armour_breaker:   # Armour Breaker：(0—20)% 更多物理傷害
+    - { stat: damage, type: MORE, per: 1.0, tags: [physical] }
+  armour_piercing_bolt:   # Armour Piercing Rounds：(0—20)% 更多攻擊速度
+    - { stat: attack.speed, type: MORE, per: 1.0 }
+  artillery_ballista:   # Artillery Ballista：+(0—1) 圖騰上限
+    - { stat: skill.totems, type: FLAT, per: 0.05 }
+  ball_lightning:   # Ball Lightning：(-30—0)% 更多投射物速度（更慢）
+    - { stat: skill.projectile_speed, type: MORE, per: -1.5 }
+  barkskin:   # Barkskin：(0—20)% 更多技能持續時間
+    - { stat: skill.duration, type: MORE, per: 1.0 }
+  bloodhounds_mark:   # Bloodhound's Mark：(0—20)% 更多物理傷害
+    - { stat: damage, type: MORE, per: 1.0, tags: [physical] }
+  bone_cage:   # Bone Cage：(0—40)% 更多流血幅度
+    - { stat: bleed.magnitude, type: MORE, per: 2.0 }
+  bone_offering:   # Bone Offering：(0—30)% 更多技能持續時間
+    - { stat: skill.duration, type: MORE, per: 1.5 }
+  caustic_arrow:   # Gas Arrow：(0—20)% 更多火焰傷害
+    - { stat: damage, type: MORE, per: 1.0, tags: [fire] }
+  comet:   # Comet：(0—40)% 增加對凍結敵人的擊中傷害
+    - { stat: damage.vs_frozen, type: INCREASED, per: 2.0 }
+  concussion_grenade:   # Flash Grenade：獲得 (0—10)% 傷害為冰冷、(0—10)% 為閃電
+    - { stat: damage.extra.cold, type: FLAT, per: 0.5 }
+    - { stat: damage.extra.lightning, type: FLAT, per: 0.5 }
+  contagion:   # Contagion：(0—50)% 更多範圍
+    - { stat: skill.area, type: MORE, per: 2.5 }
+  convalescence:   # Convalescence：(0—30)% 增加冷卻回復速度
+    - { stat: cooldown.recovery, type: INCREASED, per: 1.5 }
+  defiance_banner:   # Defiance Banner：(0—30)% 更多範圍
+    - { stat: skill.area, type: MORE, per: 1.5 }
+  despair_curse:   # Despair：(0—50)% 減少魔力消耗
+    - { stat: skill.cost, type: INCREASED, per: -2.5 }
+  dread_banner:   # Dread Banner：(0—30)% 更多範圍
+    - { stat: skill.area, type: MORE, per: 1.5 }
+  earthquake:   # Earthquake：(0—40)% 更多傷害型異常的幅度
+    - { stat: ignite.magnitude, type: MORE, per: 2.0 }
+    - { stat: bleed.magnitude, type: MORE, per: 2.0 }
+    - { stat: poison.magnitude, type: MORE, per: 2.0 }
+  ember_seed:   # Living Bomb：(0—50)% 更多火焰傷害（另一條「爆炸門檻」沒做）
+    - { stat: damage, type: MORE, per: 2.5, tags: [fire] }
+  enfeeble_curse:   # Enfeeble：(0—50)% 減少魔力消耗
+    - { stat: skill.cost, type: INCREASED, per: -2.5 }
+  escape_shot:   # Escape Shot：(0—40)% 增加對凍結敵人的擊中傷害
+    - { stat: damage.vs_frozen, type: INCREASED, per: 2.0 }
+  essence_drain:   # Essence Drain：連鎖 +(0—4) 次
+    - { stat: skill.chains, type: FLAT, per: 0.2 }
+  explosive_grenade:   # Explosive Grenade：+(0—2) 投射物
+    - { stat: skill.projectiles, type: FLAT, per: 0.1 }
+  flame_wall:   # Flame Wall：(0—40)% 更多火焰傷害
+    - { stat: damage, type: MORE, per: 2.0, tags: [fire] }
+  forge_hammer:   # Forge Hammer：獲得 (0—20)% 傷害為額外火焰
+    - { stat: damage.extra.fire, type: FLAT, per: 1.0 }
+  fragmentation_rounds:   # Fragmentation Rounds：(0—100)% 更多裝填速度
+    - { stat: crossbow.reload_speed, type: MORE, per: 5.0 }
+  freezing_mark:   # Freezing Mark：(0—50)% 減少魔力消耗
+    - { stat: skill.cost, type: INCREASED, per: -2.5 }
+  frostbolt:   # Frostbolt：(0—40)% 更多投射物速度
+    - { stat: skill.projectile_speed, type: MORE, per: 2.0 }
+  glacial_cascade:   # Glacial Cascade：(0—20)% 更多攻擊速度
+    - { stat: attack.speed, type: MORE, per: 1.0 }
+  herald_of_plague:   # Herald of Plague：(0—30)% 更多範圍
+    - { stat: skill.area, type: MORE, per: 1.5 }
+  hex_burst:   # Hexblast：(0—40)% 更多暴擊率
+    - { stat: crit.chance, type: MORE, per: 2.0 }
+  ice_strike:   # Ice Strike：(0—20)% 更多暴擊率
+    - { stat: crit.chance, type: MORE, per: 1.0 }
+  iron_ward:   # Iron Ward：(0—20)% 更多物理傷害
+    - { stat: damage, type: MORE, per: 1.0, tags: [physical] }
+  leap_slam:   # Leap Slam：(0—20)% 更多範圍
+    - { stat: skill.area, type: MORE, per: 1.0 }
+  lightning_rod:   # Lightning Rod：(0—20)% 更多攻擊速度
+    - { stat: attack.speed, type: MORE, per: 1.0 }
+  magnetic_salvo:   # Magnetic Salvo：(0—20)% 更多閃電傷害
+    - { stat: damage, type: MORE, per: 1.0, tags: [lightning] }
+  permafrost_bolts:   # Permafrost Bolts：(0—100)% 更多裝填速度
+    - { stat: crossbow.reload_speed, type: MORE, per: 5.0 }
+  plasma_blast:   # Plasma Blast：+(0—2) 投射物
+    - { stat: skill.projectiles, type: FLAT, per: 0.1 }
+  primal_strikes:   # Primal Strikes：(0—20)% 更多暴擊率
+    - { stat: crit.chance, type: MORE, per: 1.0 }
+  prism_rend:   # Elemental Sundering：(0—20)% 更多暴擊率
+    - { stat: crit.chance, type: MORE, per: 1.0 }
+  profane_ritual:   # Profane Ritual：(0—100)% 更多技能持續時間
+    - { stat: skill.duration, type: MORE, per: 5.0 }
+  rain_of_arrows:   # Rain of Arrows：(0—20)% 更多傷害
+    - { stat: damage, type: MORE, per: 1.0 }
+  raise_zombie:   # Raise Zombie：+(0—4) 殭屍上限
+    - { stat: skill.minions, type: FLAT, per: 0.2 }
+  rampage:   # Rampage：(0—20)% 更多範圍
+    - { stat: skill.area, type: MORE, per: 1.0 }
+  shard_scavenger:   # Shard Scavenger：(0—20)% 更多技能持續時間
+    - { stat: skill.duration, type: MORE, per: 1.0 }
+  siege_ballista:   # Siege Ballista：+(0—1) 圖騰上限
+    - { stat: skill.totems, type: FLAT, per: 0.05 }
+  snipe:   # Snipe：(0—20)% 更多攻擊速度（另一條完美時機的區間沒做）
+    - { stat: attack.speed, type: MORE, per: 1.0 }
+  spark:   # Spark：+(0—4) 投射物
+    - { stat: skill.projectiles, type: FLAT, per: 0.2 }
+  stampede:   # Stampede：(0—20)% 更多範圍
+    - { stat: skill.area, type: MORE, per: 1.0 }
+  storm_blink:   # Lightning Warp：(0—40)% 更多施法速度
+    - { stat: cast.speed, type: MORE, per: 2.0 }
+  sunder:   # Sunder：(0—20)% 更多攻擊速度
+    - { stat: attack.speed, type: MORE, per: 1.0 }
+  sunfire_spear:   # Spear of Solaris：(0—20)% 更多火焰傷害
+    - { stat: damage, type: MORE, per: 1.0, tags: [fire] }
+  supercharged_slam:   # Supercharged Slam：(0—300)% 更多暈眩累積
+    - { stat: stun.buildup, type: MORE, per: 15.0 }
+  thunder_arrow:   # Stormcaller Arrow：+(0—2) 投射物
+    - { stat: skill.projectiles, type: FLAT, per: 0.1 }
+  thunderstorm:   # Thunderstorm：(0—20)% 更多範圍
+    - { stat: skill.area, type: MORE, per: 1.0 }
+  true_strike:   # Perfect Strike：(0—40)% 更多攻擊速度
+    - { stat: attack.speed, type: MORE, per: 2.0 }
+  voltaic_grenade:   # Voltaic Grenade：(0—20)% 更多閃電傷害
+    - { stat: damage, type: MORE, per: 1.0, tags: [lightning] }

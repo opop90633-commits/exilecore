@@ -1,0 +1,2590 @@
+{
+ "source": "原作的 Path of Building 2：TimelessJewelData/LegionPassives.lua（kalguur_*、abyss_*）",
+ "radius": 1500,
+ "legions": {
+  "kalguur": {
+   "name": "卡爾葛",
+   "unique": "heroic_tragedy",
+   "conquerors": [
+    {
+     "id": "vorana",
+     "name": "沃拉娜",
+     "keystone": "kalguur_keystone_1"
+    },
+    {
+     "id": "medved",
+     "name": "梅德偉",
+     "keystone": "kalguur_keystone_2"
+    },
+    {
+     "id": "olroth",
+     "name": "奧爾羅斯",
+     "keystone": "kalguur_keystone_3"
+    }
+   ],
+   "keystones": [
+    {
+     "id": "kalguur_keystone_1",
+     "name": "黑暗血鐮訓練",
+     "en": "Black Scythe Training",
+     "lines": [
+      {
+       "text": "無法獲得力量的固有加成",
+       "stats": [
+        {
+         "stat": "flag.timeless_alt_str",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "每 2 點力量增加 1% 能量護盾",
+       "stats": [],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_keystone_2",
+     "name": "循環教義",
+     "en": "Circular Teachings",
+     "lines": [
+      {
+       "text": "無法獲得敏捷的固有加成",
+       "stats": [
+        {
+         "stat": "flag.timeless_alt_dex",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "每 2 點敏捷增加 1% 護甲",
+       "stats": [],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_keystone_3",
+     "name": "騎士信條",
+     "en": "Knightly Tenets",
+     "lines": [
+      {
+       "text": "無法獲得智慧的固有加成",
+       "stats": [
+        {
+         "stat": "flag.timeless_alt_int",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "每 2 點智慧增加 1% 閃避值",
+       "stats": [],
+       "per": 0,
+       "active": true
+      }
+     ]
+    }
+   ],
+   "notables": [
+    {
+     "id": "kalguur_notable1",
+     "name": "焦土",
+     "en": "Scorched Earth",
+     "lines": [
+      {
+       "text": "增加 40% 火焰傷害",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": [
+          "fire"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "+15 智慧",
+       "stats": [
+        {
+         "stat": "attr.int",
+         "type": "FLAT",
+         "value": 15,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable2",
+     "name": "戰爭策略",
+     "en": "War Tactics",
+     "lines": [
+      {
+       "text": "增加 20% 魔力再生速度",
+       "stats": [
+        {
+         "stat": "mana.regen",
+         "type": "INCREASED",
+         "value": 0.2,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 40% 物理傷害",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": [
+          "physical"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable3",
+     "name": "卡爾葛鍛造",
+     "en": "Kalguuran Forged",
+     "lines": [
+      {
+       "text": "+2% 最大火焰抗性",
+       "stats": [
+        {
+         "stat": "resist.max.fire",
+         "type": "FLAT",
+         "value": 2,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "減少 10% 你身上的凍結持續時間",
+       "stats": [
+        {
+         "stat": "ailment.self_duration.freeze",
+         "type": "INCREASED",
+         "value": -0.1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable4",
+     "name": "密登加德之裔",
+     "en": "Born of Middengard",
+     "lines": [
+      {
+       "text": "增加 40% 護甲",
+       "stats": [
+        {
+         "stat": "armour",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "+10% 冰冷抗性",
+       "stats": [
+        {
+         "stat": "resist.cold",
+         "type": "FLAT",
+         "value": 10,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable5",
+     "name": "意志之力",
+     "en": "Force of Will",
+     "lines": [
+      {
+       "text": "增加 2% 最大魔力",
+       "stats": [
+        {
+         "stat": "mana.max",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 30% 暈眩累積",
+       "stats": [
+        {
+         "stat": "stun.buildup",
+         "type": "INCREASED",
+         "value": 0.3,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable6",
+     "name": "符文奔流",
+     "en": "Runic Flows",
+     "lines": [
+      {
+       "text": "增加 10% 詛咒持續時間",
+       "stats": [
+        {
+         "stat": "skill.duration",
+         "type": "INCREASED",
+         "value": 0.1,
+         "tags": [
+          "curse"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "每秒再生 1.5% 最大生命",
+       "stats": [
+        {
+         "stat": "life.regen_percent",
+         "type": "FLAT",
+         "value": 0.025,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable7",
+     "name": "圍攻心理",
+     "en": "Siege Mentality",
+     "lines": [
+      {
+       "text": "能量護盾開始回充速度加快 10%",
+       "stats": [
+        {
+         "stat": "es.delay",
+         "type": "INCREASED",
+         "value": -0.1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 40% 破甲",
+       "stats": [
+        {
+         "stat": "armour.break",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable8",
+     "name": "魔符騎士",
+     "en": "Rune Knight",
+     "lines": [
+      {
+       "text": "增加 15% 法術暴擊傷害加成",
+       "stats": [
+        {
+         "stat": "crit.bonus",
+         "type": "INCREASED",
+         "value": 0.15,
+         "tags": [
+          "spell"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 40% 近戰傷害",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": [
+          "melee"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable9",
+     "name": "激情領導",
+     "en": "Fiery Leadership",
+     "lines": [
+      {
+       "text": "增加 40% 易燃幅度",
+       "stats": [
+        {
+         "stat": "ignite.chance",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "召喚物 +15% 全元素抗性",
+       "stats": [
+        {
+         "stat": "resist.fire",
+         "type": "FLAT",
+         "value": 15,
+         "tags": [
+          "minion"
+         ]
+        },
+        {
+         "stat": "resist.cold",
+         "type": "FLAT",
+         "value": 15,
+         "tags": [
+          "minion"
+         ]
+        },
+        {
+         "stat": "resist.lightning",
+         "type": "FLAT",
+         "value": 15,
+         "tags": [
+          "minion"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable10",
+     "name": "德魯伊同盟",
+     "en": "Druidic Alliance",
+     "lines": [
+      {
+       "text": "+7% 混沌抗性",
+       "stats": [
+        {
+         "stat": "resist.chaos",
+         "type": "FLAT",
+         "value": 7,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 40% 圖騰傷害",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": [
+          "totem"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable11",
+     "name": "堅鋼與巫術",
+     "en": "Steel and Sorcery",
+     "lines": [
+      {
+       "text": "增加 10% 你身上的秘術增強效果",
+       "stats": [
+        {
+         "stat": "arcane_surge.effect",
+         "type": "INCREASED",
+         "value": 0.1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 20% 你造成的流血幅度",
+       "stats": [
+        {
+         "stat": "bleed.magnitude",
+         "type": "INCREASED",
+         "value": 0.2,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable12",
+     "name": "三曲之光",
+     "en": "Triskelion's Light",
+     "lines": [
+      {
+       "text": "增加 10% 冰冷曝露效果",
+       "stats": [
+        {
+         "stat": "exposure.effect.cold",
+         "type": "INCREASED",
+         "value": 0.1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 50% 強化攻擊的傷害",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.5,
+         "tags": [
+          "attack",
+          "empowered"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 10% 火焰曝露效果",
+       "stats": [
+        {
+         "stat": "exposure.effect.fire",
+         "type": "INCREASED",
+         "value": 0.1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 10% 閃電曝露效果",
+       "stats": [
+        {
+         "stat": "exposure.effect.lightning",
+         "type": "INCREASED",
+         "value": 0.1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable13",
+     "name": "暴風航行者",
+     "en": "Stormtossed Voyager",
+     "lines": [
+      {
+       "text": "+2% 最大閃電抗性",
+       "stats": [
+        {
+         "stat": "resist.max.lightning",
+         "type": "FLAT",
+         "value": 2,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "減少 10% 你身上的點燃持續時間",
+       "stats": [
+        {
+         "stat": "ailment.self_duration.ignite",
+         "type": "INCREASED",
+         "value": -0.1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable14",
+     "name": "強奪控制",
+     "en": "Wrest Control",
+     "lines": [
+      {
+       "text": "增加 40% 閃電傷害",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": [
+          "lightning"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "+15 力量",
+       "stats": [
+        {
+         "stat": "attr.str",
+         "type": "FLAT",
+         "value": 15,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable15",
+     "name": "火焰舞者",
+     "en": "Firedancer",
+     "lines": [
+      {
+       "text": "增加 40% 閃避值",
+       "stats": [
+        {
+         "stat": "evasion",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "+10% 火焰抗性",
+       "stats": [
+        {
+         "stat": "resist.fire",
+         "type": "FLAT",
+         "value": 10,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable16",
+     "name": "僱用兵之命",
+     "en": "Mercenary's Lot",
+     "lines": [
+      {
+       "text": "增加 10% 攻擊速度",
+       "stats": [
+        {
+         "stat": "attack.speed",
+         "type": "INCREASED",
+         "value": 0.1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 15% 暈眩門檻",
+       "stats": [
+        {
+         "stat": "stun.threshold",
+         "type": "INCREASED",
+         "value": 0.15,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable17",
+     "name": "沃拉娜之怒",
+     "en": "Vorana's Fury",
+     "lines": [
+      {
+       "text": "增加 40% 投射物傷害",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": [
+          "projectile"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "近戰擊中時獲得 1 怒氣",
+       "stats": [
+        {
+         "stat": "rage.on_hit",
+         "type": "FLAT",
+         "value": 1,
+         "tags": [
+          "melee"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable18",
+     "name": "明智預防",
+     "en": "Sensible Precautions",
+     "lines": [
+      {
+       "text": "增加 6% 格擋率",
+       "stats": [
+        {
+         "stat": "block.chance",
+         "type": "INCREASED",
+         "value": 0.06,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 40% 藥劑的生命回復",
+       "stats": [
+        {
+         "stat": "flask.life_recovery",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable19",
+     "name": "瞄準要害",
+     "en": "Aim for the Jugular",
+     "lines": [
+      {
+       "text": "增加 30% 命中值",
+       "stats": [
+        {
+         "stat": "accuracy",
+         "type": "INCREASED",
+         "value": 0.3,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 10% 你造成的流血幅度",
+       "stats": [
+        {
+         "stat": "bleed.magnitude",
+         "type": "INCREASED",
+         "value": 0.1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable20",
+     "name": "生存計畫",
+     "en": "Survival Plan",
+     "lines": [
+      {
+       "text": "增加 2% 最大生命",
+       "stats": [
+        {
+         "stat": "life.max",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 40% 藥劑的魔力回復",
+       "stats": [
+        {
+         "stat": "flask.mana_recovery",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable21",
+     "name": "消耗戰",
+     "en": "War of Attrition",
+     "lines": [
+      {
+       "text": "增加 10% 生命偷取量",
+       "stats": [
+        {
+         "stat": "leech.effect",
+         "type": "INCREASED",
+         "value": 0.1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 20% 你造成的中毒幅度",
+       "stats": [
+        {
+         "stat": "poison.magnitude",
+         "type": "INCREASED",
+         "value": 0.2,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable22",
+     "name": "游擊戰",
+     "en": "Guerilla Warfare",
+     "lines": [
+      {
+       "text": "增加 40% 感電機率",
+       "stats": [
+        {
+         "stat": "shock.chance",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 15% 圖騰生命",
+       "stats": [
+        {
+         "stat": "totem.life",
+         "type": "INCREASED",
+         "value": 0.15,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable23",
+     "name": "餞行酒",
+     "en": "One for the Road",
+     "lines": [
+      {
+       "text": "增加 30% 藥劑效果持續時間",
+       "stats": [
+        {
+         "stat": "flask.duration",
+         "type": "INCREASED",
+         "value": 0.3,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 15% 戰吼冷卻回復速度",
+       "stats": [
+        {
+         "stat": "cooldown.recovery",
+         "type": "INCREASED",
+         "value": 0.15,
+         "tags": [
+          "warcry"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable24",
+     "name": "指定打擊",
+     "en": "Targeted Strike",
+     "lines": [
+      {
+       "text": "增加 8% 技能效果持續時間",
+       "stats": [
+        {
+         "stat": "skill.duration",
+         "type": "INCREASED",
+         "value": 0.08,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 20% 你的印記技能效果",
+       "stats": [
+        {
+         "stat": "mark.effect",
+         "type": "INCREASED",
+         "value": 0.2,
+         "tags": [
+          "mark"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable25",
+     "name": "鋼鐵堡壘",
+     "en": "Steel Bastion",
+     "lines": [
+      {
+       "text": "增加 40% 元素傷害",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": [
+          "elemental"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 20% 已裝備盾牌的護甲、閃避值與能量護盾",
+       "stats": [
+        {
+         "stat": "shield.defences",
+         "type": "INCREASED",
+         "value": 0.2,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable26",
+     "name": "強力能量",
+     "en": "Forceful Energies",
+     "lines": [
+      {
+       "text": "增加 10% 施放速度",
+       "stats": [
+        {
+         "stat": "cast.speed",
+         "type": "INCREASED",
+         "value": 0.1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "有 10% 機率穿透 1 名敵人",
+       "stats": [
+        {
+         "stat": "skill.pierce_chance",
+         "type": "FLAT",
+         "value": 10,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable27",
+     "name": "寒冬之林",
+     "en": "Winter Forest",
+     "lines": [
+      {
+       "text": "增加 40% 冰冷傷害",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": [
+          "cold"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "+15 敏捷",
+       "stats": [
+        {
+         "stat": "attr.dex",
+         "type": "FLAT",
+         "value": 15,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable28",
+     "name": "並肩作戰",
+     "en": "Fight as One",
+     "lines": [
+      {
+       "text": "增加 8% 命中值",
+       "stats": [
+        {
+         "stat": "accuracy",
+         "type": "INCREASED",
+         "value": 0.08,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 40% 召喚物的傷害",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": [
+          "minion"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable29",
+     "name": "盛夏草原",
+     "en": "Summer Meadows",
+     "lines": [
+      {
+       "text": "增加 15% 閃避值",
+       "stats": [
+        {
+         "stat": "evasion",
+         "type": "INCREASED",
+         "value": 0.15,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 30% 召喚物的最大生命",
+       "stats": [
+        {
+         "stat": "life.max",
+         "type": "INCREASED",
+         "value": 0.3,
+         "tags": [
+          "minion"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable30",
+     "name": "德魯伊訓練",
+     "en": "Druidic Training",
+     "lines": [
+      {
+       "text": "增加 40% 法術傷害",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": [
+          "spell"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 10% 獲得的藥劑與護符充能",
+       "stats": [
+        {
+         "stat": "flask.charges_gained",
+         "type": "INCREASED",
+         "value": 0.1,
+         "tags": []
+        },
+        {
+         "stat": "charm.charges_gained",
+         "type": "INCREASED",
+         "value": 0.1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable31",
+     "name": "腐化視界",
+     "en": "Corrupted Vision",
+     "lines": [
+      {
+       "text": "增加 30% 法術暴擊率",
+       "stats": [
+        {
+         "stat": "crit.chance",
+         "type": "INCREASED",
+         "value": 0.3,
+         "tags": [
+          "spell"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "擊中時有 5% 機率致盲敵人",
+       "stats": [
+        {
+         "stat": "blind.chance",
+         "type": "FLAT",
+         "value": 5,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable32",
+     "name": "符文紋身",
+     "en": "Runic Tattoos",
+     "lines": [
+      {
+       "text": "增加 30% 魔力再生速度",
+       "stats": [
+        {
+         "stat": "mana.regen",
+         "type": "INCREASED",
+         "value": 0.3,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 15% 元素異常狀態門檻",
+       "stats": [
+        {
+         "stat": "ailment.threshold",
+         "type": "INCREASED",
+         "value": 0.15,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable33",
+     "name": "毛皮與皮革",
+     "en": "Furs and Leather",
+     "lines": [
+      {
+       "text": "+2% 最大冰冷抗性",
+       "stats": [
+        {
+         "stat": "resist.max.cold",
+         "type": "FLAT",
+         "value": 2,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "減少 10% 你身上的感電持續時間",
+       "stats": [
+        {
+         "stat": "ailment.self_duration.shock",
+         "type": "INCREASED",
+         "value": -0.1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable34",
+     "name": "突降冰雹",
+     "en": "Sudden Hail",
+     "lines": [
+      {
+       "text": "增加 8% 投射物速度",
+       "stats": [
+        {
+         "stat": "skill.projectile_speed",
+         "type": "INCREASED",
+         "value": 0.08,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "增加 30% 凍結累積",
+       "stats": [
+        {
+         "stat": "freeze.buildup",
+         "type": "INCREASED",
+         "value": 0.3,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable35",
+     "name": "自然能量",
+     "en": "Natural Energies",
+     "lines": [
+      {
+       "text": "增加 40% 最大能量護盾",
+       "stats": [
+        {
+         "stat": "es.max",
+         "type": "INCREASED",
+         "value": 0.4,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "+10% 閃電抗性",
+       "stats": [
+        {
+         "stat": "resist.lightning",
+         "type": "FLAT",
+         "value": 10,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable36",
+     "name": "橡木形態",
+     "en": "Oaken Form",
+     "lines": [
+      {
+       "text": "增加 10% 護符效果持續時間",
+       "stats": [
+        {
+         "stat": "charm.duration",
+         "type": "INCREASED",
+         "value": 0.1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "承受的傷害有 10% 補償為生命",
+       "stats": [
+        {
+         "stat": "life.recoup",
+         "type": "FLAT",
+         "value": 10,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "kalguur_notable37",
+     "name": "毒蛛的教訓",
+     "en": "Spider's Lesson",
+     "lines": [
+      {
+       "text": "增加 37% 混沌傷害",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.37,
+         "tags": [
+          "chaos"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "投射物有 6% 機率從地形額外連鎖 1 次",
+       "stats": [
+        {
+         "stat": "skill.chain_terrain",
+         "type": "FLAT",
+         "value": 6,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    }
+   ],
+   "small": null,
+   "attribute": null
+  },
+  "abyss": {
+   "name": "深淵族",
+   "unique": "undying_hate",
+   "conquerors": [
+    {
+     "id": "amanamu",
+     "name": "阿姆納姆",
+     "keystone": "abyss_keystone_1"
+    },
+    {
+     "id": "kulemak",
+     "name": "骷髏馬克",
+     "keystone": "abyss_keystone_2"
+    },
+    {
+     "id": "kurgal",
+     "name": "柯戈",
+     "keystone": "abyss_keystone_3"
+    },
+    {
+     "id": "tecrod",
+     "name": "特克羅德",
+     "keystone": "abyss_keystone_4"
+    },
+    {
+     "id": "ulaman",
+     "name": "烏拉曼",
+     "keystone": "abyss_keystone_5"
+    }
+   ],
+   "keystones": [
+    {
+     "id": "abyss_keystone_1",
+     "name": "血肉獻祭",
+     "en": "Sacrifice of Flesh",
+     "lines": [
+      {
+       "text": "當承受擊中傷害時，損失生命值的 20% 將會被避免，並在 4 秒內損失減免數值的 150%",
+       "stats": [
+        {
+         "stat": "flag.sacrifice_flesh",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_keystone_2",
+     "name": "忠誠獻祭",
+     "en": "Sacrifice of Loyalty",
+     "lines": [
+      {
+       "text": "你的不死召喚物每有 2 強度總值，你造成 1% 更多傷害",
+       "stats": [
+        {
+         "stat": "flag.sacrifice_loyalty",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "不死召喚物具有 25% 更少最大生命",
+       "stats": [
+        {
+         "stat": "life.max",
+         "type": "MORE",
+         "value": -0.25,
+         "tags": [
+          "minion",
+          "undead"
+         ]
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_keystone_3",
+     "name": "心靈獻祭",
+     "en": "Sacrifice of Mind",
+     "lines": [
+      {
+       "text": "來自回復的魔力恢復會溢出最大魔力",
+       "stats": [
+        {
+         "stat": "flag.sacrifice_mind",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "50% 更少魔力回復率",
+       "stats": [
+        {
+         "stat": "mana.regen",
+         "type": "MORE",
+         "value": -0.5,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_keystone_4",
+     "name": "鮮血獻祭",
+     "en": "Sacrifice of Blood",
+     "lines": [
+      {
+       "text": "過去 4 秒內每消耗 16 生命即每秒回復 1 生命",
+       "stats": [
+        {
+         "stat": "flag.sacrifice_blood",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "20% 更多技能生命消耗",
+       "stats": [
+        {
+         "stat": "skill.life_cost",
+         "type": "MORE",
+         "value": 0.2,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_keystone_5",
+     "name": "遠目獻祭",
+     "en": "Sacrifice of Sight",
+     "lines": [
+      {
+       "text": "投射物將會隨機進行下列其中一個行為：",
+       "stats": [
+        {
+         "stat": "flag.sacrifice_sight",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "・額外分裂一次",
+       "stats": [],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "・額外連鎖一次",
+       "stats": [],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "・從地形額外連鎖一次",
+       "stats": [],
+       "per": 0,
+       "active": true
+      },
+      {
+       "text": "・無法與地形碰撞",
+       "stats": [],
+       "per": 0,
+       "active": true
+      }
+     ]
+    }
+   ],
+   "notables": [
+    {
+     "id": "abyss_notable_1",
+     "name": "黑暗門徒",
+     "en": "Disciple of Darkness",
+     "lines": [
+      {
+       "text": "增加 20% 貢禮",
+       "stats": [],
+       "per": 0,
+       "active": true,
+       "tribute_increase": 20
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_2",
+     "name": "死亡之獸",
+     "en": "Creature of Death",
+     "lines": [
+      {
+       "text": "承受的傷害有 1% 補償為生命（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "life.recoup",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      },
+      {
+       "text": "擊殺時回復 1% 最大生命（每 50 點貢禮）",
+       "stats": [
+        {
+         "stat": "life.on_kill",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 50,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_3",
+     "name": "魔法之獸",
+     "en": "Creature of Magic",
+     "lines": [
+      {
+       "text": "承受的傷害有 1% 補償為魔力（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "mana.recoup",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      },
+      {
+       "text": "擊殺時回復 1% 最大魔力（每 50 點貢禮）",
+       "stats": [
+        {
+         "stat": "mana.on_kill",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 50,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_4",
+     "name": "屍體激勵",
+     "en": "Quickened Corpses",
+     "lines": [
+      {
+       "text": "增加 3% 召喚物的攻擊與施放速度（每 50 點貢禮）",
+       "stats": [
+        {
+         "stat": "attack.speed",
+         "type": "INCREASED",
+         "value": 0.03,
+         "tags": [
+          "minion"
+         ]
+        },
+        {
+         "stat": "cast.speed",
+         "type": "INCREASED",
+         "value": 0.03,
+         "tags": [
+          "minion"
+         ]
+        }
+       ],
+       "per": 50,
+       "active": true
+      },
+      {
+       "text": "增加 1% 召喚物的傷害（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.01,
+         "tags": [
+          "minion"
+         ]
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_5",
+     "name": "矛盾命令",
+     "en": "Ambivalent Command",
+     "lines": [
+      {
+       "text": "增加 4% 召喚物的冷卻回復速度（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "cooldown.recovery",
+         "type": "INCREASED",
+         "value": 0.04,
+         "tags": [
+          "minion"
+         ]
+        }
+       ],
+       "per": 10,
+       "active": true
+      },
+      {
+       "text": "召喚物聽從指令時損失 2% 生命（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "minion.command_life_loss",
+         "type": "FLAT",
+         "value": 2,
+         "tags": [
+          "minion"
+         ]
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_6",
+     "name": "骸骨削切",
+     "en": "Boneshedder",
+     "lines": [
+      {
+       "text": "投射物分裂時有 10% 機率多一個投射物（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "skill.fork_extra_chance",
+         "type": "FLAT",
+         "value": 10,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_7",
+     "name": "純粹殘暴",
+     "en": "Unfiltered Brutality",
+     "lines": [
+      {
+       "text": "增加 8% 攻擊傷害（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.08,
+         "tags": [
+          "attack"
+         ]
+        }
+       ],
+       "per": 10,
+       "active": true
+      },
+      {
+       "text": "增加 1% 受到的傷害（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "debuff.taken.physical",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        },
+        {
+         "stat": "debuff.taken.fire",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        },
+        {
+         "stat": "debuff.taken.cold",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        },
+        {
+         "stat": "debuff.taken.lightning",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        },
+        {
+         "stat": "debuff.taken.chaos",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_8",
+     "name": "貶損凝視",
+     "en": "Derogatory Gaze",
+     "lines": [
+      {
+       "text": "減少 3% 命中值（每 25 點貢禮）",
+       "stats": [
+        {
+         "stat": "accuracy",
+         "type": "INCREASED",
+         "value": -0.03,
+         "tags": []
+        }
+       ],
+       "per": 25,
+       "active": true
+      },
+      {
+       "text": "增加 5% 攻擊暴擊率（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "crit.chance",
+         "type": "INCREASED",
+         "value": 0.05,
+         "tags": [
+          "attack"
+         ]
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_9",
+     "name": "深淵連結",
+     "en": "Abyssal Conduit",
+     "lines": [
+      {
+       "text": "增加 2% 魔力消耗效率（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "skill.cost",
+         "type": "INCREASED",
+         "value": -0.02,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_10",
+     "name": "加深恐懼",
+     "en": "Expedited Horrors",
+     "lines": [
+      {
+       "text": "詛咒生效速度加快 3%（每 20 點貢禮）",
+       "stats": [
+        {
+         "stat": "curse.delay",
+         "type": "INCREASED",
+         "value": -0.03,
+         "tags": []
+        }
+       ],
+       "per": 20,
+       "active": true
+      },
+      {
+       "text": "增加 3% 詛咒持續時間（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "skill.duration",
+         "type": "INCREASED",
+         "value": 0.03,
+         "tags": [
+          "curse"
+         ]
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_11",
+     "name": "侷限喜悅",
+     "en": "Confined Exaltation",
+     "lines": [
+      {
+       "text": "增加 1% 技能的精魂保留效率（每 20 點貢禮）",
+       "stats": [
+        {
+         "stat": "aura.reservation",
+         "type": "INCREASED",
+         "value": -0.01,
+         "tags": []
+        }
+       ],
+       "per": 20,
+       "active": true
+      },
+      {
+       "text": "減少 2% 臨在範圍（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "presence.area",
+         "type": "INCREASED",
+         "value": -0.02,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_12",
+     "name": "秘術昇華",
+     "en": "Arcane Ascension",
+     "lines": [
+      {
+       "text": "1% 最大生命轉換為能量護盾（每 20 點貢禮）",
+       "stats": [
+        {
+         "stat": "life.convert_es",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 20,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_13",
+     "name": "貪婪思想",
+     "en": "Ravenous Mind",
+     "lines": [
+      {
+       "text": "增加 2% 魔力回復速度（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "mana.regen",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_14",
+     "name": "暴食存在",
+     "en": "Gluttonous Presence",
+     "lines": [
+      {
+       "text": "增加 2% 生命回復速度（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "life.recovery_rate",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_15",
+     "name": "無縛智慧",
+     "en": "Unrestrained Intellect",
+     "lines": [
+      {
+       "text": "增加 1% 冷卻回復速度（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "cooldown.recovery",
+         "type": "INCREASED",
+         "value": 0.01,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      },
+      {
+       "text": "+2 智慧（每 25 點貢禮）",
+       "stats": [
+        {
+         "stat": "attr.int",
+         "type": "FLAT",
+         "value": 2,
+         "tags": []
+        }
+       ],
+       "per": 25,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_16",
+     "name": "殘忍力量",
+     "en": "Cruel Strength",
+     "lines": [
+      {
+       "text": "+2 力量（每 25 點貢禮）",
+       "stats": [
+        {
+         "stat": "attr.str",
+         "type": "FLAT",
+         "value": 2,
+         "tags": []
+        }
+       ],
+       "per": 25,
+       "active": true
+      },
+      {
+       "text": "增加 2% 暈眩累積（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "stun.buildup",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_17",
+     "name": "投機敏捷",
+     "en": "Opportunistic Dexterity",
+     "lines": [
+      {
+       "text": "+2 敏捷（每 25 點貢禮）",
+       "stats": [
+        {
+         "stat": "attr.dex",
+         "type": "FLAT",
+         "value": 2,
+         "tags": []
+        }
+       ],
+       "per": 25,
+       "active": true
+      },
+      {
+       "text": "增加 2% 招架減益持續時間（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "parry.parried_duration",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_18",
+     "name": "虛幻潛力",
+     "en": "Unreal Potential",
+     "lines": [
+      {
+       "text": "獲得戰星時有 1% 機率多獲得一顆（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "charge.extra",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_19",
+     "name": "吾有黯視",
+     "en": "I Have Darkvision",
+     "lines": [
+      {
+       "text": "增加 2% 命中值（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "accuracy",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      },
+      {
+       "text": "減少 2% 照亮範圍（每 10 點貢禮）（原作只影響畫面；這裡沒有照亮範圍，沒有效果）",
+       "stats": [],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_20",
+     "name": "跋扈命令",
+     "en": "Domineering Commands",
+     "lines": [
+      {
+       "text": "增加 2% 強化攻擊的傷害（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "damage",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": [
+          "attack",
+          "empowered"
+         ]
+        }
+       ],
+       "per": 10,
+       "active": true
+      },
+      {
+       "text": "增加 4% 戰吼速度（每 25 點貢禮）",
+       "stats": [
+        {
+         "stat": "warcry.speed",
+         "type": "INCREASED",
+         "value": 0.04,
+         "tags": []
+        }
+       ],
+       "per": 25,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_21",
+     "name": "值得的稅負",
+     "en": "Worthy Tithes",
+     "lines": [
+      {
+       "text": "你產生的殘骸效果增加 2%（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "remnant.effect",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_22",
+     "name": "埋藏敵意",
+     "en": "Buried Animosity",
+     "lines": [
+      {
+       "text": "+1 最大怒氣（每 50 點貢禮）",
+       "stats": [
+        {
+         "stat": "rage.max",
+         "type": "FLAT",
+         "value": 1,
+         "tags": []
+        }
+       ],
+       "per": 50,
+       "active": true
+      },
+      {
+       "text": "怒氣自然流失減慢 2%（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "rage.decay",
+         "type": "INCREASED",
+         "value": -0.02,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_23",
+     "name": "快速腐爛",
+     "en": "Fast Rot",
+     "lines": [
+      {
+       "text": "增加 2% 你造成的傷害型異常狀態幅度（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "ignite.magnitude",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": []
+        },
+        {
+         "stat": "bleed.magnitude",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": []
+        },
+        {
+         "stat": "poison.magnitude",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      },
+      {
+       "text": "減少 1% 傷害型異常狀態持續時間（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "ailment.duration",
+         "type": "INCREASED",
+         "value": -0.01,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_24",
+     "name": "空洞骸骨",
+     "en": "Hollow Bones",
+     "lines": [
+      {
+       "text": "獲得等同 2% 閃避值的偏斜值（每 25 點貢禮）",
+       "stats": [
+        {
+         "stat": "deflection.from_evasion",
+         "type": "FLAT",
+         "value": 2,
+         "tags": []
+        }
+       ],
+       "per": 25,
+       "active": true
+      },
+      {
+       "text": "增加 2% 閃避值（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "evasion",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_25",
+     "name": "遠古堅堡",
+     "en": "Ancient Bastion",
+     "lines": [
+      {
+       "text": "減少 2% 能量護盾回充速度（每 25 點貢禮）",
+       "stats": [
+        {
+         "stat": "es.recharge",
+         "type": "INCREASED",
+         "value": -0.02,
+         "tags": []
+        }
+       ],
+       "per": 25,
+       "active": true
+      },
+      {
+       "text": "增加 4% 最大能量護盾（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "es.max",
+         "type": "INCREASED",
+         "value": 0.04,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_26",
+     "name": "殘破堅鋼",
+     "en": "Deformed Steel",
+     "lines": [
+      {
+       "text": "增加 2% 護甲（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "armour",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      },
+      {
+       "text": "增加 5% 暈眩門檻（每 25 點貢禮）",
+       "stats": [
+        {
+         "stat": "stun.threshold",
+         "type": "INCREASED",
+         "value": 0.05,
+         "tags": []
+        }
+       ],
+       "per": 25,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_27",
+     "name": "神秘精釀",
+     "en": "Mystic Brew",
+     "lines": [
+      {
+       "text": "增加 3% 藥劑效果持續時間（每 25 點貢禮）",
+       "stats": [
+        {
+         "stat": "flask.duration",
+         "type": "INCREASED",
+         "value": 0.03,
+         "tags": []
+        }
+       ],
+       "per": 25,
+       "active": true
+      },
+      {
+       "text": "增加 1% 藥劑的生命與魔力回復（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "flask.life_recovery",
+         "type": "INCREASED",
+         "value": 0.01,
+         "tags": []
+        },
+        {
+         "stat": "flask.mana_recovery",
+         "type": "INCREASED",
+         "value": 0.01,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_28",
+     "name": "堅韌守護",
+     "en": "Resilient Wards",
+     "lines": [
+      {
+       "text": "增加 3% 護符效果持續時間（每 25 點貢禮）",
+       "stats": [
+        {
+         "stat": "charm.duration",
+         "type": "INCREASED",
+         "value": 0.03,
+         "tags": []
+        }
+       ],
+       "per": 25,
+       "active": true
+      },
+      {
+       "text": "增加 1% 你身上的護符效果（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "charm.effect",
+         "type": "INCREASED",
+         "value": 0.01,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_29",
+     "name": "可敬的堅毅",
+     "en": "Dreadful Fortitude",
+     "lines": [
+      {
+       "text": "你的重度暈眩累積消退加快 1%（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "stun.decay_rate",
+         "type": "INCREASED",
+         "value": 0.01,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      },
+      {
+       "text": "增加 5% 已裝備盾牌的護甲、閃避值與能量護盾（每 25 點貢禮）",
+       "stats": [
+        {
+         "stat": "shield.defences",
+         "type": "INCREASED",
+         "value": 0.05,
+         "tags": []
+        }
+       ],
+       "per": 25,
+       "active": true
+      }
+     ]
+    },
+    {
+     "id": "abyss_notable_30",
+     "name": "帶刺忠誠",
+     "en": "Barbed Allegiance",
+     "lines": [
+      {
+       "text": "+0.5% 荊棘暴擊率（每 50 點貢禮）",
+       "stats": [
+        {
+         "stat": "thorns.crit",
+         "type": "FLAT",
+         "value": 0.5,
+         "tags": []
+        }
+       ],
+       "per": 50,
+       "active": true
+      },
+      {
+       "text": "增加 2% 荊棘傷害（每 10 點貢禮）",
+       "stats": [
+        {
+         "stat": "thorns.damage",
+         "type": "INCREASED",
+         "value": 0.02,
+         "tags": []
+        }
+       ],
+       "per": 10,
+       "active": true
+      }
+     ]
+    }
+   ],
+   "small": {
+    "id": "abyss_small_tribute",
+    "name": "貢禮",
+    "en": "Tribute",
+    "tribute": 5,
+    "lines": [
+     {
+      "text": "+5 貢禮",
+      "stats": [],
+      "per": 0,
+      "active": true
+     }
+    ]
+   },
+   "attribute": {
+    "id": "abyss_attribute_tribute",
+    "name": "貢禮",
+    "en": "Tribute",
+    "tribute": 3,
+    "lines": [
+     {
+      "text": "+3 貢禮",
+      "stats": [],
+      "per": 0,
+      "active": true
+     }
+    ]
+   }
+  }
+ }
+}

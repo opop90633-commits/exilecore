@@ -57,6 +57,16 @@ public final class PlayerStateService {
         resourceBar.hideAll();
     }
 
+    /**
+     * 2026-10-27：下線、換角色時清掉跟著「這一次上線的這個角色」的暫存：條件取樣（變身中、事件計數）與被怪物破掉的護甲。
+     * 這次之前都沒清：重新登入時拿舊的「變身中」取樣當作剛變回人形（變身時間算到下線那麼久，白拿變回人形的增益），
+     * 事件計數與破甲也帶到下一個角色。
+     */
+    public void forgetTransient(final UUID player) {
+        conditionTracker.forget(player);
+        tw.exilecore.combat.PlayerArmourBreak.clear(player);
+    }
+
     /** 撿到東西的角落提示（2026-10）。 */
     private final LootFeed lootFeed = new LootFeed();
     /** 2026-10-18：畫面左上角的隊伍框（接在動作列後面）。 */
@@ -118,6 +128,14 @@ public final class PlayerStateService {
         this.grace = new EntryGrace(plugin, this);
         this.resourceBar = new ResourceBar(plugin);
         this.partyHud = new tw.exilecore.party.PartyHud(plugin);
+        this.conditionTracker = new ConditionTracker(plugin);
+    }
+
+    /** 2026-10-26：天賦樹條件（靜止、被包圍、低血…）的狀態；變身、夥伴系統在這裡接上條件。 */
+    private final ConditionTracker conditionTracker;
+
+    public ConditionTracker conditions() {
+        return conditionTracker;
     }
 
     public CharacterConfig config() {
@@ -154,8 +172,10 @@ public final class PlayerStateService {
 
     public void remove(final Player player) {
         states.remove(player.getUniqueId());
+        forgetTransient(player.getUniqueId());
         parsedGear.remove(player.getUniqueId());
         comparerSignature.remove(player.getUniqueId());
+        conditionHold.forget(player.getUniqueId());
         resourceBar.hide(player);
         lootFeed.clear(player.getUniqueId());
     }
@@ -200,13 +220,21 @@ public final class PlayerStateService {
     }
 
     public void rebuild(final Player player, final PlayerState state) {
-        build(player, state, state.sheet(), true, null);
+        // 2026-10-27 效能：整張屬性表重算計時（/ec perf 的 stats.rebuild；單次太慢會寫【卡頓】警告）
+        final long start = System.nanoTime();
+        try {
+            build(player, state, state.sheet(), true, null);
+        } finally {
+            if (plugin.getServer().isPrimaryThread()) { // Perf 只在主執行緒用
+                plugin.perf().record("stats.rebuild", System.nanoTime() - start);
+            }
+        }
     }
 
     /**
      * 網頁計算器（2026-10）的虛擬角色要的東西：不在線、沒有真的物品，裝備與珠寶直接給物品資料。
      *
-     * @param gear   照 {@link PlayerState#JEWELLERY_SLOTS} 的順序（武器、防具、飾品；空的是 null）
+     * @param gear   照 {@link PlayerState#GEAR_SLOTS} 的順序（武器、防具、飾品、第三個戒指；空的是 null）
      * @param jewels 天賦樹珠寶孔：節點代號 → 珠寶
      * @param extra  要看玩家本人才算得出來的永久加成（稱號、公會、贊助、分身獎勵），快照時記下來的
      */
@@ -268,7 +296,11 @@ public final class PlayerStateService {
             rebuild(player, state);
         }
         final StatSheet baseline = new StatSheet();
+        final long start = System.nanoTime();
         build(player, state, baseline, false, null);
+        if (plugin.getServer().isPrimaryThread()) {
+            plugin.perf().record("stats.baseline", System.nanoTime() - start); // 2026-10-27：整張重算，計時給 /ec perf 看
+        }
         return baseline;
     }
 
@@ -278,6 +310,18 @@ public final class PlayerStateService {
      */
     private void build(final Player player, final PlayerState state, final StatSheet sheet, final boolean live, final VirtualInputs virtual) {
         build(player, state, sheet, live, virtual, null);
+    }
+
+    /** 2026-10-26 照 PoE2：徒手的最大物理傷害（戰士 8、傭兵與德魯伊 6、其他 5）。 */
+    static double unarmedMax(final CharacterClass characterClass) {
+        if (characterClass == null) {
+            return 5;
+        }
+        return switch (characterClass) {
+            case MARAUDER -> 8;
+            case MERCENARY, DRUID -> 6;
+            default -> 5;
+        };
     }
 
     /** @param inactiveSink 不是 null：需求不符的裝備寫進這裡（虛擬角色用） */
@@ -297,16 +341,26 @@ public final class PlayerStateService {
 
         // 天賦（含天賦樹珠寶孔裡的珠寶）：屬性點也算進裝備需求
         final PassiveTree tree = plugin.passives().tree();
+        // 2026-10-26 照 PoE2：永恆珠寶征服的節點換成征服後的效果（TimelessJewels）；這次之前直接用 tree.modifiers
         final List<Modifier> passiveModifiers = attributeChoices(state, characterClass,
-                tree == null ? List.of() : tree.modifiers(state.passives()), tree);
+                tree == null ? List.of() : tw.exilecore.passive.TimelessJewels.treeModifiers(plugin.items() == null ? null : plugin.items().repository(),
+                        virtual != null ? virtual.jewels() : tw.exilecore.passive.JewelSockets.jewelData(plugin, state), tree, state.passives(),
+                        characterClass == null ? null : characterClass.id()), tree);
         passiveModifiers.addAll(virtual != null
                 ? tw.exilecore.passive.JewelSockets.modifiers(plugin.items() == null ? null : plugin.items().repository(), virtual.jewels(), state.passives(), tree)
                 : tw.exilecore.passive.JewelSockets.modifiers(plugin, state, tree));
         // 2026-10：半徑珠寶放大的「+x 任一屬性」：照那一點選的屬性換成力量／敏捷／智慧
-        passiveModifiers.replaceAll(mod -> mod.stat().startsWith(StatKeys.ATTR_CHOICE + "@")
-                ? new Modifier(attributeStat(chosenAttribute(state, characterClass, mod.stat().substring(StatKeys.ATTR_CHOICE.length() + 1))),
-                        mod.type(), mod.value(), mod.tags(), mod.source())
-                : mod);
+        // 2026-10-26 照 PoE2 旅者的智慧：選了傷害／防禦／消耗效率的換成那些（choiceModifiers）
+        final List<Modifier> amplified = new ArrayList<>();
+        passiveModifiers.removeIf(mod -> {
+            if (!mod.stat().startsWith(StatKeys.ATTR_CHOICE + "@")) {
+                return false;
+            }
+            amplified.addAll(choiceModifiers(chosenAttribute(state, characterClass, mod.stat().substring(StatKeys.ATTR_CHOICE.length() + 1)),
+                    mod.value(), mod.tags(), mod.source()));
+            return true;
+        });
+        passiveModifiers.addAll(amplified);
         // 2026-10：「最近…」的條件詞綴（珠寶、裝備）：條件成立才算；記下算過哪些條件，變了就重算（tick）
         final Map<String, Boolean> conditions = new java.util.HashMap<>();
         final long now = plugin.getServer().getCurrentTick();
@@ -319,12 +373,20 @@ public final class PlayerStateService {
         }
         sheet.addAll(passiveResolved);
         // 其他來源（地圖詞綴、任務獎勵、昇華天賦、分身獎勵）：給的屬性點也算進裝備需求，所以兩輪都加
+        // 2026-10-27：暫時增益的來源（addBuffSource）延後到裝備第一輪之後才呼叫——它們讀 state.sheet()（就是這張正在算的表）
+        //   看昇華天賦、裝備的旗標（意志之力、靈能導體、衝刺突擊、最近消耗過銳星、夏烏拉之炎的效果、裝備給的不潔之力…）；
+        //   這次之前排在昇華（state 來源）與裝備之前，看到的表只有天賦樹，那幾個昇華效果完全沒生效
         final List<Modifier> extra = new ArrayList<>();
+        final List<Function<Player, List<Modifier>>> deferredBuffs = new ArrayList<>();
         if (virtual != null) {
             extra.addAll(virtual.extra()); // 虛擬角色：要看玩家的來源用快照記下來的
         } else {
             for (final Function<Player, List<Modifier>> source : modifierSources) {
-                if (live || !buffSources.contains(source)) {
+                if (buffSources.contains(source)) {
+                    if (live) {
+                        deferredBuffs.add(source);
+                    }
+                } else {
                     extra.addAll(source.apply(player));
                 }
             }
@@ -335,13 +397,24 @@ public final class PlayerStateService {
         sheet.addAll(extra);
 
         // 第一輪：所有裝備的修飾器，用來算屬性值
-        final List<EquippedItem> equipped = virtual != null ? equippedItems(state, virtual.gear()) : equippedItems(player, state);
+        // 2026-10-26（昇華・展露之指）：有「+1 戒指欄位」才算第三個戒指欄（只看裝備以外的來源，不會繞回來）
+        final boolean thirdRing = ringExtra(passiveResolved) + ringExtra(extra) > 0;
+        final List<EquippedItem> equipped = virtual != null ? equippedItems(state, virtual.gear(), thirdRing) : equippedItems(player, state, thirdRing);
         for (final EquippedItem item : equipped) {
             sheet.addAll(item.modifiers());
         }
+        // 2026-10-27：暫時增益在這裡才算（表上已經有天賦樹、昇華、其他來源、裝備）；給的屬性值照樣算進裝備需求（第二輪也照樣加）
+        final List<Modifier> buffModifiers = new ArrayList<>(collectBuffs(deferredBuffs, player));
+        if (virtual != null) {
+            // 2026-10-27：虛擬角色（網頁規劃器）不呼叫暫時增益的來源；昇華增益裡只看屬性表的（凱莎的平衡、不潔之力、自然秩序）照樣算，這次之前漏掉
+            buffModifiers.addAll(tw.exilecore.ascendancy.AscendancyEffects.virtualBuffs(sheet));
+        }
+        sheet.addAll(buffModifiers);
+        extra.addAll(buffModifiers);
         final double str = sheet.get(StatKeys.STR);
         final double dex = sheet.get(StatKeys.DEX);
         final double intelligence = sheet.get(StatKeys.INT);
+        final double requirementScale = tw.exilecore.stats.TreeEffectKeys.requirementScale(sheet); // 2026-10-26 照 PoE2 天賦樹：減少屬性需求
 
         // 第二輪：剔除需求不符的裝備
         sheet.clearModifiers();
@@ -350,9 +423,36 @@ public final class PlayerStateService {
         Set<String> weaponTags = Set.of();
         final List<String> inactive = new ArrayList<>();
         final List<EquippedItem> active = new ArrayList<>();
+        // 2026-10-26（計數之戒，PoE2 Thief's Torment）：戴著「不能使用其他戒指」的戒指時，另一隻戒指不生效
+        final EquippedItem soloRing = equipped.stream().filter(item -> item.base().slot() == tw.exilecore.item.ItemSlot.RING
+                && tw.exilecore.item.unique.UniqueDerived.onlyRing(item.modifiers())).findFirst().orElse(null);
+        // 2026-10-26（昇華・嵌晶）：減少能力值需求、應變能力（最高的屬性滿足需求）
+        final double[] reqAttr = tw.exilecore.ascendancy.AscBuild.requirementAttributes(extra, str, dex, intelligence);
+        // 2026-10-26 照 PoE2 基石：巨人之血（武鬥武器屬性需求三倍）、靈能魔符（項鍊的加成改給召喚物）
+        final boolean giantsBlood = StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_GIANTS_BLOOD);
+        final boolean necroTalisman = StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_NECRO_TALISMAN);
+        // 2026-10-27 照 PoE2 基石：巨人之血（雙手斧錘劍單手持用，副手可以配盾、法器或再一把雙手斧錘劍雙持）、荒野領主（副手的權杖）——天賦換了也要重看副手
+        final java.util.function.Function<EquippedItem, String> ownProblem = item -> {
+            final ItemBase.Requirements req = scaledRequirements(item.requirements(), requirementScale);
+            final double reqScale = giantsBlood && item.base().isWeapon() && tw.exilecore.stats.KeystoneKeys.martial(item.base().tags()) ? 3 : 1;
+            // 2026-10-27 照 PoE2（昇華・石拳之道）：腿甲不需要能力值
+            final double[] attrs = tw.exilecore.ascendancy.AscBuild.ignoresRequirements(extra, item.base().slot())
+                    ? tw.exilecore.ascendancy.AscBuild.NO_REQUIREMENT : reqAttr;
+            final String why = soloRing != null && item != soloRing && item.base().slot() == tw.exilecore.item.ItemSlot.RING
+                    ? "不能跟另一隻戒指一起用" : requirementProblem(reqScale == 1 ? req
+                    : new ItemBase.Requirements(req.level(), req.str() * 3, req.dex() * 3, req.intelligence() * 3), level, attrs[0], attrs[1], attrs[2]);
+            return why != null ? why : tw.exilecore.ascendancy.AscBuild.itemProblem(extra, item.base().slot(), item.data()); // 2026-10-26（昇華・鐵匠傑作）
+        };
+        // 2026-10-27：副手看的是「生效的」主手：主手需求不符時當作沒拿（副手的雙手武器、權杖跟著不生效）；
+        //   這次之前看裝著的主手，主手不生效時副手的雙手武器還是照算全域詞綴
+        final EquippedItem mainItem = equipped.stream().filter(item -> !item.offHandWeapon() && item.base().slot() == ItemSlot.MAIN_HAND)
+                .findFirst().orElse(null);
+        final ItemBase mainBase = mainItem == null || ownProblem.apply(mainItem) != null ? null : mainItem.base();
         for (final EquippedItem item : equipped) {
-            final ItemBase.Requirements req = item.requirements();
-            final String reason = requirementProblem(req, level, str, dex, intelligence);
+            String reason = ownProblem.apply(item);
+            if (reason == null && (item.offHandWeapon() || item.base().slot() == ItemSlot.OFF_HAND)) {
+                reason = offHandProblem(state, mainBase, item, sheet); // 2026-10-27
+            }
             if (reason != null) {
                 inactive.add(item.base().name() + "：" + reason);
                 continue;
@@ -366,6 +466,12 @@ public final class PlayerStateService {
                 if (modifier == null) {
                     continue;
                 }
+                if (necroTalisman && item.base().slot() == tw.exilecore.item.ItemSlot.AMULET && !modifier.stat().startsWith("flag.")) {
+                    final Set<String> minionTags = new java.util.HashSet<>(modifier.tags());
+                    minionTags.add(Tags.MINION);
+                    sheet.add(modifier.withTags(minionTags)); // 靈能魔符：項鍊的加成給召喚物（不給你）
+                    continue;
+                }
                 if (sceptre && StatKeys.SPIRIT_MAX.equals(modifier.stat()) && modifier.type() == ModType.INCREASED) {
                     localSpirit += modifier.value(); // 2026-10：權杖的「增加 x% 精魂」是本地的，只放大權杖自己的 100（PoE2）
                     continue;
@@ -375,15 +481,53 @@ public final class PlayerStateService {
             if (sceptre) {
                 sheet.add(Modifier.flat(StatKeys.SPIRIT_MAX, SCEPTRE_SPIRIT * Math.max(0, 1 + localSpirit), "權杖")); // 2026-10：照 PoE2，權杖給 100 精魂
             }
-            if (item.base().isWeapon()) {
+            if (item.base().isWeapon() && !item.offHandWeapon()) { // 2026-10-27：副手的權杖不算拿著的武器（攻擊用主手）
                 hasWeapon = true;
                 weaponTags = item.base().tags();
             }
         }
+        // 2026-10-27（傳奇）：映鏡指環（另一枚戒指再算一次）、巧匠束帶（左右手戒指的加成增加）
+        sheet.addAll(tw.exilecore.item.unique.UniqueDerived.rings(sheet, active.stream()
+                .filter(item -> item.base().slot() == ItemSlot.RING).map(EquippedItem::modifiers).toList()));
         sheet.addAll(extra);
+        // 2026-10-26 照 PoE2 基石：空掌之術——兩手都空著時當作拿長棍攻擊（長棍的技能能用、吃長棍的修飾器）
+        final boolean hollowPalm = !hasWeapon && StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_HOLLOW_PALM)
+                && active.stream().noneMatch(item -> item.offHandWeapon() // 2026-10-27：副手拿的雙手武器、權杖也不是空手
+                        || item.base().slot() == tw.exilecore.item.ItemSlot.OFF_HAND);
+        if (hollowPalm) {
+            weaponTags = Set.of("weapon", Tags.TWO_HAND, Tags.QUARTERSTAFF, Tags.MELEE);
+        }
+        final List<tw.exilecore.stats.KeystoneKeys.Piece> armourPieces = new ArrayList<>();
+        for (final EquippedItem item : active) {
+            if (!item.base().isWeapon() && item.base().slot() != null) {
+                armourPieces.add(new tw.exilecore.stats.KeystoneKeys.Piece(item.base().slot().name(), itemFlat(item, StatKeys.ARMOUR),
+                        itemFlat(item, StatKeys.EVASION), itemFlat(item, StatKeys.ES_MAX)));
+            }
+        }
+        // 2026-10-27 照 PoE2：身體護甲、盾牌的移動懲罰（純力量身體 5%、力量混合 4%、其他 3%；力量盾 3%、混合 1.5%），氣勢（無視防具的移動懲罰）不算；
+        // 這次之前防具沒有移動懲罰，氣勢平衡等效成增加 3% 移動速度
+        if (!StatKeys.flag(sheet, tw.exilecore.stats.KeystoneOriginKeys.IGNORE_ARMOUR_MOVE_PENALTY)) {
+            double movePenalty = 0;
+            for (final EquippedItem item : active) {
+                if (!item.offHandWeapon() && item.base().slot() != null) {
+                    movePenalty += tw.exilecore.stats.KeystoneOriginKeys.armourMovePenalty(item.base().slot().name(), item.base().tags());
+                }
+            }
+            if (movePenalty > 0) {
+                sheet.add(Modifier.more(StatKeys.MOVEMENT_SPEED, -movePenalty, "防具的移動懲罰"));
+            }
+        }
+        if (live || virtual != null) {
+            state.setOffHandAttack(offHandAttack(active)); // 2026-10-27 照 PoE2 雙持（巨人之血）：副手武器輪流出手
+        }
         if (live) {
             state.setWeaponTags(weaponTags);
             state.setConditionsEvaluated(conditions);
+            // 2026-10-26：法杖、長杖、權杖賦予的技能（PoE2 Grants Skill）放進技能面板；需求不符的武器不給
+            // 2026-10-26（昇華）：昇華天賦賦予的技能（grant_skill.代號，等級照角色等級）
+            final Map<String, Integer> granted = new java.util.LinkedHashMap<>(grantedSkills(active));
+            tw.exilecore.ascendancy.AscBuild.grantedSkills(plugin, extra, level, granted);
+            state.skills().syncGranted(granted, grantedQuality(active)); // 面板跟著角色一起存檔（定期、登出）；2026-10-27：＋武器的品質
         } else if (virtual != null) {
             state.setWeaponTags(weaponTags); // 虛擬角色：技能要知道拿什麼武器
         }
@@ -391,6 +535,16 @@ public final class PlayerStateService {
             inactiveSink.addAll(inactive);
         }
         ascendancyEquipment(sheet, state, active, tree);
+        // 2026-10-26（昇華）：添煤工、烈焰鑄造、引我行恩典之途、神聖流向、聖賢智慧、嵌晶的寶石顏色…（AscBuild；展露之指改成第三個戒指欄）
+        tw.exilecore.ascendancy.AscBuild.equipment(plugin, sheet, state, active.stream()
+                .map(item -> new tw.exilecore.ascendancy.AscBuild.Gear(item.offHandWeapon() ? ItemSlot.OFF_HAND : item.base().slot(), item.base(), item.data(), item.modifiers())).toList());
+        // 2026-10-26（傳奇）：每顆銳星的抗性、每 100 生命的精魂效率、拿著法器的格擋、邪力（tw.exilecore.item.unique.UniqueDerived）
+        sheet.addAll(tw.exilecore.item.unique.UniqueDerived.modifiers(sheet,
+                player == null || plugin.combat() == null || plugin.combat().charges() == null ? 0 : plugin.combat().charges().count(player, "power"),
+                active.stream().anyMatch(item -> item.base().tags().contains("focus"))));
+        // 2026-10-27（傳奇第二批）：生命／魔力換護盾、每顆戰星、照屬性點數、魔力換荊棘、格擋率換火焰
+        sheet.addAll(tw.exilecore.item.unique.UniqueDerived.second(sheet, id -> player == null || plugin.combat() == null
+                || plugin.combat().charges() == null ? 0 : plugin.combat().charges().count(player, id)));
         // 與死共舞（2026-10 PoE2 基石）：主手單手武器（魔杖、權杖除外）、副手空著：技能速度更多 25%
         if (StatKeys.flag(sheet, StatKeys.FLAG_DANCE_WITH_DEATH) && weaponTags.contains("one_hand")
                 && !weaponTags.contains("wand") && !weaponTags.contains("sceptre")
@@ -398,11 +552,30 @@ public final class PlayerStateService {
             sheet.add(Modifier.more(StatKeys.ATTACK_SPEED, 0.25, "單刃疾舞"));
             sheet.add(Modifier.more(StatKeys.CAST_SPEED, 0.25, "單刃疾舞"));
         }
-        if (!hasWeapon) {
+        if (hollowPalm) {
+            // 空掌之術（PoE2）：徒手的基礎物理傷害換成照等級算的（約同等級的白色長棍），每 75 點防具物品閃避更多 1% 攻擊速度、
+            // 每 10 點防具物品能量護盾 +0.1% 暴擊率
+            double itemEvasion = 0;
+            double itemEs = 0;
+            for (final tw.exilecore.stats.KeystoneKeys.Piece piece : armourPieces) {
+                if (!"OFF_HAND".equals(piece.slot())) {
+                    itemEvasion += Math.max(0, piece.evasion());
+                    itemEs += Math.max(0, piece.energyShield());
+                }
+            }
+            sheet.add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, Math.round(1 + 0.9 * level), Set.of(Tags.PHYSICAL), "空掌之術"));
+            sheet.add(new Modifier(StatKeys.WEAPON_MAX, ModType.FLAT, Math.round(2 + 1.7 * level), Set.of(Tags.PHYSICAL), "空掌之術"));
+            sheet.add(Modifier.flat(StatKeys.WEAPON_APS, 1.4, "空掌之術"));
+            sheet.add(Modifier.flat(StatKeys.WEAPON_CRIT, 10 + Math.floor(itemEs / 10) * 0.1, "空掌之術"));
+            if (itemEvasion >= 75) {
+                sheet.add(Modifier.more(StatKeys.ATTACK_SPEED, Math.floor(itemEvasion / 75) / 100.0, "空掌之術"));
+            }
+        } else if (!hasWeapon) {
             // 徒手：2-6 物理，每秒 1.2 次，暴擊 5%
+            // 2026-10-26 照 PoE2：徒手 1.65 次／秒（攻擊時間 0.606 秒），傷害照職業：戰士 2–8、傭兵與德魯伊 2–6、其他 2–5
             sheet.add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, 2, Set.of(Tags.PHYSICAL), "徒手"));
-            sheet.add(new Modifier(StatKeys.WEAPON_MAX, ModType.FLAT, 6, Set.of(Tags.PHYSICAL), "徒手"));
-            sheet.add(Modifier.flat(StatKeys.WEAPON_APS, 1.2, "徒手"));
+            sheet.add(new Modifier(StatKeys.WEAPON_MAX, ModType.FLAT, unarmedMax(characterClass), Set.of(Tags.PHYSICAL), "徒手"));
+            sheet.add(Modifier.flat(StatKeys.WEAPON_APS, 1.65, "徒手"));
             sheet.add(Modifier.flat(StatKeys.WEAPON_CRIT, 5, "徒手"));
         }
 
@@ -410,17 +583,33 @@ public final class PlayerStateService {
         final double finalStr = sheet.get(StatKeys.STR);
         final double finalDex = sheet.get(StatKeys.DEX);
         final double finalInt = sheet.get(StatKeys.INT);
-        sheet.setBase(StatKeys.LIFE_MAX, Formulas.baseLife(level) + Formulas.lifeFromStrength(finalStr));
-        sheet.setBase(StatKeys.MANA_MAX, Formulas.baseMana(level) + Formulas.manaFromIntelligence(finalInt));
+        // 2026-10-26 照 PoE2：永恆珠寶（英雄悲劇）的卡爾葛基石——沒有某個屬性的固有加成，改成每 2 點給增加 1% 別的防禦
+        final boolean altStr = StatKeys.flag(sheet, tw.exilecore.passive.TimelessJewels.FLAG_ALT_STR);
+        final boolean altDex = StatKeys.flag(sheet, tw.exilecore.passive.TimelessJewels.FLAG_ALT_DEX);
+        final boolean altInt = StatKeys.flag(sheet, tw.exilecore.passive.TimelessJewels.FLAG_ALT_INT);
+        sheet.setBase(StatKeys.LIFE_MAX, Formulas.baseLife(level) + (altStr ? 0 : Formulas.lifeFromStrength(finalStr)));
+        sheet.setBase(StatKeys.MANA_MAX, Formulas.baseMana(level) + (altInt ? 0 : Formulas.manaFromIntelligence(finalInt)));
         sheet.setBase(StatKeys.SPIRIT_MAX, questSpirit(state)); // 2026-10：精魂的基礎＝打倒過的劇情 Boss
         sheet.setBase(StatKeys.EVASION, Formulas.baseEvasion(level));
-        sheet.setBase(StatKeys.ACCURACY, Formulas.baseAccuracy(level) + Formulas.accuracyFromDexterity(finalDex));
-        sheet.add(Modifier.increased(StatKeys.EVASION, Formulas.evasionIncreaseFromDexterity(finalDex), "敏捷"));
-        sheet.add(Modifier.increased(StatKeys.ES_MAX, Formulas.esIncreaseFromIntelligence(finalInt), "智慧"));
-        sheet.add(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, Formulas.meleePhysicalIncreaseFromStrength(finalStr),
+        sheet.setBase(tw.exilecore.stats.DamageCalculator.FLAG_PLAYER_SIDE, 1); // 2026-10-27 照 PoE2：被怪物打用怪物的命中公式
+        sheet.setBase(StatKeys.ACCURACY, Formulas.baseAccuracy(level) + (altDex ? 0 : Formulas.accuracyFromDexterity(finalDex)));
+        sheet.add(Modifier.increased(StatKeys.EVASION, altDex ? 0 : Formulas.evasionIncreaseFromDexterity(finalDex), "敏捷"));
+        sheet.add(Modifier.increased(StatKeys.ES_MAX, altInt ? 0 : Formulas.esIncreaseFromIntelligence(finalInt), "智慧"));
+        sheet.add(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, altStr ? 0 : Formulas.meleePhysicalIncreaseFromStrength(finalStr),
                 Set.of(Tags.MELEE, Tags.PHYSICAL), "力量"));
+        if (altStr) {
+            sheet.add(Modifier.increased(StatKeys.ES_MAX, Math.floor(finalStr / 2) / 100.0, "黑暗血鐮訓練"));
+        }
+        if (altDex) {
+            sheet.add(Modifier.increased(StatKeys.ARMOUR, Math.floor(finalDex / 2) / 100.0, "循環教義"));
+        }
+        if (altInt) {
+            sheet.add(Modifier.increased(StatKeys.EVASION, Math.floor(finalInt / 2) / 100.0, "騎士信條"));
+        }
         // 魔力回復：每秒回 4% 最大魔力（PoE2 的基礎值；再吃「增加 x% 魔力回復」）
         sheet.setBase(StatKeys.MANA_REGEN, sheet.get(StatKeys.MANA_MAX) * 0.04);
+        // 2026-10-26（昇華）：強化效果（固有加成加倍）、無魂型態（魔力再生）、火祭協議（最大魔力換成煉獄之炎）
+        tw.exilecore.ascendancy.AscBuild.afterBase(sheet, finalStr, finalDex, finalInt, altStr, altDex, altInt);
 
         // 元素抗性的懲罰（2026-10，PoE 的做法）：等級 12、24、36、48、60 與第一次完成第四試煉各 -10%，共 -60%
         final int penalty = resistPenalty(state);
@@ -449,36 +638,187 @@ public final class PlayerStateService {
             sheet.add(Modifier.flat(StatKeys.SPIRIT_MAX, Math.floor(lifeForBeidat / 25), "魔契之志"));
         }
 
+        // 2026-10-26 照 PoE2（永恆珠寶的忠誠獻祭）：不死召喚物強度換成更多傷害（盾牌防禦、生命轉護盾在 TreeEffectKeys）
+        tw.exilecore.passive.ConquestEffects.derive(sheet);
+        // 2026-10-26 照 PoE2 天賦樹：輔助寶石顏色的門檻、照裝備數值換算、每 x 點屬性（AttributeScalingKeys）
+        tw.exilecore.stats.AttributeScalingKeys.applyDerived(sheet, scalingGear(active, armourPieces), supportCounts(state));
+        tw.exilecore.stats.TreeEffectKeys.applyDerived(sheet); // 2026-10-26 照 PoE2 天賦樹：每點敏捷的暈眩門檻、等同智慧的命中、生命轉換成護盾
+        // 2026-10-26 照 PoE2 天賦樹（一次性的特殊效果）：閃避→護甲、力量→命中、頭盔護盾、鞋子／頭盔門檻、巨人之血…（KeystoneKeys）
+        final boolean spellsCostLife = StatKeys.flag(sheet, StatKeys.FLAG_BLOOD_MAGIC) || StatKeys.flag(sheet, StatKeys.FLAG_SANGUIMANCY)
+                || sheet.flat(tw.exilecore.stats.TreeKeys.LIFE_COST_PERCENT, Set.of(Tags.SPELL)) > 0;
+        tw.exilecore.stats.KeystoneKeys.applyDerived(sheet, armourPieces, altStr ? 0 : Formulas.lifeFromStrength(finalStr), spellsCostLife);
+        tw.exilecore.stats.AttributeScalingKeys.applyLate(sheet); // 2026-10-26 照 PoE2 天賦樹：每 400 命中的攻擊速度（命中都加完之後）
+        // 荒野領主（PoE2）：持用獸魂符時可以再裝一把權杖——2026-10-27 照原作，副手真的裝權杖（精魂、詞綴、賦予的技能照權杖算）；
+        // 這次之前副手放不了權杖，平衡等效直接給 100 精魂
+        // 巨人之血：2026-10-27 起副手可以配盾、法器，或再拿一把雙手斧、錘、劍雙持（DualWield，照原作）；
+        // 這次之前沒有雙持，副手空著時給「攻擊傷害更多 25%」當平衡等效（拿掉了）
+        tw.exilecore.stats.TreeKeys.applyEsThresholds(sheet); // 2026-10-26 照 PoE2 天賦樹：等同最大護盾 x% 的暈眩／異常／凍結門檻
+        // 2026-10-27：夥伴傷害的增加也給你（天賦樹）——只看屬性表，比對用的表、網頁的虛擬角色也算；這次之前是暫時增益（網頁沒算）
+        sheet.addAll(tw.exilecore.skill.TreeMechanics.companionDamageModifiers(sheet));
         if (!live) {
             return; // 比對用的表：到這裡就算完了，下面都是更新玩家狀態
         }
+        // 2026-10-26：有「對某種敵人」（vs_ 標籤）的修飾器，擊中時才去看目標的狀態
+        if (player != null) {
+            conditionTracker.setTargetTags(player.getUniqueId(), passiveResolved.stream().anyMatch(tw.exilecore.stats.TreeConditions::hasEnemyCondition)
+                    || active.stream().anyMatch(item -> item.modifiers().stream().anyMatch(tw.exilecore.stats.TreeConditions::hasEnemyCondition)));
+        }
         state.clampToMax();
         state.markClean();
+        reportUnmetGems(player, state, sheet); // 2026-10-26 照 PoE2：技能寶石的屬性需求（tw.exilecore.skill.GemAttributes）
         syncVanillaAttributes(player, sheet);
         reportInactiveEquipment(player, state, inactive);
         if (plugin.items() != null && plugin.items().comparer() != null) {
             // 身上的裝備可能換了：背包裡的「比身上的 ×」重算。
             // 2026-10-23：buff、充能一變也會重算屬性表；裝備沒換的話最多 2 秒才重比一次（背包撿到的新東西照樣會比到）
+            // 2026-10-27 效能：每 2 秒那次只在背包內容變了才真的重比（ItemComparer 看背包的指紋）；這次之前每 2 秒整個背包重新解析一次
             final long tick = plugin.getServer().getCurrentTick();
             final int signature = gearSignature(state);
             final long[] last = comparerSignature.get(player.getUniqueId());
-            if (last == null || last[0] != signature || tick - last[1] >= COMPARER_INTERVAL) {
+            if (last == null || last[0] != signature) {
                 comparerSignature.put(player.getUniqueId(), new long[] {signature, tick});
                 plugin.items().comparer().schedule(player);
+            } else if (tick - last[1] >= COMPARER_INTERVAL) {
+                last[1] = tick;
+                plugin.items().comparer().scheduleIfChanged(player);
             }
         }
     }
+
+    /**
+     * 2026-10-27 照 PoE2 雙持（巨人之血）：生效的副手武器（權杖不能攻擊，不算）——主手、副手武器本身的數值，副手出手時換過去。
+     * 沒有雙持回傳 null。
+     */
+    private DualWield.OffHand offHandAttack(final List<EquippedItem> active) {
+        final EquippedItem main = active.stream().filter(item -> !item.offHandWeapon() && item.base().isWeapon()).findFirst().orElse(null);
+        final EquippedItem off = active.stream().filter(item -> item.offHandWeapon() && !item.base().tags().contains("sceptre"))
+                .findFirst().orElse(null);
+        if (main == null || off == null || plugin.items() == null) {
+            return null;
+        }
+        final List<Modifier> offWeapon = ItemStats.modifiers(plugin.items().repository(), off.data()).stream()
+                .filter(DualWield::weaponLocal).toList();
+        return new DualWield.OffHand(off.base().tags(), main.base().tags(), DualWield.swap(main.modifiers(), offWeapon));
+    }
+
+    /**
+     * 2026-10-27：副手跟主手搭不搭（天賦換了、裝備存檔換上的也要擋）：雙手武器配盾、法器要巨人之血（雙手斧錘劍）或昇華・力量之器（長杖配法器）；
+     * 副手的權杖要點了荒野領主、主手是獸魂符、不是傳奇。
+     */
+    private String offHandProblem(final PlayerState state, final ItemBase main, final EquippedItem off, final StatSheet sheet) {
+        if (off.offHandWeapon() && !off.base().tags().contains("sceptre")) {
+            // 2026-10-27 照 PoE2 巨人之血：兩手各拿一把雙手斧、錘、劍（雙持）
+            return Gear.giantOffHand(main, off.base(), sheet) ? null : "副手的雙手武器要點了巨人之血、主手也是雙手斧、錘、劍";
+        }
+        if (off.offHandWeapon()) {
+            return Gear.sceptreOffHand(main, off.base(), sheet) && !Gear.uniqueSceptre(off.data()) ? null : "副手的權杖要持用獸魂符並點了荒野領主（非傳奇）";
+        }
+        if (main == null || !off.base().isShield() || !main.hasTag(Tags.TWO_HAND)) {
+            return null;
+        }
+        if (StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_GIANTS_BLOOD) && tw.exilecore.stats.KeystoneKeys.giantWeapon(main.tags())
+                || tw.exilecore.ascendancy.AscBuild.staffFocus(plugin, state, main, off.base())) {
+            return null;
+        }
+        return Gear.pairProblem(main, off.base());
+    }
+
+    /**
+     * 2026-10-26：生效的武器賦予的技能（技能代號 → 等級）。等級照武器的物品等級：寶石需求等級（skills.yml 的 level_requirements）
+     * 不超過物品等級的最高那一級（PoE2：物品等級越高，賦予的技能等級越高）。
+     */
+    /** 2026-10-27 照 PoE2：每把矛都賦予的擲矛（skills.yml 的代號）。 */
+    static final String SPEAR_THROW = "spear_throw";
+
+    private Map<String, Integer> grantedSkills(final List<EquippedItem> active) {
+        if (plugin.items() == null || plugin.skills() == null) {
+            return Map.of();
+        }
+        final Map<String, Integer> granted = new java.util.LinkedHashMap<>();
+        for (final EquippedItem item : active) {
+            // 2026-10-26（傳奇：司祭法衣、踏骸之履）：武器以外的裝備也可以賦予技能（grant_skill.代號）
+            for (final String own : tw.exilecore.item.unique.UniqueDerived.grantedSkills(item.modifiers())) {
+                if (plugin.skills().config().skill(own) != null) {
+                    granted.merge(own, plugin.skills().config().maxLevelFor(Math.max(1, item.data().ilvl())), Math::max);
+                }
+            }
+            if (!item.base().isWeapon() && !item.base().tags().contains("sceptre")) {
+                continue;
+            }
+            // 2026-10-27 照 PoE2：每把矛都賦予擲矛（Spear Throw；品質照常加在矛上，不算 grants）；這次之前拿矛沒有擲矛
+            if (item.base().tags().contains(tw.exilecore.stats.Tags.SPEAR) && plugin.skills().config().skill(SPEAR_THROW) != null) {
+                granted.merge(SPEAR_THROW, plugin.skills().config().maxLevelFor(Math.max(1, item.data().ilvl())), Math::max);
+            }
+            final String skill = plugin.items().repository().grantedSkill(item.data().base());
+            if (skill == null || plugin.skills().config().skill(skill) == null) {
+                continue;
+            }
+            final int level = plugin.skills().config().maxLevelFor(Math.max(1, item.data().ilvl()));
+            granted.merge(skill, level, Math::max);
+        }
+        return granted;
+    }
+
+    /**
+     * 2026-10-27 照 PoE2 0.5（poe2wiki Quality）：法杖、長杖、權杖的品質不加武器自己的數值，加在賦予的技能上
+     * （技能代號 → 武器的品質；同一個技能有好幾把取最高）。這次之前賦予的技能沒有品質。
+     */
+    private Map<String, Integer> grantedQuality(final List<EquippedItem> active) {
+        if (plugin.items() == null) {
+            return Map.of();
+        }
+        final Map<String, Integer> quality = new java.util.HashMap<>();
+        for (final EquippedItem item : active) {
+            if (item.data().quality() <= 0 || !item.base().isWeapon() && !item.base().tags().contains("sceptre")) {
+                continue;
+            }
+            final String skill = plugin.items().repository().grantedSkill(item.data().base());
+            if (skill != null) {
+                quality.merge(skill, item.data().quality(), Math::max);
+            }
+        }
+        return quality;
+    }
+
+    /** 2026-10-27 效能：條件造成的重算每人最多每秒一次。 */
+    private final ConditionHold conditionHold = new ConditionHold();
 
     /** 2026-10-23：裝備沒換時，裝備比較最多這麼多 tick 重算一次。 */
     static final long COMPARER_INTERVAL = 40;
     /** 玩家 → {上次比較時的裝備雜湊, 那時的 tick}。 */
     private final Map<java.util.UUID, long[]> comparerSignature = new java.util.HashMap<>();
 
+    /**
+     * 2026-10-27：依序呼叫暫時增益的來源（照註冊的順序）。呼叫時屬性表上已經有天賦樹、昇華、其他來源與裝備（第一輪），
+     * 所以來源可以讀 state.sheet() 看那些旗標。
+     */
+    static List<Modifier> collectBuffs(final List<Function<Player, List<Modifier>>> sources, final Player player) {
+        if (sources.isEmpty()) {
+            return List.of();
+        }
+        final List<Modifier> out = new ArrayList<>();
+        for (final Function<Player, List<Modifier>> source : sources) {
+            out.addAll(source.apply(player));
+        }
+        return out;
+    }
+
+    /** 「+1 戒指欄位」加起來（2026-10-26）。 */
+    private static double ringExtra(final List<Modifier> modifiers) {
+        double total = 0;
+        for (final Modifier mod : modifiers) {
+            if (mod.type() == ModType.FLAT && PlayerState.RING_EXTRA_STAT.equals(mod.stat())) {
+                total += mod.value();
+            }
+        }
+        return total;
+    }
+
     /** 身上裝備的雜湊（哪一件、內容）。 */
     private static int gearSignature(final PlayerState state) {
         int hash = 1;
-        for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length; i++) {
-            final ItemStack stack = state.jewellery(i);
+        for (int i = 0; i < PlayerState.GEAR_SLOTS.length; i++) {
+            final ItemStack stack = state.jewellery(PlayerState.gearIndex(i));
             hash = 31 * hash + (stack == null ? 0 : System.identityHashCode(stack) * 17 + stack.hashCode());
         }
         return hash;
@@ -531,8 +871,18 @@ public final class PlayerStateService {
             return null;
         }
         final StatSheet sheet = sheet(player);
-        return equipProblem(data, ItemStats.requirements(plugin.items().repository(), base, data), get(player).level(),
-                sheet.get(StatKeys.STR), sheet.get(StatKeys.DEX), sheet.get(StatKeys.INT));
+        // 2026-10-26（昇華・嵌晶、鐵匠傑作）
+        final List<Modifier> asc = plugin.ascendancy() == null || !get(player).hasCharacter() ? List.of()
+                : plugin.ascendancy().ascension(get(player)).modifiers();
+        final double[] attr = tw.exilecore.ascendancy.AscBuild.requirementAttributes(asc, sheet.get(StatKeys.STR), sheet.get(StatKeys.DEX), sheet.get(StatKeys.INT));
+        final String own = data.identified() ? tw.exilecore.ascendancy.AscBuild.itemProblem(asc, base.slot(), data) : null;
+        if (own != null) {
+            return "穿不上去：" + own;
+        }
+        final double[] attrs = tw.exilecore.ascendancy.AscBuild.ignoresRequirements(asc, base.slot())
+                ? tw.exilecore.ascendancy.AscBuild.NO_REQUIREMENT : attr; // 2026-10-27（昇華・石拳之道）
+        return equipProblem(data, scaledRequirements(ItemStats.requirements(plugin.items().repository(), base, data),
+                        tw.exilecore.stats.TreeEffectKeys.requirementScale(sheet)), get(player).level(), attrs[0], attrs[1], attrs[2]);
     }
 
     /** 同上，純邏輯。 */
@@ -543,6 +893,15 @@ public final class PlayerStateService {
         }
         final String reason = requirementProblem(req, level, str, dex, intelligence);
         return reason == null ? null : "穿不上去：" + reason;
+    }
+
+    /** 2026-10-26 照 PoE2 天賦樹：「裝備的屬性需求減少 x%」（等級需求不變）。 */
+    static ItemBase.Requirements scaledRequirements(final ItemBase.Requirements req, final double scale) {
+        if (scale == 1.0) {
+            return req;
+        }
+        return new ItemBase.Requirements(req.level(), (int) Math.round(req.str() * scale), (int) Math.round(req.dex() * scale),
+                (int) Math.round(req.intelligence() * scale));
     }
 
     /** 需求不符的原因；符合回傳 null。 */
@@ -569,6 +928,23 @@ public final class PlayerStateService {
     }
 
     /** 需求不符的裝備有變動時提醒玩家（只提醒新出現的那幾件）。 */
+    /** 2026-10-26 照 PoE2：重算屬性需求不足的技能寶石（不能用、光環關掉），新變成不足的提醒一次。 */
+    private void reportUnmetGems(final Player player, final PlayerState state, final StatSheet sheet) {
+        if (plugin.skills() == null) {
+            return;
+        }
+        final Map<String, String> unmet = tw.exilecore.skill.GemAttributes.unmet(plugin.skills().config(), state.skills(), sheet);
+        final List<String> added = state.skills().syncUnmet(unmet);
+        if (!state.isLoaded() || player == null) {
+            return;
+        }
+        for (final String id : added) {
+            final tw.exilecore.skill.SkillDefinition definition = plugin.skills().config().skill(id);
+            player.sendMessage(plugin.text().prefixed("<red>" + escape(definition == null ? id : definition.name()) + "：" + escape(unmet.get(id))
+                    + "，這顆技能寶石不能使用"));
+        }
+    }
+
     private void reportInactiveEquipment(final Player player, final PlayerState state, final List<String> inactive) {
         final List<String> previous = state.inactiveEquipment();
         state.setInactiveEquipment(inactive);
@@ -588,15 +964,18 @@ public final class PlayerStateService {
      */
     private Modifier resolveCondition(final Player player, final PlayerState state, final Modifier modifier, final long now,
                                       final Map<String, Boolean> conditions) {
+        return resolved(modifier, condition -> conditions.computeIfAbsent(condition.key(), key -> evaluate(player, state, condition, now)));
+    }
+
+    /**
+     * 條件詞綴的判斷（純邏輯，2026-10-26 抽出來給測試用）：沒有條件原樣回傳；條件不認得或不成立回傳 null；成立回傳拿掉條件的修飾器。
+     */
+    public static Modifier resolved(final Modifier modifier, final java.util.function.Predicate<tw.exilecore.stats.Recently.Condition> holds) {
         if (!tw.exilecore.stats.Recently.hasCondition(modifier.stat())) {
             return modifier;
         }
         final tw.exilecore.stats.Recently.Condition condition = tw.exilecore.stats.Recently.condition(modifier.stat());
-        if (condition == null) {
-            return null;
-        }
-        final boolean ok = conditions.computeIfAbsent(condition.key(), key -> evaluate(player, state, condition, now));
-        if (!ok) {
+        if (condition == null || !holds.test(condition)) {
             return null;
         }
         return new Modifier(tw.exilecore.stats.Recently.stat(modifier.stat()), modifier.type(), modifier.value(), modifier.tags(), modifier.source());
@@ -607,7 +986,7 @@ public final class PlayerStateService {
         final boolean happened = switch (condition.event()) {
             case tw.exilecore.stats.Recently.LIFE_FLASK -> plugin.flasks() != null && plugin.flasks().recovering(player, tw.exilecore.flask.FlaskKind.LIFE);
             case tw.exilecore.stats.Recently.MANA_FLASK -> plugin.flasks() != null && plugin.flasks().recovering(player, tw.exilecore.flask.FlaskKind.MANA);
-            default -> state.recently(condition.event(), now);
+            default -> conditionTracker.test(player, state, condition.event(), now); // 2026-10-26：天賦樹的狀態條件（也包含「最近…」）
         };
         return condition.negated() != happened;
     }
@@ -623,13 +1002,16 @@ public final class PlayerStateService {
         return false;
     }
 
-    /** 我們有算的裝備欄位：全部在角色面板上（武器、副手、四件防具、戒指×2、項鍊、腰帶），手上拿的、身上穿的只是顯示。 */
-    private List<EquippedItem> equippedItems(final Player player, final PlayerState state) {
+    /**
+     * 我們有算的裝備欄位：全部在角色面板上（武器、副手、四件防具、戒指×2、項鍊、腰帶；2026-10-26 展露之指的第三個戒指），
+     * 手上拿的、身上穿的只是顯示。
+     */
+    private List<EquippedItem> equippedItems(final Player player, final PlayerState state, final boolean thirdRing) {
         final List<EquippedItem> list = new ArrayList<>();
         final ParsedGear[] cache = player == null ? null : parsedGear.computeIfAbsent(player.getUniqueId(),
-                uuid -> new ParsedGear[PlayerState.JEWELLERY_SLOTS.length]);
-        for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length; i++) {
-            final ItemStack stack = state.jewellery(i);
+                uuid -> new ParsedGear[PlayerState.GEAR_SLOTS.length]);
+        for (int i = 0; i < PlayerState.GEAR_SLOTS.length; i++) {
+            final ItemStack stack = i == PlayerState.RING3 && !thirdRing ? null : state.jewellery(PlayerState.gearIndex(i));
             if (stack == null || stack.isEmpty() || plugin.items() == null) {
                 if (cache != null) {
                     cache[i] = null;
@@ -642,7 +1024,7 @@ public final class PlayerStateService {
             ParsedGear parsed = cache == null ? null : cache[i];
             if (parsed == null || parsed.stack() != stack || parsed.hash() != hash || parsed.repository() != repository) {
                 final List<EquippedItem> one = new ArrayList<>(1);
-                collect(one, state, stack, PlayerState.JEWELLERY_SLOTS[i], false);
+                collect(one, state, stack, PlayerState.GEAR_SLOTS[i], false);
                 parsed = new ParsedGear(stack, hash, repository, one.isEmpty() ? null : one.getFirst());
                 if (cache != null) {
                     cache[i] = parsed;
@@ -670,18 +1052,18 @@ public final class PlayerStateService {
         for (final Modifier mod : ItemStats.instilOf(item.data()).modifiers()) {
             modifiers.remove(mod);
         }
-        return new EquippedItem(item.base(), item.data(), modifiers, item.requirements());
+        return new EquippedItem(item.base(), item.data(), modifiers, item.requirements(), item.offHandWeapon());
     }
 
-    /** 虛擬角色的裝備（物品資料，照 {@link PlayerState#JEWELLERY_SLOTS} 的順序）。 */
-    private List<EquippedItem> equippedItems(final PlayerState state, final List<ItemData> gear) {
+    /** 虛擬角色的裝備（物品資料，照 {@link PlayerState#GEAR_SLOTS} 的順序；第 11 個是第三個戒指，有「+1 戒指欄位」才算）。 */
+    private List<EquippedItem> equippedItems(final PlayerState state, final List<ItemData> gear, final boolean thirdRing) {
         final List<EquippedItem> list = new ArrayList<>();
         if (plugin.items() == null) {
             return list;
         }
-        for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length && i < gear.size(); i++) {
-            if (gear.get(i) != null) {
-                collect(list, state, gear.get(i), PlayerState.JEWELLERY_SLOTS[i]);
+        for (int i = 0; i < PlayerState.GEAR_SLOTS.length && i < gear.size(); i++) {
+            if (gear.get(i) != null && (i != PlayerState.RING3 || thirdRing)) {
+                collect(list, state, gear.get(i), PlayerState.GEAR_SLOTS[i]);
             }
         }
         return list;
@@ -701,7 +1083,11 @@ public final class PlayerStateService {
     private void collect(final List<EquippedItem> list, final PlayerState state, final ItemData item, final ItemSlot slot, final boolean instil) {
         final Optional<ItemData> data = Optional.of(item);
         final ItemBase base = plugin.items().repository().base(data.get().base());
-        if (base == null || base.slot() != slot) {
+        // 2026-10-27 照 PoE2 荒野領主：副手的權杖（能不能生效在算屬性表時看：要點了荒野領主、主手是獸魂符、不是傳奇）
+        // 2026-10-27 照 PoE2 巨人之血：副手的雙手斧、錘、劍（雙持；能不能生效同樣在算屬性表時看）
+        final boolean offHandSceptre = base != null && slot == ItemSlot.OFF_HAND && base.slot() == ItemSlot.MAIN_HAND
+                && (base.tags().contains("sceptre") || tw.exilecore.stats.KeystoneKeys.giantWeapon(base.tags()));
+        if (base == null || base.slot() != slot && !offHandSceptre) {
             // 放錯欄位（例如把頭盔拿在手上）不算數
             return;
         }
@@ -714,8 +1100,13 @@ public final class PlayerStateService {
                 modifiers.remove(mod);
             }
         }
+        if (offHandSceptre) {
+            // 副手的權杖只給精魂、詞綴與賦予的技能；武器本身的傷害、攻速、暴擊（本地）不算（攻擊用主手的獸魂符）
+            // 2026-10-27 雙持（巨人之血）：副手武器本身的數值只在副手出手時算（DualWield，算屬性表時另外取）
+            modifiers = modifiers.stream().filter(mod -> !DualWield.weaponLocal(mod)).toList();
+        }
         list.add(new EquippedItem(base, data.get(), modifiers,
-                ItemStats.requirements(plugin.items().repository(), base, data.get())));
+                ItemStats.requirements(plugin.items().repository(), base, data.get()), offHandSceptre));
     }
 
     /** 這件裝備注入的天賦核心，這個角色在天賦樹上已經配置了（注入的效果不重複算）。 */
@@ -723,7 +1114,11 @@ public final class PlayerStateService {
         return data.instilled() != null && state.passives().contains(data.instilled()) && ItemStats.instilOf(data) != null;
     }
 
-    private record EquippedItem(ItemBase base, ItemData data, List<Modifier> modifiers, ItemBase.Requirements requirements) {
+    /** offHandWeapon：2026-10-27 照 PoE2 荒野領主，裝在副手的權杖；巨人之血，裝在副手的雙手斧、錘、劍（主手武器的基底，放在副手）。 */
+    private record EquippedItem(ItemBase base, ItemData data, List<Modifier> modifiers, ItemBase.Requirements requirements, boolean offHandWeapon) {
+        EquippedItem(final ItemBase base, final ItemData data, final List<Modifier> modifiers, final ItemBase.Requirements requirements) {
+            this(base, data, modifiers, requirements, false);
+        }
     }
 
     /**
@@ -746,8 +1141,14 @@ public final class PlayerStateService {
         final double dex = sheet.get(StatKeys.DEX);
         final double intelligence = sheet.get(StatKeys.INT);
         final List<GearPiece> list = new ArrayList<>();
-        for (final EquippedItem item : equippedItems(player, state)) {
-            if (requirementProblem(item.requirements(), state.level(), str, dex, intelligence) != null) {
+        final List<Modifier> asc = plugin.ascendancy() == null || !state.hasCharacter() ? List.of() : plugin.ascendancy().ascension(state).modifiers();
+        final double[] attr = tw.exilecore.ascendancy.AscBuild.requirementAttributes(asc, str, dex, intelligence); // 2026-10-26（昇華・嵌晶）
+        for (final EquippedItem item : equippedItems(player, state, Gear.ringSlotOpen(sheet))) { // 2026-10-26：第三個戒指欄
+            final double[] attrs = tw.exilecore.ascendancy.AscBuild.ignoresRequirements(asc, item.base().slot())
+                    ? tw.exilecore.ascendancy.AscBuild.NO_REQUIREMENT : attr; // 2026-10-27（昇華・石拳之道）
+            if (requirementProblem(scaledRequirements(item.requirements(), tw.exilecore.stats.TreeEffectKeys.requirementScale(sheet)),
+                    state.level(), attrs[0], attrs[1], attrs[2]) != null
+                    || tw.exilecore.ascendancy.AscBuild.itemProblem(asc, item.base().slot(), item.data()) != null) {
                 continue;
             }
             final List<Modifier> mods = new ArrayList<>();
@@ -779,11 +1180,19 @@ public final class PlayerStateService {
         }
         final AttributeInstance movement = player.getAttribute(Attribute.MOVEMENT_SPEED);
         if (movement != null) {
-            movement.removeModifier(movementKey);
-            final double increased = sheet.increased(StatKeys.MOVEMENT_SPEED, Set.of());
-            if (increased != 0) {
-                movement.addModifier(new AttributeModifier(movementKey, increased,
-                        AttributeModifier.Operation.MULTIPLY_SCALAR_1));
+            // 2026-10-26：更多／更少的移動速度（引導、舉盾的減速）也算進去；這次之前只看增加，那些減速沒有作用
+            final double increased = Math.max(0, 1 + sheet.increased(StatKeys.MOVEMENT_SPEED, Set.of()))
+                    * sheet.more(StatKeys.MOVEMENT_SPEED, Set.of()) - 1;
+            // 2026-10-27 效能：數值沒變就不動（每次拿掉再加會讓原版重算屬性、送封包）；這次之前每次重算屬性表都拿掉再加
+            final AttributeModifier current = movement.getModifier(movementKey);
+            final boolean same = current == null ? increased == 0
+                    : current.getAmount() == increased && current.getOperation() == AttributeModifier.Operation.MULTIPLY_SCALAR_1;
+            if (!same) {
+                movement.removeModifier(movementKey);
+                if (increased != 0) {
+                    movement.addModifier(new AttributeModifier(movementKey, increased,
+                            AttributeModifier.Operation.MULTIPLY_SCALAR_1));
+                }
             }
         }
         if (movement != null && movement.getModifier(oldRunKey) != null) {
@@ -1142,12 +1551,23 @@ public final class PlayerStateService {
 
     /** 每秒回復與護盾回充；由排程每 10 tick 呼叫一次。 */
     public void tick(final Player player, final PlayerState state, final long currentTick, final int ticksSinceLast) {
+        conditionTracker.sample(player, state, currentTick); // 2026-10-26：天賦樹條件（移動、生命比例…）
         // 2026-10：「最近…」的條件變了（剛被打、剛翻滾、4 秒過了……）：重算屬性表
-        if (state.hitConditions() && conditionsChanged(player, state, currentTick)) {
-            state.markDirty();
+        // 2026-10-27 效能：條件造成的重算每人每秒最多一次（ConditionHold）；計時 stats.conditions，重算的原因分開記 stats.rebuild.cond／dirty
+        boolean conditionFlip = false;
+        if (state.hitConditions() && !state.isDirty() && conditionHold.ready(player.getUniqueId(), currentTick)) {
+            final long start = System.nanoTime();
+            conditionFlip = conditionsChanged(player, state, currentTick);
+            plugin.perf().record("stats.conditions", System.nanoTime() - start);
+            if (conditionFlip) {
+                conditionHold.flipped(player.getUniqueId(), currentTick);
+                state.markDirty();
+            }
         }
         if (state.isDirty()) {
+            final long start = System.nanoTime();
             rebuild(player, state);
+            plugin.perf().record(conditionFlip ? "stats.rebuild.cond" : "stats.rebuild.dirty", System.nanoTime() - start);
         }
         if (state.isDead() || player.isDead()) {
             return;
@@ -1164,20 +1584,45 @@ public final class PlayerStateService {
         if (ruined) {
             state.notice("<#b06cff>☠ 荒蕪：無法回復生命（離開黑色地面）", currentTick + 15);
         }
+        // 2026-10-26 照 PoE2 天賦樹：「增加 x% 生命回復速度」——生命再生、偷取、回復都快 x%
+        final double lifeRate = tw.exilecore.stats.TreeEffectKeys.scale(sheet, tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE, Set.of(), 0.1);
         final double regen = ruined ? 0
-                : (sheet.get(StatKeys.LIFE_REGEN) + state.maxLife() * sheet.get(StatKeys.LIFE_REGEN_PERCENT) / 100.0) * seconds * missingFactor;
+                : (sheet.get(StatKeys.LIFE_REGEN) + state.maxLife() * sheet.get(StatKeys.LIFE_REGEN_PERCENT) / 100.0
+                        + tw.exilecore.passive.ConquestEffects.bloodRegen(player.getUniqueId(), sheet, currentTick)) // 2026-10-26：鮮血獻祭
+                        * seconds * missingFactor * lifeRate;
         final double overflow = Math.max(0, state.life() + regen - state.maxLife());
-        state.setLife(state.life() + regen);
+        // 2026-10-26 照 PoE2 基石：創傷信仰——能量護盾不回充、不能用再生回復
+        final boolean scarred = StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_SCARRED_FAITH);
+        if (scarred && StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.REGEN_TO_ES)) {
+            // 再生改成回護盾的那部分沒了
+        } else if (StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.REGEN_TO_ES)) {
+            state.setEnergyShield(state.energyShield() + regen); // 2026-10-26（空殼護符）：生命回復改成回復能量護盾
+        } else {
+            state.setLife(state.life() + regen);
+        }
         final boolean zealot = StatKeys.flag(sheet, StatKeys.FLAG_ZEALOTS_OATH);
         final boolean youth = StatKeys.flag(sheet, StatKeys.FLAG_ETERNAL_YOUTH);
-        if (zealot && overflow > 0 && state.maxEnergyShield() > 0) {
+        if (zealot && !scarred && overflow > 0 && state.maxEnergyShield() > 0) {
             state.setEnergyShield(state.energyShield() + Math.min(overflow, Math.max(0, regen))); // 狂熱誓言：溢出的生命回復變成護盾
         }
         final double leechRate = sheet.apply(StatKeys.LEECH_RATE, 1.0, java.util.Set.of()); // 最大偷取速度（2026-10）
         if (!ruined) {
-            state.recoverLeech(seconds, leechRate);
+            state.recoverLeech(seconds, leechRate * lifeRate);
         }
-        state.setMana(state.mana() + sheet.get(StatKeys.MANA_REGEN) * seconds);
+        // 2026-10-26 照 PoE2：回復（Recoup）4 秒內平均回來；禁療中生命、護盾那份不回（魔力照回）
+        final double[] recouped = state.recoup().tick(ticksSinceLast);
+        if (!ruined) {
+            state.setLife(state.life() + recouped[tw.exilecore.character.Recoup.LIFE]);
+            // 2026-10-27：創傷信仰回復的護盾（ES_CAPPED）不超過護甲；一般的護盾回復不夾（這次之前有創傷信仰時整份都夾在護甲）
+            state.setEnergyShield(tw.exilecore.character.Recoup.cappedEs(state.energyShield(), recouped[tw.exilecore.character.Recoup.ES],
+                    recouped[tw.exilecore.character.Recoup.ES_CAPPED], sheet.get(StatKeys.ARMOUR)));
+        }
+        state.setMana(state.mana() + recouped[tw.exilecore.character.Recoup.MANA]);
+        if (StatKeys.flag(sheet, tw.exilecore.passive.ConquestEffects.MIND)) {
+            state.recoverManaOverflowing(sheet.get(StatKeys.MANA_REGEN) * seconds); // 2026-10-26 照 PoE2 心靈獻祭：回復的魔力溢出最大魔力
+        } else {
+            state.setMana(state.mana() + sheet.get(StatKeys.MANA_REGEN) * seconds);
+        }
         if (!ruined) {
             state.recoverManaLeech(seconds, leechRate); // 2026-10-18：荒蕪禁療中魔力偷取也停（以前照回）
         }
@@ -1185,7 +1630,8 @@ public final class PlayerStateService {
             // 永恆青春：生命像護盾一樣回充（護盾不回充）
             state.setLife(state.life() + Formulas.esRechargePerSecond(state.maxLife(), esRechargeSpeed(sheet)) * seconds);
         }
-        if (!zealot && !youth && !ruined && state.maxEnergyShield() > 0 && currentTick - state.lastDamageTick() >= esRechargeDelay(sheet)) {
+        if (!zealot && !youth && !scarred && !ruined && state.maxEnergyShield() > 0 && currentTick - state.lastDamageTick() >= esRechargeDelay(sheet)
+                && !tw.exilecore.skill.TreeLeftovers.esRechargeBlocked(plugin, player, currentTick)) { // 2026-10-27 照 PoE2 天賦樹：被詛咒的不能回充（PvP）
             // 延遲 4 秒過後每秒回充 12.5%（回充速度、延遲都吃詞綴）
             state.setEnergyShield(state.energyShield() + Formulas.esRechargePerSecond(state.maxEnergyShield(), esRechargeSpeed(sheet)) * seconds);
         }
@@ -1204,10 +1650,96 @@ public final class PlayerStateService {
         return total;
     }
 
-    /** PoE2 昇華裡跟裝備、天賦小點有關的效果（旗標來自昇華，在裝備之後才知道）。 */
-    private static void ascendancyEquipment(final StatSheet sheet, final PlayerState state, final List<EquippedItem> active, final PassiveTree tree) {
+    /**
+     * 2026-10-26 照 PoE2 天賦樹：「增加 x% 裝備的盾的護甲、閃避、護盾」「增加 x% 胸甲的護甲」「增加 x% 法器的護盾」
+     * （照基底數值加，跟裝備本地的增加相加）、「增加 x% 箭袋的加成」（箭袋上每條詞綴放大）。
+     */
+    private static void treeEquipment(final StatSheet sheet, final EquippedItem item) {
+        final ItemBase base = item.base();
+        final Set<String> none = Set.of();
+        if (base.isShield() && !base.tags().contains("focus")) {
+            final double inc = sheet.increased(tw.exilecore.stats.TreeEffectKeys.SHIELD_DEFENCES, none);
+            if (inc != 0) {
+                sheet.add(Modifier.flat(StatKeys.ARMOUR, base.armour() * inc, "盾的防禦"));
+                sheet.add(Modifier.flat(StatKeys.EVASION, base.evasion() * inc, "盾的防禦"));
+                sheet.add(Modifier.flat(StatKeys.ES_MAX, base.energyShield() * inc, "盾的防禦"));
+            }
+        }
+        if (base.slot() == tw.exilecore.item.ItemSlot.CHEST) {
+            final double inc = sheet.increased(tw.exilecore.stats.TreeEffectKeys.BODY_ARMOUR, none);
+            if (inc != 0) {
+                sheet.add(Modifier.flat(StatKeys.ARMOUR, base.armour() * inc, "胸甲的護甲"));
+            }
+        }
+        if (base.tags().contains("focus")) {
+            final double inc = sheet.increased(tw.exilecore.stats.TreeEffectKeys.FOCUS_ES, none);
+            if (inc != 0) {
+                sheet.add(Modifier.flat(StatKeys.ES_MAX, base.energyShield() * inc, "法器的護盾"));
+            }
+        }
+        if (base.tags().contains("quiver")) {
+            final double inc = sheet.increased(tw.exilecore.stats.TreeEffectKeys.QUIVER_EFFECT, none);
+            if (inc != 0) {
+                sheet.addAll(tw.exilecore.stats.TreeEffectKeys.amplify(item.modifiers(), inc, "箭袋效果"));
+            }
+        }
+    }
+
+    /** 2026-10-26（AttributeScalingKeys）：胸甲的基底閃避、護盾，頭盔、護腿（PoE2 的手套）、鞋子的力量需求總和。 */
+    private static tw.exilecore.stats.AttributeScalingKeys.Gear scalingGear(final List<EquippedItem> active,
+                                                                           final List<tw.exilecore.stats.KeystoneKeys.Piece> pieces) {
+        double evasion = 0;
+        double es = 0;
+        double str = 0;
         for (final EquippedItem item : active) {
             final tw.exilecore.item.ItemSlot slot = item.base().slot();
+            if (slot == tw.exilecore.item.ItemSlot.CHEST) {
+                evasion = item.base().evasion();
+                es = item.base().energyShield();
+            } else if ((slot == tw.exilecore.item.ItemSlot.HEAD || slot == tw.exilecore.item.ItemSlot.LEGS || slot == tw.exilecore.item.ItemSlot.FEET)
+                    && item.requirements() != null) {
+                str += item.requirements().str();
+            }
+        }
+        return new tw.exilecore.stats.AttributeScalingKeys.Gear(pieces, evasion, es, str);
+    }
+
+    /** 2026-10-26：技能面板上插著的輔助寶石顏色（SupportColours）。 */
+    private static tw.exilecore.stats.AttributeScalingKeys.Supports supportCounts(final PlayerState state) {
+        final tw.exilecore.skill.SupportColours.Counts counts = tw.exilecore.skill.SupportColours.count(state.skills());
+        return new tw.exilecore.stats.AttributeScalingKeys.Supports(counts.red(), counts.green(), counts.blue(), counts.total());
+    }
+
+    /** PoE2 昇華裡跟裝備、天賦小點有關的效果（旗標來自昇華，在裝備之後才知道）。 */
+    private static void ascendancyEquipment(final StatSheet sheet, final PlayerState state, final List<EquippedItem> active, final PassiveTree tree) {
+        // 2026-10-26 照 PoE2 天賦：身體護甲的本地效果、「護甲等同鞋子、手套、頭盔力量需求的 x%」
+        final double fromStr = sheet.flat(tw.exilecore.stats.TreeNewMechanicKeys.ARMOUR_FROM_STR_REQUIREMENT, java.util.Set.of());
+        final double bodyThorns = sheet.flat(tw.exilecore.stats.TreeNewMechanicKeys.BODY_ARMOUR_THORNS, java.util.Set.of());
+        final double bodyEs = sheet.increased(tw.exilecore.stats.TreeNewMechanicKeys.BODY_ES, java.util.Set.of());
+        final double bodyEvasion = sheet.increased(tw.exilecore.stats.TreeNewMechanicKeys.BODY_EVASION, java.util.Set.of());
+        for (final EquippedItem item : active) {
+            final tw.exilecore.item.ItemSlot slot = item.base().slot();
+            if (fromStr > 0 && item.requirements() != null && (slot == tw.exilecore.item.ItemSlot.HEAD || slot == tw.exilecore.item.ItemSlot.LEGS
+                    || slot == tw.exilecore.item.ItemSlot.FEET)) {
+                sheet.add(Modifier.flat(StatKeys.ARMOUR, item.requirements().str() * fromStr / 100.0, "力量需求的護甲"));
+            }
+            if (slot == tw.exilecore.item.ItemSlot.CHEST) {
+                if (bodyThorns > 0) {
+                    final double thorns = itemFlat(item, StatKeys.ARMOUR) * bodyThorns / 100.0;
+                    sheet.add(Modifier.flat(StatKeys.THORNS_MIN, thorns, "身體護甲的荊棘"));
+                    sheet.add(Modifier.flat(StatKeys.THORNS_MAX, thorns, "身體護甲的荊棘"));
+                }
+                // 「增加 x% 身體護甲的能量護盾／閃避」跟全域的增加相加（固定值先除掉全域的倍率）
+                if (bodyEs != 0) {
+                    sheet.add(Modifier.flat(StatKeys.ES_MAX, itemFlat(item, StatKeys.ES_MAX) * bodyEs
+                            / Math.max(0.1, 1 + sheet.increased(StatKeys.ES_MAX, java.util.Set.of())), "身體護甲"));
+                }
+                if (bodyEvasion != 0) {
+                    sheet.add(Modifier.flat(StatKeys.EVASION, itemFlat(item, StatKeys.EVASION) * bodyEvasion
+                            / Math.max(0.1, 1 + sheet.increased(StatKeys.EVASION, java.util.Set.of())), "身體護甲"));
+                }
+            }
+            treeEquipment(sheet, item);
             if (slot == tw.exilecore.item.ItemSlot.CHEST && StatKeys.flag(sheet, StatKeys.FLAG_STONE_SKIN)) {
                 sheet.add(Modifier.flat(StatKeys.ARMOUR, itemFlat(item, StatKeys.ARMOUR) * 0.5, "岩膚"));
             }
@@ -1243,11 +1775,13 @@ public final class PlayerStateService {
                 if (node == null || node.type() != tw.exilecore.passive.PassiveNode.Type.SMALL) {
                     continue;
                 }
-                for (final Modifier mod : node.modifiers()) {
-                    final String stat = StatKeys.ATTR_CHOICE.equals(mod.stat())
-                            ? attributeStat(chosenAttribute(state, state.characterClass(), id)) : mod.stat();
-                    if (mod.type() != ModType.MORE && !stat.startsWith("flag.")) {
-                        sheet.add(new Modifier(stat, mod.type(), mod.value() * 0.5, mod.tags(), "巨像化"));
+                for (final Modifier raw : node.modifiers()) {
+                    for (final Modifier mod : StatKeys.ATTR_CHOICE.equals(raw.stat())
+                            ? choiceModifiers(chosenAttribute(state, state.characterClass(), id), raw.value(), raw.tags(), raw.source())
+                            : List.of(raw)) {
+                        if (mod.type() != ModType.MORE && !mod.stat().startsWith("flag.")) {
+                            sheet.add(new Modifier(mod.stat(), mod.type(), mod.value() * 0.5, mod.tags(), "巨像化"));
+                        }
                     }
                 }
             }
@@ -1276,17 +1810,40 @@ public final class PlayerStateService {
             }
             for (final Modifier mod : node.modifiers()) {
                 if (StatKeys.ATTR_CHOICE.equals(mod.stat())) {
-                    out.add(Modifier.flat(attributeStat(chosenAttribute(state, characterClass, id)), mod.value(), node.name()));
+                    out.addAll(choiceModifiers(chosenAttribute(state, characterClass, id), mod.value(), Set.of(), node.name()));
                 }
             }
         }
         return out;
     }
 
-    /** 這個屬性點選了哪個屬性（str／dex／int）。 */
+    /** 2026-10-26 照 PoE2 旅者的智慧（開路者）：屬性點可以改給傷害（dmg）、防禦（def）、消耗效率（cost）。 */
+    public static final List<String> WISDOM_CHOICES = List.of("dmg", "def", "cost");
+
+    /**
+     * 屬性點選的效果：力量／敏捷／智慧給 +x 點；旅者的智慧的傷害／防禦／消耗效率給增加 x%（+5 屬性 → 增加 5%，
+     * 珠寶放大、巨像化照比例）。這次之前只有三種屬性。
+     */
+    public static List<Modifier> choiceModifiers(final String choice, final double value, final Set<String> tags, final String source) {
+        final double percent = value / 100.0;
+        return switch (choice) {
+            case "dmg" -> List.of(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, percent, tags, source));
+            case "def" -> List.of(new Modifier(StatKeys.ARMOUR, ModType.INCREASED, percent, tags, source),
+                    new Modifier(StatKeys.EVASION, ModType.INCREASED, percent, tags, source),
+                    new Modifier(StatKeys.ES_MAX, ModType.INCREASED, percent, tags, source));
+            // 消耗效率 x% ≈ 消耗減少 x%（天賦樹產生器的 efficiency 也是這樣換）
+            case "cost" -> List.of(new Modifier("skill.cost", ModType.INCREASED, -percent, tags, source));
+            default -> List.of(new Modifier(attributeStat(choice), ModType.FLAT, value, tags, source));
+        };
+    }
+
+    /** 這個屬性點選了哪個屬性（str／dex／int；旅者的智慧另外有 dmg／def／cost，沒有那個昇華天賦時當沒選）。 */
     public static String chosenAttribute(final PlayerState state, final tw.exilecore.character.CharacterClass characterClass, final String nodeId) {
         final String chosen = state.progress().get("attr." + nodeId);
         if ("str".equals(chosen) || "dex".equals(chosen) || "int".equals(chosen)) {
+            return chosen;
+        }
+        if (chosen != null && WISDOM_CHOICES.contains(chosen) && wisdom(state)) {
             return chosen;
         }
         if (characterClass == null) {
@@ -1296,6 +1853,12 @@ public final class PlayerStateService {
         final int d = characterClass.dexterity();
         final int i = characterClass.intelligence();
         return s >= d && s >= i ? "str" : d >= i ? "dex" : "int";
+    }
+
+    /** 有沒有配旅者的智慧（看角色進度裡配好的昇華天賦；不看屬性表，重算屬性表時也能用）。 */
+    private static boolean wisdom(final PlayerState state) {
+        final String nodes = state.progress().get("asc.nodes"); // Ascension.NODES：逗號分隔的昇華天賦代號
+        return nodes != null && java.util.Arrays.stream(nodes.split(",")).anyMatch(id -> "travellers_wisdom".equals(id.trim()));
     }
 
     public static String attributeStat(final String key) {

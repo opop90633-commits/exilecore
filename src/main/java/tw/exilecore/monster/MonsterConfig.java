@@ -109,6 +109,22 @@ public final class MonsterConfig {
     private double evasionPerLevel = 3;
     private double evasionBase = 20;
     private double armourPerLevel = 8;
+    /** 2026-10-26 照 PoE2：命中、閃避、護甲的逐級表（monsters.yml 的 accuracy／evasion／armour；空的 = 照 defence 的線性公式）。 */
+    private final TreeMap<Integer, Double> accuracyTable = new TreeMap<>();
+    private final TreeMap<Integer, Double> evasionTable = new TreeMap<>();
+    private final TreeMap<Integer, Double> armourTable = new TreeMap<>();
+    /** 2026-10-26 照 PoE2：各稀有度的元素抗性（rarity.x.resist；PoE2 一般 Boss +30%）。 */
+    private final Map<MonsterRarity, Double> rarityResist = new EnumMap<>(MonsterRarity.class);
+    /** 2026-10-26 照 PoE2：各稀有度身上的詛咒效果（rarity.x.curse_effect，百分比，負的 = 更少；魔法 −15、稀有 −30、傳奇 −50）。 */
+    private final Map<MonsterRarity, Double> rarityCurse = new EnumMap<>(MonsterRarity.class);
+    /** 2026-10-26 照 PoE2 0.5：元素異常門檻、暈眩門檻（poise）的逐級表（monsters.yml 的 ailment_threshold／poise；空的 = 照生命）。 */
+    private final TreeMap<Integer, Double> ailmentThresholdTable = new TreeMap<>();
+    private final TreeMap<Integer, Double> poiseTable = new TreeMap<>();
+    /** 2026-10-26 照 PoE2 0.5：各稀有度的暈眩門檻倍率（rarity.x.poise：魔法 1.26、稀有 2.25、傳奇 6）。 */
+    private final Map<MonsterRarity, Double> rarityPoise = new EnumMap<>(MonsterRarity.class);
+    /** 2026-10-26 照 PoE2 0.5：各稀有度身上的緩速、曝露效果（rarity.x.slow_effect／exposure_effect，百分比，負的 = 更少）。 */
+    private final Map<MonsterRarity, Double> raritySlow = new EnumMap<>(MonsterRarity.class);
+    private final Map<MonsterRarity, Double> rarityExposure = new EnumMap<>(MonsterRarity.class);
     private double critChance = 5;
     private final Map<MonsterRarity, RaritySettings> rarities = new EnumMap<>(MonsterRarity.class);
     private final Map<String, TypeSettings> types = new LinkedHashMap<>();
@@ -150,6 +166,26 @@ public final class MonsterConfig {
         evasionPerLevel = other.evasionPerLevel;
         evasionBase = other.evasionBase;
         armourPerLevel = other.armourPerLevel;
+        accuracyTable.clear();
+        accuracyTable.putAll(other.accuracyTable);
+        evasionTable.clear();
+        evasionTable.putAll(other.evasionTable);
+        armourTable.clear();
+        armourTable.putAll(other.armourTable);
+        rarityResist.clear();
+        rarityResist.putAll(other.rarityResist);
+        rarityCurse.clear();
+        rarityCurse.putAll(other.rarityCurse);
+        ailmentThresholdTable.clear();
+        ailmentThresholdTable.putAll(other.ailmentThresholdTable);
+        poiseTable.clear();
+        poiseTable.putAll(other.poiseTable);
+        rarityPoise.clear();
+        rarityPoise.putAll(other.rarityPoise);
+        raritySlow.clear();
+        raritySlow.putAll(other.raritySlow);
+        rarityExposure.clear();
+        rarityExposure.putAll(other.rarityExposure);
         critChance = other.critChance;
         rarities.clear();
         rarities.putAll(other.rarities);
@@ -188,6 +224,11 @@ public final class MonsterConfig {
                 damageTable.put(Integer.parseInt(key.trim()), new double[] {range[0], range[1]});
             }
         }
+        readTable(root, "accuracy", accuracyTable);
+        readTable(root, "evasion", evasionTable);
+        readTable(root, "armour", armourTable);
+        readTable(root, "ailment_threshold", ailmentThresholdTable);
+        readTable(root, "poise", poiseTable);
         if (root.has("experience")) {
             experienceTable.clear();
             final YamlNode xpNode = root.node("experience");
@@ -218,6 +259,19 @@ public final class MonsterConfig {
             final YamlNode node = rarityNode.node(key);
             final int[] modRange = node.has("mods") ? node.range("mods") : new int[] {0, 0};
             final RaritySettings previous = rarities.get(rarity);
+            if (node.has("curse_effect")) {
+                rarityCurse.put(rarity, Math.max(-100, Math.min(100, node.decimal("curse_effect", 0))));
+            } else {
+                rarityCurse.remove(rarity);
+            }
+            readRarityValue(node, "poise", rarity, rarityPoise, 0, 1000);
+            readRarityValue(node, "slow_effect", rarity, raritySlow, -100, 100);
+            readRarityValue(node, "exposure_effect", rarity, rarityExposure, -100, 100);
+            if (node.has("resist")) {
+                rarityResist.put(rarity, Math.max(-100, Math.min(100, node.decimal("resist", 0))));
+            } else {
+                rarityResist.remove(rarity);
+            }
             rarities.put(rarity, new RaritySettings(node.integer("weight", 0),
                     node.decimal("life", 1.0), node.decimal("damage", 1.0),
                     modRange[0], modRange[1], node.decimal("quantity", 0), node.decimal("rarity", 0),
@@ -366,15 +420,77 @@ public final class MonsterConfig {
     }
 
     public double accuracyAt(final int level) {
-        return accuracyBase + accuracyPerLevel * level;
+        return accuracyTable.isEmpty() ? accuracyBase + accuracyPerLevel * level
+                : LevelCurve.at(accuracyTable, level, 1, LevelCurve.Mode.GEOMETRIC);
     }
 
     public double evasionAt(final int level) {
-        return evasionBase + evasionPerLevel * level;
+        return evasionTable.isEmpty() ? evasionBase + evasionPerLevel * level
+                : LevelCurve.at(evasionTable, level, 1, LevelCurve.Mode.GEOMETRIC);
     }
 
     public double armourAt(final int level) {
-        return armourPerLevel * level;
+        return armourTable.isEmpty() ? armourPerLevel * level
+                : LevelCurve.at(armourTable, level, 1, LevelCurve.Mode.GEOMETRIC);
+    }
+
+    /** 這種稀有度身上的詛咒效果（百分比，負的 = 更少；2026-10-26 照 PoE2）。 */
+    public double rarityCurseEffect(final MonsterRarity rarity) {
+        return rarityCurse.getOrDefault(rarity, 0.0);
+    }
+
+    /** 這種稀有度的元素抗性（火、冰、雷；2026-10-26 照 PoE2，Boss 30%）。 */
+    public double rarityResist(final MonsterRarity rarity) {
+        return rarityResist.getOrDefault(rarity, 0.0);
+    }
+
+    private static void readRarityValue(final YamlNode node, final String key, final MonsterRarity rarity, final Map<MonsterRarity, Double> map,
+                                        final double min, final double max) {
+        if (node.has(key)) {
+            map.put(rarity, Math.max(min, Math.min(max, node.decimal(key, 0))));
+        } else {
+            map.remove(rarity);
+        }
+    }
+
+    /**
+     * 2026-10-26 照 PoE2 0.5：等級 → 元素異常門檻（點燃、冰緩、感電；不看稀有度）。沒有表時照普通怪的生命。
+     */
+    public double ailmentThresholdAt(final int level) {
+        return ailmentThresholdTable.isEmpty() ? lifeAt(level) : LevelCurve.at(ailmentThresholdTable, level, 1, LevelCurve.Mode.GEOMETRIC);
+    }
+
+    /**
+     * 2026-10-26 照 PoE2 0.5：等級 → 普通怪的暈眩門檻（poise；重暈、凍結、電擊、釘地）。沒有表時是元素異常門檻的 2 倍（PoE2 低等級的比例）。
+     */
+    public double poiseAt(final int level) {
+        return poiseTable.isEmpty() ? 2 * ailmentThresholdAt(level) : LevelCurve.at(poiseTable, level, 1, LevelCurve.Mode.GEOMETRIC);
+    }
+
+    /** 這種稀有度的暈眩門檻倍率（沒寫 = 1）。 */
+    public double rarityPoise(final MonsterRarity rarity) {
+        return rarityPoise.getOrDefault(rarity, 1.0);
+    }
+
+    /** 這種稀有度身上的緩速效果（百分比，負的 = 更少）。 */
+    public double raritySlowEffect(final MonsterRarity rarity) {
+        return raritySlow.getOrDefault(rarity, 0.0);
+    }
+
+    /** 這種稀有度身上的曝露效果（百分比，負的 = 更少）。 */
+    public double rarityExposureEffect(final MonsterRarity rarity) {
+        return rarityExposure.getOrDefault(rarity, 0.0);
+    }
+
+    private static void readTable(final YamlNode root, final String key, final TreeMap<Integer, Double> table) {
+        if (!root.has(key)) {
+            return;
+        }
+        table.clear();
+        final YamlNode node = root.node(key);
+        for (final String level : node.keys()) {
+            table.put(Integer.parseInt(level.trim()), node.decimal(level, 0));
+        }
     }
 
     public double critChance() {
@@ -387,6 +503,11 @@ public final class MonsterConfig {
 
     public TypeSettings type(final String entityType) {
         return types.getOrDefault(entityType.toUpperCase(Locale.ROOT), defaultType);
+    }
+
+    /** 2026-10-26：所有寫在 types 底下的生物種類（代號 → 設定，不含 default），唯讀；網頁圖鑑用。 */
+    public Map<String, TypeSettings> types() {
+        return java.util.Collections.unmodifiableMap(types);
     }
 
     public MonsterMod mod(final String id) {

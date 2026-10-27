@@ -53,13 +53,13 @@ public final class PartyMenu extends Menu {
         if (party == null) {
             set(SLOT_HEADER, icon(Material.PLAYER_HEAD, "<gray>你沒有隊伍",
                     "<gray>邀請別人：下面的「邀請玩家」，或 /party invite 玩家",
-                    "<gray>最多 " + max + " 人；隊友共用地圖的傳送門，附近的隊友分經驗",
+                    "<gray>最多 " + max + " 人；隊友共用地圖的傳送門，" + rangeLine(),
                     lootLine() + "，進自己的背包"));
         } else {
             set(SLOT_HEADER, glowing(icon(Material.PLAYER_HEAD, "<#7fd4ff>隊伍（" + party.size() + " / " + max + " 人）",
                     "<gray>隊長：<white>" + ItemRenderer.escape(service.name(party.leader())),
                     "<gray>/p 訊息：隊伍聊天",
-                    "<gray>隊友共用地圖的傳送門，附近的隊友分經驗",
+                    "<gray>隊友共用地圖的傳送門，" + rangeLine(),
                     lootLine())));
             int slot = FIRST_MEMBER;
             for (final UUID member : party.members()) {
@@ -114,6 +114,9 @@ public final class PartyMenu extends Menu {
                         + character.characterClass().displayName() + " Lv." + state.level());
             }
             lore.add("<gray>在：<white>" + ItemRenderer.escape(where(online)));
+            if (!online.equals(player)) {
+                lore.add(rangeTag(online)); // 2026-10-26：誰在範圍內（經驗、掉落、隊伍加成只算附近的隊員）
+            }
         }
         if (viewerIsLeader && !member.equals(player.getUniqueId())) {
             lore.add("");
@@ -227,8 +230,23 @@ public final class PartyMenu extends Menu {
                 }, () -> new PartyMenu(plugin, player, service).open());
     }
 
+    /** 2026-10-26：「在附近」的說明（經驗、掉落、隊伍加成只算附近的隊員）。 */
+    private String rangeLine() {
+        return "<gray>" + Math.round(service.config().nearbyRadius()) + " 格內（約一間 Boss 房）的隊友才分經驗、算隊伍加成";
+    }
+
+    /** 2026-10-26：這個隊友跟你在不在範圍內（兩邊都要活著、不在城鎮、同一個世界、水平距離在 nearby_radius 內）。 */
+    private String rangeTag(final Player other) {
+        final boolean sameWorld = other.getWorld().equals(player.getWorld());
+        final String distance = sameWorld ? "（" + Math.round(Math.hypot(other.getLocation().getX() - player.getLocation().getX(),
+                other.getLocation().getZ() - player.getLocation().getZ())) + " 格）" : "（不同世界）";
+        return service.nearby(other, player.getLocation()) && service.nearby(player, other.getLocation())
+                ? "<green>● 範圍內<gray>" + distance
+                : "<red>○ 範圍外<gray>" + distance + "<dark_gray> 不分經驗、掉落";
+    }
+
     /** 掉落怎麼分（給隊伍介面的說明）。 */
     private String lootLine() {
-        return "<gray>掉落：傷害有到 " + Math.round(service.config().shareThreshold() * 100) + "% 的人各拿一份（Boss：同隊在附近就有）";
+        return "<gray>掉落：附近、傷害有到 " + Math.round(service.config().shareThreshold() * 100) + "% 的人各拿一份（Boss：同隊在附近就有）";
     }
 }

@@ -88,7 +88,8 @@ class BuildCalcTest {
         assertEquals(CharacterClass.WITCH, build.characterClass());
         assertEquals(70, build.level());
         assertEquals(nodes, build.passives());
-        assertEquals(PlayerState.JEWELLERY_SLOTS.length, build.gear().size(), "十個裝備欄都有位置（空的是 null）");
+        // 2026-10-26：多了展露之指的第三個戒指欄（PlayerState.GEAR_SLOTS，11 格）；這次之前是 JEWELLERY_SLOTS 的 10 格
+        assertEquals(PlayerState.GEAR_SLOTS.length, build.gear().size(), "十一個裝備欄都有位置（空的是 null）");
         assertTrue(build.gear().stream().allMatch(java.util.Objects::isNull));
         assertNull(build.supportsFor());
     }
@@ -290,5 +291,49 @@ class BuildCalcTest {
         assertEquals(unique.version(), BuildCalc.normalize(repository, fresh).uniqueVersion());
         final ItemData old = new com.google.gson.Gson().fromJson(json + "}", ItemData.class);
         assertEquals(1, BuildCalc.normalize(repository, old).uniqueVersion(), "遊戲裡的舊物品（沒記版本）照第 1 版");
+    }
+
+    /** 2026-10-26：永恆珠寶——網頁天賦樹即時換成征服後的節點（伺服器算雜湊，跟遊戲同一套）。 */
+    @Test
+    void timelessConquestJsonMatchesGame() throws Exception {
+        // 找一個範圍內有基石、核心的珠寶孔
+        PassiveNode socket = null;
+        for (final PassiveNode node : tree.ordered()) {
+            if (node.isSocket() && tw.exilecore.passive.TimelessJewels.inRadius(tree, node).stream().anyMatch(n -> n.type() == PassiveNode.Type.KEYSTONE)
+                    && tw.exilecore.passive.TimelessJewels.inRadius(tree, node).stream().filter(n -> n.type() == PassiveNode.Type.NOTABLE).count() >= 4) {
+                socket = node;
+                break;
+            }
+        }
+        assertNotNull(socket, "樹上要有範圍內有基石的珠寶孔");
+        final JsonObject request = JsonParser.parseString("{\"socket\":\"" + socket.id() + "\",\"legion\":1,\"seed\":99999,\"conqueror\":2}").getAsJsonObject();
+        final tw.exilecore.passive.TimelessJewels.Conquest conquest = BuildCalc.parseConquest(request, tree);
+        assertEquals(tw.exilecore.passive.TimelessJewels.SEED_MAX, conquest.seed(), "種子夾到範圍內");
+        final JsonObject json = BuildCalc.conquestJson(tree, conquest, Set.of());
+        final Map<String, PassiveNode> game = tw.exilecore.passive.TimelessJewels.conquered(tree, conquest, Set.of());
+        final JsonObject nodes = json.getAsJsonObject("nodes");
+        assertEquals(game.size(), nodes.size());
+        for (final Map.Entry<String, PassiveNode> entry : game.entrySet()) {
+            assertEquals(entry.getValue().name(), nodes.getAsJsonObject(entry.getKey()).get("name").getAsString());
+        }
+        assertEquals("循環教義", json.get("keystone").getAsString());
+        assertEquals("梅德偉", json.get("conquerorName").getAsString());
+        // 換種子：核心跟著變（同一個種子永遠一樣）
+        final JsonObject other = BuildCalc.conquestJson(tree, new tw.exilecore.passive.TimelessJewels.Conquest(socket.id(), conquest.legion(), 1234, 2), Set.of());
+        assertEquals(other.toString(), BuildCalc.conquestJson(tree, new tw.exilecore.passive.TimelessJewels.Conquest(socket.id(), conquest.legion(), 1234, 2), Set.of()).toString());
+        assertFalse(other.getAsJsonObject("nodes").toString().equals(nodes.toString()), "換種子，核心要變");
+        // 深淵族：屬性點保留原本的效果、多給貢禮（add）
+        final JsonObject abyss = BuildCalc.conquestJson(tree, BuildCalc.parseConquest(
+                JsonParser.parseString("{\"socket\":\"" + socket.id() + "\",\"legion\":2,\"seed\":500,\"conqueror\":9}").getAsJsonObject(), tree), Set.of());
+        assertEquals("遠目獻祭", abyss.get("keystone").getAsString(), "征服者夾到範圍內");
+        for (final Map.Entry<String, com.google.gson.JsonElement> entry : abyss.getAsJsonObject("nodes").entrySet()) {
+            final PassiveNode original = tree.node(entry.getKey());
+            final JsonObject node = entry.getValue().getAsJsonObject();
+            if (original.attributeChoice() > 0) {
+                assertTrue(node.has("add"));
+                assertEquals("+3 貢禮", node.getAsJsonArray("lines").get(0).getAsString());
+            }
+        }
+        assertThrows(BuildCalc.BadRequest.class, () -> BuildCalc.parseConquest(JsonParser.parseString("{\"socket\":\"nope\",\"legion\":1}").getAsJsonObject(), tree));
     }
 }

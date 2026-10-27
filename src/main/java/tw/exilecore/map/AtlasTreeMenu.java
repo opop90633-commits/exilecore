@@ -113,7 +113,7 @@ public final class AtlasTreeMenu extends Menu {
             }
         }
         set(SLOT_ATLAS, uiIcon("nav_back", Material.FILLED_MAP, "<#f5b942>← 星圖", "<gray>左鍵：回到星圖（地圖的解鎖進度）",
-                "<#bcd4ff>右鍵：星圖天賦組（月卡）<gray>：第 " + (AtlasSetMenu.activeSet(plugin.players().get(player)) + 1) + " 組使用中"));
+                "<#bcd4ff>右鍵：星圖天賦組（月卡）<gray>：第 " + (AtlasSetMenu.activeSet(service.atlasData(player)) + 1) + " 組使用中"));
         set(SLOT_UP, arrow("arrow_up", "↑ 往上"));
         set(SLOT_DOWN, arrow("arrow_down", "↓ 往下"));
         set(SLOT_LEFT, arrow("arrow_left", "← 往左"));

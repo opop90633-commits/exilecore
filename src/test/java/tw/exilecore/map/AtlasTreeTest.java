@@ -225,9 +225,10 @@ class AtlasTreeTest {
     @Test
     void bonusSumsAndDescribes() {
         final AtlasBonus bonus = tree.bonus(List.of("wealth_1", "wealth_2", "wealth_3"));
-        assertEquals(7, bonus.get("map.quantity"), 1e-9);
-        assertEquals(12, bonus.get("map.rarity"), 1e-9);
-        assertEquals(List.of("地圖的物品數量 +7%", "地圖的物品稀有度 +12%"), bonus.describe());
+        // 2026-10-27 照 PoE2：星圖天賦沒有物品數量，數量換成稀有度（這次之前數量 7、稀有度 12）
+        assertEquals(0, bonus.get("map.quantity"), 1e-9);
+        assertEquals(26, bonus.get("map.rarity"), 1e-9);
+        assertEquals(List.of("地圖的物品稀有度 +26%"), bonus.describe());
         assertSame(AtlasBonus.NONE, tree.bonus(List.of()));
         assertTrue(AtlasBonus.NONE.describe().isEmpty());
     }
@@ -235,7 +236,10 @@ class AtlasTreeTest {
     @Test
     void keystoneDrawbacksAreCountedAndDescribed() {
         final AtlasBonus bonus = tree.bonus(List.of("wealth_7"));
-        assertEquals(30, bonus.get("map.quantity"), 1e-9); // 2026-10-21：孤注一擲 50 → 30
+        // 2026-10-21：孤注一擲 50 → 30；2026-10-27 照 PoE2：數量 30 換成稀有度 30＋怪物群 15
+        assertEquals(0, bonus.get("map.quantity"), 1e-9);
+        assertEquals(30, bonus.get("map.rarity"), 1e-9);
+        assertEquals(15, bonus.get("map.pack_size"), 1e-9);
         assertEquals(50, bonus.get("atlas.map_drop_less"), 1e-9);
         assertTrue(bonus.describe().contains("地圖怪掉地圖的機率減少 50%"), bonus.describe().toString());
         assertTrue(AtlasTree.isDrawback("atlas.map_drop_less"));
@@ -248,8 +252,8 @@ class AtlasTreeTest {
         assertSame(base, base.plus(AtlasBonus.NONE));
         final AtlasBonus bonus = tree.bonus(List.of("wealth_1", "wealth_2", "packs_1", "packs_2", "packs_4"));
         final MapStats boosted = base.plus(bonus);
-        assertEquals(11, boosted.quantity(), 1e-9);
-        assertEquals(15, boosted.rarity(), 1e-9);
+        assertEquals(8, boosted.quantity(), 1e-9, "2026-10-27：拾荒不再給數量（這次之前 11）");
+        assertEquals(21, boosted.rarity(), 1e-9, "2026-10-27：拾荒改給稀有度 6（這次之前 15）");
         assertEquals(5, boosted.packSize(), 1e-9);
         assertEquals(15, boosted.magicPacks(), 1e-9);
         assertEquals(15, boosted.rarePacks(), 1e-9);

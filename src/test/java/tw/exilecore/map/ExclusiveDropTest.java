@@ -52,6 +52,10 @@ class ExclusiveDropTest {
         events.load(DATA);
     }
 
+    private static MapEventConfig defaults() {
+        return new MapEventConfig();
+    }
+
     // ---- 地圖事件 ----
 
     @Test
@@ -96,7 +100,13 @@ class ExclusiveDropTest {
             assertEquals(Rarity.UNIQUE, unique.rarity());
         }
         // 祭壇、幻霧：獎勵裡的「傳奇」那一種，從各自的專屬池抽
-        assertEquals(1, events.ritual().rewardWeights().get(MapEventConfig.Reward.UNIQUE), "2026-10：2 → 1");
+        // 2026-10-27 照 PoE2 0.5：祭壇只給星籤與傳奇，傳奇 35（大多共通），專屬 3%（一組 7 件平均 0.07 件專屬，跟以前權重 1/99 一樣）
+        assertEquals(35, events.ritual().rewardWeights().get(MapEventConfig.Reward.UNIQUE), "2026-10：2 → 1；2026-10-27：1 → 35（多半共通）");
+        assertEquals(0.03, events.ritualExclusiveChance(), 1e-9);
+        assertEquals(7 * 0.35 * 0.03, 7 * 1.0 / 99, 0.003, "一組裡的專屬傳奇跟以前差不多");
+        assertEquals(defaults().ritualExclusiveChance(), events.ritualExclusiveChance(), 1e-9);
+        assertEquals(java.util.Arrays.toString(defaults().ritualExclusivePrice()), java.util.Arrays.toString(events.ritualExclusivePrice()));
+        assertEquals(defaults().ritualBankThreshold(), events.ritualBankThreshold());
         assertEquals(1, events.delirium().rewardWeights().get(MapEventConfig.Reward.UNIQUE), "幻霧也會給傳奇（2026-10：2 → 1）");
         final MapEventConfig defaults = new MapEventConfig();
         assertEquals(events.ritual().rewardWeights(), defaults.ritual().rewardWeights(), "程式的預設值跟出貨的 map_events.yml 一樣");
@@ -140,7 +150,7 @@ class ExclusiveDropTest {
     void exclusiveSupportsComeFromBossesNotFromUncutGems() {
         int exclusive = 0;
         for (final SupportDefinition support : skills.supports()) {
-            if (!support.cuttable()) {
+            if (!support.cuttable() && !support.lineage()) { // 2026-10-27：血脈輔助（切不出來，但不算專屬）另外測（LineageSupportTest）
                 exclusive++;
                 assertEquals(3, support.tier(), support.id());
                 assertFalse(support.notes().isEmpty(), support.id() + "：寫出是誰掉的");

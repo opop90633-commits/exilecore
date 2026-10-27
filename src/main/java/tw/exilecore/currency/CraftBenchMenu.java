@@ -41,7 +41,8 @@ public final class CraftBenchMenu extends Menu {
             CurrencyOperation.REROLL_IMPLICIT, CurrencyOperation.CORRUPT, CurrencyOperation.QUALITY_WEAPON, CurrencyOperation.QUALITY_ARMOUR,
             CurrencyOperation.QUALITY_MAP, CurrencyOperation.ESSENCE, CurrencyOperation.CATALYST,
             CurrencyOperation.UNVEIL, // 2026-10-19：揭露石（加一條隱匿詞綴，之後找盜賊首領揭露）
-            CurrencyOperation.FRACTURE); // 2026-10-21：定星石（PoE2 的破裂石）
+            CurrencyOperation.FRACTURE, // 2026-10-21：定星石（PoE2 的破裂石）
+            CurrencyOperation.QUALITY_CASTER); // 2026-10-26：星紋蝕刻器（預見鎖要先看結果，照原本拿在游標上點；工匠石照站長拿掉了）
 
     /** 左邊星籤（第 2～5 排的第 1～3 格）、右邊通貨（第 2～5 排的第 7～9 格）。 */
     private static final int[] OMEN_SLOTS = grid(0);
@@ -190,7 +191,7 @@ public final class CraftBenchMenu extends Menu {
             }
             if (hanging == null) {
                 if (data.corrupted() || !omen.canApply(data, plugin.items().generator())) {
-                    return "星籤只能掛在已鑑定、沒腐化的魔法或稀有裝備上";
+                    return "這個星籤不能掛在這件上（要已鑑定、沒腐化；能掛的稀有度看星籤的說明）"; // 2026-10-26：有的星籤掛在普通、傳奇上
                 }
                 after.setOmen(omen.id());
             }

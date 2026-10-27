@@ -42,6 +42,8 @@ WEAPONS = {
     'wand': ('wand', 'wand', '法杖'), 'staff': ('staff', 'staff', '長杖'), 'sceptre': ('sceptre', 'sceptre', '權杖'),
 }
 NO_POE2_DAMAGE = {'wand', 'staff', 'sceptre'}
+# 2026-10-26：這三類換成 bases/weapons_casters.yml（照 PoE2：沒有傷害、賦予技能），這裡產生的全部退役、合併到那邊的第 1 把
+CASTER_SUCCESSOR = {'wand': 'cwand_01', 'staff': 'cstaff_01', 'sceptre': 'csceptre_01'}
 SKIP = {'Kalguuran Forgehammer', 'Trarthan Cannon', 'Runic Fork', 'Heartwood Shortbow',
         'Abyssal Signet', 'Grasping Ring', 'Breach Ring', 'Fine Breach Ring', 'Ring of Potential',
         'Corona Amulet', 'Lament Amulet', 'Portent Amulet', 'Absent Amulet', 'Veridical Chain',
@@ -319,6 +321,7 @@ def weapons(old):
                 target_dps = old_avg * old_aps * curve * dps(r) / fit(lv)
                 own_dps = dps(r)
                 scale = target_dps / own_dps if own_dps > 0 else 1
+                scale = 1  # 2026-10-26：武器傷害改成 PoE2 原值（不再對到原本的曲線；物品等級超過 base_level 也不再往上長，見 ItemStats.damageFactor）
                 parts = []
                 pmin, pmax = num(r['phys_min']), num(r['phys_max'])
                 if pmax > 0:
@@ -606,7 +609,14 @@ def collapse(lines):
     for bid, fields in blocks:
         rep = rep_of[bid]
         new = []
+        successor = CASTER_SUCCESSOR.get(parsed[bid].get('family')) if bid == rep else None
         for f in fields:
+            if successor and f.startswith('  name:'):
+                # 2026-10-26：法杖、長杖、權杖換成 bases/weapons_casters.yml（tools/gen_poe2_casters.py）：留下來的那一階也退役
+                new.append(f)
+                new.append('  retired: true          # 2026-10-26：換成照 PoE2 的法杖、長杖、權杖（bases/weapons_casters.yml，沒有傷害、賦予技能）；舊物品照常能用')
+                new.append('  merged_into: %s' % successor)
+                continue
             if bid == rep:
                 if f == '  fixed: true':
                     base_level, implicit_level = info[bid]

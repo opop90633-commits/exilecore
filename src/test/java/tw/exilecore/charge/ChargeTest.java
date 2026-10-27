@@ -48,7 +48,7 @@ class ChargeTest {
         assertEquals(ChargeType.Trigger.HIT, types.get("endurance").trigger());
         for (final ChargeType type : types.values()) {
             assertEquals(3, type.baseMax(), type.id());
-            assertEquals(10, type.durationSeconds(), 1e-9, type.id());
+            assertEquals(15, type.durationSeconds(), 1e-9, type.id()); // 2026-10-27 照 PoE2：15 秒（這次之前 10）
             assertTrue(type.describe().isEmpty(), type.id() + " 本身不給屬性（2026-10 照 PoE2）");
             assertFalse(type.symbol().isBlank());
         }
@@ -82,20 +82,20 @@ class ChargeTest {
     }
 
     @Test
-    void bagGainsUpToTheCapRefreshesTheOldestAndExpiresOneByOne() {
+    void bagGainsUpToTheCapAndEveryGainRefreshesAllCharges() {
+        // 2026-10-27 照 PoE2（poe2db Charges）：獲得一顆時同一種全部刷新、一起到期；這次之前滿了只刷新最舊那顆、一顆一顆掉
         final ChargeBag bag = new ChargeBag();
         assertEquals(-1, bag.nextExpiry());
         assertTrue(bag.gain(0, 3, 200));
         assertTrue(bag.gain(10, 3, 200));
+        assertEquals(210, bag.nextExpiry(), "第二顆把第一顆也刷新到 210");
         assertTrue(bag.gain(20, 3, 200));
         assertEquals(3, bag.count());
-        assertFalse(bag.gain(30, 3, 200), "滿了：只刷新最舊那顆，不會變多");
+        assertFalse(bag.gain(30, 3, 200), "滿了：全部刷新，不會變多");
         assertEquals(3, bag.count());
-        assertEquals(210, bag.nextExpiry(), "最舊的（0 → 200）被換成 30 → 230，現在最早消失的是 10 → 210");
-        assertEquals(1, bag.expire(210));
-        assertEquals(2, bag.count());
-        assertEquals(0, bag.expire(219));
-        assertEquals(2, bag.expire(1000), "其他的也到期了");
+        assertEquals(230, bag.nextExpiry());
+        assertEquals(0, bag.expire(229));
+        assertEquals(3, bag.expire(230), "一起到期");
         assertTrue(bag.isEmpty());
         bag.gain(0, 5, 100);
         bag.gain(1, 5, 100);
@@ -112,20 +112,20 @@ class ChargeTest {
         final ChargeType frenzy = types.get("frenzy");
         final StatSheet none = new StatSheet();
         assertEquals(3, frenzy.maxFor(none));
-        assertEquals(200, frenzy.durationTicksFor(none), "10 秒 = 200 tick");
+        assertEquals(300, frenzy.durationTicksFor(none), "15 秒 = 300 tick（2026-10-27 照 PoE2；這次之前 10 秒）");
         assertEquals(0, frenzy.chanceFor(none), 1e-9, "沒有任何來源：一顆也拿不到");
         final StatSheet geared = new StatSheet()
                 .add(Modifier.flat(StatKeys.chargeMax("frenzy"), 1, "靴子"))
                 .add(Modifier.flat(StatKeys.chargeChance("frenzy"), 25, "戒指"))
                 .add(Modifier.increased(StatKeys.CHARGE_DURATION, 0.5, "腰帶"));
         assertEquals(4, frenzy.maxFor(geared));
-        assertEquals(300, frenzy.durationTicksFor(geared));
+        assertEquals(450, frenzy.durationTicksFor(geared));
         assertEquals(0.25, frenzy.chanceFor(geared), 1e-9);
         assertEquals(3, types.get("power").maxFor(geared), "別種球不受影響");
         final StatSheet cursed = new StatSheet().add(Modifier.flat(StatKeys.chargeMax("frenzy"), -5, "詛咒"))
                 .add(Modifier.increased(StatKeys.CHARGE_DURATION, -2, "詛咒"));
         assertEquals(0, frenzy.maxFor(cursed), "不會變負的");
-        assertEquals(20, frenzy.durationTicksFor(cursed), "持續時間最短剩一成");
+        assertEquals(30, frenzy.durationTicksFor(cursed), "持續時間最短剩一成");
         assertEquals(1.0, frenzy.chanceFor(new StatSheet().add(Modifier.flat(StatKeys.chargeChance("frenzy"), 250, "測試"))), 1e-9);
     }
 
@@ -188,7 +188,10 @@ class ChargeTest {
                         // 詞綴寫的字跟天賦、輔助寶石、/stats 的說明（ChargeText）一樣；
                         // 好幾條效果的詞綴（揭露的怒星：+1 上限、擊殺時機率）每一條都要寫在文字裡
                         final double value = mod.variable() == null ? mod.constant() : 7;
-                        final String line = ChargeText.describe(mod.stat(), value, "");
+                        final String described = ChargeText.describe(mod.stat(), value, "");
+                        // 2026-10-26：數值範圍有正有負的（星軌魔杖的 -1～+1 銳星上限）照資料檔的寫法不寫「+」，數值自己帶正負號
+                        final String line = mod.variable() != null && described != null && described.startsWith("+") && !affix.text().contains("+{")
+                                ? described.substring(1) : described;
                         if (affix.mods().size() == 1) {
                             assertEquals(affix.text().replace("{value}", "7"), line, affix.id() + " 的文字");
                         } else {
@@ -206,12 +209,12 @@ class ChargeTest {
     void consumingAndCountingSkipExpiredCharges() {
         final ChargeBag bag = new ChargeBag();
         bag.gain(0, 3, 100);  // 100 消失
-        bag.gain(50, 3, 100); // 150 消失
-        assertEquals(2, bag.count(99));
-        assertEquals(1, bag.count(100), "到期的那一 tick 就不算（還沒被清掉也一樣）");
+        bag.gain(50, 3, 100); // 2026-10-27 照 PoE2：兩顆都刷新成 150 消失
+        assertEquals(2, bag.count(149));
+        assertEquals(0, bag.count(150), "到期的那一 tick 就不算（還沒被清掉也一樣）");
         assertTrue(bag.consume(60), "瞬影擊用掉一顆");
         assertEquals(1, bag.count(60));
-        assertEquals(150, bag.nextExpiry(), "用掉的是最快消失的那顆，留下撐比較久的");
+        assertEquals(150, bag.nextExpiry());
         assertFalse(bag.consume(150), "過期的不能拿來用");
         assertTrue(bag.isEmpty());
         assertFalse(new ChargeBag().consume(0));
@@ -243,9 +246,10 @@ class ChargeTest {
         skills.load(DATA);
         // 2026-10 PoE2 改版：聚銳、聚怒、聚磐換成 charge_power、charge_frenzy、charge_endurance（說明直接寫，不用 {charge:…}）
         assertNull(skills.support("power_on_hit"));
-        assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆銳星。",
-                skills.support("charge_power").descriptionText(), "戰星本身沒有屬性，說明不寫每顆效果");
-        assertTrue(skills.support("charge_frenzy").descriptionText().contains(ChargeText.name("frenzy")));
+        // 2026-10-27：聚銳、聚怒（原作沒有）刪掉，只剩聚磐
+        assertNull(skills.support("charge_power"));
+        assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆磐星。",
+                skills.support("charge_endurance").descriptionText(), "戰星本身沒有屬性，說明不寫每顆效果");
         assertTrue(skills.support("charge_endurance").descriptionText().contains(ChargeText.name("endurance")));
         assertEquals("先 x 再 怒星", ChargeText.expand("先 {charge:x} 再 {charge:frenzy}"),
                 "不認得的代號換成代號本身");
@@ -256,16 +260,16 @@ class ChargeTest {
         final Path dir = java.nio.file.Files.createTempDirectory("exilecore-charge");
         java.nio.file.Files.copy(DATA.resolve("skills.yml"), dir.resolve("skills.yml"));
         final String supports = java.nio.file.Files.readString(DATA.resolve("supports.yml"));
-        final String original = "有機率獲得一顆銳星。";
+        final String original = "有機率獲得一顆磐星。";
         assertTrue(supports.contains(original));
-        java.nio.file.Files.writeString(dir.resolve("supports.yml"), supports.replace(original, "有機率獲得一顆{charge:power}。"));
+        java.nio.file.Files.writeString(dir.resolve("supports.yml"), supports.replace(original, "有機率獲得一顆{charge:endurance}。"));
         final tw.exilecore.skill.SkillConfig placeholders = new tw.exilecore.skill.SkillConfig();
         placeholders.load(dir);
-        assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆銳星。",
-                placeholders.support("charge_power").descriptionText(), "沒有每顆效果就只換名字");
+        assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆磐星。",
+                placeholders.support("charge_endurance").descriptionText(), "沒有每顆效果就只換名字");
         assertEquals(List.of(), placeholders.chargeProblems(types::containsKey));
-        assertEquals(1, placeholders.chargeProblems(id -> !id.equals("power")).stream()
-                        .filter(line -> line.contains("charge_power") && line.contains("說明寫了 {charge:power}")).count(),
+        assertEquals(1, placeholders.chargeProblems(id -> !id.equals("endurance")).stream()
+                        .filter(line -> line.contains("charge_endurance") && line.contains("說明寫了 {charge:endurance}")).count(),
                 "說明裡打錯字也會被抓出來（2026-10-24：戰星輔助的說明本來就用 {charge:power}，只看改的那一顆）");
     }
 
@@ -289,11 +293,11 @@ class ChargeTest {
         }
         assertEquals(List.of(), skills.chargeProblems(types::containsKey), "伺服器紀錄不會有警告");
         assertEquals(1, skills.chargeProblems(id -> !id.equals("frenzy")).stream().filter(line -> line.contains("cooldown_bypass")).count(),
-                "打錯字會被抓出來");
+                "打錯字會被抓出來（2026-10-26：照站長拿掉霜綻，用怒星的只剩霜鏃；這次之前 2）");
         assertNull(skills.skill("flicker_strike").cooldownBypass(), "2026-10-24：瞬影擊照 PoE2 沒有冷卻，改成用銳星連打");
         assertEquals(0, skills.skill("flicker_strike").cooldown(), 1e-9);
-        assertEquals("frenzy", skills.skill("frost_snap").cooldownBypass(), "霜綻冷卻中消耗怒星（2026-10）");
-        assertEquals(1, bypass);
+        assertNull(skills.skill("frost_snap"), "2026-10-26：照站長拿掉霜綻（這次之前冷卻中消耗怒星）");
+        assertEquals(1 + 5, bypass, "2026-10-26：照站長拿掉霜綻（這次之前 2 + 5）；霜鏃照 PoE2 可以花怒星跳過冷卻；焚獄、震地、堅壁、寒夜嗥、裂甲熊咆照 PoE2 可以花磐星跳過冷卻");
         assertEquals(3, warcry, "聚星戰吼拿掉了（2026-10），只剩隱藏的磐星、怒星、銳星（2026-10-24：引雷棍）各給一種");
         for (final tw.exilecore.skill.SupportDefinition support : skills.supports()) {
             for (final Modifier modifier : support.modifiers()) {

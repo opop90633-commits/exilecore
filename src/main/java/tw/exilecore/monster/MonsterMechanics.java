@@ -151,7 +151,24 @@ public final class MonsterMechanics implements Listener {
     }
 
     /** 足跡：一小塊點燃／冰緩／感電的地面。 */
-    private record Patch(UUID world, double x, double y, double z, AilmentType type, double value, long until) {
+    private record Patch(UUID world, double x, double y, double z, AilmentType type, double value, long until, double radius, String owner) {
+        Patch(final UUID world, final double x, final double y, final double z, final AilmentType type, final double value, final long until) {
+            this(world, x, y, z, type, value, until, 1.3, null);
+        }
+    }
+
+    /** 地圖的地面效果（2026-10-26 PoE2 換界石）：不會被足跡擠掉；owner 是實例代號，關掉時一起收。 */
+    private final List<Patch> mapPatches = new ArrayList<>();
+
+    /** 放一塊地圖的地面效果（點燃 value = 每秒火焰傷害、冰緩 = 冰緩幅度、感電 = 感電幅度），半徑 radius 格。 */
+    public void addMapPatch(final String owner, final Location at, final AilmentType type, final double value, final double radius,
+                            final long until) {
+        mapPatches.add(new Patch(at.getWorld().getUID(), at.getX(), at.getY(), at.getZ(), type, value, until, radius, owner));
+    }
+
+    /** 收掉某個實例的地面效果。 */
+    public void clearMapPatches(final String owner) {
+        mapPatches.removeIf(patch -> owner.equals(patch.owner()));
     }
 
     /** 閃電幻影：追著玩家跑，碰到就炸。 */
@@ -256,7 +273,7 @@ public final class MonsterMechanics implements Listener {
             }
             return 0;
         }
-        double rest = amount;
+        double rest = amount / MonsterSheets.effectiveness(sheet); // 2026-10-26（PoE2）：怪物效能 = 韌性，受到的傷害照倍率變少
         final Integer stacks = souls.get(defender.getUniqueId());
         if (stacks != null && stacks > 0) {
             rest *= Math.max(0, 1 - 0.01 * stacks);
@@ -425,10 +442,25 @@ public final class MonsterMechanics implements Listener {
         final Location at = monster.getLocation();
         final World world = at.getWorld();
         // 再生的：每秒（每兩次）回復 x% 最大生命
-        if (traits.regen() > 0 && ticks % 10 == 0) {
+        if (traits.regen() > 0 && ticks % 10 == 0 && !tw.exilecore.ascendancy.AscendancyEffects.cursedNoRegen(monster)) { // 2026-10-26（昇華・血肉低語）
             final AttributeInstance max = monster.getAttribute(Attribute.MAX_HEALTH);
             if (max != null && monster.getHealth() < max.getValue()) {
-                monster.setHealth(Math.min(max.getValue(), monster.getHealth() + max.getValue() * traits.regen() / 100.0));
+                // 2026-10-26（淵握戒）：深淵消耗中生命回復速度減少 50%
+                double wasting = plugin.combat() != null && plugin.combat().debuffs()
+                        .has(monster.getUniqueId(), tw.exilecore.combat.KeystoneEffects.NO_REGEN_ID, now) ? 0 // 2026-10-26 天賦樹：流血／完全破甲的敵人不能再生
+                        : plugin.combat() != null && plugin.combat().debuffs()
+                        .has(monster.getUniqueId(), tw.exilecore.item.unique.UniqueMechanics.WASTING_ID, now) ? 0.5 : 1.0;
+                if (plugin.combat() != null) {
+                    // 2026-10-26 照 PoE2 天賦樹：詛咒帶的「生命再生速度減少 x%」
+                    double rate = 0;
+                    for (final tw.exilecore.stats.Modifier mod : plugin.combat().debuffs().modifiers(monster.getUniqueId(), null, now)) {
+                        if (tw.exilecore.stats.TreeEffectKeys.REGEN_RATE.equals(mod.stat()) && mod.type() == tw.exilecore.stats.ModType.INCREASED) {
+                            rate += mod.value();
+                        }
+                    }
+                    wasting *= Math.max(0, 1 + rate);
+                }
+                monster.setHealth(Math.min(max.getValue(), monster.getHealth() + max.getValue() * traits.regen() * wasting / 100.0));
             }
         }
         if (world == null || at.getNearbyPlayers(VIEW_RADIUS).isEmpty()) {
@@ -598,11 +630,15 @@ public final class MonsterMechanics implements Listener {
      */
     private void tickPatches(final long now) {
         patches.removeIf(patch -> patch.until() <= now);
-        if (patches.isEmpty()) {
+        mapPatches.removeIf(patch -> patch.until() <= now);
+        if (patches.isEmpty() && mapPatches.isEmpty()) {
             return;
         }
         final Map<UUID, List<Player>> players = new HashMap<>();
-        for (final Patch patch : patches) {
+        final List<Patch> all = new ArrayList<>(patches.size() + mapPatches.size());
+        all.addAll(patches);
+        all.addAll(mapPatches);
+        for (final Patch patch : all) {
             final List<Player> here = players.computeIfAbsent(patch.world(), uuid -> {
                 final World world = plugin.getServer().getWorld(uuid);
                 return world == null ? List.of() : world.getPlayers();
@@ -620,8 +656,14 @@ public final class MonsterMechanics implements Listener {
                 if (flat <= VIEW_RADIUS * VIEW_RADIUS) {
                     seen = true;
                 }
-                if (plugin.ailments() != null && flat <= 1.3 * 1.3 && Math.abs(dy) <= 1.5 && !player.isDead()) {
+                if (plugin.ailments() != null && flat <= patch.radius() * patch.radius() && Math.abs(dy) <= 1.5 && !player.isDead()) {
                     plugin.ailments().groundAilment(player, patch.type(), patch.value(), 2.0);
+                    // 2026-10-27 照 PoE2 天賦樹（「站在感電／冰緩／點燃地面上時」）
+                    plugin.players().get(player).markRecent(switch (patch.type()) {
+                        case IGNITE -> tw.exilecore.stats.TreeLastKeys.EVENT_GROUND_FIRE;
+                        case CHILL -> tw.exilecore.stats.TreeLastKeys.EVENT_GROUND_CHILL;
+                        default -> tw.exilecore.stats.TreeLastKeys.EVENT_GROUND_SHOCK;
+                    }, now);
                 }
             }
             if (seen) {
@@ -630,7 +672,8 @@ public final class MonsterMechanics implements Listener {
                     case IGNITE -> Particle.FLAME;
                     case CHILL -> Particle.SNOWFLAKE;
                     default -> Particle.ELECTRIC_SPARK;
-                }, patch.x(), patch.y() + 0.1, patch.z(), 3, 0.5, 0.05, 0.5, 0.01);
+                }, patch.x(), patch.y() + 0.1, patch.z(), patch.owner() == null ? 3 : 2 + (int) Math.round(patch.radius() * 2),
+                        patch.radius() * 0.4, 0.05, patch.radius() * 0.4, 0.01);
             }
         }
     }
@@ -640,7 +683,9 @@ public final class MonsterMechanics implements Listener {
     private void tickPools(final long now) {
         for (final Map.Entry<UUID, Pool> entry : pools.entrySet()) {
             final Pool pool = entry.getValue();
-            if (pool.shieldMax > 0 && pool.shield < pool.shieldMax && now - pool.lastHit >= SHIELD_RECHARGE_DELAY) {
+            if (pool.shieldMax > 0 && pool.shield < pool.shieldMax && now - pool.lastHit >= SHIELD_RECHARGE_DELAY
+                    && (plugin.combat() == null || !plugin.combat().debuffs().has(entry.getKey(),
+                            tw.exilecore.stats.KeystoneOriginKeys.NO_ES_RECHARGE_ID, now))) { // 2026-10-27 照 PoE2 命運終結：被詛咒的不能回充
                 pool.shield = Math.min(pool.shieldMax, pool.shield + pool.shieldMax * 0.1); // 每秒 20%
             }
             if (pool.magmaMax > 0 && pool.magma <= 0 && pool.magmaBack > 0 && now >= pool.magmaBack) {

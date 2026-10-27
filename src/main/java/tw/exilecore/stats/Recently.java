@@ -79,10 +79,11 @@ public final class Recently {
             return null;
         }
         final String text = stat.substring(at + 1).trim().toLowerCase(Locale.ROOT);
-        if (EVENTS.contains(text)) {
+        // 2026-10-26：天賦樹的狀態條件（靜止、被包圍、低血…，見 TreeConditions）也走這裡
+        if (EVENTS.contains(text) || TreeConditions.isSelf(text)) {
             return new Condition(text, false);
         }
-        if (text.startsWith("no") && EVENTS.contains(text.substring(2))) {
+        if (text.startsWith("no") && TreeConditions.isSelf(text.substring(2))) {
             return new Condition(text.substring(2), true);
         }
         return null;

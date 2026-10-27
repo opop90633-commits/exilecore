@@ -29,6 +29,123 @@ public final class CodexData {
     private CodexData() {
     }
 
+    /**
+     * 一個技能的圖鑑資料（網頁圖鑑、2026-10-27 起網頁規劃器的昇華賦予技能預覽共用）。
+     *
+     * @param tagNamesIn 標籤代號 → 中文名稱，順便收集；null = 寫在這個技能自己的 tagNames 裡
+     */
+    public static JsonObject skillJson(final ExileCore plugin, final SkillDefinition skill, final java.util.Collection<SupportDefinition> gems,
+                                       final JsonObject tagNamesIn) {
+        final JsonObject tagNames = tagNamesIn == null ? new JsonObject() : tagNamesIn;
+        final JsonObject s = new JsonObject();
+        s.addProperty("id", skill.id());
+        s.addProperty("name", skill.name());
+        s.addProperty("type", skill.type() == null ? "" : skill.type().name().toLowerCase(Locale.ROOT));
+        s.addProperty("tier", skill.tier());
+        s.addProperty("text", plain(tw.exilecore.charge.ChargeText.expand(skill.description())));
+        final JsonArray weapons = new JsonArray();
+        if (skill.weapons() != null) {
+            skill.weapons().stream().sorted().forEach(weapons::add);
+        }
+        s.add("weapons", weapons);
+        final JsonArray tags = new JsonArray();
+        if (skill.tags() != null) {
+            skill.tags().stream().sorted().forEach(tag -> {
+                tags.add(tag);
+                if (!tagNames.has(tag)) {
+                    tagNames.addProperty(tag, ModifierText.tagName(tag));
+                }
+            });
+        }
+        s.add("tags", tags);
+        final JsonArray fits = new JsonArray();
+        for (final SupportDefinition support : gems) {
+            if (support.supports(skill)) {
+                fits.add(support.id());
+            }
+        }
+        s.add("supports", fits);
+        final JsonArray effects = new JsonArray(); // 2026-10：效果文字（光環、戰吼、印記…；搜尋也找得到）
+        try {
+            for (final String text : tw.exilecore.gui.CodexMenu.skillEffectTexts(skill)) {
+                effects.add(plain(text));
+            }
+        } catch (final RuntimeException ignored) {
+            // 寫不出來的略過
+        }
+        s.add("effects", effects);
+        s.addProperty("kind", skill.summon() != null ? "summon" : skill.aura() != null ? "aura" : skill.warcry() != null ? "warcry" : "");
+        if (skill.cooldown() > 0) {
+            s.addProperty("cooldown", skill.cooldown());
+        }
+        // 2026-10-22（補齊遊戲裡圖鑑有的）：來源（未切割寶石雕得出來／專屬掉落）、施放時間、各等級的基礎數值
+        if (!skill.engravable()) {
+            s.addProperty("source", plain(tw.exilecore.gui.CodexMenu.skillSourceLabel(plugin, skill))); // 2026-10-27：昇華專屬寫出是哪個昇華
+        }
+        if (skill.isAttack()) {
+            if (skill.attackSpeed() > 0 && Math.abs(skill.attackSpeed() - 1) > 1e-9) {
+                s.addProperty("attackSpeed", Math.round(skill.attackSpeed() * 100));
+            }
+        } else if (skill.castTime() > 0) {
+            s.addProperty("castTime", skill.castTime());
+        }
+        final JsonArray levels = new JsonArray();
+        for (final int level : new int[] {1, 10, 20, 30, 40}) {
+            try {
+                final JsonObject row = new JsonObject();
+                row.addProperty("lv", level);
+                row.addProperty("mana", tw.exilecore.skill.SkillProfiles.manaCost(skill, level));
+                if (skill.isAttack()) {
+                    row.addProperty("eff", Math.round(skill.effectiveness().at(level) * 100));
+                } else if (skill.damage() != null) {
+                    final double[] range = tw.exilecore.skill.SkillProfiles.spellDamage(plugin.skills().config(), skill, level);
+                    row.addProperty("min", Math.round(range[0]));
+                    row.addProperty("max", Math.round(range[1]));
+                    final double eff = skill.effectiveness().at(level);
+                    if (Math.abs(eff - 1) > 1e-9) {
+                        row.addProperty("eff", Math.round(eff * 100));
+                    }
+                }
+                levels.add(row);
+            } catch (final RuntimeException ignored) {
+                // 算不出來的等級略過
+            }
+        }
+        s.add("levels", levels);
+        // 2026-10-26 照 PoE2：技能寶石的屬性分配與需求（GemAttributes；武器賦予的沒有）
+        if (tw.exilecore.skill.GemAttributes.isGem(skill)) {
+            final tw.exilecore.skill.GemAttributes.Weights weights = tw.exilecore.skill.GemAttributes.weights(skill);
+            final JsonObject attr = new JsonObject();
+            attr.addProperty("str", weights.str());
+            attr.addProperty("dex", weights.dex());
+            attr.addProperty("int", weights.intelligence());
+            s.add("attr", attr);
+            s.addProperty("colour", String.valueOf(colourCode(weights.primary())));
+            final JsonArray reqs = new JsonArray();
+            for (final int level : new int[] {1, 5, 10, 15, 20}) {
+                final tw.exilecore.skill.GemAttributes.Requirement req =
+                        tw.exilecore.skill.GemAttributes.base(plugin.skills().config(), skill, level);
+                final JsonObject row = new JsonObject();
+                row.addProperty("lv", level);
+                row.addProperty("level", level <= 1 ? 0 : plugin.skills().config().requiredLevel(level));
+                row.addProperty("str", req.str());
+                row.addProperty("dex", req.dex());
+                row.addProperty("int", req.intelligence());
+                reqs.add(row);
+            }
+            s.add("requirements", reqs);
+        }
+        if (tagNamesIn == null) {
+            s.add("tagNames", tagNames);
+        }
+        return s;
+    }
+
+    /** 2026-10-26：寶石顏色的代號（r／g／b；白色 w）。 */
+    static char colourCode(final char colour) {
+        return colour == 0 ? 'w' : colour;
+    }
+
     public static byte[] json(final ExileCore plugin) {
         final JsonObject root = new JsonObject();
         final JsonArray skills = new JsonArray();
@@ -44,82 +161,7 @@ public final class CodexData {
                 if (skill.hidden() || skill.id().startsWith("proc_") || skill.name() == null || skill.name().isBlank()) {
                     continue; // 輔助觸發的、內部用的不列
                 }
-                final JsonObject s = new JsonObject();
-                s.addProperty("id", skill.id());
-                s.addProperty("name", skill.name());
-                s.addProperty("type", skill.type() == null ? "" : skill.type().name().toLowerCase(Locale.ROOT));
-                s.addProperty("tier", skill.tier());
-                s.addProperty("text", plain(tw.exilecore.charge.ChargeText.expand(skill.description())));
-                final JsonArray weapons = new JsonArray();
-                if (skill.weapons() != null) {
-                    skill.weapons().stream().sorted().forEach(weapons::add);
-                }
-                s.add("weapons", weapons);
-                final JsonArray tags = new JsonArray();
-                if (skill.tags() != null) {
-                    skill.tags().stream().sorted().forEach(tag -> {
-                        tags.add(tag);
-                        if (!tagNames.has(tag)) {
-                            tagNames.addProperty(tag, ModifierText.tagName(tag));
-                        }
-                    });
-                }
-                s.add("tags", tags);
-                final JsonArray fits = new JsonArray();
-                for (final SupportDefinition support : gems) {
-                    if (support.supports(skill)) {
-                        fits.add(support.id());
-                    }
-                }
-                s.add("supports", fits);
-                final JsonArray effects = new JsonArray(); // 2026-10：效果文字（光環、戰吼、印記…；搜尋也找得到）
-                try {
-                    for (final String text : tw.exilecore.gui.CodexMenu.skillEffectTexts(skill)) {
-                        effects.add(plain(text));
-                    }
-                } catch (final RuntimeException ignored) {
-                    // 寫不出來的略過
-                }
-                s.add("effects", effects);
-                s.addProperty("kind", skill.summon() != null ? "summon" : skill.aura() != null ? "aura" : skill.warcry() != null ? "warcry" : "");
-                if (skill.cooldown() > 0) {
-                    s.addProperty("cooldown", skill.cooldown());
-                }
-                // 2026-10-22（補齊遊戲裡圖鑑有的）：來源（未切割寶石雕得出來／專屬掉落）、施放時間、各等級的基礎數值
-                if (!skill.engravable()) {
-                    s.addProperty("source", plain(tw.exilecore.gui.CodexMenu.sourceLabel(plugin, skill.source())));
-                }
-                if (skill.isAttack()) {
-                    if (skill.attackSpeed() > 0 && Math.abs(skill.attackSpeed() - 1) > 1e-9) {
-                        s.addProperty("attackSpeed", Math.round(skill.attackSpeed() * 100));
-                    }
-                } else if (skill.castTime() > 0) {
-                    s.addProperty("castTime", skill.castTime());
-                }
-                final JsonArray levels = new JsonArray();
-                for (final int level : new int[] {1, 10, 20, 30, 40}) {
-                    try {
-                        final JsonObject row = new JsonObject();
-                        row.addProperty("lv", level);
-                        row.addProperty("mana", tw.exilecore.skill.SkillProfiles.manaCost(skill, level));
-                        if (skill.isAttack()) {
-                            row.addProperty("eff", Math.round(skill.effectiveness().at(level) * 100));
-                        } else if (skill.damage() != null) {
-                            final double[] range = tw.exilecore.skill.SkillProfiles.spellDamage(plugin.skills().config(), skill, level);
-                            row.addProperty("min", Math.round(range[0]));
-                            row.addProperty("max", Math.round(range[1]));
-                            final double eff = skill.effectiveness().at(level);
-                            if (Math.abs(eff - 1) > 1e-9) {
-                                row.addProperty("eff", Math.round(eff * 100));
-                            }
-                        }
-                        levels.add(row);
-                    } catch (final RuntimeException ignored) {
-                        // 算不出來的等級略過
-                    }
-                }
-                s.add("levels", levels);
-                skills.add(s);
+                skills.add(skillJson(plugin, skill, gems, tagNames));
             }
             for (final SupportDefinition support : gems) {
                 final JsonObject s = new JsonObject();
@@ -140,6 +182,11 @@ public final class CodexData {
                     // 寫不出來的略過
                 }
                 s.add("mods", mods);
+                // 2026-10-26 照 PoE2：輔助寶石的顏色（r 紅＝力量、g 綠＝敏捷、b 藍＝智慧、w 白）與加給技能寶石的需求
+                final char colour = tw.exilecore.skill.SupportColours.colour(support.id());
+                s.addProperty("colour", String.valueOf(colourCode(colour)));
+                s.addProperty("attrName", tw.exilecore.skill.GemAttributes.label(colour));
+                s.addProperty("requirement", colour == 0 ? 0 : tw.exilecore.skill.GemAttributes.SUPPORT_REQUIREMENT);
                 supports.add(s);
             }
         }

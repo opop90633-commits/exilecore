@@ -171,7 +171,7 @@ public final class WeaponSelectMenu extends Menu {
             lore.add("<gray>" + entry.getKey().displayName() + "傷害：<white>" + entry.getValue()[0] + " - " + entry.getValue()[1]);
         }
         lore.add(String.format(Locale.ROOT, "<gray>暴擊率：<white>%.1f%%  <gray>每秒攻擊：<white>%.2f", base.crit(), base.aps()));
-        lore.add(requirementLine(base));
+        lore.add(requirementLine(plugin.items().repository(), base));
         if (base.implicit() != null) {
             lore.add("<#a0a0ff>" + ItemRenderer.escape(rangeText(base)) + " <dark_gray>(固定)"
                     + tw.exilecore.item.AffixChips.miniMessage(tw.exilecore.item.AffixChips.of(base.implicit().mods())));
@@ -207,16 +207,18 @@ public final class WeaponSelectMenu extends Menu {
         return option.recommended() ? glowing(stack) : stack;
     }
 
-    private static String requirementLine(final ItemBase base) {
+    private static String requirementLine(final ItemRepository repository, final ItemBase base) {
+        // 2026-10-26：顯示新手武器那個物品等級的需求（合併的基底照同一類最低那一階的 PoE2 需求）；這次之前直接顯示基底寫的
+        final ItemBase.Requirements req = tw.exilecore.item.ItemStats.requirements(repository, base, StarterKits.ITEM_LEVEL);
         final List<String> parts = new ArrayList<>();
-        if (base.requirements().str() > 0) {
-            parts.add("力量 <white>" + base.requirements().str());
+        if (req.str() > 0) {
+            parts.add("力量 <white>" + req.str());
         }
-        if (base.requirements().dex() > 0) {
-            parts.add("敏捷 <white>" + base.requirements().dex());
+        if (req.dex() > 0) {
+            parts.add("敏捷 <white>" + req.dex());
         }
-        if (base.requirements().intelligence() > 0) {
-            parts.add("智慧 <white>" + base.requirements().intelligence());
+        if (req.intelligence() > 0) {
+            parts.add("智慧 <white>" + req.intelligence());
         }
         return parts.isEmpty() ? "<gray>需求：無" : "<gray>需求：" + String.join("<gray>，", parts);
     }

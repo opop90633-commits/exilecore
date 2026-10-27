@@ -43,7 +43,7 @@ import java.util.Set;
  *   "level": 70,
  *   "asc": "lich", "ascNodes": ["…"],      昇華職業與昇華天賦（可以不寫）
  *   "progress": { … },                     角色頁快照的進度（任務、Boss 首殺、試煉；只收認得的鍵）
- *   "gear": [物品資料 | null × 10],          照 PlayerState.JEWELLERY_SLOTS 的順序
+ *   "gear": [物品資料 | null × 11],          照 PlayerState.GEAR_SLOTS 的順序（2026-10-26：第 11 個是展露之指的第三個戒指；舊的 10 個也收）
  *   "jewels": { "節點": 物品資料 },
  *   "skills": [{ "id", "level", "sockets", "supports": [...] }],   技能面板（最多 27 個）
  *   "binds": [技能的位置 | -1 × 10],         按鍵格（左、右、蹲左、蹲右、數字鍵 3–8）
@@ -148,7 +148,7 @@ public final class BuildCalc {
         // 裝備與珠寶
         final List<ItemData> gear = new ArrayList<>();
         final JsonArray gearArray = json.has("gear") && json.get("gear").isJsonArray() ? json.getAsJsonArray("gear") : new JsonArray();
-        for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length; i++) {
+        for (int i = 0; i < PlayerState.GEAR_SLOTS.length; i++) {
             gear.add(i < gearArray.size() ? item(gearArray.get(i)) : null);
         }
         final Map<String, ItemData> jewels = new LinkedHashMap<>();
@@ -183,7 +183,22 @@ public final class BuildCalc {
                 // 2026-10-18：共鳴的輔助代號後面有 ~（照存檔的寫法），查定義時剝掉、放進 Entry 時保留讓它記成共鳴
                 final String clean = supportId.endsWith(SkillLoadout.Entry.RESONANT_SUFFIX)
                         ? supportId.substring(0, supportId.length() - SkillLoadout.Entry.RESONANT_SUFFIX.length()) : supportId;
-                supports.add(skills.support(clean) == null ? "" : supportId);
+                // 2026-10-26：舊的低階 I／II 輔助（supports.yml 的 merged）換成同系列最高階；同一個技能重複的不算
+                final String into = skills.supportMergedInto(clean);
+                if (into != null) {
+                    supports.add(supports.contains(into) || supports.contains(into + SkillLoadout.Entry.RESONANT_SUFFIX) ? ""
+                            : into + supportId.substring(clean.length()));
+                    continue;
+                }
+                if (clean.startsWith(SkillLoadout.Entry.INNER_PREFIX)) {
+                    // 2026-10-26：宿主孔裡的技能寶石（@代號/等級/孔數；每一孔都可以）照存檔格式留著；這次之前被當成不認得的輔助丟掉
+                    final String spellId = clean.substring(SkillLoadout.Entry.INNER_PREFIX.length()).split("/", -1)[0].trim();
+                    supports.add(skills.skill(spellId) == null ? "" : clean);
+                    continue;
+                }
+                // 2026-10-27 照站長：規劃器不強迫專屬輔助只能一顆（可能共鳴過）：專屬掉落的輔助一律當成共鳴（血脈輔助不能共鳴，照常一個技能一顆）
+                final SupportDefinition known = skills.support(clean);
+                supports.add(known == null ? "" : plannerResonant(known) ? clean + SkillLoadout.Entry.RESONANT_SUFFIX : supportId);
             }
             final int sockets = s.has("sockets") ? s.get("sockets").getAsInt() : Math.max(SkillLoadout.BASE_SOCKETS, supports.size());
             final int level1 = s.has("level") ? s.get("level").getAsInt() : 1;
@@ -384,6 +399,15 @@ public final class BuildCalc {
         result.inactive().forEach(inactive::add);
         root.add("inactive", inactive);
         final SkillService skills = plugin.skills();
+        // 2026-10-26 照 PoE2：屬性需求不足、不能用的技能寶石（「名稱：力量不足（需要 x，你有 y）」）
+        final JsonArray gemProblems = new JsonArray();
+        if (skills != null) {
+            tw.exilecore.skill.GemAttributes.unmet(skills.config(), result.state().skills(), result.sheet()).forEach((id, why) -> {
+                final SkillDefinition definition = skills.config().skill(id);
+                gemProblems.add((definition == null ? id : definition.name()) + "：" + why);
+            });
+        }
+        root.add("gemProblems", gemProblems);
         final JsonArray rows = new JsonArray();
         if (skills != null) {
             for (final SkillService.DpsRow row : skills.skillDps(result.state(), result.sheet(), auraView(result))) {
@@ -442,8 +466,10 @@ public final class BuildCalc {
             final JsonObject jewel = new JsonObject();
             jewel.addProperty("node", socket.id());
             final JsonArray inRange = new JsonArray();
-            if (base != null && base.isRadiusJewel()) {
-                final double radius = tw.exilecore.passive.JewelSockets.radiusOf(tw.exilecore.item.ItemStats.modifiers(repository, data));
+            final boolean timeless = tw.exilecore.passive.TimelessJewels.isTimeless(base); // 2026-10-26：永恆珠寶（範圍 1500）
+            if (base != null && (base.isRadiusJewel() || timeless)) {
+                final double radius = timeless ? tw.exilecore.passive.TimelessJewels.RADIUS
+                        : tw.exilecore.passive.JewelSockets.radiusOf(tw.exilecore.item.ItemStats.modifiers(repository, data));
                 jewel.addProperty("radius", radius);
                 for (final tw.exilecore.passive.PassiveNode near : tw.exilecore.passive.JewelSockets.nodesInRadius(tree, socket, radius)) {
                     if (build.passives().contains(near.id())) {
@@ -454,10 +480,128 @@ public final class BuildCalc {
             jewel.add("inRange", inRange);
             final JsonArray lines = new JsonArray();
             tw.exilecore.skill.ModifierText.describeAll(mods).forEach(lines::add);
+            if (timeless) {
+                final tw.exilecore.passive.TimelessJewels.Conquest conquest = tw.exilecore.passive.TimelessJewels.read(repository, socket.id(), data);
+                tw.exilecore.passive.TimelessJewels.explain(conquest).forEach(lines::add);
+                if (conquest != null) {
+                    jewel.add("conquest", conquestJson(tree, conquest, build.passives())); // 2026-10-26：網頁天賦樹換成征服後的節點
+                }
+            }
             jewel.add("lines", lines);
             out.add(jewel);
         }
         return out;
+    }
+
+    // ---- 永恆珠寶（2026-10-26）----
+
+    /**
+     * 永恆珠寶征服的節點（網頁天賦樹即時換名稱與說明用；種子的雜湊在伺服器算，跟遊戲裡一模一樣，網頁不用自己重寫）。
+     * <pre>
+     * { "socket", "legion", "legionName", "seed", "conqueror", "conquerorName", "keystone", "radius",
+     *   "nodes": { "節點": { "name", "type", "lines": [...], "add": true（屬性點：lines 是多給的，原本的效果保留） } } }
+     * </pre>
+     * 純函式。allocated：已配置的天賦（深淵族的貢禮照這些算）。
+     */
+    static JsonObject conquestJson(final PassiveTree tree, final tw.exilecore.passive.TimelessJewels.Conquest conquest, final Set<String> allocated) {
+        final JsonObject out = new JsonObject();
+        out.addProperty("socket", conquest.socket());
+        out.addProperty("legion", conquest.legion().code());
+        out.addProperty("legionName", conquest.legion().name());
+        out.addProperty("seed", conquest.seed());
+        out.addProperty("conqueror", conquest.conqueror());
+        out.addProperty("conquerorName", conquest.conquerorInfo().name());
+        out.addProperty("keystone", conquest.legion().keystone(conquest.conqueror()).name());
+        out.addProperty("radius", tw.exilecore.passive.TimelessJewels.RADIUS);
+        final JsonObject nodes = new JsonObject();
+        for (final Map.Entry<String, tw.exilecore.passive.PassiveNode> entry
+                : tw.exilecore.passive.TimelessJewels.conquered(tree, conquest, allocated).entrySet()) {
+            final tw.exilecore.passive.PassiveNode original = tree.node(entry.getKey());
+            final tw.exilecore.passive.PassiveNode replaced = entry.getValue();
+            final boolean addition = original != null && original.attributeChoice() > 0;
+            final List<String> description = replaced.description();
+            final List<String> shown = addition ? description.subList(Math.min(description.size(), original.description().size()), description.size())
+                    : description;
+            final JsonObject node = new JsonObject();
+            node.addProperty("name", replaced.name());
+            node.addProperty("type", replaced.type().name().toLowerCase(java.util.Locale.ROOT));
+            final JsonArray lines = new JsonArray();
+            shown.forEach(lines::add);
+            node.add("lines", lines);
+            if (addition) {
+                node.addProperty("add", true);
+            }
+            nodes.add(entry.getKey(), node);
+        }
+        out.add("nodes", nodes);
+        return out;
+    }
+
+    /**
+     * 讀 POST /tree/timeless 送來的 JSON（純函式）：{ "socket": 孔位, "legion": 1|2, "seed": 100–8000, "conqueror": 1 起算, "nodes": [已配置的] }。
+     * 種子、征服者超出範圍的夾到範圍內（跟擲出來的珠寶一樣）。
+     */
+    static tw.exilecore.passive.TimelessJewels.Conquest parseConquest(final JsonObject json, final PassiveTree tree) throws BadRequest {
+        if (tree == null) {
+            throw new BadRequest("天賦樹還沒載入");
+        }
+        final String socketId = json.has("socket") ? json.get("socket").getAsString() : "";
+        final tw.exilecore.passive.PassiveNode socket = tree.node(socketId);
+        if (socket == null || !socket.isSocket()) {
+            throw new BadRequest("不是珠寶孔：" + socketId);
+        }
+        final tw.exilecore.passive.TimelessJewels.Legion legion = tw.exilecore.passive.TimelessJewels.legions()
+                .get(json.has("legion") ? json.get("legion").getAsInt() : 0);
+        if (legion == null) {
+            throw new BadRequest("沒有這個族");
+        }
+        final int seed = Math.max(tw.exilecore.passive.TimelessJewels.SEED_MIN, Math.min(tw.exilecore.passive.TimelessJewels.SEED_MAX,
+                json.has("seed") ? json.get("seed").getAsInt() : tw.exilecore.passive.TimelessJewels.SEED_MIN));
+        final int conqueror = Math.max(1, Math.min(legion.conquerors().size(), json.has("conqueror") ? json.get("conqueror").getAsInt() : 1));
+        return new tw.exilecore.passive.TimelessJewels.Conquest(socket.id(), legion, seed, conqueror);
+    }
+
+    /** 讀 POST /tree/timeless 的已配置天賦（只收樹上有的，最多 {@value #MAX_TIMELESS_NODES} 個）。 */
+    static Set<String> parseAllocated(final JsonObject json, final PassiveTree tree) {
+        final Set<String> allocated = new LinkedHashSet<>();
+        if (json.has("nodes") && json.get("nodes").isJsonArray()) {
+            for (final JsonElement element : json.getAsJsonArray("nodes")) {
+                if (allocated.size() >= MAX_TIMELESS_NODES) {
+                    break;
+                }
+                final String id = element.getAsString();
+                if (tree.node(id) != null) {
+                    allocated.add(id);
+                }
+            }
+        }
+        return allocated;
+    }
+
+    static final int MAX_TIMELESS_NODES = 2000;
+    private final Limiter timelessLimiter = new Limiter(8, 30);
+
+    /** POST /tree/timeless 的處理（2026-10-26）：給孔位、族、種子、征服者 → 每個被征服的節點換成什麼。 */
+    WebServer.Response handleTimeless(final WebServer.Request request) {
+        if (!timelessLimiter.allow(clientIp.apply(request), System.currentTimeMillis())) {
+            return WebServer.Response.text(429, "太快了，等一下再試");
+        }
+        final PassiveTree tree = plugin.passives() == null ? null : plugin.passives().tree();
+        try {
+            final JsonElement element = JsonParser.parseString(request.text() == null ? "" : request.text());
+            if (!element.isJsonObject()) {
+                return WebServer.Response.text(400, "要送一個 JSON 物件");
+            }
+            final JsonObject json = element.getAsJsonObject();
+            final tw.exilecore.passive.TimelessJewels.Conquest conquest = parseConquest(json, tree);
+            return new WebServer.Response(200, "application/json; charset=utf-8",
+                    GSON.toJson(conquestJson(tree, conquest, parseAllocated(json, tree))).getBytes(StandardCharsets.UTF_8),
+                    Map.of("Cache-Control", "no-store"));
+        } catch (final BadRequest e) {
+            return WebServer.Response.text(400, e.getMessage());
+        } catch (final RuntimeException e) {
+            return WebServer.Response.text(400, "讀不懂送來的資料");
+        }
     }
 
     private static SkillService.AuraView auraView(final Result result) {
@@ -502,6 +646,11 @@ public final class BuildCalc {
      * 輔助寶石比較（PoE 的「這顆輔助多幾 %」）：每一顆能掛上去、還沒掛的輔助，假設掛在這個技能上（沒有空孔就假設多開一孔）
      * 算一次每秒傷害；掛著的每一顆，假設拿掉算一次。屬性表不變（輔助只改這個技能的數值），所以很快。
      */
+    /** 2026-10-27：規劃器裡專屬掉落的輔助（不含血脈）一律當成共鳴過，不佔一個技能的專屬名額。 */
+    static boolean plannerResonant(final SupportDefinition support) {
+        return !support.cuttable() && !support.lineage();
+    }
+
     private JsonObject supports(final Build build, final Result result) {
         final SkillService skills = plugin.skills();
         final SkillConfig config = skills.config();
@@ -530,6 +679,16 @@ public final class BuildCalc {
                 continue; // 掛不上去的不列
             }
             String problem = null;
+            int lineageAt = -1;
+            if (support.lineage()) { // 2026-10-27 照站長：血脈輔助一個技能只能一顆
+                for (int i = 0; i < entry.sockets(); i++) {
+                    final SupportDefinition other = config.support(entry.support(i));
+                    if (other != null && other.lineage()) {
+                        problem = "一個技能只能掛一顆血脈輔助（假設換掉" + other.name() + "）";
+                        lineageAt = i;
+                    }
+                }
+            }
             if (config.oncePerCharacter(support.id())) {
                 final int used = result.state().skills().supportUsedBy(support.id());
                 if (used >= 0 && used != position) {
@@ -537,11 +696,13 @@ public final class BuildCalc {
                 }
             }
             SkillLoadout.Entry trial = entry.freeSocket() >= 0 ? entry : entry.withSockets(entry.sockets() + 1);
-            if (trial.freeSocket() < 0) {
+            if (lineageAt >= 0) {
+                trial = entry.withSupport(lineageAt, support.id()); // 換掉已經掛著的那顆血脈輔助
+            } else if (trial.freeSocket() < 0) {
                 problem = problem == null ? "輔助孔滿了（假設換掉一顆）" : problem;
                 trial = null;
             } else {
-                trial = trial.withSupport(trial.freeSocket(), support.id());
+                trial = trial.withSupport(trial.freeSocket(), support.id(), plannerResonant(support));
             }
             final SkillService.DpsRow row = trial == null ? replaceBest(result, view, position, entry, support.id())
                     : withEntry(result, view, position, trial);
@@ -549,13 +710,16 @@ public final class BuildCalc {
             if (problem != null) {
                 o.addProperty("problem", problem);
             }
+            if (lineageAt >= 0) {
+                o.addProperty("replace", lineageAt); // 2026-10-27：規劃器點下去就換掉那一孔的血脈輔助
+            }
             add.add(o);
         }
         out.add("add", add);
         final JsonArray remove = new JsonArray();
         for (int i = 0; i < entry.sockets(); i++) {
             final String id = entry.support(i);
-            if (id.isEmpty()) {
+            if (id.isEmpty() || entry.spellSocket(i)) { // 2026-10-26：放著技能寶石的孔不是輔助
                 continue;
             }
             final SupportDefinition support = config.support(id);
@@ -623,9 +787,14 @@ public final class BuildCalc {
         out.addProperty("dps", base == null ? 0 : base.dps());
         out.addProperty("full", base == null ? 0 : base.full());
         final List<JsonObject> list = new ArrayList<>();
-        for (final tw.exilecore.passive.PassiveNode node : tree.nodes()) {
-            if (node.type() != tw.exilecore.passive.PassiveNode.Type.NOTABLE || build.passives().contains(node.id())) {
+        // 2026-10-27 照 PoE2 0.5：塗油限定的核心（天賦樹上沒有）也比（anointOnly = true）
+        for (final PassiveTree.Anointable anointable : tree.anointable()) {
+            final tw.exilecore.passive.PassiveNode node = anointable.node();
+            if (build.passives().contains(node.id())) {
                 continue; // 天賦樹上已經配了：注入沒有效果
+            }
+            if (tw.exilecore.currency.InstilRecipes.size() > 0 && tw.exilecore.currency.InstilRecipes.recipe(node.id()) == null) {
+                continue; // 2026-10-27 照 PoE2：沒有情緒配方的核心不能注入
             }
             final ItemData trial = current.copy();
             trial.setInstilled(node.id());
@@ -633,6 +802,9 @@ public final class BuildCalc {
             final JsonObject o = new JsonObject();
             o.addProperty("id", node.id());
             o.addProperty("name", node.name());
+            if (anointable.anointOnly()) {
+                o.addProperty("anointOnly", true);
+            }
             put(o, row, base);
             list.add(o);
         }
@@ -658,7 +830,11 @@ public final class BuildCalc {
                                             final SkillLoadout.Entry entry, final String supportId) {
         SkillService.DpsRow best = null;
         for (int i = 0; i < entry.sockets(); i++) {
-            final SkillService.DpsRow row = withEntry(result, view, position, entry.withSupport(i, supportId));
+            if (entry.spellSocket(i) || i == SkillLoadout.Entry.INNER_SOCKET && entry.inner() != null) {
+                continue; // 2026-10-26：放著技能寶石的孔不拿來換輔助
+            }
+            final SupportDefinition replacing = plugin.skills().config().support(supportId);
+            final SkillService.DpsRow row = withEntry(result, view, position, entry.withSupport(i, supportId, replacing != null && plannerResonant(replacing)));
             if (row != null && (best == null || row.full() > best.full())) {
                 best = row;
             }

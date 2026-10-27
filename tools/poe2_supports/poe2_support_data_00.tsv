@@ -1,0 +1,43 @@
+Magnified_Area_II	3	130%	-	Area skills (Area, MinionsCanExplode)	Supported Skills have 45% increased Area of Effect
+Projectile_Acceleration_I	1	120%	-	Projectile skills (excl. FixedSpeedProjectile)	Supported Skills have 40% more Projectile Speed
+Pierce_I	1	100%	-	Projectile skills (excl. ProjectileNoCollision)	Projectiles from Supported Skills Pierce an Enemy || Projectiles from Supported Skills deal 20% less Damage if they've Pierced an enemy
+Rapid_Attacks_I	1	100%	-	Attacks (Attack, CrossbowAmmoSkill; excl. Herald, NoAttackOrCastTime)	Supported Skills have 15% increased Attack Speed
+Cadence	2	100%	-	Attacks (excl. UsedByProxy, Triggered, Persistent, NoAttackOrCastTime)	Supported Skills have 8% more Attack speed for each time they've been used Recently || Supported Skills are unusable for 10 seconds after being used 6 or more times within four seconds
+Hit_and_Run	4	100%	-	Attacks (excl. UsedByProxy, Triggered, Persistent, HasUsageCondition, Instant, Cooldown)	Supported Skills have 40% more Skill Speed || Supported Skills become usable after you have moved 10 metres || Supported Skills become unusable again after use
+Rapid_Casting_I	1	100%	-	Spells (excl. Instant, FixedCastTime, NoAttackOrCastTime)	Supported Skills have 15% increased Cast Speed
+Arcane_Surge	1	100%	-	Spells (excl. UsedByProxy, Triggered, Persistent, HasReservation, ReservationBecomesCost)	Gain Arcane Surge for 10 seconds after Spending a total of 100% of your Maximum Mana on Supported Skills || (buff ref) Arcane Surge grants 15% increased Cast Speed and 20% more Mana Regeneration Rate
+Prolonged_Duration_I	1	120%	-	Duration skills	Supported Skills have 30% more Skill Effect Duration
+Prolonged_Duration_II	3	120%	-	Duration skills	Supported Skills have 35% more Skill Effect Duration
+Persistent_Ground_I	2	100%	-	Ground surface skills (CreatesGroundEffect)	50% increased duration of Ground Surfaces created by Supported Skills
+Concentrated_Area	1	100%	-	Area skills (Area, MinionsCanExplode)	Supported Skills deal 30% more Area Damage || Supported Skills have 50% less Area of Effect
+Chain_I	1	100%	-	Chaining/Projectile skills (excl. CannotChain, ProjectileNoCollision)	Supported Skills Chain +1 times || Supported Skills deal 30% less Damage with Hits
+Life_Leech_I	2	100%	-	Attacks (Attack, CrossbowAmmoSkill)	Leech 12% of Physical Attack Damage from Supported Skills as Life
+Mana_Leech	2	100%	-	Attacks (Attack, CrossbowAmmoSkill)	Leech 8% of Physical Attack Damage from Supported Skills as Mana
+Ignite_I	1	120%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Supported Skills have 100% more Flammability Magnitude
+Searing_Flame_I	3	100%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Supported Skills deal 25% less Damage with Hits || 75% more Magnitude of Ignite inflicted with Supported Skills
+Bleed_I	1	120%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Supported Skills have 50% chance to inflict Bleeding
+Bleed_II	3	100%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Supported Skills have 75% chance to inflict Bleeding
+Poison_I	1	120%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Supported Skills have 40% chance to Poison on Hit
+Deadly_Poison_I	2	100%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Supported Skills deal 25% less Damage with Hits || 75% more Magnitude of Poison inflicted with Supported Skills
+Stun_I	2	120%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Hits with Supported Skills cause 50% more Stun buildup
+Electrocute	2	100%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Lightning Damage from Supported Skills Contributes to Electrocution Buildup || Supported Skills Cannot inflict Shock
+Freeze	2	120%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Supported Skills cause 50% more Freeze Buildup
+Shock	1	120%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Supported Skills have 100% more chance to Shock
+Shock_Conduction	2	120%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Shocking Hits from supported Skills have a 50% chance to also Shock enemies in a 2.5 metre radius
+Culling_Strike_I	4	100%	-	Attacks (Attack, CrossbowAmmoSkill)	Supported Skills have Culling Strike against Rare or Unique Enemies
+Cooldown_Recovery_I	3	130%	-	Cooldown skills (not minion skills)	Supported Skills have 25% increased cooldown recovery rate
+Cooldown_Recovery_II	4	130%	-	Cooldown skills (not minion skills)	Supported Skills have 30% increased cooldown recovery rate
+Fork	3	110%	-	Projectile skills (excl. ProjectileNoCollision)	Projectiles from Supported Skills Fork || Projectiles from Supported Skills deal 30% less Damage after Forking
+Spell_Echo	2	150%	-	Cascadable spells (excl. Triggered, UsedByProxy, Persistent)	Supported Skills have 30% less Cast Speed || Supported Spells Echo 1 times || Echoes from Supported Spells have 40% increased Area of Effect
+Multishot_I	1	100%	-	Projectile skills (excl. ProjectilesNumberModifiersNotApplied)	Supported Skills deal 35% less Damage || Supported Skills fire 2 additional Projectiles || Supported Skills have 20% less Skill Speed
+Multishot_II	2	100%	-	Projectile skills (excl. ProjectilesNumberModifiersNotApplied)	Supported Skills deal 25% less Damage || Supported Skills fire 2 additional Projectiles || Supported Skills have 20% less Skill Speed
+Elemental_Focus	3	100%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Supported Skills deal 25% more Elemental Damage || Supported Skills cannot inflict Elemental Ailments
+Brutality_I	1	120%	-	Damaging skills (Damage, Attack, DamageOverTime, CrossbowAmmoSkill)	Supported Skills deal 25% more Physical Damage || Supported Skills deal no Chaos Damage || Supported Skills deal no Elemental Damage
+Armour_Break_I	2	100%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Break Armour equal to 15% of Physical Damage dealt by Supported Skill
+Pin_I	1	100%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Modifiers to Stun Buildup for Supported Skills instead apply to Pin Buildup || Supported Skills cannot cause Stun Buildup || Physical Damage from Supported Skill is Pinning
+Lockdown	? (not shown on page)	100%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	Supported Skills have 120% more Pin Buildup against enemies within 2 metres of you, scaling to no change at 12 metres
+Rage_I	1	100%	-	Melee skills	Supported Skills grant 3 Rage on Melee Hit
+Considered_Casting	2	115%	-	Spells (excl. UsedByProxy, Triggered, Persistent, FixedCastTime, HasReservation, ReservationBecomesCost)	Supported Spell Skills have 15% less Cast Speed || Supported Spells deal 35% more Damage
+Swift_Affliction_I	1	100%	-	Damaging skills (Damage, Attack, DamageOverTime, CrossbowAmmoSkill)	Supported Skills deal 30% more non-Ailment Damage over Time || 20% less Duration of Supported Skills and Damaging Ailments they inflict
+Overcharge	4	100%	-	Hit skills (Damage, Attack, CrossbowAmmoSkill)	50% increased Magnitude of Shocks inflicted with Supported Skills || Shocks caused by Supported Skills are reflected back to you
+Heavy_Swing	4	100%	-	Melee skills	Supported Skills deal 35% more Melee Physical Damage || Supported Skills have 10% less Attack Speed

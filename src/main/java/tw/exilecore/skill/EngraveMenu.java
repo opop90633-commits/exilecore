@@ -19,7 +19,7 @@ import java.util.List;
  * <ul>
  *   <li>最上面一排中間：用的是哪一顆（還有幾顆）。</li>
  *   <li>中間三排：能雕的新技能（這顆雕得出來的排前面，灰色的要更高等級的寶石；多了翻頁）。</li>
- *   <li>第五排：技能面板上的技能，點一下升一級。</li>
+ *   <li>第五排：技能面板上的技能，點一下直接升到未切割寶石的等級（2026-10-27 照 PoE2；這次之前升一級）。</li>
  *   <li>最下面一排：返回（從隨身背包來的）、翻頁、說明、關閉。</li>
  * </ul>
  * 每次點都重新確認那顆寶石還在（手上那一格，或通貨袋裡那一種）。
@@ -294,8 +294,8 @@ final class EngraveMenu extends Menu {
                 "用一顆未切割技能寶石 Lv." + level + "：",
                 "<white>雕新技能</white>：中間三排點一下，做成 Lv." + level + " 的技能寶石",
                 "　（面板有空格就直接放進去，不然放進背包）",
-                "<white>升級</white>：第五排是技能面板上的技能，點一下升一級",
-                "　（一顆升一級，最高到 Lv." + level + "；角色等級也要夠）",
+                "<white>升級</white>：第五排是技能面板上的技能，點一下直接升到 Lv." + level,
+                "　（技能要比 Lv." + level + " 低；角色等級也要夠）",
                 "",
                 "<dark_gray>技能面板（/skills）裡也可以直接升級")));
         set(SLOT_CLOSE_BAR, closeButton());
@@ -326,9 +326,9 @@ final class EngraveMenu extends Menu {
         final List<String> lore = new ArrayList<>();
         lore.add("<dark_gray>技能面板上的技能");
         if (problem == null) {
-            lore.add("<gray>Lv." + entry.level() + " → <white>Lv." + (entry.level() + 1));
+            lore.add("<gray>Lv." + entry.level() + " → <white>Lv." + GemService.levelUpTarget(entry, level)); // 2026-10-27 照 PoE2：直接升到未切割寶石的等級
             lore.add("");
-            lore.add("<yellow>點一下：升一級（用掉一顆）");
+            lore.add("<yellow>點一下：升到 Lv." + GemService.levelUpTarget(entry, level) + "（用掉一顆）");
         } else {
             lore.add("<red>" + ItemRenderer.escape(problem));
         }

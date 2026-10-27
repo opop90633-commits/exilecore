@@ -58,14 +58,14 @@ public final class GearSetMenu extends Menu {
             final List<String> lore = new ArrayList<>();
             lore.add(current ? "<green>使用中" : "<gray>放著（不生效）");
             int count = 0;
-            for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length; i++) {
-                final ItemStack stack = items[i];
+            for (int i = 0; i < PlayerState.GEAR_SLOTS.length; i++) { // 2026-10-26：含展露之指的第三個戒指
+                final ItemStack stack = items[current ? PlayerState.gearIndex(i) : i];
                 if (stack == null || stack.isEmpty()) {
                     continue;
                 }
                 count++;
                 final Optional<ItemData> data = plugin.items().read(stack);
-                lore.add("<gray>" + PlayerState.JEWELLERY_SLOTS[i].displayName() + "：<white>"
+                lore.add("<gray>" + PlayerState.GEAR_SLOTS[i].displayName() + "：<white>"
                         + ItemRenderer.escape(data.map(ItemData::name).orElse("?")));
             }
             if (count == 0) {

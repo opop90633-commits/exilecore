@@ -59,6 +59,8 @@ final class SkillRuntime {
     /** 持續引導（2026-10）：正在蓄的技能、第幾層、上一次放的 tick。 */
     String channelSkill;
     int channelStage;
+    /** 2026-10-27（漸熾）：這一輪持續引導從哪個 tick 開始。 */
+    long channelSince;
     /** 2026-10：弩技能彈匣裡還有幾發（沒記 = 滿的）、裝填到什麼時候。 */
     final java.util.Map<String, Integer> ammo = new java.util.HashMap<>();
     final java.util.Map<String, Long> reloadDone = new java.util.HashMap<>();
@@ -71,12 +73,20 @@ final class SkillRuntime {
     long landedAt = -1_000;
     /** 冷卻中的技能：技能代號 → 哪個 tick 才能再放。 */
     final Map<String, Long> cooldowns = new HashMap<>();
+    /** 2026-10-26（PoE2 的「冷卻 5 秒（3 次）」）：可以存好幾次的技能，每一次各自什麼時候好（照順序一次充一個）。 */
+    final Map<String, long[]> cooldownSlots = new HashMap<>();
+    /** 技能可以存幾次冷卻（SkillService 設定；沒有就是 1）。 */
+    java.util.function.ToIntFunction<String> cooldownUses = id -> 1;
     /** 雙詠：等著重複的那一次（null = 沒有）。 */
     Echo echo;
     /** 複擊：還要自動再打的近戰攻擊（null = 沒有）。 */
     Repeat repeat;
-    /** 戰吼的強化：接下來幾次攻擊更痛（null = 沒有）。 */
+    /** 戰吼的強化：接下來幾次攻擊更痛（null = 沒有）。舊寫法（固定次數、更多 x%）。 */
     Exert exert;
+    /**
+     * 2026-10-26 照 PoE2：每個戰吼各自的強化（戰吼代號 → 強化）；一次攻擊可以同時被好幾個戰吼強化，各自扣一次。
+     */
+    final java.util.Map<String, Empowered> empowered = new java.util.LinkedHashMap<>();
     /** 連珠（2026-10）：下一次弓／矛的投射物攻擊會重複（null = 沒有）。 */
     Barrage barrage;
 
@@ -98,6 +108,22 @@ final class SkillRuntime {
         /** 開始蓄的時候這一招的攻擊／施法間隔（tick）與速度倍率。 */
         double interval;
         double speed = 1.0;
+        /**
+         * 2026-10-26 照 PoE2 的引導：開始時的技能（衝鋒、持續作用用）、每秒扣的魔力（0 = 不是逐秒扣）、
+         * 衝鋒走了多遠、上一 tick 的位置、卡住幾 tick、下一次踏地／作用的 tick、凋蝕術的作用點、放開了沒（最短引導時間內放開照樣撐著）。
+         */
+        SkillBuild build;
+        int drainCost;
+        double travelled;
+        org.bukkit.Location lastAt;
+        int stuck;
+        long nextBeat;
+        org.bukkit.Location focus;
+        boolean letGo;
+        /** 2026-10-26（STREAM）：用戰星強化時另外給的屬性（null = 沒強化）。 */
+        java.util.List<tw.exilecore.stats.Modifier> empowered;
+        /** 2026-10-27（RECHARGE，冥想）：溢出最大能量護盾的回充累積了多少（變成守護）。 */
+        double overflow;
 
         Charging(final String skillId, final int key, final long start, final long perfectAt, final java.util.UUID target) {
             this.skillId = skillId;
@@ -147,6 +173,37 @@ final class SkillRuntime {
         }
     }
 
+    /**
+     * 2026-10-26：一個戰吼給的強化（照 PoE2）。
+     *
+     * @param name      戰吼的名字（提示用）
+     * @param left      還剩幾次
+     * @param untilTick 到哪個 tick 失效
+     * @param spec      強化的內容（哪一類攻擊、多了什麼）
+     * @param level     戰吼的等級（強化的數值隨等級）
+     * @param power     吼的時候算到的強度（每 5 點強度附加冰冷這種）
+     * @param tireless  被強化的攻擊有幾 % 機率不算次數（不竭嘯）
+     * @param cull      被強化的攻擊有斷命（決嘯）
+     * @param extra     2026-10-27：被強化的攻擊另外加的修飾器（戰吼品質的額外火焰、裂甲熊咆插槽的增加傷害）
+     * @param aftershockMore 2026-10-27：被強化的猛擊的餘震更多 x% 傷害（震地戰吼的品質）
+     * @param triggerRadius  2026-10-27：被強化的攻擊觸發的隱藏技能半徑 +x 公尺（堅壁戰吼的品質：盾波）
+     */
+    record Empowered(String name, int left, long untilTick, WarcrySpec.Empower spec, int level, double power, double tireless, boolean cull,
+                     java.util.List<tw.exilecore.stats.Modifier> extra, double aftershockMore, double triggerRadius) {
+        Empowered(final String name, final int left, final long untilTick, final WarcrySpec.Empower spec, final int level, final double power,
+                  final double tireless, final boolean cull) {
+            this(name, left, untilTick, spec, level, power, tireless, cull, java.util.List.of(), 0, 0);
+        }
+
+        Empowered consume() {
+            return left <= 1 ? null : new Empowered(name, left - 1, untilTick, spec, level, power, tireless, cull, extra, aftershockMore, triggerRadius);
+        }
+
+        boolean active(final long now) {
+            return left > 0 && now < untilTick;
+        }
+    }
+
     /** 戰吼之後的強化：還剩幾次、更多幾 %、到哪個 tick 失效。 */
     record Exert(int left, double more, long untilTick) {
         Exert consume() {
@@ -160,14 +217,42 @@ final class SkillRuntime {
 
     /** 這個技能還要等幾 tick（0 = 可以放）。 */
     long cooldownLeft(final String skillId, final long now) {
+        final long[] slots = cooldownSlots.get(skillId);
+        if (slots != null) {
+            long best = Long.MAX_VALUE;
+            for (final long ready : slots) {
+                best = Math.min(best, Math.max(0, ready - now));
+            }
+            return best;
+        }
         final Long until = cooldowns.get(skillId);
         return until == null ? 0 : Math.max(0, until - now);
     }
 
     void startCooldown(final String skillId, final long now, final int ticks) {
-        if (ticks > 0) {
-            cooldowns.put(skillId, now + ticks);
+        if (ticks <= 0) {
+            return;
         }
+        final int uses = Math.max(1, cooldownUses.applyAsInt(skillId));
+        if (uses <= 1) {
+            cooldowns.put(skillId, now + ticks);
+            return;
+        }
+        // 用掉最早好的那一次；照順序一次充一個：這一次在「其他次裡最晚好的」之後（或現在）再過 ticks 才好
+        final long[] slots = cooldownSlots.computeIfAbsent(skillId, id -> new long[uses]);
+        int use = 0;
+        long latest = now;
+        for (int i = 0; i < slots.length; i++) {
+            if (slots[i] < slots[use]) {
+                use = i;
+            }
+        }
+        for (int i = 0; i < slots.length; i++) {
+            if (i != use) {
+                latest = Math.max(latest, slots[i]);
+            }
+        }
+        slots[use] = latest + ticks;
     }
 
     /** 一次跳躍重擊：起跳時間、預計的滯空時間、落地要打的技能（含輔助寶石）。 */
@@ -203,9 +288,11 @@ final class SkillRuntime {
         clearQueue();
         leap = null;
         cooldowns.clear();
+        cooldownSlots.clear();
         echo = null;
         repeat = null;
         exert = null;
+        empowered.clear();
         barrage = null;
         // 2026-10-18：蓄力、彈匣、封印、引導也清掉（不然上一個角色的蓄力會放出新角色綁在同一鍵的技能）
         charging = null;

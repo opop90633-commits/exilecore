@@ -162,4 +162,35 @@ class SkillLoadoutTest {
         // 舊資料（沒有品質）照樣讀得出來
         assertEquals(0, SkillLoadout.Entry.decode("fireball", 18, plain.encodeSupports()).quality());
     }
+
+    /** 2026-10-26 照 PoE2 Meta Gem：主要寶石第 2～5 孔也能放技能寶石（存成 @代號/等級/孔數），不算輔助。 */
+    @Test
+    void metaGemHoldsSeveralSpells() {
+        SkillLoadout.Entry host = new SkillLoadout.Entry("meta_crit", 10, 4, List.of())
+                .withInner(new SkillLoadout.Entry("fireball", 12))
+                .withSpell(2, new SkillLoadout.Entry("arc", 8, 3, List.of("pierce")).withQuality(5))
+                .withSupport(1, "added_fire");
+        assertTrue(host.spellSocket(0));
+        assertFalse(host.spellSocket(1));
+        assertTrue(host.spellSocket(2));
+        assertEquals(List.of("added_fire"), host.supportIds(), "放技能的孔不是輔助");
+        assertEquals(2, host.spells().size());
+        assertEquals("arc", host.spellAt(2).skillId());
+        assertEquals(5, host.spellAt(2).quality());
+        assertTrue(host.spellAt(2).supportIds().isEmpty(), "放進去的寶石自己沒有輔助");
+        assertEquals(1, host.freeSocket() == 3 ? 1 : 0, "第 4 孔是空的");
+        final String text = host.encodeSupports();
+        final SkillLoadout.Entry back = SkillLoadout.Entry.decode("meta_crit", 10, text);
+        assertEquals(text, back.encodeSupports(), "存檔來回一樣");
+        assertEquals(List.of("fireball", "arc"), back.spells().stream().map(SkillLoadout.Entry::skillId).toList());
+        final SkillLoadout loadout = new SkillLoadout();
+        loadout.add(back);
+        assertEquals(0, loadout.findInner("arc"), "第 3 孔的技能也找得到宿主");
+        assertEquals(-1, loadout.supportUsedBy("arc"));
+        host = back.withSpell(2, null);
+        assertEquals(1, host.spells().size());
+        assertFalse(host.spellSocket(2));
+        // 壞掉的 @ 當成空孔
+        assertTrue(SkillLoadout.Entry.decode("meta_crit", 10, "3:,,@").support(2).isEmpty());
+    }
 }

@@ -85,6 +85,8 @@ public final class CharacterService {
     private final Map<UUID, CharacterRepository.SaveJob> frozenSnapshots = new ConcurrentHashMap<>();
     /** 卡住的操作重試成功時通知（市集用來確認上架、收入）。 */
     private final List<Consumer<Set<String>>> recoveryListeners = new ArrayList<>();
+    /** 2026-10-27：換上一個角色（登入、建立、切換）之前要清掉的每人暫時狀態（各模組自己註冊；這次之前換角色會留著上一個角色的增益）。 */
+    private final List<Consumer<Player>> characterResetHooks = new ArrayList<>();
     private BukkitTask retryTask;
     private boolean retrying;
     /** 還原備份中：不寫任何存檔（還原完的資料不能被記憶體裡的舊資料蓋掉）。 */
@@ -396,8 +398,19 @@ public final class CharacterService {
         if (stack == null || plugin.skills() == null) {
             return false;
         }
+        final tw.exilecore.skill.GemData before = plugin.skills().gems().read(stack).orElse(null);
         final java.util.List<ItemStack> extra = plugin.skills().gems().migrateRemoved(stack);
         if (extra != null) {
+            // 2026-10-26：背包裡拿掉的技能寶石換掉時也通知（這次之前只有技能面板上的會通知）
+            if (before != null && before.kind() == tw.exilecore.skill.GemData.Kind.SKILL && before.id() != null
+                    && plugin.skills().config().skill(before.id()) == null) {
+                final String merged = plugin.skills().config().mergeNotice(before.id()); // 2026-10-26：併入別的技能（等級、品質、輔助保留）
+                player.sendMessage(plugin.text().prefixed(merged != null
+                        ? "<yellow>技能改版：" + tw.exilecore.item.ItemRenderer.escape(merged) + "（技能寶石 Lv." + before.level() + " 直接換過去，品質、輔助寶石都保留）"
+                        : "<yellow>技能改版：技能寶石「" + tw.exilecore.item.ItemRenderer.escape(
+                        plugin.skills().config().retiredSkillName(before.id())) + "」Lv." + before.level()
+                        + " 已經拿掉，換成同等級的未切割技能寶石" + (extra.isEmpty() ? "" : "，上面的輔助寶石放回背包")));
+            }
             // 放回去之後才給拆下來的輔助（不然可能剛好放進還沒看過的格子，再看一次也沒關係）
             plugin.getServer().getScheduler().runTask(plugin, () -> plugin.skills().gems().giveAll(player, extra));
             return true;
@@ -409,7 +422,22 @@ public final class CharacterService {
         return stack != null && plugin.skills() != null && plugin.skills().gems().refresh(stack);
     }
 
+    /** 2026-10-27：換上一個角色之前呼叫（清掉上一個角色留下的暫時狀態）。 */
+    public void addCharacterResetHook(final Consumer<Player> hook) {
+        characterResetHooks.add(hook);
+    }
+
     private void apply(final Player player, final PlayerState state, final CharacterRepository.Loaded loaded, final boolean replaceInventory) {
+        // 2026-10-27：條件取樣、事件計數、破甲不帶到下一個角色——放在這裡，登入、建立、切換都會清
+        //（這次之前只有切換角色清，建立新角色時舊角色的會帶過去）
+        states.forgetTransient(player.getUniqueId());
+        for (final Consumer<Player> hook : characterResetHooks) {
+            try {
+                hook.accept(player);
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().warn("換角色時清除暫時狀態失敗", e);
+            }
+        }
         final CharacterRecord record = loaded.record();
         final Set<String> passives = new HashSet<>(loaded.passives());
         final PassiveTree tree = plugin.passives().tree();
@@ -425,13 +453,16 @@ public final class CharacterService {
             }
             final PassiveNode start = tree.start(record.characterClass().id());
             if (start != null) {
-                final Set<String> removed = tree.prune(passives, start);
+                // 2026-10-26 照 PoE2：昇華給的配點規則（觀星專屬節點、開路者別的起點、虛實交織）也算
+                final Set<String> removed = tree.prune(passives, start, plugin.ascendancy() == null ? Set.of()
+                        : plugin.ascendancy().treeRules(loaded.progress(), record.characterClass().id(), record.level()));
                 if (!removed.isEmpty()) {
                     player.sendMessage(plugin.text().prefixed("<yellow>天賦樹改版，有 " + removed.size() + " 個配點已退回"));
                 }
             }
         }
         state.setCharacter(record, passives, loaded.progress(), loaded.skills());
+        trimOverBudget(player, state, tree); // 2026-10-27：配的天賦比能用的點多（昇華給的天賦點沒了）；這次之前只核對相連
         if (newTree) {
             stampTreeVersion(state, tree, true);
         }
@@ -500,7 +531,7 @@ public final class CharacterService {
                 try {
                     final int set = Integer.parseInt(parts[0]);
                     final int slot = Integer.parseInt(parts[1]);
-                    if (set >= 0 && set < PlayerState.GEAR_SETS && slot >= 0 && slot < PlayerState.JEWELLERY_SLOTS.length) {
+                    if (set >= 0 && set < PlayerState.GEAR_SETS && slot >= 0 && slot < PlayerState.GEAR_SLOTS.length) { // 2026-10-26：第 10 格是第三個戒指
                         state.gearSet(set)[slot] = entry.getValue();
                         continue;
                     }
@@ -571,6 +602,36 @@ public final class CharacterService {
                 }
             }, 60L);
         }
+    }
+
+    /**
+     * 2026-10-27：可用天賦點是負的（昇華給的天賦點被拿掉了，例如管理員重置、昇華改版）就從最外面退掉多配的
+     * （珠寶接著在載入珠寶時還給玩家）；這次之前登入只核對相連。
+     */
+    private void trimOverBudget(final Player player, final PlayerState state, final PassiveTree tree) {
+        final CharacterRecord record = state.character();
+        final PassiveNode start = tree == null || record == null ? null : tree.start(record.characterClass().id());
+        final int over = -states.availablePoints(state);
+        if (start == null || over <= 0) {
+            return;
+        }
+        // 2026-10-27：給天賦點的模組（任務、昇華）有一個沒載入／停用，可用點數會少算——那時只警告，不退點
+        //（這次之前照少算的點數直接退掉，模組出錯一次玩家的天賦就永久被拿掉）
+        if (!shouldTrim(over, plugin.quests() != null, plugin.ascendancy() != null)) {
+            plugin.getSLF4JLogger().warn("角色 {} 的天賦多配了 {} 點，但任務或昇華模組沒有載入，可用點數不準，先不退點", record.name(), over);
+            return;
+        }
+        final Set<String> rules = plugin.ascendancy() == null ? Set.of() : plugin.ascendancy().treeRules(state);
+        final List<String> trimmed = tw.exilecore.ascendancy.TreeBudget.trim(tree, state.passives(), start, rules, over);
+        if (!trimmed.isEmpty()) {
+            state.markDirty();
+            player.sendMessage(plugin.text().prefixed("<yellow>天賦點不夠配那麼多：天賦樹上最外面的 " + trimmed.size() + " 點已退回"));
+        }
+    }
+
+    /** 2026-10-27：多配了 over 點時要不要退點：給天賦點的模組（任務、昇華）都載入了才退（測試用）。 */
+    static boolean shouldTrim(final int over, final boolean questsLoaded, final boolean ascendancyLoaded) {
+        return over > 0 && questsLoaded && ascendancyLoaded;
     }
 
     // ---- 天賦樹改版 ----
@@ -977,6 +1038,18 @@ public final class CharacterService {
      * 沒角色或還沒載入完回傳 null。
      */
     public CharacterRepository.SaveJob snapshot(final Player player) {
+        // 2026-10-27：在主執行緒把背包、倉庫編碼成存檔，計時給 /ec perf 看（character.snapshot；單次太慢會寫【卡頓】警告）
+        final long start = System.nanoTime();
+        try {
+            return snapshotNow(player);
+        } finally {
+            if (plugin.getServer().isPrimaryThread()) {
+                plugin.perf().record("character.snapshot", System.nanoTime() - start);
+            }
+        }
+    }
+
+    private CharacterRepository.SaveJob snapshotNow(final Player player) {
         final PlayerState state = states.get(player);
         final CharacterRecord character = state.character();
         if (!state.isLoaded() || character == null) {
@@ -1626,7 +1699,7 @@ public final class CharacterService {
             for (int i = 0; i < PlayerState.STORED_SLOTS; i++) {
                 current.setJewellery(i, null);
             }
-            apply(player, current, loaded, true);
+            apply(player, current, loaded, true); // 2026-10-27：條件取樣、破甲在 apply 裡清（forgetTransient）
             arriveAtCamp(player);
             updateRoster(uuid, loaded.record());
         }));

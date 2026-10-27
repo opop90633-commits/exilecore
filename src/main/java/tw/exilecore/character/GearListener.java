@@ -114,15 +114,15 @@ final class GearListener implements Listener {
             tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(blocked)));
             return;
         }
-        int index = Gear.index(base.slot());
-        if (base.slot() == tw.exilecore.item.ItemSlot.RING && state.jewellery(0) != null && state.jewellery(1) == null) {
-            index = 1;
+        int index = gear.target(state, base, stack); // 2026-10-27 荒野領主：權杖放副手
+        if (base.slot() == tw.exilecore.item.ItemSlot.RING) {
+            index = Gear.ringTarget(state, gear.ringSlotOpen(player)); // 2026-10-26：展露之指的第三個戒指欄
         }
         if (index == Gear.OFF) {
             final ItemStack main = state.jewellery(Gear.MAIN);
             final ItemBase mainBase = main == null ? null
                     : plugin.items().read(main).map(value -> plugin.items().repository().base(value.base())).orElse(null);
-            final String problem = Gear.pairProblem(mainBase, base);
+            final String problem = Gear.pairProblem(mainBase, base, plugin, state);
             if (problem != null) {
                 tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
                 return;

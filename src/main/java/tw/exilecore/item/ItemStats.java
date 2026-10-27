@@ -42,7 +42,10 @@ public final class ItemStats {
         final ItemRepository.Scaling scaling = repository.scaling();
         final int statLevel = statLevel(repository, base, data);
         final double levelFactorDamage = damageFactor(base, scaling.damagePerLevel(), statLevel, scaling.cap(data.ilvl()), data);
-        final double levelFactorDefence = levelFactor(base, scaling.defencePerLevel(), statLevel);
+        // 2026-10-26：照 PoE2 分階的防具、盾（寫了 base_level）寫的防禦就是原作那一階的原值，物品等級超過那一階不再往上長
+        // （原作的基底不跟物品等級走）；比較低的照曲線往下縮。這次之前會長到 stat_level_cap
+        final double levelFactorDefence = levelFactor(base, scaling.defencePerLevel(),
+                base.baseLevel() > 0 ? Math.min(statLevel, base.statLevel()) : statLevel);
         final double qualityWeapon = 1 + data.quality() * scaling.qualityWeaponPercent() / 100.0;
         final double qualityArmour = 1 + data.quality() * scaling.qualityArmourPercent() / 100.0;
 
@@ -111,7 +114,7 @@ public final class ItemStats {
     }
 
     /**
-     * 武器基底傷害的倍率。一般物品就是 {@link #levelFactor}。
+     * 武器基底傷害的倍率。一般物品就是 {@link #levelFactor}（照 PoE2 分階的武器最多到它的 base_level）。
      * 傳奇武器（2026-10）：基底傷害照物品等級往上長——跟稀有武器同一條曲線，從它那一階（{@link #uniqueTier}）算起，
      * 物品等級比那一階高多少就多多少，不會比那一階低（低物品等級的舊傳奇數值不變）。
      * 等級與屬性需求、固定詞綴、防禦照舊固定在那一階；詞綴的附加傷害不跟著長。
@@ -119,6 +122,11 @@ public final class ItemStats {
     public static double damageFactor(final ItemBase base, final double perLevel, final int statLevel, final int itemLevel, final ItemData data) {
         final int tier = data.unique() != null && base.isWeapon() ? uniqueTier(base) : 0;
         if (tier <= 0) {
+            // 2026-10-26：照 PoE2 分階的武器基底（寫了 base_level）數值就是原作那一階的原值：物品等級超過那一階不再往上長
+            // （原作的基底不跟物品等級走），比較低的照曲線往下縮（原作在那個等級只拿得到比較低階的基底）
+            if (base.isWeapon() && base.baseLevel() > 0) {
+                return levelFactor(base, perLevel, Math.min(statLevel, base.statLevel()));
+            }
             return levelFactor(base, perLevel, statLevel);
         }
         final int level = Math.max(tier, itemLevel); // itemLevel 已經夾過 stat_level_cap
@@ -138,8 +146,12 @@ public final class ItemStats {
 
     /** 這件物品（照它的物品等級，傳奇照它那一階）的固定詞綴；沒有回傳 null。 */
     public static Implicit implicit(final ItemRepository repository, final ItemBase itemBase, final ItemData data) {
-        final ItemBase base = statBase(repository, itemBase, data);
-        return base.implicitAt(statLevel(repository, base, data), repository.scaling().damagePerLevel());
+        ItemBase base = statBase(repository, itemBase, data);
+        if (base.implicit() == null && itemBase.implicit() != null) {
+            // 2026-10-26：基底補了 PoE2 的固有詞綴，傳奇 stat_base 指的那一階沒有：用基底的（照 PoE2，傳奇也有基底的固有詞綴）
+            base = itemBase;
+        }
+        return base.implicitAt(statLevel(repository, statBase(repository, itemBase, data), data), repository.scaling().damagePerLevel());
     }
 
     /** 防具（有基礎護甲、閃避或能量護盾的非武器）身上的護甲／閃避／能量護盾詞綴（沒有標籤的固定值與增加）是本地的。 */
@@ -163,8 +175,10 @@ public final class ItemStats {
         if (baseValue <= 0) {
             return 0;
         }
-        final double flat = localSum(repository, base, data, stat, ModType.FLAT);
-        final double increased = localSum(repository, base, data, stat, ModType.INCREASED);
+        // 2026-10-26：嵌著的符文的「增加 x% 護甲、閃避、能量護盾」也是本地的（PoE2 鐵骨符文嵌在防具上）
+        final double flat = localSum(repository, base, data, stat, ModType.FLAT) + Runes.armourLocalSum(repository, base, data, stat, ModType.FLAT);
+        final double increased = localSum(repository, base, data, stat, ModType.INCREASED)
+                + Runes.armourLocalSum(repository, base, data, stat, ModType.INCREASED);
         return (baseValue + flat) * Math.max(0, 1 + increased);
     }
 
@@ -199,42 +213,42 @@ public final class ItemStats {
         return Math.round(value * scale) / (double) scale;
     }
 
-    /** 裝備需求：等級 = max(基底等級, 物品等級 × 0.9)；屬性需求隨物品等級放大。 */
+    /**
+     * 裝備需求（2026-10-26 照 PoE2）：每個基底固定的等級、力量、敏捷、智慧（bases/*.yml 的 requirements）；
+     * 合併的基底在物品等級比它那一階低時照同一類較低階的 PoE2 需求（{@link ItemRepository#tierRequirements}）。
+     * 這次之前：等級 = max(基底等級, 物品等級 × 0.9)，屬性需求照物品等級放大（items.yml 的 requirement_per_level，現在沒用到）。
+     */
     public static ItemBase.Requirements requirements(final ItemRepository repository, final ItemBase base, final int itemLevel) {
-        final int capped = repository.scaling().cap(itemLevel);
-        return requirements(repository, base, capped, capped, 0);
+        return requirementsAt(repository, base, Math.max(1, repository.scaling().cap(itemLevel)));
     }
 
-    /** 同上，這件物品的（傳奇的屬性需求照它那一階、等級需求至少是那一階）。 */
+    /** 同上，這件物品的（傳奇照它那一階）。 */
     public static ItemBase.Requirements requirements(final ItemRepository repository, final ItemBase itemBase, final ItemData data) {
         final ItemBase base = statBase(repository, itemBase, data);
-        final int statLevel = statLevel(repository, base, data);
-        final ItemBase.Requirements plain = requirements(repository, base, repository.scaling().cap(data.ilvl()), statLevel,
-                data.unique() != null && base.baseLevel() > 0 ? statLevel : 0);
+        final ItemBase.Requirements plain = requirementsAt(repository, base, statLevel(repository, base, data));
         // 2026-10-21：腐化「減少 x% 屬性需求」（本地；等級需求不變）
         final double scale = 1 + localSum(repository, itemBase, data, LocalMods.REQUIREMENTS, ModType.INCREASED);
-        if (Math.abs(scale - 1) < 1e-9) {
+        // 2026-10-26（守墓巨鎚，PoE2 Marohi Erqi）：「+x 力量需求」
+        final int addStr = (int) Math.round(localSum(repository, itemBase, data, tw.exilecore.item.unique.UniqueStats.LOCAL_REQUIREMENT_STR, ModType.FLAT));
+        final int addDex = (int) Math.round(localSum(repository, itemBase, data, tw.exilecore.item.unique.UniqueStats.LOCAL_REQUIREMENT_DEX, ModType.FLAT));
+        final int addInt = (int) Math.round(localSum(repository, itemBase, data, tw.exilecore.item.unique.UniqueStats.LOCAL_REQUIREMENT_INT, ModType.FLAT));
+        if (Math.abs(scale - 1) < 1e-9 && addStr == 0 && addDex == 0 && addInt == 0) {
             return plain;
         }
-        return new ItemBase.Requirements(plain.level(), scaleRequirement(plain.str(), scale), scaleRequirement(plain.dex(), scale),
-                scaleRequirement(plain.intelligence(), scale));
+        return new ItemBase.Requirements(plain.level(), scaleRequirement(plain.str() + addStr, scale), scaleRequirement(plain.dex() + addDex, scale),
+                scaleRequirement(plain.intelligence() + addInt, scale));
     }
 
     static int scaleRequirement(final int value, final double scale) {
         return value <= 0 ? 0 : (int) Math.max(1, Math.round(value * Math.max(0, scale)));
     }
 
-    private static ItemBase.Requirements requirements(final ItemRepository repository, final ItemBase base, final int itemLevel,
-                                                      final int statLevel, final int floor) {
+    private static ItemBase.Requirements requirementsAt(final ItemRepository repository, final ItemBase base, final int itemLevel) {
         if (base.isJewel()) {
             return NO_REQUIREMENTS; // 珠寶放進天賦樹就生效，沒有等級與屬性需求（PoE 的做法）
         }
-        final double factor = levelFactor(base, repository.scaling().requirementPerLevel(), statLevel);
-        final int level = Math.max(Math.max(base.requirements().level(), floor), (int) Math.round(itemLevel * 0.9));
-        return new ItemBase.Requirements(level,
-                (int) Math.round(base.requirements().str() * factor),
-                (int) Math.round(base.requirements().dex() * factor),
-                (int) Math.round(base.requirements().intelligence() * factor));
+        final ItemBase.Requirements req = repository.tierRequirements(base, itemLevel);
+        return new ItemBase.Requirements(Math.max(1, req.level()), req.str(), req.dex(), req.intelligence());
     }
 
     /**
@@ -260,6 +274,10 @@ public final class ItemStats {
         }
         if (snapshot.crit() > 0) {
             list.add(Modifier.flat(StatKeys.WEAPON_CRIT, snapshot.crit(), source));
+        }
+        final double reload = repository.reloadTime(base.id());
+        if (reload > 0) {
+            list.add(Modifier.flat(StatKeys.WEAPON_RELOAD, reload, source)); // 2026-10-26：弩的裝填時間（照 PoE2）
         }
         if (snapshot.armour() > 0) {
             list.add(Modifier.flat(StatKeys.ARMOUR, snapshot.armour(), source));

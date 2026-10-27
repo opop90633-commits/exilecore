@@ -19,7 +19,7 @@ public record DefenceEstimates(double monsterHit, double armourReduction, double
         return new DefenceEstimates(hit,
                 Formulas.armourReduction(armour, hit),
                 Formulas.armourReduction(armour, hit * 3),
-                1 - Formulas.hitChance(monsterAccuracy, evasion),
+                1 - Formulas.monsterHitChance(monsterAccuracy, evasion), // 2026-10-27 照 PoE2：怪物打玩家的公式（這次之前用玩家打怪的）
                 Formulas.hitChance(accuracy, monsterEvasion));
     }
 }

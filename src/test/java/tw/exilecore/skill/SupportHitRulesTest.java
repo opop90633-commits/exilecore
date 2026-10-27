@@ -8,6 +8,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -39,11 +40,17 @@ class SupportHitRulesTest {
     void hitOnlySupportsRefuseSkillsThatNeverHit() {
         final String reason = "不會造成傷害的技能不行";
         // 光環、詛咒、印記、護體、戰吼、純位移、召喚本身都不會打到敵人
-        for (final String id : new String[] {"vulnerability_curse", "hunters_mark", "raise_guard", "blink"}) {
+        // 2026-10-26 照 PoE2：架盾是攻擊（放開時的盾擊會打人），拿掉；這次之前也列架盾
+        for (final String id : new String[] {"vulnerability_curse", "blink"}) {
             assertEquals(reason, support("added_fire").refusal(skill(id)), id);
             assertEquals(reason, support("critical_strikes").refusal(skill(id)), id);
             assertEquals(reason, support("deep_freeze").refusal(skill(id)), id);
             assertEquals(reason, support("deliberation").refusal(skill(id)), id);
+        }
+        // 2026-10-26：印記不算法術了（照 PoE2）：在標籤那一關或「不會造成傷害」擋掉都可以
+        for (final String supportId : new String[] {"added_fire", "critical_strikes", "deep_freeze", "deliberation"}) {
+            final String refusal = support(supportId).refusal(skill("hunters_mark"));
+            assertTrue(reason.equals(refusal) || "要攻擊技能或法術技能".equals(refusal), supportId + "：" + refusal);
         }
         // 2026-10：光環不算法術了（照 PoE2）——要攻擊或法術的輔助在標籤那一關就擋掉，不看標籤的照舊擋在「不會造成傷害」
         for (final String supportId : new String[] {"added_fire", "critical_strikes", "deep_freeze", "deliberation"}) {
@@ -54,36 +61,42 @@ class SupportHitRulesTest {
         assertTrue(skill("herald_of_ash").tags().contains(tw.exilecore.stats.Tags.SPELL), "捷光環例外：輔助要傳給擊殺效果");
         assertEquals(reason, support("deep_freeze").refusal(skill("fortifying_cry")), "戰吼沒有 attack／spell 標籤：只有不看標籤的輔助會走到這條");
         assertEquals("召喚物技能不行", support("ruthless").refusal(skill("summon_skeletons")), "無情的傷害沒有 minion 標籤：召喚技能掛了只會落到主人身上");
-        assertEquals("要投射物技能", support("pinning").refusal(skill("skeletal_archers")), "遠程召喚物標「遠程」不標投射物（2026-10）：投射物的輔助在標籤那一關就擋掉");
+        assertEquals("要投射物技能", support("multiple_projectiles").refusal(skill("skeletal_archers")), "（2026-10-27：分矢併入分光）遠程召喚物標「遠程」不標投射物（2026-10）：投射物的輔助在標籤那一關就擋掉（2026-10-26：釘地照 PoE2 改成物理累積定身，換散射測）");
         // 真的會打到敵人的照舊
         assertNull(support("added_fire").refusal(skill("fireball")));
         assertNull(support("added_fire").refusal(skill("rolling_slam")));
         assertNull(support("added_fire").refusal(skill("storm_blink")), "會打到敵人的位移");
         assertNull(support("added_fire").refusal(skill("herald_of_ash")), "捷的輔助會傳給擊殺效果");
+        // 2026-10-26 照 PoE2：架盾（Raise Shield）是攻擊、近戰、範圍、物理，盾擊會打人（原作能掛的輔助很多：暈眩、反擊…）
+        assertNull(support("added_fire").refusal(skill("raise_guard")), "架盾的盾擊");
+        assertTrue(skill("raise_guard").isAttack());
+        assertTrue(skill("raise_guard").tags().containsAll(java.util.Set.of(tw.exilecore.stats.Tags.ATTACK, tw.exilecore.stats.Tags.MELEE,
+                tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.PHYSICAL)), skill("raise_guard").tags().toString());
     }
 
     @Test
     void utilitySupportsStillFitUtilitySkills() {
-        assertNull(support("increased_area").refusal(skill("frost_aegis")), "範圍：光環有 area");
-        assertNull(support("increased_duration").refusal(skill("vulnerability_curse")));
-        assertNull(support("cooldown_recovery").refusal(skill("fortifying_cry")));
+        assertNull(support("increased_area").refusal(skill("war_banner")), "範圍：戰旗有 area"); // 2026-10-26：凜冬之殼、魔湧照 PoE2 都沒有範圍了，改用征戰之旗
+        assertNull(support("prolonged_duration").refusal(skill("vulnerability_curse"))); // 2026-10-27：持久併入長留、速冷併入迅返（只留最高階）
+        assertNull(support("swift_cooldown").refusal(skill("fortifying_cry")));
         assertNull(support("minion_damage").refusal(skill("raise_zombie")), "minion 標籤的給召喚物");
         assertNull(support("clarity").refusal(skill("frost_aegis")), "精魂輔助");
         assertNull(support("heightened_curse").refusal(skill("vulnerability_curse")));
-        assertNull(support("warcry_power").refusal(skill("seismic_cry")), "震地戰吼會強化攻擊");
+        assertNull(support("tireless").refusal(skill("seismic_cry")), "震地戰吼會強化攻擊");
         // 2026-10：好處是傷害、代價是範圍／冷卻／持續／施法速度的輔助，掛在不會造成傷害的技能上只剩代價：不行
         final String reason = "不會造成傷害的技能不行";
         assertEquals(reason, support("burst").refusal(skill("hunters_mark")), "爆發：傷害吃不到，只剩冷卻變久");
-        assertEquals(reason, support("concentrated_effect").refusal(skill("mana_storm")), "凝聚掛在魔湧上：只剩範圍變小");
-        assertEquals(reason, support("concentrated_effect").refusal(skill("frost_aegis")));
+        // 2026-10-26 照 PoE2：魔湧（Mana Tempest）沒有 AoE 標籤（風暴不吃範圍加成），凝聚在標籤那一關就擋掉；這次之前是光環，擋在「不會造成傷害」
+        assertEquals("要範圍技能", support("concentrated_effect").refusal(skill("mana_storm")), "凝聚掛在魔湧上：風暴不吃範圍");
+        assertNotNull(support("concentrated_effect").refusal(skill("frost_aegis")), "2026-10-26：凜冬之殼照 PoE2 沒有範圍，先被「要範圍技能」擋下");
         assertEquals(reason, support("intense_agony").refusal(skill("hunters_mark")));
         assertEquals(reason, support("hourglass").refusal(skill("vulnerability_curse")));
         assertEquals(reason, support("excise").refusal(skill("vulnerability_curse")));
         assertEquals(reason, support("considered_casting").refusal(skill("vulnerability_curse")));
         // 會造成傷害的技能照舊能掛；範圍變大的、只改冷卻／持續的也照舊
         assertNull(support("concentrated_effect").refusal(skill("fireball")));
-        assertNull(support("burst").refusal(skill("storm_blink")));
-        assertNull(support("impact_area").refusal(skill("frost_aegis")), "範圍變大那半邊有用");
+        assertNull(support("burst").refusal(skill("lightning_pillar")), "2026-10-26：雷遁照原作沒有冷卻了；霜綻照站長拿掉了，改用天柱雷");
+        assertNull(support("impact_area").refusal(skill("war_banner")), "範圍變大那半邊有用"); // 2026-10-26：凜冬之殼、魔湧照 PoE2 都沒有範圍了，改用征戰之旗
         assertNull(support("swift_cooldown").refusal(skill("hunters_mark")), "冷卻變短有用");
         assertNull(support("spell_echo").refusal(skill("vulnerability_curse")), "代價是傷害的不擋");
         assertEquals("要冷卻技能", support("burst").refusal(skill("raise_zombie")), "喚屍沒有冷卻");
@@ -102,12 +115,12 @@ class SupportHitRulesTest {
         assertNull(support("point_blank").refusal(skill("artillery_ballista")), "只吃投射物傷害的照舊");
         assertNull(support("pierce").refusal(skill("fireball")));
         assertNull(support("chain").refusal(skill("arc")), "鏈雷多跳幾次");
-        assertNull(support("multiple_projectiles").refusal(skill("command_volley")), "指令技能自己會射投射物");
+        // 2026-10-27：指令技能（骸弓齊射）照 PoE2 拿掉，這一條跟著拿掉
     }
 
     @Test
     void heraldsAreNotCastSpells() {
-        for (final String id : new String[] {"spell_echo", "unleash", "channel_focus", "ember_infusion", "faster_casting", "considered_casting"}) {
+        for (final String id : new String[] {"spell_echo", "unleash", "channel_focus", "faster_casting", "considered_casting"}) {
             assertFalse(support(id).supports(skill("herald_of_ash")), id);
             assertFalse(support(id).supports(skill("herald_ash_burst")), id + "：擊殺效果也帶 herald 標籤");
         }
@@ -118,7 +131,8 @@ class SupportHitRulesTest {
 
     @Test
     void scattershotPenalisesSpellsToo() {
-        assertTrue(support("scattershot").modifiers().stream().anyMatch(m -> m.stat().equals(tw.exilecore.stats.StatKeys.CAST_SPEED) && m.value() < 0));
+        // 2026-10-27：分矢（Multishot I）併入分光（Multishot II），改測分光
+        assertTrue(support("multiple_projectiles").modifiers().stream().anyMatch(m -> m.stat().equals(tw.exilecore.stats.StatKeys.CAST_SPEED) && m.value() < 0));
     }
 
     @Test
@@ -131,21 +145,28 @@ class SupportHitRulesTest {
     /** 2026-10-17 標籤整理：掛得上卻沒作用的輔助擋掉、技能標籤補齊。 */
     @Test
     void tagAuditRules() {
-        assertEquals("要會強化攻擊的戰吼", support("warcry_power").refusal(skill("fortifying_cry")));
-        assertEquals("要會強化攻擊的戰吼", support("enraged_warcry").refusal(skill("war_banner")));
-        assertEquals("要原本只打一個目標的打擊技能", support("additional_strike").refusal(skill("lunge")));
-        assertEquals("要原本只打一個目標的打擊技能", support("additional_strike").refusal(skill("tempest_flurry")));
+        // 2026-10-26 照 PoE2：堅壁戰吼會強化盾的攻擊、戰旗不是戰吼（戰吼的輔助在標籤那一關就擋掉）、怒嘯要能用磐星跳過冷卻的戰吼
+        assertEquals("要會強化攻擊的戰吼", support("tireless").refusal(skill("lunar_blessing")));
+        // 2026-10-26：怒嘯 I 併入怒嘯 II
+        assertEquals("要戰吼技能", support("enraged_warcry_ii").refusal(skill("war_banner")));
+        assertEquals("要可以花磐星跳過冷卻的戰吼", support("enraged_warcry_ii").refusal(skill("lunar_blessing")));
+        assertNull(support("enraged_warcry_ii").refusal(skill("infernal_cry")));
+        assertEquals("要戰吼技能", support("echoing_cry").refusal(skill("blood_offering")), "祭品不是戰吼");
+        assertEquals("本來就要榮耀才能用的技能不行", support("echoing_cry").refusal(skill("ancestral_cry")));
+        assertEquals("要原本只打一個目標的打擊技能", support("additional_strike").refusal(skill("rake")));
+        assertNull(support("additional_strike").refusal(skill("tempest_flurry")), "2026-10-26 照 PoE2：風暴連擊改成打單一目標");
         assertNull(support("additional_strike").refusal(skill(firstSingleStrike())));
         assertEquals("要打擊技能（衝過去、扇形的不行）", support("shattering_strike").refusal(skill("disengage")));
         assertEquals("本身會蓄力的技能不行", support("unleash").refusal(skill("flame_stream")));
-        assertEquals("本身會蓄力的技能不行", support("hit_and_run").refusal(skill("charged_shot")));
-        assertEquals("遠程技能不行", support("danse_macabre").refusal(skill("skeletal_archers")));
+        assertEquals("本身會蓄力的技能不行", support("hit_and_run").refusal(skill("flame_stream")), "2026-10-26：蓄力射擊照 PoE2 改成爆破矢（放開型引導，不是 channel.stages），改用焚流");
+        assertEquals("要祭品技能", support("danse_macabre").refusal(skill("skeletal_archers")), "2026-10-26 照 PoE2：骸舞只能掛祭品");
+        assertNull(support("danse_macabre").refusal(skill("bone_offering")));
         assertTrue(skill("meta_crit").tags().contains(tw.exilecore.stats.Tags.AURA), "引星維持算光環（精魂輔助掛得上）");
         assertFalse(skill("summon_mount").tags().contains(tw.exilecore.stats.Tags.TRAVEL), "坐騎不算突進");
-        assertTrue(skill("lunge").tags().contains(tw.exilecore.stats.Tags.TRAVEL), "突刺還是突進");
+        assertTrue(skill("rake").tags().contains(tw.exilecore.stats.Tags.TRAVEL), "裂血掠還是突進");
         assertTrue(skill("bramble_arrow").tags().contains(tw.exilecore.stats.Tags.PHYSICAL), "剩 70% 物理");
-        assertTrue(skill("lightning_arrow").tags().contains(tw.exilecore.stats.Tags.PHYSICAL), "剩 50% 物理");
-        assertFalse(skill("prismatic_strike").tags().contains(tw.exilecore.stats.Tags.PHYSICAL), "隨機元素不算");
+        assertFalse(skill("lightning_arrow").tags().contains(tw.exilecore.stats.Tags.PHYSICAL), "2026-10-26 照 PoE2：80% 轉閃電，只剩 20% 物理");
+        assertFalse(skill("prism_rend").tags().contains(tw.exilecore.stats.Tags.PHYSICAL), "隨機元素不算（2026-10-26：幻元擊拿掉了，改用稜光裂）");
         assertTrue(skill("seismic_cry").tags().contains(tw.exilecore.stats.Tags.PHYSICAL));
         assertTrue(skill("ember_volley").tags().contains(tw.exilecore.stats.Tags.AREA));
         assertFalse(skill("essence_drain").tags().contains(tw.exilecore.stats.Tags.AREA));

@@ -11,6 +11,11 @@
 #               notable 大天賦、keystone 核心（有 drawbacks 代價）、icon（原版物品；小天賦不用）、mods 效果
 # 效果鍵見 AtlasTree.STATS（百分比都是百分比點數：20 = 20%）：
 #   map.quantity / map.rarity / map.pack_size / map.magic_packs / map.rare_packs   地圖本身
+#   2026-10-27 照 PoE2：星圖天賦沒有「物品數量」（原作的星圖天賦給的是稀有度、怪物群大小、換界石掉落），
+#     原本 map.quantity 的節點換成同等的稀有度（數量 ×2）或怪物群大小（數量 ×1）：核心拾穗 4 → 稀有度 4、星塵 → 怪物群 2、
+#     星橋 → 稀有度 2＋怪物群 2、豐饒主幹 → 稀有度／怪物群、核心「孤注一擲」數量 30 → 稀有度 30＋怪物群 15（代價不變）。
+#     map.quantity 這個鍵還認得（石板、別的地方可以用），只是星圖天賦裡沒有了。
+#   atlas.monster_effectiveness（2026-10-26 PoE2 怪物效能：受到的傷害 ÷ 倍率，經驗、物品數量多一半）
 #   atlas.experience / atlas.map_drop / atlas.tier_up / atlas.boss_maps / atlas.boss_quantity / atlas.boss_rarity / atlas.boss_unique / atlas.uber_key
 #   atlas.<事件>.weight / .extra / .unique，atlas.shrine.duration、atlas.strongbox.quantity、atlas.breach.duration、atlas.exile.drops、
 #   atlas.ritual.chance / .tribute、atlas.delirium.chance / .progress
@@ -31,7 +36,7 @@ points:
 trunks:
   core: { name: 星核, color: "#e8e8f2", icon: NETHER_STAR, description: 中心的輻條、內環與橋：小小的通用加成 }
   sustain: { name: 地圖續航, color: "#9fd3ff", icon: FILLED_MAP, description: 地圖掉得更多、階級更高 }
-  wealth: { name: 豐饒, color: "#f5b942", icon: GOLD_INGOT, description: 地圖的物品數量與稀有度 }
+  wealth: { name: 豐饒, color: "#f5b942", icon: GOLD_INGOT, description: 地圖的物品稀有度與怪物群大小 }   # 2026-10-27：這次之前「地圖的物品數量與稀有度」
   packs: { name: 群聚, color: "#ff8c69", icon: ZOMBIE_HEAD, description: 更多、更強的怪物群（掉落與經驗跟著變多） }
   bosses: { name: 首領, color: "#af6025", icon: DRAGON_HEAD, description: 地圖 Boss 掉得更好 }
   shrine: { name: 神龕, color: "#9fe8c8", icon: SEA_LANTERN, description: 更多神龕、增益更久 }
@@ -45,34 +50,34 @@ trunks:
 
 nodes:
   - { id: sp_n1, name: 引路, x: 0, y: -1, trunk: core, cost: 1, mods: [{ stat: atlas.map_drop, value: 5 }] }
-  - { id: sp_n2, name: 拾穗, x: 0, y: -2, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: sp_n2, name: 拾穗, x: 0, y: -2, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 4 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%
   - { id: sp_e1, name: 引路, x: 1, y: 0, trunk: core, cost: 1, mods: [{ stat: atlas.map_drop, value: 5 }] }
-  - { id: sp_e2, name: 拾穗, x: 2, y: 0, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: sp_e2, name: 拾穗, x: 2, y: 0, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 4 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%
   - { id: sp_s1, name: 引路, x: 0, y: 1, trunk: core, cost: 1, mods: [{ stat: atlas.map_drop, value: 5 }] }
-  - { id: sp_s2, name: 拾穗, x: 0, y: 2, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: sp_s2, name: 拾穗, x: 0, y: 2, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 4 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%
   - { id: sp_w1, name: 引路, x: -1, y: 0, trunk: core, cost: 1, mods: [{ stat: atlas.map_drop, value: 5 }] }
-  - { id: sp_w2, name: 拾穗, x: -2, y: 0, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
-  - { id: ring_1, name: 星塵, x: -3, y: -3, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: sp_w2, name: 拾穗, x: -2, y: 0, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 4 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%
+  - { id: ring_1, name: 星塵, x: -3, y: -3, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 2 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%
   - { id: ring_2, name: 星輝, x: -2, y: -3, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 3 }] }
   - { id: ring_3, name: 星潮, x: -1, y: -3, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 3 }] }
   - { id: ring_4, name: 星識, x: 0, y: -3, trunk: core, cost: 1, mods: [{ stat: atlas.experience, value: 3 }] }
-  - { id: ring_5, name: 星塵, x: 1, y: -3, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: ring_5, name: 星塵, x: 1, y: -3, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 2 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%
   - { id: ring_6, name: 星輝, x: 2, y: -3, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 3 }] }
   - { id: ring_7, name: 星潮, x: 3, y: -3, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 3 }] }
   - { id: ring_8, name: 星識, x: 3, y: -2, trunk: core, cost: 1, mods: [{ stat: atlas.experience, value: 3 }] }
-  - { id: ring_9, name: 星塵, x: 3, y: -1, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: ring_9, name: 星塵, x: 3, y: -1, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 2 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%
   - { id: ring_10, name: 星輝, x: 3, y: 0, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 3 }] }
   - { id: ring_11, name: 星潮, x: 3, y: 1, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 3 }] }
   - { id: ring_12, name: 星識, x: 3, y: 2, trunk: core, cost: 1, mods: [{ stat: atlas.experience, value: 3 }] }
-  - { id: ring_13, name: 星塵, x: 3, y: 3, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: ring_13, name: 星塵, x: 3, y: 3, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 2 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%
   - { id: ring_14, name: 星輝, x: 2, y: 3, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 3 }] }
   - { id: ring_15, name: 星潮, x: 1, y: 3, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 3 }] }
   - { id: ring_16, name: 星識, x: 0, y: 3, trunk: core, cost: 1, mods: [{ stat: atlas.experience, value: 3 }] }
-  - { id: ring_17, name: 星塵, x: -1, y: 3, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: ring_17, name: 星塵, x: -1, y: 3, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 2 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%
   - { id: ring_18, name: 星輝, x: -2, y: 3, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 3 }] }
   - { id: ring_19, name: 星潮, x: -3, y: 3, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 3 }] }
   - { id: ring_20, name: 星識, x: -3, y: 2, trunk: core, cost: 1, mods: [{ stat: atlas.experience, value: 3 }] }
-  - { id: ring_21, name: 星塵, x: -3, y: 1, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }] }
+  - { id: ring_21, name: 星塵, x: -3, y: 1, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 2 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%
   - { id: ring_22, name: 星輝, x: -3, y: 0, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 3 }] }
   - { id: ring_23, name: 星潮, x: -3, y: -1, trunk: core, cost: 1, mods: [{ stat: map.pack_size, value: 3 }] }
   - { id: ring_24, name: 星識, x: -3, y: -2, trunk: core, cost: 1, mods: [{ stat: atlas.experience, value: 3 }] }
@@ -83,16 +88,17 @@ nodes:
   - { id: sustain_5, name: 遠征, x: -2, y: -8, trunk: sustain, cost: 1, mods: [{ stat: atlas.boss_maps, value: 1 }] }
   - { id: sustain_6, name: 星圖之主, x: -2, y: -9, trunk: sustain, cost: 2, notable: true, icon: RECOVERY_COMPASS, mods: [{ stat: atlas.boss_maps, value: 1 }, { stat: atlas.tier_up, value: 12 }] }
   - { id: sustain_7, name: 尋星者, x: -2, y: -10, trunk: sustain, cost: 3, keystone: true, icon: NETHER_STAR, mods: [{ stat: atlas.chase_unique, value: 50 }], drawbacks: [{ stat: atlas.unique_less, value: 50 }] }
-  - { id: wealth_1, name: 拾荒, x: 0, y: -4, trunk: wealth, cost: 1, mods: [{ stat: map.quantity, value: 3 }] }
+  - { id: wealth_1, name: 拾荒, x: 0, y: -4, trunk: wealth, cost: 1, mods: [{ stat: map.rarity, value: 6 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +3%
   - { id: wealth_2, name: 鑑寶, x: 0, y: -5, trunk: wealth, cost: 1, mods: [{ stat: map.rarity, value: 6 }] }
-  - { id: wealth_3, name: 豐收, x: 0, y: -6, trunk: wealth, cost: 2, notable: true, icon: GOLD_BLOCK, mods: [{ stat: map.quantity, value: 4 }, { stat: map.rarity, value: 6 }] }
-  - { id: wealth_4, name: 囤積, x: 0, y: -7, trunk: wealth, cost: 1, mods: [{ stat: map.quantity, value: 3 }] }
+  - { id: wealth_3, name: 豐收, x: 0, y: -6, trunk: wealth, cost: 2, notable: true, icon: GOLD_BLOCK, mods: [{ stat: map.rarity, value: 14 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +4%、稀有度 +6%
+  - { id: wealth_4, name: 囤積, x: 0, y: -7, trunk: wealth, cost: 1, mods: [{ stat: map.pack_size, value: 3 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +3%
   - { id: wealth_5, name: 慧眼, x: 0, y: -8, trunk: wealth, cost: 1, mods: [{ stat: map.rarity, value: 8 }] }
-  - { id: wealth_6, name: 星骸的饋贈, x: 0, y: -9, trunk: wealth, cost: 2, notable: true, icon: RAW_GOLD_BLOCK, mods: [{ stat: map.quantity, value: 5 }, { stat: map.rarity, value: 10 }] }
-  - { id: wealth_7, name: 孤注一擲, x: 0, y: -10, trunk: wealth, cost: 3, keystone: true, icon: TOTEM_OF_UNDYING, mods: [{ stat: map.quantity, value: 30 }], drawbacks: [{ stat: atlas.map_drop_less, value: 50 }] }
+  - { id: wealth_6, name: 星骸的饋贈, x: 0, y: -9, trunk: wealth, cost: 2, notable: true, icon: RAW_GOLD_BLOCK, mods: [{ stat: map.rarity, value: 20 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +5%、稀有度 +10%
+  - { id: wealth_7, name: 孤注一擲, x: 0, y: -10, trunk: wealth, cost: 3, keystone: true, icon: TOTEM_OF_UNDYING, mods: [{ stat: map.rarity, value: 30 }, { stat: map.pack_size, value: 15 }], drawbacks: [{ stat: atlas.map_drop_less, value: 50 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +30%（代價一樣：地圖掉落 -50%）
   - { id: packs_1, name: 蜂擁, x: 2, y: -4, trunk: packs, cost: 1, mods: [{ stat: map.pack_size, value: 5 }] }
   - { id: packs_2, name: 魔染, x: 2, y: -5, trunk: packs, cost: 1, mods: [{ stat: map.magic_packs, value: 15 }] }
   - { id: packs_3, name: 獸潮, x: 2, y: -6, trunk: packs, cost: 2, notable: true, icon: SKELETON_SKULL, mods: [{ stat: map.pack_size, value: 6 }, { stat: map.magic_packs, value: 10 }] }
+  - { id: packs_e1, name: 前路漫漫, x: 3, y: -6, trunk: packs, cost: 2, notable: true, icon: COMPASS, mods: [{ stat: atlas.monster_effectiveness, value: 15 }] }   # 2026-10-26 照 PoE2 The Journey Ahead 的「怪物效能增加 15%」
   - { id: packs_4, name: 梟雄, x: 2, y: -7, trunk: packs, cost: 1, mods: [{ stat: map.rare_packs, value: 15 }] }
   - { id: packs_5, name: 歷練, x: 2, y: -8, trunk: packs, cost: 1, mods: [{ stat: atlas.experience, value: 6 }] }
   - { id: packs_6, name: 萬物歸巢, x: 2, y: -9, trunk: packs, cost: 2, notable: true, icon: WITHER_SKELETON_SKULL, mods: [{ stat: map.pack_size, value: 8 }, { stat: map.rare_packs, value: 15 }, { stat: atlas.experience, value: 5 }] }
@@ -160,11 +166,11 @@ nodes:
   - { id: cards_5, name: 賭局, x: -8, y: 2, trunk: cards, cost: 1, mods: [{ stat: atlas.card.gamble, value: 10 }] }
   - { id: cards_6, name: 命運之輪, x: -9, y: 2, trunk: cards, cost: 2, notable: true, icon: RECOVERY_COMPASS, mods: [{ stat: atlas.card.chance, value: 40 }, { stat: atlas.card.deck, value: 20 }] }
   - { id: cards_7, name: 星牌師, x: -10, y: 2, trunk: cards, cost: 2, notable: true, icon: BOOK, mods: [{ stat: atlas.card.chance, value: 30 }, { stat: atlas.card.gamble, value: 20 }] }
-  - { id: bridge_nl, name: 星橋, x: -1, y: -9, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
-  - { id: bridge_nr, name: 星橋, x: 1, y: -9, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
-  - { id: bridge_el, name: 星橋, x: 9, y: -1, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
-  - { id: bridge_er, name: 星橋, x: 9, y: 1, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
-  - { id: bridge_sl, name: 星橋, x: -1, y: 9, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
-  - { id: bridge_sr, name: 星橋, x: 1, y: 9, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
-  - { id: bridge_wl, name: 星橋, x: -9, y: -1, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
-  - { id: bridge_wr, name: 星橋, x: -9, y: 1, trunk: core, cost: 1, mods: [{ stat: map.quantity, value: 2 }, { stat: map.rarity, value: 2 }] }
+  - { id: bridge_nl, name: 星橋, x: -1, y: -9, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 2 }, { stat: map.pack_size, value: 2 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%、稀有度 +2%
+  - { id: bridge_nr, name: 星橋, x: 1, y: -9, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 2 }, { stat: map.pack_size, value: 2 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%、稀有度 +2%
+  - { id: bridge_el, name: 星橋, x: 9, y: -1, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 2 }, { stat: map.pack_size, value: 2 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%、稀有度 +2%
+  - { id: bridge_er, name: 星橋, x: 9, y: 1, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 2 }, { stat: map.pack_size, value: 2 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%、稀有度 +2%
+  - { id: bridge_sl, name: 星橋, x: -1, y: 9, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 2 }, { stat: map.pack_size, value: 2 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%、稀有度 +2%
+  - { id: bridge_sr, name: 星橋, x: 1, y: 9, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 2 }, { stat: map.pack_size, value: 2 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%、稀有度 +2%
+  - { id: bridge_wl, name: 星橋, x: -9, y: -1, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 2 }, { stat: map.pack_size, value: 2 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%、稀有度 +2%
+  - { id: bridge_wr, name: 星橋, x: -9, y: 1, trunk: core, cost: 1, mods: [{ stat: map.rarity, value: 2 }, { stat: map.pack_size, value: 2 }] }   # 2026-10-27 照 PoE2（星圖天賦沒有物品數量）：這次之前 物品數量 +2%、稀有度 +2%

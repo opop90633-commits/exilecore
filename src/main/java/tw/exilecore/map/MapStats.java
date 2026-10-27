@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 一張地圖物品的總效果：階級（決定怪物等級，每高一階多一點物品數量與稀有度），
+ * 一張地圖物品的總效果：階級（決定怪物等級；2026-10-27 起照 PoE2 不再隨階級多物品數量與稀有度，maps.yml 的 tier_quantity／tier_rarity 0），
  * 加上地圖詞綴（data/affixes/maps.yml）的修飾器，依屬性鍵的前綴分成
  * <ul>
  *   <li>{@code map.quantity}、{@code map.rarity}、{@code map.pack_size}、{@code map.magic_packs}、{@code map.rare_packs}：地圖本身（百分比點數，加總）</li>
@@ -30,10 +30,37 @@ import java.util.List;
  * @param packSize    怪物群大小加成
  * @param magicPacks  魔法怪物群增加（百分比點數：權重乘上 1 + x/100）
  * @param rarePacks   稀有怪物群增加
+ * @param extra       2026-10-26（PoE2 換界石）：其他 map.* 鍵（百分比點數）：map.waystones 換界石掉落更多（相乘）、
+ *                    map.rare_mod_chance 稀有怪的詞綴機率更多（相乘）、map.curse_zone.*（週期詛咒）、map.ground.*（地面效果）…
  */
 public record MapStats(int tier, int monsterLevel, double quantity, double rarity, double packSize, double magicPacks,
                        double rarePacks, List<Modifier> monsterModifiers, List<Modifier> bossModifiers,
-                       List<Modifier> playerModifiers) {
+                       List<Modifier> playerModifiers, java.util.Map<String, Double> extra) {
+
+    /** 「更多」的 map.* 鍵：多條詞綴相乘（其他相加）。 */
+    public static final java.util.Set<String> MULTIPLICATIVE = java.util.Set.of("map.waystones", "map.rare_mod_chance");
+
+    /** 舊的寫法（沒有其他 map.* 鍵）。 */
+    public MapStats(final int tier, final int monsterLevel, final double quantity, final double rarity, final double packSize,
+                    final double magicPacks, final double rarePacks, final List<Modifier> monsterModifiers,
+                    final List<Modifier> bossModifiers, final List<Modifier> playerModifiers) {
+        this(tier, monsterLevel, quantity, rarity, packSize, magicPacks, rarePacks, monsterModifiers, bossModifiers, playerModifiers,
+                java.util.Map.of());
+    }
+
+    /** 其他 map.* 鍵的值（沒有 = 0）。 */
+    public double extra(final String key) {
+        return extra.getOrDefault(key, 0.0);
+    }
+
+    /** 加一個 map.* 鍵到表裡（「更多」的相乘，其他相加）。 */
+    static void addExtra(final java.util.Map<String, Double> map, final String key, final double value) {
+        if (MULTIPLICATIVE.contains(key)) {
+            map.merge(key, value, (a, b) -> ((1 + a / 100) * (1 + b / 100) - 1) * 100);
+        } else {
+            map.merge(key, value, Double::sum);
+        }
+    }
 
     /**
      * 地圖的階級表（maps.yml 的 settings.tiers、tier_quantity、tier_rarity）：PoE2 換界石的做法，
@@ -83,8 +110,11 @@ public record MapStats(int tier, int monsterLevel, double quantity, double rarit
         }
     }
 
-    /** 跟出貨的 maps.yml 一樣：T1 = 61 … T16 = 84，每高一階物品數量 +2%、稀有度 +3%。 */
-    public static final Tiers DEFAULT_TIERS = new Tiers(List.of(61, 62, 63, 64, 65, 66, 68, 70, 71, 73, 75, 77, 78, 80, 82, 84), 2, 3);
+    /**
+     * 跟出貨的 maps.yml 一樣：T1 = 61 … T16 = 84。2026-10-27 照 PoE2（換界石沒有隨階級的物品數量、稀有度）：每階 0；
+     * 這次之前每高一階物品數量 +2%、稀有度 +3%。
+     */
+    public static final Tiers DEFAULT_TIERS = new Tiers(List.of(61, 62, 63, 64, 65, 66, 68, 70, 71, 73, 75, 77, 78, 80, 82, 84), 0, 0);
 
     /** 目前的階級表（地圖模組載入 maps.yml 時設定；物品描述、每日委託也用它）。 */
     private static volatile Tiers tiers = DEFAULT_TIERS;
@@ -94,6 +124,7 @@ public record MapStats(int tier, int monsterLevel, double quantity, double rarit
     public static final String PLAYER_PREFIX = "player:";
 
     public MapStats {
+        extra = extra == null ? java.util.Map.of() : java.util.Map.copyOf(extra);
         monsterModifiers = List.copyOf(monsterModifiers);
         bossModifiers = List.copyOf(bossModifiers);
         playerModifiers = List.copyOf(playerModifiers);
@@ -136,6 +167,7 @@ public record MapStats(int tier, int monsterLevel, double quantity, double rarit
         final List<Modifier> monster = new ArrayList<>();
         final List<Modifier> boss = new ArrayList<>();
         final List<Modifier> player = new ArrayList<>();
+        final java.util.Map<String, Double> extra = new java.util.HashMap<>();
         for (final RolledAffix rolled : data.affixes()) {
             final Affix affix = repository.affix(rolled.id());
             if (affix == null) {
@@ -157,12 +189,14 @@ public record MapStats(int tier, int monsterLevel, double quantity, double rarit
                             boss.add(strip(modifier, BOSS_PREFIX));
                         } else if (stat.startsWith(PLAYER_PREFIX)) {
                             player.add(strip(modifier, PLAYER_PREFIX));
+                        } else if (stat.startsWith("map.")) {
+                            addExtra(extra, stat, modifier.value()); // 2026-10-26：換界石掉落、稀有怪詞綴、週期詛咒、地面效果
                         }
                     }
                 }
             }
         }
-        return new MapStats(tier, table.level(tier), quantity, rarity, packSize, magicPacks, rarePacks, monster, boss, player);
+        return new MapStats(tier, table.level(tier), quantity, rarity, packSize, magicPacks, rarePacks, monster, boss, player, extra);
     }
 
     /**
@@ -175,7 +209,7 @@ public record MapStats(int tier, int monsterLevel, double quantity, double rarit
         }
         return new MapStats(tier, monsterLevel, quantity + bonus.get("map.quantity"), rarity + bonus.get("map.rarity"),
                 packSize + bonus.get("map.pack_size"), magicPacks + bonus.get("map.magic_packs"), rarePacks + bonus.get("map.rare_packs"),
-                monsterModifiers, bossModifiers, playerModifiers);
+                monsterModifiers, bossModifiers, playerModifiers, extra);
     }
 
     private static Modifier strip(final Modifier modifier, final String prefix) {

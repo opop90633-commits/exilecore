@@ -111,17 +111,41 @@ public final class LifeConfig {
     /**
      * 小島。2026-10-23：shape 島的形狀（reef、ruin、wreck、atoll；新的島照舊的形狀蓋）；needs 出航要用掉的材料（藏寶圖）；
      * description 海圖桌上的說明。
+     * 2026-10-27：currencyWeights 寶箱通貨的權重（currency.ids 寫成 { 代號: 權重 }；寫成清單 = 每種一樣）。
+     *   這次之前一律平均抽：淵底遺跡、環礁的寶箱必給通貨，神諭石、深淵星核、大鑿星石各 1/4～1/5，一個人一天各 2.5～3.5 顆，比刷地圖多太多。
      */
     public record Island(String id, String name, int level, int stamina, int travelSeconds, int minutes, List<String> monsterTypes,
                          int[] count, int magic, int rare, Captain captain, int chests, Map<String, int[]> loot, double currencyChance,
                          List<String> currencies, double hornShard, boolean letter, int xp, String shape, Map<String, Integer> needs,
-                         String description) {
+                         String description, Map<String, Double> currencyWeights) {
         public Island(final String id, final String name, final int level, final int stamina, final int travelSeconds, final int minutes,
                       final List<String> monsterTypes, final int[] count, final int magic, final int rare, final Captain captain, final int chests,
                       final Map<String, int[]> loot, final double currencyChance, final List<String> currencies, final double hornShard,
                       final boolean letter, final int xp) {
             this(id, name, level, stamina, travelSeconds, minutes, monsterTypes, count, magic, rare, captain, chests, loot, currencyChance,
-                    currencies, hornShard, letter, xp, id, Map.of(), "");
+                    currencies, hornShard, letter, xp, id, Map.of(), "", Map.of());
+        }
+
+        /** 寶箱的通貨照權重抽一種（沒寫權重的每種一樣）；r 是 0～1 的亂數。沒有通貨回傳 null。 */
+        public String pickCurrency(final double r) {
+            if (currencies.isEmpty()) {
+                return null;
+            }
+            double total = 0;
+            for (final String id : currencies) {
+                total += currencyWeights.getOrDefault(id, 1.0);
+            }
+            if (total <= 0) {
+                return null;
+            }
+            double pick = r * total;
+            for (final String id : currencies) {
+                pick -= currencyWeights.getOrDefault(id, 1.0);
+                if (pick < 0) {
+                    return id;
+                }
+            }
+            return currencies.getLast();
         }
     }
 
@@ -652,13 +676,25 @@ public final class LifeConfig {
                 loot.put(mat, new int[] {Math.max(0, range[0]), Math.max(Math.max(0, range[0]), range[1])});
             }
             final YamlNode cur = node.node("currency");
+            // 2026-10-27：ids 可以寫成 { 代號: 權重 }（高價的通貨給低權重）；寫成清單 = 每種一樣（這次之前只能寫清單）
+            final List<String> curIds = new ArrayList<>();
+            final Map<String, Double> curWeights = new LinkedHashMap<>();
+            if (cur.raw("ids") instanceof Map<?, ?>) {
+                final YamlNode idNode = cur.node("ids");
+                for (final String key : idNode.keys()) {
+                    curIds.add(key.trim());
+                    curWeights.put(key.trim(), Math.max(0, idNode.decimal(key, 1)));
+                }
+            } else {
+                curIds.addAll(cur.strings("ids"));
+            }
             islandMap.put(id, new Island(id, node.requireString("name").trim(), Math.max(1, node.integer("level", 1)),
                     Math.max(0, node.integer("stamina", 10)), Math.max(5, node.integer("travel_seconds", 60)), Math.max(3, node.integer("minutes", 20)),
                     List.copyOf(types), m.has("count") ? m.range("count") : new int[] {4, 6}, Math.max(0, m.integer("magic", 1)),
                     Math.max(0, m.integer("rare", 0)), captain, Math.max(0, node.integer("chests", 1)), Collections.unmodifiableMap(loot),
-                    Math.max(0, Math.min(1, cur.decimal("chance", 0))), List.copyOf(cur.strings("ids")),
+                    Math.max(0, Math.min(1, cur.decimal("chance", 0))), List.copyOf(curIds),
                     Math.max(0, Math.min(1, node.decimal("horn_shard", 0))), node.bool("letter", false), Math.max(0, node.integer("xp", 40)),
-                    shape, Collections.unmodifiableMap(islandNeeds), node.string("description", "").trim()));
+                    shape, Collections.unmodifiableMap(islandNeeds), node.string("description", "").trim(), Map.copyOf(curWeights)));
         }
         islands = Collections.unmodifiableMap(islandMap);
 

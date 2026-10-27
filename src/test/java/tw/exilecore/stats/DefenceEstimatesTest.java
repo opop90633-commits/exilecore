@@ -16,7 +16,8 @@ class DefenceEstimatesTest {
         assertEquals(1000.0 / (1000 + 10 * 100), e.armourReduction(), 1e-9, "護甲 ÷ (護甲 + 10 × 傷害)");
         assertEquals(1000.0 / (1000 + 10 * 300), e.armourReductionBigHit(), 1e-9);
         assertTrue(e.armourReductionBigHit() < e.armourReduction(), "大的一下減得比較少");
-        assertEquals(1 - Formulas.hitChance(500, 2000), e.evadeChance(), 1e-9);
+        // 2026-10-27 照 PoE2：怪物打玩家用怪物的命中公式（這次之前 1 − hitChance(500, 2000)）
+        assertEquals(1 - Formulas.monsterHitChance(500, 2000), e.evadeChance(), 1e-9);
         assertEquals(Formulas.hitChance(600, 400), e.hitChance(), 1e-9);
     }
 

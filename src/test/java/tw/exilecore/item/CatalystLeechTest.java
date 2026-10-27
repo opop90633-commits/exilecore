@@ -24,7 +24,9 @@ class CatalystLeechTest {
         assertTrue(Catalyst.ATTACK.matches(life));
         assertTrue(Catalyst.ATTACK.matches(mana));
         assertTrue(Catalyst.LIFE.matches(life));
-        assertTrue(Catalyst.LIFE.matches(mana));
+        // 2026-10-26 照 PoE2：魔力的偷取吃魔力催化劑（Neural）；這次之前生命催化劑也算魔力
+        assertFalse(Catalyst.LIFE.matches(mana));
+        assertTrue(Catalyst.MANA.matches(mana));
         assertFalse(Catalyst.RESIST.matches(life));
         assertFalse(Catalyst.CASTER.matches(life), "攻擊的偷取不吃法術催化劑");
         assertFalse(Catalyst.ATTACK.matches(mod(StatKeys.LEECH_LIFE)), "沒有攻擊標籤的偷取不吃攻擊催化劑");

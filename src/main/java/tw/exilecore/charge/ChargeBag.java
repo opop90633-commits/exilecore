@@ -7,8 +7,9 @@ import java.util.List;
 /**
  * 一個玩家身上某一種球的持有狀態：每一顆各自記什麼時候消失（tick）。純函式，不依賴 Bukkit。
  * <p>
- * 獲得一顆時，已經滿了就刷新最舊的那一顆的時間（PoE：滿了再獲得會重新計時），沒滿就多一顆。
- * 過期的一顆一顆掉，不是全部一起掉。
+ * 2026-10-27 照 PoE2（poe2db Charges：「戰星預設撐 15 秒，獲得同一種的另一顆時刷新」）：獲得一顆時，這一種的每一顆都刷新成新的持續時間
+ * （滿了就只刷新），所以同一種的球一起到期、一起掉。
+ * 這次之前：每顆各自倒數，滿了只刷新最舊那一顆，過期的一顆一顆掉。
  */
 public final class ChargeBag {
 
@@ -58,7 +59,9 @@ public final class ChargeBag {
         } else {
             grew = true;
         }
-        expiries.add(now + Math.max(1, durationTicks));
+        final long until = now + Math.max(1, durationTicks);
+        expiries.add(until);
+        expiries.replaceAll(expiry -> until); // 2026-10-27 照 PoE2：同一種的全部刷新
         Collections.sort(expiries);
         return grew;
     }

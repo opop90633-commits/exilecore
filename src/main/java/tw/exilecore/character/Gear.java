@@ -67,7 +67,7 @@ public final class Gear {
         this.plugin = plugin;
     }
 
-    /** 這個欄位放在 jewellery() 的第幾格（戒指有兩格，回傳第一格）。 */
+    /** 這個欄位放在 jewellery() 的第幾格（戒指有兩格（展露之指三格），回傳第一格；空的戒指欄見 {@link #ringTarget}）。 */
     public static int index(final ItemSlot slot) {
         return switch (slot) {
             case RING -> 0;
@@ -81,6 +81,32 @@ public final class Gear {
             case FEET -> FEET;
             case MAP, JEWEL, FLASK, CHARM -> -1;
         };
+    }
+
+    /** 有沒有開第三個戒指欄（2026-10-26 照 PoE2 昇華・展露之指「+1 戒指欄位」）。 */
+    public static boolean ringSlotOpen(final tw.exilecore.stats.StatSheet sheet) {
+        return sheet != null && sheet.get(PlayerState.RING_EXTRA_STAT) > 0;
+    }
+
+    /** 這個玩家現在有沒有開第三個戒指欄。 */
+    public boolean ringSlotOpen(final Player player) {
+        return ringSlotOpen(plugin.players().sheet(player));
+    }
+
+    /**
+     * 戒指要裝進哪一格（2026-10-26）：第一個空的戒指欄（第一、第二，開了的話第三）；都滿了換掉第一格。
+     */
+    public static int ringTarget(final PlayerState state, final boolean thirdOpen) {
+        if (state.jewellery(0) == null) {
+            return 0;
+        }
+        if (state.jewellery(1) == null) {
+            return 1;
+        }
+        if (thirdOpen && state.jewellery(PlayerState.RING3_SLOT) == null) {
+            return PlayerState.RING3_SLOT;
+        }
+        return 0;
     }
 
     /** 是不是顯示用的複本。 */
@@ -252,6 +278,7 @@ public final class Gear {
         changed |= absorb(player, state, 37, ItemSlot.LEGS);
         changed |= absorb(player, state, 36, ItemSlot.FEET);
         changed |= checkPair(player, state);
+        changed |= checkThirdRing(player, state);
         final boolean combat = combat(player);
         if (!combat) {
             restoreHotbar(player, state); // 離開戰鬥區域：技能圖示換回原本的東西
@@ -330,6 +357,70 @@ public final class Gear {
      *
      * @return 不搭的原因；搭（或其中一邊沒裝）回傳 null
      */
+    /** 2026-10-26（昇華・力量之器）：沙靈持用長杖時可以裝備法器。 */
+    public static String pairProblem(final ItemBase main, final ItemBase off, final tw.exilecore.ExileCore plugin, final PlayerState state) {
+        if (tw.exilecore.ascendancy.AscBuild.staffFocus(plugin, state, main, off)) {
+            return null;
+        }
+        final tw.exilecore.stats.StatSheet sheet = state == null ? null : state.sheet();
+        // 2026-10-27 照 PoE2 基石・巨人之血：雙手斧、錘、劍可以單手持用，所以副手照樣能裝盾或法器；這次之前雙手武器一律不能配
+        if (off != null && off.isShield() && main != null && sheet != null
+                && tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_GIANTS_BLOOD)
+                && tw.exilecore.stats.KeystoneKeys.giantWeapon(main.tags())) {
+            return null;
+        }
+        if (off != null && off.slot() == tw.exilecore.item.ItemSlot.MAIN_HAND && giantOffHand(main, off, sheet)) {
+            return null; // 2026-10-27 照 PoE2 基石・巨人之血：兩手各拿一把雙手斧、錘、劍（雙持，DualWield）
+        }
+        if (off != null && off.slot() == tw.exilecore.item.ItemSlot.MAIN_HAND) {
+            // 2026-10-27 照 PoE2 基石・荒野領主：持用獸魂符時可以在副手再裝一把非傳奇權杖；這次之前副手放不了權杖（平衡等效給 100 精魂）
+            return sceptreOffHand(main, off, sheet) ? null
+                    : "副手不能放武器（荒野領主：持用獸魂符時可以再裝一把權杖；巨人之血：兩手各拿一把雙手斧、錘、劍）";
+        }
+        return pairProblem(main, off);
+    }
+
+    /** 荒野領主（PoE2）：主手是獸魂符、點了荒野領主，副手可以裝權杖（傳奇另外在裝上時擋：{@link #uniqueSceptre}）。 */
+    public static boolean sceptreOffHand(final ItemBase main, final ItemBase off, final tw.exilecore.stats.StatSheet sheet) {
+        return main != null && off != null && sheet != null && off.tags().contains("sceptre") && main.tags().contains(tw.exilecore.stats.Tags.TALISMAN)
+                && tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_LORD_OF_WILDS);
+    }
+
+    /**
+     * 巨人之血（PoE2「可以單手持用雙手斧、錘、劍」）：主手、副手都是雙手斧、錘、劍時可以雙持（2026-10-27；這次之前副手不收武器，
+     * 平衡等效是副手空著時攻擊傷害更多 25%）。
+     */
+    public static boolean giantOffHand(final ItemBase main, final ItemBase off, final tw.exilecore.stats.StatSheet sheet) {
+        return main != null && off != null && sheet != null && off.isWeapon()
+                && tw.exilecore.stats.KeystoneKeys.giantWeapon(main.tags()) && tw.exilecore.stats.KeystoneKeys.giantWeapon(off.tags())
+                && tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_GIANTS_BLOOD);
+    }
+
+    /** 這把權杖是傳奇（荒野領主只收非傳奇的）。 */
+    static boolean uniqueSceptre(final ItemData data) {
+        return data != null && data.rarity() == tw.exilecore.item.Rarity.UNIQUE;
+    }
+
+    /**
+     * 裝上的時候放哪一格（2026-10-27）：權杖本來是主手；荒野領主拿著獸魂符時放副手（換掉獸魂符不合理）。
+     *
+     * 傳奇權杖照常放主手（原作只收非傳奇）。
+     *
+     * @return 欄位（{@link #index}）
+     */
+    int target(final PlayerState state, final ItemBase base, final ItemStack stack) {
+        final int target = index(base.slot());
+        if (target == MAIN && base.tags().contains("sceptre") && sceptreOffHand(baseOf(state.jewellery(MAIN)), base, state.sheet())
+                && !uniqueSceptre(plugin.items().read(stack).orElse(null))) {
+            return OFF;
+        }
+        // 2026-10-27 巨人之血：主手已經拿著雙手斧、錘、劍、副手空著，再裝一把就放副手（雙持）；副手有東西的話照常換主手
+        if (target == MAIN && state.jewellery(OFF) == null && giantOffHand(baseOf(state.jewellery(MAIN)), base, state.sheet())) {
+            return OFF;
+        }
+        return target;
+    }
+
     public static String pairProblem(final ItemBase main, final ItemBase off) {
         if (off == null) {
             return null;
@@ -350,13 +441,29 @@ public final class Gear {
         if (off == null) {
             return false;
         }
-        final String problem = pairProblem(baseOf(state.jewellery(MAIN)), baseOf(off));
+        final String problem = pairProblem(baseOf(state.jewellery(MAIN)), baseOf(off), plugin, state);
         if (problem == null) {
             return false;
         }
         state.setJewellery(OFF, null);
         stow(player, state, off);
         player.sendMessage(plugin.text().prefixed("<yellow>" + ItemRenderer.escape(name(off)) + " 卸下了，放回背包<gray>（" + problem + "）"));
+        return true;
+    }
+
+    /**
+     * 第三個戒指欄關掉了（2026-10-26：退掉展露之指、換昇華）：那一格的戒指卸下放回背包（滿了放隨身背包，再滿掉在腳邊）。
+     * 回傳裝備欄有沒有變。
+     */
+    private boolean checkThirdRing(final Player player, final PlayerState state) {
+        final ItemStack ring = state.jewellery(PlayerState.RING3_SLOT);
+        if (ring == null || ringSlotOpen(player)) {
+            return false;
+        }
+        state.setJewellery(PlayerState.RING3_SLOT, null);
+        stow(player, state, ring);
+        player.sendMessage(plugin.text().prefixed("<yellow>" + ItemRenderer.escape(name(ring))
+                + " 卸下了，放回背包<gray>（沒有「+1 戒指欄位」，第三個戒指欄關閉了）"));
         return true;
     }
 
@@ -624,7 +731,7 @@ public final class Gear {
         if (base == null || !base.isWearable()) {
             return "這不是能裝備的東西";
         }
-        int target = index(base.slot());
+        int target = target(state, base, stack); // 2026-10-27 荒野領主：權杖放副手
         if (target < 0) {
             return "這不是能裝備的東西";
         }
@@ -632,11 +739,11 @@ public final class Gear {
         if (blocked != null) {
             return blocked;
         }
-        if (base.slot() == ItemSlot.RING && state.jewellery(0) != null && state.jewellery(1) == null) {
-            target = 1;
+        if (base.slot() == ItemSlot.RING) {
+            target = ringTarget(state, ringSlotOpen(player)); // 2026-10-26：展露之指的第三個戒指欄
         }
         if (target == OFF) {
-            final String problem = pairProblem(baseOf(state.jewellery(MAIN)), base);
+            final String problem = pairProblem(baseOf(state.jewellery(MAIN)), base, plugin, state);
             if (problem != null) {
                 return problem;
             }
@@ -666,15 +773,20 @@ public final class Gear {
             return "這不是能裝備的東西";
         }
         final int natural = index(base.slot());
-        if (natural != index && !(base.slot() == ItemSlot.RING && (index == 0 || index == 1))) {
+        if (natural != index && !(base.slot() == ItemSlot.RING && (index == 0 || index == 1 || index == PlayerState.RING3_SLOT))
+                && !(index == OFF && (target(state, base, stack) == OFF // 2026-10-27 荒野領主：副手的權杖
+                        || giantOffHand(baseOf(state.jewellery(MAIN)), base, state.sheet())))) { // 2026-10-27 巨人之血：副手的雙手武器
             return "放錯欄位";
+        }
+        if (index == PlayerState.RING3_SLOT && !ringSlotOpen(player)) {
+            return "沒有第三個戒指欄（要「+1 戒指欄位」）";
         }
         final String blocked = plugin.players().equipProblem(player, stack); // 2026-10：未鑑定、需求不夠的穿不上
         if (blocked != null) {
             return blocked;
         }
         if (index == OFF) {
-            final String problem = pairProblem(baseOf(state.jewellery(MAIN)), base);
+            final String problem = pairProblem(baseOf(state.jewellery(MAIN)), base, plugin, state);
             if (problem != null) {
                 return problem;
             }
@@ -734,11 +846,11 @@ public final class Gear {
         };
     }
 
-    /** 給選單：裝備欄的內容（含戒指、項鍊、腰帶）。 */
+    /** 給選單：裝備欄的內容（含戒指、項鍊、腰帶；2026-10-26 加上第三個戒指欄）。鍵是 jewellery() 的位置。 */
     public static Map<Integer, ItemStack> equipped(final PlayerState state) {
         final Map<Integer, ItemStack> map = new java.util.LinkedHashMap<>();
-        for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length; i++) {
-            map.put(i, state.jewellery(i));
+        for (int i = 0; i < PlayerState.GEAR_SLOTS.length; i++) {
+            map.put(PlayerState.gearIndex(i), state.jewellery(PlayerState.gearIndex(i)));
         }
         return map;
     }

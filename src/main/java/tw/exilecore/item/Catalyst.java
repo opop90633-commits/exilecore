@@ -7,20 +7,33 @@ import tw.exilecore.stats.StatKeys;
 import java.util.Locale;
 
 /**
- * 催化劑的種類（PoE2 的催化劑）：只能打在飾品（戒指、項鍊、腰帶）上，品質變成「這一類詞綴的數值 +品質%」。
- * 打不同種類的催化劑會換掉原本的（品質重新從 5 開始）。
+ * 催化劑的種類（PoE2 的催化劑）：只能打在戒指、項鍊上（2026-10-26 照 PoE2：腰帶不行；這次之前腰帶也可以），
+ * 品質變成「這一類詞綴的數值 +品質%」。打不同種類的催化劑會換掉原本的（品質重新從 5 開始）。
+ * <p>
+ * 2026-10-26 照 PoE2 0.5 的 13 種：生命（Flesh）、魔力（Neural）、防禦（Carapace）、物理（Uul-Netol's）、火焰（Xoph's）、
+ * 冰冷（Tul's）、閃電（Esh's）、混沌（Chayula's）、攻擊（Reaver）、法術（Sibilant）、速度（Skittering）、屬性（Adaptive）、
+ * 召喚物（Necrotic）。這次之前是 10 種（抗性、生命與魔力、暴擊、元素、物理與混沌…）：舊的抗性、暴擊、元素、物理與混沌
+ * 留著（{@link #legacy()}）只是讓已經打上去的飾品照常生效，不會再掉。
  */
 public enum Catalyst {
-    RESIST("抗性", "抗性詞綴"),
-    LIFE("生命", "生命與魔力詞綴"),
+    LIFE("生命", "生命詞綴"),
+    MANA("魔力", "魔力詞綴"),
+    DEFENCE("防禦", "防禦詞綴"),
+    PHYSICAL("物理", "物理詞綴"),
+    FIRE("火焰", "火焰詞綴"),
+    COLD("冰冷", "冰冷詞綴"),
+    LIGHTNING("閃電", "閃電詞綴"),
+    CHAOS("混沌", "混沌詞綴"),
     ATTACK("攻擊", "攻擊詞綴"),
     CASTER("法術", "法術詞綴"),
+    SPEED("速度", "速度詞綴"),
+    ATTRIBUTE("屬性", "屬性詞綴"),
+    MINION("召喚物", "召喚物詞綴"),
+    // ---- 舊的（2026-10-26 之前）：不會再掉，已經打上去的照舊生效 ----
+    RESIST("抗性", "抗性詞綴"),
     CRIT("暴擊", "暴擊率與暴擊傷害加成詞綴"),
     ELEMENTAL("元素", "元素傷害詞綴（火焰、冰冷、閃電）"),
-    PHYS_CHAOS("物理與混沌", "物理傷害與混沌傷害詞綴"),
-    ATTRIBUTE("屬性", "屬性詞綴"),
-    SPEED("速度", "速度詞綴"),
-    DEFENCE("防禦", "防禦詞綴");
+    PHYS_CHAOS("物理與混沌", "物理傷害與混沌傷害詞綴");
 
     private final String displayName;
     private final String description;
@@ -28,6 +41,11 @@ public enum Catalyst {
     Catalyst(final String displayName, final String description) {
         this.displayName = displayName;
         this.description = description;
+    }
+
+    /** 2026-10-26：舊的種類（PoE2 沒有）：只留給已經打上去的飾品。 */
+    public boolean legacy() {
+        return this == RESIST || this == CRIT || this == ELEMENTAL || this == PHYS_CHAOS;
     }
 
     public String displayName() {
@@ -63,21 +81,33 @@ public enum Catalyst {
         final java.util.Set<String> tags = mod.tags();
         final boolean spell = tags.contains("spell");
         final boolean elementTag = tags.contains("elemental") || tags.contains("fire") || tags.contains("cold") || tags.contains("lightning");
+        final boolean minion = tags.contains("minion") || stat.startsWith("minion.");
         return switch (this) {
+            // 2026-10-26 照 PoE2 的 13 種催化劑（看詞綴的標籤：生命、魔力、防禦、物理、火焰、冰冷、閃電、混沌、攻擊、法術、速度、屬性、召喚物）
+            case MANA -> stat.equals(StatKeys.MANA_MAX) || stat.equals(StatKeys.MANA_REGEN) || stat.equals(StatKeys.MANA_ON_KILL)
+                    || stat.equals(StatKeys.MANA_PER_KILL) || stat.equals(StatKeys.LEECH_MANA) || stat.equals("mana.recoup");
+            case PHYSICAL -> !minion && (damage(mod) && tags.contains("physical") || stat.equals("damage.extra.physical")
+                    || stat.startsWith("bleed.") || stat.equals("thorns.min") || stat.equals("thorns.max") || stat.equals(StatKeys.PHYS_REDUCTION));
+            case FIRE -> !minion && element(stat, mod, "fire", "ignite.");
+            case COLD -> !minion && (element(stat, mod, "cold", "chill.") || stat.startsWith("freeze."));
+            case LIGHTNING -> !minion && (element(stat, mod, "lightning", "shock.") || stat.startsWith("electrocute."));
+            case CHAOS -> !minion && (damage(mod) && tags.contains("chaos") || stat.equals("resist.chaos")
+                    || stat.equals(StatKeys.DAMAGE_GAIN + "chaos") || stat.equals("damage.extra.chaos")
+                    || stat.equals(StatKeys.PENETRATION) && tags.contains("chaos") || stat.startsWith("poison."));
+            case MINION -> minion || stat.equals(StatKeys.SKILL_MINIONS) || stat.equals(StatKeys.SKILL_LEVEL) && tags.contains("minion");
             case RESIST -> stat.startsWith("resist.");
             // 2026-10：受到的傷害回復為生命（life.recoup）、擊中／擊殺回復生命也算生命詞綴
             // 2026-10-20：每擊殺回復生命／魔力（life.per_kill、mana.per_kill、mana.on_kill）也算
-            case LIFE -> stat.equals(StatKeys.LIFE_MAX) || stat.equals(StatKeys.LIFE_REGEN) || stat.equals(StatKeys.LIFE_REGEN_PERCENT)
-                    || stat.equals(StatKeys.MANA_MAX) || stat.equals(StatKeys.MANA_REGEN) || stat.equals(StatKeys.LIFE_RECOUP)
-                    || stat.equals(StatKeys.LIFE_ON_HIT) || stat.equals(StatKeys.LIFE_ON_KILL) || stat.equals(StatKeys.MANA_ON_KILL)
-                    || stat.equals(StatKeys.LIFE_PER_KILL) || stat.equals(StatKeys.MANA_PER_KILL)
-                    || stat.equals(StatKeys.LEECH_LIFE) || stat.equals(StatKeys.LEECH_MANA); // 2026-10-19：偷取為生命／魔力（PoE2 的標籤有生命）
+            // 2026-10-26 照 PoE2 的 Flesh Catalyst：只有生命（魔力改成魔力催化劑）；這次之前生命與魔力一起
+            case LIFE -> !minion && (stat.equals(StatKeys.LIFE_MAX) || stat.equals(StatKeys.LIFE_REGEN) || stat.equals(StatKeys.LIFE_REGEN_PERCENT)
+                    || stat.equals(StatKeys.LIFE_RECOUP) || stat.equals(StatKeys.LIFE_ON_HIT) || stat.equals(StatKeys.LIFE_ON_KILL)
+                    || stat.equals(StatKeys.LIFE_PER_KILL) || stat.equals(StatKeys.LEECH_LIFE)); // 2026-10-19：偷取為生命（PoE2 的標籤有生命）
             // 攻擊：攻擊專用的（tags 有 attack）與陷阱、手雷的傷害類；通用的元素、混沌傷害不算；攻速歸速度、暴擊歸暴擊（2026-10）
             // 2026-10-19：攻擊造成的物理傷害偷取為生命／魔力也算（PoE2 的標籤有攻擊）；2026-10-20：命中（PoE2 的標籤是攻擊）
             case ATTACK -> damage(mod) && (tags.contains("attack") || tags.contains("trap") || tags.contains("grenade"))
                     || leech(mod) && tags.contains("attack") || stat.equals(StatKeys.ACCURACY);
             // 法術：法術專用的（tags 有 spell）傷害類；施法速度歸速度、法術暴擊歸暴擊
-            case CASTER -> damage(mod) && spell;
+            case CASTER -> damage(mod) && spell && !minion;
             // 2026-10-16：「增加 x% 暴擊傷害加成」（crit.bonus，飾品上的暴傷詞綴都是這個）也算——以前只認 crit.multi，暴傷詞綴吃不到
             case CRIT -> stat.equals(StatKeys.CRIT_CHANCE) || stat.equals(StatKeys.CRIT_MULTI) || stat.equals(StatKeys.CRIT_BONUS);
             // 元素、物理與混沌：看傷害種類（攻擊、法術都算）；「額外火焰傷害」（damage.gain.火焰）也算
@@ -100,6 +130,13 @@ public enum Catalyst {
                     || stat.equals(StatKeys.ES_RECHARGE) || stat.equals(StatKeys.ARMOUR_ELEMENTAL) || stat.equals(StatKeys.DEFLECTION)
                     || stat.equals(StatKeys.PHYS_REDUCTION);
         };
+    }
+
+    /** 2026-10-26：單一元素的催化劑：那種元素的傷害、抗性、穿透、額外傷害與那種異常狀態。 */
+    private static boolean element(final String stat, final Modifier mod, final String element, final String ailment) {
+        return damage(mod) && mod.tags().contains(element) || stat.equals("resist." + element)
+                || stat.equals(StatKeys.DAMAGE_GAIN + element) || stat.equals("damage.extra." + element)
+                || stat.equals(StatKeys.PENETRATION) && mod.tags().contains(element) || stat.startsWith(ailment);
     }
 
     /** prefix 後面接火焰、冰冷、閃電（damage.gain.fire、damage.extra.cold…）。 */

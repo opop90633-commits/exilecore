@@ -44,7 +44,7 @@ public final class Tags {
     /** 捷光環（2026-10，燼使、雷使、霜使）：保留魔力、放在面板上一直開，但不算光環（光環的輔助與光環效果不吃）。 */
     public static final String HERALD = "herald";
     public static final String WARCRY = "warcry";
-    /** 常駐技能（2026-10，焚心業火）：放在技能面板上就一直生效、不保留魔力、不算光環。 */
+    /** 常駐技能（2026-10）：放在技能面板上就一直生效（2026-10-26 焚心業火、星律拿掉了，現在是引星、主要寶石這類 yml 寫的）。 */
     public static final String PERSISTENT = "persistent";
     /** 荊棘（被近戰擊中時的反彈傷害）自己的標籤：「增加荊棘傷害」用。 */
     public static final String THORNS = "thorns";

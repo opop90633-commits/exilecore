@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -91,11 +92,30 @@ public final class DpsRecords {
     private final Path file;
     private final Deque<Entry> entries = new ArrayDeque<>();
     private final Object writeLock = new Object();
+    /** 2026-10-27：每筆加進來的序號（鎖 entries）；清除時記下清到第幾號，背景還沒寫進檔的舊紀錄就不寫回去。 */
+    private long sequence;
+    /** 2026-10-27：做過的清除（鎖 entries）。 */
+    private final List<Clear> clears = new ArrayList<>();
+
+    /** 2026-10-27：一次清除：uuid = null 是全部玩家，character = null 是這個人的全部角色；upTo = 清除當下最後一筆的序號。 */
+    private record Clear(String uuid, String character, long upTo) {
+    }
 
     private DpsRecords(final ExileCore plugin) {
+        this(plugin, plugin.getDataFolder().toPath().resolve("dps_records.jsonl"));
+    }
+
+    /** 測試用（2026-10-27）：plugin 可以是 null（寫檔直接在呼叫的執行緒做）。 */
+    DpsRecords(final ExileCore plugin, final Path file) {
         this.plugin = plugin;
-        this.file = plugin.getDataFolder().toPath().resolve("dps_records.jsonl");
+        this.file = file;
         load();
+    }
+
+    private void warn(final String message, final Object arg, final Throwable error) {
+        if (plugin != null) {
+            plugin.getSLF4JLogger().warn(message, arg, error);
+        }
     }
 
     /** 共用的一份（第一次用時讀檔）。 */
@@ -131,13 +151,15 @@ public final class DpsRecords {
                 Files.write(file, keep, StandardCharsets.UTF_8);
             }
         } catch (final IOException e) {
-            plugin.getSLF4JLogger().warn("讀不到輸出紀錄 {}", file, e);
+            warn("讀不到輸出紀錄 {}", file, e);
         }
     }
 
     /** 加一筆（主執行緒）；寫檔在背景。 */
     public void add(final Entry entry) {
+        final long seq;
         synchronized (entries) {
+            seq = ++sequence;
             entries.addLast(entry);
             while (entries.size() > KEEP) {
                 entries.removeFirst();
@@ -146,6 +168,9 @@ public final class DpsRecords {
         final String line = GSON.toJson(entry);
         final Runnable write = () -> {
             synchronized (writeLock) {
+                if (clearedBeforeWrite(entry, seq)) {
+                    return; // 2026-10-27：還沒寫進檔就被管理員清掉了
+                }
                 try {
                     Files.createDirectories(file.getParent());
                     try (BufferedWriter out = Files.newBufferedWriter(file, StandardCharsets.UTF_8, StandardOpenOption.CREATE,
@@ -154,14 +179,107 @@ public final class DpsRecords {
                         out.newLine();
                     }
                 } catch (final IOException e) {
-                    plugin.getSLF4JLogger().warn("寫不進輸出紀錄 {}", file, e);
+                    warn("寫不進輸出紀錄 {}", file, e);
                 }
             }
         };
-        if (plugin.isEnabled()) {
+        if (plugin != null && plugin.isEnabled()) {
             plugin.getServer().getScheduler().runTaskAsynchronously(plugin, write);
         } else {
             write.run();
+        }
+    }
+
+    // ---- 清除（2026-10-27，管理網頁）----
+
+    /** 這筆是不是要清的：uuid = null 是全部玩家（不分大小寫比對），character = null 是這個人的全部角色。 */
+    static boolean matches(final Entry entry, final String uuid, final String character) {
+        if (entry == null) {
+            return false;
+        }
+        if (uuid != null && !uuid.equalsIgnoreCase(entry.uuid())) {
+            return false;
+        }
+        return character == null || character.equals(entry.character());
+    }
+
+    private boolean clearedBeforeWrite(final Entry entry, final long seq) {
+        synchronized (entries) {
+            for (final Clear clear : clears) {
+                if (seq <= clear.upTo() && matches(entry, clear.uuid(), clear.character())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 清掉輸出紀錄（2026-10-27，站長要的）：uuid = null 清全部玩家；character = null 清這個人的全部角色。
+     * 記憶體裡的馬上拿掉（管理網頁的排行下次讀就更新），檔案也重寫（寫到暫存檔再換過去）。回傳清掉幾筆（記憶體裡的）。
+     */
+    public int clear(final String uuid, final String character) {
+        final String who = uuid == null || uuid.isBlank() ? null : uuid.strip();
+        final String role = who == null || character == null || character.isBlank() ? null : character.strip();
+        int removed = 0;
+        synchronized (entries) {
+            final java.util.Iterator<Entry> it = entries.iterator();
+            while (it.hasNext()) {
+                if (matches(it.next(), who, role)) {
+                    it.remove();
+                    removed++;
+                }
+            }
+            clears.add(new Clear(who, role, sequence));
+        }
+        synchronized (writeLock) {
+            try {
+                if (Files.exists(file)) {
+                    final List<String> keep = new ArrayList<>();
+                    for (final String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
+                        Entry entry = null;
+                        try {
+                            entry = GSON.fromJson(line, Entry.class);
+                        } catch (final RuntimeException ignored) {
+                            // 壞掉的一行：清全部時一起丟掉，其他時候留著
+                        }
+                        if (entry == null ? who != null : !matches(entry, who, role)) {
+                            keep.add(line);
+                        }
+                    }
+                    final Path temp = file.resolveSibling(file.getFileName() + ".tmp");
+                    Files.write(temp, keep, StandardCharsets.UTF_8);
+                    try {
+                        Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                    } catch (final java.nio.file.AtomicMoveNotSupportedException e) {
+                        Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                }
+            } catch (final IOException e) {
+                warn("清除輸出紀錄時寫不進 {}（記憶體裡已經清掉，重開後可能會回來）", file, e);
+            }
+        }
+        return removed;
+    }
+
+    /** 這個人（uuid）最後一筆紀錄上的名字；沒有紀錄是 null（管理網頁的操作紀錄用）。 */
+    public String playerName(final String uuid) {
+        synchronized (entries) {
+            final java.util.Iterator<Entry> it = entries.descendingIterator();
+            while (it.hasNext()) {
+                final Entry entry = it.next();
+                if (entry.uuid() != null && entry.uuid().equalsIgnoreCase(uuid)) {
+                    return entry.player();
+                }
+            }
+        }
+        return null;
+    }
+
+    /** 記憶體裡現在有幾筆。 */
+    public int size() {
+        synchronized (entries) {
+            return entries.size();
         }
     }
 
@@ -279,7 +397,7 @@ public final class DpsRecords {
                     continue;
                 }
                 final tw.exilecore.skill.SkillDefinition definition = plugin.skills().config().skill(slot.skillId());
-                // 2026-10-25：技能放在宿主（英靈圖騰、星咒圖騰…）第 1 孔裡：戰鬥數據記的是裡面那個技能的名字，主技能寫成「宿主＞技能」、輔助用宿主的
+                // 2026-10-25：技能放在宿主（英靈圖騰、星咒圖騰…）孔裡：戰鬥數據記的是裡面那個技能的名字，主技能寫成「宿主＞技能」、輔助用宿主的
                 final tw.exilecore.skill.SkillDefinition inner = slot.inner() == null ? null : plugin.skills().config().skill(slot.inner().skillId());
                 final boolean hosted = definition != null && inner != null && mainSkill.equals(inner.name());
                 if (definition == null || !hosted && !mainSkill.equals(definition.name())) {
@@ -360,7 +478,7 @@ public final class DpsRecords {
      * （無防禦 0.55 ÷ 一般 0.6 ≈ 0.92）。對不到假人、沒有訓練模組時是 1。
      */
     private double normalFactor(final String target) {
-        if (plugin.training() == null || target == null) {
+        if (plugin == null || plugin.training() == null || target == null) {
             return 1;
         }
         final tw.exilecore.training.DummyConfig config = plugin.training().dummyConfig();

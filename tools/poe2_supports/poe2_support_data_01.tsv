@@ -1,0 +1,43 @@
+Close_Combat_I	3	120%	-	Attack, CrossbowAmmoSkill	Supported Skills deal 20% more Attack Damage to enemies within 1 metre of you, scaling down to no bonus at 3.5 metres or further
+Precision_I	1	Mana: 10 (no multiplier listed)	10 Spirit	Persistent AND Buff	30% Increased Accuracy Rating while a Supported Skill is active
+Deep_Cuts_I	3	100%	-	Attack, Damage, CrossbowAmmoSkill (Hit skills)	Supported Skills deal 25% less Damage with Hits || 75% more Magnitude of Bleeding inflicted with Supported Skills
+Elemental_Army	1	100%	-	CreatesMinion (excl. MinionsAreUndamagable)	Minions from Supported Skills have +30% to all Elemental Resistances
+Meat_Shield_I	1	100%	-	CreatesMinion (excl. MinionsAreUndamagable)	Minions from Supported Skills deal 35% less Damage || Minions from Supported Skills take 35% less Damage
+Fire_Penetration_I	2	120%	-	Damage, Attack, CrossbowAmmoSkill	Supported Skills Penetrate 30% Fire Resistance
+Cold_Penetration	2	120%	-	Damage, Attack, CrossbowAmmoSkill	Supported Skills Penetrate 30% Cold Resistance
+Lightning_Penetration	2	120%	-	Damage, Attack, CrossbowAmmoSkill	Supported Skills Penetrate 30% Lightning Resistance
+Controlled_Destruction	1	100%	-	Damage AND Spell	Supported Spells deal 25% more Hit Damage || Supported Skills cannot deal Critical Hits
+Hardy_Totems_I	2	110%	-	SummonsTotem	Totems created by Supported Skills have 40% more maximum Life
+Reinforced_Totems_I	3	100%	-	SummonsTotem	Totems summoned by Supported Skills have +40% to all Elemental Resistances
+Hulking_Minions	4	100%	Reservation Multiplier 130%	Minion AND Persistent	Minions from Supported Skills are Gigantic
+Execute_I	1	110%	-	Damage, Attack, CrossbowAmmoSkill	Supported Skills deal 40% more Damage with Hits against Enemies that are on Low Life
+Heft	5	120%	-	Damage, Attack, CrossbowAmmoSkill	Supported Skills deal 30% more Maximum Physical Hit Damage
+Fire_Mastery	5	100%	-	Fire (excl. SingleLevelSkill)	+1 to Level of Supported Fire Skills
+Deliberation	3	100%	-	UsableWhileMoving	Supported Skills deal 20% more Damage || 30% more Movement Speed penalty while using Supported Skills
+Overreach	2	100%	-	Attack + Area	Supported Skills have 40% increased Area of Effect || Supported Skills have 80% less Accuracy Rating against Enemies within two metres
+Bloodlust	- (not stated)	100%	-	Melee	Supported Skills deal 30% more Melee Physical Damage against Bleeding enemies || Supported Attacks cannot cause Bleeding
+Deep_Freeze	1	120%	-	Damage, Attack, CrossbowAmmoSkill	Supported Skills have 50% increased Freeze Duration on Enemies
+Lasting_Shock	2	100%	-	Damage, Attack, CrossbowAmmoSkill	Supported Skills have 100% increased Shock Duration || Supported Skills have 30% less chance to Shock
+Escalating_Poison	1	100%	-	Attack, Damage, CrossbowAmmoSkill (Hit skills)	Targets can be affected by +1 Poisons from Supported Skills at the same time || Supported Skills have 20% less Poison Duration
+Intense_Agony	2	100%	-	Spell AND DamageOverTime	Damage over time with non-Ailment Debuffs inflicted on full-life enemies by Supported Skills deal 50% more damage || Supported Skills have 25% less Skill Effect Duration
+Immolate	3	100%	-	Attack, CrossbowAmmoSkill	Supported Attacks Gain 30% of Damage as extra Fire Damage against Ignited enemies || Supported Skills cannot Ignite
+Frostfire	3	100%	-	Attack, Damage, CrossbowAmmoSkill (excl. SkillConsumesIgnite/Freeze)	50% more Magnitude of Ignite inflicted on Frozen targets with Supported Skills || Supported Skills cannot cause Freeze buildup || Supported Skills Consume Freeze from Enemies they Ignite || 25% more Magnitude of Ignite inflicted on Frozen Unique enemies with Supported Skills
+Scouring_Flame	- (not stated)	100%	-	Attack, Damage, CrossbowAmmoSkill	50% more Magnitude of Ignite inflicted with Supported Skills || Supported Skills gain 25% of Life and Mana Cost as Extra Runic Ward Cost
+Embitter	2	120%	-	Damage, Attack, CrossbowSkill, CrossbowAmmoSkill (excl. DegenOnlySpellDamage)	If Supported Skills would gain extra Damage of any Type other than Cold, they gain extra Cold Damage instead
+Volt	2	120%	-	Attack + Projectile (excl. UsedByProxy, Triggered, Persistent)	Supported Skills gain 2 Voltaic Charge per Metre travelled || Supported Skills have 30 maximum Voltaic Charge || Supported Skills consume all Voltaic Charge on use || Supported Skills gain 1% of Damage as extra Lightning Damage per Voltaic Charge consumed
+Corrosion	1	110%	-	Damage, Attack, CrossbowAmmoSkill (excl. ConsumesFullyBrokenArmour)	Poison applied by Supported Skills also breaks Armour equal to 80% of Poison damage
+Brittle_Armour	3	100%	-	Attack, Damage, CrossbowAmmoSkill	Hits against targets Frozen by Supported Skills Break Armour equal to 100% of Physical damage dealt
+Flamepierce	- (not stated)	100%	-	Projectile (excl. ProjectileNoCollision)	Projectiles from Supported Skills Pierce Ignited Enemies || Supported Skills cannot Ignite
+Freezefork	- (not stated)	100%	-	Projectile (excl. ProjectileNoCollision)	Supported Skills Fork when hitting Frozen Enemies || Supported Skills cannot cause Freeze buildup
+Stormchain	- (not stated)	100%	-	Chains, Projectile (excl. ProjectileNoCollision, CannotChain)	Supported Skills Cannot inflict Shock || always chain from shocked enemies
+Expanse	1	100%	-	Area, MinionsCanExplode (excl. Cooldown, UsedByProxy, Triggered, Persistent)	Supported Skills have 50% increased Area of Effect || Supported Skills have a Cooldown of 8 seconds
+Excise	2	100%	-	Attack, Damage, CrossbowAmmoSkill (excl. Cooldown, UsedByProxy, Triggered, Persistent)	Supported Skills have 40% more chance to Critically Hit || Supported Skills have a Cooldown of 8 seconds
+Execrate	3	100%	-	Attack, Damage, CrossbowAmmoSkill (excl. Cooldown, UsedByProxy, Triggered, Persistent)	Supported Skills have 100% more chance to inflict Ailments || Supported Skills have a Cooldown of 8 seconds
+Hourglass	1	100%	-	Attack, Damage, DegenOnlySpellDamage, CrossbowAmmoSkill, DamageOverTime (excl. Cooldown, UsedByProxy, Triggered, Persistent)	Supported Skills deal 30% more Damage || Supported Skills have a Cooldown of 10 seconds
+Heightened_Curse	1	140%	Reservation Multiplier 140%	AppliesCurse, IsBlasphemy	Supported Curses have 25% increased Magnitudes
+Focused_Curse	2	120%	-	AppliesCurse	Curse zones from Supported Skills erupt after 50% less delay
+Ritualistic_Curse	3	100%	-	AppliesCurse	Supported Skills have 50% increased Area of Effect || Curse zones from Supported Skills erupt after 30% more delay
+Abiding_Hex	2	100%	-	AppliesCurse (excl. Aura, UsedByProxy, Triggered, Persistent, SkillConsumesPowerChargesOnUse)	Supported Skills consume a Power Charge on use || Supported Skills have 80% more duration when consuming a Power Charge
+Eternal_Mark	3	110%	-	Mark	Marks from Supported Skills are not Consumed the first time they Activate
+Mark_for_Death	2	120%	-	Mark	Hits against targets Marked by Supported Skills Break Armour equal to 10% of Physical damage dealt
+Echoing_Cry	4	150%	-	Warcry (excl. HasUsageCondition)	Supported Skills Echo 2 times, with a 1.3 second delay || Supported Skills have 100% more area of effect per time they have Echoed || Supported Skills become usable after you have moved 10 metres || Supported Skills become unusable again after use || Supported Skills have 50% less Area of Effect || Supported Skills deal 40% less Damage || Supported Skills count enemies as having 50% less Power

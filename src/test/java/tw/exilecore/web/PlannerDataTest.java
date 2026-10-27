@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 網頁規劃器的資料：節點順序＝代碼的位元順序、職業起點、點數規則。 */
 class PlannerDataTest {
@@ -37,6 +38,14 @@ class PlannerDataTest {
 
         final JsonArray nodes = root.getAsJsonArray("nodes");
         assertEquals(tree.size(), nodes.size());
+        // 2026-10-26：永恆珠寶的族、征服者與基石（網頁換征服者時顯示用）
+        final JsonObject timeless = root.getAsJsonObject("timeless");
+        assertEquals(1500, timeless.get("radius").getAsDouble());
+        final JsonObject kalguur = timeless.getAsJsonArray("legions").get(0).getAsJsonObject();
+        assertEquals(1, kalguur.get("code").getAsInt());
+        assertEquals("heroic_tragedy", kalguur.get("unique").getAsString());
+        assertEquals("循環教義", kalguur.getAsJsonArray("conquerors").get(1).getAsJsonObject().get("keystone").getAsString());
+        assertEquals("undying_hate", timeless.getAsJsonArray("legions").get(1).getAsJsonObject().get("unique").getAsString());
         int i = 0;
         for (final PassiveNode node : tree.ordered()) {
             final JsonObject object = nodes.get(i++).getAsJsonObject();
@@ -57,10 +66,15 @@ class PlannerDataTest {
         assertEquals("str", PlannerData.mainAttribute("mercenary"), "力量跟敏捷一樣高：照力量");
         assertEquals("dex", PlannerData.mainAttribute("monk"), "敏捷跟智慧一樣高：照敏捷");
         assertEquals("str", PlannerData.mainAttribute("druid"));
-        // 沒給昇華：空的清單；珠寶孔的範圍照遊戲的（基本 2 格，更大 3、巨大 4）
+        // 沒給昇華：空的清單。2026-10-26 照 PoE2：珠寶孔的範圍是原作單位（遺時珠寶小 1000、中 1150、大 1300，永恆珠寶 1500），
+        // 節點帶原作座標 px/py 算距離（這次之前是格子：基本 2 格，更大 3、巨大 4）
         assertEquals(0, root.getAsJsonArray("ascendancies").size());
-        assertEquals(List.of(2.0, 3.0, 4.0), List.of(root.getAsJsonArray("jewelRadii").get(0).getAsDouble(),
-                root.getAsJsonArray("jewelRadii").get(1).getAsDouble(), root.getAsJsonArray("jewelRadii").get(2).getAsDouble()));
+        final com.google.gson.JsonArray radii = root.getAsJsonArray("jewelRadii");
+        assertEquals(List.of(1000.0, 1150.0, 1300.0, 1500.0), List.of(radii.get(0).getAsDouble(), radii.get(1).getAsDouble(),
+                radii.get(2).getAsDouble(), radii.get(3).getAsDouble()));
+        final PassiveNode first = tree.ordered().getFirst();
+        assertEquals(Math.round(tree.position(first)[0]), nodes.get(0).getAsJsonObject().get("px").getAsLong());
+        assertEquals(Math.round(tree.position(first)[1]), nodes.get(0).getAsJsonObject().get("py").getAsLong());
     }
 
     /** 2026-10：昇華預覽的資料——每個昇華職業的分支與每個天賦的名稱、點數、效果說明。 */
@@ -86,5 +100,33 @@ class PlannerDataTest {
         assertEquals(2, second.getAsJsonArray("lines").size());
         assertEquals("要先配雷心", second.get("note").getAsString());
         assertFalse(branches.get(1).getAsJsonArray().get(0).getAsJsonObject().has("note"), "空的補充不寫");
+    }
+
+    /** 2026-10-26 照 PoE2 的昇華樹會分岔：每個天賦帶 requires（任一個配了就能配）、depth、row、「選一個」的選項。 */
+    @Test
+    void ascendancyNodesCarryTheirBranching() throws IOException {
+        final PassiveTree tree = PassiveTree.load(Path.of("src/main/resources/data/passives/tree.json"));
+        final PlannerData.AscendancyInfo info = new PlannerData.AscendancyInfo("gemling", "mercenary", "嵌晶", "#7fb3ff", "寶石",
+                List.of(List.of(new PlannerData.AscendancyNode("技能寶石品質", 1, List.of("所有技能品質 +2%"), null, "quality", List.of(), 0, 0,
+                                        null, false, false),
+                                new PlannerData.AscendancyNode("植入寶石", 1, List.of(), null, "implanted", List.of("quality"), 1, 0, null, true, false),
+                                new PlannerData.AscendancyNode("強化鑲嵌物", 0, List.of("所有需求力量的技能等級 +2"), null, "bolster",
+                                        List.of("implanted"), 2, 0, "implanted", false, false)),
+                        List.of(new PlannerData.AscendancyNode("機動鑲嵌物", 0, List.of("所有需求敏捷的技能等級 +2"), null, "motoric",
+                                List.of("implanted"), 2, 1, "implanted", false, false))));
+        final byte[] bytes = PlannerData.json(tree, List.of(new PlannerData.ClassInfo("mercenary", "重弩手", "#d9a066")), 100, 1, 24, List.of(info), 8);
+        final JsonObject root = JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8)).getAsJsonObject();
+        final JsonArray branches = root.getAsJsonArray("ascendancies").get(0).getAsJsonObject().getAsJsonArray("branches");
+        final JsonObject quality = branches.get(0).getAsJsonArray().get(0).getAsJsonObject();
+        assertEquals(0, quality.getAsJsonArray("requires").size(), "接在起點");
+        assertEquals(0, quality.get("depth").getAsInt());
+        final JsonObject implanted = branches.get(0).getAsJsonArray().get(1).getAsJsonObject();
+        assertEquals("quality", implanted.getAsJsonArray("requires").get(0).getAsString());
+        assertTrue(implanted.get("choice").getAsBoolean());
+        final JsonObject motoric = branches.get(1).getAsJsonArray().get(0).getAsJsonObject();
+        assertEquals(2, motoric.get("depth").getAsInt(), "分岔出去的那一排從第 2 層開始");
+        assertEquals(1, motoric.get("row").getAsInt());
+        assertEquals("implanted", motoric.get("optionOf").getAsString());
+        assertFalse(quality.has("optionOf"));
     }
 }

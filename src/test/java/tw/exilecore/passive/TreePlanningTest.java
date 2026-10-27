@@ -176,6 +176,9 @@ class TreePlanningTest {
 
     @Test
     void plannedNodesThatGetCutOffAreRefundedAndSpent() throws Exception {
+        // 2026-10-26：主天賦樹換成 PoE2 的樹（明確連線）之後，這個測試改用舊的第 3 版格子樹（測試資源）驗 TreePlan 的退點／重配邏輯
+        final PassiveTree tree = PassiveTree.load(Path.of("src/test/resources/passives/tree_v3_grid.json"));
+        final PassiveNode witch = tree.start("witch");
         // 混沌術士的輻條走到內環 (-2,-4)，現在往右繞：(-1,-4)、(0,-4) 再沿中心的輻條往下到 (0,-1)；
         // 規劃改往左繞內環一圈半：(-3,-4)…(-4,0)、(-3,0)…(0,0)，再接回 (0,-1)
         final List<String> prefix = List.of("nm3_m7", "nm3_m6", "nm3_m5", "nm2_m5", "nm2_m4");

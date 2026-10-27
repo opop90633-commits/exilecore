@@ -1,8 +1,10 @@
 # 珠寶詞綴（只出現在珠寶上）：小幅的百分比加成，照 PoE2 的珠寶。顏色決定能出什麼：
 #   spawn_tags: [ruby]      赤星晶（白星晶也會出）   spawn_tags: [emerald]  翠星晶   spawn_tags: [sapphire]  蒼星晶
 #   spawn_tags: [jewel]     每一種珠寶都會出
-# 三個階級：代號 2（物品等級 1 起）、代號 1（物品等級 50 起，比較少見）與代號 0（物品等級 75 起，最少見）。前綴、後綴各最多 2 條（引擎對珠寶的限制）。
-# 2026-10-22：高階更難出——每高一階的權重相對再 ×0.875（跟裝備詞綴的「×0.8 → ×0.7」同一個比例）；每條詞綴的權重總和不變（出現哪一條的機率不變，只改出哪一階）。
+# 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，代號 3）；這次之前三個階級：代號 2（物品等級 1 起）、代號 1（物品等級 50 起）與代號 0（物品等級 75 起）。
+#   舊珠寶的 0／1／2 由 AffixRescale 換到代號 3（數值在新範圍內的不動）。退役的舊詞綴還是三階。前綴、後綴各最多 2 條（引擎對珠寶的限制）。
+# 2026-10-27 照 PoE2 原始資料：每一階權重一樣（1000）；poe2db 寫「Modifier weight information cannot be obtained from game files」，遊戲資料每階都是 1。
+#   這次之前（2026-10-22）：高階更難出——每高一階的權重相對再 ×0.875（跟裝備詞綴的「×0.8 → ×0.7」同一個比例）；每條詞綴的權重總和不變（出現哪一條的機率不變，只改出哪一階）。
 
 # ---- 前綴 ----
 
@@ -887,9 +889,8 @@ j2_area_of_effect:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 範圍效果"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [6, 6] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [5, 5] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [4, 4] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [6, 6]；T1 物品等級 50 權重 370 value: [5, 5]；T2 物品等級 1 權重 1058 value: [4, 4]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [4, 6] }
   mods:
     - { stat: skill.area, type: INCREASED, value: "{value}" }
 
@@ -901,9 +902,8 @@ j2_armour_break:
   text: "增加 {value}% 破甲"
   chips: []   # PoE2 的標籤（ArmourBreak）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: armour.break, type: INCREASED, value: "{value}" }
 
@@ -914,9 +914,8 @@ j2_attack_critical_strike_chance:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 攻擊暴擊率"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [13, 16] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [10, 12] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [6, 9] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [13, 16]；T1 物品等級 50 權重 370 value: [10, 12]；T2 物品等級 1 權重 1058 value: [6, 9]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [6, 16] }
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [attack] }
 
@@ -928,9 +927,8 @@ j2_attack_critical_strike_multiplier:
   text: "增加 {value}% 攻擊暴擊傷害加成"
   chips: [damage, attack, critical]   # PoE2 的標籤（AttackCriticalStrikeMultiplier）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [attack] }
 
@@ -941,9 +939,8 @@ j2_attack_damage:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 攻擊傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [attack] }
 
@@ -955,9 +952,8 @@ j2_base_chance_to_bleed:
   text: "攻擊擊中時 {value}% 機率造成流血"
   chips: [attack, physical, ailment]   # PoE2 的標籤（BaseChanceToBleed）；2026-10-17 補攻擊
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [6, 7] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [5, 5] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [3, 4] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [6, 7]；T1 物品等級 50 權重 370 value: [5, 5]；T2 物品等級 1 權重 1058 value: [3, 4]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
     - { stat: bleed.chance, type: FLAT, value: "{value}", tags: [attack] }
 
@@ -968,9 +964,8 @@ j2_base_chance_to_poison:
   names: [之星骸, 之精煉, 之雕琢]
   text: "擊中時 {value}% 機率造成中毒"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: poison.chance, type: FLAT, value: "{value}" }
 
@@ -982,9 +977,8 @@ j2_bleed_dot_multiplier:
   text: "增加 {value}% 流血傷害"
   chips: [damage, physical, attack, ailment]   # PoE2 的標籤（BleedDotMultiplier）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
 
@@ -996,9 +990,8 @@ j2_bleed_duration:
   text: "增加 {value}% 流血持續時間"
   chips: [physical, attack, ailment]   # PoE2 的標籤（BleedDuration）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: bleed.duration, type: INCREASED, value: "{value}" }
 
@@ -1009,9 +1002,8 @@ j2_bow_attack_speed:
   names: [之星骸, 之精煉, 之雕琢]
   text: "使用弓時增加 {value}% 攻擊速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [4, 4] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [2, 2] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [4, 4]；T1 物品等級 50 權重 370 value: [3, 3]；T2 物品等級 1 權重 1058 value: [2, 2]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [2, 4] }
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [bow] }
 
@@ -1022,9 +1014,8 @@ j2_cold_damage_percentage:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 冰冷傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
 
@@ -1036,9 +1027,8 @@ j2_cold_resistance_penetration:
   text: "傷害穿透 {value}% 冰冷抗性"
   chips: [damage, elemental, cold]   # PoE2 的標籤（ColdResistancePenetration）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: penetration, type: FLAT, value: "{value}", tags: [cold] }
 
@@ -1049,9 +1039,8 @@ j2_critical_strike_chance:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 暴擊率"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}" }
 
@@ -1063,9 +1052,8 @@ j2_critical_strike_multiplier:
   text: "增加 {value}% 暴擊傷害加成"
   chips: [damage, critical]   # PoE2 的標籤（CriticalStrikeMultiplier）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}" }
 
@@ -1077,9 +1065,8 @@ j2_crossbow_damage:
   text: "使用弩時增加 {value}% 傷害"
   chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [13, 16] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [10, 12] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [6, 9] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [13, 16]；T1 物品等級 50 權重 370 value: [10, 12]；T2 物品等級 1 權重 1058 value: [6, 9]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [6, 16] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [crossbow] }
 
@@ -1090,9 +1077,8 @@ j2_crossbow_speed:
   names: [之星骸, 之精煉, 之雕琢]
   text: "使用弩時增加 {value}% 攻擊速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [4, 4] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [2, 2] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [4, 4]；T1 物品等級 50 權重 370 value: [3, 3]；T2 物品等級 1 權重 1058 value: [2, 2]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [2, 4] }
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [crossbow] }
 
@@ -1104,9 +1090,8 @@ j2_damage_removed_from_mana_before_life:
   text: "受到的傷害有 {value}% 先從魔力扣除"
   chips: [life, mana]   # PoE2 的標籤（DamageRemovedFromManaBeforeLife）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [4, 4] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [2, 2] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [4, 4]；T1 物品等級 50 權重 370 value: [3, 3]；T2 物品等級 1 權重 1058 value: [2, 2]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [2, 4] }
   mods:
     - { stat: damage.from_mana, type: FLAT, value: "{value}" }
 
@@ -1131,9 +1116,8 @@ j2_elemental_damage_percent:
   text: "增加 {value}% 元素傷害"
   chips: [damage, elemental, fire, cold, lightning]   # PoE2 的標籤（ElementalDamagePercent）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
 
@@ -1144,9 +1128,8 @@ j2_energy_shield_delay:
   names: [星骸的, 精煉的, 雕琢的]
   text: "能量護盾開始回充的等待時間縮短 {value}%"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [14, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [12, 13] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 11] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [14, 15]；T1 物品等級 50 權重 370 value: [12, 13]；T2 物品等級 1 權重 1058 value: [10, 11]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 15] }
   mods:
     - { stat: es.delay, type: INCREASED, value: "-{value}" }
 
@@ -1157,9 +1140,8 @@ j2_fire_damage_percentage:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 火焰傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
 
@@ -1171,9 +1153,8 @@ j2_fire_resistance_penetration:
   text: "傷害穿透 {value}% 火焰抗性"
   chips: [damage, elemental, fire]   # PoE2 的標籤（FireResistancePenetration）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: penetration, type: FLAT, value: "{value}", tags: [fire] }
 
@@ -1185,9 +1166,8 @@ j2_flask_mana_recovery:
   text: "增加 {value}% 魔力藥劑回復量"
   chips: [mana, flask]   # PoE2 的標籤（FlaskManaRecovery）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: flask.mana_recovery, type: INCREASED, value: "{value}" }
 
@@ -1199,9 +1179,8 @@ j2_freeze_damage_increase:
   text: "增加 {value}% 凍結累積"
   chips: [elemental, cold, ailment]   # PoE2 的標籤（FreezeDamageIncrease）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
 
@@ -1212,9 +1191,8 @@ j2_global_cooldown_recovery:
   names: [之星骸, 之精煉, 之雕琢]
   text: "冷卻時間減少 {value}%"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [5, 5] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [4, 4] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [3, 3] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [5, 5]；T1 物品等級 50 權重 370 value: [4, 4]；T2 物品等級 1 權重 1058 value: [3, 3]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [3, 5] }
   mods:
     - { stat: skill.cooldown, type: INCREASED, value: "-{value}" }
 
@@ -1225,9 +1203,8 @@ j2_global_energy_shield_percent:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 最大能量護盾"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
 
@@ -1238,9 +1215,8 @@ j2_global_evasion_rating_percent:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 閃避"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
 
@@ -1252,9 +1228,8 @@ j2_global_flask_life_recovery:
   text: "增加 {value}% 生命藥劑回復量"
   chips: [life, flask]   # PoE2 的標籤（GlobalFlaskLifeRecovery）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
 
@@ -1265,9 +1240,8 @@ j2_global_physical_damage_reduction_rating_percent:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 護甲"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
 
@@ -1279,9 +1253,8 @@ j2_ignite_chance_increase:
   text: "增加 {value}% 點燃機率"
   chips: [elemental, fire, ailment]   # PoE2 的標籤（IgniteChanceIncrease）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: ignite.chance, type: INCREASED, value: "{value}" }
 
@@ -1293,9 +1266,8 @@ j2_ignite_effect:
   text: "增加 {value}% 點燃傷害"
   chips: [damage, elemental, fire, ailment]   # PoE2 的標籤（IgniteEffect）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
 
@@ -1306,9 +1278,8 @@ j2_increased_accuracy_percent:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 命中"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: accuracy, type: INCREASED, value: "{value}" }
 
@@ -1319,9 +1290,8 @@ j2_increased_ailment_threshold:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 元素異常門檻"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: ailment.threshold, type: INCREASED, value: "{value}" }
 
@@ -1332,9 +1302,8 @@ j2_increased_attack_speed:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 攻擊速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [4, 4] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [2, 2] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [4, 4]；T1 物品等級 50 權重 370 value: [3, 3]；T2 物品等級 1 權重 1058 value: [2, 2]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [2, 4] }
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}" }
 
@@ -1345,9 +1314,8 @@ j2_increased_block_chance:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 格擋率"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [6, 7] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [5, 5] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [3, 4] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [6, 7]；T1 物品等級 50 權重 370 value: [5, 5]；T2 物品等級 1 權重 1058 value: [3, 4]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
     - { stat: block.chance, type: INCREASED, value: "{value}" }
 
@@ -1359,9 +1327,8 @@ j2_increased_bow_damage:
   text: "使用弓時增加 {value}% 傷害"
   chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [13, 16] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [10, 12] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [6, 9] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [13, 16]；T1 物品等級 50 權重 370 value: [10, 12]；T2 物品等級 1 權重 1058 value: [6, 9]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [6, 16] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [bow] }
 
@@ -1372,9 +1339,8 @@ j2_increased_cast_speed:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 施法速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [4, 4] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [2, 2] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [4, 4]；T1 物品等級 50 權重 370 value: [3, 3]；T2 物品等級 1 權重 1058 value: [2, 2]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [2, 4] }
   mods:
     - { stat: cast.speed, type: INCREASED, value: "{value}" }
 
@@ -1385,9 +1351,8 @@ j2_increased_chaos_damage:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 混沌傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 13] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [10, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [7, 9] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 13]；T1 物品等級 50 權重 370 value: [10, 11]；T2 物品等級 1 權重 1058 value: [7, 9]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [7, 13] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
 
@@ -1399,9 +1364,8 @@ j2_increased_chill_duration:
   text: "增加 {value}% 冰緩持續時間"
   chips: [elemental, cold, ailment]   # PoE2 的標籤（IncreasedChillDuration）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [22, 25] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [19, 21] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [15, 18] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [22, 25]；T1 物品等級 50 權重 370 value: [19, 21]；T2 物品等級 1 權重 1058 value: [15, 18]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
   mods:
     - { stat: chill.duration, type: INCREASED, value: "{value}" }
 
@@ -1413,9 +1377,8 @@ j2_increased_mace_damage:
   text: "使用錘時增加 {value}% 傷害"
   chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [13, 16] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [10, 12] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [6, 9] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [13, 16]；T1 物品等級 50 權重 370 value: [10, 12]；T2 物品等級 1 權重 1058 value: [6, 9]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [6, 16] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [mace] }
 
@@ -1427,9 +1390,8 @@ j2_increased_staff_damage:
   text: "使用長棍時增加 {value}% 傷害"
   chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [13, 16] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [10, 12] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [6, 9] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [13, 16]；T1 物品等級 50 權重 370 value: [10, 12]；T2 物品等級 1 權重 1058 value: [6, 9]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [6, 16] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [quarterstaff] }
 
@@ -1441,9 +1403,8 @@ j2_increased_stun_threshold:
   text: "增加 {value}% 暈眩門檻"
   chips: []   # PoE2 的標籤（IncreasedStunThreshold）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [13, 16] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [10, 12] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [6, 9] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [13, 16]；T1 物品等級 50 權重 370 value: [10, 12]；T2 物品等級 1 權重 1058 value: [6, 9]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [6, 16] }
   mods:
     - { stat: stun.threshold, type: INCREASED, value: "{value}" }
 
@@ -1454,9 +1415,8 @@ j2_increased_totem_life:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 圖騰生命"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: totem.life, type: INCREASED, value: "{value}" }
 
@@ -1467,9 +1427,8 @@ j2_life_leech_amount:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 生命偷取量"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: leech.effect, type: INCREASED, value: "{value}" }
 
@@ -1480,9 +1439,8 @@ j2_life_recoup:
   names: [之星骸, 之精煉, 之雕琢]
   text: "受到的傷害有 {value}% 在 4 秒內回復為生命"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [3, 3] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [2, 3] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [2, 2] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [3, 3]；T1 物品等級 50 權重 370 value: [2, 3]；T2 物品等級 1 權重 1058 value: [2, 2]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
     - { stat: life.recoup, type: FLAT, value: "{value}" }
 j2_life_regeneration_rate:
@@ -1492,9 +1450,8 @@ j2_life_regeneration_rate:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 生命回復速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: life.regen, type: INCREASED, value: "{value}" }
 
@@ -1505,9 +1462,8 @@ j2_lightning_damage_percentage:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 閃電傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
 
@@ -1519,9 +1475,8 @@ j2_lightning_resistance_penetration:
   text: "傷害穿透 {value}% 閃電抗性"
   chips: [damage, elemental, lightning]   # PoE2 的標籤（LightningResistancePenetration）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: penetration, type: FLAT, value: "{value}", tags: [lightning] }
 
@@ -1532,9 +1487,8 @@ j2_mana_gained_on_kill_percentage:
   names: [之星骸, 之精煉, 之雕琢]
   text: "擊殺時回復 {value}% 最大魔力"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [2, 2] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [1, 2] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [1, 1] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [2, 2]；T1 物品等級 50 權重 370 value: [1, 2]；T2 物品等級 1 權重 1058 value: [1, 1]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
     - { stat: mana.on_kill, type: FLAT, value: "{value}" }
 j2_mana_regeneration:
@@ -1544,9 +1498,8 @@ j2_mana_regeneration:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 魔力回復速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: mana.regen, type: INCREASED, value: "{value}" }
 
@@ -1557,9 +1510,8 @@ j2_maximum_cold_resist:
   names: [之星骸, 之精煉, 之雕琢]
   text: "+{value}% 最大冰冷抗性"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [1, 1] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [1, 1] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [1, 1] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [1, 1]；T1 物品等級 50 權重 370 value: [1, 1]；T2 物品等級 1 權重 1058 value: [1, 1]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
     - { stat: resist.max.cold, type: FLAT, value: "{value}" }
 j2_maximum_fire_resist:
@@ -1569,9 +1521,8 @@ j2_maximum_fire_resist:
   names: [之星骸, 之精煉, 之雕琢]
   text: "+{value}% 最大火焰抗性"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [1, 1] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [1, 1] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [1, 1] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [1, 1]；T1 物品等級 50 權重 370 value: [1, 1]；T2 物品等級 1 權重 1058 value: [1, 1]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
     - { stat: resist.max.fire, type: FLAT, value: "{value}" }
 j2_maximum_lightning_resistance:
@@ -1581,9 +1532,8 @@ j2_maximum_lightning_resistance:
   names: [之星骸, 之精煉, 之雕琢]
   text: "+{value}% 最大閃電抗性"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [1, 1] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [1, 1] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [1, 1] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [1, 1]；T1 物品等級 50 權重 370 value: [1, 1]；T2 物品等級 1 權重 1058 value: [1, 1]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
     - { stat: resist.max.lightning, type: FLAT, value: "{value}" }
 j2_maximum_life_on_kill_percent:
@@ -1593,9 +1543,8 @@ j2_maximum_life_on_kill_percent:
   names: [之星骸, 之精煉, 之雕琢]
   text: "擊殺時回復 {value}% 最大生命"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [2, 2] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [1, 2] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [1, 1] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [2, 2]；T1 物品等級 50 權重 370 value: [1, 2]；T2 物品等級 1 權重 1058 value: [1, 1]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
     - { stat: life.on_kill, type: FLAT, value: "{value}" }
 j2_melee_damage:
@@ -1606,9 +1555,8 @@ j2_melee_damage:
   text: "增加 {value}% 近戰傷害"
   chips: [damage, attack]   # PoE2 的標籤（jewel MeleeDamage）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [melee] }
 
@@ -1619,9 +1567,8 @@ j2_minion_attack_speed_and_cast_speed:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 召喚物攻擊速度"   # 2026-10-17：召喚物不會施法，拿掉沒作用的施法速度那半
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [4, 4] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [2, 2] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [4, 4]；T1 物品等級 50 權重 370 value: [3, 3]；T2 物品等級 1 權重 1058 value: [2, 2]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [2, 4] }
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -1632,9 +1579,8 @@ j2_minion_critical_strike_chance_increase:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 召喚物暴擊率"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -1646,9 +1592,8 @@ j2_minion_critical_strike_multiplier:
   text: "增加 {value}% 召喚物暴擊傷害加成"
   chips: [damage, critical, minion]   # PoE2 的標籤（MinionCriticalStrikeMultiplier）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [22, 25] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [19, 21] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [15, 18] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [22, 25]；T1 物品等級 50 權重 370 value: [19, 21]；T2 物品等級 1 權重 1058 value: [15, 18]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -1659,9 +1604,8 @@ j2_minion_damage:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 召喚物傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -1672,9 +1616,8 @@ j2_minion_life:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 召喚物最大生命"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -1685,9 +1628,8 @@ j2_movement_velocity:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 移動速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [2, 2] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [1, 2] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [1, 1] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [2, 2]；T1 物品等級 50 權重 370 value: [1, 2]；T2 物品等級 1 權重 1058 value: [1, 1]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
     - { stat: movement.speed, type: INCREASED, value: "{value}" }
 j2_physical_damage_percent:
@@ -1697,9 +1639,8 @@ j2_physical_damage_percent:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 物理傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
 
@@ -1711,9 +1652,8 @@ j2_poison_duration:
   text: "增加 {value}% 中毒持續時間"
   chips: [chaos, ailment]   # PoE2 的標籤（PoisonDuration）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: poison.duration, type: INCREASED, value: "{value}" }
 
@@ -1725,9 +1665,8 @@ j2_poison_effect:
   text: "增加 {value}% 中毒傷害"
   chips: [damage, ailment]   # PoE2 的標籤（PoisonEffect）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: poison.magnitude, type: INCREASED, value: "{value}" }
 
@@ -1738,9 +1677,8 @@ j2_projectile_damage:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 投射物傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
 
@@ -1751,9 +1689,8 @@ j2_projectile_speed:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 投射物速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [7, 8] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [6, 6] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [4, 5] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [7, 8]；T1 物品等級 50 權重 370 value: [6, 6]；T2 物品等級 1 權重 1058 value: [4, 5]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [4, 8] }
   mods:
     - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
 
@@ -1765,9 +1702,8 @@ j2_shock_chance_increase:
   text: "增加 {value}% 感電機率"
   chips: [elemental, lightning, ailment]   # PoE2 的標籤（ShockChanceIncrease）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: shock.chance, type: INCREASED, value: "{value}" }
 
@@ -1779,9 +1715,8 @@ j2_shock_duration:
   text: "增加 {value}% 感電持續時間"
   chips: [elemental, lightning, ailment]   # PoE2 的標籤（ShockDuration）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [22, 25] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [19, 21] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [15, 18] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [22, 25]；T1 物品等級 50 權重 370 value: [19, 21]；T2 物品等級 1 權重 1058 value: [15, 18]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
   mods:
     - { stat: shock.duration, type: INCREASED, value: "{value}" }
 
@@ -1793,9 +1728,8 @@ j2_shock_effect:
   text: "增加 {value}% 感電效果"
   chips: [elemental, lightning, ailment]   # PoE2 的標籤（ShockEffect）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [14, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [12, 13] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 11] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [14, 15]；T1 物品等級 50 權重 370 value: [12, 13]；T2 物品等級 1 權重 1058 value: [10, 11]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 15] }
   mods:
     - { stat: shock.effect, type: INCREASED, value: "{value}" }
 
@@ -1806,9 +1740,8 @@ j2_skill_effect_duration:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 技能持續時間"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: skill.duration, type: INCREASED, value: "{value}" }
 
@@ -1819,9 +1752,8 @@ j2_spear_attack_speed:
   names: [之星骸, 之精煉, 之雕琢]
   text: "使用矛時增加 {value}% 攻擊速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [4, 4] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [2, 2] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [4, 4]；T1 物品等級 50 權重 370 value: [3, 3]；T2 物品等級 1 權重 1058 value: [2, 2]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [2, 4] }
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [spear] }
 
@@ -1833,9 +1765,8 @@ j2_spear_damage:
   text: "使用矛時增加 {value}% 傷害"
   chips: [damage, attack]   # PoE2 的標籤（jewel weapon damage）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [13, 16] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [10, 12] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [6, 9] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [13, 16]；T1 物品等級 50 權重 370 value: [10, 12]；T2 物品等級 1 權重 1058 value: [6, 9]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [6, 16] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [spear] }
 
@@ -1847,9 +1778,8 @@ j2_spell_crit_multiplier:
   text: "增加 {value}% 法術暴擊傷害加成"
   chips: [damage, caster, critical]   # PoE2 的標籤（SpellCritMultiplierForJewel）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -1860,9 +1790,8 @@ j2_spell_critical_strike_chance:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 法術暴擊率"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -1873,9 +1802,8 @@ j2_staff_attack_speed:
   names: [之星骸, 之精煉, 之雕琢]
   text: "使用長棍時增加 {value}% 攻擊速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [4, 4] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [2, 2] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [4, 4]；T1 物品等級 50 權重 370 value: [3, 3]；T2 物品等級 1 權重 1058 value: [2, 2]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [2, 4] }
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [quarterstaff] }
 
@@ -1887,9 +1815,8 @@ j2_stun_damage_increase:
   text: "增加 {value}% 暈眩累積"
   chips: []   # PoE2 的標籤（StunDamageIncrease）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: stun.buildup, type: INCREASED, value: "{value}" }
 
@@ -1900,9 +1827,8 @@ j2_totem_damage:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 圖騰傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [16, 18] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [13, 15] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 12] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [16, 18]；T1 物品等級 50 權重 370 value: [13, 15]；T2 物品等級 1 權重 1058 value: [10, 12]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 18] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [totem] }
 
@@ -1913,9 +1839,8 @@ j2_warcry_cooldown_speed:
   names: [之星骸, 之精煉, 之雕琢]
   text: "戰吼的冷卻時間減少 {value}%"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: skill.cooldown, type: INCREASED, value: "-{value}", tags: [warcry] }
 
@@ -1926,9 +1851,8 @@ j2_weapon_spell_damage:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 法術傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -1940,9 +1864,8 @@ j2_damage_vs_rare:
   names: [星骸的, 精煉的, 雕琢的]
   text: "對稀有與傳奇怪物增加 {value}% 傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: damage.vs_rare, type: INCREASED, value: "{value}" }
 j2_deflection_from_evasion:
@@ -1966,9 +1889,8 @@ j2_rage_on_hit:
   text: "近戰攻擊擊中時獲得 {value} 點怒氣"
   chips: [attack]   # PoE2 的標籤（RageOnHit）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [1, 1] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [1, 1] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [1, 1] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [1, 1]；T1 物品等級 50 權重 370 value: [1, 1]；T2 物品等級 1 權重 1058 value: [1, 1]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
     - { stat: rage.on_hit, type: FLAT, value: "{value}", tags: [melee] }
 j2_exposure_chance:
@@ -1992,9 +1914,8 @@ j2_shapeshift_damage:
   names: [星骸的, 精煉的, 雕琢的]
   text: "變身技能增加 {value}% 傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [shapeshift] }
 j2_shapeshift_speed:
@@ -2005,9 +1926,8 @@ j2_shapeshift_speed:
   text: "變身技能增加 {value}% 攻擊與施放速度"
   chips: [speed]   # PoE2 的標籤（Skill Speed）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [4, 4] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [2, 2] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [4, 4]；T1 物品等級 50 權重 370 value: [3, 3]；T2 物品等級 1 權重 1058 value: [2, 2]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [2, 4] }
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [shapeshift] }
     - { stat: cast.speed, type: INCREASED, value: "{value}", tags: [shapeshift] }
@@ -2020,9 +1940,8 @@ j2_curse_area:
   text: "增加 {value}% 詛咒範圍"
   chips: [curse, caster]   # PoE2 的標籤（jewel Curse*）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [11, 12] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [10, 10] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [8, 9] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [11, 12]；T1 物品等級 50 權重 370 value: [10, 10]；T2 物品等級 1 權重 1058 value: [8, 9]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [8, 12] }
   mods:
     - { stat: skill.area, type: INCREASED, value: "{value}", tags: [curse] }
 j2_curse_duration:
@@ -2033,9 +1952,8 @@ j2_curse_duration:
   text: "增加 {value}% 詛咒持續時間"
   chips: [curse, caster]   # PoE2 的標籤（jewel Curse*）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [22, 25] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [19, 21] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [15, 18] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [22, 25]；T1 物品等級 50 權重 370 value: [19, 21]；T2 物品等級 1 權重 1058 value: [15, 18]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
   mods:
     - { stat: skill.duration, type: INCREASED, value: "{value}", tags: [curse] }
 j2_mark_effect:
@@ -2046,9 +1964,8 @@ j2_mark_effect:
   text: "增加 {value}% 印記效果"
   chips: []   # PoE2 的標籤（MarkEffect）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [7, 8] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [6, 6] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [4, 5] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [7, 8]；T1 物品等級 50 權重 370 value: [6, 6]；T2 物品等級 1 權重 1058 value: [4, 5]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [4, 8] }
   mods:
     - { stat: mark.effect, type: INCREASED, value: "{value}", tags: [mark] }   # 2026-10-22：印記效果跟詛咒效果分開
 j2_mark_duration:
@@ -2058,9 +1975,8 @@ j2_mark_duration:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 印記持續時間"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [28, 32] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [23, 27] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [18, 22] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [28, 32]；T1 物品等級 50 權重 370 value: [23, 27]；T2 物品等級 1 權重 1058 value: [18, 22]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [18, 32] }
   mods:
     - { stat: skill.duration, type: INCREASED, value: "{value}", tags: [mark] }
 j2_herald_damage:
@@ -2070,9 +1986,8 @@ j2_herald_damage:
   names: [星骸的, 精煉的, 雕琢的]
   text: "捷光環增加 {value}% 傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [22, 25] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [19, 21] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [15, 18] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [22, 25]；T1 物品等級 50 權重 370 value: [19, 21]；T2 物品等級 1 權重 1058 value: [15, 18]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [herald] }
 j2_warcry_effect:
@@ -2096,9 +2011,8 @@ j2_crossbow_reload:
   text: "增加 {value}% 弩的裝填速度"
   chips: [attack, speed]   # PoE2 的標籤（CrossbowReloadSpeed）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [14, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [12, 13] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 11] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [14, 15]；T1 物品等級 50 權重 370 value: [12, 13]；T2 物品等級 1 權重 1058 value: [10, 11]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 15] }
   mods:
     - { stat: crossbow.reload_speed, type: INCREASED, value: "{value}" }
 
@@ -2112,9 +2026,8 @@ j2_ailment_effect:
   text: "增加 {value}% 異常狀態效果（點燃、流血、中毒、感電、冰緩）"
   chips: [damage, ailment]   # PoE2 的標籤（AilmentEffect）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
     - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
@@ -2129,9 +2042,8 @@ j2_bow_accuracy_rating:
   names: [星骸的, 精煉的, 雕琢的]
   text: "使用弓時增加 {value}% 命中"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: accuracy, type: INCREASED, value: "{value}", tags: [bow] }
 
@@ -2143,9 +2055,8 @@ j2_curse_effect:
   text: "增加 {value}% 詛咒效果"
   chips: [curse, caster]   # PoE2 的標籤（jewel Curse*）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [4, 4] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [2, 2] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [4, 4]；T1 物品等級 50 權重 370 value: [3, 3]；T2 物品等級 1 權重 1058 value: [2, 2]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [2, 4] }
   mods:
     - { stat: curse.effect, type: INCREASED, value: "{value}", tags: [curse] }
 
@@ -2156,9 +2067,8 @@ j2_maximum_rage:
   names: [星骸的, 精煉的, 雕琢的]
   text: "+{value} 最大怒氣"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [2, 2] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [1, 2] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [1, 1] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [2, 2]；T1 物品等級 50 權重 370 value: [1, 2]；T2 物品等級 1 權重 1058 value: [1, 1]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
     - { stat: rage.max, type: FLAT, value: "{value}" }
 
@@ -2169,9 +2079,8 @@ j2_minion_skill_area_of_effect:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 召喚物範圍"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [8, 8] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 7] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [8, 8]；T1 物品等級 50 權重 370 value: [7, 7]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 8] }
   mods:
     - { stat: skill.area, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -2183,9 +2092,8 @@ j2_presence_area:
   text: "增加 {value}% 臨在範圍"
   chips: [aura]   # PoE2 的標籤（PresenceRadius）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [22, 25] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [19, 21] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [15, 18] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [22, 25]；T1 物品等級 50 權重 370 value: [19, 21]；T2 物品等級 1 權重 1058 value: [15, 18]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
   mods:
     - { stat: presence.area, type: INCREASED, value: "{value}" }
 
@@ -2196,9 +2104,8 @@ j2_thorns_damage:
   names: [星骸的, 精煉的, 雕琢的]
   text: "增加 {value}% 荊棘傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: thorns.damage, type: INCREASED, value: "{value}" }
 
@@ -2209,9 +2116,8 @@ j2_warcry_damage:
   names: [星骸的, 精煉的, 雕琢的]
   text: "戰吼增加 {value}% 傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [warcry] }
 
@@ -2222,9 +2128,8 @@ j2_ailment_chance:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 點燃、感電、流血與中毒機率"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: ignite.chance, type: INCREASED, value: "{value}" }
     - { stat: shock.chance, type: INCREASED, value: "{value}" }
@@ -2239,9 +2144,8 @@ j2_chance_to_daze:
   text: "擊中時 {value}% 機率讓敵人眩暈"
   chips: []   # PoE2 的標籤（DazeBuildup）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: daze.chance, type: FLAT, value: "{value}" }
 
@@ -2252,9 +2156,8 @@ j2_damaging_ailment_duration2:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 點燃、流血與中毒持續時間"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: ignite.duration, type: INCREASED, value: "{value}" }
     - { stat: bleed.duration, type: INCREASED, value: "{value}" }
@@ -2268,9 +2171,8 @@ j2_ignite_shock_chill_duration:
   text: "增加 {value}% 點燃、感電與冰緩持續時間"
   chips: [elemental, fire, cold, lightning, ailment]   # PoE2 的標籤（ElementalAilmentDuration）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: ignite.duration, type: INCREASED, value: "{value}" }
     - { stat: shock.duration, type: INCREASED, value: "{value}" }
@@ -2284,9 +2186,8 @@ j2_mace_hit_damage_stun_multiplier:
   text: "使用錘時增加 {value}% 暈眩累積"
   chips: [attack]   # PoE2 的標籤（MaceStun）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [22, 25] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [19, 21] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [15, 18] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [22, 25]；T1 物品等級 50 權重 370 value: [19, 21]；T2 物品等級 1 權重 1058 value: [15, 18]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
   mods:
     - { stat: stun.buildup, type: INCREASED, value: "{value}", tags: [mace] }
 
@@ -2297,9 +2198,8 @@ j2_minion_elemental_resistance:
   names: [之星骸, 之精煉, 之雕琢]
   text: "召喚物 +{value}% 元素抗性"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: resist.fire, type: FLAT, value: "{value}", tags: [minion] }
     - { stat: resist.cold, type: FLAT, value: "{value}", tags: [minion] }
@@ -2313,9 +2213,8 @@ j2_quarterstaff_hit_damage_freeze_multiplier:
   text: "使用長棍時增加 {value}% 凍結累積"
   chips: [elemental, cold, ailment]   # PoE2 的標籤（QuarterstaffFreezeBuildup）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: freeze.buildup, type: INCREASED, value: "{value}", tags: [quarterstaff] }
 
@@ -2327,9 +2226,8 @@ j2_spear_critical_strike_multiplier:
   text: "使用矛時增加 {value}% 暴擊傷害加成"
   chips: [critical, attack]   # PoE2 的標籤（SpearCriticalDamage）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spear] }
 
@@ -2342,9 +2240,8 @@ j2_charm_duration:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 護符效果持續時間"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: charm.duration, type: INCREASED, value: "{value}" }
 
@@ -2355,9 +2252,8 @@ j2_charm_charges_gained:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 護符拿到的充能"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: charm.charges_gained, type: INCREASED, value: "{value}" }
 
@@ -2368,9 +2264,8 @@ j2_flask_charges_gained:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 藥劑拿到的充能"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: flask.charges_gained, type: INCREASED, value: "{value}" }
 
@@ -2381,9 +2276,8 @@ j2_flask_duration:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 藥劑效果持續時間"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: flask.duration, type: INCREASED, value: "{value}" }
 
@@ -2395,9 +2289,8 @@ j2_life_flask_charges_gained:
   text: "增加 {value}% 生命藥劑拿到的充能"
   chips: [flask]   # PoE2 的標籤（LifeFlaskChargePercentGeneration）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: flask.charges_gained.life, type: INCREASED, value: "{value}" }
 
@@ -2409,9 +2302,8 @@ j2_mana_flask_charges_gained:
   text: "增加 {value}% 魔力藥劑拿到的充能"
   chips: [flask]   # PoE2 的標籤（ManaFlaskChargePercentGeneration）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: flask.charges_gained.mana, type: INCREASED, value: "{value}" }
 
@@ -2424,9 +2316,8 @@ j2_damage_corpse:
   names: [星骸的, 精煉的, 雕琢的]
   text: "最近消耗過屍體，則增加 {value}% 傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: damage@corpse, type: INCREASED, value: "{value}" }
 
@@ -2437,9 +2328,8 @@ j2_damage_charm:
   names: [星骸的, 精煉的, 雕琢的]
   text: "最近用過護符，則增加 {value}% 傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: damage@charm, type: INCREASED, value: "{value}" }
 
@@ -2451,9 +2341,8 @@ j2_melee_damage_projhit:
   text: "最近用投射物攻擊擊中過敵人，則增加 {value}% 近戰傷害"
   chips: [damage, attack]   # PoE2 的標籤（Melee/ProjectileDamageIf...HitRecently）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: damage@projhit, type: INCREASED, value: "{value}", tags: [melee] }
 
@@ -2465,9 +2354,8 @@ j2_projectile_damage_meleehit:
   text: "最近近戰擊中過敵人，則增加 {value}% 投射物傷害"
   chips: [damage, projectile, attack]   # PoE2 的標籤（Melee/ProjectileDamageIf...HitRecently）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: damage@meleehit, type: INCREASED, value: "{value}", tags: [projectile] }
 
@@ -2479,9 +2367,8 @@ j2_stun_threshold_nostun:
   text: "最近沒被重暈過，則增加 {value}% 重暈門檻"
   chips: []   # PoE2 的標籤（IncreasedStunThreshold）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [22, 25] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [19, 21] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [15, 18] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [22, 25]；T1 物品等級 50 權重 370 value: [19, 21]；T2 物品等級 1 權重 1058 value: [15, 18]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
   mods:
     - { stat: stun.threshold@nostun, type: INCREASED, value: "{value}" }
 
@@ -2495,9 +2382,8 @@ j2_blind_chance:
   text: "攻擊擊中時 {value}% 機率致盲敵人"
   chips: [attack]   # PoE2 的標籤（jewel AttacksChanceToBlind）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [6, 7] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [5, 5] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [3, 4] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [6, 7]；T1 物品等級 50 權重 370 value: [5, 5]；T2 物品等級 1 權重 1058 value: [3, 4]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
     - { stat: blind.chance, type: FLAT, value: "{value}", tags: [attack] }
 
@@ -2509,9 +2395,8 @@ j2_pierce_chance:
   text: "投射物有 {value}% 機率穿透敵人"
   chips: [projectile]   # PoE2 的標籤（jewel ArrowPierceChance）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [14, 16] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [10, 13] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [17, 20]；T1 物品等級 50 權重 370 value: [14, 16]；T2 物品等級 1 權重 1058 value: [10, 13]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: skill.pierce_chance, type: FLAT, value: "{value}", tags: [projectile] }
 
@@ -2523,9 +2408,8 @@ j2_slow_taken:
   text: "你身上減益的緩速幅度減少 {value}%"
   chips: []   # PoE2 的標籤（jewel SlowPotency）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 6] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [9, 10]；T1 物品等級 50 權重 370 value: [7, 8]；T2 物品等級 1 權重 1058 value: [5, 6]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: slow.taken, type: INCREASED, value: "-{value}" }
 
@@ -2537,9 +2421,8 @@ j2_chain_terrain:
   text: "投射物有 {value}% 機率從地形額外連鎖一次"
   chips: [projectile]   # PoE2 的標籤（jewel ChainFromTerrain）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [5, 5] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [4, 4] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [3, 3] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [5, 5]；T1 物品等級 50 權重 370 value: [4, 4]；T2 物品等級 1 權重 1058 value: [3, 3]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [3, 5] }
   mods:
     - { stat: skill.chain_terrain, type: FLAT, value: "{value}", tags: [projectile] }
 
@@ -2551,9 +2434,8 @@ j2_mana_leech_amount:
   text: "增加 {value}% 魔力偷取量"
   chips: []   # PoE2 的標籤（jewel ManaLeechAmount）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: leech.mana_effect, type: INCREASED, value: "{value}" }
 
@@ -2565,9 +2447,8 @@ j2_knockback_distance:
   text: "增加 {value}% 擊退距離"
   chips: []   # PoE2 的標籤（jewel KnockbackDistance）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 15] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [5, 8] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 15]；T1 物品等級 50 權重 370 value: [9, 11]；T2 物品等級 1 權重 1058 value: [5, 8]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
   mods:
     - { stat: skill.knockback, type: INCREASED, value: "{value}" }
 
@@ -2579,9 +2460,8 @@ j2_rage_when_hit:
   text: "被敵人擊中時獲得 {value} 點怒氣"
   chips: []   # PoE2 的標籤（jewel RageWhenHit）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [3, 3] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [2, 2] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [1, 1] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [3, 3]；T1 物品等級 50 權重 370 value: [2, 2]；T2 物品等級 1 權重 1058 value: [1, 1]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [1, 3] }
   mods:
     - { stat: rage.when_hit, type: FLAT, value: "{value}" }
 
@@ -2593,9 +2473,8 @@ j2_minion_physical_reduction:
   text: "召喚物 {value}% 額外物理傷害減免"
   chips: [minion]   # PoE2 的標籤（jewel MinionPhysicalDamageReduction）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [13, 16] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [10, 12] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [6, 9] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [13, 16]；T1 物品等級 50 權重 370 value: [10, 12]；T2 物品等級 1 權重 1058 value: [6, 9]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [6, 16] }
   mods:
     - { stat: physical.reduction, type: FLAT, value: "{value}", tags: [minion] }
 
@@ -2607,8 +2486,7 @@ j2_minion_chaos_resistance:
   text: "召喚物 +{value}% 混沌抗性"
   chips: [minion]   # PoE2 的標籤（jewel MinionChaosResistance）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 122, value: [12, 13] }
-    - { tier: 1, ilvl: 50, weight: 370, value: [10, 11] }
-    - { tier: 2, ilvl: 1, weight: 1058, value: [7, 9] }
+    # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [12, 13]；T1 物品等級 50 權重 370 value: [10, 11]；T2 物品等級 1 權重 1058 value: [7, 9]
+    - { tier: 3, ilvl: 1, weight: 1000, value: [7, 13] }
   mods:
     - { stat: resist.chaos, type: FLAT, value: "{value}", tags: [minion] }

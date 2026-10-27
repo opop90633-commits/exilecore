@@ -31,14 +31,14 @@ boss:
   name: 開天者・始源之星
   type: IRON_GOLEM
   level: 88
-  life: 7333                    # 生命倍率（一個人的份；2026-10-21 晚：照打 Boss 每秒 100 萬、單人 3 分半，Lv.88 約 2.1 億生命；早上 300 萬時是 22000）
+  life: 44.36   # 2026-10-26：比照極境（照原作超難版），一個人的份；這次之前 7333
   # 2026-10-21：不遞減（沒有每秒傷害上限；以前照 15 萬遞減）
   # 生命照在場（浮動）的高等級玩家人數：等級 count_level 以上的才算（低等級不算），最多算 max_counted_players 人（0 = 沒有上限）；
   # 每多一人，生命多 life_per_player 倍的基礎（1.0 = +100%、0.5 = +50%）。有人進來就變多、離開就變少，血量比例不變
   count_level: 80
   life_per_player: 1.0          # 2026-10：0.5 → 1.0（跟地圖 Boss 組隊的倍率一樣：每多一人多一份）。伺服器紀錄：改 293 之後 5 人 14 秒、32 秒就倒
   max_counted_players: 0
-  damage: 3.0
+  damage: 4.5   # 2026-10-26 照 PoE2（這次之前 3.0）
   scale: 1.6
   mods: [armoured, resistant]
   intro: "「世界剛剛開始。讓我看看，你們配不配留在這裡。」"
@@ -77,13 +77,13 @@ invasion:
   commander:
     name: 潮汐統帥
     type: RAVAGER
-    life: 967   # 2026-10-21 晚：照打 Boss 每秒 50 萬、單人 3 分半（Lv.84 約 1.05 億生命）；不遞減。早上 150 萬時是 2900
+    life: 7.5   # 2026-10-26 照 PoE2（原作 Trialmaster／Zarokh 750%／250%，一個人的份；這次之前 967）
     # 2026-10：生命照在場（浮動）的高等級玩家人數，跟開天者一樣：count_level 等以上才算，每多一人多 life_per_player 倍的基礎，
     # 最多算 max_counted_players 人（0 = 沒有上限）；有人進來就變多、離開就變少，血量比例不變
     count_level: 80
     life_per_player: 1.0        # 2026-10：0.5 → 1.0（跟開天者一樣：每多一人多一份）
     max_counted_players: 0
-    damage: 1.5
+    damage: 2.5   # 2026-10-26 照 PoE2（這次之前 1.5）
     skills: [world_ley_hunt, world_star_spiral]
   rewards:
     currency: event_swarm_shard

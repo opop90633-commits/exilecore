@@ -28,8 +28,9 @@ import java.util.Set;
  * @param castTime      法術的基礎施法時間（秒）
  * @param effectiveness 傷害效益（攻擊乘武器傷害；法術乘附加傷害）
  * @param mana          魔力消耗
- * @param damage        法術等級 1 的基礎傷害 [最小, 最大]（攻擊為 null）
- * @param damageTypes   法術傷害的類型比例（總和 1）
+ * @param damage        法術等級 1 的基礎傷害 [最小, 最大]，或逐級表攤平的 [等級 1 最小, 等級 1 最大, 等級 2 最小, …]（一般的攻擊為 null；
+ *                      2026-10-27：不用武器的攻擊也寫這個，取代武器傷害，見 {@link #weaponless()}）
+ * @param damageTypes   法術（與不用武器的攻擊）傷害的類型比例（總和 1）
  * @param conversion    物理轉換成其他類型的比例（焚羽箭）
  * @param visual        外觀（粒子與音效）的代號
  * @param modifiers     技能自己帶的修飾器（例如熾星彈的點燃機率），跟輔助寶石一樣只對這個技能有效
@@ -53,7 +54,7 @@ public record SkillDefinition(String id, String name, String description, String
         source = source == null || source.isBlank() ? null : source.trim().toLowerCase(Locale.ROOT);
     }
 
-    /** 同一個技能換一種特效（幻元箭每次施放的元素不同）。 */
+    /** 同一個技能換一種特效（稜光裂每次施放的元素不同）。 */
     public SkillDefinition withVisual(final String newVisual) {
         return new SkillDefinition(id, name, description, icon, type, tags, weapons, starter, hidden, tier, mechanic, attackSpeed, castTime,
                 effectiveness, mana, damage, damageTypes, conversion, params, newVisual, modifiers, cooldown, deploy, summon, aura, warcry,
@@ -85,6 +86,9 @@ public record SkillDefinition(String id, String name, String description, String
             case "ritual_priest" -> "血契祭場的祭司・血契";
             case "delirium_mirror" -> "妄念霧原的幻霧之鏡・妄念";
             case "abyss_lich" -> "骨潮深坑的淵底之王・骨潮";
+            // 2026-10-26：法杖、長杖、權杖賦予的技能（PoE2 的 Grants Skill；沒有寶石）
+            case "weapon" -> "法杖、長杖、權杖賦予";
+            case "ascendancy" -> "昇華天賦賦予"; // 2026-10-26
             default -> "專屬的掉落來源";
         };
     }
@@ -92,6 +96,14 @@ public record SkillDefinition(String id, String name, String description, String
     /** 是不是這個來源的專屬技能寶石。 */
     public boolean droppedBy(final String from) {
         return source != null && source.equals(from);
+    }
+
+    /**
+     * 2026-10-27 照 PoE2（NonWeaponAttack）：不用武器的攻擊——攻擊技能自己寫了基礎傷害（damage），取代武器的傷害；
+     * 帶 attack 標籤、吃攻擊的加成，不吃法術的加成、武器的傷害與武器的本地數值（暴擊率用 {@link tw.exilecore.stats.DamageCalculator#WEAPONLESS_BASE_CRIT}）。
+     */
+    public boolean weaponless() {
+        return type == SkillType.ATTACK && damage != null;
     }
 
     /** 這個技能會不會直接造成傷害（純位移、印記、召喚、光環、戰吼不會：法術可以不寫 damage，說明也不列傷害）。 */
@@ -102,13 +114,16 @@ public record SkillDefinition(String id, String name, String description, String
             }
         }
         if (mechanic == Mechanic.AURA) {
-            return aura != null && aura.burns(); // 焚燒光環（焚心業火）每半秒打周圍的敵人
+            return false; // 2026-10-26：焚燒光環（焚心業火）拿掉了，光環都不直接造成傷害
         }
         if (mechanic == Mechanic.WARCRY) {
             return damage != null; // 2026-10（PoE2）：有寫 damage 的戰吼（震地戰吼）吼的時候會打範圍內的敵人
         }
+        if (mechanic == Mechanic.GUARD) {
+            return type == SkillType.ATTACK; // 2026-10-26 照 PoE2：架盾是攻擊（放開時的盾擊會打人）；其他舉盾、增益技能不打人
+        }
         if (mechanic == Mechanic.MARK || mechanic == Mechanic.SUMMON || mechanic == Mechanic.RALLY || mechanic == Mechanic.META
-                || mechanic == Mechanic.DESECRATE || mechanic == Mechanic.GUARD) {
+                || mechanic == Mechanic.DESECRATE) {
             return false;
         }
         if (mechanic == Mechanic.DASH) {
@@ -131,6 +146,9 @@ public record SkillDefinition(String id, String name, String description, String
         if (mechanic == Mechanic.AURA) {
             // 2026-10：光環、捷光環、常駐技能不算法術——種類就寫「光環」「捷光環」「常駐」（type 寫 spell 只是開的動作照施法時間）
             return ModifierText.tagName(tags.contains(Tags.HERALD) ? Tags.HERALD : tags.contains(Tags.PERSISTENT) ? Tags.PERSISTENT : Tags.AURA);
+        }
+        if (mechanic == Mechanic.MARK && !params.mark().curse()) {
+            return ModifierText.tagName(Tags.MARK); // 2026-10-26 照 PoE2：印記不算法術
         }
         return mechanic == Mechanic.WARCRY ? ModifierText.tagName(Tags.WARCRY) : type.displayName();
     }
@@ -184,7 +202,7 @@ public record SkillDefinition(String id, String name, String description, String
         final Set<String> tags = new LinkedHashSet<>(lower(node.strings("tags")));
         tags.add(type == SkillType.ATTACK ? Tags.ATTACK : Tags.SPELL);
         if (node.has("meta")) {
-            tags.add(Tags.META); // 2026-10-22：主要寶石（星咒圖騰、暴擊引星…）：技能寶石放在它自己的第 1 孔
+            tags.add(Tags.META); // 2026-10-22：主要寶石（星咒圖騰、暴擊引星…）：技能寶石放在它自己的孔（每一孔都能放）
         }
         tags.remove(type == SkillType.ATTACK ? Tags.SPELL : Tags.ATTACK);
         // 2026-10 標籤統一：沒有轉成元素、混沌的攻擊打的就是武器的物理傷害，一律算物理技能（以前有的有寫、有的沒寫）
@@ -216,7 +234,7 @@ public record SkillDefinition(String id, String name, String description, String
         if (mechanic == Mechanic.DASH || mechanic == Mechanic.LEAP || mechanic == Mechanic.FLICKER) {
             tags.add(Tags.MOVEMENT);
         }
-        // 2026-10-17：坐騎（喚駒、骨駒）借 dash 實作，但不是衝過去：不算突進（躍電這種突進輔助掛不上）
+        // 2026-10-17：坐騎（喚駒；2026-10-26 骨駒拿掉了）借 dash 實作，但不是衝過去：不算突進（躍電這種突進輔助掛不上）
         if ((mechanic == Mechanic.DASH || mechanic == Mechanic.LEAP) && !node.has("mount")) {
             tags.add(Tags.TRAVEL); // 一路衝過去、跳過去的（瞬影擊是瞬移到敵人身邊，不算）
         }
@@ -227,6 +245,8 @@ public record SkillDefinition(String id, String name, String description, String
             tags.add(params.mark().curse() ? "curse" : Tags.MARK); // 2026-10：範圍的是詛咒
             if (params.mark().curse()) {
                 tags.add(Tags.AREA);
+            } else {
+                tags.remove(Tags.SPELL); // 2026-10-26 照 PoE2：印記不算法術（詛咒才是），法術的輔助、帶 spell 標籤的加成不吃
             }
         }
         if (mechanic == Mechanic.CORPSE) {
@@ -266,8 +286,8 @@ public record SkillDefinition(String id, String name, String description, String
             }
             final boolean onFire = node.list("modifiers").stream()
                     .anyMatch(m -> tw.exilecore.stats.StatKeys.FLAG_SUMMON_ON_FIRE.equals(m.string("stat", "")));
-            if (mechanic == Mechanic.AURA && !summon.permanent() && !onFire) {
-                throw new IllegalArgumentException(where + ".summon.duration：夥伴要是永久的（寫 0）");
+            if (mechanic == Mechanic.AURA && !summon.permanent() && !onFire && summon.interval() <= 0) {
+                throw new IllegalArgumentException(where + ".summon.duration：夥伴要是永久的（寫 0；每隔幾秒叫一隻的 interval 例外）");
             }
             // 2026-10：召喚技能不算法術（法術的輔助掛不上、帶 spell 標籤的加成不吃）；type 還是 spell：召喚的動作照施法時間算
             tags.remove(Tags.SPELL);
@@ -295,11 +315,7 @@ public record SkillDefinition(String id, String name, String description, String
             tags.remove(Tags.AURA);
             tags.remove(Tags.AREA);
         } else if (aura != null) {
-            if (aura.persistent()) {
-                // 常駐技能（焚心業火）：不算光環（光環的輔助、光環效果、保留魔力都不吃），放在面板上就一直生效
-                tags.remove(Tags.AURA);
-                tags.add(Tags.PERSISTENT);
-            } else if (aura.herald()) {
+            if (aura.herald()) { // 2026-10-26：焚心業火（常駐、不算光環）拿掉了，這次之前先判斷它
                 // 捷光環（2026-10）：不算光環，另外一個標籤（光環的輔助、光環效果不吃；魔力保留的加成照吃）
                 tags.remove(Tags.AURA);
                 tags.add(Tags.HERALD);
@@ -309,7 +325,7 @@ public record SkillDefinition(String id, String name, String description, String
             }
             // 隊友在範圍內才有效：範圍效果的加成讓它更大。2026-10-16：沒有任何效果會分給範圍內的人（引星：只是觸發別的技能）
             // 就不算範圍技能——擴散、凝聚這些範圍的輔助掛上去不會有作用，不要讓人誤會
-            if (!aura.effects().isEmpty() || aura.burn() || aura.enemy() != null || aura.onKill() != null) {
+            if (!aura.effects().isEmpty() || aura.enemy() != null || aura.onKill() != null) {
                 tags.add(Tags.AREA);
             }
             // 2026-10：光環、常駐技能不算法術（照 PoE2：它們是「增益、常駐」）——法術的輔助掛不上、
@@ -318,12 +334,23 @@ public record SkillDefinition(String id, String name, String description, String
             if (!aura.herald()) {
                 tags.remove(Tags.SPELL);
             }
+            // 2026-10-26 照 PoE2：雷使、霜使是攻擊（擊殺效果打的是攻擊傷害；攻擊的輔助能掛、法術的不行）——yml 的 tags 寫 attack 的捷光環照攻擊算
+            if (aura.herald() && lower(node.strings("tags")).contains(Tags.ATTACK)) {
+                tags.remove(Tags.SPELL);
+                tags.add(Tags.ATTACK);
+            }
         }
         if (warcry != null) {
-            if (cooldown <= 0) {
-                throw new IllegalArgumentException(where + "：戰吼要有 cooldown（冷卻時間）");
+            // 2026-10-26 照 PoE2：熔魂嘯沒有冷卻，要榮耀才能用（warcry.glory）
+            if (cooldown <= 0 && warcry.extras().glory() <= 0) {
+                throw new IllegalArgumentException(where + "：戰吼要有 cooldown（冷卻時間）或 glory（要幾點榮耀）");
             }
-            tags.add(Tags.WARCRY);
+            // 2026-10-26 照 PoE2：戰旗、祭品、召歸令不是戰吼（cry: false）：不帶戰吼標籤，戰吼的輔助掛不上、戰吼的加成不吃
+            if (warcry.cry()) {
+                tags.add(Tags.WARCRY);
+            } else {
+                tags.remove(Tags.WARCRY);
+            }
             tags.add(Tags.AREA);
             tags.add(Tags.DURATION);
             // 戰吼不算法術（2026-10）：法術的輔助寶石（疾詠、雙詠、聚銳……）掛不上去，帶 spell 標籤的加成也不吃。
@@ -342,7 +369,7 @@ public record SkillDefinition(String id, String name, String description, String
         int[] damage = null;
         Map<DamageType, Double> damageTypes = Map.of();
         final boolean utility = mechanic == Mechanic.MARK || mechanic == Mechanic.SUMMON
-                || mechanic == Mechanic.AURA && (aura == null || !aura.burns())
+                || mechanic == Mechanic.AURA
                 || mechanic == Mechanic.WARCRY || mechanic == Mechanic.RALLY || mechanic == Mechanic.DESECRATE || mechanic == Mechanic.META
                 || mechanic == Mechanic.GUARD
                 || (mechanic == Mechanic.DASH && params.dash().hitWidth() <= 0 && params.dash().startRadius().last() <= 0
@@ -351,20 +378,23 @@ public record SkillDefinition(String id, String name, String description, String
             throw new IllegalArgumentException(where + ".damage：召喚技能自己不造成傷害（召喚物的傷害寫在 summon.damage，是同等級怪物的倍數）");
         }
         // 2026-10（PoE2）：戰吼可以寫 damage——吼的時候打半徑內的敵人一下（戰吼傷害：不算攻擊也不算法術，吃帶 warcry 標籤的加成）
-        if (mechanic == Mechanic.AURA && (aura == null || !aura.burns()) && node.has("damage")) {
+        if (mechanic == Mechanic.AURA && node.has("damage")) {
             throw new IllegalArgumentException(where + ".damage：光環自己不造成傷害（捷的擊殺效果寫成隱藏技能，用 aura.on_kill 指過去）");
         }
         if (type == SkillType.SPELL && (!utility || node.has("damage"))) {
-            damage = node.range("damage");
-            if (damage[0] < 0 || damage[1] < damage[0] || damage[1] <= 0) {
-                throw new IllegalArgumentException(where + ".damage：要寫 [最小, 最大]，最大要大於 0");
-            }
+            damage = spellDamage(where + ".damage", node.raw("damage"));
             damageTypes = weights(where + ".damage_types", node.node("damage_types"), true);
             if (damageTypes.isEmpty()) {
                 throw new IllegalArgumentException(where + "：法術要寫 damage_types（例如 { fire: 1.0 }）");
             }
         } else if (type == SkillType.ATTACK && node.has("damage")) {
-            throw new IllegalArgumentException(where + ".damage：攻擊技能用武器傷害，不寫 damage（用 effectiveness 調）");
+            // 2026-10-27 照 PoE2（NonWeaponAttack：血爆、嗅血爆…）：攻擊寫了 damage 就是「不用武器的攻擊」——基礎傷害照這張表（取代武器），
+            //   乘傷害效益；帶 attack 標籤（吃攻擊的加成），不帶武器的標籤、不吃武器的傷害與本地數值。這次之前攻擊不能寫 damage
+            damage = spellDamage(where + ".damage", node.raw("damage"));
+            damageTypes = weights(where + ".damage_types", node.node("damage_types"), true);
+            if (damageTypes.isEmpty()) {
+                throw new IllegalArgumentException(where + "：不用武器的攻擊（寫了 damage）要寫 damage_types（例如 { physical: 1.0 }）");
+            }
         }
         final Map<DamageType, Double> conversion = weights(where + ".convert", node.node("convert"), false);
         double converted = 0;
@@ -381,8 +411,8 @@ public record SkillDefinition(String id, String name, String description, String
 
         final double attackSpeed = node.decimal("attack_speed", 1.0);
         final double castTime = node.decimal("cast_time", 0.75);
-        if (attackSpeed <= 0.1 || attackSpeed > 5) {
-            throw new IllegalArgumentException(where + ".attack_speed：要在 0.1 到 5 之間");
+        if (attackSpeed <= 0.1 || attackSpeed > 10) { // 2026-10-26：5 → 10（照 PoE2：熾息 800%）
+            throw new IllegalArgumentException(where + ".attack_speed：要在 0.1 到 10 之間");
         }
         if (castTime < 0.1 || castTime > 5) {
             throw new IllegalArgumentException(where + ".cast_time：要在 0.1 到 5 秒之間");
@@ -393,7 +423,7 @@ public record SkillDefinition(String id, String name, String description, String
         }
         final Scaled effectiveness = Scaled.parse(where + ".effectiveness", node.raw("effectiveness"), 1.0);
         final Scaled mana = Scaled.parse(where + ".mana", node.raw("mana"), 0);
-        if (effectiveness.first() <= 0 || effectiveness.last() <= 0 || mana.first() < 0 || mana.last() < 0) {
+        if (effectiveness.min() <= 0 || mana.min() < 0) {
             throw new IllegalArgumentException(where + "：effectiveness 要大於 0，mana 不能是負的");
         }
         final String name = node.requireString("name");
@@ -415,6 +445,44 @@ public record SkillDefinition(String id, String name, String description, String
                     params, visual, parsed.modifiers(), cooldown, deploy, summon, aura, warcry, cooldownBypass, parsed.source());
         }
         return parsed;
+    }
+
+    /**
+     * 法術的 damage：{@code [最小, 最大]}（等級 1 的值，再乘 spell_damage_growth），
+     * 或逐級表 {@code [[最小, 最大], [最小, 最大], …]}（2026-10-26：照 PoE2 寶石表，從等級 1 開始每一級的實際傷害，不再乘成長倍率）。
+     * 逐級表攤平成 {@code [等級 1 最小, 等級 1 最大, 等級 2 最小, …]}，所以 {@code damage[0..1]} 一樣是等級 1。
+     */
+    static int[] spellDamage(final String where, final Object raw) {
+        if (raw instanceof List<?> list && !list.isEmpty() && list.get(0) instanceof List<?>) {
+            if (list.size() < 2 || list.size() > SkillBuild.MAX_EFFECTIVE_LEVEL) {
+                throw new IllegalArgumentException(where + "：逐級表要寫 2～" + SkillBuild.MAX_EFFECTIVE_LEVEL + " 級");
+            }
+            final int[] flat = new int[list.size() * 2];
+            for (int i = 0; i < list.size(); i++) {
+                final int[] pair = YamlNode.toRange(where + "[" + (i + 1) + "]", list.get(i));
+                checkDamage(where + "[" + (i + 1) + "]", pair);
+                flat[i * 2] = pair[0];
+                flat[i * 2 + 1] = pair[1];
+            }
+            return flat;
+        }
+        if (raw == null) {
+            throw new IllegalArgumentException(where + "：缺少範圍欄位 damage");
+        }
+        final int[] pair = YamlNode.toRange(where, raw);
+        checkDamage(where, pair);
+        return pair;
+    }
+
+    private static void checkDamage(final String where, final int[] pair) {
+        if (pair[0] < 0 || pair[1] < pair[0] || pair[1] <= 0) {
+            throw new IllegalArgumentException(where + "：要寫 [最小, 最大]，最大要大於 0");
+        }
+    }
+
+    /** damage 是不是逐級表（照 PoE2 的實際傷害，不乘成長倍率）。 */
+    public boolean damageByLevel() {
+        return damage != null && damage.length > 2;
     }
 
     /** 傷害類型的標籤。 */

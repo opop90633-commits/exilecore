@@ -48,6 +48,10 @@ import java.util.random.RandomGenerator;
  */
 public final class FlaskService {
 
+    /** 2026-10-26：FLAT：藥劑回復有 x% 立即生效（裝備的全域屬性，PoE2 百用束帶的固定詞綴）。 */
+    public static final String STAT_INSTANT = "flask.instant";
+
+
     /** 進度鍵：新角色的起始藥劑送過了。 */
     public static final String PROGRESS_STARTER = "flask.starter";
     /** 回復多久結算一次（tick）。 */
@@ -240,7 +244,7 @@ public final class FlaskService {
             if (affixLines != null) {
                 lore.addAll(affixLines);
             }
-            meta.lore(lore);
+            meta.lore(tw.exilecore.core.text.TextWrap.lore(lore)); // 2026-10-26：長行自動換行
             meta.setMaxStackSize(1);
             if (resourcePack && base.model() != null) {
                 final NamespacedKey model = NamespacedKey.fromString(base.model());
@@ -276,7 +280,7 @@ public final class FlaskService {
             for (final String line : lore(base, FlaskMods.NONE, clamped, true)) {
                 lore.add(ItemRenderer.line(line));
             }
-            meta.lore(lore);
+            meta.lore(tw.exilecore.core.text.TextWrap.lore(lore)); // 2026-10-26：長行自動換行
             meta.setMaxStackSize(1);
             if (resourcePack && base.model() != null) {
                 final NamespacedKey model = NamespacedKey.fromString(base.model());
@@ -469,6 +473,24 @@ public final class FlaskService {
      * 喝藥劑欄某一格的藥劑（數字鍵）。回傳 false 表示那一格放的不是藥劑也不是空瓶（照原版換手上的東西）。
      * 空瓶（藥劑欄是空的）、放錯種類：提示，不喝。
      */
+    /**
+     * 2026-10-26（天賦樹「生命藥劑沒有使用次數時」）：這種藥劑欄的藥劑還夠不夠喝一次。sheet 給呼叫的人現在的屬性表
+     * （不要在屬性表重算中呼叫：藥劑的全域詞綴要讀表）。
+     */
+    public boolean hasUse(final Player player, final FlaskKind kind, final tw.exilecore.stats.StatSheet sheet) {
+        final ItemStack item = player.getInventory().getItem(slotFor(player, kind));
+        if (item == null || isPlaceholder(item)) {
+            return false;
+        }
+        final FlaskData data = read(item).orElse(null);
+        final FlaskBase base = data == null ? null : config.base(data.base());
+        if (base == null || base.kind() != kind) {
+            return false;
+        }
+        final double global = sheet.increased(tw.exilecore.stats.StatKeys.FLASK_CHARGES_USED, java.util.Set.of());
+        return data.charges() >= Math.max(1, (int) Math.round(mods(item, base).perUse(base.perUse()) * Math.max(0, 1 + global)));
+    }
+
     public boolean drink(final Player player, final int hotbarSlot) {
         final PlayerInventory inventory = player.getInventory();
         final ItemStack item = inventory.getItem(hotbarSlot);
@@ -519,6 +541,7 @@ public final class FlaskService {
             return true;
         }
         uses.put(hotbarSlot, now);
+        plugin.players().conditions().onFlask(player, base.kind(), now); // 2026-10-26：天賦樹「最近用過魔力藥劑」「10 秒內用過生命藥劑」
         final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
         // 「x% 機率不消耗充能」（裝備的全域詞綴）
         final double free = Math.max(0, Math.min(1, sheet.get(tw.exilecore.stats.StatKeys.FLASK_FREE_CHANCE) / 100.0));
@@ -528,22 +551,38 @@ public final class FlaskService {
         // 回復量：藥劑自己的詞綴（低血時更多）× 「藥劑回復」的全域加成（任務獎勵、裝備）
         final boolean low = life ? state.life() < state.maxLife() * FlaskMods.LOW_FRACTION : state.mana() < state.maxMana() * FlaskMods.LOW_FRACTION;
         final String recoveryStat = life ? tw.exilecore.stats.StatKeys.FLASK_LIFE_RECOVERY : tw.exilecore.stats.StatKeys.FLASK_MANA_RECOVERY;
-        final double recovery = mods.recoveryAmount(base.recovery(), low) * Math.max(0, 1 + sheet.increased(recoveryStat, java.util.Set.of()));
+        // 2026-10-26：「更多／更少藥劑回復」也算（幻景綠洲更多 30%、青春永駐更少 50%、地圖詞綴）；這次之前只算增加
+        final double recovery = mods.recoveryAmount(base.recovery(), low) * Math.max(0, 1 + sheet.increased(recoveryStat, java.util.Set.of()))
+                * Math.max(0, sheet.more(recoveryStat, java.util.Set.of()));
         // 回復時間：藥劑自己的「回復速度」× 全域的「藥劑效果持續時間」
-        final double seconds = mods.recoveryTime(base.duration()) * Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.StatKeys.FLASK_DURATION, java.util.Set.of()));
+        // 2026-10-26 照 PoE2 天賦樹：「增加藥劑生命回復速率」：同樣的量、更短的時間
+        final double seconds = mods.recoveryTime(base.duration()) * Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.StatKeys.FLASK_DURATION, java.util.Set.of()))
+                / (life ? Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.KeystoneKeys.FLASK_LIFE_RATE, java.util.Set.of())) : 1);
         final int ticks = Math.max(1, (int) Math.round(seconds * 20));
-        final double instant = recovery * mods.instant();
+        // 2026-10-26（PoE2 百用束帶：藥劑回復有 20% 立即生效）：裝備的全域「立即回復」跟藥劑自己的詞綴相加
+        // 2026-10-26（亡命者背心）：生命藥劑的回復全部立即生效
+        final double instant = recovery * (life && tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.FLASK_LIFE_INSTANT)
+                ? 1.0 : Math.min(1, mods.instant() + Math.max(0, sheet.get(STAT_INSTANT) / 100.0)));
         final double gradual = recovery - instant;
+        // 2026-10-26（昇華）：阿茲莫里之酒（生命藥劑也回復魔力、魔力藥劑也回復生命）、血紅之潮（藥劑不會回復生命）
+        final boolean noLife = tw.exilecore.ascendancy.AscendancyEffects.flaskNoLife(player);
+        final boolean both = tw.exilecore.ascendancy.AscendancyEffects.flaskBoth(player);
         if (instant > 0) {
-            if (life) {
+            if ((life || both) && !noLife) {
                 state.setLife(state.life() + instant);
-            } else {
+            }
+            if (!life || both) {
                 state.setMana(state.mana() + instant);
             }
         }
         if (gradual > 0) {
-            active.computeIfAbsent(player.getUniqueId(), uuid -> new ArrayList<>())
-                    .add(new Recovery(base.kind(), gradual / ticks, ticks));
+            final List<Recovery> list = active.computeIfAbsent(player.getUniqueId(), uuid -> new ArrayList<>());
+            if ((life || both) && !noLife) {
+                list.add(new Recovery(FlaskKind.LIFE, gradual / ticks, ticks));
+            }
+            if (!life || both) {
+                list.add(new Recovery(FlaskKind.MANA, gradual / ticks, ticks));
+            }
         }
         // 「生命藥劑的回復也消耗魔力」／「魔力藥劑的回復也消耗生命」：喝的時候一次扣另一種資源
         if (mods.costOther() > 0) {
@@ -558,6 +597,13 @@ public final class FlaskService {
         if (life && mods.minionHeal() > 0 && plugin.skills() != null && plugin.skills().minions() != null) {
             plugin.skills().minions().healOwned(player, recovery * mods.minionHeal());
         }
+        if (life && plugin.combat() != null && plugin.combat().uniques() != null) {
+            plugin.combat().uniques().lifeFlaskUsed(player, sheet, recovery, ticks); // 2026-10-26（骸骨束帶）：生命藥劑也套用在召喚物身上
+        }
+        if (life && plugin.skills() != null && plugin.skills().treeMechanics() != null) {
+            plugin.skills().treeMechanics().lifeFlaskUsed(player, recovery); // 2026-10-26 照 PoE2 天賦：使用生命藥劑時獲得怒氣、夥伴也回復
+        }
+        tw.exilecore.combat.KeystoneEffects.flaskUsed(plugin, player, state, sheet, life, recovery, ticks); // 2026-10-26 天賦樹：守護、魔力藥劑回生命、解詛咒
         state.markRecent(tw.exilecore.stats.Recently.FLASK, now); // 「最近喝過藥劑」
         state.markDirty(); // 藥劑效果中的條件（lifeflask／manaflask）
         plugin.players().display(player, state);
@@ -589,11 +635,8 @@ public final class FlaskService {
 
     /** 每 TICK_INTERVAL tick：正在喝的藥劑回復一點；回滿了那一種的效果就結束。每兩秒把空瓶提示補好。 */
     void tick() {
-        sweepTicks += TICK_INTERVAL;
-        if (sweepTicks >= 40) {
-            sweepTicks = 0;
-            sweep();
-        }
+        // 2026-10-27 效能：空瓶提示攤開補（每 2 tick 一小批，每個人一樣每 2 秒一次）；這次之前每 2 秒所有人同一個 tick 一起補
+        sweepSlice();
         minuteTicks += TICK_INTERVAL;
         if (minuteTicks >= 1200) {
             minuteTicks = 0;
@@ -630,8 +673,10 @@ public final class FlaskService {
             }
             final boolean lifeFull = state.life() >= state.maxLife() - 1e-6;
             final boolean manaFull = state.mana() >= state.maxMana() - 1e-6;
+            // 2026-10-26（昇華・耐久靈藥）：生命全滿時不移除生命藥劑效果
+            final boolean enduring = tw.exilecore.ascendancy.AscendancyEffects.enduringElixirs(player);
             entry.getValue().removeIf(recovery -> recovery.ticksLeft <= 0
-                    || (recovery.kind == FlaskKind.LIFE && lifeFull) || (recovery.kind == FlaskKind.MANA && manaFull));
+                    || (recovery.kind == FlaskKind.LIFE && lifeFull && !enduring) || (recovery.kind == FlaskKind.MANA && manaFull));
             if (life > 0 || mana > 0) {
                 plugin.players().display(player, state);
             }
@@ -650,6 +695,55 @@ public final class FlaskService {
             return;
         }
         addCharges(player, slotFor(player, kind), amount, true);
+    }
+
+    /** 2026-10-26（昇華・御風的混合物）：藥劑欄裡這種藥劑現在有幾點充能（沒有 0）。 */
+    public int charges(final Player player, final FlaskKind kind) {
+        final int slot = slotFor(player, kind);
+        if (slot < 0) {
+            return 0;
+        }
+        final FlaskData data = read(player.getInventory().getItem(slot)).orElse(null);
+        return data == null ? 0 : data.charges();
+    }
+
+    /** 2026-10-26（昇華・御風的混合物）：用掉這種藥劑 amount 點充能；不夠回傳 false（不扣）。 */
+    public boolean spendCharges(final Player player, final FlaskKind kind, final int amount) {
+        final int slot = slotFor(player, kind);
+        if (slot < 0) {
+            return false;
+        }
+        final PlayerInventory inventory = player.getInventory();
+        final FlaskData data = read(inventory.getItem(slot)).orElse(null);
+        if (data == null || data.charges() < amount) {
+            return false;
+        }
+        setCharges(inventory, slot, data.charges() - amount);
+        return true;
+    }
+
+    /** 2026-10-26（昇華・血紅之潮）：這種藥劑充能全滿時，消耗 fraction 的充能；回傳消耗了幾點（沒滿 0）。 */
+    public int consumeIfFull(final Player player, final FlaskKind kind, final double fraction) {
+        final int slot = slotFor(player, kind);
+        if (slot < 0) {
+            return 0;
+        }
+        final PlayerInventory inventory = player.getInventory();
+        final ItemStack stack = inventory.getItem(slot);
+        final FlaskData data = read(stack).orElse(null);
+        final FlaskBase base = data == null ? null : config.base(data.base());
+        if (base == null || base.kind() != kind) {
+            return 0;
+        }
+        final int max = maxCharges(stack, base);
+        if (max <= 0 || data.charges() < max) {
+            return 0;
+        }
+        final int used = (int) Math.floor(max * fraction);
+        if (used > 0) {
+            setCharges(inventory, slot, data.charges() - used);
+        }
+        return used;
     }
 
     /** 2026-10-23：藥劑欄裡的藥劑各少 amount 點充能（怪物詞綴「竊瓶的」）。 */
@@ -930,7 +1024,6 @@ public final class FlaskService {
     }
 
     private final java.util.Set<UUID> ensureQueued = new java.util.HashSet<>();
-    private int sweepTicks;
     private int minuteTicks;
 
     /** 下一個 tick 把空瓶提示補好（同一個 tick 只排一次）。 */
@@ -1114,6 +1207,23 @@ public final class FlaskService {
     void sweep() {
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             ensureSlots(player);
+        }
+    }
+
+    /** 2026-10-27：一輪 2 秒（40 tick ÷ TICK_INTERVAL 次）。 */
+    private final tw.exilecore.core.Staggered sweepRound = new tw.exilecore.core.Staggered(40 / TICK_INTERVAL);
+
+    /** 這一次（每 TICK_INTERVAL tick）補一小批人的空瓶提示。 */
+    private void sweepSlice() {
+        final List<UUID> online = new ArrayList<>();
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            online.add(player.getUniqueId());
+        }
+        for (final UUID id : sweepRound.next(online)) {
+            final Player player = plugin.getServer().getPlayer(id);
+            if (player != null) {
+                ensureSlots(player);
+            }
         }
     }
 

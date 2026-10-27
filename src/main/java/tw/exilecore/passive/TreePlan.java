@@ -56,6 +56,12 @@ public final class TreePlan {
      */
     public static Plan compute(final PassiveTree tree, final PassiveNode start, final Set<String> current, final Set<String> planned,
                                final int available) throws InvalidPlan {
+        return compute(tree, start, current, planned, available, Set.of());
+    }
+
+    /** 同上，加上昇華的配點規則（2026-10-26 照 PoE2，見 {@link PassiveTree#RULES}）。 */
+    public static Plan compute(final PassiveTree tree, final PassiveNode start, final Set<String> current, final Set<String> planned,
+                               final int available, final Set<String> rules) throws InvalidPlan {
         final Set<String> plan = new LinkedHashSet<>();
         for (final String id : planned) {
             final PassiveNode node = tree.node(id);
@@ -66,10 +72,10 @@ public final class TreePlan {
                 plan.add(id);
             }
         }
-        if (tree.reachable(plan, start).size() != plan.size()) {
+        if (tree.reachable(plan, start, rules).size() != plan.size()) {
             throw new InvalidPlan("規劃有一部分連不到你的起點（可能是別的職業的規劃）");
         }
-        final Map<String, Integer> distance = distances(tree, start, plan);
+        final Map<String, Integer> distance = distances(tree, tree.seeds(start, rules), plan);
         final Map<String, Integer> fileOrder = new HashMap<>();
         for (final PassiveNode node : tree.ordered()) {
             fileOrder.put(node.id(), fileOrder.size());
@@ -82,11 +88,11 @@ public final class TreePlan {
                 budget++;
             }
         }
-        Grown best = grow(tree, start, current, plan, distance, fileOrder, budget);
+        Grown best = grow(tree, start, current, plan, distance, fileOrder, budget, rules);
         // 規劃裡已經配了、但這次接不回起點的也會退掉，點數一樣拿回來：預算一次多給一點再算，
         // 直到付不起（多配的點把本來要退的接回來，退的變少）或規劃已經配完
         while (true) {
-            final Grown next = grow(tree, start, current, plan, distance, fileOrder, budget + 1);
+            final Grown next = grow(tree, start, current, plan, distance, fileOrder, budget + 1, rules);
             if (next.added().size() == best.added().size() || next.added().size() > points + next.removedFrom(current)) {
                 break;
             }
@@ -130,12 +136,16 @@ public final class TreePlan {
 
     /** 已經配了的先拿（不花點），其他的照離起點近、再照樹檔順序，花 budget 點。同樣的輸入結果一定一樣，預算越多長得越遠。 */
     private static Grown grow(final PassiveTree tree, final PassiveNode start, final Set<String> current, final Set<String> plan,
-                              final Map<String, Integer> distance, final Map<String, Integer> fileOrder, final int budget) {
+                              final Map<String, Integer> distance, final Map<String, Integer> fileOrder, final int budget,
+                              final Set<String> rules) {
         int left = budget;
         final Set<String> included = new LinkedHashSet<>();
         final List<PassiveNode> added = new ArrayList<>();
         final Set<String> frontier = new LinkedHashSet<>();
-        expand(tree, start, plan, included, frontier);
+        for (final PassiveNode seed : tree.seeds(start, rules)) {
+            expand(tree, seed, plan, included, frontier);
+        }
+        entwine(tree, plan, included, frontier, rules);
         while (!frontier.isEmpty()) {
             String pick = null;
             for (final String id : frontier) {
@@ -158,6 +168,7 @@ public final class TreePlan {
             frontier.remove(pick);
             included.add(pick);
             expand(tree, tree.node(pick), plan, included, frontier);
+            entwine(tree, plan, included, frontier, rules);
         }
         return new Grown(included, added);
     }
@@ -172,12 +183,27 @@ public final class TreePlan {
         }
     }
 
-    /** 規劃裡每個節點離起點幾步（只走規劃裡的節點）。 */
-    private static Map<String, Integer> distances(final PassiveTree tree, final PassiveNode start, final Collection<String> plan) {
+    /** 2026-10-26 照 PoE2 虛實交織：已拿的基石附近、規劃裡的節點也放進候選。 */
+    private static void entwine(final PassiveTree tree, final Set<String> plan, final Set<String> included, final Set<String> frontier,
+                                final Set<String> rules) {
+        if (!rules.contains(PassiveTree.RULE_ENTWINED)) {
+            return;
+        }
+        for (final String id : plan) {
+            if (!included.contains(id) && !frontier.contains(id) && tree.entwined(included, tree.node(id), rules)) {
+                frontier.add(id);
+            }
+        }
+    }
+
+    /** 規劃裡每個節點離起點幾步（只走規劃裡的節點；開路者另外的起點也算起點）。 */
+    private static Map<String, Integer> distances(final PassiveTree tree, final List<PassiveNode> starts, final Collection<String> plan) {
         final Map<String, Integer> distance = new HashMap<>();
         final Deque<PassiveNode> queue = new ArrayDeque<>();
-        queue.add(start);
-        distance.put(start.id(), 0);
+        for (final PassiveNode start : starts) {
+            queue.add(start);
+            distance.put(start.id(), 0);
+        }
         while (!queue.isEmpty()) {
             final PassiveNode current = queue.poll();
             for (final PassiveNode neighbour : tree.neighbours(current)) {

@@ -12,14 +12,15 @@ import java.util.Map;
 /**
  * data/ailments.yml：異常狀態（點燃、冰緩、凍結、感電，以及 PoE2 的流血、中毒）的數值與公式。純函式，不依賴 Bukkit。
  * <p>
- * 機制照 PoE2：看這一擊造成的元素傷害（抗性減免後）佔目標「異常門檻」的比例。
+ * 機制照 PoE2 0.5（2026-10-26）：看這一擊<b>目標減免前</b>的傷害佔目標「異常門檻」或「暈眩門檻（poise）」的比例。
  * <ul>
- *   <li>點燃：機率 = 比例 × 每門檻機率（PoE2：每 4% 門檻 1%）＋ 點燃機率；每秒造成那一擊火焰傷害的 20%，4 秒；同時只有最強的在燒。</li>
- *   <li>冰緩：冰冷傷害一定冰緩；效果 = 50% × 比例^0.4，最多 50%，太小不算。</li>
- *   <li>凍結：冰冷傷害累積凍結值，滿 100% 凍結；一陣子沒被打到會消退。</li>
- *   <li>感電：機率跟點燃一樣算；目標受到的傷害增加 20%。</li>
- *   <li>流血（物理，只有攻擊）：機率只看加成（每門檻機率預設 0）；每秒造成那一擊物理傷害的 15%，5 秒，目標移動時 2 倍；只有最強的在流。</li>
- *   <li>中毒（物理＋混沌）：每秒造成那一擊傷害的 30%，2 秒，可以疊加（每個來源上限 12 個）。</li>
+ *   <li>點燃：每一擊給目標一層「易燃」= 比例 × 20（每 5% 門檻 1%）＋ 點燃機率，易燃疊加（怪物身上 8 秒、玩家 4 秒），
+ *   這一擊點燃的機率 = 身上所有易燃加起來；每秒造成那一擊火焰傷害的 20%，4 秒；同時只有最強的在燒。</li>
+ *   <li>冰緩：冰冷傷害一定冰緩；效果 = 100 × 比例，最多 50%，小於 30% 不算。</li>
+ *   <li>凍結、電擊、重暈、釘地：累積條，對暈眩門檻的係數 2.1／1.7／0.58／4.2；滿 100% 觸發，觸發後門檻暫時提高 500%（慢慢降回來）。</li>
+ *   <li>感電：機率 = 比例 × 25（每 4% 門檻 1%）；目標受到的傷害增加 20%。</li>
+ *   <li>流血（物理，只有攻擊）：機率只看加成；每秒造成那一擊物理傷害的 15%，5 秒，目標移動時 2 倍；只有最強的在流。</li>
+ *   <li>中毒（物理＋混沌）：每秒造成那一擊傷害的 20%，2 秒；預設同一個人只有 1 層生效（輔助、天賦加層數）。</li>
  * </ul>
  */
 public final class AilmentConfig {
@@ -27,21 +28,20 @@ public final class AilmentConfig {
     public static final String FILE = "ailments.yml";
 
     private final Map<MonsterRarity, Double> monsterThreshold = new EnumMap<>(MonsterRarity.class);
+    /** 2026-10-26 照 PoE2：玩家的異常門檻 = 最大生命的幾 %（不含能量護盾）。 */
+    private double playerThresholdLife;
     private double igniteChancePerThreshold;
+    private double flammabilityMonster;
+    private double flammabilityPlayer;
+    private double chillPerThreshold;
     private double igniteDamagePerSecond;
     private double igniteDuration;
     private double chillMax;
     private double chillMin;
     private double chillDurationMonster;
     private double chillDurationPlayer;
-    private double freezeBuildup;
-    private double freezeDurationMonster;
-    private double freezeDurationPlayer;
-    private double freezeDecayDelay;
-    private double freezeDecayPerSecond;
-    private double freezeUniqueBuildup;
-    private double freezeUniqueImmunity;
-    private double freezePlayerImmunity;
+    private MeterSettings freeze;
+    private MeterSettings pin;
     private double shockChancePerThreshold;
     private double shockEffect;
     private double shockMaxEffect;
@@ -69,54 +69,92 @@ public final class AilmentConfig {
     private final java.util.EnumMap<MonsterRarity, Double> armourBreakMultiplier = new java.util.EnumMap<>(MonsterRarity.class);
     private double armourBreakDuration = 12;
     private double fullyBrokenTaken = 20;
+    /** 2026-10-26 照 PoE2（PoB 的 Boss 設定）：Boss 的暈眩門檻再乘（地圖 Boss ×3.13、巔峰與極境 Boss ×9.38）；這次之前沒有。 */
+    private double bossPoiseMap = 3.13;
+    private double bossPoisePinnacle = 9.38;
 
     /**
-     * 一條累積條（暈眩、電擊）的設定。
+     * 一條累積條（凍結、重暈、電擊、釘地）的設定（2026-10-26 照 PoE2 0.5：門檻是暈眩門檻 poise；觸發後門檻暫時提高，取代以前的傳奇怪打折與免疫時間）。
      *
-     * @param buildup         每造成門檻 100% 的傷害累積幾 %
-     * @param durationMonster 怪物觸發幾秒
-     * @param durationPlayer  玩家觸發幾秒
-     * @param decayDelay      最後一次被打到後幾秒開始消退
-     * @param decayPerSecond  每秒消退幾 %
-     * @param playerImmunity  玩家結束後幾秒不能再累積
-     * @param uniqueBuildup   傳奇怪的累積只有幾 %
-     * @param uniqueImmunity  傳奇怪結束後幾秒不能再累積
+     * @param buildup              每造成門檻 100% 的傷害累積幾 %（PoE2 的 DamageScale × 100：凍結 210、電擊 170、重暈 58、釘地 420）
+     * @param buildupPlayer        打玩家時的累積（凍結 200、重暈 65）
+     * @param durationMonster      怪物觸發幾秒
+     * @param durationPlayer       玩家觸發幾秒
+     * @param decayDelay           怪物最後一次被累積後幾秒開始消退
+     * @param decayPerSecond       怪物每秒消退幾 %
+     * @param playerDecayDelay     玩家幾秒開始消退
+     * @param playerDecayPerSecond 玩家每秒消退幾 %
+     * @param afterBonus           觸發後門檻提高幾 %（之後 afterSeconds 秒內直線降回 0）
+     * @param afterSeconds         提高的門檻幾秒降回來
+     * @param playerAfterBonus     玩家觸發後門檻提高幾 %
+     * @param playerAfterSeconds   玩家幾秒降回來
      */
-    public record MeterSettings(double buildup, double durationMonster, double durationPlayer, double decayDelay, double decayPerSecond,
-                                double playerImmunity, double uniqueBuildup, double uniqueImmunity) {
+    public record MeterSettings(double buildup, double buildupPlayer, double durationMonster, double durationPlayer,
+                                double decayDelay, double decayPerSecond, double playerDecayDelay, double playerDecayPerSecond,
+                                double afterBonus, double afterSeconds, double playerAfterBonus, double playerAfterSeconds) {
 
-        /** 這一擊的累積（1 = 100%）：傷害佔門檻的比例 × buildup% × 加成；傳奇怪再打折。 */
-        public double buildupFor(final double damage, final double threshold, final double multiplier, final boolean unique) {
+        /** 這一擊的累積（1 = 100%）：傷害 ÷ 門檻 × buildup% × 加成（打怪物）。 */
+        public double buildupFor(final double damage, final double threshold, final double multiplier) {
+            return buildupFor(damage, threshold, multiplier, false);
+        }
+
+        /** 這一擊的累積（1 = 100%）；player：目標是玩家（用 buildupPlayer）。 */
+        public double buildupFor(final double damage, final double threshold, final double multiplier, final boolean player) {
             if (damage <= 0 || threshold <= 0) {
                 return 0;
             }
-            final double amount = damage / threshold * buildup / 100.0 * Math.max(0, multiplier);
-            return unique ? amount * uniqueBuildup / 100.0 : amount;
+            return damage / threshold * (player ? buildupPlayer : buildup) / 100.0 * Math.max(0, multiplier);
         }
 
         public double duration(final boolean player) {
             return player ? durationPlayer : durationMonster;
         }
 
-        /** 每 tick 消退多少（小數）。 */
+        /** 怪物每 tick 消退多少（小數）。 */
         public double decayPerTick() {
-            return decayPerSecond / 100.0 / 20.0;
+            return decayPerTick(false);
         }
 
-        /** 幾 tick 後開始消退。 */
+        public double decayPerTick(final boolean player) {
+            return (player ? playerDecayPerSecond : decayPerSecond) / 100.0 / 20.0;
+        }
+
+        /** 怪物幾 tick 後開始消退。 */
         public long decayDelayTicks() {
-            return Math.max(0, Math.round(decayDelay * 20));
+            return decayDelayTicks(false);
+        }
+
+        public long decayDelayTicks(final boolean player) {
+            return Math.max(0, Math.round((player ? playerDecayDelay : decayDelay) * 20));
+        }
+
+        /** 觸發後門檻提高多少（小數，5 = +500%）。 */
+        public double after(final boolean player) {
+            return (player ? playerAfterBonus : afterBonus) / 100.0;
+        }
+
+        /** 提高的門檻幾 tick 降回來。 */
+        public long afterTicks(final boolean player) {
+            return Math.max(1, Math.round((player ? playerAfterSeconds : afterSeconds) * 20));
         }
 
         static MeterSettings parse(final YamlNode node, final MeterSettings def) {
-            return new MeterSettings(nonNegative(node, "buildup", def.buildup()),
+            final double buildup = nonNegative(node, "buildup", def.buildup());
+            final YamlNode after = node.node("after");
+            final YamlNode playerAfter = node.node("player_after");
+            final YamlNode playerDecay = node.node("player_decay");
+            final double afterBonus = nonNegative(after, "bonus", def.afterBonus());
+            final double afterSeconds = positive(after, "seconds", def.afterSeconds());
+            return new MeterSettings(buildup, nonNegative(node, "player_buildup", def.buildupPlayer()),
                     positive(node.node("duration"), "monster", def.durationMonster()),
                     positive(node.node("duration"), "player", def.durationPlayer()),
                     nonNegative(node, "decay_delay", def.decayDelay()),
                     nonNegative(node, "decay_per_second", def.decayPerSecond()),
-                    nonNegative(node, "player_immunity", def.playerImmunity()),
-                    nonNegative(node.node("unique"), "buildup", def.uniqueBuildup()),
-                    nonNegative(node.node("unique"), "immunity", def.uniqueImmunity()));
+                    nonNegative(playerDecay, "delay", def.playerDecayDelay()),
+                    nonNegative(playerDecay, "per_second", def.playerDecayPerSecond()),
+                    afterBonus, afterSeconds,
+                    nonNegative(playerAfter, "bonus", def.playerAfterBonus()),
+                    positive(playerAfter, "seconds", def.playerAfterSeconds()));
         }
     }
 
@@ -129,21 +167,19 @@ public final class AilmentConfig {
         for (final MonsterRarity rarity : MonsterRarity.values()) {
             monsterThreshold.put(rarity, rarity == MonsterRarity.UNIQUE ? 0.5 : 1.0);
         }
-        igniteChancePerThreshold = 25;
+        playerThresholdLife = 50;
+        igniteChancePerThreshold = 20;
+        flammabilityMonster = 8;
+        flammabilityPlayer = 4;
         igniteDamagePerSecond = 20;
         igniteDuration = 4;
+        chillPerThreshold = 100;
         chillMax = 50;
-        chillMin = 5;
+        chillMin = 30;
         chillDurationMonster = 8;
         chillDurationPlayer = 2;
-        freezeBuildup = 200;
-        freezeDurationMonster = 4;
-        freezeDurationPlayer = 1.5;
-        freezeDecayDelay = 2;
-        freezeDecayPerSecond = 50;
-        freezeUniqueBuildup = 50;
-        freezeUniqueImmunity = 6;
-        freezePlayerImmunity = 3;
+        freeze = new MeterSettings(210, 200, 4, 2, 8, 5, 2, 50, 500, 14, 500, 14);
+        pin = new MeterSettings(420, 420, 3, 2, 8, 5, 2, 50, 500, 13, 500, 13);
         shockChancePerThreshold = 25;
         shockEffect = 20;
         shockMaxEffect = 50;
@@ -154,12 +190,12 @@ public final class AilmentConfig {
         bleedMovingMultiplier = 2.0;
         bleedDuration = 5;
         poisonChancePerThreshold = 0;
-        poisonDamagePerSecond = 30;
+        poisonDamagePerSecond = 20;
         poisonDuration = 2;
-        poisonMaxStacks = 12;
-        stun = new MeterSettings(120, 1.5, 0.8, 1.5, 40, 3, 40, 8);
-        stunElementalMultiplier = 0.5;
-        electrocute = new MeterSettings(150, 3, 1.5, 2, 50, 3, 50, 8);
+        poisonMaxStacks = 1;
+        stun = new MeterSettings(58, 65, 2, 3, 8, 5, 2, 50, 500, 16.5, 100, 10);
+        stunElementalMultiplier = 1.0;
+        electrocute = new MeterSettings(170, 170, 5, 2, 8, 5, 2, 50, 500, 15, 500, 15);
     }
 
     /** 讀 ailments.yml。先讀進一份新的，全部檢查過才換上去（寫錯時 /ec reload 失敗，遊戲裡還是原本的設定）。 */
@@ -181,11 +217,15 @@ public final class AilmentConfig {
             }
             monsterThreshold.put(rarity, positive(threshold, key, 1.0));
         }
+        playerThresholdLife = positive(root.node("threshold"), "player_life", playerThresholdLife);
         final YamlNode ignite = root.node("ignite");
         igniteChancePerThreshold = nonNegative(ignite, "chance_per_threshold", igniteChancePerThreshold);
+        flammabilityMonster = positive(ignite.node("flammability_duration"), "monster", flammabilityMonster);
+        flammabilityPlayer = positive(ignite.node("flammability_duration"), "player", flammabilityPlayer);
         igniteDamagePerSecond = nonNegative(ignite, "damage_per_second", igniteDamagePerSecond);
         igniteDuration = positive(ignite, "duration", igniteDuration);
         final YamlNode chill = root.node("chill");
+        chillPerThreshold = nonNegative(chill, "effect_per_threshold", chillPerThreshold);
         chillMax = nonNegative(chill, "max", chillMax);
         chillMin = nonNegative(chill, "min", chillMin);
         if (chillMin > chillMax) {
@@ -193,15 +233,8 @@ public final class AilmentConfig {
         }
         chillDurationMonster = positive(chill.node("duration"), "monster", chillDurationMonster);
         chillDurationPlayer = positive(chill.node("duration"), "player", chillDurationPlayer);
-        final YamlNode freeze = root.node("freeze");
-        freezeBuildup = nonNegative(freeze, "buildup", freezeBuildup);
-        freezeDurationMonster = positive(freeze.node("duration"), "monster", freezeDurationMonster);
-        freezeDurationPlayer = positive(freeze.node("duration"), "player", freezeDurationPlayer);
-        freezeDecayDelay = nonNegative(freeze, "decay_delay", freezeDecayDelay);
-        freezeDecayPerSecond = nonNegative(freeze, "decay_per_second", freezeDecayPerSecond);
-        freezeUniqueBuildup = nonNegative(freeze.node("unique"), "buildup", freezeUniqueBuildup);
-        freezeUniqueImmunity = nonNegative(freeze.node("unique"), "immunity", freezeUniqueImmunity);
-        freezePlayerImmunity = nonNegative(freeze, "player_immunity", freezePlayerImmunity);
+        freeze = MeterSettings.parse(root.node("freeze"), freeze);
+        pin = MeterSettings.parse(root.node("pin"), pin);
         final YamlNode shock = root.node("shock");
         shockChancePerThreshold = nonNegative(shock, "chance_per_threshold", shockChancePerThreshold);
         shockEffect = nonNegative(shock, "effect", shockEffect);
@@ -222,6 +255,9 @@ public final class AilmentConfig {
         stun = MeterSettings.parse(stunNode, stun);
         stunElementalMultiplier = nonNegative(stunNode, "elemental_multiplier", stunElementalMultiplier);
         electrocute = MeterSettings.parse(root.node("electrocute"), electrocute);
+        final YamlNode bossPoise = root.node("boss_poise");
+        bossPoiseMap = positive(bossPoise, "map", bossPoiseMap);
+        bossPoisePinnacle = positive(bossPoise, "pinnacle", bossPoisePinnacle);
         final YamlNode light = stunNode.node("light");
         lightStunMin = nonNegative(light, "min_chance", lightStunMin);
         lightStunMonster = nonNegative(light.node("duration"), "monster", lightStunMonster);
@@ -251,21 +287,19 @@ public final class AilmentConfig {
     private void copyFrom(final AilmentConfig other) {
         monsterThreshold.clear();
         monsterThreshold.putAll(other.monsterThreshold);
+        playerThresholdLife = other.playerThresholdLife;
         igniteChancePerThreshold = other.igniteChancePerThreshold;
+        flammabilityMonster = other.flammabilityMonster;
+        flammabilityPlayer = other.flammabilityPlayer;
+        chillPerThreshold = other.chillPerThreshold;
         igniteDamagePerSecond = other.igniteDamagePerSecond;
         igniteDuration = other.igniteDuration;
         chillMax = other.chillMax;
         chillMin = other.chillMin;
         chillDurationMonster = other.chillDurationMonster;
         chillDurationPlayer = other.chillDurationPlayer;
-        freezeBuildup = other.freezeBuildup;
-        freezeDurationMonster = other.freezeDurationMonster;
-        freezeDurationPlayer = other.freezeDurationPlayer;
-        freezeDecayDelay = other.freezeDecayDelay;
-        freezeDecayPerSecond = other.freezeDecayPerSecond;
-        freezeUniqueBuildup = other.freezeUniqueBuildup;
-        freezeUniqueImmunity = other.freezeUniqueImmunity;
-        freezePlayerImmunity = other.freezePlayerImmunity;
+        freeze = other.freeze;
+        pin = other.pin;
         shockChancePerThreshold = other.shockChancePerThreshold;
         shockEffect = other.shockEffect;
         shockMaxEffect = other.shockMaxEffect;
@@ -282,6 +316,8 @@ public final class AilmentConfig {
         stun = other.stun;
         stunElementalMultiplier = other.stunElementalMultiplier;
         electrocute = other.electrocute;
+        bossPoiseMap = other.bossPoiseMap;
+        bossPoisePinnacle = other.bossPoisePinnacle;
         lightStunMin = other.lightStunMin;
         lightStunMonster = other.lightStunMonster;
         lightStunPlayer = other.lightStunPlayer;
@@ -297,6 +333,11 @@ public final class AilmentConfig {
     // ---- 輕暈、蓄勢待暈、破甲（2026-10 PoE2）----
 
     /** 輕暈機率低於這個（百分比）算 0。 */
+    /** 2026-10-26 照 PoE2：Boss 的暈眩門檻倍率（pinnacle = 巔峰、極境 Boss；不然是一般 Boss）。 */
+    public double bossPoise(final boolean pinnacle) {
+        return pinnacle ? bossPoisePinnacle : bossPoiseMap;
+    }
+
     public double lightStunMin() {
         return lightStunMin;
     }
@@ -344,6 +385,16 @@ public final class AilmentConfig {
         return electrocute;
     }
 
+    /** 2026-10-26 照 PoE2 0.5：凍結的累積條。 */
+    public MeterSettings freeze() {
+        return freeze;
+    }
+
+    /** 2026-10-26 照 PoE2 0.5：釘地的累積條。 */
+    public MeterSettings pin() {
+        return pin;
+    }
+
     private static double nonNegative(final YamlNode node, final String key, final double def) {
         final double value = node.decimal(key, def);
         if (value < 0) {
@@ -362,12 +413,19 @@ public final class AilmentConfig {
 
     // ---- 門檻 ----
 
-    /** 怪物的異常門檻倍率（× 最大生命）。 */
+    /**
+     * 怪物的異常門檻再乘的倍率（2026-10-26 照 PoE2：門檻改用等級表、不看稀有度，預設全部 1；這次之前是 × 最大生命，傳奇 0.5）。
+     */
     public double monsterThreshold(final MonsterRarity rarity) {
         return monsterThreshold.getOrDefault(rarity, 1.0);
     }
 
-    // ---- 公式（damage 都是抗性減免後、感電之前的那一元素的傷害）----
+    /** 2026-10-26 照 PoE2：玩家的異常門檻 = 最大生命 × 這個比例（0.5；不含能量護盾）。 */
+    public double playerThresholdLife() {
+        return playerThresholdLife / 100.0;
+    }
+
+    // ---- 公式（damage 都是目標減免前的那一種傷害；2026-10-26 這次之前是抗性減免後）----
 
     /**
      * 點燃或感電的機率（0–1）：(傷害 ÷ 門檻 × 每門檻機率 ＋ flat) ×（1 ＋ increased）。沒有這一元素的傷害就是 0。
@@ -384,8 +442,25 @@ public final class AilmentConfig {
         return Math.max(0, Math.min(100, percent)) / 100.0;
     }
 
+    /** 只看這一擊的點燃機率（0–1；面板估計用。實際打中時看身上疊的易燃 {@link #flammability}）。 */
     public double igniteChance(final double fire, final double threshold, final double flat, final double increased) {
         return chance(fire, threshold, igniteChancePerThreshold, flat, increased);
+    }
+
+    /**
+     * 2026-10-26 照 PoE2 0.5：這一擊給的易燃（百分比點數，可以超過 100）：(火焰 ÷ 門檻 × 20 ＋ 點燃機率) ×（1 ＋ 增加）。
+     * 身上的易燃疊加，加起來就是這一擊點燃的機率。
+     */
+    public double flammability(final double fire, final double threshold, final double flat, final double increased) {
+        if (fire <= 0 || threshold <= 0) {
+            return 0;
+        }
+        return Math.max(0, (fire / threshold * igniteChancePerThreshold + Math.max(0, flat)) * Math.max(0, 1 + increased));
+    }
+
+    /** 易燃在身上幾秒（怪物 8、玩家 4）。 */
+    public double flammabilityDuration(final boolean player) {
+        return player ? flammabilityPlayer : flammabilityMonster;
     }
 
     public double shockChance(final double lightning, final double threshold, final double flat, final double increased) {
@@ -407,7 +482,7 @@ public final class AilmentConfig {
         return Math.max(0, physical) * bleedDamagePerSecond / 100.0 * Math.max(0, 1 + increased) * Math.max(0, more);
     }
 
-    /** 中毒每秒的傷害：那一擊（物理＋混沌）傷害 × 30% ×（1 ＋ 增加）× 更多。 */
+    /** 中毒每秒的傷害：那一擊（物理＋混沌）傷害 × 20% ×（1 ＋ 增加）× 更多。 */
     public double poisonDps(final double physicalAndChaos, final double increased, final double more) {
         return Math.max(0, physicalAndChaos) * poisonDamagePerSecond / 100.0 * Math.max(0, 1 + increased) * Math.max(0, more);
     }
@@ -417,26 +492,25 @@ public final class AilmentConfig {
         return Math.max(0, fire) * igniteDamagePerSecond / 100.0 * Math.max(0, 1 + increased) * Math.max(0, more);
     }
 
-    /** 冰緩效果（0–最大值的小數）：50% ×（傷害 ÷ 門檻）^0.4 ×（1 ＋ 增加效果），小於下限回傳 0。 */
+    /**
+     * 冰緩效果（0–最大值的小數）：100 ×（傷害 ÷ 門檻）×（1 ＋ 增加效果），最多 50%，小於 30% 回傳 0
+     * （2026-10-26 照 PoE2 0.5 / Path of Building 的直線公式；這次之前是 50% × 比例^0.4，最低 5%）。
+     */
     public double chillMagnitude(final double cold, final double threshold, final double increasedEffect) {
         if (cold <= 0 || threshold <= 0) {
             return 0;
         }
-        final double percent = Math.min(chillMax, 50 * Math.pow(cold / threshold, 0.4) * Math.max(0, 1 + increasedEffect));
-        return percent < chillMin ? 0 : percent / 100.0;
+        final double percent = chillPerThreshold * cold / threshold * Math.max(0, 1 + increasedEffect);
+        return percent < chillMin ? 0 : Math.min(chillMax, percent) / 100.0;
     }
 
     /**
-     * 這一擊的凍結累積（1 = 100%，滿了就凍結）：傷害 ÷ 門檻 × 累積倍率 × 詞綴與輔助的倍率，傳奇怪再乘 unique.buildup。
+     * 這一擊的凍結累積（1 = 100%，滿了就凍結）：冰冷傷害 ÷ 暈眩門檻 × 210% × 詞綴與輔助的倍率（打玩家 200%）。
      *
      * @param multiplier 攻擊方的凍結累積倍率（（1 ＋ 增加）× 更多）
      */
-    public double freezeBuildup(final double cold, final double threshold, final double multiplier, final boolean unique) {
-        if (cold <= 0 || threshold <= 0) {
-            return 0;
-        }
-        final double buildup = cold / threshold * freezeBuildup / 100.0 * Math.max(0, multiplier);
-        return unique ? buildup * freezeUniqueBuildup / 100.0 : buildup;
+    public double freezeBuildup(final double cold, final double threshold, final double multiplier, final boolean player) {
+        return freeze.buildupFor(cold, threshold, multiplier, player);
     }
 
     /** 感電效果（小數，受到的傷害增加多少）：基礎 ×（1 ＋ 增加效果），夾在上限內。 */
@@ -474,31 +548,11 @@ public final class AilmentConfig {
     }
 
     public double freezeDuration(final boolean player) {
-        return player ? freezeDurationPlayer : freezeDurationMonster;
+        return freeze.duration(player);
     }
 
     public double shockDuration(final boolean player) {
         return player ? shockDurationPlayer : shockDurationMonster;
-    }
-
-    /** 最後一次被冰冷傷害打到後，幾秒開始消退。 */
-    public double freezeDecayDelay() {
-        return freezeDecayDelay;
-    }
-
-    /** 每秒消退多少（1 = 100%）。 */
-    public double freezeDecayPerSecond() {
-        return freezeDecayPerSecond / 100.0;
-    }
-
-    /** 傳奇怪凍結結束後幾秒不能再累積。 */
-    public double freezeUniqueImmunity() {
-        return freezeUniqueImmunity;
-    }
-
-    /** 玩家凍結結束後幾秒不能再累積（不會被一群怪一直凍住）。 */
-    public double freezePlayerImmunity() {
-        return freezePlayerImmunity;
     }
 
     public double igniteDamagePerSecond() {
@@ -518,7 +572,7 @@ public final class AilmentConfig {
         return poisonDuration;
     }
 
-    /** 中毒最多疊幾個。 */
+    /** 中毒同時有幾層生效（2026-10-26 照 PoE2：預設 1；這次之前 12）。 */
     public int poisonMaxStacks() {
         return poisonMaxStacks;
     }

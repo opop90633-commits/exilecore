@@ -7,16 +7,26 @@ import tw.exilecore.stats.StatKeys;
 import tw.exilecore.stats.StatSheet;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * 2026-10-26：天賦樹整棵換成 PoE2 0.5 的樹（tools/gen_poe2_tree.py 產生；第 4 版，舊角色的配點全部退回）。
+ * 相連照 tree.json 的 links，不相鄰的連線走 wires 畫在中間的空格上。
+ */
 class PassiveTreeTest {
 
     static PassiveTree tree;
@@ -26,183 +36,269 @@ class PassiveTreeTest {
         tree = PassiveTree.load(Path.of("src/main/resources/data/passives/tree.json"));
     }
 
+    /** 2026-10-26 照 PoE2：觀星專屬節點（unlock）要有「未見之道」才能配；開路者的女術者之道可以從女術士起點配。 */
     @Test
-    void treeIsConnectedAndHasAllStarts() {
-        assertTrue(tree.size() >= 650, "節點數 " + tree.size());
-        assertEquals(3, tree.version(), "加了德魯伊、八個職業的樹是第 3 版（舊角色的配點全部退回）");
-        assertTrue(tree.isConnected());
-        for (final tw.exilecore.character.CharacterClass type : tw.exilecore.character.CharacterClass.values()) {
-            final String cls = type.id();
-            final PassiveNode start = tree.start(cls);
-            assertNotNull(start, cls + " 要有起點");
-            assertTrue(start.isStart());
-            assertEquals(cls, start.startClass());
-            // 起點是葉子：只連一格，別的職業的路不會穿過它（起點不能配、也不能當路）
-            // TODO（2026-10 已知問題）：第 3 版新加的節點接在遊俠、女術士、德魯伊的起點旁（n2_8、n2_m8、nm7_m1），
-            //   這三個起點現在連兩格；把新節點改接到別處之後，這三個也改回只連一格。
-            final int expected = Set.of("huntress", "sorceress", "druid").contains(cls) ? 2 : 1;
-            assertEquals(expected, tree.neighbours(start).size(), cls + " 的起點連了幾格");
+    void unlockRulesAndExtraStarts() {
+        int oracle = 0;
+        PassiveNode locked = null;
+        PassiveNode gate = null;
+        for (final PassiveNode node : tree.ordered()) {
+            final PassiveTree.Unlock unlock = tree.unlock(node);
+            if (unlock == null || unlock.stat() == null) {
+                continue;
+            }
+            assertEquals(PassiveTree.RULE_UNSEEN_PATH, unlock.stat());
+            oracle++;
+            for (final PassiveNode other : tree.neighbours(node)) {
+                if (locked == null && tree.unlock(other) == null && !other.isStart()) {
+                    locked = node;
+                    gate = other;
+                }
+            }
         }
-        assertEquals(tw.exilecore.character.CharacterClass.values().length, tree.starts().size());
+        assertEquals(176, oracle, "原作 176 個觀星專屬節點");
+        assertNotNull(locked);
+        // 2026-10-26 照站長：只有觀星看得到（別的昇華、沒選昇華都藏起來）
+        assertFalse(tree.hidden(locked, "starseer"));
+        assertTrue(tree.hidden(locked, null));
+        assertTrue(tree.hidden(locked, "wildshaman"));
+        assertFalse(tree.hidden(gate, null));
+        final PassiveNode start = tree.start("druid");
+        final Set<String> allocated = new HashSet<>();
+        for (final PassiveNode step : tree.pathTo(allocated, start, gate)) {
+            allocated.add(step.id());
+        }
+        assertTrue(allocated.contains(gate.id()));
+        assertFalse(tree.canAllocate(allocated, start, locked), "沒有未見之道不能配");
+        assertTrue(tree.canAllocate(allocated, start, locked, Set.of(PassiveTree.RULE_UNSEEN_PATH)));
+        final Set<String> with = new HashSet<>(allocated);
+        with.add(locked.id());
+        assertEquals(with.size(), tree.reachable(with, start, Set.of(PassiveTree.RULE_UNSEEN_PATH)).size());
+        assertEquals(Set.of(locked.id()), tree.prune(with, start), "退了未見之道：觀星節點退回");
+
+        // 開路者（遊俠起點）：女術者之道可以直接配女術士起點旁邊的節點
+        final PassiveNode ranger = tree.start("ranger");
+        final PassiveNode sorceressNext = tree.neighbours(tree.start("sorceress")).get(0);
+        assertFalse(tree.canAllocate(Set.of(), ranger, sorceressNext));
+        assertTrue(tree.canAllocate(Set.of(), ranger, sorceressNext, Set.of(PassiveTree.RULE_PATH_SORCERESS)));
+        assertEquals(List.of(sorceressNext), tree.pathTo(Set.of(), ranger, sorceressNext, Set.of(PassiveTree.RULE_PATH_SORCERESS)));
+    }
+
+    @Test
+    void treeIsThePoe2Tree() {
+        assertEquals(6, tree.version(), "第 5 版：拿掉連枷節點；第 6 版：加回觀星專屬等有解鎖條件的節點（舊角色的配點全部退回）");
+        assertTrue(tree.size() > 3800, "PoE2 0.5 的主樹（扣掉裝飾、連不到的、Oracle 專屬的）：" + tree.size());
+        assertTrue(tree.isConnected());
         int keystones = 0;
         int notables = 0;
         int sockets = 0;
+        int starts = 0;
+        int attributes = 0;
         for (final PassiveNode node : tree.nodes()) {
-            if (node.type() == PassiveNode.Type.KEYSTONE) {
-                keystones++;
-            } else if (node.type() == PassiveNode.Type.NOTABLE) {
-                notables++;
-            } else if (node.isSocket()) {
-                sockets++;
-                assertTrue(node.modifiers().isEmpty(), "珠寶孔本身沒有修飾器（珠寶才有）：" + node.id());
-                assertEquals(1, tree.neighbours(node).size(), "珠寶孔是掛在路上的葉子：" + node.id());
-                assertFalse(tree.neighbours(node).getFirst().isSocket(), "珠寶孔不會接在另一個珠寶孔上");
+            switch (node.type()) {
+                case KEYSTONE -> keystones++;
+                case NOTABLE -> notables++;
+                case SOCKET -> sockets++;
+                case START -> starts++;
+                default -> {
+                }
             }
-            assertTrue(node.isStart() || node.isSocket() || !node.modifiers().isEmpty(), node.id() + " 沒有修飾器");
+            if (node.attributeChoice() == 5) {
+                attributes++;
+            }
             assertTrue(node.isStart() || !node.description().isEmpty(), node.id() + " 沒有說明");
-        }
-        assertTrue(keystones >= 16, "基石 " + keystones);
-        assertTrue(notables >= 60, "核心 " + notables);
-        assertEquals(18, sockets, "珠寶孔：每區 2 個 + 中心 2 個");
-        // 珠寶孔放在原本的 716 個節點後面，異常狀態的群組（2026-10）再放在珠寶孔後面（舊的規劃代碼的位元順序不變）
-        final List<PassiveNode> ordered = tree.ordered();
-        final int ailmentEnd = 734 + 16 * 5;
-        final int critEnd = ailmentEnd + 4 * 5;
-        final int chargeEnd = critEnd + 3;
-        assertEquals(chargeEnd + 61 + 1 + 1, ordered.size(), "716 ＋ 18 珠寶孔 ＋ 16 個異常狀態的叉 ＋ 4 個暴擊的叉（各 5 個）＋ 3 個戰星的核心"
-                + " ＋ 61 個第 3 版新加的（德魯伊與 PoE2 機制的群組）＋ 1 個元素汲取（2026-10-17，雷性旁邊）＋ 1 個星環共鳴（2026-10-24，精算旁邊）");
-        for (int i = 716; i < 734; i++) {
-            assertTrue(ordered.get(i).isSocket(), "第 " + i + " 個節點應該是珠寶孔");
-        }
-        int ailmentNotables = 0;
-        for (int i = 734; i < ailmentEnd; i++) {
-            final PassiveNode node = ordered.get(i);
-            assertFalse(node.isSocket() || node.isStart(), "第 " + i + " 個節點應該是異常狀態群組的");
-            if (node.type() == PassiveNode.Type.NOTABLE) {
-                ailmentNotables++; // 2026-10 第 3 版：這 16 個核心改成照 PoE2 的各種核心，不再限定異常狀態
+            assertTrue(node.isStart() || node.isSocket() || !node.name().isEmpty(), node.id() + " 沒有名稱");
+            for (final PassiveNode other : tree.neighbours(node)) {
+                assertTrue(tree.neighbours(other).contains(node), "連線要雙向：" + node.id() + "－" + other.id());
             }
+            assertFalse(tree.neighbours(node).isEmpty(), node.id() + " 沒有連線");
         }
-        assertEquals(16, ailmentNotables, "原本異常狀態群組的 16 個核心");
-        // 暴擊的群組（2026-10）：法術暴擊（元素法師、混沌術士）、攻擊暴擊（弓箭手、長矛獵手）；小點只對法術／攻擊有效
-        // （第 3 版：群組的核心改成照 PoE2 的一般核心，只看小點）
-        int spellCrit = 0;
-        int attackCrit = 0;
-        for (int i = ailmentEnd; i < critEnd; i++) {
-            final PassiveNode node = ordered.get(i);
-            assertFalse(node.isSocket() || node.isStart(), "第 " + i + " 個節點應該是暴擊群組的");
-            assertTrue(Math.abs(node.x()) <= 21 && Math.abs(node.y()) <= 21, node.id() + "：不超出原本的範圍");
-            if (node.type() == PassiveNode.Type.NOTABLE) {
-                continue;
-            }
-            for (final tw.exilecore.stats.Modifier modifier : node.modifiers()) {
-                assertTrue(modifier.stat().equals(tw.exilecore.stats.StatKeys.CRIT_CHANCE)
-                        || modifier.stat().equals(tw.exilecore.stats.StatKeys.CRIT_MULTI), node.id() + "：暴擊群組只有暴擊");
-                if (modifier.tags().contains(tw.exilecore.stats.Tags.SPELL)) {
-                    spellCrit++;
-                } else {
-                    assertTrue(modifier.tags().contains(tw.exilecore.stats.Tags.ATTACK), node.id() + "：要嘛法術、要嘛攻擊");
-                    attackCrit++;
-                }
-            }
+        assertEquals(33, keystones, "PoE2 0.5 的 33 個基石");
+        assertTrue(notables > 900, "核心 " + notables);
+        assertEquals(12, sockets, "珠寶孔（Sinister 的 6 個連不到，不放）");
+        assertEquals(6, starts, "PoE2 只有 6 個起點");
+        assertTrue(attributes > 250, "+5 任一屬性的點 " + attributes);
+        // 每個職業都有起點；遊俠與長矛獵手、元素法師與混沌術士共用（PoE2 一樣）
+        for (final tw.exilecore.character.CharacterClass type : tw.exilecore.character.CharacterClass.values()) {
+            final PassiveNode start = tree.start(type.id());
+            assertNotNull(start, type.id() + " 要有起點");
+            assertTrue(start.isStart());
+            assertTrue(tree.neighbours(start).size() >= 2, type.id() + " 的起點往外有好幾條路");
         }
-        assertEquals(8, spellCrit, "兩組法術暴擊：8 個小點");
-        assertEquals(8, attackCrit);
-        // 原本戰星的三個核心（2026-10）：掛在旁邊的葉子（不會變成新的捷徑）。
-        // 第 3 版改成照 PoE2 的一般核心，戰星的機率移到別的核心（星馳、麻木、精算）上
-        for (int i = critEnd; i < chargeEnd; i++) {
-            final PassiveNode node = ordered.get(i);
-            assertEquals(PassiveNode.Type.NOTABLE, node.type(), node.id());
-            // TODO（2026-10 已知問題）：第 3 版新加的 nm11_1（震天吼）接在 nm12_1（穩界）旁，穩界現在連兩格；改接到別處後改回 1
-            assertEquals("nm12_1".equals(node.id()) ? 2 : 1, tree.neighbours(node).size(), node.id() + " 是葉子");
-            assertEquals(node.modifiers().size(), node.description().size(), node.id() + "：每條效果一行說明");
-        }
-        // 怒星、銳星、磐星在樹上都拿得到
-        final java.util.Set<String> charges = new java.util.HashSet<>();
+        assertEquals(tree.start("ranger"), tree.start("huntress"));
+        assertEquals(tree.start("sorceress"), tree.start("witch"));
+        assertNotEquals(tree.start("marauder"), tree.start("mercenary"));
+        // 起點彼此不相連（起點不能當路）
         for (final PassiveNode node : tree.nodes()) {
-            for (final tw.exilecore.stats.Modifier modifier : node.modifiers()) {
-                if (tw.exilecore.charge.ChargeText.isChargeStat(modifier.stat())) {
-                    charges.add(tw.exilecore.charge.ChargeText.chargeOf(modifier.stat()));
+            if (node.isStart()) {
+                for (final PassiveNode other : tree.neighbours(node)) {
+                    assertFalse(other.isStart(), node.id() + " 連到別的起點");
                 }
             }
         }
-        assertEquals(java.util.Set.of("power", "frenzy", "endurance"), charges);
     }
 
     @Test
-    void allocationMustBeAdjacentAndRefundMustKeepConnectivity() {
-        final PassiveNode start = tree.start("witch");
-        final Set<String> allocated = new HashSet<>();
-        final PassiveNode center = tree.at(0, 0);
-        assertNotNull(center);
-        final PassiveNode first = closestToCenter(tree.neighbours(start), allocated, start);
-        assertNotNull(first);
-        assertTrue(tree.canAllocate(allocated, start, first));
-
-        // 不相鄰的節點不能配
-        final PassiveNode far = tree.start("marauder");
-        assertFalse(tree.canAllocate(allocated, start, far), "起點不能配");
-        assertFalse(tree.canAllocate(allocated, start, center), "中心離起點很遠");
-
-        // 沿著混沌術士支線一路配到中心（每步挑離中心最近的鄰居）
-        allocated.add(first.id());
-        PassiveNode current = first;
-        int steps = 0;
-        while (!current.equals(center) && steps < 30) {
-            final PassiveNode chosen = closestToCenter(tree.neighbours(current), allocated, start);
-            assertNotNull(chosen, "從 " + current.id() + " 走不到中心");
-            assertTrue(manhattan(chosen) < manhattan(current), "要越走越近：" + current.id() + " → " + chosen.id());
-            assertTrue(tree.canAllocate(allocated, start, chosen));
-            allocated.add(chosen.id());
-            current = chosen;
-            steps++;
+    void wiresDrawEveryLinkCellByCell() {
+        // 每條連線在格子上都畫得出來：兩端的節點格都有往那條線的方向，中間每一格都接得起來
+        for (final PassiveTree.Link link : tree.links()) {
+            final PassiveNode a = link.a();
+            boolean found = false;
+            for (final PassiveTree.CellWire wire : tree.wiresAt(a.x(), a.y())) {
+                if (wire.link().equals(link)) {
+                    assertEquals(1, Integer.bitCount(wire.directions()), "端點只有一個方向：" + a.id());
+                    found = true;
+                }
+            }
+            assertTrue(found, "連線 " + a.id() + "－" + link.b().id() + " 在起點格上沒畫");
         }
-        assertTrue(allocated.contains(center.id()));
-
-        // 中間的節點退掉會斷線，最外面的可以退
-        assertFalse(tree.canRefund(allocated, start, first), "退掉第一格會讓後面全部斷線");
-        assertTrue(tree.canRefund(allocated, start, center), "最尾端可以退");
-        assertEquals(allocated.size(), tree.reachable(allocated, start).size());
-
-        // 樹改版：塞一個連不到的節點進去，prune 要把它清掉
-        allocated.add(tree.neighbours(far).get(0).id());
-        final Set<String> removed = tree.prune(allocated, start);
-        assertEquals(1, removed.size());
+        // 畫面：相連的節點之間一定有線
+        final PassiveNode start = tree.start("witch");
+        final TreeView view = new TreeView(tree, start, Set.of(), Set.of(), Set.of());
+        final TreeView.Tile tile = view.tile(start.x(), start.y());
+        assertTrue(TreeView.hasWire(tile), "起點那一格有往外的線");
+        assertEquals(TreeView.EdgeState.LIT, TreeView.brightest(tile), "起點連出去的線：一端配了、另一端能配");
     }
 
     @Test
-    void shortestPathAndSearch() {
-        final PassiveNode start = tree.start("marauder");
+    void linksReplaceGridAdjacency() {
+        // 沒有 links 的舊格式：上下左右相鄰就是相連；有 links：只照 links（格子相鄰也不算）
+        final String grid = """
+                {"version": 1, "starts": {"witch": "s"}, "nodes": [
+                  {"id": "s", "type": "start", "x": 0, "y": 0},
+                  {"id": "a", "type": "small", "x": 1, "y": 0, "stats": [], "description": ["a"]},
+                  {"id": "b", "type": "small", "x": 1, "y": 1, "stats": [], "description": ["b"]}]}""";
+        final PassiveTree old = PassiveTree.load(new StringReader(grid));
+        assertEquals(1, old.neighbours(old.node("s")).size());
+        assertEquals(2, old.neighbours(old.node("a")).size());
+        final String linked = """
+                {"version": 1, "starts": {"witch": "s"}, "nodes": [
+                  {"id": "s", "type": "start", "x": 0, "y": 0, "links": ["b"]},
+                  {"id": "a", "type": "small", "x": 1, "y": 0, "stats": [], "description": ["a"]},
+                  {"id": "b", "type": "small", "x": 3, "y": 2, "stats": [], "description": ["b"], "links": ["a"]}]}""";
+        final PassiveTree poe2 = PassiveTree.load(new StringReader(linked));
+        final PassiveNode s = poe2.node("s");
+        assertEquals(List.of(poe2.node("b")), poe2.neighbours(s), "格子相鄰的 a 沒有連線就不算");
+        assertTrue(poe2.canAllocate(Set.of(), s, poe2.node("b")));
+        assertFalse(poe2.canAllocate(Set.of(), s, poe2.node("a")));
+        assertTrue(poe2.canAllocate(Set.of("b"), s, poe2.node("a")));
+        // 沒寫路線的連線走 L 形：(0,0)→(3,0)→(3,2)，中間的空格有線
+        assertTrue(TreeView.hasWire(new TreeView(poe2, s, Set.of(), Set.of(), Set.of()).tile(2, 0)));
+        assertTrue(TreeView.hasWire(new TreeView(poe2, s, Set.of(), Set.of(), Set.of()).tile(3, 1)));
+        // 連到不存在的節點、路線斷掉都擋下來
+        assertThrows(IllegalArgumentException.class, () -> PassiveTree.load(new StringReader(linked.replace("\"links\": [\"a\"]", "\"links\": [\"zz\"]"))));
+        assertThrows(IllegalArgumentException.class, () -> PassiveTree.load(new StringReader(linked.replace("]}]}",
+                "]}], \"wires\": [{\"a\": \"s\", \"b\": \"b\", \"cells\": [[1, 1]]}]}"))));
+    }
+
+    @Test
+    void allocationFollowsLinksAndRefundKeepsConnectivity() {
+        final PassiveNode start = tree.start("witch");
+        final PassiveNode target = keystone("Chaos Inoculation");
         final Set<String> allocated = new HashSet<>();
-        final PassiveNode center = tree.at(0, 0);
-        final List<PassiveNode> path = tree.pathTo(allocated, start, center);
+        final List<PassiveNode> path = tree.pathTo(allocated, start, target);
         assertFalse(path.isEmpty());
-        assertEquals(center, path.get(path.size() - 1));
-        // 路徑上每一步都與前一步（或起點）相鄰，而且是最短的（曼哈頓距離 = 起點到中心）
+        assertEquals(target, path.getLast());
+        assertEquals(distance(start, target), path.size(), "自動配路是最短的路");
         PassiveNode previous = start;
         for (final PassiveNode step : path) {
-            assertEquals(1, Math.abs(step.x() - previous.x()) + Math.abs(step.y() - previous.y()), step.id() + " 沒貼著上一步");
+            assertTrue(tree.neighbours(previous).contains(step), step.id() + " 沒連著上一步");
             assertTrue(tree.canAllocate(allocated, start, step));
             allocated.add(step.id());
             previous = step;
         }
-        assertEquals(distance(start, center), path.size(), "自動配路是最短的路");
-        assertTrue(path.size() >= Math.abs(start.x()) + Math.abs(start.y()));
-        // 已配置的節點不會再出現在路徑裡；已配置的目標回傳空
-        assertTrue(tree.pathTo(allocated, start, center).isEmpty());
-        final PassiveNode witchStart = tree.start("witch");
-        assertTrue(tree.pathTo(allocated, start, witchStart).isEmpty(), "起點不能當目標");
+        assertFalse(tree.canAllocate(allocated, start, tree.start("marauder")), "起點不能配");
+        assertFalse(tree.canRefund(allocated, start, path.getFirst()), "退掉第一點會讓後面全部斷線");
+        assertTrue(tree.canRefund(allocated, start, target), "最尾端可以退");
+        assertTrue(tree.pathTo(allocated, start, target).isEmpty(), "已配置的目標回傳空");
+        // 樹改版：塞一個連不到的節點進去，prune 要把它清掉
+        final PassiveNode far = tree.neighbours(tree.start("marauder")).getFirst();
+        allocated.add(far.id());
+        assertEquals(Set.of(far.id()), tree.prune(allocated, start));
+    }
 
-        final List<PassiveNode> life = tree.search("生命");
-        assertTrue(life.size() >= 10, "生命相關節點 " + life.size());
-        assertTrue(life.get(0).type() != PassiveNode.Type.SMALL, "核心與基石排前面");
+    @Test
+    void keystonesAndNodesFeedTheStatSheet() {
+        final StatSheet flags = new StatSheet();
+        flags.addAll(keystone("Resolute Technique").modifiers());
+        assertTrue(StatKeys.flag(flags, StatKeys.FLAG_NO_CRIT), "堅毅之心：無法暴擊");
+        assertFalse(StatKeys.flag(flags, StatKeys.FLAG_ALWAYS_HIT));
+        final StatSheet blood = new StatSheet();
+        blood.addAll(keystone("Blood Magic").modifiers());
+        assertTrue(StatKeys.flag(blood, "flag.blood_magic"));
+        // 一個「最大生命增加」的核心真的加到屬性表
+        PassiveNode life = null;
+        for (final PassiveNode node : tree.nodes()) {
+            // 2026-10-26：核心的其他行也陸續生效了，只要求「最大生命」這條只有一條、沒標籤
+            if (node.type() == PassiveNode.Type.NOTABLE && node.modifiers().stream().filter(m -> m.stat().equals(StatKeys.LIFE_MAX)).count() == 1
+                    && node.modifiers().getFirst().stat().equals(StatKeys.LIFE_MAX) && node.modifiers().getFirst().tags().isEmpty()) {
+                life = node;
+                break;
+            }
+        }
+        assertNotNull(life);
+        final StatSheet sheet = new StatSheet();
+        sheet.setBase(StatKeys.LIFE_MAX, 100);
+        sheet.addAll(tree.modifiers(Set.of(life.id())));
+        assertEquals(100 * (1 + life.modifiers().getFirst().value()), sheet.get(StatKeys.LIFE_MAX), 1e-9);
+        // 生效的說明行跟修飾器一起，沒生效的標「尚未生效」
+        int inactive = 0;
+        int lines = 0;
+        for (final PassiveNode node : tree.nodes()) {
+            for (final String line : node.description()) {
+                lines++;
+                if (line.endsWith("（尚未生效）")) {
+                    inactive++;
+                }
+            }
+            if (!node.modifiers().isEmpty()) {
+                assertTrue(node.description().stream().anyMatch(l -> !l.endsWith("（尚未生效）")), node.id());
+            }
+        }
+        assertTrue(inactive < lines / 2, "大部分的說明行都要生效：" + inactive + " / " + lines);
+        assertFalse(tree.search("生命").isEmpty());
         assertTrue(tree.search("不存在的字").isEmpty());
-        assertTrue(tree.search("  ").isEmpty());
+    }
+
+    @Test
+    void classVariantsChangeTheNode() {
+        // PoE2：女巫、德魯伊、女獵人在某些節點拿到不同的效果
+        PassiveNode varied = null;
+        for (final PassiveNode node : tree.nodes()) {
+            if (node.variants().containsKey("druid")) {
+                varied = node;
+                break;
+            }
+        }
+        assertNotNull(varied);
+        final PassiveNode druid = varied.forClass("druid");
+        assertNotEquals(varied.modifiers(), druid.modifiers());
+        assertEquals(varied.id(), druid.id());
+        assertEquals(varied, varied.forClass("marauder"));
+        assertEquals(varied, varied.forClass(null));
+        final List<Modifier> mods = tree.modifiers(Set.of(varied.id()), "druid");
+        assertEquals(druid.modifiers().size(), mods.size());
+        int witch = 0;
+        int huntress = 0;
+        for (final PassiveNode node : tree.nodes()) {
+            witch += node.variants().containsKey("witch") ? 1 : 0;
+            huntress += node.variants().containsKey("huntress") ? 1 : 0;
+        }
+        assertTrue(witch > 10 && huntress > 10, witch + " " + huntress);
+    }
+
+    private static PassiveNode keystone(final String english) {
+        final Map<String, String> ids = Map.of("Chaos Inoculation", "p56349", "Resolute Technique", "p44017", "Blood Magic", "p51749");
+        final PassiveNode node = tree.node(ids.get(english));
+        assertNotNull(node, english);
+        assertEquals(PassiveNode.Type.KEYSTONE, node.type());
+        return node;
     }
 
     /** 從起點出發（不經過其他起點）走到目標要幾步。 */
     private static int distance(final PassiveNode from, final PassiveNode to) {
-        final java.util.Map<String, Integer> steps = new java.util.HashMap<>();
-        final java.util.ArrayDeque<PassiveNode> queue = new java.util.ArrayDeque<>();
+        final Map<String, Integer> steps = new HashMap<>();
+        final ArrayDeque<PassiveNode> queue = new ArrayDeque<>();
         steps.put(from.id(), 0);
         queue.add(from);
         while (!queue.isEmpty()) {
@@ -218,56 +314,5 @@ class PassiveTreeTest {
             }
         }
         return -1;
-    }
-
-    private static int manhattan(final PassiveNode node) {
-        return Math.abs(node.x()) + Math.abs(node.y());
-    }
-
-    private static PassiveNode closestToCenter(final List<PassiveNode> candidates, final Set<String> allocated, final PassiveNode start) {
-        PassiveNode best = null;
-        for (final PassiveNode node : candidates) {
-            if (node.isStart() || allocated.contains(node.id())) {
-                continue;
-            }
-            if (best == null || manhattan(node) < manhattan(best)) {
-                best = node;
-            }
-        }
-        return best;
-    }
-
-    @Test
-    void modifiersFeedTheStatSheet() {
-        // 2026-10：中心是「星幕」（增加 15% 格擋率）；力量、生命改看「崩山」（+15 力量）與「獸魂共鳴」（增加 5% 最大生命）
-        final PassiveNode center = tree.at(0, 0);
-        final PassiveNode mountain = tree.at(-16, 17);
-        final PassiveNode beast = tree.at(-8, 0);
-        assertEquals("星幕", center.name());
-        assertEquals("崩山", mountain.name());
-        assertEquals("獸魂共鳴", beast.name());
-        final StatSheet sheet = new StatSheet();
-        sheet.setBase(StatKeys.STR, 20);
-        sheet.setBase(StatKeys.LIFE_MAX, 100);
-        sheet.setBase(StatKeys.BLOCK_CHANCE, 20);
-        final List<Modifier> modifiers = tree.modifiers(Set.of(center.id(), mountain.id(), beast.id()));
-        sheet.addAll(modifiers);
-        assertEquals(35, sheet.get(StatKeys.STR), 1e-9);
-        assertEquals(105, sheet.get(StatKeys.LIFE_MAX), 1e-9);
-        assertEquals(23, sheet.get(StatKeys.BLOCK_CHANCE), 1e-9);
-
-        // 基石是開關（2026-10：「必中」照 PoE2 改成「穩手無鋒」：命中加倍、無法暴擊，不再必中）
-        PassiveNode keystone = null;
-        for (final PassiveNode node : tree.nodes()) {
-            if (node.type() == PassiveNode.Type.KEYSTONE && node.name().equals("穩手無鋒")) {
-                keystone = node;
-            }
-        }
-        assertNotNull(keystone);
-        final StatSheet flags = new StatSheet();
-        flags.addAll(keystone.modifiers());
-        assertTrue(StatKeys.flag(flags, StatKeys.FLAG_NO_CRIT));
-        assertFalse(StatKeys.flag(flags, StatKeys.FLAG_ALWAYS_HIT));
-        assertFalse(StatKeys.flag(flags, StatKeys.FLAG_CHAOS_IMMUNE));
     }
 }

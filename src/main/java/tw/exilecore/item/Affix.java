@@ -138,7 +138,22 @@ public record Affix(String id, AffixType type, String group, Set<String> spawnTa
                 list.add(tier);
             }
         }
+        if (banded() && list.size() > 1) {
+            // 2026-10-26（PoE2 換界石）：每一個換界石階段帶只會出那一段的數值（T16 一定是最高的那一階），不會擲到低階
+            AffixTier best = list.getFirst();
+            for (final AffixTier tier : list) {
+                if (tier.ilvl() > best.ilvl()) {
+                    best = tier;
+                }
+            }
+            return List.of(best);
+        }
         return list;
+    }
+
+    /** 2026-10-26：地圖（換界石）詞綴照階段帶，只出物品等級允許的最高那一階（PoE2）。 */
+    public boolean banded() {
+        return spawnTags.contains("map") || spawnTags.contains("map_desecrated");
     }
 
     public AffixTier tier(final int number) {
@@ -204,7 +219,8 @@ public record Affix(String id, AffixType type, String group, Set<String> spawnTa
      * 顯示文字（MiniMessage；文字已經跳脫）：每個數值後面接著這一階的範圍，PoE 按住 Alt 看到的樣子，例如「+15(10–19) 最大生命」、
      * 「附加 5(3–6) 到 12(10–14) 物理傷害」。上下限一樣（固定值）的不接。變數寫成 {名字/10} 的是小數（見 {@link AffixMod}）。
      */
-    public static String substituteWithRanges(final String template, final Map<String, Integer> vars, final Map<String, int[]> ranges) {
+    public static String substituteWithRanges(final String rawTemplate, final Map<String, Integer> vars, final Map<String, int[]> ranges) {
+        final String template = choices(rawTemplate, vars); // 2026-10-26
         final StringBuilder out = new StringBuilder();
         final java.util.regex.Matcher matcher = AffixMod.VARIABLE.matcher(template);
         int last = 0;
@@ -240,6 +256,7 @@ public record Affix(String id, AffixType type, String group, Set<String> spawnTa
     public String rangeText(final int tierId) {
         final Map<String, int[]> ranges = ranges(tierId);
         final StringBuilder out = new StringBuilder();
+        final String text = choices(this.text, Map.of()); // 2026-10-26：{名字:甲|乙} 在圖鑑列出全部（甲／乙）
         final java.util.regex.Matcher matcher = AffixMod.VARIABLE.matcher(text);
         int last = 0;
         while (matcher.find()) {
@@ -264,7 +281,31 @@ public record Affix(String id, AffixType type, String group, Set<String> spawnTa
         return text == null ? "" : text.replace("\\", "\\\\").replace("<", "\\<");
     }
 
-    public static String substitute(final String template, final Map<String, Integer> vars) {
+    /** 2026-10-26：文字裡的選項 {@code {名字:甲|乙|丙}}（永恆珠寶的征服者）。 */
+    static final java.util.regex.Pattern CHOICE = java.util.regex.Pattern.compile("\\{([A-Za-z0-9_]+):([^{}]*)}");
+
+    /**
+     * 2026-10-26：把 {@code {名字:甲|乙|丙}} 換成擲出的那一個（值 1 是甲）；沒有這個變數或超出範圍時列出全部（甲／乙／丙）。
+     * 數值的 {@code {名字}} 不受影響。
+     */
+    public static String choices(final String template, final Map<String, Integer> vars) {
+        if (template == null || template.indexOf(':') < 0) {
+            return template;
+        }
+        final java.util.regex.Matcher matcher = CHOICE.matcher(template);
+        final StringBuilder out = new StringBuilder();
+        while (matcher.find()) {
+            final String[] options = matcher.group(2).split("\\|", -1);
+            final Integer value = vars == null ? null : vars.get(matcher.group(1));
+            final String chosen = value != null && value >= 1 && value <= options.length ? options[value - 1] : String.join("／", options);
+            matcher.appendReplacement(out, java.util.regex.Matcher.quoteReplacement(chosen));
+        }
+        matcher.appendTail(out);
+        return out.toString();
+    }
+
+    public static String substitute(final String rawTemplate, final Map<String, Integer> vars) {
+        final String template = choices(rawTemplate, vars); // 2026-10-26
         final StringBuilder out = new StringBuilder();
         final java.util.regex.Matcher matcher = AffixMod.VARIABLE.matcher(template);
         int last = 0;

@@ -385,6 +385,15 @@ public final class LifeModule implements Module, Listener {
         }
     }
 
+    /** 2026-10-27：星索鉤不能丟在地上（身上沒有就能在選單再領；這次之前丟了再領一把＝複製）。 */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onDropHook(final org.bukkit.event.player.PlayerDropItemEvent event) {
+        if (LifeService.isHook(event.getItemDrop().getItemStack())) {
+            event.setCancelled(true);
+            tw.exilecore.gui.ActionBar.send(event.getPlayer(), plugin.text().parse("<red>星索鉤綁定帳號，不能丟"));
+        }
+    }
+
     /** 淵鯨（快樂惡魂）不能拴、不能騎、不能互動。 */
     @EventHandler(priority = EventPriority.HIGH)
     public void onInteractEntity(final org.bukkit.event.player.PlayerInteractEntityEvent event) {

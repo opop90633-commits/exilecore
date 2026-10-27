@@ -92,8 +92,13 @@ public final class Fx {
         final double range = 16.0 * Math.max(1.0, volume); // 原版聽得到的距離
         final double rangeSquared = range * range;
         int sent = 0;
-        for (final Player viewer : world.getPlayers()) {
-            if (viewer.getLocation().distanceSquared(at) > rangeSquared) {
+        final Snapshot snapshot = players(world); // 2026-10-27 效能：這個 tick 的玩家與位置只拿一次
+        for (int i = 0; i < snapshot.players().length; i++) {
+            final Player viewer = snapshot.players()[i];
+            final double dx = snapshot.xyz()[i * 3] - at.getX();
+            final double dy = snapshot.xyz()[i * 3 + 1] - at.getY();
+            final double dz = snapshot.xyz()[i * 3 + 2] - at.getZ();
+            if (dx * dx + dy * dy + dz * dz > rangeSquared || !viewer.isConnected()) {
                 continue;
             }
             final boolean mine = viewer.getUniqueId().equals(source);
@@ -146,15 +151,46 @@ public final class Fx {
         void to(Player viewer);
     }
 
+    // ---- 2026-10-27 效能：每個世界的玩家與位置每個 tick 只拿一次 ----
+    // （所有地圖實例在同一個世界；以前每個粒子點都 world.getPlayers() 複製一份名單、每個人 getLocation() 一次，一招幾百個點就是幾萬次）
+
+    /** 一個世界這個 tick 的玩家與位置。 */
+    private record Snapshot(Player[] players, double[] xyz) {
+    }
+
+    private static final java.util.Map<World, Snapshot> snapshots = new java.util.HashMap<>();
+    private static int snapshotTick = Integer.MIN_VALUE;
+
+    private static Snapshot players(final World world) {
+        final int tick = Bukkit.getCurrentTick();
+        if (tick != snapshotTick) {
+            snapshots.clear();
+            snapshotTick = tick;
+        }
+        return snapshots.computeIfAbsent(world, key -> {
+            final List<Player> list = key.getPlayers();
+            final Player[] players = list.toArray(new Player[0]);
+            final double[] xyz = new double[players.length * 3];
+            for (int i = 0; i < players.length; i++) {
+                final Location at = players[i].getLocation();
+                xyz[i * 3] = at.getX();
+                xyz[i * 3 + 1] = at.getY();
+                xyz[i * 3 + 2] = at.getZ();
+            }
+            return new Snapshot(players, xyz);
+        });
+    }
+
     private static void each(final World world, final double x, final double y, final double z, final Send send) {
         Player owner = null;
         crowd.clear();
-        for (final Player viewer : world.getPlayers()) {
-            final Location at = viewer.getLocation();
-            final double dx = at.getX() - x;
-            final double dy = at.getY() - y;
-            final double dz = at.getZ() - z;
-            if (dx * dx + dy * dy + dz * dz <= RANGE_SQUARED && sees(viewer)) {
+        final Snapshot snapshot = players(world);
+        for (int i = 0; i < snapshot.players().length; i++) {
+            final Player viewer = snapshot.players()[i];
+            final double dx = snapshot.xyz()[i * 3] - x;
+            final double dy = snapshot.xyz()[i * 3 + 1] - y;
+            final double dz = snapshot.xyz()[i * 3 + 2] - z;
+            if (dx * dx + dy * dy + dz * dz <= RANGE_SQUARED && viewer.isConnected() && sees(viewer)) {
                 if (viewer.getUniqueId().equals(source)) {
                     owner = viewer;
                 } else {

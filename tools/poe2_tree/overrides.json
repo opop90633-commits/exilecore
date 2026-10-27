@@ -1,0 +1,3159 @@
+{
+ "keystone_zealots_oath": [
+  {
+   "stat": "flag.zealots_oath",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "keystone_crimson_assault": [
+  {
+   "stat": "flag.crimson_assault",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "keystone_dance_with_death": [
+  {
+   "stat": "flag.dance_with_death",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "keystone_unwavering_stance": [
+  {
+   "stat": "flag.unwavering_stance",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "keystone_avatar_of_fire": [
+  {
+   "stat": "flag.avatar_of_fire",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "keystone_charge_cycle": [
+  {
+   "stat": "flag.resonance",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "keystone_iron_reflexes": [
+  {
+   "stat": "flag.iron_reflexes",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "keystone_vaal_pact": [
+  {
+   "stat": "leech.effect",
+   "type": "MORE",
+   "value": 0.5
+  },
+  {
+   "stat": "leech.rate",
+   "type": "MORE",
+   "value": -0.67
+  },
+  {
+   "stat": "life.regen",
+   "type": "MORE",
+   "value": -1.0
+  },
+  {
+   "stat": "life.regen_percent",
+   "type": "MORE",
+   "value": -1.0
+  },
+  {
+   "stat": "flask.life_recovery",
+   "type": "MORE",
+   "value": -1.0
+  }
+ ],
+ "keystone_eternal_youth": [
+  {
+   "stat": "flag.eternal_youth",
+   "type": "FLAT",
+   "value": 1
+  },
+  {
+   "stat": "flask.life_recovery",
+   "type": "MORE",
+   "value": -0.5
+  }
+ ],
+ "keystone_fire_spells_become_chaos_spells": [
+  {
+   "stat": "flag.blackflame",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "resolute_technique": [
+  {
+   "stat": "accuracy",
+   "type": "MORE",
+   "value": 1.0
+  },
+  {
+   "stat": "flag.no_crit",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "keystone_ancestral_bond": [
+  {
+   "stat": "flag.ancestral_bond",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "keystone_mana_shield": [
+  {
+   "stat": "damage.from_mana",
+   "type": "FLAT",
+   "value": 100
+  },
+  {
+   "stat": "mana.regen",
+   "type": "MORE",
+   "value": -0.5
+  }
+ ],
+ "keystone_blood_magic": [
+  {
+   "stat": "flag.blood_magic",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "keystone_pain_attunement": [
+  {
+   "stat": "flag.pain_attunement",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "keystone_chaos_inoculation": [
+  {
+   "stat": "flag.chaos_immune",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "keystone_bulwark": [
+  {
+   "stat": "flag.bulwark",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "keystone_eldritch_battery": [
+  {
+   "stat": "flag.eldritch_battery",
+   "type": "FLAT",
+   "value": 1
+  },
+  {
+   "stat": "skill.cost",
+   "type": "MORE",
+   "value": 1.0
+  }
+ ],
+ "base_cooldown_speed_+%": [
+  {
+   "stat": "cooldown.recovery",
+   "type": "INCREASED"
+  }
+ ],
+ "warcry_cooldown_speed_+%": [
+  {
+   "stat": "cooldown.recovery",
+   "type": "INCREASED",
+   "tags": [
+    "warcry"
+   ]
+  }
+ ],
+ "grenade_skill_cooldown_speed_+%": [
+  {
+   "stat": "cooldown.recovery",
+   "type": "INCREASED",
+   "tags": [
+    "grenade"
+   ]
+  }
+ ],
+ "minion_command_skill_cooldown_speed_+%": [
+  {
+   "stat": "cooldown.recovery",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ]
+  }
+ ],
+ "your_slam_aftershock_chance_%": [
+  {
+   "stat": "slam.aftershock_chance",
+   "type": "FLAT",
+   "tags": [
+    "slam"
+   ]
+  }
+ ],
+ "spell_skills_fire_2_additional_projectiles_final_chance_%": [
+  {
+   "stat": "skill.projectile_chance_two",
+   "type": "FLAT",
+   "tags": [
+    "spell"
+   ]
+  }
+ ],
+ "damage_+%_vs_enemies_affected_by_status_ailments": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "condition": "vs_elementalailment"
+  }
+ ],
+ "life_reserved_by_stat_only_for_midnight_bargain_and_infernalist_%": null,
+ "non_skill_base_all_damage_%_to_gain_as_random_element": [
+  {
+   "stat": "asc.random_element",
+   "type": "FLAT",
+   "scale": 1
+  }
+ ],
+ "additional_combo_gain_on_hit": [
+  {
+   "stat": "combo.extra_chance",
+   "type": "FLAT",
+   "value": 100
+  }
+ ],
+ "enemies_in_presence_have_exposure": [
+  {
+   "stat": "presence.resist.fire",
+   "type": "FLAT",
+   "value": 20
+  },
+  {
+   "stat": "presence.resist.cold",
+   "type": "FLAT",
+   "value": 20
+  },
+  {
+   "stat": "presence.resist.lightning",
+   "type": "FLAT",
+   "value": 20
+  }
+ ],
+ "immune_to_bleeding_while_shapeshifted": [
+  {
+   "stat": "avoid.bleed",
+   "type": "FLAT",
+   "value": 100,
+   "condition": "shapeshifted"
+  }
+ ],
+ "unaffected_by_chill_during_dodge_roll": [
+  {
+   "stat": "chill.effect_on_self",
+   "type": "INCREASED",
+   "value": -1.0,
+   "condition": "dodgerolling"
+  }
+ ],
+ "unaffected_by_chill_while_mana_leeching": [
+  {
+   "stat": "chill.effect_on_self",
+   "type": "INCREASED",
+   "value": -1.0,
+   "condition": "manaleech"
+  }
+ ],
+ "dodge_roll_travel_distance_+_while_surrounded": [
+  {
+   "stat": "dodge.metres",
+   "type": "FLAT",
+   "scale": 0.1,
+   "condition": "surrounded"
+  }
+ ],
+ "projectile_attacks_%_chance_to_fire_2_additional_projectiles_while_moving": [
+  {
+   "stat": "skill.projectile_chance",
+   "type": "FLAT",
+   "scale": 2,
+   "tags": [
+    "attack",
+    "projectile"
+   ],
+   "condition": "moving"
+  }
+ ],
+ "enemies_chaos_resistance_%_while_cursed": [
+  {
+   "stat": "penetration",
+   "type": "FLAT",
+   "scale": -1,
+   "tags": [
+    "chaos",
+    "vs_cursed"
+   ]
+  }
+ ],
+ "damage_taken_+%_on_low_life": [
+  {
+   "stat": "debuff.taken.physical",
+   "type": "FLAT",
+   "condition": "lowlife"
+  },
+  {
+   "stat": "debuff.taken.fire",
+   "type": "FLAT",
+   "condition": "lowlife"
+  },
+  {
+   "stat": "debuff.taken.cold",
+   "type": "FLAT",
+   "condition": "lowlife"
+  },
+  {
+   "stat": "debuff.taken.lightning",
+   "type": "FLAT",
+   "condition": "lowlife"
+  },
+  {
+   "stat": "debuff.taken.chaos",
+   "type": "FLAT",
+   "condition": "lowlife"
+  }
+ ],
+ "gain_fire_damage_+%_per_endurance_charge_consumed_recently": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 1,
+   "condition": "endurancespent1"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 1,
+   "condition": "endurancespent2"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 1,
+   "condition": "endurancespent3"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 1,
+   "condition": "endurancespent4"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 1,
+   "condition": "endurancespent5"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 1,
+   "condition": "endurancespent6"
+  }
+ ],
+ "non_skill_base_all_damage_%_to_gain_as_fire_per_endurance_charge_consumed_recently": [
+  {
+   "stat": "damage.extra.fire",
+   "type": "FLAT",
+   "scale": 1,
+   "condition": "endurancespent1"
+  },
+  {
+   "stat": "damage.extra.fire",
+   "type": "FLAT",
+   "scale": 1,
+   "condition": "endurancespent2"
+  },
+  {
+   "stat": "damage.extra.fire",
+   "type": "FLAT",
+   "scale": 1,
+   "condition": "endurancespent3"
+  },
+  {
+   "stat": "damage.extra.fire",
+   "type": "FLAT",
+   "scale": 1,
+   "condition": "endurancespent4"
+  },
+  {
+   "stat": "damage.extra.fire",
+   "type": "FLAT",
+   "scale": 1,
+   "condition": "endurancespent5"
+  },
+  {
+   "stat": "damage.extra.fire",
+   "type": "FLAT",
+   "scale": 1,
+   "condition": "endurancespent6"
+  }
+ ],
+ "stun_threshold_+%_for_each_time_hit_recently_up_to_100%": [
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hitstaken1"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hitstaken2"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hitstaken3"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hitstaken4"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hitstaken5"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hitstaken6"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hitstaken7"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hitstaken8"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hitstaken9"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hitstaken10"
+  }
+ ],
+ "damage_+%_per_warcry_used_recently": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "warcries1"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "warcries2"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "warcries3"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "warcries4"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "warcries5"
+  }
+ ],
+ "damage_+%_per_different_warcry_used_recently": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "warcrytypes1"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "warcrytypes2"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "warcrytypes3"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "warcrytypes4"
+  }
+ ],
+ "stun_threshold_+%_per_number_of_times_stunned_recently": [
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "stuns1"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "stuns2"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "stuns3"
+  }
+ ],
+ "cast_speed_+%_per_num_unique_spells_cast_in_last_8_seconds": [
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "spelltypes1"
+  },
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "spelltypes2"
+  },
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "spelltypes3"
+  },
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "spelltypes4"
+  },
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "spelltypes5"
+  },
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "spelltypes6"
+  }
+ ],
+ "attack_damage_+%_for_each_different_non_instant_spell_youve_cast_in_the_past_8_seconds": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "slowspelltypes1"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "slowspelltypes2"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "slowspelltypes3"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "slowspelltypes4"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "slowspelltypes5"
+  }
+ ],
+ "spell_damage_+%_for_each_different_non_instant_attack_youve_used_in_the_past_8_seconds": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 1,
+   "condition": "slowattacktypes1"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 1,
+   "condition": "slowattacktypes2"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 1,
+   "condition": "slowattacktypes3"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 1,
+   "condition": "slowattacktypes4"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 1,
+   "condition": "slowattacktypes5"
+  }
+ ],
+ "attack_area_of_effect_+%_per_enemy_ignited_last_8_seconds": [
+  {
+   "stat": "skill.area",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "ignitedenemies1"
+  },
+  {
+   "stat": "skill.area",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "ignitedenemies2"
+  },
+  {
+   "stat": "skill.area",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "ignitedenemies3"
+  },
+  {
+   "stat": "skill.area",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "ignitedenemies4"
+  },
+  {
+   "stat": "skill.area",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "ignitedenemies5"
+  },
+  {
+   "stat": "skill.area",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "ignitedenemies6"
+  },
+  {
+   "stat": "skill.area",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "ignitedenemies7"
+  },
+  {
+   "stat": "skill.area",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "ignitedenemies8"
+  },
+  {
+   "stat": "skill.area",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "ignitedenemies9"
+  },
+  {
+   "stat": "skill.area",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "ignitedenemies10"
+  }
+ ],
+ "skill_effect_duration_+%_per_enemy_frozen_last_8_seconds": [
+  {
+   "stat": "skill.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "frozenenemies1"
+  },
+  {
+   "stat": "skill.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "frozenenemies2"
+  },
+  {
+   "stat": "skill.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "frozenenemies3"
+  },
+  {
+   "stat": "skill.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "frozenenemies4"
+  },
+  {
+   "stat": "skill.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "frozenenemies5"
+  }
+ ],
+ "gain_attack_damage_+%_for_each_your_minion_in_presence_capped": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions1"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions2"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions3"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions4"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions5"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions6"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions7"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions8"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions9"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions10"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions11"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions12"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions13"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions14"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions15"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "minions16"
+  }
+ ],
+ "life_and_mana_regeneration_rate_+%_for_each_minion_in_your_presence_capped": [
+  {
+   "stat": "life.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions1"
+  },
+  {
+   "stat": "mana.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions1"
+  },
+  {
+   "stat": "life.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions2"
+  },
+  {
+   "stat": "mana.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions2"
+  },
+  {
+   "stat": "life.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions3"
+  },
+  {
+   "stat": "mana.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions3"
+  },
+  {
+   "stat": "life.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions4"
+  },
+  {
+   "stat": "mana.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions4"
+  },
+  {
+   "stat": "life.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions5"
+  },
+  {
+   "stat": "mana.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions5"
+  },
+  {
+   "stat": "life.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions6"
+  },
+  {
+   "stat": "mana.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions6"
+  },
+  {
+   "stat": "life.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions7"
+  },
+  {
+   "stat": "mana.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions7"
+  },
+  {
+   "stat": "life.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions8"
+  },
+  {
+   "stat": "mana.regen",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "minions8"
+  }
+ ],
+ "attack_speed_+%_per_enemy_in_close_range": [
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "closeenemies1"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "closeenemies2"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "closeenemies3"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "closeenemies4"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "closeenemies5"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "closeenemies6"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "closeenemies7"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "closeenemies8"
+  }
+ ],
+ "attack_damage_+%_per_active_totem_in_presence": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "totems1"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "totems2"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "totems3"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "totems4"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "attack"
+   ],
+   "scale": 1,
+   "condition": "totems5"
+  }
+ ],
+ "armour_and_evasion_rating_+%_per_active_totem_in_presence": [
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "totems1"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "totems1"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "totems2"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "totems2"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "totems3"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "totems3"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "totems4"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "totems4"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "totems5"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "totems5"
+  }
+ ],
+ "totems_attack_speed_+%_per_active_totem": [
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "totem"
+   ],
+   "scale": 1,
+   "condition": "totems1"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "totem"
+   ],
+   "scale": 1,
+   "condition": "totems2"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "totem"
+   ],
+   "scale": 1,
+   "condition": "totems3"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "totem"
+   ],
+   "scale": 1,
+   "condition": "totems4"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "totem"
+   ],
+   "scale": 1,
+   "condition": "totems5"
+  }
+ ],
+ "totems_spells_cast_speed_+%_per_active_totem": [
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "tags": [
+    "totem"
+   ],
+   "scale": 1,
+   "condition": "totems1"
+  },
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "tags": [
+    "totem"
+   ],
+   "scale": 1,
+   "condition": "totems2"
+  },
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "tags": [
+    "totem"
+   ],
+   "scale": 1,
+   "condition": "totems3"
+  },
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "tags": [
+    "totem"
+   ],
+   "scale": 1,
+   "condition": "totems4"
+  },
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "tags": [
+    "totem"
+   ],
+   "scale": 1,
+   "condition": "totems5"
+  }
+ ],
+ "physical_damage_+%_per_10_rage": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "physical"
+   ],
+   "scale": 0.5,
+   "condition": "rage5"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "physical"
+   ],
+   "scale": 0.5,
+   "condition": "rage10"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "physical"
+   ],
+   "scale": 0.5,
+   "condition": "rage15"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "physical"
+   ],
+   "scale": 0.5,
+   "condition": "rage20"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "physical"
+   ],
+   "scale": 0.5,
+   "condition": "rage25"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "physical"
+   ],
+   "scale": 0.5,
+   "condition": "rage30"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "physical"
+   ],
+   "scale": 0.5,
+   "condition": "rage35"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "physical"
+   ],
+   "scale": 0.5,
+   "condition": "rage40"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "physical"
+   ],
+   "scale": 0.5,
+   "condition": "rage45"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "physical"
+   ],
+   "scale": 0.5,
+   "condition": "rage50"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "physical"
+   ],
+   "scale": 0.5,
+   "condition": "rage55"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "physical"
+   ],
+   "scale": 0.5,
+   "condition": "rage60"
+  }
+ ],
+ "armour_+%_per_rage": [
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage5"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage10"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage15"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage20"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage25"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage30"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage35"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage40"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage45"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage50"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage55"
+  },
+  {
+   "stat": "armour",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage60"
+  }
+ ],
+ "evasion_rating_+%_per_rage": [
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage5"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage10"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage15"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage20"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage25"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage30"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage35"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage40"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage45"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage50"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage55"
+  },
+  {
+   "stat": "evasion",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage60"
+  }
+ ],
+ "fire_damage_+%_per_rage": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 5,
+   "condition": "rage5"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 5,
+   "condition": "rage10"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 5,
+   "condition": "rage15"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 5,
+   "condition": "rage20"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 5,
+   "condition": "rage25"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 5,
+   "condition": "rage30"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 5,
+   "condition": "rage35"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 5,
+   "condition": "rage40"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 5,
+   "condition": "rage45"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 5,
+   "condition": "rage50"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 5,
+   "condition": "rage55"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "fire"
+   ],
+   "scale": 5,
+   "condition": "rage60"
+  }
+ ],
+ "spell_damage_+%_per_rage": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 5,
+   "condition": "rage5"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 5,
+   "condition": "rage10"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 5,
+   "condition": "rage15"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 5,
+   "condition": "rage20"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 5,
+   "condition": "rage25"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 5,
+   "condition": "rage30"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 5,
+   "condition": "rage35"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 5,
+   "condition": "rage40"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 5,
+   "condition": "rage45"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 5,
+   "condition": "rage50"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 5,
+   "condition": "rage55"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ],
+   "scale": 5,
+   "condition": "rage60"
+  }
+ ],
+ "stun_threshold_+%_per_rage": [
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage5"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage10"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage15"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage20"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage25"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage30"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage35"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage40"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage45"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage50"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage55"
+  },
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "scale": 5,
+   "condition": "rage60"
+  }
+ ],
+ "minion_damage_+%_per_rage": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 5,
+   "condition": "rage5"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 5,
+   "condition": "rage10"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 5,
+   "condition": "rage15"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 5,
+   "condition": "rage20"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 5,
+   "condition": "rage25"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 5,
+   "condition": "rage30"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 5,
+   "condition": "rage35"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 5,
+   "condition": "rage40"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 5,
+   "condition": "rage45"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 5,
+   "condition": "rage50"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 5,
+   "condition": "rage55"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 5,
+   "condition": "rage60"
+  }
+ ],
+ "minion_attack_speed_+%_per_five_rage": [
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 1,
+   "condition": "rage5"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 1,
+   "condition": "rage10"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 1,
+   "condition": "rage15"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 1,
+   "condition": "rage20"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 1,
+   "condition": "rage25"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 1,
+   "condition": "rage30"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 1,
+   "condition": "rage35"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 1,
+   "condition": "rage40"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 1,
+   "condition": "rage45"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 1,
+   "condition": "rage50"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 1,
+   "condition": "rage55"
+  },
+  {
+   "stat": "attack.speed",
+   "type": "INCREASED",
+   "tags": [
+    "minion"
+   ],
+   "scale": 1,
+   "condition": "rage60"
+  }
+ ],
+ "damage_+%_per_enemy_elemental_ailment": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "vs_eleail1"
+   ]
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "vs_eleail2"
+   ]
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "vs_eleail3"
+   ]
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "vs_eleail4"
+   ]
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "vs_eleail5"
+   ]
+  }
+ ],
+ "armour_break_taken_+%": [
+  {
+   "stat": "armour.break_taken",
+   "type": "INCREASED",
+   "tags": []
+  }
+ ],
+ "spells_impale_on_hit_%_chance": [
+  {
+   "stat": "impale.spell_chance",
+   "type": "FLAT",
+   "tags": [
+    "spell"
+   ]
+  }
+ ],
+ "spell_impale_magnitude_+%": [
+  {
+   "stat": "impale.magnitude",
+   "type": "INCREASED",
+   "tags": [
+    "spell"
+   ]
+  }
+ ],
+ "melee_splash": [
+  {
+   "stat": "skill.melee_splash",
+   "type": "FLAT",
+   "tags": [
+    "strike"
+   ],
+   "value": 60
+  }
+ ],
+ "your_mace_strike_melee_splash_chance_%": [
+  {
+   "stat": "skill.melee_splash_chance",
+   "type": "FLAT",
+   "tags": [
+    "strike",
+    "mace"
+   ]
+  }
+ ],
+ "explode_burning_enemies_for_10%_life_as_fire_on_kill_chance_%": [
+  {
+   "stat": "kill.burning_explode_chance",
+   "type": "FLAT",
+   "tags": []
+  }
+ ],
+ "while_curse_is_50%_expired_curse_effect_+%": [
+  {
+   "stat": "curse.late_magnitude",
+   "type": "INCREASED",
+   "tags": []
+  }
+ ],
+ "fully_broken_armour_and_sundered_armour_you_inflict_also_applies_to_fire_damage": [
+  {
+   "stat": "damage",
+   "type": "MORE",
+   "tags": [
+    "fire"
+   ],
+   "value": 0.2,
+   "condition": "vs_brokenarmour"
+  }
+ ],
+ "fully_broken_armour_and_sundered_armour_you_inflict_also_applies_to_cold_and_lightning_damage": [
+  {
+   "stat": "damage",
+   "type": "MORE",
+   "tags": [
+    "cold"
+   ],
+   "value": 0.2,
+   "condition": "vs_brokenarmour"
+  },
+  {
+   "stat": "damage",
+   "type": "MORE",
+   "tags": [
+    "lightning"
+   ],
+   "value": 0.2,
+   "condition": "vs_brokenarmour"
+  }
+ ],
+ "warcries_have_minimum_10_power": [
+  {
+   "stat": "warcry.min_power",
+   "type": "FLAT",
+   "tags": [],
+   "value": 10
+  }
+ ],
+ "warcries_debilitate_enemies_for_1_second": [
+  {
+   "stat": "warcry.debilitate",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  }
+ ],
+ "gain_accuracy_rating_equal_to_strength": [
+  {
+   "stat": "accuracy.from_str",
+   "type": "FLAT",
+   "tags": [],
+   "value": 100
+  }
+ ],
+ "minions_are_gigantic": [
+  {
+   "stat": "life.max",
+   "type": "MORE",
+   "tags": [
+    "minion"
+   ],
+   "value": 0.2
+  },
+  {
+   "stat": "damage",
+   "type": "MORE",
+   "tags": [
+    "minion"
+   ],
+   "value": 0.2
+  }
+ ],
+ "ascendancy_gemling_charge_generator_buff_display": [
+  {
+   "stat": "charge.generator_seconds",
+   "type": "FLAT",
+   "tags": [],
+   "value": 5
+  }
+ ],
+ "ignore_armour_movement_penalties": [
+  {
+   "stat": "flag.ignore_armour_move_penalty",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  }
+ ],
+ "keystone_glancing_blows": [
+  {
+   "stat": "flag.glancing_blows",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  }
+ ],
+ "keystone_oasis": [
+  {
+   "stat": "flag.oasis",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  },
+  {
+   "stat": "flask.life_recovery",
+   "type": "MORE",
+   "tags": [],
+   "value": 0.3
+  },
+  {
+   "stat": "flask.mana_recovery",
+   "type": "MORE",
+   "tags": [],
+   "value": 0.3
+  }
+ ],
+ "keystone_giants_blood": [
+  {
+   "stat": "flag.giants_blood",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  }
+ ],
+ "keystone_conduit": [
+  {
+   "stat": "flag.conduit",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  }
+ ],
+ "keystone_heartstopper": [
+  {
+   "stat": "flag.heartstopper",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  }
+ ],
+ "minions_get_amulet_stats_instead_of_you": [
+  {
+   "stat": "flag.necromantic_talisman",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  }
+ ],
+ "keystone_elemental_equilibrium": [
+  {
+   "stat": "flag.elemental_equilibrium",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  }
+ ],
+ "keystone_hex_master": [
+  {
+   "stat": "curse.limit",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  },
+  {
+   "stat": "curse.delay",
+   "type": "MORE",
+   "tags": [],
+   "value": 1.0
+  }
+ ],
+ "keystone_alternate_es_recovery": [
+  {
+   "stat": "flag.scarred_faith",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  },
+  {
+   "stat": "es.recoup_prevented_per_power",
+   "type": "FLAT",
+   "tags": [],
+   "value": 5
+  }
+ ],
+ "keystone_lord_of_the_wilds": [
+  {
+   "stat": "flag.lord_of_the_wilds",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  },
+  {
+   "stat": "spirit.max",
+   "type": "MORE",
+   "tags": [],
+   "value": -0.5
+  },
+  {
+   "stat": "aura.reservation",
+   "type": "MORE",
+   "tags": [],
+   "value": 1.0
+  },
+  {
+   "stat": "aura.reservation",
+   "type": "MORE",
+   "tags": [
+    "minion"
+   ],
+   "value": -0.5
+  }
+ ],
+ "keystone_hollow_palm_technique": [
+  {
+   "stat": "flag.hollow_palm",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  }
+ ],
+ "keystone_auto_invocation": [
+  {
+   "stat": "flag.ritual_cadence",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  }
+ ],
+ "keystone_druidic_rage": [
+  {
+   "stat": "flag.primal_hunger",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  },
+  {
+   "stat": "rage.max",
+   "type": "MORE",
+   "tags": [],
+   "value": 1.0
+  }
+ ],
+ "keystone_2_companions": [
+  {
+   "stat": "aura.reservation",
+   "type": "MORE",
+   "tags": [],
+   "value": 0.25
+  },
+  {
+   "stat": "aura.reservation",
+   "type": "MORE",
+   "tags": [
+    "companion"
+   ],
+   "value": -0.384615
+  },
+  {
+   "stat": "skill.minions",
+   "type": "FLAT",
+   "tags": [
+    "companion"
+   ],
+   "value": 1
+  }
+ ],
+ "keystone_wildsurge_incantation": [
+  {
+   "stat": "damage",
+   "type": "MORE",
+   "tags": [
+    "spell",
+    "storm"
+   ],
+   "value": 0.5
+  },
+  {
+   "stat": "damage",
+   "type": "MORE",
+   "tags": [
+    "spell",
+    "plant"
+   ],
+   "value": 0.5
+  },
+  {
+   "stat": "skill.cost",
+   "type": "MORE",
+   "tags": [
+    "storm"
+   ],
+   "value": -0.5
+  },
+  {
+   "stat": "skill.cost",
+   "type": "MORE",
+   "tags": [
+    "plant"
+   ],
+   "value": -0.5
+  },
+  {
+   "stat": "skill.duration",
+   "type": "MORE",
+   "tags": [
+    "storm"
+   ],
+   "value": -0.75
+  },
+  {
+   "stat": "skill.duration",
+   "type": "MORE",
+   "tags": [
+    "plant"
+   ],
+   "value": -0.75
+  }
+ ],
+ "skill_additional_fissure_chance_%": [
+  {
+   "stat": "skill.additional_fissure_chance",
+   "type": "FLAT",
+   "tags": [
+    "fissure"
+   ]
+  }
+ ],
+ "enemies_you_curse_have_15%_hinder": [
+  {
+   "stat": "curse.hinder",
+   "type": "FLAT",
+   "value": 15
+  }
+ ],
+ "offering_life_+%": [
+  {
+   "stat": "skill.duration",
+   "type": "INCREASED",
+   "scale": 0.5,
+   "tags": [
+    "offering"
+   ]
+  }
+ ],
+ "number_of_additional_banners_allowed": [
+  {
+   "stat": "skill.duration",
+   "type": "INCREASED",
+   "scale": 25,
+   "tags": [
+    "banner"
+   ]
+  }
+ ],
+ "banner_buff_lingers_for_X_seconds_after_leaving_area": [
+  {
+   "stat": "skill.duration",
+   "type": "INCREASED",
+   "scale": 12.5,
+   "tags": [
+    "banner"
+   ]
+  }
+ ],
+ "allies_in_presence_glory_generation_+%": [
+  {
+   "stat": "glory.gain",
+   "type": "INCREASED",
+   "scale": 0.5
+  }
+ ],
+ "culling_strike_vs_beasts_while_in_presence_of_beast_companion": [
+  {
+   "stat": "flag.culling",
+   "type": "FLAT",
+   "value": 1,
+   "tags": [
+    "vs_beast"
+   ],
+   "condition": "companion"
+  }
+ ],
+ "x%_of_damage_taken_while_channelling_recouped_as_life": [
+  {
+   "stat": "life.recoup",
+   "type": "FLAT",
+   "condition": "channelling"
+  }
+ ],
+ "base_bleeding_magnitude_+%_on_self": [
+  {
+   "stat": "ailment.self_duration.bleed",
+   "type": "INCREASED"
+  }
+ ],
+ "base_chance_to_poison_on_hit_%_vs_non_poisoned_enemies": [
+  {
+   "stat": "poison.chance",
+   "type": "FLAT",
+   "scale": 0.5
+  }
+ ],
+ "life_regeneration_rate_+%_while_ignited": [
+  {
+   "stat": "life.regen",
+   "type": "INCREASED",
+   "condition": "ignited"
+  }
+ ],
+ "allies_in_presence_life_regeneration_rate_per_minute_equal_to_your_maximum_life_%": [
+  {
+   "stat": "life.regen_percent",
+   "type": "FLAT",
+   "scale": 0.016666666666666666,
+   "tags": [
+    "minion"
+   ]
+  }
+ ],
+ "physical_bow_damage_+%": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "tags": [
+    "physical",
+    "bow"
+   ]
+  }
+ ],
+ "damage_penetrates_x%_of_elemental_resistances_per_glory_skill_used_in_last_6_seconds": [
+  {
+   "stat": "penetration",
+   "type": "FLAT",
+   "scale": 0.25,
+   "tags": [
+    "fire"
+   ]
+  },
+  {
+   "stat": "penetration",
+   "type": "FLAT",
+   "scale": 0.25,
+   "tags": [
+    "cold"
+   ]
+  },
+  {
+   "stat": "penetration",
+   "type": "FLAT",
+   "scale": 0.25,
+   "tags": [
+    "lightning"
+   ]
+  }
+ ],
+ "skill_effect_duration_+%_when_using_shapeshift_skills": [
+  {
+   "stat": "skill.duration",
+   "type": "INCREASED",
+   "tags": [
+    "shapeshift"
+   ]
+  }
+ ],
+ "base_spirit_reservation_efficiency_+%": [
+  {
+   "stat": "aura.reservation",
+   "type": "INCREASED",
+   "scale": -1
+  }
+ ],
+ "non_damaging_ailment_effect_+%_on_self": [
+  {
+   "stat": "chill.effect_on_self",
+   "type": "INCREASED"
+  },
+  {
+   "stat": "shock.effect_on_self",
+   "type": "INCREASED"
+  }
+ ],
+ "rage_loss_delay_recovery_rate_+%": [
+  {
+   "stat": "rage.loss_delay",
+   "type": "FLAT",
+   "value": -1333
+  }
+ ],
+ "chance_to_avoid_death_%": [
+  {
+   "stat": "death.avoid_chance",
+   "type": "FLAT"
+  }
+ ],
+ "base_armour_%_applies_to_chaos_damage": [
+  {
+   "stat": "asc.chaos_armour",
+   "type": "FLAT"
+  }
+ ],
+ "minion_non_skill_base_elemental_damage_%_to_gain_as_chaos": [
+  {
+   "stat": "damage.extra.chaos",
+   "type": "FLAT",
+   "tags": [
+    "minion",
+    "elemental"
+   ]
+  }
+ ],
+ "gain_physical_thorns_damage_equal_to_x%_of_maximum_life_while_shapeshifted": [
+  {
+   "stat": "thorns.life_percent",
+   "type": "FLAT",
+   "condition": "shapeshifted"
+  }
+ ],
+ "non_skill_base_physical_damage_%_to_gain_as_lightning": [
+  {
+   "stat": "damage.gain.lightning",
+   "type": "FLAT"
+  }
+ ],
+ "minion_commanded_skill_damage_+%_per_different_persistent_minion_in_presence": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 2,
+   "tags": [
+    "minion"
+   ]
+  }
+ ],
+ "reapply_enemy_shock_on_consuming_enemy_shock_chance_%": [
+  {
+   "stat": "shock.reapply_on_consume",
+   "type": "FLAT",
+   "tags": []
+  }
+ ],
+ "arrow_critical_strike_chance_+%_max_as_distance_travelled_increases": [
+  {
+   "stat": "crit.arrow_distance",
+   "type": "INCREASED",
+   "tags": []
+  }
+ ],
+ "cascadable_spells_final_echo_also_cascades_to_sides": [
+  {
+   "stat": "flag.final_echo_cascade",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  }
+ ],
+ "enemies_you_curse_cannot_recharge_energy_shield": [
+  {
+   "stat": "flag.curse_no_es_recharge",
+   "type": "FLAT",
+   "tags": [],
+   "value": 1
+  }
+ ],
+ "damage_with_hits_is_lucky_vs_enemies_on_low_life": [
+  {
+   "stat": "damage.lucky",
+   "type": "FLAT",
+   "value": 100,
+   "condition": "vs_lowlife"
+  }
+ ],
+ "damage_with_hits_is_lucky_vs_heavy_stunned_enemies": [
+  {
+   "stat": "damage.lucky",
+   "type": "FLAT",
+   "value": 100,
+   "condition": "vs_heavystunned"
+  }
+ ],
+ "cast_speed_+%_per_spell_echoed_recently_up_to_30%": [
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "echoes1"
+  },
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "echoes2"
+  },
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "echoes3"
+  },
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "echoes4"
+  },
+  {
+   "stat": "cast.speed",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "echoes5"
+  }
+ ],
+ "damage_+%_per_active_curse_on_self": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "selfcurses1"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "selfcurses2"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "selfcurses3"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "selfcurses4"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "selfcurses5"
+  }
+ ],
+ "crossbow_damage_+%_per_ammo_type_fired_in_past_10_seconds": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "ammotypes1",
+   "tags": [
+    "crossbow"
+   ]
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "ammotypes2",
+   "tags": [
+    "crossbow"
+   ]
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "ammotypes3",
+   "tags": [
+    "crossbow"
+   ]
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "ammotypes4",
+   "tags": [
+    "crossbow"
+   ]
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "ammotypes5",
+   "tags": [
+    "crossbow"
+   ]
+  }
+ ],
+ "non_skill_base_all_damage_%_to_gain_as_fire_per_different_grenade_type_fired_in_past_8_seconds": [
+  {
+   "stat": "damage.extra.fire",
+   "type": "FLAT",
+   "scale": 1,
+   "condition": "grenadetypes1"
+  },
+  {
+   "stat": "damage.extra.fire",
+   "type": "FLAT",
+   "scale": 1,
+   "condition": "grenadetypes2"
+  },
+  {
+   "stat": "damage.extra.fire",
+   "type": "FLAT",
+   "scale": 1,
+   "condition": "grenadetypes3"
+  },
+  {
+   "stat": "damage.extra.fire",
+   "type": "FLAT",
+   "scale": 1,
+   "condition": "grenadetypes4"
+  },
+  {
+   "stat": "damage.extra.fire",
+   "type": "FLAT",
+   "scale": 1,
+   "condition": "grenadetypes5"
+  }
+ ],
+ "poison_duration_+%_per_poison_applied_recently": [
+  {
+   "stat": "poison.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "poisons1"
+  },
+  {
+   "stat": "poison.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "poisons2"
+  },
+  {
+   "stat": "poison.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "poisons3"
+  },
+  {
+   "stat": "poison.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "poisons4"
+  },
+  {
+   "stat": "poison.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "poisons5"
+  },
+  {
+   "stat": "poison.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "poisons6"
+  },
+  {
+   "stat": "poison.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "poisons7"
+  },
+  {
+   "stat": "poison.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "poisons8"
+  },
+  {
+   "stat": "poison.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "poisons9"
+  },
+  {
+   "stat": "poison.duration",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "poisons10"
+  }
+ ],
+ "damage_+%_per_recently_triggered_hazard_up_to_50%": [
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hazards1"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hazards2"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hazards3"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hazards4"
+  },
+  {
+   "stat": "damage",
+   "type": "INCREASED",
+   "scale": 1,
+   "condition": "hazards5"
+  }
+ ],
+ "maximum_elemental_resistance_+%_of_each_elemental_damage_type_youve_been_hit_with_recently": [
+  {
+   "stat": "resist.max.fire",
+   "type": "FLAT",
+   "scale": 1,
+   "condition": "hitbyfire"
+  },
+  {
+   "stat": "resist.max.cold",
+   "type": "FLAT",
+   "scale": 1,
+   "condition": "hitbycold"
+  },
+  {
+   "stat": "resist.max.lightning",
+   "type": "FLAT",
+   "scale": 1,
+   "condition": "hitbylightning"
+  }
+ ],
+ "allies_in_presence_regenerate_X_rage_per_minute_if_you_gained_rage_recently": [
+  {
+   "stat": "rage.ally_regen",
+   "type": "FLAT",
+   "scale": 0.016666666666666666
+  }
+ ],
+ "defend_with_%_armour_against_critical_strikes": [
+  {
+   "stat": "armour.defend",
+   "type": "FLAT",
+   "value": 100,
+   "tags": [
+    "crit_taken"
+   ]
+  }
+ ],
+ "defend_with_%_armour_against_ranged_attacks": [
+  {
+   "stat": "armour.defend",
+   "type": "FLAT",
+   "value": 20,
+   "tags": [
+    "projectile",
+    "attack"
+   ]
+  }
+ ],
+ "defend_with_%_of_armour_while_not_on_low_energy_shield": [
+  {
+   "stat": "armour.defend",
+   "type": "FLAT",
+   "value": 20,
+   "condition": "nolowes"
+  }
+ ],
+ "defend_with_%_armour_against_hits_from_distance_greater_than_6m": [
+  {
+   "stat": "armour.defend",
+   "type": "FLAT",
+   "value": 50,
+   "tags": [
+    "hit_from_far"
+   ]
+  }
+ ],
+ "notable_knockback_distance_+%_final_for_blocked_hits": [
+  {
+   "stat": "stun.threshold",
+   "type": "INCREASED",
+   "tags": [],
+   "value": 0.2,
+   "condition": "block"
+  }
+ ],
+ "light_radius_+%": [
+  {
+   "stat": "accuracy.range_penalty",
+   "type": "INCREASED",
+   "tags": [],
+   "scale": -0.5
+  }
+ ],
+ "passive_notable_kaomsblessing_fire_spells_ancestral_boosted_when_you_warcry": [
+  {
+   "stat": "flag.warcry_fire_spell_ancestral",
+   "type": "FLAT",
+   "value": 1
+  }
+ ],
+ "chaos_damage_over_time_+%_per_volatility": [
+  {
+   "stat": "volatility.chaos_dot_per",
+   "type": "FLAT"
+  }
+ ],
+ "num_additional_skill_slots": [
+  {
+   "stat": "spirit.max",
+   "type": "FLAT",
+   "value": 20
+  }
+ ],
+ "revive_persistent_minion_%_chance_when_you_use_a_command_skill": [
+  {
+   "stat": "command.revive_minion_chance",
+   "type": "FLAT"
+  }
+ ],
+ "grant_elemental_archon_to_minions_for_x_ms_when_they_revive": [
+  {
+   "stat": "minion.revive_elemental_archon",
+   "type": "FLAT",
+   "scale": 0.001
+  }
+ ],
+ "inflict_blind_on_enemies_within_x_meters_while_shield_is_raised": [
+  {
+   "stat": "shield.blind_range",
+   "type": "FLAT"
+  }
+ ],
+ "raise_shield_skill_inflicts_parry_for_duration_ms": [
+  {
+   "stat": "shield.raise_parried",
+   "type": "FLAT",
+   "scale": 0.001
+  }
+ ],
+ "enemies_in_chilled_ground_take_+%_fire_damage": [
+  {
+   "stat": "ground.chilled_fire_taken",
+   "type": "FLAT"
+  }
+ ],
+ "enemies_in_ignited_ground_take_+%_cold_damage": [
+  {
+   "stat": "ground.ignited_cold_taken",
+   "type": "FLAT"
+  }
+ ],
+ "charm_effect_+%_per_empty_charm_slot": [
+  {
+   "stat": "charm.effect_per_empty_slot",
+   "type": "FLAT"
+  }
+ ]
+}

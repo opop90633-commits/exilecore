@@ -1,50 +1,56 @@
-# 異常狀態（機制照 PoE2）：點燃、冰緩、凍結、感電，加上流血、中毒、暈眩、電擊。改完在遊戲內 /ec reload。
+# 異常狀態（機制照 PoE2 0.5）：點燃、冰緩、凍結、感電，加上流血、中毒、暈眩、電擊、釘地。改完在遊戲內 /ec reload。
 #
-# 異常門檻：怪物 = 最大生命 × threshold.monster（依稀有度）；玩家 = 最大生命 ＋ 最大能量護盾。
-# 打中時看這一擊造成的各元素傷害（抗性減免後）佔目標異常門檻的比例：
-#   點燃（火焰）：機率 = 比例 × chance_per_threshold ＋ 點燃機率；每秒造成那一擊火焰傷害的 damage_per_second%，
-#                 持續 duration 秒。同時只有傷害最高的那個在燒，它結束後下一個接著燒。燒死的怪物算點燃的玩家殺的。
-#   冰緩（冰冷）：冰冷傷害一定冰緩；效果 = 50% × 比例^0.4，最多 max%，小於 min% 不算。只有最強的冰緩有效。
-#                 怪物移動變慢；玩家移動、攻擊、施法都變慢。
-#   凍結（冰冷）：冰冷傷害累積凍結值 = 比例 × buildup%，累積到 100% 凍結 duration 秒：不能動、不能攻擊、不能施放。
-#                 decay_delay 秒沒再被冰冷傷害打到，每秒消退 decay_per_second%。凍結中不累積。
-#                 傳奇怪（區域 Boss）的累積只有 unique.buildup%，凍結結束後 unique.immunity 秒不能再累積；
-#                 玩家凍結結束後 player_immunity 秒不能再累積。
+# 2026-10-26 照 PoE2 0.5 全部重算（Path of Building 0.5 的資料與公式）；這次之前：門檻 = 最大生命 × 稀有度倍率、玩家 = 生命 ＋ 護盾，
+#   傷害用抗性減免後的，凍結／暈眩／電擊有傳奇怪打折與免疫時間。
+# 門檻（兩種）：
+#   異常門檻（點燃、冰緩、感電）：怪物 = monsters.yml 的 ailment_threshold 等級表（不看稀有度、不看生命）；
+#                 玩家 = 最大生命 × threshold.player_life%（不含能量護盾）。防禦方「增加元素異常門檻」再乘上去。
+#   暈眩門檻（重暈、凍結、電擊、釘地）：怪物 = monsters.yml 的 poise 等級表 × 稀有度 poise 倍率（魔法 1.26、稀有 2.25、傳奇 6）；
+#                 玩家 = 同上的異常門檻（生命的 50%）。凍結、電擊再乘「增加元素異常門檻」，重暈再加「暈眩門檻」。
+# 打中時看這一擊<目標減免前>的各種傷害佔門檻的比例（點燃、中毒每秒的傷害再照目標的火焰／混沌抗性算；流血不吃護甲）：
+#   點燃（火焰）：每一擊給目標一層「易燃」= 比例 × chance_per_threshold ＋ 點燃機率（再乘增加、更多），易燃疊加，
+#                 每層在怪物身上 flammability_duration.monster 秒（玩家 player 秒）；這一擊點燃的機率 = 身上所有易燃加起來（最多 100%）。
+#                 每秒造成那一擊火焰傷害的 damage_per_second%，持續 duration 秒。同時只有傷害最高的那個在燒。燒死的怪物算點燃的玩家殺的。
+#   冰緩（冰冷）：冰冷傷害一定冰緩；效果 = effect_per_threshold × 比例，最多 max%，小於 min% 不算。只有最強的冰緩有效。
+#                 怪物移動變慢（魔法、稀有、傳奇身上的緩速效果更少，最慢降到原本速度的 25%）；玩家移動、攻擊、施法都變慢。
+#   凍結（冰冷）、電擊（閃電，要有「電擊機率」的來源；2026-10-26 照 PoE2 不先擲機率，不到 100% 的機率乘在累積量上）、
+#                 重暈（所有傷害）、釘地（投射物攻擊，要有「定身」的來源）：累積條。
+#                 每造成暈眩門檻 100% 的傷害累積 buildup%（打玩家 player_buildup%），累積到 100% 觸發 duration 秒。
+#                 最後一次累積後 decay_delay 秒開始每秒消退 decay_per_second%（玩家看 player_decay）。
+#                 觸發後暈眩門檻暫時提高 after.bonus%，after.seconds 秒內直線降回來（玩家看 player_after）——不容易被連續控住。
 #   感電（閃電）：機率 = 比例 × chance_per_threshold ＋ 感電機率；目標受到的所有傷害（含點燃）增加 effect%，最多 max_effect%。
 #                 只有最強的感電有效。
-#   流血（物理，只有攻擊）：機率 = 比例 × chance_per_threshold ＋ 流血機率（預設只靠「流血機率」：天賦、詞綴、輔助、怪物詞綴）；
-#                 每秒造成那一擊物理傷害的 damage_per_second%，目標移動時乘 moving_multiplier（PoE2：流血時別動），持續 duration 秒。
-#                 同時只有傷害最高的那個在流。
-#   中毒（物理＋混沌，攻擊與法術都行）：機率 = 比例 × chance_per_threshold ＋ 中毒機率；每秒造成那一擊物理＋混沌傷害的
-#                 damage_per_second%，持續 duration 秒；可以疊加，最多 max_stacks 個一起算（超過丟掉最弱的）。混沌傷害，不吃抗性。
-#   暈眩（任何傷害，PoE2 的重暈）：跟凍結一樣是累積條：每造成門檻 100% 的傷害累積 buildup%（物理算 100%，元素與混沌只算
-#                 elemental_multiplier），累積到 100% 暈眩 duration 秒：不能動、不能攻擊、不能施放。decay_delay 秒沒再被打到開始消退。
-#                 防禦方「增加暈眩門檻」會讓條變長（「增加元素異常門檻」不影響暈眩）；玩家與傳奇怪結束後一段時間免疫。
-#   電擊（閃電）：要有「電擊機率」的來源（輔助、詞綴、怪物詞綴）才會累積：每一擊照機率決定要不要累積，
-#                 累積 = 比例 × buildup%；滿了電擊 duration 秒（跟暈眩一樣動不了）。感電照樣另外算。
+#   流血（物理，只有攻擊）：機率 = 流血機率（天賦、詞綴、輔助、怪物詞綴）；每秒造成那一擊物理傷害的 damage_per_second%，
+#                 目標移動時乘 moving_multiplier（PoE2：流血時別動），持續 duration 秒。同時只有傷害最高的那個在流。不先扣能量護盾。
+#   中毒（物理＋混沌，攻擊與法術都行）：機率 = 中毒機率；每秒造成那一擊物理＋混沌傷害的 damage_per_second%，持續 duration 秒；
+#                 同一個人的中毒同時只有 max_stacks 層生效（最強的；輔助、天賦的「中毒層數 +x」另外加）。不先扣能量護盾。
 # 技能、輔助寶石、裝備詞綴、怪物詞綴都可以加成，屬性名稱見 data/README.md。
 
 threshold:
-  # 異常門檻 = 最大生命 × 這個倍率（Boss 的生命很高，門檻打五折，異常才有機會生效）
-  monster: { normal: 1.0, magic: 1.0, rare: 1.0, unique: 0.5 }
+  # 2026-10-26 照 PoE2：怪物的門檻改用 monsters.yml 的等級表，這裡的倍率預設全部 1（這次之前 × 最大生命，傳奇 0.5）
+  monster: { normal: 1.0, magic: 1.0, rare: 1.0, unique: 1.0 }
+  player_life: 50            # 2026-10-26 照 PoE2：玩家的異常門檻 = 生命的 50%（這次之前 = 生命 ＋ 能量護盾）
 
 ignite:
-  chance_per_threshold: 25   # 每造成門檻 100% 的火焰傷害 = 25% 機率（PoE2：每 4% 門檻 1%）
+  chance_per_threshold: 20   # 2026-10-26 照 PoE2：每 5% 門檻 1%（這次之前 25）
   damage_per_second: 20      # 每秒造成那一擊火焰傷害的 20%
   duration: 4                # 秒
+  flammability_duration: { monster: 8, player: 4 }   # 2026-10-26 照 PoE2：易燃疊加（這次之前沒有易燃，每一擊各自擲機率）
 
 chill:
+  effect_per_threshold: 100  # 2026-10-26 照 PoE2：效果 = 100 × 比例（直線；這次之前 50% × 比例^0.4）
   max: 50                    # 最多慢 50%
-  min: 5                     # 小於 5% 不算
+  min: 30                    # 2026-10-26 照 PoE2：小於 30% 不算（這次之前 5%）
   duration: { monster: 8, player: 2 }
 
 freeze:
-  buildup: 200               # 打出門檻 50% 的冰冷傷害就累積滿（可以分好幾下）
-  duration: { monster: 4, player: 1.5 }
-  decay_delay: 2
-  decay_per_second: 50
-  player_immunity: 3         # 玩家凍結結束後 3 秒不能再累積（不會被一群怪一直凍住）
-  unique: { buildup: 50, immunity: 6 }
+  buildup: 210               # 2026-10-26 照 PoE2：冰冷傷害 × 2.1 ÷ 暈眩門檻（這次之前 200% 的異常門檻）
+  player_buildup: 200
+  duration: { monster: 4, player: 2 }   # 這次之前玩家 1.5
+  decay_delay: 8             # 這次之前 2 秒、每秒 50%
+  decay_per_second: 5
+  player_decay: { delay: 2, per_second: 50 }
+  after: { bonus: 500, seconds: 14 }    # 2026-10-26 照 PoE2：取代這次之前的傳奇怪累積 50%、凍結後免疫 6 秒（玩家 3 秒）
 
 shock:
   chance_per_threshold: 25
@@ -54,29 +60,47 @@ shock:
 
 bleed:
   chance_per_threshold: 0    # 流血不靠傷害比例，靠「流血機率」（PoE2 的做法）
-  damage_per_second: 15      # 每秒造成那一擊物理傷害的 15%（PoE2：70%／5 秒 ≈ 14%）
-  moving_multiplier: 2.0     # 目標移動時流血傷害 ×2（怪物追你時更痛；玩家流血時站著不動就少痛）
+  damage_per_second: 15      # 每秒造成那一擊物理傷害的 15%（PoE2：BleedingHitDamagePercentPerMinute 900）
+  # 目標移動時流血傷害 ×2（怪物）。2026-10-27 照 PoE2 Character.ot（no_extra_bleeding_damage_while_moving）：玩家移動不會更痛；
+  #   這次之前玩家移動也 ×2。（PoE2 0.5 的「血漬」只給會讀它的技能消耗，我們沒有那種技能，沒做）
+  moving_multiplier: 2.0
   duration: 5                # 秒
 
 poison:
   chance_per_threshold: 0    # 中毒也靠「中毒機率」
-  damage_per_second: 30      # 每秒造成那一擊物理＋混沌傷害的 30%（2026-10 由 20 上調，跟 PoE2 一樣 30%／2 秒 → 每層共 60%）
+  # 2026-10-26 照 PoE2：每秒 20%（PoisonHitDamagePercentPerMinute 1200）；這次之前 30%（舊註解說「跟 PoE2 一樣 30%」是錯的）
+  damage_per_second: 20
   duration: 2                # 秒
-  max_stacks: 12             # 每個來源最多疊幾個（2026-10 由 8 上調；開拓者加倍為 24。PoE2 預設 1 個，這裡預設就能疊）
+  # 2026-10-26 照 PoE2：同一個人的中毒預設只有 1 層生效（最強的；弱的等強的結束再接著毒）；輔助、天賦的 poison.stacks 另外加，
+  #   開拓者加倍。這次之前預設 12 層一起算
+  max_stacks: 1
 
 stun:
-  buildup: 100               # 每造成門檻 100% 的傷害累積 100%（2026-10 PoE2：玩家打出的物理 ×1.5、近戰再 ×1.5，怪物打的物理 ×2、近戰 ×1.33）
-  elemental_multiplier: 0.5  # 元素與混沌傷害的累積只算一半（物理最會暈人，PoE2）
-  duration: { monster: 1.5, player: 0.8 }
-  decay_delay: 1.5
-  decay_per_second: 40
-  player_immunity: 3         # 玩家暈眩結束後 3 秒不能再累積（不會被一群怪連續暈）
-  unique: { buildup: 40, immunity: 8 }
-  player_heavy: false        # 玩家會不會被重暈（PoE2：不會，只會輕暈）
-  # 輕暈（PoE2）：每一擊的機率 ≈ 這一擊（照上面的倍率）÷ 暈眩門檻，低於 min_chance% 算 0；打斷一下（不能動、不能攻擊）
-  light: { min_chance: 15, duration: { monster: 0.3, player: 0.2 } }
+  buildup: 58                # 2026-10-26 照 PoE2：傷害 × 0.58 ÷ 暈眩門檻（玩家打出的物理 ×1.5、近戰再 ×1.5，怪物打的物理 ×2、近戰 ×1.33）；這次之前 100
+  player_buildup: 65
+  elemental_multiplier: 1.0  # 2026-10-26 照 PoE2：元素與混沌傷害全算（這次之前 0.5）
+  duration: { monster: 2, player: 3 }   # 這次之前 1.5／0.8
+  decay_delay: 8             # 2026-10-26 照 PoE2：8 秒沒累積才開始每秒退 5%（這次之前 1.5 秒、每秒 40%）
+  decay_per_second: 5
+  player_decay: { delay: 2, per_second: 50 }
+  after: { bonus: 500, seconds: 16.5 }  # 這次之前傳奇怪累積 40%、重暈後免疫 8 秒（玩家 3 秒）
+  player_after: { bonus: 100, seconds: 10 }
+  # 玩家被一般擊中會不會累積重暈（PoE2：不會，只會輕暈）。2026-10-27 照 PoE2：舉盾（含招架）格擋下來的擊中會累積
+  #   （× player_buildup 65 = HeavyStunDamageScalePlayer 0.65，滿了重暈 duration.player 3 秒，之後 player_after；閃避率同樣能避開累積）；
+  #   這次之前玩家完全不會被重暈
+  player_heavy: false
+  # 輕暈（PoE2）：每一擊的機率 ≈ 這一擊（照上面的倍率）÷ 目標最大生命（2026-10-26 照 PoE2；這次之前 ÷ 暈眩門檻），
+  #   低於 min_chance% 算 0；打斷一下（不能動、不能攻擊）
+  #   2026-10-26 照 PoE2：輕暈 0.5 秒（stun_base_duration_override_ms 500；這次之前怪物 0.3、玩家 0.2）；被釘住時也輕暈一下
+  #   2026-10-27 照 PoE2 Character.ot：玩家 4 秒內每被暈眩一次（輕暈、重暈都算），輕暈門檻更多 50%（程式寫死）
+  light: { min_chance: 15, duration: { monster: 0.5, player: 0.5 } }
   # 蓄勢待暈：暈眩條到這個 % 時怪物名字旁的「暈」變金色；帶「重擊」的技能（碎骨這類）打中就直接重暈
+  #   2026-10-26 照 PoE2：凍結條也有「蓄勢待凍」（同樣的比例；怪物名字旁的「凍」變金色）
   primed: { normal: 40, magic: 50, rare: 60, unique: 70 }
+
+# 2026-10-26 照 PoE2（Path of Building 的 Boss 設定）：Boss 的暈眩門檻（重暈、凍結、電擊、釘地）在稀有度倍率之外再乘：
+# 一般 Boss（地圖、劇情、世界 Boss）×3.13、巔峰與極境 Boss ×9.38。這次之前沒有，Boss 跟同稀有度的怪一樣好控
+boss_poise: { map: 3.13, pinnacle: 9.38 }
 
 # 破甲（2026-10 PoE2）：技能、輔助、詞綴的「破甲 x%」= 擊中時破掉「減免前物理傷害 × x%」的護甲。
 # 對普通怪 ×3、魔法 ×2；扣到 0 = 完全破甲 duration 秒：沒有護甲、物理擊中受到的傷害增加 fully_broken_taken%。
@@ -87,9 +111,19 @@ armour_break:
   fully_broken_taken: 20
 
 electrocute:
-  buildup: 150               # 有電擊機率的閃電傷害：每造成門檻 100% 累積 150%
-  duration: { monster: 3, player: 1.5 }
-  decay_delay: 2
-  decay_per_second: 50
-  player_immunity: 3
-  unique: { buildup: 50, immunity: 8 }
+  buildup: 170               # 2026-10-26 照 PoE2：閃電傷害 × 1.7 ÷ 暈眩門檻（這次之前 150% 的異常門檻）
+  duration: { monster: 5, player: 2 }   # 這次之前 3／1.5
+  decay_delay: 8
+  decay_per_second: 5
+  player_decay: { delay: 2, per_second: 50 }
+  after: { bonus: 500, seconds: 15 }    # 這次之前傳奇怪累積 50%、電擊後免疫 8 秒（玩家 3 秒）
+
+# 釘地（2026-10-26 照 PoE2 Pin；這次之前是「定身」機率：普通與魔法 2 秒、稀有 1.5 秒、傳奇 1 秒，之後 4 秒免疫）：
+# 投射物攻擊帶「定身」（pin.chance）的來源時，物理傷害 × 4.2 ÷ 暈眩門檻累積，滿了釘住 duration 秒（不能移動，照樣能攻擊）
+pin:
+  buildup: 420
+  duration: { monster: 3, player: 2 }
+  decay_delay: 8
+  decay_per_second: 5
+  player_decay: { delay: 2, per_second: 50 }
+  after: { bonus: 500, seconds: 13 }

@@ -31,15 +31,15 @@ import java.util.Optional;
 public final class CharacterPanelMenu extends Menu {
 
     /**
-     * 裝備欄在選單裡的格子，順序對應 PlayerState.JEWELLERY_SLOTS（戒指、戒指、項鍊、腰帶、武器、副手、頭、身、腿、腳）：
+     * 裝備欄在選單裡的格子，順序對應 PlayerState.GEAR_SLOTS（戒指、戒指、項鍊、腰帶、武器、副手、頭、身、腿、腳、第三個戒指）：
      * <pre>
-     *         頭 項鍊
+     *    戒指3 頭 項鍊
      *   武器 戒指 身 戒指 副手
      *         腿 腰帶 腳
      *       護符 護符 護符
      * </pre>
      */
-    private static final int[] JEWELLERY_POSITIONS = {21, 23, 14, 31, 20, 24, 13, 22, 30, 32};
+    private static final int[] JEWELLERY_POSITIONS = {21, 23, 14, 31, 20, 24, 13, 22, 30, 32, 12};
     private static final int SLOT_CHARACTER = 0;
     private static final int SLOT_ATTRIBUTES = 2;
     private static final int SLOT_DEFENCE = 3;
@@ -63,6 +63,12 @@ public final class CharacterPanelMenu extends Menu {
     /** 上次畫的時候屬性表的樣子：變了就重畫。 */
     private int drawnSignature;
     private long lastDrawTick;
+    /** 2026-10-27 效能：上次算 {@link #signature} 時屬性表的版本與結果（版本沒變就不用再把所有修飾器雜湊一次）。 */
+    private long signatureVersion = Long.MIN_VALUE;
+    private int signatureRage = Integer.MIN_VALUE;
+    private int signatureHash;
+    /** 上次整個重畫時算的增益影響（倒數重畫增益那格時沿用：屬性表沒變，影響就一樣，不用再算一張沒有增益的表）。 */
+    private tw.exilecore.character.BuffImpact.Lines drawnImpact;
     private static final int SLOT_CLOSE = 49;
 
     public CharacterPanelMenu(final ExileCore plugin, final Player player) {
@@ -106,6 +112,7 @@ public final class CharacterPanelMenu extends Menu {
         }
         addImpact(offenceLore, impact.offence());
         final List<String> buffs = StatsReport.buffs(plugin, player);
+        drawnImpact = impact;
         drawBuffs(buffs, impact);
         final List<String> minions = StatsReport.minions(plugin, player);
         if (!minions.isEmpty()) {
@@ -139,15 +146,23 @@ public final class CharacterPanelMenu extends Menu {
                 plugin.sponsors() != null && plugin.sponsors().cardActive(player) ? "<green>月卡：可以使用" : "<dark_gray>要有月卡才能使用",
                 "", "<yellow>左鍵：打開"));
 
+        // 2026-10-26 照 PoE2（昇華・展露之指「+1 戒指欄位」）：第三個戒指欄，沒開而且沒裝東西就不顯示
+        final boolean thirdRing = Gear.ringSlotOpen(plugin.players().sheet(player));
         for (int i = 0; i < JEWELLERY_POSITIONS.length; i++) {
-            final ItemSlot slot = PlayerState.JEWELLERY_SLOTS[i];
-            final ItemStack equipped = state.jewellery(i);
+            final ItemSlot slot = PlayerState.GEAR_SLOTS[i];
+            final ItemStack equipped = state.jewellery(PlayerState.gearIndex(i));
+            if (i == PlayerState.RING3 && equipped == null && !thirdRing) {
+                continue;
+            }
             final ItemStack ghost = equipped == null && slot == ItemSlot.OFF_HAND ? twoHandGhost(state) : null;
             if (ghost != null) {
                 set(JEWELLERY_POSITIONS[i], ghost); // 2026-10-17：拿雙手武器時副手欄顯示同一把（只是外觀）
             } else if (equipped == null) {
                 // 2026-10：套了資源包的人看到那一欄的剪影（戒指、項鍊、頭盔…），比較好認
-                set(JEWELLERY_POSITIONS[i], uiIcon(slotShape(slot), emptyIcon(slot), "<gray>" + slot.displayName() + "欄",
+                set(JEWELLERY_POSITIONS[i], i == PlayerState.RING3
+                        ? uiIcon(slotShape(slot), emptyIcon(slot), "<gray>第三個戒指欄", "<dark_gray>點下方自己背包裡的戒指裝上",
+                                "<dark_gray>（前兩格都裝了才會裝到這裡）", "<gray>展露之指：+1 戒指欄位")
+                        : uiIcon(slotShape(slot), emptyIcon(slot), "<gray>" + slot.displayName() + "欄",
                         "<dark_gray>點下方自己背包裡的" + slot.displayName() + "裝上"));
             } else {
                 final ItemStack shown = equipped.clone();
@@ -169,6 +184,7 @@ public final class CharacterPanelMenu extends Menu {
         drawCharms(state);
         set(SLOT_HELP, uiIcon("help", Material.PAPER, "<white>裝備欄",
                 "<gray>武器、副手、防具、戒指 ×2、項鍊、腰帶都裝在這裡",
+                "<gray>（昇華・展露之指「+1 戒指欄位」：頭盔左邊多一格戒指欄）",
                 "<gray>裝上就生效：手上不用拿、身上不用穿",
                 "<gray>快捷列第 9 格、防具欄顯示的是裝在這裡的東西（只是外觀）",
                 "<gray>點下方自己背包裡的裝備就會裝上（原本的換回背包）",
@@ -259,10 +275,18 @@ public final class CharacterPanelMenu extends Menu {
 
     /** 屬性表的樣子（含增益與怒氣）：拿來判斷要不要重畫。 */
     private int signature() {
-        int hash = plugin.players().sheet(player).allModifiers().hashCode();
-        if (plugin.skills() != null) {
-            hash = 31 * hash + plugin.skills().resources().rage(player);
+        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+        final int rage = plugin.skills() != null ? plugin.skills().resources().rage(player) : 0;
+        if (sheet.version() == signatureVersion && rage == signatureRage) {
+            return signatureHash; // 2026-10-27 效能：屬性表沒改過：跟上次一樣
         }
+        int hash = sheet.allModifiers().hashCode();
+        if (plugin.skills() != null) {
+            hash = 31 * hash + rage;
+        }
+        signatureVersion = sheet.version();
+        signatureRage = rage;
+        signatureHash = hash;
         return hash;
     }
 
@@ -290,9 +314,17 @@ public final class CharacterPanelMenu extends Menu {
         }
         final long now = plugin.getServer().getCurrentTick();
         final boolean changed = signature() != drawnSignature;
-        final boolean countdown = now - lastDrawTick >= 20 && !StatsReport.buffs(plugin, player).isEmpty();
-        if (changed || countdown) {
+        if (changed || drawnImpact == null) {
             redraw();
+            return;
+        }
+        // 2026-10-27 效能：只是增益剩幾秒的倒數：只重畫增益那一格（這次之前整個重畫，每秒算一張沒有增益的屬性表）
+        if (now - lastDrawTick >= 20) {
+            final List<String> buffs = StatsReport.buffs(plugin, player);
+            if (!buffs.isEmpty()) {
+                drawBuffs(buffs, drawnImpact);
+                lastDrawTick = now;
+            }
         }
     }
 
@@ -313,7 +345,10 @@ public final class CharacterPanelMenu extends Menu {
             default -> {
                 for (int i = 0; i < JEWELLERY_POSITIONS.length; i++) {
                     if (JEWELLERY_POSITIONS[i] == slot) {
-                        unequip(i);
+                        if (i == PlayerState.RING3 && state3Hidden()) {
+                            return; // 第三個戒指欄沒顯示（那一格是空白）
+                        }
+                        unequip(PlayerState.gearIndex(i));
                         return;
                     }
                 }
@@ -328,6 +363,11 @@ public final class CharacterPanelMenu extends Menu {
                 }
             }
         }
+    }
+
+    /** 第三個戒指欄現在沒畫出來（沒開、也沒裝東西）。 */
+    private boolean state3Hidden() {
+        return plugin.players().get(player).jewellery(PlayerState.RING3_SLOT) == null && !Gear.ringSlotOpen(plugin.players().sheet(player));
     }
 
     private tw.exilecore.flask.CharmService charms() {

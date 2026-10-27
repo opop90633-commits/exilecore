@@ -1,0 +1,68 @@
+# 2026-10-27 照 PoE2 0.5：塗油限定的核心（天賦樹上沒有、只能注入在項鍊上的核心）與它們的注入配方。
+# tools/gen_poe2_tree.py 產生（配方的來源是 tools/poe2_tree/anoint_recipes.json，照 poe2db 各核心頁面），不要手改。
+# 核心的效果在 tree.json 的 anoint（PassiveTree.anointable() 會跟樹上的核心一起列出來，anointOnly = true）。
+# recipe：三種蒸餾情緒，照原作寫的順序（原作的配方有順序：巨著與模範、群集復甦與奇術發動機用的是同樣三種，只差順序）。
+# 情緒的代號照 currencies.yml 現有的寫法（distilled_<情緒>）；強效（Potent）三種是原作 0.5 終局才掉的情緒。
+emotions:
+  distilled_ire: { name: "蒸餾怒火" }
+  distilled_guilt: { name: "蒸餾愧疚" }
+  distilled_greed: { name: "蒸餾貪婪" }
+  distilled_paranoia: { name: "蒸餾妄想" }
+  distilled_envy: { name: "蒸餾嫉妒" }
+  distilled_disgust: { name: "蒸餾厭惡" }
+  distilled_despair: { name: "蒸餾絕望" }
+  distilled_fear: { name: "濃縮蒸餾恐懼" }
+  distilled_suffering: { name: "濃縮蒸餾苦難" }
+  distilled_isolation: { name: "濃縮蒸餾孤立" }
+  distilled_melancholy: { name: "強效蒸餾憂鬱" }
+  distilled_ferocity: { name: "強效蒸餾兇猛" }
+  distilled_contempt: { name: "強效蒸餾輕蔑" }
+notables:
+  p3663:
+    name: "岡姆之祝"
+    recipe: [distilled_ferocity, distilled_fear, distilled_isolation]
+  p10169:
+    name: "無束"
+    recipe: [distilled_contempt, distilled_envy, distilled_despair]
+  p13844:
+    name: "危境增長"
+    recipe: [distilled_melancholy, distilled_suffering, distilled_despair]
+  p17696:
+    name: "增幅血肉"
+    recipe: [distilled_contempt, distilled_suffering, distilled_suffering]
+  p20495:
+    name: "黑暗無序"
+    recipe: [distilled_ferocity, distilled_isolation, distilled_disgust]
+  p20686:
+    name: "模範"
+    recipe: [distilled_ferocity, distilled_isolation, distilled_despair]
+  p21251:
+    name: "群集復甦"
+    recipe: [distilled_melancholy, distilled_isolation, distilled_disgust]
+  p22726:
+    name: "風暴之責"
+    recipe: [distilled_melancholy, distilled_suffering, distilled_suffering]
+  p26214:
+    name: "統御"
+    recipe: [distilled_contempt, distilled_suffering, distilled_isolation]
+  p27704:
+    name: "先祖優雅"
+    recipe: [distilled_melancholy, distilled_envy, distilled_fear]
+  p27779:
+    name: "狂颮之主"
+    recipe: [distilled_contempt, distilled_isolation, distilled_despair]
+  p35046:
+    name: "神幻雪崩"
+    recipe: [distilled_ferocity, distilled_isolation, distilled_suffering]
+  p37846:
+    name: "光明壁壘"
+    recipe: [distilled_contempt, distilled_fear, distilled_despair]
+  p37967:
+    name: "沙漠之蔑"
+    recipe: [distilled_contempt, distilled_fear, distilled_suffering]
+  p39568:
+    name: "巨著"
+    recipe: [distilled_ferocity, distilled_despair, distilled_isolation]
+  p56666:
+    name: "奇術發動機"
+    recipe: [distilled_melancholy, distilled_disgust, distilled_isolation]

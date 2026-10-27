@@ -130,15 +130,107 @@ public final class AilmentService {
             return false;
         }
         final Set<String> context = Set.of(tw.exilecore.stats.Tags.CHAOS);
+        final double faster = tw.exilecore.stats.TreeEffectKeys.ailmentSpeed(sourceSheet, null, context); // 2026-10-26：傷害型異常快 x%
         final double dps = config.poisonDps(baseChaos, sourceSheet.increased(StatKeys.POISON_MAGNITUDE, context),
-                sourceSheet.more(StatKeys.POISON_MAGNITUDE, context));
+                sourceSheet.more(StatKeys.POISON_MAGNITUDE, context)) * faster;
         final double seconds = AilmentConfig.duration(config.poisonDuration(),
-                sourceSheet.increased(StatKeys.POISON_DURATION, context) + sourceSheet.increased(StatKeys.AILMENT_DURATION, context), 0);
+                sourceSheet.increased(StatKeys.POISON_DURATION, context) + sourceSheet.increased(StatKeys.AILMENT_DURATION, context), 0) / faster;
         final long now = now();
-        track(target).state.addPoison(dps, now + ticks(seconds), source.getUniqueId(),
-                config.poisonMaxStacks() * (StatKeys.flag(sourceSheet, StatKeys.FLAG_DOUBLE_POISON) ? 2 : 1));
+        track(target).state.addPoison(dps * resistFactor(defenderSheet, DamageType.CHAOS), now + ticks(seconds), source.getUniqueId(),
+                poisonStacks(sourceSheet, context));
         feedback(target, AilmentType.POISON);
         return true;
+    }
+
+    // ---- 2026-10-26：傳奇的特殊效果用（tw.exilecore.item.unique） ----
+
+    /**
+     * 讓 target 點燃，視同 source 造成 baseFire 點火焰傷害（行灰之履的燃燒地面）：吃 source 的點燃傷害、持續時間加成；
+     * 避免點燃的不會中。回傳有沒有中。
+     */
+    public boolean igniteFrom(final Player source, final LivingEntity target, final double baseFire, final StatSheet sourceSheet) {
+        return igniteFrom(source, target, baseFire, sourceSheet, 0);
+    }
+
+    /**
+     * 2026-10-27 照 PoE2 的點燃地面（Ignited Ground）：站在上面每次對敵人施加易燃（照 baseFire 當成這一下的火焰傷害算，
+     * 跟擊中一樣吃點燃機率的增加），易燃會疊（8 秒）；身上的易燃總和到 50% 才點燃，不擲機率。點燃了回傳 true。
+     */
+    public boolean groundIgnite(final Player source, final LivingEntity target, final double baseFire, final StatSheet sourceSheet) {
+        if (baseFire <= 0 || target == null || !target.isValid() || target.isDead() || target instanceof Player) {
+            return false;
+        }
+        final java.util.Optional<tw.exilecore.monster.MonsterData> data = plugin.monsters() == null ? java.util.Optional.empty()
+                : plugin.monsters().data(target);
+        final StatSheet defenderSheet = data.isPresent() ? plugin.monsters().sheet(target, data.get()) : new StatSheet();
+        final double threshold = AilmentConfig.threshold(baseThreshold(target, data.orElse(null), defenderSheet)
+                        + Math.max(0, defenderSheet.flat(StatKeys.AILMENT_THRESHOLD, Set.of())),
+                defenderSheet.increased(StatKeys.AILMENT_THRESHOLD, Set.of()));
+        final Set<String> context = Set.of(tw.exilecore.stats.Tags.FIRE);
+        final double flammable = config.flammability(baseFire, threshold, sourceSheet.flat(StatKeys.IGNITE_CHANCE, context),
+                sourceSheet.increased(StatKeys.IGNITE_CHANCE, context)) * sourceSheet.more(StatKeys.IGNITE_CHANCE, context);
+        final long now = now();
+        final Tracked entry = track(target);
+        final double total = entry.state.addFlammability(flammable, now + ticks(config.flammabilityDuration(false)), now);
+        return total >= GROUND_FLAMMABILITY && igniteFrom(source, target, baseFire, sourceSheet);
+    }
+
+    /** 2026-10-27 照 PoE2：地面效果的易燃總和到 50% 才點燃（poe2db Ignited Ground）。 */
+    public static final double GROUND_FLAMMABILITY = 50;
+
+    /** 同上，基礎持續時間換成 baseSeconds 秒（0 = 照點燃的預設；2026-10-26 燼使照 PoE2 是 3 秒）。 */
+    public boolean igniteFrom(final Player source, final LivingEntity target, final double baseFire, final StatSheet sourceSheet,
+                              final double baseSeconds) {
+        if (baseFire <= 0 || target == null || !target.isValid() || target.isDead() || target instanceof Player) {
+            return false;
+        }
+        final java.util.Optional<tw.exilecore.monster.MonsterData> data = plugin.monsters() == null ? java.util.Optional.empty()
+                : plugin.monsters().data(target);
+        final StatSheet defenderSheet = data.isPresent() ? plugin.monsters().sheet(target, data.get()) : null;
+        if (defenderSheet != null && avoided(defenderSheet, StatKeys.AVOID_IGNITE, plugin.items().random())) {
+            return false;
+        }
+        final Set<String> context = Set.of(tw.exilecore.stats.Tags.FIRE);
+        final double faster = tw.exilecore.stats.TreeEffectKeys.ailmentSpeed(sourceSheet, tw.exilecore.stats.TreeEffectKeys.IGNITE_SPEED, context); // 2026-10-26
+        final double dps = config.igniteDps(baseFire, sourceSheet.increased(StatKeys.IGNITE_MAGNITUDE, context),
+                sourceSheet.more(StatKeys.IGNITE_MAGNITUDE, context)) * faster;
+        final double seconds = AilmentConfig.duration(baseSeconds > 0 ? baseSeconds : config.igniteDuration(),
+                sourceSheet.increased(StatKeys.IGNITE_DURATION, context) + sourceSheet.increased(StatKeys.AILMENT_DURATION, context), 0)
+                * sourceSheet.more(StatKeys.IGNITE_DURATION, context) / faster; // 2026-10-27：更多的點燃持續時間（熔岩噴射、燃燒射擊）以前沒算到
+        final Tracked entry = track(target);
+        entry.state.addIgnite(dps, now() + ticks(seconds), source.getUniqueId());
+        feedback(target, AilmentType.IGNITE);
+        update(target, entry, now());
+        return true;
+    }
+
+    /** 這個目標身上最強的點燃（沒有回傳 null）。 */
+    public AilmentState.Ignite ignite(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        return entry == null ? null : entry.state.ignite(now());
+    }
+
+    /** 把一個點燃（每秒傷害、到哪個 tick、誰點的）原樣加到 target 身上（點燃擴散）。 */
+    public void copyIgnite(final LivingEntity target, final AilmentState.Ignite ignite) {
+        if (ignite == null || ignite.endTick() <= now() || target instanceof Player || !target.isValid() || target.isDead()) {
+            return;
+        }
+        final Tracked entry = track(target);
+        entry.state.addIgnite(ignite.dps(), ignite.endTick(), ignite.source());
+        feedback(target, AilmentType.IGNITE);
+        update(target, entry, now());
+    }
+
+    /** 冰緩效果（0.3 = 30%；沒有冰緩是 0）。 */
+    public double chillMagnitude(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        return entry == null ? 0 : entry.state.chill(now());
+    }
+
+    /** 加劇 source 在 target 身上造成的流血；回傳加劇了幾條。 */
+    public int aggravateBleeds(final LivingEntity target, final UUID source) {
+        final Tracked entry = tracked.get(target.getUniqueId());
+        return entry == null ? 0 : entry.state.aggravateBleeds(source, now(), config.bleedMovingMultiplier());
     }
 
     // ---- 給其他模組查詢 ----
@@ -167,6 +259,31 @@ public final class AilmentService {
         };
     }
 
+    /** 2026-10-26（護符：受到緩速時）：身上有沒有緩速（冰緩、癱瘓、阻礙、減速地面）。 */
+    public boolean slowed(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        if (entry == null) {
+            return false;
+        }
+        final long now = now();
+        return entry.state.chill(now) > 0 || entry.state.hexSlow(now) > 0;
+    }
+
+    /** 2026-10-26（PoE2 銀護符：速度不受緩速影響）：解掉身上的冰緩、癱瘓、阻礙、減速地面，移動速度馬上還原。 */
+    public void clearSlows(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        if (entry == null) {
+            return;
+        }
+        entry.state.clearSlows();
+        if (entry.state.isEmpty(plugin.getServer().getCurrentTick())) {
+            tracked.remove(entity.getUniqueId());
+            restore(entity, entry);
+        } else {
+            update(entity, entry, now());
+        }
+    }
+
     /** 2026-10-17：是不是重暈中（暈眩條滿了的那種；輕暈、凍結、電擊不算）。 */
     public boolean heavyStunned(final LivingEntity entity) {
         final Tracked entry = tracked.get(entity.getUniqueId());
@@ -177,6 +294,24 @@ public final class AilmentService {
     public int poisonStacks(final LivingEntity entity) {
         final Tracked entry = tracked.get(entity.getUniqueId());
         return entry == null ? 0 : entry.state.poisons(now()).size();
+    }
+
+    /** 2026-10-26：致盲中（天賦樹「對致盲的敵人」）。 */
+    public boolean blinded(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        return entry != null && entry.state.blindUntil() > now();
+    }
+
+    /** 2026-10-26：電擊中（天賦樹「對電擊的敵人」；凍結、暈眩不算）。 */
+    public boolean electrocuted(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        return entry != null && entry.state.electrocute().active(now());
+    }
+
+    /** 2026-10-26：阻礙中（天賦樹「對阻礙的敵人」）。 */
+    public boolean hindered(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        return entry != null && entry.state.hinderUntil() > now();
     }
 
     public boolean isFrozen(final LivingEntity entity) {
@@ -259,23 +394,27 @@ public final class AilmentService {
         final StatSheet attack = skill.effective(attackerSheet);
         // 純化：被輔助的技能不能造成元素異常（點燃、冰緩、凍結、感電）；中毒、流血、暈眩、電擊照常
         final boolean noElemental = StatKeys.flag(attack, StatKeys.FLAG_NO_AILMENTS);
-        // 元素異常門檻（點燃、冰緩、凍結、感電、電擊）；暈眩用沒乘「增加元素異常門檻」的基礎值
+        // 元素異常門檻（點燃、冰緩、感電）；2026-10-26 照 PoE2：怪物用等級表、玩家用生命的 50%
         final double baseThreshold = baseThreshold(defender, defenderMonster, defenderSheet);
-        final double threshold = AilmentConfig.threshold(baseThreshold, defenderSheet.increased(StatKeys.AILMENT_THRESHOLD, Set.of()));
+        // 2026-10-26 照 PoE2 天賦樹：「+x 異常門檻」（等同最大護盾 x% 的那種）加在基礎門檻上
+        final double threshold = AilmentConfig.threshold(baseThreshold + Math.max(0, defenderSheet.flat(StatKeys.AILMENT_THRESHOLD, Set.of())),
+                defenderSheet.increased(StatKeys.AILMENT_THRESHOLD, Set.of()));
         if (threshold <= 0) {
             return;
         }
-        final double taken = takenMultiplier <= 0 ? 1.0 : takenMultiplier;
-        final double fire = result.dealt().get(DamageType.FIRE) / taken / typeTaken.getOrDefault(DamageType.FIRE, 1.0);
-        final double cold = result.dealt().get(DamageType.COLD) / taken / typeTaken.getOrDefault(DamageType.COLD, 1.0);
-        final double lightning = result.dealt().get(DamageType.LIGHTNING) / taken / typeTaken.getOrDefault(DamageType.LIGHTNING, 1.0);
-        final double physical = result.dealt().get(DamageType.PHYSICAL) / taken / typeTaken.getOrDefault(DamageType.PHYSICAL, 1.0);
-        final double chaos = result.dealt().get(DamageType.CHAOS) / taken / typeTaken.getOrDefault(DamageType.CHAOS, 1.0);
+        // 2026-10-26 照 PoE2：暈眩門檻（poise；重暈、凍結、電擊）。凍結、電擊再乘「增加元素異常門檻」
+        final double poise = basePoise(defender, defenderMonster, defenderSheet);
+        final double freezePoise = AilmentConfig.threshold(poise, defenderSheet.increased(StatKeys.AILMENT_THRESHOLD, Set.of()));
+        // 2026-10-26 照 PoE2：異常用目標減免前的傷害（這次之前用抗性、護甲減免後的，再除掉感電之類的倍率）
+        final double fire = result.outgoing().get(DamageType.FIRE);
+        final double cold = result.outgoing().get(DamageType.COLD);
+        final double lightning = result.outgoing().get(DamageType.LIGHTNING);
+        final double physical = result.outgoing().get(DamageType.PHYSICAL);
+        final double chaos = StatKeys.flag(defenderSheet, StatKeys.FLAG_CHAOS_IMMUNE) ? 0 : result.outgoing().get(DamageType.CHAOS);
         if (fire <= 0 && cold <= 0 && lightning <= 0 && physical <= 0 && chaos <= 0) {
             return;
         }
         final boolean playerTarget = defender instanceof Player;
-        final boolean unique = defenderMonster != null && defenderMonster.rarity() == MonsterRarity.UNIQUE;
         final double selfDuration = defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION, Set.of());
         final RandomGenerator random = plugin.items().random();
         final long now = now();
@@ -284,58 +423,112 @@ public final class AilmentService {
 
         // PoE2 昇華：所有傷害都算進點燃／冰緩／感電（燃燒使者、冬之塑造者、風暴塑造者）
         final double allDamage = fire + cold + lightning + physical + chaos;
-        final double igniteBase = noElemental ? 0 : StatKeys.flag(attack, StatKeys.FLAG_ALL_IGNITE) ? allDamage : fire;
-        final double chillBase = noElemental ? 0 : StatKeys.flag(attack, StatKeys.FLAG_ALL_CHILL) ? allDamage : cold;
-        final double shockBase = noElemental ? 0 : StatKeys.flag(attack, StatKeys.FLAG_ALL_SHOCK) ? allDamage : lightning;
+        // 2026-10-26（昇華・紛亂）：混沌傷害輪流也算進凍結（0）、點燃（1）或感電（2）
+        final int unravel = tw.exilecore.ascendancy.AscendancyEffects.unravel(attacker);
+        // 2026-10-27 照 PoE2 血脈輔助：燼蝕（混沌算進點燃）、霆蝕（混沌算進感電）、寂寒（混沌算進凍結）、傲寒（物理算進凍結）、霆爆（不能感電）
+        final boolean chaosIgnites = StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.CHAOS_IGNITES);
+        final boolean chaosShocks = StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.CHAOS_SHOCKS);
+        final double igniteBase = noElemental ? 0 : StatKeys.flag(attack, StatKeys.FLAG_ALL_IGNITE) ? allDamage
+                : fire + (unravel == 1 || chaosIgnites ? chaos : 0);
+        // 2026-10-26（赤紋之戒）：對流血中的敵人／你流血時被打，擊中的所有傷害都算進冰緩
+        final boolean bleedingChill = entry != null && (StatKeys.flag(attack, tw.exilecore.item.unique.UniqueStats.BLEEDING_TARGET_CHILL)
+                || StatKeys.flag(defenderSheet, tw.exilecore.item.unique.UniqueStats.BLEEDING_SELF_CHILL)) && entry.state.bleed(now) != null;
+        final double chillBase = noElemental ? 0 : StatKeys.flag(attack, StatKeys.FLAG_ALL_CHILL) || bleedingChill ? allDamage : cold;
+        final double shockBase = noElemental || StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.LIGHTNING_ELECTROCUTES) ? 0
+                : StatKeys.flag(attack, StatKeys.FLAG_ALL_SHOCK) ? allDamage : lightning + (unravel == 2 || chaosShocks ? chaos : 0);
+        // 2026-10-27 照 PoE2 Chaotic Freeze：對受到持續傷害（混沌減益、中毒）的敵人，混沌傷害也累積凍結；這次之前沒有
+        final double chaoticFreeze = chaos > 0 && unravel != 0 && StatKeys.flag(attack, tw.exilecore.stats.SupportExtraKeys.FLAG_CHAOTIC_FREEZE)
+                && entry != null && (debuffDps(defender) > 0 || !entry.state.poisons(now).isEmpty()) ? chaos : 0;
         if (igniteBase > 0) {
             final Set<String> context = skill.contextFor(DamageType.FIRE);
-            final double chance = config.igniteChance(igniteBase, threshold, attack.flat(StatKeys.IGNITE_CHANCE, context),
+            // 2026-10-26 照 PoE2：這一擊先疊一層易燃（怪物身上 8 秒、玩家 4 秒），點燃機率 = 身上所有易燃加起來
+            // （這次之前每一擊各自擲「門檻比例 × 25 ＋ 點燃機率」）
+            final double flammable = config.flammability(igniteBase, threshold, attack.flat(StatKeys.IGNITE_CHANCE, context),
                     attack.increased(StatKeys.IGNITE_CHANCE, context))
                     * attack.more(StatKeys.IGNITE_CHANCE, context); // 2026-10：輔助的「更多／更少機率」
-            if (chance > 0 && random.nextDouble() < chance && !avoided(defenderSheet, StatKeys.AVOID_IGNITE, random)) {
+            entry = entry == null ? track(defender) : entry;
+            final double chance = Math.min(1.0, entry.state.addFlammability(flammable, now + ticks(config.flammabilityDuration(playerTarget)), now) / 100.0);
+            if (chance > 0 && random.nextDouble() < chance && !avoided(defenderSheet, StatKeys.AVOID_IGNITE, random)
+                    && !oneDamagingAilment(defender, defenderSheet)) { // 2026-10-26 照 PoE2 天賦樹：身上已經有傷害型異常就不會再中
+                // 2026-10-26 照 PoE2 天賦樹：點燃（傷害型異常）造成傷害快 x%：每秒傷害乘、時間除（總傷害不變）
+                final double igniteFaster = tw.exilecore.stats.TreeEffectKeys.ailmentSpeed(attack, tw.exilecore.stats.TreeEffectKeys.IGNITE_SPEED, context);
                 final double dps = config.igniteDps(igniteBase, attack.increased(StatKeys.IGNITE_MAGNITUDE, context),
-                        attack.more(StatKeys.IGNITE_MAGNITUDE, context));
+                        attack.more(StatKeys.IGNITE_MAGNITUDE, context)) * resistFactor(defenderSheet, DamageType.FIRE) // 2026-10-26：減免前的傷害，再吃火焰抗性
+                        * tw.exilecore.stats.TreeKeys.selfEffect(defenderSheet, tw.exilecore.stats.TreeKeys.IGNITE_EFFECT_ON_SELF) // 2026-10-26：身上的點燃效果
+                        * igniteFaster;
                 final double seconds = AilmentConfig.duration(config.igniteDuration(),
                         attack.increased(StatKeys.IGNITE_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context),
-                        selfDuration + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".ignite", Set.of()));
+                        selfDuration + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".ignite", Set.of()))
+                        * attack.more(StatKeys.IGNITE_DURATION, context) / igniteFaster; // 2026-10-27：更多的點燃持續時間以前沒算到
                 entry = entry == null ? track(defender) : entry;
                 entry.state.addIgnite(dps, now + ticks(seconds), attacker instanceof Player ? attacker.getUniqueId() : null);
+                if (attacker instanceof Player igniter && plugin.skills() != null && !skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) {
+                    // 2026-10-26 照 PoE2 天賦樹：擊中點燃敵人時獲得怒氣
+                    final double rage = attack.flat(tw.exilecore.stats.TreeEffectKeys.RAGE_ON_IGNITE, Set.of());
+                    if (rage > 0) {
+                        plugin.skills().resources().gainRage(igniter, rage);
+                    }
+                }
                 feedback(defender, AilmentType.IGNITE);
+                if (attacker instanceof Player self && self != defender && StatKeys.flag(attack, tw.exilecore.stats.KeystoneKeys.IGNITE_REFLECT)) {
+                    // 2026-10-26 照 PoE2 天賦樹：你造成的點燃會反射到自己身上（照沒吃目標抗性的點燃傷害，再吃你自己的火焰抗性）
+                    igniteSelf(self, config.igniteDps(igniteBase, attack.increased(StatKeys.IGNITE_MAGNITUDE, context),
+                            attack.more(StatKeys.IGNITE_MAGNITUDE, context)), seconds);
+                }
                 if (attacker instanceof Player triggerer && plugin.skills() != null) {
-                    if (!skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) plugin.skills().triggers().ailment(triggerer, defender, AilmentType.IGNITE, skill.id()); // 主要寶石：元素異常時施放（2026-10）
+                    // 主要寶石：元素異常時施放（2026-10）；2026-10-26 照 PoE2：點燃的能量照這個點燃總傷害占異常門檻的 %
+                    if (!skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) plugin.skills().triggers().ailment(triggerer, defender, AilmentType.IGNITE, skill.id(),
+                            threshold > 0 ? dps * seconds / threshold * 100 : tw.exilecore.skill.MetaGems.CRIT_PERCENT_FALLBACK);
                 }
                 chargeEvent(attacker, "ignite", attack, context, defender); // 戰星（2026-10）
                 changed = true;
             }
         }
-        if (chillBase > 0) {
+        if (chillBase > 0 || chaoticFreeze > 0) {
             final Set<String> context = skill.contextFor(DamageType.COLD);
             // 2026-10：「更多」的冰緩效果也算；2026-10-21：攻擊方的減速幅度（slow.magnitude）、玩家身上的減速幅度（slow.taken）也乘進去
-            final double slowScale = Math.max(0, 1 + attack.increased(StatKeys.SLOW_MAGNITUDE, context))
-                    * Math.max(0, 1 + defenderSheet.increased(StatKeys.SLOW_TAKEN, Set.of())); // 2026-10-23：怪物（不羈的）也吃
-            final double magnitude = config.chillMagnitude(chillBase, threshold, attack.apply(StatKeys.CHILL_EFFECT, 1.0, context) * slowScale - 1);
+            final double slowScale = Math.max(0, 1 + attack.increased(StatKeys.SLOW_MAGNITUDE, context));
+            // 2026-10-23：怪物（不羈的）也吃；2026-10-26 照 PoE2：稀有度的「緩速效果更少」也算，在 30% 下限判斷之後才乘（不然稀有、傳奇很難冰緩）
+            final double slowTaken = Math.max(0, defenderSheet.apply(StatKeys.SLOW_TAKEN, 1.0, Set.of()));
+            final double magnitude = config.chillMagnitude(chillBase, threshold, attack.apply(StatKeys.CHILL_EFFECT, 1.0, context) * slowScale
+                    * tw.exilecore.stats.TreeKeys.selfEffect(defenderSheet, tw.exilecore.stats.TreeKeys.CHILL_EFFECT_ON_SELF) - 1) * slowTaken; // 2026-10-26：身上的冰緩效果
             if (magnitude > 0 && !StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE) && !avoided(defenderSheet, StatKeys.AVOID_CHILL, random)) {
                 final double seconds = AilmentConfig.duration(config.chillDuration(playerTarget),
                         attack.increased(StatKeys.CHILL_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context),
                         selfDuration + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".chill", Set.of()));
                 entry = entry == null ? track(defender) : entry;
-                changed |= entry.state.applyChill(magnitude, now + ticks(seconds), now);
+                // 2026-10-26（昇華・狂風暴雪）：最多緩速 35%、可以同時兩個
+                changed |= entry.state.applyChill(tw.exilecore.ascendancy.AscendancyEffects.stackAilment(attacker, defender, AilmentType.CHILL,
+                        magnitude, now + ticks(seconds)), now + ticks(seconds), now);
+                if (attacker instanceof Player chiller && !(defender instanceof Player)) {
+                    plugin.players().conditions().onAilment(chiller, defender, AilmentType.CHILL, now); // 2026-10-26：天賦樹「最近冰緩過敵人」
+                }
             }
-            final double buildup = config.freezeBuildup(cold, threshold, attack.apply(StatKeys.FREEZE_BUILDUP, 1.0, context), unique);
+            // 2026-10-26 照 PoE2：凍結累積 = 冰冷 × 2.1 ÷ 暈眩門檻（觸發後門檻暫時提高）；這次之前 200% × 冰冷 ÷ 異常門檻，傳奇怪 50%
+            // 天賦樹的凍結門檻（增加凍結門檻、等同最大護盾 x% 的凍結門檻）也算
+            entry = entry == null ? track(defender) : entry;
+            final AilmentConfig.MeterSettings freezeSettings = config.freeze();
+            final double buildup = noElemental ? 0 : freezeSettings.buildupFor(cold
+                            + (unravel == 0 || StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.CHAOS_FREEZES) ? chaos : 0)
+                            + (StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.PHYSICAL_FREEZES) ? physical : 0) + chaoticFreeze,
+                    tw.exilecore.stats.TreeKeys.freezeThreshold(freezePoise, defenderSheet) * entry.state.freezeMeter().thresholdMultiplier(now),
+                    attack.apply(StatKeys.FREEZE_BUILDUP, 1.0, context)
+                            * defenderSheet.more(tw.exilecore.stats.SupportExtraKeys.FREEZE_BUILDUP_TAKEN, Set.of()), playerTarget); // 2026-10-27 照 PoE2：濕透
             if (buildup > 0) {
-                entry = entry == null ? track(defender) : entry;
-                if (entry.state.addBuildup(buildup, now, ticks(config.freezeDecayDelay()), config.freezeDecayPerSecond() / 20.0)) {
+                if (entry.state.addBuildup(buildup, now, freezeSettings.decayDelayTicks(playerTarget), freezeSettings.decayPerTick(playerTarget))) {
                     if (StatKeys.flag(defenderSheet, StatKeys.FLAG_FREEZE_IMMUNE) || avoided(defenderSheet, StatKeys.AVOID_FREEZE, random)) {
                         entry.state.resetBuildup();
                     } else {
                         final double seconds = AilmentConfig.duration(config.freezeDuration(playerTarget),
                                 attack.increased(StatKeys.FREEZE_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context),
                                 selfDuration + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".freeze", Set.of()));
-                        final long immunity = unique ? ticks(config.freezeUniqueImmunity())
-                                : playerTarget ? ticks(config.freezePlayerImmunity()) : 0;
-                        entry.state.freeze(now, ticks(seconds), immunity);
+                        entry.state.freeze(now, ticks(seconds), 0);
+                        entry.state.freezeMeter().raiseThreshold(freezeSettings.after(playerTarget), freezeSettings.afterTicks(playerTarget), now);
                         refreshAt(defender, entry, entry.state.frozenUntil() - now); // 解凍準時（不用等下一次半秒更新）
                         feedback(defender, AilmentType.FREEZE);
+                        if (attacker instanceof Player freezer && !playerTarget && plugin.skills() != null && plugin.skills().treeLeftovers() != null) {
+                            plugin.skills().treeLeftovers().immobilised(freezer, defender); // 2026-10-27 照 PoE2 天賦樹：禁錮（凍結）時恫嚇
+                        }
                         if (attacker instanceof Player triggerer && plugin.skills() != null) {
                             if (!skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) plugin.skills().triggers().ailment(triggerer, defender, AilmentType.FREEZE, skill.id()); // 主要寶石（2026-10）
                             plugin.skills().procEvent(triggerer, skill.id(), "freeze", null, defender); // 輔助：凍結時
@@ -348,16 +541,23 @@ public final class AilmentService {
         }
         if (shockBase > 0) {
             final Set<String> context = skill.contextFor(DamageType.LIGHTNING);
-            final double chance = config.shockChance(shockBase, threshold, attack.flat(StatKeys.SHOCK_CHANCE, context),
+            // 2026-10-27 照 PoE2 Drenched：濕透的敵人感電機率更多 50%；Shock Conduction 擊中濕透的一定感電
+            final double chance = StatKeys.flag(attack, tw.exilecore.stats.SupportExtraKeys.FLAG_SHOCK_DRENCHED)
+                    && StatKeys.flag(defenderSheet, tw.exilecore.stats.SupportExtraKeys.FLAG_DRENCHED) ? 1.0
+                    : config.shockChance(shockBase, threshold, attack.flat(StatKeys.SHOCK_CHANCE, context),
                     attack.increased(StatKeys.SHOCK_CHANCE, context))
-                    * attack.more(StatKeys.SHOCK_CHANCE, context); // 2026-10：輔助的「更多／更少機率」
+                    * attack.more(StatKeys.SHOCK_CHANCE, context) // 2026-10：輔助的「更多／更少機率」
+                    * defenderSheet.more(tw.exilecore.stats.SupportExtraKeys.SHOCK_CHANCE_TAKEN, Set.of());
             if (chance > 0 && random.nextDouble() < chance && !avoided(defenderSheet, StatKeys.AVOID_SHOCK, random)) {
-                final double effect = config.shockEffect(attack.increased(StatKeys.SHOCK_EFFECT, context));
+                final double effect = config.shockEffect(attack.increased(StatKeys.SHOCK_EFFECT, context))
+                        * tw.exilecore.stats.TreeKeys.selfEffect(defenderSheet, tw.exilecore.stats.TreeKeys.SHOCK_EFFECT_ON_SELF); // 2026-10-26：身上的感電效果
                 final double seconds = AilmentConfig.duration(config.shockDuration(playerTarget),
                         attack.increased(StatKeys.SHOCK_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context),
                         selfDuration + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".shock", Set.of()));
                 entry = entry == null ? track(defender) : entry;
-                if (entry.state.applyShock(effect, now + ticks(seconds), now)) {
+                // 2026-10-26（昇華・二重打擊）：感電幅度更少 25%、可以同時兩個
+                if (entry.state.applyShock(tw.exilecore.ascendancy.AscendancyEffects.stackAilment(attacker, defender, AilmentType.SHOCK, effect,
+                        now + ticks(seconds)), now + ticks(seconds), now)) {
                     feedback(defender, AilmentType.SHOCK);
                     if (attacker instanceof Player triggerer && plugin.skills() != null) {
                         if (!skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) plugin.skills().triggers().ailment(triggerer, defender, AilmentType.SHOCK, skill.id()); // 主要寶石（2026-10）
@@ -368,22 +568,38 @@ public final class AilmentService {
             }
         }
         // 流血（PoE2）：只有攻擊的物理傷害；機率看加成（流血機率 +x%）
-        if (physical > 0 && skill.isAttack()) {
+        // 2026-10-26（昇華・鮮血荊棘）：元素傷害也計入流血幅度
+        final double bleedBase = physical + (tw.exilecore.ascendancy.AscendancyEffects.elementalBleed(attacker) ? fire + cold + lightning : 0);
+        if (bleedBase > 0 && skill.isAttack()) {
             final Set<String> context = skill.contextFor(DamageType.PHYSICAL);
-            final double chance = config.bleedChance(physical, threshold, attack.flat(StatKeys.BLEED_CHANCE, context),
+            // 2026-10-26 照 PoE2：切割（Incision）每層讓牠被流血的機率 +10%（天賦的切割效果另外乘）
+            final double incision = plugin.skills() == null || plugin.skills().treeMechanics() == null ? 0
+                    : plugin.skills().treeMechanics().incisionBleedChance(defender);
+            final double chance = config.bleedChance(bleedBase, threshold, attack.flat(StatKeys.BLEED_CHANCE, context),
                     attack.increased(StatKeys.BLEED_CHANCE, context))
-                    * attack.more(StatKeys.BLEED_CHANCE, context); // 2026-10：輔助的「更多／更少機率」
+                    * attack.more(StatKeys.BLEED_CHANCE, context) + incision; // 2026-10：輔助的「更多／更少機率」
             if (chance > 0 && random.nextDouble() < chance && !avoided(defenderSheet, StatKeys.AVOID_BLEED, random)
-                    && !StatKeys.flag(defenderSheet, StatKeys.FLAG_CHAOS_IMMUNE)) { // 混沌免疫（PoE2）也免疫流血
+                    && !StatKeys.flag(defenderSheet, StatKeys.FLAG_CHAOS_IMMUNE) // 混沌免疫（PoE2）也免疫流血
+                    && !oneDamagingAilment(defender, defenderSheet)
+                    && !(result.deflected() && StatKeys.flag(defenderSheet, tw.exilecore.stats.KeystoneKeys.DEFLECT_NO_BLEED))) { // 2026-10-26：被偏斜的擊中不會讓你流血
                 // 猩紅突襲（PoE2 基石）：流血加劇（不管目標有沒有在動都照移動算）、基礎持續 1 秒、更多 50%
                 final boolean crimson = StatKeys.flag(attack, StatKeys.FLAG_CRIMSON_ASSAULT);
-                final double dps = config.bleedDps(physical, attack.increased(StatKeys.BLEED_MAGNITUDE, context),
-                        attack.more(StatKeys.BLEED_MAGNITUDE, context)) * (crimson ? 1.5 * config.bleedMovingMultiplier() : 1.0);
+                // 2026-10-26（叛徒之矛）：流血傷害快 x%：每秒傷害乘上去、時間除掉（總傷害不變）
+                final double faster = Math.max(0.1, 1 + attack.increased(tw.exilecore.item.unique.UniqueStats.BLEED_FASTER, context)
+                        + attack.increased(tw.exilecore.stats.TreeEffectKeys.AILMENT_SPEED, context)); // 2026-10-26 照 PoE2 天賦樹：傷害型異常快 x%
+                final double dps = config.bleedDps(bleedBase, attack.increased(StatKeys.BLEED_MAGNITUDE, context),
+                        attack.more(StatKeys.BLEED_MAGNITUDE, context)) * (crimson ? 1.5 * config.bleedMovingMultiplier() : 1.0) * faster;
                 final double seconds = AilmentConfig.duration(crimson ? 1.0 : config.bleedDuration(),
                         attack.increased(StatKeys.BLEED_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context),
-                        selfDuration + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".bleed", Set.of()));
+                        selfDuration + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".bleed", Set.of())) / faster;
                 entry = entry == null ? track(defender) : entry;
                 entry.state.addBleed(dps, now + ticks(seconds), attacker instanceof Player ? attacker.getUniqueId() : null, crimson);
+                if (attacker instanceof Player bleeder && !playerTarget && plugin.skills() != null && plugin.skills().treeLeftovers() != null) {
+                    plugin.skills().treeLeftovers().bleedInflicted(bleeder, defender, attack, context); // 2026-10-27 照 PoE2 天賦樹：對釘住的、站在碎地上的加劇
+                }
+                if (incision > 0) {
+                    plugin.skills().treeMechanics().clearIncision(defender); // 被流血了：切割全部拿掉
+                }
                 feedback(defender, AilmentType.BLEED);
                 changed = true;
             }
@@ -391,20 +607,31 @@ public final class AilmentService {
         // 中毒（PoE2）：物理與混沌傷害都算，可以疊加
         if (physical + chaos > 0) {
             final Set<String> context = skill.contextFor(DamageType.CHAOS);
-            final double chance = config.poisonChance(physical + chaos, threshold, attack.flat(StatKeys.POISON_CHANCE, context),
+            final double onCrit = result.crit() ? attack.flat(tw.exilecore.item.unique.UniqueStats.POISON_ON_CRIT, context) / 100.0 : 0; // 2026-10-26（夢鏡面具）
+            final double chance = Math.max(onCrit, config.poisonChance(physical + chaos, threshold, attack.flat(StatKeys.POISON_CHANCE, context),
                     attack.increased(StatKeys.POISON_CHANCE, context))
-                    * attack.more(StatKeys.POISON_CHANCE, context); // 2026-10：輔助的「更多／更少機率」
+                    * attack.more(StatKeys.POISON_CHANCE, context)); // 2026-10：輔助的「更多／更少機率」
             if (chance > 0 && random.nextDouble() < chance && !avoided(defenderSheet, StatKeys.AVOID_POISON, random)
-                    && !StatKeys.flag(defenderSheet, StatKeys.FLAG_CHAOS_IMMUNE)) { // 2026-10：混沌免疫也免疫中毒
+                    && !StatKeys.flag(defenderSheet, StatKeys.FLAG_CHAOS_IMMUNE) // 2026-10：混沌免疫也免疫中毒
+                    && !oneDamagingAilment(defender, defenderSheet)) {
+                final double poisonFaster = tw.exilecore.stats.TreeEffectKeys.ailmentSpeed(attack, null, context); // 2026-10-26 照 PoE2 天賦樹：傷害型異常快 x%
                 final double dps = config.poisonDps(physical + chaos, attack.increased(StatKeys.POISON_MAGNITUDE, context),
-                        attack.more(StatKeys.POISON_MAGNITUDE, context));
+                        attack.more(StatKeys.POISON_MAGNITUDE, context)) * resistFactor(defenderSheet, DamageType.CHAOS) // 2026-10-26：減免前的傷害，再吃混沌抗性
+                        * poisonFaster;
                 final double seconds = AilmentConfig.duration(config.poisonDuration(),
                         attack.increased(StatKeys.POISON_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context),
                         selfDuration + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".poison", Set.of()))
-                        * attack.more(StatKeys.POISON_DURATION, context); // 2026-10：「更少中毒持續時間」（蝕骨劇毒）也算
+                        * attack.more(StatKeys.POISON_DURATION, context) / poisonFaster; // 2026-10：「更少中毒持續時間」（蝕骨劇毒）也算
                 entry = entry == null ? track(defender) : entry;
-                entry.state.addPoison(dps, now + ticks(seconds), attacker instanceof Player ? attacker.getUniqueId() : null,
-                        config.poisonMaxStacks() * (StatKeys.flag(attack, StatKeys.FLAG_DOUBLE_POISON) ? 2 : 1)); // 壓倒性毒性：疊加上限加倍
+                // 2026-10-26 照 PoE2：層數上限是「同一個來源」的，怪物毒玩家也一樣（每隻怪各自最強的 1 層，一群怪的毒會疊）；
+                // 這次之前怪物的毒來源都是 null，全部怪物共用 1 層。怪物打怪物照舊（來源 null）
+                final UUID poisonSource = attacker instanceof Player || (attacker != null && defender instanceof Player)
+                        ? attacker.getUniqueId() : null;
+                entry.state.addPoison(dps, now + ticks(seconds), poisonSource,
+                        poisonStacks(attack, context)); // 2026-10-26 照 PoE2：預設 1 層生效，加層數另外算；壓倒性毒性加倍
+                if (attacker instanceof Player poisoner && !playerTarget) {
+                    plugin.players().conditions().note(poisoner, tw.exilecore.stats.TreeConditions.POISONS, "poison", now); // 2026-10-27：最近讓敵人中毒幾次
+                }
                 feedback(defender, AilmentType.POISON);
                 changed = true;
             }
@@ -414,9 +641,17 @@ public final class AilmentService {
             final Set<String> hexTags = skill.tags() == null ? Set.of() : skill.tags();
             final long hexEnd = now + ticks(HEX_SECONDS);
             final boolean unslowable = StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE);
-            if (!unslowable && !StatKeys.flag(defenderSheet, StatKeys.FLAG_MAIM_IMMUNE) && rollPercent(attack.flat(StatKeys.MAIM_CHANCE, hexTags), random)) {
+            if (!unslowable && !StatKeys.flag(defenderSheet, StatKeys.FLAG_MAIM_IMMUNE) && rollPercent(attack.flat(StatKeys.MAIM_CHANCE, hexTags), random)
+                    // 2026-10-27 照 PoE2 天賦樹：被偏斜的擊中不會讓你癱瘓（這次之前旗標沒有人讀）
+                    && !(result.deflected() && StatKeys.flag(defenderSheet, tw.exilecore.stats.TreeNewMechanicKeys.FLAG_DEFLECT_NO_MAIM))) {
                 entry = entry == null ? track(defender) : entry;
                 entry.state.maim(hexEnd);
+                if (plugin.combat() != null) {
+                    // 2026-10-26 照 PoE2：癱瘓也減少 15% 閃避（這次之前只有變慢）
+                    plugin.combat().debuffs().apply(defender.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff("monster_maim",
+                            attacker.getUniqueId(), hexEnd, 0, false, null,
+                            List.of(tw.exilecore.stats.Modifier.increased(StatKeys.EVASION, -tw.exilecore.combat.HitEffects.MAIM_EVASION, "癱瘓")), 0));
+                }
                 defender.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, defender.getLocation().add(0, 0.3, 0), 4, 0.3, 0.1, 0.3, 0);
                 changed = true;
             }
@@ -449,12 +684,14 @@ public final class AilmentService {
         }
         // 混沌減益（2026-10，PoE2 的汲魂彈、疫潮）：每秒傷害 = 這一下傷害的 x%；同一個技能的不疊加
         final double debuffPercent = attack.flat(StatKeys.DEBUFF_CHAOS, skill.contextFor(DamageType.CHAOS));
-        if (debuffPercent > 0 && !StatKeys.flag(defenderSheet, StatKeys.FLAG_CHAOS_IMMUNE)) {
-            final double seconds = attack.flat(StatKeys.DEBUFF_DURATION, Set.of()) > 0 ? attack.flat(StatKeys.DEBUFF_DURATION, Set.of()) : 4;
-            final double dps = allDamage * debuffPercent / 100.0;
+        // 2026-10-26 照 PoE2（汲魂彈）：持續傷害有自己的每秒基礎傷害，吃法術、混沌的加成（不照這一下的傷害換算）
+        final double debuffBase = chaosDebuffBase(attack, skill);
+        if ((debuffPercent > 0 || debuffBase > 0) && !StatKeys.flag(defenderSheet, StatKeys.FLAG_CHAOS_IMMUNE)) {
+            final double seconds = debuffSeconds(attack, skill); // 2026-10-26 照 PoE2：吃技能持續時間的加成；這次之前固定
+            final double dps = allDamage * debuffPercent / 100.0 + debuffBase * resistFactor(defenderSheet, DamageType.CHAOS);
             entry = entry == null ? track(defender) : entry;
             entry.state.addDebuff(debuffKey(skill.id()), new AilmentState.Debuff(dps, now + ticks(seconds),
-                    attacker instanceof Player ? attacker.getUniqueId() : null, StatKeys.flag(attack, StatKeys.FLAG_DEBUFF_SPREAD), 0, dps));
+                    attacker instanceof Player ? attacker.getUniqueId() : null, StatKeys.flag(attack, StatKeys.FLAG_DEBUFF_SPREAD), 0, dps, ticks(seconds)));
             changed = true;
         }
         // 暈眩（PoE2 的重暈）：任何傷害都累積，物理算 100%、其他算幾成；滿了就暈一段時間。
@@ -467,48 +704,97 @@ public final class AilmentService {
                 * Math.max(0, Math.min(1.0, stunScale)); // 2026-10-18：Boss 照遞減後的傷害算暈眩
         if (stunDamage > 0) {
             final Set<String> context = skill.contextFor(DamageType.PHYSICAL);
-            // 暈眩門檻 = 基礎門檻 ×（1 ＋ 增加暈眩門檻）：元素異常門檻不影響暈眩
-            // 2026-10 PoE2：「+x 暈眩門檻」加在基礎門檻上
-            final double stunThreshold = AilmentConfig.threshold(baseThreshold + Math.max(0, defenderSheet.flat(StatKeys.STUN_THRESHOLD, Set.of())),
-                    defenderSheet.increased(StatKeys.STUN_THRESHOLD, Set.of()));
-            final double buildup = playerTarget && !config.playerHeavyStun() ? 0
-                    : config.stun().buildupFor(stunDamage, stunThreshold, attack.apply(StatKeys.STUN_BUILDUP, 1.0, context), unique);
+            // 暈眩門檻 = 暈眩門檻（poise）＋「+x 暈眩門檻」，再乘（1 ＋ 增加暈眩門檻）：元素異常門檻不影響暈眩
+            // 2026-10-26 照 PoE2：怪物的基礎改用 poise 等級表 × 稀有度（這次之前用最大生命 × 稀有度倍率）
+            final double flatStun = Math.max(0, defenderSheet.flat(StatKeys.STUN_THRESHOLD, Set.of()));
+            final double stunIncreased = defenderSheet.increased(StatKeys.STUN_THRESHOLD, Set.of());
+            // 2026-10-27 照 PoE2：「更多暈眩門檻」（Steadfast、Unbreakable、山巒之教…）也算；重暈另外有只給重暈的更多；這次之前更多的不吃
+            final double stunMore = Math.max(0, defenderSheet.more(StatKeys.STUN_THRESHOLD, Set.of()));
+            final double stunThreshold = AilmentConfig.threshold(poise + flatStun, stunIncreased) * stunMore
+                    * Math.max(0, defenderSheet.more(tw.exilecore.stats.SupportExtraKeys.HEAVY_STUN_THRESHOLD, Set.of()));
+            final double heavyThreshold = stunThreshold * (entry == null ? 1.0 : entry.state.stun().thresholdMultiplier(now));
+            // 2026-10-26 照 PoE2：眩暈的敵人受到的暈眩累積更多 50%（stun.buildup_taken）
+            // 2026-10-26 照 PoE2 Rhoa Mount：騎在坐騎上被打會累積重暈（被重暈就摔下坐騎）
+            final boolean mountedTarget = playerTarget && plugin.skills() != null && plugin.skills().mounted((Player) defender);
+            final double rawBuildup = playerTarget && !config.playerHeavyStun() && !mountedTarget ? 0
+                    : config.stun().buildupFor(stunDamage, heavyThreshold, attack.apply(StatKeys.STUN_BUILDUP, 1.0, context)
+                    * Math.max(0, defenderSheet.apply(AilmentKeys.STUN_BUILDUP_TAKEN, 1.0, Set.of())), playerTarget);
+            // 2026-10-27 照 PoE2 Brink：被輔助的技能的暈眩累積到不了 100%（停在差一點，給重壓擊、天罰巨鎚這類收尾）；這次之前沒有
+            final boolean brink = StatKeys.flag(attack, tw.exilecore.stats.SupportExtraKeys.FLAG_STUN_CANNOT_REACH);
+            final double buildup = brink && entry != null
+                    ? Math.min(rawBuildup, Math.max(0, 0.999 - entry.state.stun().buildup())) : brink ? Math.min(rawBuildup, 0.999) : rawBuildup;
             // 2026-10-24（鼓翼風）：這一下之前就蓄勢待暈了（重暈時另外給戰星事件 stun_primed）
             final boolean wasPrimed = defenderMonster != null && entry != null && primed(entry, defenderMonster, now);
             // 蓄勢待暈的怪被「重擊」技能打中：直接重暈（碎骨這類，PoE2）
-            final boolean crush = defenderMonster != null && (entry != null && StatKeys.flag(attack, StatKeys.FLAG_CRUSH_PRIMED)
+            final boolean crush = !brink && defenderMonster != null && (entry != null && StatKeys.flag(attack, StatKeys.FLAG_CRUSH_PRIMED)
                     && primed(entry, defenderMonster, now)
                     // 2026-10（傳奇）：重暈滿血的敵人
                     || StatKeys.flag(attack, StatKeys.FLAG_STUN_FULL_LIFE) && fullLifeHits.remove(defender.getUniqueId()));
-            // 輕暈：機率 ≈ 這一擊 ÷ 暈眩門檻，低於 15% 算 0；打斷一下
-            final double lightChance = stunThreshold <= 0 ? 0 : Math.min(1.0, stunDamage / stunThreshold);
+            // 輕暈：機率 ≈ 這一擊 ÷ 目標最大生命（2026-10-26 照 PoE2；這次之前 ÷ 暈眩門檻），低於 15% 算 0；打斷一下
+            // 2026-10-27 照 PoE2 Character.ot：玩家 4 秒內每被暈眩一次，輕暈門檻更多 50%（這次之前沒有）
+            final double lightThreshold = AilmentConfig.threshold(lightStunBase(defender, defenderSheet) + flatStun, stunIncreased)
+                    * (playerTarget && entry != null ? recentStunThreshold(entry.state.stunsRecently(now)) : 1.0)
+                    * stunMore * Math.max(0, defenderSheet.more(tw.exilecore.stats.SupportExtraKeys.LIGHT_STUN_THRESHOLD, Set.of())); // 2026-10-27 照 PoE2 Unbreakable
+            final double lightChance = lightThreshold <= 0 ? 0 : Math.min(1.0, stunDamage / lightThreshold);
             if (lightChance * 100 >= config.lightStunMin() && !StatKeys.flag(defenderSheet, StatKeys.FLAG_UNWAVERING) && random.nextDouble() < lightChance
+                    && !StatKeys.flag(defenderSheet, tw.exilecore.stats.TreeLastKeys.FLAG_NO_LIGHT_STUN) // 2026-10-27 照 PoE2 天賦樹：不會被輕暈（有條件）
+                    && !(result.deflected() && StatKeys.flag(defenderSheet, tw.exilecore.item.unique.UniqueStats.NO_LIGHT_STUN_DEFLECTED)) // 2026-10-27（冷蔑步靴）
                     && !avoided(defenderSheet, StatKeys.AVOID_STUN, random)) {
                 entry = entry == null ? track(defender) : entry;
                 if (!entry.state.stun().active(now)) {
-                    final long light = ticks(config.lightStunDuration(playerTarget));
+                    final long light = ticks(config.lightStunDuration(playerTarget) / stunRecovery(playerTarget, defenderSheet));
                     entry.state.lightStun(now + light);
+                    if (playerTarget) {
+                        entry.state.noteStunned(now); // 2026-10-27：4 秒內被暈眩的次數
+                    }
                     refreshAt(defender, entry, light);
                     changed = true;
+                    stunEvents(attacker, defender, skill, "light_stun_applied"); // 2026-10-27 照 PoE2：先鋒（輕暈給守護）、能障（被暈眩）
+                    if (defender instanceof Player stunned && plugin.skills() != null && plugin.skills().treeLeftovers() != null) {
+                        plugin.skills().treeLeftovers().stunnedBy(stunned, attacker); // 2026-10-27 照 PoE2 天賦樹：被暈眩時易爆、致盲對方
+                    }
                 }
             }
             if (buildup > 0 || crush) {
                 entry = entry == null ? track(defender) : entry;
-                if (entry.state.stun().add(crush ? Math.max(buildup, 1.0) : buildup, now, config.stun().decayDelayTicks(), config.stun().decayPerTick())) {
+                if (entry.state.stun().add(crush ? Math.max(buildup, 1.0) : buildup, now, config.stun().decayDelayTicks(playerTarget),
+                        config.stun().decayPerTick(playerTarget) * (playerTarget // 2026-10-26 照 PoE2：「你的重度暈眩累積消退加快 x%」
+                                ? Math.max(0, 1 + defenderSheet.increased(tw.exilecore.passive.ConquestEffects.STUN_DECAY, Set.of())) : 1))) {
                     if (avoided(defenderSheet, StatKeys.AVOID_STUN, random)) {
                         entry.state.stun().reset();
                     } else {
                         final double seconds = AilmentConfig.duration(config.stun().duration(playerTarget),
-                                attack.increased(StatKeys.STUN_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context), selfDuration);
-                        final long immunity = unique ? ticks(config.stun().uniqueImmunity()) : playerTarget ? ticks(config.stun().playerImmunity()) : 0;
-                        entry.state.stun().trigger(now, ticks(seconds), immunity);
+                                attack.increased(StatKeys.STUN_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context), selfDuration)
+                                / stunRecovery(playerTarget, defenderSheet); // 2026-10-26（傳奇）：暈眩回復
+                        entry.state.stun().trigger(now, ticks(seconds), 0);
+                        entry.state.stun().raiseThreshold(config.stun().after(playerTarget), config.stun().afterTicks(playerTarget), now); // 2026-10-26 照 PoE2
+                        if (playerTarget) {
+                            entry.state.noteStunned(now); // 2026-10-27：4 秒內被暈眩的次數
+                            stunEvents(attacker, defender, skill, null); // 2026-10-27 照 PoE2 Energy Barrier：被重暈也算被暈眩
+                        }
                         refreshAt(defender, entry, entry.state.stun().activeUntil() - now);
                         feedback(defender, AilmentType.STUN);
                         if (defender instanceof Player stunned) {
                             plugin.players().get(stunned).markRecent(tw.exilecore.stats.Recently.STUN, now); // 「最近被重暈過」
+                            plugin.players().conditions().onStunned(stunned, now); // 2026-10-26：天賦樹（最近被重暈幾次、被重暈時回復生命）
+                            if (plugin.skills() != null && plugin.skills().treeLeftovers() != null) {
+                                plugin.skills().treeLeftovers().stunnedBy(stunned, attacker); // 2026-10-27 照 PoE2 天賦樹：被暈眩時易爆、致盲對方
+                            }
+                            if (plugin.skills() != null) {
+                                plugin.skills().dismountOnStun(stunned); // 2026-10-26 照 PoE2：騎著被重暈就摔下坐騎
+                            }
                         }
                         if (attacker instanceof Player stunner && plugin.skills() != null) {
                             plugin.skills().procEvent(stunner, skill.id(), "stun_applied", null, defender); // 輔助：重暈時（2026-10）
+                        }
+                        if (attacker instanceof Player stunner && !(defender instanceof Player)) {
+                            plugin.players().get(stunner).markRecent(tw.exilecore.stats.TreeConditions.STUNNED_ENEMY, now); // 2026-10-26：「最近重暈過敵人」
+                            if (plugin.skills() != null && plugin.skills().treeLeftovers() != null) {
+                                plugin.skills().treeLeftovers().heavyStunned(stunner, defender, skill); // 2026-10-27 照 PoE2 天賦樹：雙手近戰重暈、變身重暈恫嚇、禁錮恫嚇
+                            }
+                            if (plugin.skills() != null && plugin.skills().treeMechanics() != null && !skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) {
+                                plugin.skills().treeMechanics().onHeavyStun(stunner, defender); // 2026-10-26 照 PoE2 天賦：重暈稀有怪回血、磐星、先祖強化；破甲
+                            }
                         }
                         chargeEvent(attacker, "stun_applied", attack, context, defender); // 戰星：重暈時（2026-10）
                         if (wasPrimed) {
@@ -522,24 +808,37 @@ public final class AilmentService {
         // 電擊（PoE2）：要有「電擊機率」的來源，閃電傷害才會累積；滿了就麻一段時間
         if (lightning > 0) {
             final Set<String> context = skill.contextFor(DamageType.LIGHTNING);
-            final double chance = Math.max(0, attack.flat(StatKeys.ELECTROCUTE_CHANCE, context))
-                    * Math.max(0, 1 + attack.increased(StatKeys.ELECTROCUTE_CHANCE, context)) / 100.0;
-            if (chance > 0 && random.nextDouble() < chance) {
-                final double buildup = config.electrocute().buildupFor(lightning, threshold, attack.apply(StatKeys.ELECTROCUTE_BUILDUP, 1.0, context), unique);
+            // 2026-10-27 照 PoE2 霆爆（Eonyr's Thunder）：閃電傷害本身就累積電擊（等於 100% 的來源）
+            final double chance = StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.LIGHTNING_ELECTROCUTES) ? 1.0
+                    : Math.max(0, attack.flat(StatKeys.ELECTROCUTE_CHANCE, context))
+                    * Math.max(0, 1 + attack.increased(StatKeys.ELECTROCUTE_CHANCE, context))
+                    * Math.max(0, attack.more(StatKeys.ELECTROCUTE_CHANCE, context)) / 100.0; // 2026-10-27：更多（風暴箭的 −100%）以前沒算到
+            // 2026-10-26 照 PoE2：電擊是累積條，有來源就每一擊都累積，不先擲機率；不到 100% 的「電擊機率」改成累積量乘那個比例
+            //（期望值一樣）。這次之前先擲機率，擲中才累積
+            if (chance > 0) {
+                // 2026-10-26 照 PoE2：閃電 × 1.7 ÷ 暈眩門檻（這次之前 150% × 閃電 ÷ 異常門檻，傳奇怪 50%）
+                entry = entry == null ? track(defender) : entry;
+                final double buildup = config.electrocute().buildupFor(lightning, freezePoise * entry.state.electrocute().thresholdMultiplier(now),
+                        attack.apply(StatKeys.ELECTROCUTE_BUILDUP, 1.0, context) * Math.min(1.0, chance), playerTarget);
                 if (buildup > 0) {
-                    entry = entry == null ? track(defender) : entry;
-                    if (entry.state.electrocute().add(buildup, now, config.electrocute().decayDelayTicks(), config.electrocute().decayPerTick())) {
+                    if (entry.state.electrocute().add(buildup, now, config.electrocute().decayDelayTicks(playerTarget),
+                            config.electrocute().decayPerTick(playerTarget))) {
                         if (avoided(defenderSheet, StatKeys.AVOID_ELECTROCUTE, random)) {
                             entry.state.electrocute().reset();
                         } else {
                             final double seconds = AilmentConfig.duration(config.electrocute().duration(playerTarget),
                                     attack.increased(StatKeys.ELECTROCUTE_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context), selfDuration);
-                            final long immunity = unique ? ticks(config.electrocute().uniqueImmunity())
-                                    : playerTarget ? ticks(config.electrocute().playerImmunity()) : 0;
-                            entry.state.electrocute().trigger(now, ticks(seconds), immunity);
+                            entry.state.electrocute().trigger(now, ticks(seconds), 0);
+                            entry.state.electrocute().raiseThreshold(config.electrocute().after(playerTarget), config.electrocute().afterTicks(playerTarget), now);
                             refreshAt(defender, entry, entry.state.electrocute().activeUntil() - now);
                             feedback(defender, AilmentType.ELECTROCUTE);
+                            if (attacker instanceof Player zapper && !playerTarget && plugin.skills() != null && plugin.skills().treeLeftovers() != null) {
+                                plugin.skills().treeLeftovers().immobilised(zapper, defender); // 2026-10-27 照 PoE2 天賦樹：禁錮（電擊）時恫嚇
+                            }
                             chargeEvent(attacker, "electrocute", attack, context, defender); // 2026-10-24：戰意（PoE2：冰凍、電擊、釘住）
+                            if (attacker instanceof Player electrocuter && plugin.skills() != null) {
+                                plugin.skills().procEvent(electrocuter, skill.id(), "electrocute", null, defender); // 2026-10-27：輔助：電擊時（凝破）
+                            }
                         }
                     }
                     changed = true;
@@ -549,6 +848,74 @@ public final class AilmentService {
         if (changed && entry != null) {
             update(defender, entry, now); // 馬上套用（不用等下一次更新）
         }
+    }
+
+    /** 2026-10-26（冰行者之靴）：玩家的暈眩回復速度（暈眩時間除以這個數）；怪物一律 1。 */
+    /**
+     * 2026-10-27 照 PoE2（poe2db Stun：玩家一般不會被重暈，但舉盾時「格擋太多傷害可能讓你重度暈眩」、招架也會累積；
+     * 閃避率同樣是避開這份累積的機率）：玩家舉盾（含招架）格擋下來的擊中累積重暈，
+     * 累積 = 減免前的暈眩傷害（怪物的物理 ×2、近戰 ×1.33）× 0.65（HeavyStunDamageScalePlayer）÷ 暈眩門檻（最大生命），
+     * 滿了重暈 3 秒（base_heavy_stun_duration_ms 3000），之後 10 秒內門檻更多 100%（stun.player_after）。
+     * 這次之前玩家完全不會被重暈。一般被打中照樣不累積（stun.player_heavy: false）。
+     */
+    public void blockedHit(final Player defender, final LivingEntity attacker, final SkillProfile skill, final StatSheet attack,
+                           final StatSheet defenderSheet) {
+        if (defender == null || attack == null || defenderSheet == null || !defender.isValid()) {
+            return;
+        }
+        final RandomGenerator random = plugin.items().random();
+        // 閃避率同樣避開格擋的暈眩累積（怪物的命中公式）
+        final double evade = 1 - tw.exilecore.stats.Formulas.monsterHitChance(attack.get(StatKeys.ACCURACY, skill.tags()), defenderSheet.get(StatKeys.EVASION));
+        if (evade > 0 && random.nextDouble() < evade) {
+            return;
+        }
+        final tw.exilecore.stats.DamagePacket raw = tw.exilecore.stats.DamageCalculator.expectedOutgoing(attack, skill);
+        final boolean playerAttacker = attacker instanceof Player;
+        final boolean melee = skill.tags() != null && skill.tags().contains(tw.exilecore.stats.Tags.MELEE);
+        final double others = raw.get(DamageType.FIRE) + raw.get(DamageType.COLD) + raw.get(DamageType.LIGHTNING) + raw.get(DamageType.CHAOS);
+        final double stunDamage = (raw.get(DamageType.PHYSICAL) * (playerAttacker ? 1.5 : 2.0) + others * config.stunElementalMultiplier())
+                * (melee ? (playerAttacker ? 1.5 : 1.33) : 1.0);
+        if (stunDamage <= 0 || avoided(defenderSheet, StatKeys.AVOID_STUN, random) || StatKeys.flag(defenderSheet, StatKeys.FLAG_UNWAVERING)) {
+            return;
+        }
+        final long now = now();
+        final Tracked entry = track(defender);
+        final double threshold = AilmentConfig.threshold(lightStunBase(defender, defenderSheet)
+                + Math.max(0, defenderSheet.flat(StatKeys.STUN_THRESHOLD, Set.of())), defenderSheet.increased(StatKeys.STUN_THRESHOLD, Set.of()))
+                * entry.state.stun().thresholdMultiplier(now)
+                * Math.max(0, defenderSheet.more(StatKeys.STUN_THRESHOLD, Set.of())) // 2026-10-27 照 PoE2：更多暈眩門檻、只給重暈的更多也算
+                * Math.max(0, defenderSheet.more(tw.exilecore.stats.SupportExtraKeys.HEAVY_STUN_THRESHOLD, Set.of()));
+        final double buildup = config.stun().buildupFor(stunDamage, threshold,
+                Math.max(0, defenderSheet.apply(AilmentKeys.STUN_BUILDUP_TAKEN, 1.0, Set.of())), true);
+        if (buildup <= 0) {
+            return;
+        }
+        if (entry.state.stun().add(buildup, now, config.stun().decayDelayTicks(true), config.stun().decayPerTick(true)
+                * Math.max(0, 1 + defenderSheet.increased(tw.exilecore.passive.ConquestEffects.STUN_DECAY, Set.of())))) {
+            final double seconds = config.stun().duration(true) / stunRecovery(true, defenderSheet);
+            entry.state.stun().trigger(now, ticks(seconds), 0);
+            entry.state.stun().raiseThreshold(config.stun().after(true), config.stun().afterTicks(true), now);
+            entry.state.noteStunned(now);
+            refreshAt(defender, entry, entry.state.stun().activeUntil() - now);
+            feedback(defender, AilmentType.STUN);
+            plugin.players().get(defender).markRecent(tw.exilecore.stats.Recently.STUN, now);
+            plugin.players().conditions().onStunned(defender, now);
+            if (plugin.skills() != null) {
+                plugin.skills().dismountOnStun(defender);
+            }
+        }
+        refreshAt(defender, entry, 1);
+    }
+
+    /** 2026-10-27 照 PoE2 Character.ot（light_stun_threshold_+%_final_per_number_of_times_stunned_in_past_duration 50）：玩家輕暈門檻的倍率。 */
+    public static final double LIGHT_STUN_THRESHOLD_PER_RECENT_STUN = 0.5;
+
+    static double recentStunThreshold(final int stunsRecently) {
+        return 1 + LIGHT_STUN_THRESHOLD_PER_RECENT_STUN * Math.max(0, stunsRecently);
+    }
+
+    static double stunRecovery(final boolean playerTarget, final StatSheet defenderSheet) {
+        return playerTarget ? Math.max(0.1, 1 + defenderSheet.increased(tw.exilecore.item.unique.UniqueStats.STUN_RECOVERY, Set.of())) : 1.0;
     }
 
     /** 減益的代號：技能代號去掉後綴（「.triggered」之類），同一個技能的不疊加。 */
@@ -578,9 +945,10 @@ public final class AilmentService {
                 continue;
             }
             final int spreads = Math.min(SPREAD_MAX, debuff.spreads() + 1);
-            final long length = Math.max(ticks(1), debuff.endTick() - now) + ticks(2);
-            final AilmentState.Debuff passed = new AilmentState.Debuff(debuff.base() * (1 + spreads), now + Math.min(ticks(5), length),
-                    debuff.source(), true, spreads, debuff.base());
+            // 2026-10-26 照 PoE2：傳出去的照掛上時的完整持續時間（含技能持續時間的加成）重新算；這次之前 min(5 秒, 剩下 + 2 秒)
+            final long length = debuff.length() > 0 ? debuff.length() : Math.min(ticks(5), Math.max(ticks(1), debuff.endTick() - now) + ticks(2));
+            final AilmentState.Debuff passed = new AilmentState.Debuff(debuff.base() * (1 + spreads), now + length,
+                    debuff.source(), true, spreads, debuff.base(), length);
             for (final org.bukkit.entity.Entity near : dead.getNearbyEntities(SPREAD_RADIUS, SPREAD_RADIUS, SPREAD_RADIUS)) {
                 if (!(near instanceof LivingEntity living) || near instanceof Player || !living.isValid() || living.isDead()
                         || plugin.monsters() == null || plugin.monsters().data(living).isEmpty()) {
@@ -609,6 +977,25 @@ public final class AilmentService {
         final double before = entry.bloodLoss;
         damageOverTime(target, entry, amount * 20.0 / TICK_INTERVAL / (1 + entry.state.shock(now)), source, AilmentType.BLEED, now);
         entry.bloodLoss = before;
+    }
+
+    /**
+     * 2026-10-26 照 PoE2：技能自己的混沌持續傷害（每秒，{@link tw.exilecore.stats.SkillMechanicKeys#DEBUFF_CHAOS_BASE}），
+     * 吃這個技能（含法術）的混沌傷害增加、更多；沒有回傳 0。
+     */
+    static double chaosDebuffBase(final StatSheet attack, final tw.exilecore.stats.SkillProfile skill) {
+        final java.util.Set<String> context = skill.contextFor(DamageType.CHAOS);
+        final double base = attack.flat(tw.exilecore.stats.SkillMechanicKeys.DEBUFF_CHAOS_BASE, context);
+        return base <= 0 ? 0 : Math.max(0, attack.apply(StatKeys.DAMAGE, base, context));
+    }
+
+    /**
+     * 2026-10-26 照 PoE2：汲魂彈（4 秒）、疫潮（5 秒）的混沌減益有 Duration 標籤，持續時間乘技能持續時間的增加／更多
+     * （{@link StatKeys#SKILL_DURATION}，照技能的標籤：持久、急蝕、天賦的「技能效果持續時間」）。這次之前固定 debuff.duration 秒。
+     */
+    public static double debuffSeconds(final StatSheet attack, final tw.exilecore.stats.SkillProfile skill) {
+        final double base = attack.flat(StatKeys.DEBUFF_DURATION, Set.of());
+        return (base > 0 ? base : 4) * Math.max(0.1, attack.apply(StatKeys.SKILL_DURATION, 1.0, skill.tags()));
     }
 
     /** 2026-10-24：這隻怪累積被流血打掉多少（血宣：爆炸多打失血的 15%）。 */
@@ -646,7 +1033,8 @@ public final class AilmentService {
             }
             Tracked other = tracked.get(living.getUniqueId());
             other = other == null ? track(living) : other;
-            other.state.addPoison(strongest.dps(), now + left, source == null ? strongest.source() : source, AilmentState.MAX_POISONS);
+            other.state.addPoison(strongest.dps(), now + left, source == null ? strongest.source() : source,
+                    strongest.limit()); // 2026-10-27：傳過去的帶著原本那層毒的層數上限；這次之前用 20 層，把來源整個的上限拉高、1 層上限的毒全部生效
             if (hinderChance > 0 && plugin.random().nextDouble() * 100 < hinderChance) {
                 other.state.hinder(now + ticks(hinderSeconds));
             }
@@ -692,7 +1080,9 @@ public final class AilmentService {
         if (expected == null || expected.isEmpty() || plugin.monsters() == null) {
             return out;
         }
-        final double threshold = plugin.monsters().config().lifeAt(Math.max(1, level)) * config.monsterThreshold(MonsterRarity.NORMAL);
+        // 2026-10-26 照 PoE2：同等級普通怪的異常門檻、暈眩門檻（等級表）
+        final double threshold = plugin.monsters().config().ailmentThresholdAt(Math.max(1, level)) * config.monsterThreshold(MonsterRarity.NORMAL);
+        final double poise = plugin.monsters().config().poiseAt(Math.max(1, level)) * plugin.monsters().config().rarityPoise(MonsterRarity.NORMAL);
         final StatSheet attack = skill.effective(attackerSheet);
         if (threshold <= 0 || StatKeys.flag(attack, StatKeys.FLAG_NO_AILMENTS)) {
             return out;
@@ -715,7 +1105,7 @@ public final class AilmentService {
         }
         if (cold > 0) {
             final Set<String> context = skill.contextFor(DamageType.COLD);
-            out[2] = Math.min(1, config.freezeBuildup(cold, threshold, attack.apply(StatKeys.FREEZE_BUILDUP, 1.0, context), false));
+            out[2] = Math.min(1, config.freezeBuildup(cold, poise, attack.apply(StatKeys.FREEZE_BUILDUP, 1.0, context), false));
         }
         return out;
     }
@@ -725,7 +1115,7 @@ public final class AilmentService {
         if (hitsPerSecond <= 0 || expected == null || expected.isEmpty() || plugin.monsters() == null) {
             return hitDps;
         }
-        final double threshold = plugin.monsters().config().lifeAt(Math.max(1, level)) * config.monsterThreshold(MonsterRarity.NORMAL);
+        final double threshold = plugin.monsters().config().ailmentThresholdAt(Math.max(1, level)) * config.monsterThreshold(MonsterRarity.NORMAL);
         if (threshold <= 0) {
             return hitDps;
         }
@@ -742,10 +1132,13 @@ public final class AilmentService {
         final double igniteBase = noElemental ? 0 : StatKeys.flag(attack, StatKeys.FLAG_ALL_IGNITE) ? all : fire;
         if (igniteBase > 0) {
             final Set<String> context = skill.contextFor(DamageType.FIRE);
-            final double chance = config.igniteChance(igniteBase, threshold, attack.flat(StatKeys.IGNITE_CHANCE, context),
+            // 2026-10-26 照 PoE2：易燃會疊（8 秒內每一下都加上去），一直打的平均機率 ≈ 每下的易燃 × 8 秒內的次數
+            final double perHit = config.igniteChance(igniteBase, threshold, attack.flat(StatKeys.IGNITE_CHANCE, context),
                     attack.increased(StatKeys.IGNITE_CHANCE, context)) * attack.more(StatKeys.IGNITE_CHANCE, context);
+            final double chance = Math.min(1.0, perHit * Math.max(1.0, hitsPerSecond * config.flammabilityDuration(false) / 2.0));
             final double seconds = AilmentConfig.duration(config.igniteDuration(),
-                    attack.increased(StatKeys.IGNITE_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context), 0);
+                    attack.increased(StatKeys.IGNITE_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context), 0)
+                    * attack.more(StatKeys.IGNITE_DURATION, context); // 2026-10-27：估計也乘更多的持續時間
             dot += config.igniteDps(igniteBase, attack.increased(StatKeys.IGNITE_MAGNITUDE, context), attack.more(StatKeys.IGNITE_MAGNITUDE, context))
                     * uptime(chance, hitsPerSecond, seconds);
         }
@@ -768,16 +1161,17 @@ public final class AilmentService {
             final double seconds = AilmentConfig.duration(config.poisonDuration(),
                     attack.increased(StatKeys.POISON_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context), 0)
                     * attack.more(StatKeys.POISON_DURATION, context);
-            final int maxStacks = config.poisonMaxStacks() * (StatKeys.flag(attack, StatKeys.FLAG_DOUBLE_POISON) ? 2 : 1);
+            final int maxStacks = poisonStacks(attack, context);
             final double stacks = Math.min(maxStacks, Math.max(0, Math.min(1, chance)) * hitsPerSecond * seconds);
             dot += config.poisonDps(physical + chaos, attack.increased(StatKeys.POISON_MAGNITUDE, context), attack.more(StatKeys.POISON_MAGNITUDE, context))
                     * stacks;
         }
         // 混沌減益（2026-10，汲魂彈、疫潮）：每一下都會掛上（同一個技能不疊加），只要一直打就一直在
         final double debuffPercent = attack.flat(StatKeys.DEBUFF_CHAOS, skill.contextFor(DamageType.CHAOS));
-        if (debuffPercent > 0) {
-            final double seconds = attack.flat(StatKeys.DEBUFF_DURATION, Set.of()) > 0 ? attack.flat(StatKeys.DEBUFF_DURATION, Set.of()) : 4;
-            dot += all * debuffPercent / 100.0 * uptime(1.0, hitsPerSecond, seconds);
+        final double debuffBase = chaosDebuffBase(attack, skill); // 2026-10-26 照 PoE2（汲魂彈自己的每秒基礎傷害）
+        if (debuffPercent > 0 || debuffBase > 0) {
+            final double seconds = debuffSeconds(attack, skill); // 2026-10-26：吃技能持續時間的加成
+            dot += (all * debuffPercent / 100.0 + debuffBase) * uptime(1.0, hitsPerSecond, seconds);
         }
         // 感電：受到的傷害增加（擊中與持續傷害都吃）
         double shocked = 1.0;
@@ -802,16 +1196,162 @@ public final class AilmentService {
         return 1 - Math.exp(-p * hitsPerSecond * seconds);
     }
 
+    /**
+     * 元素異常門檻的基礎（2026-10-26 照 PoE2 0.5）：怪物 = 等級表（不看稀有度、生命）；玩家 = 最大生命 × 50%（不含能量護盾）。
+     * 這次之前：怪物 = 最大生命 × 稀有度倍率（傳奇 0.5）；玩家 = 生命 ＋ 護盾。
+     */
     private double baseThreshold(final LivingEntity defender, final MonsterData monster, final StatSheet sheet) {
         if (defender instanceof Player player) {
-            final PlayerState state = plugin.players().get(player);
-            return state.maxLife() + state.maxEnergyShield();
+            return plugin.players().get(player).maxLife() * config.playerThresholdLife();
         }
-        return monster == null ? 0 : sheet.get(StatKeys.LIFE_MAX) * config.monsterThreshold(monster.rarity());
+        if (monster == null) {
+            return 0;
+        }
+        return plugin.monsters().config().ailmentThresholdAt(Math.max(1, monster.level())) * config.monsterThreshold(monster.rarity());
+    }
+
+    /**
+     * 2026-10-26 照 PoE2 0.5：暈眩門檻（poise；重暈、凍結、電擊、釘地）的基礎：怪物 = poise 等級表 × 稀有度（1.26／2.25／6）；
+     * 玩家 = 異常門檻（生命的 50%）。
+     */
+    private double basePoise(final LivingEntity defender, final MonsterData monster, final StatSheet sheet) {
+        if (defender instanceof Player player) {
+            // 2026-10-26 照 PoE2 天賦樹：「暈眩門檻有 x% 改照能量護盾算」
+            final double share = sheet == null ? 0 : Math.max(0, Math.min(100, sheet.flat(tw.exilecore.stats.KeystoneKeys.STUN_ES_SHARE, Set.of()))) / 100.0;
+            if (share > 0) {
+                final PlayerState state = plugin.players().get(player);
+                return (state.maxLife() * (1 - share) + state.maxEnergyShield() * share) * config.playerThresholdLife();
+            }
+            return baseThreshold(defender, monster, sheet);
+        }
+        if (monster == null) {
+            return 0;
+        }
+        return plugin.monsters().config().poiseAt(Math.max(1, monster.level())) * plugin.monsters().config().rarityPoise(monster.rarity())
+                * (monster.boss() ? config.bossPoise(pinnacleBoss(defender)) : 1); // 2026-10-26 照 PoE2：Boss 的暈眩門檻（地圖 ×3.13、巔峰 ×9.38）
+    }
+
+    /** 2026-10-26：這隻 Boss 是不是在巔峰、極境（只有 Boss 房的實例）。 */
+    private boolean pinnacleBoss(final LivingEntity defender) {
+        final tw.exilecore.map.MapInstance instance = plugin.maps() == null ? null : plugin.maps().instanceOf(defender);
+        return instance != null && instance.bossOnly();
+    }
+
+    /** 2026-10-26 照 PoE2：輕暈看目標的最大生命（玩家不含能量護盾）。 */
+    private double lightStunBase(final LivingEntity defender, final StatSheet sheet) {
+        if (defender instanceof Player player) {
+            return plugin.players().get(player).maxLife();
+        }
+        return sheet.get(StatKeys.LIFE_MAX);
+    }
+
+    /**
+     * 2026-10-26：點燃、中毒每秒的傷害照減免前的那一擊算，再吃目標這種傷害的抗性（照抗性上限）；物理（流血）不吃護甲。
+     */
+    static double resistFactor(final StatSheet sheet, final DamageType type) {
+        if (sheet == null || type == DamageType.PHYSICAL) {
+            return 1.0;
+        }
+        final double cap = tw.exilecore.stats.DamageCalculator.resistCap(sheet, type);
+        final double resist = Math.min(sheet.get(type.mitigationStat()), cap);
+        return Math.max(0, 1 - tw.exilecore.stats.Formulas.resistReduction(resist, cap));
+    }
+
+    /**
+     * 2026-10-26 照 PoE2：同一個人的中毒同時幾層生效：預設 1（ailments.yml 的 poison.max_stacks）＋「中毒層數 +x」（poison.stacks），
+     * 開拓者（flag.double_poison）加倍。
+     */
+    int poisonStacks(final StatSheet attack, final Set<String> context) {
+        final int base = config.poisonMaxStacks() + (int) Math.round(Math.max(0, attack.flat(AilmentKeys.POISON_STACKS, context)));
+        return Math.max(1, Math.min(AilmentState.MAX_POISONS, base * (StatKeys.flag(attack, StatKeys.FLAG_DOUBLE_POISON) ? 2 : 1)));
+    }
+
+    /**
+     * 2026-10-26 照 PoE2 Pin：投射物攻擊的物理傷害累積釘地（× 4.2 ÷ 暈眩門檻，觸發後門檻暫時提高 500%）。回傳這一下有沒有釘住
+     * （呼叫端照 {@link AilmentConfig#pin()} 的秒數讓牠不能移動）。
+     */
+    public boolean pinBuildup(final LivingEntity defender, final MonsterData data, final StatSheet sheet, final double physical, final double multiplier) {
+        if (physical <= 0 || data == null || defender instanceof Player) {
+            return false;
+        }
+        final long now = now();
+        final Tracked entry = track(defender);
+        final AilmentConfig.MeterSettings settings = config.pin();
+        final double threshold = basePoise(defender, data, sheet) * entry.state.pin().thresholdMultiplier(now);
+        final double buildup = settings.buildupFor(physical, threshold, multiplier, false);
+        if (!entry.state.pin().add(buildup, now, settings.decayDelayTicks(false), settings.decayPerTick(false))) {
+            return false;
+        }
+        entry.state.pin().trigger(now, ticks(settings.duration(false)), 0);
+        entry.state.pin().raiseThreshold(settings.after(false), settings.afterTicks(false), now);
+        // 2026-10-26 照 PoE2 Pinned：被釘住的時候輕暈一下（這次之前沒有）
+        if (!StatKeys.flag(sheet, StatKeys.FLAG_UNWAVERING)) {
+            entry.state.lightStun(now + ticks(config.lightStunDuration(false) / stunRecovery(false, sheet)));
+            update(defender, entry, now);
+        }
+        return true;
+    }
+
+    /** 2026-10-26（昇華・位置正好）：被釘身的敵人無法進行動作：釘住期間一直輕暈。 */
+    public void holdPinned(final LivingEntity target) {
+        final Tracked entry = tracked.get(target.getUniqueId());
+        if (entry != null) {
+            entry.state.lightStun(now() + ticks(config.pin().duration(false)));
+        }
+    }
+
+    /** 2026-10-26（昇華・時間凍結）：讓牠停住 ticks 個 tick（不能動也不能攻擊）。 */
+    public void holdStill(final LivingEntity target, final long ticks) {
+        if (target instanceof Player || ticks <= 0) {
+            return;
+        }
+        track(target).state.lightStun(now() + ticks);
+    }
+
+    /** 2026-10-26：這隻現在有沒有被釘身。 */
+    public boolean pinned(final LivingEntity target) {
+        final Tracked entry = tracked.get(target.getUniqueId());
+        return entry != null && entry.state.pin().active(now());
+    }
+
+    /** 2026-10-26：異常（冰緩、癱瘓、阻礙、碎地）現在讓牠慢了多少（戰鬥模組的詛咒減速照這個算 25% 速度的下限）。 */
+    public double appliedSlow(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        return entry == null ? 0 : entry.appliedSlow;
+    }
+
+    /** 2026-10-26 照 PoE2：緩速最多讓怪物降到原本速度的 25%（凍結、暈眩這種定住的不算）。 */
+    public static final double MONSTER_MIN_SPEED = 0.25;
+
+    /** 2026-10-26 照 PoE2 天賦樹：「身上已經有一種傷害型異常時，不會再中傷害型異常」（點燃、流血、中毒）。 */
+    private boolean oneDamagingAilment(final LivingEntity defender, final StatSheet defenderSheet) {
+        return defender instanceof Player && defenderSheet != null && StatKeys.flag(defenderSheet, tw.exilecore.stats.KeystoneKeys.ONE_DAMAGING_AILMENT)
+                && (has(defender, AilmentType.IGNITE) || has(defender, AilmentType.BLEED) || has(defender, AilmentType.POISON));
+    }
+
+    /** 2026-10-26 心靈永止：玩家 → {這一段持續傷害開始的 tick, 上次受到持續傷害的 tick}。 */
+    private final Map<UUID, long[]> dotStreak = new HashMap<>();
+
+    /** 心靈永止的倍率（沒有這個基石是 1）：中斷超過 1 秒再受到持續傷害算「開始承受」。 */
+    private double heartstopper(final Player player, final StatSheet sheet) {
+        if (!StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_HEARTSTOPPER)) {
+            dotStreak.remove(player.getUniqueId());
+            return 1.0;
+        }
+        final long now = now();
+        final long[] streak = dotStreak.computeIfAbsent(player.getUniqueId(), uuid -> new long[] {now, now});
+        if (now - streak[1] > tw.exilecore.stats.KeystoneKeys.HEARTSTOPPER_WINDOW) {
+            streak[0] = now;
+        }
+        streak[1] = now;
+        return tw.exilecore.stats.KeystoneKeys.heartstopper(now - streak[0]);
     }
 
     /** 擲避免：最多 {@link StatKeys#AVOID_CAP}%（堆再多也一樣；要免疫用開關）。 */
     private static boolean avoided(final StatSheet defender, final String stat, final RandomGenerator random) {
+        if (stat.startsWith("avoid.") && StatKeys.flag(defender, "flag.immune." + stat.substring("avoid.".length()))) {
+            return true; // 2026-10-26：免疫（PoE2 護符的 Grants Immunity to X：flag.immune.ignite／shock／bleed／poison／stun…，不受 75% 上限）
+        }
         if ((stat.equals(StatKeys.AVOID_IGNITE) || stat.equals(StatKeys.AVOID_CHILL) || stat.equals(StatKeys.AVOID_FREEZE)
                 || stat.equals(StatKeys.AVOID_SHOCK)) && StatKeys.flag(defender, StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE)) {
             return true; // 免疫元素異常（2026-10，三元守護）
@@ -911,7 +1451,8 @@ public final class AilmentService {
         if (bleed != null) {
             // 流血：目標在移動就更痛（PoE2）
             // 2026-10：加劇的流血已經照移動算了，不再乘第二次
-            final double factor = AilmentState.bleedFactor(bleed, moving(living), config.bleedMovingMultiplier());
+            // 2026-10-27 照 PoE2 Character.ot（no_extra_bleeding_damage_while_moving）：玩家移動時流血不會更痛，只有怪物會；這次之前玩家也 ×2
+            final double factor = AilmentState.bleedFactor(bleed, !(living instanceof Player) && moving(living), config.bleedMovingMultiplier());
             damageOverTime(living, entry, bleed.dps() * factor, bleed.source(), AilmentType.BLEED, now);
             if (tracked.get(uuid) != entry || !living.isValid() || living.isDead()) {
                 return;
@@ -938,9 +1479,10 @@ public final class AilmentService {
                 return;
             }
         }
-        entry.state.decay(now, ticks(config.freezeDecayDelay()), config.freezeDecayPerSecond() / 20.0);
-        entry.state.stun().decay(now, config.stun().decayDelayTicks(), config.stun().decayPerTick());
-        entry.state.electrocute().decay(now, config.electrocute().decayDelayTicks(), config.electrocute().decayPerTick());
+        entry.state.decay(now, config.freeze().decayDelayTicks(entry.player), config.freeze().decayPerTick(entry.player));
+        entry.state.stun().decay(now, config.stun().decayDelayTicks(entry.player), config.stun().decayPerTick(entry.player));
+        entry.state.electrocute().decay(now, config.electrocute().decayDelayTicks(entry.player), config.electrocute().decayPerTick(entry.player));
+        entry.state.pin().decay(now, config.pin().decayDelayTicks(entry.player), config.pin().decayPerTick(entry.player));
         update(living, entry, now);
         if (entry.state.isEmpty(now)) {
             restore(living, entry);
@@ -968,7 +1510,37 @@ public final class AilmentService {
 
     /** 點燃扣血：怪物直接扣原版血量，玩家先扣護盾再扣生命；感電讓點燃也更痛。 */
     private void burn(final LivingEntity living, final Tracked entry, final AilmentState.Ignite ignite, final long now) {
-        damageOverTime(living, entry, ignite.dps(), ignite.source(), AilmentType.IGNITE, now);
+        double dps = ignite.dps();
+        // 2026-10-27 照 PoE2 Stormfire：被掛了雷焚的技能感電的敵人，點燃另外受到 x% 的閃電傷害（點燃的減免前傷害 × x%，吃閃電抗性）
+        final double storm = living instanceof Player || plugin.skills() == null ? 0 : plugin.skills().supportMechanics().extras().stormfire(living);
+        if (storm > 0 && plugin.monsters() != null && plugin.monsters().data(living).isPresent()) {
+            final StatSheet sheet = plugin.monsters().sheet(living, plugin.monsters().data(living).get());
+            final double fire = resistFactor(sheet, DamageType.FIRE);
+            if (fire > 1e-6) {
+                dps += dps / fire * storm / 100.0 * resistFactor(sheet, DamageType.LIGHTNING);
+            }
+        }
+        damageOverTime(living, entry, dps, ignite.source(), AilmentType.IGNITE, now);
+    }
+
+    /** 2026-10-27（Shock Conduction）：這隻目前的感電幅度（0 = 沒有）。 */
+    public double shockMagnitude(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        return entry == null ? 0 : entry.state.shock(now());
+    }
+
+    /**
+     * 2026-10-27：暈眩的事件——怪物被玩家輕暈（event＝light_stun_applied：輔助的先鋒）；玩家被暈眩（輕暈、重暈：輔助的能障）。
+     */
+    private void stunEvents(final LivingEntity attacker, final LivingEntity defender, final SkillProfile skill, final String event) {
+        if (plugin.skills() == null) {
+            return;
+        }
+        if (defender instanceof Player stunned) {
+            plugin.skills().supportMechanics().extras().playerStunned(stunned);
+        } else if (event != null && attacker instanceof Player stunner && skill != null) {
+            plugin.skills().procEvent(stunner, skill.id(), event, null, defender);
+        }
     }
 
     /** 這個實體正在移動（流血更痛）：水平速度明顯。 */
@@ -1030,6 +1602,9 @@ public final class AilmentService {
         credit(source, living, type, capped);
         if (type == AilmentType.BLEED) {
             entry.bloodLoss += capped; // 2026-10-24：血宣
+            if (source != null && plugin.skills() != null) {
+                plugin.skills().spears().bloodLoss(living, source, capped); // 2026-10-27 照 PoE2 Bloodhound's Mark：失血累積重暈
+            }
         }
         double vanilla = plugin.monsters().toVanillaDamage(living, data, capped);
         final double health = living.getHealth();
@@ -1085,10 +1660,11 @@ public final class AilmentService {
         if (type == AilmentType.POISON && StatKeys.flag(sheet, StatKeys.FLAG_CHAOS_IMMUNE)) {
             return false; // 2026-10：無垢之軀（混沌免疫）也不吃中毒的混沌持續傷害（以前只擋了「上中毒」以外的混沌擊中）
         }
-        double rest = amount;
+        double rest = amount * heartstopper(player, sheet); // 2026-10-26 心靈永止（PoE2 Heartstopper）
         final double shield = state.energyShield();
         double absorbed = 0;
-        if (shield > 0) {
+        // 2026-10-26 照 PoE2：流血、中毒不先扣能量護盾（這次之前全部持續傷害都先扣護盾）
+        if (shield > 0 && type != AilmentType.BLEED && type != AilmentType.POISON) {
             absorbed = Math.min(shield, rest);
             state.setEnergyShield(shield - absorbed);
             rest -= absorbed;
@@ -1142,7 +1718,9 @@ public final class AilmentService {
         final boolean burning = entry.state.ignite(now) != null;
         final boolean bleeding = entry.state.bleed(now) != null;
         final boolean poisoned = !entry.state.poisons(now).isEmpty();
-        setSlow(living, entry, held ? 1.0 : AilmentState.combineSlow(chill, entry.state.hexSlow(now))); // 2026-10-23：癱瘓、阻礙一起算
+        final double slowed = AilmentState.combineSlow(chill, entry.state.hexSlow(now)); // 2026-10-23：癱瘓、阻礙一起算
+        // 2026-10-26 照 PoE2：怪物最慢降到原本速度的 25%
+        setSlow(living, entry, held ? 1.0 : entry.player ? slowed : Math.min(1 - MONSTER_MIN_SPEED, slowed));
         if (living instanceof Player) {
             setJumpBlocked(living, entry, held);
         } else if (living instanceof Mob mob) {
@@ -1241,6 +1819,27 @@ public final class AilmentService {
         update(target, entry, now);
     }
 
+    /**
+     * 2026-10-26 照 PoE2：玩家技能的冰緩地面、感電地面（Frost Nexus、Storm Lance）直接給怪物冰緩／感電，不擲機率、不造成傷害。
+     * chill、shock 是小數（0.1 = 冰緩 10%、受到的傷害增加 10%）；不會被減速的不吃冰緩。
+     */
+    public void groundStatusOnMonster(final LivingEntity target, final double chill, final double shock, final long ticks) {
+        if (target == null || target instanceof Player || !target.isValid() || target.isDead() || plugin.monsters() == null
+                || plugin.monsters().data(target).isEmpty()) {
+            return;
+        }
+        final StatSheet sheet = plugin.monsters().sheet(target, plugin.monsters().data(target).get());
+        final long now = now();
+        final Tracked entry = track(target);
+        if (chill > 0 && !StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE)) {
+            entry.state.applyChill(chill, now + ticks, now);
+        }
+        if (shock > 0) {
+            entry.state.applyShock(shock, now + ticks, now);
+        }
+        update(target, entry, now);
+    }
+
     /** 2026-10-23：拿掉某個玩家在怪物身上造成的持續傷害（他死了、下線、離開地圖）；外觀與標記下一次更新時跟上。 */
     public void removeSource(final UUID source) {
         for (final Tracked entry : tracked.values()) {
@@ -1282,7 +1881,7 @@ public final class AilmentService {
                 if (StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE)) {
                     return;
                 }
-                entry.state.applyChill(value * Math.max(0, 1 + sheet.increased(StatKeys.SLOW_TAKEN, Set.of())), now + ticks(seconds), now);
+                entry.state.applyChill(value * Math.max(0, sheet.apply(StatKeys.SLOW_TAKEN, 1.0, Set.of())), now + ticks(seconds), now);
             }
             case SHOCK -> entry.state.applyShock(value, now + ticks(seconds), now);
             default -> {
@@ -1324,6 +1923,113 @@ public final class AilmentService {
     private boolean primed(final Tracked entry, final MonsterData data, final long now) {
         entry.state.stun().decay(now, config.stun().decayDelayTicks(), config.stun().decayPerTick());
         return !entry.state.stun().active(now) && entry.state.stun().buildup() >= config.primed(data.rarity());
+    }
+
+    /** 2026-10-26 照 PoE2：蓄勢待凍（凍結條到稀有度的門檻，還沒凍住）。 */
+    public boolean isPrimedForFreeze(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        if (entry == null) {
+            return false;
+        }
+        final long now = now();
+        entry.state.decay(now, config.freeze().decayDelayTicks(), config.freeze().decayPerTick());
+        return !entry.state.frozen(now) && plugin.monsters().data(entity).map(data -> entry.state.buildup() >= config.primed(data.rarity())).orElse(false);
+    }
+
+    /**
+     * 2026-10-27 照 PoE2（寒夜嗥 Arctic Howl：Freezes enemies that are Primed for Freeze）：蓄勢待凍的怪直接凍結（基礎凍結時間），
+     * 回傳有沒有凍住。
+     */
+    public boolean freezeIfPrimed(final LivingEntity entity) {
+        if (entity instanceof org.bukkit.entity.Player || !isPrimedForFreeze(entity)) {
+            return false;
+        }
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        if (entry == null) {
+            return false;
+        }
+        final long now = now();
+        entry.state.freeze(now, ticks(config.freezeDuration(false)), 0);
+        entry.state.freezeMeter().raiseThreshold(config.freeze().after(false), config.freeze().afterTicks(false), now);
+        refreshAt(entity, entry, entry.state.frozenUntil() - now);
+        feedback(entity, AilmentType.FREEZE);
+        return true;
+    }
+
+    /** 2026-10-27 照 PoE2 Exploit Weakness：用掉這隻的完全破甲（護甲恢復）；本來就沒有完全破甲回傳 false。 */
+    public boolean consumeFullBreak(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        if (entry == null || !entry.state.fullyBroken(now())) {
+            return false;
+        }
+        entry.state.restoreArmour();
+        return true;
+    }
+
+    /**
+     * 2026-10-27 照 PoE2 Bloodhound's Mark（血嗅印：失血的 300% 算成重暈累積）：對怪物累積 damage 點的重暈（不是擊中，照牠的暈眩門檻），
+     * 滿了照一般的重暈（基礎時間）。回傳這次累積了門檻的幾成（0–1）；玩家、不是怪物的回傳 0。
+     */
+    public double addStunFromDamage(final LivingEntity defender, final double damage) {
+        if (damage <= 0 || defender instanceof Player || !defender.isValid() || defender.isDead() || plugin.monsters() == null) {
+            return 0;
+        }
+        final MonsterData monster = plugin.monsters().data(defender).orElse(null);
+        if (monster == null) {
+            return 0;
+        }
+        final long now = now();
+        Tracked entry = tracked.get(defender.getUniqueId());
+        final double threshold = basePoise(defender, monster, null) * (entry == null ? 1.0 : entry.state.stun().thresholdMultiplier(now));
+        final double buildup = config.stun().buildupFor(damage, threshold, 1.0);
+        if (buildup <= 0) {
+            return 0;
+        }
+        entry = entry == null ? track(defender) : entry;
+        if (entry.state.stun().add(buildup, now, config.stun().decayDelayTicks(false), config.stun().decayPerTick(false))) {
+            entry.state.stun().trigger(now, ticks(config.stun().duration(false)), 0);
+            entry.state.stun().raiseThreshold(config.stun().after(false), config.stun().afterTicks(false), now);
+            refreshAt(defender, entry, entry.state.stun().activeUntil() - now);
+            feedback(defender, AilmentType.STUN);
+        }
+        update(defender, entry, now);
+        return Math.min(1, buildup);
+    }
+
+    /** 2026-10-27 照 PoE2 Spar／Retaliate：這隻（玩家）的重暈條累積了幾成（0–1）。 */
+    public double stunBuildup(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        if (entry == null) {
+            return 0;
+        }
+        final boolean player = entity instanceof Player;
+        entry.state.stun().decay(now(), config.stun().decayDelayTicks(player), config.stun().decayPerTick(player));
+        return Math.max(0, Math.min(1, entry.state.stun().buildup()));
+    }
+
+    /**
+     * 2026-10-27 照 PoE2 Neural Overload（Supported Skills Electrocute Primed enemies on Hit）：電擊條到「蓄勢待電」（普通 40%、魔法 50%、
+     * 稀有 60%、傳奇 70%）還沒電擊的怪直接電擊（基礎時間），回傳有沒有電到。
+     */
+    public boolean electrocuteIfPrimed(final LivingEntity entity) {
+        if (entity instanceof Player) {
+            return false;
+        }
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        final MonsterData data = entry == null || plugin.monsters() == null ? null : plugin.monsters().data(entity).orElse(null);
+        if (data == null) {
+            return false;
+        }
+        final long now = now();
+        entry.state.electrocute().decay(now, config.electrocute().decayDelayTicks(false), config.electrocute().decayPerTick(false));
+        if (entry.state.electrocute().active(now) || entry.state.electrocute().buildup() < config.primed(data.rarity())) {
+            return false;
+        }
+        entry.state.electrocute().trigger(now, ticks(config.electrocute().duration(false)), 0);
+        entry.state.electrocute().raiseThreshold(config.electrocute().after(false), config.electrocute().afterTicks(false), now);
+        refreshAt(entity, entry, entry.state.electrocute().activeUntil() - now);
+        feedback(entity, AilmentType.ELECTROCUTE);
+        return true;
     }
 
     /** 蓄勢待暈（給其他模組，例如技能說明、昇華）。 */
@@ -1377,13 +2083,20 @@ public final class AilmentService {
      * @param armour   怪物沒被破之前的護甲
      */
     public boolean breakArmour(final LivingEntity defender, final MonsterData data, final double physical, final double percent, final double armour) {
+        return breakArmour(defender, data, physical, percent, armour, 1.0);
+    }
+
+    /** 2026-10-26 照 PoE2 天賦樹：durationScale＝破甲持續時間的倍率（增加 x% 破甲持續時間）。 */
+    public boolean breakArmour(final LivingEntity defender, final MonsterData data, final double physical, final double percent, final double armour,
+                               final double durationScale) {
         if (physical <= 0 || percent <= 0 || armour <= 0 || data == null) {
             return false;
         }
         final double amount = physical * percent / 100.0 * config.armourBreakMultiplier(data.rarity());
         final Tracked entry = track(defender);
         final long now = now();
-        final boolean full = entry.state.breakArmour(amount, armour, now, ticks(config.armourBreakDuration()));
+        final boolean full = entry.state.breakArmour(amount, armour, now,
+                Math.max(1, Math.round(ticks(config.armourBreakDuration()) * Math.max(0.1, durationScale))));
         if (full) {
             defender.getWorld().playSound(defender.getLocation(), org.bukkit.Sound.ENTITY_ITEM_BREAK, 0.9f, 0.7f);
             defender.getWorld().spawnParticle(Particle.BLOCK, defender.getLocation().add(0, defender.getHeight() * 0.6, 0), 18, 0.3, 0.4, 0.3, 0,
@@ -1408,6 +2121,14 @@ public final class AilmentService {
             if (bar >= 0.05) {
                 final boolean ready = plugin.monsters().data(living).map(data -> bar >= config.primed(data.rarity())).orElse(false);
                 marks.append(ready ? "<gold>暈" : "<gray>暈").append(Math.min(99, Math.round(bar * 100))).append("%");
+            }
+        }
+        // 2026-10-26 照 PoE2：凍結條也顯示，到「蓄勢待凍」（普通 40%、魔法 50%、稀有 60%、傳奇 70%）變金色
+        if (!frozen) {
+            final double freezeBar = entry.state.buildup();
+            if (freezeBar >= 0.05) {
+                final boolean ready = plugin.monsters().data(living).map(data -> freezeBar >= config.primed(data.rarity())).orElse(false);
+                marks.append(ready ? "<gold>凍" : "<#9fd8ff>凍").append(Math.min(99, Math.round(freezeBar * 100))).append("%");
             }
         }
         if (entry.state.fullyBroken(markNow)) {
@@ -1583,11 +2304,36 @@ public final class AilmentService {
         if (entry == null) {
             return;
         }
+        if (plugin.skills() != null && has(entity, type)) {
+            plugin.skills().originals().ailmentConsumed(entity, type); // 2026-10-26 照 PoE2：用掉異常（拾晶裝）
+        }
         entry.state.cure(type);
         if (entry.state.isEmpty(plugin.getServer().getCurrentTick())) {
             tracked.remove(entity.getUniqueId());
             restore(entity, entry);
         }
+    }
+
+    /**
+     * 2026-10-27：玩家的技能「用掉」敵人身上的異常（元崩、稜光裂、用掉異常的輔助觸發）。照 PoE2 無限循環：
+     * 用掉感電時有 x% 機率重新施加——用掉的效果照常觸發，感電留在身上（同一個感電，時間照舊）。
+     *
+     * @return 異常真的拿掉了
+     */
+    public boolean consume(final LivingEntity entity, final AilmentType type, final org.bukkit.entity.Player by) {
+        if (type == AilmentType.SHOCK && by != null && !(entity instanceof org.bukkit.entity.Player) && has(entity, type)) {
+            final double chance = plugin.players().sheet(by).flat(tw.exilecore.stats.KeystoneOriginKeys.SHOCK_REAPPLY, java.util.Set.of());
+            if (chance > 0 && plugin.random().nextDouble() * 100 < chance) {
+                if (plugin.skills() != null) {
+                    plugin.skills().originals().ailmentConsumed(entity, type); // 用掉的那一下照常算（拾晶裝）
+                }
+                entity.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK, entity.getLocation().add(0, entity.getHeight() * 0.6, 0),
+                        8, 0.3, 0.4, 0.3, 0.05);
+                return false;
+            }
+        }
+        cure(entity, type);
+        return true;
     }
 
     /** 清掉一個實體身上的異常並還原（死亡、登出、換角色、卸載）。 */
@@ -1653,7 +2399,7 @@ public final class AilmentService {
         final AilmentState.Ignite bleed = entry.state.bleed(now);
         if (bleed != null) {
             parts.add(String.format(Locale.ROOT, "<%s>%s %.1fs%s", AilmentType.BLEED.color(), AilmentType.BLEED.mark(),
-                    (bleed.endTick() - now) / 20.0, moving(player) ? "⚠" : ""));
+                    (bleed.endTick() - now) / 20.0, "")); // 2026-10-27：玩家移動不再更痛，拿掉移動時的「⚠」
         }
         final int poisons = entry.state.poisons(now).size();
         if (poisons > 0) {

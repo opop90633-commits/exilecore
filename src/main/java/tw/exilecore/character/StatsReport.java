@@ -267,7 +267,8 @@ public final class StatsReport {
     /** @param chat 聊天欄版本：說明放在 hover，不另外佔行 */
     private static List<String> defence(final ExileCore plugin, final Player player, final boolean chat) {
         final PlayerState state = plugin.players().get(player);
-        final StatSheet sheet = plugin.players().sheet(player);
+        // 2026-10-27：含身上的減益（詛咒的抗性…）、被破甲、神聖儀式——跟挨打時一樣（BuffImpact.defenceSheet）；這次之前只看屬性表
+        final StatSheet sheet = BuffImpact.defenceSheet(plugin, player);
         final DefenceEstimates estimates = estimates(plugin, state, sheet);
         final List<String> lines = new ArrayList<>();
         final double lifeRegen = sheet.get(StatKeys.LIFE_REGEN) + state.maxLife() * sheet.get(StatKeys.LIFE_REGEN_PERCENT) / 100.0;
@@ -278,9 +279,10 @@ public final class StatsReport {
                 state.maxSpirit(), state.reservedSpirit(), Math.max(0, state.maxSpirit() - state.reservedSpirit()),
                 chat ? "" : " <dark_gray>精魂技能、捷光環用；劇情 Boss、權杖、胸甲與項鍊給"));
         final double block = sheet.get(StatKeys.BLOCK_CHANCE);
+        final double blockCap = DamageCalculator.blockCap(sheet); // 2026-10-27：含格擋上限加成，最多 90%（PoE2；這次之前固定顯示 50）
         lines.add(String.format(Locale.ROOT, "%s✦ 能量護盾 <white>%d%s%s⛨ 格擋 <white>%d%%%s",
-                ES, Math.round(state.maxEnergyShield()), SEP, BLOCK, Math.round(Math.min(StatKeys.BLOCK_CAP, block)),
-                block > StatKeys.BLOCK_CAP ? String.format(Locale.ROOT, " <dark_gray>（上限 %d%%，堆了 %d%%）", Math.round(StatKeys.BLOCK_CAP), Math.round(block)) : ""));
+                ES, Math.round(state.maxEnergyShield()), SEP, BLOCK, Math.round(Math.min(blockCap, block)),
+                block > blockCap ? String.format(Locale.ROOT, " <dark_gray>（上限 %d%%，堆了 %d%%）", Math.round(blockCap), Math.round(block)) : ""));
         if (state.maxEnergyShield() > 0) {
             lines.add(String.format(Locale.ROOT, "<dark_gray>　護盾被打後 %.1f 秒開始回充，每秒回 %,d",
                     PlayerStateService.esRechargeDelay(sheet) / 20.0,
@@ -307,8 +309,7 @@ public final class StatsReport {
             }
         }
         // 2026-10：偏斜（沒閃掉的擊中再擲一次，偏斜的傷害更少 40%）
-        final double deflection = sheet.get(StatKeys.DEFLECTION)
-                + sheet.get(StatKeys.EVASION) * Math.max(0, sheet.flat(StatKeys.DEFLECTION_FROM_EVASION, java.util.Set.of())) / 100.0;
+        final double deflection = tw.exilecore.stats.DamageCalculator.deflectionRating(sheet); // 2026-10-27：增加偏斜也乘閃避轉來的
         if (deflection > 0) {
             final double accuracy = plugin.monsters() == null ? 0 : plugin.monsters().config().accuracyAt(Math.max(1, state.level()));
             lines.add(String.format(Locale.ROOT, "<gray>偏斜 <white>%d <dark_gray>＝偏斜率 <white>%d%%<dark_gray>（偏斜的擊中傷害更少 %d%%）",
@@ -328,6 +329,7 @@ public final class StatsReport {
                 + "已經扣掉抗性與護甲；沒算格擋、閃避、受到傷害增加或減少<newline><dark_gray>越高越不容易被 Boss 的大招秒掉";
         lines.add(chat ? hover(maxHit, maxHitHelp) : maxHit);
         lines.addAll(ailmentDefence(sheet));
+        lines.addAll(BuffImpact.situationLines(plugin, player)); // 2026-10-27：身上的減益（數字已含）
         if (plugin.pvp() != null && plugin.pvp().inArena(player)) {
             lines.add(String.format(Locale.ROOT, "<#ff6b6b>⚔ 競技場<gray>：玩家打你的傷害減少 <white>%d%%<dark_gray>（專屬的 PvP 減傷，你打別人也一樣）",
                     Math.round(plugin.pvp().config().reduction())));
@@ -481,7 +483,7 @@ public final class StatsReport {
         out.put("int", sheet.get(StatKeys.INT));
         out.put("armour", sheet.get(StatKeys.ARMOUR));
         out.put("evasion", sheet.get(StatKeys.EVASION));
-        out.put("block", Math.min(StatKeys.BLOCK_CAP, sheet.get(StatKeys.BLOCK_CHANCE)));
+        out.put("block", Math.min(DamageCalculator.blockCap(sheet), sheet.get(StatKeys.BLOCK_CHANCE))); // 2026-10-27：含上限加成，最多 90%
         out.put("accuracy", sheet.get(StatKeys.ACCURACY));
         out.put("movement", sheet.increased(StatKeys.MOVEMENT_SPEED, Set.of()) * 100); // 跟 /stats 一樣：增加幾 %
         final double max = sheet.get(StatKeys.RESIST_MAX);
@@ -565,6 +567,21 @@ public final class StatsReport {
         final String dpsText = String.format(Locale.ROOT, "<gray>估計每秒傷害 <white>%,d", dps);
         lines.add(chat ? hover(dpsText, "普攻平均傷害 × 每秒次數 × 暴擊期望<newline><dark_gray>沒算怪物的護甲與抗性；技能的傷害看 /skill")
                 : dpsText + " <dark_gray>（未減免、含暴擊）");
+        // 2026-10-27：擊中時看目標才算的加成不加進數字，列出來（看得到有配到）
+        // 2026-10-27：也看每個技能疊上輔助的表（處刑、貪匣之鎖、貼身、連擊、毒慾…掛在輔助上）；這次之前只看角色屬性表
+        final List<StatSheet> conditionSheets = new ArrayList<>();
+        conditionSheets.add(sheet);
+        if (plugin.skills() != null) {
+            try {
+                conditionSheets.addAll(plugin.skills().boundSkillSheets(state, sheet));
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().warn("算 {} 的技能條件失敗", player.getName(), e);
+            }
+        }
+        final List<String> conditional = BuffImpact.conditionalNames(conditionSheets);
+        if (!conditional.isEmpty()) {
+            lines.add("<dark_gray>　打到符合條件的敵人才算（沒算進上面的數字）：<gray>" + String.join("<dark_gray>、<gray>", conditional));
+        }
         // 2026-10：技能欄上每個技能的每秒傷害（大家打怪都是用技能，不是普攻）
         if (plugin.skills() != null) {
             // 2026-10-24：一個技能算不出來不要拖垮整張面板（以前丟例外整個 build() 失敗，網頁就停在舊快照）
@@ -587,7 +604,9 @@ public final class StatsReport {
                         + "<dark_gray>召喚技能：一隻召喚物的每秒傷害 × 同時最多幾隻<newline>"
                         + "<dark_gray>全開：技能欄上的戰吼、戰旗的增益都開著、強化攻擊照冷卻平均，詛咒、印記都掛在敵人身上<newline>"
                         + "<dark_gray>平常也算雙詠的第二發、蓄力滿層；全開再算投射物貼臉全中、灌注滿層、瞬影擊滿銳星連打<newline>"
-                        + "<dark_gray>沒算怪物的減免、曝露、怒氣、對異常敵人更多這些打起來才有的加成、打到幾個敵人<newline>"
+                        + "<dark_gray>沒算怪物的減免、曝露、怒氣、連擊、終式、抑星、對異常敵人更多這些打起來才有的加成、打到幾個敵人<newline>"
+                        + "<dark_gray>季節循環、穿透、痛極生力、血鋒照滿血估；雙持照主副手輪流平均<newline>"
+                        + "<dark_gray>異能賦予照付得起、血滲照生命消耗、傲寒照滿魔力估；「擊中傷害更少」只乘擊中<newline>"
                         + "<dark_gray>實際輸出去營地打訓練假人最準") : text);
             }
             // 2026-10：打訓練假人的實測（估計值跟實際可以差很多）
@@ -682,7 +701,11 @@ public final class StatsReport {
             lines.addAll(plugin.skills().statusLines(player));
             // 2026-10：怒氣（打中時才算，但現在就看得出來給了多少）
             final int rage = plugin.skills().resources().rage(player);
-            if (rage > 0) {
+            if (rage > 0 && StatKeys.flag(plugin.players().sheet(player), tw.exilecore.stats.KeystoneKeys.FLAG_PRIMAL_HUNGER)) {
+                // 2026-10-27：原初飢餓——怒氣沒有效果（跟戰鬥一樣）；這次之前照樣寫攻擊傷害增加
+                lines.add(String.format(Locale.ROOT, "<#ff6b4a>怒氣 <white>%d<dark_gray>/%d<gray>：<dark_gray>原初飢餓，怒氣沒有效果",
+                        rage, plugin.skills().resources().rageMax(plugin.players().sheet(player))));
+            } else if (rage > 0) {
                 lines.add(String.format(Locale.ROOT, "<#ff6b4a>怒氣 <white>%d<dark_gray>/%d<gray>：攻擊傷害增加 <white>%d%%",
                         rage, plugin.skills().resources().rageMax(plugin.players().sheet(player)),
                         Math.round(BuffImpact.rageBonus(plugin, player) * 100)));

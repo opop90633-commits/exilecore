@@ -86,8 +86,8 @@ public final class FlaskConfig {
         }
         final List<String> parsedStarter = settings.strings("starter");
         for (final String id : parsedStarter) {
-            if (!parsed.containsKey(id)) {
-                throw new IllegalArgumentException(FILE + ".settings.starter：沒有這種藥劑 " + id);
+            if (!parsed.containsKey(id) || parsed.get(id).retired()) {
+                throw new IllegalArgumentException(FILE + ".settings.starter：沒有這種藥劑（或已經拿掉） " + id);
             }
         }
         this.slots = parsedSlots;
@@ -99,8 +99,15 @@ public final class FlaskConfig {
         return id == null ? null : bases.get(id);
     }
 
+    /** 現役的藥劑基底（2026-10-26：拿掉的 retired 不算；舊物品用 {@link #base(String)} 還是找得到）。 */
     public Collection<FlaskBase> bases() {
-        return bases.values();
+        final List<FlaskBase> active = new ArrayList<>();
+        for (final FlaskBase base : bases.values()) {
+            if (!base.retired()) {
+                active.add(base);
+            }
+        }
+        return active;
     }
 
     /** 藥劑欄（快捷欄索引，0 = 數字鍵 1）。 */
@@ -165,7 +172,7 @@ public final class FlaskConfig {
         final FlaskKind kind = random.nextBoolean() ? FlaskKind.LIFE : FlaskKind.MANA;
         final List<FlaskBase> eligible = new ArrayList<>();
         for (final FlaskBase base : bases.values()) {
-            if (base.kind() == kind && base.level() <= monsterLevel) {
+            if (base.kind() == kind && base.level() <= monsterLevel && !base.retired()) {
                 eligible.add(base);
             }
         }

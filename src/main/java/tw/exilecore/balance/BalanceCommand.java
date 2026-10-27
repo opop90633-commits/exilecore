@@ -129,7 +129,7 @@ public final class BalanceCommand {
             final tw.exilecore.heist.HeistConfig.Site finale = heist.finale();
             if (finale != null && finale.boss() != null) {
                 specs.add(new BalanceModel.BossSpec("heist:finale", finale.boss().name(), topLevel + heist.finaleLevelBonus(), null,
-                        finale.boss().life() * (maps == null ? 1.0 : maps.finalLifeMultiplier(maps.tiers().max())), finale.boss().mods()));
+                        finale.boss().life() * (maps == null ? 1.0 : maps.heistFinaleLifeMultiplier(maps.tiers().max())), finale.boss().mods())); // 2026-10-27 照站長：再乘 boss_life.heist_finale
             }
         }
         if (bounties != null && zones != null) {
@@ -169,7 +169,7 @@ public final class BalanceCommand {
                 }
                 specs.add(new BalanceModel.BossSpec("uber:" + map.id(), uber.name() != null ? uber.name() : map.boss().name() + "・極境",
                         maps.uberStats(map.id(), uber).monsterLevel(), null,
-                        map.boss().life() * uber.life() * maps.finalLifeMultiplier(maps.tiers().max()), mods, 2.0, uber.life()));
+                        map.boss().life() * uber.life() * maps.uberLifeMultiplier(), mods, 2.0, uber.life())); // 2026-10-27 照站長：再乘 boss_life.uber
             }
         }
         if (events != null) {

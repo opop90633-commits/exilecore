@@ -107,7 +107,7 @@ public final class TrainingService {
         return stamped == null || stamped.isBlank() || stamped.equals(gearHash(state)) ? record : null;
     }
 
-    /** 裝備欄 10 件（戒指、項鍊、腰帶、主副手、四件防具）的物品編號湊成的雜湊；沒裝的格子算空。 */
+    /** 裝備欄 10 件（戒指、項鍊、腰帶、主副手、四件防具；有裝的話加第三個戒指）的物品編號湊成的雜湊；沒裝的格子算空。 */
     public String gearHash(final tw.exilecore.character.PlayerState state) {
         final StringBuilder text = new StringBuilder();
         for (int i = 0; i < tw.exilecore.character.PlayerState.JEWELLERY_SLOTS.length; i++) {
@@ -115,6 +115,11 @@ public final class TrainingService {
             final String id = stack == null || stack.isEmpty() || plugin.items() == null ? ""
                     : plugin.items().read(stack).map(tw.exilecore.item.ItemData::uuid).orElse(stack.getType().getKey().getKey());
             text.append(id).append(';');
+        }
+        // 2026-10-26：展露之指的第三個戒指（有裝才加進去，沒裝的人雜湊跟以前一樣，舊紀錄不會失效）
+        final org.bukkit.inventory.ItemStack ring3 = state.jewellery(tw.exilecore.character.PlayerState.RING3_SLOT);
+        if (ring3 != null && !ring3.isEmpty() && plugin.items() != null) {
+            text.append("r3=").append(plugin.items().read(ring3).map(tw.exilecore.item.ItemData::uuid).orElse(ring3.getType().getKey().getKey())).append(';');
         }
         return Integer.toHexString(text.toString().hashCode());
     }

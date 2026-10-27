@@ -1,0 +1,329 @@
+# 2026-10-27：PoE2 0.5（poe2db.tw／RePoE poe2 uniques.json，不含 Cultivated）有、我們這次之前沒有的傳奇（照英文名比對 uniques.yml 的註解）。
+# 詞綴原文來自 PoB-PoE2 的 Current 版本（跟 poe2db 對過幾件：雷頌墜、逆漏法袍、映鏡指環）。needs-new-mechanic：做不出來的那幾條（最多列三條）。
+# poe2db 的總表另外有幾個 Trial of the Sekhemas 的戒指名稱（例如 Sekhema's Resolve：只能嵌綠寶石珠寶），跟下面 Eshtera's Path／Safrin's Resolve／Zaida's Longevity 同一套（戒指嵌珠寶，還沒有這個機制）。
+name	slot/base	needs-new-mechanic	proposed tier	status
+Beacon of Azis	Amulet／Solar Amulet	是：30% increased Light Radius	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：sunbeacon_amulet（烈陽墜）
+Carnage Heart	Amulet／Amber Amulet	是：(25-50)% increased Damage while Leeching	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：carnage_heart_amulet（屠心墜）
+Choir of the Storm	Amulet／Jade Amulet	是：Grants Skill: Level (1-20) Lightning Bolt；Critical Hits Ignore Enemy Monster Lightning Resistance；Trigger Lightning Bolt Skill on Critical Hit	chase（流派核心（暴擊觸發落雷、無視閃電抗性））	added 2026-10-27：storm_choir_amulet（雷頌墜）
+Defiance of Destiny	Amulet／Jade Amulet	是：Recover (20-30)% of Missing Life before being Hit by an Enemy	normal（一般效果／練功、特定流派用）	todo
+Eventide Petals	Amulet／Veridical Chain	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Eye of Chayula	Amulet／Gold Amulet	是：Cannot be Light Stunned	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：void_eye_amulet（虛眸墜）
+Fireflower	Amulet／Solar Amulet	是：Take 100 Fire Damage when you Ignite an Enemy	normal（一般效果／練功、特定流派用）	todo
+Fixation of Yix	Amulet／Stellar Amulet	是：Allies in your Presence have (30-50)% increased Critical Hit Chance；Allies in your Presence have (30-50)% increased Critical Damage Bonus；Allies in your Presence have (10-20)% increased Attack Speed	normal（一般效果／練功、特定流派用）	todo
+Hinekora's Sight	Amulet／Stellar Amulet	是：Grants Skill: Level (1-20) Future-Past	normal（一般效果／練功、特定流派用）	todo
+Idol of Uldurn	Amulet／Crimson Amulet	是：Skills have +1 to Limit	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：many_hands_idol（眾手偶墜）
+Igniferis	Amulet／Crimson Amulet	是：25% increased Light Radius；Life Recovery from Regeneration is not applied；Every 4 seconds, Recover 1 Life for every 0.2 Life Recovery per second from Regeneration	normal（一般效果／練功、特定流派用）	todo
+Immaculate Adherence	Amulet／Solar Amulet	是：Cannot have Energy Shield；Convert 100% of maximum Energy Shield to maximum Divinity；(0-100)% increased maximum Divinity	normal（一般效果／練功、特定流派用）	todo
+Strugglescream	Amulet／Stellar Amulet	是：Can have 3 additional Instilled Modifiers	chase（流派核心（多三條注入詞綴））	todo
+Surefooted Sigil	Amulet／Jade Amulet	是：+1 metre to Dodge Roll distance；50% increased Evasion Rating if you've Dodge Rolled Recently	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：surestep_sigil（穩足墜）
+The Everlasting Gaze	Amulet／Azure Amulet	是：Gain (4-6)% of maximum Mana as Extra maximum Energy Shield	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：everwatch_amulet（恆望墜）
+The Pandemonius	Amulet／Lapis Amulet	是：Blind Chilled enemies on Hit	normal（一般效果／練功、特定流派用）	todo
+Ungil's Harmony	Amulet／Azure Amulet	是：You have no Critical Damage Bonus	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：still_harmony_amulet（靜和墜）
+Yoke of Suffering	Amulet／Bloodstone Amulet	是：Enemies take (15-20)% increased Damage for each Elemental Ailment type among；your Ailments on them；(30-40)% reduced Duration of Ignite, Shock and Chill on Enemies	normal（一般效果／練功、特定流派用）	todo
+Bijouborne	Belt／Double Belt	是：Grants Skill: Level (1-20) Cast on Charm Use；+2 Charm Slots	normal（一般效果／練功、特定流派用）	todo
+Birthright Buckle	Belt／Wide Belt	是：Life Flasks used while on Low Life apply Recovery Instantly；Mana Flasks used while on Low Mana apply Recovery Instantly	normal（一般效果／練功、特定流派用）	todo
+Cat O' Nine Tails	Belt／Utility Belt	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Coward's Legacy	Belt／Mail Belt	是：(30-40)% increased Life and Mana Recovery from Flasks；You are considered on Low Life while at 75% of maximum Life or below instead	normal（一般效果／練功、特定流派用）	todo
+Ingenuity	Belt／Utility Belt	基底：我們沒有這個基底	chase（流派核心（放大兩枚戒指））	added 2026-10-27：ingenious_cord（巧匠束帶）
+Mageblood	Belt／Utility Belt	基底：我們沒有這個基底	chase（流派核心（法師遺產，原作最貴的腰帶））	skipped：要法師遺產（Mage's Legacy）系統
+Ryslatha's Coil	Belt／Ornate Belt	是：(30-40)% more maximum Physical Attack Damage；(30-40)% less minimum Physical Attack Damage	normal（一般效果／練功、特定流派用）	todo
+Shavronne's Satchel	Belt／Fine Belt	是：Life Recovery from Flasks also applies to Energy Shield	normal（一般效果／練功、特定流派用）	todo
+Soul Tether	Belt／Long Belt	是：You lose 5% of maximum Energy Shield per second；Excess Life Recovery from Leech is applied to Energy Shield	normal（一般效果／練功、特定流派用）	todo
+The Gnashing Sash	Belt／Wide Belt	是：Lose 5% of maximum Life per second；Life Recovery from Flasks can Overflow Maximum Life	normal（一般效果／練功、特定流派用）	todo
+Waistgate	Belt／Heavy Belt	是：Life and Mana Flasks can be equipped in either slot	normal（一般效果／練功、特定流派用）	todo
+Zerphi's Genesis	Belt／Heavy Belt	是：(25-50)% increased Corrupted Charms effect duration；50% of Charges consumed by used Charms are granted to your Life Flasks；50% of Charges consumed by used Life Flasks are granted to your Charms	normal（一般效果／練功、特定流派用）	todo
+Apron of Emiran	Body Armour／Hermit Garb	是：Bleeding you inflict is Aggravated	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：butcher_apron（屠夫圍裙）
+Atziri's Splendour	Body Armour／Sacrificial Regalia	基底：我們沒有這個基底	chase（原作只有阿姿里（Boss）會掉）	todo
+Bitterbloom	Body Armour／Feathered Robe	是：Energy Shield Recharge starts when you use a Mana Flask	normal（一般效果／練功、特定流派用）	todo
+Bramblejack	Body Armour／Rusted Cuirass	是：Cannot Evade Enemy Attacks；250% of Melee Physical Damage taken reflected to Attacker；Regenerate 5% of maximum Life per second while Surrounded	normal（一般效果／練功、特定流派用）	todo
+Bristleboar	Body Armour／Leather Vest	是：Gain 10 Rage when Critically Hit by an Enemy	normal（一般效果／練功、特定流派用）	todo
+Coat of Red	Body Armour／Chain Mail	是：25% chance to be inflicted with Bleeding when Hit	normal（一般效果／練功、特定流派用）	todo
+Couture of Crimson	Body Armour／Gilded Vestments	是：Life Leech can Overflow Maximum Life	normal（一般效果／練功、特定流派用）	todo
+Decree of Loyalty	Body Armour／Ancient Mail	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Doryani's Prototype	Body Armour／Scale Mail	是：+100% of Armour also applies to Lightning Damage；Enemies in your Presence have Lightning Resistance equal to yours；Lightning Resistance does not affect Lightning damage taken	normal（一般效果／練功、特定流派用）	todo
+Dustbloom	Body Armour／Studded Vest	是：Maximum 10 Fragile Regrowth；0.5% of maximum Life Regenerated per second per Fragile Regrowth；10% increased Mana Regeneration Rate per Fragile Regrowth	normal（一般效果／練功、特定流派用）	todo
+Enfolding Dawn	Body Armour／Pilgrim Vestments	是：Gain no inherent bonus from Intelligence	normal（一般效果／練功、特定流派用）	todo
+Forgotten Warden	Body Armour／Primal Markings	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Foxshade	Body Armour／Quilted Vest	是：10% increased Movement Speed when on Full Life；100% increased Evasion Rating when on Full Life	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：foxshade_vest（狐影背心）
+Geofri's Sanctuary	Body Armour／Revered Vestments	是：Your maximum Energy Shield is equal to (200-300)% of your Strength；Maximum Energy Shield cannot be Converted；Regenerate 2 Life per second for every 10 Intelligence	normal（一般效果／練功、特定流派用）	todo
+Ghostwrithe	Body Armour／Tattered Robe	是：35% of Maximum Life Converted to Energy Shield	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：wraithwrap_robe（魂縛破袍）
+Gloamgown	Body Armour／Elementalist Robe	是：Your base Energy Shield Recharge Delay is 10 seconds	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：gloaming_gown（暮色長袍）
+Gloomform	Body Armour／Waxed Jacket	是：20% reduced Light Radius；You have a Smoke Cloud around you while stationary	normal（一般效果／練功、特定流派用）	todo
+Greed's Embrace	Body Armour／Vaal Cuirass	是：50% increased Strength Requirement	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：gilded_greed_plate（貪金胸鎧）
+Icetomb	Body Armour／Mail Vestments	是：Gain Cold Thorns Damage equal to (10-18)% of your maximum Mana	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：icetomb_vestments（冰塚法鎧）
+Irongrasp	Body Armour／Vagabond Armour	是：Iron Grip；Iron Will	normal（一般效果／練功、特定流派用）	todo
+Kingsguard	Body Armour／Full Plate	是：25% reduced Endurance Charge Duration；Recover 5% of maximum Life for each Endurance Charge consumed	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：kingsguard_plate（王衛全鎧）
+Lightning Coil	Body Armour／Ancestral Mail	是：Grants Skill: Level (1-20) Valako's Charge；(30-50)% of Physical damage from Hits taken as Lightning damage	normal（一般效果／練功、特定流派用）	todo
+Loreweave	Body Armour／?	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Morior Invictus	Body Armour／Grand Regalia	基底：我們沒有這個基底	chase（終局專屬基底、插槽詞綴）	skipped：原作是 10 種插槽詞綴隨機擲 3 條、每個填滿的插槽算一次；我們的傳奇還沒有隨機詞綴池
+Necromantle	Body Armour／Bone Raiment	是：Minions gain (20-30)% of their maximum Life as Extra maximum Energy Shield；Minions Revive 50% faster	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：gravecloak_raiment（冥殮骨袍）
+Pariah's Embrace	Body Armour／Cloaked Mail	是：(20-40)% increased Mana Cost Efficiency	normal（一般效果／練功、特定流派用）	todo
+Perfidy	Body Armour／Knight Armour	是：(10-30)% chance to Avoid Physical Damage from Hits；(10-30)% chance to Avoid Fire Damage from Hits；(10-30)% chance to Avoid Cold Damage from Hits	normal（一般效果／練功、特定流派用）	todo
+Pragmatism	Body Armour／Explorer Armour	是：Charms use no Charges	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：pragmatist_armour（務實戰甲）
+Prayers for Rain	Body Armour／Keth Raiment	是：30% slower start of Energy Shield Recharge；Energy Shield Recharge is not interrupted by Damage if Recharge began Recently	normal（一般效果／練功、特定流派用）	todo
+Queen of the Forest	Body Armour／Smuggler Coat	是：Increases Movement Speed by 25%, plus 1% per 600 Evasion Rating, up to a maximum of 75%；Other Modifiers to Movement Speed except for Sprinting do not apply	normal（一般效果／練功、特定流派用）	todo
+Reverie	Body Armour／Shaman Mantle	是：Grants Skill: Level (1-20) Rite of Restoration；Cannot use Life Flasks；Non-Unique Life Flasks apply their Effects constantly	normal（一般效果／練功、特定流派用）	todo
+Sacrosanctum	Body Armour／Corvus Mantle	是：Damage taken Recouped as Life is also Recouped as Energy Shield	normal（一般效果／練功、特定流派用）	todo
+Sands of Silk	Body Armour／Shrouded Vest	是：Grants Skill: Level (1-20) Blink	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：silksand_vest（絲沙背心）
+Sierran Inheritance	Body Armour／Marabout Garb	是：All Damage taken from Hits Contributes to Magnitude of Chill inflicted on you；The Effect of Chill on you is reversed	normal（一般效果／練功、特定流派用）	todo
+Silks of Veneration	Body Armour／Enlightened Robe	是：Current Energy Shield also grants Elemental Damage reduction	normal（一般效果／練功、特定流派用）	todo
+Skin of the Loyal	Body Armour／Garment	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Tabula Rasa	Body Armour／Garment	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Temporalis	Body Armour／Silk Robe	是：Skills have -(2-1) seconds to Cooldown	chase（流派核心（技能冷卻 -1～2 秒））	added 2026-10-27：hourglass_robe（逆漏法袍）
+Tetzlapokal's Desire	Body Armour／Votive Raiment	是：Life Recharges	normal（一般效果／練功、特定流派用）	todo
+The Auspex	Body Armour／Exquisite Vest	是：Grants Skill: Level (1-20) Mist Raven；Chance to Deflect is Lucky while on Low Life；Enemies in your Presence gain 1 Gruelling Madness each second	normal（一般效果／練功、特定流派用）	todo
+The Barrow Dweller	Body Armour／Rogue Armour	是：Damage of Enemies Hitting you is Unlucky while you are on Low Life；50% chance to Avoid Death from Hits	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：barrow_coat（塚居者皮鎧）
+The Black Doubt	Body Armour／Hexer's Robe	是：Damage over Time bypasses your Energy Shield；While not on Full Life, Sacrifice 10% of maximum Mana per Second to Recover that much Life	normal（一般效果／練功、特定流派用）	todo
+The Coming Calamity	Body Armour／Heroic Armour	是：Grants Skill: Level (1-20) Herald of Ash；Grants Skill: Level (1-20) Herald of Ice；Grants Skill: Level (1-20) Herald of Thunder	chase（流派核心（三種先鋒、臨在無元素抗性））	todo
+The Covenant	Body Armour／Altar Robe	是：Grants Skill: Level (1-20) Life Remnants；10% of Spell Damage Leeched as Life；Skills Gain 100% of Mana Cost as Extra Life Cost	normal（一般效果／練功、特定流派用）	todo
+The Dancing Mirage	Body Armour／Wayfarer Jacket	是：20% less Damage taken if you have not been Hit Recently；100% increased Evasion Rating if you have been Hit Recently	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：dancing_mirage_jacket（舞影外套）
+The Fallen Formation	Body Armour／Lamellar Mail	是：-20 to maximum Valour；Banners always have maximum Valour	normal（一般效果／練功、特定流派用）	todo
+The Mutable Star	Body Armour／Cleric Vestments	是：Defend against Hits as though you had 1% more Armour per 1% current Energy Shield	normal（一般效果／練功、特定流派用）	todo
+The Rat Cage	Body Armour／Scout's Vest	是：100% of Fire Damage from Hits taken as Physical Damage	normal（一般效果／練功、特定流派用）	todo
+The Road Warrior	Body Armour／Raider Plate	是：Moving while Bleeding doesn't cause you to take extra damage	normal（一般效果／練功、特定流派用）	todo
+The Sunken Vessel	Body Armour／Knight Armour	是：30% reduced Life Recovery rate；33% chance to avoid Projectiles；Physical Damage of Enemies Hitting you is Unlucky	normal（一般效果／練功、特定流派用）	todo
+The Unleashed	Body Armour／Revered Vestments	是：(15-25)% of Damage taken from Hits bypasses Energy Shield if Energy Shield is below half；Gain 1 Runic Binding on Hit with Spells, no more than once every 0.5 seconds；Lose all Runic Bindings when you Shapeshift to gain that much Unbound Potential	normal（一般效果／練功、特定流派用）	todo
+Titanrot Cataphract	Body Armour／Maraketh Cuirass	是：You have no Life Regeneration	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：titanrot_plate（巨朽重鎧）
+Vis Mortis	Body Armour／Plated Raiment	是：Minions have Unholy Might	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：deathforce_raiment（死力法衣）
+Wandering Reliquary	Body Armour／Steel Plate	是：50% of Physical Damage prevented Recouped as Life	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：wandering_reliquary（行聖骨匣）
+Waveshaper	Body Armour／Tideseer Mantle	是：Increases and Reductions to Mana Regeneration Rate also；apply to Energy Shield Recharge Rate；Gain (30-50)% of Maximum Mana as Armour	normal（一般效果／練功、特定流派用）	todo
+Widow's Reign	Body Armour／Knight Armour	是：+(200-300) to Ailment Threshold；Life that would be lost by taking Damage is instead Reserved；until you take no Damage to Life for 3 seconds	normal（一般效果／練功、特定流派用）	todo
+Yriel's Fostering	Body Armour／Strider Vest	是：You can have two Companions of different types	normal（一般效果／練功、特定流派用）	todo
+Zerphi's Serape	Body Armour／Scalper's Jacket	是：Soul Eater	normal（一般效果／練功、特定流派用）	todo
+Ab Aeterno	Boots／Grand Cuisses	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Atziri's Step	Boots／Cinched Boots	是：-(12-6)% to amount of Damage Prevented by Deflection；Cannot be Light Stunned by Deflected Hits	chase（原作只有阿姿里（Boss）會掉）	added 2026-10-27：scornful_stride（冷蔑步靴）
+Beetlebite	Boots／Velour Shoes	是：Aggravate Bleeding on Enemies when they Enter your Presence	normal（一般效果／練功、特定流派用）	todo
+Bones of Ullr	Boots／Lattice Sandals	是：(20-30)% increased Reservation Efficiency of Skills which create Undead Minions	normal（一般效果／練功、特定流派用）	todo
+Briarpatch	Boots／Laced Boots	是：+25% to Thorns Critical Hit Chance	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：briarpatch_boots（荊叢皮靴）
+Bushwhack	Boots／Lizardscale Boots	是：Physical Damage is Pinning	normal（一般效果／練功、特定流派用）	todo
+Darkray Vectors	Boots／Braced Sabatons	是：25% reduced Light Radius；5% increased Movement Speed per Frenzy Charge	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：darkray_sabatons（暗芒戰靴）
+Decree of Flight	Boots／Ancient Leggings	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Gamblesprint	Boots／Embossed Boots	是：Gain 0% to 40% increased Movement Speed at random when Hit, until Hit again	normal（一般效果／練功、特定流派用）	todo
+Powertread	Boots／Hunting Shoes	是：12% increased Critical Damage Bonus per Power Charge	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：powertread_shoes（銳踏便鞋）
+Shankgonne	Boots／Covered Sabatons	是：Grants Skill: Level (1-20) Black Powder Blitz；Gain Deflection Rating equal to 20% of Armour；You cannot Sprint	normal（一般效果／練功、特定流派用）	todo
+The Infinite Pursuit	Boots／Bronze Greaves	是：(80-100)% increased Chance to be afflicted by Ailments when Hit；25% increased Movement Speed while affected by an Ailment	normal（一般效果／練功、特定流派用）	todo
+The Knight-errant	Boots／Mail Sabatons	是：+(30-50) to Ailment Threshold	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：errant_sabatons（遊俠騎士戰靴）
+Trampletoe	Boots／Trimmed Greaves	是：Deal 30% of Overkill damage to enemies within 2 metres of the enemy killed	normal（一般效果／練功、特定流派用）	todo
+Wake of Destruction	Boots／Secured Leggings	是：Drop Shocked Ground while moving, lasting 8 seconds	normal（一般效果／練功、特定流派用）	todo
+Wondertrap	Boots／Silk Slippers	是：50% increased Rarity of Items found when on Low Life	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：wondertrap_slippers（奇遇絲履）
+Doomfletch	Bow／Composite Bow	是：Attacks with this Weapon gain 100% of Physical damage as Extra damage of each Element	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：doomfletch_bow（厄羽複弓）
+Fairgraves' Curse	Bow／Artillery Bow	是：Grants Skill: Level (1-20) Phantasmal Arrow；50% reduced Projectile Range；30% reduced Life Recovery rate	normal（一般效果／練功、特定流派用）	todo
+Ironbound	Bow／Warden Bow	是：(25-35)% chance to Chain an additional time；(3-5)% increased Block chance per 100 total Item Armour on Equipped Armour Items；Hits with this weapon have (1-2) to (4-5) Added Physical Damage per 1% Block Chance	normal（一般效果／練功、特定流派用）	todo
+Periphery	Bow／Heartwood Shortbow	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Quill Rain	Bow／Shortbow	是：(50-100)% increased Arrow Speed；40% less Attack Damage	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：quillstorm_bow（羽暴短弓）
+Splinterheart	Bow／Recurve Bow	是：Projectiles Split towards +2 targets	normal（一般效果／練功、特定流派用）	todo
+Voltaxic Rift	Bow／Fanatic Bow	是：100% of Lightning Damage Converted to Chaos Damage；Chaos Damage from Hits also Contributes to Shock Chance	normal（一般效果／練功、特定流派用）	todo
+Widowhail	Bow／Crude Bow	是：(150-250)% increased bonuses gained from Equipped Quiver	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：widowsong_bow（孀雨粗弓）
+Arakaali's Gift	Charm／Antidote Charm	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Beira's Anguish	Charm／Dousing Charm	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+For Utopia	Charm／Stone Charm	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Forsaken Bangle	Charm／Amethyst Charm	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Nascent Hope	Charm／Thawing Charm	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Ngamahu's Chosen	Charm／Ruby Charm	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Rite of Passage	Charm／Golden Charm	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Sanguis Heroum	Charm／Staunching Charm	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+The Black Cat	Charm／Grounding Charm	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+The Fall of the Axe	Charm／Silver Charm	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Redemption	Crossbow／Trarthan Cannon	基底：我們沒有這個基底	chase（終局專屬基底）	todo
+Blood of the Warrior	Flask／Gargantuan Life Flask	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Lavianga's Spirits	Flask／Gargantuan Mana Flask	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Melting Maelstrom	Flask／Ultimate Mana Flask	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Olroth's Resolve	Flask／Ultimate Life Flask	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Opportunity	Flask／Ultimate Life Flask	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Uhtred's Chalice	Flask／Transcendent Mana Flask	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Apep's Supremacy	Focii／Voodoo Focus	是：20% of Elemental damage from Hits taken as Chaos damage；+25% chance to be Poisoned；100% chance to Poison on Hit with Spell Damage	normal（一般效果／練功、特定流派用）	todo
+Deathrattle	Focii／Twig Focus	是：20% chance for Energy Shield Recharge to start when you Kill an Enemy	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：deathrattle_focus（喪鈴法器）
+Effigy of Cruelty	Focii／Antler Focus	是：Critical Hits with Spells apply (1-3) Stack of Critical Weakness	normal（一般效果／練功、特定流派用）	todo
+Rathpith Globe	Focii／Sacred Focus	是：Non-Channelling Spells cost an additional 6% of your maximum Life；Non-Channelling Spells have 3% increased Critical Hit Chance per 100 maximum Life；Non-Channelling Spells deal 6% increased Damage per 100 maximum Life	normal（一般效果／練功、特定流派用）	todo
+Serpent's Lesson	Focii／Tonal Focus	是：You count as on Low Life while at 35% of maximum Mana or below；You count as on Low Mana while at 35% of maximum Life or below	normal（一般效果／練功、特定流派用）	todo
+The Eternal Spark	Focii／Crystal Focus	是：40% increased Mana Regeneration Rate while stationary	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：eternal_spark_focus（永燃火花）
+Threaded Light	Focii／Woven Focus	是：20% increased Light Radius；(8-12)% increased Spell Damage per 10 Spirit	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：threaded_light_focus（織光法器）
+Aerisvane's Wings	Gloves／Burnished Gauntlets	是：Decimating Strike	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：windvane_gauntlets（風羽鐵手）
+Atziri's Acuity	Gloves／Moulded Mitts	是：Grants Skill: Level (1-20) Herald of the Royal Queen；10% of Physical damage dealt by your Hits causes Blood Loss；Vaal Pact	chase（原作只有阿姿里（Boss）會掉）	skipped：要「瓦爾契約」（偷取限制）、命中造成失血、新技能「女王先驅」三套新機制，下一批做
+Blessed Bonds	Gloves／Linen Wraps	是：Inflict Cold Exposure on Igniting an Enemy；Inflict Fire Exposure on Shocking an Enemy；Inflict Lightning Exposure on Critical Hit	normal（一般效果／練功、特定流派用）	todo
+Blueflame Bracers	Gloves／Goldcast Cuffs	是：100% of Fire Damage Converted to Cold Damage	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：blueflame_cuffs（藍焰護腕）
+Candlemaker	Gloves／Sombre Gloves	是：Flammability Magnitude is doubled	normal（一般效果／練功、特定流派用）	todo
+Death Articulated	Gloves／Ornate Gauntlets	是：Lose 5% of maximum Life per second；Regenerate 5 Rage per second；No Inherent loss of Rage	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：death_articulated（骸節鐵手）
+Demon Stitcher	Gloves／Intricate Gloves	是：Sacrifice (5-15)% of maximum Life to gain that much Energy Shield when you Cast a Spell	normal（一般效果／練功、特定流派用）	todo
+Dreadfist	Gloves／Bolstered Mitts	是：Critical Hits inflict Impale；Critical Hits cannot Extract Impale	normal（一般效果／練功、特定流派用）	todo
+Essentia Sanguis	Gloves／Furtive Wraps	是：Life Leech is Converted to Energy Shield Leech	normal（一般效果／練功、特定流派用）	todo
+Facebreaker	Gloves／Stocky Mitts	是：Has 8 to 12 Physical damage, +3 to +4 per Boss's Face Broken；1% more Unarmed Damage per 5 Strength；+0.3 metres to Melee Strike Range while Unarmed	normal（一般效果／練功、特定流派用）	todo
+Gravebind	Gloves／Rope Cuffs	是：Your other Modifiers to Rarity of Items found do not apply；Enemies in your Presence killed by anyone count as being killed by you instead	normal（一般效果／練功、特定流派用）	todo
+Hand of Wisdom and Action	Gloves／Spiral Wraps	是：1% increased Attack Speed per 20 Dexterity；Adds 1 to 10 Lightning Damage to Attacks per 20 Intelligence	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：wisdom_action_wraps（知行捲布）
+Horror's Flight	Gloves／Engraved Bracers	是：Grants Skill: Level (1-20) Crushing Fear；Gain 1 Fear Incarnate when you Cull a target；Raven-Touched	normal（一般效果／練功、特定流派用）	todo
+Idle Hands	Gloves／Sectioned Bracers	是：25% increased Attack Speed while on Full Mana；You count as on Full Mana while at 90% of maximum Mana or above	normal（一般效果／練功、特定流派用）	todo
+Jarngreipr	Gloves／Ringmail Gauntlets	是：Strength can satisfy other Attribute Requirements of Melee Weapons and Melee Skills	normal（一般效果／練功、特定流派用）	todo
+Killjoy	Gloves／Linen Wraps	是：Flasks do not recover Life；On-Kill Effects happen twice	normal（一般效果／練功、特定流派用）	todo
+Kitoko's Current	Gloves／Jewelled Gloves	是：(10-15)% reduced Attack and Cast Speed；Lightning damage from Hits Contributes to Electrocution Buildup	normal（一般效果／練功、特定流派用）	todo
+Leopold's Applause	Gloves／Embroidered Gloves	是：Your Hits can Penetrate Elemental Resistances down to a minimum of -50%	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：applause_gloves（喝采手套）
+Lochtonial Caress	Gloves／Tempered Mitts	是：Share Charges with Allies in your Presence	normal（一般效果／練功、特定流派用）	todo
+Maligaro's Virtuosity	Gloves／Fine Bracers	是：Your Critical Hit Chance cannot be Rerolled；Your Critical Damage Bonus is 250%	normal（一般效果／練功、特定流派用）	todo
+Nightscale	Gloves／Pauascale Gloves	是：150% increased Mana Regeneration Rate if you've dealt a Critical Hit Recently；Cannot Regenerate Mana if you haven't dealt a Critical Hit Recently	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：nightscale_gloves（夜鱗手套）
+Northpaw	Gloves／Suede Bracers	是：Base Critical Hit Chance for Attacks with Weapons is 7%	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：northpaw_bracers（北爪護腕）
+Painter's Servant	Gloves／Torn Gloves	是：Gain (5-10)% of Elemental Damage as Extra Cold Damage；Gain (5-10)% of Elemental Damage as Extra Fire Damage；Gain (5-10)% of Elemental Damage as Extra Lightning Damage	normal（一般效果／練功、特定流派用）	todo
+Plaguefinger	Gloves／Gauze Wraps	是：Cannot inflict Elemental Ailments；All Damage from Hits Contributes to Poison Magnitude	normal（一般效果／練功、特定流派用）	todo
+Shackles of the Wretched	Gloves／Aged Cuffs	是：You cannot be Chilled for 6 seconds after being Chilled；You cannot be Frozen for 6 seconds after being Frozen；You cannot be Ignited for 6 seconds after being Ignited	normal（一般效果／練功、特定流派用）	todo
+Sine Aequo	Gloves／Grand Manchettes	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Snakebite	Gloves／Spined Bracers	是：Targets can be affected by +1 of your Poisons at the same time	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：snakebite_bracers（蛇咬護腕）
+The Prisoner's Manacles	Gloves／Kalguuran Cuffs	是：Debuffs you inflict have (20-30)% increased Slow Magnitude；Cannot Immobilise enemies	normal（一般效果／練功、特定流派用）	todo
+Thunderfist	Gloves／Utility Wraps	是：Grants Skill: Level (1-20) Crackling Palm；Adds 1 to (77-111) Lightning Damage to Unarmed Melee Hits；+(0.1-1.1)% to Unarmed Melee Attack Critical Hit Chance	normal（一般效果／練功、特定流派用）	todo
+Treefingers	Gloves／Riveted Mitts	是：Giant's Blood	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：treefinger_mitts（樹指鐵手）
+Valako's Vice	Gloves／Plate Gauntlets	是：100% of Fire damage Converted to Lightning damage	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：stormvice_gauntlets（雷鉗鐵手）
+Alpha's Howl	Helmet／Armoured Cap	是：Presence Radius is doubled	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：alpha_howl_cap（頭狼皮帽）
+Atziri's Disdain	Helmet／Gold Circlet	是：Gain (10-15)% of maximum Life as Extra maximum Energy Shield；10% of Damage taken bypasses Energy Shield	chase（原作只有阿姿里（Boss）會掉）	added 2026-10-27：scornful_circlet（冷蔑金冠）
+Black Sun Crest	Helmet／Wrapped Greathelm	是：20% reduced Light Radius	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：blacksun_greathelm（黑日巨盔）
+Blood Price	Helmet／Fierce Greathelm	是：Enemies in your Presence have at least 10% of Life Reserved	normal（一般效果／練功、特定流派用）	todo
+Bronzebeard	Helmet／Horned Crown	是：(35-50)% reduced Effect of Chill on you；(35-50)% reduced Magnitude of Ignite on you；(35-50)% reduced effect of Shock on you	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：bronzebeard_crown（銅鬚角冠）
+Constricting Command	Helmet／Viper Cap	是：Require (2-4) fewer enemies to be Surrounded	normal（一般效果／練功、特定流派用）	todo
+Cornathaum	Helmet／Heavy Crown	是：30% increased Light Radius	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：scholar_crown（學者重冠）
+Corona of the Red Sun	Helmet／Warrior Greathelm	是：25% increased Light Radius；Leeching Life from your Hits causes Allies in your Presence to also Leech the same amount of Life	normal（一般效果／練功、特定流派用）	todo
+Crown of Eyes	Helmet／Vermeil Circlet	是：Increases and Reductions to Spell damage also apply to Attacks	normal（一般效果／練功、特定流派用）	todo
+Crown of Thorns	Helmet／Twig Circlet	是：Lose 5 Life when you use a Skill	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：thorncrown_circlet（荊冠細環）
+Crown of the Pale King	Helmet／Cultist Crown	是：Thorns can Retaliate against all Hits	normal（一般效果／練功、特定流派用）	todo
+Decree of Acuity	Helmet／Ancient Visor	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Deidbell	Helmet／Elite Greathelm	是：(20-30)% increased Warcry Speed；Warcries Explode Corpses dealing 10% of their Life as Physical Damage；Warcry Skills have (20-30)% increased Area of Effect	normal（一般效果／練功、特定流派用）	todo
+Elevore	Helmet／Hunter Hood	是：Charms gain 1 charge per Second；+(1-2) Charm Slot	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：elevore_hood（高翔兜帽）
+Forbidden Gaze	Helmet／Chain Tiara	是：25% reduced Light Radius	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：forbidden_tiara（禁視鏈冠）
+Glimpse of Chaos	Helmet／Tribal Mask	是：Can be modified while Corrupted；Chaos Resistance is zero	normal（一般效果／練功、特定流派用）	todo
+Greymake	Helmet／Brimmed Helm	是：-1 to all Attributes per Level；Has 4 Augment Sockets	normal（一般效果／練功、特定流派用）	todo
+Horns of Bynden	Helmet／Rusted Greathelm	是：Every Rage also grants 1% increased Armour	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：rage_horns（怒角巨盔）
+Indigon	Helmet／Magus Tiara	是：(5-10)% increased Cost of Skills for each 200 total Mana Spent Recently；(10-15)% increased Spell damage for each 200 total Mana you have Spent Recently；Mana Recovery other than Regeneration cannot Recover Mana	normal（一般效果／練功、特定流派用）	todo
+Ironride	Helmet／Visored Helm	是：You have no Accuracy Penalty at Distance	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：ironride_helm（鐵騎面盔）
+Keeper of the Arc	Helmet／Spiritbone Crown	是：Alternating every 5 seconds:；Take 40% less Damage from Hits；Take 40% less Damage over time	normal（一般效果／練功、特定流派用）	todo
+Leer Cast	Helmet／Hooded Mask	是：Allies in your Presence deal 50% increased Damage	normal（一般效果／練功、特定流派用）	todo
+Mask of the Stitched Demon	Helmet／Feathered Tiara	是：Cannot have Energy Shield；Regenerate 0.05 Life per second per Maximum Energy Shield	normal（一般效果／練功、特定流派用）	todo
+Mind of the Council	Helmet／Death Mask	是：Attacks cost an additional 6% of your maximum Mana；Attacks have Added maximum Lightning Damage equal to (6-9)% of maximum Mana	normal（一般效果／練功、特定流派用）	todo
+Myris Uxor	Helmet／Covert Hood	是：100% increased Culling Strike Threshold	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：myris_hood（暗妻兜帽）
+Radiant Grief	Helmet／Lace Hood	是：30% increased Light Radius；Enemies in your Presence are Ignited as though dealt 200 Base Fire Damage	normal（一般效果／練功、特定流派用）	todo
+Sandstorm Visage	Helmet／Chain Tiara	是：Enemies in your Presence are Blinded；Every second, inflicts Critical Weakness on enemies in your Presence for (15-20) seconds	normal（一般效果／練功、特定流派用）	todo
+Solus Ipse	Helmet／Grand Visage	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Starkonja's Head	Helmet／Leatherbound Hood	是：150% increased Global Evasion Rating when on Low Life；15% of Damage from Hits is taken from your Damageable Companion's Life before you	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：beastlord_hood（獸王頭罩）
+The Black Insignia	Helmet／Corsair Cap	是：Gain Tailwind on Critical Hit, no more than once per second；Lose all Tailwind when Hit	normal（一般效果／練功、特定流派用）	todo
+The Bringer of Rain	Helmet／Decorated Helm	是：Can't use Body Armour；You can wield Two-Handed Axes, Maces and Swords in one hand；This item gains bonuses from Socketed Items as though it was a Body Armour	normal（一般效果／練功、特定流派用）	todo
+The Deepest Tower	Helmet／Spiritbone Crown	是：10% reduced Light Radius；Enemies in your Presence count as being on Low Life	normal（一般效果／練功、特定流派用）	todo
+The Devouring Diadem	Helmet／Wicker Tiara	是：Every 3 seconds, Consume a nearby Corpse to Recover 20% of maximum Life	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：devouring_diadem（噬屍頭環）
+The Hollow Mask	Helmet／Hewn Mask	是：Grants Skill: Level (1-20) Wildwood's Gifts；Remnants you create affect Allies in your Presence as well as you when collected；(80-100)% increased Reservation Efficiency of Remnant Skills	normal（一般效果／練功、特定流派用）	todo
+The Smiling Knight	Helmet／Cowled Helm	是：Aggravate Bleeding on targets you Critically Hit with Attacks	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：smiling_knight_helm（笑騎士盔）
+The Three Dragons	Helmet／Solid Mask	是：Fire Damage from Hits Contributes to Shock Chance instead of Flammability and Ignite Magnitudes；Cold Damage from Hits Contributes to Flammability and Ignite Magnitudes instead of Chill Magnitude or Freeze Buildup；Lightning Damage from Hits Contributes to Freeze Buildup instead of Shock Chance	normal（一般效果／練功、特定流派用）	todo
+The Vertex	Helmet／Tribal Mask	是：Skill Gems have no Attribute Requirements	normal（一般效果／練功、特定流派用）	todo
+The Vile Knight	Helmet／Shielded Helm	是：Deal 4% increased Damage with Hits to Rare or Unique Enemies for each second they've ever been in your Presence, up to a maximum of 200%	normal（一般效果／練功、特定流派用）	todo
+Thrillsteel	Helmet／Spired Greathelm	否	normal（一般效果／練功、特定流派用）	todo
+Veil of the Night	Helmet／Martyr Crown	是：40% reduced Light Radius；You have no Elemental Resistances	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：nightveil_crown（夜幕之冠）
+Vestige of Darkness	Helmet／Tenebrous Crown	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Wings of Caelyn	Helmet／Rusted Greathelm	是：Every Rage also grants 1% increased Stun Threshold	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：caelyn_wings（凱琳翼盔）
+Against the Darkness	Jewel／?	基底：我們沒有這個基底	chase（珍稀珠寶（時空裂隙））	skipped：天賦樹互動的珠寶，先不做
+Controlled Metamorphosis	Jewel／Diamond	基底：我們沒有這個基底	chase（珍稀珠寶）	skipped：天賦樹互動的珠寶，先不做
+Flesh Crucible	Jewel／?	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+From Nothing	Jewel／?	基底：我們沒有這個基底	chase（珍稀珠寶（不連接配點））	skipped：天賦樹互動的珠寶，先不做
+Grand Spectrum	Jewel／Sapphire	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	skipped：要「每顆同名珠寶」計數，先不做
+Megalomaniac	Jewel／?	基底：我們沒有這個基底	chase（珍稀珠寶（隨機三個核心天賦））	skipped：天賦樹互動的珠寶（隨機核心天賦），先不做
+Prism of Belief	Jewel／?	基底：我們沒有這個基底	chase（珍稀珠寶（技能等級））	skipped：天賦樹互動的珠寶，先不做
+Split Personality	Jewel／Ruby	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	skipped：天賦樹互動的珠寶，先不做
+The Adorned	Jewel／Diamond	基底：我們沒有這個基底	chase（珍稀珠寶）	skipped：天賦樹互動的珠寶，先不做
+Voices	Jewel／Sapphire	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	skipped：天賦樹互動的珠寶，先不做
+Brain Rattler	Mace／Studded Greatclub	是：All damage with this Weapon causes Electrocution buildup	normal（一般效果／練功、特定流派用）	todo
+Brutus' Lead Sprinkler	Mace／Morning Star	是：Grants Skill: Level (1-20) Molten Shower；Hits with this Weapon have 5% chance to Trigger Molten Shower per 25 Strength；5 to 10 Added Attack Fire Damage per 25 Strength	normal（一般效果／練功、特定流派用）	todo
+Brynhand's Mark	Mace／Wooden Club	是：Causes Double Stun Buildup	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：brynhand_club（布林錘）
+Chober Chaber	Mace／Leaden Greathammer	是：+100 Intelligence Requirement；Increases and Reductions to Minion Damage also affect you	normal（一般效果／練功、特定流派用）	todo
+Frostbreath	Mace／Slim Mace	是：All Damage from Hits with this Weapon Contributes to Freeze Buildup；Culling Strike against Frozen Enemies	normal（一般效果／練功、特定流派用）	todo
+Hoghunt	Mace／Felled Greatclub	是：Maim on Critical Hit	normal（一般效果／練功、特定流派用）	todo
+Mjölner	Mace／Torment Club	是：Grants Skill: Level (1-20) Thundergod's Wrath；+200 Intelligence Requirement；+100 Strength Requirement	chase（流派核心（雷神之怒））	todo
+Nebuloch	Mace／Brigand Mace	是：Attacks consume an Endurance Charge to Critically Hit；Take 100 Chaos damage per second per Endurance Charge	normal（一般效果／練功、特定流派用）	todo
+Olrovasara	Mace／Torment Club	是：On Hitting an enemy, gains maximum added Lightning damage equal to；the enemy's Power for 20 seconds, up to a total of 500	normal（一般效果／練功、特定流派用）	todo
+Quecholli	Mace／Crumbling Maul	是：Causes Enemies to Explode on Critical kill, for 10% of their Life as Physical Damage；Hits with this Weapon have no Critical Damage Bonus；This Weapon's Critical Hit Chance is 100%	normal（一般效果／練功、特定流派用）	todo
+Sadist's Mercy	Mace／Flanged Mace	是：Grants Skill: Level (1-20) Harbinger of Madness；Hits with this Weapon inflict (2-5) Gruelling Madness；Enemies in your Presence have additional Power equal to their Gruelling Madness	normal（一般效果／練功、特定流派用）	todo
+Seeing Stars	Mace／Marching Mace	是：Energy Generation is doubled	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：seeing_stars_mace（眼冒金星）
+Serle's Grit	Mace／Kalguuran Forgehammer	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Shyaba	Mace／Temple Maul	是：+50 Dexterity Requirement；-15 Strength Requirement；(15-25)% increased Light Radius	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：shyaba_maul（夏巴巨錘）
+Trenchtimbre	Mace／Spiked Club	是：Increases and Reductions to Minion Attack Speed also affect you	normal（一般效果／練功、特定流派用）	todo
+Twisted Empyrean	Mace／Aberrant Sledge	是：Grants Skill: Level (1-20) Starborn Onslaught；Attacks with this Weapon have Added Cold Damage equal to (6-8)% to (10-12)% of maximum Mana；Convert 100% of Fire Damage with Mace Skills to Cold Damage	chase（終局 Boss 掉落）	todo
+Wylund's Stake	Mace／Smithing Hammer	是：Hits Break (30-50) Armour；Inflicts Elemental Exposure when this Weapon Fully Breaks Armour	normal（一般效果／練功、特定流派用）	todo
+Beyond Reach	Quiver／Visceral Quiver	是：Attacks Gain (10-20)% of Physical Damage as extra Chaos Damage；Chaos Damage from Hits also Contributes to Freeze Buildup；Chaos Damage from Hits also Contributes to Electrocute Buildup	normal（一般效果／練功、特定流派用）	todo
+Blackgleam	Quiver／Fire Quiver	是：Projectiles Pierce all Ignited enemies	normal（一般效果／練功、特定流派用）	todo
+Cadiro's Gambit	Quiver／Primed Quiver	是：Each Arrow fired is a Crescendo, Splinter, Reversing, Diamond, Covetous, or Blunt Arrow	normal（一般效果／練功、特定流派用）	todo
+Murkshaft	Quiver／Toxic Quiver	是：Grants Skill: Level (1-20) Bursting Fen Toad；Blind Targets when you Poison them	normal（一般效果／練功、特定流派用）	todo
+The Lethal Draw	Quiver／Sacral Quiver	是：Bow Attacks consume 10% of your maximum Life Flask Charges if possible to deal added Physical damage equal to (5-10)% of Flask's Life Recovery amount	normal（一般效果／練功、特定流派用）	todo
+Berek's Pass	Ring／Two-Stone Ring	是：Regenerate (1-2)% of maximum Life per second while Ignited；Wind Skills which can be boosted by Elemental Ground Surfaces count；as being boosted by Chilled Ground	normal（一般效果／練功、特定流派用）	todo
+Berek's Respite	Ring／Two-Stone Ring	是：(15-25)% increased Critical Damage Bonus while Shocked；Wind Skills which can be boosted by Elemental Ground Surfaces count；as being boosted by Ignited Ground	normal（一般效果／練功、特定流派用）	todo
+Blackflame	Ring／Amethyst Ring	是：Ignite you inflict deals Chaos Damage instead of Fire Damage；Withered you inflict also increases Fire Damage taken；Withered does not expire on Enemies Ignited by you	normal（一般效果／練功、特定流派用）	todo
+Blackheart	Ring／Iron Ring	是：+(10-20)% of Armour also applies to Chaos Damage；25% chance to Intimidate Enemies for 4 seconds on Hit	normal（一般效果／練功、特定流派用）	todo
+Blistering Bond	Ring／Ruby Ring	是：You take Fire Damage instead of Physical Damage from Bleeding；Fire Damage also Contributes to Bleeding Magnitude；Bleeding you inflict deals Fire Damage instead of Physical Damage	normal（一般效果／練功、特定流派用）	todo
+Bursting Decay	Ring／Unset Ring	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Call of the Brotherhood	Ring／Topaz Ring	是：100% of Lightning Damage Converted to Cold Damage	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：brotherhood_call_ring（兄弟呼喚戒）
+Doedre's Damning	Ring／Lazuli Ring	是：You can apply an additional Curse	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：damning_ring（詛縛指環）
+Eshtera's Path	Ring／Ring	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Evergrasping Ring	Ring／Pearl Ring	是：Allies in your Presence Gain (15-25)% of Damage as Extra Chaos Damage；Enemies in your Presence Gain (6-12)% of Damage as Extra Chaos Damage	normal（一般效果／練功、特定流派用）	todo
+Gifts from Above	Ring／Prismatic Ring	是：(20-30)% increased Light Radius；(20-30)% increased Rarity of Items Dropped by Enemies killed with a Critical Hit；You have Consecrated Ground around you while stationary	normal（一般效果／練功、特定流派用）	todo
+Glowswarm	Ring／Lazuli Ring	是：Using a Mana Flask grants Guard equal to 100% of Flask's recovery amount for 4 seconds	normal（一般效果／練功、特定流派用）	todo
+Heartbound Loop	Ring／Pearl Ring	是：300 Physical Damage taken on Minion Death；Minions Revive (10-15)% faster	normal（一般效果／練功、特定流派用）	todo
+Icefang Orbit	Ring／Iron Ring	是：All Damage taken from Hits while Poisoned Contributes to Magnitude of Chill on you；All Damage from Hits against Poisoned targets Contributes to Chill Magnitude	normal（一般效果／練功、特定流派用）	todo
+Kalandra's Touch	Ring／Ring	基底：我們沒有這個基底	chase（流派核心（複製另一枚戒指））	added 2026-10-27：mirror_touch_ring（映鏡指環）
+Original Sin	Ring／Amethyst Ring	是：100% of Elemental Damage Converted to Chaos Damage	chase（流派核心（元素全轉混沌））	added 2026-10-27：tainted_origin_ring（濁源指環）
+Perandus Seal	Ring／Gold Ring	是：(10-15)% increased Quantity of Gold Dropped by Slain Enemies	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：merchant_seal_ring（商印金戒）
+Prized Pain	Ring／Iron Ring	是：Skills Gain 10% of Mana Cost as Extra Life Cost；(15-25)% chance to deal your Thorns Damage to Enemies you Hit with Melee Attacks	normal（一般效果／練功、特定流派用）	todo
+Safrin's Resolve	Ring／Ring	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Seed of Cataclysm	Ring／Lazuli Ring	是：5% reduced Critical Spell Damage Bonus per Critical Hit you've dealt with Spells Recently；(15-30)% chance for Spell Damage with Critical Hits to be Lucky	normal（一般效果／練功、特定流派用）	todo
+Snakepit	Ring／Pearl Ring	是：Left ring slot: Projectiles from Spells cannot Chain；Left ring slot: Projectiles from Spells Fork；Right ring slot: Projectiles from Spells Chain +1 times	normal（一般效果／練功、特定流派用）	todo
+The Burrower	Ring／Topaz Ring	是：Lightning Damage of Enemies Hitting you is Unlucky	normal（一般效果／練功、特定流派用）	todo
+The Taming	Ring／Prismatic Ring	是：(10-20)% increased Damage for each type of Elemental Ailment on Enemy；Wind Skills which can be boosted by Elemental Ground Surfaces can be boosted by multiple Elemental Ground Surfaces；Wind Skills which can be boosted by Elemental Ground Surfaces count	normal（一般效果／練功、特定流派用）	todo
+Veilpiercer	Ring／Amethyst Ring	是：Curses you inflict can affect Hexproof Enemies；Curses you inflict spread to enemies within 3 metres when Cursed enemy dies；Gain 1 Dark Whisper every second there is a Cursed Enemy in your Presence	normal（一般效果／練功、特定流派用）	todo
+Vigilant View	Ring／Emerald Ring	是：Enemies have an Accuracy Penalty against you based on Distance；Maximum Chance to Evade is 50%	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：vigilant_ring（警望指環）
+Whisper of the Brotherhood	Ring／Sapphire Ring	是：100% of Cold Damage Converted to Lightning Damage	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：brotherhood_whisper_ring（兄弟低語戒）
+Zaida's Longevity	Ring／Ring	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Guiding Palm	Sceptre／Shrine Sceptre	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Guiding Palm of the Eye	Sceptre／Shrine Sceptre	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Guiding Palm of the Heart	Sceptre／Shrine Sceptre	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Guiding Palm of the Mind	Sceptre／Shrine Sceptre	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Palm of the Dreamer	Sceptre／Shrine Sceptre	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Sacred Flame	Sceptre／Shrine Sceptre	基底：我們沒有這個基底	normal（一般效果／練功、特定流派用）	todo
+Sylvan's Effigy	Sceptre／Stoic Sceptre	是：Grants Skill: Level (1-20) Azmerian Wolf；Allies in your Presence Regenerate (50-100) Life per second；Companions deal (50-100)% increased damage to your Marked targets	normal（一般效果／練功、特定流派用）	todo
+The Dark Defiler	Sceptre／Rattling Sceptre	是：Gain 5% of Damage as Chaos Damage per Undead Minion	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：dark_defiler_sceptre（暗瀆權杖）
+Alkem Eira	Shield／Blazon Crest Shield	是：Damage Blocked is Recouped as Mana	normal（一般效果／練功、特定流派用）	todo
+Bloodbarrier	Shield／Iron Buckler	是：Inflict Corrupted Blood for 5 seconds on Block, dealing 50% of；your maximum Life as Physical damage per second	normal（一般效果／練功、特定流派用）	todo
+Calgyra's Arc	Shield／Ornate Buckler	是：Infinite Parry Range；50% increased Parried Debuff Duration	normal（一般效果／練功、特定流派用）	todo
+Chernobog's Pillar	Shield／Blacksteel Tower Shield	是：Gain 1% of damage as Fire damage per 1% Chance to Block	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：blackgod_pillar（黑神柱盾）
+Dionadair	Shield／Splintered Tower Shield	是：Double Stun Threshold while Shield is Raised	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：dionadair_tower（迪歐塔盾）
+Doomgate	Shield／Braced Tower Shield	是：Enemies are Culled on Block	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：doomgate_tower（厄門塔盾）
+Dunkelhalt	Shield／Leather Buckler	是：50% increased Parried Debuff Magnitude	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：darkhold_buckler（暗擋皮盾）
+Eyes of the Runefather	Shield／Venerable Defender	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Feathered Fortress	Shield／Crescent Targe	是：No Movement Speed Penalty while Shield is Raised	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：feather_fortress（羽堡鳶盾）
+Mahuxotl's Machination	Shield／Omen Crest Shield	是：Grants Skill: Raise Shield；(66-333)% increased effect of Socketed Soul Cores；Everlasting Sacrifice	chase（流派核心（靈魂核心效果大增））	todo
+Merit of Service	Shield／Pelage Targe	是：Allies in your Presence have Block Chance equal to yours	normal（一般效果／練功、特定流派用）	todo
+Nightfall	Shield／Fortress Tower Shield	是：+150 Strength Requirement；(10-20)% of Fire damage taken as Cold damage；(10-20)% of Lightning damage taken as Cold damage	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：nightfall_tower（夜落塔盾）
+Nocturne	Shield／Wooden Buckler	是：Parried enemies take more Spell Damage instead of more Attack Damage；100% increased Parried Debuff Duration	normal（一般效果／練功、特定流派用）	todo
+Rise of the Phoenix	Shield／Omen Crest Shield	是：+25% to Fire Resistance while on Low Life；Regenerate 3% of maximum Life per second while on Low Life	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：phoenix_crest（鳳起聖盾）
+Rondel de Ezo	Shield／Plated Buckler	是：100% increased Block chance against Projectiles；Curse Enemies with Enfeeble on Block	normal（一般效果／練功、特定流派用）	todo
+Saffell's Frame	Shield／Emblem Crest Shield	是：Cannot Block；Modifiers to Maximum Block Chance instead apply to Maximum Resistances	normal（一般效果／練功、特定流派用）	todo
+Silverthorne	Shield／Spiked Buckler	是：Parrying applies 10 Stacks of Critical Weakness；100% increased Parry Damage	normal（一般效果／練功、特定流派用）	todo
+Svalinn	Shield／Crucible Tower Shield	是：Grants Skill: Level (1-20) Cast on Block；+(50-100) to maximum Runic Ward；Chance to Block Damage is Lucky	chase（流派核心（幸運格擋、格擋施放））	skipped：要符文護盾（Runic Ward）與「格擋施放」輔助，我們都還沒有
+The Surrender	Shield／Vaal Tower Shield	是：Recover 4% of maximum Life when you Block	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：surrender_tower（降伏塔盾）
+The Wailing Wall	Shield／Effigial Tower Shield	是：Cannot use Shield Skills	normal（一般效果／練功、特定流派用）	todo
+Window to Paradise	Shield／Barricade Tower Shield	是：Inflict Elemental Exposure to Enemies 3 metres in front of you；for 4 seconds, every 0.25 seconds while raised	normal（一般效果／練功、特定流派用）	todo
+Wulfsbane	Shield／Painted Tower Shield	是：Intimidate Enemies on Block for 8 seconds；Permanently Intimidate enemies on Block	normal（一般效果／練功、特定流派用）	todo
+Atziri's Contempt	Spear／Pronged Spear	是：Grants Skill: Level (1-20) Shattering Spite；Spear Skills inflict a Bloodstone Lance on Hit, up to a maximum of 30 on each target	chase（原作只有阿姿里（Boss）會掉）	todo
+Chainsting	Spear／Hunting Spear	是：All Damage from Hits with this Weapon Contributes to Pin Buildup；(20-30)% increased Projectile Speed with this Weapon	normal（一般效果／練功、特定流派用）	todo
+Daevata's Wind	Spear／War Spear	是：(25-35)% increased Projectile Speed with this Weapon；(30-60)% increased Melee Damage if you've dealt a Projectile Attack Hit in the past eight seconds；(30-60)% increased Projectile Damage if you've dealt a Melee Hit in the past eight seconds	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：daevata_spear（迪瓦塔之風）
+Spire of Ire	Spear／Helix Spear	是：Grants Skill: Level (1-20) Chaotic Surge；When you Consume a Charge Trigger Chaotic Surge to gain 2 Chaos Surges；Life Leech recovers based on your Chaos damage instead of Physical damage	normal（一般效果／練功、特定流派用）	todo
+Splinter of Lorrata	Spear／Hardwood Spear	是：Deal no Elemental Damage；Any number of Poisons from this Weapon can affect a target at the same time；Always Poison on Hit with this weapon	normal（一般效果／練功、特定流派用）	todo
+Tyranny's Grip	Spear／Ironhead Spear	是：Knocks Back Enemies on Hit；Cannot use Projectile Attacks	normal（一般效果／練功、特定流派用）	todo
+Atziri's Rule	Staff／Reflecting Staff	是：+(3-5) to Level of all Corrupted Spell Skill Gems；Spells which cost Life Gain (80-120)% of Damage as Extra Physical Damage	chase（原作只有阿姿里（Boss）會掉）	todo
+Dusk Vigil	Staff／Ashen Staff	是：Trigger Ember Fusillade Skill on casting a Spell	normal（一般效果／練功、特定流派用）	skipped：要新技能「餘燼齊射」（Ember Fusillade）
+Earthbound	Staff／Voltaic Staff	是：Trigger Spark Skill on killing a Shocked Enemy	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：earthbound_staff（縛地長杖）
+Sire of Shards	Staff／Chiming Staff	是：20% increased Light Radius；Spells fire 4 additional Projectiles；Spells fire Projectiles in a circle	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：shardsire_staff（碎片之主）
+Taryn's Shiver	Staff／Gelid Staff	是：Enemies Frozen by you take 100% increased Damage	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：taryn_shiver（泰琳之顫）
+The Burden of Shadows	Staff／Chiming Staff	是：Grants Skill: Level (1-20) Sigil of Power；Skill Mana Costs Converted to Life Costs；Skills gain 1% of Damage as Chaos Damage per 3 Life Cost	normal（一般效果／練功、特定流派用）	todo
+The Whispering Ice	Staff／Permafrost Staff	是：2% increased Spell Damage per 10 Intelligence；Inflict Elemental Exposure on Hit, lowering Total Elemental Resistances by (50-60)%	normal（一般效果／練功、特定流派用）	todo
+Amor Mandragora	Talisman／Changeling Talisman	是：Enemies in your Presence are Hindered；Gain 1 Druidic Prowess for every 20 total Rage spent	normal（一般效果／練功、特定流派用）	todo
+Hysseg's Claw	Talisman／Familial Talisman	是：Grants Skill: Level (1-20) Cackling Companions；(5-8)% increased Damage per Minion	normal（一般效果／練功、特定流派用）	skipped：要新技能「嘻笑同伴」（Cackling Companions）
+Spiteful Floret	Talisman／Nettle Talisman	是：Grants Skill: Level (1-20) Sanguine Revelry；Every 5 Rage also grants 5% of Damage taken Recouped as Life	normal（一般效果／練功、特定流派用）	todo
+Surge of the Tide	Talisman／Lumbering Talisman	是：Every second Slam Skill you use while Shapeshifted is Ancestrally Boosted；Every second Strike Skill you use while Shapeshifted is Ancestrally Boosted	normal（一般效果／練功、特定流派用）	todo
+The Flesh Poppet	Talisman／Vicious Talisman	是：Copy a random Modifier from each enemy in your Presence when；you Shapeshift to an Animal form；Modifiers gained this way are lost after 30 seconds or when you next Shapeshift	normal（一般效果／練功、特定流派用）	todo
+Enezun's Charge	Wand／Volatile Wand	是：25% chance to not destroy Corpses when Consuming Corpses	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：enezun_wand（恩澤魔杖）
+Liminal Coil	Wand／Twisted Wand	是：Magnitudes of Curses you inflict are zero；Curses you inflict ignore Curse limit；Spell Hits Gain (23-31)% of Damage as Extra Chaos Damage per Curse on target	normal（一般效果／練功、特定流派用）	todo
+Runeseeker's Call	Wand／Runic Fork	基底：我們沒有這個基底	chase（原作是終局專屬的新基底（極稀有））	todo
+Sanguine Diviner	Wand／Bone Wand	是：25% of Spell Mana Cost Converted to Life Cost	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：blood_diviner_wand（血卜魔杖）
+The Wicked Quill	Wand／Withered Wand	是：Spells have a 25% chance to inflict Withered for 4 seconds on Hit	normal（一般效果／練功、特定流派用）	todo
+Collapsing Horizon	Warstaff／Wyrm Quarterstaff	是：+(2-4) to Level of all Elemental Skills；Trigger skills refund half of Energy spent	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：collapsing_horizon（崩落地平）
+Duality	Warstaff／Warding Quarterstaff	是：+(30-50) to maximum Runic Ward；Gain Finality for 0.5 seconds per Combo expended when using Skills；Gain (500-1000) Guard for 0.5 seconds per Combo expended when using Skills	normal（一般效果／練功、特定流派用）	todo
+Pillar of the Caged God	Warstaff／Long Quarterstaff	是：1% increased Area of Effect for Attacks per 10 Intelligence；1% increased Attack Speed per 10 Dexterity；10% increased Weapon Damage per 10 Strength	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：caged_god_pillar（囚神長棍）
+The Sentry	Warstaff／Gothic Quarterstaff	是：30% increased Light Radius	normal（一般掉落（地圖 Boss、僥倖石、賭博））	added 2026-10-27：sentry_staff（哨兵長棍）

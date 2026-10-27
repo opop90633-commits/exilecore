@@ -1298,7 +1298,8 @@ final class MapTwists implements Listener {
             final double monthRarity = plugin.events() == null ? 0 : plugin.events().rarityBonus();
             final double quantity = instance.stats().quantity() / 100.0 + instance.twist().quantity
                     + tw.exilecore.loot.LootBonus.personalQuantity(plugin, player) + month;
-            final double rarity = rarityBonus + instance.stats().rarity() / 100.0 + tw.exilecore.loot.LootBonus.personalRarity(plugin, player) + monthRarity;
+            final double rarity = rarityBonus + instance.stats().rarity() / 100.0 + instance.twist().rarity // 2026-10-27：腐化區路上怪的稀有度（取代數量）
+                    + tw.exilecore.loot.LootBonus.personalRarity(plugin, player) + monthRarity;
             final List<DropTable.Drop> rolled = new ArrayList<>();
             for (int i = 0; i < rolls; i++) {
                 rolled.addAll(drops.roll(level, MonsterRarity.RARE, quantity + drops.serverQuantity(), rarity + drops.serverRarity(),

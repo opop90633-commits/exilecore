@@ -336,7 +336,10 @@ public final class BalanceModel {
         final StatSheet sheet = referenceSheet(build, weapon, level, gear);
         final int gemLevel = skills.maxLevelFor(level);
         final List<SupportDefinition> supports = supports(build, skill, level);
-        final SkillBuild skillBuild = SkillBuild.of(skills, skill, gemLevel, level, false, supports, weapon.tags(), sheet);
+        // 2026-10-27：寶石屬性不足會自動降級；平衡曲線假設參考角色配得起滿級寶石（需求 ×0）
+        final StatSheet noRequirement = sheet.overlay(List.of(tw.exilecore.stats.Modifier.increased(
+                tw.exilecore.stats.TreeEffectKeys.ITEM_ATTR_REQUIREMENT, -1, "平衡模型")));
+        final SkillBuild skillBuild = SkillBuild.of(skills, skill, gemLevel, level, false, supports, weapon.tags(), noRequirement);
         final SkillProfile profile = skillBuild.profile();
         final StatSheet effective = profile.effective(sheet);
 
@@ -346,7 +349,7 @@ public final class BalanceModel {
         final double critMultiplier = tw.exilecore.stats.DamageCalculator.critMultiplier(effective, profile.tags(), null);
         final double hitChance = skill.isAttack()
                 ? Formulas.hitChance(effective.get(StatKeys.ACCURACY), target.get(StatKeys.EVASION)) : 1.0;
-        final double block = skill.isAttack() ? Math.min(StatKeys.BLOCK_CAP, target.get(StatKeys.BLOCK_CHANCE)) / 100.0 : 0;
+        final double block = skill.isAttack() ? Math.min(DamageCalculator.blockCap(target), target.get(StatKeys.BLOCK_CHANCE)) / 100.0 : 0;
         final double perSecond = 20.0 / skillBuild.intervalTicks(sheet);
         final double dps = perHit * (1 + critChance * (critMultiplier - 1)) * hitChance * (1 - block) * perSecond;
         double swings = 0;
@@ -434,6 +437,7 @@ public final class BalanceModel {
         sheet.setBase(StatKeys.LIFE_MAX, Formulas.baseLife(level) + Formulas.lifeFromStrength(str));
         sheet.setBase(StatKeys.MANA_MAX, Formulas.baseMana(level) + Formulas.manaFromIntelligence(intelligence));
         sheet.setBase(StatKeys.EVASION, Formulas.baseEvasion(level));
+        sheet.setBase(DamageCalculator.FLAG_PLAYER_SIDE, 1); // 2026-10-27：跟 PlayerStateService 一樣
         sheet.setBase(StatKeys.ACCURACY, Formulas.baseAccuracy(level) + Formulas.accuracyFromDexterity(dex));
         sheet.add(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, Formulas.meleePhysicalIncreaseFromStrength(str),
                 Set.of(Tags.MELEE, Tags.PHYSICAL), "力量"));
@@ -579,8 +583,9 @@ public final class BalanceModel {
         // 不然寶石等級間隔長的地方（50 級以後），快拿到下一個寶石等級前法術一直偏弱。
         final Map<Integer, Double> growthTargets = new TreeMap<>();
         for (int skillLevel = 1; skillLevel <= SkillLoadout.MAX_LEVEL; skillLevel++) {
-            final int from = skills.requiredLevel(skillLevel);
-            final int to = skillLevel < SkillLoadout.MAX_LEVEL ? skills.requiredLevel(skillLevel + 1) - 1 : maxLevel;
+            // 2026-10-26：法術成長照掉落用的等級表（需求等級改成 PoE2 之後成長曲線不跟著變）
+            final int from = skills.dropLevel(skillLevel);
+            final int to = skillLevel < SkillLoadout.MAX_LEVEL ? skills.dropLevel(skillLevel + 1) - 1 : maxLevel;
             double logSum = 0;
             int count = 0;
             for (int level = from; level <= Math.min(to, maxLevel); level++) {

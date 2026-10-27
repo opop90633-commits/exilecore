@@ -61,7 +61,14 @@ public final class ItemService {
 
     /** 寫進 PDC；傳奇順便記下目前的定義指紋（剛做出來的就是新版，不用再檢查）。 */
     private void write(final ItemStack stack, final ItemData data) {
+        // 2026-10-26：寫進去之前照目前的詞綴資料換算、記下每條的範圍（之後資料改版才換得回同一個位置），蓋上詞綴資料的指紋
+        try {
+            AffixRescale.apply(repository, data);
+        } catch (final RuntimeException ignored) {
+            // 換算不了就原樣寫
+        }
         codec.write(stack, data);
+        codec.stampAffixRevision(stack, repository.affixRevision());
         if (data.rarity() == Rarity.UNIQUE) {
             codec.stampUniqueRevision(stack, repository.uniqueRevision());
         }
@@ -76,12 +83,72 @@ public final class ItemService {
      * （只改讀出來的資料，{@link #refresh} 才寫回物品）。
      */
     public Optional<ItemData> read(final ItemStack stack) {
-        final Optional<ItemData> data = codec.read(stack);
+        // 2026-10-26：詞綴資料改版過（指紋不一樣）的，詞綴照比例換到新範圍、拿掉的換成同類的（AffixRescale）
+        final int revision = repository.affixRevision();
+        final boolean rescale = !Integer.valueOf(revision).equals(codec.affixRevision(stack));
+        if (!rescale) {
+            return upgrade(codec.read(stack), false);
+        }
+        // 2026-10-27 效能：還沒 refresh 寫回的舊物品每次讀都要重新換算；同一份資料＋同一個指紋換算結果一樣（種子固定），記起來
+        final String json = codec.rawJson(stack);
+        if (json == null) {
+            return Optional.empty();
+        }
+        final String key = revision + "\n" + repository.uniqueRevision() + "\n" + json;
+        final String cached;
+        synchronized (rescaled) {
+            cached = rescaled.get(key);
+        }
+        if (cached != null) {
+            return codec.parse(cached);
+        }
+        final Optional<ItemData> data = upgrade(codec.parse(json), true);
+        data.ifPresent(value -> {
+            synchronized (rescaled) {
+                rescaled.put(key, codec.toJson(value));
+            }
+        });
+        return data;
+    }
+
+    /** 2026-10-27：換算過的舊物品資料（原本的 JSON＋指紋 → 換算後的 JSON），最多記 512 件，最舊的先丟。 */
+    private final java.util.Map<String, String> rescaled = new java.util.LinkedHashMap<>(64, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(final java.util.Map.Entry<String, String> eldest) {
+            return size() > 512;
+        }
+    };
+
+    private Optional<ItemData> upgrade(final Optional<ItemData> data, final boolean rescale) {
         data.ifPresent(value -> {
             UniqueUpgrade.apply(repository, value);
+            if (rescale) {
+                try {
+                    AffixRescale.apply(repository, value);
+                } catch (final RuntimeException ignored) {
+                    // 換算不了就照原本的
+                }
+            }
             AffixUpgrade.apply(repository, value);
         });
         return data;
+    }
+
+    /**
+     * 2026-10-27 效能：這件裝備的基底（只讀 PDC 的基底代號，不解整份 JSON、不做詞綴換算）；舊物品沒記基底的才整份讀。
+     * 天賦樹條件（拿斧頭、拿盾、雙持…）每次判斷都要看，這次之前每次都整份讀。
+     */
+    public ItemBase base(final ItemStack stack) {
+        final String id = codec.baseId(stack);
+        if (id != null) {
+            return repository.base(id);
+        }
+        return read(stack).map(data -> repository.base(data.base())).orElse(null);
+    }
+
+    /** 2026-10-27 效能：PDC 裡原樣的資料 JSON（不解析；拿來算指紋）；不是裝備回傳 null。 */
+    public String rawJson(final ItemStack stack) {
+        return codec.rawJson(stack);
     }
 
     /** 資料改了以後：寫回 PDC 並重繪外觀。 */
@@ -161,6 +228,8 @@ public final class ItemService {
         final boolean oldRender = version == null || version < ItemRenderer.RENDER_VERSION;
         // 傳奇：uniques.yml 改過（指紋不一樣）才解開來檢查
         final boolean checkUnique = codec.isUnique(stack) && !Integer.valueOf(repository.uniqueRevision()).equals(codec.uniqueRevision(stack));
+        // 2026-10-26：詞綴資料改過（指紋不一樣，或這次之前做的舊物品）才解開來換算（AffixRescale），換完寫回、記下指紋
+        final boolean checkAffixes = !Integer.valueOf(repository.affixRevision()).equals(codec.affixRevision(stack));
         final Optional<ItemData> data = codec.read(stack);
         if (data.isEmpty() || repository.base(data.get().base()) == null) {
             return false;
@@ -175,7 +244,7 @@ public final class ItemService {
         } catch (final RuntimeException ignored) {
             // 畫不出來就原樣不動
         }
-        if (!oldRender && !checkUnique) {
+        if (!oldRender && !checkUnique && !checkAffixes) {
             // 2026-10-16：外觀是新版畫的，但說明跟資料對不上（沒跟著更新）也重畫；登入、打開倉庫時都會檢查。
             // 先補詞綴後來多出來的變數；還是畫不出來就原樣不動（不能讓整個倉庫、市集因為一件裝備起不來）
             try {
@@ -193,12 +262,23 @@ public final class ItemService {
             }
         }
         // 2026-10：詞綴後來多出來的變數也補上（不補的話重畫時丟「缺少變數」，整個倉庫被當成資料損毀）
-        final boolean upgraded = UniqueUpgrade.apply(repository, data.get()) | AffixUpgrade.apply(repository, data.get());
+        boolean upgraded = UniqueUpgrade.apply(repository, data.get()); // 傳奇先照 uniques.yml 對好（換了順序的照 legacy 找回舊的那條）
+        if (checkAffixes) {
+            try {
+                upgraded |= AffixRescale.apply(repository, data.get());
+            } catch (final RuntimeException e) {
+                // 換算不了就照原本的（下次資料改版再試）
+            }
+        }
+        upgraded |= AffixUpgrade.apply(repository, data.get());
         if (upgraded) {
             codec.write(stack, data.get());
         }
         if (checkUnique) {
             codec.stampUniqueRevision(stack, repository.uniqueRevision());
+        }
+        if (checkAffixes) {
+            codec.stampAffixRevision(stack, repository.affixRevision());
         }
         if (oldRender || upgraded) {
             renderer.render(stack, data.get());

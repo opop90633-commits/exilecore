@@ -120,9 +120,15 @@ public final class UniqueRecipe {
         return exclude(pool, settings, inputIds);
     }
 
-    /** 追逐級、極境專屬：一般的三換一不會換到（追逐級另外照 {@link #chaseOutcomes} 換；極境專屬不能放）。 */
+    /** 永恆珠寶的基底（bases/jewels.yml）：照 PoE2 只從來源 Boss 固定 1% 掉（uniques.yml 的 drop_chance）。 */
+    static final String TIMELESS_BASE = "timeless_jewel";
+
+    /**
+     * 追逐級、極境專屬：一般的三換一不會換到（追逐級另外照 {@link #chaseOutcomes} 換；極境專屬不能放）。
+     * 2026-10-26：永恆珠寶也算（照 PoE2 只從 Boss 固定 1% 掉，換不到、兌換券也挑不到）；這次之前它在 final 的池子裡會換到。
+     */
     public static boolean protectedUnique(final UniqueItem unique) {
-        if (unique.chase()) {
+        if (unique.chase() || TIMELESS_BASE.equals(unique.base())) {
             return true;
         }
         for (final String source : unique.sources()) {

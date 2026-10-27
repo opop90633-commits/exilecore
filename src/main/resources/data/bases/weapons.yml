@@ -4,6 +4,9 @@
 # 2026-10：近戰武器的基礎傷害補到跟弓一樣的比例（對照 PoE2 的原值：弓、雙手錘約 0.69 倍，長矛原本只有 0.59、長棍 0.62、單手錘 0.63、獸魂符 0.64）：
 #   長矛 ×1.17、長棍 ×1.11、單手錘 ×1.09、獸魂符 ×1.07——這幾類的每一個基底（含退役的舊基底）都乘過了，所以用 tools/gen_poe2_bases.py 重跑也是這個強度。
 #   弩（原本 0.57）也補了：×1.21。權杖沒動。
+# 2026-10-26：PoE2 分階基底（下面那一段）的傷害、攻速、暴擊全部改回 poe2db 的原值（行尾註解有原作名字與這次之前的值），
+#   上面那幾個倍率不再適用。物品等級到 base_level 就是原值，再高也不往上長（原作的基底不跟物品等級走），比較低的照曲線往下縮。
+#   法杖、長杖、權杖原作沒有攻擊傷害，沒動。
 
 short_sword:
   name: 短劍
@@ -252,6 +255,7 @@ crossbow:
   requirements: { level: 1, str: 10, dex: 12, int: 0 }
   damage: { physical: [11, 25] }
   aps: 1.25          # 2026-10：1.15 → 1.25（弩的技能出手太慢）
+  reload: 0.8   # 2026-10-26：舊的弩（退役）照 PoE2 一般弩的裝填時間
   crit: 5.5
   sockets: 6
   implicit:
@@ -334,8 +338,8 @@ mace1_01:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
-  requirements: { level: 1, str: 16, dex: 0, int: 0 }
-  damage: { physical: [9, 15] }
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Wooden Club，固定不隨物品等級變）；這次之前 { level: 1, str: 16, dex: 0, int: 0 }
+  damage: { physical: [6, 10] }   # 2026-10-26 照 PoE2 原值（Wooden Club）；這次之前 { physical: [9, 15] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -351,8 +355,8 @@ mace1_02:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 4
-  requirements: { level: 4, str: 17, dex: 0, int: 0 }
-  damage: { physical: [7, 11], fire: [7, 11] }
+  requirements: { level: 4, str: 11, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Smithing Hammer，固定不隨物品等級變）；這次之前 { level: 4, str: 17, dex: 0, int: 0 }
+  damage: { physical: [6, 9], fire: [6, 9] }   # 2026-10-26 照 PoE2 原值（Smithing Hammer）；這次之前 { physical: [7, 11], fire: [7, 11] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -368,8 +372,8 @@ mace1_03:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 10
-  requirements: { level: 10, str: 20, dex: 0, int: 0 }
-  damage: { physical: [11, 16] }
+  requirements: { level: 10, str: 21, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Slim Mace，固定不隨物品等級變）；這次之前 { level: 10, str: 20, dex: 0, int: 0 }
+  damage: { physical: [11, 17] }   # 2026-10-26 照 PoE2 原值（Slim Mace）；這次之前 { physical: [11, 16] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -385,8 +389,8 @@ mace1_04:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 16
-  requirements: { level: 16, str: 22, dex: 0, int: 0 }
-  damage: { physical: [13, 21] }
+  requirements: { level: 16, str: 31, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Spiked Club，固定不隨物品等級變）；這次之前 { level: 16, str: 22, dex: 0, int: 0 }
+  damage: { physical: [15, 24] }   # 2026-10-26 照 PoE2 原值（Spiked Club）；這次之前 { physical: [13, 21] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -402,8 +406,8 @@ mace1_05:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 22
-  requirements: { level: 22, str: 23, dex: 0, int: 0 }
-  damage: { physical: [14, 20] }
+  requirements: { level: 22, str: 41, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Warpick，固定不隨物品等級變）；這次之前 { level: 22, str: 23, dex: 0, int: 0 }
+  damage: { physical: [18, 24] }   # 2026-10-26 照 PoE2 原值（Warpick）；這次之前 { physical: [14, 20] }
   aps: 1.45
   crit: 7.0
   sockets: 3
@@ -424,8 +428,8 @@ mace1_06:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 26
-  requirements: { level: 26, str: 24, dex: 0, int: 0 }
-  damage: { physical: [14, 29] }
+  requirements: { level: 26, str: 48, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Plated Mace，固定不隨物品等級變）；這次之前 { level: 26, str: 24, dex: 0, int: 0 }
+  damage: { physical: [18, 38] }   # 2026-10-26 照 PoE2 原值（Plated Mace）；這次之前 { physical: [14, 29] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -441,8 +445,8 @@ mace1_07:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 33
-  requirements: { level: 33, str: 26, dex: 0, int: 0 }
-  damage: { physical: [21, 28] }
+  requirements: { level: 33, str: 60, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Brigand Mace，固定不隨物品等級變）；這次之前 { level: 33, str: 26, dex: 0, int: 0 }
+  damage: { physical: [28, 38] }   # 2026-10-26 照 PoE2 原值（Brigand Mace）；這次之前 { physical: [21, 28] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -458,8 +462,8 @@ mace1_08:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 36
-  requirements: { level: 36, str: 27, dex: 0, int: 0 }
-  damage: { physical: [23, 28] }
+  requirements: { level: 36, str: 65, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Construct Hammer，固定不隨物品等級變）；這次之前 { level: 36, str: 27, dex: 0, int: 0 }
+  damage: { physical: [31, 38] }   # 2026-10-26 照 PoE2 原值（Construct Hammer）；這次之前 { physical: [23, 28] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -473,8 +477,8 @@ mace1_09:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
-  requirements: { level: 1, str: 29, dex: 0, int: 0 }
-  damage: { physical: [24, 35] }
+  requirements: { level: 45, str: 80, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Morning Star；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 29, dex: 0, int: 0 }
+  damage: { physical: [33, 49] }   # 2026-10-26 照 PoE2 原值（Morning Star）；這次之前 { physical: [24, 35] }
   aps: 1.45
   crit: 6.5
   sockets: 3
@@ -490,8 +494,8 @@ mace1_10:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 45
-  requirements: { level: 45, str: 29, dex: 0, int: 0 }
-  damage: { physical: [15, 26], fire: [15, 26] }
+  requirements: { level: 45, str: 80, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Calescent Hammer，固定不隨物品等級變）；這次之前 { level: 45, str: 29, dex: 0, int: 0 }
+  damage: { physical: [22, 37], fire: [22, 37] }   # 2026-10-26 照 PoE2 原值（Calescent Hammer）；這次之前 { physical: [15, 26], fire: [15, 26] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -507,8 +511,8 @@ mace1_11:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 48
-  requirements: { level: 48, str: 30, dex: 0, int: 0 }
-  damage: { physical: [23, 36] }
+  requirements: { level: 48, str: 86, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Flared Mace，固定不隨物品等級變）；這次之前 { level: 48, str: 30, dex: 0, int: 0 }
+  damage: { physical: [33, 50] }   # 2026-10-26 照 PoE2 原值（Flared Mace）；這次之前 { physical: [23, 36] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -524,8 +528,8 @@ mace1_12:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 49
-  requirements: { level: 49, str: 30, dex: 0, int: 0 }
-  damage: { physical: [22, 36] }
+  requirements: { level: 49, str: 87, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Jade Club，固定不隨物品等級變）；這次之前 { level: 49, str: 30, dex: 0, int: 0 }
+  damage: { physical: [31, 51] }   # 2026-10-26 照 PoE2 原值（Jade Club）；這次之前 { physical: [22, 36] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -545,8 +549,8 @@ mace1_13:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 51
-  requirements: { level: 51, str: 31, dex: 0, int: 0 }
-  damage: { physical: [25, 33] }
+  requirements: { level: 51, str: 91, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Battle Pick，固定不隨物品等級變）；這次之前 { level: 51, str: 31, dex: 0, int: 0 }
+  damage: { physical: [35, 47] }   # 2026-10-26 照 PoE2 原值（Battle Pick）；這次之前 { physical: [25, 33] }
   aps: 1.45
   crit: 7.0
   sockets: 3
@@ -567,8 +571,8 @@ mace1_14:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 52
-  requirements: { level: 52, str: 31, dex: 0, int: 0 }
-  damage: { physical: [25, 43] }
+  requirements: { level: 52, str: 92, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Lumen Mace，固定不隨物品等級變）；這次之前 { level: 52, str: 31, dex: 0, int: 0 }
+  damage: { physical: [36, 60] }   # 2026-10-26 照 PoE2 原值（Lumen Mace）；這次之前 { physical: [25, 43] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -584,8 +588,8 @@ mace1_15:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 54
-  requirements: { level: 54, str: 31, dex: 0, int: 0 }
-  damage: { physical: [23, 48] }
+  requirements: { level: 54, str: 96, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Marching Mace，固定不隨物品等級變）；這次之前 { level: 54, str: 31, dex: 0, int: 0 }
+  damage: { physical: [33, 69] }   # 2026-10-26 照 PoE2 原值（Marching Mace）；這次之前 { physical: [23, 48] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -601,8 +605,8 @@ mace1_16:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 55
-  requirements: { level: 55, str: 31, dex: 0, int: 0 }
-  damage: { physical: [28, 43] }
+  requirements: { level: 55, str: 97, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Execratus Hammer，固定不隨物品等級變）；這次之前 { level: 55, str: 31, dex: 0, int: 0 }
+  damage: { physical: [40, 60] }   # 2026-10-26 照 PoE2 原值（Execratus Hammer）；這次之前 { physical: [28, 43] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -618,8 +622,8 @@ mace1_17:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 59
-  requirements: { level: 59, str: 32, dex: 0, int: 0 }
-  damage: { physical: [32, 43] }
+  requirements: { level: 59, str: 104, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Bandit Mace，固定不隨物品等級變）；這次之前 { level: 59, str: 32, dex: 0, int: 0 }
+  damage: { physical: [45, 61] }   # 2026-10-26 照 PoE2 原值（Bandit Mace）；這次之前 { physical: [32, 43] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -635,8 +639,8 @@ mace1_18:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 62
-  requirements: { level: 62, str: 33, dex: 0, int: 0 }
-  damage: { physical: [34, 41] }
+  requirements: { level: 62, str: 109, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Structured Hammer，固定不隨物品等級變）；這次之前 { level: 62, str: 33, dex: 0, int: 0 }
+  damage: { physical: [49, 60] }   # 2026-10-26 照 PoE2 原值（Structured Hammer）；這次之前 { physical: [34, 41] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -652,8 +656,8 @@ mace1_19:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 65
-  requirements: { level: 65, str: 34, dex: 0, int: 0 }
-  damage: { physical: [31, 51] }
+  requirements: { level: 65, str: 114, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Torment Club，固定不隨物品等級變）；這次之前 { level: 65, str: 34, dex: 0, int: 0 }
+  damage: { physical: [44, 73] }   # 2026-10-26 照 PoE2 原值（Torment Club）；這次之前 { physical: [31, 51] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -667,8 +671,8 @@ mace1_20:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
-  requirements: { level: 1, str: 39, dex: 0, int: 0 }
-  damage: { physical: [32, 47] }
+  requirements: { level: 67, str: 134, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Flanged Mace；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 39, dex: 0, int: 0 }
+  damage: { physical: [45, 67] }   # 2026-10-26 照 PoE2 原值（Flanged Mace）；這次之前 { physical: [32, 47] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -684,8 +688,8 @@ mace1_21:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 72
-  requirements: { level: 72, str: 42, dex: 0, int: 0 }
-  damage: { physical: [29, 62] }
+  requirements: { level: 72, str: 149, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Crown Mace，固定不隨物品等級變）；這次之前 { level: 72, str: 42, dex: 0, int: 0 }
+  damage: { physical: [43, 89] }   # 2026-10-26 照 PoE2 原值（Crown Mace）；這次之前 { physical: [29, 62] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -699,8 +703,8 @@ mace1_22:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
-  requirements: { level: 1, str: 44, dex: 0, int: 0 }
-  damage: { physical: [25, 40], fire: [25, 40] }
+  requirements: { level: 77, str: 163, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Molten Hammer；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 44, dex: 0, int: 0 }
+  damage: { physical: [36, 59], fire: [36, 59] }   # 2026-10-26 照 PoE2 原值（Molten Hammer）；這次之前 { physical: [25, 40], fire: [25, 40] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -714,8 +718,8 @@ mace1_23:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
-  requirements: { level: 1, str: 44, dex: 0, int: 0 }
-  damage: { physical: [35, 58] }
+  requirements: { level: 77, str: 163, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Marauding Mace；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 44, dex: 0, int: 0 }
+  damage: { physical: [51, 84] }   # 2026-10-26 照 PoE2 原值（Marauding Mace）；這次之前 { physical: [35, 58] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -730,8 +734,8 @@ mace1_24:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
-  requirements: { level: 1, str: 44, dex: 0, int: 0 }
-  damage: { physical: [34, 46] }
+  requirements: { level: 78, str: 163, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Strife Pick；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 44, dex: 0, int: 0 }
+  damage: { physical: [49, 66] }   # 2026-10-26 照 PoE2 原值（Strife Pick）；這次之前 { physical: [34, 46] }
   aps: 1.45
   crit: 7.0
   sockets: 3
@@ -751,8 +755,8 @@ mace1_25:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
-  requirements: { level: 1, str: 44, dex: 0, int: 0 }
-  damage: { physical: [32, 52] }
+  requirements: { level: 78, str: 163, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Akoyan Club；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 44, dex: 0, int: 0 }
+  damage: { physical: [46, 76] }   # 2026-10-26 照 PoE2 原值（Akoyan Club）；這次之前 { physical: [32, 52] }
   aps: 1.45
   crit: 5.0
   sockets: 3
@@ -770,11 +774,16 @@ mace1_26:
   slot: MAIN_HAND
   tags: [weapon, one_hand, mace, melee, melee_1h]
   drop_level: 1
-  requirements: { level: 1, str: 43, dex: 0, int: 0 }
-  damage: { physical: [41, 50] }
+  requirements: { level: 79, str: 163, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Fortified Hammer；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 43, dex: 0, int: 0 }
+  damage: { physical: [60, 73] }   # 2026-10-26 照 PoE2 原值（Fortified Hammer）；這次之前 { physical: [41, 50] }
   aps: 1.4
   crit: 5.0
   sockets: 3
+  implicit:   # 2026-10-26 照 PoE2 補上（Fortified Hammer）；這次之前沒有
+    text: "擊中時 {value}% 機率眩暈"
+    value: [40, 40]
+    mods:
+      - { stat: daze.chance, type: FLAT, value: "{value}" }
 
 mace2_01:
   name: 樸素巨錘
@@ -787,8 +796,8 @@ mace2_01:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 24, dex: 0, int: 0 }
-  damage: { physical: [22, 31] }
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Felled Greatclub，固定不隨物品等級變）；這次之前 { level: 1, str: 24, dex: 0, int: 0 }
+  damage: { physical: [13, 18] }   # 2026-10-26 照 PoE2 原值（Felled Greatclub）；這次之前 { physical: [22, 31] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -804,8 +813,8 @@ mace2_02:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 4
-  requirements: { level: 4, str: 26, dex: 0, int: 0 }
-  damage: { physical: [21, 40] }
+  requirements: { level: 4, str: 11, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Oak Greathammer，固定不隨物品等級變）；這次之前 { level: 4, str: 26, dex: 0, int: 0 }
+  damage: { physical: [16, 30] }   # 2026-10-26 照 PoE2 原值（Oak Greathammer）；這次之前 { physical: [21, 40] }
   aps: 1.0
   crit: 5.0
   sockets: 6
@@ -826,7 +835,7 @@ mace2_03:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 11
-  requirements: { level: 11, str: 31, dex: 0, int: 0 }
+  requirements: { level: 11, str: 23, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Forge Maul，固定不隨物品等級變）；這次之前 { level: 11, str: 31, dex: 0, int: 0 }
   damage: { physical: [26, 35] }
   aps: 1.05
   crit: 5.0
@@ -843,8 +852,8 @@ mace2_04:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 16
-  requirements: { level: 16, str: 32, dex: 0, int: 0 }
-  damage: { physical: [29, 43] }
+  requirements: { level: 16, str: 31, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Studded Greatclub，固定不隨物品等級變）；這次之前 { level: 16, str: 32, dex: 0, int: 0 }
+  damage: { physical: [32, 48] }   # 2026-10-26 照 PoE2 原值（Studded Greatclub）；這次之前 { physical: [29, 43] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -860,8 +869,8 @@ mace2_05:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 22
-  requirements: { level: 22, str: 35, dex: 0, int: 0 }
-  damage: { physical: [30, 41] }
+  requirements: { level: 22, str: 41, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Cultist Greathammer，固定不隨物品等級變）；這次之前 { level: 22, str: 35, dex: 0, int: 0 }
+  damage: { physical: [36, 49] }   # 2026-10-26 照 PoE2 原值（Cultist Greathammer）；這次之前 { physical: [30, 41] }
   aps: 1.05
   crit: 5.0
   sockets: 6
@@ -877,8 +886,8 @@ mace2_06:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 28
-  requirements: { level: 28, str: 38, dex: 0, int: 0 }
-  damage: { physical: [28, 57] }
+  requirements: { level: 28, str: 52, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Temple Maul，固定不隨物品等級變）；這次之前 { level: 28, str: 38, dex: 0, int: 0 }
+  damage: { physical: [35, 72] }   # 2026-10-26 照 PoE2 原值（Temple Maul）；這次之前 { physical: [28, 57] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -894,8 +903,8 @@ mace2_07:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 33
-  requirements: { level: 33, str: 39, dex: 0, int: 0 }
-  damage: { physical: [44, 60] }
+  requirements: { level: 33, str: 60, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Leaden Greathammer，固定不隨物品等級變）；這次之前 { level: 33, str: 39, dex: 0, int: 0 }
+  damage: { physical: [58, 78] }   # 2026-10-26 照 PoE2 原值（Leaden Greathammer）；這次之前 { physical: [44, 60] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -911,8 +920,8 @@ mace2_08:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 38
-  requirements: { level: 38, str: 41, dex: 0, int: 0 }
-  damage: { physical: [46, 56] }
+  requirements: { level: 38, str: 68, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Crumbling Maul，固定不隨物品等級變）；這次之前 { level: 38, str: 41, dex: 0, int: 0 }
+  damage: { physical: [62, 75] }   # 2026-10-26 照 PoE2 原值（Crumbling Maul）；這次之前 { physical: [46, 56] }
   aps: 1.1
   crit: 8.0
   sockets: 6
@@ -926,8 +935,8 @@ mace2_09:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 43, dex: 0, int: 0 }
-  damage: { physical: [49, 74] }
+  requirements: { level: 45, str: 80, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Pointed Maul；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 43, dex: 0, int: 0 }
+  damage: { physical: [68, 102] }   # 2026-10-26 照 PoE2 原值（Pointed Maul）；這次之前 { physical: [49, 74] }
   aps: 1.1
   crit: 6.5
   sockets: 6
@@ -942,8 +951,8 @@ mace2_10:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 43, dex: 0, int: 0 }
-  damage: { physical: [45, 83] }
+  requirements: { level: 45, str: 80, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Snakewood Greathammer；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 43, dex: 0, int: 0 }
+  damage: { physical: [62, 115] }   # 2026-10-26 照 PoE2 原值（Snakewood Greathammer）；這次之前 { physical: [45, 83] }
   aps: 1.05
   crit: 5.0
   sockets: 6
@@ -964,8 +973,8 @@ mace2_11:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 48
-  requirements: { level: 48, str: 45, dex: 0, int: 0 }
-  damage: { physical: [54, 73] }
+  requirements: { level: 48, str: 86, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Blacksmith Maul，固定不隨物品等級變）；這次之前 { level: 48, str: 45, dex: 0, int: 0 }
+  damage: { physical: [75, 102] }   # 2026-10-26 照 PoE2 原值（Blacksmith Maul）；這次之前 { physical: [54, 73] }
   aps: 1.05
   crit: 5.0
   sockets: 6
@@ -981,8 +990,8 @@ mace2_12:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 50
-  requirements: { level: 50, str: 45, dex: 0, int: 0 }
-  damage: { physical: [55, 75] }
+  requirements: { level: 50, str: 89, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Totemic Greatclub，固定不隨物品等級變）；這次之前 { level: 50, str: 45, dex: 0, int: 0 }
+  damage: { physical: [77, 105] }   # 2026-10-26 照 PoE2 原值（Totemic Greatclub）；這次之前 { physical: [55, 75] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -998,8 +1007,8 @@ mace2_13:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 51
-  requirements: { level: 51, str: 45, dex: 0, int: 0 }
-  damage: { physical: [50, 68] }
+  requirements: { level: 51, str: 91, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Zealot Greathammer，固定不隨物品等級變）；這次之前 { level: 51, str: 45, dex: 0, int: 0 }
+  damage: { physical: [70, 95] }   # 2026-10-26 照 PoE2 原值（Zealot Greathammer）；這次之前 { physical: [50, 68] }
   aps: 1.05
   crit: 5.0
   sockets: 6
@@ -1015,8 +1024,8 @@ mace2_14:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 52
-  requirements: { level: 52, str: 45, dex: 0, int: 0 }
-  damage: { physical: [53, 88] }
+  requirements: { level: 52, str: 92, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Greatmace，固定不隨物品等級變）；這次之前 { level: 52, str: 45, dex: 0, int: 0 }
+  damage: { physical: [74, 124] }   # 2026-10-26 照 PoE2 原值（Greatmace）；這次之前 { physical: [53, 88] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -1032,8 +1041,8 @@ mace2_15:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 54
-  requirements: { level: 54, str: 46, dex: 0, int: 0 }
-  damage: { physical: [62, 84] }
+  requirements: { level: 54, str: 96, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Precise Greathammer，固定不隨物品等級變）；這次之前 { level: 54, str: 46, dex: 0, int: 0 }
+  damage: { physical: [87, 118] }   # 2026-10-26 照 PoE2 原值（Precise Greathammer）；這次之前 { physical: [62, 84] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -1049,8 +1058,8 @@ mace2_16:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 54
-  requirements: { level: 54, str: 46, dex: 0, int: 0 }
-  damage: { physical: [42, 87] }
+  requirements: { level: 54, str: 96, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Solemn Maul，固定不隨物品等級變）；這次之前 { level: 54, str: 46, dex: 0, int: 0 }
+  damage: { physical: [59, 123] }   # 2026-10-26 照 PoE2 原值（Solemn Maul）；這次之前 { physical: [42, 87] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -1066,8 +1075,8 @@ mace2_17:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 59
-  requirements: { level: 59, str: 48, dex: 0, int: 0 }
-  damage: { physical: [66, 89] }
+  requirements: { level: 59, str: 104, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Heavy Greathammer，固定不隨物品等級變）；這次之前 { level: 59, str: 48, dex: 0, int: 0 }
+  damage: { physical: [94, 127] }   # 2026-10-26 照 PoE2 原值（Heavy Greathammer）；這次之前 { physical: [66, 89] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -1083,8 +1092,8 @@ mace2_18:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 62
-  requirements: { level: 62, str: 49, dex: 0, int: 0 }
-  damage: { physical: [64, 78] }
+  requirements: { level: 62, str: 109, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Disintegrating Maul，固定不隨物品等級變）；這次之前 { level: 62, str: 49, dex: 0, int: 0 }
+  damage: { physical: [92, 112] }   # 2026-10-26 照 PoE2 原值（Disintegrating Maul）；這次之前 { physical: [64, 78] }
   aps: 1.1
   crit: 8.0
   sockets: 6
@@ -1100,8 +1109,8 @@ mace2_19:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 65
-  requirements: { level: 65, str: 50, dex: 0, int: 0 }
-  damage: { physical: [67, 100] }
+  requirements: { level: 65, str: 114, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Giant Maul，固定不隨物品等級變）；這次之前 { level: 65, str: 50, dex: 0, int: 0 }
+  damage: { physical: [96, 144] }   # 2026-10-26 照 PoE2 原值（Giant Maul）；這次之前 { physical: [67, 100] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -1117,8 +1126,8 @@ mace2_20:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 67
-  requirements: { level: 67, str: 58, dex: 0, int: 0 }
-  damage: { physical: [70, 95] }
+  requirements: { level: 67, str: 134, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Anvil Maul，固定不隨物品等級變）；這次之前 { level: 67, str: 58, dex: 0, int: 0 }
+  damage: { physical: [101, 136] }   # 2026-10-26 照 PoE2 原值（Anvil Maul）；這次之前 { physical: [70, 95] }
   aps: 1.05
   crit: 5.0
   sockets: 6
@@ -1134,8 +1143,8 @@ mace2_21:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 70
-  requirements: { level: 70, str: 68, dex: 0, int: 0 }
-  damage: { physical: [51, 107] }
+  requirements: { level: 70, str: 163, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Aberrant Sledge，固定不隨物品等級變）；這次之前 { level: 70, str: 68, dex: 0, int: 0 }
+  damage: { physical: [74, 154] }   # 2026-10-26 照 PoE2 原值（Aberrant Sledge）；這次之前 { physical: [51, 107] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -1149,8 +1158,8 @@ mace2_22:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 62, dex: 0, int: 0 }
-  damage: { physical: [53, 109] }
+  requirements: { level: 72, str: 149, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Sacred Maul；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 62, dex: 0, int: 0 }
+  damage: { physical: [76, 158] }   # 2026-10-26 照 PoE2 原值（Sacred Maul）；這次之前 { physical: [53, 109] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -1165,8 +1174,8 @@ mace2_23:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 65, dex: 0, int: 0 }
-  damage: { physical: [72, 135] }
+  requirements: { level: 77, str: 163, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Ironwood Greathammer；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 65, dex: 0, int: 0 }
+  damage: { physical: [105, 196] }   # 2026-10-26 照 PoE2 原值（Ironwood Greathammer）；這次之前 { physical: [72, 135] }
   aps: 1.0
   crit: 5.0
   sockets: 6
@@ -1187,8 +1196,8 @@ mace2_24:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 77
-  requirements: { level: 77, str: 65, dex: 0, int: 0 }
-  damage: { physical: [82, 111] }
+  requirements: { level: 77, str: 163, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Massive Greathammer，固定不隨物品等級變）；這次之前 { level: 77, str: 65, dex: 0, int: 0 }
+  damage: { physical: [119, 161] }   # 2026-10-26 照 PoE2 原值（Massive Greathammer）；這次之前 { physical: [82, 111] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -1202,11 +1211,16 @@ mace2_25:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 65, dex: 0, int: 0 }
-  damage: { physical: [70, 94] }
+  requirements: { level: 78, str: 163, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Fanatic Greathammer；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 65, dex: 0, int: 0 }
+  damage: { physical: [101, 137] }   # 2026-10-26 照 PoE2 原值（Fanatic Greathammer）；這次之前 { physical: [70, 94] }
   aps: 1.05
   crit: 5.0
   sockets: 6
+  implicit:   # 2026-10-26 照 PoE2（Fanatic Greathammer「打擊造成擴散傷害」）；原作沒寫比例，用我們近戰擴散常用的 50%（平衡等效）；這次之前沒有
+    text: "近戰打擊對周圍敵人造成 {value}% 擴散傷害"
+    value: [50, 50]
+    mods:
+      - { stat: skill.melee_splash, type: FLAT, value: "{value}" }
 
 mace2_26:
   name: 龍骨巨錘
@@ -1217,11 +1231,16 @@ mace2_26:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 65, dex: 0, int: 0 }
-  damage: { physical: [78, 105] }
+  requirements: { level: 78, str: 163, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Tawhoan Greatclub；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 65, dex: 0, int: 0 }
+  damage: { physical: [113, 153] }   # 2026-10-26 照 PoE2 原值（Tawhoan Greatclub）；這次之前 { physical: [78, 105] }
   aps: 1.1
   crit: 5.0
   sockets: 6
+  implicit:   # 2026-10-26 照 PoE2 補上（Tawhoan Greatclub）；這次之前沒有
+    text: "戰吼多強化 {value} 次攻擊"
+    value: [1, 1]
+    mods:
+      - { stat: warcry.exerts, type: FLAT, value: "{value}" }
 
 mace2_27:
   name: 淵鋼巨錘
@@ -1232,11 +1251,17 @@ mace2_27:
   slot: MAIN_HAND
   tags: [weapon, two_hand, mace, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 64, dex: 0, int: 0 }
-  damage: { physical: [72, 87] }
+  requirements: { level: 79, str: 163, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Ruination Maul；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 64, dex: 0, int: 0 }
+  damage: { physical: [104, 127] }   # 2026-10-26 照 PoE2 原值（Ruination Maul）；這次之前 { physical: [72, 87] }
   aps: 1.1
   crit: 8.0
   sockets: 6
+  implicit:   # 2026-10-26 平衡等效 PoE2（Ruination Maul「暴擊殺死的敵人爆炸，造成牠 10% 生命的物理傷害」）：我們的擊殺效果分不出暴擊，
+               # 改成 5% 機率爆炸、造成 100% 生命的傷害（期望值約等於暴擊殺死佔一半時的 10% × 50%）；這次之前沒有
+    text: "殺死的敵人 {value}% 機率爆炸，造成牠最大生命 100% 的傷害"
+    value: [5, 5]
+    mods:
+      - { stat: kill.explode_chance, type: FLAT, value: "{value}" }
 
 spear_01:
   name: 樸素長矛
@@ -1249,8 +1274,8 @@ spear_01:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
-  requirements: { level: 1, str: 6, dex: 12, int: 0 }
-  damage: { physical: [8, 15] }
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Hardwood Spear，固定不隨物品等級變）；這次之前 { level: 1, str: 6, dex: 12, int: 0 }
+  damage: { physical: [5, 9] }   # 2026-10-26 照 PoE2 原值（Hardwood Spear）；這次之前 { physical: [8, 15] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1266,8 +1291,8 @@ spear_02:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 5
-  requirements: { level: 5, str: 0, dex: 15, int: 0 }
-  damage: { physical: [12, 15] }
+  requirements: { level: 5, str: 0, dex: 10, int: 0 }   # 2026-10-26 照 PoE2（Ironhead Spear，固定不隨物品等級變）；這次之前 { level: 5, str: 0, dex: 15, int: 0 }
+  damage: { physical: [9, 12] }   # 2026-10-26 照 PoE2 原值（Ironhead Spear）；這次之前 { physical: [12, 15] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1284,7 +1309,7 @@ spear_03:
   tags: [weapon, one_hand, spear, melee]
   drop_level: 10
   requirements: { level: 10, str: 9, dex: 17, int: 0 }
-  damage: { physical: [11, 18] }
+  damage: { physical: [10, 17] }   # 2026-10-26 照 PoE2 原值（Hunting Spear）；這次之前 { physical: [11, 18] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -1300,8 +1325,8 @@ spear_04:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 16
-  requirements: { level: 16, str: 9, dex: 18, int: 0 }
-  damage: { physical: [11, 20] }
+  requirements: { level: 16, str: 12, dex: 25, int: 0 }   # 2026-10-26 照 PoE2（Winged Spear，固定不隨物品等級變）；這次之前 { level: 16, str: 9, dex: 18, int: 0 }
+  damage: { physical: [12, 22] }   # 2026-10-26 照 PoE2 原值（Winged Spear）；這次之前 { physical: [11, 20] }
   aps: 1.7
   crit: 5.0
   sockets: 3
@@ -1317,8 +1342,8 @@ spear_05:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 21
-  requirements: { level: 21, str: 8, dex: 19, int: 0 }
-  damage: { physical: [13, 22] }
+  requirements: { level: 21, str: 14, dex: 31, int: 0 }   # 2026-10-26 照 PoE2（War Spear，固定不隨物品等級變）；這次之前 { level: 21, str: 8, dex: 19, int: 0 }
+  damage: { physical: [16, 27] }   # 2026-10-26 照 PoE2 原值（War Spear）；這次之前 { physical: [13, 22] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1334,8 +1359,8 @@ spear_06:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 26
-  requirements: { level: 26, str: 9, dex: 20, int: 0 }
-  damage: { physical: [11, 30] }
+  requirements: { level: 26, str: 17, dex: 38, int: 0 }   # 2026-10-26 照 PoE2（Forked Spear，固定不隨物品等級變）；這次之前 { level: 26, str: 9, dex: 20, int: 0 }
+  damage: { physical: [13, 38] }   # 2026-10-26 照 PoE2 原值（Forked Spear）；這次之前 { physical: [11, 30] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -1351,8 +1376,8 @@ spear_07:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 33
-  requirements: { level: 33, str: 9, dex: 21, int: 0 }
-  damage: { physical: [15, 29] }
+  requirements: { level: 33, str: 20, dex: 47, int: 0 }   # 2026-10-26 照 PoE2（Barbed Spear，固定不隨物品等級變）；這次之前 { level: 33, str: 9, dex: 21, int: 0 }
+  damage: { physical: [20, 38] }   # 2026-10-26 照 PoE2 原值（Barbed Spear）；這次之前 { physical: [15, 29] }
   aps: 1.5
   crit: 6.0
   sockets: 3
@@ -1368,8 +1393,8 @@ spear_08:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 40
-  requirements: { level: 40, str: 10, dex: 21, int: 0 }
-  damage: { physical: [23, 35] }
+  requirements: { level: 40, str: 26, dex: 55, int: 0 }   # 2026-10-26 照 PoE2（Broad Spear，固定不隨物品等級變）；這次之前 { level: 40, str: 10, dex: 21, int: 0 }
+  damage: { physical: [32, 48] }   # 2026-10-26 照 PoE2 原值（Broad Spear）；這次之前 { physical: [23, 35] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -1385,8 +1410,8 @@ spear_09:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 45
-  requirements: { level: 45, str: 9, dex: 23, int: 0 }
-  damage: { physical: [18, 37] }
+  requirements: { level: 45, str: 26, dex: 63, int: 0 }   # 2026-10-26 照 PoE2（Crossblade Spear，固定不隨物品等級變）；這次之前 { level: 45, str: 9, dex: 23, int: 0 }
+  damage: { physical: [25, 52] }   # 2026-10-26 照 PoE2 原值（Crossblade Spear）；這次之前 { physical: [18, 37] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1402,8 +1427,8 @@ spear_10:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 45
-  requirements: { level: 45, str: 9, dex: 23, int: 0 }
-  damage: { physical: [23, 32] }
+  requirements: { level: 45, str: 26, dex: 63, int: 0 }   # 2026-10-26 照 PoE2（Steelhead Spear，固定不隨物品等級變）；這次之前 { level: 45, str: 9, dex: 23, int: 0 }
+  damage: { physical: [33, 44] }   # 2026-10-26 照 PoE2 原值（Steelhead Spear）；這次之前 { physical: [23, 32] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1419,8 +1444,8 @@ spear_11:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 48
-  requirements: { level: 48, str: 9, dex: 23, int: 0 }
-  damage: { physical: [22, 37] }
+  requirements: { level: 48, str: 27, dex: 67, int: 0 }   # 2026-10-26 照 PoE2（Coursing Spear，固定不隨物品等級變）；這次之前 { level: 48, str: 9, dex: 23, int: 0 }
+  damage: { physical: [31, 52] }   # 2026-10-26 照 PoE2 原值（Coursing Spear）；這次之前 { physical: [22, 37] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -1436,8 +1461,8 @@ spear_12:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 51
-  requirements: { level: 51, str: 10, dex: 23, int: 17 }
-  damage: { physical: [21, 37] }
+  requirements: { level: 51, str: 29, dex: 71, int: 50 }   # 2026-10-26 照 PoE2（Seaglass Spear，固定不隨物品等級變）；這次之前 { level: 51, str: 10, dex: 23, int: 17 }
+  damage: { physical: [29, 53] }   # 2026-10-26 照 PoE2 原值（Seaglass Spear）；這次之前 { physical: [21, 37] }
   aps: 1.6
   crit: 7.0
   sockets: 3
@@ -1453,8 +1478,8 @@ spear_13:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 51
-  requirements: { level: 51, str: 10, dex: 23, int: 0 }
-  damage: { physical: [22, 37] }
+  requirements: { level: 51, str: 29, dex: 71, int: 0 }   # 2026-10-26 照 PoE2（Swift Spear，固定不隨物品等級變）；這次之前 { level: 51, str: 10, dex: 23, int: 0 }
+  damage: { physical: [32, 53] }   # 2026-10-26 照 PoE2 原值（Swift Spear）；這次之前 { physical: [22, 37] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1470,8 +1495,8 @@ spear_14:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 52
-  requirements: { level: 52, str: 9, dex: 24, int: 0 }
-  damage: { physical: [21, 40] }
+  requirements: { level: 52, str: 29, dex: 72, int: 0 }   # 2026-10-26 照 PoE2（Sword Spear，固定不隨物品等級變）；這次之前 { level: 52, str: 9, dex: 24, int: 0 }
+  damage: { physical: [30, 56] }   # 2026-10-26 照 PoE2 原值（Sword Spear）；這次之前 { physical: [21, 40] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1487,8 +1512,8 @@ spear_15:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 54
-  requirements: { level: 54, str: 10, dex: 24, int: 0 }
-  damage: { physical: [16, 49] }
+  requirements: { level: 54, str: 30, dex: 75, int: 0 }   # 2026-10-26 照 PoE2（Branched Spear，固定不隨物品等級變）；這次之前 { level: 54, str: 10, dex: 24, int: 0 }
+  damage: { physical: [23, 69] }   # 2026-10-26 照 PoE2 原值（Branched Spear）；這次之前 { physical: [16, 49] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -1502,8 +1527,8 @@ spear_16:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
-  requirements: { level: 1, str: 10, dex: 24, int: 0 }
-  damage: { physical: [8, 32], lightning: [8, 32] }
+  requirements: { level: 55, str: 31, dex: 76, int: 0 }   # 2026-10-26 照 PoE2（Striking Spear；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 10, dex: 24, int: 0 }
+  damage: { physical: [12, 46], lightning: [12, 46] }   # 2026-10-26 照 PoE2 原值（Striking Spear）；這次之前 { physical: [8, 32], lightning: [8, 32] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1519,8 +1544,8 @@ spear_17:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 59
-  requirements: { level: 59, str: 10, dex: 25, int: 0 }
-  damage: { physical: [23, 43] }
+  requirements: { level: 59, str: 33, dex: 81, int: 0 }   # 2026-10-26 照 PoE2（Jagged Spear，固定不隨物品等級變）；這次之前 { level: 59, str: 10, dex: 25, int: 0 }
+  damage: { physical: [33, 61] }   # 2026-10-26 照 PoE2 原值（Jagged Spear）；這次之前 { physical: [23, 43] }
   aps: 1.5
   crit: 6.0
   sockets: 3
@@ -1536,8 +1561,8 @@ spear_18:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 62
-  requirements: { level: 62, str: 12, dex: 23, int: 0 }
-  damage: { physical: [32, 48] }
+  requirements: { level: 62, str: 40, dex: 80, int: 0 }   # 2026-10-26 照 PoE2（Massive Spear，固定不隨物品等級變）；這次之前 { level: 62, str: 12, dex: 23, int: 0 }
+  damage: { physical: [46, 69] }   # 2026-10-26 照 PoE2 原值（Massive Spear）；這次之前 { physical: [32, 48] }
   aps: 1.4
   crit: 5.0
   sockets: 3
@@ -1553,8 +1578,8 @@ spear_19:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 65
-  requirements: { level: 65, str: 10, dex: 25, int: 0 }
-  damage: { physical: [26, 47] }
+  requirements: { level: 65, str: 36, dex: 89, int: 0 }   # 2026-10-26 照 PoE2（Helix Spear，固定不隨物品等級變）；這次之前 { level: 65, str: 10, dex: 25, int: 0 }
+  damage: { physical: [37, 68] }   # 2026-10-26 照 PoE2 原值（Helix Spear）；這次之前 { physical: [26, 47] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1570,8 +1595,8 @@ spear_20:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 67
-  requirements: { level: 67, str: 12, dex: 29, int: 0 }
-  damage: { physical: [32, 43] }
+  requirements: { level: 67, str: 41, dex: 104, int: 0 }   # 2026-10-26 照 PoE2（Orichalcum Spear，固定不隨物品等級變）；這次之前 { level: 67, str: 12, dex: 29, int: 0 }
+  damage: { physical: [46, 62] }   # 2026-10-26 照 PoE2 原值（Orichalcum Spear）；這次之前 { physical: [32, 43] }
   aps: 1.6
   crit: 5.0
   sockets: 3
@@ -1585,8 +1610,8 @@ spear_21:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
-  requirements: { level: 1, str: 11, dex: 31, int: 0 }
-  damage: { physical: [25, 44] }
+  requirements: { level: 70, str: 41, dex: 115, int: 0 }   # 2026-10-26 照 PoE2（Soaring Spear；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 11, dex: 31, int: 0 }
+  damage: { physical: [35, 65] }   # 2026-10-26 照 PoE2 原值（Soaring Spear）；這次之前 { physical: [25, 44] }
   aps: 1.7
   crit: 5.0
   sockets: 3
@@ -1602,8 +1627,8 @@ spear_22:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 72
-  requirements: { level: 72, str: 12, dex: 31, int: 0 }
-  damage: { physical: [21, 61] }
+  requirements: { level: 72, str: 46, dex: 115, int: 0 }   # 2026-10-26 照 PoE2（Pronged Spear，固定不隨物品等級變）；這次之前 { level: 72, str: 12, dex: 31, int: 0 }
+  damage: { physical: [30, 89] }   # 2026-10-26 照 PoE2 原值（Pronged Spear）；這次之前 { physical: [21, 61] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -1619,8 +1644,8 @@ spear_23:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 75
-  requirements: { level: 75, str: 13, dex: 33, int: 0 }
-  damage: { physical: [26, 54] }
+  requirements: { level: 75, str: 50, dex: 127, int: 0 }   # 2026-10-26 照 PoE2（Guardian Spear，固定不隨物品等級變）；這次之前 { level: 75, str: 13, dex: 33, int: 0 }
+  damage: { physical: [38, 79] }   # 2026-10-26 照 PoE2 原值（Guardian Spear）；這次之前 { physical: [26, 54] }
   aps: 1.55
   crit: 5.0
   sockets: 3
@@ -1634,11 +1659,16 @@ spear_24:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
-  requirements: { level: 1, str: 13, dex: 33, int: 0 }
-  damage: { physical: [33, 54] }
+  requirements: { level: 77, str: 50, dex: 127, int: 0 }   # 2026-10-26 照 PoE2（Stalking Spear；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 13, dex: 33, int: 0 }
+  damage: { physical: [47, 79] }   # 2026-10-26 照 PoE2 原值（Stalking Spear）；這次之前 { physical: [33, 54] }
   aps: 1.55
   crit: 5.0
   sockets: 3
+  implicit:   # 2026-10-26 照 PoE2 補上（Stalking Spear）；這次之前沒有
+    text: "擊中時 {value}% 機率癱瘓"
+    value: [15, 25]
+    mods:
+      - { stat: maim.chance, type: FLAT, value: "{value}" }
 
 spear_25:
   name: 聖紋長矛
@@ -1649,11 +1679,18 @@ spear_25:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
-  requirements: { level: 1, str: 13, dex: 33, int: 0 }
-  damage: { physical: [28, 53] }
+  requirements: { level: 77, str: 50, dex: 127, int: 0 }   # 2026-10-26 照 PoE2（Spiked Spear；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 13, dex: 33, int: 0 }
+  damage: { physical: [41, 76] }   # 2026-10-26 照 PoE2 原值（Spiked Spear）；這次之前 { physical: [28, 53] }
   aps: 1.5
   crit: 6.0
   sockets: 3
+  implicit:   # 2026-10-26 平衡等效 PoE2（Spiked Spear「你造成的流血傷害快 (10-20)%」：總傷害不變、時間變短）：
+               # 流血傷害增加 x%、持續時間減少 x%（總傷害約不變、每秒傷害多 x%）；這次之前沒有
+    text: "增加 {value}% 流血傷害，流血持續時間減少 {value}%"
+    value: [10, 20]
+    mods:
+      - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
+      - { stat: bleed.duration, type: INCREASED, value: "-{value}" }
 
 spear_26:
   name: 龍骨長矛
@@ -1664,11 +1701,16 @@ spear_26:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
-  requirements: { level: 1, str: 13, dex: 33, int: 0 }
-  damage: { physical: [32, 53] }
+  requirements: { level: 78, str: 50, dex: 127, int: 0 }   # 2026-10-26 照 PoE2（Flying Spear；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 13, dex: 33, int: 0 }
+  damage: { physical: [46, 77] }   # 2026-10-26 照 PoE2 原值（Flying Spear）；這次之前 { physical: [32, 53] }
   aps: 1.6
   crit: 5.0
   sockets: 3
+  implicit:   # 2026-10-26 照 PoE2 補上（Flying Spear）；這次之前沒有
+    text: "增加 {value}% 投射物速度"
+    value: [25, 35]
+    mods:
+      - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
 
 spear_27:
   name: 淵鋼長矛
@@ -1679,8 +1721,8 @@ spear_27:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
-  requirements: { level: 1, str: 13, dex: 33, int: 23 }
-  damage: { physical: [27, 49] }
+  requirements: { level: 78, str: 50, dex: 127, int: 90 }   # 2026-10-26 照 PoE2（Akoyan Spear；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 13, dex: 33, int: 23 }
+  damage: { physical: [39, 72] }   # 2026-10-26 照 PoE2 原值（Akoyan Spear）；這次之前 { physical: [27, 49] }
   aps: 1.6
   crit: 7.0
   sockets: 3
@@ -1694,11 +1736,16 @@ spear_28:
   slot: MAIN_HAND
   tags: [weapon, one_hand, spear, melee]
   drop_level: 1
-  requirements: { level: 1, str: 17, dex: 28, int: 0 }
-  damage: { physical: [39, 57] }
+  requirements: { level: 79, str: 68, dex: 109, int: 0 }   # 2026-10-26 照 PoE2（Grand Spear；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 17, dex: 28, int: 0 }
+  damage: { physical: [56, 84] }   # 2026-10-26 照 PoE2 原值（Grand Spear）；這次之前 { physical: [39, 57] }
   aps: 1.4
   crit: 5.0
   sockets: 3
+  implicit:   # 2026-10-26 照 PoE2 補上（Grand Spear）；這次之前沒有
+    text: "增加 {value}% 近戰打擊距離"
+    value: [25, 25]
+    mods:
+      - { stat: melee.range, type: INCREASED, value: "{value}" }
 
 qstaff_01:
   name: 樸素長棍
@@ -1711,8 +1758,8 @@ qstaff_01:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 12, int: 10 }
-  damage: { physical: [12, 21] }
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Wrapped Quarterstaff，固定不隨物品等級變）；這次之前 { level: 1, str: 0, dex: 12, int: 10 }
+  damage: { physical: [7, 12] }   # 2026-10-26 照 PoE2 原值（Wrapped Quarterstaff）；這次之前 { physical: [12, 21] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1728,8 +1775,8 @@ qstaff_02:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 4
-  requirements: { level: 4, str: 0, dex: 19, int: 0 }
-  damage: { physical: [12, 24] }
+  requirements: { level: 4, str: 0, dex: 9, int: 0 }   # 2026-10-26 照 PoE2（Long Quarterstaff，固定不隨物品等級變）；這次之前 { level: 4, str: 0, dex: 19, int: 0 }
+  damage: { physical: [9, 18] }   # 2026-10-26 照 PoE2 原值（Long Quarterstaff）；這次之前 { physical: [12, 24] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1745,8 +1792,8 @@ qstaff_03:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 11
-  requirements: { level: 11, str: 0, dex: 21, int: 10 }
-  damage: { physical: [17, 27] }
+  requirements: { level: 11, str: 0, dex: 18, int: 9 }   # 2026-10-26 照 PoE2（Gothic Quarterstaff，固定不隨物品等級變）；這次之前 { level: 11, str: 0, dex: 21, int: 10 }
+  damage: { physical: [16, 26] }   # 2026-10-26 照 PoE2 原值（Gothic Quarterstaff）；這次之前 { physical: [17, 27] }
   aps: 1.4
   crit: 12.0
   sockets: 6
@@ -1762,8 +1809,8 @@ qstaff_04:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 16
-  requirements: { level: 16, str: 0, dex: 23, int: 11 }
-  damage: { physical: [4, 20], lightning: [1, 32] }
+  requirements: { level: 16, str: 0, dex: 25, int: 12 }   # 2026-10-26 照 PoE2（Crackling Quarterstaff，固定不隨物品等級變）；這次之前 { level: 16, str: 0, dex: 23, int: 11 }
+  damage: { physical: [5, 22], lightning: [1, 35] }   # 2026-10-26 照 PoE2 原值（Crackling Quarterstaff）；這次之前 { physical: [4, 20], lightning: [1, 32] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1779,8 +1826,8 @@ qstaff_05:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 20
-  requirements: { level: 20, str: 0, dex: 23, int: 11 }
-  damage: { physical: [17, 33] }
+  requirements: { level: 20, str: 0, dex: 30, int: 14 }   # 2026-10-26 照 PoE2（Crescent Quarterstaff，固定不隨物品等級變）；這次之前 { level: 20, str: 0, dex: 23, int: 11 }
+  damage: { physical: [19, 39] }   # 2026-10-26 照 PoE2 原值（Crescent Quarterstaff）；這次之前 { physical: [17, 33] }
   aps: 1.5
   crit: 10.0
   sockets: 6
@@ -1796,8 +1843,8 @@ qstaff_06:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 28
-  requirements: { level: 28, str: 0, dex: 25, int: 11 }
-  damage: { physical: [22, 40] }
+  requirements: { level: 28, str: 0, dex: 41, int: 18 }   # 2026-10-26 照 PoE2（Steelpoint Quarterstaff，固定不隨物品等級變）；這次之前 { level: 28, str: 0, dex: 25, int: 11 }
+  damage: { physical: [28, 51] }   # 2026-10-26 照 PoE2 原值（Steelpoint Quarterstaff）；這次之前 { physical: [22, 40] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1813,8 +1860,8 @@ qstaff_07:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 33
-  requirements: { level: 33, str: 0, dex: 26, int: 11 }
-  damage: { physical: [22, 46] }
+  requirements: { level: 33, str: 0, dex: 47, int: 20 }   # 2026-10-26 照 PoE2（Slicing Quarterstaff，固定不隨物品等級變）；這次之前 { level: 33, str: 0, dex: 26, int: 11 }
+  damage: { physical: [29, 60] }   # 2026-10-26 照 PoE2 原值（Slicing Quarterstaff）；這次之前 { physical: [22, 46] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1830,8 +1877,8 @@ qstaff_08:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 37
-  requirements: { level: 37, str: 0, dex: 26, int: 11 }
-  damage: { physical: [27, 43] }
+  requirements: { level: 37, str: 0, dex: 52, int: 22 }   # 2026-10-26 照 PoE2（Barrier Quarterstaff，固定不隨物品等級變）；這次之前 { level: 37, str: 0, dex: 26, int: 11 }
+  damage: { physical: [35, 58] }   # 2026-10-26 照 PoE2 原值（Barrier Quarterstaff）；這次之前 { physical: [27, 43] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1852,8 +1899,8 @@ qstaff_09:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 45
-  requirements: { level: 45, str: 0, dex: 28, int: 12 }
-  damage: { physical: [29, 59] }
+  requirements: { level: 45, str: 0, dex: 63, int: 26 }   # 2026-10-26 照 PoE2（Hefty Quarterstaff，固定不隨物品等級變）；這次之前 { level: 45, str: 0, dex: 28, int: 12 }
+  damage: { physical: [39, 81] }   # 2026-10-26 照 PoE2 原值（Hefty Quarterstaff）；這次之前 { physical: [29, 59] }
   aps: 1.3
   crit: 10.0
   sockets: 6
@@ -1869,8 +1916,8 @@ qstaff_10:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 45
-  requirements: { level: 45, str: 0, dex: 28, int: 12 }
-  damage: { physical: [26, 52] }
+  requirements: { level: 45, str: 0, dex: 63, int: 26 }   # 2026-10-26 照 PoE2（Reaching Quarterstaff，固定不隨物品等級變）；這次之前 { level: 45, str: 0, dex: 28, int: 12 }
+  damage: { physical: [35, 72] }   # 2026-10-26 照 PoE2 原值（Reaching Quarterstaff）；這次之前 { physical: [26, 52] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1886,8 +1933,8 @@ qstaff_11:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 48
-  requirements: { level: 48, str: 0, dex: 29, int: 12 }
-  damage: { physical: [30, 51] }
+  requirements: { level: 48, str: 0, dex: 67, int: 27 }   # 2026-10-26 照 PoE2（Barbarous Quarterstaff，固定不隨物品等級變）；這次之前 { level: 48, str: 0, dex: 29, int: 12 }
+  damage: { physical: [42, 71] }   # 2026-10-26 照 PoE2 原值（Barbarous Quarterstaff）；這次之前 { physical: [30, 51] }
   aps: 1.4
   crit: 12.0
   sockets: 6
@@ -1903,10 +1950,10 @@ qstaff_12:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 49
-  requirements: { level: 49, str: 0, dex: 29, int: 12 }
-  damage: { physical: [42, 57] }
+  requirements: { level: 49, str: 0, dex: 68, int: 28 }   # 2026-10-26 照 PoE2（Smooth Quarterstaff，固定不隨物品等級變）；這次之前 { level: 49, str: 0, dex: 29, int: 12 }
+  damage: { physical: [59, 79] }   # 2026-10-26 照 PoE2 原值（Smooth Quarterstaff）；這次之前 { physical: [42, 57] }
   aps: 1.5
-  crit: 6.5
+  crit: 6.5   # 2026-10-26：poe2db 寫 0%（這種長棍原作的暴擊另外算），照產生器的做法沿用 6.5
   sockets: 6
 
 qstaff_13:
@@ -1920,8 +1967,8 @@ qstaff_13:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 51
-  requirements: { level: 51, str: 0, dex: 29, int: 12 }
-  damage: { physical: [10, 39], lightning: [1, 53] }
+  requirements: { level: 51, str: 0, dex: 71, int: 29 }   # 2026-10-26 照 PoE2（Arcing Quarterstaff，固定不隨物品等級變）；這次之前 { level: 51, str: 0, dex: 29, int: 12 }
+  damage: { physical: [14, 55], lightning: [1, 75] }   # 2026-10-26 照 PoE2 原值（Arcing Quarterstaff）；這次之前 { physical: [10, 39], lightning: [1, 53] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1937,8 +1984,8 @@ qstaff_14:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 52
-  requirements: { level: 52, str: 0, dex: 30, int: 12 }
-  damage: { physical: [33, 57] }
+  requirements: { level: 52, str: 0, dex: 72, int: 29 }   # 2026-10-26 照 PoE2（Anima Quarterstaff，固定不隨物品等級變）；這次之前 { level: 52, str: 0, dex: 30, int: 12 }
+  damage: { physical: [47, 79] }   # 2026-10-26 照 PoE2 原值（Anima Quarterstaff）；這次之前 { physical: [33, 57] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1954,8 +2001,8 @@ qstaff_15:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 54
-  requirements: { level: 54, str: 0, dex: 30, int: 12 }
-  damage: { physical: [28, 58] }
+  requirements: { level: 54, str: 0, dex: 75, int: 30 }   # 2026-10-26 照 PoE2（Waxing Quarterstaff，固定不隨物品等級變）；這次之前 { level: 54, str: 0, dex: 30, int: 12 }
+  damage: { physical: [39, 82] }   # 2026-10-26 照 PoE2 原值（Waxing Quarterstaff）；這次之前 { physical: [28, 58] }
   aps: 1.5
   crit: 10.0
   sockets: 6
@@ -1971,8 +2018,8 @@ qstaff_16:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 56
-  requirements: { level: 56, str: 0, dex: 30, int: 12 }
-  damage: { physical: [33, 61] }
+  requirements: { level: 56, str: 0, dex: 77, int: 31 }   # 2026-10-26 照 PoE2（Graceful Quarterstaff，固定不隨物品等級變）；這次之前 { level: 56, str: 0, dex: 30, int: 12 }
+  damage: { physical: [47, 87] }   # 2026-10-26 照 PoE2 原值（Graceful Quarterstaff）；這次之前 { physical: [33, 61] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -1988,8 +2035,8 @@ qstaff_17:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 59
-  requirements: { level: 59, str: 0, dex: 31, int: 13 }
-  damage: { physical: [31, 65] }
+  requirements: { level: 59, str: 0, dex: 81, int: 33 }   # 2026-10-26 照 PoE2（Bladed Quarterstaff，固定不隨物品等級變）；這次之前 { level: 59, str: 0, dex: 31, int: 13 }
+  damage: { physical: [45, 94] }   # 2026-10-26 照 PoE2 原值（Bladed Quarterstaff）；這次之前 { physical: [31, 65] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2005,8 +2052,8 @@ qstaff_18:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 62
-  requirements: { level: 62, str: 0, dex: 31, int: 13 }
-  damage: { physical: [37, 60] }
+  requirements: { level: 62, str: 0, dex: 85, int: 34 }   # 2026-10-26 照 PoE2（Guardian Quarterstaff，固定不隨物品等級變）；這次之前 { level: 62, str: 0, dex: 31, int: 13 }
+  damage: { physical: [52, 86] }   # 2026-10-26 照 PoE2 原值（Guardian Quarterstaff）；這次之前 { physical: [37, 60] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2027,8 +2074,8 @@ qstaff_19:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 65
-  requirements: { level: 65, str: 0, dex: 32, int: 13 }
-  damage: { physical: [40, 65] }
+  requirements: { level: 65, str: 0, dex: 89, int: 36 }   # 2026-10-26 照 PoE2（Wyrm Quarterstaff，固定不隨物品等級變）；這次之前 { level: 65, str: 0, dex: 32, int: 13 }
+  damage: { physical: [57, 94] }   # 2026-10-26 照 PoE2 原值（Wyrm Quarterstaff）；這次之前 { physical: [40, 65] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2044,8 +2091,8 @@ qstaff_20:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 65
-  requirements: { level: 65, str: 0, dex: 46, int: 18 }
-  damage: { physical: [36, 59] }
+  requirements: { level: 65, str: 0, dex: 127, int: 50 }   # 2026-10-26 照 PoE2（Warding Quarterstaff，固定不隨物品等級變）；這次之前 { level: 65, str: 0, dex: 46, int: 18 }
+  damage: { physical: [51, 85] }   # 2026-10-26 照 PoE2 原值（Warding Quarterstaff）；這次之前 { physical: [36, 59] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2059,8 +2106,8 @@ qstaff_21:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 37, int: 14 }
-  damage: { physical: [38, 63] }
+  requirements: { level: 67, str: 0, dex: 104, int: 41 }   # 2026-10-26 照 PoE2（Sinister Quarterstaff；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 37, int: 14 }
+  damage: { physical: [55, 91] }   # 2026-10-26 照 PoE2 原值（Sinister Quarterstaff）；這次之前 { physical: [38, 63] }
   aps: 1.4
   crit: 12.0
   sockets: 6
@@ -2074,8 +2121,8 @@ qstaff_22:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 39, int: 16 }
-  damage: { physical: [34, 71] }
+  requirements: { level: 72, str: 0, dex: 115, int: 46 }   # 2026-10-26 照 PoE2（Lunar Quarterstaff；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 39, int: 16 }
+  damage: { physical: [50, 103] }   # 2026-10-26 照 PoE2 原值（Lunar Quarterstaff）；這次之前 { physical: [34, 71] }
   aps: 1.5
   crit: 10.0
   sockets: 6
@@ -2089,11 +2136,16 @@ qstaff_23:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 42, int: 17 }
-  damage: { physical: [41, 84] }
+  requirements: { level: 75, str: 0, dex: 127, int: 50 }   # 2026-10-26 照 PoE2（Skullcrusher Quarterstaff；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 42, int: 17 }
+  damage: { physical: [59, 122] }   # 2026-10-26 照 PoE2 原值（Skullcrusher Quarterstaff）；這次之前 { physical: [41, 84] }
   aps: 1.3
   crit: 10.0
   sockets: 6
+  implicit:   # 2026-10-26 照 PoE2 補上（Skullcrusher Quarterstaff）；這次之前沒有
+    text: "擊中時 {value}% 機率眩暈"
+    value: [20, 50]
+    mods:
+      - { stat: daze.chance, type: FLAT, value: "{value}" }
 
 qstaff_24:
   name: 古王長棍
@@ -2106,8 +2158,8 @@ qstaff_24:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 77
-  requirements: { level: 77, str: 0, dex: 42, int: 16 }
-  damage: { physical: [37, 77] }
+  requirements: { level: 77, str: 0, dex: 127, int: 50 }   # 2026-10-26 照 PoE2（Striking Quarterstaff，固定不隨物品等級變）；這次之前 { level: 77, str: 0, dex: 42, int: 16 }
+  damage: { physical: [53, 111] }   # 2026-10-26 照 PoE2 原值（Striking Quarterstaff）；這次之前 { physical: [37, 77] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2121,8 +2173,8 @@ qstaff_25:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 42, int: 16 }
-  damage: { physical: [44, 74] }
+  requirements: { level: 77, str: 0, dex: 127, int: 50 }   # 2026-10-26 照 PoE2（Razor Quarterstaff；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 42, int: 16 }
+  damage: { physical: [65, 108] }   # 2026-10-26 照 PoE2 原值（Razor Quarterstaff）；這次之前 { physical: [44, 74] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2136,8 +2188,8 @@ qstaff_26:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 41, int: 16 }
-  damage: { physical: [17, 67], lightning: [1, 69] }
+  requirements: { level: 78, str: 0, dex: 127, int: 50 }   # 2026-10-26 照 PoE2（Bolting Quarterstaff；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 41, int: 16 }
+  damage: { physical: [24, 97], lightning: [1, 100] }   # 2026-10-26 照 PoE2 原值（Bolting Quarterstaff）；這次之前 { physical: [17, 67], lightning: [1, 69] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2151,10 +2203,10 @@ qstaff_27:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 41, int: 16 }
-  damage: { physical: [68, 91] }
+  requirements: { level: 78, str: 0, dex: 127, int: 50 }   # 2026-10-26 照 PoE2（Dreaming Quarterstaff；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 41, int: 16 }
+  damage: { physical: [99, 133] }   # 2026-10-26 照 PoE2 原值（Dreaming Quarterstaff）；這次之前 { physical: [68, 91] }
   aps: 1.5
-  crit: 6.5
+  crit: 6.5   # 2026-10-26：poe2db 寫 0%（這種長棍原作的暴擊另外算），照產生器的做法沿用 6.5
   sockets: 6
 
 qstaff_28:
@@ -2167,8 +2219,8 @@ qstaff_28:
   slot: MAIN_HAND
   tags: [weapon, two_hand, quarterstaff, melee]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 41, int: 16 }
-  damage: { physical: [40, 67] }
+  requirements: { level: 79, str: 0, dex: 127, int: 50 }   # 2026-10-26 照 PoE2（Aegis Quarterstaff；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 41, int: 16 }
+  damage: { physical: [58, 97] }   # 2026-10-26 照 PoE2 原值（Aegis Quarterstaff）；這次之前 { physical: [40, 67] }
   aps: 1.4
   crit: 10.0
   sockets: 6
@@ -2189,8 +2241,8 @@ talis_01:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 10, dex: 0, int: 10 }
-  damage: { physical: [15, 25] }
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Changeling Talisman，固定不隨物品等級變）；這次之前 { level: 1, str: 10, dex: 0, int: 10 }
+  damage: { physical: [9, 15] }   # 2026-10-26 照 PoE2 原值（Changeling Talisman）；這次之前 { physical: [15, 25] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2206,8 +2258,8 @@ talis_02:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 5
-  requirements: { level: 5, str: 12, dex: 0, int: 11 }
-  damage: { physical: [15, 25] }
+  requirements: { level: 5, str: 9, dex: 0, int: 8 }   # 2026-10-26 照 PoE2（Nettle Talisman，固定不隨物品等級變）；這次之前 { level: 5, str: 12, dex: 0, int: 11 }
+  damage: { physical: [12, 20] }   # 2026-10-26 照 PoE2 原值（Nettle Talisman）；這次之前 { physical: [15, 25] }
   aps: 1.25
   crit: 11.0
   sockets: 6
@@ -2223,8 +2275,8 @@ talis_03:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 10
-  requirements: { level: 10, str: 14, dex: 0, int: 10 }
-  damage: { physical: [13, 26], fire: [5, 11] }
+  requirements: { level: 10, str: 15, dex: 0, int: 11 }   # 2026-10-26 照 PoE2（Cinderbark Talisman，固定不隨物品等級變）；這次之前 { level: 10, str: 14, dex: 0, int: 10 }
+  damage: { physical: [13, 25], fire: [5, 11] }   # 2026-10-26 照 PoE2 原值（Cinderbark Talisman）；這次之前 { physical: [13, 26], fire: [5, 11] }
   aps: 1.2
   crit: 8.0
   sockets: 6
@@ -2240,8 +2292,8 @@ talis_04:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 16
-  requirements: { level: 16, str: 15, dex: 0, int: 11 }
-  damage: { physical: [18, 30] }
+  requirements: { level: 16, str: 21, dex: 0, int: 16 }   # 2026-10-26 照 PoE2（Familial Talisman，固定不隨物品等級變）；這次之前 { level: 16, str: 15, dex: 0, int: 11 }
+  damage: { physical: [20, 34] }   # 2026-10-26 照 PoE2 原值（Familial Talisman）；這次之前 { physical: [18, 30] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2262,8 +2314,8 @@ talis_05:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 22
-  requirements: { level: 22, str: 17, dex: 0, int: 12 }
-  damage: { physical: [19, 31] }
+  requirements: { level: 22, str: 28, dex: 0, int: 20 }   # 2026-10-26 照 PoE2（Frenzied Talisman，固定不隨物品等級變）；這次之前 { level: 22, str: 17, dex: 0, int: 12 }
+  damage: { physical: [23, 38] }   # 2026-10-26 照 PoE2 原值（Frenzied Talisman）；這次之前 { physical: [19, 31] }
   aps: 1.4
   crit: 8.0
   sockets: 6
@@ -2279,8 +2331,8 @@ talis_06:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 28
-  requirements: { level: 28, str: 18, dex: 0, int: 13 }
-  damage: { physical: [25, 35] }
+  requirements: { level: 28, str: 34, dex: 0, int: 25 }   # 2026-10-26 照 PoE2（Primal Talisman，固定不隨物品等級變）；這次之前 { level: 28, str: 18, dex: 0, int: 13 }
+  damage: { physical: [31, 46] }   # 2026-10-26 照 PoE2 原值（Primal Talisman）；這次之前 { physical: [25, 35] }
   aps: 1.3
   crit: 9.0
   sockets: 6
@@ -2301,8 +2353,8 @@ talis_07:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 34
-  requirements: { level: 34, str: 19, dex: 0, int: 13 }
-  damage: { physical: [24, 44] }
+  requirements: { level: 34, str: 40, dex: 0, int: 29 }   # 2026-10-26 照 PoE2（Rabid Talisman，固定不隨物品等級變）；這次之前 { level: 34, str: 19, dex: 0, int: 13 }
+  damage: { physical: [31, 58] }   # 2026-10-26 照 PoE2 原值（Rabid Talisman）；這次之前 { physical: [24, 44] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2323,8 +2375,8 @@ talis_08:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 40
-  requirements: { level: 40, str: 20, dex: 0, int: 14 }
-  damage: { physical: [31, 52] }
+  requirements: { level: 40, str: 47, dex: 0, int: 34 }   # 2026-10-26 照 PoE2（Vicious Talisman，固定不隨物品等級變）；這次之前 { level: 40, str: 20, dex: 0, int: 14 }
+  damage: { physical: [43, 71] }   # 2026-10-26 照 PoE2 原值（Vicious Talisman）；這次之前 { physical: [31, 52] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2340,8 +2392,8 @@ talis_09:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 46
-  requirements: { level: 46, str: 21, dex: 0, int: 15 }
-  damage: { physical: [12, 65], lightning: [5, 28] }
+  requirements: { level: 46, str: 53, dex: 0, int: 38 }   # 2026-10-26 照 PoE2（Voltfang Talisman，固定不隨物品等級變）；這次之前 { level: 46, str: 21, dex: 0, int: 15 }
+  damage: { physical: [16, 91], lightning: [7, 39] }   # 2026-10-26 照 PoE2 原值（Voltfang Talisman）；這次之前 { physical: [12, 65], lightning: [5, 28] }
   aps: 1.3
   crit: 8.0
   sockets: 6
@@ -2357,8 +2409,8 @@ talis_10:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 52
-  requirements: { level: 52, str: 22, dex: 0, int: 16 }
-  damage: { physical: [50, 76] }
+  requirements: { level: 52, str: 60, dex: 0, int: 43 }   # 2026-10-26 照 PoE2（Lumbering Talisman，固定不隨物品等級變）；這次之前 { level: 52, str: 22, dex: 0, int: 16 }
+  damage: { physical: [71, 107] }   # 2026-10-26 照 PoE2 原值（Lumbering Talisman）；這次之前 { physical: [50, 76] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -2374,8 +2426,8 @@ talis_11:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 55
-  requirements: { level: 55, str: 23, dex: 0, int: 16 }
-  damage: { physical: [36, 55] }
+  requirements: { level: 55, str: 63, dex: 0, int: 45 }   # 2026-10-26 照 PoE2（Howling Talisman，固定不隨物品等級變）；這次之前 { level: 55, str: 23, dex: 0, int: 16 }
+  damage: { physical: [52, 78] }   # 2026-10-26 照 PoE2 原值（Howling Talisman）；這次之前 { physical: [36, 55] }
   aps: 1.3
   crit: 9.0
   sockets: 6
@@ -2396,8 +2448,8 @@ talis_12:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 58
-  requirements: { level: 58, str: 23, dex: 0, int: 17 }
-  damage: { physical: [40, 67] }
+  requirements: { level: 58, str: 66, dex: 0, int: 47 }   # 2026-10-26 照 PoE2（Roaring Talisman，固定不隨物品等級變）；這次之前 { level: 58, str: 23, dex: 0, int: 17 }
+  damage: { physical: [57, 96] }   # 2026-10-26 照 PoE2 原值（Roaring Talisman）；這次之前 { physical: [40, 67] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2418,8 +2470,8 @@ talis_13:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 59
-  requirements: { level: 59, str: 24, dex: 0, int: 17 }
-  damage: { physical: [34, 64] }
+  requirements: { level: 59, str: 67, dex: 0, int: 48 }   # 2026-10-26 照 PoE2（Fury Talisman，固定不隨物品等級變）；這次之前 { level: 59, str: 24, dex: 0, int: 17 }
+  damage: { physical: [49, 91] }   # 2026-10-26 照 PoE2 原值（Fury Talisman）；這次之前 { physical: [34, 64] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2440,8 +2492,8 @@ talis_14:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 63
-  requirements: { level: 63, str: 25, dex: 0, int: 17 }
-  damage: { physical: [43, 72] }
+  requirements: { level: 63, str: 72, dex: 0, int: 51 }   # 2026-10-26 照 PoE2（Cruel Talisman，固定不隨物品等級變）；這次之前 { level: 63, str: 25, dex: 0, int: 17 }
+  damage: { physical: [62, 103] }   # 2026-10-26 照 PoE2 原值（Cruel Talisman）；這次之前 { physical: [43, 72] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2455,8 +2507,8 @@ talis_15:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 25, dex: 0, int: 17 }
-  damage: { physical: [31, 58] }
+  requirements: { level: 65, str: 74, dex: 0, int: 52 }   # 2026-10-26 照 PoE2（Wingbeat Talisman；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 25, dex: 0, int: 17 }
+  damage: { physical: [45, 83] }   # 2026-10-26 照 PoE2 原值（Wingbeat Talisman）；這次之前 { physical: [31, 58] }
   aps: 1.45
   crit: 7.0
   sockets: 6
@@ -2470,11 +2522,16 @@ talis_16:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 25, dex: 0, int: 17 }
-  damage: { physical: [47, 78] }
+  requirements: { level: 65, str: 74, dex: 0, int: 52 }   # 2026-10-26 照 PoE2（Condemned Talisman；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 25, dex: 0, int: 17 }
+  damage: { physical: [68, 113] }   # 2026-10-26 照 PoE2 原值（Condemned Talisman）；這次之前 { physical: [47, 78] }
   aps: 1.25
   crit: 9.0
   sockets: 6
+  implicit:   # 2026-10-26 照 PoE2 補上（Condemned Talisman）；這次之前沒有
+    text: "增加 {value}% 印記效果"
+    value: [10, 20]
+    mods:
+      - { stat: mark.effect, type: INCREASED, value: "{value}" }
 
 talis_17:
   name: 暗鋼獸符
@@ -2485,8 +2542,8 @@ talis_17:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 29, dex: 0, int: 22 }
-  damage: { physical: [42, 68] }
+  requirements: { level: 67, str: 86, dex: 0, int: 65 }   # 2026-10-26 照 PoE2（Spiny Talisman；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 29, dex: 0, int: 22 }
+  damage: { physical: [60, 99] }   # 2026-10-26 照 PoE2 原值（Spiny Talisman）；這次之前 { physical: [42, 68] }
   aps: 1.25
   crit: 11.0
   sockets: 6
@@ -2500,8 +2557,8 @@ talis_18:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 32, dex: 0, int: 23 }
-  damage: { physical: [46, 77] }
+  requirements: { level: 70, str: 98, dex: 0, int: 72 }   # 2026-10-26 照 PoE2（Wildwood Talisman；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 32, dex: 0, int: 23 }
+  damage: { physical: [67, 112] }   # 2026-10-26 照 PoE2 原值（Wildwood Talisman）；這次之前 { physical: [46, 77] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2515,11 +2572,16 @@ talis_19:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 30, dex: 0, int: 22 }
-  damage: { physical: [35, 73], fire: [15, 31] }
+  requirements: { level: 72, str: 94, dex: 0, int: 67 }   # 2026-10-26 照 PoE2（Ashbark Talisman；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 30, dex: 0, int: 22 }
+  damage: { physical: [50, 105], fire: [22, 45] }   # 2026-10-26 照 PoE2 原值（Ashbark Talisman）；這次之前 { physical: [35, 73], fire: [15, 31] }
   aps: 1.2
   crit: 8.0
   sockets: 6
+  implicit:   # 2026-10-26 照 PoE2 補上（Ashbark Talisman（易燃幅度））；這次之前沒有
+    text: "增加 {value}% 點燃機率"
+    value: [50, 80]
+    mods:
+      - { stat: ignite.chance, type: INCREASED, value: "{value}" }
 
 talis_20:
   name: 曜石獸符
@@ -2531,8 +2593,8 @@ talis_20:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 31, dex: 0, int: 23 }
-  damage: { physical: [44, 65] }
+  requirements: { level: 75, str: 98, dex: 0, int: 72 }   # 2026-10-26 照 PoE2（Alpha Talisman；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 31, dex: 0, int: 23 }
+  damage: { physical: [63, 94] }   # 2026-10-26 照 PoE2 原值（Alpha Talisman）；這次之前 { physical: [44, 65] }
   aps: 1.3
   crit: 9.0
   sockets: 6
@@ -2552,8 +2614,8 @@ talis_21:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 28, dex: 0, int: 21 }
-  damage: { physical: [48, 80] }
+  requirements: { level: 77, str: 89, dex: 0, int: 68 }   # 2026-10-26 照 PoE2（Fang Talisman；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 28, dex: 0, int: 21 }
+  damage: { physical: [70, 116] }   # 2026-10-26 照 PoE2 原值（Fang Talisman）；這次之前 { physical: [48, 80] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2572,11 +2634,16 @@ talis_22:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 32, dex: 0, int: 23 }
-  damage: { physical: [16, 90], lightning: [6, 39] }
+  requirements: { level: 77, str: 102, dex: 0, int: 72 }   # 2026-10-26 照 PoE2（Thunder Talisman；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 32, dex: 0, int: 23 }
+  damage: { physical: [23, 131], lightning: [10, 56] }   # 2026-10-26 照 PoE2 原值（Thunder Talisman）；這次之前 { physical: [16, 90], lightning: [6, 39] }
   aps: 1.3
   crit: 8.0
   sockets: 6
+  implicit:   # 2026-10-26 照 PoE2 補上（Thunder Talisman）；這次之前沒有
+    text: "增加 {value}% 感電效果"
+    value: [20, 30]
+    mods:
+      - { stat: shock.effect, type: INCREASED, value: "{value}" }
 
 talis_23:
   name: 天鐵獸符
@@ -2587,8 +2654,8 @@ talis_23:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 30, dex: 0, int: 22 }
-  damage: { physical: [41, 67] }
+  requirements: { level: 78, str: 96, dex: 0, int: 70 }   # 2026-10-26 照 PoE2（Fungal Talisman；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 30, dex: 0, int: 22 }
+  damage: { physical: [59, 98] }   # 2026-10-26 照 PoE2 原值（Fungal Talisman）；這次之前 { physical: [41, 67] }
   aps: 1.4
   crit: 8.0
   sockets: 6
@@ -2602,8 +2669,8 @@ talis_24:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 34, dex: 0, int: 20 }
-  damage: { physical: [70, 104] }
+  requirements: { level: 78, str: 109, dex: 0, int: 65 }   # 2026-10-26 照 PoE2（Jade Talisman；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 34, dex: 0, int: 20 }
+  damage: { physical: [101, 151] }   # 2026-10-26 照 PoE2 原值（Jade Talisman）；這次之前 { physical: [70, 104] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -2618,8 +2685,8 @@ talis_25:
   slot: MAIN_HAND
   tags: [weapon, two_hand, talisman, melee, melee_2h]
   drop_level: 1
-  requirements: { level: 1, str: 31, dex: 0, int: 21 }
-  damage: { physical: [42, 78] }
+  requirements: { level: 79, str: 100, dex: 0, int: 67 }   # 2026-10-26 照 PoE2（Maji Talisman；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 31, dex: 0, int: 21 }
+  damage: { physical: [61, 114] }   # 2026-10-26 照 PoE2 原值（Maji Talisman）；這次之前 { physical: [42, 78] }
   aps: 1.25
   crit: 8.0
   sockets: 6
@@ -2640,8 +2707,8 @@ bow_01:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 16, int: 0 }
-  damage: { physical: [12, 18] }
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Crude Bow，固定不隨物品等級變）；這次之前 { level: 1, str: 0, dex: 16, int: 0 }
+  damage: { physical: [6, 9] }   # 2026-10-26 照 PoE2 原值（Crude Bow）；這次之前 { physical: [12, 18] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -2657,8 +2724,8 @@ bow_02:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 5
-  requirements: { level: 5, str: 0, dex: 17, int: 0 }
-  damage: { physical: [10, 20] }
+  requirements: { level: 5, str: 0, dex: 12, int: 0 }   # 2026-10-26 照 PoE2（Shortbow，固定不隨物品等級變）；這次之前 { level: 5, str: 0, dex: 17, int: 0 }
+  damage: { physical: [7, 14] }   # 2026-10-26 照 PoE2 原值（Shortbow）；這次之前 { physical: [10, 20] }
   aps: 1.25
   crit: 5.0
   sockets: 6
@@ -2674,8 +2741,8 @@ bow_03:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 11
-  requirements: { level: 11, str: 0, dex: 20, int: 0 }
-  damage: { physical: [13, 22] }
+  requirements: { level: 11, str: 0, dex: 23, int: 0 }   # 2026-10-26 照 PoE2（Warden Bow，固定不隨物品等級變）；這次之前 { level: 11, str: 0, dex: 20, int: 0 }
+  damage: { physical: [12, 20] }   # 2026-10-26 照 PoE2 原值（Warden Bow）；這次之前 { physical: [13, 22] }
   aps: 1.15
   crit: 5.0
   sockets: 6
@@ -2691,8 +2758,8 @@ bow_04:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 16
-  requirements: { level: 16, str: 0, dex: 21, int: 0 }
-  damage: { physical: [15, 30] }
+  requirements: { level: 16, str: 0, dex: 31, int: 0 }   # 2026-10-26 照 PoE2（Recurve Bow，固定不隨物品等級變）；這次之前 { level: 16, str: 0, dex: 21, int: 0 }
+  damage: { physical: [15, 31] }   # 2026-10-26 照 PoE2 原值（Recurve Bow）；這次之前 { physical: [15, 30] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -2708,8 +2775,8 @@ bow_05:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 22
-  requirements: { level: 22, str: 0, dex: 23, int: 0 }
-  damage: { physical: [17, 27] }
+  requirements: { level: 22, str: 0, dex: 41, int: 0 }   # 2026-10-26 照 PoE2（Composite Bow，固定不隨物品等級變）；這次之前 { level: 22, str: 0, dex: 23, int: 0 }
+  damage: { physical: [19, 31] }   # 2026-10-26 照 PoE2 原值（Composite Bow）；這次之前 { physical: [17, 27] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -2725,8 +2792,8 @@ bow_06:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 28
-  requirements: { level: 28, str: 0, dex: 25, int: 0 }
-  damage: { physical: [16, 29] }
+  requirements: { level: 28, str: 0, dex: 52, int: 0 }   # 2026-10-26 照 PoE2（Dualstring Bow，固定不隨物品等級變）；這次之前 { level: 28, str: 0, dex: 25, int: 0 }
+  damage: { physical: [19, 35] }   # 2026-10-26 照 PoE2 原值（Dualstring Bow）；這次之前 { physical: [16, 29] }
   aps: 1.15
   crit: 5.0
   sockets: 6
@@ -2742,8 +2809,8 @@ bow_07:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 33
-  requirements: { level: 33, str: 0, dex: 26, int: 0 }
-  damage: { physical: [17, 29], chaos: [6, 15] }
+  requirements: { level: 33, str: 0, dex: 60, int: 0 }   # 2026-10-26 照 PoE2（Cultist Bow，固定不隨物品等級變）；這次之前 { level: 33, str: 0, dex: 26, int: 0 }
+  damage: { physical: [22, 36], chaos: [7, 19] }   # 2026-10-26 照 PoE2 原值（Cultist Bow）；這次之前 { physical: [17, 29], chaos: [6, 15] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -2759,8 +2826,8 @@ bow_08:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 39
-  requirements: { level: 39, str: 0, dex: 27, int: 0 }
-  damage: { physical: [24, 36] }
+  requirements: { level: 39, str: 0, dex: 70, int: 0 }   # 2026-10-26 照 PoE2（Zealot Bow，固定不隨物品等級變）；這次之前 { level: 39, str: 0, dex: 27, int: 0 }
+  damage: { physical: [31, 47] }   # 2026-10-26 照 PoE2 原值（Zealot Bow）；這次之前 { physical: [24, 36] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -2776,8 +2843,8 @@ bow_09:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 45
-  requirements: { level: 45, str: 0, dex: 28, int: 0 }
-  damage: { physical: [29, 53] }
+  requirements: { level: 45, str: 0, dex: 80, int: 0 }   # 2026-10-26 照 PoE2（Artillery Bow，固定不隨物品等級變）；這次之前 { level: 45, str: 0, dex: 28, int: 0 }
+  damage: { physical: [39, 72] }   # 2026-10-26 照 PoE2 原值（Artillery Bow）；這次之前 { physical: [29, 53] }
   aps: 1.1
   crit: 5.0
   sockets: 6
@@ -2793,8 +2860,8 @@ bow_10:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 45
-  requirements: { level: 45, str: 0, dex: 28, int: 0 }
-  damage: { physical: [22, 40] }
+  requirements: { level: 45, str: 0, dex: 80, int: 0 }   # 2026-10-26 照 PoE2（Snakewood Shortbow，固定不隨物品等級變）；這次之前 { level: 45, str: 0, dex: 28, int: 0 }
+  damage: { physical: [29, 54] }   # 2026-10-26 照 PoE2 原值（Snakewood Shortbow）；這次之前 { physical: [22, 40] }
   aps: 1.25
   crit: 5.0
   sockets: 6
@@ -2810,8 +2877,8 @@ bow_11:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 48
-  requirements: { level: 48, str: 0, dex: 29, int: 0 }
-  damage: { physical: [26, 39] }
+  requirements: { level: 48, str: 0, dex: 86, int: 0 }   # 2026-10-26 照 PoE2（Protector Bow，固定不隨物品等級變）；這次之前 { level: 48, str: 0, dex: 29, int: 0 }
+  damage: { physical: [35, 53] }   # 2026-10-26 照 PoE2 原值（Protector Bow）；這次之前 { physical: [26, 39] }
   aps: 1.15
   crit: 5.0
   sockets: 6
@@ -2827,8 +2894,8 @@ bow_12:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 50
-  requirements: { level: 50, str: 0, dex: 29, int: 0 }
-  damage: { physical: [28, 42] }
+  requirements: { level: 50, str: 0, dex: 89, int: 0 }   # 2026-10-26 照 PoE2（Tribal Bow，固定不隨物品等級變）；這次之前 { level: 50, str: 0, dex: 29, int: 0 }
+  damage: { physical: [38, 57] }   # 2026-10-26 照 PoE2 原值（Tribal Bow）；這次之前 { physical: [28, 42] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -2844,8 +2911,8 @@ bow_13:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 51
-  requirements: { level: 51, str: 0, dex: 30, int: 0 }
-  damage: { physical: [26, 44] }
+  requirements: { level: 51, str: 0, dex: 91, int: 0 }   # 2026-10-26 照 PoE2（Rider Bow，固定不隨物品等級變）；這次之前 { level: 51, str: 0, dex: 30, int: 0 }
+  damage: { physical: [36, 61] }   # 2026-10-26 照 PoE2 原值（Rider Bow）；這次之前 { physical: [26, 44] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -2859,8 +2926,8 @@ bow_14:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 30, dex: 30, int: 0 }
-  damage: { physical: [29, 59] }
+  requirements: { level: 52, str: 92, dex: 92, int: 0 }   # 2026-10-26 照 PoE2（Greatbow；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 30, dex: 30, int: 0 }
+  damage: { physical: [40, 82] }   # 2026-10-26 照 PoE2 原值（Greatbow）；這次之前 { physical: [29, 59] }
   aps: 1.15
   crit: 6.5
   sockets: 6
@@ -2876,8 +2943,8 @@ bow_15:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 54
-  requirements: { level: 54, str: 0, dex: 30, int: 0 }
-  damage: { physical: [23, 43] }
+  requirements: { level: 54, str: 0, dex: 96, int: 0 }   # 2026-10-26 照 PoE2（Twin Bow，固定不隨物品等級變）；這次之前 { level: 54, str: 0, dex: 30, int: 0 }
+  damage: { physical: [32, 60] }   # 2026-10-26 照 PoE2 原值（Twin Bow）；這次之前 { physical: [23, 43] }
   aps: 1.15
   crit: 5.0
   sockets: 6
@@ -2893,8 +2960,8 @@ bow_16:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 56
-  requirements: { level: 56, str: 0, dex: 31, int: 0 }
-  damage: { physical: [30, 45] }
+  requirements: { level: 56, str: 0, dex: 99, int: 0 }   # 2026-10-26 照 PoE2（Double Limb Bow，固定不隨物品等級變）；這次之前 { level: 56, str: 0, dex: 31, int: 0 }
+  damage: { physical: [42, 63] }   # 2026-10-26 照 PoE2 原值（Double Limb Bow）；這次之前 { physical: [30, 45] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -2910,8 +2977,8 @@ bow_17:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 59
-  requirements: { level: 59, str: 0, dex: 31, int: 0 }
-  damage: { physical: [25, 42], chaos: [10, 23] }
+  requirements: { level: 59, str: 0, dex: 104, int: 0 }   # 2026-10-26 照 PoE2（Adherent Bow，固定不隨物品等級變）；這次之前 { level: 59, str: 0, dex: 31, int: 0 }
+  damage: { physical: [35, 59], chaos: [14, 32] }   # 2026-10-26 照 PoE2 原值（Adherent Bow）；這次之前 { physical: [25, 42], chaos: [10, 23] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -2927,8 +2994,8 @@ bow_18:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 62
-  requirements: { level: 62, str: 0, dex: 32, int: 0 }
-  damage: { physical: [32, 49] }
+  requirements: { level: 62, str: 0, dex: 109, int: 0 }   # 2026-10-26 照 PoE2（Militant Bow，固定不隨物品等級變）；這次之前 { level: 62, str: 0, dex: 32, int: 0 }
+  damage: { physical: [46, 69] }   # 2026-10-26 照 PoE2 原值（Militant Bow）；這次之前 { physical: [32, 49] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -2944,8 +3011,8 @@ bow_19:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 65
-  requirements: { level: 65, str: 0, dex: 32, int: 0 }
-  damage: { physical: [32, 53] }
+  requirements: { level: 65, str: 0, dex: 114, int: 0 }   # 2026-10-26 照 PoE2（Heavy Bow，固定不隨物品等級變）；這次之前 { level: 65, str: 0, dex: 32, int: 0 }
+  damage: { physical: [45, 75] }   # 2026-10-26 照 PoE2 原值（Heavy Bow）；這次之前 { physical: [32, 53] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -2959,8 +3026,8 @@ bow_20:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 38, int: 0 }
-  damage: { physical: [29, 53] }
+  requirements: { level: 67, str: 0, dex: 134, int: 0 }   # 2026-10-26 照 PoE2（Ironwood Shortbow；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 38, int: 0 }
+  damage: { physical: [41, 76] }   # 2026-10-26 照 PoE2 原值（Ironwood Shortbow）；這次之前 { physical: [29, 53] }
   aps: 1.25
   crit: 5.0
   sockets: 6
@@ -2976,8 +3043,8 @@ bow_21:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 72
-  requirements: { level: 72, str: 0, dex: 40, int: 0 }
-  damage: { physical: [34, 57] }
+  requirements: { level: 72, str: 0, dex: 149, int: 0 }   # 2026-10-26 照 PoE2（Cavalry Bow，固定不隨物品等級變）；這次之前 { level: 72, str: 0, dex: 40, int: 0 }
+  damage: { physical: [49, 82] }   # 2026-10-26 照 PoE2 原值（Cavalry Bow）；這次之前 { physical: [34, 57] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -2993,8 +3060,8 @@ bow_22:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 77
-  requirements: { level: 77, str: 0, dex: 42, int: 0 }
-  damage: { physical: [36, 61] }
+  requirements: { level: 77, str: 0, dex: 163, int: 0 }   # 2026-10-26 照 PoE2（Guardian Bow，固定不隨物品等級變）；這次之前 { level: 77, str: 0, dex: 42, int: 0 }
+  damage: { physical: [53, 88] }   # 2026-10-26 照 PoE2 原值（Guardian Bow）；這次之前 { physical: [36, 61] }
   aps: 1.15
   crit: 5.0
   sockets: 6
@@ -3008,8 +3075,8 @@ bow_23:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 42, int: 0 }
-  damage: { physical: [39, 58] }
+  requirements: { level: 77, str: 0, dex: 163, int: 0 }   # 2026-10-26 照 PoE2（Warmonger Bow；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 42, int: 0 }
+  damage: { physical: [56, 84] }   # 2026-10-26 照 PoE2 原值（Warmonger Bow）；這次之前 { physical: [39, 58] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -3023,11 +3090,16 @@ bow_24:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 42, int: 0 }
-  damage: { physical: [27, 49] }
+  requirements: { level: 78, str: 0, dex: 163, int: 0 }   # 2026-10-26 照 PoE2（Gemini Bow；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 42, int: 0 }
+  damage: { physical: [39, 72] }   # 2026-10-26 照 PoE2 原值（Gemini Bow）；這次之前 { physical: [27, 49] }
   aps: 1.15
   crit: 5.0
   sockets: 6
+  implicit:   # 2026-10-26 照 PoE2 補上（Gemini Bow）；這次之前沒有
+    text: "+{value}% 機率多射一支箭"
+    value: [50, 50]
+    mods:
+      - { stat: skill.projectile_chance, type: FLAT, value: "{value}" }
 
 bow_25:
   name: 聖紋弓
@@ -3038,11 +3110,16 @@ bow_25:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 42, int: 0 }
-  damage: { physical: [43, 79] }
+  requirements: { level: 78, str: 0, dex: 163, int: 0 }   # 2026-10-26 照 PoE2（Obliterator Bow；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 42, int: 0 }
+  damage: { physical: [62, 115] }   # 2026-10-26 照 PoE2 原值（Obliterator Bow）；這次之前 { physical: [43, 79] }
   aps: 1.1
   crit: 5.0
   sockets: 6
+  implicit:   # 2026-10-26 照 PoE2 補上（Obliterator Bow，傷害高、射程短）；這次之前沒有（只留了高傷害）
+    text: "投射物射程減少 {value}%"
+    value: [50, 50]
+    mods:
+      - { stat: skill.projectile_range, type: INCREASED, value: "-{value}" }
 
 bow_26:
   name: 龍骨弓
@@ -3053,8 +3130,8 @@ bow_26:
   slot: MAIN_HAND
   tags: [weapon, two_hand, bow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 42, int: 0 }
-  damage: { physical: [32, 54], chaos: [19, 44] }
+  requirements: { level: 79, str: 0, dex: 163, int: 0 }   # 2026-10-26 照 PoE2（Fanatic Bow；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 42, int: 0 }
+  damage: { physical: [47, 79], chaos: [28, 64] }   # 2026-10-26 照 PoE2 原值（Fanatic Bow）；這次之前 { physical: [32, 54], chaos: [19, 44] }
   aps: 1.2
   crit: 5.0
   sockets: 6
@@ -3070,9 +3147,10 @@ xbow_01:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 10, dex: 12, int: 0 }
-  damage: { physical: [12, 21] }
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Makeshift Crossbow，固定不隨物品等級變）；這次之前 { level: 1, str: 10, dex: 12, int: 0 }
+  damage: { physical: [7, 12] }   # 2026-10-26 照 PoE2 原值（Makeshift Crossbow）；這次之前 { physical: [12, 21] }
   aps: 1.6
+  reload: 0.8   # 2026-10-26 照 PoE2（Makeshift Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3087,9 +3165,10 @@ xbow_02:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 4
-  requirements: { level: 4, str: 13, dex: 13, int: 0 }
-  damage: { physical: [11, 21] }
+  requirements: { level: 4, str: 8, dex: 8, int: 0 }   # 2026-10-26 照 PoE2（Tense Crossbow，固定不隨物品等級變）；這次之前 { level: 4, str: 13, dex: 13, int: 0 }
+  damage: { physical: [8, 15] }   # 2026-10-26 照 PoE2 原值（Tense Crossbow）；這次之前 { physical: [11, 21] }
   aps: 1.6
+  reload: 0.85   # 2026-10-26 照 PoE2（Tense Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
   implicit:
@@ -3110,8 +3189,9 @@ xbow_03:
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 10
   requirements: { level: 10, str: 13, dex: 13, int: 0 }
-  damage: { physical: [11, 27] }
+  damage: { physical: [11, 26] }   # 2026-10-26 照 PoE2 原值（Sturdy Crossbow）；這次之前 { physical: [11, 27] }
   aps: 1.55
+  reload: 0.75   # 2026-10-26 照 PoE2（Sturdy Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3126,9 +3206,10 @@ xbow_04:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 16
-  requirements: { level: 16, str: 15, dex: 15, int: 0 }
-  damage: { physical: [11, 33] }
+  requirements: { level: 16, str: 19, dex: 19, int: 0 }   # 2026-10-26 照 PoE2（Varnished Crossbow，固定不隨物品等級變）；這次之前 { level: 16, str: 15, dex: 15, int: 0 }
+  damage: { physical: [12, 36] }   # 2026-10-26 照 PoE2 原值（Varnished Crossbow）；這次之前 { physical: [11, 33] }
   aps: 1.6
+  reload: 0.8   # 2026-10-26 照 PoE2（Varnished Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3143,9 +3224,10 @@ xbow_05:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 20
-  requirements: { level: 20, str: 15, dex: 15, int: 0 }
-  damage: { physical: [7, 31] }
+  requirements: { level: 20, str: 22, dex: 22, int: 0 }   # 2026-10-26 照 PoE2（Dyad Crossbow，固定不隨物品等級變）；這次之前 { level: 20, str: 15, dex: 15, int: 0 }
+  damage: { physical: [9, 37] }   # 2026-10-26 照 PoE2 原值（Dyad Crossbow）；這次之前 { physical: [7, 31] }
   aps: 1.6
+  reload: 1.1   # 2026-10-26 照 PoE2（Dyad Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
   implicit:
@@ -3163,9 +3245,10 @@ xbow_06:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 16, dex: 16, int: 0 }
-  damage: { physical: [10, 40] }
+  requirements: { level: 26, str: 28, dex: 28, int: 0 }   # 2026-10-26 照 PoE2（Alloy Crossbow；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 16, dex: 16, int: 0 }
+  damage: { physical: [12, 50] }   # 2026-10-26 照 PoE2 原值（Alloy Crossbow）；這次之前 { physical: [10, 40] }
   aps: 1.7
+  reload: 0.7   # 2026-10-26 照 PoE2（Alloy Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3180,9 +3263,10 @@ xbow_07:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 33
-  requirements: { level: 33, str: 18, dex: 18, int: 0 }
-  damage: { physical: [11, 42] }
+  requirements: { level: 33, str: 34, dex: 34, int: 0 }   # 2026-10-26 照 PoE2（Bombard Crossbow，固定不隨物品等級變）；這次之前 { level: 33, str: 18, dex: 18, int: 0 }
+  damage: { physical: [14, 56] }   # 2026-10-26 照 PoE2 原值（Bombard Crossbow）；這次之前 { physical: [11, 42] }
   aps: 1.65
+  reload: 0.75   # 2026-10-26 照 PoE2（Bombard Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3197,9 +3281,10 @@ xbow_08:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 38
-  requirements: { level: 38, str: 19, dex: 19, int: 0 }
-  damage: { physical: [13, 53] }
+  requirements: { level: 38, str: 39, dex: 39, int: 0 }   # 2026-10-26 照 PoE2（Construct Crossbow，固定不隨物品等級變）；這次之前 { level: 38, str: 19, dex: 19, int: 0 }
+  damage: { physical: [18, 72] }   # 2026-10-26 照 PoE2 原值（Construct Crossbow）；這次之前 { physical: [13, 53] }
   aps: 1.6
+  reload: 0.8   # 2026-10-26 照 PoE2（Construct Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3212,9 +3297,10 @@ xbow_09:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 20, dex: 20, int: 0 }
-  damage: { physical: [15, 58] }
+  requirements: { level: 45, str: 45, dex: 45, int: 0 }   # 2026-10-26 照 PoE2（Blackfire Crossbow；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 20, dex: 20, int: 0 }
+  damage: { physical: [20, 80] }   # 2026-10-26 照 PoE2 原值（Blackfire Crossbow）；這次之前 { physical: [15, 58] }
   aps: 1.6
+  reload: 0.85   # 2026-10-26 照 PoE2（Blackfire Crossbow 的 Reload Time）
   crit: 7.0
   sockets: 6
 
@@ -3229,9 +3315,10 @@ xbow_10:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 45
-  requirements: { level: 45, str: 20, dex: 20, int: 0 }
-  damage: { physical: [15, 57] }
+  requirements: { level: 45, str: 45, dex: 45, int: 0 }   # 2026-10-26 照 PoE2（Taut Crossbow，固定不隨物品等級變）；這次之前 { level: 45, str: 20, dex: 20, int: 0 }
+  damage: { physical: [20, 79] }   # 2026-10-26 照 PoE2 原值（Taut Crossbow）；這次之前 { physical: [15, 57] }
   aps: 1.6
+  reload: 0.85   # 2026-10-26 照 PoE2（Taut Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
   implicit:
@@ -3251,9 +3338,10 @@ xbow_11:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 48
-  requirements: { level: 48, str: 20, dex: 20, int: 0 }
-  damage: { physical: [16, 64] }
+  requirements: { level: 48, str: 48, dex: 48, int: 0 }   # 2026-10-26 照 PoE2（Robust Crossbow，固定不隨物品等級變）；這次之前 { level: 48, str: 20, dex: 20, int: 0 }
+  damage: { physical: [22, 89] }   # 2026-10-26 照 PoE2 原值（Robust Crossbow）；這次之前 { physical: [16, 64] }
   aps: 1.55
+  reload: 0.75   # 2026-10-26 照 PoE2（Robust Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3268,9 +3356,10 @@ xbow_12:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 50
-  requirements: { level: 50, str: 20, dex: 20, int: 0 }
-  damage: { physical: [15, 60] }
+  requirements: { level: 50, str: 49, dex: 49, int: 0 }   # 2026-10-26 照 PoE2（Piercing Crossbow，固定不隨物品等級變）；這次之前 { level: 50, str: 20, dex: 20, int: 0 }
+  damage: { physical: [21, 84] }   # 2026-10-26 照 PoE2 原值（Piercing Crossbow）；這次之前 { physical: [15, 60] }
   aps: 1.65
+  reload: 0.85   # 2026-10-26 照 PoE2（Piercing Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3285,9 +3374,10 @@ xbow_13:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 51
-  requirements: { level: 51, str: 21, dex: 21, int: 0 }
-  damage: { physical: [17, 65] }
+  requirements: { level: 51, str: 50, dex: 50, int: 0 }   # 2026-10-26 照 PoE2（Painted Crossbow，固定不隨物品等級變）；這次之前 { level: 51, str: 21, dex: 21, int: 0 }
+  damage: { physical: [23, 92] }   # 2026-10-26 照 PoE2 原值（Painted Crossbow）；這次之前 { physical: [17, 65] }
   aps: 1.6
+  reload: 0.8   # 2026-10-26 照 PoE2（Painted Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3302,9 +3392,10 @@ xbow_14:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 52
-  requirements: { level: 52, str: 21, dex: 21, int: 0 }
-  damage: { physical: [13, 54] }
+  requirements: { level: 52, str: 51, dex: 51, int: 0 }   # 2026-10-26 照 PoE2（Cumbrous Crossbow，固定不隨物品等級變）；這次之前 { level: 52, str: 21, dex: 21, int: 0 }
+  damage: { physical: [19, 76] }   # 2026-10-26 照 PoE2 原值（Cumbrous Crossbow）；這次之前 { physical: [13, 54] }
   aps: 1.6
+  reload: 0.9   # 2026-10-26 照 PoE2（Cumbrous Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3319,9 +3410,10 @@ xbow_15:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 54
-  requirements: { level: 54, str: 21, dex: 21, int: 0 }
-  damage: { physical: [15, 58] }
+  requirements: { level: 54, str: 53, dex: 53, int: 0 }   # 2026-10-26 照 PoE2（Twin Crossbow，固定不隨物品等級變）；這次之前 { level: 54, str: 21, dex: 21, int: 0 }
+  damage: { physical: [20, 82] }   # 2026-10-26 照 PoE2 原值（Twin Crossbow）；這次之前 { physical: [15, 58] }
   aps: 1.6
+  reload: 1.1   # 2026-10-26 照 PoE2（Twin Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
   implicit:
@@ -3339,9 +3431,10 @@ xbow_16:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 22, dex: 22, int: 0 }
-  damage: { physical: [18, 70] }
+  requirements: { level: 56, str: 55, dex: 55, int: 0 }   # 2026-10-26 照 PoE2（Dedalian Crossbow；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 22, dex: 22, int: 0 }
+  damage: { physical: [25, 99] }   # 2026-10-26 照 PoE2 原值（Dedalian Crossbow）；這次之前 { physical: [18, 70] }
   aps: 1.55
+  reload: 0.85   # 2026-10-26 照 PoE2（Dedalian Crossbow 的 Reload Time）
   crit: 7.0
   sockets: 6
 
@@ -3356,9 +3449,10 @@ xbow_17:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 59
-  requirements: { level: 59, str: 22, dex: 22, int: 0 }
-  damage: { physical: [16, 63] }
+  requirements: { level: 59, str: 58, dex: 58, int: 0 }   # 2026-10-26 照 PoE2（Cannonade Crossbow，固定不隨物品等級變）；這次之前 { level: 59, str: 22, dex: 22, int: 0 }
+  damage: { physical: [23, 90] }   # 2026-10-26 照 PoE2 原值（Cannonade Crossbow）；這次之前 { physical: [16, 63] }
   aps: 1.65
+  reload: 0.75   # 2026-10-26 照 PoE2（Cannonade Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3373,9 +3467,10 @@ xbow_18:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 62
-  requirements: { level: 62, str: 23, dex: 23, int: 0 }
-  damage: { physical: [19, 76] }
+  requirements: { level: 62, str: 60, dex: 60, int: 0 }   # 2026-10-26 照 PoE2（Bleak Crossbow，固定不隨物品等級變）；這次之前 { level: 62, str: 23, dex: 23, int: 0 }
+  damage: { physical: [27, 109] }   # 2026-10-26 照 PoE2 原值（Bleak Crossbow）；這次之前 { physical: [19, 76] }
   aps: 1.6
+  reload: 0.8   # 2026-10-26 照 PoE2（Bleak Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3390,9 +3485,10 @@ xbow_19:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 65
-  requirements: { level: 65, str: 23, dex: 23, int: 0 }
-  damage: { physical: [19, 79] }
+  requirements: { level: 65, str: 63, dex: 63, int: 0 }   # 2026-10-26 照 PoE2（Esoteric Crossbow，固定不隨物品等級變）；這次之前 { level: 65, str: 23, dex: 23, int: 0 }
+  damage: { physical: [28, 113] }   # 2026-10-26 照 PoE2 原值（Esoteric Crossbow）；這次之前 { physical: [19, 79] }
   aps: 1.6
+  reload: 0.8   # 2026-10-26 照 PoE2（Esoteric Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3405,9 +3501,10 @@ xbow_20:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 27, dex: 27, int: 0 }
-  damage: { physical: [21, 82] }
+  requirements: { level: 67, str: 74, dex: 74, int: 0 }   # 2026-10-26 照 PoE2（Stout Crossbow；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 27, dex: 27, int: 0 }
+  damage: { physical: [30, 119] }   # 2026-10-26 照 PoE2 原值（Stout Crossbow）；這次之前 { physical: [21, 82] }
   aps: 1.55
+  reload: 0.75   # 2026-10-26 照 PoE2（Stout Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3422,9 +3519,10 @@ xbow_21:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 72
-  requirements: { level: 72, str: 29, dex: 29, int: 0 }
-  damage: { physical: [22, 86] }
+  requirements: { level: 72, str: 82, dex: 82, int: 0 }   # 2026-10-26 照 PoE2（Engraved Crossbow，固定不隨物品等級變）；這次之前 { level: 72, str: 29, dex: 29, int: 0 }
+  damage: { physical: [31, 124] }   # 2026-10-26 照 PoE2 原值（Engraved Crossbow）；這次之前 { physical: [22, 86] }
   aps: 1.6
+  reload: 0.8   # 2026-10-26 照 PoE2（Engraved Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3438,9 +3536,10 @@ xbow_22:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 31, dex: 31, int: 0 }
-  damage: { physical: [22, 87] }
+  requirements: { level: 77, str: 89, dex: 89, int: 0 }   # 2026-10-26 照 PoE2（Flexed Crossbow；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 31, dex: 31, int: 0 }
+  damage: { physical: [32, 127] }   # 2026-10-26 照 PoE2 原值（Flexed Crossbow）；這次之前 { physical: [22, 87] }
   aps: 1.6
+  reload: 0.85   # 2026-10-26 照 PoE2（Flexed Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
   implicit:
@@ -3458,9 +3557,10 @@ xbow_23:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 31, dex: 31, int: 0 }
-  damage: { physical: [23, 91] }
+  requirements: { level: 77, str: 89, dex: 89, int: 0 }   # 2026-10-26 照 PoE2（Desolate Crossbow；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 31, dex: 31, int: 0 }
+  damage: { physical: [33, 132] }   # 2026-10-26 照 PoE2 原值（Desolate Crossbow）；這次之前 { physical: [23, 91] }
   aps: 1.6
+  reload: 0.8   # 2026-10-26 照 PoE2（Desolate Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3474,9 +3574,10 @@ xbow_24:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 30, dex: 30, int: 0 }
-  damage: { physical: [19, 77] }
+  requirements: { level: 78, str: 89, dex: 89, int: 0 }   # 2026-10-26 照 PoE2（Gemini Crossbow；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 30, dex: 30, int: 0 }
+  damage: { physical: [28, 112] }   # 2026-10-26 照 PoE2 原值（Gemini Crossbow）；這次之前 { physical: [19, 77] }
   aps: 1.6
+  reload: 1.1   # 2026-10-26 照 PoE2（Gemini Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
   implicit:
@@ -3496,9 +3597,10 @@ xbow_25:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 78
-  requirements: { level: 78, str: 30, dex: 30, int: 0 }
-  damage: { physical: [22, 85] }
+  requirements: { level: 78, str: 89, dex: 89, int: 0 }   # 2026-10-26 照 PoE2（Elegant Crossbow，固定不隨物品等級變）；這次之前 { level: 78, str: 30, dex: 30, int: 0 }
+  damage: { physical: [31, 123] }   # 2026-10-26 照 PoE2 原值（Elegant Crossbow）；這次之前 { physical: [22, 85] }
   aps: 1.65
+  reload: 0.85   # 2026-10-26 照 PoE2（Elegant Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
 
@@ -3511,11 +3613,17 @@ xbow_26:
   slot: MAIN_HAND
   tags: [weapon, two_hand, crossbow, ranged]
   drop_level: 1
-  requirements: { level: 1, str: 30, dex: 30, int: 0 }
-  damage: { physical: [19, 79] }
+  requirements: { level: 79, str: 89, dex: 89, int: 0 }   # 2026-10-26 照 PoE2（Siege Crossbow；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 30, dex: 30, int: 0 }
+  damage: { physical: [29, 115] }   # 2026-10-26 照 PoE2 原值（Siege Crossbow）；這次之前 { physical: [19, 79] }
   aps: 1.65
+  reload: 0.75   # 2026-10-26 照 PoE2（Siege Crossbow 的 Reload Time）
   crit: 5.0
   sockets: 6
+  implicit:   # 2026-10-26 照 PoE2 補上（Siege Crossbow）；這次之前沒有
+    text: "榴彈技能多射 {value} 顆投射物"
+    value: [1, 1]
+    mods:
+      - { stat: skill.projectiles, type: FLAT, value: "{value}", tags: [grenade] }
 
 wand_01:
   name: 樸素法杖
@@ -3805,6 +3913,8 @@ wand_13:
 
 wand_14:
   name: 雷紋法杖
+  retired: true          # 2026-10-26：換成照 PoE2 的法杖、長杖、權杖（bases/weapons_casters.yml，沒有傷害、賦予技能）；舊物品照常能用
+  merged_into: cwand_01
   base_level: 65          # 數值是物品等級 65 的值，照物品等級縮放
   implicit_level: 1
   family: wand
@@ -4178,6 +4288,8 @@ staff_16:
 
 staff_17:
   name: 暗鋼長杖
+  retired: true          # 2026-10-26：換成照 PoE2 的法杖、長杖、權杖（bases/weapons_casters.yml，沒有傷害、賦予技能）；舊物品照常能用
+  merged_into: cstaff_01
   base_level: 75          # 數值是物品等級 75 的值，照物品等級縮放
   implicit_level: 1
   family: staff
@@ -4529,6 +4641,8 @@ sceptre_15:
 
 sceptre_16:
   name: 秘銀權杖
+  retired: true          # 2026-10-26：換成照 PoE2 的法杖、長杖、權杖（bases/weapons_casters.yml，沒有傷害、賦予技能）；舊物品照常能用
+  merged_into: csceptre_01
   base_level: 65          # 數值是物品等級 65 的值，照物品等級縮放
   implicit_level: 1
   family: sceptre

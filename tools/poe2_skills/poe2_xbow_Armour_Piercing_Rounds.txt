@@ -1,0 +1,48 @@
+Armour Piercing Rounds (poe2db.tw/us/Armour_Piercing_Rounds) - Tier 1; mana 8-55. (Text paraphrased by WebFetch.)
+Mechanic: Loads a clip of bolts that fire rapidly and break enemy armour. Using again reloads.
+Ammunition: +12-21 bolts per clip (lv1-20).
+Projectile: 0 mana; 425% attack speed; attack dmg 25-91%; projectile speed 32.5 m/s; hits Break 1-845 Armour (flat, lv1-20).
+Quality: 0-20% increased Armour Break (0.3.0 reduced from 0-30%); 0-20% more attack speed.
+Hidden: 1000 ms queue override; 60 deg facing; 100 ms turn; knockback 30; 300 ms barrage debuff; 8 recoil buffs; -70% move speed, +160%/s. No pierce stat listed.
+
+level	bolts_per_clip	armour_break_flat
+1	12	1
+2	12	2
+3	13	3
+4	13	5
+5	14	8
+6	14	12
+7	15	17
+8	15	24
+9	16	35
+10	16	50
+11	17	71
+12	17	98
+13	18	144
+14	18	209
+15	19	300
+16	19	402
+17	20	479
+18	20	569
+19	21	714
+20	21	845
+21	22	894
+22	22	945
+23	23	999
+24	23	1056
+25	24	1117
+26	24	1180
+27	25	1247
+28	25	1318
+29	26	1392
+30	26	1470
+31	27	1553
+32	27	1640
+33	28	1732
+34	28	1829
+35	29	1931
+36	29	2038
+37	30	2151
+38	30	2271
+39	31	2389
+40	31	2512

@@ -38,9 +38,17 @@ public final class Bag {
     /** 能用幾頁（一般 2 頁，累積贊助多的另外算）。 */
     private int unlocked = BASE_PAGES;
 
+    /** 2026-10-26（昇華・巨量承載）：額外多幾頁（不超過 {@link #MAX_PAGES}）。 */
+    private int bonus;
+
     /** 能用幾頁。 */
     public int pages() {
-        return unlocked;
+        return Math.min(MAX_PAGES, unlocked + bonus);
+    }
+
+    /** 2026-10-26（昇華・巨量承載）：攜帶一個箱子＝多一頁（贊助的頁已經滿了就沒有）。 */
+    public void setBonusPages(final int count) {
+        bonus = Math.max(0, count);
     }
 
     /** 能用的頁數（贊助模組在角色載入、累積贊助變了的時候設；只會在 BASE_PAGES 到 MAX_PAGES 之間）。 */
@@ -51,18 +59,18 @@ public final class Bag {
     /** 看得到幾頁（能用的頁，加上收回之後還有東西的頁；2026-10）。 */
     public int viewPages() {
         int last = -1;
-        for (int i = pages.size() - 1; i >= unlocked; i--) {
+        for (int i = pages.size() - 1; i >= pages(); i--) {
             if (!emptyPage(i)) {
                 last = i;
                 break;
             }
         }
-        return Math.max(unlocked, last + 1);
+        return Math.max(pages(), last + 1);
     }
 
     /** 這一頁收回了（只能拿出來）。 */
     public boolean locked(final int page) {
-        return page >= unlocked;
+        return page >= pages();
     }
 
     /**
@@ -70,14 +78,14 @@ public final class Bag {
      * 放不下的留在原本的頁（看得到、只能拿出來）。回傳還有東西的收回頁有幾頁。
      */
     public int compact() {
-        for (int from = unlocked; from < pages.size(); from++) {
+        for (int from = pages(); from < pages.size(); from++) {
             final ItemStack[] source = pages.get(from);
             for (int i = 0; i < source.length; i++) {
                 if (source[i] == null || source[i].isEmpty()) {
                     continue;
                 }
                 boolean moved = false;
-                for (int to = 0; to < unlocked && !moved; to++) {
+                for (int to = 0; to < pages() && !moved; to++) {
                     final ItemStack[] target = page(to);
                     for (int j = 0; j < target.length; j++) {
                         if (target[j] == null || target[j].isEmpty()) {
@@ -93,10 +101,10 @@ public final class Bag {
                 }
             }
         }
-        while (pages.size() > Math.max(BASE_PAGES, unlocked) && emptyPage(pages.size() - 1)) {
+        while (pages.size() > Math.max(BASE_PAGES, pages()) && emptyPage(pages.size() - 1)) {
             pages.remove(pages.size() - 1);
         }
-        return viewPages() - unlocked;
+        return viewPages() - pages();
     }
 
     private boolean emptyPage(final int index) {
@@ -158,7 +166,7 @@ public final class Bag {
             return 0;
         }
         int free = 0;
-        for (int page = 0; page < unlocked; page++) {
+        for (int page = 0; page < pages(); page++) {
             free += PAGE_SIZE - itemCount(page);
         }
         return free;
@@ -172,7 +180,7 @@ public final class Bag {
         if (!usable() || stack == null || stack.isEmpty()) {
             return false;
         }
-        for (int page = 0; page < unlocked; page++) {
+        for (int page = 0; page < pages(); page++) {
             for (int i = 0; i < PAGE_SIZE; i++) {
                 final ItemStack there = page(page)[i];
                 if (there == null || there.isEmpty()) {

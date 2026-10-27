@@ -45,6 +45,10 @@ public final class PlainArt {
         if (category == null) {
             return null;
         }
+        // 2026-10-27：法杖、長杖、權杖每個基底各一張（杆子材質、寶石顏色、頭的樣子不同），簡圖的代號就是基底代號；沒有那張用通用的
+        if (("wand".equals(category) || "staff".equals(category) || "sceptre".equals(category)) && sprites().containsKey(base.id())) {
+            return base.id();
+        }
         // 2026-10-24：戒指照固定詞綴的抗性換寶石顏色（ring_fire、ring_cold_lightning、ring_all…）
         if ("ring".equals(category)) {
             final String resist = ringResist(base);

@@ -84,11 +84,43 @@ public final class AscendancyService {
         if (!state.hasCharacter()) {
             return List.of();
         }
-        final List<Modifier> list = new ArrayList<>(ascension(state).modifiers());
+        final List<Modifier> list = new ArrayList<>(AscKeys.expand(ascension(state).modifiers())); // 2026-10-26：更少 x% 屬性、沒有精魂
         if (player != null) { // 網頁計算器的虛擬角色（player 是 null）：分身獎勵用快照記下來的（legacyModifiers）
             list.addAll(Legacy.modifiers(legacy(player, state), AscendancyService::className));
         }
         return list;
+    }
+
+    /** 2026-10-26 照 PoE2：昇華改變天賦樹配點規則的（{@link tw.exilecore.passive.PassiveTree#RULES}）；這次之前沒有。 */
+    public java.util.Set<String> treeRules(final java.util.Map<String, String> progress, final String classId, final int level) {
+        final java.util.Set<String> rules = new java.util.HashSet<>();
+        for (final Modifier mod : new Ascension(config, progress, classId, level).modifiers()) {
+            if (mod.value() > 0 && tw.exilecore.passive.PassiveTree.RULES.contains(mod.stat())) {
+                rules.add(mod.stat());
+            }
+        }
+        return rules;
+    }
+
+    public java.util.Set<String> treeRules(final PlayerState state) {
+        final CharacterRecord character = state.character();
+        return character == null ? java.util.Set.of() : treeRules(state.progress(), character.characterClass().id(), state.level());
+    }
+
+    /** 2026-10-26：昇華天賦給的額外天賦點（武器大師：原作的武器組天賦點，我們沒有武器組，改成 +10 天賦點）。 */
+    public static final String EXTRA_PASSIVE_POINTS = "passive.points_extra";
+
+    public int passivePoints(final PlayerState state) {
+        if (!state.hasCharacter()) {
+            return 0;
+        }
+        double total = 0;
+        for (final Modifier mod : ascension(state).modifiers()) {
+            if (EXTRA_PASSIVE_POINTS.equals(mod.stat())) {
+                total += mod.value();
+            }
+        }
+        return (int) Math.round(total);
     }
 
     /** 分身獎勵的修飾器（帳號的其他角色給的；2026-10 網頁計算器的快照記下來）。 */
@@ -394,9 +426,48 @@ public final class AscendancyService {
             return "存檔中，請稍等一下再配點";
         }
         plugin.characters().setProgress(player, Ascension.NODES, ascension.withNode(node));
+        if (Ascension.outdated(config.version(), plugin.players().get(player).progress().get(Ascension.VERSION))) {
+            plugin.characters().setProgress(player, Ascension.VERSION, String.valueOf(config.version())); // 這一版配的
+        }
         refreshStats(player);
         updateTracker(player);
         return null;
+    }
+
+    /**
+     * 2026-10-26 昇華天賦改版（ascendancy.yml 的 version 變了，比照天賦樹改版）：這個角色已配的昇華天賦全部退回
+     * （昇華職業留著、昇華點拿回來），通知玩家，記下現在的版本。登入、建立、切換角色、/ec reload 時檢查。
+     */
+    public void checkVersion(final Player player) {
+        if (!ready(player)) {
+            return;
+        }
+        final PlayerState state = plugin.players().get(player);
+        if (!Ascension.outdated(config.version(), state.progress().get(Ascension.VERSION))) {
+            return;
+        }
+        if (plugin.characters().hasUnsavedTrades(player)) {
+            // 退點（花金幣）的那一筆還在重試：等它寫完再清，不然會被舊的那一筆蓋回去
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline()) {
+                    checkVersion(player);
+                }
+            }, 100L);
+            return;
+        }
+        final int count = Ascension.parse(state.progress().get(Ascension.NODES)).size();
+        if (count > 0) {
+            plugin.characters().removeProgress(player, Ascension.NODES);
+            player.sendMessage(plugin.text().prefixed("<yellow>昇華天賦改版了：這個角色的 " + count
+                    + " 個昇華天賦全部退回（昇華職業不變、昇華點拿回來了），打 <white>/ascend tree</white> 重新配"));
+            plugin.getSLF4JLogger().info("{} 的昇華天賦改版退點（{} 個，第 {} 版）", player.getName(), count, config.version());
+        }
+        plugin.characters().setProgress(player, Ascension.VERSION, String.valueOf(config.version()));
+        if (count > 0) {
+            pruneTree(player); // 2026-10-27：改配點規則的、給天賦點的昇華天賦退了，天賦樹跟著核對（這次之前要重新登入才核對）
+            refreshStats(player);
+            updateTracker(player);
+        }
     }
 
     /** 退一個昇華天賦要花的金幣：天賦樹退一點的價格 × 這個天賦的點數。 */
@@ -421,6 +492,10 @@ public final class AscendancyService {
         final String problem = ascension.refundProblem(node);
         if (problem != null) {
             return problem;
+        }
+        final int debt = refundDebt(player, ascension, node);
+        if (debt > 0) {
+            return "先在天賦樹上退 " + debt + " 點天賦：這個昇華天賦給的天賦點已經配下去了";
         }
         final String value = ascension.withoutNode(node);
         final long cost = refundCost(player, node);
@@ -457,9 +532,73 @@ public final class AscendancyService {
                 }
             }, null, "昇華退點（" + player.getName() + "）");
         }
+        pruneTree(player);
         refreshStats(player);
         updateTracker(player);
         return null;
+    }
+
+    /**
+     * 2026-10-26 照 PoE2：退了改配點規則的昇華天賦（觀星「未見之道」「虛實交織」、開路者的女術者之道／戰士之道）之後，
+     * 天賦樹上因此接不上的節點退回（點數拿回來、孔裡的珠寶放回背包）；這次之前沒有這些規則。
+     */
+    private void pruneTree(final Player player) {
+        final PlayerState state = plugin.players().get(player);
+        final tw.exilecore.passive.PassiveTree tree = plugin.passives() == null ? null : plugin.passives().tree();
+        final CharacterRecord character = state.character();
+        if (tree == null || character == null) {
+            return;
+        }
+        final tw.exilecore.passive.PassiveNode start = tree.start(character.characterClass().id());
+        if (start == null) {
+            return;
+        }
+        final java.util.Set<String> rules = treeRules(state);
+        final java.util.Set<String> removed = tree.prune(state.passives(), start, rules);
+        // 2026-10-27：昇華給的天賦點沒了（管理員重置、改版退回、少了試煉），多配的從最外面退掉；這次之前可用天賦點會變成負的
+        final int over = -plugin.players().availablePoints(state);
+        final List<String> trimmed = over > 0 ? TreeBudget.trim(tree, state.passives(), start, rules, over) : List.of();
+        if (!removed.isEmpty() || !trimmed.isEmpty()) {
+            state.markDirty();
+            tw.exilecore.passive.JewelSockets.reclaim(plugin, player, state, tree, "天賦樹節點退回");
+        }
+        if (!removed.isEmpty()) {
+            player.sendMessage(plugin.text().prefixed("<yellow>昇華天賦變了，天賦樹上有 " + removed.size() + " 點接不上，已退回"));
+        }
+        if (!trimmed.isEmpty()) {
+            player.sendMessage(plugin.text().prefixed("<yellow>昇華給的天賦點沒了，天賦樹上多配的 " + trimmed.size() + " 點（最外面的）已退回"));
+        }
+    }
+
+    /**
+     * 2026-10-27：退這個昇華天賦之前天賦樹上要先退幾點（它給的天賦點已經配下去了；0 = 可以退）。
+     * 這次之前不檢查，退了之後可用天賦點變成負的、用那些點配的天賦照樣有效。
+     */
+    private int refundDebt(final Player player, final Ascension ascension, final AscendancyConfig.Node node) {
+        final int lost = Ascension.extraPassivePoints(node);
+        final PlayerState state = plugin.players().get(player);
+        final CharacterRecord character = state.character();
+        final tw.exilecore.passive.PassiveTree tree = plugin.passives() == null ? null : plugin.passives().tree();
+        final java.util.Set<String> before = treeRules(state);
+        if (lost <= 0 && before.isEmpty()) {
+            return 0;
+        }
+        int pruned = 0;
+        if (tree != null && character != null && tree.start(character.characterClass().id()) != null) {
+            // 退掉之後配點規則（女術者之道、未見之道…）沒了，天賦樹上接不上的會自動退回，那些點也算
+            final java.util.Map<String, String> after = new java.util.HashMap<>(state.progress());
+            final String value = ascension.withoutNode(node);
+            if (value == null) {
+                after.remove(Ascension.NODES);
+            } else {
+                after.put(Ascension.NODES, value);
+            }
+            final java.util.Set<String> rules = treeRules(after, character.characterClass().id(), state.level());
+            if (!rules.equals(before)) {
+                pruned = tree.prune(new java.util.HashSet<>(state.passives()), tree.start(character.characterClass().id()), rules).size();
+            }
+        }
+        return Ascension.refundDebt(plugin.players().availablePoints(state), lost, pruned);
     }
 
     /** 屬性表重算、畫面上的生命與 TAB 列表跟著變。 */
@@ -513,6 +652,21 @@ public final class AscendancyService {
      * @param startId    先看哪一個（null = 自己的昇華職業，沒有就自己職業的第一個）
      * @param allClasses 一開始就看全部職業的昇華
      */
+    /** 2026-10-27：技能代號 → 技能（昇華天賦說明附上賦予的技能用；技能模組沒開回傳 null）。 */
+    java.util.function.Function<String, tw.exilecore.skill.SkillDefinition> skillLookup() {
+        return plugin.skills() == null ? null : id -> plugin.skills().config().skill(id);
+    }
+
+    /** 2026-10-27 照站長：昇華天賦 Shift＋點擊，看它賦予的技能（跟技能寶石同一套說明）；沒有賦予技能就不開。 */
+    void openSkillPreview(final Player player, final AscendancyConfig.Node node, final Runnable back) {
+        final List<tw.exilecore.skill.SkillDefinition> skills = AscendancyLayout.granted(node, skillLookup());
+        if (skills.isEmpty()) {
+            return;
+        }
+        player.playSound(player.getLocation(), org.bukkit.Sound.ITEM_BOOK_PAGE_TURN, 0.6f, 1.0f);
+        new AscSkillPreviewMenu(plugin, player, node, skills, back).open();
+    }
+
     public void openPreview(final Player player, final String startId, final boolean allClasses) {
         if (!ready(player)) {
             player.sendMessage(plugin.text().prefixed("<red>先選一個角色（/char）"));
@@ -569,6 +723,7 @@ public final class AscendancyService {
             if (!ready(player)) {
                 continue;
             }
+            checkVersion(player); // 2026-10-26：/ec reload 換了一版昇華天賦，線上的角色照登入時一樣退點
             refreshStats(player);
             updateTracker(player);
         }
@@ -595,6 +750,7 @@ public final class AscendancyService {
     /** 把一個試煉變回沒完成（昇華點跟著少，配不下的天賦照順序拿掉）。 */
     void adminUntrial(final Player player, final AscendancyConfig.Trial trial) {
         plugin.characters().removeProgress(player, Ascension.trialKey(trial.id()));
+        pruneTree(player); // 2026-10-27：配不下的昇華天賦拿掉了，天賦樹跟著核對
         refreshStats(player);
         updateTracker(player);
     }
@@ -603,6 +759,7 @@ public final class AscendancyService {
     void adminReset(final Player player) {
         plugin.characters().removeProgress(player, Ascension.CHOSEN);
         plugin.characters().removeProgress(player, Ascension.NODES);
+        pruneTree(player); // 2026-10-27：配點規則、昇華給的天賦點跟著拿掉（這次之前要重新登入才核對，而且不核對點數）
         refreshStats(player);
         updateTracker(player);
     }

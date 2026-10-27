@@ -7,18 +7,19 @@ import java.util.Locale;
  * 沒有職業限定技能：想玩什麼都靠天賦樹與寶石決定。新手裝備在 character.yml 的 starter（{@link StarterKits}）。
  * <p>
  * 照 PoE2 的職業分法（名字是自己的）：重弩手（弩，Mercenary）、棍僧（長棍，Monk）、長矛獵手（矛，Huntress）、元素法師（元素法術，Sorceress）；混沌術士（Witch）改走混沌與詛咒。
- * 每個職業的起始屬性加起來都是 60。
+ * 每個職業的起始屬性加起來都是 29（2026-10-26 照 PoE2：Warrior 15/7/7、Mercenary 11/11/7、Huntress／Ranger 7/15/7、Monk 7/11/11、
+ * Sorceress／Witch 7/7/15、Druid 11/7/11；這次之前加起來 60，例如重甲鬥士 32/14/14）。
  */
 public enum CharacterClass {
-    MARAUDER("marauder", "重甲鬥士", 32, 14, 14, "MACE", "<#ff6655>", "力量起點：生命、護甲與近戰傷害；錘"),
-    MERCENARY("mercenary", "重弩手", 23, 23, 14, "CROSSBOW", "<#d9a066>", "力量與敏捷：護甲與閃避、投射物；弩"),
-    HUNTRESS("huntress", "長矛獵手", 18, 28, 14, "IRON_SPEAR", "<#7ed957>", "敏捷偏力量：近戰與投擲、暴擊；矛與小盾"),
-    RANGER("ranger", "弓箭手", 14, 32, 14, "BOW", "<#66dd66>", "敏捷起點：閃避、攻速與暴擊；弓"),
-    MONK("monk", "棍僧", 14, 23, 23, "BAMBOO", "<#5fd3c7>", "敏捷與智慧：閃避與能量護盾、閃電與冰冷的攻擊；長棍"),
-    SORCERESS("sorceress", "元素法師", 14, 14, 32, "BLAZE_ROD", "<#6699ff>", "智慧起點：能量護盾、元素法術；法杖與長杖"),
-    WITCH("witch", "混沌術士", 14, 14, 32, "WITHER_ROSE", "<#b07cff>", "智慧起點（靠力量那一側）：混沌法術、生命與能量護盾；法杖與長杖"),
+    MARAUDER("marauder", "重甲鬥士", 15, 7, 7, "MACE", "<#ff6655>", "力量起點：生命、護甲與近戰傷害；錘"),
+    MERCENARY("mercenary", "重弩手", 11, 11, 7, "CROSSBOW", "<#d9a066>", "力量與敏捷：護甲與閃避、投射物；弩"),
+    HUNTRESS("huntress", "長矛獵手", 7, 15, 7, "IRON_SPEAR", "<#7ed957>", "敏捷偏力量：近戰與投擲、暴擊；矛與小盾"),
+    RANGER("ranger", "弓箭手", 7, 15, 7, "BOW", "<#66dd66>", "敏捷起點：閃避、攻速與暴擊；弓"),
+    MONK("monk", "棍僧", 7, 11, 11, "BAMBOO", "<#5fd3c7>", "敏捷與智慧：閃避與能量護盾、閃電與冰冷的攻擊；長棍"),
+    SORCERESS("sorceress", "元素法師", 7, 7, 15, "BLAZE_ROD", "<#6699ff>", "智慧起點：能量護盾、元素法術；法杖與長杖"),
+    WITCH("witch", "混沌術士", 7, 7, 15, "WITHER_ROSE", "<#b07cff>", "智慧起點（靠力量那一側）：混沌法術、生命與能量護盾；法杖與長杖"),
     /** 2026-10：照 PoE2 的德魯伊（力量與智慧，變身與自然法術；獸魂符）。天賦樹起點在重甲鬥士與混沌術士之間。 */
-    DRUID("druid", "德魯伊", 23, 14, 23, "OAK_SAPLING", "<#8fc75a>", "力量與智慧：變身成熊、狼人、飛龍，或放自然法術；獸魂符");
+    DRUID("druid", "德魯伊", 11, 7, 11, "OAK_SAPLING", "<#8fc75a>", "力量與智慧：變身成熊、狼人、飛龍，或放自然法術；獸魂符");
 
     private final String id;
     private final String displayName;

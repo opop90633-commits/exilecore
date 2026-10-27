@@ -22,8 +22,13 @@ import java.util.Locale;
 final class PriceMenu extends Menu {
 
     private static final int CURRENCY_SLOTS = 18;
-    /** 2026-10：第三列左邊四格是通貨頁的四個分組（一般通貨、未切割寶石、星魄、其他機制），右邊兩格換頁。 */
-    private static final int[] GROUP_SLOTS = {18, 19, 20, 21, 23}; // 2026-10-18：第五組（Boss 門票）
+    /**
+     * 2026-10：第三列左邊是通貨頁的分組，右邊兩格換頁。
+     * 2026-10-26：分組變成 11 組放不下，改成 18 ◀ 上一組、19～21 包含目前那組的三組、23 下一組 ▶（這次之前固定放前五組，後面的組點不到）。
+     */
+    private static final int[] GROUP_SLOTS = {19, 20, 21};
+    private static final int SLOT_PREV_GROUP = 18;
+    private static final int SLOT_NEXT_GROUP = 23;
     private static final int SLOT_PREV_PAGE = 24;
     private static final int SLOT_NEXT_PAGE = 26;
     private static final int SLOT_ITEM = 22;
@@ -101,6 +106,12 @@ final class PriceMenu extends Menu {
         page = Math.max(0, shown.indexOf(id)) / CURRENCY_SLOTS;
     }
 
+    /** 2026-10-26：分組頁籤顯示的第一組（包含目前那組的一段，頭尾不超出）。 */
+    private int firstGroupShown() {
+        final int count = tw.exilecore.currency.CurrencyGroups.Group.values().length;
+        return Math.max(0, Math.min(count - GROUP_SLOTS.length, group.ordinal() - GROUP_SLOTS.length / 2));
+    }
+
     private void fillShown() {
         shown.clear();
         for (final CurrencyType type : tw.exilecore.currency.CurrencyGroups.in(plugin.currencies().repository().all(), group)) {
@@ -130,7 +141,9 @@ final class PriceMenu extends Menu {
             set(i, selected ? highlight(icon) : withoutGlint(icon));
         }
         final tw.exilecore.currency.CurrencyGroups.Group[] groups = tw.exilecore.currency.CurrencyGroups.Group.values();
-        for (int g = 0; g < Math.min(GROUP_SLOTS.length, groups.length); g++) {
+        final int firstGroup = firstGroupShown();
+        for (int i = 0; i < Math.min(GROUP_SLOTS.length, groups.length); i++) {
+            final int g = firstGroup + i;
             final List<CurrencyType> members = tw.exilecore.currency.CurrencyGroups.in(plugin.currencies().repository().all(), groups[g]);
             final ItemStack tab = members.isEmpty() ? new ItemStack(Material.SUNFLOWER) : plugin.currencies().create(members.getFirst(), 1);
             final tw.exilecore.currency.CurrencyGroups.Group each = groups[g];
@@ -141,7 +154,13 @@ final class PriceMenu extends Menu {
                         ItemRenderer.line(current ? "<green>✔ 目前在這一組" : "<yellow>左鍵：看這一組")));
                 meta.setEnchantmentGlintOverride(false);
             });
-            set(GROUP_SLOTS[g], current ? highlight(tab) : tab);
+            set(GROUP_SLOTS[i], current ? highlight(tab) : tab);
+        }
+        if (groups.length > GROUP_SLOTS.length) {
+            set(SLOT_PREV_GROUP, icon(Material.ARROW, "<white>◀ 上一組", "<gray>" + group.previous().displayName(),
+                    "<dark_gray>第 " + (group.ordinal() + 1) + " / " + groups.length + " 組"));
+            set(SLOT_NEXT_GROUP, icon(Material.ARROW, "<white>下一組 ▶", "<gray>" + group.next().displayName(),
+                    "<dark_gray>第 " + (group.ordinal() + 1) + " / " + groups.length + " 組"));
         }
         if (pages() > 1) {
             set(SLOT_PREV_PAGE, icon(Material.PAPER, "<white>◀ 上一頁", "<gray>第 " + (page + 1) + " / " + pages() + " 頁"));
@@ -237,9 +256,12 @@ final class PriceMenu extends Menu {
             }
             return;
         }
-        for (int g = 0; g < GROUP_SLOTS.length; g++) {
-            if (GROUP_SLOTS[g] == clicked && g < tw.exilecore.currency.CurrencyGroups.Group.values().length) {
-                group = tw.exilecore.currency.CurrencyGroups.Group.values()[g];
+        final int groupCount = tw.exilecore.currency.CurrencyGroups.Group.values().length;
+        for (int i = 0; i < GROUP_SLOTS.length; i++) {
+            final boolean arrow = groupCount > GROUP_SLOTS.length && (clicked == SLOT_PREV_GROUP || clicked == SLOT_NEXT_GROUP);
+            if (arrow || GROUP_SLOTS[i] == clicked && firstGroupShown() + i < groupCount) {
+                group = arrow ? (clicked == SLOT_PREV_GROUP ? group.previous() : group.next())
+                        : tw.exilecore.currency.CurrencyGroups.Group.values()[firstGroupShown() + i];
                 fillShown();
                 page = 0;
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.2f);

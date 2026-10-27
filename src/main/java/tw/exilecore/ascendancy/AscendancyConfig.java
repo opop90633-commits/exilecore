@@ -32,9 +32,13 @@ public final class AscendancyConfig {
     private static final Pattern COLOR = Pattern.compile("#[0-9a-fA-F]{6}");
     /** 試煉最多幾個（選單一列）。 */
     public static final int MAX_TRIALS = 7;
-    /** 一棵昇華小樹最多幾條分支、每條最多幾個（選單的格子）。 */
-    public static final int MAX_BRANCHES = 4;
-    public static final int MAX_DEPTH = 4;
+    /**
+     * 一棵昇華小樹從起點往外最多幾層（選單 9 欄：第 0、2、4、6、8 欄放天賦，中間放連線）。
+     * 2026-10-26 照 PoE2：最深 5 層、分岔的往下多一排（選單上下捲動），不再限制幾條分支；這次之前最多 4 條、每條 4 個。
+     */
+    public static final int MAX_DEPTH = 5;
+    /** 一棵昇華小樹最多幾個天賦（含選項）。 */
+    public static final int MAX_NODES = 40;
     /** 配的昇華天賦存成一筆「a,b,c」（progress_value 最長 255 字）。 */
     static final int NODES_VALUE_MAX = 250;
     /** 試煉的怪物等級上限（地圖最高 68）。 */
@@ -81,17 +85,90 @@ public final class AscendancyConfig {
 
     /**
      * 一個昇華天賦。
+     * <p>
+     * 2026-10-26 照 PoE2 0.5 的昇華樹：一個天賦可以接好幾個（分岔）、requires 可以寫好幾個（Ritualist、Invoker 有環：
+     * 跟 PoE2 一樣「跟已配的天賦相連」就能配，連線不分方向）；「選一個」的天賦（choice）底下的選項（option_of）只能配一個，
+     * 選項不花點數（點數花在 choice 本身）。這次之前每個天賦只有一個 requires、一條分支一個接一個。
      *
-     * @param requires 要先配的天賦（同一條分支的前一個；null = 分支的第一個）
-     * @param cost     幾個昇華點
+     * @param requires 相連的、比較靠近起點的天賦（空的 = 直接接在起點；第一個是畫面上畫在它左邊的那個）
+     * @param cost     幾個昇華點（選項是 0）
      * @param icon     原版物品名稱
      * @param stats    給的修飾器（引擎格式）
      * @param note     補充說明（可以沒有）
+     * @param lines    說明行（照原作寫；空的 = 照 stats 自動寫）
+     * @param optionOf 這是哪個「選一個」天賦的選項（null = 不是選項）
+     * @param choice   這是「選一個」的天賦（配了之後從底下的選項選一個）
+     * @param notable  核心天賦（原作的大天賦；選單上發光、選昇華的畫面只列這些）
+     * @param unlock   2026-10-27 照 PoE2（靈狩者「聖潔一統」的 unlock_constraint）：這幾個都配了才能配（空的 = 沒有這個條件）；
+     *                 這種天賦接在起點、可以不花點數（cost: 0），不當作連線的路
      */
-    public record Node(String id, String name, String requires, int cost, String icon, List<Modifier> stats, String note) {
+    public record Node(String id, String name, List<String> requires, int cost, String icon, List<Modifier> stats, String note,
+                       List<String> lines, String optionOf, boolean choice, boolean notable, List<String> unlock) {
         public Node {
+            requires = List.copyOf(requires);
             stats = List.copyOf(stats);
+            lines = List.copyOf(lines);
+            unlock = unlock == null ? List.of() : List.copyOf(unlock);
         }
+
+        /** 2026-10-27 以前的寫法（沒有 unlock）。 */
+        public Node(final String id, final String name, final List<String> requires, final int cost, final String icon, final List<Modifier> stats,
+                    final String note, final List<String> lines, final String optionOf, final boolean choice, final boolean notable) {
+            this(id, name, requires, cost, icon, stats, note, lines, optionOf, choice, notable, List.of());
+        }
+
+        /** 2026-10-26 以前的寫法（一個 requires；說明照 stats 寫）。 */
+        public Node(final String id, final String name, final String requires, final int cost, final String icon, final List<Modifier> stats,
+                    final String note) {
+            this(id, name, requires == null ? List.of() : List.of(requires), cost, icon, stats, note, List.of(), null, false, false, List.of());
+        }
+
+        /** 直接接在起點（不用先配別的）。 */
+        public boolean root() {
+            return requires.isEmpty();
+        }
+
+        /** 「選一個」天賦的選項。 */
+        public boolean option() {
+            return optionOf != null;
+        }
+
+        /** 玩家看的說明：有寫 lines 就照 lines，沒有就照 stats 自動寫。 */
+        public List<String> display() {
+            return tw.exilecore.stats.KeywordText.distinct(lines.isEmpty() ? StatLines.describeAll(stats) : lines); // 2026-10-27：同一行只寫一次
+        }
+
+        /** 2026-10-27：補充說明（跟說明行一樣的、空的回傳 null）；玩家只看一次。 */
+        public String shownNote() {
+            if (note == null || note.isBlank() || display().contains(note)) {
+                return null;
+            }
+            return note;
+        }
+
+        /** 2026-10-27 照站長：說明裡只寫了關鍵字的（撲殺、毀滅打擊…）自動補一行「關鍵字：說明」，每個只補一次。 */
+        public List<String> explanations() {
+            final List<String> shown = new java.util.ArrayList<>(display());
+            if (shownNote() != null) {
+                shown.add(shownNote());
+            }
+            return tw.exilecore.stats.KeywordText.explain(shown);
+        }
+
+        /** 2026-10-27：這個天賦賦予的技能（grant_skill.代號，照 stats 的順序）。 */
+        public List<String> grantedSkills() {
+            final List<String> out = new java.util.ArrayList<>();
+            for (final Modifier modifier : stats) {
+                if (modifier.stat().startsWith(AscKeys.GRANT_SKILL) && !out.contains(modifier.stat().substring(AscKeys.GRANT_SKILL.length()))) {
+                    out.add(modifier.stat().substring(AscKeys.GRANT_SKILL.length()));
+                }
+            }
+            return out;
+        }
+    }
+
+    /** 昇華天賦在選單（9 欄）上的位置：第幾排、第幾層（離起點幾步，0 = 直接接在起點）。 */
+    public record Cell(Node node, int row, int depth) {
     }
 
     /**
@@ -160,36 +237,115 @@ public final class AscendancyConfig {
             return "<" + color + ">" + name.replace("\\", "\\\\").replace("<", "\\<") + "</" + color + ">";
         }
 
-        /**
-         * 分支：每條從第一個（沒有 requires）開始，一個接一個（照設定檔的順序）。
-         * 檢查過的設定才保證每個天賦剛好在一條分支裡。
-         */
-        public List<List<Node>> branches() {
-            final List<List<Node>> branches = new ArrayList<>();
-            for (final Node root : nodes) {
-                if (root.requires() != null) {
-                    continue;
+        /** 直接接在起點的天賦（照設定檔的順序）。 */
+        public List<Node> roots() {
+            final List<Node> roots = new ArrayList<>();
+            for (final Node node : nodes) {
+                if (node.root()) {
+                    roots.add(node);
                 }
-                final List<Node> branch = new ArrayList<>();
-                Node current = root;
-                final Set<String> seen = new HashSet<>();
-                while (current != null && seen.add(current.id())) {
-                    branch.add(current);
-                    current = child(current.id());
-                }
-                branches.add(branch);
             }
-            return branches;
+            return roots;
         }
 
-        /** 接在這個天賦後面的那一個（沒有回傳 null）。 */
-        public Node child(final String nodeId) {
+        /**
+         * 畫在這個天賦右邊的那幾個（2026-10-26 分岔：可以好幾個；requires 的第一個是它的）。
+         * 這次之前是 child()，只會回傳一個。
+         */
+        public List<Node> children(final String nodeId) {
+            final List<Node> children = new ArrayList<>();
             for (final Node node : nodes) {
-                if (nodeId.equals(node.requires())) {
-                    return node;
+                if (!node.root() && nodeId.equals(node.requires().getFirst())) {
+                    children.add(node);
                 }
             }
-            return null;
+            return children;
+        }
+
+        /** 「選一個」天賦的選項（照設定檔的順序）。 */
+        public List<Node> options(final String choiceId) {
+            final List<Node> options = new ArrayList<>();
+            for (final Node node : nodes) {
+                if (choiceId.equals(node.optionOf())) {
+                    options.add(node);
+                }
+            }
+            return options;
+        }
+
+        /** 跟這個天賦相連的（連線不分方向：它的 requires，加上 requires 寫了它的）。 */
+        public List<Node> neighbours(final String nodeId) {
+            final List<Node> list = new ArrayList<>();
+            final Node self = node(nodeId);
+            for (final Node node : nodes) {
+                if (node.id().equals(nodeId)) {
+                    continue;
+                }
+                if (node.requires().contains(nodeId) || self != null && self.requires().contains(node.id())) {
+                    list.add(node);
+                }
+            }
+            return list;
+        }
+
+        /**
+         * 選單上的位置：從每個接在起點的天賦往右畫，分岔的往下多一排（每個沒有後續的天賦一排，前面的天賦跟第一個後續同一排）。
+         * 繞成一圈的（requires 的第一個一路找回自己）畫不出來，略過。
+         */
+        public List<Cell> layout() {
+            final List<Cell> cells = new ArrayList<>();
+            final int[] row = {0};
+            final Set<String> seen = new HashSet<>();
+            for (final Node root : roots()) {
+                place(root, 0, row, cells, seen);
+            }
+            return cells;
+        }
+
+        private void place(final Node node, final int depth, final int[] row, final List<Cell> cells, final Set<String> seen) {
+            if (!seen.add(node.id())) {
+                return;
+            }
+            cells.add(new Cell(node, row[0], depth));
+            final List<Node> children = children(node.id());
+            boolean first = true;
+            for (final Node child : children) {
+                if (seen.contains(child.id())) {
+                    continue;
+                }
+                if (!first) {
+                    row[0]++;
+                }
+                first = false;
+                place(child, depth + 1, row, cells, seen);
+            }
+            if (node.root() && cells.getLast().row() == row[0]) {
+                row[0]++; // 下一個接在起點的從新的一排開始
+            }
+        }
+
+        /** 選單有幾排。 */
+        public int rows() {
+            int rows = 0;
+            for (final Cell cell : layout()) {
+                rows = Math.max(rows, cell.row() + 1);
+            }
+            return rows;
+        }
+
+        /**
+         * 每一排的天賦（網頁規劃器的 branches；2026-10-26 以前是一條一條的分支，現在是選單上的每一排，
+         * 分岔出去的那一排從分岔的地方開始，第一個天賦的 depth 說它在第幾層）。
+         */
+        public List<List<Node>> branches() {
+            final List<List<Node>> rows = new ArrayList<>();
+            for (final Cell cell : layout()) {
+                while (rows.size() <= cell.row()) {
+                    rows.add(new ArrayList<>());
+                }
+                rows.get(cell.row()).add(cell.node());
+            }
+            return rows;
         }
     }
 
@@ -200,6 +356,11 @@ public final class AscendancyConfig {
         }
     }
 
+    /**
+     * 昇華天賦的版本（2026-10-26，比照天賦樹的 version）：改了昇華天賦就加 1，角色記的版本（asc.version）不一樣時
+     * 已配的昇華天賦全部退回（昇華職業留著、點數拿回來）。沒寫 = 1。
+     */
+    private int version = 1;
     private Settings settings = new Settings(60, 8);
     private LevelRace levelRace = new LevelRace(false, 100, java.util.Map.of());
     private final Map<String, Trial> trials = new LinkedHashMap<>();
@@ -226,6 +387,7 @@ public final class AscendancyConfig {
 
     /** 換成另一份（模組先讀進新的一份、檢查過才換）。 */
     public void copyFrom(final AscendancyConfig other) {
+        version = other.version;
         settings = other.settings;
         levelRace = other.levelRace;
         trials.clear();
@@ -237,6 +399,7 @@ public final class AscendancyConfig {
     }
 
     private void parse(final YamlNode root) {
+        version = root.integer("version", 1);
         final YamlNode s = root.node("settings");
         settings = new Settings(s.integer("cooldown_seconds", 60), s.integer("weekly_opens", 8));
         final YamlNode race = root.node("level_race");
@@ -285,9 +448,32 @@ public final class AscendancyConfig {
                 final YamlNode n = nodesNode.node(nodeId);
                 checkId(nodeId, n.path());
                 final String nodeName = n.requireString("name").trim();
-                nodes.add(new Node(nodeId, nodeName, blankToNull(n.string("requires", null)), n.integer("cost", 1),
+                // 2026-10-26：requires 可以寫一個或一串；選項（option_of）接在它的「選一個」天賦上、不花點數
+                final String optionOf = blankToNull(n.string("option_of", null));
+                final List<String> requires = new ArrayList<>();
+                for (final String required : n.strings("requires")) {
+                    if (!required.isBlank() && !requires.contains(required.trim())) {
+                        requires.add(required.trim());
+                    }
+                }
+                if (optionOf != null && requires.isEmpty()) {
+                    requires.add(optionOf);
+                }
+                final List<String> lines = new ArrayList<>();
+                for (final String line : n.strings("lines")) {
+                    if (!line.isBlank()) {
+                        lines.add(line.trim());
+                    }
+                }
+                final List<String> unlock = new ArrayList<>(); // 2026-10-27：都配了才能配（聖潔一統）
+                for (final String required : n.strings("unlock")) {
+                    if (!required.isBlank() && !unlock.contains(required.trim())) {
+                        unlock.add(required.trim());
+                    }
+                }
+                nodes.add(new Node(nodeId, nodeName, requires, n.integer("cost", optionOf != null ? 0 : 1),
                         n.string("icon", "AMETHYST_SHARD").trim(), stats(n.list("stats"), "昇華「" + nodeName + "」"),
-                        blankToNull(n.string("note", null))));
+                        blankToNull(n.string("note", null)), lines, optionOf, n.bool("choice", false), n.bool("notable", false), unlock));
             }
             ascendancies.put(id, new Ascendancy(id, node.requireString("class").trim().toLowerCase(Locale.ROOT), name,
                     node.string("color", "#c77dff").trim(), node.string("icon", "NETHER_STAR").trim(), node.string("summary", "").trim(), nodes));
@@ -374,7 +560,7 @@ public final class AscendancyConfig {
         }
         final Map<String, Integer> perClass = new LinkedHashMap<>();
         for (final Ascendancy ascendancy : ascendancies.values()) {
-            checkAscendancy(problems, ascendancy, classIds);
+            checkAscendancy(problems, ascendancy, classIds, totalPoints());
             perClass.merge(ascendancy.classId(), 1, Integer::sum);
         }
         for (final Map.Entry<String, Integer> entry : perClass.entrySet()) {
@@ -451,7 +637,8 @@ public final class AscendancyConfig {
         }
     }
 
-    private static void checkAscendancy(final List<String> problems, final Ascendancy ascendancy, final Collection<String> classIds) {
+    private static void checkAscendancy(final List<String> problems, final Ascendancy ascendancy, final Collection<String> classIds,
+                                        final int points) {
         final String where = "ascendancies." + ascendancy.id();
         if (!classIds.contains(ascendancy.classId())) {
             problems.add(where + ".class：沒有職業 " + ascendancy.classId() + "（可以用 " + String.join("、", classIds) + "）");
@@ -466,52 +653,91 @@ public final class AscendancyConfig {
             problems.add(where + ".nodes：沒有任何昇華天賦");
             return;
         }
-        int length = -1;
+        if (ascendancy.nodes().size() > MAX_NODES) {
+            problems.add(where + ".nodes：最多 " + MAX_NODES + " 個天賦");
+        }
+        final List<Integer> idLengths = new ArrayList<>();
+        int choices = 0;
         for (final Node node : ascendancy.nodes()) {
             final String nodeWhere = where + ".nodes." + node.id();
-            length += node.id().length() + 1;
+            idLengths.add(node.id().length() + 1);
             if (node.name().isBlank()) {
                 problems.add(nodeWhere + "：沒有名字");
             }
-            if (node.cost() < 1) {
-                problems.add(nodeWhere + ".cost：至少 1 點");
+            if (node.option()) {
+                final Node choice = ascendancy.node(node.optionOf());
+                if (choice == null || !choice.choice()) {
+                    problems.add(nodeWhere + ".option_of：" + node.optionOf() + " 不是這個昇華職業「選一個」的天賦（要寫 choice: true）");
+                }
+                if (!node.requires().equals(List.of(node.optionOf()))) {
+                    problems.add(nodeWhere + ".requires：選項只能接在它的「選一個」天賦 " + node.optionOf() + " 上");
+                }
+                if (node.cost() != 0) {
+                    problems.add(nodeWhere + ".cost：選項不花點數（點數花在「選一個」的天賦上）");
+                }
+            } else if (node.cost() < 1 && (node.unlock().isEmpty() || node.cost() < 0)) {
+                problems.add(nodeWhere + ".cost：至少 1 點（寫了 unlock 的可以是 0）");
             }
-            if (node.requires() != null && (ascendancy.node(node.requires()) == null || node.requires().equals(node.id()))) {
-                problems.add(nodeWhere + ".requires：這個昇華職業沒有天賦 " + node.requires());
+            for (final String required : node.unlock()) {
+                if (ascendancy.node(required) == null || required.equals(node.id()) || ascendancy.node(required).option()) {
+                    problems.add(nodeWhere + ".unlock：這個昇華職業沒有（不是選項的）天賦 " + required);
+                }
             }
-            if (node.stats().isEmpty()) {
+            if (!node.unlock().isEmpty() && !node.root()) {
+                problems.add(nodeWhere + ".unlock：寫了 unlock 的天賦要直接接在起點（不寫 requires）");
+            }
+            if (node.choice()) {
+                choices++;
+                if (ascendancy.options(node.id()).size() < 2) {
+                    problems.add(nodeWhere + "：「選一個」的天賦至少要有兩個選項（option_of: " + node.id() + "）");
+                }
+            }
+            for (final String required : node.requires()) {
+                if (ascendancy.node(required) == null || required.equals(node.id())) {
+                    problems.add(nodeWhere + ".requires：這個昇華職業沒有天賦 " + required);
+                } else if (ascendancy.node(required).option()) {
+                    problems.add(nodeWhere + ".requires：不能接在選項 " + required + " 後面");
+                }
+            }
+            if (node.stats().isEmpty() && node.lines().isEmpty() && !node.choice()) {
                 problems.add(nodeWhere + ".stats：沒有任何加成");
             }
             checkStats(problems, nodeWhere, node.stats());
         }
+        // 存進角色進度的是配了的那幾個（最多 points 個花點數的＋每個「選一個」的一個選項）：最長的那幾個加起來要放得下
+        idLengths.sort(java.util.Comparator.reverseOrder());
+        int length = -1;
+        for (int i = 0; i < Math.min(idLengths.size(), Math.max(1, points) + choices); i++) {
+            length += idLengths.get(i);
+        }
         if (length > NODES_VALUE_MAX) {
-            problems.add(where + ".nodes：天賦代號加起來太長（" + length + " 字，最多 " + NODES_VALUE_MAX + "），代號短一點");
+            problems.add(where + ".nodes：天賦代號太長（配滿可能要 " + length + " 字，最多 " + NODES_VALUE_MAX + "），代號短一點");
         }
-        // 只能是一條一條的分支：每個天賦後面最多接一個、不能繞圈；分支數與長度要放得進選單
-        final Map<String, Integer> children = new LinkedHashMap<>();
+        // 每個天賦都要接得到起點（連線不分方向）、畫得進選單（requires 的第一個一路往回找不能繞圈、最多 MAX_DEPTH 層）
+        final Set<String> reached = new HashSet<>();
+        final java.util.ArrayDeque<Node> queue = new java.util.ArrayDeque<>(ascendancy.roots());
+        while (!queue.isEmpty()) {
+            final Node node = queue.poll();
+            if (reached.add(node.id())) {
+                queue.addAll(ascendancy.neighbours(node.id()));
+            }
+        }
+        if (ascendancy.roots().isEmpty()) {
+            problems.add(where + ".nodes：沒有直接接在起點的天賦（不寫 requires 的）");
+        }
+        final Map<String, Integer> depth = new LinkedHashMap<>();
+        for (final Cell cell : ascendancy.layout()) {
+            depth.put(cell.node().id(), cell.depth());
+            if (cell.depth() >= MAX_DEPTH) {
+                problems.add(where + ".nodes." + cell.node().id() + "：離起點太遠（最多 " + MAX_DEPTH + " 層，選單放不下）");
+            }
+        }
         for (final Node node : ascendancy.nodes()) {
-            if (node.requires() != null) {
-                children.merge(node.requires(), 1, Integer::sum);
+            if (!reached.contains(node.id())) {
+                problems.add(where + ".nodes." + node.id() + "：接不到起點");
+            } else if (!depth.containsKey(node.id())) {
+                problems.add(where + ".nodes." + node.id() + "：requires 的第一個繞成一圈了（畫不出來）");
             }
-        }
-        for (final Map.Entry<String, Integer> entry : children.entrySet()) {
-            if (entry.getValue() > 1) {
-                problems.add(where + ".nodes." + entry.getKey() + "：後面接了 " + entry.getValue() + " 個天賦（一條分支只能一個接一個）");
-            }
-        }
-        int placed = 0;
-        final List<List<Node>> branches = ascendancy.branches();
-        for (final List<Node> branch : branches) {
-            placed += branch.size();
-            if (branch.size() > MAX_DEPTH) {
-                problems.add(where + ".nodes." + branch.getFirst().id() + "：一條分支最多 " + MAX_DEPTH + " 個天賦");
-            }
-        }
-        if (branches.size() > MAX_BRANCHES) {
-            problems.add(where + ".nodes：最多 " + MAX_BRANCHES + " 條分支（沒有 requires 的天賦）");
-        }
-        if (placed != ascendancy.nodes().size()) {
-            problems.add(where + ".nodes：有天賦接不到任何一條分支（requires 繞成一圈了）");
         }
     }
 
@@ -528,6 +754,11 @@ public final class AscendancyConfig {
 
     public Settings settings() {
         return settings;
+    }
+
+    /** 昇華天賦的版本（2026-10-26）。 */
+    public int version() {
+        return version;
     }
 
     /** 全部試煉（照設定檔的順序）。 */

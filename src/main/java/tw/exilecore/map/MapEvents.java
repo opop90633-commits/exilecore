@@ -1161,12 +1161,8 @@ final class MapEvents implements Listener {
                 }
                 rolled.add(DropTable.Drop.equipment(plugin.items().generator().generate(base, Rarity.RARE, level, random)));
             }
-            // 流寇的招牌：星籤。2026-10-21：同一張圖每個人只有第一個流寇保證掉，之後的每個 EXILE_OMEN_LATER 機率
-            //（星圖的流寇天賦、單一信仰、石板疊起來一張圖會有 5、6 個流寇，籤會變成以前的 20 倍）
-            final int nth = exileKills.computeIfAbsent(found.instance.id(), id -> new java.util.HashMap<>())
-                    .merge(player.getUniqueId(), 1, Integer::sum);
-            final boolean omenRoll = nth <= 1 || random.nextDouble() < EXILE_OMEN_LATER;
-            final int omens = !omenRoll ? 0 : bonus.amount(config.minOmens() + (config.maxOmens() > config.minOmens() ? random.nextInt(config.maxOmens() - config.minOmens() + 1) : 0), random);
+            // 流寇的招牌：星籤。2026-10-27 照站長：每隻流寇都必掉星籤（這次之前同一張圖只有第一個保證、之後 20% 機率；計數一併拿掉）
+            final int omens = bonus.amount(config.minOmens() + (config.maxOmens() > config.minOmens() ? random.nextInt(config.maxOmens() - config.minOmens() + 1) : 0), random);
             for (int i = 0; i < omens; i++) {
                 final tw.exilecore.currency.CurrencyType omen = pickCurrency(tw.exilecore.currency.CurrencyOperation.OMEN, level, random);
                 if (omen != null) {
@@ -1938,16 +1934,11 @@ final class MapEvents implements Listener {
         blocks.values().removeIf(other -> other == event);
     }
 
-    /** 同一張圖第二個以後的流寇掉星籤的機率（2026-10-21）。 */
-    static final double EXILE_OMEN_LATER = 0.2;
-    /** 每張圖每個人殺了幾個流寇（實例 → 玩家 → 個數；實例關閉時清掉）。 */
-    private final Map<Integer, Map<java.util.UUID, Integer>> exileKills = new java.util.HashMap<>();
     /** 這張圖已經拿過入場券的人（實例 → 玩家；2026-10-21 每張圖每人最多 1 張）。 */
     private final Map<Integer, java.util.Set<java.util.UUID>> ticketTaken = new java.util.HashMap<>();
 
     /** 實例關閉：標籤、刷出來的怪都收掉（方塊由清格子的人清）。 */
     void clear(final MapInstance instance) {
-        exileKills.remove(instance.id());
         ticketTaken.remove(instance.id());
         rituals.clear(instance);
         delirium.clear(instance);
@@ -1961,7 +1952,6 @@ final class MapEvents implements Listener {
     }
 
     void clearAll() {
-        exileKills.clear();
         ticketTaken.clear();
         rituals.clearAll();
         delirium.clearAll();

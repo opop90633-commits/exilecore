@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 常駐的地面圈（2026-10，減少粒子）：光環、焚燒光環、怪物的光環詞綴、裂隙、祭壇這些「一直在的圈」，
+ * 常駐的地面圈（2026-10，減少粒子）：光環、怪物的光環詞綴、裂隙、祭壇這些「一直在的圈」，
  * 以前每半秒用幾十顆粒子畫一次（一顆一個封包、附近每個玩家各一份）。
  * <p>
  * 套了介面資源包的玩家：改成一片平貼在地上的圈（資源包的 exilecore:mark/ring，跟招式預警同一張圖），
@@ -121,7 +121,7 @@ public final class GroundDecals {
         show(decal);
     }
 
-    /** 跟著實體走的圈（怪物的光環詞綴、焚燒光環）：每 {@link #FOLLOW_STEP} tick 移到實體腳下（{@link #follow()}）。 */
+    /** 跟著實體走的圈（怪物的光環詞綴）：每 {@link #FOLLOW_STEP} tick 移到實體腳下（{@link #follow()}）。 */
     public void follow(final String id, final Entity owner, final double radius, final int rgb) {
         follow(id, owner, RING, radius * 2, rgb, 0, false);
     }
@@ -133,7 +133,7 @@ public final class GroundDecals {
     public void follow(final String id, final Entity owner, final String model, final double size, final int rgb, final double angle,
                        final boolean spin) {
         Decal decal = decals.get(id);
-        // 大小變了也重畫（2026-10：焚心業火掛上擴散之後，地上的圈還是原本的大小，傷害範圍其實已經變大了）
+        // 大小變了也重畫（2026-10：範圍變大之後，地上的圈還是原本的大小）
         if (decal != null && (decal.display == null || !decal.display.isValid() || decal.owner != owner
                 || !decal.display.getWorld().equals(owner.getWorld()) || Math.abs(decal.size - size) > 0.01)) {
             remove(id);

@@ -179,11 +179,7 @@ public abstract class Menu implements InventoryHolder {
         final ItemStack stack = ItemStack.of(material);
         stack.editMeta(meta -> {
             meta.displayName(ItemRenderer.line(name));
-            final List<Component> lines = new ArrayList<>();
-            for (final String line : lore) {
-                lines.add(ItemRenderer.line(line));
-            }
-            meta.lore(lines);
+            meta.lore(tw.exilecore.core.text.TextWrap.lines(lore)); // 2026-10-26：長的說明自動換行（天賦、昇華節點、地圖詞綴…）
             meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ADDITIONAL_TOOLTIP, ItemFlag.HIDE_ENCHANTS);
         });
         return stack;
@@ -197,9 +193,7 @@ public abstract class Menu implements InventoryHolder {
     public static ItemStack appendLore(final ItemStack stack, final List<String> lines) {
         stack.editMeta(meta -> {
             final List<Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
-            for (final String line : lines) {
-                lore.add(ItemRenderer.line(line));
-            }
+            lore.addAll(tw.exilecore.core.text.TextWrap.lines(lines)); // 2026-10-26：長行自動換行
             meta.lore(lore);
         });
         return stack;

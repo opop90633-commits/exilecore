@@ -149,7 +149,7 @@ public final class IceCrystals implements Listener {
                 d.setPersistent(false);
                 d.setGlowing(true);
             });
-            final Crystal crystal = new Crystal(at.clone().add(0, 0.5, 0), display, until, build.gemLevel(), hits, shards, verglas);
+            final Crystal crystal = new Crystal(at.clone().add(0, 0.5, 0), display, until, build.usableGemLevel(), hits, shards, verglas);
             mine.add(crystal);
             spots.add(at.clone());
             alive.add(display::isValid);
@@ -200,6 +200,26 @@ public final class IceCrystals implements Listener {
         for (final Crystal crystal : broken) {
             shatter(player, crystal);
         }
+    }
+
+    /** 2026-10-26（碎晶嘯，PoE2 Vruun's Aftermath）：戰吼讓範圍內你的冰晶全部炸掉；回傳炸掉幾顆。 */
+    int explodeAround(final Player owner, final Location center, final double radius) {
+        final List<Crystal> mine = crystals.get(owner.getUniqueId());
+        if (mine == null || mine.isEmpty()) {
+            return 0;
+        }
+        final List<Crystal> broken = new ArrayList<>();
+        for (final Iterator<Crystal> it = mine.iterator(); it.hasNext(); ) {
+            final Crystal crystal = it.next();
+            if (crystal.at.getWorld().equals(center.getWorld()) && crystal.at.distanceSquared(center) <= radius * radius) {
+                it.remove();
+                broken.add(crystal);
+            }
+        }
+        for (final Crystal crystal : broken) {
+            shatter(owner, crystal);
+        }
+        return broken.size();
     }
 
     private void shatter(final Player owner, final Crystal crystal) {

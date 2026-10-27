@@ -13,6 +13,11 @@
 # 存在角色進度裡：trial.試煉代號（完成時間）、asc（選的昇華職業）、asc.nodes（配的昇華天賦，照配的順序）、
 # asc.week（這週開了幾次試煉）。
 
+# 2026-10-26：昇華天賦的版本（比照天賦樹的 version）。改了昇華天賦就加 1：角色記的版本（asc.version）不一樣時，
+# 已配的昇華天賦全部退回（昇華職業不變、點數拿回來）並通知玩家。這次之前沒有版本（= 1）。
+# 2026-10-26：第 3 版（原本寫著（尚未生效）的機制都做出來了，有的多了壞處：鐵匠傑作只能穿普通胸甲、心宇和諧更少生命與魔力…；已配的全部退回重選）
+version: 3
+
 settings:
   cooldown_seconds: 60        # 開了一個試煉之後多久才能再開（每個人）
   weekly_opens: 0             # 2026-10-25 改不限次數。每個角色每週最多開幾次試煉（打倒前全倒了可以重開，算次數；每週一 0 點重置；0 = 不限）
@@ -54,6 +59,9 @@ level_race:
     lich: 巔峰骸主
     starseer: 巔峰觀星
     wildshaman: 巔峰獸巫
+    spiritwalker: 巔峰靈狩   # 2026-10-27 照 PoE2 0.5 補上的三個昇華
+    martialartist: 巔峰鳴鐘
+    abysslich: 巔峰淵骸
 
 # ---- 試煉 ----
 #   name        名稱
@@ -255,2354 +263,4037 @@ trials:
           stats:
             - { stat: damage, type: INCREASED, value: 40 }
 
-# ---- 昇華職業（2026-10 PoE2 改版）----
-# 照 PoE2 的昇華：每個昇華一棵小樹（四條分支、最多 16 個天賦），每個天賦都是 1 點，四個試煉一共 8 點：大約只能配一半，要選。名稱沿用原本的，效果照 PoE2
-# （每個昇華取 PoE2 那個昇華裡我們的系統做得出來的核心；要連段、榮耀、元素灌注、護符、寶石顏色、夥伴的先不做）。
-# 每條分支的第一個隨時能配，後面的要先配同一條前面那個（requires）。
-#   class    哪個職業的（marauder 戰士、mercenary 傭兵、huntress 女獵手、ranger 遊俠、monk 武僧、sorceress 女巫師、witch 女巫）
-#   nodes    代號 → { name, requires, cost（預設 1）, icon, stats, note }
-#            stats：{ stat, type: FLAT|INCREASED|MORE, value, tags }，INCREASED／MORE 的 value 是百分比；flag.* 這種寫死的效果說明在 stats/SignatureText。
-# 退掉昇華天賦要花金幣（跟天賦樹退點同一個價格 × 點數），要從分支的最後面退。
+# ---- 昇華職業（2026-10-26 照 PoE2 0.5 換成原作的昇華天賦）----
+# 2026-10-26 照 PoE2 0.5：每個昇華的天賦全部換成原作的（名稱照台服、相連、數值、說明行照原作）；這次之前是自己挑的 16 個、四條分支。
+# 昇華職業本身（class、name、color、icon）沿用原本的；改版時 version 加 1，已配的昇華天賦全部退回（昇華職業不變、點數拿回來）。
+# 樹會分岔（一個天賦後面可以接好幾個），跟 PoE2 一樣「跟已配的天賦相連」就能配（連線不分方向；Ritualist、Invoker 的環也是）。
+# 每個天賦 1 點，四個試煉一共 8 點：只能配一小部分，要選。
+#   class    哪個職業的（marauder 戰士、mercenary 傭兵、huntress 女獵手、ranger 遊俠、monk 武僧、sorceress 女巫師、witch 女巫、druid 德魯伊）
+#   nodes    代號 → { name, requires, cost（預設 1）, icon, notable, choice, option_of, lines, stats, note }
+#            requires：相連、比較靠近起點的天賦（一個或 [a, b]；不寫 = 直接接在起點；第一個是選單上畫在左邊的那個）
+#            choice: true = 「選一個」的天賦：配了之後從 option_of 寫它的選項挑一個（選項不花點數、同一組只能一個）
+#            unlock: [a, b] = 2026-10-27 照 PoE2（靈狩者「聖潔一統」）：這幾個都配了才能配；直接接在起點、可以寫 cost: 0、不當作連線的路
+#            lines：說明行（照原作；後面寫著（尚未生效）的是還沒做出來的機制，stats 裡沒有它）
+#            stats：{ stat, type: FLAT|INCREASED|MORE, value, tags }，INCREASED／MORE 的 value 是百分比；flag.* 這種寫死的效果說明在 stats/SignatureText，
+#                   asc.* 是這次新做的（ascendancy/AscendancyMechanics）。
+# 退掉昇華天賦要花金幣（跟天賦樹退點同一個價格 × 點數），退掉之後剩下的要都還接得到起點。
 ascendancies:
-  ironwarden:
+  ironwarden:                # 原作：Titan
     class: marauder
     name: 鐵衛
     color: "#d4a24c"
     icon: SHIELD
-    summary: 曜京十二道城門的守將：更多生命、胸甲護甲、荊棘、放大天賦小點、粉碎打擊。
+    summary: 曜京十二道城門的守將：胸甲的護甲更多、最大生命更多、放大天賦小點、粉碎打擊與重擊。
     nodes:
-      t_armour:
-        name: 鐵壁
-        cost: 1
+      armour:
+        name: 護甲          # Armour
         icon: IRON_CHESTPLATE
+        lines:
+          - 增加 20% 護甲
         stats:
           - { stat: armour, type: INCREASED, value: 20 }
-      t_stone_skin:
-        name: 岩膚
-        requires: t_armour
-        cost: 1
-        icon: STONE
+      stone_skin:
+        name: 頑石鋼膚          # Stone Skin
+        requires: armour
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 更多 50% 已裝備胸甲的護甲
         stats:
-          - { stat: flag.stone_skin, value: 1 }
-      t_str:
-        name: 巨力
-        cost: 1
+          - { stat: flag.stone_skin, type: FLAT, value: 1 }
+      slam_area_effect:
+        name: 重擊效果範圍          # Slam Area of Effect
+        icon: MACE
+        lines:
+          - 增加 8% 猛擊技能的範圍效果
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 8, tags: [slam] }
+      earthbreaker:
+        name: 天崩地裂          # Earthbreaker
+        requires: slam_area_effect
+        notable: true
+        icon: MACE
+        lines:
+          - 你親自使用的猛擊技能有 25% 機率額外造成 1 次餘震
+        stats:
+          - { stat: asc.slam_aftershock, type: FLAT, value: 25 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      slam_area_effect_2:
+        name: 重擊效果範圍          # Slam Area of Effect
+        requires: earthbreaker
+        icon: MACE
+        lines:
+          - 增加 8% 猛擊技能的範圍效果
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 8, tags: [slam] }
+      ancestral:
+        name: 先祖威能          # Ancestral Empowerment
+        requires: slam_area_effect_2
+        notable: true
+        icon: MACE
+        lines:
+          - 你親自使用的猛擊技能每第二次會獲得先祖強化
+        stats:
+          - { stat: flag.ancestral_every_other_slam, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果；跟天賦樹同一個，TreeMechanics）
+      strength:
+        name: 力量          # Strength
         icon: IRON_INGOT
+        lines:
+          - 增加 4% 力量
         stats:
           - { stat: attr.str, type: INCREASED, value: 4 }
-      t_lineage:
-        name: 星脈
-        requires: t_str
-        cost: 1
-        icon: RED_DYE
+      colossal_capacity:
+        name: 巨量承載          # Colossal Capacity
+        requires: strength
+        notable: true
+        icon: NETHER_STAR
+        # 2026-10-27 照 PoE2 Colossal Capacity（Carry a Chest which adds 20 Inventory slots）：原作背包 60 格多 20 格（+33%）；
+        #   我們的隨身背包以 45 格一頁為單位，背包 36 格＋隨身背包 2 頁 = 126 格，箱子給一頁 45 格（+36%），比例跟原作相當，照原作算。
+        #   這次之前 lines 寫「增加 20 格物品欄」、note 補充一頁 45 格（Bag.setBonusPages，AscendancyEffects）
+        lines:
+          - 攜帶一個箱子，隨身背包增加一頁（45 格）
         stats:
-          - { stat: life.max, type: MORE, value: 15 }
-      t_stun:
-        name: 震撼
-        cost: 1
+          - { stat: asc.chest_slots, type: FLAT, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）；有就給一頁
+      strength_2:
+        name: 力量          # Strength
+        requires: colossal_capacity
+        icon: IRON_INGOT
+        lines:
+          - 增加 4% 力量
+        stats:
+          - { stat: attr.str, type: INCREASED, value: 4 }
+      hulking_form:
+        name: 壓倒性的身姿          # Hulking Form
+        requires: strength_2
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 增加 50% 小型天賦效果
+        stats:
+          - { stat: flag.hulking_form, type: FLAT, value: 1 }
+      stun_buildup:
+        name: 暈眩累積          # Stun Buildup
         icon: ANVIL
+        lines:
+          - 增加 18% 暈眩累積
         stats:
           - { stat: stun.buildup, type: INCREASED, value: 18 }
-      t_crushing:
-        name: 裂勁
-        requires: t_stun
-        cost: 1
-        icon: NETHERITE_INGOT
+      crushing_impacts:
+        name: 輾壓痛擊          # Crushing Impacts
+        requires: stun_buildup
+        notable: true
+        icon: ANVIL
+        lines:
+          - 你的擊中為粉碎打擊
+          - 對被重度暈眩的敵人，更多 25% 傷害
         stats:
-          - { stat: flag.crush_primed, value: 1 }
-          - { stat: damage.vs_stunned, value: 25 }
-      t_str2:
-        name: 巨力 II
-        cost: 1
-        icon: IRON_INGOT
+          - { stat: flag.crush_primed, type: FLAT, value: 1 }
+          - { stat: damage.vs_stunned, type: FLAT, value: 25 }
+      stun_buildup_2:
+        name: 暈眩累積          # Stun Buildup
+        requires: crushing_impacts
+        icon: ANVIL
+        lines:
+          - 增加 18% 暈眩累積
         stats:
-          - { stat: attr.str, type: INCREASED, value: 4 }
-      t_hulking:
-        name: 巨像化
-        requires: t_str2
-        cost: 1
-        icon: GOLDEN_APPLE
-        stats:
-          - { stat: flag.hulking_form, value: 1 }
-      t_armour2:
-        name: 厚甲
-        requires: t_stone_skin
-        cost: 1
-        icon: IRON_BLOCK
-        stats:
-          - { stat: armour, type: INCREASED, value: 20 }
-      t_mountain:
-        name: 山岳之軀
-        requires: t_armour2
-        cost: 1
-        icon: DEEPSLATE
-        stats:
-          - { stat: stun.threshold, type: INCREASED, value: 30 }
-          - { stat: life.max, type: INCREASED, value: 5 }
-          - { stat: flag.thorns_any_hit, value: 1 }         # 2026-10-17：荊棘也會被遠程攻擊與法術觸發
-          - { stat: thorns.damage, type: INCREASED, value: 50 }
-      t_str3:
-        name: 巨力 III
-        requires: t_lineage
-        cost: 1
-        icon: IRON_INGOT
-        stats:
-          - { stat: attr.str, type: INCREASED, value: 4 }
-      t_laststand:
-        name: 背水一戰
-        requires: t_str3
-        cost: 1
-        icon: TOTEM_OF_UNDYING
-        stats:
-          - { stat: sig.last_stand, type: FLAT, value: 1 }
-      t_quake:
-        name: 撼地
-        requires: t_crushing
-        cost: 1
-        icon: COBBLESTONE
-        stats:
-          - { stat: skill.area, type: INCREASED, value: 15, tags: [slam] }
-      t_earthbreaker:
-        name: 崩地者
-        requires: t_quake
-        cost: 1
+          - { stat: stun.buildup, type: INCREASED, value: 18 }
+      mountain_splitter:
+        name: 劈山碎石          # Mountain Splitter
+        requires: stun_buildup_2
+        notable: true
         icon: MACE
+        lines:
+          - 你親自使用的不產生裂隙的猛擊技能，每第三次會在初始區域的前方與兩側各額外造成 3 次餘震
         stats:
-          - { stat: damage, type: MORE, value: 20, tags: [slam] }
-      t_regen:
-        name: 巨軀回春
-        requires: t_hulking
-        cost: 1
+          - { stat: asc.mountain_splitter, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      life_regeneration:
+        name: 生命回復          # Life Regeneration
         icon: RED_DYE
+        lines:
+          - 每秒再生 0.5% 最大生命
         stats:
-          - { stat: life.regen, type: INCREASED, value: 25 }
-      t_colossal:
-        name: 巨像之軀
-        requires: t_regen
-        cost: 1
-        icon: IRON_CHESTPLATE
+          - { stat: life.regen_percent, type: FLAT, value: 0.5 }
+      mysterious_lineage:
+        name: 神秘血脈          # Mysterious Lineage
+        requires: life_regeneration
+        notable: true
+        icon: RED_DYE
+        lines:
+          - 更多 15% 最大生命
         stats:
-          - { stat: life.max, type: INCREASED, value: 8 }
-          - { stat: armour, type: INCREASED, value: 20 }
+          - { stat: life.max, type: MORE, value: 15 }
 
-  berserker:
+  berserker:                # 原作：Warbringer
     class: marauder
     name: 狂嘯者
     color: "#ff5544"
     icon: NETHERITE_AXE
-    summary: 熔爐失控那一夜衝出火裡的禁衛：破甲、圖騰、戰吼、格擋。
+    summary: 熔爐失控那一夜衝出火裡的禁衛：破甲與完全破甲、圖騰、戰吼、盾牌格擋。
     nodes:
-      w_break:
-        name: 碎甲
-        cost: 1
-        icon: IRON_PICKAXE
+      armour_break:
+        name: 護甲破壞          # Armour Break
+        icon: IRON_CHESTPLATE
+        lines:
+          - 增加 25% 破甲
         stats:
           - { stat: armour.break, type: INCREASED, value: 25 }
-      w_anvil:
-        name: 鐵砧之重
-        requires: w_break
-        cost: 1
-        icon: ANVIL
+      anvils_weight:
+        name: 沉砧之勢          # Anvil's Weight
+        requires: armour_break
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 破甲量等同造成擊中傷害的 10%
         stats:
-          - { stat: armour.break, value: 10 }
-      w_imploding:
-        name: 碎甲之怒
-        requires: w_anvil
-        cost: 1
-        icon: TNT
+          - { stat: armour.break, type: FLAT, value: 10 }
+      armour_break_2:
+        name: 護甲破壞          # Armour Break
+        requires: anvils_weight
+        icon: IRON_CHESTPLATE
+        lines:
+          - 增加 25% 破甲
         stats:
-          - { stat: flag.imploding_impacts, value: 1 }
-      w_totem:
-        name: 圖騰之軀
-        cost: 1
-        icon: OAK_LOG
+          - { stat: armour.break, type: INCREASED, value: 25 }
+      imploding_impacts:
+        name: 碎猛之擊          # Imploding Impacts
+        requires: armour_break_2
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 你造成的完全破甲改為增加承受的所有擊中傷害
+          - 你可將敵人護甲破壞至低於 0
+        stats:
+          - { stat: flag.imploding_impacts, type: FLAT, value: 1 }
+          - { stat: asc.negative_armour, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      armour:
+        name: 護甲          # Armour
+        icon: IRON_CHESTPLATE
+        lines:
+          - 增加 20% 護甲
+        stats:
+          - { stat: armour, type: INCREASED, value: 20 }
+      jade_heritage:
+        name: 玉石之護          # Jade Heritage
+        requires: armour
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 每秒獲得 1 層玉石
+          - 提供技能：包覆於翠玉中
+        stats:
+          - { stat: asc.jade, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.encase_in_jade, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      totem_life:
+        name: 圖騰生命          # Totem Life
+        icon: TOTEM_OF_UNDYING
+        lines:
+          - 增加 20% 圖騰生命
         stats:
           - { stat: totem.life, type: INCREASED, value: 20 }
-      w_answered:
-        name: 英靈應召
-        requires: w_totem
-        cost: 1
-        icon: TOTEM_OF_UNDYING
-        stats:
-          - { stat: skill.totems, value: 1 }
-      w_block:
-        name: 盾衛
-        cost: 1
-        icon: SHIELD
-        stats:
-          - { stat: block.chance, type: INCREASED, value: 6 }
-      w_renly:
-        name: 盾術精修
-        requires: w_block
-        cost: 1
-        icon: SHIELD
-        stats:
-          - { stat: flag.renly_training, value: 1 }
-      w_turtle:
-        name: 玄甲符
-        requires: w_renly
-        cost: 1
-        icon: TURTLE_HELMET
-        stats:
-          - { stat: block.max, value: 25 }
-          - { stat: block.taken, value: 20 }
-      w_bellow:
-        name: 戰吼咆哮
-        cost: 1
-        icon: GOAT_HORN
-        stats:
-          - { stat: skill.cooldown, type: MORE, value: -50, tags: [warcry] }
-      w_shatter:
-        name: 斷骨
-        requires: w_imploding
-        cost: 1
-        icon: BONE
-        stats:
-          - { stat: damage, type: MORE, value: 15, tags: [physical] }
-      w_totem2:
-        name: 英靈之力
-        requires: w_answered
-        cost: 1
-        icon: TOTEM_OF_UNDYING
-        stats:
-          - { stat: damage, type: INCREASED, value: 30, tags: [totem] }
-      w_ancestral:
-        name: 祖靈列陣
-        requires: w_totem2
-        cost: 1
-        icon: OAK_LOG
+      answered_call:
+        name: 先祖之引          # Answered Call
+        requires: totem_life
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - +1 已召喚圖騰數量上限
+          - 召喚圖騰時觸發先祖之靈
+          - 提供技能：先祖之魂
         stats:
           - { stat: skill.totems, type: FLAT, value: 1 }
-      w_bulwark:
-        name: 鐵幕
-        requires: w_turtle
-        cost: 1
+          - { stat: asc.ancestral_spirits, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      totem_life_2:
+        name: 圖騰生命          # Totem Life
+        requires: answered_call
+        icon: TOTEM_OF_UNDYING
+        lines:
+          - 增加 20% 圖騰生命
+        stats:
+          - { stat: totem.life, type: INCREASED, value: 20 }
+      wooden_wall:
+        name: 堅木之壘          # Wooden Wall
+        requires: totem_life_2
+        notable: true
+        icon: TOTEM_OF_UNDYING
+        lines:
+          - 擊中的傷害有 20% 先從你最近的圖騰生命扣除
+        stats:   # 2026-10-26 照 PoE2 Wooden Wall；這次之前沒有生效
+          - { stat: totem.takes_damage, type: FLAT, value: 20 }
+      block_chance:
+        name: 格擋率          # Block Chance
         icon: SHIELD
+        lines:
+          - 增加 6% 格擋率
         stats:
-          - { stat: armour, type: INCREASED, value: 30 }
-      w_cry:
-        name: 戰吼回響
-        requires: w_bellow
-        cost: 1
+          - { stat: block.chance, type: INCREASED, value: 6 }
+      renlys_training:
+        name: 倫利之訓          # Renly's Training
+        requires: block_chance
+        notable: true
+        icon: SHIELD
+        lines:
+          - 改為從已裝備盾牌獲得 35% 基礎格擋率，而非盾牌本身的數值
+        stats:
+          - { stat: flag.renly_training, type: FLAT, value: 1 }
+      block_chance_2:
+        name: 格擋率          # Block Chance
+        requires: renlys_training
+        icon: SHIELD
+        lines:
+          - 增加 6% 格擋率
+        stats:
+          - { stat: block.chance, type: INCREASED, value: 6 }
+      turtle_charm:
+        name: 靈龜之符          # Turtle Charm
+        requires: block_chance_2
+        notable: true
+        icon: SHIELD
+        lines:
+          - 你承受被格擋擊中 20% 的傷害
+          - 最大格擋率為 75%
+        stats:
+          - { stat: block.taken, type: FLAT, value: 20 }
+          - { stat: block.max, type: FLAT, value: 25 }
+      warcry_speed:
+        name: 戰吼速度          # Warcry Speed
         icon: GOAT_HORN
+        lines:
+          - 增加 20% 戰吼速度
         stats:
-          - { stat: skill.area, type: INCREASED, value: 30, tags: [warcry] }
-          - { stat: skill.cooldown, type: INCREASED, value: -15, tags: [warcry] }
-      w_rage:
-        name: 血怒
-        requires: w_cry
-        cost: 1
-        icon: REDSTONE
+          - { stat: warcry.speed, type: INCREASED, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      warcallers_bellow:
+        name: 戰爭之哮          # Warcaller's Bellow
+        requires: warcry_speed
+        notable: true
+        icon: RED_DYE
+        lines:
+          - 戰吼引爆屍體，造成其生命 25% 的物理傷害
+          - 無視戰吼冷卻時間
         stats:
-          - { stat: sig.blood_rage, type: FLAT, value: 1 }
-      w_god:
-        name: 弒神
-        requires: w_rage
-        cost: 1
-        icon: NETHERITE_SWORD
-        stats:
-          - { stat: sig.godslayer, type: FLAT, value: 1 }
+          - { stat: skill.cooldown, type: MORE, value: -100, tags: [warcry] }   # 2026-10-26 照 PoE2：戰吼沒有冷卻（SkillBuild）；這次之前冷卻縮到最短（一成）
+          - { stat: asc.warcry_corpses, type: FLAT, value: 25 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
-  forgesmith:
+  forgesmith:                # 原作：Smith of Kitava
     class: marauder
     name: 鑄星匠
     color: "#ff7a3a"
     icon: ANVIL
-    summary: 熔爐旁長大的鐵匠：火焰抗性、護甲擋元素、鍛打之火。
+    summary: 熔爐旁長大的鐵匠：火焰抗性、鐵匠傑作（每個胸甲天賦 +200 護甲）、火焰與近戰傷害。
     nodes:
-      k_fire:
-        name: 耐火
-        cost: 1
-        icon: MAGMA_CREAM
-        stats:
-          - { stat: resist.fire, type: FLAT, value: 12 }
-      k_temper:
-        name: 淬火
-        requires: k_fire
-        cost: 1
-        icon: IRON_INGOT
-        stats:
-          - { stat: armour.elemental, type: FLAT, value: 15 }
-      k_maxfire:
-        name: 熔爐之膚
-        requires: k_temper
-        cost: 1
-        icon: MAGMA_BLOCK
-        stats:
-          - { stat: resist.max.fire, type: FLAT, value: 3 }
-      k_molten:
-        name: 熔火之軀
-        requires: k_maxfire
-        cost: 1
-        icon: LAVA_BUCKET
-        stats:
-          - { stat: avoid.ignite, type: FLAT, value: 100 }
-      k_armour:
-        name: 鍛甲
-        cost: 1
-        icon: IRON_CHESTPLATE
-        stats:
-          - { stat: armour, type: INCREASED, value: 25 }
-      k_master:
-        name: 傑作
-        requires: k_armour
-        cost: 1
-        icon: NETHERITE_INGOT
-        stats:
-          - { stat: physical.reduction, type: FLAT, value: 5 }
-      k_anvil:
-        name: 鐵砧
-        requires: k_master
-        cost: 1
-        icon: ANVIL
-        stats:
-          - { stat: stun.threshold, type: INCREASED, value: 30 }
-      k_heart:
-        name: 熔爐之心
-        requires: k_anvil
-        cost: 1
-        icon: BLAST_FURNACE
-        stats:
-          - { stat: life.max, type: MORE, value: 10 }
-      k_hammer:
-        name: 鍛錘
-        cost: 1
-        icon: MACE
-        stats:
-          - { stat: damage, type: INCREASED, value: 15, tags: [mace] }
-      k_flame:
-        name: 鍛打之火
-        requires: k_hammer
-        cost: 1
-        icon: FIRE_CHARGE
-        stats:
-          - { stat: damage.gain.fire, type: FLAT, value: 10 }
-      k_ignite:
-        name: 火花
-        requires: k_flame
-        cost: 1
+      fire_resistance:
+        name: 火焰抗性          # Fire Resistance
         icon: BLAZE_POWDER
+        lines:
+          - +8% 火焰抗性
         stats:
-          - { stat: ignite.chance, type: FLAT, value: 15 }
-      k_wildfire:
-        name: 燎原
-        requires: k_ignite
-        cost: 1
-        icon: CAMPFIRE
+          - { stat: resist.fire, type: FLAT, value: 8 }
+      coal_stoker:
+        name: 添煤工          # Coal Stoker
+        requires: fire_resistance
+        notable: true
+        icon: BLAZE_POWDER
+        lines:
+          - 火焰抗性詞綴也會提供其數值 50% 的冰冷與閃電抗性
         stats:
-          - { stat: sig.wildfire, type: FLAT, value: 1 }
-      k_regen:
-        name: 爐邊休息
-        cost: 1
-        icon: RED_DYE
+          - { stat: asc.coal_stoker, type: FLAT, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      fire_resistance_2:
+        name: 火焰抗性          # Fire Resistance
+        requires: coal_stoker
+        icon: BLAZE_POWDER
+        lines:
+          - +8% 火焰抗性
         stats:
-          - { stat: life.regen, type: INCREASED, value: 20 }
-      k_recoup:
-        name: 回火
-        requires: k_regen
-        cost: 1
-        icon: GLISTERING_MELON_SLICE
+          - { stat: resist.fire, type: FLAT, value: 8 }
+      forged_flame:
+        name: 烈焰鑄造          # Forged in Flame
+        requires: fire_resistance_2
+        notable: true
+        icon: BLAZE_POWDER
+        lines:
+          - 最大火焰抗性詞綴也會提供最大冰冷與閃電抗性
         stats:
-          - { stat: life.recoup, type: FLAT, value: 8 }
-      k_last:
-        name: 背水一戰
-        requires: k_recoup
-        cost: 1
-        icon: TOTEM_OF_UNDYING
+          - { stat: asc.forged_flame, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      melee_damage:
+        name: 近戰傷害          # Melee Damage
+        icon: IRON_SWORD
+        lines:
+          - 增加 20% 近戰傷害
         stats:
-          - { stat: sig.last_stand, type: FLAT, value: 1 }
-      k_sac:
-        name: 獻祭
-        requires: k_last
-        cost: 1
-        icon: NETHER_WART
+          - { stat: damage, type: INCREASED, value: 20, tags: [melee] }
+      against_anvil:
+        name: 千錘百鍊          # Against the Anvil
+        requires: melee_damage
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：鍛鍊武器
         stats:
-          - { stat: sig.sacrifice, type: FLAT, value: 1 }
+          - { stat: grant_skill.temper_weapon, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      strength:
+        name: 力量          # Strength
+        icon: IRON_INGOT
+        lines:
+          - 增加 5% 力量
+        stats:
+          - { stat: attr.str, type: INCREASED, value: 5 }
+      living_weapon:
+        name: 活體武器          # Living Weapon
+        requires: strength
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：幻化武器
+        stats:
+          - { stat: grant_skill.manifest_weapon, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      smiths_masterwork:
+        name: 鐵匠傑作          # Smith's Masterwork
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 只能使用普通胸甲
+          - +200 護甲（每個已配置的相連核心天賦）
+        stats:
+          - { stat: asc.normal_chest, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        note: 每個相連的核心天賦都 +200 護甲；胸甲類的效果不看穿什麼胸甲   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：每個相連的核心天賦都 +200 護甲；胸甲類的效果不看穿什麼胸甲」
+      kitavan_imprint:
+        name: 奇塔弗銘刻          # Kitavan Imprint
+        requires: smiths_masterwork
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 胸甲提供：增加 60% 榮耀產生
+        stats:
+          - { stat: armour, type: FLAT, value: 200 }
+          - { stat: glory.gain, type: INCREASED, value: 60 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+      spiked_plates:
+        name: 尖刺鎧甲          # Spiked Plates
+        requires: smiths_masterwork
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 胸甲提供：增加 100% 荊棘傷害
+        stats:
+          - { stat: armour, type: FLAT, value: 200 }
+          - { stat: thorns.damage, type: INCREASED, value: 100 }
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+      dedication_kitava:
+        name: 奇塔弗奉獻          # Dedication to Kitava
+        requires: smiths_masterwork
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 胸甲提供：+100% 的護甲也套用於混沌傷害
+        stats:
+          - { stat: armour, type: FLAT, value: 200 }
+          - { stat: asc.chaos_armour, type: FLAT, value: 100 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+      tantalum_alloy:
+        name: 鉭合金          # Tantalum Alloy
+        requires: smiths_masterwork
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 胸甲提供：+75% 火焰抗性
+        stats:
+          - { stat: armour, type: FLAT, value: 200 }
+          - { stat: resist.fire, type: FLAT, value: 75 }
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+      kitavan_engraving:
+        name: 奇塔弗雕紋          # Kitavan Engraving
+        requires: smiths_masterwork
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 胸甲提供：增加 15% 最大生命
+        stats:
+          - { stat: armour, type: FLAT, value: 200 }
+          - { stat: life.max, type: INCREASED, value: 15 }
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+      support_straps:
+        name: 支撐綁帶          # Support Straps
+        requires: smiths_masterwork
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 胸甲提供：增加 20% 力量
+        stats:
+          - { stat: armour, type: FLAT, value: 200 }
+          - { stat: attr.str, type: INCREASED, value: 20 }
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+      internal_layer:
+        name: 內裡          # Internal Layer
+        requires: smiths_masterwork
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 胸甲提供：對你的擊中減少 100% 暴擊傷害加成
+        stats:
+          - { stat: armour, type: FLAT, value: 200 }
+          - { stat: crit.bonus_taken, type: INCREASED, value: -100 }
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+      heatproofing:
+        name: 火焰隔絕          # Heatproofing
+        requires: smiths_masterwork
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 胸甲提供：不受傷害型異常狀態影響
+        stats:
+          - { stat: armour, type: FLAT, value: 200 }
+          - { stat: flag.immune.ignite, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: flag.immune.bleed, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: flag.immune.poison, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+      flowing_metal:
+        name: 流體金屬          # Flowing Metal
+        requires: smiths_masterwork
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 胸甲提供：+50% 的護甲也套用於元素傷害
+        stats:
+          - { stat: armour, type: FLAT, value: 200 }
+          - { stat: armour.elemental, type: FLAT, value: 50 }
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+      tribute_utula:
+        name: 烏圖拉的貢禮          # Tribute to Utula
+        requires: smiths_masterwork
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 胸甲提供：增加 30% 精魂
+        stats:
+          - { stat: armour, type: FLAT, value: 200 }
+          - { stat: spirit.max, type: INCREASED, value: 30 }
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+      molten_symbol:
+        name: 熔化標誌          # Molten Symbol
+        requires: smiths_masterwork
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 胸甲提供：擊中的物理傷害有 25% 視為火焰傷害
+        stats:
+          - { stat: armour, type: FLAT, value: 200 }
+          - { stat: taken.physical_as_fire, type: FLAT, value: 25 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+      leather_bindings:
+        name: 皮帶          # Leather Bindings
+        requires: smiths_masterwork
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 胸甲提供：每秒再生 3% 最大生命
+        stats:
+          - { stat: armour, type: FLAT, value: 200 }
+          - { stat: life.regen_percent, type: FLAT, value: 3 }
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+      fire_damage:
+        name: 火焰傷害          # Fire Damage
+        icon: BLAZE_POWDER
+        lines:
+          - 增加 20% 火焰傷害
+        stats:
+          - { stat: damage, type: INCREASED, value: 20, tags: [fire] }
+      heat_forge:
+        name: 熔爐熱力          # Heat of the Forge
+        requires: fire_damage
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：擊中時火焰法術
+        stats:
+          - { stat: grant_skill.fire_spell_on_hit, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
-  witchhunter:
+  witchhunter:                # 原作：Witchhunter
     class: mercenary
     name: 斷咒獵人
     color: "#c0c0c0"
     icon: CROSSBOW
-    summary: 專殺施法者的獵人：撲殺、爆屍、打殘血。
+    summary: 專殺施法者的獵人：撲殺、對低血敵人加傷、擊殺爆炸、冷卻與範圍。
     nodes:
-      h_area:
-        name: 審判之域
-        cost: 1
-        icon: TARGET
-        stats:
-          - { stat: skill.area, type: INCREASED, value: 8 }
-      h_pitiless:
-        name: 冷刃
-        requires: h_area
-        cost: 1
-        icon: IRON_SWORD
-        stats:
-          - { stat: flag.culling, value: 1 }
-      h_cdr:
-        name: 迅速審判
-        cost: 1
+      cooldown_recovery:
+        name: 冷卻時間恢復率          # Cooldown Recovery Rate
         icon: CLOCK
+        lines:
+          - 增加 6% 冷卻回復速度
         stats:
           - { stat: skill.cooldown, type: INCREASED, value: -6 }
-      h_zealous:
-        name: 焚罪
-        requires: h_cdr
-        cost: 1
-        icon: TNT
+      witchbane:
+        name: 女巫殺手          # Witchbane
+        requires: cooldown_recovery
+        notable: true
+        icon: RED_DYE
+        lines:
+          - 敵人的最大專注等同其最大生命的 30%
+          - 擊中時破壞敵人專注，數值等同造成傷害的 100%
+          - 敵人每秒恢復 10% 專注，若其在過去 5 秒內未失去專注
         stats:
-          - { stat: kill.explode_chance, value: 10 }
-      h_low:
-        name: 補刀
-        cost: 1
-        icon: IRON_AXE
-        stats:
-          - { stat: damage.vs_low_life, value: 35 }
-      h_low2:
-        name: 斬首
-        requires: h_low
-        cost: 1
-        icon: WITHER_SKELETON_SKULL
-        stats:
-          - { stat: damage.vs_low_life, value: 35 }
-      h_def:
-        name: 皮甲獵裝
-        cost: 1
-        icon: LEATHER_CHESTPLATE
-        stats:
-          - { stat: armour, type: INCREASED, value: 15 }
-          - { stat: evasion, type: INCREASED, value: 15 }
-      h_def2:
-        name: 獵人之甲
-        requires: h_def
-        cost: 1
-        icon: CHAINMAIL_CHESTPLATE
-        stats:
-          - { stat: armour, type: INCREASED, value: 15 }
-          - { stat: evasion, type: INCREASED, value: 15 }
-      h_area2:
-        name: 審判擴張
-        requires: h_pitiless
-        cost: 1
-        icon: SPYGLASS
-        stats:
-          - { stat: skill.area, type: INCREASED, value: 12 }
-      h_god:
-        name: 弒神
-        requires: h_area2
-        cost: 1
-        icon: NETHERITE_SWORD
-        stats:
-          - { stat: sig.godslayer, type: FLAT, value: 1 }
-      h_cdr2:
-        name: 迅速審判 II
-        requires: h_zealous
-        cost: 1
+          - { stat: asc.witchbane, type: FLAT, value: 30 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      cooldown_recovery_2:
+        name: 冷卻時間恢復率          # Cooldown Recovery Rate
+        requires: witchbane
         icon: CLOCK
+        lines:
+          - 增加 6% 冷卻回復速度
         stats:
-          - { stat: skill.cooldown, type: INCREASED, value: -8 }
-      h_pyre:
-        name: 淨化之火
-        requires: h_cdr2
-        cost: 1
-        icon: BLAZE_POWDER
+          - { stat: skill.cooldown, type: INCREASED, value: -6 }
+      no_mercy:
+        name: 毫不留情          # No Mercy
+        requires: cooldown_recovery_2
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 依敵人損失的專注，對其造成最多更多 40% 的傷害
         stats:
-          - { stat: kill.explode, type: FLAT, value: 5 }
-      h_crit:
-        name: 要害
-        requires: h_low2
-        cost: 1
-        icon: ARROW
+          - { stat: asc.no_mercy, type: FLAT, value: 40 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      armour_evasion:
+        name: 護甲和閃避          # Armour and Evasion
+        icon: FEATHER
+        lines:
+          - 增加 15% 護甲與閃避值
         stats:
-          - { stat: crit.chance, type: INCREASED, value: 25 }
-      h_verdict:
-        name: 斷罪
-        requires: h_crit
-        cost: 1
-        icon: IRON_SWORD
+          - { stat: armour, type: INCREASED, value: 15 }
+          - { stat: evasion, type: INCREASED, value: 15 }
+      obsessive_rituals:
+        name: 執著祭儀          # Obsessive Rituals
+        requires: armour_evasion
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 更少 50% 護甲與閃避值
+          - 提供技能：巫術護盾
         stats:
-          - { stat: sig.verdict, type: FLAT, value: 1 }
-      h_res:
-        name: 抗魔
-        requires: h_def2
-        cost: 1
-        icon: LAPIS_LAZULI
+          - { stat: armour, type: MORE, value: -50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: evasion, type: MORE, value: -50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.sorcery_ward, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      armour_evasion_2:
+        name: 護甲和閃避          # Armour and Evasion
+        requires: obsessive_rituals
+        icon: FEATHER
+        lines:
+          - 增加 15% 護甲與閃避值
         stats:
-          - { stat: resist.fire, type: FLAT, value: 8 }
-          - { stat: resist.cold, type: FLAT, value: 8 }
-          - { stat: resist.lightning, type: FLAT, value: 8 }
-      h_ward:
-        name: 純化之身
-        requires: h_res
-        cost: 1
-        icon: GLASS_BOTTLE
+          - { stat: armour, type: INCREASED, value: 15 }
+          - { stat: evasion, type: INCREASED, value: 15 }
+      ceremonial_ablution:
+        name: 儀式淨身          # Ceremonial Ablution
+        requires: armour_evasion_2
+        notable: true
+        icon: WITHER_ROSE
+        lines:
+          - 巫術護盾的屏障也可承受擊中的物理與混沌傷害
         stats:
-          - { stat: ailment.self_duration, type: INCREASED, value: -40 }
+          - { stat: asc.ward_all, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      area_effect:
+        name: 影響範圍          # Area of Effect
+        icon: FIREWORK_STAR
+        lines:
+          - 增加 8% 範圍效果
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 8 }
+      zealous_inquisition:
+        name: 狂熱裁決          # Zealous Inquisition
+        requires: area_effect
+        notable: true
+        icon: RED_DYE
+        lines:
+          - 你擊殺的敵人有 10% 機率爆炸，造成等同其最大生命 100% 的物理傷害
+          - 對不死生物和惡魔的機率加倍
+        stats:
+          - { stat: kill.explode_chance, type: FLAT, value: 10 }
+      cooldown_recovery_3:
+        name: 冷卻時間恢復率          # Cooldown Recovery Rate
+        icon: CLOCK
+        lines:
+          - 增加 6% 冷卻回復速度
+        stats:
+          - { stat: skill.cooldown, type: INCREASED, value: -6 }
+      weapon_master:
+        name: 武器大師          # Weapon Master
+        requires: cooldown_recovery_3
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - +10 天賦點數   # 2026-10-26 照站長：原作「100 天賦點數轉為武器組天賦點數」，我們沒有武器組，改成平衡等效的額外天賦點
+        stats:
+          - { stat: passive.points_extra, type: FLAT, value: 10 }
+      damage_low_life:
+        name: 對貧血狀態的敵人造成的傷害          # Damage vs Low Life Enemies
+        icon: RED_DYE
+        lines:
+          - 增加 35% 對低血敵人的擊中傷害
+        stats:
+          - { stat: damage.vs_low_life, type: FLAT, value: 35 }
+      pitiless_killer:
+        name: 冷酷殺手          # Pitiless Killer
+        requires: damage_low_life
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 撲殺
+        stats:
+          - { stat: flag.culling, type: FLAT, value: 1 }
+      damage_low_life_2:
+        name: 對貧血狀態的敵人造成的傷害          # Damage vs Low Life Enemies
+        requires: pitiless_killer
+        icon: RED_DYE
+        lines:
+          - 增加 35% 對低血敵人的擊中傷害
+        stats:
+          - { stat: damage.vs_low_life, type: FLAT, value: 35 }
+      judge_jury:
+        name: 法官、陪審團和劊子手          # Judge, Jury, and Executioner
+        requires: damage_low_life_2
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 毀滅打擊
+        stats:
+          - { stat: asc.decimating, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        # 2026-10-27 照站長：關鍵字說明改由 KeywordText 自動帶出（只顯示一次）；這次之前 note: 毀滅打擊：擊中滿血的敵人時，先扣掉牠 5～30% 的生命再算這一下的傷害（Boss 不算）
 
-  legionnaire:
+  legionnaire:                # 原作：Tactician
     class: mercenary
     name: 星紋弩衛
     color: "#7fb3ff"
     icon: CROSSBOW
-    summary: 帶兵的弩衛：圖騰、精魂效率、護甲換閃避。
+    summary: 帶兵的弩衛：圖騰更多技能速度、護甲加倍但上限 50%、常駐增益少保留、存在範圍。
     nodes:
-      c_totem:
-        name: 砲台
-        cost: 1
-        icon: DISPENSER
-        stats:
-          - { stat: damage, type: INCREASED, value: 20, tags: [totem] }
-      c_cannons:
-        name: 列陣齊發
-        requires: c_totem
-        cost: 1
-        icon: DISPENSER
-        stats:
-          - { stat: skill.totems, value: 1 }
-          - { stat: attack.speed, type: MORE, value: 30, tags: [totem] }
-          - { stat: cast.speed, type: MORE, value: 30, tags: [totem] }
-      c_spirit:
-        name: 調度
-        cost: 1
-        icon: AMETHYST_SHARD
-        stats:
-          - { stat: spirit.max, type: FLAT, value: 15 }   # 2026-10：增加 8% → +15（全域 % 精魂太多）
-      c_plan:
-        name: 運籌
-        requires: c_spirit
-        cost: 1
-        icon: MAP
-        stats:
-          - { stat: aura.reservation, type: INCREASED, value: -30 }   # 2026-10：100% → 30%（100% 等於所有精魂技能保留減半，太強）
-      c_def:
-        name: 掩體
-        cost: 1
-        icon: IRON_CHESTPLATE
+      armour_evasion:
+        name: 護甲和閃避          # Armour and Evasion
+        icon: FEATHER
+        lines:
+          - 增加 15% 護甲與閃避值
         stats:
           - { stat: armour, type: INCREASED, value: 15 }
           - { stat: evasion, type: INCREASED, value: 15 }
-      c_cover:
-        name: 輕甲疾行
-        requires: c_def
-        cost: 1
-        icon: OAK_FENCE
+      polish_that_gear:
+        name: 為齒輪拋光          # Polish That Gear
+        requires: armour_evasion
+        notable: true
+        icon: FEATHER
+        lines:
+          - 獲得等同 20% 護甲的偏斜值
+          - 獲得 100% 閃避值作為額外異常狀態門檻
+        stats:
+          - { stat: asc.deflect_from_armour, type: FLAT, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.threshold_from_evasion, type: FLAT, value: 100 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      armour_evasion_2:
+        name: 護甲和閃避          # Armour and Evasion
+        requires: polish_that_gear
+        icon: FEATHER
+        lines:
+          - 增加 15% 護甲與閃避值
+        stats:
+          - { stat: armour, type: INCREASED, value: 15 }
+          - { stat: evasion, type: INCREASED, value: 15 }
+      stay_light_use_cover:
+        name: 保持警覺，善用掩護          # Stay Light, Use Cover
+        requires: armour_evasion_2
+        notable: true
+        icon: IRON_CHESTPLATE
+        lines:
+          - 以 200% 護甲進行防禦
+          - 敵人依距離對你有命中值懲罰
+          - 最大閃避機率為 50%
+          - 最大物理傷害減免為 50%
         stats:
           - { stat: armour, type: MORE, value: 100 }
-          - { stat: flag.stay_light, value: 1 }
-      c_minion:
-        name: 指揮
-        cost: 1
-        icon: GOLDEN_HELMET
+          - { stat: flag.stay_light, type: FLAT, value: 1 }
+          - { stat: asc.enemy_accuracy_falloff, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      minion_damage:
+        name: 召喚物傷害          # Minion Damage
+        icon: BONE
+        lines:
+          - 增加 20% 召喚物的傷害
         stats:
           - { stat: damage, type: INCREASED, value: 20, tags: [minion] }
-      c_minion2:
-        name: 部隊
-        requires: c_minion
-        cost: 1
-        icon: GOLDEN_HELMET
+      unleash_hell:
+        name: 火力全開！          # Unleash Hell!
+        requires: minion_damage
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：支援火力
         stats:
-          - { stat: damage, type: INCREASED, value: 20, tags: [minion] }
-      c_totem2:
-        name: 堅固砲台
-        requires: c_cannons
-        cost: 1
-        icon: OAK_LOG
+          - { stat: grant_skill.supporting_fire, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        # 2026-10-27 照 PoE2：砲手是有實體、不會受傷、只聽指令的召喚物（MinionService 的從天而降）；拿掉 note（這次之前「砲手不是召喚物，支援火力是一個 4 秒冷卻的箭雨」）
+      totem_damage:
+        name: 圖騰傷害          # Totem Damage
+        icon: TOTEM_OF_UNDYING
+        lines:
+          - 增加 20% 圖騰傷害
         stats:
-          - { stat: totem.life, type: INCREASED, value: 30 }
-      c_barrage:
-        name: 齊射
-        requires: c_totem2
-        cost: 1
-        icon: CROSSBOW
+          - { stat: damage, type: INCREASED, value: 20, tags: [totem] }
+      cannons_ready:
+        name: 砲彈準備好了！          # Cannons, Ready!
+        requires: totem_damage
+        notable: true
+        icon: TOTEM_OF_UNDYING
+        lines:
+          - 圖騰使用的技能，更多 30% 技能速度
+          - +1 已召喚圖騰數量上限
+          - 圖騰只在你發射攻擊投射物時使用技能
         stats:
-          - { stat: attack.speed, type: INCREASED, value: 10, tags: [totem] }
-      c_spirit2:
-        name: 調度 II
-        requires: c_plan
-        cost: 1
-        icon: AMETHYST_SHARD
+          # 2026-10-26 照 PoE2 Cannons, Ready!：補上代價（圖騰只在你發射攻擊投射物時用技能）；這次之前只有更多技能速度與 +1 上限
+          - { stat: attack.speed, type: MORE, value: 30, tags: [totem] }
+          - { stat: cast.speed, type: MORE, value: 30, tags: [totem] }
+          - { stat: skill.totems, type: FLAT, value: 1 }
+          - { stat: asc.cannons_ready, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      totem_damage_2:
+        name: 圖騰傷害          # Totem Damage
+        requires: cannons_ready
+        icon: TOTEM_OF_UNDYING
+        lines:
+          - 增加 20% 圖騰傷害
         stats:
-          - { stat: spirit.max, type: FLAT, value: 15 }   # 2026-10：增加 8% → +15（全域 % 精魂太多）
-      c_legion:
-        name: 軍陣
-        requires: c_spirit2
-        cost: 1
+          - { stat: damage, type: INCREASED, value: 20, tags: [totem] }
+      strategic:
+        name: 戰術陣地          # Strategic Embankments
+        requires: totem_damage_2
+        notable: true
+        icon: TOTEM_OF_UNDYING
+        lines:
+          - 你放置的圖騰提供堤防光環
+        stats:
+          - { stat: asc.embankment, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      spirit:
+        name: 精魂          # Spirit
+        icon: SOUL_LANTERN
+        lines:
+          - 增加 8% 精魂
+        stats:
+          - { stat: spirit.max, type: INCREASED, value: 8 }
+      solid_plan:
+        name: 可靠的計畫          # A Solid Plan
+        requires: spirit
+        notable: true
+        icon: BREWING_STAND
+        lines:
+          - 更少 50% 持續增益的保留
+        stats:
+          - { stat: aura.reservation, type: INCREASED, value: -100, tags: [persistent] }
+      presence_area:
+        name: 存在範圍          # Presence Area
+        requires: solid_plan
+        icon: FIREWORK_STAR
+        lines:
+          - 增加 20% 存在範圍
+        stats:
+          - { stat: presence.area, type: INCREASED, value: 20 }
+      watch_how_do_it:
+        name: 看看我怎麼辦事的          # Watch How I Do It
+        requires: presence_area
+        notable: true
+        icon: BEACON
+        lines:
+          - 你存在範圍內的友軍獲得附加攻擊傷害，等同你主手武器傷害的 25%
+        stats:
+          - { stat: asc.ally_weapon_damage, type: FLAT, value: 25 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      banner_area:
+        name: 鬥旗範圍          # Banner Area
+        requires: solid_plan
         icon: WHITE_BANNER
+        lines:
+          - 增加 16% 鬥旗技能的範圍效果
         stats:
-          - { stat: sig.legion, type: FLAT, value: 1 }
-      c_def2:
-        name: 伏擊
-        requires: c_cover
-        cost: 1
-        icon: LEATHER_BOOTS
+          - { stat: skill.area, type: INCREASED, value: 16, tags: [banner] }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      whoever_pays_best:
+        name: 待價而沽          # Whoever Pays Best
+        requires: banner_area
+        notable: true
+        icon: WHITE_BANNER
+        lines:
+          - 鬥旗每秒獲得 5 榮耀
+          - 你可放置的鬥旗數量沒有上限
         stats:
-          - { stat: evasion, type: INCREASED, value: 20 }
-      c_voidstep:
-        name: 伺機
-        requires: c_def2
-        cost: 1
-        icon: ENDER_PEARL
+          - { stat: asc.banner_glory, type: FLAT, value: 5 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        note: 鬥旗是增益（不是插在地上的旗），本來就沒有數量上限   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器的鬥旗是增益（不是插在地上的旗），本來就沒有數量上限」
+      pin_buildup:
+        name: 釘身累積          # Pin Buildup
+        icon: TRIPWIRE_HOOK
+        lines:
+          - 增加 20% 釘身累積
         stats:
-          - { stat: sig.void_step, type: FLAT, value: 1 }
-      c_minion3:
-        name: 部隊 II
-        requires: c_minion2
-        cost: 1
-        icon: IRON_HORSE_ARMOR
+          - { stat: pin.buildup, type: INCREASED, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      suppressing_fire:
+        name: 火力抑制          # Suppressing Fire
+        requires: pin_buildup
+        notable: true
+        icon: BLAZE_POWDER
+        lines:
+          - 更多 40% 禁錮累積
+        stats:   # 2026-10-26 照 PoE2：禁錮＝凍結與釘身（跟天賦樹的禁錮累積一樣）；這次之前只算凍結累積
+          - { stat: freeze.buildup, type: MORE, value: 40 }
+          - { stat: pin.buildup, type: MORE, value: 40 }
+      pin_buildup_2:
+        name: 釘身累積          # Pin Buildup
+        requires: suppressing_fire
+        icon: TRIPWIRE_HOOK
+        lines:
+          - 增加 20% 釘身累積
         stats:
-          - { stat: attack.speed, type: INCREASED, value: 10, tags: [minion] }
-      c_command:
-        name: 號令
-        requires: c_minion3
-        cost: 1
-        icon: GOAT_HORN
+          - { stat: pin.buildup, type: INCREASED, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      right_where_we_want:
+        name: 位置正好          # Right Where We Want Them
+        requires: pin_buildup_2
+        notable: true
+        icon: ARROW
+        lines:
+          - 投射物傷害會累積釘身
+          - 被釘身的敵人無法進行動作
         stats:
-          - { stat: damage, type: MORE, value: 15, tags: [minion] }
+          - { stat: asc.projectile_pin, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.pin_stops, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
-  gemling:
+  gemling:                # 原作：Gemling Legionnaire
     class: mercenary
     name: 嵌晶戰團
     color: "#7fe0c8"
     icon: EMERALD
-    summary: 把星晶嵌進身體的士兵：屬性、技能等級、更省的技能。
+    summary: 把星晶嵌進身體的士兵：屬性、技能寶石品質與等級、屬性需求（寶石的機制多半還沒做出來）。
     nodes:
-      g_attr:
-        name: 嵌晶
-        cost: 1
+      reduced_attribute:
+        name: 減少能力值需求          # Reduced Attribute Requirements
+        icon: GOLD_INGOT
+        lines:
+          - 減少 4% 裝備與技能寶石的屬性需求
+        stats:   # 2026-10-26 照 PoE2：裝備與技能寶石的屬性需求都乘（GemAttributes）；這次之前尚未生效
+          - { stat: item.attr_requirement, type: INCREASED, value: -4 }
+      gem_studded:
+        name: 鑲嵌的寶石          # Gem Studded
+        requires: reduced_attribute
+        notable: true
+        icon: AMETHYST_SHARD
+        lines:
+          - 依你鑲嵌數量最多的輔助寶石顏色，獲得：
+          - •紅色：對你的擊中沒有暴擊傷害加成
+          - •藍色：技能消耗更少 30%
+          - •綠色：移動中使用技能的移動速度懲罰更少 40%
+        stats:
+          - { stat: asc.gem_studded, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果；綠色之前平衡等效成增加 10% 移動速度，現在照原作：SkillMovePenalty）
+      reduced_attribute_2:
+        name: 減少能力值需求          # Reduced Attribute Requirements
+        requires: gem_studded
+        icon: GOLD_INGOT
+        lines:
+          - 減少 4% 裝備與技能寶石的屬性需求
+        stats:   # 2026-10-26 照 PoE2：裝備與技能寶石的屬性需求都乘（GemAttributes）；這次之前尚未生效
+          - { stat: item.attr_requirement, type: INCREASED, value: -4 }
+      integrated:
+        name: 整合效率          # Integrated Efficiency
+        requires: reduced_attribute_2
+        notable: true
+        icon: AMETHYST_SHARD
+        lines:
+          - 增加 20% 技能暴擊率（每個相連的藍色輔助寶石）
+          - 增加 20% 技能傷害（每個相連的紅色輔助寶石）
+          - 增加 6% 技能速度（每個相連的綠色輔助寶石）
+        stats:
+          - { stat: asc.integrated, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      reduced_attribute_3:
+        name: 減少能力值需求          # Reduced Attribute Requirements
+        requires: gem_studded
+        icon: GOLD_INGOT
+        lines:
+          - 減少 4% 裝備與技能寶石的屬性需求
+        stats:   # 2026-10-26 照 PoE2：裝備與技能寶石的屬性需求都乘（GemAttributes）；這次之前尚未生效
+          - { stat: item.attr_requirement, type: INCREASED, value: -4 }
+      thaumaturgical:
+        name: 奇術注入          # Thaumaturgical Infusion
+        requires: reduced_attribute_3
+        notable: true
+        icon: BLAZE_POWDER
+        lines:
+          - +1% 最大冰冷抗性（每鑲嵌 3 個藍色輔助寶石）
+          - +1% 最大火焰抗性（每鑲嵌 3 個紅色輔助寶石）
+          - +1% 最大閃電抗性（每鑲嵌 3 個綠色輔助寶石）
+        stats:
+          - { stat: asc.thaumaturgical, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      attributes:
+        name: 能力          # Attributes
+        icon: GOLD_INGOT
+        lines:
+          - 增加 3% 屬性
+        stats:
+          - { stat: attr.str, type: INCREASED, value: 3 }
+          - { stat: attr.dex, type: INCREASED, value: 3 }
+          - { stat: attr.int, type: INCREASED, value: 3 }
+      adaptive_capability:
+        name: 應變能力          # Adaptive Capability
+        requires: attributes
+        notable: true
+        icon: GOLD_INGOT
+        lines:
+          - 寶石的屬性需求可由你最高的屬性滿足
+        stats:   # 2026-10-26 照 PoE2 Adaptive Capability（GemAttributes.HIGHEST）；這次之前尚未生效
+          - { stat: gem.attr_req_highest, type: FLAT, value: 1 }
+      attributes_2:
+        name: 能力          # Attributes
+        requires: adaptive_capability
+        icon: GOLD_INGOT
+        lines:
+          - 增加 3% 屬性
+        stats:
+          - { stat: attr.str, type: INCREASED, value: 3 }
+          - { stat: attr.dex, type: INCREASED, value: 3 }
+          - { stat: attr.int, type: INCREASED, value: 3 }
+      enhanced:
+        name: 強化效果          # Enhanced Effectiveness
+        requires: attributes_2
+        notable: true
+        icon: GOLD_INGOT
+        lines:
+          - 更少 20% 屬性
+          - 屬性提供的固有加成加倍
+        stats:
+          - { stat: asc.attribute_less, type: FLAT, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.inherent_double, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      skill_gem_quality:
+        name: 技能寶石品質          # Skill Gem Quality
         icon: EMERALD
+        lines:
+          - 所有技能品質 +2%
         stats:
-          - { stat: attr.str, type: INCREASED, value: 3 }
-          - { stat: attr.dex, type: INCREASED, value: 3 }
-          - { stat: attr.int, type: INCREASED, value: 3 }
-      g_attr2:
-        name: 嵌晶 II
-        requires: g_attr
-        cost: 1
-        icon: DIAMOND
+          - { stat: asc.skill_quality, type: FLAT, value: 2 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      essence_virtue:
+        name: 結晶美德          # Essence of Virtue
+        requires: skill_gem_quality
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：高尚禦盾
         stats:
-          - { stat: attr.str, type: INCREASED, value: 3 }
-          - { stat: attr.dex, type: INCREASED, value: 3 }
-          - { stat: attr.int, type: INCREASED, value: 3 }
-      g_skill:
-        name: 晶化技藝
-        requires: g_attr2
-        cost: 1
-        icon: AMETHYST_CLUSTER
+          - { stat: grant_skill.virtuous_barrier, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      skill_gem_quality_2:
+        name: 技能寶石品質          # Skill Gem Quality
+        requires: essence_virtue
+        icon: EMERALD
+        lines:
+          - 所有技能品質 +2%
         stats:
-          - { stat: skill.level, type: FLAT, value: 1 }
-      g_attr3:
-        name: 完美嵌晶
-        requires: g_skill
-        cost: 1
-        icon: NETHER_STAR
+          - { stat: asc.skill_quality, type: FLAT, value: 2 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      implanted_gems:
+        name: 植入寶石          # Implanted Gems
+        requires: skill_gem_quality_2
+        choice: true
+        icon: EMERALD
+      bolstering_implants:
+        name: 強化鑲嵌物          # Bolstering Implants
+        option_of: implanted_gems
+        icon: IRON_INGOT
+        lines:
+          - 所有需求力量的技能等級 +2
         stats:
-          - { stat: attr.str, type: INCREASED, value: 5 }
-          - { stat: attr.dex, type: INCREASED, value: 5 }
-          - { stat: attr.int, type: INCREASED, value: 5 }
-      g_cost:
-        name: 節能
-        cost: 1
-        icon: LAPIS_LAZULI
+          - { stat: asc.level_str, type: FLAT, value: 2 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      neurological:
+        name: 神經鑲嵌物          # Neurological Implants
+        option_of: implanted_gems
+        icon: AMETHYST_SHARD
+        lines:
+          - 所有需求智慧的技能等級 +2
         stats:
-          - { stat: skill.cost, type: INCREASED, value: -8 }
-      g_cost2:
-        name: 節能 II
-        requires: g_cost
-        cost: 1
-        icon: LAPIS_BLOCK
+          - { stat: asc.level_int, type: FLAT, value: 2 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      motoric_implants:
+        name: 機動鑲嵌物          # Motoric Implants
+        option_of: implanted_gems
+        icon: AMETHYST_SHARD
+        lines:
+          - 所有需求敏捷的技能等級 +2
         stats:
-          - { stat: skill.cost, type: INCREASED, value: -8 }
-      g_mana:
-        name: 晶能
-        requires: g_cost2
-        cost: 1
-        icon: PRISMARINE_CRYSTALS
+          - { stat: asc.level_dex, type: FLAT, value: 2 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      skill_gem_quality_3:
+        name: 技能寶石品質          # Skill Gem Quality
+        requires: essence_virtue
+        icon: EMERALD
+        lines:
+          - 所有技能品質 +2%
         stats:
-          - { stat: mana.max, type: INCREASED, value: 15 }
-      g_soul:
-        name: 雷魂
-        requires: g_mana
-        cost: 1
-        icon: LIGHTNING_ROD
+          - { stat: asc.skill_quality, type: FLAT, value: 2 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      advanced_thaumaturgy:
+        name: 進階奇術          # Advanced Thaumaturgy
+        requires: skill_gem_quality_3
+        notable: true
+        icon: EMERALD
+        lines:
+          - 寶石品質為插槽中的技能提供額外效果
         stats:
-          - { stat: sig.thunder_soul, type: FLAT, value: 1 }
-      g_crit:
-        name: 精準
-        cost: 1
-        icon: ARROW
-        stats:
-          - { stat: crit.chance, type: INCREASED, value: 15 }
-      g_critb:
-        name: 致命
-        requires: g_crit
-        cost: 1
-        icon: IRON_SWORD
-        stats:
-          - { stat: crit.bonus, type: INCREASED, value: 20 }
-      g_aspd:
-        name: 操練
-        requires: g_critb
-        cost: 1
-        icon: CROSSBOW
-        stats:
-          - { stat: attack.speed, type: INCREASED, value: 8 }
-      g_legion:
-        name: 軍陣
-        requires: g_aspd
-        cost: 1
-        icon: WHITE_BANNER
-        stats:
-          - { stat: sig.legion, type: FLAT, value: 1 }
-      g_life:
-        name: 強身
-        cost: 1
-        icon: RED_DYE
-        stats:
-          - { stat: life.max, type: INCREASED, value: 4 }
-      g_res:
-        name: 晶膚
-        requires: g_life
-        cost: 1
-        icon: LAPIS_LAZULI
-        stats:
-          - { stat: resist.fire, type: FLAT, value: 8 }
-          - { stat: resist.cold, type: FLAT, value: 8 }
-          - { stat: resist.lightning, type: FLAT, value: 8 }
-      g_proj:
-        name: 分晶彈
-        requires: g_res
-        cost: 1
-        icon: SPECTRAL_ARROW
-        stats:
-          - { stat: skill.projectiles, type: FLAT, value: 1 }
-      g_pierce:
-        name: 穿晶
-        requires: g_proj
-        cost: 1
-        icon: TRIDENT
-        stats:
-          - { stat: skill.pierce, type: FLAT, value: 1 }
+          - { stat: asc.advanced_quality, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        # 2026-10-27 照 PoE2：寶石的額外品質效果（gem_quality.yml 的 advanced；額外效果的機制還沒有的寶石照舊把品質效果再算一次）；
+        #   拿掉 note（這次之前「寶石只有一條品質效果：額外效果改成品質效果再算一次」）
 
-  amazon:
+  amazon:                # 原作：Amazon
     class: huntress
     name: 林嵐獵姬
     color: "#8fd36b"
     icon: TRIDENT
-    summary: 叢林的戰士：命中轉暴擊、元素偷取、輕裝閃避。
+    summary: 叢林的戰士：命中超過的部分變暴擊、元素也能偷取、藥劑、輕裝閃避。
     nodes:
-      a_acc:
-        name: 鷹睛
-        cost: 1
+      flask_recovery:
+        name: 藥劑回復          # Flask Recovery
+        icon: POTION
+        lines:
+          - 增加 15% 藥劑的生命與魔力回復
+        stats:
+          - { stat: flask.life_recovery, type: INCREASED, value: 15 }
+          - { stat: flask.mana_recovery, type: INCREASED, value: 15 }
+      azmeri_brew:
+        name: 阿茲莫里之酒          # Azmeri Brew
+        requires: flask_recovery
+        notable: true
+        icon: POTION
+        lines:
+          - 生命藥劑也會回復魔力
+          - 魔力藥劑也會回復生命
+        stats:
+          - { stat: asc.azmeri, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      accuracy:
+        name: 命中          # Accuracy
         icon: SPYGLASS
+        lines:
+          - 增加 12% 命中值
         stats:
           - { stat: accuracy, type: INCREASED, value: 12 }
-      a_crit:
-        name: 穿心
-        requires: a_acc
-        cost: 1
-        icon: ARROW
+      critical_strike:
+        name: 暴擊          # Critical Strike
+        requires: accuracy
+        notable: true
+        icon: AMETHYST_SHARD
+        lines:
+          - 攻擊命中機率可超過 100%
+          - 獲得額外暴擊率，等同超出的攻擊命中機率的 25%
         stats:
-          - { stat: flag.amazon_crit, value: 1 }
-          - { stat: damage, type: MORE, value: 20, tags: [spear] }   # 2026-10 補強：林嵐獵姬沒有像星矢「弒神」那樣的更多傷害
-      a_leech:
-        name: 汲取
-        cost: 1
-        icon: GHAST_TEAR
+          - { stat: flag.amazon_crit, type: FLAT, value: 1 }
+      accuracy_2:
+        name: 命中          # Accuracy
+        requires: critical_strike
+        icon: SPYGLASS
+        lines:
+          - 增加 12% 命中值
         stats:
-          - { stat: leech.effect, type: INCREASED, value: 12 }
-      a_harvest:
-        name: 元素汲收
-        requires: a_leech
-        cost: 1
-        icon: GLOW_BERRIES
+          - { stat: accuracy, type: INCREASED, value: 12 }
+      penetrate:
+        name: 穿透          # Penetrate
+        requires: accuracy_2
+        notable: true
+        icon: SPYGLASS
+        lines:
+          - 使用你武器的攻擊獲得附加物理傷害，等同該武器命中值的 25%
         stats:
-          - { stat: flag.leech_elemental_all, value: 1 }
-      a_ev:
-        name: 叢林步
-        cost: 1
-        icon: LEATHER_BOOTS
-        stats:
-          - { stat: evasion, type: INCREASED, value: 20 }
-      a_panther:
-        name: 林豹
-        requires: a_ev
-        cost: 1
-        icon: OCELOT_SPAWN_EGG
-        stats:
-          - { stat: flag.stalking_panther, value: 1 }
-      a_ele:
-        name: 元素之威
-        cost: 1
-        icon: PRISMARINE_CRYSTALS
-        stats:
-          - { stat: damage, type: INCREASED, value: 12, tags: [elemental] }
-      a_speed:
-        name: 迅捷
-        requires: a_ele
-        cost: 1
-        icon: FEATHER
+          - { stat: asc.accuracy_damage, type: FLAT, value: 25 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      skill_speed:
+        name: 技能速度          # Skill Speed
+        icon: SUGAR
+        lines:
+          - 增加 4% 技能速度
         stats:
           - { stat: attack.speed, type: INCREASED, value: 4 }
           - { stat: cast.speed, type: INCREASED, value: 4 }
-      a_acc2:
-        name: 銳眼 II
-        requires: a_crit
-        cost: 1
-        icon: SPYGLASS
+      predatory_instinct:
+        name: 獵食直覺          # Predatory Instinct
+        requires: skill_speed
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 對稀有和傳奇敵人揭露弱點
+          - 對有開放弱點的敵人，更多 50% 傷害
         stats:
-          - { stat: accuracy, type: INCREASED, value: 15 }
-      a_critb:
-        name: 致命要害
-        requires: a_acc2
-        cost: 1
-        icon: ARROW
+          - { stat: asc.weakness, type: FLAT, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      skill_speed_2:
+        name: 技能速度          # Skill Speed
+        requires: predatory_instinct
+        icon: SUGAR
+        lines:
+          - 增加 4% 技能速度
         stats:
-          - { stat: crit.bonus, type: INCREASED, value: 30 }
-      a_leech2:
-        name: 渴血
-        requires: a_harvest
-        cost: 1
-        icon: REDSTONE
+          - { stat: attack.speed, type: INCREASED, value: 4 }
+          - { stat: cast.speed, type: INCREASED, value: 4 }
+      for_kill:
+        name: 專注擊殺          # In for the Kill
+        requires: skill_speed_2
+        notable: true
+        icon: SUGAR
+        lines:
+          - 你的存在範圍內有開放弱點的敵人時，增加 20% 移動速度
+          - 你的存在範圍內有開放弱點的敵人時，增加 40% 技能速度
         stats:
-          - { stat: leech.rate, type: INCREASED, value: 30 }
-      a_vital:
-        name: 生機
-        requires: a_leech2
-        cost: 1
-        icon: GLISTERING_MELON_SLICE
+          - { stat: asc.for_the_kill, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      elemental_damage:
+        name: 元素傷害          # Elemental Damage
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - 增加 12% 元素傷害
         stats:
-          - { stat: life.max, type: INCREASED, value: 8 }
-      a_ev2:
-        name: 叢林步 II
-        requires: a_panther
-        cost: 1
-        icon: LEATHER_BOOTS
+          - { stat: damage, type: INCREASED, value: 12, tags: [elemental] }
+      elemental_surge:
+        name: 元素湧動          # Elemental Surge
+        requires: elemental_damage
+        notable: true
+        icon: ENCHANTED_BOOK
+        # 2026-10-26 照 PoE2 0.5（poe2db.tw/us/Elemental_Surge；0.3 以前叫 Elemental Infusion／Infuse Weapon，跟元素灌注是兩回事）：
+        #   湧動每種最多 6 層、15 秒；非近戰的投射物攻擊每一發用掉一層，投射物在終點爆開 1.8 公尺（攻擊傷害 50%～181%、物理全轉該元素）。
+        # 2026-10-27 照 PoE2 做成另外一發爆炸（湧動爆炸 asc_surge_*：1.8 公尺、攻擊傷害 50%～181%、物理全轉該元素；SkillResources／ProjectileEngine）；
+        #   這次之前做不到：投射物終點爆開 1.8 公尺、獲得 100% 傷害為額外的該元素傷害（平衡等效）
+        lines:
+          - 消耗戰星時，觸發元素湧動以獲得 3 層閃電湧動
+          - 非近戰的投射物攻擊每一發用掉一層湧動：投射物飛行結束時引發一次湧動爆炸，造成那種元素的攻擊傷害（湧動每種最多 6 層，撐 15 秒）
+        stats:
+          - { stat: surge.lightning, type: FLAT, value: 3 }
+      elemental_damage_2:
+        name: 元素傷害          # Elemental Damage
+        requires: elemental_surge
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - 增加 12% 元素傷害
+        stats:
+          - { stat: damage, type: INCREASED, value: 12, tags: [elemental] }
+      surging_avatar:
+        name: 澎湃灌注          # Surging Avatar
+        requires: elemental_damage_2
+        notable: true
+        icon: BLAZE_POWDER
+        lines:
+          - 消耗戰星時，觸發元素湧動以獲得 2 層冰冷湧動
+          - 消耗戰星時，觸發元素湧動以獲得 2 層火焰湧動
+          - 觸發元素湧動時少獲得 1 層閃電湧動
+        stats:   # 2026-10-26 照 PoE2 Surging Avatar
+          - { stat: surge.cold, type: FLAT, value: 2 }
+          - { stat: surge.fire, type: FLAT, value: 2 }
+          - { stat: surge.lightning, type: FLAT, value: -1 }
+      life_leech:
+        name: 生命偷取          # Life Leech
+        icon: GHAST_TEAR
+        lines:
+          - 增加 12% 生命偷取量
+        stats:
+          - { stat: leech.effect, type: INCREASED, value: 12 }
+      mystic_harvest:
+        name: 神秘豐收          # Mystic Harvest
+        requires: life_leech
+        notable: true
+        icon: GHAST_TEAR
+        lines:
+          - 生命偷取也會依據你的元素傷害與物理傷害回復
+        stats:
+          - { stat: flag.leech_elemental_all, type: FLAT, value: 1 }
+      evasion:
+        name: 閃避          # Evasion
+        icon: FEATHER
+        lines:
+          - 增加 20% 閃避值
         stats:
           - { stat: evasion, type: INCREASED, value: 20 }
-      a_windwalk:
-        name: 御風
-        requires: a_ev2
-        cost: 1
+      stalking_panther:
+        name: 潛伏獵豹          # Stalking Panther
+        requires: evasion
+        notable: true
         icon: FEATHER
+        lines:
+          - 已裝備頭盔、手套與鞋子的閃避值加倍
+          - 已裝備胸甲的閃避值減半
         stats:
-          - { stat: sig.windwalk, type: FLAT, value: 1 }
-      a_ele2:
-        name: 元素之力 II
-        requires: a_speed
-        cost: 1
-        icon: PRISMARINE_CRYSTALS
-        stats:
-          - { stat: damage, type: INCREASED, value: 15, tags: [elemental] }
-      a_frost:
-        name: 霜之灌注
-        requires: a_ele2
-        cost: 1
-        icon: PACKED_ICE
-        stats:
-          - { stat: damage.extra.cold, type: FLAT, value: 10 }
+          - { stat: flag.stalking_panther, type: FLAT, value: 1 }
 
-  ritualist:
+  ritualist:                # 原作：Ritualist
     class: huntress
     name: 儀祭者
     color: "#b34dff"
     icon: BONE
-    summary: 與惡靈立約的獵手：飾品加成、殘血回復；代價是抗性與精魂。
+    summary: 與惡靈立約的獵手：犧牲魔力、精魂與抗性換戒指欄位，飾品加成、殘血回復、護符。
     nodes:
-      r_attr:
-        name: 祭品
-        cost: 1
-        icon: BONE_MEAL
+      physical_damage:
+        name: 物理傷害          # Physical Damage
+        icon: IRON_SWORD
+        lines:
+          - 增加 15% 物理傷害
+        stats:
+          - { stat: damage, type: INCREASED, value: 15, tags: [physical] }
+      corrupted_lifeforce:
+        name: 腐化生命力          # Corrupted Lifeforce
+        requires: physical_damage
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 對受血液沸騰影響的敵人，更多 15% 傷害
+          - 提供技能：鮮血沸騰
+        stats:
+          - { stat: asc.blood_boil_more, type: FLAT, value: 15 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.blood_boil, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      reduced_mana:
+        name: 減少魔力          # Reduced Mana
+        icon: LAPIS_LAZULI
+        lines:
+          - 減少 30% 最大魔力
+        stats:
+          - { stat: mana.max, type: INCREASED, value: -30 }
+      reduced_spirit:
+        name: 減少精魂          # Reduced Spirit
+        icon: SOUL_LANTERN
+        lines:
+          - 減少 25% 精魂
+        stats:
+          - { stat: spirit.max, type: INCREASED, value: -25 }
+      unfurled_finger:
+        name: 展露之指          # Unfurled Finger
+        requires: [reduced_spirit, reduced_resistances, reduced_mana]
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - +1 戒指欄位
+        stats:
+          # 2026-10-26 照 PoE2：角色面板多一個戒指欄（頭盔左邊；PlayerState.RING3_SLOT）；
+          # 這次之前沒有第三個戒指欄，平衡等效成戒指的詞綴效果增加 50%（asc.ring_effect）
+          - { stat: slot.ring_extra, type: FLAT, value: 1 }
+      attributes:
+        name: 能力          # Attributes
+        requires: unfurled_finger
+        icon: GOLD_INGOT
+        lines:
+          - 增加 3% 屬性
         stats:
           - { stat: attr.str, type: INCREASED, value: 3 }
           - { stat: attr.dex, type: INCREASED, value: 3 }
           - { stat: attr.int, type: INCREASED, value: 3 }
-      r_attune:
-        name: 祭器共鳴
-        requires: r_attr
-        cost: 1
-        icon: EMERALD
+      mystic_attunement:
+        name: 神秘同調          # Mystic Attunement
+        requires: attributes
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 增加 25% 已裝備戒指與護身符提供的加成
         stats:
-          - { stat: flag.mystic_attunement, value: 1 }
-          - { stat: resist.fire, value: -20 }
-          - { stat: resist.cold, value: -20 }
-          - { stat: resist.lightning, value: -20 }
-      r_phys:
-        name: 血祭
-        cost: 1
-        icon: REDSTONE
+          - { stat: flag.mystic_attunement, type: FLAT, value: 1 }
+      reduced_resistances:
+        name: 減少抗性          # Reduced Resistances
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - "-20% 全元素抗性"
         stats:
-          - { stat: damage, type: INCREASED, value: 15, tags: [physical] }
-      r_ms:
-        name: 疾行
-        cost: 1
-        icon: RABBIT_FOOT
-        stats:
-          - { stat: movement.speed, type: INCREASED, value: 3 }
-      r_regen:
-        name: 生生不息
-        cost: 1
-        icon: OAK_SAPLING
-        stats:
-          - { stat: life.regen, type: INCREASED, value: 10 }
-      r_wildwood:
-        name: 林息
-        requires: r_regen
-        cost: 1
-        icon: OAK_LEAVES
-        stats:
-          - { stat: life.recovery_per_missing, value: 10 }
-      r_ms2:
-        name: 疾行 II
-        requires: r_ms
-        cost: 1
-        icon: RABBIT_FOOT
-        stats:
-          - { stat: movement.speed, type: INCREASED, value: 3 }
-      r_charm:
-        name: 護身符咒
-        requires: r_attune
-        cost: 1
-        icon: RABBIT_FOOT
-        stats:
-          - { stat: flask.life_recovery, type: INCREASED, value: 20 }
-      r_sacrifice:
-        name: 獻祭
-        requires: r_charm
-        cost: 1
-        icon: NETHER_WART
-        stats:
-          - { stat: sig.sacrifice, type: FLAT, value: 1 }
-      r_phys2:
-        name: 血祭 II
-        requires: r_phys
-        cost: 1
-        icon: REDSTONE
-        stats:
-          - { stat: damage, type: INCREASED, value: 15 }
-      r_rage:
-        name: 血怒
-        requires: r_phys2
-        cost: 1
+          - { stat: resist.fire, type: FLAT, value: -20 }
+          - { stat: resist.cold, type: FLAT, value: -20 }
+          - { stat: resist.lightning, type: FLAT, value: -20 }
+      life_recovery_rate:
+        name: 生命回復率          # Life Recovery Rate
         icon: RED_DYE
+        lines:
+          - 增加 10% 生命回復速度
         stats:
-          - { stat: sig.blood_rage, type: FLAT, value: 1 }
-      r_bleed:
-        name: 放血
-        requires: r_rage
-        cost: 1
-        icon: IRON_SWORD
+          - { stat: life.recovery_rate, type: INCREASED, value: 10 }   # 2026-10-26 照 PoE2：生命回復速度（再生、偷取、回復都算）；這次之前只加生命再生速度
+      wildwood_persistence:
+        name: 荒林堅毅          # Wildwood Persistence
+        requires: life_recovery_rate
+        notable: true
+        icon: RED_DYE
+        lines:
+          - 增加 10% 生命回復速度（每損失 5% 未保留生命）
         stats:
-          - { stat: bleed.chance, type: FLAT, value: 15 }
-      r_ev:
-        name: 林間身法
-        requires: r_ms2
-        cost: 1
+          - { stat: life.recovery_per_missing, type: FLAT, value: 10 }
+      charm_charges:
+        name: 護符充能          # Charm Charges
+        icon: EMERALD
+        lines:
+          - 增加 15% 獲得的護符充能
+        stats:
+          - { stat: charm.charges_gained, type: INCREASED, value: 15 }
+      intricate_sigils:
+        name: 精妙符印          # Intricate Sigils
+        requires: charm_charges
+        notable: true
+        icon: EMERALD
+        lines:
+          - +1 護符欄位
+          - 更多 20% 獲得的護符充能
+        stats:
+          - { stat: charm.charges_gained, type: MORE, value: 20 }   # 2026-10-26 照 PoE2：更多（這次之前照增加 20% 算）
+          - { stat: charm.slots, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        note: 護符欄位最多 3 格
+      charm_charges_2:
+        name: 護符充能          # Charm Charges
+        requires: intricate_sigils
+        icon: EMERALD
+        lines:
+          - 增加 15% 獲得的護符充能
+        stats:
+          - { stat: charm.charges_gained, type: INCREASED, value: 15 }
+      mind_phylacteries:
+        name: 心靈護符          # Mind Phylacteries
+        requires: charm_charges_2
+        notable: true
+        icon: EMERALD
+        lines:
+          - 護符充能不足時，可改為消耗 25% 最大魔力來觸發護符
+        stats:
+          - { stat: asc.charm_mana, type: FLAT, value: 25 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      movement_speed:
+        name: 移動速度          # Movement Speed
         icon: LEATHER_BOOTS
+        lines:
+          - 增加 3% 移動速度
         stats:
-          - { stat: evasion, type: INCREASED, value: 20 }
-      r_recoup:
-        name: 回春
-        requires: r_wildwood
-        cost: 1
-        icon: GLISTERING_MELON_SLICE
+          - { stat: movement.speed, type: INCREASED, value: 3 }
+      as_whispers_demand:
+        name: 正如低語所求          # As the Whispers Demand
+        requires: movement_speed
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：儀式獻祭
         stats:
-          - { stat: life.recoup, type: FLAT, value: 8 }
+          - { stat: grant_skill.ritual_sacrifice, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      movement_speed_2:
+        name: 移動速度          # Movement Speed
+        requires: as_whispers_demand
+        icon: LEATHER_BOOTS
+        lines:
+          - 增加 3% 移動速度
+        stats:
+          - { stat: movement.speed, type: INCREASED, value: 3 }
+      devotion_king:
+        name: 誓忠於王          # Devotion to the King
+        requires: movement_speed_2
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：女王進軍
+        stats:
+          - { stat: grant_skill.queens_procession, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
-  stararrow:
+  # 2026-10-27 照 PoE2 0.5 補上第三個女獵手昇華（Spirit Walker，poe2db／PoB 0_5 tree.json）：天賦、相連、數值照原作。
+  spiritwalker:                # 原作：Spirit Walker
+    class: huntress
+    name: 靈狩者
+    color: "#7ec8e3"
+    icon: SOUL_LANTERN
+    summary: 受林靈選中的獵手：熊靈夥伴、靈鹿奔竄、梟羽強化投射物，夥伴傷害與精魂。
+    nodes:
+      spirit:
+        name: 精魂          # Spirit
+        icon: AMETHYST_SHARD
+        lines:
+          - +10 精魂
+        stats:
+          - { stat: spirit.max, type: FLAT, value: 10 }
+      idolatry:
+        name: 偶像崇敬          # Idolatry
+        requires: spirit
+        notable: true
+        icon: TOTEM_OF_UNDYING
+        lines:
+          - 裝備上每個空著的符文孔，夥伴增加 10% 傷害
+          - 裝備上每個空著的符文孔，增加 2% 技能的保留效率
+          - 裝備上每顆嵌著的符文，-4% 全部元素抗性
+        stats:
+          - { stat: asc.idol_companion_damage, type: FLAT, value: 10 }   # 2026-10-27 照 PoE2 Idolatry（每個神像）
+          - { stat: asc.idol_reservation, type: FLAT, value: 2 }
+          - { stat: asc.augment_resist, type: FLAT, value: -4 }   # 每個不是神像的嵌入物
+        note: 還沒有神像：空著的符文孔當作神像，嵌著的符文算其他嵌入物
+      move_speed:
+        name: 移動速度          # Movement Speed
+        icon: SUGAR
+        lines:
+          - 增加 2% 移動速度
+        stats:
+          - { stat: movement.speed, type: INCREASED, value: 2 }
+      vivid_stampede:
+        name: 靈現奔竄          # Vivid Stampede
+        requires: move_speed
+        notable: true
+        icon: LIGHTNING_ROD
+        lines:
+          - 每移動 10 公尺獲得 1 個靈現之靈，最多 3 個
+          - 攻擊時用掉全部的靈現之靈觸發靈現奔竄
+          - 提供技能：靈現奔竄
+        stats:
+          - { stat: asc.vivid_wisps, type: FLAT, value: 3 }   # 2026-10-27 照 PoE2（vivid_stag_maximum_stag_wisps_allowed 3、每 10 公尺 1 個）
+          - { stat: grant_skill.vivid_stampede, type: FLAT, value: 1 }
+      move_speed_2:
+        name: 移動速度          # Movement Speed
+        requires: vivid_stampede
+        icon: SUGAR
+        lines:
+          - 增加 2% 移動速度
+        stats:
+          - { stat: movement.speed, type: INCREASED, value: 2 }
+      morrigan:
+        name: 莫里根的指引          # The Mórrigan's Guidance
+        requires: move_speed_2
+        notable: true
+        icon: LIGHTNING_ROD
+        lines:
+          - 靈現奔竄結束時獲得 1 個靈現之靈
+          - 靈鹿每躍起一次，傷害更多 20%
+          - 靈鹿每躍起一次，感電幅度更多 20%
+        stats:
+          - { stat: asc.stag_guidance, type: FLAT, value: 20 }   # 2026-10-27 照 PoE2（vivid_stag_damage／shock_effect_%_final_per_cascade 20）
+      companion_damage:
+        name: 共享盟友傷害          # Shared Companion Damage
+        icon: BONE
+        lines:
+          - 增加 10% 夥伴的傷害
+          - 夥伴在你的存在範圍內時，增加 10% 傷害
+        stats:
+          - { stat: damage, type: INCREASED, value: 10, tags: [minion, companion] }
+          - { stat: asc.companion_near_damage, type: FLAT, value: 10 }
+      wild_protector:
+        name: 荒野守護          # Wild Protector
+        requires: companion_damage
+        notable: true
+        icon: RABBIT_HIDE
+        lines:
+          - 提供技能：荒野守護
+        stats:
+          - { stat: grant_skill.wild_protector, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2
+      companion_damage_2:
+        name: 共享盟友傷害          # Shared Companion Damage
+        requires: wild_protector
+        icon: BONE
+        lines:
+          - 增加 10% 夥伴的傷害
+          - 夥伴在你的存在範圍內時，增加 10% 傷害
+        stats:
+          - { stat: damage, type: INCREASED, value: 10, tags: [minion, companion] }
+          - { stat: asc.companion_near_damage, type: FLAT, value: 10 }
+      catha:
+        name: 凱莎的平衡          # The Catha's Balance
+        requires: companion_damage_2
+        notable: true
+        icon: RABBIT_HIDE
+        lines:
+          - 夥伴獲得附加攻擊傷害，等同你主手武器傷害的 60%
+        stats:
+          - { stat: asc.companion_weapon, type: FLAT, value: 60 }   # 2026-10-27 照 PoE2（weapon_damage_%_granted_to_companions 60）
+      companion_life_area:
+        name: 盟友生命和範圍          # Companion Life and Area
+        icon: BONE
+        lines:
+          - 增加 10% 夥伴的範圍效果
+          - 增加 15% 夥伴的最大生命
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 10, tags: [minion, companion] }
+          - { stat: life.max, type: INCREASED, value: 15, tags: [minion, companion] }
+      natural_order:
+        name: 自然秩序          # The Natural Order
+        requires: companion_life_area
+        notable: true
+        icon: WOLF_SPAWN_EGG
+        lines:
+          - 夥伴增加 30% 移動速度
+          - 夥伴被隨機一種林靈附身，每 20 秒換一種
+        stats:
+          - { stat: asc.natural_order, type: FLAT, value: 20 }   # 2026-10-27 照 PoE2（tamed_beasts_randomly_possessed_every_x_ms 20000）
+        note: 還沒有馴服傳奇野獸：改成你所有的夥伴被林靈附身——靈現：25% 傷害為額外閃電；原始：增加 30% 攻擊與施法速度；荒野：每秒再生 3% 最大生命、增加 30% 最大生命
+      crit_chance:
+        name: 暴擊機率          # Critical Chance
+        icon: FLINT
+        lines:
+          - 增加 12% 暴擊率
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 12 }
+      primal_bounty:
+        name: 原始賞金          # Primal Bounty
+        requires: crit_chance
+        notable: true
+        icon: FEATHER
+        lines:
+          - 每 4 秒獲得 1 根原始梟羽，最多 3 根
+          - 翻滾時用掉 1 根梟羽觸發原始賞金
+          - 提供技能：原始賞金
+        stats:
+          - { stat: asc.owl_feathers, type: FLAT, value: 3 }   # 2026-10-27 照 PoE2（每 4 秒 1 根、最多 3 根）
+          - { stat: grant_skill.primal_bounty, type: FLAT, value: 1 }
+      crit_chance_2:
+        name: 暴擊機率          # Critical Chance
+        requires: primal_bounty
+        icon: FLINT
+        lines:
+          - 增加 12% 暴擊率
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 12 }
+      mhacha:
+        name: 姆哈查之贈          # The Mhacha's Gift
+        requires: crit_chance_2
+        notable: true
+        icon: FEATHER
+        lines:
+          - 翻滾時最多可以用掉 2 根梟羽，每多用 1 根，原始賞金的強化效果更多 100%
+          - 梟羽的獲得速度加快 50%
+        stats:
+          - { stat: asc.owl_spend, type: FLAT, value: 2 }   # 2026-10-27 照 PoE2（owl_feather_max_bonus_to_stack 2）
+          - { stat: asc.owl_rate, type: FLAT, value: 50 }   # owl_feather_gain_frequency_+% 50
+      sacred_unity:
+        name: 聖潔一統          # Sacred Unity
+        notable: true
+        cost: 0
+        unlock: [vivid_stampede, wild_protector, primal_bounty]
+        icon: NETHER_STAR
+        lines:
+          - 熊靈獲得荒野擁抱
+          - 靈鹿會躍向敵人
+          - 梟羽強化的技能，中央的投射物會留下一道翱翔之地
+        stats:
+          - { stat: asc.sacred_unity, type: FLAT, value: 6 }   # 2026-10-27 照 PoE2（翱翔之地 6 秒；熊靈每秒再生 2%、先替你承受 8% 傷害；靈鹿追向前方 120° 內的敵人）
+        note: 配了靈現奔竄、荒野守護、原始賞金三個之後免費配置。荒野擁抱：熊靈存在範圍內的友軍每秒再生 2% 最大生命，熊靈先替他們承受 8% 的傷害。翱翔之地（6 秒）：站在上面增加 30% 閃避值，生命全滿時增加 40% 傷害
+
+  stararrow:                # 原作：Deadeye
     class: ranger
     name: 星矢
     color: "#9fd0ff"
     icon: BOW
-    summary: 一箭穿星的神射手：多一支投射物、投射物強化。
+    summary: 一箭穿星的神射手：多一個投射物、零點射擊或遠射、印記、怒星。
     nodes:
-      d_proj:
-        name: 準星
-        cost: 1
-        icon: ARROW
+      mark_effect:
+        name: 印記效果          # Mark Effect
+        icon: TARGET
+        lines:
+          - 增加 12% 你的印記技能效果
         stats:
-          - { stat: damage, type: INCREASED, value: 12, tags: [projectile] }
-      d_munitions:
-        name: 分星矢
-        requires: d_proj
-        cost: 1
-        icon: SPECTRAL_ARROW
+          - { stat: mark.effect, type: INCREASED, value: 12 }
+      called_shots:
+        name: 預告射擊          # Called Shots
+        requires: mark_effect
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：預告射擊
         stats:
-          - { stat: skill.projectiles, value: 1 }
-      d_speed:
-        name: 疾矢
-        cost: 1
-        icon: FEATHER
+          - { stat: grant_skill.called_shots, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        note: 放面板上的第一個印記技能（不用插在孔裡）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：放面板上的第一個印記技能（不用插在孔裡）」
+      mark_effect_2:
+        name: 印記效果          # Mark Effect
+        requires: called_shots
+        icon: TARGET
+        lines:
+          - 增加 12% 你的印記技能效果
         stats:
-          - { stat: skill.projectile_speed, type: INCREASED, value: 10 }
-      d_speed2:
-        name: 流星
-        requires: d_speed
-        cost: 1
-        icon: FIREWORK_ROCKET
+          - { stat: mark.effect, type: INCREASED, value: 12 }
+      bullseye:
+        name: 靶心          # Bullseye
+        requires: mark_effect_2
+        notable: true
+        icon: AMETHYST_SHARD
+        lines:
+          - 消耗敵人身上的印記時，對其施加 10 層暴擊弱點
         stats:
-          - { stat: skill.projectile_speed, type: INCREASED, value: 10 }
-          - { stat: damage, type: INCREASED, value: 12, tags: [projectile] }
-      d_skill:
-        name: 連射
-        cost: 1
-        icon: CLOCK
+          - { stat: asc.bullseye, type: FLAT, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      skill_speed:
+        name: 技能速度          # Skill Speed
+        icon: SUGAR
+        lines:
+          - 增加 4% 技能速度
         stats:
           - { stat: attack.speed, type: INCREASED, value: 4 }
           - { stat: cast.speed, type: INCREASED, value: 4 }
-      d_frenzy:
-        name: 狂怒
-        requires: d_skill
-        cost: 1
-        icon: BLAZE_POWDER
+      gathering_winds:
+        name: 集風          # Gathering Winds
+        requires: skill_speed
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 使用技能時獲得順風
+          - 被擊中時失去所有順風
         stats:
-          - { stat: charge.max.frenzy, value: 1 }
-      d_crit:
-        name: 要害
-        cost: 1
-        icon: TARGET
-        stats:
-          - { stat: crit.chance, type: INCREASED, value: 20, tags: [projectile] }
-      d_crit2:
-        name: 一擊必殺
-        requires: d_crit
-        cost: 1
-        icon: TARGET
-        stats:
-          - { stat: crit.bonus, type: INCREASED, value: 20, tags: [projectile] }
-      d_proj2:
-        name: 精準射擊 II
-        requires: d_munitions
-        cost: 1
+          - { stat: asc.tailwind, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      projectile_speed:
+        name: 投射物速度          # Projectile Speed
         icon: ARROW
+        lines:
+          - 增加 10% 投射物速度
         stats:
-          - { stat: damage, type: INCREASED, value: 15, tags: [projectile] }
-      d_far:
-        name: 遠星
-        requires: d_proj2
-        cost: 1
-        icon: SPYGLASS
-        stats:
-          - { stat: sig.far_shot, type: FLAT, value: 1 }
-      d_pierce:
-        name: 穿星
-        requires: d_speed2
-        cost: 1
-        icon: SPECTRAL_ARROW
-        stats:
-          - { stat: skill.pierce, type: FLAT, value: 1 }
-      d_chain:
-        name: 連星
-        requires: d_pierce
-        cost: 1
-        icon: LEAD
-        stats:
-          - { stat: skill.chains, type: FLAT, value: 1 }
-      d_skill2:
-        name: 連射 II
-        requires: d_frenzy
-        cost: 1
-        icon: BOW
-        stats:
-          - { stat: attack.speed, type: INCREASED, value: 6 }
-      d_windwalk:
-        name: 御風
-        requires: d_skill2
-        cost: 1
-        icon: FEATHER
-        stats:
-          - { stat: sig.windwalk, type: FLAT, value: 1 }
-      d_crit3:
-        name: 要害 II
-        requires: d_crit2
-        cost: 1
+          - { stat: skill.projectile_speed, type: INCREASED, value: 10 }
+      projectile_proximity:
+        name: 投射物近接專精          # Projectile Proximity Specialisation
+        requires: projectile_speed
+        choice: true
         icon: ARROW
+      point_blank:
+        name: 零點射擊          # Point Blank
+        option_of: projectile_proximity
+        icon: ARROW
+        lines:
+          - 投射物對移動前 3.5 公尺內的目標擊中傷害更多 20%，隨飛行距離遞減，7 公尺後為 0%
         stats:
-          - { stat: crit.chance, type: INCREASED, value: 20 }
-      d_god:
-        name: 弒神
-        requires: d_crit3
-        cost: 1
-        icon: NETHERITE_SWORD
+          - { stat: asc.point_blank, type: FLAT, value: 20 }
+      far_shot:
+        name: 遠射          # Far Shot
+        option_of: projectile_proximity
+        icon: ARROW
+        lines:
+          - 投射物對移動前 3.5 公尺內的目標擊中傷害更多 0%，隨飛行距離遞增，7 公尺後為更多 20%
         stats:
-          - { stat: sig.godslayer, type: FLAT, value: 1 }
+          - { stat: asc.far_shot, type: FLAT, value: 20 }
+      projectile_speed_2:
+        name: 投射物速度          # Projectile Speed
+        requires: projectile_proximity
+        icon: ARROW
+        lines:
+          - 增加 10% 投射物速度
+        stats:
+          - { stat: skill.projectile_speed, type: INCREASED, value: 10 }
+      endless_munitions:
+        name: 無限彈藥          # Endless Munitions
+        requires: projectile_speed_2
+        notable: true
+        icon: ARROW
+        lines:
+          - 技能額外發射 1 個投射物
+        stats:
+          - { stat: skill.projectiles, type: FLAT, value: 1 }
+      projectile_damage:
+        name: 投射物傷害          # Projectile Damage
+        icon: ARROW
+        lines:
+          - 增加 12% 投射物傷害
+        stats:
+          - { stat: damage, type: INCREASED, value: 12, tags: [projectile] }
+      mirage_deadeye:
+        name: 幻影銳眼          # Mirage Deadeye
+        requires: projectile_damage
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：幻影銳眼
+        stats:
+          - { stat: grant_skill.mirage_deadeye, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        note: 幻影重複你接下來的投射物攻擊（不用插在孔裡）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：幻影重複你接下來的投射物攻擊（不用插在孔裡）」
+      frenzy_charge:
+        name: 怒星持續時間          # Frenzy Charge Duration
+        icon: GLOWSTONE_DUST
+        lines:
+          - 增加 25% 怒星持續時間
+        stats:
+          - { stat: charge.duration, type: INCREASED, value: 25 }
+      avidity:
+        name: 貪慾          # Avidity
+        requires: frenzy_charge
+        notable: true
+        icon: GLOWSTONE_DUST
+        lines:
+          - 獲得怒星時有 50% 機率額外獲得 1 顆怒星
+        stats:
+          - { stat: charge.extra.frenzy, type: FLAT, value: 50 }
+      frenzy_charge_2:
+        name: 怒星持續時間          # Frenzy Charge Duration
+        requires: avidity
+        icon: GLOWSTONE_DUST
+        lines:
+          - 增加 25% 怒星持續時間
+        stats:
+          - { stat: charge.duration, type: INCREASED, value: 25 }
+      thrilling_chase:
+        name: 驚險追逐          # Thrilling Chase
+        requires: frenzy_charge_2
+        notable: true
+        icon: GLOWSTONE_DUST
+        lines:
+          - 技能消耗怒星所得的效益有 50% 機率加倍
+        stats:
+          - { stat: asc.frenzy_double, type: FLAT, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
-  windwalker:
+  windwalker:                # 原作：Pathfinder
     class: ranger
     name: 御風者
     color: "#7de0c2"
     icon: FEATHER
-    summary: 走遍荒野的旅人：閃避擋元素、不被減速、劇毒。
+    summary: 走遍荒野的旅人：中毒上限加倍、不受緩速、閃避擋元素、藥劑充能。
     nodes:
-      p_ev:
-        name: 荒野之皮
-        cost: 1
-        icon: LEATHER_CHESTPLATE
+      evasion:
+        name: 閃避          # Evasion
+        icon: FEATHER
+        lines:
+          - 增加 20% 閃避值
         stats:
           - { stat: evasion, type: INCREASED, value: 20 }
-      p_sustain:
-        name: 風衣
-        requires: p_ev
-        cost: 1
-        icon: MOSS_BLOCK
-        stats:
-          - { stat: evasion.elemental, value: 50 }
-      p_speed:
-        name: 疾行
-        cost: 1
+      sustainable:
+        name: 永續實踐          # Sustainable Practices
+        requires: evasion
+        notable: true
         icon: FEATHER
+        lines:
+          - 閃避值的 50% 也提供元素傷害減免
+        stats:
+          - { stat: evasion.elemental, type: FLAT, value: 50 }
+      skill_speed:
+        name: 技能速度          # Skill Speed
+        icon: SUGAR
+        lines:
+          - 增加 4% 技能速度
         stats:
           - { stat: attack.speed, type: INCREASED, value: 4 }
           - { stat: cast.speed, type: INCREASED, value: 4 }
-      p_pursuit:
-        name: 不滯
-        requires: p_speed
-        cost: 1
-        icon: RABBIT_FOOT
+      relentless_pursuit:
+        name: 無情追獵          # Relentless Pursuit
+        requires: skill_speed
+        notable: true
+        icon: SOUL_SAND
+        lines:
+          - 你的速度不受緩速影響
         stats:
-          - { stat: flag.unslowable, value: 1 }
-      p_poison:
-        name: 毒草
-        cost: 1
+          - { stat: flag.unslowable, type: FLAT, value: 1 }
+      skill_speed_2:
+        name: 技能速度          # Skill Speed
+        requires: relentless_pursuit
+        icon: SUGAR
+        lines:
+          - 增加 4% 技能速度
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 4 }
+          - { stat: cast.speed, type: INCREASED, value: 4 }
+      running_assault:
+        name: 衝刺突擊          # Running Assault
+        requires: skill_speed_2
+        notable: true
+        icon: LEATHER_BOOTS
+        lines:
+          - 衝刺時無法被重度暈眩
+          - 更少 30% 移動中使用技能的移動速度懲罰
+        stats:
+          - { stat: asc.sprint_stun, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.move_penalty, type: FLAT, value: 30 }   # 2026-10-26 照 PoE2：放技能會變慢（SkillMovePenalty），懲罰更少 30%；這次之前平衡等效成增加 8% 移動速度
+      poison_effect:
+        name: 中毒效果          # Poison Effect
         icon: SPIDER_EYE
+        lines:
+          - 增加 12% 你造成的中毒幅度
         stats:
           - { stat: poison.magnitude, type: INCREASED, value: 12 }
-      p_toxic:
-        name: 蝕骨劇毒
-        requires: p_poison
-        cost: 1
-        icon: FERMENTED_SPIDER_EYE
-        stats:
-          - { stat: flag.double_poison, value: 1 }
-          - { stat: poison.duration, type: MORE, value: -50 }
-      p_flask:
-        name: 藥草知識
-        cost: 1
-        icon: POTION
-        stats:
-          - { stat: flask.life_recovery, type: INCREASED, value: 20 }
-          - { stat: flask.mana_recovery, type: INCREASED, value: 20 }
-      p_flask2:
-        name: 長效藥劑
-        requires: p_flask
-        cost: 1
-        icon: POTION
-        stats:
-          - { stat: flask.life_recovery, type: INCREASED, value: 20 }
-      p_res:
-        name: 荒野抗性
-        requires: p_sustain
-        cost: 1
-        icon: LAPIS_LAZULI
-        stats:
-          - { stat: resist.fire, type: FLAT, value: 8 }
-          - { stat: resist.cold, type: FLAT, value: 8 }
-          - { stat: resist.lightning, type: FLAT, value: 8 }
-      p_windwalk:
-        name: 御風
-        requires: p_res
-        cost: 1
-        icon: FEATHER
-        stats:
-          - { stat: sig.windwalk, type: FLAT, value: 1 }
-      p_ms:
-        name: 疾行 II
-        requires: p_pursuit
-        cost: 1
-        icon: SUGAR
-        stats:
-          - { stat: movement.speed, type: INCREASED, value: 5 }
-      p_onslaught:
-        name: 趁勢
-        requires: p_ms
-        cost: 1
-        icon: RABBIT_FOOT
-        stats:
-          - { stat: onslaught.on_kill, type: FLAT, value: 20 }
-      p_poison2:
-        name: 毒草 II
-        requires: p_toxic
-        cost: 1
+      overwhelming:
+        name: 懾人劇毒          # Overwhelming Toxicity
+        requires: poison_effect
+        notable: true
         icon: SPIDER_EYE
+        lines:
+          - 目標可同時受到你中毒影響的數量加倍
+          - 更少 50% 中毒持續時間
         stats:
-          - { stat: poison.chance, type: FLAT, value: 15 }
-      p_plague:
-        name: 瘟主
-        requires: p_poison2
-        cost: 1
-        icon: FERMENTED_SPIDER_EYE
-        stats:
-          - { stat: sig.plague_lord, type: FLAT, value: 1 }
-      p_flask3:
-        name: 藥草知識 II
-        requires: p_flask2
-        cost: 1
+          - { stat: flag.double_poison, type: FLAT, value: 1 }
+          - { stat: poison.duration, type: MORE, value: -50 }
+      mana_flask_charges:
+        name: 魔力藥劑充能          # Mana Flask Charges
         icon: POTION
+        lines:
+          - 增加 20% 獲得的魔力藥劑充能
         stats:
-          - { stat: flask.mana_recovery, type: INCREASED, value: 20 }
-      p_herb:
-        name: 草藥之心
-        requires: p_flask3
-        cost: 1
-        icon: GLISTERING_MELON_SLICE
+          - { stat: flask.charges_gained.mana, type: INCREASED, value: 20 }
+      brew_concoction:
+        name: 釀造靈藥          # Brew Concoction
+        requires: mana_flask_charges
+        choice: true
+        icon: SPLASH_POTION
+      bleeding_concoction:
+        name: 流血混合物          # Bleeding Concoction
+        option_of: brew_concoction
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：流血混合物
         stats:
-          - { stat: life.recoup, type: FLAT, value: 8 }
+          - { stat: grant_skill.bleeding_concoction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      shattering:
+        name: 粉碎混合物          # Shattering Concoction
+        option_of: brew_concoction
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：粉碎混合物
+        stats:
+          - { stat: grant_skill.shattering_concoction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      explosive_concoction:
+        name: 爆裂物          # Explosive Concoction
+        option_of: brew_concoction
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：爆裂物
+        stats:
+          - { stat: grant_skill.explosive_concoction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      fulminating:
+        name: 烈性混合物          # Fulminating Concoction
+        option_of: brew_concoction
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：烈性混合物
+        stats:
+          - { stat: grant_skill.fulminating_concoction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      acidic_concoction:
+        name: 酸性混合物          # Acidic Concoction
+        option_of: brew_concoction
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：酸性靈藥
+        stats:
+          - { stat: grant_skill.acidic_concoction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      life_flask_charges:
+        name: 生命藥劑充能          # Life Flask Charges
+        icon: POTION
+        lines:
+          - 增加 20% 獲得的生命藥劑充能
+        stats:
+          - { stat: flask.charges_gained.life, type: INCREASED, value: 20 }
+      enduring_elixirs:
+        name: 耐久靈藥          # Enduring Elixirs
+        requires: life_flask_charges
+        notable: true
+        icon: POTION
+        lines:
+          - 未保留生命全滿時，不會移除生命藥劑效果
+          - 生命藥劑效果不會排隊
+        stats:
+          - { stat: asc.enduring_elixirs, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        note: 藥劑效果本來就會同時生效（不排隊）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器的藥劑效果本來就會同時生效（不排隊）」
+      passive_points:
+        name: 天賦點數          # Passive Points
+        icon: EXPERIENCE_BOTTLE
+        lines:
+          - 提供 1 點天賦點數
+        stats:
+          - { stat: passive.points_extra, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      path_seeker:
+        name: 道路探求者          # Path Seeker
+        requires: passive_points
+        choice: true
+        icon: MAP
+      path_sorceress:
+        name: 女術者之道          # Path of the Sorceress
+        option_of: path_seeker
+        icon: MAP
+        lines:
+          - 可從元素法師的起點配置天賦
+          - 提供 4 點天賦點數
+        stats:
+          - { stat: asc.path_sorceress, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: passive.points_extra, type: FLAT, value: 4 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      path_warrior:
+        name: 戰士之道          # Path of the Warrior
+        option_of: path_seeker
+        icon: MAP
+        lines:
+          - 可從重甲鬥士的起點配置天賦
+          - 提供 4 點天賦點數
+        stats:
+          - { stat: asc.path_warrior, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: passive.points_extra, type: FLAT, value: 4 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      passive_points_2:
+        name: 天賦點數          # Passive Points
+        requires: path_seeker
+        icon: EXPERIENCE_BOTTLE
+        lines:
+          - 提供 1 點天賦點數
+        stats:
+          - { stat: passive.points_extra, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      travellers_wisdom:
+        name: 旅者的智慧          # Traveller's Wisdom
+        requires: passive_points_2
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 屬性天賦可改為提供增加 5% 傷害
+          - 屬性天賦可改為提供增加 5% 護甲、閃避值與能量護盾
+          - 屬性天賦可改為提供增加 5% 消耗效率
+        stats:
+          - { stat: asc.travellers_wisdom, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        note: 在天賦樹上左鍵切換已配置的屬性天賦：力量、敏捷、智慧、傷害、防禦、消耗效率
 
-  invoker:
+  invoker:                # 原作：Invoker
     class: monk
     name: 喚雷者
     color: "#ffe066"
     icon: LIGHTNING_ROD
-    summary: 以元素為信仰的武僧：額外雷冰、暴擊無視抗性、閃避化為護甲。
+    summary: 以元素為信仰的武僧：額外的雷與冰、暴擊無視抗性、閃避也算護甲、引星少保留。
     nodes:
-      i_ele:
-        name: 元素經
-        cost: 1
-        icon: PRISMARINE_CRYSTALS
-        stats:
-          - { stat: damage, type: INCREASED, value: 12, tags: [elemental] }
-      i_thunder:
-        name: 雷身
-        requires: i_ele
-        cost: 1
-        icon: LIGHTNING_ROD
-        stats:
-          - { stat: damage.extra.lightning, value: 10 }
-      i_blizzard:
-        name: 雪身
-        requires: i_thunder
-        cost: 1
-        icon: PACKED_ICE
-        stats:
-          - { stat: damage.extra.cold, value: 10 }
-      i_crit:
-        name: 洞察
-        cost: 1
-        icon: ENDER_EYE
+      critical_chance:
+        name: 暴擊率          # Critical Chance
+        icon: AMETHYST_SHARD
+        lines:
+          - 增加 12% 暴擊率
         stats:
           - { stat: crit.chance, type: INCREASED, value: 12 }
-      i_sunder:
-        name: 破法拳
-        requires: i_crit
-        cost: 1
-        icon: NETHERITE_SWORD
+      sunder_enemies:
+        name: 粉碎我的敵人……          # Sunder my Enemies...
+        requires: critical_chance
+        notable: true
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - 暴擊無視敵方怪物的非負元素抗性
         stats:
-          - { stat: flag.sunder_enemies, value: 1 }
-      i_ev:
-        name: 身法
-        cost: 1
-        icon: LEATHER_CHESTPLATE
+          - { stat: flag.sunder_enemies, type: FLAT, value: 1 }
+      critical_chance_2:
+        name: 暴擊率          # Critical Chance
+        requires: sunder_enemies
+        icon: AMETHYST_SHARD
+        lines:
+          - 增加 12% 暴擊率
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 12 }
+      scatter_them_winds:
+        name: ……並驅散於長風之中          # ...and Scatter Them to the Winds
+        requires: critical_chance_2
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 近戰暴擊時觸發元素展現
+          - 提供技能：元素表現
+        stats:
+          - { stat: asc.expression, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        note: 元素表現自動觸發，不佔技能面板
+      triggered_spell:
+        name: 觸發法術傷害          # Triggered Spell Damage
+        icon: BOOK
+        lines:
+          - 觸發的法術，增加 16% 法術傷害
+        stats:
+          - { stat: damage, type: INCREASED, value: 16, tags: [spell, triggered] }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      soul_springs_eternal:
+        name: 魂魄永恆不息          # The Soul Springs Eternal
+        requires: triggered_spell
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 更多 35% 引星獲得的能量
+          - 增加 50% 引星的保留效率
+        stats:
+          - { stat: aura.reservation, type: INCREASED, value: -50, tags: [meta] }
+          - { stat: meta.energy_gain, type: MORE, value: 35 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      shock_effect:
+        name: 感電效果          # Shock Effect
+        icon: LIGHTNING_ROD
+        lines:
+          - 增加 15% 你造成的感電幅度
+        stats:
+          - { stat: shock.effect, type: INCREASED, value: 15 }
+      thunder:
+        name: 我即為雷鳴……          # I am the Thunder...
+        requires: shock_effect
+        notable: true
+        icon: LIGHTNING_ROD
+        lines:
+          - 使敵人感電時，有 25% 機率產生感電地面
+          - 獲得 10% 傷害作為額外閃電傷害
+        stats:
+          - { stat: damage.extra.lightning, type: FLAT, value: 10 }
+          - { stat: asc.shocked_ground, type: FLAT, value: 25 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      elemental_damage:
+        name: 元素傷害          # Elemental Damage
+        requires: thunder
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - 增加 12% 元素傷害
+        stats:
+          - { stat: damage, type: INCREASED, value: 12, tags: [elemental] }
+      shall_rage:
+        name: ……而我將怒號          # ...and I Shall Rage
+        requires: [elemental_damage, elemental_damage_2]
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：無縛化身
+        stats:
+          - { stat: grant_skill.unbound_avatar, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      chill_effect:
+        name: 冰緩效果          # Chill Effect
+        icon: SNOWBALL
+        lines:
+          - 增加 15% 你造成的冰緩幅度
+        stats:
+          - { stat: chill.effect, type: INCREASED, value: 15 }
+      blizzard:
+        name: 我即為暴雪……          # I am the Blizzard...
+        requires: chill_effect
+        notable: true
+        icon: SNOWBALL
+        lines:
+          - 凍結敵人時產生冰緩地面
+          - 獲得 10% 傷害作為額外冰冷傷害
+        stats:
+          - { stat: damage.extra.cold, type: FLAT, value: 10 }
+          - { stat: asc.chilled_ground, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      elemental_damage_2:
+        name: 元素傷害          # Elemental Damage
+        requires: blizzard
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - 增加 12% 元素傷害
+        stats:
+          - { stat: damage, type: INCREASED, value: 12, tags: [elemental] }
+      energy_shield:
+        name: 能量護盾充能率          # Energy Shield Recharge Rate
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 增加 20% 能量護盾回充速度
+        stats:
+          - { stat: es.recharge, type: INCREASED, value: 20 }
+      faith_choice:
+        name: 信仰即為抉擇          # Faith is a Choice
+        requires: energy_shield
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：冥想
+        stats:
+          - { stat: grant_skill.meditate, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        # 2026-10-27 照 PoE2：冥想是真的引導，受到傷害就中斷（Channelling 的 recharge 模式）；拿掉 note（這次之前「沒有這種引導：施放一次回充約 2 秒份，超過上限的變成守護」）
+      evasion_energy:
+        name: 閃避和能量護盾          # Evasion and Energy Shield
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 增加 15% 閃避值
+          - 增加 15% 最大能量護盾
         stats:
           - { stat: evasion, type: INCREASED, value: 15 }
           - { stat: es.max, type: INCREASED, value: 15 }
-      i_protect:
-        name: 護身罡氣
-        requires: i_ev
-        cost: 1
-        icon: SHIELD
+      lead_grace:
+        name: 引我行恩典之途……          # Lead me through Grace...
+        requires: evasion_energy
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - +1 精魂（已裝備胸甲上每 8 點物品能量護盾）
+          - +1 精魂（已裝備胸甲上每 20 點閃避值）
+          - 無法從裝備獲得精魂
         stats:
-          - { stat: flag.protect_from_harm, value: 1 }
-          - { stat: evasion, type: MORE, value: -35 }
-      i_recharge:
-        name: 氣海
-        cost: 1
-        icon: HEART_OF_THE_SEA
-        stats:
-          - { stat: es.recharge, type: INCREASED, value: 20 }
-      i_ele2:
-        name: 元素之道 II
-        requires: i_blizzard
-        cost: 1
-        icon: PRISMARINE_CRYSTALS
-        stats:
-          - { stat: damage, type: INCREASED, value: 15, tags: [elemental] }
-      i_crit2:
-        name: 洞察 II
-        requires: i_sunder
-        cost: 1
-        icon: AMETHYST_SHARD
-        stats:
-          - { stat: crit.bonus, type: INCREASED, value: 25 }
-      i_thundersoul:
-        name: 雷魂
-        requires: i_crit2
-        cost: 1
-        icon: LIGHTNING_ROD
-        stats:
-          - { stat: sig.thunder_soul, type: FLAT, value: 1 }
-      i_ev2:
-        name: 身法 II
-        requires: i_protect
-        cost: 1
-        icon: LEATHER_BOOTS
+          - { stat: asc.grace, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      evasion:
+        name: 閃避          # Evasion
+        requires: lead_grace
+        icon: FEATHER
+        lines:
+          - 增加 20% 閃避值
         stats:
           - { stat: evasion, type: INCREASED, value: 20 }
-      i_voidstep:
-        name: 虛步
-        requires: i_ev2
-        cost: 1
-        icon: ENDER_PEARL
+      protect_harm:
+        name: ……並免我於傷痛          # ...and Protect me from Harm
+        requires: evasion
+        notable: true
+        icon: FEATHER
+        lines:
+          - 護甲的物理傷害減免改為依據你護甲與閃避值的總和計算
+          - 更少 35% 閃避值
         stats:
-          - { stat: sig.void_step, type: FLAT, value: 1 }
-      i_es:
-        name: 氣海 II
-        requires: i_recharge
-        cost: 1
-        icon: LIGHT_BLUE_DYE
-        stats:
-          - { stat: es.max, type: INCREASED, value: 15 }
-      i_ward:
-        name: 靜心
-        requires: i_es
-        cost: 1
-        icon: GLASS_BOTTLE
-        stats:
-          - { stat: ailment.threshold, type: INCREASED, value: 30 }
-      i_mind:
-        name: 心如止水
-        requires: i_ward
-        cost: 1
-        icon: WHITE_DYE
-        stats:
-          - { stat: avoid.stun, type: FLAT, value: 30 }
+          - { stat: flag.protect_from_harm, type: FLAT, value: 1 }
+          - { stat: evasion, type: MORE, value: -35 }
 
-  voidwalker:
+  voidwalker:                # 原作：Acolyte of Chayula
     class: monk
     name: 虛步者
     color: "#8e44ad"
     icon: ENDER_PEARL
-    summary: 追隨虛空的苦修者：混沌抗性加倍、混沌偷取。
+    summary: 追隨虛空的苦修者：混沌傷害與抗性、混沌抗性加倍、混沌也能偷取。
     nodes:
-      v_chaos:
-        name: 虛無之觸
-        cost: 1
-        icon: ENDER_PEARL
+      darkness:
+        name: 黑暗          # Darkness
+        icon: BLACK_DYE
+        lines:
+          - 增加 10% 最大黑暗
         stats:
-          - { stat: damage, type: INCREASED, value: 11, tags: [chaos] }
-      v_extra:
-        name: 虛空湧流
-        requires: v_chaos
-        cost: 1
-        icon: DRAGON_BREATH
+          - { stat: asc.darkness, type: INCREASED, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      embrace_darkness:
+        name: 靈魂昇華          # Embrace the Darkness
+        requires: darkness
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 你沒有精魂
+          - 基礎最大黑暗為 100
+          - 承受的傷害先從黑暗中保留，再從生命或能量護盾扣除
+          - 黑暗保留持續 5 秒
+          - +10 最大黑暗（每等級）
         stats:
-          - { stat: damage.extra.chaos, value: 4 }
-      v_res:
-        name: 暗影之膚
-        cost: 1
-        icon: OBSIDIAN
+          - { stat: asc.no_spirit, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.darkness, type: FLAT, value: 100 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.darkness_per_level, type: FLAT, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.darkness_seconds, type: FLAT, value: 5 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      darkness_2:
+        name: 黑暗          # Darkness
+        requires: embrace_darkness
+        icon: BLACK_DYE
+        lines:
+          - 增加 10% 最大黑暗
         stats:
-          - { stat: resist.chaos, value: 7 }
-      v_gift:
-        name: 虛空饋贈
-        requires: v_res
-        cost: 1
-        icon: CRYING_OBSIDIAN
+          - { stat: asc.darkness, type: INCREASED, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      deepening_shadows:
+        name: 加深陰影          # Deepening Shadows
+        requires: darkness_2
+        notable: true
+        icon: WITHER_ROSE
+        lines:
+          - 增加 1% 最大黑暗（每 1% 混沌抗性）
         stats:
-          - { stat: resist.max.chaos, value: 10 }
-          - { stat: flag.chaos_res_double, value: 1 }
-      v_leech:
-        name: 汲夢
-        cost: 1
-        icon: GHAST_TEAR
+          - { stat: asc.darkness_per_chaos, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      damage_as_chaos:
+        name: 額外混沌傷害          # Damage as Chaos
+        icon: WITHER_ROSE
+        lines:
+          - 獲得 4% 傷害作為額外混沌傷害
         stats:
-          - { stat: leech.effect, type: INCREASED, value: 11 }
-      v_sap:
-        name: 夢魘汲
-        requires: v_leech
-        cost: 1
-        icon: FERMENTED_SPIDER_EYE
+          - { stat: damage.extra.chaos, type: FLAT, value: 4 }
+      grasp_void:
+        name: 虛空之握          # Grasp of the Void
+        requires: damage_as_chaos
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：虛空幻影
         stats:
-          - { stat: flag.leech_chaos, value: 1 }
-      v_speed:
-        name: 迅捷
-        cost: 1
-        icon: FEATHER
+          - { stat: grant_skill.void_illusion, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      skill_speed:
+        name: 技能速度          # Skill Speed
+        icon: SUGAR
+        lines:
+          - 增加 4% 技能速度
         stats:
           - { stat: attack.speed, type: INCREASED, value: 4 }
           - { stat: cast.speed, type: INCREASED, value: 4 }
-      v_chaos2:
-        name: 虛無之觸 II
-        requires: v_speed
-        cost: 1
-        icon: ENDER_PEARL
+      waking_dream:
+        name: 夢醒          # Waking Dream
+        requires: skill_speed
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：遁入裂痕
+        stats:
+          - { stat: grant_skill.into_the_breach, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      skill_speed_2:
+        name: 技能速度          # Skill Speed
+        requires: waking_dream
+        icon: SUGAR
+        lines:
+          - 增加 4% 技能速度
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 4 }
+          - { stat: cast.speed, type: INCREASED, value: 4 }
+      lucid_dreaming:
+        name: 清晰夢境          # Lucid Dreaming
+        requires: skill_speed_2
+        choice: true
+        icon: AMETHYST_SHARD
+      choice_power:
+        name: 力量之選          # Choice of Power
+        option_of: lucid_dreaming
+        icon: GLOWSTONE_DUST
+        lines:
+          - 你顯現的所有夏烏拉之炎皆為紫色
+          - 增加 50% 你產生的殘骸效果
+          - 可從遠 50% 的距離拾取殘骸
+        stats:
+          - { stat: asc.flame_colour, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.remnant_effect, type: INCREASED, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: remnant.pickup_range, type: INCREASED, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      choice_mana:
+        name: 魔力之選          # Choice of Mana
+        option_of: lucid_dreaming
+        icon: LAPIS_LAZULI
+        lines:
+          - 你顯現的所有夏烏拉之炎皆為藍色
+          - 增加 50% 你產生的殘骸效果
+          - 可從遠 50% 的距離拾取殘骸
+        stats:
+          - { stat: asc.flame_colour, type: FLAT, value: 2 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.remnant_effect, type: INCREASED, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: remnant.pickup_range, type: INCREASED, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      choice_life:
+        name: 生命之選          # Choice of Life
+        option_of: lucid_dreaming
+        icon: RED_DYE
+        lines:
+          - 你顯現的所有夏烏拉之炎皆為紅色
+          - 增加 50% 你產生的殘骸效果
+          - 可從遠 50% 的距離拾取殘骸
+        stats:
+          - { stat: asc.flame_colour, type: FLAT, value: 3 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.remnant_effect, type: INCREASED, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: remnant.pickup_range, type: INCREASED, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      leech:
+        name: 偷取          # Leech
+        icon: GHAST_TEAR
+        lines:
+          - 增加 11% 生命偷取量
+          - 增加 11% 魔力偷取量
+        stats:
+          - { stat: leech.effect, type: INCREASED, value: 11 }
+      sap_nightmares:
+        name: 惡夢樹液          # Sap of Nightmares
+        requires: leech
+        notable: true
+        icon: GHAST_TEAR
+        lines:
+          - 偷取也會依據混沌傷害與物理傷害回復
+        stats:
+          - { stat: flag.leech_chaos, type: FLAT, value: 1 }
+      chaos_resistance:
+        name: 混沌抗性          # Chaos Resistance
+        icon: WITHER_ROSE
+        lines:
+          - +7% 混沌抗性
+        stats:
+          - { stat: resist.chaos, type: FLAT, value: 7 }
+      chayulas_gift:
+        name: 夏烏拉之禮          # Chayula's Gift
+        requires: chaos_resistance
+        notable: true
+        icon: WITHER_ROSE
+        lines:
+          - +10% 最大混沌抗性
+          - 混沌抗性加倍
+        stats:
+          - { stat: resist.max.chaos, type: FLAT, value: 10 }
+          - { stat: flag.chaos_res_double, type: FLAT, value: 1 }
+      chaos_damage:
+        name: 混沌傷害          # Chaos Damage
+        requires: chayulas_gift
+        icon: WITHER_ROSE
+        lines:
+          - 增加 11% 混沌傷害
         stats:
           - { stat: damage, type: INCREASED, value: 11, tags: [chaos] }
-      v_chaos3:
-        name: 虛無之觸 III
-        requires: v_extra
-        cost: 1
-        icon: ECHO_SHARD
+      archon_chayula:
+        name: 夏烏拉統治者          # Archon of Chayula
+        requires: chaos_damage
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：夏烏拉統治者
         stats:
-          - { stat: damage, type: INCREASED, value: 15, tags: [chaos] }
-      v_plague:
-        name: 瘟主
-        requires: v_chaos3
-        cost: 1
-        icon: FERMENTED_SPIDER_EYE
+          - { stat: grant_skill.archon_of_chayula, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      volatility:
+        name: 易爆          # Volatility
+        icon: TNT
+        lines:
+          - 擊殺時有 10% 機率獲得易爆
         stats:
-          - { stat: sig.plague_lord, type: FLAT, value: 1 }
-      v_res2:
-        name: 暗影之膚 II
-        requires: v_gift
-        cost: 1
-        icon: OBSIDIAN
+          - { stat: volatility.on_kill, type: FLAT, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果；易爆跟天賦樹同一套，TreeMechanics）
+      inner_turmoil:
+        name: 內心動盪          # Inner Turmoil
+        requires: volatility
+        notable: true
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - 造成元素異常狀態時獲得 1 易爆
+          - 不會受到易爆的傷害
         stats:
-          - { stat: resist.chaos, type: FLAT, value: 10 }
-      v_es:
-        name: 虛空護體
-        requires: v_res2
-        cost: 1
-        icon: LIGHT_BLUE_DYE
+          - { stat: volatility.on_elemental_ailment, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: flag.volatility_immune, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      chaos_damage_2:
+        name: 混沌傷害          # Chaos Damage
+        requires: inner_turmoil
+        icon: WITHER_ROSE
+        lines:
+          - 增加 11% 混沌傷害
         stats:
-          - { stat: es.max, type: INCREASED, value: 15 }
-      v_leech2:
-        name: 汲夢 II
-        requires: v_sap
-        cost: 1
-        icon: REDSTONE
+          - { stat: damage, type: INCREASED, value: 11, tags: [chaos] }
+      unravelling:
+        name: 收心          # Unravelling
+        requires: chaos_damage_2
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 提供紛亂
         stats:
-          - { stat: leech.rate, type: INCREASED, value: 30 }
-      v_void:
-        name: 虛步
-        requires: v_leech2
-        cost: 1
-        icon: ENDER_PEARL
-        stats:
-          - { stat: sig.void_step, type: FLAT, value: 1 }
-      v_ms:
-        name: 無影
-        requires: v_chaos2
-        cost: 1
-        icon: SUGAR
-        stats:
-          - { stat: movement.speed, type: INCREASED, value: 5 }
-      v_dark:
-        name: 闇心
-        requires: v_ms
-        cost: 1
-        icon: COAL
-        stats:
-          - { stat: crit.chance, type: INCREASED, value: 25 }
+          - { stat: asc.unravelling, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        # 2026-10-27 照站長：關鍵字說明改由 KeywordText 自動帶出（只顯示一次）；這次之前 note: 紛亂：混沌傷害每 2 秒輪流也算進凍結累積、點燃或感電機率
 
-  starfire:
+  # 2026-10-27 照 PoE2 0.5 補上第三個武僧昇華（Martial Artist，poe2db／PoB 0_5 tree.json）：天賦、相連、數值照原作。
+  martialartist:                # 原作：Martial Artist
+    class: monk
+    name: 鳴鐘武師
+    color: "#d9b44a"
+    icon: BELL
+    summary: 以身為器的武者：空無之鐘、幻影出招、山巒之道的護體、符文紋身、連擊與石拳。
+    nodes:
+      attributes:
+        name: 能力值          # Attributes
+        icon: GOLD_NUGGET
+        lines:
+          - +5 全能力值
+        stats:
+          - { stat: attr.str, type: FLAT, value: 5 }
+          - { stat: attr.dex, type: FLAT, value: 5 }
+          - { stat: attr.int, type: FLAT, value: 5 }
+      runic_meridians:
+        name: 符文子午線          # Runic Meridians
+        requires: attributes
+        notable: true
+        icon: PAPER
+        lines:
+          - 可以把符文紋在身上，獲得只能嵌符文的孔：
+          - 頭盔 1 孔、胸甲 2 孔、腿甲 1 孔、鞋子 1 孔
+        stats:
+          - { stat: asc.meridians, type: FLAT, value: 5 }   # 2026-10-27 照 PoE2（enable_chakras：頭 1、身 2、手 1、腳 1）
+        note: 在昇華天賦（/ascend tree）點「符文子午線」紋上符文；照防具上的符文生效，護甲、閃避、能量護盾的增加套用在那一格穿著的防具上。原作的手套孔在這裡是腿甲
+      area:
+        name: 範圍效果          # Area of Effect
+        icon: SLIME_BALL
+        lines:
+          - 增加 8% 範圍效果
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 8 }
+      hollow_focus:
+        name: 空無專注之技          # Hollow Focus Technique
+        requires: area
+        notable: true
+        icon: BELL
+        lines:
+          - 提供技能：空無專注
+        stats:
+          - { stat: grant_skill.hollow_focus, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2
+      area_2:
+        name: 範圍效果          # Area of Effect
+        requires: hollow_focus
+        icon: SLIME_BALL
+        lines:
+          - 增加 8% 範圍效果
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 8 }
+      hollow_resonance:
+        name: 空無共鳴之技          # Hollow Resonance Technique
+        requires: area_2
+        notable: true
+        icon: BELL
+        lines:
+          - 提供技能：空無共鳴
+        stats:
+          - { stat: grant_skill.hollow_resonance, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2
+      power_chance:
+        name: 額外銳星機率          # Additional Power Charge Chance
+        icon: LAPIS_LAZULI
+        lines:
+          - 獲得銳星時有 10% 機率多獲得 1 顆
+        stats:
+          - { stat: charge.extra.power, type: FLAT, value: 10 }
+      hollow_form:
+        name: 空無型態之技          # Hollow Form Technique
+        requires: power_chance
+        notable: true
+        icon: PHANTOM_MEMBRANE
+        lines:
+          - 提供技能：空無型態
+        stats:
+          - { stat: grant_skill.hollow_form, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2
+      immobilise:
+        name: 禁錮累積          # Immobilisation Buildup
+        icon: COBWEB
+        lines:
+          - 增加 20% 禁錮累積
+        stats:
+          - { stat: pin.buildup, type: INCREASED, value: 20 }
+          - { stat: freeze.buildup, type: INCREASED, value: 20 }
+          - { stat: electrocute.buildup, type: INCREASED, value: 20 }
+      mountain:
+        name: 山巒之道          # Way of the Mountain
+        requires: immobilise
+        notable: true
+        icon: COBBLESTONE
+        lines:
+          - 禁錮敵人時，照敵人的強度每點 100% 超越機率獲得 1 層山巒之教，最多 30 層
+          - 被擊中、或使用與持續會受山巒之教加成的攻擊時，失去 1 層山巒之教
+        stats:
+          - { stat: asc.mountain, type: FLAT, value: 30 }   # 2026-10-27 照 PoE2（stone_skin：攻擊更多 15%、小擊中傷害更少 40%、暈眩門檻更多 50%）
+        note: 山巒之教：你的攻擊更多 15% 傷害；承受經護甲與抗性後不超過最大生命 30% 的擊中時，傷害更少 40%；暈眩門檻更多 50%。8 秒沒有獲得就全部失去
+      evasion_es:
+        name: 閃避和能量護盾          # Evasion and Energy Shield
+        icon: LEATHER
+        lines:
+          - 增加 15% 閃避值
+          - 增加 15% 最大能量護盾
+        stats:
+          - { stat: evasion, type: INCREASED, value: 15 }
+          - { stat: es.max, type: INCREASED, value: 15 }
+      stonefist:
+        name: 石拳之道          # Way of the Stonefist
+        requires: evasion_es
+        notable: true
+        icon: STONE
+        lines:
+          - 裝備的腿甲變成石拳：防禦換成每角色等級 +3 閃避值、+1 最大能量護盾，詞綴的加成更強
+          - 裝備腿甲不需要能力值
+        stats:
+          - { stat: asc.stonefist, type: FLAT, value: 50 }   # 2026-10-27 照 PoE2（ascendancy_hand_wraps、ignore_attribute_requirements_for_gloves）
+        note: 原作的手套在這裡是腿甲；原作每種詞綴各自換成相關的強化詞綴，這裡改成腿甲詞綴的數值增加 50%
+      attack_speed:
+        name: 攻擊速度          # Attack Speed
+        icon: SUGAR
+        lines:
+          - 增加 4% 攻擊速度
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 4 }
+      martial_adept:
+        name: 武術精通          # Martial Adept
+        requires: attack_speed
+        notable: true
+        icon: BLAZE_ROD
+        lines:
+          - 累積連擊時多累積 1 層
+          - 使用技能時每用掉 1 層連擊，目前的能量護盾回充延遲 -0.2 秒
+        stats:
+          - { stat: combo.extra_chance, type: FLAT, value: 100 }   # 2026-10-27 照 PoE2（additional_combo_gain_on_hit 1）
+          - { stat: asc.combo_es_delay, type: FLAT, value: 0.2 }
+      attack_speed_2:
+        name: 攻擊速度          # Attack Speed
+        requires: martial_adept
+        icon: SUGAR
+        lines:
+          - 增加 4% 攻擊速度
+        stats:
+          - { stat: attack.speed, type: INCREASED, value: 4 }
+      martial_master:
+        name: 武術宗師          # Martial Master
+        requires: attack_speed_2
+        notable: true
+        icon: BLAZE_ROD
+        lines:
+          - 不管用哪一套武器，技能都能累積與保留連擊
+          - 所有攻擊擊中都會累積連擊
+        stats:
+          - { stat: asc.combo_any_attack, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2（can_gain_combo_from_any_attack_hit）
+
+  starfire:                # 原作：Stormweaver
     class: sorceress
     name: 星焰術士
     color: "#ff9f43"
     icon: BLAZE_ROD
-    summary: 操縱風暴的術士：所有傷害都能冰緩、感電，魔力扛傷。
+    summary: 操縱風暴的術士：所有傷害都能冰緩、感電，傷害先扣魔力、法術暴擊。
     nodes:
-      s_mana:
-        name: 法泉
-        cost: 1
-        icon: LAPIS_LAZULI
+      remnant_range:
+        name: 痕跡距離          # Remnant Range
+        icon: GLOWSTONE_DUST
+        lines:
+          - 可從遠 25% 的距離拾取殘骸
+        stats:   # 2026-10-26 照 PoE2（灌注殘骸、殘影都算）
+          - { stat: remnant.pickup_range, type: INCREASED, value: 25 }
+      storms_recollection:
+        name: 風暴回憶          # Storm's Recollection
+        requires: remnant_range
+        notable: true
+        icon: GLOWSTONE_DUST
+        lines:
+          - 可從遠 50% 的距離拾取殘骸
+          - 你產生的殘骸被拾取 3 秒後會再出現一次
+        stats:   # 2026-10-26 照 PoE2
+          - { stat: remnant.pickup_range, type: INCREASED, value: 50 }
+          - { stat: remnant.reappear_ms, type: FLAT, value: 3000 }
+      spell_critical:
+        name: 法術暴擊率          # Spell Critical Chance
+        icon: AMETHYST_SHARD
+        lines:
+          - 增加 12% 法術暴擊率
         stats:
-          - { stat: mana.regen, type: INCREASED, value: 12 }
-      s_will:
-        name: 心力
-        requires: s_mana
-        cost: 1
-        icon: LAPIS_BLOCK
+          - { stat: crit.chance, type: INCREASED, value: 12, tags: [spell] }
+      tempest_caller:
+        name: 暴風召喚者          # Tempest Caller
+        requires: spell_critical
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 法術暴擊時觸發元素風暴
+          - 提供技能：元素風暴
         stats:
-          - { stat: damage.from_mana, value: 20 }
-      s_shock:
-        name: 雷落
-        cost: 1
-        icon: LIGHTNING_ROD
+          - { stat: asc.tempest, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        note: 元素風暴自動觸發，不佔技能面板
+      spell_critical_2:
+        name: 法術暴擊率          # Spell Critical Chance
+        requires: tempest_caller
+        icon: AMETHYST_SHARD
+        lines:
+          - 增加 12% 法術暴擊率
         stats:
-          - { stat: shock.chance, type: INCREASED, value: 20 }
-      s_storms:
-        name: 御雷
-        requires: s_shock
-        cost: 1
-        icon: TRIDENT
+          - { stat: crit.chance, type: INCREASED, value: 12, tags: [spell] }
+      multiplying_squalls:
+        name: 頻繁暴雨          # Multiplying Squalls
+        requires: spell_critical_2
+        notable: true
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - 元素技能上限 +2
         stats:
-          - { stat: flag.all_damage_shocks, value: 1 }
-      s_chill:
-        name: 寒意
-        cost: 1
+          - { stat: asc.elemental_limit, type: FLAT, value: 2 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      chill_duration:
+        name: 冰緩持續時間          # Chill Duration
         icon: SNOWBALL
+        lines:
+          - 增加 25% 對敵人的冰緩持續時間
         stats:
           - { stat: chill.duration, type: INCREASED, value: 25 }
-      s_winter:
-        name: 御寒
-        requires: s_chill
-        cost: 1
-        icon: PACKED_ICE
-        stats:
-          - { stat: flag.all_damage_chills, value: 1 }
-      s_crit:
-        name: 星火
-        cost: 1
-        icon: GLOWSTONE_DUST
-        stats:
-          - { stat: crit.chance, type: INCREASED, value: 12, tags: [spell] }
-      s_crit2:
-        name: 星火 II
-        requires: s_crit
-        cost: 1
-        icon: GLOWSTONE_DUST
-        stats:
-          - { stat: crit.chance, type: INCREASED, value: 12, tags: [spell] }
-      s_mana2:
-        name: 法泉 II
-        requires: s_will
-        cost: 1
-        icon: LAPIS_LAZULI
-        stats:
-          - { stat: mana.max, type: INCREASED, value: 10 }
-      s_thunder:
-        name: 雷魂
-        requires: s_mana2
-        cost: 1
-        icon: LIGHTNING_ROD
-        stats:
-          - { stat: sig.thunder_soul, type: FLAT, value: 1 }
-      s_shock2:
-        name: 雷擊 II
-        requires: s_storms
-        cost: 1
-        icon: GLOWSTONE_DUST
-        stats:
-          - { stat: shock.effect, type: INCREASED, value: 20 }
-      s_extra:
-        name: 我即雷霆
-        requires: s_shock2
-        cost: 1
-        icon: LIGHTNING_ROD
-        stats:
-          - { stat: damage.extra.lightning, type: FLAT, value: 10 }
-      s_chill2:
-        name: 寒意 II
-        requires: s_winter
-        cost: 1
+      heavy_snows:
+        name: 狂風暴雪          # Heavy Snows
+        requires: chill_duration
+        notable: true
         icon: SNOWBALL
+        lines:
+          - 目標可同時受到你兩個冰緩影響
+          - 你的冰緩最多可使目標緩速 35%
+          - 更少 25% 你造成的冰緩幅度
         stats:
-          - { stat: freeze.buildup, type: INCREASED, value: 25 }
-      s_tomb:
-        name: 冬葬
-        requires: s_chill2
-        cost: 1
-        icon: PACKED_ICE
+          - { stat: asc.double_chill, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.chill_cap, type: FLAT, value: 35 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.chill_less, type: FLAT, value: 25 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      chill_duration_2:
+        name: 冰緩持續時間          # Chill Duration
+        requires: heavy_snows
+        icon: SNOWBALL
+        lines:
+          - 增加 25% 對敵人的冰緩持續時間
         stats:
-          - { stat: sig.winter_tomb, type: FLAT, value: 1 }
-      s_crit3:
-        name: 星火 III
-        requires: s_crit2
-        cost: 1
-        icon: BLAZE_POWDER
+          - { stat: chill.duration, type: INCREASED, value: 25 }
+      shaper_winter:
+        name: 寒冬雕塑者          # Shaper of Winter
+        requires: chill_duration_2
+        notable: true
+        icon: SNOWBALL
+        lines:
+          - 擊中的所有傷害都會計入冰緩幅度
         stats:
-          - { stat: crit.bonus, type: INCREASED, value: 25 }
-      s_area:
-        name: 暴心
-        requires: s_crit3
-        cost: 1
-        icon: HEART_OF_THE_SEA
+          - { stat: flag.all_damage_chills, type: FLAT, value: 1 }
+      shock_chance:
+        name: 感電機率          # Shock Chance
+        icon: LIGHTNING_ROD
+        lines:
+          - 增加 20% 感電機率
         stats:
-          - { stat: skill.area, type: INCREASED, value: 15, tags: [spell] }
+          - { stat: shock.chance, type: INCREASED, value: 20 }
+      strike_twice:
+        name: 二重打擊          # Strike Twice
+        requires: shock_chance
+        notable: true
+        icon: LIGHTNING_ROD
+        lines:
+          - 目標可同時受到你兩個感電影響
+          - 更少 25% 你造成的感電幅度
+        stats:
+          - { stat: asc.double_shock, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.shock_less, type: FLAT, value: 25 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      shock_chance_2:
+        name: 感電機率          # Shock Chance
+        requires: strike_twice
+        icon: LIGHTNING_ROD
+        lines:
+          - 增加 20% 感電機率
+        stats:
+          - { stat: shock.chance, type: INCREASED, value: 20 }
+      shaper_storms:
+        name: 風暴雕塑者          # Shaper of Storms
+        requires: shock_chance_2
+        notable: true
+        icon: LIGHTNING_ROD
+        lines:
+          - 擊中的所有傷害都會計入感電機率
+        stats:
+          - { stat: flag.all_damage_shocks, type: FLAT, value: 1 }
+      mana_regeneration:
+        name: 魔力回復率          # Mana Regeneration
+        icon: LAPIS_LAZULI
+        lines:
+          - 增加 12% 魔力再生速度
+        stats:
+          - { stat: mana.regen, type: INCREASED, value: 12 }
+      constant_gale:
+        name: 不變勁風          # Constant Gale
+        requires: mana_regeneration
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 你擁有秘術增強
+        stats:
+          - { stat: flag.arcane_surge_always, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果；跟天賦樹同一個，TreeMechanics）
+      mana_regeneration_2:
+        name: 魔力回復率          # Mana Regeneration
+        requires: constant_gale
+        icon: LAPIS_LAZULI
+        lines:
+          - 增加 12% 魔力再生速度
+        stats:
+          - { stat: mana.regen, type: INCREASED, value: 12 }
+      force_will:
+        name: 意志之力          # Force of Will
+        requires: mana_regeneration_2
+        notable: true
+        icon: RED_DYE
+        lines:
+          - 每損失百分之十的魔力，增加 20% 你身上的秘術增強效果
+          - 20% 的傷害先從魔力扣除，再扣生命
+        stats:
+          - { stat: damage.from_mana, type: FLAT, value: 20 }
+          - { stat: asc.arcane_per_mana, type: FLAT, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      remnant_range_2:
+        name: 痕跡距離          # Remnant Range
+        icon: GLOWSTONE_DUST
+        lines:
+          - 可從遠 25% 的距離拾取殘骸
+        stats:   # 2026-10-26 照 PoE2
+          - { stat: remnant.pickup_range, type: INCREASED, value: 25 }
+      refracted_infusion:
+        name: 拆射灌注          # Refracted Infusion
+        requires: remnant_range_2
+        notable: true
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - 拾取元素灌注時，獲得另一種不同的元素灌注
+        stats:   # 2026-10-26 照 PoE2（另一種隨機挑，SkillResources#collectInfusion）
+          - { stat: flag.infusion_refracted, type: FLAT, value: 1 }
 
-  voidrobe:
+  voidrobe:                # 原作：Chronomancer
     class: sorceress
     name: 虛空法袍
     color: "#6c5ce7"
     icon: CLOCK
-    summary: 操縱時間的術士：傷害延後、冷卻縮短。
+    summary: 操縱時間的術士：傷害延後（迷蹤形態）、施法速度、範圍、冷卻。
     nodes:
-      c_cdr:
-        name: 時光流轉
-        cost: 1
+      cooldown_recovery:
+        name: 冷卻時間恢復率          # Cooldown Recovery Rate
         icon: CLOCK
+        lines:
+          - 增加 6% 冷卻回復速度
         stats:
           - { stat: skill.cooldown, type: INCREASED, value: -6 }
-      c_phased:
-        name: 相移
-        requires: c_cdr
-        cost: 1
-        icon: PHANTOM_MEMBRANE
+      unbound_encore:
+        name: 無縛安可          # Unbound Encore
+        requires: cooldown_recovery
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：時間短縮
         stats:
-          - { stat: flag.phased_form, value: 1 }
-      c_area:
-        name: 時空擴張
-        cost: 1
-        icon: ENDER_EYE
+          - { stat: grant_skill.time_snap, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      cooldown_recovery_2:
+        name: 冷卻時間恢復率          # Cooldown Recovery Rate
+        requires: unbound_encore
+        icon: CLOCK
+        lines:
+          - 增加 6% 冷卻回復速度
+        stats:
+          - { stat: skill.cooldown, type: INCREASED, value: -6 }
+      ultimate_command:
+        name: 終極指令          # Ultimate Command
+        requires: cooldown_recovery_2
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：時間凍結
+        stats:
+          - { stat: grant_skill.time_freeze, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      slow_effect:
+        name: 緩速效果          # Slow Effect
+        icon: SOUL_SAND
+        lines:
+          - 增加 6% 你施加的減益效果緩速幅度
+        stats:
+          - { stat: slow.magnitude, type: INCREASED, value: 6 }
+      apex_moment:
+        name: 巔峰時刻          # Apex of the Moment
+        requires: slow_effect
+        notable: true
+        icon: BEACON
+        lines:
+          - 你存在範圍內的敵人被緩速 20%
+        stats:
+          - { stat: presence.slow, type: FLAT, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      cast_speed:
+        name: 施法速度          # Cast Speed
+        icon: SUGAR
+        lines:
+          - 增加 6% 施放速度
+        stats:
+          - { stat: cast.speed, type: INCREASED, value: 6 }
+      now_again:
+        name: 循環往復          # Now and Again
+        requires: cast_speed
+        notable: true
+        icon: BOOK
+        lines:
+          - 可層疊法術有 20% 機率回響
+          - 可重複法術有 20% 機率重複
+        stats:
+          - { stat: asc.echo, type: FLAT, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.repeat, type: FLAT, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      area_effect:
+        name: 範圍效果          # Area of Effect
+        icon: FIREWORK_STAR
+        lines:
+          - 增加 8% 範圍效果
         stats:
           - { stat: skill.area, type: INCREASED, value: 8 }
-      c_area2:
-        name: 時空擴張 II
-        requires: c_area
-        cost: 1
-        icon: ENDER_EYE
+      inevitability:
+        name: 不可避免          # Inevitability
+        requires: area_effect
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：命定苦痛
+        stats:
+          - { stat: grant_skill.inevitable_agony, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      skill_speed_area:
+        name: 技能速度和範圍效果          # Skill Speed and Area of Effect
+        icon: SUGAR
+        lines:
+          - 增加 6% 範圍效果
+          - 增加 4% 技能速度
         stats:
           - { stat: skill.area, type: INCREASED, value: 6 }
+          - { stat: attack.speed, type: INCREASED, value: 4 }
           - { stat: cast.speed, type: INCREASED, value: 4 }
-      c_cast:
-        name: 加速
-        cost: 1
-        icon: SUGAR
+      quicksand_hourglass:
+        name: 流沙沙漏          # Quicksand Hourglass
+        requires: skill_speed_area
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 提供時間之沙
         stats:
-          - { stat: cast.speed, type: INCREASED, value: 6 }
-      c_duration:
-        name: 延續
-        cost: 1
-        icon: HONEY_BOTTLE
+          - { stat: asc.sands, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        # 2026-10-27 照站長：關鍵字說明改由 KeywordText 自動帶出（只顯示一次）；這次之前 note: 時間之沙：技能速度增加 60% 在 10 秒內降到 1%，再升回 60%；範圍效果反過來從 1% 升到 60%
+      buff_expiry_rate:
+        name: 增益效果失效速度          # Buff Expiry Rate
+        icon: BREWING_STAND
+        lines:
+          - 你身上的增益效果消退速度減慢 10%
         stats:
-          - { stat: skill.duration, type: INCREASED, value: 10 }
-      c_cdr2:
-        name: 時光流轉 II
-        requires: c_phased
-        cost: 1
-        icon: CLOCK
+          - { stat: asc.buff_expiry, type: FLAT, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      phased_form:
+        name: 迷蹤形態          # Phased Form
+        requires: buff_expiry_rate
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 更少 30% 承受的傷害
+          - 被敵人擊中受到傷害的 4 秒後，承受等同該次擊中傷害 30% 的傷害
         stats:
-          - { stat: skill.cooldown, type: INCREASED, value: -6 }
-      c_duration2:
-        name: 延續 II
-        requires: c_duration
-        cost: 1
-        icon: HONEY_BOTTLE
+          - { stat: flag.phased_form, type: FLAT, value: 1 }
+      buff_expiry_rate_2:
+        name: 增益效果失效速度          # Buff Expiry Rate
+        requires: phased_form
+        icon: BREWING_STAND
+        lines:
+          - 你身上的增益效果消退速度減慢 10%
         stats:
-          - { stat: skill.duration, type: INCREASED, value: 10 }
-      c_rewind:
-        name: 回溯
-        requires: c_cdr2
-        cost: 1
-        icon: CLOCK
+          - { stat: asc.buff_expiry, type: FLAT, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      footprints_sand:
+        name: 沙中足跡          # Footprints in the Sand
+        requires: buff_expiry_rate_2
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：時空裂隙
         stats:
-          - { stat: life.recoup, type: FLAT, value: 10 }
-      c_area3:
-        name: 時空擴張 III
-        requires: c_area2
-        cost: 1
-        icon: ENDER_EYE
-        stats:
-          - { stat: damage, type: INCREASED, value: 15, tags: [area] }
-      c_quick:
-        name: 加速時光
-        requires: c_area3
-        cost: 1
-        icon: SUGAR
-        stats:
-          - { stat: cast.speed, type: MORE, value: 10 }
-      c_cast2:
-        name: 加速 II
-        requires: c_cast
-        cost: 1
-        icon: FEATHER
-        stats:
-          - { stat: cast.speed, type: INCREASED, value: 6 }
-      c_mana:
-        name: 時之泉
-        requires: c_cast2
-        cost: 1
-        icon: LAPIS_LAZULI
-        stats:
-          - { stat: mana.regen, type: INCREASED, value: 25 }
-      c_void:
-        name: 虛步
-        requires: c_mana
-        cost: 1
-        icon: ENDER_PEARL
-        stats:
-          - { stat: sig.void_step, type: FLAT, value: 1 }
-      c_slow:
-        name: 遲滯
-        requires: c_duration2
-        cost: 1
-        icon: SNOWBALL
-        stats:
-          - { stat: chill.effect, type: INCREASED, value: 25 }
-      c_freeze:
-        name: 時間凍結
-        requires: c_slow
-        cost: 1
-        icon: PACKED_ICE
-        stats:
-          - { stat: freeze.duration, type: INCREASED, value: 30 }
+          - { stat: grant_skill.temporal_rift, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
-  sandsage:
+  sandsage:                # 原作：Disciple of Varashta
     class: sorceress
     name: 沙靈使
     color: "#e8c46a"
     icon: SAND
-    summary: 與沙海精靈立約的術士：召喚物、法術範圍、精魂。
+    summary: 與沙海精靈立約的術士：召喚三位巨靈聽你指令、能量護盾回充、施法速度、範圍。   # 2026-10-27 巨靈做出來了；這次之前「…範圍（巨靈技能還沒做出來）。」
     nodes:
-      n_minion:
-        name: 沙靈
-        cost: 1
-        icon: SAND
+      barya_kelari:
+        name: 克拉里的巨靈之幣          # Barya of Kelari
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：黯染飛砂．克拉里
         stats:
-          - { stat: damage, type: INCREASED, value: 20, tags: [minion] }
-      n_minion2:
-        name: 疾風沙靈
-        requires: n_minion
-        cost: 1
+          - { stat: grant_skill.kelari_djinn, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        # 2026-10-27 照 PoE2：巨靈是有實體、不會受傷、只聽指令的召喚物；拿掉 note（這次之前「巨靈沒有實體：指令直接在準心的地方生效」）
+      kelaris_deception:
+        name: 克拉里的欺瞞          # Kelari's Deception
+        requires: barya_kelari
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：克拉里的欺瞞
+        stats:
+          - { stat: grant_skill.kelari_deception, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      kelaris_judgment:
+        name: 克拉里的審判          # Kelari's Judgment
+        requires: barya_kelari
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：克拉里的審判
+        stats:
+          - { stat: grant_skill.kelari_judgment, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      kelaris_malediction:
+        name: 克拉里的惡咒          # Kelari's Malediction
+        requires: barya_kelari
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：克拉里的惡言
+        stats:
+          - { stat: grant_skill.kelari_malediction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      area_effect:
+        name: 範圍效果          # Area of Effect
+        icon: FIREWORK_STAR
+        lines:
+          - 增加 8% 範圍效果
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 8 }
+      baryanic_leylines:
+        name: 巴雅地脈          # Baryanic Leylines
+        requires: area_effect
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 增加 40% 非傳奇的失落時光珠寶半徑
+        stats:
+          - { stat: asc.leylines, type: FLAT, value: 40 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      cast_speed:
+        name: 施法速度          # Cast Speed
         icon: SUGAR
+        lines:
+          - 增加 4% 施放速度
         stats:
-          - { stat: attack.speed, type: INCREASED, value: 10, tags: [minion] }
-      n_legion:
-        name: 軍陣
-        requires: n_minion2
-        cost: 1
-        icon: WHITE_BANNER
+          - { stat: cast.speed, type: INCREASED, value: 4 }
+      instruments_power:
+        name: 力量之器          # Instruments of Power
+        requires: cast_speed
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 持用法杖時可裝備法器
+          - 減少 50% 已裝備法器提供的加成
         stats:
-          - { stat: sig.legion, type: FLAT, value: 1 }
-      n_command:
-        name: 精靈之王
-        requires: n_legion
-        cost: 1
-        icon: GOLDEN_HELMET
+          - { stat: asc.staff_focus, type: FLAT, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      barya_navira:
+        name: 納維拉的巨靈之幣          # Barya of Navira
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：最終幻象．納維拉
         stats:
-          - { stat: damage, type: MORE, value: 20, tags: [minion] }
-      n_spell:
-        name: 沙暴
-        cost: 1
-        icon: SANDSTONE
+          - { stat: grant_skill.navira_djinn, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        # 2026-10-27 照 PoE2：巨靈是有實體、不會受傷、只聽指令的召喚物；拿掉 note（這次之前「巨靈沒有實體：指令直接生效」）
+      naviras_oasis:
+        name: 納維拉綠洲          # Navira's Oasis
+        requires: barya_navira
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：納維拉的綠洲
         stats:
-          - { stat: damage, type: INCREASED, value: 15, tags: [spell] }
-      n_cast:
-        name: 疾詠
-        requires: n_spell
-        cost: 1
-        icon: FEATHER
+          - { stat: grant_skill.navira_oasis, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      naviras_well:
+        name: 納維拉之井          # Navira's Well
+        requires: barya_navira
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：納維拉的水井
         stats:
-          - { stat: cast.speed, type: INCREASED, value: 6 }
-      n_area:
-        name: 漫天黃沙
-        requires: n_cast
-        cost: 1
-        icon: SAND
+          - { stat: grant_skill.navira_well, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      naviras_fracturing:
+        name: 納維拉的分裂          # Navira's Fracturing
+        requires: barya_navira
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：納維拉的封凍
         stats:
-          - { stat: skill.area, type: INCREASED, value: 15, tags: [spell] }
-      n_frost:
-        name: 夜沙之寒
-        requires: n_area
-        cost: 1
-        icon: PACKED_ICE
+          - { stat: grant_skill.navira_fracturing, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      mana:
+        name: 魔力          # Mana
+        icon: LAPIS_LAZULI
+        lines:
+          - 增加 3% 最大魔力
         stats:
-          - { stat: damage.extra.cold, type: FLAT, value: 10 }
-      n_es:
-        name: 沙之護
-        cost: 1
+          - { stat: mana.max, type: INCREASED, value: 3 }
+      varashtas_intuition:
+        name: 瓦拉什塔的直覺          # Varashta's Intuition
+        requires: mana
+        notable: true
+        icon: RED_DYE
+        lines:
+          - 100% 的元素傷害先從魔力扣除，再扣生命
+        stats:
+          - { stat: asc.elemental_from_mana, type: FLAT, value: 100 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      energy_shield:
+        name: 能量護盾          # Energy Shield
         icon: LIGHT_BLUE_DYE
+        lines:
+          - 增加 20% 最大能量護盾
         stats:
-          - { stat: es.max, type: INCREASED, value: 15 }
-      n_rech:
-        name: 流沙
-        requires: n_es
-        cost: 1
-        icon: HOPPER
+          - { stat: es.max, type: INCREASED, value: 20 }
+      fourth_teaching:
+        name: 第四教誨          # The Fourth Teaching
+        requires: energy_shield
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 低能量護盾時，更多 40% 能量護盾回充速度
+          - 能量護盾回充基礎延遲 -1 秒
         stats:
-          - { stat: es.recharge, type: INCREASED, value: 25 }
-      n_ward:
-        name: 穩如沙丘
-        requires: n_rech
-        cost: 1
-        icon: SANDSTONE
+          - { stat: es.delay, type: INCREASED, value: -25 }
+          - { stat: asc.low_es_recharge, type: FLAT, value: 40 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      energy_shield_2:
+        name: 能量護盾          # Energy Shield
+        requires: fourth_teaching
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 增加 20% 最大能量護盾
         stats:
-          - { stat: avoid.stun, type: FLAT, value: 30 }
-      n_void:
-        name: 虛步
-        requires: n_ward
-        cost: 1
-        icon: ENDER_PEARL
+          - { stat: es.max, type: INCREASED, value: 20 }
+      sacred_rituals:
+        name: 神聖儀式          # Sacred Rituals
+        requires: energy_shield_2
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 計算護甲的物理傷害減免時，你當前能量護盾的 60% 會加到護甲上
         stats:
-          - { stat: sig.void_step, type: FLAT, value: 1 }
-      n_spirit:
-        name: 契約
-        cost: 1
-        icon: AMETHYST_SHARD
+          - { stat: asc.es_armour, type: FLAT, value: 60 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      barya_ruzhan:
+        name: 魯兹安的巨靈之幣          # Barya of Ruzhan
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：赤炎利劍．魯兹安
         stats:
-          - { stat: spirit.max, type: FLAT, value: 15 }   # 2026-10：增加 8% → +15（全域 % 精魂太多）
-      n_spirit2:
-        name: 契約 II
-        requires: n_spirit
-        cost: 1
-        icon: AMETHYST_CLUSTER
+          - { stat: grant_skill.ruzhan_djinn, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        # 2026-10-27 照 PoE2：巨靈是有實體、不會受傷、只聽指令的召喚物；拿掉 note（這次之前「巨靈沒有實體：斬擊與指令直接在你前方、準心的地方生效」）
+      ruzhans_reckoning:
+        name: 魯兹安的清算          # Ruzhan's Reckoning
+        requires: barya_ruzhan
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：魯兹安的清算
         stats:
-          - { stat: spirit.max, type: FLAT, value: 15 }   # 2026-10：增加 8% → +15（全域 % 精魂太多）
-      n_aura:
-        name: 精靈庇佑
-        requires: n_spirit2
-        cost: 1
-        icon: BEACON
+          - { stat: grant_skill.ruzhan_reckoning, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      ruzhans_fury:
+        name: 魯兹安的狂怒          # Ruzhan's Fury
+        requires: barya_ruzhan
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：魯兹安的怒火
         stats:
-          - { stat: aura.effect, type: INCREASED, value: 15 }
-      n_dur:
-        name: 永續
-        requires: n_aura
-        cost: 1
-        icon: CLOCK
+          - { stat: grant_skill.ruzhan_fury, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      ruzhans_trap:
+        name: 魯兹安的陷阱          # Ruzhan's Trap
+        requires: barya_ruzhan
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：魯兹安的陷阱
         stats:
-          - { stat: skill.duration, type: INCREASED, value: 20 }
+          - { stat: grant_skill.ruzhan_trap, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
-  blightcaller:
+  blightcaller:                # 原作：Infernalist
     class: witch
     name: 疫喚者
     color: "#e17055"
     icon: BLAZE_POWDER
-    summary: 與惡魔立約的女巫：用生命換護盾、魔力、精魂，暴擊焚身。
+    summary: 與惡魔立約的女巫：用生命換護盾、魔力、精魂，暴擊傷害更多但會自焚、全部傷害能點燃。
     nodes:
-      f_life:
-        name: 惡魔之血
-        cost: 1
-        icon: REDSTONE
-        stats:
-          - { stat: life.max, type: INCREASED, value: 3 }
-      f_hand:
-        name: 魔契之手
-        requires: f_life
-        cost: 1
-        icon: BLAZE_POWDER
-        stats:
-          - { stat: flag.beidat_hand, value: 1 }
-      f_mana:
-        name: 惡魔之心
-        cost: 1
-        icon: LAPIS_LAZULI
-        stats:
-          - { stat: mana.max, type: INCREASED, value: 3 }
-      f_gaze:
-        name: 魔契之眼
-        requires: f_mana
-        cost: 1
-        icon: ENDER_EYE
-        stats:
-          - { stat: flag.beidat_gaze, value: 1 }
-      f_will:
-        name: 魔契之志
-        requires: f_gaze
-        cost: 1
+      critical_chance:
+        name: 暴擊率          # Critical Chance
         icon: AMETHYST_SHARD
-        stats:
-          - { stat: flag.beidat_will, value: 1 }
-      f_crit:
-        name: 炎眼
-        cost: 1
-        icon: MAGMA_CREAM
+        lines:
+          - 增加 12% 暴擊率
         stats:
           - { stat: crit.chance, type: INCREASED, value: 12 }
-      f_grin:
-        name: 狂焰焚身
-        requires: f_crit
-        cost: 1
-        icon: FIRE_CHARGE
+      grinning_immolation:
+        name: 邪惡焚化          # Grinning Immolation
+        requires: critical_chance
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 造成暴擊時你會被點燃，每秒承受你最大生命與能量護盾 15% 的火焰傷害
+          - 更多 50% 暴擊傷害加成
         stats:
+          - { stat: self.ignite_on_crit, type: FLAT, value: 15 }
           - { stat: crit.bonus, type: MORE, value: 50 }
-          - { stat: self.ignite_on_crit, value: 15 }
-      f_flame:
-        name: 燃燒
-        cost: 1
-        icon: FLINT_AND_STEEL
+      minion_life:
+        name: 召喚物生命          # Minion Life
+        icon: BONE
+        lines:
+          - 增加 12% 召喚物的最大生命
+        stats:
+          - { stat: life.max, type: INCREASED, value: 12, tags: [minion] }
+      loyal_hellhound:
+        name: 忠誠獄犬          # Loyal Hellhound
+        requires: minion_life
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：召喚獄炎獵犬
+        stats:
+          - { stat: grant_skill.infernal_hound, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      mana:
+        name: 魔力          # Mana
+        icon: LAPIS_LAZULI
+        lines:
+          - 增加 3% 最大魔力
+        stats:
+          - { stat: mana.max, type: INCREASED, value: 3 }
+      pyromantic_pact:
+        name: 火祭協議          # Pyromantic Pact
+        requires: mana
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 煉獄之炎達到上限時，承受等同最大生命與能量護盾的火焰傷害
+          - 以雙倍的最大煉獄之炎取代最大魔力
+          - 技能消耗改為獲得煉獄之炎，而非花費魔力
+          - 達到煉獄之炎上限時失去所有煉獄之炎
+          - 每秒失去 25% 煉獄之炎，若過去 2 秒內未獲得煉獄之炎
+        stats:
+          - { stat: asc.infernal, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      mana_2:
+        name: 魔力          # Mana
+        requires: pyromantic_pact
+        icon: LAPIS_LAZULI
+        lines:
+          - 增加 3% 最大魔力
+        stats:
+          - { stat: mana.max, type: INCREASED, value: 3 }
+      seething_body:
+        name: 沸騰軀體          # Seething Body
+        requires: mana_2
+        notable: true
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - 高煉獄之炎時，元素執政官不會結束
+          - 處於高煉獄之炎時施放法術，獲得元素執政官
+          - 達到煉獄之炎上限時失去元素執政官
+        stats:
+          - { stat: asc.seething, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      flammability:
+        name: 易燃幅度          # Flammability Magnitude
+        icon: AMETHYST_SHARD
+        lines:
+          - 增加 40% 易燃幅度
         stats:
           - { stat: ignite.chance, type: INCREASED, value: 40 }
-      f_bringer:
-        name: 燎原者
-        requires: f_flame
-        cost: 1
-        icon: FIRE_CHARGE
+      bringer_flame:
+        name: 火焰呼喚者          # Bringer of Flame
+        requires: flammability
+        notable: true
+        icon: BEACON
+        lines:
+          - 你與你存在範圍內友軍的所有傷害都會計入易燃幅度與點燃幅度
         stats:
-          - { stat: flag.all_damage_ignites, value: 1 }
-      f_life2:
-        name: 惡魔之血 II
-        requires: f_hand
-        cost: 1
+          - { stat: flag.all_damage_ignites, type: FLAT, value: 1 }
+      spell_damage:
+        name: 法術傷害          # Spell Damage
+        icon: BOOK
+        lines:
+          - 增加 12% 法術傷害
+        stats:
+          - { stat: damage, type: INCREASED, value: 12, tags: [spell] }
+      demonic_possession:
+        name: 惡魔附身          # Demonic Possession
+        requires: spell_damage
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：惡魔變身
+        stats:
+          - { stat: grant_skill.demon_form, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      spell_damage_2:
+        name: 法術傷害          # Spell Damage
+        requires: demonic_possession
+        icon: BOOK
+        lines:
+          - 增加 12% 法術傷害
+        stats:
+          - { stat: damage, type: INCREASED, value: 12, tags: [spell] }
+      mastered_darkness:
+        name: 黑暗精通          # Mastered Darkness
+        requires: spell_damage_2
+        notable: true
+        icon: BLACK_DYE
+        lines:
+          - 惡魔烈焰沒有上限
+        stats:
+          - { stat: asc.demonflame_uncapped, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      life:
+        name: 生命          # Life
         icon: RED_DYE
+        lines:
+          - 增加 3% 最大生命
         stats:
-          - { stat: life.max, type: INCREASED, value: 4 }
-      f_feast:
-        name: 獻祭
-        requires: f_life2
-        cost: 1
-        icon: NETHER_WART
-        stats:
-          - { stat: sig.sacrifice, type: FLAT, value: 1 }
-      f_spirit:
-        name: 惡魔契約
-        requires: f_will
-        cost: 1
-        icon: AMETHYST_SHARD
-        stats:
-          - { stat: spirit.max, type: FLAT, value: 20 }   # 2026-10：增加 10% → +20（全域 % 精魂太多）
-      f_crit2:
-        name: 炎眼 II
-        requires: f_grin
-        cost: 1
+          - { stat: life.max, type: INCREASED, value: 3 }
+      altered_flesh:
+        name: 變形肉體          # Altered Flesh
+        requires: life
+        notable: true
         icon: BLAZE_POWDER
+        lines:
+          - 承受的冰冷傷害有 20% 視為火焰傷害
+          - 承受的閃電傷害有 20% 視為火焰傷害
+          - 承受的物理傷害有 20% 視為混沌傷害
         stats:
-          - { stat: crit.chance, type: INCREASED, value: 15 }
-      f_wildfire:
-        name: 燎原
-        requires: f_crit2
-        cost: 1
-        icon: FIRE_CHARGE
+          - { stat: asc.taken.cold.fire, type: FLAT, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.taken.lightning.fire, type: FLAT, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.taken.physical.chaos, type: FLAT, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      life_2:
+        name: 生命          # Life
+        requires: altered_flesh
+        icon: RED_DYE
+        lines:
+          - 增加 3% 最大生命
         stats:
-          - { stat: sig.wildfire, type: FLAT, value: 1 }
-      f_flame2:
-        name: 燃燒 II
-        requires: f_bringer
-        cost: 1
-        icon: MAGMA_CREAM
+          - { stat: life.max, type: INCREASED, value: 3 }
+      beidats_hand:
+        name: 貝達特之手          # Beidat's Hand
+        requires: life_2
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - +1 最大能量護盾（每 8 點最大生命）
+          - 保留 25% 生命
         stats:
-          - { stat: ignite.magnitude, type: INCREASED, value: 25 }
-      f_pyre:
-        name: 火葬
-        requires: f_flame2
-        cost: 1
-        icon: BLAZE_ROD
+          - { stat: flag.beidat_hand, type: FLAT, value: 1 }
+      life_3:
+        name: 生命          # Life
+        requires: altered_flesh
+        icon: RED_DYE
+        lines:
+          - 增加 3% 最大生命
         stats:
-          - { stat: kill.explode, type: FLAT, value: 5 }
+          - { stat: life.max, type: INCREASED, value: 3 }
+      beidats_will:
+        name: 貝達意志          # Beidat's Will
+        requires: life_3
+        notable: true
+        icon: RED_DYE
+        lines:
+          - +1 最大精魂（每 25 點最大生命）
+          - 保留 25% 生命
+        stats:
+          - { stat: flag.beidat_will, type: FLAT, value: 1 }
+      life_4:
+        name: 生命          # Life
+        requires: altered_flesh
+        icon: RED_DYE
+        lines:
+          - 增加 3% 最大生命
+        stats:
+          - { stat: life.max, type: INCREASED, value: 3 }
+      beidats_gaze:
+        name: 貝達特之視          # Beidat's Gaze
+        requires: life_4
+        notable: true
+        icon: RED_DYE
+        lines:
+          - +1 最大魔力（每 6 點最大生命）
+          - 保留 25% 生命
+        stats:
+          - { stat: flag.beidat_gaze, type: FLAT, value: 1 }
 
-  bloodmage:
+  bloodmage:                # 原作：Blood Mage
     class: witch
     name: 血術士
     color: "#c0392b"
     icon: REDSTONE
-    summary: 以血為媒的術士：法術偷取、高基礎暴擊、以血換力。
+    summary: 以血為媒的術士：技能也扣生命、法術偷取、法術基礎暴擊 15%、胸甲護盾變生命。
     nodes:
-      b_life:
-        name: 血脈
-        cost: 1
-        icon: REDSTONE
-        stats:
-          - { stat: life.max, type: INCREASED, value: 3 }
-      b_siphon:
-        name: 汲生
-        requires: b_life
-        cost: 1
-        icon: GHAST_TEAR
-        stats:
-          - { stat: leech.life_spell, value: 20 }
-      b_crit:
-        name: 血之洞察
-        cost: 1
-        icon: RED_DYE
-        stats:
-          - { stat: crit.chance, type: INCREASED, value: 12, tags: [spell] }
-      b_sunder:
-        name: 剖血
-        requires: b_crit
-        cost: 1
-        icon: IRON_SWORD
-        stats:
-          - { stat: flag.spell_base_crit_15, value: 1 }
-      b_gore:
-        name: 血鋒
-        requires: b_sunder
-        cost: 1
-        icon: POINTED_DRIPSTONE
-        stats:
-          - { stat: crit.bonus_per_50_life, value: 1 }
-      b_life2:
-        name: 血脈 II
-        cost: 1
-        icon: REDSTONE
-        stats:
-          - { stat: life.max, type: INCREASED, value: 3 }
-      b_crimson:
-        name: 赤力
-        requires: b_life2
-        cost: 1
-        icon: RED_STAINED_GLASS
-        stats:
-          - { stat: flag.crimson_power, value: 1 }
-      b_grasp:
-        name: 纏傷
-        requires: b_crimson
-        cost: 1
-        icon: COBWEB
-        stats:
-          - { stat: flag.grasping_wounds, value: 1 }
-      b_feast:
-        name: 血宴
-        requires: b_siphon
-        cost: 1
-        icon: GLISTERING_MELON_SLICE
-        stats:
-          - { stat: sig.blood_feast, type: FLAT, value: 1 }
-      b_rage:
-        name: 血怒
-        requires: b_feast
-        cost: 1
-        icon: REDSTONE
-        stats:
-          - { stat: sig.blood_rage, type: FLAT, value: 1 }
-      b_crit2:
-        name: 血之洞察 II
-        requires: b_gore
-        cost: 1
-        icon: AMETHYST_SHARD
-        stats:
-          - { stat: crit.bonus, type: INCREASED, value: 25 }
-      b_regen:
-        name: 血肉再生
-        requires: b_grasp
-        cost: 1
-        icon: RED_DYE
-        stats:
-          - { stat: life.regen, type: INCREASED, value: 30 }
-      b_spell:
-        name: 血咒
-        cost: 1
-        icon: REDSTONE_BLOCK
-        stats:
-          - { stat: damage, type: INCREASED, value: 15, tags: [spell] }
-      b_sang:
-        name: 以血代魔
-        requires: b_spell
-        cost: 1
-        icon: NETHER_WART
+      sanguimancy:
+        name: 占血術          # Sanguimancy
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 技能獲得等同基礎魔力消耗的基礎生命消耗
+          - 提供技能：生命痕跡
         stats:
           - { stat: flag.sanguimancy, type: FLAT, value: 1 }
-          - { stat: damage, type: MORE, value: 15, tags: [spell] }
-      b_vital:
-        name: 血脈 III
-        requires: b_sang
-        cost: 1
+          - { stat: grant_skill.life_remnants, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      life:
+        name: 生命          # Life
+        requires: sanguimancy
         icon: RED_DYE
+        lines:
+          - 增加 3% 最大生命
         stats:
-          - { stat: life.max, type: INCREASED, value: 6 }
-      b_last:
-        name: 背水一戰
-        requires: b_vital
-        cost: 1
-        icon: TOTEM_OF_UNDYING
+          - { stat: life.max, type: INCREASED, value: 3 }
+      grasping_wounds:
+        name: 緊扼傷口          # Grasping Wounds
+        requires: life
+        notable: true
+        icon: RED_DYE
+        lines:
+          - 擊中造成的生命損失有 25% 被抵銷，改為在 4 秒內失去等量生命
         stats:
-          - { stat: sig.last_stand, type: FLAT, value: 1 }
+          - { stat: flag.grasping_wounds, type: FLAT, value: 1 }
+      life_2:
+        name: 生命          # Life
+        requires: grasping_wounds
+        icon: RED_DYE
+        lines:
+          - 增加 3% 最大生命
+        stats:
+          - { stat: life.max, type: INCREASED, value: 3 }
+      crimson_power:
+        name: 緋紅之力          # Crimson Power
+        requires: life_2
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 獲得額外最大生命，等同已裝備胸甲上物品能量護盾的 100%
+        stats:
+          - { stat: flag.crimson_power, type: FLAT, value: 1 }
+      curse_effect:
+        name: 詛咒效果          # Curse Effect
+        requires: sanguimancy
+        icon: FERMENTED_SPIDER_EYE
+        lines:
+          - 增加 6% 詛咒幅度
+        stats:
+          - { stat: curse.effect, type: INCREASED, value: 6 }
+      whispers_flesh:
+        name: 血肉低語          # Whispers of the Flesh
+        requires: curse_effect
+        notable: true
+        icon: FERMENTED_SPIDER_EYE
+        lines:
+          - 被你詛咒的目標至少保留 15% 生命
+          - 減少 100% 被你詛咒的目標生命再生速度
+        stats:
+          - { stat: asc.curse_reserve, type: FLAT, value: 15 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.curse_no_regen, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      life_flasks:
+        name: 生命藥劑          # Life Flasks
+        requires: sanguimancy
+        icon: POTION
+        lines:
+          - 增加 15% 獲得的生命藥劑充能
+        stats:
+          - { stat: flask.charges_gained.life, type: INCREASED, value: 15 }
+      sanguine_tides:
+        name: 血紅之潮          # Sanguine Tides
+        requires: life_flasks
+        notable: true
+        icon: POTION
+        lines:
+          - 生命藥劑充能全滿時擊中敵人，會消耗其 40% 充能
+          - 以此方式每消耗 1 充能，獲得 1% 傷害作為物理傷害，持續 5 秒
+          - 獲得 1 生命藥劑充能（每花費 2% 生命）
+          - 藥劑不會回復生命
+        stats:
+          - { stat: asc.sanguine, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      bleed_critical:
+        name: 暴擊引起流血機率          # Bleed on Critical Chance
+        requires: sanguimancy
+        icon: REDSTONE
+        lines:
+          - 暴擊時有 15% 機率造成流血
+        stats:
+          - { stat: bleed.chance, type: FLAT, value: 15, tags: [crit_hit] }   # 2026-10-26 照 PoE2：只有暴擊才算；這次之前每次擊中都有機率
+      blood_barbs:
+        name: 鮮血荊棘          # Blood Barbs
+        requires: bleed_critical
+        notable: true
+        icon: FERMENTED_SPIDER_EYE
+        lines:
+          - 你對被詛咒目標造成的流血會加劇
+          - 元素傷害也會計入流血幅度
+        stats:
+          - { stat: asc.curse_aggravate, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.elemental_bleed, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      life_leech:
+        name: 生命偷取          # Life Leech
+        requires: sanguimancy
+        icon: GHAST_TEAR
+        lines:
+          - 增加 12% 生命偷取量
+        stats:
+          - { stat: leech.effect, type: INCREASED, value: 12 }
+      vitality_siphon:
+        name: 活力虹吸          # Vitality Siphon
+        requires: life_leech
+        notable: true
+        icon: GHAST_TEAR
+        lines:
+          - 20% 的法術傷害偷取為生命
+        stats:
+          - { stat: leech.life_spell, type: FLAT, value: 20 }
+      spell_critical:
+        name: 法術暴擊率          # Spell Critical Chance
+        requires: sanguimancy
+        icon: AMETHYST_SHARD
+        lines:
+          - 增加 12% 法術暴擊率
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 12, tags: [spell] }
+      sunder_flesh:
+        name: 碎裂血肉          # Sunder the Flesh
+        requires: spell_critical
+        notable: true
+        icon: AMETHYST_SHARD
+        lines:
+          - 法術的基礎暴擊率為 15%
+        stats:
+          - { stat: flag.spell_base_crit_15, type: FLAT, value: 1 }
+      spell_critical_2:
+        name: 法術暴擊率          # Spell Critical Chance
+        requires: sunder_flesh
+        icon: AMETHYST_SHARD
+        lines:
+          - 增加 12% 法術暴擊率
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 12, tags: [spell] }
+      gore_spike:
+        name: 血棘          # Gore Spike
+        requires: spell_critical_2
+        notable: true
+        icon: RED_DYE
+        lines:
+          - 增加 1% 暴擊傷害加成（每 50 點當前生命）
+        stats:
+          - { stat: crit.bonus_per_50_life, type: FLAT, value: 1 }
 
-  lich:
+  lich:                # 原作：Lich
     class: witch
     name: 永夜骸主
     color: "#9a7bff"
     icon: WITHER_SKELETON_SKULL
-    summary: 拋棄血肉的不死術士：能量護盾、混沌、以魔力代生命。
+    summary: 拋棄血肉的不死術士：能量護盾、詛咒範圍（骸主的機制多半還沒做出來）。
     nodes:
-      l_es:
-        name: 骸殼
-        cost: 1
+      life:
+        name: 生命          # Life
+        icon: RED_DYE
+        lines:
+          - 增加 3% 最大生命
+        stats:
+          - { stat: life.max, type: INCREASED, value: 3 }
+      soulless_form:
+        name: 無魂型態          # Soulless Form
+        requires: life
+        notable: true
         icon: LIGHT_BLUE_DYE
+        lines:
+          - 承受的傷害有 10% 無視能量護盾
+          - 沒有固有魔力再生
+          - 每秒再生等同 6% 最大生命的魔力
         stats:
-          - { stat: es.max, type: INCREASED, value: 15 }
-      l_es2:
-        name: 亡者之殼 II
-        requires: l_es
-        cost: 1
-        icon: LIGHT_BLUE_STAINED_GLASS
+          - { stat: asc.es_bypass, type: FLAT, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.no_mana_regen, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.mana_regen_life, type: FLAT, value: 6 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      life_2:
+        name: 生命          # Life
+        requires: soulless_form
+        icon: RED_DYE
+        lines:
+          - 增加 3% 最大生命
         stats:
-          - { stat: es.max, type: INCREASED, value: 15 }
-      l_rech:
-        name: 冥息
-        requires: l_es2
-        cost: 1
-        icon: SOUL_LANTERN
+          - { stat: life.max, type: INCREASED, value: 3 }
+      eternal_life:
+        name: 永生          # Eternal Life
+        requires: life_2
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 擁有能量護盾時，你的生命無法改變
         stats:
-          - { stat: es.recharge, type: INCREASED, value: 30 }
-      l_eternal:
-        name: 不朽
-        requires: l_rech
-        cost: 1
-        icon: TOTEM_OF_UNDYING
+          - { stat: asc.eternal_life, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      energy_shield_if:
+        name: 消耗銳星的能量護盾          # Energy Shield if Consumed Power Charge
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 若你最近消耗過銳星，增加 30% 最大能量護盾
         stats:
-          - { stat: flag.eternal_youth, type: FLAT, value: 1 }
-      l_chaos:
-        name: 凋零
-        cost: 1
-        icon: WITHER_ROSE
+          - { stat: asc.es_power, type: FLAT, value: 30 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      price_power:
+        name: 力量的代價          # Price of Power
+        requires: energy_shield_if
+        notable: true
+        icon: BOOK
+        lines:
+          - 若可行，法術會消耗 1 顆銳星以造成更多 40% 的傷害
         stats:
-          - { stat: damage, type: INCREASED, value: 15, tags: [chaos] }
-      l_chaos2:
-        name: 凋零 II
-        requires: l_chaos
-        cost: 1
-        icon: WITHER_ROSE
+          - { stat: asc.price_of_power, type: FLAT, value: 40 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      energy_shield:
+        name: 能量護盾          # Energy Shield
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 增加 20% 最大能量護盾
         stats:
-          - { stat: damage, type: INCREASED, value: 15, tags: [chaos] }
-      l_extra:
-        name: 虛空湧流
-        requires: l_chaos2
-        cost: 1
-        icon: ECHO_SHARD
+          - { stat: es.max, type: INCREASED, value: 20 }
+      crystalline:
+        name: 晶化護符          # Crystalline Phylactery
+        requires: energy_shield
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 若你沒有能量護盾，更多 50% 技能的魔力消耗
+          - 可在命匣中鑲嵌一個非傳奇的基礎珠寶
+          - 增加 100% 插槽珠寶提供的加成效果
         stats:
-          - { stat: damage.extra.chaos, type: FLAT, value: 4 }
-      l_plague:
-        name: 瘟主
-        requires: l_extra
-        cost: 1
+          - { stat: asc.no_es_cost, type: FLAT, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.phylactery, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        # 2026-10-27 照 PoE2：命匣是昇華天賦上的珠寶孔（/ascend tree 左下角，JewelSockets.PHYLACTERY），放非傳奇的基礎珠寶、效果增加 100%；
+        #   拿掉 note（這次之前「沒有命匣的珠寶孔：天賦樹上第一顆非傳奇的基礎珠寶效果增加 100%」）
+      energy_shield_2:
+        name: 能量護盾          # Energy Shield
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 增加 20% 最大能量護盾
+        stats:
+          - { stat: es.max, type: INCREASED, value: 20 }
+      eldritch_empowerment:
+        name: 異能賦予          # Eldritch Empowerment
+        requires: energy_shield_2
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 施放法術時犧牲 5% 最大能量護盾
+          - 更多 30% 完全支付此犧牲的法術傷害
+          - 犧牲能量護盾不會中斷回充
+        stats:
+          - { stat: asc.eldritch, type: FLAT, value: 5 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      curse_area:
+        name: 詛咒範圍          # Curse Area
         icon: FERMENTED_SPIDER_EYE
+        lines:
+          - 增加 15% 詛咒的範圍效果
         stats:
-          - { stat: sig.plague_lord, type: FLAT, value: 1 }
-      l_mana:
-        name: 冥泉
-        cost: 1
+          - { stat: skill.area, type: INCREASED, value: 15, tags: [curse] }
+      rupture_soul:
+        name: 割裂靈魂          # Rupture the Soul
+        requires: curse_area
+        notable: true
+        icon: FERMENTED_SPIDER_EYE
+        lines:
+          - 被你或你存在範圍內友軍擊殺的被詛咒敵人有 33% 機率爆炸，造成等同其最大生命四分之一的混沌傷害
+        stats:
+          - { stat: asc.rupture, type: FLAT, value: 33 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      curse_area_2:
+        name: 詛咒範圍          # Curse Area
+        requires: rupture_soul
+        icon: FERMENTED_SPIDER_EYE
+        lines:
+          - 增加 15% 詛咒的範圍效果
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 15, tags: [curse] }
+      incessant_cacophony:
+        name: 不斷爭吵          # Incessant Cacophony
+        requires: curse_area_2
+        notable: true
+        icon: FERMENTED_SPIDER_EYE
+        lines:
+          - 你施加的詛咒持續時間無限
+          - 你可額外施加 1 個詛咒
+        stats:
+          - { stat: asc.curse_infinite, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.curse_extra, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      mana:
+        name: 魔力          # Mana
         icon: LAPIS_LAZULI
+        lines:
+          - 增加 3% 最大魔力
         stats:
-          - { stat: mana.max, type: INCREASED, value: 10 }
-      l_battery:
-        name: 魂池逆流
-        requires: l_mana
-        cost: 1
-        icon: REDSTONE_BLOCK
+          - { stat: mana.max, type: INCREASED, value: 3 }
+      necromantic_conduit:
+        name: 靈能導體          # Necromantic Conduit
+        requires: mana
+        notable: true
+        icon: LAPIS_LAZULI
+        lines:
+          - 非低魔力時，你與你存在範圍內的友軍擁有不潔之力
+          - 每秒失去 5% 最大魔力
         stats:
-          - { stat: flag.eldritch_battery, type: FLAT, value: 1 }
-      l_will:
-        name: 意志之力
-        requires: l_battery
-        cost: 1
-        icon: ENDER_EYE
+          - { stat: asc.conduit, type: FLAT, value: 5 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      mana_2:
+        name: 魔力          # Mana
+        requires: necromantic_conduit
+        icon: LAPIS_LAZULI
+        lines:
+          - 增加 3% 最大魔力
         stats:
-          - { stat: damage.from_mana, type: FLAT, value: 15 }
-      l_crit:
-        name: 死亡凝視
-        requires: l_will
-        cost: 1
-        icon: AMETHYST_SHARD
+          - { stat: mana.max, type: INCREASED, value: 3 }
+      blackened_heart:
+        name: 黑化之心          # Blackened Heart
+        requires: mana_2
+        notable: true
+        icon: LAPIS_LAZULI
+        lines:
+          - 增加 4% 你給予的不潔之力增益幅度（每 100 點最大魔力）
         stats:
-          - { stat: crit.chance, type: INCREASED, value: 20, tags: [spell] }
-      l_res:
-        name: 暗影之膚
-        cost: 1
-        icon: OBSIDIAN
+          - { stat: asc.unholy_per_mana, type: FLAT, value: 4 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+
+  # 2026-10-27 照 PoE2 0.5 補上深淵骸主（Abyssal Lich，poe2db／PoB 0_5 tree.json）：骸主的另一個版本，跟骸主同一棵樹，換掉 8 個天賦。
+  # 原作要先昇華成骸主、帶庫勒馬克的邀請函跳進魂井打完黑色大教堂才能切換；這裡沒有那段內容，跟其他昇華一樣直接選。
+  abysslich:                # 原作：Abyssal Lich
+    class: witch
+    name: 淵井骸主
+    color: "#5b6ee1"
+    icon: SCULK_CATALYST
+    summary: 走進魂井深處的骸主：深淵幻影替你重施法術、骷髏化為幽影之魂、撲殺獻祭、能量護盾與詛咒。
+    nodes:
+      life:
+        name: 生命          # Life
+        icon: RED_DYE
+        lines:
+          - 增加 3% 最大生命
         stats:
-          - { stat: resist.chaos, type: FLAT, value: 10 }
-      l_ci:
-        name: 無血之軀
-        requires: l_res
-        cost: 1
+          - { stat: life.max, type: INCREASED, value: 3 }
+      soulless_form:
+        name: 無魂型態          # Soulless Form
+        requires: life
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 承受的傷害有 10% 無視能量護盾
+          - 沒有固有魔力再生
+          - 每秒再生等同 6% 最大生命的魔力
+        stats:
+          - { stat: asc.es_bypass, type: FLAT, value: 10 }
+          - { stat: asc.no_mana_regen, type: FLAT, value: 1 }
+          - { stat: asc.mana_regen_life, type: FLAT, value: 6 }
+      life_2:
+        name: 生命          # Life
+        requires: soulless_form
+        icon: RED_DYE
+        lines:
+          - 增加 3% 最大生命
+        stats:
+          - { stat: life.max, type: INCREASED, value: 3 }
+      eternal_life:
+        name: 永生          # Eternal Life
+        requires: life_2
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 擁有能量護盾時，你的生命無法改變
+        stats:
+          - { stat: asc.eternal_life, type: FLAT, value: 1 }
+      es_power:
+        name: 消耗銳星的能量護盾          # Energy Shield if Consumed Power Charge
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 若你最近消耗過銳星，增加 30% 最大能量護盾
+        stats:
+          - { stat: asc.es_power, type: FLAT, value: 30 }
+      steward:
+        name: 骷髏馬克的管家          # Steward of Kulemak
+        requires: es_power
+        notable: true
+        icon: SCULK_SHRIEKER
+        lines:
+          - 若可行，造成傷害的法術會消耗 1 顆銳星觸發深淵幻影
+          - 提供技能：深淵幻影
+        stats:
+          - { stat: grant_skill.abyssal_apparition, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2（ascendancy_lich_consume_power_for_apparition）
+      energy_shield:
+        name: 能量護盾          # Energy Shield
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 增加 20% 最大能量護盾
+        stats:
+          - { stat: es.max, type: INCREASED, value: 20 }
+      crystalline:
+        name: 晶化護符          # Crystalline Phylactery
+        requires: energy_shield
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 若你沒有能量護盾，更多 50% 技能的魔力消耗
+          - 可在命匣中鑲嵌一個非傳奇的基礎珠寶
+          - 增加 100% 插槽珠寶提供的加成效果
+        stats:
+          - { stat: asc.no_es_cost, type: FLAT, value: 50 }
+          - { stat: asc.phylactery, type: FLAT, value: 1 }
+      energy_shield_2:
+        name: 能量護盾          # Energy Shield
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 增加 20% 最大能量護盾
+        stats:
+          - { stat: es.max, type: INCREASED, value: 20 }
+      eldritch_empowerment:
+        name: 異能賦予          # Eldritch Empowerment
+        requires: energy_shield_2
+        notable: true
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 施放法術時犧牲 5% 最大能量護盾
+          - 更多 30% 完全支付此犧牲的法術傷害
+          - 犧牲能量護盾不會中斷回充
+        stats:
+          - { stat: asc.eldritch, type: FLAT, value: 5 }
+      curse_area:
+        name: 詛咒範圍          # Curse Area
+        icon: FERMENTED_SPIDER_EYE
+        lines:
+          - 增加 15% 詛咒的範圍效果
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 15, tags: [curse] }
+      rupture_flesh:
+        name: 割裂血肉          # Rupture the Flesh
+        requires: curse_area
+        notable: true
+        icon: FERMENTED_SPIDER_EYE
+        lines:
+          - 被你或你存在範圍內友軍擊殺的被詛咒敵人有 33% 機率爆炸，造成等同其最大生命四分之一的物理傷害
+        stats:
+          - { stat: asc.rupture_physical, type: FLAT, value: 33 }   # 2026-10-27 照 PoE2（explode_cursed_enemies_for_25%_life_as_physical_on_kill_chance_% 33）
+      curse_area_2:
+        name: 詛咒範圍          # Curse Area
+        requires: rupture_flesh
+        icon: FERMENTED_SPIDER_EYE
+        lines:
+          - 增加 15% 詛咒的範圍效果
+        stats:
+          - { stat: skill.area, type: INCREASED, value: 15, tags: [curse] }
+      incessant_cacophony:
+        name: 不斷爭吵          # Incessant Cacophony
+        requires: curse_area_2
+        notable: true
+        icon: FERMENTED_SPIDER_EYE
+        lines:
+          - 你施加的詛咒持續時間無限
+          - 你可額外施加 1 個詛咒
+        stats:
+          - { stat: asc.curse_infinite, type: FLAT, value: 1 }
+          - { stat: asc.curse_extra, type: FLAT, value: 1 }
+      minion_reservation:
+        name: 召喚物保留效用          # Minion Reservation Efficiency
         icon: BONE
+        lines:
+          - 增加 6% 召喚物技能的保留效率
         stats:
-          - { stat: flag.chaos_immune, type: FLAT, value: 1 }
-      l_eskill:
-        name: 收魂
-        requires: l_ci
-        cost: 1
-        icon: SOUL_TORCH
+          - { stat: aura.reservation, type: INCREASED, value: -6, tags: [minion] }
+      umbral_well:
+        name: 幽影之井          # Umbral Well
+        requires: minion_reservation
+        notable: true
+        icon: SCULK_VEIN
+        lines:
+          - 你本來要召喚的骷髏召喚物，改成每一隻給你 1 個幽影之魂
         stats:
-          - { stat: es.on_kill, type: FLAT, value: 3 }
-      l_soul:
-        name: 魂火
-        requires: l_eskill
-        cost: 1
-        icon: SOUL_CAMPFIRE
+          - { stat: asc.umbral_well, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2（ascendancy_lich_skeletons_are_buffs_instead_of_minions）
+        note: 幽影之魂照本來的骷髏種類給增益（每一個）：戰士 增加 15% 攻擊傷害、弓手 增加 15% 投射物速度、祭司 增加 30% 能量護盾回充速度、焰術士 增加 15% 範圍效果、雷術士 增加 25% 法術傷害、霜術士 增加 35% 最大能量護盾、重卒 增加 60% 暈眩累積、狂卒 增加 6% 技能速度
+      minion_duration:
+        name: 召喚物持續時間          # Minion Duration
+        requires: umbral_well
+        icon: BONE
+        lines:
+          - 增加 15% 召喚物持續時間
         stats:
-          - { stat: mana.on_kill, type: FLAT, value: 3 }
+          - { stat: skill.duration, type: INCREASED, value: 15, tags: [minion] }
+      unwilling_offering:
+        name: 不情願的獻祭          # Unwilling Offering
+        requires: minion_duration
+        notable: true
+        icon: NETHER_BRICK
+        lines:
+          - 你的祭品可以把撲殺範圍內的敵人當作目標
+          - 你的祭品改成影響你，而不是你的召喚物
+          - 撲殺敵人產生的祭品，每點被撲殺敵人的強度增加 1% 效果
+        stats:
+          - { stat: asc.unwilling_offering, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2（offering_skill_target_cullable_enemies_instead、offerings_only_buff_you、lich_offering_effect_+%_per_enemy_power 1）
 
-
-  # 2026-10：德魯伊的兩個昇華（照 PoE2 的神諭者、薩滿，名稱是自己的）
-  starseer:
+  starseer:                # 原作：Oracle
     class: druid
     name: 觀星祭
     color: "#9fd6ff"
     icon: SPYGLASS
-    summary: 讀星的德魯伊：暴擊與雙倍傷害、能量護盾、法術與飛龍形態。
+    summary: 讀星的德魯伊：圖騰、生命與魔力再生、被暴擊時傷害較低、禁錮。
     nodes:
-      o_sight:
-        name: 觀辰
-        cost: 1
-        icon: SPYGLASS
+      totem_cast_attack:
+        name: 圖騰施放和攻擊速度          # Totem Cast and Attack Speed
+        icon: TOTEM_OF_UNDYING
+        lines:
+          - 圖騰使用的攻擊，增加 5% 攻擊速度
+          - 圖騰施放的法術，增加 5% 施放速度
         stats:
-          - { stat: crit.chance, type: INCREASED, value: 20 }
-      o_fate:
-        name: 曜命
-        requires: o_sight
-        cost: 1
-        icon: CLOCK
+          - { stat: attack.speed, type: INCREASED, value: 5, tags: [totem] }
+          - { stat: cast.speed, type: INCREASED, value: 5, tags: [totem] }
+      unnamed_heartwood:
+        name: 無名心木          # Unnamed Heartwood
+        requires: totem_cast_attack
+        notable: true
+        icon: TOTEM_OF_UNDYING
+        lines:
+          - 圖騰在 6 秒後死亡，從其生命降至 0 時起算
+          - +1 已召喚圖騰數量上限
         stats:
-          - { stat: crit.bonus, type: INCREASED, value: 25 }
-      o_twin:
-        name: 雙曜
-        requires: o_fate
-        cost: 1
-        icon: AMETHYST_CLUSTER
-        stats:
-          - { stat: damage.double, type: FLAT, value: 8 }
-      o_int:
-        name: 辰慧
-        cost: 1
-        icon: LAPIS_LAZULI
-        stats:
-          - { stat: attr.int, type: INCREASED, value: 4 }
-      o_lineage:
-        name: 辰脈
-        requires: o_int
-        cost: 1
-        icon: LIGHT_BLUE_DYE
-        stats:
-          - { stat: es.max, type: INCREASED, value: 15 }
-      o_ward:
-        name: 曜盾
-        requires: o_lineage
-        cost: 1
-        icon: DIAMOND
-        stats:
-          - { stat: es.recharge, type: INCREASED, value: 30 }
-      o_evade:
-        name: 徵兆
-        requires: o_twin
-        cost: 1
-        icon: FEATHER
-        stats:
-          - { stat: evasion, type: INCREASED, value: 25 }
-      o_step:
-        name: 踏星
-        requires: o_ward
-        cost: 1
-        icon: RABBIT_FOOT
-        stats:
-          - { stat: movement.speed, type: INCREASED, value: 6 }
-          - { stat: evasion, type: INCREASED, value: 15 }
-      o_spell:
-        name: 曜咒
-        cost: 1
-        icon: ENCHANTED_BOOK
-        stats:
-          - { stat: damage, type: INCREASED, value: 20 }   # 2026-10：德魯伊的法術很少 → 法術傷害改成全部傷害
-      o_cast:
-        name: 速曜
-        requires: o_spell
-        cost: 1
-        icon: SUGAR
-        stats:
-          - { stat: attack.speed, type: INCREASED, value: 8 }   # 2026-10：施法速度 12% → 攻擊與施法速度各 8%（形態技能是攻擊）
-          - { stat: cast.speed, type: INCREASED, value: 8 }
-      o_elem:
-        name: 三元眸
-        requires: o_cast
-        cost: 1
-        icon: ENDER_EYE
-        stats:
-          - { stat: damage, type: INCREASED, value: 20, tags: [elemental] }
-          - { stat: resist.fire, type: FLAT, value: 8 }
-          - { stat: resist.cold, type: FLAT, value: 8 }
-          - { stat: resist.lightning, type: FLAT, value: 8 }
-      o_nature:
-        name: 林語
-        requires: o_elem
-        cost: 1
-        icon: OAK_SAPLING
-        stats:
-          - { stat: damage, type: INCREASED, value: 25, tags: [shapeshift] }
-      o_wyvern:
-        name: 翼讖
-        requires: o_skill
-        cost: 1
-        icon: PHANTOM_MEMBRANE
-        stats:
-          - { stat: damage, type: MORE, value: 15, tags: [wyvern] }
-      o_spirit:
-        name: 曜魂
-        cost: 1
+          - { stat: skill.totems, type: FLAT, value: 1 }
+          - { stat: asc.totem_linger, type: FLAT, value: 6 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      critical_damage:
+        name: 對你的暴擊傷害加成          # Critical Damage Bonus on You
         icon: AMETHYST_SHARD
+        lines:
+          - 減少 12% 對你的擊中暴擊傷害加成
         stats:
-          - { stat: spirit.max, type: FLAT, value: 20 }
-      o_skill:
-        name: 辰嗣
-        requires: o_spirit
-        cost: 1
+          - { stat: crit.bonus_taken, type: INCREASED, value: -12 }
+      lesser_harm:
+        name: 微小損害          # The Lesser Harm
+        requires: critical_damage
+        notable: true
+        icon: AMETHYST_SHARD
+        lines:
+          - 敵人對你的暴擊率為不幸
+          - 擊中你的敵人傷害為不幸
+        stats:
+          - { stat: asc.lesser_harm, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      critical_hit_chance:
+        name: 暴擊機率          # Critical Hit Chance
+        requires: lesser_harm
+        icon: AMETHYST_SHARD
+        lines:
+          - 增加 12% 暴擊率
+        stats:
+          - { stat: crit.chance, type: INCREASED, value: 12 }
+      forced_outcome:
+        name: 強制結果          # Forced Outcome
+        requires: critical_hit_chance
+        notable: true
+        icon: AMETHYST_SHARD
+        lines:
+          - 必然暴擊
+        stats:
+          - { stat: asc.inevitable_crit, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        # 2026-10-27 照站長：關鍵字說明改由 KeywordText 自動帶出（只顯示一次）；這次之前 note: 必然暴擊：沒擲中暴擊就重擲到暴擊為止，每重擲一次暴擊傷害加成更少 30%
+      immobilisation:
+        name: 禁錮累積          # Immobilisation Buildup
+        icon: COBWEB
+        lines:
+          - 增加 20% 禁錮累積
+        stats:   # 2026-10-26 照 PoE2：禁錮＝凍結與釘身（跟天賦樹一樣）；這次之前只算凍結累積
+          - { stat: freeze.buildup, type: INCREASED, value: 20 }
+          - { stat: pin.buildup, type: INCREASED, value: 20 }
+      converging_paths:
+        name: 交錯道途          # Converging Paths
+        requires: immobilisation
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：可趁之刻
+        stats:
+          - { stat: grant_skill.moment_of_vulnerability, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      life_mana:
+        name: 生命及魔力回復率          # Life and Mana Regeneration Rate
+        icon: RED_DYE
+        lines:
+          - 增加 8% 生命再生速度
+          - 增加 8% 魔力再生速度
+        stats:
+          - { stat: life.regen, type: INCREASED, value: 8 }
+          - { stat: mana.regen, type: INCREASED, value: 8 }
+      harmony_within:
+        name: 心宇和諧          # Harmony Within
+        requires: life_mana
+        notable: true
+        icon: RED_DYE
+        lines:
+          - 若你當前魔力高於當前生命，擊中傷害先從魔力扣除，再扣生命
+          - 更少 15% 最大生命
+          - 更少 15% 最大魔力
+        stats:
+          - { stat: asc.harmony, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: life.max, type: MORE, value: -15 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: mana.max, type: MORE, value: -15 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      spell_damage:
+        name: 法術傷害          # Spell Damage
+        icon: BOOK
+        lines:
+          - 增加 12% 法術傷害
+        stats:
+          - { stat: damage, type: INCREASED, value: 12, tags: [spell] }
+      fateful_vision:
+        name: 命見視野          # Fateful Vision
+        requires: spell_damage
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：命運同調
+        stats:
+          - { stat: grant_skill.align_fate, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      passive_point:
+        name: 天賦點          # Passive Point
+        icon: EXPERIENCE_BOTTLE
+        lines:
+          - 提供 1 點天賦點數
+        stats:
+          - { stat: passive.points_extra, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      unseen_path:
+        name: 未見之道          # The Unseen Path
+        requires: passive_point
+        notable: true
+        icon: MAP
+        lines:
+          - 踏上未曾走過的道路
+        stats:
+          - { stat: asc.unseen_path, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+        note: 可以配置天賦樹上觀星專屬的天賦（天賦樹上標著「未見之道」的）
+      passive_point_2:
+        name: 天賦點          # Passive Point
+        requires: unseen_path
+        icon: EXPERIENCE_BOTTLE
+        lines:
+          - 提供 1 點天賦點數
+        stats:
+          - { stat: passive.points_extra, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      entwined_realities:
+        name: 虛實交織          # Entwined Realities
+        requires: passive_point_2
+        notable: true
         icon: NETHER_STAR
+        lines:
+          - 已配置基石天賦中半徑範圍內的非基石天賦，可在不與你天賦樹相連的情況下配置
         stats:
-          - { stat: skill.level, type: FLAT, value: 1, tags: [wyvern] }   # 2026-10：飛龍技能改成攻擊，原本的 +1 法術等級吃不到 → 改 +1 飛龍形態技能等級
+          - { stat: asc.entwined, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
-  wildshaman:
+  wildshaman:                # 原作：Shaman
     class: druid
     name: 荒獸巫
     color: "#8fc75a"
     icon: OAK_SAPLING
-    summary: 跟萬靈立約的德魯伊：熊與狼人形態、元素之怒、變身技能等級。
+    summary: 跟萬靈立約的德魯伊：怒氣強化法術、元素傷害與抗性、防禦、藥劑。
     nodes:
-      s_bear:
-        name: 熊祖
-        cost: 1
-        icon: BROWN_WOOL
+      elemental_damage:
+        name: 元素傷害          # Elemental Damage
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - 增加 12% 元素傷害
         stats:
-          - { stat: life.max, type: INCREASED, value: 8 }
-      s_bear2:
-        name: 厚皮
-        requires: s_bear
-        cost: 1
-        icon: IRON_CHESTPLATE
+          - { stat: damage, type: INCREASED, value: 12, tags: [elemental] }
+      turning_seasons:
+        name: 季節循環          # Turning of the Seasons
+        requires: elemental_damage
+        notable: true
+        icon: BEACON
+        lines:
+          - 你存在範圍內的敵人受到曝露
+          - 獲得 10% 傷害作為隨機一種元素的額外傷害
         stats:
-          - { stat: damage, type: MORE, value: 15, tags: [bear] }
-          - { stat: armour, type: INCREASED, value: 25 }
-      s_wolf:
-        name: 狼祖
-        cost: 1
-        icon: BONE
+          - { stat: presence.exposure, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.random_element, type: FLAT, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      elemental_damage_2:
+        name: 元素傷害          # Elemental Damage
+        requires: turning_seasons
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - 增加 12% 元素傷害
         stats:
-          - { stat: attack.speed, type: INCREASED, value: 8, tags: [werewolf] }
-      s_wolf2:
-        name: 嘯月
-        requires: s_wolf
-        cost: 1
-        icon: SHEARS
+          - { stat: damage, type: INCREASED, value: 12, tags: [elemental] }
+      bringer_apocalypse:
+        name: 災厄信使          # Bringer of the Apocalypse
+        requires: elemental_damage_2
+        notable: true
+        icon: ENCHANTED_BOOK
+        lines:
+          - 提供技能：壞滅災變
         stats:
-          - { stat: damage, type: MORE, value: 15, tags: [werewolf] }
-      s_str:
-        name: 蠻勁
-        requires: s_bear2
-        cost: 1
-        icon: IRON_INGOT
+          - { stat: grant_skill.apocalypse, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      elemental:
+        name: 元素抗性          # Elemental Resistances
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - +3% 全元素抗性
         stats:
-          - { stat: attr.str, type: INCREASED, value: 4 }
-      s_regen:
-        name: 青苔
-        requires: s_str
-        cost: 1
-        icon: GLISTERING_MELON_SLICE
+          - { stat: resist.fire, type: FLAT, value: 3 }
+          - { stat: resist.cold, type: FLAT, value: 3 }
+          - { stat: resist.lightning, type: FLAT, value: 3 }
+      reactive_growth:
+        name: 反應性生長          # Reactive Growth
+        requires: elemental
+        notable: true
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - 每個相符的適應，更少 10% 承受的該種元素傷害
+          - 更少 10% 承受的元素傷害
+          - 適應你承受的每次擊中中最高的元素傷害類型
         stats:
-          - { stat: life.regen, type: INCREASED, value: 30 }
-      s_storm:
-        name: 喚雷
-        cost: 1
-        icon: LIGHTNING_ROD
+          - { stat: asc.adapt, type: FLAT, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.elemental_taken_less, type: FLAT, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      elemental_2:
+        name: 元素抗性          # Elemental Resistances
+        requires: reactive_growth
+        icon: PRISMARINE_CRYSTALS
+        lines:
+          - +3% 全元素抗性
         stats:
-          - { stat: damage, type: INCREASED, value: 25, tags: [lightning] }
-          - { stat: shock.chance, type: FLAT, value: 15 }
-      s_quake:
-        name: 裂土
-        requires: s_storm
-        cost: 1
-        icon: MAGMA_BLOCK
+          - { stat: resist.fire, type: FLAT, value: 3 }
+          - { stat: resist.cold, type: FLAT, value: 3 }
+          - { stat: resist.lightning, type: FLAT, value: 3 }
+      avatar_evolution:
+        name: 演化化身          # Avatar of Evolution
+        requires: elemental_2
+        notable: true
+        icon: BLAZE_POWDER
+        lines:
+          - 適應持續 5 秒
+          - 承受的物理傷害有 5% 視為冰冷傷害
+          - 承受的物理傷害有 5% 視為火焰傷害
+          - 承受的物理傷害有 5% 視為閃電傷害
+          - 適應效果加倍
         stats:
-          - { stat: damage, type: INCREASED, value: 25, tags: [fire] }
-          - { stat: ignite.chance, type: FLAT, value: 15 }
-      s_shape:
-        name: 化形
-        requires: s_wolf2
-        cost: 1
-        icon: OAK_SAPLING
+          - { stat: asc.adapt_duration, type: FLAT, value: 5 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.adapt_double, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.taken.physical.cold, type: FLAT, value: 5 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.taken.physical.fire, type: FLAT, value: 5 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.taken.physical.lightning, type: FLAT, value: 5 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      maximum_rage:
+        name: 最大怒氣          # Maximum Rage
+        icon: NETHER_WART
+        lines:
+          - +3 最大怒氣
         stats:
-          - { stat: damage, type: INCREASED, value: 20, tags: [shapeshift] }
-      s_master:
-        name: 千形
-        requires: s_shape
-        cost: 1
-        icon: TOTEM_OF_UNDYING
+          - { stat: rage.max, type: FLAT, value: 3 }
+      druidic_champion:
+        name: 德魯伊之冠          # Druidic Champion
+        requires: maximum_rage
+        notable: true
+        icon: NETHER_WART
+        lines:
+          - 每 2 點怒氣也使法術傷害更多 1%
         stats:
-          - { stat: attack.speed, type: INCREASED, value: 10, tags: [shapeshift] }
-          - { stat: cast.speed, type: INCREASED, value: 10 }
-      s_stun:
-        name: 震野
-        cost: 1
-        icon: ANVIL
+          - { stat: asc.druidic_champion, type: FLAT, value: 1 }
+      maximum_rage_2:
+        name: 最大怒氣          # Maximum Rage
+        requires: druidic_champion
+        icon: NETHER_WART
+        lines:
+          - +3 最大怒氣
         stats:
-          - { stat: stun.buildup, type: INCREASED, value: 25 }
-      s_feast:
-        name: 飽食
-        requires: s_stun
-        cost: 1
-        icon: COOKED_BEEF
+          - { stat: rage.max, type: FLAT, value: 3 }
+      furious_wellspring:
+        name: 狂怒源泉          # Furious Wellspring
+        requires: maximum_rage_2
+        notable: true
+        icon: LAPIS_LAZULI
+        lines:
+          - 每秒再生 6% 最大怒氣
+          - 魔力再生速度的增加與減少也套用於怒氣再生速度
+          - 技能 +5 怒氣消耗
+          - +7 最大怒氣
+          - 怒氣不會自然流失
         stats:
-          - { stat: life.on_kill, type: FLAT, value: 15 }
-      s_spirit:
-        name: 群靈
-        requires: s_feast
-        cost: 1
-        icon: AMETHYST_SHARD
+          - { stat: rage.max, type: FLAT, value: 7 }
+          - { stat: asc.rage_regen, type: FLAT, value: 6 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.rage_cost, type: FLAT, value: 5 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      flask_recovery:
+        name: 藥劑回復          # Flask Recovery
+        icon: POTION
+        lines:
+          - 增加 12% 藥劑的生命與魔力回復
         stats:
-          - { stat: spirit.max, type: FLAT, value: 20 }
-      s_primal:
-        name: 荒力
-        requires: s_spirit
-        cost: 1
-        icon: MOSSY_COBBLESTONE
+          - { stat: flask.life_recovery, type: INCREASED, value: 12 }
+          - { stat: flask.mana_recovery, type: INCREASED, value: 12 }
+      sacred_flow:
+        name: 神聖流向          # Sacred Flow
+        requires: flask_recovery
+        notable: true
+        icon: EMERALD
+        lines:
+          - +40 精魂（每個空的護符欄位）
         stats:
-          - { stat: skill.level, type: FLAT, value: 1, tags: [shapeshift] }
+          - { stat: asc.spirit_per_empty_charm, type: FLAT, value: 40 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+      defences:
+        name: 全域防禦          # Defences
+        icon: LIGHT_BLUE_DYE
+        lines:
+          - 增加 10% 護甲、閃避值與能量護盾
+        stats:
+          - { stat: armour, type: INCREASED, value: 10 }
+          - { stat: evasion, type: INCREASED, value: 10 }
+          - { stat: es.max, type: INCREASED, value: 10 }
+      wisdom_maji:
+        name: 聖賢智慧          # Wisdom of the Maji
+        requires: defences
+        notable: true
+        icon: NETHER_STAR
+        lines:
+          - 獲得符文與神像上羈絆詞綴的效益
+        stats:
+          - { stat: asc.bonded, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2：符文的羈絆詞綴生效（runes.yml 的 bonded；神像還沒做）；這次之前 asc.rune_effect 50（符文效果增加 50%，平衡等效）
+        # 2026-10-27：拿掉 note（這次之前「符文沒有羈絆詞綴：改成鑲在裝備上的符文效果增加 50%」）
 
 legacy:
   marauder:

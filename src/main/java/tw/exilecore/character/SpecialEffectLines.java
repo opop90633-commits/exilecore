@@ -47,7 +47,7 @@ public final class SpecialEffectLines {
         FLAGS.put(StatKeys.FLAG_UNWAVERING, "磐石不移：不會被輕暈，不能翻滾");
         FLAGS.put(StatKeys.FLAG_CRIMSON_ASSAULT, "血湧狂潮：流血加劇、基礎 1 秒、更多 50%");
         FLAGS.put(StatKeys.FLAG_ANCESTRAL_BOND, "圖騰之林：圖騰上限加倍");
-        FLAGS.put(StatKeys.FLAG_CULLING, "斷命：擊中後生命低於門檻的敵人直接倒下（普通 30%、魔法 20%、稀有 10%、傳奇與 Boss 5%）");
+        FLAGS.put(StatKeys.FLAG_CULLING, "斷命：擊中後生命低於門檻的敵人直接倒下（普通 35%、魔法 20%、稀有 10%、傳奇與 Boss 5%）");
         FLAGS.put(StatKeys.FLAG_AURA_LIFE, "光環保留生命而非魔力（最大生命照保留的比例縮小）");
         FLAGS.put(StatKeys.FLAG_NO_CRIT, "無法暴擊");
         FLAGS.put(StatKeys.FLAG_CHAOS_IMMUNE, "免疫混沌傷害（最大生命 1）");

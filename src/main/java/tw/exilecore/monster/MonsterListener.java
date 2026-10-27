@@ -151,7 +151,9 @@ public final class MonsterListener implements Listener {
         final KillCredit credit = plugin.monsterModule().credit();
         credit.awardExperience(entity, data, killer);
 
-        double quantityBonus = monsters.config().rarity(data.rarity()).quantityBonus();
+        // 2026-10-27 照 PoE2：怪物稀有度的物品數量（monsters.yml 的 rarity.*.quantity）只在 rollAndDeliver 加到掉落件數上，
+        //   不再進這個數量（這次之前從這裡開始加，又乘 drops_per_rarity 的稀有度倍數，算了兩次；劫盜合約、地圖掉落也跟著多算）
+        double quantityBonus = 0;
         double rarityBonus = monsters.config().rarity(data.rarity()).rarityBonus();
         // 2026-10-16：終局以上的 Boss 掉落不吃物品數量、稀有度（地圖、主題、全服、自己的都不算；Boss 本身的稀有度加成照算）
         final boolean flat = plugin.maps() != null && plugin.maps().flatBossLoot(entity);
@@ -223,7 +225,12 @@ public final class MonsterListener implements Listener {
         // 2026-10：裝備基底照這個人的職業調整（傳奇不吃）
         final tw.exilecore.item.LootBias bias = owner == null || plugin.characters() == null ? tw.exilecore.item.LootBias.NONE
                 : plugin.characters().lootBias(owner);
-        final List<DropTable.Drop> rolled = new java.util.ArrayList<>(drops.roll(data.level(), data.rarity(), quantityBonus,
+        // 2026-10-27 照 PoE2（怪物稀有度是 monster_dropped_item_quantity_+%：魔法 +400%、稀有 +1980%、傳奇 +2400%）：
+        //   件數 = 普通怪的件數 ×（1 + 怪物稀有度的數量 + 其他數量）×防刷——只算一次。
+        //   這次之前 = drops_per_rarity 的那個稀有度（普通的 4.3／8.6／17 倍）×（1 + 怪物稀有度 +50%／+150%／+300% + 其他）
+        final double rarityQuantity = monsters.config().rarity(data.rarity()).quantityBonus();
+        final double itemQuantity = Math.max(0, 1 + rarityQuantity + baseQuantity + server) * fatigue - 1;
+        final List<DropTable.Drop> rolled = new java.util.ArrayList<>(drops.roll(data.level(), MonsterRarity.NORMAL, itemQuantity,
                 rarityBonus + (flat ? 0 : drops.serverRarity()), plugin.items().generator(), plugin.currencies().repository(), plugin.items().random(), bias));
         if (plugin.maps() != null) {
             // 地圖怪掉地圖（照這個人的星圖）、地圖 Boss 的地圖、傳奇、天穹碎片

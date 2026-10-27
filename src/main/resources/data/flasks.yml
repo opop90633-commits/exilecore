@@ -19,8 +19,9 @@ settings:
   starter: [crude_life_flask, crude_mana_flask]
 
 # 基底：kind life／mana、level 需求等級（也是從幾級的怪物開始掉）、recovery 回復量、duration 秒數、
-# charges 充能上限、per_use 每次用掉的充能。前九階照 PoE2 的九階藥劑；熔星（68 級，T7 地圖起）、
-# 星骸（80 級，T14 地圖起）兩階是等級上限改成 100 時加的。
+# charges 充能上限、per_use 每次用掉的充能。九階照 PoE2 的九階藥劑。
+# 2026-10-26 照 PoE2：原作只有九階，熔星（68 級）、星骸（80 級）兩階拿掉（retired: true：已經在玩家身上的照常能喝，
+#   不再掉落、商人不賣、圖鑑與清單看不到）；這次之前是等級上限改成 100 時加的兩階。
 # 怪物掉落時，生命與魔力各半，從需求等級 ≤ 怪物等級的基底裡最高的三種挑一種。
 bases:
   crude_life_flask:         { name: 粗製生命藥劑, kind: life, level: 1,  recovery: 50,  duration: 3.0, charges: 60, per_use: 10 }
@@ -32,8 +33,8 @@ bases:
   starlit_life_flask:       { name: 星輝生命藥劑, kind: life, level: 40, recovery: 710, duration: 5.0, charges: 75, per_use: 10 }
   starcore_life_flask:      { name: 星髓生命藥劑, kind: life, level: 50, recovery: 840, duration: 4.0, charges: 75, per_use: 10 }
   heavens_life_flask:       { name: 天穹生命藥劑, kind: life, level: 60, recovery: 920, duration: 3.0, charges: 75, per_use: 10 }
-  molten_life_flask:        { name: 熔星生命藥劑, kind: life, level: 68, recovery: 1100, duration: 3.0, charges: 75, per_use: 10 }
-  relic_life_flask:         { name: 星骸生命藥劑, kind: life, level: 80, recovery: 1300, duration: 3.0, charges: 75, per_use: 10 }
+  molten_life_flask:        { name: 熔星生命藥劑, kind: life, level: 68, recovery: 1100, duration: 3.0, charges: 75, per_use: 10, retired: true }
+  relic_life_flask:         { name: 星骸生命藥劑, kind: life, level: 80, recovery: 1300, duration: 3.0, charges: 75, per_use: 10, retired: true }
 
   crude_mana_flask:         { name: 粗製魔力藥劑, kind: mana, level: 1,  recovery: 50,  duration: 2.0, charges: 60, per_use: 10 }
   mana_flask:               { name: 魔力藥劑,     kind: mana, level: 4,  recovery: 70,  duration: 3.0, charges: 65, per_use: 10 }
@@ -44,48 +45,60 @@ bases:
   starlit_mana_flask:       { name: 星輝魔力藥劑, kind: mana, level: 40, recovery: 185, duration: 2.0, charges: 75, per_use: 10 }
   starcore_mana_flask:      { name: 星髓魔力藥劑, kind: mana, level: 50, recovery: 285, duration: 3.5, charges: 75, per_use: 10 }
   heavens_mana_flask:       { name: 天穹魔力藥劑, kind: mana, level: 60, recovery: 310, duration: 3.0, charges: 75, per_use: 10 }
-  molten_mana_flask:        { name: 熔星魔力藥劑, kind: mana, level: 68, recovery: 365, duration: 3.0, charges: 75, per_use: 10 }
-  relic_mana_flask:         { name: 星骸魔力藥劑, kind: mana, level: 80, recovery: 430, duration: 3.0, charges: 75, per_use: 10 }
+  molten_mana_flask:        { name: 熔星魔力藥劑, kind: mana, level: 68, recovery: 365, duration: 3.0, charges: 75, per_use: 10, retired: true }
+  relic_mana_flask:         { name: 星骸魔力藥劑, kind: mana, level: 80, recovery: 430, duration: 3.0, charges: 75, per_use: 10, retired: true }
 
 # ---- 護符（2026-10，照 PoE2 的 Charm）----
 # 裝進角色面板的護符欄（/panel，腰帶下面那排；或拿在手上右鍵）就生效、不佔背包，條件成立時自動用掉 per_use 點充能觸發。
-# 護符欄有幾格：base_slots，加上裝備的「+x 護符欄位」（屬性 charm.slots，腰帶的後綴），最多 3 格。
+# 護符欄有幾格：base_slots，加上裝備的「x 個護符欄位」（屬性 charm.slots：腰帶的固定詞綴、傳奇），最多 3 格。
+# 2026-10-26 照 PoE2：角色本身 0 格，護符欄只有腰帶給（每條腰帶的固定詞綴「有 1–3 個護符欄位」）；這次之前角色本身 2 格。
 # 跟藥劑一樣殺怪充能、回營地與碰到檢查點補滿。怪物掉藥劑時有 drop_chance 的機率換成護符（需求等級 ≤ 怪物等級的隨機一種）。
 #   trigger  觸發條件：freeze 被凍結、ignite 被點燃、shock 感電、chill 被冰緩、bleed 流血、poison 中毒、stun 被重暈、electrocute 被電擊、
 #            hit_fire／hit_cold／hit_lightning／hit_chaos／hit_physical 受到那種傷害的擊中、hit_unique 被傳奇怪物或 Boss 擊中、
-#            kill_rare 擊殺稀有或傳奇怪物、low_life 被擊中後生命低於一半
-#   cure     true = 觸發時解除那個異常狀態（異常狀態的條件才有用）
+#            kill_rare 擊殺稀有或傳奇怪物、low_life 被擊中後生命低於一半、
+#            curse 被詛咒（2026-10-26）、slow 受到緩速（冰緩、癱瘓、阻礙、減速地面、Boss 的減速；2026-10-26）
+#   cure     true = 觸發時解除那個異常狀態（異常狀態、詛咒、緩速的條件才有用）
 #   duration 效果持續幾秒；effects 效果（寫法跟詞綴一樣）
+#   retired  true = 拿掉的護符：已經在玩家身上的照常能用，不再掉落、圖鑑與清單看不到
+# 免疫用開關：flag.freeze_immune 凍結、flag.immune.ignite／shock／bleed／poison／stun 點燃、感電、流血、中毒、暈眩，
+#   flag.curse_immune 詛咒、flag.unslowable 速度不受緩速影響（避免有 75% 上限，PoE2 的護符是「免疫」，所以用開關）
 charms:
-  base_slots: 2
+  base_slots: 0          # 2026-10-26 照 PoE2：0（這次之前 2）
   drop_chance: 0.25
-  # 2026-10-25（照 PoE2）：焰鱗、霜鱗、雷鱗、蝕鱗護符每次用 20／40 充能（以前 10）；傳奇護符自己寫的抗性只在生效期間有、取代基底的效果
+  # 2026-10-26 照 PoE2 0.5 的護符表重寫等級需求、持續時間、充能與每次消耗、效果；這次之前：
+  #   融冰 8 級 4 秒 40／20 免疫凍結＋避免冰緩、澆熄／避雷 8 級 4 秒 40／20 避免 100%、凝血／祛毒 18 級、穩身 24 級（都是 4 秒 40／20 避免 100%）、
+  #   焰鱗／霜鱗／雷鱗 30 級 4 秒 +20% 抗性與 +3% 上限、蝕鱗 40 級、迅影 45 級 6 秒 60／30 被傳奇擊中時攻速施法移速增加 20%、
+  #   聚寶 50 級 2 秒 稀有度 20%
   bases:
-    thawing_charm:     { name: 融冰護符, icon: PRISMARINE_CRYSTALS, trigger: freeze, cure: true, level: 8, duration: 4, charges: 40, per_use: 20,
-                         effects: [ { stat: flag.freeze_immune, type: FLAT, value: 1 }, { stat: avoid.chill, type: FLAT, value: 100 } ] }
-    dousing_charm:     { name: 澆熄護符, icon: NAUTILUS_SHELL, trigger: ignite, cure: true, level: 8, duration: 4, charges: 40, per_use: 20,
-                         effects: [ { stat: avoid.ignite, type: FLAT, value: 100 } ] }
-    grounding_charm:   { name: 避雷護符, icon: COPPER_INGOT, trigger: shock, cure: true, level: 8, duration: 4, charges: 40, per_use: 20,
-                         effects: [ { stat: avoid.shock, type: FLAT, value: 100 }, { stat: avoid.electrocute, type: FLAT, value: 100 } ] }
-    staunching_charm:  { name: 凝血護符, icon: RABBIT_HIDE, trigger: bleed, cure: true, level: 18, duration: 4, charges: 40, per_use: 20,
-                         effects: [ { stat: avoid.bleed, type: FLAT, value: 100 } ] }
-    antidote_charm:    { name: 祛毒護符, icon: SLIME_BALL, trigger: poison, cure: true, level: 18, duration: 4, charges: 40, per_use: 20,
-                         effects: [ { stat: avoid.poison, type: FLAT, value: 100 } ] }
-    stone_charm:       { name: 穩身護符, icon: FLINT, trigger: stun, cure: true, level: 24, duration: 4, charges: 40, per_use: 20,
-                         effects: [ { stat: avoid.stun, type: FLAT, value: 100 } ] }
-    ruby_charm:        { name: 焰鱗護符, icon: MAGMA_CREAM, trigger: hit_fire, level: 30, duration: 4, charges: 40, per_use: 20,
-                         effects: [ { stat: resist.fire, type: FLAT, value: 20 }, { stat: resist.max.fire, type: FLAT, value: 3 } ] }
-    sapphire_charm:    { name: 霜鱗護符, icon: LAPIS_LAZULI, trigger: hit_cold, level: 30, duration: 4, charges: 40, per_use: 20,
-                         effects: [ { stat: resist.cold, type: FLAT, value: 20 }, { stat: resist.max.cold, type: FLAT, value: 3 } ] }
-    topaz_charm:       { name: 雷鱗護符, icon: GLOWSTONE_DUST, trigger: hit_lightning, level: 30, duration: 4, charges: 40, per_use: 20,
-                         effects: [ { stat: resist.lightning, type: FLAT, value: 20 }, { stat: resist.max.lightning, type: FLAT, value: 3 } ] }
-    amethyst_charm:    { name: 蝕鱗護符, icon: AMETHYST_SHARD, trigger: hit_chaos, level: 40, duration: 4, charges: 40, per_use: 20,
-                         effects: [ { stat: resist.chaos, type: FLAT, value: 20 }, { stat: resist.max.chaos, type: FLAT, value: 3 } ] }
-    silver_charm:      { name: 迅影護符, icon: IRON_NUGGET, trigger: hit_unique, level: 45, duration: 6, charges: 60, per_use: 30,
-                         effects: [ { stat: attack.speed, type: INCREASED, value: 20 }, { stat: cast.speed, type: INCREASED, value: 20 },
-                                    { stat: movement.speed, type: INCREASED, value: 20 } ] }
-    golden_charm:      { name: 聚寶護符, icon: GOLD_NUGGET, trigger: kill_rare, level: 50, duration: 2, charges: 80, per_use: 80,
+    thawing_charm:     { name: 融冰護符, icon: PRISMARINE_CRYSTALS, trigger: freeze, cure: true, level: 12, duration: 3, charges: 40, per_use: 40,
+                         effects: [ { stat: flag.freeze_immune, type: FLAT, value: 1 } ] }
+    dousing_charm:     { name: 澆熄護符, icon: NAUTILUS_SHELL, trigger: ignite, cure: true, level: 32, duration: 3, charges: 40, per_use: 30,
+                         effects: [ { stat: flag.immune.ignite, type: FLAT, value: 1 } ] }
+    grounding_charm:   { name: 避雷護符, icon: COPPER_INGOT, trigger: shock, cure: true, level: 32, duration: 3, charges: 40, per_use: 30,
+                         effects: [ { stat: flag.immune.shock, type: FLAT, value: 1 } ] }
+    staunching_charm:  { name: 凝血護符, icon: RABBIT_HIDE, trigger: bleed, cure: true, level: 18, duration: 3, charges: 40, per_use: 30,
+                         effects: [ { stat: flag.immune.bleed, type: FLAT, value: 1 } ] }
+    antidote_charm:    { name: 祛毒護符, icon: SLIME_BALL, trigger: poison, cure: true, level: 24, duration: 3, charges: 40, per_use: 20,
+                         effects: [ { stat: flag.immune.poison, type: FLAT, value: 1 } ] }
+    stone_charm:       { name: 穩身護符, icon: FLINT, trigger: stun, cure: true, level: 8, duration: 3, charges: 40, per_use: 20,
+                         effects: [ { stat: flag.immune.stun, type: FLAT, value: 1 } ] }
+    ruby_charm:        { name: 焰鱗護符, icon: MAGMA_CREAM, trigger: hit_fire, level: 5, duration: 4, charges: 40, per_use: 20,
+                         effects: [ { stat: resist.fire, type: FLAT, value: 25 } ] }
+    sapphire_charm:    { name: 霜鱗護符, icon: LAPIS_LAZULI, trigger: hit_cold, level: 5, duration: 4, charges: 40, per_use: 20,
+                         effects: [ { stat: resist.cold, type: FLAT, value: 25 } ] }
+    topaz_charm:       { name: 雷鱗護符, icon: GLOWSTONE_DUST, trigger: hit_lightning, level: 5, duration: 4, charges: 40, per_use: 20,
+                         effects: [ { stat: resist.lightning, type: FLAT, value: 25 } ] }
+    amethyst_charm:    { name: 蝕鱗護符, icon: AMETHYST_SHARD, trigger: hit_chaos, level: 40, duration: 4, charges: 40, per_use: 30,
+                         effects: [ { stat: resist.chaos, type: FLAT, value: 18 } ] }
+    # 2026-10-26 照 PoE2 的 Silver Charm：受到緩速時觸發，效果期間速度不受緩速影響（觸發時身上的緩速也解掉）
+    silver_charm:      { name: 迅影護符, icon: IRON_NUGGET, trigger: slow, cure: true, level: 10, duration: 3, charges: 40, per_use: 20,
+                         effects: [ { stat: flag.unslowable, type: FLAT, value: 1 } ] }
+    golden_charm:      { name: 聚寶護符, icon: GOLD_NUGGET, trigger: kill_rare, level: 50, duration: 1, charges: 80, per_use: 80,
                          description: "效果期間撿到的東西不受影響：掉落是在殺死的那一刻算的，要在下一隻稀有怪死之前觸發",
-                         effects: [ { stat: drop.rarity, type: INCREASED, value: 20 } ] }
-    heartwood_charm:   { name: 續命護符, icon: RABBIT_FOOT, trigger: low_life, level: 35, duration: 4, charges: 60, per_use: 30,
+                         effects: [ { stat: drop.rarity, type: INCREASED, value: 15 } ] }
+    # 2026-10-26 照 PoE2 的 Cleansing Charm（新增）：被詛咒時觸發，解除身上的詛咒，效果期間免疫詛咒
+    cleansing_charm:   { name: 滌咒護符, icon: GHAST_TEAR, trigger: curse, cure: true, level: 40, duration: 3, charges: 40, per_use: 20,
+                         effects: [ { stat: flag.curse_immune, type: FLAT, value: 1 } ] }
+    # 2026-10-26 照 PoE2：原作沒有這種護符，拿掉（retired：舊物品照常能用，不再掉落）
+    heartwood_charm:   { name: 續命護符, icon: RABBIT_FOOT, trigger: low_life, level: 35, duration: 4, charges: 60, per_use: 30, retired: true,
                          effects: [ { stat: life.recoup, type: FLAT, value: 20 }, { stat: physical.reduction, type: FLAT, value: 10 } ] }

@@ -51,6 +51,10 @@ class UniqueDataTest {
     static final Set<String> WEAPON_TAGS = Set.of(Tags.SWORD, Tags.AXE, Tags.MACE, Tags.DAGGER, Tags.CLAW, Tags.WAND, Tags.STAFF,
             Tags.BOW, Tags.CROSSBOW, Tags.QUARTERSTAFF, Tags.SPEAR, Tags.ONE_HAND, Tags.TWO_HAND);
 
+    /** 原作就不到三條詞綴的傳奇（2026-10-26 天樞墜、巨像之心；2026-10-27 映鏡指環、孀雨粗弓、濁源指環）：最少幾條。 */
+    static final Map<String, Integer> FEW_LINES = Map.of("celestial_pivot", 2, "colossus_heart", 2, "mirror_touch_ring", 1,
+            "widowsong_bow", 1, "tainted_origin_ring", 2);
+
     @BeforeAll
     static void load() throws IOException, IllegalAccessException {
         repository = new ItemRepository();
@@ -87,11 +91,20 @@ class UniqueDataTest {
         }
         stats.add(tw.exilecore.flask.CharmService.STAT_SLOTS);
         stats.add(ItemStats.UNVEILED_MAGNITUDE);
+        stats.addAll(tw.exilecore.passive.TimelessJewels.STATS); // 2026-10-26：永恆珠寶的種子、征服者、族（TimelessJewels 讀）
         // 2026-10：對身上有某種異常的敵人（damage.vs_chilled…，CombatListener.ailmentWord）
         for (final String ailment : List.of("chilled", "frozen", "ignited", "shocked", "poisoned", "bleeding")) {
             stats.add(StatKeys.DAMAGE_VS_AILMENT + ailment);
         }
+        // 2026-10-26 照 PoE2 0.5 傳奇重做：傳奇的新機制屬性鍵（UniqueStats）與賦予的技能（grant_skill.技能）
+        stats.addAll(tw.exilecore.item.unique.UniqueStats.all());
+        for (final String skill : List.of("decompose", "withering_presence", "lightning_bolt", "spark", "blink")) { // 2026-10-27：＋雷頌墜、縛地長杖、絲沙背心
+            stats.add(tw.exilecore.item.unique.UniqueStats.GRANT_SKILL + skill);
+        }
         tags = constants(Tags.class);
+        // 2026-10-27（王衛全鎧）：只對某一種球（charge.duration 寫 endurance 標籤，ChargeType.durationTicksFor）
+        tags.addAll(tw.exilecore.charge.ChargeConfig.parse(YamlNode.load(DATA.resolve(tw.exilecore.charge.ChargeConfig.FILE))).keySet());
+        tags.add(tw.exilecore.item.unique.UniqueStats.SKILL_TAG_PREFIX + "temporal_curse"); // 2026-10-26：只對某個技能（SkillBuild 的 skill:技能 標籤）
         tags.add("curse"); // 2026-10：詛咒技能的標籤（SkillDefinition 給範圍印記加的，Tags 沒有常數）
         final YamlNode mapsYml = YamlNode.load(DATA.resolve("maps.yml"));
         maps = new HashSet<>(mapsYml.node("maps").keys());
@@ -113,15 +126,20 @@ class UniqueDataTest {
     void everyUniqueLoadsWithValidStatsTagsAndSources() {
         assertTrue(repository.warnings().isEmpty(), String.join("\n", repository.warnings()));
         // 2026-10 PoE2 改版：舊的傳奇退役（retired，不算在 uniques() 裡），換成照 PoE2 的一批，加上劫盜、世界 Boss 的專屬
-        assertEquals(127 + 21 + 5 + 2 + 6, repository.uniques().size(), // 2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件、淵鯨再 2 件；2026-10-24：＋6 件戰星傳奇
-                "終局 2 + 追逐級 13 + 其他終局 3 + 具名 Boss 2 + 共通 41（2026-10：＋德魯伊的獸魂符 4 件；2026-10-15 ＋6 件、＋3 件圖騰；2026-10-17 ＋棘壘） + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 11（2026-10-15 ＋1） + 四個終局共通 1（蛛巢壁壘） + 星骸之海的淵鯨 3 + 只能賭的 1（2026-10-17 踏骸之履）");
+        // 2026-10-26 照 PoE2 0.5：＋30 件原作有、我們以前沒有的傳奇（淵握墜退役換成淵握戒，件數不變）
+        assertEquals(127 + 21 + 5 + 2 + 6 + 2 + 30 + 91, repository.uniques().size(), // 2026-10-27：＋91 件照 PoE2 0.5 的第二批（84 件一般、7 件追逐級）
+                // 2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件、淵鯨再 2 件；2026-10-24：＋6 件戰星傳奇；2026-10-26：＋永恆珠寶 2 件（英雄悲劇、不朽恨意）
+                "（2026-10-27 第二批 ＋91）終局 2 + 追逐級 13 + 其他終局 3 + 具名 Boss 2 + 共通 41（2026-10：＋德魯伊的獸魂符 4 件；2026-10-15 ＋6 件、＋3 件圖騰；2026-10-17 ＋棘壘） + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 11（2026-10-15 ＋1） + 四個終局共通 1（蛛巢壁壘） + 星骸之海的淵鯨 3 + 只能賭的 1（2026-10-17 踏骸之履）");
         final Set<String> names = new HashSet<>();
         for (final UniqueItem unique : repository.uniques()) {
             final String where = unique.id();
             assertTrue(names.add(unique.name()), where + " 名字重複");
             assertNotNull(repository.base(unique.base()), where);
             assertFalse(unique.flavour().isEmpty(), where + " 要有世界觀文字");
-            assertTrue(unique.affixIds().size() + repository.uniqueVeiled(where).size() >= 3, where + " 至少三條詞綴（隱匿傳奇的隱匿詞綴也算）");
+            // 2026-10-26 照 PoE2 0.5：天樞墜（Astramentis）、巨像之心（Kaom's Heart）原作就只有兩條
+            // 2026-10-27 照 PoE2 0.5：映鏡指環（Kalandra's Touch）、孀雨粗弓（Widowhail）原作只有一條，濁源指環（Original Sin）兩條
+            final int least = FEW_LINES.getOrDefault(where, 3);
+            assertTrue(unique.affixIds().size() + repository.uniqueVeiled(where).size() >= least, where + " 至少三條詞綴（隱匿傳奇的隱匿詞綴也算）");
             assertFalse(unique.sources().isEmpty(), where + " 要有掉落來源");
             for (final String source : unique.sources()) {
                 assertTrue(Set.of("final", "map_boss", "chance", "gamble", "chase").contains(source) || maps.contains(source)
@@ -154,7 +172,9 @@ class UniqueDataTest {
                     if (mod.variable() != null) {
                         assertTrue(affix.tiers().getFirst().vars().containsKey(mod.variable()), affixId + " 缺少變數 " + mod.variable());
                         // 小數擲骰寫 {value/100}（顯示跟效果一樣）
-                        assertTrue(affix.text().contains("{" + mod.variable() + "}") || affix.text().contains("{" + mod.variable() + "/"),
+                        // 2026-10-26：{名字:甲|乙} 是選項（永恆珠寶的征服者，Affix.choices）
+                        assertTrue(affix.text().contains("{" + mod.variable() + "}") || affix.text().contains("{" + mod.variable() + "/")
+                                        || affix.text().contains("{" + mod.variable() + ":"),
                                 affixId + " 的文字沒有 {" + mod.variable() + "}");
                     }
                 }
@@ -166,11 +186,20 @@ class UniqueDataTest {
     void sourcesSplitIntoBossOnlyAndFindableUniques() {
         // 2026-10 PoE2 改版：天穹之心、星爐、守陵者的誓約、觀星者的星盤…退役，換成新的一批
         final Set<String> finals = ids(repository.uniquesFor("final", 84));
-        assertEquals(Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark"), finals); // 2026-10-15：＋蛛巢壁壘（四個終局都掉）
+        // 2026-10-15：＋蛛巢壁壘（四個終局都掉）；2026-10-26：＋英雄悲劇（照 PoE2 是終局級 Boss 奧爾羅斯掉的永恆珠寶）
+        // 2026-10-26：英雄悲劇改成固定 1%（drop_chance），不在 final 的權重池裡，改由 fixedChanceUniques 擲
+        assertEquals(Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark"), finals);
+        assertEquals(Set.of("heroic_tragedy"), ids(repository.fixedChanceUniques("final", 84)));
+        assertEquals(Set.of("undying_hate"), ids(repository.fixedChanceUniques("abyss_lich", 84)));
+        assertFalse(ids(repository.uniquesFor("abyss_lich", 84)).contains("undying_hate"));
+        assertEquals(0.01, repository.dropChance("heroic_tragedy"), 1e-12);
+        assertEquals(0.01, repository.dropChance("undying_hate"), 1e-12);
+        assertEquals(0, repository.dropChance("celestial_pivot"), 1e-12);
         assertEquals(Set.of("gravewarden_maul"), ids(repository.uniquesFor("royal_tomb", 84)));
         assertEquals(Set.of("astrolabe_wand"), ids(repository.uniquesFor("observatory", 84)));
         // 新武器（弩、長棍、矛）都有自己的傳奇，地圖 Boss 會掉、僥倖石做得出來
-        for (final String base : List.of("xbow_26", "qstaff_25", "spear_25")) {
+        // 2026-10-26 照 PoE2 0.5 傳奇重做：弩、長棍、矛的一般掉落傳奇換到原作的基底（這次之前 xbow_26、qstaff_25、spear_25）
+        for (final String base : List.of("xbow_22", "qstaff_22", "spear_21")) {
             final ItemData normal = generator.generate(repository.base(base), Rarity.NORMAL, 70, new Random(1));
             assertFalse(CurrencyOperation.chanceUniques(normal, generator).isEmpty(), base + " 要有能用僥倖石做的傳奇");
         }
@@ -300,17 +329,18 @@ class UniqueDataTest {
                 assertFalse(unique.droppedBy(other), unique.id() + "：追逐級只在 chase 池，不在 " + other + "（不然機率會被別的擲骰拉高）");
             }
             assertFalse(unique.droppedBy("chance") || unique.droppedBy("gamble"), unique.id() + "：追逐級不能做、不能賭");
-            // 2026-10：照 PoE2 同部位的傳奇重做，巨像之心只剩三條（大量生命、沒有精魂）
-            assertTrue(unique.affixIds().size() >= 3, unique.id() + "：追逐級至少三條");
+            // 2026-10-26 照 PoE2 0.5 的 Kaom's Heart：巨像之心只剩兩條（+1500 生命、沒有精魂），其他的追逐級至少三條
+            // 2026-10-27：映鏡指環、濁源指環照原作只有一、兩條（FEW_LINES）
+            assertTrue(unique.affixIds().size() >= FEW_LINES.getOrDefault(unique.id(), 3), unique.id() + "：追逐級至少三條");
         }
-        assertEquals(13, chase, "十三件追逐級傳奇（2026-10-15 加了九件）");
+        assertEquals(20, chase, "二十件追逐級傳奇（2026-10-15 加了九件；2026-10-27 照 PoE2 第二批 ＋7：映鏡指環、濁源指環、逆漏法袍、巧匠束帶、雷頌墜、冷蔑金冠、冷蔑步靴）");
         // 共通池（map_boss）任何等級都沒有追逐級：追逐級只從 chase 池、照固定機率掉
         for (final int level : new int[] {70, 75, 90}) {
             for (final UniqueItem unique : repository.uniquesFor("map_boss", level)) {
                 assertFalse(unique.chase(), unique.id());
             }
         }
-        assertEquals(13, repository.uniquesFor("chase", 75).size());
+        assertEquals(20, repository.uniquesFor("chase", 75).size()); // 2026-10-27：13 → 20
         assertEquals(0, repository.uniquesFor("chase", 74).size());
         // 2026-10-15：退役的傳奇定義從 uniques.yml 刪掉了
         assertNull(repository.unique("star_chaser"));
@@ -330,34 +360,38 @@ class UniqueDataTest {
 
     @Test
     void uniqueWeaponBaseDamageGrowsWithItemLevelFromItsTier() {
-        // 裂穹：stat_base 是霜晶弓（72 級那一階，固定 34–57）。物品等級比那一階高，基底傷害照稀有武器同一條曲線往上長
+        // 裂穹：stat_base 是鑄紋弓（bow_08，39 級那一階，固定數值）。物品等級比那一階高，基底傷害照稀有武器同一條曲線往上長
+        // （2026-10-26 照 PoE2 0.5 傳奇重做換了那一階；這次之前是霜晶弓 72 級那一階、49–82）
         final UniqueItem bow = repository.unique("horizon_cleaver");
-        assertEquals(34, basePhysical(bow, 72)[0]);
-        assertEquals(57, basePhysical(bow, 72)[1]);
-        assertEquals(34, basePhysical(bow, 60)[0], "不會比它那一階低（低物品等級的舊傳奇數值不變）");
-        assertEquals(57, basePhysical(bow, 60)[1]);
-        for (final int level : new int[] {75, 84, 91}) {
-            final double factor = curve(level) / curve(72);
-            assertEquals(Math.round(34 * factor), basePhysical(bow, level)[0], "物品等級 " + level);
-            assertEquals(Math.round(57 * factor), basePhysical(bow, level)[1], "物品等級 " + level);
+        final ItemBase bowTier = repository.base("bow_08");
+        final int tierLevel = bowTier.requirements().level();
+        final int[] tierDamage = bowTier.damage().get(DamageType.PHYSICAL);
+        assertEquals(tierDamage[0], basePhysical(bow, tierLevel)[0]);
+        assertEquals(tierDamage[1], basePhysical(bow, tierLevel)[1]);
+        assertEquals(tierDamage[0], basePhysical(bow, 20)[0], "不會比它那一階低（低物品等級的舊傳奇數值不變）");
+        assertEquals(tierDamage[1], basePhysical(bow, 20)[1]);
+        for (final int level : new int[] {60, 75, 84, 91}) {
+            final double factor = curve(level) / curve(tierLevel);
+            assertEquals(Math.round(tierDamage[0] * factor), basePhysical(bow, level)[0], "物品等級 " + level);
+            assertEquals(Math.round(tierDamage[1] * factor), basePhysical(bow, level)[1], "物品等級 " + level);
         }
-        assertEquals(38, basePhysical(bow, 84)[0], "物品等級 84：×1.12");
-        assertEquals(64, basePhysical(bow, 84)[1]);
 
-        // 寫 base_level 的基底（劈世巨鎚：79 級那一階）也一樣，從 base_level 算起
+        // 寫 base_level 的基底（劈世巨鎚：45 級那一階）也一樣，從 base_level 算起
         final UniqueItem maul = repository.unique("worldsplitter");
         final ItemBase maulBase = repository.base(maul.base());
         assertTrue(maulBase.baseLevel() > 0 && !maulBase.fixed());
         final int[] written = maulBase.damage().get(DamageType.PHYSICAL);
         assertEquals(written[1], basePhysical(maul, maulBase.baseLevel())[1]);
-        assertEquals(written[1], basePhysical(maul, 60)[1]);
+        // 2026-10-26 照 PoE2 0.5 傳奇重做：基底換成戰痕巨錘（45 級那一階；這次之前 79 級那一階、這裡寫物品等級 60）
+        assertEquals(written[1], basePhysical(maul, maulBase.baseLevel() - 10)[1]);
         assertEquals(Math.round(written[1] * curve(91) / curve(maulBase.baseLevel())), basePhysical(maul, 91)[1]);
 
         // 需求照舊固定在那一階（屬性需求不跟著長）；詞綴的附加傷害也不跟著長
-        final ItemData tier = generator.generateUnique(bow, 72, new Random(5));
+        final ItemData tier = generator.generateUnique(bow, tierLevel, new Random(5));
         final ItemData high = generator.generateUnique(bow, 91, new Random(5));
         final ItemBase bowBase = repository.base(tier.base());
         assertEquals(ItemStats.requirements(repository, bowBase, tier).dex(), ItemStats.requirements(repository, bowBase, high).dex());
+        // 2026-10-27 照站長比照 poe2db 調強：第 1 條是增加物理，附加傷害變成第 2 條（這次之前是第 1 條）
         assertEquals(tier.affixes().get(1).vars(), high.affixes().get(1).vars(), "同一個種子擲出一樣的附加傷害");
 
         // 不是武器的傳奇不變（虛空冠冕的能量護盾）；稀有武器照原本的算法
@@ -370,44 +404,119 @@ class UniqueDataTest {
         assertEquals(ItemStats.snapshot(repository, helm, lowHelm).energyShield(), ItemStats.snapshot(repository, helm, highHelm).energyShield());
         final ItemBase rareBow = repository.base("bow_23");
         final ItemData rare = generator.generate(rareBow, Rarity.NORMAL, 84, new Random(5));
-        assertEquals(Math.round(rareBow.damage().get(DamageType.PHYSICAL)[1] * curve(84) / curve(rareBow.baseLevel())),
+        // 2026-10-26：照 PoE2 分階的武器到 base_level 就是原值，物品等級再高也不往上長
+        assertEquals(Math.round(rareBow.damage().get(DamageType.PHYSICAL)[1] * curve(Math.min(84, rareBow.baseLevel())) / curve(rareBow.baseLevel())),
                 ItemStats.snapshot(repository, rareBow, rare).damage().get(DamageType.PHYSICAL)[1]);
     }
 
     @Test
-    void horizonCleaverHasLocalPhysicalAndOldOnesKeepTheirRolls() {
+    void horizonCleaverFollowsItsOriginalAndOldOnesKeepTheirRolls() {
+        // 2026-10-26 照 PoE2 0.5 傳奇重做：裂穹照原作（附加物理、暴擊、偷取、分裂、分裂後穿透）；基底那一階是鑄紋弓（bow_08，39 級）。
+        // 2026-10-27 照站長比照 poe2db 的頂級弓調強（第 5 版）：偷取魔力換成增加 150–190% 物理（放第 1 條），附加物理 40–48 到 65–72 → 75–85 到 130–150；
+        // 這次之前是第 4 版（附加物理在第 1 條、沒有增加物理、第 4 條偷取魔力）
         final UniqueItem bow = repository.unique("horizon_cleaver");
-        assertEquals(3, bow.version());
-        assertEquals(7, bow.affixIds().size());
+        assertEquals(5, bow.version());
+        assertEquals(6, bow.affixIds().size());
+        final ItemBase tierBase = repository.base("bow_08");
+        final int tierLevel = tierBase.requirements().level();
+        final int[] written = tierBase.damage().get(DamageType.PHYSICAL);
         final ItemData fresh = generator.generateUnique(bow, 84, new Random(11));
-        final int increased = value(fresh, 1);
-        assertTrue(increased >= 150 && increased <= 190, "增加物理傷害 " + increased);
         final ItemBase base = repository.base(fresh.base());
         final ItemStats.Snapshot snapshot = ItemStats.snapshot(repository, base, fresh);
-        assertEquals(increased / 100.0, snapshot.local().physical(), 1e-9, "武器上的增加物理是本地的");
-        // 面板 =（基底 × 物品等級的倍率 + 附加）×（1 + 增加）
+        final int increased = fresh.affixes().get(0).vars().get("value");
+        assertTrue(increased >= 150 && increased <= 190);
+        assertEquals(increased / 100.0, snapshot.local().physical(), 1e-9, "增加物理是本地的");
+        // 面板 = (基底 × 物品等級的倍率 + 附加) × (1 + 增加物理)
         final Map<String, Integer> added = fresh.affixes().get(1).vars();
-        final double factor = curve(84) / curve(72);
-        assertEquals(Math.round((34 * factor + added.get("min")) * (1 + increased / 100.0)), snapshot.damage().get(DamageType.PHYSICAL)[0]);
-        assertEquals(Math.round((57 * factor + added.get("max")) * (1 + increased / 100.0)), snapshot.damage().get(DamageType.PHYSICAL)[1]);
-        assertTrue(snapshot.damage().get(DamageType.PHYSICAL)[0] >= 200, "面板要跟同階不錯的稀有弓差不多：" + snapshot.damage().get(DamageType.PHYSICAL)[0]);
+        final double factor = curve(84) / curve(tierLevel);
+        final double more = 1 + increased / 100.0;
+        final double[] physical = snapshot.damage().get(DamageType.PHYSICAL);
+        assertEquals(Math.round((written[0] * factor + added.get("min")) * more), physical[0], 1);
+        assertEquals(Math.round((written[1] * factor + added.get("max")) * more), physical[1], 1);
+        // 追逐級的強度：84 級無品質的物理 DPS 在原作頂級稀有弓（六條好詞綴約 530、全頂約 626）上下，不再只有 150 左右
+        final double dps = (physical[0] + physical[1]) / 2.0 * snapshot.aps();
+        assertTrue(dps >= 480 && dps <= 650, "物理 DPS " + dps);
 
-        // 第 2 版的裂穹（六條，沒有增加物理）：登入時補上新的第 1 條，原本六條的數值原封不動往後挪一條
-        final ItemData old = generator.generateUnique(bow, 75, new Random(12));
-        final List<RolledAffix> six = new java.util.ArrayList<>(old.affixes().subList(1, 7));
-        old.affixes().clear();
-        for (int i = 0; i < six.size(); i++) {
-            old.affixes().add(new RolledAffix(UniqueItem.AFFIX_PREFIX + bow.id() + "." + (i + 1), 1, six.get(i).vars()));
-        }
-        old.setUniqueVersion(2);
-        assertTrue(UniqueUpgrade.outdated(repository, old));
-        assertTrue(UniqueUpgrade.apply(repository, old));
-        assertEquals(7, old.affixes().size());
-        assertEquals(3, old.uniqueVersion());
-        assertTrue(value(old, 1) >= 150 && value(old, 1) <= 190, "新的增加物理 " + value(old, 1));
-        for (int i = 0; i < six.size(); i++) {
-            assertEquals(six.get(i).vars(), old.affixes().get(i + 1).vars(), "原本的第 " + (i + 1) + " 條");
-        }
-        assertFalse(UniqueUpgrade.outdated(repository, old));
+        // 第 4 版（附加物理、暴擊、偷取生命、偷取魔力、分裂、分裂後穿透）：附加物理照比例換到新範圍，其他對得上的留著，
+        // 偷取魔力拿掉，增加物理是新的（重擲）
+        final String prefix = UniqueItem.AFFIX_PREFIX + bow.id() + ".";
+        final ItemData v4 = generator.generateUnique(bow, 84, new Random(14));
+        v4.affixes().clear();
+        final RolledAffix oldAdded = new RolledAffix(prefix + "1", 1, Map.of("min", 44, "max", 72));
+        oldAdded.record(1, Map.of("min", new int[] {40, 48}, "max", new int[] {65, 72}), "unique", "prefix");
+        v4.affixes().add(oldAdded);
+        v4.affixes().add(new RolledAffix(prefix + "2", 1, Map.of("value", 500)));
+        v4.affixes().add(new RolledAffix(prefix + "3", 1, Map.of("value", 6)));
+        v4.affixes().add(new RolledAffix(prefix + "4", 1, Map.of("value", 5)));
+        v4.affixes().add(new RolledAffix(prefix + "5", 1, Map.of()));
+        v4.affixes().add(new RolledAffix(prefix + "6", 1, Map.of()));
+        v4.setUniqueVersion(4);
+        assertTrue(UniqueUpgrade.outdated(repository, v4));
+        assertTrue(UniqueUpgrade.apply(repository, v4));
+        assertEquals(6, v4.affixes().size());
+        assertEquals(5, v4.uniqueVersion());
+        final int rerolled = v4.affixes().get(0).vars().get("value");
+        assertTrue(rerolled >= 150 && rerolled <= 190, "新的增加物理");
+        assertEquals(80, v4.affixes().get(1).vars().get("min"), "舊範圍的正中間 → 新範圍的正中間");
+        assertEquals(150, v4.affixes().get(1).vars().get("max"), "舊範圍的最高 → 新範圍的最高");
+        assertEquals(Map.of("value", 500), v4.affixes().get(2).vars());
+        assertEquals(Map.of("value", 6), v4.affixes().get(3).vars());
+        assertFalse(UniqueUpgrade.outdated(repository, v4));
+
+        // 第 3 版（七條，第 1 條就是增加 150–190% 物理）：增加物理接回第 1 條，附加物理、暴擊、偷取生命、分裂接上；
+        // 偷取魔力、穿透 5 個拿掉，分裂後穿透是新的
+        final ItemData v3 = generator.generateUnique(bow, 75, new Random(12));
+        v3.affixes().clear();
+        v3.affixes().add(new RolledAffix(prefix + "1", 1, Map.of("value", 170)));
+        v3.affixes().add(new RolledAffix(prefix + "2", 1, Map.of("min", 80, "max", 140)));
+        v3.affixes().add(new RolledAffix(prefix + "3", 1, Map.of("value", 450)));
+        v3.affixes().add(new RolledAffix(prefix + "4", 1, Map.of("value", 7)));
+        v3.affixes().add(new RolledAffix(prefix + "5", 1, Map.of("value", 5)));
+        v3.affixes().add(new RolledAffix(prefix + "6", 1, Map.of()));
+        v3.affixes().add(new RolledAffix(prefix + "7", 1, Map.of()));
+        v3.setUniqueVersion(3);
+        assertTrue(UniqueUpgrade.apply(repository, v3));
+        assertEquals(6, v3.affixes().size());
+        assertEquals(Map.of("value", 170), v3.affixes().get(0).vars());
+        assertEquals(Map.of("min", 80, "max", 140), v3.affixes().get(1).vars());
+        assertEquals(Map.of("value", 450), v3.affixes().get(2).vars());
+        assertEquals(Map.of("value", 7), v3.affixes().get(3).vars());
+        assertFalse(UniqueUpgrade.outdated(repository, v3));
+
+        // 第 2 版（六條，附加物理在第 1 條）也一樣接得上
+        final ItemData v2 = generator.generateUnique(bow, 75, new Random(13));
+        v2.affixes().clear();
+        v2.affixes().add(new RolledAffix(prefix + "1", 1, Map.of("min", 76, "max", 131)));
+        v2.affixes().add(new RolledAffix(prefix + "2", 1, Map.of("value", 600)));
+        v2.affixes().add(new RolledAffix(prefix + "3", 1, Map.of("value", 8)));
+        v2.affixes().add(new RolledAffix(prefix + "4", 1, Map.of("value", 4)));
+        v2.affixes().add(new RolledAffix(prefix + "5", 1, Map.of()));
+        v2.affixes().add(new RolledAffix(prefix + "6", 1, Map.of()));
+        v2.setUniqueVersion(2);
+        assertTrue(UniqueUpgrade.apply(repository, v2));
+        assertEquals(Map.of("min", 76, "max", 131), v2.affixes().get(1).vars(), "第 2 版的第 1 條");
+        assertEquals(Map.of("value", 600), v2.affixes().get(2).vars(), "第 2 版的第 2 條");
+        assertEquals(Map.of("value", 8), v2.affixes().get(3).vars(), "第 2 版的第 3 條");
+        assertFalse(UniqueUpgrade.outdated(repository, v2));
+    }
+
+    @Test
+    void chaseWeaponsSitAroundTopRaresOfTheirKind() {
+        // 2026-10-27 照站長比照 poe2db：弒神之矛數值不變（84 級無品質物理 DPS 約 590–772，原作頂級稀有矛六條好詞綴約 660、全頂約 786）
+        final UniqueItem spear = repository.unique("godslayer_spear");
+        final ItemData rolled = generator.generateUnique(spear, 84, new Random(21));
+        final ItemStats.Snapshot spearStats = ItemStats.snapshot(repository, repository.base(rolled.base()), rolled);
+        final double[] spearPhysical = spearStats.damage().get(DamageType.PHYSICAL);
+        final double spearDps = (spearPhysical[0] + spearPhysical[1]) / 2.0 * spearStats.aps();
+        assertTrue(spearDps >= 560 && spearDps <= 800, "弒神之矛物理 DPS " + spearDps);
+
+        // 萬象之杖：+5 全部法術技能等級、增加 200–240% 法術傷害、35–45% 施法速度（這次之前 +3、80–120%、15–25%）
+        final UniqueItem staff = repository.unique("omniscience_staff");
+        assertEquals(2, staff.version());
+        final ItemData rolledStaff = generator.generateUnique(staff, 84, new Random(22));
+        assertEquals(5, total(rolledStaff, StatKeys.SKILL_LEVEL, Set.of(Tags.SPELL)), 1e-9);
+        final int spell = rolledStaff.affixes().get(1).vars().get("value");
+        final int cast = rolledStaff.affixes().get(2).vars().get("value");
+        assertTrue(spell >= 200 && spell <= 240 && cast >= 35 && cast <= 45, spell + "% / " + cast + "%");
     }
 }

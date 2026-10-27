@@ -1,0 +1,8425 @@
+{
+ "source": "RePoE poe2 export (github.com/repoe-fork/poe2, data/mods.json, fetched 2026-10-26; contains 0.5 \"Runes of Aldur\" data). Display text cross-checked with poe2db.tw/us/Waystones (107 \"Waystones Mods\" rows, 19 \"Desecrated Waystone Mods\").",
+ "tier_bands": {
+  "map_key_low": "Waystone T1-T5 (area 65-69)",
+  "map_key_medium": "T6-T10",
+  "map_key_high": "T11-T15",
+  "map_key_highest": "T16",
+  "default": "any waystone",
+  "map": "any waystone, only via desecration/unveil (Abyss)"
+ },
+ "notes": [
+  "Every waystone-tier band has its own mod id; a waystone can ONLY roll the band matching its tier (T16 always gets tier-4 values). All spawn weights are 1 (equal) within a band.",
+  "Reward lines are \"_final\" (multiplicative, \"more\") except map_map_item_drop_chance_+% (increased) on the disabled RareMonstersAdditionalModifier mod.",
+  "Ground-effect group MapSpreadGroundEffect has 3 variants (ignited/chilled/shocked) sharing one group => only one per waystone, 3x total weight of a normal family."
+ ],
+ "counts": {
+  "total": 141,
+  "rollable": 125
+ },
+ "families": [
+  {
+   "group": "MapBleeding",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonsterBleeding1",
+    "MapMonsterBleeding2",
+    "MapMonsterBleeding3",
+    "MapMonsterBleeding4"
+   ]
+  },
+  {
+   "group": "MapMonsterChaosDamage",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonsterDamageAsChaos1",
+    "MapMonsterDamageAsChaos2",
+    "MapMonsterDamageAsChaos3",
+    "MapMonsterDamageAsChaos4"
+   ]
+  },
+  {
+   "group": "MapMonsterColdDamage",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonsterDamageAsCold1",
+    "MapMonsterDamageAsCold2",
+    "MapMonsterDamageAsCold3",
+    "MapMonsterDamageAsCold4"
+   ]
+  },
+  {
+   "group": "MapMonsterCriticalStrikesAndDamage",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonsterCritIncrease1",
+    "MapMonsterCritIncrease2",
+    "MapMonsterCritIncrease3",
+    "MapMonsterCritIncrease4"
+   ]
+  },
+  {
+   "group": "MapMonsterDamage",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonsterDamageIncrease1",
+    "MapMonsterDamageIncrease2",
+    "MapMonsterDamageIncrease3",
+    "MapMonsterDamageIncrease4"
+   ]
+  },
+  {
+   "group": "MapMonsterFast",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonsterSpeedIncrease3",
+    "MapMonsterSpeedIncrease4",
+    "MapMonsterSpeedIncrease1",
+    "MapMonsterSpeedIncrease2"
+   ]
+  },
+  {
+   "group": "MapMonsterFireDamage",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonsterDamageAsFire1",
+    "MapMonsterDamageAsFire2",
+    "MapMonsterDamageAsFire3",
+    "MapMonsterDamageAsFire4"
+   ]
+  },
+  {
+   "group": "MapMonsterLife",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonsterLifeIncrease1",
+    "MapMonsterLifeIncrease2",
+    "MapMonsterLifeIncrease3",
+    "MapMonsterLifeIncrease4"
+   ]
+  },
+  {
+   "group": "MapMonsterLightningDamage",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonsterDamageAsLightning1",
+    "MapMonsterDamageAsLightning2",
+    "MapMonsterDamageAsLightning3",
+    "MapMonsterDamageAsLightning4"
+   ]
+  },
+  {
+   "group": "MapMonstersAccuracy",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonsterAccuracy1",
+    "MapMonsterAccuracy2",
+    "MapMonsterAccuracy3",
+    "MapMonsterAccuracy4"
+   ]
+  },
+  {
+   "group": "MapMonstersArmourBreak",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonsterArmourBreak1",
+    "MapMonsterArmourBreak2",
+    "MapMonsterArmourBreak3",
+    "MapMonsterArmourBreak4"
+   ]
+  },
+  {
+   "group": "MapMonstersElementalPenetration",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonstersElementalPenetration1",
+    "MapMonstersElementalPenetration2",
+    "MapMonstersElementalPenetration3",
+    "MapMonstersElementalPenetration4"
+   ]
+  },
+  {
+   "group": "MapMonstersStunBuildup",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonsterStunBuildup1",
+    "MapMonsterStunBuildup2",
+    "MapMonsterStunBuildup3",
+    "MapMonsterStunBuildup4"
+   ]
+  },
+  {
+   "group": "MapPoisoning",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonsterPoisoning1",
+    "MapMonsterPoisoning2",
+    "MapMonsterPoisoning3",
+    "MapMonsterPoisoning4"
+   ]
+  },
+  {
+   "group": "MapMonstersAilmentChance",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapMonsterElementAilmentChance1",
+    "MapMonsterElementAilmentChance2",
+    "MapMonsterElementAilmentChance3",
+    "MapMonsterElementAilmentChance4"
+   ]
+  },
+  {
+   "group": "MapMonstersAllResistances",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapMonsterElementalResistances1",
+    "MapMonsterElementalResistances2",
+    "MapMonsterElementalResistances3",
+    "MapMonsterElementalResistances4"
+   ]
+  },
+  {
+   "group": "MapMonstersArmoured",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapMonsterArmoured1"
+   ]
+  },
+  {
+   "group": "MapMonstersBaseSelfCriticalMultiplier",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapMonstersBaseSelfCriticalMultiplier1",
+    "MapMonstersBaseSelfCriticalMultiplier2",
+    "MapMonstersBaseSelfCriticalMultiplier3",
+    "MapMonstersBaseSelfCriticalMultiplier4"
+   ]
+  },
+  {
+   "group": "MapMonstersCurseEffectOnSelfFinal",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapMonstersCurseEffectOnSelf1",
+    "MapMonstersCurseEffectOnSelf2",
+    "MapMonstersCurseEffectOnSelf3",
+    "MapMonstersCurseEffectOnSelf4"
+   ]
+  },
+  {
+   "group": "MapMonstersEnergyShield",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapMonsterEnergyShield1"
+   ]
+  },
+  {
+   "group": "MapMonstersEvasive",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapMonsterEvasive1"
+   ]
+  },
+  {
+   "group": "MapMonstersStunAndAilmentThreshold",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapMonsterStunAilmentThreshold1",
+    "MapMonsterStunAilmentThreshold2",
+    "MapMonsterStunAilmentThreshold3",
+    "MapMonsterStunAilmentThreshold4"
+   ]
+  },
+  {
+   "group": "MapPlayerCooldownRecovery",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapPlayerCooldownRecovery1",
+    "MapPlayerCooldownRecovery2",
+    "MapPlayerCooldownRecovery3",
+    "MapPlayerCooldownRecovery4"
+   ]
+  },
+  {
+   "group": "MapPlayerElementalWeakness",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapPlayerElementalWeakness1"
+   ]
+  },
+  {
+   "group": "MapPlayerEnfeeblement",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapPlayerEnfeeble1"
+   ]
+  },
+  {
+   "group": "MapPlayerMaxResists",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapPlayerMaximumResists1",
+    "MapPlayerMaximumResists2",
+    "MapPlayerMaximumResists3",
+    "MapPlayerMaximumResists4"
+   ]
+  },
+  {
+   "group": "MapPlayerReducedRegen",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapPlayerRecoveryRate1",
+    "MapPlayerRecoveryRate2",
+    "MapPlayerRecoveryRate3",
+    "MapPlayerRecoveryRate4"
+   ]
+  },
+  {
+   "group": "MapPlayerTemporalChains",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapPlayerTemporalChains1"
+   ]
+  },
+  {
+   "group": "MapPlayersGainReducedFlaskCharges",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapPlayerFlaskChargeGain1",
+    "MapPlayerFlaskChargeGain2",
+    "MapPlayerFlaskChargeGain3",
+    "MapPlayerFlaskChargeGain4"
+   ]
+  },
+  {
+   "group": "MapSpreadGroundEffect",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapSpreadBurningGround1",
+    "MapSpreadBurningGround2",
+    "MapSpreadBurningGround3",
+    "MapSpreadBurningGround4",
+    "MapSpreadChilledGround1",
+    "MapSpreadChilledGround2",
+    "MapSpreadChilledGround3",
+    "MapSpreadChilledGround4",
+    "MapSpreadShockedGround1",
+    "MapSpreadShockedGround2",
+    "MapSpreadShockedGround3",
+    "MapSpreadShockedGround4"
+   ]
+  },
+  {
+   "group": "MapGainRarityOnKill",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapGainRarityOnKill1"
+   ]
+  },
+  {
+   "group": "MapMonsterMultipleProjectiles",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapMonsterAdditionalProjectiles1",
+    "MapMonsterAdditionalProjectiles2",
+    "MapMonsterAdditionalProjectiles3"
+   ]
+  },
+  {
+   "group": "MapSuffixesNullified",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapSuffixesNullified1"
+   ]
+  },
+  {
+   "group": "MapWildwoodWispEmpowered",
+   "domain": "area",
+   "affix": "prefix",
+   "mods": [
+    "MapWildwoodWispEmpowered1"
+   ]
+  },
+  {
+   "group": "MapMonsterAreaOfEffect",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapMonsterIncreasedAreaOfEffect1"
+   ]
+  },
+  {
+   "group": "MapRareMonstersAdditionalModifier",
+   "domain": "area",
+   "affix": "suffix",
+   "mods": [
+    "MapRareMonstersAdditionalModifier1"
+   ]
+  },
+  {
+   "group": "MapMonstersStealChargesOnHit",
+   "domain": "area",
+   "affix": "unique",
+   "mods": [
+    "MapMonstersStealCharges1",
+    "MapMonstersStealCharges2",
+    "MapMonstersStealCharges3",
+    "MapMonstersStealCharges4"
+   ]
+  },
+  {
+   "group": "MapAbyssContainsHarvester",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "mods": [
+    "MapAbyssContainsHarvester"
+   ]
+  },
+  {
+   "group": "MapAbyssCracksAllMagicMonsterChance",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "mods": [
+    "MapAbyssCracksAllMagicMonsterChance"
+   ]
+  },
+  {
+   "group": "MapAbyssCracksAlwaysLeadToDepths",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "mods": [
+    "MapAbyssAlwaysContainsBoss",
+    "MapAbyssCracksAlwaysLeadToDepths"
+   ]
+  },
+  {
+   "group": "MapAbyssDifficultyRewardIncreasePerPit",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "mods": [
+    "MapAbyssDifficultyRewardIncreasePerPit"
+   ]
+  },
+  {
+   "group": "MapAbyssGuaranteeRewards",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "mods": [
+    "MapAbyssGuaranteeRewards"
+   ]
+  },
+  {
+   "group": "MapAbyssRareMonstersAbyssalModifier",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "mods": [
+    "MapAbyssRareMonstersAbyssalModifier"
+   ]
+  },
+  {
+   "group": "MapAbyssalAbyssMonsterExperience",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "mods": [
+    "MapAbyssalAbyssMonsterExperience"
+   ]
+  },
+  {
+   "group": "MapAbyssalAdditionalPits",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "mods": [
+    "MapAbyssalAdditionalPits"
+   ]
+  },
+  {
+   "group": "MapAbyssalIncreasedAbyssMonsters",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "mods": [
+    "MapAbyssalIncreasedAbyssMonsters"
+   ]
+  },
+  {
+   "group": "MapAbyssalOverrun",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "mods": [
+    "MapAbyssalOverrun"
+   ]
+  },
+  {
+   "group": "MapAbyssDamageCycle",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "mods": [
+    "MapAbyssDamageRotation"
+   ]
+  },
+  {
+   "group": "MapAbyssRareMonstersSoulEater",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "mods": [
+    "MapAbyssRareMonstersSoulEater"
+   ]
+  },
+  {
+   "group": "MapSpreadGroundEffect",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "mods": [
+    "MapAbyssModManaSiphonGround"
+   ]
+  },
+  {
+   "group": "MapUberModActionSpeed",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "mods": [
+    "MapAbyssActionSpeed"
+   ]
+  },
+  {
+   "group": "MapUberModMarkedForDeath",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "mods": [
+    "MapAbyssMarkedForDeath"
+   ]
+  },
+  {
+   "group": "MapUberModVines",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "mods": [
+    "MapAbyssVines"
+   ]
+  },
+  {
+   "group": "MapAbyssPackUnionofSouls",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "mods": [
+    "MapAbyssPackUnionofSouls"
+   ]
+  },
+  {
+   "group": "MapAbyssRaresBossUnionofSouls",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "mods": [
+    "MapAbyssRaresBossUnionofSouls"
+   ]
+  }
+ ],
+ "mods": [
+  {
+   "id": "MapMonsterBleeding1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapBleeding",
+   "name": "Puncturing",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_chance_to_inflict_bleeding_%",
+     "min": 5,
+     "max": 10
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_monster_effectiveness_%": 13
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_chance_to_inflict_bleeding_%",
+     "min": 5,
+     "max": 10
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 13,
+     "max": 13
+    }
+   ],
+   "display_text": [
+    "Monsters have (5-10)% chance to inflict Bleeding on Hit",
+    "10% more Waystones found in Area",
+    "Monsters have 13% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterBleeding2",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapBleeding",
+   "name": "Puncturing",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_chance_to_inflict_bleeding_%",
+     "min": 10,
+     "max": 15
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_monster_effectiveness_%": 13
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_chance_to_inflict_bleeding_%",
+     "min": 10,
+     "max": 15
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 13,
+     "max": 13
+    }
+   ],
+   "display_text": [
+    "Monsters have (10-15)% chance to inflict Bleeding on Hit",
+    "10% more Waystones found in Area",
+    "Monsters have 13% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterBleeding3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapBleeding",
+   "name": "Puncturing",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_chance_to_inflict_bleeding_%",
+     "min": 15,
+     "max": 20
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_monster_effectiveness_%": 13
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_chance_to_inflict_bleeding_%",
+     "min": 15,
+     "max": 20
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 13,
+     "max": 13
+    }
+   ],
+   "display_text": [
+    "Monsters have (15-20)% chance to inflict Bleeding on Hit",
+    "10% more Waystones found in Area",
+    "Monsters have 13% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterBleeding4",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapBleeding",
+   "name": "Puncturing",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_chance_to_inflict_bleeding_%",
+     "min": 20,
+     "max": 25
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_monster_effectiveness_%": 13
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_chance_to_inflict_bleeding_%",
+     "min": 20,
+     "max": 25
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 13,
+     "max": 13
+    }
+   ],
+   "display_text": [
+    "Monsters have (20-25)% chance to inflict Bleeding on Hit",
+    "10% more Waystones found in Area",
+    "Monsters have 13% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsChaos1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterChaosDamage",
+   "name": "Profane",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_chaos",
+     "min": 5,
+     "max": 9
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 15
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_chaos",
+     "min": 5,
+     "max": 9
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    }
+   ],
+   "display_text": [
+    "Monsters deal (5-9)% of Damage as Extra Chaos",
+    "15% more Waystones found in Area",
+    "15% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsChaos2",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterChaosDamage",
+   "name": "Profane",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_chaos",
+     "min": 10,
+     "max": 14
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 15
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_chaos",
+     "min": 10,
+     "max": 14
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    }
+   ],
+   "display_text": [
+    "Monsters deal (10-14)% of Damage as Extra Chaos",
+    "15% more Waystones found in Area",
+    "15% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsChaos3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterChaosDamage",
+   "name": "Profane",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_chaos",
+     "min": 15,
+     "max": 19
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 15
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_chaos",
+     "min": 15,
+     "max": 19
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    }
+   ],
+   "display_text": [
+    "Monsters deal (15-19)% of Damage as Extra Chaos",
+    "15% more Waystones found in Area",
+    "15% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsChaos4",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterChaosDamage",
+   "name": "Profane",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_chaos",
+     "min": 20,
+     "max": 24
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 15
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_chaos",
+     "min": 20,
+     "max": 24
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    }
+   ],
+   "display_text": [
+    "Monsters deal (20-24)% of Damage as Extra Chaos",
+    "15% more Waystones found in Area",
+    "15% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsCold1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterColdDamage",
+   "name": "Frostbitten",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_cold",
+     "min": 5,
+     "max": 9
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 14
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_cold",
+     "min": 5,
+     "max": 9
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 14,
+     "max": 14
+    }
+   ],
+   "display_text": [
+    "Monsters deal (5-9)% of Damage as Extra Cold",
+    "15% more Waystones found in Area",
+    "14% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsCold2",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterColdDamage",
+   "name": "Frostbitten",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_cold",
+     "min": 10,
+     "max": 14
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 14
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_cold",
+     "min": 10,
+     "max": 14
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 14,
+     "max": 14
+    }
+   ],
+   "display_text": [
+    "Monsters deal (10-14)% of Damage as Extra Cold",
+    "15% more Waystones found in Area",
+    "14% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsCold3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterColdDamage",
+   "name": "Frostbitten",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_cold",
+     "min": 15,
+     "max": 19
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 14
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_cold",
+     "min": 15,
+     "max": 19
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 14,
+     "max": 14
+    }
+   ],
+   "display_text": [
+    "Monsters deal (15-19)% of Damage as Extra Cold",
+    "15% more Waystones found in Area",
+    "14% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsCold4",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterColdDamage",
+   "name": "Frostbitten",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_cold",
+     "min": 20,
+     "max": 24
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 14
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_cold",
+     "min": 20,
+     "max": 24
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 14,
+     "max": 14
+    }
+   ],
+   "display_text": [
+    "Monsters deal (20-24)% of Damage as Extra Cold",
+    "15% more Waystones found in Area",
+    "14% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterCritIncrease1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterCriticalStrikesAndDamage",
+   "name": "Destructive",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_critical_strike_chance_+%",
+     "min": 80,
+     "max": 120
+    },
+    {
+     "id": "map_monsters_critical_strike_multiplier_+",
+     "min": 11,
+     "max": 15
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 9
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_critical_strike_chance_+%",
+     "min": 80,
+     "max": 120
+    },
+    {
+     "id": "map_monsters_critical_strike_multiplier_+",
+     "min": 11,
+     "max": 15
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 9,
+     "max": 9
+    }
+   ],
+   "display_text": [
+    "Monsters have (80-120)% increased Critical Hit Chance",
+    "Monsters have +(11-15)% Critical Damage Bonus",
+    "15% more Waystones found in Area",
+    "9% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterCritIncrease2",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterCriticalStrikesAndDamage",
+   "name": "Destructive",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_critical_strike_chance_+%",
+     "min": 140,
+     "max": 180
+    },
+    {
+     "id": "map_monsters_critical_strike_multiplier_+",
+     "min": 16,
+     "max": 20
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 9
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_critical_strike_chance_+%",
+     "min": 140,
+     "max": 180
+    },
+    {
+     "id": "map_monsters_critical_strike_multiplier_+",
+     "min": 16,
+     "max": 20
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 9,
+     "max": 9
+    }
+   ],
+   "display_text": [
+    "Monsters have (140-180)% increased Critical Hit Chance",
+    "Monsters have +(16-20)% Critical Damage Bonus",
+    "15% more Waystones found in Area",
+    "9% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterCritIncrease3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterCriticalStrikesAndDamage",
+   "name": "Destructive",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_critical_strike_chance_+%",
+     "min": 200,
+     "max": 240
+    },
+    {
+     "id": "map_monsters_critical_strike_multiplier_+",
+     "min": 21,
+     "max": 25
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 9
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_critical_strike_chance_+%",
+     "min": 200,
+     "max": 240
+    },
+    {
+     "id": "map_monsters_critical_strike_multiplier_+",
+     "min": 21,
+     "max": 25
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 9,
+     "max": 9
+    }
+   ],
+   "display_text": [
+    "Monsters have (200-240)% increased Critical Hit Chance",
+    "Monsters have +(21-25)% Critical Damage Bonus",
+    "15% more Waystones found in Area",
+    "9% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterCritIncrease4",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterCriticalStrikesAndDamage",
+   "name": "Destructive",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_critical_strike_chance_+%",
+     "min": 260,
+     "max": 300
+    },
+    {
+     "id": "map_monsters_critical_strike_multiplier_+",
+     "min": 26,
+     "max": 30
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 9
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_critical_strike_chance_+%",
+     "min": 260,
+     "max": 300
+    },
+    {
+     "id": "map_monsters_critical_strike_multiplier_+",
+     "min": 26,
+     "max": 30
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 9,
+     "max": 9
+    }
+   ],
+   "display_text": [
+    "Monsters have (260-300)% increased Critical Hit Chance",
+    "Monsters have +(26-30)% Critical Damage Bonus",
+    "15% more Waystones found in Area",
+    "9% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageIncrease1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterDamage",
+   "name": "Painful",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_damage_+%",
+     "min": 5,
+     "max": 9
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 25
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_damage_+%",
+     "min": 5,
+     "max": 9
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    }
+   ],
+   "display_text": [
+    "(5-9)% increased Monster Damage",
+    "20% more Waystones found in Area",
+    "25% more Magic and Rare Monsters",
+    "Rare Monsters have 25% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageIncrease2",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterDamage",
+   "name": "Painful",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_damage_+%",
+     "min": 10,
+     "max": 14
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 25
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_damage_+%",
+     "min": 10,
+     "max": 14
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    }
+   ],
+   "display_text": [
+    "(10-14)% increased Monster Damage",
+    "20% more Waystones found in Area",
+    "25% more Magic and Rare Monsters",
+    "Rare Monsters have 25% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageIncrease3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterDamage",
+   "name": "Painful",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_damage_+%",
+     "min": 15,
+     "max": 19
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 25
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_damage_+%",
+     "min": 15,
+     "max": 19
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    }
+   ],
+   "display_text": [
+    "(15-19)% increased Monster Damage",
+    "20% more Waystones found in Area",
+    "25% more Magic and Rare Monsters",
+    "Rare Monsters have 25% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageIncrease4",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterDamage",
+   "name": "Painful",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_damage_+%",
+     "min": 20,
+     "max": 24
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 25
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_damage_+%",
+     "min": 20,
+     "max": 24
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    }
+   ],
+   "display_text": [
+    "(20-24)% increased Monster Damage",
+    "20% more Waystones found in Area",
+    "25% more Magic and Rare Monsters",
+    "Rare Monsters have 25% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonsterSpeedIncrease3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterFast",
+   "name": "Fleeting",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monster_attack_cast_and_movement_speed_+%",
+     "min": 10,
+     "max": 15
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "more_pack_size_%": 9
+   },
+   "all_stats": [
+    {
+     "id": "map_monster_attack_cast_and_movement_speed_+%",
+     "min": 10,
+     "max": 15
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 9,
+     "max": 9
+    }
+   ],
+   "display_text": [
+    "Monsters have (10-15)% increased Attack, Cast and Movement Speed",
+    "25% more Waystones found in Area",
+    "9% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterSpeedIncrease4",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterFast",
+   "name": "Fleeting",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monster_attack_cast_and_movement_speed_+%",
+     "min": 10,
+     "max": 15
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "more_pack_size_%": 9
+   },
+   "all_stats": [
+    {
+     "id": "map_monster_attack_cast_and_movement_speed_+%",
+     "min": 10,
+     "max": 15
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 9,
+     "max": 9
+    }
+   ],
+   "display_text": [
+    "Monsters have (10-15)% increased Attack, Cast and Movement Speed",
+    "25% more Waystones found in Area",
+    "9% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsFire1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterFireDamage",
+   "name": "Infernal",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_fire",
+     "min": 5,
+     "max": 9
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_monster_effectiveness_%": 16
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_fire",
+     "min": 5,
+     "max": 9
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 16,
+     "max": 16
+    }
+   ],
+   "display_text": [
+    "Monsters deal (5-9)% of Damage as Extra Fire",
+    "15% more Waystones found in Area",
+    "Monsters have 16% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsFire2",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterFireDamage",
+   "name": "Infernal",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_fire",
+     "min": 10,
+     "max": 14
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_monster_effectiveness_%": 16
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_fire",
+     "min": 10,
+     "max": 14
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 16,
+     "max": 16
+    }
+   ],
+   "display_text": [
+    "Monsters deal (10-14)% of Damage as Extra Fire",
+    "15% more Waystones found in Area",
+    "Monsters have 16% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsFire3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterFireDamage",
+   "name": "Infernal",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_fire",
+     "min": 15,
+     "max": 19
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_monster_effectiveness_%": 16
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_fire",
+     "min": 15,
+     "max": 19
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 16,
+     "max": 16
+    }
+   ],
+   "display_text": [
+    "Monsters deal (15-19)% of Damage as Extra Fire",
+    "15% more Waystones found in Area",
+    "Monsters have 16% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsFire4",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterFireDamage",
+   "name": "Infernal",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_fire",
+     "min": 20,
+     "max": 24
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_monster_effectiveness_%": 16
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_fire",
+     "min": 20,
+     "max": 24
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 16,
+     "max": 16
+    }
+   ],
+   "display_text": [
+    "Monsters deal (20-24)% of Damage as Extra Fire",
+    "15% more Waystones found in Area",
+    "Monsters have 16% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterLifeIncrease1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterLife",
+   "name": "Tough",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_life_+%",
+     "min": 10,
+     "max": 14
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 23
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_life_+%",
+     "min": 10,
+     "max": 14
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 23,
+     "max": 23
+    }
+   ],
+   "display_text": [
+    "(10-14)% more Monster Life",
+    "15% more Waystones found in Area",
+    "23% more Magic and Rare Monsters",
+    "Rare Monsters have 23% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonsterLifeIncrease2",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterLife",
+   "name": "Tough",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_life_+%",
+     "min": 15,
+     "max": 19
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 23
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_life_+%",
+     "min": 15,
+     "max": 19
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 23,
+     "max": 23
+    }
+   ],
+   "display_text": [
+    "(15-19)% more Monster Life",
+    "15% more Waystones found in Area",
+    "23% more Magic and Rare Monsters",
+    "Rare Monsters have 23% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonsterLifeIncrease3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterLife",
+   "name": "Tough",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_life_+%",
+     "min": 20,
+     "max": 25
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 23
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_life_+%",
+     "min": 20,
+     "max": 25
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 23,
+     "max": 23
+    }
+   ],
+   "display_text": [
+    "(20-25)% more Monster Life",
+    "15% more Waystones found in Area",
+    "23% more Magic and Rare Monsters",
+    "Rare Monsters have 23% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonsterLifeIncrease4",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterLife",
+   "name": "Tough",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_life_+%",
+     "min": 26,
+     "max": 30
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 23
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_life_+%",
+     "min": 26,
+     "max": 30
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 23,
+     "max": 23
+    }
+   ],
+   "display_text": [
+    "(26-30)% more Monster Life",
+    "15% more Waystones found in Area",
+    "23% more Magic and Rare Monsters",
+    "Rare Monsters have 23% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsLightning1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterLightningDamage",
+   "name": "Thunderous",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_lightning",
+     "min": 5,
+     "max": 9
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 8
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_lightning",
+     "min": 5,
+     "max": 9
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 8,
+     "max": 8
+    }
+   ],
+   "display_text": [
+    "Monsters deal (5-9)% of Damage as Extra Lightning",
+    "15% more Waystones found in Area",
+    "8% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsLightning2",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterLightningDamage",
+   "name": "Thunderous",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_lightning",
+     "min": 10,
+     "max": 14
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 8
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_lightning",
+     "min": 10,
+     "max": 14
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 8,
+     "max": 8
+    }
+   ],
+   "display_text": [
+    "Monsters deal (10-14)% of Damage as Extra Lightning",
+    "15% more Waystones found in Area",
+    "8% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsLightning3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterLightningDamage",
+   "name": "Thunderous",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_lightning",
+     "min": 15,
+     "max": 19
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 8
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_lightning",
+     "min": 15,
+     "max": 19
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 8,
+     "max": 8
+    }
+   ],
+   "display_text": [
+    "Monsters deal (15-19)% of Damage as Extra Lightning",
+    "15% more Waystones found in Area",
+    "8% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterDamageAsLightning4",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterLightningDamage",
+   "name": "Thunderous",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_lightning",
+     "min": 20,
+     "max": 24
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 8
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_%_all_damage_to_gain_as_lightning",
+     "min": 20,
+     "max": 24
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 8,
+     "max": 8
+    }
+   ],
+   "display_text": [
+    "Monsters deal (20-24)% of Damage as Extra Lightning",
+    "15% more Waystones found in Area",
+    "8% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterAccuracy1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersAccuracy",
+   "name": "Precise",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_accuracy_rating_+%",
+     "min": 10,
+     "max": 20
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_accuracy_rating_+%",
+     "min": 10,
+     "max": 20
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Monsters have (10-20)% increased Accuracy Rating",
+    "10% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterAccuracy2",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersAccuracy",
+   "name": "Precise",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_accuracy_rating_+%",
+     "min": 20,
+     "max": 30
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_accuracy_rating_+%",
+     "min": 20,
+     "max": 30
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Monsters have (20-30)% increased Accuracy Rating",
+    "10% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterAccuracy3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersAccuracy",
+   "name": "Precise",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_accuracy_rating_+%",
+     "min": 30,
+     "max": 40
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_accuracy_rating_+%",
+     "min": 30,
+     "max": 40
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Monsters have (30-40)% increased Accuracy Rating",
+    "10% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterAccuracy4",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersAccuracy",
+   "name": "Precise",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_accuracy_rating_+%",
+     "min": 40,
+     "max": 50
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_accuracy_rating_+%",
+     "min": 40,
+     "max": 50
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Monsters have (40-50)% increased Accuracy Rating",
+    "10% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterArmourBreak1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersArmourBreak",
+   "name": "Shattering",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_armour_break_physical_damage_%_dealt_as_armour_break",
+     "min": 15,
+     "max": 20
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 19
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_armour_break_physical_damage_%_dealt_as_armour_break",
+     "min": 15,
+     "max": 20
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 19,
+     "max": 19
+    }
+   ],
+   "display_text": [
+    "Monsters Break Armour equal to (15-20)% of Physical Damage dealt",
+    "10% more Waystones found in Area",
+    "19% more Magic and Rare Monsters",
+    "Rare Monsters have 19% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonsterArmourBreak2",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersArmourBreak",
+   "name": "Shattering",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_armour_break_physical_damage_%_dealt_as_armour_break",
+     "min": 20,
+     "max": 25
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 19
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_armour_break_physical_damage_%_dealt_as_armour_break",
+     "min": 20,
+     "max": 25
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 19,
+     "max": 19
+    }
+   ],
+   "display_text": [
+    "Monsters Break Armour equal to (20-25)% of Physical Damage dealt",
+    "10% more Waystones found in Area",
+    "19% more Magic and Rare Monsters",
+    "Rare Monsters have 19% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonsterArmourBreak3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersArmourBreak",
+   "name": "Shattering",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_armour_break_physical_damage_%_dealt_as_armour_break",
+     "min": 25,
+     "max": 30
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 19
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_armour_break_physical_damage_%_dealt_as_armour_break",
+     "min": 25,
+     "max": 30
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 19,
+     "max": 19
+    }
+   ],
+   "display_text": [
+    "Monsters Break Armour equal to (25-30)% of Physical Damage dealt",
+    "10% more Waystones found in Area",
+    "19% more Magic and Rare Monsters",
+    "Rare Monsters have 19% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonsterArmourBreak4",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersArmourBreak",
+   "name": "Shattering",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_armour_break_physical_damage_%_dealt_as_armour_break",
+     "min": 30,
+     "max": 45
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 19
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_armour_break_physical_damage_%_dealt_as_armour_break",
+     "min": 30,
+     "max": 45
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 19,
+     "max": 19
+    }
+   ],
+   "display_text": [
+    "Monsters Break Armour equal to (30-45)% of Physical Damage dealt",
+    "10% more Waystones found in Area",
+    "19% more Magic and Rare Monsters",
+    "Rare Monsters have 19% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonstersElementalPenetration1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersElementalPenetration",
+   "name": "Penetrating",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_penetrate_elemental_resistances_%",
+     "min": 6,
+     "max": 8
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_item_rarity_%": 16
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_penetrate_elemental_resistances_%",
+     "min": 6,
+     "max": 8
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 16,
+     "max": 16
+    }
+   ],
+   "display_text": [
+    "Monster Damage Penetrates (6-8)% Elemental Resistances",
+    "20% more Waystones found in Area",
+    "16% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonstersElementalPenetration2",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersElementalPenetration",
+   "name": "Penetrating",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_penetrate_elemental_resistances_%",
+     "min": 9,
+     "max": 11
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_item_rarity_%": 16
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_penetrate_elemental_resistances_%",
+     "min": 9,
+     "max": 11
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 16,
+     "max": 16
+    }
+   ],
+   "display_text": [
+    "Monster Damage Penetrates (9-11)% Elemental Resistances",
+    "20% more Waystones found in Area",
+    "16% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonstersElementalPenetration3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersElementalPenetration",
+   "name": "Penetrating",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_penetrate_elemental_resistances_%",
+     "min": 12,
+     "max": 14
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_item_rarity_%": 16
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_penetrate_elemental_resistances_%",
+     "min": 12,
+     "max": 14
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 16,
+     "max": 16
+    }
+   ],
+   "display_text": [
+    "Monster Damage Penetrates (12-14)% Elemental Resistances",
+    "20% more Waystones found in Area",
+    "16% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonstersElementalPenetration4",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersElementalPenetration",
+   "name": "Penetrating",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_penetrate_elemental_resistances_%",
+     "min": 14,
+     "max": 16
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_item_rarity_%": 16
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_penetrate_elemental_resistances_%",
+     "min": 14,
+     "max": 16
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 16,
+     "max": 16
+    }
+   ],
+   "display_text": [
+    "Monster Damage Penetrates (14-16)% Elemental Resistances",
+    "20% more Waystones found in Area",
+    "16% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterStunBuildup1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersStunBuildup",
+   "name": "Impacting",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_hit_damage_stun_multiplier_+%",
+     "min": 50,
+     "max": 60
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_monster_effectiveness_%": 13
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_hit_damage_stun_multiplier_+%",
+     "min": 50,
+     "max": 60
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 13,
+     "max": 13
+    }
+   ],
+   "display_text": [
+    "Monsters have (50-60)% increased Stun Buildup",
+    "15% more Waystones found in Area",
+    "Monsters have 13% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterStunBuildup2",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersStunBuildup",
+   "name": "Impacting",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_hit_damage_stun_multiplier_+%",
+     "min": 70,
+     "max": 80
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_monster_effectiveness_%": 13
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_hit_damage_stun_multiplier_+%",
+     "min": 70,
+     "max": 80
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 13,
+     "max": 13
+    }
+   ],
+   "display_text": [
+    "Monsters have (70-80)% increased Stun Buildup",
+    "15% more Waystones found in Area",
+    "Monsters have 13% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterStunBuildup3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersStunBuildup",
+   "name": "Impacting",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_hit_damage_stun_multiplier_+%",
+     "min": 90,
+     "max": 100
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_monster_effectiveness_%": 13
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_hit_damage_stun_multiplier_+%",
+     "min": 90,
+     "max": 100
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 13,
+     "max": 13
+    }
+   ],
+   "display_text": [
+    "Monsters have (90-100)% increased Stun Buildup",
+    "15% more Waystones found in Area",
+    "Monsters have 13% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterStunBuildup4",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonstersStunBuildup",
+   "name": "Impacting",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_hit_damage_stun_multiplier_+%",
+     "min": 100,
+     "max": 110
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_monster_effectiveness_%": 13
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_hit_damage_stun_multiplier_+%",
+     "min": 100,
+     "max": 110
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 13,
+     "max": 13
+    }
+   ],
+   "display_text": [
+    "Monsters have (100-110)% increased Stun Buildup",
+    "15% more Waystones found in Area",
+    "Monsters have 13% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterPoisoning1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapPoisoning",
+   "name": "Venomous",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_chance_to_poison_on_hit_%",
+     "min": 13,
+     "max": 19
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_chance_to_poison_on_hit_%",
+     "min": 13,
+     "max": 19
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Monsters have (13-19)% chance to Poison on Hit",
+    "10% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterPoisoning2",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapPoisoning",
+   "name": "Venomous",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_chance_to_poison_on_hit_%",
+     "min": 20,
+     "max": 26
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_chance_to_poison_on_hit_%",
+     "min": 20,
+     "max": 26
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Monsters have (20-26)% chance to Poison on Hit",
+    "10% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterPoisoning3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapPoisoning",
+   "name": "Venomous",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_chance_to_poison_on_hit_%",
+     "min": 27,
+     "max": 33
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_chance_to_poison_on_hit_%",
+     "min": 27,
+     "max": 33
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Monsters have (27-33)% chance to Poison on Hit",
+    "10% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterPoisoning4",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapPoisoning",
+   "name": "Venomous",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_chance_to_poison_on_hit_%",
+     "min": 34,
+     "max": 40
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_chance_to_poison_on_hit_%",
+     "min": 34,
+     "max": 40
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Monsters have (34-40)% chance to Poison on Hit",
+    "10% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterElementAilmentChance1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersAilmentChance",
+   "name": "of Overpowering",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_elemental_ailment_chance_+%",
+     "min": 60,
+     "max": 79
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 11
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_elemental_ailment_chance_+%",
+     "min": 60,
+     "max": 79
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 11,
+     "max": 11
+    }
+   ],
+   "display_text": [
+    "Monster have (60-79)% increased Elemental Ailment Application",
+    "15% more Waystones found in Area",
+    "11% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterElementAilmentChance2",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersAilmentChance",
+   "name": "of Overpowering",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_elemental_ailment_chance_+%",
+     "min": 80,
+     "max": 99
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 11
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_elemental_ailment_chance_+%",
+     "min": 80,
+     "max": 99
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 11,
+     "max": 11
+    }
+   ],
+   "display_text": [
+    "Monster have (80-99)% increased Elemental Ailment Application",
+    "15% more Waystones found in Area",
+    "11% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterElementAilmentChance3",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersAilmentChance",
+   "name": "of Overpowering",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_elemental_ailment_chance_+%",
+     "min": 100,
+     "max": 119
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 11
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_elemental_ailment_chance_+%",
+     "min": 100,
+     "max": 119
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 11,
+     "max": 11
+    }
+   ],
+   "display_text": [
+    "Monster have (100-119)% increased Elemental Ailment Application",
+    "15% more Waystones found in Area",
+    "11% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterElementAilmentChance4",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersAilmentChance",
+   "name": "of Overpowering",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_elemental_ailment_chance_+%",
+     "min": 120,
+     "max": 130
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 11
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_elemental_ailment_chance_+%",
+     "min": 120,
+     "max": 130
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 11,
+     "max": 11
+    }
+   ],
+   "display_text": [
+    "Monster have (120-130)% increased Elemental Ailment Application",
+    "15% more Waystones found in Area",
+    "11% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterElementalResistances1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersAllResistances",
+   "name": "of the Prism",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_additional_elemental_resistance",
+     "min": 20,
+     "max": 24
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_item_rarity_%": 14
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_additional_elemental_resistance",
+     "min": 20,
+     "max": 24
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 14,
+     "max": 14
+    }
+   ],
+   "display_text": [
+    "+(20-24)% Monster Elemental Resistances",
+    "10% more Waystones found in Area",
+    "14% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterElementalResistances2",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersAllResistances",
+   "name": "of the Prism",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_additional_elemental_resistance",
+     "min": 25,
+     "max": 29
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_item_rarity_%": 14
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_additional_elemental_resistance",
+     "min": 25,
+     "max": 29
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 14,
+     "max": 14
+    }
+   ],
+   "display_text": [
+    "+(25-29)% Monster Elemental Resistances",
+    "10% more Waystones found in Area",
+    "14% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterElementalResistances3",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersAllResistances",
+   "name": "of the Prism",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_additional_elemental_resistance",
+     "min": 30,
+     "max": 34
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_item_rarity_%": 14
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_additional_elemental_resistance",
+     "min": 30,
+     "max": 34
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 14,
+     "max": 14
+    }
+   ],
+   "display_text": [
+    "+(30-34)% Monster Elemental Resistances",
+    "10% more Waystones found in Area",
+    "14% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterElementalResistances4",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersAllResistances",
+   "name": "of the Prism",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_additional_elemental_resistance",
+     "min": 35,
+     "max": 40
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_item_rarity_%": 14
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_additional_elemental_resistance",
+     "min": 35,
+     "max": 40
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 14,
+     "max": 14
+    }
+   ],
+   "display_text": [
+    "+(35-40)% Monster Elemental Resistances",
+    "10% more Waystones found in Area",
+    "14% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterArmoured1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersArmoured",
+   "name": "of Enduring",
+   "waystone_tiers": [
+    "T1-T16 (all waystones)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_additional_strength_ratio_%_for_armour",
+     "min": 35,
+     "max": 55
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 18
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_additional_strength_ratio_%_for_armour",
+     "min": 35,
+     "max": 55
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 18,
+     "max": 18
+    }
+   ],
+   "display_text": [
+    "Monsters are Armoured",
+    "15% more Waystones found in Area",
+    "18% more Magic and Rare Monsters",
+    "Rare Monsters have 18% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonstersBaseSelfCriticalMultiplier1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersBaseSelfCriticalMultiplier",
+   "name": "of Obstruction",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_base_self_critical_strike_multiplier_-%",
+     "min": 15,
+     "max": 19
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 18
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_base_self_critical_strike_multiplier_-%",
+     "min": 15,
+     "max": 19
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 18,
+     "max": 18
+    }
+   ],
+   "display_text": [
+    "Monsters take (15-19)% reduced Extra Damage from Critical Hits",
+    "10% more Waystones found in Area",
+    "18% more Magic and Rare Monsters",
+    "Rare Monsters have 18% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonstersBaseSelfCriticalMultiplier2",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersBaseSelfCriticalMultiplier",
+   "name": "of Obstruction",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_base_self_critical_strike_multiplier_-%",
+     "min": 20,
+     "max": 25
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 18
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_base_self_critical_strike_multiplier_-%",
+     "min": 20,
+     "max": 25
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 18,
+     "max": 18
+    }
+   ],
+   "display_text": [
+    "Monsters take (20-25)% reduced Extra Damage from Critical Hits",
+    "10% more Waystones found in Area",
+    "18% more Magic and Rare Monsters",
+    "Rare Monsters have 18% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonstersBaseSelfCriticalMultiplier3",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersBaseSelfCriticalMultiplier",
+   "name": "of Obstruction",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_base_self_critical_strike_multiplier_-%",
+     "min": 26,
+     "max": 30
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 18
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_base_self_critical_strike_multiplier_-%",
+     "min": 26,
+     "max": 30
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 18,
+     "max": 18
+    }
+   ],
+   "display_text": [
+    "Monsters take (26-30)% reduced Extra Damage from Critical Hits",
+    "10% more Waystones found in Area",
+    "18% more Magic and Rare Monsters",
+    "Rare Monsters have 18% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonstersBaseSelfCriticalMultiplier4",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersBaseSelfCriticalMultiplier",
+   "name": "of Obstruction",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_base_self_critical_strike_multiplier_-%",
+     "min": 26,
+     "max": 30
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_magic_and_rare_monsters_%_and_rare_monster_modifier_chance_%": 18
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_base_self_critical_strike_multiplier_-%",
+     "min": 26,
+     "max": 30
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_number_of_magic_and_rare_packs_+%_final_and_rare_monster_modifiers_chance_+%_final_from_map",
+     "min": 18,
+     "max": 18
+    }
+   ],
+   "display_text": [
+    "Monsters take (26-30)% reduced Extra Damage from Critical Hits",
+    "10% more Waystones found in Area",
+    "18% more Magic and Rare Monsters",
+    "Rare Monsters have 18% more chance of Monster Modifiers"
+   ]
+  },
+  {
+   "id": "MapMonstersCurseEffectOnSelf1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersCurseEffectOnSelfFinal",
+   "name": "of Hexwarding",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_curse_effect_on_self_+%_final",
+     "min": -30,
+     "max": -20
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_item_rarity_%": 10
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_curse_effect_on_self_+%_final",
+     "min": -30,
+     "max": -20
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    }
+   ],
+   "display_text": [
+    "(30-20)% less effect of Curses on Monsters",
+    "10% more Waystones found in Area",
+    "10% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonstersCurseEffectOnSelf2",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersCurseEffectOnSelfFinal",
+   "name": "of Hexwarding",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_curse_effect_on_self_+%_final",
+     "min": -40,
+     "max": -30
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_item_rarity_%": 10
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_curse_effect_on_self_+%_final",
+     "min": -40,
+     "max": -30
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    }
+   ],
+   "display_text": [
+    "(40-30)% less effect of Curses on Monsters",
+    "10% more Waystones found in Area",
+    "10% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonstersCurseEffectOnSelf3",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersCurseEffectOnSelfFinal",
+   "name": "of Hexwarding",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_curse_effect_on_self_+%_final",
+     "min": -50,
+     "max": -40
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_item_rarity_%": 10
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_curse_effect_on_self_+%_final",
+     "min": -50,
+     "max": -40
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    }
+   ],
+   "display_text": [
+    "(50-40)% less effect of Curses on Monsters",
+    "10% more Waystones found in Area",
+    "10% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonstersCurseEffectOnSelf4",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersCurseEffectOnSelfFinal",
+   "name": "of Hexwarding",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_curse_effect_on_self_+%_final",
+     "min": -50,
+     "max": -40
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_item_rarity_%": 10
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_curse_effect_on_self_+%_final",
+     "min": -50,
+     "max": -40
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    }
+   ],
+   "display_text": [
+    "(50-40)% less effect of Curses on Monsters",
+    "10% more Waystones found in Area",
+    "10% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterEnergyShield1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersEnergyShield",
+   "name": "of Buffering",
+   "waystone_tiers": [
+    "T1-T16 (all waystones)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_maximum_life_%_to_add_to_maximum_energy_shield",
+     "min": 12,
+     "max": 25
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 13
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_maximum_life_%_to_add_to_maximum_energy_shield",
+     "min": 12,
+     "max": 25
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 13,
+     "max": 13
+    }
+   ],
+   "display_text": [
+    "Monsters gain (12-25)% of maximum Life as Extra maximum Energy Shield",
+    "15% more Waystones found in Area",
+    "13% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapMonsterEvasive1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersEvasive",
+   "name": "of Evasion",
+   "waystone_tiers": [
+    "T1-T16 (all waystones)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_additional_dexterity_ratio_%_for_evasion",
+     "min": 35,
+     "max": 55
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 6
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_additional_dexterity_ratio_%_for_evasion",
+     "min": 35,
+     "max": 55
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 6,
+     "max": 6
+    }
+   ],
+   "display_text": [
+    "Monsters are Evasive",
+    "15% more Waystones found in Area",
+    "6% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterStunAilmentThreshold1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersStunAndAilmentThreshold",
+   "name": "of the Unwavering",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_stun_threshold_+%",
+     "min": 30,
+     "max": 39
+    },
+    {
+     "id": "map_monsters_ailment_threshold_+%",
+     "min": 30,
+     "max": 39
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_monster_effectiveness_%": 13
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_stun_threshold_+%",
+     "min": 30,
+     "max": 39
+    },
+    {
+     "id": "map_monsters_ailment_threshold_+%",
+     "min": 30,
+     "max": 39
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 13,
+     "max": 13
+    }
+   ],
+   "display_text": [
+    "Monsters have (30-39)% increased Stun Threshold",
+    "Monsters have (30-39)% increased Ailment Threshold",
+    "10% more Waystones found in Area",
+    "Monsters have 13% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterStunAilmentThreshold2",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersStunAndAilmentThreshold",
+   "name": "of the Unwavering",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_stun_threshold_+%",
+     "min": 40,
+     "max": 49
+    },
+    {
+     "id": "map_monsters_ailment_threshold_+%",
+     "min": 50,
+     "max": 59
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_monster_effectiveness_%": 13
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_stun_threshold_+%",
+     "min": 40,
+     "max": 49
+    },
+    {
+     "id": "map_monsters_ailment_threshold_+%",
+     "min": 50,
+     "max": 59
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 13,
+     "max": 13
+    }
+   ],
+   "display_text": [
+    "Monsters have (40-49)% increased Stun Threshold",
+    "Monsters have (50-59)% increased Ailment Threshold",
+    "10% more Waystones found in Area",
+    "Monsters have 13% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterStunAilmentThreshold3",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersStunAndAilmentThreshold",
+   "name": "of the Unwavering",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_stun_threshold_+%",
+     "min": 60,
+     "max": 69
+    },
+    {
+     "id": "map_monsters_ailment_threshold_+%",
+     "min": 70,
+     "max": 79
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_monster_effectiveness_%": 13
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_stun_threshold_+%",
+     "min": 60,
+     "max": 69
+    },
+    {
+     "id": "map_monsters_ailment_threshold_+%",
+     "min": 70,
+     "max": 79
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 13,
+     "max": 13
+    }
+   ],
+   "display_text": [
+    "Monsters have (60-69)% increased Stun Threshold",
+    "Monsters have (70-79)% increased Ailment Threshold",
+    "10% more Waystones found in Area",
+    "Monsters have 13% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapMonsterStunAilmentThreshold4",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonstersStunAndAilmentThreshold",
+   "name": "of the Unwavering",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monsters_stun_threshold_+%",
+     "min": 70,
+     "max": 79
+    },
+    {
+     "id": "map_monsters_ailment_threshold_+%",
+     "min": 70,
+     "max": 79
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_monster_effectiveness_%": 13
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_stun_threshold_+%",
+     "min": 70,
+     "max": 79
+    },
+    {
+     "id": "map_monsters_ailment_threshold_+%",
+     "min": 70,
+     "max": 79
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 13,
+     "max": 13
+    }
+   ],
+   "display_text": [
+    "Monsters have (70-79)% increased Stun Threshold",
+    "Monsters have (70-79)% increased Ailment Threshold",
+    "10% more Waystones found in Area",
+    "Monsters have 13% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapPlayerCooldownRecovery1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerCooldownRecovery",
+   "name": "of Fatigue",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_player_cooldown_speed_+%_final",
+     "min": -20,
+     "max": -15
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 12
+   },
+   "all_stats": [
+    {
+     "id": "map_player_cooldown_speed_+%_final",
+     "min": -20,
+     "max": -15
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 12,
+     "max": 12
+    }
+   ],
+   "display_text": [
+    "Players have (20-15)% less Cooldown Recovery Rate",
+    "15% more Waystones found in Area",
+    "12% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapPlayerCooldownRecovery2",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerCooldownRecovery",
+   "name": "of Fatigue",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_player_cooldown_speed_+%_final",
+     "min": -25,
+     "max": -20
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 12
+   },
+   "all_stats": [
+    {
+     "id": "map_player_cooldown_speed_+%_final",
+     "min": -25,
+     "max": -20
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 12,
+     "max": 12
+    }
+   ],
+   "display_text": [
+    "Players have (25-20)% less Cooldown Recovery Rate",
+    "15% more Waystones found in Area",
+    "12% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapPlayerCooldownRecovery3",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerCooldownRecovery",
+   "name": "of Fatigue",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_player_cooldown_speed_+%_final",
+     "min": -30,
+     "max": -25
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 12
+   },
+   "all_stats": [
+    {
+     "id": "map_player_cooldown_speed_+%_final",
+     "min": -30,
+     "max": -25
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 12,
+     "max": 12
+    }
+   ],
+   "display_text": [
+    "Players have (30-25)% less Cooldown Recovery Rate",
+    "15% more Waystones found in Area",
+    "12% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapPlayerCooldownRecovery4",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerCooldownRecovery",
+   "name": "of Fatigue",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_player_cooldown_speed_+%_final",
+     "min": -30,
+     "max": -25
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 12
+   },
+   "all_stats": [
+    {
+     "id": "map_player_cooldown_speed_+%_final",
+     "min": -30,
+     "max": -25
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 12,
+     "max": 12
+    }
+   ],
+   "display_text": [
+    "Players have (30-25)% less Cooldown Recovery Rate",
+    "15% more Waystones found in Area",
+    "12% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapPlayerElementalWeakness1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerElementalWeakness",
+   "name": "of Erosion",
+   "waystone_tiers": [
+    "T1-T16 (all waystones)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_elemental_weakness_curse_zones",
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_item_rarity_%": 13
+   },
+   "all_stats": [
+    {
+     "id": "map_elemental_weakness_curse_zones",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 13,
+     "max": 13
+    }
+   ],
+   "display_text": [
+    "Players are periodically Cursed with Elemental Weakness",
+    "20% more Waystones found in Area",
+    "13% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapPlayerEnfeeble1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerEnfeeblement",
+   "name": "of Enfeebling",
+   "waystone_tiers": [
+    "T1-T16 (all waystones)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_enfeeble_curse_zones",
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_monster_effectiveness_%": 16
+   },
+   "all_stats": [
+    {
+     "id": "map_enfeeble_curse_zones",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 16,
+     "max": 16
+    }
+   ],
+   "display_text": [
+    "Players are periodically Cursed with Enfeeble",
+    "20% more Waystones found in Area",
+    "Monsters have 16% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapPlayerMaximumResists1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerMaxResists",
+   "name": "of Exposure",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_additional_player_maximum_resistances_%",
+     "min": -4,
+     "max": -3
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "more_pack_size_%": 10
+   },
+   "all_stats": [
+    {
+     "id": "map_additional_player_maximum_resistances_%",
+     "min": -4,
+     "max": -3
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    }
+   ],
+   "display_text": [
+    "-(4-3)% maximum Player Resistances",
+    "25% more Waystones found in Area",
+    "10% more Pack size"
+   ]
+  },
+  {
+   "id": "MapPlayerMaximumResists2",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerMaxResists",
+   "name": "of Exposure",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_additional_player_maximum_resistances_%",
+     "min": -6,
+     "max": -4
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "more_pack_size_%": 10
+   },
+   "all_stats": [
+    {
+     "id": "map_additional_player_maximum_resistances_%",
+     "min": -6,
+     "max": -4
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    }
+   ],
+   "display_text": [
+    "-(6-4)% maximum Player Resistances",
+    "25% more Waystones found in Area",
+    "10% more Pack size"
+   ]
+  },
+  {
+   "id": "MapPlayerMaximumResists3",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerMaxResists",
+   "name": "of Exposure",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_additional_player_maximum_resistances_%",
+     "min": -8,
+     "max": -6
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "more_pack_size_%": 10
+   },
+   "all_stats": [
+    {
+     "id": "map_additional_player_maximum_resistances_%",
+     "min": -8,
+     "max": -6
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    }
+   ],
+   "display_text": [
+    "-(8-6)% maximum Player Resistances",
+    "25% more Waystones found in Area",
+    "10% more Pack size"
+   ]
+  },
+  {
+   "id": "MapPlayerMaximumResists4",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerMaxResists",
+   "name": "of Exposure",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_additional_player_maximum_resistances_%",
+     "min": -10,
+     "max": -8
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "more_pack_size_%": 10
+   },
+   "all_stats": [
+    {
+     "id": "map_additional_player_maximum_resistances_%",
+     "min": -10,
+     "max": -8
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    }
+   ],
+   "display_text": [
+    "-(10-8)% maximum Player Resistances",
+    "25% more Waystones found in Area",
+    "10% more Pack size"
+   ]
+  },
+  {
+   "id": "MapPlayerRecoveryRate1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerReducedRegen",
+   "name": "of Smothering",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_player_life_and_es_recovery_speed_+%_final",
+     "min": -29,
+     "max": -20
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_item_rarity_%": 15
+   },
+   "all_stats": [
+    {
+     "id": "map_player_life_and_es_recovery_speed_+%_final",
+     "min": -29,
+     "max": -20
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    }
+   ],
+   "display_text": [
+    "Players have (29-20)% less Recovery Rate of Life and Energy Shield",
+    "20% more Waystones found in Area",
+    "15% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapPlayerRecoveryRate2",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerReducedRegen",
+   "name": "of Smothering",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_player_life_and_es_recovery_speed_+%_final",
+     "min": -35,
+     "max": -30
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_item_rarity_%": 15
+   },
+   "all_stats": [
+    {
+     "id": "map_player_life_and_es_recovery_speed_+%_final",
+     "min": -35,
+     "max": -30
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    }
+   ],
+   "display_text": [
+    "Players have (35-30)% less Recovery Rate of Life and Energy Shield",
+    "20% more Waystones found in Area",
+    "15% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapPlayerRecoveryRate3",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerReducedRegen",
+   "name": "of Smothering",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_player_life_and_es_recovery_speed_+%_final",
+     "min": -40,
+     "max": -36
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_item_rarity_%": 15
+   },
+   "all_stats": [
+    {
+     "id": "map_player_life_and_es_recovery_speed_+%_final",
+     "min": -40,
+     "max": -36
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    }
+   ],
+   "display_text": [
+    "Players have (40-36)% less Recovery Rate of Life and Energy Shield",
+    "20% more Waystones found in Area",
+    "15% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapPlayerRecoveryRate4",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerReducedRegen",
+   "name": "of Smothering",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_player_life_and_es_recovery_speed_+%_final",
+     "min": -40,
+     "max": -36
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_item_rarity_%": 15
+   },
+   "all_stats": [
+    {
+     "id": "map_player_life_and_es_recovery_speed_+%_final",
+     "min": -40,
+     "max": -36
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    }
+   ],
+   "display_text": [
+    "Players have (40-36)% less Recovery Rate of Life and Energy Shield",
+    "20% more Waystones found in Area",
+    "15% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapPlayerTemporalChains1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayerTemporalChains",
+   "name": "of Slowing",
+   "waystone_tiers": [
+    "T1-T16 (all waystones)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_temporal_chains_curse_zones",
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_pack_size_%": 8
+   },
+   "all_stats": [
+    {
+     "id": "map_temporal_chains_curse_zones",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 8,
+     "max": 8
+    }
+   ],
+   "display_text": [
+    "Players are periodically Cursed with Temporal Chains",
+    "20% more Waystones found in Area",
+    "8% more Pack size"
+   ]
+  },
+  {
+   "id": "MapPlayerFlaskChargeGain1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayersGainReducedFlaskCharges",
+   "name": "of Drought",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_player_charges_gained_+%",
+     "min": -24,
+     "max": -20
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_player_charges_gained_+%",
+     "min": -24,
+     "max": -20
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Players gain (24-20)% reduced Flask Charges",
+    "15% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapPlayerFlaskChargeGain2",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayersGainReducedFlaskCharges",
+   "name": "of Drought",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_player_charges_gained_+%",
+     "min": -29,
+     "max": -25
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_player_charges_gained_+%",
+     "min": -29,
+     "max": -25
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Players gain (29-25)% reduced Flask Charges",
+    "15% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapPlayerFlaskChargeGain3",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayersGainReducedFlaskCharges",
+   "name": "of Drought",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_player_charges_gained_+%",
+     "min": -35,
+     "max": -30
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_player_charges_gained_+%",
+     "min": -35,
+     "max": -30
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Players gain (35-30)% reduced Flask Charges",
+    "15% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapPlayerFlaskChargeGain4",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapPlayersGainReducedFlaskCharges",
+   "name": "of Drought",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_player_charges_gained_+%",
+     "min": -35,
+     "max": -30
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_player_charges_gained_+%",
+     "min": -35,
+     "max": -30
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Players gain (35-30)% reduced Flask Charges",
+    "15% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapSpreadBurningGround1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapSpreadGroundEffect",
+   "name": "of Flames",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_base_ground_fire_damage_to_deal_per_10_seconds",
+     "min": 2000,
+     "max": 2000
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 4,
+     "max": 4
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "ground_fire_art_variation",
+     "min": 1033,
+     "max": 1033
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_monster_effectiveness_%": 15
+   },
+   "all_stats": [
+    {
+     "id": "map_base_ground_fire_damage_to_deal_per_10_seconds",
+     "min": 2000,
+     "max": 2000
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 4,
+     "max": 4
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "ground_fire_art_variation",
+     "min": 1033,
+     "max": 1033
+    }
+   ],
+   "display_text": [
+    "Area has patches of Ignited Ground",
+    "15% more Waystones found in Area",
+    "Monsters have 15% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapSpreadBurningGround2",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapSpreadGroundEffect",
+   "name": "Flaming",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_base_ground_fire_damage_to_deal_per_10_seconds",
+     "min": 4000,
+     "max": 4000
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 5,
+     "max": 5
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "ground_fire_art_variation",
+     "min": 1033,
+     "max": 1033
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_monster_effectiveness_%": 15
+   },
+   "all_stats": [
+    {
+     "id": "map_base_ground_fire_damage_to_deal_per_10_seconds",
+     "min": 4000,
+     "max": 4000
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 5,
+     "max": 5
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "ground_fire_art_variation",
+     "min": 1033,
+     "max": 1033
+    }
+   ],
+   "display_text": [
+    "Area has patches of Ignited Ground",
+    "15% more Waystones found in Area",
+    "Monsters have 15% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapSpreadBurningGround3",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapSpreadGroundEffect",
+   "name": "Flaming",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_base_ground_fire_damage_to_deal_per_10_seconds",
+     "min": 6000,
+     "max": 6000
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 6,
+     "max": 6
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "ground_fire_art_variation",
+     "min": 1033,
+     "max": 1033
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_monster_effectiveness_%": 15
+   },
+   "all_stats": [
+    {
+     "id": "map_base_ground_fire_damage_to_deal_per_10_seconds",
+     "min": 6000,
+     "max": 6000
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 6,
+     "max": 6
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "ground_fire_art_variation",
+     "min": 1033,
+     "max": 1033
+    }
+   ],
+   "display_text": [
+    "Area has patches of Ignited Ground",
+    "15% more Waystones found in Area",
+    "Monsters have 15% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapSpreadBurningGround4",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapSpreadGroundEffect",
+   "name": "Flaming",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_potency"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_base_ground_fire_damage_to_deal_per_10_seconds",
+     "min": 6000,
+     "max": 6000
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 7,
+     "max": 7
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "ground_fire_art_variation",
+     "min": 1033,
+     "max": 1033
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_monster_effectiveness_%": 15
+   },
+   "all_stats": [
+    {
+     "id": "map_base_ground_fire_damage_to_deal_per_10_seconds",
+     "min": 6000,
+     "max": 6000
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 7,
+     "max": 7
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_monster_potency_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "ground_fire_art_variation",
+     "min": 1033,
+     "max": 1033
+    }
+   ],
+   "display_text": [
+    "Area has patches of Ignited Ground",
+    "15% more Waystones found in Area",
+    "Monsters have 15% more Effectiveness"
+   ]
+  },
+  {
+   "id": "MapSpreadChilledGround1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapSpreadGroundEffect",
+   "name": "of Sleet",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_ground_ice_base_magnitude",
+     "min": 30,
+     "max": 30
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 3,
+     "max": 3
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 26,
+     "max": 26
+    },
+    {
+     "id": "ground_ice_art_variation",
+     "min": 1014,
+     "max": 1014
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 12
+   },
+   "all_stats": [
+    {
+     "id": "map_ground_ice_base_magnitude",
+     "min": 30,
+     "max": 30
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 3,
+     "max": 3
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 26,
+     "max": 26
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 12,
+     "max": 12
+    },
+    {
+     "id": "ground_ice_art_variation",
+     "min": 1014,
+     "max": 1014
+    }
+   ],
+   "display_text": [
+    "Area has patches of Chilled Ground",
+    "15% more Waystones found in Area",
+    "12% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapSpreadChilledGround2",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapSpreadGroundEffect",
+   "name": "Sleet",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_ground_ice_base_magnitude",
+     "min": 30,
+     "max": 30
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 4,
+     "max": 4
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 26,
+     "max": 26
+    },
+    {
+     "id": "ground_ice_art_variation",
+     "min": 1014,
+     "max": 1014
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 12
+   },
+   "all_stats": [
+    {
+     "id": "map_ground_ice_base_magnitude",
+     "min": 30,
+     "max": 30
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 4,
+     "max": 4
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 26,
+     "max": 26
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 12,
+     "max": 12
+    },
+    {
+     "id": "ground_ice_art_variation",
+     "min": 1014,
+     "max": 1014
+    }
+   ],
+   "display_text": [
+    "Area has patches of Chilled Ground",
+    "15% more Waystones found in Area",
+    "12% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapSpreadChilledGround3",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapSpreadGroundEffect",
+   "name": "Sleet",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_ground_ice_base_magnitude",
+     "min": 30,
+     "max": 30
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 5,
+     "max": 5
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 26,
+     "max": 26
+    },
+    {
+     "id": "ground_ice_art_variation",
+     "min": 1014,
+     "max": 1014
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 12
+   },
+   "all_stats": [
+    {
+     "id": "map_ground_ice_base_magnitude",
+     "min": 30,
+     "max": 30
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 5,
+     "max": 5
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 26,
+     "max": 26
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 12,
+     "max": 12
+    },
+    {
+     "id": "ground_ice_art_variation",
+     "min": 1014,
+     "max": 1014
+    }
+   ],
+   "display_text": [
+    "Area has patches of Chilled Ground",
+    "15% more Waystones found in Area",
+    "12% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapSpreadChilledGround4",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapSpreadGroundEffect",
+   "name": "Sleet",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_item_rarity"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_ground_ice_base_magnitude",
+     "min": 30,
+     "max": 30
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 6,
+     "max": 6
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 26,
+     "max": 26
+    },
+    {
+     "id": "ground_ice_art_variation",
+     "min": 1014,
+     "max": 1014
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_item_rarity_%": 12
+   },
+   "all_stats": [
+    {
+     "id": "map_ground_ice_base_magnitude",
+     "min": 30,
+     "max": 30
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 6,
+     "max": 6
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 26,
+     "max": 26
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 12,
+     "max": 12
+    },
+    {
+     "id": "ground_ice_art_variation",
+     "min": 1014,
+     "max": 1014
+    }
+   ],
+   "display_text": [
+    "Area has patches of Chilled Ground",
+    "15% more Waystones found in Area",
+    "12% more Rarity of Items found in this Area"
+   ]
+  },
+  {
+   "id": "MapSpreadShockedGround1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapSpreadGroundEffect",
+   "name": "of Shocking",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_ground_lightning",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 5,
+     "max": 5
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 17,
+     "max": 17
+    },
+    {
+     "id": "ground_lightning_art_variation",
+     "min": 1011,
+     "max": 1011
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_ground_lightning",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 5,
+     "max": 5
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 17,
+     "max": 17
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    },
+    {
+     "id": "ground_lightning_art_variation",
+     "min": 1011,
+     "max": 1011
+    }
+   ],
+   "display_text": [
+    "Area has patches of Shocked Ground",
+    "15% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapSpreadShockedGround2",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapSpreadGroundEffect",
+   "name": "Shocking",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_ground_lightning",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 6,
+     "max": 6
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 17,
+     "max": 17
+    },
+    {
+     "id": "ground_lightning_art_variation",
+     "min": 1011,
+     "max": 1011
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_ground_lightning",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 6,
+     "max": 6
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 17,
+     "max": 17
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    },
+    {
+     "id": "ground_lightning_art_variation",
+     "min": 1011,
+     "max": 1011
+    }
+   ],
+   "display_text": [
+    "Area has patches of Shocked Ground",
+    "15% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapSpreadShockedGround3",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapSpreadGroundEffect",
+   "name": "Shocking",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_ground_lightning",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 7,
+     "max": 7
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 17,
+     "max": 17
+    },
+    {
+     "id": "ground_lightning_art_variation",
+     "min": 1011,
+     "max": 1011
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_ground_lightning",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 7,
+     "max": 7
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 17,
+     "max": 17
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    },
+    {
+     "id": "ground_lightning_art_variation",
+     "min": 1011,
+     "max": 1011
+    }
+   ],
+   "display_text": [
+    "Area has patches of Shocked Ground",
+    "15% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapSpreadShockedGround4",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapSpreadGroundEffect",
+   "name": "Shocking",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_ground_lightning",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 8,
+     "max": 8
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 17,
+     "max": 17
+    },
+    {
+     "id": "ground_lightning_art_variation",
+     "min": 1011,
+     "max": 1011
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 15,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_ground_lightning",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 8,
+     "max": 8
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 17,
+     "max": 17
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 15,
+     "max": 15
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    },
+    {
+     "id": "ground_lightning_art_variation",
+     "min": 1011,
+     "max": 1011
+    }
+   ],
+   "display_text": [
+    "Area has patches of Shocked Ground",
+    "15% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapGainRarityOnKill1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapGainRarityOnKill",
+   "name": "",
+   "waystone_tiers": [],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 0
+    }
+   ],
+   "reward_class_tag": [],
+   "rollable": "NOT rollable (all spawn weights 0 in 0.5 data)",
+   "effect_stats": [],
+   "reward_lines": {},
+   "all_stats": [],
+   "display_text": [
+    ""
+   ]
+  },
+  {
+   "id": "MapMonsterAdditionalProjectiles1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterMultipleProjectiles",
+   "name": "Splitting",
+   "waystone_tiers": [],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 0
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "NOT rollable (all spawn weights 0 in 0.5 data)",
+   "effect_stats": [
+    {
+     "id": "map_monsters_additional_number_of_projecitles",
+     "min": 2,
+     "max": 2
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "more_pack_size_%": 9
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_additional_number_of_projecitles",
+     "min": 2,
+     "max": 2
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 9,
+     "max": 9
+    }
+   ],
+   "display_text": [
+    "Monsters fire 2 additional Projectiles",
+    "25% more Waystones found in Area",
+    "9% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterAdditionalProjectiles2",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterMultipleProjectiles",
+   "name": "Splitting",
+   "waystone_tiers": [],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 0
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "NOT rollable (all spawn weights 0 in 0.5 data)",
+   "effect_stats": [
+    {
+     "id": "map_monsters_additional_number_of_projecitles",
+     "min": 2,
+     "max": 2
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "more_pack_size_%": 9
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_additional_number_of_projecitles",
+     "min": 2,
+     "max": 2
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 9,
+     "max": 9
+    }
+   ],
+   "display_text": [
+    "Monsters fire 2 additional Projectiles",
+    "25% more Waystones found in Area",
+    "9% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterAdditionalProjectiles3",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapMonsterMultipleProjectiles",
+   "name": "Splitting",
+   "waystone_tiers": [],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 0
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "NOT rollable (all spawn weights 0 in 0.5 data)",
+   "effect_stats": [
+    {
+     "id": "map_monsters_additional_number_of_projecitles",
+     "min": 3,
+     "max": 3
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "more_pack_size_%": 9
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_additional_number_of_projecitles",
+     "min": 3,
+     "max": 3
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 9,
+     "max": 9
+    }
+   ],
+   "display_text": [
+    "Monsters fire 3 additional Projectiles",
+    "25% more Waystones found in Area",
+    "9% more Pack size"
+   ]
+  },
+  {
+   "id": "MapSuffixesNullified1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapSuffixesNullified",
+   "name": "",
+   "waystone_tiers": [],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 0
+    }
+   ],
+   "reward_class_tag": [],
+   "rollable": "NOT rollable (all spawn weights 0 in 0.5 data)",
+   "effect_stats": [],
+   "reward_lines": {},
+   "all_stats": [],
+   "display_text": [
+    ""
+   ]
+  },
+  {
+   "id": "MapWildwoodWispEmpowered1",
+   "domain": "area",
+   "affix": "prefix",
+   "group": "MapWildwoodWispEmpowered",
+   "name": "",
+   "waystone_tiers": [],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 0
+    }
+   ],
+   "reward_class_tag": [],
+   "rollable": "NOT rollable (all spawn weights 0 in 0.5 data)",
+   "effect_stats": [],
+   "reward_lines": {},
+   "all_stats": [],
+   "display_text": [
+    ""
+   ]
+  },
+  {
+   "id": "MapMonsterIncreasedAreaOfEffect1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapMonsterAreaOfEffect",
+   "name": "of Giants",
+   "waystone_tiers": [],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 0
+    }
+   ],
+   "reward_class_tag": [],
+   "rollable": "NOT rollable (all spawn weights 0 in 0.5 data)",
+   "effect_stats": [
+    {
+     "id": "map_monsters_area_of_effect_+%",
+     "min": 50,
+     "max": 50
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_area_of_effect_+%",
+     "min": 50,
+     "max": 50
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    }
+   ],
+   "display_text": [
+    "Monsters have 50% increased Area of Effect",
+    "20% more Waystones found in Area"
+   ]
+  },
+  {
+   "id": "MapRareMonstersAdditionalModifier1",
+   "domain": "area",
+   "affix": "suffix",
+   "group": "MapRareMonstersAdditionalModifier",
+   "name": "of Nemeses",
+   "waystone_tiers": [],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 0
+    }
+   ],
+   "reward_class_tag": [
+    "map_monster_rarity"
+   ],
+   "rollable": "NOT rollable (all spawn weights 0 in 0.5 data)",
+   "effect_stats": [
+    {
+     "id": "map_rare_monster_num_additional_modifiers",
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "reward_lines": {
+    "increased_waystones_found_%": 10,
+    "increased_rare_monsters_%": 25
+   },
+   "all_stats": [
+    {
+     "id": "map_rare_monster_num_additional_modifiers",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_map_item_drop_chance_+%",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_number_of_rare_packs_+%",
+     "min": 25,
+     "max": 25
+    }
+   ],
+   "display_text": [
+    "Rare Monsters have 1 additional Modifier",
+    "10% increased Waystones found in Area",
+    "25% increased number of Rare Monsters"
+   ]
+  },
+  {
+   "id": "MapMonsterSpeedIncrease1",
+   "domain": "area",
+   "affix": "unique",
+   "group": "MapMonsterFast",
+   "name": "Fleeting",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "NOT rollable (generation_type unique in data; shows as waystone-tagged but cannot be added by currency)",
+   "effect_stats": [
+    {
+     "id": "map_monster_attack_cast_and_movement_speed_+%",
+     "min": 10,
+     "max": 15
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "more_pack_size_%": 9
+   },
+   "all_stats": [
+    {
+     "id": "map_monster_attack_cast_and_movement_speed_+%",
+     "min": 10,
+     "max": 15
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 9,
+     "max": 9
+    }
+   ],
+   "display_text": [
+    "Monsters have (10-15)% increased Attack, Cast and Movement Speed",
+    "25% more Waystones found in Area",
+    "9% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonsterSpeedIncrease2",
+   "domain": "area",
+   "affix": "unique",
+   "group": "MapMonsterFast",
+   "name": "Fleeting",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "NOT rollable (generation_type unique in data; shows as waystone-tagged but cannot be added by currency)",
+   "effect_stats": [
+    {
+     "id": "map_monster_attack_cast_and_movement_speed_+%",
+     "min": 10,
+     "max": 15
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "more_pack_size_%": 9
+   },
+   "all_stats": [
+    {
+     "id": "map_monster_attack_cast_and_movement_speed_+%",
+     "min": 10,
+     "max": 15
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 9,
+     "max": 9
+    }
+   ],
+   "display_text": [
+    "Monsters have (10-15)% increased Attack, Cast and Movement Speed",
+    "25% more Waystones found in Area",
+    "9% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonstersStealCharges1",
+   "domain": "area",
+   "affix": "unique",
+   "group": "MapMonstersStealChargesOnHit",
+   "name": "Enervating",
+   "waystone_tiers": [
+    "T1-T5"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_low",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "NOT rollable (generation_type unique in data; shows as waystone-tagged but cannot be added by currency)",
+   "effect_stats": [
+    {
+     "id": "map_monsters_steal_charges",
+     "min": 10,
+     "max": 15
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_steal_charges",
+     "min": 10,
+     "max": 15
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Monsters have (10-15)% chance to steal Power, Frenzy and Endurance charges on Hit",
+    "10% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonstersStealCharges2",
+   "domain": "area",
+   "affix": "unique",
+   "group": "MapMonstersStealChargesOnHit",
+   "name": "Enervating",
+   "waystone_tiers": [
+    "T6-T10"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_medium",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "NOT rollable (generation_type unique in data; shows as waystone-tagged but cannot be added by currency)",
+   "effect_stats": [
+    {
+     "id": "map_monsters_steal_charges",
+     "min": 15,
+     "max": 20
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_steal_charges",
+     "min": 15,
+     "max": 20
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Monsters have (15-20)% chance to steal Power, Frenzy and Endurance charges on Hit",
+    "10% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonstersStealCharges3",
+   "domain": "area",
+   "affix": "unique",
+   "group": "MapMonstersStealChargesOnHit",
+   "name": "Enervating",
+   "waystone_tiers": [
+    "T11-T15"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_high",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "NOT rollable (generation_type unique in data; shows as waystone-tagged but cannot be added by currency)",
+   "effect_stats": [
+    {
+     "id": "map_monsters_steal_charges",
+     "min": 20,
+     "max": 25
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_steal_charges",
+     "min": 20,
+     "max": 25
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Monsters have (20-25)% chance to steal Power, Frenzy and Endurance charges on Hit",
+    "10% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapMonstersStealCharges4",
+   "domain": "area",
+   "affix": "unique",
+   "group": "MapMonstersStealChargesOnHit",
+   "name": "Enervating",
+   "waystone_tiers": [
+    "T16"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map_key_highest",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "map_pack_size"
+   ],
+   "rollable": "NOT rollable (generation_type unique in data; shows as waystone-tagged but cannot be added by currency)",
+   "effect_stats": [
+    {
+     "id": "map_monsters_steal_charges",
+     "min": 20,
+     "max": 25
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_pack_size_%": 7
+   },
+   "all_stats": [
+    {
+     "id": "map_monsters_steal_charges",
+     "min": 20,
+     "max": 25
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 7,
+     "max": 7
+    }
+   ],
+   "display_text": [
+    "Monsters have (20-25)% chance to steal Power, Frenzy and Endurance charges on Hit",
+    "10% more Waystones found in Area",
+    "7% more Pack size"
+   ]
+  },
+  {
+   "id": "MapAbyssContainsHarvester",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "group": "MapAbyssContainsHarvester",
+   "name": "Abyssal",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monster_additional_abyssal_monolithic_slug_packs",
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "more_pack_size_%": 12
+   },
+   "all_stats": [
+    {
+     "id": "map_monster_additional_abyssal_monolithic_slug_packs",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 12,
+     "max": 12
+    }
+   ],
+   "display_text": [
+    "Area contains an additional Incubator Queen"
+   ]
+  },
+  {
+   "id": "MapAbyssCracksAllMagicMonsterChance",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "group": "MapAbyssCracksAllMagicMonsterChance",
+   "name": "Abyssal",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_abyss_%_chance_path_spawns_at_least_magic_monsters",
+     "min": 40,
+     "max": 60
+    },
+    {
+     "id": "map_abyss_%_chance_chasm_spawns_at_least_magic_monsters",
+     "min": 50,
+     "max": 80
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "increased_magic_monsters_%": 40
+   },
+   "all_stats": [
+    {
+     "id": "map_abyss_%_chance_path_spawns_at_least_magic_monsters",
+     "min": 40,
+     "max": 60
+    },
+    {
+     "id": "map_abyss_%_chance_chasm_spawns_at_least_magic_monsters",
+     "min": 50,
+     "max": 80
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_number_of_magic_packs_+%",
+     "min": 40,
+     "max": 40
+    }
+   ],
+   "display_text": [
+    "Abyss Cracks have (40-60)% chance to spawn all Monsters as at least Magic",
+    "Abyss Pits have (50-80)% chance to spawn all Monsters as at least Magic"
+   ]
+  },
+  {
+   "id": "MapAbyssAlwaysContainsBoss",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "group": "MapAbyssCracksAlwaysLeadToDepths",
+   "name": "Abyssal",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_contains_abyss_boss",
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 10,
+    "more_item_rarity_%": 25
+   },
+   "all_stats": [
+    {
+     "id": "map_contains_abyss_boss",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    }
+   ],
+   "display_text": [
+    "Abysses lead to an Abyssal Boss"
+   ]
+  },
+  {
+   "id": "MapAbyssCracksAlwaysLeadToDepths",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "group": "MapAbyssCracksAlwaysLeadToDepths",
+   "name": "Abyssal",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_contains_abyss_depths_with_no_boss",
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_item_rarity_%": 25
+   },
+   "all_stats": [
+    {
+     "id": "map_contains_abyss_depths_with_no_boss",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    }
+   ],
+   "display_text": [
+    "Abysses lead to an Abyssal Depths"
+   ]
+  },
+  {
+   "id": "MapAbyssDifficultyRewardIncreasePerPit",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "group": "MapAbyssDifficultyRewardIncreasePerPit",
+   "name": "Abyssal",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_abyss_monsters_enhanced_per_chasm_closed",
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_pack_size_%": 12
+   },
+   "all_stats": [
+    {
+     "id": "map_abyss_monsters_enhanced_per_chasm_closed",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 12,
+     "max": 12
+    }
+   ],
+   "display_text": [
+    "Abyssal Monsters have increased Difficulty and Reward for each closed Pit"
+   ]
+  },
+  {
+   "id": "MapAbyssGuaranteeRewards",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "group": "MapAbyssGuaranteeRewards",
+   "name": "Abyssal",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_abyss_no_reward_chance_+%",
+     "min": -100,
+     "max": -100
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "increased_magic_monsters_%": 40,
+    "increased_rare_monsters_%": 30
+   },
+   "all_stats": [
+    {
+     "id": "map_abyss_no_reward_chance_+%",
+     "min": -100,
+     "max": -100
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_number_of_magic_packs_+%",
+     "min": 40,
+     "max": 40
+    },
+    {
+     "id": "map_number_of_rare_packs_+%",
+     "min": 30,
+     "max": 30
+    }
+   ],
+   "display_text": [
+    "Abyss Pits in Area always have Rewards"
+   ]
+  },
+  {
+   "id": "MapAbyssRareMonstersAbyssalModifier",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "group": "MapAbyssRareMonstersAbyssalModifier",
+   "name": "Abyssal",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_natural_rare_monsters_have_x_additional_abyssal_modifiers",
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "increased_rare_monsters_%": 30
+   },
+   "all_stats": [
+    {
+     "id": "map_natural_rare_monsters_have_x_additional_abyssal_modifiers",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_number_of_rare_packs_+%",
+     "min": 30,
+     "max": 30
+    }
+   ],
+   "display_text": [
+    "Natural Rare Monsters in Area have 1 extra Abyssal Modifier"
+   ]
+  },
+  {
+   "id": "MapAbyssalAbyssMonsterExperience",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "group": "MapAbyssalAbyssMonsterExperience",
+   "name": "Abyssal",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_abyss_monster_experience_+%",
+     "min": 50,
+     "max": 100
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_pack_size_%": 16
+   },
+   "all_stats": [
+    {
+     "id": "map_abyss_monster_experience_+%",
+     "min": 50,
+     "max": 100
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 16,
+     "max": 16
+    }
+   ],
+   "display_text": [
+    "Abyssal Monsters grant (50-100)% increased Experience"
+   ]
+  },
+  {
+   "id": "MapAbyssalAdditionalPits",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "group": "MapAbyssalAdditionalPits",
+   "name": "Abyssal",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_abyss_overrun_extra_pits",
+     "min": 2,
+     "max": 3
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_item_rarity_%": 25
+   },
+   "all_stats": [
+    {
+     "id": "map_abyss_overrun_extra_pits",
+     "min": 2,
+     "max": 3
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    }
+   ],
+   "display_text": [
+    "Area contains (2-3) additional Abysses"
+   ]
+  },
+  {
+   "id": "MapAbyssalIncreasedAbyssMonsters",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "group": "MapAbyssalIncreasedAbyssMonsters",
+   "name": "Abyssal",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_abyss_monster_spawn_amount_+%",
+     "min": 50,
+     "max": 100
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 20,
+    "more_pack_size_%": 12
+   },
+   "all_stats": [
+    {
+     "id": "map_abyss_monster_spawn_amount_+%",
+     "min": 50,
+     "max": 100
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 12,
+     "max": 12
+    }
+   ],
+   "display_text": [
+    "Abysses spawn (50-100)% increased Monsters"
+   ]
+  },
+  {
+   "id": "MapAbyssalOverrun",
+   "domain": "desecrated",
+   "affix": "prefix",
+   "group": "MapAbyssalOverrun",
+   "name": "Abyssal",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_abyss_overrun_extra_pits",
+     "min": 14,
+     "max": 18
+    },
+    {
+     "id": "map_abyss_overrun_no_monsters",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_abyss_num_additional_rare_monsters",
+     "min": 3,
+     "max": 3
+    },
+    {
+     "id": "map_abyss_tower_augment_quantity_+%_final_from_overrun_unique_tablet",
+     "min": 0,
+     "max": 0
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "more_pack_size_%": 10
+   },
+   "all_stats": [
+    {
+     "id": "map_abyss_overrun_extra_pits",
+     "min": 14,
+     "max": 18
+    },
+    {
+     "id": "map_abyss_overrun_no_monsters",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_abyss_num_additional_rare_monsters",
+     "min": 3,
+     "max": 3
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_abyss_tower_augment_quantity_+%_final_from_overrun_unique_tablet",
+     "min": 0,
+     "max": 0
+    }
+   ],
+   "display_text": [
+    "Area contains (14-18) additional Abysses",
+    "Area is overrun by the Abyssal",
+    "3 additional Rare Monsters are spawned from Abysses"
+   ]
+  },
+  {
+   "id": "MapAbyssDamageRotation",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "group": "MapAbyssDamageCycle",
+   "name": "of Cycling",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_uber_map_player_damage_cycle",
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "reward_lines": {
+    "increased_rare_monsters_%": 50,
+    "more_waystones_found_%": 40
+   },
+   "all_stats": [
+    {
+     "id": "map_uber_map_player_damage_cycle",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_number_of_rare_packs_+%",
+     "min": 50,
+     "max": 50
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 40,
+     "max": 40
+    }
+   ],
+   "display_text": [
+    "Players and their Minions deal no damage for 3 out of every 10 seconds"
+   ]
+  },
+  {
+   "id": "MapAbyssRareMonstersSoulEater",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "group": "MapAbyssRareMonstersSoulEater",
+   "name": "of Consumption",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_natural_rare_monsters_have_soul_eater",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_player_soul_eater_souls_stolen_on_rare_kill",
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "more_pack_size_%": 18
+   },
+   "all_stats": [
+    {
+     "id": "map_natural_rare_monsters_have_soul_eater",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_player_soul_eater_souls_stolen_on_rare_kill",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 18,
+     "max": 18
+    }
+   ],
+   "display_text": [
+    "Natural Rare Monsters in Area Eat the Souls of slain Monsters in their Presence",
+    "Players steal the Eaten Souls of Slain Rare Monsters in Area"
+   ]
+  },
+  {
+   "id": "MapAbyssModManaSiphonGround",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "group": "MapSpreadGroundEffect",
+   "name": "of Siphoning",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_ground_mana_siphoning_mana_degeneration_per_minute",
+     "min": 1200,
+     "max": 1200
+    },
+    {
+     "id": "map_ground_mana_siphoning_base_lightning_damage_to_deal_per_minute",
+     "min": 7200,
+     "max": 7200
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 16,
+     "max": 16
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_ground_mana_siphoning",
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "reward_lines": {
+    "more_waystones_found_%": 35,
+    "more_pack_size_%": 18
+   },
+   "all_stats": [
+    {
+     "id": "map_ground_mana_siphoning_mana_degeneration_per_minute",
+     "min": 1200,
+     "max": 1200
+    },
+    {
+     "id": "map_ground_mana_siphoning_base_lightning_damage_to_deal_per_minute",
+     "min": 7200,
+     "max": 7200
+    },
+    {
+     "id": "map_ground_effect_radius",
+     "min": 16,
+     "max": 16
+    },
+    {
+     "id": "map_ground_effect_patches_per_100_tiles",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_ground_mana_siphoning",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 35,
+     "max": 35
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 18,
+     "max": 18
+    }
+   ],
+   "display_text": [
+    "Area has patches of Mana Siphoning Ground"
+   ]
+  },
+  {
+   "id": "MapAbyssActionSpeed",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "group": "MapUberModActionSpeed",
+   "name": "of Deceleration",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_player_speed_+%_final_per_recent_skill_use",
+     "min": -3,
+     "max": -3
+    }
+   ],
+   "reward_lines": {
+    "more_item_rarity_%": 45,
+    "more_waystones_found_%": 25
+   },
+   "all_stats": [
+    {
+     "id": "map_player_speed_+%_final_per_recent_skill_use",
+     "min": -3,
+     "max": -3
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 45,
+     "max": 45
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    }
+   ],
+   "display_text": [
+    "Players have 3% less Movement and Skill Speed for each time they've used a Skill Recently"
+   ]
+  },
+  {
+   "id": "MapAbyssMarkedForDeath",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "group": "MapUberModMarkedForDeath",
+   "name": "of Retribution",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_player_death_mark_on_rare_unique_kill_ms",
+     "min": 10000,
+     "max": 10000
+    }
+   ],
+   "reward_lines": {
+    "more_pack_size_%": 10,
+    "more_item_rarity_%": 40,
+    "increased_item_quantity_%": 0,
+    "more_waystones_found_%": 25
+   },
+   "all_stats": [
+    {
+     "id": "map_player_death_mark_on_rare_unique_kill_ms",
+     "min": 10000,
+     "max": 10000
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 10,
+     "max": 10
+    },
+    {
+     "id": "map_item_drop_rarity_+%_final_from_map",
+     "min": 40,
+     "max": 40
+    },
+    {
+     "id": "map_item_drop_quantity_+%",
+     "min": 0,
+     "max": 0
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    }
+   ],
+   "display_text": [
+    "Players are Marked for Death for 10 seconds",
+    "after killing a Rare or Unique monster"
+   ]
+  },
+  {
+   "id": "MapAbyssVines",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "group": "MapUberModVines",
+   "name": "of Grasping",
+   "waystone_tiers": [
+    "T1-T16 (desecrated/unveiled only)"
+   ],
+   "spawn_weights": [
+    {
+     "tag": "map",
+     "weight": 1
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "rollable",
+   "effect_stats": [
+    {
+     "id": "map_monster_add_x_grasping_vines_on_hit",
+     "min": 1,
+     "max": 1
+    }
+   ],
+   "reward_lines": {
+    "more_pack_size_%": 22,
+    "more_waystones_found_%": 30
+   },
+   "all_stats": [
+    {
+     "id": "map_monster_add_x_grasping_vines_on_hit",
+     "min": 1,
+     "max": 1
+    },
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 22,
+     "max": 22
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 30,
+     "max": 30
+    }
+   ],
+   "display_text": [
+    "Monsters inflict 1 Grasping Vine on Hit"
+   ]
+  },
+  {
+   "id": "MapAbyssPackUnionofSouls",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "group": "MapAbyssPackUnionofSouls",
+   "name": "of Union",
+   "waystone_tiers": [],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 0
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "NOT rollable (all spawn weights 0 in 0.5 data)",
+   "effect_stats": [],
+   "reward_lines": {
+    "more_pack_size_%": 22,
+    "more_waystones_found_%": 20
+   },
+   "all_stats": [
+    {
+     "id": "map_pack_size_+%_final_from_map",
+     "min": 22,
+     "max": 22
+    },
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 20,
+     "max": 20
+    }
+   ],
+   "display_text": [
+    ""
+   ]
+  },
+  {
+   "id": "MapAbyssRaresBossUnionofSouls",
+   "domain": "desecrated",
+   "affix": "suffix",
+   "group": "MapAbyssRaresBossUnionofSouls",
+   "name": "of Union",
+   "waystone_tiers": [],
+   "spawn_weights": [
+    {
+     "tag": "default",
+     "weight": 0
+    }
+   ],
+   "reward_class_tag": [
+    "unveiled_mod"
+   ],
+   "rollable": "NOT rollable (all spawn weights 0 in 0.5 data)",
+   "effect_stats": [],
+   "reward_lines": {
+    "more_waystones_found_%": 25,
+    "increased_rare_monsters_%": 50
+   },
+   "all_stats": [
+    {
+     "id": "map_map_item_drop_chance_+%_final_from_map",
+     "min": 25,
+     "max": 25
+    },
+    {
+     "id": "map_number_of_rare_packs_+%",
+     "min": 50,
+     "max": 50
+    }
+   ],
+   "display_text": [
+    ""
+   ]
+  }
+ ]
+}

@@ -28,7 +28,7 @@ import java.util.random.RandomGenerator;
 /**
  * 寶石（PoE2 的未切割寶石）：物品的建立與辨識、右鍵雕琢、技能面板上的放入／取出／掛輔助／開孔、怪物掉落。
  * <ul>
- *   <li>未切割技能寶石（Lv.N）：雕成一個 Lv.N 的技能寶石，或把面板上的技能升一級（最高到 Lv.N）</li>
+ *   <li>未切割技能寶石（Lv.N）：雕成一個 Lv.N 的技能寶石，或把面板上的技能直接升到 Lv.N（2026-10-27 照 PoE2；這次之前一顆升一級）</li>
  *   <li>未切割輔助寶石（第 T 階）：切成一個第 T 階以下的輔助寶石</li>
  *   <li>技能寶石：放進技能面板就學會；取出來會帶著等級、輔助孔與掛的輔助寶石</li>
  *   <li>輔助寶石：掛在技能的輔助孔上；同一種可以掛在不同技能上（各用一顆），同一個技能不能掛兩顆一樣的
@@ -124,17 +124,59 @@ public final class GemService {
         return true;
     }
 
+    /**
+     * 2026-10-26：拿掉的技能寶石原數退還投入的通貨：開過的輔助孔（第 3 孔小鑿星石、第 4 孔鑿星石、第 5 孔大鑿星石）
+     * 與品質（每 5% 一個琢星稜鏡）。沒有通貨系統時回傳空的。
+     */
+    public List<ItemStack> investedRefund(final SkillLoadout.Entry entry) {
+        final List<ItemStack> refund = new ArrayList<>();
+        if (entry == null || plugin.currencies() == null) {
+            return refund;
+        }
+        for (int socket = SkillLoadout.BASE_SOCKETS + 1; socket <= entry.sockets(); socket++) {
+            for (final tw.exilecore.currency.CurrencyType type : plugin.currencies().repository().all()) {
+                if (type.operation() == tw.exilecore.currency.CurrencyOperation.SKILL_SOCKET && type.sockets() == socket) {
+                    refund.add(plugin.currencies().create(type, 1));
+                    break;
+                }
+            }
+        }
+        // 2026-10-27：賦予的技能的品質是武器給的，不退琢星稜鏡
+        final int prisms = entry.granted() ? 0 : (entry.quality() + QUALITY_STEP - 1) / QUALITY_STEP;
+        if (prisms > 0) {
+            plugin.currencies().repository().firstWith(tw.exilecore.currency.CurrencyOperation.SKILL_QUALITY)
+                    .ifPresent(type -> refund.add(plugin.currencies().create(type, prisms)));
+        }
+        return refund;
+    }
+
+    /**
+     * 2026-10-26：拿掉的宿主寶石（引星…）第 1 孔裡的技能寶石還給玩家：還在的原樣（等級、品質、孔），併入別的技能的換成那個，
+     * 也被拿掉的換成同等級的未切割技能寶石。
+     */
+    public ItemStack innerRefund(final SkillLoadout.Entry inner) {
+        final SkillLoadout.Entry merged = config().merge(inner);
+        final SkillLoadout.Entry entry = merged != null && config().skill(merged.skillId()) != null ? merged : inner;
+        return config().skill(entry.skillId()) != null ? create(GemData.skill(entry), 1) : create(GemData.uncutSkill(inner.level()), 1);
+    }
+
     /** 2026-10-18：migrateRemoved 會不會拆下輔助（技能被拿掉且掛著輔助，或掛著被拿掉的輔助）。 */
     private boolean detachesSupports(final GemData data) {
         if (data.kind() != GemData.Kind.SKILL || data.entry() == null) {
             return false;
         }
-        if (config().skill(data.id()) == null) {
-            return !data.entry().supportIds().isEmpty();
+        if (config().skill(data.id()) == null && config().mergedInto(data.id()) == null) { // 2026-10-26：併入別的技能的輔助保留
+            return !data.entry().supportIds().isEmpty() || !data.entry().spells().isEmpty(); // 2026-10-26：拿掉的引星裡放著技能寶石也要拆
+        }
+        // 2026-10-26：併入同系列最高階的輔助原孔換過去，不拆；只有同一個技能已經掛著那顆（重複）才要拆
+        final List<GemData> duplicate = new ArrayList<>();
+        config().mergeSupports(data.entry(), duplicate);
+        if (!duplicate.isEmpty()) {
+            return true;
         }
         for (int i = 0; i < data.entry().sockets(); i++) {
             final String support = data.entry().support(i);
-            if (!support.isEmpty() && config().support(support) == null) {
+            if (!support.isEmpty() && !data.entry().spellSocket(i) && config().support(support) == null && config().supportMergedInto(support) == null) {
                 return true;
             }
         }
@@ -144,6 +186,7 @@ public final class GemService {
     /**
      * 2026-10 PoE2 改版拿掉的技能、輔助寶石：原地換成未切割寶石（技能 → 同等級的未切割技能寶石；輔助 → 同階的未切割輔助寶石）。
      * 技能寶石上掛著的輔助（從面板取下來的寶石）拆下來放在回傳的清單裡：還在的輔助原樣、拿掉的換成未切割輔助寶石。
+     * 2026-10-26：併入別的技能的（skills.yml 的 merged）換成併入的技能寶石，等級、品質、孔、輔助都保留（不拆）。
      *
      * @return null = 不用換；否則是要另外給玩家的東西（可能是空的）
      */
@@ -158,16 +201,40 @@ public final class GemService {
         GemData replacement = null;
         int amount = 1;
         if (data.kind() == GemData.Kind.SKILL && data.entry() != null) {
-            if (config().skill(data.id()) == null) {
-                replacement = GemData.uncutSkill(data.level());
+            // 2026-10-26：掛著的低階 I／II 輔助先換成同系列最高階（supports.yml 的 merged；重複的拆下來）
+            final List<GemData> detached = new ArrayList<>();
+            final SkillLoadout.Entry current = config().mergeSupports(data.entry(), detached);
+            for (final GemData gem : detached) {
+                extra.add(create(gem, 1));
+            }
+            // 2026-10-26：併入別的技能（skills.yml 的 merged）：直接換成那個技能，等級、品質、孔、輔助保留（拿掉的輔助照下面另外換）
+            final SkillLoadout.Entry mergedSkill = config().merge(current);
+            final SkillLoadout.Entry merged = mergedSkill == null && current != data.entry() ? current : mergedSkill;
+            if (merged != null && config().skill(merged.skillId()) != null) {
+                SkillLoadout.Entry entry = merged;
+                for (int i = 0; i < entry.sockets(); i++) {
+                    final String support = entry.support(i);
+                    if (!support.isEmpty() && !entry.spellSocket(i) && config().support(support) == null) { // 2026-10-26：放技能寶石的孔不是輔助
+                        extra.add(supportOrUncut(support));
+                        entry = entry.withSupport(i, null);
+                    }
+                }
+                replacement = GemData.skill(entry);
+            } else if (config().skill(data.id()) == null) {
+                replacement = data.removedSkillReplacement(config()); // 同等級的未切割技能寶石
+                extra.clear(); // 2026-10-26：上面重複拆下來的那顆下面照原本的代號再退一次，避免多給
                 for (final String support : data.entry().supportIds()) {
                     extra.add(supportOrUncut(support));
+                }
+                extra.addAll(investedRefund(data.entry())); // 2026-10-26：開過的孔、品質原數退還
+                for (final SkillLoadout.Entry spell : data.entry().spells()) {
+                    extra.add(innerRefund(spell)); // 2026-10-26：拿掉的引星孔裡的技能寶石還給玩家（第 2～5 孔的也還）
                 }
             } else {
                 SkillLoadout.Entry entry = data.entry();
                 for (int i = 0; i < entry.sockets(); i++) {
                     final String support = entry.support(i);
-                    if (!support.isEmpty() && config().support(support) == null) {
+                    if (!support.isEmpty() && !entry.spellSocket(i) && config().support(support) == null) { // 2026-10-26：放技能寶石的孔不是輔助
                         extra.add(supportOrUncut(support));
                         entry = entry.withSupport(i, null);
                     }
@@ -176,6 +243,10 @@ public final class GemService {
                     replacement = GemData.skill(entry);
                 }
             }
+        } else if (data.kind() == GemData.Kind.SUPPORT && config().supportMergedInto(data.id()) != null) {
+            // 2026-10-26：低階 I／II 輔助換成同系列最高階那顆（共鳴保留、整疊一起換）
+            replacement = GemData.support(config().supportMergedInto(data.id()), data.resonant());
+            amount = stack.getAmount();
         } else if (data.kind() == GemData.Kind.SUPPORT && config().support(data.id()) == null) {
             replacement = GemData.uncutSupport(config().retiredSupportTier(data.id()));
             amount = stack.getAmount();
@@ -248,6 +319,9 @@ public final class GemService {
         if (config().support(supportId) != null) {
             return create(GemData.support(supportId), 1);
         }
+        if (config().supportMergedInto(supportId) != null) { // 2026-10-26：低階 I／II 換成同系列最高階
+            return create(GemData.support(config().supportMergedInto(supportId)), 1);
+        }
         return create(GemData.uncutSupport(config().retiredSupportTier(supportId)), 1);
     }
 
@@ -263,11 +337,7 @@ public final class GemService {
         final ItemStack stack = ItemStack.of(material(data.kind()), Math.max(1, Math.min(data.maxStack(), amount)));
         stack.editMeta(meta -> {
             meta.displayName(ItemRenderer.line(name(data)));
-            final List<Component> lore = new ArrayList<>();
-            for (final String line : lore(data)) {
-                lore.add(ItemRenderer.line(line));
-            }
-            meta.lore(lore);
+            meta.lore(tw.exilecore.core.text.TextWrap.lines(lore(data))); // 2026-10-26：長的說明自動換行（這次之前一行到底）
             meta.setMaxStackSize(data.maxStack());
             meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS);
             meta.setEnchantmentGlintOverride(data.kind() == GemData.Kind.SKILL || data.kind() == GemData.Kind.SUPPORT);
@@ -275,6 +345,12 @@ public final class GemService {
                 final NamespacedKey model = NamespacedKey.fromString("exilecore:gem/" + data.kind().key());
                 if (model != null) {
                     meta.setItemModel(model);
+                }
+            } else if (data.kind() == GemData.Kind.SUPPORT) {
+                // 2026-10-26：沒有資源包時輔助寶石看起來是對應顏色的染料（紅／綠／淡藍；白色的照舊惡魂之淚），只換外觀、不換物品
+                final String dye = GemAttributes.dyeModel(SupportColours.colour(data.id()));
+                if (dye != null) {
+                    meta.setItemModel(NamespacedKey.minecraft(dye));
                 }
             }
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, data.encode());
@@ -322,14 +398,19 @@ public final class GemService {
             case UNCUT_SUPPORT -> "<#9fc8ff>未切割輔助寶石 <gray>第 " + data.level() + " 階";
             case SKILL -> {
                 final SkillDefinition definition = config().skill(data.id());
+                // 2026-10-26 照 PoE2：名字照寶石的屬性上色（紅＝力量、綠＝敏捷、藍＝智慧、混色漸層）並標出屬性；這次之前一律金色
                 yield definition == null ? "<red>不認得的技能：" + ItemRenderer.escape(data.id())
-                        : (definition.engravable() ? "<#e0c080>技能寶石：" : "<#d4a017>異質技能寶石：") + ItemRenderer.escape(definition.name())
-                        + " <gray>Lv." + data.level();
+                        : (definition.engravable() ? "" : "<#d4a017>✦異質 ")
+                        + GemAttributes.colourSkill(definition, "技能寶石：" + ItemRenderer.escape(definition.name()))
+                        + " " + GemAttributes.skillBadge(definition) + " <gray>Lv." + data.level();
             }
             case SUPPORT -> {
                 final SupportDefinition support = config().support(data.id());
+                // 2026-10-26 照 PoE2：名字照輔助寶石的顏色（紅 §c 力量、綠 §a 敏捷、藍 §9 智慧、白色無屬性）並標出屬性；
+                //   這次之前一般的淡藍、專屬的橘色（專屬的改成前面一個橘色 ✦）
                 yield support == null ? "<red>不認得的輔助：" + ItemRenderer.escape(data.id())
-                        : (support.cuttable() ? "<#8fd3ff>" : "<#ff9f43>") + "輔助寶石：" + ItemRenderer.escape(support.name())
+                        : (support.cuttable() ? "" : "<#ff9f43>✦ ") + GemAttributes.supportTag(support.id()) + "輔助寶石：" + ItemRenderer.escape(support.name())
+                        + " " + GemAttributes.supportBadge(support.id())
                         + (data.resonant() ? "<#c48bff>（共鳴）" : ""); // 2026-10-18：用過共鳴石的
             }
         };
@@ -340,7 +421,7 @@ public final class GemService {
         switch (data.kind()) {
             case UNCUT_SKILL -> {
                 lines.add("<gray>右鍵：做成一個 <white>Lv." + data.level() + "</white> 的技能寶石，");
-                lines.add("<gray>或把技能面板上的技能升一級（最高到 Lv." + data.level() + "）");
+                lines.add("<gray>或把技能面板上的技能直接升到 Lv." + data.level()); // 2026-10-27 照 PoE2；這次之前「升一級（最高到 Lv.N）」
                 lines.add("<gray>能雕的技能：<white>" + config().engravable(data.level()).size() + "</white> 種");
                 lines.add("<dark_gray>也可以拿在游標上點技能面板（/skills）裡的技能來升級");
                 lines.add("<dark_gray><i>還沒刻上紋路的星骸，記得的東西還很模糊。");
@@ -378,6 +459,7 @@ public final class GemService {
             lines.add("<gray>skills.yml 裡沒有這個技能（被刪掉或改名了）");
             return;
         }
+        lines.add(GemAttributes.skillBadge(definition) + " <gray>技能寶石"); // 2026-10-26 照 PoE2：第一行寫寶石的屬性（顏色）
         lines.add(SkillService.headlineChips(definition));
         if (!definition.engravable()) {
             lines.add("<#d4a017>異質品質：只有" + definition.sourceText() + "會掉，未切割技能寶石雕不出來");
@@ -389,19 +471,24 @@ public final class GemService {
             lines.add("<gray>需要" + definition.weaponText());
         }
         lines.add("<gray>需要角色等級 <white>" + config().requiredLevel(entry.level()));
+        lines.addAll(GemAttributes.lines(config(), entry, null)); // 2026-10-26 照 PoE2：屬性需求（含插著的輔助寶石加的）
         lines.add("");
         lines.add("<gray>輔助孔：<white>" + entry.sockets() + "</white>／" + SkillLoadout.MAX_SOCKETS);
         final boolean host = SupportDefinition.hostsSkill(definition); // 2026-10-22：第 1 孔放技能寶石
         for (int i = 0; i < entry.sockets(); i++) {
             final String id = entry.support(i);
             if (host && i == SkillLoadout.Entry.INNER_SOCKET) {
-                lines.add(entry.inner() == null ? "<dark_gray> ◇ 第 1 孔：放技能寶石（空）"
+                lines.add(entry.inner() == null ? "<dark_gray> ◇ 放技能寶石（空；每一孔都能放）"
                         : "<#ffd27f> ◆ " + ItemRenderer.escape(skillName(entry.inner())) + " <gray>Lv." + entry.inner().level() + "（放在裡面的技能）");
+            } else if (entry.spellSocket(i)) { // 2026-10-26：宿主寶石其他孔的技能寶石
+                final SkillLoadout.Entry spell = entry.spellAt(i);
+                lines.add("<#ffd27f> ◆ " + ItemRenderer.escape(skillName(spell)) + " <gray>Lv." + spell.level() + "（放在裡面的技能）");
             } else if (id.isEmpty()) {
                 lines.add("<dark_gray> ◇ 空");
             } else {
                 final SupportDefinition support = config().support(id);
-                lines.add("<#8fd3ff> ◆ " + ItemRenderer.escape(support == null ? id : support.name())
+                lines.add(GemAttributes.supportTag(id) + " ◆ " + ItemRenderer.escape(support == null ? id : support.name()) // 2026-10-26：照顏色
+                        + " " + GemAttributes.supportBadge(id)
                         + (entry.resonant(i) ? "<#c48bff>（共鳴）" : "")); // 2026-10-18
             }
         }
@@ -414,7 +501,11 @@ public final class GemService {
             lines.add("<gray>supports.yml 裡沒有這個輔助（被刪掉或改名了）");
             return;
         }
-        if (!support.cuttable()) {
+        lines.add(GemAttributes.supportLine(support.id())); // 2026-10-26 照 PoE2：第一行寫輔助寶石的顏色與加的屬性需求
+        if (support.lineage()) {
+            lines.add("<#ff9f43>✦ 血脈輔助寶石<dark_gray>（未切割輔助寶石切不出來）");
+            lines.add("<#ff9f43>一個技能只能掛一顆血脈輔助寶石<dark_gray>（不能用共鳴石）"); // 2026-10-27 照站長
+        } else if (!support.cuttable()) {
             lines.add("<#ff9f43>✦ 專屬掉落的輔助寶石<dark_gray>（未切割輔助寶石切不出來）");
             if (resonant) {
                 lines.add("<#c48bff>共鳴：不佔一個技能的專屬輔助名額"); // 2026-10-18：用過共鳴石
@@ -686,7 +777,7 @@ public final class GemService {
         return null;
     }
 
-    /** 用一顆未切割技能寶石把面板上的技能升一級。 */
+    /** 用一顆未切割技能寶石把面板上的技能升到那顆寶石的等級（2026-10-27 照 PoE2；這次之前一顆升一級）。 */
     String levelUpFrom(final Player player, final UncutSource source, final int position) {
         final GemData uncut = held(player, source, GemData.Kind.UNCUT_SKILL);
         if (uncut == null) {
@@ -702,8 +793,8 @@ public final class GemService {
     }
 
     /**
-     * 用一顆 Lv.uncutLevel 的未切割技能寶石把面板上的技能升一級（一顆升一級，寶石等級要夠）。
-     * 不扣寶石、不存檔，由呼叫端扣掉寶石之後再存。
+     * 用一顆 Lv.uncutLevel 的未切割技能寶石把面板上的技能直接升到 Lv.uncutLevel（2026-10-27 照 PoE2 0.5：未切割寶石的等級要比技能高，
+     * 角色等級要夠新的等級；這次之前一顆升一級）。不扣寶石、不存檔，由呼叫端扣掉寶石之後再存。
      */
     String levelUp(final Player player, final int position, final int uncutLevel) {
         final PlayerState state = plugin.players().get(player);
@@ -715,7 +806,7 @@ public final class GemService {
         if (problem != null) {
             return problem;
         }
-        final int next = entry.level() + 1;
+        final int next = levelUpTarget(entry, uncutLevel); // 2026-10-27 照 PoE2：直接升到未切割寶石的等級（這次之前 entry.level() + 1）
         state.skills().set(position, entry.withLevel(next));
         final SkillDefinition definition = config().skill(entry.skillId());
         player.sendMessage(plugin.text().prefixed("<green>" + ItemRenderer.escape(definition == null ? entry.skillId() : definition.name())
@@ -725,48 +816,65 @@ public final class GemService {
 
     /** 不能升級的原因；可以升回傳 null。 */
     String levelUpProblem(final PlayerState state, final SkillLoadout.Entry entry, final int uncutLevel) {
+        if (entry.granted()) {
+            return GRANTED_LEVEL; // 2026-10-26
+        }
         if (entry.corrupted()) {
             return "已腐化的技能寶石不能再升級"; // 2026-10-23
         }
         if (entry.level() >= SkillLoadout.GEM_CAP) {
             return "已經是最高等級（Lv." + SkillLoadout.GEM_CAP + "）";
         }
+        // 2026-10-27 照 PoE2 0.5：未切割技能寶石直接把技能升到它的等級（要比技能現在的等級高）；這次之前一顆升一級、Lv.20 之後要 Lv.21 的
         if (entry.level() >= SkillLoadout.MAX_LEVEL && uncutLevel < SkillLoadout.GEM_CAP) {
             return "Lv." + SkillLoadout.MAX_LEVEL + " 之後要 Lv." + SkillLoadout.GEM_CAP + " 的未切割技能寶石（劫盜大金庫、金庫之主）";
         }
-        final int next = entry.level() + 1;
-        if (next > uncutLevel) {
-            return "要 Lv." + next + " 以上的未切割技能寶石才能升到 Lv." + next;
+        final int next = levelUpTarget(entry, uncutLevel);
+        if (next <= entry.level()) {
+            return "要 Lv." + (entry.level() + 1) + " 以上的未切割技能寶石才能升級（會直接升到未切割寶石的等級）";
         }
         final int required = config().requiredLevel(next);
         if (state.level() < required) {
-            return "角色等級要 " + required + " 才能升到 Lv." + next;
+            return "角色等級要 " + required + " 才能升到 Lv." + next + "（未切割寶石的等級）";
         }
         return null;
     }
 
+    /** 2026-10-27 照 PoE2：用 Lv.uncutLevel 的未切割技能寶石升級後的等級（＝未切割寶石的等級，最高 Lv.21）。 */
+    static int levelUpTarget(final SkillLoadout.Entry entry, final int uncutLevel) {
+        return Math.min(SkillLoadout.GEM_CAP, uncutLevel);
+    }
+
     /**
-     * 技能面板的「一鍵升級」：從背包或通貨袋找一顆夠用、等級最低的未切割技能寶石（不浪費高等級的）。
+     * 技能面板的「一鍵升級」：從背包、通貨袋或倉庫找一顆比技能高、角色用得了的未切割技能寶石。
+     * 2026-10-27 照 PoE2（直接升到未切割寶石的等級）：挑角色用得了的最高等級那顆（一顆就升到能用的最高；這次之前一顆升一級，挑夠用、等級最低的）。
      * 找不到回傳 null。
      */
     UncutSource bestForLevelUp(final Player player, final SkillLoadout.Entry entry) {
         final PlayerState state = plugin.players().get(player);
-        if (entry == null || levelUpProblem(state, entry, SkillLoadout.GEM_CAP) != null) {
+        if (entry == null || levelUpProblem(state, entry, Math.min(SkillLoadout.GEM_CAP, entry.level() + 1)) != null) {
             return null; // 已經最高等級、角色等級不夠：用什麼寶石都一樣不行
         }
         final int need = entry.level() + 1;
+        int cap = need;
+        for (int level = SkillLoadout.GEM_CAP; level >= need; level--) {
+            if (levelUpProblem(state, entry, level) == null) {
+                cap = level; // 角色等級用得了的最高等級
+                break;
+            }
+        }
         UncutSource best = null;
-        int bestLevel = Integer.MAX_VALUE;
+        int bestLevel = need - 1;
         final org.bukkit.inventory.PlayerInventory inventory = player.getInventory();
         for (int slot = 0; slot < 36; slot++) {
             final GemData data = read(inventory.getItem(slot)).orElse(null);
-            if (data != null && data.kind() == GemData.Kind.UNCUT_SKILL && data.level() >= need && data.level() < bestLevel) {
+            if (data != null && data.kind() == GemData.Kind.UNCUT_SKILL && data.level() > bestLevel && data.level() <= cap) {
                 best = UncutSource.hand(slot);
                 bestLevel = data.level();
             }
         }
         if (state.bag() != null && state.bag().usable()) {
-            for (int level = need; level < bestLevel && level <= SkillLoadout.GEM_CAP; level++) { // 2026-10：21 級的也找得到
+            for (int level = cap; level > bestLevel; level--) { // 2026-10：21 級的也找得到
                 final String id = GemData.uncutSkill(level).currencyId();
                 if (state.bag().pouch().amount(id) > 0) {
                     best = UncutSource.pouch(id);
@@ -778,7 +886,7 @@ public final class GemService {
         // 2026-10-23：倉庫的通貨頁也找（Lv.21 的常常存在倉庫裡）；背包、通貨袋有同樣等級的先用那邊的
         final tw.exilecore.stash.Stash stash = plugin.stash() == null ? null : plugin.stash().stash(player).orElse(null);
         if (stash != null) {
-            for (int level = need; level < bestLevel && level <= SkillLoadout.GEM_CAP; level++) {
+            for (int level = cap; level > bestLevel; level--) {
                 final String id = GemData.uncutSkill(level).currencyId();
                 if (stash.currency(id) > 0) {
                     best = UncutSource.stash(id);
@@ -788,6 +896,16 @@ public final class GemService {
             }
         }
         return best;
+    }
+
+    /** 2026-10-27：那個來源的未切割技能寶石是幾級（讀不到回傳 0）。 */
+    int uncutLevel(final Player player, final UncutSource source) {
+        if (source == null) {
+            return 0;
+        }
+        final GemData data = source.fromPouch() ? GemData.fromCurrencyId(source.currencyId()).orElse(null)
+                : read(player.getInventory().getItem(source.slot())).orElse(null);
+        return data == null ? 0 : data.level();
     }
 
     /** 那個來源的寶石叫什麼（「通貨袋裡的未切割技能寶石 Lv.5」）。 */
@@ -877,24 +995,24 @@ public final class GemService {
         }
         final int insideOf = loadout.findInner(entry.skillId()); // 2026-10-22
         if (insideOf >= 0) {
-            return Change.fail(definition.name() + "已經放在" + skillName(loadout.skill(insideOf)) + "的第 1 孔裡了");
+            return Change.fail(definition.name() + "已經放在" + skillName(loadout.skill(insideOf)) + "的孔裡了");
         }
         final int sibling = config().familyConflict(loadout, entry.skillId(), target);
         if (sibling >= 0) {
             return Change.fail("面板上已經有" + skillName(loadout.skill(sibling)) + "（異質寶石跟原本的技能只能放一個）");
         }
-        if (entry.inner() != null && !SupportDefinition.hostsSkill(definition)) {
+        if (entry.inner() != null && !SupportDefinition.hostsSkill(definition) && !SocketedWarcry.hosts(definition)) { // 2026-10-27：裂甲熊咆也可以
             return Change.fail("這顆寶石裡放著技能，但" + definition.name() + "不是英靈圖騰、星咒圖騰或暴擊引星"); // 不該發生
         }
-        if (entry.inner() != null) {
+        for (final SkillLoadout.Entry spell : entry.spells()) { // 2026-10-26：主要寶石每一孔的技能寶石都要看
             // 2026-10-23（照 PoE2：同一個技能只能有一顆）：宿主裡放著的技能，面板上不能再有一顆（以前只擋反過來的順序）
-            final int outside = loadout.find(entry.inner().skillId());
+            final int outside = loadout.find(spell.skillId());
             if (outside >= 0 && outside != target) {
-                return Change.fail("面板上已經有" + skillName(entry.inner()) + "了，宿主第 1 孔裡的技能不能再綁在自己的按鍵上（先取出一邊）");
+                return Change.fail("面板上已經有" + skillName(spell) + "了，宿主孔裡的技能不能再綁在自己的按鍵上（先取出一邊）");
             }
-            final int elsewhere = loadout.findInner(entry.inner().skillId());
+            final int elsewhere = loadout.findInner(spell.skillId());
             if (elsewhere >= 0 && elsewhere != target) {
-                return Change.fail(skillName(entry.inner()) + "已經放在" + skillName(loadout.skill(elsewhere)) + "的第 1 孔裡了");
+                return Change.fail(skillName(spell) + "已經放在" + skillName(loadout.skill(elsewhere)) + "的孔裡了");
             }
         }
         {
@@ -906,6 +1024,9 @@ public final class GemService {
             }
         }
         final SkillLoadout.Entry old = loadout.skill(target);
+        if (old != null && old.granted()) {
+            return Change.fail("這一格是武器賦予的" + skillName(old) + "（不是寶石），放到別格，或先把它拿掉"); // 2026-10-26
+        }
         if (old != null && !old.skillId().equals(entry.skillId())) {
             loadout.remove(target); // 換成別的技能：原本綁的按鍵改回普攻
         }
@@ -921,21 +1042,70 @@ public final class GemService {
             return Change.fail("那一格沒有技能");
         }
         loadout.remove(position);
+        if (entry.granted()) {
+            // 2026-10-26：武器賦予的技能不是寶石：拿掉就好，掛著的輔助還給玩家（拿著那把武器時會再放回面板）
+            final List<ItemStack> supports = new java.util.ArrayList<>();
+            for (int i = 0; i < entry.sockets(); i++) {
+                if (!entry.support(i).isEmpty() && !entry.spellSocket(i)) {
+                    supports.add(create(GemData.support(entry.support(i), entry.resonant(i)), 1));
+                }
+            }
+            for (final SkillLoadout.Entry spell : entry.spells()) {
+                supports.add(create(GemData.skill(spell), 1)); // 2026-10-26：咒擲孔裡的技能寶石也還（這次之前跟著不見）
+            }
+            giveAll(player, supports);
+            return Change.ok(null);
+        }
         return Change.ok(create(GemData.skill(entry), 1));
     }
 
+    /** 2026-10-26：武器賦予的技能不能用未切割寶石升級的說明。 */
+    static final String GRANTED_LEVEL = "武器賦予的技能：等級照武器的物品等級，不能用未切割寶石升級";
+
     /**
-     * 2026-10-22：把技能寶石放進宿主寶石（英靈圖騰、星咒圖騰、暴擊引星）的第 1 孔。
-     * 寶石自己掛的輔助拆下來放進背包（裡面的技能沒有自己的輔助：宿主第 2～5 孔的輔助就是它的）；
+     * 2026-10-22：把技能寶石放進宿主寶石（英靈圖騰、星咒圖騰、引星）的第 1 孔。
+     * 寶石自己掛的輔助拆下來放進背包（裡面的技能沒有自己的輔助：宿主其他孔的輔助就是它的）；
      * 原本放著的技能換下來回傳；宿主孔裡跟新技能不合的輔助也拆下來放進背包。
      */
     Change placeInner(final Player player, final int position, final GemData gem) {
+        return placeSpell(player, position, SkillLoadout.Entry.INNER_SOCKET, gem);
+    }
+
+    /**
+     * 2026-10-26 照 PoE2 Meta Gem（「Triggers all Socketed Spells」）：常駐的主要寶石（引星、咒擲）每一孔都能放法術的技能寶石。
+     * 2026-10-27 照 PoE2（Spell Totem「uses socketed Spells」、Ancestral Warrior Totem「Place one or more Skill Gems」）：
+     * 星咒圖騰、英靈圖騰也可以（圖騰／英靈照孔的順序輪流用）；這次之前它們只有第 1 孔能放。
+     */
+    boolean multiSpell(final SkillDefinition host) {
+        return SupportDefinition.hostsSkill(host);
+    }
+
+    /**
+     * 2026-10-26：把技能寶石放進宿主寶石的第 index 孔（其他孔裡不能有輔助；2026-10-27 起每種宿主寶石都可以）。
+     * 原本放著的技能換下來回傳。
+     */
+    Change placeSpell(final Player player, final int position, final int index, final GemData gem) {
         final PlayerState state = plugin.players().get(player);
         final SkillLoadout loadout = state.skills();
         final SkillLoadout.Entry host = loadout.skill(position);
         final SkillDefinition hostDefinition = host == null ? null : config().skill(host.skillId());
-        if (hostDefinition == null || !SupportDefinition.hostsSkill(hostDefinition)) {
-            return Change.fail("只有英靈圖騰、星咒圖騰、暴擊引星的第 1 孔能放技能寶石");
+        final boolean warcryHost = SocketedWarcry.hosts(hostDefinition); // 2026-10-27 照 PoE2 Ferocious Roar：裂甲熊咆的第 1 孔放一顆人形戰吼
+        if (hostDefinition == null || !SupportDefinition.hostsSkill(hostDefinition) && !warcryHost) {
+            return Change.fail("只有英靈圖騰、星咒圖騰、引星這類主要寶石（與裂甲熊咆的第 1 孔）能放技能寶石");
+        }
+        if (warcryHost && index != SkillLoadout.Entry.INNER_SOCKET) {
+            return Change.fail(hostDefinition.name() + "只有第 1 孔能放人形戰吼（只能放一顆）");
+        }
+        if (warcryHost && host.inner() == null && !host.support(SkillLoadout.Entry.INNER_SOCKET).isEmpty()) {
+            return Change.fail("第 1 孔掛著輔助寶石，先拿下來");
+        }
+        if (index != SkillLoadout.Entry.INNER_SOCKET) {
+            if (index < 0 || index >= host.sockets()) {
+                return Change.fail("這個孔還沒開（用鑿星石開孔）");
+            }
+            if (!host.support(index).isEmpty() && !host.spellSocket(index)) {
+                return Change.fail("這一孔掛著輔助寶石，先拿下來");
+            }
         }
         final SkillLoadout.Entry entry = gem.entry();
         if (gem.kind() != GemData.Kind.SKILL || entry == null) {
@@ -953,10 +1123,11 @@ public final class GemService {
             return Change.fail("面板上已經有" + definition.name() + "了，先取出來");
         }
         final int insideOf = loadout.findInner(entry.skillId());
-        if (insideOf >= 0 && insideOf != position) {
-            return Change.fail(definition.name() + "已經放在" + skillName(loadout.skill(insideOf)) + "的第 1 孔裡了");
+        final SkillLoadout.Entry replaced = host.spellAt(index);
+        if (insideOf >= 0 && (insideOf != position || replaced == null || !replaced.skillId().equals(entry.skillId()))) {
+            return Change.fail(definition.name() + "已經放在" + skillName(loadout.skill(insideOf)) + "的孔裡了");
         }
-        if (entry.inner() != null) {
+        if (!entry.spells().isEmpty()) {
             return Change.fail("這顆寶石裡還放著別的技能，先拿出來");
         }
         final List<ItemStack> extra = new ArrayList<>();
@@ -967,9 +1138,9 @@ public final class GemService {
                 names.add(supportName(entry.support(i)));
             }
         }
-        SkillLoadout.Entry updated = host.withInner(new SkillLoadout.Entry(entry.skillId(), entry.level(), entry.sockets(), List.of())
+        SkillLoadout.Entry updated = host.withSpell(index, new SkillLoadout.Entry(entry.skillId(), entry.level(), entry.sockets(), List.of())
                 .withCorrupted(entry.corrupted()).withQuality(entry.quality())); // 2026-10-23：腐化、品質放進去也留著
-        for (int i = SkillLoadout.Entry.INNER_SOCKET + 1; i < updated.sockets(); i++) {
+        for (int i = SkillLoadout.Entry.INNER_SOCKET + 1; !warcryHost && index == SkillLoadout.Entry.INNER_SOCKET && i < updated.sockets(); i++) {
             final SupportDefinition support = config().support(updated.support(i));
             if (support != null && support.hostRefusal(hostDefinition, definition) != null) { // 跟新技能不合的輔助拆下來
                 extra.add(create(GemData.support(updated.support(i), updated.resonant(i)), 1));
@@ -981,27 +1152,35 @@ public final class GemService {
         if (!extra.isEmpty()) {
             giveAll(player, extra);
             player.sendMessage(plugin.text().prefixed("<gray>拆下來放進背包：" + ItemRenderer.escape(String.join("、", names))
-                    + "（放進" + ItemRenderer.escape(hostDefinition.name()) + "裡的技能用的是它第 2～5 孔的輔助）"));
+                    + "（放進" + ItemRenderer.escape(hostDefinition.name()) + "裡的技能用的是它其他孔的輔助）"));
         }
-        final SkillLoadout.Entry old = host.inner();
-        return Change.ok(old == null ? null : create(GemData.skill(old), 1));
+        return Change.ok(replaced == null ? null : create(GemData.skill(replaced), 1));
     }
 
     /** 2026-10-22：把宿主寶石第 1 孔的技能寶石拿出來（帶著它自己的孔數，沒有輔助）。 */
     Change takeInner(final Player player, final int position) {
-        final SkillLoadout loadout = plugin.players().get(player).skills();
-        final SkillLoadout.Entry host = loadout.skill(position);
-        if (host == null || host.inner() == null) {
-            return Change.fail("第 1 孔是空的");
-        }
-        loadout.set(position, host.withInner(null));
-        return Change.ok(create(GemData.skill(host.inner()), 1));
+        return takeSpell(player, position, SkillLoadout.Entry.INNER_SOCKET);
     }
 
-    /** 2026-10-22：這個技能能不能放進這種宿主寶石的第 1 孔；可以回傳 null，不行回傳原因。 */
+    /** 2026-10-26：把宿主寶石第 index 孔的技能寶石拿出來。 */
+    Change takeSpell(final Player player, final int position, final int index) {
+        final SkillLoadout loadout = plugin.players().get(player).skills();
+        final SkillLoadout.Entry host = loadout.skill(position);
+        final SkillLoadout.Entry spell = host == null ? null : host.spellAt(index);
+        if (spell == null) {
+            return Change.fail("這一孔是空的");
+        }
+        loadout.set(position, host.withSpell(index, null));
+        return Change.ok(create(GemData.skill(spell), 1));
+    }
+
+    /** 2026-10-22：這個技能能不能放進這種宿主寶石的孔；可以回傳 null，不行回傳原因。 */
     String innerProblem(final SkillDefinition host, final SkillDefinition inner) {
         if (SkillExecutor.hasFlag(host, tw.exilecore.stats.StatKeys.FLAG_TOTEM_LINKED)) {
             return SkillService.linkedProblem(inner);
+        }
+        if (SocketedWarcry.hosts(host)) {
+            return SocketedWarcry.problem(inner); // 2026-10-27 照 PoE2 Ferocious Roar：只能放人形戰吼
         }
         final MetaSpec spec = config().meta(host.id());
         return spec == null ? "不是宿主寶石" : MetaGems.problem(spec, inner);
@@ -1026,7 +1205,7 @@ public final class GemService {
         }
         final boolean host = SupportDefinition.hostsSkill(definition); // 2026-10-22：宿主寶石：第 1 孔放技能，輔助照裡面的技能驗
         if (host) {
-            final String why = support.hostRefusal(definition, config().skill(entry.inner() == null ? "" : entry.inner().skillId()));
+            final String why = support.hostRefusal(definition, config().skill(entry.spells().isEmpty() ? "" : entry.spells().getFirst().skillId())); // 2026-10-27：孔裡第一個技能
             if (why != null) {
                 return Change.fail(why);
             }
@@ -1034,7 +1213,10 @@ public final class GemService {
             return Change.fail(support.name() + "不能輔助" + definition.name() + "（" + support.refusal(definition) + "）");
         }
         if (host && index == SkillLoadout.Entry.INNER_SOCKET) {
-            return Change.fail(definition.name() + "的第 1 孔只放技能寶石，輔助請放第 2～5 孔");
+            return Change.fail(definition.name() + "的第 1 孔只放技能寶石，輔助請放其他孔");
+        }
+        if (index >= 0 && entry.spellSocket(index)) {
+            return Change.fail("這一孔放著技能寶石，先拿出來"); // 2026-10-26
         }
         final int socket = index >= 0 ? index : entry.freeSocket();
         if (socket < 0) {
@@ -1058,7 +1240,7 @@ public final class GemService {
         }
         final String old = entry.support(socket);
         final boolean oldResonant = entry.resonant(socket);
-        loadout.set(position, entry.withSupport(socket, supportId, resonant && !support.cuttable()));
+        loadout.set(position, entry.withSupport(socket, supportId, resonant && !support.cuttable() && !support.lineage())); // 2026-10-27：血脈輔助不留共鳴
         return Change.ok(old.isEmpty() ? null : create(GemData.support(old, oldResonant), 1)); // 2026-10-18：換下來的保留共鳴
     }
 
@@ -1075,11 +1257,11 @@ public final class GemService {
         if (orb.operation() != CurrencyOperation.RESONANCE) {
             return Change.fail(orb.name() + "不能用在輔助上");
         }
-        if (index < 0 || index >= entry.sockets() || entry.support(index).isEmpty()) {
+        if (index < 0 || index >= entry.sockets() || entry.support(index).isEmpty() || entry.spellSocket(index)) {
             return Change.fail(orb.name() + "要點一顆已經掛上去的專屬輔助寶石");
         }
         final SupportDefinition support = config().support(entry.support(index));
-        if (support == null || support.cuttable()) {
+        if (support == null || support.cuttable() || support.lineage()) { // 2026-10-27 照站長：血脈輔助不能共鳴
             return Change.fail(orb.name() + "只能用在專屬掉落的輔助寶石上（" + (support == null ? entry.support(index) : support.name()) + "不是）");
         }
         if (entry.resonant(index)) {
@@ -1096,6 +1278,9 @@ public final class GemService {
         final SkillLoadout.Entry entry = loadout.skill(position);
         if (entry == null || index < 0 || index >= entry.sockets() || entry.support(index).isEmpty()) {
             return Change.fail("這個孔是空的");
+        }
+        if (entry.spellSocket(index)) {
+            return takeSpell(player, position, index); // 2026-10-26：宿主寶石其他孔的技能寶石
         }
         final String old = entry.support(index);
         final boolean oldResonant = entry.resonant(index);
@@ -1142,6 +1327,9 @@ public final class GemService {
         if (orb.operation() != CurrencyOperation.CORRUPT) {
             return Change.fail(orb.name() + "不能用在技能上");
         }
+        if (entry.granted()) {
+            return Change.fail("武器賦予的技能不是寶石，不能腐化"); // 2026-10-26
+        }
         if (entry.corrupted()) {
             return Change.fail("這顆技能寶石已經腐化過了");
         }
@@ -1160,9 +1348,9 @@ public final class GemService {
                 final int next = Math.max(SkillLoadout.BASE_SOCKETS, Math.min(SkillLoadout.MAX_SOCKETS, entry.sockets() + (add ? 1 : -1)));
                 if (next < entry.sockets()) {
                     final int last = entry.sockets() - 1;
-                    if (last == SkillLoadout.Entry.INNER_SOCKET && entry.inner() != null) {
-                        returned = create(GemData.skill(entry.inner()), 1);
-                        updated = updated.withInner(null);
+                    if (entry.spellSocket(last)) { // 2026-10-26：第 2～5 孔的技能寶石也一樣還
+                        returned = create(GemData.skill(entry.spellAt(last)), 1);
+                        updated = updated.withSpell(last, null);
                     } else if (!entry.support(last).isEmpty()) {
                         returned = create(GemData.support(entry.support(last), entry.resonant(last)), 1);
                         updated = updated.withSupport(last, "", false);
@@ -1212,6 +1400,9 @@ public final class GemService {
 
     /** 不能加品質的原因；可以回傳 null。 */
     String qualityProblem(final SkillLoadout.Entry entry) {
+        if (entry.granted()) {
+            return "武器賦予的技能不能加品質"; // 2026-10-26
+        }
         if (entry.corrupted()) {
             return "已腐化的技能寶石不能再加品質";
         }
@@ -1266,6 +1457,9 @@ public final class GemService {
 
     /** 放進背包；放不下的掉在腳邊（只有自己看得到、撿得起來）。 */
     void give(final Player player, final ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return; // 2026-10-26：拿掉武器賦予的技能沒有寶石可以還
+        }
         final Map<Integer, ItemStack> leftover = player.getInventory().addItem(stack);
         for (final ItemStack rest : leftover.values()) {
             plugin.personalDrops().dropForever(player, rest);

@@ -34,10 +34,32 @@ public final class PlayerState {
     public static final int CHARM_SLOT = HOTBAR_STASH + 6;
     /** 護符欄最多幾格（開幾格看基本格數加「+x 護符欄位」）。 */
     public static final int CHARM_SLOTS = 3;
-    /** 存檔裡這一串的總長度：裝備欄 + 收起來的快捷列 6 格 + 護符欄。 */
-    public static final int STORED_SLOTS = JEWELLERY_SLOTS.length + 6 + CHARM_SLOTS;
-    /** 生命偷取每秒最多回最大生命的幾成（PoE 的偷取是慢慢回的）。 */
-    public static final double LEECH_RATE = 0.10;
+    /**
+     * 第三個戒指欄（2026-10-26 照 PoE2 昇華・展露之指「+1 戒指欄位」；這次之前沒有這一格，平衡等效成戒指的詞綴效果增加 50%）：
+     * 跟護符欄一樣是接在後面的虛擬欄位（舊存檔讀進來是空的，前面的位置都沒動）。有 {@link #RING_EXTRA_STAT} 才開。
+     */
+    public static final int RING3_SLOT = CHARM_SLOT + CHARM_SLOTS;
+    /** 存檔裡這一串的總長度：裝備欄 + 收起來的快捷列 6 格 + 護符欄 + 第三個戒指欄。 */
+    public static final int STORED_SLOTS = JEWELLERY_SLOTS.length + 6 + CHARM_SLOTS + 1;
+    /** 「+1 戒指欄位」（2026-10-26，展露之指）：大於 0 時開第三個戒指欄。 */
+    public static final String RING_EXTRA_STAT = "slot.ring_extra";
+    /**
+     * 角色面板上全部的裝備欄（2026-10-26）：{@link #JEWELLERY_SLOTS} 的 10 格，接著第三個戒指欄。
+     * 裝備組、網頁的 gear 陣列、虛擬角色都照這個順序（第 {@link #RING3} 個是第三個戒指；在 jewellery() 的位置見 {@link #gearIndex}）。
+     */
+    public static final ItemSlot[] GEAR_SLOTS = {ItemSlot.RING, ItemSlot.RING, ItemSlot.AMULET, ItemSlot.BELT,
+            ItemSlot.MAIN_HAND, ItemSlot.OFF_HAND, ItemSlot.HEAD, ItemSlot.CHEST, ItemSlot.LEGS, ItemSlot.FEET, ItemSlot.RING};
+    /** 第三個戒指在 {@link #GEAR_SLOTS} 的順序。 */
+    public static final int RING3 = JEWELLERY_SLOTS.length;
+
+    /** {@link #GEAR_SLOTS} 第 i 個在 jewellery() 的位置（前 10 個一樣，第三個戒指是 {@link #RING3_SLOT}）。 */
+    public static int gearIndex(final int i) {
+        return i < JEWELLERY_SLOTS.length ? i : RING3_SLOT;
+    }
+    /**
+     * 生命偷取每秒最多回最大生命的幾成：2026-10-27 照 PoE2 改成 20%（一份最多 10%、1 秒回完，見 {@link Leech}）；這次之前 10%。
+     */
+    public static final double LEECH_RATE = Leech.MAX_RATE;
 
     private final UUID uuid;
     private CharacterRecord character;
@@ -49,7 +71,7 @@ public final class PlayerState {
     private final Map<String, ItemStack> jewels = new LinkedHashMap<>();
     /** 裝備組（2026-10，月卡福利）：沒在用的組放的裝備（不生效）；正在用的那一組就是 {@link #jewellery}，這裡那一格是空的。 */
     public static final int GEAR_SETS = 5;
-    private final ItemStack[][] gearSets = new ItemStack[GEAR_SETS][JEWELLERY_SLOTS.length];
+    private final ItemStack[][] gearSets = new ItemStack[GEAR_SETS][GEAR_SLOTS.length];
     /** 天賦組（2026-10，月卡福利）：沒在用的組放在珠寶孔裡的珠寶（節點代號 → 珠寶；不生效）。正在用的那一組在 {@link #jewels}。 */
     @SuppressWarnings("unchecked")
     private final Map<String, ItemStack>[] treeJewels = new Map[GEAR_SETS];
@@ -65,10 +87,12 @@ public final class PlayerState {
     private double life;
     private double mana;
     private double energyShield;
-    /** 還沒回復的生命偷取（每秒最多回最大生命的 {@link #LEECH_RATE}）。 */
-    private double leechPool;
-    /** 還沒回復的魔力偷取（每秒最多回最大魔力的 {@link #LEECH_RATE}）。 */
-    private double manaLeechPool;
+    /** 還沒回復的生命偷取（2026-10-27 照 PoE2：一份一份的，見 {@link Leech}；這次之前一個池子每秒 10%）。 */
+    private final Leech leech = new Leech();
+    /** 還沒回復的魔力偷取。 */
+    private final Leech manaLeech = new Leech();
+    /** 2026-10-26 照 PoE2：受到的傷害之後 4 秒內回來的回復（Recoup；這次之前生命的存進偷取）。 */
+    private final Recoup recoup = new Recoup();
     private final StatSheet sheet = new StatSheet();
     private boolean dirty = true;
     /** 很久以前（不能用 Long.MIN_VALUE：「現在 − 它」會溢位成負數）。 */
@@ -125,8 +149,8 @@ public final class PlayerState {
         }
         this.bag = new Bag(); // 呼叫端接著放進讀出來的隨身背包
         this.sessionStartMillis = System.currentTimeMillis();
-        this.leechPool = 0;
-        this.manaLeechPool = 0;
+        this.leech.clear();
+        this.manaLeech.clear();
         this.dirty = true;
     }
 
@@ -182,7 +206,7 @@ public final class PlayerState {
         dirty = true;
     }
 
-    /** 第 set 組放著（沒在用）的裝備，照 {@link #JEWELLERY_SLOTS} 的順序；正在用的組是空的（裝在 jewellery 裡）。 */
+    /** 第 set 組放著（沒在用）的裝備，照 {@link #GEAR_SLOTS} 的順序（2026-10-26 多了第三個戒指）；正在用的組是空的（裝在 jewellery 裡）。 */
     public ItemStack[] gearSet(final int set) {
         return gearSets[set];
     }
@@ -228,9 +252,10 @@ public final class PlayerState {
 
     /** 換成第 set 組：現在裝著的收進原本那一組，那一組的換上來（裝備沒有消失，只是不生效）。 */
     public void switchGearSet(final int from, final int to) {
-        for (int i = 0; i < JEWELLERY_SLOTS.length; i++) {
-            gearSets[from][i] = jewellery[i];
-            jewellery[i] = gearSets[to][i];
+        for (int i = 0; i < GEAR_SLOTS.length; i++) {
+            final int at = gearIndex(i);
+            gearSets[from][i] = jewellery[at];
+            jewellery[at] = gearSets[to][i];
             gearSets[to][i] = null;
         }
         dirty = true;
@@ -321,8 +346,30 @@ public final class PlayerState {
     }
 
     public double mana() {
-        return mana;
+        return mana + manaOverflow;
     }
+
+    /** 2026-10-26 照 PoE2（心靈獻祭）：溢出最大魔力的那部分（最多最大魔力的 50%；先扣這部分，一般回復補不回來）。 */
+    private double manaOverflow;
+
+    public double manaOverflow() {
+        return manaOverflow;
+    }
+
+    /** 2026-10-26 照 PoE2 的溢出：回復 amount 魔力，可以溢出到最大魔力的 {@value #OVERFLOW_CAP} 倍。 */
+    public void recoverManaOverflowing(final double amount) {
+        if (amount <= 0) {
+            return;
+        }
+        final double max = maxMana();
+        final double room = Math.max(0, max - mana);
+        mana += Math.min(room, amount);
+        final double rest = amount - Math.min(room, amount);
+        manaOverflow = Math.max(0, Math.min(max * (OVERFLOW_CAP - 1), manaOverflow + rest));
+    }
+
+    /** 溢出的上限（PoE2：最大值的 1.5 倍）。 */
+    public static final double OVERFLOW_CAP = 1.5;
 
     /** 最大魔力：屬性表的最大魔力扣掉光環保留的部分（保留只縮小魔力池，不影響回復速度：照 PoE2 的精神值精神，比較好用）。 */
     public double maxMana() {
@@ -375,7 +422,10 @@ public final class PlayerState {
     }
 
     public void setMana(final double value) {
-        this.mana = Math.max(0, Math.min(maxMana(), value));
+        // 2026-10-26：有溢出的魔力時先扣溢出的部分（setMana 不會增加溢出）
+        final double max = maxMana();
+        manaOverflow = Math.max(0, Math.min(manaOverflow, value - max));
+        this.mana = Math.max(0, Math.min(max, value - manaOverflow));
     }
 
     public void setEnergyShield(final double value) {
@@ -387,14 +437,30 @@ public final class PlayerState {
         life = maxLife();
         mana = maxMana();
         energyShield = maxEnergyShield();
-        leechPool = 0;
-        manaLeechPool = 0;
+        leech.clear();
+        manaLeech.clear();
+        recoup.clear();
     }
 
-    /** 打中敵人偷到的生命先存起來，之後慢慢回。 */
+    /** 2026-10-26：還沒回來的回復（生命、魔力、能量護盾）。 */
+    public Recoup recoup() {
+        return recoup;
+    }
+
+    /**
+     * 不是擊中來的「存進偷取慢慢回」（昇華、傳奇的補償）：每秒回最大生命的 10%，沒有一份的上限。
+     * 擊中的偷取用 {@link #addHitLeech}（2026-10-27 分開；這次之前都用這個）。
+     */
     public void addLeech(final double amount) {
         if (amount > 0 && !isDead()) {
-            leechPool += amount;
+            leech.addSlow(amount, maxLife());
+        }
+    }
+
+    /** 2026-10-27 照 PoE2：擊中偷到的生命：一份最多最大生命的 10%，1 秒內回完（{@link Leech}）。 */
+    public void addHitLeech(final double amount) {
+        if (amount > 0 && !isDead()) {
+            leech.addHit(amount, maxLife());
         }
     }
 
@@ -409,54 +475,65 @@ public final class PlayerState {
 
     /** rateScale：最大偷取速度的倍率（「增加 x% 最大偷取速度」）。 */
     public double recoverLeech(final double seconds, final double rateScale) {
-        if (leechPool <= 0) {
+        final double amount = leech.tick(seconds, maxLife(), rateScale); // 2026-10-27 照 PoE2（Leech）
+        if (amount <= 0) {
             return 0;
         }
-        final double amount = Math.min(leechPool, maxLife() * LEECH_RATE * Math.max(0.1, rateScale) * seconds);
         final double before = life;
         setLife(life + amount);
-        leechPool -= amount;
         if (life >= maxLife() - 1e-6) {
-            leechPool = 0;
+            leech.clear();
         }
         return life - before;
     }
 
-    /** 打中敵人偷到的魔力先存起來，之後慢慢回。 */
+    /** 不是擊中來的魔力「慢慢回」：每秒回最大魔力的 10%（擊中的用 {@link #addHitManaLeech}）。 */
     public void addManaLeech(final double amount) {
         if (amount > 0 && !isDead()) {
-            manaLeechPool += amount;
+            manaLeech.addSlow(amount, maxMana());
         }
     }
 
-    /** 回復一段時間的魔力偷取（跟生命偷取一樣：每秒最多回最大魔力的 10%，魔力滿了剩下的就結束）；回傳實際回了多少。 */
+    /** 2026-10-27 照 PoE2：擊中偷到的魔力：一份最多最大魔力的 10%，1 秒內回完。 */
+    public void addHitManaLeech(final double amount) {
+        if (amount > 0 && !isDead()) {
+            manaLeech.addHit(amount, maxMana());
+        }
+    }
+
+    /** 回復一段時間的魔力偷取（跟生命偷取一樣：每秒最多回最大魔力的 20%，魔力滿了剩下的就結束）；回傳實際回了多少。 */
     public double recoverManaLeech(final double seconds) {
         return recoverManaLeech(seconds, 1.0);
     }
 
     public double recoverManaLeech(final double seconds, final double rateScale) {
-        if (manaLeechPool <= 0) {
+        final double amount = manaLeech.tick(seconds, maxMana(), rateScale);
+        if (amount <= 0) {
             return 0;
         }
-        final double amount = Math.min(manaLeechPool, maxMana() * LEECH_RATE * Math.max(0.1, rateScale) * seconds);
         final double before = mana;
         setMana(mana + amount);
-        manaLeechPool -= amount;
         if (mana >= maxMana() - 1e-6) {
-            manaLeechPool = 0;
+            manaLeech.clear();
         }
         return mana - before;
     }
 
     /** 還沒回復的魔力偷取（測試與除錯看）。 */
     public double manaLeechPool() {
-        return manaLeechPool;
+        return manaLeech.pending();
+    }
+
+    /** 2026-10-26：還沒回復的生命偷取（天賦樹的「偷取中」條件）。 */
+    public double leechPool() {
+        return leech.pending();
     }
 
     /** 重算後把目前值夾在新上限內。 */
     public void clampToMax() {
         life = Math.min(life, maxLife());
         mana = Math.min(mana, maxMana());
+        manaOverflow = Math.max(0, Math.min(manaOverflow, maxMana() * (OVERFLOW_CAP - 1)));
         energyShield = Math.min(energyShield, maxEnergyShield());
     }
 
@@ -482,6 +559,11 @@ public final class PlayerState {
     public boolean recently(final String event, final long currentTick) {
         final Long tick = recent.get(event);
         return tick != null && currentTick - tick <= tw.exilecore.stats.StatKeys.RECENTLY_TICKS;
+    }
+
+    /** 2026-10-26：這個事件上一次發生的 tick（沒發生過是很久以前；天賦樹的「引導中」看這個）。 */
+    public long recentTick(final String event) {
+        return recent.getOrDefault(event, -1_000_000L);
     }
 
     /** 上一次被擊中的 tick（舊介面：等同事件 hit）。 */
@@ -557,6 +639,39 @@ public final class PlayerState {
 
     void setWeaponTags(final Set<String> tags) {
         this.weaponTags = Set.copyOf(tags);
+    }
+
+    /** 2026-10-27 照 PoE2 雙持（巨人之血）：副手武器出手要用的東西（沒有雙持是 null），重算時更新。 */
+    private DualWield.OffHand offHandAttack;
+    /** 下一次攻擊輪到副手。 */
+    private boolean offHandNext;
+
+    public DualWield.OffHand offHandAttack() {
+        return offHandAttack;
+    }
+
+    void setOffHandAttack(final DualWield.OffHand offHand) {
+        this.offHandAttack = offHand;
+    }
+
+    /** 雙持輪流出手：回傳這一下是不是副手（每呼叫一次換一手）。 */
+    public boolean nextHandIsOff() {
+        final boolean off = offHandNext;
+        offHandNext = !offHandNext;
+        return off;
+    }
+
+    /** 2026-10-27：下一下是不是副手（只看，不換手）；真的出手（付了消耗）才 {@link #flipHand()}。 */
+    public boolean peekHandIsOff() {
+        return offHandNext;
+    }
+
+    /**
+     * 2026-10-27：真的出手了，換另一手。這次之前一按就換手（冷卻中、沒魔力、太遠、按住蓄力都會換），
+     * 失敗一次就能一直用比較強的那一手。
+     */
+    public void flipHand() {
+        offHandNext = !offHandNext;
     }
 
     /** 需求不符、沒有生效的裝備說明（重算時更新）。 */

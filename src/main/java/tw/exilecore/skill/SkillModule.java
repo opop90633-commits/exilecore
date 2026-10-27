@@ -16,6 +16,8 @@ public final class SkillModule implements Module {
     private final SkillConfig config = new SkillConfig();
     private SkillService service;
     private BukkitTask task;
+    private BukkitTask treeTask;
+    private BukkitTask leftoverTask;
 
     public SkillModule(final ExileCore plugin) {
         this.plugin = plugin;
@@ -42,6 +44,16 @@ public final class SkillModule implements Module {
         manager.registerEvents(created.resources(), plugin); // 怒氣（2026-10 PoE2）
         manager.registerEvents(created.triggers(), plugin); // 觸發（2026-10）
         manager.registerEvents(created.procs(), plugin); // 輔助觸發的專屬技能（2026-10）
+        manager.registerEvents(created.supportMechanics(), plugin); // 2026-10-26：照 PoE2 重做的輔助寶石與戰吼
+        manager.registerEvents(created.supportMechanics().lineage(), plugin); // 2026-10-27 照 PoE2 0.5：血脈輔助寶石
+        manager.registerEvents(created.supportMechanics().extras(), plugin); // 2026-10-27：照 PoE2 0.5 補上的一般輔助寶石
+        manager.registerEvents(created.granted(), plugin); // 2026-10-26：雷霆共鳴、折光之鏡、鴉群密謀
+        manager.registerEvents(created.persistentBuffs(), plugin); // 2026-10-26：護時、幻步、木甲、不熄怒
+        manager.registerEvents(created.storedReleases(), plugin); // 2026-10-27 照 PoE2：鐵壁守、瘟囊爆存傷害
+        manager.registerEvents(created.originals(), plugin); // 2026-10-26：照 PoE2 原作機制重做的技能
+        manager.registerEvents(created.spears(), plugin); // 2026-10-27 照 PoE2：血嗅印（死掉時的血爆）
+        created.originals().start();
+        plugin.players().addBuffSource(created.persistentBuffs()::modifiers); // 2026-10-26：木甲的護甲
         manager.registerEvents(created.chargeEffects(), plugin); // 2026-10-24：戰星輔助
         manager.registerEvents(created.crystals(), plugin); // 冰晶（2026-10）
         manager.registerEvents(created.mounts(), plugin); // 坐騎（2026-10）
@@ -52,6 +64,19 @@ public final class SkillModule implements Module {
         plugin.players().addBuffSource(created.minions()::modifiers); // 魔像給主人的增益
         plugin.players().addBuffSource(created.auras()::modifiers); // 光環：自己的效果、保留、隊友給的
         plugin.players().addBuffSource(created.buffs()::modifiers); // 戰吼、護符的增益
+        // 2026-10-26：天賦樹的新機制（統治者、易爆、切割、傀儡大師、秘術增強、先祖強化、衝刺…）
+        final TreeMechanics treeMechanics = new TreeMechanics(plugin, created);
+        created.setTreeMechanics(treeMechanics);
+        manager.registerEvents(treeMechanics, plugin);
+        plugin.players().addBuffSource(treeMechanics::modifiers);
+        plugin.players().conditions().register(tw.exilecore.stats.TreeConditions.ARCHON, (player, state) -> treeMechanics.archon(player) != null);
+        treeTask = plugin.repeat("tree-mechanics", treeMechanics::tick, TreeMechanics.PERIOD, TreeMechanics.PERIOD);
+        // 2026-10-27 照 PoE2：天賦樹最後一批（存在範圍的進出、恫嚇、榮耀、祭品、地面…）
+        final TreeLeftovers treeLeftovers = new TreeLeftovers(plugin, created);
+        created.setTreeLeftovers(treeLeftovers);
+        manager.registerEvents(treeLeftovers, plugin);
+        treeLeftovers.registerConditions(plugin.players().conditions());
+        leftoverTask = plugin.repeat("tree-leftovers", treeLeftovers::tick, TreeLeftovers.PERIOD, TreeLeftovers.PERIOD);
         plugin.combat().setMinions(created.minions()); // 召喚物走戰鬥模組的傷害管道
         created.deployables().sweep(); // 上次當機留下的圖騰、陷阱
         created.minions().sweep(); // 上次當機留下的召喚物
@@ -111,6 +136,14 @@ public final class SkillModule implements Module {
         if (task != null) {
             task.cancel();
             task = null;
+        }
+        if (treeTask != null) {
+            treeTask.cancel();
+            treeTask = null;
+        }
+        if (leftoverTask != null) {
+            leftoverTask.cancel();
+            leftoverTask = null;
         }
         if (service != null) {
             service.shutdown();

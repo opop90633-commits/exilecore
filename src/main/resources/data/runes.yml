@@ -1,42 +1,815 @@
 # 符文（2026-10，照 PoE2 的符文）：currencies.yml 裡 operation: RUNE 的通貨用在裝備上，嵌進一個空的符文孔。
 # 符文孔：雙手武器 2、單手武器 1、胸甲 2、頭盔／褲子／鞋子／副手 1；飾品、地圖、珠寶沒有。孔滿了可以選一顆覆蓋（被換掉的會消失）。
-# weapon：嵌在武器上的加成（local.physical／local.attack_speed 這類本地的改武器自己的數值，跟詞綴一樣算進武器面板）；armour：嵌在防具、副手上的加成。每條寫 text（顯示的字）與修飾器（寫法跟詞綴的 mods 一樣，數值固定）。
+# weapon：嵌在武器上的加成（local.physical／附加傷害這類本地的改武器自己的數值，跟詞綴一樣算進武器面板）；
+# caster：嵌在法杖類（法杖、長杖、權杖）上的加成（沒寫照 weapon）；armour：嵌在防具、副手上的加成（護甲／閃避／能量護盾的增加是那件本地的）。
+# 每條寫 text（顯示的字）與修飾器（寫法跟詞綴的 mods 一樣，數值固定；好幾個寫 mods: [ … ]）。level：需求等級（原作的 Requires Level，也是掉落等級）。
 # 改完重新啟動或 /ec reload。
+#
+# 2026-10-26 照 PoE2 0.5：13 個家族 × 4 階（次級、普通 15 級、高階 30 級、完美 50 級）× 3 類（武器、法杖類、護甲），數值照原作。
+#   原有 6 種的代號保留，換成對應家族的普通階：iron → 鐵（Iron）、ember → 沙漠（Desert）、frost → 冰川（Glacial）、
+#   storm → 風暴（Storm）、mind → 心智（Mind）、swift → 精巧（Adept，+敏捷）。
+#   這次之前：鐵骨 武器增加 15% 物理傷害／防具 +25 最大生命；焰紋、霜紋、雷紋 物理傷害 10% 額外附加為元素／防具 +12% 抗性；
+#   慧光 增加 15% 法術傷害／+20 最大魔力；疾風 增加 6% 攻擊速度／+10 敏捷（只有武器、防具兩類）。
+#   魂核（Soul Core）、偶像（Idol）、深淵之眼（Abyssal Eye）還沒做。
 
 runes:
-  iron:
+  iron_lesser:   # Lesser Iron Rune
+    name: 次級鐵骨符文
+    level: 5
+    weapon:
+      - { text: "增加 14% 物理傷害", stat: local.physical, type: INCREASED, value: 14 }
+    caster:
+      - { text: "增加 20% 法術傷害", stat: damage, type: INCREASED, value: 20, tags: [spell] }
+    armour:
+      - { text: "增加 14% 護甲、閃避與能量護盾", mods: [ { stat: armour, type: INCREASED, value: 14 }, { stat: evasion, type: INCREASED, value: 14 }, { stat: es.max, type: INCREASED, value: 14 } ] }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果；法杖類的羈絆（法術暴擊時照物理傷害的 12% 破甲）還沒有這個機制，沒寫
+      weapon:
+        - { text: "增加 20% 完全破甲的效果", stat: armour.break_effect, type: INCREASED, value: 20 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  iron:   # Iron Rune（原有的代號）
     name: 鐵骨符文
+    level: 15
     weapon:
-      - { text: "增加 15% 物理傷害", stat: local.physical, type: INCREASED, value: 15 }   # 2026-10-17：改成武器本地（跟詞綴的「增加 x% 物理傷害」相加，武器面板的物理傷害會直接變）；原本全域的「增加 15% 物理攻擊傷害」
+      - { text: "增加 16% 物理傷害", stat: local.physical, type: INCREASED, value: 16 }
+    caster:
+      - { text: "增加 25% 法術傷害", stat: damage, type: INCREASED, value: 25, tags: [spell] }
     armour:
-      - { text: "+25 最大生命", stat: life.max, type: FLAT, value: 25 }
-  ember:
+      - { text: "增加 16% 護甲、閃避與能量護盾", mods: [ { stat: armour, type: INCREASED, value: 16 }, { stat: evasion, type: INCREASED, value: 16 }, { stat: es.max, type: INCREASED, value: 16 } ] }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果；法杖類的羈絆（法術暴擊時照物理傷害的 12% 破甲）還沒有這個機制，沒寫
+      weapon:
+        - { text: "增加 20% 完全破甲的效果", stat: armour.break_effect, type: INCREASED, value: 20 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  iron_greater:   # Greater Iron Rune
+    name: 高階鐵骨符文
+    level: 30
+    weapon:
+      - { text: "增加 18% 物理傷害", stat: local.physical, type: INCREASED, value: 18 }
+    caster:
+      - { text: "增加 30% 法術傷害", stat: damage, type: INCREASED, value: 30, tags: [spell] }
+    armour:
+      - { text: "增加 18% 護甲、閃避與能量護盾", mods: [ { stat: armour, type: INCREASED, value: 18 }, { stat: evasion, type: INCREASED, value: 18 }, { stat: es.max, type: INCREASED, value: 18 } ] }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果；法杖類的羈絆（法術暴擊時照物理傷害的 12% 破甲）還沒有這個機制，沒寫
+      weapon:
+        - { text: "增加 20% 完全破甲的效果", stat: armour.break_effect, type: INCREASED, value: 20 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  iron_perfect:   # Perfect Iron Rune
+    name: 完美鐵骨符文
+    level: 50
+    weapon:
+      - { text: "增加 20% 物理傷害", stat: local.physical, type: INCREASED, value: 20 }
+    caster:
+      - { text: "增加 35% 法術傷害", stat: damage, type: INCREASED, value: 35, tags: [spell] }
+    armour:
+      - { text: "增加 20% 護甲、閃避與能量護盾", mods: [ { stat: armour, type: INCREASED, value: 20 }, { stat: evasion, type: INCREASED, value: 20 }, { stat: es.max, type: INCREASED, value: 20 } ] }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果；法杖類的羈絆（法術暴擊時照物理傷害的 12% 破甲）還沒有這個機制，沒寫
+      weapon:
+        - { text: "增加 20% 完全破甲的效果", stat: armour.break_effect, type: INCREASED, value: 20 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  ember_lesser:   # Lesser Desert Rune
+    name: 次級焰紋符文
+    level: 5
+    weapon:
+      - { text: "附加 4 到 6 火焰傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 4, tags: [attack, fire] }, { stat: damage.added.max, type: FLAT, value: 6, tags: [attack, fire] } ] }
+    caster:
+      - { text: "獲得 6% 傷害為額外火焰傷害", stat: damage.extra.fire, type: FLAT, value: 6 }
+    armour:
+      - { text: "+10% 火焰抗性", stat: resist.fire, type: FLAT, value: 10 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 30% 點燃幅度", stat: ignite.magnitude, type: INCREASED, value: 30 }
+      caster:
+        - { text: "增加 30% 點燃幅度", stat: ignite.magnitude, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  ember:   # Desert Rune（原有的代號）
     name: 焰紋符文
+    level: 15
     weapon:
-      - { text: "物理傷害的 10% 額外附加為火焰傷害", stat: damage.gain.fire, type: FLAT, value: 10 }
+      - { text: "附加 7 到 11 火焰傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 7, tags: [attack, fire] }, { stat: damage.added.max, type: FLAT, value: 11, tags: [attack, fire] } ] }
+    caster:
+      - { text: "獲得 8% 傷害為額外火焰傷害", stat: damage.extra.fire, type: FLAT, value: 8 }
     armour:
-      - { text: "+12% 火焰抗性", stat: resist.fire, type: FLAT, value: 12 }
-  frost:
+      - { text: "+14% 火焰抗性", stat: resist.fire, type: FLAT, value: 14 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 30% 點燃幅度", stat: ignite.magnitude, type: INCREASED, value: 30 }
+      caster:
+        - { text: "增加 30% 點燃幅度", stat: ignite.magnitude, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  ember_greater:   # Greater Desert Rune
+    name: 高階焰紋符文
+    level: 30
+    weapon:
+      - { text: "附加 13 到 16 火焰傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 13, tags: [attack, fire] }, { stat: damage.added.max, type: FLAT, value: 16, tags: [attack, fire] } ] }
+    caster:
+      - { text: "獲得 10% 傷害為額外火焰傷害", stat: damage.extra.fire, type: FLAT, value: 10 }
+    armour:
+      - { text: "+18% 火焰抗性", stat: resist.fire, type: FLAT, value: 18 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 30% 點燃幅度", stat: ignite.magnitude, type: INCREASED, value: 30 }
+      caster:
+        - { text: "增加 30% 點燃幅度", stat: ignite.magnitude, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  ember_perfect:   # Perfect Desert Rune
+    name: 完美焰紋符文
+    level: 50
+    weapon:
+      - { text: "附加 17 到 20 火焰傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 17, tags: [attack, fire] }, { stat: damage.added.max, type: FLAT, value: 20, tags: [attack, fire] } ] }
+    caster:
+      - { text: "獲得 12% 傷害為額外火焰傷害", stat: damage.extra.fire, type: FLAT, value: 12 }
+    armour:
+      - { text: "+22% 火焰抗性", stat: resist.fire, type: FLAT, value: 22 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 30% 點燃幅度", stat: ignite.magnitude, type: INCREASED, value: 30 }
+      caster:
+        - { text: "增加 30% 點燃幅度", stat: ignite.magnitude, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  frost_lesser:   # Lesser Glacial Rune
+    name: 次級霜紋符文
+    level: 5
+    weapon:
+      - { text: "附加 3 到 5 冰冷傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 3, tags: [attack, cold] }, { stat: damage.added.max, type: FLAT, value: 5, tags: [attack, cold] } ] }
+    caster:
+      - { text: "獲得 6% 傷害為額外冰冷傷害", stat: damage.extra.cold, type: FLAT, value: 6 }
+    armour:
+      - { text: "+10% 冰冷抗性", stat: resist.cold, type: FLAT, value: 10 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 30% 凍結累積", stat: freeze.buildup, type: INCREASED, value: 30 }
+      caster:
+        - { text: "增加 30% 凍結累積", stat: freeze.buildup, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  frost:   # Glacial Rune（原有的代號）
     name: 霜紋符文
+    level: 15
     weapon:
-      - { text: "物理傷害的 10% 額外附加為冰冷傷害", stat: damage.gain.cold, type: FLAT, value: 10 }
+      - { text: "附加 6 到 10 冰冷傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, cold] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, cold] } ] }
+    caster:
+      - { text: "獲得 8% 傷害為額外冰冷傷害", stat: damage.extra.cold, type: FLAT, value: 8 }
     armour:
-      - { text: "+12% 冰冷抗性", stat: resist.cold, type: FLAT, value: 12 }
-  storm:
+      - { text: "+14% 冰冷抗性", stat: resist.cold, type: FLAT, value: 14 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 30% 凍結累積", stat: freeze.buildup, type: INCREASED, value: 30 }
+      caster:
+        - { text: "增加 30% 凍結累積", stat: freeze.buildup, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  frost_greater:   # Greater Glacial Rune
+    name: 高階霜紋符文
+    level: 30
+    weapon:
+      - { text: "附加 9 到 15 冰冷傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 9, tags: [attack, cold] }, { stat: damage.added.max, type: FLAT, value: 15, tags: [attack, cold] } ] }
+    caster:
+      - { text: "獲得 10% 傷害為額外冰冷傷害", stat: damage.extra.cold, type: FLAT, value: 10 }
+    armour:
+      - { text: "+18% 冰冷抗性", stat: resist.cold, type: FLAT, value: 18 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 30% 凍結累積", stat: freeze.buildup, type: INCREASED, value: 30 }
+      caster:
+        - { text: "增加 30% 凍結累積", stat: freeze.buildup, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  frost_perfect:   # Perfect Glacial Rune
+    name: 完美霜紋符文
+    level: 50
+    weapon:
+      - { text: "附加 16 到 20 冰冷傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 16, tags: [attack, cold] }, { stat: damage.added.max, type: FLAT, value: 20, tags: [attack, cold] } ] }
+    caster:
+      - { text: "獲得 12% 傷害為額外冰冷傷害", stat: damage.extra.cold, type: FLAT, value: 12 }
+    armour:
+      - { text: "+22% 冰冷抗性", stat: resist.cold, type: FLAT, value: 22 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 30% 凍結累積", stat: freeze.buildup, type: INCREASED, value: 30 }
+      caster:
+        - { text: "增加 30% 凍結累積", stat: freeze.buildup, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  storm_lesser:   # Lesser Storm Rune
+    name: 次級雷紋符文
+    level: 5
+    weapon:
+      - { text: "附加 1 到 10 閃電傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 1, tags: [attack, lightning] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, lightning] } ] }
+    caster:
+      - { text: "獲得 6% 傷害為額外閃電傷害", stat: damage.extra.lightning, type: FLAT, value: 6 }
+    armour:
+      - { text: "+10% 閃電抗性", stat: resist.lightning, type: FLAT, value: 10 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 30% 感電幅度", stat: shock.effect, type: INCREASED, value: 30 }
+      caster:
+        - { text: "增加 30% 感電幅度", stat: shock.effect, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  storm:   # Storm Rune（原有的代號）
     name: 雷紋符文
+    level: 15
     weapon:
-      - { text: "物理傷害的 10% 額外附加為閃電傷害", stat: damage.gain.lightning, type: FLAT, value: 10 }
+      - { text: "附加 1 到 20 閃電傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 1, tags: [attack, lightning] }, { stat: damage.added.max, type: FLAT, value: 20, tags: [attack, lightning] } ] }
+    caster:
+      - { text: "獲得 8% 傷害為額外閃電傷害", stat: damage.extra.lightning, type: FLAT, value: 8 }
     armour:
-      - { text: "+12% 閃電抗性", stat: resist.lightning, type: FLAT, value: 12 }
-  mind:
-    name: 慧光符文
+      - { text: "+14% 閃電抗性", stat: resist.lightning, type: FLAT, value: 14 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 30% 感電幅度", stat: shock.effect, type: INCREASED, value: 30 }
+      caster:
+        - { text: "增加 30% 感電幅度", stat: shock.effect, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  storm_greater:   # Greater Storm Rune
+    name: 高階雷紋符文
+    level: 30
     weapon:
-      - { text: "增加 15% 法術傷害", stat: damage, type: INCREASED, value: 15, tags: [spell] }
+      - { text: "附加 1 到 30 閃電傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 1, tags: [attack, lightning] }, { stat: damage.added.max, type: FLAT, value: 30, tags: [attack, lightning] } ] }
+    caster:
+      - { text: "獲得 10% 傷害為額外閃電傷害", stat: damage.extra.lightning, type: FLAT, value: 10 }
+    armour:
+      - { text: "+18% 閃電抗性", stat: resist.lightning, type: FLAT, value: 18 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 30% 感電幅度", stat: shock.effect, type: INCREASED, value: 30 }
+      caster:
+        - { text: "增加 30% 感電幅度", stat: shock.effect, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  storm_perfect:   # Perfect Storm Rune
+    name: 完美雷紋符文
+    level: 50
+    weapon:
+      - { text: "附加 1 到 40 閃電傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 1, tags: [attack, lightning] }, { stat: damage.added.max, type: FLAT, value: 40, tags: [attack, lightning] } ] }
+    caster:
+      - { text: "獲得 12% 傷害為額外閃電傷害", stat: damage.extra.lightning, type: FLAT, value: 12 }
+    armour:
+      - { text: "+22% 閃電抗性", stat: resist.lightning, type: FLAT, value: 22 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 30% 感電幅度", stat: shock.effect, type: INCREASED, value: 30 }
+      caster:
+        - { text: "增加 30% 感電幅度", stat: shock.effect, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  mind_lesser:   # Lesser Mind Rune
+    name: 次級慧光符文
+    level: 11
+    weapon:
+      - { text: "攻擊造成的物理傷害有 2% 偷取為魔力", stat: leech.mana, type: FLAT, value: 2, tags: [attack] }
+    caster:
+      - { text: "+45 最大魔力", stat: mana.max, type: FLAT, value: 45 }
     armour:
       - { text: "+20 最大魔力", stat: mana.max, type: FLAT, value: 20 }
-  swift:
-    name: 疾風符文
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 5% 最大魔力", stat: mana.max, type: INCREASED, value: 5 }
+      caster:
+        - { text: "增加 5% 最大魔力", stat: mana.max, type: INCREASED, value: 5 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  mind:   # Mind Rune（原有的代號）
+    name: 慧光符文
+    level: 15
     weapon:
-      - { text: "增加 6% 攻擊速度", stat: local.attack_speed, type: INCREASED, value: 6 }   # 2026-10-17：武器本地（面板的每秒攻擊會直接變）
+      - { text: "攻擊造成的物理傷害有 3% 偷取為魔力", stat: leech.mana, type: FLAT, value: 3, tags: [attack] }
+    caster:
+      - { text: "+60 最大魔力", stat: mana.max, type: FLAT, value: 60 }
     armour:
-      - { text: "+10 敏捷", stat: attr.dex, type: FLAT, value: 10 }
+      - { text: "+30 最大魔力", stat: mana.max, type: FLAT, value: 30 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 5% 最大魔力", stat: mana.max, type: INCREASED, value: 5 }
+      caster:
+        - { text: "增加 5% 最大魔力", stat: mana.max, type: INCREASED, value: 5 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  mind_greater:   # Greater Mind Rune
+    name: 高階慧光符文
+    level: 30
+    weapon:
+      - { text: "攻擊造成的物理傷害有 4% 偷取為魔力", stat: leech.mana, type: FLAT, value: 4, tags: [attack] }
+    caster:
+      - { text: "+75 最大魔力", stat: mana.max, type: FLAT, value: 75 }
+    armour:
+      - { text: "+40 最大魔力", stat: mana.max, type: FLAT, value: 40 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 5% 最大魔力", stat: mana.max, type: INCREASED, value: 5 }
+      caster:
+        - { text: "增加 5% 最大魔力", stat: mana.max, type: INCREASED, value: 5 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  mind_perfect:   # Perfect Mind Rune
+    name: 完美慧光符文
+    level: 50
+    weapon:
+      - { text: "攻擊造成的物理傷害有 5% 偷取為魔力", stat: leech.mana, type: FLAT, value: 5, tags: [attack] }
+    caster:
+      - { text: "+90 最大魔力", stat: mana.max, type: FLAT, value: 90 }
+    armour:
+      - { text: "+50 最大魔力", stat: mana.max, type: FLAT, value: 50 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 5% 最大魔力", stat: mana.max, type: INCREASED, value: 5 }
+      caster:
+        - { text: "增加 5% 最大魔力", stat: mana.max, type: INCREASED, value: 5 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  body_lesser:   # Lesser Body Rune
+    name: 次級體魄符文
+    level: 11
+    weapon:
+      - { text: "攻擊造成的物理傷害有 3% 偷取為生命", stat: leech.life, type: FLAT, value: 3, tags: [attack] }
+    caster:
+      - { text: "+30 最大能量護盾", stat: es.max, type: FLAT, value: 30 }
+    armour:
+      - { text: "+30 最大生命", stat: life.max, type: FLAT, value: 30 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 5% 最大生命", stat: life.max, type: INCREASED, value: 5 }
+      caster:
+        - { text: "增加 5% 最大生命", stat: life.max, type: INCREASED, value: 5 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  body:   # Body Rune
+    name: 體魄符文
+    level: 15
+    weapon:
+      - { text: "攻擊造成的物理傷害有 4% 偷取為生命", stat: leech.life, type: FLAT, value: 4, tags: [attack] }
+    caster:
+      - { text: "+40 最大能量護盾", stat: es.max, type: FLAT, value: 40 }
+    armour:
+      - { text: "+45 最大生命", stat: life.max, type: FLAT, value: 45 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 5% 最大生命", stat: life.max, type: INCREASED, value: 5 }
+      caster:
+        - { text: "增加 5% 最大生命", stat: life.max, type: INCREASED, value: 5 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  body_greater:   # Greater Body Rune
+    name: 高階體魄符文
+    level: 30
+    weapon:
+      - { text: "攻擊造成的物理傷害有 5% 偷取為生命", stat: leech.life, type: FLAT, value: 5, tags: [attack] }
+    caster:
+      - { text: "+50 最大能量護盾", stat: es.max, type: FLAT, value: 50 }
+    armour:
+      - { text: "+60 最大生命", stat: life.max, type: FLAT, value: 60 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 5% 最大生命", stat: life.max, type: INCREASED, value: 5 }
+      caster:
+        - { text: "增加 5% 最大生命", stat: life.max, type: INCREASED, value: 5 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  body_perfect:   # Perfect Body Rune
+    name: 完美體魄符文
+    level: 50
+    weapon:
+      - { text: "攻擊造成的物理傷害有 6% 偷取為生命", stat: leech.life, type: FLAT, value: 6, tags: [attack] }
+    caster:
+      - { text: "+60 最大能量護盾", stat: es.max, type: FLAT, value: 60 }
+    armour:
+      - { text: "+75 最大生命", stat: life.max, type: FLAT, value: 75 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 5% 最大生命", stat: life.max, type: INCREASED, value: 5 }
+      caster:
+        - { text: "增加 5% 最大生命", stat: life.max, type: INCREASED, value: 5 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  swift_lesser:   # Lesser Adept Rune
+    name: 次級疾風符文
+    level: 5
+    weapon:
+      - { text: "+6 敏捷", stat: attr.dex, type: FLAT, value: 6 }
+    armour:
+      - { text: "+6 敏捷", stat: attr.dex, type: FLAT, value: 6 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊附加 6 到 10 物理傷害、1 到 16 閃電傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, physical] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, physical] }, { stat: damage.added.min, type: FLAT, value: 1, tags: [attack, lightning] }, { stat: damage.added.max, type: FLAT, value: 16, tags: [attack, lightning] } ] }
+      caster:
+        - { text: "+80 閃避值", stat: evasion, type: FLAT, value: 80 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  swift:   # Adept Rune（原有的代號）
+    name: 疾風符文
+    level: 15
+    weapon:
+      - { text: "+9 敏捷", stat: attr.dex, type: FLAT, value: 9 }
+    armour:
+      - { text: "+9 敏捷", stat: attr.dex, type: FLAT, value: 9 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊附加 6 到 10 物理傷害、1 到 16 閃電傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, physical] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, physical] }, { stat: damage.added.min, type: FLAT, value: 1, tags: [attack, lightning] }, { stat: damage.added.max, type: FLAT, value: 16, tags: [attack, lightning] } ] }
+      caster:
+        - { text: "+80 閃避值", stat: evasion, type: FLAT, value: 80 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  swift_greater:   # Greater Adept Rune
+    name: 高階疾風符文
+    level: 30
+    weapon:
+      - { text: "+12 敏捷", stat: attr.dex, type: FLAT, value: 12 }
+    armour:
+      - { text: "+12 敏捷", stat: attr.dex, type: FLAT, value: 12 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊附加 6 到 10 物理傷害、1 到 16 閃電傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, physical] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, physical] }, { stat: damage.added.min, type: FLAT, value: 1, tags: [attack, lightning] }, { stat: damage.added.max, type: FLAT, value: 16, tags: [attack, lightning] } ] }
+      caster:
+        - { text: "+80 閃避值", stat: evasion, type: FLAT, value: 80 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  swift_perfect:   # Perfect Adept Rune
+    name: 完美疾風符文
+    level: 50
+    weapon:
+      - { text: "+15 敏捷", stat: attr.dex, type: FLAT, value: 15 }
+    armour:
+      - { text: "+15 敏捷", stat: attr.dex, type: FLAT, value: 15 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊附加 6 到 10 物理傷害、1 到 16 閃電傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, physical] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, physical] }, { stat: damage.added.min, type: FLAT, value: 1, tags: [attack, lightning] }, { stat: damage.added.max, type: FLAT, value: 16, tags: [attack, lightning] } ] }
+      caster:
+        - { text: "+80 閃避值", stat: evasion, type: FLAT, value: 80 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  robust_lesser:   # Lesser Robust Rune
+    name: 次級壯力符文
+    level: 5
+    weapon:
+      - { text: "+6 力量", stat: attr.str, type: FLAT, value: 6 }
+    armour:
+      - { text: "+6 力量", stat: attr.str, type: FLAT, value: 6 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊附加 6 到 10 物理傷害、6 到 10 火焰傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, physical] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, physical] }, { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, fire] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, fire] } ] }
+      caster:
+        - { text: "+100 護甲", stat: armour, type: FLAT, value: 100 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  robust:   # Robust Rune
+    name: 壯力符文
+    level: 15
+    weapon:
+      - { text: "+9 力量", stat: attr.str, type: FLAT, value: 9 }
+    armour:
+      - { text: "+9 力量", stat: attr.str, type: FLAT, value: 9 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊附加 6 到 10 物理傷害、6 到 10 火焰傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, physical] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, physical] }, { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, fire] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, fire] } ] }
+      caster:
+        - { text: "+100 護甲", stat: armour, type: FLAT, value: 100 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  robust_greater:   # Greater Robust Rune
+    name: 高階壯力符文
+    level: 30
+    weapon:
+      - { text: "+12 力量", stat: attr.str, type: FLAT, value: 12 }
+    armour:
+      - { text: "+12 力量", stat: attr.str, type: FLAT, value: 12 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊附加 6 到 10 物理傷害、6 到 10 火焰傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, physical] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, physical] }, { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, fire] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, fire] } ] }
+      caster:
+        - { text: "+100 護甲", stat: armour, type: FLAT, value: 100 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  robust_perfect:   # Perfect Robust Rune
+    name: 完美壯力符文
+    level: 50
+    weapon:
+      - { text: "+15 力量", stat: attr.str, type: FLAT, value: 15 }
+    armour:
+      - { text: "+15 力量", stat: attr.str, type: FLAT, value: 15 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊附加 6 到 10 物理傷害、6 到 10 火焰傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, physical] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, physical] }, { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, fire] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, fire] } ] }
+      caster:
+        - { text: "+100 護甲", stat: armour, type: FLAT, value: 100 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  resolve_lesser:   # Lesser Resolve Rune
+    name: 次級決意符文
+    level: 5
+    weapon:
+      - { text: "+6 智慧", stat: attr.int, type: FLAT, value: 6 }
+    armour:
+      - { text: "+6 智慧", stat: attr.int, type: FLAT, value: 6 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊附加 6 到 10 物理傷害、5 到 8 冰冷傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, physical] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, physical] }, { stat: damage.added.min, type: FLAT, value: 5, tags: [attack, cold] }, { stat: damage.added.max, type: FLAT, value: 8, tags: [attack, cold] } ] }
+      caster:
+        - { text: "+50 最大能量護盾", stat: es.max, type: FLAT, value: 50 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  resolve:   # Resolve Rune
+    name: 決意符文
+    level: 15
+    weapon:
+      - { text: "+9 智慧", stat: attr.int, type: FLAT, value: 9 }
+    armour:
+      - { text: "+9 智慧", stat: attr.int, type: FLAT, value: 9 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊附加 6 到 10 物理傷害、5 到 8 冰冷傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, physical] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, physical] }, { stat: damage.added.min, type: FLAT, value: 5, tags: [attack, cold] }, { stat: damage.added.max, type: FLAT, value: 8, tags: [attack, cold] } ] }
+      caster:
+        - { text: "+50 最大能量護盾", stat: es.max, type: FLAT, value: 50 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  resolve_greater:   # Greater Resolve Rune
+    name: 高階決意符文
+    level: 30
+    weapon:
+      - { text: "+12 智慧", stat: attr.int, type: FLAT, value: 12 }
+    armour:
+      - { text: "+12 智慧", stat: attr.int, type: FLAT, value: 12 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊附加 6 到 10 物理傷害、5 到 8 冰冷傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, physical] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, physical] }, { stat: damage.added.min, type: FLAT, value: 5, tags: [attack, cold] }, { stat: damage.added.max, type: FLAT, value: 8, tags: [attack, cold] } ] }
+      caster:
+        - { text: "+50 最大能量護盾", stat: es.max, type: FLAT, value: 50 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  resolve_perfect:   # Perfect Resolve Rune
+    name: 完美決意符文
+    level: 50
+    weapon:
+      - { text: "+15 智慧", stat: attr.int, type: FLAT, value: 15 }
+    armour:
+      - { text: "+15 智慧", stat: attr.int, type: FLAT, value: 15 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊附加 6 到 10 物理傷害、5 到 8 冰冷傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 6, tags: [attack, physical] }, { stat: damage.added.max, type: FLAT, value: 10, tags: [attack, physical] }, { stat: damage.added.min, type: FLAT, value: 5, tags: [attack, cold] }, { stat: damage.added.max, type: FLAT, value: 8, tags: [attack, cold] } ] }
+      caster:
+        - { text: "+50 最大能量護盾", stat: es.max, type: FLAT, value: 50 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  inspiration_lesser:   # Lesser Inspiration Rune
+    name: 次級泉思符文
+    level: 21
+    weapon:
+      - { text: "每擊殺一個敵人回復 10 魔力", stat: mana.per_kill, type: FLAT, value: 10 }
+    caster:
+      - { text: "增加 20% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 20 }
+    armour:
+      - { text: "增加 12% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 12 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "12% 的技能魔力消耗改成生命消耗", stat: skill.life_cost_percent, type: FLAT, value: 12 }
+      caster:
+        - { text: "增加 16% 魔力消耗效率", stat: skill.cost, type: INCREASED, value: -16 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  inspiration:   # Inspiration Rune
+    name: 泉思符文
+    level: 15
+    weapon:
+      - { text: "每擊殺一個敵人回復 20 魔力", stat: mana.per_kill, type: FLAT, value: 20 }
+    caster:
+      - { text: "增加 25% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 25 }
+    armour:
+      - { text: "增加 15% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 15 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "12% 的技能魔力消耗改成生命消耗", stat: skill.life_cost_percent, type: FLAT, value: 12 }
+      caster:
+        - { text: "增加 16% 魔力消耗效率", stat: skill.cost, type: INCREASED, value: -16 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  inspiration_greater:   # Greater Inspiration Rune
+    name: 高階泉思符文
+    level: 30
+    weapon:
+      - { text: "每擊殺一個敵人回復 30 魔力", stat: mana.per_kill, type: FLAT, value: 30 }
+    caster:
+      - { text: "增加 30% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 30 }
+    armour:
+      - { text: "增加 18% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 18 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "12% 的技能魔力消耗改成生命消耗", stat: skill.life_cost_percent, type: FLAT, value: 12 }
+      caster:
+        - { text: "增加 16% 魔力消耗效率", stat: skill.cost, type: INCREASED, value: -16 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  inspiration_perfect:   # Perfect Inspiration Rune
+    name: 完美泉思符文
+    level: 50
+    weapon:
+      - { text: "每擊殺一個敵人回復 40 魔力", stat: mana.per_kill, type: FLAT, value: 40 }
+    caster:
+      - { text: "增加 35% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 35 }
+    armour:
+      - { text: "增加 21% 魔力回復速度", stat: mana.regen, type: INCREASED, value: 21 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "12% 的技能魔力消耗改成生命消耗", stat: skill.life_cost_percent, type: FLAT, value: 12 }
+      caster:
+        - { text: "增加 16% 魔力消耗效率", stat: skill.cost, type: INCREASED, value: -16 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  rebirth_lesser:   # Lesser Rebirth Rune
+    name: 次級復甦符文
+    level: 21
+    weapon:
+      - { text: "每擊殺一個敵人回復 15 生命", stat: life.per_kill, type: FLAT, value: 15 }
+    caster:
+      - { text: "增加 6% 能量護盾回充速度", stat: es.recharge, type: INCREASED, value: 6 }
+    armour:
+      - { text: "每秒回復 0.35% 最大生命", stat: life.regen_percent, type: FLAT, value: 0.35 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "每秒回復 0.4% 最大生命", stat: life.regen_percent, type: FLAT, value: 0.4 }
+      caster:
+        - { text: "受到傷害的 8% 回復為生命", stat: life.recoup, type: FLAT, value: 8 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  rebirth:   # Rebirth Rune
+    name: 復甦符文
+    level: 15
+    weapon:
+      - { text: "每擊殺一個敵人回復 25 生命", stat: life.per_kill, type: FLAT, value: 25 }
+    caster:
+      - { text: "增加 8% 能量護盾回充速度", stat: es.recharge, type: INCREASED, value: 8 }
+    armour:
+      - { text: "每秒回復 0.4% 最大生命", stat: life.regen_percent, type: FLAT, value: 0.4 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "每秒回復 0.4% 最大生命", stat: life.regen_percent, type: FLAT, value: 0.4 }
+      caster:
+        - { text: "受到傷害的 8% 回復為生命", stat: life.recoup, type: FLAT, value: 8 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  rebirth_greater:   # Greater Rebirth Rune
+    name: 高階復甦符文
+    level: 30
+    weapon:
+      - { text: "每擊殺一個敵人回復 35 生命", stat: life.per_kill, type: FLAT, value: 35 }
+    caster:
+      - { text: "增加 10% 能量護盾回充速度", stat: es.recharge, type: INCREASED, value: 10 }
+    armour:
+      - { text: "每秒回復 0.45% 最大生命", stat: life.regen_percent, type: FLAT, value: 0.45 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "每秒回復 0.4% 最大生命", stat: life.regen_percent, type: FLAT, value: 0.4 }
+      caster:
+        - { text: "受到傷害的 8% 回復為生命", stat: life.recoup, type: FLAT, value: 8 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  rebirth_perfect:   # Perfect Rebirth Rune
+    name: 完美復甦符文
+    level: 50
+    weapon:
+      - { text: "每擊殺一個敵人回復 45 生命", stat: life.per_kill, type: FLAT, value: 45 }
+    caster:
+      - { text: "增加 12% 能量護盾回充速度", stat: es.recharge, type: INCREASED, value: 12 }
+    armour:
+      - { text: "每秒回復 0.5% 最大生命", stat: life.regen_percent, type: FLAT, value: 0.5 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "每秒回復 0.4% 最大生命", stat: life.regen_percent, type: FLAT, value: 0.4 }
+      caster:
+        - { text: "受到傷害的 8% 回復為生命", stat: life.recoup, type: FLAT, value: 8 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  stone_lesser:   # Lesser Stone Rune；法杖類原作是「獲得等於最大能量護盾 10／12／14／16% 的暈眩門檻」（還沒有這個機制），先用防具那一階的固定暈眩門檻
+    name: 次級磐石符文
+    level: 16
+    weapon:
+      - { text: "增加 20% 暈眩累積", stat: stun.buildup, type: INCREASED, value: 20 }
+    caster:
+      - { text: "+50 暈眩門檻", stat: stun.threshold, type: FLAT, value: 50 }
+    armour:
+      - { text: "+50 暈眩門檻", stat: stun.threshold, type: FLAT, value: 50 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 40% 對被禁錮敵人的傷害", stat: damage, type: INCREASED, value: 40, tags: [vs_immobilised] }
+      caster:
+        - { text: "增加 30% 禁錮累積", stat: pin.buildup, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  stone:   # Stone Rune
+    name: 磐石符文
+    level: 15
+    weapon:
+      - { text: "增加 30% 暈眩累積", stat: stun.buildup, type: INCREASED, value: 30 }
+    caster:
+      - { text: "+75 暈眩門檻", stat: stun.threshold, type: FLAT, value: 75 }
+    armour:
+      - { text: "+75 暈眩門檻", stat: stun.threshold, type: FLAT, value: 75 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 40% 對被禁錮敵人的傷害", stat: damage, type: INCREASED, value: 40, tags: [vs_immobilised] }
+      caster:
+        - { text: "增加 30% 禁錮累積", stat: pin.buildup, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  stone_greater:   # Greater Stone Rune
+    name: 高階磐石符文
+    level: 30
+    weapon:
+      - { text: "增加 40% 暈眩累積", stat: stun.buildup, type: INCREASED, value: 40 }
+    caster:
+      - { text: "+100 暈眩門檻", stat: stun.threshold, type: FLAT, value: 100 }
+    armour:
+      - { text: "+100 暈眩門檻", stat: stun.threshold, type: FLAT, value: 100 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 40% 對被禁錮敵人的傷害", stat: damage, type: INCREASED, value: 40, tags: [vs_immobilised] }
+      caster:
+        - { text: "增加 30% 禁錮累積", stat: pin.buildup, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  stone_perfect:   # Perfect Stone Rune
+    name: 完美磐石符文
+    level: 50
+    weapon:
+      - { text: "增加 50% 暈眩累積", stat: stun.buildup, type: INCREASED, value: 50 }
+    caster:
+      - { text: "+125 暈眩門檻", stat: stun.threshold, type: FLAT, value: 125 }
+    armour:
+      - { text: "+125 暈眩門檻", stat: stun.threshold, type: FLAT, value: 125 }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "增加 40% 對被禁錮敵人的傷害", stat: damage, type: INCREASED, value: 40, tags: [vs_immobilised] }
+      caster:
+        - { text: "增加 30% 禁錮累積", stat: pin.buildup, type: INCREASED, value: 30 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  vision_lesser:   # Lesser Vision Rune；武器上的命中原作只算這把武器（本地），先算進角色的命中
+    name: 次級明眸符文
+    level: 16
+    weapon:
+      - { text: "+60 命中", stat: accuracy, type: FLAT, value: 60 }
+    caster:
+      - { text: "增加 16% 法術暴擊率", stat: crit.chance, type: INCREASED, value: 16, tags: [spell] }
+    armour:
+      - { text: "增加 8% 藥劑的生命與魔力回復", mods: [ { stat: flask.life_recovery, type: INCREASED, value: 8 }, { stat: flask.mana_recovery, type: INCREASED, value: 8 } ] }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊 +1% 暴擊率", stat: crit.base_extra, type: FLAT, value: 1, tags: [attack] }
+      caster:
+        - { text: "增加 25% 暴擊傷害加成", stat: crit.bonus, type: INCREASED, value: 25 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  vision:   # Vision Rune
+    name: 明眸符文
+    level: 15
+    weapon:
+      - { text: "+90 命中", stat: accuracy, type: FLAT, value: 90 }
+    caster:
+      - { text: "增加 20% 法術暴擊率", stat: crit.chance, type: INCREASED, value: 20, tags: [spell] }
+    armour:
+      - { text: "增加 12% 藥劑的生命與魔力回復", mods: [ { stat: flask.life_recovery, type: INCREASED, value: 12 }, { stat: flask.mana_recovery, type: INCREASED, value: 12 } ] }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊 +1% 暴擊率", stat: crit.base_extra, type: FLAT, value: 1, tags: [attack] }
+      caster:
+        - { text: "增加 25% 暴擊傷害加成", stat: crit.bonus, type: INCREASED, value: 25 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  vision_greater:   # Greater Vision Rune
+    name: 高階明眸符文
+    level: 30
+    weapon:
+      - { text: "+120 命中", stat: accuracy, type: FLAT, value: 120 }
+    caster:
+      - { text: "增加 24% 法術暴擊率", stat: crit.chance, type: INCREASED, value: 24, tags: [spell] }
+    armour:
+      - { text: "增加 16% 藥劑的生命與魔力回復", mods: [ { stat: flask.life_recovery, type: INCREASED, value: 16 }, { stat: flask.mana_recovery, type: INCREASED, value: 16 } ] }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊 +1% 暴擊率", stat: crit.base_extra, type: FLAT, value: 1, tags: [attack] }
+      caster:
+        - { text: "增加 25% 暴擊傷害加成", stat: crit.bonus, type: INCREASED, value: 25 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+  vision_perfect:   # Perfect Vision Rune
+    name: 完美明眸符文
+    level: 50
+    weapon:
+      - { text: "+150 命中", stat: accuracy, type: FLAT, value: 150 }
+    caster:
+      - { text: "增加 28% 法術暴擊率", stat: crit.chance, type: INCREASED, value: 28, tags: [spell] }
+    armour:
+      - { text: "增加 20% 藥劑的生命與魔力回復", mods: [ { stat: flask.life_recovery, type: INCREASED, value: 20 }, { stat: flask.mana_recovery, type: INCREASED, value: 20 } ] }
+    bonded:   # 2026-10-27 照 PoE2 0.5（RePoE augments.json 的 bonded_stats）：羈絆詞綴，只有昇華・聖賢智慧才有效果
+      weapon:
+        - { text: "攻擊 +1% 暴擊率", stat: crit.base_extra, type: FLAT, value: 1, tags: [attack] }
+      caster:
+        - { text: "增加 25% 暴擊傷害加成", stat: crit.bonus, type: INCREASED, value: 25 }
+      armour:
+        - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }

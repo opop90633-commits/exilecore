@@ -1,0 +1,51 @@
+Shockchain Arrow (poe2db.tw/us/Shockchain_Arrow)
+Type: Attack (Tier 11). Tags: AoE, Projectile, Lightning, Chaining, Payoff, Repeatable
+Attack speed: 70% of base | Base crit: not listed (weapon) | Cooldown: none listed | Weapon req: Bows
+Requirements L1-20: char level 1-90, Dex 4-157. Projectile speed 32.6 m/s.
+Mechanic: Fires a lightning-charged arrow that homes toward enemies with Lightning Ailments. Hitting one releases a shockwave and chains to nearby targets (each chain hit also releases a shockwave); after the final chain the arrow lodges in the ground as a Lightning Rod. Consumes Shock (not Electrocution) from enemies hit.
+Stats: Projectile converts 80% Physical to Lightning, cannot Shock; chains +3 additional times on first hitting a Shocked or Electrocuted enemy; arrow (rod) lasts 20 s and disappears after chaining 8 times; max 10 arrows active.
+Shockwave: 2.5 m radius, attack damage 140%(L1)-507%(L20), converts 100% Physical to Lightning.
+Quality: up to 20% more Lightning damage, up to 20% more attack speed (as summarised by fetch tool).
+
+# TSV (source: https://poe2db.tw/us/Shockchain_Arrow; req level/attr blank for 21-40 on page)
+level	projectile_attack_damage%	mana	shockwave_attack_damage%
+1	70%	10	140%
+2	77%	11	154%
+3	85%	13	170%
+4	92%	15	185%
+5	100%	17	200%
+6	107%	19	216%
+7	115%	21	232%
+8	122%	23	248%
+9	128%	26	262%
+10	134%	29	277%
+11	141%	32	293%
+12	148%	35	310%
+13	155%	38	329%
+14	163%	42	349%
+15	171%	45	371%
+16	180%	49	394%
+17	189%	54	419%
+18	198%	58	446%
+19	208%	63	475%
+20	218%	68	507%
+21	229%	73	541%
+22	241%	79	577%
+23	253%	85	615%
+24	265%	92	656%
+25	279%	99	700%
+26	293%	106	747%
+27	307%	114	796%
+28	323%	122	849%
+29	339%	130	906%
+30	356%	140	966%
+31	373%	149	1031%
+32	392%	160	1099%
+33	412%	170	1173%
+34	432%	182	1251%
+35	454%	194	1334%
+36	477%	207	1423%
+37	500%	221	1518%
+38	525%	235	1619%
+39	552%	250	1727%
+40	579%	266	1842%

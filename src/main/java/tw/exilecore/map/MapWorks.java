@@ -119,8 +119,23 @@ final class MapWorks {
         NavigationPause.run(first.world, logger, this::work);
     }
 
+    /** 2026-10-27：伺服器已經很忙（平均每 tick 超過這麼多毫秒）時，施工的時間額度改成 {@link #BUSY_NANOS_PER_TICK}。 */
+    static final double BUSY_MSPT = 40;
+    static final long BUSY_NANOS_PER_TICK = 3_500_000L;
+
+    /** 2026-10-27：這個 tick 施工可以花多少時間（奈秒）：平常 8 毫秒，伺服器忙（平均超過 40 毫秒）時 3.5 毫秒，地圖晚一點蓋好但不會把 TPS 拖下去。 */
+    static long budgetNanos(final double averageTickMillis) {
+        return averageTickMillis > BUSY_MSPT ? BUSY_NANOS_PER_TICK : NANOS_PER_TICK;
+    }
+
     private void work() {
-        final long deadline = System.nanoTime() + NANOS_PER_TICK;
+        double mspt = 0;
+        try {
+            mspt = plugin.getServer().getAverageTickTime();
+        } catch (final RuntimeException | LinkageError ignored) {
+            // 不是 Paper：照平常的額度
+        }
+        final long deadline = System.nanoTime() + budgetNanos(mspt);
         int budget = BLOCKS_PER_TICK;
         while (budget > 0 && !jobs.isEmpty() && System.nanoTime() < deadline) {
             final Job job = jobs.peek();
@@ -249,40 +264,50 @@ final class MapWorks {
             }
         }
 
+        /** 2026-10-27：正在清的區塊做到第幾柱（0～255）與它的快照：一個區塊可以分幾個 tick 清完（這次之前一個區塊一定一次清完，會超過時間額度）。 */
+        private int column;
+        private ChunkSnapshot snapshot;
+
         @Override
         int step(final int budget) {
             prepare();
             int used = 0;
             while (chunkIndex < chunks.size() && used < budget && (used == 0 || !late())) {
-                used += clearChunk(chunks.get(chunkIndex));
-                chunkIndex++;
+                final Chunk chunk = chunks.get(chunkIndex);
+                if (snapshot == null) {
+                    // 整段高度都看（不能只看高度圖：燈籠、蜘蛛網、花草這種不擋路的方塊不算在高度圖裡）
+                    snapshot = chunk.getChunkSnapshot(false, false, false);
+                    column = 0;
+                    used += 16;
+                }
+                used += clearColumn(chunk, column);
+                column++;
+                if (column >= 256) {
+                    snapshot = null;
+                    chunkIndex++;
+                }
             }
-            return chunkIndex >= chunks.size() ? -1 : used;
+            return chunkIndex >= chunks.size() ? -1 : Math.max(1, used);
         }
 
         private boolean inside(final int x, final int z) {
             return x >= minX && x <= maxX && z >= minZ && z <= maxZ;
         }
 
-        private int clearChunk(final Chunk chunk) {
-            // 整段高度都看（不能只看高度圖：燈籠、蜘蛛網、花草這種不擋路的方塊不算在高度圖裡）
-            final ChunkSnapshot snapshot = chunk.getChunkSnapshot(false, false, false);
-            final int baseX = chunk.getX() << 4;
-            final int baseZ = chunk.getZ() << 4;
+        /** 清一柱（區塊裡的第 index 柱：dx = index / 16、dz = index % 16），回傳讀了幾格。 */
+        private int clearColumn(final Chunk chunk, final int index) {
+            final int dx = index >> 4;
+            final int dz = index & 15;
+            if (!inside((chunk.getX() << 4) + dx, (chunk.getZ() << 4) + dz)) {
+                return 0;
+            }
             final int bottom = Math.max(minY, world.getMinHeight());
             final int top = Math.min(maxY, world.getMaxHeight() - 1);
-            int read = 16;
-            for (int dx = 0; dx < 16; dx++) {
-                for (int dz = 0; dz < 16; dz++) {
-                    if (!inside(baseX + dx, baseZ + dz)) {
-                        continue;
-                    }
-                    for (int y = bottom; y <= top; y++) {
-                        read++;
-                        if (!snapshot.getBlockType(dx, y, dz).isAir()) {
-                            chunk.getBlock(dx, y, dz).setType(Material.AIR, false);
-                        }
-                    }
+            int read = 0;
+            for (int y = bottom; y <= top; y++) {
+                read++;
+                if (!snapshot.getBlockType(dx, y, dz).isAir()) {
+                    chunk.getBlock(dx, y, dz).setType(Material.AIR, false);
                 }
             }
             return read;

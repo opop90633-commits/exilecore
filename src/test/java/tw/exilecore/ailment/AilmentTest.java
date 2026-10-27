@@ -42,6 +42,15 @@ class AilmentTest {
         skills.load(DATA);
     }
 
+    /** 2026-10-26 照 PoE2：Boss 的暈眩門檻（地圖 ×3.13、巔峰 ×9.38）、輕暈 0.5 秒。 */
+    @Test
+    void bossPoiseAndLightStunFollowPoe2() {
+        assertEquals(3.13, config.bossPoise(false), 1e-9);
+        assertEquals(9.38, config.bossPoise(true), 1e-9);
+        assertEquals(0.5, config.lightStunDuration(false), 1e-9);
+        assertEquals(0.5, config.lightStunDuration(true), 1e-9);
+    }
+
     @Test
     void avoidanceIsCappedAndThresholdsAreSeparate() {
         assertEquals(0.62, AilmentConfig.avoidChance(62), 1e-9);
@@ -57,11 +66,16 @@ class AilmentTest {
     @Test
     void thresholdsAndDurations() {
         assertEquals(1.0, config.monsterThreshold(MonsterRarity.RARE), 1e-9);
-        assertEquals(0.5, config.monsterThreshold(MonsterRarity.UNIQUE), 1e-9, "Boss 的門檻打五折");
+        // 2026-10-26 照 PoE2：怪物門檻改用等級表、不看稀有度（這次之前傳奇 0.5）；玩家 = 生命的 50%
+        assertEquals(1.0, config.monsterThreshold(MonsterRarity.UNIQUE), 1e-9, "門檻不看稀有度");
+        assertEquals(0.5, config.playerThresholdLife(), 1e-9, "玩家 = 生命的 50%");
         assertEquals(4.0, config.igniteDuration(), 1e-9);
         assertEquals(8.0, config.chillDuration(false), 1e-9, "PoE2：怪物身上的冰緩 8 秒");
         assertEquals(2.0, config.chillDuration(true), 1e-9, "玩家 2 秒");
-        assertEquals(1.5, config.freezeDuration(true), 1e-9);
+        assertEquals(2.0, config.freezeDuration(true), 1e-9, "2026-10-26 照 PoE2：玩家凍結 2 秒（這次之前 1.5）");
+        assertEquals(4.0, config.freezeDuration(false), 1e-9);
+        assertEquals(8.0, config.flammabilityDuration(false), 1e-9, "易燃在怪物身上 8 秒");
+        assertEquals(4.0, config.flammabilityDuration(true), 1e-9);
         assertEquals(8.0, config.shockDuration(false), 1e-9);
         assertEquals(4.0, config.shockDuration(true), 1e-9);
         assertEquals(2.8, AilmentConfig.duration(4, 0.4, -0.5), 1e-9, "4 × 1.4 × 0.5");
@@ -70,9 +84,11 @@ class AilmentTest {
 
     @Test
     void igniteAndShockChance() {
-        assertEquals(0.0625, config.igniteChance(10, 40, 0, 0), 1e-9, "門檻的 25% → 6.25%（每 4% 門檻 1%）");
-        assertEquals(0.2625, config.igniteChance(10, 40, 20, 0), 1e-9, "熾星彈 +20%");
-        assertEquals(0.525, config.igniteChance(10, 40, 20, 1.0), 1e-9, "增加 100% 機率");
+        // 2026-10-26 照 PoE2：每 5% 門檻 1%（這次之前每 4% 門檻 1%）
+        assertEquals(0.05, config.igniteChance(10, 40, 0, 0), 1e-9, "門檻的 25% → 5%（每 5% 門檻 1%）");
+        assertEquals(0.25, config.igniteChance(10, 40, 20, 0), 1e-9, "熾星彈 +20%");
+        assertEquals(0.5, config.igniteChance(10, 40, 20, 1.0), 1e-9, "增加 100% 機率");
+        assertEquals(250, config.flammability(500, 40, 0, 0), 1e-9, "易燃可以超過 100（疊起來再夾）");
         assertEquals(0, config.igniteChance(0, 40, 50, 0), 1e-9, "沒有火焰傷害不會點燃");
         assertEquals(1.0, config.igniteChance(1000, 40, 0, 0), 1e-9, "最多 100%");
         assertEquals(0.0625, config.shockChance(10, 40, 0, 0), 1e-9);
@@ -82,12 +98,14 @@ class AilmentTest {
 
     @Test
     void chillFreezeAndShockMagnitude() {
-        assertEquals(0.5 * Math.pow(0.25, 0.4), config.chillMagnitude(10, 40, 0), 1e-9, "50% × 比例^0.4");
+        // 2026-10-26 照 PoE2：冰緩 = 100 × 比例（直線），最低 30%；凍結 = 冰冷 × 2.1 ÷ 暈眩門檻（打玩家 × 2），沒有傳奇怪打折
+        assertEquals(0.35, config.chillMagnitude(14, 40, 0), 1e-9, "100 × 比例");
+        assertEquals(0, config.chillMagnitude(10, 40, 0), 1e-9, "25% 小於 30% 不算");
         assertEquals(0.5, config.chillMagnitude(100, 40, 0), 1e-9, "最多 50%");
-        assertEquals(0, config.chillMagnitude(0.001, 40, 0), 1e-9, "太小（< 5%）不算");
-        assertEquals(0.5, config.freezeBuildup(10, 40, 1, false), 1e-9, "門檻的 25% × 200%");
-        assertEquals(1.0, config.freezeBuildup(10, 40, 2, false), 1e-9, "霜星爆增加 100% → 一次滿");
-        assertEquals(0.25, config.freezeBuildup(10, 40, 1, true), 1e-9, "傳奇怪只有 50%");
+        assertEquals(0, config.chillMagnitude(0.001, 40, 0), 1e-9, "太小不算");
+        assertEquals(0.525, config.freezeBuildup(10, 40, 1, false), 1e-9, "門檻的 25% × 210%");
+        assertEquals(1.05, config.freezeBuildup(10, 40, 2, false), 1e-9, "霜星爆增加 100% → 一次滿");
+        assertEquals(0.5, config.freezeBuildup(10, 40, 1, true), 1e-9, "打玩家 × 2.0");
         assertEquals(0.2, config.shockEffect(0), 1e-9);
         assertEquals(0.25, config.shockEffect(0.25), 1e-9);
         assertEquals(0.5, config.shockEffect(5), 1e-9, "最多 50%");
@@ -166,12 +184,14 @@ class AilmentTest {
         final SkillBuild fireball = SkillBuild.of(skills, skills.skill("fireball"), 1, 1, false, List.of(), Set.of(), sheet);
         final StatSheet effective = fireball.profile().effective(sheet);
         final Set<String> fire = fireball.profile().contextFor(DamageType.FIRE);
-        assertEquals(20, effective.flat(StatKeys.IGNITE_CHANCE, fire), 1e-9, "熾星彈自己帶點燃機率 +20%");
+        // 2026-10-26 照 PoE2：熾星彈拿掉原作沒有的點燃機率 +20%
+        assertEquals(0, effective.flat(StatKeys.IGNITE_CHANCE, fire), 1e-9, "熾星彈自己不帶點燃機率");
 
-        final SkillBuild searing = SkillBuild.of(skills, skills.skill("fireball"), 1, 1, false, List.of(skills.support("searing")), Set.of(), sheet);
+        final SkillBuild searing = SkillBuild.of(skills, skills.skill("fireball"), 1, 1, false, List.of(skills.support("searing_ii")), Set.of(), sheet); // 2026-10-26：燎原 I 併入燎原 II
         final StatSheet boosted = searing.profile().effective(sheet);
-        assertEquals(45, boosted.flat(StatKeys.IGNITE_CHANCE, fire), 1e-9, "燎原再 +25%");
-        assertEquals(1.4, boosted.more(StatKeys.IGNITE_MAGNITUDE, fire), 1e-9);
+        // 2026-10-26 照 PoE2（Deadly Ignites I）：燎原不加點燃機率，點燃更多 75%、擊中傷害更少 25%；這次之前點燃機率 +25%、點燃更多 40%
+        assertEquals(0, boosted.flat(StatKeys.IGNITE_CHANCE, fire), 1e-9, "燎原不加點燃機率（熾星彈本身也不再 +20%）");
+        assertEquals(2.0, boosted.more(StatKeys.IGNITE_MAGNITUDE, fire), 1e-9); // 2026-10-26：燎原 II 點燃更多 100%（這次之前測燎原 I 的 75%）
 
         final SkillBuild focused = SkillBuild.of(skills, skills.skill("fireball"), 1, 1, false,
                 List.of(skills.support("elemental_focus")), Set.of(), sheet);
@@ -180,11 +200,11 @@ class AilmentTest {
                 DamageCalculator.expectedOutgoing(sheet, focused.profile())));
 
         final SkillBuild nova = SkillBuild.of(skills, skills.skill("frost_nova"), 1, 1, false, List.of(skills.support("glacial")), Set.of(), sheet);
-        assertEquals(2.0 * 1.6, nova.profile().effective(sheet).apply(StatKeys.FREEZE_BUILDUP, 1.0,
-                nova.profile().contextFor(DamageType.COLD)), 1e-9, "霜星爆增加 100% × 冰封 60% 更多");
+        assertEquals(2.0 * 1.5, nova.profile().effective(sheet).apply(StatKeys.FREEZE_BUILDUP, 1.0,
+                nova.profile().contextFor(DamageType.COLD)), 1e-9, "霜星爆增加 100% × 冰封 50% 更多（2026-10-26 照 PoE2 Freeze）");
 
         final List<String> lines = AilmentText.lines(effective, fireball.profile(), DamageCalculator.expectedOutgoing(sheet, fireball.profile()));
-        assertEquals(List.of("<#ff7a1a>點燃<gray> 機率 +20%"), lines);
+        assertEquals(List.of(), lines, "2026-10-26 照 PoE2：熾星彈不再自帶點燃機率");
     }
 
     @Test
@@ -202,16 +222,16 @@ class AilmentTest {
         assertEquals(5, config.bleedDuration(), 1e-9);
         assertEquals(2.0, config.bleedMovingMultiplier(), 1e-9);
         assertEquals(2, config.poisonDuration(), 1e-9);
-        assertEquals(12, config.poisonMaxStacks());
+        assertEquals(1, config.poisonMaxStacks(), "2026-10-26 照 PoE2：預設只有 1 層生效（這次之前 12）");
         // 預設不靠傷害比例：沒有機率來源就不會流血、中毒
         assertEquals(0, config.bleedChance(1000, 100, 0, 0), 1e-9);
         assertEquals(0, config.poisonChance(1000, 100, 0, 0), 1e-9);
         assertEquals(0.3, config.bleedChance(50, 100, 30, 0), 1e-9, "流血機率 +30%");
         assertEquals(0.45, config.poisonChance(50, 100, 30, 0.5), 1e-9, "中毒機率 +30%，增加 50%");
-        // 每秒傷害：那一擊的 15%／30%
+        // 每秒傷害：那一擊的 15%／20%（2026-10-26 照 PoE2：中毒 20%，這次之前 30%）
         assertEquals(15, config.bleedDps(100, 0, 1.0), 1e-9);
         assertEquals(15 * 1.5 * 1.4, config.bleedDps(100, 0.5, 1.4), 1e-9);
-        assertEquals(30, config.poisonDps(100, 0, 1.0), 1e-9);
+        assertEquals(20, config.poisonDps(100, 0, 1.0), 1e-9);
     }
 
     @Test
@@ -250,27 +270,88 @@ class AilmentTest {
         final StatSheet sheet = new StatSheet();
         sheet.add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, 10, Set.of(tw.exilecore.stats.Tags.PHYSICAL), "武器"));
         sheet.add(new Modifier(StatKeys.WEAPON_MAX, ModType.FLAT, 20, Set.of(tw.exilecore.stats.Tags.PHYSICAL), "武器"));
-        final SkillBuild strike = SkillBuild.of(skills, skills.skill("earthquake"), 1, 1, false, List.of(skills.support("lacerate")), Set.of(), sheet);
+        final SkillBuild strike = SkillBuild.of(skills, skills.skill("earthquake"), 1, 1, false, List.of(skills.support("lacerate_iii")), Set.of(), sheet); // 2026-10-26：割裂 I、II 併入割裂 III
         final StatSheet effective = strike.profile().effective(sheet);
         final Set<String> physical = strike.profile().contextFor(DamageType.PHYSICAL);
-        assertEquals(30, effective.flat(StatKeys.BLEED_CHANCE, physical), 1e-9, "割裂：流血機率 +30%");
-        assertEquals(1.4, effective.more(StatKeys.BLEED_MAGNITUDE, physical), 1e-9);
+        // 2026-10-26 照 PoE2（Bleed I）：流血機率 50%、沒有流血傷害加成；這次之前機率 +30%、流血更多 40%
+        assertEquals(100, effective.flat(StatKeys.BLEED_CHANCE, physical), 1e-9, "割裂 III：流血機率 +100%（這次之前測割裂 I 的 50%）");
+        assertEquals(1.0, effective.more(StatKeys.BLEED_MAGNITUDE, physical), 1e-9);
         final List<String> lines = AilmentText.lines(effective, strike.profile(), DamageCalculator.expectedOutgoing(sheet, strike.profile()));
-        assertTrue(lines.contains("<#ff4a4a>流血<gray> 機率 +30%、傷害 ×1.40"), String.join(" | ", lines));
+        assertTrue(lines.contains("<#ff4a4a>流血<gray> 機率 +100%"), String.join(" | ", lines));
 
         final SkillBuild plain = SkillBuild.of(skills, skills.skill("earthquake"), 1, 1, false, List.of(), Set.of(), sheet);
         final List<String> none = AilmentText.lines(plain.profile().effective(sheet), plain.profile(), DamageCalculator.expectedOutgoing(sheet, plain.profile()));
         assertFalse(none.stream().anyMatch(line -> line.contains("流血") || line.contains("中毒")), "沒有機率來源就不列");
 
-        final SkillBuild fireball = SkillBuild.of(skills, skills.skill("fireball"), 1, 1, false, List.of(skills.support("envenom")), Set.of(), sheet);
+        final SkillBuild fireball = SkillBuild.of(skills, skills.skill("fireball"), 1, 1, false, List.of(skills.support("envenom_iii")), Set.of(), sheet); // 2026-10-26：淬毒 I、II 併入淬毒 III
         final StatSheet venom = fireball.profile().effective(sheet);
-        assertEquals(30, venom.flat(StatKeys.POISON_CHANCE, fireball.profile().contextFor(DamageType.CHAOS)), 1e-9, "淬毒：中毒機率 +30%");
+        assertEquals(60, venom.flat(StatKeys.POISON_CHANCE, fireball.profile().contextFor(DamageType.CHAOS)), 1e-9, "淬毒 III：中毒機率 +60%（2026-10-26 I、II 併入 III；這次之前測淬毒 I 的 +40%）");
         final List<String> fire = AilmentText.lines(venom, fireball.profile(), DamageCalculator.expectedOutgoing(sheet, fireball.profile()));
         assertFalse(fire.stream().anyMatch(line -> line.contains("中毒")), "熾星彈沒有物理或混沌傷害：淬毒掛了也不會中毒，不列");
 
         assertEquals("流血機率 +30%", ModifierText.describe(new Modifier(StatKeys.BLEED_CHANCE, ModType.FLAT, 30, Set.of(), "x")));
         assertEquals("30% 更多中毒傷害", ModifierText.describe(new Modifier(StatKeys.POISON_MAGNITUDE, ModType.MORE, 0.3, Set.of(), "x")));
         assertEquals("25% 機率避免中毒", ModifierText.describe(new Modifier(StatKeys.AVOID_POISON, ModType.FLAT, 25, Set.of(), "x")));
+    }
+
+    @Test
+    void onlyTheStrongestPoisonsOfASourceApply() {
+        // 2026-10-26 照 PoE2：同一個人只有最強的 N 層生效，弱的留著等強的結束再接著毒
+        final AilmentState state = new AilmentState();
+        final UUID player = UUID.randomUUID();
+        state.addPoison(10, 40, player, 1);
+        state.addPoison(4, 100, player, 1);
+        assertEquals(1, state.poisons(0).size(), "預設 1 層");
+        assertEquals(10, state.poisonDps(0), 1e-9, "最強的那層");
+        assertEquals(4, state.poisonDps(50), 1e-9, "強的結束，弱的接著毒");
+        assertEquals(60, state.poisonRemaining(40));
+        // 2026-10-27：層數上限記在每一層自己身上：新的 2 層上限的毒不會讓舊的 1 層上限的毒變成生效（這次之前整個來源改成 2 層，期望 10）
+        state.addPoison(6, 100, player, 2);
+        assertEquals(6, state.poisonDps(50), 1e-9, "舊的 1 層上限的毒排第二，不生效");
+        state.addPoison(5, 100, player, 2);
+        assertEquals(11, state.poisonDps(50), 1e-9, "兩層都是 2 層上限：一起算");
+    }
+
+    @Test
+    void higherLimitPoisonDoesNotUnlockStoredWeakerOnes() {
+        // 2026-10-27：瘟疫之使傳染或召喚物毒氣帶 20 層上限，不會讓同一個來源記著的 1 層上限毒全部生效
+        final AilmentState state = new AilmentState();
+        final UUID player = UUID.randomUUID();
+        for (int i = 0; i < 10; i++) {
+            state.addPoison(10 + i, 200, player, 1);
+        }
+        assertEquals(1, state.poisons(0).size());
+        state.addPoison(100, 200, player, AilmentState.MAX_POISONS);
+        assertEquals(1, state.poisons(0).size(), "只有最強那層（20 層上限的那層）生效");
+        assertEquals(100, state.poisonDps(0), 1e-9);
+        state.addPoison(5, 200, player, AilmentState.MAX_POISONS);
+        assertEquals(105, state.poisonDps(0), 1e-9, "20 層上限的毒自己照疊，1 層上限的還是不生效");
+        assertTrue(state.removeSource(player));
+        assertTrue(state.isEmpty(0));
+    }
+
+    @Test
+    void meterThresholdRisesAfterTriggerAndFallsBack() {
+        // 2026-10-26 照 PoE2：觸發後門檻提高 500%，直線降回來（取代免疫時間）
+        final AilmentState.Meter meter = new AilmentState().freezeMeter();
+        assertEquals(1.0, meter.thresholdMultiplier(0), 1e-9);
+        meter.trigger(0, 80, 0);
+        meter.raiseThreshold(5.0, 280, 0);
+        assertEquals(6.0, meter.thresholdMultiplier(0), 1e-9);
+        assertEquals(3.5, meter.thresholdMultiplier(140), 1e-9, "一半的時間降一半");
+        assertFalse(meter.idle(200), "門檻還沒降回來要繼續追蹤");
+        assertEquals(1.0, meter.thresholdMultiplier(280), 1e-9);
+        assertTrue(meter.idle(280));
+    }
+
+    @Test
+    void flammabilityStacks() {
+        final AilmentState state = new AilmentState();
+        assertEquals(30, state.addFlammability(30, 160, 0), 1e-9);
+        assertEquals(70, state.addFlammability(40, 200, 20), 1e-9, "易燃疊加");
+        assertEquals(40, state.flammability(160), 1e-9, "第一層結束");
+        assertFalse(state.isEmpty(170));
+        assertTrue(state.isEmpty(200));
     }
 
     @Test
@@ -293,30 +374,39 @@ class AilmentTest {
         for (int i = 0; i < 100; i++) {
             state.addPoison(1, 200, UUID.randomUUID(), 8);
         }
-        assertEquals(AilmentState.MAX_POISONS_TOTAL, state.poisons(0).size(), "整隻的保險上限");
+        // 2026-10-26：保險上限算的是記著的（含還沒輪到的弱毒）；強的人記了 9 層、只有 8 層生效，所以生效的是 63
+        assertEquals(AilmentState.MAX_POISONS_TOTAL - 1, state.poisons(0).size(), "整隻的保險上限");
     }
 
     // ---- 暈眩與電擊（PoE2）----
 
     @Test
     void stunAndElectrocuteSettingsLoad() {
+        // 2026-10-26 照 PoE2 0.5（這次之前：累積 100%、元素只算一半、1.5／0.8 秒、1.5 秒後每秒退 40%、傳奇怪四成）
         final AilmentConfig.MeterSettings stun = config.stun();
-        assertEquals(100, stun.buildup(), 1e-9, "2026-10 PoE2：120 → 100（物理、近戰的倍率另外算）");
-        assertEquals(0.5, config.stunElementalMultiplier(), 1e-9);
-        assertEquals(1.5, stun.duration(false), 1e-9);
-        assertEquals(0.8, stun.duration(true), 1e-9);
-        assertEquals(30, stun.decayDelayTicks());
-        assertEquals(0.40 / 20, stun.decayPerTick(), 1e-12);
-        // 一擊打掉 30% 門檻 → 累積 30%；傳奇怪只有四成
-        assertEquals(0.30, stun.buildupFor(30, 100, 1.0, false), 1e-9);
-        assertEquals(0.30 * 0.4, stun.buildupFor(30, 100, 1.0, true), 1e-9);
-        assertEquals(0.30 * 1.5, stun.buildupFor(30, 100, 1.5, false), 1e-9, "震懾：50% 更多累積");
+        assertEquals(58, stun.buildup(), 1e-9, "傷害 × 0.58 ÷ 暈眩門檻");
+        assertEquals(1.0, config.stunElementalMultiplier(), 1e-9, "元素傷害全算");
+        assertEquals(2.0, stun.duration(false), 1e-9);
+        assertEquals(160, stun.decayDelayTicks(), "8 秒沒累積才開始退");
+        assertEquals(0.05 / 20, stun.decayPerTick(), 1e-12, "每秒退 5%");
+        assertEquals(40, stun.decayDelayTicks(true), "玩家 2 秒");
+        assertEquals(5.0, stun.after(false), 1e-9, "重暈後門檻 +500%");
+        assertEquals(330, stun.afterTicks(false));
+        assertEquals(1.0, stun.after(true), 1e-9, "玩家 +100%");
+        assertEquals(0.30 * 0.58, stun.buildupFor(30, 100, 1.0, false), 1e-9);
+        assertEquals(0.30 * 0.58 * 1.5, stun.buildupFor(30, 100, 1.5, false), 1e-9, "震懾：50% 更多累積");
         assertEquals(0, stun.buildupFor(0, 100, 1.0, false), 1e-9);
         final AilmentConfig.MeterSettings electrocute = config.electrocute();
-        assertEquals(150, electrocute.buildup(), 1e-9);
-        assertEquals(3, electrocute.duration(false), 1e-9);
-        assertEquals(1.5, electrocute.duration(true), 1e-9);
-        assertEquals(8, electrocute.uniqueImmunity(), 1e-9);
+        assertEquals(170, electrocute.buildup(), 1e-9);
+        assertEquals(5, electrocute.duration(false), 1e-9);
+        assertEquals(2, electrocute.duration(true), 1e-9);
+        assertEquals(300, electrocute.afterTicks(false));
+        final AilmentConfig.MeterSettings pin = config.pin();
+        assertEquals(420, pin.buildup(), 1e-9);
+        assertEquals(3, pin.duration(false), 1e-9);
+        assertEquals(2, pin.duration(true), 1e-9);
+        assertEquals(260, pin.afterTicks(false));
+        assertEquals(280, config.freeze().afterTicks(false));
     }
 
     @Test
@@ -371,9 +461,10 @@ class AilmentTest {
 
         final SkillBuild arc = SkillBuild.of(skills, skills.skill("arc"), 1, 1, false, List.of(skills.support("electrocute")), Set.of(), sheet);
         final StatSheet shocking = arc.profile().effective(sheet);
-        assertEquals(50, shocking.flat(StatKeys.ELECTROCUTE_CHANCE, arc.profile().contextFor(DamageType.LIGHTNING)), 1e-9, "電擊：機率 +50%");
+        // 2026-10-26 照 PoE2（Electrocute I）：閃電傷害全部算進電擊累積（機率 100%）、不能感電；這次之前機率 +50%、累積更多 30%
+        assertEquals(100, shocking.flat(StatKeys.ELECTROCUTE_CHANCE, arc.profile().contextFor(DamageType.LIGHTNING)), 1e-9, "電擊：機率 +100%");
         final List<String> arcLines = AilmentText.lines(shocking, arc.profile(), DamageCalculator.expectedOutgoing(sheet, arc.profile()));
-        assertTrue(arcLines.contains("<#9fe8ff>電擊<gray> 機率 +50%、累積 ×1.30"), String.join(" | ", arcLines));
+        assertTrue(arcLines.contains("<#9fe8ff>電擊<gray> 機率 +100%"), String.join(" | ", arcLines));
         final SkillBuild fireball = SkillBuild.of(skills, skills.skill("fireball"), 1, 1, false, List.of(skills.support("electrocute")), Set.of(), sheet);
         final List<String> fireLines = AilmentText.lines(fireball.profile().effective(sheet), fireball.profile(), DamageCalculator.expectedOutgoing(sheet, fireball.profile()));
         assertFalse(fireLines.stream().anyMatch(line -> line.contains("電擊")), "熾星彈沒有閃電傷害：電擊掛了沒用，不列");

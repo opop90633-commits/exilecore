@@ -1,0 +1,147 @@
+# 2026-10-27 PoE2 0.5 缺的一般輔助寶石（不含血脈；tools/apply_poe2_missing_supports.py 產生）
+# PoE2 家族	PoE2 最高階	PoE2 階級	顏色	我們的代號	名稱	我們的階級	狀態	說明
+Acrimony	Acrimony	T2	b	acrimony	怨蝕	2	exact	
+Alignment	Alignment III	T5	g	alignment_iii	正向 III	3	exact	2026-10-27 改成原作：對準之後 1 秒才指示新的方向（瞄準延遲）；原作鏡頭固定，畫面的上下左右就是世界上固定的四個方向，用東南西北一樣
+Ambrosia	Ambrosia II	T3	b	ambrosia_ii	瓊漿 II	2	exact	
+Ancestral Aid	Ancestral Aid	T0	r	ancestral_aid	祖援	2	exact	
+Ancestral Call	Ancestral Call III	T0	r	ancestral_call_iii	祖喚 III	2	exact	
+Astral Projection	Astral Projection	T3	b	astral_projection	星投	2	exact	
+Barbs	Barbs III	T5	r	barbs_iii	倒鉤 III	3	exact	
+Behead	Behead II	T3	r	behead_ii	斬首 II	2	exact	
+Biting Frost	Biting Frost II	T5	b	biting_frost_ii	噬寒 II	3	exact	
+Blindside	Blindside	T1	g	blindside	暗襲	1	exact	
+Branching Fissures	Branching Fissures II	T5	r	branching_fissures_ii	岔裂 II	3	exact	2026-10-27 改成原作：分岔從主裂縫上岔出去（這次之前從起點往兩旁各裂一道）
+Brink	Brink II	T3	r	brink_ii	臨界 II	2	exact	
+Catharsis	Catharsis	T2	b	catharsis	淨化	2	exact	
+Chaotic Freeze	Chaotic Freeze	T3	b	chaotic_freeze	混凍	2	exact	
+Charged Shots	Charged Shots II	T5	g	charged_shots_ii	充射 II	3	exact	
+Cold Exposure	Cold Exposure	T4	b	cold_exposure	霜曝	3	exact	
+Fire Exposure	Fire Exposure	T4	r	fire_exposure	焰曝	3	exact	
+Lightning Exposure	Lightning Exposure	T4	g	lightning_exposure	雷曝	3	exact	
+Commandment	Commandment	T0	b	commandment	號令	2	exact	2026-10-27 改成原作：召喚物自己的指令冷卻（這次之前給你的指令技能、召喚物所有傷害更少 100%）
+Commiserate	Commiserate	T2	g	commiserate	同病	2	exact	
+Concoct	Concoct II	T4	r	concoct_ii	調劑 II	3	exact	
+Concussive Spells	Concussive Spells	T4	b	concussive_spells	震法	3	exact	
+Corpse Conservation	Corpse Conservation	T3	b	corpse_conservation	惜屍	2	exact	
+Crackling Barrier	Crackling Barrier	T2	b	crackling_barrier	電屏	2	exact	
+Crazed Minions	Crazed Minions	T4	b	crazed_minions	狂僕	3	exact	2026-10-27 改成原作：召喚物自己的屬性表更多傷害（這次之前每一下另外打 30%）
+Crescendo	Crescendo III	T5	b	crescendo_iii	漸強 III	3	exact	2026-10-27 改成原作：補上打擊連段的最後一擊（快速連用、2 秒內、中間沒用別的技能；這次之前每 3 下一次）
+Cursed Ground	Cursed Ground	T3	b	cursed_ground	咒地	2	exact	2026-10-27 改成原作：詛咒改成地面、站在裡面才被詛咒（這次之前另外留一塊每秒在中心重放一次詛咒的地面）
+Dauntless	Dauntless	T0	r	dauntless	無畏	2	exact	
+Deadly Resolve	Deadly Resolve	T3	r	deadly_resolve	決殺	2	exact	2026-10-27 改成原作：斬擊照 TriggeredDeadlyResolvePlayer（3 公尺 120 度、逐級傷害與護甲換算；這次之前每 200 點護甲更多 1%、最多 100%，身邊一圈）
+Defy	Defy II	T5	r	defy_ii	抗命 II	3	exact	
+Delayed Gratification	Delayed Gratification	T2	g	delayed_gratification	延樂	2	exact	2026-10-27 改成原作：要連擊的（驚雷之鐘）也算（這次之前只有要榮耀的）
+Delayed Reaction	Delayed Reaction	T4	g	delayed_reaction	遲爆	3	exact	2026-10-27 改成原作：矛陣改成照 PoE2 Spearfield 插在地上、敵人碰到才炸的矛，跟冰晶、鐵蒺同一套（這次之前矛陣是持續打的範圍，做成持續時間更少 70%、每一下更多 283%）
+Derange	Derange	T4	b	derange	狂亂	3	exact	
+Desperation	Desperation	T0	r	desperation	絕境	2	exact	
+Direstrike	Direstrike II	T4	r	direstrike_ii	絕擊 II	3	exact	
+Drain Ailments	Drain Ailments	T3	b	drain_ailments	汲蝕	2	exact	
+Durability	Durability	T2	g	durability	堅物	2	exact	我們會被打碎的物件是冰晶
+Encroaching Ground	Encroaching Ground	T2	b	encroaching_ground	蔓地	2	exact	
+Energy Barrier	Energy Barrier	T0	b	energy_barrier	能障	2	exact	2026-10-27 改成原作：放的時候被暈眩才觸發（這次之前放的那段時間回充都不等待）
+Exploit Weakness	Exploit Weakness	T2	r	exploit_weakness	乘虛	2	exact	
+Fist of War	Fist of War III	T5	r	fist_of_war_iii	戰拳 III	3	exact	
+Font of Blood	Font of Blood	T2	r	font_of_blood	血泉	2	exact	
+Font of Mana	Font of Mana	T2	b	font_of_mana	魔泉	2	exact	
+Fortress	Fortress II	T3	b	fortress_ii	環壁 II	2	exact	
+Frenzied Riposte	Frenzied Riposte	T2	g	frenzied_riposte	反刺	2	exact	
+Fresh Clip	Fresh Clip II	T4	r	fresh_clip_ii	新匣 II	3	exact	2026-10-27 改成原作：照這個技能裝填的弩矢算（這次之前照所有弩技能射出幾發）
+Gambleshot	Gambleshot	T3	b	gambleshot	賭射	2	exact	
+Gorge	Gorge	T2	b	gorge	饕屍	2	exact	
+Harmonic Remnants	Harmonic Remnants II	T3	b	harmonic_remnants_ii	和骸 II	2	exact	2026-10-27 改成原作：跟著這個技能產生的每一個殘骸走、真的多產生一個（這次之前「放技能後 12 秒內撿的殘骸」20% 機率給兩次）
+Magnetic Remnants	Magnetic Remnants	T0	b	magnetic_remnants	磁骸	2	exact	2026-10-27 改成原作：跟著這個技能產生的每一個殘骸走（這次之前「放技能後 12 秒內撿的殘骸」都算）
+Remnant Potency	Remnant Potency III	T4	r	remnant_potency_iii	骸效 III	3	exact	2026-10-27 改成原作：撿到 3 秒後才生效、跟著這個技能產生的每一個殘骸走；殘骸效果照全遊戲的算法（灌注殘骸：多給一層的機率）
+Hex Bloom	Hex Bloom	T3	b	hex_bloom	咒綻	2	exact	
+Holy Descent	Holy Descent	T5	r	holy_descent	聖降	3	exact	
+Impale	Impale	T4	g	impale	刺釘	3	exact	
+Incision	Incision	T4	r	incision	切口	3	exact	
+Inexorable Critical	Inexorable Critical II	T4	b	inexorable_critical_ii	必然 II	3	exact	
+Last Gasp	Last Gasp	T1	b	last_gasp	迴光	1	exact	
+Leverage	Leverage	T0	g	leverage	槓桿	2	exact	
+Loyalty	Loyalty	T2	b	loyalty	忠僕	2	exact	
+Malady	Malady	T0	g	malady	病變	2	exact	
+Mark of Siphoning	Mark of Siphoning II	T4	b	mark_of_siphoning_ii	汲印 II	3	exact	
+Minion Splash	Minion Splash II	T5	r	minion_splash_ii	僕濺 II	3	exact	
+Minion Pact	Minion Pact II	T4	b	minion_pact_ii	僕契 II	3	exact	
+Mobility	Mobility	T3	g	mobility	輕身	2	exact	
+Neural Overload	Neural Overload	T3	g	neural_overload	電載	2	exact	
+Opening Move	Opening Move	T1	r	opening_move	先手	1	exact	
+Outmaneuver	Outmaneuver	T0	g	outmaneuver	巧破	2	exact	
+Perfection	Perfection	T4	g	perfection	完美	3	exact	
+Potential	Potential	T0	b	potential	潛力	2	exact	
+Practical Magic	Practical Magic II	T5	b	practical_magic_ii	實咒 II	3	exact	
+Profanity	Profanity II	T5	b	profanity_ii	褻屍 II	3	exact	
+Punch Through	Punch Through	T3	g	punch_through	擊穿	2	exact	
+Pursuit	Pursuit III	T5	g	pursuit_iii	追擊 III	3	exact	
+Retreat	Retreat III	T5	g	retreat_iii	撤擊 III	3	exact	
+Quill Burst	Quill Burst	T3	r	quill_burst	刺爆	2	exact	
+Rally	Rally	T0	r	rally	重整	2	exact	
+Rearm	Rearm II	T5	g	rearm_ii	再布 II	3	exact	2026-10-27 改成原作：矛陣改成照 PoE2 Spearfield 插在地上、敵人碰到才炸的矛，觸發後一樣會重新布置（這次之前矛陣是持續打的範圍，做成持續時間更多 30%）
+Refraction	Refraction III	T5	r	refraction_iii	折光 III	3	exact	2026-10-27 改成原作：範圍用插下的戰旗（這次之前用你身邊、臨在 1.5 倍）
+Reinforced Totems	Reinforced Totems II	T5	r	reinforced_totems_ii	固樁 II	3	exact	
+Relentless Rage	Relentless Rage	T0	r	relentless_rage	不息怒	2	exact	
+Rending Apex	Rending Apex	T3	r	rending_apex	裂巔	2	exact	2026-10-27 改成原作：補上打擊連段的最後一擊（這次之前平均成每一下物理傷害的 25%）
+Ricochet	Ricochet III	T0	g	ricochet_iii	跳彈 III	2	exact	
+Rime	Rime	T0	b	rime	霧凇	2	exact	2026-10-27 改成原作：照「站在冰緩地面上」、任何擊中都算（這次之前照冰緩中的敵人、只算這個技能的擊中）
+Rip	Rip	T3	r	rip	撕血	2	exact	
+Rupture	Rupture	T3	r	rupture	破脈	2	exact	
+Rusted Spikes	Rusted Spikes	T0	r	rusted_spikes	鏽刺	2	exact	
+Second Wind	Second Wind III	T5	g	second_wind_iii	再起 III	3	exact	
+Shock Conduction	Shock Conduction II	T0	b	shock_conduction_ii	傳雷 II	2	exact	2026-10-27 改成原作：補上濕透（積雷雲範圍內的敵人）；感電傳給範圍內所有敵人、照原本的感電幅度（這次之前只傳一隻、固定 20%）
+Shock Siphon	Shock Siphon	T0	b	shock_siphon	汲雷	2	exact	
+Slow Potency	Slow Potency	T1	g	slow_potency	緩勁	1	exact	
+Spar	Spar	T0	r	spar	切磋	2	exact	
+Retaliate	Retaliate II	T4	r	retaliate_ii	還擊 II	3	exact	
+Spectral Volley	Spectral Volley	T4	g	spectral_volley	光影	3	exact	
+Spell Cascade	Spell Cascade	T1	b	spell_cascade	連瀑	1	exact	
+Splinter Totem	Splinter Totem II	T5	r	splinter_totem_ii	裂樁 II	3	exact	2026-10-27 改成原作：圖騰真的會分裂（這次之前平衡等效成同時多 2 根）；原作沒寫一次分成幾根，照「分裂成更小的自己」做成一根變兩根
+Steadfast	Steadfast II	T3	r	steadfast_ii	穩守 II	2	exact	
+Stoicism	Stoicism II	T5	r	stoicism_ii	堅忍 II	3	exact	
+Stomping Ground	Stomping Ground	T1	r	stomping_ground	踏震	1	exact	2026-10-27 改成原作：每走一步一陣、震波是攻擊（武器傷害 50%、2 公尺；這次之前起點、終點各一陣法術震波）；我們沒有走路動畫，一步照跑步的步幅 1.5 公尺
+Stormfire	Stormfire	T3	b	stormfire	雷焚	2	exact	2026-10-27 改成原作：點燃每一跳另外算閃電傷害（這次之前平衡等效成點燃更多 20%）
+Syzygy	Syzygy	T4	r	syzygy	合軌	3	exact	
+Tear	Tear	T3	r	tear	裂創	2	exact	
+Thrill of the Kill	Thrill of the Kill II	T3	b	thrill_of_the_kill_ii	殺意 II	2	exact	
+Tumult	Tumult	T0	g	tumult	騷動	2	exact	
+Unabating	Unabating	T0	r	unabating	不撓	2	exact	
+Unbending	Unbending	T0	b	unbending	不屈	2	exact	
+Unbreakable	Unbreakable	T0	r	unbreakable	不破	2	exact	2026-10-27 改成原作：輕暈門檻更多 200%（這次之前做成不會被輕暈）；更多暈眩門檻這次之前沒有作用，一起修好
+Undermine	Undermine	T0	r	undermine	掘弱	2	exact	
+Untouchable	Untouchable	T0	g	untouchable	無影	2	exact	
+Unyielding	Unyielding	T0	r	unyielding	不退	2	exact	
+Upheaval	Upheaval II	T5	r	upheaval_ii	隆起 II	3	exact	
+Vanguard	Vanguard II	T2	r	vanguard_ii	先鋒 II	2	exact	2026-10-27 改成原作：補上怪物被輕暈的事件（這次之前 2＋6 合併在重暈時給）
+Volatile Power	Volatile Power	T0	b	volatile_power	爆能	2	exact	
+Volatility	Volatility	T3	b	volatility	不穩	2	exact	
+Wildfire	Wildfire	T2	b	wildfire	野火	2	exact	
+Wildshards	Wildshards II	T5	b	wildshards_ii	狂片 II	3	exact	
+Window of Opportunity	Window of Opportunity II	T5	g	window_of_opportunity_ii	良機 II	3	exact	2026-10-27 改成原作：補上完美時機的區間更短 35%
+Burning Inscription	Burning Inscription	T4	b				skipped	我們沒有地面符文（Ground Rune）技能可以觸發
+Healing Runes	Healing Runes	T0	w				skipped	我們沒有符文護盾（Runic Ward，0.4 卡爾葛聯盟的防禦資源）
+Runic Extraction	Runic Extraction	T0	w				skipped	我們沒有符文護盾（Runic Ward）與瓦瑞西姆殘骸
+Runic Infusion	Runic Infusion	T0	w				skipped	我們沒有符文護盾（Runic Ward）
+Fist Of Kalguur	Fist Of Kalguur	T0	w				skipped	我們沒有符文護盾（Runic Ward）與符文強化
+Catalysing Elements	Catalysing Elements	T5	b				skipped	我們的元素地面不會強化技能（沒有「被元素地面強化」這件事可以觸發）
+Skittering Stone	Skittering Stone	T4	r				skipped	我們沒有會被打碎的岩石物件（原作是石化元素的召喚）
+Soulbreaker	Soulbreaker	T0	b				skipped	我們的怪物沒有能量護盾（只有少數詞綴的護盾），打破護盾幾乎不會發生
+Controlled Hazard	Controlled Hazard	T4	g				skipped	我們的危險區域是持續打的範圍，不是踩到才觸發的物件；「3 秒內不會觸發」只剩壞處
+Unsteady Tempo	Unsteady Tempo	T0	r				skipped	0.5 資料沒有任何數值（poe2db 也沒有），做不出原作的強度
+Font of Rage	Font of Rage	T0	r				skipped	0.5 資料只有半徑，沒有怒氣偷取的比例
+Nadir	Nadir	T0	b				skipped	0.5 資料標成 DNT-UNUSED（還沒開放），也沒有數值
+Invocation	Invocation	T0	b				skipped	0.5 資料沒有任何數值（poe2db 也沒有說明）
+Lasting Ground	Lasting Ground	T0	r				skipped	跟已經有的久地（Persistent Ground I：地面持續時間增加 50%）完全一樣
+Selfless Remnants	Selfless Remnants	T2	r				skipped	我們的殘骸是給撿的人自己技能用的元素灌注，改給隊友沒有作用
+Sacrificial Lamb	Sacrificial Lamb	T3	b				skipped	我們沒有會引爆召喚物或指定召喚物為目標的技能
+Fusillade	Fusillade	T0	g	fusillade	箭幕		removed	2026-10-27 照站長刪掉（0.5 資料標成 DNT-UNUSED（還沒開放），做不出原作射上天落下的箭雨）
+Hobble	Hobble	T0	g	hobble	跛行		removed	2026-10-27 照站長刪掉（0.5 資料沒有任何數值，做不出原作的強度）
+Living Lightning	Living Lightning II	T4	b	living_lightning_ii	活雷 II		removed	2026-10-27 照站長刪掉（原作的活雷是不會被打、會瞬移的召喚物，我們做不出來）
+Momentum	Momentum	T2	g	momentum	衝勢		removed	2026-10-27 照站長刪掉（我們的技能大多按一下就瞬間出手，沒有「使用的那段時間」可以邊走邊用）
+Break Endurance	Break Endurance			break_endurance			already	代號沒寫英文名，其實已經有：break_endurance
+Charge Profusion	Charge Profusion			charge_profusion			already	代號沒寫英文名，其實已經有：charge_profusion
+Culling Strike	Culling Strike			culling_strike_ii			already	代號沒寫英文名，其實已經有：culling_strike_ii
+Enraged Warcry	Enraged Warcry			enraged_warcry_ii			already	代號沒寫英文名，其實已經有：enraged_warcry_ii
+Ice Bite	Ice Bite			ice_bite_ii			already	代號沒寫英文名，其實已經有：ice_bite_ii
+Infernal Legion	Infernal Legion			infernal_legion_ii			already	代號沒寫英文名，其實已經有：infernal_legion_ii（III 跟 II 數值一樣）
+Mark for Death	Mark for Death			mark_for_death_ii			already	代號沒寫英文名，其實已經有：mark_for_death_ii
+Swift Affliction	Swift Affliction			swift_affliction_iii			already	代號沒寫英文名，其實已經有：swift_affliction_iii
+Urgent Totems	Urgent Totems			urgent_totems_iii			already	代號沒寫英文名，其實已經有：urgent_totems_iii

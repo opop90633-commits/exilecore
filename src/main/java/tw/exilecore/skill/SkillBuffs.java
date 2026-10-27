@@ -41,9 +41,21 @@ final class SkillBuffs {
         if (ticks <= 0 || modifiers.isEmpty()) {
             return;
         }
-        buffs.computeIfAbsent(player.getUniqueId(), uuid -> new LinkedHashMap<>())
-                .put(id, new Buff(id, name, now() + ticks, List.copyOf(modifiers)));
-        plugin.players().markDirty(player);
+        // 2026-10-26（昇華・增益效果失效速度）：身上的增益消退得比較慢
+        final int lasting = tw.exilecore.ascendancy.AscendancyEffects.buffTicks(player, ticks);
+        final List<Modifier> copy = List.copyOf(modifiers);
+        final Buff previous = buffs.computeIfAbsent(player.getUniqueId(), uuid -> new LinkedHashMap<>())
+                .put(id, new Buff(id, name, now() + lasting, copy));
+        // 2026-10-27（效能）：同一個增益、效果一模一樣只是重新計時（擊殺後、法力風暴、踏骸之履…一直刷新）就不重算屬性表；
+        //   這次之前每刷新一次就整張屬性表重算一次（打怪時一秒好幾次）
+        if (!refreshOnly(previous, copy, now())) {
+            plugin.players().markDirty(player);
+        }
+    }
+
+    /** 2026-10-27：舊的還有效、修飾器完全一樣——只是延長時間，屬性表不用重算。 */
+    static boolean refreshOnly(final Buff previous, final List<Modifier> modifiers, final long now) {
+        return previous != null && previous.active(now) && previous.modifiers().equals(modifiers);
     }
 
     /** 這個增益現在有沒有效（2026-10：銀月庇的月光要看增益還在不在）。 */

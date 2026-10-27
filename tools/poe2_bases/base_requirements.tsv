@@ -1,0 +1,831 @@
+our_id	our_file	our_name	status	merged_into	family	our_base_level	our_drop_level	our_req_level	our_str	our_dex	our_int	our_armour	our_evasion	our_es	our_block	our_aps	our_crit	our_implicit	our_grants	match_method	poe2_key	poe2_name	poe2_class	poe2_drop_level	poe2_req_level	poe2_str	poe2_dex	poe2_int	poe2_armour	poe2_evasion	poe2_es	poe2_block	poe2_move_prop_raw	poe2_aps	poe2_crit	poe2_phys	poe2_implicit	poe2_grants
+body_str_01	armour	樸素胸鎧	retired	body_str_25	body_str		1	1	16	0	0	40								tier-order	FourBodyStr1	Rusted Cuirass	Body Armour	1	1	0	0	0	45				-500					
+body_str_02	armour	舊木胸鎧	retired	body_str_25	body_str		4	4	16	0	0	43								tier-order	FourBodyStr2	Fur Plate	Body Armour	4	4	10	0	0	66				-500					
+body_str_03	armour	鐵箍胸鎧	retired	body_str_25	body_str		11	11	20	0	0	53								tier-order	FourBodyStr3	Iron Cuirass	Body Armour	11	11	21	0	0	115				-500					
+body_str_04	armour	淬鐵胸鎧	retired	body_str_25	body_str		16	16	21	0	0	60								tier-order	FourBodyStr4	Raider Plate	Body Armour	16	16	28	0	0	150				-500					
+body_str_05	armour	鍛紋胸鎧	retired	body_str_25	body_str		20	20	22	0	0	66								tier-order	FourBodyStr5	Maraketh Cuirass	Body Armour	20	20	34	0	0	178				-500					
+body_str_06	armour	精鐵胸鎧	retired	body_str_25	body_str		27	27	25	0	0	77								tier-order	FourBodyStr6	Steel Plate	Body Armour	27	27	45	0	0	228				-500					
+body_str_07	armour	鋼脊胸鎧	retired	body_str_25	body_str		33	33	26	0	0	85								tier-order	FourBodyStr7	Full Plate	Body Armour	33	33	54	0	0	270				-500					
+body_str_08	armour	鑄紋胸鎧	retired	body_str_25	body_str		37	37	27	0	0	91								tier-order	FourBodyStr8	Vaal Cuirass	Body Armour	37	37	60	0	0	298				-500					
+body_str_09	armour	戰痕胸鎧	retired	body_str_25	body_str		45	45	30	0	0	103								tier-order	FourBodyStr9	Juggernaut Plate	Body Armour	45	45	72	0	0	355				-500					
+body_str_10	armour	銅鑲胸鎧	retired	body_str_25	body_str		45	45	30	0	0	103								tier-order	FourBodyStr2Cruel	Barbarian Plate	Body Armour	45	45	72	0	0	355				-500					
+body_str_11	armour	獵紋胸鎧	retired	body_str_25	body_str		48	48	30	0	0	108								tier-order	FourBodyStr3Cruel	Rugged Cuirass	Body Armour	48	48	77	0	0	376				-500					
+body_str_12	armour	熔鋼胸鎧	retired	body_str_25	body_str		50	50	31	0	0	111								tier-order	FourBodyStr10	Chieftain Cuirass	Body Armour	50	50	80	0	0	390				-500					
+body_str_13	armour	寒鐵胸鎧	retired	body_str_25	body_str		51	51	31	0	0	112								tier-order	FourBodyStr5Cruel	Sandsworn Cuirass	Body Armour	51	51	82	0	0	397				-500					
+body_str_14	armour	雷紋胸鎧	retired	body_str_25	body_str		52	52	32	0	0	114								tier-order	FourBodyStr11	Colosseum Plate	Body Armour	52	52	83	0	0	404				-500					
+body_str_15	armour	赤銅胸鎧	retired	body_str_25	body_str		54	54	32	0	0	117								tier-order	FourBodyStr6Cruel	Elegant Plate	Body Armour	54	54	86	0	0	418				-500					
+body_str_16	armour	秘銀胸鎧	retired	body_str_25	body_str		58	58	33	0	0	123								tier-order	FourBodyStr12	Champion Cuirass	Body Armour	58	58	92	0	0	446				-500					
+body_str_17	armour	暗鋼胸鎧	retired	body_str_25	body_str		59	59	33	0	0	124								tier-order	FourBodyStr7Cruel	Heavy Plate	Body Armour	59	59	94	0	0	453				-500					
+body_str_18	armour	星紋胸鎧	retired	body_str_25	body_str		62	62	34	0	0	129								tier-order	FourBodyStr8Cruel	Stone Cuirass	Body Armour	62	62	98	0	0	474				-500					
+body_str_19	armour	隕鐵胸鎧	retired	body_str_25	body_str		65	65	41	0	0	134								tier-order	FourBodyStr13	Glorious Plate	Body Armour	65	65	121	0	0	496				-500					
+body_str_20	armour	曜石胸鎧	retired	body_str_25	body_str		65	65	41	0	0	153								tier-order	FourBodyStr3Endgame	Soldier Cuirass	Body Armour	65	65	121	0	0	570				-500					
+body_str_21	armour	霜晶胸鎧	retired	body_str_24	body_str		68	68	40	0	0	132						增加 (30-40)% 暈眩門檻		tier-order	FourBodyStr14	Conqueror Plate	Body Armour	68	68	121	0	0	496				-500				(30-40)% increased Stun Threshold	
+body_str_22	armour	炎晶胸鎧	retired	body_str_23	body_str		70	70	40	0	0	132						每秒回復 (1.5-2.5)% 最大生命		tier-order	FourBodyStr6Endgame	Ornate Plate	Body Armour	70	70	121	0	0	496				-500				Regenerate (1.5-2.5)% of maximum Life per second	
+body_str_23	armour	天鐵胸鎧	active		body_str	73	1	1	39	0	0	131						每秒回復 (1.5-2.5)% 最大生命		tier-order	FourBodyStr15	Abyssal Cuirass	Body Armour	73	73	121	0	0	496				-500				Regenerate (1.5-2.5)% of maximum Life per second	
+body_str_24	armour	古王胸鎧	active		body_str	75	1	1	38	0	0	130						增加 (30-40)% 暈眩門檻		tier-order	FourBodyStr8Endgame	Utzaal Cuirass	Body Armour	75	75	121	0	0	496				-500				(30-40)% increased Stun Threshold	
+body_str_25	armour	聖紋胸鎧	active		body_str	80	1	1	37	0	0	129								tier-order	FourBodyStr10Endgame	Warlord Cuirass	Body Armour	80	80	121	0	0	496				-500				+(15-25)% of Armour also applies to Elemental Damage	
+body_dex_01	armour	樸素皮甲	retired	body_dex_22	body_dex		1	1	0	16	0		36							tier-order	FourBodyDex1	Leather Vest	Body Armour	1	1	0	0	0		30			-300					
+body_dex_02	armour	舊木皮甲	retired	body_dex_22	body_dex		4	4	0	16	0		43							tier-order	FourBodyDex2	Quilted Vest	Body Armour	4	4	0	10	0		49			-300					
+body_dex_03	armour	鐵箍皮甲	retired	body_dex_22	body_dex		11	11	0	20	0		56							tier-order	FourBodyDex3	Pathfinder Coat	Body Armour	11	11	0	21	0		96			-300					
+body_dex_04	armour	淬鐵皮甲	retired	body_dex_22	body_dex		16	16	0	21	0		63							tier-order	FourBodyDex4	Shrouded Vest	Body Armour	16	16	0	28	0		128			-300					
+body_dex_05	armour	鍛紋皮甲	retired	body_dex_22	body_dex		22	22	0	23	0		72							tier-order	FourBodyDex5	Rhoahide Coat	Body Armour	22	22	0	37	0		168			-300					
+body_dex_06	armour	精鐵皮甲	retired	body_dex_22	body_dex		26	26	0	24	0		78							tier-order	FourBodyDex6	Studded Vest	Body Armour	26	26	0	43	0		194			-300					
+body_dex_07	armour	鋼脊皮甲	retired	body_dex_22	body_dex		33	33	0	26	0		88							tier-order	FourBodyDex7	Scout's Vest	Body Armour	33	33	0	54	0		240			-300					
+body_dex_08	armour	鑄紋皮甲	retired	body_dex_22	body_dex		36	36	0	27	0		92							tier-order	FourBodyDex8	Serpentscale Coat	Body Armour	36	36	0	59	0		260			-300					
+body_dex_09	armour	戰痕皮甲	retired	body_dex_22	body_dex		45	45	0	30	0		105							tier-order	FourBodyDex9	Corsair Vest	Body Armour	45	45	0	72	0		320			-300					
+body_dex_10	armour	銅鑲皮甲	retired	body_dex_22	body_dex		45	45	0	30	0		105							tier-order	FourBodyDex2Cruel	Patchwork Vest	Body Armour	45	45	0	72	0		320			-300					
+body_dex_11	armour	獵紋皮甲	retired	body_dex_22	body_dex		48	48	0	30	0		109							tier-order	FourBodyDex3Cruel	Hunting Coat	Body Armour	48	48	0	77	0		339			-300					
+body_dex_12	armour	熔鋼皮甲	retired	body_dex_22	body_dex		51	51	0	31	0		113							tier-order	FourBodyDex10	Smuggler Coat	Body Armour	51	51	0	82	0		359			-300					
+body_dex_13	armour	寒鐵皮甲	retired	body_dex_22	body_dex		51	51	0	31	0		113							tier-order	FourBodyDex5Cruel	Riding Coat	Body Armour	51	51	0	82	0		359			-300					
+body_dex_14	armour	雷紋皮甲	retired	body_dex_22	body_dex		52	52	0	31	0		114							tier-order	FourBodyDex11	Strider Vest	Body Armour	52	52	0	83	0		366			-300					
+body_dex_15	armour	赤銅皮甲	retired	body_dex_22	body_dex		54	54	0	32	0		117							tier-order	FourBodyDex6Cruel	Layered Vest	Body Armour	54	54	0	86	0		379			-300					
+body_dex_16	armour	秘銀皮甲	retired	body_dex_22	body_dex		56	56	0	33	0		120							tier-order	FourBodyDex12	Hardleather Coat	Body Armour	56	56	0	89	0		392			-300					
+body_dex_17	armour	暗鋼皮甲	retired	body_dex_22	body_dex		59	59	0	33	0		124							tier-order	FourBodyDex7Cruel	Runner Vest	Body Armour	59	59	0	94	0		412			-300					
+body_dex_18	armour	星紋皮甲	retired	body_dex_22	body_dex		62	62	0	34	0		128							tier-order	FourBodyDex8Cruel	Lizardscale Coat	Body Armour	62	62	0	98	0		432			-300					
+body_dex_19	armour	隕鐵皮甲	retired	body_dex_22	body_dex		65	65	0	41	0		132							tier-order	FourBodyDex13	Exquisite Vest	Body Armour	65	65	0	121	0		451			-300					
+body_dex_20	armour	曜石皮甲	retired	body_dex_22	body_dex		65	65	0	41	0		132							tier-order	FourBodyDex3Endgame	Swiftstalker Coat	Body Armour	65	65	0	121	0		451			-300				(30-20)% reduced Slowing Potency of Debuffs on You	
+body_dex_21	armour	霜晶皮甲	retired	body_dex_22	body_dex		68	68	0	40	0		130							tier-order	FourBodyDex14	Mail Coat	Body Armour	68	68	0	121	0		451			-300				(30-20)% reduced Slowing Potency of Debuffs on You	
+body_dex_22	armour	炎晶皮甲	active		body_dex	70	1	1	0	40	0		149							tier-order	FourBodyDex6Endgame	Slipstrike Vest	Body Armour	70	70	0	121	0		519			-300					
+body_dex_23	armour	天鐵皮甲	retired	body_dex_24	body_dex		73	73	0	39	0		128					增加 (30-40)% 元素異常門檻		tier-order	FourBodyDex15	Armoured Vest	Body Armour	73	73	0	121	0		451			-300				(30-40)% increased Elemental Ailment Threshold	
+body_dex_24	armour	古王皮甲	active		body_dex	75	1	1	0	38	0		127					增加 (30-40)% 元素異常門檻		tier-order	FourBodyDex8Endgame	Wyrmscale Coat	Body Armour	75	75	0	121	0		451			-300				(30-40)% increased Elemental Ailment Threshold	
+body_dex_25	armour	聖紋皮甲	active		body_dex	80	1	1	0	37	0		125					增加 5% 移動速度		tier-order	FourBodyDex10Endgame	Corsair Coat	Body Armour	80	80	0	121	0		451			-300				5% increased Movement Speed	
+body_int_01	armour	樸素法袍	retired	body_int_20	body_int		1	1	0	0	16			16						tier-order	FourBodyInt1	Tattered Robe	Body Armour	1	1	0	0	0			28		-300					
+body_int_02	armour	舊木法袍	retired	body_int_20	body_int		5	5	0	0	16			16						tier-order	FourBodyInt2	Feathered Robe	Body Armour	5	5	0	0	11			35		-300					
+body_int_03	armour	鐵箍法袍	retired	body_int_20	body_int		11	11	0	0	20			18						tier-order	FourBodyInt3	Hexer's Robe	Body Armour	11	11	0	0	21			45		-300					
+body_int_04	armour	淬鐵法袍	retired	body_int_20	body_int		16	16	0	0	21			20						tier-order	FourBodyInt4	Bone Raiment	Body Armour	16	16	0	0	28			54		-300					
+body_int_05	armour	鍛紋法袍	retired	body_int_20	body_int		22	22	0	0	23			22						tier-order	FourBodyInt5	Silk Robe	Body Armour	22	22	0	0	37			64		-300					
+body_int_06	armour	精鐵法袍	retired	body_int_20	body_int		28	28	0	0	25			25						tier-order	FourBodyInt6	Keth Raiment	Body Armour	28	28	0	0	47			74		-300					
+body_int_07	armour	鋼脊法袍	retired	body_int_20	body_int		33	33	0	0	26			28						tier-order	FourBodyInt7	Votive Raiment	Body Armour	33	33	0	0	54			83		-300					
+body_int_08	armour	鑄紋法袍	retired	body_int_20	body_int		40	40	0	0	28			32						tier-order	FourBodyInt8	Altar Robe	Body Armour	40	40	0	0	65			95		-300					
+body_int_09	armour	戰痕法袍	retired	body_int_20	body_int		45	45	0	0	30			34						tier-order	FourBodyInt9	Elementalist Robe	Body Armour	45	45	0	0	72			103		-300					
+body_int_10	armour	銅鑲法袍	retired	body_int_20	body_int		45	45	0	0	30			34						tier-order	FourBodyInt2Cruel	Avian Robe	Body Armour	45	45	0	0	72			103		-300					
+body_int_11	armour	獵紋法袍	retired	body_int_20	body_int		48	48	0	0	31			36						tier-order	FourBodyInt3Cruel	Cursespeaker's Robe	Body Armour	48	48	0	0	77			109		-300					
+body_int_12	armour	熔鋼法袍	retired	body_int_20	body_int		49	49	0	0	31			37						tier-order	FourBodyInt10	Mystic Raiment	Body Armour	49	49	0	0	78			110		-300					
+body_int_13	armour	寒鐵法袍	retired	body_int_20	body_int		51	51	0	0	31			38						tier-order	FourBodyInt5Cruel	Luxurious Robe	Body Armour	51	51	0	0	82			114		-300					
+body_int_14	armour	雷紋法袍	retired	body_int_20	body_int		52	52	0	0	32			38						tier-order	FourBodyInt11	Imperial Robe	Body Armour	52	52	0	0	83			115		-300					
+body_int_15	armour	赤銅法袍	retired	body_int_20	body_int		54	54	0	0	32			40						tier-order	FourBodyInt6Cruel	River Raiment	Body Armour	54	54	0	0	86			119		-300					
+body_int_16	armour	秘銀法袍	retired	body_int_20	body_int		58	58	0	0	33			42						tier-order	FourBodyInt12	Plated Raiment	Body Armour	58	58	0	0	92			126		-300					
+body_int_17	armour	暗鋼法袍	retired	body_int_20	body_int		59	59	0	0	33			43						tier-order	FourBodyInt7Cruel	Adherent's Raiment	Body Armour	59	59	0	0	94			127		-300					
+body_int_18	armour	星紋法袍	retired	body_int_20	body_int		62	62	0	0	34			44						tier-order	FourBodyInt8Cruel	Ceremonial Robe	Body Armour	62	62	0	0	98			132		-300					
+body_int_19	armour	隕鐵法袍	retired	body_int_20	body_int		65	65	0	0	41			47						tier-order	FourBodyInt13	Havoc Raiment	Body Armour	65	65	0	0	121			138		-300					
+body_int_20	armour	曜石法袍	active		body_int	65	1	1	0	0	41			58						tier-order	FourBodyInt3Endgame	Vile Robe	Body Armour	65	65	0	0	121			171		-300					
+body_int_21	armour	霜晶法袍	retired	body_int_22	body_int		68	68	0	0	40			47				增加 (40-50)% 魔力回復速度		tier-order	FourBodyInt14	Enlightened Robe	Body Armour	68	68	0	0	121			138		-300				(40-50)% increased Mana Regeneration Rate	
+body_int_22	armour	炎晶法袍	active		body_int	70	1	1	0	0	40			52				增加 (40-50)% 魔力回復速度		tier-order	FourBodyInt6Endgame	Flowing Raiment	Body Armour	70	70	0	0	121			153		-300				(40-50)% increased Mana Regeneration Rate	
+body_int_23	armour	天鐵法袍	retired	body_int_24	body_int		73	73	0	0	39			47				增加 (20-25)% 能量護盾回充速度		tier-order	FourBodyInt15	Arcane Raiment	Body Armour	73	73	0	0	121			138		-300				(20-25)% increased Energy Shield Recharge Rate	
+body_int_24	armour	古王法袍	active		body_int	75	1	1	0	0	38			52				增加 (20-25)% 能量護盾回充速度		tier-order	FourBodyInt8Endgame	Sacramental Robe	Body Armour	75	75	0	0	121			153		-300				(20-25)% increased Energy Shield Recharge Rate	
+body_int_25	armour	聖紋法袍	active		body_int	80	1	1	0	0	37			52				受到的傷害有 (5-10)% 先從魔力扣		tier-order	FourBodyInt10Endgame	Feathered Raiment	Body Armour	80	80	0	0	121			153		-300				(5-10)% of Damage is taken from Mana before Life	
+body_str_dex_01	armour	樸素鱗甲	retired	body_str_dex_27	body_str_dex		1	1	10	10	0	22	19							tier-order	FourBodyStrDex1	Chain Mail	Body Armour	1	1	0	0	0	25	16			-400					
+body_str_dex_02	armour	舊木鱗甲	retired	body_str_dex_27	body_str_dex		11	11	13	13	0	29	31							tier-order	FourBodyStrDex2	Rogue Armour	Body Armour	11	11	13	13	0	63	53			-400					
+body_str_dex_03	armour	鐵箍鱗甲	retired	body_str_dex_27	body_str_dex		16	16	13	13	0	33	35							tier-order	FourBodyStrDex3	Vagabond Armour	Body Armour	16	16	17	17	0	83	71			-400					
+body_str_dex_04	armour	淬鐵鱗甲	retired	body_str_dex_27	body_str_dex		26	26	15	15	0	41	43							tier-order	FourBodyStrDex4	Cloaked Mail	Body Armour	26	26	25	25	0	121	107			-400					
+body_str_dex_05	armour	鍛紋鱗甲	retired	body_str_dex_27	body_str_dex		33	33	16	16	0	47	48							tier-order	FourBodyStrDex5	Explorer Armour	Body Armour	33	33	31	31	0	149	132			-400					
+body_str_dex_06	armour	精鐵鱗甲	retired	body_str_dex_27	body_str_dex		37	37	17	17	0	50	52							tier-order	FourBodyStrDex6	Scale Mail	Body Armour	37	37	34	34	0	164	147			-400					
+body_str_dex_07	armour	鋼脊鱗甲	retired	body_str_dex_27	body_str_dex		45	45	18	18	0	57	58							tier-order	FourBodyStrDex7	Knight Armour	Body Armour	45	45	41	41	0	195	176			-400					
+body_str_dex_08	armour	鑄紋鱗甲	retired	body_str_dex_27	body_str_dex		45	45	18	18	0	57	58							tier-order	FourBodyStrDex1Cruel	Ring Mail	Body Armour	45	45	41	41	0	195	176			-400					
+body_str_dex_09	armour	戰痕鱗甲	retired	body_str_dex_27	body_str_dex		48	48	19	19	0	59	60							tier-order	FourBodyStrDex2Cruel	Scoundrel Armour	Body Armour	48	48	43	43	0	207	187			-400					
+body_str_dex_10	armour	銅鑲鱗甲	retired	body_str_dex_27	body_str_dex		50	50	19	19	0	61	62							tier-order	FourBodyStrDex8	Ancestral Mail	Body Armour	50	50	44	44	0	214	194			-400					
+body_str_dex_11	armour	獵紋鱗甲	retired	body_str_dex_27	body_str_dex		51	51	19	19	0	62	62							tier-order	FourBodyStrDex3Cruel	Wanderer Armour	Body Armour	51	51	45	45	0	218	197			-400					
+body_str_dex_12	armour	熔鋼鱗甲	retired	body_str_dex_27	body_str_dex		52	52	19	19	0	62	63							tier-order	FourBodyStrDex9	Lamellar Mail	Body Armour	52	52	46	46	0	222	201			-400					
+body_str_dex_13	armour	寒鐵鱗甲	retired	body_str_dex_27	body_str_dex		54	54	20	20	0	64	64							tier-order	FourBodyStrDex4Cruel	Mantled Mail	Body Armour	54	54	48	48	0	230	208			-400					
+body_str_dex_14	armour	雷紋鱗甲	retired	body_str_dex_27	body_str_dex		58	58	20	20	0	67	68							tier-order	FourBodyStrDex10	Gladiator Armour	Body Armour	58	58	51	51	0	245	223			-400					
+body_str_dex_15	armour	赤銅鱗甲	retired	body_str_dex_27	body_str_dex		59	59	21	21	0	68	68							tier-order	FourBodyStrDex5Cruel	Trailblazer Armour	Body Armour	59	59	52	52	0	249	226			-400					
+body_str_dex_16	armour	秘銀鱗甲	retired	body_str_dex_27	body_str_dex		62	62	21	21	0	71	70							tier-order	FourBodyStrDex6Cruel	Golden Mail	Body Armour	62	62	54	54	0	261	237			-400					
+body_str_dex_17	armour	暗鋼鱗甲	retired	body_str_dex_18	body_str_dex		65	65	25	25	0	73	73					+(60-80) 最大生命		tier-order	FourBodyStrDex11	Heroic Armour	Body Armour	65	65	67	67	0	273	248			-400				+(60-80) to maximum Life	
+body_str_dex_18	armour	星紋鱗甲	active		body_str_dex	65	1	1	25	25	0	82	81					+(60-80) 最大生命		tier-order	FourBodyStrDex2Endgame	Dastard Armour	Body Armour	65	65	67	67	0	303	276			-400				+(60-80) to maximum Life	
+body_str_dex_19	armour	隕鐵鱗甲	retired	body_str_dex_22	body_str_dex		68	68	25	25	0	73	72					+(20-25)% 火焰抗性		tier-order	FourBodyStrDex12a	Tournament Mail	Body Armour	68	68	67	67	0	273	248			-400				+(20-25)% to Fire Resistance	
+body_str_dex_20	armour	曜石鱗甲	retired	body_str_dex_23	body_str_dex		68	68	25	25	0	73	72					+(20-25)% 冰冷抗性		tier-order	FourBodyStrDex12b	Tournament Mail	Body Armour	68	68	67	67	0	273	248			-400				+(20-25)% to Cold Resistance	
+body_str_dex_21	armour	霜晶鱗甲	retired	body_str_dex_24	body_str_dex		68	68	25	25	0	73	72					+(20-25)% 閃電抗性		tier-order	FourBodyStrDex12c	Tournament Mail	Body Armour	68	68	67	67	0	273	248			-400				+(20-25)% to Lightning Resistance	
+body_str_dex_22	armour	炎晶鱗甲	active		body_str_dex	70	1	1	25	25	0	72	71					+(20-25)% 火焰抗性		tier-order	FourBodyStrDex4aEndgame	Shrouded Mail	Body Armour	70	70	67	67	0	273	248			-400				+(20-25)% to Fire Resistance	
+body_str_dex_23	armour	天鐵鱗甲	active		body_str_dex	70	1	1	25	25	0	72	71					+(20-25)% 冰冷抗性		tier-order	FourBodyStrDex4bEndgame	Shrouded Mail	Body Armour	70	70	67	67	0	273	248			-400				+(20-25)% to Cold Resistance	
+body_str_dex_24	armour	古王鱗甲	active		body_str_dex	70	1	1	25	25	0	72	71					+(20-25)% 閃電抗性		tier-order	FourBodyStrDex4cEndgame	Shrouded Mail	Body Armour	70	70	67	67	0	273	248			-400				+(20-25)% to Lightning Resistance	
+body_str_dex_25	armour	聖紋鱗甲	retired	body_str_dex_27	body_str_dex		73	73	24	24	0	72	70							tier-order	FourBodyStrDex13	Slayer Armour	Body Armour	73	73	67	67	0	273	248			-400					
+body_str_dex_26	armour	龍骨鱗甲	retired	body_str_dex_27	body_str_dex		75	75	24	24	0	82	80							tier-order	FourBodyStrDex6Endgame	Death Mail	Body Armour	75	75	67	67	0	313	285			-400					
+body_str_dex_27	armour	淵鋼鱗甲	active		body_str_dex	80	1	1	23	23	0	71	69							tier-order	FourBodyStrDex8Endgame	Thane Mail	Body Armour	80	80	67	67	0	273	248			-400				Hits against you have (15-25)% reduced Critical Damage Bonus	
+body_dex_int_01	armour	樸素纏衣	retired	body_dex_int_18	body_dex_int		1	1	0	10	10		20	9						tier-order	FourBodyDexInt1	Hermit Garb	Body Armour	1	1	0	0	0		16	16		-300					
+body_dex_int_02	armour	舊木纏衣	retired	body_dex_int_18	body_dex_int		11	11	0	12	12		31	10						tier-order	FourBodyDexInt2	Waxed Jacket	Body Armour	11	11	0	13	13		53	25		-300					
+body_dex_int_03	armour	鐵箍纏衣	retired	body_dex_int_18	body_dex_int		16	16	0	13	13		35	11						tier-order	FourBodyDexInt3	Marabout Garb	Body Armour	16	16	0	17	17		71	30		-300					
+body_dex_int_04	armour	淬鐵纏衣	retired	body_dex_int_18	body_dex_int		28	28	0	15	15		44	15						tier-order	FourBodyDexInt4	Wayfarer Jacket	Body Armour	28	28	0	26	26		114	41		-300					
+body_dex_int_05	armour	鍛紋纏衣	retired	body_dex_int_18	body_dex_int		33	33	0	16	16		48	16						tier-order	FourBodyDexInt5	Anchorite Garb	Body Armour	33	33	0	31	31		132	46		-300					
+body_dex_int_06	armour	精鐵纏衣	retired	body_dex_int_18	body_dex_int		39	39	0	17	17		53	18						tier-order	FourBodyDexInt6	Scalper's Jacket	Body Armour	39	39	0	35	35		154	51		-300					
+body_dex_int_07	armour	鋼脊纏衣	retired	body_dex_int_18	body_dex_int		45	45	0	19	19		58	20						tier-order	FourBodyDexInt7	Scoundrel Jacket	Body Armour	45	45	0	41	41		176	57		-300					
+body_dex_int_08	armour	鑄紋纏衣	retired	body_dex_int_18	body_dex_int		45	45	0	19	19		58	20						tier-order	FourBodyDexInt1Cruel	Ascetic Garb	Body Armour	45	45	0	41	41		176	57		-300					
+body_dex_int_09	armour	戰痕纏衣	retired	body_dex_int_18	body_dex_int		48	48	0	19	19		60	21						tier-order	FourBodyDexInt2Cruel	Oiled Jacket	Body Armour	48	48	0	43	43		187	60		-300					
+body_dex_int_10	armour	銅鑲纏衣	retired	body_dex_int_18	body_dex_int		51	51	0	19	19		62	22						tier-order	FourBodyDexInt8	Ascetic Garb	Body Armour	51	51	0	45	45		197	63		-300					
+body_dex_int_11	armour	獵紋纏衣	retired	body_dex_int_18	body_dex_int		51	51	0	19	19		62	22						tier-order	FourBodyDexInt3Cruel	Evangelist Garb	Body Armour	51	51	0	45	45		197	63		-300					
+body_dex_int_12	armour	熔鋼纏衣	retired	body_dex_int_18	body_dex_int		52	52	0	20	20		63	22						tier-order	FourBodyDexInt9	Clandestine Jacket	Body Armour	52	52	0	46	46		201	63		-300					
+body_dex_int_13	armour	寒鐵纏衣	retired	body_dex_int_18	body_dex_int		54	54	0	20	20		64	23						tier-order	FourBodyDexInt4Cruel	Itinerant Jacket	Body Armour	54	54	0	48	48		208	65		-300					
+body_dex_int_14	armour	雷紋纏衣	retired	body_dex_int_18	body_dex_int		56	56	0	21	21		66	24						tier-order	FourBodyDexInt10	Monastic Garb	Body Armour	56	56	0	50	50		216	67		-300					
+body_dex_int_15	armour	赤銅纏衣	retired	body_dex_int_18	body_dex_int		59	59	0	21	21		68	25						tier-order	FourBodyDexInt5Cruel	Hatungo Garb	Body Armour	59	59	0	52	52		226	70		-300					
+body_dex_int_16	armour	秘銀纏衣	retired	body_dex_int_18	body_dex_int		62	62	0	21	21		70	26						tier-order	FourBodyDexInt6Cruel	Hawker's Jacket	Body Armour	62	62	0	54	54		237	73		-300					
+body_dex_int_17	armour	暗鋼纏衣	retired	body_dex_int_18	body_dex_int		65	65	0	26	26		73	27						tier-order	FourBodyDexInt11	Torment Jacket	Body Armour	65	65	0	67	67		248	76		-300					
+body_dex_int_18	armour	星紋纏衣	active		body_dex_int	65	1	1	0	26	26		83	31						tier-order	FourBodyDexInt2Endgame	Sleek Jacket	Body Armour	65	65	0	67	67		285	87		-300					
+body_dex_int_19	armour	隕鐵纏衣	retired	body_dex_int_20	body_dex_int		68	68	0	25	25		72	27				+(7-13)% 混沌抗性		tier-order	FourBodyDexInt12	Devout Garb	Body Armour	68	68	0	67	67		248	76		-300				+(7-13)% to Chaos Resistance	
+body_dex_int_20	armour	曜石纏衣	active		body_dex_int	70	1	1	0	25	25		71	27				+(7-13)% 混沌抗性		tier-order	FourBodyDexInt4Endgame	Rambler Jacket	Body Armour	70	70	0	67	67		248	76		-300				+(7-13)% to Chaos Resistance	
+body_dex_int_21	armour	霜晶纏衣	retired	body_dex_int_22	body_dex_int		73	73	0	25	25		70	28				增加 5% 移動速度		tier-order	FourBodyDexInt13	Assassin Garb	Body Armour	73	73	0	67	67		248	76		-300				5% increased Movement Speed	
+body_dex_int_22	armour	炎晶纏衣	active		body_dex_int	75	1	1	0	24	24		70	28				增加 5% 移動速度		tier-order	FourBodyDexInt6Endgame	Falconer's Jacket	Body Armour	75	75	0	67	67		248	76		-300				5% increased Movement Speed	
+body_dex_int_23	armour	天鐵纏衣	active		body_dex_int	80	1	1	0	24	24		69	28				你身上的元素異常持續時間減少 (10-15)%		tier-order	FourBodyDexInt8Endgame	Austere Garb	Body Armour	80	80	0	67	67		248	76		-300				(10-15)% reduced Elemental Ailment Duration on you	
+body_str_int_01	armour	樸素聖鎧	retired	body_str_int_23	body_str_int		1	1	10	0	10	22		9						tier-order	FourBodyStrInt1	Pilgrim Vestments	Body Armour	1	1	0	0	0	25		16		-400					
+body_str_int_02	armour	舊木聖鎧	retired	body_str_int_23	body_str_int		10	10	12	0	12	28		10						tier-order	FourBodyStrInt2	Pelt Mantle	Body Armour	10	10	12	0	12	59		24		-400					
+body_str_int_03	armour	鐵箍聖鎧	retired	body_str_int_23	body_str_int		16	16	13	0	13	33		11						tier-order	FourBodyStrInt3	Mail Vestments	Body Armour	16	16	17	0	17	83		30		-400					
+body_str_int_04	armour	淬鐵聖鎧	retired	body_str_int_23	body_str_int		28	28	15	0	15	43		15						tier-order	FourBodyStrInt4	Shaman Mantle	Body Armour	28	28	26	0	26	129		41		-400					
+body_str_int_05	armour	鍛紋聖鎧	retired	body_str_int_23	body_str_int		33	33	16	0	16	47		16						tier-order	FourBodyStrInt5	Ironclad Vestments	Body Armour	33	33	31	0	31	149		46		-400					
+body_str_int_06	armour	精鐵聖鎧	retired	body_str_int_23	body_str_int		36	36	17	0	17	49		17						tier-order	FourBodyStrInt6	Sacrificial Mantle	Body Armour	36	36	33	0	33	160		48		-400					
+body_str_int_07	armour	鋼脊聖鎧	retired	body_str_int_23	body_str_int		45	45	19	0	19	57		20						tier-order	FourBodyStrInt7	Cleric Vestments	Body Armour	45	45	41	0	41	195		57		-400					
+body_str_int_08	armour	鑄紋聖鎧	retired	body_str_int_23	body_str_int		45	45	19	0	19	57		20						tier-order	FourBodyStrInt1Cruel	Templar Vestments	Body Armour	45	45	41	0	41	195		57		-400					
+body_str_int_09	armour	戰痕聖鎧	retired	body_str_int_23	body_str_int		48	48	19	0	19	59		21						tier-order	FourBodyStrInt2Cruel	Bearskin Mantle	Body Armour	48	48	43	0	43	207		60		-400					
+body_str_int_10	armour	銅鑲聖鎧	retired	body_str_int_23	body_str_int		51	51	19	0	19	62		22						tier-order	FourBodyStrInt8	Tideseer Mantle	Body Armour	51	51	45	0	45	218		63		-400					
+body_str_int_11	armour	獵紋聖鎧	retired	body_str_int_23	body_str_int		51	51	19	0	19	62		22						tier-order	FourBodyStrInt3Cruel	Chain Vestments	Body Armour	51	51	45	0	45	218		63		-400					
+body_str_int_12	armour	熔鋼聖鎧	retired	body_str_int_23	body_str_int		52	52	20	0	20	63		22						tier-order	FourBodyStrInt9	Gilded Vestments	Body Armour	52	52	46	0	46	222		63		-400					
+body_str_int_13	armour	寒鐵聖鎧	retired	body_str_int_23	body_str_int		54	54	20	0	20	64		23						tier-order	FourBodyStrInt10	Venerated Mantle	Body Armour	54	54	48	0	48	230		65		-400					
+body_str_int_14	armour	雷紋聖鎧	retired	body_str_int_23	body_str_int		54	54	20	0	20	64		23						tier-order	FourBodyStrInt4Cruel	Occultist Mantle	Body Armour	54	54	48	0	48	230		65		-400					
+body_str_int_15	armour	赤銅聖鎧	retired	body_str_int_23	body_str_int		59	59	21	0	21	68		25						tier-order	FourBodyStrInt5Cruel	Plated Vestments	Body Armour	59	59	52	0	52	249		70		-400					
+body_str_int_16	armour	秘銀聖鎧	retired	body_str_int_23	body_str_int		62	62	21	0	21	71		26						tier-order	FourBodyStrInt6Cruel	Heartcarver Mantle	Body Armour	62	62	54	0	54	261		73		-400					
+body_str_int_17	armour	暗鋼聖鎧	retired	body_str_int_23	body_str_int		65	65	26	0	26	74		27						tier-order	FourBodyStrInt11	Revered Vestments	Body Armour	65	65	67	0	67	273		76		-400				+1% to all Maximum Elemental Resistances	
+body_str_int_18	armour	星紋聖鎧	retired	body_str_int_23	body_str_int		65	65	26	0	26	84		31						tier-order	FourBodyStrInt2Endgame	Wolfskin Mantle	Body Armour	65	65	67	0	67	313		87		-400					
+body_str_int_19	armour	隕鐵聖鎧	retired	body_str_int_20	body_str_int		68	68	25	0	25	73		27				+(20-30) 最大精魂		tier-order	FourBodyStrInt12	Corvus Mantle	Body Armour	68	68	67	0	67	273		76		-400				+(20-30) to Spirit	
+body_str_int_20	armour	曜石聖鎧	active		body_str_int	70	1	1	25	0	25	73		27				+(20-30) 最大精魂		tier-order (tie re-paired by implicit)	FourBodyStrInt4Endgame	Conjurer Mantle	Body Armour	70	70	67	0	67	273		76		-400				+(20-30) to Spirit	
+body_str_int_21	armour	霜晶聖鎧	retired	body_str_int_23	body_str_int		73	73	25	0	25	72		28						tier-order	FourBodyStrInt13	Zenith Vestments	Body Armour	73	73	67	0	67	273		76		-400					
+body_str_int_22	armour	炎晶聖鎧	retired	body_str_int_23	body_str_int		75	75	24	0	24	72		28						tier-order	FourBodyStrInt6Endgame	Death Mantle	Body Armour	75	75	67	0	67	273		76		-400				+1% to all Maximum Elemental Resistances	
+body_str_int_23	armour	天鐵聖鎧	active		body_str_int	80	1	1	24	0	24	71		28						tier-order	FourBodyStrInt8Endgame	Seastorm Mantle	Body Armour	80	80	67	0	67	273		76		-400				(8-14)% of Damage taken Recouped as Life	
+helm_str_01	armour	樸素戰盔	retired	helm_str_20	helm_str		1	1	16	0	0	24								tier-order	FourHelmetStr1	Rusted Greathelm	Helmet	1	1	0	0	0	29									
+helm_str_02	armour	舊木戰盔	retired	helm_str_20	helm_str		12	12	19	0	0	33								tier-order	FourHelmetStr2	Soldier Greathelm	Helmet	12	12	19	0	0	80									
+helm_str_03	armour	鐵箍戰盔	retired	helm_str_20	helm_str		16	16	21	0	0	37								tier-order	FourHelmetStr3	Wrapped Greathelm	Helmet	16	16	25	0	0	99									
+helm_str_04	armour	淬鐵戰盔	retired	helm_str_20	helm_str		27	27	25	0	0	46								tier-order	FourHelmetStr4	Spired Greathelm	Helmet	27	27	40	0	0	149									
+helm_str_05	armour	鍛紋戰盔	retired	helm_str_20	helm_str		33	33	27	0	0	51								tier-order	FourHelmetStr5	Elite Greathelm	Helmet	33	33	48	0	0	177									
+helm_str_06	armour	精鐵戰盔	retired	helm_str_20	helm_str		36	36	27	0	0	54								tier-order	FourHelmetStr6	Warrior Greathelm	Helmet	36	36	52	0	0	191									
+helm_str_07	armour	鋼脊戰盔	retired	helm_str_20	helm_str		45	45	30	0	0	61								tier-order	FourHelmetStr7	Commander Greathelm	Helmet	45	45	64	0	0	233									
+helm_str_08	armour	鑄紋戰盔	retired	helm_str_20	helm_str		45	45	30	0	0	61								tier-order	FourHelmetStr1Cruel	Corroded Greathelm	Helmet	45	45	64	0	0	233									
+helm_str_09	armour	戰痕戰盔	retired	helm_str_20	helm_str		48	48	31	0	0	64								tier-order	FourHelmetStr2Cruel	Mercenary Greathelm	Helmet	48	48	69	0	0	246									
+helm_str_10	armour	銅鑲戰盔	retired	helm_str_20	helm_str		51	51	32	0	0	66								tier-order	FourHelmetStr8	Fierce Greathelm	Helmet	51	51	73	0	0	260									
+helm_str_11	armour	獵紋戰盔	retired	helm_str_20	helm_str		51	51	32	0	0	66								tier-order	FourHelmetStr3Cruel	Homeguard Greathelm	Helmet	51	51	73	0	0	260									
+helm_str_12	armour	熔鋼戰盔	retired	helm_str_20	helm_str		52	52	32	0	0	67								tier-order	FourHelmetStr9	Sentinel Greathelm	Helmet	52	52	74	0	0	265									
+helm_str_13	armour	寒鐵戰盔	retired	helm_str_20	helm_str		54	54	33	0	0	69								tier-order	FourHelmetStr4Cruel	Elegant Greathelm	Helmet	54	54	77	0	0	274									
+helm_str_14	armour	雷紋戰盔	retired	helm_str_20	helm_str		57	57	34	0	0	72								tier-order	FourHelmetStr10	Goliath Greathelm	Helmet	57	57	81	0	0	288									
+helm_str_15	armour	赤銅戰盔	retired	helm_str_20	helm_str		59	59	34	0	0	73								tier-order	FourHelmetStr5Cruel	Noble Greathelm	Helmet	59	59	83	0	0	297									
+helm_str_16	armour	秘銀戰盔	retired	helm_str_20	helm_str		65	65	36	0	0	79								tier-order	FourHelmetStr11	Guardian Greathelm	Helmet	65	65	91	0	0	325									
+helm_str_17	armour	暗鋼戰盔	retired	helm_str_20	helm_str		65	65	36	0	0	79								tier-order	FourHelmetStr2Endgame	Warmonger Greathelm	Helmet	65	65	91	0	0	325									
+helm_str_18	armour	星紋戰盔	retired	helm_str_20	helm_str		70	70	38	0	0	81								tier-order	FourHelmetStr4Endgame	Masked Greathelm	Helmet	70	70	99	0	0	341									
+helm_str_19	armour	隕鐵戰盔	retired	helm_str_20	helm_str		75	75	40	0	0	84								tier-order	FourHelmetStr5Endgame	Paragon Greathelm	Helmet	75	75	107	0	0	357									
+helm_str_20	armour	曜石戰盔	active		helm_str	80	1	1	41	0	0	87								tier-order	FourHelmetStr7Endgame	Imperial Greathelm	Helmet	80	80	115	0	0	374									
+helm_dex_01	armour	樸素皮帽	retired	helm_dex_20	helm_dex		1	1	0	16	0		22							tier-order	FourHelmetDex1	Shabby Hood	Helmet	1	1	0	0	0		19								
+helm_dex_02	armour	舊木皮帽	retired	helm_dex_20	helm_dex		10	10	0	19	0		33							tier-order	FourHelmetDex2	Felt Cap	Helmet	10	10	0	17	0		58								
+helm_dex_03	armour	鐵箍皮帽	retired	helm_dex_20	helm_dex		16	16	0	21	0		38							tier-order	FourHelmetDex3	Lace Hood	Helmet	16	16	0	25	0		84								
+helm_dex_04	armour	淬鐵皮帽	retired	helm_dex_20	helm_dex		26	26	0	24	0		47							tier-order	FourHelmetDex4	Swathed Cap	Helmet	26	26	0	38	0		127								
+helm_dex_05	armour	鍛紋皮帽	retired	helm_dex_20	helm_dex		33	33	0	27	0		52							tier-order	FourHelmetDex5	Hunter Hood	Helmet	33	33	0	48	0		158								
+helm_dex_06	armour	精鐵皮帽	retired	helm_dex_20	helm_dex		38	38	0	28	0		56							tier-order	FourHelmetDex6	Viper Cap	Helmet	38	38	0	54	0		179								
+helm_dex_07	armour	鋼脊皮帽	retired	helm_dex_20	helm_dex		45	45	0	30	0		62							tier-order	FourHelmetDex7	Corsair Cap	Helmet	45	45	0	64	0		210								
+helm_dex_08	armour	鑄紋皮帽	retired	helm_dex_20	helm_dex		45	45	0	30	0		62							tier-order	FourHelmetDex1Cruel	Rotted Hood	Helmet	45	45	0	64	0		210								
+helm_dex_09	armour	戰痕皮帽	retired	helm_dex_20	helm_dex		48	48	0	31	0		64							tier-order	FourHelmetDex2Cruel	Wool Cap	Helmet	48	48	0	69	0		222								
+helm_dex_10	armour	銅鑲皮帽	retired	helm_dex_20	helm_dex		50	50	0	32	0		66							tier-order	FourHelmetDex8	Leatherbound Hood	Helmet	50	50	0	71	0		231								
+helm_dex_11	armour	獵紋皮帽	retired	helm_dex_20	helm_dex		51	51	0	32	0		67							tier-order	FourHelmetDex3Cruel	Narrow Hood	Helmet	51	51	0	73	0		235								
+helm_dex_12	armour	熔鋼皮帽	retired	helm_dex_20	helm_dex		52	52	0	32	0		67							tier-order	FourHelmetDex9	Velvet Cap	Helmet	52	52	0	74	0		240								
+helm_dex_13	armour	寒鐵皮帽	retired	helm_dex_20	helm_dex		54	54	0	33	0		69							tier-order	FourHelmetDex4Cruel	Wrapped Cap	Helmet	54	54	0	77	0		248								
+helm_dex_14	armour	雷紋皮帽	retired	helm_dex_20	helm_dex		56	56	0	33	0		71							tier-order	FourHelmetDex10	Covert Hood	Helmet	56	56	0	79	0		257								
+helm_dex_15	armour	赤銅皮帽	retired	helm_dex_20	helm_dex		59	59	0	34	0		73							tier-order	FourHelmetDex5Cruel	Deerstalker Hood	Helmet	59	59	0	83	0		270								
+helm_dex_16	armour	秘銀皮帽	retired	helm_dex_20	helm_dex		65	65	0	36	0		77							tier-order	FourHelmetDex11	Armoured Cap	Helmet	65	65	0	91	0		296								
+helm_dex_17	armour	暗鋼皮帽	retired	helm_dex_20	helm_dex		65	65	0	36	0		77							tier-order	FourHelmetDex2Endgame	Woven Cap	Helmet	65	65	0	91	0		296								
+helm_dex_18	armour	星紋皮帽	retired	helm_dex_20	helm_dex		70	70	0	38	0		80							tier-order	FourHelmetDex4Endgame	Desert Cap	Helmet	70	70	0	99	0		311								
+helm_dex_19	armour	隕鐵皮帽	retired	helm_dex_20	helm_dex		75	75	0	40	0		82							tier-order	FourHelmetDex5Endgame	Trapper Hood	Helmet	75	75	0	107	0		326								
+helm_dex_20	armour	曜石皮帽	active		helm_dex	80	1	1	0	42	0		84							tier-order	FourHelmetDex7Endgame	Freebooter Cap	Helmet	80	80	0	115	0		340								
+helm_int_01	armour	樸素頭冠	retired	helm_int_20	helm_int		1	1	0	0	16			9						tier-order	FourHelmetInt1	Twig Circlet	Helmet	1	1	0	0	0			19							
+helm_int_02	armour	舊木頭冠	retired	helm_int_20	helm_int		10	10	0	0	19			10						tier-order	FourHelmetInt2	Wicker Tiara	Helmet	10	10	0	0	17			29							
+helm_int_03	armour	鐵箍頭冠	retired	helm_int_20	helm_int		16	16	0	0	21			11						tier-order	FourHelmetInt3	Beaded Circlet	Helmet	16	16	0	0	25			35							
+helm_int_04	armour	淬鐵頭冠	retired	helm_int_20	helm_int		26	26	0	0	24			14						tier-order	FourHelmetInt4	Chain Tiara	Helmet	26	26	0	0	38			47							
+helm_int_05	armour	鍛紋頭冠	retired	helm_int_20	helm_int		33	33	0	0	27			16						tier-order	FourHelmetInt5	Feathered Tiara	Helmet	33	33	0	0	48			54							
+helm_int_06	armour	精鐵頭冠	retired	helm_int_20	helm_int		40	40	0	0	29			18						tier-order	FourHelmetInt6	Gold Circlet	Helmet	40	40	0	0	58			62							
+helm_int_07	armour	鋼脊頭冠	retired	helm_int_20	helm_int		45	45	0	0	30			20						tier-order	FourHelmetInt7	Vermeil Circlet	Helmet	45	45	0	0	64			68							
+helm_int_08	armour	鑄紋頭冠	retired	helm_int_20	helm_int		45	45	0	0	30			20						tier-order	FourHelmetInt1Cruel	Druidic Circlet	Helmet	45	45	0	0	64			68							
+helm_int_09	armour	戰痕頭冠	retired	helm_int_20	helm_int		48	48	0	0	31			21						tier-order	FourHelmetInt2Cruel	Avian Tiara	Helmet	48	48	0	0	69			71							
+helm_int_10	armour	銅鑲頭冠	retired	helm_int_20	helm_int		50	50	0	0	32			21						tier-order	FourHelmetInt8	Jade Tiara	Helmet	50	50	0	0	71			73							
+helm_int_11	armour	獵紋頭冠	retired	helm_int_20	helm_int		51	51	0	0	32			22						tier-order	FourHelmetInt3Cruel	Desert Circlet	Helmet	51	51	0	0	73			75							
+helm_int_12	armour	熔鋼頭冠	retired	helm_int_20	helm_int		52	52	0	0	32			22						tier-order	FourHelmetInt9	Noble Circlet	Helmet	52	52	0	0	74			76							
+helm_int_13	armour	寒鐵頭冠	retired	helm_int_20	helm_int		54	54	0	0	33			23						tier-order	FourHelmetInt4Cruel	Sandsworn Tiara	Helmet	54	54	0	0	77			78							
+helm_int_14	armour	雷紋頭冠	retired	helm_int_20	helm_int		58	58	0	0	34			24						tier-order	FourHelmetInt10	Twilight Tiara	Helmet	58	58	0	0	82			82							
+helm_int_15	armour	赤銅頭冠	retired	helm_int_20	helm_int		59	59	0	0	34			25						tier-order	FourHelmetInt5Cruel	Jungle Tiara	Helmet	59	59	0	0	83			84							
+helm_int_16	armour	秘銀頭冠	retired	helm_int_20	helm_int		65	65	0	0	36			27						tier-order	FourHelmetInt11	Magus Tiara	Helmet	65	65	0	0	91			90							
+helm_int_17	armour	暗鋼頭冠	retired	helm_int_20	helm_int		65	65	0	0	36			27						tier-order	FourHelmetInt2Endgame	Skycrown Tiara	Helmet	65	65	0	0	91			90							
+helm_int_18	armour	星紋頭冠	retired	helm_int_20	helm_int		70	70	0	0	38			29						tier-order	FourHelmetInt4Endgame	Sorcerous Tiara	Helmet	70	70	0	0	99			97							
+helm_int_19	armour	隕鐵頭冠	retired	helm_int_20	helm_int		75	75	0	0	40			31						tier-order	FourHelmetInt5Endgame	Kamasan Tiara	Helmet	75	75	0	0	107			103							
+helm_int_20	armour	曜石頭冠	active		helm_int	80	1	1	0	0	42			33						tier-order	FourHelmetInt8Endgame	Ancestral Tiara	Helmet	80	80	0	0	115			109							
+helm_str_dex_01	armour	樸素鱗盔	retired	helm_str_dex_18	helm_str_dex		5	5	11	11	0	15	14							tier-order	FourHelmetStrDex1	Brimmed Helm	Helmet	5	5	7	7	0	26	20								
+helm_str_dex_02	armour	舊木鱗盔	retired	helm_str_dex_18	helm_str_dex		11	11	12	12	0	18	17							tier-order	FourHelmetStrDex2	Guarded Helm	Helmet	11	11	11	11	0	42	34								
+helm_str_dex_03	armour	鐵箍鱗盔	retired	helm_str_dex_18	helm_str_dex		16	16	13	13	0	20	20							tier-order	FourHelmetStrDex3	Visored Helm	Helmet	16	16	15	15	0	54	46								
+helm_str_dex_04	armour	淬鐵鱗盔	retired	helm_str_dex_18	helm_str_dex		26	26	15	15	0	24	25							tier-order	FourHelmetStrDex4	Cowled Helm	Helmet	26	26	22	22	0	80	70								
+helm_str_dex_05	armour	鍛紋鱗盔	retired	helm_str_dex_18	helm_str_dex		33	33	16	16	0	27	28							tier-order	FourHelmetStrDex5	Shielded Helm	Helmet	33	33	27	27	0	97	87								
+helm_str_dex_06	armour	精鐵鱗盔	retired	helm_str_dex_18	helm_str_dex		45	45	19	19	0	33	33							tier-order	FourHelmetStrDex6	Closed Helm	Helmet	45	45	36	36	0	128	115								
+helm_str_dex_07	armour	鋼脊鱗盔	retired	helm_str_dex_18	helm_str_dex		45	45	19	19	0	33	33							tier-order	FourHelmetStrDex1Cruel	Domed Helm	Helmet	45	45	36	36	0	128	115								
+helm_str_dex_08	armour	鑄紋鱗盔	retired	helm_str_dex_18	helm_str_dex		48	48	19	19	0	35	35							tier-order	FourHelmetStrDex2Cruel	Engraved Helm	Helmet	48	48	38	38	0	136	122								
+helm_str_dex_09	armour	戰痕鱗盔	retired	helm_str_dex_18	helm_str_dex		51	51	20	20	0	36	36							tier-order	FourHelmetStrDex3Cruel	Soldier Helm	Helmet	51	51	40	40	0	143	129								
+helm_str_dex_10	armour	銅鑲鱗盔	retired	helm_str_dex_18	helm_str_dex		52	52	20	20	0	37	37							tier-order	FourHelmetStrDex7	Decorated Helm	Helmet	52	52	41	41	0	146	132								
+helm_str_dex_11	armour	獵紋鱗盔	retired	helm_str_dex_18	helm_str_dex		54	54	20	20	0	37	38							tier-order	FourHelmetStrDex4Cruel	Cabalist Helm	Helmet	54	54	42	42	0	151	137								
+helm_str_dex_12	armour	熔鋼鱗盔	retired	helm_str_dex_18	helm_str_dex		59	59	21	21	0	40	40							tier-order	FourHelmetStrDex5Cruel	Cassis Helm	Helmet	59	59	46	46	0	163	149								
+helm_str_dex_13	armour	寒鐵鱗盔	retired	helm_str_dex_18	helm_str_dex		65	65	22	22	0	43	42							tier-order	FourHelmetStrDexUnique1	Ancient Visor	Helmet	65	65	59	59	0	179	163								
+helm_str_dex_14	armour	雷紋鱗盔	retired	helm_str_dex_18	helm_str_dex		65	65	26	26	0	43	42							tier-order	FourHelmetStrDex8	Gallant Helm	Helmet	65	65	50	50	0	179	163								
+helm_str_dex_15	armour	赤銅鱗盔	retired	helm_str_dex_18	helm_str_dex		65	65	22	22	0	43	42							tier-order	FourHelmetStrDex2Endgame	Warded Helm	Helmet	65	65	50	50	0	179	163								
+helm_str_dex_16	armour	秘銀鱗盔	retired	helm_str_dex_18	helm_str_dex		70	70	23	23	0	44	44							tier-order	FourHelmetStrDex4Endgame	Cryptic Helm	Helmet	70	70	54	54	0	188	171								
+helm_str_dex_17	armour	暗鋼鱗盔	retired	helm_str_dex_18	helm_str_dex		75	75	25	25	0	46	45							tier-order	FourHelmetStrDex5Endgame	Champion Helm	Helmet	75	75	59	59	0	197	179								
+helm_str_dex_18	armour	星紋鱗盔	active		helm_str_dex	80	1	1	26	26	0	47	46							tier-order	FourHelmetStrDex6Endgame	Gladiatorial Helm	Helmet	80	80	63	63	0	206	187								
+helm_dex_int_01	armour	樸素兜帽	retired	helm_dex_int_17	helm_dex_int		5	5	0	11	11		14	6						tier-order	FourHelmetDexInt1	Hewn Mask	Helmet	5	5	0	7	7		20	13							
+helm_dex_int_02	armour	舊木兜帽	retired	helm_dex_int_17	helm_dex_int		10	10	0	11	11		17	7						tier-order	FourHelmetDexInt2	Face Mask	Helmet	10	10	0	10	10		32	16							
+helm_dex_int_03	armour	鐵箍兜帽	retired	helm_dex_int_17	helm_dex_int		16	16	0	13	13		20	7						tier-order	FourHelmetDexInt3	Hooded Mask	Helmet	16	16	0	15	15		46	19							
+helm_dex_int_04	armour	淬鐵兜帽	retired	helm_dex_int_17	helm_dex_int		28	28	0	15	15		26	9						tier-order	FourHelmetDexInt4	Veiled Mask	Helmet	28	28	0	23	23		75	27							
+helm_dex_int_05	armour	鍛紋兜帽	retired	helm_dex_int_17	helm_dex_int		33	33	0	16	16		28	10						tier-order	FourHelmetDexInt5	Tribal Mask	Helmet	33	33	0	27	27		87	30							
+helm_dex_int_06	armour	精鐵兜帽	retired	helm_dex_int_17	helm_dex_int		45	45	0	19	19		33	12						tier-order	FourHelmetDexInt6	Solid Mask	Helmet	45	45	0	36	36		115	37							
+helm_dex_int_07	armour	鋼脊兜帽	retired	helm_dex_int_17	helm_dex_int		45	45	0	19	19		33	12						tier-order	FourHelmetDexInt1Cruel	Oak Mask	Helmet	45	45	0	36	36		115	37							
+helm_dex_int_08	armour	鑄紋兜帽	retired	helm_dex_int_17	helm_dex_int		48	48	0	19	19		35	13						tier-order	FourHelmetDexInt2Cruel	Bandit Mask	Helmet	48	48	0	38	38		122	39							
+helm_dex_int_09	armour	戰痕兜帽	retired	helm_dex_int_17	helm_dex_int		51	51	0	20	20		36	14						tier-order	FourHelmetDexInt3Cruel	Skulking Mask	Helmet	51	51	0	40	40		129	41							
+helm_dex_int_10	armour	銅鑲兜帽	retired	helm_dex_int_17	helm_dex_int		52	52	0	20	20		37	14						tier-order	FourHelmetDexInt7	Shaded Mask	Helmet	52	52	0	41	41		132	42							
+helm_dex_int_11	armour	獵紋兜帽	retired	helm_dex_int_17	helm_dex_int		54	54	0	20	20		38	14						tier-order	FourHelmetDexInt4Cruel	Pariah Mask	Helmet	54	54	0	42	42		137	43							
+helm_dex_int_12	armour	熔鋼兜帽	retired	helm_dex_int_17	helm_dex_int		59	59	0	22	22		40	15						tier-order	FourHelmetDexInt5Cruel	Avian Mask	Helmet	59	59	0	46	46		149	46							
+helm_dex_int_13	armour	寒鐵兜帽	retired	helm_dex_int_17	helm_dex_int		65	65	0	23	23		42	17						tier-order	FourHelmetDexInt8	Death Mask	Helmet	65	65	0	50	50		163	50							
+helm_dex_int_14	armour	雷紋兜帽	retired	helm_dex_int_17	helm_dex_int		65	65	0	23	23		42	17						tier-order	FourHelmetDexInt2Endgame	Brigand Mask	Helmet	65	65	0	50	50		163	50							
+helm_dex_int_15	armour	赤銅兜帽	retired	helm_dex_int_17	helm_dex_int		70	70	0	24	24		44	17						tier-order	FourHelmetDexInt4Endgame	Faridun Mask	Helmet	70	70	0	54	54		171	52							
+helm_dex_int_16	armour	秘銀兜帽	retired	helm_dex_int_17	helm_dex_int		75	75	0	25	25		45	18						tier-order	FourHelmetDexInt5Endgame	Soaring Mask	Helmet	75	75	0	59	59		179	55							
+helm_dex_int_17	armour	暗鋼兜帽	active		helm_dex_int	80	1	1	0	26	26		46	19						tier-order	FourHelmetDexInt6Endgame	Grinning Mask	Helmet	80	80	0	63	63		187	57							
+helm_str_int_01	armour	樸素聖盔	retired	helm_str_int_18	helm_str_int		5	5	11	0	11	15		5						tier-order	FourHelmetStrInt1	Iron Crown	Helmet	5	5	7	0	7	26		13							
+helm_str_int_02	armour	舊木聖盔	retired	helm_str_int_18	helm_str_int		10	10	11	0	11	17		5						tier-order	FourHelmetStrInt2	Horned Crown	Helmet	10	10	10	0	10	39		16							
+helm_str_int_03	armour	鐵箍聖盔	retired	helm_str_int_18	helm_str_int		16	16	13	0	13	20		6						tier-order	FourHelmetStrInt3	Cultist Crown	Helmet	16	16	15	0	15	54		19							
+helm_str_int_04	armour	淬鐵聖盔	retired	helm_str_int_18	helm_str_int		28	28	15	0	15	25		7						tier-order	FourHelmetStrInt4	Martyr Crown	Helmet	28	28	23	0	23	85		27							
+helm_str_int_05	armour	鍛紋聖盔	retired	helm_str_int_18	helm_str_int		33	33	16	0	16	28		8						tier-order	FourHelmetStrInt5	Heavy Crown	Helmet	33	33	27	0	27	97		30							
+helm_str_int_06	armour	精鐵聖盔	retired	helm_str_int_18	helm_str_int		45	45	19	0	19	33		10						tier-order	FourHelmetStrInt6	Spiritbone Crown	Helmet	45	45	36	0	36	128		37							
+helm_str_int_07	armour	鋼脊聖盔	retired	helm_str_int_18	helm_str_int		45	45	19	0	19	33		10						tier-order	FourHelmetStrInt1Cruel	Mailed Crown	Helmet	45	45	36	0	36	128		37							
+helm_str_int_08	armour	鑄紋聖盔	retired	helm_str_int_18	helm_str_int		48	48	19	0	19	35		10						tier-order	FourHelmetStrInt2Cruel	Forest Crown	Helmet	48	48	38	0	38	136		39							
+helm_str_int_09	armour	戰痕聖盔	retired	helm_str_int_18	helm_str_int		51	51	20	0	20	36		11						tier-order	FourHelmetStrInt3Cruel	Zealot Crown	Helmet	51	51	40	0	40	143		41							
+helm_str_int_10	armour	銅鑲聖盔	retired	helm_str_int_18	helm_str_int		52	52	20	0	20	37		11						tier-order	FourHelmetStrInt7	Lavish Crown	Helmet	52	52	41	0	41	146		42							
+helm_str_int_11	armour	獵紋聖盔	retired	helm_str_int_18	helm_str_int		54	54	20	0	20	37		11						tier-order	FourHelmetStrInt4Cruel	Hallowed Crown	Helmet	54	54	42	0	42	151		43							
+helm_str_int_12	armour	熔鋼聖盔	retired	helm_str_int_18	helm_str_int		59	59	21	0	21	40		12						tier-order	FourHelmetStrInt5Cruel	Inquisitor Crown	Helmet	59	59	46	0	46	163		46							
+helm_str_int_13	armour	寒鐵聖盔	retired	helm_str_int_18	helm_str_int		65	65	22	0	22	43		13						tier-order	FourHelmetStrIntUnique1	Tenebrous Crown	Helmet	65	65	59	0	59	179		50							
+helm_str_int_14	armour	雷紋聖盔	retired	helm_str_int_18	helm_str_int		65	65	26	0	26	43		13						tier-order	FourHelmetStrInt8	Archon Crown	Helmet	65	65	50	0	50	179		50							
+helm_str_int_15	armour	赤銅聖盔	retired	helm_str_int_18	helm_str_int		65	65	22	0	22	43		13						tier-order	FourHelmetStrInt2Endgame	Druidic Crown	Helmet	65	65	50	0	50	179		50							
+helm_str_int_16	armour	秘銀聖盔	retired	helm_str_int_18	helm_str_int		70	70	23	0	23	44		14						tier-order	FourHelmetStrInt4Endgame	Saintly Crown	Helmet	70	70	54	0	54	188		52							
+helm_str_int_17	armour	暗鋼聖盔	retired	helm_str_int_18	helm_str_int		75	75	25	0	25	46		15						tier-order	FourHelmetStrInt5Endgame	Divine Crown	Helmet	75	75	59	0	59	197		55							
+helm_str_int_18	armour	星紋聖盔	active		helm_str_int	80	1	1	26	0	26	47		15						tier-order	FourHelmetStrInt6Endgame	Cryptic Crown	Helmet	80	80	63	0	63	206		57							
+legs_str_01	armour	樸素腿鎧	retired	legs_str_16	legs_str		1	1	16	0	0	30								tier-order	FourGlovesStr1	Stocky Mitts	Gloves	1	1	0	0	0	15									
+legs_str_02	armour	舊木腿鎧	retired	legs_str_16	legs_str		11	11	19	0	0	40								tier-order	FourGlovesStr2	Riveted Mitts	Gloves	11	11	16	0	0	38									
+legs_str_03	armour	鐵箍腿鎧	retired	legs_str_16	legs_str		16	16	21	0	0	45								tier-order	FourGlovesStr3	Tempered Mitts	Gloves	16	16	22	0	0	49									
+legs_str_04	armour	淬鐵腿鎧	retired	legs_str_16	legs_str		27	27	25	0	0	57								tier-order	FourGlovesStr4	Bolstered Mitts	Gloves	27	27	35	0	0	75									
+legs_str_05	armour	鍛紋腿鎧	retired	legs_str_16	legs_str		33	33	26	0	0	64								tier-order	FourGlovesStr5	Moulded Mitts	Gloves	33	33	42	0	0	89									
+legs_str_06	armour	精鐵腿鎧	retired	legs_str_16	legs_str		45	45	30	0	0	76								tier-order	FourGlovesStr6	Detailed Mitts	Gloves	45	45	56	0	0	116									
+legs_str_07	armour	鋼脊腿鎧	retired	legs_str_16	legs_str		45	45	30	0	0	76								tier-order	FourGlovesStr2Cruel	Plated Mitts	Gloves	45	45	56	0	0	116									
+legs_str_08	armour	鑄紋腿鎧	retired	legs_str_16	legs_str		51	51	32	0	0	83								tier-order	FourGlovesStr3Cruel	Elegant Mitts	Gloves	51	51	64	0	0	130									
+legs_str_09	armour	戰痕腿鎧	retired	legs_str_16	legs_str		52	52	32	0	0	84								tier-order	FourGlovesStr7	Titan Mitts	Gloves	52	52	64	0	0	132									
+legs_str_10	armour	銅鑲腿鎧	retired	legs_str_16	legs_str		54	54	33	0	0	86								tier-order	FourGlovesStr4Cruel	Ancient Mitts	Gloves	54	54	67	0	0	137									
+legs_str_11	armour	獵紋腿鎧	retired	legs_str_16	legs_str		59	59	34	0	0	92								tier-order	FourGlovesStr5Cruel	Feathered Mitts	Gloves	59	59	73	0	0	149									
+legs_str_12	armour	熔鋼腿鎧	retired	legs_str_16	legs_str		65	65	36	0	0	98								tier-order	FourGlovesStr8	Grand Mitts	Gloves	65	65	80	0	0	162									
+legs_str_13	armour	寒鐵腿鎧	retired	legs_str_16	legs_str		65	65	36	0	0	98								tier-order	FourGlovesStr2Endgame	Knightly Mitts	Gloves	65	65	80	0	0	162									
+legs_str_14	armour	雷紋腿鎧	retired	legs_str_16	legs_str		70	70	38	0	0	102								tier-order	FourGlovesStr4Endgame	Ornate Mitts	Gloves	70	70	87	0	0	171									
+legs_str_15	armour	赤銅腿鎧	retired	legs_str_16	legs_str		75	75	40	0	0	106								tier-order	FourGlovesStr5Endgame	Vaal Mitts	Gloves	75	75	94	0	0	179									
+legs_str_16	armour	秘銀腿鎧	active		legs_str	80	1	1	42	0	0	109								tier-order	FourGlovesStr6Endgame	Massive Mitts	Gloves	80	80	101	0	0	187									
+legs_dex_01	armour	樸素皮褲	retired	legs_dex_16	legs_dex		1	1	0	16	0		28							tier-order	FourGlovesDex1	Suede Bracers	Gloves	1	1	0	0	0		10								
+legs_dex_02	armour	舊木皮褲	retired	legs_dex_16	legs_dex		11	11	0	19	0		41							tier-order	FourGlovesDex2	Firm Bracers	Gloves	11	11	0	16	0		31								
+legs_dex_03	armour	鐵箍皮褲	retired	legs_dex_16	legs_dex		16	16	0	21	0		47							tier-order	FourGlovesDex3	Bound Bracers	Gloves	16	16	0	22	0		42								
+legs_dex_04	armour	淬鐵皮褲	retired	legs_dex_16	legs_dex		28	28	0	25	0		60							tier-order	FourGlovesDex4	Sectioned Bracers	Gloves	28	28	0	36	0		68								
+legs_dex_05	armour	鍛紋皮褲	retired	legs_dex_16	legs_dex		33	33	0	27	0		65							tier-order	FourGlovesDex5	Spined Bracers	Gloves	33	33	0	42	0		79								
+legs_dex_06	armour	精鐵皮褲	retired	legs_dex_16	legs_dex		45	45	0	30	0		78							tier-order	FourGlovesDex6	Fine Bracers	Gloves	45	45	0	56	0		105								
+legs_dex_07	armour	鋼脊皮褲	retired	legs_dex_16	legs_dex		45	45	0	30	0		78							tier-order	FourGlovesDex2Cruel	Hunting Bracers	Gloves	45	45	0	56	0		105								
+legs_dex_08	armour	鑄紋皮褲	retired	legs_dex_16	legs_dex		51	51	0	32	0		84							tier-order	FourGlovesDex3Cruel	Swift Bracers	Gloves	51	51	0	64	0		118								
+legs_dex_09	armour	戰痕皮褲	retired	legs_dex_16	legs_dex		52	52	0	32	0		85							tier-order	FourGlovesDex7	Hardened Bracers	Gloves	52	52	0	64	0		120								
+legs_dex_10	armour	銅鑲皮褲	retired	legs_dex_16	legs_dex		54	54	0	33	0		86							tier-order	FourGlovesDex4Cruel	Refined Bracers	Gloves	54	54	0	67	0		124								
+legs_dex_11	armour	獵紋皮褲	retired	legs_dex_16	legs_dex		59	59	0	34	0		91							tier-order	FourGlovesDex5Cruel	Spiked Bracers	Gloves	59	59	0	73	0		135								
+legs_dex_12	armour	熔鋼皮褲	retired	legs_dex_16	legs_dex		65	65	0	36	0		97							tier-order	FourGlovesDex8	Engraved Bracers	Gloves	65	65	0	80	0		148								
+legs_dex_13	armour	寒鐵皮褲	retired	legs_dex_16	legs_dex		65	65	0	36	0		97							tier-order	FourGlovesDex2Endgame	Stalking Bracers	Gloves	65	65	0	80	0		148								
+legs_dex_14	armour	雷紋皮褲	retired	legs_dex_16	legs_dex		70	70	0	38	0		100							tier-order	FourGlovesDex4Endgame	Grand Bracers	Gloves	70	70	0	87	0		155								
+legs_dex_15	armour	赤銅皮褲	retired	legs_dex_16	legs_dex		75	75	0	40	0		103							tier-order	FourGlovesDex5Endgame	Barbed Bracers	Gloves	75	75	0	94	0		163								
+legs_dex_16	armour	秘銀皮褲	active		legs_dex	80	1	1	0	42	0		106							tier-order	FourGlovesDex6Endgame	Polished Bracers	Gloves	80	80	0	101	0		170								
+legs_int_01	armour	樸素絲褲	retired	legs_int_16	legs_int		1	1	0	0	16			11						tier-order	FourGlovesInt1	Torn Gloves	Gloves	1	1	0	0	0			9							
+legs_int_02	armour	舊木絲褲	retired	legs_int_16	legs_int		12	12	0	0	19			13						tier-order	FourGlovesInt2	Sombre Gloves	Gloves	12	12	0	0	17			15							
+legs_int_03	armour	鐵箍絲褲	retired	legs_int_16	legs_int		16	16	0	0	21			14						tier-order	FourGlovesInt3	Stitched Gloves	Gloves	16	16	0	0	22			18							
+legs_int_04	armour	淬鐵絲褲	retired	legs_int_16	legs_int		26	26	0	0	24			17						tier-order	FourGlovesInt4	Jewelled Gloves	Gloves	26	26	0	0	34			23							
+legs_int_05	armour	鍛紋絲褲	retired	legs_int_16	legs_int		33	33	0	0	26			20						tier-order	FourGlovesInt5	Intricate Gloves	Gloves	33	33	0	0	42			27							
+legs_int_06	armour	精鐵絲褲	retired	legs_int_16	legs_int		45	45	0	0	30			25						tier-order	FourGlovesInt6	Pauascale Gloves	Gloves	45	45	0	0	56			34							
+legs_int_07	armour	鋼脊絲褲	retired	legs_int_16	legs_int		45	45	0	0	30			25						tier-order	FourGlovesInt2Cruel	Ominous Gloves	Gloves	45	45	0	0	56			34							
+legs_int_08	armour	鑄紋絲褲	retired	legs_int_16	legs_int		51	51	0	0	32			27						tier-order	FourGlovesInt3Cruel	Embellished Gloves	Gloves	51	51	0	0	64			37							
+legs_int_09	armour	戰痕絲褲	retired	legs_int_16	legs_int		52	52	0	0	32			28						tier-order	FourGlovesInt7	Embroidered Gloves	Gloves	52	52	0	0	64			38							
+legs_int_10	armour	銅鑲絲褲	retired	legs_int_16	legs_int		54	54	0	0	33			28						tier-order	FourGlovesInt4Cruel	Baroque Gloves	Gloves	54	54	0	0	67			39							
+legs_int_11	armour	獵紋絲褲	retired	legs_int_16	legs_int		59	59	0	0	34			31						tier-order	FourGlovesInt5Cruel	Gold Gloves	Gloves	59	59	0	0	73			42							
+legs_int_12	armour	熔鋼絲褲	retired	legs_int_16	legs_int		65	65	0	0	36			33						tier-order	FourGlovesInt8	Adorned Gloves	Gloves	65	65	0	0	80			45							
+legs_int_13	armour	寒鐵絲褲	retired	legs_int_16	legs_int		65	65	0	0	36			33						tier-order	FourGlovesInt2Endgame	Grim Gloves	Gloves	65	65	0	0	80			45							
+legs_int_14	armour	雷紋絲褲	retired	legs_int_16	legs_int		70	70	0	0	38			35						tier-order	FourGlovesInt4Endgame	Opulent Gloves	Gloves	70	70	0	0	87			48							
+legs_int_15	armour	赤銅絲褲	retired	legs_int_16	legs_int		75	75	0	0	40			38						tier-order	FourGlovesInt5Endgame	Vaal Gloves	Gloves	75	75	0	0	94			51							
+legs_int_16	armour	秘銀絲褲	active		legs_int	80	1	1	0	0	42			40						tier-order	FourGlovesInt6Endgame	Sirenscale Gloves	Gloves	80	80	0	0	101			54							
+legs_str_dex_01	armour	樸素鱗護腿	retired	legs_str_dex_14	legs_str_dex		6	6	11	11	0	18	18							tier-order	FourGlovesStrDex1	Ringmail Gauntlets	Gloves	6	6	6	6	0	14	11								
+legs_str_dex_02	armour	舊木鱗護腿	retired	legs_str_dex_14	legs_str_dex		16	16	14	14	0	24	25							tier-order	FourGlovesStrDex2	Layered Gauntlets	Gloves	16	16	13	13	0	27	23								
+legs_str_dex_03	armour	鐵箍鱗護腿	retired	legs_str_dex_14	legs_str_dex		33	33	17	17	0	34	35							tier-order	FourGlovesStrDex3	Doubled Gauntlets	Gloves	33	33	24	24	0	49	43								
+legs_str_dex_04	armour	淬鐵鱗護腿	retired	legs_str_dex_14	legs_str_dex		45	45	19	19	0	41	42							tier-order	FourGlovesStrDex4	Plate Gauntlets	Gloves	45	45	32	32	0	64	58								
+legs_str_dex_05	armour	鍛紋鱗護腿	retired	legs_str_dex_14	legs_str_dex		45	45	19	19	0	41	42							tier-order	FourGlovesStrDex1Cruel	Ironmail Gauntlets	Gloves	45	45	32	32	0	64	58								
+legs_str_dex_06	armour	精鐵鱗護腿	retired	legs_str_dex_14	legs_str_dex		51	51	20	20	0	45	45							tier-order	FourGlovesStrDex2Cruel	Captain Gauntlets	Gloves	51	51	35	35	0	72	65								
+legs_str_dex_07	armour	鋼脊鱗護腿	retired	legs_str_dex_14	legs_str_dex		52	52	20	20	0	45	46							tier-order	FourGlovesStrDex5	Burnished Gauntlets	Gloves	52	52	36	36	0	73	66								
+legs_str_dex_08	armour	鑄紋鱗護腿	retired	legs_str_dex_14	legs_str_dex		59	59	22	22	0	49	49							tier-order	FourGlovesStrDex3Cruel	Zealot Gauntlets	Gloves	59	59	41	41	0	82	74								
+legs_str_dex_09	armour	戰痕鱗護腿	retired	legs_str_dex_14	legs_str_dex		65	65	22	22	0	53	52							tier-order	FourGlovesStrDex6	Ornate Gauntlets	Gloves	65	65	44	44	0	89	81								
+legs_str_dex_10	armour	銅鑲鱗護腿	retired	legs_str_dex_14	legs_str_dex		65	65	22	22	0	53	52							tier-order	FourGlovesStrDex1Endgame	Steelmail Gauntlets	Gloves	65	65	44	44	0	89	81								
+legs_str_dex_11	armour	獵紋鱗護腿	retired	legs_str_dex_14	legs_str_dex		70	70	25	25	0	52	51							tier-order	FourGlovesStrDexUnique1	Ancient Gauntlets	Gloves	70	70	52	52	0	89	81								
+legs_str_dex_12	armour	熔鋼鱗護腿	retired	legs_str_dex_14	legs_str_dex		70	70	23	23	0	55	54							tier-order	FourGlovesStrDex2Endgame	Commander Gauntlets	Gloves	70	70	48	48	0	94	85								
+legs_str_dex_13	armour	寒鐵鱗護腿	retired	legs_str_dex_14	legs_str_dex		75	75	25	25	0	56	56							tier-order	FourGlovesStrDex3Endgame	Cultist Gauntlets	Gloves	75	75	52	52	0	98	90								
+legs_str_dex_14	armour	雷紋鱗護腿	active		legs_str_dex	80	1	1	25	25	0	58	58							tier-order	FourGlovesStrDex4Endgame	Blacksteel Gauntlets	Gloves	80	80	55	55	0	103	94								
+legs_dex_int_01	armour	樸素纏腿	retired	legs_dex_int_13	legs_dex_int		4	4	0	11	11		17	7						tier-order	FourGlovesDexInt1	Gauze Wraps	Gloves	4	4	0	6	6		9	6							
+legs_dex_int_02	armour	舊木纏腿	retired	legs_dex_int_13	legs_dex_int		16	16	0	13	13		25	9						tier-order	FourGlovesDexInt2	Linen Wraps	Gloves	16	16	0	13	13		23	10							
+legs_dex_int_03	armour	鐵箍纏腿	retired	legs_dex_int_13	legs_dex_int		33	33	0	16	16		34	12						tier-order	FourGlovesDexInt3	Spiral Wraps	Gloves	33	33	0	24	24		43	15							
+legs_dex_int_04	armour	淬鐵纏腿	retired	legs_dex_int_13	legs_dex_int		45	45	0	19	19		41	15						tier-order	FourGlovesDexInt4	Buckled Wraps	Gloves	45	45	0	32	32		58	19							
+legs_dex_int_05	armour	鍛紋纏腿	retired	legs_dex_int_13	legs_dex_int		45	45	0	19	19		41	15						tier-order	FourGlovesDexInt1Cruel	Bandage Wraps	Gloves	45	45	0	32	32		58	19							
+legs_dex_int_06	armour	精鐵纏腿	retired	legs_dex_int_13	legs_dex_int		51	51	0	20	20		44	16						tier-order	FourGlovesDexInt2Cruel	Cambric Wraps	Gloves	51	51	0	35	35		65	21							
+legs_dex_int_07	armour	鋼脊纏腿	retired	legs_dex_int_13	legs_dex_int		52	52	0	20	20		45	16						tier-order	FourGlovesDexInt5	Furtive Wraps	Gloves	52	52	0	36	36		66	21							
+legs_dex_int_08	armour	鑄紋纏腿	retired	legs_dex_int_13	legs_dex_int		59	59	0	22	22		48	18						tier-order	FourGlovesDexInt3Cruel	Adorned Wraps	Gloves	59	59	0	41	41		74	23							
+legs_dex_int_09	armour	戰痕纏腿	retired	legs_dex_int_13	legs_dex_int		65	65	0	23	23		51	20						tier-order	FourGlovesDexInt6	Utility Wraps	Gloves	65	65	0	44	44		81	25							
+legs_dex_int_10	armour	銅鑲纏腿	retired	legs_dex_int_13	legs_dex_int		65	65	0	23	23		60	23						tier-order	FourGlovesDexInt1Endgame	War Wraps	Gloves	65	65	0	44	44		94	29							
+legs_dex_int_11	armour	獵紋纏腿	retired	legs_dex_int_13	legs_dex_int		70	70	0	24	24		53	20						tier-order	FourGlovesDexInt2Endgame	Elegant Wraps	Gloves	70	70	0	48	48		85	26							
+legs_dex_int_12	armour	熔鋼纏腿	retired	legs_dex_int_13	legs_dex_int		75	75	0	25	25		55	21						tier-order	FourGlovesDexInt3Endgame	Vaal Wraps	Gloves	75	75	0	52	52		90	27							
+legs_dex_int_13	armour	寒鐵纏腿	active		legs_dex_int	80	1	1	0	26	26		56	23						tier-order	FourGlovesDexInt4Endgame	Secured Wraps	Gloves	80	80	0	55	55		94	29							
+legs_str_int_01	armour	樸素聖護腿	retired	legs_str_int_14	legs_str_int		5	5	11	0	11	18		7						tier-order	FourGlovesStrInt1	Rope Cuffs	Gloves	5	5	6	0	6	13		6							
+legs_str_int_02	armour	舊木聖護腿	retired	legs_str_int_14	legs_str_int		16	16	13	0	13	24		9						tier-order	FourGlovesStrInt2	Aged Cuffs	Gloves	16	16	13	0	13	27		10							
+legs_str_int_03	armour	鐵箍聖護腿	retired	legs_str_int_14	legs_str_int		33	33	16	0	16	34		12						tier-order	FourGlovesStrInt3	Goldcast Cuffs	Gloves	33	33	24	0	24	49		15							
+legs_str_int_04	armour	淬鐵聖護腿	retired	legs_str_int_14	legs_str_int		45	45	19	0	19	41		15						tier-order	FourGlovesStrInt4	Kalguuran Cuffs	Gloves	45	45	32	0	32	64		19							
+legs_str_int_05	armour	鍛紋聖護腿	retired	legs_str_int_14	legs_str_int		45	45	19	0	19	41		15						tier-order	FourGlovesStrInt1Cruel	Braided Cuffs	Gloves	45	45	32	0	32	64		19							
+legs_str_int_06	armour	精鐵聖護腿	retired	legs_str_int_14	legs_str_int		51	51	19	0	19	45		17						tier-order	FourGlovesStrInt2Cruel	Heirloom Cuffs	Gloves	51	51	35	0	35	72		21							
+legs_str_int_07	armour	鋼脊聖護腿	retired	legs_str_int_14	legs_str_int		52	52	20	0	20	45		17						tier-order	FourGlovesStrInt5	Righteous Cuffs	Gloves	52	52	36	0	36	73		21							
+legs_str_int_08	armour	鑄紋聖護腿	retired	legs_str_int_14	legs_str_int		59	59	21	0	21	49		18						tier-order	FourGlovesStrInt3Cruel	Ornate Cuffs	Gloves	59	59	41	0	41	82		23							
+legs_str_int_09	armour	戰痕聖護腿	retired	legs_str_int_14	legs_str_int		65	65	22	0	22	53		20						tier-order	FourGlovesStrIntUnique1	Tethering Bands	Gloves	65	65	55	0	55	98		27							
+legs_str_int_10	armour	銅鑲聖護腿	retired	legs_str_int_14	legs_str_int		65	65	22	0	22	53		20						tier-order	FourGlovesStrInt6	Signet Cuffs	Gloves	65	65	44	0	44	89		25							
+legs_str_int_11	armour	獵紋聖護腿	retired	legs_str_int_14	legs_str_int		65	65	27	0	27	58		21						tier-order	FourGlovesStrInt1Endgame	Bound Cuffs	Gloves	65	65	44	0	44	89		25							
+legs_str_int_12	armour	熔鋼聖護腿	retired	legs_str_int_14	legs_str_int		70	70	23	0	23	52		20						tier-order	FourGlovesStrInt2Endgame	Ancient Cuffs	Gloves	70	70	48	0	48	89		25							
+legs_str_int_13	armour	寒鐵聖護腿	retired	legs_str_int_14	legs_str_int		75	75	25	0	25	54		21						tier-order	FourGlovesStrInt3Endgame	Gleaming Cuffs	Gloves	75	75	52	0	52	94		26							
+legs_str_int_14	armour	雷紋聖護腿	active		legs_str_int	80	1	1	25	0	25	56		22						tier-order	FourGlovesStrInt4Endgame	Adherent Cuffs	Gloves	80	80	55	0	55	98		27							
+boots_str_01	armour	樸素戰靴	retired	boots_str_16	boots_str		1	1	16	0	0	18								tier-order	FourBootsStr1	Rough Greaves	Boots	1	1	0	0	0	22									
+boots_str_02	armour	舊木戰靴	retired	boots_str_16	boots_str		11	11	19	0	0	24								tier-order	FourBootsStr2	Iron Greaves	Boots	11	11	17	0	0	57									
+boots_str_03	armour	鐵箍戰靴	retired	boots_str_16	boots_str		16	16	21	0	0	27								tier-order	FourBootsStr3	Bronze Greaves	Boots	16	16	23	0	0	74									
+boots_str_04	armour	淬鐵戰靴	retired	boots_str_16	boots_str		27	27	25	0	0	34								tier-order	FourBootsStr4	Trimmed Greaves	Boots	27	27	38	0	0	112									
+boots_str_05	armour	鍛紋戰靴	retired	boots_str_16	boots_str		33	33	27	0	0	38								tier-order	FourBootsStr5	Stone Greaves	Boots	33	33	45	0	0	133									
+boots_str_06	armour	精鐵戰靴	retired	boots_str_16	boots_str		45	45	30	0	0	46								tier-order	FourBootsStr6	Reefsteel Greaves	Boots	45	45	60	0	0	174									
+boots_str_07	armour	鋼脊戰靴	retired	boots_str_16	boots_str		45	45	30	0	0	46								tier-order	FourBootsStr2Cruel	Plated Greaves	Boots	45	45	60	0	0	174									
+boots_str_08	armour	鑄紋戰靴	retired	boots_str_16	boots_str		51	51	32	0	0	50								tier-order	FourBootsStr3Cruel	Lionheart Greaves	Boots	51	51	68	0	0	195									
+boots_str_09	armour	戰痕戰靴	retired	boots_str_16	boots_str		52	52	32	0	0	51								tier-order	FourBootsStr7	Monument Greaves	Boots	52	52	69	0	0	199									
+boots_str_10	armour	銅鑲戰靴	retired	boots_str_16	boots_str		54	54	33	0	0	52								tier-order	FourBootsStr4Cruel	Elegant Greaves	Boots	54	54	72	0	0	206									
+boots_str_11	armour	獵紋戰靴	retired	boots_str_16	boots_str		59	59	34	0	0	55								tier-order	FourBootsStr5Cruel	Carved Greaves	Boots	59	59	78	0	0	223									
+boots_str_12	armour	熔鋼戰靴	retired	boots_str_16	boots_str		65	65	36	0	0	59								tier-order	FourBootsStr8	Totemic Greaves	Boots	65	65	86	0	0	244									
+boots_str_13	armour	寒鐵戰靴	retired	boots_str_16	boots_str		65	65	36	0	0	59								tier-order	FourBootsStr2Endgame	Bulwark Greaves	Boots	65	65	86	0	0	244									
+boots_str_14	armour	雷紋戰靴	retired	boots_str_16	boots_str		70	70	38	0	0	61								tier-order	FourBootsStr4Endgame	Ornate Greaves	Boots	70	70	93	0	0	256									
+boots_str_15	armour	赤銅戰靴	retired	boots_str_16	boots_str		75	75	40	0	0	63								tier-order	FourBootsStr5Endgame	Vaal Greaves	Boots	75	75	101	0	0	268									
+boots_str_16	armour	秘銀戰靴	active		boots_str	80	1	1	42	0	0	65								tier-order	FourBootsStr6Endgame	Tasalian Greaves	Boots	80	80	108	0	0	280									
+boots_dex_01	armour	樸素皮靴	retired	boots_dex_16	boots_dex		1	1	0	16	0		17							tier-order	FourBootsDex1	Rawhide Boots	Boots	1	1	0	0	0		15								
+boots_dex_02	armour	舊木皮靴	retired	boots_dex_16	boots_dex		11	11	0	19	0		25							tier-order	FourBootsDex2	Laced Boots	Boots	11	11	0	17	0		47								
+boots_dex_03	armour	鐵箍皮靴	retired	boots_dex_16	boots_dex		16	16	0	21	0		28							tier-order	FourBootsDex3	Embossed Boots	Boots	16	16	0	23	0		63								
+boots_dex_04	armour	淬鐵皮靴	retired	boots_dex_16	boots_dex		28	28	0	25	0		36							tier-order	FourBootsDex4	Steeltoe Boots	Boots	28	28	0	39	0		102								
+boots_dex_05	armour	鍛紋皮靴	retired	boots_dex_16	boots_dex		33	33	0	27	0		39							tier-order	FourBootsDex5	Lizardscale Boots	Boots	33	33	0	45	0		118								
+boots_dex_06	armour	精鐵皮靴	retired	boots_dex_16	boots_dex		45	45	0	30	0		46							tier-order	FourBootsDex6	Flared Boots	Boots	45	45	0	60	0		157								
+boots_dex_07	armour	鋼脊皮靴	retired	boots_dex_16	boots_dex		45	45	0	30	0		46							tier-order	FourBootsDex2Cruel	Bound Boots	Boots	45	45	0	60	0		157								
+boots_dex_08	armour	鑄紋皮靴	retired	boots_dex_16	boots_dex		51	51	0	32	0		50							tier-order	FourBootsDex3Cruel	Sleek Boots	Boots	51	51	0	68	0		177								
+boots_dex_09	armour	戰痕皮靴	retired	boots_dex_16	boots_dex		52	52	0	32	0		51							tier-order	FourBootsDex7	Leatherplate Boots	Boots	52	52	0	69	0		180								
+boots_dex_10	armour	銅鑲皮靴	retired	boots_dex_16	boots_dex		54	54	0	33	0		52							tier-order	FourBootsDex4Cruel	Studded Boots	Boots	54	54	0	72	0		186								
+boots_dex_11	armour	獵紋皮靴	retired	boots_dex_16	boots_dex		59	59	0	34	0		55							tier-order	FourBootsDex5Cruel	Serpentscale Boots	Boots	59	59	0	78	0		203								
+boots_dex_12	armour	熔鋼皮靴	retired	boots_dex_16	boots_dex		65	65	0	36	0		58							tier-order	FourBootsDex8	Embroidered Boots	Boots	65	65	0	86	0		222								
+boots_dex_13	armour	寒鐵皮靴	retired	boots_dex_16	boots_dex		65	65	0	36	0		58							tier-order	FourBootsDex2Endgame	Cinched Boots	Boots	65	65	0	86	0		222								
+boots_dex_14	armour	雷紋皮靴	retired	boots_dex_16	boots_dex		70	70	0	38	0		60							tier-order	FourBootsDex4Endgame	Cavalry Boots	Boots	70	70	0	93	0		233								
+boots_dex_15	armour	赤銅皮靴	retired	boots_dex_16	boots_dex		75	75	0	40	0		62							tier-order	FourBootsDex5Endgame	Dragonscale Boots	Boots	75	75	0	101	0		244								
+boots_dex_16	armour	秘銀皮靴	active		boots_dex	80	1	1	0	42	0		63							tier-order	FourBootsDex6Endgame	Drakeskin Boots	Boots	80	80	0	108	0		255								
+boots_int_01	armour	樸素絲履	retired	boots_int_16	boots_int		1	1	0	0	16			7						tier-order	FourBootsInt1	Straw Sandals	Boots	1	1	0	0	0			14							
+boots_int_02	armour	舊木絲履	retired	boots_int_16	boots_int		11	11	0	0	19			7						tier-order	FourBootsInt2	Wrapped Sandals	Boots	11	11	0	0	17			22							
+boots_int_03	armour	鐵箍絲履	retired	boots_int_16	boots_int		16	16	0	0	21			9						tier-order	FourBootsInt3	Lattice Sandals	Boots	16	16	0	0	23			27							
+boots_int_04	armour	淬鐵絲履	retired	boots_int_16	boots_int		27	27	0	0	25			11						tier-order	FourBootsInt4	Silk Slippers	Boots	27	27	0	0	38			36							
+boots_int_05	armour	鍛紋絲履	retired	boots_int_16	boots_int		33	33	0	0	27			12						tier-order	FourBootsInt5	Feathered Sandals	Boots	33	33	0	0	45			41							
+boots_int_06	armour	精鐵絲履	retired	boots_int_16	boots_int		45	45	0	0	30			15						tier-order	FourBootsInt6	Flax Sandals	Boots	45	45	0	0	60			51							
+boots_int_07	armour	鋼脊絲履	retired	boots_int_16	boots_int		45	45	0	0	30			15						tier-order	FourBootsInt2Cruel	Laced Sandals	Boots	45	45	0	0	60			51							
+boots_int_08	armour	鑄紋絲履	retired	boots_int_16	boots_int		51	51	0	0	32			16						tier-order	FourBootsInt3Cruel	Bangled Sandals	Boots	51	51	0	0	68			56							
+boots_int_09	armour	戰痕絲履	retired	boots_int_16	boots_int		52	52	0	0	32			17						tier-order	FourBootsInt7	Studded Sandals	Boots	52	52	0	0	69			57							
+boots_int_10	armour	銅鑲絲履	retired	boots_int_16	boots_int		54	54	0	0	33			17						tier-order	FourBootsInt4Cruel	Elegant Slippers	Boots	54	54	0	0	72			58							
+boots_int_11	armour	獵紋絲履	retired	boots_int_16	boots_int		59	59	0	0	34			18						tier-order	FourBootsInt5Cruel	Dunerunner Sandals	Boots	59	59	0	0	78			63							
+boots_int_12	armour	熔鋼絲履	retired	boots_int_16	boots_int		65	65	0	0	36			20						tier-order	FourBootsInt8	Elaborate Sandals	Boots	65	65	0	0	86			68							
+boots_int_13	armour	寒鐵絲履	retired	boots_int_16	boots_int		65	65	0	0	36			20						tier-order	FourBootsInt2Endgame	Bound Sandals	Boots	65	65	0	0	86			68							
+boots_int_14	armour	雷紋絲履	retired	boots_int_16	boots_int		70	70	0	0	38			21						tier-order	FourBootsInt4Endgame	Luxurious Slippers	Boots	70	70	0	0	93			73							
+boots_int_15	armour	赤銅絲履	retired	boots_int_16	boots_int		75	75	0	0	40			23						tier-order	FourBootsInt5Endgame	Sandsworn Sandals	Boots	75	75	0	0	101			78							
+boots_int_16	armour	秘銀絲履	active		boots_int	80	1	1	0	0	42			25						tier-order	FourBootsInt6Endgame	Sekhema Sandals	Boots	80	80	0	0	108			83							
+boots_str_dex_01	armour	樸素鱗靴	retired	boots_str_dex_13	boots_str_dex		6	6	11	11	0	12	11							tier-order	FourBootsStrDex1	Mail Sabatons	Boots	6	6	7	7	0	22	17								
+boots_str_dex_02	armour	舊木鱗靴	retired	boots_str_dex_13	boots_str_dex		16	16	13	13	0	15	15							tier-order	FourBootsStrDex2	Braced Sabatons	Boots	16	16	14	14	0	41	35								
+boots_str_dex_03	armour	鐵箍鱗靴	retired	boots_str_dex_13	boots_str_dex		33	33	17	17	0	21	22							tier-order	FourBootsStrDex3	Stacked Sabatons	Boots	33	33	26	26	0	73	65								
+boots_str_dex_04	armour	淬鐵鱗靴	retired	boots_str_dex_13	boots_str_dex		45	45	19	19	0	26	26							tier-order	FourBootsStrDex4	Covered Sabatons	Boots	45	45	34	34	0	96	86								
+boots_str_dex_05	armour	鍛紋鱗靴	retired	boots_str_dex_13	boots_str_dex		45	45	19	19	0	26	26							tier-order	FourBootsStrDex1Cruel	Soldiering Sabatons	Boots	45	45	34	34	0	96	86								
+boots_str_dex_06	armour	精鐵鱗靴	retired	boots_str_dex_13	boots_str_dex		51	51	20	20	0	28	28							tier-order	FourBootsStrDex2Cruel	Goldwork Sabatons	Boots	51	51	38	38	0	107	97								
+boots_str_dex_07	armour	鋼脊鱗靴	retired	boots_str_dex_13	boots_str_dex		52	52	20	20	0	28	28							tier-order	FourBootsStrDex5	Flexile Sabatons	Boots	52	52	38	38	0	109	99								
+boots_str_dex_08	armour	鑄紋鱗靴	retired	boots_str_dex_13	boots_str_dex		59	59	22	22	0	31	31							tier-order	FourBootsStrDex3Cruel	Bastion Sabatons	Boots	59	59	44	44	0	123	111								
+boots_str_dex_09	armour	戰痕鱗靴	retired	boots_str_dex_13	boots_str_dex		65	65	22	22	0	33	33							tier-order	FourBootsStrDex6	Bold Sabatons	Boots	65	65	47	47	0	134	122								
+boots_str_dex_10	armour	銅鑲鱗靴	retired	boots_str_dex_13	boots_str_dex		65	65	22	22	0	33	33							tier-order	FourBootsStrDex1Endgame	Veteran Sabatons	Boots	65	65	47	47	0	134	122								
+boots_str_dex_11	armour	獵紋鱗靴	retired	boots_str_dex_13	boots_str_dex		70	70	24	24	0	34	34							tier-order	FourBootsStrDex2Endgame	Noble Sabatons	Boots	70	70	51	51	0	141	128								
+boots_str_dex_12	armour	熔鋼鱗靴	retired	boots_str_dex_13	boots_str_dex		75	75	25	25	0	35	35							tier-order	FourBootsStrDex3Endgame	Fortress Sabatons	Boots	75	75	56	56	0	147	134								
+boots_str_dex_13	armour	寒鐵鱗靴	active		boots_str_dex	80	1	1	26	26	0	36	36							tier-order	FourBootsStrDex4Endgame	Blacksteel Sabatons	Boots	80	80	59	59	0	154	140								
+boots_dex_int_01	armour	樸素纏履	retired	boots_dex_int_13	boots_dex_int		5	5	0	11	11		11	5						tier-order	FourBootsDexInt1	Frayed Shoes	Boots	5	5	0	7	7		15	10							
+boots_dex_int_02	armour	舊木纏履	retired	boots_dex_int_13	boots_dex_int		16	16	0	13	13		16	6						tier-order	FourBootsDexInt2	Threaded Shoes	Boots	16	16	0	14	14		35	15							
+boots_dex_int_03	armour	鐵箍纏履	retired	boots_dex_int_13	boots_dex_int		33	33	0	16	16		22	8						tier-order	FourBootsDexInt3	Hunting Shoes	Boots	33	33	0	26	26		65	22							
+boots_dex_int_04	armour	淬鐵纏履	retired	boots_dex_int_13	boots_dex_int		45	45	0	19	19		26	10						tier-order	FourBootsDexInt4	Steelpoint Shoes	Boots	45	45	0	34	34		86	28							
+boots_dex_int_05	armour	鍛紋纏履	retired	boots_dex_int_13	boots_dex_int		45	45	0	19	19		26	10						tier-order	FourBootsDexInt1Cruel	Wayfarer Shoes	Boots	45	45	0	34	34		86	28							
+boots_dex_int_06	armour	精鐵纏履	retired	boots_dex_int_13	boots_dex_int		51	51	0	20	20		28	11						tier-order	FourBootsDexInt2Cruel	Silverbuckled Shoes	Boots	51	51	0	38	38		97	31							
+boots_dex_int_07	armour	鋼脊纏履	retired	boots_dex_int_13	boots_dex_int		52	52	0	20	20		28	11						tier-order	FourBootsDexInt5	Velour Shoes	Boots	52	52	0	38	38		99	31							
+boots_dex_int_08	armour	鑄紋纏履	retired	boots_dex_int_13	boots_dex_int		59	59	0	22	22		31	12						tier-order	FourBootsDexInt3Cruel	Treerunner Shoes	Boots	59	59	0	44	44		111	34							
+boots_dex_int_09	armour	戰痕纏履	retired	boots_dex_int_13	boots_dex_int		65	65	0	22	22		33	13						tier-order	FourBootsDexInt6	Bladed Shoes	Boots	65	65	0	47	47		122	37							
+boots_dex_int_10	armour	銅鑲纏履	retired	boots_dex_int_13	boots_dex_int		65	65	0	22	22		33	13						tier-order	FourBootsDexInt1Endgame	Wanderer Shoes	Boots	65	65	0	47	47		122	37							
+boots_dex_int_11	armour	獵紋纏履	retired	boots_dex_int_13	boots_dex_int		70	70	0	24	24		34	14						tier-order	FourBootsDexInt2Endgame	Charmed Shoes	Boots	70	70	0	51	51		128	39							
+boots_dex_int_12	armour	熔鋼纏履	retired	boots_dex_int_13	boots_dex_int		75	75	0	26	26		35	15						tier-order	FourBootsDexInt3Endgame	Quickslip Shoes	Boots	75	75	0	56	56		134	41							
+boots_dex_int_13	armour	寒鐵纏履	active		boots_dex_int	80	1	1	0	26	26		36	16						tier-order	FourBootsDexInt4Endgame	Daggerfoot Shoes	Boots	80	80	0	59	59		140	43							
+boots_str_int_01	armour	樸素聖靴	retired	boots_str_int_14	boots_str_int		5	5	11	0	11	11		4						tier-order	FourBootsStrInt1	Padded Leggings	Boots	5	5	7	0	7	20		10							
+boots_str_int_02	armour	舊木聖靴	retired	boots_str_int_14	boots_str_int		16	16	13	0	13	15		4						tier-order	FourBootsStrInt2	Secured Leggings	Boots	16	16	14	0	14	41		15							
+boots_str_int_03	armour	鐵箍聖靴	retired	boots_str_int_14	boots_str_int		33	33	16	0	16	21		6						tier-order	FourBootsStrInt3	Pelt Leggings	Boots	33	33	26	0	26	73		22							
+boots_str_int_04	armour	淬鐵聖靴	retired	boots_str_int_14	boots_str_int		45	45	19	0	19	26		8						tier-order	FourBootsStrInt4	Weaver Leggings	Boots	45	45	34	0	34	96		28							
+boots_str_int_05	armour	鍛紋聖靴	retired	boots_str_int_14	boots_str_int		45	45	19	0	19	26		8						tier-order	FourBootsStrInt1Cruel	Adherent Leggings	Boots	45	45	34	0	34	96		28							
+boots_str_int_06	armour	精鐵聖靴	retired	boots_str_int_14	boots_str_int		51	51	20	0	20	28		8						tier-order	FourBootsStrInt2Cruel	Bound Leggings	Boots	51	51	38	0	38	107		31							
+boots_str_int_07	armour	鋼脊聖靴	retired	boots_str_int_14	boots_str_int		52	52	20	0	20	29		8						tier-order	FourBootsStrInt5	Gilt Leggings	Boots	52	52	38	0	38	109		31							
+boots_str_int_08	armour	鑄紋聖靴	retired	boots_str_int_14	boots_str_int		59	59	22	0	22	32		9						tier-order	FourBootsStrInt3Cruel	Shamanistic Leggings	Boots	59	59	44	0	44	123		34							
+boots_str_int_09	armour	戰痕聖靴	retired	boots_str_int_14	boots_str_int		65	65	22	0	22	34		10						tier-order	FourBootsStrIntUnique1	Ancient Leggings	Boots	65	65	56	0	56	134		37							
+boots_str_int_10	armour	銅鑲聖靴	retired	boots_str_int_14	boots_str_int		65	65	26	0	26	34		10						tier-order	FourBootsStrInt6	Pious Leggings	Boots	65	65	47	0	47	134		37							
+boots_str_int_11	armour	獵紋聖靴	retired	boots_str_int_14	boots_str_int		65	65	22	0	22	34		10						tier-order	FourBootsStrInt1Endgame	Faithful Leggings	Boots	65	65	47	0	47	134		37							
+boots_str_int_12	armour	熔鋼聖靴	retired	boots_str_int_14	boots_str_int		70	70	23	0	23	33		10						tier-order	FourBootsStrInt2Endgame	Apostle Leggings	Boots	70	70	51	0	51	134		37							
+boots_str_int_13	armour	寒鐵聖靴	retired	boots_str_int_14	boots_str_int		75	75	25	0	25	33		10						tier-order	FourBootsStrInt3Endgame	Warlock Leggings	Boots	75	75	56	0	56	134		37							
+boots_str_int_14	armour	雷紋聖靴	active		boots_str_int	80	1	1	26	0	26	33		10						tier-order	FourBootsStrInt4Endgame	Cryptic Leggings	Boots	80	80	59	0	59	134		37							
+tshield_01	shields	樸素塔盾	retired	tshield_24	tshield		1	1	18	0	0	41			26.0					tier-order	FourShieldStr1	Splintered Tower Shield	Shield	1	1	0	0	0	18			26	-300					SkillGemShieldBlock
+tshield_02	shields	舊木塔盾	retired	tshield_24	tshield		6	6	18	0	0	48			26.0					tier-order	FourShieldStr2	Painted Tower Shield	Shield	6	6	11	0	0	33			26	-300					SkillGemShieldBlock
+tshield_03	shields	鐵箍塔盾	retired	tshield_24	tshield		12	12	22	0	0	55			26.0					tier-order	FourShieldStr3	Braced Tower Shield	Shield	12	12	19	0	0	50			26	-300					SkillGemShieldBlock
+tshield_04	shields	淬鐵塔盾	retired	tshield_24	tshield		16	16	24	0	0	61			26.0					tier-order	FourShieldStr4	Barricade Tower Shield	Shield	16	16	25	0	0	62			26	-300					SkillGemShieldBlock
+tshield_05	shields	鍛紋塔盾	retired	tshield_24	tshield		21	21	26	0	0	68			26.0					tier-order	FourShieldStr5	Effigial Tower Shield	Shield	21	21	32	0	0	76			26	-300					SkillGemShieldBlock
+tshield_06	shields	精鐵塔盾	retired	tshield_24	tshield		28	28	29	0	0	77			26.0					tier-order	FourShieldStr6	Rampart Tower Shield	Shield	28	28	42	0	0	96			26	-300					SkillGemShieldBlock
+tshield_07	shields	鋼脊塔盾	retired	tshield_24	tshield		33	33	30	0	0	84			26.0					tier-order	FourShieldStr7	Heraldric Tower Shield	Shield	33	33	48	0	0	111			26	-300					SkillGemShieldBlock
+tshield_08	shields	鑄紋塔盾	retired	tshield_24	tshield		36	36	31	0	0	88			26.0					tier-order	FourShieldStr8	Stone Tower Shield	Shield	36	36	52	0	0	119			26	-300					SkillGemShieldBlock
+tshield_09	shields	戰痕塔盾	retired	tshield_24	tshield		45	45	34	0	0	100			26.0					tier-order	FourShieldStr9	Crucible Tower Shield	Shield	45	45	64	0	0	145			26	-300					SkillGemShieldBlock
+tshield_10	shields	銅鑲塔盾	retired	tshield_24	tshield		45	45	34	0	0	100			26.0					tier-order	FourShieldStr2Cruel	Aged Tower Shield	Shield	45	45	64	0	0	145			26	-300					SkillGemShieldBlock
+tshield_11	shields	獵紋塔盾	retired	tshield_24	tshield		48	48	35	0	0	105			26.0					tier-order	FourShieldStr3Cruel	Metalworked Tower Shield	Shield	48	48	69	0	0	154			26	-300					SkillGemShieldBlock
+tshield_12	shields	熔鋼塔盾	retired	tshield_24	tshield		50	50	36	0	0	108			26.0					tier-order	FourShieldStr10	Ancestor Tower Shield	Shield	50	50	71	0	0	160			26	-300					SkillGemShieldBlock
+tshield_13	shields	寒鐵塔盾	retired	tshield_24	tshield		51	51	36	0	0	109			26.0					tier-order	FourShieldStr5Cruel	Cultist Tower Shield	Shield	51	51	73	0	0	163			26	-300					SkillGemShieldBlock
+tshield_14	shields	雷紋塔盾	retired	tshield_24	tshield		52	52	36	0	0	111			26.0					tier-order	FourShieldStr11	Phalanx Tower Shield	Shield	52	52	74	0	0	166			26	-300					SkillGemShieldBlock
+tshield_15	shields	赤銅塔盾	retired	tshield_24	tshield		54	54	37	0	0	113			26.0					tier-order	FourShieldStr6Cruel	Bulwark Tower Shield	Shield	54	54	77	0	0	171			26	-300					SkillGemShieldBlock
+tshield_16	shields	秘銀塔盾	retired	tshield_24	tshield		58	58	38	0	0	119			26.0					tier-order	FourShieldStr12	Defiant Tower Shield	Shield	58	58	82	0	0	183			26	-300					SkillGemShieldBlock
+tshield_17	shields	暗鋼塔盾	retired	tshield_24	tshield		59	59	38	0	0	120			26.0					tier-order	FourShieldStr7Cruel	Noble Tower Shield	Shield	59	59	83	0	0	186			26	-300					SkillGemShieldBlock
+tshield_18	shields	星紋塔盾	retired	tshield_24	tshield		61	61	39	0	0	123			26.0					tier-order	FourShieldStr8Cruel	Goldworked Tower Shield	Shield	61	61	86	0	0	192			26	-300					SkillGemShieldBlock
+tshield_19	shields	隕鐵塔盾	retired	tshield_24	tshield		65	65	40	0	0	128			26.0					tier-order	FourShieldStr13	Blacksteel Tower Shield	Shield	65	65	91	0	0	203			26	-300					SkillGemShieldBlock
+tshield_20	shields	曜石塔盾	retired	tshield_24	tshield		65	65	40	0	0	128			26.0					tier-order	FourShieldStr3Endgame	Royal Tower Shield	Shield	65	65	91	0	0	203			26	-300					SkillGemShieldBlock
+tshield_21	shields	霜晶塔盾	retired	tshield_24	tshield		70	70	42	0	0	139			26.0					tier-order	FourShieldStrUnique1	Glacial Fortress	Shield	70	70	99	0	0	223			26	-300					SkillGemShieldBlock
+tshield_22	shields	炎晶塔盾	retired	tshield_24	tshield		70	70	42	0	0	139			26.0					tier-order	FourShieldStr6Endgame	Fortress Tower Shield	Shield	70	70	99	0	0	223			26	-300					SkillGemShieldBlock
+tshield_23	shields	天鐵塔盾	retired	tshield_24	tshield		75	75	44	0	0	149			26.0					tier-order	FourShieldStr8Endgame	Vaal Tower Shield	Shield	75	75	107	0	0	244			26	-300					SkillGemShieldBlock
+tshield_24	shields	古王塔盾	active		tshield	80	1	1	46	0	0	160			26.0					tier-order	FourShieldStr10Endgame	Tawhoan Tower Shield	Shield	80	80	115	0	0	264			26	-300					SkillGemShieldBlock
+kshield_01	shields	樸素鳶盾	retired	kshield_22	kshield		1	1	11	11	0	23	21		25.0					tier-order	FourShieldStrDex1	Hardwood Targe	Shield	1	1	0	0	0	10	7		25	-150					SkillGemShieldBlock
+kshield_02	shields	舊木鳶盾	retired	kshield_22	kshield		8	8	13	13	0	27	28		25.0					tier-order	FourShieldStrDex2	Pelage Targe	Shield	8	8	9	9	0	21	17		25	-150					SkillGemShieldBlock
+kshield_03	shields	鐵箍鳶盾	retired	kshield_22	kshield		16	16	15	15	0	34	35		25.0					tier-order	FourShieldStrDex3	Studded Targe	Shield	16	16	15	15	0	34	29		25	-150					SkillGemShieldBlock
+kshield_04	shields	淬鐵鳶盾	retired	kshield_22	kshield		26	26	16	16	0	41	42		25.0					tier-order	FourShieldStrDex4	Crescent Targe	Shield	26	26	22	22	0	50	44		25	-150					SkillGemShieldBlock
+kshield_05	shields	鍛紋鳶盾	retired	kshield_22	kshield		33	33	18	18	0	46	47		25.0					tier-order	FourShieldStrDex5	Chiseled Targe	Shield	33	33	27	27	0	61	54		25	-150					SkillGemShieldBlock
+kshield_06	shields	精鐵鳶盾	retired	kshield_22	kshield		37	37	19	19	0	49	50		25.0					tier-order	FourShieldStrDex6	Feathered Targe	Shield	37	37	30	30	0	67	60		25	-150					SkillGemShieldBlock
+kshield_07	shields	鋼脊鳶盾	retired	kshield_22	kshield		45	45	20	20	0	55	56		25.0					tier-order	FourShieldStrDex1Cruel	Ironwood Targe	Shield	45	45	36	36	0	80	72		25	-150					SkillGemShieldBlock
+kshield_08	shields	鑄紋鳶盾	retired	kshield_22	kshield		46	46	21	21	0	56	57		25.0					tier-order	FourShieldStrDex7	Stratified Targe	Shield	46	46	37	37	0	82	74		25	-150					SkillGemShieldBlock
+kshield_09	shields	戰痕鳶盾	retired	kshield_22	kshield		48	48	21	21	0	58	58		25.0					tier-order	FourShieldStrDex2Cruel	Fur-lined Targe	Shield	48	48	38	38	0	85	76		25	-150					SkillGemShieldBlock
+kshield_10	shields	銅鑲鳶盾	retired	kshield_22	kshield		51	51	22	22	0	60	60		25.0					tier-order	FourShieldStrDex8	Carved Targe	Shield	51	51	40	40	0	89	81		25	-150					SkillGemShieldBlock
+kshield_11	shields	獵紋鳶盾	retired	kshield_22	kshield		51	51	22	22	0	60	60		25.0					tier-order	FourShieldStrDex3Cruel	Mercenary Targe	Shield	51	51	40	40	0	89	81		25	-150					SkillGemShieldBlock
+kshield_12	shields	熔鋼鳶盾	retired	kshield_22	kshield		52	52	22	22	0	61	61		25.0					tier-order	FourShieldStrDex9	Mosaic Targe	Shield	52	52	41	41	0	91	82		25	-150					SkillGemShieldBlock
+kshield_13	shields	寒鐵鳶盾	retired	kshield_22	kshield		54	54	22	22	0	62	62		25.0					tier-order	FourShieldStrDex4Cruel	Polished Targe	Shield	54	54	42	42	0	94	85		25	-150					SkillGemShieldBlock
+kshield_14	shields	雷紋鳶盾	retired	kshield_22	kshield		57	57	23	23	0	65	65		25.0					tier-order	FourShieldStrDex10	Aureate Targe	Shield	57	57	45	45	0	99	90		25	-150					SkillGemShieldBlock
+kshield_15	shields	赤銅鳶盾	retired	kshield_22	kshield		59	59	23	23	0	66	66		25.0					tier-order	FourShieldStrDex5Cruel	Stone Targe	Shield	59	59	46	46	0	102	93		25	-150					SkillGemShieldBlock
+kshield_16	shields	秘銀鳶盾	retired	kshield_22	kshield		62	62	24	24	0	68	68		25.0					tier-order (tie re-paired by implicit)	FourShieldStrDex6Cruel	Avian Targe	Shield	62	62	48	48	0	107	97		25	-150					SkillGemShieldBlock
+kshield_17	shields	暗鋼鳶盾	active		kshield	62	1	1	32	32	0	68	68		28.0					tier-order (tie re-paired by implicit)	FourShieldStrDexUnique1	Venerable Defender	Shield	62	62	64	64	0	107	97		28	-150					SkillGemShieldBlock
+kshield_18	shields	星紋鳶盾	retired	kshield_22	kshield		65	65	24	24	0	71	70		25.0					tier-order	FourShieldStrDex11	Grand Targe	Shield	65	65	50	50	0	112	102		25	-150					SkillGemShieldBlock
+kshield_19	shields	隕鐵鳶盾	retired	kshield_22	kshield		65	65	24	24	0	71	70		25.0					tier-order	FourShieldStrDex2Endgame	Mammoth Targe	Shield	65	65	50	50	0	112	102		25	-150					SkillGemShieldBlock
+kshield_20	shields	曜石鳶盾	retired	kshield_22	kshield		70	70	26	26	0	77	75		25.0					tier-order	FourShieldStrDex4Endgame	Baroque Targe	Shield	70	70	54	54	0	123	112		25	-150					SkillGemShieldBlock
+kshield_21	shields	霜晶鳶盾	retired	kshield_22	kshield		75	75	27	27	0	82	81		25.0					tier-order	FourShieldStrDex6Endgame	Soaring Targe	Shield	75	75	59	59	0	134	122		25	-150					SkillGemShieldBlock
+kshield_22	shields	炎晶鳶盾	active		kshield	80	1	1	28	28	0	88	86		25.0					tier-order	FourShieldStrDex10Endgame	Golden Targe	Shield	80	80	63	63	0	145	132		25	-150					SkillGemShieldBlock
+cshield_01	shields	樸素聖徽盾	retired	cshield_21	cshield		1	1	11	0	11	22		9	25.0					tier-order	FourShieldStrInt1	Blazon Crest Shield	Shield	1	1	0	0	0	10		6	25	-150					SkillGemShieldBlock
+cshield_02	shields	舊木聖徽盾	retired	cshield_21	cshield		7	7	12	0	12	27		10	25.0					tier-order	FourShieldStrInt2	Sigil Crest Shield	Shield	7	7	8	0	8	20		9	25	-150					SkillGemShieldBlock
+cshield_03	shields	鐵箍聖徽盾	retired	cshield_21	cshield		16	16	15	0	15	33		11	25.0					tier-order	FourShieldStrInt3	Emblem Crest Shield	Shield	16	16	15	0	15	34		12	25	-150					SkillGemShieldBlock
+cshield_04	shields	淬鐵聖徽盾	retired	cshield_21	cshield		28	28	17	0	17	42		15	25.0					tier-order	FourShieldStrInt4	Jingling Crest Shield	Shield	28	28	23	0	23	53		17	25	-150					SkillGemShieldBlock
+cshield_05	shields	鍛紋聖徽盾	retired	cshield_21	cshield		33	33	18	0	18	46		16	25.0					tier-order	FourShieldStrInt5	Sectarian Crest Shield	Shield	33	33	27	0	27	61		19	25	-150					SkillGemShieldBlock
+cshield_06	shields	精鐵聖徽盾	retired	cshield_21	cshield		36	36	19	0	19	49		17	25.0					tier-order	FourShieldStrInt6	Omen Crest Shield	Shield	36	36	30	0	30	66		20	25	-150					SkillGemShieldBlock
+cshield_07	shields	鋼脊聖徽盾	retired	cshield_21	cshield		45	45	21	0	21	55		19	25.0					tier-order	FourShieldStrInt7	Wayward Crest Shield	Shield	45	45	36	0	36	80		23	25	-150					SkillGemShieldBlock
+cshield_08	shields	鑄紋聖徽盾	retired	cshield_21	cshield		45	45	21	0	21	55		19	25.0					tier-order	FourShieldStrInt1Cruel	Painted Crest Shield	Shield	45	45	36	0	36	80		23	25	-150					SkillGemShieldBlock
+cshield_09	shields	戰痕聖徽盾	retired	cshield_21	cshield		48	48	21	0	21	58		20	25.0					tier-order	FourShieldStrInt2Cruel	Engraved Crest Shield	Shield	48	48	38	0	38	85		24	25	-150					SkillGemShieldBlock
+cshield_10	shields	銅鑲聖徽盾	retired	cshield_21	cshield		50	50	22	0	22	59		21	25.0					tier-order	FourShieldStrInt8	Seer Crest Shield	Shield	50	50	39	0	39	88		25	25	-150					SkillGemShieldBlock
+cshield_11	shields	獵紋聖徽盾	retired	cshield_21	cshield		51	51	22	0	22	60		22	25.0					tier-order	FourShieldStrInt3Cruel	Descry Crest Shield	Shield	51	51	40	0	40	89		26	25	-150					SkillGemShieldBlock
+cshield_12	shields	熔鋼聖徽盾	retired	cshield_21	cshield		52	52	22	0	22	61		22	25.0					tier-order	FourShieldStrInt9	Stoic Crest Shield	Shield	52	52	41	0	41	91		26	25	-150					SkillGemShieldBlock
+cshield_13	shields	寒鐵聖徽盾	retired	cshield_21	cshield		54	54	22	0	22	62		23	25.0					tier-order	FourShieldStrInt4Cruel	Dekharan Crest Shield	Shield	54	54	42	0	42	94		27	25	-150					SkillGemShieldBlock
+cshield_14	shields	雷紋聖徽盾	retired	cshield_21	cshield		57	57	23	0	23	64		24	25.0					tier-order	FourShieldStrInt10	Empyreal Crest Shield	Shield	57	57	45	0	45	99		28	25	-150					SkillGemShieldBlock
+cshield_15	shields	赤銅聖徽盾	retired	cshield_21	cshield		59	59	24	0	24	66		24	25.0					tier-order	FourShieldStrInt5Cruel	Quartered Crest Shield	Shield	59	59	46	0	46	102		29	25	-150					SkillGemShieldBlock
+cshield_16	shields	秘銀聖徽盾	retired	cshield_21	cshield		62	62	24	0	24	68		25	25.0					tier-order	FourShieldStrInt6Cruel	Glowering Crest Shield	Shield	62	62	48	0	48	107		30	25	-150					SkillGemShieldBlock
+cshield_17	shields	暗鋼聖徽盾	retired	cshield_21	cshield		65	65	25	0	25	71		26	25.0					tier-order	FourShieldStrInt11	Deified Crest Shield	Shield	65	65	50	0	50	112		31	25	-150					SkillGemShieldBlock
+cshield_18	shields	星紋聖徽盾	retired	cshield_21	cshield		65	65	25	0	25	71		26	25.0					tier-order	FourShieldStrInt2Endgame	Intricate Crest Shield	Shield	65	65	50	0	50	112		31	25	-150					SkillGemShieldBlock
+cshield_19	shields	隕鐵聖徽盾	retired	cshield_21	cshield		70	70	26	0	26	77		29	25.0					tier-order	FourShieldStrInt4Endgame	Sekheman Crest Shield	Shield	70	70	54	0	54	123		34	25	-150					SkillGemShieldBlock
+cshield_20	shields	曜石聖徽盾	retired	cshield_21	cshield		75	75	28	0	28	82		32	25.0					tier-order	FourShieldStrInt6Endgame	Vaal Crest Shield	Shield	75	75	59	0	59	134		37	25	-150					SkillGemShieldBlock
+cshield_21	shields	霜晶聖徽盾	active		cshield	80	1	1	29	0	29	88		34	25.0					tier-order	FourShieldStrInt7Endgame	Blacksteel Crest Shield	Shield	80	80	63	0	63	145		40	25	-150					SkillGemShieldBlock
+buckler_01	shields	樸素圓盾	retired	buckler_23	buckler		1	1	0	18	0		38		20.0					tier-order	FourShieldDex1	Leather Buckler	Buckler	1	1	0	0	0		10		20						SkillGemParry
+buckler_02	shields	舊木圓盾	retired	buckler_23	buckler		5	5	0	18	0		45		20.0					tier-order	FourShieldDex2	Wooden Buckler	Buckler	5	5	0	10	0		18		20						SkillGemParry
+buckler_03	shields	鐵箍圓盾	retired	buckler_23	buckler		11	11	0	22	0		55		20.0					tier-order	FourShieldDex3	Plated Buckler	Buckler	11	11	0	18	0		31		20						SkillGemParry
+buckler_04	shields	淬鐵圓盾	retired	buckler_23	buckler		16	16	0	24	0		63		20.0					tier-order	FourShieldDex4	Iron Buckler	Buckler	16	16	0	25	0		42		20						SkillGemParry
+buckler_05	shields	鍛紋圓盾	retired	buckler_23	buckler		22	22	0	26	0		71		20.0					tier-order	FourShieldDex5	Ridged Buckler	Buckler	22	22	0	33	0		55		20						SkillGemParry
+buckler_06	shields	精鐵圓盾	retired	buckler_23	buckler		26	26	0	27	0		77		20.0					tier-order	FourShieldDex6	Spiked Buckler	Buckler	26	26	0	38	0		64		20						SkillGemParry
+buckler_07	shields	鋼脊圓盾	retired	buckler_23	buckler		33	33	0	30	0		86		20.0					tier-order	FourShieldDex7	Ringed Buckler	Buckler	33	33	0	48	0		79		20						SkillGemParry
+buckler_08	shields	鑄紋圓盾	retired	buckler_23	buckler		39	39	0	32	0		94		20.0					tier-order	FourShieldDex8	Edged Buckler	Buckler	39	39	0	56	0		92		20						SkillGemParry
+buckler_09	shields	戰痕圓盾	retired	buckler_23	buckler		45	45	0	34	0		102		20.0					tier-order	FourShieldDex9	Laminate Buckler	Buckler	45	45	0	64	0		105		20						SkillGemParry
+buckler_10	shields	銅鑲圓盾	retired	buckler_23	buckler		45	45	0	34	0		102		20.0					tier-order	FourShieldDex2Cruel	Oak Buckler	Buckler	45	45	0	64	0		105		20						SkillGemParry
+buckler_11	shields	獵紋圓盾	retired	buckler_23	buckler		48	48	0	35	0		105		20.0					tier-order	FourShieldDex3Cruel	Painted Buckler	Buckler	48	48	0	69	0		111		20						SkillGemParry
+buckler_12	shields	熔鋼圓盾	retired	buckler_23	buckler		50	50	0	36	0		108		20.0					tier-order	FourShieldDex10	Pearl Buckler	Buckler	50	50	0	71	0		116		20						SkillGemParry
+buckler_13	shields	寒鐵圓盾	retired	buckler_23	buckler		51	51	0	36	0		109		20.0					tier-order	FourShieldDex5Cruel	Coiled Buckler	Buckler	51	51	0	73	0		118		20						SkillGemParry
+buckler_14	shields	雷紋圓盾	retired	buckler_23	buckler		52	52	0	36	0		111		20.0					tier-order	FourShieldDex11	Ornate Buckler	Buckler	52	52	0	74	0		120		20						SkillGemParry
+buckler_15	shields	赤銅圓盾	retired	buckler_23	buckler		54	54	0	37	0		113		20.0					tier-order	FourShieldDex6Cruel	Spikeward Buckler	Buckler	54	54	0	77	0		124		20						SkillGemParry
+buckler_16	shields	秘銀圓盾	retired	buckler_23	buckler		55	55	0	37	0		114		20.0					tier-order	FourShieldDex12	Array Buckler	Buckler	55	55	0	78	0		126		20						SkillGemParry
+buckler_17	shields	暗鋼圓盾	retired	buckler_23	buckler		59	59	0	38	0		119		20.0					tier-order	FourShieldDex7Cruel	Jingling Buckler	Buckler	59	59	0	83	0		135		20						SkillGemParry
+buckler_18	shields	星紋圓盾	retired	buckler_23	buckler		61	61	0	39	0		121		20.0					tier-order	FourShieldDex8Cruel	Bladeguard Buckler	Buckler	61	61	0	86	0		139		20						SkillGemParry
+buckler_19	shields	隕鐵圓盾	retired	buckler_23	buckler		65	65	0	40	0		127		20.0					tier-order	FourShieldDex13	Aegis Buckler	Buckler	65	65	0	91	0		148		20						SkillGemParry
+buckler_20	shields	曜石圓盾	retired	buckler_23	buckler		65	65	0	40	0		127		20.0					tier-order	FourShieldDex3Endgame	Ornate Buckler	Buckler	65	65	0	91	0		148		20						SkillGemParry
+buckler_21	shields	霜晶圓盾	retired	buckler_23	buckler		70	70	0	42	0		137		20.0					tier-order	FourShieldDex6Endgame	Gutspike Buckler	Buckler	70	70	0	99	0		163		20						SkillGemParry
+buckler_22	shields	炎晶圓盾	retired	buckler_23	buckler		75	75	0	44	0		146		20.0					tier-order	FourShieldDex8Endgame	Ancient Buckler	Buckler	75	75	0	107	0		178		20						SkillGemParry
+buckler_23	shields	天鐵圓盾	active		buckler	80	1	1	0	46	0		155		20.0					tier-order	FourShieldDex9Endgame	Desert Buckler	Buckler	80	80	0	115	0		192		20						SkillGemParry
+focus_01	shields	樸素法器	retired	focus_23	focus		1	1	0	0	18			18				增加 (5-10)% 法術傷害		tier-order	FourFocus1	Twig Focus	Focus	1	1	0	0	0			12							
+focus_02	shields	舊木法器	retired	focus_23	focus		6	6	0	0	18			17				增加 (5-10)% 法術傷害		tier-order	FourFocus2	Woven Focus	Focus	6	6	0	0	11			15							
+focus_03	shields	鐵箍法器	retired	focus_23	focus		10	10	0	0	22			18				增加 (5-10)% 法術傷害		tier-order	FourFocus3	Antler Focus	Focus	10	10	0	0	17			18							
+focus_04	shields	淬鐵法器	retired	focus_23	focus		16	16	0	0	24			20				增加 (5-10)% 法術傷害		tier-order	FourFocus4	Engraved Focus	Focus	16	16	0	0	25			22							
+focus_05	shields	鍛紋法器	retired	focus_23	focus		22	22	0	0	26			22				增加 (5-10)% 法術傷害		tier-order	FourFocus5	Tonal Focus	Focus	22	22	0	0	33			26							
+focus_06	shields	精鐵法器	retired	focus_23	focus		26	26	0	0	27			24				增加 (5-10)% 法術傷害		tier-order	FourFocus6	Crystal Focus	Focus	26	26	0	0	38			29							
+focus_07	shields	鋼脊法器	retired	focus_23	focus		33	33	0	0	30			27				增加 (5-10)% 法術傷害		tier-order	FourFocus7	Voodoo Focus	Focus	33	33	0	0	48			34							
+focus_08	shields	鑄紋法器	retired	focus_23	focus		36	36	0	0	31			29				增加 (5-10)% 法術傷害		tier-order	FourFocus8	Plumed Focus	Focus	36	36	0	0	52			36							
+focus_09	shields	戰痕法器	retired	focus_23	focus		45	45	0	0	34			33				增加 (5-10)% 法術傷害		tier-order	FourFocus9	Runed Focus	Focus	45	45	0	0	64			42							
+focus_10	shields	銅鑲法器	retired	focus_23	focus		45	45	0	0	34			33				增加 (5-10)% 法術傷害		tier-order	FourFocus2Cruel	Wreath Focus	Focus	45	45	0	0	64			42							
+focus_11	shields	獵紋法器	retired	focus_23	focus		48	48	0	0	35			35				增加 (5-10)% 法術傷害		tier-order	FourFocus3Cruel	Staghorn Focus	Focus	48	48	0	0	69			45							
+focus_12	shields	熔鋼法器	retired	focus_23	focus		51	51	0	0	36			37				增加 (5-10)% 法術傷害		tier-order	FourFocus10	Whorl Focus	Focus	51	51	0	0	73			47							
+focus_13	shields	寒鐵法器	retired	focus_23	focus		51	51	0	0	36			37				增加 (5-10)% 法術傷害		tier-order	FourFocus5Cruel	Jingling Focus	Focus	51	51	0	0	73			47							
+focus_14	shields	雷紋法器	retired	focus_23	focus		52	52	0	0	36			37				增加 (5-10)% 法術傷害		tier-order	FourFocus11	Elegant Focus	Focus	52	52	0	0	74			47							
+focus_15	shields	赤銅法器	retired	focus_23	focus		54	54	0	0	37			38				增加 (5-10)% 法術傷害		tier-order	FourFocus6Cruel	Arrayed Focus	Focus	54	54	0	0	77			49							
+focus_16	shields	秘銀法器	retired	focus_23	focus		57	57	0	0	38			40				增加 (5-10)% 法術傷害		tier-order	FourFocus12	Attuned Focus	Focus	57	57	0	0	81			51							
+focus_17	shields	暗鋼法器	retired	focus_23	focus		59	59	0	0	38			40				增加 (5-10)% 法術傷害		tier-order	FourFocus7Cruel	Cultist Focus	Focus	59	59	0	0	83			52							
+focus_18	shields	星紋法器	retired	focus_23	focus		61	61	0	0	39			44				增加 (5-10)% 法術傷害		tier-order	FourFocus8Cruel	Hallowed Focus	Focus	61	61	0	0	86			57							
+focus_19	shields	隕鐵法器	retired	focus_23	focus		65	65	0	0	40			44				增加 (5-10)% 法術傷害		tier-order	FourFocus13	Magus Focus	Focus	65	65	0	0	91			56							
+focus_20	shields	曜石法器	retired	focus_23	focus		65	65	0	0	40			48				增加 (5-10)% 法術傷害		tier-order	FourFocus3Endgame	Druidic Focus	Focus	65	65	0	0	91			62							
+focus_21	shields	霜晶法器	retired	focus_23	focus		70	70	0	0	42			55				增加 (5-10)% 法術傷害		tier-order	FourFocus6Endgame	Leyline Focus	Focus	70	70	0	0	99			71							
+focus_22	shields	炎晶法器	retired	focus_23	focus		75	75	0	0	44			63				增加 (5-10)% 法術傷害		tier-order	FourFocus8Endgame	Sacred Focus	Focus	75	75	0	0	107			81							
+focus_23	shields	天鐵法器	active		focus	80	1	1	0	0	46			71				增加 (5-10)% 法術傷害		tier-order	FourFocus10Endgame	Tasalian Focus	Focus	80	80	0	0	115			91							
+jring_01	jewellery	鍛環指環	retired	jring_16	jring		1	1	0	0	0							攻擊附加 1 到 4 物理傷害		gen JEWEL_NAMES reverse: Iron Ring	FourRing1	Iron Ring	Ring	1	1	0	0	0									Adds 1 to 4 Physical Damage to Attacks	
+jring_02	jewellery	青晶指環	active		jring	1	1	1	0	0	0							+(20-30) 最大魔力		gen JEWEL_NAMES reverse: Lazuli Ring	FourRing2	Lazuli Ring	Ring	1	1	0	0	0									+(20-30) to maximum Mana	
+jring_03	jewellery	炎晶指環	active		jring	8	1	1	0	0	0							+(20-30)% 火焰抗性		gen JEWEL_NAMES reverse: Ruby Ring	FourRing3	Ruby Ring	Ring	8	8	0	0	0									+(20-30)% to Fire Resistance	
+jring_04	jewellery	霜晶指環	active		jring	12	1	1	0	0	0							+(20-30)% 冰冷抗性		gen JEWEL_NAMES reverse: Sapphire Ring	FourRing4	Sapphire Ring	Ring	12	12	0	0	0									+(20-30)% to Cold Resistance	
+jring_05	jewellery	雷晶指環	active		jring	16	1	1	0	0	0							+(20-30)% 閃電抗性		gen JEWEL_NAMES reverse: Topaz Ring	FourRing5	Topaz Ring	Ring	16	16	0	0	0									+(20-30)% to Lightning Resistance	
+jring_06	jewellery	紫蝕指環	active		jring	20	1	1	0	0	0							+(7-13)% 混沌抗性		gen JEWEL_NAMES reverse: Amethyst Ring	FourRing6	Amethyst Ring	Ring	20	20	0	0	0									+(7-13)% to Chaos Resistance	
+jring_07	jewellery	鷹眼指環	active		jring	26	1	1	0	0	0							+(120-160) 命中		gen JEWEL_NAMES reverse: Emerald Ring	FourRing7	Emerald Ring	Ring	26	26	0	0	0									+(120-160) to Accuracy Rating	
+jring_08	jewellery	詠珠指環	active		jring	32	1	1	0	0	0							增加 (7-10)% 施法速度		gen JEWEL_NAMES reverse: Pearl Ring	FourRing8	Pearl Ring	Ring	32	32	0	0	0									(7-10)% increased Cast Speed	
+jring_09	jewellery	三晶指環	active		jring	35	1	1	0	0	0							+(7-10)% 全部元素抗性		gen JEWEL_NAMES reverse: Prismatic Ring	FourRing9	Prismatic Ring	Ring	35	35	0	0	0									+(7-10)% to all Elemental Resistances	
+jring_10	jewellery	炎霜指環	active		jring	35	1	1	0	0	0							+(12-16)% 火焰與冰冷抗性		Two-Stone Ring by implicit	FourRing13a	Two-Stone Ring	Ring	35	35	0	0	0									+(12-16)% to Fire and Cold Resistances	
+jring_11	jewellery	炎雷指環	active		jring	35	1	1	0	0	0							+(12-16)% 火焰與閃電抗性		Two-Stone Ring by implicit	FourRing13b	Two-Stone Ring	Ring	35	35	0	0	0									+(12-16)% to Fire and Lightning Resistances	
+jring_12	jewellery	霜雷指環	active		jring	35	1	1	0	0	0							+(12-16)% 冰冷與閃電抗性		Two-Stone Ring by implicit	FourRing13c	Two-Stone Ring	Ring	35	35	0	0	0									+(12-16)% to Cold and Lightning Resistances	
+jring_13	jewellery	金耀指環	active		jring	40	1	1	0	0	0							增加 (6-15)% 物品掉落稀有度		gen JEWEL_NAMES reverse: Gold Ring	FourRing10	Gold Ring	Ring	40	40	0	0	0									(6-15)% increased Rarity of Items found	
+jring_14	jewellery	生脈指環	active		jring	40	1	1	0	0	0							增加 (4-6)% 最大生命		gen JEWEL_NAMES reverse: Vitalic Ring	FourRingB2	Vitalic Ring	Ring	40	40	0	0	0									(4-6)% increased maximum Life	
+jring_15	jewellery	憶念指環	active		jring	40	1	1	0	0	0							增加 (4-6)% 最大魔力		gen JEWEL_NAMES reverse: Mnemonic Ring	FourRingB3	Mnemonic Ring	Ring	40	40	0	0	0									(4-6)% increased maximum Mana	
+jring_16	jewellery	勁擊指環	active		jring	40	1	1	0	0	0							攻擊附加 (6-9) 到 (11-15) 物理傷害		gen JEWEL_NAMES reverse: Kinetic Ring	FourRingB4	Kinetic Ring	Ring	40	40	0	0	0									Adds (6-9) to (11-15) Physical Damage to Attacks	
+jring_17	jewellery	夢紋指環	active		jring	47	1	1	0	0	0							增加 (11-23)% 混沌傷害		gen JEWEL_NAMES reverse: Oneiric Ring	FourRingB5	Oneiric Ring	Ring	47	47	0	0	0									(11-23)% increased Chaos Damage	
+jamulet_01	jewellery	赤血墜飾	active		jamulet	1	1	1	0	0	0							每秒回復 (2-4) 生命		gen JEWEL_NAMES reverse: Crimson Amulet	FourAmulet1	Crimson Amulet	Amulet	1	1	0	0	0									(2-4) Life Regeneration per second	
+jamulet_02	jewellery	蒼泉墜飾	active		jamulet	1	1	1	0	0	0							增加 (20-30)% 魔力回復速度		gen JEWEL_NAMES reverse: Azure Amulet	FourAmulet2	Azure Amulet	Amulet	1	1	0	0	0									(20-30)% increased Mana Regeneration Rate	
+jamulet_03	jewellery	烈珀墜飾	active		jamulet	8	1	1	0	0	0							+(10-15) 力量		gen JEWEL_NAMES reverse: Amber Amulet	FourAmulet3	Amber Amulet	Amulet	8	8	0	0	0									+(10-15) to Strength	
+jamulet_04	jewellery	青翠墜飾	active		jamulet	8	1	1	0	0	0							+(10-15) 敏捷		gen JEWEL_NAMES reverse: Jade Amulet	FourAmulet4	Jade Amulet	Amulet	8	8	0	0	0									+(10-15) to Dexterity	
+jamulet_05	jewellery	藍智墜飾	active		jamulet	8	1	1	0	0	0							+(10-15) 智慧		gen JEWEL_NAMES reverse: Lapis Amulet	FourAmulet5	Lapis Amulet	Amulet	8	8	0	0	0									+(10-15) to Intelligence	
+jamulet_06	jewellery	珠光墜飾	active		jamulet	8	1	1	0	0	0							+(7-10)% 全部元素抗性		gen JEWEL_NAMES reverse: Pearlescent Amulet	FourAmulet11	Pearlescent Amulet	Amulet	8	8	0	0	0									+(7-10)% to all Elemental Resistances	
+jamulet_07	jewellery	月盾墜飾	active		jamulet	14	1	1	0	0	0							+(20-30) 最大能量護盾		gen JEWEL_NAMES reverse: Lunar Amulet	FourAmulet6	Lunar Amulet	Amulet	14	14	0	0	0									+(20-30) to maximum Energy Shield	
+jamulet_08	jewellery	血晶墜飾	active		jamulet	18	1	1	0	0	0							+(30-40) 最大生命		gen JEWEL_NAMES reverse: Bloodstone Amulet	FourAmulet7	Bloodstone Amulet	Amulet	18	18	0	0	0									+(30-40) to maximum Life	
+jamulet_09	jewellery	星輝墜飾	active		jamulet	25	1	1	0	0	0							+(5-7) 全部屬性		gen JEWEL_NAMES reverse: Stellar Amulet	FourAmulet8	Stellar Amulet	Amulet	25	25	0	0	0									+(5-7) to all Attributes	
+jamulet_10	jewellery	日魄墜飾	active		jamulet	30	1	1	0	0	0							+(10-15) 最大精魂		gen JEWEL_NAMES reverse: Solar Amulet	FourAmulet9	Solar Amulet	Amulet	30	30	0	0	0									+(10-15) to Spirit	
+jamulet_11	jewellery	金耀墜飾	active		jamulet	35	1	1	0	0	0							增加 (12-20)% 物品掉落稀有度		gen JEWEL_NAMES reverse: Gold Amulet	FourAmulet10	Gold Amulet	Amulet	35	35	0	0	0									(12-20)% increased Rarity of Items found	
+jbelt_01	jewellery	鞣皮束帶	active		jbelt	1	1	1	0	0	0							增加 (20-30)% 藥劑的生命回復		gen JEWEL_NAMES reverse: Rawhide Belt	FourBelt1	Rawhide Belt	Belt	1	1	0	0	0									(20-30)% increased Life Recovery from Flasks	
+jbelt_02	jewellery	麻紋束帶	active		jbelt	1	1	1	0	0	0							增加 (20-30)% 藥劑的魔力回復		gen JEWEL_NAMES reverse: Linen Belt	FourBelt2	Linen Belt	Belt	1	1	0	0	0									(20-30)% increased Mana Recovery from Flasks	
+jbelt_03	jewellery	鐵片束帶	active		jbelt	25	1	1	0	0	0							+(140-180) 護甲		gen JEWEL_NAMES reverse: Plate Belt	FourBelt5	Plate Belt	Belt	25	25	0	0	0									+(140-180) to Armour	
+jbelt_04	jewellery	詠咒束帶	active		jbelt	32	1	1	0	0	0							增加 (8-12)% 施法速度		gen JEWEL_NAMES reverse: Invoking Belt	FourBeltB2	Invoking Belt	Belt	32	32	0	0	0									Has 1 Charm Slot / (8-12)% increased Cast Speed	
+jbelt_05	jewellery	筋索束帶	active		jbelt	32	1	1	0	0	0							+(15-20) 力量		gen JEWEL_NAMES reverse: Sinew Belt	FourBeltB3	Sinew Belt	Belt	32	32	0	0	0									Has 1 Charm Slot / +(15-20) to Strength	
+jbelt_06	jewellery	岔雷束帶	active		jbelt	32	1	1	0	0	0							攻擊附加 1 到 (20-30) 閃電傷害		gen JEWEL_NAMES reverse: Forking Belt	FourBeltB4	Forking Belt	Belt	32	32	0	0	0									Has 1 Charm Slot / Adds 1 to (20-30) Lightning damage to Attacks	
+jbelt_07	jewellery	重革束帶	active		jbelt	50	1	1	0	0	0							增加 (20-30)% 暈眩門檻		gen JEWEL_NAMES reverse: Heavy Belt	FourBelt9	Heavy Belt	Belt	50	50	0	0	0									(20-30)% increased Stun Threshold	
+quiver_01	quivers	寬鏃箭袋	active		quiver	1	1	1	0	0	0							攻擊附加 1 到 3 物理傷害		quiver name table: Broadhead Quiver	FourQuiver1	Broadhead Quiver	Quiver	1	1	0	0	0									Adds 1 to 3 Physical Damage to Attacks	
+quiver_02	quivers	焰羽箭袋	active		quiver	8	1	1	0	0	0							攻擊附加 3 到 5 火焰傷害		quiver name table: Fire Quiver	FourQuiver2	Fire Quiver	Quiver	8	8	0	0	0									Adds 3 to 5 Fire damage to Attacks	
+quiver_03	quivers	祀血箭袋	active		quiver	16	1	1	0	0	0							攻擊每擊中一個敵人回復 (2-3) 生命		quiver name table: Sacral Quiver	FourQuiver3	Sacral Quiver	Quiver	16	16	0	0	0									Gain (2-3) Life per Enemy Hit with Attacks	
+quiver_04	quivers	叉鏃箭袋	active		quiver	24	1	1	0	0	0							增加 (20-30)% 命中		quiver name table: Two-Point Quiver	FourQuiver4	Two-Point Quiver	Quiver	24	24	0	0	0									(20-30)% increased Accuracy Rating	
+quiver_05	quivers	鈍鏃箭袋	active		quiver	33	1	1	0	0	0							增加 (25-40)% 暈眩累積		quiver name table: Blunt Quiver	FourQuiver5	Blunt Quiver	Quiver	33	33	0	0	0									(25-40)% increased Stun Buildup	
+quiver_06	quivers	毒羽箭袋	active		quiver	39	1	1	0	0	0							攻擊 +(20-30)% 中毒機率		quiver name table: Toxic Quiver	FourQuiver6	Toxic Quiver	Quiver	39	39	0	0	0									(20-30)% chance to Poison on Hit with Attacks	
+quiver_07	quivers	鋸鏃箭袋	active		quiver	44	1	1	0	0	0							攻擊 +(20-30)% 流血機率		quiver name table: Serrated Quiver	FourQuiver7	Serrated Quiver	Quiver	44	44	0	0	0									Attacks have (20-30)% chance to cause Bleeding	
+quiver_08	quivers	疾裝箭袋	active		quiver	51	1	1	0	0	0							增加 (7-10)% 攻擊速度		quiver name table: Primed Quiver	FourQuiver8	Primed Quiver	Quiver	51	51	0	0	0									(7-10)% increased Attack Speed	
+quiver_09	quivers	貫甲箭袋	active		quiver	55	1	1	0	0	0							投射物多穿透 1 個敵人		quiver name table: Penetrating Quiver	FourQuiver9	Penetrating Quiver	Quiver	55	55	0	0	0									100% chance to Pierce an Enemy	
+quiver_10	quivers	飛羽箭袋	active		quiver	61	1	1	0	0	0							增加 (20-30)% 投射物速度		quiver name table: Volant Quiver	FourQuiver10	Volant Quiver	Quiver	61	61	0	0	0									(20-30)% increased Arrow Speed	
+quiver_11	quivers	刺心箭袋	active		quiver	65	1	1	0	0	0							增加 (20-30)% 攻擊暴擊率		quiver name table: Visceral Quiver	FourQuiver11	Visceral Quiver	Quiver	65	65	0	0	0									(20-30)% increased Critical Hit Chance for Attacks	
+mace1_01	weapons	樸素戰錘	retired	mace1_23	mace1		1	1	16	0	0					1.45	5.0			tools/poe2_bases tsv name_en=Wooden Club	FourOneHandMace1	Wooden Club	One Hand Mace	1	1	0	0	0						1.45	5.0	6-10		
+mace1_02	weapons	舊木戰錘	retired	mace1_22	mace1		4	4	17	0	0					1.45	5.0			tools/poe2_bases tsv name_en=Smithing Hammer	FourOneHandMace2	Smithing Hammer	One Hand Mace	4	4	11	0	0						1.45	5.0	11-18		
+mace1_03	weapons	鐵箍戰錘	retired	mace1_20	mace1		10	10	20	0	0					1.55	5.0			tools/poe2_bases tsv name_en=Slim Mace	FourOneHandMace3	Slim Mace	One Hand Mace	10	10	21	0	0						1.55	5.0	11-17		
+mace1_04	weapons	淬鐵戰錘	retired	mace1_23	mace1		16	16	22	0	0					1.45	5.0			tools/poe2_bases tsv name_en=Spiked Club	FourOneHandMace4	Spiked Club	One Hand Mace	16	16	31	0	0						1.45	5.0	15-24		
+mace1_05	weapons	鍛紋戰錘	retired	mace1_24	mace1		22	22	23	0	0					1.45	7.0	+(5-10)% 暴擊傷害加成		tools/poe2_bases tsv name_en=Warpick	FourOneHandMace5	Warpick	One Hand Mace	22	22	41	0	0						1.45	7.0	18-24	+(5-10)% to Critical Damage Bonus	
+mace1_06	weapons	精鐵戰錘	retired	mace1_26	mace1		26	26	24	0	0					1.4	5.0			tools/poe2_bases tsv name_en=Plated Mace	FourOneHandMace6	Plated Mace	One Hand Mace	26	26	48	0	0						1.4	5.0	18-38		
+mace1_07	weapons	鋼脊戰錘	retired	mace1_23	mace1		33	33	26	0	0					1.45	5.0			tools/poe2_bases tsv name_en=Brigand Mace	FourOneHandMace7	Brigand Mace	One Hand Mace	33	33	60	0	0						1.45	5.0	28-38		
+mace1_08	weapons	鑄紋戰錘	retired	mace1_26	mace1		36	36	27	0	0					1.4	5.0			tools/poe2_bases tsv name_en=Construct Hammer	FourOneHandMace8	Construct Hammer	One Hand Mace	36	36	65	0	0						1.4	5.0	31-38	40% chance to Daze on Hit	
+mace1_09	weapons	戰痕戰錘	active		mace1	45	1	1	29	0	0					1.45	6.5			tools/poe2_bases tsv name_en=Morning Star	FourOneHandMace9	Morning Star	One Hand Mace	45	45	80	0	0						1.45	6.5	33-49		
+mace1_10	weapons	銅鑲戰錘	retired	mace1_22	mace1		45	45	29	0	0					1.45	5.0			tools/poe2_bases tsv name_en=Calescent Hammer	FourOneHandMace2Cruel	Calescent Hammer	One Hand Mace	45	45	80	0	0						1.45	5.0	44-74		
+mace1_11	weapons	獵紋戰錘	retired	mace1_20	mace1		48	48	30	0	0					1.55	5.0			tools/poe2_bases tsv name_en=Flared Mace	FourOneHandMace3Cruel	Flared Mace	One Hand Mace	48	48	86	0	0						1.55	5.0	33-50		
+mace1_12	weapons	熔鋼戰錘	retired	mace1_25	mace1		49	49	30	0	0					1.45	5.0	攻擊必定命中		tools/poe2_bases tsv name_en=Jade Club	FourOneHandMace10	Jade Club	One Hand Mace	49	49	87	0	0						1.45	5.0	31-51	Always Hits	
+mace1_13	weapons	寒鐵戰錘	retired	mace1_24	mace1		51	51	31	0	0					1.45	7.0	+(5-10)% 暴擊傷害加成		tools/poe2_bases tsv name_en=Battle Pick	FourOneHandMace5Cruel	Battle Pick	One Hand Mace	51	51	91	0	0						1.45	7.0	35-47	+(5-10)% to Critical Damage Bonus	
+mace1_14	weapons	雷紋戰錘	retired	mace1_23	mace1		52	52	31	0	0					1.45	5.0			tools/poe2_bases tsv name_en=Lumen Mace	FourOneHandMace11	Lumen Mace	One Hand Mace	52	52	92	0	0						1.45	5.0	36-60		
+mace1_15	weapons	赤銅戰錘	retired	mace1_26	mace1		54	54	31	0	0					1.4	5.0			tools/poe2_bases tsv name_en=Marching Mace	FourOneHandMace6Cruel	Marching Mace	One Hand Mace	54	54	96	0	0						1.4	5.0	33-69		
+mace1_16	weapons	秘銀戰錘	retired	mace1_23	mace1		55	55	31	0	0					1.45	5.0			tools/poe2_bases tsv name_en=Execratus Hammer	FourOneHandMace12	Execratus Hammer	One Hand Mace	55	55	97	0	0						1.45	5.0	40-60		
+mace1_17	weapons	暗鋼戰錘	retired	mace1_23	mace1		59	59	32	0	0					1.45	5.0			tools/poe2_bases tsv name_en=Bandit Mace	FourOneHandMace7Cruel	Bandit Mace	One Hand Mace	59	59	104	0	0						1.45	5.0	45-61		
+mace1_18	weapons	星紋戰錘	retired	mace1_26	mace1		62	62	33	0	0					1.4	5.0			tools/poe2_bases tsv name_en=Structured Hammer	FourOneHandMace8Cruel	Structured Hammer	One Hand Mace	62	62	109	0	0						1.4	5.0	49-60	40% chance to Daze on Hit	
+mace1_19	weapons	隕鐵戰錘	retired	mace1_23	mace1		65	65	34	0	0					1.45	5.0			tools/poe2_bases tsv name_en=Torment Club	FourOneHandMace13	Torment Club	One Hand Mace	65	65	114	0	0						1.45	5.0	44-73		
+mace1_20	weapons	曜石戰錘	active		mace1	67	1	1	39	0	0					1.55	5.0			tools/poe2_bases tsv name_en=Flanged Mace	FourOneHandMace3Endgame	Flanged Mace	One Hand Mace	67	67	134	0	0						1.55	5.0	45-67		
+mace1_21	weapons	霜晶戰錘	retired	mace1_26	mace1		72	72	42	0	0					1.4	5.0			tools/poe2_bases tsv name_en=Crown Mace	FourOneHandMace6Endgame	Crown Mace	One Hand Mace	72	72	149	0	0						1.4	5.0	43-89		
+mace1_22	weapons	炎晶戰錘	active		mace1	77	1	1	44	0	0					1.45	5.0			tools/poe2_bases tsv name_en=Molten Hammer	FourOneHandMace2Endgame	Molten Hammer	One Hand Mace	77	77	163	0	0						1.45	5.0	71-118		
+mace1_23	weapons	天鐵戰錘	active		mace1	77	1	1	44	0	0					1.45	5.0			tools/poe2_bases tsv name_en=Marauding Mace	FourOneHandMace7Endgame	Marauding Mace	One Hand Mace	77	77	163	0	0						1.45	5.0	51-84		
+mace1_24	weapons	古王戰錘	active		mace1	78	1	1	44	0	0					1.45	7.0	+(5-10)% 暴擊傷害加成		tools/poe2_bases tsv name_en=Strife Pick	FourOneHandMace5Endgame	Strife Pick	One Hand Mace	78	78	163	0	0						1.45	7.0	49-66	+(5-10)% to Critical Damage Bonus	
+mace1_25	weapons	聖紋戰錘	active		mace1	78	1	1	44	0	0					1.45	5.0	攻擊必定命中		tools/poe2_bases tsv name_en=Akoyan Club	FourOneHandMace10Endgame	Akoyan Club	One Hand Mace	78	78	163	0	0						1.45	5.0	46-76	Always Hits	
+mace1_26	weapons	龍骨戰錘	active		mace1	79	1	1	43	0	0					1.4	5.0			tools/poe2_bases tsv name_en=Fortified Hammer	FourOneHandMace8Endgame	Fortified Hammer	One Hand Mace	79	79	163	0	0						1.4	5.0	60-73	40% chance to Daze on Hit	
+mace2_01	weapons	樸素巨錘	retired	mace2_26	mace2		1	1	24	0	0					1.1	5.0			tools/poe2_bases tsv name_en=Felled Greatclub	FourTwoHandMace1	Felled Greatclub	Two Hand Mace	1	1	0	0	0						1.1	5.0	13-18		
+mace2_02	weapons	舊木巨錘	retired	mace2_23	mace2		4	4	26	0	0					1.0	5.0	增加 (20-40)% 暈眩累積		tools/poe2_bases tsv name_en=Oak Greathammer	FourTwoHandMace2	Oak Greathammer	Two Hand Mace	4	4	11	0	0						1.0	5.0	16-30	Causes (20-40)% increased Stun Buildup	
+mace2_03	weapons	鐵箍巨錘	retired	mace2_25	mace2		11	11	31	0	0					1.05	5.0			tools/poe2_bases tsv name_en=Forge Maul	FourTwoHandMace3	Forge Maul	Two Hand Mace	11	11	23	0	0						1.05	5.0	26-35	Crushes Enemies on Hit	
+mace2_04	weapons	淬鐵巨錘	retired	mace2_26	mace2		16	16	32	0	0					1.1	5.0			tools/poe2_bases tsv name_en=Studded Greatclub	FourTwoHandMace4	Studded Greatclub	Two Hand Mace	16	16	31	0	0						1.1	5.0	32-48		
+mace2_05	weapons	鍛紋巨錘	retired	mace2_25	mace2		22	22	35	0	0					1.05	5.0			tools/poe2_bases tsv name_en=Cultist Greathammer	FourTwoHandMace5	Cultist Greathammer	Two Hand Mace	22	22	41	0	0						1.05	5.0	36-49	Strikes deal Splash Damage	
+mace2_06	weapons	精鐵巨錘	retired	mace2_22	mace2		28	28	38	0	0					1.2	5.0			tools/poe2_bases tsv name_en=Temple Maul	FourTwoHandMace6	Temple Maul	Two Hand Mace	28	28	52	0	0						1.2	5.0	35-72		
+mace2_07	weapons	鋼脊巨錘	retired	mace2_26	mace2		33	33	39	0	0					1.1	5.0			tools/poe2_bases tsv name_en=Leaden Greathammer	FourTwoHandMace7	Leaden Greathammer	Two Hand Mace	33	33	60	0	0						1.1	5.0	58-78		
+mace2_08	weapons	鑄紋巨錘	retired	mace2_27	mace2		38	38	41	0	0					1.1	8.0			tools/poe2_bases tsv name_en=Crumbling Maul	FourTwoHandMace8	Crumbling Maul	Two Hand Mace	38	38	68	0	0						1.1	8.0	62-75	Causes Enemies to Explode on Critical kill, for 10% of their Life as Physical Damage	
+mace2_09	weapons	戰痕巨錘	active		mace2	45	1	1	43	0	0					1.1	6.5			tools/poe2_bases tsv name_en=Pointed Maul	FourTwoHandMace9	Pointed Maul	Two Hand Mace	45	45	80	0	0						1.1	6.5	68-102		
+mace2_10	weapons	銅鑲巨錘	active		mace2	45	1	1	43	0	0					1.05	5.0	增加 (20-40)% 暈眩累積		tools/poe2_bases tsv name_en=Snakewood Greathammer	FourTwoHandMace2Cruel	Snakewood Greathammer	Two Hand Mace	45	45	80	0	0						1.05	5.0	62-115	Causes (20-40)% increased Stun Buildup	
+mace2_11	weapons	獵紋巨錘	retired	mace2_25	mace2		48	48	45	0	0					1.05	5.0			tools/poe2_bases tsv name_en=Blacksmith Maul	FourTwoHandMace3Cruel	Blacksmith Maul	Two Hand Mace	48	48	86	0	0						1.05	5.0	75-102	Crushes Enemies on Hit	
+mace2_12	weapons	熔鋼巨錘	retired	mace2_26	mace2		50	50	45	0	0					1.1	5.0			tools/poe2_bases tsv name_en=Totemic Greatclub	FourTwoHandMace10	Totemic Greatclub	Two Hand Mace	50	50	89	0	0						1.1	5.0	77-105	Warcries Empower an additional Attack	
+mace2_13	weapons	寒鐵巨錘	retired	mace2_25	mace2		51	51	45	0	0					1.05	5.0			tools/poe2_bases tsv name_en=Zealot Greathammer	FourTwoHandMace5Cruel	Zealot Greathammer	Two Hand Mace	51	51	91	0	0						1.05	5.0	70-95	Strikes deal Splash Damage	
+mace2_14	weapons	雷紋巨錘	retired	mace2_26	mace2		52	52	45	0	0					1.1	5.0			tools/poe2_bases tsv name_en=Greatmace	FourTwoHandMace11	Greatmace	Two Hand Mace	52	52	92	0	0						1.1	5.0	74-124		
+mace2_15	weapons	赤銅巨錘	retired	mace2_26	mace2		54	54	46	0	0					1.1	5.0			tools/poe2_bases tsv name_en=Precise Greathammer	FourTwoHandMace12	Precise Greathammer	Two Hand Mace	54	54	96	0	0						1.1	5.0	87-118		
+mace2_16	weapons	秘銀巨錘	retired	mace2_22	mace2		54	54	46	0	0					1.2	5.0			tools/poe2_bases tsv name_en=Solemn Maul	FourTwoHandMace6Cruel	Solemn Maul	Two Hand Mace	54	54	96	0	0						1.2	5.0	59-123		
+mace2_17	weapons	暗鋼巨錘	retired	mace2_26	mace2		59	59	48	0	0					1.1	5.0			tools/poe2_bases tsv name_en=Heavy Greathammer	FourTwoHandMace7Cruel	Heavy Greathammer	Two Hand Mace	59	59	104	0	0						1.1	5.0	94-127		
+mace2_18	weapons	星紋巨錘	retired	mace2_27	mace2		62	62	49	0	0					1.1	8.0			tools/poe2_bases tsv name_en=Disintegrating Maul	FourTwoHandMace8Cruel	Disintegrating Maul	Two Hand Mace	62	62	109	0	0						1.1	8.0	92-112	Causes Enemies to Explode on Critical kill, for 10% of their Life as Physical Damage	
+mace2_19	weapons	隕鐵巨錘	retired	mace2_26	mace2		65	65	50	0	0					1.1	5.0			tools/poe2_bases tsv name_en=Giant Maul	FourTwoHandMace13	Giant Maul	Two Hand Mace	65	65	114	0	0						1.1	5.0	96-144		
+mace2_20	weapons	曜石巨錘	retired	mace2_25	mace2		67	67	58	0	0					1.05	5.0			tools/poe2_bases tsv name_en=Anvil Maul	FourTwoHandMace3Endgame	Anvil Maul	Two Hand Mace	67	67	134	0	0						1.05	5.0	101-136	Crushes Enemies on Hit	
+mace2_21	weapons	霜晶巨錘	retired	mace2_22	mace2		70	70	68	0	0					1.2	5.0			tools/poe2_bases tsv name_en=Aberrant Sledge	FourTwoHandMaceUnique1	Aberrant Sledge	Two Hand Mace	70	70	163	0	0						1.2	5.0	74-154		
+mace2_22	weapons	炎晶巨錘	active		mace2	72	1	1	62	0	0					1.2	5.0			tools/poe2_bases tsv name_en=Sacred Maul	FourTwoHandMace6Endgame	Sacred Maul	Two Hand Mace	72	72	149	0	0						1.2	5.0	76-158		
+mace2_23	weapons	天鐵巨錘	active		mace2	77	1	1	65	0	0					1.0	5.0	增加 (30-50)% 暈眩累積		tools/poe2_bases tsv name_en=Ironwood Greathammer	FourTwoHandMace2Endgame	Ironwood Greathammer	Two Hand Mace	77	77	163	0	0						1.0	5.0	105-196	Causes (30-50)% increased Stun Buildup	
+mace2_24	weapons	古王巨錘	retired	mace2_26	mace2		77	77	65	0	0					1.1	5.0			tools/poe2_bases tsv name_en=Massive Greathammer	FourTwoHandMace7Endgame	Massive Greathammer	Two Hand Mace	77	77	163	0	0						1.1	5.0	119-161		
+mace2_25	weapons	聖紋巨錘	active		mace2	78	1	1	65	0	0					1.05	5.0			tools/poe2_bases tsv name_en=Fanatic Greathammer	FourTwoHandMace5Endgame	Fanatic Greathammer	Two Hand Mace	78	78	163	0	0						1.05	5.0	101-137	Strikes deal Splash Damage	
+mace2_26	weapons	龍骨巨錘	active		mace2	78	1	1	65	0	0					1.1	5.0			tools/poe2_bases tsv name_en=Tawhoan Greatclub	FourTwoHandMace10Endgame	Tawhoan Greatclub	Two Hand Mace	78	78	163	0	0						1.1	5.0	113-153	Warcries Empower an additional Attack	
+mace2_27	weapons	淵鋼巨錘	active		mace2	79	1	1	64	0	0					1.1	8.0			tools/poe2_bases tsv name_en=Ruination Maul	FourTwoHandMace8Endgame	Ruination Maul	Two Hand Mace	79	79	163	0	0						1.1	8.0	104-127	Causes Enemies to Explode on Critical kill, for 10% of their Life as Physical Damage	
+spear_01	weapons	樸素長矛	retired	spear_26	spear		1	1	6	12	0					1.6	5.0			tools/poe2_bases tsv name_en=Hardwood Spear	FourSpear1	Hardwood Spear	Spear	1	1	0	0	0						1.6	5.0	5-9		
+spear_02	weapons	舊木長矛	retired	spear_26	spear		5	5	0	15	0					1.6	5.0			tools/poe2_bases tsv name_en=Ironhead Spear	FourSpear2	Ironhead Spear	Spear	5	5	0	10	0						1.6	5.0	9-12		
+spear_03	weapons	鐵箍長矛	retired	spear_24	spear		10	10	9	17	0					1.55	5.0			tools/poe2_bases tsv name_en=Hunting Spear	FourSpear3	Hunting Spear	Spear	10	10	9	17	0						1.55	5.0	10-17	 / (15-25)% chance to Maim on Hit	
+spear_04	weapons	淬鐵長矛	retired	spear_21	spear		16	16	9	18	0					1.7	5.0			tools/poe2_bases tsv name_en=Winged Spear	FourSpear4	Winged Spear	Spear	16	16	12	25	0						1.7	5.0	12-22		
+spear_05	weapons	鍛紋長矛	retired	spear_26	spear		21	21	8	19	0					1.6	5.0			tools/poe2_bases tsv name_en=War Spear	FourSpear5	War Spear	Spear	21	21	14	31	0						1.6	5.0	16-27	 / (25-35)% increased Projectile Speed with this Weapon	
+spear_06	weapons	精鐵長矛	retired	spear_24	spear		26	26	9	20	0					1.55	5.0			tools/poe2_bases tsv name_en=Forked Spear	FourSpear6	Forked Spear	Spear	26	26	17	38	0						1.55	5.0	13-38		
+spear_07	weapons	鋼脊長矛	retired	spear_25	spear		33	33	9	21	0					1.5	6.0			tools/poe2_bases tsv name_en=Barbed Spear	FourSpear7	Barbed Spear	Spear	33	33	20	47	0						1.5	6.0	20-38	 / Bleeding you inflict deals Damage (10-20)% faster	
+spear_08	weapons	鑄紋長矛	retired	spear_28	spear		40	40	10	21	0					1.4	5.0			tools/poe2_bases tsv name_en=Broad Spear	FourSpear8	Broad Spear	Spear	40	40	26	55	0						1.4	5.0	32-48	 / 25% increased Melee Strike Range with this weapon	
+spear_09	weapons	戰痕長矛	retired	spear_26	spear		45	45	9	23	0					1.6	5.0			tools/poe2_bases tsv name_en=Crossblade Spear	FourSpear9	Crossblade Spear	Spear	45	45	26	63	0						1.6	5.0	25-52	 / Prevent +(3-7)% of Damage from Deflected Hits	
+spear_10	weapons	銅鑲長矛	retired	spear_26	spear		45	45	9	23	0					1.6	5.0			tools/poe2_bases tsv name_en=Steelhead Spear	FourSpear2Cruel	Steelhead Spear	Spear	45	45	26	63	0						1.6	5.0	33-44		
+spear_11	weapons	獵紋長矛	retired	spear_24	spear		48	48	9	23	0					1.55	5.0			tools/poe2_bases tsv name_en=Coursing Spear	FourSpear3Cruel	Coursing Spear	Spear	48	48	27	67	0						1.55	5.0	31-52	 / (15-25)% chance to Maim on Hit	
+spear_12	weapons	熔鋼長矛	retired	spear_27	spear		51	51	10	23	17					1.6	7.0			tools/poe2_bases tsv name_en=Seaglass Spear	FourSpear10	Seaglass Spear	Spear	51	51	29	71	50						1.6	7.0	29-53		
+spear_13	weapons	寒鐵長矛	retired	spear_26	spear		51	51	10	23	0					1.6	5.0			tools/poe2_bases tsv name_en=Swift Spear	FourSpear5Cruel	Swift Spear	Spear	51	51	29	71	0						1.6	5.0	32-53	 / (25-35)% increased Projectile Speed with this Weapon	
+spear_14	weapons	雷紋長矛	retired	spear_26	spear		52	52	9	24	0					1.6	5.0			tools/poe2_bases tsv name_en=Sword Spear	FourSpear11	Sword Spear	Spear	52	52	29	72	0						1.6	5.0	30-56		
+spear_15	weapons	赤銅長矛	retired	spear_24	spear		54	54	10	24	0					1.55	5.0			tools/poe2_bases tsv name_en=Branched Spear	FourSpear6Cruel	Branched Spear	Spear	54	54	30	75	0						1.55	5.0	23-69		
+spear_16	weapons	秘銀長矛	active		spear	55	1	1	10	24	0					1.6	5.0			tools/poe2_bases tsv name_en=Striking Spear	FourSpear12	Striking Spear	Spear	55	55	31	76	0						1.6	5.0	23-91	 / 	
+spear_17	weapons	暗鋼長矛	retired	spear_25	spear		59	59	10	25	0					1.5	6.0			tools/poe2_bases tsv name_en=Jagged Spear	FourSpear7Cruel	Jagged Spear	Spear	59	59	33	81	0						1.5	6.0	33-61	 / Bleeding you inflict deals Damage (10-20)% faster	
+spear_18	weapons	星紋長矛	retired	spear_28	spear		62	62	12	23	0					1.4	5.0			tools/poe2_bases tsv name_en=Massive Spear	FourSpear8Cruel	Massive Spear	Spear	62	62	40	80	0						1.4	5.0	46-69	 / 25% increased Melee Strike Range with this weapon	
+spear_19	weapons	隕鐵長矛	retired	spear_26	spear		65	65	10	25	0					1.6	5.0			tools/poe2_bases tsv name_en=Helix Spear	FourSpear13	Helix Spear	Spear	65	65	36	89	0						1.6	5.0	37-68		
+spear_20	weapons	曜石長矛	retired	spear_26	spear		67	67	12	29	0					1.6	5.0			tools/poe2_bases tsv name_en=Orichalcum Spear	FourSpear2Endgame	Orichalcum Spear	Spear	67	67	41	104	0						1.6	5.0	46-62		
+spear_21	weapons	霜晶長矛	active		spear	70	1	1	11	31	0					1.7	5.0			tools/poe2_bases tsv name_en=Soaring Spear	FourSpear4Endgame	Soaring Spear	Spear	70	70	41	115	0						1.7	5.0	35-65		
+spear_22	weapons	炎晶長矛	retired	spear_24	spear		72	72	12	31	0					1.55	5.0			tools/poe2_bases tsv name_en=Pronged Spear	FourSpear6Endgame	Pronged Spear	Spear	72	72	46	115	0						1.55	5.0	30-89		
+spear_23	weapons	天鐵長矛	retired	spear_24	spear		75	75	13	33	0					1.55	5.0			tools/poe2_bases tsv name_en=Guardian Spear	FourSpear9Endgame	Guardian Spear	Spear	75	75	50	127	0						1.55	5.0	38-79	 / Prevent +(3-7)% of Damage from Deflected Hits	
+spear_24	weapons	古王長矛	active		spear	77	1	1	13	33	0					1.55	5.0			tools/poe2_bases tsv name_en=Stalking Spear	FourSpear3Endgame	Stalking Spear	Spear	77	77	50	127	0						1.55	5.0	47-79	 / (15-25)% chance to Maim on Hit	
+spear_25	weapons	聖紋長矛	active		spear	77	1	1	13	33	0					1.5	6.0			tools/poe2_bases tsv name_en=Spiked Spear	FourSpear7Endgame	Spiked Spear	Spear	77	77	50	127	0						1.5	6.0	41-76	 / Bleeding you inflict deals Damage (10-20)% faster	
+spear_26	weapons	龍骨長矛	active		spear	78	1	1	13	33	0					1.6	5.0			tools/poe2_bases tsv name_en=Flying Spear	FourSpear5Endgame	Flying Spear	Spear	78	78	50	127	0						1.6	5.0	46-77	 / (25-35)% increased Projectile Speed with this Weapon	
+spear_27	weapons	淵鋼長矛	active		spear	78	1	1	13	33	23					1.6	7.0			tools/poe2_bases tsv name_en=Akoyan Spear	FourSpear10Endgame	Akoyan Spear	Spear	78	78	50	127	90						1.6	7.0	39-72		
+spear_28	weapons	星骸長矛	active		spear	79	1	1	17	28	0					1.4	5.0			tools/poe2_bases tsv name_en=Grand Spear	FourSpear8Endgame	Grand Spear	Spear	79	79	68	109	0						1.4	5.0	56-84	 / 25% increased Melee Strike Range with this weapon	
+qstaff_01	weapons	樸素長棍	retired	qstaff_25	qstaff		1	1	0	12	10					1.4	10.0			tools/poe2_bases tsv name_en=Wrapped Quarterstaff	FourQuarterstaff1	Wrapped Quarterstaff	Warstaff	1	1	0	0	0						1.4	10.0	7-12		
+qstaff_02	weapons	舊木長棍	retired	qstaff_25	qstaff		4	4	0	19	0					1.4	10.0			tools/poe2_bases tsv name_en=Long Quarterstaff	FourQuarterstaff2	Long Quarterstaff	Warstaff	4	4	0	9	0						1.4	10.0	9-18	16% increased Melee Strike Range with this weapon	
+qstaff_03	weapons	鐵箍長棍	retired	qstaff_21	qstaff		11	11	0	21	10					1.4	12.0			tools/poe2_bases tsv name_en=Gothic Quarterstaff	FourQuarterstaff3	Gothic Quarterstaff	Warstaff	11	11	0	18	9						1.4	12.0	16-26		
+qstaff_04	weapons	淬鐵長棍	retired	qstaff_26	qstaff		16	16	0	23	11					1.4	10.0			tools/poe2_bases tsv name_en=Crackling Quarterstaff	FourQuarterstaff4	Crackling Quarterstaff	Warstaff	16	16	0	25	12						1.4	10.0	5-22		
+qstaff_05	weapons	鍛紋長棍	retired	qstaff_22	qstaff		20	20	0	23	11					1.5	10.0			tools/poe2_bases tsv name_en=Crescent Quarterstaff	FourQuarterstaff5	Crescent Quarterstaff	Warstaff	20	20	0	30	14						1.5	10.0	19-39		
+qstaff_06	weapons	精鐵長棍	retired	qstaff_25	qstaff		28	28	0	25	11					1.4	10.0			tools/poe2_bases tsv name_en=Steelpoint Quarterstaff	FourQuarterstaff6	Steelpoint Quarterstaff	Warstaff	28	28	0	41	18						1.4	10.0	28-51		
+qstaff_07	weapons	鋼脊長棍	retired	qstaff_25	qstaff		33	33	0	26	11					1.4	10.0			tools/poe2_bases tsv name_en=Slicing Quarterstaff	FourQuarterstaff7	Slicing Quarterstaff	Warstaff	33	33	0	47	20						1.4	10.0	29-60		
+qstaff_08	weapons	鑄紋長棍	retired	qstaff_28	qstaff		37	37	0	26	11					1.4	10.0	+(12-18)% 格擋率		tools/poe2_bases tsv name_en=Barrier Quarterstaff	FourQuarterstaff8	Barrier Quarterstaff	Warstaff	37	37	0	52	22						1.4	10.0	35-58	+(12-18)% to Block chance	
+qstaff_09	weapons	戰痕長棍	retired	qstaff_23	qstaff		45	45	0	28	12					1.3	10.0			tools/poe2_bases tsv name_en=Hefty Quarterstaff	FourQuarterstaff9	Hefty Quarterstaff	Warstaff	45	45	0	63	26						1.3	10.0	39-81	(20-50)% chance to Daze on Hit	
+qstaff_10	weapons	銅鑲長棍	retired	qstaff_25	qstaff		45	45	0	28	12					1.4	10.0			tools/poe2_bases tsv name_en=Reaching Quarterstaff	FourQuarterstaff2Cruel	Reaching Quarterstaff	Warstaff	45	45	0	63	26						1.4	10.0	35-72	16% increased Melee Strike Range with this weapon	
+qstaff_11	weapons	獵紋長棍	retired	qstaff_21	qstaff		48	48	0	29	12					1.4	12.0			tools/poe2_bases tsv name_en=Barbarous Quarterstaff	FourQuarterstaff3Cruel	Barbarous Quarterstaff	Warstaff	48	48	0	67	27						1.4	12.0	42-71		
+qstaff_12	weapons	熔鋼長棍	retired	qstaff_27	qstaff		49	49	0	29	12					1.5	6.5			tools/poe2_bases tsv name_en=Smooth Quarterstaff	FourQuarterstaff10	Smooth Quarterstaff	Warstaff	49	49	0	68	28						1.5		59-79		
+qstaff_13	weapons	寒鐵長棍	retired	qstaff_26	qstaff		51	51	0	29	12					1.4	10.0			tools/poe2_bases tsv name_en=Arcing Quarterstaff	FourQuarterstaff4Cruel	Arcing Quarterstaff	Warstaff	51	51	0	71	29						1.4	10.0	14-55		
+qstaff_14	weapons	雷紋長棍	retired	qstaff_25	qstaff		52	52	0	30	12					1.4	10.0			tools/poe2_bases tsv name_en=Anima Quarterstaff	FourQuarterstaff11	Anima Quarterstaff	Warstaff	52	52	0	72	29						1.4	10.0	47-79		
+qstaff_15	weapons	赤銅長棍	retired	qstaff_22	qstaff		54	54	0	30	12					1.5	10.0			tools/poe2_bases tsv name_en=Waxing Quarterstaff	FourQuarterstaff5Cruel	Waxing Quarterstaff	Warstaff	54	54	0	75	30						1.5	10.0	39-82		
+qstaff_16	weapons	秘銀長棍	retired	qstaff_25	qstaff		56	56	0	30	12					1.4	10.0			tools/poe2_bases tsv name_en=Graceful Quarterstaff	FourQuarterstaff12	Graceful Quarterstaff	Warstaff	56	56	0	77	31						1.4	10.0	47-87		
+qstaff_17	weapons	暗鋼長棍	retired	qstaff_25	qstaff		59	59	0	31	13					1.4	10.0			tools/poe2_bases tsv name_en=Bladed Quarterstaff	FourQuarterstaff7Cruel	Bladed Quarterstaff	Warstaff	59	59	0	81	33						1.4	10.0	45-94		
+qstaff_18	weapons	星紋長棍	retired	qstaff_28	qstaff		62	62	0	31	13					1.4	10.0	+(12-18)% 格擋率		tools/poe2_bases tsv name_en=Guardian Quarterstaff	FourQuarterstaff8Cruel	Guardian Quarterstaff	Warstaff	62	62	0	85	34						1.4	10.0	52-86	+(12-18)% to Block chance	
+qstaff_19	weapons	隕鐵長棍	retired	qstaff_25	qstaff		65	65	0	32	13					1.4	10.0			tools/poe2_bases tsv name_en=Wyrm Quarterstaff	FourQuarterstaff13	Wyrm Quarterstaff	Warstaff	65	65	0	89	36						1.4	10.0	57-94		
+qstaff_20	weapons	曜石長棍	retired	qstaff_25	qstaff		65	65	0	46	18					1.4	10.0			tools/poe2_bases tsv name_en=Warding Quarterstaff	FourQuarterstaffUnique1	Warding Quarterstaff	Warstaff	65	65	0	127	50						1.4	10.0	51-85	+(30-50) to maximum Runic Ward	
+qstaff_21	weapons	霜晶長棍	active		qstaff	67	1	1	0	37	14					1.4	12.0			tools/poe2_bases tsv name_en=Sinister Quarterstaff	FourQuarterstaff3Endgame	Sinister Quarterstaff	Warstaff	67	67	0	104	41						1.4	12.0	55-91		
+qstaff_22	weapons	炎晶長棍	active		qstaff	72	1	1	0	39	16					1.5	10.0			tools/poe2_bases tsv name_en=Lunar Quarterstaff	FourQuarterstaff5Endgame	Lunar Quarterstaff	Warstaff	72	72	0	115	46						1.5	10.0	50-103		
+qstaff_23	weapons	天鐵長棍	active		qstaff	75	1	1	0	42	17					1.3	10.0			tools/poe2_bases tsv name_en=Skullcrusher Quarterstaff	FourQuarterstaff9Endgame	Skullcrusher Quarterstaff	Warstaff	75	75	0	127	50						1.3	10.0	59-122	(20-50)% chance to Daze on Hit	
+qstaff_24	weapons	古王長棍	retired	qstaff_25	qstaff		77	77	0	42	16					1.4	10.0			tools/poe2_bases tsv name_en=Striking Quarterstaff	FourQuarterstaff2Endgame	Striking Quarterstaff	Warstaff	77	77	0	127	50						1.4	10.0	53-111	16% increased Melee Strike Range with this weapon	
+qstaff_25	weapons	聖紋長棍	active		qstaff	77	1	1	0	42	16					1.4	10.0			tools/poe2_bases tsv name_en=Razor Quarterstaff	FourQuarterstaff7Endgame	Razor Quarterstaff	Warstaff	77	77	0	127	50						1.4	10.0	65-108		
+qstaff_26	weapons	龍骨長棍	active		qstaff	78	1	1	0	41	16					1.4	10.0			tools/poe2_bases tsv name_en=Bolting Quarterstaff	FourQuarterstaff4Endgame	Bolting Quarterstaff	Warstaff	78	78	0	127	50						1.4	10.0	24-97		
+qstaff_27	weapons	淵鋼長棍	active		qstaff	78	1	1	0	41	16					1.5	6.5			tools/poe2_bases tsv name_en=Dreaming Quarterstaff	FourQuarterstaff10Endgame	Dreaming Quarterstaff	Warstaff	78	78	0	127	50						1.5		99-133		
+qstaff_28	weapons	星骸長棍	active		qstaff	79	1	1	0	41	16					1.4	10.0	+(12-18)% 格擋率		tools/poe2_bases tsv name_en=Aegis Quarterstaff	FourQuarterstaff8Endgame	Aegis Quarterstaff	Warstaff	79	79	0	127	50						1.4	10.0	58-97	+(12-18)% to Block chance	
+talis_01	weapons	樸素獸符	retired	talis_18	talis		1	1	10	0	10					1.25	8.0			tools/poe2_bases tsv name_en=Changeling Talisman	Talisman1	Changeling Talisman	Talisman	1	1	0	0	0						1.25	8.0	9-15		
+talis_02	weapons	舊木獸符	retired	talis_17	talis		5	5	12	0	11					1.25	11.0			tools/poe2_bases tsv name_en=Nettle Talisman	Talisman2	Nettle Talisman	Talisman	5	5	9	0	8						1.25	11.0	12-20		
+talis_03	weapons	鐵箍獸符	retired	talis_19	talis		10	10	14	0	10					1.2	8.0			tools/poe2_bases tsv name_en=Cinderbark Talisman	Talisman3	Cinderbark Talisman	Talisman	10	10	15	0	11						1.2	8.0	18-36	(50-80)% increased Flammability Magnitude	
+talis_04	weapons	淬鐵獸符	retired	talis_21	talis		16	16	15	0	11					1.25	8.0	增加 (30-50)% 召喚物傷害		tools/poe2_bases tsv name_en=Familial Talisman	Talisman4	Familial Talisman	Talisman	16	16	21	0	16						1.25	8.0	20-34	Minions deal (30-50)% increased Damage	
+talis_05	weapons	鍛紋獸符	retired	talis_23	talis		22	22	17	0	12					1.4	8.0			tools/poe2_bases tsv name_en=Frenzied Talisman	Talisman5	Frenzied Talisman	Talisman	22	22	28	0	20						1.4	8.0	23-38		
+talis_06	weapons	精鐵獸符	retired	talis_20	talis		28	28	18	0	13					1.3	9.0	+(14-18)% 格擋率		tools/poe2_bases tsv name_en=Primal Talisman	Talisman6	Primal Talisman	Talisman	28	28	34	0	25						1.3	9.0	31-46	+(14-18)% to Block chance	
+talis_07	weapons	鋼脊獸符	retired	talis_25	talis		34	34	19	0	13					1.25	8.0	+(7-10) 怒氣上限		tools/poe2_bases tsv name_en=Rabid Talisman	Talisman7	Rabid Talisman	Talisman	34	34	40	0	29						1.25	8.0	31-58	+(7-10) to Maximum Rage	
+talis_08	weapons	鑄紋獸符	retired	talis_18	talis		40	40	20	0	14					1.25	8.0			tools/poe2_bases tsv name_en=Vicious Talisman	Talisman8	Vicious Talisman	Talisman	40	40	47	0	34						1.25	8.0	43-71		
+talis_09	weapons	戰痕獸符	retired	talis_22	talis		46	46	21	0	15					1.3	8.0			tools/poe2_bases tsv name_en=Voltfang Talisman	Talisman9	Voltfang Talisman	Talisman	46	46	53	0	38						1.3	8.0	23-130	(20-30)% increased Magnitude of Shock you inflict	
+talis_10	weapons	銅鑲獸符	retired	talis_24	talis		52	52	22	0	16					1.1	5.0			tools/poe2_bases tsv name_en=Lumbering Talisman	Talisman10	Lumbering Talisman	Talisman	52	52	60	0	43						1.1	5.0	71-107		
+talis_11	weapons	獵紋獸符	retired	talis_20	talis		55	55	23	0	16					1.3	9.0	+(14-18)% 格擋率		tools/poe2_bases tsv name_en=Howling Talisman	Talisman6Cruel	Howling Talisman	Talisman	55	55	63	0	45						1.3	9.0	52-78	+(14-18)% to Block chance	
+talis_12	weapons	熔鋼獸符	retired	talis_25	talis		58	58	23	0	17					1.25	8.0	+(7-10) 怒氣上限		tools/poe2_bases tsv name_en=Roaring Talisman	Talisman11	Roaring Talisman	Talisman	58	58	66	0	47						1.25	8.0	57-96	+(7-10) to Maximum Rage	
+talis_13	weapons	寒鐵獸符	retired	talis_25	talis		59	59	24	0	17					1.25	8.0	+(7-10) 怒氣上限		tools/poe2_bases tsv name_en=Fury Talisman	Talisman7Cruel	Fury Talisman	Talisman	59	59	67	0	48						1.25	8.0	49-91	+(7-10) to Maximum Rage	
+talis_14	weapons	雷紋獸符	retired	talis_18	talis		63	63	25	0	17					1.25	8.0			tools/poe2_bases tsv name_en=Cruel Talisman	Talisman8Cruel	Cruel Talisman	Talisman	63	63	72	0	51						1.25	8.0	62-103		
+talis_15	weapons	赤銅獸符	active		talis	65	1	1	25	0	17					1.45	7.0			tools/poe2_bases tsv name_en=Wingbeat Talisman	Talisman12	Wingbeat Talisman	Talisman	65	65	74	0	52						1.45	7.0	45-83		
+talis_16	weapons	秘銀獸符	active		talis	65	1	1	25	0	17					1.25	9.0			tools/poe2_bases tsv name_en=Condemned Talisman	Talisman13	Condemned Talisman	Talisman	65	65	74	0	52						1.25	9.0	68-113	(10-20)% increased Effect of your Mark Skills	
+talis_17	weapons	暗鋼獸符	active		talis	67	1	1	29	0	22					1.25	11.0			tools/poe2_bases tsv name_en=Spiny Talisman	Talisman2Endgame	Spiny Talisman	Talisman	67	67	86	0	65						1.25	11.0	60-99		
+talis_18	weapons	星紋獸符	active		talis	70	1	1	32	0	23					1.25	8.0			tools/poe2_bases tsv name_en=Wildwood Talisman	Talisman8Endgame	Wildwood Talisman	Talisman	70	70	98	0	72						1.25	8.0	67-112		
+talis_19	weapons	隕鐵獸符	active		talis	72	1	1	30	0	22					1.2	8.0			tools/poe2_bases tsv name_en=Ashbark Talisman	Talisman3Endgame	Ashbark Talisman	Talisman	72	72	94	0	67						1.2	8.0	72-150	(50-80)% increased Flammability Magnitude	
+talis_20	weapons	曜石獸符	active		talis	75	1	1	31	0	23					1.3	9.0	+(14-18)% 格擋率		tools/poe2_bases tsv name_en=Alpha Talisman	Talisman6Endgame	Alpha Talisman	Talisman	75	75	98	0	72						1.3	9.0	63-94	+(14-18)% to Block chance	
+talis_21	weapons	霜晶獸符	active		talis	77	1	1	28	0	21					1.25	8.0	增加 (30-50)% 召喚物傷害		tools/poe2_bases tsv name_en=Fang Talisman	Talisman4Endgame	Fang Talisman	Talisman	77	77	89	0	68						1.25	8.0	70-116	Minions deal (30-50)% increased Damage	
+talis_22	weapons	炎晶獸符	active		talis	77	1	1	32	0	23					1.3	8.0			tools/poe2_bases tsv name_en=Thunder Talisman	Talisman9Endgame	Thunder Talisman	Talisman	77	77	102	0	72						1.3	8.0	33-187	(20-30)% increased Magnitude of Shock you inflict	
+talis_23	weapons	天鐵獸符	active		talis	78	1	1	30	0	22					1.4	8.0			tools/poe2_bases tsv name_en=Fungal Talisman	Talisman5Endgame	Fungal Talisman	Talisman	78	78	96	0	70						1.4	8.0	59-98		
+talis_24	weapons	古王獸符	active		talis	78	1	1	34	0	20					1.1	5.0			tools/poe2_bases tsv name_en=Jade Talisman	Talisman10Endgame	Jade Talisman	Talisman	78	78	109	0	65						1.1	5.0	101-151		
+talis_25	weapons	聖紋獸符	active		talis	79	1	1	31	0	21					1.25	8.0	+(7-10) 怒氣上限		tools/poe2_bases tsv name_en=Maji Talisman	Talisman7Endgame	Maji Talisman	Talisman	79	79	100	0	67						1.25	8.0	61-114	+(7-10) to Maximum Rage	
+bow_01	weapons	樸素弓	retired	bow_23	bow		1	1	0	16	0					1.2	5.0			tools/poe2_bases tsv name_en=Crude Bow	FourBow1	Crude Bow	Bow	1	1	0	0	0						1.2	5.0	6-9		
+bow_02	weapons	舊木弓	retired	bow_20	bow		5	5	0	17	0					1.25	5.0			tools/poe2_bases tsv name_en=Shortbow	FourBow2	Shortbow	Bow	5	5	0	12	0						1.25	5.0	7-14		
+bow_03	weapons	鐵箍弓	retired	bow_24	bow		11	11	0	20	0					1.15	5.0			tools/poe2_bases tsv name_en=Warden Bow	FourBow3	Warden Bow	Bow	11	11	0	23	0						1.15	5.0	12-20	(25-35)% chance to Chain an additional time	
+bow_04	weapons	淬鐵弓	retired	bow_25	bow		16	16	0	21	0					1.1	5.0			tools/poe2_bases tsv name_en=Recurve Bow	FourBow4	Recurve Bow	Bow	16	16	0	31	0						1.1	5.0	15-31		
+bow_05	weapons	鍛紋弓	retired	bow_23	bow		22	22	0	23	0					1.2	5.0			tools/poe2_bases tsv name_en=Composite Bow	FourBow5	Composite Bow	Bow	22	22	0	41	0						1.2	5.0	19-31		
+bow_06	weapons	精鐵弓	retired	bow_24	bow		28	28	0	25	0					1.15	5.0			tools/poe2_bases tsv name_en=Dualstring Bow	FourBow6	Dualstring Bow	Bow	28	28	0	52	0						1.15	5.0	19-35	+50% Surpassing chance to fire an additional Arrow	
+bow_07	weapons	鋼脊弓	retired	bow_26	bow		33	33	0	26	0					1.2	5.0			tools/poe2_bases tsv name_en=Cultist Bow	FourBow7	Cultist Bow	Bow	33	33	0	60	0						1.2	5.0	22-36		
+bow_08	weapons	鑄紋弓	retired	bow_23	bow		39	39	0	27	0					1.2	5.0			tools/poe2_bases tsv name_en=Zealot Bow	FourBow8	Zealot Bow	Bow	39	39	0	70	0						1.2	5.0	31-47		
+bow_09	weapons	戰痕弓	retired	bow_25	bow		45	45	0	28	0					1.1	5.0			tools/poe2_bases tsv name_en=Artillery Bow	FourBow9	Artillery Bow	Bow	45	45	0	80	0						1.1	5.0	39-72	50% reduced Projectile Range	
+bow_10	weapons	銅鑲弓	retired	bow_20	bow		45	45	0	28	0					1.25	5.0			tools/poe2_bases tsv name_en=Snakewood Shortbow	FourBow2Cruel	Snakewood Shortbow	Bow	45	45	0	80	0						1.25	5.0	29-54		
+bow_11	weapons	獵紋弓	retired	bow_24	bow		48	48	0	29	0					1.15	5.0			tools/poe2_bases tsv name_en=Protector Bow	FourBow3Cruel	Protector Bow	Bow	48	48	0	86	0						1.15	5.0	35-53	(25-35)% chance to Chain an additional time	
+bow_12	weapons	熔鋼弓	retired	bow_23	bow		50	50	0	29	0					1.2	5.0			tools/poe2_bases tsv name_en=Tribal Bow	FourBow10	Tribal Bow	Bow	50	50	0	89	0						1.2	5.0	38-57		
+bow_13	weapons	寒鐵弓	retired	bow_23	bow		51	51	0	30	0					1.2	5.0			tools/poe2_bases tsv name_en=Rider Bow	FourBow5Cruel	Rider Bow	Bow	51	51	0	91	0						1.2	5.0	36-61		
+bow_14	weapons	雷紋弓	active		bow	52	1	1	30	30	0					1.15	6.5			tools/poe2_bases tsv name_en=Greatbow	FourBow11	Greatbow	Bow	52	52	92	92	0						1.15	6.5	40-82		
+bow_15	weapons	赤銅弓	retired	bow_24	bow		54	54	0	30	0					1.15	5.0			tools/poe2_bases tsv name_en=Twin Bow	FourBow6Cruel	Twin Bow	Bow	54	54	0	96	0						1.15	5.0	32-60	+50% Surpassing chance to fire an additional Arrow	
+bow_16	weapons	秘銀弓	retired	bow_23	bow		56	56	0	31	0					1.2	5.0			tools/poe2_bases tsv name_en=Double Limb Bow	FourBow12	Double Limb Bow	Bow	56	56	0	99	0						1.2	5.0	42-63		
+bow_17	weapons	暗鋼弓	retired	bow_26	bow		59	59	0	31	0					1.2	5.0			tools/poe2_bases tsv name_en=Adherent Bow	FourBow7Cruel	Adherent Bow	Bow	59	59	0	104	0						1.2	5.0	35-59		
+bow_18	weapons	星紋弓	retired	bow_23	bow		62	62	0	32	0					1.2	5.0			tools/poe2_bases tsv name_en=Militant Bow	FourBow8Cruel	Militant Bow	Bow	62	62	0	109	0						1.2	5.0	46-69		
+bow_19	weapons	隕鐵弓	retired	bow_23	bow		65	65	0	32	0					1.2	5.0			tools/poe2_bases tsv name_en=Heavy Bow	FourBow13	Heavy Bow	Bow	65	65	0	114	0						1.2	5.0	45-75		
+bow_20	weapons	曜石弓	active		bow	67	1	1	0	38	0					1.25	5.0			tools/poe2_bases tsv name_en=Ironwood Shortbow	FourBow2Endgame	Ironwood Shortbow	Bow	67	67	0	134	0						1.25	5.0	41-76		
+bow_21	weapons	霜晶弓	retired	bow_23	bow		72	72	0	40	0					1.2	5.0			tools/poe2_bases tsv name_en=Cavalry Bow	FourBow5Endgame	Cavalry Bow	Bow	72	72	0	149	0						1.2	5.0	49-82		
+bow_22	weapons	炎晶弓	retired	bow_24	bow		77	77	0	42	0					1.15	5.0			tools/poe2_bases tsv name_en=Guardian Bow	FourBow3Endgame	Guardian Bow	Bow	77	77	0	163	0						1.15	5.0	53-88	(25-35)% chance to Chain an additional time	
+bow_23	weapons	天鐵弓	active		bow	77	1	1	0	42	0					1.2	5.0			tools/poe2_bases tsv name_en=Warmonger Bow	FourBow8Endgame	Warmonger Bow	Bow	77	77	0	163	0						1.2	5.0	56-84		
+bow_24	weapons	古王弓	active		bow	78	1	1	0	42	0					1.15	5.0			tools/poe2_bases tsv name_en=Gemini Bow	FourBow6Endgame	Gemini Bow	Bow	78	78	0	163	0						1.15	5.0	39-72	+50% Surpassing chance to fire an additional Arrow	
+bow_25	weapons	聖紋弓	active		bow	78	1	1	0	42	0					1.1	5.0			tools/poe2_bases tsv name_en=Obliterator Bow	FourBow9Endgame	Obliterator Bow	Bow	78	78	0	163	0						1.1	5.0	62-115	50% reduced Projectile Range	
+bow_26	weapons	龍骨弓	active		bow	79	1	1	0	42	0					1.2	5.0			tools/poe2_bases tsv name_en=Fanatic Bow	FourBow7Endgame	Fanatic Bow	Bow	79	79	0	163	0						1.2	5.0	47-79		
+xbow_01	weapons	樸素弩	retired	xbow_23	xbow		1	1	10	12	0					1.6	5.0			tools/poe2_bases tsv name_en=Makeshift Crossbow	FourCrossbow1	Makeshift Crossbow	Crossbow	1	1	0	0	0						1.6	5.0	7-12		
+xbow_02	weapons	舊木弩	retired	xbow_22	xbow		4	4	13	13	0					1.6	5.0	增加 (20-30)% 投射物速度		tools/poe2_bases tsv name_en=Tense Crossbow	FourCrossbow2	Tense Crossbow	Crossbow	4	4	8	8	0						1.6	5.0	8-15	(20-30)% increased Bolt Speed	
+xbow_03	weapons	鐵箍弩	retired	xbow_20	xbow		10	10	13	13	0					1.55	5.0			tools/poe2_bases tsv name_en=Sturdy Crossbow	FourCrossbow3	Sturdy Crossbow	Crossbow	10	10	13	13	0						1.55	5.0	11-26		
+xbow_04	weapons	淬鐵弩	retired	xbow_23	xbow		16	16	15	15	0					1.6	5.0			tools/poe2_bases tsv name_en=Varnished Crossbow	FourCrossbow4	Varnished Crossbow	Crossbow	16	16	19	19	0						1.6	5.0	12-36		
+xbow_05	weapons	鍛紋弩	retired	xbow_24	xbow		20	20	15	15	0					1.6	5.0	彈匣多 1 發		tools/poe2_bases tsv name_en=Dyad Crossbow	FourCrossbow5	Dyad Crossbow	Crossbow	20	20	22	22	0						1.6	5.0	9-37	Loads an additional bolt	
+xbow_06	weapons	精鐵弩	active		xbow	26	1	1	16	16	0					1.7	5.0			tools/poe2_bases tsv name_en=Alloy Crossbow	FourCrossbow6	Alloy Crossbow	Crossbow	26	26	28	28	0						1.7	5.0	12-50		
+xbow_07	weapons	鋼脊弩	retired	xbow_26	xbow		33	33	18	18	0					1.65	5.0			tools/poe2_bases tsv name_en=Bombard Crossbow	FourCrossbow7	Bombard Crossbow	Crossbow	33	33	34	34	0						1.65	5.0	14-56	Grenade Skills Fire an additional Projectile	
+xbow_08	weapons	鑄紋弩	retired	xbow_23	xbow		38	38	19	19	0					1.6	5.0			tools/poe2_bases tsv name_en=Construct Crossbow	FourCrossbow8	Construct Crossbow	Crossbow	38	38	39	39	0						1.6	5.0	18-72		
+xbow_09	weapons	戰痕弩	active		xbow	45	1	1	20	20	0					1.6	7.0			tools/poe2_bases tsv name_en=Blackfire Crossbow	FourCrossbow9	Blackfire Crossbow	Crossbow	45	45	45	45	0						1.6	7.0	20-80		
+xbow_10	weapons	銅鑲弩	retired	xbow_22	xbow		45	45	20	20	0					1.6	5.0	增加 (20-30)% 投射物速度		tools/poe2_bases tsv name_en=Taut Crossbow	FourCrossbow2Cruel	Taut Crossbow	Crossbow	45	45	45	45	0						1.6	5.0	20-79	(20-30)% increased Bolt Speed	
+xbow_11	weapons	獵紋弩	retired	xbow_20	xbow		48	48	20	20	0					1.55	5.0			tools/poe2_bases tsv name_en=Robust Crossbow	FourCrossbow3Cruel	Robust Crossbow	Crossbow	48	48	48	48	0						1.55	5.0	22-89		
+xbow_12	weapons	熔鋼弩	retired	xbow_26	xbow		50	50	20	20	0					1.65	5.0			tools/poe2_bases tsv name_en=Piercing Crossbow	FourCrossbow10	Piercing Crossbow	Crossbow	50	50	49	49	0						1.65	5.0	21-84	(20-30)% chance to Pierce an Enemy	
+xbow_13	weapons	寒鐵弩	retired	xbow_23	xbow		51	51	21	21	0					1.6	5.0			tools/poe2_bases tsv name_en=Painted Crossbow	FourCrossbow4Cruel	Painted Crossbow	Crossbow	51	51	50	50	0						1.6	5.0	23-92		
+xbow_14	weapons	雷紋弩	retired	xbow_23	xbow		52	52	21	21	0					1.6	5.0			tools/poe2_bases tsv name_en=Cumbrous Crossbow	FourCrossbow11	Cumbrous Crossbow	Crossbow	52	52	51	51	0						1.6	5.0	19-76	+1 to maximum number of Summoned Ballista Totems	
+xbow_15	weapons	赤銅弩	retired	xbow_24	xbow		54	54	21	21	0					1.6	5.0	彈匣多 1 發		tools/poe2_bases tsv name_en=Twin Crossbow	FourCrossbow5Cruel	Twin Crossbow	Crossbow	54	54	53	53	0						1.6	5.0	20-82	Loads an additional bolt	
+xbow_16	weapons	秘銀弩	active		xbow	56	1	1	22	22	0					1.55	7.0			tools/poe2_bases tsv name_en=Dedalian Crossbow	FourCrossbow12	Dedalian Crossbow	Crossbow	56	56	55	55	0						1.55	7.0	25-99		
+xbow_17	weapons	暗鋼弩	retired	xbow_26	xbow		59	59	22	22	0					1.65	5.0			tools/poe2_bases tsv name_en=Cannonade Crossbow	FourCrossbow7Cruel	Cannonade Crossbow	Crossbow	59	59	58	58	0						1.65	5.0	23-90	Grenade Skills Fire an additional Projectile	
+xbow_18	weapons	星紋弩	retired	xbow_23	xbow		62	62	23	23	0					1.6	5.0			tools/poe2_bases tsv name_en=Bleak Crossbow	FourCrossbow8Cruel	Bleak Crossbow	Crossbow	62	62	60	60	0						1.6	5.0	27-109		
+xbow_19	weapons	隕鐵弩	retired	xbow_23	xbow		65	65	23	23	0					1.6	5.0			tools/poe2_bases tsv name_en=Esoteric Crossbow	FourCrossbow13	Esoteric Crossbow	Crossbow	65	65	63	63	0						1.6	5.0	28-113		
+xbow_20	weapons	曜石弩	active		xbow	67	1	1	27	27	0					1.55	5.0			tools/poe2_bases tsv name_en=Stout Crossbow	FourCrossbow3Endgame	Stout Crossbow	Crossbow	67	67	74	74	0						1.55	5.0	30-119		
+xbow_21	weapons	霜晶弩	retired	xbow_23	xbow		72	72	29	29	0					1.6	5.0			tools/poe2_bases tsv name_en=Engraved Crossbow	FourCrossbow4Endgame	Engraved Crossbow	Crossbow	72	72	82	82	0						1.6	5.0	31-124		
+xbow_22	weapons	炎晶弩	active		xbow	77	1	1	31	31	0					1.6	5.0	增加 (20-30)% 投射物速度		tools/poe2_bases tsv name_en=Flexed Crossbow	FourCrossbow2Endgame	Flexed Crossbow	Crossbow	77	77	89	89	0						1.6	5.0	32-127	(20-30)% increased Bolt Speed	
+xbow_23	weapons	天鐵弩	active		xbow	77	1	1	31	31	0					1.6	5.0			tools/poe2_bases tsv name_en=Desolate Crossbow	FourCrossbow8Endgame	Desolate Crossbow	Crossbow	77	77	89	89	0						1.6	5.0	33-132		
+xbow_24	weapons	古王弩	active		xbow	78	1	1	30	30	0					1.6	5.0	彈匣多 1 發		tools/poe2_bases tsv name_en=Gemini Crossbow	FourCrossbow5Endgame	Gemini Crossbow	Crossbow	78	78	89	89	0						1.6	5.0	28-112	Loads an additional bolt	
+xbow_25	weapons	聖紋弩	retired	xbow_26	xbow		78	78	30	30	0					1.65	5.0			tools/poe2_bases tsv name_en=Elegant Crossbow	FourCrossbow10Endgame	Elegant Crossbow	Crossbow	78	78	89	89	0						1.65	5.0	31-123	(20-30)% chance to Pierce an Enemy	
+xbow_26	weapons	龍骨弩	active		xbow	79	1	1	30	30	0					1.65	5.0			tools/poe2_bases tsv name_en=Siege Crossbow	FourCrossbow7Endgame	Siege Crossbow	Crossbow	79	79	89	89	0						1.65	5.0	29-115	Grenade Skills Fire an additional Projectile	
+cwand_01	weapons_casters	枯枝法杖	active		wand		1	1	0	0	0					1.2	5.0		chaos_bolt	"yaml comment ""# PoE2 Withered Wand"""	FourWand1	Withered Wand	Wand	1	1	0	0	0										SkillGemChaosbolt
+cwand_02	weapons_casters	骸骨法杖	active		wand		2	2	0	0	0					1.2	5.0		bone_blast	"yaml comment ""# PoE2 Bone Wand"""	FourWand2	Bone Wand	Wand	2	2	0	0	0										SkillGemBoneBlast
+cwand_03	weapons_casters	調律法杖	active		wand		2	2	0	0	0					1.2	5.0		mana_drain	"yaml comment ""# PoE2 Attuned Wand"""	FourWand3	Attuned Wand	Wand	2	2	0	0	0										SkillGemManaDrain
+cwand_04	weapons_casters	虹吸法杖	active		wand		11	11	0	0	23					1.2	5.0		power_siphon	"yaml comment ""# PoE2 Siphoning Wand"""	FourWand4	Siphoning Wand	Wand	11	11	0	0	23										SkillGemPowerSiphon
+cwand_05	weapons_casters	炎屍法杖	active		wand		16	16	0	0	31					1.2	5.0		volatile_dead	"yaml comment ""# PoE2 Volatile Wand"""	FourWand5	Volatile Wand	Wand	16	16	0	0	31										SkillGemVolatileDead
+cwand_06	weapons_casters	電流法杖	active		wand		25	25	0	0	46					1.2	5.0		galvanic_field	"yaml comment ""# PoE2 Galvanic Wand"""	FourWand6	Galvanic Wand	Wand	25	25	0	0	46										SkillGemGalvanicField
+cwand_07	weapons_casters	腐蝕法杖	active		wand		33	33	0	0	60					1.2	5.0		decompose	"yaml comment ""# PoE2 Acrid Wand"""	FourWand7	Acrid Wand	Wand	33	33	0	0	60										SkillGemCorpseCloud
+cwand_08	weapons_casters	血祭法杖	active		wand		38	38	0	0	68					1.2	5.0		exsanguinate	"yaml comment ""# PoE2 Offering Wand"""	FourWand8	Offering Wand	Wand	38	38	0	0	68										SkillGemExsanguinate
+cwand_09	weapons_casters	霜蝕法杖	active		wand		45	45	0	0	80					1.2	5.0		chaos_bolt	"yaml comment ""# PoE2 Frigid Wand"""	FourWand9	Frigid Wand	Wand	45	45	0	0	80										SkillGemChaosbolt
+cwand_10	weapons_casters	刑苦法杖	active		wand		49	49	0	0	87					1.2	5.0		chaos_bolt	"yaml comment ""# PoE2 Torture Wand"""	FourWand10	Torture Wand	Wand	49	49	0	0	87										SkillGemChaosbolt
+cwand_11	weapons_casters	銳芒法杖	active		wand		52	52	0	0	92					1.2	5.0		chaos_bolt	"yaml comment ""# PoE2 Critical Wand"""	FourWand11	Critical Wand	Wand	52	52	0	0	92										SkillGemChaosbolt
+cwand_12	weapons_casters	太古法杖	active		wand		56	56	0	0	99					1.2	5.0		wither	"yaml comment ""# PoE2 Primordial Wand"""	FourWand12	Primordial Wand	Wand	56	56	0	0	99										SkillGemWither
+cwand_13	weapons_casters	纏蝕法杖	active		wand		65	65	0	0	114					1.2	5.0		coiling_bolts	"yaml comment ""# PoE2 Twisted Wand"""	FourWandUnique1	Twisted Wand	Wand	65	65	0	0	114										SkillGemCoilingBolts
+cwand_14	weapons_casters	決鬥法杖	active		wand		65	65	0	0	114					1.2	5.0		spellslinger	"yaml comment ""# PoE2 Dueling Wand"""	FourWand13	Dueling Wand	Wand	65	65	0	0	114										SkillGemSpellslinger
+cstaff_01	weapons_casters	灰燼長杖	active		staff		1	1	0	0	0					1.2	5.0		firebolt	"yaml comment ""# PoE2 Ashen Staff"""	FourStaff1	Ashen Staff	Staff	1	1	0	0	0										SkillGemFirebolt
+cstaff_02	weapons_casters	凝冰長杖	active		staff		2	2	0	0	0					1.2	5.0		freezing_shards	"yaml comment ""# PoE2 Gelid Staff"""	FourStaff2	Gelid Staff	Staff	2	2	0	0	0										SkillGemFreezingShards
+cstaff_03	weapons_casters	雷鳴長杖	active		staff		2	2	0	0	0					1.2	5.0		lightning_bolt	"yaml comment ""# PoE2 Voltaic Staff"""	FourStaff3	Voltaic Staff	Staff	2	2	0	0	0										SkillGemLightningBolt
+cstaff_04	weapons_casters	精靈長杖	active		staff		11	11	0	0	23					1.2	5.0		firebolt	"yaml comment ""# PoE2 Spriggan Staff"""	FourStaff4	Spriggan Staff	Staff	11	11	0	0	23										SkillGemFirebolt
+cstaff_05	weapons_casters	炎木長杖	active		staff		16	16	0	0	31					1.2	5.0		sun_orb	"yaml comment ""# PoE2 Pyrophyte Staff"""	FourStaff5	Pyrophyte Staff	Staff	16	16	0	0	31										SkillGemSolarOrb
+cstaff_06	weapons_casters	鳴鐘長杖	active		staff		25	25	0	0	46					1.2	5.0		sigil_of_power	"yaml comment ""# PoE2 Chiming Staff"""	FourStaff6	Chiming Staff	Staff	25	25	0	0	46										SkillGemSigilOfPower
+cstaff_07	weapons_casters	裂魂長杖	active		staff		33	33	0	0	60					1.2	5.0		soulrend	"yaml comment ""# PoE2 Rending Staff"""	FourStaff7	Rending Staff	Staff	33	33	0	0	60										SkillGemSoulrend
+cstaff_08	weapons_casters	血鐮長杖	active		staff		38	38	0	0	68					1.2	5.0		reap	"yaml comment ""# PoE2 Reaping Staff"""	FourStaff8	Reaping Staff	Staff	38	38	0	0	68										SkillGemReap
+cstaff_09	weapons_casters	冰錐長杖	active		staff		45	45	0	0	80					1.2	5.0		firebolt	"yaml comment ""# PoE2 Icicle Staff"""	FourStaff9	Icicle Staff	Staff	45	45	0	0	80										SkillGemFirebolt
+cstaff_10	weapons_casters	麻痺長杖	active		staff		52	52	0	0	92					1.2	5.0		enervating_nova	"yaml comment ""# PoE2 Paralysing Staff"""	FourStaff11	Paralysing Staff	Staff	52	52	0	0	92										SkillGemEnervatingNova
+cstaff_11	weapons_casters	聖紋長杖	active		staff		56	56	0	0	99					1.2	5.0		consecrate	"yaml comment ""# PoE2 Sanctified Staff"""	FourStaff12	Sanctified Staff	Staff	56	56	0	0	99										SkillGemStaffConsecrate
+cstaff_12	weapons_casters	冥暗長杖	active		staff		65	65	0	0	114					1.2	5.0		dark_pact	"yaml comment ""# PoE2 Dark Staff"""	FourStaff13	Dark Staff	Staff	65	65	0	0	114										SkillGemDarkPact
+cstaff_13	weapons_casters	饑渴長杖	active		staff		65	65	0	0	114					1.2	5.0		feast_of_flesh	"yaml comment ""# PoE2 Ravenous Staff"""	FourStaff14	Ravenous Staff	Staff	65	65	0	0	114										SkillGemFeastOfFlesh
+cstaff_14	weapons_casters	永凍長杖	active		staff		75	75	0	0	131					1.2	5.0		heart_of_ice	"yaml comment ""# PoE2 Permafrost Staff"""	FourStaffUnique1	Permafrost Staff	Staff	75	75	0	0	114										SkillGemHeartOfIce
+cstaff_15	weapons_casters	咆哮長杖	active		staff		49	49	0	0	87					1.2	5.0		unleash_spell	"yaml comment ""# PoE2 Roaring Staff"""	FourStaff10	Roaring Staff	Staff	49	49	0	0	87										SkillGemStaffUnleash
+cstaff_16	weapons_casters	棲鴉長杖	active		staff		65	65	0	0	114					1.2	5.0		spiraling_conspiracy	"yaml comment ""# PoE2 Perching Staff"""	FourStaffUnique4	Perching Staff	Staff	65	65	0	0	114										SkillGemSpiralingConspiracy
+cstaff_17	weapons_casters	映鏡長杖	active		staff		70	70	0	0	122					1.2	5.0		mirror_of_refraction	"yaml comment ""# PoE2 Reflecting Staff"""	FourStaffUnique3	Reflecting Staff	Staff	70	70	0	0	114										SkillGemMirrorOfRefraction
+csceptre_01	weapons_casters	骸鈴權杖	active		sceptre		1	1	0	0	0					1.2	5.0	+100 精魂	summon_skeletons	"yaml comment ""# PoE2 Rattling Sceptre"""	FourSceptre1	Rattling Sceptre	Sceptre	1	1	0	0	0										SkillGemSkeletalWarriorWeaponSkill
+csceptre_02	weapons_casters	堅忍權杖	active		sceptre		6	6	0	0	12					1.2	5.0	+100 精魂	discipline	"yaml comment ""# PoE2 Stoic Sceptre"""	FourSceptre2	Stoic Sceptre	Sceptre	6	6	0	0	12										SkillGemDiscipline
+csceptre_03	weapons_casters	狼牙權杖	active		sceptre		12	12	11	0	24					1.2	5.0	+100 精魂	summon_skeletons	"yaml comment ""# PoE2 Lupine Sceptre"""	FourSceptre3	Lupine Sceptre	Sceptre	12	12	0	0	24										SkillGemSkeletalWarriorWeaponSkill
+csceptre_04	weapons_casters	凶兆權杖	active		sceptre		16	16	12	0	25					1.2	5.0	+100 精魂	malice	"yaml comment ""# PoE2 Omen Sceptre"""	FourSceptre4	Omen Sceptre	Sceptre	16	16	12	0	25										SkillGemMalice
+csceptre_05	weapons_casters	赭土權杖	active		sceptre		21	21	19	0	40					1.2	5.0	+100 精魂	summon_skeletons	"yaml comment ""# PoE2 Ochre Sceptre"""	FourSceptre5	Ochre Sceptre	Sceptre	21	21	0	0	40										SkillGemSkeletalWarriorWeaponSkill
+csceptre_06	weapons_casters	焰龕權杖	active		sceptre		26	26	17	0	38					1.2	5.0	+100 精魂	purity_of_fire	"yaml comment ""# PoE2 Shrine Sceptre（Purity of Fire）"""	FourSceptre6a	Shrine Sceptre	Sceptre	26	26	17	0	38										SkillGemPurityOfFire
+csceptre_07	weapons_casters	霜龕權杖	active		sceptre		26	26	17	0	38					1.2	5.0	+100 精魂	purity_of_ice	"yaml comment ""# PoE2 Shrine Sceptre（Purity of Ice）"""	FourSceptre6a	Shrine Sceptre	Sceptre	26	26	17	0	38										SkillGemPurityOfFire
+csceptre_08	weapons_casters	雷龕權杖	active		sceptre		26	26	17	0	38					1.2	5.0	+100 精魂	purity_of_lightning	"yaml comment ""# PoE2 Shrine Sceptre（Purity of Lightning）"""	FourSceptre6a	Shrine Sceptre	Sceptre	26	26	17	0	38										SkillGemPurityOfFire
+csceptre_09	weapons_casters	蝕龕權杖	active		sceptre		26	26	17	0	38					1.2	5.0	+100 精魂	impurity	"yaml comment ""# PoE2 Shrine Sceptre（Impurity）"""	FourSceptre6a	Shrine Sceptre	Sceptre	26	26	17	0	38										SkillGemPurityOfFire
+csceptre_10	weapons_casters	吞噬權杖	active		sceptre		33	33	28	0	60					1.2	5.0	+100 精魂	summon_skeletons	"yaml comment ""# PoE2 Devouring Sceptre"""	FourSceptre7	Devouring Sceptre	Sceptre	33	33	0	0	60										SkillGemSkeletalWarriorWeaponSkill
+csceptre_11	weapons_casters	寒心權杖	active		sceptre		36	36	30	0	65					1.2	5.0	+100 精魂	heart_of_ice	"yaml comment ""# PoE2 Clasped Sceptre"""	FourSceptre8	Clasped Sceptre	Sceptre	36	36	0	0	65										SkillGemHeartOfIce
+csceptre_12	weapons_casters	虔誠權杖	active		sceptre		45	45	26	0	63					1.2	5.0	+100 精魂	summon_skeletons	"yaml comment ""# PoE2 Devotional Sceptre"""	FourSceptre9	Devotional Sceptre	Sceptre	45	45	26	0	63										SkillGemSkeletalWarriorWeaponSkill
+csceptre_13	weapons_casters	芳香權杖	active		sceptre		52	52	43	0	92					1.2	5.0	+100 精魂	summon_skeletons	"yaml comment ""# PoE2 Aromatic Sceptre"""	FourSceptre11	Aromatic Sceptre	Sceptre	52	52	0	0	92										SkillGemSkeletalWarriorWeaponSkill
+csceptre_14	weapons_casters	聖徒權杖	active		sceptre		58	58	48	0	102					1.2	5.0	+100 精魂	summon_skeletons	"yaml comment ""# PoE2 Pious Sceptre"""	FourSceptre12	Pious Sceptre	Sceptre	58	58	0	0	102										SkillGemSkeletalWarriorWeaponSkill
+csceptre_15	weapons_casters	聖化權杖	active		sceptre		65	65	54	0	114					1.2	5.0	+100 精魂	summon_skeletons	"yaml comment ""# PoE2 Hallowed Sceptre"""	FourSceptre13	Hallowed Sceptre	Sceptre	65	65	0	0	114										SkillGemSkeletalWarriorWeaponSkill
+csceptre_16	weapons_casters	怒雷權杖	active		sceptre		49	49	41	0	87					1.2	5.0	+100 精魂	fulmination	"yaml comment ""# PoE2 Wrath Sceptre"""	FourSceptre10	Wrath Sceptre	Sceptre	49	49	0	0	87										SkillGemFulmination

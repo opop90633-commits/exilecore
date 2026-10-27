@@ -72,25 +72,33 @@ class CraftingTest {
             assertEquals(0, type.operation() == CurrencyOperation.ESSENCE || type.operation() == CurrencyOperation.CATALYST
                     || type.operation() == CurrencyOperation.OMEN ? type.dropWeight() : 0, "機制的通貨怪物不掉");
         }
-        assertEquals(16, essences); // 2026-10：＋能盾星魄；2026-10-15：＋炎擊、霜擊、雷擊星魄
-        assertEquals(Catalyst.values().length, catalysts, "每一種催化劑一顆");
-        assertEquals(6, omens);
+        // 2026-10-26 照 PoE2 0.5：19 種精髓各分次級、一般、高階（57），15 種有完美、狂亂星魄 1、我們自己的移速與能盾 2 = 75；這次之前 16
+        assertEquals(75, essences); // 2026-10：＋能盾星魄；2026-10-15：＋炎擊、霜擊、雷擊星魄
+        assertEquals(Catalyst.values().length, catalysts, "每一種催化劑一顆（13 種 PoE2 的＋4 種舊的）");
+        assertEquals(26, omens); // 2026-10-26 照 PoE2 每種通貨分開、補上改造裝備用的星籤；這次之前 6
     }
 
     @Test
     void essenceUpgradesAndGuaranteesTheAffix() {
+        // 2026-10-26 照 PoE2 0.5：精髓只把魔法變稀有（普通物品不能用），給的是固定的那一階；這次之前普通→魔法也行、階級照物品等級抽
         final CurrencyType body = currencies.get("essence_body");
+        final ItemData normal = generator.generate(items.base("plate_body"), Rarity.NORMAL, 60, new SplittableRandom(1));
+        assertNotNull(Crafting.problem(body, normal, generator), "普通物品不能用星魄");
+        assertFalse(body.canApply(normal, generator));
         final ItemData plain = generator.generate(items.base("plate_body"), Rarity.NORMAL, 60, new SplittableRandom(1));
+        plain.setRarity(Rarity.MAGIC);
+        plain.affixes().clear();
         assertNull(Crafting.problem(body, plain, generator));
         assertTrue(body.canApply(plain, generator));
         Crafting.applyEssence(body, plain, generator, new SplittableRandom(2));
-        assertEquals(Rarity.MAGIC, plain.rarity());
+        assertEquals(Rarity.RARE, plain.rarity());
         assertEquals(1, plain.affixes().size());
         // 2026-10 PoE2 改版：生命詞綴照部位拆開，胸甲上是同群組的 life_flat_body
         assertEquals("life_flat_body", plain.affixes().getFirst().id());
         final Affix affix = items.affix("life_flat_body");
-        final int worst = affix.tiersFor(60).stream().mapToInt(tier -> tier.tier()).max().orElseThrow();
-        assertNotEquals(worst, plain.affixes().getFirst().tier(), "不會是最差的那階");
+        assertEquals(Crafting.fixedTier(affix, body.essenceLevel()).tier(), plain.affixes().getFirst().tier(), "一般階：需求等級 46 以下最好的那階");
+        plain.setRarity(Rarity.MAGIC);
+        plain.setName(null);
 
         // 魔法 → 稀有：原本的留著，再加星魄那條（同群組的換掉）
         final CurrencyType flame = currencies.get("essence_flame");
@@ -109,15 +117,20 @@ class CraftingTest {
     }
 
     @Test
-    void speedEssenceGivesCastSpeedOnWandsAndStaves() {
-        // 2026-10-24：速度星魄（原攻速星魄）：法杖、長杖給施放速度，攻擊武器照舊是攻擊速度
+    void alacrityEssenceGivesCastSpeedOnWandsAndStaves() {
+        // 2026-10-26 照 PoE2：速度星魄（Haste）只給攻擊武器的攻擊速度，法杖、長杖的施法速度改成施速星魄（Alacrity）；
+        //   這次之前（2026-10-24）速度星魄在法杖、長杖給施放速度
         final CurrencyType battle = currencies.get("essence_battle");
-        final ItemData wand = generator.generate(items.base("wand_01"), Rarity.NORMAL, 60, new SplittableRandom(5));
-        assertNull(Crafting.problem(battle, wand, generator));
-        Crafting.applyEssence(battle, wand, generator, new SplittableRandom(6));
+        final CurrencyType alacrity = currencies.get("essence_alacrity");
+        final ItemData wand = generator.generate(items.base("wand_01"), Rarity.MAGIC, 60, new SplittableRandom(5));
+        wand.affixes().clear();
+        assertNotNull(Crafting.problem(battle, wand, generator), "速度星魄不能用在法杖上");
+        assertNull(Crafting.problem(alacrity, wand, generator));
+        Crafting.applyEssence(alacrity, wand, generator, new SplittableRandom(6));
         assertTrue(wand.affixes().stream().anyMatch(a -> a.id().equals("cast_speed_wand")), "法杖拿到施放速度：" + wand.affixes());
-        final ItemData staff = generator.generate(items.base("staff_01"), Rarity.NORMAL, 60, new SplittableRandom(7));
-        Crafting.applyEssence(battle, staff, generator, new SplittableRandom(8));
+        final ItemData staff = generator.generate(items.base("staff_01"), Rarity.MAGIC, 60, new SplittableRandom(7));
+        staff.affixes().clear();
+        Crafting.applyEssence(alacrity, staff, generator, new SplittableRandom(8));
         assertTrue(staff.affixes().stream().anyMatch(a -> a.id().equals("cast_speed_staff")), "長杖拿到施放速度：" + staff.affixes());
     }
 
@@ -155,6 +168,71 @@ class CraftingTest {
         assertTrue(magic.affixes().stream().anyMatch(a -> items.affix(a.id()).group().equals(life.group())), "胸甲上是同群組的生命詞綴");
     }
 
+    /** 2026-10-27 照 PoE2：品質通貨普通 +5、魔法 +2、稀有／傳奇 +1（這次之前一律 +5）。 */
+    @Test
+    void qualityCurrencyDependsOnRarity() {
+        final ItemData normal = generator.generate(items.base("plate_helmet"), Rarity.NORMAL, 60, new SplittableRandom(3));
+        final ItemData magic = generator.generate(items.base("plate_helmet"), Rarity.MAGIC, 60, new SplittableRandom(4));
+        final ItemData rare = generator.generate(items.base("plate_helmet"), Rarity.RARE, 60, new SplittableRandom(5));
+        for (final ItemData data : List.of(normal, magic, rare)) {
+            data.setIdentified(true);
+            data.setQuality(0);
+            CurrencyOperation.QUALITY_ARMOUR.apply(data, generator, new SplittableRandom(1));
+        }
+        assertEquals(5, normal.quality());
+        assertEquals(2, magic.quality());
+        assertEquals(1, rare.quality());
+        rare.setQuality(19);
+        CurrencyOperation.QUALITY_ARMOUR.apply(rare, generator, new SplittableRandom(1));
+        assertEquals(20, rare.quality());
+        normal.setQuality(18);
+        CurrencyOperation.QUALITY_ARMOUR.apply(normal, generator, new SplittableRandom(1));
+        assertEquals(20, normal.quality(), "上限 20");
+    }
+
+    /** 2026-10-27 照 PoE2：前綴、後綴都有空位時從兩邊合起來的權重池抽（這次之前先 50/50 選邊）。 */
+    @Test
+    void prefixOrSuffixFollowsTheCombinedWeights() {
+        final tw.exilecore.item.ItemBase base = items.base("body_str_25");
+        final ItemData probe = generator.generate(base, Rarity.NORMAL, 80, new SplittableRandom(1));
+        probe.setRarity(Rarity.MAGIC);
+        double prefixWeight = 0;
+        double suffixWeight = 0;
+        for (final tw.exilecore.item.AffixType type : tw.exilecore.item.AffixType.values()) {
+            for (final tw.exilecore.item.Affix affix : generator.eligible(probe, type)) {
+                for (final tw.exilecore.item.AffixTier tier : ItemGenerator.rollableTiers(affix, 80)) {
+                    if (type == tw.exilecore.item.AffixType.PREFIX) {
+                        prefixWeight += tier.weight();
+                    } else {
+                        suffixWeight += tier.weight();
+                    }
+                }
+            }
+        }
+        final double expected = prefixWeight / (prefixWeight + suffixWeight);
+        int prefixes = 0;
+        final int runs = 3000;
+        final SplittableRandom random = new SplittableRandom(42);
+        for (int i = 0; i < runs; i++) {
+            final ItemData data = generator.generate(base, Rarity.NORMAL, 80, random);
+            generator.upgradeToMagic(data, random);
+            if (items.affix(data.affixes().getFirst().id()).type() == tw.exilecore.item.AffixType.PREFIX) {
+                prefixes++;
+            }
+        }
+        assertEquals(expected, prefixes / (double) runs, 0.04, "前綴的比例照權重（" + expected + "）");
+    }
+
+    /** 2026-10-27 照 PoE2：星火石用在珠寶上也是 4 條（這次之前 3 條）。 */
+    @Test
+    void alchemyGivesJewelsFourModifiers() {
+        for (int seed = 0; seed < 20; seed++) {
+            final ItemData jewel = generator.generate(items.base("ruby_jewel"), Rarity.NORMAL, 70, new SplittableRandom(seed));
+            CurrencyOperation.UPGRADE_TO_RARE.apply(jewel, generator, new SplittableRandom(seed));
+            assertEquals(4, jewel.affixes().size(), "seed " + seed);
+        }
+    }
+
     @Test
     void catalystScalesOneCategory() {
         final CurrencyType resist = currencies.get("catalyst_resist");
@@ -167,7 +245,8 @@ class CraftingTest {
         Crafting.applyCatalyst(resist, ring);
         Crafting.applyCatalyst(resist, ring);
         assertEquals("resist", ring.catalyst());
-        assertEquals(10, ring.quality());
+        // 2026-10-27 照 PoE2：稀有物品每顆催化劑 +1%（這次之前 +5%，兩顆是 10）
+        assertEquals(2, ring.quality());
         double fire = 0;
         double life = 0;
         for (final Modifier mod : ItemStats.modifiers(items, ring)) {
@@ -177,12 +256,12 @@ class CraftingTest {
                 life += mod.value();
             }
         }
-        assertEquals(44, fire, 1e-9, "抗性 ×1.1");
+        assertEquals(40.8, fire, 1e-9, "抗性 ×1.02");
         assertEquals(60, life, 1e-9, "生命不受抗性催化劑影響");
         // 換種類：品質重來
         Crafting.applyCatalyst(currencies.get("catalyst_life"), ring);
         assertEquals("life", ring.catalyst());
-        assertEquals(5, ring.quality());
+        assertEquals(1, ring.quality()); // 2026-10-27：稀有物品從 1 開始（這次之前 5）
         // 到 20 就不能再打同一種
         ring.setQuality(20);
         assertNotNull(Crafting.problem(currencies.get("catalyst_life"), ring, generator));
@@ -280,7 +359,7 @@ class CraftingTest {
     }
 
     @Test
-    void instilNeedsAnIdentifiedAmuletAndCostsByDistance() {
+    void instilNeedsAnIdentifiedAmuletAndFollowsTheRecipe() {
         final CurrencyType ire = currencies.get("distilled_ire");
         assertEquals(CurrencyOperation.INSTIL, ire.operation());
         final ItemData ring = generator.generate(items.base("iron_ring"), Rarity.MAGIC, 60, new SplittableRandom(11));
@@ -293,14 +372,34 @@ class CraftingTest {
         amulet.setIdentified(true);
         assertNull(Crafting.problem(ire, amulet, generator));
         assertTrue(ire.canApply(amulet, generator));
-        // 離中心越遠越高階
-        assertEquals(1, Crafting.instilTier(3, -5));
-        assertEquals(1, Crafting.instilTier(7, 0));
-        assertEquals(2, Crafting.instilTier(8, 2));
-        assertEquals(2, Crafting.instilTier(-11, 11));
-        assertEquals(3, Crafting.instilTier(0, 15));
-        assertEquals(4, Crafting.instilTier(16, -3));
+        // 2026-10-27 照 PoE2：每個核心固定三種情緒的配方（data/instil.yml）；這次之前看離天賦樹中心多遠、3 顆同一種（instilTier）
         assertEquals(3, Crafting.INSTIL_COST);
+        assertEquals(java.util.List.of("distilled_suffering", "distilled_greed", "distilled_despair"),
+                InstilRecipes.recipe("p42103"), "Enduring Deflection（poe2db 的 Anoint 表）");
+        assertEquals(java.util.List.of("distilled_envy", "distilled_suffering", "distilled_suffering"), InstilRecipes.recipe("p336"));
+        assertEquals(java.util.Map.of("distilled_envy", 1, "distilled_suffering", 2), InstilRecipes.cost("p336"));
+        assertTrue(InstilRecipes.size() > 800, "幾乎每個核心都有配方：" + InstilRecipes.size());
+        assertNull(InstilRecipes.recipe("p2254"), "PoE2 沒有配方的核心（Pure Energy）不能注入");
+        final java.util.Map<String, Integer> bag = new java.util.HashMap<>(java.util.Map.of("distilled_envy", 1, "distilled_suffering", 1));
+        assertNotNull(Crafting.instilProblem("p336", id -> bag.getOrDefault(id, 0), id -> id), "苦難只有 1 顆");
+        bag.put("distilled_suffering", 2);
+        assertNull(Crafting.instilProblem("p336", id -> bag.getOrDefault(id, 0), id -> id));
+        assertNotNull(Crafting.instilProblem("p2254", id -> 99, id -> id), "沒有配方");
+        // 塗油限定核心（天賦樹上沒有）照 anoint_only.yml 的配方，強效情緒是真的通貨
+        assertEquals(java.util.List.of("distilled_ferocity", "distilled_despair", "distilled_isolation"), InstilRecipes.recipe("p39568"));
+        for (final String potent : java.util.List.of("distilled_melancholy", "distilled_ferocity", "distilled_contempt")) {
+            assertEquals(CurrencyOperation.INSTIL, currencies.get(potent).operation(), potent);
+        }
+        // 舊的四種情緒代號不變，配方裡用得到（手上的不會變成沒用）
+        for (final String old : java.util.List.of("distilled_ire", "distilled_guilt", "distilled_greed", "distilled_paranoia")) {
+            assertNotNull(currencies.get(old), old);
+            assertTrue(InstilRecipes.all().values().stream().anyMatch(r -> r.contains(old)), old);
+        }
+        // 掉落等級：恐懼 69、苦難 73、孤寂 77（poe2db）；等級不夠的權重是 0
+        final java.util.List<String> ten = java.util.List.of("distilled_ire", "distilled_fear", "distilled_isolation");
+        assertEquals(java.util.List.of(5, 0, 0), Crafting.emotionWeightsAt(ten, java.util.List.of(5, 3, 1), 65, currencies::get));
+        assertEquals(java.util.List.of(5, 3, 0), Crafting.emotionWeightsAt(ten, java.util.List.of(5, 3, 1), 70, currencies::get));
+        assertEquals(java.util.List.of(5, 3, 1), Crafting.emotionWeightsAt(ten, java.util.List.of(5, 3, 1), 80, currencies::get));
         // 注入：項鍊的修飾器多了那個核心的（透過 ItemStats 的查詢）
         Crafting.instil(amulet, "n_test");
         assertEquals("n_test", amulet.instilled());
@@ -365,10 +464,11 @@ class CraftingTest {
             assertFalse(type.canApply(copy, generator), type.id() + " 不能用在鏡像複製品上");
         }
 
-        // 不能複製的：傳奇、地圖、未鑑定、已腐化、新手裝備、藥劑
+        // 2026-10-26 照 PoE2：傳奇可以複製（這次之前不行）
         final ItemData unique = new ItemData("iron_ring", Rarity.UNIQUE, 60);
         unique.setIdentified(true);
-        assertFalse(mirror.canApply(unique, generator));
+        assertTrue(mirror.canApply(unique, generator));
+        // 不能複製的：地圖、未鑑定、已腐化、新手裝備、藥劑
         final ItemData unidentified = new ItemData("iron_ring", Rarity.RARE, 60);
         unidentified.setIdentified(false);
         assertFalse(mirror.canApply(unidentified, generator));

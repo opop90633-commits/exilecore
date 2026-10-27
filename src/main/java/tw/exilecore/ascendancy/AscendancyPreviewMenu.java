@@ -18,7 +18,7 @@ import java.util.List;
  * 2026-10 改版（以前要用箭頭一個一個翻、連線跟背景分不出來）：
  * <ul>
  *   <li>最上面一排是分頁：這個職業的每個昇華職業都排出來，點一下切換（看全部職業時一次 7 個，兩邊 ◀ ▶ 換一批）。</li>
- *   <li>中間四排是四條分支：最左邊的標籤寫整條在做什麼，天賦之間用鏈子連起來（{@link AscendancyLayout}）。</li>
+ *   <li>中間四排是天賦樹（{@link AscendancyLayout}；2026-10-26 起照 PoE2 會分岔，樹太高時 ▲ ▼ 捲動）。</li>
  *   <li>下面一排：返回、只看我的職業／全部職業、昇華為這條（或打開我的昇華天賦）、怎麼看、關閉。</li>
  * </ul>
  */
@@ -104,10 +104,14 @@ final class AscendancyPreviewMenu extends Menu {
         return 0;
     }
 
+    /** 2026-10-26：樹從第幾排開始看（▲ ▼ 捲動；換分頁時回到最上面）。 */
+    private int offset;
     /** 看全部職業時，分頁目前從第幾個開始放。 */
     private int tabStart = -1;
     /** 分頁的格子 → 昇華職業的代號。 */
     private final java.util.Map<Integer, String> tabIds = new java.util.HashMap<>();
+    /** 2026-10-27：畫面上的天賦（Shift＋點擊看賦予的技能）。 */
+    private final java.util.Map<Integer, AscendancyConfig.Node> shownNodes = new java.util.HashMap<>();
 
     @Override
     protected void draw() {
@@ -133,27 +137,22 @@ final class AscendancyPreviewMenu extends Menu {
 
         drawTabs(list, index, ascension);
 
-        // 天賦樹（只能看）：每條分支一排，最左邊是標籤，天賦之間用鏈子連
-        final List<List<AscendancyConfig.Node>> branches = current.branches();
-        for (int b = 0; b < branches.size() && b < AscendancyConfig.MAX_BRANCHES; b++) {
-            final int row = AscendancyLayout.FIRST_ROW + b;
-            final List<AscendancyConfig.Node> branch = branches.get(b);
-            int owned = 0;
-            for (final AscendancyConfig.Node node : branch) {
-                if (mine && ascension.isAllocated(node)) {
-                    owned++;
-                }
-            }
-            set(row * 9, AscendancyLayout.branchLabel(current, b, branch, owned));
-            set(row * 9 + 1, AscendancyLayout.link(mine && !branch.isEmpty() && ascension.isAllocated(branch.getFirst())));
-            for (int i = 0; i < branch.size() && i < AscendancyLayout.NODE_COLUMNS.length; i++) {
-                final AscendancyConfig.Node node = branch.get(i);
-                final int slot = row * 9 + AscendancyLayout.NODE_COLUMNS[i];
-                set(slot, node(current, branch, i, mine && ascension.isAllocated(node)));
-                if (i + 1 < branch.size() && i + 1 < AscendancyLayout.NODE_COLUMNS.length) {
-                    set(slot + 1, AscendancyLayout.link(mine && ascension.isAllocated(branch.get(i + 1))));
-                }
-            }
+        // 天賦樹（只能看）：2026-10-26 照 PoE2 畫成往右長的樹（會分岔，樹太高的時候 ▲ ▼ 捲動）；這次之前每條分支一排
+        offset = AscendancyLayout.clampOffset(offset, current.rows());
+        final AscendancyLayout.Page page = AscendancyLayout.page(current, offset, node -> node(current, node, mine && ascension.isAllocated(node)),
+                node -> mine && ascension.isAllocated(node));
+        shownNodes.clear();
+        shownNodes.putAll(page.nodes());
+        for (final java.util.Map.Entry<Integer, ItemStack> entry : page.items().entrySet()) {
+            set(entry.getKey(), entry.getValue());
+        }
+        final ItemStack up = AscendancyLayout.scroll(true, offset, page.rows());
+        final ItemStack down = AscendancyLayout.scroll(false, offset, page.rows());
+        if (up != null) {
+            set(AscendancyLayout.SLOT_UP, up);
+        }
+        if (down != null) {
+            set(AscendancyLayout.SLOT_DOWN, down);
         }
 
         // 下面一排
@@ -167,10 +166,11 @@ final class AscendancyPreviewMenu extends Menu {
         set(SLOT_ACTION, action(current, ascension));
         set(SLOT_GUIDE, helpButton(List.of(
                 "最上面一排：每個昇華職業一個分頁，點一下切換",
-                "中間四排：四條分支，最左邊的紙寫整條在做什麼",
-                "每條從左到右一個接一個配（鏈子連著的要先配左邊的）",
-                "滑到每個天賦上看效果；這裡只能看，配點在「昇華天賦」",
-                "昇華點最多 " + service.config().totalPoints() + " 點：完成試煉拿點數，四條分支不可能全部配滿，要挑")));
+                "中間是天賦樹：最左邊一欄直接接在起點，往右一個接一個（鏈子連著的要先配左邊的）",
+                "分岔的往下一排；樹太高的時候用下面的 ▲ ▼ 捲動",
+                "「選一個」的天賦配了之後，從右邊的選項挑一個（不再花點數）",
+                "滑到每個天賦上看效果；寫著（尚未生效）的是還沒做出來的機制",
+                "昇華點最多 " + service.config().totalPoints() + " 點：完成試煉拿點數，不可能全部配滿，要挑")));
     }
 
     /** 最上面一排的分頁：放得下就全部排出來（置中），放不下一次 7 個、兩邊 ◀ ▶。 */
@@ -229,32 +229,24 @@ final class AscendancyPreviewMenu extends Menu {
         } else {
             lore.add("<gray>完成第一試煉之後才能選（選一條，選了不能換）");
         }
+        int count = 0;
         int cost = 0;
         for (final AscendancyConfig.Node node : current.nodes()) {
             cost += node.cost();
+            count += node.option() ? 0 : 1;
         }
-        lore.add("<dark_gray>全部 " + current.nodes().size() + " 個天賦、" + cost + " 點；昇華點最多 " + service.config().totalPoints() + " 點");
-        lore.add("<dark_gray>下面四排是四條分支：每條從左到右一個接一個配");
+        lore.add("<dark_gray>全部 " + count + " 個天賦、" + cost + " 點；昇華點最多 " + service.config().totalPoints() + " 點");
+        lore.add("<dark_gray>下面是天賦樹：從最左邊往右配，分岔的往下一排");
         return lore;
     }
 
-    private ItemStack node(final AscendancyConfig.Ascendancy ascendancy, final List<AscendancyConfig.Node> branch, final int i,
-                           final boolean owned) {
-        final AscendancyConfig.Node node = branch.get(i);
-        final List<String> lore = new ArrayList<>();
-        for (final String line : StatLines.describeAll(node.stats())) {
-            lore.add("<white>" + AscendancyService.escape(line));
-        }
-        if (node.note() != null) {
-            lore.add("<dark_gray><i>" + AscendancyService.escape(node.note()));
-        }
-        lore.add("");
-        lore.add("<gray>" + node.cost() + " 點<dark_gray>　" + AscendancyLayout.position(branch, i));
+    private ItemStack node(final AscendancyConfig.Ascendancy ascendancy, final AscendancyConfig.Node node, final boolean owned) {
+        final List<String> lore = AscendancyLayout.describe(ascendancy, node, true, service.skillLookup());
         if (owned) {
             lore.add("<green>✔ 你已經配了");
         }
         final ItemStack icon = icon(Menu.material(node.icon(), Material.AMETHYST_SHARD),
-                (owned ? "<green>✔ " : "") + "<" + ascendancy.color() + ">" + AscendancyService.escape(node.name()), lore);
+                (owned ? "<green>✔ " : "") + "<" + ascendancy.color() + ">" + (node.notable() ? "<b>" : "") + AscendancyService.escape(node.name()), lore);
         return owned ? glowing(icon) : icon;
     }
 
@@ -325,6 +317,11 @@ final class AscendancyPreviewMenu extends Menu {
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
                 redraw();
             }
+            case AscendancyLayout.SLOT_UP, AscendancyLayout.SLOT_DOWN -> {
+                offset += slot == AscendancyLayout.SLOT_UP ? -AscendancyLayout.STEP : AscendancyLayout.STEP;
+                player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.6f, 1.0f);
+                redraw();
+            }
             case SLOT_ACTION -> {
                 if (!acceptAction(click) || list.isEmpty()) {
                     return;
@@ -334,8 +331,13 @@ final class AscendancyPreviewMenu extends Menu {
             default -> {
                 if (tabIds.containsKey(slot)) {
                     switchTo(tabIds.get(slot));
+                    return;
                 }
-                // 天賦只能看
+                // 天賦只能看；2026-10-27 照站長：Shift＋點擊看賦予的技能
+                final AscendancyConfig.Node node = shownNodes.get(slot);
+                if (node != null && click.isShiftClick() && acceptAction(click)) {
+                    service.openSkillPreview(player, node, this::open); // 回來還是同一個畫面（同一個分頁、捲動位置）
+                }
             }
         }
     }
@@ -346,6 +348,7 @@ final class AscendancyPreviewMenu extends Menu {
             return;
         }
         currentId = id;
+        offset = 0;
         player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.6f, 1.0f);
         redraw();
     }

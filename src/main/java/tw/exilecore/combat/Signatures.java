@@ -186,6 +186,8 @@ public final class Signatures {
         if (has(sheet, StatKeys.SIG_SACRIFICE) && sacrificeUntil.getOrDefault(id, 0L) >= now) {
             more *= 1.20;
         }
+        // 2026-10-26：PoE2 昇華新做的機制（零點射擊、遠射、德魯伊之冠）
+        more *= tw.exilecore.ascendancy.AscendancyMechanics.outgoing(plugin, attacker, sheet, skill, target);
         return more;
     }
 

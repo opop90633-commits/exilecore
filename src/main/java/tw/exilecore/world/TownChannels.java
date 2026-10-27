@@ -80,7 +80,14 @@ public final class TownChannels implements Listener {
         final Location camp = towns.getFirst().getSpawnLocation();
         player.setFallDistance(0);
         player.setVelocity(new org.bukkit.util.Vector());
-        tw.exilecore.core.Teleports.async(player, camp).thenRun(() -> player.setFallDistance(0));
+        tw.exilecore.core.Teleports.async(player, camp).thenAccept(done -> {
+            player.setFallDistance(0);
+            // 2026-10-26：角色可能在傳送完成之前就載入好了——那時人還在大廳，rebalanceOnLogin 看不是營地就跳過，
+            //   高等級的就一直留在第 1 線。傳到營地之後再分一次（角色還沒載入的話這裡什麼都不做，等選好角色時那一次）
+            if (Boolean.TRUE.equals(done) && player.isOnline()) {
+                rebalanceOnLogin(player);
+            }
+        });
         plugin.getSLF4JLogger().info("主城分流：{} 登入在大廳（{}），送回營地", player.getName(), world.getName());
     }
 

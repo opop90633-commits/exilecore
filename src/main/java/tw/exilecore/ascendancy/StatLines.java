@@ -77,9 +77,14 @@ public final class StatLines {
         put(StatKeys.FLASK_MANA_RECOVERY, "魔力藥劑回復", INCREASED, false);
         put(StatKeys.SKILL_AREA, "範圍效果", SCALED, true);
         put(StatKeys.AURA_EFFECT, "光環效果", SCALED, false);
-        put(StatKeys.AURA_RESERVATION, "光環的魔力保留", INCREASED, false);
+        put(StatKeys.AURA_RESERVATION, "光環的魔力保留", INCREASED, true); // 2026-10-26：可以加標籤（元技能 meta、常駐 persistent；PoE2 祈願者、戰術家）
         put(StatKeys.TOTEM_LIFE, "圖騰生命", INCREASED, false);
         put(StatKeys.SPIRIT_MAX, "最大精魂", FLAT_OR_INCREASED, false); // 2026-10：昇華改成 +x 最大精魂（固定值）
+        // 2026-10-26 照 PoE2：殘骸撿取距離（星焰術士）、元素湧動（林嵐獵姬）
+        put(tw.exilecore.stats.TreeMechanicKeys.REMNANT_RANGE, "拾取殘骸的距離", INCREASED, false);
+        put("surge.fire", "層火焰湧動（消耗戰星時觸發元素湧動）", FLAT, false);
+        put("surge.cold", "層冰冷湧動（消耗戰星時觸發元素湧動）", FLAT, false);
+        put("surge.lightning", "層閃電湧動（消耗戰星時觸發元素湧動）", FLAT, false);
         for (final String signature : tw.exilecore.stats.SignatureText.TEXT.keySet()) {
             put(signature, "招牌天賦", FLAT, false);
         }
@@ -119,7 +124,7 @@ public final class StatLines {
         put(StatKeys.SHOCK_CHANCE, "感電機率", FLAT_OR_INCREASED, false);
         put(StatKeys.SHOCK_EFFECT, "感電效果", INCREASED, false);
         put(StatKeys.SHOCK_DURATION, "感電持續時間", INCREASED, false);
-        put(StatKeys.BLEED_CHANCE, "流血機率", FLAT_OR_INCREASED, false);
+        put(StatKeys.BLEED_CHANCE, "流血機率", FLAT_OR_INCREASED, true); // 2026-10-26：可以加標籤（暴擊引起流血：crit_hit）
         put(StatKeys.BLEED_MAGNITUDE, "流血傷害", SCALED, false);
         put(StatKeys.BLEED_DURATION, "流血持續時間", INCREASED, false);
         put(StatKeys.POISON_CHANCE, "中毒機率", FLAT_OR_INCREASED, false);
@@ -128,6 +133,8 @@ public final class StatLines {
         put(StatKeys.STUN_BUILDUP, "暈眩累積", SCALED, false);
         put(StatKeys.ARMOUR_BREAK, "破甲（物理傷害的 %）", FLAT_OR_INCREASED, false);
         put(StatKeys.SKILL_TOTEMS, "圖騰上限", FLAT, false);
+        put(tw.exilecore.stats.TotemKeys.TAKES_DAMAGE, "擊中傷害先由最近的圖騰承受", FLAT, false); // 2026-10-26 照 PoE2 堅木之壘
+        put(tw.exilecore.stats.TotemKeys.FLAG_ON_ATTACK_PROJECTILE, "圖騰只在你發射攻擊投射物時使用技能", FLAT, false); // 2026-10-26 照 PoE2 砲彈準備好了！
         put(StatKeys.CRIT_BONUS, "暴擊傷害加成", SCALED, true);
         put(StatKeys.ATTR_CHOICE, "任一屬性", FLAT, false);
         put(StatKeys.STUN_THRESHOLD, "暈眩門檻", INCREASED, false);
@@ -166,6 +173,23 @@ public final class StatLines {
         put(StatKeys.resistMax(tw.exilecore.stats.DamageType.FIRE), "最大火焰抗性", FLAT, false);
         put(StatKeys.resistMax(tw.exilecore.stats.DamageType.COLD), "最大冰冷抗性", FLAT, false);
         put(StatKeys.resistMax(tw.exilecore.stats.DamageType.LIGHTNING), "最大閃電抗性", FLAT, false);
+        // 2026-10-26 照 PoE2 0.5 換昇華天賦用到的（引擎本來就有，這裡補上說明與檢查）
+        put(StatKeys.MARK_EFFECT, "印記效果", SCALED, false);
+        put(StatKeys.CURSE_EFFECT, "詛咒效果", SCALED, false);
+        put(StatKeys.FLASK_CHARGES_GAINED_LIFE, "獲得的生命藥劑充能", INCREASED, false);
+        put(StatKeys.FLASK_CHARGES_GAINED_MANA, "獲得的魔力藥劑充能", INCREASED, false);
+        put(StatKeys.CHARM_CHARGES_GAINED, "獲得的護符充能", SCALED, false); // 2026-10-26：也能寫更多（精妙符印；CharmService 照 apply 算）
+        put(StatKeys.PRESENCE_AREA, "存在範圍", INCREASED, false);
+        put(StatKeys.CRIT_BONUS_TAKEN, "被暴擊時的暴擊傷害加成", INCREASED, false);
+        put(StatKeys.RAGE_MAX, "最大怒氣", FLAT, false);
+        put(StatKeys.SLOW_MAGNITUDE, "減速幅度", INCREASED, false);
+        put(StatKeys.LEECH_MANA_EFFECT, "魔力偷取的量", INCREASED, false);
+        put(AscendancyMechanics.POINT_BLANK, "零點射擊", FLAT, false);
+        put(AscendancyMechanics.FAR_SHOT, "遠射", FLAT, false);
+        put(AscendancyMechanics.DRUIDIC_CHAMPION, "德魯伊之冠", FLAT, false);
+        // 2026-10-26 照 PoE2：嵌晶戰團的減少屬性需求（裝備與技能寶石）、應變能力（tw.exilecore.skill.GemAttributes）
+        put(tw.exilecore.stats.TreeEffectKeys.ITEM_ATTR_REQUIREMENT, "裝備與技能寶石的屬性需求", INCREASED, false);
+        put(tw.exilecore.skill.GemAttributes.HIGHEST, "寶石的屬性需求可由你最高的屬性滿足", FLAT, false);
 
         GAINS.put(Tags.FIRE, "火焰");
         GAINS.put(Tags.COLD, "冰冷");
@@ -182,6 +206,7 @@ public final class StatLines {
         TAG_NAMES.put(Tags.SPELL, "法術");
         TAG_NAMES.put(Tags.MOVEMENT, "移動");
         TAG_NAMES.put(Tags.MINION, "召喚物");
+        TAG_NAMES.put(tw.exilecore.stats.TreeMechanicKeys.COMPANION, "夥伴"); // 2026-10-27 照 PoE2（靈狩者：夥伴的傷害、生命、範圍）
         TAG_NAMES.put(Tags.TOTEM, "圖騰");
         TAG_NAMES.put(Tags.TRAP, "陷阱");
         TAG_NAMES.put(Tags.AURA, "光環");
@@ -190,6 +215,7 @@ public final class StatLines {
         TAG_NAMES.put(Tags.PERSISTENT, "常駐");
         TAG_NAMES.put(Tags.META, "主要寶石"); // 2026-10-22
         TAG_NAMES.put(Tags.MARK, "印記");
+        TAG_NAMES.put("curse", "詛咒"); // 2026-10-26：詛咒技能的標籤（skills.yml 的 tags: [curse]；PoE2 骸主的詛咒範圍）
         TAG_NAMES.put(Tags.SHAPESHIFT, "變身");
         TAG_NAMES.put(Tags.BEAR, "熊形態");
         TAG_NAMES.put(Tags.WEREWOLF, "狼人形態");
@@ -214,6 +240,7 @@ public final class StatLines {
         TAG_NAMES.put(Tags.TALISMAN, "獸魂符");
         TAG_NAMES.put(Tags.ONE_HAND, "單手武器");
         TAG_NAMES.put(Tags.TWO_HAND, "雙手武器");
+        TAG_NAMES.putAll(AscKeys.TAGS); // 2026-10-26：昇華這次做出來的機制用到的標籤（觸發的、鬥旗）
     }
 
     private static void put(final String stat, final String name, final Set<ModType> types, final boolean tagged) {
@@ -264,6 +291,7 @@ public final class StatLines {
     /** 這條屬性這裡認不認得（2026-10：ModifierText 不認得的交給這裡，護符、增益的說明才不會出現英文代號）。 */
     public static boolean knows(final String stat) {
         return STATS.containsKey(stat) || tw.exilecore.stats.SignatureText.TEXT.containsKey(stat) || ChargeText.isChargeStat(stat)
+                || AscKeys.handles(stat) // 2026-10-26
                 || stat.equals(StatKeys.DAMAGE_VS_LOW_LIFE)
                 || stat.startsWith(StatKeys.DAMAGE_GAIN) && GAINS.containsKey(stat.substring(StatKeys.DAMAGE_GAIN.length()));
     }
@@ -290,6 +318,9 @@ public final class StatLines {
     /** 這條修飾器有什麼問題（遊戲不會讀、寫法不對）；沒問題回傳 null。 */
     public static String problem(final Modifier modifier) {
         final String stat = modifier.stat();
+        if (AscKeys.handles(stat)) {
+            return AscKeys.problem(modifier); // 2026-10-26：昇華原本（尚未生效）的機制（AscendancyEffects）
+        }
         if (ChargeText.isGenerationStat(stat)) {
             // 2026-10：多一顆的機率、定期給、事件冷卻（秒）
             if (modifier.type() != ModType.FLAT || !modifier.tags().isEmpty()) {
@@ -333,6 +364,10 @@ public final class StatLines {
             }
             return modifier.tags().isEmpty() ? null : stat + " 不能加標籤";
         }
+        if (stat.equals(AscendancyService.EXTRA_PASSIVE_POINTS)) {
+            // 2026-10-26：武器大師的額外天賦點（AscendancyModule 加進可用天賦點）
+            return modifier.type() == ModType.FLAT && modifier.tags().isEmpty() && modifier.value() > 0 ? null : stat + " 要用 FLAT、大於 0、不能加標籤";
+        }
         final Entry entry = STATS.get(stat);
         if (entry == null) {
             return "不支援的屬性 " + stat;
@@ -341,7 +376,10 @@ public final class StatLines {
             return stat + " 只能用 " + typeNames(entry.types()) + "（寫成 " + modifier.type() + " 遊戲不會讀）";
         }
         if (!modifier.tags().isEmpty()) {
-            if (!entry.tagged()) {
+            // 2026-10-26：只有 minion 標籤 = 給召喚物的（MinionSheets 把主人帶 minion 標籤的修飾器全部複製過去），每一種屬性都可以
+            // 2026-10-27：minion＋companion = 只給夥伴的（天賦樹也這樣寫）
+            if (!entry.tagged() && !modifier.tags().equals(Set.of(Tags.MINION))
+                    && !modifier.tags().equals(Set.of(Tags.MINION, tw.exilecore.stats.TreeMechanicKeys.COMPANION))) {
                 return stat + " 不能加標籤";
             }
             for (final String tag : modifier.tags()) {
@@ -370,6 +408,9 @@ public final class StatLines {
     /** 一條修飾器的說明（數值是引擎格式：INCREASED／MORE 是小數）。 */
     public static String describe(final Modifier modifier) {
         final String stat = modifier.stat();
+        if (AscKeys.handles(stat)) {
+            return AscKeys.describe(modifier); // 2026-10-26
+        }
         final double value = modifier.value();
         final String charge = ChargeText.describe(stat, value, prefix(modifier));
         if (charge != null) {
@@ -444,6 +485,8 @@ public final class StatLines {
             case StatKeys.FLAG_INSTANT_LEECH -> "偷取全部立即生效（一下最多回 6% 最大生命）";
             case StatKeys.FLAG_NO_LEECH -> "無法偷取";
             case StatKeys.FLAG_THORNS_ANY_HIT -> "荊棘也會被遠程攻擊與法術觸發";
+            case tw.exilecore.stats.TotemKeys.TAKES_DAMAGE -> "擊中的傷害有 " + number(value) + "% 先從你最近的圖騰生命扣除";
+            case tw.exilecore.stats.TotemKeys.FLAG_ON_ATTACK_PROJECTILE -> "圖騰只在你發射攻擊投射物時使用技能";
             case StatKeys.IGNITE_CHANCE, StatKeys.SHOCK_CHANCE, StatKeys.BLEED_CHANCE, StatKeys.POISON_CHANCE, StatKeys.ELECTROCUTE_CHANCE ->
                     modifier.type() == ModType.FLAT ? name + " " + signed(value) + "%" : scaled(modifier, name);
             case StatKeys.AVOID_IGNITE, StatKeys.AVOID_CHILL, StatKeys.AVOID_FREEZE, StatKeys.AVOID_SHOCK, StatKeys.AVOID_BLEED, StatKeys.AVOID_POISON,

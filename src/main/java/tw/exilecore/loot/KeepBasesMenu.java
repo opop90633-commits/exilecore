@@ -141,6 +141,9 @@ final class KeepBasesMenu extends Menu {
                 "<gray>撿哪幾種稀有度照過濾器「依稀有度」那三格",
                 "<gray>可以一直加；每個角色各自設定；全部拿掉就恢復原本的規則",
                 "<dark_gray>傳奇、珠寶、地圖不受影響；有挑的類別裡不在清單的，好詞綴也不救",
+                // 2026-10-26：可以跟保留好詞綴一起算
+                filter.keepBasesNeedAffixActive() ? "<#f5b942>「也要好詞綴」開著：清單內的還要有 T" + filter.rules().keepAffixTier() + " 以上詞綴才撿"
+                        : "<dark_gray>要清單內的也有好詞綴才撿：過濾器裝備頁「只撿的基底也要好詞綴」",
                 "",
                 "<gray>現在保留了 <white>" + filter.keepBases().size() + "<gray> 種"));
         final List<ItemBase> list = bases();

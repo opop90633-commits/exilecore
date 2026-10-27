@@ -106,6 +106,20 @@ class LifeConfigTest {
         assertTrue(config.islands().get("atoll").hornShard() > 0);
         assertTrue(config.islands().get("atoll").captain() != null);
         assertTrue(config.islands().get("ruin").letter());
+        // 2026-10-27：寶箱的通貨照權重抽（淵底遺跡：至臻 50、天穹碎片 44，神諭石、大鑿星石、深淵星核各 2）；寫成清單的島每種一樣
+        final LifeConfig.Island deep = config.islands().get("deep_ruin");
+        assertEquals(5, deep.currencies().size());
+        assertEquals("zenith_orb", deep.pickCurrency(0.0));
+        assertEquals("abyss_core", deep.pickCurrency(0.99));
+        int high = 0;
+        for (int i = 0; i < 1000; i++) {
+            final String id = deep.pickCurrency((i + 0.5) / 1000);
+            if (id.equals("oracle_orb") || id.equals("greater_socket_orb") || id.equals("abyss_core")) {
+                high++;
+            }
+        }
+        assertEquals(60, high, "三種高價的合計 6%");
+        assertEquals("lustre_orb", config.islands().get("ruin").pickCurrency(0.5), "清單：每種 1/3");
         assertEquals("fog", config.rollWeather(0).id());
         assertEquals("seabirds", config.rollWeather(0.9999).id());
         // 2026-10-23：夜光潮只在晚上；漩渦、海鳥群的倍數

@@ -58,6 +58,8 @@ public final class Nameplates implements Listener {
     private static final float HEIGHT = 2.15f;
     private static final float SNEAK_HEIGHT = 1.85f;
     private static final float SCALE = 0.9f;
+    /** 2026-10-27：名牌跟玩家差多遠（平方）以上才傳送過去。 */
+    static final double PLATE_MOVE_SQUARED = 0.02 * 0.02;
 
     private final ExileCore plugin;
     private final Map<UUID, TextDisplay> plates = new HashMap<>();
@@ -70,8 +72,8 @@ public final class Nameplates implements Listener {
     }
 
     void start() {
-        task = plugin.getServer().getScheduler().runTaskTimer(plugin, this::everySecond, 20, 20);
-        follow = plugin.getServer().getScheduler().runTaskTimer(plugin, this::everyTick, 1, 1);
+        task = plugin.repeat("nameplate.refresh", this::everySecond, 20, 20); // 2026-10-27：計時給 /ec perf 看
+        follow = plugin.repeat("fx.nameplate", this::everyTick, 1, 1);
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             refresh(player);
         }
@@ -225,7 +227,11 @@ public final class Nameplates implements Listener {
             at.setPitch(0);
             at.setYaw(0);
             final org.bukkit.Location now = plate.getLocation();
-            if (now.getX() != at.getX() || now.getY() != at.getY() || now.getZ() != at.getZ()) {
+            // 2026-10-27 效能：動不到 0.02 格（站著時的微小晃動、看不出來）就不送；這次之前差一點點也傳送
+            final double dx = now.getX() - at.getX();
+            final double dy = now.getY() - at.getY();
+            final double dz = now.getZ() - at.getZ();
+            if (dx * dx + dy * dy + dz * dz > PLATE_MOVE_SQUARED) {
                 plate.teleport(at);
             }
         }

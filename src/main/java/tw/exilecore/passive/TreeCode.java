@@ -9,7 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * 天賦規劃的代碼：{@code EC1.樹版本.職業.配點}，配點是「檔案裡第幾個節點有沒有配」的位元，用 base64url 寫。
+ * 天賦規劃的代碼：{@code EC1.樹版本.職業.配點}，配點是「檔案裡第幾個節點有沒有配」的位元，用 base64url 寫；
+ * 2026-10-26 起配點也可以是 {@code !} 開頭的間隔清單（第幾個節點，跟上一個差多少，變長整數），兩種取短的。
  * 網頁規劃器與遊戲內的 /tree import、/tree web 共用（網頁的 JavaScript 照同一個格式）。
  * 起點不算在裡面（永遠已配置）。純邏輯。
  * <p>
@@ -98,8 +99,65 @@ public final class TreeCode {
             }
         }
         final byte[] trimmed = java.util.Arrays.copyOf(bits, length);
+        final String bitset = Base64.getUrlEncoder().withoutPadding().encodeToString(trimmed);
+        // 2026-10-26（PoE2 的樹有近 4000 個節點）：配得少的時候改寫「第幾個」的間隔（變長整數），代碼短很多；前面加 ! 區分
+        final java.io.ByteArrayOutputStream gaps = new java.io.ByteArrayOutputStream();
+        int previous = -1;
+        for (int i = 0; i < order.size(); i++) {
+            final PassiveNode node = order.get(i);
+            if (!node.isStart() && allocated.contains(node.id())) {
+                int gap = i - previous - 1;
+                previous = i;
+                while (gap >= 0x80) {
+                    gaps.write((gap & 0x7f) | 0x80);
+                    gap >>>= 7;
+                }
+                gaps.write(gap);
+            }
+        }
+        final String sparse = SPARSE + Base64.getUrlEncoder().withoutPadding().encodeToString(gaps.toByteArray());
         return PREFIX + "." + tree.version() + "." + classId.toLowerCase(Locale.ROOT) + "."
-                + Base64.getUrlEncoder().withoutPadding().encodeToString(trimmed);
+                + (sparse.length() < bitset.length() ? sparse : bitset);
+    }
+
+    /** 配點寫成間隔清單時的開頭。 */
+    public static final String SPARSE = "!";
+
+    private static Set<String> decodeSparse(final List<PassiveNode> order, final String text) throws InvalidCode {
+        final byte[] bytes;
+        try {
+            bytes = Base64.getUrlDecoder().decode(text);
+        } catch (final IllegalArgumentException e) {
+            throw new InvalidCode("代碼的配點部分壞掉了（可能沒有複製完整）");
+        }
+        final Set<String> nodes = new LinkedHashSet<>();
+        int index = -1;
+        int value = 0;
+        int shift = 0;
+        for (final byte b : bytes) {
+            value |= (b & 0x7f) << shift;
+            if ((b & 0x80) != 0) {
+                shift += 7;
+                if (shift > 28) {
+                    throw new InvalidCode("代碼的配點部分壞掉了（可能沒有複製完整）");
+                }
+                continue;
+            }
+            index += value + 1;
+            value = 0;
+            shift = 0;
+            if (index >= order.size()) {
+                throw new InvalidCode("代碼的配點比天賦樹還多（可能是別的伺服器的代碼）");
+            }
+            final PassiveNode node = order.get(index);
+            if (!node.isStart()) {
+                nodes.add(node.id());
+            }
+        }
+        if (shift != 0) {
+            throw new InvalidCode("代碼的配點部分壞掉了（可能沒有複製完整）");
+        }
+        return nodes;
     }
 
     public static Decoded decode(final PassiveTree tree, final String code) throws InvalidCode {
@@ -124,13 +182,17 @@ public final class TreeCode {
         if (tree.start(classId) == null) {
             throw new InvalidCode("代碼裡的職業「" + parts[2] + "」不存在");
         }
+        final List<PassiveNode> order = tree.ordered();
+        if (parts[3].startsWith(SPARSE)) {
+            final Set<String> nodes = decodeSparse(order, parts[3].substring(SPARSE.length()));
+            return new Decoded(classId, nodes, parts.length == 5 ? decodeAttributes(order, nodes, parts[4]) : Map.of());
+        }
         final byte[] bits;
         try {
             bits = Base64.getUrlDecoder().decode(parts[3]);
         } catch (final IllegalArgumentException e) {
             throw new InvalidCode("代碼的配點部分壞掉了（可能沒有複製完整）");
         }
-        final List<PassiveNode> order = tree.ordered();
         if (bits.length > (order.size() + 7) / 8) {
             throw new InvalidCode("代碼的配點比天賦樹還多（可能是別的伺服器的代碼）");
         }

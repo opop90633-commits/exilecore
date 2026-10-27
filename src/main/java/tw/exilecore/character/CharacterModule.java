@@ -83,11 +83,16 @@ public final class CharacterModule implements Module {
             plugin.sidebar().tick();
             tabList.refresh(); // 2026-10-20：TAB 下面的增益倒數（每半秒）
         }, tw.exilecore.gui.Sidebar.TICK_PERIOD, tw.exilecore.gui.Sidebar.TICK_PERIOD);
+        // 2026-10-27 效能：每人還是每 10 tick 一次，但攤在每個 tick 做 1/10 的人。這次之前所有人擠在同一個 tick——
+        //   「最近…」、移動中、低血這些條件一變就整張屬性表重算，人多時每半秒一個尖峰（瞬間掉 TPS）
+        final tw.exilecore.core.Staggered characterRound = new tw.exilecore.core.Staggered(TICK_PERIOD);
         tickTask = plugin.repeat("character", () -> {
             final long currentTick = plugin.getServer().getCurrentTick();
-            for (final Map.Entry<UUID, PlayerState> entry : states.all().entrySet()) {
-                final Player player = plugin.getServer().getPlayer(entry.getKey());
-                if (player != null && player.isOnline()) {
+            for (final UUID id : characterRound.next(onlineIds())) {
+                final Player player = plugin.getServer().getPlayer(id);
+                final PlayerState state = states.all().get(id);
+                final Map.Entry<UUID, PlayerState> entry = state == null ? null : Map.entry(id, state);
+                if (entry != null && player != null && player.isOnline()) {
                     try {
                         states.tick(player, entry.getValue(), currentTick, TICK_PERIOD);
                     } catch (final RuntimeException e) {
@@ -101,7 +106,7 @@ public final class CharacterModule implements Module {
                     }
                 }
             }
-        }, TICK_PERIOD, TICK_PERIOD);
+        }, TICK_PERIOD, 1L);
         // 裝備欄的顯示用格子：每秒對一次（別的插件、原版行為塞進去的東西收進裝備欄或放回背包）。
         // 2026-10-22 效能：以前每秒在同一個 tick 把所有人做完（spark：100 人時每秒一個 15 毫秒的尖峰），現在每 tick 做 1/20 的人
         final tw.exilecore.core.Staggered gearRound = new tw.exilecore.core.Staggered(20);

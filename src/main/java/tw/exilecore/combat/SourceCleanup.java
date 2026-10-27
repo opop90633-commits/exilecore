@@ -46,6 +46,7 @@ final class SourceCleanup implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(final PlayerDeathEvent event) {
         clear(event.getEntity().getUniqueId());
+        PlayerArmourBreak.clear(event.getEntity().getUniqueId()); // 2026-10-27：被破的護甲死掉就恢復；這次之前帶到復活後（下線、換角色在 PlayerStateService）
     }
 
     @EventHandler(priority = EventPriority.MONITOR)

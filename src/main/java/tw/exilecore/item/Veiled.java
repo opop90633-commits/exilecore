@@ -140,12 +140,24 @@ public final class Veiled {
      */
     public static boolean addVeiled(final ItemData data, final ItemGenerator generator, final RandomGenerator random,
                                     final boolean replaceWhenFull) {
+        return addVeiled(data, generator, random, replaceWhenFull, null);
+    }
+
+    /**
+     * 同上；forced 不是 null 時只加那一種（2026-10-26 照 PoE2 的 Omen of Sinistral／Dextral Necromancy：揭露石只加前綴／後綴），
+     * 那一種沒空位就回傳 false。
+     */
+    public static boolean addVeiled(final ItemData data, final ItemGenerator generator, final RandomGenerator random,
+                                    final boolean replaceWhenFull, final AffixType forced) {
         final ItemBase base = generator.repository().base(data.base());
         if (base == null || base.isMap() || !hasUnveiledFor(base, generator.repository())
                 || (data.rarity() != Rarity.MAGIC && data.rarity() != Rarity.RARE) || hasSpecial(data)) {
             return false;
         }
-        AffixType type = random.nextBoolean() ? AffixType.PREFIX : AffixType.SUFFIX;
+        AffixType type = forced != null ? forced : random.nextBoolean() ? AffixType.PREFIX : AffixType.SUFFIX;
+        if (forced != null && !replaceWhenFull && !generator.canAddAffix(data, type)) {
+            return false;
+        }
         if (!replaceWhenFull && !generator.canAddAffix(data, type)) {
             type = type == AffixType.PREFIX ? AffixType.SUFFIX : AffixType.PREFIX;
             if (!generator.canAddAffix(data, type)) {

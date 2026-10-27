@@ -1,0 +1,795 @@
+# 2026-10-26：照 PoE2 的法杖、長杖、權杖（tools/gen_poe2_casters.py 產生，別手改）。
+# 沒有自己的傷害：拿著時賦予 grants 的技能（技能面板上多一格，等級照物品等級；拿掉武器就不能用）。
+# 拿著法杖、長杖時沒綁技能的鍵放賦予的法術（PoE2 的法杖、長杖沒有普攻）。權杖另外給 +100 精魂。
+# 舊的 wand_14、staff_17、sceptre_16（還有合併進去的那些）退役，合併到這裡的第 1 把（舊物品照常能用、賦予它的技能）。
+
+# ---- 法杖 ----
+
+cwand_01:   # PoE2 Withered Wand
+  name: 枯枝法杖
+  fixed: true
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: chaos_bolt
+
+cwand_02:   # PoE2 Bone Wand
+  name: 骸骨法杖
+  fixed: true
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 2
+  requirements: { level: 2, str: 0, dex: 0, int: 0 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: bone_blast
+
+cwand_03:   # PoE2 Attuned Wand
+  name: 調律法杖
+  fixed: true
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 2
+  requirements: { level: 2, str: 0, dex: 0, int: 0 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: mana_drain
+
+cwand_04:   # PoE2 Siphoning Wand
+  name: 虹吸法杖
+  fixed: true
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 11
+  requirements: { level: 11, str: 0, dex: 0, int: 23 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: power_siphon
+
+cwand_05:   # PoE2 Volatile Wand
+  name: 炎屍法杖
+  fixed: true
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 0, int: 31 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: volatile_dead
+
+cwand_06:   # PoE2 Galvanic Wand
+  name: 電流法杖
+  fixed: true
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 25
+  requirements: { level: 25, str: 0, dex: 0, int: 46 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: galvanic_field
+
+cwand_07:   # PoE2 Acrid Wand
+  name: 腐蝕法杖
+  fixed: true
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 0, int: 60 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: decompose
+
+cwand_08:   # PoE2 Offering Wand
+  name: 血祭法杖
+  fixed: true
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 38
+  requirements: { level: 38, str: 0, dex: 0, int: 68 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: exsanguinate
+
+cwand_09:   # PoE2 Frigid Wand
+  name: 霜蝕法杖
+  fixed: true
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 0, int: 80 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: chaos_bolt
+
+cwand_10:   # PoE2 Torture Wand
+  name: 刑苦法杖
+  fixed: true
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 49
+  requirements: { level: 49, str: 0, dex: 0, int: 87 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: chaos_bolt
+
+cwand_11:   # PoE2 Critical Wand
+  name: 銳芒法杖
+  fixed: true
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 0, int: 92 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: chaos_bolt
+
+cwand_12:   # PoE2 Primordial Wand
+  name: 太古法杖
+  fixed: true
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 56
+  requirements: { level: 56, str: 0, dex: 0, int: 99 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: wither
+
+cwand_13:   # PoE2 Twisted Wand
+  name: 纏蝕法杖
+  fixed: true
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 114 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: coiling_bolts
+
+cwand_14:   # PoE2 Dueling Wand
+  name: 決鬥法杖
+  fixed: true
+  family: wand
+  material: BLAZE_ROD
+  model: exilecore:weapon/wand
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, wand, ranged, caster]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 114 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: spellslinger
+
+# ---- 長杖 ----
+
+cstaff_01:   # PoE2 Ashen Staff
+  name: 灰燼長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: firebolt
+
+cstaff_02:   # PoE2 Gelid Staff
+  name: 凝冰長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 2
+  requirements: { level: 2, str: 0, dex: 0, int: 0 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: freezing_shards
+
+cstaff_03:   # PoE2 Voltaic Staff
+  name: 雷鳴長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 2
+  requirements: { level: 2, str: 0, dex: 0, int: 0 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: lightning_bolt
+
+cstaff_04:   # PoE2 Spriggan Staff
+  name: 精靈長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 11
+  requirements: { level: 11, str: 0, dex: 0, int: 23 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: firebolt
+
+cstaff_05:   # PoE2 Pyrophyte Staff
+  name: 炎木長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 16
+  requirements: { level: 16, str: 0, dex: 0, int: 31 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: sun_orb
+
+cstaff_06:   # PoE2 Chiming Staff
+  name: 鳴鐘長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 25
+  requirements: { level: 25, str: 0, dex: 0, int: 46 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: sigil_of_power
+
+cstaff_07:   # PoE2 Rending Staff
+  name: 裂魂長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 0, int: 60 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: soulrend
+
+cstaff_08:   # PoE2 Reaping Staff
+  name: 血鐮長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 38
+  requirements: { level: 38, str: 0, dex: 0, int: 68 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: reap
+
+cstaff_09:   # PoE2 Icicle Staff
+  name: 冰錐長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 45
+  requirements: { level: 45, str: 0, dex: 0, int: 80 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: firebolt
+
+cstaff_10:   # PoE2 Paralysing Staff
+  name: 麻痺長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 0, int: 92 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: enervating_nova
+
+cstaff_11:   # PoE2 Sanctified Staff
+  name: 聖紋長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 56
+  requirements: { level: 56, str: 0, dex: 0, int: 99 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: consecrate
+
+cstaff_12:   # PoE2 Dark Staff
+  name: 冥暗長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 114 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: dark_pact
+
+cstaff_13:   # PoE2 Ravenous Staff
+  name: 饑渴長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 114 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: feast_of_flesh
+
+cstaff_14:   # PoE2 Permafrost Staff
+  name: 永凍長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 75
+  requirements: { level: 75, str: 0, dex: 0, int: 114 }   # 2026-10-26 照 PoE2（Permafrost Staff，固定不隨物品等級變）；這次之前 { level: 75, str: 0, dex: 0, int: 131 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: heart_of_ice
+
+cstaff_15:   # PoE2 Roaring Staff
+  name: 咆哮長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 49
+  requirements: { level: 49, str: 0, dex: 0, int: 87 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: unleash_spell
+
+cstaff_16:   # PoE2 Perching Staff
+  name: 棲鴉長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 114 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: spiraling_conspiracy
+
+cstaff_17:   # PoE2 Reflecting Staff
+  name: 映鏡長杖
+  fixed: true
+  family: staff
+  material: BREEZE_ROD
+  model: exilecore:weapon/staff
+  slot: MAIN_HAND
+  tags: [weapon, two_hand, staff, ranged, caster]
+  drop_level: 70
+  requirements: { level: 70, str: 0, dex: 0, int: 114 }   # 2026-10-26 照 PoE2（Reflecting Staff，固定不隨物品等級變）；這次之前 { level: 70, str: 0, dex: 0, int: 122 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 6
+  grants: mirror_of_refraction
+
+# ---- 權杖 ----
+
+csceptre_01:   # PoE2 Rattling Sceptre
+  name: 骸鈴權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 1
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: summon_skeletons
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_02:   # PoE2 Stoic Sceptre
+  name: 堅忍權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 6
+  requirements: { level: 6, str: 0, dex: 0, int: 12 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: discipline
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_03:   # PoE2 Lupine Sceptre
+  name: 狼牙權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 12
+  requirements: { level: 12, str: 0, dex: 0, int: 24 }   # 2026-10-26 照 PoE2（Lupine Sceptre，固定不隨物品等級變）；這次之前 { level: 12, str: 11, dex: 0, int: 24 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: summon_skeletons
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_04:   # PoE2 Omen Sceptre
+  name: 凶兆權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 16
+  requirements: { level: 16, str: 12, dex: 0, int: 25 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: malice
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_05:   # PoE2 Ochre Sceptre
+  name: 赭土權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 21
+  requirements: { level: 21, str: 0, dex: 0, int: 40 }   # 2026-10-26 照 PoE2（Ochre Sceptre，固定不隨物品等級變）；這次之前 { level: 21, str: 19, dex: 0, int: 40 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: summon_skeletons
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_06:   # PoE2 Shrine Sceptre（Purity of Fire）
+  name: 焰龕權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 26
+  requirements: { level: 26, str: 17, dex: 0, int: 38 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: purity_of_fire
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_07:   # PoE2 Shrine Sceptre（Purity of Ice）
+  name: 霜龕權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 26
+  requirements: { level: 26, str: 17, dex: 0, int: 38 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: purity_of_ice
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_08:   # PoE2 Shrine Sceptre（Purity of Lightning）
+  name: 雷龕權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 26
+  requirements: { level: 26, str: 17, dex: 0, int: 38 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: purity_of_lightning
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_09:   # PoE2 Shrine Sceptre（Impurity）
+  name: 蝕龕權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 26
+  requirements: { level: 26, str: 17, dex: 0, int: 38 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: impurity
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_10:   # PoE2 Devouring Sceptre
+  name: 吞噬權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 33
+  requirements: { level: 33, str: 0, dex: 0, int: 60 }   # 2026-10-26 照 PoE2（Devouring Sceptre，固定不隨物品等級變）；這次之前 { level: 33, str: 28, dex: 0, int: 60 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: summon_skeletons
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_11:   # PoE2 Clasped Sceptre
+  name: 寒心權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 36
+  requirements: { level: 36, str: 0, dex: 0, int: 65 }   # 2026-10-26 照 PoE2（Clasped Sceptre，固定不隨物品等級變）；這次之前 { level: 36, str: 30, dex: 0, int: 65 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: heart_of_ice
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_12:   # PoE2 Devotional Sceptre
+  name: 虔誠權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 45
+  requirements: { level: 45, str: 26, dex: 0, int: 63 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: summon_skeletons
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_13:   # PoE2 Aromatic Sceptre
+  name: 芳香權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 52
+  requirements: { level: 52, str: 0, dex: 0, int: 92 }   # 2026-10-26 照 PoE2（Aromatic Sceptre，固定不隨物品等級變）；這次之前 { level: 52, str: 43, dex: 0, int: 92 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: summon_skeletons
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_14:   # PoE2 Pious Sceptre
+  name: 聖徒權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 58
+  requirements: { level: 58, str: 0, dex: 0, int: 102 }   # 2026-10-26 照 PoE2（Pious Sceptre，固定不隨物品等級變）；這次之前 { level: 58, str: 48, dex: 0, int: 102 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: summon_skeletons
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_15:   # PoE2 Hallowed Sceptre
+  name: 聖化權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 65
+  requirements: { level: 65, str: 0, dex: 0, int: 114 }   # 2026-10-26 照 PoE2（Hallowed Sceptre，固定不隨物品等級變）；這次之前 { level: 65, str: 54, dex: 0, int: 114 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: summon_skeletons
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }
+
+csceptre_16:   # PoE2 Wrath Sceptre
+  name: 怒雷權杖
+  fixed: true
+  family: sceptre
+  material: GOLDEN_HOE
+  model: exilecore:weapon/sceptre
+  slot: MAIN_HAND
+  tags: [weapon, one_hand, sceptre, caster, melee]
+  drop_level: 49
+  requirements: { level: 49, str: 0, dex: 0, int: 87 }   # 2026-10-26 照 PoE2（Wrath Sceptre，固定不隨物品等級變）；這次之前 { level: 49, str: 41, dex: 0, int: 87 }
+  aps: 1.2          # 沒有傷害，只是名義上的攻速
+  crit: 5.0
+  sockets: 3
+  grants: fulmination
+  implicit:
+    text: "+{value} 精魂"
+    value: [100, 100]
+    mods:
+      - { stat: spirit.max, type: FLAT, value: "{value}" }

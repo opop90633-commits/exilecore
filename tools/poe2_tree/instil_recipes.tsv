@@ -1,0 +1,876 @@
+node	name	emotion1	emotion2	emotion3
+55	Fast Acting Toxins	Paranoia	Greed	Isolation
+94	Efficient Killing	Envy	Guilt	Paranoia
+116	Insightfulness	Guilt	Disgust	Fear
+261	Toxic Sludge	Suffering	Guilt	Disgust
+336	Storm Swell	Envy	Suffering	Suffering
+338	Invocated Limit	Isolation	Ire	Greed
+372	Heatproof	Disgust	Disgust	Greed
+712	Bond of the Ape	Despair	Paranoia	Isolation
+750	Tribal Fury	Isolation	Ire	Isolation
+934	Natural Immunity	Greed	Suffering	Paranoia
+1087	Shockwaves	Greed	Paranoia	Ire
+1104	Lust for Power	Isolation	Guilt	Guilt
+1169	Urgent Call	Fear	Isolation	Suffering
+1352	Unbending	Fear	Despair	Paranoia
+1420	Dizzying Sweep	Despair	Envy	Despair
+1448	Bond of the Cat	Envy	Ire	Ire
+1502	Draiocht Cleansing	Despair	Ire	Suffering
+1506	Remnant Attraction	Despair	Disgust	Isolation
+1546	Spiral into Depression	Envy	Despair	Suffering
+1603	Storm Driven	Ire	Ire	Isolation
+1823	Illuminated Crown	Suffering	Paranoia	Suffering
+1861	Knight of Tarcus	Disgust	Isolation	Fear
+2021	Wellspring	Disgust	Greed	Guilt
+2113	Martial Artistry	Isolation	Ire	Fear
+2134	Toxic Tolerance	Suffering	Fear	Isolation
+2138	Spiral into Insanity	Greed	Isolation	Envy
+2335	Turn the Clock Forward	Despair	Fear	Guilt
+2344	Dimensional Weakspot	Greed	Suffering	Isolation
+2394	Blade Flurry	Envy	Envy	Despair
+2397	Last Stand	Paranoia	Fear	Fear
+2486	Stars Aligned	Suffering	Envy	Isolation
+2511	Sundering	Disgust	Paranoia	Ire
+2575	Ancestral Alacrity	Suffering	Paranoia	Guilt
+2645	Skullcrusher	Ire	Isolation	Ire
+2745	The Noble Wolf	Fear	Greed	Guilt
+2814	Engineered Blaze	Ire	Despair	Isolation
+2843	Tolerant Equipment	Guilt	Isolation	Fear
+2863	Perpetual Freeze	Guilt	Ire	Isolation
+2999	Final Barrage	Isolation	Despair	Disgust
+3188	Revenge	Ire	Disgust	Isolation
+3215	Melding	Guilt	Envy	Suffering
+3348	Spirit of the Wolf	Paranoia	Suffering	Suffering
+3492	Void	Isolation	Ire	Disgust
+3567	Raw Mana	Suffering	Ire	Isolation
+3663	Kaom's Blessing	Ferocity	Fear	Isolation
+3688	Dynamism	Isolation	Greed	Ire
+3698	Spike Pit	Isolation	Isolation	Greed
+3894	Eldritch Will	Isolation	Guilt	Isolation
+3921	Fate Finding	Fear	Despair	Greed
+3985	Forces of Nature	Suffering	Isolation	Ire
+4031	Icebreaker	Ire	Paranoia	Fear
+4091	Left Ventricle	Fear	Envy	Suffering
+4238	Versatile Arms	Ire	Isolation	Envy
+4295	Adverse Growth	Ire	Paranoia	Disgust
+4331	Guided Hand	Fear	Envy	Envy
+4447	Pin their Motivation	Greed	Despair	Despair
+4534	Piercing Shot	Disgust	Guilt	Disgust
+4544	The Ancient Serpent	Greed	Guilt	Despair
+4547	Unnatural Resilience	Isolation	Isolation	Isolation
+4579	Unbothering Cold	Fear	Isolation	Paranoia
+4627	Climate Change	Greed	Isolation	Despair
+4661	Inspiring Leader	Paranoia	Greed	Greed
+4673	Hulking Smash	Disgust	Guilt	Guilt
+4709	Near Sighted	Ire	Envy	Paranoia
+4716	Afterimage	Guilt	Greed	Disgust
+4810	Sanguine Tolerance	Isolation	Disgust	Greed
+4931	Dependable Ward	Ire	Fear	Envy
+4959	Heavy Frost	Despair	Fear	Paranoia
+4985	Flip the Script	Ire	Disgust	Ire
+5009	Seeing Stars	Ire	Guilt	Paranoia
+5191	Bond of the Wolf	Paranoia	Paranoia	Envy
+5227	Escape Strategy	Despair	Paranoia	Despair
+5257	Echoing Frost	Suffering	Guilt	Greed
+5284	Shredding Force	Guilt	Isolation	Greed
+5332	Crystallised Immunities	Isolation	Isolation	Suffering
+5335	Shimmering Mirage	Envy	Despair	Fear
+5410	Channelled Heritage	Envy	Envy	Fear
+5580	Watchtowers	Disgust	Suffering	Suffering
+5594	Decrepifying Curse	Isolation	Envy	Despair
+5642	Behemoth	Fear	Isolation	Greed
+5663	Endurance	Guilt	Isolation	Envy
+5686	Chillproof	Paranoia	Disgust	Disgust
+5703	Echoing Thunder	Despair	Suffering	Ire
+5728	Ancient Aegis	Despair	Paranoia	Envy
+5802	Stand and Deliver	Disgust	Greed	Isolation
+6133	Core of the Guardian	Paranoia	Greed	Fear
+6178	Power Shots	Paranoia	Isolation	Suffering
+6229	Push the Advantage	Fear	Ire	Disgust
+6304	Stand Ground	Greed	Paranoia	Guilt
+6514	Cacophony	Isolation	Guilt	Fear
+6544	Burning Strikes	Envy	Disgust	Isolation
+6655	Aggravation	Despair	Suffering	Envy
+7062	Reusable Ammunition	Paranoia	Isolation	Despair
+7128	Dangerous Blossom	Paranoia	Envy	Isolation
+7163	Stimulants	Despair	Greed	Greed
+7275	Electrocuting Exposure	Fear	Fear	Ire
+7302	Echoing Pulse	Fear	Envy	Ire
+7338	Abasement	Paranoia	Despair	Fear
+7341	Ignore Pain	Despair	Fear	Suffering
+7395	Retaliation	Ire	Fear	Suffering
+7449	Splinters	Envy	Paranoia	Despair
+7542	Encompassing Domain	Fear	Disgust	Envy
+7604	Rapid Strike	Ire	Fear	Fear
+7651	Pierce the Heart	Despair	Isolation	Paranoia
+7668	Internal Bleeding	Guilt	Despair	Paranoia
+7777	Breaking Point	Fear	Paranoia	Fear
+7782	Rupturing Pins	Greed	Suffering	Guilt
+7809	Wild Storm	Isolation	Fear	Isolation
+7847	The Fabled Stag	Despair	Paranoia	Fear
+8273	Endless Circuit	Isolation	Despair	Despair
+8397	Empowering Remains	Envy	Ire	Fear
+8483	Ruin	Greed	Despair	Suffering
+8531	Leaping Ambush	Despair	Guilt	Guilt
+8554	Burning Nature	Greed	Isolation	Greed
+8607	Lavianga's Brew	Fear	Isolation	Ire
+8660	Reverberation	Paranoia	Guilt	Fear
+8782	Empowering Infusions	Suffering	Envy	Guilt
+8791	Sturdy Ally	Fear	Greed	Despair
+8810	Multitasking	Paranoia	Disgust	Fear
+8827	Fast Metabolism	Suffering	Isolation	Suffering
+8831	Tempered Mind	Isolation	Despair	Paranoia
+8881	Unforgiving	Isolation	Greed	Greed
+8896	Agile Sprinter	Paranoia	Fear	Ire
+8904	Death from Afar	Isolation	Fear	Guilt
+8916	Bashing Beast	Despair	Paranoia	Disgust
+8957	Right Hand of Darkness	Envy	Isolation	Suffering
+9009	Return to Nature	Fear	Guilt	Ire
+9020	Giantslayer	Despair	Isolation	Despair
+9187	Escalation	Isolation	Greed	Guilt
+9226	Mental Perseverance	Ire	Disgust	Greed
+9227	Focused Thrust	Fear	Ire	Greed
+9290	Rusted Pins	Suffering	Guilt	Fear
+9323	Craving Slaughter	Ire	Despair	Fear
+9328	Spirit of the Bear	Greed	Envy	Despair
+9421	Snowpiercer	Isolation	Guilt	Disgust
+9444	One with the Storm	Isolation	Suffering	Disgust
+9472	Catapult	Envy	Disgust	Guilt
+9535	Brinerot Ferocity	Suffering	Ire	Fear
+9652	Mending Deflection	Despair	Envy	Fear
+9736	Insulated Treads	Ire	Ire	Ire
+9863	Knight of Izaro	Fear	Isolation	Disgust
+9896	Heartstopping Presence	Isolation	Ire	Suffering
+9908	Price of Freedom	Envy	Fear	Ire
+9928	Embracing Frost	Fear	Fear	Guilt
+9968	Feel the Earth	Paranoia	Suffering	Disgust
+10029	Repulsion	Disgust	Paranoia	Despair
+10169	Unfettered	Contempt	Envy	Despair
+10265	Javelin	Greed	Despair	Disgust
+10295	Overzealous	Fear	Despair	Isolation
+10315	Easy Going	Suffering	Paranoia	Isolation
+10398	Sudden Escalation	Disgust	Paranoia	Fear
+10423	Exposed to the Inferno	Isolation	Envy	Disgust
+10499	Necromantic Ward	Guilt	Envy	Fear
+10500	Dazing Blocks	Paranoia	Paranoia	Despair
+10602	Reaving	Despair	Ire	Envy
+10612	Embodiment of Frost	Paranoia	Isolation	Ire
+10681	Defensive Stance	Disgust	Fear	Isolation
+10727	Emboldening Casts	Greed	Disgust	Disgust
+10772	Bloodthirsty	Disgust	Disgust	Fear
+10774	Unyielding	Disgust	Envy	Disgust
+10873	Bestial Rage	Ire	Disgust	Fear
+10998	Strong Chin	Paranoia	Ire	Guilt
+11184	Zarokh's Gift	Melancholy	Ferocity	Contempt
+11366	Volcanic Skin	Suffering	Isolation	Paranoia
+11376	Necrotic Touch	Despair	Despair	Suffering
+11392	Molten Being	Guilt	Isolation	Disgust
+11526	Sniper	Isolation	Suffering	Despair
+11578	Spreading Shocks	Guilt	Disgust	Disgust
+11774	The Spring Hare	Disgust	Despair	Isolation
+11826	Heavy Ammunition	Guilt	Greed	Greed
+11838	Dreamcatcher	Disgust	Suffering	Fear
+11886	Mauling Stuns	Paranoia	Guilt	Suffering
+12245	Arsonist	Isolation	Greed	Despair
+12337	Flash Storm	Paranoia	Ire	Isolation
+12412	Temporal Mastery	Paranoia	Fear	Disgust
+12611	Harness the Elements	Disgust	Disgust	Isolation
+12661	Asceticism	Isolation	Ire	Guilt
+12750	Vale Shelter	Greed	Disgust	Despair
+12822	Adaptable Assault	Envy	Guilt	Envy
+12906	Sitting Duck	Despair	Despair	Guilt
+12964	Lone Warrior	Suffering	Paranoia	Disgust
+12998	Warm the Heart	Ire	Suffering	Fear
+13407	Heartbreaking	Isolation	Paranoia	Fear
+13457	Shadow Dancing	Despair	Guilt	Despair
+13482	Punctured Lung	Fear	Guilt	Greed
+13489	Unbreakable	Ire	Isolation	Fear
+13515	Stormwalker	Suffering	Greed	Fear
+13524	Everlasting Glory	Disgust	Ire	Suffering
+13542	Loose Flesh	Ire	Fear	Greed
+13693	Rhythm of Ice	Guilt	Ire	Guilt
+13708	Curved Weapon	Greed	Fear	Greed
+13724	Deadly Force	Disgust	Suffering	Envy
+13738	Lightning Quick	Fear	Fear	Isolation
+13823	Controlling Magic	Envy	Fear	Isolation
+13844	Growing Peril	Melancholy	Suffering	Despair
+13895	Precise Point	Guilt	Envy	Despair
+13980	Split the Earth	Isolation	Paranoia	Disgust
+14211	Shredding Contraptions	Despair	Despair	Envy
+14258	Puppet Master chance	Paranoia	Ire	Suffering
+14265	Pyromancer	Guilt	Guilt	Guilt
+14294	Sacrificial Blood	Envy	Greed	Suffering
+14324	Arcane Blossom	Envy	Despair	Despair
+14343	Deterioration	Paranoia	Paranoia	Isolation
+14383	Suffusion	Fear	Despair	Guilt
+14602	Specialised Shots	Guilt	Guilt	Suffering
+14761	Warlord Leader	Fear	Fear	Paranoia
+14777	Bravado	Suffering	Guilt	Despair
+14934	Spiral into Mania	Ire	Envy	Suffering
+14945	Growing Swarm	Guilt	Paranoia	Fear
+15030	Consistent Intake	Guilt	Greed	Ire
+15083	Power Conduction	Guilt	Suffering	Suffering
+15114	Boundless Growth	Fear	Paranoia	Greed
+15374	Hale Heart	Despair	Paranoia	Greed
+15443	Endured Suffering	Greed	Guilt	Fear
+15606	Thrill of the Fight	Despair	Envy	Suffering
+15617	Heavy Drinker	Envy	Envy	Envy
+15644	Shedding Skin	Envy	Ire	Paranoia
+15825	Bhatair's Storm	Guilt	Fear	Isolation
+15829	Siphon	Paranoia	Envy	Guilt
+15986	Building Toxins	Greed	Isolation	Isolation
+15991	Embodiment of Lightning	Isolation	Paranoia	Ire
+16142	Deep Freeze	Disgust	Isolation	Ire
+16150	Inspiring Ally	Ire	Suffering	Despair
+16256	Ether Flow	Envy	Greed	Envy
+16466	Mental Alacrity	Fear	Envy	Paranoia
+16499	Lingering Whispers	Isolation	Despair	Envy
+16618	Jack of all Trades	Greed	Fear	Envy
+16626	Impact Area	Paranoia	Envy	Disgust
+16790	Efficient Casting	Greed	Paranoia	Envy
+16816	Pinpoint Shot	Isolation	Envy	Envy
+16940	Arcane Nature	Guilt	Isolation	Ire
+17029	Blade Catcher	Fear	Envy	Guilt
+17150	General's Bindings	Paranoia	Fear	Envy
+17229	Silent Guardian	Fear	Greed	Disgust
+17254	Spell Haste	Ire	Guilt	Isolation
+17260	Piercing Claw	Greed	Ire	Despair
+17303	Utility Ordnance	Disgust	Despair	Envy
+17330	Perforation	Greed	Greed	Suffering
+17340	Adrenaline Rush	Disgust	Ire	Fear
+17372	Reaching Strike	Isolation	Paranoia	Guilt
+17548	Moment of Truth	Ire	Suffering	Disgust
+17600	Thirsting Ally	Ire	Greed	Suffering
+17664	Decisive Retreat	Envy	Envy	Ire
+17696	Augmented Flesh	Contempt	Suffering	Suffering
+17725	Bonded Precision	Disgust	Envy	Suffering
+17762	Vengeance	Guilt	Fear	Envy
+17825	Tactical Retreat	Paranoia	Disgust	Despair
+17854	Escape Velocity	Greed	Disgust	Suffering
+17882	Volatile Grenades	Paranoia	Ire	Despair
+17955	Careful Consideration	Paranoia	Paranoia	Greed
+18086	Breath of Ice	Suffering	Disgust	Suffering
+18157	Tempered Defences	Fear	Guilt	Envy
+18308	Bleeding Out	Despair	Suffering	Fear
+18397	Savoured Blood	Despair	Ire	Ire
+18419	Ancestral Mending	Envy	Fear	Paranoia
+18485	Unstable Bond	Envy	Guilt	Despair
+18496	Lasting Trauma	Suffering	Paranoia	Envy
+18505	Crushing Verdict	Envy	Suffering	Ire
+18959	Ruinic Helm	Paranoia	Isolation	Fear
+19044	Arcane Intensity	Disgust	Fear	Despair
+19125	Potent Incantation	Paranoia	Paranoia	Disgust
+19156	Immaterial	Ire	Disgust	Envy
+19236	Projectile Bulwark	Ire	Fear	Despair
+19249	Supportive Ancestors	Fear	Disgust	Isolation
+19337	Precision Salvo	Despair	Envy	Envy
+19442	Prolonged Assault	Guilt	Despair	Suffering
+19546	Favourable Odds	Despair	Greed	Disgust
+19644	Left Hand of Darkness	Isolation	Suffering	Envy
+19715	Cremation	Isolation	Disgust	Isolation
+19722	Thin Ice	Suffering	Ire	Greed
+19955	Endless Blizzard	Isolation	Suffering	Fear
+20008	Unleash Fire	Disgust	Guilt	Greed
+20032	Erraticism	Despair	Greed	Guilt
+20251	Splitting Ground	Suffering	Suffering	Isolation
+20289	Frozen Claw	Suffering	Envy	Ire
+20388	Regenerative Flesh	Greed	Disgust	Greed
+20397	Authority	Greed	Envy	Suffering
+20414	Reprisal	Ire	Despair	Despair
+20416	Grit	Suffering	Disgust	Envy
+20495	Dark Entropy	Ferocity	Isolation	Disgust
+20511	Cremating Cries	Despair	Suffering	Paranoia
+20558	Among the Hordes	Suffering	Greed	Suffering
+20677	For the Jugular	Paranoia	Suffering	Guilt
+20686	Paragon	Ferocity	Isolation	Despair
+20916	Blinding Strike	Envy	Fear	Envy
+21164	Fleshcrafting	Isolation	Greed	Fear
+21206	Explosive Impact	Greed	Disgust	Fear
+21213	Cirel of Tarth's Light	Isolation	Ire	Paranoia
+21251	Replenishing Horde	Melancholy	Isolation	Disgust
+21349	The Quick Fox	Isolation	Despair	Suffering
+21380	Preemptive Strike	Guilt	Disgust	Greed
+21453	Breakage	Fear	Envy	Greed
+21537	Fervour	Fear	Guilt	Isolation
+21748	Impending Doom	Envy	Isolation	Ire
+21784	Pack Encouragement	Isolation	Disgust	Despair
+22532	Fearful Paralysis	Disgust	Fear	Ire
+22626	Irreparable	Guilt	Despair	Disgust
+22726	Storm's Rebuke	Melancholy	Suffering	Suffering
+22811	The Wild Cat	Disgust	Fear	Guilt
+22817	Inevitable Rupture	Greed	Ire	Paranoia
+22864	Tainted Strike	Ire	Despair	Greed
+22967	Vigilance	Guilt	Envy	Guilt
+23078	Holy Protector	Disgust	Despair	Suffering
+23221	Trick Shot	Suffering	Isolation	Guilt
+23227	Initiative	Greed	Ire	Envy
+23244	Bounty Hunter	Despair	Suffering	Guilt
+23362	Slippery Ice	Despair	Disgust	Greed
+23427	Chilled to the Bone	Suffering	Despair	Despair
+23630	Self Immolation	Suffering	Despair	Fear
+23736	Spray and Pray	Fear	Greed	Suffering
+23738	Madness in the Bones	Ire	Paranoia	Suffering
+23764	Alternating Current	Ire	Ire	Suffering
+23907	Ice Storm	Paranoia	Isolation	Disgust
+23939	Glazed Flesh	Isolation	Fear	Fear
+23940	Fortified Aegis	Isolation	Envy	Ire
+24062	Immortal Infamy	Envy	Suffering	Fear
+24087	Everlasting Infusions	Guilt	Suffering	Despair
+24120	Mental Toughness	Envy	Fear	Greed
+24240	Time Manipulation	Fear	Despair	Envy
+24438	Hardened Wood	Despair	Greed	Despair
+24483	Direct Approach	Disgust	Paranoia	Paranoia
+24491	Invocated Echoes	Guilt	Greed	Isolation
+24630	Fulmination	Suffering	Suffering	Greed
+24655	Breath of Fire	Fear	Ire	Isolation
+24721	Brain Freeze	Greed	Ire	Suffering
+24736	Knight of Chitus	Isolation	Fear	Envy
+24753	Determined Precision	Ire	Greed	Envy
+24764	Infusing Power	Fear	Paranoia	Suffering
+24766	Paranoia	Guilt	Ire	Suffering
+25211	Waning Hindrances	Greed	Suffering	Fear
+25361	Resolute Reach	Ire	Disgust	Despair
+25362	Chakra of Impact	Greed	Greed	Despair
+25482	Beef	Fear	Disgust	Fear
+25513	Overwhelm	Despair	Fear	Envy
+25619	Sand in the Eyes	Despair	Despair	Despair
+25620	Meat Recycling	Paranoia	Despair	Guilt
+25711	Thrill of Battle	Guilt	Suffering	Ire
+25753	Blazing Arms	Suffering	Envy	Despair
+25971	Tenfold Attacks	Greed	Fear	Guilt
+26070	Bolstering Yell	Suffering	Disgust	Paranoia
+26104	Spirit of the Wyvern	Ire	Suffering	Greed
+26107	Kite Runner	Ire	Isolation	Despair
+26214	Dominion	Contempt	Suffering	Isolation
+26291	Electrifying Nature	Envy	Greed	Paranoia
+26331	Harsh Winter	Fear	Despair	Ire
+26339	Ancestral Artifice	Suffering	Suffering	Suffering
+26356	Primed to Explode	Suffering	Disgust	Disgust
+26447	Refocus	Paranoia	Suffering	Ire
+26479	Steadfast Resolve	Guilt	Isolation	Paranoia
+26518	Cold Nature	Envy	Fear	Guilt
+26563	Bone Chains	Fear	Despair	Fear
+26926	Archon of Undeath	Guilt	Suffering	Isolation
+27009	Lust for Sacrifice	Disgust	Suffering	Paranoia
+27108	Mass Hysteria	Disgust	Disgust	Envy
+27176	The Power Within	Envy	Paranoia	Suffering
+27303	Vulgar Methods	Ire	Guilt	Despair
+27388	Aspiring Genius	Suffering	Greed	Greed
+27434	Archon of the Storm	Fear	Isolation	Guilt
+27491	Heavy Buffer	Greed	Paranoia	Isolation
+27513	Material Solidification	Envy	Envy	Isolation
+27626	Touch the Arcane	Despair	Isolation	Suffering
+27687	Greatest Defence	Suffering	Fear	Disgust
+27704	Grace of the Ancestors	Melancholy	Envy	Fear
+27761	Counterstancing	Guilt	Guilt	Fear
+27779	Lord of the Squall	Contempt	Isolation	Despair
+27875	General Electric	Isolation	Suffering	Greed
+27950	Polished Iron	Paranoia	Guilt	Despair
+28044	Coming Calamity	Disgust	Isolation	Suffering
+28267	Desensitisation	Envy	Suffering	Greed
+28329	Pressure Points	Guilt	Despair	Ire
+28408	Invigorating Hate	Envy	Disgust	Despair
+28441	Frantic Swings	Disgust	Despair	Despair
+28482	Total Incineration	Guilt	Isolation	Suffering
+28542	The Molten One's Gift	Guilt	Suffering	Greed
+28613	Roaring Cries	Suffering	Despair	Greed
+28892	Primal Rage	Suffering	Guilt	Paranoia
+28963	Chakra of Rhythm	Guilt	Greed	Despair
+28975	Pure Power	Suffering	Guilt	Suffering
+29288	Deadly Invocations	Isolation	Ire	Envy
+29306	Chakra of Thought	Fear	Disgust	Guilt
+29372	Sudden Infuriation	Fear	Suffering	Isolation
+29514	Cluster Bombs	Suffering	Isolation	Disgust
+29527	First Approach	Paranoia	Ire	Fear
+29762	Guttural Roar	Paranoia	Ire	Disgust
+29800	Shocking Limit	Paranoia	Envy	Fear
+29881	Surging Beast	Disgust	Ire	Disgust
+29899	Finish Them	Suffering	Despair	Guilt
+30132	Wrapped Quiver	Greed	Suffering	Envy
+30341	Master Fletching	Fear	Despair	Disgust
+30392	Succour	Disgust	Despair	Guilt
+30395	Howling Beast	Fear	Paranoia	Envy
+30408	Efficient Contraptions	Fear	Paranoia	Guilt
+30456	High Alert	Ire	Ire	Greed
+30523	Dead can Dance	Despair	Fear	Ire
+30546	Electrified Claw	Guilt	Fear	Suffering
+30562	Inner Faith	Envy	Greed	Isolation
+30720	Entropic Incarnation	Suffering	Suffering	Envy
+30748	Controlled Chaos	Greed	Envy	Guilt
+31129	Lifelong Friend	Despair	Despair	Ire
+31172	Falcon Technique	Suffering	Suffering	Despair
+31175	Grip of Evil	Isolation	Despair	Ire
+31189	Unexpected Finesse	Despair	Greed	Isolation
+31326	Slow Burn	Guilt	Suffering	Paranoia
+31364	Primal Protection	Guilt	Greed	Paranoia
+31373	Vocal Empowerment	Isolation	Isolation	Despair
+31433	Catalysis	Isolation	Isolation	Paranoia
+31724	Iron Slippers	Isolation	Envy	Guilt
+31745	Lockdown	Guilt	Despair	Despair
+31773	Resurging Archon	Envy	Isolation	Disgust
+31826	Long Distance Relationship	Guilt	Envy	Paranoia
+31925	Warding Fetish	Fear	Suffering	Envy
+31955	Voll's Protection	Isolation	Paranoia	Despair
+32071	Primal Growth	Envy	Fear	Fear
+32128	Flow of Time	Disgust	Fear	Suffering
+32151	Crystalline Resistance	Isolation	Fear	Despair
+32301	Frazzled	Despair	Disgust	Paranoia
+32353	Swift Claw	Suffering	Fear	Despair
+32354	Defiance	Envy	Guilt	Ire
+32448	Shockproof	Disgust	Greed	Disgust
+32507	Cut to the Bone	Despair	Envy	Isolation
+32543	Unhindered	Suffering	Paranoia	Paranoia
+32655	Hunting Companion	Guilt	Envy	Ire
+32664	Chakra of Breathing	Fear	Suffering	Guilt
+32721	Distracted Target	Despair	Disgust	Despair
+32799	Captivating Companionship	Isolation	Guilt	Greed
+32858	Dread Engineer's Concoction	Suffering	Greed	Guilt
+32932	Ichlotl's Inferno	Envy	Suffering	Paranoia
+32951	Preservation	Disgust	Suffering	Ire
+32976	Gem Enthusiast	Isolation	Greed	Suffering
+33059	Back in Action	Ire	Guilt	Greed
+33093	Effervescent	Suffering	Isolation	Envy
+33099	Hunter's Talisman	Paranoia	Paranoia	Paranoia
+33216	Deep Wounds	Disgust	Despair	Paranoia
+33229	Haemorrhaging Cuts	Ire	Isolation	Paranoia
+33240	Lord of Horrors	Isolation	Isolation	Ire
+33400	Reverberating Parry	Guilt	Paranoia	Paranoia
+33542	Quick Fingers	Envy	Suffering	Envy
+33585	Unspoken Bond	Greed	Despair	Envy
+33730	Focused Channel	Despair	Despair	Fear
+33852	Flurry	Ire	Greed	Ire
+33887	Full Salvo	Ire	Isolation	Greed
+33922	Stripped Defences	Disgust	Isolation	Disgust
+33978	Unstoppable Barrier	Fear	Paranoia	Ire
+34300	Conservative Casting	Disgust	Disgust	Ire
+34308	Personal Touch	Disgust	Despair	Ire
+34316	One with the River	Guilt	Paranoia	Isolation
+34324	Spectral Ward	Envy	Fear	Suffering
+34340	Mass Rejuvenation	Ire	Paranoia	Greed
+34425	Precise Volatility	Envy	Despair	Greed
+34473	Spaghettification	Isolation	Despair	Fear
+34478	Bond of the Viper	Ire	Ire	Disgust
+34531	Hallowed	Despair	Disgust	Disgust
+34541	Energising Deflection	Paranoia	Greed	Suffering
+34543	The Frenzied Bear	Envy	Guilt	Fear
+34553	Emboldening Lead	Ire	Envy	Fear
+34617	Conall the Hunted	Despair	Envy	Paranoia
+34908	Staunch Deflection	Guilt	Despair	Fear
+35028	In the Thick of It	Disgust	Despair	Greed
+35031	Chakra of Life	Fear	Isolation	Fear
+35046	Mystic Avalanche	Ferocity	Isolation	Suffering
+35324	Burnout	Isolation	Greed	Paranoia
+35369	Investing Energies	Ire	Ire	Envy
+35417	Wyvern's Breath	Guilt	Disgust	Paranoia
+35477	Far Sighted	Guilt	Ire	Fear
+35560	At your Command	Suffering	Despair	Envy
+35564	Turn the Clock Back	Fear	Fear	Despair
+35581	Near at Hand	Paranoia	Isolation	Paranoia
+35618	Cold Coat	Envy	Despair	Envy
+35739	Crushing Judgement	Greed	Isolation	Ire
+35743	Saqawal's Hide	Disgust	Fear	Disgust
+35792	Blood of Rage	Isolation	Despair	Isolation
+35809	Reinvigoration	Disgust	Envy	Ire
+35849	Thickened Arteries	Envy	Guilt	Greed
+35855	Fortifying Blood	Greed	Paranoia	Fear
+35876	Admonisher	Disgust	Suffering	Disgust
+35918	One For All	Disgust	Paranoia	Suffering
+35966	Heart Tissue	Paranoia	Despair	Ire
+36085	Serrated Edges	Paranoia	Disgust	Greed
+36100	Molten Claw	Suffering	Greed	Paranoia
+36333	Explosive Empowerment	Paranoia	Suffering	Despair
+36341	Cull the Hordes	Despair	Guilt	Suffering
+36364	Electrocution	Paranoia	Suffering	Greed
+36507	Vile Mending	Greed	Fear	Fear
+36623	Convalescence	Disgust	Suffering	Greed
+36630	Incision	Greed	Greed	Greed
+36808	Spiked Shield	Fear	Suffering	Fear
+36931	Concussive Attack	Disgust	Greed	Greed
+36976	Marked for Death	Isolation	Suffering	Guilt
+37244	Shield Expertise	Disgust	Greed	Fear
+37266	Nourishing Ally	Ire	Fear	Guilt
+37276	Battle Trance	Isolation	Disgust	Fear
+37302	Kept at Bay	Guilt	Paranoia	Suffering
+37408	Staunching	Envy	Despair	Disgust
+37514	Whirling Assault	Envy	Disgust	Greed
+37543	Full Recovery	Despair	Envy	Guilt
+37619	Rhythm of Fire	Guilt	Guilt	Ire
+37742	Manifold Method	Paranoia	Paranoia	Fear
+37806	Branching Bolts	Suffering	Disgust	Ire
+37846	Bastion of Light	Contempt	Fear	Despair
+37872	Presence Present	Ire	Fear	Isolation
+37967	Desert's Scorn	Contempt	Fear	Suffering
+38053	Deafening Cries	Disgust	Guilt	Paranoia
+38111	Pliable Flesh	Greed	Disgust	Isolation
+38329	Biting Frost	Guilt	Isolation	Guilt
+38342	Stupefy	Paranoia	Despair	Paranoia
+38398	Apocalypse	Suffering	Paranoia	Greed
+38459	Disorientation	Disgust	Paranoia	Disgust
+38479	Close Confines	Ire	Paranoia	Ire
+38532	Thirst for Power	Envy	Ire	Despair
+38535	Stormcharged	Fear	Fear	Envy
+38537	Heartstopping	Ire	Despair	Paranoia
+38570	Demolitionist	Ire	Suffering	Envy
+38614	Psychic Fragmentation	Paranoia	Disgust	Isolation
+38628	Escalating Toxins	Despair	Isolation	Disgust
+38888	Unerring Impact	Greed	Disgust	Ire
+38895	Crystal Elixir	Fear	Suffering	Greed
+38965	Infused Limits	Greed	Isolation	Paranoia
+38969	Finesse	Fear	Suffering	Disgust
+38972	Restless Dead	Despair	Fear	Disgust
+39050	Exploit	Disgust	Envy	Isolation
+39083	Blood Rush	Guilt	Fear	Disgust
+39347	Breaking Blows	Disgust	Disgust	Disgust
+39369	Struck Through	Isolation	Despair	Greed
+39567	Ingenuity	Ire	Isolation	Suffering
+39568	Magnum Opus	Ferocity	Despair	Isolation
+39881	Staggering Palm	Guilt	Isolation	Despair
+39884	Searing Heat	Despair	Suffering	Disgust
+39911	Frantic Reach	Disgust	Despair	Fear
+39990	Chronomancy	Despair	Fear	Despair
+40073	Drenched	Isolation	Suffering	Ire
+40117	Spiked Armour	Despair	Guilt	Disgust
+40166	Deep Trance	Fear	Ire	Despair
+40213	Taste for Blood	Envy	Ire	Greed
+40270	Frenetic	Ire	Suffering	Guilt
+40292	Nimble Strength	Greed	Despair	Isolation
+40325	Resolution	Envy	Disgust	Envy
+40345	Master of Hexes	Suffering	Fear	Suffering
+40399	Energise	Isolation	Guilt	Paranoia
+40480	Harmonic Generator	Paranoia	Fear	Despair
+40687	Lead by Example	Disgust	Envy	Despair
+40803	Sigil of Ice	Suffering	Disgust	Guilt
+40985	Empowering Remnants	Guilt	Fear	Paranoia
+40990	Exposed to the Storm	Envy	Isolation	Despair
+41033	Utmost Offering	Paranoia	Fear	Greed
+41394	Invigorating Archon	Envy	Isolation	Paranoia
+41512	Heavy Weaponry	Paranoia	Disgust	Envy
+41580	Maiming Strike	Despair	Isolation	Ire
+41620	Bear's Roar	Paranoia	Envy	Greed
+41753	Evocational Practitioner	Paranoia	Envy	Suffering
+41811	Shatter Palm	Greed	Despair	Paranoia
+41905	Gravedigger	Ire	Fear	Disgust
+41935	Hide of the Bear	Suffering	Envy	Disgust
+41972	Glaciation	Paranoia	Guilt	Isolation
+42032	Escalating Mayhem	Isolation	Guilt	Ire
+42036	Off-Balancing Retort	Greed	Fear	Suffering
+42045	Archon of the Blizzard	Isolation	Fear	Ire
+42065	Surging Currents	Fear	Envy	Isolation
+42070	Saqawal's Guidance	Guilt	Envy	Isolation
+42077	Essence Infusion	Envy	Envy	Greed
+42103	Enduring Deflection	Suffering	Greed	Despair
+42177	Blurred Motion	Despair	Paranoia	Ire
+42245	Efficient Inscriptions	Paranoia	Isolation	Greed
+42302	Split Shot	Ire	Fear	Paranoia
+42347	Chakra of Sight	Despair	Despair	Disgust
+42354	Blinding Flash	Ire	Guilt	Ire
+42390	Overheating Blow	Disgust	Suffering	Guilt
+42660	Commanding Rage	Disgust	Guilt	Suffering
+42714	Thousand Cuts	Envy	Fear	Despair
+42760	Chakra of Stability	Greed	Fear	Paranoia
+42813	Tides of Change	Paranoia	Suffering	Fear
+42959	Low Tolerance	Suffering	Greed	Isolation
+42981	Cruel Methods	Suffering	Envy	Paranoia
+43082	Acceleration	Fear	Envy	Disgust
+43088	Agonising Calamity	Disgust	Suffering	Isolation
+43090	Electrotherapy	Suffering	Ire	Guilt
+43139	Stormbreaker	Isolation	Despair	Guilt
+43250	Adaptive Skin	Disgust	Isolation	Guilt
+43396	Ancestral Reach	Suffering	Paranoia	Ire
+43423	Emboldened Avatar	Suffering	Disgust	Greed
+43584	Flare	Disgust	Disgust	Despair
+43633	Energising Archon	Isolation	Paranoia	Envy
+43677	Crippling Toxins	Envy	Isolation	Envy
+43711	Thornhide	Ire	Greed	Fear
+43791	Rallying Icon	Greed	Despair	Guilt
+43829	Advanced Munitions	Guilt	Fear	Greed
+43854	All For One	Paranoia	Disgust	Suffering
+43939	Melting Flames	Fear	Paranoia	Paranoia
+43944	Instability	Paranoia	Greed	Ire
+44005	Casting Cascade	Fear	Greed	Isolation
+44293	Hastening Barrier	Paranoia	Greed	Paranoia
+44299	Enhanced Barrier	Isolation	Paranoia	Isolation
+44330	Coated Arms	Fear	Greed	Paranoia
+44373	Wither Away	Guilt	Guilt	Isolation
+44566	Lightning Rod	Suffering	Isolation	Isolation
+44573	Disciplined Training	Paranoia	Disgust	Guilt
+44753	One With Flame	Greed	Greed	Isolation
+44756	Marked Agility	Despair	Disgust	Suffering
+44765	Distracting Presence	Envy	Guilt	Suffering
+44917	Self Mortification	Ire	Envy	Envy
+44952	Made to Last	Suffering	Fear	Guilt
+44974	Hail	Disgust	Fear	Greed
+45013	Finishing Blows	Despair	Guilt	Ire
+45177	Strike True	Paranoia	Envy	Envy
+45244	Refills	Greed	Ire	Isolation
+45329	Delayed Danger	Despair	Ire	Disgust
+45370	The Raging Ox	Suffering	Ire	Disgust
+45488	Cross Strike	Guilt	Greed	Envy
+45599	Lay Siege	Fear	Envy	Fear
+45612	Defensive Reflexes	Greed	Ire	Ire
+45632	Mind Eraser	Fear	Ire	Paranoia
+45713	Savouring	Disgust	Ire	Isolation
+45751	Frightening Shield	Disgust	Disgust	Suffering
+45777	Hidden Barb	Envy	Paranoia	Isolation
+45874	Proliferating Weeds	Suffering	Ire	Paranoia
+46024	Sigil of Lightning	Paranoia	Suffering	Paranoia
+46060	Voracious	Greed	Isolation	Suffering
+46124	Arcane Remnants	Despair	Guilt	Envy
+46182	Intense Dose	Fear	Fear	Disgust
+46197	Careful Assassin	Suffering	Envy	Greed
+46224	Arcane Alchemy	Envy	Greed	Greed
+46296	Short Shot	Suffering	Guilt	Envy
+46365	Gigantic Following	Envy	Guilt	Isolation
+46384	Wide Barrier	Envy	Isolation	Isolation
+46499	Guts	Suffering	Ire	Ire
+46683	Inherited Strength 	Envy	Suffering	Despair
+46692	Efficient Alchemy	Fear	Ire	Guilt
+46696	Impair	Envy	Suffering	Disgust
+46972	Arcane Mixtures	Paranoia	Paranoia	Guilt
+47088	Sic 'Em	Paranoia	Greed	Disgust
+47270	Inescapable Cold	Ire	Paranoia	Isolation
+47316	Goring	Ire	Isolation	Isolation
+47363	Colossal Weapon	Fear	Greed	Ire
+47387	Stormkeeper	Ire	Guilt	Guilt
+47418	Warding Potions	Greed	Envy	Paranoia
+47420	Expendable Army	Ire	Greed	Isolation
+47441	Stigmata	Disgust	Guilt	Fear
+47514	Dizzying Hits	Ire	Despair	Envy
+47560	Multi Shot	Ire	Isolation	Disgust
+47635	Overload	Paranoia	Isolation	Envy
+47782	Steady Footing	Envy	Disgust	Ire
+47853	Bond of the Mamba	Ire	Greed	Disgust
+48006	Devastation	Ire	Ire	Despair
+48014	Honourless	Ire	Guilt	Fear
+48103	Forcewave	Greed	Paranoia	Paranoia
+48215	Headshot	Fear	Ire	Suffering
+48240	Quick Recovery	Despair	Suffering	Greed
+48418	Hefty Unit	Ire	Disgust	Suffering
+48524	Blood Transfusion	Paranoia	Paranoia	Suffering
+48565	Bringer of Order	Envy	Fear	Disgust
+48581	Exploit the Elements	Greed	Fear	Isolation
+48617	Hunter	Fear	Guilt	Disgust
+48649	Insulating Hide	Guilt	Greed	Suffering
+48658	Shattering	Greed	Fear	Despair
+48699	Frostwalker	Paranoia	Fear	Suffering
+48734	The Howling Primate	Guilt	Despair	Greed
+48774	Taut Flesh	Disgust	Ire	Paranoia
+48925	Blessing of the Moon	Fear	Guilt	Despair
+48974	Altered Brain Chemistry	Ire	Envy	Guilt
+49088	Splintering Force	Envy	Paranoia	Guilt
+49150	Precise Invocations	Envy	Ire	Isolation
+49214	Blood of the Wolf	Isolation	Ire	Despair
+49356	First Principle of the Hollow	Paranoia	Despair	Disgust
+49550	Prolonged Fury	Ire	Greed	Despair
+49618	Deadly Flourish	Envy	Ire	Guilt
+49661	Perfectly Placed Knife	Fear	Paranoia	Isolation
+49740	Shattered Crystal	Suffering	Fear	Ire
+49984	Spellblade	Despair	Fear	Fear
+50023	Invigorating Grandeur	Guilt	Fear	Fear
+50062	Barrier of Venarius	Despair	Greed	Envy
+50239	Mutewind Agility	Suffering	Envy	Suffering
+50253	Aftershocks	Despair	Guilt	Greed
+50392	Brute Strength	Ire	Suffering	Isolation
+50485	Zone of Control	Isolation	Isolation	Envy
+50498	Brain Storm	Suffering	Guilt	Guilt
+50562	Barbaric Strength	Guilt	Despair	Envy
+50673	Avoiding Deflection	Disgust	Greed	Suffering
+50687	Coursing Energy	Envy	Disgust	Paranoia
+50715	Frozen Limit	Greed	Envy	Fear
+50795	Careful Aim	Guilt	Guilt	Paranoia
+50884	Primal Sundering	Guilt	Fear	Ire
+50912	Imbibed Power	Ire	Disgust	Paranoia
+51105	Spirit Bond	Greed	Ire	Fear
+51129	Pile On	Isolation	Ire	Ire
+51169	Soul Bloom	Despair	Ire	Isolation
+51213	Wasting	Guilt	Fear	Despair
+51394	Unimpeded	Isolation	Envy	Isolation
+51446	Leather Bound Gauntlets	Greed	Suffering	Ire
+51509	Waters of Life	Greed	Fear	Disgust
+51602	Unsight	Suffering	Disgust	Despair
+51606	Freedom of Movement	Greed	Greed	Envy
+51707	Enhanced Reflexes	Fear	Ire	Envy
+51820	Ancestral Conduits	Despair	Suffering	Suffering
+51867	Finality	Isolation	Guilt	Envy
+51868	Molten Carapace	Guilt	Disgust	Suffering
+51871	Immortal Thirst	Guilt	Suffering	Guilt
+51891	Lucidity	Envy	Disgust	Suffering
+51934	Invocated Efficiency	Isolation	Envy	Paranoia
+52180	Trained Deflection	Suffering	Despair	Suffering
+52191	Event Horizon	Despair	Isolation	Guilt
+52199	Overexposure	Suffering	Isolation	Greed
+52229	Secrets of the Orb	Disgust	Suffering	Despair
+52245	Distant Dreamer	Paranoia	Suffering	Envy
+52257	Conductive Embrace	Paranoia	Isolation	Guilt
+52348	Carved Earth	Suffering	Suffering	Ire
+52392	Singular Purpose	Disgust	Envy	Fear
+52568	Bond of the Owl	Guilt	Ire	Despair
+52618	Boon of the Beast	Fear	Suffering	Paranoia
+52669	Flamekeeper	Guilt	Ire	Ire
+52684	Eroding Chains	Guilt	Fear	Guilt
+52764	Mystical Rage	Isolation	Greed	Envy
+52803	Hale Traveller	Envy	Disgust	Disgust
+52971	The Soul Meridian	Envy	Disgust	Fear
+53030	Immolation	Ire	Despair	Disgust
+53131	Tukohama's Brew	Isolation	Paranoia	Greed
+53150	Sharp Sight	Guilt	Disgust	Ire
+53185	The Winter Owl	Greed	Greed	Fear
+53187	Warlord Berserker	Disgust	Fear	Fear
+53265	Nature's Bite	Ire	Despair	Suffering
+53294	Burn Away	Fear	Disgust	Disgust
+53367	Symbol of Defiance	Despair	Ire	Greed
+53527	Shattering Blow	Fear	Guilt	Guilt
+53566	Run and Gun	Suffering	Paranoia	Fear
+53607	Fortified Location	Suffering	Despair	Disgust
+53683	Efficient Loading	Paranoia	Despair	Isolation
+53823	Towering Shield	Ire	Despair	Guilt
+53853	Backup Plan	Greed	Greed	Ire
+53921	Unbreaking	Paranoia	Envy	Paranoia
+53935	Briny Carapace	Guilt	Ire	Paranoia
+53941	Shimmering	Envy	Envy	Suffering
+54031	The Great Boar	Envy	Suffering	Guilt
+54148	Smoke Inhalation	Isolation	Envy	Fear
+54640	Constricting	Fear	Greed	Greed
+54805	Hindered Capabilities	Suffering	Greed	Envy
+54814	Profane Commander	Guilt	Isolation	Isolation
+54911	Firestarter	Greed	Isolation	Guilt
+54937	Vengeful Fury	Suffering	Ire	Despair
+54990	Bloodletting	Fear	Suffering	Ire
+54998	Protraction	Despair	Disgust	Guilt
+55060	Shrapnel	Guilt	Guilt	Disgust
+55131	Light on your Feet	Disgust	Isolation	Greed
+55149	Pure Chaos	Envy	Isolation	Guilt
+55180	Relentless Fallen	Despair	Fear	Isolation
+55193	Subterfuge Mask	Ire	Suffering	Paranoia
+55308	Sling Shots	Envy	Ire	Suffering
+55375	Licking Wounds	Fear	Disgust	Ire
+55450	Rallying Form	Greed	Isolation	Fear
+55568	Forthcoming	Despair	Greed	Suffering
+55708	Electric Amplification	Isolation	Fear	Disgust
+55817	Alchemical Oil	Ire	Isolation	Guilt
+55835	Exposed to the Cosmos	Isolation	Fear	Paranoia
+55847	Ice Walls	Fear	Paranoia	Disgust
+56016	Passthrough Rounds	Greed	Guilt	Isolation
+56063	Lingering Horror	Isolation	Disgust	Disgust
+56112	Extinguishing Exhalation	Suffering	Despair	Paranoia
+56237	Enhancing Attacks	Envy	Guilt	Disgust
+56265	Throatseeker	Greed	Envy	Isolation
+56388	Reinforced Rallying	Ire	Envy	Isolation
+56453	Killer Instinct	Greed	Paranoia	Greed
+56488	Glancing Deflection	Suffering	Envy	Envy
+56493	Agile Succession	Greed	Greed	Disgust
+56616	Desperate Times	Despair	Disgust	Ire
+56666	Thaumaturgic Generator	Melancholy	Disgust	Isolation
+56714	Swift Flight	Suffering	Suffering	Guilt
+56767	Electrifying Daze	Isolation	Disgust	Envy
+56776	Cooked	Suffering	Ire	Envy
+56806	Swift Blocking	Ire	Fear	Ire
+56860	Resolute Reprisal	Despair	Ire	Despair
+56893	Thicket Warding	Paranoia	Fear	Paranoia
+56988	Electric Blood	Isolation	Isolation	Guilt
+56997	Heavy Contact	Ire	Envy	Despair
+56999	Locked On	Despair	Disgust	Envy
+57047	Polymathy	Isolation	Suffering	Paranoia
+57110	Infused Flesh	Greed	Envy	Envy
+57190	Doomsayer	Paranoia	Guilt	Disgust
+57204	Critical Exploit	Envy	Paranoia	Ire
+57379	In Your Face	Fear	Greed	Envy
+57388	Overwhelming Strike	Despair	Envy	Disgust
+57471	Hunker Down	Despair	Despair	Paranoia
+57617	Shifted Strikes	Greed	Guilt	Disgust
+57785	Trained Turrets	Greed	Despair	Ire
+57805	Clear Space	Paranoia	Guilt	Guilt
+57921	Wolf's Howl	Disgust	Paranoia	Greed
+58016	All Natural	Fear	Fear	Greed
+58096	Lasting Incantations	Isolation	Greed	Disgust
+58183	Blood Tearing	Despair	Isolation	Greed
+58198	Well of Power	Fear	Ire	Ire
+58215	Sanguimantic Rituals	Paranoia	Suffering	Isolation
+58397	Proficiency	Fear	Guilt	Paranoia
+58426	Pocket Sand	Paranoia	Guilt	Paranoia
+58714	Grenadier	Paranoia	Fear	Isolation
+58817	Artillery Strike	Suffering	Suffering	Fear
+58894	Dominus' Providence	Guilt	Suffering	Envy
+58939	Dispatch Foes	Envy	Envy	Paranoia
+59070	Enduring Archon	Disgust	Isolation	Paranoia
+59208	Frantic Fighter	Ire	Guilt	Suffering
+59214	Fated End	Disgust	Isolation	Despair
+59303	Lucky Rabbit Foot	Isolation	Disgust	Ire
+59387	Infusion of Power	Despair	Guilt	Fear
+59433	Thirst for Endurance	Despair	Envy	Ire
+59438	Flow of Life	Suffering	Envy	Fear
+59541	Necrotised Flesh	Fear	Guilt	Fear
+59589	Heavy Armour	Despair	Fear	Greed
+59657	First Teachings of the Keeper	Disgust	Greed	Despair
+59720	Beastial Skin	Greed	Disgust	Envy
+59781	Embodiment of Death	Despair	Greed	Fear
+59938	Against the Elements	Disgust	Ire	Envy
+60034	Falcon Dive	Isolation	Paranoia	Paranoia
+60083	Pin and Run	Disgust	Despair	Disgust
+60138	Stylebender	Greed	Paranoia	Suffering
+60269	Roil	Disgust	Greed	Ire
+60273	Hindering Obstacles	Disgust	Guilt	Despair
+60404	Perfect Opportunity	Ire	Suffering	Suffering
+60464	Fan the Flames	Suffering	Paranoia	Despair
+60619	Scales of the Wyvern	Fear	Fear	Suffering
+60692	Echoing Flames	Guilt	Suffering	Disgust
+60764	Feathered Fletching	Isolation	Suffering	Suffering
+60878	Lightning Storm	Guilt	Despair	Isolation
+60992	Nurturing Guardian	Paranoia	Despair	Suffering
+61026	Crystalline Flesh	Despair	Paranoia	Suffering
+61104	Staggering Wounds	Paranoia	Greed	Guilt
+61112	Roll and Strike	Guilt	Paranoia	Disgust
+61309	Redblade Discipline	Despair	Despair	Greed
+61338	Breath of Lightning	Disgust	Paranoia	Isolation
+61354	Infernal Limit	Envy	Greed	Fear
+61404	Equilibrium	Fear	Suffering	Despair
+61444	Wasting Casts	Fear	Envy	Despair
+61601	True Strike	Ire	Guilt	Disgust
+61703	Sharpened Claw	Ire	Greed	Greed
+61741	Lasting Toxins	Despair	Isolation	Envy
+61921	Storm Surge	Envy	Isolation	Greed
+62034	Prism Guard	Suffering	Despair	Ire
+62185	Rattled	Greed	Fear	Ire
+62210	Puppet Master chance	Greed	Despair	Fear
+62230	Patient Barrier	Suffering	Isolation	Fear
+62237	Saqawal's Talon	Disgust	Fear	Envy
+62310	Incendiary	Isolation	Disgust	Guilt
+62431	Anticipation	Disgust	Ire	Despair
+62455	Bannerman	Suffering	Greed	Ire
+62609	Ancestral Unity	Suffering	Fear	Envy
+62803	Woodland Aspect	Suffering	Guilt	Isolation
+62887	Living Death	Greed	Suffering	Disgust
+62963	Flamewalker	Suffering	Fear	Greed
+63031	Glorious Anticipation	Paranoia	Despair	Despair
+63037	Sigil of Fire	Suffering	Guilt	Ire
+63074	Dark Entries	Despair	Isolation	Isolation
+63255	Savagery	Suffering	Fear	Paranoia
+63400	Chakra of Elements	Greed	Suffering	Greed
+63431	Leeching Toxins	Greed	Suffering	Suffering
+63451	Cranial Impact	Greed	Paranoia	Disgust
+63541	Brush Off	Ire	Suffering	Ire
+63579	Momentum	Greed	Isolation	Disgust
+63585	Thunderstruck	Despair	Paranoia	Paranoia
+63739	Vigorous Remnants	Envy	Despair	Guilt
+63759	Stacking Toxins	Isolation	Disgust	Paranoia
+63830	Marked for Sickness	Guilt	Disgust	Isolation
+64050	Marathon Runner	Paranoia	Fear	Guilt
+64119	Rapid Reload	Fear	Guilt	Suffering
+64240	Battle Fever	Disgust	Guilt	Isolation
+64415	Shattering Daze	Disgust	Isolation	Envy
+64443	Impact Force	Fear	Ire	Fear
+64525	Easy Target	Guilt	Greed	Fear
+64543	Unbound Forces	Disgust	Envy	Guilt
+64650	Wary Dodging	Suffering	Suffering	Disgust
+64659	Lasting Boons	Isolation	Fear	Greed
+64770	Morgana, the Storm Seer	Envy	Despair	Paranoia
+64851	Flashy Parrying	Greed	Guilt	Greed
+65016	Intense Flames	Guilt	Suffering	Fear
+65023	Impenetrable Shell	Paranoia	Paranoia	Ire
+65160	Titanic	Despair	Paranoia	Guilt
+65193	Viciousness	Disgust	Greed	Paranoia
+65204	Overflowing Power	Isolation	Envy	Greed
+65243	Enveloping Presence	Fear	Greed	Fear
+65256	Widespread Coverage	Guilt	Disgust	Despair
+65265	Swift Interruption	Guilt	Envy	Greed
+65468	Repeating Explosives	Suffering	Despair	Isolation

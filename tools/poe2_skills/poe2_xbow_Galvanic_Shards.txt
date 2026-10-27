@@ -1,0 +1,9 @@
+Galvanic Shards (poe2db.tw/us/Galvanic_Shards) - Tier 5; tags Projectile, Lightning, Chaining, Merging; requires Crossbow. (Text paraphrased by WebFetch.)
+Mechanic: Loads charged bolts that split into fragments in flight; fragments hitting enemies release Lightning beams that chain. Fragments can merge. Fires limited bursts before reload.
+Ammunition: 1 bolt per clip; quality +0-2 bolts per clip.
+Projectile: 0 mana; attack dmg 15-54%; projectile speed 50 m/s; fires 8 fragments per shot (quality +0-2); 60% phys->lightning; 40% speed variation; spread std dev 14, height mean 3, height std dev 20; knockback 100.
+Beam: attack dmg 75-272%; 100% phys->lightning; chains to 1 enemy.
+Hidden: 90 deg facing; -70% move speed, +160%/s, 50% locked; 1000 ms queue override.
+No radius, duration, cone angle, pierce or shock values listed.
+
+Per-level columns (excluding damage/mana): no other per-level columns.

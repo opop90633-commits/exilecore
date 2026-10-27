@@ -1,0 +1,50 @@
+Ice Shards (poe2db.tw/us/Ice_Shards) - crossbow ammunition. (Text paraphrased by WebFetch.)
+Mechanic: Loads a clip of icy bolts fired rapidly at the ground; each bolt leaves an ice shard at impact that arms after a delay. Armed shard explodes when an enemy steps on it, dealing more damage the longer it has been armed (capped). Using again reloads.
+Ammunition: +16 bolts per clip.
+Projectile: 0 mana; 550% attack speed; attack dmg 8-29%; projectile speed 29.25 m/s; fires at ground, cannot chain; 60% phys->cold.
+Shard: attack dmg 20-82%; 100% phys->cold; chills as though dealing 200-390% more damage (lv1-20); explosion radius 2.5 m; arms after 1.5 s; up to 400% more damage 2 s after arming; max 16 active shards.
+Quality: chill as though 0-100% more damage; 0-200% more Freeze buildup.
+Other: shard hazard damage reduced 80% for first 500 ms. Hidden: 8 m shard detection radius; 500 ms crossbow barrage debuff; 2 recoil per shot; 10 total recoil buff count.
+
+Per-level (Chills as though dealing X% more damage):
+level	chill_more_pct
+1	200
+2	210
+3	220
+4	230
+5	240
+6	250
+7	260
+8	270
+9	280
+10	290
+11	300
+12	310
+13	320
+14	330
+15	340
+16	350
+17	360
+18	370
+19	380
+20	390
+21	400
+22	410
+23	420
+24	430
+25	440
+26	450
+27	460
+28	470
+29	480
+30	490
+31	500
+32	510
+33	520
+34	530
+35	540
+36	550
+37	560
+38	570
+39	580
+40	590

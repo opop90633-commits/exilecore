@@ -47,7 +47,11 @@ class AffixCatalogueTest {
             StatKeys.FLASK_LIFE_RECOVERY, StatKeys.FLASK_MANA_RECOVERY, StatKeys.AILMENT_THRESHOLD, StatKeys.SELF_AILMENT_DURATION,
             StatKeys.DROP_QUANTITY, StatKeys.DROP_RARITY, StatKeys.RESIST_MAX);
     /** 地圖本身的屬性（MapStats 讀的）。 */
-    static final Set<String> MAP_STATS = Set.of("map.quantity", "map.rarity", "map.pack_size", "map.magic_packs", "map.rare_packs");
+    static final Set<String> MAP_STATS = Set.of("map.quantity", "map.rarity", "map.pack_size", "map.magic_packs", "map.rare_packs",
+            // 2026-10-26（PoE2 換界石）
+            "map.waystones", "map.rare_mod_chance", "map.curse_zone.enfeeble", "map.curse_zone.temporal_chains",
+            "map.curse_zone.elemental_weakness", "map.ground.fire", "map.ground.chill", "map.ground.shock", "map.ground.patches",
+            "map.ground.radius");
 
     @BeforeAll
     static void load() throws IOException, IllegalAccessException {
@@ -134,6 +138,9 @@ class AffixCatalogueTest {
                 String stat = mod.stat();
                 if (stat.startsWith(StatKeys.RADIUS_PREFIX)) {
                     stat = stat.substring(StatKeys.RADIUS_PREFIX.length()); // 2026-10：半徑珠寶「範圍內的小天賦也各給」
+                } else if (stat.startsWith(tw.exilecore.passive.JewelSockets.RADIUS_NOTABLE_PREFIX)) {
+                    // 2026-10-26：「範圍內的核心天賦也各給」（照 PoE2 分小天賦／核心天賦）
+                    stat = stat.substring(tw.exilecore.passive.JewelSockets.RADIUS_NOTABLE_PREFIX.length());
                 }
                 if (tw.exilecore.stats.Recently.hasCondition(stat)) {
                     // 2026-10：「最近…」的條件詞綴（damage@projhit 這種）：條件要是引擎認得的
@@ -560,9 +567,14 @@ class AffixCatalogueTest {
             }
             if (affix.spawnTags().contains("ruby") || affix.spawnTags().contains("emerald") || affix.spawnTags().contains("sapphire")
                     || affix.spawnTags().contains("jewel")) {
-                assertEquals(3, affix.tiers().size(), affix.id() + "：珠寶詞綴三階");
-                assertEquals(0, affix.tiers().getFirst().tier(), affix.id());
-                assertEquals(75, affix.tiers().getFirst().ilvl(), affix.id() + "：最強一階要物品等級 75");
+                if (affix.spawnTags().contains(ItemRepository.RETIRED_TAG)) {
+                    assertEquals(3, affix.tiers().size(), affix.id() + "：退役的舊珠寶詞綴還是三階（舊物品照讀）");
+                    continue;
+                }
+                // 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，代號 3）；這次之前三階（代號 0／1／2，最強要物品等級 75）
+                assertEquals(1, affix.tiers().size(), affix.id() + "：珠寶詞綴一個範圍");
+                assertEquals(3, affix.tiers().getFirst().tier(), affix.id());
+                assertEquals(1, affix.tiers().getFirst().ilvl(), affix.id() + "：等級 1");
             }
         }
     }
@@ -593,7 +605,7 @@ class AffixCatalogueTest {
         assertTrue(generator.forceAffix(mace, "nope", null, random).contains("沒有這條詞綴"));
         final ItemData jewel = generator.generate(repository.base("ruby_jewel"), Rarity.MAGIC, 84, random);
         jewel.affixes().clear();
-        assertEquals(null, generator.forceAffix(jewel, "j2_attack_damage", 0, random));
+        assertEquals(null, generator.forceAffix(jewel, "j2_attack_damage", 3, random)); // 2026-10-27：珠寶詞綴只剩代號 3（這次之前 0）
         assertEquals(null, generator.forceAffix(jewel, "j2_fire_damage_percentage", null, random));
         assertTrue(generator.forceAffix(jewel, "j2_elemental_damage_percent", null, random).contains("前綴已經滿了（2/2）"), "珠寶每種最多 2 條");
         assertTrue(ItemStats.modifiers(repository, mace).stream().anyMatch(modifier -> modifier.tags().contains(Tags.COLD)), "附加冰冷傷害");

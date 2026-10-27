@@ -113,8 +113,9 @@ class MapTest {
         assertEquals(1, tiers.clamp(0));
         assertEquals(16, tiers.clamp(99));
         assertEquals(0, tiers.quantity(1), 1e-9);
-        assertEquals(30, tiers.quantity(16), 1e-9, "每高一階 +2% 物品數量");
-        assertEquals(45, tiers.rarity(16), 1e-9, "每高一階 +3% 稀有度");
+        // 2026-10-27 照 PoE2：換界石沒有隨階級的物品數量、稀有度（這次之前 T16 +30%／+45%）
+        assertEquals(0, tiers.quantity(16), 1e-9, "階級不給物品數量");
+        assertEquals(0, tiers.rarity(16), 1e-9, "階級不給稀有度");
         assertEquals(MapStats.DEFAULT_TIERS, tiers, "程式的預設值跟出貨的 maps.yml 一樣");
         assertEquals(3, config.finalLevelBonus());
         // 終局：T5 = 68（跟以前一樣），T16 = 87
@@ -241,8 +242,12 @@ class MapTest {
         final MapStats stats = MapStats.of(repository, map, config.tiers());
         assertEquals(3, stats.tier());
         assertEquals(63, stats.monsterLevel());
-        assertEquals(20 + 4 + 15 + 8 + 6 + 5, stats.quantity(), 1e-9, "品質 20 + T3 的 4% + 每條詞綴的物品數量（怪物生命照 PoE2 是 +15%）");
-        assertEquals(6 + 0 + 5 + 6, stats.rarity(), 1e-9, "T3 的 6% + 詞綴（怪物生命照 PoE2 帶的是魔法與稀有怪物群，不是稀有度）");
+        // 2026-10-26 照 PoE2：換界石詞綴不給物品數量，給的是「換界石掉落更多」（怪物生命 15%）；停用的舊詞綴照舊給物品數量
+        // 2026-10-27：階級不再給數量、稀有度（這次之前 T3 +4%／+6%）
+        assertEquals(20 + 8 + 6 + 5, stats.quantity(), 1e-9, "品質 20 + 停用的舊詞綴的物品數量");
+        assertEquals(15, stats.extra("map.waystones"), 1e-9, "怪物生命：換界石掉落更多 15%");
+        assertEquals(23, stats.extra("map.rare_mod_chance"), 1e-9, "怪物生命：稀有怪帶詞綴的機率更多 23%");
+        assertEquals(0 + 5 + 6, stats.rarity(), 1e-9, "詞綴（怪物生命照 PoE2 帶的是魔法與稀有怪物群，不是稀有度）");
         assertEquals(30, stats.packSize(), 1e-9);
         assertEquals(List.of("life.max"), stats.monsterModifiers().stream().map(Modifier::stat).toList());
         assertEquals(0.4, stats.monsterModifiers().getFirst().value(), 1e-9);
@@ -256,6 +261,31 @@ class MapTest {
         for (final Modifier modifier : ItemStats.modifiers(repository, map)) {
             assertTrue(modifier.stat().startsWith("map.") || modifier.stat().contains(":"), modifier.stat());
         }
+    }
+
+    /** 2026-10-26（PoE2 換界石）：每一段只出那一段的數值；週期詛咒、地面效果的鍵存在 MapStats 的 extra。 */
+    @Test
+    void waystoneAffixesFollowPoe2Bands() {
+        final tw.exilecore.item.Affix fire = repository.affix("map_monster_fire");
+        assertEquals(List.of(0), fire.tiersFor(84).stream().map(tw.exilecore.item.AffixTier::tier).toList(), "T16 一定是最高階");
+        assertEquals(List.of(1), fire.tiersFor(80).stream().map(tw.exilecore.item.AffixTier::tier).toList(), "T11–15");
+        assertEquals(List.of(2), fire.tiersFor(70).stream().map(tw.exilecore.item.AffixTier::tier).toList(), "T6–10");
+        assertEquals(List.of(3), fire.tiersFor(61).stream().map(tw.exilecore.item.AffixTier::tier).toList(), "T1–5");
+        assertTrue(repository.affix("map_monster_cold").group().equals("map_monster_cold"), "火、冰、電、混沌各自一組");
+        final ItemData map = MapDrops.create(config, generator, config.find("royal_tomb"), Rarity.NORMAL, 16, new Random(3));
+        map.setRarity(Rarity.RARE);
+        map.affixes().add(new RolledAffix("map_player_curse_enfeeble", 0, Map.of("value", 1)));
+        map.affixes().add(new RolledAffix("map_ground_ignited", 0, Map.of("value", 7, "fire", 6000)));
+        map.affixes().add(new RolledAffix("map_monster_fire", 0, Map.of("value", 22)));
+        map.affixes().add(new RolledAffix("map_monster_damage", 0, Map.of("value", 22)));
+        final MapStats stats = MapStats.of(repository, map, config.tiers());
+        assertEquals(1, stats.extra("map.curse_zone.enfeeble"), 1e-9);
+        assertEquals(6000, stats.extra("map.ground.fire"), 1e-9);
+        assertEquals(7, stats.extra("map.ground.patches"), 1e-9);
+        assertEquals(List.of("enfeeble"), MapHazards.curses(stats));
+        // 換界石掉落更多：四條相乘（萎力 20%、地面 15%、火焰 15%、傷害 20%）
+        assertEquals((1.2 * 1.15 * 1.15 * 1.2 - 1) * 100, stats.extra("map.waystones"), 1e-6);
+        assertEquals(-0.29, MapHazards.debuff("enfeeble", 100).mods().getFirst().value(), 1e-9);
     }
 
     @Test
@@ -372,7 +402,7 @@ class MapTest {
 
     @Test
     void uniquesLoadAndRoll() {
-        assertEquals(127 + 21 + 5 + 2 + 6, repository.uniques().size(), "2026-10-24：＋6 件戰星傳奇；2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件；2026-10 照 PoE2 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件、德魯伊的獸魂符 4 件；2026-10-15 追逐級多 8 件、共通多 6 件；星骸之海的淵鯨 3 件；2026-10-17 只能賭的踏骸之履；共通的荊棘盾棘壘）");
+        assertEquals(127 + 21 + 5 + 2 + 6 + 30 + 2 + 91, repository.uniques().size(), "2026-10-27：＋91 件照 PoE2 的第二批傳奇（7 件追逐級）；2026-10-26：＋30 件照 PoE2 的新傳奇、永恆珠寶 2 件（英雄悲劇、不朽恨意）；2026-10-24：＋6 件戰星傳奇；2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件；2026-10 照 PoE2 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件、德魯伊的獸魂符 4 件；2026-10-15 追逐級多 8 件、共通多 6 件；星骸之海的淵鯨 3 件；2026-10-17 只能賭的踏骸之履；共通的荊棘盾棘壘）");
         final ItemData dropped = MapDrops.unique(generator, "final", 68, new Random(5));
         assertNotNull(dropped);
         assertEquals(Rarity.UNIQUE, dropped.rarity());
@@ -758,8 +788,7 @@ class MapTest {
         // 2026-10-21 第四版：每翻一倍一段，比例逐段遞減（2000 萬 → 等效 26.43 萬）
         final MapConfig.Pinnacle pinnacle = config.pinnacle("awakener");
         // 2026-10-21 晚：巔峰照打 Boss 每秒 200 萬打 3 分半，400 萬起遞減
-        assertEquals(4000000, pinnacle.dpsCap(), 1e-9);
-        assertEquals(List.of(new MapConfig.DpsTier(4000000, 0.8), new MapConfig.DpsTier(7000000, 0.55), new MapConfig.DpsTier(10000000, 0.3), new MapConfig.DpsTier(13000000, 0.15), new MapConfig.DpsTier(16000000, 0.05)), pinnacle.dpsOver());
+        assertEquals(2000000, pinnacle.dpsCap(), 1e-9); // 2026-10-27 照站長：200 萬起遞減（這次之前 100 萬）
         // 遞減的算法照舊（用以前 15 萬那一組分段驗算）
         final List<MapConfig.DpsTier> over = List.of(new MapConfig.DpsTier(150000, 0.08), new MapConfig.DpsTier(300000, 0.045), new MapConfig.DpsTier(600000, 0.024), new MapConfig.DpsTier(1200000, 0.013), new MapConfig.DpsTier(2500000, 0.007), new MapConfig.DpsTier(5000000, 0.004), new MapConfig.DpsTier(10000000, 0.002), new MapConfig.DpsTier(20000000, 0.001));
         assertEquals(100000, DpsCap.effective(100000, 150000, over), 1e-6, "上限以內照算");
@@ -792,5 +821,16 @@ class MapTest {
         }
         assertEquals(10000, last, 1e-6, "實際每秒 10 萬，沒超過 15 萬：照算");
         cap.forget(0);
+    }
+
+    /** 2026-10-27：極境 Boss 的擊殺稱號要在旁邊而且打到傷害門檻才記（這次之前站在旁邊沒打也算）。 */
+    @Test
+    void bossKillCreditRequiresDamage() {
+        final java.util.UUID hitter = java.util.UUID.randomUUID();
+        final java.util.UUID idle = java.util.UUID.randomUUID();
+        final Set<java.util.UUID> damagers = Set.of(hitter);
+        assertTrue(MapBosses.earnsKillCredit(damagers, hitter, true));
+        assertFalse(MapBosses.earnsKillCredit(damagers, idle, true), "沒打到門檻不算");
+        assertFalse(MapBosses.earnsKillCredit(damagers, hitter, false), "不在 Boss 旁邊不算");
     }
 }

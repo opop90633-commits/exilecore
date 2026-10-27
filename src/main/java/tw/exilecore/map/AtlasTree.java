@@ -128,6 +128,7 @@ public final class AtlasTree {
         stats.put("map.rare_packs", "稀有怪物群增加 {v}%");
         stats.put("atlas.experience", "地圖裡的怪給的經驗 +{v}%");
         stats.put("atlas.map_drop", "地圖怪掉地圖的機率增加 {v}%");
+        stats.put("atlas.monster_effectiveness", "地圖裡的怪物效能增加 {v}%（更耐打；經驗、物品數量各多一半）"); // 2026-10-26 PoE2 The Journey Ahead
         stats.put("atlas.tier_up", "掉落的地圖高一階的機率 +{v}%");
         stats.put("atlas.boss_maps", "地圖 Boss 多掉 {v} 張地圖");
         stats.put("atlas.boss_quantity", "地圖 Boss 的物品數量 +{v}%");

@@ -29,46 +29,156 @@ values:
   greater_socket_orb: 150000
   gemcutter_prism: 3000           # 2026-10-23：琢星稜鏡（技能寶石品質）
   glassblower_bauble: 1500        # 2026-10-23：凝露琉璃（藥劑、護符品質）
+  # 2026-10-26 照 PoE2 0.5 新增：高階／完美通貨（照 PoE2 的行情折算：高階約一般的 10 倍、完美更多）、星紋蝕刻器、工匠石、預見鎖
+  greater_glimmer_orb: 300
+  perfect_glimmer_orb: 3000
+  greater_lustre_orb: 400
+  perfect_lustre_orb: 4000
+  greater_bounty_orb: 4000
+  perfect_bounty_orb: 30000
+  greater_zenith_orb: 12000
+  perfect_zenith_orb: 60000
+  greater_turmoil_orb: 30000
+  perfect_turmoil_orb: 90000
+  arcanist_etcher: 40
+  hinekora_lock: 150000
   corrupt_orb: 3000               # 2026-10-21：蝕變石（PoE2 的瓦爾寶珠）：腐化區第一次打倒 Boss 才掉
   fracture_orb: 150000            # 2026-10-21：定星石（PoE2 的破裂石）：淨化區第一次打倒 Boss 才掉，很少
   star_coin: 1500                 # 2026-10-25：星幣（帳號裡的贊助星幣，1 星幣先抓 ≈ 1 至臻石）：寫了才能在通貨交易所換；拿掉這行就關掉
   # 地圖機制的特殊通貨（寶箱的星魄、裂隙的催化劑、流寇的星籤）
+  # 2026-10-26 照 PoE2 0.5：星魄分次級（約一般的 1/3）、一般（原本的值）、高階（×4）、完美（4500）；狂亂星魄（腐化）6000；
+  #   催化劑 13 種（新的照同類的值）；星籤照每一種通貨分開（新的照 PoE2 的稀有程度估）
+  lesser_essence_body: 20                # 2026-10-26 新增
   essence_body: 60
+  greater_essence_body: 240                # 2026-10-26 新增
+  perfect_essence_body: 4500                # 2026-10-26 新增
+  lesser_essence_mind: 16                # 2026-10-26 新增
   essence_mind: 50
-  essence_flame: 60
-  essence_frost: 60
-  essence_storm: 60
+  greater_essence_mind: 200                # 2026-10-26 新增
+  perfect_essence_mind: 4500                # 2026-10-26 新增
+  lesser_essence_enhancement: 23                # 2026-10-26 新增
+  essence_enhancement: 70                # 2026-10-26 新增
+  greater_essence_enhancement: 280                # 2026-10-26 新增
+  perfect_essence_enhancement: 4500                # 2026-10-26 新增
+  lesser_essence_ruin: 30                # 2026-10-26 新增
   essence_ruin: 90
-  essence_battle: 80
-  essence_sorcery: 80
-  essence_haste: 110
+  greater_essence_ruin: 360                # 2026-10-26 新增
+  lesser_essence_flame: 20                # 2026-10-26 新增
+  essence_flame: 60
+  greater_essence_flame: 240                # 2026-10-26 新增
+  lesser_essence_frost: 20                # 2026-10-26 新增
+  essence_frost: 60
+  greater_essence_frost: 240                # 2026-10-26 新增
+  lesser_essence_storm: 20                # 2026-10-26 新增
+  essence_storm: 60
+  greater_essence_storm: 240                # 2026-10-26 新增
+  lesser_essence_infinite: 23                # 2026-10-26 新增
   essence_infinite: 70
-  essence_seeking: 90
+  greater_essence_infinite: 280                # 2026-10-26 新增
+  perfect_essence_infinite: 4500                # 2026-10-26 新增
+  lesser_essence_opulence: 23                # 2026-10-26 新增
+  essence_opulence: 70                # 2026-10-26 新增
+  greater_essence_opulence: 280                # 2026-10-26 新增
+  perfect_essence_opulence: 4500                # 2026-10-26 新增
+  lesser_essence_torment: 30                # 2026-10-26 新增
   essence_torment: 90
-  essence_ward: 70
+  greater_essence_torment: 360                # 2026-10-26 新增
+  perfect_essence_torment: 4500                # 2026-10-26 新增
+  lesser_essence_blaze: 26                # 2026-10-26 新增
   essence_blaze: 80                # 2026-10-15：附加元素傷害的星魄（跟攻速星魄同價）
+  greater_essence_blaze: 320                # 2026-10-26 新增
+  perfect_essence_blaze: 4500                # 2026-10-26 新增
+  lesser_essence_rime: 26                # 2026-10-26 新增
   essence_rime: 80
+  greater_essence_rime: 320                # 2026-10-26 新增
+  perfect_essence_rime: 4500                # 2026-10-26 新增
+  lesser_essence_thunder: 26                # 2026-10-26 新增
   essence_thunder: 80
-  catalyst_resist: 108
+  greater_essence_thunder: 320                # 2026-10-26 新增
+  perfect_essence_thunder: 4500                # 2026-10-26 新增
+  lesser_essence_accuracy: 23                # 2026-10-26 新增
+  essence_accuracy: 70                # 2026-10-26 新增
+  greater_essence_accuracy: 280                # 2026-10-26 新增
+  perfect_essence_accuracy: 4500                # 2026-10-26 新增
+  lesser_essence_battle: 26                # 2026-10-26 新增
+  essence_battle: 80
+  greater_essence_battle: 320                # 2026-10-26 新增
+  perfect_essence_battle: 4500                # 2026-10-26 新增
+  lesser_essence_seeking: 30                # 2026-10-26 新增
+  essence_seeking: 90
+  greater_essence_seeking: 360                # 2026-10-26 新增
+  perfect_essence_seeking: 4500                # 2026-10-26 新增
+  lesser_essence_sorcery: 26                # 2026-10-26 新增
+  essence_sorcery: 80
+  greater_essence_sorcery: 320                # 2026-10-26 新增
+  perfect_essence_sorcery: 4500                # 2026-10-26 新增
+  lesser_essence_alacrity: 23                # 2026-10-26 新增
+  essence_alacrity: 70                # 2026-10-26 新增
+  greater_essence_alacrity: 280                # 2026-10-26 新增
+  perfect_essence_alacrity: 4500                # 2026-10-26 新增
+  lesser_essence_command: 23                # 2026-10-26 新增
+  essence_command: 70                # 2026-10-26 新增
+  greater_essence_command: 280                # 2026-10-26 新增
+  perfect_essence_command: 4500                # 2026-10-26 新增
+  essence_haste: 110
+  essence_ward: 70
+  essence_hysteria: 6000                # 2026-10-26 新增
   catalyst_life: 108
+  catalyst_mana: 100                # 2026-10-26 新增
+  catalyst_defence: 84
+  catalyst_physical: 96                # 2026-10-26 新增
+  catalyst_fire: 108                # 2026-10-26 新增
+  catalyst_cold: 108                # 2026-10-26 新增
+  catalyst_lightning: 108                # 2026-10-26 新增
+  catalyst_chaos: 108                # 2026-10-26 新增
   catalyst_attack: 108
   catalyst_caster: 108
+  catalyst_speed: 132
+  catalyst_attribute: 84
+  catalyst_minion: 96                # 2026-10-26 新增
+  catalyst_resist: 108
   catalyst_crit: 120
   catalyst_elemental: 108
   catalyst_phys_chaos: 96
-  catalyst_attribute: 84
-  catalyst_speed: 132
-  catalyst_defence: 84
   omen_sinistral: 220
   omen_dextral: 220
+  omen_sinistral_coronation: 220                # 2026-10-26 新增
+  omen_dextral_coronation: 220                # 2026-10-26 新增
   omen_abundance: 600
+  omen_homogenising_exaltation: 1500                # 2026-10-26 新增
+  omen_homogenising_coronation: 1500                # 2026-10-26 新增
+  omen_catalysing_exaltation: 1500                # 2026-10-26 新增
   omen_whittling: 1500          # 2026-10：350 → 1500（消耗率全服最高；流寇、祭壇抽到的權重也降成 1/4）
   omen_sinistral_guard: 800     # 2026-10：260 → 800（洗裝備必需，消耗 46%；權重降成 2/5）
   omen_dextral_guard: 800       # 2026-10：260 → 800（同上）
+  omen_dextral_erasure: 800                # 2026-10-26 新增
+  omen_sinistral_erasure: 800                # 2026-10-26 新增
+  omen_greater_annulment: 2000                # 2026-10-26 新增
+  omen_light: 300                # 2026-10-26 新增
+  omen_sinistral_alchemy: 220                # 2026-10-26 新增
+  omen_dextral_alchemy: 220                # 2026-10-26 新增
+  omen_corruption: 400                # 2026-10-26 新增
+  omen_blessed: 1500                # 2026-10-26 新增
+  omen_sanctification: 3000                # 2026-10-26 新增
+  omen_chance: 1500                # 2026-10-26 新增
+  omen_ancients: 1500                # 2026-10-26 新增
+  omen_sinistral_crystallisation: 1500                # 2026-10-26 新增
+  omen_dextral_crystallisation: 1500                # 2026-10-26 新增
+  omen_sinistral_necromancy: 300                # 2026-10-26 新增
+  omen_dextral_necromancy: 300                # 2026-10-26 新增
   distilled_ire: 40
   distilled_guilt: 90
   distilled_greed: 200
   distilled_paranoia: 450
+  distilled_envy: 1000                # 2026-10-27 照 PoE2 新增（十種蒸餾情緒，每一階約 ×2.2）
+  distilled_disgust: 2200                # 2026-10-27 新增
+  distilled_despair: 4800                # 2026-10-27 新增
+  distilled_fear: 10000                # 2026-10-27 新增
+  distilled_suffering: 20000                # 2026-10-27 新增
+  distilled_isolation: 40000                # 2026-10-27 新增
+  distilled_melancholy: 30000                # 2026-10-27 新增（強效情緒，塗油限定核心用）
+  distilled_ferocity: 30000                # 2026-10-27 新增
+  distilled_contempt: 30000                # 2026-10-27 新增
   # 未切割寶石（2026-10 算通貨）：等級越高越值錢（大約每升一級 ×1.32，Lv.20 約三顆至臻石）；輔助寶石第 1／2／3 階
   uncut_skill_1: 25
   uncut_skill_2: 35

@@ -52,16 +52,52 @@ public record SkillParams(double reach, double angle, int targets, double knockb
     public record Execute(double below, double more) {
     }
 
-    /** 打中時濺射：對目標附近 radius 內最多 targets 個敵人，各造成這一下 damage%（50 = 一半）的傷害。 */
-    public record Splash(int targets, double radius, double damage) {
+    /**
+     * 打中時濺射：對目標附近 radius 內最多 targets 個敵人，各造成這一下 damage%（50 = 一半）的傷害。
+     * 2026-10-26：targets、damage 可以寫逐級表（照 PoE2 雷鳴箭的雷束：2→4→5 個、雷束是 100% 基礎攻擊傷害）；
+     * 沒帶等級的 {@link #targets()}、{@link #damage()} 是 20 級的值（說明、估算用）。
+     */
+    public record Splash(Scaled targetsByLevel, double radius, Scaled damageByLevel) {
+        public Splash(final int targets, final double radius, final double damage) {
+            this(Scaled.of(targets), radius, Scaled.of(damage));
+        }
+
+        public int targets() {
+            return targets(tw.exilecore.character.SkillLoadout.MAX_LEVEL);
+        }
+
+        public int targets(final int level) {
+            return Math.max(1, targetsByLevel.intAt(level));
+        }
+
+        public double damage() {
+            return damage(tw.exilecore.character.SkillLoadout.MAX_LEVEL);
+        }
+
+        public double damage(final int level) {
+            return Math.max(1, Math.min(100, damageByLevel.at(level)));
+        }
     }
 
     /** 連續射出：一共 count 波，每波間隔 interval tick（每波都重新照準心的方向）。 */
     public record Burst(int count, int interval) {
     }
 
-    /** 散射：停下來的地方往四周（整個扇形 spread 度）再射出 count 支，每支造成這一下 damage% 的傷害，飛 range 格。 */
-    public record Scatter(int count, double spread, double damage, double range) {
+    /**
+     * 散射：停下來的地方往四周（整個扇形 spread 度）再射出 count 支，每支造成這一下 damage% 的傷害，飛 range 格。
+     * 2026-10-26 照 PoE2（凝霜箭的冰片）：counts 可以隨等級（[8, 11]）；onHit = 只在打中敵人時往前噴出（不是停下來的時候）；
+     * effectiveness > 0 = 小的用自己的傷害效益（不照這一發的 damage%）；convert = 小的自己的轉換（空的 = 跟這一發一樣）。
+     */
+    public record Scatter(Scaled counts, double spread, double damage, double range, boolean onHit, double effectiveness,
+                          java.util.Map<tw.exilecore.stats.DamageType, Double> convert) {
+        public Scatter {
+            convert = convert == null || convert.isEmpty() ? java.util.Map.of() : java.util.Map.copyOf(convert);
+        }
+
+        /** 這個技能等級射出幾支（1～12）。 */
+        public int count(final int level) {
+            return Math.max(1, Math.min(12, counts.intAt(level)));
+        }
     }
 
     /** 漩渦：留 duration 秒、每 interval 秒把 radius 內的敵人往中心拉 pull 格並造成這一下 damage% 的傷害。 */
@@ -79,8 +115,31 @@ public record SkillParams(double reach, double angle, int targets, double knockb
         }
     }
 
-    /** 餘震：delay 秒後在同一個地方再炸一次，半徑 × radius，更多 more% 傷害。 */
-    public record Aftershock(double delay, double radius, double more) {
+    /**
+     * 餘震：delay 秒後在同一個地方再炸一次，半徑 × radius，更多 more% 傷害。
+     * 2026-10-26：radius、more 可以寫逐級表（照 PoE2 地動：餘震半徑、傷害效益每一級不同）；
+     * 沒帶等級的 {@link #radius()}、{@link #more()} 是 20 級的值（說明、估算用）。
+     */
+    public record Aftershock(double delay, Scaled radiusByLevel, Scaled moreByLevel) {
+        public Aftershock(final double delay, final double radius, final double more) {
+            this(delay, Scaled.of(radius), Scaled.of(more));
+        }
+
+        public double radius() {
+            return radiusByLevel.last();
+        }
+
+        public double radius(final int level) {
+            return radiusByLevel.at(level);
+        }
+
+        public double more() {
+            return moreByLevel.last();
+        }
+
+        public double more(final int level) {
+            return moreByLevel.at(level);
+        }
     }
 
     /**
@@ -95,10 +154,33 @@ public record SkillParams(double reach, double angle, int targets, double knockb
      * 2026-10 詛咒：radius > 0 = 準心指的地方半徑 radius 格內的敵人全部套上（不用指著敵人）；
      * tags 不是空的 = 只有帶那些標籤的擊中才增加（fire：火焰技能…；好幾個就各一條）。
      */
-    public record Mark(double duration, double taken, boolean selfOnly, double radius, java.util.List<String> tags,
+    public record Mark(Scaled durationByLevel, double taken, boolean selfOnly, Scaled radiusByLevel, java.util.List<String> tags,
                        java.util.List<ScaledMod> effects, Scaled slow) {
+        public Mark(final double duration, final double taken, final boolean selfOnly, final double radius, final java.util.List<String> tags,
+                    final java.util.List<ScaledMod> effects, final Scaled slow) {
+            this(Scaled.of(duration), taken, selfOnly, Scaled.of(radius), tags, effects, slow);
+        }
+
         public Mark(final double duration, final double taken, final boolean selfOnly, final double radius, final java.util.List<String> tags) {
             this(duration, taken, selfOnly, radius, tags, java.util.List.of(), Scaled.parse("slow", null, 0));
+        }
+
+        /** 等級 1 的持續秒數（2026-10-26：詛咒照 PoE2 逐級，施放時用 {@link #duration(int)}）。 */
+        public double duration() {
+            return durationByLevel.first();
+        }
+
+        public double duration(final int level) {
+            return durationByLevel.at(level);
+        }
+
+        /** 等級 1 的範圍半徑（0 = 單體印記）。 */
+        public double radius() {
+            return radiusByLevel.first();
+        }
+
+        public double radius(final int level) {
+            return radiusByLevel.at(level);
         }
 
         public Mark(final double duration, final double taken, final boolean selfOnly) {
@@ -106,7 +188,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
         }
 
         public boolean curse() {
-            return radius > 0;
+            return radiusByLevel.first() > 0 || radiusByLevel.last() > 0;
         }
     }
 
@@ -176,9 +258,9 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 }
                 if (node.has("splash")) {
                     final YamlNode sub = node.node("splash");
-                    splash = new Splash((int) check(sub.path(), "targets", sub.integer("targets", 3), 1, 10),
+                    splash = new Splash(scaled(sub.path(), sub, "targets", 3, 1, 10),
                             check(sub.path(), "radius", sub.decimal("radius", 5), 1, 12),
-                            check(sub.path(), "damage", sub.decimal("damage", 50), 1, 100));
+                            scaled(sub.path(), sub, "damage", 50, 1, 100));
                 }
                 if (node.has("burst")) {
                     final YamlNode sub = node.node("burst");
@@ -195,10 +277,30 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 }
                 if (node.has("scatter")) {
                     final YamlNode sub = node.node("scatter");
-                    scatter = new Scatter((int) check(sub.path(), "count", sub.integer("count", 3), 1, 12),
+                    // 2026-10-26：count 可以隨等級、on_hit／effectiveness／convert（凝霜箭的冰片，照 PoE2）
+                    final java.util.Map<tw.exilecore.stats.DamageType, Double> convert = new java.util.EnumMap<>(tw.exilecore.stats.DamageType.class);
+                    if (sub.has("convert")) {
+                        final YamlNode weights = sub.node("convert");
+                        double total = 0;
+                        for (final String key : weights.keys()) {
+                            final tw.exilecore.stats.DamageType type = tw.exilecore.stats.DamageType.fromTag(key);
+                            if (type == null || type == tw.exilecore.stats.DamageType.PHYSICAL) {
+                                throw new IllegalArgumentException(sub.path() + ".convert：只能把物理轉成其他類型，卻是「" + key + "」");
+                            }
+                            final double value = check(sub.path() + ".convert", key, weights.decimal(key, 0), 0, 1);
+                            total += value;
+                            if (value > 0) {
+                                convert.put(type, value);
+                            }
+                        }
+                        check(sub.path(), "convert（總和）", total, 0, 1);
+                    }
+                    scatter = new Scatter(scaled(sub.path(), sub, "count", 3, 1, 12),
                             check(sub.path(), "spread", sub.decimal("spread", 360), 10, 360),
                             check(sub.path(), "damage", sub.decimal("damage", 60), 1, 100),
-                            check(sub.path(), "range", sub.decimal("range", 8), 1, 30));
+                            check(sub.path(), "range", sub.decimal("range", 8), 1, 30),
+                            sub.bool("on_hit", false),
+                            check(sub.path(), "effectiveness", sub.decimal("effectiveness", 0), 0, 10), convert);
                 }
                 if (node.has("ground")) {
                     ground = zone(node.node("ground"), false);
@@ -211,9 +313,10 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 }
                 if (node.has("aftershock")) {
                     final YamlNode sub = node.node("aftershock");
-                    aftershock = new Aftershock(check(sub.path(), "delay", sub.decimal("delay", 0.8), 0.2, 3),
-                            check(sub.path(), "radius", sub.decimal("radius", 1.5), 0.5, 3),
-                            check(sub.path(), "more", sub.decimal("more", 50), -90, 300));
+                    // 2026-10-26：delay 上限 3 → 4（PoE2 地動 4 秒後餘震）；radius、more 可以逐級
+                    aftershock = new Aftershock(check(sub.path(), "delay", sub.decimal("delay", 0.8), 0.2, 4),
+                            scaled(sub.path(), sub, "radius", 1.5, 0.5, 3),
+                            scaled(sub.path(), sub, "more", 50, -90, 1000));
                 }
             }
             case CONE -> {
@@ -223,8 +326,8 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                     // 2026-10：扇形也能有餘震——前方（扇形長度的 75% 處）過一下再砸一圈（崩土擊的第二下）；radius 是扇形長度的倍數
                     final YamlNode sub = node.node("aftershock");
                     aftershock = new Aftershock(check(sub.path(), "delay", sub.decimal("delay", 0.4), 0.1, 3),
-                            check(sub.path(), "radius", sub.decimal("radius", 0.4), 0.1, 3),
-                            check(sub.path(), "more", sub.decimal("more", 50), -90, 300));
+                            scaled(sub.path(), sub, "radius", 0.4, 0.1, 3),
+                            scaled(sub.path(), sub, "more", 50, -90, 300));
                 }
             }
             case LEAP -> {
@@ -266,13 +369,15 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                     }
                     markTags.add(t);
                 }
-                final double markRadius = check(where, "radius", node.decimal("radius", 0), 0, 10);
+                // 2026-10-26：詛咒的範圍、持續時間可以寫逐級表（PoE2：1.5→3.1→3.7 公尺、6→7.4→8.6 秒）
+                final Scaled markRadius = scaled(where, node, "radius", 0, 0, 10);
+                final Scaled markDuration = scaled(where, node, "duration", 6, 0.5, 30);
                 // 2026-10：effects 疊在敵人身上的修飾器（削弱：敵人造成的傷害更少…；value 可以隨等級）、slow 敵人移動慢幾 %
                 final java.util.List<ScaledMod> markEffects = ScaledMod.parseList(node, "effects");
                 final Scaled markSlow = scaled(where, node, "slow", 0, 0, 90);
-                mark = new Mark(check(where, "duration", node.decimal("duration", 6), 0.5, 30),
+                mark = new Mark(markDuration,
                         check(where, "taken", node.decimal("taken", markEffects.isEmpty() && markSlow.last() <= 0 ? 20 : 0), 0, 100),
-                        node.bool("self_only", markRadius <= 0), markRadius, java.util.List.copyOf(markTags), markEffects, markSlow);
+                        node.bool("self_only", markRadius.first() <= 0), markRadius, java.util.List.copyOf(markTags), markEffects, markSlow);
             }
             case CORPSE -> {
                 range = check(where, "range", node.decimal("range", 16), 2, 40);
@@ -318,7 +423,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
         return new Zone(check(where, "duration", node.decimal("duration", 3), 0.2, 30),
                 check(where, "interval", node.decimal("interval", 0.5), 0.1, 5),
                 scaled(where, node, "radius", shape.equals("line") ? 1.0 : 2.5, 0.3, 10),
-                check(where, "damage", node.decimal("damage", 30), 1, 200),
+                check(where, "damage", node.decimal("damage", 30), 1, 500), // 2026-10-26：上限 200 → 500（只上毒的毒霧照 PoE2 像打中一樣，是投射物的 2～4 倍）
                 shape, scaled(where, node, "length", 6, 1, 16),
                 check(where, "pull", node.decimal("pull", 0), 0, 1.5),
                 (int) check(where, "max", node.decimal("max", 0), 0, 10));

@@ -238,14 +238,16 @@ class MechanicsTest {
         assertFalse(config.skill("hunters_mark").dealsDamage());
         assertTrue(config.skill("hunters_mark").tags().contains(Tags.MARK));
         assertNotNull(config.skill("earthquake").params().aftershock());
-        assertNotNull(config.skill("killing_palm").params().execute());
+        assertNull(config.skill("killing_palm").params().execute(), "2026-10-26 照 PoE2：斷魂掌拿掉處決（原作只有撲殺）");
         assertNotNull(config.skill("lightning_arrow").params().splash());
         // 2026-10：裂空箭照 PoE2 改成落地捲起龍捲風（不再散射）
         assertNull(config.skill("tornado_shot").params().scatter());
         assertNotNull(config.tornado("tornado_shot"));
         assertEquals(1, config.tornado("tornado_shot").max());
         assertEquals(3, config.tornado("tornado_shot").copies());
-        assertNotNull(config.skill("rapid_fire").params().burst());
+        // 2026-10-26：連射照 PoE2 Rapid Shot 改成熱度（彈匣 26～65 發），不再是三連發
+        assertNull(config.skill("rapid_fire").params().burst());
+        assertEquals(26, config.clip("rapid_fire", 1));
         assertNotNull(config.skill("whirlwind_lance").params().vortex());
         assertTrue(config.skill("whirlwind_lance").tags().contains(Tags.DURATION));
         assertTrue(config.skill("explosive_grenade").params().fuse() > 0);
@@ -272,21 +274,23 @@ class MechanicsTest {
     void cooldownDurationForkReturnAndEchoComeFromSupports() {
         final StatSheet sheet = new StatSheet();
         final SkillBuild grenade = build("explosive_grenade", sheet);
-        assertEquals(30, grenade.cooldownTicks(), "1.5 秒");
+        assertEquals(100, grenade.cooldownTicks(), "2026-10-26 照 PoE2：5 秒（可以存 3 次）");
         assertEquals(1.0, grenade.durationScale(), 1e-9);
-        final SkillBuild quick = build("explosive_grenade", sheet, config.support("cooldown_recovery"));
-        assertEquals(21, quick.cooldownTicks(), "速冷：-30%");
+        // 2026-10-27 照站長只留最高階：速冷（Cooldown Recovery I）併入迅返（II），冷卻 -23%；這次之前速冷 -20% → 80
+        final SkillBuild quick = build("explosive_grenade", sheet, config.support("swift_cooldown"));
+        assertEquals(77, quick.cooldownTicks(), "迅返：冷卻回復（照 PoE2 Cooldown Recovery II，-23%）");
         final SkillBuild bursty = build("explosive_grenade", sheet, config.support("burst"));
-        assertEquals(39, bursty.cooldownTicks(), "爆發：+30%");
+        assertEquals(130, bursty.cooldownTicks(), "爆發：+30%");
         assertEquals(0, build("fireball", sheet).cooldownTicks(), "沒冷卻的技能是 0");
 
-        final SkillBuild gas = build("gas_grenade", sheet, config.support("increased_duration"));
-        assertEquals(1.45, gas.durationScale(), 1e-9);
-        assertEquals(145, gas.durationTicks(5), "5 秒 × 1.45");
-        assertFalse(config.support("increased_duration").supports(config.skill("fireball")), "熾星彈沒有持續時間");
-        assertTrue(config.support("increased_duration").supports(config.skill("whirlwind_lance")), "漩渦有");
-        assertFalse(config.support("cooldown_recovery").supports(config.skill("fireball")));
-        assertTrue(config.support("cooldown_recovery").supports(config.skill("blink")));
+        // 2026-10-27 照站長只留最高階：持久（Prolonged Duration I，更多 30%）併入長留（II，更多 35%）；這次之前 1.3／130
+        final SkillBuild gas = build("gas_grenade", sheet, config.support("prolonged_duration"));
+        assertEquals(1.35, gas.durationScale(), 1e-9, "照 PoE2 Prolonged Duration II：持續時間更多 35%");
+        assertEquals(135, gas.durationTicks(5), "5 秒 × 1.35");
+        assertFalse(config.support("prolonged_duration").supports(config.skill("fireball")), "熾星彈沒有持續時間");
+        assertTrue(config.support("prolonged_duration").supports(config.skill("whirlwind_lance")), "漩渦有");
+        assertFalse(config.support("swift_cooldown").supports(config.skill("fireball")));
+        assertTrue(config.support("swift_cooldown").supports(config.skill("blink")));
 
         final SkillBuild forked = build("lightning_arrow", sheet, config.support("fork"));
         assertEquals(1, forked.forks());
@@ -364,13 +368,13 @@ class MechanicsTest {
 
         final SkillDefinition bell = config.skill("tempest_bell");
         assertEquals(DeploySpec.Kind.BELL, bell.deploy().kind());
-        assertEquals(8, bell.deploy().rings());
+        assertEquals(10, bell.deploy().rings(), "2026-10-26 照 PoE2：鐘打 10 下才碎");
         assertTrue(bell.tags().contains(Tags.TOTEM), "鐘歸在圖騰那一類");
         assertTrue(bell.tags().contains(Tags.BELL));
         assertFalse(config.support("overabundance").supports(bell), "圖騰列陣對鐘沒用，掛不上");
         assertFalse(config.support("spell_echo").supports(config.skill("dark_idol")), "交給圖騰放的法術不迴響，掛不上");
         assertFalse(config.support("spell_echo").supports(bell));
-        assertEquals(6.0, bell.cooldown(), 1e-9);
+        assertEquals(0.5, bell.cooldown(), 1e-9, "2026-10-26 照 PoE2：冷卻 0.5 秒、要 4 點連擊（連擊接上了；這次之前用 3 秒當平衡等效）");
 
         assertNull(config.skill("fireball").deploy());
         assertEquals(Mechanic.CORPSE, config.skill("detonate_dead").mechanic());
@@ -417,9 +421,9 @@ class MechanicsTest {
         assertTrue(config.support("overabundance").supports(config.skill("shockwave_totem")));
         assertFalse(config.support("overabundance").supports(config.skill("fireball")), "熾星彈沒有 totem 標籤（掛了圖騰施法也一樣）");
         assertEquals(2, build("shockwave_totem", sheet, config.support("overabundance")).totems());
-        // 持久也讓圖騰撐久一點
-        assertTrue(config.support("increased_duration").supports(config.skill("shockwave_totem")));
-        assertEquals(232, build("shockwave_totem", sheet, config.support("increased_duration")).durationTicks(8), "8 秒 × 1.45 × 20 tick");
+        // 長留也讓圖騰撐久一點（2026-10-27 持久併入長留：這次之前 8 秒 × 1.3 = 208）
+        assertTrue(config.support("prolonged_duration").supports(config.skill("shockwave_totem")));
+        assertEquals(216, build("shockwave_totem", sheet, config.support("prolonged_duration")).durationTicks(8), "8 秒 × 1.35 × 20 tick（照 PoE2 Prolonged Duration II：更多 35%）");
     }
 
     @Test
@@ -462,7 +466,7 @@ class MechanicsTest {
         assertEquals(0, flicker.cooldown(), 1e-9);
         assertNull(flicker.cooldownBypass(), "沒有冷卻就沒有冷卻中消耗銳星");
         assertEquals(12, flicker.params().range(), 1e-9);
-        assertEquals(2, flicker.params().targets());
+        assertEquals(1, flicker.params().targets()); // 2026-10-26 照 PoE2：單體打擊（以前連旁邊一個一起打，2）
         assertFalse(flicker.usableWith(Set.of()), "要長棍，徒手不行");
         assertTrue(flicker.usableWith(Set.of(Tags.QUARTERSTAFF, Tags.MELEE)));
         assertFalse(flicker.usableWith(Set.of(Tags.SWORD, Tags.MELEE)));
@@ -472,7 +476,7 @@ class MechanicsTest {
         assertEquals(0, quick.cooldownTicks(), "沒有冷卻");
         assertNull(quick.deploy(), "攻擊不會變成圖騰或陷阱");
         assertFalse(quick.echo());
-        assertTrue(config.support("charge_frenzy").supports(flicker), "怒星輔助掛得上");
+        assertTrue(config.support("charge_endurance").supports(flicker), "戰星輔助掛得上");
         assertTrue(config.support("rage").supports(flicker), "怒火掛得上（近戰）");
         assertFalse(config.support("spell_echo").supports(flicker));
         assertNull(config.skill("leap_slam").cooldownBypass(), "其他技能沒有");

@@ -114,7 +114,11 @@ final class MapSpawner {
             // 精英巢穴：兩隻（30% 三隻）稀有怪，沒有小怪
             final int count = 2 + (random.nextDouble() < 0.3 ? 1 : 0);
             for (int i = 0; i < count; i++) {
-                final List<String> rareMods = plugin.events() == null ? null : plugin.events().rareMods(instance.level(), random);
+                List<String> rareMods = plugin.events() == null ? null : plugin.events().rareMods(instance.level(), random);
+            final double modChance = instance.stats().extra("map.rare_mod_chance");
+            if (rareMods == null && modChance > 0) {
+                rareMods = plugin.monsters().rollModsBoosted(MonsterRarity.RARE, instance.level(), modChance / 100.0); // 2026-10-26（PoE2）
+            }
                 add(pack, spawn(instance, entry, around(instance, spot, i == 0, random), MonsterRarity.RARE, rareMods));
             }
             return;
@@ -141,7 +145,11 @@ final class MapSpawner {
             }
         } else {
             // 每月活動的主題：稀有怪一定帶那一條詞綴（沒有活動照一般抽）
-            final List<String> rareMods = plugin.events() == null ? null : plugin.events().rareMods(instance.level(), random);
+            List<String> rareMods = plugin.events() == null ? null : plugin.events().rareMods(instance.level(), random);
+            final double modChance = instance.stats().extra("map.rare_mod_chance");
+            if (rareMods == null && modChance > 0) {
+                rareMods = plugin.monsters().rollModsBoosted(MonsterRarity.RARE, instance.level(), modChance / 100.0); // 2026-10-26（PoE2）
+            }
             add(pack, spawn(instance, entry, around(instance, spot, true, random), MonsterRarity.RARE, rareMods));
             // 2026-10-21 修正：無人之地「只有稀有怪與 Boss」：稀有怪不帶普通怪小弟
             final int minions = rareOnly ? 0 : size(settings.rare(), sizeFactor, random);

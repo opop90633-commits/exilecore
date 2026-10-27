@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * 技能面板（/skills）。2026-10 重新排過（拿掉 F 鍵切換的 B 組，改成數字鍵 3–8；技能三頁）：
  * <pre>
- * 第 2 排：滑鼠的 4 個按鍵格（左、右、潛行＋左、潛行＋右）；右邊是「選起來的技能」、⬆ 升一級、取出成寶石
+ * 第 2 排：滑鼠的 4 個按鍵格（左、右、潛行＋左、潛行＋右）；右邊是「選起來的技能」、⬆ 升級、取出成寶石
  * 第 3 排：數字鍵 3–8 的 6 個按鍵格；最右邊換頁
  * 第 4 排：沒套用資源包時指著技能的玻璃片
  * 第 5 排：技能（這一頁的 9 個，一共三頁 27 個）
@@ -33,7 +33,7 @@ import java.util.List;
  *   <li>光環、精魂召喚要綁在上方按鍵格才開著（常駐，不用按）。</li>
  *   <li>寶石（PoE2）：從背包拿起寶石（拖過來），能放的空格變成綠色、能放的技能亮起來、放不下的變暗，
  *       點那一格放下：技能寶石放進技能格、輔助寶石掛到技能或輔助孔、
- *       未切割技能寶石點技能升一級、鑿星石點技能開孔；Shift＋點技能取出成寶石，點掛著的輔助拿下來</li>
+ *       未切割技能寶石點技能升到它的等級（2026-10-27 照 PoE2）、鑿星石點技能開孔；Shift＋點技能取出成寶石，點掛著的輔助拿下來</li>
  *   <li>亮起來：套用介面資源包的人看到外框（選到的金色、可以放的綠色，{@link Menu#highlight}）；
  *       沒套用的人在技能上面那一排看到綠色玻璃片指著（選起來的、可以放的），先點的按鍵格變成綠色玻璃片</li>
  * </ul>
@@ -47,7 +47,7 @@ public final class SkillMenu extends Menu {
     /** 最上面一排中間：技能按鍵存檔（月卡）。 */
     private static final int SLOT_PRESETS = 4;
     private static final int SLOT_NUMBER_LABEL = 18;
-    /** 右邊：選起來的技能、升一級、取出成寶石。 */
+    /** 右邊：選起來的技能、升級、取出成寶石。 */
     private static final int SLOT_SELECTED = 15;
     private static final int SLOT_LEVEL_UP = 16;
     private static final int SLOT_TAKE_OUT = 17;
@@ -125,12 +125,12 @@ public final class SkillMenu extends Menu {
                 "右上角換頁：技能一共三頁、27 個",
                 "",
                 "<#e0c080>升級",
-                "選起來之後點「⬆ 升一級」：自動用背包或通貨袋裡夠用、等級最低的未切割技能寶石",
+                "選起來之後點「⬆ 升級」：用一顆未切割技能寶石直接升到它的等級（自動挑你用得了的最高等級那顆）",
                 "",
                 "<#e0c080>放寶石（把寶石拖過來）",
                 "在背包點一下寶石拿起來：能放的空格變綠、能放的技能亮起來，放不下的變暗；再點那一格",
                 "技能寶石 → 技能格　輔助寶石 → 技能或輔助孔",
-                "未切割技能寶石 → 技能（升一級）　鑿星石 → 技能（開孔）",
+                "未切割技能寶石 → 技能（升到它的等級）　鑿星石 → 技能（開孔）",
                 "背包裡的寶石 Shift＋點一下：直接放進面板",
                 "點掛著的輔助：拿下來；專屬掉落的輔助一個技能只能掛一顆",
                 "",
@@ -189,7 +189,7 @@ public final class SkillMenu extends Menu {
         drawSockets(loadout, holding, cursor);
     }
 
-    /** 右邊的「選起來的技能」、⬆ 升一級、取出成寶石。 */
+    /** 右邊的「選起來的技能」、⬆ 升級、取出成寶石。 */
     private void drawSelected(final PlayerState state, final SkillLoadout loadout) {
         final SkillLoadout.Entry entry = selected >= 0 ? loadout.skill(selected) : null;
         final SkillDefinition definition = entry == null ? null : service.config().skill(entry.skillId());
@@ -197,7 +197,7 @@ public final class SkillMenu extends Menu {
             // skills.yml 裡沒有了（被刪掉或改名）：只能取出成寶石
             set(SLOT_SELECTED, highlight(icon(Material.BARRIER, "<red>不認得的技能：" + ItemRenderer.escape(entry.skillId()),
                     "<gray>skills.yml 裡沒有這個技能（被刪掉或改名了）", "", "<yellow>點一下：取消選取")));
-            set(SLOT_LEVEL_UP, icon(Material.GRAY_DYE, "<gray>⬆ 升一級", "<red>不認得的技能不能升級"));
+            set(SLOT_LEVEL_UP, icon(Material.GRAY_DYE, "<gray>⬆ 升級", "<red>不認得的技能不能升級"));
             set(SLOT_TAKE_OUT, icon(Material.HEART_OF_THE_SEA, "<white>取出成技能寶石", "<gray>放進背包", "", "<yellow>左鍵：取出"));
             return;
         }
@@ -205,7 +205,7 @@ public final class SkillMenu extends Menu {
             set(SLOT_SELECTED, icon(Material.GRAY_DYE, pendingKey >= 0 ? "<green>點下面一個技能綁到 " + keyName(pendingKey) : "<gray>還沒選技能",
                     "<gray>點下面的技能選起來：", "<gray>看它的輔助孔、綁按鍵、升級、取出",
                     "<dark_gray>技能 " + loadout.size() + "／" + SkillLoadout.MAX_SKILLS + "（未切割技能寶石右鍵可以雕出新技能）"));
-            set(SLOT_LEVEL_UP, icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>⬆ 升一級", "<gray>先選一個技能"));
+            set(SLOT_LEVEL_UP, icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>⬆ 升級", "<gray>先選一個技能"));
             set(SLOT_TAKE_OUT, icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>取出成寶石", "<gray>先選一個技能"));
             return;
         }
@@ -214,6 +214,7 @@ public final class SkillMenu extends Menu {
         lore.add("<gray>輔助孔 <white>" + entry.sockets() + "</white>／" + SkillLoadout.MAX_SOCKETS + "：" + supportSummary(entry));
         final List<String> bound = boundKeys(loadout, selected);
         lore.add(bound.isEmpty() ? "<dark_gray>還沒綁在任何按鍵上" : "<gray>綁在：<white>" + String.join("、", bound));
+        lore.addAll(grantedLines(loadout, entry));
         // 2026-10：裝備有吃得到這個技能的詞綴：標出來，Shift＋右鍵看是哪幾件、哪幾條
         final int gear = service.gearBonusCount(player, definition, entry);
         if (gear > 0) {
@@ -224,22 +225,40 @@ public final class SkillMenu extends Menu {
         lore.add("<yellow>Shift＋右鍵：看裝備對這個技能的加成");
         set(SLOT_SELECTED, highlight(SkillArt.decorate(icon(material(definition.icon(), Material.BOOK),
                 "<green>選取中：<#e0c080>" + ItemRenderer.escape(definition.name()) + " <gray>Lv." + entry.level() + SkillService.qualityTag(entry), lore), definition)));
-        // 升一級：自動挑背包、通貨袋或倉庫裡夠用、等級最低的那顆
-        final String problem = gems.levelUpProblem(state, entry, SkillLoadout.GEM_CAP);
+        // 升級（2026-10-27 照 PoE2：直接升到未切割寶石的等級）：自動挑背包、通貨袋或倉庫裡角色用得了的最高等級那顆
+        final String problem = gems.levelUpProblem(state, entry, Math.min(SkillLoadout.GEM_CAP, entry.level() + 1));
         final GemService.UncutSource source = problem == null ? gems.bestForLevelUp(player, entry) : null;
         if (problem != null) {
-            set(SLOT_LEVEL_UP, icon(Material.GRAY_DYE, "<gray>⬆ 升一級", "<red>" + ItemRenderer.escape(problem)));
+            set(SLOT_LEVEL_UP, icon(Material.GRAY_DYE, "<gray>⬆ 升級", "<red>" + ItemRenderer.escape(problem)));
         } else if (source == null) {
-            set(SLOT_LEVEL_UP, icon(Material.GRAY_DYE, "<gray>⬆ 升到 Lv." + (entry.level() + 1),
-                    "<red>沒有夠用的未切割技能寶石", "<gray>要 Lv." + (entry.level() + 1) + " 以上的（背包、通貨袋或倉庫裡）"));
+            set(SLOT_LEVEL_UP, icon(Material.GRAY_DYE, "<gray>⬆ 升級",
+                    "<red>沒有用得了的未切割技能寶石", "<gray>要 Lv." + (entry.level() + 1) + " 以上、角色等級夠的（背包、通貨袋或倉庫裡）"));
         } else {
-            set(SLOT_LEVEL_UP, targetHighlight(icon(Material.EXPERIENCE_BOTTLE, "<green>⬆ 升到 Lv." + (entry.level() + 1),
+            final int target = gems.uncutLevel(player, source);
+            set(SLOT_LEVEL_UP, targetHighlight(icon(Material.EXPERIENCE_BOTTLE, "<green>⬆ 升到 Lv." + target,
                     "<gray>用掉一顆：<white>" + ItemRenderer.escape(gems.describe(player, source)),
-                    "<dark_gray>（自動挑夠用、等級最低的那顆）", "", "<yellow>左鍵：升一級")));
+                    "<dark_gray>（直接升到未切割寶石的等級；自動挑你用得了的最高等級那顆）", "", "<yellow>左鍵：升到 Lv." + target)));
+        }
+        if (entry.granted()) { // 2026-10-26：武器賦予的技能不是寶石
+            set(SLOT_TAKE_OUT, icon(Material.HEART_OF_THE_SEA, "<white>從面板拿掉",
+                    "<gray>武器賦予的技能不是寶石：拿掉後掛著的輔助寶石放進背包", "<gray>（拿著那把武器時會再放回面板）", "", "<yellow>左鍵：拿掉",
+                    "<dark_gray>也可以 Shift＋點技能"));
+            return;
         }
         set(SLOT_TAKE_OUT, icon(Material.HEART_OF_THE_SEA, "<white>取出成技能寶石",
                 "<gray>帶著等級、輔助孔與掛著的輔助寶石放進背包", "<gray>（綁的按鍵改回普攻）", "", "<yellow>左鍵：取出",
                 "<dark_gray>也可以 Shift＋點技能"));
+    }
+
+    /** 2026-10-26：武器賦予的技能的說明（不是賦予的回傳空的）。 */
+    private static List<String> grantedLines(final SkillLoadout loadout, final SkillLoadout.Entry entry) {
+        if (!entry.granted()) {
+            return List.of();
+        }
+        if (loadout.dormant(entry)) {
+            return List.of("<#b4a0ff>⚔ 武器賦予的技能", "<red>沒拿著賦予這個技能的武器：不能用（輔助、按鍵都留著）");
+        }
+        return List.of("<#b4a0ff>⚔ 武器賦予的技能：等級照武器的物品等級", "<dark_gray>不是寶石：不能升級、取出、腐化、加品質；可以掛輔助、開孔");
     }
 
     private String keyName(final int bindSlot) {
@@ -363,6 +382,7 @@ public final class SkillMenu extends Menu {
         lore.add("<gray>輔助孔 <white>" + entry.sockets() + "</white>／" + SkillLoadout.MAX_SOCKETS + "：" + supportSummary(entry));
         final List<String> bound = boundKeys(loadout, position);
         lore.add(bound.isEmpty() ? "<dark_gray>還沒綁在任何按鍵上" : "<gray>綁在：<white>" + String.join("、", bound));
+        lore.addAll(grantedLines(loadout, entry));
         boolean chosen = false; // 選起來的：金色外框
         boolean target = false; // 拿著的東西放這裡最好：綠色外框
         boolean glow = false; // 只發光：可以放但會換下原本的、等著綁按鍵時每個技能都可以點
@@ -385,15 +405,17 @@ public final class SkillMenu extends Menu {
             lore.add(chosen ? "<green>已選取：點上面的按鍵格綁上去，最下面一排是它的輔助孔"
                     : "<yellow>點一下：選取（看輔助孔、綁按鍵、升級）");
             lore.add("<yellow>數字鍵 " + flaskKey(0) + "：綁左鍵　" + flaskKey(1) + "：綁右鍵　" + layout().skillKeysText() + "：綁那個數字鍵");
-            lore.add("<yellow>Shift＋點一下：取出成技能寶石");
+            lore.add(entry.granted() ? "<yellow>Shift＋點一下：拿掉（輔助寶石還給你）" : "<yellow>Shift＋點一下：取出成技能寶石");
             if (chosen) {
                 rail = rail(Material.LIME_STAINED_GLASS_PANE, "<green>▼ 選取中：" + name, "<gray>最下面一排是它的輔助孔");
             }
         }
         final boolean auraOn = definition.mechanic() == Mechanic.AURA && service.auraActive(player, definition.id());
+        final boolean dormant = loadout.dormant(entry);
         final ItemStack stack = SkillArt.decorate(icon(material(definition.icon(), Material.BOOK),
-                (chosen || target ? "<green>▶ " : "") + (auraOn ? "<#8fd3ff>✦ " : "") + "<#e0c080>" + name + " <gray>Lv." + entry.level() + SkillService.qualityTag(entry)
-                        + (auraOn ? " <#8fd3ff>開啟中" : ""), lore), definition);
+                (chosen || target ? "<green>▶ " : "") + (auraOn ? "<#8fd3ff>✦ " : "") + (dormant ? "<dark_gray>" : "<#e0c080>") + name
+                        + " <gray>Lv." + entry.level() + SkillService.qualityTag(entry)
+                        + (entry.granted() ? " <#b4a0ff>⚔賦予" : "") + (auraOn ? " <#8fd3ff>開啟中" : ""), lore), definition);
         final boolean framed = (chosen || target) && frames(stack);
         // 開著的光環一直發光，一眼看得出來
         final ItemStack drawn = chosen ? highlight(stack) : target ? targetHighlight(stack) : glow || auraOn ? glowing(stack) : stack;
@@ -481,11 +503,13 @@ public final class SkillMenu extends Menu {
             final String id = entry.support(i);
             if (host && i == SkillLoadout.Entry.INNER_SOCKET) {
                 names.add(entry.inner() == null ? "<dark_gray>（放技能）</dark_gray>" : "<#ffd27f>" + ItemRenderer.escape(skillNameOf(entry.inner())) + "</#ffd27f>");
+            } else if (entry.spellSocket(i)) { // 2026-10-26：宿主寶石其他孔的技能寶石
+                names.add("<#ffd27f>" + ItemRenderer.escape(skillNameOf(entry.spellAt(i))) + "</#ffd27f>");
             } else if (id.isEmpty()) {
                 names.add("<dark_gray>空</dark_gray>");
             } else {
                 final SupportDefinition support = service.config().support(id);
-                names.add("<#8fd3ff>" + ItemRenderer.escape(support == null ? id : support.name()) + "</#8fd3ff>"
+                names.add(GemAttributes.supportTag(id) + ItemRenderer.escape(support == null ? id : support.name()) // 2026-10-26：照顏色
                         + (entry.resonant(i) ? "<#c48bff>（共鳴）</#c48bff>" : "")); // 2026-10-18
             }
         }
@@ -508,7 +532,7 @@ public final class SkillMenu extends Menu {
         }
         final int insideOf = loadout.findInner(entry.skillId()); // 2026-10-22
         if (insideOf >= 0) {
-            return definition.name() + "已經放在" + skillNameOf(loadout.skill(insideOf)) + "的第 1 孔裡了";
+            return definition.name() + "已經放在" + skillNameOf(loadout.skill(insideOf)) + "的孔裡了";
         }
         final int sibling = service.config().familyConflict(loadout, entry.skillId(), target);
         if (sibling >= 0) {
@@ -586,33 +610,51 @@ public final class SkillMenu extends Menu {
         final CurrencyType orb = holding == Holding.SOCKET_ORB || holding == Holding.RESONANCE_ORB
                 ? plugin.currencies().read(cursor).orElse(null) : null;
         final boolean host = SupportDefinition.hostsSkill(definition); // 2026-10-22：第 1 孔放技能寶石
+        final boolean multi = gems.multiSpell(definition); // 2026-10-26 照 PoE2：主要寶石每一孔都能放法術（2026-10-27 含星咒圖騰、英靈圖騰）
+        // 2026-10-27 照 PoE2 Ferocious Roar：裂甲熊咆的第 1 孔放著戰吼、或拿著技能寶石而第 1 孔空著時，當成放技能的孔
+        final boolean warcryHost = SocketedWarcry.hosts(definition);
         for (int i = 0; i < SkillLoadout.MAX_SOCKETS; i++) {
-            set(SUPPORT_START + i, host && i == SkillLoadout.Entry.INNER_SOCKET
-                    ? innerSocketIcon(entry, definition, holding, holding == Holding.SKILL_GEM ? gems.read(cursor).orElse(null) : null)
+            final boolean spellHere = host && (i == SkillLoadout.Entry.INNER_SOCKET || entry.spellSocket(i)
+                    || multi && holding == Holding.SKILL_GEM && i < entry.sockets() && entry.support(i).isEmpty())
+                    || warcryHost && i == SkillLoadout.Entry.INNER_SOCKET && (entry.inner() != null
+                    || holding == Holding.SKILL_GEM && entry.support(i).isEmpty());
+            set(SUPPORT_START + i, spellHere
+                    ? innerSocketIcon(entry, definition, holding, holding == Holding.SKILL_GEM ? gems.read(cursor).orElse(null) : null, i)
                     : socketIcon(entry, definition, i, holding, held, heldResonant, problem, orb));
         }
     }
 
-    /** 2026-10-22：宿主寶石（英靈圖騰、星咒圖騰、暴擊引星）的第 1 孔：放技能寶石。 */
-    private ItemStack innerSocketIcon(final SkillLoadout.Entry entry, final SkillDefinition definition, final Holding holding, final GemData heldGem) {
+    /** 2026-10-27：是不是星咒圖騰這類（圖騰輪流放插槽法術）。 */
+    private boolean isSpellTotem(final SkillDefinition definition) {
+        final MetaSpec spec = definition == null ? null : service.config().meta(definition.id());
+        return spec != null && spec.totem();
+    }
+
+    /** 2026-10-22：宿主寶石（英靈圖騰、星咒圖騰、引星）放技能寶石的孔（2026-10-26 起每一孔都能放）。 */
+    private ItemStack innerSocketIcon(final SkillLoadout.Entry entry, final SkillDefinition definition, final Holding holding, final GemData heldGem,
+                                      final int index) {
         final boolean linked = SkillExecutor.hasFlag(definition, tw.exilecore.stats.StatKeys.FLAG_TOTEM_LINKED);
-        final String wants = linked ? "錘子的攻擊技能" : "法術";
-        final SkillLoadout.Entry inner = entry.inner();
+        final String wants = linked ? "錘子的攻擊技能" : SocketedWarcry.hosts(definition) ? "人形戰吼" : "法術"; // 2026-10-27：裂甲熊咆
+        final SkillLoadout.Entry inner = entry.spellAt(index); // 2026-10-26：其他孔也可能放著技能寶石
+        final String socketName = "第 " + (index + 1) + " 孔";
         if (holding == Holding.SKILL_GEM && heldGem != null && heldGem.entry() != null) {
             final SkillDefinition held = service.config().skill(heldGem.entry().skillId());
             final String why = held == null ? "不認得的技能" : gems.innerProblem(definition, held);
             if (why == null) {
-                return targetHighlight(icon(Material.LIME_STAINED_GLASS_PANE, "<green>▶ 第 1 孔：放技能寶石",
+                return targetHighlight(icon(Material.LIME_STAINED_GLASS_PANE, "<green>▶ " + socketName + "：放技能寶石",
                         "<green>放這裡：" + ItemRenderer.escape(definition.name()) + "改用" + ItemRenderer.escape(held.name())
                                 + (inner == null ? "" : "（" + ItemRenderer.escape(skillNameOf(inner)) + "拿出來）"),
-                        "<gray>寶石自己掛的輔助會拆下來放進背包；第 2～5 孔的輔助套在它身上"));
+                        "<gray>寶石自己掛的輔助會拆下來放進背包；其他孔的輔助套在它身上"));
             }
-            return icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>第 1 孔：放技能寶石",
+            return icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>" + socketName + "：放技能寶石",
                     "<red>" + ItemRenderer.escape(held == null ? why : held.name() + "不能放進來（" + why + "）"), "<dark_gray>（放下手上的東西就恢復）");
         }
         if (inner == null) {
-            return uiIcon("slot_support", Material.WHITE_STAINED_GLASS_PANE, "<gray>第 1 孔：放技能寶石",
-                    "<gray>拿" + wants + "的技能寶石點這裡放進去", "<gray>" + ItemRenderer.escape(definition.name()) + "會用它；第 2～5 孔的輔助都套在它身上",
+            return uiIcon("slot_support", Material.WHITE_STAINED_GLASS_PANE, "<gray>" + socketName + "：放技能寶石",
+                    "<gray>拿" + wants + "的技能寶石點這裡放進去", "<gray>" + ItemRenderer.escape(definition.name()) + "會用它；其他孔的輔助都套在它身上"
+                            + (SocketedWarcry.hosts(definition) ? "（不放就是熊咆自己的效果）" // 2026-10-27 照 PoE2 Ferocious Roar
+                                    : !gems.multiSpell(definition) ? "" : linked ? "（其他孔也能放：英靈照孔的順序輪流用）" // 2026-10-27
+                                    : isSpellTotem(definition) ? "（其他孔也能放：圖騰照孔的順序輪流放）" : "（其他孔也能放：全部一起觸發）"),
                     holding == Holding.SUPPORT_GEM ? "<red>這一孔不放輔助寶石" : "");
         }
         final SkillDefinition innerDefinition = service.config().skill(inner.skillId());
@@ -640,8 +682,8 @@ public final class SkillMenu extends Menu {
                 lore.add("<red>" + ItemRenderer.escape(definition.name()) + "不能用它（" + ItemRenderer.escape(why) + "）");
             }
         }
-        lore.add("<gray>第 2～5 孔的輔助都套在它身上");
-        final List<String> info = service.innerLines(player, definition, entry); // 2026-10-23：放進去的技能實際的數值
+        lore.add("<gray>其他孔的輔助都套在它身上");
+        final List<String> info = service.innerLines(player, definition, entry, index); // 2026-10-23：放進去的技能實際的數值
         if (!info.isEmpty()) {
             lore.add("");
             lore.addAll(info);
@@ -711,7 +753,8 @@ public final class SkillMenu extends Menu {
         }
         if (resonanceInHand) {
             // 2026-10-18：拿著共鳴石：掛著沒共鳴的專屬輔助的孔亮起來，其他變暗
-            final String why = support.cuttable() ? "只能用在專屬掉落的輔助寶石上" : entry.resonant(index) ? "已經共鳴了" : null;
+            // 2026-10-27：血脈輔助不能共鳴（GemService.resonate 會拒絕），也不亮；這次之前亮起來點了才說不行
+            final String why = support.resonanceRefusal(entry.resonant(index));
             return why == null
                     ? targetHighlight(icon(Material.LIME_STAINED_GLASS_PANE, "<green>▶ " + ItemRenderer.escape(support.name()),
                             "<green>放這裡：用" + ItemRenderer.escape(orb.name()) + "讓它共鳴（不佔專屬輔助名額）"))
@@ -762,8 +805,10 @@ public final class SkillMenu extends Menu {
         }
         lore.add("");
         lore.add(supportInHand ? "<yellow>放這裡：換成" + ItemRenderer.escape(held.name()) + "（這個拿下來）" : "<yellow>點一下：拿下來");
+        lore.add(0, GemAttributes.supportLine(support.id())); // 2026-10-26 照 PoE2：輔助寶石的顏色（紅力量、綠敏捷、藍智慧）
         final ItemStack stack = SkillArt.decorateSupport(icon(material(support.icon(), Material.GHAST_TEAR),
-                "<#8fd3ff>" + ItemRenderer.escape(support.name()) + (resonant ? "<#c48bff>（共鳴）" : ""), lore), support.id());
+                GemAttributes.supportTag(support.id()) + ItemRenderer.escape(support.name()) + " " + GemAttributes.supportBadge(support.id())
+                        + (resonant ? "<#c48bff>（共鳴）" : ""), lore), support.id());
         return supportInHand ? glowing(stack) : stack; // 可以換：只發光（外框留給空的孔）
     }
 
@@ -929,7 +974,7 @@ public final class SkillMenu extends Menu {
             if (selected >= 0) {
                 final SkillLoadout.Entry host = loadout.skill(selected);
                 final boolean innerSocket = host != null && slot - SUPPORT_START == SkillLoadout.Entry.INNER_SOCKET
-                        && SupportDefinition.hostsSkill(service.config().skill(host.skillId())); // 2026-10-22：宿主寶石的第 1 孔
+                        && (SupportDefinition.hostsSkill(service.config().skill(host.skillId())) || host.inner() != null); // 2026-10-22：宿主寶石的第 1 孔；2026-10-27：裂甲熊咆放著戰吼
                 final GemService.Change change = innerSocket ? gems.takeInner(player, selected) : gems.unsocket(player, selected, slot - SUPPORT_START);
                 if (!change.failed()) {
                     event.getView().setCursor(change.returned());
@@ -1002,8 +1047,8 @@ public final class SkillMenu extends Menu {
         }
         final GemService.Change change = switch (gem.kind()) {
             case SKILL -> skillSlot ? gems.place(player, position, gem)
-                    : position >= 0 && slot - SUPPORT_START == SkillLoadout.Entry.INNER_SOCKET ? gems.placeInner(player, position, gem) // 2026-10-22
-                    : GemService.Change.fail("技能寶石要點技能格，或英靈圖騰、星咒圖騰、暴擊引星的第 1 孔");
+                    : position >= 0 ? gems.placeSpell(player, position, slot - SUPPORT_START, gem) // 2026-10-22；2026-10-26：主要寶石每一孔都能放
+                    : GemService.Change.fail("技能寶石要點技能格，或英靈圖騰、星咒圖騰、引星這類主要寶石的孔");
             case SUPPORT -> position < 0 ? GemService.Change.fail("先點一個技能")
                     : gems.socket(player, position, socketSlot ? slot - SUPPORT_START : -1, gem.id(), gem.resonant()); // 2026-10-18：帶共鳴
             case UNCUT_SKILL -> position < 0 || !skillSlot ? GemService.Change.fail("拿未切割技能寶石點技能來升級")
@@ -1071,7 +1116,7 @@ public final class SkillMenu extends Menu {
         changed();
     }
 
-    /** ⬆ 升一級：用背包或通貨袋裡夠用、等級最低的未切割技能寶石。 */
+    /** ⬆ 升級（2026-10-27 照 PoE2：直接升到未切割寶石的等級）：用背包、通貨袋或倉庫裡角色用得了的最高等級那顆。 */
     private void levelUpSelected(final SkillLoadout loadout, final ClickType click) {
         final SkillLoadout.Entry entry = selected >= 0 ? loadout.skill(selected) : null;
         if (entry == null || service.config().skill(entry.skillId()) == null || !acceptAction(click)) {
@@ -1127,6 +1172,7 @@ public final class SkillMenu extends Menu {
 
     private void changed() {
         changed = true;
+        plugin.players().markDirty(player); // 2026-10-26：輔助寶石會改技能寶石的屬性需求（GemAttributes），馬上重算
         GemService.sound(player, true);
         redraw();
     }

@@ -71,6 +71,8 @@ public final class LootFilterMenu extends Menu {
     private static final int SLOT_TIME_LOST_KINDS = slot(3, 5);
     /** 只撿的基底（2026-10）。 */
     private static final int SLOT_KEEP_BASES = slot(4, 1);
+    /** 只撿的基底也要符合好詞綴門檻（2026-10-26：兩條一起算）。 */
+    private static final int SLOT_KEEP_BASES_AFFIX = slot(4, 2);
     // ---- 寶石與藥劑 ----
     private static final int SLOT_SKILL_GEMS = slot(1, 1);
     private static final int SLOT_SKILL_GEM_LEVEL = slot(1, 2);
@@ -188,6 +190,9 @@ public final class LootFilterMenu extends Menu {
                 lore.add("<dark_gray>　　好詞綴也只撿跟你同類的武器、同系的防具");
             }
         }
+        if (filter.keepBasesNeedAffixActive()) {
+            lore.add("<dark_gray>　　只撿的基底也要有 T" + filter.rules().keepAffixTier() + " 以上詞綴才撿");
+        }
         set(slot(ROW_SUMMARY, 0), icon(Material.WRITABLE_BOOK, "<#f5b942>【目前的設定】", lore));
         set(slot(ROW_SUMMARY, 1), icon(Material.PAPER, "<white>目前：" + ItemRenderer.escape(presetName),
                 summary.isEmpty() ? "<green>什麼都撿" : "<gray>隱藏 " + summary.size() + " 類（滑鼠移到左邊的書看全部）"));
@@ -224,6 +229,9 @@ public final class LootFilterMenu extends Menu {
         }
         if (!filter.keepBases().isEmpty()) {
             lines.add("只撿 " + filter.keepBases().size() + " 種基底：有挑的那幾類裡，其他基底的普通、魔法、稀有裝備"); // 2026-10：以前總覽沒列
+            if (filter.keepBasesNeedAffixActive()) {
+                lines.add("只撿的基底裡沒有 T" + filter.rules().keepAffixTier() + " 以上詞綴的普通、魔法、稀有裝備"); // 2026-10-26
+            }
         }
         if (filter.hidesCharms()) {
             lines.add("護符");
@@ -375,6 +383,8 @@ public final class LootFilterMenu extends Menu {
         set(SLOT_KEEP_AFFIX_TIER, option(Material.ENCHANTED_BOOK, "保留好詞綴的裝備", keep == 0 ? "關" : "有 T" + keep + " 以上就撿", keep > 0,
                 List.of("<gray>裝備身上只要有一條詞綴是 T1～T" + (keep == 0 ? "幾" : keep) + "（T1 最好），",
                         "<gray>被<white>稀有度</white><gray>藏起來的照樣撿（等級差、不同類、不在只撿的基底裡的不救）",
+                        filter.keepBasesNeedAffix() ? "<#f5b942>「只撿的基底也要好詞綴」開著：有挑基底的那幾類，清單內的也要有這個門檻的詞綴才撿"
+                                : "<dark_gray>想要「只撿這幾種基底、而且要有好詞綴」：開下面「只撿的基底也要好詞綴」",
                         "<dark_gray>未鑑定的也算；珠寶也算（被珠寶的稀有度藏起來的照樣撿）；地圖、遺時星晶不管",
                         "<dark_gray>只有一兩階的詞綴（例如 +1 技能等級）不算",
                         keep == 0 ? "<dark_gray>例：開 T2、隱藏魔法裝備 → 有 T1、T2 詞綴的魔法裝備還是會撿" : ""),
@@ -423,6 +433,11 @@ public final class LootFilterMenu extends Menu {
         keptLore.add("<gray>要撿哪幾種稀有度照第一排（三格都開＝三種都撿）");
         keptLore.add("<dark_gray>例：只挑了兩種弓 → 其他武器不撿，防具、飾品照常");
         keptLore.add("<dark_gray>有挑的類別裡不在清單的一律不撿（好詞綴也不救）；等級差、同類同系照樣看");
+        if (filter.keepBasesNeedAffixActive()) {
+            keptLore.add("<#f5b942>右邊「也要好詞綴」開著：清單內的還要有 T" + filter.rules().keepAffixTier() + " 以上詞綴才撿（不看稀有度）");
+        } else {
+            keptLore.add("<dark_gray>想要清單內的也要有好詞綴才撿：開右邊「只撿的基底也要好詞綴」");
+        }
         keptLore.add("<dark_gray>傳奇、珠寶、地圖不受影響；全部拿掉就恢復原本的規則");
         keptLore.add("");
         int listed = 0;
@@ -442,6 +457,17 @@ public final class LootFilterMenu extends Menu {
         final ItemStack keepIcon = icon(Material.EMERALD, (filter.keepBases().isEmpty() ? "<white>" : "<green>")
                 + "只撿的基底（" + filter.keepBases().size() + " 種）", keptLore);
         set(SLOT_KEEP_BASES, filter.keepBases().isEmpty() ? keepIcon : highlight(keepIcon));
+        // 2026-10-26：只撿的基底跟保留好詞綴一起算（站長要的「只撿這兩種基底、而且要有 T1」）；這次之前兩條各算各的
+        final boolean needAffix = filter.keepBasesNeedAffix();
+        final String state = !needAffix ? "關" : keep == 0 ? "開（還沒設門檻，先不生效）" : filter.keepBases().isEmpty() ? "開（還沒挑基底）" : "開";
+        set(SLOT_KEEP_BASES_AFFIX, option(Material.KNOWLEDGE_BOOK, "只撿的基底也要好詞綴", state, filter.keepBasesNeedAffixActive(),
+                List.of("<gray>開了之後，<white>有挑基底的那幾類</white><gray>只撿：",
+                        "<gray>在「只撿的基底」清單內，<white>而且</white><gray>身上有一條詞綴達到「保留好詞綴」的門檻",
+                        "<gray>（普通、魔法、稀有都一樣；有好詞綴的不管第一排稀有度都撿）",
+                        "<dark_gray>例：挑兩種弓、保留好詞綴 T1 → 只撿有 T1 詞綴的那兩種弓",
+                        "<dark_gray>清單外的照樣不撿；沒挑基底的類別照原本的規則；未鑑定的也算",
+                        keep == 0 ? "<red>「保留好詞綴的裝備」是關：先在上面設定詞綴門檻，這條才會生效" : "<dark_gray>目前門檻：T" + keep + " 以上"),
+                List.of("<yellow>左鍵：" + (needAffix ? "關" : "開"))));
     }
 
     // ---- 寶石與藥劑 ----
@@ -751,6 +777,11 @@ public final class LootFilterMenu extends Menu {
                     next.toggleKeepAffixLikeMine();
                 } else if (slot == SLOT_KEEP_AFFIX_TIER) {
                     next.cycleKeepAffixTier(backwards);
+                } else if (slot == SLOT_KEEP_BASES_AFFIX) {
+                    next.toggleKeepBasesNeedAffix();
+                    if (next.keepBasesNeedAffix() && next.rules().keepAffixTier() == 0) {
+                        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>先在「保留好詞綴的裝備」設定詞綴門檻（例如 T1），這條才會生效"));
+                    }
                 } else if (slot == SLOT_MAPS) {
                     next.cycleMapRarity(backwards);
                 } else if (slot == SLOT_JEWELS) {

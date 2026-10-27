@@ -192,7 +192,13 @@ public final class AntiCheatService implements Listener {
     /** 這一秒最多能走幾格：移動速度屬性 × 衝刺跳躍 × 冰面，加上伺服器給的速度。 */
     private double allowedPerSecond(final Player player, final Location at, final Tracked state) {
         final AttributeInstance attribute = player.getAttribute(Attribute.MOVEMENT_SPEED);
-        final double speed = attribute == null ? 0.1 : Math.max(0.05, attribute.getValue());
+        double speed = attribute == null ? 0.1 : Math.max(0.05, attribute.getValue());
+        // 2026-10-26：放技能的移動懲罰（SkillMovePenalty）開始時客戶端晚一點才收到，允許的速度不扣這段，避免網路延遲誤判
+        final org.bukkit.attribute.AttributeModifier castSlow = attribute == null ? null
+                : attribute.getModifier(new org.bukkit.NamespacedKey(plugin, "skill_move_penalty"));
+        if (castSlow != null && castSlow.getAmount() > -1) {
+            speed /= 1 + castSlow.getAmount();
+        }
         double allowed = speed / 0.1 * WALK_PER_SECOND * SPRINT_JUMP_FACTOR;
         if (onIce(at)) {
             allowed *= ICE_FACTOR;

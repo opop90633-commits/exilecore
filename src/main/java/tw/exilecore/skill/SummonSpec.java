@@ -39,19 +39,32 @@ import java.util.Set;
  * @param buff        有至少一隻活著時加在主人身上的修飾器（魔像）
  * @param ranged      2026-10 遠程：大於 0 = 站在這麼多格內射擊（骷髏弓手、法師），不用走到旁邊；0 = 近戰
  * @param bolt        遠程的彈道外觀：arrow、fire、cold、lightning、chaos
- * @param spectre     2026-10 附身：用屍體原本的那種怪物當身體（要 corpse: true；Boss 的屍體不行）
+ * @param spectre     2026-10 附身：用屍體原本的那種怪物當身體（Boss 的屍體不行）；2026-10-26 起附魂術是精魂召喚，
+ *                    按鍵附身一具屍體之後一直叫那種怪（這次之前要 corpse: true，每放一次用一具屍體）
  * @param heal        2026-10 治療：每秒替主人與附近 8 格內自己的召喚物回復最大生命的 x%
+ * @param ally        2026-10-26 照 PoE2：召喚物等級 = 寶石等級 × 2，生命、傷害、護甲、閃避用 PoE2 的召喚物（ally）表，
+ *                    life／damage／armour／evasion 是 PoE2 那隻怪的倍率（見 {@link MinionSheets#allyBase}）；false = 舊的「同等級普通怪」算法
+ * @param armour      （ally）護甲倍率（PoE2 的怪物護甲表 × 這個；0 = 沒有護甲）
+ * @param evasion     （ally）閃避倍率（0 = 沒有閃避）
+ * @param spread      （ally）每一下傷害上下浮動多少（PoE2 多半 ±30%）
+ * @param interval    2026-10-26 精魂召喚每隔幾秒叫一隻（蟲噬群：每 6 秒一群、最多 3 群、每群活幾秒）；0 = 死了才補
+ * @param stats       2026-10-26 召喚物自己身上的修飾器（骸骨戰士 30% 格擋、重卒更多暈眩累積…）
+ * @param es          2026-10-26 照 PoE2（Energy Shield from Life）：生命的這個比例改成能量護盾（焰術士 0.10、霜術士／雷術士／祭司 0.15）；
+ *                    4 秒沒受傷後每秒回充 12.5%（見 {@link MinionAbilities#ES_RECHARGE_PER_SECOND}）
  */
 public record SummonSpec(String kind, int count, Scaled max, boolean fixedMax, double duration, double life, double damage,
                          double attackSpeed, double speed, double reach, double radius, boolean corpse, double search,
                          String helmet, String weapon, Map<DamageType, Double> resists, double taunt, double tauntRadius,
-                         List<Modifier> buff, double ranged, String bolt, boolean spectre, double heal) {
+                         List<Modifier> buff, double ranged, String bolt, boolean spectre, double heal,
+                         boolean ally, double armour, double evasion, double spread, double interval, List<Modifier> stats,
+                         double es) {
 
     /** 能當召喚物的原版生物（都有近戰 AI、能走路或飛；惱鬼會飛、穿牆）。 */
     public static final Set<String> KINDS = Set.of("ZOMBIE", "HUSK", "SKELETON", "STRAY", "WITHER_SKELETON", "VEX", "IRON_GOLEM", "WOLF");
 
     public SummonSpec {
         buff = buff == null ? List.of() : List.copyOf(buff);
+        stats = stats == null ? List.of() : List.copyOf(stats);
         resists = resists == null || resists.isEmpty() ? Map.of() : Map.copyOf(new EnumMap<>(resists));
     }
 
@@ -110,12 +123,16 @@ public record SummonSpec(String kind, int count, Scaled max, boolean fixedMax, d
         for (final YamlNode child : node.list("buff")) {
             buff.add(AffixMod.parse(child).toModifier(Map.of(), skillName));
         }
+        final List<Modifier> stats = new ArrayList<>();
+        for (final YamlNode child : node.list("stats")) {
+            stats.add(AffixMod.parse(child).toModifier(Map.of(), skillName));
+        }
         final boolean corpse = node.bool("corpse", false);
         return new SummonSpec(kind,
                 (int) check(where, "count", node.integer("count", 1), 1, 5),
                 max, node.bool("fixed_max", false),
                 check(where, "duration", node.decimal("duration", 0), 0, 120),
-                check(where, "life", node.decimal("life", 1.0), 0.1, 10),
+                check(where, "life", node.decimal("life", 1.0), 0.05, 10),
                 check(where, "damage", node.decimal("damage", 1.0), 0.1, 10),
                 check(where, "attack_speed", node.decimal("attack_speed", 1.0), 0.3, 3),
                 check(where, "speed", node.decimal("speed", 1.0), 0.5, 2),
@@ -126,7 +143,19 @@ public record SummonSpec(String kind, int count, Scaled max, boolean fixedMax, d
                 check(where, "taunt", node.decimal("taunt", 0), 0, 30),
                 check(where, "taunt_radius", node.decimal("taunt_radius", 8), 1, 16), buff,
                 check(where, "ranged", node.decimal("ranged", 0), 0, 24), bolt(where, node.string("bolt", "arrow")),
-                spectre(where, node, corpse), check(where, "heal", node.decimal("heal", 0), 0, 10));
+                spectre(where, node, corpse), check(where, "heal", node.decimal("heal", 0), 0, 10),
+                node.bool("ally", false), check(where, "armour", node.decimal("armour", 0), 0, 5),
+                check(where, "evasion", node.decimal("evasion", 0), 0, 5), check(where, "spread", node.decimal("spread", 0.3), 0, 0.9),
+                check(where, "interval", node.decimal("interval", 0), 0, 60), stats,
+                check(where, "es", node.decimal("es", 0), 0, 0.9));
+    }
+
+    /**
+     * 2026-10-26：換掉生命、傷害倍率（附魂術：照附身的那種怪物的倍率，見 monsters.yml 的 types）。
+     */
+    public SummonSpec withMultipliers(final double newLife, final double newDamage) {
+        return new SummonSpec(kind, count, max, fixedMax, duration, newLife, newDamage, attackSpeed, speed, reach, radius, corpse, search,
+                helmet, weapon, resists, taunt, tauntRadius, buff, ranged, bolt, spectre, heal, ally, armour, evasion, spread, interval, stats, es);
     }
 
     /** 附身召喚能用的怪物種類（都走得動、打得了近戰，不會自己爆炸或瞬移）。 */
@@ -135,11 +164,8 @@ public record SummonSpec(String kind, int count, Scaled max, boolean fixedMax, d
             "IRON_GOLEM", "RAVAGER", "HOGLIN", "ZOGLIN", "WITCH", "EVOKER");
 
     private static boolean spectre(final String where, final YamlNode node, final boolean corpse) {
-        final boolean spectre = node.bool("spectre", false);
-        if (spectre && !corpse) {
-            throw new IllegalArgumentException(where + ".spectre：附身要用屍體（同時寫 corpse: true）");
-        }
-        return spectre;
+        // 2026-10-26 照 PoE2：附魂術改成精魂召喚（按鍵附身一具屍體，之後一直叫那種怪），不再要 corpse: true
+        return node.bool("spectre", false);
     }
 
     private static String bolt(final String where, final String raw) {

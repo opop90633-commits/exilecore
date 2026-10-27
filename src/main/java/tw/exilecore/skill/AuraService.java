@@ -57,7 +57,7 @@ final class AuraService implements Listener {
         List<Modifier> allyEffects = List.of();
         double reserve;
         double radius;
-        /** 常駐技能（焚心業火）暫停中：生命只剩 1 點時停下來（不燒敵人、不燒自己、效果不算），回到 1 點以上就繼續。 */
+        /** 暫停中（開著的代價扣到剩 1 點生命時）：效果不算，回到門檻以上就繼續（2026-10-26：焚心業火拿掉了，這次之前它也用這個）。 */
         boolean paused;
         /** 上次提示暫停是哪個 tick（回復一點、燒掉一點會一直來回切，提示不要洗版）。 */
         long pauseNotice = Long.MIN_VALUE;
@@ -65,6 +65,8 @@ final class AuraService implements Listener {
         /** 夥伴（2026-10）：死掉之後哪個 tick 才能再出來。 */
         long companionReady;
         int hadCompanion;
+        /** 2026-10-27 照 PoE2 天賦樹（召喚物復活時回復生命）：死掉、還沒補回來的隻數。 */
+        int toRevive;
         /** 照隻數算精魂的召喚（2026-10）：現在的精魂養得起幾隻（其他的是不限）。 */
         int minionCap = Integer.MAX_VALUE;
 
@@ -84,8 +86,6 @@ final class AuraService implements Listener {
     private final SkillTargets targets;
     private final SkillVisuals visuals;
     private final SkillExecutor executor;
-    /** 焚燒光環打敵人用。 */
-    private final tw.exilecore.combat.SkillDamage damage;
     private final Map<UUID, LinkedHashMap<String, Active>> active = new HashMap<>();
     /** 從隊友的光環得到的效果（每半秒重算；沒變就不動屬性表）。 */
     private final Map<UUID, List<Modifier>> received = new HashMap<>();
@@ -124,6 +124,15 @@ final class AuraService implements Listener {
 
     static final String HERALD_THUNDER = "herald_of_thunder";
     static final String HERALD_BLOOD = "herald_of_blood";
+    /** 2026-10-26 照 PoE2 的 Herald of Ash：不打人，照過量擊殺的傷害點燃附近 1.2 公尺的敵人 3 秒。 */
+    static final String HERALD_ASH = "herald_of_ash";
+    static final double ASH_RADIUS = 1.2;
+    static final double ASH_SECONDS = 3;
+
+    /** 燼使：點燃每秒是過量擊殺傷害的幾 %（PoE2：1 級 16.67%、20 級 23%、40 級 29.67%，每級 +1/3）。純函式（測試用）。 */
+    static double ashPercent(final int level) {
+        return 50.0 / 3 + (Math.max(1, level) - 1) / 3.0;
+    }
     static final String HERALD_PLAGUE = "herald_of_plague";
     /** 血宣：爆炸半徑（格；PoE2 1.5 米）、多打失血的幾成（PoE2 15%）。 */
     static final double BLOOD_RADIUS = 1.5;
@@ -131,19 +140,19 @@ final class AuraService implements Listener {
     /** 疫使緩行的秒數。 */
     static final double PLAGUE_HINDER_SECONDS = 4;
 
-    /** 雷使：殺死感電的敵人之後接下來幾次攻擊擊中落雷（PoE2：1 級 2 次 → 20 級 3 次）。 */
+    /** 雷使：殺死感電的敵人之後接下來幾次攻擊擊中落雷（2026-10-26 照 PoE2 逐級：1 級 2 次、11 級 3 次、21 級 4 次、31 級 5 次）。 */
     static int thunderCharges(final int level) {
-        return level >= 11 ? 3 : 2;
+        return level >= 31 ? 5 : level >= 21 ? 4 : level >= 11 ? 3 : 2;
     }
 
-    /** 疫使：傳毒的半徑（格；PoE2 1.5～1.8 米）。 */
+    /** 疫使：傳毒的半徑（格）。2026-10-26 照 PoE2 逐級：每 5 級 +0.1（1 級 1.5 → 20 級 1.8 → 40 級 2.2）；這次之前 20 級封頂、線性內插。 */
     static double plagueRadius(final int level) {
-        return 1.5 + 0.3 * (Math.min(20, Math.max(1, level)) - 1) / 19.0;
+        return 1.5 + 0.1 * ((Math.min(40, Math.max(1, level)) - 1) / 5);
     }
 
-    /** 疫使：傳到的敵人緩行的機率（%；PoE2 10～29%）。 */
+    /** 疫使：傳到的敵人緩行的機率（%）。2026-10-26 照 PoE2 逐級：10 → 29（20 級）→ 49（40 級）；這次之前 20 級封頂。 */
     static double plagueHinderChance(final int level) {
-        return 10 + (Math.min(20, Math.max(1, level)) - 1);
+        return 10 + (Math.min(40, Math.max(1, level)) - 1);
     }
 
     /** 一個玩家的獸性。 */
@@ -161,9 +170,8 @@ final class AuraService implements Listener {
     private final Map<UUID, FuryState> furies = new HashMap<>();
 
     AuraService(final ExileCore plugin, final SkillConfig config, final SkillService service, final SkillTargets targets,
-                final SkillVisuals visuals, final SkillExecutor executor, final tw.exilecore.combat.SkillDamage damage) {
+                final SkillVisuals visuals, final SkillExecutor executor) {
         this.plugin = plugin;
-        this.damage = damage;
         this.config = config;
         this.service = service;
         this.targets = targets;
@@ -259,6 +267,9 @@ final class AuraService implements Listener {
      * 連一隻都養不起（或固定的部分不夠）回傳 null。
      */
     static Fit fit(final SkillBuild build, final double available) {
+        if (LineageRules.communionLife(build) > 0) {
+            return new Fit(0, Integer.MAX_VALUE); // 2026-10-27 照 PoE2 血契：不保留精魂，改成保留生命（modifiers 裡算）
+        }
         if (build.minionReserve() <= 0) {
             return build.reserve() > 0 && build.reserve() > available + 1e-9 ? null : new Fit(build.reserve(), Integer.MAX_VALUE);
         }
@@ -274,6 +285,51 @@ final class AuraService implements Listener {
             return null;
         }
         return new Fit(build.reserve() + Math.max(0, count - free) * build.minionReserve(), count);
+    }
+
+    /**
+     * 2026-10-27 照 PoE2 血契（Atziri's Communion）：保留的生命付不付得起。原作保留生命時至少要剩 1 點生命、
+     * 最大生命被鎖成 1（無垢之軀）就一點都不能保留；這次之前不檢查（加總夾在 95%），多掛幾顆或無垢之軀等於免費。
+     *
+     * @param baseLife      還沒被血契保留之前的最大生命
+     * @param lifeLocked    最大生命被鎖成 1（無垢之軀）
+     * @param reservedSoFar 前面已經開的光環保留了幾 % 生命
+     */
+    static boolean lifeFits(final SkillBuild build, final double baseLife, final boolean lifeLocked, final double reservedSoFar) {
+        final double percent = LineageRules.communionLife(build);
+        if (percent <= 0) {
+            return true;
+        }
+        if (lifeLocked || baseLife <= 1 + 1e-9) {
+            return false;
+        }
+        final double total = reservedSoFar + percent;
+        return total < 100 && baseLife * (1 - total / 100.0) >= 1 - 1e-9;
+    }
+
+    /** 最大生命被鎖成 1（無垢之軀）。 */
+    static boolean lifeLocked(final tw.exilecore.stats.StatSheet sheet) {
+        return StatKeys.flag(sheet, StatKeys.FLAG_CHAOS_IMMUNE);
+    }
+
+    /** 這張表的最大生命換回血契保留之前的（表裡已經算進 reservedNow % 的保留）。 */
+    static double baseLife(final tw.exilecore.stats.StatSheet sheet, final double reservedNow) {
+        final double life = PlayerState.maxLife(sheet);
+        return reservedNow > 0 && reservedNow < 100 ? life / (1 - reservedNow / 100.0) : life;
+    }
+
+    /** 這些光環的血契加起來保留幾 % 生命。 */
+    static double communionReserved(final java.util.Collection<Active> auras) {
+        double total = 0;
+        for (final Active aura : auras) {
+            total += LineageRules.communionLife(aura.build);
+        }
+        return total;
+    }
+
+    private double communionReserved(final UUID player) {
+        final Map<String, Active> mine = active.get(player);
+        return mine == null ? 0 : communionReserved(mine.values());
     }
 
     /** 開著的精魂召喚現在養得起幾隻；沒開著回傳 -1，不是照隻數算的回傳 Integer.MAX_VALUE。 */
@@ -332,9 +388,6 @@ final class AuraService implements Listener {
             afterChange(player);
             visuals.auraOff(build.definition().visual(), player);
             subtitle(player, "<gray>" + tw.exilecore.item.ItemRenderer.escape(build.definition().name()) + " 已關閉");
-            if (build.definition().aura().persistent()) {
-                return "<gray>關閉：" + tw.exilecore.item.ItemRenderer.escape(build.definition().name());
-            }
             return "<gray>關閉光環：" + tw.exilecore.item.ItemRenderer.escape(build.definition().name())
                     + (totalReserve(player.getUniqueId()) > 0 ? String.format(Locale.ROOT, "（還保留 %.0f 精魂）", totalReserve(player.getUniqueId())) : "");
         }
@@ -345,6 +398,12 @@ final class AuraService implements Listener {
                     totalReserve(player.getUniqueId()), capacity(toggleSheet), tw.exilecore.item.ItemRenderer.escape(build.definition().name()),
                     build.reserve() + build.minionReserve());
         }
+        final double lifeSoFar = communionReserved(mine.values());
+        if (!lifeFits(build, baseLife(toggleSheet, lifeSoFar), lifeLocked(toggleSheet), lifeSoFar)) {
+            // 2026-10-27 照 PoE2 血契：保留生命付不起（或最大生命被鎖成 1）就開不了
+            return String.format(Locale.ROOT, "<red>生命不夠保留：已經保留 %.0f%%，%s 要 %.0f%%",
+                    lifeSoFar, tw.exilecore.item.ItemRenderer.escape(build.definition().name()), LineageRules.communionLife(build));
+        }
         final double total = totalReserve(player.getUniqueId()) + fit.reserve();
         final Active aura = new Active(id, now());
         compute(aura, build, fit);
@@ -352,9 +411,6 @@ final class AuraService implements Listener {
         afterChange(player);
         visuals.auraOn(build.definition().visual(), player);
         subtitle(player, "<#8fd3ff>✦ " + tw.exilecore.item.ItemRenderer.escape(build.definition().name()) + " 開啟中");
-        if (build.definition().aura().persistent()) {
-            return "<#ffb070>常駐：" + tw.exilecore.item.ItemRenderer.escape(build.definition().name()) + " 生效中";
-        }
         return String.format(Locale.ROOT, "<#8fd3ff>開啟光環：%s<gray>（保留 %.0f 精魂，共 %.0f）",
                 tw.exilecore.item.ItemRenderer.escape(build.definition().name()), build.reserve(), total);
     }
@@ -409,8 +465,159 @@ final class AuraService implements Listener {
     /** 2026-10-24：骸骨系列照 PoE2 復活要 12 秒（夥伴、狼、蟲照 8 秒）。 */
     static final long SKELETON_RESPAWN = 240;
 
+    /**
+     * 死掉之後多久回來。2026-10-26 照 PoE2：骷髏、附身、夥伴（荒原狼伴）12 秒（minion_base_resummon_time_ms），
+     * 灰狼隨沒有覆寫，照全域 7.5 秒；這次之前附身不是精魂召喚、狼伴與灰狼隨都是 8 秒。
+     */
     static long respawnTicks(final String skillId) {
-        return skillId.startsWith("skeletal_") || skillId.equals("summon_skeletons") ? SKELETON_RESPAWN : COMPANION_RESPAWN;
+        if (MinionAbilities.WOLVES.equals(skillId)) {
+            return MinionAbilities.GLOBAL_RESUMMON_TICKS;
+        }
+        return skillId.startsWith("skeletal_") || skillId.equals("summon_skeletons") || MinionAbilities.SPECTRE.equals(skillId)
+                || MinionAbilities.BEAST.equals(skillId) ? SKELETON_RESPAWN : COMPANION_RESPAWN;
+    }
+
+    /**
+     * 2026-10-26 照 PoE2 骸骨祭司的復活骷髏：有一種骷髏正在等 12 秒復活的話，馬上叫一隻回來；回傳有沒有叫。
+     */
+    /**
+     * 2026-10-27：精魂召喚這個技能最多幾隻：技能的隻數、精魂養得起的隻數，再夾在一個人總上限剩下的空間（其他技能的召喚物占掉的不算）。
+     * 這次之前沒夾總上限：加起來超過 40 隻會每 0.5 秒叫新的、擠掉最舊的一直輪替（還被當成死掉復活）。
+     */
+    private int companionMax(final MinionService minions, final UUID player, final Active aura) {
+        return companionLimit(companionWanted(aura), minions.room(player, aura.skillId), reservedBefore(player, aura));
+    }
+
+    /** 這個精魂召喚自己想要幾隻（技能的隻數、精魂養得起的隻數）。 */
+    private static int companionWanted(final Active aura) {
+        return Math.max(1, Math.min(aura.build.minions(), aura.minionCap));
+    }
+
+    /**
+     * 2026-10-27：排在這個前面（先開的）精魂召喚預留的隻數。總上限照開的順序分：先開的先拿滿它要的，後開的只能用剩下的——
+     * 這次之前只看「現在活著的別的召喚物」，一種死了一隻，另一種馬上補進那個空位，死掉的那種就再也復活不了。
+     */
+    private int reservedBefore(final UUID player, final Active aura) {
+        final Map<String, Active> mine = active.get(player);
+        int reserved = 0;
+        if (mine != null) {
+            for (final Active other : mine.values()) {
+                if (other == aura) {
+                    break;
+                }
+                if (other.build.definition().summon() != null
+                        && !SkillExecutor.hasFlag(other.build.definition(), tw.exilecore.stats.StatKeys.FLAG_SUMMON_ON_FIRE)) {
+                    reserved += companionWanted(other);
+                }
+            }
+        }
+        return reserved;
+    }
+
+    /** 2026-10-27：精魂召喚的上限：想要的、總上限剩下的空間（活著的別的召喚物占掉的）、先開的預留之後剩下的，取最小（測試用）。 */
+    static int companionLimit(final int wanted, final int liveRoom, final int reservedBefore) {
+        return Math.max(0, Math.min(Math.min(wanted, liveRoom), MinionService.MAX_PER_PLAYER - reservedBefore));
+    }
+
+    boolean reviveSkeleton(final UUID player, final long now) {
+        final Map<String, Active> mine = active.get(player);
+        final Player online = plugin.getServer().getPlayer(player);
+        final MinionService minions = service.minions();
+        if (mine == null || online == null || minions == null || !service.eligibleForCompanion(online)) {
+            return false;
+        }
+        for (final Active aura : mine.values()) {
+            if (aura.build.definition().summon() == null || !MinionService.SKELETONS.contains(aura.skillId) || aura.companionReady <= now) {
+                continue;
+            }
+            final int alive = minions.count(player, aura.skillId);
+            if (alive < companionMax(minions, player, aura) && alive >= aura.hadCompanion) {
+                minions.summon(online, aura.build);
+                aura.hadCompanion = minions.count(player, aura.skillId);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 2026-10-26 照 PoE2 骸餘饗的骸骨復甦：正在等復活的精魂召喚物馬上叫回來，每隻花掉 cost（牠的最大生命）；budget[0] 不夠就停。回傳叫了幾隻。
+     */
+    int reviveWaiting(final UUID player, final java.util.function.ToDoubleFunction<String> cost, final double[] budget, final long now) {
+        final Map<String, Active> mine = active.get(player);
+        final Player online = plugin.getServer().getPlayer(player);
+        final MinionService minions = service.minions();
+        if (mine == null || online == null || minions == null || !service.eligibleForCompanion(online)) {
+            return 0;
+        }
+        int revived = 0;
+        for (final Active aura : mine.values()) {
+            if (aura.build.definition().summon() == null || aura.build.definition().summon().interval() > 0 || aura.companionReady <= now) {
+                continue;
+            }
+            final int max = companionMax(minions, player, aura);
+            while (minions.count(player, aura.skillId) < max) {
+                final double price = Math.max(1, cost.applyAsDouble(aura.skillId));
+                if (budget[0] < price) {
+                    return revived;
+                }
+                budget[0] -= price;
+                minions.summon(online, aura.build);
+                revived++;
+            }
+            aura.hadCompanion = minions.count(player, aura.skillId);
+            aura.companionReady = now;
+        }
+        return revived;
+    }
+
+    /** 2026-10-26 照 PoE2 不死統治者（Archon of Undeath）：倒下等復活的常駐不死召喚物（骷髏、附身）馬上回來；回傳幾種。 */
+    int reviveUndead(final UUID player, final long now) {
+        final Map<String, Active> mine = active.get(player);
+        if (mine == null) {
+            return 0;
+        }
+        int count = 0;
+        for (final Active aura : mine.values()) {
+            if (aura.build.definition().summon() != null && aura.companionReady > now
+                    && (MinionService.SKELETONS.contains(aura.skillId) || MinionAbilities.SPECTRE.equals(aura.skillId))) {
+                aura.companionReady = 0;
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 2026-10-27 照 PoE2（塗油限定 群集復甦，使用指令技能時復活一個隨機的常駐召喚物）：被打死、等著復活的常駐召喚物裡隨機挑一種，
+     * 不等復活時間（下一次同步就叫出來；同一種死了好幾隻的會一起回來）。回傳有沒有復活。
+     */
+    boolean reviveRandom(final UUID player, final long now, final java.util.random.RandomGenerator random) {
+        final Map<String, Active> mine = active.get(player);
+        if (mine == null) {
+            return false;
+        }
+        final List<Active> waiting = new ArrayList<>();
+        for (final Active aura : mine.values()) {
+            if (aura.build.definition().summon() != null && aura.toRevive > 0 && aura.companionReady > now) {
+                waiting.add(aura);
+            }
+        }
+        if (waiting.isEmpty()) {
+            return false;
+        }
+        waiting.get(random.nextInt(waiting.size())).companionReady = 0;
+        return true;
+    }
+
+    /** 2026-10-26：附魂術換了附身的怪：舊的收掉之後馬上叫新的（不等 12 秒）。 */
+    void resummonNow(final UUID player, final String skillId) {
+        final Map<String, Active> mine = active.get(player);
+        final Active aura = mine == null ? null : mine.get(skillId);
+        if (aura != null) {
+            aura.hadCompanion = 0;
+            aura.companionReady = 0;
+        }
     }
 
     /** 夥伴（2026-10）：開著的夥伴光環沒有活著的夥伴就叫一隻出來（死掉的等 8 秒）；關掉的收掉。 */
@@ -438,25 +645,50 @@ final class AuraService implements Listener {
                     }
                     keep.add(aura.skillId);
                     // 2026-10：精魂召喚物可以好幾隻（骸骨兵…）：少了一隻就等一下補回滿
-                    final int max = Math.max(1, Math.min(aura.build.minions(), aura.minionCap));
+                    final int max = companionMax(minions, player.getUniqueId(), aura);
                     if (minions.count(player.getUniqueId(), aura.skillId) > max) {
                         minions.trim(player.getUniqueId(), aura.skillId, max); // 精魂或上限變少了：多的收掉
                     }
                     final int alive = minions.count(player.getUniqueId(), aura.skillId);
+                    final double interval = aura.build.definition().summon().interval();
+                    if (interval > 0) {
+                        // 2026-10-26（PoE2 蟲噬群）：每隔幾秒叫一隻（最多 max 隻、各自有持續時間），不管死掉或消失；冷卻回復也加快
+                        if (alive < max && now >= aura.companionReady) {
+                            minions.summon(player, aura.build);
+                            final double cd = aura.build.definition().cooldown();
+                            final double recovery = cd > 0 && aura.build.cooldownTicks() > 0 ? aura.build.cooldownTicks() / (cd * 20) : 1.0;
+                            aura.companionReady = now + Math.max(20, Math.round(interval * 20 * recovery));
+                        }
+                        aura.hadCompanion = minions.count(player.getUniqueId(), aura.skillId);
+                        continue;
+                    }
+                    final int died = minions.takeDeaths(player.getUniqueId(), aura.skillId);
                     if (alive < aura.hadCompanion) {
-                        aura.companionReady = now + respawnTicks(aura.skillId); // 剛死掉：等一下再出來（骸骨 12 秒、其他 8 秒）
+                        // 2026-10-27：等著復活的只算真的被打死的（這次之前被擠掉、時間到也算，召喚物復活回復生命會一直觸發）
+                        aura.toRevive += Math.min(aura.hadCompanion - alive, died);
+                        // 剛死掉：等一下再出來（骸骨 12 秒、其他 8 秒）；2026-10-26 照 PoE2 天賦樹：「召喚物復活快 x%」
+                        aura.companionReady = now + Math.round(respawnTicks(aura.skillId) / tw.exilecore.stats.TreeEffectKeys.scale(
+                                plugin.players().sheet(player), tw.exilecore.stats.TreeEffectKeys.MINION_REVIVE_SPEED, java.util.Set.of(), 0.1));
                     }
                     aura.hadCompanion = alive;
                     if (alive < max && now >= aura.companionReady) {
                         int guard = 0;
                         while (minions.count(player.getUniqueId(), aura.skillId) < max && guard++ < max) {
                             minions.summon(player, aura.build);
+                            if (aura.toRevive > 0) {
+                                aura.toRevive--;
+                                if (service.treeLeftovers() != null) {
+                                    // 2026-10-27 照 PoE2 天賦樹：召喚物復活時回復生命；塗油限定 狂颮之主：給剛復活的那隻元素統治者
+                                    service.treeLeftovers().minionRevived(player, aura.skillId);
+                                }
+                            }
                         }
                         aura.hadCompanion = minions.count(player.getUniqueId(), aura.skillId);
                     }
                 }
             }
             minions.dismissCompanions(player.getUniqueId(), keep);
+            minions.clearDeaths(player.getUniqueId()); // 2026-10-27：這次同步沒拿走的死亡數（不是精魂召喚的）不留到下一次
         }
     }
 
@@ -522,7 +754,8 @@ final class AuraService implements Listener {
             }
             final SkillBuild build = service.build(state, sheet, definition, state.skills().skill(position));
             final Fit fit = fit(build, capacity(sheet) - total);
-            if (fit == null) {
+            final double lifeSoFar = communionReserved(mine.values());
+            if (fit == null || !lifeFits(build, PlayerState.maxLife(sheet), lifeLocked(sheet), lifeSoFar)) {
                 continue;
             }
             final Active aura = new Active(definition.id(), now());
@@ -560,6 +793,12 @@ final class AuraService implements Listener {
         if (reserve > 0) {
             list.add(Modifier.flat(StatKeys.SPIRIT_RESERVED, reserve, "光環保留")); // 2026-10：保留的是精魂
         }
+        // 2026-10-27 照 PoE2 血契（Atziri's Communion）：保留最大生命（每 1 點基礎精魂 0.66%，加總起來算一次；做成最大生命更少）。
+        // 付不起的開不了（lifeFits），所以不再夾值；這次之前夾在 95%，多掛幾顆血契後面的等於免費
+        final double lifeReserved = mine == null ? 0 : communionReserved(mine.values());
+        if (lifeReserved > 0) {
+            list.add(Modifier.more(StatKeys.LIFE_MAX, -Math.min(100, lifeReserved) / 100.0, "血契保留"));
+        }
         if (fromAllies != null) {
             list.addAll(fromAllies);
         }
@@ -572,6 +811,15 @@ final class AuraService implements Listener {
      */
     private List<Modifier> conditional(final Player player, final Modifier effect) {
         for (final String tag : effect.tags()) {
+            if (tag.startsWith(ModifierText.IF_CONFLUX)) {
+                // 2026-10-26 照 PoE2 Elemental Conflux：每 8 秒隨機換一種元素，只有那一種更多傷害
+                if (!tag.substring(ModifierText.IF_CONFLUX.length()).equals(confluxElement(player.getUniqueId(), plugin.getServer().getCurrentTick()))) {
+                    return List.of();
+                }
+                final java.util.Set<String> rest = new java.util.LinkedHashSet<>(effect.tags());
+                rest.remove(tag);
+                return List.of(new Modifier(effect.stat(), effect.type(), effect.value(), rest, effect.source()));
+            }
             if (tag.startsWith(ModifierText.IF_CHARGE)) {
                 final String charge = tag.substring(ModifierText.IF_CHARGE.length());
                 if (plugin.combat() == null || plugin.combat().charges() == null || plugin.combat().charges().count(player, charge) <= 0) {
@@ -583,6 +831,39 @@ final class AuraService implements Listener {
             }
         }
         return List.of(effect);
+    }
+
+    /** 2026-10-26（元素潮汐）：幾 tick 換一次元素（8 秒）。 */
+    static final long CONFLUX_PERIOD = 160;
+    private static final String[] CONFLUX_ELEMENTS = {"fire", "cold", "lightning"};
+    /** 上次重算屬性表時的元素潮汐週期（換週期就重算）。 */
+    private final Map<UUID, Long> confluxPeriod = new HashMap<>();
+
+    /** 這個玩家現在的元素潮汐是哪種元素（每 8 秒隨機換；同一個週期內每次問都一樣）。 */
+    static String confluxElement(final UUID player, final long now) {
+        final long period = now / CONFLUX_PERIOD;
+        return CONFLUX_ELEMENTS[new java.util.Random(player.getMostSignificantBits() ^ player.getLeastSignificantBits() ^ period * 0x9E3779B97F4A7C15L)
+                .nextInt(CONFLUX_ELEMENTS.length)];
+    }
+
+    /** 開著元素潮汐的人換週期了就重算屬性表（每次 tick 呼叫）。 */
+    private void tickConflux(final Player player, final Map<String, Active> mine, final long now) {
+        boolean has = false;
+        for (final Active aura : mine.values()) {
+            for (final Modifier effect : aura.effects) {
+                for (final String tag : effect.tags()) {
+                    has |= tag.startsWith(ModifierText.IF_CONFLUX);
+                }
+            }
+        }
+        if (!has) {
+            confluxPeriod.remove(player.getUniqueId());
+            return;
+        }
+        final Long last = confluxPeriod.put(player.getUniqueId(), now / CONFLUX_PERIOD);
+        if (last != null && last != now / CONFLUX_PERIOD) {
+            plugin.players().markDirty(player);
+        }
     }
 
     /**
@@ -653,6 +934,8 @@ final class AuraService implements Listener {
         double total = 0;
         if (!desired.isEmpty()) {
             final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+            final double lifeBase = baseLife(sheet, communionReserved(mine.values()));
+            double lifeTotal = 0;
             // 2026-10：照按鍵順序開（數字鍵 3→8，再來左、右、蹲左、蹲右）：精魂不夠時前面的先召喚
             for (final tw.exilecore.character.SkillLoadout.Entry entry : state.skills().entriesInKeyOrder()) {
                 final SkillDefinition definition = config.skill(entry.skillId());
@@ -662,10 +945,11 @@ final class AuraService implements Listener {
                 }
                 final SkillBuild build = service.build(state, sheet, definition, entry);
                 final Fit fit = fit(build, capacity(sheet) - total);
-                if (fit == null) {
+                if (fit == null || !lifeFits(build, lifeBase, lifeLocked(sheet), lifeTotal)) {
                     skipped.add(definition.name());
                     continue;
                 }
+                lifeTotal += LineageRules.communionLife(build);
                 Active aura = mine.get(definition.id());
                 if (aura == null) {
                     aura = new Active(definition.id(), now());
@@ -735,6 +1019,7 @@ final class AuraService implements Listener {
                 continue;
             }
             try {
+                tickConflux(player, active.get(uuid), now); // 2026-10-26：元素潮汐換元素
                 validate(player, now, periodic);
             } catch (final RuntimeException e) {
                 // 2026-10：一個人的屬性表算不出來（例如身上有壞掉的物品）不能拖累全部的人——
@@ -761,22 +1046,6 @@ final class AuraService implements Listener {
         } catch (final RuntimeException e) {
             plugin.getSLF4JLogger().error("光環的代價／獸性出錯", e);
         }
-        // 焚燒光環（焚心業火）：每半秒燒周圍的敵人，自己也燒
-        for (final Map.Entry<UUID, LinkedHashMap<String, Active>> entry : new ArrayList<>(active.entrySet())) {
-            final Player player = plugin.getServer().getPlayer(entry.getKey());
-            if (player == null || player.isDead()) {
-                continue;
-            }
-            for (final Active aura : new ArrayList<>(entry.getValue().values())) {
-                if (aura.build.definition().aura().burns()) {
-                    try {
-                        burn(player, aura);
-                    } catch (final RuntimeException e) {
-                        plugin.getSLF4JLogger().error("焚燒光環 {} 出錯", aura.skillId, e);
-                    }
-                }
-            }
-        }
         // 2026-10：對敵人的光環（威壓）：範圍內的敵人受到的傷害增加，待久了更多
         for (final Map.Entry<UUID, LinkedHashMap<String, Active>> entry : new ArrayList<>(active.entrySet())) {
             final Player player = plugin.getServer().getPlayer(entry.getKey());
@@ -798,9 +1067,7 @@ final class AuraService implements Listener {
         for (final Map.Entry<UUID, LinkedHashMap<String, Active>> entry : active.entrySet()) {
             final Player player = plugin.getServer().getPlayer(entry.getKey());
             if (player != null && !entry.getValue().isEmpty() && !player.isDead()) {
-                // 常駐技能（焚心業火）不算光環：法陣只畫真的光環（它自己有橘色的燃燒範圍圈）
-                final List<String> styles = entry.getValue().values().stream().filter(aura -> !aura.build.definition().aura().persistent())
-                        .map(aura -> aura.build.definition().visual()).toList();
+                final List<String> styles = entry.getValue().values().stream().map(aura -> aura.build.definition().visual()).toList();
                 final String prefix = "aura:" + player.getUniqueId() + ":";
                 final String signature = String.join(",", styles);
                 if (!signature.equals(decalSignature.get(player.getUniqueId()))) {
@@ -814,9 +1081,6 @@ final class AuraService implements Listener {
                             SkillVisuals.auraColor(styles.get(i)), Math.PI * 2 * i / styles.size(), true);
                 }
                 visuals.auraPulse(decals.viewers(player.getLocation()), player, styles);
-                if (entry.getValue().values().stream().noneMatch(aura -> aura.build.definition().aura().burns())) {
-                    decals.remove("burn:" + player.getUniqueId()); // 焚燒光環關了
-                }
             }
         }
         // 光環全關了、下線的：圈收掉
@@ -824,26 +1088,19 @@ final class AuraService implements Listener {
             final LinkedHashMap<String, Active> mine = active.get(uuid);
             if (mine == null || mine.isEmpty() || plugin.getServer().getPlayer(uuid) == null) {
                 decals.removePrefix("aura:" + uuid + ":");
-                decals.remove("burn:" + uuid);
                 decalSignature.remove(uuid);
             }
         }
     }
 
-    /**
-     * 焚燒光環的半秒：用技能自己的傷害（法術、火焰，吃法術與火焰的加成、會暴擊、會點燃）打一下範圍內每個敵人；
-     * 自己受到最大生命＋能量護盾 selfBurn% ÷ 2 的火焰傷害（火焰抗性減免，先扣護盾）。在營地裡不燒自己，也不會被自己燒死以外的東西擋。
-     */
-    /** 焚燒光環每秒燒自己多少（照目前的生命、護盾、火焰抗性；給說明用）。 */
-    double selfBurnPerSecond(final Player player, final AuraSpec spec) {
-        final PlayerState state = plugin.players().get(player);
-        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
-        final double resist = tw.exilecore.stats.Formulas.resistReduction(sheet.get(StatKeys.RESIST_FIRE), tw.exilecore.stats.DamageCalculator.resistCap(sheet, tw.exilecore.stats.DamageType.FIRE));
-        return (state.maxLife() + Math.max(0, state.maxEnergyShield())) * spec.selfBurn() / 100.0 * (1 - resist);
-    }
-
     /** 每個（玩家, 光環）→ 敵人 → 第一次進到範圍的 tick（待滿幾秒提升用）。 */
     private final Map<String, Map<UUID, Long>> oppressed = new HashMap<>();
+    /** 每個（玩家, 光環）→ 敵人 → 上次給暴擊弱點的 tick（惡意用）。 */
+    private final Map<String, Map<UUID, Long>> weaknessAt = new HashMap<>();
+    /** 2026-10-26：每個（玩家, 光環）→ 敵人 → 上次給凋零的 tick（凋息用）。 */
+    private final Map<String, Map<UUID, Long>> witheredAt = new HashMap<>();
+    /** 2026-10-26：凋息給的凋零持續 6 秒（PoE2 Withering Presence）。 */
+    static final long WITHERED_PRESENCE_TICKS = 120;
 
     /** 對敵人的光環：範圍內的敵人加上「受到的傷害增加」（每 10 tick 補一次，持續 15 tick：離開範圍很快就沒了）。 */
     private void oppress(final Player player, final Active aura, final long now) {
@@ -863,74 +1120,43 @@ final class AuraService implements Listener {
             final long first = since.computeIfAbsent(id, k -> now);
             final boolean ramped = enemy.rampSeconds() > 0 && now - first >= enemy.rampSeconds() * 20;
             final double taken = (ramped ? enemy.rampTaken() : enemy.taken()).at(level) * scale / 100.0;
-            if (taken > 0) {
+            if (taken > 0 || !enemy.effects().isEmpty()) {
+                // 2026-10-26：鎮懾（PoE2 Overwhelming Presence）：敵人身上另外疊修飾器（暈眩門檻、異常門檻降低，吃光環效果）
+                final List<tw.exilecore.stats.Modifier> mods = new ArrayList<>();
+                for (final ScaledMod mod : enemy.effects()) {
+                    mods.add(mod.toModifier(level, scale, aura.build.definition().name()));
+                }
                 plugin.combat().debuffs().apply(id, new tw.exilecore.combat.Debuffs.Debuff("aura." + aura.skillId + "." + player.getUniqueId(),
-                        player.getUniqueId(), tick + 15, taken, false, enemy.tag()));
+                        player.getUniqueId(), tick + 15, Math.max(0, taken), false, enemy.tag(), mods, 0));
+            }
+            if (enemy.witheredEvery() != null) { // 2026-10-26：凋息（PoE2 Withering Presence）：待在範圍裡每隔幾秒 1 層凋零（6 秒；效果越強間隔越短）
+                final double every = Math.max(0.1, enemy.witheredEvery().at(level) / Math.max(0.1, scale)) * 20;
+                final Map<UUID, Long> last = witheredAt.computeIfAbsent(key, k -> new HashMap<>());
+                final long previous = last.getOrDefault(id, first - (long) every);
+                if (now - previous >= every) {
+                    tw.exilecore.combat.HitEffects.addWithered(plugin.combat().debuffs(), id, player.getUniqueId(), tick, 1, WITHERED_PRESENCE_TICKS,
+                            Math.max(0, 1 + plugin.players().sheet(player).increased(tw.exilecore.stats.TreeEffectKeys.WITHERED_EFFECT, java.util.Set.of()))); // 2026-10-26：凋零效果
+                    last.put(id, now);
+                } else {
+                    last.putIfAbsent(id, previous);
+                }
+            }
+            if (enemy.weaknessEvery() != null) { // 2026-10-26：惡意：待在範圍裡每隔幾秒 1 層暴擊弱點（效果越強間隔越短）
+                final double every = Math.max(0.1, enemy.weaknessEvery().at(level) / Math.max(0.1, scale)) * 20;
+                final Map<UUID, Long> last = weaknessAt.computeIfAbsent(key, k -> new HashMap<>());
+                final long previous = last.getOrDefault(id, first);
+                if (now - previous >= every) {
+                    tw.exilecore.combat.HitEffects.addCritWeakness(plugin.combat().debuffs(), id, player.getUniqueId(), tick, 1,
+                            tw.exilecore.combat.HitEffects.CRIT_WEAKNESS_TICKS);
+                    last.put(id, now);
+                } else {
+                    last.putIfAbsent(id, previous);
+                }
             }
         }
+        weaknessAt.getOrDefault(key, new HashMap<>()).keySet().retainAll(seen);
+        witheredAt.getOrDefault(key, new HashMap<>()).keySet().retainAll(seen);
         since.keySet().retainAll(seen); // 離開範圍的重新計時
-    }
-
-    private void burn(final Player player, final Active aura) {
-        final AuraSpec spec = aura.build.definition().aura();
-        final Location at = player.getLocation();
-        // 2026-10：生命只剩 1 點（能量護盾也沒了）就停下來，回到 1 點以上自己繼續
-        final PlayerState owner = plugin.players().get(player);
-        final boolean pause = owner.hasCharacter() && owner.life() <= 1 + 1e-6 && owner.energyShield() <= 0;
-        if (pause != aura.paused) {
-            aura.paused = pause;
-            plugin.players().sheet(player); // 法術傷害的效果跟著拿掉／加回來
-            plugin.players().display(player, owner);
-            if (pause && now() - aura.pauseNotice >= 200) {
-                aura.pauseNotice = now();
-                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>" + tw.exilecore.item.ItemRenderer.escape(aura.build.definition().name())
-                        + " 暫停：生命只剩 1 點，回到 1 點以上自動繼續"));
-            }
-        }
-        if (pause) {
-            decals.remove("burn:" + player.getUniqueId());
-            return;
-        }
-        // 營地不燒自己；營地的練習場（訓練假人旁邊）算戰鬥區域，照燒（2026-10 修正：之前在練習場試不會燒）
-        final boolean town = plugin.zones() != null && plugin.zones().inTown(at)
-                && (plugin.training() == null || !plugin.training().inArena(at));
-        // 火焰往上竄的一圈（範圍的邊緣）：套了資源包的人看騎在身上的橘色平面圈，粒子只送給沒套的人
-        decals.follow("burn:" + player.getUniqueId(), player, aura.radius, 0xFF7A1A);
-        final List<Player> viewers = decals.viewers(at);
-        final int points = Math.max(8, (int) Math.round(aura.radius * 3));
-        for (int i = 0; i < points && !viewers.isEmpty(); i++) {
-            final double angle = Math.PI * 2 * i / points + (now() % 20) * 0.05;
-            GroundDecals.particle(viewers, org.bukkit.Particle.FLAME, new Location(at.getWorld(), at.getX() + Math.cos(angle) * aura.radius,
-                    at.getY() + 0.2, at.getZ() + Math.sin(angle) * aura.radius), 1, 0, 0.15, 0, 0.01, null);
-        }
-        tw.exilecore.skill.Fx.spawn(at.getWorld(), org.bukkit.Particle.FLAME, at.clone().add(0, 1.0, 0), 6, 0.35, 0.6, 0.35, 0.01); // 身上的火（每個人都看得到）
-        if (damage != null) {
-            for (final org.bukkit.entity.LivingEntity target : targets.around(at, aura.radius, player)) {
-                damage.hit(player, target, aura.build.profile(), null);
-            }
-        }
-        if (spec.selfBurn() <= 0 || town) {
-            return;
-        }
-        final PlayerState state = owner;
-        if (!state.hasCharacter() || state.isDead()) {
-            return;
-        }
-        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
-        final double resist = tw.exilecore.stats.Formulas.resistReduction(sheet.get(StatKeys.RESIST_FIRE), tw.exilecore.stats.DamageCalculator.resistCap(sheet, tw.exilecore.stats.DamageType.FIRE));
-        double rest = (state.maxLife() + Math.max(0, state.maxEnergyShield())) * spec.selfBurn() / 100.0 / 2.0 * (1 - resist);
-        if (rest <= 0) {
-            return;
-        }
-        final double shield = state.energyShield();
-        if (shield > 0) {
-            final double absorbed = Math.min(shield, rest);
-            state.setEnergyShield(shield - absorbed);
-            rest -= absorbed;
-        }
-        // 2026-10：燒不死自己，最多燒到剩 1 點生命
-        state.setLife(Math.max(Math.min(1, state.life()), state.life() - rest));
-        plugin.players().display(player, state);
     }
 
     private void validate(final Player player, final long now, final boolean periodic) {
@@ -943,7 +1169,21 @@ final class AuraService implements Listener {
         final List<String> closed = new ArrayList<>();
         double running = 0; // 照按鍵順序（3→8、左、右、蹲左、蹲右），前面的先拿精魂（照隻數算的召喚要知道還剩多少）
         final double capacityNow = capacity(plugin.players().sheet(player));
+        // 2026-10-27 照 PoE2 血契：保留生命付不起了（拿到無垢之軀、最大生命掉了）也照按鍵順序關掉後面的
+        final tw.exilecore.stats.StatSheet lifeSheet = plugin.players().sheet(player);
+        final double lifeBase = baseLife(lifeSheet, communionReserved(mine.values()));
+        final boolean locked = lifeLocked(lifeSheet);
+        double lifeRunning = 0;
         for (final Active aura : new ArrayList<>(mine.values())) {
+            if (aura.build != null && LineageRules.communionLife(aura.build) > 0) {
+                if (!lifeFits(aura.build, lifeBase, locked, lifeRunning)) {
+                    mine.remove(aura.skillId);
+                    closed.add(aura.name());
+                    changed = true;
+                    continue;
+                }
+                lifeRunning += LineageRules.communionLife(aura.build);
+            }
             final int position = state.skills().find(aura.skillId);
             final SkillDefinition definition = config.skill(aura.skillId);
             if (position < 0 || definition == null || definition.aura() == null || !wearable(state, definition)) {
@@ -1004,6 +1244,9 @@ final class AuraService implements Listener {
                 if (caster == null) {
                     continue;
                 }
+                if (tw.exilecore.stats.StatKeys.flag(plugin.players().sheet(caster), tw.exilecore.stats.KeystoneKeys.AURAS_SELF_ONLY)) {
+                    continue; // 2026-10-26 照 PoE2 天賦樹：你的光環增益不影響隊友
+                }
                 final List<Active> sharing = entry.getValue().values().stream().filter(aura -> !aura.allyEffects.isEmpty()).toList();
                 if (sharing.isEmpty()) {
                     continue;
@@ -1051,7 +1294,7 @@ final class AuraService implements Listener {
 
     // ---- 2026-10：開著的代價（赤怒）----
 
-    /** 營地不扣（練習場算戰鬥區域，照扣）——跟焚心業火燒自己的規則一樣。 */
+    /** 營地不扣（練習場算戰鬥區域，照扣）。 */
     private boolean safeZone(final Location at) {
         return plugin.zones() != null && plugin.zones().inTown(at) && (plugin.training() == null || !plugin.training().inArena(at));
     }
@@ -1263,6 +1506,12 @@ final class AuraService implements Listener {
         return maxLife <= 0 ? 0 : Math.max(0, damage - Math.max(0, lifeLeft)) / maxLife * 100.0;
     }
 
+    /** 2026-10-26：這隻怪的最大生命（我們的單位；不是怪物回傳 0）。 */
+    private double maxLife(final LivingEntity entity) {
+        final tw.exilecore.monster.MonsterData data = plugin.monsters() == null ? null : plugin.monsters().data(entity).orElse(null);
+        return data == null ? 0 : plugin.monsters().sheet(entity, data).get(StatKeys.LIFE_MAX);
+    }
+
     private double overkill(final LivingEntity defender, final double damage) {
         final tw.exilecore.monster.MonsterData data = plugin.monsters() == null ? null : plugin.monsters().data(defender).orElse(null);
         final org.bukkit.attribute.AttributeInstance max = defender.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
@@ -1324,11 +1573,13 @@ final class AuraService implements Listener {
         if (!ailments.isEmpty()) {
             deathAilments.put(event.getEntity().getUniqueId(), ailments);
         }
-        if (ailments.contains(AilmentType.BLEED) && plugin.monsters() != null) {
+        // 2026-10-26（照 PoE2）：血宣看「受過失血」（不用死的時候還在流血）
+        final double bloodLoss = plugin.ailments().bloodLoss(event.getEntity());
+        if ((ailments.contains(AilmentType.BLEED) || bloodLoss > 0) && plugin.monsters() != null) {
             final boolean lesser = plugin.monsters().data(event.getEntity())
                     .map(data -> data.rarity() == tw.exilecore.monster.MonsterRarity.NORMAL || data.rarity() == tw.exilecore.monster.MonsterRarity.MAGIC)
                     .orElse(false);
-            deathInfo.put(event.getEntity().getUniqueId(), new DeathInfo(plugin.ailments().bloodLoss(event.getEntity()), lesser));
+            deathInfo.put(event.getEntity().getUniqueId(), new DeathInfo(bloodLoss, lesser));
         }
     }
 
@@ -1398,9 +1649,28 @@ final class AuraService implements Listener {
                 }
                 continue;
             }
+            if (HERALD_ASH.equals(heraldId)) {
+                // 2026-10-26 照 PoE2：不打人；照過量擊殺的傷害點燃 1.2 公尺內的敵人（這次之前是一圈火焰爆炸、30% 點燃）
+                final boolean struck = last != null && last.player().equals(credit.getUniqueId()) && now() - last.tick() <= 1;
+                final double overkill = struck ? last.overkill() / 100.0 * maxLife(entity) : 0;
+                if (overkill > 0 && plugin.ailments() != null) {
+                    final double dps = overkill * ashPercent(aura.build.level()) / 100.0;
+                    final double perUnit = plugin.ailments().config().igniteDps(1, 0, 1);
+                    final tw.exilecore.stats.StatSheet sheet = aura.build.profile().effective(plugin.players().sheet(credit));
+                    final double radius = ASH_RADIUS * aura.build.areaScale();
+                    for (final LivingEntity victim : targets.around(at, radius, credit)) {
+                        if (victim != entity && perUnit > 0) {
+                            plugin.ailments().igniteFrom(credit, victim, dps / perUnit, sheet, ASH_SECONDS);
+                        }
+                    }
+                    visuals.herald(aura.build.definition().visual(), at);
+                }
+                continue;
+            }
             if (HERALD_BLOOD.equals(heraldId)) {
-                // 2026-10-24（照 PoE2）：只有普通、魔法怪的屍體會炸（炸掉之後屍體就沒了）；多打牠失血的 15%（不吃加成）
-                if (info == null || !info.lesser()) {
+                // 2026-10-24（照 PoE2）：多打牠失血的 15%（不吃加成）
+                // 2026-10-26（照 PoE2）：任何受過失血的敵人死了都炸；只有普通、魔法怪的屍體炸完會沒掉（這次之前只有流血中的普通、魔法怪才炸）
+                if (info == null || info.bloodLoss() <= 0 && !(ailed != null && ailed.contains(AilmentType.BLEED))) {
                     continue;
                 }
                 castHeraldEffect(credit, aura, at, entity, null);
@@ -1412,7 +1682,7 @@ final class AuraService implements Listener {
                         }
                     }
                 }
-                if (plugin.combat() != null) {
+                if (plugin.combat() != null && info.lesser()) {
                     final tw.exilecore.combat.Corpses.Corpse corpse = plugin.combat().corpses().nearest(entity.getWorld().getUID(),
                             entity.getLocation().getX(), entity.getLocation().getZ(), 0.6, plugin.getServer().getCurrentTick());
                     if (corpse != null) {
@@ -1443,7 +1713,7 @@ final class AuraService implements Listener {
             // 2026-10-18：光環面板上的那一條：共鳴的專屬輔助不佔名額（跟主技能算法一致）
             final int position = state.skills() == null ? -1 : state.skills().find(aura.build.definition().id());
             final tw.exilecore.character.SkillLoadout.Entry entry = position < 0 ? null : state.skills().skill(position);
-            final SkillBuild subBuild = SkillBuild.of(config, sub, aura.build.gemLevel(), state.level(), false, aura.build.supports(),
+            final SkillBuild subBuild = SkillBuild.of(config, sub, aura.build.usableGemLevel(), state.level(), false, aura.build.supports(),
                     state.weaponTags(), plugin.players().sheet(credit), entry == null ? Set.of() : SkillService.resonantOf(entry));
             // 方向：朝屍體附近最近的另一隻怪，沒有就照主人的面向
             LivingEntity target = fixedTarget;
@@ -1476,12 +1746,11 @@ final class AuraService implements Listener {
         thunderHits.remove(player);
     }
 
-    /** 這個玩家腳下的光環圈、焚燒圈收掉。 */
+    /** 這個玩家腳下的光環圈收掉。 */
     private void dropDecals(final UUID player) {
         decalSignature.remove(player);
         if (decals != null) {
             decals.removePrefix("aura:" + player + ":");
-            decals.remove("burn:" + player);
         }
     }
 
@@ -1498,14 +1767,6 @@ final class AuraService implements Listener {
     }
 
     /** 給說明：技能面板上這個光環的狀態。 */
-    static String stateText(final boolean on, final boolean persistent) {
-        if (persistent) {
-            return on ? "<#ffb070>目前：生效中<gray>（常駐技能：綁在上方按鍵格就一直有效，不用按、不保留精魂）"
-                    : "<gray>常駐技能：綁在上方按鍵格就一直生效（不保留精魂，不算光環）<red>（現在沒綁）";
-        }
-        return stateText(on);
-    }
-
     static String stateText(final boolean on) {
         return on ? "<#8fd3ff>目前：開著<gray>（綁在上方按鍵格就一直有效，不用按）"
                 : "<gray>綁在上方按鍵格就一直開著，不用按<red>（沒綁鍵、或精魂不夠時不開）";

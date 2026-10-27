@@ -82,6 +82,8 @@ public final class PassiveMenu extends Menu {
     private PassiveNode previewTarget;
     private List<PassiveNode> previewPath = List.of();
     private final Set<String> previewIds = new HashSet<>();
+    /** 2026-10-26：永恆珠寶征服的節點（畫面顯示征服後的名稱與效果；每次畫細節時重算）。 */
+    private java.util.Map<String, PassiveNode> conquered = java.util.Map.of();
 
     public PassiveMenu(final ExileCore plugin, final Player player, final PassiveTree tree,
                        final Set<String> highlights, final PassiveNode focus) {
@@ -179,6 +181,39 @@ public final class PassiveMenu extends Menu {
         return count > 0 ? "<#55ffff>這個方向還有 " + count + " 個搜尋結果" : "";
     }
 
+    /** 2026-10-27 照站長：目前跳到第幾個珠寶孔（−1 = 還沒跳）。 */
+    private int socketIndex = -1;
+
+    /** 2026-10-27 照站長：在已配置的珠寶孔之間跳（step = 1 下一個、−1 上一個），順序照離起點的距離。 */
+    private void jumpSocket(final int step) {
+        final java.util.Set<String> owned = plugin.players().get(player).passives();
+        final List<PassiveNode> sockets = new ArrayList<>();
+        for (final PassiveNode node : tree.nodes()) {
+            if (node.isSocket() && owned.contains(node.id())) {
+                sockets.add(node);
+            }
+        }
+        if (sockets.isEmpty()) {
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>還沒有配置任何珠寶孔"));
+            return;
+        }
+        final PassiveNode start = passive.start();
+        final int sx = start == null ? 0 : start.x();
+        final int sy = start == null ? 0 : start.y();
+        sockets.sort(java.util.Comparator.<PassiveNode>comparingLong(node -> (long) (node.x() - sx) * (node.x() - sx)
+                + (long) (node.y() - sy) * (node.y() - sy)).thenComparing(PassiveNode::id));
+        socketIndex = socketIndex < 0 ? (step > 0 ? 0 : sockets.size() - 1) : Math.floorMod(socketIndex + step, sockets.size());
+        final PassiveNode node = sockets.get(Math.min(socketIndex, sockets.size() - 1));
+        overview = false;
+        centerOn(node.x(), node.y());
+        redraw();
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.7f);
+        final ItemStack jewel = jewelIn(node);
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<" + SOCKET_COLOR + ">珠寶孔 " + (socketIndex + 1) + "/" + sockets.size() + "："
+                + (jewel == null ? "<gray>空的" : "<white>" + ItemRenderer.escape(net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+                .plainText().serialize(jewel.effectiveName())))));
+    }
+
     private void home() {
         final PassiveNode start = passive.start();
         if (start != null) {
@@ -208,7 +243,8 @@ public final class PassiveMenu extends Menu {
     @Override
     protected void draw() {
         final PlayerState state = plugin.players().get(player);
-        final TreeView view = new TreeView(tree, passive.start(), state.passives(), previewIds, highlights);
+        final TreeView view = new TreeView(tree, passive.start(), state.passives(), previewIds, highlights, PassiveState.rules(plugin, state),
+                PassiveState.ascendancyId(plugin, state));
         final boolean pack = pack();
         if (overview) {
             drawOverview(view, pack);
@@ -224,6 +260,7 @@ public final class PassiveMenu extends Menu {
         final long gold = character == null ? 0 : state.gold();
         final int freeRefunds = character == null ? 0 : character.refundPoints();
         final long refundCost = passive.refundCost();
+        conquered = TimelessJewels.conquered(plugin, state, tree); // 2026-10-26
         for (int row = 0; row < VIEW_HEIGHT; row++) {
             for (int column = 0; column < VIEW_WIDTH; column++) {
                 final TreeView.Tile tile = view.tile(viewX + column, viewY + row);
@@ -241,8 +278,14 @@ public final class PassiveMenu extends Menu {
         }
     }
 
+    /** 2026-10-26：畫面上看到的節點（被永恆珠寶征服的換成征服後的，其他照職業變體）。 */
+    private PassiveNode shown(final PassiveNode raw) {
+        final PassiveNode replaced = conquered.get(raw.id());
+        return replaced != null ? replaced : raw.forClass(classId());
+    }
+
     private String name(final TreeView.Tile tile) {
-        final PassiveNode node = tile.node();
+        final PassiveNode node = shown(tile.node());
         final String color = switch (tile.state()) {
             case OWNED -> node.isStart() ? "<#77ccff>" : "<green>";
             case PATH -> "<#77aaff>";
@@ -264,6 +307,12 @@ public final class PassiveMenu extends Menu {
         return (tile.highlight() ? "<#55ffff>★ " : "") + color + ItemRenderer.escape(shown);
     }
 
+    /** 玩家的職業代號（節點的職業變體用；沒有角色為 null）。 */
+    private String classId() {
+        final tw.exilecore.character.CharacterClass type = plugin.players().get(player).characterClass();
+        return type == null ? null : type.id();
+    }
+
     /** 這個珠寶孔裡的珠寶（沒有、不是珠寶孔為 null）。 */
     private ItemStack jewelIn(final PassiveNode node) {
         return node.isSocket() ? plugin.players().get(player).jewel(node.id()) : null;
@@ -271,7 +320,7 @@ public final class PassiveMenu extends Menu {
 
     private List<String> lore(final TreeView.Tile tile, final TreeView view, final int points, final long gold,
                               final long refundCost, final int freeRefunds) {
-        final PassiveNode node = tile.node();
+        final PassiveNode node = shown(tile.node()); // 2026-10-26：職業變體、永恆珠寶征服
         final PassiveNode start = passive.start();
         final String typeColor = switch (node.type()) {
             case NOTABLE -> "<#f5b942>";
@@ -292,6 +341,16 @@ public final class PassiveMenu extends Menu {
             for (final String line : node.description()) {
                 lore.add("<white>" + ItemRenderer.escape(line));
             }
+            // 2026-10-27 照站長：說明裡的關鍵字（撲殺、秘術增強…）補一次說明
+            for (final String explanation : tw.exilecore.stats.KeywordText.explain(node.description())) {
+                for (final String line : tw.exilecore.stats.KeywordText.wrap(explanation, 30)) {
+                    lore.add("<#9fb4c7>" + ItemRenderer.escape(line));
+                }
+            }
+        }
+        if (conquered.containsKey(node.id())) {
+            final PassiveNode original = tile.node().forClass(classId());
+            lore.add("<#c48bff>被永恆珠寶征服" + (original.name().equals(node.name()) ? "" : "（原本是「" + ItemRenderer.escape(original.name()) + "」）"));
         }
         lore.add("");
         final boolean own = start != null && node.id().equals(start.id());
@@ -301,12 +360,14 @@ public final class PassiveMenu extends Menu {
             if (isAttributeChoice(node)) {
                 final PlayerState owner = plugin.players().get(player);
                 final String chosen = tw.exilecore.character.PlayerStateService.chosenAttribute(owner, owner.characterClass(), node.id());
-                lore.add("<#ffd96a>目前：" + attributeName(chosen) + " <yellow>（左鍵切換：力量 → 敏捷 → 智慧）");
+                lore.add("<#ffd96a>目前：" + attributeName(chosen) + (wisdom(owner)
+                        ? " <yellow>（左鍵切換：力量 → 敏捷 → 智慧 → 傷害 → 防禦 → 消耗效率）" : " <yellow>（左鍵切換：力量 → 敏捷 → 智慧）"));
             }
             if (node.isSocket()) {
                 lore.add(jewel == null ? "<yellow>左鍵：選一顆背包裡的珠寶放進去" : "<yellow>左鍵：把珠寶拿回背包");
             }
-            final boolean refundable = tree.canRefund(plugin.players().get(player).passives(), start, node);
+            final boolean refundable = tree.canRefund(plugin.players().get(player).passives(), start, node,
+                    PassiveState.rules(plugin, plugin.players().get(player)));
             if (!refundable) {
                 lore.add("<green>已配置 <dark_gray>（退掉會切斷路徑）");
             } else if (freeRefunds > 0) {
@@ -352,14 +413,14 @@ public final class PassiveMenu extends Menu {
      * 沒有資源包的空白格（2026-10）：黑色玻璃片、沒有說明；旁邊有路徑預覽的節點時用藍色，讓路線稍微看得出來。
      */
     private ItemStack vanillaEmpty(final TreeView.Tile tile, final TreeView view) {
-        boolean nearPath = false;
-        for (final int[] d : new int[][] {{1, 0}, {-1, 0}, {0, 1}, {0, -1}}) {
-            final PassiveNode near = tree.at(tile.x() + d[0], tile.y() + d[1]);
-            if (near != null && previewIds.contains(near.id())) {
-                nearPath = true;
-            }
-        }
-        final Material material = nearPath ? Material.BLUE_STAINED_GLASS_PANE : Material.BLACK_STAINED_GLASS_PANE;
+        // 2026-10-26：連線經過的空格用顏色畫出來（配了＝綠、路徑預覽＝藍、能配的那一段＝橘、其他＝棕）
+        final TreeView.EdgeState wire = TreeView.brightest(tile);
+        final Material material = wire == null ? Material.BLACK_STAINED_GLASS_PANE : switch (wire) {
+            case OWNED -> Material.GREEN_STAINED_GLASS_PANE;
+            case PATH -> Material.BLUE_STAINED_GLASS_PANE;
+            case LIT -> Material.ORANGE_STAINED_GLASS_PANE;
+            case DIM -> Material.BROWN_STAINED_GLASS_PANE;
+        };
         final ItemStack stack = new ItemStack(material);
         stack.editMeta(meta -> meta.setHideTooltip(true));
         return stack;
@@ -555,7 +616,8 @@ public final class PassiveMenu extends Menu {
                     "<gray>Shift＋點：往下捲一整頁", "<dark_gray>點星空裡空白的地方：視野移到那裡", towardLine(0, 1)));
             set(SLOT_RIGHT, uiIcon("arrow_right", Material.ARROW, "<white>→ 往右看", "<gray>點一下：往右捲 " + SCROLL_STEP + " 格",
                     "<gray>Shift＋點：往右捲一整頁", "<dark_gray>點星空裡空白的地方：視野移到那裡", towardLine(1, 0)));
-            set(SLOT_HOME, icon(Material.COMPASS, "<white>回到起點", "<gray>視野移回職業起點"));
+            set(SLOT_HOME, icon(Material.COMPASS, "<white>回到起點", "<gray>左鍵：視野移回職業起點",
+                    "<gray>右鍵：跳到下一個配了的珠寶孔", "<gray>Shift＋右鍵：跳到上一個")); // 2026-10-27
         }
         final List<String> info = new ArrayList<>();
         info.add("<gray>可用 <white>" + points + "</white>　已配置 <white>" + state.passives().size());
@@ -622,7 +684,9 @@ public final class PassiveMenu extends Menu {
             case SLOT_UP -> scroll(0, -step);
             case SLOT_DOWN -> scroll(0, step);
             case SLOT_HOME -> {
-                if (!overview) {
+                if (click.isRightClick()) {
+                    jumpSocket(click.isShiftClick() ? -1 : 1); // 2026-10-27 照站長：跳到配了的珠寶孔
+                } else if (!overview) {
                     home();
                     redraw();
                 }
@@ -660,7 +724,8 @@ public final class PassiveMenu extends Menu {
     }
 
     private void clickRegion(final int slot) {
-        final TreeView view = new TreeView(tree, passive.start(), plugin.players().get(player).passives(), previewIds, highlights);
+        final TreeView view = new TreeView(tree, passive.start(), plugin.players().get(player).passives(), previewIds, highlights,
+                PassiveState.rules(plugin, plugin.players().get(player)), PassiveState.ascendancyId(plugin, plugin.players().get(player)));
         for (final TreeView.Region region : view.regions(VIEW_WIDTH, VIEW_HEIGHT)) {
             if (region.row() * 9 + region.column() == slot && !region.nodes().isEmpty()) {
                 final PassiveNode landmark = region.landmark();
@@ -686,7 +751,9 @@ public final class PassiveMenu extends Menu {
     private void clickCell(final int slot, final ClickType click) {
         final int x = viewX + slot % 9;
         final int y = viewY + slot / 9;
-        final PassiveNode node = tree.at(x, y);
+        final PassiveNode raw = tree.at(x, y);
+        // 2026-10-26 照站長：別的昇華看不到觀星專屬節點（當作空格）
+        final PassiveNode node = raw == null || tree.hidden(raw, PassiveState.ascendancyId(plugin, plugin.players().get(player))) ? null : raw;
         if (node == null) {
             // 空白的地方：把視野移過去
             final int oldX = viewX;
@@ -729,15 +796,22 @@ public final class PassiveMenu extends Menu {
             // 屬性點（2026-10 PoE2）：配了之後左鍵切換力量／敏捷／智慧，不花錢
             clearPreview();
             final String now = tw.exilecore.character.PlayerStateService.chosenAttribute(state, state.characterClass(), node.id());
+            // 2026-10-26 照 PoE2 旅者的智慧：智慧之後再多傷害、防禦、消耗效率
+            final boolean wisdom = wisdom(state);
             final String next = switch (now) {
                 case "str" -> "dex";
                 case "dex" -> "int";
+                case "int" -> wisdom ? "dmg" : "str";
+                case "dmg" -> "def";
+                case "def" -> "cost";
                 default -> "str";
             };
             plugin.characters().setProgress(player, "attr." + node.id(), next); // 2026-10：存進資料庫（以前只放在記憶體，重登會不見）
             state.markDirty();
             plugin.players().sheet(player);
-            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffd96a>這個屬性點改成 +" + attributeAmount(node) + " " + attributeName(next)));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(tw.exilecore.character.PlayerStateService.WISDOM_CHOICES.contains(next)
+                    ? "<#ffd96a>這個屬性點改成增加 " + attributeAmount(node) + "% " + attributeName(next)
+                    : "<#ffd96a>這個屬性點改成 +" + attributeAmount(node) + " " + attributeName(next)));
             result = PassiveState.Result.success();
         } else if (node.isSocket() && state.passives().contains(node.id())) {
             // 配了的珠寶孔：空的選珠寶放進去，有珠寶的拿回來
@@ -751,7 +825,7 @@ public final class PassiveMenu extends Menu {
                 tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>珠寶拿回背包了"));
             }
         } else if (start != null && !node.isStart() && !state.passives().contains(node.id())
-                && !tree.canAllocate(state.passives(), start, node)) {
+                && !tree.canAllocate(state.passives(), start, node, PassiveState.rules(plugin, state))) {
             // 還沒連到：第一次點畫路徑，第二次點同一個目標才配
             if (node.equals(previewTarget)) {
                 result = passive.allocatePath(previewPath);
@@ -759,10 +833,13 @@ public final class PassiveMenu extends Menu {
                     clearPreview();
                 }
             } else {
-                final List<PassiveNode> path = tree.pathTo(state.passives(), start, node);
+                final List<PassiveNode> path = tree.pathTo(state.passives(), start, node, PassiveState.rules(plugin, state));
                 if (path.isEmpty()) {
                     clearPreview();
-                    result = PassiveState.Result.fail("走不到那裡");
+                    // 2026-10-26 照 PoE2：有解鎖條件的節點（觀星「未見之道」、要先配某個核心）
+                    final PassiveTree.Unlock unlock = tree.unlock(node);
+                    result = PassiveState.Result.fail(unlock == null || !tree.locked(state.passives(), node, PassiveState.rules(plugin, state))
+                            ? "走不到那裡" : unlock.stat() != null ? "只有觀星配了昇華天賦「未見之道」才能配" : "要先配旁邊說明寫的核心才能配");
                 } else {
                     previewTarget = node;
                     previewPath = path;
@@ -816,10 +893,19 @@ public final class PassiveMenu extends Menu {
                 .mapToDouble(tw.exilecore.stats.Modifier::value).sum());
     }
 
+    /** 2026-10-26：有沒有配開路者的旅者的智慧（屬性點可以改給傷害／防禦／消耗效率）。 */
+    private static boolean wisdom(final PlayerState state) {
+        final String nodes = state.progress().get(tw.exilecore.ascendancy.Ascension.NODES);
+        return nodes != null && java.util.Arrays.stream(nodes.split(",")).anyMatch(id -> "travellers_wisdom".equals(id.trim()));
+    }
+
     private static String attributeName(final String key) {
         return switch (key) {
             case "dex" -> "敏捷";
             case "int" -> "智慧";
+            case "dmg" -> "傷害";
+            case "def" -> "護甲、閃避值與能量護盾";
+            case "cost" -> "消耗效率";
             default -> "力量";
         };
     }

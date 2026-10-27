@@ -1,0 +1,51 @@
+Freezing Salvo (poe2db.tw/us/Freezing_Salvo)
+Type: Attack (Tier 3). Tags: AoE, Projectile, Cold, Repeatable
+Attack speed: NOT listed on page | Base crit: not listed (weapon) | Cooldown: none listed | Weapon req: Bows
+Requirements L1-20: char level 1-90, Dex 4-157. Mana 15-105 (L1-20). Projectile speed 7.5 m/s.
+Mechanic: Passively gains Seals over time (1 per 0.75 s, max 10). Using the skill fires a projectile and breaks the Seals, Repeating once per Seal; for each normal Repeat it also Repeats an additional time targeting a different Ice Fragment in its area if able, detonating those Ice Fragments immediately.
+Stats: Attack damage 48-150% (L1-20); impact radius 1.2 m; converts 80% Physical to Cold; 30-68% more Magnitude of Chill inflicted; 30-68% more Freeze Buildup (L1-20).
+Hidden: active skill base secondary area of effect radius 30; movement speed -70% while performing action (+160%/s acceleration, locked 50% duration).
+Quality (0-20): 0-40% more Freeze Buildup; +0-4 maximum Seals.
+
+# TSV (source: https://poe2db.tw/us/Freezing_Salvo; req level/attr blank for 21-40 on page)
+level	attack_damage%	mana	more_freeze_buildup%	more_chill_magnitude%
+1	48%	15	30	30
+2	53%	18	32	32
+3	58%	20	34	34
+4	63%	23	36	36
+5	68%	26	38	38
+6	73%	29	40	40
+7	79%	33	42	42
+8	83%	36	44	44
+9	88%	40	46	46
+10	92%	44	48	48
+11	97%	49	50	50
+12	101%	54	52	52
+13	106%	59	54	54
+14	112%	64	56	56
+15	117%	70	58	58
+16	123%	76	60	60
+17	129%	83	62	62
+18	136%	90	64	64
+19	143%	97	66	66
+20	150%	105	68	68
+21	157%	113	70	70
+22	165%	122	72	72
+23	173%	131	74	74
+24	182%	141	76	76
+25	191%	152	78	78
+26	201%	163	80	80
+27	211%	175	82	82
+28	221%	188	84	84
+29	232%	201	86	86
+30	244%	215	88	88
+31	256%	230	90	90
+32	269%	246	92	92
+33	282%	263	94	94
+34	296%	280	96	96
+35	311%	299	98	98
+36	327%	319	100	100
+37	343%	340	102	102
+38	360%	362	104	104
+39	378%	386	106	106
+40	397%	410	108	108

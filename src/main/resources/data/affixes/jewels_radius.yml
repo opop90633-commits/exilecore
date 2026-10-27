@@ -1,31 +1,38 @@
 # 遺時珠寶（半徑珠寶）的詞綴（2026-10，照 PoE2 0.5 的 Time-Lost 珠寶；資料來源 RePoE poe2 mods.json）。
 # 基底：time_lost_ruby／emerald／sapphire／diamond（bases/jewels.yml），spawn_tags：radius（四種都出）、r_ruby、r_emerald、r_sapphire。
-# radius:屬性 = 「範圍內的小天賦也各給」：珠寶孔周圍半徑內（基本 2 格）每一個已配置的小天賦都多給一次（JewelSockets.radiusModifiers）。
-# jewel.local.radius：半徑多幾格；jewel.local.small_effect／notable_effect：範圍內已配置的小天賦／核心的數值再加 x%。
+# radius:屬性 = 「範圍內的小天賦也各給」：珠寶孔周圍半徑內每一個已配置的小天賦都多給一次（JewelSockets.radiusModifiers）。
+# radius_notable:屬性 = 「範圍內的核心天賦也各給」：範圍內每一個已配置的核心天賦都多給一次。
+#   2026-10-26 照 PoE2：每條半徑詞綴照原作分成小天賦或核心天賦（audit jewels.tsv 的 poe2_node_type）；這次之前全部都是小天賦，
+#   而且最多算 15 個小天賦（原作沒有上限，拿掉了）。
+# 半徑（2026-10-26 照 PoE2，原作座標的距離）：小 1000、中 1150、大 1300（jewel.local.radius 加在 1000 上）；這次之前是 2 格、+1／+2 格。
+# jewel.local.small_effect／notable_effect：範圍內已配置的小天賦／核心的數值再加 x%。
 # unveiled_jr_*：PoE2 的褻瀆半徑珠寶詞綴 → 隱匿（揭露）。
-# 2026-10-22：高階更難出——每高一階的權重相對再 ×0.875（跟裝備詞綴的「×0.8 → ×0.7」同一個比例）；每條詞綴的權重總和不變（出現哪一條的機率不變，只改出哪一階）。
+# 2026-10-27 照 PoE2 原始資料：每一階權重一樣（1000）；poe2db 寫「Modifier weight information cannot be obtained from game files」，遊戲資料每階都是 1。
+#   這次之前（2026-10-22）：高階更難出——每高一階的權重相對再 ×0.875（跟裝備詞綴的「×0.8 → ×0.7」同一個比例）；每條詞綴的權重總和不變（出現哪一條的機率不變，只改出哪一階）。
 
 jr_medium_size:
   type: prefix
   group: jr_medium_size
   spawn_tags: [radius]
   names: [遺時的]
-  text: "半徑更大（+{value} 格）"
+  # 2026-10-26 照 PoE2：半徑升級為中（1000 → 1150，原作單位）；這次之前是 +1 格（value 留著給舊物品讀，mods 改成固定值）
+  text: "半徑升級為中（1150）"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
-    - { stat: jewel.local.radius, type: FLAT, value: "{value}" }
+    - { stat: jewel.local.radius, type: FLAT, value: 150 }
 
 jr_large_size:
   type: prefix
   group: jr_medium_size
   spawn_tags: [radius]
   names: [遺時的]
-  text: "半徑巨大（+{value} 格）"
+  # 2026-10-26 照 PoE2：半徑升級為大（1000 → 1300，原作單位）；這次之前是 +2 格（value 留著給舊物品讀，mods 改成固定值）
+  text: "半徑升級為大（1300）"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 2] }
   mods:
-    - { stat: jewel.local.radius, type: FLAT, value: "{value}" }
+    - { stat: jewel.local.radius, type: FLAT, value: 300 }
 
 jr_small_node_effect:
   type: suffix
@@ -61,34 +68,36 @@ jr_accuracy:
     - { stat: radius:accuracy, type: INCREASED, value: "{value}" }
 
 jr_ailment_chance:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_ailment_chance
   spawn_tags: [r_emerald, r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 點燃、感電、流血與中毒機率"
+  text: "範圍內的核心天賦也各給：增加 {value}% 點燃、感電、流血與中毒機率"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
-    - { stat: radius:ignite.chance, type: INCREASED, value: "{value}" }
-    - { stat: radius:shock.chance, type: INCREASED, value: "{value}" }
-    - { stat: radius:bleed.chance, type: INCREASED, value: "{value}" }
-    - { stat: radius:poison.chance, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:ignite.chance, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:shock.chance, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:bleed.chance, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:poison.chance, type: INCREASED, value: "{value}" }
 
 jr_ailment_effect:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_ailment_effect
   spawn_tags: [r_emerald, r_sapphire]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：增加 {value}% 異常狀態效果（點燃、流血、中毒、感電、冰緩）"
+  text: "範圍內的核心天賦也各給：增加 {value}% 異常狀態效果（點燃、流血、中毒、感電、冰緩）"
   chips: [damage, ailment]   # PoE2 的標籤（AilmentEffect）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
-    - { stat: radius:ignite.magnitude, type: INCREASED, value: "{value}" }
-    - { stat: radius:bleed.magnitude, type: INCREASED, value: "{value}" }
-    - { stat: radius:poison.magnitude, type: INCREASED, value: "{value}" }
-    - { stat: radius:shock.effect, type: INCREASED, value: "{value}" }
-    - { stat: radius:chill.effect, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:ignite.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:bleed.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:poison.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:shock.effect, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:chill.effect, type: INCREASED, value: "{value}" }
 
 jr_ailment_threshold:
   type: suffix
@@ -102,15 +111,16 @@ jr_ailment_threshold:
     - { stat: radius:ailment.threshold, type: INCREASED, value: "{value}" }
 
 jr_areaof_effect:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_areaof_effect
   spawn_tags: [r_ruby, r_sapphire]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：增加 {value}% 範圍效果"
+  text: "範圍內的核心天賦也各給：增加 {value}% 範圍效果"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
-    - { stat: radius:skill.area, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:skill.area, type: INCREASED, value: "{value}" }
 
 jr_armour:
   type: prefix
@@ -136,26 +146,28 @@ jr_armour_break:
     - { stat: radius:armour.break, type: INCREASED, value: "{value}" }
 
 jr_attack_critical_chance:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_attack_critical_chance
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 攻擊暴擊率"
+  text: "範圍內的核心天賦也各給：增加 {value}% 攻擊暴擊率"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
-    - { stat: radius:crit.chance, type: INCREASED, value: "{value}", tags: [attack] }
+    - { stat: radius_notable:crit.chance, type: INCREASED, value: "{value}", tags: [attack] }
 
 jr_attack_critical_damage:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_attack_critical_damage
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 攻擊暴擊傷害加成"
+  text: "範圍內的核心天賦也各給：增加 {value}% 攻擊暴擊傷害加成"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
-    - { stat: radius:crit.bonus, type: INCREASED, value: "{value}", tags: [attack] }
+    - { stat: radius_notable:crit.bonus, type: INCREASED, value: "{value}", tags: [attack] }
 
 jr_attack_damage:
   type: prefix
@@ -169,15 +181,16 @@ jr_attack_damage:
     - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [attack] }
 
 jr_attack_speed:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_attack_speed
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 攻擊速度"
+  text: "範圍內的核心天賦也各給：增加 {value}% 攻擊速度"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
-    - { stat: radius:attack.speed, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:attack.speed, type: INCREASED, value: "{value}" }
 
 jr_bleeding_chance:
   type: prefix
@@ -192,27 +205,29 @@ jr_bleeding_chance:
     - { stat: radius:bleed.chance, type: FLAT, value: "{value}", tags: [attack] }
 
 jr_bleeding_duration:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_bleeding_duration
   spawn_tags: [r_ruby]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 流血持續時間"
+  text: "範圍內的核心天賦也各給：增加 {value}% 流血持續時間"
   chips: [physical, attack, ailment]   # PoE2 的標籤（BleedDuration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
-    - { stat: radius:bleed.duration, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:bleed.duration, type: INCREASED, value: "{value}" }
 
 jr_block:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_block
   spawn_tags: [r_ruby]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：增加 {value}% 格擋率"
+  text: "範圍內的核心天賦也各給：增加 {value}% 格擋率"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 3] }
   mods:
-    - { stat: radius:block.chance, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:block.chance, type: INCREASED, value: "{value}" }
 
 jr_damage_vs_rare_or_unique:
   type: prefix
@@ -249,26 +264,28 @@ jr_bow_damage:
     - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [bow] }
 
 jr_bow_speed:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_bow_speed
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：使用弓時增加 {value}% 攻擊速度"
+  text: "範圍內的核心天賦也各給：使用弓時增加 {value}% 攻擊速度"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
-    - { stat: radius:attack.speed, type: INCREASED, value: "{value}", tags: [bow] }
+    - { stat: radius_notable:attack.speed, type: INCREASED, value: "{value}", tags: [bow] }
 
 jr_cast_speed:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_cast_speed
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 施法速度"
+  text: "範圍內的核心天賦也各給：增加 {value}% 施法速度"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
-    - { stat: radius:cast.speed, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:cast.speed, type: INCREASED, value: "{value}" }
 
 jr_charm_duration:
   type: suffix
@@ -282,15 +299,16 @@ jr_charm_duration:
     - { stat: radius:charm.duration, type: INCREASED, value: "{value}" }
 
 jr_charm_charges_gained:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_charm_charges_gained
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 護符拿到的充能"
+  text: "範圍內的核心天賦也各給：增加 {value}% 護符拿到的充能"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
-    - { stat: radius:charm.charges_gained, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:charm.charges_gained, type: INCREASED, value: "{value}" }
 
 jr_charm_damage_while_using:
   type: prefix
@@ -316,16 +334,17 @@ jr_chaos_damage:
     - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [chaos] }
 
 jr_chill_duration:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_chill_duration
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 冰緩持續時間"
+  text: "範圍內的核心天賦也各給：增加 {value}% 冰緩持續時間"
   chips: [elemental, cold, ailment]   # PoE2 的標籤（IncreasedChillDuration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [6, 12] }
   mods:
-    - { stat: radius:chill.duration, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:chill.duration, type: INCREASED, value: "{value}" }
 
 jr_cold_damage:
   type: prefix
@@ -351,15 +370,16 @@ jr_cold_penetration:
     - { stat: radius:penetration, type: FLAT, value: "{value}", tags: [cold] }
 
 jr_cooldown_speed:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_cooldown_speed
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：冷卻時間減少 {value}%"
+  text: "範圍內的核心天賦也各給：冷卻時間減少 {value}%"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 3] }
   mods:
-    - { stat: radius:skill.cooldown, type: INCREASED, value: "-{value}" }
+    - { stat: radius_notable:skill.cooldown, type: INCREASED, value: "-{value}" }
 
 jr_corpses:
   type: prefix
@@ -373,39 +393,42 @@ jr_corpses:
     - { stat: radius:damage@corpse, type: INCREASED, value: "{value}" }
 
 jr_critical_chance:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_critical_chance
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 暴擊率"
+  text: "範圍內的核心天賦也各給：增加 {value}% 暴擊率"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
-    - { stat: radius:crit.chance, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:crit.chance, type: INCREASED, value: "{value}" }
 
 jr_critical_damage:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_critical_damage
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 暴擊傷害加成"
+  text: "範圍內的核心天賦也各給：增加 {value}% 暴擊傷害加成"
   chips: [damage, critical]   # PoE2 的標籤（CriticalStrikeMultiplier）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
-    - { stat: radius:crit.bonus, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:crit.bonus, type: INCREASED, value: "{value}" }
 
 jr_spell_critical_damage:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_spell_critical_damage
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 法術暴擊傷害加成"
+  text: "範圍內的核心天賦也各給：增加 {value}% 法術暴擊傷害加成"
   chips: [damage, caster, critical]   # PoE2 的標籤（SpellCritMultiplierForJewel）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
-    - { stat: radius:crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
+    - { stat: radius_notable:crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
 
 jr_crossbow_damage:
   type: prefix
@@ -420,39 +443,42 @@ jr_crossbow_damage:
     - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [crossbow] }
 
 jr_crossbow_reload_speed:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_crossbow_reload_speed
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 弩的裝填速度"
+  text: "範圍內的核心天賦也各給：增加 {value}% 弩的裝填速度"
   chips: [attack, speed]   # PoE2 的標籤（CrossbowReloadSpeed）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 7] }
   mods:
-    - { stat: radius:crossbow.reload_speed, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:crossbow.reload_speed, type: INCREASED, value: "{value}" }
 
 jr_crossbow_speed:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_crossbow_speed
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：使用弩時增加 {value}% 攻擊速度"
+  text: "範圍內的核心天賦也各給：使用弩時增加 {value}% 攻擊速度"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
-    - { stat: radius:attack.speed, type: INCREASED, value: "{value}", tags: [crossbow] }
+    - { stat: radius_notable:attack.speed, type: INCREASED, value: "{value}", tags: [crossbow] }
 
 jr_curse_area:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_curse_area
   spawn_tags: [r_sapphire]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：增加 {value}% 詛咒範圍"
+  text: "範圍內的核心天賦也各給：增加 {value}% 詛咒範圍"
   chips: [curse, caster]   # PoE2 的標籤（jewel Curse*）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 6] }
   mods:
-    - { stat: radius:skill.area, type: INCREASED, value: "{value}", tags: [curse] }
+    - { stat: radius_notable:skill.area, type: INCREASED, value: "{value}", tags: [curse] }
 
 jr_curse_duration:
   type: suffix
@@ -467,40 +493,43 @@ jr_curse_duration:
     - { stat: radius:skill.duration, type: INCREASED, value: "{value}", tags: [curse] }
 
 jr_curse_effect:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_curse_effect
   spawn_tags: [r_sapphire]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：增加 {value}% 詛咒效果"
+  text: "範圍內的核心天賦也各給：增加 {value}% 詛咒效果"
   chips: [curse, caster]   # PoE2 的標籤（jewel Curse*）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
-    - { stat: radius:curse.effect, type: INCREASED, value: "{value}", tags: [curse] }
+    - { stat: radius_notable:curse.effect, type: INCREASED, value: "{value}", tags: [curse] }
 
 jr_damagefrom_mana:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_damagefrom_mana
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：受到的傷害有 {value}% 先從魔力扣除"
+  text: "範圍內的核心天賦也各給：受到的傷害有 {value}% 先從魔力扣除"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
-    - { stat: radius:damage.from_mana, type: FLAT, value: "{value}" }
+    - { stat: radius_notable:damage.from_mana, type: FLAT, value: "{value}" }
 
 jr_damaging_ailment_duration:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_damaging_ailment_duration
   spawn_tags: [r_emerald, r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 點燃、流血與中毒持續時間"
+  text: "範圍內的核心天賦也各給：增加 {value}% 點燃、流血與中毒持續時間"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
   mods:
-    - { stat: radius:ignite.duration, type: INCREASED, value: "{value}" }
-    - { stat: radius:bleed.duration, type: INCREASED, value: "{value}" }
-    - { stat: radius:poison.duration, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:ignite.duration, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:bleed.duration, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:poison.duration, type: INCREASED, value: "{value}" }
 
 jr_daze_buildup:
   type: suffix
@@ -515,18 +544,19 @@ jr_daze_buildup:
     - { stat: radius:daze.chance, type: FLAT, value: "{value}" }
 
 jr_elemental_ailment_duration:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_elemental_ailment_duration
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 點燃、感電與冰緩持續時間"
+  text: "範圍內的核心天賦也各給：增加 {value}% 點燃、感電與冰緩持續時間"
   chips: [elemental, fire, cold, lightning, ailment]   # PoE2 的標籤（ElementalAilmentDuration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
   mods:
-    - { stat: radius:ignite.duration, type: INCREASED, value: "{value}" }
-    - { stat: radius:shock.duration, type: INCREASED, value: "{value}" }
-    - { stat: radius:chill.duration, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:ignite.duration, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:shock.duration, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:chill.duration, type: INCREASED, value: "{value}" }
 
 jr_elemental_damage:
   type: prefix
@@ -552,15 +582,16 @@ jr_energy_shield:
     - { stat: radius:es.max, type: INCREASED, value: "{value}" }
 
 jr_energy_shield_delay:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_energy_shield_delay
   spawn_tags: [r_sapphire]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：能量護盾開始回充的等待時間縮短 {value}%"
+  text: "範圍內的核心天賦也各給：能量護盾開始回充的等待時間縮短 {value}%"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 7] }
   mods:
-    - { stat: radius:es.delay, type: INCREASED, value: "-{value}" }   # 2026-10-24 修正：以前少了負號，寫縮短實際是變長
+    - { stat: radius_notable:es.delay, type: INCREASED, value: "-{value}" }   # 2026-10-24 修正：以前少了負號，寫縮短實際是變長
 
 jr_evasion:
   type: prefix
@@ -597,15 +628,16 @@ jr_fire_penetration:
     - { stat: radius:penetration, type: FLAT, value: "{value}", tags: [fire] }
 
 jr_flask_charges_gained:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_flask_charges_gained
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 藥劑拿到的充能"
+  text: "範圍內的核心天賦也各給：增加 {value}% 藥劑拿到的充能"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
   mods:
-    - { stat: radius:flask.charges_gained, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:flask.charges_gained, type: INCREASED, value: "{value}" }
 
 jr_flask_duration:
   type: suffix
@@ -619,15 +651,16 @@ jr_flask_duration:
     - { stat: radius:flask.duration, type: INCREASED, value: "{value}" }
 
 jr_freeze_amount:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_freeze_amount
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 凍結累積"
+  text: "範圍內的核心天賦也各給：增加 {value}% 凍結累積"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
-    - { stat: radius:freeze.buildup, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:freeze.buildup, type: INCREASED, value: "{value}" }
 
 jr_herald_damage:
   type: prefix
@@ -653,38 +686,41 @@ jr_ignite_chance:
     - { stat: radius:ignite.chance, type: INCREASED, value: "{value}" }
 
 jr_ignite_effect:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_ignite_effect
   spawn_tags: [r_ruby, r_sapphire]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：增加 {value}% 點燃傷害"
+  text: "範圍內的核心天賦也各給：增加 {value}% 點燃傷害"
   chips: [damage, elemental, fire, ailment]   # PoE2 的標籤（IgniteEffect）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
-    - { stat: radius:ignite.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:ignite.magnitude, type: INCREASED, value: "{value}" }
 
 jr_increased_duration:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_increased_duration
   spawn_tags: [r_ruby, r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 技能持續時間"
+  text: "範圍內的核心天賦也各給：增加 {value}% 技能持續時間"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
   mods:
-    - { stat: radius:skill.duration, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:skill.duration, type: INCREASED, value: "{value}" }
 
 jr_knockback:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_knockback
   spawn_tags: [r_ruby]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 擊退距離"
+  text: "範圍內的核心天賦也各給：增加 {value}% 擊退距離"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
-    - { stat: radius:skill.knockback, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:skill.knockback, type: INCREASED, value: "{value}" }
 
 jr_life_flask_recovery:
   type: suffix
@@ -699,16 +735,17 @@ jr_life_flask_recovery:
     - { stat: radius:flask.life_recovery, type: INCREASED, value: "{value}" }
 
 jr_life_flask_charge_gen:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_life_flask_charge_gen
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 生命藥劑拿到的充能"
+  text: "範圍內的核心天賦也各給：增加 {value}% 生命藥劑拿到的充能"
   chips: [flask]   # PoE2 的標籤（LifeFlaskChargePercentGeneration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
-    - { stat: radius:flask.charges_gained.life, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:flask.charges_gained.life, type: INCREASED, value: "{value}" }
 
 jr_life_leech:
   type: suffix
@@ -722,37 +759,40 @@ jr_life_leech:
     - { stat: radius:leech.effect, type: INCREASED, value: "{value}" }
 
 jr_lifeon_kill:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_lifeon_kill
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：擊殺時回復 {value}% 最大生命"
+  text: "範圍內的核心天賦也各給：擊殺時回復 {value}% 最大生命"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
-    - { stat: radius:life.on_kill, type: FLAT, value: "{value}" }
+    - { stat: radius_notable:life.on_kill, type: FLAT, value: "{value}" }
 
 jr_life_recoup:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_life_recoup
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：受到的傷害有 {value}% 在 4 秒內回復為生命"
+  text: "範圍內的核心天賦也各給：受到的傷害有 {value}% 在 4 秒內回復為生命"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
-    - { stat: radius:life.recoup, type: FLAT, value: "{value}" }
+    - { stat: radius_notable:life.recoup, type: FLAT, value: "{value}" }
 
 jr_life_regeneration:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_life_regeneration
   spawn_tags: [r_ruby]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 生命回復速度"
+  text: "範圍內的核心天賦也各給：增加 {value}% 生命回復速度"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
   mods:
-    - { stat: radius:life.regen, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:life.regen, type: INCREASED, value: "{value}" }
 
 jr_lightning_damage:
   type: prefix
@@ -790,16 +830,17 @@ jr_mace_damage:
     - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [mace] }
 
 jr_mace_stun:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_mace_stun
   spawn_tags: [r_ruby]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：使用錘時增加 {value}% 暈眩累積"
+  text: "範圍內的核心天賦也各給：使用錘時增加 {value}% 暈眩累積"
   chips: [attack]   # PoE2 的標籤（MaceStun）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [6, 12] }
   mods:
-    - { stat: radius:stun.buildup, type: INCREASED, value: "{value}", tags: [mace] }
+    - { stat: radius_notable:stun.buildup, type: INCREASED, value: "{value}", tags: [mace] }
 
 jr_mana_flask_recovery:
   type: suffix
@@ -814,27 +855,29 @@ jr_mana_flask_recovery:
     - { stat: radius:flask.mana_recovery, type: INCREASED, value: "{value}" }
 
 jr_mana_flask_charge_gen:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_mana_flask_charge_gen
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 魔力藥劑拿到的充能"
+  text: "範圍內的核心天賦也各給：增加 {value}% 魔力藥劑拿到的充能"
   chips: [flask]   # PoE2 的標籤（ManaFlaskChargePercentGeneration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
-    - { stat: radius:flask.charges_gained.mana, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:flask.charges_gained.mana, type: INCREASED, value: "{value}" }
 
 jr_manaon_kill:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_manaon_kill
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：擊殺時回復 {value}% 最大魔力"
+  text: "範圍內的核心天賦也各給：擊殺時回復 {value}% 最大魔力"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
-    - { stat: radius:mana.on_kill, type: FLAT, value: "{value}" }
+    - { stat: radius_notable:mana.on_kill, type: FLAT, value: "{value}" }
 
 jr_mana_regeneration:
   type: suffix
@@ -859,27 +902,29 @@ jr_mark_duration:
     - { stat: radius:skill.duration, type: INCREASED, value: "{value}", tags: [mark] }
 
 jr_mark_effect:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_mark_effect
   spawn_tags: [r_emerald]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：增加 {value}% 印記效果"
+  text: "範圍內的核心天賦也各給：增加 {value}% 印記效果"
   chips: []   # PoE2 的標籤（MarkEffect）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
-    - { stat: radius:mark.effect, type: INCREASED, value: "{value}", tags: [mark] }   # 2026-10-22：印記效果跟詛咒效果分開
+    - { stat: radius_notable:mark.effect, type: INCREASED, value: "{value}", tags: [mark] }   # 2026-10-22：印記效果跟詛咒效果分開
 
 jr_maximum_rage:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_maximum_rage
   spawn_tags: [r_ruby]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：+{value} 最大怒氣"
+  text: "範圍內的核心天賦也各給：+{value} 最大怒氣"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
-    - { stat: radius:rage.max, type: FLAT, value: "{value}" }
+    - { stat: radius_notable:rage.max, type: FLAT, value: "{value}" }
 
 jr_melee_damage:
   type: prefix
@@ -894,26 +939,28 @@ jr_melee_damage:
     - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [melee] }
 
 jr_minion_area:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_minion_area
   spawn_tags: [r_ruby]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：增加 {value}% 召喚物範圍"
+  text: "範圍內的核心天賦也各給：增加 {value}% 召喚物範圍"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
   mods:
-    - { stat: radius:skill.area, type: INCREASED, value: "{value}", tags: [minion] }
+    - { stat: radius_notable:skill.area, type: INCREASED, value: "{value}", tags: [minion] }
 
 jr_minion_attackand_cast_speed:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_minion_attackand_cast_speed
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 召喚物攻擊速度"   # 2026-10-17：召喚物不會施法，拿掉施法速度那半
+  text: "範圍內的核心天賦也各給：增加 {value}% 召喚物攻擊速度"   # 2026-10-17：召喚物不會施法，拿掉施法速度那半
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
-    - { stat: radius:attack.speed, type: INCREASED, value: "{value}", tags: [minion] }
+    - { stat: radius_notable:attack.speed, type: INCREASED, value: "{value}", tags: [minion] }
 
 jr_minion_chaos_resistance:
   type: suffix
@@ -927,27 +974,29 @@ jr_minion_chaos_resistance:
     - { stat: radius:resist.chaos, type: FLAT, value: "{value}", tags: [minion] }
 
 jr_minion_critical_chance:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_minion_critical_chance
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 召喚物暴擊率"
+  text: "範圍內的核心天賦也各給：增加 {value}% 召喚物暴擊率"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
-    - { stat: radius:crit.chance, type: INCREASED, value: "{value}", tags: [minion] }
+    - { stat: radius_notable:crit.chance, type: INCREASED, value: "{value}", tags: [minion] }
 
 jr_minion_critical_multiplier:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_minion_critical_multiplier
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 召喚物暴擊傷害加成"
+  text: "範圍內的核心天賦也各給：增加 {value}% 召喚物暴擊傷害加成"
   chips: [damage, critical, minion]   # PoE2 的標籤（MinionCriticalStrikeMultiplier）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [6, 12] }
   mods:
-    - { stat: radius:crit.bonus, type: INCREASED, value: "{value}", tags: [minion] }
+    - { stat: radius_notable:crit.bonus, type: INCREASED, value: "{value}", tags: [minion] }
 
 jr_minion_damage:
   type: prefix
@@ -985,15 +1034,16 @@ jr_minion_resistances:
     - { stat: radius:resist.lightning, type: FLAT, value: "{value}", tags: [minion] }
 
 jr_movement_speed:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_movement_speed
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 移動速度"
+  text: "範圍內的核心天賦也各給：增加 {value}% 移動速度"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
-    - { stat: radius:movement.speed, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:movement.speed, type: INCREASED, value: "{value}" }
 
 jr_physical_damage:
   type: prefix
@@ -1018,27 +1068,29 @@ jr_poison_chance:
     - { stat: radius:poison.chance, type: FLAT, value: "{value}" }
 
 jr_poison_damage:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_poison_damage
   spawn_tags: [r_emerald]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：增加 {value}% 中毒傷害"
+  text: "範圍內的核心天賦也各給：增加 {value}% 中毒傷害"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
-    - { stat: radius:poison.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:poison.magnitude, type: INCREASED, value: "{value}" }
 
 jr_poison_duration:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_poison_duration
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 中毒持續時間"
+  text: "範圍內的核心天賦也各給：增加 {value}% 中毒持續時間"
   chips: [chaos, ailment]   # PoE2 的標籤（PoisonDuration）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
-    - { stat: radius:poison.duration, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:poison.duration, type: INCREASED, value: "{value}" }
 
 jr_projectile_damage:
   type: prefix
@@ -1052,15 +1104,16 @@ jr_projectile_damage:
     - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [projectile] }
 
 jr_projectile_speed:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_projectile_speed
   spawn_tags: [r_emerald]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：增加 {value}% 投射物速度"
+  text: "範圍內的核心天賦也各給：增加 {value}% 投射物速度"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
   mods:
-    - { stat: radius:skill.projectile_speed, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:skill.projectile_speed, type: INCREASED, value: "{value}" }
 
 jr_quarterstaff_damage:
   type: prefix
@@ -1075,39 +1128,42 @@ jr_quarterstaff_damage:
     - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [quarterstaff] }
 
 jr_quarterstaff_freeze_buildup:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_quarterstaff_freeze_buildup
   spawn_tags: [r_emerald, r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：使用長棍時增加 {value}% 凍結累積"
+  text: "範圍內的核心天賦也各給：使用長棍時增加 {value}% 凍結累積"
   chips: [elemental, cold, ailment]   # PoE2 的標籤（QuarterstaffFreezeBuildup）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
-    - { stat: radius:freeze.buildup, type: INCREASED, value: "{value}", tags: [quarterstaff] }
+    - { stat: radius_notable:freeze.buildup, type: INCREASED, value: "{value}", tags: [quarterstaff] }
 
 jr_quarterstaff_speed:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_quarterstaff_speed
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：使用長棍時增加 {value}% 攻擊速度"
+  text: "範圍內的核心天賦也各給：使用長棍時增加 {value}% 攻擊速度"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
-    - { stat: radius:attack.speed, type: INCREASED, value: "{value}", tags: [quarterstaff] }
+    - { stat: radius_notable:attack.speed, type: INCREASED, value: "{value}", tags: [quarterstaff] }
 
 jr_rageon_hit:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_rageon_hit
   spawn_tags: [r_ruby]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：近戰攻擊擊中時獲得 {value} 點怒氣"
+  text: "範圍內的核心天賦也各給：近戰攻擊擊中時獲得 {value} 點怒氣"
   chips: [attack]   # PoE2 的標籤（RageOnHit）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
   mods:
-    - { stat: radius:rage.on_hit, type: FLAT, value: "{value}", tags: [melee] }
+    - { stat: radius_notable:rage.on_hit, type: FLAT, value: "{value}", tags: [melee] }
 
 jr_shock_chance:
   type: suffix
@@ -1134,39 +1190,42 @@ jr_shock_duration:
     - { stat: radius:shock.duration, type: INCREASED, value: "{value}" }
 
 jr_shock_effect:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_shock_effect
   spawn_tags: [r_emerald, r_sapphire]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：增加 {value}% 感電效果"
+  text: "範圍內的核心天賦也各給：增加 {value}% 感電效果"
   chips: [elemental, lightning, ailment]   # PoE2 的標籤（ShockEffect）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 7] }
   mods:
-    - { stat: radius:shock.effect, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:shock.effect, type: INCREASED, value: "{value}" }
 
 jr_spear_attack_speed:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_spear_attack_speed
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：使用矛時增加 {value}% 攻擊速度"
+  text: "範圍內的核心天賦也各給：使用矛時增加 {value}% 攻擊速度"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
-    - { stat: radius:attack.speed, type: INCREASED, value: "{value}", tags: [spear] }
+    - { stat: radius_notable:attack.speed, type: INCREASED, value: "{value}", tags: [spear] }
 
 jr_spear_critical_damage:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_spear_critical_damage
   spawn_tags: [r_emerald]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：使用矛時增加 {value}% 暴擊傷害加成"
+  text: "範圍內的核心天賦也各給：使用矛時增加 {value}% 暴擊傷害加成"
   chips: [critical, attack]   # PoE2 的標籤（SpearCriticalDamage）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
-    - { stat: radius:crit.bonus, type: INCREASED, value: "{value}", tags: [spear] }
+    - { stat: radius_notable:crit.bonus, type: INCREASED, value: "{value}", tags: [spear] }
 
 jr_spear_damage:
   type: prefix
@@ -1181,15 +1240,16 @@ jr_spear_damage:
     - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [spear] }
 
 jr_spell_critical_chance:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_spell_critical_chance
   spawn_tags: [r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 法術暴擊率"
+  text: "範圍內的核心天賦也各給：增加 {value}% 法術暴擊率"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
-    - { stat: radius:crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
+    - { stat: radius_notable:crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
 
 jr_spell_damage:
   type: prefix
@@ -1203,16 +1263,17 @@ jr_spell_damage:
     - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [spell] }
 
 jr_stun_buildup:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_stun_buildup
   spawn_tags: [r_ruby]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：增加 {value}% 暈眩累積"
+  text: "範圍內的核心天賦也各給：增加 {value}% 暈眩累積"
   chips: []   # PoE2 的標籤（StunDamageIncrease）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
-    - { stat: radius:stun.buildup, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:stun.buildup, type: INCREASED, value: "{value}" }
 
 jr_stun_threshold:
   type: suffix
@@ -1239,16 +1300,17 @@ jr_stun_threshold_if_not_stunned_recently:
     - { stat: radius:stun.threshold@nostun, type: INCREASED, value: "{value}" }
 
 jr_bleeding_effect:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_bleeding_effect
   spawn_tags: [r_ruby]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：增加 {value}% 流血傷害"
+  text: "範圍內的核心天賦也各給：增加 {value}% 流血傷害"
   chips: [damage, physical, attack, ailment]   # PoE2 的標籤（BleedDotMultiplier）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
-    - { stat: radius:bleed.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:bleed.magnitude, type: INCREASED, value: "{value}" }
 
 jr_thorns:
   type: prefix
@@ -1284,15 +1346,16 @@ jr_totem_life:
     - { stat: radius:totem.life, type: INCREASED, value: "{value}" }
 
 jr_warcry_cooldown:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_warcry_cooldown
   spawn_tags: [r_ruby]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：戰吼的冷卻時間減少 {value}%"
+  text: "範圍內的核心天賦也各給：戰吼的冷卻時間減少 {value}%"
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 7] }
   mods:
-    - { stat: radius:skill.cooldown, type: INCREASED, value: "-{value}", tags: [warcry] }
+    - { stat: radius_notable:skill.cooldown, type: INCREASED, value: "-{value}", tags: [warcry] }
 
 jr_warcry_damage:
   type: prefix
@@ -1330,16 +1393,17 @@ jr_melee_damage_if_projectile_hit_recently:
     - { stat: radius:damage@projhit, type: INCREASED, value: "{value}", tags: [melee] }
 
 jr_presence_radius:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
   group: jr_presence_radius
   spawn_tags: [r_ruby, r_sapphire]
   names: [遺時的]
-  text: "範圍內的小天賦也各給：增加 {value}% 臨在範圍"
+  text: "範圍內的核心天賦也各給：增加 {value}% 臨在範圍"
   chips: [aura]   # PoE2 的標籤（PresenceRadius）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [8, 12] }
   mods:
-    - { stat: radius:presence.area, type: INCREASED, value: "{value}" }
+    - { stat: radius_notable:presence.area, type: INCREASED, value: "{value}" }
 
 unveiled_jr_damage_taken_recoup_life:
   type: prefix
@@ -1350,8 +1414,8 @@ unveiled_jr_damage_taken_recoup_life:
   # 舊物品沒有 p，讀的時候 AffixUpgrade 照那一階補上（第 1 階 1% 不變，第 2 階 1% → 0.5%）
   text: "範圍內的小天賦也各給：受到的傷害有 {p/10}% 在 4 秒內回復為生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, p: [10, 10] }
-    - { tier: 2, ilvl: 1, weight: 727, p: [5, 5] }
+    - { tier: 1, ilvl: 60, weight: 1000, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
+    - { tier: 2, ilvl: 1, weight: 1000, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
   mods:
     - { stat: radius:life.recoup, type: FLAT, value: "{p/10}" }
 
@@ -1364,8 +1428,8 @@ unveiled_jr_percent_maximum_mana:
   # 舊物品沒有 p，讀的時候 AffixUpgrade 照那一階補上（第 1 階 1% 不變，第 2 階 1% → 0.5%）
   text: "範圍內的小天賦也各給：增加 {p/10}% 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, p: [10, 10] }
-    - { tier: 2, ilvl: 1, weight: 727, p: [5, 5] }
+    - { tier: 1, ilvl: 60, weight: 1000, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
+    - { tier: 2, ilvl: 1, weight: 1000, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
   mods:
     - { stat: radius:mana.max, type: INCREASED, value: "{p/10}" }
 
@@ -1378,8 +1442,8 @@ unveiled_jr_percent_maximum_life:
   # 舊物品沒有 p，讀的時候 AffixUpgrade 照那一階補上（第 1 階 1% 不變，第 2 階 1% → 0.5%）
   text: "範圍內的小天賦也各給：增加 {p/10}% 最大生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, p: [10, 10] }
-    - { tier: 2, ilvl: 1, weight: 727, p: [5, 5] }
+    - { tier: 1, ilvl: 60, weight: 1000, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
+    - { tier: 2, ilvl: 1, weight: 1000, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
   mods:
     - { stat: radius:life.max, type: INCREASED, value: "{p/10}" }
 
@@ -1390,8 +1454,8 @@ unveiled_jr_global_defences:
   names: [淵痕的, 黯痕的]
   text: "範圍內的小天賦也各給：增加 {value}% 護甲、閃避值與最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 727, value: [2, 2] }
+    - { tier: 1, ilvl: 60, weight: 1000, value: [3, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
+    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
   mods:
     - { stat: radius:armour, type: INCREASED, value: "{value}" }
     - { stat: radius:evasion, type: INCREASED, value: "{value}" }
@@ -1406,8 +1470,8 @@ unveiled_jr_damage_taken_from_mana_before_life:
   # 舊物品沒有 p，讀的時候 AffixUpgrade 照那一階補上（第 1 階 1% 不變，第 2 階 1% → 0.5%）
   text: "範圍內的小天賦也各給：受到的傷害有 {p/10}% 先從魔力扣除"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, p: [10, 10] }
-    - { tier: 2, ilvl: 1, weight: 727, p: [5, 5] }
+    - { tier: 1, ilvl: 60, weight: 1000, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
+    - { tier: 2, ilvl: 1, weight: 1000, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
   mods:
     - { stat: radius:damage.from_mana, type: FLAT, value: "{p/10}" }
 
@@ -1420,8 +1484,8 @@ unveiled_jr_regenerate_percent_life_per_second:
   # 舊物品沒有 regen，讀的時候 AffixUpgrade 照那一階補上（第 1 階 0.1% 不變，第 2 階從 0% 變 0.05%）
   text: "範圍內的小天賦也各給：每秒回復 {regen/100}% 最大生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, regen: [10, 10] }
-    - { tier: 2, ilvl: 1, weight: 727, regen: [5, 5] }
+    - { tier: 1, ilvl: 60, weight: 1000, regen: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
+    - { tier: 2, ilvl: 1, weight: 1000, regen: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
   mods:
     - { stat: radius:life.regen_percent, type: FLAT, value: "{regen/100}" }
 
@@ -1432,8 +1496,8 @@ unveiled_jr_mana_cost_efficiency:
   names: [淵痕之, 黯痕之]
   text: "範圍內的小天賦也各給：減少 {value}% 技能魔力消耗"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 727, value: [2, 2] }
+    - { tier: 1, ilvl: 60, weight: 1000, value: [3, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
+    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
   mods:
     - { stat: radius:skill.cost, type: INCREASED, value: "-{value}" }
 
@@ -1445,8 +1509,8 @@ unveiled_jr_mana_flask_charges_per_second:
   # 2026-10-23：兩階本來都是 6：第 2 階改成 4。換成新變數 charges，舊物品讀的時候照那一階補上（第 2 階 6 → 4）
   text: "範圍內的小天賦也各給：魔力藥劑每分鐘自動拿到 {charges} 點充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, charges: [6, 6] }
-    - { tier: 2, ilvl: 1, weight: 727, charges: [4, 4] }
+    - { tier: 1, ilvl: 60, weight: 1000, charges: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
+    - { tier: 2, ilvl: 1, weight: 1000, charges: [4, 4] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
   mods:
     - { stat: radius:flask.charges_per_minute.mana, type: FLAT, value: "{charges}" }
 
@@ -1457,8 +1521,8 @@ unveiled_jr_life_flask_charges_per_second:
   names: [淵痕之, 黯痕之]
   text: "範圍內的小天賦也各給：生命藥劑每分鐘自動拿到 {value} 點充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, value: [6, 6] }
-    - { tier: 2, ilvl: 1, weight: 727, value: [6, 6] }
+    - { tier: 1, ilvl: 60, weight: 1000, value: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
+    - { tier: 2, ilvl: 1, weight: 1000, value: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
   mods:
     - { stat: radius:flask.charges_per_minute.life, type: FLAT, value: "{value}" }
 
@@ -1469,23 +1533,24 @@ unveiled_jr_charm_charges_per_second:
   names: [淵痕之, 黯痕之]
   text: "範圍內的小天賦也各給：護符每分鐘自動拿到 {value} 點充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 273, value: [6, 6] }
-    - { tier: 2, ilvl: 1, weight: 727, value: [6, 6] }
+    - { tier: 1, ilvl: 60, weight: 1000, value: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
+    - { tier: 2, ilvl: 1, weight: 1000, value: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
   mods:
     - { stat: radius:charm.charges_per_minute, type: FLAT, value: "{value}" }
 
 jr_shapeshift_speed:
+  # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
   group: jr_shapeshift_speed
   spawn_tags: [r_ruby, r_sapphire]
   names: [之遺時]
-  text: "範圍內的小天賦也各給：變身技能增加 {value}% 攻擊與施放速度"
+  text: "範圍內的核心天賦也各給：變身技能增加 {value}% 攻擊與施放速度"
   chips: [speed]   # PoE2 的標籤（ShapeshiftSkillSpeedForJewel）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
-    - { stat: radius:attack.speed, type: INCREASED, value: "{value}", tags: [shapeshift] }
-    - { stat: radius:cast.speed, type: INCREASED, value: "{value}", tags: [shapeshift] }
+    - { stat: radius_notable:attack.speed, type: INCREASED, value: "{value}", tags: [shapeshift] }
+    - { stat: radius_notable:cast.speed, type: INCREASED, value: "{value}", tags: [shapeshift] }
 
 jr_shapeshift_damage:
   type: prefix
@@ -1497,3 +1562,114 @@ jr_shapeshift_damage:
     - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
   mods:
     - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [shapeshift] }
+
+# ---- 2026-10-26 照 PoE2 補的半徑詞綴（屬性鍵已經有的；這次之前沒有）----
+
+jr_blind_on_hit:
+  type: suffix
+  group: jr_blind_on_hit
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：攻擊擊中時 {value}% 機率致盲敵人"
+  chips: [attack]
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: radius:blind.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+jr_chain_from_terrain:
+  type: suffix
+  group: jr_chain_from_terrain
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：投射物有 {value}% 機率從地形額外連鎖一次"
+  chips: [projectile]
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius_notable:skill.chain_terrain, type: FLAT, value: "{value}", tags: [projectile] }
+
+jr_mana_leech:
+  type: suffix
+  group: jr_mana_leech
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 魔力偷取量"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:leech.mana_effect, type: INCREASED, value: "{value}" }
+
+jr_minion_physical_damage_reduction:
+  type: suffix
+  group: jr_minion_physical_damage_reduction
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：召喚物 {value}% 額外物理傷害減免"
+  chips: [minion]
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:physical.reduction, type: FLAT, value: "{value}", tags: [minion] }
+
+jr_piercing_projectiles:
+  type: suffix
+  group: jr_piercing_projectiles
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：投射物有 {value}% 機率穿透敵人"
+  chips: [projectile]
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius_notable:skill.pierce_chance, type: FLAT, value: "{value}", tags: [projectile] }
+
+jr_rage_when_hit:
+  type: suffix
+  group: jr_rage_when_hit
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：被敵人擊中時獲得 {value} 點怒氣"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius_notable:rage.when_hit, type: FLAT, value: "{value}" }
+
+jr_slow_effect_on_self:
+  type: suffix
+  group: jr_slow_effect_on_self
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：你身上減益的緩速幅度減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 5] }
+  mods:
+    - { stat: radius_notable:slow.taken, type: INCREASED, value: "-{value}" }
+
+# PoE2 的褻瀆半徑詞綴（AbyssModRadiusJewel*）缺的「受到的傷害補償為魔力」→ 隱匿（揭露），跟其他 unveiled_jr_* 一樣兩階；
+# 2026-10-26：「擊中你的暴擊率減少」也補上（unveiled_jr_reduced_crit_chance_against_you；這次之前引擎不讀 crit.chance_taken 的減少）
+unveiled_jr_damage_taken_recoup_mana:
+  type: prefix
+  group: unveiled_jr_damage_taken_recoup_mana
+  spawn_tags: [r_emerald, r_ruby, r_sapphire]
+  names: [淵痕的, 黯痕的]
+  text: "範圍內的小天賦也各給：受到的傷害有 {p/10}% 在 4 秒內回復為魔力"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 1000, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
+    - { tier: 2, ilvl: 1, weight: 1000, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
+  mods:
+    - { stat: radius:mana.recoup, type: FLAT, value: "{p/10}" }
+
+# 2026-10-26 照 PoE2 AbyssModRadiusJewelPrefixReducedCriticalHitChanceAgainstYou（Hits have (5-3)% reduced Critical Hit Chance against you）；
+# 跟其他 unveiled_jr_* 一樣兩階（高階 5%、低階 3%）
+unveiled_jr_reduced_crit_chance_against_you:
+  type: suffix
+  group: unveiled_jr_reduced_crit_chance_against_you
+  spawn_tags: [r_emerald, r_ruby, r_sapphire]
+  names: [淵痕之, 黯痕之]
+  text: "範圍內的小天賦也各給：擊中你的暴擊率減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 1000, value: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
+    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
+  mods:
+    - { stat: radius:crit.chance_taken, type: INCREASED, value: "-{value}" }

@@ -28,10 +28,18 @@ public final class Thorns {
     private Thorns() {
     }
 
+    /** 2026-10-26 照 PoE2 天賦樹（觀星專屬）：獲得等同最大生命 x% 的物理荊棘傷害（變形時）。 */
+    public static final String LIFE_PERCENT = "thorns.life_percent";
+
+    private static double lifeThorns(final StatSheet sheet) {
+        final double percent = sheet.flat(LIFE_PERCENT, Set.of());
+        return percent <= 0 ? 0 : sheet.get(StatKeys.LIFE_MAX) * percent / 100.0;
+    }
+
     /** 這張屬性表的荊棘傷害範圍 {下限, 上限}；沒有荊棘回傳 null。 */
     public static double[] range(final StatSheet sheet) {
-        final double min = sheet.flat(StatKeys.THORNS_MIN, Set.of());
-        final double max = sheet.flat(StatKeys.THORNS_MAX, Set.of());
+        final double min = sheet.flat(StatKeys.THORNS_MIN, Set.of()) + lifeThorns(sheet);
+        final double max = sheet.flat(StatKeys.THORNS_MAX, Set.of()) + lifeThorns(sheet);
         if (max <= 0) {
             return null;
         }
@@ -44,6 +52,34 @@ public final class Thorns {
         return new SkillProfile(ID, Set.of(Tags.THORNS), 0,
                 new DamagePacket().set(DamageType.PHYSICAL, min), new DamagePacket().set(DamageType.PHYSICAL, max), Map.of(),
                 List.of(Modifier.flat(StatKeys.FLAG_NO_CRIT, 1, "荊棘")));
+    }
+
+    /**
+     * 2026-10-26：反彈那一下（物理＋傳奇的火焰、冰冷荊棘：焚衣、浮冰圓盾），全部吃「增加荊棘傷害」；沒有荊棘回傳 null。
+     */
+    public static SkillProfile profile(final StatSheet sheet) {
+        final double scale = Math.max(0, 1 + sheet.increased(StatKeys.THORNS_DAMAGE, Set.of()));
+        final DamagePacket min = new DamagePacket();
+        final DamagePacket max = new DamagePacket();
+        boolean any = false;
+        for (final Object[] part : new Object[][] {{DamageType.PHYSICAL, StatKeys.THORNS_MIN, StatKeys.THORNS_MAX},
+                {DamageType.FIRE, tw.exilecore.item.unique.UniqueStats.THORNS_FIRE_MIN, tw.exilecore.item.unique.UniqueStats.THORNS_FIRE_MAX},
+                {DamageType.COLD, tw.exilecore.item.unique.UniqueStats.THORNS_COLD_MIN, tw.exilecore.item.unique.UniqueStats.THORNS_COLD_MAX},
+                // 2026-10-27 照 PoE2 Crackling Barrier：引導時的閃電荊棘
+                {DamageType.LIGHTNING, tw.exilecore.stats.SupportExtraKeys.THORNS_LIGHTNING_MIN, tw.exilecore.stats.SupportExtraKeys.THORNS_LIGHTNING_MAX}}) {
+            final double fromLife = part[0] == DamageType.PHYSICAL ? lifeThorns(sheet) : 0;
+            final double low = sheet.flat((String) part[1], Set.of()) + fromLife;
+            final double high = sheet.flat((String) part[2], Set.of()) + fromLife;
+            if (high > 0) {
+                min.set((DamageType) part[0], Math.max(0, Math.min(low, high)) * scale);
+                max.set((DamageType) part[0], high * scale);
+                any = true;
+            }
+        }
+        // 2026-10-26 照 PoE2 天賦樹：「+x% 荊棘暴擊率」——荊棘可以暴擊，基礎暴擊率就是這個數（這次之前荊棘一律不暴擊）
+        final double crit = sheet.flat(tw.exilecore.stats.KeystoneKeys.THORNS_CRIT, Set.of());
+        return any ? new SkillProfile(ID, Set.of(Tags.THORNS), 0, min, max, Map.of(),
+                List.of(crit > 0 ? Modifier.flat(StatKeys.SPELL_BASE_CRIT, crit, "荊棘") : Modifier.flat(StatKeys.FLAG_NO_CRIT, 1, "荊棘"))) : null;
     }
 
     /**

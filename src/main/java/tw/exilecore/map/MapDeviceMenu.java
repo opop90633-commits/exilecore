@@ -239,7 +239,7 @@ public final class MapDeviceMenu extends Menu {
         }
     }
 
-    /** 終局：選要打哪一個 Boss（好幾個的話）、開第幾階（最高到完成過的最高階），確定才用掉碎片。 */
+    /** 終局：選要打哪一個 Boss、開第幾階（最高到完成過的最高階），確定才用掉碎片（{@link FinalBossMenu}）。 */
     private void chooseFinalTier() {
         final MapConfig config = service.config();
         final List<MapConfig.MapDef> finals = config.regularFinals();
@@ -261,51 +261,8 @@ public final class MapDeviceMenu extends Menu {
             player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem == null ? "終局開不了" : problem)));
             return;
         }
-        final int best = Math.max(1, service.bestTier(player));
-        final List<Dialogs.Option> tiers = new ArrayList<>();
-        for (int tier = best; tier >= 1; tier--) {
-            final double life = config.finalBossLifeMultiplier(tier); // 2026-10-21
-            final double recommended = openable.isEmpty() ? 0 : service.finalRecommendedDps(openable.getFirst(), tier); // 2026-10-21
-            tiers.add(new Dialogs.Option(String.valueOf(tier), "T" + tier + " <gray>（怪物等級 " + service.finalLevel(tier)
-                    + (life > 1.0 ? "・Boss 生命 ×" + number(life) : "")
-                    + (recommended > 0 ? "・建議每秒 " + BossDpsCommand.wan(recommended) : "") + "）"));
-        }
-        final List<Dialogs.Field> fields = new ArrayList<>();
-        if (openable.size() > 1 || finals.size() > 1) {
-            final Set<String> completed = service.completed(player);
-            final List<Dialogs.Option> bosses = new ArrayList<>();
-            for (final MapConfig.MapDef map : openable) {
-                bosses.add(new Dialogs.Option(map.id(), "<#af6025>" + ItemRenderer.escape(map.boss().name()) + " <gray>（" + ItemRenderer.escape(map.name())
-                        + (completed.contains(map.id()) ? "，已打贏）" : "，還沒打贏）")));
-            }
-            fields.add(new Dialogs.Choice("boss", "Boss", bosses, openable.getFirst().id()));
-        }
-        fields.add(new Dialogs.Choice("tier", "階級", tiers, String.valueOf(best)));
-        final CurrencyType fragment = plugin.currencies().repository().get(config.drops().fragment());
-        player.closeInventory();
-        plugin.dialogs().form(player, "<#f5b942>" + ItemRenderer.escape(openable.size() == 1 && finals.size() == 1 ? openable.getFirst().name() : "終局"),
-                List.of("<gray>要用掉 " + config.drops().fragmentCost() + " 片" + (fragment == null ? "天穹碎片" : ItemRenderer.escape(fragment.name())),
-                        "<gray>最高能開到你完成過的最高階（T" + best + "）",
-                        "<dark_gray>階級越高 Boss 越強，掉的地圖與裝備越好"
-                                + (finals.size() > openable.size() ? "；還沒解鎖的 Boss 不在清單裡（地圖裝置的終局按鈕寫著要先打贏誰）" : ""),
-                        MapService.recommendedNote(config.finalDpsCap())), // 2026-10-21 晚
-                fields, "打開傳送門",
-                answers -> {
-                    final int tier;
-                    try {
-                        tier = Integer.parseInt(answers.get("tier"));
-                    } catch (final NumberFormatException e) {
-                        return;
-                    }
-                    final MapConfig.MapDef chosen = answers.get("boss").isEmpty() ? openable.getFirst() : config.find(answers.get("boss"));
-                    if (chosen == null || !chosen.isFinal()) {
-                        return;
-                    }
-                    final String failed = service.activateFinal(player, chosen, tier);
-                    if (failed != null) {
-                        player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(failed)));
-                    }
-                }, null);
+        // 2026-10-27：改成箱子選單（每隻 Boss 一顆按鈕、選中的有外框；階級一顆按鈕）；這次之前是對話框，Boss 一顆按鈕點了循環切換
+        new FinalBossMenu(plugin, player, service).open();
     }
 
     /** 有極境版本的終局（依設定檔順序）。 */

@@ -1,0 +1,51 @@
+Shattering Palm (poe2db.tw/us/Shattering_Palm)
+Type: Attack (Tier 11). Tags: Attack, Melee, AoE, Strike, Trigger, Cold (type list also: Area, MeleeSingleTarget)
+Attack speed: 75% of base | Base crit: not listed (weapon) | Cooldown: none listed | Weapon req: Quarterstaves
+Requirements L1-20: char level 1-90, Dex 4-86, Int 4-86. Mana 5-40 (L1-20).
+Mechanic: Dashes to an enemy and Strikes it, creating a cold wave that attaches ice shards to nearby enemies; dealing enough damage to a shard-coated enemy breaks the shards and triggers an icy explosion.
+Stats: Strike attack damage 35-109% (L1-20), converts 60% Physical to Cold; shards attached to enemies within 3.8 m radius. Explosion attack damage 120-374% (L1-20), converts 100% Physical to Cold, explosion radius 1.6 m.
+Hidden: base melee dash range 65; melee conditional step distance 10; shattering palm debuff damage threshold [32, 12788].
+Quality (0-20): 0-20% more Critical Hit Chance; 0-20% more Area of Effect (applies to strike and explosion).
+
+# TSV (source: https://poe2db.tw/us/Shattering_Palm; req level/attr blank for 21-40 on page)
+level	strike_attack_damage%	mana	explosion_attack_damage%
+1	35%	5	120%
+2	38%	6	132%
+3	42%	7	145%
+4	46%	8	158%
+5	50%	10	171%
+6	54%	11	184%
+7	57%	12	197%
+8	61%	14	208%
+9	64%	15	219%
+10	67%	17	230%
+11	70%	18	241%
+12	74%	20	253%
+13	78%	22	266%
+14	81%	24	279%
+15	86%	26	293%
+16	90%	29	308%
+17	94%	31	323%
+18	99%	34	339%
+19	104%	37	356%
+20	109%	40	374%
+21	115%	43	393%
+22	120%	46	413%
+23	126%	50	433%
+24	133%	54	455%
+25	139%	58	478%
+26	146%	62	502%
+27	154%	67	527%
+28	161%	71	553%
+29	169%	77	581%
+30	178%	82	610%
+31	187%	88	640%
+32	196%	94	672%
+33	206%	100	706%
+34	216%	107	741%
+35	227%	114	778%
+36	238%	122	817%
+37	250%	130	858%
+38	263%	138	901%
+39	276%	147	946%
+40	290%	157	993%

@@ -40,8 +40,8 @@ class SpellTotemSupportTest {
     void supportsOnAHostFollowTheInnerSkill() {
         final SkillDefinition totem = config.skill("totem_casting");
         final SkillDefinition fireball = config.skill("fireball");
-        for (final String id : new String[] {"increased_duration", "faster_casting", "urgent_totems", "overabundance", "totem_fury",
-                "sturdy_totem", "infusion_release", "critical_strikes", "added_fire", "considered_casting"}) {
+        for (final String id : new String[] {"prolonged_duration", "faster_casting", "urgent_totems_iii", "overabundance", "totem_fury",
+                "sturdy_totem", "critical_strikes", "added_fire", "considered_casting"}) {
             assertNull(config.support(id).hostRefusal(totem, fireball), id);
         }
         // 還沒放技能：只知道不能放哪些
@@ -53,7 +53,7 @@ class SpellTotemSupportTest {
                 ? config.skill("leap_slam") : fireball));
         assertNotNull(config.support("spell_echo").hostRefusal(totem, fireball));
         // 宿主本身只吃這幾種
-        assertTrue(config.support("urgent_totems").worksOnHost());
+        assertTrue(config.support("urgent_totems_iii").worksOnHost()); // 2026-10-26：疾樁 I 併入疾樁 III
         assertTrue(config.support("faster_casting").worksOnHost());
         assertTrue(config.support("persistent_ground").worksOnHost());
         assertFalse(config.support("critical_strikes").worksOnHost());
@@ -61,7 +61,9 @@ class SpellTotemSupportTest {
 
     @Test
     void innerSkillRulesAndEncoding() {
-        assertNull(SkillService.linkedProblem(config.skill("supercharged_slam")), "錘子攻擊可以放進英靈圖騰");
+        assertNull(SkillService.linkedProblem(config.skill("boneshatter")), "錘子攻擊可以放進英靈圖騰");
+        // 2026-10-27 照 PoE2 Ancestral Warrior Totem：千鈞砸是引導（Channel），原作不能給英靈用（這次之前測的就是千鈞砸、可以放）
+        assertNotNull(SkillService.linkedProblem(config.skill("supercharged_slam")));
         assertNotNull(SkillService.linkedProblem(config.skill("fireball")));
         final SkillLoadout.Entry inner = new SkillLoadout.Entry("fireball", 18, 4, List.of());
         final SkillLoadout.Entry host = new SkillLoadout.Entry("totem_casting", 20, 5, List.of("", "added_fire", "", "critical_strikes~", ""))

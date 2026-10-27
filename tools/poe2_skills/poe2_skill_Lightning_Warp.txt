@@ -1,0 +1,51 @@
+Lightning Warp (poe2db.tw/us/Lightning_Warp)
+Type: Spell (Tier 9). Tags: AoE, Lightning, Duration, Remnant, Repeatable
+Cast time: 0.50 sec | Base crit: 11.00% | Cooldown: none listed | Weapon req: none
+Requirements L1-20: char level 1-90, Int 4-157. Mana 8-83 (L1-20).
+Mechanic: Target an enemy; if it is below the Cull threshold you teleport into it, destroying it and exploding for Lightning damage around you. If it is above the threshold it gets a 4 s debuff that triggers the same teleport/explosion if it falls below Cull during that time. Also works on Ball Lightning projectiles; targeting leaves Shocked Ground; success grants a Lightning Infusion; enemies that can be Culled are highlighted.
+Stats: Explosion deals 2-30 (L1) to 54-1032 (L20) Lightning damage; explosion and Shocked Ground radius 3 m; Shocked Ground duration 8 s; debuff duration 4 s.
+Quality (0-20): up to 10% increased Shock magnitude; up to 40% more Cast Speed.
+Base Damage column: 100%,100%,100% at every level.
+
+# TSV (source: https://poe2db.tw/us/Lightning_Warp; req level/attr blank for 21-40 on page)
+level	lightning_damage(min-max)	mana
+1	2-30	8
+2	2-41	9
+3	3-56	11
+4	4-73	13
+5	5-92	15
+6	6-114	17
+7	7-139	19
+8	9-168	22
+9	11-200	25
+10	12-236	28
+11	15-278	32
+12	17-325	36
+13	20-378	40
+14	23-439	45
+15	27-509	50
+16	31-588	55
+17	36-678	61
+18	41-780	68
+19	47-898	75
+20	54-1032	83
+21	62-1186	92
+22	72-1362	101
+23	82-1564	112
+24	95-1797	123
+25	109-2064	135
+26	125-2371	148
+27	143-2726	162
+28	165-3136	178
+29	190-3609	195
+30	219-4156	213
+31	252-4790	233
+32	291-5526	254
+33	336-6382	278
+34	388-7376	303
+35	449-8535	330
+36	520-9887	360
+37	604-11467	392
+38	701-13315	427
+39	815-15480	464
+40	948-18020	505

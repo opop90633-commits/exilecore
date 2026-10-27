@@ -90,7 +90,8 @@ class CurrencySkinTest {
             }
             arts.add(art);
             final String material = type.material().toLowerCase(java.util.Locale.ROOT);
-            assertTrue(currencySkins.contains(new UiPack.CurrencySkin(art, material)),
+            // 2026-10-27：星籤多了稀有度外框（CurrencySkin 的 frame），只比代號與原版物品
+            assertTrue(currencySkins.stream().anyMatch(skin -> skin.artId().equals(art) && skin.vanillaItem().equals(material)),
                     type.id() + " 的圖要掛在 " + material + " 上");
         }
         // currency_art.txt 的每張圖都要有通貨在用；技能寶石、輔助寶石、星幣券的圖不是 currencies.yml 的通貨，WebModule 直接掛
@@ -120,6 +121,9 @@ class CurrencySkinTest {
     @Test
     void everyCurrencyCaseShowsItsOwnModel() throws IOException {
         for (final UiPack.CurrencySkin skin : currencySkins) {
+            if (skin.frame() != 0) {
+                continue; // 2026-10-27：星籤的稀有度外框另外測（omensGetARarityFrame）
+            }
             final Map<String, String> cases = cases(skin.vanillaItem());
             assertEquals("exilecore:item/currency/" + skin.artId(), cases.get(CurrencyArt.modelKey(skin.artId())),
                     skin.artId() + " 要在 " + skin.vanillaItem() + " 的定義裡");
@@ -165,7 +169,10 @@ class CurrencySkinTest {
         for (final String distilled : List.of("distilled_ire", "distilled_guilt", "distilled_greed", "distilled_paranoia")) {
             assertEquals("exilecore:item/currency/" + distilled, bottle.get(CurrencyArt.modelKey(distilled)), distilled);
         }
-        assertEquals(6, bottle.size());
+        // 2026-10-27：新的蒸餾情緒（嫉妒、厭惡…共 9 種）也有圖了，都掛在玻璃瓶上；這次之前寫死 6（2 個空瓶提示＋4 種蒸餾）
+        final long distilledOnBottle = currencySkins.stream().filter(skin -> skin.vanillaItem().equals("glass_bottle")).count();
+        assertTrue(distilledOnBottle >= 13, "蒸餾情緒：" + distilledOnBottle);
+        assertEquals(2 + distilledOnBottle, bottle.size());
         // 傳奇飾品跟通貨用同一個原版物品（例如火花石跟傳奇護身符都是紫水晶碎片）：兩邊都要有
         final Set<String> shared = new HashSet<>();
         for (final UiPack.CurrencySkin currency : currencySkins) {
@@ -194,8 +201,12 @@ class CurrencySkinTest {
             inFrame.put(object.get("when").getAsString(), model.has("model") && model.get("model").isJsonPrimitive() ? model.get("model").getAsString() : "?");
         }
         for (final UiPack.CurrencySkin skin : currencySkins) {
+            if (!CurrencyArt.has(skin.artId())) {
+                continue; // 2026-10-27：沒有自己的圖的星籤（currency:omen_tier_*）選到時框裡照原版物品畫
+            }
             assertEquals("exilecore:item/currency/" + skin.artId(), inFrame.get(CurrencyArt.modelKey(skin.artId())), skin.artId());
         }
+        assertFalse(UiPack.isArtKey(CurrencyArt.modelKey(tw.exilecore.currency.OmenRarity.RARE.artId())));
         for (final UiPack.UniqueSkin skin : uniqueSkins) {
             assertEquals("exilecore:item/unique/" + skin.id(), inFrame.get(tw.exilecore.item.UniqueArt.modelKey(skin.id())), skin.id());
         }
@@ -205,6 +216,67 @@ class CurrencySkinTest {
         assertFalse(UiPack.isArtKey("paper"));
         assertFalse(UiPack.isArtKey("life"));
         assertFalse(UiPack.isArtKey(null));
+    }
+
+    /** 2026-10-27：星籤照稀有度（omen.weight）在格子裡畫外框：漸層底框＋圖＋實線外框，顏色是那一級的顏色。 */
+    @Test
+    void omensGetARarityFrame() {
+        final Set<tw.exilecore.currency.OmenRarity> seen = new HashSet<>();
+        for (final CurrencyType type : currencies.all()) {
+            final tw.exilecore.currency.OmenRarity rarity = tw.exilecore.currency.OmenRarity.of(type);
+            if (rarity == null) {
+                continue;
+            }
+            seen.add(rarity);
+            final String art = CurrencyArt.artOf(type) != null ? CurrencyArt.artOf(type) : rarity.artId();
+            final String material = type.material().toLowerCase(java.util.Locale.ROOT);
+            assertTrue(currencySkins.contains(new UiPack.CurrencySkin(art, material, false, 0, rarity.rgb())), type.id());
+            final JsonObject select = UiPackTest.vanillaSelect(json("assets/minecraft/items/" + material + ".json"));
+            JsonObject found = null;
+            for (final JsonElement entry : select.getAsJsonArray("cases")) {
+                if (entry.getAsJsonObject().get("when").getAsString().equals(CurrencyArt.modelKey(art))) {
+                    found = entry.getAsJsonObject().getAsJsonObject("model");
+                }
+            }
+            assertNotNull(found, type.id() + " 在 " + material + " 上要有外框");
+            final com.google.gson.JsonArray layers = found.getAsJsonArray("cases").get(0).getAsJsonObject()
+                    .getAsJsonObject("model").getAsJsonArray("models");
+            assertEquals(3, layers.size(), "底框、圖、實線外框");
+            assertEquals("exilecore:item/ui/rarity_frame", layers.get(0).getAsJsonObject().get("model").getAsString());
+            assertEquals("exilecore:item/ui/unique_outline", layers.get(2).getAsJsonObject().get("model").getAsString());
+            assertEquals(rarity.rgb(), layers.get(2).getAsJsonObject().getAsJsonArray("tints").get(0).getAsJsonObject().get("value").getAsInt());
+            assertTrue(json("assets/minecraft/items/" + material + ".json").get("oversized_in_gui").getAsBoolean(), material);
+            assertFalse(material.equals("book"), type.id() + "：星籤不要再全部用書（2026-10-27 照作用換成比較直觀的原版物品）");
+        }
+        assertEquals(Set.of(tw.exilecore.currency.OmenRarity.values()), seen, "四種稀有度都有星籤");
+        assertEquals(tw.exilecore.currency.OmenRarity.EXALTED, tw.exilecore.currency.OmenRarity.of(currencies.get("omen_whittling")));
+        assertEquals(tw.exilecore.currency.OmenRarity.COMMON, tw.exilecore.currency.OmenRarity.of(currencies.get("omen_sinistral_coronation")));
+        assertNull(tw.exilecore.currency.OmenRarity.of(currencies.get("annul_orb")));
+    }
+
+    /**
+     * 2026-10-27 站長：「星籤 我希望用材質包去畫」：每種星籤都有自己的圖（currency_art.txt 的 omen_*，tools/gen_currency_art.py 畫的籤），
+     * 物品標記是 currency:<星籤代號>，掛在它的原版物品與以前的書上，外框照稀有度。這次之前只有 6 種有圖，其他的掛 currency:omen_tier_*（框裡畫原版的樣子）。
+     */
+    @Test
+    void everyOmenHasItsOwnArt() {
+        final Map<String, String> book = cases("book");
+        int omens = 0;
+        for (final CurrencyType type : currencies.all()) {
+            final tw.exilecore.currency.OmenRarity rarity = tw.exilecore.currency.OmenRarity.of(type);
+            if (rarity == null) {
+                continue;
+            }
+            omens++;
+            assertEquals(type.id(), CurrencyArt.artOf(type), type.id() + " 要有自己的圖（currency_art.txt）");
+            assertEquals("currency:" + type.id(), CurrencyArt.modelKey(CurrencyArt.artOf(type)));
+            assertTrue(currencySkins.contains(new UiPack.CurrencySkin(type.id(), "book", false, 0, rarity.rgb())),
+                    type.id() + "：以前做的書也要畫新的圖");
+            assertNotNull(book.get(CurrencyArt.modelKey(type.id())), type.id() + " 在書的定義裡");
+            assertTrue(UiPack.isArtKey(CurrencyArt.modelKey(type.id())), type.id() + "：選到時框裡畫它的圖");
+        }
+        assertEquals(26, omens);
+        assertTrue(currencySkins.stream().noneMatch(skin -> skin.artId().startsWith("omen_tier_")), "都有圖了，不用再照原版的樣子畫");
     }
 
     @Test

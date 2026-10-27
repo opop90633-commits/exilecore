@@ -11,6 +11,7 @@ import tw.exilecore.character.CurrencyPouch;
 import tw.exilecore.character.PlayerState;
 import tw.exilecore.currency.Crafting;
 import tw.exilecore.currency.CurrencyType;
+import tw.exilecore.currency.InstilRecipes;
 import tw.exilecore.gui.Menu;
 import tw.exilecore.item.ItemBase;
 import tw.exilecore.item.ItemData;
@@ -25,8 +26,10 @@ import java.util.Locale;
 import java.util.Optional;
 
 /**
- * 注入（PoE2 的蒸餾情緒）：拿著蒸餾情緒點背包裡的項鍊會打開這裡——列出天賦樹所有的核心，每個寫著要哪一種情緒（看離天賦樹中心多遠）、
- * 你有幾顆；買得起的有綠框，點一個就花 3 顆把它注入項鍊（項鍊上原本注入的換掉）。情緒先從背包扣，再從通貨袋扣。
+ * 注入（PoE2 的蒸餾情緒）：拿著蒸餾情緒點背包裡的項鍊會打開這裡——列出能注入的核心，每個寫著它的配方（三種情緒，照順序）、
+ * 你各有幾顆；買得起的有綠框，點一個就照配方花三顆把它注入項鍊（項鍊上原本注入的換掉）。情緒先從背包扣，再從通貨袋扣。
+ * 2026-10-27 照 PoE2 0.5：每個核心固定的配方（{@link InstilRecipes}，沒有配方的核心不列）；這次之前每個核心都能注入，
+ * 花 3 顆同一種情緒、哪一種看離天賦樹中心多遠。
  */
 public final class InstilMenu extends Menu {
 
@@ -56,24 +59,40 @@ public final class InstilMenu extends Menu {
         this.query = query == null ? "" : query.trim();
     }
 
-    /** 這個核心要的情緒。 */
-    private CurrencyType emotionFor(final PassiveNode node) {
-        final MapEventConfig.Delirium delirium = plugin.maps() != null ? plugin.maps().eventConfig().delirium() : new MapEventConfig().delirium();
-        final String id = delirium.emotion(Crafting.instilTier(node.x(), node.y()));
-        return id == null ? null : plugin.currencies().repository().get(id);
+    private MapEventConfig.Delirium delirium() {
+        return plugin.maps() != null ? plugin.maps().eventConfig().delirium() : new MapEventConfig().delirium();
+    }
+
+    /** 情緒的名稱（設定裡沒有的顯示代號）。 */
+    private String emotionName(final String id) {
+        final CurrencyType type = plugin.currencies().repository().get(id);
+        return type == null ? id : type.name();
+    }
+
+    /** 這個核心的配方裡最稀有的情緒排第幾（排序用；map_events.yml 的 delirium.emotions 由便宜到稀有）。 */
+    private int rarity(final PassiveNode node) {
+        final List<String> order = delirium().emotions();
+        int max = -1;
+        final List<String> recipe = InstilRecipes.recipe(node.id());
+        if (recipe != null) {
+            for (final String id : recipe) {
+                max = Math.max(max, order.indexOf(id));
+            }
+        }
+        return max;
     }
 
     /** 背包＋通貨袋裡有幾顆。 */
-    private int owned(final CurrencyType emotion) {
+    private int owned(final String emotionId) {
         int count = 0;
         for (final ItemStack stack : player.getInventory().getContents()) {
-            if (stack != null && !stack.isEmpty() && plugin.currencies().read(stack).map(type -> type.id().equals(emotion.id())).orElse(false)) {
+            if (stack != null && !stack.isEmpty() && plugin.currencies().read(stack).map(type -> type.id().equals(emotionId)).orElse(false)) {
                 count += stack.getAmount();
             }
         }
         final PlayerState state = plugin.players().get(player);
         if (state.bag().usable()) {
-            count += state.bag().pouch().amount(emotion.id());
+            count += state.bag().pouch().amount(emotionId);
         }
         return count;
     }
@@ -81,8 +100,10 @@ public final class InstilMenu extends Menu {
     private List<PassiveNode> candidates() {
         final List<PassiveNode> list = new ArrayList<>();
         final String needle = query.toLowerCase(Locale.ROOT);
-        for (final PassiveNode node : tree.nodes()) {
-            if (node.type() != PassiveNode.Type.NOTABLE) {
+        // 2026-10-27 照 PoE2 0.5：天賦樹上的核心加上塗油限定的核心（PassiveTree.anointable）；沒有配方的不能注入
+        for (final PassiveTree.Anointable anointable : tree.anointable()) {
+            final PassiveNode node = anointable.node();
+            if (InstilRecipes.recipe(node.id()) == null) {
                 continue;
             }
             if (!needle.isEmpty()) {
@@ -96,7 +117,7 @@ public final class InstilMenu extends Menu {
             }
             list.add(node);
         }
-        list.sort(Comparator.comparingInt((PassiveNode node) -> Crafting.instilTier(node.x(), node.y())).thenComparing(PassiveNode::name));
+        list.sort(Comparator.comparingInt(this::rarity).thenComparing(PassiveNode::name));
         return list;
     }
 
@@ -116,22 +137,23 @@ public final class InstilMenu extends Menu {
             }
             final PassiveNode node = all.get(index);
             shown.add(node);
-            final CurrencyType emotion = emotionFor(node);
-            final int have = emotion == null ? 0 : owned(emotion);
-            final boolean affordable = emotion != null && have >= Crafting.INSTIL_COST;
+            final boolean affordable = Crafting.instilProblem(node.id(), this::owned, this::emotionName) == null;
             final List<String> lore = new ArrayList<>();
-            lore.add("<#f5b942>核心 <dark_gray>（離中心 " + Math.max(Math.abs(node.x()), Math.abs(node.y())) + " 格）");
+            lore.add(tree.isAnointOnly(node.id()) ? "<#c77dff>塗油限定核心 <dark_gray>（天賦樹上沒有，只能注入）" : "<#f5b942>核心");
             for (final String line : node.description()) {
                 lore.add("<white>" + ItemRenderer.escape(line));
             }
             lore.add("");
-            if (emotion == null) {
-                lore.add("<red>設定裡沒有這一階的蒸餾情緒");
-            } else {
-                lore.add((affordable ? "<green>" : "<red>") + "要 " + Crafting.INSTIL_COST + " 顆" + ItemRenderer.escape(emotion.name())
-                        + "<gray>（你有 " + have + "）");
-                lore.add(affordable ? "<yellow>左鍵：注入這個核心" : "<dark_gray>幻霧的獎勵會掉蒸餾情緒");
+            lore.add("<gray>配方（照順序）：");
+            for (final String id : InstilRecipes.recipe(node.id())) {
+                lore.add("<dark_gray>· <white>" + ItemRenderer.escape(emotionName(id)));
             }
+            for (final java.util.Map.Entry<String, Integer> entry : InstilRecipes.cost(node.id()).entrySet()) {
+                final int have = owned(entry.getKey());
+                lore.add((have >= entry.getValue() ? "<green>" : "<red>") + "要 " + entry.getValue() + " 顆"
+                        + ItemRenderer.escape(emotionName(entry.getKey())) + "<gray>（你有 " + have + "）");
+            }
+            lore.add(affordable ? "<yellow>左鍵：注入這個核心" : "<dark_gray>幻霧的獎勵會掉蒸餾情緒");
             if (node.id().equals(current)) {
                 lore.add("<#c77dff>這條項鍊現在注入的就是它");
             } else if (current != null) {
@@ -152,12 +174,10 @@ public final class InstilMenu extends Menu {
         info.add("<gray>項鍊：" + (amulet == null ? "<red>不見了" : "<white>" + ItemRenderer.escape(amuletName(amulet))));
         info.add(current == null ? "<gray>目前沒有注入" : "<gray>目前注入：<#c77dff>" + ItemRenderer.escape(nodeName(current)));
         info.add("");
-        info.add("<gray>離天賦樹中心越遠的核心要越稀有的情緒：");
-        final MapEventConfig.Delirium delirium = plugin.maps() != null ? plugin.maps().eventConfig().delirium() : new MapEventConfig().delirium();
-        final String[] ranges = {"≤7 格", "8–11 格", "12–15 格", "16 格以上"};
-        for (int tier = 1; tier <= 4; tier++) {
-            final CurrencyType emotion = delirium.emotion(tier) == null ? null : plugin.currencies().repository().get(delirium.emotion(tier));
-            info.add("<dark_gray>" + ranges[tier - 1] + "：<white>" + (emotion == null ? "—" : ItemRenderer.escape(emotion.name()) + " <gray>（你有 " + owned(emotion) + "）"));
+        info.add("<gray>每個核心有固定的三種情緒配方（同一種可以重複）");
+        info.add("<gray>你的情緒（便宜 → 稀有）：");
+        for (final String id : delirium().emotions()) {
+            info.add("<dark_gray>· <white>" + ItemRenderer.escape(emotionName(id)) + " <gray>" + owned(id));
         }
         info.add("");
         info.add("<gray>一條項鍊只能注入一個核心，再注入就換掉");
@@ -171,7 +191,7 @@ public final class InstilMenu extends Menu {
     }
 
     private String nodeName(final String id) {
-        final PassiveNode node = tree.node(id);
+        final PassiveNode node = tree.anointNode(id);
         return node == null ? id : node.name();
     }
 
@@ -234,29 +254,37 @@ public final class InstilMenu extends Menu {
             fail(data.mirrored() ? "鏡像複製品不能再改造" : "已腐化的物品不能再改造");
             return;
         }
-        final CurrencyType emotion = emotionFor(node);
-        if (emotion == null) {
-            fail("設定裡沒有這一階的蒸餾情緒");
-            return;
-        }
         if (node.id().equals(data.instilled())) {
             fail("這條項鍊已經注入這個核心了");
             return;
         }
-        if (owned(emotion) < Crafting.INSTIL_COST) {
-            fail("要 " + Crafting.INSTIL_COST + " 顆" + emotion.name() + "，你有 " + owned(emotion));
+        final String problem = Crafting.instilProblem(node.id(), this::owned, this::emotionName);
+        if (problem != null) {
+            fail(problem);
             return;
         }
-        consume(emotion, Crafting.INSTIL_COST);
+        final java.util.Map<String, Integer> cost = InstilRecipes.cost(node.id());
+        for (final java.util.Map.Entry<String, Integer> entry : cost.entrySet()) {
+            consume(entry.getKey(), entry.getValue());
+        }
         final String before = plugin.items().toJson(data);
         Crafting.instil(data, node.id());
         plugin.items().update(stack, data);
         player.getInventory().setItem(amuletSlot, stack);
         final PlayerState state = plugin.players().get(player);
-        plugin.currencies().recordUse(state.hasCharacter() ? state.character().id() : null, player.getName(), data.uuid(), emotion.id(),
-                before, plugin.items().toJson(data));
-        // 2026-10-18：recordUse 只記 1 顆消耗，注入實際用掉 INSTIL_COST 顆，補記其餘的
-        plugin.economy().ledger().consumed(emotion.id(), tw.exilecore.economy.EconomyLedger.CRAFT, Crafting.INSTIL_COST - 1);
+        // 2026-10-27：配方可能有好幾種情緒——第一種記使用紀錄（recordUse 記 1 顆消耗），其餘照實際用掉的補記消耗
+        boolean first = true;
+        for (final java.util.Map.Entry<String, Integer> entry : cost.entrySet()) {
+            if (first) {
+                plugin.currencies().recordUse(state.hasCharacter() ? state.character().id() : null, player.getName(), data.uuid(), entry.getKey(),
+                        before, plugin.items().toJson(data));
+            }
+            final int extra = entry.getValue() - (first ? 1 : 0);
+            if (extra > 0) {
+                plugin.economy().ledger().consumed(entry.getKey(), tw.exilecore.economy.EconomyLedger.CRAFT, extra);
+            }
+            first = false;
+        }
         plugin.players().markDirty(player);
         plugin.characters().save(player);
         player.playSound(player.getLocation(), Sound.BLOCK_BREWING_STAND_BREW, 0.9f, 1.3f);
@@ -267,12 +295,12 @@ public final class InstilMenu extends Menu {
     }
 
     /** 先扣背包裡的，再扣通貨袋。 */
-    private void consume(final CurrencyType emotion, final int amount) {
+    private void consume(final String emotionId, final int amount) {
         int left = amount;
         final ItemStack[] contents = player.getInventory().getContents();
         for (int i = 0; i < contents.length && left > 0; i++) {
             final ItemStack stack = contents[i];
-            if (stack == null || stack.isEmpty() || !plugin.currencies().read(stack).map(type -> type.id().equals(emotion.id())).orElse(false)) {
+            if (stack == null || stack.isEmpty() || !plugin.currencies().read(stack).map(type -> type.id().equals(emotionId)).orElse(false)) {
                 continue;
             }
             final int take = Math.min(left, stack.getAmount());
@@ -282,7 +310,7 @@ public final class InstilMenu extends Menu {
         }
         if (left > 0) {
             final CurrencyPouch pouch = plugin.players().get(player).bag().pouch();
-            left -= pouch.withdraw(emotion.id(), left);
+            left -= pouch.withdraw(emotionId, left);
             plugin.players().get(player).markDirty();
         }
     }

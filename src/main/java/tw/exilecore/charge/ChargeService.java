@@ -25,7 +25,7 @@ import java.util.UUID;
  * {@link #grant}：直接給（聚星戰吼）。上限 = charges.yml 的基礎值 + {@code charge.max.代號}；持續時間 = 基礎 ×（1 + {@code charge.duration}）。
  * 沒有任何來源（詞綴、天賦、輔助寶石、戰吼）的玩家一顆球也不會有。
  * 用掉：{@link #consume}（瞬影擊冷卻中消耗一顆怒星直接放）。
- * 球不存檔：登出、死亡就清掉（撐 10 秒的東西）。
+ * 球不存檔：登出、死亡就清掉（撐 15 秒的東西）。
  */
 public final class ChargeService implements Listener {
 
@@ -37,7 +37,7 @@ public final class ChargeService implements Listener {
     private final Map<UUID, Map<String, ChargeBag>> bags = new HashMap<>();
     /** 事件給戰星的冷卻（2026-10）：玩家 → 事件 → 下一次可以給的 tick。 */
     private final Map<UUID, Map<String, Long>> eventReady = new HashMap<>();
-    /** 定期給戰星（2026-10，星律）：玩家 → 下一次給的 tick。 */
+    /** 定期給戰星（2026-10；2026-10-26 星律拿掉了，charge.periodic 屬性還在）：玩家 → 下一次給的 tick。 */
     private final Map<UUID, Long> periodicNext = new HashMap<>();
 
     /** 屬性鍵（2026-10）：某個事件給一顆戰星的機率，FLAT 百分比點數；charge.event.事件.代號（例如 charge.event.stun_applied.endurance）。 */
@@ -155,7 +155,7 @@ public final class ChargeService implements Listener {
         Map<String, Double> chances = null;
         final boolean ferocity = effective.flat(SUP_FEROCITY, context) > 0; // 2026-10-24：狂速的技能不會產生怒星
         for (final ChargeType type : config.types()) {
-            if (ferocity && "frenzy".equals(type.id())) {
+            if (ferocity && "frenzy".equals(type.id()) || blocked(effective, context, type.id())) {
                 continue;
             }
             final double chance = Math.max(0, Math.min(1, effective.flat(StatKeys.chargeOnHit(type.id()), context) / 100.0));
@@ -182,6 +182,12 @@ public final class ChargeService implements Listener {
             }
         }
         return chances == null ? Map.of() : chances;
+    }
+
+    /** 2026-10-27 照 PoE2 Potential／Rally：被輔助的技能不會產生銳星／磐星。 */
+    static boolean blocked(final StatSheet effective, final java.util.Set<String> context, final String chargeId) {
+        return effective != null && ("power".equals(chargeId) && effective.flat(tw.exilecore.stats.SupportExtraKeys.POTENTIAL, context) > 0
+                || "endurance".equals(chargeId) && effective.flat(tw.exilecore.stats.SupportExtraKeys.RALLY, context) > 0);
     }
 
     /** 玩家自己擊中了敵人（召喚物的不算）：照 {@link #hitChances} 算好的機率各擲一次。 */
@@ -231,7 +237,11 @@ public final class ChargeService implements Listener {
                 grew++;
             }
         }
-        plugin.players().markDirty(player); // 滿了也刷新了時間；顆數有變就要重算
+        // 顆數有變就要重算。2026-10-27 效能：滿了（只刷新時間、顆數沒變）不重算——屬性表只看顆數；
+        // 「最近獲得過銳星」照樣由每 10 tick 的條件檢查補上。這次之前滿了也整張重算
+        if (grew > 0) {
+            plugin.players().markDirty(player);
+        }
         return grew;
     }
 
@@ -250,7 +260,9 @@ public final class ChargeService implements Listener {
         if (tw.exilecore.stats.Recently.EVENTS.contains(chargeId)) {
             plugin.players().get(player).markRecent(chargeId, plugin.getServer().getCurrentTick()); // 「最近消耗過銳星／怒星／磐星」
         }
+        plugin.players().conditions().onChargeSpent(player, chargeId, plugin.getServer().getCurrentTick()); // 2026-10-26：天賦樹（消耗時回復、最近消耗幾顆）
         plugin.players().markDirty(player); // 屬性表重算：少了一顆的效果
+        tw.exilecore.ascendancy.AscendancyEffects.chargeSpent(player, chargeId); // 2026-10-26（昇華・元素湧動：消耗戰星時）
         return true;
     }
 
@@ -272,11 +284,46 @@ public final class ChargeService implements Listener {
             if (tw.exilecore.stats.Recently.EVENTS.contains(chargeId)) {
                 plugin.players().get(player).markRecent(chargeId, plugin.getServer().getCurrentTick());
             }
+            plugin.players().conditions().onChargeSpent(player, chargeId, plugin.getServer().getCurrentTick()); // 2026-10-26：恆星也算消耗
         } else if (!consume(player, chargeId)) {
             return 0;
         }
         final double twice = effective == null ? 0 : effective.flat(SUP_DOUBLE, context);
-        return twice > 0 && plugin.items().random().nextDouble() * 100 < twice ? 2 : 1;
+        if ("frenzy".equals(chargeId) && tw.exilecore.ascendancy.AscendancyEffects.doubleFrenzy(player)) {
+            return 2; // 2026-10-26（昇華・驚險追逐）：消耗怒星的效益有 50% 機率加倍
+        }
+        int counted = twice > 0 && plugin.items().random().nextDouble() * 100 < twice ? 2 : 1;
+        // 2026-10-26 照 PoE2 天賦樹：「長棍技能消耗銳星時多算一顆」——一次用掉的最後一顆多算（一次用一顆的技能就是每次多一顆）
+        if ("power".equals(chargeId) && context.contains(tw.exilecore.stats.Tags.QUARTERSTAFF) && count(player, chargeId) <= 0) {
+            counted += (int) Math.round(Math.max(0, plugin.players().sheet(player).flat(tw.exilecore.stats.KeystoneKeys.QUARTERSTAFF_EXTRA_POWER, context)));
+        }
+        return counted;
+    }
+
+    /** 2026-10-26 能量連結：正在把戰星轉給隊友（隊友也有能量連結時不再轉一次）。 */
+    private boolean conduitPassing;
+
+    /** 能量連結（Conduit）：這顆戰星給你存在範圍內的每個隊友（不給你；沒有隊友就沒了）。 */
+    private void conduit(final Player player, final ChargeType type, final StatSheet sheet) {
+        if (plugin.party() == null) {
+            return;
+        }
+        final double radius = tw.exilecore.combat.Presence.radius(sheet);
+        conduitPassing = true;
+        try {
+            for (final UUID id : plugin.party().groupMembers(player.getUniqueId())) {
+                final Player ally = plugin.getServer().getPlayer(id);
+                if (ally == null || ally == player || !ally.isOnline() || ally.isDead() || !ally.getWorld().equals(player.getWorld())
+                        || ally.getLocation().distanceSquared(player.getLocation()) > radius * radius) {
+                    continue;
+                }
+                if (gainOne(ally, type, plugin.players().sheet(ally))) {
+                    plugin.players().markDirty(ally);
+                }
+            }
+        } finally {
+            conduitPassing = false;
+        }
     }
 
     /** 2026-10-24：瞬影擊連打期間不能拿銳星（照 PoE2「使用這個技能時不能獲得銳星」）：玩家 → 到哪個 tick。 */
@@ -288,6 +335,10 @@ public final class ChargeService implements Listener {
 
     /** 獲得一顆；回傳顆數有沒有變多（滿了只刷新時間 = false）。 */
     private boolean gainOne(final Player player, final ChargeType original, final StatSheet sheet) {
+        if (!conduitPassing && tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_CONDUIT)) {
+            conduit(player, original, sheet); // 2026-10-26 照 PoE2 基石：能量連結——改給存在範圍內的隊友
+            return false;
+        }
         final ChargeType type = resonate(original, sheet);
         if ("power".equals(type.id())) {
             final Long until = noPowerUntil.get(player.getUniqueId());
@@ -301,6 +352,7 @@ public final class ChargeService implements Listener {
         final ChargeBag bag = bags.computeIfAbsent(player.getUniqueId(), id -> new HashMap<>()).computeIfAbsent(type.id(), id -> new ChargeBag());
         final int max = maxOf(type, sheet);
         final boolean grew = bag.gain(plugin.getServer().getCurrentTick(), max, durationTicks(type, sheet));
+        plugin.players().conditions().onChargeGained(player, type.id(), plugin.getServer().getCurrentTick()); // 2026-10-26：天賦樹「最近獲得過銳星」
         if (grew && bag.count() >= max && tw.exilecore.stats.StatKeys.flag(sheet, LOSE_AT_MAX + type.id())) {
             // 2026-10-24（赤焰導管）：滿了就全部失去，並讓自己感電
             bag.clear();
@@ -336,6 +388,12 @@ public final class ChargeService implements Listener {
         };
     }
 
+    /** 2026-10-26：這次獲得要不要改成直接補滿（roll 是 0–1 的亂數；機率 = charge.fill.代號 %）。 */
+    public static boolean fills(final StatSheet sheet, final String chargeId, final double roll) {
+        final double chance = sheet.flat(tw.exilecore.stats.TreeMechanicKeys.CHARGE_FILL + chargeId, java.util.Set.of()) / 100.0;
+        return chance > 0 && roll < Math.min(1, chance);
+    }
+
     /**
      * 獲得一顆，再擲「多一顆同種的」（2026-10，照 PoE2 的「當你獲得一顆 X 時，有 N% 機率多一顆」）：
      * 機率 = 屬性表的 charge.extra 與 charge.extra.代號（百分比點數）＋ localExtra（輔助寶石只對被輔助的技能，0–1）。多出來的那顆不會再擲。
@@ -343,6 +401,13 @@ public final class ChargeService implements Listener {
     private boolean gainRolled(final Player player, final ChargeType type, final StatSheet sheet, final double localExtra,
                                final double localRandom) {
         boolean grew = gainOne(player, type, sheet);
+        // 2026-10-26 照 PoE2（天賦「獲得 X 時有 N% 機率改成直接補滿」）：charge.fill.代號
+        if (fills(sheet, type.id(), plugin.items().random().nextDouble())) {
+            final int max = maxOf(type, sheet);
+            for (int i = 0; i < max && gainOne(player, type, sheet); i++) {
+                grew = true;
+            }
+        }
         final double extra = (sheet.flat(EXTRA, java.util.Set.of()) + sheet.flat(EXTRA + "." + type.id(), java.util.Set.of())) / 100.0 + localExtra;
         if (extra > 0 && plugin.items().random().nextDouble() < Math.min(1, extra)) {
             grew |= gainOne(player, type, sheet);
@@ -395,8 +460,8 @@ public final class ChargeService implements Listener {
                 .map(data -> data.rarity() == tw.exilecore.monster.MonsterRarity.UNIQUE).orElse(false);
         final boolean ferocity = effective != null && effective.flat(SUP_FEROCITY, tags) > 0;
         for (final ChargeType type : config.types()) {
-            if (ferocity && "frenzy".equals(type.id())) {
-                continue; // 2026-10-24：狂速的技能不會產生怒星
+            if (ferocity && "frenzy".equals(type.id()) || blocked(effective, tags, type.id())) {
+                continue; // 2026-10-24：狂速的技能不會產生怒星；2026-10-27：潛力、重整的技能不會產生銳星、磐星
             }
             // 2026-10-24（震磐）：對傳奇怪物直接給幾顆，不擲機率
             final int forUnique = unique ? (int) Math.round(source.flat(SUP_UNIQUE + event + "." + type.id(), tags)) : 0;
@@ -462,7 +527,7 @@ public final class ChargeService implements Listener {
         }
     }
 
-    /** 定期給的戰星（2026-10，星律）：屬性表有 charge.periodic（每分鐘幾顆）的人，時間到就照最高的能力值給一顆。 */
+    /** 定期給的戰星（2026-10；星律 2026-10-26 拿掉了，屬性還在）：屬性表有 charge.periodic（每分鐘幾顆）的人，時間到就照最高的能力值給一顆。 */
     private void periodic(final long now) {
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             if (player.isDead() || !plugin.players().get(player).hasCharacter()) {
@@ -549,7 +614,7 @@ public final class ChargeService implements Listener {
     /** 每半秒：過期的球掉掉、上限變小的多出來的丟掉；有變就重算屬性。 */
     public void tick() {
         final long now = plugin.getServer().getCurrentTick();
-        periodic(now); // 2026-10：星律（定期給戰星）
+        periodic(now); // 2026-10：定期給戰星（charge.periodic）
         regulation(now); // 2026-10-24：馭星訣（定期消耗戰星）
         final List<UUID> gone = new ArrayList<>();
         for (final Map.Entry<UUID, Map<String, ChargeBag>> owner : bags.entrySet()) {
@@ -620,8 +685,8 @@ public final class ChargeService implements Listener {
             final double seconds = Math.max(0, (bag.nextExpiry() - now) / 20.0);
             final List<String> effects = type.describe();
             final String each = effects.isEmpty() ? "" : "每顆：" + escape(String.join("、", effects)) + "；"; // 2026-10：戰星本身預設沒有屬性
-            lines.add(String.format(Locale.ROOT, "<%s>%s %d/%d<gray>（%s%.0f 秒後掉一顆）", type.color(), escape(type.name()), count,
-                    maxOf(type, sheet), each, seconds));
+            lines.add(String.format(Locale.ROOT, "<%s>%s %d/%d<gray>（%s%.0f 秒後全部消失）", type.color(), escape(type.name()), count,
+                    maxOf(type, sheet), each, seconds)); // 2026-10-27 照 PoE2：同一種一起到期（這次之前「秒後掉一顆」）
         }
         return lines;
     }

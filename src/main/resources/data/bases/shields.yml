@@ -88,8 +88,8 @@ tshield_01:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 1
-  requirements: { level: 1, str: 18, dex: 0, int: 0 }
-  armour: 41
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Splintered Tower Shield，固定不隨物品等級變）；這次之前 { level: 1, str: 18, dex: 0, int: 0 }
+  armour: 18   # 2026-10-27 照 PoE2 原值（Splintered Tower Shield）；這次之前 41
   block: 26.0
   sockets: 3
 
@@ -104,8 +104,8 @@ tshield_02:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 6
-  requirements: { level: 6, str: 18, dex: 0, int: 0 }
-  armour: 48
+  requirements: { level: 6, str: 11, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Painted Tower Shield，固定不隨物品等級變）；這次之前 { level: 6, str: 18, dex: 0, int: 0 }
+  armour: 33   # 2026-10-27 照 PoE2 原值（Painted Tower Shield）；這次之前 48
   block: 26.0
   sockets: 3
 
@@ -120,8 +120,8 @@ tshield_03:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 12
-  requirements: { level: 12, str: 22, dex: 0, int: 0 }
-  armour: 55
+  requirements: { level: 12, str: 19, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Braced Tower Shield，固定不隨物品等級變）；這次之前 { level: 12, str: 22, dex: 0, int: 0 }
+  armour: 50   # 2026-10-27 照 PoE2 原值（Braced Tower Shield）；這次之前 55
   block: 26.0
   sockets: 3
 
@@ -136,8 +136,8 @@ tshield_04:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 16
-  requirements: { level: 16, str: 24, dex: 0, int: 0 }
-  armour: 61
+  requirements: { level: 16, str: 25, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Barricade Tower Shield，固定不隨物品等級變）；這次之前 { level: 16, str: 24, dex: 0, int: 0 }
+  armour: 62   # 2026-10-27 照 PoE2 原值（Barricade Tower Shield）；這次之前 61
   block: 26.0
   sockets: 3
 
@@ -152,8 +152,8 @@ tshield_05:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 21
-  requirements: { level: 21, str: 26, dex: 0, int: 0 }
-  armour: 68
+  requirements: { level: 21, str: 32, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Effigial Tower Shield，固定不隨物品等級變）；這次之前 { level: 21, str: 26, dex: 0, int: 0 }
+  armour: 76   # 2026-10-27 照 PoE2 原值（Effigial Tower Shield）；這次之前 68
   block: 26.0
   sockets: 3
 
@@ -168,8 +168,8 @@ tshield_06:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 28
-  requirements: { level: 28, str: 29, dex: 0, int: 0 }
-  armour: 77
+  requirements: { level: 28, str: 42, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Rampart Tower Shield，固定不隨物品等級變）；這次之前 { level: 28, str: 29, dex: 0, int: 0 }
+  armour: 96   # 2026-10-27 照 PoE2 原值（Rampart Tower Shield）；這次之前 77
   block: 26.0
   sockets: 3
 
@@ -184,8 +184,8 @@ tshield_07:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 33
-  requirements: { level: 33, str: 30, dex: 0, int: 0 }
-  armour: 84
+  requirements: { level: 33, str: 48, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Heraldric Tower Shield，固定不隨物品等級變）；這次之前 { level: 33, str: 30, dex: 0, int: 0 }
+  armour: 111   # 2026-10-27 照 PoE2 原值（Heraldric Tower Shield）；這次之前 84
   block: 26.0
   sockets: 3
 
@@ -200,8 +200,8 @@ tshield_08:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 36
-  requirements: { level: 36, str: 31, dex: 0, int: 0 }
-  armour: 88
+  requirements: { level: 36, str: 52, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Stone Tower Shield，固定不隨物品等級變）；這次之前 { level: 36, str: 31, dex: 0, int: 0 }
+  armour: 119   # 2026-10-27 照 PoE2 原值（Stone Tower Shield）；這次之前 88
   block: 26.0
   sockets: 3
 
@@ -216,8 +216,8 @@ tshield_09:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 45
-  requirements: { level: 45, str: 34, dex: 0, int: 0 }
-  armour: 100
+  requirements: { level: 45, str: 64, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Crucible Tower Shield，固定不隨物品等級變）；這次之前 { level: 45, str: 34, dex: 0, int: 0 }
+  armour: 145   # 2026-10-27 照 PoE2 原值（Crucible Tower Shield）；這次之前 100
   block: 26.0
   sockets: 3
 
@@ -232,8 +232,8 @@ tshield_10:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 45
-  requirements: { level: 45, str: 34, dex: 0, int: 0 }
-  armour: 100
+  requirements: { level: 45, str: 64, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Aged Tower Shield，固定不隨物品等級變）；這次之前 { level: 45, str: 34, dex: 0, int: 0 }
+  armour: 145   # 2026-10-27 照 PoE2 原值（Aged Tower Shield）；這次之前 100
   block: 26.0
   sockets: 3
 
@@ -248,8 +248,8 @@ tshield_11:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 48
-  requirements: { level: 48, str: 35, dex: 0, int: 0 }
-  armour: 105
+  requirements: { level: 48, str: 69, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Metalworked Tower Shield，固定不隨物品等級變）；這次之前 { level: 48, str: 35, dex: 0, int: 0 }
+  armour: 154   # 2026-10-27 照 PoE2 原值（Metalworked Tower Shield）；這次之前 105
   block: 26.0
   sockets: 3
 
@@ -264,8 +264,8 @@ tshield_12:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 50
-  requirements: { level: 50, str: 36, dex: 0, int: 0 }
-  armour: 108
+  requirements: { level: 50, str: 71, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Ancestor Tower Shield，固定不隨物品等級變）；這次之前 { level: 50, str: 36, dex: 0, int: 0 }
+  armour: 160   # 2026-10-27 照 PoE2 原值（Ancestor Tower Shield）；這次之前 108
   block: 26.0
   sockets: 3
 
@@ -280,8 +280,8 @@ tshield_13:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 51
-  requirements: { level: 51, str: 36, dex: 0, int: 0 }
-  armour: 109
+  requirements: { level: 51, str: 73, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Cultist Tower Shield，固定不隨物品等級變）；這次之前 { level: 51, str: 36, dex: 0, int: 0 }
+  armour: 163   # 2026-10-27 照 PoE2 原值（Cultist Tower Shield）；這次之前 109
   block: 26.0
   sockets: 3
 
@@ -296,8 +296,8 @@ tshield_14:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 52
-  requirements: { level: 52, str: 36, dex: 0, int: 0 }
-  armour: 111
+  requirements: { level: 52, str: 74, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Phalanx Tower Shield，固定不隨物品等級變）；這次之前 { level: 52, str: 36, dex: 0, int: 0 }
+  armour: 166   # 2026-10-27 照 PoE2 原值（Phalanx Tower Shield）；這次之前 111
   block: 26.0
   sockets: 3
 
@@ -312,8 +312,8 @@ tshield_15:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 54
-  requirements: { level: 54, str: 37, dex: 0, int: 0 }
-  armour: 113
+  requirements: { level: 54, str: 77, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Bulwark Tower Shield，固定不隨物品等級變）；這次之前 { level: 54, str: 37, dex: 0, int: 0 }
+  armour: 171   # 2026-10-27 照 PoE2 原值（Bulwark Tower Shield）；這次之前 113
   block: 26.0
   sockets: 3
 
@@ -328,8 +328,8 @@ tshield_16:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 58
-  requirements: { level: 58, str: 38, dex: 0, int: 0 }
-  armour: 119
+  requirements: { level: 58, str: 82, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Defiant Tower Shield，固定不隨物品等級變）；這次之前 { level: 58, str: 38, dex: 0, int: 0 }
+  armour: 183   # 2026-10-27 照 PoE2 原值（Defiant Tower Shield）；這次之前 119
   block: 26.0
   sockets: 3
 
@@ -344,8 +344,8 @@ tshield_17:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 59
-  requirements: { level: 59, str: 38, dex: 0, int: 0 }
-  armour: 120
+  requirements: { level: 59, str: 83, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Noble Tower Shield，固定不隨物品等級變）；這次之前 { level: 59, str: 38, dex: 0, int: 0 }
+  armour: 186   # 2026-10-27 照 PoE2 原值（Noble Tower Shield）；這次之前 120
   block: 26.0
   sockets: 3
 
@@ -360,8 +360,8 @@ tshield_18:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 61
-  requirements: { level: 61, str: 39, dex: 0, int: 0 }
-  armour: 123
+  requirements: { level: 61, str: 86, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Goldworked Tower Shield，固定不隨物品等級變）；這次之前 { level: 61, str: 39, dex: 0, int: 0 }
+  armour: 192   # 2026-10-27 照 PoE2 原值（Goldworked Tower Shield）；這次之前 123
   block: 26.0
   sockets: 3
 
@@ -376,8 +376,8 @@ tshield_19:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 65
-  requirements: { level: 65, str: 40, dex: 0, int: 0 }
-  armour: 128
+  requirements: { level: 65, str: 91, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Blacksteel Tower Shield，固定不隨物品等級變）；這次之前 { level: 65, str: 40, dex: 0, int: 0 }
+  armour: 203   # 2026-10-27 照 PoE2 原值（Blacksteel Tower Shield）；這次之前 128
   block: 26.0
   sockets: 3
 
@@ -392,8 +392,8 @@ tshield_20:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 65
-  requirements: { level: 65, str: 40, dex: 0, int: 0 }
-  armour: 128
+  requirements: { level: 65, str: 91, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Royal Tower Shield，固定不隨物品等級變）；這次之前 { level: 65, str: 40, dex: 0, int: 0 }
+  armour: 203   # 2026-10-27 照 PoE2 原值（Royal Tower Shield）；這次之前 128
   block: 26.0
   sockets: 3
 
@@ -408,8 +408,8 @@ tshield_21:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 70
-  requirements: { level: 70, str: 42, dex: 0, int: 0 }
-  armour: 139
+  requirements: { level: 70, str: 99, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Glacial Fortress，固定不隨物品等級變）；這次之前 { level: 70, str: 42, dex: 0, int: 0 }
+  armour: 223   # 2026-10-27 照 PoE2 原值（Glacial Fortress）；這次之前 139
   block: 26.0
   sockets: 3
 
@@ -424,8 +424,8 @@ tshield_22:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 70
-  requirements: { level: 70, str: 42, dex: 0, int: 0 }
-  armour: 139
+  requirements: { level: 70, str: 99, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Fortress Tower Shield，固定不隨物品等級變）；這次之前 { level: 70, str: 42, dex: 0, int: 0 }
+  armour: 223   # 2026-10-27 照 PoE2 原值（Fortress Tower Shield）；這次之前 139
   block: 26.0
   sockets: 3
 
@@ -440,8 +440,8 @@ tshield_23:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 75
-  requirements: { level: 75, str: 44, dex: 0, int: 0 }
-  armour: 149
+  requirements: { level: 75, str: 107, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Vaal Tower Shield，固定不隨物品等級變）；這次之前 { level: 75, str: 44, dex: 0, int: 0 }
+  armour: 244   # 2026-10-27 照 PoE2 原值（Vaal Tower Shield）；這次之前 149
   block: 26.0
   sockets: 3
 
@@ -454,8 +454,8 @@ tshield_24:
   slot: OFF_HAND
   tags: [shield, str_armour, str_only, str_shield]
   drop_level: 1
-  requirements: { level: 1, str: 46, dex: 0, int: 0 }
-  armour: 160
+  requirements: { level: 80, str: 115, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Tawhoan Tower Shield；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 46, dex: 0, int: 0 }
+  armour: 264   # 2026-10-26 照 PoE2 原值（Tawhoan Tower Shield）；這次之前 160
   block: 26.0
   sockets: 3
 
@@ -470,9 +470,9 @@ kshield_01:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 1
-  requirements: { level: 1, str: 11, dex: 11, int: 0 }
-  armour: 23
-  evasion: 21
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Hardwood Targe，固定不隨物品等級變）；這次之前 { level: 1, str: 11, dex: 11, int: 0 }
+  armour: 10   # 2026-10-27 照 PoE2 原值（Hardwood Targe）；這次之前 23
+  evasion: 7   # 2026-10-27 照 PoE2 原值（Hardwood Targe）；這次之前 21
   block: 25.0
   sockets: 3
 
@@ -487,9 +487,9 @@ kshield_02:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 8
-  requirements: { level: 8, str: 13, dex: 13, int: 0 }
-  armour: 27
-  evasion: 28
+  requirements: { level: 8, str: 9, dex: 9, int: 0 }   # 2026-10-26 照 PoE2（Pelage Targe，固定不隨物品等級變）；這次之前 { level: 8, str: 13, dex: 13, int: 0 }
+  armour: 21   # 2026-10-27 照 PoE2 原值（Pelage Targe）；這次之前 27
+  evasion: 17   # 2026-10-27 照 PoE2 原值（Pelage Targe）；這次之前 28
   block: 25.0
   sockets: 3
 
@@ -506,7 +506,7 @@ kshield_03:
   drop_level: 16
   requirements: { level: 16, str: 15, dex: 15, int: 0 }
   armour: 34
-  evasion: 35
+  evasion: 29   # 2026-10-27 照 PoE2 原值（Studded Targe）；這次之前 35
   block: 25.0
   sockets: 3
 
@@ -521,9 +521,9 @@ kshield_04:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 26
-  requirements: { level: 26, str: 16, dex: 16, int: 0 }
-  armour: 41
-  evasion: 42
+  requirements: { level: 26, str: 22, dex: 22, int: 0 }   # 2026-10-26 照 PoE2（Crescent Targe，固定不隨物品等級變）；這次之前 { level: 26, str: 16, dex: 16, int: 0 }
+  armour: 50   # 2026-10-27 照 PoE2 原值（Crescent Targe）；這次之前 41
+  evasion: 44   # 2026-10-27 照 PoE2 原值（Crescent Targe）；這次之前 42
   block: 25.0
   sockets: 3
 
@@ -538,9 +538,9 @@ kshield_05:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 33
-  requirements: { level: 33, str: 18, dex: 18, int: 0 }
-  armour: 46
-  evasion: 47
+  requirements: { level: 33, str: 27, dex: 27, int: 0 }   # 2026-10-26 照 PoE2（Chiseled Targe，固定不隨物品等級變）；這次之前 { level: 33, str: 18, dex: 18, int: 0 }
+  armour: 61   # 2026-10-27 照 PoE2 原值（Chiseled Targe）；這次之前 46
+  evasion: 54   # 2026-10-27 照 PoE2 原值（Chiseled Targe）；這次之前 47
   block: 25.0
   sockets: 3
 
@@ -555,9 +555,9 @@ kshield_06:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 37
-  requirements: { level: 37, str: 19, dex: 19, int: 0 }
-  armour: 49
-  evasion: 50
+  requirements: { level: 37, str: 30, dex: 30, int: 0 }   # 2026-10-26 照 PoE2（Feathered Targe，固定不隨物品等級變）；這次之前 { level: 37, str: 19, dex: 19, int: 0 }
+  armour: 67   # 2026-10-27 照 PoE2 原值（Feathered Targe）；這次之前 49
+  evasion: 60   # 2026-10-27 照 PoE2 原值（Feathered Targe）；這次之前 50
   block: 25.0
   sockets: 3
 
@@ -572,9 +572,9 @@ kshield_07:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 45
-  requirements: { level: 45, str: 20, dex: 20, int: 0 }
-  armour: 55
-  evasion: 56
+  requirements: { level: 45, str: 36, dex: 36, int: 0 }   # 2026-10-26 照 PoE2（Ironwood Targe，固定不隨物品等級變）；這次之前 { level: 45, str: 20, dex: 20, int: 0 }
+  armour: 80   # 2026-10-27 照 PoE2 原值（Ironwood Targe）；這次之前 55
+  evasion: 72   # 2026-10-27 照 PoE2 原值（Ironwood Targe）；這次之前 56
   block: 25.0
   sockets: 3
 
@@ -589,9 +589,9 @@ kshield_08:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 46
-  requirements: { level: 46, str: 21, dex: 21, int: 0 }
-  armour: 56
-  evasion: 57
+  requirements: { level: 46, str: 37, dex: 37, int: 0 }   # 2026-10-26 照 PoE2（Stratified Targe，固定不隨物品等級變）；這次之前 { level: 46, str: 21, dex: 21, int: 0 }
+  armour: 82   # 2026-10-27 照 PoE2 原值（Stratified Targe）；這次之前 56
+  evasion: 74   # 2026-10-27 照 PoE2 原值（Stratified Targe）；這次之前 57
   block: 25.0
   sockets: 3
 
@@ -606,9 +606,9 @@ kshield_09:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 48
-  requirements: { level: 48, str: 21, dex: 21, int: 0 }
-  armour: 58
-  evasion: 58
+  requirements: { level: 48, str: 38, dex: 38, int: 0 }   # 2026-10-26 照 PoE2（Fur-lined Targe，固定不隨物品等級變）；這次之前 { level: 48, str: 21, dex: 21, int: 0 }
+  armour: 85   # 2026-10-27 照 PoE2 原值（Fur-lined Targe）；這次之前 58
+  evasion: 76   # 2026-10-27 照 PoE2 原值（Fur-lined Targe）；這次之前 58
   block: 25.0
   sockets: 3
 
@@ -623,9 +623,9 @@ kshield_10:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 51
-  requirements: { level: 51, str: 22, dex: 22, int: 0 }
-  armour: 60
-  evasion: 60
+  requirements: { level: 51, str: 40, dex: 40, int: 0 }   # 2026-10-26 照 PoE2（Carved Targe，固定不隨物品等級變）；這次之前 { level: 51, str: 22, dex: 22, int: 0 }
+  armour: 89   # 2026-10-27 照 PoE2 原值（Carved Targe）；這次之前 60
+  evasion: 81   # 2026-10-27 照 PoE2 原值（Carved Targe）；這次之前 60
   block: 25.0
   sockets: 3
 
@@ -640,9 +640,9 @@ kshield_11:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 51
-  requirements: { level: 51, str: 22, dex: 22, int: 0 }
-  armour: 60
-  evasion: 60
+  requirements: { level: 51, str: 40, dex: 40, int: 0 }   # 2026-10-26 照 PoE2（Mercenary Targe，固定不隨物品等級變）；這次之前 { level: 51, str: 22, dex: 22, int: 0 }
+  armour: 89   # 2026-10-27 照 PoE2 原值（Mercenary Targe）；這次之前 60
+  evasion: 81   # 2026-10-27 照 PoE2 原值（Mercenary Targe）；這次之前 60
   block: 25.0
   sockets: 3
 
@@ -657,9 +657,9 @@ kshield_12:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 52
-  requirements: { level: 52, str: 22, dex: 22, int: 0 }
-  armour: 61
-  evasion: 61
+  requirements: { level: 52, str: 41, dex: 41, int: 0 }   # 2026-10-26 照 PoE2（Mosaic Targe，固定不隨物品等級變）；這次之前 { level: 52, str: 22, dex: 22, int: 0 }
+  armour: 91   # 2026-10-27 照 PoE2 原值（Mosaic Targe）；這次之前 61
+  evasion: 82   # 2026-10-27 照 PoE2 原值（Mosaic Targe）；這次之前 61
   block: 25.0
   sockets: 3
 
@@ -674,9 +674,9 @@ kshield_13:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 54
-  requirements: { level: 54, str: 22, dex: 22, int: 0 }
-  armour: 62
-  evasion: 62
+  requirements: { level: 54, str: 42, dex: 42, int: 0 }   # 2026-10-26 照 PoE2（Polished Targe，固定不隨物品等級變）；這次之前 { level: 54, str: 22, dex: 22, int: 0 }
+  armour: 94   # 2026-10-27 照 PoE2 原值（Polished Targe）；這次之前 62
+  evasion: 85   # 2026-10-27 照 PoE2 原值（Polished Targe）；這次之前 62
   block: 25.0
   sockets: 3
 
@@ -691,9 +691,9 @@ kshield_14:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 57
-  requirements: { level: 57, str: 23, dex: 23, int: 0 }
-  armour: 65
-  evasion: 65
+  requirements: { level: 57, str: 45, dex: 45, int: 0 }   # 2026-10-26 照 PoE2（Aureate Targe，固定不隨物品等級變）；這次之前 { level: 57, str: 23, dex: 23, int: 0 }
+  armour: 99   # 2026-10-27 照 PoE2 原值（Aureate Targe）；這次之前 65
+  evasion: 90   # 2026-10-27 照 PoE2 原值（Aureate Targe）；這次之前 65
   block: 25.0
   sockets: 3
 
@@ -708,9 +708,9 @@ kshield_15:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 59
-  requirements: { level: 59, str: 23, dex: 23, int: 0 }
-  armour: 66
-  evasion: 66
+  requirements: { level: 59, str: 46, dex: 46, int: 0 }   # 2026-10-26 照 PoE2（Stone Targe，固定不隨物品等級變）；這次之前 { level: 59, str: 23, dex: 23, int: 0 }
+  armour: 102   # 2026-10-27 照 PoE2 原值（Stone Targe）；這次之前 66
+  evasion: 93   # 2026-10-27 照 PoE2 原值（Stone Targe）；這次之前 66
   block: 25.0
   sockets: 3
 
@@ -725,9 +725,9 @@ kshield_16:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 62
-  requirements: { level: 62, str: 24, dex: 24, int: 0 }
-  armour: 68
-  evasion: 68
+  requirements: { level: 62, str: 48, dex: 48, int: 0 }   # 2026-10-26 照 PoE2（Avian Targe，固定不隨物品等級變）；這次之前 { level: 62, str: 24, dex: 24, int: 0 }
+  armour: 107   # 2026-10-27 照 PoE2 原值（Avian Targe）；這次之前 68
+  evasion: 97   # 2026-10-27 照 PoE2 原值（Avian Targe）；這次之前 68
   block: 25.0
   sockets: 3
 
@@ -740,9 +740,9 @@ kshield_17:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 1
-  requirements: { level: 1, str: 32, dex: 32, int: 0 }
-  armour: 68
-  evasion: 68
+  requirements: { level: 62, str: 64, dex: 64, int: 0 }   # 2026-10-26 照 PoE2（Venerable Defender；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 32, dex: 32, int: 0 }
+  armour: 107   # 2026-10-26 照 PoE2 原值（Venerable Defender）；這次之前 68
+  evasion: 97   # 2026-10-26 照 PoE2 原值（Venerable Defender）；這次之前 68
   block: 28.0
   sockets: 3
 
@@ -757,9 +757,9 @@ kshield_18:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 65
-  requirements: { level: 65, str: 24, dex: 24, int: 0 }
-  armour: 71
-  evasion: 70
+  requirements: { level: 65, str: 50, dex: 50, int: 0 }   # 2026-10-26 照 PoE2（Grand Targe，固定不隨物品等級變）；這次之前 { level: 65, str: 24, dex: 24, int: 0 }
+  armour: 112   # 2026-10-27 照 PoE2 原值（Grand Targe）；這次之前 71
+  evasion: 102   # 2026-10-27 照 PoE2 原值（Grand Targe）；這次之前 70
   block: 25.0
   sockets: 3
 
@@ -774,9 +774,9 @@ kshield_19:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 65
-  requirements: { level: 65, str: 24, dex: 24, int: 0 }
-  armour: 71
-  evasion: 70
+  requirements: { level: 65, str: 50, dex: 50, int: 0 }   # 2026-10-26 照 PoE2（Mammoth Targe，固定不隨物品等級變）；這次之前 { level: 65, str: 24, dex: 24, int: 0 }
+  armour: 112   # 2026-10-27 照 PoE2 原值（Mammoth Targe）；這次之前 71
+  evasion: 102   # 2026-10-27 照 PoE2 原值（Mammoth Targe）；這次之前 70
   block: 25.0
   sockets: 3
 
@@ -791,9 +791,9 @@ kshield_20:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 70
-  requirements: { level: 70, str: 26, dex: 26, int: 0 }
-  armour: 77
-  evasion: 75
+  requirements: { level: 70, str: 54, dex: 54, int: 0 }   # 2026-10-26 照 PoE2（Baroque Targe，固定不隨物品等級變）；這次之前 { level: 70, str: 26, dex: 26, int: 0 }
+  armour: 123   # 2026-10-27 照 PoE2 原值（Baroque Targe）；這次之前 77
+  evasion: 112   # 2026-10-27 照 PoE2 原值（Baroque Targe）；這次之前 75
   block: 25.0
   sockets: 3
 
@@ -808,9 +808,9 @@ kshield_21:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 75
-  requirements: { level: 75, str: 27, dex: 27, int: 0 }
-  armour: 82
-  evasion: 81
+  requirements: { level: 75, str: 59, dex: 59, int: 0 }   # 2026-10-26 照 PoE2（Soaring Targe，固定不隨物品等級變）；這次之前 { level: 75, str: 27, dex: 27, int: 0 }
+  armour: 134   # 2026-10-27 照 PoE2 原值（Soaring Targe）；這次之前 82
+  evasion: 122   # 2026-10-27 照 PoE2 原值（Soaring Targe）；這次之前 81
   block: 25.0
   sockets: 3
 
@@ -823,9 +823,9 @@ kshield_22:
   slot: OFF_HAND
   tags: [shield, str_armour, dex_armour, str_dex_armour, str_dex_shield]
   drop_level: 1
-  requirements: { level: 1, str: 28, dex: 28, int: 0 }
-  armour: 88
-  evasion: 86
+  requirements: { level: 80, str: 63, dex: 63, int: 0 }   # 2026-10-26 照 PoE2（Golden Targe；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 28, dex: 28, int: 0 }
+  armour: 145   # 2026-10-26 照 PoE2 原值（Golden Targe）；這次之前 88
+  evasion: 132   # 2026-10-26 照 PoE2 原值（Golden Targe）；這次之前 86
   block: 25.0
   sockets: 3
 
@@ -840,9 +840,9 @@ cshield_01:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 1
-  requirements: { level: 1, str: 11, dex: 0, int: 11 }
-  armour: 22
-  es: 9
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Blazon Crest Shield，固定不隨物品等級變）；這次之前 { level: 1, str: 11, dex: 0, int: 11 }
+  armour: 10   # 2026-10-27 照 PoE2 原值（Blazon Crest Shield）；這次之前 22
+  es: 6   # 2026-10-27 照 PoE2 原值（Blazon Crest Shield）；這次之前 9
   block: 25.0
   sockets: 3
 
@@ -857,9 +857,9 @@ cshield_02:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 7
-  requirements: { level: 7, str: 12, dex: 0, int: 12 }
-  armour: 27
-  es: 10
+  requirements: { level: 7, str: 8, dex: 0, int: 8 }   # 2026-10-26 照 PoE2（Sigil Crest Shield，固定不隨物品等級變）；這次之前 { level: 7, str: 12, dex: 0, int: 12 }
+  armour: 20   # 2026-10-27 照 PoE2 原值（Sigil Crest Shield）；這次之前 27
+  es: 9   # 2026-10-27 照 PoE2 原值（Sigil Crest Shield）；這次之前 10
   block: 25.0
   sockets: 3
 
@@ -875,8 +875,8 @@ cshield_03:
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 16
   requirements: { level: 16, str: 15, dex: 0, int: 15 }
-  armour: 33
-  es: 11
+  armour: 34   # 2026-10-27 照 PoE2 原值（Emblem Crest Shield）；這次之前 33
+  es: 12   # 2026-10-27 照 PoE2 原值（Emblem Crest Shield）；這次之前 11
   block: 25.0
   sockets: 3
 
@@ -891,9 +891,9 @@ cshield_04:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 28
-  requirements: { level: 28, str: 17, dex: 0, int: 17 }
-  armour: 42
-  es: 15
+  requirements: { level: 28, str: 23, dex: 0, int: 23 }   # 2026-10-26 照 PoE2（Jingling Crest Shield，固定不隨物品等級變）；這次之前 { level: 28, str: 17, dex: 0, int: 17 }
+  armour: 53   # 2026-10-27 照 PoE2 原值（Jingling Crest Shield）；這次之前 42
+  es: 17   # 2026-10-27 照 PoE2 原值（Jingling Crest Shield）；這次之前 15
   block: 25.0
   sockets: 3
 
@@ -908,9 +908,9 @@ cshield_05:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 33
-  requirements: { level: 33, str: 18, dex: 0, int: 18 }
-  armour: 46
-  es: 16
+  requirements: { level: 33, str: 27, dex: 0, int: 27 }   # 2026-10-26 照 PoE2（Sectarian Crest Shield，固定不隨物品等級變）；這次之前 { level: 33, str: 18, dex: 0, int: 18 }
+  armour: 61   # 2026-10-27 照 PoE2 原值（Sectarian Crest Shield）；這次之前 46
+  es: 19   # 2026-10-27 照 PoE2 原值（Sectarian Crest Shield）；這次之前 16
   block: 25.0
   sockets: 3
 
@@ -925,9 +925,9 @@ cshield_06:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 36
-  requirements: { level: 36, str: 19, dex: 0, int: 19 }
-  armour: 49
-  es: 17
+  requirements: { level: 36, str: 30, dex: 0, int: 30 }   # 2026-10-26 照 PoE2（Omen Crest Shield，固定不隨物品等級變）；這次之前 { level: 36, str: 19, dex: 0, int: 19 }
+  armour: 66   # 2026-10-27 照 PoE2 原值（Omen Crest Shield）；這次之前 49
+  es: 20   # 2026-10-27 照 PoE2 原值（Omen Crest Shield）；這次之前 17
   block: 25.0
   sockets: 3
 
@@ -942,9 +942,9 @@ cshield_07:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 45
-  requirements: { level: 45, str: 21, dex: 0, int: 21 }
-  armour: 55
-  es: 19
+  requirements: { level: 45, str: 36, dex: 0, int: 36 }   # 2026-10-26 照 PoE2（Wayward Crest Shield，固定不隨物品等級變）；這次之前 { level: 45, str: 21, dex: 0, int: 21 }
+  armour: 80   # 2026-10-27 照 PoE2 原值（Wayward Crest Shield）；這次之前 55
+  es: 23   # 2026-10-27 照 PoE2 原值（Wayward Crest Shield）；這次之前 19
   block: 25.0
   sockets: 3
 
@@ -959,9 +959,9 @@ cshield_08:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 45
-  requirements: { level: 45, str: 21, dex: 0, int: 21 }
-  armour: 55
-  es: 19
+  requirements: { level: 45, str: 36, dex: 0, int: 36 }   # 2026-10-26 照 PoE2（Painted Crest Shield，固定不隨物品等級變）；這次之前 { level: 45, str: 21, dex: 0, int: 21 }
+  armour: 80   # 2026-10-27 照 PoE2 原值（Painted Crest Shield）；這次之前 55
+  es: 23   # 2026-10-27 照 PoE2 原值（Painted Crest Shield）；這次之前 19
   block: 25.0
   sockets: 3
 
@@ -976,9 +976,9 @@ cshield_09:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 48
-  requirements: { level: 48, str: 21, dex: 0, int: 21 }
-  armour: 58
-  es: 20
+  requirements: { level: 48, str: 38, dex: 0, int: 38 }   # 2026-10-26 照 PoE2（Engraved Crest Shield，固定不隨物品等級變）；這次之前 { level: 48, str: 21, dex: 0, int: 21 }
+  armour: 85   # 2026-10-27 照 PoE2 原值（Engraved Crest Shield）；這次之前 58
+  es: 24   # 2026-10-27 照 PoE2 原值（Engraved Crest Shield）；這次之前 20
   block: 25.0
   sockets: 3
 
@@ -993,9 +993,9 @@ cshield_10:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 50
-  requirements: { level: 50, str: 22, dex: 0, int: 22 }
-  armour: 59
-  es: 21
+  requirements: { level: 50, str: 39, dex: 0, int: 39 }   # 2026-10-26 照 PoE2（Seer Crest Shield，固定不隨物品等級變）；這次之前 { level: 50, str: 22, dex: 0, int: 22 }
+  armour: 88   # 2026-10-27 照 PoE2 原值（Seer Crest Shield）；這次之前 59
+  es: 25   # 2026-10-27 照 PoE2 原值（Seer Crest Shield）；這次之前 21
   block: 25.0
   sockets: 3
 
@@ -1010,9 +1010,9 @@ cshield_11:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 51
-  requirements: { level: 51, str: 22, dex: 0, int: 22 }
-  armour: 60
-  es: 22
+  requirements: { level: 51, str: 40, dex: 0, int: 40 }   # 2026-10-26 照 PoE2（Descry Crest Shield，固定不隨物品等級變）；這次之前 { level: 51, str: 22, dex: 0, int: 22 }
+  armour: 89   # 2026-10-27 照 PoE2 原值（Descry Crest Shield）；這次之前 60
+  es: 26   # 2026-10-27 照 PoE2 原值（Descry Crest Shield）；這次之前 22
   block: 25.0
   sockets: 3
 
@@ -1027,9 +1027,9 @@ cshield_12:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 52
-  requirements: { level: 52, str: 22, dex: 0, int: 22 }
-  armour: 61
-  es: 22
+  requirements: { level: 52, str: 41, dex: 0, int: 41 }   # 2026-10-26 照 PoE2（Stoic Crest Shield，固定不隨物品等級變）；這次之前 { level: 52, str: 22, dex: 0, int: 22 }
+  armour: 91   # 2026-10-27 照 PoE2 原值（Stoic Crest Shield）；這次之前 61
+  es: 26   # 2026-10-27 照 PoE2 原值（Stoic Crest Shield）；這次之前 22
   block: 25.0
   sockets: 3
 
@@ -1044,9 +1044,9 @@ cshield_13:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 54
-  requirements: { level: 54, str: 22, dex: 0, int: 22 }
-  armour: 62
-  es: 23
+  requirements: { level: 54, str: 42, dex: 0, int: 42 }   # 2026-10-26 照 PoE2（Dekharan Crest Shield，固定不隨物品等級變）；這次之前 { level: 54, str: 22, dex: 0, int: 22 }
+  armour: 94   # 2026-10-27 照 PoE2 原值（Dekharan Crest Shield）；這次之前 62
+  es: 27   # 2026-10-27 照 PoE2 原值（Dekharan Crest Shield）；這次之前 23
   block: 25.0
   sockets: 3
 
@@ -1061,9 +1061,9 @@ cshield_14:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 57
-  requirements: { level: 57, str: 23, dex: 0, int: 23 }
-  armour: 64
-  es: 24
+  requirements: { level: 57, str: 45, dex: 0, int: 45 }   # 2026-10-26 照 PoE2（Empyreal Crest Shield，固定不隨物品等級變）；這次之前 { level: 57, str: 23, dex: 0, int: 23 }
+  armour: 99   # 2026-10-27 照 PoE2 原值（Empyreal Crest Shield）；這次之前 64
+  es: 28   # 2026-10-27 照 PoE2 原值（Empyreal Crest Shield）；這次之前 24
   block: 25.0
   sockets: 3
 
@@ -1078,9 +1078,9 @@ cshield_15:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 59
-  requirements: { level: 59, str: 24, dex: 0, int: 24 }
-  armour: 66
-  es: 24
+  requirements: { level: 59, str: 46, dex: 0, int: 46 }   # 2026-10-26 照 PoE2（Quartered Crest Shield，固定不隨物品等級變）；這次之前 { level: 59, str: 24, dex: 0, int: 24 }
+  armour: 102   # 2026-10-27 照 PoE2 原值（Quartered Crest Shield）；這次之前 66
+  es: 29   # 2026-10-27 照 PoE2 原值（Quartered Crest Shield）；這次之前 24
   block: 25.0
   sockets: 3
 
@@ -1095,9 +1095,9 @@ cshield_16:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 62
-  requirements: { level: 62, str: 24, dex: 0, int: 24 }
-  armour: 68
-  es: 25
+  requirements: { level: 62, str: 48, dex: 0, int: 48 }   # 2026-10-26 照 PoE2（Glowering Crest Shield，固定不隨物品等級變）；這次之前 { level: 62, str: 24, dex: 0, int: 24 }
+  armour: 107   # 2026-10-27 照 PoE2 原值（Glowering Crest Shield）；這次之前 68
+  es: 30   # 2026-10-27 照 PoE2 原值（Glowering Crest Shield）；這次之前 25
   block: 25.0
   sockets: 3
 
@@ -1112,9 +1112,9 @@ cshield_17:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 65
-  requirements: { level: 65, str: 25, dex: 0, int: 25 }
-  armour: 71
-  es: 26
+  requirements: { level: 65, str: 50, dex: 0, int: 50 }   # 2026-10-26 照 PoE2（Deified Crest Shield，固定不隨物品等級變）；這次之前 { level: 65, str: 25, dex: 0, int: 25 }
+  armour: 112   # 2026-10-27 照 PoE2 原值（Deified Crest Shield）；這次之前 71
+  es: 31   # 2026-10-27 照 PoE2 原值（Deified Crest Shield）；這次之前 26
   block: 25.0
   sockets: 3
 
@@ -1129,9 +1129,9 @@ cshield_18:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 65
-  requirements: { level: 65, str: 25, dex: 0, int: 25 }
-  armour: 71
-  es: 26
+  requirements: { level: 65, str: 50, dex: 0, int: 50 }   # 2026-10-26 照 PoE2（Intricate Crest Shield，固定不隨物品等級變）；這次之前 { level: 65, str: 25, dex: 0, int: 25 }
+  armour: 112   # 2026-10-27 照 PoE2 原值（Intricate Crest Shield）；這次之前 71
+  es: 31   # 2026-10-27 照 PoE2 原值（Intricate Crest Shield）；這次之前 26
   block: 25.0
   sockets: 3
 
@@ -1146,9 +1146,9 @@ cshield_19:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 70
-  requirements: { level: 70, str: 26, dex: 0, int: 26 }
-  armour: 77
-  es: 29
+  requirements: { level: 70, str: 54, dex: 0, int: 54 }   # 2026-10-26 照 PoE2（Sekheman Crest Shield，固定不隨物品等級變）；這次之前 { level: 70, str: 26, dex: 0, int: 26 }
+  armour: 123   # 2026-10-27 照 PoE2 原值（Sekheman Crest Shield）；這次之前 77
+  es: 34   # 2026-10-27 照 PoE2 原值（Sekheman Crest Shield）；這次之前 29
   block: 25.0
   sockets: 3
 
@@ -1163,9 +1163,9 @@ cshield_20:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 75
-  requirements: { level: 75, str: 28, dex: 0, int: 28 }
-  armour: 82
-  es: 32
+  requirements: { level: 75, str: 59, dex: 0, int: 59 }   # 2026-10-26 照 PoE2（Vaal Crest Shield，固定不隨物品等級變）；這次之前 { level: 75, str: 28, dex: 0, int: 28 }
+  armour: 134   # 2026-10-27 照 PoE2 原值（Vaal Crest Shield）；這次之前 82
+  es: 37   # 2026-10-27 照 PoE2 原值（Vaal Crest Shield）；這次之前 32
   block: 25.0
   sockets: 3
 
@@ -1178,9 +1178,9 @@ cshield_21:
   slot: OFF_HAND
   tags: [shield, str_armour, int_armour, str_int_armour, str_int_shield]
   drop_level: 1
-  requirements: { level: 1, str: 29, dex: 0, int: 29 }
-  armour: 88
-  es: 34
+  requirements: { level: 80, str: 63, dex: 0, int: 63 }   # 2026-10-26 照 PoE2（Blacksteel Crest Shield；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 29, dex: 0, int: 29 }
+  armour: 145   # 2026-10-26 照 PoE2 原值（Blacksteel Crest Shield）；這次之前 88
+  es: 40   # 2026-10-26 照 PoE2 原值（Blacksteel Crest Shield）；這次之前 34
   block: 25.0
   sockets: 3
 
@@ -1195,8 +1195,8 @@ buckler_01:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 18, int: 0 }
-  evasion: 38
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Leather Buckler，固定不隨物品等級變）；這次之前 { level: 1, str: 0, dex: 18, int: 0 }
+  evasion: 10   # 2026-10-27 照 PoE2 原值（Leather Buckler）；這次之前 38
   block: 20.0
   sockets: 3
 
@@ -1211,8 +1211,8 @@ buckler_02:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 5
-  requirements: { level: 5, str: 0, dex: 18, int: 0 }
-  evasion: 45
+  requirements: { level: 5, str: 0, dex: 10, int: 0 }   # 2026-10-26 照 PoE2（Wooden Buckler，固定不隨物品等級變）；這次之前 { level: 5, str: 0, dex: 18, int: 0 }
+  evasion: 18   # 2026-10-27 照 PoE2 原值（Wooden Buckler）；這次之前 45
   block: 20.0
   sockets: 3
 
@@ -1227,8 +1227,8 @@ buckler_03:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 11
-  requirements: { level: 11, str: 0, dex: 22, int: 0 }
-  evasion: 55
+  requirements: { level: 11, str: 0, dex: 18, int: 0 }   # 2026-10-26 照 PoE2（Plated Buckler，固定不隨物品等級變）；這次之前 { level: 11, str: 0, dex: 22, int: 0 }
+  evasion: 31   # 2026-10-27 照 PoE2 原值（Plated Buckler）；這次之前 55
   block: 20.0
   sockets: 3
 
@@ -1243,8 +1243,8 @@ buckler_04:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 16
-  requirements: { level: 16, str: 0, dex: 24, int: 0 }
-  evasion: 63
+  requirements: { level: 16, str: 0, dex: 25, int: 0 }   # 2026-10-26 照 PoE2（Iron Buckler，固定不隨物品等級變）；這次之前 { level: 16, str: 0, dex: 24, int: 0 }
+  evasion: 42   # 2026-10-27 照 PoE2 原值（Iron Buckler）；這次之前 63
   block: 20.0
   sockets: 3
 
@@ -1259,8 +1259,8 @@ buckler_05:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 22
-  requirements: { level: 22, str: 0, dex: 26, int: 0 }
-  evasion: 71
+  requirements: { level: 22, str: 0, dex: 33, int: 0 }   # 2026-10-26 照 PoE2（Ridged Buckler，固定不隨物品等級變）；這次之前 { level: 22, str: 0, dex: 26, int: 0 }
+  evasion: 55   # 2026-10-27 照 PoE2 原值（Ridged Buckler）；這次之前 71
   block: 20.0
   sockets: 3
 
@@ -1275,8 +1275,8 @@ buckler_06:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 26
-  requirements: { level: 26, str: 0, dex: 27, int: 0 }
-  evasion: 77
+  requirements: { level: 26, str: 0, dex: 38, int: 0 }   # 2026-10-26 照 PoE2（Spiked Buckler，固定不隨物品等級變）；這次之前 { level: 26, str: 0, dex: 27, int: 0 }
+  evasion: 64   # 2026-10-27 照 PoE2 原值（Spiked Buckler）；這次之前 77
   block: 20.0
   sockets: 3
 
@@ -1291,8 +1291,8 @@ buckler_07:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 33
-  requirements: { level: 33, str: 0, dex: 30, int: 0 }
-  evasion: 86
+  requirements: { level: 33, str: 0, dex: 48, int: 0 }   # 2026-10-26 照 PoE2（Ringed Buckler，固定不隨物品等級變）；這次之前 { level: 33, str: 0, dex: 30, int: 0 }
+  evasion: 79   # 2026-10-27 照 PoE2 原值（Ringed Buckler）；這次之前 86
   block: 20.0
   sockets: 3
 
@@ -1307,8 +1307,8 @@ buckler_08:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 39
-  requirements: { level: 39, str: 0, dex: 32, int: 0 }
-  evasion: 94
+  requirements: { level: 39, str: 0, dex: 56, int: 0 }   # 2026-10-26 照 PoE2（Edged Buckler，固定不隨物品等級變）；這次之前 { level: 39, str: 0, dex: 32, int: 0 }
+  evasion: 92   # 2026-10-27 照 PoE2 原值（Edged Buckler）；這次之前 94
   block: 20.0
   sockets: 3
 
@@ -1323,8 +1323,8 @@ buckler_09:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 45
-  requirements: { level: 45, str: 0, dex: 34, int: 0 }
-  evasion: 102
+  requirements: { level: 45, str: 0, dex: 64, int: 0 }   # 2026-10-26 照 PoE2（Laminate Buckler，固定不隨物品等級變）；這次之前 { level: 45, str: 0, dex: 34, int: 0 }
+  evasion: 105   # 2026-10-27 照 PoE2 原值（Laminate Buckler）；這次之前 102
   block: 20.0
   sockets: 3
 
@@ -1339,8 +1339,8 @@ buckler_10:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 45
-  requirements: { level: 45, str: 0, dex: 34, int: 0 }
-  evasion: 102
+  requirements: { level: 45, str: 0, dex: 64, int: 0 }   # 2026-10-26 照 PoE2（Oak Buckler，固定不隨物品等級變）；這次之前 { level: 45, str: 0, dex: 34, int: 0 }
+  evasion: 105   # 2026-10-27 照 PoE2 原值（Oak Buckler）；這次之前 102
   block: 20.0
   sockets: 3
 
@@ -1355,8 +1355,8 @@ buckler_11:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 48
-  requirements: { level: 48, str: 0, dex: 35, int: 0 }
-  evasion: 105
+  requirements: { level: 48, str: 0, dex: 69, int: 0 }   # 2026-10-26 照 PoE2（Painted Buckler，固定不隨物品等級變）；這次之前 { level: 48, str: 0, dex: 35, int: 0 }
+  evasion: 111   # 2026-10-27 照 PoE2 原值（Painted Buckler）；這次之前 105
   block: 20.0
   sockets: 3
 
@@ -1371,8 +1371,8 @@ buckler_12:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 50
-  requirements: { level: 50, str: 0, dex: 36, int: 0 }
-  evasion: 108
+  requirements: { level: 50, str: 0, dex: 71, int: 0 }   # 2026-10-26 照 PoE2（Pearl Buckler，固定不隨物品等級變）；這次之前 { level: 50, str: 0, dex: 36, int: 0 }
+  evasion: 116   # 2026-10-27 照 PoE2 原值（Pearl Buckler）；這次之前 108
   block: 20.0
   sockets: 3
 
@@ -1387,8 +1387,8 @@ buckler_13:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 51
-  requirements: { level: 51, str: 0, dex: 36, int: 0 }
-  evasion: 109
+  requirements: { level: 51, str: 0, dex: 73, int: 0 }   # 2026-10-26 照 PoE2（Coiled Buckler，固定不隨物品等級變）；這次之前 { level: 51, str: 0, dex: 36, int: 0 }
+  evasion: 118   # 2026-10-27 照 PoE2 原值（Coiled Buckler）；這次之前 109
   block: 20.0
   sockets: 3
 
@@ -1403,8 +1403,8 @@ buckler_14:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 52
-  requirements: { level: 52, str: 0, dex: 36, int: 0 }
-  evasion: 111
+  requirements: { level: 52, str: 0, dex: 74, int: 0 }   # 2026-10-26 照 PoE2（Ornate Buckler，固定不隨物品等級變）；這次之前 { level: 52, str: 0, dex: 36, int: 0 }
+  evasion: 120   # 2026-10-27 照 PoE2 原值（Ornate Buckler）；這次之前 111
   block: 20.0
   sockets: 3
 
@@ -1419,8 +1419,8 @@ buckler_15:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 54
-  requirements: { level: 54, str: 0, dex: 37, int: 0 }
-  evasion: 113
+  requirements: { level: 54, str: 0, dex: 77, int: 0 }   # 2026-10-26 照 PoE2（Spikeward Buckler，固定不隨物品等級變）；這次之前 { level: 54, str: 0, dex: 37, int: 0 }
+  evasion: 124   # 2026-10-27 照 PoE2 原值（Spikeward Buckler）；這次之前 113
   block: 20.0
   sockets: 3
 
@@ -1435,8 +1435,8 @@ buckler_16:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 55
-  requirements: { level: 55, str: 0, dex: 37, int: 0 }
-  evasion: 114
+  requirements: { level: 55, str: 0, dex: 78, int: 0 }   # 2026-10-26 照 PoE2（Array Buckler，固定不隨物品等級變）；這次之前 { level: 55, str: 0, dex: 37, int: 0 }
+  evasion: 126   # 2026-10-27 照 PoE2 原值（Array Buckler）；這次之前 114
   block: 20.0
   sockets: 3
 
@@ -1451,8 +1451,8 @@ buckler_17:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 59
-  requirements: { level: 59, str: 0, dex: 38, int: 0 }
-  evasion: 119
+  requirements: { level: 59, str: 0, dex: 83, int: 0 }   # 2026-10-26 照 PoE2（Jingling Buckler，固定不隨物品等級變）；這次之前 { level: 59, str: 0, dex: 38, int: 0 }
+  evasion: 135   # 2026-10-27 照 PoE2 原值（Jingling Buckler）；這次之前 119
   block: 20.0
   sockets: 3
 
@@ -1467,8 +1467,8 @@ buckler_18:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 61
-  requirements: { level: 61, str: 0, dex: 39, int: 0 }
-  evasion: 121
+  requirements: { level: 61, str: 0, dex: 86, int: 0 }   # 2026-10-26 照 PoE2（Bladeguard Buckler，固定不隨物品等級變）；這次之前 { level: 61, str: 0, dex: 39, int: 0 }
+  evasion: 139   # 2026-10-27 照 PoE2 原值（Bladeguard Buckler）；這次之前 121
   block: 20.0
   sockets: 3
 
@@ -1483,8 +1483,8 @@ buckler_19:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 65
-  requirements: { level: 65, str: 0, dex: 40, int: 0 }
-  evasion: 127
+  requirements: { level: 65, str: 0, dex: 91, int: 0 }   # 2026-10-26 照 PoE2（Aegis Buckler，固定不隨物品等級變）；這次之前 { level: 65, str: 0, dex: 40, int: 0 }
+  evasion: 148   # 2026-10-27 照 PoE2 原值（Aegis Buckler）；這次之前 127
   block: 20.0
   sockets: 3
 
@@ -1499,8 +1499,8 @@ buckler_20:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 65
-  requirements: { level: 65, str: 0, dex: 40, int: 0 }
-  evasion: 127
+  requirements: { level: 65, str: 0, dex: 91, int: 0 }   # 2026-10-26 照 PoE2（Ornate Buckler，固定不隨物品等級變）；這次之前 { level: 65, str: 0, dex: 40, int: 0 }
+  evasion: 148   # 2026-10-27 照 PoE2 原值（Ornate Buckler）；這次之前 127
   block: 20.0
   sockets: 3
 
@@ -1515,8 +1515,8 @@ buckler_21:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 70
-  requirements: { level: 70, str: 0, dex: 42, int: 0 }
-  evasion: 137
+  requirements: { level: 70, str: 0, dex: 99, int: 0 }   # 2026-10-26 照 PoE2（Gutspike Buckler，固定不隨物品等級變）；這次之前 { level: 70, str: 0, dex: 42, int: 0 }
+  evasion: 163   # 2026-10-27 照 PoE2 原值（Gutspike Buckler）；這次之前 137
   block: 20.0
   sockets: 3
 
@@ -1531,8 +1531,8 @@ buckler_22:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 75
-  requirements: { level: 75, str: 0, dex: 44, int: 0 }
-  evasion: 146
+  requirements: { level: 75, str: 0, dex: 107, int: 0 }   # 2026-10-26 照 PoE2（Ancient Buckler，固定不隨物品等級變）；這次之前 { level: 75, str: 0, dex: 44, int: 0 }
+  evasion: 178   # 2026-10-27 照 PoE2 原值（Ancient Buckler）；這次之前 146
   block: 20.0
   sockets: 3
 
@@ -1545,8 +1545,8 @@ buckler_23:
   slot: OFF_HAND
   tags: [shield, dex_armour, dex_only]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 46, int: 0 }
-  evasion: 155
+  requirements: { level: 80, str: 0, dex: 115, int: 0 }   # 2026-10-26 照 PoE2（Desert Buckler；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 46, int: 0 }
+  evasion: 192   # 2026-10-26 照 PoE2 原值（Desert Buckler）；這次之前 155
   block: 20.0
   sockets: 3
 
@@ -1561,8 +1561,8 @@ focus_01:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 0, int: 18 }
-  es: 18
+  requirements: { level: 1, str: 0, dex: 0, int: 0 }   # 2026-10-26 照 PoE2（Twig Focus，固定不隨物品等級變）；這次之前 { level: 1, str: 0, dex: 0, int: 18 }
+  es: 12   # 2026-10-27 照 PoE2 原值（Twig Focus）；這次之前 18
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1581,8 +1581,8 @@ focus_02:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 6
-  requirements: { level: 6, str: 0, dex: 0, int: 18 }
-  es: 17
+  requirements: { level: 6, str: 0, dex: 0, int: 11 }   # 2026-10-26 照 PoE2（Woven Focus，固定不隨物品等級變）；這次之前 { level: 6, str: 0, dex: 0, int: 18 }
+  es: 15   # 2026-10-27 照 PoE2 原值（Woven Focus）；這次之前 17
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1601,7 +1601,7 @@ focus_03:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 10
-  requirements: { level: 10, str: 0, dex: 0, int: 22 }
+  requirements: { level: 10, str: 0, dex: 0, int: 17 }   # 2026-10-26 照 PoE2（Antler Focus，固定不隨物品等級變）；這次之前 { level: 10, str: 0, dex: 0, int: 22 }
   es: 18
   sockets: 3
   implicit:
@@ -1621,8 +1621,8 @@ focus_04:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 16
-  requirements: { level: 16, str: 0, dex: 0, int: 24 }
-  es: 20
+  requirements: { level: 16, str: 0, dex: 0, int: 25 }   # 2026-10-26 照 PoE2（Engraved Focus，固定不隨物品等級變）；這次之前 { level: 16, str: 0, dex: 0, int: 24 }
+  es: 22   # 2026-10-27 照 PoE2 原值（Engraved Focus）；這次之前 20
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1641,8 +1641,8 @@ focus_05:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 22
-  requirements: { level: 22, str: 0, dex: 0, int: 26 }
-  es: 22
+  requirements: { level: 22, str: 0, dex: 0, int: 33 }   # 2026-10-26 照 PoE2（Tonal Focus，固定不隨物品等級變）；這次之前 { level: 22, str: 0, dex: 0, int: 26 }
+  es: 26   # 2026-10-27 照 PoE2 原值（Tonal Focus）；這次之前 22
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1661,8 +1661,8 @@ focus_06:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 26
-  requirements: { level: 26, str: 0, dex: 0, int: 27 }
-  es: 24
+  requirements: { level: 26, str: 0, dex: 0, int: 38 }   # 2026-10-26 照 PoE2（Crystal Focus，固定不隨物品等級變）；這次之前 { level: 26, str: 0, dex: 0, int: 27 }
+  es: 29   # 2026-10-27 照 PoE2 原值（Crystal Focus）；這次之前 24
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1681,8 +1681,8 @@ focus_07:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 33
-  requirements: { level: 33, str: 0, dex: 0, int: 30 }
-  es: 27
+  requirements: { level: 33, str: 0, dex: 0, int: 48 }   # 2026-10-26 照 PoE2（Voodoo Focus，固定不隨物品等級變）；這次之前 { level: 33, str: 0, dex: 0, int: 30 }
+  es: 34   # 2026-10-27 照 PoE2 原值（Voodoo Focus）；這次之前 27
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1701,8 +1701,8 @@ focus_08:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 36
-  requirements: { level: 36, str: 0, dex: 0, int: 31 }
-  es: 29
+  requirements: { level: 36, str: 0, dex: 0, int: 52 }   # 2026-10-26 照 PoE2（Plumed Focus，固定不隨物品等級變）；這次之前 { level: 36, str: 0, dex: 0, int: 31 }
+  es: 36   # 2026-10-27 照 PoE2 原值（Plumed Focus）；這次之前 29
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1721,8 +1721,8 @@ focus_09:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 45
-  requirements: { level: 45, str: 0, dex: 0, int: 34 }
-  es: 33
+  requirements: { level: 45, str: 0, dex: 0, int: 64 }   # 2026-10-26 照 PoE2（Runed Focus，固定不隨物品等級變）；這次之前 { level: 45, str: 0, dex: 0, int: 34 }
+  es: 42   # 2026-10-27 照 PoE2 原值（Runed Focus）；這次之前 33
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1741,8 +1741,8 @@ focus_10:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 45
-  requirements: { level: 45, str: 0, dex: 0, int: 34 }
-  es: 33
+  requirements: { level: 45, str: 0, dex: 0, int: 64 }   # 2026-10-26 照 PoE2（Wreath Focus，固定不隨物品等級變）；這次之前 { level: 45, str: 0, dex: 0, int: 34 }
+  es: 42   # 2026-10-27 照 PoE2 原值（Wreath Focus）；這次之前 33
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1761,8 +1761,8 @@ focus_11:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 48
-  requirements: { level: 48, str: 0, dex: 0, int: 35 }
-  es: 35
+  requirements: { level: 48, str: 0, dex: 0, int: 69 }   # 2026-10-26 照 PoE2（Staghorn Focus，固定不隨物品等級變）；這次之前 { level: 48, str: 0, dex: 0, int: 35 }
+  es: 45   # 2026-10-27 照 PoE2 原值（Staghorn Focus）；這次之前 35
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1781,8 +1781,8 @@ focus_12:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 51
-  requirements: { level: 51, str: 0, dex: 0, int: 36 }
-  es: 37
+  requirements: { level: 51, str: 0, dex: 0, int: 73 }   # 2026-10-26 照 PoE2（Whorl Focus，固定不隨物品等級變）；這次之前 { level: 51, str: 0, dex: 0, int: 36 }
+  es: 47   # 2026-10-27 照 PoE2 原值（Whorl Focus）；這次之前 37
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1801,8 +1801,8 @@ focus_13:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 51
-  requirements: { level: 51, str: 0, dex: 0, int: 36 }
-  es: 37
+  requirements: { level: 51, str: 0, dex: 0, int: 73 }   # 2026-10-26 照 PoE2（Jingling Focus，固定不隨物品等級變）；這次之前 { level: 51, str: 0, dex: 0, int: 36 }
+  es: 47   # 2026-10-27 照 PoE2 原值（Jingling Focus）；這次之前 37
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1821,8 +1821,8 @@ focus_14:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 52
-  requirements: { level: 52, str: 0, dex: 0, int: 36 }
-  es: 37
+  requirements: { level: 52, str: 0, dex: 0, int: 74 }   # 2026-10-26 照 PoE2（Elegant Focus，固定不隨物品等級變）；這次之前 { level: 52, str: 0, dex: 0, int: 36 }
+  es: 47   # 2026-10-27 照 PoE2 原值（Elegant Focus）；這次之前 37
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1841,8 +1841,8 @@ focus_15:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 54
-  requirements: { level: 54, str: 0, dex: 0, int: 37 }
-  es: 38
+  requirements: { level: 54, str: 0, dex: 0, int: 77 }   # 2026-10-26 照 PoE2（Arrayed Focus，固定不隨物品等級變）；這次之前 { level: 54, str: 0, dex: 0, int: 37 }
+  es: 49   # 2026-10-27 照 PoE2 原值（Arrayed Focus）；這次之前 38
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1861,8 +1861,8 @@ focus_16:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 57
-  requirements: { level: 57, str: 0, dex: 0, int: 38 }
-  es: 40
+  requirements: { level: 57, str: 0, dex: 0, int: 81 }   # 2026-10-26 照 PoE2（Attuned Focus，固定不隨物品等級變）；這次之前 { level: 57, str: 0, dex: 0, int: 38 }
+  es: 51   # 2026-10-27 照 PoE2 原值（Attuned Focus）；這次之前 40
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1881,8 +1881,8 @@ focus_17:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 59
-  requirements: { level: 59, str: 0, dex: 0, int: 38 }
-  es: 40
+  requirements: { level: 59, str: 0, dex: 0, int: 83 }   # 2026-10-26 照 PoE2（Cultist Focus，固定不隨物品等級變）；這次之前 { level: 59, str: 0, dex: 0, int: 38 }
+  es: 52   # 2026-10-27 照 PoE2 原值（Cultist Focus）；這次之前 40
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1901,8 +1901,8 @@ focus_18:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 61
-  requirements: { level: 61, str: 0, dex: 0, int: 39 }
-  es: 44
+  requirements: { level: 61, str: 0, dex: 0, int: 86 }   # 2026-10-26 照 PoE2（Hallowed Focus，固定不隨物品等級變）；這次之前 { level: 61, str: 0, dex: 0, int: 39 }
+  es: 57   # 2026-10-27 照 PoE2 原值（Hallowed Focus）；這次之前 44
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1921,8 +1921,8 @@ focus_19:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 65
-  requirements: { level: 65, str: 0, dex: 0, int: 40 }
-  es: 44
+  requirements: { level: 65, str: 0, dex: 0, int: 91 }   # 2026-10-26 照 PoE2（Magus Focus，固定不隨物品等級變）；這次之前 { level: 65, str: 0, dex: 0, int: 40 }
+  es: 56   # 2026-10-27 照 PoE2 原值（Magus Focus）；這次之前 44
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1941,8 +1941,8 @@ focus_20:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 65
-  requirements: { level: 65, str: 0, dex: 0, int: 40 }
-  es: 48
+  requirements: { level: 65, str: 0, dex: 0, int: 91 }   # 2026-10-26 照 PoE2（Druidic Focus，固定不隨物品等級變）；這次之前 { level: 65, str: 0, dex: 0, int: 40 }
+  es: 62   # 2026-10-27 照 PoE2 原值（Druidic Focus）；這次之前 48
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1961,8 +1961,8 @@ focus_21:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 70
-  requirements: { level: 70, str: 0, dex: 0, int: 42 }
-  es: 55
+  requirements: { level: 70, str: 0, dex: 0, int: 99 }   # 2026-10-26 照 PoE2（Leyline Focus，固定不隨物品等級變）；這次之前 { level: 70, str: 0, dex: 0, int: 42 }
+  es: 71   # 2026-10-27 照 PoE2 原值（Leyline Focus）；這次之前 55
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1981,8 +1981,8 @@ focus_22:
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 75
-  requirements: { level: 75, str: 0, dex: 0, int: 44 }
-  es: 63
+  requirements: { level: 75, str: 0, dex: 0, int: 107 }   # 2026-10-26 照 PoE2（Sacred Focus，固定不隨物品等級變）；這次之前 { level: 75, str: 0, dex: 0, int: 44 }
+  es: 81   # 2026-10-27 照 PoE2 原值（Sacred Focus）；這次之前 63
   sockets: 3
   implicit:
     text: "增加 {value}% 法術傷害"
@@ -1993,18 +1993,13 @@ focus_22:
 focus_23:
   name: 天鐵法器
   base_level: 80          # 數值是物品等級 80 的值，照物品等級縮放
-  implicit_level: 1
   family: focus
   material: SHIELD
   model: exilecore:shield/spirit_shield
   slot: OFF_HAND
   tags: [shield, int_armour, int_only, focus]
   drop_level: 1
-  requirements: { level: 1, str: 0, dex: 0, int: 46 }
-  es: 71
+  requirements: { level: 80, str: 0, dex: 0, int: 115 }   # 2026-10-26 照 PoE2（Tasalian Focus；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 0, dex: 0, int: 46 }
+  es: 91   # 2026-10-26 照 PoE2 原值（Tasalian Focus）；這次之前 71
   sockets: 3
-  implicit:
-    text: "增加 {value}% 法術傷害"
-    value: [5, 10]
-    mods:
-      - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+  # 2026-10-26 照 PoE2：法器沒有固有詞綴（Tasalian Focus）；這次之前固有詞綴「增加 5–10% 法術傷害」

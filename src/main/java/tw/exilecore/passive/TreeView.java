@@ -33,11 +33,8 @@ public final class TreeView {
         DIM
     }
 
-    /** 上、右、下、左。 */
-    private static final int[][] DIRECTIONS = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}};
-
     /**
-     * 一格。node 為 null 時是空格（只有背景）；edges 是上右下左（沒有連線為 null）。
+     * 一格。node 為 null 時是空格（只有背景，或有連線經過）；edges 是上右下左（沒有連線為 null）。
      */
     public record Tile(int x, int y, PassiveNode node, NodeState state, EdgeState[] edges, boolean highlight, int background) {
     }
@@ -64,9 +61,25 @@ public final class TreeView {
     private final Set<String> allocated;
     private final Set<String> path;
     private final Set<String> highlights;
+    /** 2026-10-26 照 PoE2：昇華給的配點規則（{@link PassiveTree#RULES}）。 */
+    private final Set<String> rules;
+    /** 2026-10-26 照站長：角色的昇華代號（觀星專屬節點只有觀星看得到，見 {@link PassiveTree#hidden}）。 */
+    private final String ascendancy;
 
     public TreeView(final PassiveTree tree, final PassiveNode start, final Set<String> allocated, final Set<String> path,
                     final Set<String> highlights) {
+        this(tree, start, allocated, path, highlights, Set.of());
+    }
+
+    public TreeView(final PassiveTree tree, final PassiveNode start, final Set<String> allocated, final Set<String> path,
+                    final Set<String> highlights, final Set<String> rules) {
+        this(tree, start, allocated, path, highlights, rules, PassiveTree.SHOW_ALL);
+    }
+
+    public TreeView(final PassiveTree tree, final PassiveNode start, final Set<String> allocated, final Set<String> path,
+                    final Set<String> highlights, final Set<String> rules, final String ascendancy) {
+        this.ascendancy = ascendancy;
+        this.rules = rules;
         this.tree = tree;
         this.start = start;
         this.allocated = allocated;
@@ -85,7 +98,7 @@ public final class TreeView {
         if (path.contains(node.id())) {
             return NodeState.PATH;
         }
-        if (start != null && tree.canAllocate(allocated, start, node)) {
+        if (start != null && tree.canAllocate(allocated, start, node, rules)) {
             return NodeState.AVAILABLE;
         }
         return NodeState.LOCKED;
@@ -108,20 +121,59 @@ public final class TreeView {
         return EdgeState.DIM;
     }
 
+    /** 這一格看得到的節點（藏起來的當作空格）。 */
+    public PassiveNode at(final int x, final int y) {
+        final PassiveNode node = tree.at(x, y);
+        return node == null || tree.hidden(node, ascendancy) ? null : node;
+    }
+
     public Tile tile(final int x, final int y) {
         final int background = Math.floorMod(x * 7 + y * 13 + x * y, 4);
-        final PassiveNode node = tree.at(x, y);
-        if (node == null) {
-            return new Tile(x, y, null, null, new EdgeState[4], false, background);
-        }
+        final PassiveNode node = at(x, y);
+        // 2026-10-26：連線照 tree.json 的 links 畫（不相鄰的連線走過中間的空格）；同一個方向有好幾條線時取最亮的
         final EdgeState[] edges = new EdgeState[4];
-        for (int i = 0; i < DIRECTIONS.length; i++) {
-            final PassiveNode neighbour = tree.at(x + DIRECTIONS[i][0], y + DIRECTIONS[i][1]);
-            if (neighbour != null) {
-                edges[i] = edge(node, neighbour);
+        for (final PassiveTree.CellWire wire : tree.wiresAt(x, y)) {
+            if (tree.hidden(wire.link().a(), ascendancy) || tree.hidden(wire.link().b(), ascendancy)) {
+                continue; // 連到藏起來的節點的線也不畫
+            }
+            EdgeState state = null;
+            for (int i = 0; i < 4; i++) {
+                if ((wire.directions() & (1 << i)) == 0) {
+                    continue;
+                }
+                if (state == null) {
+                    state = edge(wire.link().a(), wire.link().b());
+                }
+                if (edges[i] == null || state.ordinal() < edges[i].ordinal()) {
+                    edges[i] = state;
+                }
             }
         }
+        if (node == null) {
+            return new Tile(x, y, null, null, edges, false, background);
+        }
         return new Tile(x, y, node, state(node), edges, highlights.contains(node.id()), background);
+    }
+
+    /** 這一格有沒有連線經過（空格才有意義）。 */
+    public static boolean hasWire(final Tile tile) {
+        for (final EdgeState edge : tile.edges()) {
+            if (edge != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 這一格的連線裡最亮的狀態（沒有線為 null）。 */
+    public static EdgeState brightest(final Tile tile) {
+        EdgeState best = null;
+        for (final EdgeState edge : tile.edges()) {
+            if (edge != null && (best == null || edge.ordinal() < best.ordinal())) {
+                best = edge;
+            }
+        }
+        return best;
     }
 
     // ---- 縮小地圖 ----
@@ -157,7 +209,7 @@ public final class TreeView {
                 PassiveNode landmark = null;
                 for (int y = minY; y <= maxY; y++) {
                     for (int x = minX; x <= maxX; x++) {
-                        final PassiveNode node = tree.at(x, y);
+                        final PassiveNode node = at(x, y);
                         if (node == null) {
                             continue;
                         }

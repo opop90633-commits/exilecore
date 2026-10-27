@@ -164,14 +164,28 @@ public final class MarketService {
                 plugin.getSLF4JLogger().error("市集：上架 {}（{}）的物品讀不出來，先不顯示（資料庫裡保留）", row.id(), row.sellerName(), e);
                 continue;
             }
-            // 上架中的舊物品：舊版畫的重畫、舊版的傳奇照目前的定義補正（買到的跟看到的一樣；資料庫裡的到下次改價或賣出才更新）
+            // 上架中的舊物品：舊版畫的重畫、舊版的傳奇照目前的定義補正（買到的跟看到的一樣；2026-10-26 起補正過的寫回資料庫）
             boolean refreshed = plugin.items().refresh(item);
             if (plugin.skills() != null) {
                 refreshed |= plugin.skills().gems().refresh(item); // 寶石：技能、輔助改過名字的重畫
             }
             final ItemData data = plugin.items().read(item).orElse(null);
+            final String search = refreshed ? searchText(item, data) : row.searchText();
+            if (refreshed) {
+                // 2026-10-26：補正過的（詞綴照新資料換算、重畫）寫回資料庫，下次啟動不用再換；這次之前要到改價或賣出才更新
+                final byte[] bytes = item.serializeAsBytes();
+                final String listingId = row.id();
+                plugin.database().async(connection -> {
+                    repository.updateItem(connection, listingId, bytes, search);
+                    return null;
+                }).whenComplete((ignored, error) -> {
+                    if (error != null) {
+                        plugin.getSLF4JLogger().warn("市集：上架 {} 補正後的物品寫不回資料庫：{}", listingId, error.toString());
+                    }
+                });
+            }
             listings.put(row.id(), new Listing(row.id(), row.account(), row.sellerName(), item, row.itemUuid(),
-                    refreshed ? searchText(item, data) : row.searchText(),
+                    search,
                     category(item, data), data == null ? null : data.rarity(), row.priceCurrency(), row.priceAmount(),
                     row.listedAt().toEpochMilli(), null, true));
         }
@@ -477,6 +491,9 @@ public final class MarketService {
         }
         if (plugin.items().read(current).map(ItemData::locked).orElse(false)) {
             return "這件鎖定了（/lock 解除後才能上架）";
+        }
+        if (tw.exilecore.life.LifeService.isHook(current)) {
+            return "星索鉤綁定帳號，不能上架"; // 2026-10-27：這次之前上架後再領一把＝複製
         }
         if (current.hasData(io.papermc.paper.datacomponent.DataComponentTypes.BUNDLE_CONTENTS)
                 || current.hasData(io.papermc.paper.datacomponent.DataComponentTypes.CONTAINER)) {

@@ -37,7 +37,7 @@ final class DpsCap {
      */
     double apply(final String key, final double amount, final double cap, final List<MapConfig.DpsTier> over, final long tick,
                  final double recordDps) {
-        if (amount <= 0 || cap <= 0) {
+        if (amount <= 0) {
             return amount;
         }
         if (recent.size() > 512) {
@@ -45,6 +45,13 @@ final class DpsCap {
             recent.values().removeIf(old -> tick - old[1] > 60 * 20);
         }
         final double[] state = recent.computeIfAbsent(key, k -> new double[] {0, tick, tick, 0, 0});
+        if (cap <= 0) {
+            // 2026-10-26：Boss 的每秒傷害遞減拿掉了（管理員決定）：照原本的傷害算，只記 /ec bossdps 的統計
+            state[1] = tick;
+            state[3] += amount;
+            state[4] += amount;
+            return amount;
+        }
         final double elapsed = Math.max(0, tick - state[1]) / 20.0;
         if (elapsed > WINDOW_SECONDS * 5) {
             state[2] = tick; // 停手好一陣子（離開、換階段）再打：重新算開場

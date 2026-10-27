@@ -52,13 +52,21 @@ public final class CharmService implements Listener {
     /** 屬性：多幾格護符欄。 */
     public static final String STAT_SLOTS = "charm.slots";
 
-    /** 觸發條件。 */
+    /** 觸發條件（2026-10-26：加上 curse 被詛咒、slow 受到緩速，照 PoE2 的淨化護符、銀護符）。 */
     static final Set<String> TRIGGERS = Set.of("freeze", "ignite", "shock", "chill", "bleed", "poison", "stun", "electrocute",
-            "hit_fire", "hit_cold", "hit_lightning", "hit_chaos", "hit_physical", "hit_unique", "kill_rare", "low_life");
+            "hit_fire", "hit_cold", "hit_lightning", "hit_chaos", "hit_physical", "hit_unique", "kill_rare", "low_life", "curse", "slow");
 
-    /** 一種護符。 */
+    /** 2026-10-26：開關（FLAT 1）：免疫詛咒（PoE2 淨化護符的 Grants Immunity to Curses）。 */
+    public static final String FLAG_CURSE_IMMUNE = "flag.curse_immune";
+
+    /** 一種護符（retired：2026-10-26 拿掉的護符，舊物品照常能用，不掉落、不列在清單）。 */
     public record CharmBase(String id, String name, String trigger, boolean cure, int level, double duration, int charges, int perUse,
-                     List<Modifier> effects, Material material, String description) {
+                     List<Modifier> effects, Material material, String description, boolean retired) {
+
+        public CharmBase(final String id, final String name, final String trigger, final boolean cure, final int level, final double duration,
+                         final int charges, final int perUse, final List<Modifier> effects, final Material material, final String description) {
+            this(id, name, trigger, cure, level, duration, charges, perUse, effects, material, description, false);
+        }
     }
 
     record CharmData(String base, int charges) {
@@ -93,7 +101,7 @@ public final class CharmService implements Listener {
         }
         final YamlNode node = root.node("charms");
         // inventory_slots（舊版：護符放在背包的哪幾格）不再使用：護符改裝在角色面板
-        baseSlots = Math.max(0, node.integer("base_slots", 2));
+        baseSlots = Math.max(0, node.integer("base_slots", 0)); // 2026-10-26 照 PoE2：角色本身 0 格，只有腰帶給（這次之前預設 2）
         dropChance = Math.max(0, Math.min(1, node.decimal("drop_chance", 0.25)));
         final YamlNode section = node.node("bases");
         for (final String id : section.keys()) {
@@ -116,7 +124,8 @@ public final class CharmService implements Listener {
                 material = Material.AMETHYST_SHARD;
             }
             bases.put(id, new CharmBase(id, b.requireString("name"), trigger, b.bool("cure", false), Math.max(1, b.integer("level", 1)),
-                    Math.max(0.5, b.decimal("duration", 4)), charges, perUse, List.copyOf(effects), material, b.string("description", "")));
+                    Math.max(0.5, b.decimal("duration", 4)), charges, perUse, List.copyOf(effects), material, b.string("description", ""),
+                    b.bool("retired", false)));
         }
     }
 
@@ -124,9 +133,15 @@ public final class CharmService implements Listener {
         return bases.size();
     }
 
-    /** 所有的護符基底（2026-10-24：管理網頁的發放清單）。 */
+    /** 現役的護符基底（2026-10-24：管理網頁的發放清單；2026-10-26：拿掉的 retired 不列，用 {@link #base(String)} 還是找得到）。 */
     public java.util.Collection<CharmBase> bases() {
-        return java.util.Collections.unmodifiableCollection(bases.values());
+        final List<CharmBase> active = new ArrayList<>();
+        for (final CharmBase base : bases.values()) {
+            if (!base.retired()) {
+                active.add(base);
+            }
+        }
+        return java.util.Collections.unmodifiableList(active);
     }
 
     /** 這個代號的護符基底（沒有回傳 null）。 */
@@ -262,7 +277,7 @@ public final class CharmService implements Listener {
             if (affixLines != null) {
                 lore.addAll(affixLines);
             }
-            meta.lore(lore);
+            meta.lore(tw.exilecore.core.text.TextWrap.lore(lore)); // 2026-10-26：長行自動換行
             meta.setMaxStackSize(1);
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, base.id() + ";" + charges);
         });
@@ -287,7 +302,7 @@ public final class CharmService implements Listener {
             for (final String line : lore(base, FlaskMods.NONE, clamped, base.effects())) {
                 lore.add(ItemRenderer.line(line));
             }
-            meta.lore(lore);
+            meta.lore(tw.exilecore.core.text.TextWrap.lore(lore)); // 2026-10-26：長行自動換行
             meta.setMaxStackSize(1);
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, base.id() + ";" + clamped);
         });
@@ -296,7 +311,11 @@ public final class CharmService implements Listener {
 
     private List<String> lore(final CharmBase base, final FlaskMods mods, final int charges, final List<tw.exilecore.stats.Modifier> effects) {
         final List<String> lines = new ArrayList<>();
-        lines.add("<gray>" + triggerText(base.trigger()) + "：自動觸發" + (base.cure() ? "，解除那個異常狀態" : ""));
+        lines.add("<gray>" + triggerText(base.trigger()) + "：自動觸發" + (base.cure() ? switch (base.trigger()) {
+            case "curse" -> "，解除身上的詛咒";
+            case "slow" -> "，解除身上的緩速";
+            default -> "，解除那個異常狀態";
+        } : ""));
         final double seconds = base.duration() * mods.duration();
         final String number = mods.duration() != 1 ? "<#8888ff>" : "<white>";
         if (!effects.isEmpty()) {
@@ -324,8 +343,9 @@ public final class CharmService implements Listener {
                 + (mods.chargesUsed() != 1 ? "</#8888ff>" : "</white>"));
         lines.add("<gray>需求：等級 <white>" + base.level());
         lines.add("");
-        lines.add("<gray>裝進角色面板的護符欄才會生效（不佔背包）：基本 " + baseSlots + " 格，");
-        lines.add("<gray>裝備的「+1 護符欄位」可以多開，最多 " + PlayerState.CHARM_SLOTS + " 格");
+        // 2026-10-26 照 PoE2：護符欄由腰帶給（這次之前寫「基本 2 格、+1 護符欄位可以多開」）
+        lines.add("<gray>裝進角色面板的護符欄才會生效（不佔背包）：" + (baseSlots > 0 ? "基本 " + baseSlots + " 格，" : ""));
+        lines.add("<gray>護符欄由腰帶給（每條腰帶 1–3 格），最多 " + PlayerState.CHARM_SLOTS + " 格");
         lines.add("<gray>殺怪充能；回營地、碰到檢查點、重生時補滿");
         lines.add("<yellow>右鍵：裝進護符欄<gray>（或在角色面板點它）");
         return lines;
@@ -349,6 +369,8 @@ public final class CharmService implements Listener {
             case "hit_unique" -> "被傳奇怪物或 Boss 擊中時";
             case "kill_rare" -> "擊殺稀有或傳奇怪物時";
             case "low_life" -> "被擊中後生命低於一半時";
+            case "curse" -> "被詛咒時";
+            case "slow" -> "受到緩速時";
             default -> trigger;
         };
     }
@@ -385,6 +407,16 @@ public final class CharmService implements Listener {
         return (int) Math.max(0, Math.min(PlayerState.CHARM_SLOTS, baseSlots + Math.round(extra)));
     }
 
+    /** 2026-10-27（塗油限定 巨著）：開著的前 open 格裡裝了幾個護符。 */
+    static int filled(final PlayerState state, final int open) {
+        int filled = 0;
+        for (int i = 0; i < open; i++) {
+            final ItemStack stack = charmAt(state, i);
+            filled += stack == null || stack.isEmpty() ? 0 : 1;
+        }
+        return filled;
+    }
+
     /** 護符欄第 index 格裝的護符（沒有是 null）。 */
     public static ItemStack charmAt(final PlayerState state, final int index) {
         return state.jewellery(PlayerState.CHARM_SLOT + index);
@@ -409,7 +441,7 @@ public final class CharmService implements Listener {
         }
         final int open = activeCount(player);
         if (open <= 0) {
-            return "沒有開著的護符欄（裝備「+1 護符欄位」的腰帶可以開）";
+            return "沒有開著的護符欄（護符欄由腰帶給：先裝一條腰帶）"; // 2026-10-26 照 PoE2
         }
         int target = 0;
         for (int i = 0; i < open; i++) {
@@ -520,10 +552,14 @@ public final class CharmService implements Listener {
         if (!eligible(player)) {
             return;
         }
+        if (tw.exilecore.stats.StatKeys.flag(plugin.players().sheet(player), tw.exilecore.stats.KeystoneKeys.FLAG_OASIS)) {
+            return; // 2026-10-26 照 PoE2 基石：幻景綠洲——無法使用護符
+        }
         final PlayerState state = plugin.players().get(player);
         final int level = state.level();
         final int open = activeCount(player);
         final Set<String> fired = new HashSet<>();
+        Set<String> chained = null;
         for (int index = 0; index < open; index++) {
             final ItemStack charm = charmAt(state, index);
             final CharmData data = read(charm).orElse(null);
@@ -535,7 +571,10 @@ public final class CharmService implements Listener {
             final List<tw.exilecore.stats.Modifier> effects = effectsOf(base, affixModifiers(charm)); // 2026-10-25：傳奇護符照自己的效果
             final double usedGlobal = plugin.players().sheet(player).increased(tw.exilecore.stats.StatKeys.CHARM_CHARGES_USED, java.util.Set.of());
             final int perUse = Math.max(1, (int) Math.round(mods.perUse(base.perUse()) * Math.max(0, 1 + usedGlobal)));
-            if (data.charges() < perUse) {
+            // 2026-10-26（昇華・心靈護符，PoE2）：充能不足時可以改消耗 25% 最大魔力來觸發
+            final double manaShare = tw.exilecore.ascendancy.AscendancyEffects.charmManaShare(player);
+            final boolean byMana = data.charges() < perUse && manaShare > 0 && state.mana() >= state.maxMana() * manaShare / 100.0 && state.maxMana() > 0;
+            if (data.charges() < perUse && !byMana) {
                 continue;
             }
             if (!base.cure() && !effects.isEmpty() && plugin.skills() != null && plugin.skills().buffActive(player, "charm." + base.id())) {
@@ -545,7 +584,9 @@ public final class CharmService implements Listener {
             fired.add(base.id());
             final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
             final double free = Math.max(0, Math.min(1, sheet.get(tw.exilecore.stats.StatKeys.CHARM_FREE_CHANCE) / 100.0));
-            if (free <= 0 || plugin.items().random().nextDouble() >= free) {
+            if (byMana) {
+                state.setMana(state.mana() - state.maxMana() * manaShare / 100.0);
+            } else if (free <= 0 || plugin.items().random().nextDouble() >= free) {
                 setCharges(state, index, base, data.charges() - perUse);
             }
             if (base.cure() && plugin.ailments() != null) {
@@ -553,24 +594,39 @@ public final class CharmService implements Listener {
                 if (type != null) {
                     plugin.ailments().cure(player, type);
                 }
+                if ("slow".equals(trigger)) {
+                    clearSlows(player); // 2026-10-26：銀護符：身上的緩速解掉
+                }
+            }
+            if (base.cure() && "curse".equals(trigger) && plugin.combat() != null) {
+                plugin.combat().debuffs().removeCurses(player.getUniqueId()); // 2026-10-26：淨化護符：身上的詛咒解掉
             }
             final long now = plugin.getServer().getCurrentTick();
             state.markRecent(tw.exilecore.stats.Recently.CHARM, now); // 「最近用過護符」
             // 持續時間：護符自己的詞綴 × 全域的「護符效果持續時間」
             final int ticks = (int) Math.round(base.duration() * mods.duration()
                     * Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.StatKeys.CHARM_DURATION, java.util.Set.of())) * 20);
+            // 2026-10-26 照 PoE2 天賦樹：「你身上的護符增加 x% 效果」：增益的數值、守護的量放大（開關不放大）
+            // 2026-10-27 照 PoE2（塗油限定 巨著）：每個開著但空著的護符欄再增加 x%
+            final double charmEffect = sheet.increased(tw.exilecore.stats.TreeEffectKeys.CHARM_EFFECT, java.util.Set.of())
+                    + tw.exilecore.stats.AnointKeys.emptyCharmEffect(sheet.flat(tw.exilecore.stats.AnointKeys.CHARM_EFFECT_PER_EMPTY, java.util.Set.of()),
+                    open, filled(state, open));
             if (!effects.isEmpty() && plugin.skills() != null) {
-                plugin.skills().buff(player, "charm." + base.id(), base.name(), ticks, effects);
+                final List<tw.exilecore.stats.Modifier> applied = charmEffect == 0 ? effects : new java.util.ArrayList<>(effects);
+                if (charmEffect != 0) {
+                    applied.addAll(tw.exilecore.stats.TreeEffectKeys.amplify(effects, charmEffect, base.name()));
+                }
+                plugin.skills().buff(player, "charm." + base.id(), base.name(), ticks, applied);
             }
             // 護符詞綴：守護、回復生命／魔力
             if (mods.guard() > 0) {
-                state.addGuard(mods.guard(), now + ticks);
+                state.addGuard(mods.guard() * Math.max(0, 1 + charmEffect), now + ticks);
             }
             if (mods.lifeOnUse() > 0) {
-                state.setLife(Math.min(state.maxLife(), state.life() + mods.lifeOnUse()));
+                state.setLife(Math.min(state.maxLife(), state.life() + mods.lifeOnUse() * Math.max(0, 1 + charmEffect)));
             }
             if (mods.manaOnUse() > 0) {
-                state.setMana(Math.min(state.maxMana(), state.mana() + mods.manaOnUse()));
+                state.setMana(Math.min(state.maxMana(), state.mana() + mods.manaOnUse() * Math.max(0, 1 + charmEffect)));
             }
             // 2026-10-24（傳奇護符：岳息、瓦拉可之吼）：使用時獲得戰星
             if (plugin.combat() != null && plugin.combat().charges() != null) {
@@ -578,9 +634,44 @@ public final class CharmService implements Listener {
                     plugin.combat().charges().grant(player, grant.getKey(), grant.getValue());
                 }
             }
+            // 2026-10-26 照 PoE2 天賦：護符觸發時回復最大魔力的 x%；x% 機率再觸發另一個護符（不消耗充能）
+            final double charmMana = sheet.flat(tw.exilecore.stats.TreeNewMechanicKeys.CHARM_MANA_ON_USE, java.util.Set.of());
+            if (charmMana > 0) {
+                state.setMana(Math.min(state.maxMana(), state.mana() + state.maxMana() * charmMana / 100.0));
+            }
+            if (chained == null && plugin.items().random().nextDouble() * 100 < sheet.flat(tw.exilecore.stats.TreeNewMechanicKeys.CHARM_CHAIN,
+                    java.util.Set.of())) {
+                chained = fired;
+            }
             state.notice("<#c9a0ff>" + ItemRenderer.escape(base.name()) + "觸發", now + 40);
             plugin.players().display(player, state);
             player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, SoundCategory.PLAYERS, 0.8f, 1.4f);
+        }
+        if (chained != null) {
+            freeOther(player, state, chained);
+        }
+    }
+
+    /** 2026-10-26 照 PoE2 天賦：再觸發一個（還沒觸發過、效果不在的）護符，不消耗充能。 */
+    private void freeOther(final Player player, final PlayerState state, final Set<String> skip) {
+        for (int index = 0; index < activeCount(player); index++) {
+            final ItemStack charm = charmAt(state, index);
+            final CharmData data = read(charm).orElse(null);
+            final CharmBase base = data == null ? null : bases.get(data.base());
+            if (base == null || skip.contains(base.id()) || base.cure() || base.level() > state.level()) {
+                continue;
+            }
+            final List<tw.exilecore.stats.Modifier> effects = effectsOf(base, affixModifiers(charm));
+            if (effects.isEmpty() || plugin.skills() == null || plugin.skills().buffActive(player, "charm." + base.id())) {
+                continue;
+            }
+            final FlaskMods mods = mods(charm, base);
+            final int ticks = (int) Math.round(base.duration() * mods.duration() * Math.max(0.1, 1 + plugin.players().sheet(player)
+                    .increased(tw.exilecore.stats.StatKeys.CHARM_DURATION, java.util.Set.of())) * 20);
+            plugin.skills().buff(player, "charm." + base.id(), base.name(), ticks, effects);
+            state.notice("<#c9a0ff>" + ItemRenderer.escape(base.name()) + "也觸發了（不消耗充能）", plugin.getServer().getCurrentTick() + 40);
+            plugin.players().display(player, state);
+            return;
         }
     }
 
@@ -661,14 +752,37 @@ public final class CharmService implements Listener {
         };
     }
 
-    /** 每幾個 tick 看一次：身上有異常狀態就觸發對應的護符。 */
+    /** 2026-10-26：詛咒的免疫檢查掛上戰鬥模組了沒（戰鬥模組可能比藥劑模組晚啟用，所以在 tick 裡掛）。 */
+    private boolean curseHooked;
+
+    /** 2026-10-26：這個玩家身上有沒有緩速（冰緩、癱瘓、阻礙、減速地面、Boss 的減速藥水效果）。 */
+    private boolean slowed(final Player player) {
+        return plugin.ailments().slowed(player) || player.hasPotionEffect(org.bukkit.potion.PotionEffectType.SLOWNESS);
+    }
+
+    /** 2026-10-26：解掉身上的緩速（銀護符觸發、效果期間）。 */
+    private void clearSlows(final Player player) {
+        plugin.ailments().clearSlows(player);
+        if (player.hasPotionEffect(org.bukkit.potion.PotionEffectType.SLOWNESS)) {
+            player.removePotionEffect(org.bukkit.potion.PotionEffectType.SLOWNESS);
+        }
+    }
+
+    /** 每幾個 tick 看一次：身上有異常狀態（2026-10-26：詛咒、緩速）就觸發對應的護符。 */
     void tick() {
         if (bases.isEmpty() || plugin.ailments() == null) {
             return;
         }
+        if (!curseHooked && plugin.combat() != null && plugin.combat().debuffs() != null) {
+            curseHooked = true;
+            plugin.combat().debuffs().setCurseImmunity(id -> {
+                final Player target = plugin.getServer().getPlayer(id);
+                return target != null && plugin.players() != null && tw.exilecore.stats.StatKeys.flag(plugin.players().sheet(target), FLAG_CURSE_IMMUNE);
+            });
+        }
         final Set<String> wanted = new HashSet<>();
         for (final CharmBase base : bases.values()) {
-            if (ailmentOf(base.trigger()) != null) {
+            if (ailmentOf(base.trigger()) != null || "curse".equals(base.trigger()) || "slow".equals(base.trigger())) {
                 wanted.add(base.trigger());
             }
         }
@@ -680,7 +794,30 @@ public final class CharmService implements Listener {
             if (!hasAnyCharm(player)) {
                 continue;
             }
+            final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
             for (final String trigger : wanted) {
+                if ("slow".equals(trigger)) {
+                    if (!slowed(player)) {
+                        continue;
+                    }
+                    if (tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.stats.StatKeys.FLAG_UNSLOWABLE)) {
+                        clearSlows(player); // 效果期間：速度不受緩速影響（擋不掉的減速也直接解掉），不再觸發
+                    } else {
+                        trigger(player, trigger);
+                    }
+                    continue;
+                }
+                if ("curse".equals(trigger)) {
+                    if (plugin.combat() == null || !plugin.combat().debuffs().cursed(player.getUniqueId(), plugin.getServer().getCurrentTick())) {
+                        continue;
+                    }
+                    if (tw.exilecore.stats.StatKeys.flag(sheet, FLAG_CURSE_IMMUNE)) {
+                        plugin.combat().debuffs().removeCurses(player.getUniqueId()); // 效果期間免疫詛咒
+                    } else {
+                        trigger(player, trigger);
+                    }
+                    continue;
+                }
                 if (plugin.ailments().has(player, ailmentOf(trigger))) {
                     trigger(player, trigger);
                 }
@@ -752,7 +889,8 @@ public final class CharmService implements Listener {
         }
         final PlayerState state = plugin.players().get(player);
         final int open = activeCount(player);
-        final double global = plugin.players().sheet(player).increased(tw.exilecore.stats.StatKeys.CHARM_CHARGES_GAINED, java.util.Set.of());
+        // 2026-10-26 照 PoE2：也算「更多」（精妙符印更多 20% 護符充能）；這次之前只算增加
+        final double global = plugin.players().sheet(player).apply(tw.exilecore.stats.StatKeys.CHARM_CHARGES_GAINED, 1.0, java.util.Set.of()) - 1;
         for (int index = 0; index < open; index++) {
             final ItemStack charm = charmAt(state, index);
             final CharmData data = read(charm).orElse(null);
@@ -841,7 +979,7 @@ public final class CharmService implements Listener {
         }
         final List<CharmBase> list = new ArrayList<>();
         for (final CharmBase base : bases.values()) {
-            if (base.level() <= monsterLevel) {
+            if (base.level() <= monsterLevel && !base.retired()) { // 2026-10-26：拿掉的不掉
                 list.add(base);
             }
         }

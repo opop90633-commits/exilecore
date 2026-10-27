@@ -1,0 +1,9 @@
+Incendiary Shot (poe2db.tw/us/Incendiary_Shot) - Tier 3. (Text paraphrased by WebFetch.)
+Mechanic: Loads flaming bolts that split into fragments in flight; each damages and Ignites enemies hit directly and hits enemies in a small cone behind the final target. Fragments can Merge.
+Ammunition: +1 bolt per clip.
+Projectile: attack dmg 10-36%; projectile speed 34.2 m/s; 80% phys->fire; Ignites deal damage 200% faster; 300% more Flammability Magnitude; consumes 15 Heat if available for 100% more Ignite Magnitude; shatter cone 1.9 m; fires 10 fragments per shot; 30% increased Ignite duration per Fragment in a single hit.
+Quality: +0-15% increased Ignite duration per fragment; +0-4 fragments per shot.
+Hidden: burst shot cone angle 220; 90 deg facing; 40% speed variation; spread std dev 9; knockback 75; 300 ms barrage debuff, 8 recoil buffs, 1 recoil/shot; -70% move speed, +160%/s, 50% locked; 1000 ms queue override.
+No ground-fire stats listed.
+
+Per-level columns (excluding damage/mana): no other per-level columns.

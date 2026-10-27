@@ -121,13 +121,13 @@ public final class CharacterConfig {
         map.put("marauder", new StarterClass(List.of("mace1_01", "mace2_01"),
                 List.of("helm_str_01", "body_str_01", "legs_str_01", "boots_str_01"), "tshield_01"));
         map.put("mercenary", new StarterClass(List.of("xbow_01"),
-                List.of("helm_str_dex_01", "body_str_dex_01", "legs_str_dex_01", "boots_str_dex_01"), "kshield_01"));
+                List.of("helm_str_01", "body_str_dex_01", "legs_dex_01", "boots_dex_01"), "kshield_01")); // 2026-10-26 見 character.yml
         map.put("huntress", new StarterClass(List.of("spear_01"),
                 List.of("helm_dex_01", "body_dex_01", "legs_dex_01", "boots_dex_01"), "buckler_01"));
         map.put("ranger", new StarterClass(List.of("bow_01"),
                 List.of("helm_dex_01", "body_dex_01", "legs_dex_01", "boots_dex_01"), "buckler_01"));
         map.put("monk", new StarterClass(List.of("qstaff_01"),
-                List.of("helm_dex_int_01", "body_dex_int_01", "legs_dex_int_01", "boots_dex_int_01"), "buckler_01"));
+                List.of("helm_dex_01", "body_dex_int_01", "legs_int_01", "boots_dex_01"), "buckler_01")); // 2026-10-26 見 character.yml
         map.put("sorceress", new StarterClass(List.of("staff_01", "wand_01"),
                 List.of("helm_int_01", "body_int_01", "legs_int_01", "boots_int_01"), "focus_01"));
         map.put("witch", new StarterClass(List.of("wand_01", "staff_01"),
@@ -142,6 +142,8 @@ public final class CharacterConfig {
                 new StarterSkillRule("quarterstaff", "tempest_flurry"), new StarterSkillRule("spear", "lightning_spear"),
                 new StarterSkillRule("wand", "essence_drain", "witch"), new StarterSkillRule("staff", "essence_drain", "witch"),
                 new StarterSkillRule("wand", "fireball"), new StarterSkillRule("staff", "fireball"),
+                // 2026-10-26：權杖照 PoE2 沒有傷害（不是錘），送法術
+                new StarterSkillRule("sceptre", "essence_drain", "witch"), new StarterSkillRule("sceptre", "fireball"),
                 new StarterSkillRule("talisman", "bear_maul"),
                 new StarterSkillRule("mace", "boneshatter"), new StarterSkillRule("melee", "earthquake"));
     }

@@ -69,6 +69,7 @@ import java.util.concurrent.TimeoutException;
  * POST /admin/api/broadcast    全服公告
  * POST /admin/api/banner       常駐公告（2026-10-23）：{ text }，空的 = 收起來；畫面最上面一直掛著，重啟後還在
  * GET  /admin/api/retention    玩家留存（2026-10-19）
+ * POST /admin/api/dps/clear    清除輸出紀錄（2026-10-27）：{ uuid, character? } 清一個人（可以只清一個角色）、{ all: true } 清全部玩家
  * </pre>
  * 每個 API 都要登入；POST 另外要帶 X-EC-CSRF 標頭（登入時給的代碼）。回應一律不快取、不能被別的網站嵌入。
  */
@@ -133,6 +134,8 @@ final class AdminWeb {
         // 2026-10：輸出紀錄（每場 Boss、每段假人：每個人打了多少、幾秒）
         server.endpoint("/admin/api/dps", request -> api(request, false, session -> tw.exilecore.combat.DpsRecords.get(plugin)
                 .json(parseDays(request.param("days")))), "GET");
+        // 2026-10-27：清除輸出紀錄（站長要的：單一玩家／單一角色，或全部玩家）
+        server.endpoint("/admin/api/dps/clear", request -> api(request, true, session -> clearDps(session, body(request))), "POST");
         // 2026-10-19：玩家留存（新玩家第 1、7、30 天還有沒有回來、每週新玩家、每天上線、流失的人停在哪）
         server.endpoint("/admin/api/retention", request -> api(request, false, session -> onDatabase(connection ->
                 RetentionReport.load(connection, Instant.now(), java.time.ZoneId.of("Asia/Taipei")))), "GET");
@@ -1360,6 +1363,40 @@ final class AdminWeb {
         plugin.getSLF4JLogger().info("[管理網頁] {} {}", session.admin(), result);
         record(session.admin(), "玩家", result);
         return Map.of("ok", true, "message", result);
+    }
+
+    // ---- 輸出紀錄（2026-10-27）----
+
+    /** 清除輸出紀錄：{ uuid, character? } 或 { all: true }；記在操作紀錄。 */
+    private Object clearDps(final AdminAuth.Session session, final JsonObject body) {
+        final tw.exilecore.combat.DpsRecords records = tw.exilecore.combat.DpsRecords.get(plugin);
+        final String result;
+        if (bool(body, "all", false)) {
+            final int removed = records.clear(null, null);
+            result = "清除全部玩家的輸出紀錄（" + removed + " 筆）";
+        } else {
+            final UUID uuid;
+            try {
+                uuid = UUID.fromString(string(body, "uuid"));
+            } catch (final IllegalArgumentException e) {
+                throw new IllegalArgumentException("玩家的代號不對");
+            }
+            final String raw = optionalString(body, "character");
+            final String character = raw == null || raw.isBlank() ? null : raw.strip();
+            if (character != null && character.length() > 32) {
+                throw new IllegalArgumentException("角色名稱太長了");
+            }
+            String name = records.playerName(uuid.toString());
+            if (name == null) {
+                name = plugin.getServer().getOfflinePlayer(uuid).getName();
+            }
+            final int removed = records.clear(uuid.toString(), character);
+            result = "清除 " + (name == null ? uuid.toString() : name) + (character == null ? "" : " 的角色「" + character + "」")
+                    + " 的輸出紀錄（" + removed + " 筆）";
+        }
+        plugin.getSLF4JLogger().info("[管理網頁] {} {}", session.admin(), result);
+        record(session.admin(), "輸出紀錄", result);
+        return Map.of("ok", true, "message", result, "total", records.size());
     }
 
     // ---- 帳號轉移（2026-10-17）----

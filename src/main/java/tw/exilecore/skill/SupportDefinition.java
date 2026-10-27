@@ -55,6 +55,21 @@ public record SupportDefinition(String id, String name, String description, Stri
         return source == null;
     }
 
+    /** 2026-10-27 照 PoE2：血脈輔助（supports_lineage.yml，source 是 lineage、lineage_rare、lineage_pinnacle）：切不出來，但不算專屬輔助的名額。 */
+    public boolean lineage() {
+        return source != null && source.startsWith(LineageRules.SOURCE_PREFIX);
+    }
+
+    /** 2026-10-27：共鳴石用在這顆上為什麼不行（可以回傳 null）：一般輔助、血脈輔助、已經共鳴的不行（技能面板拿著共鳴石時亮不亮照這個）。 */
+    public String resonanceRefusal(final boolean alreadyResonant) {
+        return lineage() ? "不能用在血脈輔助寶石上" : cuttable() ? "只能用在專屬掉落的輔助寶石上" : alreadyResonant ? "已經共鳴了" : null;
+    }
+
+    /** 2026-10-27：換掉掉落來源（supports_lineage.yml 的 existing：把 supports.yml 裡已有的血脈輔助標成血脈掉落）。 */
+    public SupportDefinition withSource(final String newSource) {
+        return new SupportDefinition(id, name, description, icon, tier, requires, excludes, manaMultiplier, modifiers, notes, newSource);
+    }
+
     /**
      * 一個技能只能掛一顆專屬掉落的輔助寶石（2026-10）：把 adding 掛到 entry 的第 socket 孔（-1 = 第一個空孔）之後，
      * 會不會有兩顆專屬的。換掉的那一孔不算。可以掛回傳 null，不行回傳原因。
@@ -74,7 +89,10 @@ public record SupportDefinition(String id, String name, String description, Stri
     public static String exclusiveConflict(final tw.exilecore.character.SkillLoadout.Entry entry, final int socket,
                                            final SupportDefinition adding, final boolean addingResonant,
                                            final java.util.function.Function<String, SupportDefinition> lookup) {
-        if (adding == null || adding.cuttable() || addingResonant) {
+        if (adding != null && adding.lineage()) {
+            return lineageConflict(entry, socket, adding, lookup); // 2026-10-27 照站長：血脈輔助一個技能只能一顆、共鳴不算
+        }
+        if (adding == null || adding.cuttable() || addingResonant) { // 2026-10-27：血脈輔助不算專屬的名額（照 PoE2）
             return null;
         }
         for (int i = 0; i < entry.sockets(); i++) {
@@ -86,8 +104,30 @@ public record SupportDefinition(String id, String name, String description, Stri
                 continue; // 同一種掛兩顆是另一條規則
             }
             final SupportDefinition other = lookup.apply(id);
-            if (other != null && !other.cuttable()) {
+            if (other != null && !other.cuttable() && !other.lineage()) {
                 return "一個技能只能掛一顆專屬掉落的輔助寶石（已經掛著" + other.name() + "）";
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 2026-10-27 照站長：一個技能只能掛一顆血脈輔助寶石（跟專屬輔助的名額分開算；血脈輔助不能用共鳴石，舊的共鳴標記也不算）。
+     * 可以掛回傳 null，不行回傳原因。
+     */
+    private static String lineageConflict(final tw.exilecore.character.SkillLoadout.Entry entry, final int socket,
+                                          final SupportDefinition adding, final java.util.function.Function<String, SupportDefinition> lookup) {
+        for (int i = 0; i < entry.sockets(); i++) {
+            if (i == socket) {
+                continue;
+            }
+            final String id = entry.support(i);
+            if (id.isEmpty() || id.equals(adding.id())) {
+                continue; // 同一種掛兩顆是另一條規則
+            }
+            final SupportDefinition other = lookup.apply(id);
+            if (other != null && other.lineage()) {
+                return "一個技能只能掛一顆血脈輔助寶石（已經掛著" + other.name() + "）";
             }
         }
         return null;
@@ -98,7 +138,7 @@ public record SupportDefinition(String id, String name, String description, Stri
         return source != null && source.equals(from);
     }
 
-    /** 2026-10-22：技能放在自己第 1 孔裡的宿主寶石（英靈圖騰、星咒圖騰、暴擊引星）。 */
+    /** 2026-10-22：技能放在自己孔裡的宿主寶石（英靈圖騰、星咒圖騰、引星；每一孔都能放）。 */
     public static boolean hostsSkill(final SkillDefinition skill) {
         return skill != null && (skill.tags().contains(Tags.META) || flagged(skill, StatKeys.FLAG_TOTEM_LINKED));
     }
@@ -113,7 +153,7 @@ public record SupportDefinition(String id, String name, String description, Stri
     }
 
     /**
-     * 2026-10-22：宿主寶石第 2～5 孔的輔助全部套在放進去的技能上；其中這幾種也套到宿主本身
+     * 2026-10-22：宿主寶石其他孔的輔助全部套在放進去的技能上；其中這幾種也套到宿主本身
      * （放圖騰、圖騰生命、叫英靈的速度）：要圖騰才能掛的、只加攻擊／施法速度或持續時間的。
      */
     public boolean worksOnHost() {
@@ -142,7 +182,7 @@ public record SupportDefinition(String id, String name, String description, Stri
             return "觸發、圖騰施法、陷阱施法的輔助不能掛在" + host.name() + "上";
         }
         if (inner == null) {
-            return "先把技能寶石放進第 1 孔";
+            return "先把技能寶石放進它的孔";
         }
         // 2026-10-24：寫了「圖騰除外」（excludes: totem）的輔助不能掛在圖騰宿主上（裂虛回響：英靈每次只打一下，連打吃不到）
         if (excludes.contains(Tags.TOTEM) && host.tags().contains(Tags.TOTEM)) {
@@ -182,6 +222,19 @@ public record SupportDefinition(String id, String name, String description, Stri
                 return ModifierText.tagName(tag) + "技能不行";
             }
         }
+        // 2026-10-27 照站長（防呆）：PoE2 0.5 補上的一般輔助，掛了完全沒作用的技能不讓掛（SupportGuards）
+        final String guard = SupportGuards.refusal(this, skill);
+        if (guard != null) {
+            return guard;
+        }
+        // 2026-10-27 照 PoE2 Burgeon（漸熾）：只能掛在引導的技能（有 channelling 標籤：引導、蓄力、按住一直放的）
+        if (flags(Burgeon.PER_SECOND) && !skill.tags().contains(tw.exilecore.stats.TreeMechanicKeys.CHANNELLING)) {
+            return "要引導或蓄力的技能";
+        }
+        // 2026-10-27 照 PoE2 Efficiency（節流）：減少消耗的輔助不能掛在保留精魂的技能（光環、捷光環、常駐、精魂召喚都是 mechanic: aura）
+        if (skill.mechanic() == Mechanic.AURA && reducesCost()) {
+            return "保留精魂的技能不行";
+        }
         // 2026-10-17 標籤整理：以前 excludes 寫 channel，但沒有技能有這個標籤（蓄力看 channel.stages），等於沒擋
         if (excludes.contains("channel") && channels(skill)) {
             return "本身會蓄力的技能不行";
@@ -194,11 +247,6 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (flags(StatKeys.MELEE_SPLASH) && skill.mechanic() != Mechanic.STRIKE) {
             return "要打擊技能（衝過去、扇形的不行）";
         }
-        // 強勢戰吼、怒嘯：要戰吼本身會強化攻擊，加次數才有意義
-        if ((flags(StatKeys.WARCRY_EXERTS) || flags(StatKeys.WARCRY_RAGE_EXERT))
-                && (skill.warcry() == null || skill.warcry().exerts() <= 0)) {
-            return "要會強化攻擊的戰吼";
-        }
         if (flags(StatKeys.CHANNEL_STAGES) && channels(skill)) {
             return "本身會蓄力的技能不行"; // 2026-10：蓄勢不能疊在本來就會蓄力的技能上（熾息、蓄力射擊…）
         }
@@ -208,9 +256,27 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (!matchesRequires(skill)) {
             return "要" + requiresText();
         }
+        // 強勢戰吼、不竭嘯、決嘯、碎晶嘯（2026-10-26 移到 requires 之後：不是戰吼的先說「要戰吼技能」）：要戰吼本身會強化攻擊，加次數才有意義
+        if ((flags(StatKeys.WARCRY_EXERTS) || flags(StatKeys.WARCRY_RAGE_EXERT) || flags(tw.exilecore.stats.SupportKeys.WARCRY_TIRELESS)
+                || flags(tw.exilecore.stats.SupportKeys.FLAG_EMPOWERED_CULL) || flags(tw.exilecore.stats.SupportKeys.WARCRY_CRYSTAL_EMPOWERS))
+                && (skill.warcry() == null || !skill.warcry().empowers())) { // 2026-10-26：照強度強化的也算
+            return "要會強化攻擊的戰吼";
+        }
+        // 2026-10-26 照 PoE2：怒嘯要可以用磐星跳過冷卻的戰吼；震嘯、血譽不能掛在本來就要榮耀才能用的戰吼（熔魂嘯）
+        if (flags(tw.exilecore.stats.SupportKeys.WARCRY_RAGE_BYPASS) && skill.cooldownBypass() == null) {
+            return "要可以花磐星跳過冷卻的戰吼";
+        }
+        if ((flags(tw.exilecore.stats.SupportKeys.WARCRY_ECHOES) || flags(tw.exilecore.stats.SupportKeys.GLORY_COST))
+                && skill.warcry() != null && skill.warcry().extras().glory() > 0) {
+            return "本來就要榮耀才能用的技能不行";
+        }
         final String charge = chargeRefusal(skill);
         if (charge != null) {
             return charge; // 2026-10-24：戰星輔助
+        }
+        final String lineage = LineageRules.refusal(this, skill);
+        if (lineage != null) {
+            return lineage; // 2026-10-27 照 PoE2：血脈輔助各自的限制（LineageRules）
         }
         // 2026-10：觸發輔助（暴擊、受擊、擊殺、異常、翻滾、召喚物死亡觸發）不能掛在增益型的技能上（連珠、霜鏃、舉盾…）：
         // 照 PoE2 這些不是能被觸發的法術；以前掛得上去，觸發時卻略過，又因為掛了觸發不能手動放，整顆技能變廢
@@ -219,7 +285,8 @@ public record SupportDefinition(String id, String name, String description, Stri
         }
         // 2026-10：光環、詛咒、印記、護體、戰吼、純位移、召喚本身不會打到敵人：只有擊中才有用的輔助（引火、致命、各種穿透、趁 X…）
         // 以前掛得上去，一條都不生效還白付魔力倍率。捷的輔助會傳給擊殺效果（隱藏的法術），所以照算
-        if (!skill.dealsDamage() && !skill.tags().contains(Tags.HERALD) && !worksWithoutHits(skill)) {
+        if (!skill.dealsDamage() && !skill.tags().contains(Tags.HERALD) && !worksWithoutHits(skill)
+                && !(requires.contains(Tags.META) && skill.tags().contains(Tags.META))) { // 2026-10-26：骰運掛在主要寶石上給觸發的技能
             return "不會造成傷害的技能不行";
         }
         // 2026-10：投射物的機制（多射幾發、穿透、分裂、連鎖、飛行速度…）只有真的射出投射物的技能才吃得到：
@@ -237,7 +304,22 @@ public record SupportDefinition(String id, String name, String description, Stri
             StatKeys.SKILL_MINIONS, StatKeys.SKILL_TOTEMS, StatKeys.SUPPORT_SPIRIT, StatKeys.CURSE_EFFECT, StatKeys.MARK_EFFECT, StatKeys.CAST_SPEED, StatKeys.FLAG_ECHO,
             StatKeys.FLAG_BLOOD_MAGIC, StatKeys.MANA_ON_MINION_DEATH, StatKeys.MINION_DEATH_HEAL);
     private static final List<String> UTILITY_PREFIXES = List.of(StatKeys.GRANT_PREFIX, "warcry.", "aura.", "herald.", "trigger.", "seal.", "meta.",
-            "infusion.", "proc.use", "proc.minion_death", "charge.sup.");
+            "infusion.", "proc.use", "proc.minion_death", "charge.sup.",
+            // 2026-10-26：照 PoE2 重做的輔助：戰吼輔助、榮耀、凍結時的增益、印記、詛咒、圖騰、召喚物、獻祭生命
+            tw.exilecore.stats.SupportKeys.FLAG_BATTERSHOUT, tw.exilecore.stats.SupportKeys.FLAG_PAQUATE, "glory.",
+            tw.exilecore.stats.SupportKeys.ICE_BITE, tw.exilecore.stats.SupportKeys.SHATTER_FANG,
+            tw.exilecore.stats.SupportKeys.FLAG_EMPOWERED_CULL, tw.exilecore.stats.SupportKeys.FLAG_UNERRING, "cost.",
+            tw.exilecore.stats.SupportKeys.FLAG_EXTRA_SKELETON, tw.exilecore.stats.SupportKeys.FLAG_MARK_ETERNAL, "mark.", "curse.", "totem.",
+            "minion.", "trigger_cost.",
+            "arcane_surge.", // 2026-10-26 照 PoE2 湧詠：花魔力就給秘術增強（不用擊中）
+            "helbrym.", "storm.", // 2026-10-26 照 PoE2：蟄甲（變身時）、行嵐與掠嵐（風暴移動）不用擊中
+            // 2026-10-27 照 PoE2 0.5 補上的一般輔助：放技能時的增益、殘骸、先祖強化、用掉的資源、地面、詛咒、印記…不用擊中（能不能掛另外看 SupportGuards）
+            tw.exilecore.stats.SupportExtraKeys.USING_PREFIX, tw.exilecore.stats.SupportExtraKeys.USING_QUARTER_PREFIX,
+            tw.exilecore.stats.SupportExtraKeys.CHANNELLING_PREFIX, tw.exilecore.stats.SupportExtraKeys.REMNANT_PREFIX, "ancestral.",
+            "flask.consume", "volatility.", "conditional.", "cooldown.", "corpse.", "banner.", "leap.", "travel.", "es.recharge",
+            "thorns.mana", "channel.", "ground.", "hazard.", "wall.", "fissure.", "rage.relentless", "charge.endurance_life", "spell.cascade",
+            "nova.", "persistent.", "objects.",
+            tw.exilecore.stats.LineageKeys.UTILITY); // 2026-10-27 照 PoE2：血脈輔助不用擊中的效果（lineage.u.）
     /** 技能有這個標籤時才有作用的屬性。 */
     private static final Map<String, String> TAGGED_UTILITY_STATS = Map.of(StatKeys.SKILL_AREA, Tags.AREA, StatKeys.SKILL_DURATION, Tags.DURATION,
             StatKeys.SKILL_COOLDOWN, Tags.COOLDOWN);
@@ -319,7 +401,12 @@ public record SupportDefinition(String id, String name, String description, Stri
         for (final Modifier modifier : modifiers) {
             switch (modifier.stat()) {
                 case StatKeys.SKILL_PROJECTILES, StatKeys.SKILL_PIERCE, StatKeys.SKILL_FORK, StatKeys.SKILL_CHAINS,
-                     StatKeys.SKILL_PROJECTILE_SPEED, StatKeys.FLAG_PROJECTILE_NOVA, StatKeys.FLAG_RETURNING, StatKeys.SEAL_PROJECTILES -> {
+                     StatKeys.SKILL_PROJECTILE_SPEED, StatKeys.FLAG_PROJECTILE_NOVA, StatKeys.FLAG_RETURNING, StatKeys.SEAL_PROJECTILES,
+                     tw.exilecore.stats.SupportKeys.PIERCE_IGNITED, tw.exilecore.stats.SupportKeys.FORK_FROZEN,
+                     tw.exilecore.stats.SupportKeys.CHAIN_SHOCKED, // 2026-10-26：穿燼、霜岔、躍霆
+                     tw.exilecore.stats.SupportExtraKeys.FLAG_GAMBLESHOT, tw.exilecore.stats.SupportExtraKeys.FLAG_RICOCHET,
+                     tw.exilecore.stats.SupportExtraKeys.ALIGNMENT, tw.exilecore.stats.SupportExtraKeys.FLAG_SPECTRAL,
+                     tw.exilecore.stats.SupportExtraKeys.CHARGED_SHOTS -> { // 2026-10-27：隨機、跳彈、指向、光影齊射、充能射擊
                     return true;
                 }
                 default -> { }
@@ -335,7 +422,9 @@ public record SupportDefinition(String id, String name, String description, Stri
             switch (modifier.stat()) {
                 case StatKeys.SKILL_PROJECTILE_SPEED -> speed = true;
                 case StatKeys.SKILL_PROJECTILES, StatKeys.SKILL_PIERCE, StatKeys.SKILL_FORK, StatKeys.SKILL_CHAINS,
-                     StatKeys.FLAG_PROJECTILE_NOVA, StatKeys.FLAG_RETURNING, StatKeys.SEAL_PROJECTILES -> {
+                     StatKeys.FLAG_PROJECTILE_NOVA, StatKeys.FLAG_RETURNING, StatKeys.SEAL_PROJECTILES,
+                     tw.exilecore.stats.SupportKeys.PIERCE_IGNITED, tw.exilecore.stats.SupportKeys.FORK_FROZEN,
+                     tw.exilecore.stats.SupportKeys.CHAIN_SHOCKED -> {
                     return false;
                 }
                 default -> { }
@@ -344,8 +433,14 @@ public record SupportDefinition(String id, String name, String description, Stri
         return speed;
     }
 
-    /** 技能本身會不會蓄力（技能的修飾器有 channel.stages）。 */
+    /**
+     * 技能本身會不會蓄力（技能的修飾器有 channel.stages，或是有引導標籤的蓄力／引導技能）。
+     * 2026-10-27 照站長：以前只看 channel.stages，炎核爆、碎骨飛矢這類寫在 charge 的蓄力技能擋不到，蓄勢掛得上去。
+     */
     static boolean channels(final SkillDefinition skill) {
+        if (skill.tags().contains("channelling")) {
+            return true;
+        }
         for (final Modifier modifier : skill.modifiers()) {
             if (modifier.stat().equals(StatKeys.CHANNEL_STAGES) && modifier.value() > 0) {
                 return true;
@@ -359,11 +454,32 @@ public record SupportDefinition(String id, String name, String description, Stri
             return true;
         }
         for (final String tag : requires) {
+            if (Tags.META.equals(tag) && !metaHost(skill)) {
+                continue; // 2026-10-26：英靈圖騰補了 meta 標籤（照 PoE2），能量輔助、骰運還是不能掛在圖騰上
+            }
             if (skill.tags().contains(tag) || skill.weapons().contains(tag)) { // 2026-10：也可以寫武器（crossbow：弩的技能）
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * 2026-10-26 照 PoE2：要 meta 的輔助能不能把這個技能當主要寶石：英靈圖騰（照 PoE2 有 Meta 標籤，但不觸發、沒有能量）不算；
+     * 星咒圖騰沒有能量，能量輔助（meta.energy_*）不算（骰運照舊可以）。
+     */
+    private boolean metaHost(final SkillDefinition skill) {
+        if (flagged(skill, StatKeys.FLAG_TOTEM_LINKED)) {
+            return false;
+        }
+        if (skill.tags().contains(Tags.TOTEM)) {
+            for (final Modifier modifier : modifiers) {
+                if (modifier.stat().startsWith("meta.energy")) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /** 2026-10：這顆是不是觸發輔助（modifiers 有 trigger. 開頭、大於 0 的）。 */
@@ -387,6 +503,16 @@ public record SupportDefinition(String id, String name, String description, Stri
     }
 
     /** 這顆輔助有沒有某個開關（flag.spell_totem、flag.trap…）。 */
+    /** 2026-10-27：有沒有「消耗更少」（skill.cost 更多／增加是負的；節流）。 */
+    boolean reducesCost() {
+        for (final Modifier modifier : modifiers) {
+            if (modifier.stat().equals(StatKeys.SKILL_COST) && modifier.value() < 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean flags(final String stat) {
         for (final Modifier modifier : modifiers) {
             if (modifier.stat().equals(stat) && modifier.value() > 0) {

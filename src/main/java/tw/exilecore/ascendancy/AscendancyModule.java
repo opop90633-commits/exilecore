@@ -40,6 +40,14 @@ public final class AscendancyModule implements Module, Listener {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         // 昇華天賦與分身獎勵：重算屬性表時從角色進度、帳號的角色清單算出來
         plugin.players().addStateModifierSource((player, state) -> service == null ? List.of() : service.modifiers(player, state));
+        plugin.players().addPointSource(state -> service == null ? 0 : service.passivePoints(state)); // 2026-10-26：武器大師的額外天賦點
+        AscendancyEffects.start(plugin); // 2026-10-26：昇華天賦原本（尚未生效）的機制
+        // 2026-10-26：登入、建立、切換角色時檢查昇華天賦的版本（改版了就退點）
+        plugin.characters().addAfterApply(player -> {
+            if (service != null) {
+                service.checkVersion(player);
+            }
+        });
         // 已經在線上的玩家（/reload）
         service.reloaded();
         // 衝等活動：要等稱號系統（委託模組，在這個模組後面啟用）好了才開始
@@ -66,6 +74,7 @@ public final class AscendancyModule implements Module, Listener {
     private void load() throws Exception {
         final AscendancyConfig fresh = new AscendancyConfig();
         fresh.load(plugin.dataFolder().resolve("data"));
+        AscBuild.loadColours(plugin.dataFolder().resolve("data")); // 2026-10-26：寶石顏色（嵌晶）
         final List<String> classes = new ArrayList<>();
         for (final CharacterClass characterClass : CharacterClass.values()) {
             classes.add(characterClass.id());

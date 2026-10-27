@@ -75,6 +75,8 @@ public final class GuildService {
     private final Map<Long, List<Consumer<GuildStash>>> stashWaiters = new HashMap<>();
     /** 整理、頁籤設定沒存成功的公會倉庫：下一輪整個重存。 */
     private final Set<Long> stashDirty = new LinkedHashSet<>();
+    /** 2026-10-27：整理、重新分頁、補正寫的頁還沒確定存好的（存入／取出時跟玩家的存檔一起寫）。 */
+    private final Map<Long, StashPendingPages> stashPending = new HashMap<>();
     private tw.exilecore.stash.StashOrganizer organizer;
     /** 開著公會倉庫的人。 */
     private final Map<UUID, GuildStashMenu> openStashes = new HashMap<>();
@@ -1035,6 +1037,7 @@ public final class GuildService {
         dirty.remove(id);
         applications.remove(id);
         stashDirty.remove(id);
+        stashPending.remove(id);
         stashes.remove(id);
         stashWaiters.remove(id);
         plugin.database().async(connection -> {
@@ -1592,10 +1595,38 @@ public final class GuildService {
                 return;
             }
             stashes.put(id, stash);
+            refreshStashItems(current, stash);
             for (final Consumer<GuildStash> each : pending) {
                 each.accept(stash);
             }
         }));
+    }
+
+    /**
+     * 2026-10-26：公會倉庫的裝備也照新資料補正（詞綴照比例換到新範圍、拿掉的換成同類的、舊版畫的重畫），有改的那幾頁寫回資料庫。
+     * 這次之前公會倉庫裡的東西不會補正。
+     */
+    private void refreshStashItems(final Guild guild, final GuildStash stash) {
+        if (plugin.items() == null) {
+            return;
+        }
+        final List<Integer> changed = new ArrayList<>();
+        for (int page = 0; page < stash.pageCount(); page++) {
+            boolean any = false;
+            for (final org.bukkit.inventory.ItemStack stack : stash.page(page)) {
+                try {
+                    any |= stack != null && plugin.items().refresh(stack);
+                } catch (final RuntimeException ignored) {
+                    // 一件補不了就跳過，不能讓整個公會倉庫打不開
+                }
+            }
+            if (any) {
+                changed.add(page);
+            }
+        }
+        if (!changed.isEmpty()) {
+            saveStash(guild, changed, false);
+        }
     }
 
     void stashOpened(final Player player, final GuildStashMenu menu) {
@@ -1646,6 +1677,9 @@ public final class GuildService {
         }
         if (plugin.items().read(stack).map(ItemData::locked).orElse(false)) {
             return "<#ffd27f>🔒 這件鎖定了（/lock 解除後才能放）";
+        }
+        if (tw.exilecore.life.LifeService.isHook(stack)) {
+            return "<red>星索鉤綁定帳號，不能放進公會倉庫"; // 2026-10-27：這次之前放進去再領一把＝複製
         }
         if (stack.hasData(io.papermc.paper.datacomponent.DataComponentTypes.BUNDLE_CONTENTS)
                 || stack.hasData(io.papermc.paper.datacomponent.DataComponentTypes.CONTAINER)) {
@@ -1800,6 +1834,10 @@ public final class GuildService {
         if (contents.isEmpty()) {
             return;
         }
+        final List<Integer> itemPages = new ArrayList<>(contents.keySet());
+        itemPages.remove(Integer.valueOf(GuildStash.META_PAGE));
+        final StashPendingPages pending = stashPending.computeIfAbsent(id, key -> new StashPendingPages());
+        final long sequence = pending.begin(itemPages);
         plugin.database().async(connection -> {
             if (plugin.characters().writesPaused()) {
                 return Boolean.FALSE;
@@ -1809,12 +1847,17 @@ public final class GuildService {
         }).whenComplete((saved, error) -> {
             if (error != null) {
                 plugin.getSLF4JLogger().error("公會倉庫（#{}）存檔失敗（之後整個重存）", id, error);
-                sync(() -> {
-                    if (roster.guild(id) != null && stashes.containsKey(id)) {
-                        stashDirty.add(id);
-                    }
-                });
             }
+            sync(() -> {
+                if (error == null && Boolean.TRUE.equals(saved)) {
+                    pending.saved(itemPages, sequence);
+                    return;
+                }
+                // 2026-10-27：暫停寫入時沒寫的也記下來重存（這次之前只有出錯才記）；頁留在 stashPending，存入／取出時一起寫
+                if (roster.guild(id) != null && stashes.containsKey(id)) {
+                    stashDirty.add(id);
+                }
+            });
         });
     }
 
@@ -1992,7 +2035,12 @@ public final class GuildService {
     private void commitStash(final Player player, final Guild guild, final int page, final String action, final ItemStack moved,
                              final boolean deposit) {
         final long id = guild.id();
-        final byte[] contents = stashes.get(id).serialize(page);
+        final GuildStash stashNow = stashes.get(id);
+        // 2026-10-27：整理、重新分頁、補正寫過還沒確定存好的頁也一起寫進這個玩家的交易（不然那些頁存失敗後，
+        // 這一頁跟背包先存了，當機重開資料庫裡舊的那頁還留著搬走的東西＝複製）；這次之前只寫這一頁
+        final Set<Integer> pages = new java.util.TreeSet<>(pendingPages(id));
+        pages.add(page);
+        final Map<Integer, byte[]> contents = serializePages(stashNow, pages);
         final long at = System.currentTimeMillis();
         final String actor = plugin.displayName(player);
         final String what = Wallet.describe(moved);
@@ -2007,17 +2055,39 @@ public final class GuildService {
         plugin.players().markDirty(player);
         // 2026-10-18：卡住重試時重新序列化這一頁當下的內容（期間整理、重新分頁直接寫過的不會被舊快照蓋回去＝不會複製物品）；
         // 公會解散了就只寫交易紀錄
-        final java.util.function.Function<byte[], tw.exilecore.character.CharacterRepository.ExtraWork> work = current -> connection -> {
+        final java.util.function.Function<Map<Integer, byte[]>, tw.exilecore.character.CharacterRepository.ExtraWork> work = current -> connection -> {
             if (current != null) {
-                repository.saveStashPage(connection, id, page, current);
+                for (final Map.Entry<Integer, byte[]> each : current.entrySet()) { // 不用 saveStashPages：它自己 commit，會把玩家的交易切開
+                    repository.saveStashPage(connection, id, each.getKey(), each.getValue());
+                }
                 repository.insertLog(connection, id, at, actor, action, what + "（第 " + (page + 1) + " 頁）");
             }
             plugin.economy().tradeLog().insert(connection, List.of(entry));
         };
         plugin.characters().commit(List.of(player), work.apply(contents), () -> {
             final GuildStash now = roster.guild(id) != null ? stashes.get(id) : null;
-            return work.apply(now != null && page < now.pageCount() ? now.serialize(page) : null);
+            if (now == null || page >= now.pageCount()) {
+                return work.apply(null);
+            }
+            final Set<Integer> again = new java.util.TreeSet<>(pendingPages(id));
+            again.add(page);
+            return work.apply(serializePages(now, again));
         }, opId, "公會倉庫" + action + "（" + player.getName() + "）");
+    }
+
+    private Set<Integer> pendingPages(final long id) {
+        final StashPendingPages pending = stashPending.get(id);
+        return pending == null ? Set.of() : pending.pages();
+    }
+
+    private static Map<Integer, byte[]> serializePages(final GuildStash stash, final Set<Integer> pages) {
+        final Map<Integer, byte[]> contents = new java.util.LinkedHashMap<>();
+        for (final int each : pages) {
+            if (each >= 0 && each < stash.pageCount()) {
+                contents.put(each, stash.serialize(each));
+            }
+        }
+        return contents;
     }
 
     // ---- 管理員 ----

@@ -115,7 +115,11 @@ class UiPackTest {
         final List<String> queue = new ArrayList<>(models);
         // 稀有度、追逐級傳奇的外框（2026-10）：一定會產生，但要有裝備（gearItems）、傳奇的外觀才會被物品定義用到
         queue.add("exilecore:item/ui/rarity_frame");
-        queue.add("exilecore:item/ui/chase_frame");
+        // 2026-10-27：傳奇、追逐級的外框改成發光底＋實線外框兩張（這次之前追逐級是一張 chase_frame）
+        queue.add("exilecore:item/ui/unique_glow");
+        queue.add("exilecore:item/ui/unique_border");
+        queue.add("exilecore:item/ui/chase_glow");
+        queue.add("exilecore:item/ui/chase_border");
         // 專屬寶石的實線外框（2026-10）：一定會產生，但要有專屬寶石的外觀才會被物品定義用到
         queue.add("exilecore:item/ui/unique_outline");
         final Set<String> visited = new HashSet<>();
@@ -277,14 +281,19 @@ class UiPackTest {
                 continue;
             }
             assertEquals(32, image.getWidth(), path);
-            assertEquals(32, image.getHeight(), path);
+            if (files.containsKey(path + ".mcmeta")) {
+                // 2026-10-27：動畫貼圖（追逐級傳奇的外框）是 32 寬、幾張 32×32 直排
+                assertTrue(image.getHeight() > 32 && image.getHeight() % 32 == 0, path);
+            } else {
+                assertEquals(32, image.getHeight(), path);
+            }
             count++;
         }
         final int smallIcons = (int) UiPack.ICONS.stream().filter(icon -> icon.startsWith("slot_") || icon.equals("community")).count();
         assertEquals(smallIcons + 1, small, "空裝備欄的剪影、社群按鈕、鎖頭");
         assertEquals(2 * transmogArmourThemes(), armour, "每一套幻化：身上、腿上各一張");
         assertEquals(UiPack.BACKGROUNDS + 4 + 1 + UiPack.Cell.NODES.size() + 1 + UiPack.ICONS.size() - smallIcons + 1 + UiPack.FLASK_SLOTS.size()
-                        + 3 + transmogItemTextures()
+                        + 6 + transmogItemTextures() // 2026-10-27：稀有度外框、實線外框＋傳奇、追逐級各兩張（這次之前 3：追逐級一張）
                         + UiPack.AtlasCell.EDGES.size() + UiPack.AtlasCell.KINDS.size() + 1
                         + UiPack.AtlasCell.EDGES.size(), count, // 2026-10-24：塔範圍外框的六邊
                 "背景、四條線、發光、節點（含珠寶孔兩種）、標記、按鍵圖示、選取外框、藥劑欄的空瓶輪廓、稀有度與追逐級的外框、專屬寶石的實線外框、幻化的物品圖、"

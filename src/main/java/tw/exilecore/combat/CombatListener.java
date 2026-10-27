@@ -398,8 +398,11 @@ public final class CombatListener implements Listener {
         final double defenderEs;
         PlayerState defenderState = null;
         MonsterData defenderMonster = null;
+        // 2026-10-27 照 PoE2：翻滾開頭只躲得開近戰攻擊與投射物（沒有無敵時間；這次之前全部的擊中都躲得開）
         if (defenderIsPlayer && dodge != null && dodge.invulnerable((Player) defender)
-                && (skill == null || !skill.tags().contains(DodgeRoll.UNDODGEABLE_TAG))) {
+                && (skill == null || !skill.tags().contains(DodgeRoll.UNDODGEABLE_TAG))
+                && DodgeRoll.avoids(skill == null || skill.isAttack() && skill.tags().contains(tw.exilecore.stats.Tags.MELEE),
+                        event.getDamager() instanceof org.bukkit.entity.Projectile || skill != null && skill.tags().contains(tw.exilecore.stats.Tags.PROJECTILE))) {
             event.setCancelled(true); // 翻滾中（2026-10）：打不到
             if (attackerIsPlayer || credit != null) {
                 numbers.word(credit != null ? credit : (Player) attacker, defender, "閃過");
@@ -416,7 +419,7 @@ public final class CombatListener implements Listener {
                 event.setCancelled(true); // 沒在名單上的召喚物（上次當機留下的）：不會被打，之後會被清掉
                 return;
             }
-            defenderEs = 0;
+            defenderEs = minions.energyShield(defender); // 2026-10-26 照 PoE2：焰術士、霜術士、雷術士、祭司有能量護盾；這次之前 0
         } else {
             final Optional<MonsterData> data = plugin.monsters().data(defender);
             if (data.isEmpty()) {
@@ -433,10 +436,16 @@ public final class CombatListener implements Listener {
         // 2026-10：減益帶的修飾器（曝露、削弱詛咒、眩暈）疊進雙方的屬性表
         final long debuffTick = plugin.getServer().getCurrentTick();
         java.util.List<Modifier> attackerDebuffs = debuffs.modifiers(attacker.getUniqueId(), defender.getUniqueId(), debuffTick);
+        if (defenderIsPlayer && !attackerIsPlayer && !attackerIsMinion) {
+            // 2026-10-26 照 PoE2 天賦樹：被你標記／釘住的敵人不能暴擊、命中降低（KeystoneEffects）
+            attackerDebuffs = KeystoneEffects.monsterAttack(plugin.players().sheet((Player) defender), attacker, debuffs, debuffTick, attackerDebuffs);
+        }
         if (attackerIsPlayer && skill.isAttack() && !skill.tags().contains(Tags.TOTEM_HIT) && attacker.getWorld().equals(defender.getWorld())) {
             // 2026-10-23（PoE2）：玩家的攻擊離越遠命中越差（量到目標身體的邊；3 格內不影響，25 格以上命中更少 90%；法術、圖騰、召喚物不算）
-            final double falloff = tw.exilecore.stats.Formulas.accuracyFalloff(
-                    Math.max(0, attacker.getLocation().distance(defender.getLocation()) - defender.getWidth() / 2));
+            // 2026-10-26 照 PoE2 天賦樹：「增加／減少 x% 遠距離的命中懲罰」
+            final double falloff = Math.min(0.95, tw.exilecore.stats.Formulas.accuracyFalloff(
+                    Math.max(0, attacker.getLocation().distance(defender.getLocation()) - defender.getWidth() / 2))
+                    * tw.exilecore.stats.TreeEffectKeys.scale(attackerBase, tw.exilecore.stats.TreeEffectKeys.ACCURACY_RANGE_PENALTY, java.util.Set.of(), 0));
             if (falloff > 0) {
                 attackerDebuffs = new java.util.ArrayList<>(attackerDebuffs);
                 attackerDebuffs.add(Modifier.more(StatKeys.ACCURACY, -falloff, "距離"));
@@ -460,8 +469,22 @@ public final class CombatListener implements Listener {
                 hitDefender = defenderSheet.overlay(java.util.List.of(Modifier.more(StatKeys.ARMOUR, -Math.min(1.0, broken / rawArmour), "破甲")));
                 if (Double.isInfinite(broken) && (skill.tags().contains(Tags.PHYSICAL)
                         || attackerIsPlayer && StatKeys.flag(attackerSheet, StatKeys.FLAG_IMPLODING))) { // 內爆衝擊：所有擊中都增加
-                    brokenTaken = ailments.fullyBrokenTaken();
+                    // 2026-10-26 照 PoE2 天賦樹：「增加完全破甲的效果」
+                    brokenTaken = ailments.fullyBrokenTaken() * Math.max(0, 1 + attackerSheet.increased(tw.exilecore.stats.TreeKeys.ARMOUR_BREAK_EFFECT, java.util.Set.of()));
                 }
+            }
+        } else if (defenderIsPlayer && pvpAttacker == null && rawArmour > 0) {
+            // 2026-10-27 照 PoE2：怪物破了你的護甲（PlayerArmourBreak）：照比例扣；完全破甲＝沒有護甲（玩家不會多受 20% 物理傷害）
+            final double less = PlayerArmourBreak.lessFraction(PlayerArmourBreak.broken(defender.getUniqueId(), plugin.getServer().getCurrentTick()), rawArmour);
+            if (less > 0) {
+                hitDefender = defenderSheet.overlay(java.util.List.of(Modifier.more(StatKeys.ARMOUR, -less, "被破甲")));
+            }
+        }
+        // 2026-10-26 照 PoE2 天賦樹：荊棘傷害有 x% 機率無視敵人護甲
+        if (attackerIsPlayer && Thorns.ID.equals(skill.id()) && rawArmour > 0) {
+            final double ignore = attackerSheet.flat(tw.exilecore.stats.TreeEffectKeys.THORNS_IGNORE_ARMOUR, java.util.Set.of());
+            if (ignore > 0 && plugin.random().nextDouble() * 100 < ignore) {
+                hitDefender = hitDefender.overlay(java.util.List.of(Modifier.more(StatKeys.ARMOUR, -1.0, "荊棘無視護甲")));
             }
         }
         // 感電：受到的傷害增加（在減免之後乘）；印記、戰吼的減益也在這裡乘
@@ -487,7 +510,7 @@ public final class CombatListener implements Listener {
         // 三相輔助（2026-10）：照元素共鳴疊上更多元素傷害與穿透
         final long hitTick = plugin.getServer().getCurrentTick();
         final boolean trinityHit = attackerIsPlayer && StatKeys.flag(skillSheet, StatKeys.FLAG_TRINITY);
-        StatSheet hitSheet = trinityHit ? attackerSheet.overlay(trinity.bonus(attacker.getUniqueId(), hitTick)) : attackerSheet;
+        StatSheet hitSheet = trinityHit ? attackerSheet.overlay(trinity.bonus(attacker.getUniqueId(), hitTick, skillSheet)) : attackerSheet; // 2026-10-26：逐級數值
         // 痛苦調和（PoE2 基石）：滿血時暴擊傷害加成更少 30%，低血（35% 以下）時更多 30%
         if (attackerIsPlayer && StatKeys.flag(attackerSheet, StatKeys.FLAG_PAIN_ATTUNEMENT)) {
             final PlayerState painState = plugin.players().get((Player) attacker);
@@ -508,7 +531,9 @@ public final class CombatListener implements Listener {
             if (vsStunned > 0 && ailments != null && ailments.heavyStunned(defender)) {
                 conditional.add(Modifier.more(StatKeys.DAMAGE, vsStunned, "對暈眩的敵人"));
             }
-            final double vsLow = skillSheet.flat(StatKeys.DAMAGE_VS_LOW_LIFE, java.util.Set.of()); // 2026-10：輔助寶石（處刑）也算
+            // 2026-10-27：天賦樹的「增加 x% 對低血敵人的擊中傷害」是 INCREASED（這次之前只讀 FLAT，天賦樹 12 個節點都沒有效果）
+            final double vsLow = skillSheet.flat(StatKeys.DAMAGE_VS_LOW_LIFE, java.util.Set.of()) // 2026-10：輔助寶石（處刑）也算
+                    + skillSheet.increased(StatKeys.DAMAGE_VS_LOW_LIFE, hitTagSet) * 100;
             final org.bukkit.attribute.AttributeInstance maxHealth = defender.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
             if (vsLow > 0 && maxHealth != null && defender.getHealth() <= maxHealth.getValue() * 0.35) {
                 conditional.add(Modifier.increased(StatKeys.DAMAGE, vsLow / 100.0, "低血的敵人"));
@@ -524,6 +549,15 @@ public final class CombatListener implements Listener {
                 final double fullCrit = supportSheet.more(StatKeys.CRIT_VS_FULL_LIFE, hitTagSet);
                 if (fullCrit != 1) {
                     conditional.add(Modifier.more(StatKeys.CRIT_CHANCE, fullCrit - 1, "對滿血的敵人"));
+                }
+                // 2026-10-27：天賦樹的「增加 x% 對滿血敵人的擊中傷害／暴擊率」是 INCREASED（這次之前只讀 MORE，沒有效果）
+                final double fullIncreased = supportSheet.increased(StatKeys.DAMAGE_VS_FULL_LIFE, hitTagSet);
+                if (fullIncreased != 0) {
+                    conditional.add(Modifier.increased(StatKeys.DAMAGE, fullIncreased, "對滿血的敵人"));
+                }
+                final double fullCritIncreased = supportSheet.increased(StatKeys.CRIT_VS_FULL_LIFE, hitTagSet);
+                if (fullCritIncreased != 0) {
+                    conditional.add(Modifier.increased(StatKeys.CRIT_CHANCE, fullCritIncreased, "對滿血的敵人"));
                 }
             }
             final PlayerState selfState = plugin.players().get((Player) attacker);
@@ -550,10 +584,19 @@ public final class CombatListener implements Listener {
                 final boolean unique = defenderMonster.boss() || defenderMonster.rarity() == tw.exilecore.monster.MonsterRarity.UNIQUE;
                 final boolean rare = unique || defenderMonster.rarity() == tw.exilecore.monster.MonsterRarity.RARE;
                 final StatSheet withSupports = skillSheet;
-                final double vsRare = rare ? withSupports.increased(StatKeys.DAMAGE_VS_RARE, java.util.Set.of()) : 0;
-                final double vsUnique = unique ? withSupports.increased(StatKeys.DAMAGE_VS_UNIQUE, java.util.Set.of()) : 0;
+                final double vsRare = rare ? withSupports.increased(StatKeys.DAMAGE_VS_RARE, hitTagSet) : 0;  // 2026-10-27：照這一擊的標籤讀（天賦的「攻擊」對稀有傷害帶 tags [attack]，以前傳空集合永遠沒算到）
+                final double vsUnique = unique ? withSupports.increased(StatKeys.DAMAGE_VS_UNIQUE, hitTagSet) : 0;
                 if (vsRare + vsUnique != 0) {
                     conditional.add(Modifier.increased(StatKeys.DAMAGE, vsRare + vsUnique, "對稀有、傳奇"));
+                }
+                // 2026-10-27：MORE 的也要算（貪匣之鎖）；這次之前只算 INCREASED，更多的那幾條沒有作用
+                final double moreRare = rare ? withSupports.more(StatKeys.DAMAGE_VS_RARE, hitTagSet) : 1;
+                final double moreUnique = unique ? withSupports.more(StatKeys.DAMAGE_VS_UNIQUE, hitTagSet) : 1;
+                if (moreRare != 1) {
+                    conditional.add(Modifier.more(StatKeys.DAMAGE, moreRare - 1, "對稀有、傳奇"));
+                }
+                if (moreUnique != 1) {
+                    conditional.add(Modifier.more(StatKeys.DAMAGE, moreUnique - 1, "對傳奇、Boss"));
                 }
             }
             // 2026-10：條件傷害：對被詛咒的敵人、對近身的敵人
@@ -639,17 +682,30 @@ public final class CombatListener implements Listener {
                     conditional.add(Modifier.increased(StatKeys.DAMAGE, perCharge * held / 100.0, "馭星訣"));
                 }
             }
+            // 2026-10-26：照 PoE2 重做的輔助：炙獵（對點燃中的敵人）、遠穿（照距離）、釘地 II（對被定住的敵人）
+            if (plugin.skills() != null) {
+                conditional.addAll(plugin.skills().supportMechanics().preHit((Player) attacker, defender, skillSheet, hitTagSet, skill)); // 2026-10-27：多帶技能描述
+            }
             // 2026-10：怒氣：每點增加 1% 攻擊傷害
             if (plugin.skills() != null) {
                 final int rage = plugin.skills().resources().rage((Player) attacker);
-                if (rage > 0) {
+                if (rage > 0 && !StatKeys.flag(attackerSheet, tw.exilecore.stats.KeystoneKeys.FLAG_PRIMAL_HUNGER)) { // 2026-10-26 原初飢餓：怒氣沒有效果
                     final double per = 0.01 * Math.max(0, 1 + attackerSheet.increased(StatKeys.RAGE_EFFECT, java.util.Set.of()));
                     conditional.add(new Modifier(StatKeys.DAMAGE, tw.exilecore.stats.ModType.INCREASED, rage * per, java.util.Set.of(Tags.ATTACK), "怒氣"));
                 }
             }
+            // 2026-10-26（傳奇）：霜環、寒息箭袋、屠王巨鎚、夢魘長棍（tw.exilecore.item.unique.UniqueMechanics）
+            conditional.addAll(tw.exilecore.item.unique.UniqueMechanics.attackerConditional(ailments, defender, skillSheet, hitTagSet));
+            // 2026-10-26（昇華）：開放弱點、專注、隨機元素、血液沸騰、力量的代價、異能賦予…（AscendancyEffects）
+            conditional.addAll(tw.exilecore.ascendancy.AscendancyEffects.attackerConditional((Player) attacker, defender, defenderMonster, skillSheet, hitTagSet, skill));
+            // 2026-10-27 照 PoE2：抽出穿刺、箭照飛行距離的暴擊率（KeystoneEffects）
+            conditional.addAll(KeystoneEffects.attackerConditional((Player) attacker, defender, skillSheet, skill));
             if (!conditional.isEmpty()) {
                 hitSheet = hitSheet.overlay(conditional);
             }
+        }
+        if (defenderIsPlayer) {
+            hitSheet = tw.exilecore.item.unique.UniqueMechanics.defenderConditional(hitSheet, defenderSheet, ailments, defender); // 2026-10-26（暗潮指環）
         }
         // 壁壘（PoE2 基石）：翻滾中受到的擊中傷害更少 30%
         if (defenderIsPlayer && dodge != null && dodge.rolling((Player) defender) && StatKeys.flag(defenderSheet, StatKeys.FLAG_BULWARK)) {
@@ -672,8 +728,27 @@ public final class CombatListener implements Listener {
         if (!typedMods.isEmpty()) {
             hitDefender = hitDefender.overlay(typedMods);
         }
-        final HitResult result = DamageCalculator.calculate(hitSheet, skill, hitDefender, defenderEs, taken * pvpScale * signature,
+        // 2026-10-26 照 PoE2 天賦樹：「對致盲、被禁錮、遠處…的敵人」：照目標的狀態把條件標籤加進這一下的情境（只給傷害計算用）
+        // 2026-10-27 照 PoE2 天賦樹：召喚物打的也看（「夥伴對被禁錮的敵人增加傷害」：主人的屬性表有條件修飾器就看）；這次之前只看玩家打的
+        final Player tagOwner = attackerIsPlayer ? (Player) attacker : attackerIsMinion ? credit : null;
+        final SkillProfile calcSkill = tagOwner != null && plugin.players().conditions().wantsTargetTags(tagOwner.getUniqueId())
+                ? TargetConditions.tag(skill, TargetConditions.of(plugin, attacker, defender, defenderMonster, debuffs, ailments, hitTick)) : skill;
+        if (defenderIsPlayer) {
+            // 2026-10-26（昇華）：神聖儀式（當前護盾加到護甲）、保持警覺（敵人依距離的命中懲罰）
+            hitDefender = tw.exilecore.ascendancy.AscendancyEffects.defenderSheet((Player) defender, defenderState, hitDefender);
+            hitSheet = tw.exilecore.ascendancy.AscendancyEffects.enemyVsPlayer((Player) defender, attacker, hitSheet);
+            // 2026-10-27 照 PoE2 天賦樹：6 公尺外打來的用更多護甲防禦、免疫曝露、身上的凋零效果減少（TreeLeftovers）
+            hitDefender = tw.exilecore.skill.TreeLeftovers.defenderSheet(defender, attacker, hitDefender, defenderDebuffs,
+                    debuffs, hitTick, skill.isAttack() && event.getDamager() instanceof org.bukkit.entity.Projectile && !skill.tags().contains(Tags.PROJECTILE));
+            if (plugin.skills() != null && !attackerIsPlayer && !attackerIsMinion) {
+                hitDefender = plugin.skills().supportMechanics().lineage().seraph((Player) defender, hitDefender); // 2026-10-27 照 PoE2 熾心
+            }
+        }
+        final HitResult rawResult = DamageCalculator.calculate(hitSheet, calcSkill, hitDefender, defenderEs, taken * pvpScale * signature,
                 plugin.items().random(), chance -> entropy.hits(entropyKey, chance, hitTick, plugin.items().random()), evadable);
+        // 2026-10-26（燎原、深切，PoE2）：「擊中傷害更少」只減擊中，異常（點燃、流血、中毒）照沒減之前的那一下算
+        final HitResult result = tw.exilecore.skill.SupportMechanics.scaled(rawResult,
+                tw.exilecore.skill.SupportMechanics.hitOnlyFactor(skillSheet, hitTagSet));
         // 獰笑焚身（煉獄使者）：暴擊時自己著火
         if (attackerIsPlayer && result.crit() && ailments != null) {
             final double selfBurn = attackerSheet.flat(StatKeys.SELF_IGNITE_ON_CRIT, java.util.Set.of());
@@ -695,26 +770,57 @@ public final class CombatListener implements Listener {
             }
             if (result.crit()) {
                 hitter.markRecent(tw.exilecore.stats.Recently.CRIT, tick);
+                // 2026-10-26 照 PoE2 天賦樹：暴擊時有 x% 機率獲得秘術增強 4 秒（跟湧詠、天賦同一個增益：TreeMechanics.grantArcaneSurge，
+                // 增加 15% 施法速度、更多 20% 魔力回復，吃「你身上的秘術增強效果」）
+                final double surge = attackerSheet.flat(tw.exilecore.stats.TreeEffectKeys.ARCANE_SURGE_ON_CRIT, java.util.Set.of());
+                if (surge > 0 && plugin.skills() != null && plugin.skills().treeMechanics() != null && !totemHit(skill)
+                        && plugin.random().nextDouble() * 100 < surge) {
+                    plugin.skills().treeMechanics().grantArcaneSurge((Player) attacker, tw.exilecore.stats.TreeEffectKeys.ARCANE_SURGE_TICKS);
+                }
+            } else {
+                hitter.markRecent(tw.exilecore.stats.TreeConditions.NON_CRIT, tick); // 2026-10-26：天賦樹「最近有一下沒暴擊」
             }
         }
         if (attackerIsPlayer && defenderMonster != null && ailments != null && result.hit() && !result.blocked()) {
             final StatSheet breakSheet = skillSheet;
-            final java.util.Set<String> breakContext = skill.contextFor(DamageType.PHYSICAL);
-            final double breakPercent = breakSheet.apply(StatKeys.ARMOUR_BREAK, breakSheet.flat(StatKeys.ARMOUR_BREAK, breakContext), breakContext); // 2026-10：「增加 x% 破甲」也算
-            if (breakPercent > 0) {
-                if (ailments.breakArmour(defender, defenderMonster, result.outgoing().get(DamageType.PHYSICAL), breakPercent, rawArmour)
+            final java.util.Set<String> breakContext = KeystoneEffects.critContext(calcSkill.contextFor(DamageType.PHYSICAL), result.crit()); // 2026-10-26：含目標的條件標籤、暴擊（crit_hit）
+            // 2026-10-26：霜裂甲（打凍結的）、烙印深（打被標記的）多破甲；碎甲吼的戰吼不能破甲（照 PoE2）
+            final double extraBreak = plugin.skills() == null ? 0
+                    : plugin.skills().supportMechanics().extraBreak((Player) attacker, breakSheet, breakContext, defender);
+            final double breakPercent = Double.isInfinite(extraBreak) ? 0 : breakSheet.apply(StatKeys.ARMOUR_BREAK,
+                    breakSheet.flat(StatKeys.ARMOUR_BREAK, breakContext) + extraBreak, breakContext); // 2026-10：「增加 x% 破甲」也算
+            // 2026-10-26：固定量的破甲（PoE2 的 Armour Piercing Rounds）：當成「破掉這麼多的 100%」，增加破甲照乘
+            final double breakFlat = Double.isInfinite(extraBreak) ? 0 : breakSheet.flat(StatKeys.ARMOUR_BREAK_FLAT, breakContext);
+            final double flatScale = breakSheet.apply(StatKeys.ARMOUR_BREAK, 100, breakContext);
+            final double breakBase = result.outgoing().get(DamageType.PHYSICAL) * Math.max(0, breakPercent) / 100.0
+                    + Math.max(0, breakFlat) * flatScale / 100.0;
+            if (breakBase > 0) {
+                if (ailments.breakArmour(defender, defenderMonster, breakBase, 100, rawArmour, // 2026-10-26 照 PoE2 天賦樹：破甲持續時間
+                        tw.exilecore.stats.TreeEffectKeys.scale(breakSheet, tw.exilecore.stats.TreeEffectKeys.ARMOUR_BREAK_DURATION, java.util.Set.of(), 0.1))
                         && plugin.skills() != null) {
                     plugin.skills().procEvent((Player) attacker, skill.id(), "armour_broken", null, defender); // 輔助：完全破甲時（2026-10）
+                    if (plugin.skills().treeLeftovers() != null) {
+                        plugin.skills().treeLeftovers().onFullBreak((Player) attacker, defender); // 2026-10-27 照 PoE2 天賦樹：完全破甲的敵人被癱瘓
+                    }
                     if (charges != null && !totemHit(skill)) { // 2026-10-21：圖騰、英靈造成的完全破甲不給你戰星
                         charges.onEvent((Player) attacker, "armour_broken", breakSheet, skill.tags(), defender); // 戰星：完全破甲時（2026-10）
                     }
                 }
             }
         }
-        if (trinityHit && result.hit() && !result.blocked() && !totemHit(skill)) { // 2026-10-21：圖騰、英靈打中的不疊共鳴（加成照吃）
-            trinity.hit(attacker.getUniqueId(), result.dealt(), hitTick);
+        if (!attackerIsPlayer && !attackerIsMinion && defenderIsPlayer && result.hit() && !result.blocked() && rawArmour > 0) {
+            // 2026-10-27 照 PoE2：帶破甲的怪物（稀有／魔法怪詞綴「粉碎的」、換界石「碎甲的」）擊中你時破你的護甲；這次之前只有玩家能破怪物的
+            final double breakAmount = PlayerArmourBreak.amount(result.outgoing().get(DamageType.PHYSICAL),
+                    skillSheet.flat(StatKeys.ARMOUR_BREAK, calcSkill.contextFor(DamageType.PHYSICAL)), PlayerArmourBreak.takenIncreased(defenderSheet));
+            if (breakAmount > 0 && PlayerArmourBreak.onHit(defender.getUniqueId(), breakAmount, rawArmour, plugin.getServer().getCurrentTick())) {
+                defender.getWorld().playSound(defender.getLocation(), org.bukkit.Sound.ENTITY_ITEM_BREAK, 0.8f, 0.8f);
+                tw.exilecore.gui.ActionBar.send((Player) defender, plugin.text().parse("<#c0c0c0>護甲被完全破除（4 秒）"));
+            }
         }
-        final HitEvent hitEvent = new HitEvent(attacker, defender, skill, result, credit);
+        if (trinityHit && result.hit() && !result.blocked() && !totemHit(skill)) { // 2026-10-21：圖騰、英靈打中的不疊共鳴（加成照吃）
+            trinity.hit(attacker.getUniqueId(), result.dealt(), hitTick, skillSheet);
+        }
+        final HitEvent hitEvent = new HitEvent(attacker, defender, calcSkill, result, credit); // 2026-10-26：含目標的條件標籤（釘住、眩暈機率…）
         plugin.getServer().getPluginManager().callEvent(hitEvent);
         if (hitEvent.isCancelled() || !result.hit() || result.blocked()) {
             event.setCancelled(true);
@@ -727,6 +833,13 @@ public final class CombatListener implements Listener {
                 if (result.blocked()) {
                     plugin.players().get((Player) defender).markRecent(tw.exilecore.stats.Recently.BLOCK, plugin.getServer().getCurrentTick());
                     gainOnBlock((Player) defender, defenderSheet); // 2026-10-21：腐化「格擋時回復生命／魔力」
+                    if (plugin.skills() != null) {
+                        plugin.skills().supportMechanics().lineage().blocked((Player) defender); // 2026-10-27 照 PoE2：雪封、岳盾
+                    }
+                    // 2026-10-27 照 PoE2：舉盾（含招架）格擋下來的擊中累積重暈（AilmentService.blockedHit）
+                    if (ailments != null && plugin.skills() != null && plugin.skills().buffActivePrefix((Player) defender, "guard")) {
+                        ailments.blockedHit((Player) defender, attacker, calcSkill, hitSheet, defenderSheet);
+                    }
                     if (charges != null) {
                         charges.onEvent((Player) defender, "block", null, null, attacker); // 2026-10-24：格擋時給戰星（詞綴、天賦用）
                     }
@@ -745,6 +858,9 @@ public final class CombatListener implements Listener {
             }
             return;
         }
+        if (attackerIsPlayer && defenderMonster != null && plugin.skills() != null) {
+            plugin.skills().totemAggro((Player) attacker, defender, totemHit(skill)); // 2026-10-26 照 PoE2：被圖騰打中的怪改打圖騰，被你打中的轉回你
+        }
         // 2026-10-17：真的打中了才用掉虛步、啟動背水（以前算倍率時就用掉，被閃掉、擋掉也一樣）
         if (signatures != null) {
             if (attackerIsPlayer && !totemHit(skill)) { // 2026-10-21：圖騰、英靈打中的不用掉你的虛步
@@ -759,8 +875,12 @@ public final class CombatListener implements Listener {
             if (defenderMonster != null && StatKeys.flag(skillSheet, StatKeys.FLAG_STUN_FULL_LIFE)) {
                 ailments.noteFullLife(defender); // 2026-10：重暈滿血的敵人（傷害寫進去之前先看）
             }
+            // 2026-10-26：異常照「只減擊中」之前的那一下（rawResult）；寒焚、淬毒 III、急蝕、速蝕的條件加成疊在攻擊方的表上
+            final StatSheet ailmentSheet = plugin.skills() == null ? attackerSheet
+                    : plugin.skills().supportMechanics().lineage().ailmentSheet(attacker, // 2026-10-27 照 PoE2 怒毒：怒氣讓中毒更快
+                    plugin.skills().supportMechanics().ailmentSheet(credit != null ? credit : attacker, attackerSheet, skillSheet, skill, defender, defenderMonster), skillSheet, skill); // 2026-10-27：多帶攻擊方
             pendingAilments.put(defender.getUniqueId(),
-                    new PendingAilment(credit != null ? credit : attacker, skill, attackerSheet, defenderSheet, result, taken, defenderMonster,
+                    new PendingAilment(credit != null ? credit : attacker, KeystoneEffects.critSkill(calcSkill, rawResult.crit()), ailmentSheet, defenderSheet, rawResult, taken, defenderMonster,
                             typeTaken));
         }
 
@@ -786,7 +906,20 @@ public final class CombatListener implements Listener {
             }
         } else if (defenderIsMinion) {
             // 召喚物跟怪物一樣：原版血量只是比例
-            event.setDamage(Math.max(0.01, result.total() * minions.healthScale(defender)));
+            // 2026-10-26：護盾吸收的部分不扣血（這次之前整下都扣生命）
+            if (result.total() > 0) {
+                minions.damaged(defender, result.esDamage(), attacker);
+            }
+            if (result.lifeDamage() > 0 || result.esDamage() <= 0) {
+                final double rawMinionDamage = Math.max(0.01, result.lifeDamage() * minions.healthScale(defender));
+                // 2026-10-27 照 PoE2：憨魄（召喚物不會受傷）、殘戰（致命的那一下留一口氣）
+                final double minionDamage = plugin.skills() == null ? rawMinionDamage
+                        : plugin.skills().supportMechanics().lineage().minionDamage(defender, rawMinionDamage);
+                event.setDamage(plugin.combat() == null || plugin.combat().uniques() == null ? minionDamage
+                        : plugin.combat().uniques().minionDamage(defender, minions.owner(defender), minionDamage)); // 2026-10-26（骸骨束帶）：只套在扣生命的部分
+            } else {
+                event.setDamage(0);
+            }
             if (pvpAttacker != null) {
                 lastPvpCapScale = 1.0; // 打召喚物沒有上限
                 pvpRewards(attackerIsPlayer, credit, attackerSheet, skill, result, defender);
@@ -815,9 +948,21 @@ public final class CombatListener implements Listener {
             event.setDamage(blocked ? 0 : plugin.monsters().toVanillaDamage(defender, defenderMonster, total));
             // 撲殺（2026-10，輔助寶石）：這一下之後生命低於門檻就直接打死
             // 撲殺：換階段鎖血中的 Boss 不能撲殺（2026-10：不然收命、收魂照給，Boss 卻沒死）
-            if (!blocked && (attackerIsPlayer || attackerIsMinion) && StatKeys.flag(skillSheet, StatKeys.FLAG_CULLING)
+            // 2026-10-26：斷命 I／II（PoE2）只對稀有、傳奇；斷命 II 打死之後門檻增加
+            // 2026-10-26 照 PoE2 天賦樹：撲殺與撲殺門檻帶這一下的情境（弓的攻擊、對被標記的、對野獸、對稀有傳奇、對被禁錮的）
+            if (!blocked && (attackerIsPlayer || attackerIsMinion) && (StatKeys.flag(skillSheet, StatKeys.FLAG_CULLING)
+                    || tw.exilecore.stats.AttributeScalingKeys.culls(skillSheet, calcSkill.tags())
+                    || tw.exilecore.skill.SupportMechanics.cullsRare(skillSheet, defenderMonster)
+                    || tw.exilecore.skill.OriginalSkills.culls(attacker, defender) // 2026-10-26 照 PoE2：磨蝕之志
+                    // 2026-10-26 照 PoE2 天賦「讓敵人重暈的擊中有撲殺」：擊中重暈中的敵人有撲殺
+                    || ailments != null && StatKeys.flag(skillSheet, tw.exilecore.stats.TreeNewMechanicKeys.FLAG_HEAVY_STUN_CULL)
+                    && ailments.heavyStunned(defender))
                     && (plugin.maps() == null || plugin.maps().phaseFloor(defender) <= 0)) {
-                final boolean culled = cull(event, defender, defenderMonster);
+                final boolean culled = cull(event, defender, defenderMonster,
+                        tw.exilecore.stats.AttributeScalingKeys.cullScale(skillSheet, calcSkill.tags())); // 這次之前 SupportMechanics.cullScale（不看情境）
+                if (culled && attackerIsPlayer && plugin.skills() != null) {
+                    plugin.skills().supportMechanics().onCull((Player) attacker, skillSheet, skill.tags());
+                }
                 if (culled && attackerIsMinion && credit != null && charges != null && plugin.skills() != null
                         && plugin.skills().minions() != null) {
                     // 2026-10-24（霧鴉，PoE2 Mist Raven）：召喚物撲殺時照那個召喚技能的 minion_cull.代號 給主人戰星
@@ -854,6 +999,7 @@ public final class CombatListener implements Listener {
                     // 2026-10-18：照 PoE，圖騰（含英靈）打中的偷取、擊中回復生命不回給玩家
                     if (!totemHit(skill)) {
                         defer(defender, () -> leech(credit, attackerSheet, skill, result)); // 2026-10-18：偷取等事件確定沒被取消才存
+                        manaOnHit(credit, skillSheet.flat(StatKeys.MANA_ON_HIT, skill.tags()), defender);
                         if (lifeOnHit > 0) {
                             pendingLifeGains.put(defender.getUniqueId(), new LifeGain(credit, lifeOnHit));
                         }
@@ -886,8 +1032,8 @@ public final class CombatListener implements Listener {
         feedback(attacker, defender, result);
     }
 
-    /** 撲殺的門檻（剩下的生命比例）：普通 30%、魔法 20%、稀有 10%、傳奇與 Boss 5%。 */
-    static double cullThreshold(final MonsterData monster) {
+    /** 撲殺的門檻（剩下的生命比例）：普通 35%、魔法 20%、稀有 10%、傳奇與 Boss 5%（2026-10-27 照 PoE2 CullingStrikeNormalThreshold 35；這次之前普通 30%）。 */
+    public static double cullThreshold(final MonsterData monster) {
         if (monster == null) {
             return 0;
         }
@@ -895,7 +1041,7 @@ public final class CombatListener implements Listener {
             return 0.05;
         }
         return switch (monster.rarity()) {
-            case NORMAL -> 0.30;
+            case NORMAL -> 0.35;
             case MAGIC -> 0.20;
             case RARE -> 0.10;
             case UNIQUE -> 0.05;
@@ -903,7 +1049,12 @@ public final class CombatListener implements Listener {
     }
 
     private static boolean cull(final EntityDamageByEntityEvent event, final LivingEntity defender, final MonsterData monster) {
-        final double threshold = cullThreshold(monster);
+        return cull(event, defender, monster, 1.0);
+    }
+
+    /** 同上，門檻再乘 scale（2026-10-26：斷命 II 的「斷命門檻增加」）。 */
+    private static boolean cull(final EntityDamageByEntityEvent event, final LivingEntity defender, final MonsterData monster, final double scale) {
+        final double threshold = cullThreshold(monster) * scale;
         final org.bukkit.attribute.AttributeInstance max = defender.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
         if (threshold <= 0 || max == null || max.getValue() <= 0) {
             return false;
@@ -955,7 +1106,13 @@ public final class CombatListener implements Listener {
         if (physical > 0) {
             final java.util.Set<String> context = skill.contextFor(DamageType.PHYSICAL);
             life += physical * effective.flat(StatKeys.LEECH_LIFE, context) / 100.0;
-            mana += physical * effective.flat(StatKeys.LEECH_MANA, context) / 100.0;
+            if (!StatKeys.flag(effective, tw.exilecore.stats.LineageKeys.MANA_LEECH_ELEMENTAL)) { // 2026-10-27 照 PoE2 元汲：魔力偷取照元素傷害算
+                mana += physical * effective.flat(StatKeys.LEECH_MANA, context) / 100.0;
+            }
+        }
+        if (StatKeys.flag(effective, tw.exilecore.stats.LineageKeys.MANA_LEECH_ELEMENTAL)) {
+            final double elemental = result.dealt().get(DamageType.FIRE) + result.dealt().get(DamageType.COLD) + result.dealt().get(DamageType.LIGHTNING);
+            mana += elemental * effective.flat(StatKeys.LEECH_MANA, skill.contextFor(DamageType.PHYSICAL)) / 100.0;
         }
         // 2026-10：元素傷害偷取為生命
         final boolean elementalAll = StatKeys.flag(effective, StatKeys.FLAG_LEECH_ELEMENTAL_ALL);
@@ -995,7 +1152,10 @@ public final class CombatListener implements Listener {
                 state.setLife(Math.min(state.maxLife(), state.life() + now));
                 changed = true;
             }
-            state.addLeech(life - now);
+            state.addHitLeech(life - now); // 2026-10-27 照 PoE2：一份最多最大生命 10%、1 秒回完、每秒最多 20%（Leech）
+            if (plugin.skills() != null && plugin.skills().treeMechanics() != null) {
+                plugin.skills().treeMechanics().leechedLife(player, effective, life); // 2026-10-26 照 PoE2 天賦：夥伴也偷取同樣多的生命
+            }
         }
         if (mana > 0) {
             final double now = Math.min(mana * instant, state.maxMana() * INSTANT_LEECH_CAP);
@@ -1003,7 +1163,7 @@ public final class CombatListener implements Listener {
                 state.setMana(Math.min(state.maxMana(), state.mana() + now));
                 changed = true;
             }
-            state.addManaLeech(mana - now);
+            state.addHitManaLeech(mana - now); // 2026-10-27 照 PoE2：同上
         }
         if (changed) {
             plugin.players().display(player, state);
@@ -1052,15 +1212,28 @@ public final class CombatListener implements Listener {
         if (lifeOnHit > 0) {
             pendingLifeGains.put(defender.getUniqueId(), new LifeGain(credit, lifeOnHit));
         }
+        manaOnHit(credit, skill.effective(attackerSheet).flat(StatKeys.MANA_ON_HIT, skill.tags()), defender);
+    }
+
+    /** 2026-10-26：擊中回復魔力（PoE2 的魔力吸取）：等事件確定沒被取消才回。 */
+    private void manaOnHit(final Player credit, final double amount, final LivingEntity defender) {
+        if (credit == null || amount <= 0) {
+            return;
+        }
+        defer(defender, () -> {
+            final PlayerState state = plugin.players().get(credit);
+            state.setMana(Math.min(state.maxMana(), state.mana() + amount));
+            plugin.players().display(credit, state);
+        });
     }
 
     /** 荊棘：對剛打到玩家的怪物反彈一筆物理傷害（算玩家的攻擊：吃玩家的屬性表、擊殺算玩家的）。 */
     private void reflect(final Player player, final LivingEntity target) {
-        final double[] range = Thorns.range(plugin.players().sheet(player));
-        if (range == null || !target.isValid() || target.isDead()) {
+        final SkillProfile thorns = Thorns.profile(plugin.players().sheet(player)); // 2026-10-26：也算傳奇的火焰、冰冷荊棘
+        if (thorns == null || !target.isValid() || target.isDead()) {
             return;
         }
-        skills.hit(player, target, Thorns.profile(range[0], range[1]), null);
+        skills.hit(player, target, thorns, null);
     }
 
     /** 2026-10-17：下線清掉環境傷害的冷卻與三相共鳴（以前每個進過伺服器的人各留一筆）。 */
@@ -1150,12 +1323,55 @@ public final class CombatListener implements Listener {
                 lifeTaken *= 0.7;
                 defer(player, () -> delayedLoss(player, later, 80, 1, true)); // 2026-10-18：事件被取消就不排延遲扣血
             }
+            // 2026-10-26 照 PoE2 天賦：擊中傷害的 x% 先由你的夥伴的生命承受（沒有夥伴照常）
+            final double toCompanion = sheet.flat(tw.exilecore.stats.TreeNewMechanicKeys.COMPANION_TAKES, java.util.Set.of());
+            if (toCompanion > 0 && esTaken + lifeTaken > 0 && plugin.skills() != null && plugin.skills().treeMechanics() != null) {
+                final double total = esTaken + lifeTaken;
+                final double absorbed = plugin.skills().treeMechanics().companionAbsorb(player, total * Math.min(100, toCompanion) / 100.0);
+                if (absorbed > 0) {
+                    esTaken *= 1 - absorbed / total;
+                    lifeTaken *= 1 - absorbed / total;
+                }
+            }
+            // 2026-10-27 照 PoE2 伴償（Romira's Requital）：擊中傷害的 10% 先由夥伴承受，你補償其中 200% 為生命
+            final double romira = plugin.skills() == null || plugin.skills().treeMechanics() == null ? 0
+                    : plugin.skills().supportMechanics().lineage().companionShare(player);
+            if (romira > 0 && esTaken + lifeTaken > 0) {
+                final double total = esTaken + lifeTaken;
+                final double absorbed = plugin.skills().treeMechanics().companionAbsorb(player, total * Math.min(100, romira) / 100.0);
+                if (absorbed > 0) {
+                    esTaken *= 1 - absorbed / total;
+                    lifeTaken *= 1 - absorbed / total;
+                    plugin.skills().supportMechanics().lineage().companionAbsorbed(player, absorbed);
+                }
+            }
+            // 2026-10-26 照 PoE2 昇華「堅木之壘」：擊中傷害的 x% 先從你最近的圖騰的生命扣（沒有圖騰照常）
+            final double toTotem = sheet.flat(tw.exilecore.stats.TotemKeys.TAKES_DAMAGE, java.util.Set.of());
+            if (toTotem > 0 && esTaken + lifeTaken > 0 && plugin.skills() != null) {
+                final double total = esTaken + lifeTaken;
+                final double absorbed = plugin.skills().totemAbsorb(player, total * Math.min(100, toTotem) / 100.0);
+                if (absorbed > 0) {
+                    esTaken *= 1 - absorbed / total;
+                    lifeTaken *= 1 - absorbed / total;
+                }
+            }
             // 緊握傷口（血術士）：擊中扣的生命有 25% 改成 4 秒內慢慢扣
             if (StatKeys.flag(sheet, StatKeys.FLAG_GRASPING_WOUNDS) && lifeTaken > 0) {
                 final double later = lifeTaken * 0.25;
                 lifeTaken -= later;
                 defer(player, () -> delayedLoss(player, later, 10, 8, false)); // 2026-10-18：事件被取消就不排延遲扣血
             }
+            // 2026-10-26 照 PoE2 血肉獻祭（不朽恨意，阿姆納姆）：擊中扣的生命避免 20%，再在 4 秒內失去避免掉的 150%
+            if (StatKeys.flag(sheet, tw.exilecore.passive.ConquestEffects.FLESH) && lifeTaken > 0) {
+                final double prevented = lifeTaken * tw.exilecore.passive.ConquestEffects.FLESH_PREVENTED;
+                lifeTaken -= prevented;
+                final double later = prevented * tw.exilecore.passive.ConquestEffects.FLESH_LOST;
+                defer(player, () -> delayedLoss(player, later, 10, 8, false));
+            }
+        }
+        if (esTaken + lifeTaken > 0 && plugin.skills() != null) {
+            final double composed = esTaken + lifeTaken; // 2026-10-26 照 PoE2 Helbrym's Hide（蟄甲）：沉著期間受到的傷害記下來
+            defer(player, () -> plugin.skills().druidSupports().damaged(player, composed));
         }
         // 守護（2026-10，護符詞綴）：效果期間先替你吃掉傷害（先吃護盾那份、再吃生命那份）
         if (esTaken + lifeTaken > 0 && state.guard(plugin.getServer().getCurrentTick()) > 0) {
@@ -1170,9 +1386,19 @@ public final class CombatListener implements Listener {
                 defer(player, () -> state.absorbGuard(fromEs + fromLife, now));
             }
         }
+        // 2026-10-26（昇華）：黑暗、堅木之壘、無魂型態、心宇和諧、瓦拉什塔的直覺、永生（AscendancyEffects）
+        double ascMana = 0;
+        if (byEnemy && esTaken + lifeTaken > 0) {
+            final double[] asc = tw.exilecore.ascendancy.AscendancyEffects.absorb(player, state, sheet, esTaken, lifeTaken, dealt);
+            esTaken = asc[0];
+            lifeTaken = asc[1];
+            ascMana = asc[2];
+        }
         // 傳奇「受到的傷害先從魔力扣」與「受到的傷害有 x% 之後慢慢回成生命」
-        final IncomingDamage split = IncomingDamage.split(esTaken, lifeTaken, state.mana(),
+        final IncomingDamage rawSplit = IncomingDamage.split(esTaken, lifeTaken, Math.max(0, state.mana() - ascMana),
                 sheet.flat(StatKeys.DAMAGE_FROM_MANA, java.util.Set.of()), sheet.flat(StatKeys.LIFE_RECOUP, java.util.Set.of()));
+        final IncomingDamage split = ascMana > 0
+                ? new IncomingDamage(rawSplit.es(), rawSplit.life(), rawSplit.mana() + ascMana, rawSplit.recoup()) : rawSplit;
         final boolean lethal = state.life() - split.life() <= 0;
         event.setDamage(lethal ? LETHAL : 0);
         final double manaRecoup = (split.es() + split.life() + split.mana())
@@ -1337,6 +1563,8 @@ public final class CombatListener implements Listener {
                 }
                 state.setLastDamageTick(plugin.getServer().getCurrentTick());
                 state.setLastHitTick(plugin.getServer().getCurrentTick()); // 2026-10：「最近被擊中」的條件
+                plugin.players().conditions().note(player, tw.exilecore.stats.TreeConditions.HITS_TAKEN, "hit",
+                        plugin.getServer().getCurrentTick()); // 2026-10-26：天賦樹「最近每被擊中一次」
                 if (damage.pvpAttacker() != null && plugin.pvp() != null) {
                     plugin.pvp().recordHit(player, damage.pvpAttacker()); // 競技場：擊倒算最後打到的人
                 }
@@ -1349,11 +1577,25 @@ public final class CombatListener implements Listener {
                     hud.taken(player, damage.dealt().asMap(), lost); // 戰鬥數據：受到的
                 }
                 if (!state.isDead()) {
+                    // 2026-10-26 照 PoE2：回復 4 秒內平均回來（吃回復速度、生命回復速度）；這次之前存進偷取（每秒最多 10%）
+                    final StatSheet recoupSheet = plugin.players().sheet(player);
+                    final double recoupSpeed = tw.exilecore.stats.TreeEffectKeys.scale(recoupSheet, tw.exilecore.stats.TreeEffectKeys.RECOUP_SPEED,
+                            java.util.Set.of(), 0.1);
                     if (damage.recoup() > 0 && !state.ruined(plugin.getServer().getCurrentTick())) { // 2026-10-18：禁療中不存
-                        state.addLeech(damage.recoup());
+                        state.recoup().add(tw.exilecore.character.Recoup.LIFE, damage.recoup(), recoupSpeed
+                                * tw.exilecore.stats.TreeEffectKeys.scale(recoupSheet, tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE, java.util.Set.of(), 0.1));
                     }
                     if (damage.manaRecoup() > 0) {
-                        state.addManaLeech(damage.manaRecoup());
+                        state.recoup().add(tw.exilecore.character.Recoup.MANA, damage.manaRecoup(), recoupSpeed);
+                    }
+                    // 2026-10-26 照 PoE2 天賦樹：受到的元素傷害有 x% 回復為能量護盾
+                    final double esRecoup = Math.min(100, recoupSheet.flat(tw.exilecore.stats.TreeEffectKeys.ES_RECOUP_ELEMENTAL, java.util.Set.of()));
+                    final double dealtTotal = damage.dealt().total();
+                    if (esRecoup > 0 && dealtTotal > 0) {
+                        final double elemental = (damage.dealt().get(DamageType.FIRE) + damage.dealt().get(DamageType.COLD)
+                                + damage.dealt().get(DamageType.LIGHTNING)) / dealtTotal;
+                        state.recoup().add(tw.exilecore.character.Recoup.ES,
+                                (damage.esDamage() + damage.lifeDamage() + damage.manaDamage()) * elemental * esRecoup / 100.0, recoupSpeed);
                     }
                     plugin.players().display(player, state);
                     if (damage.byEnemy() && charges != null) {

@@ -72,11 +72,17 @@ public final class UniqueUpgrade {
             // 版本一樣（只是數值跑出範圍、或設定檔改了沒加版本）照序號找；版本不同照 legacy 對應表
             final int oldIndex = fromVersion == unique.version() ? index : unique.legacyIndex(fromVersion, index);
             final RolledAffix old = oldIndex <= 0 ? null : previous.get(UniqueItem.AFFIX_PREFIX + unique.id() + "." + oldIndex);
-            if (old != null && fits(tier, old.vars(), data.corrupted())) {
-                upgraded.add(new RolledAffix(affixId, 1, old.vars()));
+            // 2026-10-26：對得上的照比例換到新範圍（AffixRescale：有記舊範圍的照位置換，沒記的在範圍裡留著、超出的夾進去；
+            // 腐化過的照倍數）；這次之前是超出範圍就重擲。變數對不上（換成別種數值）的才重擲。
+            final RolledAffix fresh;
+            if (old != null && old.vars() != null && tier.vars().keySet().equals(old.vars().keySet())) {
+                fresh = new RolledAffix(affixId, tier.tier(), AffixRescale.map(old.vars(), old.ranges(), tier.vars(),
+                        data.corrupted() || data.sanctified()));
             } else {
-                upgraded.add(new RolledAffix(affixId, 1, roll(tier, new SplittableRandom(seed(data, index)))));
+                fresh = new RolledAffix(affixId, tier.tier(), roll(tier, new SplittableRandom(seed(data, index))));
             }
+            fresh.record(tier.tier(), tier.vars(), affix.group(), affix.type().name().toLowerCase(java.util.Locale.ROOT));
+            upgraded.add(fresh);
         }
         data.affixes().clear();
         data.affixes().addAll(upgraded);

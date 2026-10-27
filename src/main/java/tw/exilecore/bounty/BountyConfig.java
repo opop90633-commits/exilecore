@@ -486,8 +486,9 @@ public final class BountyConfig {
             for (final Title title : shop.titles().values()) {
                 idLength += title.id().length() + 1;
             }
-            if (idLength > 250) {
-                problems.add("shop.titles：稱號的代號加起來太長（買過的稱號記在一筆帳號進度裡，最多 250 個字）");
+            // 2026-10-26：跟著 MeritShop.VALUE_MAX 加長（這次之前寫死 250）
+            if (idLength > MeritShop.VALUE_MAX) {
+                problems.add("shop.titles：稱號的代號加起來太長（買過的稱號記在一筆帳號進度裡，最多 " + MeritShop.VALUE_MAX + " 個字）");
             }
             for (final Title title : shop.titles().values()) {
                 final String where = "shop.titles." + title.id();

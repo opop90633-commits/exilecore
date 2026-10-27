@@ -29,7 +29,8 @@ class FlaskConfigTest {
 
     @Test
     void basesAndSlotsLoad() {
-        assertEquals(22, config.bases().size(), "生命、魔力各 11 種（PoE2 的九種＋地圖用的兩種）");
+        // 2026-10-26 照 PoE2：只有九階（熔星、星骸兩階拿掉，retired 的定義留著讓舊物品能用）；這次之前 22（各 11 種）
+        assertEquals(18, config.bases().size(), "生命、魔力各 9 種（PoE2 的九階）");
         assertArrayEquals(new int[] {0, 1}, config.slots(), "藥劑欄是快捷欄 1、2");
         assertTrue(config.isFlaskSlot(0));
         assertFalse(config.isFlaskSlot(2));
@@ -51,12 +52,12 @@ class FlaskConfigTest {
         final FlaskBase top = config.base("heavens_life_flask");
         assertEquals(60, top.level());
         assertEquals(920, top.recovery(), 1e-9);
-        // 等級 100：T7（68 級）、T14（80 級）地圖起掉的兩種，回復量接著往上
-        assertEquals(68, config.base("molten_life_flask").level());
-        assertEquals(80, config.base("relic_life_flask").level());
-        assertTrue(config.base("relic_life_flask").recovery() > config.base("molten_life_flask").recovery());
-        assertTrue(config.base("molten_life_flask").recovery() > top.recovery());
-        assertTrue(config.base("relic_mana_flask").recovery() > config.base("heavens_mana_flask").recovery());
+        // 2026-10-26 照 PoE2：熔星（68 級）、星骸（80 級）兩階拿掉——定義還在（舊物品照常能喝），但不在現役清單裡
+        for (final String id : List.of("molten_life_flask", "relic_life_flask", "molten_mana_flask", "relic_mana_flask")) {
+            assertNotNull(config.base(id), id + " 的定義要留著");
+            assertTrue(config.base(id).retired(), id);
+            assertFalse(config.bases().contains(config.base(id)), id + " 不在現役清單");
+        }
     }
 
     @Test
@@ -78,7 +79,8 @@ class FlaskConfigTest {
         assertTrue(life && mana, "生命、魔力都會掉");
         for (int i = 0; i < 200; i++) {
             final FlaskBase map = config.rollDrop(84, random);
-            assertTrue(map.level() >= 60, "T16 地圖掉最高的三種：" + map.id());
+            // 2026-10-26：最高的三種是 40、50、60 級（熔星、星骸拿掉了；這次之前 ≥ 60）
+            assertTrue(map.level() >= 40 && !map.retired(), "T16 地圖掉最高的三種：" + map.id());
         }
         assertNull(config.rollDrop(0, new Random(1)), "沒有能掉的基底");
     }

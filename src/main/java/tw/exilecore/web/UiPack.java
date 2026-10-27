@@ -192,10 +192,22 @@ public final class UiPack {
      * @param artId       圖的代號（currency_art.txt）
      * @param vanillaItem 通貨實際是哪個原版物品（materials 小寫，例如 glowstone_dust）
      * @param unique      格子裡畫傳奇的外框（2026-10：切不出來、雕不出來的專屬技能寶石、輔助寶石）
+     * @param outline     2026-10-26：格子裡畫這個顏色的外框（0xRRGGBB；0＝不畫）：技能寶石、輔助寶石照屬性的紅／綠／藍
+     *                    （tw.exilecore.skill.GemAttributes；傳奇外框優先）
+     * @param frame       2026-10-27：星籤的稀有度外框（0xRRGGBB；0＝不畫；{@link tw.exilecore.currency.OmenRarity}）：格子裡畫同色的
+     *                    漸層底框＋實線外框（比裝備的稀有度外框明顯）。artId 是 {@code omen_tier_*}（沒有自己的通貨圖）時，框裡照原版的樣子畫
      */
-    public record CurrencySkin(String artId, String vanillaItem, boolean unique) {
+    public record CurrencySkin(String artId, String vanillaItem, boolean unique, int outline, int frame) {
         public CurrencySkin(final String artId, final String vanillaItem) {
-            this(artId, vanillaItem, false);
+            this(artId, vanillaItem, false, 0, 0);
+        }
+
+        public CurrencySkin(final String artId, final String vanillaItem, final boolean unique) {
+            this(artId, vanillaItem, unique, 0, 0);
+        }
+
+        public CurrencySkin(final String artId, final String vanillaItem, final boolean unique, final int outline) {
+            this(artId, vanillaItem, unique, outline, 0);
         }
     }
 
@@ -214,7 +226,26 @@ public final class UiPack {
             if (item.startsWith("minecraft:")) {
                 item = item.substring("minecraft:".length());
             }
-            skins.add(new CurrencySkin(art, item));
+            final tw.exilecore.currency.OmenRarity omen = tw.exilecore.currency.OmenRarity.of(type);
+            skins.add(new CurrencySkin(art, item, false, 0, omen == null ? 0 : omen.rgb())); // 2026-10-27：星籤照稀有度畫外框
+            if (omen != null) {
+                // 2026-10-27 站長要星籤用材質包畫：26 種都有自己的圖（currency_art.txt 的籤）；2026-10-27 之前做的星籤是書，
+                // 物品上的標記會換成 currency:<星籤代號>（CurrencyService.refresh），書上也要掛同一張圖。這次之前只有圖的 6 種沒掛在書上
+                skins.add(new CurrencySkin(art, "book", false, 0, omen.rgb()));
+            }
+        }
+        // 2026-10-27：沒有自己的通貨圖的星籤：照稀有度在它的原版物品（還有以前的書）上畫外框，框裡照原版的樣子
+        for (final CurrencyType type : repository.all()) {
+            final tw.exilecore.currency.OmenRarity omen = tw.exilecore.currency.OmenRarity.of(type);
+            if (omen == null || CurrencyArt.artOf(type) != null || type.material() == null || type.material().isBlank()) {
+                continue;
+            }
+            String item = type.material().toLowerCase(Locale.ROOT);
+            if (item.startsWith("minecraft:")) {
+                item = item.substring("minecraft:".length());
+            }
+            skins.add(new CurrencySkin(omen.artId(), item, false, 0, omen.rgb()));
+            skins.add(new CurrencySkin(omen.artId(), "book", false, 0, omen.rgb())); // 2026-10-27 之前做的星籤是書
         }
         final List<CurrencySkin> sorted = new java.util.ArrayList<>(skins);
         sorted.sort(java.util.Comparator.comparing(CurrencySkin::vanillaItem).thenComparing(CurrencySkin::artId));
@@ -471,7 +502,7 @@ public final class UiPack {
         for (final Map.Entry<String, JsonArray> entry : cases.entrySet()) {
             final JsonObject root = vanillaOverride(entry.getKey(), entry.getValue());
             if (framed.contains(entry.getKey()) || UNIQUE_ITEMS.contains(entry.getKey()) || baseItems.contains(entry.getKey())
-                    || plainFramed.contains(entry.getKey())) {
+                    || plainFramed.contains(entry.getKey()) || OMEN_ITEMS.contains(entry.getKey())) {
                 // 外框比格子大一點（18×18 蓋住格子的框線）
                 root.addProperty("oversized_in_gui", true);
             }
@@ -862,13 +893,24 @@ public final class UiPack {
             files.put("assets/exilecore/items/currency/" + id + ".json", json(definition));
         }
         for (final CurrencySkin skin : skins) {
+            if (skin.frame() != 0) {
+                // 2026-10-27：星籤的稀有度外框（有自己的圖畫那張，沒有照原版的樣子）
+                final JsonObject model = sprites.containsKey(skin.artId()) ? plain("exilecore:item/currency/" + skin.artId())
+                        : vanillaGui(skin.vanillaItem());
+                final JsonObject other = sprites.containsKey(skin.artId()) ? model : vanillaFull(skin.vanillaItem());
+                cases.computeIfAbsent(skin.vanillaItem(), key -> new JsonArray())
+                        .add(selectCase(CurrencyArt.modelKey(skin.artId()), omenFramedInGui(skin.frame(), model, other)));
+                OMEN_ITEMS.add(skin.vanillaItem());
+                continue;
+            }
             if (!sprites.containsKey(skin.artId())) {
                 continue;
             }
             final JsonObject model = plain("exilecore:item/currency/" + skin.artId());
             // 2026-10：專屬的技能寶石、輔助寶石在格子裡有跟傳奇一樣的外框（手上、地上照原本的圖）
             cases.computeIfAbsent(skin.vanillaItem(), key -> new JsonArray())
-                    .add(selectCase(CurrencyArt.modelKey(skin.artId()), skin.unique() ? outlinedInGui(UNIQUE_OUTLINE, model, model) : model));
+                    .add(selectCase(CurrencyArt.modelKey(skin.artId()), skin.unique() ? uniqueFramedInGui(model, model, false) // 2026-10-27：跟傳奇同一種框；這次之前是著色的實線外框
+                            : skin.outline() != 0 ? outlinedInGui(skin.outline(), model, model) : model)); // 2026-10-26：屬性顏色的外框
         }
     }
 
@@ -920,10 +962,11 @@ public final class UiPack {
                     yield spearModel(skin.id());
                 }
             };
-            // 2026-10：專屬外觀的傳奇在格子裡也有淺淺的同色外框（手上、地上照專屬外觀本身）；追逐級的外框是淡淡的彩色漸層
+            // 2026-10-27：專屬外觀的傳奇在格子裡畫傳奇外框（發光底＋實線＋四角亮點），追逐級另外一種（金紅雙色＋會閃的四角星芒）；
+            // 手上、地上照專屬外觀本身。追逐級照 uniques.yml 的 chase 判斷，挑選的是 unique:代號，所以舊物品不用重畫也會換框。
+            // 這次之前傳奇是淺淺的同色漸層外框，追逐級是淡淡的彩虹漸層
             cases.computeIfAbsent(skin.vanillaItem(), key -> new JsonArray()).add(selectCase(UniqueArt.modelKey(skin.id()),
-                    skin.chase() ? framedInGui(plain("exilecore:item/ui/chase_frame"), plain(UNIQUE_TEX + skin.id()), model)
-                            : framedInGui(UNIQUE_FRAME, plain(UNIQUE_TEX + skin.id()), model)));
+                    uniqueFramedInGui(plain(UNIQUE_TEX + skin.id()), model, skin.chase())));
             UNIQUE_ITEMS.add(skin.vanillaItem());
         }
     }
@@ -979,7 +1022,8 @@ public final class UiPack {
             };
             final JsonArray rarities = new JsonArray();
             for (final Map.Entry<String, Integer> rarity : new TreeMap<>(RARITY_KEYS).entrySet()) {
-                rarities.add(selectCase(rarity.getKey(), framedInGui(rarity.getValue(), plain(BASE_TEX + skin.id()), model)));
+                rarities.add(selectCase(rarity.getKey(), rarity.getKey().equals("rarity:unique") ? uniqueFramedInGui(plain(BASE_TEX + skin.id()), model, false) // 2026-10-27
+                        : framedInGui(rarity.getValue(), plain(BASE_TEX + skin.id()), model)));
             }
             cases.computeIfAbsent(skin.vanillaItem(), key -> new JsonArray())
                     .add(selectCase(BaseArt.modelKey(skin.id()), select(1, rarities, model)));
@@ -1289,8 +1333,9 @@ public final class UiPack {
                 continue;
             }
             for (final Map.Entry<String, Integer> rarity : new TreeMap<>(RARITY_KEYS).entrySet()) {
-                cases.computeIfAbsent(item, key -> new JsonArray()).add(selectCase(rarity.getKey(),
-                        framedInGui(rarity.getValue(), gui != null ? gui : full, full != null ? full : gui)));
+                cases.computeIfAbsent(item, key -> new JsonArray()).add(selectCase(rarity.getKey(), rarity.getKey().equals("rarity:unique")
+                        ? uniqueFramedInGui(gui != null ? gui : full, full != null ? full : gui, false) // 2026-10-27：傳奇外框改明顯
+                        : framedInGui(rarity.getValue(), gui != null ? gui : full, full != null ? full : gui)));
             }
             framed.add(item);
         }
@@ -1387,14 +1432,56 @@ public final class UiPack {
         outlineTextures.addProperty("t", "exilecore:item/ui/unique_outline");
         outline.add("textures", outlineTextures);
         files.put("assets/exilecore/models/item/ui/unique_outline.json", json(outline));
-        // 追逐級傳奇的外框（2026-10）：貼圖本身就是彩色的，不著色
-        files.put("assets/exilecore/textures/item/ui/chase_frame.png", png(chaseFrame()));
-        final JsonObject chase = new JsonObject();
-        chase.addProperty("parent", "exilecore:item/ui/layer_frame");
-        final JsonObject chaseTextures = new JsonObject();
-        chaseTextures.addProperty("t", "exilecore:item/ui/chase_frame");
-        chase.add("textures", chaseTextures);
-        files.put("assets/exilecore/models/item/ui/chase_frame.json", json(chase));
+        // 2026-10-27 站長：「傳奇跟追逐級的框要更明顯一點」：傳奇、追逐級各兩張（底下的發光漸層＋蓋在圖上的實線外框），貼圖本身帶顏色、不著色；
+        // 追逐級的實線外框是動畫（.mcmeta，四角星芒慢慢閃）。這次之前傳奇是著色的淺漸層（rarity_frame），追逐級是淡淡的彩虹漸層（chase_frame）
+        uiLayer(files, "unique_glow", "layer_frame", uniqueGlow(false));
+        uiLayer(files, "unique_border", "layer_outline", uniqueBorder());
+        uiLayer(files, "chase_glow", "layer_frame", uniqueGlow(true));
+        uiLayer(files, "chase_border", "layer_outline", chaseBorder());
+        final JsonObject animation = new JsonObject();
+        animation.addProperty("frametime", CHASE_FRAME_TICKS);
+        animation.addProperty("interpolate", true);
+        final JsonObject meta = new JsonObject();
+        meta.add("animation", animation);
+        files.put("assets/exilecore/textures/item/ui/chase_border.png.mcmeta", json(meta));
+    }
+
+    /** 一張 ui/ 底下的外框貼圖＋模型（parent 是 layer_frame：畫在圖後面；layer_outline：蓋在圖上面）。 */
+    private static void uiLayer(final Map<String, byte[]> files, final String name, final String layer, final BufferedImage image) throws IOException {
+        files.put("assets/exilecore/textures/item/ui/" + name + ".png", png(image));
+        final JsonObject model = new JsonObject();
+        model.addProperty("parent", "exilecore:item/ui/" + layer);
+        final JsonObject textures = new JsonObject();
+        textures.addProperty("t", "exilecore:item/ui/" + name);
+        model.add("textures", textures);
+        files.put("assets/exilecore/models/item/ui/" + name + ".json", json(model));
+    }
+
+    /**
+     * 傳奇（chase＝追逐級）在格子裡（gui）的樣子（2026-10-27）：發光漸層底＋gui＋最上面一圈實線外框（四角亮點；追逐級是金紅雙色＋會閃的四角星芒）；
+     * 其他地方（手上、地上）照 other。
+     */
+    static JsonObject uniqueFramedInGui(final JsonObject gui, final JsonObject other, final boolean chase) {
+        final JsonArray layers = new JsonArray();
+        layers.add(plain("exilecore:item/ui/" + (chase ? "chase_glow" : "unique_glow")));
+        layers.add(gui.deepCopy());
+        layers.add(plain("exilecore:item/ui/" + (chase ? "chase_border" : "unique_border"))); // 後畫的在上面
+        final JsonObject composite = new JsonObject();
+        composite.addProperty("type", "minecraft:composite");
+        composite.add("models", layers);
+        final JsonArray contexts = new JsonArray();
+        contexts.add("gui");
+        final JsonObject guiCase = new JsonObject();
+        guiCase.add("when", contexts);
+        guiCase.add("model", composite);
+        final JsonArray contextCases = new JsonArray();
+        contextCases.add(guiCase);
+        final JsonObject select = new JsonObject();
+        select.addProperty("type", "minecraft:select");
+        select.addProperty("property", "minecraft:display_context");
+        select.add("cases", contextCases);
+        select.add("fallback", other.deepCopy());
+        return select;
     }
 
     /** 在格子裡（gui）：rgb 顏色的淺外框＋gui 的樣子；其他地方（手上、地上）照 other。 */
@@ -1441,6 +1528,61 @@ public final class UiPack {
         select.add("cases", contextCases);
         select.add("fallback", other.deepCopy());
         return select;
+    }
+
+    /** 2026-10-27：這次產生時掛了星籤稀有度外框的原版物品（外框比格子大，要 oversized_in_gui）。 */
+    private static final java.util.Set<String> OMEN_ITEMS = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /**
+     * 星籤的稀有度外框（2026-10-27）：在格子裡（gui）畫 rgb 顏色的漸層底框（跟裝備的稀有度外框同一張）＋圖＋最上面一圈同色的實線外框，
+     * 比裝備的外框明顯；其他地方（手上、地上）照 other。
+     */
+    static JsonObject omenFramedInGui(final int rgb, final JsonObject gui, final JsonObject other) {
+        final JsonArray layers = new JsonArray();
+        layers.add(tintedConstant("exilecore:item/ui/rarity_frame", rgb));
+        layers.add(gui.deepCopy());
+        layers.add(tintedConstant("exilecore:item/ui/unique_outline", rgb)); // 後畫的在上面
+        final JsonObject composite = new JsonObject();
+        composite.addProperty("type", "minecraft:composite");
+        composite.add("models", layers);
+        final JsonArray contexts = new JsonArray();
+        contexts.add("gui");
+        final JsonObject guiCase = new JsonObject();
+        guiCase.add("when", contexts);
+        guiCase.add("model", composite);
+        final JsonArray contextCases = new JsonArray();
+        contextCases.add(guiCase);
+        final JsonObject select = new JsonObject();
+        select.addProperty("type", "minecraft:select");
+        select.addProperty("property", "minecraft:display_context");
+        select.add("cases", contextCases);
+        select.add("fallback", other.deepCopy());
+        return select;
+    }
+
+    private static JsonObject tintedConstant(final String model, final int rgb) {
+        final JsonObject tinted = new JsonObject();
+        tinted.addProperty("type", "minecraft:model");
+        tinted.addProperty("model", model);
+        final JsonObject tint = new JsonObject();
+        tint.addProperty("type", "minecraft:constant");
+        tint.addProperty("value", rgb);
+        final JsonArray tints = new JsonArray();
+        tints.add(tint);
+        tinted.add("tints", tints);
+        return tinted;
+    }
+
+    /** 原版物品在格子裡的樣子（web/vanilla_items/ 沒有的話用最簡單的原版模型）。 */
+    private static JsonObject vanillaGui(final String item) {
+        final JsonObject gui = Vanilla.MODELS.get(item);
+        return gui != null ? gui : vanillaFull(item);
+    }
+
+    /** 原版物品的完整定義（web/vanilla_items/ 沒有的話用最簡單的原版模型）。 */
+    private static JsonObject vanillaFull(final String item) {
+        final JsonObject full = vanillaModel(item);
+        return full != null ? full : plain("minecraft:item/" + item);
     }
 
     /** 實線外框（白色，著色後是 {@link #UNIQUE_OUTLINE}）：最外面 2 格（16 格的 1 格）實心，往裡淡一點，中間透明。 */
@@ -1523,34 +1665,134 @@ public final class UiPack {
         return image;
     }
 
+    /** 追逐級外框動畫：幾張、每張幾 tick（插值，8×5＝40 tick＝2 秒閃一次）。 */
+    static final int CHASE_FRAMES = 8;
+    static final int CHASE_FRAME_TICKS = 5;
+
     /**
-     * 追逐級傳奇的外框貼圖（2026-10）：淡淡的彩色漸層——顏色繞著外框轉一圈（紅→黃→綠→青→藍→紫→紅），飽和度壓低成粉彩；
-     * 濃淡跟一般的稀有度外框一樣（最外圈最亮，往裡面慢慢淡掉）。貼圖本身帶顏色，物品定義裡不著色。
+     * 傳奇（chase＝追逐級）外框底下的發光漸層（2026-10-27）：最外圈最濃、往裡淡掉（中間只剩一點點底色，不搶物品本身）；
+     * 傳奇是 PoE 傳奇色（#AF6025）調亮的橘金，追逐級外圈紅、往裡轉金。貼圖本身帶顏色，不著色。
      */
-    static BufferedImage chaseFrame() {
+    static BufferedImage uniqueGlow(final boolean chase) {
         final BufferedImage image = canvas();
-        final double centre = (SIZE - 1) / 2.0;
+        final int outer = chase ? 0xFF3A2E : 0xFFB04A;
+        final int inner = chase ? 0xFFC23C : 0xC8642A;
         for (int y = 0; y < SIZE; y++) {
             for (int x = 0; x < SIZE; x++) {
-                final int edge = Math.min(Math.min(x, y), Math.min(SIZE - 1 - x, SIZE - 1 - y));
+                final int edge = edge(x, y);
                 final int alpha = switch (edge) {
-                    case 0 -> 0;          // 最外一圈留給格子本身的框線
-                    case 1 -> 0xA8;
-                    case 2 -> 0x7C;
-                    case 3 -> 0x54;
-                    case 4 -> 0x34;
-                    case 5 -> 0x1E;
-                    case 6 -> 0x0E;
-                    default -> 0x06;
+                    case 0, 1, 2, 3 -> 0xD0; // 上面蓋實線外框
+                    case 4 -> chase ? 0xB4 : 0x98;
+                    case 5 -> chase ? 0x8A : 0x68;
+                    case 6 -> chase ? 0x62 : 0x44;
+                    case 7 -> chase ? 0x42 : 0x2A;
+                    case 8 -> chase ? 0x2A : 0x18;
+                    case 9 -> chase ? 0x18 : 0x0C;
+                    default -> chase ? 0x0C : 0x06;
                 };
-                // 從左上角開始順時針轉一圈
-                final double angle = Math.atan2(y - centre, x - centre);
-                final float hue = (float) ((angle + Math.PI * 0.75) / (2 * Math.PI));
-                final int rgb = java.awt.Color.HSBtoRGB(hue - (float) Math.floor(hue), 0.5f, 1.0f) & 0xFFFFFF;
-                image.setRGB(x, y, alpha << 24 | rgb);
+                image.setRGB(x, y, alpha << 24 | lerp(outer, inner, Math.min(1.0, Math.max(0, edge - 3) / 6.0)));
             }
         }
         return image;
+    }
+
+    /**
+     * 傳奇的實線外框（2026-10-27，蓋在圖上面）：最外一圈深色描邊、兩格亮橘金實線（上亮下暗一點）、往裡一格半透明，
+     * 四角各一個淡黃亮點；只佔最外 4 格（格子裡大約 2 像素），物品的圖幾乎不會被擋到。
+     */
+    static BufferedImage uniqueBorder() {
+        final BufferedImage image = canvas();
+        for (int y = 0; y < SIZE; y++) {
+            for (int x = 0; x < SIZE; x++) {
+                final int edge = edge(x, y);
+                final int gold = lerp(0xFFC566, 0xE8862E, y / (double) (SIZE - 1));
+                int argb = switch (edge) {
+                    case 0 -> 0xF0000000 | 0x5C2A0A;
+                    case 1, 2 -> 0xFF000000 | gold;
+                    case 3 -> 0x70000000 | gold;
+                    default -> 0;
+                };
+                final int corner = corner(x, y);
+                if (corner <= 4 && edge >= 1 && edge <= 2) {
+                    argb = 0xFF000000 | lerp(0xFFF6C8, gold, corner / 5.0); // 四角亮點
+                } else if (corner == 3 && edge == 3) {
+                    argb = 0xFF000000 | 0xFFE48A;
+                }
+                image.setRGB(x, y, argb);
+            }
+        }
+        return image;
+    }
+
+    /**
+     * 追逐級傳奇的實線外框（2026-10-27，蓋在圖上面，{@link #CHASE_FRAMES} 張直排的動畫）：深紅描邊＋金、紅、金三條（金紅雙色），
+     * 四角各一個四芒星沿著外框往兩邊伸、往裡斜斜短短的，星芒跟金線一起慢慢亮暗（2 秒一次）；一般傳奇沒有星芒、只有一種顏色，一眼分得出來。
+     */
+    static BufferedImage chaseBorder() {
+        final BufferedImage image = new BufferedImage(SIZE, SIZE * CHASE_FRAMES, BufferedImage.TYPE_INT_ARGB);
+        for (int frame = 0; frame < CHASE_FRAMES; frame++) {
+            final double pulse = (1 - Math.cos(2 * Math.PI * frame / CHASE_FRAMES)) / 2; // 0→1→0
+            final int gold = lerp(0xFFC23A, 0xFFF07A, pulse * 0.6);
+            final double arm = 4 + pulse * 4;      // 沿著外框的星芒長度
+            final double diagonal = 1 + pulse * 2; // 往裡斜的星芒長度
+            for (int y = 0; y < SIZE; y++) {
+                for (int x = 0; x < SIZE; x++) {
+                    final int edge = edge(x, y);
+                    int argb = switch (edge) {
+                        case 0 -> 0xFF000000 | 0x3A0606;
+                        case 1 -> 0xFF000000 | gold;
+                        case 2 -> 0xFF000000 | 0xE0282A;
+                        case 3 -> 0xA0000000 | gold;
+                        default -> 0;
+                    };
+                    // 四角的四芒星：中心在離角 2 格的地方
+                    final int u = Math.min(x, SIZE - 1 - x) - 2;
+                    final int v = Math.min(y, SIZE - 1 - y) - 2;
+                    double star = 0;
+                    if (v == 0 && u >= -2) {
+                        star = Math.max(star, 1 - Math.abs(u) / (arm + 1));
+                    }
+                    if (u == 0 && v >= -2) {
+                        star = Math.max(star, 1 - Math.abs(v) / (arm + 1));
+                    }
+                    if (u == v && u > 0) {
+                        star = Math.max(star, 1 - u / (diagonal + 1));
+                    }
+                    if (Math.abs(u) <= 1 && Math.abs(v) <= 1 && u + v != 0 && Math.abs(u) + Math.abs(v) == 1) {
+                        star = Math.max(star, 0.85); // 星心旁邊一圈
+                    }
+                    if (star > 0) {
+                        final double strength = Math.min(1, star * (0.75 + 0.25 * pulse) * 1.2);
+                        final int under = argb >>> 24 == 0 ? 0xFFF6D0 : argb & 0xFFFFFF;
+                        final int alpha = Math.max(argb >>> 24, (int) Math.round(0xFF * strength));
+                        argb = alpha << 24 | lerp(under, 0xFFFDF0, strength);
+                    }
+                    image.setRGB(x, frame * SIZE + y, argb);
+                }
+            }
+        }
+        return image;
+    }
+
+    /** 離外框幾格（0＝最外一圈）。 */
+    private static int edge(final int x, final int y) {
+        return Math.min(Math.min(x, y), Math.min(SIZE - 1 - x, SIZE - 1 - y));
+    }
+
+    /** 離最近的角沿著外框幾格（兩個方向取大的；角上是 0）。 */
+    private static int corner(final int x, final int y) {
+        return Math.max(Math.min(x, SIZE - 1 - x), Math.min(y, SIZE - 1 - y));
+    }
+
+    private static int lerp(final int from, final int to, final double t) {
+        final double k = Math.min(1, Math.max(0, t));
+        int out = 0;
+        for (int shift = 16; shift >= 0; shift -= 8) {
+            final int a = from >> shift & 0xFF;
+            final int b = to >> shift & 0xFF;
+            out |= (int) Math.round(a + (b - a) * k) << shift;
+        }
+        return out;
     }
 
     static JsonObject vanillaOverride(final String vanillaItem, final JsonArray cases) {
@@ -1726,7 +1968,8 @@ public final class UiPack {
      * 選取外框裡畫的是那張圖（外框的物品定義有對應的挑選），不是原版物品的樣子。
      */
     public static boolean isArtKey(final String key) {
-        return key != null && (key.startsWith(UniqueArt.KEY_PREFIX) || key.startsWith(CurrencyArt.KEY_PREFIX) || key.startsWith(BaseArt.KEY_PREFIX)
+        // 2026-10-27：沒有自己的圖的星籤掛的是稀有度外框的標記（currency:omen_tier_*），選到時框裡照原版物品畫
+        return key != null && !key.startsWith(CurrencyArt.KEY_PREFIX + "omen_tier_") && (key.startsWith(UniqueArt.KEY_PREFIX) || key.startsWith(CurrencyArt.KEY_PREFIX) || key.startsWith(BaseArt.KEY_PREFIX)
                 || key.startsWith(tw.exilecore.item.PlainArt.KEY_PREFIX)); // 2026-10-24：簡圖的裝備選到時框裡也畫簡圖
     }
 

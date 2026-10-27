@@ -50,8 +50,9 @@ public final class ItemGenerator {
         final ItemBase base = repository.requireBase(unique.base());
         final ItemData data = new ItemData(base.id(), Rarity.UNIQUE, itemLevel);
         data.setUnique(unique.id());
-        if (base.implicit() != null) {
-            data.setImplicitVars(ItemStats.implicit(repository, base, data).roll(random)); // 傳奇照它那一階
+        final Implicit uniqueImplicit = ItemStats.implicit(repository, base, data); // 2026-10-26：stat_base 那一階可能沒有固有詞綴（基底補了 PoE2 的固有詞綴）
+        if (uniqueImplicit != null) {
+            data.setImplicitVars(uniqueImplicit.roll(random)); // 傳奇照它那一階
         }
         data.setSockets(rollSockets(base, itemLevel, random));
         data.setName(unique.name());
@@ -85,6 +86,8 @@ public final class ItemGenerator {
         }
         Veiled.addUniqueVeiled(data, repository, random);
         data.setIdentified(true);
+        // 2026-10-27：變成傳奇（或星籤換了基底）後孔變少的話，多出來的符文毀掉；這次之前符文照留，比孔還多也全部生效
+        data.trimRunes(Runes.slots(repository, repository.base(data.base()), data));
     }
 
     /** 依權重從清單抽一件傳奇；清單是空的回傳 null。 */
@@ -178,6 +181,46 @@ public final class ItemGenerator {
         return sockets;
     }
 
+    // ---- 2026-10-26 照 PoE2 的高階／完美通貨：最低詞綴等級 ----
+
+    /** 這條執行緒上「加詞綴時只抽需求等級至少多少的階級」（0 = 不限）；{@link #withMinModLevel} 設定。 */
+    private static final ThreadLocal<Integer> MIN_MOD_LEVEL = ThreadLocal.withInitial(() -> 0);
+
+    /**
+     * 在「最低詞綴等級」底下做一件事（PoE2 的 Greater／Perfect 蛻變、增幅最低 44／70，富豪、崇高、混沌 35／50）：
+     * 這段時間裡擲的詞綴只從需求等級 ≥ level 的階級抽，沒有那種階級的詞綴不會被抽到。level ≤ 0 就照平常。
+     */
+    public static void withMinModLevel(final int level, final Runnable action) {
+        final int previous = MIN_MOD_LEVEL.get();
+        MIN_MOD_LEVEL.set(Math.max(0, level));
+        try {
+            action.run();
+        } finally {
+            MIN_MOD_LEVEL.set(previous);
+        }
+    }
+
+    /** 現在的最低詞綴等級（0 = 不限）。 */
+    public static int minModLevel() {
+        return MIN_MOD_LEVEL.get();
+    }
+
+    /** 這條詞綴在這個物品等級、照現在的最低詞綴等級能抽的階級。 */
+    public static List<AffixTier> rollableTiers(final Affix affix, final int itemLevel) {
+        final List<AffixTier> tiers = affix.tiersFor(itemLevel);
+        final int min = MIN_MOD_LEVEL.get();
+        if (min <= 0) {
+            return tiers;
+        }
+        final List<AffixTier> list = new ArrayList<>();
+        for (final AffixTier tier : tiers) {
+            if (tier.ilvl() >= min) {
+                list.add(tier);
+            }
+        }
+        return list;
+    }
+
     // ---- 稀有度變換（通貨操作用） ----
 
     /** 普通 → 魔法（通貨用，PoE2 的微光石）：固定 1 條詞綴。 */
@@ -189,10 +232,14 @@ public final class ItemGenerator {
     public void upgradeToMagic(final ItemData data, final RandomGenerator random, final boolean allowSecond) {
         data.setRarity(Rarity.MAGIC);
         data.affixes().clear();
-        final AffixType first = random.nextBoolean() ? AffixType.PREFIX : AffixType.SUFFIX;
-        addAffix(data, first, random);
-        if (allowSecond && random.nextBoolean()) {
-            addAffix(data, first.other(), random);
+        // 2026-10-27 照 PoE2：第一條從前綴＋後綴合起來的權重池抽（這次之前先 50/50 選前綴或後綴；
+        // 2026-10-26 起沒有空位的那一種會自動換另一種，合起來的池子本來就包含這個情況）
+        if (!addAffix(data, null, random)) {
+            return;
+        }
+        final Affix added = repository.affix(data.affixes().getLast().id());
+        if (allowSecond && random.nextBoolean() && added != null) {
+            addAffix(data, added.type().other(), random);
         }
     }
 
@@ -203,14 +250,16 @@ public final class ItemGenerator {
 
     /**
      * 普通 → 稀有：4 條；{@code allowExtra} 時各 25% 機率加到 5 與 6（掉落用）。
-     * 珠寶（PoE 的做法）：3 條，{@code allowExtra} 時 25% 機率 4 條（珠寶前綴、後綴各最多 2 條）。
+     * 珠寶：星火石 4 條（2026-10-27 照 PoE2；之前 3 條）；掉落（{@code allowExtra}）3 條、25% 機率 4 條（珠寶前綴、後綴各最多 2 條）。
      */
     public void upgradeToRare(final ItemData data, final RandomGenerator random, final boolean allowExtra) {
         data.setRarity(Rarity.RARE);
         data.affixes().clear();
         final ItemBase base = repository.base(data.base());
         final boolean jewel = base != null && base.isJewel();
-        int count = jewel ? 3 : 4;
+        // 2026-10-27 照 PoE2：星火石（Orb of Alchemy）一律 4 條，珠寶也是；掉落的珠寶還是 3 條起（25% 4 條）。
+        // 這次之前星火石用在珠寶上是 3 條。
+        int count = jewel && allowExtra ? 3 : 4;
         if (allowExtra && random.nextDouble() < 0.25) {
             count++;
             if (!jewel && random.nextDouble() < 0.25) {
@@ -379,7 +428,11 @@ public final class ItemGenerator {
         if (base == null || base.implicit() == null || base.implicit().vars().isEmpty()) {
             return false;
         }
-        data.setImplicitVars(ItemStats.implicit(repository, base, data).roll(random));
+        final Implicit implicit = ItemStats.implicit(repository, base, data);
+        if (implicit == null) {
+            return false; // 2026-10-26：傳奇的 stat_base 那一階沒有固有詞綴
+        }
+        data.setImplicitVars(implicit.roll(random));
         return true;
     }
 
@@ -412,7 +465,29 @@ public final class ItemGenerator {
         if (base != null && base.isFlaskLike()) {
             return Math.min(max, 1); // 藥劑、護符最多魔法：一前綴一後綴
         }
-        return base != null && base.isJewel() ? Math.min(max, ItemBase.JEWEL_AFFIXES_PER_TYPE) : max;
+        if (base != null && base.isJewel()) {
+            return Math.min(max, ItemBase.JEWEL_AFFIXES_PER_TYPE);
+        }
+        return max <= 0 ? max : Math.max(0, max + allowedDelta(base, type));
+    }
+
+    /** 2026-10-26（PoE2 的 Dusk／Gloam／Penumbra／Tenebrous 戒指與項鍊等）：固定詞綴「可以多／少 x 條前綴／後綴」。 */
+    public static final String MAX_PREFIXES = "local.max_prefixes";
+    public static final String MAX_SUFFIXES = "local.max_suffixes";
+
+    /** 這個基底的固定詞綴讓前綴（或後綴）上限多幾條（負的 = 少幾條）；數值寫成常數。 */
+    static int allowedDelta(final ItemBase base, final AffixType type) {
+        if (base == null || base.implicit() == null) {
+            return 0;
+        }
+        final String stat = type == AffixType.PREFIX ? MAX_PREFIXES : MAX_SUFFIXES;
+        int delta = 0;
+        for (final AffixMod mod : base.implicit().mods()) {
+            if (stat.equals(mod.stat())) {
+                delta += (int) Math.round(mod.toModifier(java.util.Map.of(), "").value());
+            }
+        }
+        return delta;
     }
 
     /**
@@ -426,26 +501,36 @@ public final class ItemGenerator {
 
     /** 同上；ignoreLimit = 不管前綴、後綴的上限（2026-10-21：蝕變石腐化珠寶時「多一條詞綴」，照 PoE2 可以超過上限）。 */
     public boolean addAffix(final ItemData data, final AffixType type, final RandomGenerator random, final boolean ignoreLimit) {
-        AffixType chosen = type;
-        if (chosen == null) {
+        final List<Affix> pool;
+        if (type == null) {
+            // 2026-10-27 照 PoE2：前綴、後綴都有空位時，從「兩邊合起來」的權重池抽（權重大的那邊比較常出）；
+            // 這次之前先 50/50 決定前綴或後綴，再從那一邊抽。
             final boolean prefixOk = ignoreLimit || canAddAffix(data, AffixType.PREFIX);
             final boolean suffixOk = ignoreLimit || canAddAffix(data, AffixType.SUFFIX);
             if (!prefixOk && !suffixOk) {
                 return false;
             }
-            chosen = prefixOk && suffixOk ? (random.nextBoolean() ? AffixType.PREFIX : AffixType.SUFFIX)
-                    : prefixOk ? AffixType.PREFIX : AffixType.SUFFIX;
-        } else if (!ignoreLimit && !canAddAffix(data, chosen)) {
+            if (prefixOk && suffixOk) {
+                final List<Affix> both = new ArrayList<>(eligible(data, AffixType.PREFIX));
+                both.addAll(eligible(data, AffixType.SUFFIX));
+                pool = both;
+            } else {
+                pool = eligible(data, prefixOk ? AffixType.PREFIX : AffixType.SUFFIX);
+            }
+        } else if (!ignoreLimit && !canAddAffix(data, type)) {
+            return false;
+        } else {
+            pool = eligible(data, type);
+        }
+        if (pool.isEmpty()) {
             return false;
         }
-
-        final List<Affix> pool = eligible(data, chosen);
         // 第一段：依「所有可用階級的權重總和」抽詞綴
         int totalWeight = 0;
         final int[] weights = new int[pool.size()];
         for (int i = 0; i < pool.size(); i++) {
             int sum = 0;
-            for (final AffixTier tier : pool.get(i).tiersFor(data.ilvl())) {
+            for (final AffixTier tier : rollableTiers(pool.get(i), data.ilvl())) { // 2026-10-26：高階／完美通貨的最低詞綴等級
                 sum += tier.weight();
             }
             weights[i] = sum;
@@ -464,7 +549,7 @@ public final class ItemGenerator {
             }
         }
         // 第二段：依權重抽階級
-        final List<AffixTier> tiers = affix.tiersFor(data.ilvl());
+        final List<AffixTier> tiers = rollableTiers(affix, data.ilvl());
         int tierTotal = 0;
         for (final AffixTier tier : tiers) {
             tierTotal += tier.weight();
@@ -504,8 +589,9 @@ public final class ItemGenerator {
     }
 
     private static boolean hasTierFor(final Affix affix, final int itemLevel) {
+        final int min = MIN_MOD_LEVEL.get(); // 2026-10-26：高階／完美通貨
         for (final AffixTier tier : affix.tiers()) {
-            if (tier.ilvl() <= itemLevel) {
+            if (tier.ilvl() <= itemLevel && tier.ilvl() >= min) {
                 return true;
             }
         }
@@ -535,7 +621,8 @@ public final class ItemGenerator {
             if (Veiled.isUnveiled(affix.id())) {
                 continue; // 揭露詞綴只能靠揭露（盜賊首領）或揭露石，一般的掉落與通貨擲不到
             }
-            if (affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG) || affix.spawnTags().contains(ItemRepository.RETIRED_TAG)) {
+            if (affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG) || affix.spawnTags().contains(ItemRepository.RETIRED_TAG)
+                    || affix.spawnTags().contains(ItemRepository.ESSENCE_TAG)) { // 2026-10-26：星魄專屬的詞綴（affixes/essences.yml）只有星魄給得了
                 continue; // 2026-10-21 修正：腐化詞綴只有蝕變石加得上（以前掉落、通貨會當成一般的後綴擲出來）
             }
             list.add(affix);

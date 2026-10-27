@@ -22,7 +22,26 @@ import java.util.Set;
  * @param cooldownAttackTime 用掉之後冷卻多加「被強化技能攻擊時間」的幾 %（隨技能等級）
  * @param maxCooldown        冷卻最多幾秒
  */
-public record BarrageSpec(int repeats, String charge, int perCharge, double less, double gap, Scaled cooldownAttackTime, double maxCooldown) {
+public record BarrageSpec(int repeats, String charge, int perCharge, double less, double gap, Scaled cooldownAttackTime, double maxCooldown,
+                          boolean spells) {
+
+    /** 舊的寫法（強化弓／矛的投射物攻擊）。 */
+    public BarrageSpec(final int repeats, final String charge, final int perCharge, final double less, final double gap,
+                       final Scaled cooldownAttackTime, final double maxCooldown) {
+        this(repeats, charge, perCharge, less, gap, cooldownAttackTime, maxCooldown, false);
+    }
+
+    /**
+     * 2026-10-26：這個連珠能不能強化這一招。spells = true（PoE2 的 Unleash）：下一個「可以重複」的法術（沒有冷卻、不是引導、不是增益）；
+     * 其他照 {@link #empowers(SkillDefinition, Set, int)}。
+     */
+    public boolean empowersSkill(final SkillDefinition definition, final Set<String> weaponTags, final int ownRepeats) {
+        if (!spells) {
+            return empowers(definition, weaponTags, ownRepeats);
+        }
+        return !definition.isAttack() && definition.tags().contains(Tags.SPELL) && definition.cooldown() <= 0 && ownRepeats <= 0
+                && definition.dealsDamage() && definition.mechanic() != Mechanic.META && definition.mechanic() != Mechanic.AURA;
+    }
 
     /** 重複最多幾次（戰星再多也不超過）。 */
     public static final int MAX_REPEATS = 12;
@@ -82,12 +101,13 @@ public record BarrageSpec(int repeats, String charge, int perCharge, double less
         }
         final Scaled cooldown = Scaled.parse(where + ".cooldown_attack_time", node.raw("cooldown_attack_time"), 0);
         check(where, "cooldown_attack_time", cooldown.first(), 0, 5000);
+        check(where, "cooldown_attack_time", cooldown.min(), 0, 5000);
         check(where, "cooldown_attack_time", cooldown.last(), 0, 5000);
         return new BarrageSpec((int) check(where, "repeats", node.integer("repeats", 2), 1, MAX_REPEATS), charge,
                 (int) check(where, "per_charge", node.integer("per_charge", charge == null ? 0 : 1), 0, 5),
                 check(where, "less", node.decimal("less", 50), 0, 95),
                 check(where, "gap", node.decimal("gap", 0.2), 0.05, 2),
-                cooldown, check(where, "max_cooldown", node.decimal("max_cooldown", 30), 1, 120));
+                cooldown, check(where, "max_cooldown", node.decimal("max_cooldown", 30), 1, 120), node.bool("spells", false));
     }
 
     private static double check(final String where, final String key, final double value, final double min, final double max) {

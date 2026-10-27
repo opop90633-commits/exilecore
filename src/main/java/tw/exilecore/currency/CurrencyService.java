@@ -115,8 +115,13 @@ public final class CurrencyService {
         }
         final ItemStack stack = ItemStack.of(material, Math.max(1, Math.min(type.stack(), amount)));
         stack.editMeta(meta -> {
-            meta.displayName(ItemRenderer.line("<#f5b942>" + ItemRenderer.escape(type.name())));
+            // 2026-10-27：星籤的名稱照稀有度上色（OmenRarity）；這次之前所有通貨都是金色
+            final OmenRarity omenRarity = OmenRarity.of(type);
+            meta.displayName(ItemRenderer.line((omenRarity == null ? "<#f5b942>" : omenRarity.tag()) + ItemRenderer.escape(type.name())));
             final List<Component> lore = new ArrayList<>();
+            if (omenRarity != null) {
+                lore.add(ItemRenderer.line("<gray>星籤・稀有度 " + omenRarity.tag() + omenRarity.label()));
+            }
             lore.add(ItemRenderer.line("<gray>" + ItemRenderer.escape(type.description())));
             if (!type.flavor().isBlank()) {
                 lore.add(ItemRenderer.line("<dark_gray><i>" + ItemRenderer.escape(type.flavor())));
@@ -138,7 +143,7 @@ public final class CurrencyService {
                 lore.add(ItemRenderer.line("<dark_gray>拿在游標上點擊裝備來使用"));
             }
             lore.add(ItemRenderer.line("<dark_gray>通貨・堆疊上限 " + type.stack()));
-            meta.lore(lore);
+            meta.lore(tw.exilecore.core.text.TextWrap.lore(lore)); // 2026-10-26：長的說明自動換行
             meta.setMaxStackSize(type.stack());
             meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
             meta.setEnchantmentGlintOverride(true);
@@ -164,7 +169,10 @@ public final class CurrencyService {
      * @return 有沒有改到物品
      */
     private static boolean tag(final ItemStack stack, final CurrencyType type) {
-        final String art = CurrencyArt.artOf(type);
+        String art = CurrencyArt.artOf(type);
+        if (art == null && OmenRarity.of(type) != null) {
+            art = OmenRarity.of(type).artId(); // 2026-10-27：沒有自己的圖的星籤也掛標記，資源包照稀有度在格子裡畫外框
+        }
         if (art == null) {
             return false;
         }
@@ -208,7 +216,10 @@ public final class CurrencyService {
         }
         // 名稱或說明改過（2026-10 換掉跟別的遊戲一樣的名字、再改得更直觀）：整個換成照現在的定義做的（通貨沒有個別的資料，只差數量）
         final ItemStack fresh = create(type.get(), stack.getAmount());
-        if (fresh != null && fresh.getType() == stack.getType() && fresh.hasItemMeta() && stack.hasItemMeta()
+        // 2026-10-27：星籤換了原版材質（以前都是書）：舊的那疊材質不變，名稱、說明、外框標記照樣換成新的
+        if (fresh != null && (fresh.getType() == stack.getType() || OmenRarity.of(type.get()) != null)
+                && fresh.hasItemMeta() && stack.hasItemMeta()
+                && fresh.getItemMeta().getClass() == stack.getItemMeta().getClass()
                 && !ItemRenderer.sameText(fresh.getItemMeta(), stack.getItemMeta())) {
             stack.setItemMeta(fresh.getItemMeta());
             return true;
@@ -265,47 +276,130 @@ public final class CurrencyService {
         }
         final ItemData data = dataOptional.get();
         final CurrencyType type = currency.get();
-        if (data.corrupted() && !type.operation().allowedOnCorrupted()) {
-            return Result.NOT_APPLICABLE; // 已腐化：不能再改造（2026-10；鑑定、嵌符文到空孔除外）
-        }
-        if (type.operation() == CurrencyOperation.MIRROR) {
-            return Result.NOT_APPLICABLE; // 映星鏡會多出一件物品：走 mirror()（呼叫端要接住複製品），不能當成一般通貨用
-        }
-        if (!type.canApply(data, items.generator())) {
+        if (!usable(type, data)) {
             return Result.NOT_APPLICABLE;
         }
         final String before = items.toJson(data);
-        if (type.operation() == CurrencyOperation.CHANCE) {
-            return chance(type, data, target, before, playerName, characterId);
-        }
-        // 掛著的星籤：這顆通貨觸發的話照星籤的規則做，星籤用掉
-        final CurrencyType omen = data.omen() == null ? null : repository.get(data.omen());
-        final boolean omenFires = Crafting.triggers(omen, type);
-        if (omenFires && Crafting.omenProblem(omen, type, data, items.generator()) != null) {
+        final Outcome outcome = run(type, data, random(data, type));
+        if (outcome.result() == Result.NOT_APPLICABLE) {
             return Result.NOT_APPLICABLE;
         }
-        switch (type.operation()) {
-            case ESSENCE -> Crafting.applyEssence(type, data, items.generator(), items.random());
-            case CATALYST -> Crafting.applyCatalyst(type, data);
-            case RUNE -> Crafting.applyRune(type, data);
-            case OMEN -> Crafting.attachOmen(type, data);
-            default -> {
-                if (omenFires) {
-                    if (Crafting.applyWithOmen(omen, type, data, items.generator(), items.random())) {
-                        lastOmen = omen;
-                    }
-                    data.setOmen(null);
-                } else {
-                    type.operation().apply(data, items.generator(), items.random());
-                }
-            }
+        if (outcome.omen() != null) {
+            lastOmen = outcome.omen();
+        }
+        if (outcome.result() == Result.DESTROYED) {
+            usageLog.record(characterId, playerName, data.uuid(), type.id(), before, "{\"destroyed\":true}");
+            log.info("[currency] {} 對 {} 使用 {}：碎掉了", playerName, data.uuid(), type.id());
+            return Result.DESTROYED;
         }
         items.update(target, data);
         final String after = items.toJson(data);
         // 寫進資料庫的 currency_log（查作弊、看經濟），主控台也留一行
         usageLog.record(characterId, playerName, data.uuid(), type.id(), before, after);
-        log.info("[currency] {} 對 {} 使用 {}", playerName, data.uuid(), type.id());
+        log.info("[currency] {} 對 {} 使用 {}{}", playerName, data.uuid(), type.id(),
+                type.operation() == CurrencyOperation.CHANCE ? "：變成傳奇 " + data.unique() : "");
         return Result.APPLIED;
+    }
+
+    /** 一次使用的結果：成功、碎掉、不能用；生效的星籤（沒有是 null）。 */
+    private record Outcome(Result result, CurrencyType omen) {
+    }
+
+    /** 這顆通貨現在能不能用在這件上（規則面；星籤的限制在 {@link #run} 裡）。 */
+    private boolean usable(final CurrencyType type, final ItemData data) {
+        if ((data.corrupted() || data.sanctified()) && !type.operation().allowedOnCorrupted()) {
+            return false; // 已腐化（2026-10）、已聖化（2026-10-26）：不能再改造（鑑定、嵌符文到空孔除外）
+        }
+        if (type.operation() == CurrencyOperation.MIRROR) {
+            return false; // 映星鏡會多出一件物品：走 mirror()（呼叫端要接住複製品），不能當成一般通貨用
+        }
+        return type.canApply(data, items.generator());
+    }
+
+    /**
+     * 2026-10-26：這次擲骰用的亂數——上了預見鎖（PoE2 的 Hinekora's Lock）的照物品記的種子擲，所以先算一次給玩家看的結果跟真的用一樣。
+     * 預見鎖本身照一般的亂數。
+     */
+    private java.util.random.RandomGenerator random(final ItemData data, final CurrencyType type) {
+        if (data.foresight() != null && type.operation() != CurrencyOperation.FORESEE) {
+            return new java.util.SplittableRandom(data.foresight());
+        }
+        return items.random();
+    }
+
+    /** 真的做（data 會被改）：星籤、高階／完美通貨的最低詞綴等級、僥倖石都在這裡。 */
+    private Outcome run(final CurrencyType type, final ItemData data, final java.util.random.RandomGenerator random) {
+        // 掛著的星籤：這顆通貨觸發的話照星籤的規則做，星籤用掉
+        final CurrencyType omen = data.omen() == null ? null : repository.get(data.omen());
+        final boolean omenFires = Crafting.triggers(omen, type);
+        if (omenFires && Crafting.omenProblem(omen, type, data, items.generator()) != null) {
+            return new Outcome(Result.NOT_APPLICABLE, null);
+        }
+        final boolean hadForesight = data.foresight() != null;
+        final CurrencyType[] fired = {null};
+        final Result[] result = {Result.APPLIED};
+        ItemGenerator.withMinModLevel(type.minModLevel(), () -> {
+            switch (type.operation()) {
+                case CHANCE -> {
+                    final boolean noDestroy = omenFires && omen.omen().effect() == CurrencyType.Omen.Effect.NO_DESTROY;
+                    final boolean ancients = omenFires && omen.omen().effect() == CurrencyType.Omen.Effect.ANCIENTS;
+                    result[0] = chance(type, data, random, ancients);
+                    if (omenFires && (noDestroy && result[0] == Result.DESTROYED || ancients && result[0] == Result.APPLIED)) {
+                        fired[0] = omen;
+                        data.setOmen(null);
+                    }
+                    if (noDestroy && result[0] == Result.DESTROYED) {
+                        result[0] = Result.APPLIED; // 2026-10-26（Omen of Chance）：失敗也不碎，物品不變
+                    }
+                }
+                case ESSENCE -> {
+                    if (Crafting.applyEssence(type, data, items.generator(), random, omenFires ? omen : null)) {
+                        fired[0] = omen;
+                        data.setOmen(null);
+                    }
+                }
+                case CATALYST -> Crafting.applyCatalyst(type, data);
+                case RUNE -> Crafting.applyRune(type, data);
+                case OMEN -> Crafting.attachOmen(type, data);
+                default -> {
+                    if (omenFires) {
+                        if (Crafting.applyWithOmen(omen, type, data, items.generator(), random)) {
+                            fired[0] = omen;
+                        }
+                        data.setOmen(null);
+                    } else {
+                        type.operation().apply(data, items.generator(), random);
+                    }
+                }
+            }
+        });
+        if (hadForesight && type.operation() != CurrencyOperation.FORESEE && type.operation() != CurrencyOperation.OMEN) {
+            data.setForesight(null); // 2026-10-26：預見鎖：物品被改過就沒了
+        }
+        return new Outcome(result[0], fired[0]);
+    }
+
+    /**
+     * 2026-10-26：預見鎖（PoE2 的 Hinekora's Lock）：這顆通貨用在這件上會變成怎樣（不改原本的物品）。
+     * 沒上預見鎖、不能用回傳 null；碎掉回傳一件 rarity 不變、affixes 清空、標成碎掉（{@link Preview#destroyed}）的預覽。
+     */
+    public Preview foresee(final ItemStack currencyStack, final ItemStack target) {
+        final CurrencyType type = read(currencyStack).orElse(null);
+        final ItemData data = items.read(target).orElse(null);
+        if (type == null || data == null || data.foresight() == null || type.operation() == CurrencyOperation.FORESEE
+                || type.operation() == CurrencyOperation.OMEN || type.operation() == CurrencyOperation.NONE || !usable(type, data)) {
+            return null;
+        }
+        final ItemData copy = data.copy();
+        final Outcome outcome = run(type, copy, random(data, type));
+        if (outcome.result() == Result.NOT_APPLICABLE) {
+            return null;
+        }
+        return new Preview(type, copy, outcome.result() == Result.DESTROYED);
+    }
+
+    /** 2026-10-26：預見的結果。 */
+    public record Preview(CurrencyType currency, ItemData after, boolean destroyed) {
     }
 
     /** 複製裝備的通貨（operation: MIRROR，預設是映星鏡）；currencies.yml 沒有這種通貨回傳 null。 */
@@ -366,6 +460,9 @@ public final class CurrencyService {
         if (data.get().corrupted() && !type.get().operation().allowedOnCorrupted()) {
             return type.get().operation() == CurrencyOperation.MIRROR ? "已腐化的物品不能複製" : "已腐化的物品不能再改造";
         }
+        if (data.get().sanctified() && !type.get().operation().allowedOnCorrupted()) {
+            return "已聖化的物品不能再改造"; // 2026-10-26
+        }
         final String problem = Crafting.problem(type.get(), data.get(), items.generator());
         if (problem != null) {
             return problem;
@@ -377,28 +474,48 @@ public final class CurrencyService {
         return null;
     }
 
-    /** 僥倖石：success 的機率變成這個基底的傳奇，不然物品碎掉。 */
-    private Result chance(final CurrencyType type, final ItemData data, final ItemStack target, final String before,
-                          final String playerName, final Long characterId) {
+    /**
+     * 僥倖石：success 的機率變成這個基底的傳奇，不然物品碎掉（data 不動，呼叫端處理）。
+     * 2026-10-26：ancients（PoE2 的 Omen of the Ancients）：成功時從同一個部位（裝備欄位）能用僥倖石做出來的傳奇裡隨機挑，不限這個基底。
+     */
+    private Result chance(final CurrencyType type, final ItemData data, final java.util.random.RandomGenerator random, final boolean ancients) {
         // 追逐級（2026-10）：這個基底有追逐級傳奇的話，先擲一次跟小怪一樣的極低機率
         final List<UniqueItem> chase = items.generator().chaseUniques(data.base(), data.ilvl());
-        if (!chase.isEmpty() && items.random().nextDouble() < ItemGenerator.chaseChance()) {
-            items.generator().makeUnique(data, ItemGenerator.pickUnique(chase, items.random()), items.random());
-            items.update(target, data);
-            usageLog.record(characterId, playerName, data.uuid(), type.id(), before, items.toJson(data));
-            log.info("[currency] {} 對 {} 使用 {}：賭到追逐級傳奇 {}", playerName, data.uuid(), type.id(), data.unique());
+        if (!chase.isEmpty() && random.nextDouble() < ItemGenerator.chaseChance()) {
+            items.generator().makeUnique(data, ItemGenerator.pickUnique(chase, random), random);
             return Result.APPLIED;
         }
         final List<UniqueItem> candidates = CurrencyOperation.chanceUniques(data, items.generator());
-        if (!candidates.isEmpty() && items.random().nextDouble() < chanceOdds(type, candidates)) {
-            items.generator().makeUnique(data, ItemGenerator.pickUnique(candidates, items.random()), items.random());
-            items.update(target, data);
-            usageLog.record(characterId, playerName, data.uuid(), type.id(), before, items.toJson(data));
-            log.info("[currency] {} 對 {} 使用 {}：變成傳奇 {}", playerName, data.uuid(), type.id(), data.unique());
+        if (!candidates.isEmpty() && random.nextDouble() < chanceOdds(type, candidates)) {
+            final List<UniqueItem> pool = ancients ? ancientUniques(data) : candidates;
+            final UniqueItem pick = ItemGenerator.pickUnique(pool.isEmpty() ? candidates : pool, random);
+            if (!pick.base().equals(data.base())) {
+                // 同一類的別的基底：物品換成那個基底（固定詞綴照新的基底擲）
+                final ItemData fresh = items.generator().generate(items.repository().requireBase(pick.base()),
+                        tw.exilecore.item.Rarity.NORMAL, data.ilvl(), random);
+                data.setBase(pick.base());
+                data.setImplicitVars(fresh.implicitVars());
+            }
+            items.generator().makeUnique(data, pick, random);
             return Result.APPLIED;
         }
-        usageLog.record(characterId, playerName, data.uuid(), type.id(), before, "{\"destroyed\":true}");
-        log.info("[currency] {} 對 {} 使用 {}：碎掉了", playerName, data.uuid(), type.id());
         return Result.DESTROYED;
+    }
+
+    /** 2026-10-26（Omen of the Ancients）：跟這件同一個裝備欄位、物品等級夠、能用僥倖石做出來的傳奇。 */
+    private List<UniqueItem> ancientUniques(final ItemData data) {
+        final tw.exilecore.item.ItemBase base = items.repository().base(data.base());
+        final List<UniqueItem> list = new ArrayList<>();
+        if (base == null) {
+            return list;
+        }
+        for (final UniqueItem unique : items.repository().uniques()) {
+            final tw.exilecore.item.ItemBase other = items.repository().base(unique.base());
+            if (other != null && other.slot() == base.slot() && other.isWeapon() == base.isWeapon()
+                    && unique.droppedBy(CurrencyOperation.CHANCE_SOURCE) && unique.dropLevel() <= data.ilvl() && unique.weight() > 0) {
+                list.add(unique);
+            }
+        }
+        return list;
     }
 }

@@ -153,6 +153,39 @@ class UniqueSkinTest {
         assertEquals("minecraft:range_dispatch", ours.getAsJsonObject("on_true").get("type").getAsString());
     }
 
+    /** 2026-10-27 站長「傳奇跟追逐級的框要更明顯」：格子裡是發光底＋圖＋實線外框；追逐級（uniques.yml 的 chase）用另一組、外框會閃。 */
+    @Test
+    void chaseUniquesGetTheirOwnFrame() throws IOException {
+        int chase = 0;
+        for (final UiPack.UniqueSkin skin : skins) {
+            JsonObject found = null;
+            for (final JsonElement entry : UiPackTest.vanillaSelect(json("assets/minecraft/items/" + skin.vanillaItem() + ".json")).getAsJsonArray("cases")) {
+                if (entry.getAsJsonObject().get("when").getAsString().equals(UniqueArt.modelKey(skin.id()))) {
+                    found = entry.getAsJsonObject().getAsJsonObject("model");
+                }
+            }
+            assertTrue(found != null, skin.id());
+            final com.google.gson.JsonArray layers = found.getAsJsonArray("cases").get(0).getAsJsonObject().getAsJsonObject("model").getAsJsonArray("models");
+            assertEquals(3, layers.size(), "發光底、圖、實線外框：" + skin.id());
+            final String kind = skin.chase() ? "chase" : "unique";
+            assertEquals("exilecore:item/ui/" + kind + "_glow", layers.get(0).getAsJsonObject().get("model").getAsString(), skin.id());
+            assertEquals("exilecore:item/unique/" + skin.id(), layers.get(1).getAsJsonObject().get("model").getAsString(), skin.id());
+            assertEquals("exilecore:item/ui/" + kind + "_border", layers.get(2).getAsJsonObject().get("model").getAsString(), skin.id());
+            assertEquals(skin.chase(), repository.unique(skin.id()).chase(), "追逐級照 uniques.yml 的 chase（舊物品也是 unique:代號，不用重畫）");
+            chase += skin.chase() ? 1 : 0;
+        }
+        // 2026-10-27：傳奇第二批多了 7 件追逐級（共 20 件），圖補齊之後都有專屬外觀；這次之前寫死 13 件
+        assertEquals(repository.uniques().stream().filter(u -> u.chase()).count(), chase, "每件追逐級都有專屬外觀");
+        assertTrue(chase >= 20, "追逐級：" + chase);
+        final BufferedImage border = ImageIO.read(new ByteArrayInputStream(files.get("assets/exilecore/textures/item/ui/chase_border.png")));
+        assertEquals(32, border.getWidth());
+        assertEquals(32 * UiPack.CHASE_FRAMES, border.getHeight(), "追逐級的外框是直排的動畫");
+        assertTrue(json("assets/exilecore/textures/item/ui/chase_border.png.mcmeta").has("animation"));
+        final BufferedImage plainBorder = ImageIO.read(new ByteArrayInputStream(files.get("assets/exilecore/textures/item/ui/unique_border.png")));
+        assertEquals(0, plainBorder.getRGB(16, 16) >>> 24, "外框中間透明，不擋物品");
+        assertEquals(0xFF, plainBorder.getRGB(16, 1) >>> 24, "實線外框");
+    }
+
     @Test
     void deterministicAndSmall() throws IOException {
         final UiPack.Built again = UiPack.build(skins);

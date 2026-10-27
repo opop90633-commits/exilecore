@@ -359,6 +359,8 @@ shark:
 
 # 航行：海圖桌選目的地，航行 travel_seconds 秒（這段時間漂流物變多），小島生在筏的東邊；島上是戰鬥區（正常的戰鬥，怪物等級照角色）。
 #   一次一座島；minutes 分鐘後（或離開筏）島就漂走。寶箱要先清掉守衛才打得開。通貨跟瓶中信合算每天的上限。
+#   2026-10-27：currency.ids 可以寫成 { 代號: 權重 }（寫成清單 = 每種一樣）。高價的（神諭石、大鑿星石、深淵星核）只給約 2%：
+#   這次之前平均抽，淵底遺跡一天約 12 趟就各拿約 2.4 顆，比刷地圖多太多；低階的島（珊瑚礁、殘島、鯊巢）不變。
 islands:
   reef:
     name: 珊瑚礁
@@ -390,10 +392,10 @@ islands:
     travel_seconds: 100
     minutes: 25
     monsters: { types: [SKELETON, DROWNED], count: [7, 9], magic: 3, rare: 1 }
-    captain: { name: 幽靈船長, type: WITHER_SKELETON, life: 8, damage: 1.4, skills: [slam, charge] }
+    captain: { name: 幽靈船長, type: WITHER_SKELETON, life: 2.5, damage: 2.5, skills: [slam, charge] }   # 2026-10-26 照 PoE2（原作地圖 Boss 250%／250%）
     chests: 2
     loot: { scrap: [3, 6], canvas: [2, 4], rope: [2, 4], shark_tooth: [0, 1] }
-    currency: { chance: 0.8, ids: [zenith_orb, oracle_orb, sky_fragment, heist_contract] }
+    currency: { chance: 0.8, ids: { zenith_orb: 40, sky_fragment: 30, heist_contract: 28, oracle_orb: 2 } }   # 2026-10-27 照 PoE2 的稀有程度加權重（神諭石約 2%）；這次之前清單平均抽（各 1/4）
     xp: 140
   atoll:
     name: 星骸環礁
@@ -402,11 +404,11 @@ islands:
     travel_seconds: 120
     minutes: 30
     monsters: { types: [DROWNED, GUARDIAN], count: [6, 8], magic: 3, rare: 2 }   # 兩波
-    captain: { name: 礁石守衛, type: IRON_GOLEM, life: 30, damage: 1.8, skills: [tide_slam, quake, slam] }
+    captain: { name: 礁石守衛, type: IRON_GOLEM, life: 9.375, damage: 3.214, skills: [tide_slam, quake, slam] }   # 2026-10-26 照 PoE2（原作地圖 Boss 250%／250%）
     chests: 1
     loot: { abyss_pearl: [1, 2], coral: [3, 5], star_shard: [2, 3] }
     horn_shard: 0.35            # 深淵號角碎片的機率（五片做一支號角）
-    currency: { chance: 1.0, ids: [zenith_orb, oracle_orb, sky_fragment, greater_socket_orb] }
+    currency: { chance: 1.0, ids: { zenith_orb: 50, sky_fragment: 46, oracle_orb: 2, greater_socket_orb: 2 } }   # 2026-10-27 加權重（神諭石、大鑿星石各 2%）；這次之前清單平均抽（各 1/4）
     xp: 260
   # ---- 2026-10-23：新的島（shape 照舊的形狀蓋）----
   supply:
@@ -429,7 +431,7 @@ islands:
     travel_seconds: 90
     minutes: 25
     monsters: { types: [DOLPHIN, DROWNED], count: [6, 8], magic: 3, rare: 2 }   # 兩波渦齒鯊群
-    captain: { name: 巢主渦齒鯊, type: DOLPHIN, life: 20, damage: 1.6, skills: [charge, tide_slam] }
+    captain: { name: 巢主渦齒鯊, type: DOLPHIN, life: 6.25, damage: 2.857, skills: [charge, tide_slam] }   # 2026-10-26 照 PoE2（原作地圖 Boss 250%／250%）
     chests: 1
     loot: { shark_skin: [3, 5], shark_tooth: [2, 4], shark_meat: [4, 8], abyss_pearl: [0, 1] }
     currency: { chance: 0.7, ids: [zenith_orb, lustre_orb, sky_fragment] }
@@ -444,11 +446,11 @@ islands:
     minutes: 20
     needs: { treasure_map: 1 }          # 出航要用掉一張藏寶圖
     monsters: { types: [SKELETON, DROWNED, HUSK], count: [5, 7], magic: 3, rare: 1 }
-    captain: { name: 守寶的亡靈, type: WITHER_SKELETON, life: 10, damage: 1.4, skills: [slam, charge] }
+    captain: { name: 守寶的亡靈, type: WITHER_SKELETON, life: 3.125, damage: 2.5, skills: [slam, charge] }   # 2026-10-26 照 PoE2（原作地圖 Boss 250%／250%）
     chests: 2
     loot: { star_shard: [4, 8], abyss_pearl: [1, 2], scrap: [4, 8], relic: [2, 4], canvas: [3, 5] }
     horn_shard: 0.2
-    currency: { chance: 1.0, ids: [zenith_orb, oracle_orb, sky_fragment, greater_socket_orb, gemcutter_prism] }
+    currency: { chance: 1.0, ids: { zenith_orb: 45, sky_fragment: 35, gemcutter_prism: 16, oracle_orb: 2, greater_socket_orb: 2 } }   # 2026-10-27 加權重；這次之前清單平均抽（各 1/5）
     description: "照藏寶圖的位置：寶箱裡的東西比沉船多得多"
     xp: 200
   deep_ruin:
@@ -462,7 +464,7 @@ islands:
     chests: 1
     loot: { star_shard: [5, 8], abyss_pearl: [2, 3], relic: [3, 5], horn_shard: [0, 1] }
     horn_shard: 0.4
-    currency: { chance: 1.0, ids: [zenith_orb, oracle_orb, sky_fragment, greater_socket_orb, abyss_core] }
+    currency: { chance: 1.0, ids: { zenith_orb: 50, sky_fragment: 44, oracle_orb: 2, greater_socket_orb: 2, abyss_core: 2 } }   # 2026-10-27 加權重（三種高價的各 2%）；這次之前清單平均抽（各 1/5）
     letter: true
     description: "星骸殘島更深的那一層：星柱的守衛更強"
     xp: 400
@@ -571,10 +573,10 @@ shark_king:
   bait: 鯊王血餌
   type: DOLPHIN
   like: sky_crucible
-  life: 605.5
-  damage: 3.3
+  life: 44.36   # 2026-10-26：比照極境（照原作超難版：終局 750% × 5.914）；這次之前 605.5
+  damage: 4.5   # 2026-10-26 照 PoE2（原作 Arbiter of Ash 990%／450%；這次之前 3.3）
   scale: 3.0
-  mods: [armoured, resistant]
+  mods: [armoured, pinnacle_resist]
   flee_seconds: 420
   enrage: { after: 300, damage: 150 }
   intro: "（筏邊的海水被染紅了。一條比筏還長的影子，躍了上來。）"
@@ -609,10 +611,10 @@ whale:
   name: 淵鯨
   type: HAPPY_GHAST
   like: awakener
-  life: 1195.7      # 2026-10-21 晚：照打 Boss 每秒 200 萬、單人 3 分半（約 4.2 億生命）；400 萬起遞減（maps.yml 的 whale_dps）。早上 600 萬時是 3587
-  damage: 2.9
+  life: 86.79   # 2026-10-26：比照巔峰（極境的兩倍生命）；這次之前 1195.7
+  damage: 4.078   # 2026-10-26 照 PoE2（原作 Arbiter of Ash 990%／450%；這次之前 2.9）
   scale: 1.0
-  mods: [resistant, swift]
+  mods: [swift, pinnacle_resist]
   attempts: 2
   enrage: { after: 300, damage: 150 }   # 2026-10-18：360 → 300
   minutes: 10

@@ -1,0 +1,51 @@
+Unearth (poe2db.tw/us/Unearth)
+Type: Spell. Tags: Minion, AoE, Physical, Duration, Repeatable (type list also: Spell, Necrotic, Limit, Triggerable, Totemable)
+Cast time: 0.95 sec | Base crit: 15.00% | Cooldown: none listed | Weapon req: none
+Requirements L1-20: char level 1-90, Int 4-157. Mana 7-76 (L1-20).
+Mechanic: Raises bone spikes in a cone in front of you that deal Physical damage. Corpses and dead Reviving Minions in the area become short-lived Bone Construct minions that fight for you (larger corpses create more than one; Reviving Minions only create one per death).
+Stats: Deals 4-6 (L1) to 117-176 (L20) Physical damage; Limit 8-20 Bone Constructs (L1-20); cone length 6 m; Bone Construct duration 15 s.
+Quality (0-20): +0-5 s Bone Construct duration; Minions 0-50% increased Movement Speed; 0-50% more Minion Attack Speed.
+Base Damage column: 100%,100%,100% at every level.
+
+# TSV (source: https://poe2db.tw/us/Unearth; req level/attr blank for 21-40 on page)
+level	phys_damage(min-max)	mana	construct_limit	minion_level
+1	4-6	7	8	2
+2	5-8	8	8	4
+3	7-11	10	8	6
+4	9-14	12	10	8
+5	12-18	13	10	10
+6	14-22	15	10	12
+7	18-26	18	12	14
+8	21-31	20	12	16
+9	25-37	23	12	18
+10	29-44	26	14	20
+11	34-51	29	14	22
+12	40-59	33	14	24
+13	46-69	37	16	26
+14	53-79	41	16	28
+15	60-91	46	16	30
+16	69-104	51	18	32
+17	79-119	56	18	34
+18	90-135	62	18	36
+19	103-154	69	20	38
+20	117-176	76	20	40
+21	133-200	84	20	42
+22	151-227	93	22	44
+23	172-258	102	22	46
+24	195-293	112	22	48
+25	222-333	123	24	50
+26	252-378	135	24	52
+27	286-429	149	24	54
+28	325-487	163	26	56
+29	369-554	178	26	58
+30	420-629	195	26	60
+31	477-716	213	28	62
+32	543-814	233	28	64
+33	618-927	254	28	66
+34	704-1057	277	30	68
+35	803-1205	302	30	70
+36	917-1375	330	30	72
+37	1047-1571	359	32	74
+38	1197-1796	391	32	76
+39	1370-2055	425	32	78
+40	1569-2353	463	34	80

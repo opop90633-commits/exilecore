@@ -53,7 +53,8 @@ class OwnNamesTest {
             "譫妄", "流亡者", "盜賊流亡者", "收割", "冰矛", "火焰吐息", "冰川之刺");
 
     /** 掃哪些資料檔的 name、title。 */
-    private static final List<String> FILES = List.of("skills.yml", "supports.yml", "currencies.yml", "charges.yml", "uniques.yml",
+    private static final List<String> FILES = List.of("skills.yml", "supports.yml", "supports_lineage.yml", "currencies.yml", // 2026-10-27：＋血脈輔助
+            "charges.yml", "uniques.yml",
             "ascendancy.yml", "atlas_tree.yml", "map_events.yml", "boss_skills.yml", "maps.yml", "zones.yml", "events.yml", "quests.yml",
             "bases/jewellery.yml", "bases/jewels.yml", "passives/tree.json");
 
@@ -79,6 +80,8 @@ class OwnNamesTest {
         // TODO（2026-10 已知問題）：PoE2 改版新加的這幾個名稱跟別的遊戲一樣，改名之後把它們從這裡拿掉
         clashes.removeAll(List.of("ascendancy.yml：獻祭", "ascendancy.yml：齊射", "ascendancy.yml：精準",
                 "ascendancy.yml：迅捷", "ascendancy.yml：放血", "skills.yml：餘震"));
+        // 2026-10-26：昇華天賦照使用者的要求換成 PoE2 原作的台服名稱（煉獄術士「召喚物生命」、戰術家「召喚物傷害」兩個小天賦跟輔助寶石同名）
+        clashes.removeAll(List.of("ascendancy.yml：召喚物生命", "ascendancy.yml：召喚物傷害"));
         assertTrue(clashes.isEmpty(), "名稱跟別的遊戲一模一樣：\n" + String.join("\n", clashes));
     }
 

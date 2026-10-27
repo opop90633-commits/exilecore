@@ -49,6 +49,11 @@ public final class Presence {
         this.damage = damage;
     }
 
+    /** 存在範圍的半徑（格，吃 presence.area）；2026-10-26 抽出來給「存在範圍內的友軍」用。 */
+    public static double radius(final StatSheet sheet) {
+        return BASE_RADIUS * Math.sqrt(Math.max(0.1, 1 + sheet.increased(StatKeys.PRESENCE_AREA, Set.of())));
+    }
+
     public void tick() {
         ticks += PERIOD;
         final boolean burnTick = ticks % 20 == 0;
@@ -66,6 +71,13 @@ public final class Presence {
                     mods.add(Modifier.flat(type.mitigationStat(), -resist, "臨在"));
                 }
             }
+            if (StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.PRESENCE_EXPOSURE)) {
+                // 2026-10-26（焚王獸符）：你身邊的敵人曝露（元素抗性 -20%，吃曝露效果）
+                final double exposure = HitEffects.EXPOSURE * Math.max(0, 1 + sheet.increased(StatKeys.EXPOSURE_EFFECT, Set.of()));
+                for (final DamageType type : new DamageType[] {DamageType.FIRE, DamageType.COLD, DamageType.LIGHTNING}) {
+                    mods.add(Modifier.flat(type.mitigationStat(), -exposure * tw.exilecore.passive.ConquestEffects.exposureScale(sheet, type), "曝露"));
+                }
+            }
             final double weaken = sheet.flat(StatKeys.PRESENCE_WEAKEN, Set.of());
             if (weaken > 0) {
                 mods.add(Modifier.more(StatKeys.DAMAGE, -Math.min(90, weaken) / 100.0, "臨在"));
@@ -77,7 +89,7 @@ public final class Presence {
             if (mods.isEmpty() && taken <= 0 && slow <= 0 && burn <= 0) {
                 continue;
             }
-            final double radius = BASE_RADIUS * Math.sqrt(Math.max(0.1, 1 + sheet.increased(StatKeys.PRESENCE_AREA, Set.of())));
+            final double radius = radius(sheet);
             final double radiusSquared = radius * radius;
             final World world = player.getWorld();
             final String id = "presence." + player.getUniqueId();

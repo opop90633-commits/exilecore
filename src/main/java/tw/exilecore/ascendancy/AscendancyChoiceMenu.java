@@ -66,15 +66,17 @@ final class AscendancyChoiceMenu extends Menu {
     private ItemStack option(final AscendancyConfig.Ascendancy ascendancy, final boolean canChoose) {
         final List<String> lore = new ArrayList<>();
         lore.add("<gray><i>" + AscendancyService.escape(ascendancy.summary()));
-        for (final List<AscendancyConfig.Node> branch : ascendancy.branches()) {
-            lore.add("");
-            for (final AscendancyConfig.Node node : branch) {
-                lore.add("<" + ascendancy.color() + ">◆ " + AscendancyService.escape(node.name())
-                        + (node.requires() == null ? "" : " <dark_gray>（接在前一個後面）"));
-                for (final String line : StatLines.describeAll(node.stats())) {
-                    lore.add("<gray>  " + AscendancyService.escape(line));
-                }
+        // 2026-10-26：照 PoE2 的昇華樹（20 個上下的天賦）：這裡只列核心天賦的名稱與第一行，完整的樹看右鍵的預覽
+        lore.add("");
+        lore.add("<gray>核心天賦：");
+        for (final AscendancyConfig.Node node : ascendancy.nodes()) {
+            if (!node.notable() && !node.choice()) {
+                continue;
             }
+            final List<String> lines = node.display();
+            final String first = lines.isEmpty() ? "" : lines.getFirst().split("\n")[0];
+            lore.add("<" + ascendancy.color() + ">◆ " + AscendancyService.escape(node.name())
+                    + (first.isEmpty() ? "" : " <dark_gray>" + AscendancyService.escape(first)));
         }
         lore.add("");
         lore.add(canChoose ? "<yellow>左鍵：昇華為" + AscendancyService.escape(ascendancy.name()) + "（會先問一次）" : "<dark_gray>完成第一試煉之後才能選");

@@ -121,6 +121,10 @@ public final class MapInstance {
         double monsterPower;
         double bossPower;
         double bossLoot;
+        /** 2026-10-27：Boss 掉落只多稀有度（小數；腐化區）。 */
+        double bossRarity;
+        /** 2026-10-27：路上的怪（不是 Boss）掉落多的稀有度（小數；腐化區，取代原本的物品數量）。 */
+        double rarity;
         /** Boss 變體（null = 一般）。 */
         MapTwists.BossVariant bossVariant;
         /** Boss 房的干擾（null = 沒有）。 */

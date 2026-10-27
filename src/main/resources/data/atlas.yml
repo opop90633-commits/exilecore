@@ -14,7 +14,9 @@
 # tower             塔：every 大約每幾格一座、min_distance 幾格以外才有、radius 石板罩的半徑、points 完成給幾點
 # citadels          城塞：四種終局（照 maps.yml 的 requires 順序）各自大約每幾格一座、min_distance 幾格以外才有、points 完成給幾點
 # corruption        腐化區：min_distance 幾格以外才有、chance 每片區域腐化的機率、patch 一片大約幾格、
-#                   monster_level 怪物等級加成、pack 怪物群 +%、rare 稀有怪 +%、quantity 物品數量 +%、rarity 稀有度 +%
+#                   monster_level 怪物等級加成、pack 怪物群 +%、rare 稀有怪 +%、quantity 物品數量 +%（路上的怪）、
+#                   rarity 稀有度 +%（只加 Boss）、monster_rarity 稀有度 +%（路上的怪；2026-10-27 新）
+#                   2026-10-27 照 PoE2（換界石、星圖都沒有物品數量）：quantity 20 → 0，換成同等的 monster_rarity 40（數量 ×2）
 #                   vaal_chance 第一次打倒 Boss 時每個有份的人掉一顆蝕變石（PoE2 的瓦爾寶珠）的機率（2026-10-21）
 # purification      淨化區（2026-10-21）：跟腐化區一樣一片一片長，不會跟腐化區重疊；難度不變。min_distance、chance、patch 同腐化區，
 #                   fracture_chance 第一次打倒 Boss 時每個有份的人掉一顆定星石（PoE2 的破裂石）的機率
@@ -40,7 +42,7 @@ boss_unique: 2.0
 hidden_chance: 0.03
 tower: { every: 35, min_distance: 3, radius: 3, points: 2 }
 citadels: { every: 80, min_distance: 6, points: 2 }   # 2026-10-24：讓玩家早一點碰到（原本 every 150、min_distance 8）
-corruption: { min_distance: 6, chance: 0.2, patch: 12, monster_level: 1, pack: 30, rare: 50, quantity: 20, rarity: 30, vaal_chance: 0.35 }
+corruption: { min_distance: 6, chance: 0.2, patch: 12, monster_level: 1, pack: 30, rare: 50, quantity: 0, rarity: 30, monster_rarity: 40, vaal_chance: 0.35 }   # 2026-10-27：這次之前 quantity 20、沒有 monster_rarity
 purification: { min_distance: 6, chance: 0.12, patch: 12, fracture_chance: 0.04 }   # 2026-10-21：定星石 8% → 4%（約 250 張圖 1 顆，跟神諭石同等級）
 unlock: { start_radius: 1, on_complete: 1, on_tower: 3 }
 points: { per_cell: 1, soft_cap: 60, after_cap_every: 3, per_tower: 2, per_citadel: 2 }

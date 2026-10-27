@@ -52,7 +52,7 @@ public record ItemBase(String id, String name, String material, String model, It
     /** 珠寶每種型態（前綴／後綴）最多幾條詞綴（稀有珠寶最多 4 條，PoE 的做法）。 */
     public static final int JEWEL_AFFIXES_PER_TYPE = 2;
 
-    /** 裝備需求（物品等級 1 時）。 */
+    /** 裝備需求（2026-10-26 照 PoE2：基底固定的值，見 {@link ItemRepository#tierRequirements}；這次之前是物品等級 1 時的值，隨物品等級放大）。 */
     public record Requirements(int level, int str, int dex, int intelligence) {
     }
 

@@ -79,6 +79,8 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
 
     /** 複擊最多再打幾下。 */
     public static final int MAX_REPEATS = 4;
+    /** 2026-10-26：INCREASED／MORE：投射物射程（放在這裡，不動 StatKeys）。 */
+    public static final String PROJECTILE_RANGE = "skill.projectile_range";
 
     /** 一個召喚技能同時最多幾隻（連「+x 召喚物數量」都算進去的上限；2026-10-16：40 → 50）。 */
     public static final int MAX_MINIONS = 50;
@@ -98,17 +100,72 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     }
 
     /**
+     * 2026-10-27 照站長（屬性不足自動降級）：寶石實際能用的等級——角色等級與屬性需求都限制過、還沒加裝備與輔助的「+x 技能等級」。
+     * 子技能（捷光環的爆發、雷光、冰晶…）與照寶石等級的效果用這個；gemLevel 留寶石本身的等級（需求等級的提示用）。
+     * 這次之前子技能直接用 gemLevel，屬性不夠降了級的寶石子技能還是照原本的等級。
+     */
+    public int usableGemLevel() {
+        return isDefault ? 1 : Math.max(1, level - bonusLevel);
+    }
+
+    /**
      * 「+x 技能等級」看的標籤（2026-10）：召喚技能的近戰／投射物標籤只是說召喚物怎麼打（讓近戰、投射物的輔助寶石掛得上），
      * 技能本身不是近戰或投射物技能，所以「全部近戰技能等級」「全部投射物技能等級」不給召喚技能；召喚物的等級看「召喚物技能等級」。
      */
     public static Set<String> levelTags(final SkillDefinition definition) {
-        if (definition.summon() == null) {
-            return definition.tags();
-        }
         final Set<String> tags = new java.util.HashSet<>(definition.tags());
-        tags.remove(Tags.MELEE);
-        tags.remove(Tags.PROJECTILE);
+        if (definition.summon() != null) {
+            tags.remove(Tags.MELEE);
+            tags.remove(Tags.PROJECTILE);
+        }
+        // 2026-10-26（骨髓之枯：+4 遲滯詛咒技能等級）：技能自己的代號也當標籤（skill:代號），只加某一個技能的等級
+        tags.add(tw.exilecore.item.unique.UniqueStats.SKILL_TAG_PREFIX + definition.id());
         return Set.copyOf(tags);
+    }
+
+    /**
+     * 掛著的輔助裡真的生效的那幾顆（照順序）：不能輔助這個技能的略過；血脈、專屬掉落、圖騰施法／陷阱施法、多重投射各只有第一顆生效。
+     * 2026-10-27：從 of() 拆出來（孤星／雙兆／三兆要照這份數其他輔助）。
+     */
+    static List<SupportDefinition> effectiveSupports(final List<SupportDefinition> supports, final SkillDefinition definition,
+                                                     final Set<String> resonant) {
+        final List<SupportDefinition> active = new ArrayList<>();
+        {
+            boolean deployer = definition.deploy() != null;
+            boolean exclusive = false;
+            boolean lineage = false;
+            boolean multiProjectile = false;
+            for (final SupportDefinition support : supports) {
+                if (support == null || !support.supports(definition)) {
+                    continue;
+                }
+                if (support.lineage()) {
+                    if (lineage) {
+                        continue; // 2026-10-27 照站長：一個技能只有一顆血脈輔助生效（共鳴也不算例外）
+                    }
+                    lineage = true;
+                } else if (!support.cuttable() && !resonant.contains(support.id())) { // 2026-10-18：共鳴的專屬輔助不佔名額；2026-10-27：血脈輔助也不佔
+                    if (exclusive) {
+                        continue; // 一個技能只有一顆專屬掉落的輔助生效（2026-10；以前掛了兩顆的，第二顆不算）
+                    }
+                    exclusive = true;
+                }
+                if (support.flags(StatKeys.FLAG_SPELL_TOTEM) || support.flags(StatKeys.FLAG_TRAP)) {
+                    if (deployer) {
+                        continue; // 圖騰施法與陷阱施法只能有一個生效（第二個連倍率都不算）
+                    }
+                    deployer = true;
+                }
+                if (MULTI_PROJECTILE.contains(support.id())) {
+                    if (multiProjectile) {
+                        continue; // 分光與裂光只有一個生效（2026-10，照 PoE）
+                    }
+                    multiProjectile = true;
+                }
+                active.add(support);
+            }
+        }
+        return active;
     }
 
     /**
@@ -147,7 +204,10 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         final int usable = gemLevel > tw.exilecore.character.SkillLoadout.MAX_LEVEL
                 && characterLevel >= config.requiredLevel(tw.exilecore.character.SkillLoadout.MAX_LEVEL)
                 ? Math.min(gemLevel, tw.exilecore.character.SkillLoadout.GEM_CAP) : config.maxLevelFor(characterLevel);
-        final int baseLevel = isDefault ? 1 : Math.max(1, Math.min(gemLevel, usable));
+        final int levelCap = isDefault ? 1 : Math.max(1, Math.min(gemLevel, usable));
+        // 2026-10-27 照站長：屬性不夠這個等級的需求時，自動降到屬性夠的最高等級（裝備、輔助加的等級不算需求，下面再加）
+        final int baseLevel = isDefault ? 1 : GemAttributes.usableLevel(config, definition, levelCap,
+                supports.stream().filter(java.util.Objects::nonNull).map(SupportDefinition::id).toList(), sheet);
         // 傳奇的「+1 技能等級」：照技能自己的標籤（法術、混沌…），可以超過 20 級；普攻不吃
         final Set<String> levelTags = levelTags(definition);
         final int bonus = isDefault || sheet == null ? 0
@@ -164,39 +224,24 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                     }
                 }
             }
+            // 2026-10-27 照 PoE2：孤星、雙兆、三兆（看掛了幾顆其他輔助）：照名額篩過、真的生效的那幾顆算（宿主／引星合成的不算）；
+            // 這次之前照全部掛著的算，被名額擋掉的、合成的 meta.／host. 也算進去，少掛一顆就拿到等級
+            supportLevels += LineageRules.conditionalLevels(effectiveSupports(supports, definition, resonant), definition);
         }
         final int level = Math.min(MAX_EFFECTIVE_LEVEL, baseLevel + bonus + supportLevels);
         final List<SupportDefinition> active = new ArrayList<>();
         final List<Modifier> local = new ArrayList<>(definition.modifiers()); // 技能自己帶的（例如點燃機率）
         local.addAll(extra); // 2026-10-23：品質
+        if (config != null) { // 2026-10-26：逐級的修飾器（照 PoE2 每一級不同的凍結累積、穿透、破甲…）
+            for (final ScaledMod mod : config.levelModifiers(definition.id())) {
+                local.add(mod.toModifier(level, 1.0, definition.name()));
+            }
+        }
         if (!isDefault) {
-            boolean deployer = definition.deploy() != null;
-            boolean exclusive = false;
-            boolean multiProjectile = false;
-            for (final SupportDefinition support : supports) {
-                if (support == null || !support.supports(definition)) {
-                    continue;
-                }
-                if (!support.cuttable() && !resonant.contains(support.id())) { // 2026-10-18：共鳴的專屬輔助不佔名額
-                    if (exclusive) {
-                        continue; // 一個技能只有一顆專屬掉落的輔助生效（2026-10；以前掛了兩顆的，第二顆不算）
-                    }
-                    exclusive = true;
-                }
-                if (support.flags(StatKeys.FLAG_SPELL_TOTEM) || support.flags(StatKeys.FLAG_TRAP)) {
-                    if (deployer) {
-                        continue; // 圖騰施法與陷阱施法只能有一個生效（第二個連倍率都不算）
-                    }
-                    deployer = true;
-                }
-                if (MULTI_PROJECTILE.contains(support.id())) {
-                    if (multiProjectile) {
-                        continue; // 分光與裂光只有一個生效（2026-10，照 PoE）
-                    }
-                    multiProjectile = true;
-                }
+            for (final SupportDefinition support : effectiveSupports(supports, definition, resonant)) {
                 active.add(support);
                 local.addAll(support.allModifiers());
+                local.addAll(LineageRules.buildModifiers(support, definition)); // 2026-10-27 照 PoE2：願晶的品質
             }
         }
         SkillProfile profile = SkillProfiles.build(config, definition, level, weaponTags, local);
@@ -223,6 +268,13 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             }
         }
         final Set<String> context = profile.tags();
+        if (deploy != null && deploy.kind() == DeploySpec.Kind.TOTEM) {
+            // 2026-10-26 照 PoE2：「+x 秒圖騰持續時間」（星咒圖騰、英靈圖騰、崩震圖騰的品質）加在基礎持續時間上，再乘持續時間倍率
+            final double extraSeconds = effective.flat(tw.exilecore.stats.TotemKeys.DURATION_FLAT, context);
+            if (extraSeconds > 0) {
+                deploy = deploy.withDuration(deploy.duration() + extraSeconds);
+            }
+        }
         final SkillParams params = definition.params();
         final boolean area = definition.tags().contains(Tags.AREA);
         final double areaScale = area ? Math.sqrt(Math.max(0.05, effective.apply(StatKeys.SKILL_AREA, 1.0, context))) : 1.0;
@@ -237,32 +289,41 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             spread = Math.min(60, 12.0 * (projectiles - 1)); // 本來只有一發的技能多了投射物：排成扇形
         }
         final double speed = Math.max(0.2, Math.min(6, params.speed()
-                * Math.max(0.1, effective.apply(StatKeys.SKILL_PROJECTILE_SPEED, 1.0, context))));
+                * Math.max(0.1, effective.apply(StatKeys.SKILL_PROJECTILE_SPEED, 1.0, context)
+                + LineageRules.castSpeedAsProjectileSpeed(effective, context)))); // 2026-10-27 照 PoE2：推詠（施法速度的增加也套到投射物速度）
         final int pierce = clamp((int) Math.round(params.pierce() + effective.flat(StatKeys.SKILL_PIERCE, context)), 0, 20);
         final int extraChains = Math.max(0, (int) Math.round(effective.flat(StatKeys.SKILL_CHAINS, context)));
-        final int chains = switch (definition.mechanic()) {
+        final int chains = LineageRules.chains(effective, context, switch (definition.mechanic()) { // 2026-10-27 照 PoE2：倍鏈（連鎖次數更多）
             case CHAIN -> params.chains().intAt(level) + extraChains;
             case PROJECTILE -> extraChains;
             default -> 0;
-        };
+        });
         // 2026-10-21：近戰打擊範圍（腐化武器「增加 x% 近戰打擊範圍」）：打擊、扇形的近戰攻擊距離
         final double meleeRange = definition.isAttack() && definition.tags().contains(Tags.MELEE)
                 && (definition.mechanic() == Mechanic.STRIKE || definition.mechanic() == Mechanic.CONE)
                 ? Math.max(0.5, Math.min(2.0, 1 + effective.increased(StatKeys.MELEE_RANGE, context))) : 1.0;
-        final double reach = (definition.mechanic() == Mechanic.STRIKE && area ? params.reach() * areaScale : params.reach()) * meleeRange;
+        // 2026-10-27 照 PoE2 天賦樹：「近戰打擊範圍 +0.2 公尺」（melee.range 的 FLAT，單位 0.1 公尺；這次之前只讀增加的，天賦樹的 +x 公尺沒有效果）
+        final double meleeReachFlat = definition.isAttack() && definition.tags().contains(Tags.MELEE)
+                && (definition.mechanic() == Mechanic.STRIKE || definition.mechanic() == Mechanic.CONE)
+                ? Math.max(0, Math.min(20, effective.flat(StatKeys.MELEE_RANGE, context))) / 10.0 : 0;
+        final double reach = (definition.mechanic() == Mechanic.STRIKE && area ? params.reach() * areaScale : params.reach()) * meleeRange
+                + meleeReachFlat;
         final int manaCost = (int) Math.round((definition.mana().at(level) + extraManaCost(definition.mana().at(level), effective, context))
                 * Math.max(0, effective.apply(StatKeys.SKILL_COST, 1.0, context)));
-        final double baseCooldown = definition.cooldown() > 0 ? definition.cooldown()
-                : Math.max(0, effective.flat(StatKeys.SKILL_ADDED_COOLDOWN, context)); // 2026-10：輔助給的冷卻
-        final int cooldownTicks = baseCooldown <= 0 ? 0
-                : (int) Math.max(1, Math.round(baseCooldown * 20 * Math.max(0.1, effective.apply(StatKeys.SKILL_COOLDOWN, 1.0, context))));
+        final double baseCooldown = tw.exilecore.item.unique.UniqueHits.cooldown(definition.cooldown() > 0 ? definition.cooldown()
+                : Math.max(0, effective.flat(StatKeys.SKILL_ADDED_COOLDOWN, context)), effective, context); // 2026-10：輔助給的冷卻；2026-10-27（逆漏法袍）：± 秒
+        // 2026-10-26 照 PoE2（戰爭之哮「無視戰吼冷卻時間」＝更少 100% 冷卻）：沒有冷卻；這次之前最低夾在一成
+        final int cooldownTicks = baseCooldown <= 0 || effective.more(StatKeys.SKILL_COOLDOWN, context) <= 1e-9 ? 0
+                : (int) Math.max(1, Math.round(baseCooldown * 20 * Math.max(0.1, effective.apply(StatKeys.SKILL_COOLDOWN, 1.0, context))
+                        / Math.max(0.1, effective.apply(StatKeys.COOLDOWN_RECOVERY, 1.0, context)))); // 2026-10-26：冷卻回復速度
         final double durationScale = Math.max(0.1, effective.apply(StatKeys.SKILL_DURATION, 1.0, context));
         final int forks = definition.mechanic() == Mechanic.PROJECTILE && !params.blink()
                 ? clamp((int) Math.round(effective.flat(StatKeys.SKILL_FORK, context)), 0, 3) : 0;
         final boolean returning = definition.mechanic() == Mechanic.PROJECTILE && !params.blink() && params.fuse() <= 0
                 && StatKeys.flag(effective, StatKeys.FLAG_RETURNING);
         final int totems = deploy == null || deploy.kind() != DeploySpec.Kind.TOTEM ? 0
-                : clamp((deploy.max() + (int) Math.round(effective.flat(StatKeys.SKILL_TOTEMS, context)))
+                : deploy.fixedMax() ? deploy.max() // 2026-10-26 照 PoE2：英靈圖騰固定 10 根（這次之前會吃 +x 上限、先祖魂約加倍，最多 12）
+                : clamp((deploy.max() + (int) Math.floor(effective.flat(StatKeys.SKILL_TOTEMS, context) + 1e-6)) // 2026-10-26：無條件捨去（崩震圖騰品質 20% 才 +1；這次之前四捨五入）
                         * (StatKeys.flag(effective, StatKeys.FLAG_ANCESTRAL_BOND) ? 2 : 1), 1, 12); // 祖靈契約（PoE2）：圖騰上限加倍
         final boolean echo = !isDefault && !definition.isAttack() && deploy == null && StatKeys.flag(effective, StatKeys.FLAG_ECHO)
                 && definition.mechanic() != Mechanic.DASH && definition.mechanic() != Mechanic.LEAP && definition.mechanic() != Mechanic.MARK
@@ -274,22 +335,24 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 + (summon.fixedMax() ? 0 : (int) Math.round(effective.flat(StatKeys.SKILL_MINIONS, context))), 1, MAX_MINIONS);
         final AuraSpec aura = definition.aura();
         // 2026-10：照 PoE 的「保留效率」：減少的部分加總成效率，保留 = 原本 ÷ (1 + 效率)；增加的照乘（以前減少直接相加，疊到 -100% 就不用保留）
-        final double reserveFactor = reservationFactor(effective.increased(StatKeys.AURA_RESERVATION, context));
+        // 2026-10-26（雷脊長棍）：「技能保留的精魂少 50%」是 MORE（另外乘）
+        final double reserveFactor = reservationFactor(effective.increased(StatKeys.AURA_RESERVATION, context))
+                * Math.max(0, effective.more(StatKeys.AURA_RESERVATION, context));
         final double reserve = aura == null ? 0
                 : Math.max(0, Math.min(10000, (aura.reserve() + supportSpirit(active)) * reserveFactor));
         // 2026-10（照 PoE2）：精魂召喚每一隻保留多少（已經算進保留效率；超過 20 級不再變少）；0 = 不是照隻數算
         final double minionReserve = aura == null || aura.perMinion() == null ? 0 : Math.max(0.01, aura.perMinion().at(Math.min(level, tw.exilecore.character.SkillLoadout.MAX_LEVEL)) * reserveFactor);
-        // 常駐技能（焚心業火）不算光環：光環效果的加成不吃
         final double auraEffect = aura == null
                 ? (definition.mechanic() == Mechanic.MARK ? Math.max(0, effective.apply(definition.tags().contains("curse") // 2026-10-22：詛咒吃詛咒效果、印記吃印記效果（照 PoE2 分開）
                         ? StatKeys.CURSE_EFFECT : StatKeys.MARK_EFFECT, 1.0, context))
                 : definition.mechanic() == Mechanic.WARCRY ? Math.max(0, effective.apply(StatKeys.WARCRY_EFFECT, 1.0, context)) : 1) // 戰吼效果
                 : aura.herald() ? Math.max(0, effective.apply(StatKeys.HERALD_EFFECT, 1.0, context)) // 捷光環不吃光環效果，只吃捷光環效果（2026-10）
-                : aura.persistent() ? 1
                 : Math.max(0, effective.apply(StatKeys.AURA_EFFECT, 1.0, context));
         final boolean generosity = aura != null && StatKeys.flag(effective, StatKeys.FLAG_GENEROSITY);
         final WarcrySpec warcry = definition.warcry();
-        final int exerts = warcry == null || warcry.exerts() <= 0 ? 0
+        // 2026-10-26 照 PoE2：照強度強化的戰吼，這裡只記「多強化幾次」（強勢戰吼、天賦），次數吼的時候照強度算
+        final int exerts = warcry == null || !warcry.empowers() ? 0
+                : warcry.empower() != null ? clamp((int) Math.round(effective.flat(StatKeys.WARCRY_EXERTS, context)), 0, 20)
                 : clamp(warcry.exerts() + (int) Math.round(effective.flat(StatKeys.WARCRY_EXERTS, context)), 1, 20);
         // 複擊（2026-10）：自己放的近戰攻擊（打擊、扇形、繞身一圈）與瞬影擊才會重複；衝刺、跳躍、圖騰、鐘不會
         final boolean repeatable = !isDefault && definition.isAttack() && deploy == null
@@ -298,7 +361,11 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         final int repeats = repeatable ? clamp((int) Math.round(effective.flat(StatKeys.SKILL_REPEATS, context)), 0, MAX_REPEATS) : 0;
         return new SkillBuild(definition, level, isDefault ? 1 : gemLevel, isDefault, active, profile,
                 reach, params.angle(), params.targets(), Math.max(0, effective.apply(StatKeys.SKILL_KNOCKBACK, params.knockback() + effective.flat(StatKeys.SKILL_KNOCKBACK, context), context)),
-                projectiles, spread, speed, params.range(), params.size(),
+                projectiles, spread, speed,
+                // 2026-10-26：投射物射程（INCREASED／MORE，鍵 skill.projectile_range；PoE2 毀滅者之弓的「減少 50% 投射物射程」）
+                definition.mechanic() == Mechanic.PROJECTILE && !params.blink()
+                        ? params.range() * Math.max(0.1, effective.apply(PROJECTILE_RANGE, 1.0, context)) : params.range(),
+                params.size(),
                 pierce, chains, params.explode().at(level) * areaScale, params.wobble(), params.arrow(),
                 params.radius().at(level) * areaScale, params.length().at(level) * areaScale, params.chainRange(),
                 manaCost, areaScale, level - baseLevel, cooldownTicks, durationScale, forks, returning, echo, deploy, totems, minions,
@@ -330,6 +397,38 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
     }
 
+    /** 2026-10-26：每一隻保留的精魂換掉（附魂術照附身的怪物強度、荒原狼伴照最大精魂的百分比，照 PoE2）。 */
+    public SkillBuild withMinionReserve(final double newMinionReserve) {
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
+                reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
+                radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
+                deploy, totems, minions, reserve, Math.max(0.01, newMinionReserve), auraEffect, generosity, exerts, repeats);
+    }
+
+    /** 2026-10-26：這一次打擊多打幾個目標（熔魂嘯強化的打擊：多打 2 個）。 */
+    public SkillBuild withTargets(final int newTargets) {
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
+                reach, angle, Math.max(1, newTargets), knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
+                radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+    }
+
+    /** 2026-10-26 照 PoE2 的引導：這一次的爆炸半徑、射程（位移距離）換掉（爆焰矢沒疊滿不爆炸；引霆突完美時機衝 10 公尺）。 */
+    public SkillBuild withExplodeAndRange(final double newExplode, final double newRange) {
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
+                reach, angle, targets, knockback, projectiles, spread, speed, newRange, size, pierce, chains, Math.max(0, newExplode), wobble, arrow,
+                radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+    }
+
+    /** 2026-10-26：這一次多連鎖幾次（鏈雷用掉電灌注：多連鎖 6 次）。 */
+    public SkillBuild withChains(final int newChains) {
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
+                reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, Math.max(0, newChains), explode, wobble, arrow,
+                radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+    }
+
     /** 同一次施放換一個技能描述（戰吼強化的攻擊：傷害更多）。 */
     public SkillBuild withProfile(final SkillProfile newProfile) {
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, newProfile,
@@ -339,7 +438,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     }
 
     /**
-     * 幻元箭（2026-10）：這一次施放隨機挑一種元素——物理全部轉成它、只造成它的傷害，特效也換成那種元素的。
+     * 隨機元素（2026-10；2026-10-26 幻元箭、幻元擊拿掉了，現在是稜光裂在用）：這一次施放隨機挑一種元素——物理全部轉成它、只造成它的傷害，特效也換成那種元素的。
      * 技能沒有 flag.random_element 就是原本那個。
      */
     public SkillBuild rollElement(final StatSheet sheet, final java.util.random.RandomGenerator random) {
@@ -355,8 +454,8 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             default -> "lightning_arrow";
         };
         final SkillProfile rolled = profile.withLocal(List.of(
-                Modifier.flat(StatKeys.damageConvert(element), 100, "幻元箭"),
-                Modifier.flat(StatKeys.DAMAGE_ONLY + element.tag(), 1, "幻元箭")))
+                Modifier.flat(StatKeys.damageConvert(element), 100, "隨機元素"),
+                Modifier.flat(StatKeys.DAMAGE_ONLY + element.tag(), 1, "隨機元素")))
                 .derive(profile.id(), Set.of(element.tag(), tw.exilecore.stats.Tags.ELEMENTAL), Set.of());
         return new SkillBuild(definition.withVisual(visual), level, gemLevel, isDefault, supports, rolled,
                 reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
@@ -440,6 +539,19 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         final List<Modifier> list = new ArrayList<>();
         for (final ScaledMod mod : warcry.buff()) {
             list.add(mod.toModifier(level, auraEffect, "戰吼 " + definition.name())); // 2026-10：戰吼效果
+        }
+        list.addAll(qualityGrants()); // 2026-10-27 照 PoE2：戰吼品質的「增益給 x」（熔魂嘯更多火焰傷害、銀月庇獲得冰冷）
+        return list;
+    }
+
+    /** 2026-10-27：品質給的增益（寫成 grant.* 放在技能自己的修飾器裡；戰吼的增益、給狼群的增益用）。 */
+    public List<Modifier> qualityGrants() {
+        final List<Modifier> list = new ArrayList<>();
+        for (final Modifier modifier : profile.local()) {
+            if (modifier.stat().startsWith(StatKeys.GRANT_PREFIX) && modifier.source() != null && modifier.source().startsWith(SkillService.QUALITY_SOURCE)) {
+                list.add(new Modifier(modifier.stat().substring(StatKeys.GRANT_PREFIX.length()), modifier.type(), modifier.value(),
+                        modifier.tags(), modifier.source()));
+            }
         }
         return list;
     }

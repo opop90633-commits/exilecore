@@ -9,7 +9,7 @@ import java.util.Optional;
 /**
  * 寶石物品的資料（存在物品的 PDC，一行文字）。純資料，不依賴 Bukkit。
  * <ul>
- *   <li>未切割技能寶石：等級 1–20，右鍵雕成那個等級的技能寶石，或把面板上的技能升一級（最高到它的等級）</li>
+ *   <li>未切割技能寶石：等級 1–20，右鍵雕成那個等級的技能寶石，或把面板上的技能直接升到它的等級（2026-10-27 照 PoE2；這次之前一顆升一級）</li>
  *   <li>未切割輔助寶石：階級 1–3，右鍵切成一個階級不超過它的輔助寶石</li>
  *   <li>技能寶石：技能、等級、輔助孔、掛的輔助寶石（從面板取出來的樣子，放回去原樣還原）</li>
  *   <li>輔助寶石：輔助的代號</li>
@@ -67,6 +67,19 @@ public record GemData(Kind kind, String id, int level, SkillLoadout.Entry entry,
 
     public static GemData skill(final SkillLoadout.Entry entry) {
         return new GemData(Kind.SKILL, entry.skillId(), entry.level(), entry);
+    }
+
+    /**
+     * 2026-10-26：技能被拿掉（skills.yml 沒有這個技能，例如 retired 列的霜綻、斬風旋、幻元擊、幻元箭、四種法術圖騰）的技能寶石
+     * 換成什麼：同等級的未切割技能寶石（上面掛的輔助由呼叫端另外還給玩家）；技能還在、或不是技能寶石回傳 null。
+     * 2026-10-26：併入別的技能的（skills.yml 的 merged）換成併入的那個技能寶石，等級、品質、孔、輔助都保留。
+     */
+    public GemData removedSkillReplacement(final SkillConfig config) {
+        if (kind != Kind.SKILL || entry == null || config.skill(id) != null) {
+            return null;
+        }
+        final SkillLoadout.Entry merged = config.merge(entry);
+        return merged != null && config.skill(merged.skillId()) != null ? skill(merged) : uncutSkill(level);
     }
 
     public static GemData support(final String supportId) {

@@ -6,6 +6,7 @@ import tw.exilecore.currency.CurrencyRepository;
 import tw.exilecore.item.ItemGenerator;
 import tw.exilecore.item.ItemRepository;
 import tw.exilecore.stats.DamageType;
+import tw.exilecore.stats.Modifier;
 import tw.exilecore.stats.StatKeys;
 import tw.exilecore.stats.StatSheet;
 import tw.exilecore.stats.Tags;
@@ -45,27 +46,53 @@ class MonsterAndDropTest {
         assertEquals(1, config.levelForDistance(10));
         assertEquals(3, config.levelForDistance(64));
         assertEquals(60, config.levelForDistance(100_000));
-        assertEquals(17.0, config.lifeAt(1), 1e-9);
-        assertEquals(17 * Math.pow(31 / 17.0, 4 / 9.0), config.lifeAt(5), 1e-9);   // 等級 1 的 17 → 等級 10 的 31，等比內插
-        assertEquals(1540.0, config.lifeAt(60), 1e-9);
-        assertEquals(3671.0, config.lifeAt(90), 1e-9);
-        assertEquals(4105.0, config.lifeAt(120), 1e-9, "超過最後一個錨點（100 級）取端點");
-        // 等比內插：錨點之間每一級漲一樣多 %（不會剛過錨點漲很多、快到下一個錨點只漲一點）
-        final double first = config.lifeAt(21) / config.lifeAt(20);
-        for (int level = 21; level < 30; level++) {
-            assertEquals(first, config.lifeAt(level + 1) / config.lifeAt(level), 1e-9, "等級 " + level);
-        }
-        final double[] damage = config.damageAt(15);
-        assertEquals(8 * Math.sqrt(18 / 8.0), damage[0], 1e-9);
-        assertEquals(15 * Math.sqrt(30 / 15.0), damage[1], 1e-9);
+        // 2026-10-26 照 PoE2（Path of Building 的 Misc.lua，1–100 級逐級）
+        assertEquals(15.0, config.lifeAt(1), 1e-9);
+        assertEquals(33.0, config.lifeAt(5), 1e-9);
+        assertEquals(4834.0, config.lifeAt(60), 1e-9);
+        assertEquals(41748.0, config.lifeAt(90), 1e-9);
+        assertEquals(56106.0, config.lifeAt(120), 1e-9, "超過最後一個錨點（100 級）取端點");
+        assertEquals(1251, config.accuracyAt(68), 1e-9, "命中照 PoE2 的表");
+        assertEquals(708, config.evasionAt(68), 1e-9);
+        assertEquals(2413, config.armourAt(68), 1e-9);
+        // 2026-10-26 照 PoE2 0.5：元素異常門檻、暈眩門檻（poise）的等級表與稀有度倍率
+        assertEquals(65527, config.ailmentThresholdAt(80), 1e-9);
+        assertEquals(213635, config.poiseAt(80), 1e-9);
+        assertEquals(15, config.ailmentThresholdAt(1), 1e-9);
+        assertEquals(1.26, config.rarityPoise(MonsterRarity.MAGIC), 1e-9);
+        assertEquals(2.25, config.rarityPoise(MonsterRarity.RARE), 1e-9);
+        assertEquals(6.0, config.rarityPoise(MonsterRarity.UNIQUE), 1e-9);
+        assertEquals(1.0, config.rarityPoise(MonsterRarity.NORMAL), 1e-9);
+        assertEquals(-30, config.raritySlowEffect(MonsterRarity.RARE), 1e-9);
+        assertEquals(-50, config.rarityExposureEffect(MonsterRarity.UNIQUE), 1e-9);
+        final double[] damage = config.damageAt(83); // PoE2 83 級每下平均 364，寫成 ±20%
+        assertEquals(291, damage[0], 1e-9);
+        assertEquals(437, damage[1], 1e-9);
+    }
+
+    /** 2026-10-26（PoE2 怪物效能）：增加的相加、更多的相乘；受到的傷害除以倍率，經驗與物品數量多一半。 */
+    @Test
+    void effectivenessMultipliesAndDefaultsToOne() {
+        final StatSheet plain = MonsterSheets.build(config, new MonsterData(70, MonsterRarity.NORMAL, List.of(), "殭屍"), "ZOMBIE");
+        assertEquals(1.0, MonsterSheets.effectiveness(plain), 1e-9, "沒有效能就是 1");
+        assertEquals(1.0, MonsterSheets.effectiveness(null), 1e-9);
+        final StatSheet sheet = MonsterSheets.build(config, new MonsterData(70, MonsterRarity.NORMAL, List.of(), "殭屍"), "ZOMBIE");
+        sheet.add(Modifier.more(StatKeys.EFFECTIVENESS, 0.16, "換界石"));
+        sheet.add(Modifier.more(StatKeys.EFFECTIVENESS, 0.13, "換界石"));
+        sheet.add(Modifier.increased(StatKeys.EFFECTIVENESS, 0.15, "星圖天賦"));
+        assertEquals(1.15 * 1.16 * 1.13, MonsterSheets.effectiveness(sheet), 1e-9);
     }
 
     @Test
     void monsterSheetsScaleWithRarityAndMods() {
         final StatSheet normal = MonsterSheets.build(config, new MonsterData(20, MonsterRarity.NORMAL, List.of(), "殭屍"), "ZOMBIE");
         final StatSheet rare = MonsterSheets.build(config, new MonsterData(20, MonsterRarity.RARE, List.of("sturdy", "fiery", "fire_resistant"), "焰牙殭屍"), "ZOMBIE");
-        assertEquals(107, normal.get(StatKeys.LIFE_MAX), 1e-9);
-        assertEquals(107 * 3.5 * 1.5, rare.get(StatKeys.LIFE_MAX), 1e-9);
+        assertEquals(249, normal.get(StatKeys.LIFE_MAX), 1e-9, "2026-10-26 照 PoE2：20 級 249");
+        assertEquals(249 * 8 * 1.5, rare.get(StatKeys.LIFE_MAX), 1e-9, "PoE2 稀有怪 ×8（+700%）");
+        final StatSheet unique = MonsterSheets.build(config, new MonsterData(20, MonsterRarity.UNIQUE, List.of(), "王"), "ZOMBIE");
+        assertEquals(249 * 29, unique.get(StatKeys.LIFE_MAX), 1e-9, "PoE2 傳奇 ×29（+2800%）");
+        assertEquals(30, unique.get(StatKeys.RESIST_FIRE), 1e-9, "PoE2 的 Boss 元素抗性 30%");
+        assertEquals(0, normal.get(StatKeys.RESIST_FIRE), 1e-9);
         assertEquals(50, rare.get(StatKeys.RESIST_FIRE), 1e-9, "2026-10-23：抗性拆成另一條詞綴（耐火的），燃焰的只加火焰傷害");
         final Set<String> fireContext = Set.of(Tags.ATTACK, Tags.MELEE, Tags.FIRE, Tags.ELEMENTAL);
         assertTrue(rare.flat(StatKeys.DAMAGE_ADDED_MIN, fireContext) > 0);
@@ -75,18 +102,18 @@ class MonsterAndDropTest {
 
     @Test
     void experienceAndVanillaHealthScale() {
-        // PoE 的怪物經驗表 × 2（monsters.yml 的 experience_multiplier）
-        assertEquals(2.0, config.experienceMultiplier(), 1e-9);
-        assertEquals(40.0, config.experienceAt(1), 1e-9);
-        assertEquals(16_530.0, config.experienceAt(60), 1e-9);
-        assertEquals(26_500.0, config.experienceAt(84), 1e-9);
-        assertEquals(27_278.0, config.experienceAt(91), 1e-9);
-        assertEquals(27_278.0, config.experienceAt(100), 1e-9, "91 級以後不再增加");
+        // 2026-10-27 照 PoE2：PoE 的怪物經驗表 × 1（monsters.yml 的 experience_multiplier；全服 ×2 在 character.yml）；這次之前 ×2（40／16,530／26,500／27,278）
+        assertEquals(1.0, config.experienceMultiplier(), 1e-9);
+        assertEquals(20.0, config.experienceAt(1), 1e-9);
+        assertEquals(8_265.0, config.experienceAt(60), 1e-9);
+        assertEquals(13_250.0, config.experienceAt(84), 1e-9);
+        assertEquals(13_639.0, config.experienceAt(91), 1e-9);
+        assertEquals(13_639.0, config.experienceAt(100), 1e-9, "91 級以後不再增加");
         for (int level = 2; level <= 100; level++) {
             assertTrue(config.experienceAt(level) >= config.experienceAt(level - 1), "不會越高等給越少：" + level);
         }
         assertEquals(1.0, config.rarity(MonsterRarity.NORMAL).experienceMultiplier(), 1e-9);
-        assertEquals(12.0, config.rarity(MonsterRarity.RARE).experienceMultiplier(), 1e-9);
+        assertEquals(5.0, config.rarity(MonsterRarity.RARE).experienceMultiplier(), 1e-9); // 2026-10-27 照 PoE2（+400%）；這次之前 12
         // 40 級稀有怪 552 × 3.5 = 1932 > 原版上限 1024，按比例縮放
         final StatSheet rare = MonsterSheets.build(config, new MonsterData(40, MonsterRarity.RARE, List.of(), "x"), "ZOMBIE");
         final double life = rare.get(StatKeys.LIFE_MAX);
@@ -132,7 +159,8 @@ class MonsterAndDropTest {
         // 2026-10 第五次（照市場報告：寶石、天啟石、恩澤石、星盤刻刀、符文變少）：件數 × 1210/1270 → 0.880
         assertTrue(average > 0.83 && average < 0.93, "平均件數 " + average);
         // 通貨與裝備的分類權重 548：600（2026-10 第五次；以前 570：600、更早 126：120）
-        assertEquals(504.0 / 600.0, currency / (double) equipment, 0.1, "通貨與裝備差不多：" + currency + "／" + equipment);
+        // 2026-10-26：通貨的分類權重 504 → 588（照 PoE2 加了高階／完美通貨、蝕刻器、工匠石、預見鎖，其他通貨掉率不變）
+        assertEquals(588.0 / 600.0, currency / (double) equipment, 0.1, "通貨與裝備差不多：" + currency + "／" + equipment);
         // 2026-10-22（照市場報告）：技能、輔助寶石的分類權重各 20 → 12，寶石合計 24 比藥劑的 30 少了：照比例驗，不再要求寶石比藥劑多
         assertTrue(equipment > flasks && gems > 0 && flasks > 0, "裝備 > 藥劑 > 0、寶石 > 0：" + equipment + "／" + gems + "／" + flasks);
         assertEquals(24.0 / 30.0, gems / (double) flasks, 0.3, "寶石：藥劑 ≈ 24：30（" + gems + "／" + flasks + "）");

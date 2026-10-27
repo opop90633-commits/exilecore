@@ -163,6 +163,12 @@ class FlaskAffixTest {
         assertEquals(1.5, mods.duration(), 1e-9);
         assertEquals(300, mods.guard(), 1e-9);
         assertTrue(FlaskMods.of(List.of()).isNone());
+        // 2026-10-26 照 PoE2：低生命／低魔力的前綴是「更多」回復（MORE），跟回復量增加相乘
+        final FlaskMods more = FlaskMods.of(List.of(
+                new Modifier(StatKeys.FLASK_LOCAL_RECOVERY, ModType.INCREASED, 0.5, Set.of(), "t"),
+                new Modifier(StatKeys.FLASK_LOCAL_RECOVERY_LOW, ModType.MORE, 1.0, Set.of(), "t")));
+        assertEquals(150, more.recoveryAmount(100, false), 1e-9);
+        assertEquals(300, more.recoveryAmount(100, true), 1e-9, "150 × 更多 100%");
         assertEquals(1, FlaskMods.NONE.perUse(1));
     }
 

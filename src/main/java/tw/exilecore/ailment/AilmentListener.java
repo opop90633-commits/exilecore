@@ -38,7 +38,8 @@ final class AilmentListener implements Listener {
 
     @EventHandler
     public void onRemove(final EntityRemoveFromWorldEvent event) {
-        if (event.getEntity() instanceof LivingEntity living) {
+        // 2026-10-27：玩家換世界（走傳送門）也會觸發這個：玩家不在這裡清（登出、死亡另外清）；這次之前走傳送門就把身上的異常洗掉
+        if (event.getEntity() instanceof LivingEntity living && !(living instanceof org.bukkit.entity.Player)) {
             service.clear(living);
         }
     }

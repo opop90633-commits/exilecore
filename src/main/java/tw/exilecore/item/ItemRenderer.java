@@ -37,7 +37,7 @@ public final class ItemRenderer {
      * 5 = 傳奇的專屬外觀等後來的外觀調整。
      * 6 = 武器本身的詞綴（本地加成）：武器數值改過的畫成藍色、暴擊率顯示兩位小數。
      */
-    public static final int RENDER_VERSION = 32; // 32：腰帶的簡圖照固定詞綴分（2026-10-24）；31：藥劑、護符的詞綴標階級 (T1…)（2026-10-24）；30：普通、魔法、稀有裝備在格子裡畫簡圖（plain:種類，2026-10-24）；29：遺時珠寶說明寫「也各給」最多算 15 個小天賦（2026-10-21 晚）；28：傳奇以外的裝備不用畫的圖、改回原版（2026-10-21 晚）；27：一般裝備、地圖、藥劑、護符、珠寶的圖（base:基底代號，2026-10-21）；26：飾品上的偷取吃攻擊、生命催化劑（2026-10-19）；25：其他標籤也照 PoE2 的資料對過（93 條）；24：攻擊、法術標籤照 PoE2 的資料對過一輪（50 條），遺時珠寶的詞綴也有標籤；23：箭袋「弓技能傷害」的標籤照 PoE2（只有傷害）；22：詞綴後來多的變數補上（AffixUpgrade），舊物品重畫一次把補好的寫回去；21：暴擊率那一行漏了數字與「每秒攻擊」、傳奇武器的基底傷害照物品等級；20：催化劑品質只寫「攻擊詞綴」、固定詞綴有標籤；19：靈盾改名法器、不能格擋；18：基礎暴擊率改過也變色；17：權杖顯示精魂；16：符文孔；15：催化劑的說明改字；14：說明排版（分隔線、前後綴顏色）；13：鎖定的小鎖頭；8：武器上的物理增加與攻擊附加改成本地；9：魔法、稀有裝備的外框標記；10：傳奇也有外框；11：飾品品質（催化劑）加成後的數值；12：47 件傳奇補上專屬圖
+    public static final int RENDER_VERSION = 33; // 33：說明長行自動換行（core.text.TextWrap，2026-10-26）；32：腰帶的簡圖照固定詞綴分（2026-10-24）；31：藥劑、護符的詞綴標階級 (T1…)（2026-10-24）；30：普通、魔法、稀有裝備在格子裡畫簡圖（plain:種類，2026-10-24）；29：遺時珠寶說明寫「也各給」最多算 15 個小天賦（2026-10-21 晚）；28：傳奇以外的裝備不用畫的圖、改回原版（2026-10-21 晚）；27：一般裝備、地圖、藥劑、護符、珠寶的圖（base:基底代號，2026-10-21）；26：飾品上的偷取吃攻擊、生命催化劑（2026-10-19）；25：其他標籤也照 PoE2 的資料對過（93 條）；24：攻擊、法術標籤照 PoE2 的資料對過一輪（50 條），遺時珠寶的詞綴也有標籤；23：箭袋「弓技能傷害」的標籤照 PoE2（只有傷害）；22：詞綴後來多的變數補上（AffixUpgrade），舊物品重畫一次把補好的寫回去；21：暴擊率那一行漏了數字與「每秒攻擊」、傳奇武器的基底傷害照物品等級；20：催化劑品質只寫「攻擊詞綴」、固定詞綴有標籤；19：靈盾改名法器、不能格擋；18：基礎暴擊率改過也變色；17：權杖顯示精魂；16：符文孔；15：催化劑的說明改字；14：說明排版（分隔線、前後綴顏色）；13：鎖定的小鎖頭；8：武器上的物理增加與攻擊附加改成本地；9：魔法、稀有裝備的外框標記；10：傳奇也有外框；11：飾品品質（催化劑）加成後的數值；12：47 件傳奇補上專屬圖
     /** 物品上記的外觀版本（PDC）。 */
     public static final NamespacedKey RENDER_KEY = new NamespacedKey("exilecore", "render");
 
@@ -102,7 +102,7 @@ public final class ItemRenderer {
             return base != null;
         }
         final ItemStats.Snapshot snapshot = ItemStats.snapshot(repository, base, data);
-        final List<Component> lore = buildLore(base, data, snapshot);
+        final List<Component> lore = tw.exilecore.core.text.TextWrap.lore(buildLore(base, data, snapshot)); // 2026-10-26：長行自動換行
         final Component name = line("<" + data.rarity().color() + ">" + escape(ItemStats.displayName(repository, data)));
         final org.bukkit.inventory.meta.ItemMeta meta = stack.getItemMeta();
         return !lore.equals(meta.lore()) || !name.equals(meta.displayName());
@@ -112,7 +112,7 @@ public final class ItemRenderer {
     public void render(final ItemStack stack, final ItemData data) {
         final ItemBase base = repository.requireBase(data.base());
         final ItemStats.Snapshot snapshot = ItemStats.snapshot(repository, base, data);
-        final List<Component> lore = buildLore(base, data, snapshot);
+        final List<Component> lore = tw.exilecore.core.text.TextWrap.lore(buildLore(base, data, snapshot)); // 2026-10-26：長行自動換行
         final Component name = line("<" + data.rarity().color() + ">" + escape(ItemStats.displayName(repository, data)));
 
         // 原版屬性（劍的攻擊力、盔甲的護甲值）全部清空：傷害與防禦都由我們的引擎算
@@ -281,8 +281,11 @@ public final class ItemRenderer {
         }
         if (data.quality() > 0) {
             final Catalyst catalyst = base.isJewellery() ? Catalyst.parse(data.catalyst()) : null;
+            // 2026-10-27 照 PoE2 0.5：法杖、長杖、權杖的品質不加武器數值（權杖的精魂也不加），加在賦予的技能上；這次之前沒寫
+            final boolean grants = repository.grantedSkill(data.base()) != null;
             lore.add(line("<gray>品質：<#8888ff>+" + data.quality() + "%" + (base.isMap() ? " <dark_gray>(物品數量)"
-                    : catalyst != null ? " <dark_gray>(" + catalyst.description() + " +" + data.quality() + "%)" : "")));
+                    : catalyst != null ? " <dark_gray>(" + catalyst.description() + " +" + data.quality() + "%)"
+                    : grants ? " <dark_gray>(品質加在賦予的技能上)" : "")));
         }
         if (base.isMap()) {
             return buildMapLore(base, data, lore);
@@ -423,6 +426,10 @@ public final class ItemRenderer {
                 for (final Runes.Line runeLine : rune.on(base)) {
                     lore.add(line("<#7fe0c8>◈ " + escape(runeLine.text()) + " <dark_gray>(" + escape(rune.name()) + ")"));
                 }
+                for (final Runes.Line bonded : rune.bondedOn(base)) {
+                    // 2026-10-27 照 PoE2：羈絆詞綴（只有昇華・聖賢智慧才有效果，灰字）
+                    lore.add(line("<dark_gray>  羈絆：" + escape(bonded.text())));
+                }
             }
             final double runeEffect = repository.uniqueRuneEffect(data.unique());
             if (runeEffect > 0) {
@@ -448,10 +455,17 @@ public final class ItemRenderer {
             lore.add(line(SEPARATOR));
             lore.add(line("<gray>放進天賦樹的<" + base.jewelColor() + ">珠寶孔</" + base.jewelColor() + ">（/tree，配了孔位再點它）"));
             if (base.isRadiusJewel()) {
-                // 2026-10：遺時珠寶：詞綴作用在珠寶孔周圍已配置的天賦上
-                lore.add(line("<#ffd27f>遺時珠寶<gray>：珠寶孔周圍 <white>" + (int) tw.exilecore.passive.JewelSockets.radiusOf(ItemStats.modifiers(repository, data))
-                        + "</white> 格內已配置的每個小天賦都多給「範圍內的小天賦也各給」那幾條（最多算 "
-                        + tw.exilecore.passive.JewelSockets.MAX_RADIUS_SMALLS + " 個）"));
+                // 2026-10：遺時珠寶：詞綴作用在珠寶孔周圍已配置的天賦上。2026-10-26 照 PoE2：半徑用原作單位（小 1000、中 1150、大 1300），
+                // 「也各給」分小天賦與核心天賦、沒有上限（這次之前是幾格、最多算 15 個小天賦）
+                final double radius = tw.exilecore.passive.JewelSockets.radiusOf(ItemStats.modifiers(repository, data));
+                lore.add(line("<#ffd27f>遺時珠寶<gray>：半徑 <white>" + tw.exilecore.passive.JewelSockets.radiusName(radius) + "（" + (int) radius
+                        + "）</white>，範圍內已配置的每個小天賦／核心天賦各多給一次「也各給」那幾條"));
+            }
+            if (tw.exilecore.passive.TimelessJewels.isTimeless(base)) {
+                // 2026-10-26 照 PoE2：永恆珠寶征服範圍內的天賦
+                for (final String text : tw.exilecore.passive.TimelessJewels.explain(tw.exilecore.passive.TimelessJewels.read(repository, null, data))) {
+                    lore.add(line("<#ffd27f>" + escape(text)));
+                }
             }
             if (!data.identified()) {
                 lore.add(line("<dark_gray>要先鑑定才能放"));
@@ -467,6 +481,12 @@ public final class ItemRenderer {
         }
         if (data.mirrored()) {
             lore.add(line("<#9fd8ff>鏡像複製品 <dark_gray>（不能再改造、不能再複製）"));
+        }
+        if (data.sanctified()) {
+            lore.add(line("<#ffe08a>已聖化 <dark_gray>（不能再用通貨改造）")); // 2026-10-26 照 PoE2
+        }
+        if (data.foresight() != null) {
+            lore.add(line("<#e0c070>預見鎖 <dark_gray>（拿通貨點它先看結果，再點一次才用）")); // 2026-10-26 照 PoE2 的 Hinekora's Lock
         }
         if (data.locked()) {
             lore.add(line("<#ffd27f>🔒 已鎖定 <dark_gray>（不會被拆解、上架、交易；/lock 解除）"));
@@ -504,8 +524,10 @@ public final class ItemRenderer {
         }
         final ItemBase base = repository.base(data.base());
         final boolean jewel = base != null && base.isJewel();
-        final int maxPrefixes = jewel ? Math.min(data.rarity().maxPrefixes(), ItemBase.JEWEL_AFFIXES_PER_TYPE) : data.rarity().maxPrefixes();
-        final int maxSuffixes = jewel ? Math.min(data.rarity().maxSuffixes(), ItemBase.JEWEL_AFFIXES_PER_TYPE) : data.rarity().maxSuffixes();
+        final int maxPrefixes = jewel ? Math.min(data.rarity().maxPrefixes(), ItemBase.JEWEL_AFFIXES_PER_TYPE)
+                : data.rarity().maxPrefixes() <= 0 ? 0 : Math.max(0, data.rarity().maxPrefixes() + ItemGenerator.allowedDelta(base, AffixType.PREFIX)); // 2026-10-26：基底的前後綴上限
+        final int maxSuffixes = jewel ? Math.min(data.rarity().maxSuffixes(), ItemBase.JEWEL_AFFIXES_PER_TYPE)
+                : data.rarity().maxSuffixes() <= 0 ? 0 : Math.max(0, data.rarity().maxSuffixes() + ItemGenerator.allowedDelta(base, AffixType.SUFFIX));
         return "<#9a9ad0>前綴 " + prefixes + "/" + maxPrefixes + "<dark_gray>・<#d0a06a>後綴 " + (affixLines.size() - prefixes) + "/" + maxSuffixes;
     }
 
@@ -517,7 +539,7 @@ public final class ItemRenderer {
         lore.add(line(String.format(Locale.ROOT, "<gray>物品數量 <white>+%d%%　<gray>物品稀有度 <white>+%d%%%s",
                 Math.round(stats.quantity()), Math.round(stats.rarity()),
                 stats.packSize() != 0 ? "　<gray>怪物群大小 <white>+" + Math.round(stats.packSize()) + "%" : "")));
-        if (stats.tier() > 1) {
+        if (stats.tier() > 1 && (tiers.quantity(stats.tier()) > 0 || tiers.rarity(stats.tier()) > 0)) { // 2026-10-27：照 PoE2 階級加成是 0 時不寫
             lore.add(line(String.format(Locale.ROOT, "<dark_gray>（含階級加成：物品數量 +%d%%、稀有度 +%d%%）",
                     Math.round(tiers.quantity(stats.tier())), Math.round(tiers.rarity(stats.tier())))));
         }

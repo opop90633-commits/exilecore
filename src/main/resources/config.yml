@@ -49,7 +49,7 @@ tab:
 # 選單的 Discord、贊助商城、新手教學按鈕（也可以打 /discord、/store、/tutorial）。空字串 = 按鈕寫「即將開放」。改完 /ec reload
 links:
   discord: "https://discord.gg/wKpcGqzJYa"   # 2026-10-20 換新的邀請連結
-  store: ""
+  store: "https://arpg.tebex.store/"   # 2026-10-27 站長給的 Tebex 商城（寫在 jar 內建預設，伺服器的 config.yml 空著也會用這個）
   tutorial: "https://drive.google.com/file/d/1NhlPB1UTjmRL-8fXUdklSOpURGw2aJs2/view?usp=drivesdk"
 
 # NPC 的外觀（2026-10）：寫正版玩家名稱，NPC 就換成那個人的皮膚。改完 /ec reload（已經放好的 NPC 會跟著換）。

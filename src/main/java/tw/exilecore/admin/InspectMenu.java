@@ -136,19 +136,23 @@ public final class InspectMenu extends Menu {
         }
     }
 
-    /** 裝備：一次看一組（換頁看其他裝備組），十個裝備欄照順序排在第 2、3 排。 */
+    /** 裝備：一次看一組（換頁看其他裝備組），十個裝備欄（有第三個戒指時十一個）照順序排在第 2、3 排。 */
     private void drawGear(final PlayerState state) {
         final int active = state.activeGearSet();
         page = Math.max(0, Math.min(page, PlayerState.GEAR_SETS - 1));
         final ItemStack[] items = page == active ? state.jewellery() : state.gearSet(page);
         set(13, icon(Material.PAPER, page == active ? "<green>第 " + (page + 1) + " 組（使用中）"
                 : "<gray>第 " + (page + 1) + " 組（放著，不生效）", "<dark_gray>下面左右換頁看其他裝備組"));
-        for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length; i++) {
-            final int at = i < 9 ? 18 + i : 31; // 第 10 個（鞋子）放在下一排中間
-            final ItemStack stack = items[i];
+        for (int i = 0; i < PlayerState.GEAR_SLOTS.length; i++) {
+            // 第 10 個（鞋子）放在下一排中間；2026-10-26：第 11 個（展露之指的第三個戒指）放在鞋子右邊
+            final int at = i < 9 ? 18 + i : i == 9 ? 31 : 32;
+            final ItemStack stack = items[page == active ? PlayerState.gearIndex(i) : i];
             if (stack == null || stack.isEmpty()) {
-                set(at, uiIcon(tw.exilecore.character.menu.CharacterPanelMenu.slotShape(PlayerState.JEWELLERY_SLOTS[i]),
-                        Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>" + PlayerState.JEWELLERY_SLOTS[i].displayName() + "：空"));
+                if (i == PlayerState.RING3) {
+                    continue; // 沒裝第三個戒指：不畫（大部分人沒有這一格）
+                }
+                set(at, uiIcon(tw.exilecore.character.menu.CharacterPanelMenu.slotShape(PlayerState.GEAR_SLOTS[i]),
+                        Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>" + PlayerState.GEAR_SLOTS[i].displayName() + "：空"));
             } else {
                 show(at, stack, null);
             }

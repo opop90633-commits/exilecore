@@ -38,6 +38,10 @@ public final class ItemRepository {
     }
 
     private final Map<String, ItemBase> bases = new LinkedHashMap<>();
+    /** 2026-10-26：弩基底的裝填時間（秒；bases 的 reload）。 */
+    private final Map<String, Double> reloadTimes = new java.util.HashMap<>();
+    /** 2026-10-26：法杖、長杖、權杖賦予的技能（PoE2：Grants Skill；bases 的 grants）：基底代號 → 技能代號。 */
+    private final Map<String, String> grantedSkills = new java.util.HashMap<>();
     /** 隱匿傳奇：傳奇代號 → 帶的那條隱匿詞綴是前綴還是後綴（uniques.yml 的 veiled）。 */
     private final Map<String, List<AffixType>> uniqueVeiled = new java.util.HashMap<>();
     /** 傳奇自己的符文孔數、符文效果增加（小數）：uniques.yml 的 rune_sockets、rune_effect（2026-10）。 */
@@ -45,6 +49,8 @@ public final class ItemRepository {
     /** 傳奇的基底數值照哪一個基底（uniques.yml 的 stat_base，2026-10：基底合併後傳奇保留原本那一階的數值）。 */
     private final Map<String, String> uniqueStatBases = new java.util.HashMap<>();
     private final Map<String, Double> uniqueRuneEffect = new java.util.HashMap<>();
+    /** 2026-10-26：固定機率的傳奇（uniques.yml 的 drop_chance，存小數）：不在來源的權重池裡，Boss 每次擊殺、每個有份的人各自擲。 */
+    private final Map<String, Double> uniqueDropChance = new java.util.HashMap<>();
     private final Map<String, Affix> affixes = new LinkedHashMap<>();
     /** 2026-10-22：每次重讀加一（別人快取的詞綴池拿這個判斷要不要丟掉）。 */
     private volatile int version;
@@ -62,6 +68,8 @@ public final class ItemRepository {
     private Scaling scaling = new Scaling(0.035, 0.035, 0.02, 1.0, 1.0, 92); // items.yml 沒寫 stat_level_cap 也照 92
     /** 傳奇定義的指紋（名字、詞綴、範圍）：uniques.yml 改了就變；物品上記著上次檢查時的指紋（{@link UniqueUpgrade}）。 */
     private int uniqueRevision;
+    /** 2026-10-26：詞綴資料（每條詞綴的階級、範圍、群組，基底的固有詞綴範圍）的指紋：改了就變；物品上記著上次換算時的指紋（{@link AffixRescale}）。 */
+    private int affixRevision;
 
     /** 從資料夾載入全部資料檔（bases/*.yml、affixes/*.yml、uniques.yml、names.yml、items.yml）。 */
     /** 符文（2026-10）。 */
@@ -93,11 +101,14 @@ public final class ItemRepository {
         uniqueRuneSockets.clear();
         uniqueStatBases.clear();
         uniqueRuneEffect.clear();
+        uniqueDropChance.clear();
         affixes.clear();
         affixChips.clear();
         uniques.clear();
         retiredUniques.clear();
         retiredBases.clear();
+        reloadTimes.clear();
+        grantedSkills.clear();
         warnings.clear();
         runes.clear();
         runes.putAll(Runes.load(dataFolder)); // 2026-10 符文
@@ -109,6 +120,13 @@ public final class ItemRepository {
                     throw new IllegalArgumentException(file.getFileName() + "：基底代號重複 " + id);
                 }
                 bases.put(id, ItemBase.parse(id, root.node(id)));
+                if (root.node(id).has("reload")) {
+                    reloadTimes.put(id, root.node(id).decimal("reload", 0));
+                }
+                final String grants = root.node(id).string("grants", null);
+                if (grants != null && !grants.isBlank()) {
+                    grantedSkills.put(id, grants.trim());
+                }
                 if (root.node(id).bool("retired", false)) {
                     retiredBases.add(id); // 拿掉的基底（2026-10：劍、斧、匕首、爪）：舊物品照常能用，其他地方都看不到
                 }
@@ -169,6 +187,12 @@ public final class ItemRepository {
                 if (root.node(id).has("rune_effect")) {
                     uniqueRuneEffect.put(id, root.node(id).decimal("rune_effect", 0) / 100.0);
                 }
+                if (root.node(id).has("drop_chance")) { // 2026-10-26：永恆珠寶照 PoE2 是 Boss 的獨立掉落（單位 %）
+                    final double chance = root.node(id).decimal("drop_chance", 0);
+                    if (chance > 0) {
+                        uniqueDropChance.put(id, Math.min(100, chance) / 100.0);
+                    }
+                }
                 if (root.node(id).bool("retired", false)) {
                     retiredUniques.add(id);
                 }
@@ -190,6 +214,7 @@ public final class ItemRepository {
         }
 
         uniqueRevision = computeUniqueRevision();
+        affixRevision = computeAffixRevision();
 
         final Path namesFile = dataFolder.resolve("names.yml");
         if (Files.exists(namesFile)) {
@@ -234,6 +259,9 @@ public final class ItemRepository {
 
     /** 蝕變石的腐化詞綴（2026-10-21，affixes/corrupted.yml）：不會自然擲出，只有腐化時加上。 */
     public static final String CORRUPTION_TAG = "corruption";
+
+    /** 2026-10-26：星魄專屬的詞綴（affixes/essences.yml，PoE2 完美、腐化精髓的那條）：不會自然擲出，只有星魄給得了。 */
+    public static final String ESSENCE_TAG = "essence";
 
     /**
      * 交叉檢查：每條詞綴至少能出現在一個基底上，否則多半是標籤打錯；
@@ -280,7 +308,9 @@ public final class ItemRepository {
     private static boolean checkLocal(final String where, final List<AffixMod> mods) {
         boolean any = false;
         for (final AffixMod mod : mods) {
-            if (!mod.isLocal() || ItemStats.UNVEILED_MAGNITUDE.equals(mod.stat()) || LocalMods.REQUIREMENTS.equals(mod.stat())) {
+            if (!mod.isLocal() || ItemStats.UNVEILED_MAGNITUDE.equals(mod.stat()) || LocalMods.REQUIREMENTS.equals(mod.stat())
+                    || ItemGenerator.MAX_PREFIXES.equals(mod.stat()) || ItemGenerator.MAX_SUFFIXES.equals(mod.stat()) // 2026-10-26：前後綴上限（ItemGenerator）
+                    || tw.exilecore.item.unique.UniqueStats.LOCAL_ITEM.contains(mod.stat())) { // 2026-10-26：傳奇的符文效果、屬性需求
                 continue; // 「增加 x% 已揭露詞綴的幅度」「減少屬性需求」：不是武器本身的數值（防具也能出），ItemStats 自己處理
             }
             any = true;
@@ -318,6 +348,9 @@ public final class ItemRepository {
             }
             bases.put(id, ItemBase.flaskLike(id, node.requireString("name"), "POTION", ItemSlot.FLASK,
                     Set.of("flask", kind + "_flask"), node.integer("level", 1)));
+            if (node.bool("retired", false)) {
+                retiredBases.add(id); // 2026-10-26：拿掉的藥劑（熔星、星骸兩階）：舊物品照常能用，圖鑑看不到
+            }
         }
         final YamlNode charms = root.node("charms").node("bases");
         for (final String id : charms.keys()) {
@@ -327,7 +360,32 @@ public final class ItemRepository {
             }
             bases.put(id, ItemBase.flaskLike(id, node.requireString("name"), node.string("icon", "AMETHYST_SHARD").trim().toUpperCase(java.util.Locale.ROOT),
                     ItemSlot.CHARM, Set.of("charm"), node.integer("level", 1)));
+            if (node.bool("retired", false)) {
+                retiredBases.add(id); // 2026-10-26：拿掉的護符（續命護符）：舊物品照常能用，圖鑑看不到
+            }
         }
+    }
+
+    /**
+     * 2026-10-26：這個基底賦予的技能（PoE2 的法杖、長杖、權杖：Grants Skill）；沒有回傳 null。
+     * 合併掉的舊基底（retired ＋ merged_into）照合併到的那個。
+     */
+    public String grantedSkill(final String baseId) {
+        if (baseId == null) {
+            return null;
+        }
+        final String own = grantedSkills.get(baseId);
+        return own != null ? own : grantedSkills.get(canonicalBase(baseId));
+    }
+
+    /** 所有賦予技能的基底（基底代號 → 技能代號；唯讀）。 */
+    public Map<String, String> grantedSkills() {
+        return java.util.Collections.unmodifiableMap(grantedSkills);
+    }
+
+    /** 弩基底的裝填時間（秒）；沒寫回傳 0。 */
+    public double reloadTime(final String baseId) {
+        return reloadTimes.getOrDefault(baseId, 0.0);
     }
 
     public ItemBase base(final String id) {
@@ -362,7 +420,7 @@ public final class ItemRepository {
     public List<ItemBase> flaskLikeBases() {
         final List<ItemBase> list = new ArrayList<>();
         for (final ItemBase base : bases.values()) {
-            if (base.isFlaskLike()) {
+            if (base.isFlaskLike() && !retiredBases.contains(base.id())) { // 2026-10-26：拿掉的藥劑、護符不列
                 list.add(base);
             }
         }
@@ -532,6 +590,43 @@ public final class ItemRepository {
         return uniqueRevision;
     }
 
+    /** 2026-10-26：詞綴資料的指紋（範圍、階級、群組、前後綴、退役，基底固有詞綴的範圍改了就變）。 */
+    public int affixRevision() {
+        return affixRevision;
+    }
+
+    private int computeAffixRevision() {
+        int hash = 7;
+        for (final String id : new java.util.TreeSet<>(affixes.keySet())) { // 排好序：每次啟動算出來都一樣
+            final Affix affix = affixes.get(id);
+            hash = 31 * hash + id.hashCode();
+            hash = 31 * hash + affix.type().name().hashCode();
+            hash = 31 * hash + affix.group().hashCode();
+            hash = 31 * hash + (affix.spawnTags().contains(RETIRED_TAG) ? 1 : 0);
+            for (final AffixTier tier : affix.tiers()) {
+                hash = 31 * hash + tier.tier();
+                hash = hashRanges(hash, tier.vars());
+            }
+        }
+        for (final String id : new java.util.TreeSet<>(bases.keySet())) {
+            final ItemBase base = bases.get(id);
+            if (base.implicit() != null) {
+                hash = 31 * hash + id.hashCode();
+                hash = hashRanges(hash, base.implicit().vars());
+            }
+        }
+        return hash;
+    }
+
+    private static int hashRanges(final int start, final Map<String, int[]> vars) {
+        int hash = start;
+        for (final String key : new java.util.TreeSet<>(vars.keySet())) {
+            hash = 31 * hash + key.hashCode();
+            hash = 31 * hash + java.util.Arrays.hashCode(vars.get(key));
+        }
+        return hash;
+    }
+
     private int computeUniqueRevision() {
         int hash = 1;
         for (final UniqueItem unique : uniques.values()) {
@@ -561,10 +656,56 @@ public final class ItemRepository {
         return baseId == null ? null : bases.get(baseId);
     }
 
+    /**
+     * 2026-10-26 照 PoE2：裝備需求是每個基底固定的（等級、力量、敏捷、智慧，見 bases/*.yml 的 requirements）。
+     * 合併成一個、數值跟物品等級走的基底（寫了 base_level、沒寫 fixed）在物品等級比它那一階低時，代表的是同一類
+     * （family，含退役的各階）裡物品等級夠的最高那一階：需求照那一階的 PoE2 原值（同一級有好幾個時優先用自己、
+     * 再來是屬性需求加起來最少的）。一階都不夠（例如 PoE2 這一類最低就要 5 級）照最低那一階。
+     * 這次之前需求 = max(基底, 物品等級 × 0.9)、屬性需求照物品等級放大。
+     */
+    public ItemBase.Requirements tierRequirements(final ItemBase base, final int itemLevel) {
+        final ItemBase.Requirements own = base.requirements();
+        if (base.fixed() || base.baseLevel() <= 0 || itemLevel >= own.level()) {
+            return own;
+        }
+        ItemBase best = null;
+        ItemBase lowest = null;
+        for (final ItemBase each : bases.values()) {
+            if (!base.family().equals(each.family())) {
+                continue;
+            }
+            final ItemBase.Requirements req = each.requirements();
+            if (lowest == null || req.level() < lowest.requirements().level()) {
+                lowest = each;
+            }
+            if (req.level() > itemLevel) {
+                continue;
+            }
+            if (best == null || req.level() > best.requirements().level()
+                    || req.level() == best.requirements().level() && !best.id().equals(base.id())
+                    && (each.id().equals(base.id()) || attributeSum(req) < attributeSum(best.requirements()))) {
+                best = each;
+            }
+        }
+        final ItemBase chosen = best != null ? best : lowest;
+        return chosen == null ? own : chosen.requirements();
+    }
+
+    private static int attributeSum(final ItemBase.Requirements req) {
+        return req.str() + req.dex() + req.intelligence();
+    }
+
     /** 合併掉的基底（retired ＋ merged_into）現在算哪一個；其他照原本的代號。 */
     public String canonicalBase(final String id) {
-        final ItemBase base = id == null ? null : bases.get(id);
-        return base != null && base.mergedInto() != null && bases.containsKey(base.mergedInto()) ? base.mergedInto() : id;
+        String current = id;
+        for (int hop = 0; hop < 8 && current != null; hop++) { // 2026-10-26：跟著合併鏈走到底（最多 8 層，防循環）
+            final ItemBase base = bases.get(current);
+            if (base == null || base.mergedInto() == null || !bases.containsKey(base.mergedInto())) {
+                return current;
+            }
+            current = base.mergedInto();
+        }
+        return current;
     }
 
     public int uniqueRuneSockets(final String id) {
@@ -599,15 +740,36 @@ public final class ItemRepository {
         return id != null && retiredUniques.contains(id);
     }
 
-    /** 這個來源（final、map_boss、地圖代號）會掉的傳奇，物品等級要夠。 */
+    /**
+     * 這個來源（final、map_boss、地圖代號）會掉的傳奇，物品等級要夠。
+     * 2026-10-26：有 drop_chance 的（固定機率，見 {@link #fixedChanceUniques}）不在這個權重池裡，免得重複掉。
+     */
     public List<UniqueItem> uniquesFor(final String source, final int itemLevel) {
         final List<UniqueItem> list = new ArrayList<>();
         for (final UniqueItem unique : uniques.values()) {
-            if (unique.droppedBy(source) && unique.dropLevel() <= itemLevel && unique.weight() > 0) {
+            if (unique.droppedBy(source) && unique.dropLevel() <= itemLevel && unique.weight() > 0
+                    && !uniqueDropChance.containsKey(unique.id())) {
                 list.add(unique);
             }
         }
         return list;
+    }
+
+    /** 2026-10-26：這個來源的固定機率傳奇（uniques.yml 的 drop_chance；Boss 每次擊殺、每個有份的人各自擲 {@link #dropChance}）。 */
+    public List<UniqueItem> fixedChanceUniques(final String source, final int itemLevel) {
+        final List<UniqueItem> list = new ArrayList<>();
+        for (final UniqueItem unique : uniques.values()) {
+            if (uniqueDropChance.containsKey(unique.id()) && unique.droppedBy(source) && unique.dropLevel() <= itemLevel
+                    && !retiredUniques.contains(unique.id())) {
+                list.add(unique);
+            }
+        }
+        return list;
+    }
+
+    /** 這件傳奇的固定掉落機率（小數；0 = 沒有，走來源的權重池）。 */
+    public double dropChance(final String id) {
+        return id == null ? 0 : uniqueDropChance.getOrDefault(id, 0.0);
     }
 
     public List<String> rareNamePrefixes() {

@@ -26,7 +26,9 @@ import java.util.function.Function;
  *   <li>經驗：算給傷害最多的隊伍（沒隊伍的人自己一隊），附近的隊員照等級分（PoE 的做法）。
  *       怪物因為人多而變硬多少（{@link MonsterService#playersAround}），總經驗就多多少，隊伍每多一人再加一點。</li>
  * </ul>
- * 都要在線、活著、在同一個世界、在附近（在地圖裡：同一張地圖都算）。
+ * 都要在線、活著、在同一個世界、在附近：2026-10-26 起「附近」＝不在城鎮、水平 party.yml 的 nearby_radius（一間 Boss 房，40 格）內，
+ * 地圖裡也一樣（{@link PartyService#nearby}）；不在附近的隊員拿不到經驗、沒有掉落、也不算隊伍經驗加成的人數（PoE 的做法）。
+ * 這次之前小怪的掉落 128 格、經驗 64 格，在地圖裡整張地圖都算。
  */
 public final class KillCredit {
 
@@ -64,8 +66,10 @@ public final class KillCredit {
         final List<Player> result = new ArrayList<>();
         for (final UUID id : ids) {
             final Player player = plugin.getServer().getPlayer(id);
-            // Boss：一律看 Boss 旁邊 32 格（地圖裡也是；死掉、觀戰的不算）；小怪照 share_radius（地圖裡整張地圖都算）
-            final boolean counts = boss ? atBoss(player, entity) && lateEntryOk(entity, player) : player != null && near(player, entity, config.shareRadius());
+            // Boss：一律看 Boss 旁邊 32 格（地圖裡也是；死掉、觀戰的不算）；
+            // 小怪：2026-10-26 起照 nearby_radius（一間 Boss 房，地圖裡也一樣）；這次之前 share_radius 128 格、地圖裡整張地圖都算
+            final boolean counts = boss ? atBoss(player, entity) && lateEntryOk(entity, player) && near(player, entity)
+                    : near(player, entity);
             if (counts) {
                 result.add(player);
                 if (result.size() >= config.maxCountedPlayers()) {
@@ -107,13 +111,14 @@ public final class KillCredit {
         final List<Player> recipients = new ArrayList<>();
         for (final UUID id : members) {
             final Player player = plugin.getServer().getPlayer(id);
-            final boolean counts = data.boss() ? atBoss(player, entity) : player != null && near(player, entity, config.experienceRadius());
+            // 2026-10-26：不在附近的隊員拿不到（PoE 的做法）；這次之前 64 格、地圖裡整張地圖都算
+            final boolean counts = data.boss() ? atBoss(player, entity) && near(player, entity) : near(player, entity);
             if (counts && plugin.players().get(player).hasCharacter()) {
                 recipients.add(player);
             }
         }
         if (recipients.isEmpty() && killer != null
-                && (data.boss() ? atBoss(killer, entity) : near(killer, entity, config.experienceRadius()))
+                && (data.boss() ? atBoss(killer, entity) && near(killer, entity) : near(killer, entity))
                 && plugin.players().get(killer).hasCharacter()) {
             recipients.add(killer); // 傷害最多的隊伍都跑遠了：給最後一擊的人
         }
@@ -128,7 +133,11 @@ public final class KillCredit {
         // 地圖怪：星圖天賦的「地圖裡的怪給的經驗 +x%」；全服經驗加倍（character.yml 的 experience_bonus）
         final double atlas = plugin.maps() == null ? 0 : plugin.maps().experienceBonus(entity);
         final double bonus = plugin.players().config().experienceBonus();
-        final double factor = config.lifeFactor(data.rarity(), monsters.playersAround(entity)) * config.partyBonus(recipients.size()) * (1 + atlas)
+        // 2026-10-26：多人倍率（怪物因為人多變硬多少，經驗就多多少）最多只算倒下時在附近的玩家；隊伍加成只算分經驗的人（都在附近）。
+        // 這次之前刷怪時的人數（地圖裡整張地圖）全算：隊友在別的房間也讓經驗變多
+        final int players = PartyConfig.experiencePlayers(monsters.playersAround(entity),
+                PartyService.nearbyPlayers(plugin, config, entity.getLocation()));
+        final double factor = config.lifeFactor(data.rarity(), players) * config.partyBonus(recipients.size()) * (1 + atlas)
                 * bonus;
         final String bonusText = plugin.players().config().experienceBonusText();
         for (final Player player : recipients) {
@@ -179,16 +188,8 @@ public final class KillCredit {
                 && player.getWorld().equals(entity.getWorld()) && player.getLocation().distanceSquared(entity.getLocation()) <= r * r;
     }
 
-    private boolean near(final Player player, final LivingEntity entity, final double radius) {
-        if (!player.isOnline() || player.isDead() || player.getGameMode() == GameMode.SPECTATOR) {
-            return false;
-        }
-        if (!player.getWorld().equals(entity.getWorld())) {
-            return false;
-        }
-        if (plugin.maps() != null && plugin.maps().sameInstance(entity, player)) {
-            return true;
-        }
-        return player.getLocation().distanceSquared(entity.getLocation()) <= radius * radius;
+    /** 2026-10-26：在附近（{@link PartyService#nearby}：活著、不在城鎮、同世界、水平 nearby_radius 內，地圖裡也一樣）。 */
+    private boolean near(final Player player, final LivingEntity entity) {
+        return PartyService.nearby(plugin, config(), player, entity.getLocation());
     }
 }

@@ -106,7 +106,7 @@ quiver_02:
   slot: OFF_HAND
   tags: [quiver]
   drop_level: 1
-  requirements: { level: 1 }
+  requirements: { level: 8 }   # 2026-10-26 照 PoE2（Fire Quiver；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1 }
   implicit:
     text: "攻擊附加 {min} 到 {max} 火焰傷害"
     min: [3, 3]
@@ -125,7 +125,7 @@ quiver_03:
   slot: OFF_HAND
   tags: [quiver]
   drop_level: 1
-  requirements: { level: 1 }
+  requirements: { level: 16 }   # 2026-10-26 照 PoE2（Sacral Quiver；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1 }
   implicit:
     text: "攻擊每擊中一個敵人回復 {value} 生命"
     value: [2, 3]
@@ -142,7 +142,7 @@ quiver_04:
   slot: OFF_HAND
   tags: [quiver]
   drop_level: 1
-  requirements: { level: 1 }
+  requirements: { level: 24 }   # 2026-10-26 照 PoE2（Two-Point Quiver；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1 }
   implicit:
     text: "增加 {value}% 命中"
     value: [20, 30]
@@ -159,7 +159,7 @@ quiver_05:
   slot: OFF_HAND
   tags: [quiver]
   drop_level: 1
-  requirements: { level: 1 }
+  requirements: { level: 33 }   # 2026-10-26 照 PoE2（Blunt Quiver；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1 }
   implicit:
     text: "增加 {value}% 暈眩累積"
     value: [25, 40]
@@ -176,7 +176,7 @@ quiver_06:
   slot: OFF_HAND
   tags: [quiver]
   drop_level: 1
-  requirements: { level: 1 }
+  requirements: { level: 39 }   # 2026-10-26 照 PoE2（Toxic Quiver；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1 }
   implicit:
     text: "攻擊 +{value}% 中毒機率"
     value: [20, 30]
@@ -193,7 +193,7 @@ quiver_07:
   slot: OFF_HAND
   tags: [quiver]
   drop_level: 1
-  requirements: { level: 1 }
+  requirements: { level: 44 }   # 2026-10-26 照 PoE2（Serrated Quiver；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1 }
   implicit:
     text: "攻擊 +{value}% 流血機率"
     value: [20, 30]
@@ -210,7 +210,7 @@ quiver_08:
   slot: OFF_HAND
   tags: [quiver]
   drop_level: 1
-  requirements: { level: 1 }
+  requirements: { level: 51 }   # 2026-10-26 照 PoE2（Primed Quiver；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1 }
   implicit:
     text: "增加 {value}% 攻擊速度"
     value: [7, 10]
@@ -227,7 +227,7 @@ quiver_09:
   slot: OFF_HAND
   tags: [quiver]
   drop_level: 1
-  requirements: { level: 1 }
+  requirements: { level: 55 }   # 2026-10-26 照 PoE2（Penetrating Quiver；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1 }
   implicit:
     text: "投射物多穿透 1 個敵人"     # 2026-10：固定 1 個（原本寫 {value} 卻沒有 value 範圍，物品上會直接顯示 {value}）
     mods:
@@ -243,7 +243,7 @@ quiver_10:
   slot: OFF_HAND
   tags: [quiver]
   drop_level: 1
-  requirements: { level: 1 }
+  requirements: { level: 61 }   # 2026-10-26 照 PoE2（Volant Quiver；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1 }
   implicit:
     text: "增加 {value}% 投射物速度"
     value: [20, 30]
@@ -260,7 +260,7 @@ quiver_11:
   slot: OFF_HAND
   tags: [quiver]
   drop_level: 1
-  requirements: { level: 1 }
+  requirements: { level: 65 }   # 2026-10-26 照 PoE2（Visceral Quiver；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1 }
   implicit:
     text: "增加 {value}% 攻擊暴擊率"
     value: [20, 30]

@@ -209,12 +209,13 @@ public final class Profiles implements Listener {
                     final JsonObject n = new JsonObject();
                     n.addProperty("name", node.name());
                     final JsonArray lines = new JsonArray();
-                    for (final String line : tw.exilecore.ascendancy.StatLines.describeAll(node.stats())) {
+                    for (final String line : node.display()) { // 2026-10-26：照原作的說明行（沒寫的照 stats 自動寫）
                         lines.add(line);
                     }
-                    if (node.note() != null && !node.note().isBlank()) {
-                        lines.add(node.note());
+                    if (node.shownNote() != null) { // 2026-10-27：跟說明行一樣的不再寫一次
+                        lines.add(node.shownNote());
                     }
+                    node.explanations().forEach(lines::add); // 2026-10-27 照站長：關鍵字說明（撲殺、毀滅打擊…）
                     n.add("lines", lines);
                     nodes.add(n);
                 }
@@ -231,12 +232,17 @@ public final class Profiles implements Listener {
         }
         // 裝備
         final JsonArray gear = new JsonArray();
-        for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length; i++) {
+        // 2026-10-26：展露之指的第三個戒指欄（ring3）：有開或有裝才列
+        final boolean thirdRing = tw.exilecore.character.Gear.ringSlotOpen(state.sheet());
+        for (int i = 0; i < PlayerState.GEAR_SLOTS.length; i++) {
+            final ItemStack stack = state.jewellery(PlayerState.gearIndex(i));
+            if (i == PlayerState.RING3 && !thirdRing && (stack == null || stack.isEmpty())) {
+                continue;
+            }
             final JsonObject slot = new JsonObject();
-            final ItemSlot type = PlayerState.JEWELLERY_SLOTS[i];
-            slot.addProperty("slot", type.name().toLowerCase(Locale.ROOT) + (type == ItemSlot.RING ? (i == 0 ? "1" : "2") : ""));
+            final ItemSlot type = PlayerState.GEAR_SLOTS[i];
+            slot.addProperty("slot", type.name().toLowerCase(Locale.ROOT) + (type == ItemSlot.RING ? (i == 0 ? "1" : i == 1 ? "2" : "3") : ""));
             slot.addProperty("label", type.displayName());
-            final ItemStack stack = state.jewellery(i);
             if (stack != null && !stack.isEmpty()) {
                 slot.add("item", item(stack, type));
             }
@@ -303,9 +309,13 @@ public final class Profiles implements Listener {
                 skill.addProperty("name", definition.name());
                 skill.addProperty("level", entry.level());
                 skill.addProperty("sockets", entry.sockets());
-                if (entry.inner() != null) { // 2026-10-22：放在英靈圖騰、星咒圖騰、暴擊引星第 1 孔裡的技能
-                    final var inner = plugin.skills().config().skill(entry.inner().skillId());
-                    skill.addProperty("inner", (inner == null ? entry.inner().skillId() : inner.name()) + " Lv." + entry.inner().level());
+                if (!entry.spells().isEmpty()) { // 2026-10-22：放在英靈圖騰、星咒圖騰、引星孔裡的技能（2026-10-26：每一孔的都列，、隔開）
+                    final List<String> spellNames = new java.util.ArrayList<>();
+                    for (final SkillLoadout.Entry spell : entry.spells()) {
+                        final var inner = plugin.skills().config().skill(spell.skillId());
+                        spellNames.add((inner == null ? spell.skillId() : inner.name()) + " Lv." + spell.level());
+                    }
+                    skill.addProperty("inner", String.join("、", spellNames));
                 }
                 final JsonArray supports = new JsonArray();
                 for (final String supportId : entry.supportIds()) {
@@ -441,8 +451,8 @@ public final class Profiles implements Listener {
         }
         calc.add("progress", progress);
         final JsonArray gear = new JsonArray();
-        for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length; i++) {
-            gear.add(itemData(state.jewellery(i)));
+        for (int i = 0; i < PlayerState.GEAR_SLOTS.length; i++) { // 2026-10-26：第 11 個是第三個戒指（BuildCalc 同一個順序）
+            gear.add(itemData(state.jewellery(PlayerState.gearIndex(i))));
         }
         calc.add("gear", gear);
         final JsonObject jewels = new JsonObject();
@@ -471,9 +481,11 @@ public final class Profiles implements Listener {
                 final JsonArray supports = new JsonArray();
                 for (int i = 0; i < entry.sockets(); i++) {
                     // 2026-10-18：共鳴的寶石要帶 ~，BuildCalc 才會算成共鳴（跟存檔格式一樣）
-                    // 2026-10-22：宿主第 1 孔裡的技能寫成 @代號/等級/孔數（跟存檔格式一樣，Entry 認得）
+                    // 2026-10-22：宿主孔裡的技能寫成 @代號/等級/孔數（跟存檔格式一樣，Entry 認得）
                     if (i == SkillLoadout.Entry.INNER_SOCKET && entry.inner() != null) {
-                        supports.add(SkillLoadout.Entry.INNER_PREFIX + entry.inner().skillId() + "/" + entry.inner().level() + "/" + entry.inner().sockets());
+                        // 2026-10-27：品質也帶著（裂甲熊咆孔裡的戰吼、插槽法術的品質效果；格式跟存檔一樣 /q15）；這次之前沒帶
+                        supports.add(SkillLoadout.Entry.INNER_PREFIX + entry.inner().skillId() + "/" + entry.inner().level() + "/" + entry.inner().sockets()
+                                + (entry.inner().quality() > 0 ? "/" + SkillLoadout.Entry.QUALITY_PREFIX + entry.inner().quality() : ""));
                         continue;
                     }
                     supports.add(entry.support(i) + (entry.resonant(i) ? SkillLoadout.Entry.RESONANT_SUFFIX : ""));
@@ -522,11 +534,27 @@ public final class Profiles implements Listener {
         object.add("name", spans(name));
         final JsonArray lore = new JsonArray();
         if (meta != null && meta.lore() != null) {
+            boolean skipped = false;
             for (final Component line : meta.lore()) {
                 final JsonArray spans = spans(line);
+                // 2026-10-26：遊戲裡自動換行切出來的接續行接回上一行（網頁有自己的換行）；這次之前說明不會自動換行
+                if (tw.exilecore.core.text.TextWrap.continuation(line) && (skipped || !lore.isEmpty())) {
+                    if (!skipped) {
+                        final JsonArray previous = lore.get(lore.size() - 1).getAsJsonArray();
+                        if (tw.exilecore.core.text.TextWrap.spaceBefore(line)) {
+                            final JsonArray space = new JsonArray();
+                            space.add(" ");
+                            space.add("");
+                            previous.add(space);
+                        }
+                        previous.addAll(spans);
+                    }
+                    continue;
+                }
                 // 操作提示（右鍵、Shift…）網頁上用不到
                 final String text = plain(spans);
-                if (text.contains("左鍵") || text.contains("右鍵") || text.contains("Shift")) {
+                skipped = text.contains("左鍵") || text.contains("右鍵") || text.contains("Shift");
+                if (skipped) {
                     continue;
                 }
                 lore.add(spans);

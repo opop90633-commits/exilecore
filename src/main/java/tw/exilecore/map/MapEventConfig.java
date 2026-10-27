@@ -241,6 +241,12 @@ public final class MapEventConfig {
     private Safe safe = Safe.defaults();
     // PoE2 的機制
     private Ritual ritual;
+    /** 2026-10-27：祭壇的「傳奇」獎勵有多少機率是祭壇專屬傳奇（其他是共通傳奇 map_boss 池）。 */
+    private double ritualExclusiveChance = DEFAULT_RITUAL_EXCLUSIVE_CHANCE;
+    /** 2026-10-27：祭壇專屬傳奇的貢品價格範圍（共通傳奇照 prices.unique）。 */
+    private int[] ritualExclusivePrice = DEFAULT_RITUAL_EXCLUSIVE_PRICE.clone();
+    /** 2026-10-27：剩下的貢品存進帳號，滿這麼多換一張祭壇的入場券（0 = 不存）。 */
+    private int ritualBankThreshold = DEFAULT_RITUAL_BANK_THRESHOLD;
     private Delirium delirium;
     /** 地圖變化（2026-10，{@link MapTwists}）。 */
     private Twists twists;
@@ -378,18 +384,23 @@ public final class MapEventConfig {
                 Map.of(tw.exilecore.monster.MonsterRarity.NORMAL, 12, tw.exilecore.monster.MonsterRarity.MAGIC, 35,
                         tw.exilecore.monster.MonsterRarity.RARE, 120, tw.exilecore.monster.MonsterRarity.UNIQUE, 300),
                 0.25, 7, 0.2, 1.5,
-                Map.of(Reward.OMEN, 30, Reward.CURRENCY, 25, Reward.RARE, 15, Reward.ESSENCE, 10, Reward.JEWEL, 8, Reward.MAP, 6,
-                        Reward.CATALYST, 4, Reward.UNIQUE, 1),
-                Map.of(Reward.OMEN, new int[] {260, 420}, Reward.CURRENCY, new int[] {40, 160}, Reward.RARE, new int[] {140, 260},
-                        Reward.ESSENCE, new int[] {110, 190}, Reward.JEWEL, new int[] {180, 320}, Reward.MAP, new int[] {150, 260},
-                        Reward.CATALYST, new int[] {120, 200}, Reward.UNIQUE, new int[] {520, 880}));
+                // 2026-10-27 照 PoE2 0.5：祭壇只給傳奇與星籤（這次之前星籤 30、通貨 25、稀有 15、星魄 10、珠寶 8、地圖 6、催化劑 4、傳奇 1）
+                Map.of(Reward.OMEN, 65, Reward.UNIQUE, 35),
+                Map.of(Reward.OMEN, new int[] {260, 420}, Reward.UNIQUE, new int[] {280, 520}));
+        ritualExclusiveChance = DEFAULT_RITUAL_EXCLUSIVE_CHANCE;
+        ritualExclusivePrice = DEFAULT_RITUAL_EXCLUSIVE_PRICE.clone();
+        ritualBankThreshold = DEFAULT_RITUAL_BANK_THRESHOLD;
         delirium = new Delirium(0.3, 75, 60, 0.6, 4, 2, 3,
                 Map.of(tw.exilecore.monster.MonsterRarity.NORMAL, 1, tw.exilecore.monster.MonsterRarity.MAGIC, 3,
                         tw.exilecore.monster.MonsterRarity.RARE, 10, tw.exilecore.monster.MonsterRarity.UNIQUE, 25),
                 2, List.of(20, 50, 100, 170),
                 Map.of(Reward.EMOTION, 40, Reward.CURRENCY, 25, Reward.ESSENCE, 10, Reward.JEWEL, 10, Reward.MAP, 10, Reward.CATALYST, 5,
                         Reward.UNIQUE, 1),
-                List.of("distilled_ire", "distilled_guilt", "distilled_greed", "distilled_paranoia"), List.of(50, 30, 15, 5));
+                // 2026-10-27 照 PoE2：十種蒸餾情緒；這次之前四種、權重 50／30／15／5
+                List.of("distilled_ire", "distilled_guilt", "distilled_greed", "distilled_paranoia", "distilled_envy", "distilled_disgust",
+                        "distilled_despair", "distilled_fear", "distilled_suffering", "distilled_isolation",
+                        "distilled_melancholy", "distilled_ferocity", "distilled_contempt"),
+                List.of(500, 300, 180, 108, 65, 39, 23, 14, 8, 5, 3, 3, 3));
         twists = Twists.defaults();
     }
 
@@ -440,6 +451,9 @@ public final class MapEventConfig {
         abyss = other.abyss; // 2026-10-18
         safe = other.safe;
         ritual = other.ritual;
+        ritualExclusiveChance = other.ritualExclusiveChance;
+        ritualExclusivePrice = other.ritualExclusivePrice.clone();
+        ritualBankThreshold = other.ritualBankThreshold;
         delirium = other.delirium;
         twists = other.twists;
     }
@@ -625,6 +639,14 @@ public final class MapEventConfig {
                     clamp(reroll.decimal("cost", ritual.rerollCost()), 0, 1), clamp(reroll.decimal("growth", ritual.rerollGrowth()), 1, 5),
                     node.has("reward_weights") ? rewardInts(node.node("reward_weights")) : ritual.rewardWeights(),
                     node.has("prices") ? rewardRanges(node.node("prices")) : ritual.prices());
+            ritualExclusiveChance = clamp(node.decimal("exclusive_chance", ritualExclusiveChance), 0, 1);
+            if (node.has("exclusive_price")) {
+                final int[] range = node.range("exclusive_price");
+                ritualExclusivePrice = new int[] {Math.max(1, Math.min(range[0], range[1])), Math.max(1, Math.max(range[0], range[1]))};
+            }
+            if (node.has("tribute_bank")) {
+                ritualBankThreshold = Math.max(0, node.node("tribute_bank").integer("threshold", ritualBankThreshold));
+            }
         }
         if (root.has("delirium")) {
             final YamlNode node = root.node("delirium");
@@ -955,6 +977,28 @@ public final class MapEventConfig {
 
     public Ritual ritual() {
         return ritual;
+    }
+
+    /** 2026-10-27 預設：祭壇的傳奇獎勵 3% 是專屬傳奇（7 件獎勵、傳奇權重 35%：一組平均 0.07 件專屬，跟以前權重 1/99 一樣）。 */
+    public static final double DEFAULT_RITUAL_EXCLUSIVE_CHANCE = 0.03;
+    /** 2026-10-27 預設：專屬傳奇的價格（跟以前的傳奇一樣）。 */
+    static final int[] DEFAULT_RITUAL_EXCLUSIVE_PRICE = {520, 880};
+    /** 2026-10-27 預設：存下的貢品滿 10000 換一張入場券。 */
+    public static final int DEFAULT_RITUAL_BANK_THRESHOLD = 10000;
+
+    /** 祭壇的傳奇獎勵是專屬傳奇的機率（ritual.exclusive_chance）。 */
+    public double ritualExclusiveChance() {
+        return ritualExclusiveChance;
+    }
+
+    /** 祭壇專屬傳奇的貢品價格範圍（ritual.exclusive_price）。 */
+    public int[] ritualExclusivePrice() {
+        return ritualExclusivePrice.clone();
+    }
+
+    /** 剩下的貢品存進帳號，滿這麼多換一張入場券（ritual.tribute_bank.threshold；0 = 不存）。 */
+    public int ritualBankThreshold() {
+        return ritualBankThreshold;
     }
 
     public Delirium delirium() {

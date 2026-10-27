@@ -406,7 +406,7 @@ public final class CodexMenu extends Menu {
                     final ItemBase chosen = plugin.items().repository().base(base);
                     set(SLOT_BACK, backButton("基底列表"));
                     if (chosen != null) {
-                        set(SLOT_INFO, glowing(baseIcon(chosen, "<white>" + ItemRenderer.escape(chosen.name()),
+                        set(SLOT_INFO, glowing(codexBaseIcon(chosen, "<white>" + ItemRenderer.escape(chosen.name()),
                                 "<gray>" + slotName(chosen.slot()) + "・" + tagText(chosen))));
                     }
                 }
@@ -661,6 +661,8 @@ public final class CodexMenu extends Menu {
     public static String sourceLabel(final ExileCore plugin, final String source) {
         final String key = source.toLowerCase(Locale.ROOT);
         switch (key) {
+            case "weapon":
+                return "法杖、長杖、權杖賦予";
             case "gamble":
                 return "賭博（商人的未鑑定裝備）";
             case "chance":
@@ -691,6 +693,18 @@ public final class CodexMenu extends Menu {
                 return "幻霧";
             case "chase":
                 return null;
+            case "ascendancy": // 2026-10-27：昇華天賦賦予的技能（是哪個昇華見 skillSourceLabel）；這次之前寫成「ascendancy的 Boss」
+                return "昇華天賦賦予";
+            case "abyss_whale": // 2026-10-27：這次之前寫成「abyss_whale的 Boss」
+                return "淵鯨";
+            case "world_boss":
+                return "世界 Boss";
+            case "lineage": // 2026-10-27 照 PoE2：血脈輔助寶石（supports_lineage.yml 的 drops）
+                return "血脈：地圖怪物（約 50 萬隻一顆）、地圖 Boss";
+            case "lineage_rare":
+                return "血脈（稀有）：地圖怪物（約 200 萬隻一顆）、地圖 Boss";
+            case "lineage_pinnacle":
+                return "血脈（巔峰）：地圖怪物（約 400 萬隻一顆）、地圖 Boss";
             default:
                 break;
         }
@@ -698,6 +712,29 @@ public final class CodexMenu extends Menu {
             return mapName(plugin, key.substring("uber_".length())) + "（極境）專屬";
         }
         return mapName(plugin, key) + "的 Boss";
+    }
+
+    /**
+     * 2026-10-27 照站長：技能的來源；昇華天賦賦予的寫出是哪個昇華的哪個天賦（例如「昇華天賦賦予：XX（玉石之護）」）。
+     */
+    public static String skillSourceLabel(final ExileCore plugin, final SkillDefinition skill) {
+        if (skill.source() == null) {
+            return null;
+        }
+        if ("ascendancy".equalsIgnoreCase(skill.source()) && plugin.ascendancy() != null) {
+            final List<String> by = new ArrayList<>();
+            for (final tw.exilecore.ascendancy.AscendancyConfig.Ascendancy asc : plugin.ascendancy().config().ascendancies()) {
+                for (final tw.exilecore.ascendancy.AscendancyConfig.Node node : asc.nodes()) {
+                    if (node.grantedSkills().contains(skill.id())) {
+                        by.add(asc.name() + "（" + node.name() + "）");
+                    }
+                }
+            }
+            if (!by.isEmpty()) {
+                return "昇華天賦賦予：" + String.join("、", by);
+            }
+        }
+        return sourceLabel(plugin, skill.source());
     }
 
     private static String mapName(final ExileCore plugin, final String id) {
@@ -772,7 +809,11 @@ public final class CodexMenu extends Menu {
         }
         lines.add("");
         lines.add("<#f5b942>━━ 圖鑑 ━━");
-        if (!definition.engravable()) {
+        if ("weapon".equals(definition.source())) { // 2026-10-26：法杖、長杖、權杖賦予（沒有寶石）
+            lines.add("<#d4a017>法杖、長杖、權杖賦予<gray>：裝備賦予這個技能的武器就會出現在技能面板，沒有寶石");
+        } else if ("ascendancy".equalsIgnoreCase(definition.source())) { // 2026-10-27 照站長：寫出是哪個昇華專屬
+            lines.add("<#d4a017>" + ItemRenderer.escape(skillSourceLabel(plugin, definition)) + "<gray>：點了那個天賦就會出現在技能面板，沒有寶石");
+        } else if (!definition.engravable()) {
             lines.add("<#d4a017>專屬掉落：" + (definition.source() == null ? "特殊來源" : ItemRenderer.escape(sourceName(definition.source())))
                     + "<gray>，未切割技能寶石雕不出來");
         } else {
@@ -781,11 +822,7 @@ public final class CodexMenu extends Menu {
         lines.add(personal ? "<dark_gray>數值照你目前的屬性、武器算（Lv." + gemLevel + "、沒有輔助" + (gemLevel > SkillLoadout.MAX_LEVEL ? "；另外加你裝備的 +等級" : "") + "）"
                 : "<dark_gray>選一個角色之後，這裡會照你的屬性算出數值");
         stack.editMeta(meta -> {
-            final List<net.kyori.adventure.text.Component> lore = new ArrayList<>();
-            for (final String line : lines) {
-                lore.add(ItemRenderer.line(line));
-            }
-            meta.lore(lore);
+            meta.lore(tw.exilecore.core.text.TextWrap.lines(lines)); // 2026-10-26：長行自動換行
         });
         return stack;
     }
@@ -830,7 +867,7 @@ public final class CodexMenu extends Menu {
             }
             list.add(affix);
         }
-        list.sort(Comparator.comparingInt(affix -> affix.type() == AffixType.PREFIX ? 0 : 1));
+        list.sort(CodexOrder.AFFIXES); // 2026-10-27：前綴、後綴再照最低物品等級、群組、文字排；這次之前只分前後綴，其餘照載入順序
         return list;
     }
 
@@ -847,7 +884,7 @@ public final class CodexMenu extends Menu {
                 list.add(affix);
             }
         }
-        list.sort(Comparator.comparingInt(affix -> affix.type() == AffixType.PREFIX ? 0 : 1));
+        list.sort(CodexOrder.AFFIXES); // 2026-10-27：同上
         return list;
     }
 
@@ -872,6 +909,7 @@ public final class CodexMenu extends Menu {
                 list.add(affix);
             }
         }
+        list.sort(CodexOrder.AFFIXES); // 2026-10-27：排序穩定（這次之前照載入順序）
         return list;
     }
 
@@ -880,7 +918,10 @@ public final class CodexMenu extends Menu {
         return Veiled.isUnveiled(affix.id()) && !affix.tiers().isEmpty() && !affix.spawnTags().contains(ItemRepository.RETIRED_TAG);
     }
 
-    /** 圖鑑列的基底：裝備、珠寶，加上藥劑與護符（2026-10）；地圖不列。照部位、需要等級排。網頁圖鑑也用。 */
+    /**
+     * 圖鑑列的基底：裝備、珠寶，加上藥劑與護符（2026-10）；地圖不列。網頁圖鑑也用。
+     * 2026-10-27：照部位 → 種類（武器類型、防具屬性、珠寶顏色…，{@link CodexOrder#BASES}）→ 需要等級 → 名稱排；這次之前只照部位、需要等級，主手的各種武器混在一起。
+     */
     public static List<ItemBase> codexBases(final ItemRepository repository) {
         final List<ItemBase> list = new ArrayList<>();
         for (final ItemBase each : repository.bases()) {
@@ -889,7 +930,7 @@ public final class CodexMenu extends Menu {
             }
         }
         list.addAll(repository.flaskLikeBases());
-        list.sort(Comparator.<ItemBase>comparingInt(each -> each.slot().ordinal()).thenComparingInt(each -> each.requirements().level()));
+        list.sort(CodexOrder.BASES);
         return list;
     }
 
@@ -916,13 +957,31 @@ public final class CodexMenu extends Menu {
             if (slot >= CONTENT_START && slot < CONTENT_END) {
                 targets.put(slot, each.id());
             }
-            stacks.add(baseIcon(each, "<white>" + ItemRenderer.escape(each.name()),
+            stacks.add(codexBaseIcon(each, "<white>" + ItemRenderer.escape(each.name()),
                     "<gray>" + slotName(each.slot()) + "・" + tagText(each),
                     "<#8888ff>前綴 " + prefixes + " 種<gray>・<#ffd27f>後綴 " + suffixes + " 種"
                             + (unveiled > 0 ? "<gray>・<#c48bff>揭露 " + unveiled + " 種" : ""),
                     "", "<yellow>左鍵：看會出哪些詞綴"));
         }
         return stacks;
+    }
+
+    /**
+     * 圖鑑裡基底的圖示（2026-10-27）：珠寶照顏色、遺時、永恆分開，護符不跟珠寶撞（{@link CodexOrder#icon}），
+     * 藥劑照生命、魔力染紅、藍；其他照 {@link Menu#baseIcon}。這次之前白星晶、遺時、永恆珠寶都是鑽石，藥劑全是同一瓶水。
+     */
+    private static ItemStack codexBaseIcon(final ItemBase each, final String name, final String... lore) {
+        final Material material = CodexOrder.icon(each);
+        if (material != null) {
+            return icon(material, name, lore);
+        }
+        final ItemStack stack = baseIcon(each, name, lore);
+        if (each.isFlask() && stack.getType() == Material.POTION) {
+            stack.setData(io.papermc.paper.datacomponent.DataComponentTypes.POTION_CONTENTS,
+                    io.papermc.paper.datacomponent.item.PotionContents.potionContents()
+                            .customColor(org.bukkit.Color.fromRGB(each.hasTag("mana_flask") ? 0x2F6BFF : 0xD7263D)).build());
+        }
+        return stack;
     }
 
     /** 基底的種類（看得懂的標籤）。 */
@@ -1032,7 +1091,9 @@ public final class CodexMenu extends Menu {
             }
         }
         final List<ItemStack> stacks = new ArrayList<>();
-        for (final Affix affix : matched.values()) {
+        final List<Affix> found = new ArrayList<>(matched.values());
+        found.sort(CodexOrder.AFFIXES); // 2026-10-27：搜尋結果也照詞綴順序排（這次之前照第一個擲得到的基底出現的順序）
+        for (final Affix affix : found) {
             final boolean prefix = affix.type() == AffixType.PREFIX;
             final boolean unveiled = Veiled.isUnveiled(affix.id());
             final List<AffixTier> tiers = affix.tiers();

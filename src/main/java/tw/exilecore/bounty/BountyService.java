@@ -194,17 +194,14 @@ public final class BountyService {
     /** 這個帳號打倒這隻 Boss 幾次。 */
     public long bossKills(final Player player, final String boss) {
         final Account account = accounts.get(player.getUniqueId());
-        if (account == null) {
-            return 0;
-        }
-        try {
-            return Long.parseLong(account.progress.getOrDefault(BOSS_KILLS + boss, "0"));
-        } catch (final NumberFormatException e) {
-            return 0;
-        }
+        return account == null ? 0 : KillTitles.kills(account.progress, boss);
     }
 
-    /** 極境 Boss、金庫之主倒下時，場上的每個人記一次；到了次數發擊殺稱號。沒有設定擊殺稱號的 Boss 不記。 */
+    /**
+     * 極境 Boss、金庫之主倒下時，場上的每個人記一次；到了次數發擊殺稱號。沒有設定擊殺稱號的 Boss 不記。
+     * 2026-10-26：發放改走 {@link #grantDueKillTitles}（≥ 目標、還沒擁有的全部發，失敗的下次登入／開選單再補）；
+     * 這次之前只在這裡試一次，發失敗（稱號清單超過 250 字記不下）就一直「還沒有」。
+     */
     public void recordBossKill(final Player player, final String boss) {
         final BountyConfig.BossTitle def = config.bossTitles().get(boss);
         final Account account = accounts.get(player.getUniqueId());
@@ -216,29 +213,59 @@ public final class BountyService {
         account.progress.put(BOSS_KILLS + boss, value);
         commit(player, account, Map.of(BOSS_KILLS + boss, value), List.of(), "擊殺紀錄");
         final boolean owned = MeritShop.ownedTitles(account.progress).contains(def.title().id());
-        if (!owned && kills >= def.kills()) {
-            final String problem = grantTitle(player, def.title().id());
-            if (problem == null) {
-                final String tag = "<" + def.title().color() + ">【" + escape(def.title().name()) + "】</" + def.title().color() + ">";
-                player.sendMessage(plugin.text().prefixed("<green>打倒 " + escape(def.bossName()) + " " + def.kills() + " 次！擊殺稱號 " + tag + " 已經戴上"));
-                final String bonus = MeritShop.bonusText(def.title());
-                if (bonus != null) {
-                    player.sendMessage(plugin.text().prefixed("<#7fe07f>稱號的永久加成：<white>" + bonus + "<gray>（擁有就有，不用戴；帳號裡每個角色都有）"));
+        if (!owned && kills < def.kills()) {
+            player.sendMessage(plugin.text().prefixed("<gray>" + escape(def.bossName()) + " 擊殺 <white>" + kills + "／" + def.kills()
+                    + "<gray>（滿了拿擊殺稱號 <" + def.title().color() + ">【" + escape(def.title().name()) + "】</" + def.title().color() + "><gray>）"));
+        }
+        grantDueKillTitles(player, false);
+    }
+
+    /**
+     * 2026-10-26：次數已經到了（≥ 目標）、帳號還沒擁有的擊殺稱號全部發（稱號與永久加成記在帳號，帳號裡每個角色都有）。
+     * Boss 倒下時、登入／換角色、打開稱號選單、設定重讀時都會呼叫（補發以前發失敗的）。
+     *
+     * @param catchUp 補發（不廣播；已經戴著別的稱號就不換）
+     * @return 這次發了幾個
+     */
+    public int grantDueKillTitles(final Player player, final boolean catchUp) {
+        final Account account = accounts.get(player.getUniqueId());
+        if (account == null) {
+            return 0;
+        }
+        int granted = 0;
+        for (final BountyConfig.BossTitle def : KillTitles.due(config.bossTitles().values(), account.progress,
+                MeritShop.ownedTitles(account.progress))) {
+            final boolean wear = !catchUp || equippedTitle(account) == null;
+            final String problem = grantTitle(player, def.title().id(), wear, "擊殺稱號");
+            if (problem != null) {
+                if (!problem.startsWith("已經有")) {
+                    plugin.getSLF4JLogger().warn("發擊殺稱號 {} 給 {} 失敗（下次登入或打開稱號選單再補）：{}", def.title().id(), player.getName(), problem);
                 }
+                continue;
+            }
+            granted++;
+            final String tag = "<" + def.title().color() + ">【" + escape(def.title().name()) + "】</" + def.title().color() + ">";
+            player.sendMessage(plugin.text().prefixed("<green>打倒 " + escape(def.bossName()) + " " + KillTitles.kills(account.progress, def.boss())
+                    + "／" + def.kills() + " 次！擊殺稱號 " + tag + (catchUp ? "<green> 補發給你了" : "") + (wear ? "<green>，已經戴上" : "")));
+            final String bonus = MeritShop.bonusText(def.title());
+            if (bonus != null) {
+                player.sendMessage(plugin.text().prefixed("<#7fe07f>稱號的永久加成：<white>" + bonus + "<gray>（擁有就有，不用戴；帳號裡每個角色都有）"));
+            }
+            if (!catchUp) {
                 for (final Player other : plugin.getServer().getOnlinePlayers()) {
                     if (other != player) {
                         other.sendMessage(plugin.text().prefixed("<white>" + player.getName() + " <gray>打倒 " + escape(def.bossName()) + " " + def.kills()
                                 + " 次，拿到擊殺稱號 " + tag));
                     }
                 }
-                player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);
-            } else if (!problem.startsWith("已經有")) {
-                plugin.getSLF4JLogger().warn("發擊殺稱號給 {} 失敗：{}", player.getName(), problem);
             }
-        } else if (!owned) {
-            player.sendMessage(plugin.text().prefixed("<gray>" + escape(def.bossName()) + " 擊殺 <white>" + kills + "／" + def.kills()
-                    + "<gray>（滿了拿擊殺稱號 <" + def.title().color() + ">【" + escape(def.title().name()) + "】</" + def.title().color() + "><gray>）"));
+            player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);
         }
+        if (granted > 0) {
+            applyTitle(player); // 永久加成重算（整個帳號）
+            plugin.getSLF4JLogger().info("{} 拿到 {} 個擊殺稱號{}", player.getName(), granted, catchUp ? "（補發）" : "");
+        }
+        return granted;
     }
 
     public BountyConfig config() {
@@ -280,6 +307,9 @@ public final class BountyService {
                         return;
                     }
                     accounts.put(uuid, new Account(uuid, data));
+                    if (plugin.maps() != null) {
+                        plugin.maps().ensureAtlasShared(player); // 2026-10-27：星圖帳號共用（第一次的轉檔）
+                    }
                     onReady(player);
                 }));
     }
@@ -318,6 +348,9 @@ public final class BountyService {
                     plugin.events().greet(player); // 每月活動：這個月的主題與進度一行
                 }
             }
+        }
+        if (accounts.containsKey(player.getUniqueId())) {
+            grantDueKillTitles(player, true); // 2026-10-26：登入、換角色時補發次數到了卻還沒有的擊殺稱號
         }
         applyTitle(player);
         updateTracker(player);
@@ -1353,6 +1386,7 @@ public final class BountyService {
 
     /** 選單的「稱號」：擁有的稱號一覽，點一下戴上／拿下，還沒有的寫怎麼拿。 */
     public void openTitles(final Player player) {
+        grantDueKillTitles(player, true); // 2026-10-26：次數到了卻還沒有的擊殺稱號先補發
         new TitleMenu(plugin, player, this).open();
     }
 
@@ -1378,6 +1412,11 @@ public final class BountyService {
      * 稱號要先 {@link #registerTitles} 登記過。
      */
     public String grantTitle(final Player player, final String id) {
+        return grantTitle(player, id, true, "活動稱號");
+    }
+
+    /** 發一個稱號；wear = 發了就戴上（2026-10-26：補發擊殺稱號時，已經戴著別的就不換）。 */
+    private String grantTitle(final Player player, final String id, final boolean wear, final String what) {
         final Account account = accounts.get(player.getUniqueId());
         if (account == null) {
             return "帳號資料載入中，請稍等";
@@ -1400,8 +1439,18 @@ public final class BountyService {
             return "稱號太多了，記不下（請通知管理員）";
         }
         account.progress.put(MeritShop.TITLES, value);
-        commit(player, account, Map.of(MeritShop.TITLES, value), List.of(), "活動稱號");
-        wearTitle(player, id);
+        final Map<String, String> values = new LinkedHashMap<>();
+        values.put(MeritShop.TITLES, value);
+        // 2026-10-27：明確發（管理員、活動完成、商店）就解除「管理員拿掉」的記號；補發的路線呼叫前已經先跳過拿掉的
+        if (account.progress.remove(KillTitles.REVOKED + id) != null) {
+            values.put(KillTitles.REVOKED + id, null);
+        }
+        commit(player, account, values, List.of(), what);
+        if (wear) {
+            wearTitle(player, id);
+        } else {
+            applyTitle(player);
+        }
         return null;
     }
 
@@ -1453,6 +1502,12 @@ public final class BountyService {
     public String progressValue(final Player player, final String key) {
         final Account account = accounts.get(player.getUniqueId());
         return account == null ? null : account.progress.get(key);
+    }
+
+    /** 2026-10-27：整份帳號進度（唯讀；星圖帳號共用用）；帳號還沒載入回傳 null。 */
+    public Map<String, String> progressView(final Player player) {
+        final Account account = accounts.get(player.getUniqueId());
+        return account == null ? null : java.util.Collections.unmodifiableMap(account.progress);
     }
 
     /** 帳號載入好了沒（別的模組要存東西前先問）。 */
@@ -1566,6 +1621,12 @@ public final class BountyService {
         commit(player, account, Map.of(), List.of(), "管理員改功勳");
     }
 
+    /** 2026-10-27：這個稱號是不是管理員拿掉的（補發時跳過）。帳號還沒載入算不是。 */
+    public boolean titleRevoked(final Player player, final String id) {
+        final Account account = accounts.get(player.getUniqueId());
+        return account != null && KillTitles.revoked(account.progress, id);
+    }
+
     /** 管理員：拿掉一個稱號（測試稱號的加成用；戴著的話一起拿下）；成功回傳 null。 */
     String adminRemoveTitle(final Player player, final String id) {
         final Account account = accounts.get(player.getUniqueId());
@@ -1580,6 +1641,9 @@ public final class BountyService {
         account.progress.put(MeritShop.TITLES, value);
         final Map<String, String> values = new LinkedHashMap<>();
         values.put(MeritShop.TITLES, value);
+        // 2026-10-27：記「管理員拿掉的」，擊殺稱號、每月活動稱號的補發就不會再發回來（這次之前登入、開 /title、重讀設定又補回）
+        account.progress.put(KillTitles.REVOKED + id, "1");
+        values.put(KillTitles.REVOKED + id, "1");
         if (id.equals(account.progress.get(MeritShop.TITLE))) {
             account.progress.remove(MeritShop.TITLE);
             values.put(MeritShop.TITLE, null);
@@ -1673,6 +1737,7 @@ public final class BountyService {
     void reloaded() {
         registerBossTitles();
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            grantDueKillTitles(player, true); // 2026-10-26：設定改了次數（調低）時，已經到的補發
             final Account account = ready(player);
             if (account != null) {
                 refreshDay(player, account);

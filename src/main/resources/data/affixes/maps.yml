@@ -2,86 +2,88 @@
 # 屬性鍵的前綴決定作用在誰身上：
 #   monster:屬性   這張圖裡所有怪物（含 Boss）       boss:屬性   只有 Boss
 #   player:屬性    在這張圖裡的玩家                  map.xxx     地圖本身（下面）
-#   map.quantity／map.rarity    物品數量／稀有度（百分比點數）：每條詞綴都帶一些，越難越肥（PoE 的做法）
-#   map.pack_size              怪物群多幾 % 隻
-#   map.magic_packs／map.rare_packs   魔法／稀有怪物群的權重多幾 %
-# 地圖的物品等級 = 那一階的怪物等級（T1 = 61 … T16 = 84）：代號 1 的強度要物品等級 63（T3）以上，
-# 代號 0（最強，等級 100 版本加的）要 75（T11）以上。names 依排名（最強在前），物品上存的是代號。
+#   map.waystones              換界石（地圖）掉落更多 x%（相乘）　map.rarity 物品稀有度（百分比點數）
+#   map.pack_size              怪物群多幾 % 隻　　map.magic_packs／map.rare_packs   魔法／稀有怪物群的權重多幾 %
+#   map.rare_mod_chance        稀有怪帶更多詞綴的機率更多 x%（相乘）
+#   map.curse_zone.enfeeble／temporal_chains／elemental_weakness   玩家週期性被詛咒（MapHazards）
+#   map.ground.fire／chill／shock、map.ground.patches、map.ground.radius   一塊塊的地面效果（MapHazards）
+# 地圖的物品等級 = 那一階的怪物等級（T1 = 61 … T16 = 84）。names 依排名（最強在前），物品上存的是代號。
 #
-# 2026-10 PoE2 改版：可以擲出的詞綴全部照 PoE2（0.5）的換界石詞綴池（資料來源 RePoE poe2 mods.json，跟 poe2db 同一份遊戲檔案）。
-# PoE2 一條詞綴 4 個階段，照換界石的階級分：T1–5、T6–10、T11–15、T16 → 這裡的 ilvl 1／66／75／84（代號 3／2／1／0）。
-# 每條詞綴都附帶 PoE2 的獎勵：物品數量（map.quantity）加上 稀有度／怪物群大小／魔法與稀有怪物群 其中一種；
-# PoE2 的「怪物威力」（monster potency）這裡沒有對應的東西，換成稀有怪物群（map.rare_packs）。
-# PoE2 還有 3 條地面效果（燃燒／冰緩／感電地面）、「玩家獲得戰星機率減少」、「怪物受到的詛咒效果減少」，引擎沒有對應的屬性，先沒做。
+# 2026-10-26 照 PoE2 0.5 重新產生（tools/gen_poe2_waystones.py；資料 tools/poe2_waystones.json，RePoE poe2 mods.json）：
+# - PoE2 一條詞綴 4 個階段，照換界石的階級分：T1–5、T6–10、T11–15、T16 → ilvl 1／66／75／84（代號 3／2／1／0），
+#   而且「只出那一段」（Affix.banded：T16 一定是最高那一階）。沒有階段的（重甲、迅影、星盾、週期詛咒）只有一階。
+# - 每個家族權重一樣、各自一組（火、冰、電、混沌可以同時出；中毒、流血也可以）。
+# - 獎勵照原作：換界石掉落更多 + 稀有度／怪物群大小／魔法與稀有怪物群（+稀有怪詞綴機率）／怪物效能其中一種。
+#   之前把「換界石掉落更多」當成物品數量（map.quantity）；原作的換界石詞綴沒有物品數量，拿掉了。
+# - 2026-10-26 新增原作有的：重甲、迅影、星盾（生命轉能量護盾）、怪物受到的詛咒效果更少、藥劑充能減少、
+#   三種週期詛咒、三種地面效果（同一組）。
+# - 還沒做：褻瀆（深淵）詞綴——原作要用深淵的褻瀆通貨加在換界石上，我們沒有那套系統。
 # 原本自己設計的詞綴改成 spawn_tags: [retired]：不會再擲出來，已經在地圖上的照常生效。
-# 2026-10-22：高階詞綴更難出——每高一階的權重相對再 ×0.875（跟裝備詞綴同一個比例）；每條詞綴的權重總和不變。
 
-
-# ---- 前綴：讓怪物變強（PoE2） ----
+# ---- 前綴：讓怪物變強（PoE2 0.5；tools/gen_poe2_waystones.py 產生）----
 
 map_monster_fire:
   type: prefix
-  group: map_monster_extra
+  group: map_monster_fire
   spawn_tags: [map]
   names: [焚天的, 焚燒的, 灼熱的, 溫熱的]
-  text: "怪物獲得 {value}% 傷害為額外火焰傷害"
+  text: "怪物獲得 {value}% 傷害為額外火焰傷害；怪物效能更多 16%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [20, 24] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [15, 19] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [10, 14] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [5, 9] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [20, 24] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [15, 19] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 9] }
   mods:
     - { stat: "monster:damage.gain.fire", type: FLAT, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 15 }
-    - { stat: map.rare_packs, type: FLAT, value: 16 }   # PoE2：怪物威力 +16%
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
+    - { stat: "monster:effectiveness", type: MORE, value: 16 }   # 怪物效能更多 16%
 
 map_monster_cold:
   type: prefix
-  group: map_monster_extra
+  group: map_monster_cold
   spawn_tags: [map]
   names: [冰獄的, 冰封的, 霜凍的, 微寒的]
   text: "怪物獲得 {value}% 傷害為額外冰冷傷害"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [20, 24] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [15, 19] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [10, 14] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [5, 9] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [20, 24] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [15, 19] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 9] }
   mods:
     - { stat: "monster:damage.gain.cold", type: FLAT, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 15 }
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
     - { stat: map.rarity, type: FLAT, value: 14 }
 
 map_monster_lightning:
   type: prefix
-  group: map_monster_extra
+  group: map_monster_lightning
   spawn_tags: [map]
   names: [雷獄的, 雷鳴的, 帶電的, 微電的]
   text: "怪物獲得 {value}% 傷害為額外閃電傷害"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [20, 24] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [15, 19] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [10, 14] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [5, 9] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [20, 24] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [15, 19] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 9] }
   mods:
     - { stat: "monster:damage.gain.lightning", type: FLAT, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 15 }
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
     - { stat: map.pack_size, type: FLAT, value: 8 }
 
-# 2026-10 PoE2：怪物的額外混沌傷害
 map_monster_chaos:
   type: prefix
-  group: map_monster_extra
+  group: map_monster_chaos
   spawn_tags: [map]
   names: [深淵的, 腐蝕的, 蝕化的, 微蝕的]
   text: "怪物獲得 {value}% 傷害為額外混沌傷害"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [20, 24] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [15, 19] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [10, 14] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [5, 9] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [20, 24] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [15, 19] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 9] }
   mods:
     - { stat: "monster:damage.gain.chaos", type: FLAT, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 15 }
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
     - { stat: map.rarity, type: FLAT, value: 15 }
 
 map_monster_damage:
@@ -91,17 +93,17 @@ map_monster_damage:
   names: [嗜血的, 兇殘的, 粗暴的, 好鬥的]
   text: "怪物傷害增加 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [20, 24] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [15, 19] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [10, 14] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [5, 9] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [20, 24] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [15, 19] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [10, 14] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 9] }
   mods:
     - { stat: "monster:damage", type: INCREASED, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 20 }
+    - { stat: map.waystones, type: FLAT, value: 20 }   # 換界石掉落更多 20%
     - { stat: map.magic_packs, type: FLAT, value: 25 }
     - { stat: map.rare_packs, type: FLAT, value: 25 }
+    - { stat: map.rare_mod_chance, type: FLAT, value: 25 }   # 稀有怪有更多機率帶詞綴
 
-# PoE2：只有 T11 以上的換界石會有
 map_monster_speed:
   type: prefix
   group: map_monster_speed
@@ -109,13 +111,13 @@ map_monster_speed:
   names: [迅猛的, 狂奔的]
   text: "怪物攻擊、施法與移動速度增加 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 276, value: [10, 15] }
-    - { tier: 1, ilvl: 75, weight: 474, value: [10, 15] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [10, 15] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [10, 15] }
   mods:
     - { stat: "monster:attack.speed", type: INCREASED, value: "{value}" }
     - { stat: "monster:cast.speed", type: INCREASED, value: "{value}" }
     - { stat: "monster:movement.speed", type: INCREASED, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 25 }
+    - { stat: map.waystones, type: FLAT, value: 25 }   # 換界石掉落更多 25%
     - { stat: map.pack_size, type: FLAT, value: 9 }
 
 map_monster_crit:
@@ -125,14 +127,14 @@ map_monster_crit:
   names: [必殺的, 精準的, 致命的, 銳利的]
   text: "怪物暴擊率增加 {value}%，暴擊傷害加成 +{multi}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [260, 300], multi: [26, 30] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [200, 240], multi: [21, 25] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [140, 180], multi: [16, 20] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [80, 120], multi: [11, 15] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [260, 300], multi: [26, 30] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [200, 240], multi: [21, 25] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [140, 180], multi: [16, 20] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [80, 120], multi: [11, 15] }
   mods:
     - { stat: "monster:crit.chance", type: INCREASED, value: "{value}" }
     - { stat: "monster:crit.multi", type: FLAT, value: "{multi}" }
-    - { stat: map.quantity, type: FLAT, value: 15 }
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
     - { stat: map.pack_size, type: FLAT, value: 9 }
 
 map_monster_life:
@@ -140,51 +142,51 @@ map_monster_life:
   group: map_monster_life
   spawn_tags: [map]
   names: [不滅的, 強韌的, 堅實的, 結實的]
-  text: "怪物生命增加 {value}%"
+  text: "怪物生命更多 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [26, 30] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [20, 25] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [15, 19] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [10, 14] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [26, 30] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [20, 25] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [15, 19] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 14] }
   mods:
     - { stat: "monster:life.max", type: MORE, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 15 }
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
     - { stat: map.magic_packs, type: FLAT, value: 23 }
     - { stat: map.rare_packs, type: FLAT, value: 23 }
+    - { stat: map.rare_mod_chance, type: FLAT, value: 23 }   # 稀有怪有更多機率帶詞綴
 
 map_monster_poison:
   type: prefix
-  group: map_monster_ailment
+  group: map_monster_poison
   spawn_tags: [map]
   names: [劇毒的, 毒性的, 腐臭的, 帶毒的]
   text: "怪物擊中時 {value}% 機率造成中毒"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [34, 40] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [27, 33] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [20, 26] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [13, 19] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [34, 40] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [27, 33] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [20, 26] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [13, 19] }
   mods:
     - { stat: "monster:poison.chance", type: FLAT, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 10 }
+    - { stat: map.waystones, type: FLAT, value: 10 }   # 換界石掉落更多 10%
     - { stat: map.pack_size, type: FLAT, value: 7 }
 
 map_monster_bleed:
   type: prefix
-  group: map_monster_ailment
+  group: map_monster_bleed
   spawn_tags: [map]
   names: [血腥的, 撕裂的, 割裂的, 見血的]
-  text: "怪物擊中時 {value}% 機率造成流血"
+  text: "怪物擊中時 {value}% 機率造成流血；怪物效能更多 13%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [20, 25] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [15, 20] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [10, 15] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [5, 10] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [20, 25] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [15, 20] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [10, 15] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
   mods:
     - { stat: "monster:bleed.chance", type: FLAT, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 10 }
-    - { stat: map.rare_packs, type: FLAT, value: 13 }   # PoE2：怪物威力 +13%
+    - { stat: map.waystones, type: FLAT, value: 10 }   # 換界石掉落更多 10%
+    - { stat: "monster:effectiveness", type: MORE, value: 13 }   # 怪物效能更多 13%
 
-# 2026-10 PoE2：怪物破甲
 map_monster_armour_break:
   type: prefix
   group: map_monster_armour_break
@@ -192,15 +194,16 @@ map_monster_armour_break:
   names: [碎甲的, 裂甲的, 破甲的, 鑿甲的]
   text: "怪物造成的物理傷害有 {value}% 作為破甲"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [30, 45] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [25, 30] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [20, 25] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [15, 20] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [30, 45] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [25, 30] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [20, 25] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 20] }
   mods:
     - { stat: "monster:armour.break", type: FLAT, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 10 }
+    - { stat: map.waystones, type: FLAT, value: 10 }   # 換界石掉落更多 10%
     - { stat: map.magic_packs, type: FLAT, value: 19 }
     - { stat: map.rare_packs, type: FLAT, value: 19 }
+    - { stat: map.rare_mod_chance, type: FLAT, value: 19 }   # 稀有怪有更多機率帶詞綴
 
 map_monster_accuracy:
   type: prefix
@@ -209,33 +212,31 @@ map_monster_accuracy:
   names: [神射的, 精準的, 銳眼的, 明目的]
   text: "怪物命中值增加 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [40, 50] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [30, 40] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [20, 30] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [10, 20] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [40, 50] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [30, 40] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [20, 30] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
   mods:
     - { stat: "monster:accuracy", type: INCREASED, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 10 }
+    - { stat: map.waystones, type: FLAT, value: 10 }   # 換界石掉落更多 10%
     - { stat: map.pack_size, type: FLAT, value: 7 }
 
-# 2026-10 PoE2：怪物的暈眩累積
 map_monster_stun:
   type: prefix
   group: map_monster_stun
   spawn_tags: [map]
   names: [震擊的, 重擊的, 猛擊的, 撞擊的]
-  text: "怪物擊中造成的暈眩累積增加 {value}%"
+  text: "怪物擊中造成的暈眩累積增加 {value}%；怪物效能更多 13%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [100, 110] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [90, 100] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [70, 80] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [50, 60] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [100, 110] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [90, 100] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [70, 80] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [50, 60] }
   mods:
     - { stat: "monster:stun.buildup", type: INCREASED, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 15 }
-    - { stat: map.rare_packs, type: FLAT, value: 13 }   # PoE2：怪物威力 +13%
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
+    - { stat: "monster:effectiveness", type: MORE, value: 13 }   # 怪物效能更多 13%
 
-# 2026-10 PoE2：怪物元素穿透
 map_monster_penetration:
   type: prefix
   group: map_monster_penetration
@@ -243,20 +244,19 @@ map_monster_penetration:
   names: [穿透的, 貫穿的, 透甲的, 滲透的]
   text: "怪物的元素傷害穿透 {value}% 元素抗性"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [14, 16] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [12, 14] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [9, 11] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [6, 8] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [14, 16] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [12, 14] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [9, 11] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [6, 8] }
   mods:
     - { stat: "monster:penetration", type: FLAT, value: "{value}", tags: [fire] }
     - { stat: "monster:penetration", type: FLAT, value: "{value}", tags: [cold] }
     - { stat: "monster:penetration", type: FLAT, value: "{value}", tags: [lightning] }
-    - { stat: map.quantity, type: FLAT, value: 20 }
+    - { stat: map.waystones, type: FLAT, value: 20 }   # 換界石掉落更多 20%
     - { stat: map.rarity, type: FLAT, value: 16 }
 
-# ---- 後綴（PoE2） ----
+# ---- 後綴（PoE2 0.5）----
 
-# PoE2：怪物抗性是後綴
 map_monster_resist:
   type: suffix
   group: map_monster_resist
@@ -264,15 +264,15 @@ map_monster_resist:
   names: [之不屈, 之抗性, 之堅守, 之防護]
   text: "怪物 +{value}% 全部元素抗性"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [35, 40] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [30, 34] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [25, 29] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [20, 24] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [35, 40] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [30, 34] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [25, 29] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [20, 24] }
   mods:
     - { stat: "monster:resist.fire", type: FLAT, value: "{value}" }
     - { stat: "monster:resist.cold", type: FLAT, value: "{value}" }
     - { stat: "monster:resist.lightning", type: FLAT, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 10 }
+    - { stat: map.waystones, type: FLAT, value: 10 }   # 換界石掉落更多 10%
     - { stat: map.rarity, type: FLAT, value: 14 }
 
 map_monster_ailment_threshold:
@@ -280,53 +280,53 @@ map_monster_ailment_threshold:
   group: map_monster_ailment_threshold
   spawn_tags: [map]
   names: [之冷靜, 之沉著, 之穩重, 之鎮定]
-  text: "怪物的暈眩門檻增加 {stun}%，元素異常門檻增加 {value}%"
+  text: "怪物的暈眩門檻增加 {stun}%，元素異常門檻增加 {value}%；怪物效能更多 13%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [70, 79], stun: [70, 79] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [70, 79], stun: [60, 69] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [50, 59], stun: [40, 49] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [30, 39], stun: [30, 39] }
+    - { tier: 0, ilvl: 84, weight: 1000, stun: [70, 79], value: [70, 79] }
+    - { tier: 1, ilvl: 75, weight: 1000, stun: [60, 69], value: [70, 79] }
+    - { tier: 2, ilvl: 66, weight: 1000, stun: [40, 49], value: [50, 59] }
+    - { tier: 3, ilvl: 1, weight: 1000, stun: [30, 39], value: [30, 39] }
   mods:
     - { stat: "monster:stun.threshold", type: INCREASED, value: "{stun}" }
     - { stat: "monster:ailment.threshold", type: INCREASED, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 10 }
-    - { stat: map.rare_packs, type: FLAT, value: 13 }   # PoE2：怪物威力 +13%
+    - { stat: map.waystones, type: FLAT, value: 10 }   # 換界石掉落更多 10%
+    - { stat: "monster:effectiveness", type: MORE, value: 13 }   # 怪物效能更多 13%
 
 map_monster_elemental_ailments:
   type: suffix
-  group: map_monster_ailment
+  group: map_monster_elemental_ailments
   spawn_tags: [map]
   names: [之元素暴走, 之元素紊亂, 之元素躁動, 之元素不穩]
-  text: "怪物的點燃、感電機率與凍結累積增加 {value}%"
+  text: "怪物的元素異常效果增加 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [120, 130] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [100, 119] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [80, 99] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [60, 79] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [120, 130] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [100, 119] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [80, 99] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [60, 79] }
   mods:
     - { stat: "monster:ignite.chance", type: INCREASED, value: "{value}" }
     - { stat: "monster:shock.chance", type: INCREASED, value: "{value}" }
     - { stat: "monster:freeze.buildup", type: INCREASED, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 15 }
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
     - { stat: map.rarity, type: FLAT, value: 11 }
 
-# 2026-10 PoE2：怪物受到的暴擊傷害減少
 map_monster_crit_taken:
   type: suffix
   group: map_monster_crit_taken
   spawn_tags: [map]
   names: [之鐵骨, 之硬頸, 之厚皮, 之韌肉]
-  text: "怪物受到的暴擊傷害加成減少 {value}%"
+  text: "怪物受到的暴擊額外傷害減少 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [26, 30] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [26, 30] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [20, 25] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [15, 19] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [26, 30] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [26, 30] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [20, 25] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 19] }
   mods:
     - { stat: "monster:crit.bonus_taken", type: INCREASED, value: "-{value}" }
-    - { stat: map.quantity, type: FLAT, value: 10 }
+    - { stat: map.waystones, type: FLAT, value: 10 }   # 換界石掉落更多 10%
     - { stat: map.magic_packs, type: FLAT, value: 18 }
     - { stat: map.rare_packs, type: FLAT, value: 18 }
+    - { stat: map.rare_mod_chance, type: FLAT, value: 18 }   # 稀有怪有更多機率帶詞綴
 
 map_player_max_resist:
   type: suffix
@@ -335,16 +335,15 @@ map_player_max_resist:
   names: [之末日, 之詛咒, 之衰弱, 之削減]
   text: "玩家 {value}% 抗性上限"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [-10, -8] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [-8, -6] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [-6, -4] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [-4, -3] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [-10, -8] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [-8, -6] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [-6, -4] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [-4, -3] }
   mods:
     - { stat: "player:resist.max", type: FLAT, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 25 }
+    - { stat: map.waystones, type: FLAT, value: 25 }   # 換界石掉落更多 25%
     - { stat: map.pack_size, type: FLAT, value: 10 }
 
-# PoE2：Players have x% less Recovery Rate of Life and Energy Shield（這裡：生命回復、能量護盾回充、生命藥劑回復）
 map_player_regen:
   type: suffix
   group: map_player_regen
@@ -352,33 +351,198 @@ map_player_regen:
   names: [之焦土, 之枯萎, 之乾涸, 之乾燥]
   text: "玩家的生命與能量護盾回復速度更少 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [36, 40] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [36, 40] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [30, 35] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [20, 29] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [36, 40] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [36, 40] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [30, 35] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [20, 29] }
   mods:
     - { stat: "player:life.regen", type: MORE, value: "-{value}" }
     - { stat: "player:es.recharge", type: MORE, value: "-{value}" }
     - { stat: "player:flask.life_recovery", type: MORE, value: "-{value}" }
-    - { stat: map.quantity, type: FLAT, value: 20 }
+    - { stat: map.waystones, type: FLAT, value: 20 }   # 換界石掉落更多 20%
     - { stat: map.rarity, type: FLAT, value: 15 }
 
-# PoE2：Players have x% less Cooldown Recovery Rate
 map_player_cooldown:
   type: suffix
   group: map_player_cooldown
   spawn_tags: [map]
   names: [之遲鈍, 之停滯, 之凝固, 之緩慢]
-  text: "玩家技能冷卻時間增加 {value}%"
+  text: "玩家的冷卻回復速度更少 {value}%"
   tiers:
-    - { tier: 0, ilvl: 84, weight: 228, value: [25, 30] }
-    - { tier: 1, ilvl: 75, weight: 391, value: [25, 30] }
-    - { tier: 2, ilvl: 66, weight: 646, value: [20, 25] }
-    - { tier: 3, ilvl: 1, weight: 1135, value: [15, 20] }
+    - { tier: 0, ilvl: 84, weight: 1000, value: [25, 30] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [25, 30] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [20, 25] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 20] }
   mods:
-    - { stat: "player:skill.cooldown", type: INCREASED, value: "{value}" }
-    - { stat: map.quantity, type: FLAT, value: 15 }
+    - { stat: "player:cooldown.recovery", type: MORE, value: "-{value}" }
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
     - { stat: map.rarity, type: FLAT, value: 12 }
+
+map_monster_armoured:
+  type: suffix
+  group: map_monster_armoured
+  spawn_tags: [map]
+  names: [之重甲]
+  text: "怪物身披重甲：護甲增加 {value}%"
+  tiers:
+    - { tier: 0, ilvl: 1, weight: 1000, value: [35, 55] }
+  mods:
+    - { stat: "monster:armour", type: INCREASED, value: "{value}" }
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
+    - { stat: map.magic_packs, type: FLAT, value: 18 }
+    - { stat: map.rare_packs, type: FLAT, value: 18 }
+    - { stat: map.rare_mod_chance, type: FLAT, value: 18 }   # 稀有怪有更多機率帶詞綴
+
+map_monster_evasive:
+  type: suffix
+  group: map_monster_evasive
+  spawn_tags: [map]
+  names: [之迅影]
+  text: "怪物身手矯健：閃避增加 {value}%"
+  tiers:
+    - { tier: 0, ilvl: 1, weight: 1000, value: [35, 55] }
+  mods:
+    - { stat: "monster:evasion", type: INCREASED, value: "{value}" }
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
+    - { stat: map.pack_size, type: FLAT, value: 6 }
+
+map_monster_energy_shield:
+  type: suffix
+  group: map_monster_energy_shield
+  spawn_tags: [map]
+  names: [之星盾]
+  text: "怪物獲得最大生命 {value}% 的額外能量護盾"
+  tiers:
+    - { tier: 0, ilvl: 1, weight: 1000, value: [12, 25] }
+  mods:
+    - { stat: "monster:monster.shield_percent", type: FLAT, value: "{value}" }
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
+    - { stat: map.rarity, type: FLAT, value: 13 }
+
+map_monster_curse_effect:
+  type: suffix
+  group: map_monster_curse_effect
+  spawn_tags: [map]
+  names: [之辟邪, 之驅咒, 之護符, 之淨身]
+  text: "怪物受到的詛咒效果更少 {value}%"
+  tiers:
+    - { tier: 0, ilvl: 84, weight: 1000, value: [40, 50] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [40, 50] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [30, 40] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [20, 30] }
+  mods:
+    - { stat: "monster:curse.effect_on_self", type: MORE, value: "-{value}" }
+    - { stat: map.waystones, type: FLAT, value: 10 }   # 換界石掉落更多 10%
+    - { stat: map.rarity, type: FLAT, value: 10 }
+
+map_player_flask_charges:
+  type: suffix
+  group: map_player_flask_charges
+  spawn_tags: [map]
+  names: [之乾渴, 之焦渴, 之口渴, 之微渴]
+  text: "玩家獲得的藥劑充能減少 {value}%"
+  tiers:
+    - { tier: 0, ilvl: 84, weight: 1000, value: [30, 35] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [30, 35] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [25, 29] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [20, 24] }
+  mods:
+    - { stat: "player:flask.charges_gained", type: INCREASED, value: "-{value}" }
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
+    - { stat: map.pack_size, type: FLAT, value: 7 }
+
+map_player_curse_enfeeble:
+  type: suffix
+  group: map_player_curse_enfeeble
+  spawn_tags: [map]
+  names: [之萎力]
+  text: "玩家會週期性地被萎力詛咒纏上（造成的傷害更少）；怪物效能更多 16%"
+  tiers:
+    - { tier: 0, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: map.curse_zone.enfeeble, type: FLAT, value: 1 }
+    - { stat: map.waystones, type: FLAT, value: 20 }   # 換界石掉落更多 20%
+    - { stat: "monster:effectiveness", type: MORE, value: 16 }   # 怪物效能更多 16%
+
+map_player_curse_temporal:
+  type: suffix
+  group: map_player_curse_temporal
+  spawn_tags: [map]
+  names: [之遲滯]
+  text: "玩家會週期性地被遲滯詛咒纏上（變慢、冷卻變長）"
+  tiers:
+    - { tier: 0, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: map.curse_zone.temporal_chains, type: FLAT, value: 1 }
+    - { stat: map.waystones, type: FLAT, value: 20 }   # 換界石掉落更多 20%
+    - { stat: map.pack_size, type: FLAT, value: 8 }
+
+map_player_curse_elemental:
+  type: suffix
+  group: map_player_curse_elemental
+  spawn_tags: [map]
+  names: [之三元]
+  text: "玩家會週期性地被三元詛咒纏上（元素抗性降低）"
+  tiers:
+    - { tier: 0, ilvl: 1, weight: 1000, value: [1, 1] }
+  mods:
+    - { stat: map.curse_zone.elemental_weakness, type: FLAT, value: 1 }
+    - { stat: map.waystones, type: FLAT, value: 20 }   # 換界石掉落更多 20%
+    - { stat: map.rarity, type: FLAT, value: 13 }
+
+map_ground_ignited:
+  type: suffix
+  group: map_ground
+  spawn_tags: [map]
+  names: [之煉獄, 之焦原, 之火場, 之餘燼]
+  text: "地圖有一塊塊點燃的地面；怪物效能更多 15%"
+  tiers:
+    - { tier: 0, ilvl: 84, weight: 1000, value: [7, 7], fire: [6000, 6000] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [6, 6], fire: [6000, 6000] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [5, 5], fire: [4000, 4000] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [4, 4], fire: [2000, 2000] }
+  mods:
+    - { stat: map.ground.fire, type: FLAT, value: "{fire}" }   # 每 10 秒的火焰傷害（68 級怪物的強度，照等級換算）
+    - { stat: map.ground.patches, type: FLAT, value: "{value}" }   # 每 100 個地圖區塊幾塊
+    - { stat: map.ground.radius, type: FLAT, value: 20 }   # 原作的單位（÷10 = 格）
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
+    - { stat: "monster:effectiveness", type: MORE, value: 15 }   # 怪物效能更多 15%
+
+map_ground_chilled:
+  type: suffix
+  group: map_ground
+  spawn_tags: [map]
+  names: [之冰原, 之寒地, 之霜徑, 之冷霧]
+  text: "地圖有一塊塊冰緩的地面"
+  tiers:
+    - { tier: 0, ilvl: 84, weight: 1000, value: [6, 6] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [5, 5] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [4, 4] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [3, 3] }
+  mods:
+    - { stat: map.ground.chill, type: FLAT, value: 30 }   # 冰緩 30%
+    - { stat: map.ground.patches, type: FLAT, value: "{value}" }   # 每 100 個地圖區塊幾塊
+    - { stat: map.ground.radius, type: FLAT, value: 26 }   # 原作的單位（÷10 = 格）
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
+    - { stat: map.rarity, type: FLAT, value: 12 }
+
+map_ground_shocked:
+  type: suffix
+  group: map_ground
+  spawn_tags: [map]
+  names: [之雷原, 之電野, 之雷痕, 之靜電]
+  text: "地圖有一塊塊感電的地面"
+  tiers:
+    - { tier: 0, ilvl: 84, weight: 1000, value: [8, 8] }
+    - { tier: 1, ilvl: 75, weight: 1000, value: [7, 7] }
+    - { tier: 2, ilvl: 66, weight: 1000, value: [6, 6] }
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 5] }
+  mods:
+    - { stat: map.ground.shock, type: FLAT, value: 1 }
+    - { stat: map.ground.patches, type: FLAT, value: "{value}" }   # 每 100 個地圖區塊幾塊
+    - { stat: map.ground.radius, type: FLAT, value: 17 }   # 原作的單位（÷10 = 格）
+    - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%
+    - { stat: map.pack_size, type: FLAT, value: 7 }
 
 # ======== 停用的舊詞綴（不再擲出，舊地圖照常生效）========
 

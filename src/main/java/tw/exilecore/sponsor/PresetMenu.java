@@ -114,10 +114,10 @@ public final class PresetMenu extends Menu {
         final List<String> lines = new ArrayList<>();
         if (kind == Kind.GEAR) {
             final String[] entries = value.split(";", -1);
-            for (int i = 0; i < Math.min(entries.length, PlayerState.JEWELLERY_SLOTS.length); i++) {
+            for (int i = 0; i < Math.min(entries.length, PlayerState.GEAR_SLOTS.length); i++) { // 2026-10-26：第 11 格是第三個戒指（舊存檔 10 格）
                 final int eq = entries[i].indexOf('=');
                 if (eq > 0) {
-                    lines.add("<gray>" + PlayerState.JEWELLERY_SLOTS[i].displayName() + "：<white>" + ItemRenderer.escape(entries[i].substring(eq + 1)));
+                    lines.add("<gray>" + PlayerState.GEAR_SLOTS[i].displayName() + "：<white>" + ItemRenderer.escape(entries[i].substring(eq + 1)));
                 }
             }
             if (lines.isEmpty()) {
@@ -180,8 +180,8 @@ public final class PresetMenu extends Menu {
             final String value;
             if (kind == Kind.GEAR) {
                 final List<String> entries = new ArrayList<>();
-                for (int i = 0; i < PlayerState.JEWELLERY_SLOTS.length; i++) {
-                    final org.bukkit.inventory.ItemStack worn = state.jewellery(i);
+                for (int i = 0; i < PlayerState.GEAR_SLOTS.length; i++) {
+                    final org.bukkit.inventory.ItemStack worn = state.jewellery(PlayerState.gearIndex(i));
                     final java.util.Optional<tw.exilecore.item.ItemData> data = worn == null || worn.isEmpty() ? java.util.Optional.empty() : plugin.items().read(worn);
                     entries.add(data.isEmpty() ? "-" : data.get().uuid() + "=" + data.get().name().replace(";", " ").replace("=", " "));
                 }
@@ -242,27 +242,39 @@ public final class PresetMenu extends Menu {
         redraw();
     }
 
+    /** 哪一個戒指欄裝著這件（2026-10-26：第一、第二、第三個戒指欄）；沒有回傳 -1。 */
+    private int ringHolding(final PlayerState state, final String uuid) {
+        for (final int at : new int[] {0, 1, PlayerState.RING3_SLOT}) {
+            if (uuid.equals(uuidOf(state.jewellery(at)))) {
+                return at;
+            }
+        }
+        return -1;
+    }
+
     /** 套用裝備存檔：每一格要的那件在背包裡就換上（戒指兩格互換也算）；不在背包的列出來。 */
     private void applyGear(final PlayerState state, final int index, final String value) {
         final String[] entries = value.split(";", -1);
         final List<String> missing = new ArrayList<>();
         final List<String> problems = new ArrayList<>();
         int changed = 0;
-        for (int i = 0; i < Math.min(entries.length, PlayerState.JEWELLERY_SLOTS.length); i++) {
+        for (int i = 0; i < Math.min(entries.length, PlayerState.GEAR_SLOTS.length); i++) {
             final int eq = entries[i].indexOf('=');
             if (eq <= 0) {
                 continue; // 存的時候這一格是空的：不動
             }
             final String uuid = entries[i].substring(0, eq);
             final String name = entries[i].substring(eq + 1);
-            if (uuid.equals(uuidOf(state.jewellery(i)))) {
+            final int at = PlayerState.gearIndex(i);
+            if (uuid.equals(uuidOf(state.jewellery(at)))) {
                 continue;
             }
-            // 戒指放在另一格：兩格互換
-            if ((i == 0 || i == 1) && uuid.equals(uuidOf(state.jewellery(1 - i)))) {
-                final ItemStack other = state.jewellery(1 - i);
-                state.setJewellery(1 - i, state.jewellery(i));
-                state.setJewellery(i, other);
+            // 戒指放在另一個戒指欄：互換（2026-10-26：含展露之指的第三個戒指欄）
+            final int otherRing = PlayerState.GEAR_SLOTS[i] == tw.exilecore.item.ItemSlot.RING ? ringHolding(state, uuid) : -1;
+            if (otherRing >= 0 && (at != PlayerState.RING3_SLOT || plugin.characters().gear().ringSlotOpen(player))) {
+                final ItemStack other = state.jewellery(otherRing);
+                state.setJewellery(otherRing, state.jewellery(at));
+                state.setJewellery(at, other);
                 plugin.characters().gear().sync(player);
                 plugin.players().sheet(player);
                 changed++;
@@ -278,7 +290,7 @@ public final class PresetMenu extends Menu {
                 missing.add(name);
                 continue;
             }
-            final String problem = plugin.characters().gear().equipAt(player, found, i);
+            final String problem = plugin.characters().gear().equipAt(player, found, at);
             if (problem != null) {
                 problems.add(name + "：" + problem);
             } else {

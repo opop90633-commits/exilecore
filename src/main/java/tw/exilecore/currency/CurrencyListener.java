@@ -20,10 +20,25 @@ public final class CurrencyListener implements Listener {
 
     private final ExileCore plugin;
     private final CurrencyService currencies;
+    /** 2026-10-26 預見鎖：玩家看過結果、等著再點一次確認的那一次（物品代號＋通貨代號＋時間）。 */
+    private final java.util.Map<java.util.UUID, Pending> pending = new java.util.HashMap<>();
+
+    /** 2026-10-26：看過預見結果的那一次。 */
+    private record Pending(String itemUuid, String currencyId, long at) {
+    }
+
+    /** 看過預見結果之後幾毫秒內再點一次才算確認。 */
+    private static final long FORESEE_CONFIRM_MS = 20_000;
 
     public CurrencyListener(final ExileCore plugin, final CurrencyService currencies) {
         this.plugin = plugin;
         this.currencies = currencies;
+    }
+
+    /** 2026-10-27：離線就清掉他看過的預見結果（這次之前一直留在記憶體裡）。 */
+    @EventHandler
+    public void onQuit(final org.bukkit.event.player.PlayerQuitEvent event) {
+        pending.remove(event.getPlayer().getUniqueId());
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -80,6 +95,9 @@ public final class CurrencyListener implements Listener {
             instil(player, event, clicked, target, why);
             return;
         }
+        if (clicked != null && why == null && !confirmForesight(player, clicked, cursor, target)) {
+            return; // 2026-10-26 預見鎖：先看結果，再點一次才用
+        }
         final CurrencyService.Result result = currencies.apply(cursor, target, player.getName(), characterId);
         final CurrencyType used = currencies.read(cursor).orElse(null);
         final boolean chance = used != null && used.operation() == CurrencyOperation.CHANCE;
@@ -92,7 +110,11 @@ public final class CurrencyListener implements Listener {
                 event.getView().setCursor(cursor.getAmount() <= 0 ? ItemStack.empty() : cursor);
                 event.setCurrentItem(target);
                 final CurrencyType fired = currencies.takeFiredOmen();
-                if (chance) {
+                if (chance && fired != null && plugin.items().read(target).map(d -> d.unique() == null).orElse(false)) {
+                    // 2026-10-26（Omen of Chance）：失敗了，但星籤讓物品沒碎
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#c48bff>僥倖石失敗，" + fired.name() + "讓物品沒有碎掉（星籤用掉了）"));
+                    player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.8f);
+                } else if (chance) {
                     player.sendMessage(plugin.text().prefixed("<#af6025>僥倖石成功：").append(target.effectiveName()));
                     if (plugin.loot() != null) {
                         plugin.items().read(target).ifPresent(made -> plugin.loot().broadcastChase(player, made)); // 追逐級：全服廣播
@@ -131,6 +153,48 @@ public final class CurrencyListener implements Listener {
     }
 
     /**
+     * 2026-10-26 照 PoE2 的 Hinekora's Lock：上了預見鎖的物品，拿通貨點它先把結果寫在聊天欄（不用掉通貨），
+     * 20 秒內同一顆通貨再點同一件才真的用（結果跟看到的一樣）。沒上預見鎖、這顆不能用回傳 true（照平常）。
+     *
+     * @return 可以用了（true）；這次只是顯示結果（false）
+     */
+    private boolean confirmForesight(final Player player, final CurrencyType clicked, final ItemStack cursor, final ItemStack target) {
+        final CurrencyService.Preview preview = currencies.foresee(cursor, target);
+        if (preview == null) {
+            return true;
+        }
+        final String uuid = preview.after().uuid();
+        final Pending last = pending.get(player.getUniqueId());
+        final long now = System.currentTimeMillis();
+        if (last != null && last.itemUuid().equals(uuid) && last.currencyId().equals(clicked.id()) && now - last.at() <= FORESEE_CONFIRM_MS) {
+            pending.remove(player.getUniqueId());
+            return true;
+        }
+        pending.values().removeIf(p -> now - p.at() > FORESEE_CONFIRM_MS); // 2026-10-27：過期的順手清掉；這次之前一直留著
+        pending.put(player.getUniqueId(), new Pending(uuid, clicked.id(), now));
+        player.sendMessage(plugin.text().prefixed("<#e0c070>預見：用" + tw.exilecore.item.ItemRenderer.escape(clicked.name()) + "之後——"));
+        if (preview.destroyed()) {
+            player.sendMessage(plugin.text().parse("<red>  物品會碎掉"));
+        } else {
+            final tw.exilecore.item.ItemData after = preview.after();
+            final tw.exilecore.item.UniqueItem unique = after.unique() == null ? null : plugin.items().repository().unique(after.unique());
+            player.sendMessage(plugin.text().parse("<gray>  " + after.rarity().displayName()
+                    + (unique != null ? "：<#af6025>" + tw.exilecore.item.ItemRenderer.escape(unique.name()) : "")
+                    + (after.quality() > 0 ? "<gray>・品質 " + after.quality() + "%" : "")
+                    + (after.corrupted() ? "<#d20000>・已腐化" : "") + (after.sanctified() ? "<#ffe08a>・已聖化" : "")));
+            for (final tw.exilecore.item.RolledAffix rolled : after.affixes()) {
+                final tw.exilecore.item.Affix affix = plugin.items().repository().affix(rolled.id());
+                if (affix != null) {
+                    player.sendMessage(plugin.text().parse("<#8888ff>  " + tw.exilecore.item.ItemRenderer.escape(affix.render(rolled.vars()))));
+                }
+            }
+        }
+        player.sendMessage(plugin.text().parse("<yellow>  20 秒內拿同一顆再點一次才會用（預見鎖會用掉）"));
+        player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8f, 1.4f);
+        return false;
+    }
+
+    /**
      * 2026-10-18：共鳴石點一顆寶石：要是「專屬掉落的輔助寶石」（未切割輔助寶石切不出來的那種）、還沒共鳴。
      * 一疊只處理一顆（共鳴的跟沒共鳴的不能疊在一起），剩下的留在原格。流水帳記 CRAFT。
      */
@@ -142,7 +206,7 @@ public final class CurrencyListener implements Listener {
             why = "只能用在專屬掉落的輔助寶石上";
         } else {
             final tw.exilecore.skill.SupportDefinition support = plugin.skills().config().support(gem.id());
-            if (support == null || support.cuttable()) {
+            if (support == null || support.cuttable() || support.lineage()) { // 2026-10-27 照站長：血脈輔助不能用共鳴石
                 why = "只能用在專屬掉落的輔助寶石上（" + (support == null ? gem.id() : support.name()) + "不是）";
             } else if (gem.resonant()) {
                 why = support.name() + "已經共鳴了";

@@ -47,8 +47,9 @@ public final class PassiveModule implements Module {
         // 注入在項鍊上的核心：物品引擎用這個查核心（樹改版後找不到的核心，項鍊會寫「已失效」）
         tw.exilecore.item.ItemStats.setInstils(id -> {
             final PassiveTree current = this.tree;
-            final PassiveNode node = current == null ? null : current.node(id);
-            if (node == null || node.type() != PassiveNode.Type.NOTABLE) {
+            // 2026-10-27 照 PoE2 0.5：塗油限定的核心（天賦樹上沒有）也查得到（PassiveTree.anointNode）
+            final PassiveNode node = current == null ? null : current.anointNode(id);
+            if (node == null) {
                 return null;
             }
             final java.util.List<tw.exilecore.stats.Modifier> mods = new java.util.ArrayList<>();

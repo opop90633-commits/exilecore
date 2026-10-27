@@ -24,7 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** data/ascendancy.yml：讀得進來、四個試煉一共 8 點、每個職業兩三個昇華職業、分支放得進選單；寫錯的檔會被擋下來。 */
+/**
+ * data/ascendancy.yml：讀得進來、四個試煉一共 8 點、每個職業兩三個昇華職業、昇華天賦照 PoE2 0.5（2026-10-26：會分岔、有環、有「選一個」）；
+ * 寫錯的檔會被擋下來。
+ */
 class AscendancyConfigTest {
 
     static final Path DATA = Path.of("src/main/resources/data");
@@ -90,43 +93,101 @@ class AscendancyConfigTest {
         assertEquals(6, config.trial("star").requires().maps(), "最後一個在終局");
     }
 
+    /**
+     * 2026-10-26 照 PoE2 0.5：每個昇華的天賦全部換成原作的（數量照原作，起點不算）。樹會分岔、Ritualist 與 Invoker 有環、
+     * 銳眼／追獵者／嵌晶／夏烏拉有「選一個」。這次之前是四條分支、每條四個、一共 16 個。
+     */
     @Test
-    void everyClassHasTwoAscendanciesOfEightNotables() {
-        // 2026-10 PoE2 改版：每個昇華一棵小樹（四條分支、最多 16 個天賦），每個天賦 1 點；有的職業三個昇華
-        assertEquals(20, config.ascendancies().size(), "八個職業一共二十個");
+    void everyAscendancyIsThePoe2Tree() {
+        // 2026-10-27 照 PoE2 0.5：補上靈狩者（Spirit Walker）、鳴鐘武師（Martial Artist）、淵井骸主（Abyssal Lich）；這次之前 20 個
+        assertEquals(23, config.ascendancies().size(), "八個職業一共二十三個");
+        assertEquals(3, config.version(), "2026-10-26 換成原作的天賦：第 2 版；同一天做出（尚未生效）的機制：第 3 版（已配的全部退回）");
         for (final String classId : classes) {
             final int count = config.forClass(classId).size();
-            assertTrue(count == 2 || count == 3, classId + " 有 " + count + " 個");
+            assertTrue(count >= 2 && count <= 4, classId + " 有 " + count + " 個");
         }
+        assertEquals(3, config.forClass("huntress").size()); // 2026-10-27：林嵐獵姬、儀祭者、靈狩者
+        assertEquals(3, config.forClass("monk").size()); // 2026-10-27：喚雷者、虛步者、鳴鐘武師
+        assertEquals(4, config.forClass("witch").size()); // 2026-10-27：疫喚者、血術、骸主、淵井骸主
         assertEquals(3, config.forClass("marauder").size());
         assertEquals(2, config.forClass("druid").size());
+        // 原作的天賦數（不含起點）
+        final Map<String, Integer> sizes = Map.ofEntries(Map.entry("ironwarden", 16), Map.entry("berserker", 16), Map.entry("forgesmith", 23),
+                Map.entry("witchhunter", 16), Map.entry("legionnaire", 20), Map.entry("gemling", 19), Map.entry("amazon", 18),
+                Map.entry("ritualist", 18), Map.entry("stararrow", 18), Map.entry("windwalker", 23), Map.entry("invoker", 19),
+                Map.entry("voidwalker", 23), Map.entry("starfire", 20), Map.entry("voidrobe", 16), Map.entry("sandsage", 22),
+                Map.entry("blightcaller", 22), Map.entry("bloodmage", 17), Map.entry("lich", 18), Map.entry("starseer", 16),
+                Map.entry("wildshaman", 16), Map.entry("spiritwalker", 17), Map.entry("martialartist", 16), Map.entry("abysslich", 18));
         for (final AscendancyConfig.Ascendancy ascendancy : config.ascendancies()) {
-            assertTrue(ascendancy.nodes().size() <= 16, ascendancy.id());
-            final List<List<AscendancyConfig.Node>> branches = ascendancy.branches();
-            assertEquals(AscendancyConfig.MAX_BRANCHES, branches.size(), ascendancy.id() + "：四條分支");
-            int placed = 0;
-            for (final List<AscendancyConfig.Node> branch : branches) {
-                assertTrue(branch.size() >= 2 && branch.size() <= AscendancyConfig.MAX_DEPTH, ascendancy.id() + "：每條二到四個");
-                assertNull(branch.get(0).requires());
-                for (int i = 1; i < branch.size(); i++) {
-                    assertEquals(branch.get(i - 1).id(), branch.get(i).requires());
-                }
-                placed += branch.size();
-            }
-            assertEquals(ascendancy.nodes().size(), placed, ascendancy.id() + "：每個天賦都在一條分支上");
+            assertEquals(sizes.get(ascendancy.id()), ascendancy.nodes().size(), ascendancy.id());
+            final List<AscendancyConfig.Cell> layout = ascendancy.layout();
+            assertEquals(ascendancy.nodes().size(), layout.size(), ascendancy.id() + "：每個天賦都畫得出來");
             int cost = 0;
-            for (final AscendancyConfig.Node node : ascendancy.nodes()) {
-                assertEquals(1, node.cost(), node.id() + "：一個 1 點");
+            for (final AscendancyConfig.Cell cell : layout) {
+                final AscendancyConfig.Node node = cell.node();
+                assertTrue(cell.depth() < AscendancyConfig.MAX_DEPTH, node.id());
+                assertEquals(node.option() || !node.unlock().isEmpty() ? 0 : 1, node.cost(),
+                        node.id() + "：一個 1 點（選項、2026-10-27 聖潔一統這種 unlock 的不花點數）");
                 cost += node.cost();
+                assertTrue(node.choice() || !node.lines().isEmpty(), node.id() + "：說明行照原作寫");
+                for (final String line : node.lines()) {
+                    assertFalse(line.matches(".*[A-Za-z]{3,}.*"), node.id() + " 的說明沒寫成中文：" + line);
+                    assertFalse(line.contains("狂怒球") || line.contains("暴擊球") || line.contains("耐力球"), node.id() + "：戰星用我們的名字：" + line);
+                }
+                if (node.stats().isEmpty() && !node.choice() && node.note() == null) { // 鐵匠傑作：效果在後面的胸甲天賦上（補充說明有寫）
+                    assertTrue(node.lines().stream().allMatch(line -> line.endsWith(AscendancyLayout.PENDING)),
+                            node.id() + "：沒有加成的天賦，說明行要寫（尚未生效）");
+                }
                 for (final Modifier modifier : node.stats()) {
                     assertNull(StatLines.problem(modifier), node.id());
-                    final String line = StatLines.describe(modifier);
-                    assertFalse(line.contains(modifier.stat()), node.id() + " 的說明沒寫成中文：" + line);
                 }
             }
             assertTrue(cost > config.totalPoints(), ascendancy.id() + "：8 點配不完（要選）");
             assertFalse(ascendancy.summary().isBlank());
         }
+        // 分岔、環、選一個
+        final AscendancyConfig.Ascendancy ritualist = config.ascendancy("ritualist");
+        assertEquals(3, ritualist.node("unfurled_finger").requires().size(), "展露之指接在三個減少的天賦上");
+        assertEquals(2, config.ascendancy("invoker").node("shall_rage").requires().size(), "怒號接在兩個元素傷害上（環）");
+        final AscendancyConfig.Ascendancy stararrow = config.ascendancy("stararrow");
+        assertTrue(stararrow.node("projectile_proximity").choice());
+        assertEquals(List.of("point_blank", "far_shot"), stararrow.options("projectile_proximity").stream().map(AscendancyConfig.Node::id).toList());
+        assertEquals(List.of("projectile_proximity"), stararrow.node("projectile_speed_2").requires(), "選一個的天賦也能往後接");
+        assertEquals(3, config.ascendancy("gemling").options("implanted_gems").size());
+        assertEquals(3, config.ascendancy("voidwalker").options("lucid_dreaming").size());
+        assertEquals(5, config.ascendancy("windwalker").options("brew_concoction").size());
+        final AscendancyConfig.Ascendancy smith = config.ascendancy("forgesmith");
+        assertEquals(12, smith.children("smiths_masterwork").size(), "鐵匠傑作後面接 12 個胸甲天賦");
+        assertTrue(smith.rows() > AscendancyLayout.VISIBLE_ROWS, "比 4 排高：選單要捲動");
+        // 照原作的數值
+        assertEquals(List.of(new Modifier("life.max", ModType.MORE, 0.15, java.util.Set.of(), "昇華「神秘血脈」")),
+                config.ascendancy("ironwarden").node("mysterious_lineage").stats());
+        assertEquals(List.of("更多 15% 最大生命"), config.ascendancy("ironwarden").node("mysterious_lineage").lines());
+    }
+
+    /** 2026-10-26：分岔的樹怎麼排進選單：第一個後續同一排，其他的往下一排；接在起點的各自從新的一排開始。 */
+    @Test
+    void layoutBranchesDownwards() {
+        final AscendancyConfig.Ascendancy stararrow = config.ascendancy("stararrow");
+        final Map<String, AscendancyConfig.Cell> cells = new java.util.HashMap<>();
+        for (final AscendancyConfig.Cell cell : stararrow.layout()) {
+            cells.put(cell.node().id(), cell);
+        }
+        final AscendancyConfig.Cell choice = cells.get("projectile_proximity");
+        assertEquals(1, choice.depth());
+        assertEquals(choice.row(), cells.get("point_blank").row(), "第一個選項跟它同一排");
+        assertEquals(2, cells.get("point_blank").depth());
+        assertEquals(choice.row() + 1, cells.get("far_shot").row(), "第二個選項往下一排");
+        assertEquals(choice.row() + 2, cells.get("projectile_speed_2").row());
+        assertEquals(3, cells.get("endless_munitions").depth());
+        assertEquals(0, cells.get("mark_effect").row(), "第一個接在起點的在第 0 排");
+        // branches（網頁規劃器）：每一排一串
+        int count = 0;
+        for (final List<AscendancyConfig.Node> row : stararrow.branches()) {
+            assertFalse(row.isEmpty());
+            count += row.size();
+        }
+        assertEquals(stararrow.nodes().size(), count);
     }
 
     @Test
@@ -178,7 +239,8 @@ class AscendancyConfigTest {
                 tw.exilecore.stats.ModType.INCREASED, 0.05, java.util.Set.of(), "test")));
         // 原本混沌術士的兩個昇華職業跟著元素法術給了元素法師，混沌術士是新的；2026-10 兩邊各多一個
         assertEquals(List.of("starfire", "voidrobe", "sandsage"), config.forClass("sorceress").stream().map(AscendancyConfig.Ascendancy::id).toList());
-        assertEquals(List.of("blightcaller", "bloodmage", "lich"), config.forClass("witch").stream().map(AscendancyConfig.Ascendancy::id).toList());
+        // 2026-10-27 照 PoE2 0.5：多了淵井骸主（Abyssal Lich）；這次之前 [blightcaller, bloodmage, lich]
+        assertEquals(List.of("blightcaller", "bloodmage", "lich", "abysslich"), config.forClass("witch").stream().map(AscendancyConfig.Ascendancy::id).toList());
     }
 
     @Test
@@ -217,6 +279,10 @@ class AscendancyConfigTest {
                       c: { name: 丙, requires: a, cost: 0, stats: [] }
                       d: { name: 丁, requires: e, stats: [ { stat: damage, type: INCREASED, value: 10, tags: [holy] } ] }
                       e: { name: 戊, requires: d, stats: [ { stat: damage.gain.holy, value: 10 } ] }
+                      f: { name: 己, requires: [a, nope], choice: true, lines: [選一個] }
+                      g: { name: 庚, option_of: f, cost: 1, lines: [選項] }
+                      h: { name: 辛, option_of: a, lines: [選項] }
+                      i: { name: 壬, requires: g, lines: [接在選項後面] }
                 legacy:
                   marauder:
                     30: [ { stat: resist.fire, type: INCREASED, value: 2 } ]
@@ -245,8 +311,13 @@ class AscendancyConfigTest {
                 "ascendancies.hero.nodes.c.stats：沒有任何加成",
                 "ascendancies.hero.nodes.d.stats：damage：不認得的標籤 holy",
                 "ascendancies.hero.nodes.e.stats：damage.gain.holy：額外附加只能是",
-                "ascendancies.hero.nodes.a：後面接了 2 個天賦",
-                "ascendancies.hero.nodes：有天賦接不到任何一條分支",
+                "ascendancies.hero.nodes.d：接不到起點",
+                "ascendancies.hero.nodes.e：接不到起點",
+                "ascendancies.hero.nodes.f.requires：這個昇華職業沒有天賦 nope",
+                "ascendancies.hero.nodes.f：「選一個」的天賦至少要有兩個選項",
+                "ascendancies.hero.nodes.g.cost：選項不花點數",
+                "ascendancies.hero.nodes.h.option_of：a 不是這個昇華職業「選一個」的天賦",
+                "ascendancies.hero.nodes.i.requires：不能接在選項 g 後面",
                 "legacy.marauder.30.stats：resist.fire 只能用 FLAT",
                 "legacy.marauder.130：等級要在 1 到 " + levelCap + " 之間",
                 "legacy.paladin：沒有職業 paladin")) {

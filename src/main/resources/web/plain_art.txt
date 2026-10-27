@@ -48,6 +48,12 @@ item ring
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....oooooo......
   ...oAAAAAAo.....
@@ -112,6 +118,12 @@ item amulet
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ...o........o...
   ..oMo......oMo..
   ...oMo....oMo...
@@ -176,6 +188,12 @@ item belt
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   ................
@@ -240,6 +258,12 @@ item helmet
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   .......oo.......
   .....ooAAo......
@@ -304,6 +328,12 @@ item body
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....o....oo.....
   ..ooMo..oMMoo...
@@ -368,6 +398,12 @@ item leggings
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ...oooooooooo...
   ..oMMMMMMMMMMo..
@@ -432,6 +468,12 @@ item boots
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ...ooooo........
   ..oMMMMMo.......
@@ -496,6 +538,12 @@ item sword
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ...........ooo..
   ..........oMMAo.
@@ -560,6 +608,12 @@ item axe
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ..........oo....
   ........ooMMo...
   .......oMMmnAo..
@@ -624,6 +678,12 @@ item mace
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   .........oooo...
   ........oMMMMo..
@@ -688,6 +748,12 @@ item hammer
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ........oMoo....
   .......oMmMAo...
   ......oMmmmMAo..
@@ -752,22 +818,28 @@ item sceptre
   B=9e2532
   D=d0545f
   Q=5e1119
-  ................
-  ..........o.....
-  .........oMo....
-  ........oMmMo...
-  .......oMmnAMo..
-  .......oMnAaAMo.
-  ......oWWMMAMo..
-  .....oWwvoMMo...
-  ....oWwvo.oo....
-  ...oWwvo........
-  ..oWwvo.........
-  .oWwvo..........
-  oWwvo...........
-  oWvo............
-  .oo.............
-  ................
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  .......o........
+  ......oJo.......
+  ...o..oJo..o....
+  ..oAooJKo.oAo...
+  ..oJJoJHJoJJo...
+  ..oJHJHKKJHKo...
+  ..oJHHKAAJHHJo..
+  ..oJHHKAbJHHKo..
+  ..oJKHHJJHHKKo..
+  ...ooJKHHKKoo...
+  .....ooJKoo.....
+  ......oJKo......
+  ......oJKo......
+  ......oJKo......
+  .....oJHHJo.....
+  ......oJKo......
 
 item claw
   o=2c3135
@@ -816,6 +888,12 @@ item claw
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   .........o......
   ........oAoo....
@@ -880,6 +958,12 @@ item dagger
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ...........ooo..
   ..........oMMAo.
@@ -944,6 +1028,12 @@ item spear
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ...........ooo..
   ..........oMMMo.
   .........oMmnAo.
@@ -1008,6 +1098,12 @@ item quarterstaff
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ............oo..
   ...........oWWo.
   ..........oWvAo.
@@ -1072,6 +1168,12 @@ item talisman
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   .........oooo...
   ........oMMMMo..
@@ -1136,6 +1238,12 @@ item bow
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   ..oooo..........
@@ -1200,6 +1308,12 @@ item crossbow
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   .....oo.........
   ....oMMo.....o..
@@ -1264,21 +1378,27 @@ item wand
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
-  ................
-  ...........oo...
+  .............o..
+  ...........ooAo.
   ..........oAAo..
   .........oAabo..
   ........oAabo...
-  .......oWAbo....
-  ......oWwWo.....
-  .....oWwvo......
-  ....oWwvo.......
-  ...oWwvo........
-  ..oWwvo.........
-  .oWwvo..........
-  .oWvo...........
-  ..oo............
+  ........oAbo....
+  ........oMo.....
+  .......oWo......
+  ......oWo.......
+  .....oWo........
+  ...ooWo.........
+  ..oMWo..........
+  ..oMMo..........
+  ...oo...........
   ................
 
 item staff
@@ -1328,22 +1448,28 @@ item staff
   B=9e2532
   D=d0545f
   Q=5e1119
-  ................
-  .........ooooo..
-  ........oMMMMMo.
-  ........oMnAMno.
-  .......oMnAaAMMo
-  .......oMnAabMno
-  .......oWMMAMno.
-  ......oWvMnMnno.
-  .....oWwvooooo..
-  ....oWwvo.......
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ...........oo...
+  ..........oAAo..
+  ........ooAaaAo.
+  .......oMAaaaaAo
+  .......oMAaaaabo
+  .......oWMAaabo.
+  ......oWvMMAbo..
+  .....oWwvooMMo..
+  ....oWwvo..oo...
   ...oWwvo........
   ..oWwvo.........
   .oWwvo..........
   oWwvo...........
-  oWvo............
-  .oo.............
+  Wwvo............
+  Wvo.............
+  MMo.............
 
 item shield
   o=2c3135
@@ -1392,6 +1518,12 @@ item shield
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ..ooooooooooo...
   .oMMMMMMMMMMMo..
@@ -1456,6 +1588,12 @@ item buckler
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   .....oooooo.....
   ....oGGGGGGo....
@@ -1520,6 +1658,12 @@ item focus
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   .....oooooo.....
@@ -1584,6 +1728,12 @@ item quiver
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ........ooo.....
   .......oAAAo....
   .......oAabo....
@@ -1648,6 +1798,12 @@ item helmet_str
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   .......oo.......
   ......oRRo......
   .....ooRqo......
@@ -1712,6 +1868,12 @@ item body_str
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   ..oo.ooooo..oo..
@@ -1776,6 +1938,12 @@ item leggings_str
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ...oooooooooo...
   ..oRRRRRRRRRRo..
@@ -1840,6 +2008,12 @@ item boots_str
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ...ooooo........
   ..oRRRRRo.......
@@ -1904,6 +2078,12 @@ item helmet_dex
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   .....oooo.......
   ....oGGGGo......
@@ -1968,6 +2148,12 @@ item body_dex
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....oo...o......
   ...oGGo.oGoo....
@@ -2032,6 +2218,12 @@ item leggings_dex
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....oooooooo....
   ...oGGGAAGGGo...
@@ -2096,6 +2288,12 @@ item boots_dex
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ...ooooooo......
   ..oGGGGGGGo.....
@@ -2160,6 +2358,12 @@ item helmet_int
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   .......o........
   ......oUo.......
   .....oUAUo......
@@ -2224,6 +2428,12 @@ item body_int
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....oooooo......
   ...oUUUUUUo.....
@@ -2288,6 +2498,12 @@ item leggings_int
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   .....oooooo.....
   ....oUUUUUUo....
@@ -2352,6 +2568,12 @@ item boots_int
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   ................
@@ -2416,6 +2638,12 @@ item helmet_str_dex
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   .......oo.......
   ......oRGo......
   .....ooRGo......
@@ -2480,6 +2708,12 @@ item body_str_dex
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   ..oo.ooooo..oo..
@@ -2544,6 +2778,12 @@ item leggings_str_dex
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ...oooooooooo...
   ..oRRRRRGGGGGo..
@@ -2608,6 +2848,12 @@ item boots_str_dex
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ...ooooo........
   ..oRRRRRo.......
@@ -2672,6 +2918,12 @@ item helmet_str_int
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   .......oo.......
   ......oRUo......
   .....ooRUo......
@@ -2736,6 +2988,12 @@ item body_str_int
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   ..oo.ooooo..oo..
@@ -2800,6 +3058,12 @@ item leggings_str_int
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ...oooooooooo...
   ..oRRRRRUUUUUo..
@@ -2864,6 +3128,12 @@ item boots_str_int
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ...ooooo........
   ..oRRRRRo.......
@@ -2928,6 +3198,12 @@ item helmet_dex_int
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   .....oooo.......
   ....oGGGUo......
@@ -2992,6 +3268,12 @@ item body_dex_int
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....oo...o......
   ...oGGo.oUoo....
@@ -3056,6 +3338,12 @@ item leggings_dex_int
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....oooooooo....
   ...oGGGAAUUUo...
@@ -3120,6 +3408,12 @@ item boots_dex_int
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ...ooooooo......
   ..oGGGGGUUo.....
@@ -3184,6 +3478,12 @@ item quiver_phys
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ........ooo.....
   .......oCCCo....
   .......oCcdo....
@@ -3248,6 +3548,12 @@ item quiver_fire
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ........ooo.....
   .......oFFFo....
   .......oFfeo....
@@ -3312,6 +3618,12 @@ item quiver_crit
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ........ooo.....
   .......oXXXo....
   .......oXxEo....
@@ -3376,6 +3688,12 @@ item quiver_speed
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ........ooo.....
   .......oGGGo....
   .......oGgho....
@@ -3440,6 +3758,12 @@ item quiver_pierce
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ........ooo.....
   .......oUUUo....
   .......oUuto....
@@ -3504,6 +3828,12 @@ item quiver_life
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ........ooo.....
   .......oLLLo....
   .......oLlko....
@@ -3568,6 +3898,12 @@ item quiver_poison
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ........ooo.....
   .......oPPPo....
   .......oPpyo....
@@ -3632,6 +3968,12 @@ item quiver_bleed
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ........ooo.....
   .......oDDDo....
   .......oDBQo....
@@ -3696,6 +4038,12 @@ item quiver_accuracy
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ........ooo.....
   .......oAAAo....
   .......oAabo....
@@ -3760,6 +4108,12 @@ item quiver_stun
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ........ooo.....
   .......oJJJo....
   .......oJHKo....
@@ -3824,6 +4178,12 @@ item quiver_projspeed
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ........ooo.....
   .......oIIIo....
   .......oIijo....
@@ -3888,6 +4248,12 @@ item belt_life
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   ................
@@ -3952,6 +4318,12 @@ item belt_es
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   ................
@@ -4016,6 +4388,12 @@ item belt_flask_life
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   .......oo.......
@@ -4080,6 +4458,12 @@ item belt_flask_mana
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   .......oo.......
@@ -4144,6 +4528,12 @@ item belt_armour
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   ................
@@ -4208,6 +4598,12 @@ item belt_cast
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   ................
@@ -4272,6 +4668,12 @@ item belt_str
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   ................
@@ -4336,6 +4738,12 @@ item belt_lightning
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   ................
@@ -4400,6 +4808,12 @@ item belt_stun
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ................
   ....oooooooo....
@@ -4464,6 +4878,12 @@ item amulet_str
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ...o........o...
   ..oMo......oMo..
   ...oMo....oMo...
@@ -4528,6 +4948,12 @@ item amulet_dex
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ...o........o...
   ..oMo......oMo..
   ...oMo....oMo...
@@ -4592,6 +5018,12 @@ item amulet_int
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ...o........o...
   ..oMo......oMo..
   ...oMo....oMo...
@@ -4656,6 +5088,12 @@ item amulet_attr_all
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ...o........o...
   ..oMo......oMo..
   ...oMo....oMo...
@@ -4720,6 +5158,12 @@ item amulet_res_all
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ...o........o...
   ..oMo......oMo..
   ...oMo....oMo...
@@ -4784,6 +5228,12 @@ item amulet_life
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ...o........o...
   ..oMo......oMo..
   ...oMo....oMo...
@@ -4848,6 +5298,12 @@ item amulet_mana
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ...o........o...
   ..oMo......oMo..
   ...oMo....oMo...
@@ -4912,6 +5368,12 @@ item amulet_es
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ...o........o...
   ..oMo......oMo..
   ...oMo....oMo...
@@ -4976,6 +5438,12 @@ item amulet_spirit
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ...o........o...
   ..oMo......oMo..
   ...oMo....oMo...
@@ -5040,6 +5508,12 @@ item amulet_rarity
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ...o........o...
   ..oMo......oMo..
   ...oMo....oMo...
@@ -5104,6 +5578,12 @@ item ring_phys
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ......oooo......
   .....oCCCCo.....
@@ -5168,6 +5648,12 @@ item ring_life
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ......oooo......
   .....oLLLLo.....
@@ -5232,6 +5718,12 @@ item ring_mana
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ......oooo......
   .....oAAAAo.....
@@ -5296,6 +5788,12 @@ item ring_accuracy
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ......oooo......
   .....oGGGGo.....
@@ -5360,6 +5858,12 @@ item ring_cast
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ......oooo......
   .....oXXXXo.....
@@ -5424,6 +5928,12 @@ item ring_rarity
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ......oooo......
   .....oJJJJo.....
@@ -5488,6 +5998,12 @@ item ring_chaosdmg
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ......oooo......
   .....oPPPPo.....
@@ -5552,6 +6068,12 @@ item ring_fire
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....oooooo......
   ...oFFFFFFo.....
@@ -5616,6 +6138,12 @@ item ring_cold
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....oooooo......
   ...oIIIIIIo.....
@@ -5680,6 +6208,12 @@ item ring_lightning
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....oooooo......
   ...oZZZZZZo.....
@@ -5744,6 +6278,12 @@ item ring_chaos
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....oooooo......
   ...oPPPPPPo.....
@@ -5808,6 +6348,12 @@ item ring_fire_cold
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....oooooo......
   ...oFFFFIIo.....
@@ -5872,6 +6418,12 @@ item ring_fire_lightning
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....oooooo......
   ...oFFFFZZo.....
@@ -5936,6 +6488,12 @@ item ring_cold_lightning
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....oooooo......
   ...oIIIIZZo.....
@@ -6000,6 +6558,12 @@ item ring_all
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ....oooooo......
   ...oFFFIIIo.....
@@ -6064,6 +6628,12 @@ item shield_str
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ..oooooooooooo..
   .oRRRRRRRRRRRRo.
@@ -6128,6 +6698,12 @@ item shield_str_dex
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ..oooooooooooo..
   .oRRRRRRGGGGGGo.
@@ -6192,6 +6768,12 @@ item shield_str_int
   B=9e2532
   D=d0545f
   Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
   ................
   ..oooooooooooo..
   .oRRRRRRUUUUUUo.
@@ -6208,3 +6790,3293 @@ item shield_str_int
   ......oRo.......
   .......o........
   ................
+
+item cwand_01
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  ..........oo....
+  .........oPPo...
+  .........oPyo...
+  .........oYooo..
+  .........oYoPPo.
+  ........oYoYPyo.
+  ........oYYooo..
+  .......oYoo.....
+  ......oYo.......
+  .....oYo........
+  ...ooYo.........
+  ..oMYo..........
+  ..oMMo..........
+  ...oo...........
+  ................
+
+item cwand_02
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  ................
+  ............oo..
+  ..........ooXXo.
+  .........oOOoo..
+  ........oONNOo..
+  ........oONNSo..
+  ........oOSSo...
+  .......oOooo....
+  ......oOo.......
+  .....oOo........
+  ...ooOo.........
+  ..oMOo..........
+  ..oMMo..........
+  ...oo...........
+  ................
+
+item cwand_03
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  .............o..
+  ...........ooUo.
+  ..........oUUo..
+  .........oUuto..
+  ........oUuto...
+  ........oUto....
+  ........oMo.....
+  .......oMo......
+  ......oMo.......
+  .....oMo........
+  ...ooMo.........
+  ..oMMo..........
+  ..oMno..........
+  ...oo...........
+  ................
+
+item cwand_04
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  ................
+  ................
+  ..........ooo...
+  .........oAAAo..
+  .........oAabo..
+  .........oAbbo..
+  ........oWooo...
+  .......oWo......
+  ......oWo.......
+  .....oWo........
+  ...ooWo.........
+  ..oMWo..........
+  ..oMMo..........
+  ...oo...........
+  ................
+
+item cwand_05
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  .............o..
+  ...........ooFo.
+  ..........oFFo..
+  .........oFfeo..
+  ........oFfeo...
+  ........oFeo....
+  ........oMo.....
+  .......oOo......
+  ......oOo.......
+  .....oOo........
+  ...ooOo.........
+  ..oMOo..........
+  ..oMMo..........
+  ...oo...........
+  ................
+
+item cwand_06
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  ................
+  .........o......
+  ........oMooo...
+  ........oMoZZo..
+  ........oMoZso..
+  ........oMoooo..
+  ........oMMMMMo.
+  .......oMooooo..
+  ......oMo.......
+  .....oMo........
+  ...ooMo.........
+  ..oMMo..........
+  ..oMno..........
+  ...oo...........
+  ................
+
+item cwand_07
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  ................
+  ................
+  ..........ooo...
+  .........oGGGo..
+  .........oGgho..
+  .........oGhho..
+  ........oYooo...
+  .......oYo......
+  ......oYo.......
+  .....oYo........
+  ...ooYo.........
+  ..oMYo..........
+  ..oMMo..........
+  ...oo...........
+  ................
+
+item cwand_08
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  ..............o.
+  .............oDo
+  ..........oooDo.
+  .........oDDDo..
+  ........oDBQo...
+  ........oDQo....
+  ........oOo.....
+  .......oOo......
+  ......oOo.......
+  .....oOo........
+  ...ooOo.........
+  ..oMOo..........
+  ..oMMo..........
+  ...oo...........
+  ................
+
+item cwand_09
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  .............o..
+  ...........ooIo.
+  ..........oIIo..
+  .........oIijo..
+  ........oIijo...
+  ........oIjo....
+  ........oMo.....
+  .......oMo......
+  ......oMo.......
+  .....oMo........
+  ...ooMo.........
+  ..oMMo..........
+  ..oMno..........
+  ...oo...........
+  ................
+
+item cwand_10
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  ............oo..
+  ...........oPPo.
+  ..........ooPyo.
+  .........oMoMo..
+  ..........oMo...
+  .........oMoMo..
+  ........oMo.o...
+  .......oYo......
+  ......oYo.......
+  .....oYo........
+  ...ooYo.........
+  ..oMYo..........
+  ..oMMo..........
+  ...oo...........
+  ................
+
+item cwand_11
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  ..............o.
+  .............oXo
+  ..........oooXo.
+  .........oXXXo..
+  ........oXxEo...
+  ........oXEo....
+  ........oJo.....
+  .......oJo......
+  ......oJo.......
+  .....oJo........
+  ...ooJo.........
+  ..oMJo..........
+  ..oMMo..........
+  ...oo...........
+  ................
+
+item cwand_12
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  ................
+  ................
+  ..........ooo...
+  .........oPPPo..
+  .........oPpyo..
+  .........oPyyo..
+  ........oYooo...
+  .......oYo......
+  ......oYo.......
+  .....oYo........
+  ...ooYo.........
+  ..oMYo..........
+  ..oMMo..........
+  ...oo...........
+  ................
+
+item cwand_13
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  .............o..
+  ...........ooZo.
+  ..........oZZo..
+  .........oZzso..
+  ........oZzso...
+  ........oZso....
+  ........oWo.....
+  .......oZo......
+  ......oZo.......
+  .....oZo........
+  ...ooZo.........
+  ..oMWo..........
+  ..oMMo..........
+  ...oo...........
+  ................
+
+item cwand_14
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  .............o..
+  ...........ooRo.
+  ..........oRRo..
+  .........oRrqo..
+  ........oRrqo...
+  ........oRqo....
+  ......o.oMo.....
+  .....oMoMo......
+  ......oMo.......
+  .....oMoMo......
+  ...ooMo.o.......
+  ..oMMo..........
+  ..oMno..........
+  ...oo...........
+  ................
+
+item cstaff_01
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ...........oo...
+  ..........oFFo..
+  ........ooFffFo.
+  .......oMFffffFo
+  .......oMFffffeo
+  .......oYMFffeo.
+  ......oYTMMFeo..
+  .....oYVTooMMo..
+  ....oYVTo..oo...
+  ...oYVTo........
+  ..oYVTo.........
+  .oYVTo..........
+  oYVTo...........
+  YVTo............
+  YTo.............
+  MMo.............
+
+item cstaff_02
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ..........oooo..
+  .........oMMMMo.
+  ........oMooooMo
+  ........oMoIIoMo
+  ........oMMIjoMo
+  .......oMmnoooMo
+  ......oMmnnMMMo.
+  .....oMmnooooo..
+  ....oMmno.......
+  ...oMmno........
+  ..oMmno.........
+  .oMmno..........
+  oMmno...........
+  Mmno............
+  Mno.............
+  Mno.............
+
+item cstaff_03
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  .........o......
+  ........oMoooo..
+  ........oMoZZZo.
+  ........oMMZzso.
+  ........oWMZsso.
+  .......oWvMMMoo.
+  ......oWwvooMMMo
+  .....oWwvo..ooo.
+  ....oWwvo.......
+  ...oWwvo........
+  ..oWwvo.........
+  .oWwvo..........
+  oWwvo...........
+  Wwvo............
+  Wvo.............
+  MMo.............
+
+item cstaff_04
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ........oGooo...
+  .......oGgGGGo..
+  .......oGhhhhoo.
+  ........oWoooGGo
+  ........oWWoWGhG
+  .......oWwvWoooo
+  ......oWwvoo....
+  .....oWwvo......
+  ....oWwvo.......
+  ...oWwvo........
+  ..oWwvo.........
+  .oWwvo..........
+  oWwvo...........
+  Wwvo............
+  Wvo.............
+  MMo.............
+
+item cstaff_05
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ........oFooo...
+  .......oFfFFFo..
+  .......oFeeeeoo.
+  ........oWoooFFo
+  ........oWWoWFeF
+  .......oWwvWoooo
+  ......oWwvoo....
+  .....oWwvo......
+  ....oWwvo.......
+  ...oWwvo........
+  ..oWwvo.........
+  .oWwvo..........
+  oWwvo...........
+  Wwvo............
+  Wvo.............
+  MMo.............
+
+item cstaff_06
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ............oo..
+  ...........oWWo.
+  ..........oWwvo.
+  .........oWwvo..
+  ........oWwvJJo.
+  .......oWwvJHHJo
+  ......oWwvoJHHKo
+  .....oWwvooJKKKo
+  ....oWwvo..oooo.
+  ...oWwvo....oMo.
+  ..oWwvo......o..
+  .oWwvo..........
+  oWwvo...........
+  Wwvo............
+  Wvo.............
+  MMo.............
+
+item cstaff_07
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  .........oYYYYYo
+  .........oYVTTTo
+  ........oYVTooYo
+  ........oYVTooYo
+  ........oYTooPPo
+  .......oYVToPppP
+  ......oYVTooPppy
+  .....oYVTo..oPyo
+  ....oYVTo....oo.
+  ...oYVTo........
+  ..oYVTo.........
+  .oYVTo..........
+  oYVTo...........
+  YVTo............
+  YTo.............
+  MMo.............
+
+item cstaff_08
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ..........oDDoo.
+  .........oDBQDDo
+  ........oDQQoDQo
+  .........ooo.oDo
+  ........oYMMo.o.
+  .......oYTMno...
+  ......oYVToo....
+  .....oYVTo......
+  ....oYVTo.......
+  ...oYVTo........
+  ..oYVTo.........
+  .oYVTo..........
+  oYVTo...........
+  YVTo............
+  YTo.............
+  MMo.............
+
+item cstaff_09
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ............oIo.
+  ..........ooIiIo
+  .........oIIijo.
+  ........oIiiijo.
+  .......oIiiijo..
+  .......oIiijo...
+  ......oMMIijo...
+  .....oMmnoIo....
+  ....oMmno.o.....
+  ...oMmno........
+  ..oMmno.........
+  .oMmno..........
+  oMmno...........
+  Mmno............
+  Mno.............
+  Mno.............
+
+item cstaff_10
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ...........oo...
+  ..........oZZo..
+  ........ooZzzZo.
+  .......oMZzzzzZo
+  .......oMZzzzzso
+  .......oOMZzzso.
+  ......oOSMMZso..
+  .....oONSooMMo..
+  ....oONSo..oo...
+  ...oONSo........
+  ..oONSo.........
+  .oONSo..........
+  oONSo...........
+  ONSo............
+  OSo.............
+  MMo.............
+
+item cstaff_11
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ..........oooo..
+  .........oMMMMo.
+  ........oMooooMo
+  ........oMoXXoMo
+  ........oMJXEoMo
+  .......oJMJoooMo
+  ......oJHJMMMMo.
+  .....oJHKooooo..
+  ....oJHKo.......
+  ...oJHKo........
+  ..oJHKo.........
+  .oJHKo..........
+  oJHKo...........
+  JHKo............
+  JKo.............
+  MMo.............
+
+item cstaff_12
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ...........oo...
+  ..........oPPo..
+  ........ooPppPo.
+  .......oMPppppPo
+  .......oMPppppyo
+  .......oYMPppyo.
+  ......oYTMMPyo..
+  .....oYVTooMMo..
+  ....oYVTo..oo...
+  ...oYVTo........
+  ..oYVTo.........
+  .oYVTo..........
+  oYVTo...........
+  YVTo............
+  YTo.............
+  MMo.............
+
+item cstaff_13
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  .........o......
+  ........oMoooo..
+  ........oMoDDDo.
+  ........oMMDBQo.
+  ........oOMDQQo.
+  .......oOSMMMoo.
+  ......oONSooMMMo
+  .....oONSo..ooo.
+  ....oONSo.......
+  ...oONSo........
+  ..oONSo.........
+  .oONSo..........
+  oONSo...........
+  ONSo............
+  OSo.............
+  MMo.............
+
+item cstaff_14
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ...........oo...
+  ..........oIIo..
+  ........ooIiiIo.
+  .......oMIiiiiIo
+  .......oMIiiiijo
+  .......oMMIiijo.
+  ......oMmnMIjo..
+  .....oMmnooMMo..
+  ....oMmno..oo...
+  ...oMmno........
+  ..oMmno.........
+  .oMmno..........
+  oMmno...........
+  Mmno............
+  Mno.............
+  Mno.............
+
+item cstaff_15
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ..........oooo..
+  .........oMMMMo.
+  ........oMooooMo
+  ........oMoRRoMo
+  ........oMWRqoMo
+  .......oWMWoooMo
+  ......oWwWMMMMo.
+  .....oWwvooooo..
+  ....oWwvo.......
+  ...oWwvo........
+  ..oWwvo.........
+  .oWwvo..........
+  oWwvo...........
+  Wwvo............
+  Wvo.............
+  MMo.............
+
+item cstaff_16
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  .........oYYYYYo
+  .........oYVTTTo
+  ........oYVTooYo
+  ........oYVTooYo
+  ........oYTooUUo
+  .......oYVToUuuU
+  ......oYVTooUuut
+  .....oYVTo..oUto
+  ....oYVTo....oo.
+  ...oYVTo........
+  ..oYVTo.........
+  .oYVTo..........
+  oYVTo...........
+  YVTo............
+  YTo.............
+  MMo.............
+
+item cstaff_17
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ..........oooo..
+  .........oMMMMo.
+  ........oMAAAAMo
+  ........oMAaabMo
+  ........oMAaabMo
+  .......oMnAbbbMo
+  ......oMmnMMMMo.
+  .....oMmnooooo..
+  ....oMmno.......
+  ...oMmno........
+  ..oMmno.........
+  .oMmno..........
+  oMmno...........
+  Mmno............
+  Mno.............
+  Mno.............
+
+item csceptre_01
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  .......oo.......
+  .....ooOOoo.....
+  ....oOONNOOo....
+  ....oOSNNSSo....
+  ...oOooOSooOo...
+  ...oOOOSSOOSo...
+  ....oOSAAOSo....
+  ....oONOONSo....
+  ....oOSooOSo....
+  ....oMMMMMMo....
+  .....ooMnoo.....
+  ......oMno......
+  ......oMno......
+  ......oMno......
+  .....oMmmMo.....
+  ......oMno......
+
+item csceptre_02
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  ...oooooooooo...
+  ..oMMMMMMMMMMo..
+  ..oMnmmnnmmnno..
+  ...ooMnAAMnoo...
+  ..oMMmnAbMmMMo..
+  ..oMnmnAbMmnno..
+  ...ooMmMMmnoo...
+  ....oMmmmmno....
+  ....oMnmmnno....
+  .....ooMnoo.....
+  ......oMno......
+  ......oMno......
+  ......oMno......
+  .....oMmmMo.....
+  ......oMno......
+
+item csceptre_03
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ...oOo....oOo...
+  ...oOOo..oOSo...
+  ..o.oOo..oOo.o..
+  .oOooOOooOSooOo.
+  ..oOooMMMMooOo..
+  ...oOoMRRMoOo...
+  ....oMnRqMMo....
+  ..ooooMRqMoooo..
+  .oOOOOMMMnOOOOo.
+  ..oooMnmmnMooo..
+  .....ooMnoo.....
+  ......oMno......
+  ......oMno......
+  ......oMno......
+  .....oMmmMo.....
+  ......oMno......
+
+item csceptre_04
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ......oMMo......
+  .....oMmmMo.....
+  ......oMno......
+  .....oPPPPo.....
+  ....oPppppPo....
+  ....oPppppyo....
+  ....oPppppyo....
+  ....oPyyyyyo....
+  .....oMMMMo.....
+  ....oMnmmnMo....
+  .....ooMnoo.....
+  ......oMno......
+  ......oMno......
+  ......oMno......
+  .....oMmmMo.....
+  ......oMno......
+
+item csceptre_05
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ......oCCo......
+  .....oCccCo.....
+  ......oCdo......
+  .....oRRRRo.....
+  ....oRrrrrRo....
+  ....oRrrrrqo....
+  ....oRrrrrqo....
+  ....oRqqqqqo....
+  .....oCCCCo.....
+  ....oCdccdCo....
+  .....ooCdoo.....
+  ......oCdo......
+  ......oCdo......
+  ......oCdo......
+  .....oCccCo.....
+  ......oCdo......
+
+item csceptre_06
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ......oJo.......
+  .....oJHJo......
+  ....oJHHHJo.....
+  ...oJHHHHHJo....
+  ..oJHHKKKKHJo...
+  ...oJKFFFFJKo...
+  ...oJKFffeJKo...
+  ...oJKFeeeJKo...
+  ...oJHJJJJHKo...
+  ....oJKHHKKo....
+  .....ooJKoo.....
+  ......oJKo......
+  ......oJKo......
+  ......oJKo......
+  .....oJHHJo.....
+  ......oJKo......
+
+item csceptre_07
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ......oJo.......
+  .....oJHJo......
+  ....oJHHHJo.....
+  ...oJHHHHHJo....
+  ..oJHHKKKKHJo...
+  ...oJKIIIIJKo...
+  ...oJKIiijJKo...
+  ...oJKIjjjJKo...
+  ...oJHJJJJHKo...
+  ....oJKHHKKo....
+  .....ooJKoo.....
+  ......oJKo......
+  ......oJKo......
+  ......oJKo......
+  .....oJHHJo.....
+  ......oJKo......
+
+item csceptre_08
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ......oJo.......
+  .....oJHJo......
+  ....oJHHHJo.....
+  ...oJHHHHHJo....
+  ..oJHHKKKKHJo...
+  ...oJKZZZZJKo...
+  ...oJKZzzsJKo...
+  ...oJKZsssJKo...
+  ...oJHJJJJHKo...
+  ....oJKHHKKo....
+  .....ooJKoo.....
+  ......oJKo......
+  ......oJKo......
+  ......oJKo......
+  .....oJHHJo.....
+  ......oJKo......
+
+item csceptre_09
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ......oJo.......
+  .....oJHJo......
+  ....oJHHHJo.....
+  ...oJHHHHHJo....
+  ..oJHHKKKKHJo...
+  ...oJKPPPPJKo...
+  ...oJKPppyJKo...
+  ...oJKPyyyJKo...
+  ...oJHJJJJHKo...
+  ....oJKHHKKo....
+  .....ooJKoo.....
+  ......oJKo......
+  ......oJKo......
+  ......oJKo......
+  .....oJHHJo.....
+  ......oJKo......
+
+item csceptre_10
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ...oOo....oOo...
+  ...oOOo..oOSo...
+  ..o.oOo..oOo.o..
+  .oOooOOooOSooOo.
+  ..oOooMMMMooOo..
+  ...oOoMDDMoOo...
+  ....oMnDQMMo....
+  ..ooooMDQMoooo..
+  .oOOOOMMMnOOOOo.
+  ..oooMnmmnMooo..
+  .....ooMnoo.....
+  ......oMno......
+  ......oMno......
+  ......oMno......
+  .....oMmmMo.....
+  ......oMno......
+
+item csceptre_11
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ......oMMo......
+  .....oMmmMo.....
+  ......oMno......
+  .....oIIIIo.....
+  ....oIiiiiIo....
+  ....oIiiiijo....
+  ....oIiiiijo....
+  ....oIjjjjjo....
+  .....oMMMMo.....
+  ....oMnmmnMo....
+  .....ooMnoo.....
+  ......oMno......
+  ......oMno......
+  ......oMno......
+  .....oMmmMo.....
+  ......oMno......
+
+item csceptre_12
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  .......o........
+  ......oJo.......
+  ...o..oJo..o....
+  ..oXooJKo.oXo...
+  ..oJJoJHJoJJo...
+  ..oJHJHKKJHKo...
+  ..oJHHKXXJHHJo..
+  ..oJHHKXEJHHKo..
+  ..oJKHHJJHHKKo..
+  ...ooJKHHKKoo...
+  .....ooJKoo.....
+  ......oJKo......
+  ......oJKo......
+  ......oJKo......
+  .....oJHHJo.....
+  ......oJKo......
+
+item csceptre_13
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ......oCCo......
+  ......oCdo......
+  .....oCdcCo.....
+  ....oCdGCdCo....
+  ....oGCCdGCo....
+  ...oCCdGCCdCo...
+  ....oCGCGCGo....
+  ....oCCcCcCo....
+  .....oCccdo.....
+  ....oCdccdCo....
+  .....ooCdoo.....
+  ......oCdo......
+  ......oCdo......
+  ......oCdo......
+  .....oCccCo.....
+  ......oCdo......
+
+item csceptre_14
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  .......o........
+  ......oJo.......
+  ...o..oJo..o....
+  ..oAooJKo.oAo...
+  ..oJJoJHJoJJo...
+  ..oJHJHKKJHKo...
+  ..oJHHKAAJHHJo..
+  ..oJHHKAbJHHKo..
+  ..oJKHHJJHHKKo..
+  ...ooJKHHKKoo...
+  .....ooJKoo.....
+  ......oJKo......
+  ......oJKo......
+  ......oJKo......
+  .....oJHHJo.....
+  ......oJKo......
+
+item csceptre_15
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  .......o........
+  ......oJo.......
+  ...o..oJo..o....
+  ..oRooJKo.oRo...
+  ..oJJoJHJoJJo...
+  ..oJHJHKKJHKo...
+  ..oJHHKRRJHHJo..
+  ..oJHHKRqJHHKo..
+  ..oJKHHJJHHKKo..
+  ...ooJKHHKKoo...
+  .....ooJKoo.....
+  ......oJKo......
+  ......oJKo......
+  ......oJKo......
+  .....oJHHJo.....
+  ......oJKo......
+
+item csceptre_16
+  o=2c3135
+  m=cdd3d8
+  M=f4f6f8
+  n=98a1a8
+  a=6fd3dc
+  A=c6f2f5
+  b=3a9fab
+  w=b48c5c
+  W=d8b585
+  v=7c5c37
+  r=d0584c
+  R=f09a8f
+  q=8f3128
+  g=62b25a
+  G=a6dc9e
+  h=3a7a35
+  u=5b8fe0
+  U=a4c3f4
+  t=34609f
+  f=e8553f
+  F=ffa08f
+  e=a12d1d
+  i=5fb4f0
+  I=b8e2fb
+  j=2f78b0
+  z=f2cf3f
+  Z=fff09a
+  s=b38f12
+  p=a55fd8
+  P=d3a8f2
+  y=6c3299
+  c=d08a3e
+  C=f2be82
+  d=8e5520
+  l=ef6f9e
+  L=ffb3cd
+  k=a83c64
+  x=d9ccff
+  X=ffffff
+  E=9a88d6
+  H=e9a52b
+  J=ffd88a
+  K=a36d0f
+  B=9e2532
+  D=d0545f
+  Q=5e1119
+  N=e6dcc0
+  O=fbf6e6
+  S=a89c7c
+  V=6e4a2e
+  Y=957050
+  T=442a18
+  ................
+  ...oooooooooo...
+  ..oMMMMMMMMMMo..
+  ..oMnmmnnmmnno..
+  ...ooMnZZMnoo...
+  ..oMMmnZsMmMMo..
+  ..oMnmnZsMmnno..
+  ...ooMmMMmnoo...
+  ....oMmmmmno....
+  ....oMnmmnno....
+  .....ooMnoo.....
+  ......oMno......
+  ......oMno......
+  ......oMno......
+  .....oMmmMo.....
+  ......oMno......

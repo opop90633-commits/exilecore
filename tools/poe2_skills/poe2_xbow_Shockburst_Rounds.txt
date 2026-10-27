@@ -1,0 +1,50 @@
+Shockburst Rounds (poe2db.tw/us/Shockburst_Rounds) - Tier 11; tags Attack, AoE, Ammunition, Projectile, Lightning, Payoff. (Text paraphrased by WebFetch.)
+Mechanic: Loads a clip of charged bolts that release a damaging pulse when they hit an enemy affected by a Lightning ailment. Using again reloads.
+Ammunition: 20% slower reload; 10-19 bolts per clip (lv1-20); quality +0-4 bolts per clip.
+Projectile: 0 mana; 400% attack speed; attack dmg 10-36%; projectile speed 35 m/s; 40% phys->lightning; quality 0-30% more AoE.
+Pulse: attack dmg 30-109%; 100% phys->lightning; pulse radius 1.8 m.
+Hidden: usable while aiming/moving; -70% move speed, +160%/s accel; 8 recoil buffs, 1 recoil/shot, 300 ms barrage debuff; 1000 ms action queue override; 100 ms turn; 60 deg facing tolerance; NEVER SHOCKS; -100% electrocute.
+History: 0.3.0 pulse dmg ~-15%; 0.1.1 quality bugfix.
+
+Per-level (Bolts loaded per clip; page prints second value "1" alongside):
+level	bolts_per_clip
+1	10
+2	10
+3	11
+4	11
+5	12
+6	12
+7	13
+8	13
+9	14
+10	14
+11	15
+12	15
+13	16
+14	16
+15	17
+16	17
+17	18
+18	18
+19	19
+20	19
+21	20
+22	20
+23	21
+24	21
+25	22
+26	22
+27	23
+28	23
+29	24
+30	24
+31	25
+32	25
+33	26
+34	26
+35	27
+36	27
+37	28
+38	28
+39	29
+40	29

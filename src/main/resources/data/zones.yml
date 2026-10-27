@@ -43,8 +43,8 @@ zones:
       defeat: 溺潮之母沉回海底，淺灘的藍光暗了一些。
       mythic: ExileCore_TideMother
       type: DROWNED
-      life: 3.9          # 2026-10：4.8 → 3.9（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）
-      damage: 1.3
+      life: 3.088   # 2026-10-26 照 PoE2（原作地圖 Boss 250%／250%；這次之前 4.2）
+      damage: 2.5   # 2026-10-26 照 PoE2（原作地圖 Boss 250%／250%；這次之前 1.3）
       scale: 1.8
       mods: [sturdy, frosty]
 
@@ -65,8 +65,8 @@ zones:
       defeat: 蛛網一條條斷開，森林裡的低語停了下來。
       mythic: ExileCore_Broodmother
       type: SPIDER
-      life: 4.8          # 2026-10：9.0 → 4.8（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）
-      damage: 1.3
+      life: 4.412   # 2026-10-26 照 PoE2（原作地圖 Boss 250%／250%；這次之前 6）
+      damage: 2.5   # 2026-10-26 照 PoE2（原作地圖 Boss 250%／250%；這次之前 1.3）
       scale: 2.2
       mods: [swift, deadly]
 
@@ -87,8 +87,8 @@ zones:
       defeat: 督軍的鎧甲裂開，裡面只剩一把燒焦的星骸——他守了這座城三百年。
       mythic: ExileCore_Warlord
       type: VINDICATOR
-      life: 1.8          # 2026-10：4.5 → 1.8（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）
-      damage: 1.4
+      life: 1.912   # 2026-10-26 照 PoE2（原作地圖 Boss 250%／250%；這次之前 2.6）
+      damage: 2.692   # 2026-10-26 照 PoE2（原作地圖 Boss 250%／250%；這次之前 1.4）
       scale: 1.5
       mods: [warlord_plate, fiery, fire_resistant]   # 2026-10-23：鐵甲的改成 +100%、燃焰的不再給火抗：督軍照舊 +300% 護甲、50% 火抗
 
@@ -109,8 +109,8 @@ zones:
       defeat: 巫母化成一灘黑水，沼氣散開了一點。
       mythic: ExileCore_BogWitch
       type: WITCH
-      life: 2.4          # 2026-10：6.6 → 2.4（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）
-      damage: 1.5
+      life: 2.5   # 2026-10-26 照 PoE2（原作地圖 Boss 250%／250%；這次之前 3.4）
+      damage: 2.885   # 2026-10-26 照 PoE2（原作地圖 Boss 250%／250%；這次之前 1.5）
       scale: 1.6
       mods: [resistant, shocking]
 
@@ -131,8 +131,8 @@ zones:
       defeat: 撼地獸倒下，冰層底下透出天穹之心的光。
       mythic: ExileCore_FrostRavager
       type: RAVAGER
-      life: 0.6          # 2026-10：1.5 → 0.6（1–60 級 Boss 太硬，照 /ec balance 的建議調回目標秒數）；劫掠獸本身在 monsters.yml 已經是 4 倍生命
-      damage: 1.3
+      life: 0.662   # 2026-10-26 照 PoE2（原作地圖 Boss 250%／250%；這次之前 0.9）
+      damage: 2.5   # 2026-10-26 照 PoE2（原作地圖 Boss 250%／250%；這次之前 1.3）
       scale: 1.3
       mods: [frosty, sturdy]
 

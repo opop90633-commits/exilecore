@@ -31,20 +31,22 @@ class LevelPaceTest {
     @Test
     void shippedFilesMatch() {
         assertEquals(List.of(), LevelPace.problems(character, monsters::experienceAt));
-        // 每一級要殺的同等級普通怪：1 級 13 隻、10 級 70 隻、60 級約 870 隻、80 級約 2,900 隻
-        assertEquals(13, Math.round(LevelPace.sameLevelKills(character, monsters::experienceAt, 1)));
-        assertEquals(70, Math.round(LevelPace.sameLevelKills(character, monsters::experienceAt, 10)));
-        assertEquals(874, Math.round(LevelPace.sameLevelKills(character, monsters::experienceAt, 60)));
-        assertEquals(2916, Math.round(LevelPace.sameLevelKills(character, monsters::experienceAt, 80)));
+        // 2026-10-27：monsters.yml 的 experience_multiplier 2 → 1（照 PoE2，全服 ×2 是唯一的倍數），不算全服加倍的隻數變 2 倍；
+        //   這次之前 1 級 13 隻、10 級 70 隻、60 級 874 隻、80 級 2,916 隻
+        assertEquals(26, Math.round(LevelPace.sameLevelKills(character, monsters::experienceAt, 1)));
+        assertEquals(140, Math.round(LevelPace.sameLevelKills(character, monsters::experienceAt, 10)));
+        assertEquals(1747, Math.round(LevelPace.sameLevelKills(character, monsters::experienceAt, 60)));
+        assertEquals(5832, Math.round(LevelPace.sameLevelKills(character, monsters::experienceAt, 80)));
         assertEquals(0, LevelPace.sameLevelKills(character, monsters::experienceAt, character.levelCap()), "滿級");
-        assertEquals("60 級升一級要殺 874 隻同等級的普通怪（全服經驗 +100%：實際 437 隻）", LevelPace.summary(character, monsters::experienceAt),
+        assertEquals("60 級升一級要殺 1,747 隻同等級的普通怪（全服經驗 +100%：實際 874 隻）", LevelPace.summary(character, monsters::experienceAt),
                 "出貨的 character.yml 有全服經驗 ×2；上面的檢查不算加倍（看的是兩個檔案搭不搭）");
-        // 高等級在 T16（84 級）打，加上等級差與高等級的減少：90 級約 6,600 隻、99 級約 20 萬隻
-        assertEquals(6622, Math.round(character.experienceToNext(90) / (monsters.experienceAt(84) * character.levelPenalty(90, 84))));
+        // 高等級在 T16（84 級）打，加上等級差與高等級的減少：90 級約 1.3 萬隻、99 級約 40 萬隻（2026-10-27：之前 6,622、約 20 萬，經驗表 ×2 → ×1）
+        assertEquals(13243, Math.round(character.experienceToNext(90) / (monsters.experienceAt(84) * character.levelPenalty(90, 84))));
         final double at99 = character.experienceToNext(99) / (monsters.experienceAt(84) * character.levelPenalty(99, 84));
-        assertTrue(at99 > 190_000 && at99 < 220_000, "99 級：" + at99);
-        // 魔法怪 3 隻、稀有怪 12 隻
-        assertEquals(3.0, monsters.rarity(MonsterRarity.MAGIC).experienceMultiplier(), 1e-9);
+        assertTrue(at99 > 380_000 && at99 < 440_000, "99 級：" + at99);
+        // 2026-10-27 照 PoE2（monster_slain_experience_+% 250／400）：魔法怪 3.5 隻、稀有怪 5 隻；這次之前 3、12
+        assertEquals(3.5, monsters.rarity(MonsterRarity.MAGIC).experienceMultiplier(), 1e-9);
+        assertEquals(5.0, monsters.rarity(MonsterRarity.RARE).experienceMultiplier(), 1e-9);
     }
 
     @Test

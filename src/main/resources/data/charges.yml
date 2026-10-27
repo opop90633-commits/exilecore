@@ -6,13 +6,14 @@
 # 另外每一種都可以「擊中時」獲得（屬性鍵 charge.on_hit.代號：每打中一個敵人擲一次；Boss 戰沒有擊殺也拿得到）：
 #   輔助寶石聚怒／聚銳／聚磐（只對被輔助的技能）、近戰武器／法杖長杖權杖／盾的詞綴、天賦樹的怒星之潮／銳星之芒／磐星之壁；
 #   聚星戰吼直接給三種各一顆。瞬影擊冷卻中按下去會消耗一顆怒星直接放（skills.yml 的 cooldown_bypass）。
-# 每顆球各自倒數（duration 秒）；已經滿了再獲得會刷新最舊那顆的時間。登出或死亡全部消失。
+# 2026-10-27 照 PoE2（poe2db Charges）：同一種的球共用倒數（duration 秒），獲得一顆就把這一種的全部刷新，到期一起消失；
+#   這次之前每顆各自倒數 10 秒，滿了只刷新最舊那顆。登出或死亡全部消失。
 #
 #   name       遊戲裡顯示的名字
 #   symbol     動作列上的代表字（不寫就用名字第一個字）
 #   color      顏色
 #   max        基礎最多幾顆（屬性鍵 charge.max.代號 可以再加：「最大銳星 +1」）
-#   duration   每顆撐幾秒（屬性鍵 charge.duration 可以拉長：「戰星的持續時間增加 x%」）
+#   duration   同一種的球撐幾秒（屬性鍵 charge.duration 可以拉長：「戰星的持續時間增加 x%」）
 #   per_charge 每一顆給的屬性，數值是「一顆」的量（寫法跟詞綴的 mods 一樣，但數字直接寫、不能用 {變數}）；
 #              引擎乘上顆數：3 顆 = 3 倍。可以用的屬性見 data/README.md。
 #              可以不寫或寫 []：這種球本身沒有屬性，只算顆數（給「每顆怒星…」的技能、消耗戰星的技能、條件用）。
@@ -27,7 +28,7 @@ power:
   color: "#ff8fe8"
   trigger: crit
   max: 3
-  duration: 10
+  duration: 15               # 2026-10-27 照 PoE2：15 秒（這次之前 10）
   per_charge: []
 
 frenzy:
@@ -36,7 +37,7 @@ frenzy:
   color: "#8fff8f"
   trigger: kill
   max: 3
-  duration: 10
+  duration: 15               # 2026-10-27 照 PoE2：15 秒（這次之前 10）
   per_charge: []
 
 endurance:
@@ -45,5 +46,5 @@ endurance:
   color: "#ffb86b"
   trigger: hit
   max: 3
-  duration: 10
+  duration: 15               # 2026-10-27 照 PoE2：15 秒（這次之前 10）
   per_charge: []

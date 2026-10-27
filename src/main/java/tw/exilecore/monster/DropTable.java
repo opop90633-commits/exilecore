@@ -443,21 +443,16 @@ public final class DropTable {
     }
 
     /**
-     * 依掉落權重抽一種通貨，稀有度加成讓稀有的通貨比較常出現（2026-10）：
-     * 每種的權重乘（1 + 稀有度 × 稀有程度），稀有程度照權重的對數算——最常見的那種 0（不變），最稀有的那種 1（乘滿）。
-     * 例如稀有度 +100%：最稀有的通貨相對 ×2，中間的 ×1.5 左右，最常見的不變。
+     * 依掉落權重抽一種通貨。2026-10-27 照 PoE2：rarityBonus 不再影響（通貨只吃物品數量）；
+     * 這次之前每種的權重乘（1 + 稀有度 × 稀有程度），稀有度 +100% 時最稀有的通貨相對 ×2。參數留著給舊的呼叫。
      */
     public CurrencyType rollCurrency(final int level, final CurrencyRepository currencies, final RandomGenerator random,
                                      final double rarityBonus) {
         final List<CurrencyType> eligible = new ArrayList<>();
         final List<Double> weights = new ArrayList<>();
-        int max = 0;
-        int min = Integer.MAX_VALUE;
         for (final CurrencyType currency : currencies.all()) {
             if (currency.dropLevel() <= level && currency.dropWeight() > 0) {
                 eligible.add(currency);
-                max = Math.max(max, currency.dropWeight());
-                min = Math.min(min, currency.dropWeight());
             }
         }
         if (eligible.isEmpty()) {
@@ -465,8 +460,9 @@ public final class DropTable {
         }
         double total = 0;
         for (final CurrencyType currency : eligible) {
-            final double weight = currency.dropWeight() * (1 + Math.max(0, rarityBonus) * scarcity(currency.dropWeight(), min, max))
-                    * currencyScale.getOrDefault(currency.id(), 1.0); // 2026-10-22
+            // 2026-10-27 照 PoE2：物品稀有度不改「掉哪一種通貨」（通貨只吃數量）；這次之前權重再乘（1 + 稀有度 × 稀有程度），
+            //   稀有度 +100% 讓最稀有的通貨相對 ×2（高稀有度時權重 1 的通貨約 ×4.5）
+            final double weight = currency.dropWeight() * currencyScale.getOrDefault(currency.id(), 1.0); // 2026-10-22
             weights.add(weight);
             total += weight;
         }

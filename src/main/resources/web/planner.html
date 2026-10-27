@@ -73,6 +73,17 @@
   #tip .type { color: var(--quiet); font-size: 12px; }
   #tip .line { color: var(--text); }
   #tip .action { margin-top: 5px; font-size: 12px; }
+  /* 2026-10-27 照站長：說明裡的名詞畫虛線底線，滑上去（手機點一下）跳出解釋 */
+  #tip.live { pointer-events: auto; }
+  .kw { text-decoration: underline dashed; text-decoration-color: rgba(245, 192, 74, 0.75); text-underline-offset: 3px; cursor: help; }
+  .kw:hover, .kw:focus, .kw.on { color: var(--gold); outline: none; }
+  #kwtip { position: fixed; pointer-events: none; max-width: 260px; background: rgba(14, 17, 32, 0.98); border: 1px solid var(--gold);
+    border-radius: 8px; padding: 7px 10px; line-height: 1.5; font-size: 12.5px; display: none; z-index: 40; color: var(--text);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55); }
+  #kwtip .name { font-weight: 600; font-size: 13px; color: var(--gold); }
+  .asc .card .skl { margin-top: 6px; padding-top: 5px; border-top: 1px dashed var(--line); }
+  .asc .card .skl .sn { color: #7fe0c8; font-weight: 600; }
+  .asc .card .skl .meta { color: var(--quiet); font-size: 12px; }
   #toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--panel-2); border: 1px solid var(--gold);
     color: var(--text); padding: 9px 14px; border-radius: 8px; display: none; z-index: 20; }
   #codebox { width: 100%; margin-top: 8px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; background: var(--bg);
@@ -300,16 +311,17 @@
         <b>屬性點</b>（+5 任一屬性）配了之後有顏色：<span style="color:var(--str)">紅＝力量</span>、<span style="color:var(--dex)">綠＝敏捷</span>、<span style="color:var(--int)">藍＝智慧</span>；
         點已配的屬性點可以改屬性或退掉。沒選的照職業的主屬性，選好的會跟著代碼帶進遊戲。<br>
         <span style="color:#c77dff">六角形</span>是珠寶孔：配了之後<b>點它放珠寶</b>（挑基底、詞綴，或載入角色時帶進來遊戲裡的珠寶），珠寶的效果會算進天賦加總與計算器。
-        滑到珠寶孔會畫出<b>遺時星晶的範圍</b>（基本 2 格、「更大」3 格、「巨大」4 格；放了遺時星晶就畫它實際的範圍），並列出範圍裡有幾個小點、核心。<br>
+        滑到珠寶孔會畫出<b>珠寶的範圍</b>（小 1000、中 1150、大 1300、非常大 1500＝永恆珠寶；放了範圍珠寶就畫它實際的範圍），並列出範圍裡有幾個小點、核心。<br>
         複製代碼後，遊戲裡打 <b>/tree import</b> 貼上，或在天賦總覽按「匯入規劃代碼」。</div>
     </section>
     <section>
       <h2>珠寶孔的範圍</h2>
       <select id="ringMode" aria-label="珠寶孔的範圍怎麼顯示">
-        <option value="0">滑到珠寶孔才顯示（三圈都畫）</option>
-        <option value="2">已配的珠寶孔一直顯示：基本 2 格</option>
-        <option value="3">已配的珠寶孔一直顯示：更大 3 格</option>
-        <option value="4">已配的珠寶孔一直顯示：巨大 4 格</option>
+        <option value="0">滑到珠寶孔才顯示（四圈都畫）</option>
+        <option value="1000">已配的珠寶孔一直顯示：小（1000）</option>
+        <option value="1150">已配的珠寶孔一直顯示：中（1150）</option>
+        <option value="1300">已配的珠寶孔一直顯示：大（1300）</option>
+        <option value="1500">已配的珠寶孔一直顯示：非常大（1500，永恆珠寶）</option>
       </select>
       <div class="hint">遺時星晶放在珠寶孔裡，範圍內<b>已配置</b>的每個小點都多給一次它的詞綴；放了之後範圍一直畫著，滑到範圍內的節點會寫它多給什麼。</div>
     </section>
@@ -336,6 +348,7 @@
 <dialog id="ascDialog" aria-label="昇華預覽"><div class="asc" id="asc"></div></dialog>
 <dialog id="skillDialog" aria-label="技能"><div class="dlg" id="skillDlg"></div></dialog>
 <div id="tip"></div>
+<div id="kwtip" role="tooltip"></div>
 <div id="attrMenu" role="dialog" aria-label="屬性點">
   <div class="ttl" id="attrMenuTitle"></div>
   <div class="row3">
@@ -363,6 +376,8 @@
   let data = null;
   let byId = new Map();
   let byPos = new Map();
+  const adj = new Map();
+  let hasLinks = false;
   let order = [];
   let classId = null;
   let start = null;
@@ -402,8 +417,17 @@
   fetch("tree/data.json", { cache: "no-cache" }).then(r => { checkBuild(r.headers.get("X-Build")); return r.json(); }).then(json => {
     if (json.error) { document.getElementById("points").textContent = json.error; return; }
     data = json;
+    setGlossary(data.glossary); // 2026-10-27：名詞表（虛線底線、滑上去看解釋）
     order = data.nodes;
     for (const node of order) { byId.set(node.id, node); byPos.set(node.x + "," + node.y, node); }
+    // 2026-10-26（PoE2 的樹）：相連照 links（跟遊戲同樣的順序建，自動配路才會挑同一條）
+    hasLinks = order.some(n => n.links && n.links.length);
+    for (const node of order) adj.set(node.id, []);
+    for (const node of order) for (const id of node.links || []) {
+      const other = byId.get(id);
+      if (other) { adj.get(node.id).push(other); adj.get(other.id).push(node); }
+    }
+    for (const node of order) node.base = { name: node.name, lines: node.lines };
     buildClasses();
     buildAscendancyButtons();
     drawStars();
@@ -418,7 +442,11 @@
 
   // ---- 裝備（2026-10）----
   const GEAR_SLOTS = [["ring", "戒指"], ["ring", "戒指"], ["amulet", "項鍊"], ["belt", "腰帶"], ["main_hand", "主手"],
-    ["off_hand", "副手"], ["head", "頭盔"], ["chest", "胸甲"], ["legs", "褲子"], ["feet", "鞋子"]];
+    ["off_hand", "副手"], ["head", "頭盔"], ["chest", "胸甲"], ["legs", "褲子"], ["feet", "鞋子"], ["ring", "第三個戒指"]];
+  // 2026-10-26 照 PoE2：昇華・展露之指「+1 戒指欄位」開第三個戒指欄（GEAR_SLOTS 第 11 格，跟遊戲的 PlayerState.GEAR_SLOTS 同順序）
+  const RING3 = 10;
+  const RING3_NODE = "unfurled_finger";
+  function ring3Open() { try { return !!calc.asc && calc.ascNodes.includes(RING3_NODE); } catch (e) { return false; } }
   const RARITY_NAME = { normal: "普通", magic: "魔法", rare: "稀有", unique: "傳奇" };
   const RARITY_COLOR = { normal: "#e0e0e0", magic: "#8888ff", rare: "#ffff77", unique: "#af6025" };
   const AFFIX_LIMIT = { normal: 0, magic: 1, rare: 3 };
@@ -432,6 +460,12 @@
   let hashHasJewels = false;
   /** 伺服器算出來的珠寶效果（節點代號 → { radius, inRange: Set, lines }）。 */
   let jewelFx = {};
+  // 2026-10-26：永恆珠寶征服的節點（伺服器算：POST tree/timeless，跟遊戲同一套種子雜湊，網頁不自己重寫）
+  //   conquest = { key, socket, legion, legionName, conquerorName, keystone, radius, nodes: { 節點: { name, type, lines, add } } }
+  let conquest = null;
+  let conquestKey = "";
+  let conquestTimer = 0, conquestAbort = null, conquestOff = false;
+  let quietRender = false;
   fetch("tree/items.json", { cache: "no-cache" }).then(r => r.json()).then(json => {
     items = json;
     items.baseById = new Map(json.bases.map(b => [b.id, b]));
@@ -495,7 +529,8 @@
   function gearSuffix() {
     const placed = placedJewels();
     if (!gear.some(Boolean) && !placed.length) return "";
-    const packed = gear.map(packItem);
+    // 2026-10-26：第三個戒指空著就照舊存 10 格（舊連結、遊戲給的珠寶連結都一樣讀得到）
+    const packed = (gear[RING3] ? gear : gear.slice(0, RING3)).map(packItem);
     if (placed.length) packed.push(Object.fromEntries(placed.map(([id, g]) => [id, packItem(g)])));
     return "~" + b64urlEncode(JSON.stringify(packed));
   }
@@ -512,7 +547,8 @@
   }
   function decodeJewels(text) {
     const packed = unpackGear(text);
-    const extra = packed && packed.length > GEAR_SLOTS.length ? packed[GEAR_SLOTS.length] : null;
+    // 珠寶那一格是物件（裝備是陣列或 null）：接在 10 格（舊的、沒有第三個戒指）或 11 格裝備後面
+    const extra = packed ? packed.slice(RING3).find(p => p && typeof p === "object" && !Array.isArray(p)) || null : null;
     const out = {};
     if (extra && typeof extra === "object" && !Array.isArray(extra)) {
       for (const [id, p] of Object.entries(extra)) {
@@ -532,6 +568,13 @@
   function varNames(vars) { return Object.keys(vars || {}); }
   function fmtVar(raw, div) { return div > 1 ? format(raw / div) : String(raw); }
   function fill(text, div, names, values) {
+    // 2026-10-26：{名字:甲|乙|丙} 照值顯示（1 = 甲；跟遊戲的 Affix.choices 一樣，沒有值就列出全部）
+    text = text.replace(/\{([A-Za-z0-9_]+):([^{}]*)\}/g, (m, name, opts) => {
+      const list = opts.split("|");
+      const i = names.indexOf(name);
+      const v = i >= 0 ? Number(values[i]) : NaN;
+      return v >= 1 && v <= list.length ? list[v - 1] : list.join("／");
+    });
     return text.replace(/\{([A-Za-z0-9_]+)(?:\/\d+)?\}/g, (m, name) => {
       const i = names.indexOf(name);
       const v = i >= 0 ? values[i] : undefined;
@@ -587,6 +630,7 @@
     box.replaceChildren();
     GEAR_SLOTS.forEach(([slot, label], i) => {
       const g = gear[i];
+      if (i === RING3 && !g && !ring3Open()) return; // 沒有「+1 戒指欄位」：第三個戒指欄不顯示
       const b = document.createElement("button");
       b.type = "button";
       if (g && items) {
@@ -642,6 +686,8 @@
     return card;
   }
   function showItemTip(g, x, y) {
+    tipFor = "item";
+    tip.classList.remove("live");
     tip.replaceChildren(itemCard(g));
     tip.style.display = "block";
     tip.style.padding = "0";
@@ -695,6 +741,7 @@
   function closeEditor() {
     if (typeof dialog.close === "function") dialog.close(); else dialog.removeAttribute("open");
     editing = null;
+    refreshConquest();
   }
   /** 珠寶孔放珠寶（2026-10-16）：跟裝備用同一個編輯器；index = -1，jewelNode 是孔位。 */
   function openJewelEditor(socket) {
@@ -712,7 +759,7 @@
     if (typeof dialog.showModal === "function") dialog.showModal(); else dialog.setAttribute("open", "");
   }
   function affixLimit(rarity) { return (editing && editing.slot === "jewel" ? JEWEL_LIMIT : AFFIX_LIMIT)[rarity] || 0; }
-  dialog.addEventListener("cancel", () => { editing = null; });
+  dialog.addEventListener("cancel", () => { editing = null; refreshConquest(); });
   function drawEditor() {
     const { index, slot } = editing;
     const g = editing.g;
@@ -752,6 +799,14 @@
           if (r[0] === r[1]) continue;
           const j = varNames(m.vars).indexOf(n);
           const div = (m.div && m.div[n]) || 1;
+          const opts = (m.text.match(new RegExp("\\{" + n + ":([^{}]*)\\}")) || [])[1];
+          if (opts) { // 2026-10-26：{who:甲|乙}（永恆珠寶的征服者）用下拉選單
+            const pick = node("select", { "aria-label": n }, ...opts.split("|").map((o, i) => node("option", { value: String(i + 1), text: o })));
+            pick.value = String((g.uvals[k] && g.uvals[k][j] != null) ? g.uvals[k][j] : r[1]);
+            pick.addEventListener("change", () => { g.uvals[k] = g.uvals[k] || []; g.uvals[k][j] = clamp(Number(pick.value), r[0], r[1]); refreshPreview(); });
+            row.append(pick);
+            continue;
+          }
           const input = node("input", { type: "number", step: div > 1 ? String(1 / div) : "1", min: String(r[0] / div), max: String(r[1] / div),
             value: String(((g.uvals[k] && g.uvals[k][j] != null) ? g.uvals[k][j] : r[1]) / div), "aria-label": n, title: fmtVar(r[0], div) + "–" + fmtVar(r[1], div) });
           input.addEventListener("input", () => {
@@ -839,8 +894,11 @@
         node("span", { cls: "hint", style: "margin:0", text: g.raw ? "（遊戲裡的物品）" : "（0 = 物品等級 82）" })));
     } else {
       const jb = items.baseById.get(g.base);
+      const tl = timelessLegion(g);
       body.append(node("div", { cls: "hint", style: "margin:0", text: (g.raw ? "遊戲裡的珠寶。" : "")
-        + (jb && jb.radius ? "遺時星晶：「範圍內的小天賦也各給」的詞綴，照孔位範圍內已配的小點數量算，最多算 15 個（完成後天賦樹上會畫出範圍）。" : "珠寶的詞綴直接加在角色身上。") }));
+        + (tl ? "永恆珠寶：孔周圍 " + timelessRadius() + " 內的核心換成" + tl.name + "的核心（種子決定哪一個）、基石換成征服者的基石"
+          + (tl.code === 2 ? "、小天賦換成「+5 貢禮」、屬性點多給「+3 貢禮」" : "") + "；改種子、征服者，後面的天賦樹立刻跟著換（伺服器算，跟遊戲一樣），同時只能配一顆。"
+          : jb && jb.radius ? "遺時星晶：「範圍內的小天賦也各給」的詞綴，照孔位範圍內已配的小點數量算，最多算 15 個（完成後天賦樹上會畫出範圍）。" : "珠寶的詞綴直接加在角色身上。") }));
     }
     if (slot === "amulet") body.append(instilSection(g));
     const previewBox = node("div", { id: "itemPreview" });
@@ -939,6 +997,7 @@
   function refreshPreview() {
     const box = document.getElementById("itemPreview");
     if (box && editing) box.replaceChildren(itemCard(editing.g));
+    refreshConquest(); // 2026-10-26：編輯中的永恆珠寶（孔位已配）：天賦樹即時換
   }
   function trimAffixes(g) {
     const keep = [];
@@ -956,6 +1015,7 @@
     try { return decodeURIComponent(raw); } catch (e) { return raw; }
   }
   function neighbours(node) {
+    if (hasLinks) return adj.get(node.id) || [];
     const list = [];
     // 順序跟遊戲一樣（右、左、下、上），自動配路挑的路線才會跟遊戲裡一樣
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
@@ -963,6 +1023,17 @@
       if (n) list.push(n);
     }
     return list;
+  }
+  // 2026-10-26 照站長：觀星專屬的節點（unlock.ascendancy）只有計算器選了那個昇華才顯示、才能自動配路經過；規劃代碼不受影響
+  function hiddenNode(node) {
+    if (!node.unlock || !node.unlock.ascendancy) return false;
+    let asc = "";
+    try { asc = calc.asc || ""; } catch (e) { asc = ""; }
+    return node.unlock.ascendancy !== asc;
+  }
+  /** 要先配某幾個核心其中一個才能配的節點（unlock.nodes），還沒配前置的時候。 */
+  function lockedNode(node) {
+    return !!(node.unlock && node.unlock.nodes && node.unlock.nodes.length && !node.unlock.nodes.some(id => allocated.has(id)));
   }
   const owned = node => node.id === start.id || allocated.has(node.id);
   function canAllocate(node) {
@@ -989,7 +1060,7 @@
     while (queue.length) {
       const cur = queue.shift();
       for (const n of neighbours(cur)) {
-        if (n.type === "start" || seen.has(n.id)) continue;
+        if (n.type === "start" || seen.has(n.id) || hiddenNode(n) || lockedNode(n)) continue;
         seen.add(n.id);
         parent.set(n.id, cur);
         if (n.id === target.id) {
@@ -1024,7 +1095,16 @@
     let binary = "";
     for (let i = 0; i < length; i++) binary += String.fromCharCode(bytes[i]);
     const b64 = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-    return data.code + "." + data.version + "." + classId + "." + b64 + attrSuffix();
+    // 2026-10-26：配得少時寫「第幾個」的間隔（變長整數），前面加 !（跟遊戲的 TreeCode 一樣，兩種取短的）
+    let gaps = "", previous = -1;
+    order.forEach((node, i) => {
+      if (node.type === "start" || !allocated.has(node.id)) return;
+      let gap = i - previous - 1; previous = i;
+      while (gap >= 0x80) { gaps += String.fromCharCode((gap & 0x7f) | 0x80); gap >>>= 7; }
+      gaps += String.fromCharCode(gap);
+    });
+    const sparse = "!" + btoa(gaps).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    return data.code + "." + data.version + "." + classId + "." + (sparse.length < b64.length ? sparse : b64) + attrSuffix();
   }
   /** 屬性點選的屬性：照節點順序，每個已配的屬性點 2 個位元（0 沒選、1 力量、2 敏捷、3 智慧）；都沒選就不接這一段。 */
   function attrSuffix() {
@@ -1049,9 +1129,24 @@
     if ((parts.length !== 4 && parts.length !== 5) || parts[0] !== data.code) return null;
     if (Number(parts[1]) !== data.version) { flash("這是舊版天賦樹的代碼"); return null; }
     if (!data.classes.some(c => c.id === parts[2])) return null;
-    let binary;
-    try { binary = atob(parts[3].replace(/-/g, "+").replace(/_/g, "/")); } catch (e) { return null; }
     const nodes = new Set();
+    let binary;
+    if (parts[3].startsWith("!")) {
+      try { binary = atob(parts[3].slice(1).replace(/-/g, "+").replace(/_/g, "/")); } catch (e) { return null; }
+      let index = -1, value = 0, shift = 0;
+      for (let k = 0; k < binary.length; k++) {
+        const b = binary.charCodeAt(k);
+        value |= (b & 0x7f) << shift;
+        if (b & 0x80) { shift += 7; if (shift > 28) return null; continue; }
+        index += value + 1; value = 0; shift = 0;
+        if (index >= order.length) return null;
+        if (order[index].type !== "start") nodes.add(order[index].id);
+      }
+      if (shift) return null;
+      binary = "";
+    } else {
+      try { binary = atob(parts[3].replace(/-/g, "+").replace(/_/g, "/")); } catch (e) { return null; }
+    }
     for (let i = 0; i < binary.length * 8; i++) {
       if (binary.charCodeAt(i >> 3) & (1 << (i & 7))) {
         if (i >= order.length) return null;
@@ -1087,9 +1182,16 @@
   }
   /** 節點的說明行：屬性點的「+5 任一屬性…」換成現在算的那個屬性。 */
   function linesOf(node) {
-    if (!node.attr) return node.lines;
-    return node.lines.map(l => l.includes("任一屬性") ? "+" + node.attr + " " + ATTR_NAME[attrOf(node)] : l);
+    const base = !node.attr ? node.lines : node.lines.map(l => l.includes("任一屬性") ? "+" + node.attr + " " + ATTR_NAME[attrOf(node)] : l);
+    return withConquest(node, base);
   }
+  /** 2026-10-26：被永恆珠寶征服的節點：換成征服後的說明（屬性點保留原本的、多給的接在後面）。 */
+  function withConquest(node, base) {
+    const c = conqueredOf(node);
+    return c ? (c.add ? base.concat(c.lines) : c.lines) : base;
+  }
+  function conqueredOf(node) { return conquest && conquest.nodes && node ? conquest.nodes[node.id] || null : null; }
+  function nodeName(node) { const c = conqueredOf(node); return c && !c.add ? c.name : node.name; }
   /**
    * 滑過去看到的說明（2026-10）：資料檔的說明是寫給遊戲裡看的（「左鍵切換」「把背包裡的珠寶放進去」），
    * 網頁上做不到的換成這裡的講法。
@@ -1099,7 +1201,7 @@
       return jewels[node.id] && items ? [] : ["配了這一點就能把珠寶放進這個孔（遊戲裡、這裡都可以），珠寶的詞綴直接加在角色身上。"];
     }
     if (node.attr && !allocated.has(node.id)) {
-      return node.lines.map(l => l.includes("任一屬性") ? "+" + node.attr + " 任一屬性（配了之後點它選力量／敏捷／智慧）" : l);
+      return withConquest(node, node.lines.map(l => l.includes("任一屬性") ? "+" + node.attr + " 任一屬性（配了之後點它選力量／敏捷／智慧）" : l));
     }
     return linesOf(node);
   }
@@ -1189,8 +1291,17 @@
       box.appendChild(b);
     }
   }
+  function applyVariants() {
+    // PoE2：女巫、德魯伊、女獵人在某些節點拿到不同的效果
+    for (const node of order) {
+      const v = node.variants && node.variants[classId];
+      node.name = v ? v.name : node.base.name;
+      node.lines = v ? v.lines : node.base.lines;
+    }
+  }
   function setClass(id, recenter) {
     classId = id;
+    applyVariants();
     const info = data.classes.find(c => c.id === id);
     start = byId.get(info.start);
     allocated = new Set();
@@ -1251,8 +1362,8 @@
     for (const branch of a.branches) {
       html += "<div class='branch'>" + branch.map((n, i) => (i ? "<div class='link'></div>" : "") + "<div class='card'><div class='nm' style='color:"
         + escapeHtml(a.color) + "'>" + escapeHtml(n.name) + " <span class='cost'>" + n.cost + " 點</span></div>"
-        + n.lines.map(l => "<div class='ln'>" + escapeHtml(l) + "</div>").join("")
-        + (n.note ? "<div class='note'>" + escapeHtml(n.note) + "</div>" : "") + "</div>").join("") + "</div>";
+        + ((glossSeen = new Set()), n.lines.map(l => "<div class='ln'>" + gloss(l) + "</div>").join(""))
+        + (n.note ? "<div class='note'>" + gloss(n.note) + "</div>" : "") + ascSkillsHtml(n) + "</div>").join("") + "</div>";
     }
     html += "<div class='foot'><span>只能看：昇華在遊戲裡完成試煉後才選，選了不能換。</span><button type='button' id='ascClose'>關閉</button></div>";
     box.innerHTML = html;
@@ -1262,18 +1373,35 @@
     box.scrollTop = 0;
   }
 
+  /** 2026-10-27：昇華天賦賦予的技能預覽（說明、效果、施放時間、冷卻），名詞一樣有底線。 */
+  function ascSkillsHtml(n) {
+    if (!n.skills || !n.skills.length) return "";
+    return n.skills.map(s => {
+      const meta = [];
+      if (s.castTime) meta.push("施放時間 " + format(s.castTime) + " 秒");
+      if (s.attackSpeed) meta.push("攻擊速度 " + s.attackSpeed + "%");
+      if (s.cooldown) meta.push("冷卻 " + format(s.cooldown) + " 秒");
+      return "<div class='skl'><div class='sn'>技能：" + escapeHtml(s.name || s.id) + "</div>"
+        + (s.text ? "<div class='ln'>" + gloss(s.text) + "</div>" : "")
+        + (s.effects || []).map(t => "<div class='ln'>" + gloss(t) + "</div>").join("")
+        + (meta.length ? "<div class='meta'>" + meta.join("　") + "</div>" : "") + "</div>";
+    }).join("");
+  }
+
   // ---- 珠寶孔的範圍（2026-10，遺時星晶）：跟遊戲一樣，距離 ≤ 半徑 + 0.5 格的節點算在範圍內 ----
-  const RING_COLOR = ["#c77dff", "#7fb3ff", "#7fe0c8"];
-  const RING_NAME = ["基本", "更大", "巨大"];
+  const RING_COLOR = ["#c77dff", "#7fb3ff", "#7fe0c8", "#ffd27f"];
+  const RING_NAME = ["小", "中", "大", "非常大"];
+  // 2026-10-26：珠寶半徑照 PoE2 原作座標（px／py）算距離；一格 = 160 單位
+  const UNIT = 160;
+  const pxOf = n => n.px !== undefined ? n.px : n.x * UNIT;
+  const pyOf = n => n.py !== undefined ? n.py : n.y * UNIT;
   let ringMode = 0;
-  function jewelRadii() { return data && data.jewelRadii ? data.jewelRadii : [2, 3, 4]; }
+  function jewelRadii() { return data && data.jewelRadii ? data.jewelRadii : [1000, 1150, 1300, 1500]; }
   function inRadius(socket, radius) {
-    const limit = (radius + 0.5) * (radius + 0.5);
     const out = [];
     for (const n of order) {
       if (n === socket) continue;
-      const dx = n.x - socket.x, dy = n.y - socket.y;
-      if (dx * dx + dy * dy <= limit) out.push(n);
+      if (Math.hypot(pxOf(n) - pxOf(socket), pyOf(n) - pyOf(socket)) <= radius) out.push(n);
     }
     return out;
   }
@@ -1287,12 +1415,12 @@
   }
   function drawRing(socket, index, labelled) {
     const radius = jewelRadii()[index];
-    const r = (radius + 0.5) * SPACING, cx = socket.x * SPACING, cy = socket.y * SPACING;
+    const r = radius / UNIT * SPACING, cx = socket.x * SPACING, cy = socket.y * SPACING;
     el("circle", { cx, cy, r, fill: index === 0 ? "rgba(199,125,255,0.07)" : "none", stroke: RING_COLOR[index], "stroke-width": 2,
       "stroke-dasharray": index === 0 ? "none" : "8 6", opacity: 0.85, "pointer-events": "none" }, layers.rings);
     if (labelled) {
       const t = el("text", { x: cx, y: cy - r - 6, "text-anchor": "middle", class: "label", "pointer-events": "none" }, layers.rings);
-      t.textContent = RING_NAME[index] + " " + radius + " 格";
+      t.textContent = RING_NAME[index] + " " + radius;
       t.setAttribute("style", "fill:" + RING_COLOR[index]);
     }
   }
@@ -1300,16 +1428,16 @@
   function drawJewelRing(socket, labelled) {
     const g = jewels[socket.id];
     const fx = jewelFx[socket.id];
-    const radius = fx && fx.radius ? fx.radius : jewelRadii()[0];
-    const r = (radius + 0.5) * SPACING, cx = socket.x * SPACING, cy = socket.y * SPACING;
+    const radius = fx && fx.radius ? fx.radius : timelessLegion(g) ? timelessRadius() : jewelRadii()[0];
+    const r = radius / UNIT * SPACING, cx = socket.x * SPACING, cy = socket.y * SPACING;
     el("circle", { cx, cy, r, fill: "rgba(255,210,127,0.06)", stroke: jewelColor(g), "stroke-width": 2.5, opacity: 0.9, "pointer-events": "none" }, layers.rings);
     if (labelled) {
       const t = el("text", { x: cx, y: cy - r - 6, "text-anchor": "middle", class: "label", "pointer-events": "none" }, layers.rings);
-      t.textContent = itemName(g) + " " + format(radius) + " 格";
+      t.textContent = itemName(g) + " " + format(radius);
       t.setAttribute("style", "fill:" + jewelColor(g));
     }
   }
-  function isRadiusJewel(g) { const b = g && items ? items.baseById.get(g.base) : null; return !!(b && b.radius); }
+  function isRadiusJewel(g) { const b = g && items ? items.baseById.get(g.base) : null; return !!(b && b.radius) || !!timelessLegion(g); }
   function jewelColor(g) {
     const id = g ? g.base : "";
     return /ruby/.test(id) ? "#f0544f" : /emerald/.test(id) ? "#5bd65b" : /sapphire/.test(id) ? "#5a8cff" : /diamond/.test(id) ? "#e8e8f2" : "#c77dff";
@@ -1317,8 +1445,89 @@
   function setJewelFx(list) {
     jewelFx = {};
     for (const j of Array.isArray(list) ? list : []) jewelFx[j.node] = { radius: j.radius || 0, inRange: new Set(j.inRange || []), lines: j.lines || [] };
+    if (conquestOff) { // 伺服器沒有 tree/timeless（舊版）：用計算器帶回來的 jewels[].conquest
+      const j = (Array.isArray(list) ? list : []).find(x => x.conquest);
+      const next = j ? Object.assign(j.conquest, { key: conquestKey }) : null;
+      if (JSON.stringify(next && next.nodes) !== JSON.stringify(conquest && conquest.nodes)) { conquest = next; redrawConquest(); return; }
+    }
     drawRings();
     renderTotals();
+  }
+  // ---- 永恆珠寶（2026-10-26）----
+  function timelessLegion(g) {
+    if (!g || g.rarity !== "unique" || !data || !data.timeless) return null;
+    return data.timeless.legions.find(l => l.unique === g.unique) || null;
+  }
+  function timelessRadius() { return data && data.timeless ? data.timeless.radius : 1500; }
+  /** 永恆珠寶的族、種子、征服者（照編輯器填的值；沒填照最大值，跟說明行、送去計算器的一樣）。 */
+  function timelessOf(g) {
+    const legion = timelessLegion(g);
+    const u = legion && items ? items.uniqueById.get(g.unique) : null;
+    if (!u) return null;
+    let seed = 0, who = 1;
+    u.mods.forEach((m, k) => {
+      const names = varNames(m.vars);
+      if (!names.includes("who")) return;
+      const val = n => {
+        const j = names.indexOf(n);
+        if (j < 0) return null;
+        const v = g.uvals && g.uvals[k] ? g.uvals[k][j] : null;
+        return v !== undefined && v !== null && v !== "" ? Number(v) : m.vars[n][1];
+      };
+      seed = val("value"); who = val("who");
+    });
+    return { legion: legion.code, legionInfo: legion, seed, conqueror: who };
+  }
+  /** 生效的永恆珠寶：編輯器裡正在改的（孔位已配）優先，其次已配孔位裡的第一顆（遊戲裡同時只算一顆）。 */
+  function activeTimeless() {
+    if (editing && editing.jewelNode && allocated.has(editing.jewelNode)) {
+      const t = timelessOf(editing.g);
+      if (t) return Object.assign({ socket: editing.jewelNode }, t);
+    }
+    for (const [id, g] of placedJewels()) {
+      if (editing && editing.jewelNode === id) continue; // 正在換成別的珠寶
+      const t = timelessOf(g);
+      if (t) return Object.assign({ socket: id }, t);
+    }
+    return null;
+  }
+  /** 孔位、族、種子、征服者、範圍內已配的節點有變就請伺服器重算（深淵族的貢禮照已配的算）。 */
+  function refreshConquest() {
+    const t = data && items ? activeTimeless() : null;
+    if (!t) { conquestKey = ""; if (conquest) { conquest = null; redrawConquest(); } return; }
+    const socket = byId.get(t.socket);
+    const near = socket ? inRadius(socket, timelessRadius() + 50).filter(n => allocated.has(n.id)).map(n => n.id).sort() : [];
+    const key = [t.socket, t.legion, t.seed, t.conqueror, near.join(",")].join("|");
+    if (key === conquestKey) return;
+    conquestKey = key;
+    clearTimeout(conquestTimer);
+    if (conquestOff) return;
+    conquestTimer = setTimeout(() => {
+      if (conquestAbort) conquestAbort.abort();
+      const ctl = new AbortController();
+      conquestAbort = ctl;
+      fetch("tree/timeless", { method: "POST", headers: { "Content-Type": "application/json" }, signal: ctl.signal,
+        body: JSON.stringify({ socket: t.socket, legion: t.legion, seed: t.seed, conqueror: t.conqueror, nodes: near }) })
+        .then(r => {
+          if (r.status === 404 || r.status === 405) { conquestOff = true; throw new Error("off"); }
+          if (r.status === 429) { const e = new Error("retry"); e.retry = true; throw e; }
+          if (!r.ok) throw new Error("bad");
+          return r.json();
+        })
+        .then(res => { if (ctl !== conquestAbort || key !== conquestKey) return; conquest = Object.assign(res, { key }); redrawConquest(); })
+        .catch(err => {
+          if (err.name === "AbortError") return;
+          if (err.retry && key === conquestKey) { conquestKey = ""; setTimeout(refreshConquest, 800); }
+          else if (conquestOff) scheduleCalc(true);
+        });
+    }, 120);
+  }
+  /** 只重畫天賦樹與加總（不重算計算器）。 */
+  function redrawConquest() {
+    quietRender = true;
+    try { render(); } finally { quietRender = false; }
+    const box = document.getElementById("itemPreview");
+    if (box && editing) box.replaceChildren(itemCard(editing.g));
   }
   /** 範圍內有這一點的遺時星晶（已配的孔位）。 */
   function jewelsCovering(n) {
@@ -1327,9 +1536,8 @@
       if (!isRadiusJewel(g)) continue;
       const socket = byId.get(id);
       const fx = jewelFx[id];
-      const radius = fx && fx.radius ? fx.radius : jewelRadii()[0];
-      const dx = n.x - socket.x, dy = n.y - socket.y;
-      if (n !== socket && dx * dx + dy * dy <= (radius + 0.5) * (radius + 0.5)) out.push([socket, g]);
+      const radius = fx && fx.radius ? fx.radius : timelessLegion(g) ? timelessRadius() : jewelRadii()[0];
+      if (n !== socket && Math.hypot(pxOf(n) - pxOf(socket), pyOf(n) - pyOf(socket)) <= radius) out.push([socket, g]);
     }
     return out;
   }
@@ -1397,13 +1605,16 @@
     if (!data) return;
     for (const k of ["edges", "glows", "nodes", "labels"]) layers[k].replaceChildren();
     for (const node of order) {
+      if (hiddenNode(node)) continue; // 2026-10-26：藏起來的節點與連到它的線不畫
       for (const n of neighbours(node)) {
-        if (n.x < node.x || (n.x === node.x && n.y < node.y)) continue; // 每條線只畫一次
+        if (hiddenNode(n)) continue;
+        if (n.x < node.x || (n.x === node.x && n.y < node.y)) continue; // 每條線只畫一次（PoE2 的樹：兩個節點不會在同一格）
         el("line", { x1: node.x * SPACING, y1: node.y * SPACING, x2: n.x * SPACING, y2: n.y * SPACING,
           stroke: edgeColor(node, n), "stroke-width": 5, "stroke-linecap": "round" }, layers.edges);
       }
     }
     for (const node of order) {
+      if (hiddenNode(node)) continue;
       const state = node.type === "start" && node.id !== start.id ? "locked" : nodeState(node);
       // 屬性點：配了的照選的屬性上色（力量紅、敏捷綠、智慧藍），中間寫一個字（放大才看得到）
       const attr = node.attr && state === "owned" ? attrOf(node) : null;
@@ -1418,14 +1629,19 @@
         const mark = el("text", { x: node.x * SPACING, y: node.y * SPACING + 3.6, "text-anchor": "middle", class: "attrmark" }, g);
         mark.textContent = ATTR_MARK[attr];
       }
+      if (conqueredOf(node)) { // 2026-10-26：被永恆珠寶征服（橘色虛線圈）
+        el("circle", { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 13 : node.type === "keystone" ? 26 : 21, fill: "none",
+          stroke: "#ff9f43", "stroke-width": 2, "stroke-dasharray": "4 3", "pointer-events": "none" }, g);
+      }
       if (search.has(node.id)) {
         el("circle", { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 15 : 26, fill: "none",
           stroke: "#55ffff", "stroke-width": 2.5 }, g);
       }
       if (node.type === "notable" || node.type === "keystone" || node.type === "start" || node.type === "socket") {
         const t = el("text", { x: node.x * SPACING, y: node.y * SPACING + (node.type === "small" ? 22 : 34), "text-anchor": "middle", class: "label" }, layers.labels);
-        t.textContent = node.name;
+        t.textContent = nodeName(node);
         if (node.type === "keystone") t.setAttribute("style", "fill:#ff99ff");
+        if (conqueredOf(node) && !conqueredOf(node).add) t.setAttribute("style", "fill:#ffb36b");
         if (node.type === "socket") t.setAttribute("style", "fill:#c77dff");
       }
     }
@@ -1445,7 +1661,8 @@
       "需要 Lv." + Math.min(levelNoBonus, 999) + (data.bonusPoints ? "（算上 " + data.bonusPoints + " 點首殺獎勵 Lv." + levelBonus + "）" : "");
     renderTotals();
     try { history.replaceState(null, "", "#" + encodeCode() + fullSuffix()); } catch (e) { /* file:// 之類的不能改 */ }
-    scheduleCalc();
+    refreshConquest();
+    if (!quietRender) scheduleCalc();
   }
   /** 天賦（含珠寶）、裝備的加總；計算器算完珠寶的效果也會叫這個（不重算）。 */
   function renderTotals() {
@@ -1551,7 +1768,12 @@
   svg.addEventListener("pointerup", endPointer);
   svg.addEventListener("pointercancel", e => { pointers.delete(e.pointerId); drag = null; pinch = null; });
   // 觸控放開手指也會「離開」：那時不要清掉剛畫好的路線
-  svg.addEventListener("pointerleave", e => { if (e.pointerType !== "touch" && !drag) { setHover(null); hideTip(); } });
+  svg.addEventListener("pointerleave", e => {
+    if (e.pointerType === "touch" || drag) return;
+    if (e.relatedTarget && tip.contains(e.relatedTarget)) return; // 移進提示框（看名詞）
+    if (tip.classList.contains("live") && tipFor === "node") { hoverAt(e); return; } // 一樣留 0.4 秒
+    setHover(null); hideTip();
+  });
 
   function nodeAt(e) {
     const hit = document.elementFromPoint(e.clientX, e.clientY);
@@ -1559,7 +1781,15 @@
     return g ? byId.get(g.dataset.id) : null;
   }
   function hoverAt(e) {
+    if (tipHold) return; // 滑鼠在提示框裡（看名詞）
     const node = nodeAt(e);
+    if (!node && e.pointerType === "mouse" && tipFor === "node" && tip.classList.contains("live") && tip.style.display === "block") {
+      // 2026-10-27：提示框裡有名詞底線：離開節點後留 0.4 秒，滑鼠移得進去
+      if (!tipHideTimer) tipHideTimer = setTimeout(() => { tipHideTimer = 0; if (!tipHold) { setHover(null); hideTip(); } }, 400);
+      return;
+    }
+    clearTimeout(tipHideTimer);
+    tipHideTimer = 0;
     setHover(node);
     if (node) showTip(node, e.clientX, e.clientY); else hideTip();
   }
@@ -1682,6 +1912,7 @@
   }
 
   function showTip(node, x, y) {
+    glossSeen = new Set(); // 同一個提示框裡同一個名詞只標第一次
     const typeName = { small: "小點", notable: "核心", keystone: "基石", start: "起點", socket: "珠寶孔" }[node.type] || node.type;
     let action = "";
     const verb = armed === node.id ? "再點一下" : "點一下";
@@ -1700,18 +1931,22 @@
         : "<span style='color:var(--quiet)'>從起點連不過來</span>";
       if (path.length > 1) {
         action += "<div style='margin-top:4px;color:var(--quiet)'>整條路加起來：</div>" +
-          summarize(path).slice(0, 8).map(l => "<div class='line'>" + escapeHtml(l) + "</div>").join("");
+          summarize(path).slice(0, 8).map(l => "<div class='line'>" + gloss(l) + "</div>").join("");
       }
     }
     const color = node.type === "keystone" ? "var(--keystone)" : node.type === "notable" ? "var(--gold)" : node.type === "socket" ? "#c77dff"
       : node.attr && allocated.has(node.id) ? ATTR_COLOR[attrOf(node)] : "var(--text)";
     tip.style.padding = "";
     tip.style.border = "";
-    tip.innerHTML = "<div class='name' style='color:" + color + "'>" + escapeHtml(node.name) + "</div>" +
+    const cq = conqueredOf(node);
+    tip.innerHTML = "<div class='name' style='color:" + color + "'>" + escapeHtml(nodeName(node)) + "</div>" +
       "<div class='type'>" + typeName + "</div>" +
-      tipLines(node).map(l => "<div class='line'>" + escapeHtml(l) + "</div>").join("") +
+      (cq ? "<div style='color:#ffb36b;font-size:12px'>受" + escapeHtml(conquest.legionName) + "征服" + (cq.add ? "（原本的效果保留）" : "（原本：" + escapeHtml(node.name) + "）") + "</div>" : "") +
+      tipLines(node).map(l => "<div class='line'>" + gloss(l) + "</div>").join("") +
       (node.type === "socket" ? socketJewelHtml(node) + socketRangeHtml(node) : coveredHtml(node)) +
       "<div class='action'>" + action + "</div>";
+    tipFor = "node";
+    tip.classList.toggle("live", !!tip.querySelector(".kw"));
     tip.style.display = "block";
     const w = tip.offsetWidth, h = tip.offsetHeight;
     tip.style.left = Math.min(window.innerWidth - w - 8, x + 16) + "px";
@@ -1722,18 +1957,24 @@
     const g = jewels[node.id];
     if (!g || !items) return "";
     let html = "<div style='margin-top:6px;color:" + RARITY_COLOR[g.rarity] + "'>" + escapeHtml(itemName(g)) + "</div>";
-    html += itemLines(g).map(l => "<div class='line' style='color:#8888ff'>" + escapeHtml(l.text) + "</div>").join("");
+    html += itemLines(g).map(l => "<div class='line' style='color:#8888ff'>" + gloss(l.text) + "</div>").join("");
     if (!allocated.has(node.id)) return html + "<div style='color:var(--red);font-size:12px'>孔位沒配：珠寶沒有效果</div>";
     const fx = jewelFx[node.id];
     if (!fx) return html + "<div style='color:var(--quiet);font-size:12px'>效果計算中…</div>";
-    if (isRadiusJewel(g)) {
+    if (timelessLegion(g)) {
+      if (conquest && conquest.socket === node.id) {
+        const count = Object.keys(conquest.nodes || {}).length;
+        html += "<div style='margin-top:4px;color:#ffb36b'>範圍 " + format(conquest.radius) + "：征服者" + escapeHtml(conquest.conquerorName)
+          + "（基石換成「" + escapeHtml(conquest.keystone) + "」），種子 " + conquest.seed + "，換掉 " + count + " 個節點（橘色虛線圈）</div>";
+      } else html += "<div style='margin-top:4px;color:var(--quiet)'>征服的節點計算中…（同時只算一顆永恆珠寶）</div>";
+    } else if (isRadiusJewel(g)) {
       let smalls = 0;
       for (const id of fx.inRange) if (byId.get(id) && byId.get(id).type === "small") smalls++;
       html += "<div style='margin-top:4px;color:var(--gold)'>範圍 " + format(fx.radius) + " 格：已配 " + fx.inRange.size + " 點（小點 " + smalls + " 個"
         + (smalls > 15 ? "，「也各給」最多算 15 個" : "") + "）</div>";
     }
     html += "<div style='margin-top:4px;color:var(--gold)'>實際加在角色身上：</div>"
-      + (fx.lines.length ? fx.lines.map(l => "<div class='line'>" + escapeHtml(l) + "</div>").join("") : "<div class='line' style='color:var(--quiet)'>（沒有）</div>");
+      + (fx.lines.length ? fx.lines.map(l => "<div class='line'>" + gloss(l) + "</div>").join("") : "<div class='line' style='color:var(--quiet)'>（沒有）</div>");
     return html;
   }
   /** 小點、核心在遺時星晶的範圍內：寫是哪一顆、它對範圍內的節點給什麼。 */
@@ -1744,7 +1985,7 @@
       const lines = itemLines(g).filter(l => !l.implicit && l.text.includes("範圍內")).map(l => l.text);
       html += "<div style='margin-top:6px;color:" + jewelColor(g) + "'>在「" + escapeHtml(socket.name) + "」的" + escapeHtml(itemName(g)) + "範圍內"
         + (allocated.has(node.id) ? "" : "（配了才算）") + "</div>"
-        + lines.map(l => "<div class='line'>" + escapeHtml(l) + "</div>").join("");
+        + lines.map(l => "<div class='line'>" + gloss(l) + "</div>").join("");
     }
     return html;
   }
@@ -1753,12 +1994,106 @@
     let html = "<div style='margin-top:6px;color:var(--quiet)'>遺時星晶的範圍（已配／全部）：</div>";
     jewelRadii().forEach((radius, i) => {
       const c = ringCounts(node, radius);
-      html += "<div class='line'><span style='color:" + RING_COLOR[i] + "'>" + RING_NAME[i] + " " + radius + " 格</span>　小點 "
+      html += "<div class='line'><span style='color:" + RING_COLOR[i] + "'>" + RING_NAME[i] + " " + radius + "</span>　小點 "
         + c.smallOwned + "／" + c.small + "　核心 " + c.notableOwned + "／" + c.notable + "</div>";
     });
-    return html + "<div style='color:var(--quiet);font-size:12px'>範圍內已配的每個小點都多給一次珠寶的詞綴</div>";
+    return html + "<div style='color:var(--quiet);font-size:12px'>範圍內已配的小點／核心照詞綴各多給一次（PoE2 遺時珠寶）</div>";
   }
-  function hideTip() { tip.style.display = "none"; }
+  function hideTip() {
+    tip.style.display = "none";
+    tip.classList.remove("live");
+    tipHold = false;
+    clearTimeout(tipHideTimer);
+    tipHideTimer = 0;
+    hideKw();
+  }
+
+  // ---- 名詞（2026-10-27 照站長）：說明裡的名詞畫虛線底線，滑上去（手機點一下）跳出解釋 ----
+  /** 同一個提示框（或昇華卡片）裡同一個名詞只標第一次；false = 每一行各自標第一次。 */
+  const GLOSS_ONCE_PER_TIP = true;
+  let glossary = null, glossRe = null, glossSeen = null;
+  let tipFor = "", tipHold = false, tipHideTimer = 0, kwAnchor = null, lastPointer = "mouse";
+  const kwtip = document.getElementById("kwtip");
+  function setGlossary(g) {
+    glossary = g && typeof g === "object" ? g : null;
+    const keys = glossary ? Object.keys(glossary).filter(k => k && glossary[k]) : [];
+    // 最長的優先（「點燃幅度」先於「點燃」、「閃避值」先於「閃避」）
+    keys.sort((a, b) => b.length - a.length);
+    glossRe = keys.length ? new RegExp(keys.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "g") : null;
+  }
+  /** 一行說明 → HTML：名詞包成虛線底線的 span（其他照樣跳脫）。 */
+  function gloss(text) {
+    const s = String(text);
+    if (!glossRe) return escapeHtml(s);
+    const seen = GLOSS_ONCE_PER_TIP && glossSeen ? glossSeen : new Set();
+    let out = "", last = 0;
+    for (const m of s.matchAll(glossRe)) {
+      const t = m[0];
+      if (seen.has(t)) continue;
+      seen.add(t);
+      out += escapeHtml(s.slice(last, m.index)) + "<span class='kw' tabindex='0' data-kw='" + escapeHtml(t) + "'>" + escapeHtml(t) + "</span>";
+      last = m.index + t.length;
+    }
+    return out + escapeHtml(s.slice(last));
+  }
+  /** 有名詞底線的元素（給 node() 建的對話框用）。 */
+  function glossEl(tag, cls, text, style) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (style) e.setAttribute("style", style);
+    glossSeen = null;
+    e.innerHTML = gloss(text);
+    return e;
+  }
+  function showKw(span) {
+    const key = span.dataset.kw;
+    if (!glossary || !glossary[key]) return;
+    if (kwAnchor && kwAnchor !== span) kwAnchor.classList.remove("on");
+    kwAnchor = span;
+    span.classList.add("on");
+    kwtip.innerHTML = "<div class='name'>" + escapeHtml(key) + "</div><div>" + escapeHtml(glossary[key]) + "</div>";
+    // 開著的對話框在最上層：提示框要放進同一個對話框裡才看得到
+    const host = span.closest("dialog") || document.body;
+    if (kwtip.parentNode !== host) host.appendChild(kwtip);
+    kwtip.style.display = "block";
+    const r = span.getBoundingClientRect();
+    const w = kwtip.offsetWidth, h = kwtip.offsetHeight;
+    kwtip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left)) + "px";
+    kwtip.style.top = (r.bottom + 6 + h > window.innerHeight - 8 ? Math.max(8, r.top - h - 6) : r.bottom + 6) + "px";
+  }
+  function hideKw() {
+    kwtip.style.display = "none";
+    if (kwAnchor) kwAnchor.classList.remove("on");
+    kwAnchor = null;
+  }
+  const kwOf = e => e.target && e.target.closest ? e.target.closest(".kw") : null;
+  document.addEventListener("pointerdown", e => { lastPointer = e.pointerType || "mouse"; if (!kwOf(e)) hideKw(); }, true);
+  document.addEventListener("pointermove", e => { if (e.pointerType === "mouse") lastPointer = "mouse"; }, true);
+  document.addEventListener("mouseover", e => { const k = kwOf(e); if (k && lastPointer === "mouse") showKw(k); });
+  document.addEventListener("mouseout", e => { const k = kwOf(e); if (k && k === kwAnchor && lastPointer === "mouse" && !k.contains(e.relatedTarget)) hideKw(); });
+  document.addEventListener("focusin", e => { const k = kwOf(e); if (k) showKw(k); });
+  document.addEventListener("focusout", e => { if (kwOf(e)) hideKw(); });
+  // 手機：點名詞顯示／收起解釋（不要順便觸發那一列的點擊，例如換輔助）
+  document.addEventListener("click", e => {
+    const k = kwOf(e);
+    if (!k || lastPointer === "mouse") return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (kwAnchor === k && kwtip.style.display === "block") hideKw(); else showKw(k);
+  }, true);
+  // 節點提示框裡有名詞時：滑鼠移進提示框它就停住，可以去滑名詞；離開提示框才收起來
+  tip.addEventListener("pointerenter", e => {
+    if (e.pointerType !== "mouse" || !tip.classList.contains("live")) return;
+    tipHold = true;
+    clearTimeout(tipHideTimer);
+    tipHideTimer = 0;
+  });
+  tip.addEventListener("pointerleave", e => {
+    if (e.pointerType !== "mouse" || !tipHold) return;
+    tipHold = false;
+    if (tipFor === "node") setHover(null);
+    hideTip();
+  });
   function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
   function flash(text) {
     toast.textContent = text;
@@ -1808,13 +2143,15 @@
   document.getElementById("search").addEventListener("input", e => {
     const q = e.target.value.trim().toLowerCase();
     search = new Set();
-    if (q) for (const n of order) if (n.name.toLowerCase().includes(q) || n.lines.some(l => l.toLowerCase().includes(q))) search.add(n.id);
+    if (q) for (const n of order) if (!hiddenNode(n) && nodeName(n).toLowerCase().includes(q) || linesOf(n).some(l => l.toLowerCase().includes(q))) search.add(n.id);
     document.getElementById("searchHint").textContent = q ? "找到 " + search.size + " 個（青色圈起來的）" : "";
     render();
   });
   window.addEventListener("hashchange", () => {
     if (items) { const next = gearText(hashText()); if (next !== gearSuffix().slice(1)) { gear = decodeGear(next); renderGear(); renderGearTotals(); } }
+    const ascBefore = calc.asc;
     applyCalcHash(hashText());
+    if (data && calc.asc !== ascBefore) render(); // 2026-10-26：昇華換了，觀星專屬節點跟著顯示／隱藏
     const decoded = decodeCode(hashText());
     const sameAttrs = decoded && decoded.attrs.size === attrs.size && [...decoded.attrs].every(([id, v]) => attrs.get(id) === v);
     if (decoded && (decoded.classId !== classId || decoded.nodes.size !== allocated.size || [...decoded.nodes].some(id => !allocated.has(id)) || !sameAttrs)) {
@@ -1846,7 +2183,7 @@
   function keyName(slot) { return skillData && skillData.keys[slot] ? skillData.keys[slot] : "鍵" + (slot + 1); }
   function skillDef(id) { return skillData ? skillData.skillById.get(id) : null; }
   function supportDef(id) { return skillData ? skillData.supportById.get(id) : null; }
-  // 輔助孔顯示的名字：第 1 孔放技能寶石（@代號/等級/孔數）、共鳴（代號~）都轉成中文
+  // 輔助孔顯示的名字：孔裡放的技能寶石（@代號/等級/孔數；2026-10-27 宿主寶石每一孔都能放）、共鳴（代號~）都轉成中文
   function socketLabel(id) {
     if (!id) return "空";
     if (id.startsWith("@")) {
@@ -2261,7 +2598,7 @@
     btn.hidden = !calc.asc;
     btn.textContent = "昇華天賦（" + ascPointsUsed() + (data.ascendancyPoints ? "/" + data.ascendancyPoints : "") + "）";
   }
-  ascSelect.addEventListener("change", () => { calc.asc = ascSelect.value; calc.ascNodes = []; updatePanel(); if (calc.asc) openAscPicker(); });
+  ascSelect.addEventListener("change", () => { calc.asc = ascSelect.value; calc.ascNodes = []; render(); renderGear(); if (calc.asc) openAscPicker(); }); // 2026-10-26：重畫（觀星專屬節點跟著顯示／隱藏）
   function ascInfo() { return (data.ascendancies || []).find(a => a.id === calc.asc); }
   function ascPointsUsed() {
     const a = calc.asc && data ? ascInfo() : null;
@@ -2287,6 +2624,7 @@
       calc.ascNodes = calc.ascNodes.concat(need.map(n => n.id));
     }
     renderAscPicker();
+    renderGear(); // 2026-10-26：展露之指配上、退掉時第三個戒指欄跟著顯示／隱藏
     updatePanel();
   }
   function renderAscPicker() {
@@ -2490,7 +2828,7 @@
       + "　下面是每一顆輔助掛上去（孔滿了就換掉最差的那顆）大約變多少，照全開算";
     skillDlg.replaceChildren(
       node("h3", { text: (def ? def.name : s.id) + (def && def.type ? "　" : ""), title: def ? def.description : "" }, def && def.type ? node("span", { cls: "tier", style: "font-size:12px;color:var(--quiet)", text: def.type }) : null),
-      def && def.description ? node("div", { cls: "hint", text: def.description }) : null,
+      def && def.description ? glossEl("div", "hint", def.description) : null,
       node("div", { cls: "calcrow" }, node("label", null, "等級", levelIn), socketSel,
         node("span", { cls: "hint", style: "margin:0", text: "最高 Lv." + maxLevel() + "、" + maxSockets() + " 孔" })),
       node("div", { cls: "calcrow" }, node("span", { cls: "hint", style: "margin:0", text: socketPick >= 0 ? "選了第 " + (socketPick + 1) + " 孔：點下面的輔助換上去" : "點下面的輔助掛到空孔；要換掉某一顆先點那個孔" })),
@@ -2511,11 +2849,12 @@
       const pct = r.pct;
       const tr = node("tr", { cls: "pick", title: def.description || "", onclick: () => {
         if (r.problem && r.problem.includes("別的技能")) { if (!confirm(r.name + " 已經掛在別的技能上（一個角色只能一顆）。還是要掛上去？")) return; }
+        if (typeof r.replace === "number") socketPick = r.replace; // 2026-10-27：血脈輔助一個技能一顆，換掉原本那顆
         putSupport(s, r.id);
       } },
         node("td", null, r.name, node("span", { cls: "tier", text: "　" + (def.tier ? "T" + def.tier : "") }),
           r.problem ? node("span", { cls: "prob", text: r.problem }) : null,
-          def.description ? node("span", { cls: "prob", style: "color:var(--quiet)", text: def.description }) : null),
+          def.description ? glossEl("span", "prob", def.description, "color:var(--quiet)") : null),
         node("td", { cls: "num" }, node("b", { cls: "delta " + (pct > 0.05 ? "up" : pct < -0.05 ? "down" : ""), style: "font-size:13px",
           text: (pct > 0 ? "+" : "") + pct.toFixed(1) + "%" }), node("span", { cls: "key", text: fmtNum(r.full) })));
       table.append(tr);

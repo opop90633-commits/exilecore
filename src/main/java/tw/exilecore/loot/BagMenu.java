@@ -27,7 +27,7 @@ import java.util.Optional;
  * 整理（通貨袋：存入背包裡的通貨）、全部放進來、掉落過濾、關閉」，每個頁籤一直看得到、不用輪著點。
  * <ul>
  *   <li>物品頁：上面 45 格跟箱子一樣拖拉。</li>
- *   <li>通貨袋：最上面一排是四個分組的頁籤（一般通貨、未切割寶石、星魄、催化劑・星籤・蒸餾情緒），下面四排是那一組的通貨；
+ *   <li>通貨袋：最上面一排是分組的頁籤（2026-10-26：超過 9 組時兩端是 ◀ ▶、中間跟著目前那組捲），下面四排是那一組的通貨；
  *       點通貨拿到游標上（可以直接點背包裡的裝備使用），拿著通貨點這裡放回去，點背包裡的通貨存進來。</li>
  * </ul>
  */
@@ -89,7 +89,6 @@ public final class BagMenu extends Menu {
     private final LootService service;
     private final Bag bag;
     private final List<CurrencyType> currencyOrder = new ArrayList<>();
-    private final int[] groupTabs = tabSlots(tw.exilecore.currency.CurrencyGroups.Group.values().length);
     private int page;
     /** 最後看的物品頁（從通貨袋回去用）。 */
     private int lastItemPage;
@@ -395,11 +394,21 @@ public final class BagMenu extends Menu {
         }
         final int[] held = tw.exilecore.currency.CurrencyGroups.kindsHeld(all, type -> bag.pouch().amount(type.id()));
         final tw.exilecore.currency.CurrencyGroups.Group[] groups = tw.exilecore.currency.CurrencyGroups.Group.values();
-        for (int g = 0; g < groups.length; g++) {
-            final List<CurrencyType> members = tw.exilecore.currency.CurrencyGroups.in(all, groups[g]);
-            final Material material = members.isEmpty() ? Material.SUNFLOWER : Menu.material(members.getFirst().material(), Material.SUNFLOWER);
-            set(groupTabs[g], tab(material, groups[g].displayName(), groups[g] == currencyGroup,
-                    List.of("<gray>" + groups[g].about(), "<gray>有 <white>" + held[g] + "</white> / " + members.size() + " 種")));
+        // 2026-10-26：超過 9 組時頁籤列兩端是 ◀ ▶、中間跟著捲（CurrencyGroups.tabRow）；這次之前一組一格，第 10 組以後放不下
+        final int[] row = tw.exilecore.currency.CurrencyGroups.tabRow(groups.length, currencyGroup.ordinal());
+        for (int slot = 0; slot < row.length; slot++) {
+            final int g = row[slot];
+            if (g == tw.exilecore.currency.CurrencyGroups.TAB_PREVIOUS || g == tw.exilecore.currency.CurrencyGroups.TAB_NEXT) {
+                final boolean previous = g == tw.exilecore.currency.CurrencyGroups.TAB_PREVIOUS;
+                final tw.exilecore.currency.CurrencyGroups.Group to = previous ? currencyGroup.previous() : currencyGroup.next();
+                set(slot, icon(Material.ARROW, previous ? "<white>◀ 上一組" : "<white>下一組 ▶", "<gray>" + to.displayName(),
+                        "<dark_gray>第 " + (currencyGroup.ordinal() + 1) + " / " + groups.length + " 組"));
+            } else if (g >= 0) {
+                final List<CurrencyType> members = tw.exilecore.currency.CurrencyGroups.in(all, groups[g]);
+                final Material material = members.isEmpty() ? Material.SUNFLOWER : Menu.material(members.getFirst().material(), Material.SUNFLOWER);
+                set(slot, tab(material, groups[g].displayName(), groups[g] == currencyGroup,
+                        List.of("<gray>" + groups[g].about(), "<gray>有 <white>" + held[g] + "</white> / " + members.size() + " 種")));
+            }
         }
         currencyOrder.addAll(tw.exilecore.currency.CurrencyGroups.in(all, currencyGroup));
         for (int i = 0; i < CURRENCY_SLOTS; i++) {
@@ -440,11 +449,7 @@ public final class BagMenu extends Menu {
             final ItemStack icon = plugin.currencies().icon(type, 1);
             icon.editMeta(meta -> {
                 meta.displayName(ItemRenderer.line((amount > 0 ? "<#f5b942>" : "<dark_gray>") + ItemRenderer.escape(type.name())));
-                final List<net.kyori.adventure.text.Component> lines = new ArrayList<>();
-                for (final String line : lore) {
-                    lines.add(ItemRenderer.line(line));
-                }
-                meta.lore(lines);
+                meta.lore(tw.exilecore.core.text.TextWrap.lines(lore)); // 2026-10-26：長行自動換行
                 meta.setEnchantmentGlintOverride(amount > 0);
             });
             set(slot, withCount(icon, Math.min(99, Math.max(1, amount))));
@@ -636,13 +641,16 @@ public final class BagMenu extends Menu {
     /** 通貨袋最上面一排的分組頁籤。 */
     private void onGroupTab(final int raw) {
         final tw.exilecore.currency.CurrencyGroups.Group[] groups = tw.exilecore.currency.CurrencyGroups.Group.values();
-        for (int g = 0; g < groups.length; g++) {
-            if (groupTabs[g] == raw && groups[g] != currencyGroup) {
-                currencyGroup = groups[g];
-                redraw();
-                player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.6f, 1.2f);
-                return;
-            }
+        if (currencyGroup == null || raw < 0 || raw >= tw.exilecore.currency.CurrencyGroups.TAB_ROW) {
+            return;
+        }
+        final int g = tw.exilecore.currency.CurrencyGroups.tabRow(groups.length, currencyGroup.ordinal())[raw];
+        final tw.exilecore.currency.CurrencyGroups.Group to = g == tw.exilecore.currency.CurrencyGroups.TAB_PREVIOUS ? currencyGroup.previous()
+                : g == tw.exilecore.currency.CurrencyGroups.TAB_NEXT ? currencyGroup.next() : g >= 0 ? groups[g] : currencyGroup;
+        if (to != currencyGroup) { // 2026-10-26：◀ ▶ 換到上一組／下一組（超過 9 組時）
+            currencyGroup = to;
+            redraw();
+            player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.6f, 1.2f);
         }
     }
 

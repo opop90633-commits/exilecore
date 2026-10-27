@@ -62,8 +62,16 @@ public final class ProcText {
             }
         }
         final double parent = config.parentDamage(d.id());
-        if (parent > 0) {
+        if (parent < 0) {
+            parts.add("用你的武器攻擊，傷害效益 " + percentRange(d.effectiveness()) + "（自己的傷害表；觸發它的那一下的輔助也算）"); // 2026-10-26
+        } else if (parent > 0) {
             parts.add("傷害是觸發它的那一下的 " + ModifierText.number(parent * 100) + "%（那一下的輔助也算）");
+        } else if (d.weaponless() && d.dealsDamage() && d.damageTypes() != null && !d.damageTypes().isEmpty()) {
+            // 2026-10-27 照 PoE2：不用武器的攻擊（血爆、嗅血爆、混合物）
+            final double[] low = SkillProfiles.spellDamage(config, d, 1);
+            final double[] high = SkillProfiles.spellDamage(config, d, SkillLoadout.MAX_LEVEL);
+            parts.add("不用武器的攻擊：基礎" + types(d.damageTypes()) + "傷害 " + Math.round(low[0]) + "～" + Math.round(low[1]) + "（1 級）、"
+                    + Math.round(high[0]) + "～" + Math.round(high[1]) + "（" + SkillLoadout.MAX_LEVEL + " 級），傷害效益 " + percentRange(d.effectiveness()));
         } else if (d.isAttack() && d.dealsDamage()) {
             parts.add("用你的武器攻擊，傷害效益 " + percentRange(d.effectiveness()));
         } else if (!d.isAttack() && d.damage() != null && d.damageTypes() != null && !d.damageTypes().isEmpty()) {

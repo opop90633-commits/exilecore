@@ -72,6 +72,50 @@ public final class PartyService {
         return roster.groupMembers(player);
     }
 
+    /**
+     * 2026-10-26（站長：隊伍的經驗加成與掉落要人在附近才有作用，大概一間 Boss 房）：這個人算不算在 at「附近」——
+     * 在線、活著（原版或我們的生命）、不是旁觀／觀戰、不在城鎮（營地）、同一個世界、水平距離在 party.yml 的 nearby_radius 內（2026-10-27：上下也要在 24 格內）。
+     * 經驗分給誰、隊伍經驗加成算幾人、掉落有沒有份都看這個。這次之前：經驗 64 格、掉落 128 格，在地圖裡整張地圖都算，城鎮、死掉的也算。
+     */
+    public static boolean nearby(final ExileCore plugin, final PartyConfig config, final Player player, final Location at) {
+        if (player == null || at == null || !player.isOnline() || player.isDead() || player.getGameMode() == GameMode.SPECTATOR) {
+            return false;
+        }
+        if (!player.getWorld().equals(at.getWorld())) {
+            return false;
+        }
+        if (plugin.players() != null) {
+            final tw.exilecore.character.PlayerState state = plugin.players().all().get(player.getUniqueId());
+            if (state != null && state.hasCharacter() && state.isDead()) {
+                return false;
+            }
+        }
+        if (plugin.maps() != null && plugin.maps().spectators().watching(player)) {
+            return false; // 地圖裡死掉之後在旁邊觀戰
+        }
+        final Location location = player.getLocation();
+        if (plugin.zones() != null && plugin.zones().inTown(location)) {
+            return false;
+        }
+        return config.withinNearby(location.getX() - at.getX(), location.getY() - at.getY(), location.getZ() - at.getZ()); // 2026-10-27：加上高度
+    }
+
+    /** 同上，用這個隊伍模組的設定。 */
+    public boolean nearby(final Player player, final Location at) {
+        return nearby(plugin, config, player, at);
+    }
+
+    /** at 附近（{@link #nearby}）有幾個玩家（隊友或路人都算；創造模式不算）。 */
+    public static int nearbyPlayers(final ExileCore plugin, final PartyConfig config, final Location at) {
+        int count = 0;
+        for (final Player player : at.getWorld().getPlayers()) {
+            if (player.getGameMode() != GameMode.CREATIVE && nearby(plugin, config, player, at)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     /** 名字（別人看到的角色名稱；在線用現在的名字，離線用記下來的）。 */
     public String name(final UUID player) {
         final Player online = plugin.getServer().getPlayer(player);

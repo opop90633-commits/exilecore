@@ -37,12 +37,17 @@ public final class SkillProfiles {
         final Set<String> tags = new HashSet<>(definition.tags());
         DamagePacket min = null;
         DamagePacket max = null;
-        if (definition.isAttack()) {
+        if (definition.isAttack() && !definition.weaponless()) {
             tags.addAll(weaponTags);
             if (definition.tags().contains(Tags.PROJECTILE) && !definition.tags().contains(Tags.MELEE)) {
                 tags.remove(Tags.MELEE); // 擲出去的矛（擲雷槍）是投射物，不吃近戰的加成（跟輔助寶石的判斷一樣）
             }
         } else {
+            // 法術；2026-10-27 照 PoE2：不用武器的攻擊（攻擊寫了 damage）也一樣——基礎傷害照技能的表、不帶武器的標籤
+            //（加上 weaponless 標籤：DamageCalculator 看到它就用技能自己的基礎傷害、不用武器傷害）
+            if (definition.isAttack()) {
+                tags.add(DamageCalculator.WEAPONLESS_TAG);
+            }
             final double[] range = spellDamage(config, definition, level);
             min = new DamagePacket();
             max = new DamagePacket();
@@ -54,13 +59,26 @@ public final class SkillProfiles {
         return new SkillProfile(definition.id(), tags, definition.effectiveness().at(level), min, max, definition.conversion(), local);
     }
 
-    /** 法術在這個等級的基礎傷害 [最小, 最大]（拆類型之前）；攻擊回傳 [0, 0]。 */
+    /** 法術（與 2026-10-27 起不用武器的攻擊）在這個等級的基礎傷害 [最小, 最大]（拆類型之前）；用武器的攻擊回傳 [0, 0]。 */
     public static double[] spellDamage(final SkillConfig config, final SkillDefinition definition, final int level) {
-        if (definition.isAttack() || definition.damage() == null) {
+        if (definition.isAttack() && !definition.weaponless() || definition.damage() == null) {
             return new double[] {0, 0};
         }
+        final int[] damage = definition.damage();
+        if (definition.damageByLevel()) {
+            // 2026-10-26：逐級表（照 PoE2）是每一級的實際傷害，不乘 spell_damage_growth；比表長的等級照最後兩級的比例往外推
+            final int levels = damage.length / 2;
+            final int clamped = Math.max(1, Math.min(SkillBuild.MAX_EFFECTIVE_LEVEL, level));
+            if (clamped <= levels) {
+                return new double[] {damage[(clamped - 1) * 2], damage[(clamped - 1) * 2 + 1]};
+            }
+            final double lastAvg = (damage[levels * 2 - 2] + damage[levels * 2 - 1]) / 2.0;
+            final double prevAvg = (damage[levels * 2 - 4] + damage[levels * 2 - 3]) / 2.0;
+            final double scale = prevAvg > 0 ? Math.pow(lastAvg / prevAvg, clamped - levels) : 1;
+            return new double[] {damage[levels * 2 - 2] * scale, damage[levels * 2 - 1] * scale};
+        }
         final double growth = config.spellGrowthAt(level);
-        return new double[] {definition.damage()[0] * growth, definition.damage()[1] * growth};
+        return new double[] {damage[0] * growth, damage[1] * growth};
     }
 
     /** 沒有輔助寶石時的魔力消耗（有輔助的看 {@link SkillBuild#manaCost()}）。 */
@@ -71,9 +89,33 @@ public final class SkillProfiles {
     /** 這個技能兩次之間要幾 tick：攻擊看武器攻速，法術看施法時間與施法速度（輔助寶石疊在屬性表上一起算）。 */
     public static double intervalTicks(final StatSheet sheet, final SkillDefinition definition, final SkillProfile profile) {
         final StatSheet effective = tw.exilecore.stats.DamageCalculator.chargeScaling(profile.effective(sheet), profile.tags());
-        if (definition.isAttack()) {
-            return SkillMath.attackInterval(DamageCalculator.attacksPerSecond(effective, profile.tags()), definition.attackSpeed());
+        // 2026-10-26（疾樁，PoE2 Urgent Totems）：放圖騰的速度只加在「放圖騰」這個動作上
+        final double placement = profile.tags().contains(Tags.TOTEM)
+                ? Math.max(0.1, 1 + effective.increased(tw.exilecore.stats.SupportKeys.TOTEM_PLACEMENT_SPEED, profile.tags())) : 1.0;
+        // 2026-10-26 照 PoE2：「總攻擊／施法時間 +x 秒」（騰躍砸擊 +0.65、隕星 +1…），這段不吃攻擊、施法速度
+        final double added = Math.max(0, effective.flat(ADDED_TIME, profile.tags())) * 20;
+        final DeploySpec deploy = definition.deploy();
+        if (deploy != null && deploy.kind() == DeploySpec.Kind.TOTEM && deploy.place() > 0) {
+            // 2026-10-26 照 PoE2（Path of Building 的 TotemPlacementTime）：放圖騰的時間 = 寶石的施放時間 ÷ 放圖騰的速度（增加 × 更多），
+            // 不吃攻擊速度、施法速度；這次之前攻擊圖騰照武器攻速 × 技能攻速（崩震圖騰 50% → 拿 1.2 攻速的錘要 1.67 秒）、法術圖騰照施法速度
+            final double placementSpeed = Math.max(0.1, effective.apply(tw.exilecore.stats.SupportKeys.TOTEM_PLACEMENT_SPEED, 1.0, profile.tags()));
+            return SkillMath.castInterval(deploy.place(), placementSpeed) + added;
         }
-        return SkillMath.castInterval(definition.castTime(), DamageCalculator.castSpeedMultiplier(effective, profile.tags()));
+        if (definition.isAttack()) {
+            return SkillMath.attackInterval(DamageCalculator.attacksPerSecond(effective, profile.tags()), definition.attackSpeed()) / placement + added;
+        }
+        if (definition.warcry() != null && definition.warcry().cry()) {
+            // 2026-10-26 照 PoE2：戰吼的使用時間只吃戰吼速度（不吃施法速度）
+            return SkillMath.castInterval(definition.castTime(), warcrySpeed(effective, profile.tags())) + added;
+        }
+        return SkillMath.castInterval(definition.castTime(), DamageCalculator.castSpeedMultiplier(effective, profile.tags())) / placement + added;
     }
+
+    /** 2026-10-26：戰吼速度倍率：（1 + 增加戰吼速度）× 更多。 */
+    public static double warcrySpeed(final StatSheet sheet, final Set<String> context) {
+        return Math.max(0.1, sheet.apply(tw.exilecore.stats.SupportKeys.WARCRY_SPEED, 1.0, context));
+    }
+
+    /** 2026-10-26：技能自己帶的「總攻擊／施法時間 +x 秒」（FLAT，秒；不吃攻擊、施法速度）。 */
+    public static final String ADDED_TIME = "skill.added_time";
 }

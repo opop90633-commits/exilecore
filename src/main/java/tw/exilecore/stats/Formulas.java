@@ -10,10 +10,14 @@ public final class Formulas {
 
     /** 命中率下限。 */
     public static final double MIN_HIT_CHANCE = 0.05;
-    /** 護甲減免上限。 */
+    /** 護甲減免上限（玩家與召喚物；PoB characterConstants maximum_physical_damage_reduction_% = 90）。 */
     public static final double MAX_ARMOUR_REDUCTION = 0.90;
+    /** 2026-10-27 照 PoE2（PoB monsterConstants maximum_physical_damage_reduction_% = 75）：怪物的物理減免上限 75%；這次之前跟玩家一樣 90%。 */
+    public static final double MONSTER_MAX_ARMOUR_REDUCTION = 0.75;
     /** 抗性下限（負抗）。 */
-    public static final double MIN_RESIST = -60;
+    public static final double MIN_RESIST = -200; // 2026-10-26 照 PoE2（這次之前 −60）
+    /** 最大抗性的硬上限（2026-10-26 照 PoE2：最大抗性最多 90%）。 */
+    public static final double MAX_RESIST_CAP = 90;
     /** PoE2 命中公式：命中 × 1.25 ÷ (命中 + 閃避 × 0.3)。 */
     public static final double ACCURACY_FACTOR = 1.25;
     public static final double EVASION_FACTOR = 0.3;
@@ -21,8 +25,8 @@ public final class Formulas {
     public static final double ARMOUR_DAMAGE_FACTOR = 10.0;
 
     /**
-     * 攻擊命中率（2026-10 改成 PoE2）：命中 × 1.25 ÷ (命中 + 閃避 × 0.3)，下限 5%，上限 100%。
-     * 60 級怪物命中 490：閃避 1000 閃 23%、2000 閃 44%、4000 閃 64%。法術不用擲命中。
+     * 玩家（與召喚物）打怪物的命中率（2026-10 改成 PoE2，PoB calcs.hitChance）：命中 × 1.25 ÷ (命中 + 閃避 × 0.3)，下限 5%，上限 100%。
+     * 怪物打玩家用 {@link #monsterHitChance}（2026-10-27 之前兩邊都用這個）。
      */
     public static double hitChance(final double accuracy, final double evasion) {
         if (evasion <= 0) {
@@ -33,6 +37,48 @@ public final class Formulas {
         }
         final double chance = accuracy * ACCURACY_FACTOR / (accuracy + evasion * EVASION_FACTOR);
         return clamp(chance, MIN_HIT_CHANCE, 1.0);
+    }
+
+    /**
+     * 2026-10-27 照 PoE2（PoB calcs.monsterHitChance）：怪物打玩家（與玩家的召喚物）的命中率
+     * 1 − 0.95 × 閃避 ÷ (閃避 + 4 × 命中)，下限 5%，上限 100%（閃避最多 95%）。
+     * 60 級怪物命中 490：閃避 1000 閃 32%、2000 閃 48%、4000 閃 63%。
+     * 這次之前跟玩家打怪一樣用 命中 × 1.25 ÷ (命中 + 閃避 × 0.3)（閃避 1000 只閃 23%）。
+     */
+    public static double monsterHitChance(final double accuracy, final double evasion) {
+        if (evasion <= 0) {
+            return 1.0;
+        }
+        if (accuracy <= 0) {
+            return MIN_HIT_CHANCE;
+        }
+        return clamp(1 - 0.95 * evasion / (evasion + 4 * accuracy), MIN_HIT_CHANCE, 1.0);
+    }
+
+    /** 2026-10-27 照 PoE2（PoB data.misc.DeflectionChanceCap）：偏斜率上限 95%；這次之前 75%。 */
+    public static final double MAX_DEFLECT_CHANCE = 0.95;
+
+    /**
+     * 偏斜率（2026-10-27 照 PoE2，PoB calcs.deflectChance）：不被偏斜的機率 = 命中 ÷ (命中 + 0.12 × 偏斜值) × 150 − 50（百分比），
+     * 偏斜率 = 1 − 這個，夾在 0～95%。命中 490 對偏斜值 1000：偏斜約 29.5%。
+     * 這次之前：1 − 命中公式（命中 × 1.25 ÷ (命中 + 偏斜值 × 0.3)），上限 75%。
+     */
+    public static double deflectChance(final double accuracy, final double deflection) {
+        if (deflection < 1) {
+            return 0;
+        }
+        final double acc = Math.max(0, accuracy);
+        final double notDeflected = acc / (acc + 0.12 * deflection) * 150 - 50;
+        return clamp(1 - notDeflected / 100.0, 0, MAX_DEFLECT_CHANCE);
+    }
+
+    /** 2026-10-27 照 PoE2（PoB data.misc.BlockChanceCap）：格擋上限再怎麼提高也最多 90%（基礎上限 50%）；這次之前沒有硬上限。 */
+    public static final double BLOCK_BASE_CAP = 50;
+    public static final double BLOCK_HARD_CAP = 90;
+
+    /** 格擋上限（百分比點數）：基礎 50 ＋「格擋上限 +x%」，最多 90。 */
+    public static double blockCap(final double maxBonus) {
+        return Math.min(BLOCK_HARD_CAP, BLOCK_BASE_CAP + Math.max(0, maxBonus));
     }
 
     /**
@@ -65,7 +111,7 @@ public final class Formulas {
 
     /** 抗性減免比例：抗性（百分比點數）夾在 [下限, 上限] 之後除以 100。 */
     public static double resistReduction(final double resistPoints, final double maxResistPoints) {
-        return clamp(resistPoints, MIN_RESIST, maxResistPoints) / 100.0;
+        return clamp(resistPoints, MIN_RESIST, Math.min(MAX_RESIST_CAP, maxResistPoints)) / 100.0;
     }
 
     /** 攻擊間隔（tick）：20 ÷ 每秒攻擊次數，最少 1 tick。 */
@@ -104,24 +150,24 @@ public final class Formulas {
         return 0; // 2026-10 PoE2：力量不再給近戰物理傷害
     }
 
-    /** 角色基礎生命：38 + 12 × 等級。 */
+    /** 角色基礎生命：16 + 12 × 等級（2026-10-26 照 PoE2 Character.ot；這次之前 38 + 12 × 等級）。 */
     public static double baseLife(final int level) {
-        return 38 + 12.0 * level;
+        return 16 + 12.0 * level;
     }
 
-    /** 角色基礎魔力：34 + 6 × 等級。 */
+    /** 角色基礎魔力：30 + 4 × 等級（2026-10-26 照 PoE2；這次之前 34 + 6 × 等級）。 */
     public static double baseMana(final int level) {
-        return 34 + 6.0 * level;
+        return 30 + 4.0 * level;
     }
 
-    /** 角色基礎閃避：53 + 3 × 等級。 */
+    /** 角色基礎閃避：固定 7（2026-10-26 照 PoE2 base_evasion_rating；這次之前 53 + 3 × 等級）。 */
     public static double baseEvasion(final int level) {
-        return 53 + 3.0 * level;
+        return 7;
     }
 
-    /** 角色基礎命中：2 × 等級（敏捷另加）。 */
+    /** 角色基礎命中：6 × (等級 − 1)（2026-10-26 照 PoE2；敏捷另加；這次之前 2 × 等級）。 */
     public static double baseAccuracy(final int level) {
-        return 2.0 * level;
+        return 6.0 * Math.max(0, level - 1);
     }
 
     /** 怪物招式冷卻倍率的下限：地圖詞綴再怎麼縮短，也不會比基礎快過四倍。 */

@@ -37,11 +37,14 @@ MATERIALS = {
     'x': ('d9ccff', 'ffffff', '9a88d6'),   # 施法速度（淡紫白）
     'H': ('e9a52b', 'ffd88a', 'a36d0f'),   # 掉落稀有度（金）
     'B': ('9e2532', 'd0545f', '5e1119'),   # 箭袋：流血（暗紅）
+    'N': ('e6dcc0', 'fbf6e6', 'a89c7c'),   # 2026-10-27：骨頭（法杖、長杖、權杖）
+    'V': ('6e4a2e', '957050', '442a18'),   # 2026-10-27：深色木頭（枯枝、灰燼、冥暗）
 }
 OUTLINE = '2c3135'
 KEYS = {'m': ('m', 'M', 'n'), 'a': ('a', 'A', 'b'), 'w': ('w', 'W', 'v'), 'r': ('r', 'R', 'q'), 'g': ('g', 'G', 'h'),
         'u': ('u', 'U', 't'), 'f': ('f', 'F', 'e'), 'i': ('i', 'I', 'j'), 'z': ('z', 'Z', 's'), 'p': ('p', 'P', 'y'),
-        'c': ('c', 'C', 'd'), 'l': ('l', 'L', 'k'), 'x': ('x', 'X', 'E'), 'H': ('H', 'J', 'K'), 'B': ('B', 'D', 'Q')}
+        'c': ('c', 'C', 'd'), 'l': ('l', 'L', 'k'), 'x': ('x', 'X', 'E'), 'H': ('H', 'J', 'K'), 'B': ('B', 'D', 'Q'),
+        'N': ('N', 'O', 'S'), 'V': ('V', 'Y', 'T')}
 
 
 class Canvas:
@@ -251,11 +254,7 @@ def hammer():
 
 
 def sceptre():
-    c = Canvas()
-    c.line(2, 13, 9, 6, 'w', 2)
-    c.poly([(9, 7), (8, 4), (11, 2), (14, 5), (12, 8)], 'm')
-    c.disc(11, 5, 1.3, 'a')
-    return c
+    return sceptre_of('H', 'a', 'crown')  # 2026-10-27：改成短、金屬杆、頂端王冠（以前跟法杖、長杖一樣是木杆）
 
 
 def claw():
@@ -326,18 +325,13 @@ def crossbow():
 
 
 def wand():
-    c = Canvas()
-    c.line(3, 13, 10, 6, 'w', 2)
-    c.poly([(9, 6), (12, 2), (14, 4), (10, 7)], 'a')
-    return c
+    return wand_of('w', 'a', 'crystal')  # 2026-10-27：改成短而細、尖端寶石（以前跟長杖、權杖一樣長一樣粗）
 
 
 def staff():
-    c = Canvas()
-    c.line(2, 14, 10, 6, 'w', 2)
-    c.ring(11, 4.5, 1.8, 3.3, 'm')
-    c.disc(11, 4.5, 1.6, 'a')
-    return c
+    return staff_of('w', 'a', 'claw')  # 2026-10-27：改成長、頂端大寶石
+
+
 
 
 def shield():
@@ -572,6 +566,216 @@ for _variant, _elements in RING_VARIANTS.items():
 for _family in ('str', 'str_dex', 'str_int'):
     _main, _trim = FAMILIES[_family][1], FAMILIES[_family][2]
     ICONS['shield_' + _family] = (lambda m=_main, t=_trim: split(shield_of(m, m), m, t))
+
+
+# ---- 法杖、長杖、權杖（2026-10-27）----
+# 站長：三種施法武器以前長得太像（都是一樣長、一樣粗的木杆＋頂端一顆青寶石）。現在照輪廓分開：
+#   法杖：短而細（1 格寬的杆子，只到格子中間），尖端一顆小寶石或骨頭；
+#   長杖：從左下角拉到右上角的長杆（2 格寬），頂端一顆大寶石（爪托、圓環、彎鉤、分叉、鐮刃、鈴、枝葉、冰錐、鏡面）；
+#   權杖：短而粗的金屬杆，頂端是金屬的頭（王冠、寶珠、翼片、神龕、骷髏、狼牙、香爐）。
+# 同一類的每個基底（weapons_casters.yml）另外一張：杆子的材質（木頭、深色木頭、骨頭、金屬、金）、寶石顏色（照賦予技能的元素）、頭的樣子。
+# 物品上用 plain:基底代號 選到（PlainArt.category 先找基底代號那張，沒有才用 wand／staff／sceptre）。
+
+def wand_of(shaft, gem, tip):
+    c = Canvas()
+    c.line(4, 12, 9, 7, shaft)               # 細杆（1 格），只到格子中間
+    c.dot(3, 13, 'm')                         # 柄尾
+    c.dot(4, 13, 'm')
+    c.dot(3, 12, 'm')
+    if tip == 'crystal':                      # 尖晶
+        c.line(10, 6, 12, 4, gem, 2)
+        c.dot(13, 2, gem)
+        c.dot(9, 7, 'm')
+    elif tip == 'orb':                        # 小寶珠
+        c.disc(11, 5, 1.9, gem)
+    elif tip == 'fork':                       # 叉尖夾著寶石
+        c.line(9, 7, 9, 3, 'm')
+        c.line(9, 7, 13, 7, 'm')
+        c.rect(11, 4, 12, 5, gem)
+    elif tip == 'bone':                       # 骨頭：圓圓的骨節，頂上一點
+        c.disc(10.5, 5.5, 1.6, shaft)
+        c.dot(12, 3, gem)
+        c.dot(13, 3, gem)
+    elif tip == 'spike':                      # 長尖刺
+        c.line(10, 6, 11, 5, gem, 2)
+        c.line(12, 4, 14, 2, gem)
+    elif tip == 'twig':                       # 枯枝：彎的分枝，兩端各一點寶石
+        c.line(9, 7, 10, 4, shaft)
+        c.line(9, 7, 12, 6, shaft)
+        c.rect(10, 2, 11, 3, gem)
+        c.rect(12, 5, 13, 6, gem)
+    elif tip == 'barb':                       # 帶倒鉤
+        c.line(9, 7, 12, 4, 'm')
+        c.dot(10, 4, 'm')
+        c.dot(12, 6, 'm')
+        c.rect(12, 2, 13, 3, gem)
+    elif tip == 'coil':                       # 杆上纏線圈
+        c.line(10, 6, 12, 4, gem, 2)
+        c.dot(13, 2, gem)
+        for x, y in ((5, 10), (7, 8)):
+            c.dot(x, y + 1, gem)
+            c.dot(x + 1, y, gem)
+    elif tip == 'guard':                      # 決鬥：小護手
+        c.line(6, 8, 8, 10, 'm')
+        c.line(10, 6, 12, 4, gem, 2)
+        c.dot(13, 2, gem)
+    return c
+
+
+def staff_of(shaft, gem, head):
+    c = Canvas()
+    c.line(1, 14, 10, 5, shaft, 2)           # 長杆（2 格，左下角到右上）
+    c.dot(1, 15, 'm')                         # 杖尾包金屬
+    c.dot(0, 15, 'm')
+    if head == 'claw':                        # 爪托抓著大寶珠
+        c.disc(11.5, 3.5, 2.6, gem)
+        c.line(9, 6, 8, 3, 'm')
+        c.line(9, 6, 12, 7, 'm')
+    elif head == 'ring':                      # 圓環中間一顆
+        c.ring(11.5, 3.5, 2.4, 3.4, 'm')
+        c.disc(11.5, 3.5, 1.5, gem)
+    elif head == 'crook':                     # 彎鉤，鉤下吊一顆寶石
+        c.line(10, 5, 11, 1, shaft, 2)
+        c.line(11, 1, 14, 1, shaft, 2)
+        c.line(14, 2, 14, 3, shaft)
+        c.disc(13.5, 5.5, 1.7, gem)
+    elif head == 'fork':                      # 兩根分叉，中間夾一顆
+        c.line(10, 5, 9, 1, 'm')
+        c.line(10, 5, 14, 6, 'm')
+        c.disc(12, 3, 1.6, gem)
+    elif head == 'blade':                     # 鐮刃
+        c.poly([(9, 3), (12, 0), (15, 1), (15, 4), (13, 2), (11, 3)], gem)
+        c.disc(10.5, 4.5, 1.2, 'm')
+    elif head == 'bell':                      # 鈴
+        c.line(10, 5, 13, 2, shaft, 2)
+        c.poly([(11, 6), (12, 4), (14, 4), (15, 6), (15, 8), (11, 8)], gem)
+        c.dot(13, 9, 'm')
+    elif head == 'branch':                    # 枝葉：分枝上長出葉子（花）
+        c.line(10, 5, 9, 2, shaft)
+        c.line(10, 5, 13, 4, shaft)
+        c.disc(9, 1.2, 1.3, gem)
+        c.disc(13.8, 3.6, 1.3, gem)
+        c.disc(11.6, 1.8, 1.0, gem)
+    elif head == 'icicle':                    # 冰錐：長長的尖晶
+        c.poly([(9, 7), (8, 4), (14, 0), (15, 1), (11, 8)], gem)
+    elif head == 'mirror':                    # 鏡面：金屬框圓鏡
+        c.disc(11.5, 3.5, 3.4, 'm')
+        c.disc(11.5, 3.5, 2.3, gem)
+    return c
+
+
+def sceptre_of(metal, gem, head):
+    """權杖直立著畫（法杖、長杖都是斜的）：短而粗的金屬杆＋頂端的金屬頭。"""
+    c = Canvas()
+    c.rect(7, 10, 8, 13, metal)              # 短杆（2 格寬）
+    c.rect(6, 14, 9, 14, metal)              # 柄頭
+    c.rect(7, 15, 8, 15, metal)
+    c.rect(5, 9, 10, 9, metal)               # 頸箍
+    if head == 'crown':                       # 王冠：冠帶＋三個尖，冠帶中間一顆寶石、尖上各一點
+        c.rect(3, 6, 12, 8, metal)
+        c.poly([(3, 6), (3, 2), (6, 6)], metal)
+        c.poly([(5.5, 6), (7.5, 1), (9.5, 6)], metal)
+        c.poly([(9, 6), (12, 2), (12, 6)], metal)
+        c.rect(7, 6, 8, 7, gem)
+        c.dot(3, 3, gem)
+        c.dot(11, 3, gem)
+    elif head == 'orb':                       # 寶珠：大圓珠，上面一個小十字
+        c.disc(7.5, 5.5, 3.4, gem)
+        c.rect(6, 8, 9, 8, metal)            # 托住珠子的金屬托
+        c.rect(7, 0, 8, 2, metal)            # 頂上的小十字
+        c.rect(6, 1, 9, 1, metal)
+    elif head == 'flange':                    # 翼片錘頭：中間一塊，兩邊三片翼
+        c.rect(5, 2, 10, 8, metal)
+        for y in (2, 5):
+            c.rect(3, y, 4, y + 1, metal)
+            c.rect(11, y, 12, y + 1, metal)
+        c.rect(7, 4, 8, 6, gem)
+    elif head == 'shrine':                    # 神龕：屋頂＋小龕，龕裡一顆寶石
+        c.poly([(2.5, 5), (7.5, 0), (12.5, 5)], metal)
+        c.rect(4, 5, 11, 8, metal)
+        c.rect(6, 5, 9, 7, gem)
+    elif head == 'skull':                     # 骷髏
+        c.disc(7.5, 4.5, 3.6, 'N')
+        c.rect(5, 7, 10, 8, 'N')
+        c.erase(5, 4)
+        c.erase(6, 4)
+        c.erase(9, 4)
+        c.erase(10, 4)
+        c.erase(7, 8)
+        c.erase(8, 8)
+        c.rect(7, 6, 8, 6, gem)              # 鼻孔裡的光
+    elif head == 'fang':                      # 狼牙：一圈往外的尖牙，中間一顆
+        for x0, y0, x1, y1 in ((5, 6, 2, 3), (6, 4, 4, 0), (9, 4, 11, 0), (10, 6, 13, 3), (5, 8, 2, 8), (10, 8, 13, 8)):
+            c.line(x0, y0, x1, y1, 'N')
+        c.disc(7.5, 6, 2.6, metal)
+        c.disc(7.5, 6, 1.2, gem)
+    elif head == 'censer':                    # 香爐：鏤空的小籠，裡面燒著（寶石色）
+        c.disc(7.5, 5, 3.5, metal)
+        c.rect(7, 0, 8, 1, metal)
+        for x, y in ((5, 4), (7, 3), (9, 4), (6, 6), (8, 6), (10, 6), (7, 5)):
+            c.dot(x, y, gem)
+    return c
+
+
+WAND_BASES = {  # 基底 → (杆子, 寶石, 尖端)
+    'cwand_01': ('V', 'p', 'twig'),     # 枯枝：深色彎枝、混沌紫
+    'cwand_02': ('N', 'x', 'bone'),     # 骸骨：骨頭
+    'cwand_03': ('m', 'u', 'crystal'),  # 調律：金屬杆、藍晶
+    'cwand_04': ('w', 'a', 'orb'),      # 虹吸：青色寶珠
+    'cwand_05': ('N', 'f', 'crystal'),  # 炎屍：骨杆、火紅尖晶
+    'cwand_06': ('m', 'z', 'fork'),     # 電流：金屬叉、黃
+    'cwand_07': ('V', 'g', 'orb'),      # 腐蝕：深色木、綠珠
+    'cwand_08': ('N', 'B', 'spike'),    # 血祭：骨杆、血紅長刺
+    'cwand_09': ('m', 'i', 'crystal'),  # 霜蝕：冰晶
+    'cwand_10': ('V', 'p', 'barb'),     # 刑苦：倒鉤
+    'cwand_11': ('H', 'x', 'spike'),    # 銳芒：金杆、白色長刺
+    'cwand_12': ('V', 'p', 'orb'),      # 太古：深色木、紫珠
+    'cwand_13': ('w', 'z', 'coil'),     # 纏蝕：纏著電線圈
+    'cwand_14': ('m', 'r', 'guard'),    # 決鬥：小護手、紅
+}
+STAFF_BASES = {  # 基底 → (杆子, 寶石, 頂端)
+    'cstaff_01': ('V', 'f', 'claw'),    # 灰燼
+    'cstaff_02': ('m', 'i', 'ring'),    # 凝冰
+    'cstaff_03': ('w', 'z', 'fork'),    # 雷鳴
+    'cstaff_04': ('w', 'g', 'branch'),  # 精靈：綠葉
+    'cstaff_05': ('w', 'f', 'branch'),  # 炎木：紅花
+    'cstaff_06': ('w', 'H', 'bell'),    # 鳴鐘：金鈴
+    'cstaff_07': ('V', 'p', 'crook'),   # 裂魂
+    'cstaff_08': ('V', 'B', 'blade'),   # 血鐮：鐮刃
+    'cstaff_09': ('m', 'i', 'icicle'),  # 冰錐
+    'cstaff_10': ('N', 'z', 'claw'),    # 麻痺：骨杆、黃
+    'cstaff_11': ('H', 'x', 'ring'),    # 聖紋：金杆、白光
+    'cstaff_12': ('V', 'p', 'claw'),    # 冥暗
+    'cstaff_13': ('N', 'B', 'fork'),    # 饑渴：骨杆、血紅
+    'cstaff_14': ('m', 'i', 'claw'),    # 永凍
+    'cstaff_15': ('w', 'r', 'ring'),    # 咆哮
+    'cstaff_16': ('V', 'u', 'crook'),   # 棲鴉
+    'cstaff_17': ('m', 'a', 'mirror'),  # 映鏡
+}
+SCEPTRE_BASES = {  # 基底 → (金屬, 寶石, 頭)
+    'csceptre_01': ('m', 'a', 'skull'),   # 骸鈴
+    'csceptre_02': ('m', 'a', 'flange'),  # 堅忍
+    'csceptre_03': ('m', 'r', 'fang'),    # 狼牙
+    'csceptre_04': ('m', 'p', 'orb'),     # 凶兆
+    'csceptre_05': ('c', 'r', 'orb'),     # 赭土：銅杆、赭紅珠
+    'csceptre_06': ('H', 'f', 'shrine'),  # 焰龕
+    'csceptre_07': ('H', 'i', 'shrine'),  # 霜龕
+    'csceptre_08': ('H', 'z', 'shrine'),  # 雷龕
+    'csceptre_09': ('H', 'p', 'shrine'),  # 蝕龕
+    'csceptre_10': ('m', 'B', 'fang'),    # 吞噬
+    'csceptre_11': ('m', 'i', 'orb'),     # 寒心
+    'csceptre_12': ('H', 'x', 'crown'),   # 虔誠
+    'csceptre_13': ('c', 'g', 'censer'),  # 芳香
+    'csceptre_14': ('H', 'a', 'crown'),   # 聖徒
+    'csceptre_15': ('H', 'r', 'crown'),   # 聖化
+    'csceptre_16': ('m', 'z', 'flange'),  # 怒雷
+}
+for _bid, (_s, _g, _t) in WAND_BASES.items():
+    ICONS[_bid] = (lambda s=_s, g=_g, t=_t: wand_of(s, g, t))
+for _bid, (_s, _g, _t) in STAFF_BASES.items():
+    ICONS[_bid] = (lambda s=_s, g=_g, t=_t: staff_of(s, g, t))
+for _bid, (_s, _g, _t) in SCEPTRE_BASES.items():
+    ICONS[_bid] = (lambda s=_s, g=_g, t=_t: sceptre_of(s, g, t))
 
 
 def palette():

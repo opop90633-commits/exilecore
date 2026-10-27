@@ -30,6 +30,8 @@ public final class CurrencyRepository {
         }
         currencies.clear();
         currencies.putAll(parsed);
+        GemQuality.load(dataFolder); // 2026-10-26：技能寶石各自的品質效果（琢星稜鏡）
+        InstilRecipes.load(dataFolder); // 2026-10-27 照 PoE2：注入每個核心固定的情緒配方
     }
 
     public CurrencyType get(final String id) {

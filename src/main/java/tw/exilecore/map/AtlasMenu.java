@@ -69,7 +69,7 @@ public final class AtlasMenu extends Menu {
 
     /** 2026-10-24：記住的格子（上一次打完的地圖、最近開過的塔）；沒有回傳 null。 */
     private long[] lastCell(final String key) {
-        return AtlasProgress.decodeOne(plugin.players().get(player).progress().get(key));
+        return AtlasProgress.decodeOne(service.atlasData(player).get(key)); // 2026-10-27：帳號共用
     }
 
     // ---- 座標（偏移座標 ↔ 軸座標：奇數列往右半格）----
@@ -197,7 +197,7 @@ public final class AtlasMenu extends Menu {
     }
 
     private AtlasGrid.Cell chosenCell(final AtlasProgress atlas) {
-        final long[] at = AtlasProgress.decodeOne(plugin.players().get(player).progress().get(AtlasProgress.CHOSEN_KEY));
+        final long[] at = AtlasProgress.decodeOne(service.atlasData(player).get(AtlasProgress.CHOSEN_KEY));
         if (at == null) {
             return null;
         }
@@ -274,8 +274,10 @@ public final class AtlasMenu extends Menu {
                 }
                 if (corruptNow) {
                     final AtlasConfig.Corruption k = grid.config().corruption();
-                    lore.add("<#b07aff>腐化區" + (cell.corrupted() && !done ? "" : "（腐化之心）") + "：怪物等級 +" + k.monsterLevel() + "、怪物群 +" + AtlasTree.number(k.pack()) + "%、物品數量 +"
-                            + AtlasTree.number(k.quantity()) + "%、稀有度 +" + AtlasTree.number(k.rarity()) + "%");
+                    // 2026-10-27：物品數量出貨是 0（照 PoE2），改寫路上怪物與 Boss 的稀有度；數量有設定才寫
+                    lore.add("<#b07aff>腐化區" + (cell.corrupted() && !done ? "" : "（腐化之心）") + "：怪物等級 +" + k.monsterLevel() + "、怪物群 +" + AtlasTree.number(k.pack()) + "%"
+                            + (k.quantity() > 0 ? "、物品數量 +" + AtlasTree.number(k.quantity()) + "%" : "")
+                            + "、物品稀有度 +" + AtlasTree.number(k.monsterRarity()) + "%（Boss +" + AtlasTree.number(k.rarity()) + "%）");
                     if (!done) { // 2026-10-25：完成的格子吃不到第一次的獎勵，不寫
                         lore.add("<#b07aff>　第一次打倒 Boss：每個人 " + Math.round(grid.config().vaalChance() * 100) + "% 掉一顆蝕變石");
                     }

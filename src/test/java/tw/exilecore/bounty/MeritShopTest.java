@@ -84,12 +84,13 @@ class MeritShopTest {
     @Test
     void ownedTitlesNeverOutgrowTheColumn() {
         final Set<String> owned = new LinkedHashSet<>();
-        for (int i = 0; i < 40; i++) {
+        // 2026-10-26：欄位在第 20 版加長到 4096 字，上限跟著改成 MeritShop.VALUE_MAX（這次之前 40 個、250 字）
+        for (int i = 0; i < 400; i++) {
             owned.add("old_title_" + i); // 設定檔改過很多次：買過的舊稱號一大堆
         }
         owned.add("hunter");
         final String value = MeritShop.titlesValue(owned, Set.of("hunter", "exile"));
-        assertTrue(value.length() <= 250, value.length() + " 字");
+        assertTrue(value.length() <= MeritShop.VALUE_MAX, value.length() + " 字");
         assertTrue(value.startsWith("hunter"), "設定檔裡還有的排前面、一定留著");
         assertTrue(MeritShop.ownedTitles(Map.of(MeritShop.TITLES, value)).contains("old_title_0"), "放得下的舊稱號也留著");
         assertEquals("exile,hunter", MeritShop.titlesValue(new LinkedHashSet<>(List.of("exile", "hunter")), Set.of("exile", "hunter")));

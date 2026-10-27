@@ -37,8 +37,13 @@ public final class CombatModule implements Module {
     private BukkitTask chargeTask;
     /** 曝露、定身、眩暈與減益的移動變慢（2026-10）。 */
     private HitEffects hitEffects;
+    private org.bukkit.scheduler.BukkitTask keystoneTask;
     private BukkitTask hitEffectTask;
     private BukkitTask presenceTask;
+    private tw.exilecore.item.unique.UniqueMechanics uniques;
+    private BukkitTask uniqueTask;
+    /** 2026-10-27：身上減益的冷卻時間這類放進屬性表（遲滯詛咒）。 */
+    private BukkitTask selfDebuffTask;
 
     public CombatModule(final ExileCore plugin) {
         this.plugin = plugin;
@@ -100,11 +105,30 @@ public final class CombatModule implements Module {
         chargeTask = plugin.repeat("charges", charges::tick, ChargeService.TICK_INTERVAL, ChargeService.TICK_INTERVAL);
         hitEffects = new HitEffects(plugin, debuffs);
         plugin.getServer().getPluginManager().registerEvents(hitEffects, plugin);
+        // 2026-10-26：PoE2 天賦樹一次性的特殊效果（格擋、補償、擊退、感電擴散、擊殺回復…）
+        final KeystoneEffects keystones = new KeystoneEffects(plugin, debuffs);
+        plugin.getServer().getPluginManager().registerEvents(keystones, plugin);
+        plugin.players().addBuffSource(keystones::modifiers); // 過去 10 秒每格擋一次的移動速度
+        keystoneTask = plugin.repeat("keystones", keystones::tick, 20, 20); // 寶石匠的戰星產生器
         hitEffectTask = plugin.repeat("hit-effects", hitEffects::tick, 2, 2);
         // 2026-10-23：玩家死掉、下線、離開地圖時拿掉他在怪物身上留下的減益與持續傷害
         plugin.getServer().getPluginManager().registerEvents(new SourceCleanup(plugin, debuffs), plugin);
         final Presence presence = new Presence(plugin, debuffs, skillDamage); // 2026-10：臨在（範圍內的敵人…）
         presenceTask = plugin.repeat("presence", presence::tick, Presence.PERIOD, Presence.PERIOD);
+        // 2026-10-26：照 PoE2 0.5 的傳奇特殊效果（壓碎、深淵消耗、點燃擴散、燃燒地面、週期神龕…）
+        uniques = new tw.exilecore.item.unique.UniqueMechanics(plugin, debuffs, corpses);
+        plugin.getServer().getPluginManager().registerEvents(uniques, plugin);
+        uniqueTask = plugin.repeat("unique-mechanics", uniques::tick, tw.exilecore.item.unique.UniqueMechanics.PERIOD,
+                tw.exilecore.item.unique.UniqueMechanics.PERIOD);
+        // 2026-10-27：玩家身上減益的「技能冷卻時間增加」（遲滯詛咒）放進屬性表；這次之前只在擊中時疊上，冷卻完全沒變
+        final SelfDebuffs selfDebuffs = new SelfDebuffs(plugin, debuffs);
+        plugin.players().addSituationalSource(selfDebuffs::modifiers);
+        selfDebuffTask = plugin.repeat("self-debuffs", selfDebuffs::tick, SelfDebuffs.PERIOD, SelfDebuffs.PERIOD);
+    }
+
+    /** 2026-10-26：傳奇的特殊效果；模組沒啟用時 null。 */
+    public tw.exilecore.item.unique.UniqueMechanics uniques() {
+        return uniques;
     }
 
     /** 球（銳星、怒星、磐星）；模組沒啟用時 null。 */
@@ -195,9 +219,21 @@ public final class CombatModule implements Module {
             presenceTask.cancel();
             presenceTask = null;
         }
+        if (selfDebuffTask != null) {
+            selfDebuffTask.cancel();
+            selfDebuffTask = null;
+        }
+        if (uniqueTask != null) {
+            uniqueTask.cancel();
+            uniqueTask = null;
+        }
         if (hitEffectTask != null) {
             hitEffectTask.cancel();
             hitEffectTask = null;
+        }
+        if (keystoneTask != null) {
+            keystoneTask.cancel();
+            keystoneTask = null;
         }
         if (hitEffects != null) {
             hitEffects.clear();

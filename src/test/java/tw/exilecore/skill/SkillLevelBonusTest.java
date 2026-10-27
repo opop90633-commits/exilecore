@@ -75,17 +75,22 @@ class SkillLevelBonusTest {
 
     @Test
     void spellDamageAndScaledValuesKeepGrowingPastTwenty() {
-        final double twenty = SkillProfiles.spellDamage(config, config.skill("fireball"), 20)[1];
+        // 2026-10-26：照 PoE2 逐級表的法術（熾星彈）超過 20 級直接查表：22 級 286–429
         final double twentyTwo = build("fireball", 20, 100, levels(2, Tags.SPELL)).profile().spellMax().total();
-        assertEquals(twenty * config.extraLevelGrowth() * config.extraLevelGrowth(), twentyTwo, 1e-6, "每多一級 ×1.13");
+        assertEquals(429, twentyTwo, 1e-6, "22 級照 PoE2 的表");
         assertEquals(1.0 + SkillConfig.DEFAULT_EXTRA_LEVEL_DAMAGE / 100.0, config.extraLevelGrowth(), 1e-9);
 
-        // 攻擊的傷害效益照 1 → 20 級的趨勢往上加
+        // 攻擊的傷害效益：碎脊擊照 PoE2 逐級表（20 級 312%、21 級 327%）
         final double effectiveness20 = build("boneshatter", 20, 100, new StatSheet()).profile().effectiveness();
         final double effectiveness21 = build("boneshatter", 20, 100, levels(1)).profile().effectiveness();
-        assertTrue(effectiveness21 > effectiveness20);
-        final Scaled scaled = config.skill("boneshatter").effectiveness();
-        assertEquals(scaled.last() + (scaled.last() - scaled.first()) / 19.0, effectiveness21, 1e-9);
+        assertEquals(3.12, effectiveness20, 1e-9);
+        assertEquals(3.27, effectiveness21, 1e-9);
+        assertTrue(config.skill("boneshatter").effectiveness().isTable());
+
+        // 兩端內插的寫法照 1 → 20 級的趨勢往上加
+        assertEquals(2 + 1 / 19.0, new Scaled(1, 2).at(21), 1e-9);
+        // 逐級表比等級短的照最後兩級的比例往外推
+        assertEquals(8, Scaled.table(new double[] {1, 2, 4}).at(4), 1e-9);
 
         // 往外推不會把正的數值推成負的
         assertEquals(0, new Scaled(1, 0).at(SkillBuild.MAX_EFFECTIVE_LEVEL), 1e-9);

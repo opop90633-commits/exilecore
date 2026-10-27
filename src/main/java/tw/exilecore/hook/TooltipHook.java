@@ -170,9 +170,7 @@ public final class TooltipHook {
             }
             final List<Component> out = new ArrayList<>();
             out.add(Component.empty());
-            for (final String line : lines) {
-                out.add(ItemRenderer.line(line));
-            }
+            out.addAll(tw.exilecore.core.text.TextWrap.lines(lines)); // 2026-10-26：長行自動換行
             return out;
         } catch (final RuntimeException e) {
             return List.of();
