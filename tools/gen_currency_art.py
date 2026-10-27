@@ -1446,7 +1446,7 @@ HAIR_LOCK = [  # 預見鎖：一綹編起來的銀髮，紅繩綁著（r）
 ]
 EXTRA.update({
     'gemcutter_prism': (PRISM,     ('0a2a3a', '3a8ab0', '8ae0f0', 'd0f8ff', 'ffffff', 'ffd861')),
-    'arcanist_etcher': (ETCHER,    ('1a1420', '7a4e24', '8a92a6', 'd6dcea', 'ffffff', 'b06aff')),
+    # 2026-10-27 照站長：星紋蝕刻器刪掉（併進礪鋒石），不畫了
     'hinekora_lock':   (HAIR_LOCK, ('2a2a34', '8a8aa0', 'c8c8d8', 'eeeef8', 'ffffff', 'd0303a')),
 })
 

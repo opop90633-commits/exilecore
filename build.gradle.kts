@@ -75,6 +75,8 @@ tasks {
 
     test {
         useJUnitPlatform()
+        // 2026-10-27：測試會在記憶體裡組整個資源包（技能、輔助、通貨、傳奇圖都變多了），預設堆積不夠會 OutOfMemoryError
+        maxHeapSize = "3g"
         testLogging {
             events("passed", "failed", "skipped")
         }
