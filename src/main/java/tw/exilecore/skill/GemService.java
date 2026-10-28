@@ -1301,6 +1301,9 @@ public final class GemService {
         if (DeadeyeMetas.hosts(host)) {
             return DeadeyeMetas.problem(host, inner); // 2026-10-28 照 PoE2：預告射擊放印記、幻影銳眼放遠程投射物攻擊
         }
+        if (HollowForm.hosts(host)) {
+            return HollowForm.problem(inner); // 2026-10-28 照 PoE2 Hollow Form：放近戰攻擊（引導、有使用條件的不行）
+        }
         final MetaSpec spec = config().meta(host.id());
         return spec == null ? "不是宿主寶石" : MetaGems.problem(spec, inner);
     }

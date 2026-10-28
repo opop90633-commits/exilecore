@@ -1041,14 +1041,32 @@
   function lockedNode(node) {
     return !!(node.unlock && node.unlock.nodes && node.unlock.nodes.length && !node.unlock.nodes.some(id => allocated.has(id)));
   }
-  const owned = node => node.id === start.id || allocated.has(node.id);
+  /**
+   * 2026-10-28 照站長：出發點（跟遊戲的 PassiveTree.seeds 一樣）——自己的起點；御風者配了「女術者之道」「戰士之道」再加元素法師、重甲鬥士的起點。
+   * calc 在後面才宣告，太早呼叫（載入時）就只有自己的起點。
+   */
+  const PATH_STARTS = { path_sorceress: "sorceress", path_warrior: "marauder" };
+  function seeds() {
+    const list = [start];
+    let nodes = [];
+    try { nodes = calc.asc ? calc.ascNodes : []; } catch (e) { nodes = []; }
+    for (const [ascNode, cls] of Object.entries(PATH_STARTS)) {
+      if (!nodes.includes(ascNode)) continue;
+      const info = data.classes.find(c => c.id === cls);
+      const extra = info && byId.get(info.start);
+      if (extra && !list.includes(extra)) list.push(extra);
+    }
+    return list;
+  }
+  const isSeed = node => seeds().some(s => s.id === node.id);
+  const owned = node => isSeed(node) || allocated.has(node.id);
   function canAllocate(node) {
     if (node.type === "start" || allocated.has(node.id)) return false;
     return neighbours(node).some(owned);
   }
   function reachable(set) {
     const seen = new Set();
-    const queue = [start];
+    const queue = seeds(); // 2026-10-28：含女術者之道／戰士之道的起點
     while (queue.length) {
       const cur = queue.shift();
       for (const n of neighbours(cur)) {
@@ -1061,8 +1079,9 @@
   function pathTo(target) {
     if (target.type === "start" || allocated.has(target.id)) return [];
     const parent = new Map();
-    const seen = new Set([start.id, ...allocated]);
-    const queue = [start, ...[...allocated].map(id => byId.get(id))];
+    const starts = seeds(); // 2026-10-28：含女術者之道／戰士之道的起點
+    const seen = new Set([...starts.map(s => s.id), ...allocated]);
+    const queue = [...starts, ...[...allocated].map(id => byId.get(id))];
     while (queue.length) {
       const cur = queue.shift();
       for (const n of neighbours(cur)) {
@@ -1627,7 +1646,7 @@
     }
     for (const node of order) {
       if (hiddenNode(node)) continue;
-      const state = node.type === "start" && node.id !== start.id ? "locked" : nodeState(node);
+      const state = node.type === "start" && !isSeed(node) ? "locked" : node.type === "start" && node.id !== start.id ? "owned" : nodeState(node);
       // 屬性點：配了的照選的屬性上色（力量紅、敏捷綠、智慧藍），中間寫一個字（放大才看得到）
       const attr = node.attr && state === "owned" ? attrOf(node) : null;
       if (state === "owned" || state === "path" || state === "remove") {
@@ -2571,11 +2590,12 @@
           const decoded = decodeCode(d.tree || "");
           if (!decoded) throw new Error("天賦代碼對不上（天賦樹改版過，請本人上線一次）");
           closeAttrMenu();
+          // 2026-10-28：昇華先設好再載天賦（女術者之道／戰士之道的起點連著的天賦才不會被當成斷掉丟掉）
+          calc.asc = d.asc || "";
+          calc.ascNodes = Array.isArray(d.ascNodes) ? d.ascNodes.slice() : [];
           load(decoded);
           calc.level = Number(d.level) || 0;
           levelInput.value = calc.level ? String(calc.level) : "";
-          calc.asc = d.asc || "";
-          calc.ascNodes = Array.isArray(d.ascNodes) ? d.ascNodes.slice() : [];
           calc.skills = (d.skills || []).map(s => ({ id: s.id, level: s.level || 1, sockets: s.sockets || DEFAULT_SOCKETS,
             supports: (s.supports || []).slice() }));
           calc.binds = new Array(BIND_COUNT).fill(-1).map((_, k) => {
@@ -2632,7 +2652,7 @@
     btn.hidden = !calc.asc;
     btn.textContent = "昇華天賦（" + ascPointsUsed() + (data.ascendancyPoints ? "/" + data.ascendancyPoints : "") + "）";
   }
-  ascSelect.addEventListener("change", () => { calc.asc = ascSelect.value; calc.ascNodes = []; render(); renderGear(); if (calc.asc) openAscPicker(); }); // 2026-10-26：重畫（觀星專屬節點跟著顯示／隱藏）
+  ascSelect.addEventListener("change", () => { calc.asc = ascSelect.value; calc.ascNodes = []; pruneTree(); renderGear(); if (calc.asc) openAscPicker(); }); // 2026-10-26：重畫（觀星專屬節點跟著顯示／隱藏）
   function ascInfo() { return (data.ascendancies || []).find(a => a.id === calc.asc); }
   function ascPointsUsed() {
     const a = calc.asc && data ? ascInfo() : null;
@@ -2657,9 +2677,18 @@
       if (data.ascendancyPoints && ascPointsUsed() + cost > data.ascendancyPoints) { flash("昇華點不夠（最多 " + data.ascendancyPoints + " 點）"); return; }
       calc.ascNodes = calc.ascNodes.concat(need.map(n => n.id));
     }
+    pruneTree(); // 2026-10-28：退掉女術者之道／戰士之道時，只靠那個起點連著的天賦一起退
     renderAscPicker();
     renderGear(); // 2026-10-26：展露之指配上、退掉時第三個戒指欄跟著顯示／隱藏
     updatePanel();
+  }
+  /** 2026-10-28：出發點變了（昇華換了、女術者之道／戰士之道退掉）：連不到任何出發點的天賦退掉，重畫。 */
+  function pruneTree() {
+    const keep = reachable(allocated);
+    if (keep.size === allocated.size) { render(); return; }
+    allocated = keep;
+    attrs = new Map([...attrs].filter(([id]) => allocated.has(id)));
+    render();
   }
   function renderAscPicker() {
     const a = ascInfo();

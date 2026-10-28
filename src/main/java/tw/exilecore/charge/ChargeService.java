@@ -58,6 +58,11 @@ public final class ChargeService implements Listener {
     public static final String SUP_DOUBLE = "charge.sup.double";
     /** 抑星（Inhibitor）：不消耗戰星與灌注；身上每有一種戰星或灌注更多 x% 傷害。 */
     public static final String SUP_INHIBIT = "charge.sup.inhibit";
+    /**
+     * 2026-10-28 照 PoE2 Hollow Form（Socketed Skills cannot consume Charges）：這個技能不能消耗戰星（不給抑星那種傷害加成）。
+     * 空無型態的幻影用的那一下帶這條（{@link tw.exilecore.skill.HollowForm#imageBuild}）。
+     */
+    public static final String CANNOT_CONSUME = "charge.cannot_consume";
     /** 狂速（Ferocity）：放的時候消耗一顆怒星，這一次更多 x% 技能速度；被輔助的技能不會產生怒星。 */
     public static final String SUP_FEROCITY = "charge.sup.ferocity";
     /** 久咒（Abiding Hex）：放的時候消耗一顆銳星，這一次更多 x% 持續時間。 */
@@ -273,8 +278,8 @@ public final class ChargeService implements Listener {
      */
     public int spend(final Player player, final String chargeId, final StatSheet effective, final java.util.Set<String> tags) {
         final java.util.Set<String> context = tags == null ? java.util.Set.of() : tags;
-        if (effective != null && effective.flat(SUP_INHIBIT, context) > 0) {
-            return 0;
+        if (effective != null && (effective.flat(SUP_INHIBIT, context) > 0 || effective.flat(CANNOT_CONSUME, context) > 0)) {
+            return 0; // 2026-10-28：空無型態的幻影（不能消耗戰星）也一樣
         }
         if (count(player, chargeId) <= 0) {
             return 0;

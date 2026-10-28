@@ -418,7 +418,7 @@ public final class AscendancyEffects implements Listener {
         }
         echoOrRepeat(player, sheet, build, target);
         final List<Modifier> extra = granted.used(player, state, build, target);
-        // 2026-10-27 照 PoE2：靈現奔竄、原始賞金、山巒之教、空無之鐘、空無型態、深淵幻影（AscPaths）
+        // 2026-10-27 照 PoE2：靈現奔竄、原始賞金、山巒之教、空無之鐘、深淵幻影（AscPaths）
         return paths.used(player, state, extra.isEmpty() ? build : build.withProfile(build.profile().withLocal(extra)), target);
     }
 

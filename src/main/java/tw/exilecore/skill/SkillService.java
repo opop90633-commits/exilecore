@@ -73,6 +73,8 @@ public final class SkillService {
     private final Signatures signatures;
     /** 2026-10-26 照 PoE2 的引導：逐秒扣魔力、衝鋒、持續作用。 */
     private final Channelling channelling;
+    /** 2026-10-28 照 PoE2 Hollow Form：空無型態引導中顯現幻影。 */
+    private final HollowImages hollowImages;
     /** 2026-10-26 照 PoE2：魔湧（Mana Tempest）的風暴。 */
     private final ManaTempest manaTempest;
     /** 2026-10-26 照 PoE2：移動中使用技能的移動速度懲罰（放技能的那段時間移動更少 70%）。
@@ -121,6 +123,7 @@ public final class SkillService {
         this.hold = new HoldToCast(plugin, this);
         this.signatures = new Signatures(plugin, this);
         this.channelling = new Channelling(plugin, this);
+        this.hollowImages = new HollowImages(plugin, this);
         this.manaTempest = new ManaTempest(plugin, this);
         this.movePenalty = new SkillMovePenalty(plugin);
     }
@@ -248,6 +251,12 @@ public final class SkillService {
     private SkillTriggers triggers;
 
     /** 主要寶石（2026-10）。 */
+    /** 2026-10-28：畫面上方資源條的主要寶石能量（ResourceBar 用；沒有回傳空字串）。 */
+    public String metaEnergyHud(final org.bukkit.entity.Player player) {
+        final PlayerState state = plugin.players().get(player);
+        return state == null || !state.hasCharacter() ? "" : metas().hudText(player, state);
+    }
+
     MetaGems metas() {
         return metas;
     }
@@ -712,6 +721,28 @@ public final class SkillService {
         for (final SkillLoadout.Entry inner : GemAttributes.usable(config, innerEntries(host), sheet)) {
             final SkillDefinition definition = config.skill(inner.skillId());
             if (definition != null && DeadeyeMetas.problem(hostDefinition, definition) == null && definition.usableWith(state.weaponTags())) {
+                list.add(build(state, sheet, definition, inner));
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Hollow Form：空無型態孔裡能用的近戰攻擊，照孔的順序；輔助是空無型態其他孔的（不合的略過）。
+     * 屬性需求不足、武器不對、放錯的略過；面板上沒有空無型態或孔裡沒有回傳空的。
+     */
+    public List<SkillBuild> hollowSocketed(final Player player) {
+        final PlayerState state = plugin.players().get(player);
+        final int position = state.skills().find(HollowForm.ID);
+        final SkillLoadout.Entry host = position < 0 ? null : state.skills().skill(position);
+        if (host == null || !HollowForm.hosts(config.skill(HollowForm.ID))) {
+            return List.of();
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        final List<SkillBuild> list = new ArrayList<>();
+        for (final SkillLoadout.Entry inner : GemAttributes.usable(config, innerEntries(host), sheet)) {
+            final SkillDefinition definition = config.skill(inner.skillId());
+            if (definition != null && HollowForm.problem(definition) == null && definition.usableWith(state.weaponTags())) {
                 list.add(build(state, sheet, definition, inner));
             }
         }
@@ -2034,6 +2065,12 @@ public final class SkillService {
                 state.markRecent(tw.exilecore.item.unique.UniqueStats.RECENT_RELOAD, done); // 2026-10-26：「最近裝填過」（破城機弩）
             }
         }
+        // 2026-10-28 照 PoE2 Hollow Form：空無型態按住引導，照孔裡近戰攻擊的攻擊時間 ÷ 0.7 一直顯現幻影（HollowImages）；
+        //   這次之前是一按一次的戰吼型技能（AscPaths：幻影用你最近使用的近戰攻擊）
+        if (HollowForm.hosts(definition)) {
+            hollowForm(player, runtime, state, sheet, key, build, preferred, now);
+            return;
+        }
         final MetaSpec metaSpec = pressed.entry() == null ? null : config.meta(definition.id());
         if (metaSpec != null && metaSpec.totem()) {
             spellTotem(player, runtime, state, sheet, key, pressed.entry(), build, metaSpec, now); // 2026-10：法術圖騰（PoE2 主要寶石）
@@ -3168,6 +3205,34 @@ public final class SkillService {
         return plugin.items().base(stack);
     }
 
+    /** 2026-10-28 照 PoE2 Hollow Form：按下去開始引導（孔裡要有能用的近戰攻擊）；引導中的每一下交給 {@link HollowImages#beat}。 */
+    private void hollowForm(final Player player, final SkillRuntime runtime, final PlayerState state, final StatSheet sheet, final int key,
+                            final SkillBuild build, final LivingEntity preferred, final long now) {
+        final SkillDefinition definition = build.definition();
+        final boolean beat = runtime.releasing != null && runtime.releasing.skillId().equals(definition.id())
+                && runtime.charging != null && runtime.charging.skillId.equals(definition.id());
+        runtime.releasing = null;
+        if (beat) {
+            hollowImages.beat(player, runtime, state, sheet, build, now);
+            return;
+        }
+        final ChargeSpec spec = config.charge(definition.id());
+        final List<SkillBuild> socketed = hollowSocketed(player);
+        if (spec == null || socketed.isEmpty()) {
+            fail(player, runtime, state, definition.name() + "：孔裡要放" + HollowForm.wants() + "的技能寶石（/skills 點它，拿技能寶石點一個孔）", now);
+            return;
+        }
+        if (signatures.press(player, runtime, state, key, definition, build, spec, preferred, sheet, now)) {
+            final String unpaid = channelling.start(player, runtime, state, build, spec, now);
+            if (unpaid != null) {
+                runtime.charging = null;
+                fail(player, runtime, state, unpaid, now);
+                return;
+            }
+            hollowImages.started(player, runtime, socketed.getFirst(), sheet, now);
+        }
+    }
+
     private void fail(final Player player, final SkillRuntime runtime, final PlayerState state, final String message, final long now) {
         state.notice("<red>" + ItemRenderer.escape(message), now + 30);
         plugin.players().display(player, state);
@@ -4186,8 +4251,10 @@ public final class SkillService {
         final List<SupportDefinition> list = new ArrayList<>();
         final SkillDefinition hostDefinition = config.skill(entry.skillId());
         final boolean deadeye = DeadeyeMetas.hosts(hostDefinition); // 2026-10-28 照 PoE2：幻影的冷卻、持續時間；常駐增益；預告射擊的範圍
+        final boolean hollow = HollowForm.hosts(hostDefinition); // 2026-10-28 照 PoE2 Hollow Form：恆星、倍星（用掉銳星時）
         for (final SupportDefinition support : supportsOf(entry)) {
-            if (support.worksOnHost() || deadeye && DeadeyeMetas.appliesToHost(support, hostDefinition)) {
+            if (support.worksOnHost() || deadeye && DeadeyeMetas.appliesToHost(support, hostDefinition)
+                    || hollow && HollowForm.appliesToHost(support)) {
                 list.add(support);
             }
         }
@@ -4986,6 +5053,28 @@ public final class SkillService {
         if (DeadeyeMetas.hosts(definition)) {
             lines.addAll(deadeyeSummary(player, definition, entry)); // 2026-10-28 照 PoE2：預告射擊的間隔、幻影的持續時間與冷卻
         }
+        if (HollowForm.hosts(definition)) {
+            lines.addAll(hollowSummary(player)); // 2026-10-28 照 PoE2 Hollow Form：幻影的間隔、消耗與孔裡放了什麼
+        }
+        return lines;
+    }
+
+    /** 2026-10-28 照 PoE2 Hollow Form：說明上的幻影間隔、每個幻影的消耗（吃孔裡攻擊的輔助與攻擊速度）與孔裡放了什麼。 */
+    private List<String> hollowSummary(final Player player) {
+        final List<String> lines = new ArrayList<>();
+        final List<SkillBuild> socketed = hollowSocketed(player);
+        if (socketed.isEmpty()) {
+            lines.add("<red>孔裡要放" + HollowForm.wants() + "的技能寶石（/skills 點它，拿技能寶石點一個孔），沒放就沒有效果");
+            return lines;
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        for (final SkillBuild attack : socketed) {
+            final double step = HollowForm.stepTicks(attack.intervalTicks(sheet)) / 20.0;
+            lines.add(String.format(Locale.ROOT, "<#c9a7ff>幻影<gray>：%s，每 <white>%s</white> 秒一個，每個花 <white>%d</white> 魔力%s",
+                    ItemRenderer.escape(attack.definition().name()), ModifierText.number(Math.round(step * 100) / 100.0),
+                    HollowForm.imageCost(attack.manaCost()),
+                    attack.cooldownTicks() > 0 ? "（冷卻 " + ModifierText.number(Math.round(attack.cooldownTicks() / 20.0 * 100) / 100.0) + " 秒）" : ""));
+        }
         return lines;
     }
 
@@ -5082,7 +5171,9 @@ public final class SkillService {
         }
         final List<String> lines = new ArrayList<>();
         lines.add("<#e7c56b>" + ItemRenderer.escape(spell.name()) + "<gray>（由" + ItemRenderer.escape(host.name())
-                + (DeadeyeMetas.MIRAGE.equals(host.id()) ? "的幻影使用、傷害更少 " + ModifierText.number(DeadeyeMetas.MIRAGE_LESS) + "%" : "施放") // 2026-10-28 照 PoE2
+                + (DeadeyeMetas.MIRAGE.equals(host.id()) ? "的幻影使用、傷害更少 " + ModifierText.number(DeadeyeMetas.MIRAGE_LESS) + "%" // 2026-10-28 照 PoE2
+                        : HollowForm.hosts(host) ? "的幻影使用、傷害更少 " + ModifierText.number(HollowForm.LESS_DAMAGE) + "%、攻擊速度更少 "
+                        + ModifierText.number(HollowForm.LESS_ATTACK_SPEED) + "%" : "施放") // 2026-10-28 照 PoE2 Hollow Form
                 + "、吃其他孔的輔助）：");
         for (final String line : describe(player, spell, inner)) {
             lines.add("<gray>　" + line);

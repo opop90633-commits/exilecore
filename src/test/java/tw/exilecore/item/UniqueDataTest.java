@@ -85,6 +85,7 @@ class UniqueDataTest {
         // 臨在的抗性降低（Presence）、護符欄位（CharmService）、揭露詞綴的幅度（ItemStats）
         for (final String ailment : List.of("ignite", "chill", "freeze", "shock", "bleed", "poison")) {
             stats.add(StatKeys.SELF_AILMENT_DURATION + "." + ailment);
+            stats.add("flag.immune." + ailment); // 2026-10-28：「不會被…」的傳奇是免疫（AilmentService.avoided 讀 flag.immune.＋異常）
         }
         for (final DamageType type : DamageType.values()) {
             stats.add(StatKeys.damageConvert(type));

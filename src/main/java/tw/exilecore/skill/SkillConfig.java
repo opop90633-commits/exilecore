@@ -415,7 +415,8 @@ public final class SkillConfig {
                             + "其他（暴擊時施放這類）是常駐的，要寫 mechanic: aura");
                 }
                 parsedMetas.put(id, meta);
-            } else if (definition.mechanic() == Mechanic.META) {
+            } else if (definition.mechanic() == Mechanic.META && !HollowForm.hosts(definition)) {
+                // 2026-10-28 照 PoE2 Hollow Form：空無型態是按住引導的主要寶石（SkillService／HollowImages 處理），沒有 meta 區塊
                 throw new IllegalArgumentException(node.path() + "：mechanic: meta 要寫 meta 區塊");
             }
             if (node.has("parent_damage") && "own".equals(String.valueOf(node.raw("parent_damage")).trim())) {

@@ -169,6 +169,8 @@ final class SkillRuntime {
 
     Charging charging;
     Release releasing;
+    /** 2026-10-28 照 PoE2 Hollow Form：空無型態下一個幻影用孔裡的第幾個攻擊（照孔的順序輪流）。 */
+    int hollowNext;
 
     /** 雙詠要重複的一次施放。 */
     record Echo(long atTick, SkillBuild build, UUID target) {

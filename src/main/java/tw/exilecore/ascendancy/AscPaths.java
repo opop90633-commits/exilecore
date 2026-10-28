@@ -50,7 +50,7 @@ import java.util.UUID;
  * <ul>
  *   <li>靈狩者（Spirit Walker）：靈現之靈與靈現奔竄、熊靈（荒野守護：躍擊、重擊偷取、怒吼恫嚇；荒野擁抱）、原始梟羽與原始賞金
  *       （強化下一個投射物技能、翱翔之地）、夥伴在身邊的傷害、凱莎的平衡、自然秩序的林靈附身。</li>
- *   <li>鳴鐘武師（Martial Artist）：空無之鐘（空無專注）、空無共鳴、空無型態的幻影、山巒之教、武術精通的護盾回充、武術宗師的連擊。
+ *   <li>鳴鐘武師（Martial Artist）：空無之鐘（空無專注）、空無共鳴、山巒之教、武術精通的護盾回充、武術宗師的連擊。
  *       符文子午線、石拳之道在 {@link AscBuild#equipment}。</li>
  *   <li>淵井骸主（Abyssal Lich）：割裂血肉、幽影之井（骷髏換成幽影之魂）、深淵幻影、不情願的獻祭（祭品，Warcries 呼叫）。</li>
  * </ul>
@@ -97,11 +97,8 @@ final class AscPaths implements Listener {
     static final double BELL_HIT_RADIUS = 2.5;
     static final int RESONANCE_USES = 3;
     static final long RESONANCE_TICKS = 10;
-    /** 空無型態：幻影的傷害更少 15%、花 80% 的消耗、用掉銳星多 2 個、出現在準心 6 格內。 */
-    static final double FORM_LESS = 0.15;
-    static final double FORM_COST = 0.8;
-    static final int FORM_EXTRA = 2;
-    static final double FORM_RADIUS = 6;
+    // 2026-10-28 照 PoE2 Hollow Form：空無型態改成主要寶石（孔裡放近戰攻擊、按住引導），搬到 skill.HollowForm／HollowImages；
+    //   這次之前在這裡（FORM_LESS 0.15、FORM_COST 0.8、FORM_EXTRA 2、FORM_RADIUS 6，幻影用你最近使用的近戰攻擊）
     /** 山巒之教：8 秒沒有獲得就全部失去；攻擊更多 15%、不超過最大生命 30% 的擊中更少 40%、暈眩門檻更多 50%。 */
     static final long MOUNTAIN_TICKS = 160;
     static final double MOUNTAIN_ATTACK = 0.15;
@@ -144,7 +141,6 @@ final class AscPaths implements Listener {
         long bellCheckedAt = Long.MIN_VALUE;
         int resonance = RESONANCE_USES;
         long resonanceNext;
-        SkillBuild lastMelee;
         int mountain;
         long mountainGained;
         final Map<String, Umbral> umbral = new LinkedHashMap<>();
@@ -214,7 +210,7 @@ final class AscPaths implements Listener {
     // 放技能（AscendancyEffects.cast）
     // =====================================================================
 
-    /** 玩家自己放了一個技能：回傳這一下要用的 build（原始賞金的強化、山巒之教），順便觸發靈現奔竄、敲鐘、空無型態、深淵幻影。 */
+    /** 玩家自己放了一個技能：回傳這一下要用的 build（原始賞金的強化、山巒之教），順便觸發靈現奔竄、敲鐘、深淵幻影（2026-10-28：空無型態搬到 skill.HollowImages）。 */
     SkillBuild used(final Player player, final PlayerState state, final SkillBuild original, final LivingEntity target) {
         SkillBuild build = original;
         final SkillDefinition definition = build.definition();
@@ -225,9 +221,6 @@ final class AscPaths implements Listener {
         final boolean damaging = damaging(build);
         final boolean attack = damaging && tags.contains(Tags.ATTACK);
         final List<Modifier> local = new ArrayList<>();
-        if (attack && tags.contains(Tags.MELEE) && !definition.tags().contains("channelling") && !"hollow_form".equals(definition.id())) {
-            own.lastMelee = original; // 空無型態的幻影用最近使用的近戰攻擊
-        }
         // 靈現奔竄：攻擊時用掉全部的靈現之靈
         if (attack && own.wisps > 0 && now >= own.stampedeReady && on(player, "vivid_stampede")) {
             final int count = own.wisps;
@@ -262,9 +255,6 @@ final class AscPaths implements Listener {
         // 空無之鐘：你的攻擊打到鐘就敲碎
         if (attack && !own.bells.isEmpty()) {
             strikeBells(player, own, tags.contains(Tags.MELEE) ? 3.5 : 15);
-        }
-        if ("hollow_form".equals(definition.id())) {
-            hollowForm(player, state, own, target);
         }
         // 深淵幻影：造成傷害的法術用掉 1 顆銳星，幻影也施放同一個法術（傷害更少）
         if (damaging && tags.contains(Tags.SPELL) && build.cooldownTicks() <= 0 && !definition.tags().contains("channelling")
@@ -424,67 +414,6 @@ final class AscPaths implements Listener {
         final StatSheet sheet = effects.sheet(player);
         final double recovery = sheet == null ? 0 : sheet.increased(StatKeys.COOLDOWN_RECOVERY, Set.of());
         return Math.max(1, Math.round(ticks / Math.max(0.1, 1 + recovery)));
-    }
-
-    // ---- 空無型態 ----
-
-    private void hollowForm(final Player player, final PlayerState state, final Own own, final LivingEntity target) {
-        final SkillBuild melee = own.lastMelee;
-        if (melee == null || plugin.skills() == null) {
-            state.notice("<gray>空無型態：先用一次近戰攻擊（幻影會用你最近使用的近戰攻擊）", now() + 40);
-            return;
-        }
-        int images = 1;
-        if (plugin.combat() != null && plugin.combat().charges() != null
-                && plugin.combat().charges().spend(player, "power", null, melee.profile().tags()) > 0) {
-            images += FORM_EXTRA;
-        }
-        final Location aim = target != null && target.getWorld() == player.getWorld()
-                && target.getLocation().distanceSquared(player.getLocation()) <= FORM_RADIUS * FORM_RADIUS * 4
-                ? target.getLocation() : player.getLocation().add(player.getLocation().getDirection().setY(0).normalize().multiply(3));
-        final SkillBuild weaker = melee.withProfile(melee.profile().withLocal(List.of(Modifier.more(StatKeys.DAMAGE, -FORM_LESS, "空無型態"))));
-        for (int i = 0; i < images; i++) {
-            final double cost = melee.manaCost() * FORM_COST;
-            if (cost > 0 && state.mana() < cost) {
-                break;
-            }
-            if (cost > 0) {
-                state.setMana(state.mana() - cost);
-            }
-            final double angle = plugin.random().nextDouble() * Math.PI * 2;
-            final double radius = 0.8 + plugin.random().nextDouble() * 1.4;
-            final Location spot = aim.clone().add(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
-            if (spot.distanceSquared(player.getLocation()) > FORM_RADIUS * FORM_RADIUS) {
-                final Vector back = spot.toVector().subtract(player.getLocation().toVector()).setY(0);
-                spot.setX(player.getLocation().getX() + back.getX() * FORM_RADIUS / Math.max(1e-6, back.length()));
-                spot.setZ(player.getLocation().getZ() + back.getZ() * FORM_RADIUS / Math.max(1e-6, back.length()));
-            }
-            effects.later(1 + 4L * i, () -> {
-                if (!player.isOnline() || spot.getWorld() != player.getWorld()) {
-                    return;
-                }
-                LivingEntity nearest = null;
-                double best = Double.MAX_VALUE;
-                for (final LivingEntity enemy : effects.enemiesNear(player, spot, FORM_RADIUS)) {
-                    final double d = enemy.getLocation().distanceSquared(spot);
-                    if (d < best) {
-                        best = d;
-                        nearest = enemy;
-                    }
-                }
-                final Vector facing = nearest != null ? nearest.getLocation().toVector().subtract(spot.toVector()).setY(0)
-                        : player.getLocation().getDirection().setY(0);
-                if (facing.lengthSquared() < 1e-6) {
-                    facing.setX(1);
-                }
-                final Location from = spot.clone();
-                from.setDirection(facing);
-                tw.exilecore.skill.Fx.spawn(from.getWorld(), Particle.REVERSE_PORTAL, from.clone().add(0, 1, 0), 30, 0.25, 0.7, 0.25, 0.02);
-                tw.exilecore.skill.Fx.spawn(from.getWorld(), Particle.SOUL, from.clone().add(0, 1.6, 0), 4, 0.15, 0.1, 0.15, 0.01);
-                plugin.skills().recast(player, weaker, from, facing.normalize(), nearest);
-            });
-        }
-        plugin.players().display(player, state);
     }
 
     // ---- 深淵幻影 ----

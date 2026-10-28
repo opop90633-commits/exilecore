@@ -978,20 +978,30 @@ public final class PlayerStateService {
                 (int) Math.round(req.intelligence() * scale));
     }
 
+    /** 2026-10-28：屬性的整數值（無條件捨去；加 1e-6 吸收浮點誤差）。 */
+    static long whole(final double value) {
+        return (long) Math.floor(value + 1e-6);
+    }
+
     /** 需求不符的原因；符合回傳 null。 */
     private static String requirementProblem(final ItemBase.Requirements req, final int level,
                                              final double str, final double dex, final double intelligence) {
         if (level < req.level()) {
             return "等級不足（需要 " + req.level() + "，你是 " + level + "）";
         }
-        if (str < req.str()) {
-            return "力量不足（需要 " + req.str() + "，你有 " + Math.round(str) + "）";
+        // 2026-10-28 修正（站長：需求 5、自己有 5 穿不上）：屬性照 PoE 取整數（無條件捨去，先加一點點吸收浮點誤差 4.9999…）再比；
+        //   這次之前直接拿小數比、訊息四捨五入，4.99999 或 4.6 都顯示「你有 5」卻穿不上
+        final long s = whole(str);
+        final long d = whole(dex);
+        final long i = whole(intelligence);
+        if (s < req.str()) {
+            return "力量不足（需要 " + req.str() + "，你有 " + s + "）";
         }
-        if (dex < req.dex()) {
-            return "敏捷不足（需要 " + req.dex() + "，你有 " + Math.round(dex) + "）";
+        if (d < req.dex()) {
+            return "敏捷不足（需要 " + req.dex() + "，你有 " + d + "）";
         }
-        if (intelligence < req.intelligence()) {
-            return "智慧不足（需要 " + req.intelligence() + "，你有 " + Math.round(intelligence) + "）";
+        if (i < req.intelligence()) {
+            return "智慧不足（需要 " + req.intelligence() + "，你有 " + i + "）";
         }
         return null;
     }

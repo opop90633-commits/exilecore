@@ -10051,24 +10051,22 @@ skills:
 
   hollow_form:
     name: 空無型態
-    description: 在準心附近顯現你的星體幻影，每個幻影用你最近使用的近戰攻擊打離它最近的敵人一次就消失（傷害更少 15%，每個幻影花那個攻擊 80% 的消耗）。有銳星時用掉 1 顆，多 2 個幻影。按住一直放。幻影不能用引導技能與有條件的技能。
+    # 2026-10-28 照 PoE2 0.5 Hollow Form（Meta Skill Gem：Attack、Melee、Sustained、Channelling、Meta；要近戰武器）：孔裡放近戰攻擊，按住引導，
+    #   每一次（孔裡攻擊的攻擊時間 ÷ 0.7）在準心附近（離你 6 格內）顯現一個幻影用孔裡的攻擊打最近的敵人；每個幻影花那個攻擊 80% 的消耗；
+    #   用掉銳星多 2 個；孔裡的攻擊不能消耗戰星、攻擊速度更少 30%、傷害更少 15%；引導、有使用條件的不能放（規則在 skill/HollowForm.java）。
+    # 這次之前（2026-10-27）：「在準心附近顯現你的星體幻影，每個幻影用你最近使用的近戰攻擊打離它最近的敵人一次就消失（傷害更少 15%，每個幻影花那個攻擊 80% 的消耗）。
+    #   有銳星時用掉 1 顆，多 2 個幻影。按住一直放。幻影不能用引導技能與有條件的技能。」mechanic: warcry、cast_time 1.4、cooldown 0.5、tags [attack, melee, duration]
+    description: 主要寶石：孔裡放近戰攻擊的技能寶石（可以放好幾個，照孔的順序輪流）。按住引導，在準心附近（離你 6 格內）一直顯現你的星體幻影，每個幻影用孔裡的攻擊打離它最近的敵人一次就消失；每個幻影花那個攻擊 80% 的消耗。有銳星時每次用掉 1 顆，多 2 個幻影。孔裡的攻擊不能消耗戰星、攻擊速度更少 30%（幻影出現的間隔）、傷害更少 15%，有冷卻的照它自己的冷卻。引導技能、有使用條件的技能、位移與跳躍的攻擊不能放。數字鍵按一下開始、再按結束。
     icon: PHANTOM_MEMBRANE
-    type: spell
+    type: attack
     tier: 1
-    tags: [attack, melee, duration]
+    tags: [attack, melee, channelling, meta]   # 2026-10-28 照 PoE2（Attack、Melee、Channelling、Meta）
     source: ascendancy   # 2026-10-27：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
-    mechanic: warcry
-    warcry:
-      cry: false
-      radius: 6
-      duration: 1
-      taunt: false
-      allies: false
-      buff:
-        - { stat: asc.skill_mark, type: FLAT, value: 1 }
-    cast_time: 1.4   # 原作要引導、每個幻影的時間是插槽攻擊的攻擊時間（攻擊速度更少 30%）；這裡按一次一個幻影，1.4 秒 ≈ 1 秒的攻擊 ÷ 0.7
-    cooldown: 0.5   # 引擎的戰吼要有冷卻
-    mana: 0   # 照 PoE2：花的是幻影用的那個攻擊的 80%（AscPaths）
+    weapons: [melee]   # 2026-10-28 照 PoE2：要近戰武器（徒手也算）
+    mechanic: meta   # 2026-10-28：沒有 meta 區塊，由 SkillService／HollowImages 處理（SkillConfig 放行）
+    attack_speed: 0.7   # 照 PoE2（攻擊速度為基礎的 70%；實際間隔照孔裡的攻擊算，見 HollowForm.stepTicks）
+    charge: { mode: stream }   # 2026-10-28 照 PoE2：引導（每一下由 HollowImages 顯現幻影；消耗是每個幻影花孔裡攻擊的 80%，不逐秒扣）
+    mana: 0   # 照 PoE2：花的是孔裡攻擊的 80%（HollowImages）
     visual: void_rift
 
   hollow_resonance:

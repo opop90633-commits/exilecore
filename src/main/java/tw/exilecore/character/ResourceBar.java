@@ -49,6 +49,10 @@ public final class ResourceBar {
                         rage >= rageMax ? " <#ff3b1f>MAX" : decaying ? " <gray>消退中" : ""));
             }
             parts.addAll(resources.otherParts(player));
+            final String metaEnergy = plugin.skills().metaEnergyHud(player); // 2026-10-28 照站長：主要寶石（擊中時火焰術、元祈…）的能量
+            if (!metaEnergy.isEmpty()) {
+                parts.add(metaEnergy);
+            }
             final String heat = plugin.skills().originals().heatHud(player); // 2026-10-28：弩的熱度（連射）
             if (!heat.isEmpty()) {
                 parts.add(heat);

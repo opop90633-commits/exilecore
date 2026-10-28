@@ -188,6 +188,10 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (DeadeyeMetas.hosts(host) && DeadeyeMetas.appliesToHost(this, host) && refusal(host) == null) {
             return null;
         }
+        // 2026-10-28 照 PoE2 Hollow Form：恆星、倍星套在空無型態自己身上（它用掉銳星多 2 個幻影），孔裡放什麼都可以掛
+        if (HollowForm.hosts(host) && HollowForm.appliesToHost(this) && refusal(host) == null) {
+            return null;
+        }
         if (inner == null) {
             return "先把技能寶石放進它的孔";
         }
@@ -508,8 +512,8 @@ public record SupportDefinition(String id, String name, String description, Stri
      * 星咒圖騰沒有能量，能量輔助（meta.energy_*）不算（骰運照舊可以）。
      */
     private boolean metaHost(final SkillDefinition skill) {
-        if (flagged(skill, StatKeys.FLAG_TOTEM_LINKED)) {
-            return false;
+        if (flagged(skill, StatKeys.FLAG_TOTEM_LINKED) || HollowForm.hosts(skill)) {
+            return false; // 2026-10-28：空無型態也是（不觸發、沒有能量）
         }
         if (skill.tags().contains(Tags.TOTEM)) {
             for (final Modifier modifier : modifiers) {
@@ -677,7 +681,8 @@ public record SupportDefinition(String id, String name, String description, Stri
      * 冷卻中用戰星跳過的另外看 {@link SkillDefinition#cooldownBypass()}。
      */
     static final Map<String, Set<String>> CHARGE_CONSUMERS = Map.of(
-            "power", Set.of("flicker_strike", "raise_zombie", "totem_casting", "falling_thunder"), // 2026-10-28 照 PoE2：＋驚雷劈（用掉所有的銳星）
+            "power", Set.of("flicker_strike", "raise_zombie", "totem_casting", "falling_thunder", // 2026-10-28 照 PoE2：＋驚雷劈（用掉所有的銳星）
+                    HollowForm.ID), // 2026-10-28 照 PoE2 Hollow Form：用掉銳星多 2 個幻影
             "frenzy", Set.of("lightning_spear", "storm_javelin", "linked_volley"),
             "endurance", Set.of("totem_casting"));
     /** 2026-10-24：一定要消耗戰星才放得出來的技能（抑星不能掛）。 */

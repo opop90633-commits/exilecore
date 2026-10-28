@@ -4996,7 +4996,7 @@ stormward_cord:        # 2026-10-26 照 PoE2 0.5 的「Byrnabas」（原作有�
         - { stat: life.regen, type: FLAT, value: "{value}" }
     - text: "不會被感電"
       stats:
-        - { stat: avoid.shock, type: FLAT, value: 100 }
+        - { stat: flag.immune.shock, type: FLAT, value: 1 }   # 2026-10-28 修正：「不會被…」是免疫（avoid 有 75% 上限，這次之前寫 avoid 100 只有 75%）
 
 flameclasp_belt:        # 2026-10-26 照 PoE2 0.5 的「Infernoclasp」（原作有、我們以前沒有的）
   retired: true
@@ -5131,7 +5131,7 @@ scorchrend_vest:        # 2026-10-26 照 PoE2 0.5 的「Ashrend」（原作有�
         - { stat: resist.fire, type: FLAT, value: "{value}" }
     - text: "不會被點燃"
       stats:
-        - { stat: avoid.ignite, type: FLAT, value: 100 }
+        - { stat: flag.immune.ignite, type: FLAT, value: 1 }   # 2026-10-28 修正：「不會被…」是免疫（avoid 有 75% 上限，這次之前寫 avoid 100 只有 75%）
     - text: "受到的攻擊擊中物理傷害 -10"
       stats:
         - { stat: taken.attack_physical, type: FLAT, value: 10 }
@@ -5168,7 +5168,7 @@ shedscale_coat:        # 2026-10-26 照 PoE2 0.5 的「Quatl's Molt」（原作�
         - { stat: life.regen, type: FLAT, value: "{value}" }
     - text: "不會中毒"
       stats:
-        - { stat: avoid.poison, type: FLAT, value: 100 }
+        - { stat: flag.immune.poison, type: FLAT, value: 1 }   # 2026-10-28 修正：「不會被…」是免疫（avoid 有 75% 上限，這次之前寫 avoid 100 只有 75%）
 
 defiant_robe:        # 2026-10-26 照 PoE2 0.5 的「Cloak of Defiance」（原作有、我們以前沒有的）
   name: 抗命法袍
@@ -5566,8 +5566,8 @@ dreamshard_ring:        # 2026-10-26 照 PoE2 0.5 的「Dream Fragments」（原
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
     - text: "不會被冰緩與凍結"
       stats:
-        - { stat: avoid.chill, type: FLAT, value: 100 }
-        - { stat: avoid.freeze, type: FLAT, value: 100 }
+        - { stat: flag.immune.chill, type: FLAT, value: 1 }   # 2026-10-28 修正：「不會被…」是免疫（avoid 有 75% 上限，這次之前寫 avoid 100 只有 75%）
+        - { stat: flag.immune.freeze, type: FLAT, value: 1 }   # 2026-10-28 修正：「不會被…」是免疫（avoid 有 75% 上限，這次之前寫 avoid 100 只有 75%）
 
 stormseek_ring:        # 2026-10-26 照 PoE2 0.5 的「Levinstone」（原作有、我們以前沒有的）
   name: 引雷石戒

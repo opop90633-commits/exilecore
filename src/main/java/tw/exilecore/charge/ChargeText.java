@@ -253,6 +253,7 @@ public final class ChargeText {
             case ChargeService.ON_MAX_RAGE -> "怒氣滿時獲得一顆隨機戰星（每 " + number(value) + " 秒最多一次）";
             case ChargeService.SUP_KEEP -> "消耗戰星時 " + number(value) + "% 機率不扣掉，但效果照拿";
             case ChargeService.SUP_DOUBLE -> "消耗戰星的效果 " + number(value) + "% 機率加倍";
+            case ChargeService.CANNOT_CONSUME -> "不能消耗戰星"; // 2026-10-28（空無型態的幻影）
             case ChargeService.SUP_INHIBIT -> "不消耗戰星與灌注；你身上每有一種戰星或灌注，更多 " + number(value) + "% 傷害";
             case ChargeService.SUP_FEROCITY -> "放的時候消耗一顆" + name("frenzy") + "：這一次更多 " + number(value) + "% 技能速度；不會產生" + name("frenzy");
             case ChargeService.SUP_ABIDING_HEX -> "放的時候消耗一顆" + name("power") + "：這一次更多 " + number(value) + "% 持續時間";

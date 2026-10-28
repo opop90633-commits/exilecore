@@ -601,6 +601,41 @@ public final class MetaGems {
         plugin.players().display(player, state);
     }
 
+    /**
+     * 2026-10-28 照站長：畫面上方資源條的主要寶石能量（「擊中時火焰術 12/40」；圖騰不算）。
+     * 開著的（常駐）或祈喚（按下去才花能量）的才寫；沒有回傳空字串。
+     */
+    String hudText(final Player player, final PlayerState state) {
+        final SkillLoadout loadout = state.skills();
+        final List<String> parts = new ArrayList<>();
+        for (int position = 0; position < loadout.size(); position++) {
+            final Socket socket = socket(state, position);
+            if (socket == null || socket.spec().totem()) {
+                continue;
+            }
+            final SkillDefinition meta = service.config().skill(socket.metaEntry().skillId());
+            if (meta == null) {
+                continue;
+            }
+            final double stored = energyOf(player.getUniqueId(), socket);
+            final boolean invocation = socket.spec().invocation();
+            if (!invocation && !service.auras().isActive(player.getUniqueId(), meta.id()) && stored <= 0) {
+                continue;
+            }
+            final double max = invocation
+                    ? invocationMax(socket.spec(), energyModifiers(socket.metaEntry()), sheetEnergy(plugin.players().sheet(player), meta.tags()),
+                    service.qualityFlat(player, socket.metaEntry().skillId(), tw.exilecore.stats.GemQualityKeys.META_MAX_ENERGY))
+                    : socket.maxEnergy();
+            if (max <= 0) {
+                continue;
+            }
+            final boolean full = invocation ? stored + 1e-9 >= socket.maxEnergy() : stored + 1e-9 >= max;
+            parts.add("<#c9a7ff>" + ItemRenderer.escape(meta.name()) + " " + (full ? "<#ffd060>" : "<white>")
+                    + number(Math.floor(stored)) + "<gray>/" + number(max));
+        }
+        return String.join("  ", parts);
+    }
+
     /** 這顆主要寶石現在累積的能量（說明用）。 */
     double energyOf(final UUID player, final String metaId, final String spellId) {
         final Map<String, Double> mine = energy.get(player);

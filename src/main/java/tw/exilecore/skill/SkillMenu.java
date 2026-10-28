@@ -638,7 +638,8 @@ public final class SkillMenu extends Menu {
                                       final int index) {
         final boolean linked = SkillExecutor.hasFlag(definition, tw.exilecore.stats.StatKeys.FLAG_TOTEM_LINKED);
         final String wants = linked ? "錘子的攻擊技能" : SocketedWarcry.hosts(definition) ? "人形戰吼"
-                : DeadeyeMetas.hosts(definition) ? DeadeyeMetas.wants(definition) : "法術"; // 2026-10-27：裂甲熊咆；2026-10-28：預告射擊、幻影銳眼
+                : DeadeyeMetas.hosts(definition) ? DeadeyeMetas.wants(definition)
+                : HollowForm.hosts(definition) ? HollowForm.wants() : "法術"; // 2026-10-27：裂甲熊咆；2026-10-28：預告射擊、幻影銳眼、空無型態
         final SkillLoadout.Entry inner = entry.spellAt(index); // 2026-10-26：其他孔也可能放著技能寶石
         final String socketName = "第 " + (index + 1) + " 孔";
         if (holding == Holding.SKILL_GEM && heldGem != null && heldGem.entry() != null) {
@@ -658,7 +659,7 @@ public final class SkillMenu extends Menu {
                     "<gray>拿" + wants + "的技能寶石點這裡放進去", "<gray>" + ItemRenderer.escape(definition.name()) + "會用它；其他孔的輔助都套在它身上"
                             + (SocketedWarcry.hosts(definition) ? "（不放就是熊咆自己的效果）" // 2026-10-27 照 PoE2 Ferocious Roar
                                     : !gems.multiSpell(definition) ? "" : linked ? "（其他孔也能放：英靈照孔的順序輪流用）" // 2026-10-27
-                                    : DeadeyeMetas.hosts(definition) ? "（其他孔也能放：照孔的順序輪流用）" // 2026-10-28
+                                    : DeadeyeMetas.hosts(definition) || HollowForm.hosts(definition) ? "（其他孔也能放：照孔的順序輪流用）" // 2026-10-28
                                     : isSpellTotem(definition) ? "（其他孔也能放：圖騰照孔的順序輪流放）" : "（其他孔也能放：全部一起觸發）"),
                     holding == Holding.SUPPORT_GEM ? "<red>這一孔不放輔助寶石" : "");
         }
