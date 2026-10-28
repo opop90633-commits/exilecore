@@ -178,6 +178,9 @@ public final class OriginalSkills implements Listener {
     static final long ICE_TIPPED_TICKS = 400;
     static final double CROSS_PULL = 7;
     static final long HEAT_DECAY_DELAY = 80;
+    /** 地刺崩裂的地刺：6 秒、最多 6 根（PoE2 Earthshatter）。 */
+    static final long SPIKE_TICKS = 120;
+    static final int SPIKE_LIMIT = 6;
     static final double HEAT_DECAY_PER_SECOND = 10;
 
     private record Fragment(UUID owner, Location at, long explodeAt, SkillProfile profile, double radius, ItemDisplay display) {
@@ -214,8 +217,9 @@ public final class OriginalSkills implements Listener {
         int staffCharges;
         long mantraUntil;
         int mantraLevel;
-        Orb orb;
-        Seed seed;
+        /** 雷流場的電球、燼種（2026-10-28 照 PoE2「上限 1 顆」吃 +x 上限（過剩），改成清單、最舊的在前面；這次之前各一顆的欄位）。 */
+        final List<Orb> orbs = new java.util.ArrayList<>();
+        final List<Seed> seeds = new java.util.ArrayList<>();
         long convalescenceReady;
         long convalescenceUntil;
         double grimStored;
@@ -241,6 +245,8 @@ public final class OriginalSkills implements Listener {
         UUID pounceBest;
         int pounceRank = -1;
         final Map<UUID, Corpses.Corpse> virtualCorpses = new HashMap<>();
+        /** 2026-10-28 照 PoE2 Earthshatter 的品質：最近幾次用地刺崩裂的 tick（每次留一根地刺，6 秒、最多 6 根）。 */
+        final java.util.ArrayDeque<Long> spikes = new java.util.ArrayDeque<>();
     }
 
     private final ExileCore plugin;
@@ -363,6 +369,11 @@ public final class OriginalSkills implements Listener {
     // SkillService 呼叫的入口
     // =====================================================================
 
+    /** 2026-10-28 照 PoE2 Mantra of Destruction 的品質：需要的連擊少 (0—1)（往 0 捨去）。 */
+    static int mantraCombo(final SkillBuild build) {
+        return Math.max(1, MANTRA_COMBO + qualityInt(build.qualityFlat(tw.exilecore.stats.GemQualityKeys.MANTRA_COMBO)));
+    }
+
     /** 這個 signature 是不是這裡接手的。 */
     boolean handles(final String signature) {
         return signature != null && SIGNATURES.contains(signature);
@@ -377,7 +388,8 @@ public final class OriginalSkills implements Listener {
         }
         if ("mantra".equals(signature)) {
             final int combo = service.resources().combo(player);
-            return combo < MANTRA_COMBO ? "崩滅心咒要 " + MANTRA_COMBO + " 點連擊（現在 " + combo + "）" : null;
+            final int need = mantraCombo(build);
+            return combo < need ? "崩滅心咒要 " + need + " 點連擊（現在 " + combo + "）" : null;
         }
         if ("living_bomb".equals(signature)) {
             return seedTarget(player, build, preferred) == null ? "準心沒有指著敵人" : null;
@@ -399,7 +411,7 @@ public final class OriginalSkills implements Listener {
         switch (signature) {
             case "charged_staff" -> chargedStaff(player, s, build, now);
             case "mantra" -> {
-                service.resources().spendCombo(player, MANTRA_COMBO);
+                service.resources().spendCombo(player, mantraCombo(build));
                 s.mantraUntil = now + Math.round(MANTRA_TICKS * build.durationScale());
                 s.mantraLevel = build.level();
                 service.buffs().apply(player, MANTRA, build.definition().name(), (int) (s.mantraUntil - now),
@@ -409,10 +421,13 @@ public final class OriginalSkills implements Listener {
             case "galvanic" -> {
                 service.buffs().apply(player, GALVANIC, build.definition().name(), 20 * 60,
                         List.of(Modifier.more(StatKeys.SHOCK_CHANCE, 0.3, build.definition().name())));
-                s.orb = s.orb != null && s.orb.until > now ? s.orb : null;
+                s.orbs.removeIf(orb -> orb.until <= now);
                 final SkillBuild bolt = proc(player, GALVANIC_BOLT, build.level());
                 if (bolt != null) {
                     pendingBolt.put(player.getUniqueId(), bolt);
+                    // 2026-10-28 照 PoE2：電球的上限（1 + 過剩）與持續時間照雷流場自己的組合（含輔助）；這次之前照電球（沒有輔助）的持續時間
+                    pendingGalvanic.put(player.getUniqueId(), new double[] {1 + SkillLimits.bonus(plugin.players().sheet(player), build),
+                            build.durationScale()});
                 }
                 Fx.spawn(player.getWorld(), Particle.ELECTRIC_SPARK, player.getLocation().add(0, 1, 0), 25, 0.5, 0.8, 0.5, 0.1);
             }
@@ -423,9 +438,10 @@ public final class OriginalSkills implements Listener {
                 s.calamity = build;
                 s.meteors = 0;
                 s.nextMeteor = now;
+                // 2026-10-28 照 PoE2 Walking Calamity 的品質：增益另外獲得 (0—10)% 傷害為火焰（加在 30% 上）
                 service.buffs().apply(player, CALAMITY, build.definition().name(), (int) (s.calamityUntil - now),
-                        List.of(Modifier.flat(StatKeys.damageExtra(DamageType.FIRE), 30, build.definition().name()),
-                                Modifier.flat(SkillResources.RAGE_REGEN, 5, build.definition().name())));
+                        build.withQualityEffects(List.of(Modifier.flat(StatKeys.damageExtra(DamageType.FIRE), 30, build.definition().name()),
+                                Modifier.flat(SkillResources.RAGE_REGEN, 5, build.definition().name())), 1.0, build.definition().name()));
                 player.getWorld().playSound(player.getLocation(), Sound.ENTITY_RAVAGER_ROAR, SoundCategory.PLAYERS, 1f, 0.7f);
             }
             default -> {
@@ -434,6 +450,8 @@ public final class OriginalSkills implements Listener {
     }
 
     private final Map<UUID, SkillBuild> pendingBolt = new HashMap<>();
+    /** 2026-10-28：雷流場放的時候記下 {電球上限, 持續時間倍率}。 */
+    private final Map<UUID, double[]> pendingGalvanic = new HashMap<>();
 
     /**
      * 放之前改這一下（熱度、崩滅心咒、霜鏃、黑油雨的帶電油彈、噬咬的跳躍）：回傳改過的組合（沒改就是原本的）。
@@ -479,6 +497,20 @@ public final class OriginalSkills implements Listener {
         }
         if (DEVOUR.equals(definition.id())) {
             devourLeap(player, out, preferred);
+        }
+        // 2026-10-28 照 PoE2 Earthshatter 的品質：每根還在的地刺更多 x% 擊中傷害（原作每用一次在裂縫盡頭留一根，6 秒、最多 6 根；
+        //   我們的地刺崩裂沒有實體的地刺，照最近 6 秒內用了幾次算）
+        final double perSpike = out.qualityFlat(tw.exilecore.stats.GemQualityKeys.MORE_PER_SPIKE);
+        if (perSpike > 0) {
+            s.spikes.removeIf(tick -> now - tick >= SPIKE_TICKS);
+            final int alive = Math.min(SPIKE_LIMIT, s.spikes.size());
+            s.spikes.addLast(now);
+            while (s.spikes.size() > SPIKE_LIMIT) {
+                s.spikes.pollFirst();
+            }
+            if (alive > 0) {
+                out = out.withProfile(out.profile().scaled(1 + perSpike / 100.0 * alive, "地刺"));
+            }
         }
         return out;
     }
@@ -537,7 +569,9 @@ public final class OriginalSkills implements Listener {
                 return "<red>魔力不足（回盾術要 " + (int) CONVALESCENCE_MANA + "）";
             }
             state.setMana(state.mana() - CONVALESCENCE_MANA);
-            s.convalescenceUntil = now + Math.round(levelValue(CONVALESCENCE, CONVALESCENCE_TIME, build.level(), 3) * 20 * build.durationScale());
+            // 2026-10-28 照 PoE2 Convalescence 的品質：增益持續時間 +(0—0.5) 秒
+            s.convalescenceUntil = now + Math.round((levelValue(CONVALESCENCE, CONVALESCENCE_TIME, build.level(), 3)
+                    + build.qualityFlat(CONVALESCENCE_TIME)) * 20 * build.durationScale());
             state.setLastDamageTick(now - 1_000_000L); // 立刻開始回充
             Fx.spawn(player.getWorld(), Particle.END_ROD, player.getLocation().add(0, 1, 0), 20, 0.4, 0.7, 0.4, 0.03);
             plugin.players().display(player, state);
@@ -590,6 +624,9 @@ public final class OriginalSkills implements Listener {
             slowTick(player, now);
         }
         spearfield.tick(player, now); // 2026-10-27 照 PoE2 Spearfield：插在地上的矛
+        if (now % KillingPalm.HIGHLIGHT_TICKS == 1) {
+            palmHighlight(player); // 2026-10-28 照 PoE2 斷魂掌：標出身邊可以撲殺的敵人；這次之前沒有
+        }
         if (s == null) {
             return;
         }
@@ -619,6 +656,48 @@ public final class OriginalSkills implements Listener {
         markTick(player, s, now);
     }
 
+    // ---- 斷魂掌 ----
+
+    /** 斷魂掌標記的顏色（暗紅）。 */
+    private static final Particle.DustOptions PALM_MARK = new Particle.DustOptions(org.bukkit.Color.fromRGB(200, 16, 16), 1.4f);
+
+    /**
+     * 2026-10-28 照 PoE2 Killing Palm「你周圍的可撲殺敵人會被重點標示」：技能面板上有斷魂掌時，衝刺距離內生命已經在撲殺門檻以下的怪物
+     * 發光（外框，只送給這個玩家；要裝 PacketEvents，見 {@link tw.exilecore.hook.CullGlow}）。
+     * 沒裝 PacketEvents 照舊在頭上冒紅點（spawnParticle 只送給這個玩家，別人看不到）。這次之前一律是紅點。
+     */
+    private void palmHighlight(final Player player) {
+        final boolean glow = tw.exilecore.hook.CullGlow.active();
+        if (player.isDead() || plugin.monsters() == null || gemLevel(player, KillingPalm.ID) <= 0) {
+            if (glow) {
+                tw.exilecore.hook.CullGlow.update(player, List.of()); // 拿掉斷魂掌、死掉：外框拿掉
+            }
+            return;
+        }
+        final List<LivingEntity> cullable = new ArrayList<>();
+        for (final LivingEntity near : player.getWorld().getNearbyLivingEntities(player.getLocation(), KillingPalm.DASH_RANGE + 1)) {
+            if (near.isDead() || !monster(near)) {
+                continue;
+            }
+            final org.bukkit.attribute.AttributeInstance max = near.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+            final double threshold = plugin.monsters().data(near).map(tw.exilecore.combat.CombatListener::cullThreshold).orElse(0.0);
+            if (max == null || !KillingPalm.cullable(near.getHealth(), max.getValue(), threshold)) {
+                continue;
+            }
+            cullable.add(near);
+        }
+        if (glow) {
+            tw.exilecore.hook.CullGlow.update(player, cullable);
+            if (tw.exilecore.hook.CullGlow.active()) {
+                return;
+            }
+        }
+        for (final LivingEntity near : cullable) {
+            final Location top = near.getLocation().add(0, near.getHeight() + 0.45, 0);
+            player.spawnParticle(Particle.DUST, top, 5, 0.12, 0.08, 0.12, 0, PALM_MARK);
+        }
+    }
+
     // ---- 凜冬之殼 ----
 
     private void arctic(final Player player, final State s, final long now) {
@@ -631,7 +710,8 @@ public final class OriginalSkills implements Listener {
             s.nextArcticStage = -1;
             return;
         }
-        final int max = (int) Math.round(levelValue(ARCTIC, ARCTIC_STAGES, level, 2));
+        // 2026-10-28 照 PoE2 Arctic Armour 的品質：最大層數 +(0—1)（無條件捨去）
+        final int max = (int) Math.round(levelValue(ARCTIC, ARCTIC_STAGES, level, 2)) + qualityInt(service.qualityFlat(player, ARCTIC, ARCTIC_STAGES));
         final long every = Math.max(2, Math.round(levelValue(ARCTIC, ARCTIC_INTERVAL, level, 1.25) * 20));
         if (s.nextArcticStage < 0 || s.arcticStages >= max) {
             s.arcticStages = Math.min(s.arcticStages, max);
@@ -698,7 +778,8 @@ public final class OriginalSkills implements Listener {
         final StatSheet sheet = plugin.players().sheet(player);
         final double radius = tw.exilecore.combat.Presence.radius(sheet);
         final double cap = levelValue(ATTRITION, ATTRITION_CAP, level, 40);
-        final double cull = levelValue(ATTRITION, ATTRITION_CULL, level, 40);
+        // 2026-10-28 照 PoE2 Attrition 的品質：撲殺需要的層數少 (0—5)
+        final double cull = levelValue(ATTRITION, ATTRITION_CULL, level, 40) + service.qualityFlat(player, ATTRITION, ATTRITION_CULL);
         final Debuffs debuffs = plugin.combat() == null ? null : plugin.combat().debuffs();
         final Set<UUID> cullable = CULLABLE.computeIfAbsent(player.getUniqueId(), k -> ConcurrentHashMap.newKeySet());
         for (final LivingEntity near : player.getWorld().getNearbyLivingEntities(player.getLocation(), radius)) {
@@ -737,27 +818,33 @@ public final class OriginalSkills implements Listener {
     // ---- 雷流場 ----
 
     private void orb(final Player player, final State s, final long now) {
-        final Orb orb = s.orb;
-        if (orb == null) {
+        if (s.orbs.isEmpty()) {
             return;
         }
+        for (final Orb orb : new java.util.ArrayList<>(s.orbs)) {
+            if (!orbTick(player, orb, now)) {
+                s.orbs.remove(orb);
+            }
+        }
+    }
+
+    /** 一顆電球的這一刻；回傳 false = 這顆沒了。 */
+    private boolean orbTick(final Player player, final Orb orb, final long now) {
         if (now >= orb.until) {
-            s.orb = null;
-            return;
+            return false;
         }
         final Entity entity = plugin.getServer().getEntity(orb.target);
         if (entity instanceof LivingEntity living && living.isValid() && !living.isDead()) {
             orb.last = living.getLocation().add(0, living.getHeight() + 0.4, 0);
         }
         if (orb.last == null || orb.last.getWorld() == null || !orb.last.getWorld().equals(player.getWorld())) {
-            s.orb = null;
-            return;
+            return false;
         }
         if (now % 4 == 0) {
             Fx.spawn(orb.last.getWorld(), Particle.ELECTRIC_SPARK, orb.last, 4, 0.15, 0.15, 0.15, 0.02);
         }
         if (now < orb.next) {
-            return;
+            return true;
         }
         orb.next = now + GALVANIC_INTERVAL;
         final double radius = GALVANIC_RADIUS * orb.bolt.areaScale();
@@ -775,6 +862,7 @@ public final class OriginalSkills implements Listener {
             service.executor().executeFrom(Origin.at(player, orb.last.clone().subtract(0, 1.5, 0),
                     direction.lengthSquared() < 1e-6 ? new Vector(0, -1, 0) : direction.normalize()), orb.bolt, aim);
         }
+        return true;
     }
 
     // ---- 燼種 ----
@@ -791,29 +879,33 @@ public final class OriginalSkills implements Listener {
                 : data == null ? target.getHealth() : plugin.monsters().config().ailmentThresholdAt(Math.max(1, data.level()));
         seed.threshold = Math.max(1, threshold * SEED_THRESHOLD);
         seed.until = now + Math.round(SEED_TICKS * build.durationScale());
-        s.seed = seed; // 照 PoE2：同時只有一顆
+        // 照 PoE2：上限 1 顆（2026-10-28：+x 上限（過剩）多幾顆，滿了最舊的消失；同一隻身上重種換掉舊的）
+        s.seeds.removeIf(old -> old.target.equals(seed.target));
+        while (s.seeds.size() >= 1 + SkillLimits.bonus(plugin.players().sheet(player), build)) {
+            s.seeds.removeFirst();
+        }
+        s.seeds.add(seed);
         Fx.spawn(target.getWorld(), Particle.FLAME, target.getLocation().add(0, target.getHeight() / 2, 0), 15, 0.3, 0.4, 0.3, 0.02);
     }
 
     private void seed(final Player player, final State s, final long now) {
-        final Seed seed = s.seed;
-        if (seed == null) {
+        if (s.seeds.isEmpty()) {
             return;
         }
-        final Entity entity = plugin.getServer().getEntity(seed.target);
-        if (now >= seed.until || !(entity instanceof LivingEntity living) || !living.isValid()) {
-            s.seed = null;
-            return;
-        }
-        if (now % 10 == 0) {
-            Fx.spawn(living.getWorld(), Particle.SMALL_FLAME, living.getLocation().add(0, living.getHeight() + 0.2, 0), 3, 0.1, 0.1, 0.1, 0.01);
+        for (final Seed seed : new java.util.ArrayList<>(s.seeds)) {
+            final Entity entity = plugin.getServer().getEntity(seed.target);
+            if (now >= seed.until || !(entity instanceof LivingEntity living) || !living.isValid()) {
+                s.seeds.remove(seed);
+                continue;
+            }
+            if (now % 10 == 0) {
+                Fx.spawn(living.getWorld(), Particle.SMALL_FLAME, living.getLocation().add(0, living.getHeight() + 0.2, 0), 3, 0.1, 0.1, 0.1, 0.01);
+            }
         }
     }
 
-    private void explodeSeed(final Player player, final State s, final Location at) {
-        final Seed seed = s.seed;
-        s.seed = null;
-        if (seed == null || at.getWorld() == null) {
+    private void explodeSeed(final Player player, final State s, final Seed seed, final Location at) {
+        if (seed == null || !s.seeds.remove(seed) || at.getWorld() == null) {
             return;
         }
         blast(player, at, SEED_RADIUS * seed.build.areaScale(), seed.build.profile());
@@ -857,7 +949,9 @@ public final class OriginalSkills implements Listener {
             s.virtualCorpses.clear();
             return;
         }
-        final double slower = Math.abs(levelValue(SACRIFICE, SACRIFICE_SLOWER, level, -59)) / 100.0;
+        // 2026-10-28 照 PoE2 Sacrifice 的品質：召喚物復活更快 (0—5)%（加在「更慢 x%」上）
+        final double slower = Math.abs(Math.min(0, levelValue(SACRIFICE, SACRIFICE_SLOWER, level, -59)
+                + service.qualityFlat(player, SACRIFICE, SACRIFICE_SLOWER))) / 100.0;
         REVIVE_SCALE.put(player.getUniqueId(), 1 / Math.max(0.05, 1 - slower)); // 照 PoE2：復活慢 x%
         final Set<UUID> seen = new java.util.HashSet<>();
         for (final MinionService.Minion minion : service.minions().all()) {
@@ -906,7 +1000,7 @@ public final class OriginalSkills implements Listener {
         if (runtime == null || level <= 0) {
             return 0;
         }
-        final int max = service.config().clip(RAPID, level);
+        final int max = heatMax(player, level);
         if (runtime.reloadDone.containsKey(RAPID)) {
             return max;
         }
@@ -928,8 +1022,16 @@ public final class OriginalSkills implements Listener {
         if (done != null) {
             return heatText(0, 0, Math.max(0, done - now()));
         }
-        final int max = service.config().clip(RAPID, level);
+        final int max = heatMax(player, level);
         return heatText(heat(player), max, -1);
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Rapid Shot 的品質：最大熱度 +(0—15)（無條件捨去）。熱度就是連射的彈匣用掉幾發（彈匣 = 最大熱度），
+     * 品質寫成 crossbow.clip，跟 SkillService.clipSize 一樣加。
+     */
+    private int heatMax(final Player player, final int level) {
+        return service.config().clip(RAPID, level) + qualityInt(service.qualityFlat(player, RAPID, StatKeys.CROSSBOW_CLIP));
     }
 
     /** 熱度那一段的文字：過熱（overheatTicks ≥ 0）寫剩幾秒，不然寫 熱度 x/最大；0 點不顯示。 */
@@ -952,7 +1054,7 @@ public final class OriginalSkills implements Listener {
             return false;
         }
         final Integer left = runtime.ammo.get(RAPID);
-        final int max = service.config().clip(RAPID, level);
+        final int max = heatMax(player, level);
         if (left == null || max - left < amount) {
             return false;
         }
@@ -975,7 +1077,7 @@ public final class OriginalSkills implements Listener {
         if (left == null || level <= 0) {
             return;
         }
-        final int max = service.config().clip(RAPID, level);
+        final int max = heatMax(player, level);
         final int next = left + (int) Math.round(HEAT_DECAY_PER_SECOND / 2);
         if (next >= max) {
             runtime.ammo.remove(RAPID);
@@ -1054,7 +1156,7 @@ public final class OriginalSkills implements Listener {
                 final Vector facing = SkillTargets.facing(player);
                 final Vector side = new Vector(-facing.getZ(), 0, facing.getX()).multiply((index % 2 == 0 ? 1 : -1) * (0.8 + plugin.random().nextDouble() * 0.7));
                 final Location at = player.getLocation().add(side).add(0, 0.1, 0);
-                while (s.caltrops.size() >= CALTROP_MAX) {
+                while (s.caltrops.size() >= caltropMax(player)) {
                     removeDisplay(s.caltrops.removeFirst().display());
                 }
                 final Caltrop caltrop = new Caltrop(player.getUniqueId(), at, now() + ticks, profile, marker(at, Material.IRON_NUGGET, 0.35f),
@@ -1099,6 +1201,16 @@ public final class OriginalSkills implements Listener {
         }
     }
 
+    /** 2026-10-28 照 PoE2 Trail of Caltrops 的品質：鐵蒺上限 +(0—5)（無條件捨去）。 */
+    private int caltropMax(final Player player) {
+        return CALTROP_MAX + qualityInt(service.qualityFlat(player, CALTROPS, tw.exilecore.stats.GemQualityKeys.CALTROPS_MAX));
+    }
+
+    /** 2026-10-28：品質給的個數（往 0 捨去：PoE2 的整數屬性 10% 品質的 +0.5 是 0、−0.5 也是 0）。 */
+    static int qualityInt(final double value) {
+        return (int) (value + (value >= 0 ? 1e-9 : -1e-9));
+    }
+
     /** 這一輪要炸的鐵蒺（炸的時候會再放回去，不能邊跑清單邊加）。 */
     private final List<Caltrop> rearmed = new ArrayList<>();
 
@@ -1107,7 +1219,7 @@ public final class OriginalSkills implements Listener {
         blast(player, caltrop.at(), CALTROP_BLAST + 0.3, caltrop.profile());
         Fx.spawn(caltrop.at().getWorld(), Particle.CRIT, caltrop.at().clone().add(0, 0.3, 0), 8, 0.3, 0.2, 0.3, 0.1);
         removeDisplay(caltrop.display());
-        if (caltrop.rearm() > 0 && plugin.random().nextDouble() * 100 < caltrop.rearm() && s.caltrops.size() < CALTROP_MAX) {
+        if (caltrop.rearm() > 0 && plugin.random().nextDouble() * 100 < caltrop.rearm() && s.caltrops.size() < caltropMax(player)) {
             final long now = now();
             s.caltrops.add(new Caltrop(caltrop.owner(), caltrop.at(), now + Math.max(caltrop.until() - caltrop.armedAt(), 40), caltrop.profile(),
                     marker(caltrop.at(), Material.IRON_NUGGET, 0.35f), now + tw.exilecore.stats.SupportExtraKeys.REARM_TICKS, caltrop.delayed(), caltrop.rearm()));
@@ -1155,10 +1267,15 @@ public final class OriginalSkills implements Listener {
             return;
         }
         final double regen = levelValue(DEVOUR, DEVOUR_REGEN, build.level(), 10);
+        // 2026-10-28 照 PoE2 Devour 的品質：每吃一具 (0—50)% 機率當作擊殺獲得藥劑與護符充能（屍體不知道稀有度，照普通怪）
+        final double flaskChance = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.CORPSE_FLASK_CHANCE);
         for (int i = 0; i < eaten; i++) {
             corpses.remove(near.get(i));
             if (plugin.combat().charges() != null) {
                 plugin.combat().charges().grant(player, "power", 1);
+            }
+            if (flaskChance > 0 && plugin.flasks() != null && plugin.random().nextDouble() * 100 < flaskChance) {
+                plugin.flasks().gainAsKill(player, MonsterRarity.NORMAL);
             }
         }
         // 照 PoE2：每吃一個在 1 秒內回復生命
@@ -1209,11 +1326,18 @@ public final class OriginalSkills implements Listener {
                 enemies++;
             }
         }
-        final double taken = Math.min(MARK_CAP, MARK_PER_ENEMY * enemies) / 100.0;
+        // 2026-10-28 照 PoE2 Pounce 的品質：每個敵人另外 +(0—1)%、上限另外 +(0—15)%
+        final double taken = markTaken(enemies, service.qualityFlat(player, POUNCE, tw.exilecore.stats.GemQualityKeys.MARK_PER_ENEMY),
+                service.qualityFlat(player, POUNCE, tw.exilecore.stats.GemQualityKeys.MARK_CAP)) / 100.0;
         if (plugin.combat() != null && plugin.combat().debuffs() != null) {
             plugin.combat().debuffs().apply(target.getUniqueId(), new Debuffs.Debuff("predator_mark", player.getUniqueId(), s.markUntil, taken, false, null));
         }
         Fx.spawn(target.getWorld(), Particle.ANGRY_VILLAGER, target.getLocation().add(0, target.getHeight() + 0.5, 0), 1, 0.1, 0.1, 0.1, 0);
+    }
+
+    /** 獵手印記受到的傷害增加幾 %：附近 enemies 個敵人、每個 3%（＋品質）、上限 45%（＋品質）。純函式（測試用）。 */
+    static double markTaken(final int enemies, final double extraPer, final double extraCap) {
+        return Math.min(MARK_CAP + extraCap, (MARK_PER_ENEMY + extraPer) * enemies);
     }
 
     private void summonWolves(final Player player, final State s, final boolean unique) {
@@ -1296,15 +1420,21 @@ public final class OriginalSkills implements Listener {
         final long now = now();
         if (type == AilmentType.SHOCK && service.buffs().has(player.getUniqueId(), GALVANIC)) {
             final SkillBuild bolt = pendingBolt.remove(player.getUniqueId());
+            final double[] galvanic = pendingGalvanic.remove(player.getUniqueId());
             service.buffs().remove(player, GALVANIC);
             if (bolt != null) {
                 final Orb orb = new Orb();
                 orb.target = target.getUniqueId();
-                orb.until = now + Math.round(GALVANIC_TICKS * bolt.durationScale());
+                orb.until = now + Math.round(GALVANIC_TICKS * (galvanic != null ? galvanic[1] : bolt.durationScale()));
                 orb.next = now + 2;
                 orb.bolt = bolt;
                 orb.last = target.getLocation().add(0, target.getHeight() + 0.4, 0);
-                state(player).orb = orb; // 照 PoE2：同時只有一顆
+                // 照 PoE2：上限 1 顆（2026-10-28：+x 上限（過剩）多幾顆，滿了最舊的消失）
+                final List<Orb> orbs = state(player).orbs;
+                while (orbs.size() >= Math.max(1, galvanic == null ? 1 : (int) galvanic[0])) {
+                    orbs.removeFirst();
+                }
+                orbs.add(orb);
             }
         }
     }
@@ -1367,13 +1497,16 @@ public final class OriginalSkills implements Listener {
         }
         // 燼種：被種的敵人受到的傷害
         for (final State other : states.values()) {
-            if (other.seed != null && other.seed.target.equals(defender.getUniqueId())) {
-                other.seed.taken += event.result().total() > 0 ? event.result().total() : event.result().dealt().total();
-                if (other.seed.taken >= other.seed.threshold) {
+            for (final Seed seed : other.seeds) {
+                if (!seed.target.equals(defender.getUniqueId())) {
+                    continue;
+                }
+                seed.taken += event.result().total() > 0 ? event.result().total() : event.result().dealt().total();
+                if (seed.taken >= seed.threshold) {
                     final Player owner = ownerOf(other);
                     if (owner != null) {
                         final Location at = defender.getLocation();
-                        plugin.getServer().getScheduler().runTask(plugin, () -> explodeSeed(owner, other, at));
+                        plugin.getServer().getScheduler().runTask(plugin, () -> explodeSeed(owner, other, seed, at));
                     }
                 }
             }
@@ -1459,10 +1592,12 @@ public final class OriginalSkills implements Listener {
         final long now = now();
         // 燼種：被種的敵人死掉時爆開
         for (final State s : states.values()) {
-            if (s.seed != null && s.seed.target.equals(dead.getUniqueId())) {
-                final Player owner = ownerOf(s);
-                if (owner != null) {
-                    explodeSeed(owner, s, dead.getLocation());
+            for (final Seed seed : new java.util.ArrayList<>(s.seeds)) {
+                if (seed.target.equals(dead.getUniqueId())) {
+                    final Player owner = ownerOf(s);
+                    if (owner != null) {
+                        explodeSeed(owner, s, seed, dead.getLocation());
+                    }
                 }
             }
         }
@@ -1506,7 +1641,8 @@ public final class OriginalSkills implements Listener {
                 }
                 final double radius = tw.exilecore.combat.Presence.radius(plugin.players().sheet(owner));
                 if (life > 0 && owner.getLocation().distanceSquared(dead.getLocation()) <= radius * radius) {
-                    final double stored = life * GRIM_SHARE;
+                    // 2026-10-28 照 PoE2 Grim Feast 的品質：殘骸另外存召喚物最大生命的 (0—5)%
+                    final double stored = life * (GRIM_SHARE + service.qualityFlat(owner, GRIM, tw.exilecore.stats.GemQualityKeys.GRIM_SHARE) / 100.0);
                     final double cap = levelValue(GRIM, GRIM_CAP, level, 47);
                     service.chargeEffects().dropCustomRemnant(owner, dead.getLocation().add(0, 0.4, 0), Material.BONE_MEAL,
                             times -> state(owner).grimStored = Math.min(cap, state(owner).grimStored + stored * times)); // 2026-10-26：共用殘影（ChargeEffects）
@@ -1518,6 +1654,7 @@ public final class OriginalSkills implements Listener {
     @EventHandler
     public void onQuit(final PlayerQuitEvent event) {
         spearfield.forget(event.getPlayer().getUniqueId());
+        tw.exilecore.hook.CullGlow.forget(event.getPlayer().getUniqueId()); // 2026-10-28 斷魂掌的外框
         final State s = states.remove(event.getPlayer().getUniqueId());
         if (s != null) {
             for (final Caltrop caltrop : s.caltrops) {
@@ -1532,6 +1669,7 @@ public final class OriginalSkills implements Listener {
         CULLABLE.remove(event.getPlayer().getUniqueId());
         REVIVE_SCALE.remove(event.getPlayer().getUniqueId());
         pendingBolt.remove(event.getPlayer().getUniqueId());
+        pendingGalvanic.remove(event.getPlayer().getUniqueId());
     }
 
     /** 給技能面板、測試：凜冬之殼現在幾層。 */

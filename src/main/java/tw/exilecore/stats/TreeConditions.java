@@ -132,6 +132,9 @@ public final class TreeConditions {
     public static final String ON_IGNITED_GROUND = "onignitedground";
     /** 最近獲得過怒氣。 */
     public static final String RAGE_GAINED = "ragegained";
+    /** 2026-10-28 照 PoE2 Trinity 的品質：鼎元訣的三種親和加起來超過 {@link #TRINITY_HIGH_TOTAL}（SkillModule 接上）。 */
+    public static final String TRINITY_HIGH = "trinityhigh";
+    public static final double TRINITY_HIGH_TOTAL = 250;
 
     // ---- 「最近…」的新事件（照 Recently 的 4 秒） ----
     /** 最近重暈過敵人。 */
@@ -301,7 +304,8 @@ public final class TreeConditions {
             CHARM_ACTIVE, NO_LIFE_FLASK, HERALD, HERALD_ASH, HERALD_ICE, HERALD_THUNDER, HERALD_PLAGUE, HERALD_BLOOD, TOTEM, WIELD_AXE,
             WIELD_QUARTERSTAFF, NO_ENEMY_NEAR, LIFE_FLASK_10S, ARCHON,
             ARCANE_SURGE, LOW_ES, ALL_COMPANIONS, EMPOWERED_ATTACK, GLORY_20S, PROJECTILE_HIT_8S, MELEE_HIT_8S, ES_RECHARGE_2S, // 2026-10-27
-            ON_SHOCKED_GROUND, ON_CHILLED_GROUND, ON_IGNITED_GROUND, RAGE_GAINED);
+            ON_SHOCKED_GROUND, ON_CHILLED_GROUND, ON_IGNITED_GROUND, RAGE_GAINED,
+            TRINITY_HIGH); // 2026-10-28
     /** 還沒有系統支撐的條件（一律不成立）。2026-10-26：變身、夥伴接上了，現在沒有。 */
     public static final Set<String> RESERVED = Set.of();
     public static final Set<String> EVENTS = Set.of(STUNNED_ENEMY, SHAPESHIFT_EVENT, REVERT_EVENT, INFUSION_EVENT, POWER_GAIN, ATTACK_EVENT,

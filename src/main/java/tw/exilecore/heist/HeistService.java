@@ -459,6 +459,10 @@ public final class HeistService implements Listener {
             if (!run.grand && random().nextDouble() < bonus.more(settings.chestBlueprintChance())) {
                 addCurrency(rolled, BLUEPRINT, 1);
             }
+            // 2026-10-28 照站長：特殊項鍊只在劫盜掉，每個金庫箱、每個人 0.5%（heist.yml 的 special_amulet.chest_chance）；這次之前一般掉落、賭裝商人拿得到
+            if (random().nextDouble() < bonus.rare(config.specialAmulets().chestChance())) {
+                addSpecialAmulet(rolled, run.level);
+            }
             veil(rolled);
             // 2026-10：遺時珠寶只在劫盜掉（合約、藍圖的金庫箱都有小機率）
             if (random().nextDouble() < bonus.rare(settings.timeLostChance())) {
@@ -517,6 +521,22 @@ public final class HeistService implements Listener {
             return false;
         }
         final Rarity rarity = random().nextDouble() < config.settings().timeLostRare() ? Rarity.RARE : Rarity.MAGIC;
+        final ItemData item = plugin.items().generator().generate(base, rarity, level, random());
+        item.setIdentified(false);
+        drops.add(DropTable.Drop.equipment(item));
+        return true;
+    }
+
+    /**
+     * 2026-10-28 照站長：加一條特殊項鍊（劫盜專屬基底，bases 的 heist_only: true；一般掉落、商人、賭博都拿不到）。
+     * 魔法或稀有（special_amulet.rare），未鑑定；這個等級還掉不出來（基底的 drop_level）就不加。
+     */
+    private boolean addSpecialAmulet(final List<DropTable.Drop> drops, final int level) {
+        final tw.exilecore.item.ItemBase base = plugin.items().repository().pickHeistOnly(level, random());
+        if (base == null) {
+            return false;
+        }
+        final Rarity rarity = random().nextDouble() < config.specialAmulets().rare() ? Rarity.RARE : Rarity.MAGIC;
         final ItemData item = plugin.items().generator().generate(base, rarity, level, random());
         item.setIdentified(false);
         drops.add(DropTable.Drop.equipment(item));
@@ -672,6 +692,9 @@ public final class HeistService implements Listener {
             if (!run.grand && random().nextDouble() < bonus.more(vault.blueprintChance() * lockdown)) {
                 addCurrency(rolled, BLUEPRINT, 1);
             }
+            // 2026-10-28 照站長：特殊項鍊，大金庫每個人 0.5%（special_amulet.vault_chance；大劫盜 ×grand_multiplier，封鎖了減半）；這次之前大金庫沒有特別擲
+            final boolean amulet = random().nextDouble() < bonus.rare(config.specialAmulets().vaultChance() * grand * lockdown)
+                    && addSpecialAmulet(rolled, run.level);
             veil(rolled);
             // 2026-10：遺時珠寶（只在劫盜掉）：合約的大金庫 time_lost_jewel_chance，藍圖（大劫盜）×grand_multiplier；封鎖了減半
             final boolean timeLost = random().nextDouble() < bonus.rare(vault.timeLostChance() * grand * lockdown)
@@ -691,6 +714,9 @@ public final class HeistService implements Listener {
             }
             if (timeLost) {
                 player.sendMessage(plugin.text().prefixed("<#7fd4ff>大金庫裡有一顆遺時星晶！"));
+            }
+            if (amulet) {
+                player.sendMessage(plugin.text().prefixed("<#d4a017>大金庫裡有一條劫盜專屬的特殊項鍊！"));
             }
             if (finaleKey) {
                 player.sendMessage(plugin.text().prefixed("<#8b0000>大金庫深處有一個鑰印……金庫之主在等你。<gray>（找盜賊首領）"));

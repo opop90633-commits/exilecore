@@ -14,7 +14,8 @@ import java.util.function.Predicate;
 /**
  * 2026-10-28 照 PoE2 0.5 Lightning Rod（雷樁矢）：落地炸開之後插在地上的箭。
  * <ul>
- *   <li>留 20 秒（吃技能持續時間），每個玩家同時最多 10 支（多的先拿掉最舊的）。</li>
+ *   <li>留 20 秒（吃技能持續時間），每個玩家同時最多 10 支（多的先拿掉最舊的）。2026-10-28：每個技能各算各的
+ *       （雷樁矢、電鍊箭矢最後一次連鎖後插的各 10 支；PoE2 number_of_lightning_rods_allowed 寫在各自的技能上）；這次之前全部合起來算。</li>
  *   <li>閃電技能的連鎖雷束（鏈雷這類連鎖技能的每一跳、雷鳴箭的雷束）可以連鎖到自己的箭上：算一次連鎖，
  *       箭充能 1 秒之後再炸一次（用插下去那一發雷樁矢的傷害）；雷鳴箭的雷束只要 0.1 秒、同一支箭最快每 0.1 秒炸一次。</li>
  *   <li>被連鎖 8 次之後消失（已經在充能的照炸）。</li>
@@ -55,9 +56,17 @@ final class LightningRods {
         boolean spent;
         /** 畫面用的展示實體（null = 沒有）。 */
         UUID display;
+        /** 2026-10-28：插它的技能（上限各算各的；null = 不分）。 */
+        final String skill;
 
         Rod(final UUID owner, final UUID world, final Vector at, final long placed, final long until, final int maxChains, final long chargeTicks,
             final SkillProfile profile, final double radius, final String visual) {
+            this(owner, world, at, placed, until, maxChains, chargeTicks, profile, radius, visual, null);
+        }
+
+        Rod(final UUID owner, final UUID world, final Vector at, final long placed, final long until, final int maxChains, final long chargeTicks,
+            final SkillProfile profile, final double radius, final String visual, final String skill) {
+            this.skill = skill;
             this.owner = owner;
             this.world = world;
             this.at = at;
@@ -77,12 +86,12 @@ final class LightningRods {
 
     private final List<Rod> rods = new ArrayList<>();
 
-    /** 插一支（同一個玩家超過 max 支就先拿掉最舊的，拿掉的交給 removed）。 */
+    /** 插一支（同一個玩家同一個技能超過 max 支就先拿掉最舊的，拿掉的交給 removed）。 */
     Rod place(final Rod rod, final int max, final Consumer<Rod> removed) {
-        int mine = count(rod.owner);
+        int mine = count(rod.owner, rod.skill);
         for (final Iterator<Rod> it = rods.iterator(); it.hasNext() && mine >= max; ) {
             final Rod old = it.next();
-            if (old.owner.equals(rod.owner)) {
+            if (old.owner.equals(rod.owner) && java.util.Objects.equals(old.skill, rod.skill)) {
                 it.remove();
                 mine--;
                 removed.accept(old);
@@ -182,6 +191,17 @@ final class LightningRods {
         for (final Rod rod : gone) {
             removed.accept(rod);
         }
+    }
+
+    /** 2026-10-28：同一個技能插的幾支。 */
+    int count(final UUID owner, final String skill) {
+        int mine = 0;
+        for (final Rod rod : rods) {
+            if (rod.owner.equals(owner) && java.util.Objects.equals(rod.skill, skill)) {
+                mine++;
+            }
+        }
+        return mine;
     }
 
     int count(final UUID owner) {

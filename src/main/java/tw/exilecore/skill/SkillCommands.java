@@ -143,6 +143,11 @@ public final class SkillCommands {
             player.sendMessage(plugin.text().prefixed("<red>沒有這個技能：" + ItemRenderer.escape(skillId)));
             return;
         }
+        if (definition.grantedOnly()) { // 2026-10-28 照 PoE2：武器、昇華賦予的技能沒有寶石
+            player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(definition.name()) + "是"
+                    + ItemRenderer.escape(definition.sourceText()) + "的技能，沒有寶石（裝備賦予它的武器或點那個昇華天賦）"));
+            return;
+        }
         final int actual = level == null ? plugin.skills().config().maxLevelFor(plugin.players().get(player).level()) : level;
         giveGem(plugin, player, GemData.skill(new SkillLoadout.Entry(definition.id(), actual)), 1);
     }

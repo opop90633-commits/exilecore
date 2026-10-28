@@ -73,6 +73,14 @@ public final class SkillModule implements Module {
         manager.registerEvents(treeMechanics, plugin);
         plugin.players().addBuffSource(treeMechanics::modifiers);
         plugin.players().conditions().register(tw.exilecore.stats.TreeConditions.ARCHON, (player, state) -> treeMechanics.archon(player) != null);
+        // 2026-10-28 照 PoE2 Trinity 的品質：親和加起來超過 250 時技能速度增加（鼎元訣的 effect.attack.speed@trinityhigh）
+        plugin.players().conditions().register(tw.exilecore.stats.TreeConditions.TRINITY_HIGH, (player, state) -> {
+            if (plugin.combat() == null || plugin.combat().trinity() == null) {
+                return false;
+            }
+            final double[] affinity = plugin.combat().trinity().resonance(player.getUniqueId(), plugin.getServer().getCurrentTick());
+            return affinity[0] + affinity[1] + affinity[2] > tw.exilecore.stats.TreeConditions.TRINITY_HIGH_TOTAL;
+        });
         treeTask = plugin.repeat("tree-mechanics", treeMechanics::tick, TreeMechanics.PERIOD, TreeMechanics.PERIOD);
         // 2026-10-27 照 PoE2：天賦樹最後一批（存在範圍的進出、恫嚇、榮耀、祭品、地面…）
         final TreeLeftovers treeLeftovers = new TreeLeftovers(plugin, created);

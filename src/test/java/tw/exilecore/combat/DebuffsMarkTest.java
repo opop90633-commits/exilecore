@@ -53,4 +53,27 @@ class DebuffsMarkTest {
         assertTrue(debuffs.has(boss, "voltaic_mark", 10), "印記不受影響");
         assertTrue(debuffs.has(other, "enfeeble_curse", 10), "別隻身上的詛咒不受影響");
     }
+
+    /** 2026-10-28 照 PoE2 Called Shots：預告射擊放的印記不受數量限制；印記被用掉（remove）時通知，到期、被換掉不算。 */
+    @Test
+    void calledShotsBypassesTheLimitAndConsumptionIsReported() {
+        final Debuffs debuffs = new Debuffs();
+        final UUID boss = UUID.randomUUID();
+        final UUID add = UUID.randomUUID();
+        final UUID me = UUID.randomUUID();
+        final java.util.List<String> consumed = new java.util.ArrayList<>();
+        debuffs.onMarkConsumed((target, id, source, now) -> consumed.add(id + "@" + (target.equals(boss) ? "boss" : "add")));
+        debuffs.applyMark(boss, new Debuffs.Debuff("hunters_mark", me, 100, 0.1, true));
+        debuffs.applyMark(add, new Debuffs.Debuff("hunters_mark", me, 100, 0.1, true), 0);
+        assertTrue(debuffs.has(boss, "hunters_mark", 10), "不受數量限制：另一隻的印記還在");
+        assertTrue(debuffs.has(add, "hunters_mark", 10));
+        debuffs.applyMark(add, new Debuffs.Debuff("voltaic_mark", me, 100, 0.1, true)); // 一般放印記：照舊換掉
+        assertFalse(debuffs.has(boss, "hunters_mark", 10));
+        assertTrue(consumed.isEmpty(), "被換掉不算用掉");
+        assertTrue(debuffs.remove(add, "voltaic_mark", me, 10));
+        assertEquals(java.util.List.of("voltaic_mark@add"), consumed);
+        debuffs.apply(boss, new Debuffs.Debuff("enfeeble_curse", me, 100, 0, false));
+        debuffs.remove(boss, "enfeeble_curse", me, 10);
+        assertEquals(1, consumed.size(), "不是印記不通知");
+    }
 }

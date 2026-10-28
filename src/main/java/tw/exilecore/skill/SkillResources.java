@@ -55,7 +55,17 @@ public final class SkillResources implements Listener {
         /** 2026-10-26 照 PoE2 天賦樹：怒氣開始流失前等幾 tick、每掉 1 點隔幾 tick（拿到怒氣時照屬性表更新）。 */
         long decayDelay = RAGE_DECAY_DELAY;
         double decayTicks = RAGE_DECAY_TICKS;
+        /** 2026-10-28 照 PoE2 頂點：最近的近戰攻擊擊中 {tick, 技能代號}（最新的在後面，最多 {@link #CULMINATION_HISTORY} 筆）。 */
+        final java.util.ArrayDeque<MeleeHit> meleeHits = new java.util.ArrayDeque<>();
+        /** 2026-10-28 照 PoE2 頂點：被輔助的技能上一次用掉連擊的 tick（技能代號 → tick）。 */
+        final Map<String, Long> culminated = new HashMap<>();
     }
+
+    /** 2026-10-28：一次近戰攻擊擊中（同一下打中好幾個只記一筆）。 */
+    record MeleeHit(long tick, String skill) {
+    }
+
+    static final int CULMINATION_HISTORY = 64;
 
     /** 2026-10-26 照 PoE2 天賦樹：「怒氣晚 x 秒才開始流失」「怒氣流失慢 x%」。 */
     private static void tune(final State s, final StatSheet sheet) {
@@ -218,6 +228,7 @@ public final class SkillResources implements Listener {
             return;
         }
         final StatSheet sheet = plugin.players().sheet(player);
+        recordMeleeHit(state(player.getUniqueId()).meleeHits, SupportProcs.baseId(event.skill().id()), now()); // 2026-10-28 照 PoE2 頂點
         gainCombo(player, event, sheet); // 2026-10：連擊
         final double gain = event.skill().effective(sheet).flat(StatKeys.RAGE_ON_HIT, event.skill().tags());
         if (gain <= 0 || plugin.skills() != null && plugin.skills().channelBlocksRage(player)) { // 2026-10-26 照 PoE2：引導蠻衝時不會獲得怒氣
@@ -406,6 +417,88 @@ public final class SkillResources implements Listener {
             final State s = state(player.getUniqueId());
             s.enragedUntil = now + 12;
         }
+    }
+
+    // ---- 頂點（2026-10-28 照 PoE2 Culmination II）----
+
+    /** 記下一次近戰攻擊擊中（同一個技能 4 tick 內打中好幾個只算一次）。 */
+    static void recordMeleeHit(final java.util.ArrayDeque<MeleeHit> hits, final String skill, final long now) {
+        final MeleeHit last = hits.peekLast();
+        if (last != null && last.skill().equals(skill) && now - last.tick() < 4) {
+            return;
+        }
+        hits.addLast(new MeleeHit(now, skill));
+        while (hits.size() > CULMINATION_HISTORY) {
+            hits.pollFirst();
+        }
+    }
+
+    /** 這一下是不是被輔助的技能自己（含它衍生的 .aftershock 這種）。 */
+    private static boolean sameSkill(final String hit, final String skill) {
+        return hit.equals(skill) || hit.startsWith(skill + ".");
+    }
+
+    /**
+     * 被輔助的技能現在有幾層連擊：上一次用掉之後，你用「其他」近戰攻擊擊中敵人的次數（同一下打中好幾個算一次），最多 max；
+     * 超過 decayTicks 沒有獲得連擊就失去全部（從最新的往回數，中間斷超過 decayTicks 的之前那些不算）。
+     */
+    static int culminationCombo(final java.util.ArrayDeque<MeleeHit> hits, final long since, final String skill, final long now,
+                                final long decayTicks, final int max) {
+        if (hits == null || max <= 0) {
+            return 0;
+        }
+        int count = 0;
+        long previous = now;
+        for (final java.util.Iterator<MeleeHit> it = hits.descendingIterator(); it.hasNext() && count < max; ) {
+            final MeleeHit hit = it.next();
+            if (hit.tick() <= since) {
+                break;
+            }
+            if (sameSkill(hit.skill(), skill)) {
+                continue; // 自己的擊中不給自己連擊
+            }
+            if (previous - hit.tick() > decayTicks) {
+                break; // 這之前斷掉過：失去了
+            }
+            count++;
+            previous = hit.tick();
+        }
+        return count;
+    }
+
+    static long culminationDecay(final StatSheet effective, final Set<String> tags) {
+        final double seconds = effective.flat(tw.exilecore.stats.SupportExtraKeys.CULMINATION_DECAY, tags);
+        return Math.max(1, Math.round((seconds > 0 ? seconds : 6) * 20));
+    }
+
+    static int culminationMax(final StatSheet effective, final Set<String> tags) {
+        final double max = effective.flat(tw.exilecore.stats.SupportExtraKeys.CULMINATION_MAX, tags);
+        return max > 0 ? (int) Math.floor(max + 1e-9) : COMBO_MAX;
+    }
+
+    /**
+     * 放技能前（SkillService 呼叫）：掛了頂點的技能用掉它自己的全部連擊，這一下每用掉 1 層更多 x% 傷害（照 PoE2：用了就重置，0 層也算用過）。
+     * 回傳加上「頂點」更多傷害的組合；沒掛頂點回傳原本的。
+     */
+    SkillBuild culminate(final Player player, final SkillBuild build, final StatSheet sheet) {
+        final StatSheet effective = build.profile().effective(sheet);
+        final Set<String> tags = build.profile().tags();
+        final double per = effective.flat(tw.exilecore.stats.SupportExtraKeys.CULMINATION, tags);
+        if (per <= 0) {
+            return build;
+        }
+        final long now = now();
+        final State s = state(player.getUniqueId());
+        final String skill = build.definition().id();
+        final int combo = culminationCombo(s.meleeHits, s.culminated.getOrDefault(skill, Long.MIN_VALUE), skill, now,
+                culminationDecay(effective, tags), culminationMax(effective, tags));
+        s.culminated.put(skill, now);
+        if (combo <= 0) {
+            return build;
+        }
+        tw.exilecore.ascendancy.AscendancyEffects.comboSpent(player, combo); // 照 PoE2：用掉的是連擊（昇華・武術精通）
+        return build.withProfile(build.profile().withLocal(java.util.List.of(
+                tw.exilecore.stats.Modifier.more(StatKeys.DAMAGE, per * combo / 100.0, "頂點（" + combo + " 層連擊）"))));
     }
 
     /** 算「每層連擊更多傷害」用的層數：終式那一下照用掉的層數算（不然先清空就變 0 層）。 */

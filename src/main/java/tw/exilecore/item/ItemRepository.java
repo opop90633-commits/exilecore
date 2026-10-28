@@ -61,6 +61,11 @@ public final class ItemRepository {
     private final java.util.Set<String> retiredUniques = new java.util.HashSet<>();
     /** 拿掉的基底（bases 的 retired: true）：定義留著讓舊物品照常生效；不掉落、不出現在圖鑑、商人、新手武器。 */
     private final java.util.Set<String> retiredBases = new java.util.HashSet<>();
+    /**
+     * 2026-10-28 照站長：劫盜專屬的基底（bases 的 heist_only: true，目前是特殊項鍊 jamulet_special）：只在劫盜掉（金庫箱、大金庫、金庫之主的收藏），
+     * 一般掉落、地圖獎勵、商人、賭博都拿不到；這次之前跟一般基底一樣到處掉、商人也賭得到。舊物品照常能用。
+     */
+    private final java.util.Set<String> heistOnlyBases = new java.util.HashSet<>();
     /** 載入時發現、但不擋啟動的問題（例如傳奇的基底被改名了）；物品模組啟動時印到主控台。 */
     private final List<String> warnings = new ArrayList<>();
     private List<String> rareNamePrefixes = List.of();
@@ -107,6 +112,7 @@ public final class ItemRepository {
         uniques.clear();
         retiredUniques.clear();
         retiredBases.clear();
+        heistOnlyBases.clear();
         reloadTimes.clear();
         grantedSkills.clear();
         warnings.clear();
@@ -129,6 +135,9 @@ public final class ItemRepository {
                 }
                 if (root.node(id).bool("retired", false)) {
                     retiredBases.add(id); // 拿掉的基底（2026-10：劍、斧、匕首、爪）：舊物品照常能用，其他地方都看不到
+                }
+                if (root.node(id).bool("heist_only", false)) {
+                    heistOnlyBases.add(id); // 2026-10-28 照站長：劫盜專屬（特殊項鍊）；這次之前到處掉、商人賭得到
                 }
             }
         }
@@ -432,6 +441,11 @@ public final class ItemRepository {
         return id != null && retiredBases.contains(id);
     }
 
+    /** 2026-10-28：劫盜專屬的基底嗎（bases 的 heist_only: true）。 */
+    public boolean heistOnlyBase(final String id) {
+        return id != null && heistOnlyBases.contains(id);
+    }
+
     public Affix affix(final String id) {
         return affixes.get(id);
     }
@@ -454,12 +468,13 @@ public final class ItemRepository {
     /**
      * 掉落等級 ≤ 給定等級的裝備基底（地圖另外掉，不在這裡；含珠寶）。
      * 遺時珠寶（半徑珠寶）不在這裡（2026-10）：只在劫盜的金庫箱與大金庫掉，見 {@link #pickRadiusJewel}。
+     * 2026-10-28 照站長：劫盜專屬的基底（特殊項鍊）也不在這裡，見 {@link #pickHeistOnly}；這次之前特殊項鍊照 drop_weight 一般掉落。
      */
     public List<ItemBase> basesDroppableAt(final int level) {
         final List<ItemBase> list = new ArrayList<>();
         for (final ItemBase base : bases.values()) {
             if (base.dropLevel() <= level && !base.isMap() && !base.isFlaskLike() && !base.isRadiusJewel() && base.dropWeight() > 0
-                    && !retiredBases.contains(base.id())) {
+                    && !retiredBases.contains(base.id()) && !heistOnlyBases.contains(base.id())) {
                 list.add(base);
             }
         }
@@ -497,11 +512,45 @@ public final class ItemRepository {
         return pool.getLast();
     }
 
-    /** 商人賣的、能賭的基底：能穿戴的裝備（珠寶只掉落，照 PoE2 商人不賣）。 */
+    /** 2026-10-28：掉落等級 ≤ 給定等級、還在用的劫盜專屬基底（只有劫盜會掉）。 */
+    public List<ItemBase> heistOnlyBasesAt(final int level) {
+        final List<ItemBase> list = new ArrayList<>();
+        for (final ItemBase base : bases.values()) {
+            if (heistOnlyBases.contains(base.id()) && base.dropLevel() <= level && base.dropWeight() > 0 && !retiredBases.contains(base.id())) {
+                list.add(base);
+            }
+        }
+        return list;
+    }
+
+    /** 2026-10-28：照掉落權重抽一個劫盜專屬基底（特殊項鍊）；這個等級還掉不出來回傳 null。 */
+    public ItemBase pickHeistOnly(final int level, final java.util.random.RandomGenerator random) {
+        final List<ItemBase> pool = heistOnlyBasesAt(level);
+        double total = 0;
+        for (final ItemBase base : pool) {
+            total += base.dropWeight();
+        }
+        if (total <= 0) {
+            return null;
+        }
+        double pick = random.nextDouble() * total;
+        for (final ItemBase base : pool) {
+            pick -= base.dropWeight();
+            if (pick < 0) {
+                return base;
+            }
+        }
+        return pool.getLast();
+    }
+
+    /**
+     * 商人賣的、能賭的基底：能穿戴的裝備（珠寶只掉落，照 PoE2 商人不賣）。
+     * 2026-10-28 照站長：劫盜專屬的基底（特殊項鍊）不賣、不能賭；這次之前賭裝商人賭得到（例如未鑑定的冥暗墜飾）。
+     */
     public List<ItemBase> basesSoldAt(final int level) {
         final List<ItemBase> list = new ArrayList<>();
         for (final ItemBase base : bases.values()) {
-            if (base.dropLevel() <= level && base.isWearable() && !retiredBases.contains(base.id())) {
+            if (base.dropLevel() <= level && base.isWearable() && !retiredBases.contains(base.id()) && !heistOnlyBases.contains(base.id())) {
                 list.add(base);
             }
         }

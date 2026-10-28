@@ -93,13 +93,53 @@ public final class Debuffs {
      * 放新的印記時，這個玩家放在任何敵人身上的其他印記（包括同一種放在別隻身上的）都拿掉。詛咒、其他減益不受影響。
      */
     public void applyMark(final UUID target, final Debuff mark) {
+        applyMark(target, mark, 1);
+    }
+
+    /**
+     * 2026-10-28 照 PoE2：印記是「上限 1 個被標記的目標」（Limit），+x 上限（過剩）讓同一種印記能同時標記 limit 個目標：
+     * 同一種印記放在別隻身上的留最新的 limit − 1 個（最早結束的先拿掉），其他種印記照舊全部拿掉。這次之前一律只留一個。
+     * limit ≤ 0：不受印記數量限制（預告射擊）。
+     */
+    public void applyMark(final UUID target, final Debuff mark, final int limit) {
         markIds.add(mark.id());
+        if (limit <= 0) { // 2026-10-28：limit ≤ 0＝不受印記數量限制（PoE2 Called Shots），不拿掉這個玩家的其他印記
+            apply(target, mark);
+            return;
+        }
+        final List<long[]> same = new ArrayList<>(); // {untilTick, 序號}：同一種印記在別的目標身上的
+        final List<UUID> sameTargets = new ArrayList<>();
         final Iterator<Map.Entry<UUID, List<Debuff>>> iterator = entries.entrySet().iterator();
         while (iterator.hasNext()) {
-            final List<Debuff> list = iterator.next().getValue();
-            list.removeIf(existing -> markIds.contains(existing.id()) && existing.source().equals(mark.source()));
+            final Map.Entry<UUID, List<Debuff>> entry = iterator.next();
+            final List<Debuff> list = entry.getValue();
+            final boolean other = !entry.getKey().equals(target);
+            list.removeIf(existing -> {
+                if (!markIds.contains(existing.id()) || !existing.source().equals(mark.source())) {
+                    return false;
+                }
+                if (limit > 1 && other && existing.id().equals(mark.id())) {
+                    same.add(new long[] {existing.untilTick(), sameTargets.size()});
+                    sameTargets.add(entry.getKey());
+                    return false;
+                }
+                return true;
+            });
             if (list.isEmpty()) {
                 iterator.remove();
+            }
+        }
+        if (same.size() > Math.max(0, limit - 1)) {
+            same.sort(java.util.Comparator.comparingLong(pair -> pair[0]));
+            for (int i = 0; i < same.size() - Math.max(0, limit - 1); i++) {
+                final UUID gone = sameTargets.get((int) same.get(i)[1]);
+                final List<Debuff> list = entries.get(gone);
+                if (list != null) {
+                    list.removeIf(existing -> existing.id().equals(mark.id()) && existing.source().equals(mark.source()));
+                    if (list.isEmpty()) {
+                        entries.remove(gone);
+                    }
+                }
             }
         }
         apply(target, mark);
@@ -380,7 +420,27 @@ public final class Debuffs {
     /** 拿掉某個來源的某種減益（2026-10：狙擊印記打出暴擊時用掉）；有拿掉回傳 true。 */
     public boolean remove(final UUID target, final String id, final UUID source, final long now) {
         final List<Debuff> list = entries.get(target);
-        return list != null && list.removeIf(debuff -> debuff.id().equals(id) && debuff.source().equals(source) && debuff.active(now));
+        final boolean removed = list != null && list.removeIf(debuff -> debuff.id().equals(id) && debuff.source().equals(source) && debuff.active(now));
+        if (removed && markIds.contains(id) && source != null) {
+            for (final MarkConsumed listener : List.copyOf(markListeners)) {
+                listener.consumed(target, id, source, now); // 2026-10-28：印記被用掉（預告射擊補放、擴散）
+            }
+        }
+        return removed;
+    }
+
+    /** 2026-10-28：印記被用掉（remove 拿掉的印記都是被觸發、消耗掉的；到期、被新印記換掉不算）。 */
+    public interface MarkConsumed {
+        void consumed(UUID target, String markId, UUID source, long now);
+    }
+
+    private final List<MarkConsumed> markListeners = new ArrayList<>();
+
+    /** 2026-10-28：登記印記被用掉時要通知的（同一個只登記一次）。 */
+    public void onMarkConsumed(final MarkConsumed listener) {
+        if (!markListeners.contains(listener)) {
+            markListeners.add(listener);
+        }
     }
 
     public boolean has(final UUID target, final String id, final long now) {

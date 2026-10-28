@@ -17,6 +17,7 @@ import tw.exilecore.character.PlayerState;
 import tw.exilecore.character.SkillLoadout;
 import tw.exilecore.monster.MonsterData;
 import tw.exilecore.monster.MonsterRarity;
+import tw.exilecore.skill.DeadeyeMetas;
 import tw.exilecore.skill.Mechanic;
 import tw.exilecore.skill.SkillBuild;
 import tw.exilecore.skill.SkillDefinition;
@@ -59,8 +60,12 @@ final class AscGranted implements Listener {
         long swarmHit;
         long sprintEnd;
         long calledNext;
+        int calledIndex; // 2026-10-28：預告射擊孔裡好幾個印記時輪流
         long mirageUntil;
         long mirageReady;
+        int mirageIndex;
+        int mirageGeneration; // 2026-10-28：第幾個幻影（舊幻影排好的下一步作廢）
+        final Map<String, Long> mirageCooldowns = new HashMap<>(); // 2026-10-28 照 PoE2：這個幻影自己的冷卻（技能代號 → 好的 tick）
         Location mirageAt;
         long alignNext;
         String alignSkill;
@@ -228,19 +233,24 @@ final class AscGranted implements Listener {
                 own.alignSkill = null;
                 tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.ENCHANT, player.getLocation().add(0, 1.4, 0), 30, 0.5, 0.6, 0.5, 0.5);
             }
-            // 幻影銳眼：發射遠程投射物攻擊時留下幻影，幻影跟著重複（傷害更少 50%）
-            if (on(player, "mirage_deadeye") && build.profile().tags().contains(Tags.ATTACK) && build.profile().tags().contains(Tags.PROJECTILE)) {
-                if (own.mirageUntil > now && own.mirageAt != null && own.mirageAt.getWorld() == player.getWorld()) {
-                    final Location from = own.mirageAt.clone();
-                    final SkillBuild half = build.withProfile(build.profile().scaled(0.5, "幻影銳眼"));
-                    effects.later(6, () -> plugin.skills().recast(player, half, from,
-                            target != null ? target.getLocation().toVector().subtract(from.toVector()).normalize() : player.getLocation().getDirection(), target));
-                } else if (now >= own.mirageReady) {
-                    own.mirageAt = player.getLocation().clone();
-                    own.mirageUntil = now + Math.round(Math.max(4, level(player, "mirage_deadeye", "asc.mirage_seconds")) * 20);
-                    own.mirageReady = now + 200;
-                    player.getWorld().spawnParticle(Particle.CLOUD, own.mirageAt.clone().add(0, 1, 0), 20, 0.3, 0.8, 0.3, 0.01);
-                }
+            // 幻影銳眼（2026-10-28 照 PoE2 Mirage Deadeye：主要寶石）：你發射遠程投射物攻擊時留下幻影（冷卻 10 秒），
+            // 幻影在持續時間內一直用孔裡的遠程攻擊（傷害更少 50%；tickPlayer）。冷卻、持續時間吃其他孔的迅返、長留與身上的加成。
+            // 這次之前孔裡不能放技能：幻影重複你接下來的投射物攻擊，冷卻固定 10 秒、持續時間不吃加成
+            if (on(player, DeadeyeMetas.MIRAGE) && build.profile().tags().contains(Tags.ATTACK) && build.profile().tags().contains(Tags.PROJECTILE)
+                    && !build.profile().tags().contains(Tags.MELEE) && now >= own.mirageReady && own.mirageUntil <= now
+                    && plugin.skills() != null && !plugin.skills().deadeyeSocketed(player, DeadeyeMetas.MIRAGE).isEmpty()) {
+                final SkillBuild host = plugin.skills().deadeyeHost(player, DeadeyeMetas.MIRAGE);
+                final StatSheet effective = host == null ? null : host.profile().effective(state.sheet());
+                final Set<String> context = host == null ? Set.of() : host.profile().tags();
+                final double seconds = Math.max(4, level(player, DeadeyeMetas.MIRAGE, "asc.mirage_seconds"))
+                        * DeadeyeMetas.durationFactor(effective, context);
+                own.mirageAt = player.getLocation().clone();
+                own.mirageUntil = now + DeadeyeMetas.ticks(seconds);
+                own.mirageReady = now + DeadeyeMetas.ticks(DeadeyeMetas.MIRAGE_COOLDOWN * DeadeyeMetas.cooldownFactor(effective, context));
+                own.mirageCooldowns.clear();
+                final int generation = ++own.mirageGeneration;
+                effects.later(6, () -> mirageStep(player, generation));
+                player.getWorld().spawnParticle(Particle.CLOUD, own.mirageAt.clone().add(0, 1, 0), 20, 0.3, 0.8, 0.3, 0.01);
             }
         }
         switch (id) {
@@ -1011,18 +1021,15 @@ final class AscGranted implements Listener {
             o.purple = 0;
             dirty = true;
         }
-        // 預告射擊：每 5 秒把面板上的印記放在 10 格內一個還沒被標記的敵人身上
-        if (on(player, "called_shots") && now >= o.calledNext && plugin.combat() != null) {
-            o.calledNext = now + Math.round(Math.max(1, level(player, "called_shots", "asc.called_seconds")) * 20);
-            final String mark = firstMark(state);
-            if (mark != null) {
-                for (final LivingEntity enemy : effects.enemiesNear(player, player.getLocation(), 10)) {
-                    if (!plugin.combat().debuffs().marked(enemy.getUniqueId(), now)) {
-                        plugin.skills().castForFree(player, mark, enemy, 1.0, "預告射擊");
-                        break;
-                    }
-                }
-            }
+        // 預告射擊（2026-10-28 照 PoE2 Called Shots：主要寶石）：預告射擊自己的冷卻（5 秒，不吃冷卻恢復）好了、孔裡的印記自己的冷卻也好了，
+        // 就把它放在範圍內（10 格，吃範圍加成）一個還沒被標記的敵人身上（好幾個照孔的順序輪流）；印記用掉時馬上補放（markConsumed）。
+        // 這次之前放面板上第一個印記、間隔固定 5 秒（同一天稍早：間隔吃冷卻恢復、不看印記自己的冷卻）
+        if (!markListening && plugin.combat() != null && plugin.combat().debuffs() != null) {
+            plugin.combat().debuffs().onMarkConsumed(this::markConsumed);
+            markListening = true;
+        }
+        if (on(player, DeadeyeMetas.CALLED_SHOTS) && now >= o.calledNext && plugin.combat() != null) {
+            calledApply(player, o, now);
         }
         // 命運同調：殘影施放面板上一個法術
         if (on(player, "align_fate") && now >= o.alignNext) {
@@ -1182,15 +1189,167 @@ final class AscGranted implements Listener {
         return caps;
     }
 
-    private String firstMark(final PlayerState state) {
-        for (int i = 0; i < SkillLoadout.MAX_SKILLS; i++) {
-            final SkillLoadout.Entry entry = state.skills().skill(i);
-            final SkillDefinition definition = entry == null ? null : plugin.skills().config().skill(entry.skillId());
-            if (definition != null && definition.mechanic() == Mechanic.MARK && !definition.params().mark().curse()) {
-                return definition.id();
+    // =====================================================================
+    // 星矢的主要寶石（2026-10-28 照 PoE2 0.5）
+    // =====================================================================
+
+    /** 印記被用掉的通知登記了沒。 */
+    private boolean markListening;
+
+    /** 預告射擊放一次孔裡的印記（預告射擊、印記自己的冷卻都好了才放）；放了就重新開始預告射擊的冷卻。回傳有沒有放。 */
+    private boolean calledApply(final Player player, final Own o, final long now) {
+        final List<SkillBuild> marks = plugin.skills().deadeyeSocketed(player, DeadeyeMetas.CALLED_SHOTS);
+        if (marks.isEmpty() || plugin.combat() == null) {
+            return false;
+        }
+        final SkillBuild host = plugin.skills().deadeyeHost(player, DeadeyeMetas.CALLED_SHOTS);
+        final double radius = DeadeyeMetas.CALLED_RADIUS * (host == null ? 1.0 : host.areaScale());
+        for (int i = 0; i < marks.size(); i++) {
+            final SkillBuild mark = marks.get(Math.floorMod(o.calledIndex + i, marks.size()));
+            if (plugin.skills().cooldownLeft(player, mark.definition().id()) > 0) {
+                continue;
+            }
+            for (final LivingEntity enemy : effects.enemiesNear(player, player.getLocation(), radius)) {
+                if (!plugin.combat().debuffs().marked(enemy.getUniqueId(), now) && plugin.skills().castSocketedMark(player, mark, enemy, true)) {
+                    o.calledIndex += i + 1;
+                    o.calledNext = now + DeadeyeMetas.ticks(Math.max(1, level(player, DeadeyeMetas.CALLED_SHOTS, "asc.called_seconds")));
+                    return true;
+                }
+            }
+            return false; // 範圍內沒有沒被標記的敵人
+        }
+        return false;
+    }
+
+    /** 印記被用掉（Debuffs.remove）：放的人開著預告射擊、是孔裡的印記，下一 tick 擴散、補放。 */
+    private void markConsumed(final UUID target, final String markId, final UUID source, final long now) {
+        final Player player = plugin.getServer().getPlayer(source);
+        if (player == null || !player.isOnline() || plugin.skills() == null || !on(player, DeadeyeMetas.CALLED_SHOTS)) {
+            return;
+        }
+        effects.later(1, () -> calledConsumed(player, target, markId));
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Called Shots：孔裡的印記被用掉——
+     * 擴散（SupportMetaDeadeyeMarksPlayer「Supported Skills will Mark another Enemy within 3 Metres of Marked Enemy when Consumed」，100%）：
+     * 被用掉那隻 3 格內另一個還沒被標記的敵人；
+     * 補放（「Consuming socketed Marks will cause them to be reapplied to an unmarked Enemy. This reapplication can happen at most once every few seconds」）：
+     * 預告射擊的冷卻好了就馬上放到一個沒被標記的敵人身上。
+     */
+    private void calledConsumed(final Player player, final UUID targetId, final String markId) {
+        if (!player.isOnline() || plugin.combat() == null || !on(player, DeadeyeMetas.CALLED_SHOTS)) {
+            return;
+        }
+        SkillBuild mark = null;
+        for (final SkillBuild socketed : plugin.skills().deadeyeSocketed(player, DeadeyeMetas.CALLED_SHOTS)) {
+            if (socketed.definition().id().equals(markId)) {
+                mark = socketed;
+                break;
             }
         }
-        return null;
+        if (mark == null) {
+            return;
+        }
+        final long now = now();
+        final org.bukkit.entity.Entity entity = plugin.getServer().getEntity(targetId);
+        if (entity instanceof LivingEntity consumed && consumed.getWorld() == player.getWorld()) {
+            for (final LivingEntity enemy : effects.enemiesNear(player, consumed.getLocation(), DeadeyeMetas.SPREAD_RADIUS)) {
+                if (!enemy.equals(consumed) && !plugin.combat().debuffs().marked(enemy.getUniqueId(), now)) {
+                    plugin.skills().castSocketedMark(player, mark, enemy, false);
+                    break;
+                }
+            }
+        }
+        final Own o = own(player);
+        if (now >= o.calledNext) {
+            calledApply(player, o, now);
+        }
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Mirage Deadeye：幻影的下一步——照孔的順序挑一個（這個幻影自己的冷卻好了的）攻擊，朝最近的敵人用；
+     * 引導／蓄力的先站著引導（疊滿、有完美時機的在完美時機放開），幻影先消失就沒放出去。
+     */
+    private void mirageStep(final Player player, final int generation) {
+        final Own o = owns.get(player.getUniqueId());
+        if (o == null || o.mirageGeneration != generation || plugin.skills() == null) {
+            return;
+        }
+        final long now = now();
+        if (!player.isOnline() || o.mirageUntil <= now || o.mirageAt == null || o.mirageAt.getWorld() != player.getWorld()
+                || !on(player, DeadeyeMetas.MIRAGE)) {
+            o.mirageUntil = Math.min(o.mirageUntil, now);
+            return;
+        }
+        final List<SkillBuild> attacks = plugin.skills().deadeyeSocketed(player, DeadeyeMetas.MIRAGE);
+        SkillBuild attack = null;
+        long wait = 5;
+        if (!attacks.isEmpty() && !effects.enemiesNear(player, o.mirageAt, DeadeyeMetas.MIRAGE_RANGE).isEmpty()) {
+            long soonest = Long.MAX_VALUE;
+            for (int i = 0; i < attacks.size(); i++) {
+                final SkillBuild candidate = attacks.get(Math.floorMod(o.mirageIndex + i, attacks.size()));
+                final Long ready = o.mirageCooldowns.get(candidate.definition().id());
+                if (ready == null || ready <= now) {
+                    attack = candidate;
+                    o.mirageIndex += i + 1;
+                    break;
+                }
+                soonest = Math.min(soonest, ready - now);
+            }
+            if (attack == null) {
+                wait = Math.max(1, Math.min(20, soonest));
+            }
+        }
+        if (attack == null) {
+            effects.later(wait, () -> mirageStep(player, generation));
+            return;
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        final tw.exilecore.skill.SkillService.MirageRelease release = plugin.skills().mirageRelease(player, attack);
+        final SkillBuild fired = DeadeyeMetas.mirageBuild(release.build());
+        if (attack.cooldownTicks() > 0) {
+            o.mirageCooldowns.put(attack.definition().id(), now + release.holdTicks() + attack.cooldownTicks());
+        }
+        final long gap = Math.max(4, Math.round(attack.intervalTicks(sheet)));
+        if (release.holdTicks() > 0) {
+            final Location at = o.mirageAt.clone().add(0, 1.2, 0);
+            for (long t = 0; t < release.holdTicks(); t += 5) {
+                effects.later(t, () -> {
+                    if (o.mirageGeneration == generation && o.mirageUntil > now()) {
+                        at.getWorld().spawnParticle(Particle.ENCHANT, at, 6, 0.3, 0.4, 0.3, 0.3);
+                    }
+                });
+            }
+            effects.later(release.holdTicks(), () -> mirageFire(player, generation, fired));
+            effects.later(release.holdTicks() + 4, () -> mirageStep(player, generation));
+        } else {
+            mirageFire(player, generation, fired);
+            effects.later(gap, () -> mirageStep(player, generation));
+        }
+    }
+
+    /** 幻影放出那一下（朝幻影最近的敵人）；幻影已經消失就不放。 */
+    private void mirageFire(final Player player, final int generation, final SkillBuild fired) {
+        final Own o = owns.get(player.getUniqueId());
+        final long now = now();
+        if (o == null || o.mirageGeneration != generation || o.mirageUntil <= now || o.mirageAt == null || !player.isOnline()
+                || o.mirageAt.getWorld() != player.getWorld()) {
+            return;
+        }
+        final List<LivingEntity> near = effects.enemiesNear(player, o.mirageAt, DeadeyeMetas.MIRAGE_RANGE);
+        if (near.isEmpty()) {
+            return;
+        }
+        LivingEntity target = near.getFirst();
+        for (final LivingEntity enemy : near) {
+            if (enemy.getLocation().distanceSquared(o.mirageAt) < target.getLocation().distanceSquared(o.mirageAt)) {
+                target = enemy;
+            }
+        }
+        final Location from = o.mirageAt.clone();
+        plugin.skills().recast(player, fired, from, target.getLocation().toVector().subtract(from.toVector()).normalize(), target);
+        from.getWorld().spawnParticle(Particle.END_ROD, from.clone().add(0, 1, 0), 8, 0.2, 0.5, 0.2, 0.01);
     }
 
     private List<String> alignSpells(final PlayerState state) {

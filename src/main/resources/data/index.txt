@@ -59,3 +59,5 @@ data/life.yml
 data/guilds.yml
 data/anticheat.yml
 data/cards.yml
+data/gem_quality.yml
+data/affixes/essences.yml

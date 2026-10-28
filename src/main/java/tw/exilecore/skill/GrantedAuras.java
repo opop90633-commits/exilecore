@@ -132,7 +132,8 @@ final class GrantedAuras implements Listener {
         if (fulminated.size() > 2048) {
             fulminated.values().removeIf(tick -> now - tick > 200);
         }
-        final double less = levelValue(FULMINATION, StatKeys.FULMINATION_LESS, level, 90);
+        // 2026-10-28 照 PoE2 Fulmination 的品質：額外擊中的「更少」少 (0—5) 個百分點
+        final double less = levelValue(FULMINATION, StatKeys.FULMINATION_LESS, level, 90) + service.qualityFlat(player, FULMINATION, StatKeys.FULMINATION_LESS);
         final SkillProfile base = event.skill();
         final Map<tw.exilecore.stats.DamageType, Double> conversion = new java.util.EnumMap<>(tw.exilecore.stats.DamageType.class);
         conversion.put(tw.exilecore.stats.DamageType.LIGHTNING, 1.0);
@@ -207,11 +208,13 @@ final class GrantedAuras implements Listener {
             return;
         }
         final List<Mirror> list = mirrors.computeIfAbsent(id, k -> new ArrayList<>());
-        if (list.size() < MIRROR_MAX) {
+        // 2026-10-28 照 PoE2：「上限 4 面鏡子」吃 +x 上限、鏡子的持續時間吃技能持續時間（過剩）；這次之前固定 4 面、8 秒
+        final SkillBuild mirrorBuild = service.equippedBuild(player, MIRROR);
+        if (list.size() < MIRROR_MAX + SkillLimits.bonus(plugin.players().sheet(player), mirrorBuild)) {
             final double angle = plugin.random().nextDouble() * Math.PI * 2;
             final double distance = 2.5 + plugin.random().nextDouble() * 3.5;
             final Location at = player.getLocation().add(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
-            list.add(new Mirror(at, now + MIRROR_TICKS));
+            list.add(new Mirror(at, now + (mirrorBuild == null ? MIRROR_TICKS : mirrorBuild.durationTicks(MIRROR_TICKS / 20.0))));
             Fx.as(id, () -> Fx.spawn(at.getWorld(), Particle.FLASH, at.clone().add(0, 1.2, 0), 1, 0, 0, 0, 0));
         }
         // 冷卻回復加快鏡子出現（PoE2：Modifiers to Cooldown Recovery Rate also apply）
@@ -266,8 +269,10 @@ final class GrantedAuras implements Listener {
             return;
         }
         final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        // 2026-10-28 照 PoE2 Spiraling Conspiracy 的品質：(0—20)% 增加範圍（鴉群密謀寶石的品質帶到烏鴉群上）
+        final SkillBuild equipped = service.equippedBuild(player, RAVENS);
         final SkillBuild build = SkillBuild.of(service.config(), strike, level, state.level(), false, List.of(), state.weaponTags(),
-                plugin.players().sheet(player));
+                plugin.players().sheet(player), java.util.Set.of(), equipped == null ? List.of() : equipped.qualityModifiers());
         // 2026-10-26 照 PoE2 的振翅熵流（Winged Entropy）：你身邊 2 格的混沌＋物理持續傷害（每秒的量照寶石等級），
         // 每一隻烏鴉持續傷害更多 5%、範圍更多 5%；這次之前是每隻烏鴉一份傷害、3 格、沒有烏鴉就不打
         final double more = 1 + MinionAbilities.ENTROPY_PER_RAVEN * flock.size();

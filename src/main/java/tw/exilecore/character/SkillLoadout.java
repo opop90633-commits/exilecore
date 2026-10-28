@@ -42,6 +42,54 @@ public final class SkillLoadout {
     public static final int MAX_SOCKETS = 5;
 
     /**
+     * 2026-10-28 照 PoE2：武器（法杖、長杖、權杖、矛的擲矛）、傳奇裝備、昇華天賦賦予的技能的輔助孔照技能等級自動開：
+     * Lv.1～10 是 2 孔、Lv.11 起 3 孔、Lv.15 起 4 孔、Lv.20 起 5 孔（第 3、4、5 孔各自從這一級開始）。
+     * 照需求等級換算：物品等級（昇華的照角色等級）41 第 3 孔、64 第 4 孔、90 第 5 孔，跟原作玩家實測（約 40／65／90）對得上。
+     * 這次之前賦予的技能固定 2 孔，要自己用鑿星石開。
+     */
+    static final int[] GRANTED_SOCKET_LEVELS = {11, 15, 20};
+
+    /** 2026-10-28 照 PoE2：賦予的技能在這個等級有幾個輔助孔（2～5）。 */
+    public static int grantedSockets(final int level) {
+        int sockets = BASE_SOCKETS;
+        for (final int threshold : GRANTED_SOCKET_LEVELS) {
+            if (level >= threshold) {
+                sockets++;
+            }
+        }
+        return Math.min(MAX_SOCKETS, sockets);
+    }
+
+    /** 2026-10-28：賦予的技能要到幾級才開第 socket 孔（3～5）；2 孔以內回傳 1。 */
+    public static int grantedSocketLevel(final int socket) {
+        final int index = socket - BASE_SOCKETS - 1;
+        return index < 0 ? 1 : index < GRANTED_SOCKET_LEVELS.length ? GRANTED_SOCKET_LEVELS[index] : Integer.MAX_VALUE;
+    }
+
+    /**
+     * 2026-10-28：賦予的技能的輔助孔變少時，多出來那幾孔裡的東西（輔助寶石或放著的技能寶石，二擇一），要還給玩家。
+     *
+     * @param support  輔助代號（放的是技能寶石時是 null）
+     * @param resonant 這顆輔助有沒有共鳴
+     * @param spell    孔裡放著的技能寶石（放的是輔助時是 null）
+     */
+    public record Overflow(String support, boolean resonant, Entry spell) {
+    }
+
+    /** 2026-10-28：技能只剩 sockets 個孔時，第 sockets 孔以後放著的東西（照孔的順序）。 */
+    public static List<Overflow> overflow(final Entry entry, final int sockets) {
+        final List<Overflow> list = new ArrayList<>();
+        for (int i = Math.max(0, sockets); i < entry.sockets(); i++) {
+            if (entry.spellSocket(i)) {
+                list.add(new Overflow(null, false, entry.spellAt(i)));
+            } else if (!entry.support(i).isEmpty()) {
+                list.add(new Overflow(entry.support(i), entry.resonant(i), null));
+            }
+        }
+        return list;
+    }
+
+    /**
      * 一個技能：代號、等級、輔助孔數、掛的輔助寶石（長度固定 {@link #MAX_SOCKETS}，空孔是空字串）、
      * 每一孔的輔助有沒有共鳴（2026-10-18：用過共鳴石的專屬輔助不佔專屬名額；長度也固定 {@link #MAX_SOCKETS}）。
      * 存檔裡共鳴的寶石代號後面接一個 {@value #RESONANT_SUFFIX}（例如 3:rift_echo~,,pierce）；建構式會把它剝掉放進 resonant，
@@ -54,15 +102,21 @@ public final class SkillLoadout {
      * @param inner 放在第 1 孔的技能寶石（代號、等級、它自己的孔數；輔助一律空的）；沒有或不是宿主寶石為 null
      * @param corrupted 2026-10-23：被蝕變石腐化過（照 PoE2：之後不能再升級、開孔、腐化；輔助照樣能換）。
      *                  存檔文字最前面寫 {@value #CORRUPTED_PREFIX}（例如 !5:fireball,,）
+     * @param legacySockets 2026-10-28：賦予的技能、而且是這次之前存的（孔數是玩家用鑿星石開的，還沒退還）。
+     *                  SkillService.migrateRemoved 退還鑿星石後改成照等級的孔數；只有 granted 才可能是 true
      */
     public record Entry(String skillId, int level, int sockets, List<String> supports, List<Boolean> resonant, Entry inner,
-                        boolean corrupted, int quality, boolean granted) {
+                        boolean corrupted, int quality, boolean granted, boolean legacySockets) {
 
         /**
          * 2026-10-26：存檔文字裡「武器賦予的技能」的字首（PoE2 的法杖、長杖、權杖：Grants Skill）。
-         * 賦予的技能不是寶石：不能升級、取出成寶石、腐化、加品質；等級照武器的物品等級，可以掛輔助、開孔。
+         * 賦予的技能不是寶石：不能升級、取出成寶石、腐化、加品質；等級照武器的物品等級，可以掛輔助。
+         * 2026-10-28 照 PoE2：輔助孔照等級自動開（{@link #grantedSockets}），不能用鑿星石開；
+         * 這次之前可以開孔，存檔是「^孔數:…」，現在寫成「^=孔數:…」（沒有 = 的是舊的，孔是付費開的，載入後退還）。
          */
         public static final String GRANTED_PREFIX = "^";
+        /** 2026-10-28：賦予的技能的孔照等級（接在 {@link #GRANTED_PREFIX} 後面；沒有這個的是舊存檔）。 */
+        public static final String LEVEL_SOCKETS_MARK = "=";
 
         /** 2026-10-23：存檔文字裡「已腐化」的字首。 */
         public static final String CORRUPTED_PREFIX = "!";
@@ -84,6 +138,11 @@ public final class SkillLoadout {
                 throw new IllegalArgumentException("技能代號不能是空的");
             }
             level = Math.max(1, Math.min(GEM_CAP, level));
+            legacySockets = granted && legacySockets;
+            if (granted && !legacySockets) {
+                // 2026-10-28 照 PoE2：賦予的技能的孔數一律照等級（換等級時多出來的輔助由 syncGranted 先拿出來還給玩家）
+                sockets = grantedSockets(level);
+            }
             sockets = Math.max(BASE_SOCKETS, Math.min(MAX_SOCKETS, sockets));
             // 2026-10-27 照 PoE2 0.5：武器賦予的技能的品質就是武器的品質（不套寶石的上限，特殊詞綴超過 20% 也照算）
             quality = granted ? Math.max(0, quality) : Math.max(0, Math.min(QUALITY_CORRUPTED_MAX, quality));
@@ -137,9 +196,23 @@ public final class SkillLoadout {
             this(skillId, level, sockets, supports, resonant, inner, corrupted, quality, false);
         }
 
-        /** 2026-10-26：標成武器賦予的技能（或拿掉）。 */
+        /** 2026-10-28：不是舊存檔的（賦予的技能孔數照等級）。 */
+        public Entry(final String skillId, final int level, final int sockets, final List<String> supports, final List<Boolean> resonant,
+                     final Entry inner, final boolean corrupted, final int quality, final boolean granted) {
+            this(skillId, level, sockets, supports, resonant, inner, corrupted, quality, granted, false);
+        }
+
+        /** 2026-10-26：標成武器賦予的技能（或拿掉）；2026-10-28：孔數照等級。 */
         public Entry withGranted(final boolean value) {
-            return new Entry(skillId, level, sockets, supports, resonant, inner, corrupted, quality, value);
+            return new Entry(skillId, level, sockets, supports, resonant, inner, corrupted, quality, value, false);
+        }
+
+        /**
+         * 2026-10-28：標成（或拿掉）「這次之前存的賦予技能，孔是付費開的」。拿掉時孔數變成照等級的，
+         * 多出來的孔裡的東西會不見：先用 {@link SkillLoadout#overflow} 拿出來。
+         */
+        public Entry withLegacySockets(final boolean value) {
+            return new Entry(skillId, level, sockets, supports, resonant, inner, corrupted, quality, granted, value);
         }
 
         /** 2026-10-23：沒寫腐化、品質的建構式（沒腐化、品質 0）。 */
@@ -156,12 +229,12 @@ public final class SkillLoadout {
 
         /** 2026-10-23：同一顆寶石標成已腐化（或拿掉）。 */
         public Entry withCorrupted(final boolean value) {
-            return new Entry(skillId, level, sockets, supports, resonant, inner, value, quality, granted);
+            return new Entry(skillId, level, sockets, supports, resonant, inner, value, quality, granted, legacySockets);
         }
 
         /** 2026-10-23：換掉品質（0～23）。 */
         public Entry withQuality(final int value) {
-            return new Entry(skillId, level, sockets, supports, resonant, inner, corrupted, value, granted);
+            return new Entry(skillId, level, sockets, supports, resonant, inner, corrupted, value, granted, legacySockets);
         }
 
         /** 2026-10-22：舊的五個欄位的建構式（第 1 孔沒有技能寶石；supports 裡寫 @ 開頭的照樣認得）。 */
@@ -252,7 +325,7 @@ public final class SkillLoadout {
 
         /** 2026-10-22：換掉第 1 孔的技能寶石（null = 拿掉）。 */
         public Entry withInner(final Entry newInner) {
-            return new Entry(skillId, level, sockets, supports, resonant, newInner, corrupted, quality, granted);
+            return new Entry(skillId, level, sockets, supports, resonant, newInner, corrupted, quality, granted, legacySockets);
         }
 
         /** 2026-10-22：第 1 孔放著技能寶石時，第 1 孔不算輔助孔：第一個能放輔助的孔。 */
@@ -276,11 +349,11 @@ public final class SkillLoadout {
         }
 
         public Entry withLevel(final int newLevel) {
-            return new Entry(skillId, newLevel, sockets, supports, resonant, inner, corrupted, quality, granted);
+            return new Entry(skillId, newLevel, sockets, supports, resonant, inner, corrupted, quality, granted, legacySockets);
         }
 
         public Entry withSockets(final int newSockets) {
-            return new Entry(skillId, level, newSockets, supports, resonant, inner, corrupted, quality, granted);
+            return new Entry(skillId, level, newSockets, supports, resonant, inner, corrupted, quality, granted, legacySockets);
         }
 
         /** 換掉一個輔助孔的內容（null 或空字串 = 拿掉）；沒有共鳴。 */
@@ -297,7 +370,7 @@ public final class SkillLoadout {
             final List<Boolean> marks = new ArrayList<>(resonant);
             list.set(index, supportId == null ? "" : supportId);
             marks.set(index, isResonant);
-            return new Entry(skillId, level, sockets, list, marks, inner, corrupted, quality, granted);
+            return new Entry(skillId, level, sockets, list, marks, inner, corrupted, quality, granted, legacySockets);
         }
 
         /** 2026-10-18：只改一孔的共鳴旗標（孔裡要有輔助）。 */
@@ -335,6 +408,9 @@ public final class SkillLoadout {
             final StringBuilder text = new StringBuilder();
             if (granted) {
                 text.append(GRANTED_PREFIX); // 2026-10-26
+                if (!legacySockets) {
+                    text.append(LEVEL_SOCKETS_MARK); // 2026-10-28：孔照等級（舊的還沒退還的照舊寫）
+                }
             }
             if (corrupted) {
                 text.append(CORRUPTED_PREFIX); // 2026-10-23
@@ -365,7 +441,14 @@ public final class SkillLoadout {
                 return new Entry(skillId, level);
             }
             if (text.startsWith(GRANTED_PREFIX)) { // 2026-10-26：武器賦予的技能
-                return decode(skillId, level, text.substring(GRANTED_PREFIX.length())).withGranted(true);
+                final String rest = text.substring(GRANTED_PREFIX.length());
+                if (rest.startsWith(LEVEL_SOCKETS_MARK)) { // 2026-10-28：孔照等級
+                    return decode(skillId, level, rest.substring(LEVEL_SOCKETS_MARK.length())).withGranted(true);
+                }
+                // 2026-10-28：這次之前存的：孔是付費開的，原樣留著，等 SkillService.migrateRemoved 退還
+                final Entry plain = decode(skillId, level, rest);
+                return new Entry(plain.skillId(), plain.level(), plain.sockets(), plain.supports(), plain.resonant(), plain.inner(),
+                        plain.corrupted(), plain.quality(), true, true);
             }
             if (text.startsWith(CORRUPTED_PREFIX)) { // 2026-10-23：已腐化
                 return decode(skillId, level, text.substring(CORRUPTED_PREFIX.length())).withCorrupted(true);
@@ -608,6 +691,22 @@ public final class SkillLoadout {
         return added;
     }
 
+    /**
+     * 2026-10-28：賦予的技能等級變低、孔變少時拿出來的寶石（還沒還給玩家；不存檔）。
+     * PlayerStateService 重算完用 {@link #drainOverflow} 拿走、放進背包。
+     */
+    private final List<Overflow> pendingOverflow = new ArrayList<>();
+
+    /** 2026-10-28：拿走 {@link #pendingOverflow}（拿完清空）。 */
+    public List<Overflow> drainOverflow() {
+        if (pendingOverflow.isEmpty()) {
+            return List.of();
+        }
+        final List<Overflow> list = List.copyOf(pendingOverflow);
+        pendingOverflow.clear();
+        return list;
+    }
+
     /** 2026-10-26：身上的武器現在賦予的技能（技能代號 → 等級，唯讀）。 */
     public java.util.Map<String, Integer> grantedNow() {
         return grantedNow;
@@ -615,7 +714,9 @@ public final class SkillLoadout {
 
     /**
      * 2026-10-26：照身上的武器同步賦予的技能（PoE2：法杖、長杖、權杖的 Grants Skill）。
-     * 面板上已經有的（標成賦予的）改成武器給的等級；沒有的放進第一個空格（輔助孔 2 個）。
+     * 面板上已經有的（標成賦予的）改成武器給的等級；沒有的放進第一個空格。
+     * 2026-10-28 照 PoE2：輔助孔照等級（{@link #grantedSockets}）；等級變低、孔變少時多出來那幾孔的寶石放進 {@link #drainOverflow}。
+     * 這次之前新放的固定 2 孔、換武器孔數不變。
      * 已經有同一個技能的寶石就不另外放（用寶石那個）。拿掉武器的不刪：輔助、按鍵都留著，只是不能用（{@link #dormant}）。
      *
      * @return 面板有沒有變（要存檔）
@@ -637,7 +738,10 @@ public final class SkillLoadout {
             final int position = find(grant.getKey());
             if (position >= 0) {
                 final Entry entry = skills[position];
-                if (entry.granted() && (entry.level() != grant.getValue() || entry.quality() != weaponQuality)) {
+                // 2026-10-28 照 PoE2：孔數照等級（舊存檔付費開的孔先原樣留著，等 migrateRemoved 退還）
+                final int sockets = entry.legacySockets() ? entry.sockets() : grantedSockets(grant.getValue());
+                if (entry.granted() && (entry.level() != grant.getValue() || entry.quality() != weaponQuality || entry.sockets() != sockets)) {
+                    pendingOverflow.addAll(overflow(entry, sockets)); // 孔變少：多出來那幾孔的寶石還給玩家
                     skills[position] = entry.withLevel(grant.getValue()).withQuality(weaponQuality);
                     changed = true;
                 }

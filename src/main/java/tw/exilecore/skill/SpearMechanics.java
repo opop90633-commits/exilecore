@@ -105,6 +105,8 @@ public final class SpearMechanics implements Listener {
         final int level;
         double fromBleed;
         boolean wasStunned;
+        /** 2026-10-28 照 PoE2 Bloodhound's Mark 的品質：失血的幾倍算成重暈累積（3 ＋ 品質的 x%）。 */
+        double toStun = BLOOD_TO_STUN;
 
         Hound(final UUID owner, final LivingEntity target, final int level, final boolean stunned) {
             this.owner = owner;
@@ -194,7 +196,8 @@ public final class SpearMechanics implements Listener {
             return;
         }
         final Deque<Lodged> mine = lodged.computeIfAbsent(owner.getUniqueId(), uuid -> new ArrayDeque<>());
-        final int limit = EXPLOSIVE_LIMIT[Math.max(0, Math.min(EXPLOSIVE_LIMIT.length - 1, build.level() - 1))];
+        final int limit = EXPLOSIVE_LIMIT[Math.max(0, Math.min(EXPLOSIVE_LIMIT.length - 1, build.level() - 1))]
+                + SkillLimits.bonus(plugin.players().sheet(owner), build); // 2026-10-28 照 PoE2：「上限 1 支插著的矛」吃 +x 上限（過剩）
         while (mine.size() >= limit) {
             // 2026-10-27 照 PoE2（Limit：超過上限時最舊的消失）：最舊的那支消失、不炸；這次之前最舊的提早炸開
             final Lodged gone = mine.pollFirst();
@@ -207,14 +210,14 @@ public final class SpearMechanics implements Listener {
     }
 
     /** 你的引爆類技能（detonator 標籤，炎爆矛自己除外）打在插著的炎爆矛附近：提早引爆。 */
-    void detonateNear(final Player player, final SkillDefinition definition, final Location at) {
+    int detonateNear(final Player player, final SkillDefinition definition, final Location at) {
         if (at == null || definition == null || !definition.tags().contains(tw.exilecore.stats.TreeMechanicKeys.DETONATOR)
                 || "explosive_spear".equals(service.config().signature(definition.id()))) {
-            return;
+            return 0;
         }
         final Deque<Lodged> mine = lodged.get(player.getUniqueId());
         if (mine == null || mine.isEmpty()) {
-            return;
+            return 0;
         }
         final List<Lodged> boom = new ArrayList<>();
         for (final Iterator<Lodged> it = mine.iterator(); it.hasNext(); ) {
@@ -225,6 +228,7 @@ public final class SpearMechanics implements Listener {
             }
         }
         boom.forEach(spear -> explode(player, spear));
+        return boom.size(); // 2026-10-28：引爆了幾支（雷躍的品質）
     }
 
     /** 每 tick（SkillService，每個玩家）：插著的炎爆矛時間到炸開；血嗅印的目標被重暈、還在流血。 */
@@ -393,7 +397,9 @@ public final class SpearMechanics implements Listener {
         }
         hounds.values().removeIf(hound -> hound.owner.equals(player.getUniqueId()));
         final boolean stunned = plugin.ailments() != null && plugin.ailments().heavyStunned(target);
-        hounds.put(target.getUniqueId(), new Hound(player.getUniqueId(), target, build.level(), stunned));
+        final Hound hound = new Hound(player.getUniqueId(), target, build.level(), stunned);
+        hound.toStun = BLOOD_TO_STUN + build.qualityFlat(tw.exilecore.stats.GemQualityKeys.BLOOD_TO_STUN) / 100.0; // 2026-10-28 照 PoE2：品質再 +(0—50)%
+        hounds.put(target.getUniqueId(), hound);
     }
 
     /** 流血扣血（AilmentService，每一跳）：被標記的敵人身上標記者的失血 300% 算成重暈累積。 */
@@ -402,7 +408,7 @@ public final class SpearMechanics implements Listener {
         if (hound == null || !hound.owner.equals(source) || amount <= 0 || plugin.ailments() == null) {
             return;
         }
-        hound.fromBleed = Math.min(1, hound.fromBleed + plugin.ailments().addStunFromDamage(target, amount * BLOOD_TO_STUN));
+        hound.fromBleed = Math.min(1, hound.fromBleed + plugin.ailments().addStunFromDamage(target, amount * hound.toStun));
     }
 
     private void tickHounds(final Player player, final long now) {

@@ -140,7 +140,8 @@ public record SupportDefinition(String id, String name, String description, Stri
 
     /** 2026-10-22：技能放在自己孔裡的宿主寶石（英靈圖騰、星咒圖騰、引星；每一孔都能放）。 */
     public static boolean hostsSkill(final SkillDefinition skill) {
-        return skill != null && (skill.tags().contains(Tags.META) || flagged(skill, StatKeys.FLAG_TOTEM_LINKED));
+        return skill != null && (skill.tags().contains(Tags.META) || flagged(skill, StatKeys.FLAG_TOTEM_LINKED)
+                || DeadeyeMetas.hosts(skill)); // 2026-10-28 照 PoE2：預告射擊、幻影銳眼也是主要寶石；這次之前孔裡不能放技能
     }
 
     private static boolean flagged(final SkillDefinition skill, final String flag) {
@@ -181,6 +182,12 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (triggers() || flags(StatKeys.FLAG_SPELL_TOTEM) || flags(StatKeys.FLAG_TRAP)) {
             return "觸發、圖騰施法、陷阱施法的輔助不能掛在" + host.name() + "上";
         }
+        // 2026-10-28 照 PoE2（MirageDeadeyeSpawnPlayer 有 Duration、Cooldown）：迅返、長留這種只改冷卻／持續時間的，套在幻影銳眼自己身上
+        // （幻影的冷卻、持續時間），孔裡放什麼都可以掛；這次之前掛不上去
+        // 2026-10-28 照 PoE2：常駐增益（泉命、凝準…）與預告射擊的範圍輔助也套在它自己身上
+        if (DeadeyeMetas.hosts(host) && DeadeyeMetas.appliesToHost(this, host) && refusal(host) == null) {
+            return null;
+        }
         if (inner == null) {
             return "先把技能寶石放進它的孔";
         }
@@ -189,6 +196,10 @@ public record SupportDefinition(String id, String name, String description, Stri
             return name + "不能掛在" + host.name() + "上（圖騰除外）";
         }
         if (requires.contains(Tags.TOTEM) && host.tags().contains(Tags.TOTEM)) {
+            return null;
+        }
+        // 2026-10-28 照 PoE2 過剩：要「上限」的輔助掛在本身有上限的宿主（星咒圖騰：圖騰的上限）上，照宿主驗（SkillService.innerSupportsOf 帶過去）
+        if (requires.contains(SkillLimits.TAG) && host.tags().contains(SkillLimits.TAG) && refusal(host) == null) {
             return null;
         }
         // 2026-10-25：能量輔助（要 meta／invocation 的）套在引星本身：照宿主驗，不管裡面放什麼法術
@@ -293,7 +304,9 @@ public record SupportDefinition(String id, String name, String description, Stri
         // 落釘弩台是 impact 機制帶 projectile 標籤（定身用），遠程召喚物也只是畫一道彈道
         // 2026-10-24：從天上掉下來的彈（弩台這種延遲落下的投射物）吃投射物速度（落下更快）：只動速度的輔助（疾矢…）可以掛
         // 2026-10-27：射到地上再落下的投射物技能（召霆矢…）多的投射物各落一道（SkillExecutor.impact）：動到投射物數量的輔助也可以掛
+        // 2026-10-28 照 PoE2 Falling Thunder：猛擊之後另外射投射物的（skills.yml stages.thunder，SkillExecutor.thunderBolts）也算
         if (projectileMechanics() && skill.mechanic() != Mechanic.PROJECTILE && skill.mechanic() != Mechanic.CHAIN
+                && SkillStages.get(skill.id(), SkillExecutor.THUNDER) == null
                 && !((onlyProjectileSpeed() || addsProjectiles()) && skill.mechanic() == Mechanic.IMPACT && SkillExecutor.fallsAsProjectile(skill))) {
             return "要真的射出投射物的技能";
         }
@@ -303,7 +316,8 @@ public record SupportDefinition(String id, String name, String description, Stri
     /** 不用擊中敵人也有作用的屬性：消耗、等級、保留精魂、給予的增益、觸發、施法速度、灌注…（範圍、持續、冷卻另外看技能有沒有那個標籤；召喚物的看 minion 標籤）。 */
     private static final Set<String> UTILITY_STATS = Set.of(StatKeys.SKILL_ADDED_COOLDOWN, StatKeys.SKILL_COST, StatKeys.SKILL_LEVEL,
             StatKeys.SKILL_MINIONS, StatKeys.SKILL_TOTEMS, StatKeys.SUPPORT_SPIRIT, StatKeys.CURSE_EFFECT, StatKeys.MARK_EFFECT, StatKeys.CAST_SPEED, StatKeys.FLAG_ECHO,
-            StatKeys.FLAG_BLOOD_MAGIC, StatKeys.MANA_ON_MINION_DEATH, StatKeys.MINION_DEATH_HEAL);
+            StatKeys.FLAG_BLOOD_MAGIC, StatKeys.MANA_ON_MINION_DEATH, StatKeys.MINION_DEATH_HEAL,
+            tw.exilecore.stats.KeystoneKeys.SKILL_LIMIT); // 2026-10-28 照 PoE2 過剩：+x 上限不用擊中（印記、祭品、折光之鏡也有用）
     private static final List<String> UTILITY_PREFIXES = List.of(StatKeys.GRANT_PREFIX, "warcry.", "aura.", "herald.", "trigger.", "seal.", "meta.",
             "infusion.", "proc.use", "proc.minion_death", "charge.sup.",
             // 2026-10-26：照 PoE2 重做的輔助：戰吼輔助、榮耀、凍結時的增益、印記、詛咒、圖騰、召喚物、獻祭生命
@@ -656,7 +670,7 @@ public record SupportDefinition(String id, String name, String description, Stri
      * 冷卻中用戰星跳過的另外看 {@link SkillDefinition#cooldownBypass()}。
      */
     static final Map<String, Set<String>> CHARGE_CONSUMERS = Map.of(
-            "power", Set.of("flicker_strike", "raise_zombie", "totem_casting"),
+            "power", Set.of("flicker_strike", "raise_zombie", "totem_casting", "falling_thunder"), // 2026-10-28 照 PoE2：＋驚雷劈（用掉所有的銳星）
             "frenzy", Set.of("lightning_spear", "storm_javelin", "linked_volley"),
             "endurance", Set.of("totem_casting"));
     /** 2026-10-24：一定要消耗戰星才放得出來的技能（抑星不能掛）。 */

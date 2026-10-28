@@ -43,8 +43,9 @@ final class Unearth {
             return;
         }
         final PlayerState state = plugin.players().get(player);
+        // 2026-10-28 照 PoE2 Unearth 的品質：骨構體持續時間 +(0—5) 秒、移動速度增加 (0—50)%（掘骸的品質帶到骨構體上）
         final SkillBuild minions = SkillBuild.of(plugin.skills().config(), construct, build.gemLevel(), state.level(), false,
-                build.supports(), state.weaponTags(), plugin.players().sheet(player));
+                build.supports(), state.weaponTags(), plugin.players().sheet(player), java.util.Set.of(), build.qualityModifiers());
         final Location feet = origin.feet();
         final long now = plugin.getServer().getCurrentTick();
         final Predicate<Location> inCone = SkillTargets.coneShape(origin, build.length(), build.angle());

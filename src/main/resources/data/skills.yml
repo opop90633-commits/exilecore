@@ -112,7 +112,8 @@
 # 標籤自動補上：有 cooldown 的加 cooldown、dash／leap／flicker 加 movement（dash／leap 另外加 travel 突進）、有地面效果／漩渦／印記的加 duration、mark 加 mark、
 # 有引信的投射物加 grenade、圖騰／鐘加 totem、陷阱加 trap（都加 duration）、骸爆加 corpse、
 # 召喚加 minion 與 melee（召喚物用近戰打，近戰的輔助寶石可以掛；有持續時間的再加 duration）、
-# 光環加 aura 與 area、戰吼加 warcry、area 與 duration（戰吼會拿掉 spell：戰吼不算法術）
+# 光環加 aura 與 area、戰吼加 warcry、area 與 duration（戰吼會拿掉 spell：戰吼不算法術）、
+# 原作寫「上限」（Limit）而且我們也有上限的技能加 limit（2026-10-28，名單在 SkillLimits：圖騰、鐘、地面效果、有上限的召喚物、印記、祭品…；過剩輔助要這個）
 # （輔助寶石的 requires 看這些：持久要 duration、速冷要 cooldown、兇猛召喚要 minion、強效光環要 aura、強勢戰吼要 warcry）。
 #
 # 技能是寶石（PoE2）：未切割技能寶石右鍵雕成技能寶石（等級 = 未切割寶石的等級），放進技能面板就學會；
@@ -707,7 +708,7 @@ skills:
       - { stat: shock.chance, type: MORE, value: 100 }   # 2026-10-26 照 PoE2（感電機率更多 100%）；這次之前 +20%
   killing_palm:
     name: 斷魂掌
-    description: 一掌打在一個敵人身上，生命低的敵人直接打死（撲殺）。撲殺時獲得銳星：一般、魔法怪 1 顆，稀有怪 2 顆，傳奇怪 3 顆。
+    description: 衝向 6.5 格內的一個敵人打一掌，生命低的敵人直接打死（撲殺）；目標被撲殺的話，再衝向附近其他可以撲殺的敵人各打一掌（一直撲殺得到就一直連）。這一掌打死的每個敵人給銳星：一般、魔法怪 1 顆，稀有怪 2 顆，傳奇怪 3 顆。不會被閃避。身邊可以撲殺的敵人會發光（只有你看得到；伺服器沒裝 PacketEvents 時改成頭上冒紅點）。   # 2026-10-28 照 PoE2 Killing Palm（衝刺、連衝撲殺、打死給銳星、標記）；這次之前原地打一下、撲殺才給銳星；2026-10-28 標記照 PoE2 改成外框（這次之前紅點）
     icon: BONE
     type: attack
     tier: 1   # 2026-10-27 照 PoE2（Killing Palm 第 1 階）；這次之前 5
@@ -721,9 +722,11 @@ skills:
     # （更早）2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [1.11, 1.55]）
     mana: [6, 7, 8, 9, 10, 11, 13, 14, 16, 17, 19, 21, 23, 25, 28, 30, 33, 36, 38, 42, 45, 49, 52, 56, 60, 65, 70, 75, 80, 86, 92, 98, 105, 112, 119, 127, 136, 144, 154, 164]   # 2026-10-26 照 PoE2（poe2db）；這次之前 [4, 9]
     visual: killing_palm
+    # 2026-10-28 照 PoE2：衝刺 6.5 格、撲殺後連衝別的可撲殺敵人（每一掌隔一次攻擊時間、沒有上限；這次之前隔 0.2 秒、最多 40 掌）、可撲殺的敵人發光（KillingPalm／SkillExecutor.palm／hook.CullGlow）
     modifiers:   # 2026-10-24：照 PoE2 的 Killing Palm（撲殺給銳星，稀有度越高越多）
       - { stat: flag.culling, type: FLAT, value: 1 }
-      - { stat: charge.event.cull.power, type: FLAT, value: 100 }
+      - { stat: charge.event.kill.power, type: FLAT, value: 100 }   # 2026-10-28 照 PoE2「這一掌打死的每個敵人給一顆銳星，稀有 2、傳奇 3」；這次之前 charge.event.cull.power（只有撲殺才給）
+      - { stat: flag.always_hit, type: FLAT, value: 1 }   # 2026-10-28 照 PoE2（global_always_hit：不會被閃避）；這次之前會被閃避
   tempest_bell:
     name: 驚雷之鐘
     description: 在面前砸下一口鐘（要 4 點連擊才能放：用其他打擊打中敵人累積，放了就用掉），砸下來時打周圍一圈。你用近戰攻擊打到鐘（或鐘旁邊的敵人），鐘就響一次放出震波（最多十次）。打到鐘的那一下會讓鐘點燃、冰緩、凍結、感電（鐘有自己的異常門檻與暈眩門檻，隨等級 18 → 6357 → 148290），鐘身上每有一種元素異常，震波額外獲得 30% 物理傷害為那一種元素；會擊退的那一下讓震波範圍更大（每 0.1 公尺擊退更多 30%）。等級越高同時能放越多口鐘。   # 2026-10-28 照 PoE2 補上砸鐘傷害、鐘數；2026-10-28 照 PoE2 補上鐘的異常、擊退
@@ -2474,8 +2477,9 @@ skills:
     visual: lightning_arrow
 
   chain_arrow:
-    name: 跳電矢
-    description: 射出一支帶電的箭，打中後跳到附近的敵人身上好幾次，每打中一個都在牠身邊炸出一圈電擊波。物理傷害大部分轉成閃電；不會造成感電。
+    name: 電鍊箭矢   # 2026-10-28 照 PoE2 0.5 繁中名（Shockchain Arrow）；這次之前叫跳電矢
+    # 2026-10-28 照 PoE2 0.5 Shockchain Arrow 的說明（ShockchainArrows）；這次之前「射出一支帶電的箭，打中後跳到附近的敵人身上好幾次，每打中一個都在牠身邊炸出一圈電擊波。物理傷害大部分轉成閃電；不會造成感電。」
+    description: 射出一支帶有閃電能量的箭，會自動追蹤受到閃電異常狀態（感電、電擊）的敵人。打中這種敵人時箭充能，放出 2.5 格的震波，再多連鎖 3 次（最遠 8 格），連鎖的每一下也都放出震波；連鎖的箭打中另一個受到閃電異常的敵人時再多 3 次。最後一次連鎖後箭掉到地上變成雷霆之杖（20 秒，最多 10 支）：你的閃電連鎖可以連到它上面，充能 1 秒後用震波的傷害炸開，被連到 8 次就消失。箭會消耗敵人身上的感電，但不會消耗電擊；箭和震波都不會造成感電。
     icon: COPPER_INGOT
     type: attack
     tier: 11   # 2026-10-27 照 PoE2（Shockchain Arrow 第 11 階）；這次之前 7
@@ -2488,10 +2492,18 @@ skills:
     effectiveness: [0.7, 0.77, 0.85, 0.92, 1.0, 1.07, 1.15, 1.22, 1.28, 1.34, 1.41, 1.48, 1.55, 1.63, 1.71, 1.8, 1.89, 1.98, 2.08, 2.18, 2.29, 2.41, 2.53, 2.65, 2.79, 2.93, 3.07, 3.23, 3.39, 3.56, 3.73, 3.92, 4.12, 4.32, 4.54, 4.77, 5.0, 5.25, 5.52, 5.79]   # 2026-10-26 照 PoE2（poe2db Shockchain Arrow 箭本身 1–40 級）
     mana: [10, 11, 13, 15, 17, 19, 21, 23, 26, 29, 32, 35, 38, 42, 45, 49, 54, 58, 63, 68, 73, 79, 85, 92, 99, 106, 114, 122, 130, 140, 149, 160, 170, 182, 194, 207, 221, 235, 250, 266]
     visual: lightning_arrow
-    modifiers:   # 原作：最多連鎖 8 次（第一次打到感電中的敵人多 3 次）；連鎖完插地變雷樁、追蹤異常的敵人沒做
-      - { stat: skill.chains, type: FLAT, value: 5 }
-      - { stat: shock.chance, type: MORE, value: -100 }
-      - { stat: proc.hit, type: FLAT, value: 100, tags: [proc_shockchain_wave] }
+    # 2026-10-28 照 PoE2 Shockchain Arrow 的震波（ShockchainArrowExplosionPlayer：140% → 507% → 1842%、物理全轉閃電、2.5 公尺、不會感電）；
+    #   這次之前是另一個隱藏技能 proc_shockchain_wave（跳電震波，數值一樣），每一下打中都炸
+    stages:
+      shockwave: { name: 震波, effectiveness: [1.4, 1.54, 1.7, 1.85, 2.0, 2.16, 2.32, 2.48, 2.62, 2.77, 2.93, 3.1, 3.29, 3.49, 3.71, 3.94, 4.19, 4.46, 4.75, 5.07, 5.41, 5.77, 6.15, 6.56, 7.0, 7.47, 7.96, 8.49, 9.06, 9.66, 10.31, 10.99, 11.73, 12.51, 13.34, 14.23, 15.18, 16.19, 17.27, 18.42], convert: { lightning: 1.0 }, radius: 2.5 }
+    rod: { duration: 20, max: 10, chains: 8, charge: 1.0 }   # 2026-10-28 照 PoE2（RePoE base_skill_effect_duration 20000、number_of_lightning_rods_allowed 10、lightning_rod_number_of_chains_allowed 8；最後一次連鎖後插成雷霆之杖，充能照雷樁矢 1 秒）；這次之前沒有
+    modifiers:
+      # 2026-10-28 照 PoE2：本身不連鎖，第一次打中感電或電擊中的敵人多連鎖 3 次（可重複）、追蹤閃電異常的敵人、消耗感電；
+      #   這次之前（原作：最多連鎖 8 次（第一次打到感電中的敵人多 3 次）；連鎖完插地變雷樁、追蹤異常的敵人沒做）固定連鎖 5 次、每一下都炸震波
+      - { stat: projectile.chains_on_lightning_ailment, type: FLAT, value: 3 }
+      - { stat: flag.home_lightning_ailment, type: FLAT, value: 1 }
+      - { stat: flag.consume_shock_on_hit, type: FLAT, value: 1 }
+      - { stat: shock.chance, type: MORE, value: -100 }   # 照 PoE2：箭和震波都不會感電
 
   # -- 弩 --
   piercing_rounds:
@@ -2703,6 +2715,8 @@ skills:
     mana: [10, 11, 13, 15, 17, 19, 21, 24, 26, 29, 32, 35, 38, 42, 46, 50, 54, 59, 63, 69, 74, 80, 86, 93, 100, 107, 115, 123, 132, 141, 151, 161, 172, 184, 196, 209, 223, 237, 253, 269]   # 2026-10-26 照 PoE2（poe2db）；這次之前 [7, 15]
     # 2026-10-28 照 PoE2（poe2db Wind Serpent's Fury）：要 1 顆怒星、用掉身上所有的怒星，每顆一條風蛇跟在矛後面沿同一道再打一次（55% → 199% → 724%）；這次之前不用怒星、沒有風蛇
     charge_cost: { charge: frenzy, count: 1 }
+    modifiers:
+      - { stat: skill.knockback, type: FLAT, value: 0.8 }   # 2026-10-28 照 PoE2（base_knockback_distance）：擊退（SkillExecutor.cone）；這次之前寫「擊退」但扇形沒有擊退
     stages:
       serpent: { name: 風蛇, effectiveness: [0.55, 0.6, 0.67, 0.73, 0.79, 0.85, 0.91, 0.97, 1.03, 1.09, 1.15, 1.22, 1.29, 1.37, 1.46, 1.55, 1.65, 1.75, 1.87, 1.99, 2.12, 2.27, 2.42, 2.58, 2.75, 2.93, 3.13, 3.34, 3.56, 3.8, 4.05, 4.32, 4.61, 4.91, 5.24, 5.59, 5.96, 6.36, 6.78, 7.24] }
     visual: spear_thrust
@@ -2873,7 +2887,8 @@ skills:
 
   storm_blink:
     name: 雷遁
-    description: 瞄準一個敵人，在牠腳下留下 8 秒的感電地面。牠的生命已經低到可以撲殺（普通 35%、魔法 20%、稀有 10%、傳奇 5%）就瞬移進去把牠炸掉，炸到周圍 3 格，並獲得一層閃電灌注；還沒低到就掛 4 秒標記，期間掉到門檻就自動瞬移過去。
+    description: 瞄準一個敵人，在牠腳下留下 8 秒的感電地面。牠的生命已經低到可以撲殺（普通 35%、魔法 20%、稀有 10%、傳奇 5%）就瞬移進去把牠炸掉，炸到周圍 3 格，並獲得一層閃電灌注；還沒低到就掛 4 秒標記，期間掉到門檻就自動瞬移過去。也可以瞄準自己的滾雷珠：瞬移到雷珠那裡，雷珠在同一個爆炸裡消失，一樣獲得閃電灌注，但不留感電地面。準心上有可以撲殺的敵人或滾雷珠時，優先選它們（兩個都有就選近的那個），不會選到前面還不能撲殺的敵人。
+    # 2026-10-28 照 PoE2 0.5 Lightning Warp：可以瞄準自己的滾雷珠（不留感電地面）、可以撲殺的敵人與滾雷珠比還不能撲殺的敵人優先；這次之前只能瞄準準心第一個碰到的敵人
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9   # 2026-10-27 照 PoE2（Lightning Warp 第 9 階）；這次之前 5
@@ -2921,6 +2936,7 @@ skills:
     type: spell
     tier: 5
     tags: [spell, area, fire, duration, orb]   # 2026-10-26 照 PoE2 加 orb（法球技能，天賦樹用）；這次之前沒有
+    source: weapon   # 2026-10-28 照 PoE2 0.5（RePoE skill_gems：Solar Orb crafting_level 0，只有長杖賦予）：沒有寶石；這次之前未切割技能寶石雕得出來、能插進星咒圖騰／引星
     mechanic: zone
     zone: { range: 16, radius: 2.5, duration: 10, interval: 1.4, damage: 100, max: 1 }   # 2026-10-26 照 PoE2 Solar Orb：放在準心指的地方、2.5 格、10 秒、每 1.4 秒打全額；這次之前腳下、[3.0, 3.6]、6 秒、每 0.5 秒 55%（身邊 1 格點燃沒做）
     damage: [[4, 5], [5, 8], [8, 12], [11, 16], [14, 21], [18, 27], [22, 33], [27, 41], [33, 50], [40, 61], [49, 73], [57, 85], [66, 99], [77, 115], [89, 134], [103, 154], [119, 178], [137, 205], [157, 236], [181, 271], [208, 311], [238, 358], [274, 411], [314, 472], [361, 542], [415, 623], [477, 716], [549, 823], [632, 947], [727, 1091], [838, 1258], [967, 1451], [1117, 1675], [1291, 1936], [1494, 2241], [1730, 2596], [2007, 3010], [2330, 3495], [2709, 4064], [3154, 4730]]   # 2026-10-26 照 PoE2（poe2db Solar Orb 1–40 級，每一級的實際傷害，不乘 spell_damage_growth）；這次之前 [5, 9]
@@ -3306,11 +3322,11 @@ skills:
 
   falling_thunder:
     name: 驚雷劈
-    description: 長棍往前劈下一道雷，打傷前方一長條的敵人，大部分傷害轉為閃電。
+    description: 長棍往前劈下一道雷，打傷前方一長條的敵人，大部分傷害轉為閃電。用掉身上所有的銳星，從落點往前射出閃電投射物（每顆 3 發，物理全部轉為閃電、穿透所有目標）：每用掉一顆更多 50% 傷害，有用掉銳星時再更多 100%。沒有銳星就不射。   # 2026-10-28 照 PoE2 補上投射物那一段；這次之前只有前面的猛擊
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 1   # 2026-10-27 照 PoE2（Falling Thunder 第 1 階）；這次之前 5
-    tags: [attack, melee, area, slam, lightning]
+    tags: [attack, melee, area, slam, projectile, lightning]   # 2026-10-28 照 PoE2（Falling Thunder：攻擊、範圍、近戰、猛擊、投射物、閃電；猛擊那一下不算投射物，SkillProfiles）；這次之前沒有投射物
     weapons: [quarterstaff]
     mechanic: cone
     cone: { length: 4, angle: 40 }   # 2026-10-26 照 PoE2（4 格）；這次之前 [6.0, 7.5]
@@ -3320,7 +3336,27 @@ skills:
     # （更早）2026-10-23 棍的主力攻擊：20 級端 ×1.5；這次之前 [1.61, 2.25]
     # （更早）2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [1.29, 1.8]）
     mana: [11, 13, 14, 17, 19, 21, 24, 26, 29, 32, 35, 39, 42, 46, 51, 55, 60, 65, 70, 76, 82, 88, 95, 102, 110, 118, 127, 136, 146, 156, 167, 178, 190, 203, 217, 231, 246, 262, 279, 297]   # 2026-10-26 照 PoE2（poe2db）；這次之前 [6, 12]
+    # 2026-10-28 照 PoE2（RePoE FallingThunderProjectilePlayer；沒有自己的逐級表，跟猛擊同一張）：你親自用的時候用掉身上所有的銳星，
+    #   從落點往前射出閃電投射物：每顆 3 發、物理全部轉閃電、穿透所有目標、每顆更多 50%（品質再加）、有用掉再更多 100%、
+    #   每發速度各自 ±50%（16 公尺／秒）；沒有銳星不射（SkillExecutor.thunderBolts，射出去的是 falling_thunder_bolt）。這次之前沒有這一段
+    stages:
+      thunder: { name: 雷霆投射物, effectiveness: [1.4, 1.54, 1.69, 1.85, 1.99, 2.14, 2.29, 2.43, 2.55, 2.68, 2.81, 2.96, 3.1, 3.26, 3.42, 3.59, 3.77, 3.96, 4.16, 4.37, 4.58, 4.81, 5.05, 5.31, 5.57, 5.85, 6.14, 6.45, 6.77, 7.11, 7.47, 7.84, 8.23, 8.65, 9.08, 9.53, 10.01, 10.51, 11.03, 11.59], count: 3, convert: { lightning: 1.0 } }
     visual: tempest   # 2026-10-26 照 PoE2：拿掉原作沒有的感電機率 +20%
+
+  # 2026-10-28 照 PoE2 Falling Thunder 的投射物（驚雷劈用掉銳星時射出去的；傷害、數量、加成在 SkillExecutor.thunderBolts 換成驚雷劈那一下的）
+  falling_thunder_bolt:
+    name: 雷霆投射物
+    icon: COPPER_INGOT
+    hidden: true
+    type: attack
+    tags: [attack, projectile, lightning]
+    weapons: [quarterstaff]
+    mechanic: projectile
+    projectile: { speed: 0.8, range: 16, size: 0.4, pierce: 20 }   # 16 公尺／秒（每 tick 0.8 格）、穿透所有目標
+    attack_speed: 0.6
+    effectiveness: [1.4, 1.54, 1.69, 1.85, 1.99, 2.14, 2.29, 2.43, 2.55, 2.68, 2.81, 2.96, 3.1, 3.26, 3.42, 3.59, 3.77, 3.96, 4.16, 4.37, 4.58, 4.81, 5.05, 5.31, 5.57, 5.85, 6.14, 6.45, 6.77, 7.11, 7.47, 7.84, 8.23, 8.65, 9.08, 9.53, 10.01, 10.51, 11.03, 11.59]
+    convert: { lightning: 1.0 }
+    visual: spark
 
   glacial_cascade:
     name: 冰脊裂
@@ -4315,7 +4351,7 @@ skills:
     icon: PHANTOM_MEMBRANE
     type: attack
     tier: 13
-    tags: [attack, melee, strike]   # 2026-10-17：瞬移打目標，沒有範圍效果，拿掉範圍
+    tags: [attack, melee, strike, area]   # 2026-10-28 照 PoE2（寶石標籤 Attack、AoE、Melee、Strike；is area damage）：加回範圍——還是單體打擊（範圍大小不影響打到誰），但算範圍傷害、範圍輔助掛得上；這次之前 [attack, melee, strike]
     weapons: [quarterstaff]
     mechanic: flicker
     flicker: { range: 12, reach: 3.5, targets: 1 }   # 2026-10-24：照 PoE2 拿掉冷卻，改成銳星連打（SkillExecutor.flickerChain）
@@ -6627,8 +6663,9 @@ skills:
   # -- 任何武器（法術）--
   bone_cage:
     name: 骸棘環
-    # PoE2 Bone Cage：定身（Pin）現在只有投射物攻擊有 [需要程式]，先用大量暈眩累積代替
-    description: 在身邊竄出一圈骨刺，1.6 秒內刺傷圈裡的敵人一下，暈眩累積很多。再放一次會把舊的那圈拆掉。
+    # 2026-10-28 照 PoE2 Bone Cage：擊中必定累積定身（base_all_damage_can_pin）、定身當作傷害更多 50%（品質再 +0～50%）；
+    #   這次之前定身只有投射物攻擊有，用暈眩累積更多 100% 代替
+    description: 在身邊竄出一圈骨刺，1.6 秒內刺傷圈裡的敵人一下，擊中都會累積定身（定身當作傷害更多 50%）。再放一次會把舊的那圈拆掉。
     icon: BONE   # 2026-10：原本 BONE_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
@@ -6643,7 +6680,8 @@ skills:
     visual: puncture
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 15 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
-      - { stat: stun.buildup, type: MORE, value: 100 }
+      - { stat: flag.hits_pin, type: FLAT, value: 1 }   # 2026-10-28 照 PoE2（base_all_damage_can_pin）；這次之前 stun.buildup MORE 100 代替定身
+      - { stat: pin.as_though_damage, type: FLAT, value: 50 }   # 2026-10-28 照 PoE2（active_skill_pins_as_though_dealt_damage_+%_final 50）
 
   snap:
     name: 噬異爆
@@ -6844,7 +6882,7 @@ skills:
   # -- 矛 --
   rake:
     name: 裂血掠
-    description: 往前衝過去，在終點一記撕裂斬打周圍一圈的敵人，打中的全部流血（流血效果更多 100%）。
+    description: 往前衝過去，在終點一記撕裂斬打周圍一圈的敵人，打中的全部流血（流血效果更多 100%）；衝得越遠傷害越高（衝滿最多更多 100%）。
     icon: FLINT   # 2026-10：原本 SHEARS（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
@@ -6861,6 +6899,7 @@ skills:
     modifiers:
       - { stat: bleed.chance, type: FLAT, value: 100 }
       - { stat: bleed.magnitude, type: MORE, value: 100 }   # 2026-10-26 照 PoE2：流血效果更多 100%
+      - { stat: charge.distance_more, type: FLAT, value: 100 }   # 2026-10-28 照 PoE2 Rake：照衝刺的距離最多更多 100% 傷害（SkillExecutor.dashDistanceMore）；這次之前沒有
 
   # -- 弓 --
   lightning_rod:
@@ -7482,7 +7521,7 @@ skills:
   totem_casting:
     name: 星咒圖騰
     # 2026-10-26 照站長「有些敘述有點長」精簡說明（數值不變）；這次之前 301 字
-    description: 主要寶石：法術寶石放進它的孔（可放好幾個），其他孔的輔助套在那些法術上（法術自己的輔助會拆下來）。消耗 3 顆銳星或磐星（銳星先用）放下圖騰，照孔的順序輪流施放裡面的法術；每顆銳星法術更多 10% 傷害，每顆磐星圖騰更多 20% 生命與持續時間。施法速度更少 25%，不能放有冷卻的法術（穢陣、骨綻、雷流場也不行）。圖騰持續 8 秒，最多 1 根（14 級起 2 根、23 級起 3 根），元素／混沌抗性隨等級提高（20 級 75%／35%）。圖騰輔助（疾樁、繁置、樁怒…）與施法速度、持續時間加成也套到圖騰本身。
+    description: 主要寶石：法術寶石放進它的孔（可放好幾個），其他孔的輔助套在那些法術上（法術自己的輔助會拆下來）。消耗 3 顆銳星或磐星（銳星先用）放下圖騰，照孔的順序輪流施放裡面的法術；每顆銳星法術更多 10% 傷害，每顆磐星圖騰更多 20% 生命與持續時間。施法速度更少 25%，不能放有冷卻的法術（穢陣、骨綻、雷流場也不行）。圖騰持續 8 秒，最多 1 根（14 級起 2 根、23 級起 3 根），元素／混沌抗性隨等級提高（20 級 75%／35%）。圖騰輔助（疾樁、過剩 II、樁怒…）與施法速度、持續時間加成也套到圖騰本身。
     icon: NAUTILUS_SHELL
     type: spell
     tier: 7
@@ -7616,19 +7655,6 @@ skills:
     cooldown: 0.2
     mana: 0
     visual: aura_armour
-
-  proc_shockchain_wave:
-    name: 跳電震波
-    icon: COPPER_INGOT   # 2026-10-27 補圖示（照技能的元素、作用）；這次之前沒寫，顯示成書
-    hidden: true
-    type: attack
-    tags: [attack, projectile, area, lightning]
-    mechanic: nova
-    nova: { radius: 2.5 }   # 2026-10-26 照 PoE2 Shockchain Arrow 的電擊波：2.5 格
-    convert: { lightning: 1.0 }
-    attack_speed: 1.0
-    effectiveness: [1.4, 1.54, 1.7, 1.85, 2.0, 2.16, 2.32, 2.48, 2.62, 2.77, 2.93, 3.1, 3.29, 3.49, 3.71, 3.94, 4.19, 4.46, 4.75, 5.07, 5.41, 5.77, 6.15, 6.56, 7.0, 7.47, 7.96, 8.49, 9.06, 9.66, 10.31, 10.99, 11.73, 12.51, 13.34, 14.23, 15.18, 16.19, 17.27, 18.42]   # 2026-10-26 照 PoE2（poe2db Shockchain Arrow 電擊波 1–40 級）
-    visual: lightning_arrow
 
   proc_shattering_burst:
     name: 碎冰爆
@@ -8674,11 +8700,15 @@ skills:
 
   called_shots:
     name: 預告射擊
-    description: 常駐：每 5 秒把你面板上的印記技能放在 10 格內一個還沒被標記的敵人身上；印記被用掉時再放到另一個敵人身上（最多每 5 秒一次）。不保留精魂。
+    # 2026-10-28 照 PoE2 Called Shots（主要寶石，RePoE MetaDeadeyeMarksPlayer）：孔裡放印記，其他孔的輔助套在印記上（冷卻恢復、延長持續時間都能掛）；
+    # 這次之前孔裡不能放技能，放面板上第一個印記，間隔固定 5 秒：「常駐：每 5 秒把你面板上的印記技能放在 10 格內一個還沒被標記的敵人身上；印記被用掉時再放到另一個敵人身上（最多每 5 秒一次）。不保留精魂。」
+    # 2026-10-28（第二次）照 PoE2：5 秒不吃冷卻恢復、印記自己的冷卻要好、用掉馬上補放、擴散 3 格、不受印記數量限制、常駐增益與範圍輔助套在它身上；
+    # 同一天稍早：「主要寶石：孔裡放印記技能（可以放好幾個，照孔的順序輪流），每 5 秒把它放在 10 格內一個還沒被標記的敵人身上；其他孔的輔助都套在印記上（延長持續時間加印記持續時間，冷卻恢復讓間隔更短）。不保留精魂。」、tags: [persistent, mark]
+    description: 主要寶石：孔裡放印記技能（可以放好幾個，照孔的順序輪流），每 5 秒把它放在 10 格內一個還沒被標記的敵人身上（印記自己的冷卻也要好）；印記被用掉時馬上補放到另一個沒被標記的敵人身上（同樣最多每 5 秒一次），並標記被用掉那隻 3 格內的另一個敵人。不受印記數量限制。其他孔的輔助套在印記上；常駐增益、範圍的輔助套在它自己身上。不保留精魂。
     icon: GLOW_INK_SAC   # 2026-10-27 圖示：發光的標記；這次之前 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥）
     type: spell
     tier: 1
-    tags: [persistent, mark]
+    tags: [persistent, mark, area]   # 2026-10-28 照 PoE2（Called Shots 有 Area：放印記的範圍吃範圍加成）
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -8689,11 +8719,16 @@ skills:
 
   mirage_deadeye:
     name: 幻影銳眼
-    description: 常駐：發射遠程投射物攻擊時，在你站的地方留下一個幻影（4～5 秒，冷卻 10 秒），幻影跟著你重複使用投射物攻擊，傷害更少 50%。不保留精魂。
+    # 2026-10-28 照 PoE2 Mirage Deadeye（主要寶石，RePoE MetaMirageDeadeyePlayer／MirageDeadeyeSpawnPlayer：Duration、Cooldown，冷卻 10 秒）：
+    # 孔裡放遠程投射物攻擊，幻影照攻擊間隔一直用它；其他孔的冷卻恢復、延長持續時間套在幻影上；
+    # 這次之前孔裡不能放技能、tags: [persistent]：「常駐：發射遠程投射物攻擊時，在你站的地方留下一個幻影（4～5 秒，冷卻 10 秒），幻影跟著你重複使用投射物攻擊，傷害更少 50%。不保留精魂。」
+    # 2026-10-28（第二次）照 PoE2 0.5：引導／蓄力、有冷卻的攻擊也能放（幻影自己引導、自己算冷卻），孔裡的攻擊不能消耗戰星，常駐增益輔助套在它身上；
+    # 同一天稍早：「主要寶石：孔裡放遠程投射物攻擊（可以放好幾個，輪流用；你自己不能用孔裡的攻擊）。你發射遠程投射物攻擊時，在你站的地方留下一個幻影（4～5 秒，冷卻 10 秒），幻影在持續時間內一直對附近的敵人用孔裡的攻擊，傷害更少 50%。其他孔的輔助套在孔裡的攻擊上，冷卻恢復、延長持續時間套在幻影上。不保留精魂。」
+    description: 主要寶石：孔裡放遠程投射物攻擊（可以放好幾個，輪流用；你自己不能用孔裡的攻擊）。你發射遠程投射物攻擊時，在你站的地方留下一個幻影（4～5 秒，冷卻 10 秒），幻影在持續時間內一直對附近的敵人用孔裡的攻擊，傷害更少 50%：引導、蓄力的照引導時間放（疊滿層數、在完美時機放開），有冷卻的照冷卻（每個幻影自己算）；孔裡的攻擊不能消耗戰星。其他孔的輔助套在孔裡的攻擊上，冷卻恢復、延長持續時間套在幻影上，常駐增益的輔助套在它自己身上。不保留精魂。
     icon: PHANTOM_MEMBRANE
     type: spell
     tier: 1
-    tags: [persistent]
+    tags: [persistent, duration, cooldown]
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }

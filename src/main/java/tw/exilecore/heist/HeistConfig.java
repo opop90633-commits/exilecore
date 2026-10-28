@@ -45,6 +45,18 @@ public final class HeistConfig {
                            double[] contractChance, double timeLostChance, double timeLostRare) {
     }
 
+    /**
+     * 2026-10-28 照站長：特殊項鍊（bases 的 heist_only: true）只在劫盜掉；這次之前一般掉落、賭裝商人都拿得到。
+     *
+     * @param chestChance  每個金庫箱、每個人掉一條特殊項鍊的機率（合約與藍圖的金庫箱都算）
+     * @param vaultChance  大金庫每個人掉一條的機率（大劫盜 ×grand_multiplier，封鎖了減半）
+     * @param rare         掉出來是稀有的機率（不然是魔法；跟其他掉落一樣未鑑定）
+     * @param finaleWeight 金庫之主的收藏裡每一種特殊項鍊的權重（一件劫盜專屬傳奇算 1）
+     */
+    public record SpecialAmulets(double chestChance, double vaultChance, double rare, double finaleWeight) {
+        public static final SpecialAmulets DEFAULTS = new SpecialAmulets(0.005, 0.005, 0.30, 0.1);
+    }
+
     /** 一處據點（寫法跟試煉一樣）。 */
     public record Site(String id, String name, String theme, MapLayout.Style layout, String lore, List<ZoneConfig.SpawnEntry> monsters,
                        MapConfig.Boss boss) {
@@ -61,6 +73,7 @@ public final class HeistConfig {
     public static final String FILE = "heist.yml";
 
     private Settings settings = defaults();
+    private SpecialAmulets specialAmulets = SpecialAmulets.DEFAULTS;
     private final Map<String, Site> sites = new LinkedHashMap<>();
     /** 劫盜終局（金庫之主）：寫法跟據點一樣；沒寫就開不了。 */
     private Site finale;
@@ -113,6 +126,11 @@ public final class HeistConfig {
         return settings;
     }
 
+    /** 2026-10-28：特殊項鍊（劫盜專屬基底）的掉落設定（settings.special_amulet）。 */
+    public SpecialAmulets specialAmulets() {
+        return specialAmulets;
+    }
+
     public List<Site> sites() {
         return List.copyOf(sites.values());
     }
@@ -126,6 +144,7 @@ public final class HeistConfig {
         final Path file = dataFolder.resolve(FILE);
         if (!Files.exists(file)) {
             settings = defaults();
+            specialAmulets = SpecialAmulets.DEFAULTS;
             sites.clear();
             return;
         }
@@ -153,6 +172,10 @@ public final class HeistConfig {
                 new double[] {chance(s.node("contract_chance").decimal("normal", 0.002)), chance(s.node("contract_chance").decimal("magic", 0.006)),
                         chance(s.node("contract_chance").decimal("rare", 0.025)), chance(s.node("contract_chance").decimal("boss", 0.25))},
                 chance(s.decimal("time_lost_jewel_chance", 0.02)), chance(s.decimal("time_lost_jewel_rare", 0.30)));
+        final YamlNode amulet = s.node("special_amulet");
+        final SpecialAmulets amulets = new SpecialAmulets(chance(amulet.decimal("chest_chance", SpecialAmulets.DEFAULTS.chestChance())),
+                chance(amulet.decimal("vault_chance", SpecialAmulets.DEFAULTS.vaultChance())), chance(amulet.decimal("rare", SpecialAmulets.DEFAULTS.rare())),
+                nonNegative(amulet.decimal("finale_weight", SpecialAmulets.DEFAULTS.finaleWeight())));
         final Map<String, Site> parsed = new LinkedHashMap<>();
         final YamlNode sitesNode = root.node("sites");
         for (final String id : sitesNode.keys()) {
@@ -171,6 +194,7 @@ public final class HeistConfig {
             throw new IllegalArgumentException(FILE + "：sites 至少要有一處據點");
         }
         settings = fresh;
+        specialAmulets = amulets;
         sites.clear();
         sites.putAll(parsed);
         finale = parsedFinale;
@@ -198,6 +222,7 @@ public final class HeistConfig {
 
     public void copyFrom(final HeistConfig other) {
         settings = other.settings;
+        specialAmulets = other.specialAmulets;
         finale = other.finale;
         finaleChoices = other.finaleChoices;
         finaleLevelBonus = other.finaleLevelBonus;

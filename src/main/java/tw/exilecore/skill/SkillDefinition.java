@@ -97,6 +97,14 @@ public record SkillDefinition(String id, String name, String description, String
         };
     }
 
+    /**
+     * 2026-10-28 照 PoE2 0.5：只有武器（法杖、長杖、權杖、矛）或昇華天賦賦予、沒有寶石的技能（RePoE skill_gems 的 crafting_level 0）。
+     * 不能做成技能寶石，也不能插進主要寶石（星咒圖騰、引星…）或其他宿主寶石的孔。
+     */
+    public boolean grantedOnly() {
+        return "weapon".equals(source) || "ascendancy".equals(source);
+    }
+
     /** 是不是這個來源的專屬技能寶石。 */
     public boolean droppedBy(final String from) {
         return source != null && source.equals(from);
@@ -260,6 +268,9 @@ public record SkillDefinition(String id, String name, String description, String
         }
         if (params.zone() != null || params.ground() != null || params.vortex() != null || params.mark() != null) {
             tags.add(Tags.DURATION);
+        }
+        if (SkillLimits.SKILLS.contains(id)) {
+            tags.add(SkillLimits.TAG); // 2026-10-28 照 PoE2：原作有「上限」（Limit）的技能（過剩輔助要這個）
         }
         if (mechanic == Mechanic.MARK) {
             tags.add(params.mark().curse() ? "curse" : Tags.MARK); // 2026-10：範圍的是詛咒

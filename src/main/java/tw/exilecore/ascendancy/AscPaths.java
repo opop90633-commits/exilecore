@@ -138,6 +138,10 @@ final class AscPaths implements Listener {
         long possessionNext;
         final List<Bell> bells = new ArrayList<>();
         long bellNext;
+        /** 2026-10-28：空無專注的 +x 上限、鐘的持續時間（每秒重算一次，面板上的組合）。 */
+        int bellBonus;
+        long bellTicks = BELL_TICKS;
+        long bellCheckedAt = Long.MIN_VALUE;
         int resonance = RESONANCE_USES;
         long resonanceNext;
         SkillBuild lastMelee;
@@ -1093,7 +1097,17 @@ final class AscPaths implements Listener {
         if (own.bellNext <= 0) {
             own.bellNext = now + interval;
         }
-        if (now < own.bellNext || own.bells.size() >= BELL_MAX || plugin.skills() != null && plugin.skills().inTown(player)) {
+        if (now < own.bellNext || plugin.skills() != null && plugin.skills().inTown(player)) {
+            return;
+        }
+        // 2026-10-28 照 PoE2：「上限 3 口鐘」吃 +x 上限、鐘的持續時間吃技能持續時間（過剩）；這次之前固定 3 口、21 秒
+        if (now - own.bellCheckedAt >= 20) {
+            own.bellCheckedAt = now;
+            final SkillBuild focus = plugin.skills() == null ? null : plugin.skills().equippedBuild(player, "hollow_focus");
+            own.bellBonus = tw.exilecore.skill.SkillLimits.bonus(effects.sheet(player), focus);
+            own.bellTicks = focus == null ? BELL_TICKS : focus.durationTicks(BELL_TICKS / 20.0);
+        }
+        if (own.bells.size() >= BELL_MAX + own.bellBonus) {
             return;
         }
         own.bellNext = now + interval;
@@ -1110,7 +1124,7 @@ final class AscPaths implements Listener {
             d.setVisibleByDefault(false); // 2026-10-27 照站長：只有自己看得到
         });
         player.showEntity(plugin, display);
-        own.bells.add(new Bell(at, display, now + BELL_TICKS));
+        own.bells.add(new Bell(at, display, now + own.bellTicks));
         at.getWorld().playSound(at, Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.7f, 0.6f);
     }
 

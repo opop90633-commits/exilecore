@@ -51,6 +51,12 @@ public record BarrageSpec(int repeats, String charge, int perCharge, double less
         return Math.min(MAX_REPEATS, repeats + Math.max(0, consumed) * perCharge);
     }
 
+    /** 2026-10-28 照 PoE2 Barrage 的品質：重複的投射物「更少」少幾個百分點（less + delta，delta 負的）。 */
+    public BarrageSpec withLess(final double delta) {
+        return delta == 0 ? this : new BarrageSpec(repeats, charge, perCharge, Math.max(0, Math.min(95, less + delta)), gap, cooldownAttackTime,
+                maxCooldown, spells);
+    }
+
     /** 重複的那幾次的傷害倍率（少 50% = 0.5）。 */
     public double damageScale() {
         return Math.max(0, 1 - less / 100.0);

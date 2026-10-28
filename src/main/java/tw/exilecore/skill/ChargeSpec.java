@@ -110,6 +110,30 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
         }
     }
 
+    /**
+     * 2026-10-28 照 PoE2 技能品質：最大階段 +x（爆焰矢、千鈞砸，無條件捨去）、前 x 秒不耗怒氣（熾息、蠻衝）、
+     * 照衝刺距離更多傷害的上限 +x%（鐵壁衝撞）。build 沒有這些品質就原樣回傳。
+     */
+    public static ChargeSpec withQuality(final ChargeSpec spec, final SkillBuild build) {
+        if (spec == null || build == null) {
+            return spec;
+        }
+        final int stages = OriginalSkills.qualityInt(build.qualityFlat(tw.exilecore.stats.GemQualityKeys.CHARGE_STAGES));
+        final double rageFree = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.RAGE_FREE_SECONDS);
+        final double distance = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.DISTANCE_MORE);
+        if (stages == 0 && rageFree == 0 && distance == 0) {
+            return spec;
+        }
+        final Channel c = spec.channel();
+        final Channel channel = new Channel(c.mode(), c.drain(), c.perAttack(), c.stageStat(), c.stageValue(), c.explodeAtMax(), c.minTime(),
+                c.speed(), c.distanceMore() + (c.distanceMore() > 0 ? distance : 0), c.fullDistance(), c.collision(),
+                c.rageAfter() + (c.ragePerSecond() > 0 ? rageFree : 0), c.ragePerSecond(), c.backflip(), c.perfectRange(), c.perfectStat(),
+                c.perfectValue(), c.slow(), c.empowerCharge(), c.empowerStat(), c.empowerValue(), c.empowerRageLess(), c.interruptOnHit(),
+                c.attackSpeedCost());
+        return new ChargeSpec(spec.perfectAt(), spec.perfectMore(), spec.stages() > 0 ? Math.max(1, spec.stages() + stages) : 0,
+                spec.stageTime(), spec.stageMore(), spec.stageArea(), spec.stageProjectiles(), channel);
+    }
+
     /** 魔力是每秒扣的（引導中）。 */
     public boolean drain() {
         return channel.drain();

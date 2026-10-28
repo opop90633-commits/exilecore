@@ -360,8 +360,15 @@ public final class LineageMechanics implements Listener {
             final double echoArea = LineageRules.total(supports, LineageKeys.ECHO_AREA) / 100.0;
             final SkillBuild echo = echoArea > 0 ? build.withAreaAndProjectiles(build.areaScale() * Math.sqrt(1 + echoArea), build.projectiles()) : build;
             echoes = Math.min(8, echoes);
+            // 2026-10-28 照 PoE2：詛咒（Cascadable）回響落在原本的詛咒中心；這次之前詛咒掛不上三迴、雪封（照原點重放會落在自己身邊）
+            final Location curseAt = build.definition().mechanic() == Mechanic.MARK && build.params().mark() != null && build.params().mark().curse()
+                    ? service.executor().curseCenter(player, build, preferred) : null;
             for (int i = 1; i <= echoes; i++) {
-                later(player, origin, echo, preferred, 6L * i);
+                if (curseAt != null) {
+                    laterCurse(player, echo, curseAt, 6L * i);
+                } else {
+                    later(player, origin, echo, preferred, 6L * i);
+                }
             }
         }
         // 幻分（Trickster's Shard）：留下幻身，到上限時全部一起放（傷害更少 50%）
@@ -389,6 +396,15 @@ public final class LineageMechanics implements Listener {
 
     /** 幻身撐幾 tick（PoE2 5 秒）。 */
     static final long MIMIC_TICKS = 100;
+
+    /** 2026-10-28：詛咒的回響（三迴、雪封）：過 delay tick 在同一個中心再落一圈。 */
+    private void laterCurse(final Player player, final SkillBuild build, final Location center, final long delay) {
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (player.isOnline() && !player.isDead() && player.getWorld().equals(center.getWorld())) {
+                service.executor().cascade(player, build, new SkillExecutor.CascadeAnchor(Origin.of(player), center, null), new Vector());
+            }
+        }, Math.max(1, delay));
+    }
 
     private void later(final Player player, final Origin origin, final SkillBuild build, final LivingEntity target, final long delay) {
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {

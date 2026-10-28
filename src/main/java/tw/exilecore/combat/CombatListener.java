@@ -445,7 +445,9 @@ public final class CombatListener implements Listener {
             // 2026-10-26 照 PoE2 天賦樹：「增加／減少 x% 遠距離的命中懲罰」
             final double falloff = Math.min(0.95, tw.exilecore.stats.Formulas.accuracyFalloff(
                     Math.max(0, attacker.getLocation().distance(defender.getLocation()) - defender.getWidth() / 2))
-                    * tw.exilecore.stats.TreeEffectKeys.scale(attackerBase, tw.exilecore.stats.TreeEffectKeys.ACCURACY_RANGE_PENALTY, java.util.Set.of(), 0));
+                    // 2026-10-28 照 PoE2 Sunder 的品質：技能自己的「減少照距離的命中懲罰」也算（這次之前只看角色身上的）
+                    * tw.exilecore.stats.TreeEffectKeys.scale(skill.effective(attackerBase), tw.exilecore.stats.TreeEffectKeys.ACCURACY_RANGE_PENALTY,
+                    java.util.Set.of(), 0));
             if (falloff > 0) {
                 attackerDebuffs = new java.util.ArrayList<>(attackerDebuffs);
                 attackerDebuffs.add(Modifier.more(StatKeys.ACCURACY, -falloff, "距離"));
@@ -909,6 +911,7 @@ public final class CombatListener implements Listener {
             // 2026-10-26：護盾吸收的部分不扣血（這次之前整下都扣生命）
             if (result.total() > 0) {
                 minions.damaged(defender, result.esDamage(), attacker);
+                minions.hitTaken(defender, result.total()); // 2026-10-28 照 PoE2 Bone Offering 的品質
             }
             if (result.lifeDamage() > 0 || result.esDamage() <= 0) {
                 final double rawMinionDamage = Math.max(0.01, result.lifeDamage() * minions.healthScale(defender));
@@ -960,6 +963,10 @@ public final class CombatListener implements Listener {
                     && (plugin.maps() == null || plugin.maps().phaseFloor(defender) <= 0)) {
                 final boolean culled = cull(event, defender, defenderMonster,
                         tw.exilecore.stats.AttributeScalingKeys.cullScale(skillSheet, calcSkill.tags())); // 這次之前 SupportMechanics.cullScale（不看情境）
+                if (culled && attackerIsPlayer) {
+                    // 2026-10-28 照 PoE2 斷魂掌：撲殺到目標才連衝下一隻（SkillExecutor 同一個 tick 查）；這次之前沒記
+                    tw.exilecore.skill.KillingPalm.noteCull(attacker.getUniqueId(), defender.getUniqueId(), plugin.getServer().getCurrentTick());
+                }
                 if (culled && attackerIsPlayer && plugin.skills() != null) {
                     plugin.skills().supportMechanics().onCull((Player) attacker, skillSheet, skill.tags());
                 }
@@ -992,6 +999,13 @@ public final class CombatListener implements Listener {
                             }
                             culler.setMana(Math.min(culler.maxMana(), culler.mana() + culler.maxMana() * manaPct / 100.0));
                             plugin.players().display((Player) attacker, culler);
+                        }
+                        // 2026-10-28 照 PoE2 斷魂掌品質：撲殺時 4 秒內回復 x% 最大生命／魔力（量照撲殺當下的上限）；這次之前一次回
+                        final double lifeSlow = cullSheet.flat(StatKeys.LIFE_ON_CULL_OVER_TIME, skill.tags());
+                        final double manaSlow = cullSheet.flat(StatKeys.MANA_ON_CULL_OVER_TIME, skill.tags());
+                        if (lifeSlow > 0 || manaSlow > 0) {
+                            final PlayerState culler = plugin.players().get((Player) attacker);
+                            recoverOverTime((Player) attacker, culler.maxLife() * lifeSlow / 100.0, culler.maxMana() * manaSlow / 100.0);
                         }
                     });
                 }
@@ -1228,6 +1242,39 @@ public final class CombatListener implements Listener {
             state.setMana(Math.min(state.maxMana(), state.mana() + amount));
             plugin.players().display(credit, state);
         });
+    }
+
+    /**
+     * 2026-10-28 照 PoE2（斷魂掌品質「撲殺一名敵人時，在 4 秒內恢復 x%」）：把 life、mana 平均分成
+     * {@link tw.exilecore.skill.KillingPalm#RECOVERY_PULSES} 次、每 {@link tw.exilecore.skill.KillingPalm#RECOVERY_PERIOD_TICKS} tick 回一次
+     * （合計 4 秒）。每次撲殺各自一份，可以疊；荒蕪禁療中那一次不回生命；死了、下線就停。
+     */
+    private void recoverOverTime(final Player player, final double life, final double mana) {
+        final int pulses = tw.exilecore.skill.KillingPalm.RECOVERY_PULSES;
+        final double lifeEach = tw.exilecore.skill.KillingPalm.perPulse(life);
+        final double manaEach = tw.exilecore.skill.KillingPalm.perPulse(mana);
+        if (lifeEach <= 0 && manaEach <= 0) {
+            return;
+        }
+        final int[] left = {pulses};
+        final long period = tw.exilecore.skill.KillingPalm.RECOVERY_PERIOD_TICKS;
+        plugin.getServer().getScheduler().runTaskTimer(plugin, task -> {
+            if (!player.isOnline() || player.isDead() || left[0]-- <= 0) {
+                task.cancel();
+                return;
+            }
+            final PlayerState state = plugin.players().get(player);
+            if (lifeEach > 0 && !state.ruined(plugin.getServer().getCurrentTick())) {
+                state.setLife(Math.min(state.maxLife(), state.life() + lifeEach));
+            }
+            if (manaEach > 0) {
+                state.setMana(Math.min(state.maxMana(), state.mana() + manaEach));
+            }
+            plugin.players().display(player, state);
+            if (left[0] <= 0) {
+                task.cancel();
+            }
+        }, period, period);
     }
 
     /** 荊棘：對剛打到玩家的怪物反彈一筆物理傷害（算玩家的攻擊：吃玩家的屬性表、擊殺算玩家的）。 */

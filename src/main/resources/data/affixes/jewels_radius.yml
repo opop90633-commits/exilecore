@@ -1,3 +1,4 @@
+# 2026-10-28 照站長「T1 太好洗」：每條詞綴最強的三階權重 ×0.5／×0.7／×0.85（其他階不動；只有一階的不動）。
 # 遺時珠寶（半徑珠寶）的詞綴（2026-10，照 PoE2 0.5 的 Time-Lost 珠寶；資料來源 RePoE poe2 mods.json）。
 # 基底：time_lost_ruby／emerald／sapphire／diamond（bases/jewels.yml），spawn_tags：radius（四種都出）、r_ruby、r_emerald、r_sapphire。
 # radius:屬性 = 「範圍內的小天賦也各給」：珠寶孔周圍半徑內每一個已配置的小天賦都多給一次（JewelSockets.radiusModifiers）。
@@ -1414,8 +1415,8 @@ unveiled_jr_damage_taken_recoup_life:
   # 舊物品沒有 p，讀的時候 AffixUpgrade 照那一階補上（第 1 階 1% 不變，第 2 階 1% → 0.5%）
   text: "範圍內的小天賦也各給：受到的傷害有 {p/10}% 在 4 秒內回復為生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 1000, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
-    - { tier: 2, ilvl: 1, weight: 1000, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
+    - { tier: 1, ilvl: 60, weight: 500, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
+    - { tier: 2, ilvl: 1, weight: 700, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: radius:life.recoup, type: FLAT, value: "{p/10}" }
 
@@ -1428,8 +1429,8 @@ unveiled_jr_percent_maximum_mana:
   # 舊物品沒有 p，讀的時候 AffixUpgrade 照那一階補上（第 1 階 1% 不變，第 2 階 1% → 0.5%）
   text: "範圍內的小天賦也各給：增加 {p/10}% 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 1000, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
-    - { tier: 2, ilvl: 1, weight: 1000, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
+    - { tier: 1, ilvl: 60, weight: 500, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
+    - { tier: 2, ilvl: 1, weight: 700, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: radius:mana.max, type: INCREASED, value: "{p/10}" }
 
@@ -1442,8 +1443,8 @@ unveiled_jr_percent_maximum_life:
   # 舊物品沒有 p，讀的時候 AffixUpgrade 照那一階補上（第 1 階 1% 不變，第 2 階 1% → 0.5%）
   text: "範圍內的小天賦也各給：增加 {p/10}% 最大生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 1000, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
-    - { tier: 2, ilvl: 1, weight: 1000, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
+    - { tier: 1, ilvl: 60, weight: 500, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
+    - { tier: 2, ilvl: 1, weight: 700, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: radius:life.max, type: INCREASED, value: "{p/10}" }
 
@@ -1454,8 +1455,8 @@ unveiled_jr_global_defences:
   names: [淵痕的, 黯痕的]
   text: "範圍內的小天賦也各給：增加 {value}% 護甲、閃避值與最大能量護盾"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 1000, value: [3, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
-    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
+    - { tier: 1, ilvl: 60, weight: 500, value: [3, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
+    - { tier: 2, ilvl: 1, weight: 700, value: [2, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: radius:armour, type: INCREASED, value: "{value}" }
     - { stat: radius:evasion, type: INCREASED, value: "{value}" }
@@ -1470,8 +1471,8 @@ unveiled_jr_damage_taken_from_mana_before_life:
   # 舊物品沒有 p，讀的時候 AffixUpgrade 照那一階補上（第 1 階 1% 不變，第 2 階 1% → 0.5%）
   text: "範圍內的小天賦也各給：受到的傷害有 {p/10}% 先從魔力扣除"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 1000, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
-    - { tier: 2, ilvl: 1, weight: 1000, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
+    - { tier: 1, ilvl: 60, weight: 500, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
+    - { tier: 2, ilvl: 1, weight: 700, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: radius:damage.from_mana, type: FLAT, value: "{p/10}" }
 
@@ -1484,8 +1485,8 @@ unveiled_jr_regenerate_percent_life_per_second:
   # 舊物品沒有 regen，讀的時候 AffixUpgrade 照那一階補上（第 1 階 0.1% 不變，第 2 階從 0% 變 0.05%）
   text: "範圍內的小天賦也各給：每秒回復 {regen/100}% 最大生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 1000, regen: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
-    - { tier: 2, ilvl: 1, weight: 1000, regen: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
+    - { tier: 1, ilvl: 60, weight: 500, regen: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
+    - { tier: 2, ilvl: 1, weight: 700, regen: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: radius:life.regen_percent, type: FLAT, value: "{regen/100}" }
 
@@ -1496,8 +1497,8 @@ unveiled_jr_mana_cost_efficiency:
   names: [淵痕之, 黯痕之]
   text: "範圍內的小天賦也各給：增加 {value}% 魔力消耗效率"   # 2026-10-27 照 PoE2 Mana Cost Efficiency；這次之前「減少技能魔力消耗」（skill.cost）
   tiers:
-    - { tier: 1, ilvl: 60, weight: 1000, value: [3, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
-    - { tier: 2, ilvl: 1, weight: 1000, value: [2, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
+    - { tier: 1, ilvl: 60, weight: 500, value: [3, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
+    - { tier: 2, ilvl: 1, weight: 700, value: [2, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: radius:skill.mana_cost_efficiency, type: INCREASED, value: "{value}" }
 
@@ -1509,8 +1510,8 @@ unveiled_jr_mana_flask_charges_per_second:
   # 2026-10-23：兩階本來都是 6：第 2 階改成 4。換成新變數 charges，舊物品讀的時候照那一階補上（第 2 階 6 → 4）
   text: "範圍內的小天賦也各給：魔力藥劑每分鐘自動拿到 {charges} 點充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 1000, charges: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
-    - { tier: 2, ilvl: 1, weight: 1000, charges: [4, 4] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
+    - { tier: 1, ilvl: 60, weight: 500, charges: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
+    - { tier: 2, ilvl: 1, weight: 700, charges: [4, 4] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: radius:flask.charges_per_minute.mana, type: FLAT, value: "{charges}" }
 
@@ -1521,8 +1522,8 @@ unveiled_jr_life_flask_charges_per_second:
   names: [淵痕之, 黯痕之]
   text: "範圍內的小天賦也各給：生命藥劑每分鐘自動拿到 {value} 點充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 1000, value: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
-    - { tier: 2, ilvl: 1, weight: 1000, value: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
+    - { tier: 1, ilvl: 60, weight: 500, value: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: radius:flask.charges_per_minute.life, type: FLAT, value: "{value}" }
 
@@ -1533,8 +1534,8 @@ unveiled_jr_charm_charges_per_second:
   names: [淵痕之, 黯痕之]
   text: "範圍內的小天賦也各給：護符每分鐘自動拿到 {value} 點充能"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 1000, value: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
-    - { tier: 2, ilvl: 1, weight: 1000, value: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
+    - { tier: 1, ilvl: 60, weight: 500, value: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: radius:charm.charges_per_minute, type: FLAT, value: "{value}" }
 
@@ -1655,8 +1656,8 @@ unveiled_jr_damage_taken_recoup_mana:
   names: [淵痕的, 黯痕的]
   text: "範圍內的小天賦也各給：受到的傷害有 {p/10}% 在 4 秒內回復為魔力"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 1000, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
-    - { tier: 2, ilvl: 1, weight: 1000, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
+    - { tier: 1, ilvl: 60, weight: 500, p: [10, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
+    - { tier: 2, ilvl: 1, weight: 700, p: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: radius:mana.recoup, type: FLAT, value: "{p/10}" }
 
@@ -1669,7 +1670,7 @@ unveiled_jr_reduced_crit_chance_against_you:
   names: [淵痕之, 黯痕之]
   text: "範圍內的小天賦也各給：擊中你的暴擊率減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 1000, value: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273
-    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727
+    - { tier: 1, ilvl: 60, weight: 500, value: [5, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: radius:crit.chance_taken, type: INCREASED, value: "-{value}" }

@@ -40,7 +40,7 @@ class SpellTotemSupportTest {
     void supportsOnAHostFollowTheInnerSkill() {
         final SkillDefinition totem = config.skill("totem_casting");
         final SkillDefinition fireball = config.skill("fireball");
-        for (final String id : new String[] {"prolonged_duration", "faster_casting", "urgent_totems_iii", "overabundance", "totem_fury",
+        for (final String id : new String[] {"prolonged_duration", "faster_casting", "urgent_totems_iii", "overabundance_ii", "totem_fury",
                 "sturdy_totem", "critical_strikes", "added_fire", "considered_casting"}) {
             assertNull(config.support(id).hostRefusal(totem, fireball), id);
         }

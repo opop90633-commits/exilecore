@@ -390,4 +390,15 @@ public final class SupportExtraKeys {
     // ---- 冷卻 ----
     /** 旗標：冷卻次數加倍；用了進入冷卻時，每秒冷卻回復最大生命 x%（Second Wind）。 */
     public static final String SECOND_WIND = "cooldown.second_wind";
+
+    // ---- 頂點（2026-10-28 照 PoE2 Culmination II；機制在 tw.exilecore.skill.SkillResources#culminate）----
+    /**
+     * FLAT %：被輔助的技能有自己的一份連擊（不是身上那份）：你用其他近戰攻擊擊中敵人時加 1 層；用的時候用掉全部，每用掉 1 層這一下更多 x% 傷害
+     * （support_culmination_damage_+%_final_per_combo_stack）。
+     */
+    public static final String CULMINATION = "combo.culmination";
+    /** FLAT 秒：被輔助的技能超過這麼久沒有獲得連擊就失去全部（base_combo_stacks_decay_delay_ms）。 */
+    public static final String CULMINATION_DECAY = "combo.culmination_decay";
+    /** FLAT：被輔助的技能最多幾層連擊（skill_maximum_number_of_combo_stacks）。 */
+    public static final String CULMINATION_MAX = "combo.culmination_max";
 }

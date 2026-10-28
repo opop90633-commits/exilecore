@@ -442,8 +442,9 @@ public final class StageAttacks implements Listener {
     private SkillBuild rend(final Player player, final SkillBuild build, final long now) {
         if (!service.buffs().has(player.getUniqueId(), REND_BUFF) && plugin.combat() != null && plugin.combat().charges() != null
                 && plugin.combat().charges().spend(player, "power", build.profile().effective(plugin.players().sheet(player)), build.profile().tags()) > 0) {
+            // 2026-10-28 照 PoE2 Rend 的品質：增益另外獲得 (0—10)% 傷害為閃電（加在 50% 上）
             service.buff(player, REND_BUFF, "翼刃帶電", (int) Math.round(REND_TICKS * build.durationScale()),
-                    List.of(Modifier.flat(StatKeys.DAMAGE_GAIN + "lightning", REND_GAIN, "翼刃帶電")));
+                    build.withQualityEffects(List.of(Modifier.flat(StatKeys.DAMAGE_GAIN + "lightning", REND_GAIN, "翼刃帶電")), 1.0, "翼刃帶電"));
         }
         if (!service.buffs().has(player.getUniqueId(), REND_BUFF)) {
             return build;
@@ -563,10 +564,11 @@ public final class StageAttacks implements Listener {
 
     /** 地動（SkillExecutor 放餘震之前）：鋸齒地面的上限（limit.jagged），疊在現有的上面或已經滿了就不產生。 */
     boolean allowAftershock(final Player owner, final SkillBuild build, final Location center, final long delayTicks) {
-        final int limit = limit(build.profile(), "jagged", 0);
-        if (owner == null || limit <= 0) {
+        final int base = limit(build.profile(), "jagged", 0);
+        if (owner == null || base <= 0) {
             return true;
         }
+        final int limit = base + SkillLimits.bonus(plugin.players().sheet(owner), build); // 2026-10-28 照 PoE2：鋸齒地面的「上限」吃 +x 上限（過剩）
         final long now = now();
         final List<double[]> mine = jagged.computeIfAbsent(owner.getUniqueId(), key -> new ArrayList<>());
         mine.removeIf(patch -> patch[3] <= now);

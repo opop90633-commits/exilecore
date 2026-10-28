@@ -367,7 +367,7 @@ supports:
 
   zarokhs_refrain:         # Zarokh's Refrain
     name: 三迴
-    description: 被輔助的範圍法術（以自己為中心或落在準心的）回響 3 次（每次隔 0.3 秒，回響的範圍增加 40%），但多了 5 秒的冷卻。本來就有冷卻的技能不能掛。
+    description: 被輔助的範圍法術（可以連瀑的：以自己為中心、落在準心的，或詛咒）回響 3 次（每次隔 0.3 秒，回響的範圍增加 40%），但多了 5 秒的冷卻。本來就有冷卻的技能不能掛。
     icon: CLOCK
     tier: 3
     source: lineage_rare
@@ -375,6 +375,7 @@ supports:
     excludes: [minion]
     mana_multiplier: 1.3
     # 2026-10-27 照 PoE2 0.5 Zarokh's Refrain（poe2db：cooldown 5 秒）；這次新增
+    # 2026-10-28 照 PoE2（allowed_types Cascadable，SkillCascade）：詛咒也掛得上，雷雲、烈陽珠、燼種、疫潮這些不行；這次之前只看形狀
     modifiers:
       - { stat: lineage.u.echoes, type: FLAT, value: 3 }
       - { stat: lineage.u.echo_area, type: INCREASED, value: 40 }
@@ -635,13 +636,14 @@ supports:
 
   tuls_avalanche:          # Tul's Avalanche
     name: 雪封
-    description: 被輔助的範圍法術（以自己為中心或落在準心的）每格擋 2 次蓄一個封印（最多 4 個）；放的時候解開全部封印，每個封印回響一次。本來就有冷卻或封印的技能不能掛。
+    description: 被輔助的範圍法術（可以連瀑的：以自己為中心、落在準心的，或詛咒）每格擋 2 次蓄一個封印（最多 4 個）；放的時候解開全部封印，每個封印回響一次。本來就有冷卻或封印的技能不能掛。
     icon: PRISMARINE_SHARD
     tier: 3
     source: lineage_rare
     requires: [spell]
     excludes: [minion]
     # 2026-10-27 照 PoE2 0.5 Tul's Avalanche（poe2db）；這次新增
+    # 2026-10-28 照 PoE2（allowed_types Cascadable，SkillCascade）：詛咒也掛得上，雷雲、烈陽珠、燼種、疫潮這些不行；這次之前只看形狀
     modifiers:
       - { stat: lineage.u.block_seals, type: FLAT, value: 4 }
 

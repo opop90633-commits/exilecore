@@ -8,7 +8,7 @@
 # tier            階級 1–3：未切割輔助寶石的階級要 ≥ 這個才切得出來
 # requires        技能要有其中一個標籤才能掛（attack 攻擊、spell 法術、melee 近戰、projectile 投射物、area 範圍、chain 連鎖、
 #                 duration 有持續時間的、cooldown 有冷卻時間的、movement 位移、travel 突進（衝刺、跳躍）、grenade 榴彈、minion 召喚、
-#                 aura 光環、warcry 戰吼；
+#                 aura 光環、warcry 戰吼、limit 原作寫「上限」的技能（2026-10-28，SkillLimits 補上）；
 #                 見 skills.yml 的「標籤自動補上」）
 # excludes        技能有其中一個標籤就不能掛（可省略）
 # mana_multiplier 魔力消耗倍率（1.2 = 120%，好幾個輔助的倍率相乘）
@@ -179,6 +179,8 @@ merged:
   increased_duration: { into: prolonged_duration, name: 持久 }
   cooldown_recovery: { into: swift_cooldown, name: 速冷 }
   scattershot: { into: multiple_projectiles, name: 分矢 }
+  # 2026-10-28 照 PoE2 0.5：Overabundance I 併進新加的 Overabundance II（過剩 II，所有原作寫「上限」的技能都能掛）；這次之前繁置只能掛圖騰
+  overabundance: { into: overabundance_ii, name: 繁置 }
 
 supports:
 
@@ -520,7 +522,7 @@ supports:
 
   spell_echo:
     name: 雙詠
-    description: 被輔助的法術放完 0.25 秒後自動再放一次（不花魔力），但施法慢一點。位移、印記不行。
+    description: 被輔助的範圍法術放完 0.25 秒後自動再放一次（不花魔力），但施法慢一點。只能輔助可以連瀑的範圍法術（落在目標區域、身邊一圈的，或詛咒）。   # 2026-10-28 照 PoE2（只限 Cascadable）；這次之前「位移、印記不行」
     icon: AMETHYST_SHARD
     tier: 2
     requires: [spell]
@@ -3078,17 +3080,24 @@ supports:
     modifiers:
       - { stat: combo.finisher, type: FLAT, value: 30 }
 
-  culmination:             # Culmination
-    name: 累勢
-    description: 被輔助的近戰技能每一層連擊都讓它更痛（每層更多 4%，最多 10 層）。
+  culmination:             # Culmination II（代號照舊，舊存檔不用換）
+    name: 頂點 II
+    description: 輔助近戰攻擊。被輔助的技能有自己的一份連擊：你用其他近戰攻擊擊中敵人時它獲得 1 層（最多 10 層，6 秒沒有獲得連擊就失去全部）；用的時候用掉全部連擊，每用掉 1 層這一下更多 4% 傷害。本來就會獲得連擊的技能（打擊）、有使用條件的技能不行，也不能改變召喚物的技能。
     icon: GOLD_INGOT
-    tier: 3
+    tier: 3   # PoE2 第 5 階
     requires: [melee]
     excludes: [minion]
     mana_multiplier: 1.0
+    # 2026-10-28 照 PoE2 Culmination II（頂點 II，第 5 階、輔助需求 +5 敏捷；RePoE SupportCulminationPlayerTwo：用其他近戰攻擊擊中敵人時被輔助的技能獲得
+    #   自己的連擊、最多 10 層、6 秒沒有獲得就失去、用的時候用掉全部、每用掉 1 層更多 4%；不能輔助已會獲得連擊、有使用條件的技能（SupportGuards）；
+    #   Culmination I 是第 3 階、每層 3%、4 秒，只留最高階）；機制在 SkillResources.culminate。
+    #   這次之前名稱累勢、說明「被輔助的近戰技能每一層連擊都讓它更痛（每層更多 4%，最多 10 層）。」、stat: damage.per_combo, type: FLAT, value: 4
+    #   （照身上打擊累積的那份連擊算、用了也不會用掉，打擊技能也掛得上）
     # 2026-10-27 照 PoE2 Culmination II（第 5 階；poe2db／RePoE）；這次之前 tier 2、魔耗 1.15、stat: damage.per_combo, type: FLAT, value: 3、說明「被輔助的近戰技能每一層連擊都讓它更痛（最多 10 層）。」
     modifiers:
-      - { stat: damage.per_combo, type: FLAT, value: 4 }
+      - { stat: combo.culmination, type: FLAT, value: 4 }
+      - { stat: combo.culmination_decay, type: FLAT, value: 6 }
+      - { stat: combo.culmination_max, type: FLAT, value: 10 }
 
   practiced_combo:         # Practiced Combo
     name: 熟招
@@ -3377,18 +3386,20 @@ supports:
     modifiers:
       - { stat: skill.level, type: FLAT, value: 1, tags: [minion] }
 
-  overabundance:           # Overabundance（PoE2 是所有有上限的技能；我們只有圖騰有上限）
-    name: 繁置
-    description: 被輔助的圖騰同時可以多放一根，但每根撐的時間只有一半。
+  overabundance_ii:        # Overabundance II
+    name: 過剩 II
+    description: 輔助那些同時只能擁有有限數量效果的技能，增加該上限，但會縮短效果持續時間（被輔助的技能上限 +1、技能持續時間更少 40%）。僅適用於原作寫「上限」的限制：圖騰、鐘、地面效果、喚屍與焚魂這類有上限的召喚物、插著的矛、印記標記的目標、祭品的骨柱…
     icon: NAUTILUS_SHELL   # 2026-10：原本 TOTEM_OF_UNDYING（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 1
-    requires: [totem]
-    excludes: [bell]
+    tier: 3   # PoE2 第 4 階
+    requires: [limit]
     mana_multiplier: 1.0
-    # 2026-10-26 照 PoE2 Overabundance I（poe2db）；這次之前 tier 3、魔耗 1.2、效果不動
+    # 2026-10-28 照 PoE2 Overabundance II（過剩 II，第 4 階、輔助需求 +5 敏捷；RePoE SupportIncreaseLimitPlayerTwo：allowed_types Limit、base_limit_+ 1、
+    #   技能持續時間更少 40%）。limit 標籤由程式補在原作有「上限」的技能上（SkillLimits，哪些技能見那裡）；Overabundance I（繁置，第 1 階、更少 50%）照
+    #   「I／II 只留最高階」併進來（merged）。這次之前只有 overabundance（繁置）：tier 1、requires [totem]、excludes [bell]、
+    #   stat: skill.totems, type: FLAT, value: 1；stat: skill.duration, type: MORE, value: -50、說明「被輔助的圖騰同時可以多放一根，但每根撐的時間只有一半。」
     modifiers:
-      - { stat: skill.totems, type: FLAT, value: 1 }
-      - { stat: skill.duration, type: MORE, value: -50 }
+      - { stat: skill.limit, type: FLAT, value: 1 }
+      - { stat: skill.duration, type: MORE, value: -40 }
 
   pinpoint_critical:       # Pinpoint Critical
     name: 銳點
@@ -4668,8 +4679,8 @@ supports:
       - { stat: crit.inexorable_bonus, type: FLAT, value: 10 }
 
   last_gasp:               # Last Gasp
-    name: 迴光
-    description: 被輔助的常駐召喚物生命歸零後再撐 4 秒才死（這段時間不會再掉血）。
+    name: 臨終恐息   # 2026-10-28 照 PoE2 繁中名（Last Gasp＝臨終恐息）；這次之前叫「迴光」
+    description: 輔助創造出持續召喚物的技能，這些召喚物生命歸零後還能繼續戰鬥 4 秒才死亡（這段時間不會再掉血）。
     icon: GHAST_TEAR
     tier: 1
     requires: [minion]
@@ -5098,12 +5109,13 @@ supports:
 
   spell_cascade:           # Spell Cascade
     name: 連瀑
-    description: 被輔助的範圍法術往目標區域兩側（隨機一條軸）各連瀑一次，但範圍更少 20%（連瀑再少 20%）、傷害更少 30%。
+    description: 被輔助的範圍法術往目標區域兩側（隨機一條軸）各連瀑一次（詛咒就是兩側各多落一圈詛咒），但範圍更少 20%（連瀑再少 20%）、傷害更少 30%。
     icon: PRISMARINE_SHARD
     tier: 1
     requires: [spell]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Spell Cascade（第 1 階；poe2db／RePoE；照原作）；這次之前沒有這顆
+    # 2026-10-28 照 PoE2（allowed_types Cascadable，SkillCascade）：詛咒、焰幕、霜壁、骸爆、屍焰爆掛得上，雷雲、烈陽珠、燼種、疫潮、野旋風、地火柱、雷流場、血鐮、冥契、炎核爆掛不上；這次之前只看形狀
     modifiers:
       - { stat: spell.cascade, type: FLAT, value: 1 }
       - { stat: spell.cascade_area, type: FLAT, value: 20 }

@@ -73,6 +73,8 @@ final class ManaTempest {
         final int cooldownTicks;
         double extraPerSecond;
         long nextDrain;
+        /** 2026-10-28 照 PoE2 Mana Tempest 的品質：離開之後效果再留幾 tick（2 秒＋品質的 0～2 秒）。 */
+        int linger = LINGER_TICKS;
 
         Storm(final String skillId, final String name, final Location center, final List<Modifier> effects, final int cooldownTicks, final long now) {
             this.skillId = skillId;
@@ -119,9 +121,10 @@ final class ManaTempest {
     void cast(final Player player, final SkillRuntime runtime, final SkillBuild build, final long now) {
         final Storm storm = new Storm(build.definition().id(), build.definition().name(), player.getLocation().clone(), effects(build),
                 build.cooldownTicks(), now);
+        storm.linger = LINGER_TICKS + (int) Math.round(Math.max(0, build.qualityFlat(tw.exilecore.stats.GemQualityKeys.LINGER_SECONDS)) * 20);
         storms.put(player.getUniqueId(), storm);
         runtime.startCooldown(storm.skillId, now, HELD_COOLDOWN); // 風暴還在時冷卻不回復
-        service.buff(player, BUFF_ID, storm.name, LINGER_TICKS, storm.effects);
+        service.buff(player, BUFF_ID, storm.name, storm.linger, storm.effects);
         player.getWorld().playSound(storm.center, Sound.ENTITY_ILLUSIONER_CAST_SPELL, SoundCategory.PLAYERS, 0.9f, 1.4f);
         draw(storm);
         final PlayerState state = plugin.players().get(player);
@@ -171,7 +174,7 @@ final class ManaTempest {
                 end(player, storm, ended, now);
                 continue;
             }
-            service.buff(player, BUFF_ID, storm.name, LINGER_TICKS, storm.effects);
+            service.buff(player, BUFF_ID, storm.name, storm.linger, storm.effects);
             if (now % 10 < PERIOD) {
                 draw(storm);
             }

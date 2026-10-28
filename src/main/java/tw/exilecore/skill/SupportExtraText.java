@@ -152,8 +152,12 @@ final class SupportExtraText {
             case "totem.resist_max" -> "圖騰最大元素抗性 +" + n(value) + "%";
             case "flag.aggravate_bleed_pinned" -> "定身敵人或擊中被定身的敵人時加劇牠身上的流血";
             case "cooldown.recovery" -> "冷卻回復速度" + (modifier.type() == tw.exilecore.stats.ModType.MORE
-                    ? (value < 0 ? "更少 " : "更多 ") : (value < 0 ? "減少 " : "增加 ")) + n(Math.abs(value)) + "%";
+                    ? (value < 0 ? "更少 " : "更多 ") : (value < 0 ? "減少 " : "增加 "))
+                    + (modifier.type() == tw.exilecore.stats.ModType.FLAT ? n(Math.abs(value)) : percent) + "%"; // 2026-10-28：增加／更多的值是比例（0.1 = 10%）；這次之前直接寫 0.1%
             case SupportExtraKeys.GORGE -> "用掉屍體時給 " + n(value) + " 點生命與魔力藥劑充能";
+            case SupportExtraKeys.CULMINATION -> "你用其他近戰攻擊擊中敵人時，這個技能獲得連擊；用的時候用掉全部連擊，每用掉 1 層更多 " + n(value) + "% 傷害"; // 2026-10-28
+            case SupportExtraKeys.CULMINATION_DECAY -> n(value) + " 秒沒有獲得連擊就失去全部連擊";
+            case SupportExtraKeys.CULMINATION_MAX -> "最多 " + n(value) + " 層連擊";
             case SupportExtraKeys.SECOND_WIND -> "冷卻次數加倍；用了進入冷卻時，每秒冷卻回復 " + n(value) + "% 最大生命";
             case SupportExtraKeys.SPLINTER -> "圖騰用一次技能後分裂成兩根更小的圖騰，最多分裂 " + n(value) + " 次（同時只有一根在分裂）";
             case SupportExtraKeys.SPLINTER_DAMAGE -> "圖騰每分裂一次更少 " + n(value) + "% 傷害";

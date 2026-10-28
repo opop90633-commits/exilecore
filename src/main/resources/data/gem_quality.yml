@@ -6,93 +6,284 @@
 # 這次之前（2026-10-23～2026-10-25）所有技能都照上面的通用規則。
 # 2026-10-27 照 PoE2 0.5：戰吼照 poe2db 寶石頁的 Quality 寫（每條 (0—x) 是 0%～20% 品質；屬性鍵見 stats/WarcryKeys.java，吼的時候 Warcries 讀）；
 #   這次之前戰吼照通用規則每 1% 增加 0.5% 戰吼效果。神龕祝禱（原作沒有）照舊用通用規則。
+# 2026-10-28 照 PoE2 0.5（站長「技能品質的部分也全部按照原作改」）：每顆有原作對應的技能寶石都照 RePoE quality_stats／poe2db 寫自己的品質效果
+#   （對照工具 tools/audit_poe2_quality.py）；原作這顆寶石的品質沒有效果的寫 []（不再套通用規則）。
+#   原作的效果我們的引擎沒有對應屬性的（列在 audit_poe2_quality.py 的 UNREP），才照舊用通用規則（平衡等效）。
+# 2026-10-28（第二輪）：那時 UNREP 的 112 顆裡 111 顆都照原作接上了引擎（新的屬性鍵在 stats/GemQualityKeys.java；說明在 skill/GemQualityText.java）：
+#   effect.＊ 是「增益本身的數值」（PoE2 的 *_to_apply、Buff grants x），加在光環／常駐增益／印記／守勢／狂暴原本同一條上（SkillBuild.withQualityEffects），
+#   隊友、召喚物拿到的那份一樣有；做不到一模一樣的照平衡等效寫（audit 的 APPROX，列出原因）；原作的效果我們沒有那個機制的寫 []（說明寫原因）。
+#   驚雷劈（falling_thunder）由另一輪接上（每顆銳星再更多）。
+#   poe2db 寶石頁 Additional Effects From Quality 的第二條是額外的品質效果（進階奇術才有，RePoE quality_stats 沒有那條），寫在下面 advanced；
+#   急裝、瞬影擊、寒夜嗥、銀月庇這次之前把第二條算在一般品質裡，這次移到 advanced。
 
+alchemists_boon:   # Alchemist's Boon（2026-10-28 照 PoE2：每分鐘另外獲得 (0—2) 點藥劑充能（生命、魔力藥劑各一份，加在增益上）；這次之前照通用規則）
+  - { stat: effect.flask.charges_per_minute.life, type: FLAT, per: 0.1 }   # 增益：生命藥劑每分鐘充能 +x
+  - { stat: effect.flask.charges_per_minute.mana, type: FLAT, per: 0.1 }   # 增益：魔力藥劑每分鐘充能 +x
 ancestral_cry:   # Ancestral Cry（2026-10-27 照 PoE2：每用掉一顆磐星戰吼持續時間 +(0—20)%、增益給 (0—10)% 更多火焰傷害）
   - { stat: warcry.duration_per_endurance, type: FLAT, per: 1.0 }   # 每顆磐星持續時間增加 x%（Warcries）
 ancestral_totem:   # Ancestral Warrior Totem（2026-10-26 照 PoE2：+(0—2) 秒圖騰持續時間、(0—50)% 增加圖騰生命；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: totem.duration_flat, type: FLAT, per: 0.1 }   # 圖騰持續時間 +秒
 arc:   # Arc
   - { stat: skill.chains, type: FLAT, per: 0.1 }   # 連鎖次數
+archmage:   # Archmage（2026-10-28 照 PoE2：(0—10)% 增加保留效率；這次之前照通用規則每 1% 增加 0.5% 光環效果）
+  - { stat: aura.reservation, type: INCREASED, per: -0.5 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
+arctic_howl:   # Arctic Howl（2026-10-28 照 PoE2：給隊友的增益 (0—20)% 增加凍結累積；這次之前另外有不算強化次數的機率，那條是額外的品質效果，移到下面 advanced）
+  - { stat: warcry.ally_freeze_buildup, type: FLAT, per: 1.0 }   # 給隊友的增益：增加 x% 凍結累積（Warcries）
+armour_breaker:   # Armour Breaker（2026-10-28 照 PoE2：(0—20)% 增加破甲；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: armour.break, type: INCREASED, per: 1.0 }   # 破甲（CombatListener）
+armour_piercing_bolt:   # Armour Piercing Rounds（2026-10-28 照 PoE2：(0—20)% 增加破甲；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: armour.break, type: INCREASED, per: 1.0 }   # 破甲（CombatListener）
 artillery_ballista:   # Artillery Ballista（2026-10-28 照 PoE2：定身當作傷害再 +(0—200)% 更多；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: pin.as_though_damage, type: FLAT, per: 10.0 }   # 加在 600% 上（PinKeys）
-arctic_howl:   # Arctic Howl（2026-10-27 照 PoE2：給隊友的增益 (0—20)% 增加凍結累積、(0—20)% 機率不算強化次數）
-  - { stat: warcry.ally_freeze_buildup, type: FLAT, per: 1.0 }   # 給隊友的增益：增加 x% 凍結累積（Warcries）
-  - { stat: warcry.tireless, type: FLAT, per: 1.0 }   # x% 機率不算強化次數（跟不竭嘯同一條）
+attrition:   # Attrition（2026-10-28 照 PoE2：撲殺需要的層數少 (0—5)；這次之前照通用規則）
+  - { stat: attrition.cull, type: FLAT, per: -0.25 }   # 撲殺門檻（OriginalSkills）
 ball_lightning:   # Ball Lightning
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+barkskin:   # Barkskin（2026-10-28 照 PoE2：被擊中時另外獲得失去的能量護盾 (0—5)% 的護甲；這次之前照通用規則）
+  - { stat: effect.barkskin.armour, type: FLAT, per: 0.25 }   # 增益：失去的能量護盾幾 % 換成護甲（PersistentBuffs）
+bear_maul:   # Maul（2026-10-28 照 PoE2：擊中時獲得 +(0—2) 怒氣；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: rage.on_hit, type: FLAT, per: 0.1 }   # 擊中時獲得怒氣（SkillResources）
+bear_slam:   # Furious Slam（2026-10-28 照 PoE2：使用技能的動作期間暈眩門檻增加 (0—40)%；這次之前照通用規則）
+  - { stat: action.stun_threshold, type: FLAT, per: 2.0 }   # 動作期間的暈眩門檻（SkillService）
+beast_companion: []   # Tame Beast（2026-10-28 照 PoE2：鬼火持續時間 +(0—1.6) 秒——我們沒有捕捉野獸的鬼火，原作這條只影響捕捉、不影響戰鬥，所以沒有效果；這次之前照通用規則）
+berserk:   # Berserk（2026-10-28 照 PoE2：增益讓怒氣效果另外增加 (0—10)%；這次之前照通用規則）
+  - { stat: effect.rage.effect, type: INCREASED, per: 0.5 }   # 增益：怒氣效果
+blast_arrow:   # Detonating Arrow（2026-10-28 照 PoE2：最大階段 +(0—1)（無條件捨去）；這次之前照通用規則）
+  - { stat: charge.stages_flat, type: FLAT, per: 0.05 }   # 引導最大層數（ChargeSpec.withQuality）
+blink:   # Blink（2026-10-28 照 PoE2：(0—10)% 增加冷卻回復速度；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: cooldown.recovery, type: INCREASED, per: 0.5 }   # 冷卻回復速度
 blood_harvest:   # Blood Hunt
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+blood_offering:   # Pain Offering（2026-10-28 照 PoE2：召喚物光環半徑 +(0—2.4) 格；這次之前照通用規則每 1% 增加 0.5% 戰吼效果）
+  - { stat: warcry.radius_flat, type: FLAT, per: 0.12 }   # 增益半徑 +格（Warcries.baseRadius）
+bloodhounds_mark:   # Bloodhound's Mark（2026-10-28 照 PoE2：被標記的目標另外照失血的 (0—50)% 累積重暈；這次之前照通用規則）
+  - { stat: bloodhound.stun_percent, type: FLAT, per: 2.5 }   # 加在 300% 上（SpearMechanics）
 bone_blast:   # Bone Blast
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+bone_cage:   # Bone Cage（2026-10-28 照 PoE2：定身當作傷害再 +(0—50)% 更多（加在 50% 上）；這次之前照通用規則）
+  - { stat: pin.as_though_damage, type: FLAT, per: 2.5 }   # 定身累積（PinKeys）
+bone_offering:   # Bone Offering（2026-10-28 照 PoE2：護盾消失後 1 秒內受到的傷害更少 (0—30)%；這次之前照通用規則）
+  - { stat: offering.shield_lost_less, type: FLAT, per: 1.5 }   # 給祭柱旁的召喚物（MinionService.hitTaken）
+bone_spikes:   # Unearth（2026-10-28 照 PoE2：骨構體持續時間 +(0—5) 秒、召喚物移動速度增加 (0—50)%；這次之前照通用規則）
+  - { stat: skill.base_duration_flat, type: FLAT, per: 0.25 }   # 骨構體持續時間 +秒（Unearth → MinionService）
+  - { stat: movement.speed, type: INCREASED, per: 2.5, tags: [minion] }   # 骨構體的移動速度
 bone_storm:   # Bonestorm
   - { stat: cast.speed, type: MORE, per: 0.5 }   # 施法速度（更多）
 boneshatter:   # Boneshatter
   - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
+bound_spectre:   # Bind Spectre（2026-10-28 照 PoE2：召喚物 (0—20)% 更多傷害；這次之前照通用規則每 1% 增加 1% 召喚物傷害）
+  - { stat: damage, type: MORE, per: 1.0 }   # 召喚物傷害（更多）
+bramble_arrow: []   # Vine Arrow（2026-10-28 照 PoE2：藤蔓另外照中毒每秒傷害的 (0—10)% 造成混沌傷害——我們的荊棘矢沒有「植物中毒」，所以沒有效果；這次之前照通用規則）
+briarpatch:   # Briarpatch（2026-10-28 照 PoE2：法術擊中時 (0—5)% 機率阻礙；這次之前照通用規則）
+  - { stat: effect.hinder.on_hit, type: FLAT, per: 0.25, tags: [spell] }   # 增益：法術擊中阻礙的機率
 caustic_arrow:   # Gas Arrow
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+chain_arrow:   # Shockchain Arrow（2026-10-28 照 PoE2：(0—20)% 更多閃電傷害；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: damage, type: MORE, per: 1.0, tags: [lightning] }   # 閃電傷害（更多）
 chaos_bolt:   # Chaos Bolt
   - { stat: skill.projectile_speed, type: INCREASED, per: 2.0 }   # 投射物速度
-coiling_bolts:   # Coiling Bolts（2026-10-28 照 PoE2：+(0—2) 分裂目標，每 10% 品質 +1，小數捨去；這次之前照通用規則每 1% 增加 1% 傷害）
-  - { stat: skill.split, type: FLAT, per: 0.1 }   # 分裂目標數（ProjectileEngine.split）
+charge_regulation:   # Charge Regulation（2026-10-28 照 PoE2：消耗戰星的間隔 +(0—2.4) 秒；這次之前寫在 SkillService.qualityModifiers，另外多一條每顆戰星增加傷害（那條是額外的品質效果，移到下面 advanced））
+  - { stat: grant.charge.regulation_consume, type: FLAT, per: 0.12 }   # 增益：消耗戰星的間隔 +秒（ChargeService）
 cluster_grenade:   # Cluster Grenade
   - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
+coiling_bolts:   # Coiling Bolts（2026-10-28 照 PoE2：+(0—2) 分裂目標，每 10% 品質 +1，小數捨去；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: skill.split, type: FLAT, per: 0.1 }   # 分裂目標數（ProjectileEngine.split）
+combat_frenzy:   # Combat Frenzy（2026-10-28 照 PoE2：獲得戰星時 (0—20)% 機率多一顆（凍結、電擊、定身給的）；這次之前照通用規則）
+  - { stat: effect.charge.event_extra.freeze, type: FLAT, per: 1.0 }   # 增益：凍結給的戰星多一顆的機率（ChargeService）
+  - { stat: effect.charge.event_extra.electrocute, type: FLAT, per: 1.0 }   # 增益：電擊給的
+  - { stat: effect.charge.event_extra.pin, type: FLAT, per: 1.0 }   # 增益：定身給的
+comet:   # Comet（2026-10-28 照 PoE2：(0—10)% 機率回響；這次之前照通用規則）
+  - { stat: spell.echo_chance, type: FLAT, per: 0.5 }   # 回響機率（SkillService）
 concussion_grenade:   # Flash Grenade
   - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
+consecrate:   # Consecrate（2026-10-28 照 PoE2：(0—10)% 增加施法速度；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: cast.speed, type: INCREASED, per: 0.5 }   # 施法速度
+contagion:   # Contagion（2026-10-28 照 PoE2：施放時另外感染 (0—2) 個敵人（無條件捨去）；這次之前照通用規則）
+  - { stat: skill.extra_targets, type: FLAT, per: 0.1 }   # 準心範圍外最近的敵人（SkillExecutor.impact）
+convalescence:   # Convalescence（2026-10-28 照 PoE2：增益持續時間 +(0—0.5) 秒；這次之前照通用規則）
+  - { stat: convalescence.duration, type: FLAT, per: 0.025 }   # 加在逐級的秒數上（OriginalSkills）
+cross_slash:   # Cross Slash（2026-10-28 照 PoE2：撕裂寬度 +(0—0.4) 格；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+cull_the_weak:   # Cull The Weak（2026-10-28 照 PoE2：(0—20)% 機率多獲得一顆戰星；這次之前寫在 SkillService.qualityModifiers，另外多一條隨機種類的（那條是額外的品質效果，移到下面 advanced））
+  - { stat: charge.extra, type: FLAT, per: 1.0 }   # 多一顆同種戰星的機率（ChargeService）
+dark_idol:   # Dark Effigy（2026-10-28 照 PoE2：衝擊半徑 +(0—0.2) 格；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: skill.area, type: INCREASED, per: 1.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+dark_pact:   # Dark Pact（2026-10-28 照 PoE2：另外犧牲召喚物 (0—2.5)% 生命造成混沌傷害——我們的冥契沒有犧牲召喚物生命，照原作 13% 的比例換成更多 (0—19.2)% 傷害；這次之前照通用規則）
+  - { stat: damage, type: MORE, per: 0.9615 }   # 2.5 ÷ 13 換算
+decompose: []   # Decompose（2026-10-28 照 PoE2：毒雲持續時間 +(0—1) 秒——我們的腐屍爆沒有毒雲，所以沒有效果；這次之前照通用規則）
+defiance_banner:   # Defiance Banner（2026-10-28 照 PoE2：(0—10)% 增加保留效率；這次之前照通用規則每 1% 增加 0.5% 戰吼效果）
+  - { stat: aura.reservation, type: INCREASED, per: -0.5 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
+despair_curse:   # Despair（2026-10-28 照 PoE2：(0—10)% 增加詛咒幅度；這次之前照通用規則，數值一樣）
+  - { stat: curse.effect, type: INCREASED, per: 0.5 }   # 詛咒效果
 detonate_dead:   # Detonate Dead
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+devour:   # Devour（2026-10-28 照 PoE2：每吃一具屍體 (0—50)% 機率當作擊殺獲得藥劑與護符充能；這次之前照通用規則）
+  - { stat: corpse.flask_charge_chance, type: FLAT, per: 2.5 }   # 屍體照普通怪（OriginalSkills.devour）
+discipline:   # Discipline（2026-10-28 照 PoE2：光環給的能量護盾回充速度增加 (0—20)%；這次之前照通用規則）
+  - { stat: effect.es.recharge, type: INCREASED, per: 1.0 }   # 光環：能量護盾回充速度（隊友也有）
+disengage:   # Disengage（2026-10-28 照 PoE2：(0—20)% 機率多一道震波；這次之前照通用規則）
+  - { stat: shockwave.extra_chance, type: FLAT, per: 1.0 }   # 多一道震波（ChargeEffects）
+dread_banner:   # Dread Banner（2026-10-28 照 PoE2：(0—10)% 增加保留效率；這次之前照通用規則每 1% 增加 0.5% 戰吼效果）
+  - { stat: aura.reservation, type: INCREASED, per: -0.5 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
+earthquake:   # Earthquake（2026-10-28 照 PoE2：鋸齒地面上限 +(0—2)；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: limit.jagged, type: FLAT, per: 0.1 }   # 鋸齒地面上限（StageAttacks.limit，小數捨去：10% 品質 +1）
+elemental_conflux:   # Elemental Conflux（2026-10-28 照 PoE2：增益讓受影響的元素另外更多 (0—10)% 傷害（加在 40%～74% 上）；這次之前照通用規則）
+  - { stat: effect.damage, type: MORE, per: 0.5, tags: [fire, if_conflux:fire] }   # 增益：火焰
+  - { stat: effect.damage, type: MORE, per: 0.5, tags: [cold, if_conflux:cold] }   # 增益：冰冷
+  - { stat: effect.damage, type: MORE, per: 0.5, tags: [lightning, if_conflux:lightning] }   # 增益：閃電
+elemental_trinity:   # Trinity（2026-10-28 照 PoE2：親和總和超過 250 時技能速度增加 (0—15)%；這次之前照通用規則）
+  - { stat: effect.attack.speed@trinityhigh, type: INCREASED, per: 0.75 }   # 增益：攻擊速度（條件 trinityhigh）
+  - { stat: effect.cast.speed@trinityhigh, type: INCREASED, per: 0.75 }   # 增益：施法速度
+elemental_weakness_curse:   # Elemental Weakness（2026-10-28 照 PoE2：(0—10)% 增加詛咒幅度；這次之前照通用規則，數值一樣）
+  - { stat: curse.effect, type: INCREASED, per: 0.5 }   # 詛咒效果
 ember_seed:   # Living Bomb
   - { stat: ignite.chance, type: MORE, per: 1.0 }   # 易燃（點燃機率，更多）
-emergency_reload:   # Emergency Reload（2026-10-28 照 PoE2：(0—10)% 增加冷卻回復速度、強化的弩矢 (0—10)% 更多傷害；這次之前只有冷卻回復）
+ember_volley:   # Ember Fusillade（2026-10-28 照 PoE2：每一顆之前射過的火星再更多 (0—2)%（加在 5% 上）；這次之前照通用規則）
+  - { stat: ember.more_per_previous, type: FLAT, per: 0.1 }   # Signatures.tickEmbers
+emergency_reload:   # Emergency Reload（2026-10-28 照 PoE2：(0—10)% 增加冷卻回復速度；這次之前另外有強化的弩矢更多傷害，那條是額外的品質效果，移到下面 advanced）
   - { stat: cooldown.recovery, type: INCREASED, per: 0.5 }   # 冷卻回復速度
-  - { stat: emergency_reload.more, type: FLAT, per: 0.5 }   # 強化的弩矢再更多 x%（SkillService.EMERGENCY_MORE）
+enervating_nova:   # Enervating Nova（2026-10-28 照 PoE2：(0—40)% 更多電擊累積；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: electrocute.buildup, type: MORE, per: 2.0 }   # 電擊累積（更多）
+enfeeble_curse:   # Enfeeble（2026-10-28 照 PoE2：(0—10)% 增加詛咒幅度；這次之前照通用規則，數值一樣）
+  - { stat: curse.effect, type: INCREASED, per: 0.5 }   # 詛咒效果
+entangle:   # Entangle（2026-10-28 照 PoE2：(0—20)% 機率多一道裂隙（再往前一圈）；這次之前照通用規則）
+  - { stat: skill.additional_fissure_chance, type: FLAT, per: 1.0 }   # SkillExecutor.curse
 escape_shot:   # Escape Shot
   - { stat: freeze.buildup, type: MORE, per: 6.0 }   # 凍結累積（更多）
+essence_drain:   # Essence Drain（2026-10-28 照 PoE2：減益持續時間 +(0—1) 秒；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: debuff.duration, type: FLAT, per: 0.05 }   # 減益持續時間 +秒（AilmentService，加在 debuff.duration 上）
+eternal_rage:   # Eternal Rage（2026-10-28 照 PoE2：每秒另外回復 (0—0.5) 點怒氣；這次之前照通用規則）
+  - { stat: effect.rage.regen, type: FLAT, per: 0.025 }   # 增益：每秒怒氣
+explosive_bolt:   # Explosive Shot（2026-10-28 照 PoE2：(0—30)% 更多點燃幅度；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: ignite.magnitude, type: MORE, per: 1.5 }   # 點燃幅度（更多）
 explosive_grenade:   # Explosive Grenade
   - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
 explosive_spear:   # Explosive Spear
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+exsanguinate:   # Exsanguinate（2026-10-28 照 PoE2：多一道血脈（目標 +(0—1)，無條件捨去）；這次之前照通用規則）
+  - { stat: skill.chains, type: FLAT, per: 0.05 }   # 連鎖次數
+falling_thunder:   # Falling Thunder（2026-10-28 照 PoE2：每用掉一顆銳星投射物再更多 (0—20)%（加在 50% 上）；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: falling_thunder.per_charge_more, type: FLAT, per: 1.0 }   # 每顆銳星更多 x%（SkillExecutor.THUNDER_QUALITY）
+fangs_of_frost:   # Fangs of Frost（2026-10-28 照 PoE2：(0—15)% 機率不用掉被招架的減益；這次之前照通用規則）
+  - { stat: parried.keep_chance, type: FLAT, per: 0.75 }   # StageEffects
+feast_of_flesh:   # Feast of Flesh（2026-10-28 照 PoE2：多吃 (0—3) 具屍體（身邊超過 5 具時多的那幾具）；這次之前照通用規則）
+  - { stat: corpses.flat, type: FLAT, per: 0.15 }   # SkillService.feastScale
 ferocious_roar:   # Ferocious Roar（2026-10-27 照 PoE2：每點強度 +(0—1) 怒氣；插槽戰吼：被它強化的攻擊 (0—30)% 增加傷害、(0—40)% 增加冷卻回復速度）
   - { stat: warcry.rage_per_power, type: FLAT, per: 0.05 }   # 每 1 點強度多 x 點怒氣（Warcries）
   - { stat: socketed_warcry.empowered_damage, type: FLAT, per: 1.5 }   # 插槽戰吼強化的攻擊增加 x% 傷害（SocketedWarcry）
+fireball:   # Fireball（2026-10-28 照 PoE2：(0—10)% 機率多射 2 發投射物；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: skill.projectile_chance_two, type: FLAT, per: 0.5 }   # 多射 2 發的機率（ProjectileEngine）
 firebolt:   # Firebolt
   - { stat: ignite.chance, type: MORE, per: 1.0 }   # 易燃（點燃機率，更多）
 firestorm:   # Firestorm
   - { stat: skill.area, type: INCREASED, per: 1.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
-flicker_strike:   # Flicker Strike
+flame_breath:   # Flame Breath（2026-10-28 照 PoE2：引導的前 (0—1) 秒不耗怒氣（加在 4 秒上）；這次之前照通用規則）
+  - { stat: charge.rage_free_seconds, type: FLAT, per: 0.05 }   # ChargeSpec.withQuality
+flame_stream:   # Incinerate（2026-10-28 照 PoE2：(0—20)% 更多點燃持續時間；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: ignite.duration, type: MORE, per: 1.0 }   # 點燃持續時間（更多）
+flame_wall:   # Flame Wall（2026-10-28 照 PoE2：(0—20)% 更多易燃幅度；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: ignite.chance, type: MORE, per: 1.0 }   # 易燃（點燃機率，更多）
+flicker_strike:   # Flicker Strike（2026-10-28 照 PoE2：(0—20)% 更多暴擊率；這次之前另外有不用掉銳星的機率，那條是額外的品質效果，移到下面 advanced）
   - { stat: crit.chance, type: MORE, per: 1.0 }   # 暴擊率（更多）
 forge_hammer:   # Forge Hammer
   - { stat: cooldown.recovery, type: INCREASED, per: 0.5 }   # 冷卻回復速度
 fortifying_cry:   # Fortifying Cry（2026-10-27 照 PoE2：(0—20)% 更多守護、盾波半徑 +(0—0.4) 格；另一條沒有文字的 base secondary skill effect duration [0,40] 單位不明，沒做）
   - { stat: warcry.trigger_radius_flat, type: FLAT, per: 0.02 }   # 盾波半徑 +格（SupportMechanics）
+fragmentation_rounds:   # Fragmentation Rounds（2026-10-28 照 PoE2：每發碎片 +(0—2)；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: skill.projectiles, type: FLAT, per: 0.1 }   # 碎片（投射物）數量
+freezing_mark:   # Freezing Mark（2026-10-28 照 PoE2：被標記的敵人另外受到更多 (0—20)% 凍結累積；這次之前照通用規則）
+  - { stat: effect.freeze.buildup_taken, type: MORE, per: 1.0 }   # 印記：加在 25%～45% 上
 freezing_shards:   # Freezing Shards
   - { stat: skill.projectiles, type: FLAT, per: 0.05 }   # 投射物數量
+frost_aegis:   # Arctic Armour（2026-10-28 照 PoE2：最大層數 +(0—1)（無條件捨去）；這次之前照通用規則）
+  - { stat: arctic.stages, type: FLAT, per: 0.05 }   # 加在逐級的層數上（OriginalSkills）
+frost_bolt_round:   # Ice Shards（2026-10-28 照 PoE2：冰緩時當作造成 (0—100)% 更多傷害；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: chill.effect, type: MORE, per: 5.0 }   # 冰緩效果（更多；當作傷害更多＝冰緩幅度更多，跟寒晶雷同一種寫法）
+frost_darts:   # Frost Darts（2026-10-28 照 PoE2：(0—10)% 機率多射 2 發投射物；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: skill.projectile_chance_two, type: FLAT, per: 0.5 }   # 多射 2 發的機率（ProjectileEngine）
+frost_mine:   # Frost Bomb（2026-10-28 照 PoE2：曝露疊加的上限 +(0—10)；這次之前照通用規則）
+  - { stat: exposure.cap_flat, type: FLAT, per: 0.5 }   # StageLeftovers.bombExposure
+frost_nova:   # Ice Nova（2026-10-28 照 PoE2：對冰緩的敵人擊中 (0—20)% 更多傷害；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: damage.vs_chilled, type: MORE, per: 1.0 }   # 對冰緩的敵人更多傷害
+frost_palm:   # Shattering Palm（2026-10-28 照 PoE2：(0—20)% 更多暴擊率；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: crit.chance, type: MORE, per: 1.0 }   # 暴擊率（更多）
 frost_volley:   # Freezing Salvo
   - { stat: freeze.buildup, type: MORE, per: 2.0 }   # 凍結累積（更多）
+frost_wave:   # Wave of Frost（2026-10-28 照 PoE2：穿透 (0—20)% 冰冷抗性；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: penetration, type: FLAT, per: 1.0, tags: [cold] }   # 穿透冰冷抗性（DamageCalculator）
+frostbolt:   # Frostbolt（2026-10-28 照 PoE2：穿透過敵人之後投射物更多 (0—20)% 傷害；這次之前照通用規則）
+  - { stat: projectile.pierced_more, type: FLAT, per: 1.0 }   # ProjectileEngine
 frozen_locus:   # Frozen Locus
   - { stat: chill.effect, type: MORE, per: 1.0 }   # 冰緩效果（更多）
+fulmination:   # Fulmination（2026-10-28 照 PoE2：額外擊中的「更少」少 (0—5) 個百分點；這次之前照通用規則）
+  - { stat: fulmination.less, type: FLAT, per: -0.25 }   # 加在逐級的更少上（GrantedAuras）
 gale_spear:   # Twister（2026-10-28 照 PoE2：(0—20)% 機率多一道旋風；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: twister.extra_chance, type: FLAT, per: 1.0 }   # 多一道旋風的機率 %（Twisters.EXTRA_CHANCE）
+gale_sweep:   # Wind Blast（2026-10-28 照 PoE2：1.5 公尺內更多 (0—20)% 傷害，到 4 公尺遞減到沒有；這次之前照通用規則）
+  - { stat: damage.close_more, type: FLAT, per: 1.0 }   # SkillExecutor.cone
+galvanic_bolts:   # Galvanic Shards（2026-10-28 照 PoE2：每發碎片 +(0—2)；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: skill.projectiles, type: FLAT, per: 0.1 }   # 碎片（投射物）數量
 galvanic_field:   # Galvanic Field
   - { stat: skill.chains, type: FLAT, per: 0.1 }   # 連鎖次數
 gas_grenade:   # Gas Grenade
   - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
+gathering_storm:   # Gathering Storm（2026-10-28 照 PoE2：完美時機的區間 (0—20)% 更長；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: perfect_timing.window, type: INCREASED, per: 1.0 }   # 完美時機的區間（Signatures）
+ghost_dance:   # Ghost Dance（2026-10-28 照 PoE2：(0—20)% 增加保留效率；這次之前照通用規則每 1% 增加 0.5% 光環效果）
+  - { stat: aura.reservation, type: INCREASED, per: -1.0 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
+glacial_bolt:   # Glacial Bolt（2026-10-28 照 PoE2：每個彈匣 +(0—2) 支弩矢；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: crossbow.clip, type: FLAT, per: 0.1 }   # 彈匣（SkillService 小數捨去）
+glacial_cascade:   # Glacial Cascade（2026-10-28 照 PoE2：物理傷害的 (0—15)% 獲得為冰冷傷害；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: damage.gain.cold, type: FLAT, per: 0.75 }   # 物理傷害的 x% 額外獲得為冰冷
 glacial_lance:   # Glacial Lance
+  - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+grim_feast:   # Grim Feast（2026-10-28 照 PoE2：殘骸另外存召喚物最大生命的 (0—5)%（加在 35% 上）；這次之前照通用規則）
+  - { stat: grim.share, type: FLAT, per: 0.25 }   # OriginalSkills.onMinionDeath
+hail_rounds:   # Hailstorm Rounds（2026-10-28 照 PoE2：可以存放 +(0—5) 支弩矢；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: crossbow.clip, type: FLAT, per: 0.25 }   # 彈匣（SkillService 小數捨去）
+hammer_of_gods:   # Hammer of the Gods
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
 heart_of_ice:   # Heart of Ice（2026-10-28 照 PoE2：(0—20)% 更多冰緩效果；這次之前照通用規則）
   - { stat: chill.effect, type: MORE, per: 1.0 }   # 冰緩效果（更多）
-hammer_of_gods:   # Hammer of the Gods
-  - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+herald_of_ash:   # Herald of Ash（2026-10-28 照 PoE2：另外 (0—5)% 過量擊殺傷害算進點燃（每秒）；這次之前照通用規則）
+  - { stat: herald.ash_overkill, type: FLAT, per: 0.25 }   # AuraService
+herald_of_blood:   # Herald of Blood（2026-10-28 照 PoE2：爆炸另外多打失血的 (0—4)%（加在 15% 上）；這次之前照通用規則）
+  - { stat: herald.blood_share, type: FLAT, per: 0.2 }   # AuraService
+herald_of_ice:   # Herald of Ice（2026-10-28 照 PoE2：碎裂爆炸半徑 +(0—0.4) 公尺；這次之前照通用規則）
+  - { stat: herald.ice_radius, type: FLAT, per: 0.02 }   # 加在基礎半徑上（SkillBuild.withBaseRadius）
+herald_of_plague:   # Herald of Plague（2026-10-28 照 PoE2：傳毒時阻礙的機率另外 +(0—20)%；這次之前照通用規則）
+  - { stat: herald.plague_hinder, type: FLAT, per: 1.0 }   # AuraService
+herald_of_thunder:   # Herald of Thunder（2026-10-28 照 PoE2：落雷次數 +(0—2)（無條件捨去）；這次之前照通用規則）
+  - { stat: herald.thunder_hits, type: FLAT, per: 0.1 }   # AuraService
+hex_burst:   # Hexblast（2026-10-28 照 PoE2：被移除的詛咒每剩 1 秒更多 (0—10)% 傷害；這次之前照通用規則）
+  - { stat: hexblast.more_per_second, type: FLAT, per: 0.5 }   # SkillExecutor.hexblast
+hunters_mark:   # Sniper's Mark（2026-10-28 照 PoE2：下一次暴擊被標記的敵人另外增加 (0—15)% 暴擊傷害加成；這次之前照通用規則）
+  - { stat: effect.crit.bonus_taken, type: INCREASED, per: 0.75 }   # 印記：加在逐級的上面
 ice_shot:   # Ice Shot
   - { stat: chill.effect, type: MORE, per: 1.5 }   # 冰緩效果（更多）
 ice_strike:   # Ice Strike
   - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
+ice_tipped_arrows:   # Ice-Tipped Arrows（2026-10-28 照 PoE2：(0—10)% 增加冷卻回復速度；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: cooldown.recovery, type: INCREASED, per: 0.5 }   # 冷卻回復速度
 ice_wall:   # Frost Wall
   - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
+impurity:   # Impurity（2026-10-28 照 PoE2：光環另外給 +(0—6)% 混沌抗性；這次之前照通用規則）
+  - { stat: effect.resist.chaos, type: FLAT, per: 0.3 }   # 光環（隊友也有）
+incendiary_shot:   # Incendiary Shot（2026-10-28 照 PoE2：每顆打中的碎片讓點燃持續時間增加 (0—15)%；這次之前照通用規則）
+  - { stat: ignite.duration_per_pellet, type: FLAT, per: 0.75 }   # ProjectileEngine
 infernal_cry:   # Infernal Cry（2026-10-27 照 PoE2：強化攻擊獲得 (0—10)% 傷害為額外火焰、戰吼半徑 (0—3) 格（照頁面原文，加在 4 格上））
   - { stat: warcry.empower_gain_fire, type: FLAT, per: 0.5 }   # 強化攻擊獲得 x% 傷害為額外火焰（Warcries → SupportMechanics）
 inferno_blast:   # Flameblast
   - { stat: cast.speed, type: MORE, per: 1.0 }   # 施法速度（更多）
+iron_ward:   # Iron Ward（2026-10-28 照 PoE2：爆開的暈眩累積更多 (0—50)%；這次之前照通用規則）
+  - { stat: stun.buildup, type: MORE, per: 2.5 }   # 帶到爆開上（StoredReleases）
+killing_palm:   # Killing Palm（2026-10-28 照 PoE2：撲殺時回復 (0—4)% 最大魔力（RePoE recover_%_maximum_mana_on_cull 200 = 每 1% 品質 0.2%）；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: mana.on_cull_over_time, type: FLAT, per: 0.2 }   # 撲殺時 4 秒內回復 x% 最大魔力（CombatListener；2026-10-28 照 PoE2 改成 4 秒內，這次之前 mana.on_cull 一次回）
+leap_slam:   # Leap Slam（2026-10-28 照 PoE2：對護甲完全破碎的敵人擊中 (0—20)% 更多傷害；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: damage, type: MORE, per: 1.0, tags: [vs_brokenarmour] }   # 對護甲完全破碎的敵人更多傷害（TargetConditions）
 lightning_arrow:   # Lightning Arrow
+  - { stat: shock.chance, type: MORE, per: 2.0 }   # 感電機率（更多）
+lightning_bolt:   # Lightning Bolt（2026-10-28 照 PoE2：(0—40)% 更多感電機率；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: shock.chance, type: MORE, per: 2.0 }   # 感電機率（更多）
 lightning_pillar:   # Lightning Conduit
   - { stat: damage, type: MORE, per: 1.0, tags: [lightning] }   # 閃電傷害（更多）
@@ -100,67 +291,270 @@ lightning_rod:   # Lightning Rod（2026-10-28 照 PoE2：(0—20)% 機率落地�
   - { stat: lightning_rod.extra_burst, type: FLAT, per: 1.0 }   # 落地時多炸一次的機率 %（LightningRods）
 lightning_spear:   # Lightning Spear
   - { stat: skill.projectiles, type: FLAT, per: 0.1 }   # 投射物數量
-lunar_blessing:   # Lunar Blessing（2026-10-27 照 PoE2：增益另外獲得 (0—10)% 傷害為冰冷、(0—40)% 增加冷卻回復速度）
+lingering_illusion:   # Lingering Illusion（2026-10-28 照 PoE2：另外 (0—20)% 機率多留一個殘影；這次之前照通用規則）
+  - { stat: effect.charge.remnant_extra, type: FLAT, per: 1.0 }   # 增益：加在逐級的機率上
+linked_volley:   # Barrage（2026-10-28 照 PoE2：重複的投射物「更少」少 (0—5) 個百分點；這次之前照通用規則）
+  - { stat: barrage.less, type: FLAT, per: -0.25 }   # BarrageSpec.withLess
+lunar_assault:   # Lunar Assault（2026-10-28 照 PoE2：物理傷害的 (0—10)% 獲得為冰冷傷害；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: damage.gain.cold, type: FLAT, per: 0.5 }   # 物理傷害的 x% 額外獲得為冰冷
+lunar_blessing:   # Lunar Blessing（2026-10-28 照 PoE2：增益另外獲得 (0—10)% 傷害為冰冷；這次之前另外有冷卻回復速度，那條是額外的品質效果，移到下面 advanced）
   - { stat: grant.damage.extra.cold, type: FLAT, per: 0.5 }   # 增益（你與狼群）獲得 x% 傷害為額外冰冷（SkillBuild.qualityGrants）
-  - { stat: cooldown.recovery, type: INCREASED, per: 2.0 }   # 冷卻回復速度
+magma_barrier:   # Magma Barrier（2026-10-28 照 PoE2：增益另外增加 (0—5)% 格擋機率；這次之前照通用規則）
+  - { stat: effect.block.chance, type: INCREASED, per: 0.25 }   # 增益：加在 25% 上
+magma_spray:   # Molten Blast（2026-10-28 照 PoE2：擊中時 (0—30)% 機率曝露；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: exposure.chance, type: FLAT, per: 1.5 }   # 擊中時曝露的機率（HitEffects）
 magnetic_salvo:   # Magnetic Salvo
   - { stat: skill.projectiles, type: FLAT, per: 0.2 }   # 投射物數量
+malice:   # Malice（2026-10-28 照 PoE2：暴擊弱點持續時間 +(0—1) 秒；這次之前照通用規則）
+  - { stat: malice.weakness_seconds, type: FLAT, per: 0.05 }   # AuraService
+mana_drain:   # Mana Drain（2026-10-28 照 PoE2：吸取的魔力 +(0—90)；這次之前照通用規則）
+  - { stat: mana.on_hit, type: FLAT, per: 4.5 }   # 加在逐級的吸取量上
+mana_remnants:   # Mana Remnants（2026-10-28 照 PoE2：每顆殘留物多 (0—40) 魔力——我們的魔泉湧是魔力回復＋擊殺回魔（沒有殘留物），照 20 級 281 的比例換成兩者各多 (0—14.2)%；這次之前照通用規則）
+  - { stat: effect.mana.regen, type: INCREASED, per: 0.285 }   # 增益：魔力回復（40 × 14.2%）
+  - { stat: effect.mana.on_kill, type: FLAT, per: 0.0142 }   # 增益：擊殺回魔（2 × 14.2%）
+mana_storm:   # Mana Tempest（2026-10-28 照 PoE2：離開之後效果再延續 (0—2) 秒（加在 2 秒上）；這次之前照通用規則）
+  - { stat: mana_tempest.linger, type: FLAT, per: 0.1 }   # ManaTempest
+meta_ailment:   # Cast on Elemental Ailment（2026-10-28 照 PoE2：(0—15)% 增加獲得的能量；這次之前照通用規則每 1% 增加 0.5% 光環效果）
+  - { stat: meta.energy_gain, type: INCREASED, per: 0.75 }   # 獲得的能量（MetaGems.energyModifiers）
+meta_barrier_invocation:   # Barrier Invocation（2026-10-28 照 PoE2：(0—15)% 增加獲得的能量；這次之前照通用規則每 1% 增加 0.5% 光環效果）
+  - { stat: meta.energy_gain, type: INCREASED, per: 0.75 }   # 獲得的能量（MetaGems.energyModifiers）
+meta_crit:   # Cast on Critical（2026-10-28 照 PoE2：(0—10)% 增加保留效率；這次之前照通用規則每 1% 增加 0.5% 光環效果）
+  - { stat: aura.reservation, type: INCREASED, per: -0.5 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
+meta_dodge:   # Cast on Dodge（2026-10-28 照 PoE2：(0—10)% 增加保留效率；這次之前照通用規則每 1% 增加 0.5% 光環效果）
+  - { stat: aura.reservation, type: INCREASED, per: -0.5 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
+meta_elemental_invocation:   # Elemental Invocation（2026-10-28 照 PoE2：最大能量 +(0—100)（固定值）；這次之前照通用規則）
+  - { stat: meta.max_energy_flat, type: FLAT, per: 5.0 }   # MetaGems.invocationMax
+meta_minion_death:   # Cast on Minion Death（2026-10-28 照 PoE2：(0—20)% 增加獲得的能量；這次之前照通用規則每 1% 增加 0.5% 光環效果）
+  - { stat: meta.energy_gain, type: INCREASED, per: 1.0 }   # 獲得的能量（MetaGems.energyModifiers）
+meta_reaper_invocation:   # Reaper's Invocation（2026-10-28 照 PoE2：(0—20)% 增加獲得的能量；這次之前照通用規則每 1% 增加 0.5% 光環效果）
+  - { stat: meta.energy_gain, type: INCREASED, per: 1.0 }   # 獲得的能量（MetaGems.energyModifiers）
+mirage_archer:   # Mirage Archer（2026-10-28 照 PoE2：幻影持續時間 +(0—1) 秒（你停手之後幻影再多射一會兒）；這次之前照通用規則）
+  - { stat: skill.base_duration_flat, type: FLAT, per: 0.05 }   # SkillService 的幻影
+mirror_of_refraction:   # Mirror of Refraction（2026-10-28 照 PoE2：每面鏡子多複製 (0—2) 發投射物（無條件捨去）；這次之前照通用規則）
+  - { stat: mirror.copies, type: FLAT, per: 0.1 }   # ProjectileEngine
+mountain_fury:   # Fury of the Mountain（2026-10-28 照 PoE2：擊中時獲得 +(0—2) 怒氣；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: rage.on_hit, type: FLAT, per: 0.1 }   # 擊中時獲得怒氣（SkillResources）
+oil_barrage:   # Oil Barrage（2026-10-28 照 PoE2：黑油的曝露 +(0—5)%；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: oil.exposure, type: FLAT, per: 0.25 }   # 黑油曝露降低的元素抗性（OriginalSkills.oilValue）
 oil_grenade:   # Oil Grenade
   - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
+overwhelming_presence:   # Overwhelming Presence（2026-10-28 照 PoE2：(0—15)% 增加光環幅度；這次之前照通用規則每 1% 增加 0.5% 光環效果）
+  - { stat: aura.effect, type: INCREASED, per: 0.75 }   # 光環效果
+parry: []   # Parry（2026-10-28 照 PoE2：這顆寶石的品質沒有效果；這次之前照通用規則每 1% 增加 1% 傷害）
+permafrost_bolts:   # Permafrost Bolts（2026-10-28 照 PoE2：每發碎片 +(0—2)；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: skill.projectiles, type: FLAT, per: 0.1 }   # 碎片（投射物）數量
+piercing_rounds:   # High Velocity Rounds（2026-10-28 照 PoE2：穿透過敵人之後投射物更多 (0—20)% 傷害；這次之前照通用規則）
+  - { stat: projectile.pierced_more, type: FLAT, per: 1.0 }   # ProjectileEngine
+plague_bearer:   # Plague Bearer（2026-10-28 照 PoE2：另外存中毒傷害的 (0—2)%（加在 4% 上）；這次之前照通用規則）
+  - { stat: plague_bearer.percent, type: FLAT, per: 0.1 }   # StoredReleases
+plasma_blast:   # Plasma Blast（2026-10-28 照 PoE2：(0—30)% 更多感電持續時間；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: shock.duration, type: MORE, per: 1.5 }   # 感電持續時間（更多；AilmentService 2026-10-28 起讀更多的）
+pounce:   # Pounce（2026-10-28 照 PoE2：印記每個附近的敵人另外 +(0—1)% 受到的傷害、上限另外 +(0—15)%；這次之前照通用規則）
+  - { stat: pounce.mark_per_enemy, type: FLAT, per: 0.05 }   # 加在 3% 上（OriginalSkills.markTaken）
+  - { stat: pounce.mark_cap, type: FLAT, per: 0.75 }   # 加在 45% 上
 power_siphon:   # Power Siphon（2026-10-28 照 PoE2：撲殺時 (0—10)% 機率多給一顆銳星；這次之前照通用規則）
   - { stat: charge.extra, type: FLAT, per: 0.5 }   # 多一顆的機率（加在逐級的機率上，ChargeService.extraCount）
 primal_strikes:   # Primal Strikes
   - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
+primal_tornado:   # Tornado（2026-10-28 照 PoE2：旋風持續時間 +(0—2) 秒；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: skill.duration, type: INCREASED, per: 1.25 }   # 持續時間（+2 秒換算成 8 秒的 +25%：我們沒有「+秒」的技能持續時間屬性）
 prism_rend:   # Elemental Sundering
   - { stat: skill.area, type: INCREASED, per: 1.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+profane_ritual: []   # Profane Ritual（2026-10-28 照 PoE2：(0—10)% 機率不毀掉屍體——我們的穢陣不用屍體，所以沒有效果；這次之前照通用規則）
+purity_of_fire:   # Purity of Fire（2026-10-28 照 PoE2：光環另外給 +(0—8)% 火焰抗性；這次之前照通用規則）
+  - { stat: effect.resist.fire, type: FLAT, per: 0.4 }   # 光環（隊友也有）
+purity_of_ice:   # Purity of Ice（2026-10-28 照 PoE2：光環另外給 +(0—8)% 冰冷抗性；這次之前照通用規則）
+  - { stat: effect.resist.cold, type: FLAT, per: 0.4 }   # 光環（隊友也有）
+purity_of_lightning:   # Purity of Lightning（2026-10-28 照 PoE2：光環另外給 +(0—8)% 閃電抗性；這次之前照通用規則）
+  - { stat: effect.resist.lightning, type: FLAT, per: 0.4 }   # 光環（隊友也有）
+raging_spirits:   # Raging Spirits（2026-10-28 照 PoE2：焚魂上限 +(0—2)；這次之前照通用規則每 1% 增加 1% 召喚物傷害）
+  - { stat: skill.minions, type: FLAT, per: 0.1 }   # 召喚物上限（SkillBuild 小數捨去：10% 品質 +1）
+rain_of_arrows:   # Rain of Arrows（2026-10-28 照 PoE2：箭落下的速度增加 (0—20)%；這次之前照通用規則）
+  - { stat: skill.projectile_speed, type: INCREASED, per: 1.0 }   # 萬箭齊落落箭的頻率照投射物速度（StageLeftovers.rain）
+raise_guard: []   # Raise Shield（2026-10-28 照 PoE2：這顆寶石的品質沒有效果；這次之前照通用規則每 1% 增加 1% 傷害）
+raise_zombie:   # Raise Zombie（2026-10-28 照 PoE2：強化殭屍的效果增加 (0—25)%；這次之前照通用規則）
+  - { stat: zombie.empower_effect, type: FLAT, per: 1.25 }   # MinionService.empowered
+rake:   # Rake（2026-10-28 照 PoE2：照衝刺距離更多傷害的上限 +(0—30)%（加在 100% 上）；這次之前照通用規則）
+  - { stat: charge.distance_more, type: FLAT, per: 1.5 }   # SkillExecutor.dashDistanceMore
+rampage:   # Rampage（2026-10-28 照 PoE2：引導的前 (0—1) 秒不耗怒氣（加在 2.5 秒上）；這次之前照通用規則）
+  - { stat: charge.rage_free_seconds, type: FLAT, per: 0.05 }   # ChargeSpec.withQuality
+rapid_fire:   # Rapid Shot（2026-10-28 照 PoE2：最大熱度 +(0—15)（熱度＝彈匣，無條件捨去）；這次之前照通用規則）
+  - { stat: crossbow.clip, type: FLAT, per: 0.75 }   # SkillService.clipSize、OriginalSkills.heatMax
+rapid_thrust:   # Rapid Assault（2026-10-28 照 PoE2：(0—20)% 機率多留一個矛頭；這次之前照通用規則）
+  - { stat: spear_tip.extra_chance, type: FLAT, per: 1.0 }   # StageEffects
+ravenous_swarm:   # Ravenous Swarm（2026-10-28 照 PoE2：蟲群攻擊半徑 +(0—1) 公尺；這次之前照通用規則）
+  - { stat: swarm.radius, type: FLAT, per: 0.05 }   # MinionService.withinSwarm
 reap:   # Reap（2026-10-28 照 PoE2：暴擊弱點持續時間 +(0—2) 秒；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: crit_weakness.seconds, type: FLAT, per: 0.1 }   # 加在 6 秒上（HitEffects）
+reeling_palm:   # Staggering Palm（2026-10-28 照 PoE2：(0—40)% 機率致盲敵人；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: blind.chance, type: FLAT, per: 2.0 }   # 擊中時致盲的機率（HitEffects）
+resonating_shield:   # Resonating Shield（2026-10-28 照 PoE2：(0—20)% 增加破甲；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: armour.break, type: INCREASED, per: 1.0 }   # 破甲（CombatListener）
+rolling_magma:   # Rolling Magma（2026-10-28 照 PoE2：每彈（連鎖）過一次更多 (0—10)% 傷害；這次之前照通用規則）
+  - { stat: damage.more_per_chain, type: FLAT, per: 0.5 }   # ProjectileEngine.bounce
+rolling_slam:   # Rolling Slam（2026-10-28 照 PoE2：使用技能的動作期間暈眩門檻增加 (0—100)%；這次之前照通用規則）
+  - { stat: action.stun_threshold, type: FLAT, per: 5.0 }   # 動作期間的暈眩門檻（SkillService）
+ruin_mantra:   # Mantra of Destruction（2026-10-28 照 PoE2：需要的連擊少 (0—1)（往 0 捨去）；這次之前照通用規則）
+  - { stat: mantra.combo, type: FLAT, per: -0.05 }   # OriginalSkills.mantraCombo
+sacrifice:   # Sacrifice（2026-10-28 照 PoE2：召喚物復活更快 (0—5)%（加在「更慢 x%」上）；這次之前照通用規則）
+  - { stat: sacrifice.slower, type: FLAT, per: 0.25 }   # OriginalSkills.sacrifice
+savage_fury:   # Savage Fury（2026-10-28 照 PoE2：狂暴另外更多 (0—5)% 傷害（加在 20%～39% 上）；這次之前照通用規則）
+  - { stat: effect.damage, type: MORE, per: 0.25 }   # 狂暴（AuraService.startFrenzy）
+scavenged_plating:   # Scavenged Plating（2026-10-28 照 PoE2：甲片持續時間 +(0—2) 秒——我們的拾鱗是一直有的增益（沒有甲片層數），照 8 秒 +25% 的持續時間估平均多約一成層數，換成護甲、破甲各另外增加 (0—4)%；這次之前照通用規則）
+  - { stat: effect.armour, type: INCREASED, per: 0.2 }   # 增益：護甲
+  - { stat: effect.armour.break, type: INCREASED, per: 0.2 }   # 增益：破甲
 seismic_cry:   # Seismic Cry（2026-10-27 照 PoE2：強化攻擊的餘震 (0—10)% 更多傷害、獲得 (0—20)% 物理傷害為火焰）
   - { stat: warcry.aftershock_more, type: FLAT, per: 0.5 }   # 餘震更多 x%（SupportMechanics）
-siege_ballista:   # Siege Ballista（2026-10-28 照 PoE2：(0—20)% 更多範圍；這次之前照通用規則每 1% 增加 1% 傷害）
-  - { stat: skill.area, type: MORE, per: 1.0 }   # 範圍（更多）
+serpent_fury:   # Wind Serpent's Fury（2026-10-28 照 PoE2：擊退距離更多 (0—30)%；這次之前照通用規則）
+  - { stat: skill.knockback, type: MORE, per: 1.5 }   # SkillExecutor.cone
+shard_scavenger:   # Shard Scavenger（2026-10-28 照 PoE2：(0—10)% 增加保留效率；這次之前照通用規則每 1% 增加 0.5% 光環效果）
+  - { stat: aura.reservation, type: INCREASED, per: -0.5 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
+shatter_spikes:   # Earthshatter（2026-10-28 照 PoE2：每根還在的地刺更多 (0—6)% 擊中傷害；這次之前照通用規則）
+  - { stat: spike.more_per_spike, type: FLAT, per: 0.3 }   # OriginalSkills.beforeCast
+shield_rush:   # Shield Charge（2026-10-28 照 PoE2：照衝刺距離更多傷害的上限 +(0—40)%（加在 100% 上）；這次之前照通用規則）
+  - { stat: charge.distance_more, type: FLAT, per: 2.0 }   # ChargeSpec.withQuality
+shield_wall:   # Shield Wall（2026-10-28 照 PoE2：被自己的技能打碎時再更多 (0—40)% 傷害（加在 100% 上）；這次之前照通用規則）
+  - { stat: wall.self_more, type: FLAT, per: 2.0 }   # StageLeftovers.explode
+shock_arrow:   # Electrocuting Arrow（2026-10-28 照 PoE2：打中插著電殛棒的目標，獲得 (0—10)% 傷害為額外閃電；這次之前照通用規則）
+  - { stat: rod.gain_lightning, type: FLAT, per: 0.5 }   # ProjectileEngine
 shockwave_totem:   # Shockwave Totem（2026-10-26 照 PoE2：+(0—4) 秒圖騰持續時間、+(0—1) 圖騰上限；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: totem.duration_flat, type: FLAT, per: 0.2 }   # 圖騰持續時間 +秒
+siege_ballista:   # Siege Ballista（2026-10-28 照 PoE2：(0—20)% 更多範圍；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: skill.area, type: MORE, per: 1.0 }   # 範圍（更多）
+siege_salvo:   # Siege Cascade（2026-10-28 照 PoE2：對被禁錮的敵人 (0—40)% 更多傷害；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: damage, type: MORE, per: 2.0, tags: [vs_immobilised] }   # 對被禁錮（釘住、凍結）的敵人更多傷害（TargetConditions）
+sigil_of_power: []   # Sigil of Power（2026-10-28 照 PoE2：力印半徑 +(0—0.8) 公尺——我們的力印是跟著你的增益（不用站在印裡），所以沒有效果；這次之前照通用規則）
+siphon_elements:   # Siphon Elements（2026-10-28 照 PoE2：凍結、點燃、感電時產生灌注殘骸的機率另外 +(0—2)%；這次之前照通用規則）
+  - { stat: effect.infusion.remnant_on_ailment, type: FLAT, per: 0.1 }   # 增益：加在 5% 上
+siphon_strike:   # Siphoning Strike（2026-10-28 照 PoE2：擊中時 (0—50)% 機率暈眩（Daze）；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: daze.chance, type: FLAT, per: 2.5 }   # 擊中時恍惚的機率（HitEffects）
+skeletal_archers:   # Skeletal Sniper（2026-10-28 照 PoE2：召喚物 (0—20)% 更多傷害；這次之前照通用規則每 1% 增加 1% 召喚物傷害）
+  - { stat: damage, type: MORE, per: 1.0 }   # 召喚物傷害（更多）
+skeletal_brute:   # Skeletal Brute（2026-10-28 照 PoE2：召喚物 (0—40)% 更多暈眩累積；這次之前照通用規則每 1% 增加 1% 召喚物傷害）
+  - { stat: stun.buildup, type: MORE, per: 2.0 }   # 召喚物的暈眩累積（更多）
+skeletal_cleric:   # Skeletal Cleric（2026-10-28 照 PoE2：復活的骷髏 (0—3) 秒不會受到傷害；這次之前照通用規則）
+  - { stat: cleric.revive_immune, type: FLAT, per: 0.15 }   # MinionService
+skeletal_frostcaller:   # Skeletal Frost Mage（2026-10-28 照 PoE2：召喚物 (0—20)% 更多傷害；這次之前照通用規則每 1% 增加 1% 召喚物傷害）
+  - { stat: damage, type: MORE, per: 1.0 }   # 召喚物傷害（更多）
+skeletal_pyromancer:   # Skeletal Arsonist（2026-10-28 照 PoE2：多丟 +(0—2) 顆火彈（無條件捨去；poe2db，RePoE 沒寫）；這次之前照通用規則）
+  - { stat: minion.extra_projectiles, type: FLAT, per: 0.1 }   # 落在附近其他敵人身上（MinionService）
+skeletal_reaver:   # Skeletal Reaver（2026-10-28 照 PoE2：召喚物的怒氣效果增加 (0—20)%；這次之前照通用規則）
+  - { stat: minion.rage_effect, type: FLAT, per: 1.0 }   # MinionService.rageEffect
+skeletal_stormcaller:   # Skeletal Storm Mage（2026-10-28 照 PoE2：召喚物獲得最大生命的 (0—20)% 為額外最大能量護盾；這次之前照通用規則每 1% 增加 1% 召喚物傷害）
+  - { stat: minion.life_as_es, type: FLAT, per: 1.0 }   # 召喚物最大生命的 x% 為額外能量護盾（MinionSheets）
 snap:   # Snap（2026-10-27 照 PoE2：(0—10)% 機率多一個灌注殘骸、(0—100)% 增加冷卻回復速度；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: snap.extra_remnant, type: FLAT, per: 0.5 }   # 多一個灌注殘骸的機率（Snap.java）
 snipe:   # Snipe（2026-10-28 照 PoE2：爆炸、寒冰爆破的半徑 +(0—0.4) 格；這次之前照通用換算增加範圍，而且只加在箭上、爆炸吃不到）
   - { stat: skill.explosion_radius, type: FLAT, per: 0.02 }   # 觸發的爆炸半徑 +格（SupportProcs）
+soul_offering:   # Soul Offering（2026-10-28 照 PoE2：骨刺持續時間 +(0—1) 秒；這次之前照通用規則）
+  - { stat: skill.base_duration_flat, type: FLAT, per: 0.05 }   # Warcries
+soulrend:   # Soulrend（2026-10-28 照 PoE2：減益持續時間 +(0—0.1) 秒；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: debuff.duration, type: FLAT, per: 0.005 }   # 減益持續時間 +秒（AilmentService，加在 debuff.duration 上）
 spark:   # Spark
   - { stat: skill.projectile_speed, type: INCREASED, per: 1.5 }   # 投射物速度
+spear_thicket:   # Spearfield（2026-10-28 照 PoE2：危害 (0—10)% 機率重新布置；這次之前照通用規則）
+  - { stat: hazard.rearm_chance, type: FLAT, per: 0.5 }   # Spearfield.place
+spear_throw: []   # Spear Throw（2026-10-28 照 PoE2：這顆寶石的品質沒有效果；這次之前照通用規則每 1% 增加 1% 傷害）
+spellslinger:   # Spellslinger（2026-10-28 照 PoE2：(0—15)% 增加獲得的能量；這次之前照通用規則每 1% 增加 0.5% 光環效果）
+  - { stat: meta.energy_gain, type: INCREASED, per: 0.75 }   # 獲得的能量（MetaGems.energyModifiers）
 spiral_volley:   # Spiral Volley
   - { stat: skill.projectiles, type: FLAT, per: 0.2 }   # 投射物數量
+spiraling_conspiracy:   # Spiraling Conspiracy（2026-10-28 照 PoE2：增加 (0—20)% 範圍（烏鴉群）；這次之前照通用規則）
+  - { stat: skill.area, type: INCREASED, per: 1.0 }   # 帶到烏鴉群上（GrantedAuras）
+stampede:   # Stampede（2026-10-28 照 PoE2：(0—20)% 機率多一次餘震；這次之前照通用規則）
+  - { stat: slam.aftershock_chance, type: FLAT, per: 1.0 }   # 終點猛擊（SkillExecutor）
 storm_blink:   # Lightning Warp
   - { stat: shock.effect, type: INCREASED, per: 0.5 }   # 感電效果
+storm_bolts:   # Shockburst Rounds（2026-10-28 照 PoE2：每個彈匣 +(0—4) 支弩矢；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: crossbow.clip, type: FLAT, per: 0.2 }   # 彈匣（SkillService 小數捨去）
+storm_javelin:   # Storm Lance（2026-10-28 照 PoE2：超載的矛上限 +(0—1)（無條件捨去）；這次之前照通用規則）
+  - { stat: lance.overcharged_extra, type: FLAT, per: 0.05 }   # Signatures.lodge
 storm_orb:   # Orb of Storms
   - { stat: skill.chains, type: FLAT, per: 0.15 }   # 連鎖次數
+storm_staff:   # Charged Staff（2026-10-28 照 PoE2：(0—20)% 增加技能效果持續時間；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: skill.duration, type: INCREASED, per: 1.0 }   # 持續時間
+storm_wave:   # Storm Wave（2026-10-28 照 PoE2：波寬 +(0—1) 格；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: skill.area, type: INCREASED, per: 5.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+stormblast_bolts:   # Stormblast Bolts（2026-10-28 照 PoE2：穿透 (0—20)% 閃電抗性；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: penetration, type: FLAT, per: 1.0, tags: [lightning] }   # 穿透閃電抗性（DamageCalculator）
+summon_mount:   # Rhoa Mount（2026-10-28 照 PoE2：坐騎更多 (0—20)% 最大生命——坐騎打不死，換成騎著時的重暈門檻更多 (0—20)%；這次之前照通用規則）
+  - { stat: mount.life_more, type: FLAT, per: 1.0 }   # AilmentService
+summon_skeletons:   # Skeletal Warrior（2026-10-28 照 PoE2：召喚物 (0—20)% 更多最大生命；這次之前照通用規則每 1% 增加 1% 召喚物傷害）
+  - { stat: life.max, type: MORE, per: 1.0 }   # 召喚物最大生命（更多；MinionSheets）
+sun_orb:   # Solar Orb（2026-10-28 照 PoE2：對燃燒的敵人擊中 (0—20)% 更多傷害；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: damage.vs_ignited, type: MORE, per: 1.0 }   # 對點燃（燃燒）的敵人更多傷害
+sunder:   # Sunder（2026-10-28 照 PoE2：照距離的命中懲罰減少 (0—50)%；這次之前照通用規則）
+  - { stat: accuracy.range_penalty, type: INCREASED, per: -2.5 }   # CombatListener
+sunfire_spear:   # Spear of Solaris（2026-10-28 照 PoE2：(0—25)% 機率用的時候保留 40% 榮耀；這次之前照通用規則）
+  - { stat: glory.retain_chance, type: FLAT, per: 1.25 }   # SupportMechanics.used
+supercharged_slam:   # Supercharged Slam（2026-10-28 照 PoE2：最大階段 +(0—1)（無條件捨去）；這次之前照通用規則）
+  - { stat: charge.stages_flat, type: FLAT, per: 0.05 }   # ChargeSpec.withQuality
+tempest_bell:   # Tempest Bell（2026-10-28 照 PoE2：鐘每被打一下震波更多 (0—3)% 傷害；這次之前照通用規則）
+  - { stat: bell.more_per_hit, type: FLAT, per: 0.15 }   # SkillDeployables.ring
+tempest_flurry:   # Tempest Flurry（2026-10-28 照 PoE2：近戰打擊距離 +(0—0.4) 格；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: melee.range, type: FLAT, per: 0.2 }   # 近戰打擊距離（單位 0.1 格，SkillBuild）
+temporal_curse:   # Temporal Chains（2026-10-28 照 PoE2：(0—10)% 增加詛咒幅度；這次之前照通用規則，數值一樣）
+  - { stat: curse.effect, type: INCREASED, per: 0.5 }   # 詛咒效果
 thrashing_vines:   # Thrashing Vines
   - { stat: skill.area, type: INCREASED, per: 2.5 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
 thunder_arrow:   # Stormcaller Arrow
   - { stat: shock.duration, type: INCREASED, per: 1.5 }   # 感電持續時間
+thunder_leap:   # Thunderous Leap（2026-10-28 照 PoE2：引爆矛的時候 (0—30)% 機率留下感電地面；這次之前照通用規則）
+  - { stat: detonate.shocked_ground_chance, type: FLAT, per: 1.5 }   # SkillService
+thunderstorm:   # Thunderstorm（2026-10-28 照 PoE2：濕透的敵人另外受到更多 (0—5)% 凍結累積、被感電的機率另外更多 (0—10)%；這次之前照通用規則）
+  - { stat: drenched.freeze_more, type: FLAT, per: 0.25 }   # 加在 25% 上（SupportExtras.drench）
+  - { stat: drenched.shock_more, type: FLAT, per: 0.5 }   # 加在 50% 上
+time_of_need:   # Time of Need（2026-10-28 照 PoE2：祝福另外回復 (0—40) 生命；這次之前照通用規則）
+  - { stat: effect.blessing.life, type: FLAT, per: 2.0 }   # 增益：加在逐級的生命上
+tornado_shot:   # Tornado Shot（2026-10-28 照 PoE2：複製的投射物 (0—15)% 更多傷害，跟等級的更少是同一條屬性、相加；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: tornado.copy_more, type: FLAT, per: 0.75 }   # 複製的投射物更多 x%（TornadoSpec.COPY_MORE）
 totem_casting:   # Spell Totem（2026-10-26 照 PoE2：+(0—4) 秒圖騰持續時間、每根召喚中的圖騰讓圖騰施放的法術增加 (0—10)% 施法速度；這次之前品質對圖騰沒有作用）
   - { stat: totem.duration_flat, type: FLAT, per: 0.2 }   # 圖騰持續時間 +秒
 toxic_domain:   # Toxic Domain
   - { stat: skill.area, type: INCREASED, per: 1.5 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
 toxic_growth:   # Toxic Growth
   - { stat: skill.projectiles, type: FLAT, per: 0.05 }   # 投射物數量
-tornado_shot:   # Tornado Shot（2026-10-28 照 PoE2：複製的投射物 (0—15)% 更多傷害，跟等級的更少是同一條屬性、相加；這次之前照通用規則每 1% 增加 1% 傷害）
-  - { stat: tornado.copy_more, type: FLAT, per: 0.75 }   # 複製的投射物更多 x%（TornadoSpec.COPY_MORE）
+trail_of_caltrops:   # Trail of Caltrops（2026-10-28 照 PoE2：鐵蒺上限 +(0—5)（無條件捨去）；這次之前照通用規則）
+  - { stat: caltrops.max, type: FLAT, per: 0.25 }   # OriginalSkills.caltropMax
 true_strike:   # Perfect Strike
   - { stat: ignite.chance, type: MORE, per: 1.0 }   # 易燃（點燃機率，更多）
+unleash_spell:   # Unleash（2026-10-28 照 PoE2：(0—10)% 增加冷卻回復速度；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: cooldown.recovery, type: INCREASED, per: 0.5 }   # 冷卻回復速度
+vault_strike: []   # Vaulting Impact（2026-10-28 照 PoE2：破勢在多 (0—2) 次擊中之後才移除——我們的躍棍崩擊沒有破勢，所以沒有效果；這次之前照通用規則）
 venom_burst_arrow:   # Poisonburst Arrow
   - { stat: poison.magnitude, type: MORE, per: 0.5 }   # 中毒幅度（更多）
 volatile_dead:   # Volatile Dead（2026-10-28 照 PoE2：(0—10)% 機率不毀掉消耗的屍體；這次之前照通用規則）
   - { stat: corpse.save_chance, type: FLAT, per: 0.5 }   # 不毀掉屍體的機率（TreeEffectKeys.corpseSaved）
+volcanic_fissure:   # Volcanic Fissure（2026-10-28 照 PoE2：(0—20)% 機率多一次餘震；這次之前照通用規則）
+  - { stat: slam.aftershock_chance, type: FLAT, per: 1.0 }   # 整道裂縫再打一次（SkillExecutor.lineAftershocks）
 volcano:   # Volcano
   - { stat: skill.area, type: INCREASED, per: 1.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
 voltaic_grenade:   # Voltaic Grenade
   - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
+voltaic_mark:   # Voltaic Mark（2026-10-28 照 PoE2：被標記的敵人另外受到增加 (0—20)% 電擊累積；這次之前照通用規則）
+  - { stat: effect.electrocute.buildup_taken, type: INCREASED, per: 1.0 }   # 印記：加在 25%～45% 上
+vulnerability_curse:   # Vulnerability（2026-10-28 照 PoE2：(0—10)% 增加詛咒幅度；這次之前照通用規則，數值一樣）
+  - { stat: curse.effect, type: INCREASED, per: 0.5 }   # 詛咒效果
+walking_calamity:   # Walking Calamity（2026-10-28 照 PoE2：增益另外獲得 (0—10)% 傷害為火焰（加在 30% 上）；這次之前照通用規則）
+  - { stat: effect.damage.extra.fire, type: FLAT, per: 0.5 }   # 增益（OriginalSkills）
+war_banner:   # War Banner（2026-10-28 照 PoE2：(0—10)% 增加保留效率；這次之前照通用規則每 1% 增加 0.5% 戰吼效果）
+  - { stat: aura.reservation, type: INCREASED, per: -0.5 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
 whirling_rush:   # Whirling Assault
   - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
 whirling_slash:   # Whirling Slash（2026-10-28 照 PoE2：崩散每多一階再更多 +(0—40)%；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: whirl.collapse_more_per_stage, type: FLAT, per: 2.0 }   # 加在每多一階更多 150% 上（Signatures.WHIRL_QUALITY_MORE）
+whirlwind_lance:   # Whirlwind Lance（2026-10-28 照 PoE2：旋風崩散每多一階再更多 (0—40)%（加在 150% 上）；這次之前照通用規則）
+  - { stat: whirl.collapse_more_per_stage, type: FLAT, per: 2.0 }   # StageLeftovers.collapse
+wind_dancer: []   # Wind Dancer（2026-10-28 照 PoE2：爆炸半徑 +(0—0.4) 公尺——我們的風之舞步只有閃避（沒有被擊中時的疾風爆炸），所以沒有效果；這次之前照通用規則）
+wing_blast:   # Wing Blast（2026-10-28 照 PoE2：重暈蓄勢待暈的敵人時另外 (0—5)% 機率獲得銳星；這次之前照通用規則）
+  - { stat: charge.event.stun_primed.power, type: FLAT, per: 0.25 }   # 加在 15% 上（ChargeService）
 winter_eye:   # Eye of Winter
   - { stat: skill.projectile_speed, type: INCREASED, per: 1.5 }   # 投射物速度
+wither: []   # Wither（2026-10-28 照 PoE2：這顆寶石的品質沒有效果；這次之前照通用規則每 1% 增加 1% 傷害）
+withering_presence:   # Withering Presence（2026-10-28 照 PoE2：凋零持續時間 +(0—1) 秒；這次之前照通用規則）
+  - { stat: withering.seconds, type: FLAT, per: 0.05 }   # AuraService
+wolf_pack:   # Wolf Pack（2026-10-28 照 PoE2：召喚 +(0—1) 隻狼；這次之前照通用規則每 1% 增加 1% 召喚物傷害）
+  - { stat: skill.minions, type: FLAT, per: 0.05 }   # 召喚物上限（SkillBuild 小數捨去：20% 品質才 +1）
 wolf_shred:   # Shred
   - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
 
@@ -170,6 +564,9 @@ wolf_shred:   # Shred
 # 寫法跟上面一樣（每 1% 品質給 per）。這裡只寫我們的引擎有對應屬性的技能；沒寫的技能（額外效果的機制還沒有：例如火球的環射、
 # 連鎖剩幾次更多傷害）有進階奇術時照舊把一般的品質效果再算一次（平衡等效，AscBuild.advanced）。
 # 這次之前（2026-10-26～2026-10-27）沒有這個區塊，進階奇術一律是品質效果再算一次；下面標「從一般品質移過來」的那幾條這次之前算在一般品質裡。
+wyvern_rend:   # Rend（2026-10-28 照 PoE2：增益另外獲得 (0—10)% 傷害為閃電（加在 50% 上）；這次之前照通用規則）
+  - { stat: effect.damage.gain.lightning, type: FLAT, per: 0.5 }   # 增益（StageAttacks.rend）
+
 advanced:
   ancestral_cry:   # Ancestral Cry：增益給 (0—10)% 更多火焰傷害
     - { stat: grant.damage, type: MORE, per: 0.5, tags: [fire] }   # 增益：更多火焰傷害（grant.＝給你自己的增益；SkillBuild.qualityGrants）（2026-10-27 照 PoE2：這次之前是一般品質效果）
@@ -209,6 +606,8 @@ advanced:
     - { stat: skill.duration, type: MORE, per: 1.5 }
   caustic_arrow:   # Gas Arrow：(0—20)% 更多火焰傷害
     - { stat: damage, type: MORE, per: 1.0, tags: [fire] }
+  chain_arrow:   # Shockchain Arrow：(0—20)% 更多攻擊速度（2026-10-28 照 PoE2（poe2db 寶石頁第二條）；這次之前沒有）
+    - { stat: attack.speed, type: MORE, per: 1.0 }
   comet:   # Comet：(0—40)% 增加對凍結敵人的擊中傷害
     - { stat: damage.vs_frozen, type: INCREASED, per: 2.0 }
   concussion_grenade:   # Flash Grenade：獲得 (0—10)% 傷害為冰冷、(0—10)% 為閃電
@@ -311,3 +710,19 @@ advanced:
     - { stat: damage, type: MORE, per: 1.0, tags: [lightning] }
   whirling_slash:   # Whirling Slash：(0—10)% 更多攻擊速度（2026-10-28 照 PoE2）
     - { stat: attack.speed, type: MORE, per: 0.5 }
+  emergency_reload:   # Emergency Reload：增益強化的弩矢 (0—10)% 更多傷害（2026-10-28 照 PoE2：這次之前是一般品質效果）
+    - { stat: emergency_reload.more, type: FLAT, per: 0.5 }   # 強化的弩矢再更多 x%（SkillService.EMERGENCY_MORE）
+  flicker_strike:   # Flicker Strike：(0—20)% 機率不用掉戰星（2026-10-28 照 PoE2：這次之前是一般品質效果）
+    - { stat: charge.sup.keep, type: FLAT, per: 1.0 }   # 用銳星時 x% 機率不用掉（ChargeService.SUP_KEEP，跟恆星同一條）
+  falling_thunder:   # Falling Thunder：(0—20)% 機率不用掉戰星（2026-10-28 照 PoE2 poe2db 寶石頁第二條；這次之前沒有）
+    - { stat: charge.sup.keep, type: FLAT, per: 1.0 }   # 用銳星時 x% 機率不用掉（ChargeService.SUP_KEEP，跟恆星同一條）
+  arctic_howl:   # Arctic Howl：(0—20)% 機率不算強化次數（2026-10-28 照 PoE2：這次之前是一般品質效果）
+    - { stat: warcry.tireless, type: FLAT, per: 1.0 }   # x% 機率不算強化次數（跟不竭嘯同一條）
+  lunar_blessing:   # Lunar Blessing：(0—40)% 增加冷卻回復速度（2026-10-28 照 PoE2：這次之前是一般品質效果）
+    - { stat: cooldown.recovery, type: INCREASED, per: 2.0 }   # 冷卻回復速度
+  cull_the_weak:   # Cull The Weak：(0—20)% 機率多獲得一顆隨機種類的戰星（2026-10-28 照 PoE2：這次之前寫在 SkillService，算一般品質效果）
+    - { stat: charge.extra_random, type: FLAT, per: 1.0 }   # 多一顆隨機種類戰星的機率（ChargeService）
+  charge_regulation:   # Charge Regulation：增益每顆戰星 (0—2)% 增加傷害（2026-10-28 照 PoE2：這次之前寫在 SkillService，算一般品質效果）
+    - { stat: grant.damage.per_charge, type: FLAT, per: 0.1 }   # 增益：每顆戰星增加 x% 傷害
+  killing_palm:   # Killing Palm：撲殺時 4 秒內回復 (0—10)% 最大生命（2026-10-28 照 PoE2）
+    - { stat: life.on_cull_over_time, type: FLAT, per: 0.5 }   # 撲殺時 4 秒內回復 x% 最大生命（CombatListener；2026-10-28 照 PoE2 改成 4 秒內，這次之前 life.on_cull 一次回）

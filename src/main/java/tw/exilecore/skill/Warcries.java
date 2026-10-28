@@ -47,7 +47,7 @@ final class Warcries {
     static final double SPIKE_SEARCH = 12;
 
     /** 一根祭柱。 */
-    private record Spike(org.bukkit.entity.BlockDisplay display, org.bukkit.scheduler.BukkitTask task) {
+    private record Spike(org.bukkit.entity.BlockDisplay display, org.bukkit.scheduler.BukkitTask task, long start) {
         void remove() {
             task.cancel();
             if (display.isValid()) {
@@ -56,8 +56,17 @@ final class Warcries {
         }
     }
 
-    /** 每個人、每種祭品同時只有一根（新的換掉舊的）。 */
+    /**
+     * 每個人、每種祭品同時只有一根（新的換掉舊的）。鍵是「玩家/祭品代號」；2026-10-28 照 PoE2「上限 1 根骨柱」吃 +x 上限（過剩）：
+     * 多的那幾根鍵是「玩家/祭品代號#2」「#3」…，超過上限最舊的那根倒下。
+     */
     private final java.util.Map<String, Spike> spikes = new java.util.HashMap<>();
+
+    /** 「玩家/祭品代號#2」→「祭品代號」。 */
+    private static String spikeSkill(final String keyAfterPrefix) {
+        final int hash = keyAfterPrefix.indexOf('#');
+        return hash < 0 ? keyAfterPrefix : keyAfterPrefix.substring(0, hash);
+    }
 
     /** 花魔力之前：祭柱放不放得出來（附近要有屍體或自己的召喚物）。 */
     String spikeProblem(final Player player) {
@@ -90,12 +99,34 @@ final class Warcries {
     }
 
     private void raiseSpike(final Player player, final String skillId, final org.bukkit.Location at, final double radius, final int ticks,
-                            final List<Modifier> mods, final double powerEvery, final double regenPercent) {
-        final String key = player.getUniqueId() + "/" + skillId;
-        final Spike old = spikes.remove(key);
-        if (old != null) {
-            old.remove();
+                            final List<Modifier> mods, final double powerEvery, final double regenPercent, final int limit) {
+        final String baseKey = player.getUniqueId() + "/" + skillId;
+        // 2026-10-28 照 PoE2：同一種祭品最多 limit 根（1 + 過剩的 +x 上限），滿了最舊的倒下；這次之前一律換掉唯一那根
+        final List<String> standing = new java.util.ArrayList<>();
+        for (int i = 1; i <= Math.max(1, limit) + 8; i++) {
+            final String key = i == 1 ? baseKey : baseKey + "#" + i;
+            if (spikes.containsKey(key)) {
+                standing.add(key);
+            }
         }
+        while (standing.size() >= Math.max(1, limit)) {
+            String oldestKey = standing.getFirst();
+            for (final String key : standing) {
+                if (spikes.get(key).start() < spikes.get(oldestKey).start()) {
+                    oldestKey = key;
+                }
+            }
+            standing.remove(oldestKey);
+            final Spike old = spikes.remove(oldestKey);
+            if (old != null) {
+                old.remove();
+            }
+        }
+        String free = baseKey;
+        for (int i = 2; spikes.containsKey(free); i++) {
+            free = baseKey + "#" + i;
+        }
+        final String key = free;
         final org.bukkit.Location base = at.clone();
         base.setYaw(0);
         base.setPitch(0);
@@ -144,7 +175,7 @@ final class Warcries {
                         at.clone().add(Math.cos(a) * radius, 0.15, Math.sin(a) * radius), 1, 0, 0, 0, 0);
             }
         }), 1, 10);
-        spikes.put(key, new Spike(display, holder[0]));
+        spikes.put(key, new Spike(display, holder[0], start));
         if (plugin.skills() != null && plugin.skills().treeLeftovers() != null) {
             plugin.skills().treeLeftovers().offeringCreated(player); // 2026-10-27 照 PoE2 天賦樹：立祭品時回復生命
         }
@@ -153,13 +184,13 @@ final class Warcries {
     /** 2026-10-27 照 PoE2 天賦樹（至少兩種不同的祭品）：這個人現在立著幾種祭品（每種同時只有一根）。 */
     int activeOfferings(final java.util.UUID player) {
         final String prefix = player + "/";
-        int count = 0;
+        final java.util.Set<String> kinds = new java.util.HashSet<>(); // 2026-10-28：同一種有好幾根（過剩）也只算一種
         for (final java.util.Map.Entry<String, Spike> entry : spikes.entrySet()) {
             if (entry.getKey().startsWith(prefix) && entry.getValue().display().isValid()) {
-                count++;
+                kinds.add(spikeSkill(entry.getKey().substring(prefix.length())));
             }
         }
-        return count;
+        return kinds.size();
     }
 
     /** 2026-10-27 照 PoE2 祭脈（Kulemak's Dominion）：這個人現在立著的祭柱（祭品技能代號 → 位置）。 */
@@ -168,7 +199,7 @@ final class Warcries {
         final java.util.Map<String, org.bukkit.Location> spots = new java.util.HashMap<>();
         for (final java.util.Map.Entry<String, Spike> entry : spikes.entrySet()) {
             if (entry.getKey().startsWith(prefix) && entry.getValue().display().isValid()) {
-                spots.put(entry.getKey().substring(prefix.length()), entry.getValue().display().getLocation());
+                spots.putIfAbsent(spikeSkill(entry.getKey().substring(prefix.length())), entry.getValue().display().getLocation()); // 2026-10-28：同一種好幾根時取一根
             }
         }
         return spots;
@@ -368,7 +399,8 @@ final class Warcries {
         final int echoes = (int) Math.round(Math.max(0, effective.flat(tw.exilecore.stats.SupportKeys.WARCRY_ECHOES, tags)));
         final double echoArea = 1.0 + echo;
         final double radius = baseRadius(spec, effective, tags) * build.areaScale() * Math.sqrt(echoArea); // 2026-10-27：＋焚獄戰吼品質的半徑
-        int ticks = build.durationTicks(spec.duration());
+        // 2026-10-28 照 PoE2 Soul Offering 的品質：骨刺持續時間 +(0—1) 秒（加在基礎上，再乘持續時間倍率）
+        int ticks = build.durationTicks(spec.duration() + Math.max(0, SkillZones.localFlat(build.profile(), tw.exilecore.stats.GemQualityKeys.DURATION_FLAT)));
         // 銀月庇（2026-10，PoE2 的月光賜福）：吼的時候用掉全部怒氣，每點怒氣增益多撐 rage_extend 秒
         int rageFed = 0;
         if (spec.rageExtend() > 0 && plugin.skills() != null && echo == 0) {
@@ -448,6 +480,11 @@ final class Warcries {
             for (final ScaledMod mod : spec.minionBuff()) {
                 minionMods.add(mod.toModifier(build.level(), build.auraEffect() * (1 + extraEffect) * (1 + power / 100.0), name));
             }
+            // 2026-10-28 照 PoE2 Bone Offering 的品質：護盾消失後 1 秒更少 x% 傷害（MinionService.hitTaken）
+            final double shieldLess = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.SHIELD_LOST_LESS);
+            if (shieldLess > 0) {
+                minionMods.add(Modifier.flat(tw.exilecore.stats.GemQualityKeys.SHIELD_LOST_LESS, shieldLess, name));
+            }
             if (unwilling) {
                 final org.bukkit.Location at = victimAt != null ? victimAt : spikeSpot(player);
                 if (at == null) {
@@ -466,7 +503,8 @@ final class Warcries {
                 }
                 raiseSpike(player, id, at, radius, ticks, minionMods,
                         effective.flat(tw.exilecore.charge.ChargeService.SUP_OFFERING_POWER, tags),
-                        effective.flat(tw.exilecore.charge.ChargeService.SUP_OFFERING_REGEN, tags));
+                        effective.flat(tw.exilecore.charge.ChargeService.SUP_OFFERING_REGEN, tags),
+                        1 + (build.definition().tags().contains(SkillLimits.TAG) ? SkillLimits.bonus(effective, tags) : 0)); // 2026-10-28：過剩
                 notice.append(String.format(Locale.ROOT, "<gray>：立起祭柱（%.0f 秒，半徑 %.0f 格）", ticks / 20.0, radius));
                 if (extraEffect > 0) {
                     notice.append("<gray>，多獻上一隻骷髏");

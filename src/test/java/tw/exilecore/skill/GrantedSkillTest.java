@@ -68,7 +68,9 @@ class GrantedSkillTest {
             assertEquals("weapon", config.skill(id).source(), id);
             assertFalse(config.skill(id).engravable(), id + " 沒有寶石，雕不出來");
         }
-        assertTrue(config.skill("sun_orb").engravable(), "烈陽珠也有寶石（PoE2 一樣）");
+        // 2026-10-28 照 PoE2 0.5（RePoE skill_gems：Solar Orb crafting_level 0）：烈陽珠只有長杖賦予，沒有寶石（這次之前雕得出來）
+        assertEquals("weapon", config.skill("sun_orb").source());
+        assertFalse(config.skill("sun_orb").engravable(), "烈陽珠沒有寶石");
         assertEquals(0, config.skill("chaos_bolt").mana().last(), "武器賦予的不耗魔力");
     }
 
@@ -92,12 +94,12 @@ class GrantedSkillTest {
         assertTrue(loadout.dormant(loadout.skill(position)));
         assertNull(loadout.boundSkill(3));
         assertEquals(position, loadout.find("chaos_bolt"), "輔助、按鍵都留著");
-        // 已經有寶石的技能不另外放
+        // 已經有寶石的技能不另外放（2026-10-28：游雷有寶石、傳奇也賦予；這次之前用烈陽珠，照 PoE2 它沒有寶石）
         final SkillLoadout gem = new SkillLoadout();
-        gem.put("sun_orb", 12);
-        assertFalse(gem.syncGranted(Map.of("sun_orb", 3)));
-        assertFalse(gem.skill(gem.find("sun_orb")).granted());
-        assertEquals(12, gem.skill(gem.find("sun_orb")).level());
+        gem.put("spark", 12);
+        assertFalse(gem.syncGranted(Map.of("spark", 3)));
+        assertFalse(gem.skill(gem.find("spark")).granted());
+        assertEquals(12, gem.skill(gem.find("spark")).level());
     }
 
     @Test

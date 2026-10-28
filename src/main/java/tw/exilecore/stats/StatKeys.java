@@ -574,6 +574,13 @@ public final class StatKeys {
     /** 2026-10：斷命打死時回復最大生命／魔力的 x%（FLAT）。 */
     public static final String LIFE_ON_CULL = "life.on_cull";
     public static final String MANA_ON_CULL = "mana.on_cull";
+    /**
+     * 2026-10-28 照 PoE2 Killing Palm 的品質（recover_%_maximum_mana_on_cull、進階奇術的生命那條：「撲殺一名敵人時，在 4 秒內恢復 x%」）：
+     * 撲殺時在 {@link tw.exilecore.skill.KillingPalm#RECOVERY_SECONDS} 秒內慢慢回復最大生命／魔力的 x%（FLAT；CombatListener）。
+     * 收命、汲魂（{@link #LIFE_ON_CULL}／{@link #MANA_ON_CULL}）原作是一次回，跟這兩條分開。
+     */
+    public static final String LIFE_ON_CULL_OVER_TIME = "life.on_cull_over_time";
+    public static final String MANA_ON_CULL_OVER_TIME = "mana.on_cull_over_time";
     /** 2026-10：投射物改成往四周一圈射出（FLAT 1）。 */
     public static final String FLAG_PROJECTILE_NOVA = "flag.projectile_nova";
     /** 2026-10：自己的召喚物死掉時觸發（在召喚物死掉的地方施放）。 */

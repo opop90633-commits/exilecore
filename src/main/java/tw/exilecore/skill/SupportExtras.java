@@ -750,17 +750,17 @@ public final class SupportExtras implements Listener {
             final double areaLess = flat(effective, SupportExtraKeys.CASCADE_AREA, tags) / 100.0;
             final SkillBuild smaller = build.withAreaAndProjectiles(build.areaScale() * Math.sqrt(Math.max(0.1, 1 - areaLess)), build.projectiles());
             final double angle = plugin.random().nextDouble() * Math.PI;
-            final double offset = Math.max(1.5, Math.max(build.radius(), 1.5) * 2);
-            final Origin self = Origin.of(player);
+            final double offset = Math.max(1.5, Math.max(SkillCascade.radius(build), 1.5) * 2);
+            // 2026-10-28 照 PoE2：詛咒照原本的落點、骸爆照原本的爆炸往兩側各一次（SkillExecutor.cascade）；這次之前一律從平移後的位置重放
+            final SkillExecutor.CascadeAnchor anchor = service.executor().cascadeAnchor(player, build, preferred);
             final Location center = build.definition().mechanic() == Mechanic.NOVA ? player.getLocation() : null;
             for (int i = 1; i <= (int) Math.round(cascades); i++) {
                 final Vector axis = new Vector(Math.cos(angle), 0, Math.sin(angle)).multiply(offset * i);
                 for (final int side : new int[] {1, -1}) {
                     final Vector shift = axis.clone().multiply(side);
-                    final Origin moved = new Origin(player, self.feet().clone().add(shift), self.eye().clone().add(shift), self.direction(), false);
                     plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                        if (player.isOnline() && player.getWorld().equals(moved.feet().getWorld())) {
-                            service.executor().executeFrom(moved, smaller, null);
+                        if (player.isOnline() && player.getWorld().equals(anchor.self().feet().getWorld())) {
+                            service.executor().cascade(player, smaller, anchor, shift);
                         }
                     }, 3L * i);
                 }
@@ -1571,11 +1571,28 @@ public final class SupportExtras implements Listener {
      * （Shock Conduction 擊中濕透的一定感電）。SkillZones 的地面效果每一波呼叫。
      */
     static void drench(final ExileCore plugin, final Player owner, final LivingEntity target, final String skillId, final int intervalTicks, final long now) {
+        drench(plugin, owner, target, skillId, intervalTicks, now, 0, 0);
+    }
+
+    /** 2026-10-28 照 PoE2 Thunderstorm 的品質：濕透的凍結累積另外更多 freezeExtra%、感電機率另外更多 shockExtra%（加在 25%、50% 上）。 */
+    static void drench(final ExileCore plugin, final Player owner, final LivingEntity target, final String skillId, final int intervalTicks, final long now,
+                       final double freezeExtra, final double shockExtra) {
         if (owner == null || skillId == null || target instanceof Player || plugin.combat() == null || !SupportExtraKeys.DRENCHING_SKILLS.contains(skillId)) {
             return;
         }
         plugin.combat().debuffs().apply(target.getUniqueId(), new Debuffs.Debuff(SupportExtraKeys.DRENCHED_ID, owner.getUniqueId(),
-                now + intervalTicks + SupportExtraKeys.DRENCHED_TICKS, 0, false, null, DRENCHED_MODS, 0));
+                now + intervalTicks + SupportExtraKeys.DRENCHED_TICKS, 0, false, null, drenchedMods(freezeExtra, shockExtra), 0));
+    }
+
+    /** 濕透的修飾器（freezeExtra、shockExtra：品質另外加的百分點）。 */
+    static List<Modifier> drenchedMods(final double freezeExtra, final double shockExtra) {
+        if (freezeExtra <= 0 && shockExtra <= 0) {
+            return DRENCHED_MODS;
+        }
+        return List.of(
+                Modifier.more(SupportExtraKeys.SHOCK_CHANCE_TAKEN, (SupportExtraKeys.DRENCHED_SHOCK + Math.max(0, shockExtra)) / 100.0, "濕透"),
+                Modifier.more(SupportExtraKeys.FREEZE_BUILDUP_TAKEN, (SupportExtraKeys.DRENCHED_FREEZE + Math.max(0, freezeExtra)) / 100.0, "濕透"),
+                Modifier.flat(SupportExtraKeys.FLAG_DRENCHED, 1, "濕透"));
     }
 
     private static final List<Modifier> DRENCHED_MODS = List.of(

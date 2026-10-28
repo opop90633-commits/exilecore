@@ -42,6 +42,11 @@ public final class SkillProfiles {
             if (definition.tags().contains(Tags.PROJECTILE) && !definition.tags().contains(Tags.MELEE)) {
                 tags.remove(Tags.MELEE); // 擲出去的矛（擲雷槍）是投射物，不吃近戰的加成（跟輔助寶石的判斷一樣）
             }
+            if (definition.tags().contains(Tags.MELEE) && definition.tags().contains(Tags.PROJECTILE) && definition.mechanic() != Mechanic.PROJECTILE) {
+                // 2026-10-28 照 PoE2（驚雷劈：近戰猛擊＋另外一段投射物）：近戰的那一下不是投射物，不吃投射物的加成；
+                // 投射物那一段自己加回投射物標籤（SkillExecutor.thunderBolts）。寶石的標籤照舊有投射物（輔助、+等級照寶石標籤）
+                tags.remove(Tags.PROJECTILE);
+            }
         } else {
             // 法術；2026-10-27 照 PoE2：不用武器的攻擊（攻擊寫了 damage）也一樣——基礎傷害照技能的表、不帶武器的標籤
             //（加上 weaponless 標籤：DamageCalculator 看到它就用技能自己的基礎傷害、不用武器傷害）

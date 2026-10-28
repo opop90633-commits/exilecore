@@ -1120,7 +1120,8 @@ final class MapBosses {
 
     /** 一顆指定的技能寶石，直接 20 級（skills.yml 沒有這個代號就不掉；巔峰 Boss 的專屬技能寶石）。 */
     private void addSkillId(final List<DropTable.Drop> drops, final String skillId) {
-        if (plugin.skills() != null && plugin.skills().config().skill(skillId) != null) {
+        if (plugin.skills() != null && plugin.skills().config().skill(skillId) != null
+                && !plugin.skills().config().skill(skillId).grantedOnly()) { // 2026-10-28：武器、昇華賦予的技能沒有寶石
             drops.add(DropTable.Drop.skill(skillId, tw.exilecore.character.SkillLoadout.MAX_LEVEL));
         }
     }

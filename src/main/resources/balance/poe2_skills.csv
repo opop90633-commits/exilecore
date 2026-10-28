@@ -54,7 +54,7 @@ thrashing_vines,Thrashing Vines,188.5,已套用；physical
 gathering_storm,Gathering Storm,435,已套用；shockwave 435% L20; perfect dash 1014%; tempest shockwave 869% L20
 reeling_palm,Staggering Palm,250,未套用；approx match (PoE2 heavy stuns; no daze); projectiles 204%
 explosive_grenade,Explosive Grenade,878,已套用
-chain_arrow,Lightning Arrow,250,未套用
+chain_arrow,Shockchain Arrow,218,已套用；2026-10-28 照 PoE2 對應改成 Shockchain Arrow（箭 218%、震波 507%）；這次之前誤對 Lightning Arrow 250
 bear_maul,Maul,290,已套用
 hammer_of_gods,Hammer of the Gods,1529,已套用；Glory-based in PoE2; no cooldown
 magma_spray,Molten Blast,265,已套用；shrapnel 265% at L20

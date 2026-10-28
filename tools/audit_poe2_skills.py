@@ -105,6 +105,7 @@ MAP = {
     'sunfire_spear': ['SpearOfSolarisPlayer'],
     'hammer_of_gods': ['HammerOfTheGodsPlayer'],
     'falling_thunder': ['FallingThunderPlayer'],
+    'falling_thunder_bolt': ['FallingThunderPlayer'],   # 2026-10-28：驚雷劈用掉銳星射出的投射物（FallingThunderProjectilePlayer 沒有自己的逐級表，跟猛擊同一張）
     'glacial_cascade': ['GlacialCascadePlayer'],
     'spear_throw': ['SpearThrowPlayer'],
     'explosive_spear': ['ExplosiveSpearPlayer'],
@@ -175,7 +176,7 @@ MAP = {
     'proc_magma_spray': ['MagmaSprayPlayer'],
     'proc_disengage_shockwave': ['DisengagePlayer:DisengageShockwavePlayer'],
     'proc_parry_sweep': ['ParryPlayer'],
-    'proc_shockchain_wave': ['ShockchainArrowPlayer:ShockchainArrowExplosionPlayer'],
+    # 2026-10-28：跳電震波（proc_shockchain_wave）改成電鍊箭矢的 stages.shockwave（下面 STAGE_SETS）
     'proc_shattering_burst': ['ShatteringPalmExplosionPlayer'],
     'proc_stormblast_burst': ['StormblastBoltsPlayer:StormblastBoltsExplosionPlayer'],
     'proc_ice_shard_burst': ['IceShardsPlayer:IceShardsShardPlayer'],
@@ -423,10 +424,12 @@ STAGE_SETS = {
     ('sunfire_spear', 'pulse'): 'SpearOfSolarisPulsePlayer',
     ('glacial_cascade', 'final'): 'GlacialCascadeLastSpikePlayer',
     ('fangs_of_frost', 'burst'): 'FangsOfFrostBurstPlayer',
+    ('falling_thunder', 'thunder'): 'FallingThunderPlayer',   # 2026-10-28：投射物那一段（FallingThunderProjectilePlayer）沒有自己的 damage_multiplier，跟猛擊同一張
     # 2026-10-28：分段之後剩下的（StageLeftovers）
     ('sunfire_spear', 'ground'): 'SpearOfSolarisGroundPlayer',
     ('stampede', 'explosion'): 'StampedeEruptionPlayer',
     ('forge_hammer', 'fissure'): 'ForgeHammerFissurePlayer',
+    ('chain_arrow', 'shockwave'): 'ShockchainArrowExplosionPlayer',   # 2026-10-28 照 PoE2 Shockchain Arrow；這次之前是隱藏技能 proc_shockchain_wave
 }
 
 

@@ -95,14 +95,23 @@ public final class StageEffects implements Listener {
             }
             final long headUntil = now + Math.round((last.duration() > 0 ? last.duration() : 30) * 20 * Math.max(0.1, stab.durationScale()));
             heads.addLast(headUntil);
+            // 2026-10-28 照 PoE2 Rapid Assault 的品質：(0—20)% 機率多留一個矛頭
+            final double extraTip = stab.qualityFlat(tw.exilecore.stats.GemQualityKeys.EXTRA_SPEAR_TIP);
+            if (extraTip > 0 && plugin.random().nextDouble() * 100 < extraTip) {
+                heads.addLast(headUntil);
+            }
             spearheadBuild.put(player.getUniqueId(), stab);
             service.leftovers().spearheadMaim(player, target, headUntil); // 2026-10-28 照 PoE2 Rapid Assault：插著矛頭的敵人被癱瘓
         }
         // 霜牙刺：打中被招架的敵人，用掉招架、炸開冰霜
         final SkillStages.Stage burst = SkillStages.get(skill.id(), "burst");
-        if (burst != null && plugin.combat() != null
-                && plugin.combat().debuffs().remove(target.getUniqueId(), ChargeEffects.PARRIED, player.getUniqueId(), now)) {
+        if (burst != null && plugin.combat() != null && parried(target, player, now)) {
             final SkillBuild build = loadout(player, skill.id());
+            // 2026-10-28 照 PoE2 Fangs of Frost 的品質：(0—15)% 機率不用掉被招架的減益
+            final double keep = build == null ? 0 : build.qualityFlat(tw.exilecore.stats.GemQualityKeys.KEEP_PARRIED);
+            if (!(keep > 0 && plugin.random().nextDouble() * 100 < keep)) {
+                plugin.combat().debuffs().remove(target.getUniqueId(), ChargeEffects.PARRIED, player.getUniqueId(), now);
+            }
             if (build != null) {
                 final double radius = SkillStages.radius(build, "burst", 2.2 * build.areaScale());
                 final SkillProfile blast = SkillStages.profile(build, build.profile(), "burst")
@@ -124,10 +133,11 @@ public final class StageEffects implements Listener {
     }
 
     /** 用了一個技能之後（SkillService）：引爆類技能引爆附近的矛頭；震脈掌增益中的長棍攻擊多射一發投射物。 */
-    void afterUse(final Player player, final SkillDefinition definition, final Location at) {
+    int afterUse(final Player player, final SkillDefinition definition, final Location at) {
         final long now = now();
+        int detonated = 0;
         if (at != null && definition.tags().contains(tw.exilecore.stats.TreeMechanicKeys.DETONATOR)) {
-            detonate(player, definition, at, now);
+            detonated = detonate(player, definition, at, now);
         }
         final Long until = palmUntil.get(player.getUniqueId());
         if (until != null && until < now) {
@@ -136,13 +146,14 @@ public final class StageEffects implements Listener {
                 && SkillStages.get(definition.id(), "projectile") == null) {
             firePalm(player);
         }
+        return detonated; // 2026-10-28：引爆了幾個矛頭（雷躍的品質）
     }
 
-    private void detonate(final Player player, final SkillDefinition definition, final Location at, final long now) {
+    private int detonate(final Player player, final SkillDefinition definition, final Location at, final long now) {
         final Map<UUID, Deque<Long>> mine = spearheads.get(player.getUniqueId());
         final SkillBuild build = spearheadBuild.get(player.getUniqueId());
         if (mine == null || build == null || build.definition().id().equals(definition.id())) {
-            return;
+            return 0;
         }
         final double radius = SkillStages.radius(build, "explosion", 2.4 * build.areaScale());
         final SkillProfile blast = SkillStages.profile(build, build.profile(), "explosion")
@@ -166,6 +177,17 @@ public final class StageEffects implements Listener {
             }
         }
         booms.forEach(Runnable::run);
+        return booms.size();
+    }
+
+    /** 牠身上有沒有這個玩家的「被招架」。 */
+    private boolean parried(final LivingEntity target, final Player player, final long now) {
+        for (final tw.exilecore.combat.Debuffs.Debuff debuff : plugin.combat().debuffs().active(target.getUniqueId(), now)) {
+            if (ChargeEffects.PARRIED.equals(debuff.id()) && player.getUniqueId().equals(debuff.source())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void firePalm(final Player player) {

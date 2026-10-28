@@ -149,6 +149,11 @@ public final class MinionService implements Listener, MinionHooks {
         /** 霜術士的冰甲到哪個 tick、被打時反擊的冰冷傷害 {最小, 最大}。 */
         long iceArmourUntil;
         double[] iceArmourCold = {0, 0};
+        /** 2026-10-28 照 PoE2 Skeletal Cleric 的品質：被祭司復活之後到哪個 tick 不會受到傷害（0 = 沒有）。 */
+        long immuneUntil;
+        /** 2026-10-28 照 PoE2 Bone Offering 的品質：骸骨祭的護盾（這一輪）消失了沒、消失之後「受到的傷害更少」到哪個 tick。 */
+        long shieldLostAt = -1;
+        long shieldLessUntil;
         /** 狼的躍擊：落地的 tick（0 = 沒在跳）。 */
         long leapLandAt;
         /** 這一下用的屬性表與技能描述（召喚物自己的技能：碎骨、電弧…）；null = 普攻。 */
@@ -471,6 +476,7 @@ public final class MinionService implements Listener, MinionHooks {
             minion.offering = List.copyOf(mods);
             minion.offeringUntil = now + ticks;
             if (fresh) {
+                minion.shieldLostAt = -1; // 2026-10-28：新的一輪祭品，護盾重新有
                 rebuild(minion, plugin.players().sheet(owner), false);
                 minion.mob.getWorld().spawnParticle(org.bukkit.Particle.SOUL, minion.mob.getLocation().add(0, 1, 0), 6, 0.3, 0.5, 0.3, 0.02);
             }
@@ -693,11 +699,20 @@ public final class MinionService implements Listener, MinionHooks {
      * 擊中傷害更多 100%～253%（隨寶石等級）、移動速度更多 25%。
      */
     static List<Modifier> empowered(final int level) {
-        final double more = EMPOWERED_DAMAGE[Math.max(1, Math.min(EMPOWERED_DAMAGE.length, level)) - 1] / 100.0;
+        return empowered(level, 0);
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Raise Zombie 的品質：強化的效果增加 effectPercent%（受到的傷害更少、擊中傷害更多、移動速度更多都照比例放大）。
+     */
+    static List<Modifier> empowered(final int level, final double effectPercent) {
+        final double scale = Math.max(0, 1 + effectPercent / 100.0);
+        final double more = EMPOWERED_DAMAGE[Math.max(1, Math.min(EMPOWERED_DAMAGE.length, level)) - 1] / 100.0 * scale;
+        final double less = Math.min(0.9, 0.3 * scale);
         return List.of(
-                Modifier.more(tw.exilecore.stats.StatKeys.LIFE_MAX, 1 / 0.7 - 1, "強化"),
+                Modifier.more(tw.exilecore.stats.StatKeys.LIFE_MAX, 1 / (1 - less) - 1, "強化"),
                 Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, more, "強化"),
-                Modifier.more(tw.exilecore.stats.StatKeys.MOVEMENT_SPEED, 0.25, "強化"));
+                Modifier.more(tw.exilecore.stats.StatKeys.MOVEMENT_SPEED, 0.25 * scale, "強化"));
     }
 
     /** 召出來（超過上限就把同一個技能最舊的收掉）。 */
@@ -715,7 +730,7 @@ public final class MinionService implements Listener, MinionHooks {
                     build.profile().tags());
             if (benefit > 0) {
                 for (int i = 0; i < benefit; i++) {
-                    summon(player, build, 3, false, empowered(build.level())); // 吃一顆銳星：一隻強化的加兩隻一般的，從面前爬出來
+                    summon(player, build, 3, false, empowered(build.level(), build.qualityFlat(tw.exilecore.stats.GemQualityKeys.ZOMBIE_EMPOWER_EFFECT))); // 吃一顆銳星：一隻強化的加兩隻一般的，從面前爬出來
                 }
                 return;
             }
@@ -752,7 +767,7 @@ public final class MinionService implements Listener, MinionHooks {
             return;
         }
         final long now = now();
-        oldest.untilTick = now + build.durationTicks(spec.duration());
+        oldest.untilTick = now + build.durationTicks(spec.duration() + durationFlat(build));
         if (oldest.build != build) {
             oldest.build = build; // 技能升級、換輔助了：下一 tick 照新的重算
             oldest.nextRebuild = 0;
@@ -845,7 +860,7 @@ public final class MinionService implements Listener, MinionHooks {
             }
             // 2026-10-26 照 PoE2 附魂術：附身的召喚物用那種怪物原本的倍率（monsters.yml 的 types；生命、傷害）
             final SummonSpec own = spec.spectre() && spectreKind != null ? spectreSpec(spec, spectreKind) : spec;
-            final Minion minion = new Minion(owner, build, own, mob, name, now, spec.permanent() ? 0 : now + build.durationTicks(spec.duration()));
+            final Minion minion = new Minion(owner, build, own, mob, name, now, spec.permanent() ? 0 : now + build.durationTicks(spec.duration() + durationFlat(build)));
             minion.spectreType = spec.spectre() ? spectreKind : null;
             if (i == 0 && !first.isEmpty()) {
                 minion.empowered = first;
@@ -889,7 +904,7 @@ public final class MinionService implements Listener, MinionHooks {
         if (mob == null) {
             return;
         }
-        final Minion minion = new Minion(owner, build, spec, mob, name, now, now + build.durationTicks(spec.duration()));
+        final Minion minion = new Minion(owner, build, spec, mob, name, now, now + build.durationTicks(spec.duration() + durationFlat(build)));
         minion.decoy = true;
         rebuild(minion, plugin.players().sheet(player), true);
         final AttributeInstance speed = mob.getAttribute(Attribute.MOVEMENT_SPEED);
@@ -1120,6 +1135,14 @@ public final class MinionService implements Listener, MinionHooks {
         if (armoured) {
             ownerModifiers.addAll(ICE_ARMOUR); // 2026-10-26 霜術士的冰甲：受到的擊中傷害更少 40%
         }
+        // 2026-10-28 照 PoE2 Bone Offering 的品質：護盾消失後 1 秒受到的傷害更少 x%
+        final boolean shieldLost = minion.shieldLessUntil > now();
+        if (shieldLost) {
+            final double less = shieldLostLess(minion.offering);
+            for (final tw.exilecore.stats.DamageType type : tw.exilecore.stats.DamageType.values()) {
+                ownerModifiers.add(Modifier.flat(tw.exilecore.stats.StatKeys.DEBUFF_TAKEN + type.tag(), -less, "骸骨祭"));
+            }
+        }
         final boolean treeBuffed = minion.treeBuffUntil > now();
         if (treeBuffed) {
             ownerModifiers.addAll(minion.treeBuff); // 2026-10-26 天賦樹：夥伴擊殺時的疾速
@@ -1135,8 +1158,9 @@ public final class MinionService implements Listener, MinionHooks {
         final double[] factors = MinionSheets.poe2Factors(config, minion.build.level(),
                 ownerPlayer == null ? 0 : plugin.players().get(ownerPlayer).level(), monsters::lifeAt, monsters::damageAt);
         ownerModifiers.addAll(MinionEstimates.ownerDerived(minion.build, ownerSheet, factors[1], !minion.decoy));
-        final long expiry = Math.min(Math.min(Math.min(offered ? minion.offeringUntil + 1 : Long.MAX_VALUE, armoured ? minion.iceArmourUntil + 1 : Long.MAX_VALUE),
-                treeBuffed ? minion.treeBuffUntil + 1 : Long.MAX_VALUE), crazed != null ? crazed.getValue() + 1 : Long.MAX_VALUE);
+        final long expiry = Math.min(Math.min(Math.min(Math.min(offered ? minion.offeringUntil + 1 : Long.MAX_VALUE, armoured ? minion.iceArmourUntil + 1 : Long.MAX_VALUE),
+                treeBuffed ? minion.treeBuffUntil + 1 : Long.MAX_VALUE), crazed != null ? crazed.getValue() + 1 : Long.MAX_VALUE),
+                shieldLost ? minion.shieldLessUntil + 1 : Long.MAX_VALUE);
         // 2026-10：每 2 秒看一次，主人的屬性、光環、技能都沒變就不用重算（以前每隻每 2 秒整個重算、重送血量與移動速度給附近的人）
         if (!fresh && minion.sheet != null && minion.builtFor == minion.build && base.equals(minion.builtBase)
                 && ownerModifiers.equals(minion.builtModifiers)) {
@@ -1431,8 +1455,9 @@ public final class MinionService implements Listener, MinionHooks {
             }
         }
         // 2026-10-26 照 PoE2：狂卒每點怒氣攻擊傷害更多 1%
+        // 2026-10-28 照 PoE2 Skeletal Reaver 的品質：召喚物的怒氣效果增加 (0—20)%
         final Attack raged = minion.rage > 0 && minion.profile != null ? with(minion, minion.profile.withLocal(List.of(Modifier.more(
-                tw.exilecore.stats.StatKeys.DAMAGE, MinionAbilities.RAGE_DAMAGE * minion.rage, "怒氣")))) : null;
+                tw.exilecore.stats.StatKeys.DAMAGE, MinionAbilities.RAGE_DAMAGE * minion.rage * rageEffect(minion), "怒氣")))) : null;
         for (final LivingEntity hit : hits) {
             if (hit.isValid() && !hit.isDead()) {
                 if (raged != null) {
@@ -1798,11 +1823,22 @@ public final class MinionService implements Listener, MinionHooks {
         if (!MinionAbilities.SWARM.equals(minion.skillId())) {
             return true;
         }
-        final double radius = MinionAbilities.SWARM_RADIUS * areaScale(minion) + target.getWidth() / 2;
+        // 2026-10-28 照 PoE2 Ravenous Swarm 的品質：攻擊半徑 +(0—1) 公尺（加在 4 公尺上，再乘範圍）
+        final double radius = (MinionAbilities.SWARM_RADIUS + minion.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.SWARM_RADIUS)) * areaScale(minion) + target.getWidth() / 2;
         return target.getWorld().equals(owner.getWorld()) && target.getLocation().distanceSquared(owner.getLocation()) <= radius * radius;
     }
 
     /** 範圍倍率換成半徑倍率（√）。 */
+    /** 2026-10-28 照 PoE2 技能品質（掘骸的骨構體）：召喚物的持續時間 +x 秒（加在基礎上，再乘持續時間倍率）。 */
+    static double durationFlat(final SkillBuild build) {
+        return Math.max(0, SkillZones.localFlat(build.profile(), tw.exilecore.stats.GemQualityKeys.DURATION_FLAT));
+    }
+
+    /** 2026-10-28 照 PoE2 Skeletal Reaver 的品質：召喚物的怒氣效果倍率（1 + 品質的 x%）。 */
+    private static double rageEffect(final Minion minion) {
+        return Math.max(0, 1 + (minion.build == null ? 0 : minion.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.MINION_RAGE_EFFECT)) / 100.0);
+    }
+
     private static double areaScale(final Minion minion) {
         return minion.effective == null || minion.profile == null ? 1.0
                 : Math.sqrt(Math.max(0.05, minion.effective.apply(tw.exilecore.stats.StatKeys.SKILL_AREA, 1.0, minion.profile.tags())));
@@ -1924,6 +1960,22 @@ public final class MinionService implements Listener, MinionHooks {
             case MinionAbilities.ARSONIST -> {
                 attack(minion, target); // 火彈：1.6 格、70% 轉火焰（summon 的 radius、convert）
                 detonate(minion.owner, target.getLocation(), MinionAbilities.FIRE_BOMB_RADIUS * areaScale(minion), minion);
+                // 2026-10-28 照 PoE2 Skeletal Arsonist 的品質：多丟 (0—2) 顆火彈（無條件捨去），散開落在附近其他的敵人身上（附近沒有別的就不丟）
+                final int extra = OriginalSkills.qualityInt(minion.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.EXTRA_PROJECTILES));
+                if (extra > 0) {
+                    int thrown = 0;
+                    for (final LivingEntity other : targets.around(target.getLocation(), MinionAbilities.EXTRA_BOMB_SPREAD, owner)) {
+                        if (thrown >= extra) {
+                            break;
+                        }
+                        if (other == target || other.getLocation().distanceSquared(target.getLocation()) < 1e-4) {
+                            continue;
+                        }
+                        attack(minion, other);
+                        detonate(minion.owner, other.getLocation(), MinionAbilities.FIRE_BOMB_RADIUS * areaScale(minion), minion);
+                        thrown++;
+                    }
+                }
                 return minion.attackTicks;
             }
             case MinionAbilities.REAVER -> {
@@ -1932,7 +1984,7 @@ public final class MinionService implements Listener, MinionHooks {
                     minion.rage = Math.min(MinionAbilities.RAGE_MAX, minion.rage + MinionAbilities.RAGE_ON_HIT); // 激怒：擊中獲得 2 點怒氣
                     minion.rageGainedAt = now;
                 }
-                return Math.max(4, Math.round(minion.attackTicks / (1 + MinionAbilities.RAGE_SPEED * minion.rage)));
+                return Math.max(4, Math.round(minion.attackTicks / (1 + MinionAbilities.RAGE_SPEED * minion.rage * rageEffect(minion))));
             }
             default -> {
             }
@@ -2097,8 +2149,18 @@ public final class MinionService implements Listener, MinionHooks {
                 cleric.ready.put(HEAL, now + castTicks(cleric, MinionAbilities.HEAL_CAST));
             }
         }
-        if (!cleric.onCooldown(REVIVE, now) && auras != null && auras.reviveSkeleton(cleric.owner, now)) {
+        final String revived = !cleric.onCooldown(REVIVE, now) && auras != null ? auras.reviveSkeleton(cleric.owner, now) : null;
+        if (revived != null) {
             cleric.startCooldown(REVIVE, now, MinionAbilities.REVIVE_COOLDOWN);
+            // 2026-10-28 照 PoE2 Skeletal Cleric 的品質：復活的骷髏 (0—3) 秒不會受到傷害
+            final double immune = cleric.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.CLERIC_REVIVE_IMMUNE);
+            if (immune > 0) {
+                final UUID back = newest(cleric.owner, revived);
+                final Minion fresh = back == null ? null : byEntity.get(back);
+                if (fresh != null) {
+                    fresh.immuneUntil = now + Math.round(immune * 20);
+                }
+            }
             Fx.spawn(cleric.mob.getWorld(), org.bukkit.Particle.TOTEM_OF_UNDYING, cleric.mob.getLocation().add(0, 1.2, 0), 10, 0.3, 0.5, 0.3, 0.1);
         }
     }
@@ -2769,6 +2831,45 @@ public final class MinionService implements Listener, MinionHooks {
         }
     }
 
+    /**
+     * 2026-10-28 照 PoE2 Bone Offering 的品質（Shielded Minions take x% less Damage for 1 second after Shield is lost）：
+     * 骸骨祭給的護盾吸收「第一下超過最大生命 25% 的擊中」（我們的骸骨祭用物理減傷代替護盾，這裡只算護盾什麼時候沒掉）；
+     * 護盾沒掉之後 1 秒受到的傷害更少 x%。
+     */
+    @Override
+    public void hitTaken(final LivingEntity entity, final double total) {
+        final Minion minion = byEntity.get(entity.getUniqueId());
+        final long now = now();
+        if (minion == null || minion.offeringUntil <= now || minion.shieldLostAt >= 0 || minion.effective == null) {
+            return;
+        }
+        final double less = shieldLostLess(minion.offering);
+        if (less <= 0 || total <= MinionSheets.life(minion.effective) * SHIELD_HIT_FRACTION) {
+            return;
+        }
+        minion.shieldLostAt = now;
+        minion.shieldLessUntil = now + SHIELD_LOST_TICKS;
+        final Player owner = plugin.getServer().getPlayer(minion.owner);
+        if (owner != null) {
+            rebuild(minion, plugin.players().sheet(owner), false);
+        }
+    }
+
+    /** 骸骨祭的護盾吸收超過最大生命幾成的擊中（PoE2 25%）、消失之後「更少傷害」撐幾 tick（1 秒）。 */
+    static final double SHIELD_HIT_FRACTION = 0.25;
+    static final long SHIELD_LOST_TICKS = 20;
+
+    /** 祭品的增益裡帶的「護盾消失後更少 x%」（骸骨祭的品質）。 */
+    static double shieldLostLess(final List<Modifier> offering) {
+        double total = 0;
+        for (final Modifier modifier : offering) {
+            if (modifier.stat().equals(tw.exilecore.stats.GemQualityKeys.SHIELD_LOST_LESS)) {
+                total += modifier.value();
+            }
+        }
+        return Math.min(90, Math.max(0, total));
+    }
+
     @Override
     public Player owner(final LivingEntity entity) {
         final Minion minion = byEntity.get(entity.getUniqueId());
@@ -3007,7 +3108,8 @@ public final class MinionService implements Listener, MinionHooks {
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onSwarmHit(final EntityDamageByEntityEvent event) {
         final Minion target = byEntity.get(event.getEntity().getUniqueId());
-        if (target != null && (MinionAbilities.SWARM.equals(target.skillId()) || MinionAbilities.commandOnly(target.skillId()))) {
+        if (target != null && (MinionAbilities.SWARM.equals(target.skillId()) || MinionAbilities.commandOnly(target.skillId())
+                || target.immuneUntil > now())) { // 2026-10-28 照 PoE2 Skeletal Cleric 的品質：剛復活的骷髏
             event.setCancelled(true); // 2026-10-27：砲手、巨靈也不會受傷（PoE2 MinionsAreUndamagable）
         }
     }

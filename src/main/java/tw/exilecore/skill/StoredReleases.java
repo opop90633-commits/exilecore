@@ -140,7 +140,9 @@ final class StoredReleases implements Listener {
                 final int level = level(plugin.players().get(attacker), PLAGUE_BEARER);
                 if (expected > 0 && level > 0) {
                     final double[] values = stored.computeIfAbsent(attacker.getUniqueId(), uuid -> new double[2]);
-                    values[1] = store(values[1], expected * PLAGUE_PERCENT / 100.0, at(PLAGUE_CAP, level));
+                    // 2026-10-28 照 PoE2 Plague Bearer 的品質：另外存中毒傷害的 (0—2)%
+                    values[1] = store(values[1], expected * (PLAGUE_PERCENT + service.qualityFlat(attacker, PLAGUE_BEARER,
+                            tw.exilecore.stats.GemQualityKeys.PLAGUE_BEARER_PERCENT)) / 100.0, at(PLAGUE_CAP, level));
                 }
             }
         }
@@ -165,8 +167,9 @@ final class StoredReleases implements Listener {
             return null;
         }
         final PlayerState state = plugin.players().get(player);
+        // 2026-10-28 照 PoE2：寶石的品質帶到爆開上（鐵壁守：暈眩累積更多 (0—50)%）
         final SkillBuild base = SkillBuild.of(service.config(), release, build.level(), state.level(), false, build.supports(), state.weaponTags(),
-                plugin.players().sheet(player));
+                plugin.players().sheet(player), java.util.Set.of(), build.qualityModifiers());
         final SkillProfile profile = base.profile();
         final DamagePacket packet = new DamagePacket().set(DamageType.PHYSICAL, amount);
         final SkillBuild withDamage = base.withProfile(new SkillProfile(profile.id(), profile.tags(), profile.effectiveness(), packet,

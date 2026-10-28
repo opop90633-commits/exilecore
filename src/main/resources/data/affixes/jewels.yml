@@ -1,3 +1,4 @@
+# 2026-10-28 照站長「T1 太好洗」：每條詞綴最強的三階權重 ×0.5／×0.7／×0.85（其他階不動；只有一階的不動）。
 # 珠寶詞綴（只出現在珠寶上）：小幅的百分比加成，照 PoE2 的珠寶。顏色決定能出什麼：
 #   spawn_tags: [ruby]      赤星晶（白星晶也會出）   spawn_tags: [emerald]  翠星晶   spawn_tags: [sapphire]  蒼星晶
 #   spawn_tags: [jewel]     每一種珠寶都會出
@@ -15,9 +16,9 @@ jewel_life_inc:
   names: [星骸的, 不朽的, 健壯的]
   text: "增加 {value}% 最大生命"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [8, 8] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [6, 7] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [4, 5] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [8, 8] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [6, 7] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [4, 5] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: life.max, type: INCREASED, value: "{value}" }
 
@@ -28,9 +29,9 @@ jewel_armour_inc:
   names: [不落的, 堡壘的, 堅固的]
   text: "增加 {value}% 護甲"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [21, 25] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [15, 20] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [21, 25] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [15, 20] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [10, 14] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
 
@@ -41,9 +42,9 @@ jewel_phys_inc:
   names: [屠戮的, 殘暴的, 銳利的]
   text: "增加 {value}% 物理傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [19, 22] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [19, 22] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [15, 18] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [10, 14] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
 
@@ -54,9 +55,9 @@ jewel_fire_inc:
   names: [煉獄的, 焚燒的, 灼熱的]
   text: "增加 {value}% 火焰傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [19, 22] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [19, 22] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [15, 18] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [10, 14] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
 
@@ -68,9 +69,9 @@ jewel_melee_inc:
   text: "增加 {value}% 近戰傷害"
   chips: [damage, attack]   # PoE2 的標籤（jewel MeleeDamage）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [17, 19] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [17, 19] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [13, 16] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [melee] }
 
@@ -81,9 +82,9 @@ jewel_area_inc:
   names: [崩山的, 震地的, 轟擊的]
   text: "增加 {value}% 範圍傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [17, 19] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [17, 19] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [13, 16] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [area] }
 
@@ -94,9 +95,9 @@ jewel_attack_inc:
   names: [戰神的, 戰士的, 鬥士的]
   text: "增加 {value}% 攻擊傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [17, 19] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [17, 19] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [13, 16] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [attack] }
 
@@ -107,9 +108,9 @@ jewel_evasion_inc:
   names: [無影的, 幻影的, 輕盈的]
   text: "增加 {value}% 閃避"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [21, 25] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [15, 20] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [21, 25] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [15, 20] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [10, 14] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
 
@@ -120,9 +121,9 @@ jewel_cold_inc:
   names: [永凍的, 凍結的, 冰霜的]
   text: "增加 {value}% 冰冷傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [19, 22] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [19, 22] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [15, 18] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [10, 14] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
 
@@ -133,9 +134,9 @@ jewel_proj_inc:
   names: [貫日的, 穿刺的, 飛射的]
   text: "增加 {value}% 投射物傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [17, 19] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [17, 19] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [13, 16] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
 
@@ -146,9 +147,9 @@ jewel_es_inc:
   names: [星耀的, 星輝的, 微光的]
   text: "增加 {value}% 最大能量護盾"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [11, 12] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [8, 10] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 7] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [11, 12] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [8, 10] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [5, 7] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
 
@@ -159,9 +160,9 @@ jewel_mana_inc:
   names: [星海的, 深泉的, 清明的]
   text: "增加 {value}% 最大魔力"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [11, 12] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [8, 10] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 7] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [11, 12] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [8, 10] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [5, 7] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: mana.max, type: INCREASED, value: "{value}" }
 
@@ -172,9 +173,9 @@ jewel_lightning_inc:
   names: [天雷的, 雷鳴的, 帶電的]
   text: "增加 {value}% 閃電傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [19, 22] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [19, 22] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [15, 18] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [10, 14] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
 
@@ -185,9 +186,9 @@ jewel_chaos_inc:
   names: [深淵的, 腐蝕的, 汙濁的]
   text: "增加 {value}% 混沌傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [19, 22] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [19, 22] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [15, 18] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [10, 14] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
 
@@ -198,9 +199,9 @@ jewel_spell_inc:
   names: [大法師的, 奧法的, 咒術的]
   text: "增加 {value}% 法術傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [17, 19] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [17, 19] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [13, 16] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -211,9 +212,9 @@ jewel_minion_inc:
   names: [亡者之主的, 役靈的, 喚靈的]
   text: "增加 {value}% 召喚物傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [19, 22] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [19, 22] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [15, 18] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [10, 14] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -224,9 +225,9 @@ jewel_minion_life:
   names: [不死軍團的, 守墓人的, 護靈的]
   text: "增加 {value}% 召喚物最大生命"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [19, 22] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [19, 22] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [15, 18] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [10, 14] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -239,9 +240,9 @@ jewel_str:
   names: [之泰坦, 之巨人, 之公牛]
   text: "+{value} 力量"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [17, 20] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [13, 16] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: attr.str, type: FLAT, value: "{value}" }
 
@@ -252,9 +253,9 @@ jewel_dex:
   names: [之疾風, 之獵豹, 之山貓]
   text: "+{value} 敏捷"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [17, 20] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [13, 16] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: attr.dex, type: FLAT, value: "{value}" }
 
@@ -265,9 +266,9 @@ jewel_int:
   names: [之大賢, 之賢者, 之學徒]
   text: "+{value} 智慧"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [17, 20] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [13, 16] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: attr.int, type: FLAT, value: "{value}" }
 
@@ -278,9 +279,9 @@ jewel_all_attr:
   names: [之眾神, 之星辰, 之英雄]
   text: "+{value} 全部屬性"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 100, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 300, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 800, value: [4, 6] }
+    - { tier: 0, ilvl: 75, weight: 50, value: [9, 10] }   # 2026-10-28 站長：前三階權重 ×0.5（100 → 50）
+    - { tier: 1, ilvl: 50, weight: 210, value: [7, 8] }   # 2026-10-28 站長：前三階權重 ×0.7（300 → 210）
+    - { tier: 2, ilvl: 1, weight: 680, value: [4, 6] }   # 2026-10-28 站長：前三階權重 ×0.85（800 → 680）
   mods:
     - { stat: attr.str, type: FLAT, value: "{value}" }
     - { stat: attr.dex, type: FLAT, value: "{value}" }
@@ -293,9 +294,9 @@ jewel_res_fire:
   names: [之火龍, 之火蜥, 之餘燼]
   text: "+{value}% 火焰抗性"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [16, 18] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [13, 15] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [16, 18] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [13, 15] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: resist.fire, type: FLAT, value: "{value}" }
 
@@ -306,9 +307,9 @@ jewel_res_cold:
   names: [之冰龍, 之雪豹, 之冰雹]
   text: "+{value}% 冰冷抗性"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [16, 18] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [13, 15] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [16, 18] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [13, 15] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: resist.cold, type: FLAT, value: "{value}" }
 
@@ -319,9 +320,9 @@ jewel_res_lightning:
   names: [之雷龍, 之雷雲, 之靜電]
   text: "+{value}% 閃電抗性"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [16, 18] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [13, 15] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [16, 18] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [13, 15] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: resist.lightning, type: FLAT, value: "{value}" }
 
@@ -332,9 +333,9 @@ jewel_res_chaos:
   names: [之驅邪, 之淨化, 之驅毒]
   text: "+{value}% 混沌抗性"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 100, value: [11, 13] }
-    - { tier: 1, ilvl: 50, weight: 300, value: [8, 10] }
-    - { tier: 2, ilvl: 1, weight: 800, value: [5, 7] }
+    - { tier: 0, ilvl: 75, weight: 50, value: [11, 13] }   # 2026-10-28 站長：前三階權重 ×0.5（100 → 50）
+    - { tier: 1, ilvl: 50, weight: 210, value: [8, 10] }   # 2026-10-28 站長：前三階權重 ×0.7（300 → 210）
+    - { tier: 2, ilvl: 1, weight: 680, value: [5, 7] }   # 2026-10-28 站長：前三階權重 ×0.85（800 → 680）
   mods:
     - { stat: resist.chaos, type: FLAT, value: "{value}" }
 
@@ -345,9 +346,9 @@ jewel_res_all:
   names: [之光譜, 之稜鏡, 之彩虹]
   text: "+{value}% 全部元素抗性"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 100, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 300, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 800, value: [4, 6] }
+    - { tier: 0, ilvl: 75, weight: 50, value: [9, 10] }   # 2026-10-28 站長：前三階權重 ×0.5（100 → 50）
+    - { tier: 1, ilvl: 50, weight: 210, value: [7, 8] }   # 2026-10-28 站長：前三階權重 ×0.7（300 → 210）
+    - { tier: 2, ilvl: 1, weight: 680, value: [4, 6] }   # 2026-10-28 站長：前三階權重 ×0.85（800 → 680）
   mods:
     - { stat: resist.fire, type: FLAT, value: "{value}" }
     - { stat: resist.cold, type: FLAT, value: "{value}" }
@@ -360,9 +361,9 @@ jewel_attack_speed:
   names: [之神速, 之疾速, 之敏捷]
   text: "增加 {value}% 攻擊速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [7, 7] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [5, 6] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 4] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [7, 7] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [5, 6] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [3, 4] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}" }
 
@@ -373,9 +374,9 @@ jewel_cast_speed:
   names: [之神念, 之急智, 之靈巧]
   text: "增加 {value}% 施法速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [7, 7] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [5, 6] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 4] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [7, 7] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [5, 6] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [3, 4] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: cast.speed, type: INCREASED, value: "{value}" }
 
@@ -386,9 +387,9 @@ jewel_crit_chance:
   names: [之穿刺, 之致命, 之精準]
   text: "增加 {value}% 暴擊率"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [17, 20] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [13, 16] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}" }
 
@@ -399,9 +400,9 @@ jewel_crit_multi:
   names: [之滅世, 之毀滅, 之殘酷]
   text: "增加 {value}% 暴擊傷害加成"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [16, 18] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [13, 15] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [16, 18] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [13, 15] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}" }
 
@@ -412,9 +413,9 @@ jewel_accuracy:
   names: [之穿楊, 之鷹眼, 之神射]
   text: "增加 {value}% 命中值"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [17, 20] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [13, 16] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [17, 20] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [13, 16] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: accuracy, type: INCREASED, value: "{value}" }
 
@@ -425,9 +426,9 @@ jewel_proj_speed:
   names: [之流星, 之飛矢, 之疾風]
   text: "增加 {value}% 投射物速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [13, 15] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [10, 12] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [6, 9] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [13, 15] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [10, 12] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [6, 9] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
 
@@ -438,9 +439,9 @@ jewel_life_regen:
   names: [之涅槃, 之不滅, 之再生]
   text: "每秒回復 {value} 生命"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [9, 11] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [6, 8] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 5] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [9, 11] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [6, 8] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [3, 5] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: life.regen, type: FLAT, value: "{value}" }
 
@@ -451,9 +452,9 @@ jewel_block:
   names: [之壁壘, 之盾牆, 之格擋]
   text: "+{value}% 格擋率"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 100, value: [4, 4] }
-    - { tier: 1, ilvl: 50, weight: 300, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 800, value: [1, 2] }
+    - { tier: 0, ilvl: 75, weight: 50, value: [4, 4] }   # 2026-10-28 站長：前三階權重 ×0.5（100 → 50）
+    - { tier: 1, ilvl: 50, weight: 210, value: [3, 3] }   # 2026-10-28 站長：前三階權重 ×0.7（300 → 210）
+    - { tier: 2, ilvl: 1, weight: 680, value: [1, 2] }   # 2026-10-28 站長：前三階權重 ×0.85（800 → 680）
   mods:
     - { stat: block.chance, type: FLAT, value: "{value}" }
 
@@ -464,9 +465,9 @@ jewel_mana_regen:
   names: [之泉源, 之靜思, 之冥想]
   text: "增加 {value}% 魔力再生速度"   # 2026-10-27 照 PoE2 用語「魔力再生速度」；這次之前寫「魔力回復」
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [21, 25] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [16, 20] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 15] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [21, 25] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [16, 20] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [10, 15] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: mana.regen, type: INCREASED, value: "{value}" }
 
@@ -477,9 +478,9 @@ jewel_skill_area:
   names: [之廣域, 之擴散, 之延展]
   text: "增加 {value}% 範圍效果"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 100, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 300, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 800, value: [4, 6] }
+    - { tier: 0, ilvl: 75, weight: 50, value: [9, 10] }   # 2026-10-28 站長：前三階權重 ×0.5（100 → 50）
+    - { tier: 1, ilvl: 50, weight: 210, value: [7, 8] }   # 2026-10-28 站長：前三階權重 ×0.7（300 → 210）
+    - { tier: 2, ilvl: 1, weight: 680, value: [4, 6] }   # 2026-10-28 站長：前三階權重 ×0.85（800 → 680）
   mods:
     - { stat: skill.area, type: INCREASED, value: "{value}" }
 
@@ -491,9 +492,9 @@ jewel_ignite_mag:
   names: [業火的, 焚身的, 悶燒的]
   text: "增加 {value}% 點燃傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [20, 24] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [16, 19] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [10, 15] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [20, 24] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [16, 19] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [10, 15] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
 
@@ -505,9 +506,9 @@ jewel_bleed_mag:
   text: "增加 {value}% 流血傷害"
   chips: [ailment, attack]   # PoE2 的標籤（jewel BleedDotMultiplier/BleedDuration）
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [20, 24] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [16, 19] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [10, 15] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [20, 24] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [16, 19] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [10, 15] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
 
@@ -518,9 +519,9 @@ jewel_poison_mag:
   names: [瘟毒的, 毒蝕的, 微毒的]
   text: "增加 {value}% 中毒傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [20, 24] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [16, 19] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [10, 15] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [20, 24] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [16, 19] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [10, 15] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: poison.magnitude, type: INCREASED, value: "{value}" }
 
@@ -531,9 +532,9 @@ jewel_totem_inc:
   names: [祖靈的, 立柱的, 刻紋的]
   text: "增加 {value}% 圖騰傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [18, 21] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [15, 17] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [10, 14] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [18, 21] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [15, 17] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [10, 14] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [totem] }
 
@@ -544,9 +545,9 @@ jewel_trap_inc:
   names: [詭雷的, 引信的, 機關的]
   text: "增加 {value}% 榴彈傷害"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [18, 21] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [15, 17] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [10, 14] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [18, 21] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [15, 17] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [10, 14] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [grenade] }   # 2026-10-17：沒有陷阱了，拿掉陷阱那條（榴彈照吃）
 
@@ -557,9 +558,9 @@ jewel_leech_life:
   names: [之飲血, 之噬血, 之汲取]
   text: "攻擊造成的物理傷害有 {value/10}% 偷取為生命"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [5, 6] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [3, 4] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [2, 2] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [5, 6] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [3, 4] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [2, 2] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: leech.life, type: FLAT, value: "{value/10}", tags: [attack] }
 
@@ -570,9 +571,9 @@ jewel_leech_mana:
   names: [之汲魔, 之啜飲, 之吸取]
   text: "攻擊造成的物理傷害有 {value/10}% 偷取為魔力"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [5, 6] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [3, 4] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [2, 2] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [5, 6] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [3, 4] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [2, 2] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: leech.mana, type: FLAT, value: "{value/10}", tags: [attack] }
 
@@ -583,9 +584,9 @@ jewel_life_on_kill:
   names: [之收割, 之斬獲, 之拾荒]
   text: "擊殺時回復 {value/10}% 最大生命"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [7, 8] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [5, 6] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [3, 4] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [7, 8] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [5, 6] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [3, 4] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: life.on_kill, type: FLAT, value: "{value/10}" }
 
@@ -596,9 +597,9 @@ jewel_mana_on_kill:
   names: [之吞噬, 之汲靈, 之回收]
   text: "擊殺時回復 {value/10}% 最大魔力"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [6, 8] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [4, 5] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [9, 10] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [6, 8] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [4, 5] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: mana.on_kill, type: FLAT, value: "{value/10}" }
 
@@ -609,9 +610,9 @@ jewel_life_on_hit:
   names: [之回春, 之生機, 之微補]
   text: "攻擊每次擊中回復 {value} 生命"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [4, 5] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [3, 3] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [1, 2] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [4, 5] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [3, 3] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [1, 2] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: life.on_hit, type: FLAT, value: "{value}", tags: [attack] }
 
@@ -622,9 +623,9 @@ jewel_ignite_chance:
   names: [之燎原, 之火種, 之星火]
   text: "增加 {value}% 點燃機率"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [26, 30] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [20, 25] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [12, 19] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [26, 30] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [20, 25] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [12, 19] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: ignite.chance, type: INCREASED, value: "{value}" }
 
@@ -636,9 +637,9 @@ jewel_bleed_chance:
   text: "攻擊擊中時 {value}% 機率造成流血"
   chips: [attack, ailment]   # PoE2 的標籤（jewel BaseChanceToBleed）；2026-10-17 補攻擊
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [6, 7] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [4, 5] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [2, 3] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [6, 7] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [4, 5] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [2, 3] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: bleed.chance, type: FLAT, value: "{value}", tags: [attack] }
 
@@ -649,9 +650,9 @@ jewel_poison_chance:
   names: [之毒牙, 之毒液, 之毒刺]
   text: "擊中時 {value}% 機率造成中毒"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [6, 7] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [4, 5] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [2, 3] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [6, 7] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [4, 5] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [2, 3] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: poison.chance, type: FLAT, value: "{value}" }
 
@@ -662,9 +663,9 @@ jewel_shock_chance:
   names: [之電擊, 之電光, 之帶電]
   text: "增加 {value}% 感電機率"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [26, 30] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [20, 25] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [12, 19] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [26, 30] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [20, 25] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [12, 19] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: shock.chance, type: INCREASED, value: "{value}" }
 
@@ -675,9 +676,9 @@ jewel_freeze_buildup:
   names: [之冰封, 之凝凍, 之霜凍]
   text: "增加 {value}% 凍結累積"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [26, 30] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [20, 25] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [12, 19] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [26, 30] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [20, 25] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [12, 19] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
 
@@ -688,9 +689,9 @@ jewel_chill_effect:
   names: [之凝滯, 之遲緩, 之冷顫]
   text: "增加 {value}% 冰緩效果"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [10, 12] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [7, 9] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [4, 6] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [10, 12] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [7, 9] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [4, 6] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: chill.effect, type: INCREASED, value: "{value}" }
 
@@ -701,9 +702,9 @@ jewel_shock_effect:
   names: [之麻痺, 之電殛, 之酥麻]
   text: "增加 {value}% 感電效果"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [10, 12] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [7, 9] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [4, 6] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [10, 12] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [7, 9] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [4, 6] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: shock.effect, type: INCREASED, value: "{value}" }
 
@@ -714,9 +715,9 @@ jewel_ailment_duration:
   names: [之綿延, 之持久, 之延續]
   text: "增加 {value}% 異常狀態持續時間"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [10, 12] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [7, 9] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [4, 6] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [10, 12] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [7, 9] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [4, 6] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: ailment.duration, type: INCREASED, value: "{value}" }
 
@@ -727,9 +728,9 @@ jewel_ailment_threshold:
   names: [之鎮定, 之泰然, 之平靜]
   text: "增加 {value}% 元素異常門檻"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [18, 22] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [13, 17] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [8, 12] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [18, 22] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [13, 17] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [8, 12] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: ailment.threshold, type: INCREASED, value: "{value}" }
 
@@ -740,9 +741,9 @@ jewel_self_ailment:
   names: [之淨身, 之袪病, 之康復]
   text: "身上的異常狀態持續時間減少 {value}%"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [10, 12] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [7, 9] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [4, 6] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [10, 12] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [7, 9] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [4, 6] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: ailment.self_duration, type: INCREASED, value: "-{value}" }
 
@@ -753,9 +754,9 @@ jewel_minion_speed:
   names: [之鞭策, 之催動, 之號令]
   text: "增加 {value}% 召喚物攻擊速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [7, 8] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [5, 6] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [3, 4] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [7, 8] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [5, 6] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [3, 4] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -766,9 +767,9 @@ jewel_minion_move:
   names: [之疾行, 之驅馳, 之跟隨]
   text: "增加 {value}% 召喚物移動速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [10, 12] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [7, 9] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [4, 6] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [10, 12] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [7, 9] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [4, 6] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: movement.speed, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -779,9 +780,9 @@ jewel_aura_effect:
   names: [之號角, 之旗手, 之領袖]
   text: "增加 {value}% 光環效果"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [5, 6] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [4, 4] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [2, 3] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [5, 6] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [4, 4] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [2, 3] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: aura.effect, type: INCREASED, value: "{value}" }
 
@@ -793,9 +794,9 @@ jewel_aura_reservation:
   text: "光環的保留效率增加 {value}%"
   # 2026-10 精魂改版：不再出現（權重 0），已經有的物品保留
   tiers:
-    - { tier: 0, ilvl: 75, weight: 0, value: [5, 6] }
-    - { tier: 1, ilvl: 50, weight: 0, value: [3, 4] }
-    - { tier: 2, ilvl: 1, weight: 0, value: [2, 2] }
+    - { tier: 0, ilvl: 75, weight: 1, value: [5, 6] }   # 2026-10-28 站長：前三階權重 ×0.5（0 → 1）
+    - { tier: 1, ilvl: 50, weight: 1, value: [3, 4] }   # 2026-10-28 站長：前三階權重 ×0.7（0 → 1）
+    - { tier: 2, ilvl: 1, weight: 1, value: [2, 2] }   # 2026-10-28 站長：前三階權重 ×0.85（0 → 1）
   mods:
     - { stat: aura.reservation, type: INCREASED, value: "-{value}" }
 
@@ -806,9 +807,9 @@ jewel_skill_duration:
   names: [之悠長, 之延時, 之留痕]
   text: "增加 {value}% 技能持續時間"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [10, 12] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [7, 9] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [4, 6] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [10, 12] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [7, 9] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [4, 6] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: skill.duration, type: INCREASED, value: "{value}" }
 
@@ -819,9 +820,9 @@ jewel_es_recharge:
   names: [之靈流, 之回能, 之蓄能]
   text: "增加 {value}% 能量護盾回充速度"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 80, value: [12, 14] }
-    - { tier: 1, ilvl: 50, weight: 250, value: [9, 11] }
-    - { tier: 2, ilvl: 1, weight: 600, value: [6, 8] }
+    - { tier: 0, ilvl: 75, weight: 40, value: [12, 14] }   # 2026-10-28 站長：前三階權重 ×0.5（80 → 40）
+    - { tier: 1, ilvl: 50, weight: 175, value: [9, 11] }   # 2026-10-28 站長：前三階權重 ×0.7（250 → 175）
+    - { tier: 2, ilvl: 1, weight: 510, value: [6, 8] }   # 2026-10-28 站長：前三階權重 ×0.85（600 → 510）
   mods:
     - { stat: es.recharge, type: INCREASED, value: "{value}" }
 
@@ -833,9 +834,9 @@ jewel_spell_crit_chance:
   names: [之星眸, 之慧眼, 之靈視]
   text: "增加 {value}% 法術暴擊率"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [24, 28] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [18, 22] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [12, 16] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [24, 28] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [18, 22] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [12, 16] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -846,9 +847,9 @@ jewel_spell_crit_multi:
   names: [之星隕, 之碎星, 之咒鋒]
   text: "增加 {value}% 法術暴擊傷害加成"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [20, 23] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [20, 23] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [15, 18] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [10, 14] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
 
@@ -861,9 +862,9 @@ jewel_attack_crit_chance:
   names: [之隼眸, 之要害, 之見隙]
   text: "增加 {value}% 攻擊暴擊率"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [24, 28] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [18, 22] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [12, 16] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [24, 28] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [18, 22] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [12, 16] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [attack] }
 
@@ -874,9 +875,9 @@ jewel_attack_crit_multi:
   names: [之斬首, 之穿心, 之見血]
   text: "增加 {value}% 攻擊暴擊傷害加成"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [20, 23] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [15, 18] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [10, 14] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [20, 23] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [15, 18] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [10, 14] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [attack] }
 
@@ -1102,9 +1103,9 @@ j2_damaging_ailment_duration:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 異常狀態持續時間"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [9, 10] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [7, 8] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [5, 6] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [9, 10] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [7, 8] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [5, 6] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: ailment.duration, type: INCREASED, value: "{value}" }
 
@@ -1875,9 +1876,9 @@ j2_deflection_from_evasion:
   names: [之星骸, 之精煉, 之雕琢]
   text: "獲得閃避值 {value}% 的偏斜值"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [8, 10] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [6, 7] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [4, 5] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [8, 10] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [6, 7] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [4, 5] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: deflection.from_evasion, type: FLAT, value: "{value}" }
 
@@ -1900,9 +1901,9 @@ j2_exposure_chance:
   names: [之星骸, 之精煉, 之雕琢]
   text: "擊中時 {value}% 機率讓敵人曝露"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [8, 10] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [6, 7] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [4, 5] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [8, 10] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [6, 7] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [4, 5] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: exposure.chance, type: FLAT, value: "{value}" }
 
@@ -1997,9 +1998,9 @@ j2_warcry_effect:
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 戰吼效果"
   tiers:
-    - { tier: 0, ilvl: 75, weight: 150, value: [7, 8] }
-    - { tier: 1, ilvl: 50, weight: 400, value: [5, 6] }
-    - { tier: 2, ilvl: 1, weight: 1000, value: [3, 4] }
+    - { tier: 0, ilvl: 75, weight: 75, value: [7, 8] }   # 2026-10-28 站長：前三階權重 ×0.5（150 → 75）
+    - { tier: 1, ilvl: 50, weight: 280, value: [5, 6] }   # 2026-10-28 站長：前三階權重 ×0.7（400 → 280）
+    - { tier: 2, ilvl: 1, weight: 850, value: [3, 4] }   # 2026-10-28 站長：前三階權重 ×0.85（1000 → 850）
   mods:
     - { stat: warcry.effect, type: INCREASED, value: "{value}" }
 

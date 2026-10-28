@@ -35,8 +35,9 @@ class TotemSocketRulesTest {
         for (final String id : List.of("fireball", "arc", "spark", "flame_stream", "comet", "frostbolt")) {
             assertNull(MetaGems.problem(totem, config.skill(id)), id + " 原作可以");
         }
-        // 引星（不是圖騰）照樣能插這幾個
-        assertNull(MetaGems.problem(config.meta("meta_crit"), config.skill("galvanic_field")));
+        // 引星（不是圖騰）機制上照樣能觸發這幾個；2026-10-28 照 PoE2：雷流場是武器賦予的技能（沒有寶石），所以插不進任何主要寶石
+        assertNull(MetaGems.castProblem(config.meta("meta_crit"), config.skill("galvanic_field")));
+        assertEquals(MetaGems.GRANTED_ONLY, MetaGems.problem(config.meta("meta_crit"), config.skill("galvanic_field")));
     }
 
     @Test

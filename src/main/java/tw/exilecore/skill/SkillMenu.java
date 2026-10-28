@@ -130,7 +130,7 @@ public final class SkillMenu extends Menu {
                 "<#e0c080>放寶石（把寶石拖過來）",
                 "在背包點一下寶石拿起來：能放的空格變綠、能放的技能亮起來，放不下的變暗；再點那一格",
                 "技能寶石 → 技能格　輔助寶石 → 技能或輔助孔",
-                "未切割技能寶石 → 技能（升到它的等級）　鑿星石 → 技能（開孔）",
+                "未切割技能寶石 → 技能（升到它的等級）　鑿星石 → 技能寶石（開孔；賦予的技能照等級自動開）",
                 "背包裡的寶石 Shift＋點一下：直接放進面板",
                 "點掛著的輔助：拿下來；專屬掉落的輔助一個技能只能掛一顆",
                 "",
@@ -258,7 +258,10 @@ public final class SkillMenu extends Menu {
         if (loadout.dormant(entry)) {
             return List.of("<#b4a0ff>⚔ 武器賦予的技能", "<red>沒拿著賦予這個技能的武器：不能用（輔助、按鍵都留著）");
         }
-        return List.of("<#b4a0ff>⚔ 武器賦予的技能：等級照武器的物品等級", "<dark_gray>不是寶石：不能升級、取出、腐化、加品質；可以掛輔助、開孔");
+        // 2026-10-28 照 PoE2：輔助孔照等級自動開，不能用鑿星石開；這次之前寫「可以掛輔助、開孔」
+        return List.of("<#b4a0ff>⚔ 武器賦予的技能：等級照武器的物品等級", "<dark_gray>不是寶石：不能升級、取出、腐化、加品質、開孔；可以掛輔助",
+                "<dark_gray>輔助孔照等級自動開：Lv." + SkillLoadout.grantedSocketLevel(3) + " 第 3 孔、Lv." + SkillLoadout.grantedSocketLevel(4)
+                        + " 第 4 孔、Lv." + SkillLoadout.grantedSocketLevel(5) + " 第 5 孔（等級變低時多出來的輔助放回背包）");
     }
 
     private String keyName(final int bindSlot) {
@@ -452,7 +455,7 @@ public final class SkillMenu extends Menu {
                     return Hint.no(exclusive);
                 }
                 return entry.freeSocket() >= 0 ? Hint.best("放這裡：掛上" + ItemRenderer.escape(support.name()))
-                        : Hint.no("沒有空的輔助孔（用鑿星石開孔）");
+                        : Hint.no(entry.granted() ? "沒有空的輔助孔（" + GemService.grantedSocketHint(entry) + "）" : "沒有空的輔助孔（用鑿星石開孔）");
             }
             case UNCUT_SKILL -> {
                 final GemData gem = gems.read(cursor).orElse(null);
@@ -469,6 +472,9 @@ public final class SkillMenu extends Menu {
                     final String problem = gems.qualityProblem(entry);
                     return problem != null ? Hint.no(problem)
                             : Hint.best("放這裡：品質 " + entry.quality() + "% → " + Math.min(SkillLoadout.Entry.QUALITY_MAX, entry.quality() + 5) + "%");
+                }
+                if (entry.granted()) {
+                    return Hint.no(GemService.GRANTED_SOCKETS); // 2026-10-28 照 PoE2
                 }
                 if (entry.corrupted()) {
                     return Hint.no("已腐化的技能寶石不能再開孔");
@@ -634,7 +640,8 @@ public final class SkillMenu extends Menu {
     private ItemStack innerSocketIcon(final SkillLoadout.Entry entry, final SkillDefinition definition, final Holding holding, final GemData heldGem,
                                       final int index) {
         final boolean linked = SkillExecutor.hasFlag(definition, tw.exilecore.stats.StatKeys.FLAG_TOTEM_LINKED);
-        final String wants = linked ? "錘子的攻擊技能" : SocketedWarcry.hosts(definition) ? "人形戰吼" : "法術"; // 2026-10-27：裂甲熊咆
+        final String wants = linked ? "錘子的攻擊技能" : SocketedWarcry.hosts(definition) ? "人形戰吼"
+                : DeadeyeMetas.hosts(definition) ? DeadeyeMetas.wants(definition) : "法術"; // 2026-10-27：裂甲熊咆；2026-10-28：預告射擊、幻影銳眼
         final SkillLoadout.Entry inner = entry.spellAt(index); // 2026-10-26：其他孔也可能放著技能寶石
         final String socketName = "第 " + (index + 1) + " 孔";
         if (holding == Holding.SKILL_GEM && heldGem != null && heldGem.entry() != null) {
@@ -654,6 +661,7 @@ public final class SkillMenu extends Menu {
                     "<gray>拿" + wants + "的技能寶石點這裡放進去", "<gray>" + ItemRenderer.escape(definition.name()) + "會用它；其他孔的輔助都套在它身上"
                             + (SocketedWarcry.hosts(definition) ? "（不放就是熊咆自己的效果）" // 2026-10-27 照 PoE2 Ferocious Roar
                                     : !gems.multiSpell(definition) ? "" : linked ? "（其他孔也能放：英靈照孔的順序輪流用）" // 2026-10-27
+                                    : DeadeyeMetas.hosts(definition) ? "（其他孔也能放：照孔的順序輪流用）" // 2026-10-28
                                     : isSpellTotem(definition) ? "（其他孔也能放：圖騰照孔的順序輪流放）" : "（其他孔也能放：全部一起觸發）"),
                     holding == Holding.SUPPORT_GEM ? "<red>這一孔不放輔助寶石" : "");
         }
@@ -714,8 +722,13 @@ public final class SkillMenu extends Menu {
                 return uiIcon("slot_support_locked", Material.RED_STAINED_GLASS_PANE, "<gray>第 " + (index + 1) + " 個輔助孔（還沒開）",
                         "<gray>共鳴石要點掛著專屬輔助的孔");
             }
-            final String orbName = gems.socketOrbName(index + 1);
             final String title = "第 " + (index + 1) + " 個輔助孔（還沒開）";
+            if (entry.granted()) {
+                // 2026-10-28 照 PoE2：賦予的技能的孔照等級自動開（這次之前要用鑿星石開）
+                return uiIcon("slot_support_locked", Material.RED_STAINED_GLASS_PANE, "<gray>" + title,
+                        "<gray>賦予的技能 Lv." + SkillLoadout.grantedSocketLevel(index + 1) + " 自動開這個孔", "<dark_gray>（不能用鑿星石開）");
+            }
+            final String orbName = gems.socketOrbName(index + 1);
             if (orb != null && index == entry.sockets() && orb.sockets() == index + 1) {
                 return targetHighlight(icon(Material.LIME_STAINED_GLASS_PANE, "<green>▶ " + title,
                         "<green>放這裡：用" + ItemRenderer.escape(orb.name()) + "開這個孔"));

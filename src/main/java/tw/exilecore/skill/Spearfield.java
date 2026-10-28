@@ -88,7 +88,8 @@ final class Spearfield {
     void place(final Player player, final SkillBuild build, final long now) {
         final String id = build.definition().id();
         final double delayed = service.supportFlat(player, id, SupportExtraKeys.DELAYED_REACTION);
-        final double rearm = service.supportFlat(player, id, SupportExtraKeys.REARM);
+        // 2026-10-28 照 PoE2 Spearfield 的品質：危害 (0—10)% 機率重新布置（跟 Rearm 輔助的機率相加）
+        final double rearm = service.supportFlat(player, id, SupportExtraKeys.REARM) + build.qualityFlat(tw.exilecore.stats.GemQualityKeys.HAZARD_REARM);
         final SkillProfile profile = delayed > 0 ? build.profile().scaled(1 + delayed / 100.0, "遲爆") : build.profile();
         final long duration = duration(build.durationScale(), delayed > 0);
         final double length = Math.max(MIN_DISTANCE + 0.5, build.length());
@@ -118,7 +119,7 @@ final class Spearfield {
             }
             mine.addLast(spear);
         }
-        player.swingMainHand();
+        ServerSwing.mainHand(player);
         player.getWorld().playSound(origin, Sound.BLOCK_POINTED_DRIPSTONE_LAND, SoundCategory.PLAYERS, 1f, 0.8f);
         Fx.spawn(player.getWorld(), Particle.CRIT, origin.clone().add(facing.clone().multiply(length / 2)).add(0, 0.3, 0), 20,
                 length / 4, 0.1, length / 4, 0.05);

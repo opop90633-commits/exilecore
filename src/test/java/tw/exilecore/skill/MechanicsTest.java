@@ -307,8 +307,9 @@ class MechanicsTest {
         assertFalse(config.support("fork").supports(config.skill("gas_grenade")), "歧射掛不上榴彈");
         assertTrue(config.support("fork").supports(config.skill("lightning_arrow")));
 
-        final SkillBuild echoed = build("fireball", sheet, config.support("spell_echo"));
+        final SkillBuild echoed = build("comet", sheet, config.support("spell_echo"));
         assertTrue(echoed.echo());
+        assertFalse(config.support("spell_echo").supports(config.skill("fireball")), "2026-10-28 照 PoE2：雙詠只能插可以連瀑的範圍法術，熾星彈不行");
         assertFalse(build("lightning_arrow", sheet, config.support("spell_echo")).echo(), "攻擊不迴響（也掛不上）");
         assertFalse(config.support("spell_echo").supports(config.skill("blink")), "位移掛不上迴響");
         assertFalse(config.support("spell_echo").supports(config.skill("hunters_mark")), "印記掛不上迴響");
@@ -373,7 +374,8 @@ class MechanicsTest {
         assertEquals(10, bell.deploy().rings(), "2026-10-26 照 PoE2：鐘打 10 下才碎");
         assertTrue(bell.tags().contains(Tags.TOTEM), "鐘歸在圖騰那一類");
         assertTrue(bell.tags().contains(Tags.BELL));
-        assertFalse(config.support("overabundance").supports(bell), "圖騰列陣對鐘沒用，掛不上");
+        // 2026-10-28 照 PoE2：鐘也是「上限」（Limit 1 Bell），過剩 II 掛得上；這次之前繁置（Overabundance I）只能掛圖騰、鐘掛不上
+        assertTrue(config.support("overabundance_ii").supports(bell), "鐘的上限吃過剩");
         assertFalse(config.support("spell_echo").supports(config.skill("dark_idol")), "交給圖騰放的法術不迴響，掛不上");
         assertFalse(config.support("spell_echo").supports(bell));
         assertEquals(0.5, bell.cooldown(), 1e-9, "2026-10-26 照 PoE2：冷卻 0.5 秒、要 4 點連擊（連擊接上了；這次之前用 3 秒當平衡等效）");
@@ -419,10 +421,10 @@ class MechanicsTest {
         assertFalse(spellTotem.supports(config.skill("dark_idol")));
         assertFalse(trapSupport.supports(config.skill("lightning_arrow")));
         assertTrue(trapSupport.supports(config.skill("frostbolt")));
-        // 圖騰列陣（2026-10：豐饒）只有圖騰技能能掛，+1 根
-        assertTrue(config.support("overabundance").supports(config.skill("shockwave_totem")));
-        assertFalse(config.support("overabundance").supports(config.skill("fireball")), "熾星彈沒有 totem 標籤（掛了圖騰施法也一樣）");
-        assertEquals(2, build("shockwave_totem", sheet, config.support("overabundance")).totems());
+        // 過剩 II（2026-10-28 照 PoE2，繁置併進來）：原作寫「上限」的技能能掛，圖騰 +1 根
+        assertTrue(config.support("overabundance_ii").supports(config.skill("shockwave_totem")));
+        assertFalse(config.support("overabundance_ii").supports(config.skill("fireball")), "熾星彈沒有上限（掛了圖騰施法也一樣）");
+        assertEquals(2, build("shockwave_totem", sheet, config.support("overabundance_ii")).totems());
         // 長留也讓圖騰撐久一點（2026-10-27 持久併入長留：這次之前 8 秒 × 1.3 = 208）
         assertTrue(config.support("prolonged_duration").supports(config.skill("shockwave_totem")));
         assertEquals(216, build("shockwave_totem", sheet, config.support("prolonged_duration")).durationTicks(8), "8 秒 × 1.35 × 20 tick（照 PoE2 Prolonged Duration II：更多 35%）");

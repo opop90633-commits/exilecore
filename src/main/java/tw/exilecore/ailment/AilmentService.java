@@ -568,7 +568,8 @@ public final class AilmentService {
                         * tw.exilecore.stats.TreeKeys.selfEffect(defenderSheet, tw.exilecore.stats.TreeKeys.SHOCK_EFFECT_ON_SELF); // 2026-10-26：身上的感電效果
                 final double seconds = AilmentConfig.duration(config.shockDuration(playerTarget),
                         attack.increased(StatKeys.SHOCK_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context),
-                        selfDuration + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".shock", Set.of()));
+                        selfDuration + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".shock", Set.of()))
+                        * attack.more(StatKeys.SHOCK_DURATION, context); // 2026-10-28 照 PoE2 熾漿砲的品質：更多的感電持續時間；這次之前只讀增加的
                 entry = entry == null ? track(defender) : entry;
                 // 2026-10-26（昇華・二重打擊）：感電幅度更少 25%、可以同時兩個
                 if (entry.state.applyShock(tw.exilecore.ascendancy.AscendancyEffects.stackAilment(attacker, defender, AilmentType.SHOCK, effect,
@@ -734,8 +735,11 @@ public final class AilmentService {
             // 2026-10-26 照 PoE2：眩暈的敵人受到的暈眩累積更多 50%（stun.buildup_taken）
             // 2026-10-26 照 PoE2 Rhoa Mount：騎在坐騎上被打會累積重暈（被重暈就摔下坐騎）
             final boolean mountedTarget = playerTarget && plugin.skills() != null && plugin.skills().mounted((Player) defender);
+            // 2026-10-28 照 PoE2 Rhoa Mount 的品質（坐騎更多 (0—20)% 最大生命）：坐騎沒有自己的生命（打不死），換成騎著時的重暈門檻更多 x%
+            final double mountScale = mountedTarget ? 1 + Math.max(0, plugin.skills().qualityFlat((Player) defender, tw.exilecore.stats.GemQualityKeys.MOUNT_SKILL,
+                    tw.exilecore.stats.GemQualityKeys.MOUNT_LIFE_MORE)) / 100.0 : 1.0;
             final double rawBuildup = playerTarget && !config.playerHeavyStun() && !mountedTarget ? 0
-                    : config.stun().buildupFor(stunDamage, heavyThreshold, attack.apply(StatKeys.STUN_BUILDUP, 1.0, context)
+                    : config.stun().buildupFor(stunDamage, heavyThreshold * mountScale, attack.apply(StatKeys.STUN_BUILDUP, 1.0, context)
                     * Math.max(0, defenderSheet.apply(AilmentKeys.STUN_BUILDUP_TAKEN, 1.0, Set.of())), playerTarget);
             // 2026-10-27 照 PoE2 Brink：被輔助的技能的暈眩累積到不了 100%（停在差一點，給重壓擊、天罰巨鎚這類收尾）；這次之前沒有
             final boolean brink = StatKeys.flag(attack, tw.exilecore.stats.SupportExtraKeys.FLAG_STUN_CANNOT_REACH);
@@ -1254,7 +1258,8 @@ public final class AilmentService {
             final double chance = config.shockChance(shockBase, threshold, attack.flat(StatKeys.SHOCK_CHANCE, context),
                     attack.increased(StatKeys.SHOCK_CHANCE, context)) * attack.more(StatKeys.SHOCK_CHANCE, context);
             final double seconds = AilmentConfig.duration(config.shockDuration(false),
-                    attack.increased(StatKeys.SHOCK_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context), 0);
+                    attack.increased(StatKeys.SHOCK_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context), 0)
+                    * attack.more(StatKeys.SHOCK_DURATION, context); // 2026-10-28：更多的感電持續時間
             shocked += config.shockEffect(attack.increased(StatKeys.SHOCK_EFFECT, context)) * uptime(chance, hitsPerSecond, seconds);
         }
         return (hitDps + dot) * shocked;

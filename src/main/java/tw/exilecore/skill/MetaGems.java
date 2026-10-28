@@ -169,8 +169,23 @@ public final class MetaGems {
         return null;
     }
 
+    /** 2026-10-28：武器、昇華賦予的技能不能放進宿主寶石孔的原因（接在技能名字後面）。 */
+    static final String GRANTED_ONLY = "是武器／昇華賦予的技能（不是寶石），不能插進主要寶石";
+
     /** 這個法術能不能插進這種主要寶石；可以回傳 null，不行回傳原因（接在法術名字後面）。 */
     static String problem(final MetaSpec spec, final SkillDefinition spell) {
+        final String why = castProblem(spec, spell);
+        if (why == null && spell.grantedOnly()) {
+            return GRANTED_ONLY; // 2026-10-28 照 PoE2：武器、昇華賦予的技能不是寶石，不能插進主要寶石（星咒圖騰、引星…都一樣）
+        }
+        return why;
+    }
+
+    /**
+     * 2026-10-28：只看機制（能不能被觸發／由圖騰放）；不管是不是寶石。SkillService.metaCast 的保險用
+     * （命運同調、預告射擊免費放面板上的法術，武器賦予的也可以）。
+     */
+    static String castProblem(final MetaSpec spec, final SkillDefinition spell) {
         if (spell.hidden() || spell.type() != SkillType.SPELL || !spell.tags().contains(tw.exilecore.stats.Tags.SPELL)) {
             return "不是法術（只能插法術）";
         }
@@ -278,7 +293,8 @@ public final class MetaGems {
             mine.keySet().removeIf(k -> k.startsWith(entry.skillId() + ":") && !k.equals(key));
             if (spec.invocation()) {
                 // 2026-10-26 照 PoE2 Invocation：存到上限（500，擴能、天賦加大）為止，不自動觸發；按下去才花（invoke）
-                mine.put(key, Math.min(mine.getOrDefault(key, 0.0) + gained, invocationMax(spec, mods, own)));
+                mine.put(key, Math.min(mine.getOrDefault(key, 0.0) + gained, invocationMax(spec, mods, own,
+                        service.qualityFlat(player, entry.skillId(), tw.exilecore.stats.GemQualityKeys.META_MAX_ENERGY))));
                 continue;
             }
             final double max = socket.maxEnergy() * (1 + mods[1] / 100.0) * own[1];
@@ -314,7 +330,12 @@ public final class MetaGems {
 
     /** 2026-10-26：Invocation 的能量上限（寶石的 max_energy × 擴能 × 天賦的「Invocation 技能的最大能量」）。 */
     static double invocationMax(final MetaSpec spec, final double[] mods, final double[] own) {
-        return spec.maxEnergy() * (1 + mods[1] / 100.0) * own[1];
+        return invocationMax(spec, mods, own, 0);
+    }
+
+    /** 2026-10-28 照 PoE2 Elemental Invocation 的品質：最大能量 +(0—100)（固定值，加在 500 上，再乘擴能與天賦）。 */
+    static double invocationMax(final MetaSpec spec, final double[] mods, final double[] own, final double flat) {
+        return (spec.maxEnergy() + Math.max(0, flat)) * (1 + mods[1] / 100.0) * own[1];
     }
 
     /** 2026-10-26：按一次祈喚最多觸發幾次（能量剩的留著；原作沒有上限，這裡防一次排太多發）。 */
@@ -386,7 +407,7 @@ public final class MetaGems {
                 left += cost / 2; // 返能：退還這一次花的一半
             }
         }
-        mine.put(key, Math.max(0, Math.min(left, invocationMax(spec, mods, own))));
+        mine.put(key, Math.max(0, Math.min(left, invocationMax(spec, mods, own, service.qualityFlat(player, entry.skillId(), tw.exilecore.stats.GemQualityKeys.META_MAX_ENERGY)))));
         fired.put(entry.skillId(), now);
         final String source = metaDefinition == null ? "主要寶石" : metaDefinition.name();
         final LivingEntity first = preferred != null && preferred.isValid() && !preferred.isDead() ? preferred : nearestEnemy(player);
@@ -488,6 +509,11 @@ public final class MetaGems {
     /** 2026-10-25：掛在這顆引星上的輔助給的 {能量獲得 %, 能量上限 %, 退還機率 %}（共鳴的 ~ 去掉；孔裡的法術 @ 跳過）。 */
     double[] energyModifiers(final SkillLoadout.Entry entry) {
         final double[] sum = new double[3];
+        // 2026-10-28 照 PoE2：引星、咒擲自己的品質（Energy gained、gem_quality.yml）也算；這次之前品質照通用規則加光環效果，對能量沒有作用
+        final java.util.List<tw.exilecore.stats.Modifier> quality = tw.exilecore.currency.GemQuality.modifiers(entry.skillId(), entry.quality(), "品質");
+        if (quality != null) {
+            addEnergy(sum, quality);
+        }
         for (String id : entry.supportIds()) {
             if (id.startsWith(SkillLoadout.Entry.INNER_PREFIX)) {
                 continue;
@@ -499,16 +525,21 @@ public final class MetaGems {
             if (support == null) {
                 continue;
             }
-            for (final tw.exilecore.stats.Modifier modifier : support.modifiers()) {
-                switch (modifier.stat()) {
-                    case tw.exilecore.stats.StatKeys.META_ENERGY_GAIN -> sum[0] += modifier.value() * (modifier.type() == tw.exilecore.stats.ModType.INCREASED ? 100 : 1);
-                    case tw.exilecore.stats.StatKeys.META_ENERGY_MAX -> sum[1] += modifier.value() * (modifier.type() == tw.exilecore.stats.ModType.INCREASED ? 100 : 1);
-                    case tw.exilecore.stats.StatKeys.META_ENERGY_REFUND -> sum[2] += modifier.value();
-                    default -> { }
-                }
-            }
+            addEnergy(sum, support.modifiers());
         }
         return sum;
+    }
+
+    /** 能量的修飾器加到 {能量獲得 %, 能量上限 %, 退還機率 %}。 */
+    static void addEnergy(final double[] sum, final java.util.List<tw.exilecore.stats.Modifier> modifiers) {
+        for (final tw.exilecore.stats.Modifier modifier : modifiers) {
+            switch (modifier.stat()) {
+                case tw.exilecore.stats.StatKeys.META_ENERGY_GAIN -> sum[0] += modifier.value() * (modifier.type() == tw.exilecore.stats.ModType.INCREASED ? 100 : 1);
+                case tw.exilecore.stats.StatKeys.META_ENERGY_MAX -> sum[1] += modifier.value() * (modifier.type() == tw.exilecore.stats.ModType.INCREASED ? 100 : 1);
+                case tw.exilecore.stats.StatKeys.META_ENERGY_REFUND -> sum[2] += modifier.value();
+                default -> { }
+            }
+        }
     }
 
     /** 主要寶石實際用幾級算能量（2026-10-17：Lv.21 寶石照 21 級算，跟 SkillBuild 一樣：角色到 20 級寶石的需求等級就能用 21 級）。 */
@@ -692,13 +723,14 @@ public final class MetaGems {
                 if (build.deploy() != null) {
                     lines.add(String.format(Locale.ROOT, "<gray>圖騰持續 <white>%s</white> 秒", number(build.durationTicks(build.deploy().duration()) / 20.0)));
                 }
-                lines.add("<dark_gray>其他孔的輔助都套在插槽法術上；要圖騰的（疾樁、繁置、樁怒…）、加施法速度與持續時間的也套到圖騰本身");
+                lines.add("<dark_gray>其他孔的輔助都套在插槽法術上；要圖騰的（疾樁、過剩 II、樁怒…）、加施法速度與持續時間的也套到圖騰本身");
             } else if (spec.invocation()) {
                 final double cost = socket.maxEnergy();
                 final double stored = energyOf(player.getUniqueId(), socket);
                 lines.add(String.format(Locale.ROOT, "<gray>插槽：<white>%s</white>（能量 %s／%s，觸發一次要 %s，現在按可觸發 %d 次）",
                         ItemRenderer.escape(socket.names()), number(Math.floor(stored)),
-                        number(invocationMax(spec, energyModifiers(socket.metaEntry()), sheetEnergy(plugin.players().sheet(player), meta.tags()))),
+                        number(invocationMax(spec, energyModifiers(socket.metaEntry()), sheetEnergy(plugin.players().sheet(player), meta.tags()),
+                                service.qualityFlat(player, socket.metaEntry().skillId(), tw.exilecore.stats.GemQualityKeys.META_MAX_ENERGY))),
                         number(cost), invokeTimes(stored, cost, socket.anyCooldown())));
             } else {
                 lines.add(String.format(Locale.ROOT, "<gray>插槽：<white>%s</white>（能量 %s／%s）", ItemRenderer.escape(socket.names()),

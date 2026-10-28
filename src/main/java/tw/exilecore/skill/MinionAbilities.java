@@ -156,6 +156,8 @@ final class MinionAbilities {
 
     /** 火彈（Fire Bomb，自動）：1.6 格、物理 70% 轉火焰，會引爆毒雲。 */
     static final double FIRE_BOMB_RADIUS = 1.6;
+    /** 2026-10-28 照 PoE2 Skeletal Arsonist 的品質（多丟幾顆火彈）：多的火彈落在主要目標幾格內的其他敵人身上。 */
+    static final double EXTRA_BOMB_SPREAD = 4.0;
     /** 爆裂殉身（Explosive Demise，指令）：冷卻 3 秒；引爆目標 3 格內生命低於門檻的自己的召喚物，2.4 格、300% 傷害全轉火焰，加上牠最大生命 8% 的火焰傷害。 */
     static final double DEMISE_DAMAGE = 3.0;
     static final double DEMISE_RADIUS = 2.4;

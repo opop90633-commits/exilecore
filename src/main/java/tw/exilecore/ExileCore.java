@@ -255,6 +255,7 @@ public final class ExileCore extends JavaPlugin {
         });
 
         tw.exilecore.hook.TooltipHook.start(this); // 2026-10：物品的「對你的技能」提示（要裝 PacketEvents）
+        tw.exilecore.hook.CullGlow.start(this); // 2026-10-28 照 PoE2 斷魂掌：可撲殺的敵人只在你的畫面上發光（要裝 PacketEvents，沒裝照舊紅點）
         new tw.exilecore.music.MusicService(this).start(); // 2026-10：主世界、地圖、Boss 的背景音樂
 
         getSLF4JLogger().info("ExileCore {} 已啟用（Minecraft {}，Java {}）",
@@ -264,6 +265,7 @@ public final class ExileCore extends JavaPlugin {
     @Override
     public void onDisable() {
         tw.exilecore.hook.TooltipHook.stop();
+        tw.exilecore.hook.CullGlow.stop();
         if (modules != null) {
             modules.disableAll();
         }

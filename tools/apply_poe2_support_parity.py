@@ -61,8 +61,7 @@ SPEC = {
     'maim': ('Maim', 2, 1.0, None, None),
     'blind': ('Blind II', 5, 1.1, None, None),
     'hinder': ('Hinder', None, 1.0, None, None),
-    'culmination': ('Culmination II', 5, 1.0, [m('damage.per_combo', 'FLAT', 4)],
-                    '被輔助的近戰技能每一層連擊都讓它更痛（每層更多 4%，最多 10 層）。'),
+    # 2026-10-28：culmination 改成照 PoE2 的頂點 II（自己的一份連擊，SkillResources.culminate），supports.yml 手寫；不要再用這支腳本蓋掉
     'practiced_combo': ('Practiced Combo', 3, 1.0, None, None),
     'flow': ('Flow', None, 1.0, None, None),
     'glacier': ('Glacier', 2, 1.0, None, None),

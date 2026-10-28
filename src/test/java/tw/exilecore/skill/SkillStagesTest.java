@@ -66,6 +66,7 @@ class SkillStagesTest {
                 {"sunfire_spear", "pulse", 0.27, 1.1, 4.89},
                 {"glacial_cascade", "final", 1.2, 3.74, 9.93},
                 {"fangs_of_frost", "burst", 1.1, 4.49, 19.91},
+                {"falling_thunder", "thunder", 1.4, 4.37, 11.59},   // 2026-10-28：投射物那一段沒有自己的表，跟猛擊同一張
         };
         for (final Object[] c : cases) {
             final SkillStages.Stage stage = SkillStages.get((String) c[0], (String) c[1]);

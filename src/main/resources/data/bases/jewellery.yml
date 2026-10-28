@@ -127,6 +127,8 @@ chain_belt:
 #   「可以多／少 x 條前綴／後綴」用 local.max_prefixes／local.max_suffixes（ItemGenerator 照這個算上限）；
 #   還沒有的機制先略過那一行（見各基底的註解）：戒指的技能欄位、品質上限、深淵消蝕、當作手套／頭盔／鞋子的嵌入物、
 #   項鍊賦予的技能。只剩略過那一行的基底一樣會掉（像原作沒有固定詞綴的戒指）；悲歌、兆示、空無墜飾只剩缺點，先停用（retired，不掉落、商人不賣）。
+# 2026-10-28 照站長：特殊項鍊（family: jamulet_special，改前後綴上限／日冕）改成劫盜專屬（heist_only: true）：只在劫盜的金庫箱、大金庫掉
+#   （heist.yml 的 special_amulet_chance，0.5%），也會出現在金庫之主的收藏裡；一般掉落、地圖獎勵、商人、賭博都拿不到。這次之前跟一般基底一樣。
 
 jbelt_wide:
   # PoE2 Wide Belt
@@ -440,6 +442,7 @@ jamulet_twisted:
   # PoE2 Twisted Amulet
   name: 扭曲墜飾
   family: jamulet_special
+  heist_only: true     # 2026-10-28 照站長：特殊項鍊只在劫盜掉（heist.yml 的 special_amulet_chance、金庫之主的收藏）；這次之前一般掉落、賭裝商人都拿得到
   drop_weight: 2
   material: CHORUS_FRUIT
   model: exilecore:jewellery/amber_amulet
@@ -456,6 +459,7 @@ jamulet_distorted:
   # PoE2 Distorted Amulet
   name: 歪斜墜飾
   family: jamulet_special
+  heist_only: true     # 2026-10-28 照站長：特殊項鍊只在劫盜掉（heist.yml 的 special_amulet_chance、金庫之主的收藏）；這次之前一般掉落、賭裝商人都拿得到
   drop_weight: 2
   material: ENDER_PEARL
   model: exilecore:jewellery/amber_amulet
@@ -472,6 +476,7 @@ jamulet_dusk:
   # PoE2 Dusk Amulet
   name: 暮光墜飾
   family: jamulet_special
+  heist_only: true     # 2026-10-28 照站長：特殊項鍊只在劫盜掉（heist.yml 的 special_amulet_chance、金庫之主的收藏）；這次之前一般掉落、賭裝商人都拿得到
   drop_weight: 2
   material: MAGMA_CREAM
   model: exilecore:jewellery/amber_amulet
@@ -489,6 +494,7 @@ jamulet_gloam:
   # PoE2 Gloam Amulet
   name: 幽微墜飾
   family: jamulet_special
+  heist_only: true     # 2026-10-28 照站長：特殊項鍊只在劫盜掉（heist.yml 的 special_amulet_chance、金庫之主的收藏）；這次之前一般掉落、賭裝商人都拿得到
   drop_weight: 2
   material: GLOW_BERRIES
   model: exilecore:jewellery/amber_amulet
@@ -506,6 +512,7 @@ jamulet_penumbra:
   # PoE2 Penumbra Amulet
   name: 半影墜飾
   family: jamulet_special
+  heist_only: true     # 2026-10-28 照站長：特殊項鍊只在劫盜掉（heist.yml 的 special_amulet_chance、金庫之主的收藏）；這次之前一般掉落、賭裝商人都拿得到
   drop_weight: 2
   material: CHARCOAL
   model: exilecore:jewellery/amber_amulet
@@ -523,6 +530,7 @@ jamulet_tenebrous:
   # PoE2 Tenebrous Amulet
   name: 冥暗墜飾
   family: jamulet_special
+  heist_only: true     # 2026-10-28 照站長：特殊項鍊只在劫盜掉（heist.yml 的 special_amulet_chance、金庫之主的收藏）；這次之前一般掉落、賭裝商人都拿得到
   drop_weight: 2
   material: CRYING_OBSIDIAN
   model: exilecore:jewellery/amber_amulet
@@ -541,6 +549,7 @@ jamulet_lament:
   retired: true        # 2026-10-26：賦予技能的機制還沒有，只剩缺點；先停用（定義留著，不掉落、商人不賣），做了技能再打開
   name: 悲歌墜飾
   family: jamulet_special
+  heist_only: true     # 2026-10-28 照站長：特殊項鍊只在劫盜掉（heist.yml 的 special_amulet_chance、金庫之主的收藏）；這次之前一般掉落、賭裝商人都拿得到
   drop_weight: 0
   material: SKELETON_SKULL
   model: exilecore:jewellery/amber_amulet
@@ -558,6 +567,7 @@ jamulet_portent:
   retired: true        # 2026-10-26：賦予技能的機制還沒有，只剩缺點；先停用（定義留著，不掉落、商人不賣），做了技能再打開
   name: 兆示墜飾
   family: jamulet_special
+  heist_only: true     # 2026-10-28 照站長：特殊項鍊只在劫盜掉（heist.yml 的 special_amulet_chance、金庫之主的收藏）；這次之前一般掉落、賭裝商人都拿得到
   drop_weight: 0
   material: SPYGLASS
   model: exilecore:jewellery/amber_amulet
@@ -575,6 +585,7 @@ jamulet_absent:
   retired: true        # 2026-10-26：賦予技能的機制還沒有，只剩缺點；先停用（定義留著，不掉落、商人不賣），做了技能再打開
   name: 空無墜飾
   family: jamulet_special
+  heist_only: true     # 2026-10-28 照站長：特殊項鍊只在劫盜掉（heist.yml 的 special_amulet_chance、金庫之主的收藏）；這次之前一般掉落、賭裝商人都拿得到
   drop_weight: 0
   material: GLASS_BOTTLE
   model: exilecore:jewellery/amber_amulet
@@ -592,6 +603,7 @@ jamulet_corona:
   # PoE2 Corona Amulet：「嵌入物的加成當作頭盔」先略過（項鍊沒有符文孔）
   name: 日冕墜飾
   family: jamulet_special
+  heist_only: true     # 2026-10-28 照站長：特殊項鍊只在劫盜掉（heist.yml 的 special_amulet_chance、金庫之主的收藏）；這次之前一般掉落、賭裝商人都拿得到
   drop_weight: 2
   material: SUNFLOWER
   model: exilecore:jewellery/amber_amulet

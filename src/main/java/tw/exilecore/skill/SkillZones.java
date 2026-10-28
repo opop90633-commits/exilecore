@@ -163,6 +163,11 @@ final class SkillZones implements SkillTargets.Strikeable {
         final Location at = target.getLocation();
         at.setYaw(owner.getLocation().getYaw());
         at.setPitch(owner.getLocation().getPitch());
+        warpTo(owner, at, build);
+    }
+
+    /** 2026-10-28：瞬移到某個地方炸開（周圍 3 格）、給一層閃電灌注（瞄準滾雷珠時用；撲殺敵人也走這裡）。 */
+    void warpTo(final Player owner, final Location at, final SkillBuild build) {
         owner.teleport(at);
         final double radius = Math.max(0.5, build.params().dash().endRadius().at(build.level()) * build.areaScale());
         for (final LivingEntity hit : targets.around(at, radius, owner)) {
@@ -535,20 +540,28 @@ final class SkillZones implements SkillTargets.Strikeable {
 
     /** 插一支雷樁矢的箭（持續時間吃技能持續時間；品質的機率多炸一次）。 */
     private void placeRod(final Player owner, final Impact impact) {
-        final SkillConfig.RodSpec spec = plugin.skills() == null ? null : plugin.skills().config().rod(impact.rod());
-        if (spec == null || impact.center().getWorld() == null) {
+        placeRod(owner, impact.rod(), impact.center(), impact.profile(), impact.radius(), impact.visual());
+    }
+
+    /**
+     * 插一支雷霆之杖的箭（skill 是插它的技能，rod 設定照它的 skills.yml；被連到時用 profile 在 radius 內炸開）。
+     * 2026-10-28 照 PoE2 Shockchain Arrow：電鍊箭矢最後一次連鎖之後也插一支（ProjectileEngine）；這次之前只有雷樁矢落地插。
+     */
+    void placeRod(final Player owner, final String skill, final Location center, final SkillProfile profile, final double radius, final String visual) {
+        final SkillConfig.RodSpec spec = plugin.skills() == null ? null : plugin.skills().config().rod(skill);
+        if (spec == null || center.getWorld() == null) {
             return;
         }
         final long now = now();
-        final tw.exilecore.stats.StatSheet effective = impact.profile().effective(plugin.players().sheet(owner));
-        final double durationScale = Math.max(0.1, effective.apply(tw.exilecore.stats.StatKeys.SKILL_DURATION, 1.0, impact.profile().tags()));
-        final Location at = impact.center().clone();
+        final tw.exilecore.stats.StatSheet effective = profile.effective(plugin.players().sheet(owner));
+        final double durationScale = Math.max(0.1, effective.apply(tw.exilecore.stats.StatKeys.SKILL_DURATION, 1.0, profile.tags()));
+        final Location at = center.clone();
         final LightningRods.Rod rod = new LightningRods.Rod(owner.getUniqueId(), at.getWorld().getUID(), at.toVector(), now,
-                now + Math.round(spec.duration() * 20 * durationScale), spec.chains(), Math.round(spec.charge() * 20), impact.profile(),
-                impact.radius(), impact.visual());
+                now + Math.round(spec.duration() * 20 * durationScale), spec.chains(), Math.round(spec.charge() * 20), profile,
+                radius, visual, skill);
         rod.display = spawnRodDisplay(at);
         rods.place(rod, spec.max(), this::rodRemoved);
-        final double extra = effective.flat(LightningRods.EXTRA_BURST, impact.profile().tags());
+        final double extra = effective.flat(LightningRods.EXTRA_BURST, profile.tags());
         if (extra > 0 && plugin.random().nextDouble() * 100 < extra) {
             rods.extraBurst(rod, now);
         }
@@ -683,6 +696,11 @@ final class SkillZones implements SkillTargets.Strikeable {
 
     /** 留一顆在地上（同一個技能超過上限就先拿掉最舊的）。 */
     void lodge(final Player owner, final String parent, final int level, final Location at) {
+        lodge(owner, parent, level, at, 0);
+    }
+
+    /** 同上；extraLimit：這個技能的 +x 上限（2026-10-28 照 PoE2：瘴苞雨的「上限 5 顆毒苞」吃過剩；這次之前固定照 lodge.max）。 */
+    void lodge(final Player owner, final String parent, final int level, final Location at, final int extraLimit) {
         final SkillConfig.LodgeSpec spec = plugin.skills() == null ? null : plugin.skills().config().lodge(parent);
         if (spec == null) {
             return;
@@ -694,7 +712,8 @@ final class SkillZones implements SkillTargets.Strikeable {
                 mine++;
             }
         }
-        for (final Iterator<Lodged> it = lodged.iterator(); it.hasNext() && mine >= spec.max(); ) {
+        final int max = spec.max() + Math.max(0, extraLimit);
+        for (final Iterator<Lodged> it = lodged.iterator(); it.hasNext() && mine >= max; ) {
             final Lodged bolt = it.next();
             if (bolt.owner().equals(owner.getUniqueId()) && bolt.parent().equals(parent)) {
                 it.remove();
@@ -973,7 +992,9 @@ final class SkillZones implements SkillTargets.Strikeable {
                 }
                 // 2026-10-27 照 PoE2（塗油限定 沙漠之蔑）：站在冰緩／點燃地面上的敵人受到的火焰／冰冷傷害增加（先給再打）
                 TreeLeftovers.scornGround(plugin, owner, ownerSheet, target, groundEvent, zone.intervalTicks, now);
-                SupportExtras.drench(plugin, owner, target, zone.skill, zone.intervalTicks, now); // 2026-10-27 照 PoE2：積雷雲範圍內的敵人濕透
+                // 2026-10-27 照 PoE2：積雷雲範圍內的敵人濕透；2026-10-28 照 PoE2 Thunderstorm 的品質：濕透另外更多凍結累積、感電機率
+                SupportExtras.drench(plugin, owner, target, zone.skill, zone.intervalTicks, now,
+                        localFlat(zone.profile, tw.exilecore.stats.GemQualityKeys.DRENCHED_FREEZE_MORE), localFlat(zone.profile, tw.exilecore.stats.GemQualityKeys.DRENCHED_SHOCK_MORE));
                 if (zone.pull > 0 && !(target instanceof Player)) {
                     // 吸引不拉玩家（2026-10，PvP：虛空裂隙、颶風槍的漩渦只拉怪物與召喚物，打到玩家照樣有傷害）
                     pull(target, zone.points.getFirst(), zone.pull);

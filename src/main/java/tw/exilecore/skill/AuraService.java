@@ -433,13 +433,15 @@ final class AuraService implements Listener {
         final List<Modifier> own = new ArrayList<>(build.generosity() ? List.of() : build.auraModifiers());
         own.addAll(build.grantModifiers()); // 2026-10：精魂輔助（只給自己）
         aura.effects = own;
-        final List<Modifier> ally = new ArrayList<>();
+        List<Modifier> ally = new ArrayList<>();
         final AuraSpec spec = build.definition().aura();
         if (spec.allies() || build.generosity()) {
+            final double allyScale = build.auraEffect() * (build.generosity() ? GENEROSITY_ALLY_BONUS : 1.0);
             for (final ScaledMod mod : spec.effects()) {
-                ally.add(mod.toModifier(build.level(), build.auraEffect() * (build.generosity() ? GENEROSITY_ALLY_BONUS : 1.0),
-                        "光環 " + build.definition().name()));
+                ally.add(mod.toModifier(build.level(), allyScale, "光環 " + build.definition().name()));
             }
+            // 2026-10-28 照 PoE2：品質加在光環本身的數值上（焰守的抗性、律盾的充能速度），隊友一樣吃到
+            ally = build.withQualityEffects(ally, allyScale, "光環 " + build.definition().name());
         }
         aura.allyEffects = List.copyOf(ally);
         aura.reserve = build.reserve();
@@ -519,12 +521,12 @@ final class AuraService implements Listener {
         return Math.max(0, Math.min(Math.min(wanted, liveRoom), MinionService.MAX_PER_PLAYER - reservedBefore));
     }
 
-    boolean reviveSkeleton(final UUID player, final long now) {
+    String reviveSkeleton(final UUID player, final long now) {
         final Map<String, Active> mine = active.get(player);
         final Player online = plugin.getServer().getPlayer(player);
         final MinionService minions = service.minions();
         if (mine == null || online == null || minions == null || !service.eligibleForCompanion(online)) {
-            return false;
+            return null;
         }
         for (final Active aura : mine.values()) {
             if (aura.build.definition().summon() == null || !MinionService.SKELETONS.contains(aura.skillId) || aura.companionReady <= now) {
@@ -534,10 +536,10 @@ final class AuraService implements Listener {
             if (alive < companionMax(minions, player, aura) && alive >= aura.hadCompanion) {
                 minions.summon(online, aura.build);
                 aura.hadCompanion = minions.count(player, aura.skillId);
-                return true;
+                return aura.skillId; // 2026-10-28：回傳復活了哪一種（祭司的品質：剛復活的不會受傷）
             }
         }
-        return false;
+        return null;
     }
 
     /**
@@ -1179,7 +1181,9 @@ final class AuraService implements Listener {
                 final Map<UUID, Long> last = witheredAt.computeIfAbsent(key, k -> new HashMap<>());
                 final long previous = last.getOrDefault(id, first - (long) every);
                 if (now - previous >= every) {
-                    tw.exilecore.combat.HitEffects.addWithered(plugin.combat().debuffs(), id, player.getUniqueId(), tick, 1, WITHERED_PRESENCE_TICKS,
+                    // 2026-10-28 照 PoE2 Withering Presence 的品質：凋零持續時間 +(0—1) 秒
+                    tw.exilecore.combat.HitEffects.addWithered(plugin.combat().debuffs(), id, player.getUniqueId(), tick, 1,
+                            WITHERED_PRESENCE_TICKS + Math.round(aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.WITHERED_SECONDS) * 20),
                             Math.max(0, 1 + plugin.players().sheet(player).increased(tw.exilecore.stats.TreeEffectKeys.WITHERED_EFFECT, java.util.Set.of()))); // 2026-10-26：凋零效果
                     last.put(id, now);
                 } else {
@@ -1191,8 +1195,9 @@ final class AuraService implements Listener {
                 final Map<UUID, Long> last = weaknessAt.computeIfAbsent(key, k -> new HashMap<>());
                 final long previous = last.getOrDefault(id, first);
                 if (now - previous >= every) {
+                    // 2026-10-28 照 PoE2 Malice 的品質：暴擊弱點持續時間 +(0—1) 秒
                     tw.exilecore.combat.HitEffects.addCritWeakness(plugin.combat().debuffs(), id, player.getUniqueId(), tick, 1,
-                            tw.exilecore.combat.HitEffects.CRIT_WEAKNESS_TICKS);
+                            tw.exilecore.combat.HitEffects.CRIT_WEAKNESS_TICKS + Math.round(aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.MALICE_WEAKNESS_SECONDS) * 20));
                     last.put(id, now);
                 } else {
                     last.putIfAbsent(id, previous);
@@ -1513,6 +1518,9 @@ final class AuraService implements Listener {
         for (final ScaledMod mod : fury.effects()) {
             mods.add(mod.toModifier(aura.build.level(), aura.build.auraEffect(), name));
         }
+        final List<Modifier> merged = aura.build.withQualityEffects(mods, aura.build.auraEffect(), name); // 2026-10-28 照 PoE2 獸血沸的品質：狂暴更多 x% 傷害
+        mods.clear();
+        mods.addAll(merged);
         if (fury.onslaught()) {
             final double speed = tw.exilecore.combat.KillEffects.ONSLAUGHT_SPEED;
             mods.add(Modifier.increased(StatKeys.ATTACK_SPEED, speed, "疾速"));
@@ -1682,14 +1690,18 @@ final class AuraService implements Listener {
             final String heraldId = aura.build.definition().id();
             if (HERALD_THUNDER.equals(heraldId)) {
                 // 2026-10-24（照 PoE2）：不從屍體放，改成接下來 2～3 次攻擊擊中落雷（再殺一隻就重新算）
-                thunderHits.put(credit.getUniqueId(), thunderCharges(aura.build.level()));
+                // 2026-10-28 照 PoE2 Herald of Thunder 的品質：落雷次數 +(0—2)（無條件捨去）
+                thunderHits.put(credit.getUniqueId(), thunderCharges(aura.build.level())
+                        + (int) Math.floor(aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.HERALD_THUNDER_HITS) + 1e-9));
                 visuals.herald(aura.build.definition().visual(), at);
                 continue;
             }
             if (HERALD_PLAGUE.equals(heraldId)) {
                 // 2026-10-24（照 PoE2）：把牠身上最痛的那個毒傳給 1.5～1.8 格內的敵人，有 10～29% 機率緩行
+                // 2026-10-28 照 PoE2 Herald of Plague 的品質：阻礙的機率另外 +(0—20)%
                 if (plugin.ailments() != null && plugin.ailments().spreadStrongestPoison(entity, plagueRadius(aura.build.level()), credit.getUniqueId(),
-                        plagueHinderChance(aura.build.level()), PLAGUE_HINDER_SECONDS) > 0) {
+                        plagueHinderChance(aura.build.level()) + aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.HERALD_PLAGUE_HINDER),
+                        PLAGUE_HINDER_SECONDS) > 0) {
                     visuals.herald(aura.build.definition().visual(), at);
                 }
                 continue;
@@ -1699,7 +1711,9 @@ final class AuraService implements Listener {
                 final boolean struck = last != null && last.player().equals(credit.getUniqueId()) && now() - last.tick() <= 1;
                 final double overkill = struck ? last.overkill() / 100.0 * maxLife(entity) : 0;
                 if (overkill > 0 && plugin.ailments() != null) {
-                    final double dps = overkill * ashPercent(aura.build.level()) / 100.0;
+                    // 2026-10-28 照 PoE2 Herald of Ash 的品質：另外 +(0—5)% 過量擊殺傷害算進點燃
+                    final double dps = overkill * (ashPercent(aura.build.level())
+                            + aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.HERALD_ASH_OVERKILL)) / 100.0;
                     final double perUnit = plugin.ailments().config().igniteDps(1, 0, 1);
                     final tw.exilecore.stats.StatSheet sheet = aura.build.profile().effective(plugin.players().sheet(credit));
                     final double radius = ASH_RADIUS * aura.build.areaScale();
@@ -1719,7 +1733,8 @@ final class AuraService implements Listener {
                     continue;
                 }
                 castHeraldEffect(credit, aura, at, entity, null);
-                final double extra = info.bloodLoss() * BLOOD_LOSS_SHARE;
+                // 2026-10-28 照 PoE2 Herald of Blood 的品質：另外多打失血的 (0—4)%
+                final double extra = info.bloodLoss() * (BLOOD_LOSS_SHARE + aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.HERALD_BLOOD_SHARE) / 100.0);
                 if (extra > 0 && plugin.ailments() != null) {
                     for (final LivingEntity victim : targets.around(at, BLOOD_RADIUS)) {
                         if (victim != entity) {
@@ -1758,8 +1773,10 @@ final class AuraService implements Listener {
             // 2026-10-18：光環面板上的那一條：共鳴的專屬輔助不佔名額（跟主技能算法一致）
             final int position = state.skills() == null ? -1 : state.skills().find(aura.build.definition().id());
             final tw.exilecore.character.SkillLoadout.Entry entry = position < 0 ? null : state.skills().skill(position);
-            final SkillBuild subBuild = SkillBuild.of(config, sub, aura.build.usableGemLevel(), state.level(), false, aura.build.supports(),
+            final SkillBuild built = SkillBuild.of(config, sub, aura.build.usableGemLevel(), state.level(), false, aura.build.supports(),
                     state.weaponTags(), plugin.players().sheet(credit), entry == null ? Set.of() : SkillService.resonantOf(entry));
+            // 2026-10-28 照 PoE2 Herald of Ice 的品質：碎裂爆炸半徑 +(0—0.4) 公尺（加在基礎半徑上，再乘範圍）
+            final SkillBuild subBuild = built.withBaseRadius(aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.HERALD_ICE_RADIUS));
             // 方向：朝屍體附近最近的另一隻怪，沒有就照主人的面向
             LivingEntity target = fixedTarget;
             for (final LivingEntity candidate : target != null ? List.<LivingEntity>of() : targets.around(at, HERALD_SEARCH)) {

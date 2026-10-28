@@ -213,7 +213,7 @@ final class Signatures {
         if (charging == null) {
             return;
         }
-        final ChargeSpec spec = service.config().charge(charging.skillId);
+        final ChargeSpec spec = ChargeSpec.withQuality(service.config().charge(charging.skillId), charging.build); // 2026-10-28：品質
         if (spec == null || !service.eligible(player) || player.isDead()) {
             runtime.charging = null;
             return;
@@ -307,13 +307,9 @@ final class Signatures {
     /** 放開的那一下：完美時機（更多傷害、代號接 .perfect，打中時觸發 perfect_hit）、疊層（更多傷害、更大範圍）。 */
     SkillBuild applyRelease(final Player player, final PlayerState state, final SkillBuild build, final ChargeSpec spec,
                             final SkillRuntime.Release release, final long now) {
-        SkillBuild result = build;
         final String name = ItemRenderer.escape(build.definition().name());
         if (spec.perfect()) {
             if (release.perfect()) {
-                // 2026-10-28 照 PoE2：有完美時機那一段自己的表（stage.perfect）就換成它；這次之前一律乘 perfect_more（20 級的比例）
-                result = result.withProfile(StageAttacks.perfect(result.profile(), 1 + spec.perfectMore() / 100.0, "完美時機")
-                        .derive(result.profile().id() + SupportProcs.PERFECT_SUFFIX, Set.of(), Set.of()));
                 state.notice("<#ffd700><bold>★ 完美時機！</bold> <white>" + name, now + 30);
                 player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, SoundCategory.PLAYERS, 1.0f, 1.4f);
                 player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_RESONATE, SoundCategory.PLAYERS, 1.0f, 1.6f);
@@ -321,8 +317,33 @@ final class Signatures {
                 state.notice("<gray>" + name + "：沒抓到完美時機", now + 30);
             }
         }
+        final int stages = spec.stages() > 0 ? spec.stagesAt(release.held(), release.speed()) : 1;
         if (spec.stages() > 0) {
-            final int stages = spec.stagesAt(release.held(), release.speed());
+            state.notice(String.format(Locale.ROOT, "<#ff9a4d>%s 放出：%d／%d 層", name, stages, spec.stages()), now + 30);
+        }
+        final SkillBuild result = released(build, spec, stages, release.perfect(), state.sheet(), release.held() / 20.0);
+        plugin.players().display(player, state);
+        return result;
+    }
+
+    /** 引導／蓄力一層要幾 tick 的速度係數（跟玩家按住時一樣：爆焰矢每層一次攻擊時間）。 */
+    static double stageSpeed(final SkillDefinition definition, final ChargeSpec spec, final double interval) {
+        return spec.channel().perAttack() && interval > 0 ? spec.stageTime() * 20 / interval : speed(definition, interval);
+    }
+
+    /**
+     * 2026-10-28：放開那一下的數值（純計算；這次之前寫在 applyRelease 裡，幻影銳眼的幻影引導也要用）：
+     * 完美時機（更多傷害、代號接 .perfect，打中時觸發 perfect_hit）、疊層（更多傷害、更大範圍、更多投射物、每層屬性、疊滿才爆）、漸熾。
+     */
+    static SkillBuild released(final SkillBuild build, final ChargeSpec spec, final int stages, final boolean perfect, final StatSheet sheet,
+                               final double heldSeconds) {
+        SkillBuild result = build;
+        if (spec.perfect() && perfect) {
+            // 2026-10-28 照 PoE2：有完美時機那一段自己的表（stage.perfect）就換成它；這次之前一律乘 perfect_more（20 級的比例）
+            result = result.withProfile(StageAttacks.perfect(result.profile(), 1 + spec.perfectMore() / 100.0, "完美時機")
+                    .derive(result.profile().id() + SupportProcs.PERFECT_SUFFIX, Set.of(), Set.of()));
+        }
+        if (spec.stages() > 0) {
             final double more = spec.stageMore() * (stages - 1) / 100.0;
             if (more > 0) {
                 result = result.withProfile(result.profile().withLocal(List.of(Modifier.more(StatKeys.DAMAGE, more, "蓄力"))));
@@ -343,10 +364,9 @@ final class Signatures {
             if (channel.explodeAtMax() && stages < spec.stages()) {
                 result = result.withExplodeAndRange(0, result.range());
             }
-            state.notice(String.format(Locale.ROOT, "<#ff9a4d>%s 放出：%d／%d 層", name, stages, spec.stages()), now + 30);
         }
         // 2026-10-26 照 PoE2（引霆突）：完美時機放開衝得比較遠、轉換比較多閃電
-        if (spec.perfect() && release.perfect()) {
+        if (spec.perfect() && perfect) {
             final ChargeSpec.Channel channel = spec.channel();
             if (channel.perfectRange() > 0) {
                 result = result.withExplodeAndRange(result.explode(), channel.perfectRange());
@@ -356,9 +376,7 @@ final class Signatures {
             }
         }
         // 2026-10-27 照 PoE2 Burgeon（漸熾）：引導越久越痛（放開型照按住多久；連續出手型照從開始引導到這一下）
-        result = Burgeon.apply(result, state.sheet(), release.held() / 20.0);
-        plugin.players().display(player, state);
-        return result;
+        return Burgeon.apply(result, sheet, heldSeconds);
     }
 
     // ---- 放之前：消耗怒星（2026-10-15，照 PoE2 的風暴之槍、閃電長矛） ----
@@ -396,22 +414,25 @@ final class Signatures {
     }
 
     /** 你的其他技能打在插著的霆落矛附近：把它提早引爆（2026-10-15，照 PoE2「被其他技能引爆」）。 */
-    void detonateNear(final Player player, final SkillDefinition definition, final Location at) {
+    int detonateNear(final Player player, final SkillDefinition definition, final Location at) {
         if (at == null || "lance".equals(service.config().signature(definition.id()))) {
-            return;
+            return 0;
         }
         final Deque<Lance> mine = lances.get(player.getUniqueId());
         if (mine == null || mine.isEmpty()) {
-            return;
+            return 0;
         }
+        int count = 0;
         final Iterator<Lance> it = mine.iterator();
         while (it.hasNext()) {
             final Lance lance = it.next();
             if (lance.at().getWorld() == at.getWorld() && lance.at().distance(at) <= LANCE_DETONATE_RANGE) {
                 it.remove();
                 detonate(player, lance);
+                count++;
             }
         }
+        return count; // 2026-10-28：引爆了幾支（雷躍的品質）
     }
 
     // ---- 放完之後（旋矛擊的旋風、霆落矛插地）／取代施放（星火連珠） ----
@@ -518,7 +539,10 @@ final class Signatures {
 
     private void lodge(final Player player, final SkillBuild build, final Location at, final long now) {
         final Deque<Lance> mine = lances.computeIfAbsent(player.getUniqueId(), uuid -> new ArrayDeque<>());
-        while (mine.size() >= LANCE_MAX) {
+        // 2026-10-28 照 PoE2 Storm Lance 的品質：超載的矛上限 +(0—1)（無條件捨去）
+        // 2026-10-28 照 PoE2：「上限 3 支插著的矛」吃 +x 上限（過剩）
+        while (mine.size() >= LANCE_MAX + OriginalSkills.qualityInt(build.qualityFlat(tw.exilecore.stats.GemQualityKeys.OVERCHARGED_LIMIT))
+                + SkillLimits.bonus(plugin.players().sheet(player), build)) {
             detonate(player, mine.pollFirst()); // 第 4 支：最舊的提早炸開
         }
         final Integer chargedBenefit = chargedLance.remove(player.getUniqueId());
@@ -717,7 +741,9 @@ final class Signatures {
         final Location from = head.clone().add(SkillTargets.facing(player).multiply(0.5));
         final Vector direction = target != null ? SkillTargets.center(target).toVector().subtract(from.toVector())
                 : player.getEyeLocation().getDirection();
-        final SkillBuild shot = index > 0 ? build.withProfile(build.profile().scaled(1 + EMBER_MORE_PER * index, "火星連射")) : build;
+        // 2026-10-28 照 PoE2 Ember Fusillade 的品質：每一顆之前射過的火星再更多 (0—2)%（加在 5% 上）
+        final double perEmber = EMBER_MORE_PER + build.qualityFlat(tw.exilecore.stats.GemQualityKeys.MORE_PER_EMBER) / 100.0;
+        final SkillBuild shot = index > 0 ? build.withProfile(build.profile().scaled(1 + perEmber * index, "火星連射")) : build;
         service.procCast(Origin.at(player, from, direction.lengthSquared() < 1e-6 ? SkillTargets.facing(player) : direction.normalize()),
                 shot, target);
     }

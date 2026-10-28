@@ -25,13 +25,19 @@ public final class SupportGuards {
      * 拿掉魔泉湧（我們的魔泉湧不會留殘骸；這次之前殘骸輔助是「放技能後撿的殘骸都算」，掛在它上面也有作用）。
      */
     private static volatile Set<String> remnants = Set.of();
+    /** 2026-10-28：resource.combo_gain 的技能（打中就累積連擊；頂點不能掛）。 */
+    private static volatile Set<String> comboGainers = Set.of();
 
     /** 讀完 skills.yml（SkillConfig.load 呼叫）：記下有使用條件、會留殘骸的技能。 */
     static void index(final SkillConfig config) {
         final Set<String> withCondition = new HashSet<>();
         final Set<String> withRemnant = new HashSet<>();
+        final Set<String> gainers = new HashSet<>();
         for (final SkillDefinition skill : config.all()) {
             final ResourceSpec resource = config.resource(skill.id());
+            if (resource != null && resource.comboGain()) {
+                gainers.add(skill.id());
+            }
             if (resource != null && (resource.glory() > 0 || resource.combo() > 0)
                     || skill.warcry() != null && skill.warcry().extras().glory() > 0) {
                 withCondition.add(skill.id());
@@ -42,6 +48,7 @@ public final class SupportGuards {
         }
         conditional = Set.copyOf(withCondition);
         remnants = Set.copyOf(withRemnant);
+        comboGainers = Set.copyOf(gainers);
     }
 
     /** 2026-10-27：不寫 resource.remnant、在程式裡留殘骸的技能（Snap、SkillTriggers 的素痕湧、OriginalSkills 的燼種）。 */
@@ -147,6 +154,19 @@ public final class SupportGuards {
                 || support.flags(SupportExtraKeys.CATHARSIS)) && conditional(skill)) {
             return "本來就有使用條件的技能不行";
         }
+        // 2026-10-28 照 PoE2 Culmination（頂點）：要近戰攻擊（Attack AND Melee）；本來就會獲得連擊的（打擊、resource.combo_gain）、
+        //   有使用條件的（HasUsageCondition：要榮耀、連擊才能用）不行；召喚物另外由 excludes 擋
+        if (support.flags(SupportExtraKeys.CULMINATION)) {
+            if (!skill.isAttack() || !tags.contains(Tags.MELEE)) {
+                return "要近戰攻擊";
+            }
+            if (tags.contains(Tags.STRIKE) || comboGainers.contains(skill.id())) {
+                return "本來就會獲得連擊的技能不行";
+            }
+            if (conditional(skill)) {
+                return "本來就有使用條件的技能不行";
+            }
+        }
         if (support.flags(SupportExtraKeys.GRATIFICATION) && !conditional(skill)) {
             return "要有使用條件的技能（要榮耀、連擊才能用的）";
         }
@@ -168,8 +188,12 @@ public final class SupportGuards {
         if (support.flags(SupportExtraKeys.WILDSHARDS) && (!tags.contains(Tags.SPELL) || mechanic != Mechanic.PROJECTILE)) {
             return "要射出投射物的法術";
         }
+        // 2026-10-28 照 PoE2：Spell Echo 的 allowed_types 只有 Cascadable（雙詠和照它做的終局版都一樣）；這次之前所有法術（排除位移、印記…）都能插
+        if (support.flags(StatKeys.FLAG_ECHO) && !cascadable(skill)) {
+            return "要可以連瀑的範圍法術（落在目標區域、身邊一圈的，或詛咒）";
+        }
         if (support.flags(SupportExtraKeys.CASCADE) && !cascadable(skill)) {
-            return "要落在目標區域或身邊一圈的範圍法術";
+            return "要可以連瀑的範圍法術（落在目標區域、身邊一圈的，或詛咒）"; // 2026-10-28 照 PoE2 Cascadable；這次之前「要落在目標區域或身邊一圈的範圍法術」
         }
         if (support.flags(SupportExtraKeys.FLAG_ASTRAL) && mechanic != Mechanic.NOVA) {
             return "要繞身邊一圈的技能（新星）";
@@ -207,7 +231,9 @@ public final class SupportGuards {
         if (support.flags(SupportExtraKeys.LOYALTY) && !tags.contains(tw.exilecore.stats.TreeMechanicKeys.COMPANION)) {
             return "要叫出夥伴的技能";
         }
-        if ((support.flags(SupportExtraKeys.LAST_GASP) || support.flags(SupportExtraKeys.CRAZED)) && !tags.contains("persistent")) {
+        // 2026-10-28：常駐召喚（骷髏、殭屍…）沒有 persistent 標籤，改看召喚本身是不是常駐（LineageRules.persistentMinion）；這次之前常駐召喚都插不進去
+        if ((support.flags(SupportExtraKeys.LAST_GASP) || support.flags(SupportExtraKeys.CRAZED)) && !tags.contains("persistent")
+                && !LineageRules.persistentMinion(skill)) {
             return "要常駐的召喚物（保留精魂的）";
         }
         if (support.flags(SupportExtraKeys.MARK_SIPHON) && tags.contains("curse")) {
@@ -246,9 +272,12 @@ public final class SupportGuards {
                 || has(skill, StatKeys.HINDER_CHANCE);
     }
 
-    /** 落在目標區域的範圍法術、繞身邊一圈的範圍法術（PoE2 Cascadable）。 */
+    /**
+     * PoE2 Cascadable。2026-10-28 照 PoE2：改看 SkillCascade（原作有對應的照原作：詛咒可以、雷雲、烈陽珠、燼種、疫潮這些不行）；
+     * 這次之前只看形狀（落在目標區域的範圍法術、繞身邊一圈的法術）。
+     */
     static boolean cascadable(final SkillDefinition skill) {
-        return SkillService.cascadable(skill) || skill.mechanic() == Mechanic.NOVA && skill.tags().contains(Tags.SPELL);
+        return SkillCascade.cascadable(skill);
     }
 
     /** 這顆輔助有沒有某個開頭的屬性。 */

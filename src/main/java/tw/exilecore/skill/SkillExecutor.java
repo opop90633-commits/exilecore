@@ -58,8 +58,8 @@ final class SkillExecutor {
                 }
             }
             case DASH -> {
-                if (hasFlag(build.definition(), StatKeys.FLAG_LIGHTNING_WARP)) { // 2026-10-26：雷遁要瞄準敵人
-                    return targets.aimed(player, build.range(), 1.5) == null ? "準心沒有指著敵人" : null;
+                if (hasFlag(build.definition(), StatKeys.FLAG_LIGHTNING_WARP)) { // 2026-10-26：雷遁要瞄準敵人（2026-10-28 照 PoE2：或自己的滾雷珠）
+                    return warpAim(player, build).pick() == LightningWarp.Pick.NONE ? "準心沒有指著敵人或自己的滾雷珠" : null;
                 }
                 if (dashDestination(player, build.range()) == null) {
                     return "前方沒有空間";
@@ -89,7 +89,13 @@ final class SkillExecutor {
                 final long now) {
         final Origin origin = Origin.of(player);
         switch (build.definition().mechanic()) {
-            case STRIKE -> strike(origin, build, preferred);
+            case STRIKE -> {
+                if (KillingPalm.is(build)) {
+                    palm(player, runtime, build, preferred); // 2026-10-28 照 PoE2 斷魂掌：衝過去打、撲殺就連衝；這次之前原地打一下
+                } else {
+                    strike(origin, build, preferred);
+                }
+            }
             case PROJECTILE -> projectiles.launch(origin, build);
             case NOVA -> nova(origin, build);
             case CONE -> {
@@ -126,6 +132,8 @@ final class SkillExecutor {
     /** 從別的地方放（圖騰、陷阱、雙詠）：不含跳躍、位移、瞬影、印記這些只有玩家本人能做的。 */
     void executeFrom(final Origin origin, final SkillBuild build, final LivingEntity preferred) {
         switch (build.definition().mechanic()) {
+            // 斷魂掌（2026-10-28 照 PoE2）：原作沒有 Totemable／Triggerable，不會從圖騰、觸發放出來；萬一從別的地方放就只在原地打（不衝刺、不連衝）。
+            // 複擊的那一下是玩家自己打，走 palmAgain（會衝刺、連衝）
             case STRIKE -> strike(origin, build, preferred);
             case PROJECTILE -> projectiles.launch(origin, build);
             case NOVA -> nova(origin, build);
@@ -338,19 +346,81 @@ final class SkillExecutor {
 
     /** 2026-10-26（鑄父之錘，PoE2 Hrimnor's Hymn）：你自己使用的猛擊技能多造成幾次餘震（同樣的範圍與傷害，間隔 0.5 秒）。 */
     private void uniqueAftershocks(final Player owner, final SkillBuild build, final Location center, final double radius) {
-        if (owner == null || !build.definition().tags().contains(tw.exilecore.stats.Tags.SLAM)) {
+        uniqueAftershocks(owner, build, build.profile(), center, radius);
+    }
+
+    /** 2026-10-28：同上，餘震照 profile（奔雷踏終點的猛擊有自己的表）。 */
+    private void uniqueAftershocks(final Player owner, final SkillBuild build, final SkillProfile profile, final Location center, final double radius) {
+        final int extra = extraAftershocks(owner, build);
+        if (extra <= 0) {
             return;
+        }
+        final double shockRadius = radius * TreeMechanics.aftershockRadius(build.profile().effective(plugin.players().sheet(owner)), build.profile().tags());
+        for (int i = 1; i <= Math.min(3, extra); i++) {
+            zones.addImpact(owner, center, shockRadius, profile.scaled(1.0, "餘震"), build.definition().visual(), 10 * i);
+        }
+    }
+
+    /**
+     * 你自己使用的猛擊多幾次餘震：鑄父之錘、天賦樹的機率、技能自己的「x% 機率多一次餘震」（2026-10-28 照 PoE2 奔雷踏、炎脈裂地的品質，
+     * 同一個鍵 slam.aftershock_chance 寫在技能的品質裡）。
+     */
+    private int extraAftershocks(final Player owner, final SkillBuild build) {
+        if (owner == null || !build.definition().tags().contains(tw.exilecore.stats.Tags.SLAM)) {
+            return 0;
         }
         final tw.exilecore.stats.StatSheet sheet = build.profile().effective(plugin.players().sheet(owner));
         // 2026-10-26 照 PoE2 天賦：「猛擊 x% 機率多造成一次餘震」（錘、變身限定的帶標籤；兩套鍵都算）、「餘震範圍增加」
-        final int extra = (int) Math.round(plugin.players().sheet(owner).flat(tw.exilecore.item.unique.UniqueStats.SLAM_AFTERSHOCK, java.util.Set.of()))
+        return (int) Math.round(plugin.players().sheet(owner).flat(tw.exilecore.item.unique.UniqueStats.SLAM_AFTERSHOCK, java.util.Set.of()))
                 + TreeMechanics.extraAftershocks(sheet, build.profile().tags(), plugin.random())
                 + tw.exilecore.stats.TreeEffectKeys.fromChance(sheet.flat(tw.exilecore.stats.TreeEffectKeys.SLAM_AFTERSHOCK_CHANCE,
                         build.profile().tags()), plugin.random());
-        final double shockRadius = radius * TreeMechanics.aftershockRadius(sheet, build.profile().tags());
-        for (int i = 1; i <= Math.min(3, extra); i++) {
-            zones.addImpact(owner, center, shockRadius, build.profile().scaled(1.0, "餘震"), build.definition().visual(), 10 * i);
+    }
+
+    /** 2026-10-28 照 PoE2 炎脈裂地的品質：裂縫的餘震——整道裂縫 0.5 秒後再打一次（每隻只算一下）。 */
+    private void lineAftershocks(final Player owner, final SkillBuild build, final SkillProfile profile, final List<Location> points, final double radius) {
+        final int extra = Math.min(3, extraAftershocks(owner, build));
+        for (int i = 1; i <= extra; i++) {
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (!owner.isOnline()) {
+                    return;
+                }
+                final java.util.Set<LivingEntity> hit = new java.util.LinkedHashSet<>();
+                for (final Location point : points) {
+                    if (point.getWorld() != null && point.getWorld().equals(owner.getWorld())) {
+                        hit.addAll(targets.around(point, radius, owner));
+                        visuals.nova(build.definition().visual(), point, radius);
+                    }
+                }
+                final SkillProfile shock = profile.scaled(1.0, "餘震");
+                for (final LivingEntity target : hit) {
+                    damage.hit(owner, target, shock, null);
+                }
+            }, 10L * i);
         }
+    }
+
+    /** 嵐棍橫掃品質的近身加成：1.5 公尺內全部、4 公尺以外沒有。 */
+    static final double CLOSE_FULL = 1.5;
+    static final double CLOSE_NONE = 4.0;
+
+    /** 2026-10-28：距離 distance 公尺時近身更多幾（小數）；percent 是 1.5 公尺內的更多 %。純函式（測試用）。 */
+    static double closeMore(final double percent, final double distance) {
+        if (percent <= 0 || distance >= CLOSE_NONE) {
+            return 0;
+        }
+        final double t = distance <= CLOSE_FULL ? 1 : (CLOSE_NONE - distance) / (CLOSE_NONE - CLOSE_FULL);
+        return percent / 100.0 * t;
+    }
+
+    /** 2026-10-28：技能自己（skills.yml 的 modifiers）有沒有寫這個屬性。 */
+    static boolean hasModifier(final SkillDefinition definition, final String stat) {
+        for (final tw.exilecore.stats.Modifier modifier : definition.modifiers()) {
+            if (modifier.stat().equals(stat)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     static boolean hasFlag(final SkillDefinition definition, final String flag) {
@@ -370,8 +440,14 @@ final class SkillExecutor {
                 .effective(plugin.players().sheet(origin.owner())).flat(tw.exilecore.stats.SpellParityKeys.SHOCKED_BOLTS, build.profile().tags()));
         final boolean shockedInside = extraBolts > 0 && plugin.ailments() != null
                 && coneHits.stream().anyMatch(target -> plugin.ailments().has(target, tw.exilecore.ailment.AilmentType.SHOCK));
+        // 2026-10-28 照 PoE2 Wind Serpent's Fury（base_knockback_distance）：技能自己寫了擊退的扇形攻擊會擊退（品質再更多 x%）；這次之前扇形沒有擊退
+        final boolean pushes = build.knockback() > 0 && hasModifier(build.definition(), StatKeys.SKILL_KNOCKBACK);
+        // 2026-10-28 照 PoE2 Wind Blast 的品質：1.5 公尺內更多 x% 傷害，到 4 公尺遞減到沒有
+        final double close = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.CLOSE_MORE);
         for (final LivingEntity target : coneHits) {
-            damage.hit(origin.owner(), target, build.profile(), null);
+            final double near = close > 0 ? closeMore(close, Math.max(0, target.getLocation().distance(origin.feet()) - target.getWidth() / 2)) : 0;
+            damage.hit(origin.owner(), target, near > 0 ? build.profile().scaled(1 + near, "近身") : build.profile(),
+                    pushes ? knockback(origin.feet(), target, build.knockback()) : null);
         }
         if (shockedInside) {
             for (final LivingEntity target : ZonePulses.distribute(coneHits, extraBolts, plugin.random())) {
@@ -460,6 +536,98 @@ final class SkillExecutor {
                 }, (long) SERPENT_GAP_TICKS * i);
             }
         }
+        if (SkillStages.get(build.definition().id(), THUNDER) != null && origin.self() && plugin.combat() != null
+                && plugin.combat().charges() != null) {
+            thunderBolts(origin, build, facing, length);
+        }
+    }
+
+    /** 2026-10-28 照 PoE2 Falling Thunder：投射物那一段（skills.yml 的 stages.thunder）、射出去的隱藏技能。 */
+    static final String THUNDER = "thunder";
+    static final String THUNDER_BOLT = "falling_thunder_bolt";
+    /** 每用掉一顆銳星投射物更多 50% 傷害（品質再加，gem_quality.yml 的 falling_thunder）；有用掉銳星時再更多 100%。 */
+    static final double THUNDER_MORE_PER_CHARGE = 50;
+    static final double THUNDER_MORE_CHARGED = 100;
+    /** 品質：每用掉一顆銳星再更多 x%（FLAT，加在 50% 上）。 */
+    public static final String THUNDER_QUALITY = "falling_thunder.per_charge_more";
+    /** 每顆銳星幾發（stages.thunder 沒寫 count 時）。 */
+    static final int THUNDER_PER_CHARGE = 3;
+    /** PoE2 active_skill_projectile_speed_+%_variation_final 50：每一發的速度各自 ±50%（往前散開）。 */
+    static final double THUNDER_SPEED_VARIATION = 50;
+
+    /** 驚雷劈這一下投射物的傷害倍率（純函式）：(1 + 每顆 x% × 顆數) ×（有用掉 → 2），沒用掉是 0。 */
+    static double thunderMore(final int charges, final double perCharge) {
+        if (charges <= 0) {
+            return 0;
+        }
+        return (1 + perCharge / 100.0 * charges) * (1 + THUNDER_MORE_CHARGED / 100.0);
+    }
+
+    /** 驚雷劈幾發（純函式）：每顆 perCharge 發，再加輔助、裝備的投射物數量（extra，可以是負的）；沒有銳星 0 發。 */
+    static int thunderCount(final int charges, final int perCharge, final int extra) {
+        if (charges <= 0) {
+            return 0;
+        }
+        return Math.max(1, Math.min(SkillBuild.MAX_PROJECTILES, perCharge * charges + extra));
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Falling Thunder：你親自用的時候用掉身上所有的銳星（恆星、品質「機率不用掉」照樣算一顆、倍星算兩顆，
+     * 最多照身上原本的顆數用），從落點往前射出閃電投射物：每顆 3 發、物理全部轉閃電、穿透所有目標、每顆更多 50%、有用掉再更多 100%；
+     * 沒有銳星不射。投射物的數量、速度、分裂、連鎖照掛著的輔助算（輔助掛在投射物上也要能掛），傷害用這一下（含輔助、品質）。
+     */
+    private void thunderBolts(final Origin origin, final SkillBuild build, final org.bukkit.util.Vector facing, final double length) {
+        final Player player = origin.owner();
+        final StatSheet sheet = plugin.players().sheet(player);
+        final StatSheet effective = build.profile().effective(sheet);
+        final int held = plugin.combat().charges().count(player, "power");
+        int consumed = 0;
+        int benefit = 0;
+        while (consumed < Math.min(20, held)) {
+            final int got = plugin.combat().charges().spend(player, "power", effective, build.profile().tags());
+            if (got <= 0) {
+                break;
+            }
+            consumed++;
+            benefit += got;
+        }
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        final SkillBuild bolt = plugin.skills() == null ? null
+                : thunderBuild(plugin.skills().config(), build, benefit, state.level(), state.weaponTags(), sheet);
+        if (bolt == null) {
+            return; // PoE2：沒有銳星就沒有投射物
+        }
+        final int count = bolt.projectiles();
+        // 落點：長棍劈到地上的地方（扇形一半的距離），從那裡往前（水平）射出去
+        final Location impact = origin.feet().clone().add(facing.clone().multiply(Math.min(length, Math.max(1.0, length * 0.5))));
+        projectiles.launch(Origin.at(player, impact.subtract(0, 0.4, 0), facing.clone()), bolt);
+        state.notice(String.format(java.util.Locale.ROOT, "<#ffe066>⚡ %s：用掉 %d 顆銳星，射出 %d 發", bolt.definition().name(), consumed, count),
+                plugin.getServer().getCurrentTick() + 30);
+    }
+
+    /**
+     * 驚雷劈這一下（build）用掉 benefit 顆銳星時射出去的投射物（純資料，測試用）：隱藏技能 falling_thunder_bolt 帶上這一下的修飾器
+     * （數量、速度、分裂、連鎖照輔助），傷害換成這一下的（含輔助、品質）再照投射物那一段換表、轉換、加上銳星的更多；
+     * 標籤換成投射物（不是近戰、猛擊、範圍）。沒有銳星回傳 null。
+     */
+    static SkillBuild thunderBuild(final SkillConfig config, final SkillBuild build, final int benefit, final int characterLevel,
+                                   final Set<String> weaponTags, final StatSheet sheet) {
+        final SkillDefinition sub = config.skill(THUNDER_BOLT);
+        final SkillStages.Stage stage = SkillStages.get(build.definition().id(), THUNDER);
+        if (benefit <= 0 || sub == null || stage == null) {
+            return null;
+        }
+        // 輔助、品質、技能自己的修飾器（這一下 profile 的 local）照樣算進投射物的數量、速度、分裂、連鎖（隱藏的攻擊不能直接掛輔助）
+        final SkillBuild base = SkillBuild.of(config, sub, build.level(), characterLevel, false, List.of(), weaponTags, sheet, Set.of(),
+                build.profile().local());
+        final int perCharge = stage.count().intAt(build.level()) > 0 ? stage.count().intAt(build.level()) : THUNDER_PER_CHARGE;
+        final int count = thunderCount(benefit, perCharge, base.projectiles() - sub.params().projectiles().intAt(build.level()));
+        final double perChargeMore = THUNDER_MORE_PER_CHARGE + build.profile().effective(sheet).flat(THUNDER_QUALITY, build.profile().tags());
+        final SkillProfile profile = SkillStages.profile(build, build.profile(), THUNDER)
+                .derive(THUNDER_BOLT, Set.of(Tags.PROJECTILE), Set.of(Tags.MELEE, Tags.SLAM, Tags.AREA))
+                .scaled(thunderMore(benefit, perChargeMore), "用掉銳星")
+                .withLocal(List.of(tw.exilecore.stats.Modifier.flat(ProjectileEngine.SPEED_VARIATION, THUNDER_SPEED_VARIATION, sub.name())));
+        return base.withProfile(profile).withAreaAndProjectiles(base.areaScale(), count);
     }
 
     // ---- 連鎖 ----
@@ -641,12 +809,16 @@ final class SkillExecutor {
         return to.distanceSquared(from) < 1.0 ? null : to;
     }
 
-    private void dash(final Player player, final SkillBuild build) {
-        final Location to = dashDestination(player, build.range());
+    private void dash(final Player player, final SkillBuild original) {
+        final Location to = dashDestination(player, original.range());
         if (to == null) {
             return;
         }
         final Location from = player.getLocation();
+        // 2026-10-28 照 PoE2 Rake（base_additional_damage_from_distance_+%_final）：照衝刺的距離最多更多 100% 傷害（品質再 +0～30%）；
+        //   這次之前裂血掠沒有照距離加成
+        final double distanceMore = dashDistanceMore(original, from.distance(to));
+        final SkillBuild build = distanceMore > 0 ? original.withProfile(original.profile().scaled(1 + distanceMore, "衝刺距離")) : original;
         final SkillParams.Dash params = build.params().dash();
         final String visual = build.definition().visual();
         final Object strikeSource = new Object(); // 2026-10-25：起點、順路、終點同一下（鐘、冰晶只算一次）
@@ -693,10 +865,25 @@ final class SkillExecutor {
                 damage.hit(player, target, slam, null);
             }
             visuals.nova(visual, to, endRadius);
+            uniqueAftershocks(player, build, slam, to, endRadius); // 2026-10-28 照 PoE2 Stampede 的品質（終點猛擊 x% 機率多一次餘震）
         }
         if (plugin.skills() != null) {
             plugin.skills().leftovers().stampede(player, build, from, to); // 2026-10-28 照 PoE2 Stampede：鋸齒地面、終點炸開
         }
+    }
+
+    /** 2026-10-28：衝刺了 distance 格，照距離更多幾（小數）：技能自己寫了 charge.distance_more 才有（裂血掠），品質的另外加。 */
+    static double dashDistanceMore(final SkillBuild build, final double distance) {
+        double base = 0;
+        for (final tw.exilecore.stats.Modifier modifier : build.definition().modifiers()) {
+            if (modifier.stat().equals(tw.exilecore.stats.GemQualityKeys.DISTANCE_MORE)) {
+                base += modifier.value();
+            }
+        }
+        if (base <= 0 || build.range() <= 0) {
+            return 0;
+        }
+        return (base + build.qualityFlat(tw.exilecore.stats.GemQualityKeys.DISTANCE_MORE)) / 100.0 * Math.max(0, Math.min(1, distance / build.range()));
     }
 
     /**
@@ -741,10 +928,11 @@ final class SkillExecutor {
                 break;
             }
             boolean mine = false;
+            long remaining = 0;
             for (final Debuffs.Debuff debuff : plugin.combat().debuffs().active(cursed.getUniqueId(), now)) {
                 if (debuff.id().contains("_curse") && player.getUniqueId().equals(debuff.source())) {
                     mine = true;
-                    break;
+                    remaining = Math.max(remaining, debuff.untilTick() - now);
                 }
             }
             if (!mine) {
@@ -753,13 +941,22 @@ final class SkillExecutor {
             plugin.combat().debuffs().removeCurses(cursed.getUniqueId());
             blasts++;
             final Location at = cursed.getLocation();
-            targets.strike(player, build.profile(), SkillTargets.sphere(at, radius), new Object());
+            // 2026-10-28 照 PoE2 Hexblast 的品質：被移除的詛咒每剩 1 秒更多 (0—10)% 傷害
+            final SkillProfile blast = hexblastProfile(build, remaining);
+            targets.strike(player, blast, SkillTargets.sphere(at, radius), new Object());
             for (final LivingEntity victim : targets.around(at, radius, player)) {
-                damage.hit(player, victim, build.profile(), null);
+                damage.hit(player, victim, blast, null);
             }
             visuals.nova(build.definition().visual(), at, radius);
         }
         return blasts;
+    }
+
+    /** 2026-10-28：蝕咒裂這一下的傷害：詛咒還剩 remainingTicks（每剩整 1 秒更多品質的 x%）。 */
+    static SkillProfile hexblastProfile(final SkillBuild build, final long remainingTicks) {
+        final double per = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.MORE_PER_CURSE_SECOND);
+        final long seconds = Math.max(0, remainingTicks) / 20;
+        return per > 0 && seconds > 0 ? build.profile().scaled(1 + per / 100.0 * seconds, "詛咒剩餘時間") : build.profile();
     }
 
     /** 稜光裂：脈衝的範圍（PoE2 5 格）、最多用掉幾隻的異常、冰爆與雷爆是火爆的幾倍（PoE2 350% ÷ 125%、140% ÷ 125%）。 */
@@ -887,7 +1084,11 @@ final class SkillExecutor {
      * 都要看得到（不穿牆），最多 {@link #FLICKER_CANDIDATES} 個（看不到的不算數）。
      */
     List<LivingEntity> flickerCandidates(final Player player, final SkillBuild build, final LivingEntity preferred) {
-        final double range = build.range();
+        return dashCandidates(player, build.range(), preferred);
+    }
+
+    /** 同上，range 自己給（2026-10-28：斷魂掌的衝刺距離）。 */
+    private List<LivingEntity> dashCandidates(final Player player, final double range, final LivingEntity preferred) {
         final Location feet = player.getLocation();
         final List<LivingEntity> list = new ArrayList<>();
         if (preferred != null && targets.valid(preferred, player) && preferred.getWorld().equals(feet.getWorld())
@@ -1098,26 +1299,203 @@ final class SkillExecutor {
         }, step);
     }
 
+    // ---- 斷魂掌 ----
+
+    /** 斷魂掌連衝中的玩家 → 下一掌排在哪個 tick（連衝結束就拿掉）。 */
+    private final java.util.Map<UUID, Long> palmPending = new java.util.HashMap<>();
+
+    /**
+     * 2026-10-28 照 PoE2 Killing Palm（見 {@link KillingPalm}）：衝向 6.5 格內的敵人（打得到就不動）打一掌；
+     * 那一掌撲殺了目標，就往附近隨機一隻可以撲殺的敵人再衝過去打（一直撲殺得到就一直連）。這次之前原地打一下。
+     */
+    private void palm(final Player player, final SkillRuntime runtime, final SkillBuild build, final LivingEntity preferred) {
+        final double reach = build.reach();
+        LivingEntity target = null;
+        Location spot = null;
+        for (final LivingEntity candidate : dashCandidates(player, KillingPalm.DASH_RANGE, preferred)) {
+            if (candidate.getLocation().distanceSquared(player.getLocation()) <= reach * reach) {
+                target = candidate; // 已經打得到：不用衝
+                break;
+            }
+            spot = flickerSpot(player, candidate);
+            if (spot != null) {
+                target = candidate;
+                break;
+            }
+        }
+        if (target == null) {
+            strike(Origin.of(player), build, preferred); // 附近沒有敵人：原地打（跟原作一樣可以空揮）
+            return;
+        }
+        if (!palmDash(player, build, spot)) {
+            return;
+        }
+        strike(Origin.of(player), build, target);
+        if (KillingPalm.culled(player.getUniqueId(), target.getUniqueId(), plugin.getServer().getCurrentTick())) {
+            final Set<UUID> hit = new java.util.HashSet<>();
+            hit.add(target.getUniqueId());
+            palmChain(player, runtime, build, hit);
+        }
+    }
+
+    /** 複擊（裂虛回響）的斷魂掌：算玩家自己再打一下，照樣衝過去、撲殺就連衝（這次之前複擊的那一下原地打）。 */
+    void palmAgain(final Player player, final SkillRuntime runtime, final SkillBuild build, final LivingEntity preferred) {
+        palm(player, runtime, build, preferred);
+    }
+
+    /** 這個玩家的斷魂掌還在連衝（下一掌還沒打）：複擊的那一下等連衝打完再打。 */
+    boolean palmChaining(final Player player, final long now) {
+        final Long next = palmPending.get(player.getUniqueId());
+        return next != null && next >= now;
+    }
+
+    /** 衝到落點（null = 不用動）；傳送被擋掉回傳 false。 */
+    private boolean palmDash(final Player player, final SkillBuild build, final Location to) {
+        if (to == null) {
+            return true;
+        }
+        final Location from = player.getLocation();
+        if (to.distanceSquared(from) < SkillMath.FLICKER_MIN_MOVE * SkillMath.FLICKER_MIN_MOVE) {
+            return true;
+        }
+        player.setFallDistance(0);
+        player.setVelocity(new Vector());
+        if (!tw.exilecore.core.Teleports.go(player, to)) {
+            return false;
+        }
+        visuals.dash(build.definition().visual(), from, to);
+        return true;
+    }
+
+    /**
+     * 斷魂掌的連擊：隔一次攻擊時間（{@link KillingPalm#chainStepTicks}，吃攻擊速度），隨機挑一隻 6.5 格內看得到、可以撲殺、
+     * 還沒打過的敵人衝過去打；那一掌又撲殺就再排下一掌。2026-10-28 照 PoE2：沒有上限（這次之前隔 0.2 秒、最多 40 掌）——
+     * 每一掌都要撲殺（打死）一隻 {@code hit} 裡沒有的敵人才會再連，同一隻不會打兩次，連的次數最多就是附近的敵人數。
+     * 連衝期間把 {@code runtime.readyAt} 往後推（每一掌都是一次攻擊，打完才能做別的事），跟原作一樣不能邊連衝邊放別的技能。
+     */
+    private void palmChain(final Player player, final SkillRuntime runtime, final SkillBuild build, final Set<UUID> hit) {
+        final long step = KillingPalm.chainStepTicks(build.intervalTicks(plugin.players().sheet(player)));
+        final long at = plugin.getServer().getCurrentTick() + step;
+        palmPending.put(player.getUniqueId(), at);
+        if (runtime != null) {
+            runtime.readyAt = Math.max(runtime.readyAt, at + 1); // 下一掌打之前不能做別的
+        }
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            palmPending.remove(player.getUniqueId(), at);
+            if (!player.isOnline() || player.isDead()
+                    || plugin.ailments() != null && plugin.ailments().isIncapacitated(player)) {
+                return;
+            }
+            final List<LivingEntity> candidates = new ArrayList<>();
+            for (final LivingEntity near : targets.around(player.getLocation(), KillingPalm.DASH_RANGE, player)) {
+                if (!hit.contains(near.getUniqueId()) && zones.cullable(near) && player.hasLineOfSight(near)) {
+                    candidates.add(near);
+                }
+            }
+            KillingPalm.shuffle(candidates, java.util.concurrent.ThreadLocalRandom.current());
+            for (final LivingEntity next : candidates) {
+                final boolean inReach = next.getLocation().distanceSquared(player.getLocation()) <= build.reach() * build.reach();
+                final Location spot = inReach ? null : flickerSpot(player, next);
+                if (!inReach && spot == null) {
+                    continue;
+                }
+                if (!palmDash(player, build, spot)) {
+                    return;
+                }
+                hit.add(next.getUniqueId());
+                final long now = plugin.getServer().getCurrentTick();
+                if (runtime != null) {
+                    runtime.readyAt = Math.max(runtime.readyAt, now + step); // 這一掌也是一次攻擊：打完才能做別的
+                }
+                ServerSwing.mainHand(player);
+                strike(Origin.of(player), build, next);
+                if (KillingPalm.culled(player.getUniqueId(), next.getUniqueId(), now)) {
+                    palmChain(player, runtime, build, hit);
+                }
+                return;
+            }
+        }, step);
+    }
+
     // ---- 延遲落下、地面效果、印記 ----
 
     /**
      * 2026-10-26（PoE2 的 Lightning Warp）：瞄準的敵人腳下留 8 秒感電地面；生命已經低到可以撲殺 → 瞬移進去炸開（撲殺它、炸周圍 3 格）；
      * 還沒低到 → 掛 4 秒標記，期間掉到門檻就自動瞬移過去。
+     * 2026-10-28 照 PoE2 0.5：也能瞄準自己的滾雷珠（瞬移過去、雷珠在爆炸裡消失、照樣給閃電灌注、不留感電地面）；
+     * 可以撲殺的敵人、滾雷珠比還不能撲殺的敵人優先（見 {@link LightningWarp}）。這次之前只看準心第一個碰到的敵人。
      */
     private void warp(final Player player, final SkillBuild build) {
-        final LivingEntity target = targets.aimed(player, build.range(), 1.5);
-        if (target == null) {
+        final WarpAim aim = warpAim(player, build);
+        if (aim.pick() == LightningWarp.Pick.NONE) {
             return;
         }
-        if (plugin.skills() != null && plugin.skills().config().skill(WARP_GROUND) != null) {
-            plugin.skills().procs().castAt(player, WARP_GROUND, build.definition().id(), target.getLocation());
+        if (LightningWarp.shockedGround(aim.pick()) && plugin.skills() != null && plugin.skills().config().skill(WARP_GROUND) != null) {
+            plugin.skills().procs().castAt(player, WARP_GROUND, build.definition().id(), aim.enemy().getLocation());
         }
-        if (zones.cullable(target)) {
-            zones.warpInto(player, target, build);
-        } else {
-            zones.markWarp(player, target, build, WARP_MARK_TICKS);
-            visuals.cast(build.definition().visual(), target.getLocation().add(0, 1, 0));
+        switch (aim.pick()) {
+            case CULL -> zones.warpInto(player, aim.enemy(), build);
+            case BALL -> {
+                final Origin origin = Origin.of(player);
+                projectiles.aimedShot(player.getUniqueId(), LightningWarp.BALL, origin.eye(), origin.direction(),
+                        targets.aimReach(origin, build.range()), LightningWarp.BALL_TOLERANCE, true); // 雷珠在爆炸裡消失
+                player.setFallDistance(0);
+                player.setVelocity(new Vector());
+                zones.warpTo(player, aim.landing(), build);
+            }
+            case MARK -> {
+                zones.markWarp(player, aim.enemy(), build, WARP_MARK_TICKS);
+                visuals.cast(build.definition().visual(), aim.enemy().getLocation().add(0, 1, 0));
+            }
+            default -> {
+            }
         }
+    }
+
+    /** 雷遁這一下要對誰：種類、敵人（撲殺／標記）、滾雷珠那裡的落點。 */
+    private record WarpAim(LightningWarp.Pick pick, LivingEntity enemy, Location landing) {
+    }
+
+    private WarpAim warpAim(final Player player, final SkillBuild build) {
+        final Origin origin = Origin.of(player);
+        final double range = build.range();
+        final LivingEntity any = targets.aimed(origin, range, 1.5);
+        final SkillTargets.Aimed cull = any == null ? null : targets.aimedWhere(origin, range, 1.5, zones::cullable);
+        final double reach = targets.aimReach(origin, range);
+        final Location ball = reach <= 0.05 ? null : projectiles.aimedShot(player.getUniqueId(), LightningWarp.BALL, origin.eye(),
+                origin.direction(), reach, LightningWarp.BALL_TOLERANCE, false);
+        final Location landing = ball == null ? null : ballLanding(player, ball);
+        final Double ballAlong = landing == null ? null : ball.toVector().subtract(origin.eye().toVector()).dot(origin.direction());
+        final LightningWarp.Pick pick = LightningWarp.choose(cull == null ? null : cull.along(), ballAlong, any != null);
+        return switch (pick) {
+            case CULL -> new WarpAim(pick, cull.entity(), null);
+            case BALL -> new WarpAim(pick, null, landing);
+            case MARK -> new WarpAim(pick, any, null);
+            case NONE -> new WarpAim(pick, null, null);
+        };
+    }
+
+    /** 瞬移到滾雷珠那裡站的位置：雷珠正下方幾格內能站的地方；懸空就站在雷珠的高度（會掉下去）；卡在方塊裡回傳 null。 */
+    private Location ballLanding(final Player player, final Location ball) {
+        final World world = ball.getWorld();
+        final int x = ball.getBlockX();
+        final int z = ball.getBlockZ();
+        final int baseY = (int) Math.floor(ball.getY());
+        for (int dy = 0; dy >= -3; dy--) {
+            final int y = baseY + dy;
+            if (y - 1 >= world.getMinHeight() && y + 1 < world.getMaxHeight() && standable(world, x, y, z)) {
+                return new Location(world, ball.getX(), y, ball.getZ(), player.getLocation().getYaw(), player.getLocation().getPitch());
+            }
+        }
+        final Location feet = ball.clone().subtract(0, 0.9, 0);
+        final Block at = feet.getBlock();
+        final Block head = at.getRelative(0, 1, 0);
+        if (at.isPassable() && !at.isLiquid() && head.isPassable() && !head.isLiquid()) {
+            feet.setYaw(player.getLocation().getYaw());
+            feet.setPitch(player.getLocation().getPitch());
+            return feet;
+        }
+        return null;
     }
 
     /** 雷遁留下的感電地面（隱藏技能）。 */
@@ -1165,6 +1543,9 @@ final class SkillExecutor {
             impact(origin, build);
         }
     }
+
+    /** 2026-10-28：疫潮品質另外感染的敵人找多遠內的。 */
+    static final double EXTRA_TARGET_RANGE = 8;
 
     private void impact(final Origin origin, final SkillBuild build) {
         final LivingEntity aimed = targets.aimed(origin, build.range(), 1.0);
@@ -1241,6 +1622,22 @@ final class SkillExecutor {
                     at.add(Math.cos(angle) * spread, 0, Math.sin(angle) * spread);
                 }
                 points.add(at);
+            }
+            // 2026-10-28 照 PoE2 Contagion 的品質：施放時另外感染 (0—2) 個敵人（無條件捨去）：準心範圍外最近的幾隻身上各落一下
+            final int extraTargets = OriginalSkills.qualityInt(build.qualityFlat(tw.exilecore.stats.GemQualityKeys.EXTRA_TARGETS));
+            if (extraTargets > 0 && origin.owner() != null) {
+                final List<LivingEntity> near = new ArrayList<>(targets.around(center, EXTRA_TARGET_RANGE, origin.owner()));
+                near.sort(java.util.Comparator.comparingDouble(enemy -> enemy.getLocation().distanceSquared(center)));
+                int added = 0;
+                for (final LivingEntity enemy : near) {
+                    if (added >= extraTargets) {
+                        break;
+                    }
+                    if (enemy.getLocation().distance(center) > build.radius()) {
+                        points.add(enemy.getLocation());
+                        added++;
+                    }
+                }
             }
             if (SkillStages.get(id, "bolt") != null) {
                 // 2026-10-28 照 PoE2 Siege Cascade（崩城落彈）：準心處（impact 的半徑內）每一隻敵人旁邊各落一發弩彈（stages.bolt 的小半徑），
@@ -1331,8 +1728,8 @@ final class SkillExecutor {
         if (max <= 0 || origin.owner() == null) {
             return max;
         }
-        return max + (int) Math.round(Math.max(0, build.profile().effective(plugin.players().sheet(origin.owner()))
-                .flat(tw.exilecore.stats.KeystoneKeys.SKILL_LIMIT, build.profile().tags())));
+        // 2026-10-28：改用 SkillLimits（小數捨去，跟圖騰、召喚物這些一樣）；這次之前四捨五入
+        return max + SkillLimits.bonus(plugin.players().sheet(origin.owner()), build);
     }
 
     private void zone(final Origin origin, final SkillBuild build) {
@@ -1378,6 +1775,9 @@ final class SkillExecutor {
                     build.definition().id(), zoneMax(origin, build, params.max()));
             if (plugin.skills() != null) {
                 plugin.skills().leftovers().wallPlaced(origin, build, points); // 2026-10-28 照 PoE2 Shield Wall：每一段的生命
+            }
+            if (origin.self() && origin.owner() != null) {
+                lineAftershocks(origin.owner(), build, profile, points, radius); // 2026-10-28 照 PoE2 Volcanic Fissure 的品質：x% 機率多一次餘震
             }
         } else {
             final Location center;
@@ -1521,28 +1921,101 @@ final class SkillExecutor {
             return;
         }
         final Location center = new Location(origin.world(), corpse.x(), corpse.y() + 0.3, corpse.z());
+        if (origin.self() && origin.owner() != null) { // 2026-10-28 照 PoE2：連瀑照這一次的爆炸往兩側各炸一次（SkillExecutor.cascade）
+            lastBlast.put(origin.owner().getUniqueId(), new Blast(center.clone(), corpse.maxLife(), plugin.getServer().getCurrentTick()));
+        }
+        blastAt(origin.owner(), build, center, corpse.maxLife());
+    }
+
+    /** 屍體在 center 爆炸（骸爆；連瀑的那幾次也走這裡，不再用掉屍體）。 */
+    private void blastAt(final Player owner, final SkillBuild build, final Location center, final double corpseLife) {
         final double radius = build.radius();
         // 技能自己的傷害 ＋ 屍體最大生命的 x% 當火焰傷害（照法術附加一樣，走增加／更多）
-        final double extra = corpse.maxLife() * build.params().percent().at(build.level()) / 100.0;
+        final double extra = corpseLife * build.params().percent().at(build.level()) / 100.0;
         final SkillProfile base = build.profile();
         final tw.exilecore.stats.DamagePacket min = base.spellDamage() == null ? new tw.exilecore.stats.DamagePacket() : new tw.exilecore.stats.DamagePacket(base.spellDamage());
         final tw.exilecore.stats.DamagePacket max = base.spellMax() == null ? new tw.exilecore.stats.DamagePacket() : new tw.exilecore.stats.DamagePacket(base.spellMax());
         min.add(tw.exilecore.stats.DamageType.FIRE, extra);
         max.add(tw.exilecore.stats.DamageType.FIRE, extra);
         final SkillProfile profile = new SkillProfile(base.id(), base.tags(), base.effectiveness(), min, max, base.conversion(), base.local());
-        for (final LivingEntity target : targets.around(center, radius, origin.owner())) {
-            damage.hit(origin.owner(), target, profile, null);
+        for (final LivingEntity target : targets.around(center, radius, owner)) {
+            damage.hit(owner, target, profile, null);
         }
-        targets.strike(origin.owner(), profile, SkillTargets.sphere(center, radius), new Object()); // 2026-10-25
+        targets.strike(owner, profile, SkillTargets.sphere(center, radius), new Object()); // 2026-10-25
         visuals.detonate(build.definition().visual(), center, radius);
+    }
+
+    // ---- 連瀑（2026-10-28 照 PoE2 Cascadable）----
+
+    /** 玩家這一 tick 引爆的屍體（連瀑照它往兩側各炸一次）。 */
+    record Blast(Location center, double corpseLife, long tick) {
+    }
+
+    private final java.util.Map<UUID, Blast> lastBlast = new java.util.HashMap<>();
+
+    /**
+     * 連瀑的基準（施放當下記下來）：self 是施放者的位置與準心；curse 是詛咒落下的中心（詛咒才有）；
+     * blast 是剛引爆的屍體（骸爆才有）。
+     */
+    record CascadeAnchor(Origin self, Location curse, Blast blast) {
+    }
+
+    CascadeAnchor cascadeAnchor(final Player player, final SkillBuild build, final LivingEntity preferred) {
+        final Origin self = Origin.of(player);
+        Location curse = null;
+        if (build.definition().mechanic() == Mechanic.MARK && build.params().mark() != null && build.params().mark().curse()) {
+            curse = curseCenter(player, build, preferred);
+        }
+        Blast blast = null;
+        if (build.definition().mechanic() == Mechanic.CORPSE) {
+            final Blast last = lastBlast.remove(player.getUniqueId());
+            if (last != null && last.tick() == plugin.getServer().getCurrentTick() && last.center().getWorld().equals(player.getWorld())) {
+                blast = last;
+            }
+        }
+        return new CascadeAnchor(self, curse, blast);
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 連瀑（Spell Cascade、神幻雪崩）：把這一次往 shift 平移再放一次（build 是已經套上連瀑範圍更少的）。
+     * 詛咒：照原本的落點平移再落一圈（一樣過 1.5 秒才生效、一隻敵人同時只有你一個詛咒，同一個詛咒重疊就是刷新）；
+     * 骸爆：照原本的爆炸平移再炸一次（不再用掉屍體）；其他：從平移後的位置照同一個準心重放。
+     * 這次之前一律從平移後的位置重放：詛咒會落在自己身邊，所以詛咒掛不上連瀑。
+     */
+    void cascade(final Player player, final SkillBuild build, final CascadeAnchor anchor, final Vector shift) {
+        if (anchor.curse() != null) {
+            curseAt(player, build, anchor.curse().clone().add(shift), build.params().mark());
+            return;
+        }
+        if (anchor.blast() != null) {
+            blastAt(player, build, anchor.blast().center().clone().add(shift), anchor.blast().corpseLife());
+            return;
+        }
+        final Origin self = anchor.self();
+        executeFrom(new Origin(player, self.feet().clone().add(shift), self.eye().clone().add(shift), self.direction(), false), build, null);
+    }
+
+    /** 詛咒落下的中心：指著敵人就是牠腳下，沒有就是準心指的地方。 */
+    Location curseCenter(final Player player, final SkillBuild build, final LivingEntity preferred) {
+        final Origin origin = Origin.of(player);
+        final LivingEntity aimed = preferred != null && targets.valid(preferred, player) ? preferred : targets.aimed(origin, build.range(), 1.2);
+        return aimed != null ? aimed.getLocation() : targets.aimPoint(origin, build.range());
     }
 
     /** 詛咒（2026-10）：準心指的地方（指著敵人就是牠腳下）一圈的敵人全部套上減益。 */
     private void curse(final Player player, final SkillBuild build, final LivingEntity preferred, final SkillParams.Mark spec) {
         final Origin origin = Origin.of(player);
-        final LivingEntity aimed = preferred != null && targets.valid(preferred, player) ? preferred : targets.aimed(origin, build.range(), 1.2);
-        final Location center = aimed != null ? aimed.getLocation() : targets.aimPoint(origin, build.range());
+        final Location center = curseCenter(player, build, preferred);
         curseAt(player, build, center, spec);
+        // 2026-10-28 照 PoE2 Entangle 的品質：(0—20)% 機率多一道裂隙（再往前一圈；跟天賦樹「多一道裂隙的機率」同一個鍵，只看技能自己的）
+        final double extra = SkillZones.localFlat(build.profile(), tw.exilecore.stats.KeystoneOriginKeys.EXTRA_FISSURE_CHANCE);
+        if (extra > 0 && plugin.random().nextDouble() * 100 < extra) {
+            final double step = spec.radius(build.level()) * build.areaScale() * 1.5;
+            final org.bukkit.util.Vector ahead = origin.facing().clone().setY(0);
+            if (ahead.lengthSquared() > 1e-6) {
+                curseAt(player, build, center.clone().add(ahead.normalize().multiply(step)), spec);
+            }
+        }
     }
 
     /** 2026-10-26 照 PoE2：詛咒落地之後 1.5 秒才生效（捷咒：更少 50%）；輔助觸發的減益（隱藏技能）馬上生效。 */
@@ -1598,6 +2071,9 @@ final class SkillExecutor {
         for (final ScaledMod effect : spec.effects()) {
             effects.add(effect.toModifier(build.level(), scale, build.definition().name()));
         }
+        final List<tw.exilecore.stats.Modifier> mergedCurse = build.withQualityEffects(effects, scale, build.definition().name()); // 2026-10-28 照 PoE2：品質加在詛咒本身的數值上
+        effects.clear();
+        effects.addAll(mergedCurse);
         final double slow = spec.slow().at(build.level()) / 100.0 * scale;
         // 2026-10-22：真正的詛咒（不是輔助觸發的殘肢、目眩這些隱藏技能）一隻敵人身上同時只能有你的一個，放新的拿掉舊的
         final boolean exclusive = !build.definition().hidden() && !LineageMechanics.ignoresCurseLimit(build); // 2026-10-27 照 PoE2 魅咒：不受詛咒上限限制
@@ -1707,15 +2183,29 @@ final class SkillExecutor {
         if (target == null) {
             return;
         }
+        markOn(player, build, target, false);
+    }
+
+    /**
+     * 把印記放在 target 身上。bypassLimit：2026-10-28 照 PoE2 0.3.0 起的 Called Shots「bypasses your Mark limit」——
+     * 預告射擊放的印記不拿掉你其他的印記（一般放印記照舊同時只能有一個）。
+     */
+    void markOn(final Player player, final SkillBuild build, final LivingEntity target, final boolean bypassLimit) {
         final SkillParams.Mark params = build.params().mark();
         final long until = plugin.getServer().getCurrentTick() + build.durationTicks(params.duration(build.level()));
         final java.util.List<tw.exilecore.stats.Modifier> mods = new java.util.ArrayList<>();
         for (final ScaledMod effect : params.effects()) {
             mods.add(effect.toModifier(build.level(), build.auraEffect(), build.definition().name()));
         }
+        // 2026-10-28 照 PoE2：印記的品質加在印記本身的數值上（霜縛印的凍結累積、引雷印的電擊累積）
+        final java.util.List<tw.exilecore.stats.Modifier> merged = build.withQualityEffects(mods, build.auraEffect(), build.definition().name());
+        mods.clear();
+        mods.addAll(merged);
         // 2026-10-22：同時只能有一個印記，放新的會拿掉舊的（以前引雷印、霜縛印、血嗅印能同時掛在同一隻身上）
+        // 2026-10-28 照 PoE2：印記是「上限 1 個被標記的目標」，+x 上限（過剩）讓同一種印記多標記幾個；這次之前一律一個
+        final int markLimit = 1 + (build.definition().tags().contains(SkillLimits.TAG) ? SkillLimits.bonus(plugin.players().sheet(player), build) : 0);
         plugin.combat().debuffs().applyMark(target.getUniqueId(), new Debuffs.Debuff(build.definition().id(), player.getUniqueId(), until,
-                params.taken() / 100.0 * build.auraEffect(), params.selfOnly(), null, mods, 0));
+                params.taken() / 100.0 * build.auraEffect(), params.selfOnly(), null, mods, 0), bypassLimit ? 0 : markLimit);
         if (plugin.skills() != null) {
             plugin.skills().supportMechanics().markApplied(player, build, target, until); // 2026-10-26：烙印深、久印
             plugin.skills().spears().marked(player, build, target); // 2026-10-27 照 PoE2 Bloodhound's Mark

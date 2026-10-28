@@ -294,7 +294,8 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 * Math.max(0.1, effective.apply(StatKeys.SKILL_PROJECTILE_SPEED, 1.0, context)
                 + LineageRules.castSpeedAsProjectileSpeed(effective, context)))); // 2026-10-27 照 PoE2：推詠（施法速度的增加也套到投射物速度）
         final int pierce = clamp((int) Math.round(params.pierce() + effective.flat(StatKeys.SKILL_PIERCE, context)), 0, 20);
-        final int extraChains = Math.max(0, (int) Math.round(effective.flat(StatKeys.SKILL_CHAINS, context)));
+        // 2026-10-28：無條件捨去（品質的連鎖：電弧 10% 品質 +1、血脈牽 20% 品質 +1，照 PoE2）；這次之前四捨五入
+        final int extraChains = Math.max(0, (int) Math.floor(effective.flat(StatKeys.SKILL_CHAINS, context) + 1e-6));
         final int chains = LineageRules.chains(effective, context, switch (definition.mechanic()) { // 2026-10-27 照 PoE2：倍鏈（連鎖次數更多）
             case CHAIN -> params.chains().intAt(level) + extraChains;
             case PROJECTILE -> extraChains;
@@ -328,7 +329,8 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 && StatKeys.flag(effective, StatKeys.FLAG_RETURNING);
         final int totems = deploy == null || deploy.kind() != DeploySpec.Kind.TOTEM ? 0
                 : deploy.fixedMax() ? deploy.max() // 2026-10-26 照 PoE2：英靈圖騰固定 10 根（這次之前會吃 +x 上限、先祖魂約加倍，最多 12）
-                : clamp((deploy.max() + (int) Math.floor(effective.flat(StatKeys.SKILL_TOTEMS, context) + 1e-6)) // 2026-10-26：無條件捨去（崩震圖騰品質 20% 才 +1；這次之前四捨五入）
+                : clamp((deploy.max() + (int) Math.floor(effective.flat(StatKeys.SKILL_TOTEMS, context) + 1e-6) // 2026-10-26：無條件捨去（崩震圖騰品質 20% 才 +1；這次之前四捨五入）
+                        + SkillLimits.bonus(effective, context)) // 2026-10-28 照 PoE2：圖騰是「上限 1 根圖騰」（Limit），吃 +x 上限（過剩）；這次之前只吃 skill.totems
                         * (StatKeys.flag(effective, StatKeys.FLAG_ANCESTRAL_BOND) ? 2 : 1), 1, 12); // 祖靈契約（PoE2）：圖騰上限加倍
         final boolean echo = !isDefault && !definition.isAttack() && deploy == null && StatKeys.flag(effective, StatKeys.FLAG_ECHO)
                 && definition.mechanic() != Mechanic.DASH && definition.mechanic() != Mechanic.LEAP && definition.mechanic() != Mechanic.MARK
@@ -337,7 +339,9 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 && definition.mechanic() != Mechanic.GUARD;
         final SummonSpec summon = definition.summon();
         final int minions = summon == null ? 0 : clamp(summon.max().intAt(level)
-                + (summon.fixedMax() ? 0 : (int) Math.round(effective.flat(StatKeys.SKILL_MINIONS, context))), 1, MAX_MINIONS);
+                + (summon.fixedMax() ? 0 : (int) Math.floor(effective.flat(StatKeys.SKILL_MINIONS, context) + 1e-6))
+                // 2026-10-28 照 PoE2：召喚物數量寫「上限」的（喚屍、焚魂、骨構體、蟲噬群，帶 limit 標籤）吃 +x 上限（過剩）；這次之前不吃
+                + (summon.fixedMax() || !definition.tags().contains(SkillLimits.TAG) ? 0 : SkillLimits.bonus(effective, context)), 1, MAX_MINIONS); // 2026-10-28：無條件捨去（灰狼隨品質 20% 才 +1）；這次之前四捨五入
         final AuraSpec aura = definition.aura();
         // 2026-10：照 PoE 的「保留效率」：減少的部分加總成效率，保留 = 原本 ÷ (1 + 效率)；增加的照乘（以前減少直接相加，疊到 -100% 就不用保留）
         // 2026-10-26（雷脊長棍）：「技能保留的精魂少 50%」是 MORE（另外乘）
@@ -386,6 +390,18 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 speed, range, size, pierce, chains, explode * (newAreaScale / Math.max(1e-6, areaScale)), wobble, arrow,
                 radius * (newAreaScale / Math.max(1e-6, areaScale)), length, chainRange, manaCost, newAreaScale, bonusLevel, cooldownTicks,
                 durationScale, forks, returning, echo, deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 技能品質（霜使、風之舞步的「半徑 +x 公尺」）：基礎半徑加 meters 公尺再乘原本的範圍倍率
+     *（範圍倍率照比例換掉，爆炸半徑一起放大）；沒有半徑或 meters ≤ 0 原樣回傳。
+     */
+    public SkillBuild withBaseRadius(final double meters) {
+        final double base = areaScale <= 0 ? 0 : radius / areaScale;
+        if (meters <= 0 || base <= 0) {
+            return this;
+        }
+        return withAreaAndProjectiles(areaScale * (base + meters) / base, projectiles);
     }
 
     /** 2026-10-22：換掉放下去的東西的設定（星咒圖騰：主要寶石上的持續時間輔助只加圖騰的持續時間）。 */
@@ -492,7 +508,83 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         for (final ScaledMod mod : aura.effects()) {
             list.add(mod.toModifier(level, auraEffect, "光環 " + definition.name()));
         }
+        // 2026-10-28 照 PoE2：品質加在增益本身的數值上（獸血沸這種有狂暴的，品質加在狂暴上：AuraService.startFrenzy）
+        return aura.fury() != null ? list : withQualityEffects(list, auraEffect, "光環 " + definition.name());
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 技能品質（「增益給 x」「光環給的抗性 +x%」這種 *_to_apply 的品質）：寫成 effect.＊ 放在技能自己的修飾器裡。
+     * 跟增益原本的某一條同屬性、同種類、同標籤的，加在那一條上（一起乘增益效果倍率；例如元素潮汐的更多 40% → 50%，不是另外乘一個 10%）；
+     * 沒有對應的多一條。光環、常駐增益、印記、引導與守勢的增益都走這裡（給隊友、召喚物的那份一樣有）。
+     */
+    public static final String EFFECT_PREFIX = "effect.";
+
+    /** 2026-10-28：品質給的 effect.＊（拿掉前綴，還沒乘效果倍率）。 */
+    public List<Modifier> qualityEffects() {
+        final List<Modifier> list = new ArrayList<>();
+        for (final Modifier modifier : profile.local()) {
+            if (modifier.stat().startsWith(EFFECT_PREFIX) && isQuality(modifier)) {
+                list.add(new Modifier(modifier.stat().substring(EFFECT_PREFIX.length()), modifier.type(), modifier.value(),
+                        modifier.tags(), modifier.source()));
+            }
+        }
         return list;
+    }
+
+    /** 2026-10-28：effects（已經乘過效果倍率）加上品質給的 effect.＊（照 scale 乘）。 */
+    public List<Modifier> withQualityEffects(final List<Modifier> effects, final double scale, final String source) {
+        final List<Modifier> quality = qualityEffects();
+        return quality.isEmpty() ? effects : mergeEffects(effects, quality, scale, source);
+    }
+
+    /** 2026-10-28：同屬性、同種類、同標籤的加在一起，沒有的多一條（純函式，給測試）。 */
+    static List<Modifier> mergeEffects(final List<Modifier> effects, final List<Modifier> quality, final double scale, final String source) {
+        final List<Modifier> out = new ArrayList<>(effects);
+        for (final Modifier extra : quality) {
+            boolean merged = false;
+            for (int i = 0; i < out.size(); i++) {
+                final Modifier base = out.get(i);
+                if (base.stat().equals(extra.stat()) && base.type() == extra.type() && base.tags().equals(extra.tags())) {
+                    out.set(i, new Modifier(base.stat(), base.type(), base.value() + extra.value() * scale, base.tags(), base.source()));
+                    merged = true;
+                    break;
+                }
+            }
+            if (!merged) {
+                out.add(new Modifier(extra.stat(), extra.type(), extra.value() * scale, extra.tags(), source));
+            }
+        }
+        return out;
+    }
+
+    /** 2026-10-28：這條是不是品質給的（一般品質「品質 x%」、進階奇術加倍的「進階奇術」）。 */
+    static boolean isQuality(final Modifier modifier) {
+        return modifier.source() != null && (modifier.source().startsWith(SkillService.QUALITY_SOURCE) || "進階奇術".equals(modifier.source()));
+    }
+
+    /**
+     * 2026-10-28：品質給的修飾器（原樣，來源還是「品質 x%」）。這顆寶石的品質要帶到它放出的另一個技能上時用
+     *（鐵壁守的爆開、掘骸的骨構體、鴉群密謀的烏鴉群：當作那個技能的 extra 傳給 {@link #of}）。
+     */
+    public List<Modifier> qualityModifiers() {
+        final List<Modifier> list = new ArrayList<>();
+        for (final Modifier modifier : profile.local()) {
+            if (isQuality(modifier)) {
+                list.add(modifier);
+            }
+        }
+        return list;
+    }
+
+    /** 2026-10-28 照 PoE2 技能品質：品質給的某個 FLAT 屬性加總（不含技能自己的逐級數值、輔助）。 */
+    public double qualityFlat(final String stat) {
+        double sum = 0;
+        for (final Modifier modifier : profile.local()) {
+            if (modifier.stat().equals(stat) && modifier.type() == tw.exilecore.stats.ModType.FLAT && isQuality(modifier)) {
+                sum += modifier.value();
+            }
+        }
+        return sum;
     }
 
     /**

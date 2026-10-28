@@ -340,6 +340,9 @@ public final class ChargeEffects implements Listener {
      * 打中時：完磐（完美時機的那一下給磐星）、回槍躍（打中被招架的敵人用掉招架、放震波、給怒星，charge.on_parried.代號）。
      * 同一下打中好幾個只算一次。
      */
+    /** 2026-10-28：回槍躍多的那一道震波隔幾 tick（觸發技能自己有短冷卻，同一 tick 放不出第二道）。 */
+    static final long EXTRA_SHOCKWAVE_DELAY = 4;
+
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onHit(final HitEvent event) {
         if (!(event.attacker() instanceof Player player) || event.skill() == null || !event.result().hit()
@@ -377,6 +380,16 @@ public final class ChargeEffects implements Listener {
         }
         final String skillId = SupportProcs.baseId(event.skill().id());
         service.procs().castAt(player, DISENGAGE_SHOCKWAVE, skillId, target.getLocation());
+        // 2026-10-28 照 PoE2 Disengage 的品質：(0—20)% 機率多一道震波（緊接著在同一個地方）
+        final double extraWave = effective.flat(tw.exilecore.stats.GemQualityKeys.EXTRA_SHOCKWAVE, event.skill().tags());
+        if (extraWave > 0 && plugin.random().nextDouble() * 100 < extraWave) {
+            final org.bukkit.Location again = target.getLocation();
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline()) {
+                    service.procs().castAtNow(player, DISENGAGE_SHOCKWAVE, skillId, again);
+                }
+            }, EXTRA_SHOCKWAVE_DELAY);
+        }
         target.getWorld().playSound(target.getLocation(), Sound.ITEM_TRIDENT_RETURN, SoundCategory.PLAYERS, 0.8f, 1.6f);
         if (parriedTick.getOrDefault(player.getUniqueId(), -100L) < now - PARRIED_WINDOW) {
             parriedTick.put(player.getUniqueId(), now);

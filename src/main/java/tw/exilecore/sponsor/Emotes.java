@@ -458,9 +458,9 @@ public final class Emotes implements Listener {
                 afterimage(player.getLocation());
                 player.setSneaking(true);
                 if (tick == 0) {
-                    player.swingOffHand();
+                    tw.exilecore.skill.ServerSwing.offHand(player);
                 } else {
-                    player.swingMainHand();
+                    tw.exilecore.skill.ServerSwing.mainHand(player);
                 }
                 world.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.7f, 1.6f);
                 world.playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_FLAP, 0.4f, 1.8f);
@@ -556,8 +556,8 @@ public final class Emotes implements Listener {
             }
             if (tick == 0) {
                 // 張開雙手
-                player.swingMainHand();
-                player.swingOffHand();
+                tw.exilecore.skill.ServerSwing.mainHand(player);
+                tw.exilecore.skill.ServerSwing.offHand(player);
                 world.playSound(player.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 0.5f, 1.4f);
             }
             if (tick == 4 || tick == 16) {
@@ -567,9 +567,9 @@ public final class Emotes implements Listener {
                 }
                 player.setSneaking(true);
                 if (tick == 4) {
-                    player.swingOffHand();
+                    tw.exilecore.skill.ServerSwing.offHand(player);
                 } else {
-                    player.swingMainHand();
+                    tw.exilecore.skill.ServerSwing.mainHand(player);
                 }
                 final Location foot = player.getLocation().subtract(player.getLocation().getDirection().setY(0).normalize().multiply(0.5)).add(0, 0.4, 0);
                 world.spawnParticle(Particle.CLOUD, foot, 4, 0.12, 0.08, 0.12, 0.02);
@@ -581,13 +581,13 @@ public final class Emotes implements Listener {
             }
             if (tick == 12) {
                 // 交叉步
-                player.swingMainHand();
+                tw.exilecore.skill.ServerSwing.mainHand(player);
                 world.spawnParticle(Particle.POOF, player.getLocation().add(0, 0.1, 0), 4, 0.25, 0.02, 0.25, 0.01);
                 world.playSound(player.getLocation(), Sound.BLOCK_WOOL_STEP, 0.6f, 1.2f);
             }
             if (tick == 26) {
-                player.swingMainHand();
-                player.swingOffHand();
+                tw.exilecore.skill.ServerSwing.mainHand(player);
+                tw.exilecore.skill.ServerSwing.offHand(player);
             }
         });
     }
@@ -668,9 +668,9 @@ public final class Emotes implements Listener {
                 if (tick % 2 == 0) {
                     player.setSneaking(tick % 6 != 4); // 大多蹲著，偶爾站起來一下
                     if (tick % 4 == 0) {
-                        player.swingMainHand();
+                        tw.exilecore.skill.ServerSwing.mainHand(player);
                     } else {
-                        player.swingOffHand();
+                        tw.exilecore.skill.ServerSwing.offHand(player);
                     }
                 }
                 // 身子左右扭、甩頭
@@ -696,8 +696,8 @@ public final class Emotes implements Listener {
                 turnHead(player, -turned[0], 0);
                 turned[0] = 0;
                 player.setSneaking(false);
-                player.swingMainHand();
-                player.swingOffHand();
+                tw.exilecore.skill.ServerSwing.mainHand(player);
+                tw.exilecore.skill.ServerSwing.offHand(player);
                 world.spawnParticle(Particle.SPLASH, player.getLocation().add(0, 2.1, 0), 12, 0.4, 0.1, 0.4, 0.2);
                 world.playSound(player.getLocation(), Sound.ENTITY_POLAR_BEAR_WARNING, 0.5f, 1.3f);
             }
@@ -737,7 +737,7 @@ public final class Emotes implements Listener {
             }
             if (tick == 0) {
                 player.setSneaking(true); // 馬步
-                player.swingMainHand();   // 一手伸出去
+                tw.exilecore.skill.ServerSwing.mainHand(player);   // 一手伸出去
                 world.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.4f, 1.8f);
             }
             if (tick >= 4 && tick < 34) {
@@ -754,7 +754,7 @@ public final class Emotes implements Listener {
                     world.playSound(head, Sound.ENTITY_PLAYER_ATTACK_WEAK, 0.25f, 1.9f);
                 }
                 if (tick % 10 == 0) {
-                    player.swingOffHand();
+                    tw.exilecore.skill.ServerSwing.offHand(player);
                 }
             }
             if (tick == 34) {
@@ -762,7 +762,7 @@ public final class Emotes implements Listener {
                 applied[0] = 0;
                 applied[1] = 0;
                 player.setSneaking(false); // 收回站好
-                player.swingMainHand();
+                tw.exilecore.skill.ServerSwing.mainHand(player);
             }
         });
     }
@@ -789,7 +789,7 @@ public final class Emotes implements Listener {
             turnHead(player, yaw - applied[0], 0);
             applied[0] = yaw;
             if (tick % 8 == 0) {
-                player.swingMainHand();
+                tw.exilecore.skill.ServerSwing.mainHand(player);
             }
         });
     }
@@ -814,9 +814,9 @@ public final class Emotes implements Listener {
             if (tick % 4 == 0) {
                 final boolean left = tick % 8 == 0;
                 if (left) {
-                    player.swingOffHand();
+                    tw.exilecore.skill.ServerSwing.offHand(player);
                 } else {
-                    player.swingMainHand();
+                    tw.exilecore.skill.ServerSwing.mainHand(player);
                 }
                 final float yaw = left ? 8 : -8;
                 turnHead(player, yaw - applied[0], 0);
@@ -1004,11 +1004,11 @@ public final class Emotes implements Listener {
                 return;
             }
             switch (tick) {
-                case 8, 55 -> player.swingMainHand();
-                case 24 -> player.swingOffHand();
+                case 8, 55 -> tw.exilecore.skill.ServerSwing.mainHand(player);
+                case 24 -> tw.exilecore.skill.ServerSwing.offHand(player);
                 case 41 -> {
-                    player.swingMainHand();
-                    player.swingOffHand();
+                    tw.exilecore.skill.ServerSwing.mainHand(player);
+                    tw.exilecore.skill.ServerSwing.offHand(player);
                 }
                 default -> {
                 }
@@ -1103,7 +1103,7 @@ public final class Emotes implements Listener {
                 return;
             }
             if (tick == 23) {
-                player.swingMainHand();
+                tw.exilecore.skill.ServerSwing.mainHand(player);
                 turnHead(player, 0, 25 - applied[0]); // 低頭看腰
                 applied[0] = 25;
             }

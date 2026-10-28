@@ -498,6 +498,9 @@ public final class DeliveryService {
             if (skill == null || skill.hidden()) {
                 throw new IllegalArgumentException("沒有這個技能：" + ref.substring(6));
             }
+            if (skill.grantedOnly()) { // 2026-10-28 照 PoE2：武器、昇華賦予的技能沒有寶石
+                throw new IllegalArgumentException(skill.name() + "是" + skill.sourceText() + "的技能，沒有寶石：" + ref.substring(6));
+            }
             return GemData.skill(new SkillLoadout.Entry(skill.id(), level));
         }
         if (ref.startsWith("support:")) {

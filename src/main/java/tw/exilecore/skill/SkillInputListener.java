@@ -165,6 +165,11 @@ final class SkillInputListener implements Listener {
             runtime.leftHeldTick = now;
             return true;
         }
+        // 2026-10-28：伺服器揮手（右鍵、數字鍵施放…）的回音推出來的左鍵不算（ServerSwing）；這次之前只擋右鍵、丟東西之後 3 tick，
+        // 延遲高一點回音就被當成左鍵，放技能時一直自動放左鍵的技能。同一個封包的揮手事件（onSwing）接著吃掉這一筆。
+        if (ServerSwing.echoPending(player, now)) {
+            return false;
+        }
         return SkillMath.airClick(runtime.lastRightTick, runtime.lastDropTick, now);
     }
 
@@ -198,20 +203,23 @@ final class SkillInputListener implements Listener {
 
     /**
      * 揮手（主手）：按住左鍵時客戶端以為在挖方塊，每 tick 揮一次（{@link HoldToCast}），每一下當成一次左鍵。
-     * 點一下的那次揮手跟「左鍵點方塊」在同一個 tick，只算一次。沒有按住左鍵時的揮手（右鍵用工具、開門、丟東西帶出來的）不算。
+     * 點一下的那次揮手跟「左鍵點方塊」在同一個 tick，只算一次。沒有按住左鍵時的揮手（右鍵用工具、開門、丟東西帶出來的、
+     * 伺服器揮手的回音）不算。
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onSwing(final PlayerArmSwingEvent event) {
-        if (event.getHand() != EquipmentSlot.HAND) {
-            return;
-        }
         final Player player = event.getPlayer();
-        if (!service.hold().active(player)) {
-            return;
-        }
         final SkillRuntime runtime = service.runtime(player);
         final long now = now();
-        if (!SkillMath.heldSwing(runtime.leftHeld, runtime.leftHeldTick, now)) {
+        final boolean held = event.getHand() == EquipmentSlot.HAND && service.hold().active(player)
+                && SkillMath.heldSwing(runtime.leftHeld, runtime.leftHeldTick, now);
+        if (!held) {
+            // 2026-10-28：不是按住左鍵的揮手：先當成伺服器揮手的回音吃掉一筆（ServerSwing；Paper 先推左鍵點空氣、再發這個事件）。
+            // 右鍵、丟東西同一個 tick 帶出來的揮手是客戶端自己的（工具削樹皮、鋤地），不吃，回音晚一個來回才會到。
+            // 這次之前沒有記帳，回音被當成左鍵
+            if (now != runtime.lastRightTick && now != runtime.lastDropTick) {
+                ServerSwing.consumeEcho(player, now);
+            }
             return;
         }
         runtime.leftHeldTick = now;
@@ -333,6 +341,7 @@ final class SkillInputListener implements Listener {
     @EventHandler
     public void onQuit(final PlayerQuitEvent event) {
         service.forget(event.getPlayer());
+        ServerSwing.forget(event.getPlayer());
     }
 
     /** 有角色、活著（用寶石不限遊戲模式）。 */

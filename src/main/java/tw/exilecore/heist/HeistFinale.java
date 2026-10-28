@@ -34,7 +34,6 @@ import tw.exilecore.skill.SkillDefinition;
 
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -46,7 +45,7 @@ import java.util.UUID;
  * 劫盜終局「金庫之主」（2026-10）：用大劫盜大金庫掉的鑰印開（heist.yml 的 vault.finale_key_chance）。
  * 打倒之後 Boss 房中間放一排寶箱（finale.choices，預設 5 個），上面的全息文字寫著裡面是哪一件（2026-10：每個有份的人各自一組、
  * 各自擲數值，全息文字只有本人看得到）——
- * 從劫盜的隱匿傳奇裡隨機挑（有機率多一個 Lv.21 未切割技能寶石）。每個人只能開一個，開了之後其他的對他就封鎖了（全息文字也看不到了）。
+ * 從劫盜的隱匿傳奇裡隨機挑（有機率多一個 Lv.21 未切割技能寶石）。2026-10-28 照站長：特殊項鍊（劫盜專屬基底）也在收藏裡（見 {@link FinalePool}）。每個人只能開一個，開了之後其他的對他就封鎖了（全息文字也看不到了）。
  */
 final class HeistFinale implements Listener {
 
@@ -57,7 +56,10 @@ final class HeistFinale implements Listener {
      * 一個寶箱裡是什麼：傳奇（unique）或 Lv.21 未切割技能寶石（skill = uncut_skill_21）。
      * seed：2026-10 傳奇的數值照這個擲（全息文字上看到的就是拿到的那一件；每個人拿到的數值一樣、物品 UUID 各自新的）。
      */
-    private record Choice(String unique, String skill, String label, long seed) {
+    private record Choice(String unique, String skill, String label, long seed, String base) {
+        Choice(final String unique, final String skill, final String label, final long seed) {
+            this(unique, skill, label, seed, null);
+        }
     }
 
     private static final class Run {
@@ -152,7 +154,7 @@ final class HeistFinale implements Listener {
         }
         if (count == 0) {
             for (final Player player : players) {
-                player.sendMessage(plugin.text().prefixed("<red>金庫之主的收藏是空的（uniques.yml、skills.yml 沒有劫盜專屬的東西）"));
+                player.sendMessage(plugin.text().prefixed("<red>金庫之主的收藏是空的（uniques.yml、bases 沒有劫盜專屬的東西）"));
             }
             return;
         }
@@ -166,16 +168,32 @@ final class HeistFinale implements Listener {
         }
     }
 
-    /** 從劫盜的隱匿傳奇裡不重複地挑 finale.choices 件（一個人一組，各自擲）。 */
+    /**
+     * 從劫盜的隱匿傳奇裡不重複地挑 finale.choices 件（一個人一組，各自擲）。
+     * 2026-10-28 照站長：特殊項鍊（劫盜專屬基底）也在收藏裡，每一種權重 special_amulet.finale_weight（一件傳奇算 1）；
+     * 這次之前只有傳奇（平均洗牌挑）。
+     */
     private List<Choice> rollChoices(final Run run, final Player player) {
-        final List<Choice> pool = new ArrayList<>();
+        final List<FinalePool.Entry> entries = new ArrayList<>();
         if (plugin.items() != null) {
             for (final UniqueItem unique : plugin.items().repository().uniquesFor(HeistService.UNIQUE_SOURCE, Math.max(run.level, 100))) {
-                pool.add(new Choice(unique.id(), null, "<#af6025>" + ItemRenderer.escape(unique.name()), plugin.random().nextLong()));
+                entries.add(FinalePool.Entry.unique(unique.id()));
+            }
+            final double amuletWeight = heists.config().specialAmulets().finaleWeight();
+            for (final tw.exilecore.item.ItemBase base : plugin.items().repository().heistOnlyBasesAt(Math.max(run.level, 100))) {
+                entries.add(FinalePool.Entry.base(base.id(), amuletWeight));
             }
         }
-        Collections.shuffle(pool, new java.util.Random(plugin.random().nextLong()));
-        final List<Choice> picked = new ArrayList<>(pool.subList(0, Math.min(pool.size(), heists.config().finaleChoices())));
+        final List<Choice> picked = new ArrayList<>();
+        for (final FinalePool.Entry entry : FinalePool.pick(entries, heists.config().finaleChoices(), plugin.random())) {
+            if (entry.unique() != null) {
+                final UniqueItem unique = plugin.items().repository().unique(entry.unique());
+                picked.add(new Choice(unique.id(), null, "<#af6025>" + ItemRenderer.escape(unique.name()), plugin.random().nextLong()));
+            } else {
+                final tw.exilecore.item.ItemBase base = plugin.items().repository().base(entry.base());
+                picked.add(new Choice(null, null, "<#d4a017>" + ItemRenderer.escape(base.name()), plugin.random().nextLong(), base.id()));
+            }
+        }
         // 2026-10：收藏裡有機率多一個 Lv.21 未切割技能寶石的寶箱（以前是異質技能寶石）
         if (plugin.random().nextDouble() < heists.config().settings().vault().finaleGemChance() // 2026-10-16：終局以上的掉落不吃物品稀有度
                 && heists.currency(HeistService.UNCUT_21) != null) {
@@ -253,6 +271,9 @@ final class HeistFinale implements Listener {
             if (choice.unique() != null) {
                 final ItemData item = rollUnique(run, choice);
                 stack = item == null ? null : plugin.items().renderer().create(item);
+            } else if (choice.base() != null) {
+                final ItemData item = rollBase(run, choice);
+                stack = item == null ? null : plugin.items().renderer().create(item);
             } else if (HeistService.UNCUT_21.equals(choice.skill()) && plugin.skills() != null) {
                 stack = plugin.skills().gems().create(tw.exilecore.skill.GemData.uncutSkill(tw.exilecore.character.SkillLoadout.GEM_CAP), 1);
             }
@@ -280,6 +301,18 @@ final class HeistFinale implements Listener {
             return null;
         }
         final ItemData item = plugin.items().generator().generateUnique(unique, Math.max(run.level, unique.dropLevel()), new java.util.Random(choice.seed()));
+        item.setIdentified(true);
+        return item;
+    }
+
+    /** 2026-10-28：這個寶箱的特殊項鍊（稀有、已鑑定，照 seed 擲：看到的跟拿到的一樣）。 */
+    private ItemData rollBase(final Run run, final Choice choice) {
+        final tw.exilecore.item.ItemBase base = plugin.items() == null ? null : plugin.items().repository().base(choice.base());
+        if (base == null) {
+            return null;
+        }
+        final ItemData item = plugin.items().generator().generate(base, tw.exilecore.item.Rarity.RARE, Math.max(run.level, base.dropLevel()),
+                new java.util.Random(choice.seed()));
         item.setIdentified(true);
         return item;
     }
@@ -537,6 +570,10 @@ final class HeistFinale implements Listener {
     private DropTable.Drop toDrop(final Run run, final Choice choice) {
         if (choice.unique() != null) {
             final ItemData item = rollUnique(run, choice);
+            return item == null ? null : DropTable.Drop.equipment(item);
+        }
+        if (choice.base() != null) {
+            final ItemData item = rollBase(run, choice);
             return item == null ? null : DropTable.Drop.equipment(item);
         }
         if (HeistService.UNCUT_21.equals(choice.skill())) {

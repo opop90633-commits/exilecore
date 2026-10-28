@@ -414,7 +414,15 @@ public final class PlayerStateService {
             sheet.addAll(item.modifiers());
         }
         // 2026-10-27：暫時增益在這裡才算（表上已經有天賦樹、昇華、其他來源、裝備）；給的屬性值照樣算進裝備需求（第二輪也照樣加）
-        final List<Modifier> buffModifiers = new ArrayList<>(collectBuffs(deferredBuffs, player));
+        final List<Modifier> buffModifiers = new ArrayList<>();
+        for (final Modifier raw : collectBuffs(deferredBuffs, player)) {
+            // 2026-10-28：增益也可以帶條件（鼎元訣品質的「親和總和超過 250 時技能速度增加」：attack.speed@trinityhigh）；
+            //   這次之前只有天賦、裝備的條件會判斷，增益帶條件的鍵（含 @）沒人認得、等於沒效果
+            final Modifier modifier = live ? resolveCondition(player, state, raw, now, conditions) : withoutCondition(raw);
+            if (modifier != null) {
+                buffModifiers.add(modifier);
+            }
+        }
         if (virtual != null) {
             // 2026-10-27：虛擬角色（網頁規劃器）不呼叫暫時增益的來源；昇華增益裡只看屬性表的（凱莎的平衡、不潔之力、自然秩序）照樣算，這次之前漏掉
             buffModifiers.addAll(tw.exilecore.ascendancy.AscendancyEffects.virtualBuffs(sheet));
@@ -538,6 +546,14 @@ public final class PlayerStateService {
             final Map<String, Integer> granted = new java.util.LinkedHashMap<>(grantedSkills(active));
             tw.exilecore.ascendancy.AscBuild.grantedSkills(plugin, extra, level, granted);
             state.skills().syncGranted(granted, grantedQuality(active)); // 面板跟著角色一起存檔（定期、登出）；2026-10-27：＋武器的品質
+            // 2026-10-28 照 PoE2：賦予的技能的孔照等級；換了等級低的武器、孔變少，多出來那幾孔的寶石放回背包
+            final List<tw.exilecore.character.SkillLoadout.Overflow> overflow = state.skills().drainOverflow();
+            if (!overflow.isEmpty() && plugin.skills() != null) {
+                plugin.skills().gems().returnOverflow(player, overflow);
+                if (plugin.characters() != null) {
+                    plugin.characters().save(player); // 面板與背包一起存（當機才不會兩邊都有、或兩邊都沒有）
+                }
+            }
         } else if (virtual != null) {
             state.setWeaponTags(weaponTags); // 虛擬角色：技能要知道拿什麼武器
         }

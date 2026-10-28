@@ -466,7 +466,10 @@ public final class ChargeService implements Listener {
                 default -> 0;
             }).orElse(0);
         }
-        final double localExtra = effective != null ? effective.flat(EXTRA, tags) / 100.0 - sheet.flat(EXTRA, java.util.Set.of()) / 100.0 : 0;
+        // 2026-10-28 照 PoE2 Combat Frenzy 的品質：這種事件給的戰星 x% 機率多一顆（charge.event_extra.事件，戰意昂揚的增益）
+        final double eventExtra = Math.max(0, sheet.flat(tw.exilecore.stats.GemQualityKeys.CHARGE_EVENT_EXTRA + event, java.util.Set.of())) / 100.0;
+        final double localExtra = (effective != null ? effective.flat(EXTRA, tags) / 100.0 - sheet.flat(EXTRA, java.util.Set.of()) / 100.0 : 0)
+                + eventExtra;
         final double localRandom = effective != null
                 ? effective.flat(EXTRA_RANDOM, tags) / 100.0 - sheet.flat(EXTRA_RANDOM, java.util.Set.of()) / 100.0 : 0;
         boolean changed = false;

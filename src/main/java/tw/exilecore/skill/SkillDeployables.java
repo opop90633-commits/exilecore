@@ -419,7 +419,8 @@ final class SkillDeployables implements Listener {
         // 2026-10-28 照 PoE2 Tempest Bell：同時最多幾口鐘隨等級（1 → 3（16 級）→ 4（24 級）；skills.yml 的 stages.impact.count）；這次之前一律 1 口
         final SkillStages.Stage bellImpact = spec.kind() == DeploySpec.Kind.BELL ? SkillStages.get(build.definition().id(), "impact") : null;
         final int limit = spec.kind() == DeploySpec.Kind.TOTEM ? (onlyOne ? 1 : Math.max(1, build.totems()))
-                : bellImpact != null && bellImpact.count().intAt(build.level()) > 0 ? bellImpact.count().intAt(build.level()) : Math.max(1, spec.max());
+                : (bellImpact != null && bellImpact.count().intAt(build.level()) > 0 ? bellImpact.count().intAt(build.level()) : Math.max(1, spec.max()))
+                        + (spec.kind() == DeploySpec.Kind.BELL ? SkillLimits.bonus(plugin.players().sheet(player), build) : 0); // 2026-10-28 照 PoE2：鐘的「上限」吃 +x 上限（過剩）；這次之前不吃
         final List<Deployed> mine = new ArrayList<>();
         for (final Deployed item : deployed) {
             if (item.owner.equals(player.getUniqueId()) && item.skillId().equals(build.definition().id())) {
@@ -1575,8 +1576,12 @@ final class SkillDeployables implements Listener {
         bell.ringsLeft--;
         bell.nextTick = now + Math.max(1, Math.round(bell.spec.interval() * 20));
         // 2026-10-28 照 PoE2：鐘身上的元素異常讓震波額外獲得元素傷害、會擊退的那一下讓震波範圍更大（StageLeftovers）；這次之前沒有
-        final SkillProfile profile = StageLeftovers.bellShockwave(bell,
+        final SkillProfile shockwave = StageLeftovers.bellShockwave(bell,
                 bell.build.profile().derive(bell.skillId() + ".ring", java.util.Set.of(tw.exilecore.stats.Tags.AREA), java.util.Set.of()), now);
+        // 2026-10-28 照 PoE2 Tempest Bell 的品質：鐘每被打一下（含這一下）震波更多 (0—3)% 傷害
+        final double perHit = bell.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.MORE_PER_BELL_HIT);
+        final int timesHit = Math.max(0, bell.spec.rings() - bell.ringsLeft);
+        final SkillProfile profile = perHit > 0 && timesHit > 0 ? shockwave.scaled(1 + perHit / 100.0 * timesHit, "鐘被打的次數") : shockwave;
         final double radius = bell.build.radius() * Math.sqrt(Math.max(1, bell.ringArea));
         bell.ringArea = 1;
         for (final LivingEntity target : targets.around(bell.feet, radius, owner)) {

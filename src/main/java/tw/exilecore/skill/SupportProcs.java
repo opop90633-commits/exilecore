@@ -317,6 +317,14 @@ public final class SupportProcs implements Listener {
         return true;
     }
 
+    /** 2026-10-28：不看觸發冷卻直接放一次（回槍躍品質多的那一道震波：同一次觸發的第二道）。 */
+    void castAtNow(final Player player, final String subId, final String levelFrom, final Location at) {
+        final SkillDefinition sub = service.config().skill(subId);
+        if (sub != null) {
+            castNow(player, sub, levelFrom, at);
+        }
+    }
+
     /** 月光另外落下的範圍（格；PoE2 Moonbeam secondary radius 6 格）與每道之間隔幾 tick（200 毫秒）。 */
     static final double MOONBEAM_CHAIN_RANGE = 6;
     static final long MOONBEAM_CHAIN_DELAY = 4;

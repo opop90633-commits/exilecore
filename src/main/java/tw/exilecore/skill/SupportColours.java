@@ -13,6 +13,7 @@ import java.util.Map;
  * 火焰、物理近戰、護甲、磐星、戰吼、圖騰、流血是紅；投射物、閃電、中毒、怒星、速度是綠；法術、冰冷、混沌、召喚、詛咒、光環、銳星是藍。
  * 2026-10-26：I／II／III 分階的輔助只留最高階（supports.yml 的 merged），較低階的代號拿掉。
  * 2026-10-27：再拿掉漏掉的 increased_duration、cooldown_recovery、scattershot（併入 prolonged_duration、swift_cooldown、multiple_projectiles）。
+ * 2026-10-28：overabundance 併入新加的 overabundance_ii（過剩 II，綠）。
  * 沒列的（白色的，例如 PoE2 的 Vruun's Aftermath）不算任何顏色。
  */
 public final class SupportColours {
@@ -63,7 +64,7 @@ public final class SupportColours {
                     + "hit_and_run overextend warm_blooded projectile_deceleration deadly_herald "
                     + "nova_projectiles life_drain soul_drain frozen_spite bursting_plague wind_wave charged_mark "
                     + "poison_spores caltrops maim blind ammo_conservation streamlined_rounds nimble_reload combo_finisher "
-                    + "culmination practiced_combo flow lightning_attunement admixture dazzle lockdown overabundance "
+                    + "culmination practiced_combo flow lightning_attunement admixture dazzle lockdown overabundance_ii "
                     + "shocking_leap salvo murderous_intent unerring_power precision adhesive_grenades break_posture "
                     + "innervate bounty life_bounty mana_bounty charm_bounty heightened_charges inhibitor ferocity "
                     + "perfected_endurance ailith_chimes "

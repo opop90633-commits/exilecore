@@ -261,6 +261,9 @@ public final class SupportMechanics implements Listener {
     /** 震嘯：用過之後要再移動幾格才能用。 */
     static final double ECHO_TRAVEL = 10;
 
+    /** 2026-10-28 照 PoE2 Spear of Solaris 的品質：保留幾成榮耀（chance_to_retain_40%_of_glory_on_use）。 */
+    static final double GLORY_RETAIN_SHARE = 0.4;
+
     /** 真的放了（扣完魔力之後）：用掉榮耀、記下移動距離。 */
     void used(final Player player, final SkillBuild build) {
         final StatSheet sheet = plugin.players().sheet(player);
@@ -277,7 +280,13 @@ public final class SupportMechanics implements Listener {
             service.treeLeftovers().gloryUsed(player, consumed ? required : 0); // 2026-10-27 照 PoE2 天賦樹：用了需要榮耀的技能、用掉榮耀
         }
         if (consumed) {
+            final double had = glory(player, build.definition().id());
             glory.remove(key(player, build.definition().id()));
+            // 2026-10-28 照 PoE2 Spear of Solaris 的品質：(0—25)% 機率用的時候保留 40% 榮耀
+            final double retain = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.GLORY_RETAIN_CHANCE);
+            if (retain > 0 && had > 0 && plugin.random().nextDouble() * 100 < retain) {
+                glory.put(key(player, build.definition().id()), Math.min(gloryCap(build.definition()), had * GLORY_RETAIN_SHARE));
+            }
             final double refund = build.profile().tags().contains(tw.exilecore.stats.TreeMechanicKeys.BANNER)
                     ? sheet.flat(tw.exilecore.stats.TreeNewMechanicKeys.BANNER_GLORY_REFUND, Set.of()) : 0;
             if (refund > 0) {

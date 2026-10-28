@@ -712,6 +712,20 @@ public final class FlaskService {
         addCharges(player, slotFor(player, kind), amount, true);
     }
 
+    /**
+     * 2026-10-28 照 PoE2 Devour 的品質（「當作擊殺」獲得藥劑與護符充能）：照殺了一隻這種稀有度的怪物給藥劑與護符充能（不給擊殺的其他效果）。
+     */
+    public void gainAsKill(final Player player, final tw.exilecore.monster.MonsterRarity rarity) {
+        if (!eligible(player)) {
+            return;
+        }
+        final int charges = config.chargesPerKill(rarity);
+        addCharges(player, charges);
+        if (charms != null) {
+            charms.onKill(player, rarity, charges);
+        }
+    }
+
     /** 2026-10-26（昇華・御風的混合物）：藥劑欄裡這種藥劑現在有幾點充能（沒有 0）。 */
     public int charges(final Player player, final FlaskKind kind) {
         final int slot = slotFor(player, kind);

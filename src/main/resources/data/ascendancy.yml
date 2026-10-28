@@ -1858,7 +1858,7 @@ ascendancies:
           - 提供技能：預告射擊
         stats:
           - { stat: grant_skill.called_shots, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-        note: 放面板上的第一個印記技能（不用插在孔裡）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：放面板上的第一個印記技能（不用插在孔裡）」
+        note: 主要寶石：孔裡放印記技能，其他孔的輔助套在印記上   # 2026-10-28 照 PoE2 Called Shots；這次之前「放面板上的第一個印記技能（不用插在孔裡）」
       mark_effect_2:
         name: 印記效果          # Mark Effect
         requires: called_shots
@@ -1955,7 +1955,7 @@ ascendancies:
           - 提供技能：幻影銳眼
         stats:
           - { stat: grant_skill.mirage_deadeye, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-        note: 幻影重複你接下來的投射物攻擊（不用插在孔裡）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：幻影重複你接下來的投射物攻擊（不用插在孔裡）」
+        note: 主要寶石：孔裡放遠程投射物攻擊，幻影用它；冷卻恢復、延長持續時間套在幻影上   # 2026-10-28 照 PoE2 Mirage Deadeye；這次之前「幻影重複你接下來的投射物攻擊（不用插在孔裡）」
       frenzy_charge:
         name: 怒星持續時間          # Frenzy Charge Duration
         icon: GLOWSTONE_DUST

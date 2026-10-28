@@ -159,6 +159,35 @@ final class SkillTargets {
         return hit != null && hit.getHitEntity() instanceof LivingEntity living ? living : null;
     }
 
+    /** 準心上找到的敵人跟它沿著準心的距離（格）。 */
+    record Aimed(LivingEntity entity, double along) {
+    }
+
+    /** 準心沿著視線能看多遠（碰到牆就停，最多 range 格）。 */
+    double aimReach(final Origin origin, final double range) {
+        final RayTraceResult blocks = origin.world().rayTraceBlocks(origin.eye(), origin.direction(), range, FluidCollisionMode.NEVER, true);
+        return blocks == null ? range : blocks.getHitPosition().distance(origin.eye().toVector());
+    }
+
+    /**
+     * 2026-10-28（雷遁）：跟 {@link #aimed(Origin, double, double)} 一樣，但只算符合 filter 的敵人（前面擋著不符合的也照樣穿過去找）；
+     * 連沿著準心的距離一起回傳。沒有回傳 null。
+     */
+    Aimed aimedWhere(final Origin origin, final double range, final double raySize,
+                     final java.util.function.Predicate<LivingEntity> filter) {
+        final double max = aimReach(origin, range);
+        if (max <= 0.05) {
+            return null;
+        }
+        final Player owner = origin.owner();
+        final RayTraceResult hit = origin.world().rayTraceEntities(origin.eye(), origin.direction(), max, raySize,
+                entity -> valid(entity, owner) && entity instanceof LivingEntity living && filter.test(living));
+        if (hit == null || !(hit.getHitEntity() instanceof LivingEntity living)) {
+            return null;
+        }
+        return new Aimed(living, hit.getHitPosition().distance(origin.eye().toVector()));
+    }
+
     /**
      * center 周圍 radius 內的敵人，近的在前面。距離量到身體的碰撞箱（水平），
      * 高度上碰撞箱要在 center 上下 HEIGHT 格內。

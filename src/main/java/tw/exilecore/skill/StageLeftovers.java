@@ -186,7 +186,12 @@ public final class StageLeftovers implements Listener {
 
     /** 寒晶雷第 pulse 下（1 起）的曝露 %。 */
     static double bombExposure(final int pulse) {
-        return pulse <= 0 ? 0 : Math.min(BOMB_EXPOSURE_CAP, BOMB_EXPOSURE_START + BOMB_EXPOSURE_STEP * (pulse - 1));
+        return bombExposure(pulse, 0);
+    }
+
+    /** 2026-10-28 照 PoE2 Frost Bomb 的品質：曝露疊加的上限 +extraCap。 */
+    static double bombExposure(final int pulse, final double extraCap) {
+        return pulse <= 0 ? 0 : Math.min(BOMB_EXPOSURE_CAP + Math.max(0, extraCap), BOMB_EXPOSURE_START + BOMB_EXPOSURE_STEP * (pulse - 1));
     }
 
     /** 天柱雷：目標的感電效果（小數，0.2 = 受到的傷害增加 20%）→ 更多幾（小數）；每 5% 更多 per%（無條件捨去）。 */
@@ -616,7 +621,8 @@ public final class StageLeftovers implements Listener {
                 mine++;
             }
         }
-        final int max = Math.max(1, build.params().zone() == null ? 2 : build.params().zone().max());
+        final int max = Math.max(1, build.params().zone() == null ? 2 : build.params().zone().max())
+                + SkillLimits.bonus(plugin.players().sheet(origin.owner()), build); // 2026-10-28 照 PoE2：「上限 2 道土牆」吃 +x 上限（過剩），跟 zoneMax 一樣
         for (final Iterator<Wall> it = walls.iterator(); it.hasNext() && mine >= max; ) {
             if (it.next().owner.equals(owner)) {
                 it.remove();
@@ -640,7 +646,8 @@ public final class StageLeftovers implements Listener {
     private void explode(final Player owner, final Wall wall, final List<Location> points, final boolean bySelf) {
         SkillProfile profile = wall.build.profile().derive(SHIELD_WALL + ".shatter", Set.of(Tags.AREA), Set.of());
         if (bySelf) {
-            profile = profile.scaled(1 + WALL_SELF_MORE, "自己打碎");
+            // 2026-10-28 照 PoE2 Shield Wall 的品質：被自己的技能打碎時再更多 (0—40)%（加在 100% 上）
+            profile = profile.scaled(1 + WALL_SELF_MORE + wall.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.WALL_SELF_MORE) / 100.0, "自己打碎");
         }
         final double scale = wall.build.areaScale();
         final Set<UUID> hit = new HashSet<>();
@@ -806,6 +813,8 @@ public final class StageLeftovers implements Listener {
         final double effect;
         int pulses;
         long next;
+        /** 2026-10-28 照 PoE2 Frost Bomb 的品質：曝露上限另外 +x。 */
+        double extraCap;
 
         Bomb(final UUID owner, final Location center, final double radius, final long until, final int levelCap, final double effect, final long next) {
             this.owner = owner;
@@ -824,8 +833,10 @@ public final class StageLeftovers implements Listener {
         final StatSheet effective = build.profile().effective(sheet(owner));
         final double effect = Math.max(0, 1 + effective.increased(StatKeys.EXPOSURE_EFFECT, build.profile().tags()));
         final long now = now();
-        bombs.add(new Bomb(owner.getUniqueId(), center.clone(), build.radius(), now + delay,
-                StageAttacks.limit(build.profile(), "exposure_level", 100), effect, now));
+        final Bomb bomb = new Bomb(owner.getUniqueId(), center.clone(), build.radius(), now + delay,
+                StageAttacks.limit(build.profile(), "exposure_level", 100), effect, now);
+        bomb.extraCap = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.EXPOSURE_CAP); // 2026-10-28 照 PoE2 Frost Bomb 的品質：曝露上限 +(0—10)
+        bombs.add(bomb);
         startTimer();
     }
 
@@ -842,7 +853,7 @@ public final class StageLeftovers implements Listener {
             }
             bomb.next = now + BOMB_PULSE_TICKS;
             bomb.pulses++;
-            final double base = bombExposure(bomb.pulses) * bomb.effect;
+            final double base = bombExposure(bomb.pulses, bomb.extraCap) * bomb.effect;
             for (final LivingEntity target : service.targets().around(bomb.center, bomb.radius, owner)) {
                 if (target instanceof Player || plugin.monsters() == null) {
                     continue;
@@ -1156,7 +1167,8 @@ public final class StageLeftovers implements Listener {
                 mine++;
             }
         }
-        for (final Iterator<Whirl> it = whirls.iterator(); it.hasNext() && mine >= WHIRL_LIMIT; ) {
+        final int whirlLimit = WHIRL_LIMIT + SkillLimits.bonus(plugin.players().sheet(owner), build); // 2026-10-28 照 PoE2：「上限 6 個旋風」吃 +x 上限（過剩）
+        for (final Iterator<Whirl> it = whirls.iterator(); it.hasNext() && mine >= whirlLimit; ) {
             if (it.next().owner.equals(owner.getUniqueId())) {
                 it.remove();
                 mine--;
@@ -1224,7 +1236,9 @@ public final class StageLeftovers implements Listener {
     }
 
     private void collapse(final Player owner, final Whirl whirl, final double radius) {
-        final double more = whirlMore(whirl.stage);
+        // 2026-10-28 照 PoE2 Whirlwind Lance 的品質：每多一階再更多 (0—40)%（加在 150% 上）
+        final double more = whirlMore(whirl.stage)
+                + SkillZones.localFlat(whirl.profile, Signatures.WHIRL_QUALITY_MORE) / 100.0 * Math.max(0, whirl.stage - 1);
         final SkillProfile profile = more > 0 ? whirl.profile.scaled(1 + more, "旋風階數") : whirl.profile;
         final double push = 0.8 * (1 + WHIRL_STAGE_KNOCKBACK * Math.max(0, whirl.stage - 1));
         for (final LivingEntity victim : service.targets().around(whirl.center, radius, owner)) {

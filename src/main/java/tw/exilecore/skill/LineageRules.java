@@ -168,7 +168,7 @@ public final class LineageRules {
             case "breachlords_amalgam" -> skill.mechanic() != Mechanic.PROJECTILE ? "要真的射出投射物的技能"
                     : !tags.contains(Tags.COLD) && !tags.contains(Tags.LIGHTNING) ? "要冰冷或閃電技能"
                     : skill.cooldown() > 0 ? "本來就有冷卻的技能不行" : null;
-            case "zarokhs_refrain", "tuls_avalanche" -> !cascadable(skill) ? "要以自己為中心或落在準心的範圍法術"
+            case "zarokhs_refrain", "tuls_avalanche" -> !cascadable(skill) ? "要可以連瀑的範圍法術（以自己為中心、落在準心的，或詛咒）"
                     : skill.cooldown() > 0 ? "本來就有冷卻的技能不行" : sealed(skill) ? "本來就會蓄封印的技能不行" : null;
             case "zarokhs_revolt" -> skill.cooldown() > 0 ? "本來就有冷卻的技能不行" : sealed(skill) ? "本來就會蓄封印的技能不行"
                     : skill.castTime() <= 0 || skill.mechanic() == Mechanic.AURA || skill.summon() != null ? "要會施放的法術" : null;
@@ -201,11 +201,12 @@ public final class LineageRules {
                 && !skill.tags().contains(Tags.META);
     }
 
-    /** PoE2 的 Cascadable：以自己為中心或落在準心的範圍法術（不是引導的）。 */
+    /**
+     * PoE2 的 Cascadable。2026-10-28 照 PoE2：改看 SkillCascade（跟連瀑同一套：詛咒、焰幕、霜壁、骸爆可以；雷雲、烈陽珠、燼種、疫潮這些不行）；
+     * 這次之前只看形狀（以自己為中心或落在準心的範圍法術，不是引導的）。
+     */
     static boolean cascadable(final SkillDefinition skill) {
-        return skill.tags().contains(Tags.SPELL) && skill.tags().contains(Tags.AREA) && !skill.tags().contains("channelling")
-                && (skill.mechanic() == Mechanic.NOVA || skill.mechanic() == Mechanic.IMPACT
-                || skill.mechanic() == Mechanic.ZONE && skill.params() != null && skill.params().zone() != null && !skill.params().zone().line());
+        return SkillCascade.cascadable(skill);
     }
 
     /** 本來就會蓄封印的技能（技能自己寫了 seal.max）。 */

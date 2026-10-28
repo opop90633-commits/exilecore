@@ -903,7 +903,8 @@ final class LifeWhale {
                     }
                 }
                 case "skill" -> {
-                    if (plugin.skills() != null && plugin.skills().config().skill(drop.id()) != null) {
+                    if (plugin.skills() != null && plugin.skills().config().skill(drop.id()) != null
+                            && !plugin.skills().config().skill(drop.id()).grantedOnly()) { // 2026-10-28：武器、昇華賦予的技能沒有寶石
                         give(player, DropTable.Drop.skill(drop.id(), tw.exilecore.character.SkillLoadout.MAX_LEVEL), got);
                     }
                 }

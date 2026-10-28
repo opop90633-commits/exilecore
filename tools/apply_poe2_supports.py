@@ -114,7 +114,7 @@ SPEC = {
                                                          m('crossbow.reload_speed', 'MORE', -50)]),
     'nimble_reload': ('Nimble Reload', 4, 1.0, [m('crossbow.reload_speed', 'INCREASED', 60)]),
     'auto_reload': ('Auto Reload', None, 1.0, None),
-    'overabundance': ('Overabundance I', 1, 1.0, None),
+    # 2026-10-28：overabundance（Overabundance I）併入 overabundance_ii（過剩 II，supports.yml 手寫；不要再用這支腳本蓋掉）
     'bounty': ('Bounty I', 2, 1.0, None),
     'life_bounty': ('Life Bounty', None, 1.0, None),
     'mana_bounty': ('Mana Bounty', None, 1.0, None),

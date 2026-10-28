@@ -172,7 +172,7 @@ class SupportHitRulesTest {
         assertTrue(skill("seismic_cry").tags().contains(tw.exilecore.stats.Tags.PHYSICAL));
         assertTrue(skill("ember_volley").tags().contains(tw.exilecore.stats.Tags.AREA));
         assertFalse(skill("essence_drain").tags().contains(tw.exilecore.stats.Tags.AREA));
-        assertFalse(skill("flicker_strike").tags().contains(tw.exilecore.stats.Tags.AREA));
+        assertTrue(skill("flicker_strike").tags().contains(tw.exilecore.stats.Tags.AREA), "2026-10-28 照 PoE2：瞬影擊有範圍標籤（還是單體打擊）");
     }
 
     private static String firstSingleStrike() {

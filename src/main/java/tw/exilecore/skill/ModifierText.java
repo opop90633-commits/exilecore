@@ -68,6 +68,7 @@ public final class ModifierText {
             case Tags.WARCRY -> "戰吼";
             case "offering" -> "祭品"; // 2026-10-26：照 PoE2 祭品、戰旗不是戰吼
             case "banner" -> "戰旗";
+            case SkillLimits.TAG -> "有上限"; // 2026-10-28 照 PoE2：原作有「上限」（Limit）的技能（過剩）
             case "fissure" -> "裂地"; // 2026-10-26：雙震（Tectonic Slams）照 PoE2 擋裂地技能，refusal 用
             case Tags.PERSISTENT -> "常駐";
             case Tags.BUFF -> "增益"; // 2026-10-28
@@ -430,6 +431,8 @@ public final class ModifierText {
             case StatKeys.TRIGGER_AILMENT -> "讓敵人點燃、冰緩、凍結或感電時自動施放這個法術（不花魔力，間隔至少 0.75 秒）";
             case StatKeys.LIFE_ON_CULL -> "斷命打死敵人時回復 " + number(value) + "% 最大生命";
             case StatKeys.MANA_ON_CULL -> "斷命打死敵人時回復 " + number(value) + "% 最大魔力";
+            case StatKeys.LIFE_ON_CULL_OVER_TIME -> "斷命打死敵人時，4 秒內回復 " + number(value) + "% 最大生命"; // 2026-10-28 照 PoE2 斷魂掌品質
+            case StatKeys.MANA_ON_CULL_OVER_TIME -> "斷命打死敵人時，4 秒內回復 " + number(value) + "% 最大魔力"; // 2026-10-28 照 PoE2 斷魂掌品質
             case StatKeys.FLAG_PROJECTILE_NOVA -> "投射物改成往四周一圈射出";
             case StatKeys.FLAG_DODGE_CALTROPS -> "翻滾時在腳下撒一片鐵蒺";
             case StatKeys.FLAG_MIRAGE -> "弓的攻擊過一下由身旁的幻影再射一次（傷害少 30%）";
@@ -540,6 +543,10 @@ public final class ModifierText {
             case tw.exilecore.stats.SpellParityKeys.MARK_ACTIVATION_SECONDS -> "印記觸發給的增益持續 " + number(value) + " 秒";
             default -> {
                 // 2026-10：不認得的交給昇華的說明（那邊的屬性比較齊）；都不認得也不要秀出英文代號
+                final String shockchain = ShockchainArrows.describe(stat, value); // 2026-10-28 照 PoE2 Shockchain Arrow（電鍊箭矢）
+                if (shockchain != null) {
+                    yield shockchain;
+                }
                 final String leftover = StageLeftovers.describe(stat, value); // 2026-10-28 照 PoE2：冰晶生命、鐘的門檻、冰片門檻…
                 if (leftover != null) {
                     yield leftover;
