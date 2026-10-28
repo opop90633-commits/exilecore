@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,36 +31,17 @@ class MeleeStepTest {
     }
 
     @Test
-    void whirlingSlashStepsTwoPointSixMetres() {
-        final MeleeStep.Spec step = config.step("whirling_slash");
-        assertNotNull(step, "Whirling Slash：melee conditional step distance [26]");
-        assertEquals(tw.exilecore.core.Units.metres(2.6), step.distance(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
-        assertTrue(step.conditional());
-        assertNull(config.step("whirling_slash_collapse"), "崩散是旋風自己炸，不會動");
-        assertTrue(config.skill("whirling_slash").description().startsWith("往前踏一步"));
-    }
-
-    @Test
-    void everyPoe2SkillWithTheStatGetsItsDistance() {
-        // RePoE skills.json：有 melee_conditional_step_distance、我們這邊原本不會動的技能（值 ÷ 10 = 公尺 = 格）
-        final Map<String, Double> expected = Map.ofEntries(
-                Map.entry("whirling_slash", 2.6), Map.entry("boneshatter", 1.7), Map.entry("armour_breaker", 1.7),
-                Map.entry("earthquake", 1.0), Map.entry("falling_thunder", 2.1), Map.entry("fangs_of_frost", 1.5),
-                Map.entry("ice_strike", 1.0), Map.entry("lunar_assault", 1.2), Map.entry("primal_strikes", 1.5),
-                Map.entry("rapid_thrust", 1.3), Map.entry("rolling_slam", 1.5), Map.entry("sunder", 1.1),
-                Map.entry("tempest_bell", 2.1), Map.entry("volcanic_fissure", 0.8), Map.entry("cull_the_weak", 1.5),
-                Map.entry("siphon_strike", 1.0), Map.entry("reeling_palm", 1.0), Map.entry("frost_palm", 1.0),
-                Map.entry("wolf_shred", 1.0), Map.entry("wyvern_rend", 1.0), Map.entry("bear_maul", 0.5),
-                Map.entry("default_melee", 1.0), Map.entry("default_quarterstaff", 1.0), Map.entry("default_spear", 1.5));
-        expected.forEach((id, distance) -> {
-            final MeleeStep.Spec step = config.step(id);
-            assertNotNull(step, id);
-            assertEquals(tw.exilecore.core.Units.metres(distance), step.distance(), 1e-9, id); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
-        });
-        // 本來就會位移的（騰躍砸擊、裂血掠、斷魂掌的衝刺、裂空斬）、遠程的血獵、引導的山岳之怒不加
-        for (final String id : List.of("leap_slam", "rake", "killing_palm", "rift_slash", "blood_harvest", "mountain_fury", "fireball")) {
+    void noSkillStepsBeforeAttacking() {
+        // 2026-10-29 照站長：出手前往前踏一步先全部拿掉（2026-10-28 曾照 PoE2 melee_conditional_step_distance 加在 24 個近戰技能上），
+        //   MeleeStep 的程式留著，skills.yml 寫回 step 就會再生效
+        for (final String id : List.of("whirling_slash", "boneshatter", "armour_breaker", "earthquake", "falling_thunder",
+                "fangs_of_frost", "ice_strike", "lunar_assault", "primal_strikes", "rapid_thrust", "rolling_slam", "sunder",
+                "tempest_bell", "volcanic_fissure", "cull_the_weak", "siphon_strike", "reeling_palm", "frost_palm",
+                "wolf_shred", "wyvern_rend", "bear_maul", "default_melee", "default_quarterstaff", "default_spear",
+                "leap_slam", "rake", "killing_palm", "rift_slash", "blood_harvest", "mountain_fury", "fireball")) {
             assertNull(config.step(id), id);
         }
+        assertTrue(config.skill("whirling_slash").description().startsWith("揮矛轉一圈"));
     }
 
     @Test
@@ -115,7 +95,7 @@ class MeleeStepTest {
     @Test
     void tooltipLine() {
         assertNull(SkillService.stepLine(null));
-        final String line = SkillService.stepLine(config.step("whirling_slash"));
+        final String line = SkillService.stepLine(new MeleeStep.Spec(tw.exilecore.core.Units.metres(2.6), true));
         assertTrue(line.contains("最多 <white>3.9</white> 格") && line.contains("打得到就不動"), line);
     }
 
