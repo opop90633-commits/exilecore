@@ -315,9 +315,10 @@ supports:
     requires: [area]
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Concentrated Area（poe2db）；這次之前 tier 2、魔耗 1.3、stat: skill.area, type: MORE, value: -30；stat: damage, type: MORE, value: 35, tags: [area]
+    # 2026-10-29 照 PoE2 目前版本（集中效應：40% 更多範圍傷害；30% 是 0.1.0 的數值）；這次之前 30
     modifiers:
       - { stat: skill.area, type: MORE, value: -50 }
-      - { stat: damage, type: MORE, value: 30, tags: [area] }
+      - { stat: damage, type: MORE, value: 40, tags: [area] }
 
   chain:
     name: 連環
@@ -1394,7 +1395,7 @@ supports:
   # 2026-10-15：虛星的第八顆專屬——打擊的近戰擴散（打中一個，旁邊的一起吃）
   shattering_strike:
     name: 碎界擴散
-    description: 虛星碎界的一擊：被輔助的近戰打擊打中敵人時，那個敵人周圍 2.5 格的其他敵人也受到這一下 60% 的傷害（範圍吃範圍效果加成）。
+    description: 虛星碎界的一擊：被輔助的近戰打擊打中敵人時，那個敵人周圍 3.75 格的其他敵人也受到這一下 60% 的傷害（範圍吃範圍效果加成）。
     icon: FLINT
     tier: 3
     source: awakener
@@ -1990,7 +1991,7 @@ supports:
 
   volt:                    # Volt（移動累積電荷用平均值近似）
     name: 引雷
-    description: 被輔助的投射物攻擊每移動 1 格累積 2 點電荷（最多 30），放的時候全部用掉，每點獲得 1% 傷害為額外閃電傷害。
+    description: 被輔助的投射物攻擊每移動 1.5 格累積 2 點電荷（最多 30），放的時候全部用掉，每點獲得 1% 傷害為額外閃電傷害。
     icon: COPPER_INGOT
     tier: 2
     requires: [projectile]
@@ -2220,7 +2221,7 @@ supports:
 
   echoing_cry:             # Echoing Cry（回聲兩次 → 戰吼效果更強、範圍變小）
     name: 震嘯
-    description: 被輔助的戰吼回聲 2 次（每次隔 1.3 秒，範圍每回聲一次更多 100%），但範圍更少 50%、傷害更少 40%、算到的怪物強度更少 50%；用過之後要再移動 10 格才能用。要榮耀才能用的戰吼不能掛。
+    description: 被輔助的戰吼回聲 2 次（每次隔 1.3 秒，範圍每回聲一次更多 100%），但範圍更少 50%、傷害更少 40%、算到的怪物強度更少 50%；用過之後要再移動 15 格才能用。要榮耀才能用的戰吼不能掛。
     icon: ECHO_SHARD   # 2026-10：原本 GOAT_HORN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 3
     requires: [warcry]
@@ -2534,7 +2535,7 @@ supports:
 
   longshot_ii:
     name: 遠穿 II
-    description: 被輔助的攻擊對 7 格以外的敵人更多 35% 攻擊傷害，越近越少，3.5 格以內沒有加成。
+    description: 被輔助的攻擊對 10.5 格以外的敵人更多 35% 攻擊傷害，越近越少，5.25 格以內沒有加成。
     icon: FEATHER   # 2026-10：原本 SPYGLASS（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 2
     requires: [attack]
@@ -2716,7 +2717,7 @@ supports:
 
   elemental_discharge:     # Elemental Discharge
     name: 元崩
-    description: 被輔助的法術不能造成元素異常；擊中時用掉敵人身上的點燃、凍結、感電，觸發元素崩解（2 格，照你的智慧：火焰 40–60%、冰冷 80–120%、閃電 1–120%，只有用掉的那幾種元素；暴擊率 10%；冷卻 1 秒）。
+    description: 被輔助的法術不能造成元素異常；擊中時用掉敵人身上的點燃、凍結、感電，觸發元素崩解（3 格，照你的智慧：火焰 40–60%、冰冷 80–120%、閃電 1–120%，只有用掉的那幾種元素；暴擊率 10%；冷卻 1 秒）。
     icon: PRISMARINE_CRYSTALS
     tier: 2
     requires: [spell]
@@ -2761,7 +2762,7 @@ supports:
 
   battershout:             # Battershout
     name: 碎甲吼
-    description: 被輔助的戰吼吼出時，用掉範圍內敵人的完全破甲，在牠身上炸開（破掉的護甲 40% 物理傷害，2 格，暴擊率 5%，對傳奇更多 50%）；被輔助的戰吼不能破甲。
+    description: 被輔助的戰吼吼出時，用掉範圍內敵人的完全破甲，在牠身上炸開（破掉的護甲 40% 物理傷害，3 格，暴擊率 5%，對傳奇更多 50%）；被輔助的戰吼不能破甲。
     icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [warcry]
@@ -2805,7 +2806,7 @@ supports:
 
   bhatairs_vengeance:
     name: 霜仇嘯
-    description: 被輔助的攻擊或戰吼讓敵人凍結時，你身上每 2 點怒氣，讓你和身邊（4 格內）的隊友 15 秒內獲得 1% 傷害為額外冰冷傷害。觸發的技能、圖騰放的不算。
+    description: 被輔助的攻擊或戰吼讓敵人凍結時，你身上每 2 點怒氣，讓你和身邊（6 格內）的隊友 15 秒內獲得 1% 傷害為額外冰冷傷害。觸發的技能、圖騰放的不算。
     icon: PRISMARINE_CRYSTALS
     tier: 3
     requires: [attack, warcry]
@@ -3988,7 +3989,7 @@ supports:
 
   advancing_storm:         # Advancing Storm（PoE2 第 4 階）
     name: 行嵐
-    description: 被輔助的風暴技能從你腳下出發，往準心指的地方移動（每秒 2.5 格），到了就停在那裡，沿路掃過的敵人都會挨打。
+    description: 被輔助的風暴技能從你腳下出發，往準心指的地方移動（每秒 3.75 格），到了就停在那裡，沿路掃過的敵人都會挨打。
     icon: FEATHER
     tier: 3   # PoE2 第 4 階
     requires: [storm]
@@ -3998,7 +3999,7 @@ supports:
 
   morganas_tempest:        # Morgana's Tempest（血脈）
     name: 掠嵐
-    description: 被輔助的風暴技能同時存在的上限 +1，從你腳下出發、很快地移動到準心指的地方（每秒 4 格），但範圍更小 25%、傷害更少 35%。
+    description: 被輔助的風暴技能同時存在的上限 +1，從你腳下出發、很快地移動到準心指的地方（每秒 6 格），但範圍更小 25%、傷害更少 35%。
     icon: PHANTOM_MEMBRANE
     tier: 3   # PoE2 血脈
     requires: [storm]
@@ -4529,7 +4530,7 @@ supports:
 
   font_of_blood:           # Font of Blood
     name: 血泉
-    description: 被輔助的圖騰四周 4 格是血之泉：站在裡面的你與隊友偷取圖騰物理傷害的 12% 為生命。
+    description: 被輔助的圖騰四周 6 格是血之泉：站在裡面的你與隊友偷取圖騰物理傷害的 12% 為生命。
     icon: GLISTERING_MELON_SLICE
     tier: 2
     requires: [totem]
@@ -4540,7 +4541,7 @@ supports:
 
   font_of_mana:            # Font of Mana
     name: 魔泉
-    description: 被輔助的圖騰四周 4 格是魔之泉：站在裡面的你與隊友偷取圖騰物理傷害的 12% 為魔力。
+    description: 被輔助的圖騰四周 6 格是魔之泉：站在裡面的你與隊友偷取圖騰物理傷害的 12% 為魔力。
     icon: LAPIS_LAZULI
     tier: 2
     requires: [totem]
@@ -4650,7 +4651,7 @@ supports:
 
   holy_descent:            # Holy Descent
     name: 聖降
-    description: 被輔助的跳躍技能落地時留下 2.2 格的聖化地面 4 秒：站在上面的你與隊友每秒回復 5% 最大生命，詛咒效果減少 50%。
+    description: 被輔助的跳躍技能落地時留下 3.3 格的聖化地面 4 秒：站在上面的你與隊友每秒回復 5% 最大生命，詛咒效果減少 50%。
     icon: GLOWSTONE_DUST
     tier: 3
     mana_multiplier: 1.0
@@ -4752,7 +4753,7 @@ supports:
 
   minion_splash_ii:        # Minion Splash II
     name: 僕濺 II
-    description: 被輔助的召喚物近戰打中時，目標周圍 2 格的敵人受到這一下 60% 的傷害；召喚物的範圍增加 20%。
+    description: 被輔助的召喚物近戰打中時，目標周圍 3 格的敵人受到這一下 60% 的傷害；召喚物的範圍增加 20%。
     icon: SLIME_BALL
     tier: 3
     requires: [minion]
@@ -4764,7 +4765,7 @@ supports:
 
   minion_pact_ii:          # Minion Pact II
     name: 僕契 II
-    description: 被輔助的技能放的時候，附近（6 格）一隻你的召喚物失去等同你最大生命 150% 的生命，這一下更多 35% 傷害。
+    description: 被輔助的技能放的時候，附近（9 格）一隻你的召喚物失去等同你最大生命 150% 的生命，這一下更多 35% 傷害。
     icon: GHAST_TEAR
     tier: 3
     requires: [attack, spell]
@@ -4858,7 +4859,7 @@ supports:
 
   profanity_ii:            # Profanity II
     name: 褻屍 II
-    description: 被輔助的技能放的時候用掉 5 格內最多 10 具屍體，每具這一下混沌更多 5% 傷害。
+    description: 被輔助的技能放的時候用掉 7.5 格內最多 10 具屍體，每具這一下混沌更多 5% 傷害。
     icon: BONE
     tier: 3
     requires: [attack, spell]
@@ -5055,7 +5056,7 @@ supports:
 
   shock_conduction_ii:     # Shock Conduction II
     name: 傳雷 II
-    description: 被輔助的技能讓敵人感電時，50% 機率讓 2.5 格內的敵人也感電；擊中濕透的敵人（積雷雲範圍內）一定感電。
+    description: 被輔助的技能讓敵人感電時，50% 機率讓 3.75 格內的敵人也感電；擊中濕透的敵人（積雷雲範圍內）一定感電。
     icon: COPPER_INGOT
     tier: 2   # PoE2 第 0 階（不從未切割寶石切；我們放第 2 階）
     requires: [attack, spell]

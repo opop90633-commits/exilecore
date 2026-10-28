@@ -40,13 +40,13 @@ final class Spearfield {
 
     static final String SIGNATURE = "spearfield";
     /** 每 0.2 格扇形長度一支矛（spear_wall_cm_per_spear 20）。 */
-    static final double METRES_PER_SPEAR = 0.2;
+    static final double METRES_PER_SPEAR = tw.exilecore.core.Units.metres(0.2); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（扇形長度已是格，支數維持原作）
     /** 同時最多 70 支（spear_wall_maximum_active_spears）。 */
     static final int MAX_SPEARS = 70;
     /** 矛插 10 秒（base_skill_effect_duration 10000）。 */
     static final long DURATION_TICKS = 200;
     /** 炸開的半徑 0.6 格（active_skill_base_secondary_area_of_effect_radius 6）。 */
-    static final double BLAST = 0.6;
+    static final double BLAST = tw.exilecore.core.Units.metres(0.6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 敵人「碰到」矛：碰撞箱離矛 0.3 格內。 */
     static final double TRIGGER = 0.3;
     /** 放下 0.5 秒內被敵人碰炸：傷害更少 80%（hazard_damage_+%_final_for_first_500_ms_when_not_killed_by_self −80）。 */

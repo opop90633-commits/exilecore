@@ -5,6 +5,11 @@ import tw.exilecore.core.config.YamlNode;
 /**
  * 技能運作方式的參數（skills.yml 裡跟 mechanic 同名的區塊）。沒用到的欄位保持預設值。
  * 距離的單位都是方塊，角度是度數（整個扇形的張角），速度是每 tick 幾格，時間是秒。
+ * <p>
+ * 2026-10-29 照站長（1 公尺 = 2 格，{@link tw.exilecore.core.Units}）：skills.yml 裡照 PoE2 公尺寫的欄位（範圍半徑、扇形與直線長度、
+ * 爆炸半徑、連鎖距離、濺射與漩渦的範圍、位移距離、地面效果…）照原作寫公尺，讀進來乘上 {@link tw.exilecore.core.Units#BLOCKS_PER_METRE}，
+ * 檢查範圍照公尺檢查；投射物的速度、射程、大小，近戰打擊距離（reach），準心最遠指多遠（range）本來就照 Minecraft 調，不換算。
+ * 這次之前 1 公尺 = 1 格。
  *
  * @param reach       strike、flicker：打得到多遠
  * @param angle       strike、cone、flicker：扇形張角
@@ -249,6 +254,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
     static SkillParams parse(final Mechanic mechanic, final YamlNode skill) {
         final YamlNode node = skill.node(mechanic.key());
         final String where = node.path();
+        final double f = blocksPerMetre(skill); // 2026-10-29：每公尺幾格
         double reach = 3.5;
         double angle = 70;
         int targets = 1;
@@ -271,10 +277,10 @@ public record SkillParams(double reach, double angle, int targets, double knockb
         Vortex vortex = null;
         Scatter scatter = null;
         Zone ground = null;
-        Scaled radius = Scaled.of(3);
-        Scaled length = Scaled.of(6);
+        Scaled radius = m(f, Scaled.of(3)); // 2026-10-29：預設值也是公尺
+        Scaled length = m(f, Scaled.of(6));
         Scaled chains = Scaled.of(2);
-        double chainRange = 7;
+        double chainRange = m(f, 7);
         Aftershock aftershock = null;
         Dash dash = null;
         double delay = 0.8;
@@ -302,7 +308,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 range = check(where, "range", node.decimal("range", range), 2, 64);
                 size = check(where, "size", node.decimal("size", size), 0, 2);
                 pierce = (int) check(where, "pierce", node.integer("pierce", pierce), 0, 20);
-                explode = scaled(where, node, "explode", 0, 0, 6);
+                explode = m(f, scaled(where, node, "explode", 0, 0, 6));
                 wobble = check(where, "wobble", node.decimal("wobble", wobble), 0, 90);
                 arrow = node.bool("arrow", false);
                 gravity = check(where, "gravity", node.decimal("gravity", 0), 0, 0.3);
@@ -311,7 +317,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 if (node.has("wander")) {
                     final YamlNode sub = node.node("wander");
                     wander = new Wander(check(sub.path(), "duration", sub.decimal("duration", 2), 0.2, 10),
-                            check(sub.path(), "width", sub.decimal("width", 2), 0, 10),
+                            m(f, check(sub.path(), "width", sub.decimal("width", 2), 0, 10)),
                             check(sub.path(), "hit_cooldown", sub.decimal("hit_cooldown", 0), 0, 5));
                 }
                 if (arrow && (gravity > 0 || fuse > 0)) {
@@ -320,7 +326,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 if (node.has("splash")) {
                     final YamlNode sub = node.node("splash");
                     splash = new Splash(scaled(sub.path(), sub, "targets", 3, 1, 10),
-                            check(sub.path(), "radius", sub.decimal("radius", 5), 1, 12),
+                            m(f, check(sub.path(), "radius", sub.decimal("radius", 5), 1, 12)),
                             // 2026-10-28 照 PoE2：上限 100 → 200（雷鳴箭 1～3 級的雷束是基礎攻擊傷害 100%，比箭本身 80%～97% 還高）
                             scaled(sub.path(), sub, "damage", 50, 1, 200));
                 }
@@ -332,9 +338,9 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 if (node.has("vortex")) {
                     final YamlNode sub = node.node("vortex");
                     vortex = new Vortex(check(sub.path(), "duration", sub.decimal("duration", 2), 0.5, 10),
-                            check(sub.path(), "radius", sub.decimal("radius", 3), 1, 8),
+                            m(f, check(sub.path(), "radius", sub.decimal("radius", 3), 1, 8)),
                             check(sub.path(), "interval", sub.decimal("interval", 0.5), 0.1, 2),
-                            check(sub.path(), "pull", sub.decimal("pull", 0.2), 0, 1.5),
+                            m(f, check(sub.path(), "pull", sub.decimal("pull", 0.2), 0, 1.5)),
                             check(sub.path(), "damage", sub.decimal("damage", 40), 1, 100));
                 }
                 if (node.has("scatter")) {
@@ -365,25 +371,25 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                             check(sub.path(), "effectiveness", sub.decimal("effectiveness", 0), 0, 10), convert);
                 }
                 if (node.has("ground")) {
-                    ground = zone(node.node("ground"), false);
+                    ground = zone(node.node("ground"), false, f);
                 }
             }
             case NOVA -> {
-                radius = scaled(where, node, "radius", 3.5, 0.5, 10);
+                radius = m(f, scaled(where, node, "radius", 3.5, 0.5, 10));
                 knockback = check(where, "knockback", node.decimal("knockback", 0), 0, 3); // 2026-10-28 照 PoE2（旋矛擊揮那一下擊退）；這次之前新星不能擊退
                 if (node.has("ground")) {
-                    ground = zone(node.node("ground"), false);
+                    ground = zone(node.node("ground"), false, f);
                 }
                 if (node.has("aftershock")) {
                     final YamlNode sub = node.node("aftershock");
                     // 2026-10-26：delay 上限 3 → 4（PoE2 地動 4 秒後餘震）；radius、more 可以逐級
                     aftershock = new Aftershock(check(sub.path(), "delay", sub.decimal("delay", 0.8), 0.2, 4),
-                            scaled(sub.path(), sub, "radius", 1.5, 0.5, 3),
+                            m(f, scaled(sub.path(), sub, "radius", 1.5, 0.5, 3)), // 新星的餘震半徑是公尺（扇形的是長度的倍數，不換算）
                             scaled(sub.path(), sub, "more", 50, -90, 1000));
                 }
             }
             case CONE -> {
-                length = scaled(where, node, "length", 6, 1, 16);
+                length = m(f, scaled(where, node, "length", 6, 1, 16));
                 angle = check(where, "angle", node.decimal("angle", angle), 1, 180);
                 if (node.has("aftershock")) {
                     // 2026-10：扇形也能有餘震——前方（扇形長度的 75% 處）過一下再砸一圈（崩土擊的第二下）；radius 是扇形長度的倍數
@@ -395,42 +401,42 @@ public record SkillParams(double reach, double angle, int targets, double knockb
             }
             case LEAP -> {
                 range = check(where, "range", node.decimal("range", 9), 2, 16);
-                radius = scaled(where, node, "radius", 2.5, 0.5, 8);
+                radius = m(f, scaled(where, node, "radius", 2.5, 0.5, 8));
             }
             case CHAIN -> {
                 range = check(where, "range", node.decimal("range", 12), 2, 32);
                 chains = scaled(where, node, "chains", 2, 0, 10);
-                chainRange = check(where, "chain_range", node.decimal("chain_range", chainRange), 1, 16);
+                chainRange = m(f, check(where, "chain_range", node.decimal("chain_range", chainRange), 1, 16));
             }
             case DASH -> {
                 // 2026-10-28 照 PoE2（掠閃 4 → 4.9 → 5.5 米）：range 可以寫逐級表；這次之前只能寫一個數字
-                final Scaled dashRange = scaled(where, node, "range", 8, 2, 20);
+                final Scaled dashRange = m(f, scaled(where, node, "range", 8, 2, 20)); // 照 PoE2 的位移距離（公尺）
                 range = dashRange.last();
                 knockback = check(where, "knockback", node.decimal("knockback", 0), 0, 3);
-                dash = new Dash(check(where, "hit_width", node.decimal("hit_width", 0), 0, 4),
-                        scaled(where, node, "start_radius", 0, 0, 8), scaled(where, node, "end_radius", 0, 0, 8),
+                dash = new Dash(m(f, check(where, "hit_width", node.decimal("hit_width", 0), 0, 4)),
+                        m(f, scaled(where, node, "start_radius", 0, 0, 8)), m(f, scaled(where, node, "end_radius", 0, 0, 8)),
                         dashRange.first() == dashRange.last() && !dashRange.isTable() ? null : dashRange,
                         (int) check(where, "spins", node.integer("spins", 0), 0, 12), // 2026-10-28 照 PoE2 Whirling Assault：一路轉幾圈
-                        check(where, "spin_radius", node.decimal("spin_radius", 0), 0, 8));
+                        m(f, check(where, "spin_radius", node.decimal("spin_radius", 0), 0, 8)));
                 if (node.has("ground")) {
-                    ground = zone(node.node("ground"), false);
+                    ground = zone(node.node("ground"), false, f);
                 }
             }
             case IMPACT -> {
                 range = check(where, "range", node.decimal("range", 20), 2, 40);
                 delay = check(where, "delay", node.decimal("delay", 0.8), 0.1, 4);
-                radius = scaled(where, node, "radius", 3, 0.5, 10);
+                radius = m(f, scaled(where, node, "radius", 3, 0.5, 10));
                 // 2026-10-28 照 PoE2（衝霄弩台一次 3 發、落釘弩台一輪 4 擊）：一次落下幾發（投射物數量的加成加在這上面）；
                 // spread：多的那幾發散在準心周圍幾格（0 = 照半徑估）。這次之前一律 1 發
                 projectiles = scaled(where, node, "count", 1, 1, 20);
-                spread = check(where, "spread", node.decimal("spread", 0), 0, 10);
+                spread = m(f, check(where, "spread", node.decimal("spread", 0), 0, 10));
                 // 2026-10-28 照 PoE2 Contagion（瘟疫「使一名敵人」）：targets 有寫就是單體——準心指的（或準心 radius 內最近的）那隻敵人，
                 // 不是一整圈；沒寫（0）照舊打半徑內全部。這次之前 impact 一律打一整圈
                 targets = node.has("targets") ? (int) check(where, "targets", node.integer("targets", 1), 1, 10) : 0;
             }
             case ZONE -> {
                 range = check(where, "range", node.decimal("range", 0), 0, 40);
-                zone = zone(node, true);
+                zone = zone(node, true, f);
                 radius = zone.radius();
                 length = zone.length();
             }
@@ -445,7 +451,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                     markTags.add(t);
                 }
                 // 2026-10-26：詛咒的範圍、持續時間可以寫逐級表（PoE2：1.5→3.1→3.7 格、6→7.4→8.6 秒）
-                final Scaled markRadius = scaled(where, node, "radius", 0, 0, 10);
+                final Scaled markRadius = m(f, scaled(where, node, "radius", 0, 0, 10));
                 final Scaled markDuration = scaled(where, node, "duration", 6, 0.5, 30);
                 // 2026-10：effects 疊在敵人身上的修飾器（削弱：敵人造成的傷害更少…；value 可以隨等級）、slow 敵人移動慢幾 %
                 final java.util.List<ScaledMod> markEffects = ScaledMod.parseList(node, "effects");
@@ -457,7 +463,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
             case CORPSE -> {
                 range = check(where, "range", node.decimal("range", 16), 2, 40);
                 search = check(where, "search", node.decimal("search", 6), 1, 16);
-                radius = scaled(where, node, "radius", 3, 0.5, 10);
+                radius = m(f, scaled(where, node, "radius", 3, 0.5, 10));
                 percent = scaled(where, node, "percent", 10, 0, 100);
             }
             case FLICKER -> {
@@ -489,7 +495,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
     }
 
     /** 地面效果的區塊（zone 運作方式自己、投射物停下來留下的、位移沿路留下的）。 */
-    private static Zone zone(final YamlNode node, final boolean shaped) {
+    private static Zone zone(final YamlNode node, final boolean shaped, final double f) {
         final String where = node.path();
         final String shape = shaped ? node.string("shape", "circle").trim() : "circle";
         if (!shape.equals("circle") && !shape.equals("line")) {
@@ -497,16 +503,33 @@ public record SkillParams(double reach, double angle, int targets, double knockb
         }
         return new Zone(check(where, "duration", node.decimal("duration", 3), 0.2, 30),
                 check(where, "interval", node.decimal("interval", 0.5), 0.1, 5),
-                scaled(where, node, "radius", shape.equals("line") ? 1.0 : 2.5, 0.3, 10),
+                m(f, scaled(where, node, "radius", shape.equals("line") ? 1.0 : 2.5, 0.3, 10)),
                 check(where, "damage", node.decimal("damage", 30), 1, 500), // 2026-10-26：上限 200 → 500（只上毒的毒霧照 PoE2 像打中一樣，是投射物的 2～4 倍）
-                shape, scaled(where, node, "length", 6, 1, 16),
-                check(where, "pull", node.decimal("pull", 0), 0, 1.5),
+                shape, m(f, scaled(where, node, "length", 6, 1, 16)),
+                m(f, check(where, "pull", node.decimal("pull", 0), 0, 1.5)),
                 (int) check(where, "max", node.decimal("max", 0), 0, 10),
                 node.has("bolts") ? new Bolts(scaled(where + ".bolts", node.node("bolts"), "chains", 0, 0, 20),
-                        check(where + ".bolts", "range", node.node("bolts").decimal("range", 5.6), 1, 16),
-                        check(where + ".bolts", "chain_range", node.node("bolts").decimal("chain_range", 3.5), 1, 16)) : null,
+                        m(f, check(where + ".bolts", "range", node.node("bolts").decimal("range", 5.6), 1, 16)),
+                        m(f, check(where + ".bolts", "chain_range", node.node("bolts").decimal("chain_range", 3.5), 1, 16))) : null,
                 node.has("shower") ? new Shower(scaled(where + ".shower", node.node("shower"), "count", 3, 1, 20),
-                        check(where + ".shower", "radius", node.node("shower").decimal("radius", 0.6), 0.2, 4)) : null);
+                        m(f, check(where + ".shower", "radius", node.node("shower").decimal("radius", 0.6), 0.2, 4))) : null);
+    }
+
+    /** 2026-10-29：照 PoE2 公尺寫的距離換成格（{@link tw.exilecore.core.Units}；先照公尺檢查範圍再換）。 */
+    private static double m(final double factor, final double metres) {
+        return metres * factor;
+    }
+
+    private static Scaled m(final double factor, final Scaled metres) {
+        return metres.times(factor);
+    }
+
+    /**
+     * 2026-10-29 照站長（只換算 PoE2DB 原作有公尺的地方）：這個技能的距離每公尺幾格。skills.yml 寫 {@code metres: false} 的
+     * （伺服器自己設計的近似值，例如輔助觸發的熔坑、詛咒小標記）照舊 1 比 1，不換算。
+     */
+    static double blocksPerMetre(final YamlNode skill) {
+        return skill.bool("metres", true) ? tw.exilecore.core.Units.BLOCKS_PER_METRE : 1.0;
     }
 
     private static Scaled scaled(final String where, final YamlNode node, final String key, final double def,

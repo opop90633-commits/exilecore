@@ -37,7 +37,7 @@ public final class SkillStages {
      * @param speed         這一下的攻擊速度更多 x%（負的是更少）
      * @param reach         打擊距離 +幾格
      * @param hits          這一下打幾次
-     * @param radius        這一段的半徑（格；0 = 各技能的預設）
+     * @param radius        這一段的半徑（格；0 = 各技能的預設；2026-10-29：skills.yml 寫公尺，讀進來已換成格）
      * @param count         這一段的次數（逐級；0 = 各技能的預設）
      * @param interval      這一段的間隔（秒）
      * @param duration      這一段的持續（秒）
@@ -96,7 +96,9 @@ public final class SkillStages {
             out.put(key, new Stage(key, node.string("name", key).trim(), effectiveness,
                     node.has("convert") ? SkillDefinition.weights(where + ".convert", node.node("convert"), false) : Map.of(),
                     speed, node.decimal("reach", 0), hits,
-                    Scaled.parse(where + ".radius", node.raw("radius"), 0), Scaled.parse(where + ".count", node.raw("count"), 0),
+                    // 2026-10-29 照站長：1 公尺 = 2 格（Units）——這一段的半徑照 PoE2 寫公尺，讀進來換成格（reach 是打擊距離，照 Minecraft，不換）
+                    Scaled.parse(where + ".radius", node.raw("radius"), 0).times(tw.exilecore.core.Units.BLOCKS_PER_METRE),
+                    Scaled.parse(where + ".count", node.raw("count"), 0),
                     Math.max(0, node.decimal("interval", 0)), Math.max(0, node.decimal("duration", 0)), Math.max(0, node.decimal("after", 0)),
                     ScaledMod.parseList(node, "modifiers")));
         }

@@ -67,6 +67,8 @@ final class SkillZones implements SkillTargets.Strikeable {
         double chainRange;
         /** 2026-10-28 照 PoE2 Orb of Storms：還能放幾道雷（6 道就消失；-1 = 不限）。 */
         int boltsLeft = -1;
+        /** 2026-10-29 照 PoE2 Orb of Storms：消失時（放完雷、時間到、被新的擠掉）在中心留下灌注殘骸；null = 沒有。只跑一次。 */
+        java.util.function.Consumer<Location> onExpire;
         /** 2026-10-28 照 PoE2 Volcano：每一波噴幾顆火山彈（0 = 照舊整圈都打）、每顆炸多大。 */
         int shards;
         double shardRadius;
@@ -286,6 +288,7 @@ final class SkillZones implements SkillTargets.Strikeable {
             if (same >= limit + tw.exilecore.ascendancy.AscendancyEffects.limitBonus(owner, profile.tags()) && oldestSame != null) {
                 oldestSame.gone = true;
                 zones.remove(oldestSame);
+                expired(oldestSame); // 2026-10-29：雷雲被新的擠掉也留下殘骸
             }
         }
         int mine = 0;
@@ -355,7 +358,7 @@ final class SkillZones implements SkillTargets.Strikeable {
      * 2026-10-28 照 PoE2（雷雲 Orb of Storms、地火柱 Volcano）：owner 剛放下的這個技能的地面效果每一波改成放一道會連鎖的雷
      * （chains ≥ 0），或噴 shards 顆隨機落下的火山彈（shards > 0）。這次之前每一波打範圍內全部的敵人。
      */
-    void pulses(final Player owner, final String skill, final int chains, final double boltRange, final double chainRange,
+    void pulses(final Player owner, final String skill, final int chains, final int maxBolts, final double boltRange, final double chainRange,
                 final int shards, final double shardRadius) {
         Zone newest = null;
         for (final Zone zone : zones) {
@@ -369,12 +372,39 @@ final class SkillZones implements SkillTargets.Strikeable {
         newest.boltChains = chains;
         newest.boltRange = boltRange;
         newest.chainRange = chainRange;
-        newest.boltsLeft = chains >= 0 ? ORB_MAX_BOLTS : -1;
+        newest.boltsLeft = chains >= 0 ? Math.max(1, maxBolts) : -1; // 2026-10-29：品質多放幾道
         newest.shards = Math.max(0, shards);
         newest.shardRadius = shardRadius;
     }
 
-    /** 2026-10-28 照 PoE2 Orb of Storms（orb_of_storms_maximum_number_of_hits）：雷雲放了 6 道雷就消失。 */
+    /**
+     * 2026-10-29 照 PoE2 Orb of Storms（0.3.0：放完雷或時間到都會留下閃電灌注殘骸）：owner 剛放下、會放雷的這個技能的地面效果
+     * 消失時跑 action（給中心點）。掛上了回傳 true；沒有這種地面效果回傳 false（照舊用固定延遲）。
+     */
+    boolean onExpire(final UUID owner, final String skill, final java.util.function.Consumer<Location> action) {
+        Zone newest = null;
+        for (final Zone zone : zones) {
+            if (!zone.gone && zone.owner.equals(owner) && skill.equals(zone.skill)) {
+                newest = zone;
+            }
+        }
+        if (newest == null || newest.boltChains < 0 || newest.points.size() != 1 || newest.onExpire != null) {
+            return false;
+        }
+        newest.onExpire = action;
+        return true;
+    }
+
+    /** 2026-10-29：地面效果真的消失了（不是主人下線、換世界）：跑一次 onExpire。 */
+    private static void expired(final Zone zone) {
+        final java.util.function.Consumer<Location> action = zone.onExpire;
+        zone.onExpire = null;
+        if (action != null) {
+            action.accept(zone.points.getFirst().clone());
+        }
+    }
+
+    /** 2026-10-28 照 PoE2 Orb of Storms（orb_of_storms_maximum_number_of_hits）：雷雲放了 6 道雷就消失（品質再多，見 pulses）。 */
     static final int ORB_MAX_BOLTS = 6;
 
     /**
@@ -392,6 +422,7 @@ final class SkillZones implements SkillTargets.Strikeable {
             fired++;
             if (zone.gone) {
                 zones.remove(zone);
+                expired(zone); // 2026-10-29：放完雷留下殘骸
             }
         }
         return fired;
@@ -826,7 +857,7 @@ final class SkillZones implements SkillTargets.Strikeable {
                 build = build.withProfile(build.profile().scaled(1 + more / 100.0, "存的毒"));
             }
             final double base = sub.params().radius().at(build.level());
-            final double extra = StageAttacks.pustuleRadius(store.stored, plugin.skills().levelValue(bolt.parent(), StageLeftovers.PUSTULE_RADIUS_PER, bolt.level()));
+            final double extra = tw.exilecore.core.Units.metres(StageAttacks.pustuleRadius(store.stored, plugin.skills().levelValue(bolt.parent(), StageLeftovers.PUSTULE_RADIUS_PER, bolt.level()))); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（pustuleRadius 回傳公尺）
             if (extra > 0 && base > 0) {
                 build = build.withAreaAndProjectiles(build.areaScale() * (base + extra) / base, build.projectiles());
             }
@@ -972,6 +1003,7 @@ final class SkillZones implements SkillTargets.Strikeable {
                 expired = true;
                 if (now >= zone.untilTick && owner != null && owner.getWorld().equals(zone.world)) {
                     completed(owner, zone); // 2026-10-24（穢陣）：撐到結束給戰星
+                    expired(zone); // 2026-10-29：雷雲時間到留下殘骸
                 }
                 continue;
             }
@@ -998,7 +1030,10 @@ final class SkillZones implements SkillTargets.Strikeable {
             TreeLeftovers.groundPulse(plugin, zone.points, zone.radius, groundEvent, now);
             if (zone.boltChains >= 0 && zone.points.size() == 1) {
                 bolt(owner, zone); // 2026-10-28 照 PoE2 Orb of Storms：一道會連鎖的雷（不是整圈都打）
-                expired |= zone.gone; // 2026-10-28：放完 6 道的雷雲這一輪就拿掉
+                if (zone.gone) {
+                    expired = true; // 2026-10-28：放完 6 道的雷雲這一輪就拿掉
+                    expired(zone); // 2026-10-29：放完雷留下殘骸
+                }
                 continue;
             }
             if (zone.shards > 0 && zone.points.size() == 1) {

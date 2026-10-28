@@ -562,7 +562,8 @@ public final class LineageMechanics implements Listener {
 
     /** 孤立：6 格內沒有其他敵人。 */
     private boolean isolated(final Player attacker, final LivingEntity defender) {
-        for (final LivingEntity other : service.targets().around(defender.getLocation(), 6, attacker)) {
+        // 孤立 6 公尺（Vorana's Siege）// 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+        for (final LivingEntity other : service.targets().around(defender.getLocation(), tw.exilecore.core.Units.metres(6), attacker)) {
             if (!other.getUniqueId().equals(defender.getUniqueId())) {
                 return false;
             }
@@ -889,7 +890,7 @@ public final class LineageMechanics implements Listener {
     }
 
     static double voltaicRadius(final int level) {
-        return Math.min(2.5, 1.5 + (Math.max(1, level) - 1) / 19.0);
+        return tw.exilecore.core.Units.metres(Math.min(2.5, 1.5 + (Math.max(1, level) - 1) / 19.0)); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     }
 
     /** 這個技能在面板上的等級（找不到用角色能用的最高等級）。 */
@@ -961,13 +962,13 @@ public final class LineageMechanics implements Listener {
                 break;
             }
             corpses.remove(corpse);
-            explode(player, new Location(at.getWorld(), corpse.x(), corpse.y() + 0.3, corpse.z()), 1.5, corpse.maxLife() * percent / 100.0,
+            explode(player, new Location(at.getWorld(), corpse.x(), corpse.y() + 0.3, corpse.z()), tw.exilecore.core.Units.metres(1.5), corpse.maxLife() * percent / 100.0, // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
                     DamageType.FIRE, "fiery_reclamation", Particle.FLAME);
             blown++;
         }
     }
 
-    static final double LANDING_RADIUS = 3.5;
+    static final double LANDING_RADIUS = tw.exilecore.core.Units.metres(3.5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
 
     /** 圖騰放技能之前（SkillDeployables）：林樁（附近每根圖騰更多傷害、增加範圍）。 */
     SkillBuild totemCast(final Player owner, final Location feet, final SkillBuild cast) {
@@ -989,11 +990,14 @@ public final class LineageMechanics implements Listener {
         return per <= 0 ? 0 : groveCount(owner, feet) * per / 10.0;
     }
 
-    /** 這根圖騰 4 格內你的其他圖騰（最多 5 根）。 */
+    /** 林樁：圖騰 4 公尺內（Tawhoa's Grove）。 */
+    static final double GROVE_RANGE = tw.exilecore.core.Units.metres(4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+
+    /** 這根圖騰 4 公尺（6 格）內你的其他圖騰（最多 5 根）。 */
     private int groveCount(final Player owner, final Location feet) {
         int count = 0;
         for (final SkillService.TotemView totem : service.totems(owner.getUniqueId())) {
-            if (totem.feet().getWorld().equals(feet.getWorld()) && totem.feet().distanceSquared(feet) <= 16 && totem.feet().distanceSquared(feet) > 0.01) {
+            if (totem.feet().getWorld().equals(feet.getWorld()) && totem.feet().distanceSquared(feet) <= GROVE_RANGE * GROVE_RANGE && totem.feet().distanceSquared(feet) > 0.01) {
                 count++;
             }
         }
@@ -1004,7 +1008,8 @@ public final class LineageMechanics implements Listener {
     void totemDied(final Player owner, final SkillBuild build, final Location feet, final double maxLife) {
         final double percent = LineageRules.total(build.supports(), LineageKeys.TOTEM_EXPLODE);
         if (owner != null && percent > 0) {
-            explode(owner, feet.clone().add(0, 0.6, 0), 3, maxLife * percent / 100.0, DamageType.PHYSICAL, "tawhoas_vengeance", Particle.CRIT);
+            explode(owner, feet.clone().add(0, 0.6, 0), tw.exilecore.core.Units.metres(3), maxLife * percent / 100.0, // 樁爆 3 公尺 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+                    DamageType.PHYSICAL, "tawhoas_vengeance", Particle.CRIT);
         }
     }
 
@@ -1470,7 +1475,7 @@ public final class LineageMechanics implements Listener {
             }
             final double base = MinionSheets.life(minion.effective) * percent / 100.0;
             final StatSheet sheet = plugin.players().sheet(owner);
-            for (final LivingEntity enemy : service.targets().around(minion.mob.getLocation(), 2, owner)) {
+            for (final LivingEntity enemy : service.targets().around(minion.mob.getLocation(), tw.exilecore.core.Units.metres(2), owner)) { // 焰伴 2 公尺 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
                 plugin.combat().debuffs().apply(enemy.getUniqueId(), new Debuffs.Debuff("lineage_blind", owner.getUniqueId(), now + 30, 0, false, null,
                         List.of(Modifier.more(StatKeys.ACCURACY, -tw.exilecore.combat.HitEffects.BLIND_LESS, "致盲"),
                                 Modifier.more(StatKeys.EVASION, -tw.exilecore.combat.HitEffects.BLIND_LESS, "致盲")), 0));
@@ -1596,7 +1601,7 @@ public final class LineageMechanics implements Listener {
     }
 
     static final double TOAD_REACH = 3;
-    static final double TOAD_RADIUS = 1.6;
+    static final double TOAD_RADIUS = tw.exilecore.core.Units.metres(1.6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 巫蟾炸開（Dark Consequences）的混沌傷害（poe2db 1–40 級）。 */
     static final double[][] TOAD_DAMAGE = {{5, 10}, {7, 14}, {10, 19}, {13, 24}, {17, 31}, {21, 38}, {25, 47}, {30, 56}, {36, 67}, {43, 79},
             {50, 93}, {59, 109}, {68, 127}, {79, 147}, {92, 170}, {106, 197}, {122, 227}, {141, 261}, {162, 300}, {186, 345}, {214, 397},
@@ -1639,7 +1644,7 @@ public final class LineageMechanics implements Listener {
         }
     }
 
-    static final double ANNIHILATION_RADIUS = 1.7;
+    static final double ANNIHILATION_RADIUS = tw.exilecore.core.Units.metres(1.7); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 湮滅（Annihilation）的物理傷害（poe2db 1–40 級，每一下）。 */
     static final double[][] ANNIHILATION_DAMAGE = {{25, 37}, {34, 50}, {46, 69}, {60, 90}, {76, 114}, {94, 141}, {115, 172}, {138, 207},
             {165, 247}, {195, 292}, {229, 343}, {268, 401}, {312, 468}, {362, 543}, {419, 628}, {484, 726}, {558, 837}, {643, 964},

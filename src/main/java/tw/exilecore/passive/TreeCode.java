@@ -24,6 +24,11 @@ public final class TreeCode {
 
     /** 屬性的代號（跟角色進度 attr.節點 存的一樣）；索引就是代碼裡的數字。 */
     private static final String[] ATTRIBUTES = {null, "str", "dex", "int"};
+    /**
+     * 2026-10-29：旅者的智慧（開路者）的三種選擇，接在代碼的第六段（一樣每點 2 個位元；那一點在第五段是 0）。
+     * 跟 PlayerStateService.WISDOM_CHOICES 一樣；舊代碼沒有第六段照樣讀得懂。
+     */
+    private static final String[] WISDOM = {null, "dmg", "def", "cost"};
 
     /**
      * 解出來的規劃。
@@ -60,6 +65,17 @@ public final class TreeCode {
      */
     public static String encode(final PassiveTree tree, final String classId, final Set<String> allocated, final Map<String, String> attributes) {
         final String base = encodeNodes(tree, classId, allocated);
+        final String plain = encodeAttributes(tree, allocated, attributes, ATTRIBUTES);
+        final String wisdom = encodeAttributes(tree, allocated, attributes, WISDOM); // 2026-10-29：旅者的智慧
+        if (!wisdom.isEmpty()) {
+            return base + "." + plain + "." + wisdom;
+        }
+        return plain.isEmpty() ? base : base + "." + plain;
+    }
+
+    /** 已配的屬性點照節點順序，每點 2 個位元（codes 裡的索引；不在 codes 裡的算 0）；全是 0 回傳空字串。 */
+    private static String encodeAttributes(final PassiveTree tree, final Set<String> allocated, final Map<String, String> attributes,
+                                           final String[] codes) {
         final List<PassiveNode> order = tree.ordered();
         final byte[] bits = new byte[(order.size() + 3) / 4];
         int length = 0;
@@ -68,19 +84,19 @@ public final class TreeCode {
             if (node.isStart() || !allocated.contains(node.id()) || node.attributeChoice() <= 0) {
                 continue;
             }
-            final int value = attributeCode(attributes == null ? null : attributes.get(node.id()));
+            final int value = attributeCode(attributes == null ? null : attributes.get(node.id()), codes);
             if (value != 0) {
                 bits[k / 4] |= (byte) (value << ((k % 4) * 2));
                 length = k / 4 + 1;
             }
             k++;
         }
-        return length == 0 ? base : base + "." + Base64.getUrlEncoder().withoutPadding().encodeToString(java.util.Arrays.copyOf(bits, length));
+        return length == 0 ? "" : Base64.getUrlEncoder().withoutPadding().encodeToString(java.util.Arrays.copyOf(bits, length));
     }
 
-    private static int attributeCode(final String attribute) {
-        for (int i = 1; i < ATTRIBUTES.length; i++) {
-            if (ATTRIBUTES[i].equals(attribute)) {
+    private static int attributeCode(final String attribute, final String[] codes) {
+        for (int i = 1; i < codes.length; i++) {
+            if (codes[i].equals(attribute)) {
                 return i;
             }
         }
@@ -166,7 +182,7 @@ public final class TreeCode {
         final int hash = text.lastIndexOf('#');
         final String body = hash >= 0 ? text.substring(hash + 1) : text;
         final String[] parts = body.split("\\.", -1);
-        if ((parts.length != 4 && parts.length != 5) || !parts[0].equals(PREFIX)) {
+        if (parts.length < 4 || parts.length > 6 || !parts[0].equals(PREFIX)) { // 2026-10-29：第六段是旅者的智慧的選擇
             throw new InvalidCode("看不懂這個代碼（要像 EC1.2.witch.xxxx，從網頁規劃器按「複製代碼」）");
         }
         final int version;
@@ -185,7 +201,7 @@ public final class TreeCode {
         final List<PassiveNode> order = tree.ordered();
         if (parts[3].startsWith(SPARSE)) {
             final Set<String> nodes = decodeSparse(order, parts[3].substring(SPARSE.length()));
-            return new Decoded(classId, nodes, parts.length == 5 ? decodeAttributes(order, nodes, parts[4]) : Map.of());
+            return new Decoded(classId, nodes, attributes(order, nodes, parts));
         }
         final byte[] bits;
         try {
@@ -209,11 +225,24 @@ public final class TreeCode {
                 nodes.add(node.id());
             }
         }
-        return new Decoded(classId, nodes, parts.length == 5 ? decodeAttributes(order, nodes, parts[4]) : Map.of());
+        return new Decoded(classId, nodes, attributes(order, nodes, parts));
     }
 
-    /** 代碼的第五段：已配的屬性點各選了哪個屬性。 */
-    private static Map<String, String> decodeAttributes(final List<PassiveNode> order, final Set<String> nodes, final String text) throws InvalidCode {
+    /** 第五段（力量／敏捷／智慧）再蓋上第六段（旅者的智慧：傷害／防禦／消耗效率）。 */
+    private static Map<String, String> attributes(final List<PassiveNode> order, final Set<String> nodes, final String[] parts) throws InvalidCode {
+        final Map<String, String> attributes = new LinkedHashMap<>();
+        if (parts.length >= 5) {
+            attributes.putAll(decodeAttributes(order, nodes, parts[4], ATTRIBUTES));
+        }
+        if (parts.length >= 6) {
+            attributes.putAll(decodeAttributes(order, nodes, parts[5], WISDOM));
+        }
+        return attributes;
+    }
+
+    /** 代碼的第五段：已配的屬性點各選了哪個屬性（2026-10-29：第六段用一樣的格式，codes 換成旅者的智慧的）。 */
+    private static Map<String, String> decodeAttributes(final List<PassiveNode> order, final Set<String> nodes, final String text,
+                                                        final String[] codes) throws InvalidCode {
         final byte[] bits;
         try {
             bits = Base64.getUrlDecoder().decode(text);
@@ -229,7 +258,7 @@ public final class TreeCode {
             if (k / 4 < bits.length) {
                 final int value = (bits[k / 4] >> ((k % 4) * 2)) & 3;
                 if (value != 0) {
-                    attributes.put(node.id(), ATTRIBUTES[value]);
+                    attributes.put(node.id(), codes[value]);
                 }
             }
             k++;

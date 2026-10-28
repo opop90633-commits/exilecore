@@ -42,7 +42,7 @@ public final class HollowForm {
     /** 用掉一顆銳星多幾個幻影。 */
     public static final int EXTRA_IMAGES = 2;
     /** 幻影出現在離你幾格內（PoE2 6 米）。 */
-    public static final double RADIUS = 6;
+    public static final double RADIUS = tw.exilecore.core.Units.metres(6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 引導開始到第一個幻影：一次間隔的幾成（PoE2 channel start 30% of attack time）。 */
     public static final double START_SHARE = 0.3;
     /** 同一次的額外幻影（銳星）一個隔幾 tick 出現。 */

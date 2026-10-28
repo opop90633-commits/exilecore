@@ -141,12 +141,12 @@ public final class OriginalSkills implements Listener {
     static final double PURPLE_FLAMES = 7;
     static final long GALVANIC_TICKS = 120;
     static final long GALVANIC_INTERVAL = 12;
-    static final double GALVANIC_RADIUS = 1.9;
+    static final double GALVANIC_RADIUS = tw.exilecore.core.Units.metres(1.9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final long SEED_TICKS = 300;
     static final double SEED_THRESHOLD = 2.0;
-    static final double SEED_RADIUS = 2.5;
+    static final double SEED_RADIUS = tw.exilecore.core.Units.metres(2.5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final long REMNANT_TICKS = 160;
-    static final double REMNANT_PICKUP = 1.6;
+    static final double REMNANT_PICKUP = tw.exilecore.core.Units.metres(1.6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final long CONVALESCENCE_COOLDOWN = 600;
     static final double CONVALESCENCE_MANA = 20;
     static final double GRIM_SHARE = 0.35;
@@ -156,22 +156,22 @@ public final class OriginalSkills implements Listener {
     static final int CALTROP_MAX = 20;
     static final long CALTROP_TICKS = 160;
     static final double CALTROP_TRIGGER = 0.5;
-    static final double CALTROP_BLAST = 0.8;
+    static final double CALTROP_BLAST = tw.exilecore.core.Units.metres(0.8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final long CALAMITY_TICKS = 200;
-    static final double CALAMITY_RANGE = 8;
+    static final double CALAMITY_RANGE = tw.exilecore.core.Units.metres(8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double CALAMITY_INTERVAL = 3;
     static final int CALAMITY_LARGE_EVERY = 15;
-    static final double SMALL_METEOR = 0.8;
-    static final double LARGE_METEOR = 1.4;
-    static final double DEVOUR_LEAP = 4;
+    static final double SMALL_METEOR = tw.exilecore.core.Units.metres(0.8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double LARGE_METEOR = tw.exilecore.core.Units.metres(1.4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double DEVOUR_LEAP = tw.exilecore.core.Units.metres(4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final int DEVOUR_EXTRA = 2;
     static final long OIL_WINDOW = 30;
     static final long MARK_TICKS = 160;
     static final double MARK_PER_ENEMY = 3;
     static final double MARK_CAP = 45;
-    static final double MARK_RADIUS = 6;
+    static final double MARK_RADIUS = tw.exilecore.core.Units.metres(6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final long FRAGMENT_TICKS = 50;
-    static final double FRAGMENT_RADIUS = 1.8;
+    static final double FRAGMENT_RADIUS = tw.exilecore.core.Units.metres(1.8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final int SHRED_FRAGMENTS = 3;
     static final int ICE_TIPPED_FRAGMENTS = 5;
     static final int ICE_TIPPED_USES = 4;
@@ -1474,7 +1474,7 @@ public final class OriginalSkills implements Listener {
             }
             final boolean unique = plugin.monsters() != null && plugin.monsters().data(target).map(d -> d.rarity() == MonsterRarity.UNIQUE).orElse(false);
             // 照 PoE2：重暈蓄勢待暈的敵人時炸出 2 格震波（傳奇更多 50%）
-            blast(player, target.getLocation(), 2.0 * wave.areaScale(), unique ? wave.profile().scaled(1.5, "傳奇") : wave.profile());
+            blast(player, target.getLocation(), tw.exilecore.core.Units.metres(2.0) * wave.areaScale(), /* 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算 */ unique ? wave.profile().scaled(1.5, "傳奇") : wave.profile());
             Fx.spawn(target.getWorld(), Particle.SWEEP_ATTACK, target.getLocation().add(0, 0.6, 0), 6, 1, 0.2, 1, 0);
         }
     }
@@ -1532,7 +1532,7 @@ public final class OriginalSkills implements Listener {
             final int level = gemLevel(player, ESCAPE);
             mine.escapeUse = -1;
             spawnFragments(player, defender.getLocation(), (int) Math.round(levelValue(ESCAPE, ESCAPE_FRAGMENTS, level, 8)),
-                    proc(player, FRAGMENT_ESCAPE, level), 2.0, now);
+                    proc(player, FRAGMENT_ESCAPE, level), tw.exilecore.core.Units.metres(2.0), now); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
         }
         if (hasMark(skill, ICE_TIPPED_MARK) && now >= mine.fragmentReady) {
             mine.fragmentReady = now + 3;

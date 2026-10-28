@@ -23,7 +23,7 @@ import java.util.UUID;
 /**
  * 2026-10-26 照 PoE2 0.5 的 Mana Tempest（魔湧；這次之前是保留 30 精魂的常駐光環：法術傷害、施法速度增加，魔力消耗增加 20%）：
  * <ul>
- *   <li>施放時在腳下召出一團風暴（半徑 2.6 格，原作 do_not_apply_area_modifiers：不吃範圍加成）。</li>
+ *   <li>施放時在腳下召出一團風暴（半徑 2.6 公尺 = 3.9 格，原作 do_not_apply_area_modifiers：不吃範圍加成）。</li>
  *   <li>站在風暴裡，你的法術被強化：技能的 level_modifiers 裡「獲得 x% 傷害為額外閃電」與「分裂 x 個目標」（{@link #SPLIT}）
  *       變成身上的增益；離開風暴後效果再留 2 秒。</li>
  *   <li>風暴每秒消耗最大魔力的 1%，在風暴裡花掉的魔力與生命有 30% 加到每秒的消耗上（越花越快）；付不起或走出風暴就消散。</li>
@@ -40,8 +40,8 @@ final class ManaTempest {
      * 分裂出來的不會再分裂、不打剛打中的那隻）。
      */
     static final String SPLIT = "skill.split";
-    /** 風暴半徑（格；原作 active_skill_base_area_of_effect_radius 26 = 2.6 格）。 */
-    static final double RADIUS = 2.6;
+    /** 風暴半徑（格；原作 active_skill_base_area_of_effect_radius 26 = 2.6 公尺）。 */
+    static final double RADIUS = tw.exilecore.core.Units.metres(2.6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 離開風暴後效果再留幾 tick（原作 2 秒）。 */
     static final int LINGER_TICKS = 40;
     /** 每秒基礎消耗：最大魔力的幾 %（原作 ManaPercentPerMinute 60）。 */

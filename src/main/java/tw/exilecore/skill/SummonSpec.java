@@ -28,7 +28,7 @@ import java.util.Set;
  * @param attackSpeed 每秒攻擊幾次（基礎）
  * @param speed       移動速度倍率（原版該生物的）
  * @param reach       攻擊距離（身體邊緣到身體邊緣，格）
- * @param radius      打中時連目標周圍幾格內的敵人一起打（0 = 只打一個）
+ * @param radius      打中時連目標周圍幾格內的敵人一起打（0 = 只打一個；2026-10-29：skills.yml 寫公尺，讀進來已換成格）
  * @param corpse      要用一具屍體（怪物死後十秒內）當材料，在屍體的位置出現
  * @param search      屍體在主人幾格內都算
  * @param helmet      頭上戴什麼（原版物品名稱；外觀用，沒有就不戴）
@@ -137,7 +137,8 @@ public record SummonSpec(String kind, int count, Scaled max, boolean fixedMax, d
                 check(where, "attack_speed", node.decimal("attack_speed", 1.0), 0.3, 3),
                 check(where, "speed", node.decimal("speed", 1.0), 0.5, 2),
                 check(where, "reach", node.decimal("reach", 2.0), 1, 4),
-                check(where, "radius", node.decimal("radius", 0), 0, 4),
+                // 2026-10-29 照站長：1 公尺 = 2 格（Units）——召喚物打中時的範圍照 PoE2 寫公尺（骸骨焰術士火彈 1.6），檢查照公尺
+                tw.exilecore.core.Units.metres(check(where, "radius", node.decimal("radius", 0), 0, 4)),
                 corpse, check(where, "search", node.decimal("search", 10), 2, 16),
                 item(node, "helmet"), item(node, "weapon"), resists,
                 check(where, "taunt", node.decimal("taunt", 0), 0, 30),

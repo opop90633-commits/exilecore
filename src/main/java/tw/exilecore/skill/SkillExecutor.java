@@ -166,7 +166,7 @@ final class SkillExecutor {
     // ---- 近戰打擊 ----
 
     /** 近戰擴散打到目標周圍幾格（再乘範圍效果）。 */
-    static final double MELEE_SPLASH_RADIUS = 2.5;
+    static final double MELEE_SPLASH_RADIUS = tw.exilecore.core.Units.metres(2.5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 打擊技能的額外目標最多幾個。 */
     static final int MAX_STRIKE_TARGETS = 6;
 
@@ -405,10 +405,10 @@ final class SkillExecutor {
     }
 
     /** 嵐棍橫掃品質的近身加成：1.5 公尺內全部、4 公尺以外沒有。 */
-    static final double CLOSE_FULL = 1.5;
-    static final double CLOSE_NONE = 4.0;
+    static final double CLOSE_FULL = tw.exilecore.core.Units.metres(1.5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double CLOSE_NONE = tw.exilecore.core.Units.metres(4.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
 
-    /** 2026-10-28：距離 distance 公尺時近身更多幾（小數）；percent 是 1.5 公尺內的更多 %。純函式（測試用）。 */
+    /** 2026-10-28：距離 distance 格時近身更多幾（小數）；percent 是 1.5 公尺（{@link #CLOSE_FULL} 格）內的更多 %。純函式（測試用）。 */
     static double closeMore(final double percent, final double distance) {
         if (percent <= 0 || distance >= CLOSE_NONE) {
             return 0;
@@ -906,7 +906,9 @@ final class SkillExecutor {
             return 0;
         }
         player.setFallDistance(0);
-        if (!tw.exilecore.core.Teleports.go(player, to)) {
+        // 2026-10-29 照站長：保留視角與移動速度的傳送（走路中踏步不再卡一下）；這次之前用一般傳送，客戶端速度歸零、視角被拉回
+        //   （試過踏完再往前推一小段，站長說踏步本身就會往前，先不用）
+        if (!tw.exilecore.core.Teleports.glide(player, to)) {
             return 0;
         }
         visuals.dash(build.definition().visual(), from, to);
@@ -1108,7 +1110,7 @@ final class SkillExecutor {
     }
 
     /** 蝕咒裂：找詛咒的範圍（PoE2 2.8 格）、一次最多幾個爆炸。 */
-    static final double HEXBLAST_SEARCH = 2.8;
+    static final double HEXBLAST_SEARCH = tw.exilecore.core.Units.metres(2.8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final int HEXBLAST_MAX = 10;
 
     /**
@@ -1134,7 +1136,11 @@ final class SkillExecutor {
             for (final Debuffs.Debuff debuff : plugin.combat().debuffs().active(cursed.getUniqueId(), now)) {
                 if (debuff.id().contains("_curse") && player.getUniqueId().equals(debuff.source())) {
                     mine = true;
-                    remaining = Math.max(remaining, debuff.untilTick() - now);
+                    // 2026-10-29：無限持續的詛咒（司祭法衣，untilTick = Long.MAX_VALUE / 4）不算剩餘時間——這次之前當成剩幾百兆秒，
+                    // 品質的「每剩 1 秒更多傷害」乘爆，傷害變成 long 的最大值
+                    if (debuff.untilTick() < Long.MAX_VALUE / 8) {
+                        remaining = Math.max(remaining, debuff.untilTick() - now);
+                    }
                 }
             }
             if (!mine) {
@@ -1162,7 +1168,7 @@ final class SkillExecutor {
     }
 
     /** 稜光裂：脈衝的範圍（PoE2 5 格）、最多用掉幾隻的異常、冰爆與雷爆是火爆的幾倍（PoE2 350% ÷ 125%、140% ÷ 125%）。 */
-    static final double SUNDER_PULSE = 5;
+    static final double SUNDER_PULSE = tw.exilecore.core.Units.metres(5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final int SUNDER_MAX = 20;
     static final double SUNDER_COLD = 2.8;
     static final double SUNDER_LIGHTNING = 1.12;
@@ -2129,7 +2135,9 @@ final class SkillExecutor {
                         + Math.max(0, (int) Math.round(effective.flat(StatKeys.SKILL_CHAINS, build.profile().tags())));
                 final int shards = params.shower() == null ? 0 : Math.max(1, params.shower().count().intAt(build.level())
                         + (int) Math.round(effective.flat(StatKeys.SKILL_PROJECTILES, build.profile().tags())));
-                zones.pulses(origin.owner(), build.definition().id(), chains,
+                // 2026-10-29 照 PoE2 Orb of Storms 的品質：雷雲多放 (0—6) 道雷才消失
+                final int bolts = SkillZones.ORB_MAX_BOLTS + Math.max(0, (int) effective.flat(tw.exilecore.stats.GemQualityKeys.ORB_EXTRA_BOLTS, build.profile().tags()));
+                zones.pulses(origin.owner(), build.definition().id(), chains, bolts,
                         params.bolts() == null ? 0 : params.bolts().range() * build.areaScale(),
                         params.bolts() == null ? 0 : params.bolts().chainRange(),
                         Math.min(20, shards), params.shower() == null ? 0 : params.shower().radius() * build.areaScale());

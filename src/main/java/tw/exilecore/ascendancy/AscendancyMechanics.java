@@ -11,11 +11,11 @@ import tw.exilecore.stats.Tags;
  * 2026-10-26 照 PoE2 0.5 換昇華天賦時新做的機制（屬性鍵與計算；戰鬥的「這一下乘多少」從 combat.Signatures 呼叫）。
  * 這次之前沒有這些機制（原本的遠星是自己的數字：5 格外每遠 1 格更多 2%）。
  * <ul>
- *   <li>零點射擊（銳眼）：投射物對 3.5 格內的目標擊中傷害更多 20%，到 7 格遞減成 0%。</li>
- *   <li>遠射（銳眼）：投射物對 3.5 格內的目標更多 0%，到 7 格遞增成 20%。</li>
+ *   <li>零點射擊（銳眼）：投射物對 3.5 公尺內的目標擊中傷害更多 20%，到 7 公尺遞減成 0%。</li>
+ *   <li>遠射（銳眼）：投射物對 3.5 公尺內的目標更多 0%，到 7 公尺遞增成 20%。</li>
+ * 2026-10-29：公尺照 Units 換成格（3.5 公尺 = 5.25 格、7 公尺 = 10.5 格）；這次之前一格當一公尺。
  *   <li>德魯伊之冠（薩滿）：每 2 點怒氣，法術傷害更多 1%。</li>
  * </ul>
- * 一格當一格。
  */
 public final class AscendancyMechanics {
 
@@ -27,9 +27,10 @@ public final class AscendancyMechanics {
     public static final String DRUIDIC_CHAMPION = "asc.druidic_champion";
 
     /** 距離從幾格開始變（之前都是最大或 0）。 */
-    static final double NEAR = 3.5;
+    // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前 3.5 格、FAR 7 格）
+    static final double NEAR = tw.exilecore.core.Units.metres(3.5);
     /** 到幾格變完。 */
-    static final double FAR = 7.0;
+    static final double FAR = tw.exilecore.core.Units.metres(7.0);
 
     private AscendancyMechanics() {
     }

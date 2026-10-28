@@ -55,6 +55,22 @@ public final class Teleports {
         return player.teleport(to);
     }
 
+    /**
+     * 2026-10-29：短距離位移（近戰踏步）用：傳送但保留客戶端的視角與移動速度（Paper 的相對傳送旗標）。
+     * 一般的 teleport 會把客戶端的速度歸零、視角拉回伺服器記的角度，走路中踏步會卡一下（頓挫）；這個不會。
+     * to 的 yaw／pitch 照玩家現在的填（相對旗標送的是差值，差 0 就是不動視角）。
+     */
+    public static boolean glide(final Player player, final Location to) {
+        dismount(player);
+        final Location at = to.clone();
+        at.setYaw(player.getLocation().getYaw());
+        at.setPitch(player.getLocation().getPitch());
+        return player.teleport(at, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.PLUGIN,
+                io.papermc.paper.entity.TeleportFlag.Relative.YAW, io.papermc.paper.entity.TeleportFlag.Relative.PITCH,
+                io.papermc.paper.entity.TeleportFlag.Relative.VELOCITY_X, io.papermc.paper.entity.TeleportFlag.Relative.VELOCITY_Y,
+                io.papermc.paper.entity.TeleportFlag.Relative.VELOCITY_Z);
+    }
+
     public static CompletableFuture<Boolean> async(final Player player, final Location to) {
         dismount(player);
         hold.put(player.getUniqueId(), System.currentTimeMillis() + HOLD_MILLIS);

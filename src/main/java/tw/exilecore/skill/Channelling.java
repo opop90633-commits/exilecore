@@ -42,7 +42,7 @@ import java.util.Locale;
 final class Channelling {
 
     /** 凋蝕術的作用區域往準心移動的速度（格／秒；PoE2 wither_channeled_move_targeting_area_X_units_per_second = 18）。 */
-    static final double WITHER_FOLLOW = 1.8;
+    static final double WITHER_FOLLOW = tw.exilecore.core.Units.metres(1.8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 衝鋒時撞到敵人的偵測：前方幾格、多寬。 */
     static final double CRASH_AHEAD = 1.2;
     static final double CRASH_WIDTH = 1.0;

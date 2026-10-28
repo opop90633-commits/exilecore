@@ -973,8 +973,9 @@ public final class AilmentService {
         return skillId == null ? "?" : dot < 0 ? skillId : skillId.substring(0, dot);
     }
 
-    /** 傳染的半徑（格）：2026-10-28 照 PoE2 Contagion（Spread radius 1.7 公尺）；這次之前 4 格的方塊。 */
-    static final double SPREAD_RADIUS = 1.7;
+    /** 傳染的半徑（格）：2026-10-28 照 PoE2 Contagion（Spread radius 1.7 公尺，2026-10-29 起換成 2.55 格）；這次之前 4 格的方塊。 */
+    // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前 1.7 格；技能的 debuff.spread_radius 在下面 spreadRadius 用的時候換）
+    static final double SPREAD_RADIUS = tw.exilecore.core.Units.metres(1.7);
     /** 每傳一手更多幾倍、最多幾手（PoE2：每手更多 100%，最多更多 300%）。 */
     static final int SPREAD_MAX = 3;
     /** 2026-10-28：屍體、召喚物帶著的瘟疫掛上去用的減益代號（跟施放時的同一個，不疊加）。 */
@@ -992,7 +993,8 @@ public final class AilmentService {
         final Set<String> tags = skill.tags() == null ? Set.of() : skill.tags();
         final double scale = tags.contains(tw.exilecore.stats.Tags.AREA)
                 ? Math.sqrt(Math.max(0.05, attack.apply(StatKeys.SKILL_AREA, 1.0, tags))) : 1.0;
-        return (base > 0 ? base : SPREAD_RADIUS) * scale;
+        // 2026-10-29 照站長：skills.yml 的 debuff.spread_radius 照 PoE2 寫公尺（Contagion 1.7），用的時候換成格（Units）
+        return (base > 0 ? tw.exilecore.core.Units.metres(base) : SPREAD_RADIUS) * scale;
     }
 
     /**

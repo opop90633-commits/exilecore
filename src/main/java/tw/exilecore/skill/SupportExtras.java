@@ -441,7 +441,7 @@ public final class SupportExtras implements Listener {
     /** Minion Pact：最近的一隻自己的召喚物扣 amount 生命（扣到死也算），有扣到回傳 true。 */
     private boolean pactMinion(final Player player, final double amount) {
         MinionService.Minion best = null;
-        double distance = SupportExtraKeys.MINION_PACT_RANGE * SupportExtraKeys.MINION_PACT_RANGE;
+        double distance = tw.exilecore.core.Units.metres(SupportExtraKeys.MINION_PACT_RANGE) * tw.exilecore.core.Units.metres(SupportExtraKeys.MINION_PACT_RANGE); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（常數在 SupportExtraKeys，照公尺，在這裡乘）
         for (final MinionService.Minion minion : service.minions().all()) {
             if (!minion.owner.equals(player.getUniqueId()) || !minion.mob.isValid() || !minion.mob.getWorld().equals(player.getWorld())) {
                 continue;
@@ -468,7 +468,7 @@ public final class SupportExtras implements Listener {
         int consumed = 0;
         for (int i = 0; i < max; i++) {
             final tw.exilecore.combat.Corpses.Corpse corpse = corpses.nearest(at.getWorld().getUID(), at.getX(), at.getZ(),
-                    SupportExtraKeys.PROFANITY_RANGE, now());
+                    tw.exilecore.core.Units.metres(SupportExtraKeys.PROFANITY_RANGE), now()); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（常數在 SupportExtraKeys，照公尺，在這裡乘）
             if (corpse == null) {
                 break;
             }
@@ -888,7 +888,8 @@ public final class SupportExtras implements Listener {
         }
         final double seconds = service.supportFlat(player, definition.id(), SupportExtraKeys.HOLY_DESCENT);
         if (seconds > 0) {
-            grounds.add(new Ground(player.getUniqueId(), 0, at.clone(), SupportExtraKeys.CONSECRATED_RADIUS, now() + Math.round(seconds * 20), null, null));
+            // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（常數在 SupportExtraKeys，照公尺，在這裡乘）
+            grounds.add(new Ground(player.getUniqueId(), 0, at.clone(), tw.exilecore.core.Units.metres(SupportExtraKeys.CONSECRATED_RADIUS), now() + Math.round(seconds * 20), null, null));
             at.getWorld().spawnParticle(Particle.END_ROD, at.clone().add(0, 0.3, 0), 20, 1, 0.1, 1, 0.01);
         }
     }
@@ -1507,7 +1508,7 @@ public final class SupportExtras implements Listener {
         for (final Player candidate : candidates) {
             for (final SkillService.TotemView totem : totems) {
                 if (candidate.getWorld().equals(totem.feet().getWorld())
-                        && candidate.getLocation().distanceSquared(totem.feet()) <= SupportExtraKeys.FONT_RADIUS * SupportExtraKeys.FONT_RADIUS) {
+                        && candidate.getLocation().distanceSquared(totem.feet()) <= tw.exilecore.core.Units.metres(SupportExtraKeys.FONT_RADIUS) * tw.exilecore.core.Units.metres(SupportExtraKeys.FONT_RADIUS)) { // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（常數在 SupportExtraKeys，照公尺，在這裡乘）
                     inside.add(candidate);
                     break;
                 }
@@ -1553,7 +1554,7 @@ public final class SupportExtras implements Listener {
      */
     private void conductShock(final Player player, final LivingEntity source) {
         final double magnitude = Math.max(0.01, plugin.ailments().shockMagnitude(source));
-        for (final LivingEntity near : service.targets().around(source.getLocation(), SupportExtraKeys.SHOCK_NEARBY_RADIUS, player)) {
+        for (final LivingEntity near : service.targets().around(source.getLocation(), tw.exilecore.core.Units.metres(SupportExtraKeys.SHOCK_NEARBY_RADIUS), player)) { // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（常數在 SupportExtraKeys，照公尺，在這裡乘）
             if (near != source) {
                 plugin.ailments().groundStatusOnMonster(near, 0, magnitude, 80);
                 near.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, near.getLocation().add(0, 1, 0), 8, 0.3, 0.4, 0.3, 0.05);
@@ -1630,7 +1631,7 @@ public final class SupportExtras implements Listener {
             final DamagePacket share = new DamagePacket(outgoing).scale(SupportExtraKeys.MINION_SPLASH_SHARE);
             final SkillProfile profile = new SkillProfile(SPLASH_ID, Set.of(Tags.MINION, Tags.AREA), 0, share, share, Map.of(),
                     List.of(Modifier.flat(StatKeys.FLAG_NO_CRIT, 1, "僕濺")));
-            for (final LivingEntity near : service.targets().around(event.defender().getLocation(), SupportExtraKeys.MINION_SPLASH_RADIUS, owner)) {
+            for (final LivingEntity near : service.targets().around(event.defender().getLocation(), tw.exilecore.core.Units.metres(SupportExtraKeys.MINION_SPLASH_RADIUS), owner)) { // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（常數在 SupportExtraKeys，照公尺，在這裡乘）
                 if (near != event.defender()) {
                     plugin.combat().skillDamage().hit(owner, near, profile, null);
                 }

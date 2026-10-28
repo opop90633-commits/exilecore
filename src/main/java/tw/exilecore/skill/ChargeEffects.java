@@ -524,7 +524,7 @@ public final class ChargeEffects implements Listener {
     static final String REMNANT_EXTRA = "charge.remnant_extra";
     /** 殘影：撐幾 tick、多近算撿到。 */
     static final long REMNANT_TICKS = 100;
-    static final double REMNANT_PICKUP = 1.6;
+    static final double REMNANT_PICKUP = tw.exilecore.core.Units.metres(1.6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
 
     /** 翻滾時（SkillTriggers 呼叫）：開著幻身的人花 10 魔力在原地留下一個會引怪的幻身。 */
     void onDodge(final Player player, final StatSheet sheet) {
@@ -841,12 +841,12 @@ public final class ChargeEffects implements Listener {
         }
     }
 
-    /** 2026-10-26：撿殘影的距離（格）：1.6 × (1 + 撿取距離)。 */
+    /** 2026-10-26：撿殘影的距離（格）：1.6 公尺（{@link #REMNANT_PICKUP} 格）× (1 + 撿取距離)。 */
     static double remnantPickup(final StatSheet sheet) {
         return remnantPickup(sheet.increased(tw.exilecore.stats.TreeMechanicKeys.REMNANT_RANGE, Set.of()));
     }
 
-    /** 撿取距離（格）：1.6 ×（1 ＋ 增加的撿取距離）。 */
+    /** 撿取距離（格）：1.6 公尺（{@link #REMNANT_PICKUP} 格）×（1 ＋ 增加的撿取距離）。 */
     static double remnantPickup(final double increased) {
         return REMNANT_PICKUP * Math.max(0.1, 1 + increased);
     }

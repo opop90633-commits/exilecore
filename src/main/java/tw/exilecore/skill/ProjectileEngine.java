@@ -1319,7 +1319,7 @@ final class ProjectileEngine implements Listener {
     /** 2026-10-28 照 PoE2 Shockchain Arrow：震波的半徑（stages 的 shockwave，吃範圍加成；沒寫照 2.5 公尺）。 */
     private static double shockwaveRadius(final Shot shot) {
         final SkillStages.Stage stage = SkillStages.get(shot.build.definition().id(), ShockchainArrows.SHOCKWAVE);
-        return stage != null && stage.radius(shot.build.level()) > 0 ? shot.build.scaledRadius(stage.radius()) : 2.5 * shot.build.areaScale();
+        return stage != null && stage.radius(shot.build.level()) > 0 ? shot.build.scaledRadius(stage.radius()) : tw.exilecore.core.Units.metres(2.5) * shot.build.areaScale(); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     }
 
     /** 2026-10-28 照 PoE2 Shockchain Arrow：在打中的敵人那裡放出震波（打到周圍包括牠自己，PoE2 0.2.0）。 */

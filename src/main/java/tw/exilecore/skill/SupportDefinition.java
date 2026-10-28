@@ -313,7 +313,8 @@ public record SupportDefinition(String id, String name, String description, Stri
         // 2026-10-28 照 PoE2 Falling Thunder：猛擊之後另外射投射物的（skills.yml stages.thunder，SkillExecutor.thunderBolts）也算
         if (projectileMechanics() && skill.mechanic() != Mechanic.PROJECTILE && skill.mechanic() != Mechanic.CHAIN
                 && SkillStages.get(skill.id(), SkillExecutor.THUNDER) == null
-                && !((onlyProjectileSpeed() || addsProjectiles()) && skill.mechanic() == Mechanic.IMPACT && SkillExecutor.fallsAsProjectile(skill))) {
+                && !((onlyProjectileSpeed() || addsProjectiles()) && skill.mechanic() == Mechanic.IMPACT && SkillExecutor.fallsAsProjectile(skill))
+                && !(onlyChains() && chainingBolts(skill))) {
             return "要真的射出投射物的技能";
         }
         return null;
@@ -418,23 +419,56 @@ public record SupportDefinition(String id, String name, String description, Stri
         return true;
     }
 
+    /**
+     * 2026-10-29 照 PoE2 Chain I（Supports Projectile skills and any other skills that Chain）：動到的投射物機制只有連鎖次數
+     * （連環這種）。這次之前跟分裂、穿透一起被當成「要真的射出投射物」，雷雲掛不上去。
+     */
+    boolean onlyChains() {
+        boolean chains = false;
+        for (final Modifier modifier : modifiers) {
+            if (StatKeys.SKILL_CHAINS.equals(modifier.stat())) {
+                chains = true;
+            }
+        }
+        if (!chains) {
+            return false;
+        }
+        for (final Modifier modifier : modifiers) {
+            if (!StatKeys.SKILL_CHAINS.equals(modifier.stat()) && projectileMechanic(modifier.stat())) {
+                return false; // 還動到別的投射物機制（分裂、穿透、多射…）：雷雲吃不到
+            }
+        }
+        return true;
+    }
+
+    /** 2026-10-29：放會連鎖的雷的區域技能（雷雲：skills.yml zone.bolts，SkillExecutor 把 skill.chains 加到每一道雷的連鎖次數）。 */
+    private static boolean chainingBolts(final SkillDefinition skill) {
+        return skill.mechanic() == Mechanic.ZONE && skill.tags().contains("chain")
+                && skill.params().zone() != null && skill.params().zone().bolts() != null;
+    }
+
     /** 這顆輔助有沒有動到投射物本身的機制（數量、穿透、分裂、連鎖、速度、環射、回返、封矢）。 */
     public boolean projectileMechanics() {
         for (final Modifier modifier : modifiers) {
-            switch (modifier.stat()) {
-                case StatKeys.SKILL_PROJECTILES, StatKeys.SKILL_PIERCE, StatKeys.SKILL_FORK, StatKeys.SKILL_CHAINS,
-                     StatKeys.SKILL_PROJECTILE_SPEED, StatKeys.FLAG_PROJECTILE_NOVA, StatKeys.FLAG_RETURNING, StatKeys.SEAL_PROJECTILES,
-                     tw.exilecore.stats.SupportKeys.PIERCE_IGNITED, tw.exilecore.stats.SupportKeys.FORK_FROZEN,
-                     tw.exilecore.stats.SupportKeys.CHAIN_SHOCKED, // 2026-10-26：穿燼、霜岔、躍霆
-                     tw.exilecore.stats.SupportExtraKeys.FLAG_GAMBLESHOT, tw.exilecore.stats.SupportExtraKeys.FLAG_RICOCHET,
-                     tw.exilecore.stats.SupportExtraKeys.ALIGNMENT, tw.exilecore.stats.SupportExtraKeys.FLAG_SPECTRAL,
-                     tw.exilecore.stats.SupportExtraKeys.CHARGED_SHOTS -> { // 2026-10-27：隨機、跳彈、指向、光影齊射、充能射擊
-                    return true;
-                }
-                default -> { }
+            if (projectileMechanic(modifier.stat())) {
+                return true;
             }
         }
         return false;
+    }
+
+    /** 這個屬性是不是投射物本身的機制（{@link #projectileMechanics}）。 */
+    private static boolean projectileMechanic(final String stat) {
+        return switch (stat) {
+            case StatKeys.SKILL_PROJECTILES, StatKeys.SKILL_PIERCE, StatKeys.SKILL_FORK, StatKeys.SKILL_CHAINS,
+                 StatKeys.SKILL_PROJECTILE_SPEED, StatKeys.FLAG_PROJECTILE_NOVA, StatKeys.FLAG_RETURNING, StatKeys.SEAL_PROJECTILES,
+                 tw.exilecore.stats.SupportKeys.PIERCE_IGNITED, tw.exilecore.stats.SupportKeys.FORK_FROZEN,
+                 tw.exilecore.stats.SupportKeys.CHAIN_SHOCKED, // 2026-10-26：穿燼、霜岔、躍霆
+                 tw.exilecore.stats.SupportExtraKeys.FLAG_GAMBLESHOT, tw.exilecore.stats.SupportExtraKeys.FLAG_RICOCHET,
+                 tw.exilecore.stats.SupportExtraKeys.ALIGNMENT, tw.exilecore.stats.SupportExtraKeys.FLAG_SPECTRAL,
+                 tw.exilecore.stats.SupportExtraKeys.CHARGED_SHOTS -> true; // 2026-10-27：隨機、跳彈、指向、光影齊射、充能射擊
+            default -> false;
+        };
     }
 
     /**

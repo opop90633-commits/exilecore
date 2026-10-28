@@ -259,7 +259,7 @@ public final class SupportMechanics implements Listener {
     }
 
     /** 震嘯：用過之後要再移動幾格才能用。 */
-    static final double ECHO_TRAVEL = 10;
+    static final double ECHO_TRAVEL = tw.exilecore.core.Units.metres(10); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
 
     /** 2026-10-28 照 PoE2 Spear of Solaris 的品質：保留幾成榮耀（chance_to_retain_40%_of_glory_on_use）。 */
     static final double GLORY_RETAIN_SHARE = 0.4;
@@ -331,7 +331,7 @@ public final class SupportMechanics implements Listener {
             final String key = key(player, build.definition().id());
             final double moved = travelled(player) - voltMark.getOrDefault(key, travelled(player));
             voltMark.put(key, travelled(player));
-            final double charge = Math.min(voltMax, Math.floor(moved * 2));
+            final double charge = Math.min(voltMax, Math.floor(moved / tw.exilecore.core.Units.metres(1) * 2)); // 每 1 公尺（1.5 格）2 點 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
             if (charge > 0) {
                 extra.add(Modifier.flat(StatKeys.damageExtra(DamageType.LIGHTNING), charge, "引雷電荷"));
             }
@@ -639,7 +639,7 @@ public final class SupportMechanics implements Listener {
                 Map.of(), List.of(Modifier.flat(StatKeys.SPELL_BASE_CRIT, 5, "碎甲吼"), Modifier.increased(StatKeys.ARMOUR_BREAK, -1.0, "碎甲吼")));
         final MonsterData data = plugin.monsters().data(center).orElse(null);
         final Location at = center.getLocation();
-        for (final LivingEntity target : service.targets().around(at, 2.0, player)) {
+        for (final LivingEntity target : service.targets().around(at, tw.exilecore.core.Units.metres(2.0), player)) { // 碎甲吼爆炸 2 公尺 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
             final MonsterData each = plugin.monsters().data(target).orElse(null);
             final boolean unique = each != null && (each.boss() || each.rarity() == MonsterRarity.UNIQUE);
             plugin.combat().skillDamage().hit(player, target, unique ? profile.scaled(1.5, "對傳奇") : profile, null);
@@ -730,7 +730,7 @@ public final class SupportMechanics implements Listener {
     }
 
     /** 「身邊」（PoE2 的 Presence）多遠。 */
-    static final double PRESENCE = 4;
+    static final double PRESENCE = tw.exilecore.core.Units.metres(4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
 
     // =====================================================================
     // 熔魂嘯：火山步、火山噴發
@@ -754,7 +754,7 @@ public final class SupportMechanics implements Listener {
 
     private final Map<UUID, Kaom> kaom = new HashMap<>();
     /** 火山步每走幾格一次；火山噴發的冷卻（tick）。 */
-    static final double STEP_METRES = 1.2;
+    static final double STEP_METRES = tw.exilecore.core.Units.metres(1.2); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final long ERUPTION_COOLDOWN = 8;
 
     /** 熔魂嘯吼完（Warcries 呼叫）。 */
@@ -804,7 +804,7 @@ public final class SupportMechanics implements Listener {
         final double far = skillSheet.flat(SupportKeys.DAMAGE_FAR, tags);
         if (far > 0 && attacker.getWorld().equals(defender.getWorld())) {
             final double distance = attacker.getLocation().distance(defender.getLocation());
-            final double scale = Math.max(0, Math.min(1, (distance - 3.5) / 3.5));
+            final double scale = Math.max(0, Math.min(1, (distance - tw.exilecore.core.Units.metres(3.5)) / tw.exilecore.core.Units.metres(3.5))); // 遠穿 3.5～7 公尺 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
             if (scale > 0) {
                 list.add(new Modifier(StatKeys.DAMAGE, ModType.MORE, far * scale / 100.0, Set.of(Tags.ATTACK), "遠穿"));
             }
@@ -1154,7 +1154,7 @@ public final class SupportMechanics implements Listener {
         final SkillProfile profile = new SkillProfile("elemental_discharge", tags, 1.0, min, max, Map.of(),
                 List.of(Modifier.flat(StatKeys.SPELL_BASE_CRIT, 10, "元素崩解"), Modifier.flat(StatKeys.FLAG_NO_AILMENTS, 1, "元素崩解")));
         final Location at = center.getLocation();
-        for (final LivingEntity target : service.targets().around(at, 2.0, player)) {
+        for (final LivingEntity target : service.targets().around(at, tw.exilecore.core.Units.metres(2.0), player)) { // 元素崩解 2 公尺 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
             plugin.combat().skillDamage().hit(player, target, profile, null);
         }
         at.getWorld().spawnParticle(Particle.FLASH, at.clone().add(0, 1, 0), 1, 0, 0, 0, 0, org.bukkit.Color.WHITE);

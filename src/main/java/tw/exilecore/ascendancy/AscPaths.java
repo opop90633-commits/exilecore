@@ -67,33 +67,41 @@ final class AscPaths implements Listener {
     static final double WISP_METRES = 10;
     /** 靈鹿躍起幾次、每次幾格、靈鹿之間的角度、追敵的錐角（一半）、追敵距離。 */
     static final int STAG_LEAPS = 4;
-    static final double STAG_LEAP = 3;
+    // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前 3 格）
+    static final double STAG_LEAP = tw.exilecore.core.Units.metres(3);
     static final double STAG_SPREAD = 15;
     static final double STAG_HOME_HALF_ANGLE = 60;
-    static final double STAG_HOME_RANGE = 5;
+    // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前 5 格）
+    static final double STAG_HOME_RANGE = tw.exilecore.core.Units.metres(5);
     /** 靈現奔竄的冷卻（0.3 秒）。 */
     static final long STAMPEDE_COOLDOWN = 6;
     /** 梟羽每幾 tick 一根（4 秒）、強化等幾 tick（8 秒）、翱翔之地的長、寬。 */
     static final long FEATHER_TICKS = 80;
     static final long EMPOWER_TICKS = 160;
-    static final double TRAIL_LENGTH = 12;
-    static final double TRAIL_HALF_WIDTH = 1.2;
-    /** 熊靈：躍擊（8 秒、3 格）、重擊（5 秒、2.5 格、偷取 50%）、怒吼（12 秒、6 格、恫嚇 8 秒）、荒野擁抱（存在範圍 6 格、每秒 2%、先承受 8%）。 */
+    // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前長 12 格、半寬 1.2 格）
+    static final double TRAIL_LENGTH = tw.exilecore.core.Units.metres(12);
+    static final double TRAIL_HALF_WIDTH = tw.exilecore.core.Units.metres(1.2);
+    /** 熊靈：躍擊（8 秒、3 公尺）、重擊（5 秒、2.5 公尺、偷取 50%）、怒吼（12 秒、6 公尺、恫嚇 8 秒）、荒野擁抱（存在範圍 6 公尺、每秒 2%、先承受 8%）；公尺用 Units 換成格。 */
     static final long BEAR_LEAP_TICKS = 160;
-    static final double BEAR_LEAP_RADIUS = 3;
+    // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前 3 格）
+    static final double BEAR_LEAP_RADIUS = tw.exilecore.core.Units.metres(3);
     static final long BEAR_SLAM_TICKS = 100;
-    static final double BEAR_SLAM_RADIUS = 2.5;
+    // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前 2.5 格；觸發距離「半徑 + 0.5」跟著變）
+    static final double BEAR_SLAM_RADIUS = tw.exilecore.core.Units.metres(2.5);
     static final double BEAR_SLAM_LEECH = 0.5;
     static final long BEAR_ROAR_TICKS = 240;
-    static final double BEAR_ROAR_RADIUS = 6;
+    // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前 6 格）
+    static final double BEAR_ROAR_RADIUS = tw.exilecore.core.Units.metres(6);
     static final long INTIMIDATE_TICKS = 160;
-    static final double EMBRACE_RADIUS = 6;
+    // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（存在範圍 6 公尺；這次之前 6 格）
+    static final double EMBRACE_RADIUS = tw.exilecore.core.Units.metres(6);
     static final double EMBRACE_REGEN = 2;
     static final double EMBRACE_SHARE = 0.08;
-    /** 空無之鐘：最多 3 口、21 秒、出現在 3 格內；打中鐘的範圍。空無共鳴：最多存 3 次、每 0.5 秒回一次。 */
+    /** 空無之鐘：最多 3 口、21 秒、出現在 3 公尺內（Units 換成格）；打中鐘的範圍。空無共鳴：最多存 3 次、每 0.5 秒回一次。 */
     static final int BELL_MAX = 3;
     static final long BELL_TICKS = 420;
-    static final double BELL_SPAWN = 3;
+    // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前 3 格；打中鐘的範圍 BELL_HIT_RADIUS 是方塊世界自己的判定，不換）
+    static final double BELL_SPAWN = tw.exilecore.core.Units.metres(3);
     static final double BELL_HIT_RADIUS = 2.5;
     static final int RESONANCE_USES = 3;
     static final long RESONANCE_TICKS = 10;
@@ -932,7 +940,7 @@ final class AscPaths implements Listener {
         final boolean valid = target != null && target.isValid() && !target.isDead() && target.getWorld() == bear.getWorld()
                 && effects.enemyOf(player, target);
         final double distance = valid ? target.getLocation().distance(bear.getLocation()) : Double.MAX_VALUE;
-        // 躍擊：跳向較遠的敵人，落地 3 格、癱瘓、擊退
+        // 躍擊：跳向較遠的敵人，落地 3 公尺（4.5 格）、癱瘓、擊退
         if (valid && now >= own.bearLeapReady && distance >= 2 && distance <= 9) {
             own.bearLeapReady = now + BEAR_LEAP_TICKS;
             final Vector toward = target.getLocation().toVector().subtract(bear.getLocation().toVector());
@@ -940,14 +948,14 @@ final class AscPaths implements Listener {
             effects.later(10, () -> bearImpact(player, bear, BEAR_LEAP_RADIUS, true));
             return;
         }
-        // 重擊：身邊 2.5 格，偷取 50%
+        // 重擊：身邊 2.5 公尺（3.75 格），偷取 50%
         if (valid && now >= own.bearSlamReady && distance <= BEAR_SLAM_RADIUS + 0.5) {
             own.bearSlamReady = now + BEAR_SLAM_TICKS;
             own.bearSlamUntil = now + 2;
             bearImpact(player, bear, BEAR_SLAM_RADIUS, false);
             return;
         }
-        // 怒吼：恫嚇 6 格內的敵人 8 秒、引牠們來打熊靈
+        // 怒吼：恫嚇 6 公尺（9 格）內的敵人 8 秒、引牠們來打熊靈
         if (now >= own.bearRoarReady && plugin.combat() != null) {
             final List<LivingEntity> near = effects.enemiesNear(player, bear.getLocation(), BEAR_ROAR_RADIUS);
             if (!near.isEmpty()) {

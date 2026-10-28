@@ -39,9 +39,9 @@ public final class DeadeyeMetas {
      */
     public static final double CALLED_INTERVAL = 5;
     /** 預告射擊放印記的範圍（格；PoE2 active_skill_base_area_of_effect_radius 100 = 10 米，吃範圍加成）。 */
-    public static final double CALLED_RADIUS = 10;
+    public static final double CALLED_RADIUS = tw.exilecore.core.Units.metres(10); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 孔裡的印記被用掉時，再標記被用掉那隻 3 米內的另一個敵人（SupportMetaDeadeyeMarksPlayer，100% 機率）。 */
-    public static final double SPREAD_RADIUS = 3;
+    public static final double SPREAD_RADIUS = tw.exilecore.core.Units.metres(3); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 幻影的冷卻（秒；RePoE MirageDeadeyeSpawnPlayer cooldown 10000）。 */
     public static final double MIRAGE_COOLDOWN = 10;
     /** 幻影傷害更少（%；support_lingering_mirage_damage_+%_final -50）。 */

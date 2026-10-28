@@ -38,6 +38,21 @@ public record Scaled(double first, double last, double[] table) {
         return new Scaled(copy[0], copy[Math.min(SkillLoadout.MAX_LEVEL, copy.length) - 1], copy);
     }
 
+    /** 2026-10-29：每一級都乘上 factor（公尺換成格，{@link tw.exilecore.core.Units}）。 */
+    public Scaled times(final double factor) {
+        if (factor == 1) {
+            return this;
+        }
+        if (table != null) {
+            final double[] copy = new double[table.length];
+            for (int i = 0; i < table.length; i++) {
+                copy[i] = table[i] * factor;
+            }
+            return new Scaled(first * factor, last * factor, copy);
+        }
+        return new Scaled(first * factor, last * factor, null);
+    }
+
     public boolean isTable() {
         return table != null;
     }

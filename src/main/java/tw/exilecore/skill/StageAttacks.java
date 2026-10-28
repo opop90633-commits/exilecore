@@ -86,10 +86,10 @@ public final class StageAttacks implements Listener {
     static final double PRIMAL_FINAL_SPEED = -0.35;
     static final double PRIMAL_FINAL_CONVERT = 20;
     /** 驚雷刺的鹿靈：衝 8.6 公尺、寬 1.8 公尺；終結一擊 7 隻、間隔 1.6 公尺、更多 50% 傷害、間隔 150 毫秒。 */
-    static final double SPIRIT_LENGTH = 8.6;
-    static final double SPIRIT_WIDTH = 1.8;
+    static final double SPIRIT_LENGTH = tw.exilecore.core.Units.metres(8.6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double SPIRIT_WIDTH = tw.exilecore.core.Units.metres(1.8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final int STAMPEDE = 7;
-    static final double STAMPEDE_SPACING = 1.6;
+    static final double STAMPEDE_SPACING = tw.exilecore.core.Units.metres(1.6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double STAMPEDE_MORE = 0.5;
     static final long SPIRIT_DELAY = 3;
     /** 翼刃斬：用掉一顆銳星給 10 秒增益（50% 傷害額外獲得閃電）；增益期間更多 150% 範圍、更少 20% 攻擊速度。 */
@@ -105,12 +105,12 @@ public final class StageAttacks implements Listener {
     static final double LANCE_EMPOWERED_SECONDS = 1;
     static final double LANCE_BURST_SPACING = 2.0;
     /** 萬箭齊落：箭雨 3.6 公尺、每 0.08 秒落一支、用掉怒星更多 150% 箭。 */
-    static final double RAIN_RADIUS = 3.6;
+    static final double RAIN_RADIUS = tw.exilecore.core.Units.metres(3.6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double RAIN_TICKS_PER_ARROW = 1.6;
     static final double RAIN_FRENZY_MORE = 1.5;
     /** 磁霆齊發：往前方（散開 70 度）的雷樁矢的箭射，落在箭旁邊的那一發炸成 2.4 公尺、全部轉閃電，箭被毀掉。 */
     static final double MAGNETIC_HALF_ANGLE = 35;
-    static final double MAGNETIC_RADIUS = 2.4;
+    static final double MAGNETIC_RADIUS = tw.exilecore.core.Units.metres(2.4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 瘴域：每個敵人最多 1 顆毒苞、15 秒後引爆、存的毒最多更多 300% 傷害、半徑最多 +1.5 公尺（每一點 0.1 公尺）、技能消耗增加 25%。 */
     static final long PUSTULE_TICKS = 300;
     static final double PUSTULE_MORE_CAP = 300;
@@ -256,7 +256,7 @@ public final class StageAttacks implements Listener {
         return per <= 0 || stored <= 0 ? 0 : Math.min(PUSTULE_MORE_CAP, Math.floor(stored / per));
     }
 
-    /** 毒苞存了 stored 點毒：基礎半徑多幾公尺（每 per 點 0.1 公尺，最多 1.5 公尺）。 */
+    /** 毒苞存了 stored 點毒：基礎半徑多幾公尺（每 per 點 0.1 公尺，最多 1.5 公尺）。2026-10-29：回傳的是公尺，呼叫的地方用 Units.metres 換成格。 */
     static double pustuleRadius(final double stored, final double per) {
         return per <= 0 || stored <= 0 ? 0 : Math.min(PUSTULE_RADIUS_CAP, Math.floor(stored / per) * 0.1);
     }
@@ -763,7 +763,7 @@ public final class StageAttacks implements Listener {
             burst = burst.withProfile(burst.profile().scaled(1 + more / 100.0, "存的毒"));
         }
         final double base = burst.definition().params().radius().at(burst.level());
-        final double extra = pustuleRadius(pustule.stored, service.levelValue(DOMAIN, PUSTULE_RADIUS_PER, pustule.level));
+        final double extra = tw.exilecore.core.Units.metres(pustuleRadius(pustule.stored, service.levelValue(DOMAIN, PUSTULE_RADIUS_PER, pustule.level))); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（pustuleRadius 回傳公尺）
         if (extra > 0 && base > 0) {
             burst = burst.withAreaAndProjectiles(burst.areaScale() * (base + extra) / base, burst.projectiles());
         }

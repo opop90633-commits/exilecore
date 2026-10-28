@@ -1430,9 +1430,14 @@ public final class SkillService {
         };
     }
 
+    /** 殘骸是哪一種灌注（random = 三種隨機一種）。 */
+    private int remnantElement(final ResourceSpec spec) {
+        return "random".equals(spec.remnant()) ? plugin.random().nextInt(3) : SkillResources.infusionIndex(spec.remnant());
+    }
+
     /** 2026-10-26 照 PoE2：過 remnant_delay 秒在 at 留下灌注殘骸（random = 三種隨機一種）。 */
     private void dropInfusionRemnantLater(final Player player, final org.bukkit.Location at, final ResourceSpec spec, final ChargeEffects.RemnantMods mods) {
-        final int element = "random".equals(spec.remnant()) ? plugin.random().nextInt(3) : SkillResources.infusionIndex(spec.remnant());
+        final int element = remnantElement(spec);
         final org.bukkit.Location spot = at.clone();
         final long delay = Math.max(1, Math.round(spec.remnantDelay() * 20));
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> chargeEffects().dropInfusionRemnant(player, spot, element, mods), delay); // 2026-10-27：殘骸輔助
@@ -2571,8 +2576,15 @@ public final class SkillService {
         }
         resources.gainInfusion(player, build.profile().effective(sheet), build.profile().tags()); // 2026-10：放完疊灌注
         if (resourceSpec.remnant() != null) { // 2026-10-26 照 PoE2：寒晶雷引爆、燼種爆開、雷雲消失時在落點留下灌注殘骸
-            dropInfusionRemnantLater(player, useLocation(player, definition, build, preferred), resourceSpec,
-                    ChargeEffects.RemnantMods.of(build.profile().effective(sheet), build.profile().tags()));
+            final ChargeEffects.RemnantMods remnantMods = ChargeEffects.RemnantMods.of(build.profile().effective(sheet), build.profile().tags());
+            // 2026-10-29 照 PoE2 Orb of Storms（0.3.0）：雷雲放完雷、時間到、被新的擠掉時，在雷雲那裡留下殘骸；這次之前固定放下後 12 秒、在準心那裡
+            if (!zones.onExpire(player.getUniqueId(), definition.id(), spot -> {
+                if (player.isOnline()) {
+                    chargeEffects().dropInfusionRemnant(player, spot, remnantElement(resourceSpec), remnantMods);
+                }
+            })) {
+                dropInfusionRemnantLater(player, useLocation(player, definition, build, preferred), resourceSpec, remnantMods);
+            }
         }
         supportMechanics().afterEmpowered(player, empowering, build, preferred); // 2026-10-26：餘震、盾波、冰緩地面
         if (definition.mechanic() != Mechanic.LEAP) {
@@ -6377,12 +6389,12 @@ public final class SkillService {
         return lines;
     }
 
-    /** 戰吼的說明。 */
+    /** 戰吼的說明。2026-10-29：祭柱找屍體的距離改成讀 {@link Warcries#SPIKE_SEARCH}（這次之前寫死「12 格」）。 */
     private static List<String> warcryLines(final SkillBuild build) {
         final WarcrySpec spec = build.definition().warcry();
         final List<String> lines = new ArrayList<>();
         final double duration = spec.duration() * build.durationScale();
-        lines.add(String.format(Locale.ROOT, spec.spike() ? "<#c9a0ff>祭柱<gray>：用掉 12 格內一具屍體（沒有就獻祭一隻你的召喚物）立柱，柱子半徑 <white>%.0f</white> 格"
+        lines.add(String.format(Locale.ROOT, spec.spike() ? "<#c9a0ff>祭柱<gray>：用掉 " + Math.round(Warcries.SPIKE_SEARCH) + " 格內一具屍體（沒有就獻祭一隻你的召喚物）立柱，柱子半徑 <white>%.0f</white> 格"
                 : spec.cry() ? "<#f5b942>戰吼<gray>：半徑 <white>%.1f</white> 格" // 2026-10-26 照 PoE2：使用時間 0.8 秒（只吃戰吼速度），不是瞬間
                 : spec.minionBuff().isEmpty() ? "<#f5b942>戰吼<gray>：半徑 <white>%.0f</white> 格，瞬間發動" : "<#c9a0ff>祭品<gray>：半徑 <white>%.0f</white> 格，瞬間發動", spec.radius() * build.areaScale()));
         final double heal = spec.heal().at(build.level());

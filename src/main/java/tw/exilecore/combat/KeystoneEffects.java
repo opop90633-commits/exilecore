@@ -48,8 +48,9 @@ public final class KeystoneEffects implements Listener {
     public static final double DEBILITATE_SLOW = 0.2;
     /** 補償（recoup）分幾秒回（PoE2：4 秒）。 */
     static final int RECOUP_SECONDS = 4;
-    /** 感電擴散的半徑（1.5 格 = 1.5 格）。 */
-    static final double SHOCK_SPREAD_RADIUS = 1.5;
+    /** 感電擴散的半徑（PoE2 1.5 公尺）。 */
+    // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前 1.5 格）
+    static final double SHOCK_SPREAD_RADIUS = tw.exilecore.core.Units.metres(1.5);
     /** 格擋次數記多久（10 秒）。 */
     static final long BLOCK_WINDOW = 200;
 
@@ -429,7 +430,7 @@ public final class KeystoneEffects implements Listener {
         target.setVelocity(target.getVelocity().add(push.normalize().multiply(0.6).setY(0.25)));
     }
 
-    /** 這一下讓目標感電了：機率讓 1.5 格內的其他敵人也感電（同樣的效果、4 秒）。 */
+    /** 這一下讓目標感電了：機率讓 1.5 公尺（2.25 格）內的其他敵人也感電（同樣的效果、4 秒）。 */
     private void spreadShock(final Player owner, final LivingEntity target, final boolean before, final double chance) {
         if (before || !target.isValid() || plugin.ailments() == null || !plugin.ailments().has(target, AilmentType.SHOCK)
                 || random().nextDouble() * 100 >= chance) {

@@ -300,7 +300,8 @@ final class Warcries {
             lines.add(String.format(Locale.ROOT, "<gray>用掉身上全部的磐星，每顆持續時間更多 <white>%s%%</white>", ModifierText.number(extras.endurancePct())));
         }
         if (extras.steps() != null) {
-            lines.add("<gray>持續期間每走 1.2 格觸發火山步（身邊一圈火焰猛擊）；近戰打擊打中時觸發火山噴發（三顆熔岩彈，0.4 秒一次）");
+            // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（SupportMechanics.STEP_METRES 1.2 公尺 = 1.8 格）
+            lines.add("<gray>持續期間每走 1.8 格觸發火山步（身邊一圈火焰猛擊）；近戰打擊打中時觸發火山噴發（三顆熔岩彈，0.4 秒一次）");
         }
         if (extras.knockback()) {
             lines.add("<gray>震退範圍內的敵人");

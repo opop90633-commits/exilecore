@@ -116,9 +116,10 @@ final class AscGranted implements Listener {
      */
     static final int BOIL_MAX = 20;
 
-    /** 2026-10-27 照 PoE2：爆開的範圍 1.5 格，每個血泡更多 20% 範圍（加總，不是連乘）；這次之前是 1.2 的次方連乘。 */
+    /** 2026-10-27 照 PoE2：爆開的範圍 1.5 公尺（2026-10-29 起換成 2.25 格），每個血泡更多 20% 範圍（加總，不是連乘）；這次之前是 1.2 的次方連乘。 */
     static double boilRadius(final int boil) {
-        return 1.5 * Math.sqrt(1 + 0.2 * Math.max(0, Math.min(BOIL_MAX, boil)));
+        // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前 1.5 格）
+        return tw.exilecore.core.Units.metres(1.5) * Math.sqrt(1 + 0.2 * Math.max(0, Math.min(BOIL_MAX, boil)));
     }
 
     /** 再加一個血泡（最多 {@link #BOIL_MAX}）。 */
@@ -306,7 +307,8 @@ final class AscGranted implements Listener {
                 }
                 // 2026-10-27 照 PoE2：納維拉在牠所在的地方變出綠洲（這次之前巨靈沒有實體，綠洲在你腳下）
                 final Location djinn = djinnAt(player, "navira_djinn");
-                oases.add(new Oasis(player.getUniqueId(), (djinn == null ? player.getLocation() : djinn).clone(), 8, now + 300));
+                // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（綠洲半徑 8 公尺；這次之前 8 格）
+                oases.add(new Oasis(player.getUniqueId(), (djinn == null ? player.getLocation() : djinn).clone(), tw.exilecore.core.Units.metres(8), now + 300));
             }
             case "navira_well" -> {
                 if (!navira(player)) {
@@ -427,7 +429,8 @@ final class AscGranted implements Listener {
 
     private void timeFreeze(final Player player) {
         final long now = now();
-        for (final LivingEntity enemy : effects.enemiesNear(player, player.getLocation(), 10)) {
+        // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（時間凍結 10 公尺；這次之前 10 格）
+        for (final LivingEntity enemy : effects.enemiesNear(player, player.getLocation(), tw.exilecore.core.Units.metres(10))) {
             final ArrayDeque<Long> times = frozenAt.computeIfAbsent(enemy.getUniqueId(), id -> new ArrayDeque<>());
             while (!times.isEmpty() && now - times.peekFirst() > 600) {
                 times.pollFirst();
@@ -724,7 +727,8 @@ final class AscGranted implements Listener {
         final Location at = player.getLocation().clone();
         tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.REVERSE_PORTAL, at.clone().add(0, 1, 0), 30, 0.3, 0.8, 0.3, 0.02);
         effects.later(Math.round(Math.max(1, level(player, "void_illusion", "asc.illusion_seconds")) * 20), () -> {
-            if (!player.isOnline() || effects.enemiesNear(player, at, 3).isEmpty() || plugin.skills() == null) {
+            // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（虛空幻影爆炸 3 公尺，跟 asc_void_explosion 的範圍一樣；這次之前 3 格）
+            if (!player.isOnline() || effects.enemiesNear(player, at, tw.exilecore.core.Units.metres(3)).isEmpty() || plugin.skills() == null) {
                 return;
             }
             plugin.skills().triggerSkill(player, "asc_void_explosion", at);
@@ -806,7 +810,8 @@ final class AscGranted implements Listener {
                 continue;
             }
             final StatSheet sheet = effects.sheet(owner);
-            final double pickup = 1.6 * Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.TreeMechanicKeys.REMNANT_RANGE, Set.of()));
+            // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（撿殘骸 1.6 公尺；這次之前 1.6 格）
+            final double pickup = tw.exilecore.core.Units.metres(1.6) * Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.TreeMechanicKeys.REMNANT_RANGE, Set.of()));
             if (owner.getWorld() != remnant.at.getWorld() || owner.getLocation().distanceSquared(remnant.at) > pickup * pickup) {
                 continue;
             }
@@ -1071,7 +1076,7 @@ final class AscGranted implements Listener {
                         org.bukkit.Material.SAND.createBlockData());
             }
         }
-        // 女王進軍：衝刺時化成蝗蟲，每 0.5 秒打 3 格內的敵人
+        // 女王進軍：衝刺時化成蝗蟲，每 0.5 秒打 3 公尺（4.5 格）內的敵人
         if (on(player, "queens_procession")) {
             if (player.isSprinting()) {
                 o.sprintEnd = now;
@@ -1083,7 +1088,7 @@ final class AscGranted implements Listener {
                 o.swarm = 0;
             }
         }
-        // 召喚獄炎獵犬：獵犬身邊 2.5 格的敵人點燃（照獵犬最大生命的 20%）
+        // 召喚獄炎獵犬：獵犬身邊 2.5 公尺（3.75 格）的敵人點燃（照獵犬最大生命的 20%）
         if (on(player, "infernal_hound") && AscendancyEffects.every(now, 20) && plugin.skills().minions() != null && plugin.ailments() != null) {
             for (final org.bukkit.entity.Entity entity : player.getNearbyEntities(30, 10, 30)) {
                 if (entity instanceof org.bukkit.entity.Wolf wolf && plugin.skills().minions().isMinion(wolf)
@@ -1092,7 +1097,8 @@ final class AscGranted implements Listener {
                     // 2026-10-27 修正：原版血量是縮過的（真正生命 × healthScale，healthScale ≤ 1），要除回去；以前乘 max(1, 縮放) 等於沒還原，
                     // 獵犬生命超過 1024 時點燃一律只照 1024 算
                     final double houndLife = hp == null ? 0 : hp.getValue() / Math.max(1e-6, plugin.skills().minions().healthScale(wolf));
-                    for (final LivingEntity enemy : effects.enemiesNear(player, wolf.getLocation(), 2.5)) {
+                    // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（獵犬點燃 2.5 公尺；這次之前 2.5 格）
+                    for (final LivingEntity enemy : effects.enemiesNear(player, wolf.getLocation(), tw.exilecore.core.Units.metres(2.5))) {
                         plugin.ailments().igniteFrom(player, enemy, houndLife * 0.20, sheet);
                     }
                     wolf.getWorld().spawnParticle(Particle.FLAME, wolf.getLocation().add(0, 0.5, 0), 6, 1.2, 0.2, 1.2, 0.01);
@@ -1157,7 +1163,8 @@ final class AscGranted implements Listener {
         if (plugin.combat() == null || plugin.combat().skillDamage() == null) {
             return;
         }
-        final List<LivingEntity> near = effects.enemiesNear(player, player.getLocation(), 3);
+        // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（蝗蟲群 3 公尺；這次之前 3 格）
+        final List<LivingEntity> near = effects.enemiesNear(player, player.getLocation(), tw.exilecore.core.Units.metres(3));
         player.getWorld().spawnParticle(Particle.ASH, player.getLocation().add(0, 1, 0), 30, 1.5, 0.8, 1.5, 0);
         if (near.isEmpty()) {
             return;

@@ -50,7 +50,7 @@ final class Twisters {
     /** 好幾個旋風時互相至少隔幾度（minimum_per_projectile_spread_angle_degrees 15）。 */
     static final double SPREAD = 15;
     /** 旋風的半徑（格，active_skill_base_area_of_effect_radius 5）。 */
-    static final double RADIUS = 0.5;
+    static final double RADIUS = tw.exilecore.core.Units.metres(0.5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** FLAT（%）：多一個旋風的機率（品質：每 1% 品質 1%）。 */
     static final String EXTRA_CHANCE = "twister.extra_chance";
     /** 每個玩家同時最多幾個（太多就丟最舊的）。 */

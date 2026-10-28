@@ -27,6 +27,10 @@
     --str: #f0544f;
     --dex: #5bd65b;
     --int: #5a8cff;
+    /* 2026-10-29：旅者的智慧（開路者）多的三種：傷害橘、防禦銀、消耗效率青 */
+    --dmg: #ff9f43;
+    --def: #c9cbd8;
+    --cost: #3fd6c6;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
@@ -109,6 +113,9 @@
   .attrbulk button { padding: 5px 6px; font-size: 12px; }
   #attrCount { margin-top: 6px; }
   #attrCount b.str { color: var(--str); } #attrCount b.dex { color: var(--dex); } #attrCount b.int { color: var(--int); }
+  #attrCount b.dmg { color: var(--dmg); } #attrCount b.def { color: var(--def); } #attrCount b.cost { color: var(--cost); }
+  #attrMenu .row3.wisdom { margin-top: 6px; }
+  #attrMenu .wisdomTtl, .attrbulk .wisdomTtl { grid-column: 1 / -1; font-size: 11px; color: var(--quiet); margin: 2px 2px -2px; }
   .node { cursor: pointer; }
   /* 裝備（2026-10） */
   .gear { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
@@ -251,6 +258,9 @@
         <radialGradient id="glowStr"><stop offset="0" stop-color="#f0544f" stop-opacity="0.55"/><stop offset="1" stop-color="#f0544f" stop-opacity="0"/></radialGradient>
         <radialGradient id="glowDex"><stop offset="0" stop-color="#5bd65b" stop-opacity="0.5"/><stop offset="1" stop-color="#5bd65b" stop-opacity="0"/></radialGradient>
         <radialGradient id="glowInt"><stop offset="0" stop-color="#5a8cff" stop-opacity="0.55"/><stop offset="1" stop-color="#5a8cff" stop-opacity="0"/></radialGradient>
+        <radialGradient id="glowDmg"><stop offset="0" stop-color="#ff9f43" stop-opacity="0.55"/><stop offset="1" stop-color="#ff9f43" stop-opacity="0"/></radialGradient>
+        <radialGradient id="glowDef"><stop offset="0" stop-color="#c9cbd8" stop-opacity="0.5"/><stop offset="1" stop-color="#c9cbd8" stop-opacity="0"/></radialGradient>
+        <radialGradient id="glowCost"><stop offset="0" stop-color="#3fd6c6" stop-opacity="0.5"/><stop offset="1" stop-color="#3fd6c6" stop-opacity="0"/></radialGradient>
       </defs>
       <g id="world">
         <g id="stars"></g>
@@ -306,6 +316,10 @@
         <button type="button" data-attr="str" style="--c:var(--str)">全改力量</button>
         <button type="button" data-attr="dex" style="--c:var(--dex)">全改敏捷</button>
         <button type="button" data-attr="int" style="--c:var(--int)">全改智慧</button>
+        <div class="wisdomTtl wisdomOnly">旅者的智慧（開路者）</div>
+        <button type="button" class="wisdomOnly" data-attr="dmg" style="--c:var(--dmg)">全改傷害</button>
+        <button type="button" class="wisdomOnly" data-attr="def" style="--c:var(--def)">全改防禦</button>
+        <button type="button" class="wisdomOnly" data-attr="cost" style="--c:var(--cost)">全改消耗效率</button>
       </div>
       <div class="hint">點節點：配到那裡（自動走最短的路）。點已配的節點：退掉（連帶退掉因此斷線的）。<br>
         <b>屬性點</b>（+5 任一屬性）配了之後有顏色：<span style="color:var(--str)">紅＝力量</span>、<span style="color:var(--dex)">綠＝敏捷</span>、<span style="color:var(--int)">藍＝智慧</span>；
@@ -356,6 +370,12 @@
     <button type="button" data-attr="dex" style="--c:var(--dex)">敏捷</button>
     <button type="button" data-attr="int" style="--c:var(--int)">智慧</button>
   </div>
+  <div class="row3 wisdom wisdomOnly" id="attrWisdomRow">
+    <div class="wisdomTtl">旅者的智慧：改成增加 x%</div>
+    <button type="button" data-attr="dmg" style="--c:var(--dmg)">傷害</button>
+    <button type="button" data-attr="def" style="--c:var(--def)">防禦</button>
+    <button type="button" data-attr="cost" style="--c:var(--cost)">消耗效率</button>
+  </div>
   <button type="button" class="drop" id="attrDrop">退掉這一點</button>
 </div>
 <div id="toast"></div>
@@ -385,10 +405,20 @@
   /** 屬性點選的屬性（2026-10）：節點代號 → "str"／"dex"／"int"；沒在裡面的照職業的主屬性。只留已配的。 */
   let attrs = new Map();
   const ATTR_KEYS = ["str", "dex", "int"];
-  const ATTR_NAME = { str: "力量", dex: "敏捷", int: "智慧" };
-  const ATTR_MARK = { str: "力", dex: "敏", int: "智" };
-  const ATTR_COLOR = { str: "#f0544f", dex: "#5bd65b", int: "#5a8cff" };
-  const ATTR_GLOW = { str: "url(#glowStr)", dex: "url(#glowDex)", int: "url(#glowInt)" };
+  /** 2026-10-29 照遊戲（PassiveMenu、PlayerStateService.WISDOM_CHOICES）：配了開路者的旅者的智慧，屬性點還能改給傷害／防禦／消耗效率（增加 x%）。 */
+  const WISDOM_KEYS = ["dmg", "def", "cost"];
+  const WISDOM_NODE = "travellers_wisdom";
+  const ATTR_NAME = { str: "力量", dex: "敏捷", int: "智慧", dmg: "傷害", def: "護甲、閃避值與能量護盾", cost: "消耗效率" };
+  const ATTR_SHORT = { str: "力量", dex: "敏捷", int: "智慧", dmg: "傷害", def: "防禦", cost: "消耗效率" };
+  const ATTR_MARK = { str: "力", dex: "敏", int: "智", dmg: "傷", def: "防", cost: "效" };
+  const ATTR_COLOR = { str: "#f0544f", dex: "#5bd65b", int: "#5a8cff", dmg: "#ff9f43", def: "#c9cbd8", cost: "#3fd6c6" };
+  const ATTR_GLOW = { str: "url(#glowStr)", dex: "url(#glowDex)", int: "url(#glowInt)", dmg: "url(#glowDmg)", def: "url(#glowDef)", cost: "url(#glowCost)" };
+  /** 有沒有配旅者的智慧（計算器那邊選的昇華天賦）。 */
+  function wisdomOn() { try { return !!calc.asc && calc.ascNodes.includes(WISDOM_NODE); } catch (e) { return false; } }
+  /** 這個屬性點選的效果說明：力量／敏捷／智慧是「+5 力量」，旅者的智慧的是「增加 5% 傷害」（跟遊戲一樣）。 */
+  function attrText(amount, key) {
+    return WISDOM_KEYS.includes(key) ? "增加 " + amount + "% " + ATTR_NAME[key] : "+" + amount + " " + ATTR_NAME[key];
+  }
   let hover = null;
   let preview = { add: new Set(), remove: new Set() };
   let search = new Set();
@@ -1131,27 +1161,38 @@
     const sparse = "!" + btoa(gaps).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
     return data.code + "." + data.version + "." + classId + "." + (sparse.length < b64.length ? sparse : b64) + attrSuffix();
   }
-  /** 屬性點選的屬性：照節點順序，每個已配的屬性點 2 個位元（0 沒選、1 力量、2 敏捷、3 智慧）；都沒選就不接這一段。 */
+  /**
+   * 屬性點選的屬性：照節點順序，每個已配的屬性點 2 個位元（0 沒選、1 力量、2 敏捷、3 智慧）；都沒選就不接這一段。
+   * 2026-10-29：旅者的智慧的三種另外接第六段（一樣 2 個位元：1 傷害、2 防禦、3 消耗效率；第五段那一點是 0），舊代碼照樣讀得懂。
+   */
   function attrSuffix() {
-    const values = [];
+    const plain = [], wisdom = [];
     for (const node of order) {
       if (node.type === "start" || !allocated.has(node.id) || !node.attr) continue;
-      values.push(ATTR_KEYS.indexOf(attrs.get(node.id)) + 1);
+      const a = attrs.get(node.id);
+      plain.push(ATTR_KEYS.indexOf(a) + 1);
+      wisdom.push(WISDOM_KEYS.indexOf(a) + 1);
     }
+    const p5 = packAttr(plain), p6 = packAttr(wisdom);
+    if (p6) return "." + p5 + "." + p6;
+    return p5 ? "." + p5 : "";
+  }
+  /** 每個 2 個位元打包成 base64url；全是 0 回傳空字串。 */
+  function packAttr(values) {
     let length = 0;
     const bytes = new Uint8Array(Math.ceil(values.length / 4));
     values.forEach((v, k) => { if (v) { bytes[k >> 2] |= v << ((k & 3) * 2); length = (k >> 2) + 1; } });
     if (!length) return "";
     let binary = "";
     for (let i = 0; i < length; i++) binary += String.fromCharCode(bytes[i]);
-    return "." + btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
   }
   function decodeCode(text) {
     if (!text || !data) return null;
     let body = text.includes("#") ? text.slice(text.lastIndexOf("#") + 1) : text.trim();
     if (body.includes("~")) body = body.slice(0, body.indexOf("~")); // ~ 後面是裝備（只有網頁用）
     const parts = body.split(".");
-    if ((parts.length !== 4 && parts.length !== 5) || parts[0] !== data.code) return null;
+    if (parts.length < 4 || parts.length > 6 || parts[0] !== data.code) return null; // 2026-10-29：第六段是旅者的智慧的選擇
     if (Number(parts[1]) !== data.version) { flash("這是舊版天賦樹的代碼"); return null; }
     if (!data.classes.some(c => c.id === parts[2])) return null;
     const nodes = new Set();
@@ -1179,14 +1220,15 @@
       }
     }
     const picked = new Map();
-    if (parts.length === 5) {
+    for (const [part, keys] of [[parts[4], ATTR_KEYS], [parts[5], WISDOM_KEYS]]) {
+      if (!part) continue;
       let bits;
-      try { bits = atob(parts[4].replace(/-/g, "+").replace(/_/g, "/")); } catch (e) { return null; }
+      try { bits = atob(part.replace(/-/g, "+").replace(/_/g, "/")); } catch (e) { return null; }
       let k = 0;
       for (const node of order) {
         if (node.type === "start" || !nodes.has(node.id) || !node.attr) continue;
         const v = (k >> 2) < bits.length ? (bits.charCodeAt(k >> 2) >> ((k & 3) * 2)) & 3 : 0;
-        if (v) picked.set(node.id, ATTR_KEYS[v - 1]);
+        if (v) picked.set(node.id, keys[v - 1]);
         k++;
       }
     }
@@ -1203,11 +1245,14 @@
   const classInfo = () => data.classes.find(c => c.id === classId);
   /** 這個屬性點算哪個屬性：選過的照選的，沒選的照職業的主屬性（跟遊戲一樣）。 */
   function attrOf(node) {
-    return attrs.get(node.id) || (classInfo() && classInfo().attr) || "str";
+    const chosen = attrs.get(node.id);
+    // 2026-10-29：旅者的智慧的選擇要有配那個昇華天賦才算（跟遊戲的 chosenAttribute 一樣，沒配就照職業主屬性）
+    if (chosen && (ATTR_KEYS.includes(chosen) || (WISDOM_KEYS.includes(chosen) && wisdomOn()))) return chosen;
+    return (classInfo() && classInfo().attr) || "str";
   }
   /** 節點的說明行：屬性點的「+5 任一屬性…」換成現在算的那個屬性。 */
   function linesOf(node) {
-    const base = !node.attr ? node.lines : node.lines.map(l => l.includes("任一屬性") ? "+" + node.attr + " " + ATTR_NAME[attrOf(node)] : l);
+    const base = !node.attr ? node.lines : node.lines.map(l => l.includes("任一屬性") ? attrText(node.attr, attrOf(node)) : l);
     return withConquest(node, base);
   }
   /** 2026-10-26：被永恆珠寶征服的節點：換成征服後的說明（屬性點保留原本的、多給的接在後面）。 */
@@ -1226,7 +1271,7 @@
       return jewels[node.id] && items ? [] : ["配了這一點就能把珠寶放進這個孔（遊戲裡、這裡都可以），珠寶的詞綴直接加在角色身上。"];
     }
     if (node.attr && !allocated.has(node.id)) {
-      return withConquest(node, node.lines.map(l => l.includes("任一屬性") ? "+" + node.attr + " 任一屬性（配了之後點它選力量／敏捷／智慧）" : l));
+      return withConquest(node, node.lines.map(l => l.includes("任一屬性") ? "+" + node.attr + " 任一屬性（配了之後點它選力量／敏捷／智慧" + (wisdomOn() ? "，或旅者的智慧的傷害／防禦／消耗效率" : "") + "）" : l));
     }
     return linesOf(node);
   }
@@ -1702,14 +1747,17 @@
     list.replaceChildren();
     const nodes = order.filter(n => allocated.has(n.id)); // 照樹的順序加總，跟遊戲裡的天賦總覽一樣
     // 屬性點各配了幾個、加多少
-    const attrTotal = { str: 0, dex: 0, int: 0 };
-    const attrNodes = { str: 0, dex: 0, int: 0 };
+    const attrTotal = { str: 0, dex: 0, int: 0, dmg: 0, def: 0, cost: 0 };
+    const attrNodes = { str: 0, dex: 0, int: 0, dmg: 0, def: 0, cost: 0 };
     for (const n of nodes) if (n.attr) { attrTotal[attrOf(n)] += n.attr; attrNodes[attrOf(n)]++; }
-    const anyAttr = attrNodes.str + attrNodes.dex + attrNodes.int > 0;
+    const anyAttr = Object.values(attrNodes).some(v => v > 0);
+    const shown = ATTR_KEYS.concat(WISDOM_KEYS.filter(k => attrNodes[k] > 0)); // 2026-10-29：有選旅者的智慧那幾種才列
     document.getElementById("attrCount").innerHTML = anyAttr
-      ? "屬性點：" + ATTR_KEYS.map(k => "<b class='" + k + "'>" + ATTR_NAME[k] + " +" + attrTotal[k] + "</b>（" + attrNodes[k] + " 個）").join("　")
+      ? "屬性點：" + shown.map(k => "<b class='" + k + "'>" + (WISDOM_KEYS.includes(k) ? ATTR_SHORT[k] + " 增加 " + attrTotal[k] + "%" : ATTR_NAME[k] + " +" + attrTotal[k])
+        + "</b>（" + attrNodes[k] + " 個）").join("　")
       : "還沒有配屬性點";
     document.getElementById("attrBulk").style.display = anyAttr ? "" : "none";
+    for (const el of document.querySelectorAll("#attrBulk .wisdomOnly")) el.style.display = wisdomOn() ? "" : "none";
     const lines = summarize(nodes, true);
     if (!lines.length) {
       const li = document.createElement("li"); li.className = "empty"; li.textContent = "還沒有配任何天賦"; list.appendChild(li);
@@ -1903,8 +1951,9 @@
     hideTip();
     const current = attrOf(node);
     const cascade = removal(node).size;
-    document.getElementById("attrMenuTitle").textContent = "屬性點 +" + node.attr + "：現在是" + ATTR_NAME[current]
-      + (attrs.has(node.id) ? "" : "（職業主屬性）");
+    document.getElementById("attrMenuTitle").textContent = "屬性點 +" + node.attr + "：現在是" + ATTR_SHORT[current]
+      + (attrs.get(node.id) === current ? "" : "（職業主屬性）");
+    document.getElementById("attrWisdomRow").style.display = wisdomOn() ? "" : "none"; // 2026-10-29：配了旅者的智慧才有
     for (const b of attrMenu.querySelectorAll("button[data-attr]")) {
       const on = b.dataset.attr === current;
       b.classList.toggle("on", on);
@@ -1927,12 +1976,13 @@
     b.addEventListener("click", () => {
       const node = attrMenuNode;
       if (!node || !allocated.has(node.id)) { closeAttrMenu(); return; }
+      if (WISDOM_KEYS.includes(b.dataset.attr) && !wisdomOn()) { closeAttrMenu(); flash("要先在計算器配開路者的「旅者的智慧」"); return; }
       attrs.set(node.id, b.dataset.attr);
       closeAttrMenu();
       hover = null;
       preview = { add: new Set(), remove: new Set() };
       render();
-      flash("這個屬性點改成 +" + node.attr + " " + ATTR_NAME[b.dataset.attr]);
+      flash("這個屬性點改成" + attrText(node.attr, b.dataset.attr));
     });
   }
   document.getElementById("attrDrop").addEventListener("click", () => {
@@ -1952,11 +2002,12 @@
   for (const b of document.querySelectorAll("#attrBulk button[data-attr]")) {
     b.addEventListener("click", () => {
       let count = 0;
+      if (WISDOM_KEYS.includes(b.dataset.attr) && !wisdomOn()) { flash("要先在計算器配開路者的「旅者的智慧」"); return; }
       for (const node of order) if (node.attr && allocated.has(node.id)) { attrs.set(node.id, b.dataset.attr); count++; }
       if (!count) { flash("還沒有配屬性點"); return; }
       closeAttrMenu();
       render();
-      flash(count + " 個屬性點全部改成" + ATTR_NAME[b.dataset.attr]);
+      flash(count + " 個屬性點全部改成" + ATTR_SHORT[b.dataset.attr]);
     });
   }
 
@@ -1967,7 +2018,7 @@
     const verb = armed === node.id ? "再點一下" : "點一下";
     if (node.type === "start") action = node.id === start.id ? "你的職業起點" : "別的職業的起點";
     else if (allocated.has(node.id) && node.attr) {
-      action = "<span style='color:" + ATTR_COLOR[attrOf(node)] + "'>現在算" + ATTR_NAME[attrOf(node)] + "</span>"
+      action = "<span style='color:" + ATTR_COLOR[attrOf(node)] + "'>現在算" + ATTR_SHORT[attrOf(node)] + "</span>"
         + "<span style='color:var(--quiet)'>　點一下：改屬性或退掉</span>";
     } else if (allocated.has(node.id) && node.type === "socket" && items) {
       action = "<span style='color:var(--quiet)'>點一下：" + (jewels[node.id] ? "換珠寶、拿掉，或退掉這個孔" : "放珠寶，或退掉這個孔") + "</span>";

@@ -31,7 +31,7 @@ final class VolatileCores {
     /** 核心持續 5 秒（base_skill_effect_duration 5000）。 */
     static final long DURATION_TICKS = 100;
     /** 點燃的範圍 1.5 格（VolatileDeadIgniteAuraPlayer 的 active_skill_base_area_of_effect_radius 15）。 */
-    static final double IGNITE_RADIUS = 1.5;
+    static final double IGNITE_RADIUS = tw.exilecore.core.Units.metres(1.5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 每 10 tick 對身邊的敵人補一次點燃。 */
     static final long IGNITE_EVERY = 10;
     /** 核心每 tick 最多移動幾格（原作沒寫數值，這裡 4 格／秒）。 */

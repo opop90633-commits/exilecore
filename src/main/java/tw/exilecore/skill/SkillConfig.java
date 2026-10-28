@@ -322,7 +322,9 @@ public final class SkillConfig {
             if (node.has("lodge")) {
                 final YamlNode l = node.node("lodge");
                 final String sub = l.requireString("skill").trim();
-                parsedLodges.put(id, new LodgeSpec(sub, Math.max(1, l.integer("count", 1)), Math.max(0, l.decimal("scatter", 0)),
+                // 2026-10-29 照站長：1 公尺 = 2 格（Units）——scatter（散在準心周圍多遠）跟著落點的範圍換成格；trigger（敵人靠多近引爆）照 Minecraft，不換
+                parsedLodges.put(id, new LodgeSpec(sub, Math.max(1, l.integer("count", 1)),
+                        tw.exilecore.core.Units.metres(Math.max(0, l.decimal("scatter", 0))),
                         Math.max(0.5, l.decimal("duration", 10)), Math.max(1, l.integer("max", 30)), l.bool("proximity", false),
                         Math.max(0, l.decimal("arm", 0)), Math.max(0.3, l.decimal("trigger", 1.0)), Math.max(0, l.decimal("ramp_more", 0)),
                         Math.max(0.05, l.decimal("ramp_seconds", 1)), l.bool("expire", false)));
@@ -338,7 +340,9 @@ public final class SkillConfig {
             }
             if (node.has("cascade")) { // 2026-10-28 照 PoE2 Siege Ballista
                 final YamlNode c = node.node("cascade");
-                parsedCascades.put(id, new CascadeSpec(Math.max(0.3, c.decimal("radius", 1.4)), Math.max(0, c.decimal("after", 0.3)),
+                // 2026-10-29 照站長：1 公尺 = 2 格（Units）——爆炸半徑照 PoE2 寫公尺，讀進來換成格
+                parsedCascades.put(id, new CascadeSpec(tw.exilecore.core.Units.metres(Math.max(0.3, c.decimal("radius", 1.4))),
+                        Math.max(0, c.decimal("after", 0.3)),
                         Scaled.parse(c.path() + ".effectiveness", c.raw("effectiveness"), 1),
                         c.has("convert") ? SkillDefinition.weights(c.path() + ".convert", c.node("convert"), false) : Map.of()));
             }
@@ -349,7 +353,9 @@ public final class SkillConfig {
             }
             if (node.has("rain")) {
                 final YamlNode r = node.node("rain");
-                parsedRains.put(id, new RainSpec(Math.max(0.5, r.decimal("area", 4)), Math.max(0.3, r.decimal("radius", 1)),
+                // 2026-10-29 照站長：1 公尺 = 2 格（Units）——落點範圍、每一發的半徑照 PoE2 寫公尺，讀進來換成格
+                parsedRains.put(id, new RainSpec(tw.exilecore.core.Units.metres(Math.max(0.5, r.decimal("area", 4))),
+                        tw.exilecore.core.Units.metres(Math.max(0.3, r.decimal("radius", 1))),
                         Math.max(0, r.decimal("seconds", 1)), Scaled.parse(r.path() + ".store", r.raw("store"), 1),
                         Math.max(0.05, r.decimal("interval", 0.4))));
             }

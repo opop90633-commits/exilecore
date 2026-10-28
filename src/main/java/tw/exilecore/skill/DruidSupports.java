@@ -23,7 +23,7 @@ import java.util.UUID;
  */
 public final class DruidSupports {
 
-    /** FLAT：風暴從施放者腳下出發、往準心指的地方移動；值是 PoE2 的移動速度（25 = 每秒 2.5 格 = 2.5 格）。 */
+    /** FLAT：風暴從施放者腳下出發、往準心指的地方移動；值是 PoE2 的移動速度（25 = 每秒 2.5 公尺 = 3.75 格；2026-10-29 照站長換算）。 */
     public static final String STORM_ADVANCE = "storm.advance";
     /** MORE／INCREASED：風暴的移動速度（PoE2 Morgana's Tempest：更多 60%）。 */
     public static final String STORM_TRAVEL_SPEED = "storm.travel_speed";
@@ -65,7 +65,7 @@ public final class DruidSupports {
     static String text(final Modifier modifier) {
         final double value = modifier.value();
         return switch (modifier.stat()) {
-            case STORM_ADVANCE -> "風暴從你腳下出發，往準心指的地方移動（每秒 " + number(value / 10.0) + " 格），到了就停在那裡";
+            case STORM_ADVANCE -> "風暴從你腳下出發，往準心指的地方移動（每秒 " + number(tw.exilecore.core.Units.metres(value / 10.0)) + " 格），到了就停在那裡"; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
             case STORM_TRAVEL_SPEED -> modifier.type() == tw.exilecore.stats.ModType.MORE
                     ? number(Math.abs(value * 100)) + "% " + (value < 0 ? "更少" : "更多") + "風暴移動速度"
                     : (value < 0 ? "減少 " : "增加 ") + number(Math.abs(value * 100)) + "% 風暴移動速度";
@@ -93,7 +93,7 @@ public final class DruidSupports {
             return 0;
         }
         final double scaled = speed * Math.max(0, 1 + effective.increased(STORM_TRAVEL_SPEED, tags)) * effective.more(STORM_TRAVEL_SPEED, tags);
-        return scaled / 10.0 / 20.0; // PoE2 的 25 = 每秒 2.5 格；一格當一格
+        return tw.exilecore.core.Units.metres(scaled / 10.0) / 20.0; // PoE2 的 25 = 每秒 2.5 公尺 = 3.75 格 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前一格當一公尺）
     }
 
     /** 剛放下的風暴（地面效果）改成從 from 出發往 to 移動。 */

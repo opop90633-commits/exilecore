@@ -54,14 +54,14 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
      * @param stageValue   同上的數值
      * @param explodeAtMax 投射物只有疊滿層數才會爆炸（爆焰矢）
      * @param minTime      最短引導幾秒（放開也會撐到這個時間；蠻衝 3 秒、盾衝 1.3 秒）
-     * @param speed        衝鋒速度（格／秒，吃移動速度；盾衝 9、蠻衝 5.5）
+     * @param speed        衝鋒速度（格／秒，吃移動速度；skills.yml 照 PoE2 寫公尺／秒（盾衝 9），2026-10-29 起讀進來乘 Units）
      * @param distanceMore 衝越遠更多幾 % 傷害（最多；盾衝 100）
-     * @param fullDistance 衝多遠（格）拿到全部的 distanceMore
+     * @param fullDistance 衝多遠（格）拿到全部的 distanceMore（2026-10-29：skills.yml 寫公尺，讀進來已換成格）
      * @param collision    撞上的敵人另外再挨一下：傷害是範圍那一下的幾倍（盾衝的 Collision 70% ÷ 範圍 30%）
      * @param rageAfter    引導幾秒之後開始花怒氣（蠻衝 2.5 秒）
      * @param ragePerSecond 之後每秒花幾點怒氣（蠻衝 300／分鐘 = 5）；沒有怒氣就結束
      * @param backflip     開始引導時往後翻幾格（引霆突）
-     * @param perfectRange 完美時機放開時位移的距離（引霆突 10 格；0 = 不變）
+     * @param perfectRange 完美時機放開時位移的距離（引霆突 10 公尺；0 = 不變；2026-10-29：讀進來已換成格）
      * @param perfectStat  完美時機放開時另外給的屬性（FLAT；引霆突：damage.convert.lightning 再 50，物理 70% 轉閃電）
      * @param perfectValue 同上的數值
      * @param slow         2026-10-26：引導中移動更少幾 %（STREAM；熾息 40）。2026-10-27 照站長「放技能減速全部移除」：不再套用（只留著讓舊資料讀得進來）。2026-10-26 站長把焚燼併入焚流，只有焚燼用的燃料（fuel）一起拿掉
@@ -236,7 +236,8 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
             if (perfectAt > 0 || stages > 0) {
                 throw new IllegalArgumentException(node.path() + "：mode 是 rush／pulse／hold／stream 時不能寫 perfect_at、stages");
             }
-            if (channel.mode() == Mode.RUSH && (channel.speed() <= 0 || channel.speed() > 20)) {
+            // 2026-10-29 照站長：1 公尺 = 2 格（Units）——speed 已經換成格／秒，上限照公尺（20 公尺／秒）檢查
+            if (channel.mode() == Mode.RUSH && (channel.speed() <= 0 || channel.speed() > tw.exilecore.core.Units.metres(20))) {
                 throw new IllegalArgumentException(node.path() + ".speed：衝鋒要寫 0 到 20 格／秒");
             }
             return new ChargeSpec(0, 0, 0, stageTime, 0, 0, 0, channel);
@@ -248,6 +249,10 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
             throw new IllegalArgumentException(node.path() + "：要寫 perfect_at（完美時機）或 stages（疊層）");
         }
         return new ChargeSpec(perfectAt, perfectMore, stages, stageTime, stageMore, stageArea, stageProjectiles, channel);
+    }
+
+    private static double metres(final double metres) {
+        return tw.exilecore.core.Units.metres(metres);
     }
 
     /** 2026-10-26：charge 區塊裡的引導欄位（都沒寫就是 {@link Channel#NONE}）。 */
@@ -280,9 +285,10 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
         }
         final String empowerStat = node.has("empower_stat") ? node.string("empower_stat", "").trim() : null;
         return new Channel(mode, node.bool("drain", false), node.bool("per_attack", false), stageStat == null || stageStat.isEmpty() ? null : stageStat,
-                node.decimal("stage_value", 0), node.bool("explode_at_max", false), minTime, node.decimal("speed", 0),
-                node.decimal("distance_more", 0), node.decimal("full_distance", 0), collision, node.decimal("rage_after", 0),
-                node.decimal("rage_per_second", 0), node.decimal("backflip", 0), node.decimal("perfect_range", 0),
+                // 2026-10-29 照站長：1 公尺 = 2 格（Units）——衝鋒速度（公尺／秒）、拿滿距離加成的距離、完美時機的突進距離照 PoE2 寫公尺，讀進來換成格
+                node.decimal("stage_value", 0), node.bool("explode_at_max", false), minTime, metres(node.decimal("speed", 0)),
+                node.decimal("distance_more", 0), metres(node.decimal("full_distance", 0)), collision, node.decimal("rage_after", 0),
+                node.decimal("rage_per_second", 0), node.decimal("backflip", 0), metres(node.decimal("perfect_range", 0)),
                 perfectStat == null || perfectStat.isEmpty() ? null : perfectStat, node.decimal("perfect_value", 0),
                 slow,
                 empowerCharge == null || empowerCharge.isEmpty() ? null : empowerCharge,

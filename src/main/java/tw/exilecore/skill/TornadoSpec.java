@@ -82,7 +82,10 @@ public record TornadoSpec(double duration, double interval, Scaled radius, Scale
             throw new IllegalArgumentException(where + "：duration 0–60、interval 0.1–5、dps 要寫（每秒物理傷害，> 0）、hits ≥ 1、max 1–5、"
                     + "copies 0–12、copy_less 0–99、copy_range 1–30");
         }
-        return new TornadoSpec(duration, interval, Scaled.parse(where + ".radius", node.raw("radius"), 2.5), dps, hits, max, copies,
+        // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算：龍捲風半徑（skills.yml 寫公尺，Tornado Shot secondary radius 30 = 3 公尺）讀進來換成格；
+        //   copy_range 是複製投射物的射程，不換
+        return new TornadoSpec(duration, interval, Scaled.parse(where + ".radius", node.raw("radius"), 2.5).times(tw.exilecore.core.Units.BLOCKS_PER_METRE),
+                dps, hits, max, copies,
                 copyLess, copyRange);
     }
 }

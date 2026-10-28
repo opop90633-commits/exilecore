@@ -69,9 +69,9 @@ public final class SpearMechanics implements Listener {
     /** 炎爆矛：準心指的點離你至少幾格（PoE2 remote_spear_mine_minimum_target_distance 10 = 1 格）。 */
     static final double MIN_TARGET = 1.0;
     /** 炎爆矛（怒星）十字的寬度（PoE2 active_skill_base_secondary_area_of_effect_radius 15 = 1.5 格，整條的寬）。 */
-    static final double CROSS_WIDTH = 1.5;
+    static final double CROSS_WIDTH = tw.exilecore.core.Units.metres(1.5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 炎爆矛（怒星）燃燒地面的半徑（PoE2 active_skill_base_tertiary_area_of_effect_radius 20 = 2 格）。 */
-    static final double GROUND_RADIUS = 2.0;
+    static final double GROUND_RADIUS = tw.exilecore.core.Units.metres(2.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 炎爆矛（怒星）燃燒地面持續幾秒（PoE2 base_skill_effect_duration 8000，吃持續時間的加成）。 */
     static final double GROUND_SECONDS = 8.0;
     /** 燃燒地面多久檢查一次、同一隻敵人多久再點一次（tick）。 */

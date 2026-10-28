@@ -14,7 +14,7 @@ import java.util.Set;
  * 效果一直加在自己身上，範圍內的隊友與自己的召喚物也有（2026-10：只給自己的，召喚物也沒有）。捷（Herald）是「擊殺時觸發一個隱藏技能」的光環。
  *
  * @param reserve     保留最大魔力的百分比
- * @param radius      隊友在幾格內有效
+ * @param radius      隊友在幾格內有效（2026-10-29：skills.yml 寫公尺，讀進來已換成格）
  * @param allies      隊友也有效
  * @param effects     光環的效果（隨技能等級變）
  * @param onKill      擊殺時從屍體的位置放的隱藏技能代號（捷；null = 沒有）
@@ -279,7 +279,8 @@ public record AuraSpec(double reserve, double radius, boolean allies, List<Scale
         }
         final int free = (int) check(where, "free", node.integer("free", 0), 0, 20);
         return new AuraSpec(check(where, "reserve", node.decimal("reserve", perMinion != null ? 0 : 35), 0, 100),
-                check(where, "radius", node.decimal("radius", 8), 2, 24),
+                // 2026-10-29 照站長：1 公尺 = 2 格（Units）——radius 照 PoE2 寫公尺，檢查照公尺，讀進來換成格
+                tw.exilecore.core.Units.metres(check(where, "radius", node.decimal("radius", 8), 2, 24)),
                 node.bool("allies", true), effects, onKill, chance, enemy, perMinion, free, condition, lifeCost, fury);
     }
 

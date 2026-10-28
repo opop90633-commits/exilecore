@@ -113,6 +113,8 @@ public final class GemQualityKeys {
     public static final String OVERCHARGED_LIMIT = "lance.overcharged_extra";
     /** FLAT（%）：對插了電殛棒的目標，擊中獲得 x% 傷害為額外閃電（電殛矢）。 */
     public static final String ROD_GAIN_LIGHTNING = "rod.gain_lightning";
+    /** FLAT：雷雲多放 x 道雷才消失（風暴漩渦 Orb of Storms，無條件捨去；2026-10-29 照 PoE2）。 */
+    public static final String ORB_EXTRA_BOLTS = "orb.extra_bolts";
     /** FLAT（%）：淋濕的敵人凍結累積更多 x%（積雷雲）。 */
     public static final String DRENCHED_FREEZE_MORE = "drenched.freeze_more";
     /** FLAT（%）：淋濕的敵人被感電的機率更多 x%（積雷雲）。 */

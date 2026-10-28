@@ -26,13 +26,15 @@ final class MeleeStep {
     static final double LOCK_RANGE = 16;
 
     /**
-     * @param distance    最多踏幾格（PoE2 的 melee_conditional_step_distance ÷ 10，公尺 = 格）
+     * @param distance    最多踏幾格（PoE2 的 melee_conditional_step_distance ÷ 10 是公尺；2026-10-29 照站長：1 公尺 = 2 格（Units），
+     *                    skills.yml 寫公尺，{@link #parse} 讀進來乘 Units.BLOCKS_PER_METRE；這次之前公尺 = 格）
      * @param conditional 有條件：目標已經打得到就不動、走到打得到就停（PoE2 全部都是）
      */
     record Spec(double distance, boolean conditional) {
         Spec {
-            if (!(distance > 0) || distance > 10) {
-                throw new IllegalArgumentException("step.distance：要在 0 到 10 格之間，卻是 " + distance);
+            // 2026-10-29 照站長：1 公尺 = 2 格（Units）——這裡是換算後的格數，上限跟著放寬成 10 公尺（20 格）；公尺的檢查在 parse
+            if (!(distance > 0) || distance > tw.exilecore.core.Units.metres(10)) {
+                throw new IllegalArgumentException("step.distance：要在 0 到 " + tw.exilecore.core.Units.metres(10) + " 格之間，卻是 " + distance);
             }
         }
     }
@@ -44,14 +46,23 @@ final class MeleeStep {
         }
         final Object raw = node.raw("step");
         try {
+            // 2026-10-29 照站長：1 公尺 = 2 格（Units）——distance 照 PoE2 寫公尺，檢查照公尺（0 到 10），讀進來換成格
             if (raw instanceof Number number) {
-                return new Spec(number.doubleValue(), true);
+                return new Spec(metres(number.doubleValue()), true);
             }
             final YamlNode sub = node.node("step");
-            return new Spec(sub.decimal("distance", 0), sub.bool("conditional", true));
+            return new Spec(metres(sub.decimal("distance", 0)), sub.bool("conditional", true));
         } catch (final IllegalArgumentException e) {
             throw new IllegalArgumentException(node.path() + "." + e.getMessage(), e);
         }
+    }
+
+    /** 公尺檢查（0 到 10 公尺）後換成格。 */
+    private static double metres(final double metres) {
+        if (!(metres > 0) || metres > 10) {
+            throw new IllegalArgumentException("step.distance：要在 0 到 10 公尺之間，卻是 " + metres);
+        }
+        return tw.exilecore.core.Units.metres(metres);
     }
 
     /**

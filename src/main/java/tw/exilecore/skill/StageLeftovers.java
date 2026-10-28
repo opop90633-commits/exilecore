@@ -100,7 +100,7 @@ public final class StageLeftovers implements Listener {
     static final long BELL_CHILL_TICKS = 40;
     static final long BELL_FREEZE_TICKS = 80;
     /** 寒魄掌：冰片掛在 3.8 公尺內的敵人身上；原作沒寫冰片多久，照 PoE2 減益的預設 4 秒。 */
-    static final double PALM_RADIUS = 3.8;
+    static final double PALM_RADIUS = tw.exilecore.core.Units.metres(3.8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final long PALM_TICKS = 80;
     /** 血獵：每 X 點失血更多 10% 範圍、最多 500%；被炸到的失去用掉失血 25% 的生命；至少要 1 點失血才炸。 */
     static final double BLOOD_AREA_STEP = 10;
@@ -110,8 +110,8 @@ public final class StageLeftovers implements Listener {
     /** 萬箭齊落：同一隻每 0.12 秒最多被打一次（2.4 tick → 隔 3 tick）。 */
     static final double RAIN_HIT_GAP_SECONDS = 0.12;
     /** 土壁擊：崩碎時往前炸 4 公尺、周圍 1.4 公尺；被你自己打碎更多 100%；敵人每秒攻擊牆一次。 */
-    static final double WALL_LENGTH = 4.0;
-    static final double WALL_AROUND = 1.4;
+    static final double WALL_LENGTH = tw.exilecore.core.Units.metres(4.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double WALL_AROUND = tw.exilecore.core.Units.metres(1.4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double WALL_SELF_MORE = 1.0;
     static final double WALL_TOUCH = 1.2;
     /** 熾陽之矛：點燃地面跟著光矛的時間擴大到半徑更多 100%。 */
@@ -119,14 +119,14 @@ public final class StageLeftovers implements Listener {
     /** 奔雷踏：每一步隔多遠、鋸齒地面緩速 20%、終點猛擊炸 3.2 公尺內的鋸齒地面。 */
     static final double STAMPEDE_STEP = 1.6;
     static final double JAGGED_SLOW = 0.20;
-    static final double STAMPEDE_EXPLODE_RADIUS = 3.2;
+    static final double STAMPEDE_EXPLODE_RADIUS = tw.exilecore.core.Units.metres(3.2); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 回旋鍛錘：鍛錘的印記 12 秒；每道裂地 4 公尺長。 */
     static final double FORGE_SECONDS = 12;
-    static final double FISSURE_LENGTH = 4.0;
+    static final double FISSURE_LENGTH = tw.exilecore.core.Units.metres(4.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 颶風槍：上限 3 階（怒星 4 階）、每多一階更多 150%、半徑 +0.3 公尺、擊退更多 10%；緩速 30%；最多 6 個旋風。 */
     static final int WHIRL_MAX_STAGE = 3;
     static final double WHIRL_STAGE_MORE = 1.5;
-    static final double WHIRL_STAGE_RADIUS = 0.3;
+    static final double WHIRL_STAGE_RADIUS = tw.exilecore.core.Units.metres(0.3); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double WHIRL_STAGE_KNOCKBACK = 0.1;
     static final double WHIRL_SLOW = 0.30;
     static final int WHIRL_LIMIT = 6;
@@ -146,7 +146,7 @@ public final class StageLeftovers implements Listener {
     static final long BOMB_EXPOSURE_TICKS = 160;
     static final long BOMB_PULSE_TICKS = 5;
     /** 雷雲：施法的地方離雷雲多近才多放一道（雷雲半徑 3.6 公尺）。 */
-    static final double ORB_NEAR = 3.6;
+    static final double ORB_NEAR = tw.exilecore.core.Units.metres(3.6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
 
     // ================================================================ 純邏輯（單元測試）
 
@@ -266,7 +266,7 @@ public final class StageLeftovers implements Listener {
             case "limit.blood_per" -> "每用掉 " + number + " 點失血，血爆範圍更多 10%（最多 500%）";
             case "limit.exposure_level" -> "不會曝露等級高於 " + number + " 的敵人";
             case PUSTULE_MORE_PER -> "毒苞每存 " + number + " 點毒，爆炸更多 1% 傷害（最多 300%）";
-            case PUSTULE_RADIUS_PER -> "毒苞每存 " + number + " 點毒，爆炸半徑 +0.1 公尺（最多 +1.5）";
+            case PUSTULE_RADIUS_PER -> "毒苞每存 " + number + " 點毒，爆炸半徑 +0.15 格（最多 +2.25 格）"; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前「+0.1 公尺（最多 +1.5）」）
             case PUSTULE_FASTER_PER -> "毒苞存的毒 × 60 每 " + number + " 點，倒數快 1%";
             default -> null;
         };

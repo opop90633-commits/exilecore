@@ -50,8 +50,8 @@ final class MeridiansMenu extends Menu {
         set(4, icon(Material.PAPER, "<#d9b44a>符文子午線",
                 "<gray>把符文紋在身上，照防具上的符文生效",
                 "<gray>護甲、閃避、能量護盾的增加套用在那一格穿著的防具上",
-                "<gray>先點上面的孔選位置，再點下面的符文紋上去",
-                "<red>紋上去的符文拿不下來；同一孔再紋會蓋掉原本的"));
+                "<gray>先點上面的孔選位置，再點下面（或你背包裡）的符文紋上去",
+                "<yellow>已經紋了的孔可以再紋一顆換掉（舊的那顆會消失）"));
         for (int i = 0; i < SOCKET_SLOTS.length; i++) {
             final Runes.Rune rune = tattoos[i].isEmpty() || plugin.items() == null ? null : plugin.items().repository().rune(tattoos[i]);
             final List<String> lore = new ArrayList<>();
@@ -63,7 +63,8 @@ final class MeridiansMenu extends Menu {
                 }
             }
             lore.add("");
-            lore.add(i == selected ? "<green>▶ 下面點一顆符文紋在這一孔" : "<yellow>左鍵：選這一孔");
+            lore.add(i == selected ? (rune == null ? "<green>▶ 下面點一顆符文紋在這一孔" : "<green>▶ 下面點一顆符文換掉這一顆")
+                    : "<yellow>左鍵：選這一孔" + (rune == null ? "" : "（可以換掉）"));
             final String title = "<#d9b44a>" + SOCKET_NAMES[i] + (rune == null ? "" : "：<white>" + ItemRenderer.escape(rune.name()));
             final org.bukkit.inventory.ItemStack stack = icon(rune == null ? Material.GRAY_DYE : Material.LAPIS_LAZULI, title, lore);
             set(SOCKET_SLOTS[i], i == selected ? glowing(stack) : stack);
@@ -88,7 +89,9 @@ final class MeridiansMenu extends Menu {
             }
             lore.add("<dark_gray>你有 " + plugin.economy().wallet().available(player, type.id()) + " 個");
             lore.add("");
-            lore.add("<yellow>左鍵：紋在「" + SOCKET_NAMES[selected] + "」");
+            final Runes.Rune current = tattoos[selected].isEmpty() || plugin.items() == null ? null : plugin.items().repository().rune(tattoos[selected]);
+            lore.add(current == null ? "<yellow>左鍵：紋在「" + SOCKET_NAMES[selected] + "」"
+                    : "<yellow>左鍵：換掉「" + SOCKET_NAMES[selected] + "」的" + ItemRenderer.escape(current.name()) + "（舊的會消失）");
             set(LIST_START + i, highlight(icon(Menu.material(type.material(), Material.LAPIS_LAZULI), "<white>" + ItemRenderer.escape(type.name()), lore)));
         }
         if (runes.isEmpty()) {
@@ -123,12 +126,29 @@ final class MeridiansMenu extends Menu {
         if (index < 0 || index >= Math.min(LIST_SIZE, runes.size())) {
             return;
         }
+        tattoo(runes.get(index));
+    }
+
+    /** 2026-10-29：點自己背包裡的符文也能紋（紋在選好的那一孔）。 */
+    @Override
+    protected void onBottomClick(final int slot, final ClickType click, final InventoryClickEvent event) {
+        if (plugin.currencies() == null || !acceptAction(click)) {
+            return;
+        }
+        final org.bukkit.inventory.ItemStack stack = event.getCurrentItem();
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+        plugin.currencies().read(stack).filter(type -> type.operation() == CurrencyOperation.RUNE).ifPresent(this::tattoo);
+    }
+
+    /** 把一顆符文紋在選好的孔（孔裡原本有的就換掉，舊的消失）。 */
+    private void tattoo(final CurrencyType type) {
         final PlayerState state = plugin.players().get(player);
         if (AscBuild.ascFlat(plugin, state, AscKeys.MERIDIANS) <= 0) {
             fail("要先配昇華天賦「符文子午線」");
             return;
         }
-        final CurrencyType type = runes.get(index);
         if (plugin.items() == null || plugin.items().repository().rune(type.affix()) == null) {
             fail("這種符文不能紋");
             return;
@@ -139,12 +159,13 @@ final class MeridiansMenu extends Menu {
             return;
         }
         final String[] tattoos = AscBuild.meridianRunes(state);
+        final Runes.Rune old = tattoos[selected].isEmpty() ? null : plugin.items().repository().rune(tattoos[selected]);
         tattoos[selected] = type.affix();
         plugin.characters().setProgress(player, AscBuild.MERIDIANS, String.join("|", tattoos));
         plugin.players().markDirty(player);
         player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 0.8f, 1.3f);
         tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#d9b44a>符文子午線<gray>：" + ItemRenderer.escape(type.name())
-                + " 紋在" + SOCKET_NAMES[selected]));
+                + " 紋在" + SOCKET_NAMES[selected] + (old == null ? "" : "（換掉了" + ItemRenderer.escape(old.name()) + "）")));
         redraw();
     }
 

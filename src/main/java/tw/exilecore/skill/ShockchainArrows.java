@@ -33,7 +33,7 @@ final class ShockchainArrows {
     /** 震波那一段（skills.yml stages 的代號）。 */
     static final String SHOCKWAVE = "shockwave";
     /** PoE2 0.2.0：Shockchain Arrow 連鎖最遠 8 公尺。 */
-    static final double CHAIN_RANGE = 8;
+    static final double CHAIN_RANGE = tw.exilecore.core.Units.metres(8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（8 公尺 = 12 格）
     /**
      * 追蹤：找多遠以內的閃電異常敵人、只找前方幾度以內的、每 tick 最多轉幾度。
      * 2026-10-28 查過：PoE2 的追蹤寫在投射物本身（.ot／.ao），RePoE skills.json、stats、poe2db、官方改版說明都沒有任何追蹤的數值

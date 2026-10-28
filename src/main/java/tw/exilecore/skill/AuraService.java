@@ -126,7 +126,7 @@ final class AuraService implements Listener {
     static final String HERALD_BLOOD = "herald_of_blood";
     /** 2026-10-26 照 PoE2 的 Herald of Ash：不打人，照過量擊殺的傷害點燃附近 1.2 格的敵人 3 秒。 */
     static final String HERALD_ASH = "herald_of_ash";
-    static final double ASH_RADIUS = 1.2;
+    static final double ASH_RADIUS = tw.exilecore.core.Units.metres(1.2); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double ASH_SECONDS = 3;
 
     /** 燼使：點燃每秒是過量擊殺傷害的幾 %（PoE2：1 級 16.67%、20 級 23%、40 級 29.67%，每級 +1/3）。純函式（測試用）。 */
@@ -135,7 +135,7 @@ final class AuraService implements Listener {
     }
     static final String HERALD_PLAGUE = "herald_of_plague";
     /** 血宣：爆炸半徑（格；PoE2 1.5 米）、多打失血的幾成（PoE2 15%）。 */
-    static final double BLOOD_RADIUS = 1.5;
+    static final double BLOOD_RADIUS = tw.exilecore.core.Units.metres(1.5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double BLOOD_LOSS_SHARE = 0.15;
     /** 疫使緩行的秒數。 */
     static final double PLAGUE_HINDER_SECONDS = 4;
@@ -147,7 +147,7 @@ final class AuraService implements Listener {
 
     /** 疫使：傳毒的半徑（格）。2026-10-26 照 PoE2 逐級：每 5 級 +0.1（1 級 1.5 → 20 級 1.8 → 40 級 2.2）；這次之前 20 級封頂、線性內插。 */
     static double plagueRadius(final int level) {
-        return 1.5 + 0.1 * ((Math.min(40, Math.max(1, level)) - 1) / 5);
+        return tw.exilecore.core.Units.metres(1.5 + 0.1 * ((Math.min(40, Math.max(1, level)) - 1) / 5)); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     }
 
     /** 疫使：傳到的敵人緩行的機率（%）。2026-10-26 照 PoE2 逐級：10 → 29（20 級）→ 49（40 級）；這次之前 20 級封頂。 */

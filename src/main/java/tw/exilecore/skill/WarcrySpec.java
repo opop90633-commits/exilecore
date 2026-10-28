@@ -15,7 +15,7 @@ import java.util.Map;
  * 冷卻可以花一顆磐星跳過（skills.yml 的 cooldown_bypass: endurance）。原作沒有的治療、嘲諷、受到傷害增加、隊伍增益拿掉了，
  * 那些欄位還留著給戰旗、祭品、神龕祝禱、隱藏的戰星技能用（它們不是戰吼：cry: false 的戰吼輔助不能掛）。
  *
- * @param radius        範圍（格 = 格）
+ * @param radius        範圍（格；2026-10-29：skills.yml 寫公尺，讀進來已換成格）
  * @param duration      增益、強化持續幾秒
  * @param taunt         範圍內的敵人轉過來打你（只有非原作的技能用）
  * @param heal          立刻回復最大生命的百分比（隨等級；只有非原作的技能用）
@@ -208,7 +208,8 @@ public record WarcrySpec(double radius, double duration, boolean taunt, Scaled h
                 && !skill.has("damage")) {
             throw new IllegalArgumentException(where + "：戰吼至少要有 heal、buff、debuff、exert、empower、guard、charges、minion_buff 或 damage 其中一個");
         }
-        return new WarcrySpec(check(where, "radius", node.decimal("radius", 8), 2, 16),
+        // 2026-10-29 照站長：1 公尺 = 2 格（Units）——radius 照 PoE2 寫公尺，檢查照公尺，讀進來換成格（skills.yml 寫 metres: false 的不換）
+        return new WarcrySpec(check(where, "radius", node.decimal("radius", 8), 2, 16) * SkillParams.blocksPerMetre(skill),
                 check(where, "duration", node.decimal("duration", 6), 1, 30),
                 node.bool("taunt", true), heal, node.bool("allies", true), buff, taken, exerts, exertMore, charges, minionBuff,
                 node.bool("spike", false), check(where, "rage_extend", node.decimal("rage_extend", 0), 0, 2),

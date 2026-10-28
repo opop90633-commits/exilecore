@@ -40,7 +40,7 @@ import java.util.UUID;
 public final class StageEffects implements Listener {
 
     /** 引爆類技能用在多近的地方會引爆矛頭（跟炎爆矛一樣 3 格）。 */
-    static final double DETONATE_RANGE = 3.0;
+    static final double DETONATE_RANGE = tw.exilecore.core.Units.metres(3.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 震脈掌的投射物：射出的樣子（隱藏技能）。 */
     static final String PALM_BOLT = "reeling_palm_bolt";
     /** 震脈掌的增益最長幾秒（PoE2 staggering_palm_buff_max_duration_ms 30000）。 */

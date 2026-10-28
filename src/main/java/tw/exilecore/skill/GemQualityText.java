@@ -108,6 +108,7 @@ final class GemQualityText {
             Map.entry("spear_thicket", "危害 {hazard.rearm_chance}% 機率重新布置"),
             Map.entry("spiraling_conspiracy", "烏鴉群增加 {skill.area}% 範圍"),
             Map.entry("stampede", "{slam.aftershock_chance}% 機率多一次餘震"),
+            Map.entry("storm_orb", "連鎖 +{i:skill.chains} 次、雷雲多放 {i:orb.extra_bolts} 道雷才消失"), // 2026-10-29 照 PoE2
             Map.entry("storm_javelin", "超載的矛上限 +{i:lance.overcharged_extra}"),
             Map.entry("summon_mount", "騎著時的重暈門檻更多 {mount.life_more}%"),
             Map.entry("sunder", "照距離的命中懲罰減少 {-accuracy.range_penalty}%"),

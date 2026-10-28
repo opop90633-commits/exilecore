@@ -473,6 +473,7 @@ storm_javelin:   # Storm Lance（2026-10-28 照 PoE2：超載的矛上限 +(0—
   - { stat: lance.overcharged_extra, type: FLAT, per: 0.05 }   # Signatures.lodge
 storm_orb:   # Orb of Storms
   - { stat: skill.chains, type: FLAT, per: 0.15 }   # 連鎖次數
+  - { stat: orb.extra_bolts, type: FLAT, per: 0.3 }   # 2026-10-29 照 PoE2（Orb expires after firing (0—6) bolts）：雷雲多放幾道雷才消失（SkillZones）
 storm_staff:   # Charged Staff（2026-10-28 照 PoE2：(0—20)% 增加技能效果持續時間；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: skill.duration, type: INCREASED, per: 1.0 }   # 持續時間
 storm_wave:   # Storm Wave（2026-10-28 照 PoE2：波寬 +(0—1) 格；這次之前照通用規則每 1% 增加 1% 傷害）

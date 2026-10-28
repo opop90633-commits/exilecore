@@ -336,7 +336,7 @@ public final class SupportProcs implements Listener {
     }
 
     /** 月光另外落下的範圍（格；PoE2 Moonbeam secondary radius 6 格）與每道之間隔幾 tick（200 毫秒）。 */
-    static final double MOONBEAM_CHAIN_RANGE = 6;
+    static final double MOONBEAM_CHAIN_RANGE = tw.exilecore.core.Units.metres(6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final long MOONBEAM_CHAIN_DELAY = 4;
 
     /** 2026-10-27 照 PoE2（RePoE wolf_lunar_blessing_beam_attack_extra_beams_to_trigger）：月光另外落在幾個敵人身上（1–15 級 4、16–20 級 5、21–25 級 6、26–30 級 7、31 級起 8）。 */
