@@ -768,7 +768,7 @@ final class Warcries {
 
     /** 2026-10-27 照 PoE2（焚獄戰吼的品質：戰吼半徑 +x 格）：戰吼的基礎半徑（還沒乘範圍倍率）。 */
     static double baseRadius(final WarcrySpec spec, final tw.exilecore.stats.StatSheet effective, final java.util.Set<String> tags) {
-        return spec.radius() + Math.max(0, effective.flat(tw.exilecore.stats.WarcryKeys.RADIUS_FLAT, tags));
+        return spec.radius() + tw.exilecore.core.Units.metres(Math.max(0, effective.flat(tw.exilecore.stats.WarcryKeys.RADIUS_FLAT, tags))); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算
     }
 
     /** 範圍內同一個世界的隊友（不含自己）。 */

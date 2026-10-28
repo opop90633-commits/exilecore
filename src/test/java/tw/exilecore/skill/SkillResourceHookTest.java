@@ -113,7 +113,7 @@ class SkillResourceHookTest {
             final SkillDefinition blast = config.skill("asc_surge_" + element);
             assertNotNull(blast, element);
             assertTrue(blast.hidden() && blast.isAttack(), element);
-            assertEquals(1.8, blast.params().radius().at(1), 1e-9, element + "：1.8 格");
+            assertEquals(tw.exilecore.core.Units.metres(1.8), blast.params().radius().at(1), 1e-9, element + "：1.8 公尺"); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         }
         final SkillBuild fire1 = SkillBuild.of(config, config.skill("asc_surge_fire"), 1, 1, false, List.of(), java.util.Set.of(), new tw.exilecore.stats.StatSheet());
         final SkillBuild fire20 = SkillBuild.of(config, config.skill("asc_surge_fire"), 20, 90, false, List.of(), java.util.Set.of(), new tw.exilecore.stats.StatSheet());

@@ -41,9 +41,9 @@ class Poe2SpearfieldTest {
         assertTrue(skill.tags().contains(TreeMechanicKeys.HAZARD), "矛是危險物件");
         final StatSheet sheet = new StatSheet();
         // 扇形長度照 RePoE（1 級 4 格、20 級 6.9 格、40 級 9.9 格）
-        assertEquals(4.0, SkillBuild.of(config, skill, 1, 1, false, List.of(), Set.of("spear"), sheet).length(), 1e-9);
-        assertEquals(6.9, SkillBuild.of(config, skill, 20, 90, false, List.of(), Set.of("spear"), sheet).length(), 1e-9);
-        assertEquals(9.9, skill.params().length().at(40), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(4.0), SkillBuild.of(config, skill, 1, 1, false, List.of(), Set.of("spear"), sheet).length(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
+        assertEquals(tw.exilecore.core.Units.metres(6.9), SkillBuild.of(config, skill, 20, 90, false, List.of(), Set.of("spear"), sheet).length(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(9.9), skill.params().length().at(40), 1e-9);
         // 傷害：炸開的攻擊傷害 50%（1 級）～204%（20 級）
         assertEquals(0.5, skill.effectiveness().at(1), 1e-9);
         assertEquals(2.04, skill.effectiveness().at(20), 1e-9);
@@ -53,11 +53,11 @@ class Poe2SpearfieldTest {
 
     @Test
     void spearCountDurationAndEarlyPenalty() {
-        // 每 0.2 格扇形長度一支，最多同時 70 支
-        assertEquals(20, Spearfield.count(4.0));
-        assertEquals(34, Spearfield.count(6.9));
-        assertEquals(49, Spearfield.count(9.9));
-        assertEquals(70, Spearfield.count(30));
+        // 每 0.2 公尺扇形長度一支，最多同時 70 支（2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算）
+        assertEquals(20, Spearfield.count(tw.exilecore.core.Units.metres(4.0)));
+        assertEquals(34, Spearfield.count(tw.exilecore.core.Units.metres(6.9)));
+        assertEquals(49, Spearfield.count(tw.exilecore.core.Units.metres(9.9)));
+        assertEquals(70, Spearfield.count(tw.exilecore.core.Units.metres(30)));
         // 插 10 秒；遲爆更少 70%
         assertEquals(200, Spearfield.duration(1, false));
         assertEquals(60, Spearfield.duration(1, true));
@@ -66,7 +66,7 @@ class Poe2SpearfieldTest {
         assertEquals(0.2, Spearfield.damageScale(100, 105, true), 1e-9);
         assertEquals(1.0, Spearfield.damageScale(100, 110, true), 1e-9);
         assertEquals(1.0, Spearfield.damageScale(100, 105, false), 1e-9);
-        assertEquals(0.6, Spearfield.BLAST, 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(0.6), Spearfield.BLAST, 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
     }
 
     @Test

@@ -155,7 +155,7 @@ class SkillStagesTest {
                 stages:
                   blast: { name: 爆, effectiveness: [1, 2], radius: 1.5, convert: { fire: 1.0 } }
                 """)));
-        assertEquals(1.5, ok.get("blast").radius(1), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(1.5), ok.get("blast").radius(1), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals("爆", ok.get("blast").name());
         assertEquals(Map.of(DamageType.FIRE, 1.0), ok.get("blast").conversion());
         assertTrue(SkillStages.parse(YamlNode.load("t", new StringReader("name: 測試\n"))).isEmpty());

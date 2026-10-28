@@ -75,7 +75,7 @@ class ShockchainArrowTest {
         assertEquals(1.4, wave.effectiveness().at(1), 1e-9);
         assertEquals(5.07, wave.effectiveness().at(20), 1e-9);
         assertEquals(18.42, wave.effectiveness().at(40), 1e-9);
-        assertEquals(2.5, wave.radius(1), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(2.5), wave.radius(1), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals(1.0, wave.conversion().get(DamageType.LIGHTNING), 1e-9);
         final SkillConfig.RodSpec rod = config.rod("chain_arrow");
         assertNotNull(rod);
@@ -83,7 +83,7 @@ class ShockchainArrowTest {
         assertEquals(10, rod.max());
         assertEquals(8, rod.chains());
         assertEquals(1.0, rod.charge(), 1e-9); // PoE2 0.2.0：被連到後充能 1 秒
-        assertEquals(8, ShockchainArrows.CHAIN_RANGE, 1e-9); // PoE2 0.2.0：連鎖最遠 8 公尺
+        assertEquals(tw.exilecore.core.Units.metres(8), ShockchainArrows.CHAIN_RANGE, 1e-9); // PoE2 0.2.0：連鎖最遠 8 公尺
     }
 
     @Test

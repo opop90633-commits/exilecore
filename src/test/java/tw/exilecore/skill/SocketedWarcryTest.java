@@ -117,8 +117,9 @@ class SocketedWarcryTest {
         final SkillBuild infernal = withQuality("infernal_cry", 20, List.of());
         assertEquals(10, Warcries.empoweredExtra(infernal.profile().effective(new StatSheet()), infernal.profile().tags(), "x").getFirst().value(), 1e-9);
         assertEquals(StatKeys.damageExtra(DamageType.FIRE), Warcries.empoweredExtra(infernal.profile().effective(new StatSheet()), infernal.profile().tags(), "x").getFirst().stat());
-        assertEquals(7, Warcries.baseRadius(infernal.definition().warcry(), infernal.profile().effective(new StatSheet()), infernal.profile().tags()), 1e-9);
-        assertEquals(4, Warcries.baseRadius(infernal.definition().warcry(), withQuality("infernal_cry", 0, List.of()).profile().effective(new StatSheet()),
+        // 2026-10-29 照站長：基礎 4 公尺、品質 +3 公尺都換算成格
+        assertEquals(tw.exilecore.core.Units.metres(4 + 3), Warcries.baseRadius(infernal.definition().warcry(), infernal.profile().effective(new StatSheet()), infernal.profile().tags()), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(4), Warcries.baseRadius(infernal.definition().warcry(), withQuality("infernal_cry", 0, List.of()).profile().effective(new StatSheet()),
                 Set.of()), 1e-9);
         // 震地：餘震更多 10%、物理的 20% 獲得為火焰
         final SkillBuild seismic = withQuality("seismic_cry", 20, List.of());

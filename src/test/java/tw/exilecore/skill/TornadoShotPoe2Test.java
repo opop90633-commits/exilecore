@@ -37,8 +37,8 @@ class TornadoShotPoe2Test {
         assertEquals(208.7, spec.dps(20), 1e-9);
         assertEquals(241.8, spec.dps(21), 1e-9);
         assertEquals(4450.3, spec.dps(40), 1e-9);
-        assertEquals(3.0, spec.radius().at(20), 1e-9, "龍捲風 3 格（secondary radius 30）");
-        assertEquals(1.0, config.skill("tornado_shot").params().explode().at(20), 1e-9, "落地衝擊 1 格（radius 10）");
+        assertEquals(tw.exilecore.core.Units.metres(3.0), spec.radius().at(20), 1e-9, "龍捲風 3 公尺（secondary radius 30）"); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
+        assertEquals(tw.exilecore.core.Units.metres(1.0), config.skill("tornado_shot").params().explode().at(20), 1e-9, "落地衝擊 1 公尺（radius 10）");
         assertEquals(15, spec.duration(), 1e-9);
     }
 

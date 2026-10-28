@@ -35,7 +35,7 @@ class MeleeStepTest {
     void whirlingSlashStepsTwoPointSixMetres() {
         final MeleeStep.Spec step = config.step("whirling_slash");
         assertNotNull(step, "Whirling Slash：melee conditional step distance [26]");
-        assertEquals(2.6, step.distance(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(2.6), step.distance(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertTrue(step.conditional());
         assertNull(config.step("whirling_slash_collapse"), "崩散是旋風自己炸，不會動");
         assertTrue(config.skill("whirling_slash").description().startsWith("往前踏一步"));
@@ -56,7 +56,7 @@ class MeleeStepTest {
         expected.forEach((id, distance) -> {
             final MeleeStep.Spec step = config.step(id);
             assertNotNull(step, id);
-            assertEquals(distance, step.distance(), 1e-9, id);
+            assertEquals(tw.exilecore.core.Units.metres(distance), step.distance(), 1e-9, id); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         });
         // 本來就會位移的（騰躍砸擊、裂血掠、斷魂掌的衝刺、裂空斬）、遠程的血獵、引導的山岳之怒不加
         for (final String id : List.of("leap_slam", "rake", "killing_palm", "rift_slash", "blood_harvest", "mountain_fury", "fireball")) {
@@ -84,10 +84,10 @@ class MeleeStepTest {
     void parsesShortAndLongForms() {
         assertNull(MeleeStep.parse(yaml("a: 1")));
         final MeleeStep.Spec number = MeleeStep.parse(yaml("step: 1.7"));
-        assertEquals(1.7, number.distance(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(1.7), number.distance(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertTrue(number.conditional());
         final MeleeStep.Spec map = MeleeStep.parse(yaml("step: { distance: 2.6, conditional: false }"));
-        assertEquals(2.6, map.distance(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(2.6), map.distance(), 1e-9);
         assertTrue(!map.conditional());
         assertThrows(IllegalArgumentException.class, () -> MeleeStep.parse(yaml("step: { conditional: true }")));
         assertThrows(IllegalArgumentException.class, () -> MeleeStep.parse(yaml("step: 20")));
@@ -116,7 +116,7 @@ class MeleeStepTest {
     void tooltipLine() {
         assertNull(SkillService.stepLine(null));
         final String line = SkillService.stepLine(config.step("whirling_slash"));
-        assertTrue(line.contains("最多 <white>2.6</white> 格") && line.contains("打得到就不動"), line);
+        assertTrue(line.contains("最多 <white>3.9</white> 格") && line.contains("打得到就不動"), line);
     }
 
     /** 平地：地板在 y = 63，x ≥ wallAtX 是牆。 */

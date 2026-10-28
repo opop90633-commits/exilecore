@@ -55,7 +55,7 @@ class LightningRodTest {
         assertEquals(10, spec.max());
         assertEquals(8, spec.chains());
         assertEquals(1.0, spec.charge(), 1e-9);
-        assertEquals(2.0, rod.params().radius().at(1), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(2.0), rod.params().radius().at(1), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertNull(config.rod("lightning_arrow"));
         assertFalse(rod.description().contains("需要程式"));
     }

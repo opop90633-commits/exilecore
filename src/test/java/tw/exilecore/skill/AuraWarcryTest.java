@@ -409,7 +409,7 @@ class AuraWarcryTest {
         assertEquals(8, rally.cooldown(), 1e-9);
         assertEquals("endurance", rally.cooldownBypass(), "照 PoE2：冷卻中可以花磐星直接吼");
         assertEquals(0.8, rally.castTime(), 1e-9);
-        assertEquals(4, rally.warcry().radius(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(4), rally.warcry().radius(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals(19, rally.mana().at(1), 1e-9);
         assertEquals(85, rally.mana().at(20), 1e-9);
         assertEquals(208, rally.mana().at(40), 1e-9);
@@ -530,7 +530,7 @@ class AuraWarcryTest {
         assertEquals(5, SupportProcs.moonbeamExtraTargets(20));
         assertEquals(6, SupportProcs.moonbeamExtraTargets(21));
         assertEquals(8, SupportProcs.moonbeamExtraTargets(40));
-        assertEquals(6, SupportProcs.MOONBEAM_CHAIN_RANGE, 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(6), SupportProcs.MOONBEAM_CHAIN_RANGE, 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
     }
 
     @Test

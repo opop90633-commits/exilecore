@@ -129,7 +129,7 @@ class DeadeyeMetasTest {
         final SkillBuild mark = build("hunters_mark", List.of(support("swift_cooldown")));
         assertEquals(Math.round(6 * 20 * 0.77), mark.cooldownTicks());
         assertEquals(120, build("hunters_mark", List.of()).cooldownTicks());
-        assertEquals(3, DeadeyeMetas.SPREAD_RADIUS, 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(3), DeadeyeMetas.SPREAD_RADIUS, 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
     }
 
     @Test

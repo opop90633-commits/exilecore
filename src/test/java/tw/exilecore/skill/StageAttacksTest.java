@@ -238,7 +238,7 @@ class StageAttacksTest {
         assertEquals(2500, StageAttacks.local(profile("toxic_domain", 20), StageAttacks.DOMAIN_REGEN), 1e-9);
         assertEquals(969, StageAttacks.local(profile("toxic_domain", 20), StageAttacks.PUSTULE_MORE_PER), 1e-9);
         // 萬箭齊落：每一支 0.7 公尺
-        assertEquals(0.7, config.skill("rain_of_arrows").params().radius().at(20), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(0.7), config.skill("rain_of_arrows").params().radius().at(20), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals("proc_glacial_bolt_wall", StageAttacks.CRYSTAL_BURST.get("glacial_bolt"));
     }
 }

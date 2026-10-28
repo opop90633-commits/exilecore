@@ -33,10 +33,10 @@ class WhirlTwisterPoe2Test {
 
     @Test
     void whirlwindRadiusStagesAndCollapse() {
-        assertEquals(1.8, Signatures.whirlRadius(1, 1), 1e-9, "Whirlwind radius is 1.8 metres");
-        assertEquals(2.1, Signatures.whirlRadius(2, 1), 1e-9, "+0.3m to Radius per additional stage");
-        assertEquals(2.4, Signatures.whirlRadius(3, 1), 1e-9);
-        assertEquals(3.6, Signatures.whirlRadius(1, 2), 1e-9, "吃範圍");
+        assertEquals(tw.exilecore.core.Units.metres(1.8), Signatures.whirlRadius(1, 1), 1e-9, "Whirlwind radius is 1.8 metres"); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
+        assertEquals(tw.exilecore.core.Units.metres(2.1), Signatures.whirlRadius(2, 1), 1e-9, "+0.3m to Radius per additional stage");
+        assertEquals(tw.exilecore.core.Units.metres(2.4), Signatures.whirlRadius(3, 1), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(1.8) * 2, Signatures.whirlRadius(1, 2), 1e-9, "吃範圍");
         assertEquals(1, Signatures.nextWhirlStage(0), "沒有旋風：捲起第 1 階");
         assertEquals(2, Signatures.nextWhirlStage(1));
         assertEquals(3, Signatures.nextWhirlStage(3), "Maximum 3 stages");
@@ -52,8 +52,8 @@ class WhirlTwisterPoe2Test {
     void whirlingSlashData() {
         final SkillDefinition slash = config.skill("whirling_slash");
         assertTrue(slash.tags().contains("wind"), "Wind");
-        assertEquals(1.8, slash.params().radius().at(1), 1e-9);
-        assertEquals(1.8, slash.params().radius().at(40), 1e-9, "不再隨等級變大");
+        assertEquals(tw.exilecore.core.Units.metres(1.8), slash.params().radius().at(1), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
+        assertEquals(tw.exilecore.core.Units.metres(1.8), slash.params().radius().at(40), 1e-9, "不再隨等級變大");
         assertTrue(slash.params().knockback() > 0, "Knocks Back Enemies");
         final SkillDefinition collapse = config.skill("whirling_slash_collapse");
         assertEquals(1.0, collapse.effectiveness().at(7), 1e-9, "7 級 100%（RePoE 沒寫＝預設值）");

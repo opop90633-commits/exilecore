@@ -78,10 +78,10 @@ class SpellReservationParityTest {
 
     @Test
     void blinkDistanceFollowsTheGemTable() {
-        assertEquals(4.0, build("blink", 1, Set.of()).range(), 1e-9);
-        assertEquals(4.4, build("blink", 10, Set.of()).range(), 1e-9);
-        assertEquals(4.9, build("blink", 20, Set.of()).range(), 1e-9);
-        assertEquals(5.5, config.skill("blink").params().dash().range(40, 0), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(4.0), build("blink", 1, Set.of()).range(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
+        assertEquals(tw.exilecore.core.Units.metres(4.4), build("blink", 10, Set.of()).range(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(4.9), build("blink", 20, Set.of()).range(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(5.5), config.skill("blink").params().dash().range(40, 0), 1e-9);
         // 沒寫逐級的位移照舊
         final SkillParams.Dash fixed = new SkillParams.Dash(0, Scaled.of(0), Scaled.of(0));
         assertEquals(8, fixed.range(20, 8), 1e-9);
@@ -94,14 +94,14 @@ class SpellReservationParityTest {
         assertEquals(3, orb.bolts().chains().intAt(1));
         assertEquals(5, orb.bolts().chains().intAt(20));
         assertEquals(9, orb.bolts().chains().intAt(40));
-        assertEquals(5.6, orb.bolts().range(), 1e-9);
-        assertEquals(3.5, orb.bolts().chainRange(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(5.6), orb.bolts().range(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
+        assertEquals(tw.exilecore.core.Units.metres(3.5), orb.bolts().chainRange(), 1e-9);
         final SkillParams.Zone volcano = config.skill("volcano").params().zone();
         assertNotNull(volcano.shower());
         assertEquals(3, volcano.shower().count().intAt(1));
         assertEquals(5, volcano.shower().count().intAt(20));
         assertEquals(6, volcano.shower().count().intAt(40));
-        assertEquals(0.6, volcano.shower().radius(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(0.6), volcano.shower().radius(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units）
         assertEquals(8, volcano.duration(), 1e-9);
         assertEquals(0.5, volcano.interval(), 1e-9);
         double bolts1 = 0;

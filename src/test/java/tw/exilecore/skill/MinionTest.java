@@ -396,7 +396,7 @@ class MinionTest {
         // 蟲群擊中一定中毒、焰術士 70% 轉火焰 1.6 格、焚魂沒有點燃機率
         assertTrue(config.skill("ravenous_swarm").modifiers().stream().anyMatch(m -> m.stat().equals(StatKeys.POISON_CHANCE) && m.value() == 100));
         assertEquals(0.7, config.skill("skeletal_pyromancer").conversion().get(DamageType.FIRE), 1e-9);
-        assertEquals(1.6, config.skill("skeletal_pyromancer").summon().radius(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(1.6), config.skill("skeletal_pyromancer").summon().radius(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertTrue(config.skill("raging_spirits").modifiers().stream().noneMatch(m -> m.stat().equals(StatKeys.IGNITE_CHANCE)));
         // 復活時間：骷髏、附身、狼伴 12 秒，灰狼隨 7.5 秒
         assertEquals(240, AuraService.respawnTicks("bound_spectre"));

@@ -1835,7 +1835,7 @@ public final class MinionService implements Listener, MinionHooks {
             return true;
         }
         // 2026-10-28 照 PoE2 Ravenous Swarm 的品質：攻擊半徑 +(0—1) 公尺（加在 4 公尺上，再乘範圍）
-        final double radius = (MinionAbilities.SWARM_RADIUS + minion.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.SWARM_RADIUS)) * areaScale(minion) + target.getWidth() / 2;
+        final double radius = (MinionAbilities.SWARM_RADIUS + tw.exilecore.core.Units.metres(minion.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.SWARM_RADIUS))) * areaScale(minion) + target.getWidth() / 2; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算
         return target.getWorld().equals(owner.getWorld()) && target.getLocation().distanceSquared(owner.getLocation()) <= radius * radius;
     }
 

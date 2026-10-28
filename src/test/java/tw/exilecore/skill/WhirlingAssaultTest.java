@@ -43,10 +43,10 @@ class WhirlingAssaultTest {
         final SkillParams.Dash dash = whirl.params().dash();
         assertTrue(dash.whirls());
         assertEquals(4, dash.spins());
-        assertEquals(2.8, dash.spinRadius(), 1e-9, "長棍 1.4 米 + 1.4 米");
+        assertEquals(tw.exilecore.core.Units.metres(2.8), dash.spinRadius(), 1e-9, "長棍 1.4 米 + 1.4 米"); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals(0, dash.hitWidth(), 1e-9, "不再是順路一條線");
         assertEquals(0, whirl.params().knockback(), 1e-9, "原作沒有擊退");
-        assertEquals(4.2, whirl.params().range(), 1e-9, "attack_maximum_action_distance_+ 42");
+        assertEquals(tw.exilecore.core.Units.metres(4.2), whirl.params().range(), 1e-9, "attack_maximum_action_distance_+ 42"); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertTrue(whirl.dealsDamage());
         assertTrue(whirl.modifiers().stream().anyMatch(m -> m.stat().equals(SkillProfiles.ADDED_TIME) && Math.abs(m.value() - 1.0) < 1e-9),
                 "+1 秒總攻擊時間");

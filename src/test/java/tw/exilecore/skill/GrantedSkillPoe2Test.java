@@ -184,7 +184,7 @@ class GrantedSkillPoe2Test {
         assertEquals(218, level("volatile_dead", GrantedSkillKeys.AS_THOUGH_MAX, 20), 1e-9);
         assertEquals(2541, level("volatile_dead", GrantedSkillKeys.AS_THOUGH_MIN, 40), 1e-9);
         assertEquals(3812, level("volatile_dead", GrantedSkillKeys.AS_THOUGH_MAX, 40), 1e-9);
-        assertEquals(2.2, dead.params().radius().at(1), 1e-9, "爆炸 2.2 格");
+        assertEquals(tw.exilecore.core.Units.metres(2.2), dead.params().radius().at(1), 1e-9, "爆炸 2.2 公尺"); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
     }
 
     @Test
@@ -196,7 +196,7 @@ class GrantedSkillPoe2Test {
         assertTrue(VolatileCores.igniteDue(0), "一出現就點");
         assertFalse(VolatileCores.igniteDue(5));
         assertTrue(VolatileCores.igniteDue(10));
-        assertEquals(1.5, VolatileCores.IGNITE_RADIUS, 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(1.5), VolatileCores.IGNITE_RADIUS, 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         // 往敵人移動，最多一步、不會穿過去
         final double[] step = VolatileCores.seek(new double[] {0, 0, 0}, new double[] {10, 0, 0}, 0.2, 0.4);
         assertArrayEquals(new double[] {0.2, 0, 0}, step, 1e-9);

@@ -4465,7 +4465,7 @@ public final class SkillService {
                         trimNumber(qualityFlat(definition, quality, SkillExecutor.THUNDER_QUALITY)));
             }
             case "snipe" -> { // 2026-10-28 照 PoE2 Snipe：爆炸半徑 +(0—0.4) 格（gem_quality.yml）；這次之前顯示成增加傷害
-                return String.format(Locale.ROOT, "品質 +%d%%：爆炸與寒冰爆破的半徑 +%s 格", quality, trimNumber(quality * 0.02));
+                return String.format(Locale.ROOT, "品質 +%d%%：爆炸與寒冰爆破的半徑 +%s 格", quality, trimNumber(tw.exilecore.core.Units.metres(quality * 0.02))); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算
             }
             default -> {
             }
@@ -4517,7 +4517,7 @@ public final class SkillService {
             case tw.exilecore.stats.KeystoneKeys.MINION_LIFE_AS_ES -> "召喚物獲得最大生命的 " + trimNumber(value) + "% 為額外最大能量護盾";
             case Snap.EXTRA_REMNANT -> trimNumber(value) + "% 機率多一個灌注殘骸";
             case StatKeys.MELEE_RANGE -> modifier.type() == tw.exilecore.stats.ModType.FLAT ? "近戰打擊距離 +" + trimNumber(value / 10) + " 格" : null;
-            case tw.exilecore.stats.WarcryKeys.RADIUS_FLAT -> "增益半徑 +" + trimNumber(value) + " 格";
+            case tw.exilecore.stats.WarcryKeys.RADIUS_FLAT -> "增益半徑 +" + trimNumber(tw.exilecore.core.Units.metres(value)) + " 格"; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算
             case StatKeys.DEBUFF_DURATION -> "減益持續時間 +" + trimNumber(value) + " 秒";
             case StatKeys.META_ENERGY_GAIN -> "獲得的能量增加 " + trimNumber(value * 100) + "%";
             case StatKeys.DAMAGE -> modifier.tags().contains(tw.exilecore.stats.TreeConditions.VS_BROKEN_ARMOUR)
@@ -4562,7 +4562,7 @@ public final class SkillService {
             // 2026-10-28：只寫一般品質效果（額外的品質效果在 advanced，進階奇術才有）；這次之前連額外的那幾條也寫，沒有進階奇術時顯示 0
             case "infernal_cry" -> "強化攻擊獲得 " + v.apply(tw.exilecore.stats.WarcryKeys.EMPOWER_GAIN_FIRE) + "% 傷害為額外火焰傷害";
             case "seismic_cry" -> "強化猛擊的餘震更多 " + v.apply(tw.exilecore.stats.WarcryKeys.AFTERSHOCK_MORE) + "% 傷害";
-            case "fortifying_cry" -> "盾波半徑 +" + v.apply(tw.exilecore.stats.WarcryKeys.TRIGGER_RADIUS_FLAT) + " 格";
+            case "fortifying_cry" -> "盾波半徑 +" + trimNumber(tw.exilecore.core.Units.metres(Double.parseDouble(v.apply(tw.exilecore.stats.WarcryKeys.TRIGGER_RADIUS_FLAT)))) + " 格"; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算
             case "ancestral_cry" -> "每用掉一顆磐星，戰吼持續時間增加 " + v.apply(tw.exilecore.stats.WarcryKeys.DURATION_PER_ENDURANCE) + "%";
             case "arctic_howl" -> "給隊友的增益增加 " + v.apply(tw.exilecore.stats.WarcryKeys.ALLY_FREEZE_BUILDUP) + "% 凍結累積";
             case "ferocious_roar" -> "每 1 點強度多 " + v.apply(tw.exilecore.stats.WarcryKeys.RAGE_PER_POWER) + " 點怒氣；插槽戰吼：被它強化的攻擊增加 "

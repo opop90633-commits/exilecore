@@ -447,7 +447,7 @@ public final class SupportProcs implements Listener {
         final double baseRadius = definition.params().radius().at(sub.level());
         final double flat = effective.flat(EXPLOSION_RADIUS_FLAT, profile.tags());
         if (baseRadius > 0 && flat > 0) {
-            scale *= (baseRadius + flat) / baseRadius;
+            scale *= (baseRadius + tw.exilecore.core.Units.metres(flat)) / baseRadius; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算
         }
         return result.withAreaAndProjectiles(scale, result.projectiles());
     }

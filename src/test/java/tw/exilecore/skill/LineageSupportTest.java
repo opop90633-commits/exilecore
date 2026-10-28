@@ -184,7 +184,7 @@ class LineageSupportTest {
         assertEquals(40, LineageMechanics.bloodlettingPercent(10000, 2), 1e-9, "最多 40%");
         assertEquals(5, LineageMechanics.voltaicPercent(5, 1), 1e-9);
         assertEquals(19, LineageMechanics.voltaicPercent(5, 20), 1e-9);
-        assertEquals(2.5, LineageMechanics.voltaicRadius(20), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(2.5), LineageMechanics.voltaicRadius(20), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals(531, LineageMechanics.natureGuard(20), 1e-9, "自然交換 20 級 531 守護（poe2db）");
         assertEquals(4, LineageMechanics.hubrisAdded(200).size());
         assertEquals(30, LineageMechanics.hubrisAdded(200).get(0).value(), 1e-9, "傲寒：消耗的 15%");

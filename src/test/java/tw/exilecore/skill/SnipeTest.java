@@ -88,12 +88,12 @@ class SnipeTest {
         assertEquals(1.31, build("proc_snipe_ice_blast", 1, new StatSheet(), List.of()).profile().effective(new StatSheet())
                 .more(StatKeys.DAMAGE_VS_UNIQUE, Set.of(Tags.ATTACK)), 1e-9, "1 級 31%");
         assertTrue(ice.profile().tags().contains(Tags.AREA));
-        assertEquals(3.0, ice.radius(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(3.0), ice.radius(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals("proc_snipe_ice_blast", ice.profile().id());
         // 一般的爆炸不轉換
         final SkillBuild blast = SupportProcs.ownSubBuild(build("proc_snipe_blast", 20, new StatSheet(), List.of()), parent, 4, new StatSheet());
         assertEquals(0, blast.profile().effective(new StatSheet()).flat(StatKeys.DAMAGE_CONVERT + "cold", blast.profile().tags()), 1e-9);
-        assertEquals(2.5, blast.radius(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(2.5), blast.radius(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertNotNull(DamageType.fromTag("cold"));
     }
 
@@ -105,14 +105,14 @@ class SnipeTest {
                 && Math.abs(m.value() - 0.4) < 1e-9), "20% 品質：爆炸半徑 +0.4 格");
         final SkillBuild parent = build("snipe", 20, new StatSheet(), quality);
         final SkillBuild blast = SupportProcs.ownSubBuild(build("proc_snipe_blast", 20, new StatSheet(), List.of()), parent, 4, new StatSheet());
-        assertEquals(2.9, blast.radius(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(2.5 + 0.4), blast.radius(), 1e-9); // 2026-10-29 照站長：基礎 2.5 公尺、品質 +0.4 公尺都換算成格
         final SkillBuild ice = SupportProcs.ownSubBuild(build("proc_snipe_ice_blast", 20, new StatSheet(), List.of()), parent, 6, new StatSheet());
-        assertEquals(3.4, ice.radius(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(3.0 + 0.4), ice.radius(), 1e-9);
         // 穿雲箭上的增加範圍（輔助、角色）也加在爆炸上，不會重複算角色的
         final StatSheet wide = new StatSheet().add(Modifier.increased(StatKeys.SKILL_AREA, 0.44, "測試"));
         final SkillBuild wideBlast = SupportProcs.ownSubBuild(build("proc_snipe_blast", 20, wide, List.of()), build("snipe", 20, wide, List.of()), 4, wide);
-        assertEquals(2.5 * 1.2, wideBlast.radius(), 1e-9, "增加 44% 範圍 = 半徑 ×1.2");
-        assertEquals("品質 +20%：爆炸與寒冰爆破的半徑 +0.4 格", SkillService.qualityText(snipe, 20));
+        assertEquals(tw.exilecore.core.Units.metres(2.5) * 1.2, wideBlast.radius(), 1e-9, "增加 44% 範圍 = 半徑 ×1.2");
+        assertEquals("品質 +20%：爆炸與寒冰爆破的半徑 +0.6 格", SkillService.qualityText(snipe, 20)); // 2026-10-29：+0.4 公尺 × 1.5
         // 額外的品質效果（進階奇術）：更多攻擊速度、更長的完美時機區間
         final List<Modifier> advanced = tw.exilecore.currency.GemQuality.advancedModifiers("snipe", 20, "測試");
         assertTrue(advanced.stream().anyMatch(m -> m.stat().equals(StatKeys.ATTACK_SPEED) && m.type() == ModType.MORE));

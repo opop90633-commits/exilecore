@@ -514,7 +514,7 @@ public final class SupportMechanics implements Listener {
             return 1;
         }
         final double base = sub.params().radius().at(Math.max(1, level));
-        return base <= 0 ? 1 : (base + extra) / base;
+        return base <= 0 ? 1 : (base + tw.exilecore.core.Units.metres(extra)) / base; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算（extra 是公尺，base 已經是格）
     }
 
     /** 同上，另外加上只對這一下有效的修飾器（盾波的盾護甲附加傷害）。 */

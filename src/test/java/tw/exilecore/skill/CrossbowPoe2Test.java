@@ -66,7 +66,7 @@ class CrossbowPoe2Test {
         assertNotNull(rain);
         assertEquals(32, rain.store().intAt(1));
         assertEquals(50, rain.store().intAt(20));
-        assertEquals(4, rain.area(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(4), rain.area(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals(1, config.clip("hail_rounds", 20), "放一次就要重裝");
     }
 

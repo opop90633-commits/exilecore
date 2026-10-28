@@ -89,12 +89,12 @@ class DruidSupportsTest {
         assertEquals(0, DruidSupports.stormPerTick(firestorm, plain, tags), 1e-9, "沒掛不動");
         final StatSheet advancing = new StatSheet();
         advancing.addAll(config.support("advancing_storm").modifiers());
-        assertEquals(2.5 / 20, DruidSupports.stormPerTick(firestorm, advancing, tags), 1e-9, "行嵐：每秒 2.5 格");
+        assertEquals(tw.exilecore.core.Units.metres(2.5) / 20, DruidSupports.stormPerTick(firestorm, advancing, tags), 1e-9, "行嵐：每秒 2.5 公尺"); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         final StatSheet morgana = new StatSheet();
         morgana.addAll(config.support("morganas_tempest").modifiers());
-        assertEquals(2.5 * 1.6 / 20, DruidSupports.stormPerTick(firestorm, morgana, tags), 1e-9, "掠嵐：更多 60%");
+        assertEquals(tw.exilecore.core.Units.metres(2.5) * 1.6 / 20, DruidSupports.stormPerTick(firestorm, morgana, tags), 1e-9, "掠嵐：更多 60%");
         assertEquals(0, DruidSupports.stormPerTick(config.skill("fireball"), advancing, config.skill("fireball").tags()), 1e-9, "不是風暴不動");
-        assertEquals("風暴從你腳下出發，往準心指的地方移動（每秒 2.5 格），到了就停在那裡",
+        assertEquals("風暴從你腳下出發，往準心指的地方移動（每秒 3.75 格），到了就停在那裡", // 2026-10-29：每秒 2.5 公尺 × 1.5
                 ModifierText.describe(new Modifier(DruidSupports.STORM_ADVANCE, ModType.FLAT, 25, Set.of(), "")));
         assertEquals("60% 更多風暴移動速度", ModifierText.describe(new Modifier(DruidSupports.STORM_TRAVEL_SPEED, ModType.MORE, 0.6, Set.of(), "")));
     }

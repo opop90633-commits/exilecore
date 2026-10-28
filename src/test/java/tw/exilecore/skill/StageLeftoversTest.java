@@ -89,7 +89,7 @@ class StageLeftoversTest {
         // 崩城落彈 0.5 秒落地、0.6 秒後爆炸；冰脊裂主波 4.8 公尺；雷雲每 4 秒；寒魄掌不再打中就炸
         assertEquals(0.5, config.skill("siege_salvo").params().delay(), 1e-9);
         assertEquals(0.6, SkillStages.get("siege_salvo", "explosion").after(), 1e-9);
-        assertEquals(4.8, config.skill("glacial_cascade").params().length().at(20), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(4.8), config.skill("glacial_cascade").params().length().at(20), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals(4.0, config.skill("storm_orb").params().zone().interval(), 1e-9);
         for (final Modifier modifier : config.skill("frost_palm").modifiers()) {
             assertFalse(modifier.stat().startsWith("proc."), "寒魄掌改成照門檻碎，不再 proc.hit");
@@ -171,7 +171,7 @@ class StageLeftoversTest {
         assertEquals(4, StageLeftovers.whirlStage(4, false)); // 已經 4 階的不會掉
         assertEquals(0, StageLeftovers.whirlMore(1), 1e-9);
         assertEquals(3.0, StageLeftovers.whirlMore(3), 1e-9);
-        assertEquals(2.7, StageLeftovers.whirlRadius(1.8, 4, 1.0), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(2.7), StageLeftovers.whirlRadius(tw.exilecore.core.Units.metres(1.8), 4, 1.0), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
     }
 
     @Test

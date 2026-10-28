@@ -106,7 +106,20 @@ class TreePlanningTest {
         // 壞掉的屬性段
         assertThrows(TreeCode.InvalidCode.class, () -> TreeCode.decode(tree, plain + ".$$$"), "壞掉的 base64");
         assertThrows(TreeCode.InvalidCode.class, () -> TreeCode.decode(tree, plain + "." + "A".repeat(400)), "比屬性點還多");
-        assertThrows(TreeCode.InvalidCode.class, () -> TreeCode.decode(tree, code + ".AA"), "六段");
+        // 2026-10-29：第六段是旅者的智慧（傷害／防禦／消耗效率）的選擇，七段才是壞的
+        assertThrows(TreeCode.InvalidCode.class, () -> TreeCode.decode(tree, code + ".AA.AA"), "七段");
+        // 旅者的智慧的選擇也帶得回來，跟力量／敏捷／智慧混在一起
+        final java.util.Map<String, String> wisdom = new java.util.LinkedHashMap<>();
+        wisdom.put(attributeNodes.get(0), "dmg");
+        wisdom.put(attributeNodes.get(1), "str");
+        wisdom.put(attributeNodes.get(2), "cost");
+        wisdom.put(attributeNodes.get(3), "def");
+        final String wisdomCode = TreeCode.encode(tree, "witch", allocated, wisdom);
+        assertEquals(6, wisdomCode.split("\\.", -1).length, wisdomCode);
+        assertEquals(wisdom, TreeCode.decode(tree, wisdomCode).attributes());
+        // 只有旅者的智慧的選擇：第五段是空的
+        final java.util.Map<String, String> onlyWisdom = java.util.Map.of(attributeNodes.get(4), "def");
+        assertEquals(onlyWisdom, TreeCode.decode(tree, TreeCode.encode(tree, "witch", allocated, onlyWisdom)).attributes());
     }
 
     @Test

@@ -116,8 +116,8 @@ class SkillPoe2MechanicTest {
         assertEquals(2, ManaTempest.costPerSecond(200, 0), 1e-9, "每秒最大魔力 1%");
         assertEquals(2 + 0.3 * 50, ManaTempest.costPerSecond(200, 50 * ManaTempest.SPENT_SHARE), 1e-9, "花掉的 30% 加上去");
         final org.bukkit.Location center = new org.bukkit.Location(null, 0, 64, 0);
-        assertTrue(ManaTempest.inside(center, new org.bukkit.Location(null, 2.5, 64, 0)));
-        assertFalse(ManaTempest.inside(center, new org.bukkit.Location(null, 2.7, 64, 0)));
+        assertTrue(ManaTempest.inside(center, new org.bukkit.Location(null, tw.exilecore.core.Units.metres(2.5), 64, 0))); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
+        assertFalse(ManaTempest.inside(center, new org.bukkit.Location(null, tw.exilecore.core.Units.metres(2.7), 64, 0)));
     }
 
     @Test

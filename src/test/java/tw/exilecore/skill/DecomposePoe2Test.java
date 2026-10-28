@@ -75,7 +75,7 @@ class DecomposePoe2Test {
         assertEquals(1.0, extra, 1e-9);
         assertEquals(100, q20.durationTicks(DecomposeClouds.seconds(extra)));
         assertEquals("品質 +20%：毒雲持續時間 +1 秒", SkillService.qualityText(decompose, 20));
-        assertEquals(1.6, q20.radius(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(1.6), q20.radius(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertTrue(q20.definition().tags().contains(Tags.CHAOS));
         assertTrue(DecomposeClouds.is(q20));
     }

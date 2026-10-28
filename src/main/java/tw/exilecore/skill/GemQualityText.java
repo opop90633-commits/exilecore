@@ -9,7 +9,8 @@ import java.util.Map;
 
 /**
  * 2026-10-28 照 PoE2 0.5（站長「技能品質的部分也全部按照原作改」）：這次照原作接上的 111 顆寶石的品質說明（寶石、技能面板用）。
- * 樣板裡 {屬性} 換成品質給的數值（FLAT 照原值；INCREASED／MORE 乘 100），{-屬性} 是負號拿掉，{i:屬性} 是往 0 捨去的整數；
+ * 樣板裡 {屬性} 換成品質給的數值（FLAT 照原值；INCREASED／MORE 乘 100），{-屬性} 是負號拿掉，{i:屬性} 是往 0 捨去的整數，
+ * {m:屬性} 是公尺換成格（2026-10-29，{@link tw.exilecore.core.Units}）；
  * 同一個屬性有好幾條（元素潮汐的三種元素）取第一條。原作的效果我們沒有對應機制的（品質寫 []）照 {@link #NO_EFFECT} 寫原因。
  * 純邏輯，不依賴 Bukkit。
  */
@@ -58,7 +59,7 @@ final class GemQualityText {
             Map.entry("grim_feast", "殘骸另外存召喚物最大生命的 {grim.share}%"),
             Map.entry("herald_of_ash", "另外 {herald.ash_overkill}% 過量擊殺傷害算進點燃（每秒）"),
             Map.entry("herald_of_blood", "爆炸另外多打失血的 {herald.blood_share}%"),
-            Map.entry("herald_of_ice", "碎裂爆炸半徑 +{herald.ice_radius} 公尺"),
+            Map.entry("herald_of_ice", "碎裂爆炸半徑 +{m:herald.ice_radius} 格"), // 2026-10-29：品質給的是公尺，顯示換算後的格
             Map.entry("herald_of_plague", "傳毒時阻礙的機率另外 +{herald.plague_hinder}%"),
             Map.entry("herald_of_thunder", "落雷次數 +{i:herald.thunder_hits}"),
             Map.entry("hex_burst", "被移除的詛咒每剩 1 秒更多 {hexblast.more_per_second}% 傷害"),
@@ -88,7 +89,7 @@ final class GemQualityText {
             Map.entry("rampage", "引導的前 {charge.rage_free_seconds} 秒另外不耗怒氣"),
             Map.entry("rapid_fire", "最大熱度 +{i:crossbow.clip}"),
             Map.entry("rapid_thrust", "{spear_tip.extra_chance}% 機率多留一個矛頭"),
-            Map.entry("ravenous_swarm", "蟲群攻擊半徑 +{swarm.radius} 公尺"),
+            Map.entry("ravenous_swarm", "蟲群攻擊半徑 +{m:swarm.radius} 格"), // 2026-10-29：同上
             Map.entry("rolling_magma", "每彈（連鎖）過一次更多 {damage.more_per_chain}% 傷害"),
             Map.entry("rolling_slam", "使用這個技能的動作期間暈眩門檻增加 {action.stun_threshold}%"),
             Map.entry("ruin_mantra", "需要的連擊少 {-i:mantra.combo}"),
@@ -166,7 +167,14 @@ final class GemQualityText {
             if (integer) {
                 key = key.substring(2);
             }
+            final boolean metres = key.startsWith("m:"); // 2026-10-29：公尺換成格
+            if (metres) {
+                key = key.substring(2);
+            }
             double value = value(mods, key);
+            if (metres) {
+                value = tw.exilecore.core.Units.metres(value);
+            }
             if (negate) {
                 value = -value;
             }

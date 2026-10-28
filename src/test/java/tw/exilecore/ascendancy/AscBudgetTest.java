@@ -62,8 +62,8 @@ class AscBudgetTest {
 
     @Test
     void bloodBoilIsCapped() {
-        assertEquals(1.5 * Math.sqrt(1.2), AscGranted.boilRadius(1), 1e-9, "照 PoE2：1.5 格，每個血泡更多 20% 範圍");
-        assertEquals(1.5 * Math.sqrt(5), AscGranted.boilRadius(AscGranted.BOIL_MAX), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(1.5) * Math.sqrt(1.2), AscGranted.boilRadius(1), 1e-9, "照 PoE2：1.5 格，每個血泡更多 20% 範圍");
+        assertEquals(tw.exilecore.core.Units.metres(1.5) * Math.sqrt(5), AscGranted.boilRadius(AscGranted.BOIL_MAX), 1e-9);
         assertEquals(AscGranted.boilRadius(AscGranted.BOIL_MAX), AscGranted.boilRadius(500), 1e-9, "超過上限不再變大");
         int boil = 0;
         for (int i = 0; i < 100; i++) {

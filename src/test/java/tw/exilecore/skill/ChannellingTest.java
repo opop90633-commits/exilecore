@@ -38,7 +38,7 @@ class ChannellingTest {
         assertEquals(ChargeSpec.Mode.RUSH, spec.mode());
         assertTrue(spec.drain());
         assertEquals(1.0, spec.channel().distanceFactor(0), 1e-9);
-        assertEquals(1.5, spec.channel().distanceFactor(4), 1e-9);
+        assertEquals(1.5, spec.channel().distanceFactor(tw.exilecore.core.Units.metres(4)), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals(2.0, spec.channel().distanceFactor(30), 1e-9, "最多更多 100%");
         assertEquals(26, spec.channel().minTicks(), "最短引導 1.3 秒");
         assertEquals(0, config.skill("shield_rush").cooldown(), 1e-9);
@@ -63,7 +63,7 @@ class ChannellingTest {
         assertNotNull(spec);
         assertTrue(spec.perfect());
         assertTrue(spec.drain());
-        assertEquals(10, spec.channel().perfectRange(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(10), spec.channel().perfectRange(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals(0, config.skill("gathering_storm").cooldown(), 1e-9, "做完引導後拿掉暫時保留的冷卻");
         assertNotNull(config.skill("proc_storm_shockwave"));
     }

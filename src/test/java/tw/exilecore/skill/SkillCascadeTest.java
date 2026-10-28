@@ -126,7 +126,7 @@ class SkillCascadeTest {
         final SkillDefinition weakness = skill("elemental_weakness_curse");
         final SkillBuild build = SkillBuild.of(config, weakness, 20, 90, false, List.of(), Set.of(), new StatSheet());
         assertEquals(weakness.params().mark().radius(20) * build.areaScale(), SkillCascade.radius(build), 1e-9);
-        assertEquals(3.1, weakness.params().mark().radius(20), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(3.1), weakness.params().mark().radius(20), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         // 連瀑範圍更少：詛咒圈跟著變小
         final SkillBuild smaller = build.withAreaAndProjectiles(build.areaScale() * Math.sqrt(0.8), build.projectiles());
         assertEquals(SkillCascade.radius(build) * Math.sqrt(0.8), SkillCascade.radius(smaller), 1e-9);

@@ -69,11 +69,11 @@ class SpearSkillsTest {
     @Test
     void frenzyExplosionIsACrossWithIgnitedGround() {
         final SkillDefinition infused = config.skill("explosive_spear_infused");
-        assertEquals(4.0, infused.params().radius().at(1), 1e-9);
-        assertEquals(5.9, infused.params().radius().at(20), 1e-9);
-        assertEquals(7.9, infused.params().radius().at(40), 1e-9);
-        assertEquals(1.5, SpearMechanics.CROSS_WIDTH, 1e-9);
-        assertEquals(2.0, SpearMechanics.GROUND_RADIUS, 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(4.0), infused.params().radius().at(1), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
+        assertEquals(tw.exilecore.core.Units.metres(5.9), infused.params().radius().at(20), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(7.9), infused.params().radius().at(40), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(1.5), SpearMechanics.CROSS_WIDTH, 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(2.0), SpearMechanics.GROUND_RADIUS, 1e-9);
         assertEquals(8.0, SpearMechanics.GROUND_SECONDS, 1e-9);
         assertFalse(infused.modifiers().stream().anyMatch(m -> m.stat().equals(tw.exilecore.stats.StatKeys.IGNITE_CHANCE)), "原作沒有一定點燃");
         assertTrue(infused.modifiers().stream().anyMatch(m -> m.stat().equals(tw.exilecore.stats.StatKeys.IGNITE_MAGNITUDE)

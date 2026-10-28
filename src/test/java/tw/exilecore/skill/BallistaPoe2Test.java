@@ -52,14 +52,14 @@ class BallistaPoe2Test {
     void siegeBallistaFiresThreeBoltsThatLandThenExplode() {
         final SkillBuild siege = build("siege_ballista", 20, new StatSheet());
         assertEquals(3, siege.projectiles(), "每次攻擊 3 發弩彈");
-        assertEquals(0.5, siege.radius(), 1e-9, "落地 0.5 格");
+        assertEquals(tw.exilecore.core.Units.metres(0.5), siege.radius(), 1e-9, "落地 0.5 公尺"); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals(0.66, siege.profile().effectiveness(), 1e-9, "落地 66%");
         assertEquals(0.6, siege.profile().conversion().get(DamageType.FIRE), 1e-9, "落地 60% 轉火焰");
         assertEquals(0.25, build("siege_ballista", 1, new StatSheet()).profile().effectiveness(), 1e-9);
         assertEquals(1.27, config.skill("siege_ballista").effectiveness().at(40), 1e-9);
         final SkillConfig.CascadeSpec cascade = config.cascade("siege_ballista");
         assertNotNull(cascade);
-        assertEquals(1.4, cascade.radius(), 1e-9, "爆炸 1.4 格");
+        assertEquals(tw.exilecore.core.Units.metres(1.4), cascade.radius(), 1e-9, "爆炸 1.4 公尺");
         assertEquals(0.5, cascade.effectiveness().at(1), 1e-9);
         assertEquals(1.32, cascade.effectiveness().at(20), 1e-9);
         assertEquals(2.53, cascade.effectiveness().at(40), 1e-9);
@@ -77,7 +77,7 @@ class BallistaPoe2Test {
     void artilleryBallistaRainsFourHitsPerSalvo() {
         final SkillBuild artillery = build("artillery_ballista", 20, new StatSheet());
         assertEquals(4, artillery.projectiles(), "一輪 4 擊");
-        assertEquals(2.5, artillery.radius(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(2.5), artillery.radius(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals(0.4, artillery.profile().effectiveness(), 1e-9);
         assertTrue(artillery.profile().conversion().isEmpty());
         final StatSheet more = new StatSheet().add(Modifier.flat(StatKeys.SKILL_PROJECTILES, 2, "測試"));

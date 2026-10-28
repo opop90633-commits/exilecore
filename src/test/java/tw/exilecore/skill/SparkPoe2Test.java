@@ -46,7 +46,7 @@ class SparkPoe2Test {
         final SkillParams.Wander wander = spark.params().wander();
         assertNotNull(wander, "貼地游走");
         assertEquals(2, wander.duration(), 1e-9, "投射物持續 2 秒");
-        assertEquals(2, wander.width(), 1e-9, "spark_pathing_width_bounds 20");
+        assertEquals(tw.exilecore.core.Units.metres(2), wander.width(), 1e-9, "spark_pathing_width_bounds 20"); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals(0.66, wander.hitCooldown(), 1e-9);
         assertEquals(14, wander.hitCooldownTicks(), "0.66 秒無條件進位成 14 tick（不比原作快）");
         assertEquals(14, spark(20).intervalTicks(new StatSheet()), 1e-9, "施法 0.7 秒");

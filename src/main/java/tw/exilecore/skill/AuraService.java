@@ -1840,7 +1840,7 @@ final class AuraService implements Listener {
             final SkillBuild built = SkillBuild.of(config, sub, aura.build.usableGemLevel(), state.level(), false, aura.build.supports(),
                     state.weaponTags(), plugin.players().sheet(credit), entry == null ? Set.of() : SkillService.resonantOf(entry));
             // 2026-10-28 照 PoE2 Herald of Ice 的品質：碎裂爆炸半徑 +(0—0.4) 公尺（加在基礎半徑上，再乘範圍）
-            final SkillBuild subBuild = built.withBaseRadius(aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.HERALD_ICE_RADIUS));
+            final SkillBuild subBuild = built.withBaseRadius(tw.exilecore.core.Units.metres(aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.HERALD_ICE_RADIUS))); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算
             // 方向：朝屍體附近最近的另一隻怪，沒有就照主人的面向
             LivingEntity target = fixedTarget;
             for (final LivingEntity candidate : target != null ? List.<LivingEntity>of() : targets.around(at, HERALD_SEARCH)) {

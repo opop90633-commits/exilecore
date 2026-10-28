@@ -33,7 +33,7 @@ class ContagionPoe2Test {
         final SkillDefinition contagion = config.skill("contagion");
         assertEquals("瘟疫", contagion.name());
         assertEquals(1, contagion.params().targets(), "使一名敵人");
-        assertEquals(1.7, contagion.params().radius().at(1), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(1.7), contagion.params().radius().at(1), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertTrue(contagion.modifiers().stream().anyMatch(m -> m.stat().equals(SkillMechanicKeys.DEBUFF_SPREAD_RADIUS) && m.value() == 1.7));
         // 其他 impact 技能沒寫 targets 照舊打一整圈
         final long single = config.all().stream().filter(s -> s.mechanic() == Mechanic.IMPACT && s.params().targets() > 0).count();
@@ -53,10 +53,10 @@ class ContagionPoe2Test {
     void spreadRadiusScalesWithArea() {
         final StatSheet sheet = new StatSheet();
         final SkillBuild plain = SkillBuild.of(config, config.skill("contagion"), 20, 20, false, List.of(), Set.of(), sheet);
-        assertEquals(1.7, AilmentService.spreadRadius(plain.profile().effective(sheet), plain.profile()), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(1.7), AilmentService.spreadRadius(plain.profile().effective(sheet), plain.profile()), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         final StatSheet bigger = new StatSheet();
         bigger.add(Modifier.increased(StatKeys.SKILL_AREA, 0.5, "測試"));
         final SkillBuild wide = SkillBuild.of(config, config.skill("contagion"), 20, 20, false, List.of(), Set.of(), bigger);
-        assertEquals(1.7 * Math.sqrt(1.5), AilmentService.spreadRadius(wide.profile().effective(bigger), wide.profile()), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(1.7) * Math.sqrt(1.5), AilmentService.spreadRadius(wide.profile().effective(bigger), wide.profile()), 1e-9);
     }
 }

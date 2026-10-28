@@ -92,7 +92,7 @@ class HollowFormTest {
     void poe2Numbers() {
         assertEquals(15, HollowForm.LESS_DAMAGE, 1e-9);
         assertEquals(30, HollowForm.LESS_ATTACK_SPEED, 1e-9);
-        assertEquals(6, HollowForm.RADIUS, 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(6), HollowForm.RADIUS, 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         // 每個幻影花 80% 的消耗
         assertEquals(8, HollowForm.imageCost(10));
         assertEquals(4, HollowForm.imageCost(5));

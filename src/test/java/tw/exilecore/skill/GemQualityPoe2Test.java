@@ -217,8 +217,8 @@ class GemQualityPoe2Test {
         assertEquals(7, OriginalSkills.mantraCombo(build(config.skill("ruin_mantra"), 20)));
         // 嵐棍橫掃：1.5 公尺內全部、4 公尺沒有、中間遞減
         assertEquals(0.20, SkillExecutor.closeMore(20, 1.0), 1e-9);
-        assertEquals(0.10, SkillExecutor.closeMore(20, 2.75), 1e-9);
-        assertEquals(0, SkillExecutor.closeMore(20, 4.0), 1e-9);
+        assertEquals(0.10, SkillExecutor.closeMore(20, tw.exilecore.core.Units.metres(2.75)), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
+        assertEquals(0, SkillExecutor.closeMore(20, tw.exilecore.core.Units.metres(4.0)), 1e-9);
         // 引導：爆焰矢最大階段 +1、熾息前 1 秒不耗怒氣、鐵壁衝撞距離加成上限 +40
         final ChargeSpec arrow = config.charge("blast_arrow");
         assertEquals(arrow.stages() + 1, ChargeSpec.withQuality(arrow, build(config.skill("blast_arrow"), 20)).stages());
