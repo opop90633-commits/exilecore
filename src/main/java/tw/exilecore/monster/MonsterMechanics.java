@@ -166,6 +166,32 @@ public final class MonsterMechanics implements Listener {
         mapPatches.add(new Patch(at.getWorld().getUID(), at.getX(), at.getY(), at.getZ(), type, value, until, radius, owner));
     }
 
+    /**
+     * 2026-10-28 照 PoE2（旋風矛、旋矛擊的元素旋風）：at 附近 reach 格內最新的一塊足跡／地圖地面是哪種（點燃、冰緩、感電）；沒有回傳 null。
+     * 這次之前這些地面只有怪物自己用，外面查不到。
+     */
+    public AilmentType groundAt(final Location at, final double reach, final long now) {
+        if (at == null || at.getWorld() == null) {
+            return null;
+        }
+        final UUID world = at.getWorld().getUID();
+        for (final List<Patch> list : List.of(mapPatches, patches)) {
+            for (int i = list.size() - 1; i >= 0; i--) {
+                final Patch patch = list.get(i);
+                if (patch.until() <= now || !patch.world().equals(world) || Math.abs(at.getY() - patch.y()) > 1.5) {
+                    continue;
+                }
+                final double dx = at.getX() - patch.x();
+                final double dz = at.getZ() - patch.z();
+                final double r = patch.radius() + Math.max(0, reach);
+                if (dx * dx + dz * dz <= r * r) {
+                    return patch.type();
+                }
+            }
+        }
+        return null;
+    }
+
     /** 收掉某個實例的地面效果。 */
     public void clearMapPatches(final String owner) {
         mapPatches.removeIf(patch -> owner.equals(patch.owner()));

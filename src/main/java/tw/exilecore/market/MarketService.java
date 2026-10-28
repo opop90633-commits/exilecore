@@ -492,6 +492,9 @@ public final class MarketService {
         if (plugin.items().read(current).map(ItemData::locked).orElse(false)) {
             return "這件鎖定了（/lock 解除後才能上架）";
         }
+        if (tw.exilecore.item.AccountBound.isBound(current)) {
+            return tw.exilecore.item.AccountBound.problem(current, tw.exilecore.item.AccountBound.Channel.MARKET); // 2026-10-28：職業轉職卷之類
+        }
         if (tw.exilecore.life.LifeService.isHook(current)) {
             return "星索鉤綁定帳號，不能上架"; // 2026-10-27：這次之前上架後再領一把＝複製
         }

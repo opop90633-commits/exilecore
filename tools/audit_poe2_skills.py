@@ -3,13 +3,17 @@
 
 用法：python3 tools/audit_poe2_skills.py [RePoE poe2/data 目錄] [技能 id ...]（給技能 id 只印那幾個、連對的也印）
 
-對 skills.yml 每個 type: attack 的技能（法術另外對；whirling_slash、gale_spear、tornado_shot 另外處理），照 MAP 找到 RePoE 的技能／stat set：
+對 skills.yml 每個 type: attack 的技能（法術另外對；tornado_shot 另外處理；2026-10-28 whirling_slash、gale_spear 也照這裡對了），照 MAP 找到 RePoE 的技能／stat set：
   - effectiveness ↔ damage_multiplier（%／100；沒寫＝100%）
   - mana ↔ costs.Mana（原始值，伺服器另外整體減半）
   - attack_speed ↔ 100% + attack_speed_multiplier
   - cooldown ↔ cooldown（毫秒／1000）
   - 其他每一個數字（含 level_modifiers、機制參數）拿去比對所有逐級屬性（換算：原值、/10、/100、/1000、1+x/100）。
+    2026-10-28：level_modifiers 的 stage.代號（第二段的傷害效益 %，StageAttacks）對 stat set 的 damage_multiplier、
+    limit.代號（逐級上限）對那個屬性；技能自己寫的 proc.事件 不是數值，略過。
 [a, b] 兩個數字是 Scaled 的線性內插（1 級 a、20 級 b，往外推）；PoE2 是非線性的 40 級表時也算不一樣，要換成逐級表。
+2026-10-28：分段傷害（skills.yml 的 stages）：STAGE_SETS 指定每一段對哪一個 stat set，effectiveness 要跟那組的 damage_multiplier 逐級一樣
+（STAGE 列；寫成一個數字的要每一級都一樣），其他數字（半徑、次數、修飾器）照一般的方式對。
 印出：OK／MISMATCH／INTERP（兩點內插不符逐級表）／UNMATCHED（找不到對應的屬性，人工看）。
 """
 import json
@@ -21,11 +25,15 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 SKILLS = ROOT / 'src/main/resources/data/skills.yml'
-SKIP = {'whirling_slash', 'gale_spear', 'tornado_shot', 'whirling_slash_collapse'}
+SKIP = {'tornado_shot'}   # 2026-10-28：whirling_slash、whirling_slash_collapse、gale_spear 照 PoE2 改完，拿掉略過
 
 # 我們的技能 id → RePoE 來源（第一個是主要的：傷害效益、魔力、攻速、冷卻照它；「技能:statset」指定 stat set）
 MAP = {
     'leap_slam': ['LeapSlamPlayer'],
+    # 2026-10-28：旋矛擊（揮的那一圈的半徑＝旋風那組的 1.8 格）、旋風崩散（Whirlwind 那組）、旋風矛
+    'whirling_slash': ['WhirlingSlashPlayer', 'WhirlingSlashPlayer:WhirlingSlashSandstormPlayer'],
+    'whirling_slash_collapse': ['WhirlingSlashPlayer:WhirlingSlashSandstormPlayer', 'WhirlingSlashPlayer'],
+    'gale_spear': ['TwisterPlayer'],
     'earthquake': ['EarthquakePlayer', 'EarthquakePlayer:EarthquakeAftershockPlayer'],
     'boneshatter': ['BoneshatterPlayer'],
     'ancestral_totem': ['AncestralWarriorTotemPlayer'],
@@ -74,6 +82,7 @@ MAP = {
     'stampede': ['StampedePlayer'],
     'forge_hammer': ['ForgeHammerPlayer'],
     'reeling_palm': ['StaggeringPalmPlayer', 'StaggeringPalmProjectilePlayer'],
+    'reeling_palm_bolt': ['StaggeringPalmProjectilePlayer'],   # 2026-10-28：震脈掌增益期間長棍攻擊多射的投射物（飛的樣子）
     'frost_palm': ['ShatteringPalmPlayer'],
     'frost_wave': ['WaveOfFrostPlayer'],
     'shock_arrow': ['ElectrocutingArrowPlayer'],
@@ -143,12 +152,10 @@ MAP = {
     'siege_ballista': ['SiegeBallistaProjectilePlayer', 'SiegeBallistaPlayer'],
     'artillery_ballista': ['ArtilleryBallistaProjectilePlayer', 'ArtilleryBallistaPlayer'],
     # 觸發／附屬的攻擊
-    'proc_concussive_rune': ['ConcussiveRunesPlayer'],
     'proc_crystal_burst': ['FrozenLocusPlayer:FrozenLocusExplodePlayer'],
     'proc_stomping_ground': ['StompingGroundShockwavePlayer'],
     'proc_impact_shockwave': ['ImpactShockwaveSupportPlayer'],
     'proc_side_aftershock': ['SupportSlamAftershocksPlayer'],
-    'proc_rune_blades': ['TriggeredRuneforgedBladesPlayer'],
     'proc_armour_explosion': ['ArmourExplosionPlayer'],
     'proc_volcanic_eruption': ['TriggeredVolcanicEruptionPlayer'],
     'proc_snipe_blast': ['SnipePlayer:SnipeExplosionPlayer'],
@@ -196,6 +203,15 @@ MAP = {
     'asc_vivid_stag': ['VividStampedePlayer'],
     'asc_hollow_bell': ['HollowFocusPlayer'],
     'asc_hollow_ring': ['HollowResonancePlayer'],
+    # 2026-10-28：攻擊的第二段（StageAttacks；同一下換段的寫在原技能 level_modifiers 的 stage.代號，這裡是另外打出去的那一段）
+    'proc_cross_shockwave': ['WolfCrossSlashPlayer:WolfCrossSlashMarkConsumedPlayer'],
+    'proc_glacial_lance_burst': ['GlacialLancePlayer:GlacialLanceWallsPlayer', 'GlacialLancePlayer'],
+    'proc_primal_spirit': ['PrimalStrikesPlayer:PrimalStrikesStagWavePlayer'],
+    'proc_domain_pustule': ['ToxicDomainPlayer:ToxicDomainPustuleExplosion'],
+    'proc_glacial_bolt_wall': ['GlacialBoltPlayer:GlacialBoltWallPlayer'],
+    'proc_frag_shatter': ['FragmentationRoundsPlayer:FragmentationRoundsFreezeShatterPlayer'],
+    # 2026-10-28：分段之後剩下的（StageLeftovers）
+    'proc_storm_tempest_shockwave': ['GatheringStormPlayer:GatheringStormExplodeBetterPlayer', 'GatheringStormPlayer'],
 }
 # 沒有 PoE2 對應（我們自己的普攻、Boss 掉的技能、照比例觸發的通用餘震…）
 NO_EQUIV = {
@@ -365,14 +381,88 @@ DERIVED = {
     'sunder': [
         ('cone.aftershock.more', '震波 ÷ 主波 − 1', lambda S: ratio_more(S, 'SunderShockwavePlayer.damage_multiplier', 'SunderPlayer.damage_multiplier')),
     ],
+    'fangs_of_frost': [   # 2026-10-28：冰霜爆裂的凍結累積、冰緩效果（200% → 404%）寫成比刺擊本身（level_modifiers 100% → 202%）再更多幾 %
+        ('stages.burst.modifiers.freeze.buildup.value', '(1+爆裂)÷(1+刺擊)−1', lambda S: [round(((1 + b / 100) / (1 + a / 100) - 1) * 100, 1) for a, b in zip(
+            S['FangsOfFrostPlayer.active_skill_hit_damage_freeze_multiplier_+%_final'], S['FangsOfFrostBurstPlayer.active_skill_hit_damage_freeze_multiplier_+%_final'])]),
+        ('stages.burst.modifiers.chill.effect.value', '(1+爆裂)÷(1+刺擊)−1', lambda S: [round(((1 + b / 100) / (1 + a / 100) - 1) * 100, 1) for a, b in zip(
+            S['FangsOfFrostPlayer.active_skill_chill_effect_+%_final'], S['FangsOfFrostBurstPlayer.active_skill_chill_effect_+%_final'])]),
+    ],
     'pounce': [
         ('level_modifiers.skill.cooldown.value', '冷卻 ÷ 6 秒 − 1', lambda S: [round((x / 6000 - 1) * 100, 2) for x in S['WolfPouncePlayer#cooldown']]),
     ],
+    # 2026-10-28：寒錐爆的冰緩、凍結累積疊在冰槍自己的上面（ownSubBuild 帶著原技能的 level_modifiers），寫成再更多幾 %
+    'proc_glacial_lance_burst': [
+        ('level_modifiers.chill.effect.value', '(1 + 爆炸) ÷ (1 + 冰槍) − 1', lambda S: [round(((100 + a) / (100 + b) - 1) * 100, 2) for a, b in zip(
+            S['GlacialLanceWallsPlayer.active_skill_chill_effect_+%_final'], S['GlacialLancePlayer.active_skill_chill_effect_+%_final'])]),
+        ('level_modifiers.freeze.buildup.value', '(1 + 爆炸) ÷ (1 + 冰槍) − 1', lambda S: [round(((100 + a) / (100 + b) - 1) * 100, 2) for a, b in zip(
+            S['GlacialLanceWallsPlayer.active_skill_hit_damage_freeze_multiplier_+%_final'],
+            S['GlacialLancePlayer.active_skill_hit_damage_freeze_multiplier_+%_final'])]),
+    ],
 }
+
+# 2026-10-28：分段傷害（skills.yml 的 stages）：(技能 id, 段) → 那一段的 stat set（「技能:statset」，沒寫技能就是 MAP 的第一個來源）
+STAGE_SETS = {
+    ('tempest_flurry', 'third'): 'TempestFlurryPlayerThirdStrike',
+    ('tempest_flurry', 'final'): 'TempestFlurryPlayerFinalStrike',
+    ('ice_strike', 'final'): 'IceStrikeThirdAttackPlayer',
+    ('tempest_bell', 'impact'): 'TempestBellSlamPlayer',
+    ('whirlwind_lance', 'whirlwind'): 'WhirlwindLanceStormPlayer',
+    ('plasma_blast', 'explosion'): 'PlasmaBlastExplosionPlayer',
+    ('siege_salvo', 'bolt'): 'SiegeCascadePlayer',
+    ('siege_salvo', 'explosion'): 'SiegeCascadeExplodePlayer',
+    ('storm_javelin', 'infused'): 'StormLanceInfusedPlayer',
+    ('rapid_thrust', 'last'): 'RapidAssaultFinalHitPlayer',
+    ('rapid_thrust', 'explosion'): 'RapidAssaultDetonation',
+    ('stampede', 'slam'): 'StampedeSlamPlayer',
+    ('forge_hammer', 'recall'): 'ForgeHammerRecallPlayer',
+    ('reeling_palm', 'projectile'): 'StaggeringPalmProjectilePlayer:StaggeringPalmProjectilePlayer',
+    ('piercing_rounds', 'vs_armour_broken'): 'HighVelocityRoundsArmourBrokenPlayer',
+    ('serpent_fury', 'serpent'): 'WindSerpentsFurySnakePlayer',
+    ('prism_rend', 'cold'): 'ElementalSunderingColdPlayer',
+    ('prism_rend', 'lightning'): 'ElementalSunderingLightningPlayer',
+    ('sunfire_spear', 'pulse'): 'SpearOfSolarisPulsePlayer',
+    ('glacial_cascade', 'final'): 'GlacialCascadeLastSpikePlayer',
+    ('fangs_of_frost', 'burst'): 'FangsOfFrostBurstPlayer',
+    # 2026-10-28：分段之後剩下的（StageLeftovers）
+    ('sunfire_spear', 'ground'): 'SpearOfSolarisGroundPlayer',
+    ('stampede', 'explosion'): 'StampedeEruptionPlayer',
+    ('forge_hammer', 'fissure'): 'ForgeHammerFissurePlayer',
+}
+
+
+def stage_rows(sk, sid, sdef):
+    """2026-10-28：每一段的 effectiveness 跟指定的 stat set 的 damage_multiplier 逐級比。"""
+    rows = []
+    for key, st in (sdef.get('stages') or {}).items():
+        target = STAGE_SETS.get((sid, key))
+        path = 'stages.%s.effectiveness' % key
+        if not target:
+            rows.append(('UNMATCHED', path, fmt(st.get('effectiveness')), 'STAGE_SETS 沒寫這一段對哪個 stat set'))
+            continue
+        src = target if ':' in target else MAP[sid][0].split(':')[0] + ':' + target
+        ser = series_of(sk, src).get(src.split(':')[1] + '.damage_multiplier')
+        if ser is None:
+            rows.append(('UNMATCHED', path, fmt(st.get('effectiveness')), '找不到 ' + src))
+            continue
+        USED.add(src.split(':')[1] + '.damage_multiplier')
+        exp = [x / 100.0 for x in ser]
+        v = st.get('effectiveness')
+        if isinstance(v, list) and len(v) == 40:
+            ok = all(close(v[i], exp[i]) for i in range(40))
+        elif isinstance(v, (int, float)):
+            ok = all(close(v, x) for x in exp)
+        else:
+            ok = False
+        rows.append(('OK' if ok else 'MISMATCH', 'STAGE ' + path, fmt(v), '%s %s' % (src, series_fmt(exp))))
+    return rows
+
 
 # 刻意跟 PoE2 寫法不同、報告裡不算錯的（路徑 → 原因）
 NOTES = {
     ('plasma_blast', 'attack_speed'): '原作「總攻擊時間 +2 秒」，照弩 1.6 次／秒換算成 0.24',
+    ('proc_frag_shatter', 'cooldown'): '觸發的爆炸，1 tick 的觸發間隔（每一隻凍結的敵人各炸一次）',
+    ('proc_storm_tempest_shockwave', 'cooldown'): '觸發的震波，1 tick 的觸發間隔（同時炸好幾口鐘時每口都放）',
+    ('proc_shattering_burst', 'cooldown'): '觸發的爆炸，1 tick 的觸發間隔（每隻碎掉的敵人各炸一次）',
 }
 
 USED = set()
@@ -414,7 +504,10 @@ def audit(sk, sid, sdef):
     derived = {p: (d, f(Track(allser))) for p, d, f in DERIVED.get(sid, [])}
     fields = []
     walk({k: v for k, v in sdef.items() if k not in ('tier', 'damage')}, [], fields)
+    rows.extend(stage_rows(sk, sid, sdef))   # 2026-10-28：分段傷害
     for path, v in fields:
+        if path.startswith('stages.') and path.endswith('.effectiveness'):
+            continue   # 上面 stage_rows 照指定的 stat set 對過了
         if path in derived:
             d, exp = derived[path]
             if isinstance(v, list):
@@ -424,8 +517,14 @@ def audit(sk, sid, sdef):
                 ok = abs(v - med) <= max(0.006, abs(med) * 0.01) and max(exp) - min(exp) <= max(0.02, abs(med) * 0.05)
             rows.append(('OK' if ok else 'DERIVED', path + '（' + d + '）', fmt(v), series_fmt(exp)))
             continue
+        if path.startswith('modifiers.proc.'):
+            rows.append(('OK', path + '（觸發的隱藏技能，100% 機率，不是數值）', fmt(v), ''))
+            continue
         if path in expect:
             exp = expect[path]
+            if exp is None and (sid, path) in NOTES:
+                rows.append(('OK', path + '（' + NOTES[(sid, path)] + '）', fmt(v), ''))
+                continue
             if path == 'attack_speed' and hidden:
                 rows.append(('OK', path + '（觸發的技能，不用攻擊時間）', fmt(v), ''))
                 continue

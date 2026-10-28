@@ -787,6 +787,7 @@ public final class SupportMechanics implements Listener {
                                  final SkillProfile skill) {
         final List<Modifier> list = new ArrayList<>(extras.preHit(attacker, defender, skillSheet, tags, skill));
         list.addAll(lineage.preHit(attacker, defender, skillSheet, tags)); // 2026-10-27 照 PoE2：血脈輔助
+        list.addAll(service.leftovers().preHit(attacker, defender, skillSheet, tags, skill)); // 2026-10-28 照 PoE2：裂甲、天柱雷照感電效果
         final double extraFire = skillSheet.flat(SupportKeys.EXTRA_FIRE_VS_IGNITED, tags);
         if (extraFire > 0 && plugin.ailments() != null && plugin.ailments().has(defender, AilmentType.IGNITE)) {
             list.add(Modifier.flat(StatKeys.damageExtra(DamageType.FIRE), extraFire, "炙獵"));
@@ -1174,6 +1175,7 @@ public final class SupportMechanics implements Listener {
 
     void chilledGround(final Player player, final Location at, final double radius, final long ticks) {
         grounds.add(new Ground(player.getUniqueId(), at.clone(), radius, now() + ticks));
+        ElementalGround.mark(at, radius, tw.exilecore.stats.DamageType.COLD, now() + ticks); // 2026-10-28 照 PoE2：冰緩地面是元素地面（旋風矛、旋矛擊）
     }
 
     // =====================================================================

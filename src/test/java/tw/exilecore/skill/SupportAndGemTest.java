@@ -50,7 +50,7 @@ class SupportAndGemTest {
         // 2026-10 PoE2 改版：輔助寶石 290 顆（第 1 階 81、第 2 階 166、第 3 階 43，其中 13 顆專屬掉落：終局 4、極境 2、巔峰 7）；
         // 2026-10：圖騰施法與 6 顆觸發改成主要寶石（拿掉 7 顆），加了 2 顆戰星來源（滿星、斷命聚怒）
         final List<String> ids = config.supports().stream().map(SupportDefinition::id).toList();
-        assertEquals(293 + 21 + 2 + 10 + 3 + 24 - 19 + 1 + 120 + 68 - 17 - 3 - 4, ids.size()); // 2026-10-27 照站長刪掉箭幕、跛行、活雷 II、衝勢（－4） // 2026-10-27：照站長只留最高階，再併掉持久、速冷、分矢（−3） // 2026-10-27：照站長刪掉原作沒有的 17 顆（supports.yml 的 retired） // 2026-10-27：＋68 顆血脈輔助（supports_lineage.yml） // 2026-10-27：＋120 顆照 PoE2 0.5 補上的一般輔助（tools/poe2_supports/missing_0.5.tsv） // 2026-10-27：照 PoE2 0.5 恢復節流（Efficiency） // 2026-10-26：照站長 I／II／III 只留最高階（刪 19 顆，併入最高階）； 2026-10-26：照 PoE2 把 I／II／III 拆成不同寶石（＋18 顆）、新增 6 顆戰吼輔助（不竭嘯、霜仇嘯、契血嘯、血譽、碎晶嘯、怒嘯 II） // 2026-10-25：＋3 顆能量輔助（湧能、返能、擴能） // 2026-10：＋怒嘯；2026-10-15：＋碎界擴散（虛星專屬）；＋潮汐共鳴（淵鯨專屬）；2026-10-18：＋七隻事件巔峰 Boss 各 3 顆專屬、淵鯨再 2 顆；2026-10-24：＋10 顆戰星輔助（恆星、倍星、抑星…；磐震、磐破、雷星只留最強的那一級）
+        assertEquals(293 + 21 + 2 + 10 + 3 + 24 - 19 + 1 + 120 + 68 - 17 - 3 - 4 - 2, ids.size()); // 2026-10-28 照站長刪掉震符印、符刃（－2） // 2026-10-27 照站長刪掉箭幕、跛行、活雷 II、衝勢（－4） // 2026-10-27：照站長只留最高階，再併掉持久、速冷、分矢（−3） // 2026-10-27：照站長刪掉原作沒有的 17 顆（supports.yml 的 retired） // 2026-10-27：＋68 顆血脈輔助（supports_lineage.yml） // 2026-10-27：＋120 顆照 PoE2 0.5 補上的一般輔助（tools/poe2_supports/missing_0.5.tsv） // 2026-10-27：照 PoE2 0.5 恢復節流（Efficiency） // 2026-10-26：照站長 I／II／III 只留最高階（刪 19 顆，併入最高階）； 2026-10-26：照 PoE2 把 I／II／III 拆成不同寶石（＋18 顆）、新增 6 顆戰吼輔助（不竭嘯、霜仇嘯、契血嘯、血譽、碎晶嘯、怒嘯 II） // 2026-10-25：＋3 顆能量輔助（湧能、返能、擴能） // 2026-10：＋怒嘯；2026-10-15：＋碎界擴散（虛星專屬）；＋潮汐共鳴（淵鯨專屬）；2026-10-18：＋七隻事件巔峰 Boss 各 3 顆專屬、淵鯨再 2 顆；2026-10-24：＋10 顆戰星輔助（恆星、倍星、抑星…；磐震、磐破、雷星只留最強的那一級）
         assertEquals(List.of("increased_area", "faster_projectiles", "pierce", "faster_attacks", "faster_casting", "added_fire",
                 "critical_strikes", "lingering", "minion_damage", "concentrated_effect"), ids.subList(0, 10), "照檔案裡的順序（2026-10-27：持久併入長留，拿掉）");
         assertTrue(ids.containsAll(List.of("concentrated_effect", "chain", "life_leech", "searing_ii", "lacerate_iii", "envenom_iii", "concussive",
@@ -68,8 +68,8 @@ class SupportAndGemTest {
         assertEquals(3, config.retiredSupportTier("multistrike"));
         assertEquals(2, config.retiredSupportTier("melee_physical"));
         assertEquals(76 + 6 - 1 - 3, config.supportsUpTo(1).size()); // 2026-10-27：持久、分矢併入第 2 階的長留、分光，初裂改成 Bleed II（第 2 階），第 1 階 −3 // 2026-10-27：刪掉原作沒有的凝凍 // 2026-10-27：＋6 顆第 1 階的新輔助 // 2026-10-27 照 PoE2 對照 79 顆輔助的階級（回震 II、目眩 II、殘肢、熟招、厚晶、脆晶、撒蒺升階；這次之前 80） // 2026-10-26：I／II／III 只留最高階，第 1 階少了割裂、淬毒、釘地、急蝕、冰嚙（這次之前 85）； 2026-10-26：照 PoE2 的階級（I／II／III 拆開、新增戰吼輔助）；這次之前 79 // 2026-10-26：照 PoE2 的階級改了一些；2026-10-24：＋恆星、蔓寒
-        assertEquals(239 + 76 - 16 - 3 - 3, config.supportsUpTo(2).size()); // 2026-10-27 照站長刪掉第 2 階的箭幕、跛行、衝勢（－3） // 2026-10-27：持久、速冷、分矢併入最高階（−3） // 2026-10-27：刪掉原作沒有的 16 顆第 1–2 階 // 2026-10-27：＋76 顆第 1–2 階的新輔助 // 2026-10-27 照 PoE2：巨魄、腐蝕嘯、電印地、累勢、漸熾、播火、節流是第 3 階（這次之前 245） // 2026-10-26：I／II／III 只留最高階（第 1–2 階少 17 顆；這次之前 262）； 2026-10-26：同上；這次之前 255 // 2026-10：＋怒嘯；2026-10-24：＋倍星、抑星、狂速、碎地，磐震、磐破改第 3 階
-        assertEquals(297 - 8 + 120 - 17 - 3 - 4, config.supportsUpTo(3).size(), "2026-10-27 照站長刪掉箭幕、跛行、活雷 II、衝勢（－4）；2026-10-27：持久、速冷、分矢併入最高階（−3）；2026-10-27：刪掉原作沒有的 17 顆；專屬掉落的 13 顆切不出來（2026-10-27：supports.yml 原本的 8 顆血脈輔助改成切不出來，−8；2026-10-27：＋120 顆照 PoE2 0.5 補上的；2026-10-27：＋節流；2026-10-24：＋10 顆戰星輔助；2026-10-26：＋24 顆照 PoE2 拆開與新增的；2026-10-26：I／II／III 只留最高階，−19 顆，這次之前 315）");
+        assertEquals(239 + 76 - 16 - 3 - 3 - 2, config.supportsUpTo(2).size()); // 2026-10-28 照站長刪掉第 2 階的震符印、符刃（－2） // 2026-10-27 照站長刪掉第 2 階的箭幕、跛行、衝勢（－3） // 2026-10-27：持久、速冷、分矢併入最高階（−3） // 2026-10-27：刪掉原作沒有的 16 顆第 1–2 階 // 2026-10-27：＋76 顆第 1–2 階的新輔助 // 2026-10-27 照 PoE2：巨魄、腐蝕嘯、電印地、累勢、漸熾、播火、節流是第 3 階（這次之前 245） // 2026-10-26：I／II／III 只留最高階（第 1–2 階少 17 顆；這次之前 262）； 2026-10-26：同上；這次之前 255 // 2026-10：＋怒嘯；2026-10-24：＋倍星、抑星、狂速、碎地，磐震、磐破改第 3 階
+        assertEquals(297 - 8 + 120 - 17 - 3 - 4 - 2, config.supportsUpTo(3).size(), "2026-10-28 照站長刪掉震符印、符刃（－2）；2026-10-27 照站長刪掉箭幕、跛行、活雷 II、衝勢（－4）；2026-10-27：持久、速冷、分矢併入最高階（−3）；2026-10-27：刪掉原作沒有的 17 顆；專屬掉落的 13 顆切不出來（2026-10-27：supports.yml 原本的 8 顆血脈輔助改成切不出來，−8；2026-10-27：＋120 顆照 PoE2 0.5 補上的；2026-10-27：＋節流；2026-10-24：＋10 顆戰星輔助；2026-10-26：＋24 顆照 PoE2 拆開與新增的；2026-10-26：I／II／III 只留最高階，−19 顆，這次之前 315）");
         for (final SupportDefinition support : config.supports()) {
             assertFalse(support.name().isBlank(), support.id());
             assertFalse(support.modifiers().isEmpty(), support.id());
@@ -201,7 +201,7 @@ class SupportAndGemTest {
         // 就算別的地方給了 skill.repeats，也只有自己放的打擊、扇形、繞身一圈的攻擊會重複
         final StatSheet repeating = new StatSheet().add(new Modifier(StatKeys.SKILL_REPEATS, ModType.FLAT, 9, Set.of(), "測試"));
         assertEquals(SkillBuild.MAX_REPEATS, SkillBuild.of(config, skill("boneshatter"), 1, 60, false, List.of(), Set.of(), repeating).repeats(),
-                "最多 4 下");
+                "最多 5 下（2026-10-28 照 PoE2 三連刺一次刺六下：4 → 5）");
         for (final String id : List.of("fireball", "permafrost_bolts", "leap_slam", "rake", "ancestral_totem", "rain_of_arrows",
                 "raise_zombie")) {
             assertEquals(0, SkillBuild.of(config, skill(id), 1, 60, false, List.of(), Set.of(), repeating).repeats(), id);

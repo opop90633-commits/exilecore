@@ -328,8 +328,11 @@ final class AscGranted implements Listener {
             }
             case "ruzhan_trap" -> moveDjinn(player, "ruzhan_djinn", aim(player, target, 20)); // 2026-10-27：魯兹安把巨劍擲過去
             case "explosive_concoction" -> {
-                // 另外對附近最多 4 個點燃中的敵人各丟一瓶小的（傷害效益 145／185）
+                // 另外對附近最多 4 個點燃中的敵人各丟一瓶小的
+                // 2026-10-28 照 PoE2 Mini Flasks：自己的表（stage.second 50% → 145% → 330%）、1.2 公尺（主瓶 1.8）；這次之前固定 145／185、同樣大
                 final Location at = aim(player, target, 16);
+                final SkillBuild mini = tw.exilecore.skill.StageAttacks.stage(build, "second");
+                final SkillBuild smaller = mini.withAreaAndProjectiles(mini.areaScale() * 12.0 / 18.0, mini.projectiles());
                 int thrown = 0;
                 for (final LivingEntity enemy : effects.enemiesNear(player, at, 8)) {
                     if (thrown >= 4) {
@@ -337,7 +340,7 @@ final class AscGranted implements Listener {
                     }
                     if (plugin.ailments() != null && plugin.ailments().has(enemy, AilmentType.IGNITE)) {
                         thrown++;
-                        final SkillBuild small = build.withProfile(build.profile().scaled(145.0 / 185.0, "爆裂物"));
+                        final SkillBuild small = smaller;
                         effects.later(8, () -> plugin.skills().recast(player, small, enemy.getLocation(), player.getLocation().getDirection(), enemy));
                     }
                 }

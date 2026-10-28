@@ -251,6 +251,12 @@ public final class TradeService {
             tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<#ffd27f>🔒 這件鎖定了（/lock 解除後才能交易）"));
             return;
         }
+        if (tw.exilecore.item.AccountBound.isBound(stack)) {
+            // 2026-10-28：綁定帳號的物品（職業轉職卷）不能交易
+            tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<red>" + tw.exilecore.item.AccountBound.problem(stack,
+                    tw.exilecore.item.AccountBound.Channel.TRADE)));
+            return;
+        }
         if (tw.exilecore.life.LifeService.isHook(stack)) {
             // 2026-10-27：星索鉤綁定帳號；這次之前交易給別人再到選單領一把＝複製（公會倉庫、市集、丟地上已經擋了）
             tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<red>星索鉤綁定帳號，不能交易"));

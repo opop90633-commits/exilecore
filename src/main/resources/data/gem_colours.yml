@@ -539,7 +539,6 @@ supports:
   haemocrystals: r
   electromagnetism: b
   elemental_discharge: b
-  concussive_runes: r
   brambleslam: r
   crater: r
   corrupting_cry: r
@@ -604,7 +603,6 @@ supports:
   shocking_leap: g
   spreading_frost: b
   withering_touch: b
-  runeforged_blades: r
   murderous_intent: g
   premeditation: r
   unerring_power: g

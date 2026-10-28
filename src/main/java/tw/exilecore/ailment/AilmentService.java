@@ -356,6 +356,14 @@ public final class AilmentService {
     // ---- 打中 ----
 
     /**
+     * 2026-10-28 照 PoE2 Voltaic Mark（擊中被標記的敵人時電擊累積增加 25% → 45%）：電擊累積的倍率 =
+     * (1 + 攻擊者的增加 + 目標身上印記的增加) × 攻擊者的更多。這次之前只看攻擊者（印記是降閃電抗性）。
+     */
+    public static double electrocuteBuildupScale(final double attackerIncreased, final double attackerMore, final double markedIncreased) {
+        return Math.max(0, 1 + attackerIncreased + markedIncreased) * Math.max(0, attackerMore);
+    }
+
+    /**
      * 一擊確定打中之後（傷害事件沒被取消）算異常。
      *
      * @param attackerSheet   攻擊方的屬性表（還沒疊技能的輔助寶石）
@@ -530,6 +538,9 @@ public final class AilmentService {
                         entry.state.freezeMeter().raiseThreshold(freezeSettings.after(playerTarget), freezeSettings.afterTicks(playerTarget), now);
                         refreshAt(defender, entry, entry.state.frozenUntil() - now); // 解凍準時（不用等下一次半秒更新）
                         feedback(defender, AilmentType.FREEZE);
+                        if (plugin.skills() != null && !playerTarget) {
+                            plugin.skills().markAilment(defender, AilmentType.FREEZE); // 2026-10-28 照 PoE2：霜縛印被凍結時觸發
+                        }
                         if (attacker instanceof Player freezer && !playerTarget && plugin.skills() != null && plugin.skills().treeLeftovers() != null) {
                             plugin.skills().treeLeftovers().immobilised(freezer, defender); // 2026-10-27 照 PoE2 天賦樹：禁錮（凍結）時恫嚇
                         }
@@ -635,6 +646,9 @@ public final class AilmentService {
                         poisonStacks(attack, context)); // 2026-10-26 照 PoE2：預設 1 層生效，加層數另外算；壓倒性毒性加倍
                 if (attacker instanceof Player poisoner && !playerTarget) {
                     plugin.players().conditions().note(poisoner, tw.exilecore.stats.TreeConditions.POISONS, "poison", now); // 2026-10-27：最近讓敵人中毒幾次
+                    if (plugin.skills() != null) {
+                        plugin.skills().stageAttacks().poisoned(poisoner, defender, dps * seconds); // 2026-10-28 照 PoE2 瘴域：毒苞存下這次中毒的預期傷害
+                    }
                 }
                 feedback(defender, AilmentType.POISON);
                 changed = true;
@@ -823,7 +837,9 @@ public final class AilmentService {
                 // 2026-10-26 照 PoE2：閃電 × 1.7 ÷ 暈眩門檻（這次之前 150% × 閃電 ÷ 異常門檻，傳奇怪 50%）
                 entry = entry == null ? track(defender) : entry;
                 final double buildup = config.electrocute().buildupFor(lightning, freezePoise * entry.state.electrocute().thresholdMultiplier(now),
-                        attack.apply(StatKeys.ELECTROCUTE_BUILDUP, 1.0, context) * Math.min(1.0, chance), playerTarget);
+                        electrocuteBuildupScale(attack.increased(StatKeys.ELECTROCUTE_BUILDUP, context), attack.more(StatKeys.ELECTROCUTE_BUILDUP, context),
+                                defenderSheet.increased(tw.exilecore.stats.SpellParityKeys.ELECTROCUTE_BUILDUP_TAKEN, Set.of()))
+                                * Math.min(1.0, chance), playerTarget);
                 if (buildup > 0) {
                     if (entry.state.electrocute().add(buildup, now, config.electrocute().decayDelayTicks(playerTarget),
                             config.electrocute().decayPerTick(playerTarget))) {
@@ -836,6 +852,9 @@ public final class AilmentService {
                             entry.state.electrocute().raiseThreshold(config.electrocute().after(playerTarget), config.electrocute().afterTicks(playerTarget), now);
                             refreshAt(defender, entry, entry.state.electrocute().activeUntil() - now);
                             feedback(defender, AilmentType.ELECTROCUTE);
+                            if (plugin.skills() != null && !playerTarget) {
+                                plugin.skills().markAilment(defender, AilmentType.ELECTROCUTE); // 2026-10-28 照 PoE2：引雷印被電擊時觸發
+                            }
                             if (attacker instanceof Player zapper && !playerTarget && plugin.skills() != null && plugin.skills().treeLeftovers() != null) {
                                 plugin.skills().treeLeftovers().immobilised(zapper, defender); // 2026-10-27 照 PoE2 天賦樹：禁錮（電擊）時恫嚇
                             }
@@ -1039,6 +1058,17 @@ public final class AilmentService {
     public static double debuffSeconds(final StatSheet attack, final tw.exilecore.stats.SkillProfile skill) {
         final double base = attack.flat(StatKeys.DEBUFF_DURATION, Set.of());
         return (base > 0 ? base : 4) * Math.max(0.1, attack.apply(StatKeys.SKILL_DURATION, 1.0, skill.tags()));
+    }
+
+    /** 2026-10-28 照 PoE2 Blood Hunt：用掉這隻怪累積的失血（回傳用掉多少，之後從 0 再累積）。 */
+    public double consumeBloodLoss(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        if (entry == null) {
+            return 0;
+        }
+        final double consumed = entry.bloodLoss;
+        entry.bloodLoss = 0;
+        return consumed;
     }
 
     /** 2026-10-24：這隻怪累積被流血打掉多少（血宣：爆炸多打失血的 15%）。 */
@@ -1988,7 +2018,8 @@ public final class AilmentService {
         final long now = now();
         final Tracked entry = track(player);
         switch (type) {
-            case IGNITE -> entry.state.addIgnite(value, now + ticks(seconds), null);
+            // 2026-10-28 修正：燃燒地面（怪物的拖痕、地圖詞綴）是火焰持續傷害，吃火焰抗性（照抗性上限）；這次之前不吃抗性
+            case IGNITE -> entry.state.addIgnite(value * igniteResist(sheet, DamageType.FIRE), now + ticks(seconds), null);
             case CHILL -> {
                 if (StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE)) {
                     return;

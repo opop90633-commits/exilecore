@@ -758,48 +758,69 @@ public final class CharacterService {
     }
 
     /**
-     * 管理員換職業（/ec setclass）：天賦全部退回（珠寶還給玩家）、昇華職業退掉（昇華點還在，/ascend 重選）、
-     * 混沌術士的二選一記成選過了。等級、裝備、技能、通貨都不動。回傳錯誤訊息；成功 null。
+     * 管理員換職業（/ec setclass）：規則跟職業轉職卷一樣（{@link #changeClass}），訊息寫「管理員」。
      */
     public String adminChangeClass(final Player player, final CharacterClass target) {
+        return changeClass(player, target, true);
+    }
+
+    /**
+     * 換職業（2026-10-28：職業轉職卷與 /ec setclass 共用；規則見 {@link ClassChange}）：天賦全部退回（珠寶還給玩家）、
+     * 天賦組清掉、昇華職業退掉（完成的試煉留著 = 昇華點全部拿回來，照正常流程重選）、命匣的珠寶與子午線的符文還回去、
+     * 屬性點的選擇清掉、混沌術士的二選一記成選過了。等級、裝備、技能、通貨都不動。回傳錯誤訊息；成功 null。
+     * 這次之前（只有 /ec setclass）天賦組、命匣、符文子午線沒有清，命匣的珠寶會卡在已經不能用的孔裡。
+     */
+    public String changeClass(final Player player, final CharacterClass target, final boolean byAdmin) {
         final PlayerState state = states.get(player);
         final CharacterRecord record = state.character();
         if (record == null) {
-            return "這個玩家還沒有選角色";
+            return byAdmin ? "這個玩家還沒有選角色" : "你還沒有選角色";
         }
         if (busy.contains(player.getUniqueId()) || hasUnsavedTrades(player)) {
-            return "這個玩家的角色資料處理中（交易或存檔），等一下再試";
+            return byAdmin ? "這個玩家的角色資料處理中（交易或存檔），等一下再試" : "角色資料處理中（交易或存檔），等一下再試";
         }
-        if (record.characterClass() == target) {
-            return "已經是" + target.displayName() + "了";
+        final String problem = ClassChange.problem(record.characterClass(), target);
+        if (problem != null) {
+            return problem;
         }
         final CharacterClass from = record.characterClass();
         final long id = record.id();
+        final List<String> removed = ClassChange.progressToRemove(state.progress());
+        final List<String> runes = ClassChange.meridianRunes(state.progress());
+        final boolean hadAscendancy = state.progress().containsKey(tw.exilecore.ascendancy.Ascension.CHOSEN);
         record.setCharacterClass(target);
         updateRoster(player.getUniqueId(), record);
         state.passives().clear();
-        state.markDirty();
-        tw.exilecore.passive.JewelSockets.reclaim(plugin, player, state, plugin.passives().tree(), "換了職業，天賦全部退回");
+        removed.forEach(state.progress()::remove);
         state.progress().put(ClassSplit.PROGRESS, target.id());
-        final boolean hadAscendancy = state.progress().containsKey(tw.exilecore.ascendancy.Ascension.CHOSEN);
-        state.progress().remove(tw.exilecore.ascendancy.Ascension.CHOSEN);
-        state.progress().remove(tw.exilecore.ascendancy.Ascension.NODES);
-        // 天賦全部退回了：屬性點的選擇也清掉（重新配的照新職業的主屬性）
-        final List<String> attrKeys = new java.util.ArrayList<>();
-        for (final String key : state.progress().keySet()) {
-            if (key.startsWith("attr.")) {
-                attrKeys.add(key);
+        state.markDirty();
+        // 天賦組（月卡）裡放著的珠寶：配點是舊職業的起點，全部清掉、珠寶還回去
+        int returned = 0;
+        for (int set = 0; set < PlayerState.GEAR_SETS; set++) {
+            final List<ItemStack> jewels = new ArrayList<>(state.treeJewels(set).values());
+            state.treeJewels(set).clear();
+            for (final ItemStack jewel : jewels) {
+                if (jewel != null && !jewel.isEmpty()) {
+                    tw.exilecore.passive.JewelSockets.giveBack(plugin, player, state, jewel);
+                    returned++;
+                }
             }
         }
-        attrKeys.forEach(state.progress()::remove);
+        // 命匣（昇華天賦的孔）：昇華職業退掉了，珠寶還回去
+        final ItemStack phylactery = state.jewels().remove(tw.exilecore.passive.JewelSockets.PHYLACTERY);
+        if (phylactery != null && !phylactery.isEmpty()) {
+            tw.exilecore.passive.JewelSockets.giveBack(plugin, player, state, phylactery);
+            returned++;
+        }
+        returned += tw.exilecore.passive.JewelSockets.reclaim(plugin, player, state, plugin.passives().tree(), null);
+        // 符文子午線紋的符文：還成通貨（倉庫通貨頁 → 通貨袋 → 背包）
+        final int runeCount = giveBackRunes(player, runes);
         plugin.database().async(connection -> {
             repository.inTransaction(connection, () -> {
                 repository.updateClass(connection, id, target);
                 repository.savePassives(connection, id, Set.of());
                 repository.setProgress(connection, id, ClassSplit.PROGRESS, target.id());
-                repository.deleteProgress(connection, id, tw.exilecore.ascendancy.Ascension.CHOSEN);
-                repository.deleteProgress(connection, id, tw.exilecore.ascendancy.Ascension.NODES);
-                for (final String key : attrKeys) {
+                for (final String key : removed) {
                     repository.deleteProgress(connection, id, key);
                 }
             });
@@ -818,10 +839,36 @@ public final class CharacterService {
         }
         player.showTitle(net.kyori.adventure.title.Title.title(plugin.text().parse(target.color() + target.displayName()),
                 plugin.text().parse("<gray>" + escape(target.description()))));
-        player.sendMessage(plugin.text().prefixed("<gray>管理員把這個角色的職業換成 " + target.color() + target.displayName()
-                + "<gray>：天賦點全部退回了（/tree 重配）" + (hadAscendancy ? "；昇華職業退掉了，昇華點還你（/ascend 重選）" : "")));
-        plugin.getSLF4JLogger().info("[管理] {} 的角色 {} 職業 {} → {}", player.getName(), record.name(), from.id(), target.id());
+        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.0f);
+        player.sendMessage(plugin.text().prefixed("<gray>" + (byAdmin ? "管理員把這個角色的職業換成 " : "這個角色現在是 ")
+                + target.color() + target.displayName() + "<gray>：天賦點全部退回了（/tree 重配）"
+                + (hadAscendancy ? "；昇華職業退掉了，昇華點還你（/ascend 重選）" : "")
+                + (returned > 0 ? "；" + returned + " 顆珠寶拿回來了" : "")
+                + (runeCount > 0 ? "；子午線的 " + runeCount + " 顆符文還你" : "")));
+        plugin.getSLF4JLogger().info("{} 的角色 {} 職業 {} → {}（{}）", player.getName(), record.name(), from.id(), target.id(),
+                byAdmin ? "管理員" : "職業轉職卷");
         return null;
+    }
+
+    /** 符文子午線的符文還回去（詞綴代號 → 那種符文通貨）；回傳還了幾顆。 */
+    private int giveBackRunes(final Player player, final List<String> affixes) {
+        if (affixes.isEmpty() || plugin.currencies() == null || plugin.economy() == null) {
+            return 0;
+        }
+        int count = 0;
+        for (final String affix : affixes) {
+            for (final tw.exilecore.currency.CurrencyType type : plugin.currencies().repository().all()) {
+                if (type.operation() == tw.exilecore.currency.CurrencyOperation.RUNE && affix.equals(type.affix())) {
+                    final int rest = plugin.economy().wallet().deposit(player, type.id(), 1);
+                    if (rest > 0) {
+                        plugin.economy().wallet().dropFor(player, plugin.currencies().create(type, rest));
+                    }
+                    count++;
+                    break;
+                }
+            }
+        }
+        return count;
     }
 
     /** 寫進選擇：職業（元素法師才改）與選過的記號在同一個資料庫工作裡；昇華職業不屬於新職業的退掉。 */

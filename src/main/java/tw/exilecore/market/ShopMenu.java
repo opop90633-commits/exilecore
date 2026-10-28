@@ -164,6 +164,10 @@ final class ShopMenu extends Menu {
             fail("這是空的藥劑欄（提示），不是東西");
             return;
         }
+        if (tw.exilecore.item.AccountBound.isBound(stack)) {
+            fail(tw.exilecore.item.AccountBound.problem(stack, tw.exilecore.item.AccountBound.Channel.MARKET)); // 2026-10-28
+            return;
+        }
         if (shown.size() >= service.shopSlots(player)) {
             fail("商店頁滿了（" + service.shopSlots(player) + " 件）：先下架一些" + service.slotsHint(player));
             return;

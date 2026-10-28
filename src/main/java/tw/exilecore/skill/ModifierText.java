@@ -175,6 +175,7 @@ public final class ModifierText {
                 case "perfect_hit" -> "完美時機放開的那一下打中時";
                 case "perfect_hit_frozen" -> "完美時機放開的那一下直接打中凍結中的敵人時（用掉凍結，取代一般的爆炸）"; // 2026-10-28 照 PoE2 Snipe
                 case "kill" -> "打死敵人時";
+                case "mark_consumed" -> "打中被你標記的敵人、用掉印記時"; // 2026-10-28 照 PoE2 Cross Slash
                 default -> "條件成立時";
             };
             final String sub = modifier.tags().isEmpty() ? "" : modifier.tags().iterator().next();
@@ -532,8 +533,17 @@ public final class ModifierText {
             case tw.exilecore.stats.GrantedSkillKeys.FLAG_VOLATILE_CORE -> "消耗屍體做出一顆追擊敵人的不穩定核心：點燃身邊的敵人，時間到時爆炸";
             case tw.exilecore.stats.GrantedSkillKeys.FLAG_NO_RARITY_CHARGES -> "撲殺給的戰星不因敵人稀有度增加";
             case "barkskin.armour" ->"被敵人擊中時，獲得失去的能量護盾 " + number(value) + "% 的護甲 6 秒（總共不超過身上原本的護甲）";
+            // 2026-10-28 照 PoE2（天柱雷、引雷印、霜縛印）
+            case tw.exilecore.stats.SpellParityKeys.SHOCKED_BOLTS -> "範圍內有感電中的敵人時，多劈 " + number(value) + " 道雷，隨機分給打到的敵人";
+            case tw.exilecore.stats.SpellParityKeys.ELECTROCUTE_BUILDUP_TAKEN -> "受到的電擊累積" + (value < 0 ? "減少 " : "增加 ") + percent + "%";
+            case tw.exilecore.stats.SpellParityKeys.MARK_ACTIVATION_GAIN -> "印記觸發時用掉印記，你獲得 " + number(value) + "% 傷害為額外元素傷害的增益";
+            case tw.exilecore.stats.SpellParityKeys.MARK_ACTIVATION_SECONDS -> "印記觸發給的增益持續 " + number(value) + " 秒";
             default -> {
                 // 2026-10：不認得的交給昇華的說明（那邊的屬性比較齊）；都不認得也不要秀出英文代號
+                final String leftover = StageLeftovers.describe(stat, value); // 2026-10-28 照 PoE2：冰晶生命、鐘的門檻、冰片門檻…
+                if (leftover != null) {
+                    yield leftover;
+                }
                 if (tw.exilecore.ascendancy.StatLines.knows(stat)) {
                     yield tw.exilecore.ascendancy.StatLines.describe(modifier);
                 }

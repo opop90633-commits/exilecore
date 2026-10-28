@@ -248,7 +248,9 @@ class MechanicsTest {
         // 2026-10-26：連射照 PoE2 Rapid Shot 改成熱度（彈匣 26～65 發），不再是三連發
         assertNull(config.skill("rapid_fire").params().burst());
         assertEquals(26, config.clip("rapid_fire", 1));
-        assertNotNull(config.skill("whirlwind_lance").params().vortex());
+        // 2026-10-28 照 PoE2：颶風槍的旋風改成留在地上、走進去才崩散（stages.whirlwind），不再是會吸人的漩渦；這次之前 vortex 不是 null
+        assertNull(config.skill("whirlwind_lance").params().vortex());
+        assertNotNull(SkillStages.get("whirlwind_lance", "whirlwind"));
         assertTrue(config.skill("whirlwind_lance").tags().contains(Tags.DURATION));
         assertTrue(config.skill("explosive_grenade").params().fuse() > 0);
         assertTrue(config.skill("explosive_grenade").params().gravity() > 0);

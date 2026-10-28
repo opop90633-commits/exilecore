@@ -74,7 +74,7 @@ public final class CodexData {
             // 寫不出來的略過
         }
         s.add("effects", effects);
-        s.addProperty("kind", skill.summon() != null ? "summon" : skill.aura() != null ? "aura" : skill.warcry() != null ? "warcry" : "");
+        s.addProperty("kind", skill.summon() != null ? "summon" : skill.aura() != null && !skill.reservesSpiritOnly() ? "aura" : skill.warcry() != null ? "warcry" : "");
         if (skill.cooldown() > 0) {
             s.addProperty("cooldown", skill.cooldown());
         }

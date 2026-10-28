@@ -142,6 +142,14 @@ public record SkillDefinition(String id, String name, String description, String
         return type == SkillType.ATTACK;
     }
 
+    /**
+     * 2026-10-28 照 PoE2：不是光環、但綁在按鍵格上就保留精魂的主動技能（戰旗、掠閃、喚駒）。
+     * 保留算在 {@link AuraService}（跟光環一起照按鍵順序排）；精魂不夠沒保留到的話不能用。這次之前這些技能不保留精魂。
+     */
+    public boolean reservesSpiritOnly() {
+        return aura != null && mechanic != Mechanic.AURA;
+    }
+
     /** 種類（說明用）：攻擊、法術；戰吼不算法術（2026-10，沒有 spell 標籤），寫「戰吼」。 */
     public String typeName() {
         if (summon != null) {
@@ -312,8 +320,9 @@ public record SkillDefinition(String id, String name, String description, String
             }
         }
         final AuraSpec aura = AuraSpec.parse(node);
-        if ((aura == null) != (mechanic != Mechanic.AURA)) {
-            throw new IllegalArgumentException(where + "：mechanic: aura 要寫 aura 區塊（其他運作方式不能寫）");
+        // 2026-10-28 照 PoE2：其他運作方式可以寫「只保留精魂」的 aura 區塊（戰旗、掠閃、喚駒）；這次之前只有光環能寫
+        if (mechanic == Mechanic.AURA ? aura == null : aura != null && !aura.reservationOnly()) {
+            throw new IllegalArgumentException(where + "：mechanic: aura 要寫 aura 區塊（其他運作方式只能寫只保留精魂的 aura: { reserve: … }）");
         }
         final WarcrySpec warcry = WarcrySpec.parse(node);
         if ((warcry == null) != (mechanic != Mechanic.WARCRY)) {
@@ -326,7 +335,7 @@ public record SkillDefinition(String id, String name, String description, String
             // 2026-10：精魂召喚（骸骨兵、狼伴…）不算光環、也不算範圍技能：光環的輔助、「光環技能等級」、範圍加成都不吃
             tags.remove(Tags.AURA);
             tags.remove(Tags.AREA);
-        } else if (aura != null) {
+        } else if (aura != null && mechanic == Mechanic.AURA) { // 2026-10-28：只保留精魂的戰旗、掠閃、喚駒不算光環（標籤照舊）
             if (aura.herald()) { // 2026-10-26：焚心業火（常駐、不算光環）拿掉了，這次之前先判斷它
                 // 捷光環（2026-10）：不算光環，另外一個標籤（光環的輔助、光環效果不吃；魔力保留的加成照吃）
                 tags.remove(Tags.AURA);

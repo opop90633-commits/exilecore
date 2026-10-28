@@ -530,7 +530,7 @@
 
   var KINDS = [
     ['currency', '通貨'], ['gold', '金幣'], ['merits', '功勳'], ['sponsor', '星幣／月卡幣／時裝幣／免費抽獎箱'], ['cosmetic', '時裝（限定、整組）'], ['item', '裝備'], ['unique', '傳奇'],
-    ['gem', '寶石'], ['flask', '藥劑'], ['map', '地圖'], ['refund', '免費退點'], ['life', '生活（材料、筏的方塊、料理、號角）'],
+    ['gem', '寶石'], ['flask', '藥劑'], ['map', '地圖'], ['refund', '免費退點'], ['class_scroll', '職業轉職卷（綁定帳號）'], ['life', '生活（材料、筏的方塊、料理、號角）'],
     ['take_sponsor', '⛔ 收回：累積贊助／星幣／買的格子'], ['take_currency', '⛔ 收回：通貨'], ['take_gold', '⛔ 收回：金幣'], ['take_item', '⛔ 收回：物品'],
     ['take_merits', '⛔ 收回：功勳'], ['take_refund', '⛔ 收回：免費退點'], ['take_life', '⛔ 收回：生活材料'], ['take_cosmetic', '⛔ 收回：時裝、限定稱號']
   ];
@@ -874,6 +874,10 @@
       keyword.addEventListener('input', function () { item.ref = keyword.value; renderSummary(); });
       row.appendChild(h('label', null, '物品編號或名稱', keyword));
     }
+    if (item.kind === 'class_scroll') {
+      // 2026-10-28：職業轉職卷
+      row.appendChild(h('span', { cls: 'hint', text: '綁定帳號（不能交易、上架、放公會倉庫、丟地上）；玩家拿在手上右鍵選新職業。天賦、昇華點全部退回，等級裝備不變' }));
+    }
     if (item.kind && item.kind.indexOf('take_') === 0) {
       row.appendChild(h('span', { cls: 'hint', text: item.kind === 'take_item' ? '有多少拿多少；找的是領的那個角色的背包、隨身背包與帳號倉庫'
         : item.kind === 'take_refund' ? '有多少拿多少；領的那個角色的' : '有多少拿多少（帳號共用）' }));
@@ -918,7 +922,7 @@
       }
     }
     var max = c.limits[item.kind] || 1;
-    var amountLabel = item.kind === 'gold' ? '金幣' : item.kind === 'merits' ? '功勳' : item.kind === 'sponsor' ? (item.ref === 'card_days' ? '天數' : item.ref === 'free_box' ? '箱數' : item.ref === 'card' ? '月卡幣' : item.ref === 'fashion' ? '時裝幣' : '星幣') : item.kind === 'refund' ? '次數' : item.kind === 'take_gold' ? '金幣' : item.kind === 'take_merits' ? '功勳' : item.kind === 'take_refund' ? '次數' : item.kind === 'take_item' ? '最多幾件' : item.kind === 'take_sponsor' ? (item.ref === 'card_days' ? '天數' : item.ref === 'free_box' ? '箱數' : '數量（星幣、頁、格）') : '數量';
+    var amountLabel = item.kind === 'gold' ? '金幣' : item.kind === 'merits' ? '功勳' : item.kind === 'sponsor' ? (item.ref === 'card_days' ? '天數' : item.ref === 'free_box' ? '箱數' : item.ref === 'card' ? '月卡幣' : item.ref === 'fashion' ? '時裝幣' : '星幣') : item.kind === 'refund' ? '次數' : item.kind === 'class_scroll' ? '張數' : item.kind === 'take_gold' ? '金幣' : item.kind === 'take_merits' ? '功勳' : item.kind === 'take_refund' ? '次數' : item.kind === 'take_item' ? '最多幾件' : item.kind === 'take_sponsor' ? (item.ref === 'card_days' ? '天數' : item.ref === 'free_box' ? '箱數' : '數量（星幣、頁、格）') : '數量';
     row.appendChild(numberInput(amountLabel, item.amount, 1, max, function (v) { item.amount = v; renderSummary(); }, '最多 ' + num(max)));
     row.appendChild(h('button', { type: 'button', cls: 'small remove', text: '移除', 'aria-label': '移除這一樣', onclick: function () {
       items = items.filter(function (x) { return x !== item; });
@@ -1068,7 +1072,7 @@
       spec.ref = item.gemType === 'skill' ? 'skill:' + item.ref : item.gemType === 'support' ? 'support:' + item.ref : item.gemType;
       if (item.gemType === 'support') { spec.level = 0; }
     }
-    if (item.kind === 'gold' || item.kind === 'merits' || item.kind === 'refund' || item.kind === 'take_gold' || item.kind === 'take_merits' || item.kind === 'take_refund') { spec.ref = null; spec.level = 0; }
+    if (item.kind === 'gold' || item.kind === 'merits' || item.kind === 'refund' || item.kind === 'class_scroll' || item.kind === 'take_gold' || item.kind === 'take_merits' || item.kind === 'take_refund') { spec.ref = null; spec.level = 0; }
     if (item.kind === 'take_item') { spec.ref = (item.ref || '').trim(); }
     if (item.kind === 'item' || item.kind === 'unique') { spec.affixes = affixSpec(item); }
     return spec;
@@ -1086,6 +1090,7 @@
       case 'cosmetic': return nameOf(c.cosmetics, item.ref) + '（已經有的不重複給）';
       case 'sponsor': return item.ref === 'card_days' ? '月卡 ' + num(n) + ' 天' : item.ref === 'free_box' ? '免費抽獎箱 ' + num(n) + ' 箱' : item.ref === 'card' ? '月卡幣 ' + num(n) : item.ref === 'fashion' ? '時裝幣 ' + num(n) : '星幣 ' + num(n) + (item.ref === 'bonus' ? '（贈送）' : '（儲值）');
       case 'refund': return '免費退點 ×' + n;
+      case 'class_scroll': return '職業轉職卷 ×' + num(n);
       case 'take_sponsor': var what = { total: '累積贊助', coins: '星幣', card: '月卡幣', fashion: '時裝幣', bought_stash: '買的倉庫頁', bought_bag: '買的背包頁', bought_listing: '買的上架格', card_days: '月卡天數', free_box: '免費抽獎箱' }[item.ref] || item.ref;
         return '⛔ 收回 ' + what + ' ' + num(n);
       case 'take_currency': return '⛔ 收回 ' + nameOf(c.currencies, item.ref) + ' ×' + num(n);

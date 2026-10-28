@@ -77,8 +77,8 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     /** 互斥的多重投射輔助（2026-10）：掛了兩顆只有第一顆生效。 */
     public static final Set<String> MULTI_PROJECTILE = Set.of("multiple_projectiles", "greater_multiple_projectiles");
 
-    /** 複擊最多再打幾下。 */
-    public static final int MAX_REPEATS = 4;
+    /** 複擊最多再打幾下（2026-10-28 照 PoE2 Rapid Assault 一次刺六下：4 → 5）。 */
+    public static final int MAX_REPEATS = 5;
     /** 2026-10-26：INCREASED／MORE：投射物射程（放在這裡，不動 StatKeys）。 */
     public static final String PROJECTILE_RANGE = "skill.projectile_range";
 
@@ -347,13 +347,13 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 : Math.max(0, Math.min(10000, (aura.reserve() + supportSpirit(active)) * reserveFactor));
         // 2026-10（照 PoE2）：精魂召喚每一隻保留多少（已經算進保留效率）；0 = 不是照隻數算。2026-10-28 照 poe2db：21～40 級繼續照表變少（這次之前超過 20 級停在 20 級的值）
         final double minionReserve = aura == null || aura.perMinion() == null ? 0 : Math.max(0.01, aura.perMinion().at(Math.min(level, 40)) * reserveFactor);
-        final double auraEffect = aura == null
+        final double auraEffect = aura == null || definition.reservesSpiritOnly() // 2026-10-28：只保留精魂的戰旗照舊吃戰吼效果
                 ? (definition.mechanic() == Mechanic.MARK ? Math.max(0, effective.apply(definition.tags().contains("curse") // 2026-10-22：詛咒吃詛咒效果、印記吃印記效果（照 PoE2 分開）
                         ? StatKeys.CURSE_EFFECT : StatKeys.MARK_EFFECT, 1.0, context))
                 : definition.mechanic() == Mechanic.WARCRY ? Math.max(0, effective.apply(StatKeys.WARCRY_EFFECT, 1.0, context)) : 1) // 戰吼效果
                 : aura.herald() ? Math.max(0, effective.apply(StatKeys.HERALD_EFFECT, 1.0, context)) // 捷光環不吃光環效果，只吃捷光環效果（2026-10）
                 : Math.max(0, effective.apply(StatKeys.AURA_EFFECT, 1.0, context));
-        final boolean generosity = aura != null && StatKeys.flag(effective, StatKeys.FLAG_GENEROSITY);
+        final boolean generosity = aura != null && !definition.reservesSpiritOnly() && StatKeys.flag(effective, StatKeys.FLAG_GENEROSITY);
         final WarcrySpec warcry = definition.warcry();
         // 2026-10-26 照 PoE2：照強度強化的戰吼，這裡只記「多強化幾次」（強勢戰吼、天賦），次數吼的時候照強度算
         final int exerts = warcry == null || !warcry.empowers() ? 0
@@ -369,7 +369,9 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 projectiles, spread, speed,
                 // 2026-10-26：投射物射程（INCREASED／MORE，鍵 skill.projectile_range；PoE2 毀滅者之弓的「減少 50% 投射物射程」）
                 definition.mechanic() == Mechanic.PROJECTILE && !params.blink()
-                        ? params.range() * Math.max(0.1, effective.apply(PROJECTILE_RANGE, 1.0, context)) : params.range(),
+                        ? params.range() * Math.max(0.1, effective.apply(PROJECTILE_RANGE, 1.0, context))
+                        : definition.mechanic() == Mechanic.DASH && params.dash() != null ? params.dash().range(level, params.range()) // 2026-10-28 照 PoE2：位移距離逐級
+                        : params.range(),
                 params.size(),
                 pierce, chains, params.explode().at(level) * areaScale, params.wobble(), params.arrow(),
                 params.radius().at(level) * areaScale, params.length().at(level) * areaScale, params.chainRange(),

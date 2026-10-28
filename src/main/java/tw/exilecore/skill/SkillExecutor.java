@@ -176,7 +176,8 @@ final class SkillExecutor {
     }
 
     private void strike(final Origin origin, final SkillBuild build, final LivingEntity preferred) {
-        final double reach = build.reach();
+        // 2026-10-28 照 PoE2：連段的那一下多的打擊距離（寒冰震波第三擊 +0.7 公尺…；SkillStages）
+        final double reach = build.reach() + SkillStages.mark(build.profile(), SkillStages.REACH);
         final Location from = origin.feet();
         final List<LivingEntity> hits = new ArrayList<>();
         final StatSheet ownerSheet = origin.owner() == null ? null : plugin.players().sheet(origin.owner());
@@ -230,16 +231,23 @@ final class SkillExecutor {
             }
         }
         final SkillParams.Execute execute = build.params().execute();
-        for (final LivingEntity target : hits) {
-            SkillProfile profile = build.profile();
-            boolean executed = false;
-            if (execute != null && lifeFraction(target) < execute.below()) {
-                profile = profile.scaled(1 + execute.more() / 100.0, "處決");
-                executed = true;
-            }
-            damage.hit(origin.owner(), target, profile, knockback(from, target, build.knockback()));
-            if (executed) {
-                visuals.execute(SkillTargets.center(target));
+        // 2026-10-28 照 PoE2：一下打好幾次（風暴連擊第三下快速連打三次；SkillStages 的 hits）
+        final int repeatsHere = SkillStages.hits(build.profile());
+        for (int round = 0; round < repeatsHere; round++) {
+            for (final LivingEntity target : hits) {
+                if (round > 0 && (!target.isValid() || target.isDead())) {
+                    continue;
+                }
+                SkillProfile profile = build.profile();
+                boolean executed = false;
+                if (execute != null && lifeFraction(target) < execute.below()) {
+                    profile = profile.scaled(1 + execute.more() / 100.0, "處決");
+                    executed = true;
+                }
+                damage.hit(origin.owner(), target, profile, knockback(from, target, build.knockback()));
+                if (executed) {
+                    visuals.execute(SkillTargets.center(target));
+                }
             }
         }
         // 近戰擴散：每個打中的目標周圍的其他敵人也挨一下（打到的不重複）
@@ -302,7 +310,7 @@ final class SkillExecutor {
         }
         for (final LivingEntity target : targets.around(center, radius, origin.owner())) {
             if (origin.canSee(target)) {
-                damage.hit(origin.owner(), target, build.profile(), null);
+                damage.hit(origin.owner(), target, build.profile(), knockback(center, target, build.params().knockback() > 0 ? build.knockback() : 0)); // 2026-10-28：nova 寫了 knockback 才擊退（其他新星照舊）
             }
         }
         targets.strike(origin.owner(), build.profile(), SkillTargets.sphere(center, radius), new Object()); // 2026-10-25
@@ -313,7 +321,9 @@ final class SkillExecutor {
                     build.definition().visual(), build.durationTicks(ground.duration()), ground.interval(), ground.pull());
         }
         final SkillParams.Aftershock aftershock = build.params().aftershock();
-        if (aftershock != null) {
+        // 2026-10-28 照 PoE2 Earthquake：鋸齒地面有逐級上限（2 → 4 → 8）、不能疊在現有的上面，產生不了就沒有餘震
+        if (aftershock != null && (plugin.skills() == null
+                || plugin.skills().stageAttacks().allowAftershock(origin.owner(), build, center, Math.round(aftershock.delay() * 20)))) {
             // 2026-10-26：餘震的半徑、傷害照等級（PoE2 地動逐級）；天賦「你親自使用的猛擊的餘震範圍增加」
             final double shockArea = origin.self() && build.definition().tags().contains(tw.exilecore.stats.Tags.SLAM)
                     ? TreeMechanics.aftershockRadius(build.profile().effective(plugin.players().sheet(origin.owner())), build.profile().tags()) : 1.0;
@@ -354,11 +364,26 @@ final class SkillExecutor {
 
     private void cone(final Origin origin, final SkillBuild build) {
         final double length = build.length();
-        for (final LivingEntity target : targets.cone(origin, length, build.angle())) {
+        final List<LivingEntity> coneHits = targets.cone(origin, length, build.angle());
+        // 2026-10-28 照 PoE2 Lightning Conduit：範圍內有感電中的敵人時多劈 1 → 2 道雷，隨機分給打到的敵人（這次之前沒做）
+        final int extraBolts = origin.owner() == null || coneHits.isEmpty() ? 0 : (int) Math.round(build.profile()
+                .effective(plugin.players().sheet(origin.owner())).flat(tw.exilecore.stats.SpellParityKeys.SHOCKED_BOLTS, build.profile().tags()));
+        final boolean shockedInside = extraBolts > 0 && plugin.ailments() != null
+                && coneHits.stream().anyMatch(target -> plugin.ailments().has(target, tw.exilecore.ailment.AilmentType.SHOCK));
+        for (final LivingEntity target : coneHits) {
             damage.hit(origin.owner(), target, build.profile(), null);
+        }
+        if (shockedInside) {
+            for (final LivingEntity target : ZonePulses.distribute(coneHits, extraBolts, plugin.random())) {
+                if (target.isValid() && !target.isDead()) {
+                    damage.hit(origin.owner(), target, build.profile(), null);
+                    visuals.impact(build.definition().visual(), target.getLocation());
+                }
+            }
         }
         targets.strike(origin.owner(), build.profile(), SkillTargets.coneShape(origin, length, build.angle()), new Object()); // 2026-10-25
         visuals.cone(build.definition().visual(), origin, length, build.angle());
+        coneStages(origin, build, length);
         final SkillParams.Aftershock aftershock = build.params().aftershock();
         if (aftershock != null) {
             final org.bukkit.util.Vector facing = origin.facing().clone().setY(0);
@@ -369,6 +394,71 @@ final class SkillExecutor {
             zones.addImpact(origin.owner(), center, length * aftershock.radius(build.level()),
                     build.profile().scaled(1 + aftershock.more(build.level()) / 100.0, "第二擊"),
                     build.definition().visual(), (int) Math.round(aftershock.delay() * 20));
+        }
+    }
+
+    /** 2026-10-28 照 PoE2 Glacial Cascade：最後一根冰稜用掉凍結時更多幾倍（一般怪更多 250%、傳奇怪更多 425%）。 */
+    static final double FINAL_SPIKE_FREEZE_MORE = 2.5;
+    static final double FINAL_SPIKE_FREEZE_MORE_UNIQUE = 4.25;
+    /** 2026-10-28 照 PoE2 Wind Serpent's Fury：每條風蛇隔幾 tick 跟在矛後面。 */
+    static final int SERPENT_GAP_TICKS = 5;
+
+    /**
+     * 2026-10-28 照 PoE2：扇形技能的分段（SkillStages）。
+     * final（冰脊裂的最後一根冰稜）：在扇形最遠的地方再打一小圈（自己的傷害表、轉換、半徑），打到凍結的敵人用掉凍結、更多 250%（傳奇 425%）；
+     * serpent（蛇嵐突的風蛇）：你親自用的時候用掉身上所有的怒星（charge_cost 先付的那一顆也算一條），每顆一條風蛇隔一下沿同一道再打一次。
+     */
+    private void coneStages(final Origin origin, final SkillBuild build, final double length) {
+        final org.bukkit.util.Vector facing = origin.facing().clone().setY(0);
+        if (facing.lengthSquared() > 1.0E-6) {
+            facing.normalize();
+        }
+        final SkillStages.Stage spike = SkillStages.get(build.definition().id(), "final");
+        if (spike != null) {
+            final Location tip = origin.feet().clone().add(facing.clone().multiply(length));
+            final double radius = SkillStages.radius(build, "final", 0.9 * build.areaScale());
+            final SkillProfile profile = SkillStages.profile(build, build.profile(), "final");
+            for (final LivingEntity target : targets.around(tip, radius, origin.owner())) {
+                SkillProfile hit = profile;
+                if (plugin.ailments() != null && plugin.ailments().isFrozen(target)) {
+                    final boolean unique = plugin.monsters() != null && plugin.monsters().data(target)
+                            .map(data -> data.rarity() == tw.exilecore.monster.MonsterRarity.UNIQUE).orElse(false);
+                    plugin.ailments().consume(target, tw.exilecore.ailment.AilmentType.FREEZE, origin.owner());
+                    hit = profile.scaled(1 + (unique ? FINAL_SPIKE_FREEZE_MORE_UNIQUE : FINAL_SPIKE_FREEZE_MORE), "用掉凍結");
+                }
+                damage.hit(origin.owner(), target, hit, null);
+            }
+            targets.strike(origin.owner(), profile, SkillTargets.sphere(tip, radius), new Object());
+            visuals.nova(build.definition().visual(), tip, radius);
+        }
+        final SkillStages.Stage serpent = SkillStages.get(build.definition().id(), "serpent");
+        if (serpent != null && origin.self() && plugin.combat() != null && plugin.combat().charges() != null) {
+            final Player player = origin.owner();
+            final StatSheet effective = build.profile().effective(plugin.players().sheet(player));
+            int serpents = plugin.skills() != null && plugin.skills().config().chargeCost(build.definition().id()) != null ? 1 : 0;
+            for (int guard = 0; guard < 20; guard++) {
+                final int spent = plugin.combat().charges().spend(player, "frenzy", effective, build.profile().tags());
+                if (spent <= 0) {
+                    break;
+                }
+                serpents += spent;
+            }
+            final SkillProfile profile = SkillStages.profile(build, build.profile(), "serpent");
+            final Location from = origin.feet().clone();
+            final org.bukkit.util.Vector direction = origin.direction().clone();
+            final double angle = build.angle();
+            for (int i = 1; i <= Math.min(10, serpents); i++) {
+                plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                    if (!player.isOnline() || !player.getWorld().equals(from.getWorld())) {
+                        return;
+                    }
+                    final Origin again = Origin.at(player, from, direction);
+                    for (final LivingEntity target : targets.cone(again, length, angle)) {
+                        damage.hit(player, target, profile, null);
+                    }
+                    visuals.cone(build.definition().visual(), again, length, angle);
+                }, (long) SERPENT_GAP_TICKS * i);
+            }
         }
     }
 
@@ -596,11 +686,16 @@ final class SkillExecutor {
         // 終點爆開
         final double endRadius = build.scaledRadius(params.endRadius());
         if (endRadius > 0) {
-            targets.strike(player, build.profile(), SkillTargets.sphere(to, endRadius), strikeSource);
+            // 2026-10-28 照 PoE2（奔雷踏）：終點的猛擊有自己的傷害表（SkillStages 的 slam）；這次之前跟沿路的踏步一樣
+            final SkillProfile slam = SkillStages.profile(build, build.profile(), "slam");
+            targets.strike(player, slam, SkillTargets.sphere(to, endRadius), strikeSource);
             for (final LivingEntity target : targets.around(to, endRadius, player)) {
-                damage.hit(player, target, build.profile(), null);
+                damage.hit(player, target, slam, null);
             }
             visuals.nova(visual, to, endRadius);
+        }
+        if (plugin.skills() != null) {
+            plugin.skills().leftovers().stampede(player, build, from, to); // 2026-10-28 照 PoE2 Stampede：鋸齒地面、終點炸開
         }
     }
 
@@ -705,7 +800,12 @@ final class SkillExecutor {
                     case SHOCK -> tw.exilecore.stats.DamageType.LIGHTNING;
                     default -> tw.exilecore.stats.DamageType.FIRE;
                 };
-                final double scale = type == tw.exilecore.ailment.AilmentType.FREEZE ? SUNDER_COLD
+                // 2026-10-28 照 PoE2：冰爆、雷爆照自己的逐級表（SkillStages 的 cold、lightning；1 級 350%、140%，40 級 6334%、2534%）；
+                // 這次之前固定是火爆的 2.8 倍、1.12 倍（20 級的比例）
+                final SkillStages.Stage own = SkillStages.get(build.definition().id(),
+                        type == tw.exilecore.ailment.AilmentType.FREEZE ? "cold" : type == tw.exilecore.ailment.AilmentType.SHOCK ? "lightning" : "fire");
+                final double scale = own != null ? SkillStages.share(build.definition(), own, build.level())
+                        : type == tw.exilecore.ailment.AilmentType.FREEZE ? SUNDER_COLD
                         : type == tw.exilecore.ailment.AilmentType.SHOCK ? SUNDER_LIGHTNING : 1.0;
                 final SkillProfile base = build.profile();
                 final SkillProfile blast = new SkillProfile(base.id() + "." + element.name().toLowerCase(java.util.Locale.ROOT), base.tags(),
@@ -1071,6 +1171,11 @@ final class SkillExecutor {
         final Location center = aimed != null ? aimed.getLocation() : targets.aimPoint(origin, build.range());
         final int delay = (int) Math.max(2, Math.round(build.params().delay() * 20 / fallSpeed(origin, build)));
         final String id = build.definition().id();
+        // 2026-10-28 照 PoE2：萬箭齊落自己排箭（圖騰、觸發的也落全部的箭、同一隻 0.12 秒一次、同時一場）；寒晶雷引爆前脈衝曝露（StageLeftovers）
+        if (plugin.skills() != null && plugin.skills().leftovers().impact(origin, build, center, delay)) {
+            visuals.cast(build.definition().visual(), origin.eye());
+            return;
+        }
         final SkillConfig config = plugin.skills() == null ? null : plugin.skills().config();
         final SkillConfig.RainSpec rain = config == null ? null : config.rain(id);
         final SkillConfig.LodgeSpec lodge = config == null || origin.owner() == null ? null : config.lodge(id);
@@ -1128,19 +1233,73 @@ final class SkillExecutor {
             final SkillProfile blast = cascade == null ? null : cascadeProfile(build.profile(), cascade, build.level());
             final double blastRadius = cascade == null ? 0 : cascade.radius() * build.areaScale();
             final int blastDelay = cascade == null ? 0 : (int) Math.max(1, Math.round(cascade.after() * 20));
+            final List<Location> points = new ArrayList<>();
             for (int i = 0; i < count; i++) {
                 final Location at = center.clone();
                 if (i > 0) {
                     final double angle = phase + Math.PI * 2 * (i - 1) / (count - 1);
                     at.add(Math.cos(angle) * spread, 0, Math.sin(angle) * spread);
                 }
-                zones.addImpact(origin.owner(), at, build.radius(), build.profile(), build.definition().visual(), delay);
+                points.add(at);
+            }
+            if (SkillStages.get(id, "bolt") != null) {
+                // 2026-10-28 照 PoE2 Siege Cascade（崩城落彈）：準心處（impact 的半徑內）每一隻敵人旁邊各落一發弩彈（stages.bolt 的小半徑），
+                // 沒有敵人就落在準心；這次之前是準心處一整圈 4 格
+                final List<Location> seeded = new ArrayList<>();
+                for (final Location at : points) {
+                    for (final LivingEntity enemy : targets.around(at, build.radius(), origin.owner())) {
+                        seeded.add(enemy.getLocation());
+                    }
+                }
+                if (!seeded.isEmpty()) {
+                    points.clear();
+                    points.addAll(seeded);
+                }
+            }
+            final double boltRadius = SkillStages.radius(build, "bolt", build.radius());
+            final SkillStages.Stage explosion = SkillStages.get(id, "explosion");
+            final SkillProfile burst = explosion == null ? null : SkillStages.profile(build, build.profile(), "explosion");
+            final double burstRadius = SkillStages.radius(build, "explosion", boltRadius);
+            final int burstDelay = explosion == null ? 0 : (int) Math.max(1, Math.round(explosion.after() * 20));
+            for (final Location at : points) {
+                zones.addImpact(origin.owner(), at, boltRadius, build.profile(), build.definition().visual(), delay);
                 if (blast != null) {
                     zones.addImpact(origin.owner(), at, blastRadius, blast, build.definition().visual(), delay + blastDelay);
                 }
+                if (burst != null) {
+                    // 2026-10-28 照 PoE2：落地之後再炸開（自己的傷害表、半徑；崩城落彈的弩彈）
+                    zones.addImpact(origin.owner(), at, burstRadius, burst, build.definition().visual(), delay + burstDelay);
+                }
             }
+            pulses(origin, build, center, delay);
         }
         visuals.cast(build.definition().visual(), origin.eye());
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Spear of Solaris（熾陽之矛）：落地之後天光在原地脈衝（stages.pulse：自己的傷害表、半徑，
+     * 每 interval 秒一次、共 count 次）。這次之前沒有脈衝。
+     */
+    private void pulses(final Origin origin, final SkillBuild build, final Location center, final int delay) {
+        final SkillStages.Stage pulse = SkillStages.get(build.definition().id(), "pulse");
+        if (pulse == null || origin.owner() == null) {
+            return;
+        }
+        final double radius = SkillStages.radius(build, "pulse", build.radius());
+        final SkillProfile profile = SkillStages.profile(build, build.profile(), "pulse")
+                .derive(build.definition().id() + ".pulse", java.util.Set.of(tw.exilecore.stats.Tags.AREA), java.util.Set.of(tw.exilecore.stats.Tags.PROJECTILE));
+        final double interval = pulse.interval() > 0 ? pulse.interval() : 0.2;
+        final int times = Math.max(1, pulse.count().intAt(build.level()));
+        final Player owner = origin.owner();
+        final Location at = center.clone();
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (owner.isOnline() && owner.getWorld().equals(at.getWorld())) {
+                zones.addCircle(owner, at, radius, profile, build.definition().visual(), (int) Math.round(interval * times * 20), interval, 0);
+            }
+        }, Math.max(1, delay));
+        if (plugin.skills() != null) {
+            plugin.skills().leftovers().solarisGround(owner, build, at, delay); // 2026-10-28 照 PoE2 Spear of Solaris：會擴大的點燃地面
+        }
     }
 
     /**
@@ -1195,6 +1354,9 @@ final class SkillExecutor {
             }
             zones.addPoints(origin.owner(), points, radius, profile, visual, build.durationTicks(params.duration()), params.interval(), params.pull(),
                     build.definition().id(), zoneMax(origin, build, params.max()));
+            if (plugin.skills() != null) {
+                plugin.skills().leftovers().wallPlaced(origin, build, points); // 2026-10-28 照 PoE2 Shield Wall：每一段的生命
+            }
         } else if (params.line()) {
             // 面前橫向的一道（焰幕）：中心在面前 2 格，左右各半條長度
             final Vector facing = origin.facing();
@@ -1214,6 +1376,9 @@ final class SkillExecutor {
             }
             zones.addPoints(origin.owner(), points, radius, profile, visual, build.durationTicks(params.duration()), params.interval(), params.pull(),
                     build.definition().id(), zoneMax(origin, build, params.max()));
+            if (plugin.skills() != null) {
+                plugin.skills().leftovers().wallPlaced(origin, build, points); // 2026-10-28 照 PoE2 Shield Wall：每一段的生命
+            }
         } else {
             final Location center;
             if (build.range() <= 0) {
@@ -1224,7 +1389,22 @@ final class SkillExecutor {
             }
             zones.addCircle(origin.owner(), center, radius, profile, visual, build.durationTicks(params.duration()), params.interval(), params.pull(),
                     build.definition().id(), zoneMax(origin, build, params.max()));
+            if (origin.owner() != null && (params.bolts() != null || params.shower() != null)) {
+                // 2026-10-28 照 PoE2：雷雲每一波一道會連鎖的雷（連鎖 3 → 5 → 9 次，再加連鎖的輔助）、地火柱每一波噴 3 → 5 → 6 顆火山彈（再加投射物數量）
+                final tw.exilecore.stats.StatSheet effective = build.profile().effective(plugin.players().sheet(origin.owner()));
+                final int chains = params.bolts() == null ? -1 : params.bolts().chains().intAt(build.level())
+                        + Math.max(0, (int) Math.round(effective.flat(StatKeys.SKILL_CHAINS, build.profile().tags())));
+                final int shards = params.shower() == null ? 0 : Math.max(1, params.shower().count().intAt(build.level())
+                        + (int) Math.round(effective.flat(StatKeys.SKILL_PROJECTILES, build.profile().tags())));
+                zones.pulses(origin.owner(), build.definition().id(), chains,
+                        params.bolts() == null ? 0 : params.bolts().range() * build.areaScale(),
+                        params.bolts() == null ? 0 : params.bolts().chainRange(),
+                        Math.min(20, shards), params.shower() == null ? 0 : params.shower().radius() * build.areaScale());
+            }
             DruidSupports.advanceStorm(plugin, zones, origin, build, center); // 2026-10-26 照 PoE2：行嵐、掠嵐讓風暴從腳下走過去
+            if (plugin.skills() != null) {
+                plugin.skills().leftovers().volcano(origin, build, center); // 2026-10-28 照 PoE2 Volcano：引導的開場爆發
+            }
         }
         visuals.cast(visual, origin.eye());
     }
@@ -1539,6 +1719,7 @@ final class SkillExecutor {
         if (plugin.skills() != null) {
             plugin.skills().supportMechanics().markApplied(player, build, target, until); // 2026-10-26：烙印深、久印
             plugin.skills().spears().marked(player, build, target); // 2026-10-27 照 PoE2 Bloodhound's Mark
+            plugin.skills().markActivation().marked(player, build.definition()); // 2026-10-28 照 PoE2：標記新目標時拿掉印記觸發的增益
         }
         visuals.mark(build.definition().visual(), target);
     }

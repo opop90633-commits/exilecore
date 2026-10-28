@@ -879,7 +879,7 @@ public final class BuildCalc {
             o.addProperty("tier", definition.tier());
             o.addProperty("weapon", definition.weaponText());
             o.addProperty("description", definition.description() == null ? "" : definition.description());
-            o.addProperty("aura", definition.aura() != null);
+            o.addProperty("aura", definition.aura() != null && !definition.reservesSpiritOnly()); // 2026-10-28：戰旗、掠閃、喚駒只保留精魂，不是光環
             o.addProperty("summon", definition.summon() != null);
             o.addProperty("damage", definition.dealsDamage() || definition.summon() != null);
             final JsonArray tags = new JsonArray();

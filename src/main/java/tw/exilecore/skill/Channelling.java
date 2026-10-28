@@ -334,7 +334,8 @@ final class Channelling {
         final double more = channel.distanceFactor(charging(player) == null ? 0 : charging(player).travelled);
         final tw.exilecore.stats.SkillProfile area = more > 1 ? build.profile().scaled(more, "衝鋒距離") : build.profile();
         service.executor().burst(player, area, at, radius, build.knockback(), build.definition().visual());
-        final tw.exilecore.stats.SkillProfile collision = area.scaled(channel.collision(), "撞擊");
+        // 2026-10-28 照 PoE2 Shield Charge 的 Collision：自己的逐級表（2.33 → 2.70 → 3.71 倍）、盾護甲每 15 點 6～8；這次之前固定 2.7 倍
+        final tw.exilecore.stats.SkillProfile collision = StageAttacks.collision(area, channel.collision());
         for (final LivingEntity target : collided) {
             if (target.isValid()) {
                 service.executor().hitOne(player, collision, target, at, CRASH_KNOCKBACK);

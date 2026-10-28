@@ -111,10 +111,10 @@ public final class HitEffects implements Listener {
             boolean any = false;
             for (final DamageType type : new DamageType[] {DamageType.FIRE, DamageType.COLD, DamageType.LIGHTNING}) {
                 if (result.dealt().get(type) > 0) {
+                    any |= !debuffs.has(target, "exposure." + type.tag(), now); // 2026-10-28：已經曝露的不再冒字（這次之前每一下都冒）
                     debuffs.apply(target, new Debuffs.Debuff("exposure." + type.tag(), source, now + EXPOSURE_TICKS, 0, false, null,
                             List.of(Modifier.flat(type.mitigationStat(), -amount * tw.exilecore.passive.ConquestEffects.exposureScale(effective, type),
                                     "曝露")), 0));
-                    any = true;
                 }
             }
             if (any) {
@@ -143,20 +143,26 @@ public final class HitEffects implements Listener {
         }
         final double daze = effective.flat(StatKeys.DAZE_CHANCE, tags);
         if (daze > 0 && roll(daze)) {
+            final boolean wasDazed = debuffs.has(target, "daze", now); // 2026-10-28：已經眩暈的不再冒字
             debuffs.apply(target, new Debuffs.Debuff("daze", source, now + scaledTicks(DAZE_TICKS, // 2026-10-26：天賦的眩暈持續時間
                     effective.increased(tw.exilecore.stats.TreeMechanicKeys.DAZE_DURATION, tags)), 0, false, null,
                     List.of(Modifier.more(tw.exilecore.ailment.AilmentKeys.STUN_BUILDUP_TAKEN, DAZE_STUN_BUILDUP // 2026-10-26 照 PoE2 天賦樹：眩暈效果
                             * Math.max(0, 1 + effective.increased(tw.exilecore.stats.TreeEffectKeys.DAZE_EFFECT, tags)), "眩暈")), 0));
-            feedback(viewer, defender, "眩暈", Particle.WAX_OFF);
+            if (!wasDazed) {
+                feedback(viewer, defender, "眩暈", Particle.WAX_OFF);
+            }
         }
         final double blind = effective.flat(StatKeys.BLIND_CHANCE, tags);
         if (blind > 0 && !StatKeys.flag(effective, tw.exilecore.stats.SupportExtraKeys.FLAG_CANNOT_BLIND) && roll(blind)) { // 2026-10-27 照 PoE2 Blindside：不會致盲
+            final boolean wasBlind = debuffs.has(target, "blind", now); // 2026-10-28：已經致盲的不再冒字
             // 2026-10-26 照 PoE2：天賦的致盲持續時間、「被你致盲的敵人暴擊率降低」
             debuffs.apply(target, new Debuffs.Debuff("blind", source, now + scaledTicks(BLIND_TICKS,
                     effective.increased(tw.exilecore.stats.TreeMechanicKeys.BLIND_DURATION, tags)), 0, false, null,
                     blindModifiers(effective.increased(tw.exilecore.stats.TreeMechanicKeys.BLIND_ENEMY_CRIT, tags),
                             Math.max(0, 1 + effective.increased(tw.exilecore.stats.TreeEffectKeys.BLIND_EFFECT, tags))), 0));
-            feedback(viewer, defender, "致盲", Particle.SMOKE);
+            if (!wasBlind) {
+                feedback(viewer, defender, "致盲", Particle.SMOKE);
+            }
         }
         // 2026-10-26：凋零、暴擊弱點、阻礙（PoE2：混沌弩箭、收割、魔力吸取…）
         final int withered = (int) Math.round(effective.flat(StatKeys.WITHERED_ON_HIT, tags));
@@ -177,9 +183,12 @@ public final class HitEffects implements Listener {
         }
         final double maim = effective.flat(StatKeys.MAIM_CHANCE, tags);
         if (maim > 0 && !StatKeys.flag(effective, tw.exilecore.stats.SupportExtraKeys.FLAG_CANNOT_MAIM) && roll(maim)) { // 2026-10-27 照 PoE2 Undermine：不會癱瘓
+            final boolean wasMaimed = debuffs.has(target, "maim", now); // 2026-10-28：已經癱瘓的只刷新時間、不再冒字（這次之前每一下都冒「癱瘓」，把傷害數字擠掉）
             debuffs.apply(target, new Debuffs.Debuff("maim", source, now + MAIM_TICKS, 0, false, null,
                     List.of(Modifier.increased(StatKeys.EVASION, -MAIM_EVASION, "癱瘓")), maimSlow(effective.increased(StatKeys.SLOW_MAGNITUDE, tags))));
-            feedback(viewer, defender, "癱瘓", Particle.DAMAGE_INDICATOR);
+            if (!wasMaimed) {
+                feedback(viewer, defender, "癱瘓", Particle.DAMAGE_INDICATOR);
+            }
         }
     }
 

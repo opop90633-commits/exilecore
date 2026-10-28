@@ -52,6 +52,9 @@ public final class SkillModule implements Module {
         manager.registerEvents(created.storedReleases(), plugin); // 2026-10-27 照 PoE2：鐵壁守、瘟囊爆存傷害
         manager.registerEvents(created.originals(), plugin); // 2026-10-26：照 PoE2 原作機制重做的技能
         manager.registerEvents(created.spears(), plugin); // 2026-10-27 照 PoE2：血嗅印（死掉時的血爆）
+        manager.registerEvents(created.stageEffects(), plugin); // 2026-10-28 照 PoE2：矛頭、冰爆、震脈掌的投射物
+        manager.registerEvents(created.leftovers(), plugin); // 2026-10-28 照 PoE2：冰片門檻、血爆範圍、裂甲（StageLeftovers）
+        manager.registerEvents(created.stageAttacks(), plugin); // 2026-10-28 照 PoE2：交錯爪的印記震波、驚雷刺的鹿靈、瘴域的毒苞
         created.originals().start();
         plugin.players().addBuffSource(created.persistentBuffs()::modifiers); // 2026-10-26：木甲的護甲
         manager.registerEvents(created.chargeEffects(), plugin); // 2026-10-24：戰星輔助

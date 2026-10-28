@@ -107,9 +107,15 @@ public final class MinionSheets {
     /** PoE2 召喚物的基礎暴擊率 5%（所有召喚物都一樣）。 */
     public static final double ALLY_CRIT = 5;
 
-    /** PoE2：召喚物等級 = 寶石等級 × 2（20 級寶石 = 40 級召喚物；超過 20 級照 {@link #extraScale}）。 */
+    /** 照 PoE2 寶石逐級表才有的最高技能等級（40 級；召喚物等級 80）。 */
+    public static final int POE2_MAX_GEM_LEVEL = 40;
+
+    /**
+     * PoE2：召喚物等級 = 寶石等級 × 2（20 級寶石 = 40 級、40 級寶石 = 80 級召喚物；poe2db 的 Minion Level 欄）。
+     * 2026-10-28 照 PoE2：超過 20 級也照 × 2 往上（這次之前停在 40 級，超過 20 級改乘 {@link #extraScale}）；40 級以上才照 extraScale。
+     */
     public static int allyLevel(final int skillLevel) {
-        return 2 * Math.max(1, Math.min(SkillLoadout.MAX_LEVEL, skillLevel));
+        return 2 * Math.max(1, Math.min(POE2_MAX_GEM_LEVEL, skillLevel));
     }
 
     /** PoE2 的表（1–100 級逐級；超出兩端夾住，非整數等級照相鄰兩級等比內插）。 */
@@ -230,11 +236,12 @@ public final class MinionSheets {
     }
 
     /**
-     * 超過 20 級（裝備的「+x 技能等級」、Lv.21 寶石）每多一級，召喚物的生命與傷害再乘 1 + minion_extra_level_damage
+     * 超過 40 級（2026-10-28 之前是 20 級）每多一級，召喚物的生命與傷害再乘 1 + minion_extra_level_damage
      * （2026-10：預設 5%，比法術的 10% 低——召喚流的「+召喚物技能等級」很好疊，+8 級時 ×1.48，以前 ×2.14）。
      */
     public static double extraScale(final SkillConfig config, final int skillLevel) {
-        return skillLevel > SkillLoadout.MAX_LEVEL ? Math.pow(config.minionExtraLevelGrowth(), skillLevel - SkillLoadout.MAX_LEVEL) : 1.0;
+        // 2026-10-28：21～40 級改成召喚物等級照 PoE2 表往上（allyLevel），這個倍率只給超過 40 級的；這次之前超過 20 級就乘
+        return skillLevel > POE2_MAX_GEM_LEVEL ? Math.pow(config.minionExtraLevelGrowth(), skillLevel - POE2_MAX_GEM_LEVEL) : 1.0;
     }
 
     /** 主人屬性表裡會給召喚物的修飾器：帶 minion 標籤的。 */

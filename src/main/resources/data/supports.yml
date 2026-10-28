@@ -148,6 +148,9 @@ retired:
   hobble: 2              # 跛行（0.5 資料沒有任何數值）
   living_lightning_ii: 3 # 活雷 II（原作的活雷是不會被打、會瞬移的召喚物）
   momentum: 2            # 衝勢（我們的技能大多按一下就瞬間出手，沒有「使用的那段時間」可以邊走邊用）
+  # 2026-10-28 照站長：刪掉震符、符刃環（原作要付符文護盾，我們沒有這個防禦），換成同階的未切割輔助寶石
+  concussive_runes: 2    # 震符印
+  runeforged_blades: 2   # 符刃
 
 # 2026-10-26：照站長「輔助寶石有分 I II III 的一律保留最高的」：同系列較低階的併入最高階（舊代號: { into: 併入的輔助, name: 舊名稱 }）。
 #   定義刪掉；玩家身上、倉庫裡的舊輔助寶石整疊直接換成最高階那顆（共鳴保留），技能面板與技能寶石上掛著的原孔換過去；
@@ -2719,18 +2722,6 @@ supports:
       - { stat: flag.elemental_discharge, type: FLAT, value: 1 }
       - { stat: flag.no_elemental_ailments, type: FLAT, value: 1 }
 
-  concussive_runes:        # Concussive Runes
-    name: 震符印
-    description: 被輔助的攻擊擊中暈眩中的敵人時，在牠腳下炸開一道震符，很容易再把周圍的敵人震暈。
-    icon: BRICK   # 2026-10：原本 CHISELED_STONE_BRICKS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 2
-    requires: [attack]
-    excludes: [minion]
-    mana_multiplier: 1.0
-    # 2026-10-27 照 PoE2 Concussive Runes（0.5 切不出來；poe2db／RePoE）；這次之前 魔耗 1.15
-    modifiers:
-      - { stat: proc.heavy_stun, type: FLAT, value: 100, tags: [proc_concussive_rune] }
-
   brambleslam:             # Brambleslam
     name: 荊棘震
     description: 被輔助的猛擊砸下時，在面前長出一片荊棘，一直刺傷裡面的敵人。
@@ -3481,18 +3472,6 @@ supports:
       - { stat: damage, type: MORE, value: -25 }
       - { stat: withered.per_threshold, type: FLAT, value: 175 }
       - { stat: withered.seconds, type: FLAT, value: 4 }
-
-  runeforged_blades:       # Runeforged Blades（用掉破甲才觸發 → 擊中時有機率；自己不能破甲照 PoE2）
-    name: 符刃
-    description: 被輔助的攻擊擊中時，有機率在敵人身上迸出一圈符文刀刃，但自己不會破甲。
-    icon: IRON_NUGGET   # 2026-10：原本 IRON_SWORD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 2
-    requires: [attack]
-    excludes: [minion]
-    mana_multiplier: 1.15
-    modifiers:
-      - { stat: proc.hit, type: FLAT, value: 30, tags: [proc_rune_blades] }
-      - { stat: armour.break, type: MORE, value: -100 }
 
   # 強化（PoE2 的 Empowered）：我們的戰吼強化只有傷害，條件改成「戰吼增益期間你得到」
   murderous_intent:        # Murderous Intent（強化的攻擊有斷命 → 戰吼增益期間你的擊中有斷命）

@@ -282,7 +282,7 @@ public final class CodexValues {
                 info.add("有召喚物活著時你：" + CodexData.plain(line));
             }
         }
-        if (skill.aura() != null) {
+        if (skill.aura() != null && !skill.reservesSpiritOnly()) { // 2026-10-28：只保留精魂的主動技能（戰旗、掠閃、喚駒）沒有光環範圍
             final var aura = skill.aura();
             if (aura.radius() > 0) {
                 info.add("光環半徑 " + num(aura.radius()) + " 格" + (aura.allies() ? "，隊友也有效" : ""));

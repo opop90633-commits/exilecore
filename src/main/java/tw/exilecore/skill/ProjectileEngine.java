@@ -59,7 +59,8 @@ final class ProjectileEngine implements Listener {
         final long id;
         final UUID owner;
         final SkillBuild build;
-        final SkillProfile profile;
+        /** 2026-10-28：回歸時換成回收那一段的傷害（SkillStages 的 recall），所以不是 final。 */
+        SkillProfile profile;
         final World world;
         final double size;
         final double explode;
@@ -236,6 +237,10 @@ final class ProjectileEngine implements Listener {
 
     /** 發射：依數量排成水平扇形。連射的技能排後面幾波。 */
     void launch(final Origin origin, final SkillBuild build) {
+        if (plugin.skills() != null && Twisters.SIGNATURE.equals(plugin.skills().config().signature(build.definition().id()))) {
+            plugin.skills().signatures().twister(origin, build); // 2026-10-28 照 PoE2 Twister：旋風（Twisters）；這次之前是一般的投射物
+            return;
+        }
         launchVolley(origin, build);
         final SkillParams.Burst burst = build.params().burst();
         if (burst != null && burst.count() > 1) {
@@ -862,7 +867,15 @@ final class ProjectileEngine implements Listener {
             pierceFree = TreeLeftovers.pierceClose(shot.profile.effective(ownerSheet), shot.profile.tags(), owner, target, random);
         }
         // 2026-10-26（穿雲箭袋）：每穿透過一次，擊中傷害與暴擊率增加
-        damage.hit(owner, target, tw.exilecore.item.unique.UniqueMechanics.pierceProfile(shot.profile, shot.pierced, ownerSheet), null);
+        // 2026-10-28 照 PoE2（穿甲重彈）：打中完全破甲的敵人用「對破甲」那一段的傷害表（SkillStages 的 vs_armour_broken）
+        SkillProfile hitProfile = shot.profile;
+        if (SkillStages.get(shot.build.definition().id(), VS_ARMOUR_BROKEN) != null && plugin.ailments() != null
+                && Double.isInfinite(plugin.ailments().armourBroken(target))) {
+            // 2026-10-28 照 PoE2：記下這一下是「對破甲」的那一段（StageLeftovers 照它上裂甲）
+            hitProfile = SkillStages.profile(shot.build, shot.profile, VS_ARMOUR_BROKEN)
+                    .withLocal(List.of(tw.exilecore.stats.Modifier.flat(SkillStages.IS + VS_ARMOUR_BROKEN, 1, "對破甲")));
+        }
+        damage.hit(owner, target, tw.exilecore.item.unique.UniqueMechanics.pierceProfile(hitProfile, shot.pierced, ownerSheet), null);
         splash(shot, owner, target, at);
         if (!shot.secondary && shot.build.params().scatter() != null && shot.build.params().scatter().onHit()) {
             scatter(shot, owner, at); // 2026-10-26 照 PoE2（凝霜箭）：打中敵人時往前方噴出冰片
@@ -1031,11 +1044,19 @@ final class ProjectileEngine implements Listener {
         visuals.explosion(shot.visual(), at, radius);
     }
 
+    /** 2026-10-28 照 PoE2：投射物的分段（skills.yml 的 stages）：爆炸、對完全破甲的敵人、回收、旋風。 */
+    static final String EXPLOSION = "explosion";
+    static final String VS_ARMOUR_BROKEN = "vs_armour_broken";
+    static final String RECALL = "recall";
+    static final String WHIRLWIND = "whirlwind";
+
     /** 停下：會爆炸的打周圍（這一發直接打中的不再打一次），再做停下來的效果，然後移除。 */
     private void stop(final Shot shot, final Player owner, final Location at) {
         if (shot.explode > 0) {
-            final boolean burstPoison = PoisonOnly.burst(plugin.players().sheet(owner), shot.profile);
-            targets.strike(owner, shot.profile, SkillTargets.sphere(at, shot.explode), new Object()); // 2026-10-25：爆炸也打到冰晶、鐘
+            // 2026-10-28 照 PoE2（熾漿砲）：爆炸有自己的傷害表、轉換（SkillStages 的 explosion）；這次之前爆炸照投射物本身的傷害
+            final SkillProfile blastProfile = SkillStages.profile(shot.build, shot.profile, EXPLOSION);
+            final boolean burstPoison = PoisonOnly.burst(plugin.players().sheet(owner), blastProfile);
+            targets.strike(owner, blastProfile, SkillTargets.sphere(at, shot.explode), new Object()); // 2026-10-25：爆炸也打到冰晶、鐘
             for (final LivingEntity victim : targets.around(at, shot.explode, owner)) {
                 if (shot.struck.contains(victim.getUniqueId())) {
                     continue;
@@ -1047,17 +1068,17 @@ final class ProjectileEngine implements Listener {
                     continue;
                 }
                 if (burstPoison) {
-                    PoisonOnly.apply(plugin, owner, victim, shot.profile); // 2026-10-26 照 PoE2（爆毒矢）：毒爆不打人、像打中一樣上毒
+                    PoisonOnly.apply(plugin, owner, victim, blastProfile); // 2026-10-26 照 PoE2（爆毒矢）：毒爆不打人、像打中一樣上毒
                     continue;
                 }
-                damage.hit(owner, victim, shot.profile, null);
+                damage.hit(owner, victim, blastProfile, null);
             }
             visuals.explosion(shot.visual(), at, shot.explode);
             // 2026-10-26 照 PoE2 天賦：榴彈 x% 機率再爆一次（0.5 秒後同一個地方）
             if (shot.fuseLeft >= 0 && !shot.secondary && shot.profile.tags().contains(tw.exilecore.stats.Tags.GRENADE)
                     && random.nextDouble() * 100 < shot.profile.effective(plugin.players().sheet(owner))
                     .flat(tw.exilecore.stats.TreeNewMechanicKeys.GRENADE_TWICE, shot.profile.tags())) {
-                final SkillProfile profile = shot.profile;
+                final SkillProfile profile = blastProfile;
                 final double radius = shot.explode;
                 final String visual = shot.visual();
                 plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
@@ -1119,7 +1140,8 @@ final class ProjectileEngine implements Listener {
             // 2026-10：同一招留下的地面效果疊在一起只算一灘（同一個敵人每個間隔只打一次）；單發、多發都一樣
             final String exclusive = shot.build.definition().id();
             // 同時最多幾灘：資料檔有寫 max 照它；一次射好幾發的最多「一次射幾發」灘（再放就換掉最舊的）
-            final int limit = ground.max() > 0 ? ground.max() : shot.build.projectiles() > 1 ? shot.build.projectiles() : 0;
+            // 2026-10-28 照 PoE2：逐級的上限（limit.ground：荊棘矢的藤苞 1 → 3 → 3）優先
+            final int limit = StageAttacks.limit(shot.profile, "ground", ground.max() > 0 ? ground.max() : shot.build.projectiles() > 1 ? shot.build.projectiles() : 0);
             zones.addCircle(owner, at, shot.build.scaledRadius(ground.radius()), shot.profile.scaled(ground.damage() / 100.0, "地面效果"),
                     shot.visual(), shot.build.durationTicks(ground.duration()), ground.interval(), ground.pull(),
                     limit > 0 ? shot.build.definition().id() : null, limit, exclusive);
@@ -1128,7 +1150,10 @@ final class ProjectileEngine implements Listener {
         if (lodge != null && reached) {
             zones.lodge(owner, shot.build.definition().id(), shot.build.level(), at); // 2026-10-26 照 PoE2（瘴苞雨）：落地留下毒苞，之後引爆
         }
-        if (params.vortex() != null) {
+        final SkillStages.Stage whirlwind = SkillStages.get(shot.build.definition().id(), WHIRLWIND);
+        if (whirlwind != null) {
+            whirlwind(owner, shot, at, whirlwind); // 2026-10-28 照 PoE2（颶風槍）：旋風留在地上，敵人走進去才崩散打一下
+        } else if (params.vortex() != null) {
             final SkillParams.Vortex vortex = params.vortex();
             // 漩渦自己一組：同一招的漩渦之間不疊加，但不跟同一招的地面效果互相擋
             zones.addCircle(owner, at, vortex.radius() * shot.build.areaScale(), shot.profile.scaled(vortex.damage() / 100.0, "漩渦"),
@@ -1251,9 +1276,30 @@ final class ProjectileEngine implements Listener {
         }
     }
 
+    /**
+     * 2026-10-28 照 PoE2 Whirlwind Lance：矛落地捲起旋風（持續 duration 秒、半徑 radius），敵人走進去就崩散——
+     * 打旋風裡的所有敵人一下（旋風自己的傷害表，算近戰、範圍，不算投射物）並往外擊退，旋風消失。
+     * 這次之前是一個把敵人往中心吸、每 0.5 秒打投射物 35% 傷害的漩渦（2.5 秒）。
+     */
+    private void whirlwind(final Player owner, final Shot shot, final Location at, final SkillStages.Stage stage) {
+        // 2026-10-28 照 PoE2 Whirlwind Lance（RePoE、poe2db Whirlwinds）：旋風留在地上緩速 30%、致盲範圍內的敵人，你跨過邊緣才崩散；
+        // 疊在舊的旋風上時舊的移過來多一階（最多 3 階），用掉怒星的直接 4 階，每多一階崩散更多 150%、半徑 +0.3 公尺（StageLeftovers）。
+        // 這次之前敵人走進旋風就崩散、沒有緩速致盲與階數
+        if (plugin.skills() != null) {
+            plugin.skills().leftovers().whirlwind(owner, shot.build, shot.profile, at, shot.visual());
+        }
+    }
+
     /** 回歸：掉頭飛回施放者身邊，路上可以再打一次（剛打過的也算）。 */
     private void startReturn(final Shot shot) {
         shot.returning = true;
+        final Player thrower = plugin.getServer().getPlayer(shot.owner);
+        if (thrower != null && plugin.skills() != null) {
+            // 2026-10-28 照 PoE2 Forge Hammer：鍛錘落下的地方（我們的鍛錘會自己飛回來，這裡記下回頭的地方給戰吼震碎）
+            plugin.skills().leftovers().forgeTurned(thrower, shot.build, new Location(shot.world, shot.position.getX(), shot.position.getY(), shot.position.getZ()));
+        }
+        // 2026-10-28 照 PoE2（回旋鍛錘）：收回來的那一趟用回收那一段的傷害表（SkillStages 的 recall）；這次之前跟擲出去一樣
+        shot.profile = SkillStages.profile(shot.build, shot.profile, RECALL);
         shot.hit = new HashSet<>(); // 自己的一份：同一次施放的其他投射物不受影響，路上的敵人可以再打一次
         shot.pierceLeft = 50;
         shot.chainsLeft = 0;

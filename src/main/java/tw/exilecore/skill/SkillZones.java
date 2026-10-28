@@ -61,6 +61,15 @@ final class SkillZones implements SkillTargets.Strikeable {
         /** 2026-10-28 照 PoE2 龍捲射擊：這一灘是技能自己的物理持續傷害（每秒，已含加成；0 = 照舊每一波擊中）、每一波阻礙幾 tick。 */
         double physicalDps;
         long hinderTicks;
+        /** 2026-10-28 照 PoE2 Orb of Storms：每一波放一道雷，連鎖幾次（0 = 照舊整圈都打）、第一下找多遠內、每次連鎖多遠。 */
+        int boltChains = -1;
+        double boltRange;
+        double chainRange;
+        /** 2026-10-28 照 PoE2 Orb of Storms：還能放幾道雷（6 道就消失；-1 = 不限）。 */
+        int boltsLeft = -1;
+        /** 2026-10-28 照 PoE2 Volcano：每一波噴幾顆火山彈（0 = 照舊整圈都打）、每顆炸多大。 */
+        int shards;
+        double shardRadius;
 
         Zone(final UUID owner, final String skill, final World world, final List<Location> points, final double radius, final SkillProfile profile,
              final String visual, final long untilTick, final int intervalTicks, final double pull, final long now, final String exclusive) {
@@ -116,6 +125,15 @@ final class SkillZones implements SkillTargets.Strikeable {
     }
 
     private final List<Lodged> lodged = new ArrayList<>();
+
+    /** 2026-10-28 照 PoE2 Toxic Growth：地上的毒苞存的毒、已經倒數了幾 tick（存的毒讓倒數變快）、上一次被哪一下打到。 */
+    private static final class PustuleStore {
+        double stored;
+        double elapsed;
+        Object lastSource;
+    }
+
+    private final java.util.Map<Lodged, PustuleStore> pustules = new java.util.IdentityHashMap<>();
 
     /** 2026-10-26：雷遁的標記（敵人 → 誰掛的、用哪個技能、到哪個 tick）。 */
     private record WarpMark(UUID owner, LivingEntity target, SkillBuild build, long until) {
@@ -294,6 +312,14 @@ final class SkillZones implements SkillTargets.Strikeable {
         zone.growPerSecond = localFlat(profile, tw.exilecore.stats.SupportExtraKeys.ENCROACH) / 100.0;
         zone.growMax = localFlat(profile, tw.exilecore.stats.SupportExtraKeys.ENCROACH_MAX_KEY) / 100.0;
         zones.add(zone);
+        // 2026-10-28 照 PoE2：冰緩地面、感電地面是元素地面（旋矛擊、旋風矛的旋風碰到變成那種元素）；這次之前沒登記
+        final tw.exilecore.stats.DamageType element = GroundEffects.sum(profile, GroundEffects.CHILL) > 0 ? tw.exilecore.stats.DamageType.COLD
+                : GroundEffects.sum(profile, GroundEffects.SHOCK) > 0 ? tw.exilecore.stats.DamageType.LIGHTNING : null;
+        if (element != null) {
+            for (final Location point : points) {
+                ElementalGround.mark(point, radius, element, zone.untilTick);
+            }
+        }
     }
 
     /** 2026-10-26 照 PoE2 Advancing Storm：owner 剛放下的這個技能的圓形地面效果改成從 from 出發，每 tick 往 to 移動 perTick 格，到了就停。 */
@@ -313,6 +339,95 @@ final class SkillZones implements SkillTargets.Strikeable {
         point.setZ(from.getZ());
         newest.driftTo = to.clone();
         newest.driftPerTick = perTick;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2（雷雲 Orb of Storms、地火柱 Volcano）：owner 剛放下的這個技能的地面效果每一波改成放一道會連鎖的雷
+     * （chains ≥ 0），或噴 shards 顆隨機落下的火山彈（shards > 0）。這次之前每一波打範圍內全部的敵人。
+     */
+    void pulses(final Player owner, final String skill, final int chains, final double boltRange, final double chainRange,
+                final int shards, final double shardRadius) {
+        Zone newest = null;
+        for (final Zone zone : zones) {
+            if (!zone.gone && zone.owner.equals(owner.getUniqueId()) && skill.equals(zone.skill)) {
+                newest = zone; // 清單照放的順序，最後一個是剛放的
+            }
+        }
+        if (newest == null) {
+            return;
+        }
+        newest.boltChains = chains;
+        newest.boltRange = boltRange;
+        newest.chainRange = chainRange;
+        newest.boltsLeft = chains >= 0 ? ORB_MAX_BOLTS : -1;
+        newest.shards = Math.max(0, shards);
+        newest.shardRadius = shardRadius;
+    }
+
+    /** 2026-10-28 照 PoE2 Orb of Storms（orb_of_storms_maximum_number_of_hits）：雷雲放了 6 道雷就消失。 */
+    static final int ORB_MAX_BOLTS = 6;
+
+    /**
+     * 2026-10-28 照 PoE2 Orb of Storms：你在雷雲旁邊（near 公尺內）施放法術時，那團雷雲多放一道雷（也算進 6 道裡）；回傳放了幾道。
+     * 這次之前施法不會多放（平衡等效成每 2 秒一道）。
+     */
+    int stormOrbCast(final Player owner, final Location at, final double near) {
+        int fired = 0;
+        for (final Zone zone : new ArrayList<>(zones)) {
+            if (zone.gone || zone.boltChains < 0 || !zone.owner.equals(owner.getUniqueId()) || zone.points.size() != 1
+                    || !zone.world.equals(at.getWorld()) || zone.points.getFirst().distanceSquared(at) > Math.pow(near + zone.radius, 2)) {
+                continue;
+            }
+            bolt(owner, zone);
+            fired++;
+            if (zone.gone) {
+                zones.remove(zone);
+            }
+        }
+        return fired;
+    }
+
+    /** 2026-10-28 照 PoE2 Orb of Storms：這一波的雷彈（範圍內隨機一個，再連鎖）。 */
+    private void bolt(final Player owner, final Zone zone) {
+        final Location center = zone.points.getFirst();
+        final List<LivingEntity> inRange = new ArrayList<>(targets.around(center, zone.boltRange, owner));
+        inRange.removeIf(target -> !target.isValid() || target.isDead());
+        if (inRange.isEmpty()) {
+            return;
+        }
+        if (zone.boltsLeft > 0 && --zone.boltsLeft == 0) {
+            zone.gone = true; // 2026-10-28 照 PoE2：放完 6 道就消失（這一道照放）
+        }
+        final List<LivingEntity> candidates = targets.around(center, zone.boltRange + zone.chainRange * Math.max(0, zone.boltChains), owner);
+        final List<LivingEntity> chain = ZonePulses.boltChain(inRange, candidates, zone.boltChains, zone.chainRange,
+                (a, b) -> a.getLocation().distance(b.getLocation()), plugin.random());
+        final List<Location> path = new ArrayList<>();
+        path.add(center.clone().add(0, 1.2, 0));
+        for (final LivingEntity target : chain) {
+            if (zone.gone || !target.isValid() || target.isDead()) {
+                continue;
+            }
+            path.add(target.getLocation().add(0, target.getHeight() / 2, 0));
+            damage.hit(owner, target, zone.profile, null);
+        }
+        Fx.as(zone.owner, () -> visuals.chain(path));
+    }
+
+    /** 2026-10-28 照 PoE2 Volcano：這一波的火山彈（每顆落在範圍內隨機一點，炸到落點附近的敵人；同一隻可以被好幾顆打到）。 */
+    private void shower(final Player owner, final Zone zone) {
+        final Location center = zone.points.getFirst();
+        for (final double[] offset : ZonePulses.showerPoints(zone.shards, zone.radius, plugin.random())) {
+            if (zone.gone) {
+                return;
+            }
+            final Location at = center.clone().add(offset[0], 0, offset[1]);
+            for (final LivingEntity target : targets.around(at, zone.shardRadius, owner)) {
+                if (target.isValid() && !target.isDead()) {
+                    damage.hit(owner, target, zone.profile, null);
+                }
+            }
+            Fx.as(zone.owner, () -> visuals.explosion(zone.visual, at, zone.shardRadius));
+        }
     }
 
     /**
@@ -623,6 +738,22 @@ final class SkillZones implements SkillTargets.Strikeable {
         final List<Lodged> hit = new ArrayList<>();
         for (final Iterator<Lodged> it = lodged.iterator(); it.hasNext(); ) {
             final Lodged bolt = it.next();
+            if (StageLeftovers.TOXIC_GROWTH.equals(bolt.parent())) {
+                // 2026-10-28 照 PoE2 Toxic Growth：毒苞不會被打爆，而是被你的擊中下毒——存下那一下預期的中毒傷害（存得多炸得痛、炸得快）；
+                // 這次之前別的技能打到就直接引爆
+                if (bolt.owner().equals(owner.getUniqueId()) && !bolt.parent().equals(by) && inside.test(bolt.at()) && plugin.skills() != null) {
+                    final PustuleStore store = pustules.computeIfAbsent(bolt, key -> {
+                        final PustuleStore created = new PustuleStore();
+                        created.elapsed = Math.max(0, now() - key.placed()); // 從放下的那一刻開始倒數
+                        return created;
+                    });
+                    if (store.lastSource != source) {
+                        store.lastSource = source;
+                        store.stored += plugin.skills().leftovers().expectedPoison(owner, skill);
+                    }
+                }
+                continue;
+            }
             if (!bolt.spec().proximity() && bolt.owner().equals(owner.getUniqueId()) && !bolt.parent().equals(by) && inside.test(bolt.at())) { // 伏霆彈（不是危險區域）
                 it.remove();
                 hit.add(bolt);
@@ -642,6 +773,19 @@ final class SkillZones implements SkillTargets.Strikeable {
         final tw.exilecore.character.PlayerState state = plugin.players().get(owner);
         final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(owner);
         SkillBuild build = SkillBuild.of(config, sub, bolt.level(), state.level(), false, List.of(), state.weaponTags(), sheet);
+        final PustuleStore store = pustules.remove(bolt);
+        if (store != null && store.stored > 0 && plugin.skills() != null) {
+            // 2026-10-28 照 PoE2 Toxic Growth：存的毒每 X 點更多 1% 傷害（最多 300%）、基礎半徑 +0.1 公尺（最多 +1.5）
+            final double more = StageAttacks.pustuleMore(store.stored, plugin.skills().levelValue(bolt.parent(), StageLeftovers.PUSTULE_MORE_PER, bolt.level()));
+            if (more > 0) {
+                build = build.withProfile(build.profile().scaled(1 + more / 100.0, "存的毒"));
+            }
+            final double base = sub.params().radius().at(build.level());
+            final double extra = StageAttacks.pustuleRadius(store.stored, plugin.skills().levelValue(bolt.parent(), StageLeftovers.PUSTULE_RADIUS_PER, bolt.level()));
+            if (extra > 0 && base > 0) {
+                build = build.withAreaAndProjectiles(build.areaScale() * (base + extra) / base, build.projectiles());
+            }
+        }
         if (bolt.spec().rampMore() > 0) { // 寒凝彈：武裝後越久越痛
             final double armed = (now - bolt.armedAt()) / 20.0;
             final double more = bolt.spec().rampMore() / 100.0 * Math.max(0, Math.min(1, armed / bolt.spec().rampSeconds()));
@@ -663,12 +807,26 @@ final class SkillZones implements SkillTargets.Strikeable {
 
     private void tickLodged(final long now) {
         if (lodged.isEmpty()) {
+            pustules.clear();
             return;
+        }
+        if (now % 100 == 0 && !pustules.isEmpty()) {
+            pustules.keySet().removeIf(bolt -> !lodged.contains(bolt)); // 被擠掉的毒苞不留著
         }
         final List<Lodged> boom = new ArrayList<>();
         for (final Iterator<Lodged> it = lodged.iterator(); it.hasNext(); ) {
             final Lodged bolt = it.next();
             final Player owner = plugin.getServer().getPlayer(bolt.owner());
+            final PustuleStore store = pustules.get(bolt);
+            if (store != null && owner != null && plugin.skills() != null && owner.getWorld().equals(bolt.at().getWorld())) {
+                // 2026-10-28 照 PoE2 Toxic Growth：存的毒 × 60 每 X 點，倒數快 1%（倒數完就引爆）
+                store.elapsed += StageLeftovers.pustuleRate(store.stored, plugin.skills().levelValue(bolt.parent(), StageLeftovers.PUSTULE_FASTER_PER, bolt.level()));
+                if (store.elapsed >= bolt.until() - bolt.placed()) {
+                    it.remove();
+                    boom.add(bolt);
+                    continue;
+                }
+            }
             if (owner == null || now >= bolt.until() || !owner.getWorld().equals(bolt.at().getWorld())) {
                 it.remove();
                 if (owner != null && now >= bolt.until() && (bolt.spec().expire() || bolt.delayed() > 0) && owner.getWorld().equals(bolt.at().getWorld())) {
@@ -793,6 +951,15 @@ final class SkillZones implements SkillTargets.Strikeable {
             // 2026-10-27 照 PoE2 天賦樹（「站在感電／冰緩／點燃地面上時」）：這一波站在裡面的玩家記一下
             final String groundEvent = TreeLeftovers.groundEvent(zone.profile, poisonOnly || unlit);
             TreeLeftovers.groundPulse(plugin, zone.points, zone.radius, groundEvent, now);
+            if (zone.boltChains >= 0 && zone.points.size() == 1) {
+                bolt(owner, zone); // 2026-10-28 照 PoE2 Orb of Storms：一道會連鎖的雷（不是整圈都打）
+                expired |= zone.gone; // 2026-10-28：放完 6 道的雷雲這一輪就拿掉
+                continue;
+            }
+            if (zone.shards > 0 && zone.points.size() == 1) {
+                shower(owner, zone); // 2026-10-28 照 PoE2 Volcano：隨機落下的火山彈
+                continue;
+            }
             // 一波裡每隻只打一次：線的幾個圓一次掃完（2026-10，以前每個圓各掃一次）
             for (final LivingEntity target : targets.aroundPoints(zone.points, zone.radius, owner)) {
                 if (zone.gone) {
@@ -966,7 +1133,9 @@ final class SkillZones implements SkillTargets.Strikeable {
         for (final Zone zone : burst) {
             final Location center = zone.points.getFirst();
             final double radius = zone.radius * 1.3;
-            final SkillProfile blast = zone.profile.scaled(GAS_BURST, "毒霧引爆");
+            // 2026-10-28 照 PoE2：有爆炸自己的表（stage.explosion：蝕毒箭 90% → 281% → 745%、瘴氣榴彈 150% → 612% → 2715%）就照它、全部轉火焰；
+            // 這次之前毒霧一跳 × 6
+            final SkillProfile blast = StageAttacks.gasBlast(zone.profile, GAS_BURST, "毒霧引爆");
             for (final LivingEntity target : targets.around(center, radius, owner)) {
                 damage.hit(owner, target, blast, null);
             }
@@ -987,6 +1156,7 @@ final class SkillZones implements SkillTargets.Strikeable {
         });
         impacts.removeIf(impact -> impact.owner().equals(owner));
         lodged.removeIf(bolt -> bolt.owner().equals(owner));
+        pustules.keySet().removeIf(bolt -> bolt.owner().equals(owner));
         rods.forget(owner, this::rodRemoved); // 2026-10-28：雷樁矢的箭
         warpMarks.values().removeIf(mark -> mark.owner().equals(owner));
     }

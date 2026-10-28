@@ -80,6 +80,7 @@ final class SkillInputListener implements Listener {
         final long now = now();
         if (right && event.getItem() != null && hasCharacter(player) && (service.gems().use(player, event.getItem(), event.getHand())
                 || tw.exilecore.item.UniqueVoucherMenu.tryOpen(plugin, player, event.getItem(), event.getHand())
+                || tw.exilecore.character.menu.ClassChangeMenu.tryOpen(plugin, player, event.getItem(), event.getHand()) // 2026-10-28：職業轉職卷
                 || plugin.flasks() != null && plugin.flasks().charms() != null
                         && plugin.flasks().charms().equipFromHand(player, event.getItem(), event.getHand()))) {
             // 寶石：雕琢、放進技能面板（營地裡、創造模式也可以）；傳奇兌換券：選一件傳奇；護符：裝進護符欄。同一個 tick 跟著來的右鍵不施放

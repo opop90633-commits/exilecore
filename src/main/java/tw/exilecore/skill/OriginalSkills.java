@@ -472,7 +472,8 @@ public final class OriginalSkills implements Listener {
                 s.oilUntil = now + OIL_WINDOW; // 照 PoE2：每 1.5 秒用掉一顆銳星，換成帶電的油彈（40% 閃電、不留油地）
             }
             if (s.oilUntil > now) {
-                out = out.withProfile(out.profile().withLocal(List.of(Modifier.flat(StatKeys.DAMAGE_CONVERT + "lightning", 40, "帶電油彈"),
+                // 2026-10-28 照 PoE2：帶電油彈自己的表（stage.empowered 100% → 312% → 828%）；這次之前照一般油彈的表
+                out = out.withProfile(StageAttacks.stage(out.profile(), "empowered").withLocal(List.of(Modifier.flat(StatKeys.DAMAGE_CONVERT + "lightning", 40, "帶電油彈"),
                         Modifier.flat(NO_GROUND, 1, "帶電油彈"))));
             }
         }

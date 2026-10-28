@@ -202,6 +202,15 @@ public final class ExileCoreCommand {
                                         .suggests(tw.exilecore.chat.ChatModule.targets(plugin))
                                         .executes(context -> setClass(plugin, context, StringArgumentType.getString(context, "class"),
                                                 StringArgumentType.getString(context, "player"))))))
+                // 2026-10-28：發職業轉職卷（/ec classscroll 玩家 [張數]；跟管理網頁的發放同一套，離線的下次登入發）
+                .then(Commands.literal("classscroll")
+                        .then(Commands.argument("player", StringArgumentType.word())
+                                .suggests(tw.exilecore.chat.ChatModule.targets(plugin))
+                                .executes(context -> classScroll(plugin, context.getSource().getSender(),
+                                        StringArgumentType.getString(context, "player"), 1))
+                                .then(Commands.argument("amount", IntegerArgumentType.integer(1, 50))
+                                        .executes(context -> classScroll(plugin, context.getSource().getSender(),
+                                                StringArgumentType.getString(context, "player"), IntegerArgumentType.getInteger(context, "amount"))))))
                 .then(Commands.literal("save").executes(context -> save(plugin, context.getSource().getSender())))
                 .then(Commands.literal("stats")
                         .executes(context -> stats(plugin, context, null))
@@ -834,6 +843,29 @@ public final class ExileCoreCommand {
     }
 
     /** /ec stats [名字]：自己的或某個在線玩家的屬性表（後台也能看別人的）。 */
+    /** /ec classscroll 玩家 [張數]（2026-10-28）：發職業轉職卷，走管理員發放（寫進 admin_deliveries；在線馬上、離線下次登入發）。 */
+    private static int classScroll(final ExileCore plugin, final CommandSender sender, final String name, final int amount) {
+        if (plugin.admin() == null || plugin.admin().deliveries() == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>管理模組沒有啟用（發放要用資料庫）"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final tw.exilecore.admin.DeliveryService.Spec spec = new tw.exilecore.admin.DeliveryService.Spec(
+                tw.exilecore.admin.DeliveryService.CLASS_SCROLL, null, null, 0, amount);
+        plugin.admin().deliveries().grant(name, java.util.List.of(spec), "職業轉職卷（指令）", sender.getName()).whenComplete((created, error) ->
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    if (error != null) {
+                        sender.sendMessage(plugin.text().prefixed("<red>發不出去：" + tw.exilecore.item.ItemRenderer.escape(String.valueOf(error.getMessage()))));
+                        plugin.getSLF4JLogger().error("[管理] 發職業轉職卷 ×{} 給 {} 失敗", amount, name, error);
+                    } else if (!created.unknown().isEmpty()) {
+                        sender.sendMessage(plugin.text().prefixed("<red>找不到玩家「" + tw.exilecore.item.ItemRenderer.escape(name) + "」（要進過伺服器）"));
+                    } else {
+                        sender.sendMessage(plugin.text().prefixed("<green>發給 " + tw.exilecore.item.ItemRenderer.escape(name) + " 職業轉職卷 ×" + amount
+                                + "<gray>（離線的下次登入發）"));
+                    }
+                }));
+        return Command.SINGLE_SUCCESS;
+    }
+
     /** /ec setclass 職業 [玩家]：換職業（天賦全部退回、昇華職業退掉）。 */
     private static int setClass(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final String classText, final String name) {
         final CommandSender sender = context.getSource().getSender();

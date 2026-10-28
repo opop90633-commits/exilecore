@@ -33,6 +33,10 @@ import java.util.UUID;
  * 你擊中冰晶旁邊（{@value #HIT_RADIUS} 格內）的敵人、或技能直接打到冰晶（2026-10-25：揮到、炸到、投射物飛過）時，冰晶被打一下；打 {@value #BASE_HITS} 下（crystal.hits 可以改）就碎掉，
  * 炸出一圈冰（隱藏技能 proc_crystal_burst，用留下冰晶那個技能的寶石等級）。時間到沒打碎就自己融掉，不會炸。
  * 輔助：厚晶（要打更多下）、脆晶（更少下）、霜蝕晶（冰晶周圍一直冰）、晶刺（碎掉時往四周噴冰片）、冰鍍（打碎時你得到附加冰冷的增益）。
+ * <p>
+ * 2026-10-28 照 PoE2（RePoE frost_wall_maximum_life）：留下冰晶的技能寫了 level_modifiers 的 limit.crystal_life（霜壁、凍壁矢），
+ * 冰晶就有那麼多生命，你的擊中（打中旁邊的敵人、或範圍直接蓋到冰晶）照那一下減免前的傷害扣生命，扣完才碎；厚晶、脆晶照「要打幾下」的比例放大縮小生命。
+ * 沒寫的（寒晶雷這種）照舊打幾下就碎。這次之前一律打三下就碎。
  */
 public final class IceCrystals implements Listener {
 
@@ -53,6 +57,10 @@ public final class IceCrystals implements Listener {
         final boolean shards;
         final boolean verglas;
         int hitsLeft;
+        /** 2026-10-28 照 PoE2：冰晶剩下的生命（0 以下 = 照舊算打幾下）。 */
+        double life;
+        /** 2026-10-28 照 PoE2：碎掉時炸的隱藏技能（凍壁矢的冰牆有自己的表）；這次之前一律 proc_crystal_burst。 */
+        String burst = "proc_crystal_burst";
         long lastHit;
         Object lastSource;
 
@@ -94,7 +102,9 @@ public final class IceCrystals implements Listener {
                 continue;
             }
             crystal.lastSource = source; // 同一顆投射物飛過去好幾 tick 只算一下
-            if (chip(crystal, now)) {
+            // 2026-10-28 照 PoE2：有生命的冰晶照這一下打出去的傷害扣（沒有敵人可以算，就對沒有防禦的目標估一次）
+            final double damage = crystal.life > 0 ? service.leftovers().outgoing(owner, skill).total() : 0;
+            if (chip(crystal, now, damage)) {
                 it.remove();
                 broken.add(crystal);
             }
@@ -104,11 +114,15 @@ public final class IceCrystals implements Listener {
         }
     }
 
-    /** 冰晶被打一下；碎了回傳 true。 */
-    private static boolean chip(final Crystal crystal, final long now) {
+    /** 冰晶被打一下（damage：那一下減免前的傷害，有生命的冰晶照這個扣）；碎了回傳 true。 */
+    private static boolean chip(final Crystal crystal, final long now, final double damage) {
         crystal.lastHit = now; // 同一下打中好幾個敵人只算一下
-        crystal.hitsLeft--;
         crystal.at.getWorld().spawnParticle(Particle.ITEM_SNOWBALL, crystal.at, 6, 0.2, 0.3, 0.2, 0.05);
+        if (crystal.life > 0) {
+            crystal.life -= Math.max(0, damage);
+            return crystal.life <= 0;
+        }
+        crystal.hitsLeft--;
         return crystal.hitsLeft <= 0;
     }
 
@@ -134,6 +148,8 @@ public final class IceCrystals implements Listener {
         final boolean hoarfrost = StatKeys.flag(effective, StatKeys.FLAG_HOARFROST);
         final boolean shards = StatKeys.flag(effective, StatKeys.FLAG_CRYSTAL_SHARDS);
         final boolean verglas = StatKeys.flag(effective, StatKeys.FLAG_VERGLAS);
+        // 2026-10-28 照 PoE2：冰晶的生命（技能逐級表；厚晶、脆晶照要打幾下的比例）
+        final double life = StageLeftovers.scaledLife(StageAttacks.limit(build.profile(), "crystal_life", 0), hits, BASE_HITS);
         final long until = now() + build.durationTicks(BASE_SECONDS);
         final List<Crystal> mine = crystals.computeIfAbsent(owner.getUniqueId(), key -> new ArrayList<>());
         final List<Location> spots = new ArrayList<>();
@@ -150,6 +166,8 @@ public final class IceCrystals implements Listener {
                 d.setGlowing(true);
             });
             final Crystal crystal = new Crystal(at.clone().add(0, 0.5, 0), display, until, build.usableGemLevel(), hits, shards, verglas);
+            crystal.burst = StageAttacks.CRYSTAL_BURST.getOrDefault(build.definition().id(), crystal.burst);
+            crystal.life = life;
             mine.add(crystal);
             spots.add(at.clone());
             alive.add(display::isValid);
@@ -192,7 +210,7 @@ public final class IceCrystals implements Listener {
                     || crystal.lastHit == now) {
                 continue;
             }
-            if (chip(crystal, now)) {
+            if (chip(crystal, now, event.result().outgoing().total())) {
                 it.remove();
                 broken.add(crystal);
             }
@@ -225,7 +243,7 @@ public final class IceCrystals implements Listener {
     private void shatter(final Player owner, final Crystal crystal) {
         crystal.display.remove();
         crystal.at.getWorld().playSound(crystal.at, Sound.BLOCK_GLASS_BREAK, SoundCategory.PLAYERS, 1.0f, 0.9f);
-        cast(owner, "proc_crystal_burst", crystal.level, crystal.at);
+        cast(owner, crystal.burst, crystal.level, crystal.at);
         if (crystal.shards) {
             cast(owner, "proc_crystal_shards", crystal.level, crystal.at);
         }

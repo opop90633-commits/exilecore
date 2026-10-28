@@ -619,7 +619,7 @@ final class AdminWeb {
         catalog.put("rarities", rarities);
         final Map<String, Object> limits = new LinkedHashMap<>();
         for (final String kind : List.of(DeliveryService.CURRENCY, DeliveryService.GOLD, DeliveryService.MERITS, DeliveryService.SPONSOR, DeliveryService.COSMETIC, DeliveryService.REFUND,
-                DeliveryService.ITEM, DeliveryService.UNIQUE, DeliveryService.GEM, DeliveryService.FLASK, DeliveryService.CHARM, DeliveryService.MAP,
+                DeliveryService.ITEM, DeliveryService.UNIQUE, DeliveryService.GEM, DeliveryService.FLASK, DeliveryService.CHARM, DeliveryService.MAP, DeliveryService.CLASS_SCROLL,
                 DeliveryService.TAKE_SPONSOR, DeliveryService.TAKE_CURRENCY, DeliveryService.TAKE_GOLD, DeliveryService.TAKE_ITEM,
                 DeliveryService.LIFE, DeliveryService.TAKE_LIFE, DeliveryService.TAKE_MERITS, DeliveryService.TAKE_REFUND, DeliveryService.TAKE_COSMETIC)) {
             limits.put(kind, DeliveryService.maxAmount(kind));

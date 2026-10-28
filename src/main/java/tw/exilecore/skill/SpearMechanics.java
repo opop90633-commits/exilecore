@@ -308,6 +308,9 @@ public final class SpearMechanics implements Listener {
         if (fire > 0) {
             grounds.computeIfAbsent(player.getUniqueId(), uuid -> new ArrayList<>()).add(new Ground(at.clone(), GROUND_RADIUS * sub.areaScale(),
                     plugin.getServer().getCurrentTick() + sub.durationTicks(GROUND_SECONDS), fire, sub.profile().effective(sheet), new HashMap<>()));
+            // 2026-10-28 照 PoE2：點燃地面是元素地面（旋風矛、旋矛擊的旋風碰到變成火焰的）；這次之前沒登記
+            ElementalGround.mark(at, GROUND_RADIUS * sub.areaScale(), tw.exilecore.stats.DamageType.FIRE,
+                    plugin.getServer().getCurrentTick() + sub.durationTicks(GROUND_SECONDS));
         }
     }
 

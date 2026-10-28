@@ -191,7 +191,8 @@ public final class SkillConfig {
     /** 專屬機制（2026-10，PoE2）：技能代號 → whirl（旋矛擊的旋風）、lance（霆落矛插地放電）、ember（星火連珠懸浮）。 */
     private Map<String, String> signatures = Map.of();
     /** signature 可以寫的值。 */
-    static final java.util.Set<String> SIGNATURES = union(java.util.Set.of("whirl", "lance", "ember", "bolt_spear", "hexblast", "sunder"), // 2026-10-15：bolt_spear（擲雷槍）；2026-10-26：hexblast（蝕咒裂）、sunder（稜光裂）
+    static final java.util.Set<String> SIGNATURES = union(java.util.Set.of("whirl", "lance", "ember", "bolt_spear", "hexblast", "sunder", // 2026-10-15：bolt_spear（擲雷槍）；2026-10-26：hexblast（蝕咒裂）、sunder（稜光裂）
+                    Twisters.SIGNATURE), // 2026-10-28 照 PoE2：旋風矛的旋風
             union(OriginalSkills.SIGNATURES, SpearMechanics.SIGNATURES)); // 2026-10-26：照 PoE2 原作機制的（OriginalSkills）；2026-10-27：擲矛、炎爆矛（SpearMechanics）
 
     private static java.util.Set<String> union(final java.util.Set<String> a, final java.util.Set<String> b) {
@@ -269,6 +270,7 @@ public final class SkillConfig {
         final Map<String, RainSpec> parsedRains = new HashMap<>();
         final Map<String, RodSpec> parsedRods = new HashMap<>();
         final Map<String, CascadeSpec> parsedCascades = new HashMap<>();
+        final Map<String, Map<String, SkillStages.Stage>> parsedStages = new HashMap<>(); // 2026-10-28 照 PoE2：分段傷害（stages）
         final Map<String, ChargeCost> parsedChargeCosts = new HashMap<>();
         final Map<String, Integer> parsedUses = new HashMap<>();
         final Map<String, ResourceSpec> parsedResources = new HashMap<>();
@@ -326,6 +328,10 @@ public final class SkillConfig {
                 final YamlNode r = node.node("rod");
                 parsedRods.put(id, new RodSpec(Math.max(0.5, r.decimal("duration", 20)), Math.max(1, r.integer("max", 10)),
                         Math.max(1, r.integer("chains", 8)), Math.max(0.05, r.decimal("charge", 1.0))));
+            }
+            final Map<String, SkillStages.Stage> stageMap = SkillStages.parse(node); // 2026-10-28 照 PoE2：每一段自己的逐級傷害
+            if (!stageMap.isEmpty()) {
+                parsedStages.put(id, stageMap);
             }
             if (node.has("cascade")) { // 2026-10-28 照 PoE2 Siege Ballista
                 final YamlNode c = node.node("cascade");
@@ -541,6 +547,7 @@ public final class SkillConfig {
         this.rains = Map.copyOf(parsedRains);
         this.rods = Map.copyOf(parsedRods);
         this.cascades = Map.copyOf(parsedCascades);
+        SkillStages.install(parsedStages);
         this.chargeCosts = Map.copyOf(parsedChargeCosts);
         this.cooldownUses = parsedUses;
         this.resources = parsedResources;

@@ -109,10 +109,30 @@ public record SkillParams(double reach, double angle, int targets, double knockb
      * zone 運作方式的形狀：circle（準心指的地方一圈）或 line（面前橫向的一道，length 長）；pull 是每波往中心拉幾格；
      * max 同一個玩家這個技能的地面效果同時最多幾個（0 = 不另外限制；超過的話最舊的那個消失）。
      */
-    public record Zone(double duration, double interval, Scaled radius, double damage, String shape, Scaled length, double pull, int max) {
+    public record Zone(double duration, double interval, Scaled radius, double damage, String shape, Scaled length, double pull, int max,
+                       Bolts bolts, Shower shower) {
+        public Zone(final double duration, final double interval, final Scaled radius, final double damage, final String shape, final Scaled length,
+                    final double pull, final int max) {
+            this(duration, interval, radius, damage, shape, length, pull, max, null, null);
+        }
+
         public boolean line() {
             return "line".equals(shape);
         }
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Orb of Storms：每一波對 range 格內隨機一個敵人放一道雷，連鎖 chains 次（逐級，3 → 5 → 9），每次跳 chainRange 格內的。
+     * 這次之前雷雲每一波打範圍內全部的敵人、沒有連鎖。
+     */
+    public record Bolts(Scaled chains, double range, double chainRange) {
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Volcano：每一波噴出 count 顆火山彈（逐級，3 → 5 → 6），各落在範圍內隨機一點，炸到落點 radius 格內的敵人。
+     * 這次之前地火柱每一波打範圍內全部的敵人。
+     */
+    public record Shower(Scaled count, double radius) {
     }
 
     /**
@@ -146,7 +166,15 @@ public record SkillParams(double reach, double angle, int targets, double knockb
      * 位移的細節：hitWidth > 0 時順路打到離路線這麼近的敵人；startRadius、endRadius > 0 時在起點、終點炸一圈；
      * ground 不是 null 時沿路留下地面效果（寫在 dash 區塊的 ground）。
      */
-    public record Dash(double hitWidth, Scaled startRadius, Scaled endRadius) {
+    public record Dash(double hitWidth, Scaled startRadius, Scaled endRadius, Scaled rangeByLevel) {
+        public Dash(final double hitWidth, final Scaled startRadius, final Scaled endRadius) {
+            this(hitWidth, startRadius, endRadius, null);
+        }
+
+        /** 2026-10-28 照 PoE2（掠閃 4 → 4.9 → 5.5 米）：這個等級最遠幾格；沒寫逐級的回傳 fallback（{@link SkillParams#range()}）。 */
+        public double range(final int level, final double fallback) {
+            return rangeByLevel == null ? fallback : rangeByLevel.at(level);
+        }
     }
 
     /**
@@ -309,6 +337,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
             }
             case NOVA -> {
                 radius = scaled(where, node, "radius", 3.5, 0.5, 10);
+                knockback = check(where, "knockback", node.decimal("knockback", 0), 0, 3); // 2026-10-28 照 PoE2（旋矛擊揮那一下擊退）；這次之前新星不能擊退
                 if (node.has("ground")) {
                     ground = zone(node.node("ground"), false);
                 }
@@ -341,10 +370,13 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 chainRange = check(where, "chain_range", node.decimal("chain_range", chainRange), 1, 16);
             }
             case DASH -> {
-                range = check(where, "range", node.decimal("range", 8), 2, 20);
+                // 2026-10-28 照 PoE2（掠閃 4 → 4.9 → 5.5 米）：range 可以寫逐級表；這次之前只能寫一個數字
+                final Scaled dashRange = scaled(where, node, "range", 8, 2, 20);
+                range = dashRange.last();
                 knockback = check(where, "knockback", node.decimal("knockback", 0), 0, 3);
                 dash = new Dash(check(where, "hit_width", node.decimal("hit_width", 0), 0, 4),
-                        scaled(where, node, "start_radius", 0, 0, 8), scaled(where, node, "end_radius", 0, 0, 8));
+                        scaled(where, node, "start_radius", 0, 0, 8), scaled(where, node, "end_radius", 0, 0, 8),
+                        dashRange.first() == dashRange.last() && !dashRange.isTable() ? null : dashRange);
                 if (node.has("ground")) {
                     ground = zone(node.node("ground"), false);
                 }
@@ -431,7 +463,12 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 check(where, "damage", node.decimal("damage", 30), 1, 500), // 2026-10-26：上限 200 → 500（只上毒的毒霧照 PoE2 像打中一樣，是投射物的 2～4 倍）
                 shape, scaled(where, node, "length", 6, 1, 16),
                 check(where, "pull", node.decimal("pull", 0), 0, 1.5),
-                (int) check(where, "max", node.decimal("max", 0), 0, 10));
+                (int) check(where, "max", node.decimal("max", 0), 0, 10),
+                node.has("bolts") ? new Bolts(scaled(where + ".bolts", node.node("bolts"), "chains", 0, 0, 20),
+                        check(where + ".bolts", "range", node.node("bolts").decimal("range", 5.6), 1, 16),
+                        check(where + ".bolts", "chain_range", node.node("bolts").decimal("chain_range", 3.5), 1, 16)) : null,
+                node.has("shower") ? new Shower(scaled(where + ".shower", node.node("shower"), "count", 3, 1, 20),
+                        check(where + ".shower", "radius", node.node("shower").decimal("radius", 0.6), 0.2, 4)) : null);
     }
 
     private static Scaled scaled(final String where, final YamlNode node, final String key, final double def,

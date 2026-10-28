@@ -96,7 +96,8 @@ class CurrencySkinTest {
         }
         // currency_art.txt 的每張圖都要有通貨在用；技能寶石、輔助寶石、星幣券的圖不是 currencies.yml 的通貨，WebModule 直接掛
         final Set<String> currencyArt = new HashSet<>(currencyArtFile().keySet());
-        currencyArt.removeAll(Set.of("gem_skill", "gem_support", "star_voucher"));
+        // 2026-10-28：職業轉職卷（class_scroll）也是 WebModule 直接掛的，站長補了圖以後不算多出來的
+        currencyArt.removeAll(Set.of("gem_skill", "gem_support", "star_voucher", tw.exilecore.character.ClassScroll.ART));
         assertEquals(currencyArt, arts, "每張通貨的圖都要有通貨在用");
         // 2026-10：技能、輔助寶石的圖示（web/skill_art.txt）跟通貨同一套
         for (final String id : CurrencyArt.sprites().keySet()) {

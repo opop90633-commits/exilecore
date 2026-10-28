@@ -520,6 +520,12 @@ public final class SupportExtras implements Listener {
         final int step = comboStep(previous == null ? null : previous.skill(), previous == null ? 0 : previous.tick(),
                 previous == null ? 0 : previous.count(), build.definition().id(), now, finalAt);
         combos.put(player.getUniqueId(), new Combo(build.definition().id(), now, finalAt > 0 && step >= finalAt ? 0 : step));
+        // 2026-10-28 照 PoE2：連段的那一下用自己那一段的傷害表（寒冰震波第三擊、風暴連擊第三下三連打與第四下終結打擊：
+        // skills.yml 的 stages.final／third）；這次之前最後一擊只是個記號，傷害跟一般打擊一樣
+        final String comboStage = SkillStages.comboKey(build.definition().id(), step, finalAt);
+        if (comboStage != null) {
+            build = SkillStages.apply(build, comboStage);
+        }
         if (finalAt > 0 && step >= finalAt) {
             local.add(Modifier.flat(SupportExtraKeys.FINAL_STRIKE_MARK, 1, "最後一擊"));
             if (flat(effective, SupportExtraKeys.CRESCENDO, tags) > 0) {

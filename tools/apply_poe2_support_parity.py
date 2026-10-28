@@ -46,7 +46,7 @@ SPEC = {
     'bone_shrapnel': ('Bone Shrapnel', 2, 1.0, None, None),
     'flame_pillar': ('Flame Pillar', None, 1.15, None, None),
     'electromagnetism': ('Electromagnetism', 3, 1.0, None, None),
-    'concussive_runes': ('Concussive Runes', None, 1.0, None, None),
+    # 2026-10-28 照站長刪掉震符印（supports.yml 的 retired）
     'corrupting_cry': ('Corrupting Cry II', 5, 1.0, None, None),
     'caltrops': ('Caltrops', 3, 1.2, None, None),
     'decaying_hex': ('Decaying Hex', 3, 1.3, None, None),

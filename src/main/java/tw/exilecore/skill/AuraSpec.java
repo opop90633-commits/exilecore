@@ -224,6 +224,14 @@ public record AuraSpec(double reserve, double radius, boolean allies, List<Scale
         return onKill != null;
     }
 
+    /**
+     * 2026-10-28 照 PoE2（戰旗、掠閃、喚駒這類「保留精魂的主動技能」）：只保留精魂、沒有任何光環效果。
+     * 這種 aura 區塊可以寫在不是 mechanic: aura 的技能上（照樣要放在綁鍵格才保留；精魂不夠時不能用）；這次之前只有光環能保留精魂。
+     */
+    public boolean reservationOnly() {
+        return effects.isEmpty() && onKill == null && enemy == null && perMinion == null && lifeCost == null && fury == null;
+    }
+
     /** skills.yml 的 aura 區塊；沒有回傳 null。 */
     static AuraSpec parse(final YamlNode skill) {
         if (!skill.has("aura")) {
@@ -259,8 +267,10 @@ public record AuraSpec(double reserve, double radius, boolean allies, List<Scale
                     // 2026-10-26（照 PoE2 的鎮懾 Overwhelming Presence）：疊在範圍內敵人身上的修飾器（暈眩門檻、異常門檻降低）
                     ScaledMod.parseList(e, "effects"));
         }
+        // 2026-10-28：不是光環的技能（戰旗、掠閃、喚駒）寫 aura 區塊 = 只保留精魂，可以沒有效果
+        final boolean persistentReserve = !"aura".equals(skill.string("mechanic", "").trim().toLowerCase(Locale.ROOT));
         if (effects.isEmpty() && onKill == null && enemy == null && fury == null && !skill.has("summon") && !skill.has("meta")
-                && !skill.has("level_modifiers")) { // 2026-10-26：雷霆共鳴、折光之鏡、鴉群密謀的效果寫在程式裡（GrantedAuras），逐級數值在 level_modifiers // 2026-10：夥伴（aura ＋ summon）、主要寶石（只保留精魂）可以沒有效果
+                && !skill.has("level_modifiers") && !persistentReserve) { // 2026-10-26：雷霆共鳴、折光之鏡、鴉群密謀的效果寫在程式裡（GrantedAuras），逐級數值在 level_modifiers // 2026-10：夥伴（aura ＋ summon）、主要寶石（只保留精魂）可以沒有效果
             throw new IllegalArgumentException(where + "：光環至少要有 effects、enemy、on_kill 或 fury");
         }
         final Scaled perMinion = node.has("per_minion") ? Scaled.parse(where + ".per_minion", node.raw("per_minion"), 0) : null;

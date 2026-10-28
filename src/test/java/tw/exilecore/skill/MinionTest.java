@@ -264,7 +264,9 @@ class MinionTest {
     void minionsFollowPoe2AllyTables() {
         assertEquals(2, MinionSheets.allyLevel(1));
         assertEquals(40, MinionSheets.allyLevel(20));
-        assertEquals(40, MinionSheets.allyLevel(23), "超過 20 級不加召喚物等級（照 extraScale）");
+        assertEquals(46, MinionSheets.allyLevel(23), "2026-10-28 照 PoE2：超過 20 級也照 ×2");
+        assertEquals(80, MinionSheets.allyLevel(40));
+        assertEquals(80, MinionSheets.allyLevel(45), "超過 40 級照 extraScale");
         final SummonSpec warrior = config.skill("summon_skeletons").summon();
         assertTrue(warrior.ally());
         // 20 級寶石：區域 90 級；PoE2 骸骨戰士 2490 × 0.88 生命、204.04 × 0.70 傷害，90 級怪 41748 生命、每下 443.79

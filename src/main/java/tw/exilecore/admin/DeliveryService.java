@@ -64,6 +64,8 @@ public final class DeliveryService {
     /** 護符（2026-10-24）：ref 護符代號（flasks.yml 的 charms.bases）；rarity 普通或魔法（預設魔法、跟掉落一樣），level 物品等級（0 = 角色等級）。 */
     public static final String CHARM = "charm";
     public static final String MAP = "map";
+    /** 職業轉職卷（2026-10-28）：綁定帳號、右鍵換職業（tw.exilecore.character.ClassScroll）；ref 不用填。 */
+    public static final String CLASS_SCROLL = "class_scroll";
     /** 贊助的星幣（2026-10）：ref "paid" = 儲值（算進累積贊助）、"bonus" = 贈送。 */
     public static final String SPONSOR = "sponsor";
     /** 時裝（2026-10）：ref 時裝代號或 bundle:組代號（sponsor.yml 的 bundles）；一次一份，已經有的不重複給。絕版、限定的時裝只有這條路。 */
@@ -241,6 +243,9 @@ public final class DeliveryService {
             }
             case REFUND -> {
                 return "免費退點 ×" + spec.amount();
+            }
+            case CLASS_SCROLL -> {
+                return tw.exilecore.character.ClassScroll.NAME + " ×" + spec.amount(); // 2026-10-28
             }
             case COSMETIC -> {
                 if (plugin.sponsors() == null) {
@@ -1142,7 +1147,7 @@ public final class DeliveryService {
                         List.of(entry(opId, null, "收回功勳", (int) Math.max(1, Math.min(Integer.MAX_VALUE, taken.taken())), admin, player)),
                         taken.work());
             }
-            case ITEM, UNIQUE, GEM, FLASK, CHARM, MAP -> {
+            case ITEM, UNIQUE, GEM, FLASK, CHARM, MAP, CLASS_SCROLL -> {
                 return giveItems(player, state, row, opId, wallet);
             }
             default -> {
@@ -1267,6 +1272,10 @@ public final class DeliveryService {
                 final Rarity rarity = Rarity.parse(spec.rarity(), Rarity.MAGIC);
                 return charms.create(base, base.charges(), rarity == null ? Rarity.MAGIC : rarity,
                         spec.level() > 0 ? spec.level() : Math.max(base.level(), characterLevel));
+            }
+            case CLASS_SCROLL -> {
+                // 2026-10-28：職業轉職卷（一次一疊）
+                return tw.exilecore.character.ClassScroll.create((int) Math.min(remaining, tw.exilecore.character.ClassScroll.STACK));
             }
             case MAP -> {
                 if (plugin.maps() == null) {

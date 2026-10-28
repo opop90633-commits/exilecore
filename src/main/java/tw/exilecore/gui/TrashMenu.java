@@ -139,6 +139,12 @@ public final class TrashMenu extends Menu {
             tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffd27f>🔒 這件鎖定了，不會丟進垃圾桶（/lock 解除）"));
             return;
         }
+        if (tw.exilecore.item.AccountBound.isBound(stack)) {
+            // 2026-10-28：職業轉職卷這種綁定帳號、拿不到第二張的東西不收（免得手滑）
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + tw.exilecore.item.AccountBound.problem(stack,
+                    tw.exilecore.item.AccountBound.Channel.TRASH)));
+            return;
+        }
         for (final Mark mark : marks) {
             if (mark.slot() == slot) {
                 tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>已經在垃圾桶裡了（點上面的拿回來）"));

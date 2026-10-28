@@ -95,6 +95,10 @@ final class SkillDeployables implements Listener {
         double physReduction;
         /** 怨燼的基礎傷害照的生命（舊的算法：你最大生命的 30%～60%；圖騰生命改成照原作之後怨燼不跟著變強）。 */
         double vengefulLife;
+        /** 2026-10-28 照 PoE2 Tempest Bell：鐘身上的元素異常（哪一種元素 → 到哪個 tick）、凍結累積、下一次震波的範圍倍率（擊退）。 */
+        final Map<tw.exilecore.stats.DamageType, Long> ailed = new java.util.EnumMap<>(tw.exilecore.stats.DamageType.class);
+        double freezeBuild;
+        double ringArea = 1;
 
         Deployed(final UUID owner, final SkillBuild build, final DeploySpec spec, final ArmorStand stand, final Location feet,
                  final long now, final long untilTick, final String label) {
@@ -412,7 +416,10 @@ final class SkillDeployables implements Listener {
         // 同一個技能同時最多幾個：多的收最舊的（2026-10-27 照 PoE2 Splinter Totem：同時只能有一根；分裂出來的一起收掉）
         final boolean onlyOne = spec.kind() == DeploySpec.Kind.TOTEM && tw.exilecore.stats.StatKeys.flag(
                 build.profile().effective(plugin.players().sheet(player)), tw.exilecore.stats.SupportExtraKeys.TOTEM_ONLY_ONE);
-        final int limit = spec.kind() == DeploySpec.Kind.TOTEM ? (onlyOne ? 1 : Math.max(1, build.totems())) : Math.max(1, spec.max());
+        // 2026-10-28 照 PoE2 Tempest Bell：同時最多幾口鐘隨等級（1 → 3（16 級）→ 4（24 級）；skills.yml 的 stages.impact.count）；這次之前一律 1 口
+        final SkillStages.Stage bellImpact = spec.kind() == DeploySpec.Kind.BELL ? SkillStages.get(build.definition().id(), "impact") : null;
+        final int limit = spec.kind() == DeploySpec.Kind.TOTEM ? (onlyOne ? 1 : Math.max(1, build.totems()))
+                : bellImpact != null && bellImpact.count().intAt(build.level()) > 0 ? bellImpact.count().intAt(build.level()) : Math.max(1, spec.max());
         final List<Deployed> mine = new ArrayList<>();
         for (final Deployed item : deployed) {
             if (item.owner.equals(player.getUniqueId()) && item.skillId().equals(build.definition().id())) {
@@ -502,6 +509,16 @@ final class SkillDeployables implements Listener {
         }
         showTimeLeft(item, now);
         deployed.add(item);
+        if (bellImpact != null) {
+            // 2026-10-28 照 PoE2 Tempest Bell：鐘砸下來的那一下打周圍一圈（砸鐘自己的傷害表、2.1 公尺）；這次之前放鐘不造成傷害
+            final double radius = SkillStages.radius(build, "impact", build.radius());
+            final SkillProfile slam = SkillStages.profile(build, build.profile(), "impact")
+                    .derive(build.definition().id() + ".slam", Set.of(tw.exilecore.stats.Tags.AREA), Set.of());
+            for (final LivingEntity target : targets.around(at, radius, player)) {
+                damage.hit(player, target, slam, null);
+            }
+            visuals.bellRing(build.definition().visual(), at, radius, item.ringsLeft);
+        }
         if (totem) {
             item.cannonsSeen = tw.exilecore.ascendancy.AscendancyEffects.cannonsFired(player);
             tw.exilecore.ascendancy.AscendancyEffects.totemPlaced(player, at); // 2026-10-26（昇華・先祖之引：召喚圖騰時觸發先祖之魂）
@@ -1557,8 +1574,11 @@ final class SkillDeployables implements Listener {
         }
         bell.ringsLeft--;
         bell.nextTick = now + Math.max(1, Math.round(bell.spec.interval() * 20));
-        final SkillProfile profile = bell.build.profile().derive(bell.skillId() + ".ring", java.util.Set.of(tw.exilecore.stats.Tags.AREA), java.util.Set.of());
-        final double radius = bell.build.radius();
+        // 2026-10-28 照 PoE2：鐘身上的元素異常讓震波額外獲得元素傷害、會擊退的那一下讓震波範圍更大（StageLeftovers）；這次之前沒有
+        final SkillProfile profile = StageLeftovers.bellShockwave(bell,
+                bell.build.profile().derive(bell.skillId() + ".ring", java.util.Set.of(tw.exilecore.stats.Tags.AREA), java.util.Set.of()), now);
+        final double radius = bell.build.radius() * Math.sqrt(Math.max(1, bell.ringArea));
+        bell.ringArea = 1;
         for (final LivingEntity target : targets.around(bell.feet, radius, owner)) {
             damage.hit(owner, target, profile, null);
         }
@@ -1580,12 +1600,19 @@ final class SkillDeployables implements Listener {
             return;
         }
         final long now = now();
+        final List<Deployed> exploded = new ArrayList<>();
         for (final Deployed bell : deployed) {
             if (bell.spec.kind() == DeploySpec.Kind.BELL && bell.owner.equals(owner.getUniqueId()) && bell.ringsLeft > 0
-                    && now >= bell.nextTick && inside.test(bell.feet.clone().add(0, 0.5, 0))) {
-                queueRing(bell, now);
+                    && inside.test(bell.feet.clone().add(0, 0.5, 0))) {
+                // 2026-10-28 照 PoE2：完美時機的引霆突把鐘炸掉；其他的照鐘的門檻上異常、記下擊退（StageLeftovers）
+                if (plugin.skills() != null && plugin.skills().leftovers().bellHit(owner, bell, skill, null, now)) {
+                    exploded.add(bell);
+                } else if (now >= bell.nextTick) {
+                    queueRing(bell, now);
+                }
             }
         }
+        exploded.forEach(bell -> remove(bell, true));
     }
 
     /** 施放者在鐘旁邊打中敵人：鐘排隊響一次（下一 tick）。 */
@@ -1596,14 +1623,21 @@ final class SkillDeployables implements Listener {
             return; // 只有近戰攻擊打中（不是地面效果一波一波的、不是遠程）
         }
         final long now = now();
+        final List<Deployed> exploded = new ArrayList<>();
         for (final Deployed bell : deployed) {
             if (bell.spec.kind() != DeploySpec.Kind.BELL || !bell.owner.equals(player.getUniqueId()) || bell.ringsLeft <= 0
-                    || now < bell.nextTick || !event.defender().getWorld().equals(bell.feet.getWorld())
+                    || !event.defender().getWorld().equals(bell.feet.getWorld())
                     || event.defender().getLocation().distanceSquared(bell.feet) > bell.spec.range() * bell.spec.range()) {
                 continue;
             }
-            queueRing(bell, now);
+            // 2026-10-28 照 PoE2：完美時機的引霆突把鐘炸掉；其他的照那一下（減免前）的傷害讓鐘上異常、記下擊退（StageLeftovers）
+            if (plugin.skills() != null && plugin.skills().leftovers().bellHit(player, bell, event.skill(), event.result().outgoing(), now)) {
+                exploded.add(bell);
+            } else if (now >= bell.nextTick) {
+                queueRing(bell, now);
+            }
         }
+        exploded.forEach(bell -> remove(bell, true));
     }
 
     private void queueRing(final Deployed bell, final long now) {

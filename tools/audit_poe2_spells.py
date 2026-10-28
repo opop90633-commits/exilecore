@@ -292,10 +292,15 @@ S = {
     ('java:skill/Signatures.java:EMBER_MAX', ('EmberFusilladePlayer', 'blazing_cluster_maximum_number_of_projectiles_allowed', 0), ID)]),
  'storm_orb': dict(main='OrbOfStormsPlayer', dmg=('OrbOfStormsPlayer', 0), checks=[
     ('zone.duration', ('OrbOfStormsPlayer', 'base_skill_effect_duration'), MS),
-    ('zone.max', ('OrbOfStormsPlayer', 'orb_of_storms_base_maximum_number_of_orbs'), ID)],
-    unrep=['Orb of Storms 雷彈連鎖 3→5→9 次（number_of_chains）：雷雲是地面效果，沒有連鎖', '每 4 秒一發、放法術時多一發、最多 6 發（用每 2 秒一下代替）']),
- 'lightning_pillar': dict(main='LightningConduitPlayer', dmg=('LightningConduitPlayer', 0),
-    unrep=['Lightning Conduit 打到感電的敵人多劈 1→2→2 道（lightning_conduit_x_additional_strikes_if_consumed_a_shock）']),
+    ('zone.max', ('OrbOfStormsPlayer', 'orb_of_storms_base_maximum_number_of_orbs'), ID),
+    ('zone.bolts.chains', ('OrbOfStormsPlayer', 'number_of_chains'), ID),  # 2026-10-28：雷彈連鎖做了
+    ('zone.bolts.range', ('OrbOfStormsPlayer', 'active_skill_base_area_of_effect_radius'), DM),
+    ('zone.bolts.chain_range', ('OrbOfStormsPlayer', 'arc_chain_distance'), DM),
+    ('zone.interval', ('OrbOfStormsPlayer', 'orb_of_storms_base_bolt_frequency_ms'), MS)]),  # 2026-10-28：每 4 秒、施法時多一發、6 發就消失（SkillZones.ORB_MAX_BOLTS）做了
+ 'lightning_pillar': dict(main='LightningConduitPlayer', dmg=('LightningConduitPlayer', 0), checks=[  # 2026-10-28：多劈的雷做了
+    ('level_modifiers[skill.shocked_bolts/FLAT].value', ('LightningConduitPlayer', 'lightning_conduit_x_additional_strikes_if_consumed_a_shock'), ID),
+    # 2026-10-28：每 5% 感電效果更多 10% 做了（StageLeftovers 照目標身上的感電效果）
+    ('modifiers[damage.more_per_5_shock/FLAT].value', ('LightningConduitPlayer', 'lightning_conduit_damage_+%_final_per_5%_increased_damage_taken_from_shock'), ID)]),
  'hex_burst': dict(main='HexblastPlayer', dmg=('HexblastPlayer', 0), checks=[
     ('impact.radius', ('HexblastPlayer', 'active_skill_base_area_of_effect_radius'), DM)]),
  'bone_storm': dict(main='BonestormPlayer', dmg=('BonestormPlayer', 0), skip={'mana'}, checks=[
@@ -310,13 +315,15 @@ S = {
  'frost_mine': dict(main='FrostBombPlayer', dmg=('FrostBombPlayer', 0), checks=[
     ('impact.radius', ('FrostBombPlayer', 'active_skill_base_area_of_effect_radius'), DM),
     ('impact.delay', ('FrostBombPlayer', 'base_skill_detonation_time'), MS),
-    ('modifiers[chill.effect/MORE].value', ('FrostBombPlayer', 'active_skill_chill_as_though_damage_+%_final'), ID)],
-    unrep=['Frost Bomb 元素曝露 20%＋每跳 2%（最多 50%）']),
+    ('modifiers[chill.effect/MORE].value', ('FrostBombPlayer', 'active_skill_chill_as_though_damage_+%_final'), ID),
+    # 2026-10-28：脈衝的元素曝露做了（StageLeftovers；20%＋每下 2%、最多 50%、8 秒）
+    ('level_modifiers[limit.exposure_level/FLAT].value', ('FrostBombPlayer', 'frost_bomb_exposure_does_not_apply_to_enemies_of_level_higher_than_X'), ID)],
+    unrep=['Frost Bomb 的脈衝間隔 RePoE／poe2db 都沒寫：照「20% 起每下 +2%、4 秒引爆時剛好疊滿 50%」推成 0.25 秒']),
  'ice_wall': dict(main='FrostWallPlayer', dmg=('FrostWallPlayer', 0), checks=[
     ('zone.length', ('FrostWallPlayer', 'wall_maximum_length', 0), DM),
     ('zone.duration', ('FrostWallPlayer', 'base_skill_effect_duration', 0), MS),
-    ('cooldown_uses', '_stored:FrostWallPlayer', ID)],
-    unrep=['Frost Wall 冰牆生命 36→12,714→33,734（frost_wall_maximum_life）：冰牆不能被打']),
+    ('cooldown_uses', '_stored:FrostWallPlayer', ID),
+    ('level_modifiers[limit.crystal_life/FLAT].value', ('FrostWallPlayer', 'frost_wall_maximum_life', 0), ID)]),  # 2026-10-28：冰晶生命做了
  'storm_blink': dict(main='LightningWarpPlayer', dmg=('LightningWarpPlayer', 0), checks=[
     ('dash.end_radius', ('LightningWarpPlayer', 'active_skill_base_area_of_effect_radius'), DM)]),
  'inferno_blast': dict(main='FlameblastPlayer', dmg=('FlameblastPlayer', 0), skip={'mana'}, checks=[
@@ -374,15 +381,15 @@ S = {
     ('warcry.glory', ('DefianceBannerPlayer', 'active_skill_requires_X_glory'), ID),
     ('warcry.duration', ('DefianceBannerPlayer', 'base_skill_effect_duration'), lambda x: 6.0),
     ('level_modifiers[skill.duration/INCREASED].value', ('DefianceBannerPlayer', 'base_skill_effect_duration'), lambda x: (x / 6000 - 1) * 100, 0.006),
-    ('warcry.buff[armour/MORE].value', 30), ('warcry.buff[evasion/MORE].value', 30), ('warcry.buff[movement.speed/INCREASED].value', 30)],
-    unrep=['戰旗保留 30 精魂（DefianceBannerReservationPlayer）：戰旗是插下去的戰吼，不保留精魂']),
+    ('warcry.buff[armour/MORE].value', 30), ('warcry.buff[evasion/MORE].value', 30), ('warcry.buff[movement.speed/INCREASED].value', 30),
+    ('aura.reserve', '_spirit:DefianceBannerReservationPlayer')]),  # 2026-10-28：戰旗保留精魂做了
  'war_banner': dict(main='WarBannerPlayer', skip={'cast'}, checks=[
     ('warcry.radius', ('WarBannerPlayer', 'active_skill_base_area_of_effect_radius'), DM),
     ('warcry.glory', ('WarBannerPlayer', 'active_skill_requires_X_glory'), ID),
     ('warcry.duration', ('WarBannerPlayer', 'base_skill_effect_duration'), lambda x: 6.0),
     ('level_modifiers[skill.duration/INCREASED].value', ('WarBannerPlayer', 'base_skill_effect_duration'), lambda x: (x / 6000 - 1) * 100, 0.006),
-    ('warcry.buff[damage/MORE].value', 25), ('warcry.buff[accuracy/INCREASED].value', 50), ('warcry.buff[attack.speed/INCREASED].value', 25)],
-    unrep=['戰旗保留 30 精魂（WarBannerReservationPlayer）']),
+    ('warcry.buff[damage/MORE].value', 25), ('warcry.buff[accuracy/INCREASED].value', 50), ('warcry.buff[attack.speed/INCREASED].value', 25),
+    ('aura.reserve', '_spirit:WarBannerReservationPlayer')]),
  'dread_banner': dict(main='DreadBannerPlayer', skip={'cast'}, checks=[
     ('warcry.radius', ('DreadBannerPlayer', 'active_skill_base_area_of_effect_radius'), DM),
     ('warcry.glory', ('DreadBannerPlayer', 'active_skill_requires_X_glory'), ID),
@@ -390,8 +397,8 @@ S = {
     ('level_modifiers[skill.duration/INCREASED].value', ('DreadBannerPlayer', 'base_skill_effect_duration'), lambda x: (x / 6000 - 1) * 100, 0.006),
     ('warcry.buff[resist.max.fire/FLAT].value', 4), ('warcry.buff[resist.max.cold/FLAT].value', 4), ('warcry.buff[resist.max.lightning/FLAT].value', 4),
     ('warcry.buff[ailment.threshold/MORE].value', 60),
-    ('warcry.buff[flask.charges_per_minute.life/FLAT].value', 30), ('warcry.buff[flask.charges_per_minute.mana/FLAT].value', 30)],
-    unrep=['戰旗保留 30 精魂（DreadBannerReservationPlayer）']),
+    ('warcry.buff[flask.charges_per_minute.life/FLAT].value', 30), ('warcry.buff[flask.charges_per_minute.mana/FLAT].value', 30),
+    ('aura.reserve', '_spirit:DreadBannerReservationPlayer')]),
  'frostbolt': dict(main='FrostboltPlayer', dmg=('FrostboltPlayer', 0), checks=[
     ('level_modifiers[chill.effect/MORE].value', ('FrostboltPlayer', 'active_skill_chill_effect_+%_final', 0), ID)]),
  'ball_lightning': dict(main='BallLightningPlayer', dmg=('BallLightningPlayer', 0), checks=[
@@ -440,9 +447,16 @@ S = {
     note='旋風的 damage 是每秒物理（PoE2 base_physical_damage_to_deal_per_minute ÷ 60）'),
  'thrashing_vines': dict(main='ThrashingVinesPlayer', dmg=('ThrashingVinesPlayer', 0), checks=[
     ('impact.radius', ('ThrashingVinesPlayer', 'active_skill_base_area_of_effect_radius'), DM)]),
- 'volcano': dict(main='VolcanoPlayer', dmg=('VolcanoPlayer', 0), checks=[
-    ('zone.radius', ('VolcanoPlayer', 'active_skill_base_secondary_area_of_effect_radius', 0), DM)],
-    unrep=['Volcano 噴出的火山彈 3→5→6 顆（VolcanoProjectilePlayer base_number_of_projectiles）、引導充能 4 階']),
+ 'volcano': dict(main='VolcanoPlayer', dmg=('VolcanoPlayer', 'VolcanoProjectilePlayer'), checks=[  # 2026-10-28：火山彈數量、傷害、持續、間隔做了
+    ('zone.radius', ('VolcanoPlayer', 'active_skill_base_secondary_area_of_effect_radius', 0), DM),
+    ('zone.shower.count', ('VolcanoPlayer', 'base_number_of_projectiles', 'VolcanoProjectilePlayer'), ID),
+    ('zone.shower.radius', ('VolcanoPlayer', 'active_skill_base_area_of_effect_radius', 'VolcanoProjectilePlayer'), DM),
+    ('zone.duration', ('VolcanoPlayer', 'base_skill_effect_duration', 0), MS),
+    ('zone.interval', ('VolcanoPlayer', 'volcano_fires_projectiles_every_x_ms', 0), MS),
+    # 2026-10-28：引導 4 階、開場爆發（StageLeftovers；每階更多 150%、多 4 顆火山彈）做了
+    ('charge.stages', ('VolcanoPlayer', 'volcano_maximum_number_of_stages', 0), ID),
+    ('stages.eruption.radius', ('VolcanoPlayer', 'active_skill_base_area_of_effect_radius', 0), DM)],
+    unrep=['Volcano 引導期間每分鐘的魔力消耗（ManaPerMinute）：只收放的那一次', '開場爆發的傷害寫成本體表 ÷ 火山彈表的比例（stages.eruption.effectiveness）']),
  'entangle': dict(main='EntanglePlayer', unrep=[
     'Entangle 實際是藤蔓（每條 1–1 → 29–43 物理、根數上限 4→8→13、每層移動 -15%）；我們做成詛咒式的緩速＋受到物理傷害增加，沒有逐級可以對']),
  'barkskin': dict(main='BarkskinPlayer', skip={'cast'}, checks=[
@@ -471,12 +485,15 @@ S = {
  'withering_presence': dict(main='WitheringPresencePlayer', skip={'cast'}, checks=[
     ('aura.enemy.withered_every', ('WitheringPresencePlayer', 'skill_withering_presence_frequency_ms'), MS)]),
  'voltaic_mark': dict(main='VoltaicMarkPlayer', checks=[
-    ('mark.duration', ('VoltaicMarkPlayer', 'base_skill_effect_duration'), MS)],
-    unrep=['Voltaic Mark：打被標記的敵人感電（電擊）累積增加 25→35→45%（thaumaturgist_mark_hit_damage_electrocute_multiplier_+%）、牠死時你獲得 30% 傷害為額外閃電；'
-           '我們做成降閃電抗性 [-15, -30]＋受到傷害增加 10%（沒有「對某一個目標的累積倍率」）']),
+    ('mark.duration', ('VoltaicMarkPlayer', 'base_skill_effect_duration'), MS),  # 2026-10-28：電擊累積、觸發的增益做了
+    ('mark.effects[electrocute.buildup_taken/INCREASED].value', ('VoltaicMarkPlayer', 'thaumaturgist_mark_hit_damage_electrocute_multiplier_+%'), ID),
+    ('modifiers[mark.activation_gain/FLAT].value', ('VoltaicMarkPlayer', 'thaumaturgist_mark_damage_buff_damage_%_to_gain_as_lightning'), ID),
+    ('modifiers[mark.activation_seconds/FLAT].value', ('VoltaicMarkPlayer', 'base_secondary_skill_effect_duration'), MS)]),
  'freezing_mark': dict(main='FreezingMarkPlayer', checks=[
-    ('mark.duration', ('FreezingMarkPlayer', 'base_skill_effect_duration'), MS)],
-    unrep=['Freezing Mark：打被標記的敵人凍結累積更多 25→35→45%、牠死時你獲得 30% 傷害為額外冰冷；我們做成降冰冷抗性 [-15, -30]＋異常門檻 -30%']),
+    ('mark.duration', ('FreezingMarkPlayer', 'base_skill_effect_duration'), MS),  # 2026-10-28：凍結累積、觸發的增益做了
+    ('mark.effects[freeze.buildup_taken/MORE].value', ('FreezingMarkPlayer', 'freezing_mark_hit_damage_freeze_multiplier_+%_final'), ID),
+    ('modifiers[mark.activation_gain/FLAT].value', ('FreezingMarkPlayer', 'freezing_mark_damage_buff_damage_%_to_gain_as_cold'), ID),
+    ('modifiers[mark.activation_seconds/FLAT].value', ('FreezingMarkPlayer', 'base_secondary_skill_effect_duration'), MS)]),
  'bloodhounds_mark': dict(main='BloodhoundsMarkPlayer', checks=[
     ('mark.duration', ('BloodhoundsMarkPlayer', 'base_skill_effect_duration'), MS)]),
  'ice_tipped_arrows': dict(main='IceTippedArrowsPlayer'),
@@ -492,9 +509,10 @@ S = {
     ('guard.effects[damage/MORE].value', ('EmergencyReloadPlayer', 'emergency_reload_damage_+%_final'), ID)]),
  'blink': dict(main='BlinkPlayer', skip={'mana', 'cast', 'cooldown'}, checks=[
     ('cooldown', ('BlinkPlayer', '_cooldown'), lambda x: 4.5),
-    ('level_modifiers[skill.cooldown/MORE].value', ('BlinkPlayer', '_cooldown'), lambda x: (x / 4.5 - 1) * 100, 0.006)],
-    unrep=['Blink 保留 60 精魂、不花魔力（BlinkReservationPlayer）：位移技能不能保留精魂，維持每次 [4, 8] 魔力',
-           'Blink 距離 4→4.9→5.5 米（blink_travel_distance）：dash.range 不能隨等級，取 5']),
+    ('level_modifiers[skill.cooldown/MORE].value', ('BlinkPlayer', '_cooldown'), lambda x: (x / 4.5 - 1) * 100, 0.006),
+    ('mana', 0),  # 2026-10-28：不花魔力、保留 60 精魂、距離逐級都做了
+    ('aura.reserve', '_spirit:BlinkReservationPlayer'),
+    ('dash.range', ('BlinkPlayer', 'blink_travel_distance'), DM)]),
  'time_of_need': dict(main='TimeOfNeedPlayer', skip={'cast'}, checks=[
     ('aura.effects[blessing.life/FLAT].value', ('TimeOfNeedPlayer', 'skill_time_of_need_gain_x_life'), ID),
     ('level_modifiers[blessing.interval/FLAT].value', ('TimeOfNeedPlayer', 'base_cooldown_modifiable_repeat_interval_ms'), MS)]),
@@ -571,7 +589,7 @@ S = {
  'parry': dict(main=None, checks=[
     ('guard.effects[stun.threshold/INCREASED].value', ('ParryPlayer', 'stun_threshold_+%_final_while_performing_action'), ID)],
     unrep=['Parry 在 PoE2 是攻擊（副手盾 65% 傷害、只有 1 級），招架成功給敵人受到的傷害增加 50%（2 秒）；我們做成舉盾式的招架姿勢']),
- 'summon_mount': dict(main='RhoaMountPlayer', skip={'cast', 'spirit'}, unrep=['Rhoa Mount 保留 100 精魂：坐騎是位移技能，不保留精魂']),
+ 'summon_mount': dict(main='RhoaMountPlayer', skip={'cast'}),  # 2026-10-28：保留 100 精魂做了（主技能的 spirit 跟 aura.reserve 比）
  # ---- 寶石本身的隱藏部分（使者的爆炸、放出、幻身）----
  'herald_ash_burst': dict(main=None, checks=[
     ('nova.radius', ('HeraldOfAshPlayer', 'active_skill_base_area_of_effect_radius', 1), DM)],
@@ -769,6 +787,8 @@ def source(r, src):
         if parts[0] == '_crit':
             c = r.crit(parts[1], int(parts[2]) if len(parts) > 2 else 0)
             return [c] * 40
+        if parts[0] == '_spirit':
+            return r.spirit(parts[1])  # 2026-10-28：戰旗、掠閃這種「另外一個保留用的技能」的精魂
         if parts[0] == '_stored':
             return [(r.skill(parts[1]).get('static') or {}).get('stored_uses')] * 40
         raise ValueError(src)

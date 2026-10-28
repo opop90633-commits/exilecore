@@ -199,6 +199,7 @@ public final class SkillService {
         auras.forget(player.getUniqueId());
         signatures.forget(player.getUniqueId());
         spears().forget(player.getUniqueId()); // 2026-10-27：插著的炎爆矛、血嗅印
+        stageEffects().forget(player.getUniqueId()); // 2026-10-28：矛頭、震脈掌的增益
         movePenalty.forget(player); // 2026-10-27：放技能的移動懲罰（這次之前離線的玩家一直留著）
     }
 
@@ -279,6 +280,21 @@ public final class SkillService {
         return granted;
     }
 
+    private MarkActivation markActivation;
+
+    /** 2026-10-28 照 PoE2：引雷印、霜縛印被電擊／凍結時觸發（印記用掉、放印記的人獲得額外元素傷害的增益）。 */
+    MarkActivation markActivation() {
+        if (markActivation == null) {
+            markActivation = new MarkActivation(plugin, this);
+        }
+        return markActivation;
+    }
+
+    /** 2026-10-28：敵人被電擊、凍結了（AilmentService 呼叫）：身上的引雷印、霜縛印觸發。 */
+    public void markAilment(final LivingEntity target, final tw.exilecore.ailment.AilmentType type) {
+        markActivation().ailment(target, type);
+    }
+
     private DruidSupports druidSupports;
 
     /** 2026-10-26 照 PoE2 0.5 補的德魯伊輔助（行嵐、掠嵐、蟄甲）。 */
@@ -302,6 +318,15 @@ public final class SkillService {
     private PersistentBuffs persistentBuffs;
     private OriginalSkills originals;
     private SpearMechanics spears;
+    /** 2026-10-28 照 PoE2：打中之後才發生的分段（三連刺的矛頭、霜牙刺的冰爆、震脈掌的投射物）。 */
+    private StageEffects stageEffects;
+
+    public StageEffects stageEffects() {
+        if (stageEffects == null) {
+            stageEffects = new StageEffects(plugin, this);
+        }
+        return stageEffects;
+    }
 
     /** 2026-10-27 照 PoE2 0.5 的矛技能：擲矛、炎爆矛（插地、怒星）、血嗅印（失血累積重暈、血爆），見 {@link SpearMechanics}。 */
     public SpearMechanics spears() {
@@ -309,6 +334,30 @@ public final class SkillService {
             spears = new SpearMechanics(plugin, this);
         }
         return spears;
+    }
+
+    private StageAttacks stageAttacks;
+    private StageLeftovers leftovers;
+
+    /** 2026-10-28：專屬機制（旋風矛的旋風從 ProjectileEngine 交給它）。 */
+    Signatures signatures() {
+        return signatures;
+    }
+
+    /** 2026-10-28 照 PoE2：分段之後剩下的機制（雷暴震波、鐘的異常、冰片門檻、血爆範圍、箭雨、土牆、旋風…，見 {@link StageLeftovers}）。 */
+    public StageLeftovers leftovers() {
+        if (leftovers == null) {
+            leftovers = new StageLeftovers(plugin, this);
+        }
+        return leftovers;
+    }
+
+    /** 2026-10-28 照 PoE2：攻擊技能的第二段（自己的逐級表）、逐級上限、盾技能（見 {@link StageAttacks}）。 */
+    public StageAttacks stageAttacks() {
+        if (stageAttacks == null) {
+            stageAttacks = new StageAttacks(plugin, this);
+        }
+        return stageAttacks;
     }
 
     /** 2026-10-26：照 PoE2 原作機制重做的技能（凜冬之殼、雷縛長棍、崩滅心咒…，見 {@link OriginalSkills}）。 */
@@ -1624,7 +1673,8 @@ public final class SkillService {
 
     private void repeatStrikeInner(final Player player, final SkillRuntime runtime, final long now) {
         final SkillRuntime.Repeat repeat = runtime.repeat;
-        final SkillBuild build = repeat.build();
+        // 2026-10-28 照 PoE2（三連刺的第六刺）：連刺的最後一下用自己那一段的傷害表、距離（SkillStages 的 last）；這次之前每一下都一樣
+        final SkillBuild build = repeat.left() == 1 ? SkillStages.apply(repeat.build(), SkillStages.LAST) : repeat.build();
         final SkillDefinition definition = build.definition();
         boolean able = eligible(player) && !inTown(player)
                 && (plugin.ailments() == null || !plugin.ailments().isIncapacitated(player))
@@ -1636,6 +1686,9 @@ public final class SkillService {
             if (definition.mechanic() == Mechanic.FLICKER) {
                 able = executor.flickerAgain(player, build, target);
             } else {
+                if (repeat.left() == 1) {
+                    stageEffects().armLast(player, repeat.build()); // 2026-10-28 照 PoE2：三連刺最後一刺插矛頭
+                }
                 executor.executeFrom(Origin.of(player), build, target);
             }
         }
@@ -1728,6 +1781,14 @@ public final class SkillService {
         final String gemProblem = GemAttributes.problem(config, pressed.entry(), sheet); // 2026-10-26 照 PoE2：屬性需求不足的技能寶石不能用
         if (gemProblem != null) {
             fail(player, runtime, state, ItemRenderer.escape(definition.name()) + "：" + ItemRenderer.escape(gemProblem), now);
+            return;
+        }
+        // 2026-10-28 照 PoE2：保留精魂的主動技能（戰旗、掠閃、喚駒）要保留得到精魂才能用（綁在按鍵格上照按鍵順序保留，跟光環一起算）；
+        //   這次之前不保留精魂（掠閃每次花 [4, 8] 魔力）
+        if (definition.reservesSpiritOnly() && !pressed.isDefault() && !auras.isActive(player.getUniqueId(), definition.id())) {
+            fail(player, runtime, state, String.format(Locale.ROOT, "%s：精魂不夠，要保留 %.0f 精魂才能用（已經保留 %.0f／%.0f）",
+                    ItemRenderer.escape(definition.name()), build.reserve(), auras.totalReserve(player.getUniqueId()),
+                    AuraService.capacity(sheet)), now);
             return;
         }
         // 2026-10-23（照 PoE2：同一個技能只能有一顆）：放在宿主孔裡的技能自己不能再放（舊的面板可能兩邊都有）
@@ -1965,6 +2026,7 @@ public final class SkillService {
             }
         } else if (definition.tags().contains(tw.exilecore.stats.Tags.SPELL)) {
             state.markRecent(tw.exilecore.stats.KeystoneKeys.RECENT_SPELL, now);
+            leftovers().spellCast(player, definition); // 2026-10-28 照 PoE2 Orb of Storms：在雷雲旁邊施法多放一道雷
         }
         // 2026-10-26（捐命，PoE2 Sacrificial Offering）：放的時候獻祭 x% 最大生命
         supportMechanics().sacrifice(player, build, state);
@@ -1977,6 +2039,7 @@ public final class SkillService {
         // 2026-10-24：放的時候消耗戰星的輔助（狂速、久咒、碎地；照 PoE2）
         final ChargeEffects.OnUse onUse = chargeEffects().onUse(player, build, sheet);
         build = originals().beforeCast(player, onUse.build(), preferred, now); // 2026-10-26 照 PoE2：熱度、崩滅心咒、霜鏃、帶電油彈、噬咬的跳躍
+        build = stageAttacks().beforeCast(player, build, preferred, now); // 2026-10-28 照 PoE2：攻擊的第二段（狂怒、第三擊／終結、帶電、箭雨、毒花）
         // 2026-10-26（昇華）：先祖強化、力量的代價、異能賦予、順風、回響與重複、猛擊的餘震…（AscendancyEffects）
         build = tw.exilecore.ascendancy.AscendancyEffects.beforeCast(player, state, build, preferred);
         build = supportMechanics().lineage().prepare(player, build); // 2026-10-27 照 PoE2：血脈輔助（血滲、狂伐、傲寒、積勢、雪封）
@@ -2132,6 +2195,11 @@ public final class SkillService {
         // 用的元素（元湧）、累積的電荷（引雷）
         final SupportMechanics.Empowering empowering = supportMechanics().empower(player, runtime, build, now);
         build = supportMechanics().beforeUse(player, empowering.build());
+        // 2026-10-28 照 PoE2：連段的那一下自己的攻擊速度（終結打擊更少 45%、第三擊更少 35%…；SkillStages）——出手時間照比例拉長
+        final double stageTime = SkillStages.timeScale(build.profile());
+        if (stageTime != 1.0) {
+            runtime.readyAt += interval * (stageTime - 1);
+        }
         if (ammoSkill(definition) && runtime.takeEmpoweredBolt(definition.id(), now)) {
             // 2026-10-28 照 PoE2 Emergency Reload：被急裝強化的弩矢更多 x% 傷害（每個彈匣各自的發數，用完或到期就沒了）
             build = build.withProfile(build.profile().withLocal(List.of(tw.exilecore.stats.Modifier.more(StatKeys.DAMAGE, runtime.empoweredMore, "急裝"))));
@@ -2306,18 +2374,24 @@ public final class SkillService {
         }
         signatures.detonateNear(player, definition, useLocation(player, definition, build, preferred)); // 2026-10-15：其他技能引爆霆落矛
         spears().detonateNear(player, definition, useLocation(player, definition, build, preferred)); // 2026-10-27 照 PoE2：引爆類技能引爆插著的炎爆矛
+        stageEffects().afterUse(player, definition, useLocation(player, definition, build, preferred)); // 2026-10-28 照 PoE2：引爆矛頭、震脈掌的投射物
         // 2026-10：幻弓影：弓的攻擊過一下由身旁的幻影再射一次（傷害少很多）
         if (definition.isAttack() && definition.weapons().contains("bow") && !definition.hidden() && definition.cooldown() <= 0
                 && StatKeys.flag(state.sheet(), StatKeys.FLAG_MIRAGE)) {
             final SkillBuild mirage = build.withProfile(build.profile().scaled(0.7, "幻影")); // 2026-10-26 照 PoE2 Mirage Archer：更少 30%（這次之前少 60%）
             final org.bukkit.util.Vector facing = SkillTargets.facing(player);
             final org.bukkit.Location from = player.getLocation().add(new org.bukkit.util.Vector(-facing.getZ(), 0, facing.getX()).multiply(1.5));
-            final java.util.UUID aim = preferred == null ? null : preferred.getUniqueId();
             // 2026-10：幻影要射向放的那一刻準心指的地方（以前用玩家的水平朝向從旁邊 1.5 格平行射出：
             // 不管上下的角度、也不管鎖定的目標，單發的箭打不到同一個地方，偏一格半而且往下瞄時從頭頂飛過去）
+            // 2026-10-28 修正：準心的射線也算敵人（這次之前只看方塊：準心對著怪時，點落在怪後面的牆上，幻影從旁邊 1.5 格朝那點射，
+            //   箭從怪旁邊擦過去）；準心指到的敵人當作幻影的目標
             final org.bukkit.Location eye = player.getEyeLocation();
-            final org.bukkit.util.RayTraceResult ray = player.getWorld().rayTraceBlocks(eye, eye.getDirection(), MIRAGE_AIM_RANGE,
-                    org.bukkit.FluidCollisionMode.NEVER, true);
+            final org.bukkit.util.RayTraceResult ray = player.getWorld().rayTrace(eye, eye.getDirection(), MIRAGE_AIM_RANGE,
+                    org.bukkit.FluidCollisionMode.NEVER, true, 0.3,
+                    entity -> entity instanceof org.bukkit.entity.LivingEntity && !(entity instanceof Player) && !entity.equals(player)
+                            && !(entity instanceof org.bukkit.entity.ArmorStand));
+            final org.bukkit.entity.LivingEntity crosshair = ray != null && ray.getHitEntity() instanceof org.bukkit.entity.LivingEntity hit ? hit : null;
+            final java.util.UUID aim = preferred != null ? preferred.getUniqueId() : crosshair != null ? crosshair.getUniqueId() : null;
             final org.bukkit.util.Vector point = ray != null && ray.getHitPosition() != null ? ray.getHitPosition()
                     : eye.toVector().add(eye.getDirection().multiply(MIRAGE_AIM_RANGE));
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
@@ -2355,7 +2429,7 @@ public final class SkillService {
             auras.fireSpellCast(player, definition.tags().contains(tw.exilecore.stats.Tags.AREA) ? 2 : 1); // 焚魂（2026-10 PoE2）
         }
         if (!definition.isAttack() && definition.tags().contains(tw.exilecore.stats.Tags.SPELL) && definition.castTime() > 0
-                && config.meta(definition.id()) == null && definition.aura() == null) {
+                && config.meta(definition.id()) == null && definition.mechanic() != Mechanic.AURA) { // 2026-10-28：只保留精魂的主動技能（掠閃）照樣算；這次之前寫 aura() == null
             metas.gain(player, MetaSpec.Kind.SPELL_CAST, definition.castTime() * 10, preferred); // 2026-10-26：Spellslinger 每 0.1 秒施法時間給能量
         }
         if (airborne > 0) {
@@ -2371,9 +2445,13 @@ public final class SkillService {
         }
         if (build.repeats() > 0) {
             // 複擊：接下來每隔一次攻擊間隔自動再打一下（不花魔力），全部打完才能做別的
-            runtime.repeat = new SkillRuntime.Repeat(runtime.readyAt, interval, build.repeats(), build,
+            // 2026-10-28 照 PoE2 Rapid Assault：有「最後一下」那一段的連刺（stages.last）整串在一次攻擊時間裡打完（六刺平分攻擊時間）；
+            // 這次之前每一下都要等一整個攻擊間隔
+            final boolean sequence = SkillStages.get(definition.id(), SkillStages.LAST) != null;
+            final double gap = sequence ? interval / (build.repeats() + 1) : interval;
+            runtime.repeat = new SkillRuntime.Repeat(sequence ? now + gap : runtime.readyAt, gap, build.repeats(), build,
                     preferred == null ? null : preferred.getUniqueId());
-            runtime.readyAt = runtime.repeat.doneAt();
+            runtime.readyAt = sequence ? Math.max(runtime.readyAt, runtime.repeat.doneAt()) : runtime.repeat.doneAt();
         } else if (sealRepeats > 0) {
             // 封印（解封）：接下來自動再放幾次，每次傷害少一半
             runtime.repeat = new SkillRuntime.Repeat(Math.max(runtime.readyAt, now + 6), 6, sealRepeats,
@@ -2884,7 +2962,7 @@ public final class SkillService {
             for (final SkillLoadout.Entry granted : state.skills().entries()) {
                 if (granted.granted() && !state.skills().dormant(granted)) {
                     final SkillDefinition definition = config.skill(granted.skillId());
-                    if (definition != null && !definition.hidden() && definition.dealsDamage() && definition.aura() == null
+                    if (definition != null && !definition.hidden() && definition.dealsDamage() && definition.mechanic() != Mechanic.AURA
                             && definition.summon() == null && definition.cooldown() <= 0) {
                         return new Resolved(definition, granted);
                     }
@@ -2905,6 +2983,12 @@ public final class SkillService {
     /**
      * 一個技能每秒打幾下：一輪是「複擊的每一下各一次攻擊間隔」再加「最後一下的間隔與冷卻比較長的那個」。
      */
+    /** 2026-10-28 照 PoE2 Rapid Assault：整串在一次攻擊時間裡打完的連刺（stages.last），每一下隔「攻擊間隔 ÷ 下數」（估算用）。 */
+    static double repeatGap(final SkillBuild build, final double intervalTicks) {
+        return SkillStages.get(build.definition().id(), SkillStages.LAST) != null && build.repeats() > 0
+                ? intervalTicks / (build.repeats() + 1) : intervalTicks;
+    }
+
     static double hitsPerSecond(final double intervalTicks, final double cooldownTicks, final int repeats) {
         final int extra = Math.max(0, repeats);
         final double cycle = extra * intervalTicks + Math.max(intervalTicks, cooldownTicks);
@@ -3431,7 +3515,7 @@ public final class SkillService {
         final double critFactor = 1 + crit * (multi / 100.0 - 1);
         // 2026-10-24：圖騰（弩台等）算圖騰自己射的（每根每秒幾次 × 同時幾根，吃攻速）；以前算成放圖騰的速度（被冷卻卡住），攻速、圖騰數都不會動
         final double totemRate = totemFireRate(build, sheet);
-        final double hitRate = (totemRate > 0 ? totemRate * build.totems() : hitsPerSecond(build.intervalTicks(sheet), build.cooldownTicks(), build.repeats()))
+        final double hitRate = (totemRate > 0 ? totemRate * build.totems() : hitsPerSecond(repeatGap(build, build.intervalTicks(sheet)), build.cooldownTicks(), build.repeats()))
                 * castHits(params.burst() == null ? 1 : params.burst().count(), params.aftershock() != null,
                         params.aftershock() == null ? 0 : params.aftershock().more());
         // 2026-10-24：補齊以前漏算的（實測比估計高 6～20 倍的來源）：雙詠的第二發、蓄力層（平常就會有的）
@@ -3459,7 +3543,7 @@ public final class SkillService {
             final SkillParams fullParams = fullBuild.params();
             final double fullTotemRate = totemFireRate(fullBuild, fullSheet); // 2026-10-24：同上
             final double casts = fullTotemRate > 0 ? fullTotemRate * fullBuild.totems()
-                    : hitsPerSecond(fullBuild.intervalTicks(fullSheet), fullBuild.cooldownTicks(), fullBuild.repeats());
+                    : hitsPerSecond(repeatGap(fullBuild, fullBuild.intervalTicks(fullSheet)), fullBuild.cooldownTicks(), fullBuild.repeats());
             final double fullRate = casts * castHits(fullParams.burst() == null ? 1 : fullParams.burst().count(), fullParams.aftershock() != null,
                     fullParams.aftershock() == null ? 0 : fullParams.aftershock().more());
             double exert = 1.0;
@@ -3732,6 +3816,34 @@ public final class SkillService {
         return build(state, sheet, resolved.definition(), resolved.entry());
     }
 
+    /**
+     * 2026-10-28 照 PoE2：技能說明裡每一段（skills.yml 的 stages）自己的傷害效益、轉換、半徑、攻速（這一級）。
+     */
+    static List<String> stageLines(final SkillBuild build) {
+        final List<String> lines = new ArrayList<>();
+        for (final SkillStages.Stage stage : SkillStages.of(build.definition().id()).values()) {
+            final StringBuilder line = new StringBuilder(String.format(Locale.ROOT, "<gray>%s：傷害效益 <white>%d%%",
+                    ItemRenderer.escape(stage.name()), Math.round(stage.effectiveness().at(build.level()) * 100)));
+            if (stage.hits() > 1) {
+                line.append(String.format(Locale.ROOT, "<gray> × <white>%d</white> 下", stage.hits()));
+            }
+            if (stage.radius(build.level()) > 0) {
+                line.append(String.format(Locale.ROOT, "<gray>，半徑 <white>%.1f</white> 格", build.scaledRadius(stage.radius())));
+            }
+            if (stage.speed() != 0) {
+                line.append(String.format(Locale.ROOT, "<gray>，攻擊速度%s <white>%d%%", stage.speed() > 0 ? "更多" : "更少",
+                        Math.round(Math.abs(stage.speed()))));
+            }
+            if (stage.reach() != 0) {
+                line.append(String.format(Locale.ROOT, "<gray>，打擊距離 +<white>%.1f</white> 格", stage.reach()));
+            }
+            lines.add(line.toString());
+            stage.conversion().forEach((type, fraction) -> lines.add(String.format(Locale.ROOT,
+                    "<dark_gray>　%s：%d%% 物理傷害轉換為%s傷害", ItemRenderer.escape(stage.name()), Math.round(fraction * 100), type.displayName())));
+        }
+        return lines;
+    }
+
     /** 面板上（或寶石裡）的一個技能在這個角色身上的數值。 */
     SkillBuild build(final PlayerState state, final StatSheet sheet, final SkillDefinition definition, final SkillLoadout.Entry entry) {
         // 2026-10-23：同一張屬性表（沒改過）、同一個技能、同樣的寶石：直接用上次算好的（按住攻擊一秒要施放好幾次）
@@ -3740,7 +3852,7 @@ public final class SkillService {
         if (cached != null) {
             return minionSpirit(state, sheet, cached);
         }
-        final SkillBuild fresh = buildFresh(state, sheet, definition, entry);
+        final SkillBuild fresh = StageAttacks.withShield(plugin, state, buildFresh(state, sheet, definition, entry)); // 2026-10-28 照 PoE2：盾技能照盾的護甲附加傷害
         if (buildCache.size() >= BUILD_CACHE_MAX) {
             buildCache.clear(); // 很簡單的上限：滿了就整個清掉（舊的屬性表也跟著放掉）
         }
@@ -4004,6 +4116,14 @@ public final class SkillService {
                 return String.format(Locale.ROOT, "品質 +%d%%：複製的投射物更多 %s%% 傷害（跟等級的「更少」相加）", quality,
                         trimNumber(qualityFlat(definition, quality, TornadoSpec.COPY_MORE)));
             }
+            case "whirling_slash" -> { // 2026-10-28 照 PoE2 Whirling Slash：崩散每多一階再更多 +(0—40)%（gem_quality.yml）；這次之前顯示成增加傷害
+                return String.format(Locale.ROOT, "品質 +%d%%：旋風崩散每多一階再更多 %s%% 傷害（加在 150%% 上）", quality,
+                        trimNumber(qualityFlat(definition, quality, Signatures.WHIRL_QUALITY_MORE)));
+            }
+            case "gale_spear" -> { // 2026-10-28 照 PoE2 Twister：(0—20)% 機率多一道旋風（gem_quality.yml）；這次之前顯示成增加傷害
+                return String.format(Locale.ROOT, "品質 +%d%%：%s%% 機率多一道旋風", quality,
+                        trimNumber(qualityFlat(definition, quality, Twisters.EXTRA_CHANCE)));
+            }
             case "snipe" -> { // 2026-10-28 照 PoE2 Snipe：爆炸半徑 +(0—0.4) 格（gem_quality.yml）；這次之前顯示成增加傷害
                 return String.format(Locale.ROOT, "品質 +%d%%：爆炸與寒冰爆破的半徑 +%s 格", quality, trimNumber(quality * 0.02));
             }
@@ -4160,6 +4280,7 @@ public final class SkillService {
         metas.forget(player.getUniqueId());
         signatures.forget(player.getUniqueId()); // 2026-10-17：換角色也清掉插地的矛、蓄力這些（以前照舊角色的 build 繼續打）
         spears().forget(player.getUniqueId()); // 2026-10-27：插著的炎爆矛、血嗅印
+        stageEffects().forget(player.getUniqueId()); // 2026-10-28：矛頭、震脈掌的增益
         // 2026-10-27：換角色也清掉魔湧的風暴、怒氣／連擊／灌注、榮耀與輔助的標記、移動懲罰（這次之前只有離線才清，會帶到另一個角色）
         manaTempest.clear(player.getUniqueId());
         resources.forget(player.getUniqueId());
@@ -4671,6 +4792,7 @@ public final class SkillService {
             definition.conversion().forEach((type, fraction) -> lines.add(String.format(Locale.ROOT,
                     "<gray>%d%% 物理傷害轉換為%s傷害", Math.round(fraction * 100), type.displayName())));
         }
+        lines.addAll(stageLines(build)); // 2026-10-28 照 PoE2：每一段自己的傷害效益
         lines.addAll(resourceLines(player, definition));
         if (build.deploy() != null) {
             lines.addAll(deployLines(build, sheet, deployables.count(player.getUniqueId(), definition.id())));
@@ -4772,7 +4894,7 @@ public final class SkillService {
                 final double interval = build.intervalTicks(sheet);
                 if (build.cooldownTicks() > interval && definition.mechanic() != Mechanic.AURA) {
                     lines.add(String.format(Locale.ROOT, "<gray>每秒 <white>%.2f<gray> 次 <dark_gray>（受冷卻限制；不算冷卻每秒 %.2f 次）",
-                            hitsPerSecond(interval, build.cooldownTicks(), build.repeats()), 20.0 / interval));
+                            hitsPerSecond(repeatGap(build, interval), build.cooldownTicks(), build.repeats()), 20.0 / interval));
                 } else {
                     lines.add(String.format(Locale.ROOT, "<gray>每秒 <white>%.2f<gray> 次", 20.0 / interval));
                 }
@@ -5291,6 +5413,14 @@ public final class SkillService {
                 lines.add(String.format(Locale.ROOT, "<gray>在%s區域留 <white>%.1f</white> 秒，每 %.1f 秒對裡面的敵人造成 <white>%d%%</white> 傷害%s",
                         where, zone.duration() * build.durationScale(), zone.interval(), Math.round(zone.damage()),
                         zone.pull() > 0 ? "，並把敵人往中心吸（玩家不會被吸）" : ""));
+                if (zone.bolts() != null) { // 2026-10-28 照 PoE2 Orb of Storms
+                    lines.add(String.format(Locale.ROOT, "<gray>　每一波不是整圈都打：對 <white>%.1f</white> 格內隨機一個敵人放一道雷，連鎖 <white>%d</white> 次（每次跳 %.1f 格內的）",
+                            zone.bolts().range() * build.areaScale(), zone.bolts().chains().intAt(build.level()), zone.bolts().chainRange()));
+                }
+                if (zone.shower() != null) { // 2026-10-28 照 PoE2 Volcano
+                    lines.add(String.format(Locale.ROOT, "<gray>　每一波不是整圈都打：噴出 <white>%d</white> 顆火山彈，落在範圍內隨機的地方，炸到落點 <white>%.1f</white> 格內的敵人",
+                            zone.shower().count().intAt(build.level()), zone.shower().radius() * build.areaScale()));
+                }
                 if (zone.max() != 1) {
                     lines.add("<dark_gray>　" + (zone.max() > 1 ? "同時最多 " + zone.max() + " 個；" : "") + "疊在一起只算一個（不疊加）");
                 }
@@ -5327,8 +5457,10 @@ public final class SkillService {
                                 ? String.format(Locale.ROOT, "暴擊傷害加成增加 <white>%d%%</white>", Math.round(effect.value().at(build.level()) * fx))
                                 : "<white>" + effect.describe(build.level(), fx) + "</white>");
                     }
-                    lines.add(String.format(Locale.ROOT, "<gray>標記準心指的敵人（最遠 %.0f 格）<white>%.1f</white> 秒：%s對牠", build.range(),
-                            mark.duration() * build.durationScale(), mark.selfOnly() ? "只有你" : "") + String.join("<gray>、", parts));
+                    // 2026-10-28：誰打都算的印記（引雷印、霜縛印：牠受到的電擊／凍結累積…）寫「牠…（誰打都算）」；這次之前一律寫「對牠」
+                    lines.add(String.format(Locale.ROOT, "<gray>標記準心指的敵人（最遠 %.0f 格）<white>%.1f</white> 秒：%s", build.range(),
+                            mark.duration() * build.durationScale(), mark.selfOnly() ? "只有你對牠" : "牠") + String.join("<gray>、", parts)
+                            + (mark.selfOnly() ? "" : "<gray>（誰打都算）"));
                     break;
                 }
                 lines.add(String.format(Locale.ROOT, "<gray>準心指的敵人（最遠 %.0f 格）<white>%.1f</white> 秒內%s受到的傷害增加 <white>%d%%</white>",
@@ -5548,7 +5680,9 @@ public final class SkillService {
                             build.minions(), build.reserve() + Math.max(0, build.minions() - free) * build.minionReserve()));
                 }
             } else {
-            lines.add(String.format(Locale.ROOT, "<#8fd3ff>%s<gray>：保留 <white>%.0f</white> 精魂（你有 %.0f%s）", spec.herald() ? "捷光環" : "光環", build.reserve(),
+            lines.add(String.format(Locale.ROOT, "<#8fd3ff>%s<gray>：保留 <white>%.0f</white> 精魂（你有 %.0f%s）",
+                    build.definition().reservesSpiritOnly() ? "常駐" // 2026-10-28 照 PoE2：戰旗、掠閃、喚駒綁在按鍵格上就保留，精魂不夠時不能用
+                    : spec.herald() ? "捷光環" : "光環", build.reserve(),
                     Math.max(0, plugin.players().sheet(player).get(StatKeys.SPIRIT_MAX)),
                     others > 0 ? String.format(Locale.ROOT, "，其他光環已保留 %.0f", others) : ""));
             }

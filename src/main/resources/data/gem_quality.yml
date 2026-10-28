@@ -70,6 +70,8 @@ frost_volley:   # Freezing Salvo
   - { stat: freeze.buildup, type: MORE, per: 2.0 }   # 凍結累積（更多）
 frozen_locus:   # Frozen Locus
   - { stat: chill.effect, type: MORE, per: 1.0 }   # 冰緩效果（更多）
+gale_spear:   # Twister（2026-10-28 照 PoE2：(0—20)% 機率多一道旋風；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: twister.extra_chance, type: FLAT, per: 1.0 }   # 多一道旋風的機率 %（Twisters.EXTRA_CHANCE）
 galvanic_field:   # Galvanic Field
   - { stat: skill.chains, type: FLAT, per: 0.1 }   # 連鎖次數
 gas_grenade:   # Gas Grenade
@@ -155,6 +157,8 @@ voltaic_grenade:   # Voltaic Grenade
   - { stat: cooldown.recovery, type: INCREASED, per: 1.0 }   # 冷卻回復速度
 whirling_rush:   # Whirling Assault
   - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
+whirling_slash:   # Whirling Slash（2026-10-28 照 PoE2：崩散每多一階再更多 +(0—40)%；這次之前照通用規則每 1% 增加 1% 傷害）
+  - { stat: whirl.collapse_more_per_stage, type: FLAT, per: 2.0 }   # 加在每多一階更多 150% 上（Signatures.WHIRL_QUALITY_MORE）
 winter_eye:   # Eye of Winter
   - { stat: skill.projectile_speed, type: INCREASED, per: 1.5 }   # 投射物速度
 wolf_shred:   # Shred
@@ -244,6 +248,8 @@ advanced:
     - { stat: skill.cost, type: INCREASED, per: -2.5 }
   frostbolt:   # Frostbolt：(0—40)% 更多投射物速度
     - { stat: skill.projectile_speed, type: MORE, per: 2.0 }
+  gale_spear:   # Twister：(0—20)% 更多投射物速度（2026-10-28 照 PoE2）
+    - { stat: skill.projectile_speed, type: MORE, per: 1.0 }
   glacial_cascade:   # Glacial Cascade：(0—20)% 更多攻擊速度
     - { stat: attack.speed, type: MORE, per: 1.0 }
   herald_of_plague:   # Herald of Plague：(0—30)% 更多範圍
@@ -303,3 +309,5 @@ advanced:
     - { stat: attack.speed, type: MORE, per: 2.0 }
   voltaic_grenade:   # Voltaic Grenade：(0—20)% 更多閃電傷害
     - { stat: damage, type: MORE, per: 1.0, tags: [lightning] }
+  whirling_slash:   # Whirling Slash：(0—10)% 更多攻擊速度（2026-10-28 照 PoE2）
+    - { stat: attack.speed, type: MORE, per: 0.5 }

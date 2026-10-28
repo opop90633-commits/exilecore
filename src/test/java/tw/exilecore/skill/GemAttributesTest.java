@@ -93,7 +93,7 @@ class GemAttributesTest {
                 "styrns_ferocity", "styrns_mountain", "tangmazus_thurible", "tricksters_shard", "tuls_avalanche", "uhtreds_constellation",
                 "uhtreds_rite", "voranas_siege", "vruuns_aftermath"), whiteLineage.stream().sorted().toList());
         // 原作是白色（沒有屬性）的只有這幾顆
-        assertEquals(List.of("concussive_runes", "runeforged_blades", "scouring_flame"), white.stream().sorted().toList()); // 2026-10-27：碎晶嘯算血脈（上面）
+        assertEquals(List.of("scouring_flame"), white.stream().sorted().toList()); // 2026-10-27：碎晶嘯算血脈（上面）；2026-10-28 照站長刪掉震符印、符刃
         assertEquals(SupportColours.RED, SupportColours.colour("urgent_totems_iii"), "疾樁是紅（RePoE）");
         assertEquals(SupportColours.BLUE, SupportColours.colour("ice_bite_ii"));
         assertEquals(SupportColours.GREEN, SupportColours.colour("deliberation"));

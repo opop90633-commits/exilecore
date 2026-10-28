@@ -87,8 +87,7 @@ class Poe2SkillSyncTest {
         assertEquals(0.2, config.skill("proc_coursing_current").cooldown(), 1e-9);
         assertEquals(6, config.skill("proc_coursing_current").params().chains().at(1), 1e-9);
         assertTrue(config.skill("proc_coursing_current").damageByLevel());
-        assertTrue(config.skill("proc_concussive_rune").isAttack(), "符文震波是攻擊");
-        assertEquals(5.31, config.skill("proc_concussive_rune").effectiveness().at(20), 1e-9);
+        // 2026-10-28 照站長刪掉震符印（符文震波 proc_concussive_rune 一起拿掉）
         assertTrue(config.skill("proc_crystal_burst").isAttack(), "冰晶爆炸是攻擊");
         assertTrue(config.skill("proc_volcanic_eruption").isAttack());
         assertEquals(4, config.skill("proc_volcanic_eruption").params().projectiles().at(1), 1e-9);

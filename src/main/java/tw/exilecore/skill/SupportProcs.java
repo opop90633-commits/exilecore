@@ -361,8 +361,8 @@ public final class SupportProcs implements Listener {
     private void castNow(final Player player, final SkillDefinition sub, final String levelFrom, final Location at) {
         final PlayerState state = plugin.players().get(player);
         final int level = gemLevelOf(player, state, levelFrom);
-        final SkillBuild build = SkillBuild.of(service.config(), sub, level, state.level(), false, List.of(), state.weaponTags(),
-                plugin.players().sheet(player));
+        final SkillBuild build = StageAttacks.withShield(plugin, state, SkillBuild.of(service.config(), sub, level, state.level(), false, List.of(),
+                state.weaponTags(), plugin.players().sheet(player))); // 2026-10-28 照 PoE2：熔岩噴射照盾的護甲、閃避附加火焰
         service.procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), build, null);
     }
 

@@ -953,8 +953,10 @@ final class AuraService implements Listener {
                 Active aura = mine.get(definition.id());
                 if (aura == null) {
                     aura = new Active(definition.id(), now());
-                    opened.add(definition.name());
-                    visuals.auraOn(definition.visual(), player);
+                    if (!definition.reservesSpiritOnly()) { // 2026-10-28：只保留精魂的主動技能（戰旗、掠閃、喚駒）不提示、不畫光環
+                        opened.add(definition.name());
+                        visuals.auraOn(definition.visual(), player);
+                    }
                 }
                 compute(aura, build, fit);
                 next.put(definition.id(), aura);
@@ -963,7 +965,7 @@ final class AuraService implements Listener {
         }
         final List<String> closed = new ArrayList<>();
         for (final Active aura : mine.values()) {
-            if (!next.containsKey(aura.skillId)) {
+            if (!next.containsKey(aura.skillId) && !aura.build.definition().reservesSpiritOnly()) {
                 closed.add(aura.name());
                 visuals.auraOff(aura.build.definition().visual(), player);
             }
@@ -1074,7 +1076,12 @@ final class AuraService implements Listener {
         for (final Map.Entry<UUID, LinkedHashMap<String, Active>> entry : active.entrySet()) {
             final Player player = plugin.getServer().getPlayer(entry.getKey());
             if (player != null && !entry.getValue().isEmpty() && !player.isDead()) {
-                final List<String> styles = entry.getValue().values().stream().map(aura -> aura.build.definition().visual()).toList();
+                // 2026-10-28：只保留精魂的主動技能（戰旗、掠閃、喚駒）腳下不畫光環
+                final List<String> styles = entry.getValue().values().stream().filter(aura -> !aura.build.definition().reservesSpiritOnly())
+                        .map(aura -> aura.build.definition().visual()).toList();
+                if (styles.isEmpty()) {
+                    continue;
+                }
                 final String prefix = "aura:" + player.getUniqueId() + ":";
                 final String signature = String.join(",", styles);
                 if (!signature.equals(decalSignature.get(player.getUniqueId()))) {
@@ -1093,7 +1100,8 @@ final class AuraService implements Listener {
         // 光環全關了、下線的：圈收掉
         for (final UUID uuid : new ArrayList<>(decalSignature.keySet())) {
             final LinkedHashMap<String, Active> mine = active.get(uuid);
-            if (mine == null || mine.isEmpty() || plugin.getServer().getPlayer(uuid) == null) {
+            if (mine == null || mine.values().stream().allMatch(aura -> aura.build.definition().reservesSpiritOnly())
+                    || plugin.getServer().getPlayer(uuid) == null) { // 2026-10-28：只剩只保留精魂的主動技能也收掉
                 decals.removePrefix("aura:" + uuid + ":");
                 decalSignature.remove(uuid);
             }

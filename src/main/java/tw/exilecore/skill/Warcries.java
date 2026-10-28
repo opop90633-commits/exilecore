@@ -578,6 +578,7 @@ final class Warcries {
             int bonus = 0;
             if (plugin.skills() != null) {
                 bonus = plugin.skills().supportMechanics().onWarcry(player, build, enemies, radius, notice);
+                plugin.skills().leftovers().onWarcry(player, radius); // 2026-10-28 照 PoE2：戰吼讓土牆崩碎、鍛錘震碎成裂地
             }
             // 2026-10-26 照 PoE2 天賦樹：戰吼時回復生命魔力、解除點燃、衰弱與暴擊弱點、機率多強化 3 次（KeystoneEffects）
             bonus += tw.exilecore.combat.KeystoneEffects.onWarcry(plugin, player, effective, tags, enemies, notice);

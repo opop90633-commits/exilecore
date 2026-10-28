@@ -72,6 +72,7 @@ public final class CommandHelp {
                     e("/ec gold <金幣>", "給自己的帳號金幣（負數扣；所有角色共用）"),
                     e("/ec resetpassives", "把目前角色的天賦全部退掉"),
                     e("/ec setclass <職業> [玩家]", "換職業"),
+                    e("/ec classscroll <玩家> [張數]", "發職業轉職卷（綁定帳號；離線的下次登入發）"),
                     e("/ec stats [玩家]", "看自己或在線玩家的屬性表"),
                     e("/ec skill list", "列出所有技能與代號"),
                     e("/ec skill give <技能> [等級]", "加到自己的技能面板（已經有就改等級）"),

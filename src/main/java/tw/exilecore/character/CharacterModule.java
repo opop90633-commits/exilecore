@@ -66,6 +66,7 @@ public final class CharacterModule implements Module {
         plugin.getServer().getPluginManager().registerEvents(new GearListener(plugin, characters.gear()), plugin); // 角色面板的裝備欄
         plugin.getServer().getPluginManager().registerEvents(states.grace(), plugin); // 入場保護
         plugin.getServer().getPluginManager().registerEvents(new MenuListener(), plugin);
+        plugin.getServer().getPluginManager().registerEvents(new tw.exilecore.item.AccountBoundGuard(plugin), plugin); // 2026-10-28：綁定帳號的物品（職業轉職卷）
         plugin.getServer().getPluginManager().registerEvents(plugin.personalDrops(), plugin); // 地上有主人的東西
         plugin.getServer().getPluginManager().registerEvents(chatPrompts, plugin);
         plugin.getServer().getPluginManager().registerEvents(plugin.sidebar(), plugin); // 右邊側欄（任務追蹤、最近撿到）

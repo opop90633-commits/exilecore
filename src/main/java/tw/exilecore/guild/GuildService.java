@@ -1678,6 +1678,9 @@ public final class GuildService {
         if (plugin.items().read(stack).map(ItemData::locked).orElse(false)) {
             return "<#ffd27f>🔒 這件鎖定了（/lock 解除後才能放）";
         }
+        if (tw.exilecore.item.AccountBound.isBound(stack)) {
+            return "<red>" + tw.exilecore.item.AccountBound.problem(stack, tw.exilecore.item.AccountBound.Channel.GUILD_STASH); // 2026-10-28
+        }
         if (tw.exilecore.life.LifeService.isHook(stack)) {
             return "<red>星索鉤綁定帳號，不能放進公會倉庫"; // 2026-10-27：這次之前放進去再領一把＝複製
         }

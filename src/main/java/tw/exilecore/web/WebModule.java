@@ -928,6 +928,7 @@ public final class WebModule implements Module, Listener {
         all.add(new UiPack.CurrencySkin("gem_skill", "heart_of_the_sea"));
         all.add(new UiPack.CurrencySkin("gem_support", "ghast_tear"));
         all.add(new UiPack.CurrencySkin("star_voucher", "paper")); // 星幣券（2026-10）
+        all.add(new UiPack.CurrencySkin(tw.exilecore.character.ClassScroll.ART, "paper")); // 2026-10-28 職業轉職卷（currency_art.txt 沒有這張圖就是原版的紙）
         all.sort(java.util.Comparator.comparing(UiPack.CurrencySkin::vanillaItem).thenComparing(UiPack.CurrencySkin::artId));
         return all;
     }

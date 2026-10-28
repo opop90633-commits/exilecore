@@ -6,8 +6,6 @@ import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 import tw.exilecore.ExileCore;
 import tw.exilecore.character.PlayerState;
@@ -54,6 +52,13 @@ final class Signatures {
     static final double WHIRL_KNOCKBACK = 0.5;
     static final double WHIRL_KNOCKBACK_PER_STAGE = 0.1;
     static final double WHIRL_MORE_PER_STAGE = 1.5;
+    /**
+     * 2026-10-28 照 PoE2（poe2db Whirling Slash 品質：Collapse deals +(0—40)% more damage per additional stage）：
+     * FLAT（百分點），加在每多一階更多 150% 上（gem_quality.yml 每 1% 品質 +2）。這次之前品質照通用規則增加傷害。
+     */
+    static final String WHIRL_QUALITY_MORE = "whirl.collapse_more_per_stage";
+    /** 2026-10-28 照 PoE2：元素旋風獲得 50% 傷害為那種元素的額外傷害（windstorm_gain_all_damage_%_as_corresponding_element_if_empowered）。 */
+    static final double WHIRL_ELEMENT_GAIN = 50;
 
     /** 霆落矛插多久、多久放電一次、同時幾支、放電與炸開是原技能一下的幾成。 */
     static final long LANCE_LIFE = 120;
@@ -88,18 +93,50 @@ final class Signatures {
         long expires;
         SkillBuild build;
         final String skillId;
+        /** 2026-10-28：範圍倍率（不含揮矛那一下照階數放大的部分）。 */
+        double area;
+        /** 2026-10-28 照 PoE2：捲在元素地面上的是元素旋風（null = 一般的）。 */
+        tw.exilecore.stats.DamageType element;
 
-        Whirl(final Location center, final SkillBuild build, final long now) {
+        Whirl(final Location center, final SkillBuild build, final long now, final double area) {
             this.center = center;
             this.stage = 1;
             this.expires = now + WHIRL_LIFE;
             this.build = build;
             this.skillId = build.definition().id();
+            this.area = area;
         }
 
         double radius() {
-            return (WHIRL_RADIUS + WHIRL_RADIUS_PER_STAGE * (stage - 1)) * Math.max(0.5, build.areaScale());
+            return whirlRadius(stage, area);
         }
+    }
+
+    /** 旋風的半徑：1.8 格、每多一階 +0.3（PoE2），乘上範圍倍率（最少算 0.5）。 */
+    static double whirlRadius(final int stage, final double area) {
+        return (WHIRL_RADIUS + WHIRL_RADIUS_PER_STAGE * (Math.max(1, stage) - 1)) * Math.max(0.5, area);
+    }
+
+    /**
+     * 2026-10-28 照 PoE2（sandstorm_swipe_nova_radius_+_per_stage）：揮矛那一圈跟旋風一樣大——這一下之後旋風是第幾階，
+     * 揮的範圍就是那一階旋風的半徑（1.8 → 2.1 → 2.4 格）；回傳要乘在範圍上的倍率。這次之前固定 3.0 → 3.8 格（隨等級）。
+     */
+    static double slashScale(final int stage) {
+        return whirlRadius(stage, 1) / WHIRL_RADIUS;
+    }
+
+    /** 這一下揮完旋風變幾階：身邊沒有自己的旋風是 1，有的話多一階（最多 3 階）。 */
+    static int nextWhirlStage(final int current) {
+        return Math.min(WHIRL_MAX, Math.max(0, current) + 1);
+    }
+
+    /** 2026-10-28 照 PoE2：崩散的傷害倍率：每多一階更多 (150 + 品質的 x)%。 */
+    static double collapseMore(final int stage, final double qualityPerStage) {
+        return 1 + (WHIRL_MORE_PER_STAGE + Math.max(0, qualityPerStage) / 100.0) * (Math.max(1, stage) - 1);
+    }
+
+    /** 2026-10-28：旋風矛用掉一個旋風：那個旋風幾階、是不是元素旋風。 */
+    record ConsumedWhirl(int stage, tw.exilecore.stats.DamageType element) {
     }
 
     private record Lance(Location at, SkillBuild build, long until, long[] nextZap, long zapEvery) {
@@ -118,10 +155,19 @@ final class Signatures {
     private final Map<UUID, Embers> embers = new HashMap<>();
     /** 下一支霆落矛有沒有消耗怒星（beforeCast 記、lodge 用）。 */
     private final java.util.Map<UUID, Integer> chargedLance = new java.util.HashMap<>(); // 2026-10-24：值 = 這次的怒星算幾顆（倍星 2）
+    private final java.util.Map<UUID, SkillBuild> unstagedLance = new java.util.HashMap<>(); // 2026-10-28：消耗怒星那一支換表之前的技能
+    /** 2026-10-28 照 PoE2：旋風矛的旋風（Twisters）。 */
+    private final Twisters twisters;
 
     Signatures(final ExileCore plugin, final SkillService service) {
         this.plugin = plugin;
         this.service = service;
+        this.twisters = new Twisters(plugin, service, this);
+    }
+
+    /** 2026-10-28 照 PoE2 Twister：旋風矛放出旋風（ProjectileEngine.launch 取代一般的投射物；圖騰、幻影也走這裡）。 */
+    void twister(final Origin origin, final SkillBuild build) {
+        twisters.launch(origin, build);
     }
 
     // ---- 蓄力放開 ----
@@ -265,7 +311,8 @@ final class Signatures {
         final String name = ItemRenderer.escape(build.definition().name());
         if (spec.perfect()) {
             if (release.perfect()) {
-                result = result.withProfile(result.profile().scaled(1 + spec.perfectMore() / 100.0, "完美時機")
+                // 2026-10-28 照 PoE2：有完美時機那一段自己的表（stage.perfect）就換成它；這次之前一律乘 perfect_more（20 級的比例）
+                result = result.withProfile(StageAttacks.perfect(result.profile(), 1 + spec.perfectMore() / 100.0, "完美時機")
                         .derive(result.profile().id() + SupportProcs.PERFECT_SUFFIX, Set.of(), Set.of()));
                 state.notice("<#ffd700><bold>★ 完美時機！</bold> <white>" + name, now + 30);
                 player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, SoundCategory.PLAYERS, 1.0f, 1.4f);
@@ -319,6 +366,10 @@ final class Signatures {
     /** 放之前（SkillService 呼叫）：霆落矛、擲雷槍有怒星就消耗一顆，回傳這一次要用的技能。 */
     SkillBuild beforeCast(final Player player, final SkillDefinition definition, final SkillBuild build, final PlayerState state, final long now) {
         final String signature = service.config().signature(definition.id());
+        if ("whirl".equals(signature)) {
+            // 2026-10-28 照 PoE2：揮矛那一圈跟這一下之後的旋風一樣大（每多一階 +0.3 格）
+            return build.withAreaAndProjectiles(build.areaScale() * slashScale(nextWhirlStage(whirlHere(player))), build.projectiles());
+        }
         if (!"lance".equals(signature) && !"bolt_spear".equals(signature)) {
             return build;
         }
@@ -332,8 +383,11 @@ final class Signatures {
             state.notice("<#ffe14a>" + tw.exilecore.item.ItemRenderer.escape(definition.name()) + " 消耗怒星：插 1.5 秒、每 " + (benefit > 1 ? "0.1" : "0.2")
                     + " 秒放電" + (benefit > 1 ? "（倍星）" : ""), now + 30);
             plugin.players().display(player, state);
-            return build.withProfile(build.profile().withLocal(List.of(
-                    tw.exilecore.stats.Modifier.flat("damage.convert.lightning", 30, "怒星"))));
+            // 2026-10-28 照 PoE2 Storm Lance 的 Frenzy-Charged：消耗怒星的那一支擲出去的傷害照自己的表（25% → 91% → 329%）、
+            // 物理全部轉閃電（SkillStages 的 infused）；這次之前照一般那支的表、多轉 30% 閃電。
+            // 插在地上的那支（放電、引爆）照一般的表換算，所以記下沒換過的那個
+            unstagedLance.put(player.getUniqueId(), build);
+            return build.withProfile(SkillStages.profile(build, build.profile(), "infused"));
         }
         final int copies = BOLT_SPEAR_COPIES * benefit; // 倍星：分裂的支數加倍
         state.notice("<#ffe14a>" + tw.exilecore.item.ItemRenderer.escape(definition.name()) + " 消耗怒星：分裂成 " + copies + " 支", now + 30);
@@ -371,16 +425,28 @@ final class Signatures {
             lodge(player, build, at, now);
         } else if ("lance".equals(signature)) {
             chargedLance.remove(player.getUniqueId()); // 沒插下去：這次的怒星不留到下一支
+            unstagedLance.remove(player.getUniqueId());
         }
+    }
+
+    /** 玩家現在站在自己的旋風裡的話是幾階（沒有、不在裡面是 0）。 */
+    private int whirlHere(final Player player) {
+        final Whirl old = whirls.get(player.getUniqueId());
+        return old != null && old.center.getWorld() == player.getWorld() && old.center.distance(player.getLocation()) <= old.radius() + 0.5
+                ? old.stage : 0;
     }
 
     private void whirl(final Player player, final SkillBuild build, final long now) {
         final UUID uuid = player.getUniqueId();
         final Whirl old = whirls.get(uuid);
+        // build 的範圍已經照這一下之後的階數放大過（beforeCast），旋風本身的範圍倍率要除回來
+        final double area = build.areaScale() / slashScale(nextWhirlStage(whirlHere(player)));
         if (old != null && old.center.getWorld() == player.getWorld() && old.center.distance(player.getLocation()) <= old.radius() + 0.5) {
             old.stage = Math.min(WHIRL_MAX, old.stage + 1);
             old.expires = now + WHIRL_LIFE;
             old.build = build;
+            old.area = area;
+            elementalize(old); // 2026-10-28 照 PoE2：在元素地面上疊階也會變成元素旋風
             if (old.stage > 1) {
                 player.playSound(player.getLocation(), Sound.ITEM_ELYTRA_FLYING, SoundCategory.PLAYERS, 0.4f, 0.8f + 0.3f * old.stage);
                 final PlayerState state = plugin.players().get(player);
@@ -392,15 +458,46 @@ final class Signatures {
         if (old != null) {
             collapse(player, old);
         }
-        whirls.put(uuid, new Whirl(player.getLocation(), build, now));
+        final Whirl created = new Whirl(player.getLocation(), build, now, area);
+        elementalize(created);
+        whirls.put(uuid, created);
+    }
+
+    /** 2026-10-28 照 PoE2：旋風捲在元素地面（點燃、冰緩、感電地面）上就變成那種元素的旋風（已經是的不變）。 */
+    private void elementalize(final Whirl whirl) {
+        if (whirl.element == null) {
+            whirl.element = ElementalGround.at(plugin, whirl.center, whirl.radius());
+        }
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Twister：旋風矛的旋風碰到 owner 的旋風（at 的 reach 格內）就把它用掉——不崩散、直接消失，
+     * 回傳它的階數與元素；沒碰到回傳 null。
+     */
+    ConsumedWhirl consumeWhirl(final UUID owner, final Location at, final double reach) {
+        final Whirl whirl = whirls.get(owner);
+        if (whirl == null || whirl.center.getWorld() != at.getWorld()
+                || whirl.center.distanceSquared(at) > (whirl.radius() + reach) * (whirl.radius() + reach)) {
+            return null;
+        }
+        whirls.remove(owner);
+        whirl.center.getWorld().spawnParticle(Particle.CLOUD, whirl.center.clone().add(0, 0.8, 0), 8 + 4 * whirl.stage, whirl.radius() * 0.4, 0.4,
+                whirl.radius() * 0.4, 0.05);
+        return new ConsumedWhirl(whirl.stage, whirl.element);
     }
 
     /** 旋風崩散：在中心炸一圈（階數越高越痛、越大），把敵人往外推。 */
     private void collapse(final Player player, final Whirl whirl) {
-        final double share = share("whirling_slash_collapse", whirl.build, WHIRL_SHARE) * (1 + WHIRL_MORE_PER_STAGE * (whirl.stage - 1));
-        final SkillBuild sub = subBuild(player, "whirling_slash_collapse", whirl.build, share);
+        // 2026-10-28 照 PoE2：每多一階更多 150%＋品質（這次之前品質不影響崩散）
+        final double share = share("whirling_slash_collapse", whirl.build, WHIRL_SHARE)
+                * collapseMore(whirl.stage, SkillZones.localFlat(whirl.build.profile(), WHIRL_QUALITY_MORE));
+        SkillBuild sub = subBuild(player, "whirling_slash_collapse", whirl.build, share);
         if (sub == null) {
             return;
+        }
+        if (whirl.element != null) {
+            // 2026-10-28 照 PoE2：元素旋風獲得 50% 傷害為那種元素的額外傷害；這次之前沒有元素旋風
+            sub = sub.withProfile(sub.profile().withLocal(List.of(Modifier.flat(StatKeys.damageExtra(whirl.element), WHIRL_ELEMENT_GAIN, "元素旋風"))));
         }
         final double radius = whirl.radius();
         final SkillDefinition def = sub.definition();
@@ -426,9 +523,11 @@ final class Signatures {
         }
         final Integer chargedBenefit = chargedLance.remove(player.getUniqueId());
         final boolean charged = chargedBenefit != null;
+        final SkillBuild unstaged = unstagedLance.remove(player.getUniqueId());
+        final SkillBuild lodged = charged && unstaged != null ? unstaged : build;
         // 2026-10-24：倍星觸發（算兩顆）：放電間隔減半 = 放電次數加倍
         final long zap = charged ? Math.max(1, LANCE_CHARGED_ZAP / Math.max(1, chargedBenefit)) : LANCE_ZAP;
-        mine.addLast(new Lance(at.clone(), build, now + (charged ? LANCE_CHARGED_LIFE : LANCE_LIFE),
+        mine.addLast(new Lance(at.clone(), lodged, now + (charged ? LANCE_CHARGED_LIFE : LANCE_LIFE),
                 new long[] {now + (charged ? 4 : 10) + zap}, zap));
     }
 
@@ -512,6 +611,7 @@ final class Signatures {
                 embers.remove(uuid);
             }
         }
+        twisters.tick(player, now); // 2026-10-28 照 PoE2：旋風矛的旋風
     }
 
     private void tickWhirl(final Player player, final Whirl whirl, final long now) {
@@ -527,17 +627,25 @@ final class Signatures {
         final double radius = whirl.radius();
         if (now % 2 == 0) {
             final double spin = now * 0.6;
+            // 2026-10-28：元素旋風換成那種元素的粒子
+            final Particle particle = whirl.element == tw.exilecore.stats.DamageType.FIRE ? Particle.FLAME
+                    : whirl.element == tw.exilecore.stats.DamageType.COLD ? Particle.SNOWFLAKE
+                    : whirl.element == tw.exilecore.stats.DamageType.LIGHTNING ? Particle.ELECTRIC_SPARK : Particle.CLOUD;
             for (int i = 0; i < 3 + whirl.stage; i++) {
                 final double angle = spin + i * Math.PI * 2 / (3 + whirl.stage);
                 final Location point = whirl.center.clone().add(Math.cos(angle) * radius, 0.3 + 0.4 * (i % 3), Math.sin(angle) * radius);
-                Fx.spawn(player.getWorld(), Particle.CLOUD, point, 1, 0.05, 0.05, 0.05, 0.01);
+                Fx.spawn(player.getWorld(), particle, point, 1, 0.05, 0.05, 0.05, 0.01);
             }
         }
-        if (now % 10 == 0) {
-            // PoE2：旋風讓裡面的敵人移動變慢 30%
+        if (now % 5 == 0 && plugin.combat() != null) {
+            // 2026-10-28 照 PoE2：旋風範圍內的敵人移動變慢 30%、被致盲（跟颶風槍的旋風一樣）；
+            // 這次之前用原版緩速 I（只慢 15%）、沒有致盲
             for (final LivingEntity target : service.targets().around(whirl.center, radius, player)) {
                 if (!(target instanceof Player)) {
-                    target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 12, 0, true, false, false));
+                    plugin.combat().debuffs().apply(target.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff("whirlwind_slow", player.getUniqueId(),
+                            now + 10, 0, false, null, List.of(), StageLeftovers.WHIRL_SLOW));
+                    plugin.combat().debuffs().apply(target.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff("blind", player.getUniqueId(), now + 80, 0,
+                            false, null, tw.exilecore.combat.HitEffects.blindModifiers(0), 0));
                 }
             }
         }
@@ -639,6 +747,7 @@ final class Signatures {
     /** 登出、換角色：清掉這個人的旋風、插著的矛、火星。 */
     void forget(final UUID uuid) {
         whirls.remove(uuid);
+        twisters.forget(uuid);
         lances.remove(uuid);
         embers.remove(uuid);
         chargedLance.remove(uuid);
