@@ -74,6 +74,30 @@ final class ElementalGround {
         return null;
     }
 
+    /** 純邏輯：有沒有碰到 element 這種元素的地面（不管是不是最新的那一塊）。2026-10-28：腐屍爆的毒雲碰到點燃地面就炸開。 */
+    static boolean touchesAny(final List<Surface> list, final UUID world, final double x, final double y, final double z, final double reach,
+                              final DamageType element, final long now) {
+        for (final Surface surface : list) {
+            if (surface.element() == element && surface.touches(world, x, y, z, reach, now)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 2026-10-28：at 附近 reach 格內有沒有點燃地面（玩家技能登記的，或怪物的足跡與地圖詞綴）。 */
+    static boolean burningAt(final ExileCore plugin, final Location at, final double reach) {
+        if (at == null || at.getWorld() == null) {
+            return false;
+        }
+        final long now = plugin.getServer().getCurrentTick();
+        if (touchesAny(SURFACES, at.getWorld().getUID(), at.getX(), at.getY(), at.getZ(), reach, DamageType.FIRE, now)) {
+            return true;
+        }
+        return plugin.monsterModule() != null && plugin.monsterModule().mechanics() != null
+                && plugin.monsterModule().mechanics().groundAt(at, reach, now) == AilmentType.IGNITE;
+    }
+
     /** 點燃、冰緩、感電地面是哪種元素（其他異常的地面不是元素地面，回傳 null）。 */
     static DamageType of(final AilmentType type) {
         if (type == null) {

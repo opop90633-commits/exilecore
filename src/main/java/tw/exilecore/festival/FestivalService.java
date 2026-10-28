@@ -852,7 +852,8 @@ public final class FestivalService {
         }
         final long left = Math.max(0, (event.endMillis - now) / 1000);
         event.bar.name(plugin.text().parse("<" + config.color() + ">" + ItemRenderer.escape(config.boss().name()) + " <gray>Lv." + config.boss().level()
-                + " <dark_gray>｜ <white>" + String.format(Locale.ROOT, "%d:%02d", left / 60, left % 60)));
+                + " <dark_gray>｜ <white>" + String.format(Locale.ROOT, "%d:%02d", left / 60, left % 60)
+                + (plugin.ailments() == null ? "" : plugin.ailments().bossBarSuffix(event.boss)))); // 2026-10-28 照站長：Boss 身上的異常
         final Set<UUID> show = new HashSet<>();
         for (final Player player : near) {
             show.add(player.getUniqueId());

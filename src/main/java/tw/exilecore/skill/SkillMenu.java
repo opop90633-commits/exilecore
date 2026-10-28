@@ -532,13 +532,10 @@ public final class SkillMenu extends Menu {
         if (definition == null || definition.hidden()) {
             return "不認得的技能：" + entry.skillId();
         }
-        final int existing = loadout.find(entry.skillId());
-        if (existing >= 0 && existing != target) {
-            return "面板上已經有" + definition.name() + "了（放在那一格可以換）";
-        }
-        final int insideOf = loadout.findInner(entry.skillId()); // 2026-10-22
-        if (insideOf >= 0) {
-            return definition.name() + "已經放在" + skillNameOf(loadout.skill(insideOf)) + "的孔裡了";
+        // 2026-10-28 照 PoE2：同一個技能可以放好幾顆，只擋一個角色一顆的常駐、宿主；這次之前面板上、宿主孔裡已經有就不能放
+        final String copies = GemCopies.placeProblem(service.config(), loadout, entry, target);
+        if (copies != null) {
+            return copies;
         }
         final int sibling = service.config().familyConflict(loadout, entry.skillId(), target);
         if (sibling >= 0) {

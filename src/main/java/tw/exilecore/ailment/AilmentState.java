@@ -387,8 +387,14 @@ public final class AilmentState {
      * @param spreads 已經傳了幾手（每傳一手傷害更多，有上限）
      * @param base    第一手的每秒傷害（傳染時照它算，不會越傳越大到沒上限）
      * @param length  2026-10-26：掛上時的完整持續時間（tick，已經算過技能持續時間的加成；傳染出去照這個重新算，0 = 舊的 5 秒）
+     * @param radius  2026-10-28 照 PoE2 Contagion：死掉時傳染的半徑（格，已經乘過範圍加成；0 = 預設 1.7 格）；這次之前固定 4 格的方塊
      */
-    public record Debuff(double dps, long endTick, UUID source, boolean spread, int spreads, double base, long length) {
+    public record Debuff(double dps, long endTick, UUID source, boolean spread, int spreads, double base, long length, double radius) {
+        public Debuff(final double dps, final long endTick, final UUID source, final boolean spread, final int spreads, final double base,
+                      final long length) {
+            this(dps, endTick, source, spread, spreads, base, length, 0);
+        }
+
         public Debuff(final double dps, final long endTick, final UUID source, final boolean spread, final int spreads, final double base) {
             this(dps, endTick, source, spread, spreads, base, 0);
         }
@@ -402,9 +408,11 @@ public final class AilmentState {
         final Debuff old = debuffs.get(key);
         if (old == null || debuff.dps() >= old.dps()) {
             debuffs.put(key, old == null || debuff.endTick() >= old.endTick() ? debuff
-                    : new Debuff(debuff.dps(), old.endTick(), debuff.source(), debuff.spread(), debuff.spreads(), debuff.base(), debuff.length()));
+                    : new Debuff(debuff.dps(), old.endTick(), debuff.source(), debuff.spread(), debuff.spreads(), debuff.base(), debuff.length(),
+                    debuff.radius()));
         } else if (debuff.endTick() > old.endTick()) {
-            debuffs.put(key, new Debuff(old.dps(), debuff.endTick(), old.source(), old.spread(), old.spreads(), old.base(), Math.max(old.length(), debuff.length())));
+            debuffs.put(key, new Debuff(old.dps(), debuff.endTick(), old.source(), old.spread(), old.spreads(), old.base(), Math.max(old.length(), debuff.length()),
+                    old.radius()));
         }
     }
 
@@ -763,7 +771,8 @@ public final class AilmentState {
             list.replaceAll(dot -> dot.endTick() > now ? new Ignite(dot.dps(), dot.endTick() + extra, dot.source(), dot.aggravated(), dot.limit(), dot.chaos()) : dot);
         }
         debuffs.replaceAll((key, debuff) -> debuff.endTick() > now
-                ? new Debuff(debuff.dps(), debuff.endTick() + extra, debuff.source(), debuff.spread(), debuff.spreads(), debuff.base(), debuff.length()) : debuff);
+                ? new Debuff(debuff.dps(), debuff.endTick() + extra, debuff.source(), debuff.spread(), debuff.spreads(), debuff.base(), debuff.length(),
+                debuff.radius()) : debuff);
         if (chillEnd > now) {
             chillEnd += extra;
         }

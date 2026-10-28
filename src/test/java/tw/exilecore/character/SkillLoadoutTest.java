@@ -101,13 +101,20 @@ class SkillLoadoutTest {
     }
 
     @Test
-    void addRefusesDuplicatesAndFindsSupportOwners() {
+    void addAllowsDuplicatesAndFindsSupportOwners() {
         final SkillLoadout loadout = new SkillLoadout();
         final int arc = loadout.add(new SkillLoadout.Entry("arc", 3).withSupport(0, "chain"));
         assertEquals(0, arc);
-        assertEquals(-2, loadout.add(new SkillLoadout.Entry("arc", 9)), "同一個技能不能放兩個");
+        // 2026-10-28 照 PoE2：同一個技能可以放好幾顆（各自的等級、輔助）；這次之前回傳 -2
+        final int second = loadout.add(new SkillLoadout.Entry("arc", 9).withSupport(0, "pierce"));
+        assertEquals(1, second, "同一個技能可以再放一顆");
+        assertEquals(2, loadout.count("arc"));
+        assertEquals(List.of("chain"), loadout.skill(arc).supportIds());
+        assertEquals(List.of("pierce"), loadout.skill(second).supportIds(), "每一顆自己的輔助");
         assertEquals(arc, loadout.supportUsedBy("chain"));
-        assertEquals(-1, loadout.supportUsedBy("pierce"));
+        assertEquals(second, loadout.supportUsedBy("pierce"));
+        assertEquals(-1, loadout.supportUsedBy("fork"));
+        loadout.remove(second);
         // put 只改等級，不動輔助孔
         loadout.put("arc", 7);
         assertEquals(7, loadout.skill(arc).level());

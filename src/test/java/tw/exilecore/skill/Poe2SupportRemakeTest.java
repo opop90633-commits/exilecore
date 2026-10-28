@@ -168,10 +168,10 @@ class Poe2SupportRemakeTest {
     @Test
     void supportsAttachWhereTheOriginalAllows() {
         // 冰嚙照 PoE2：攻擊、法術、戰吼都能掛
-        // 2026-10-26：低階併入最高階（冰嚙 II、斷命 II、怒嘯 II、釘地 III）
+        // 2026-10-26：低階併入最高階（冰嚙 II、撲殺 II、怒嘯 II、釘地 III）
         assertNull(support("ice_bite_ii").refusal(config.skill("boneshatter")));
         assertNull(support("ice_bite_ii").refusal(config.skill("arctic_howl")));
-        // 斷命照 PoE2 只能掛攻擊
+        // 撲殺照 PoE2 只能掛攻擊
         assertEquals("要攻擊技能", support("culling_strike_ii").refusal(config.skill("fireball")));
         // 骰運掛在主要寶石上
         assertNull(support("fluke").refusal(config.skill("totem_casting")), "骰運能掛主要寶石");

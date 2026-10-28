@@ -55,6 +55,8 @@ public final class TreeConditions {
     public static final String SHIELD = "shield";
     /** 主手拿近戰武器。 */
     public static final String MELEE_WEAPON = "meleeweapon";
+    /** 2026-10-28 照 PoE2（轟天雷、毀面者、磐石之拳的北方之爪）：空手（主手、副手都沒拿武器）。 */
+    public static final String UNARMED = "unarmed";
     /** 任何藥劑效果中（生命或魔力藥劑的回復還在進行）。 */
     public static final String ANY_FLASK = "anyflask";
     /** 臨在範圍裡有盟友（自己的召喚物、同隊的玩家）。 */
@@ -80,6 +82,8 @@ public final class TreeConditions {
     public static final String IGNITED = "ignited";
     /** 自己被冰緩。 */
     public static final String CHILLED = "chilled";
+    /** 2026-10-28 照 PoE2（貝雷克的火與雷之樂「被感電時」）：自己被感電。 */
+    public static final String SHOCKED = "shocked";
     /** 自己身上有傷害型異常（點燃、流血、中毒）。 */
     public static final String DAMAGING_AILMENT = "damagingailment";
     /** 魔力全滿。 */
@@ -305,7 +309,7 @@ public final class TreeConditions {
             WIELD_QUARTERSTAFF, NO_ENEMY_NEAR, LIFE_FLASK_10S, ARCHON,
             ARCANE_SURGE, LOW_ES, ALL_COMPANIONS, EMPOWERED_ATTACK, GLORY_20S, PROJECTILE_HIT_8S, MELEE_HIT_8S, ES_RECHARGE_2S, // 2026-10-27
             ON_SHOCKED_GROUND, ON_CHILLED_GROUND, ON_IGNITED_GROUND, RAGE_GAINED,
-            TRINITY_HIGH); // 2026-10-28
+            TRINITY_HIGH, UNARMED, SHOCKED); // 2026-10-28
     /** 還沒有系統支撐的條件（一律不成立）。2026-10-26：變身、夥伴接上了，現在沒有。 */
     public static final Set<String> RESERVED = Set.of();
     public static final Set<String> EVENTS = Set.of(STUNNED_ENEMY, SHAPESHIFT_EVENT, REVERT_EVENT, INFUSION_EVENT, POWER_GAIN, ATTACK_EVENT,

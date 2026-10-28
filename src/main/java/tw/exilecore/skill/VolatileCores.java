@@ -93,6 +93,11 @@ final class VolatileCores {
 
     /** 從屍體的位置做出一顆核心（已經消耗掉屍體）。 */
     void spawn(final Player owner, final SkillBuild build, final Location at) {
+        spawn(owner, build, at, null);
+    }
+
+    /** 同上；carried：2026-10-28 照 PoE2 Contagion，屍體帶著的瘟疫（核心爆炸擊中的敵人都掛上；null = 沒有）。 */
+    void spawn(final Player owner, final SkillBuild build, final Location at, final tw.exilecore.combat.Corpses.Contagion carried) {
         if (owner == null || at.getWorld() == null || counts.getOrDefault(owner.getUniqueId(), 0) >= MAX_PER_PLAYER) {
             return;
         }
@@ -120,7 +125,7 @@ final class VolatileCores {
                 task[0].cancel();
                 counts.computeIfPresent(owner.getUniqueId(), (k, v) -> v <= 1 ? null : v - 1);
                 if (!ownerGone) {
-                    explode(owner, explosion, core, blast, visual);
+                    explode(owner, explosion, core, blast, visual, carried);
                 }
                 return;
             }
@@ -158,9 +163,13 @@ final class VolatileCores {
     }
 
     /** 時間到：原地爆炸，打 blast 格內的敵人（爆炸的那張表，火焰）。 */
-    private void explode(final Player owner, final SkillProfile profile, final Location at, final double blast, final String visual) {
+    private void explode(final Player owner, final SkillProfile profile, final Location at, final double blast, final String visual,
+                         final tw.exilecore.combat.Corpses.Contagion carried) {
         if (damage != null) {
             for (final LivingEntity target : targets.around(at, blast, owner)) {
+                if (carried != null && plugin.ailments() != null) {
+                    plugin.ailments().applyContagion(target, carried); // 2026-10-28 照 PoE2 Contagion：引爆帶著瘟疫的屍體，爆炸擊中時傳出瘟疫
+                }
                 damage.hit(owner, target, profile, null);
             }
         }

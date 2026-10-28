@@ -351,9 +351,10 @@ final class MapBosses {
         final AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
         final double fraction = max == null ? 1 : boss.getHealth() / Math.max(1, max.getValue());
         bar.progress((float) Math.max(0, Math.min(1, fraction)));
-        if (instance.bossDef().enrage() != null && !instance.enraged() && instance.fightStartTick() >= 0) {
-            bar.name(title(instance, instance.bossPhase())); // 狂暴倒數
-        }
+        // 狂暴倒數；2026-10-28 照站長：也寫 Boss 身上的異常（這次之前只有有狂暴倒數的才每次更新）
+        final String ailments = plugin.ailments() == null ? "" : plugin.ailments().bossBarSuffix(boss);
+        bar.name(ailments.isEmpty() ? title(instance, instance.bossPhase())
+                : title(instance, instance.bossPhase()).append(plugin.text().parse(ailments)));
         // 2026-10：血條常駐——在 Boss 附近（64 格）或 Boss 房裡就一直顯示，不管剛復活的保護時間、死掉觀戰、離開戰鬥範圍
         final Location center = center(instance);
         for (final UUID uuid : instance.inside()) {

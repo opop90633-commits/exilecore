@@ -38,6 +38,7 @@ data/balance.yml
 data/bases/maps.yml
 data/affixes/maps.yml
 data/uniques.yml
+data/stonefist.yml
 data/maps.yml
 data/map_events.yml
 data/atlas_tree.yml

@@ -67,6 +67,34 @@ public final class UniqueDerived {
      *
      * @param chargeCount 身上某種戰星有幾顆（frenzy、power）
      */
+    /** 幽墓束縛自己給的物品稀有度（%）：其他的無效時留下這麼多。 */
+    public static final double RARITY_ONLY_THIS_KEEP = 20;
+
+    /**
+     * 2026-10-28 照 PoE2（毀面者）：空手時，每 5 點力量空手攻擊傷害更多 x%（PlayerStateService 只在沒拿武器時呼叫）。
+     */
+    public static List<Modifier> unarmed(final StatSheet sheet) {
+        final List<Modifier> list = new ArrayList<>();
+        final double per = sheet.flat(UniqueStats.PER_STR_UNARMED_MORE, Set.of());
+        final double fives = per > 0 ? Math.floor(sheet.get(StatKeys.STR) / 5) : 0;
+        if (fives > 0) {
+            list.add(Modifier.more(StatKeys.DAMAGE, per * fives / 100.0, SOURCE + "（空手、力量）").withTags(Set.of(Tags.ATTACK)));
+        }
+        // 2026-10-28 照 PoE2（磐石之拳的毀面者）：每 5 點智慧獲得 1% 空手傷害為額外火焰傷害、每 10 點智慧增加 1% 空手攻擊範圍
+        final double intelligence = sheet.get(StatKeys.INT);
+        final double fire = sheet.flat(UniqueStats.PER_INT_UNARMED_FIRE, Set.of());
+        if (fire > 0 && intelligence >= 5) {
+            list.add(Modifier.flat(StatKeys.damageExtra(DamageType.FIRE), fire * Math.floor(intelligence / 5), SOURCE + "（空手、智慧）")
+                    .withTags(Set.of(Tags.ATTACK)));
+        }
+        final double area = sheet.flat(UniqueStats.PER_INT_UNARMED_AREA, Set.of());
+        if (area > 0 && intelligence >= 10) {
+            list.add(Modifier.increased(StatKeys.SKILL_AREA, area * Math.floor(intelligence / 10) / 100.0, SOURCE + "（空手、智慧）")
+                    .withTags(Set.of(Tags.ATTACK)));
+        }
+        return list;
+    }
+
     public static List<Modifier> second(final StatSheet sheet, final java.util.function.ToIntFunction<String> chargeCount) {
         final List<Modifier> list = new ArrayList<>();
         final Set<String> none = Set.of();
@@ -115,6 +143,38 @@ public final class UniqueDerived {
             final Set<String> tags = Set.of(Tags.ATTACK, DamageType.LIGHTNING.tag());
             list.add(Modifier.flat(StatKeys.DAMAGE_ADDED_MIN, twenties * lightning / 10.0, SOURCE + "（智慧）").withTags(tags));
             list.add(Modifier.flat(StatKeys.DAMAGE_ADDED_MAX, twenties * lightning, SOURCE + "（智慧）").withTags(tags));
+        }
+        // 2026-10-28 照 PoE2（磐石之拳的智行之手）：每 20 點敏捷攻擊附加冰冷傷害、每 20 點智慧增加範圍效果
+        final double coldMax = sheet.flat(UniqueStats.PER_DEX_ATTACK_COLD_MAX, none);
+        final double dexTwenties = coldMax > 0 ? Math.floor(dex / 20) : 0;
+        if (dexTwenties > 0) {
+            final Set<String> tags = Set.of(Tags.ATTACK, DamageType.COLD.tag());
+            list.add(Modifier.flat(StatKeys.DAMAGE_ADDED_MIN, dexTwenties * sheet.flat(UniqueStats.PER_DEX_ATTACK_COLD_MIN, none), SOURCE + "（敏捷）")
+                    .withTags(tags));
+            list.add(Modifier.flat(StatKeys.DAMAGE_ADDED_MAX, dexTwenties * coldMax, SOURCE + "（敏捷）").withTags(tags));
+        }
+        final double perIntAll = sheet.flat(UniqueStats.PER_INT_AREA, none);
+        if (perIntAll > 0 && intelligence >= 20) {
+            list.add(Modifier.increased(StatKeys.SKILL_AREA, perIntAll * Math.floor(intelligence / 20) / 100.0, SOURCE + "（智慧）"));
+        }
+        // 2026-10-28 照 PoE2（毀面者）：每 1 點力量 +1 護甲
+        final double perStrArmour = sheet.flat(UniqueStats.PER_STR_ARMOUR, none);
+        if (perStrArmour > 0 && str > 0) {
+            list.add(Modifier.flat(StatKeys.ARMOUR, perStrArmour * Math.floor(str), SOURCE + "（力量）"));
+        }
+        // 2026-10-28 照 PoE2（幽墓束縛）：其他的物品稀有度加成無效——全部的「增加物品稀有度」加起來壓回這件給的 20%
+        final double onlyThis = sheet.flat(UniqueStats.RARITY_ONLY_THIS, none);
+        if (onlyThis > 0) {
+            final double current = sheet.increased(StatKeys.DROP_RARITY, none);
+            final double keep = RARITY_ONLY_THIS_KEEP / 100.0;
+            if (Math.abs(current - keep) > 1e-9) {
+                list.add(Modifier.increased(StatKeys.DROP_RARITY, keep - current, SOURCE + "（其他稀有度無效）"));
+            }
+        }
+        // 2026-10-28 照 PoE2（吉爾菲的聖殿）：每 10 點智慧每秒回復 x 生命
+        final double regenPerInt = sheet.flat(UniqueStats.PER_INT_LIFE_REGEN, none);
+        if (regenPerInt > 0 && intelligence >= 10) {
+            list.add(Modifier.flat(StatKeys.LIFE_REGEN, regenPerInt * Math.floor(intelligence / 10), SOURCE + "（智慧）"));
         }
         final double coldThorns = sheet.flat(UniqueStats.THORNS_COLD_PER_MANA, none);
         if (coldThorns > 0) {

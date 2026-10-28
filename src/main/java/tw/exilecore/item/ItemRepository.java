@@ -51,6 +51,9 @@ public final class ItemRepository {
     private final Map<String, Double> uniqueRuneEffect = new java.util.HashMap<>();
     /** 2026-10-26：固定機率的傳奇（uniques.yml 的 drop_chance，存小數）：不在來源的權重池裡，Boss 每次擊殺、每個有份的人各自擲。 */
     private final Map<String, Double> uniqueDropChance = new java.util.HashMap<>();
+    /** 2026-10-28 照 PoE2：傳奇的稀有度（uniques.yml 的 rarity）與賭博權重（gamble_weight，沒寫照稀有度；兩個都沒寫 = weight）。 */
+    private final Map<String, UniqueRarity> uniqueRarity = new java.util.HashMap<>();
+    private final Map<String, Integer> uniqueGambleWeight = new java.util.HashMap<>();
     private final Map<String, Affix> affixes = new LinkedHashMap<>();
     /** 2026-10-22：每次重讀加一（別人快取的詞綴池拿這個判斷要不要丟掉）。 */
     private volatile int version;
@@ -59,6 +62,8 @@ public final class ItemRepository {
     private final Map<String, UniqueItem> uniques = new LinkedHashMap<>();
     /** 退役的傳奇（uniques.yml 的 retired: true，2026-10 PoE2 改版）：定義留著讓還沒換掉的舊物品照常生效，其他地方都看不到。 */
     private final java.util.Set<String> retiredUniques = new java.util.HashSet<>();
+    /** 2026-10-28 照站長：刪除的傳奇（uniques.yml 的 deleted: true）：跟退役一樣看不到，玩家手上的登入時直接拿掉、不給兌換券。 */
+    private final java.util.Set<String> deletedUniques = new java.util.HashSet<>();
     /** 拿掉的基底（bases 的 retired: true）：定義留著讓舊物品照常生效；不掉落、不出現在圖鑑、商人、新手武器。 */
     private final java.util.Set<String> retiredBases = new java.util.HashSet<>();
     /**
@@ -79,6 +84,12 @@ public final class ItemRepository {
     /** 從資料夾載入全部資料檔（bases/*.yml、affixes/*.yml、uniques.yml、names.yml、items.yml）。 */
     /** 符文（2026-10）。 */
     private final Map<String, Runes.Rune> runes = new java.util.LinkedHashMap<>();
+    /** 2026-10-28 照 PoE2 石拳之道：腿甲（原作的手套）變成磐石之拳時每條詞綴換成什麼（data/stonefist.yml）。 */
+    private Stonefist.Data stonefist = Stonefist.Data.EMPTY;
+
+    public Stonefist.Data stonefist() {
+        return stonefist;
+    }
 
     public Runes.Rune rune(final String id) {
         return id == null ? null : runes.get(id);
@@ -107,10 +118,13 @@ public final class ItemRepository {
         uniqueStatBases.clear();
         uniqueRuneEffect.clear();
         uniqueDropChance.clear();
+        uniqueRarity.clear();
+        uniqueGambleWeight.clear();
         affixes.clear();
         affixChips.clear();
         uniques.clear();
         retiredUniques.clear();
+        deletedUniques.clear();
         retiredBases.clear();
         heistOnlyBases.clear();
         reloadTimes.clear();
@@ -118,6 +132,7 @@ public final class ItemRepository {
         warnings.clear();
         runes.clear();
         runes.putAll(Runes.load(dataFolder)); // 2026-10 符文
+        stonefist = Stonefist.load(dataFolder); // 2026-10-28 照 PoE2 石拳之道
 
         for (final Path file : yamlFiles(dataFolder.resolve("bases"))) {
             final YamlNode root = YamlNode.load(file);
@@ -202,8 +217,18 @@ public final class ItemRepository {
                         uniqueDropChance.put(id, Math.min(100, chance) / 100.0);
                     }
                 }
-                if (root.node(id).bool("retired", false)) {
+                final UniqueRarity rarity = UniqueRarity.parse(root.node(id).string("rarity", null));
+                if (rarity != null) {
+                    uniqueRarity.put(id, rarity);
+                }
+                if (root.node(id).has("gamble_weight") || rarity != null) {
+                    uniqueGambleWeight.put(id, Math.max(0, root.node(id).integer("gamble_weight", rarity == null ? unique.weight() : rarity.gambleWeight())));
+                }
+                if (root.node(id).bool("retired", false) || root.node(id).bool("deleted", false)) {
                     retiredUniques.add(id);
+                }
+                if (root.node(id).bool("deleted", false)) {
+                    deletedUniques.add(id);
                 }
                 final Object veiledRaw = root.node(id).raw("veiled");
                 if (veiledRaw != null) {
@@ -785,6 +810,11 @@ public final class ItemRepository {
     }
 
     /** 退役的傳奇（2026-10 PoE2 改版）：玩家手上的會換成傳奇兌換券。 */
+    /** 2026-10-28：刪除的傳奇（不給兌換券，直接拿掉）。 */
+    public boolean deletedUnique(final String id) {
+        return id != null && deletedUniques.contains(id);
+    }
+
     public boolean retiredUnique(final String id) {
         return id != null && retiredUniques.contains(id);
     }
@@ -814,6 +844,40 @@ public final class ItemRepository {
             }
         }
         return list;
+    }
+
+    /** 2026-10-28：這件傳奇的稀有度（uniques.yml 的 rarity）；沒寫回傳 null。 */
+    public UniqueRarity uniqueRarity(final String id) {
+        return id == null ? null : uniqueRarity.get(id);
+    }
+
+    /** 2026-10-28：賭博、僥倖石用的權重（gamble_weight，沒寫照稀有度，都沒寫 = weight）。 */
+    public int gambleWeight(final UniqueItem unique) {
+        return unique == null ? 0 : uniqueGambleWeight.getOrDefault(unique.id(), unique.weight());
+    }
+
+    /** 2026-10-28 照 PoE2：這些（同一個基底能賭到的）傳奇的賭博機率倍率（{@link UniqueRarity#factor}，賭博權重）。 */
+    public double gambleFactor(final Collection<UniqueItem> candidates) {
+        return UniqueRarity.factor(candidates, this::gambleWeight);
+    }
+
+    /** 2026-10-28：照賭博權重挑一件（賭博、僥倖石）。 */
+    public UniqueItem pickGamble(final List<UniqueItem> candidates, final java.util.random.RandomGenerator random) {
+        double total = 0;
+        for (final UniqueItem unique : candidates) {
+            total += Math.max(0, gambleWeight(unique));
+        }
+        if (total <= 0) {
+            return ItemGenerator.pickUnique(candidates, random);
+        }
+        double pick = random.nextDouble() * total;
+        for (final UniqueItem unique : candidates) {
+            pick -= Math.max(0, gambleWeight(unique));
+            if (pick < 0) {
+                return unique;
+            }
+        }
+        return candidates.getLast();
     }
 
     /** 這件傳奇的固定掉落機率（小數；0 = 沒有，走來源的權重池）。 */

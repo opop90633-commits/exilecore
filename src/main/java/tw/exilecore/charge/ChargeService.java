@@ -304,8 +304,19 @@ public final class ChargeService implements Listener {
     private boolean conduitPassing;
 
     /** 能量連結（Conduit）：這顆戰星給你存在範圍內的每個隊友（不給你；沒有隊友就沒了）。 */
+    /**
+     * 2026-10-28 照 PoE2（磐石之拳的意識之緣）：給臨在範圍內的隊友一顆（自己不拿）。
+     * 擊中時擲 charge.ally_on_hit.代號 的機率（HitEffects 呼叫）。
+     */
+    public void grantAllies(final Player player, final String chargeId) {
+        final ChargeType type = config.type(chargeId);
+        if (type != null && player.isOnline()) {
+            conduit(player, type, plugin.players().sheet(player));
+        }
+    }
+
     private void conduit(final Player player, final ChargeType type, final StatSheet sheet) {
-        if (plugin.party() == null) {
+        if (plugin.party() == null || conduitPassing) {
             return;
         }
         final double radius = tw.exilecore.combat.Presence.radius(sheet);
@@ -353,6 +364,9 @@ public final class ChargeService implements Listener {
         final int max = maxOf(type, sheet);
         final boolean grew = bag.gain(plugin.getServer().getCurrentTick(), max, durationTicks(type, sheet));
         plugin.players().conditions().onChargeGained(player, type.id(), plugin.getServer().getCurrentTick()); // 2026-10-26：天賦樹「最近獲得過銳星」
+        if (!conduitPassing && tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.SHARE_CHARGES)) {
+            conduit(player, type, sheet); // 2026-10-28 照 PoE2（意識之緣）：與臨在範圍內的隊友共享戰星（隊友也拿一顆）
+        }
         if (grew && bag.count() >= max && tw.exilecore.stats.StatKeys.flag(sheet, LOSE_AT_MAX + type.id())) {
             // 2026-10-24（赤焰導管）：滿了就全部失去，並讓自己感電
             bag.clear();
@@ -729,6 +743,15 @@ public final class ChargeService implements Listener {
 
     /** 2026-10-24（憎鑄，PoE2 Hateforge）：怒氣滿了：有 charge.on_max_rage（秒）的給一顆隨機戰星，冷卻內不給。 */
     public void onMaxRage(final Player player, final StatSheet sheet) {
+        // 2026-10-28 照 PoE2（磐石之拳的憎鑄）：怒氣滿時回復 x% 最大能量護盾（原作是符文保護）
+        final double es = sheet.flat(tw.exilecore.item.unique.UniqueStats.ES_ON_MAX_RAGE, java.util.Set.of());
+        if (es > 0) {
+            final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+            if (state.energyShield() < state.maxEnergyShield()) {
+                state.setEnergyShield(Math.min(state.maxEnergyShield(), state.energyShield() + state.maxEnergyShield() * es / 100.0));
+                plugin.players().display(player, state);
+            }
+        }
         final double seconds = sheet.flat(ON_MAX_RAGE, java.util.Set.of());
         final long now = plugin.getServer().getCurrentTick();
         if (seconds <= 0 || rageReady.getOrDefault(player.getUniqueId(), 0L) > now || config.types().isEmpty()) {

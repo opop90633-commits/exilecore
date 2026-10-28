@@ -93,6 +93,9 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
      * 實際施放的等級最高到幾級：寶石最高 20 級，裝備的「+x 技能等級」可以再往上加（照 PoE：21 級以上只有靠裝備）。
      * 超過 20 級的數值照 1 → 20 級的趨勢往外推（{@link Scaled#at}），法術基礎傷害每級再多 skills.yml 的 extra_level_damage。
      */
+    /** 2026-10-28：圖鑑看「Lv.X 的數值」用：設了就直接照這個等級算（不受角色等級、屬性需求限制，也不加裝備、輔助的 +等級）。 */
+    static final ThreadLocal<Integer> PREVIEW_LEVEL = new ThreadLocal<>();
+
     public static final int MAX_EFFECTIVE_LEVEL = 40; // 2026-10：25 → 40（照 PoE2，寶石資料到 40 級）
 
     public SkillBuild {
@@ -140,10 +143,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                     continue;
                 }
                 if (support.lineage()) {
-                    if (lineage) {
-                        continue; // 2026-10-27 照站長：一個技能只有一顆血脈輔助生效（共鳴也不算例外）
-                    }
-                    lineage = true;
+                    lineage = true; // 2026-10-28 照 PoE2（站長）：不同的血脈輔助都生效；這次之前一個技能只有第一顆生效
                 } else if (!support.cuttable() && !resonant.contains(support.id())) { // 2026-10-18：共鳴的專屬輔助不佔名額；2026-10-27：血脈輔助也不佔
                     if (exclusive) {
                         continue; // 一個技能只有一顆專屬掉落的輔助生效（2026-10；以前掛了兩顆的，第二顆不算）
@@ -228,7 +228,9 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             // 這次之前照全部掛著的算，被名額擋掉的、合成的 meta.／host. 也算進去，少掛一顆就拿到等級
             supportLevels += LineageRules.conditionalLevels(effectiveSupports(supports, definition, resonant), definition);
         }
-        final int level = Math.min(MAX_EFFECTIVE_LEVEL, baseLevel + bonus + supportLevels);
+        final Integer preview = PREVIEW_LEVEL.get(); // 2026-10-28：圖鑑的寶石等級（這次之前照你的角色等級、屬性被壓低，切 20／30／40 數值不會變）
+        final int level = preview != null ? Math.max(1, Math.min(MAX_EFFECTIVE_LEVEL, preview))
+                : Math.min(MAX_EFFECTIVE_LEVEL, baseLevel + bonus + supportLevels);
         final List<SupportDefinition> active = new ArrayList<>();
         final List<Modifier> local = new ArrayList<>(definition.modifiers()); // 技能自己帶的（例如點燃機率）
         local.addAll(extra); // 2026-10-23：品質
@@ -254,11 +256,22 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 profile = SkillProfiles.build(config, definition, level, weaponTags, local);
             }
         }
+        if (local.stream().anyMatch(mod -> mod.stat().equals(tw.exilecore.stats.SupportKeys.FLAG_PROJECTILE_SPEED_TO_DAMAGE))) {
+            // 2026-10-28 照 PoE2 Projectile Acceleration III（疾矢 III）：投射物速度的增加與減少也套用在投射物傷害上
+            final double speedIncrease = projectileSpeedAsDamage(profile.effective(sheet), profile.tags());
+            if (Math.abs(speedIncrease) > 1e-9) {
+                local.add(new Modifier(StatKeys.DAMAGE, tw.exilecore.stats.ModType.INCREASED, speedIncrease, Set.of(Tags.PROJECTILE), "投射物速度"));
+                profile = SkillProfiles.build(config, definition, level, weaponTags, local);
+            }
+        }
         final StatSheet effective = profile.effective(sheet);
         // 圖騰施法、陷阱施法輔助：技能從此算圖騰／陷阱技能（「增加 x% 圖騰傷害」、「陷阱持續時間」這些天賦與詞綴才吃得到）
         DeploySpec deploy = definition.deploy();
         final boolean deployable = deployable(definition);
-        if (deploy == null && !isDefault && !definition.isAttack() && deployable) {
+        // 2026-10-28 照 PoE2 Spell Totem：圖騰照 TotemRules.spellTotemCastable（雷遁、骸爆、詛咒也行）；陷阱照舊只看 deployable。
+        //   這次之前兩個都只看 deployable（位移、印記、屍體交給圖騰也不會變成圖騰）
+        if (deploy == null && !isDefault && !definition.isAttack()
+                && (StatKeys.flag(effective, StatKeys.FLAG_SPELL_TOTEM) ? TotemRules.spellTotemCastable(definition) : deployable)) {
             if (StatKeys.flag(effective, StatKeys.FLAG_SPELL_TOTEM)) {
                 deploy = DeploySpec.spellTotem(definition.castTime());
                 profile = profile.derive(profile.id(), Set.of(Tags.TOTEM, Tags.DURATION), Set.of());
@@ -285,7 +298,9 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 effective.flat(StatKeys.SKILL_PROJECTILES, context),
                 StatKeys.flag(effective, tw.exilecore.stats.GrantedSkillKeys.FLAG_PROJECTILES_TO_SPLIT), MAX_PROJECTILES);
         double spread = params.spread();
-        if (StatKeys.flag(effective, StatKeys.FLAG_PROJECTILE_NOVA) && definition.mechanic() == Mechanic.PROJECTILE && !params.blink()) {
+        // 2026-10-28 照 PoE2：鏈雷（連鎖機制、投射物標籤）的閃電也是投射物，環射時一圈放出去；這次之前只有 projectile 機制吃
+        if (StatKeys.flag(effective, StatKeys.FLAG_PROJECTILE_NOVA) && !params.blink() && (definition.mechanic() == Mechanic.PROJECTILE
+                || definition.mechanic() == Mechanic.CHAIN && definition.tags().contains(Tags.PROJECTILE))) {
             spread = 360; // 2026-10：環射（投射物往四周一圈射出）
         } else if (projectiles > 1 && spread < 1) {
             spread = Math.min(60, 12.0 * (projectiles - 1)); // 本來只有一發的技能多了投射物：排成扇形
@@ -389,6 +404,19 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 reach, angle, targets, knockback, newProjectiles, spread < 1 && newProjectiles > 1 ? Math.min(60, 12.0 * (newProjectiles - 1)) : spread,
                 speed, range, size, pierce, chains, explode * (newAreaScale / Math.max(1e-6, areaScale)), wobble, arrow,
                 radius * (newAreaScale / Math.max(1e-6, areaScale)), length, chainRange, manaCost, newAreaScale, bonusLevel, cooldownTicks,
+                durationScale, forks, returning, echo, deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+    }
+
+    /**
+     * 2026-10-28 照 PoE2（游雷的冰灌注：改成往四周一圈射出）：投射物數換掉，nova = 整圈（360 度）；不是整圈的照原本的張角。
+     */
+    public SkillBuild withProjectilesSpread(final int newProjectiles, final boolean nova) {
+        final int count = Math.max(1, Math.min(MAX_PROJECTILES, newProjectiles));
+        final double newSpread = nova ? 360 : spread < 1 && count > 1 ? Math.min(60, 12.0 * (count - 1)) : spread;
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
+                reach, angle, targets, knockback, count, newSpread,
+                speed, range, size, pierce, chains, explode, wobble, arrow,
+                radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks,
                 durationScale, forks, returning, echo, deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
     }
 
@@ -712,5 +740,16 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
 
     private static int clamp(final int value, final int min, final int max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Projectile Acceleration III：被輔助技能有「投射物速度的增減也套用在投射物傷害」時，
+     * 要加在投射物傷害上的增加（＝投射物速度的增加加總，小數；沒有這個旗標回傳 0）。純函式。
+     */
+    static double projectileSpeedAsDamage(final StatSheet effective, final Set<String> context) {
+        if (!StatKeys.flag(effective, tw.exilecore.stats.SupportKeys.FLAG_PROJECTILE_SPEED_TO_DAMAGE)) {
+            return 0;
+        }
+        return effective.increased(StatKeys.SKILL_PROJECTILE_SPEED, context);
     }
 }

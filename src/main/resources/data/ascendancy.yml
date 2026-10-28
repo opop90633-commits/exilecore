@@ -2615,7 +2615,8 @@ ascendancies:
           - 頭盔 1 孔、胸甲 2 孔、腿甲 1 孔、鞋子 1 孔
         stats:
           - { stat: asc.meridians, type: FLAT, value: 5 }   # 2026-10-27 照 PoE2（enable_chakras：頭 1、身 2、手 1、腳 1）
-        note: 在昇華天賦（/ascend tree）點「符文子午線」紋上符文；照防具上的符文生效，護甲、閃避、能量護盾的增加套用在那一格穿著的防具上。原作的手套孔在這裡是腿甲
+        note: 在昇華天賦（/ascend tree）點「符文子午線」紋上符文；照防具上的符文生效，護甲、閃避、能量護盾的增加套用在那一格穿著的防具上
+        # 2026-10-28 照站長「敘述把原作那些拿掉」：原作的手套孔在這裡是腿甲（我們沒有手套欄）；這次之前 note 結尾寫「原作的手套孔在這裡是腿甲」
       area:
         name: 範圍效果          # Area of Effect
         icon: SLIME_BALL
@@ -2699,12 +2700,19 @@ ascendancies:
         requires: evasion_es
         notable: true
         icon: STONE
+        # 2026-10-28 照 PoE2 0.5（poe2db Way of the Stonefist：Gloves you equip have their Base Type transformed to Fists of Stone while equipped,
+        #   and their Explicit Modifiers are transformed into more powerful related Modifiers／Ignore Attribute Requirements to equip Gloves）：
+        #   穿著時整件換成磐石之拳（需求等級 1、每一玩家等級 +3 閃避 +1 能量護盾），每條詞綴換成原作的 HandWraps 詞綴（data/stonefist.yml、
+        #   tw.exilecore.item.Stonefist）；裝了 PacketEvents 的話腿甲的說明會多列「穿上時變成什麼」。我們沒有手套欄，PoE2 的手套是腿甲。
+        # 這次之前（2026-10-27）：防具換成每角色等級 +3 閃避、+1 能量護盾，腿甲詞綴（固定詞綴、符文以外）的數值增加 50%（asc.stonefist 50）；
+        #   說明寫「裝備的腿甲變成石拳：防禦換成每角色等級 +3 閃避值、+1 最大能量護盾，詞綴的加成更強」，
+        #   note 寫「原作的手套在這裡是腿甲；原作每種詞綴各自換成相關的強化詞綴，這裡改成腿甲詞綴的數值增加 50%」（照站長拿掉）
         lines:
-          - 裝備的腿甲變成石拳：防禦換成每角色等級 +3 閃避值、+1 最大能量護盾，詞綴的加成更強
+          - 穿著的腿甲變成磐石之拳：需求等級 1，基底防禦換成每一玩家等級 +3 閃避值、+1 最大能量護盾
+          - 腿甲的每條詞綴換成更強的相關詞綴
           - 裝備腿甲不需要能力值
         stats:
-          - { stat: asc.stonefist, type: FLAT, value: 50 }   # 2026-10-27 照 PoE2（ascendancy_hand_wraps、ignore_attribute_requirements_for_gloves）
-        note: 原作的手套在這裡是腿甲；原作每種詞綴各自換成相關的強化詞綴，這裡改成腿甲詞綴的數值增加 50%
+          - { stat: asc.stonefist, type: FLAT, value: 1 }   # 2026-10-28 照 PoE2（ascendancy_hand_wraps、ignore_attribute_requirements_for_gloves）；這次之前 50
       attack_speed:
         name: 攻擊速度          # Attack Speed
         icon: SUGAR
@@ -3127,7 +3135,7 @@ ascendancies:
         notable: true
         icon: NETHER_STAR
         lines:
-          - 增加 40% 非傳奇的失落時光珠寶半徑
+          - 增加 40% 非傳奇的遺時珠寶半徑
         stats:
           - { stat: asc.leylines, type: FLAT, value: 40 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       cast_speed:
@@ -4291,7 +4299,7 @@ ascendancies:
         notable: true
         icon: NETHER_STAR
         lines:
-          - 獲得符文與神像上羈絆詞綴的效益
+          - 獲得符文上羈絆詞綴的效益
         stats:
           - { stat: asc.bonded, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2：符文的羈絆詞綴生效（runes.yml 的 bonded；神像還沒做）；這次之前 asc.rune_effect 50（符文效果增加 50%，平衡等效）
         # 2026-10-27：拿掉 note（這次之前「符文沒有羈絆詞綴：改成鑲在裝備上的符文效果增加 50%」）

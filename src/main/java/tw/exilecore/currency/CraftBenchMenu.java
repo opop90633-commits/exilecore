@@ -62,6 +62,7 @@ public final class CraftBenchMenu extends Menu {
     /** 選的裝備：背包第幾格、那件的 uuid（換了格子或換了一件就不算）。 */
     private int itemSlot = -1;
     private String itemUuid;
+    /** 2026-10-28：左邊星籤、右邊通貨一起翻頁（同一個頁碼）；這次之前只有通貨翻頁，星籤超過 12 種後面的選不到。 */
     private int page;
     /** 從哪裡打開的（左下角「← 返回」）；null＝直接打 /craft，沒有返回鍵。 */
     private final String backName;
@@ -76,6 +77,15 @@ public final class CraftBenchMenu extends Menu {
         super(plugin, player, 6, "<dark_gray>洗裝台");
         this.backName = backName;
         this.back = back;
+    }
+
+    /**
+     * 2026-10-28：總共幾頁＝星籤、通貨哪一邊頁數多就照哪一邊（每頁各 12 格，最少 1 頁）。
+     * 這次之前只看通貨，星籤（PoE2 有 26 種）超過 12 種的永遠看不到。
+     */
+    static int pages(final int omens, final int currencies) {
+        final int per = CURRENCY_SLOTS.length;
+        return Math.max(1, Math.max((omens + per - 1) / per, (currencies + per - 1) / per));
     }
 
     private static int[] grid(final int firstColumn) {
@@ -232,30 +242,34 @@ public final class CraftBenchMenu extends Menu {
         if (omenId != null && omens.stream().noneMatch(t -> t.id().equals(omenId))) {
             omenId = null; // 用完了
         }
-        for (int i = 0; i < OMEN_SLOTS.length; i++) {
-            set(OMEN_SLOTS[i], i < omens.size() ? choice(omens.get(i), omens.get(i).id().equals(omenId)) : null);
-        }
-        if (omens.isEmpty()) {
-            set(OMEN_SLOTS[0], icon(Material.GRAY_DYE, "<gray>沒有星籤", "<dark_gray>流寇、祭壇會給"));
-        }
-
         final List<CurrencyType> list = benchCurrencies();
         if (currencyId != null && list.stream().noneMatch(t -> t.id().equals(currencyId))) {
             currencyId = null;
         }
-        final int pages = Math.max(1, (list.size() + CURRENCY_SLOTS.length - 1) / CURRENCY_SLOTS.length);
+        final int pages = pages(omens.size(), list.size());
         page = Math.max(0, Math.min(page, pages - 1));
+        for (int i = 0; i < OMEN_SLOTS.length; i++) {
+            final int index = page * OMEN_SLOTS.length + i;
+            set(OMEN_SLOTS[i], index < omens.size() ? choice(omens.get(index), omens.get(index).id().equals(omenId)) : null);
+        }
+        if (omens.isEmpty()) {
+            set(OMEN_SLOTS[0], icon(Material.GRAY_DYE, "<gray>沒有星籤", "<dark_gray>流寇、祭壇會給"));
+        } else if (page * OMEN_SLOTS.length >= omens.size()) {
+            set(OMEN_SLOTS[0], icon(Material.GRAY_DYE, "<gray>星籤只有 " + pagesOf(omens.size()) + " 頁", "<dark_gray>往前翻看星籤"));
+        }
         for (int i = 0; i < CURRENCY_SLOTS.length; i++) {
             final int index = page * CURRENCY_SLOTS.length + i;
             set(CURRENCY_SLOTS[i], index < list.size() ? choice(list.get(index), list.get(index).id().equals(currencyId)) : null);
         }
         if (list.isEmpty()) {
             set(CURRENCY_SLOTS[0], icon(Material.GRAY_DYE, "<gray>沒有能用的通貨"));
+        } else if (page * CURRENCY_SLOTS.length >= list.size()) {
+            set(CURRENCY_SLOTS[0], icon(Material.GRAY_DYE, "<gray>通貨只有 " + pagesOf(list.size()) + " 頁", "<dark_gray>往前翻看通貨"));
         }
-        if (pages > 1) {
-            set(SLOT_PREV, pageButton(false, page, pages));
-            set(SLOT_NEXT, pageButton(true, page, pages));
-        }
+        // 2026-10-28 照站長「洗裝台要有下一頁的按鈕」：翻頁鈕一直在（跟商人賭博一樣，沒有上一頁／下一頁時變灰，看得到第幾頁）；
+        // 這次之前只有通貨超過一頁才出現
+        set(SLOT_PREV, benchPageButton(false, page, pages, omens.size(), list.size()));
+        set(SLOT_NEXT, benchPageButton(true, page, pages, omens.size(), list.size()));
 
         final ItemStack stack = item();
         final CurrencyType omen = type(omenId);
@@ -301,6 +315,7 @@ public final class CraftBenchMenu extends Menu {
                 "按「使用」：先掛上星籤，再用通貨；",
                 "選好之後一直按就一直洗（每次各扣一顆）。",
                 "",
+                "一頁放不下：下面的箭頭翻頁（星籤、通貨一起翻）。",
                 "通貨從通貨袋、背包、倉庫通貨頁扣。",
                 "整套做不了（星籤不會被觸發、用不上去）就什麼都不扣。",
                 "<dark_gray>僥倖石、符文、映星鏡、蒸餾情緒照原本拿在游標上點")));
@@ -308,6 +323,19 @@ public final class CraftBenchMenu extends Menu {
             set(SLOT_BACK, backButton(backName));
         }
         set(SLOT_CLOSE_BAR, closeButton());
+    }
+
+    private static int pagesOf(final int count) {
+        return Math.max(1, (count + CURRENCY_SLOTS.length - 1) / CURRENCY_SLOTS.length);
+    }
+
+    /** 翻頁鈕：寫出星籤、通貨各有幾頁；只有一頁時變灰。 */
+    private ItemStack benchPageButton(final boolean next, final int page, final int pages, final int omens, final int currencies) {
+        final String count = "<dark_gray>星籤 " + omens + " 種（" + pagesOf(omens) + " 頁）、通貨 " + currencies + " 種（" + pagesOf(currencies) + " 頁）";
+        if (pages <= 1) {
+            return icon(Material.GRAY_DYE, "<dark_gray>" + (next ? "下一頁 ▶" : "◀ 上一頁"), List.of("<gray>第 1／1 頁", count, "<dark_gray>只有一頁"));
+        }
+        return appendLore(pageButton(next, page, pages), List.of(count));
     }
 
     /** 圖示上顯示的數量（最多一疊；真正的數量寫在說明）。 */
@@ -331,8 +359,9 @@ public final class CraftBenchMenu extends Menu {
         for (int i = 0; i < OMEN_SLOTS.length; i++) {
             if (OMEN_SLOTS[i] == slot) {
                 final List<CurrencyType> omens = omens();
-                if (i < omens.size()) {
-                    omenId = omens.get(i).id().equals(omenId) ? null : omens.get(i).id();
+                final int index = page * OMEN_SLOTS.length + i;
+                if (index < omens.size()) {
+                    omenId = omens.get(index).id().equals(omenId) ? null : omens.get(index).id();
                     redraw();
                 }
                 return;
@@ -376,9 +405,12 @@ public final class CraftBenchMenu extends Menu {
                 redraw();
             }
             case SLOT_PREV, SLOT_NEXT -> {
-                final int count = benchCurrencies().size();
-                final int pages = Math.max(1, (count + CURRENCY_SLOTS.length - 1) / CURRENCY_SLOTS.length);
+                final int pages = pages(omens().size(), benchCurrencies().size());
+                if (pages <= 1) {
+                    return;
+                }
                 page = Math.floorMod(page + (slot == SLOT_NEXT ? 1 : -1), pages);
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
                 redraw();
             }
             case SLOT_CLOSE_BAR -> goBack();
@@ -403,6 +435,12 @@ public final class CraftBenchMenu extends Menu {
         if (currency != null) {
             if (currency.operation() == CurrencyOperation.OMEN) {
                 omenId = currency.id();
+                final List<CurrencyType> omens = omens();
+                for (int i = 0; i < omens.size(); i++) {
+                    if (omens.get(i).id().equals(omenId)) {
+                        page = i / OMEN_SLOTS.length; // 2026-10-28：翻到它那一頁
+                    }
+                }
             } else if (BENCH.contains(currency.operation()) && !currency.isSkillCurrency()) {
                 currencyId = currency.id();
                 final List<CurrencyType> list = benchCurrencies();

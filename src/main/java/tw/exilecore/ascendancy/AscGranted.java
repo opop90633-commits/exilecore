@@ -847,9 +847,11 @@ final class AscGranted implements Listener {
                 final double amount = remnant.value * effect;
                 final double room = Math.max(0, state.maxLife() - state.life());
                 state.setLife(state.life() + Math.min(room, amount));
-                final double overflow = Math.min(state.maxLife() * 0.5, Math.max(0, amount - room));
+                // 2026-10-28：溢出的部分疊加到現有的守護上（合計最多 0.5 倍最大生命）；這次之前取較大的（連撿好幾個不會疊，看起來像沒作用）
+                final double overflow = Math.max(0, amount - room);
                 if (overflow > 0) {
-                    state.addGuard(overflow, now() + 160);
+                    final double total = Math.min(state.maxLife() * 0.5, state.guard(now()) + overflow);
+                    state.addGuard(total, now() + 160);
                 }
             }
             case "red" -> state.addLeech(state.maxLife() * 0.20 * effect);

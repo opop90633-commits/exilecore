@@ -548,6 +548,16 @@ public final class SkillLoadout {
         return -1;
     }
 
+    /** 2026-10-28：面板上武器、昇華賦予的這個技能的位置；沒有回傳 -1。 */
+    public int findGranted(final String skillId) {
+        for (int i = 0; i < MAX_SKILLS; i++) {
+            if (skills[i] != null && skills[i].granted() && skills[i].skillId().equals(skillId)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     /** 2026-10-22：放在某個宿主寶石孔裡的技能（2026-10-26：第 2～5 孔的也算）；那個宿主在面板上的位置，沒有回傳 -1。 */
     public int findInner(final String skillId) {
         for (int i = 0; i < MAX_SKILLS; i++) {
@@ -561,6 +571,27 @@ public final class SkillLoadout {
             }
         }
         return -1;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2（同一個技能可以放好幾顆：面板上一顆、主要寶石孔裡一顆）：打中、擊殺這類只知道技能代號的事件，
+     * 找「是哪一顆」在面板上的位置（輔助照那一格的算）。triggered（主要寶石觸發的那一下）先找宿主孔裡的，其他先找面板上的；
+     * 都沒有回傳 -1。面板上好幾顆自己按的照第一顆。這次之前一個技能只有一顆，面板上的先找。
+     */
+    public int locate(final String skillId, final boolean triggered) {
+        final int first = triggered ? findInner(skillId) : find(skillId);
+        return first >= 0 ? first : triggered ? find(skillId) : findInner(skillId);
+    }
+
+    /** 2026-10-28：面板上這個技能有幾顆（自己那一格的；宿主孔裡的另外算）。 */
+    public int count(final String skillId) {
+        int count = 0;
+        for (final Entry entry : skills) {
+            if (entry != null && entry.skillId().equals(skillId)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     public int size() {
@@ -592,14 +623,12 @@ public final class SkillLoadout {
     }
 
     /**
-     * 放進第一個空格（技能寶石放進面板）。
+     * 放進第一個空格（技能寶石放進面板）。2026-10-28 照 PoE2：同一個技能可以放好幾顆，這裡不擋
+     * （一個角色只能一顆的常駐、宿主由呼叫端先看 tw.exilecore.skill.GemCopies）；這次之前已經有同一個技能回傳 -2。
      *
-     * @return 位置；面板滿了回傳 -1，已經有同一個技能回傳 -2
+     * @return 位置；面板滿了回傳 -1
      */
     public int add(final Entry entry) {
-        if (find(entry.skillId()) >= 0) {
-            return -2;
-        }
         for (int i = 0; i < MAX_SKILLS; i++) {
             if (skills[i] == null) {
                 skills[i] = entry;
@@ -735,7 +764,12 @@ public final class SkillLoadout {
         boolean changed = false;
         for (final java.util.Map.Entry<String, Integer> grant : grantedNow.entrySet()) {
             final int weaponQuality = quality == null ? 0 : Math.max(0, quality.getOrDefault(grant.getKey(), 0));
-            final int position = find(grant.getKey());
+            // 2026-10-28：同一個技能可以放好幾顆，先找賦予的那一顆（這次之前一個技能只有一顆，直接 find）
+            final int grantedAt = findGranted(grant.getKey());
+            if (grantedAt < 0 && find(grant.getKey()) >= 0) {
+                continue; // 已經有同一個技能的寶石就不另外放（用寶石那個）
+            }
+            final int position = grantedAt;
             if (position >= 0) {
                 final Entry entry = skills[position];
                 // 2026-10-28 照 PoE2：孔數照等級（舊存檔付費開的孔先原樣留著，等 migrateRemoved 退還）

@@ -308,8 +308,11 @@ final class EngraveMenu extends Menu {
         }
         final List<String> lore = new ArrayList<>(service.describe(player, definition, new SkillLoadout.Entry(definition.id(), level)));
         lore.add("");
-        lore.add(state.skills().find(definition.id()) >= 0
-                ? "<gray>面板上已經有這個技能：做好的寶石會放進背包"
+        // 2026-10-28 照 PoE2：同一個技能可以放好幾顆，只有一個角色一顆的常駐、宿主會放進背包（這次之前面板上有就放進背包）
+        lore.add(GemCopies.placeProblem(service.config(), state.skills(), new SkillLoadout.Entry(definition.id(), level), -1) != null
+                ? "<gray>面板上已經有這個技能（常駐、宿主一個角色一顆）：做好的寶石會放進背包"
+                : state.skills().find(definition.id()) >= 0 || state.skills().findInner(definition.id()) >= 0
+                ? "<gray>已經有一顆了，做好的這顆也直接放進技能面板（同一個技能可以放好幾顆，各自掛輔助）"
                 : "<gray>做好直接放進技能面板（面板滿了就放進背包）");
         lore.add("<yellow>點一下：做成 Lv." + level + " 的技能寶石");
         return SkillArt.decorate(icon(material(definition.icon(), Material.BOOK),

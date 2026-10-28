@@ -34,6 +34,13 @@ public final class SkillModule implements Module {
             throw new IllegalStateException("角色、怪物或戰鬥模組沒有啟用（看上面的錯誤訊息），技能模組無法運作");
         }
         config.load(plugin.dataFolder().resolve("data"));
+        if (plugin.items() != null) { // 2026-10-28：法杖、長杖、權杖的說明寫賦予的技能（等級照物品等級，跟 PlayerStateService.grantedSkills 一樣）
+            plugin.items().renderer().setGrantedLabel((baseId, ilvl) -> {
+                final String id = plugin.items().repository().grantedSkill(baseId);
+                final SkillDefinition skill = id == null ? null : config.skill(id);
+                return skill == null ? null : "Lv." + config.maxLevelFor(Math.max(1, ilvl)) + " " + skill.name();
+            });
+        }
         final SkillService created = new SkillService(plugin, config, plugin.combat().skillDamage());
         final PluginManager manager = plugin.getServer().getPluginManager();
         manager.registerEvents(new SkillInputListener(plugin, created), plugin);

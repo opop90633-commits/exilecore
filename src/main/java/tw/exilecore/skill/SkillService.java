@@ -169,8 +169,11 @@ public final class SkillService {
             final SkillRuntime created = new SkillRuntime();
             // 2026-10-26：照 PoE2 可以存好幾次的冷卻；天賦「榴彈技能 +1 冷卻次數」
             // 2026-10-27 照 PoE2 Second Wind：冷卻次數加倍；裂潮、星律（血脈輔助）多的次數也算在裡面
-            created.cooldownUses = id -> (config.cooldownUses(id) + grenadeUses(player.getUniqueId(), id)
-                    + supportMechanics().lineage().cooldownUses(plugin.getServer().getPlayer(player.getUniqueId()), id)) * secondWind(player.getUniqueId(), id);
+            created.cooldownUses = key -> { // 2026-10-28：觸發的那一顆（代號後面加 .meta）照技能本身的次數
+                final String id = key.endsWith(MetaGems.TRIGGERED_SUFFIX) ? key.substring(0, key.length() - MetaGems.TRIGGERED_SUFFIX.length()) : key;
+                return (config.cooldownUses(id) + grenadeUses(player.getUniqueId(), id)
+                        + supportMechanics().lineage().cooldownUses(plugin.getServer().getPlayer(player.getUniqueId()), id)) * secondWind(player.getUniqueId(), id);
+            };
             return created;
         });
     }
@@ -200,6 +203,7 @@ public final class SkillService {
         signatures.forget(player.getUniqueId());
         spears().forget(player.getUniqueId()); // 2026-10-27：插著的炎爆矛、血嗅印
         stageEffects().forget(player.getUniqueId()); // 2026-10-28：矛頭、震脈掌的增益
+        executor.forgetDecompose(player.getUniqueId()); // 2026-10-28：腐屍爆的毒雲
         movePenalty.forget(player); // 2026-10-27：放技能的移動懲罰（這次之前離線的玩家一直留著）
     }
 
@@ -737,10 +741,11 @@ public final class SkillService {
         final SkillRuntime runtime = runtime(player);
         final long now = now();
         if (respectCooldown) {
-            if (runtime.cooldownLeft(build.definition().id(), now) > 0) {
+            final String cooldownKey = build.definition().id() + MetaGems.TRIGGERED_SUFFIX; // 2026-10-28 照站長：預告射擊孔裡的印記跟手動放的另一顆冷卻分開
+            if (runtime.cooldownLeft(cooldownKey, now) > 0) {
                 return false;
             }
-            runtime.startCooldown(build.definition().id(), now, build.cooldownTicks());
+            runtime.startCooldown(cooldownKey, now, build.cooldownTicks());
         }
         executor.markOn(player, build, target, true);
         return true;
@@ -852,8 +857,12 @@ public final class SkillService {
      */
     void metaCast(final Player player, final SkillLoadout.Entry host, final SkillDefinition definition, final SkillLoadout.Entry entry,
                   final LivingEntity target, final double scale, final String source, final java.util.Set<String> metaTags) {
-        if (MetaGems.castProblem(new MetaSpec(MetaSpec.Kind.CRIT, 1, Scaled.of(0), 0, 0, 0, 0, 0, Scaled.of(1), 0), definition) != null) {
-            return; // 插槽的檢查在 MetaGems 已經做過，這裡只是保險
+        // 插槽的檢查在 MetaGems 已經做過，這裡只是保險：只看引擎放不放得出來
+        // （2026-10-28 照 PoE2：雷遁這種原作能被觸發的位移可以；這次之前用暴擊引星的整套規則，位移一律不行）
+        if (definition.hidden() || definition.type() != SkillType.SPELL || !definition.tags().contains(tw.exilecore.stats.Tags.SPELL)
+                || MetaGems.engineProblem(definition) != null
+                || definition.tags().contains("command")) {
+            return;
         }
         final PlayerState state = plugin.players().get(player);
         final StatSheet sheet = plugin.players().sheet(player);
@@ -865,11 +874,13 @@ public final class SkillService {
         final SkillRuntime runtime = runtime(player);
         final long now = now();
         // 2026-10-17：有冷卻的法術被觸發也照冷卻（以前能量一滿就放，冷卻等於沒有）
-        if (runtime.cooldownLeft(definition.id(), now) > 0) {
+        // 2026-10-28 照站長：觸發的那一顆（主要寶石孔裡）跟手動施放的另一顆冷卻分開算；手動的兩顆才共用冷卻；這次之前全部共用
+        final String cooldownKey = definition.id() + MetaGems.TRIGGERED_SUFFIX;
+        if (runtime.cooldownLeft(cooldownKey, now) > 0) {
             return;
         }
         if (build.cooldownTicks() > 0) {
-            runtime.startCooldown(definition.id(), now, build.cooldownTicks());
+            runtime.startCooldown(cooldownKey, now, build.cooldownTicks());
         }
         plugin.players().conditions().onTriggered(player, now); // 2026-10-26：天賦樹「最近觸發過技能」
         // 2026-10-26：被觸發的法術也用掉灌注（照 PoE2：觸發的法術是玩家放的，吃得到身上的灌注；圖騰不走這裡、不吃）
@@ -1429,6 +1440,37 @@ public final class SkillService {
         return local.isEmpty() ? result : result.withProfile(result.profile().withLocal(local));
     }
 
+    /**
+     * 2026-10-28 照 PoE2（RePoE SparkColdInfusedPlayer）：用掉灌注時整組換掉的數值——基礎傷害換成灌注版的逐級表、
+     * 基礎投射物數換成灌注版的（+x 投射物照樣加上去，最多 {@link SkillBuild#MAX_PROJECTILES}）、改成往四周一圈射出。
+     * 這次之前游雷冰灌注做成多 7 顆投射物、獲得 120% 傷害為額外冰冷（平衡等效）。
+     */
+    static SkillBuild applyInfusedSet(final SkillBuild build, final ResourceSpec.InfusedSet set) {
+        if (set == null) {
+            return build;
+        }
+        SkillBuild result = build;
+        if (!set.damage().isEmpty() && build.profile().spellDamage() != null) {
+            final tw.exilecore.stats.DamagePacket min = new tw.exilecore.stats.DamagePacket();
+            final tw.exilecore.stats.DamagePacket max = new tw.exilecore.stats.DamagePacket();
+            for (final java.util.Map.Entry<tw.exilecore.stats.DamageType, int[]> entry : set.damage().entrySet()) {
+                final double[] range = SkillProfiles.tableAt(entry.getValue(), build.level());
+                min.set(entry.getKey(), range[0]);
+                max.set(entry.getKey(), range[1]);
+            }
+            final tw.exilecore.stats.SkillProfile profile = build.profile();
+            result = result.withProfile(new tw.exilecore.stats.SkillProfile(profile.id(), profile.tags(), profile.effectiveness(), min, max,
+                    profile.conversion(), profile.local()));
+        }
+        if (set.projectiles() != null || set.nova()) {
+            final int base = build.definition().params().projectiles().intAt(build.level());
+            final int count = set.projectiles() == null ? result.projectiles()
+                    : result.projectiles() - base + set.projectiles().intAt(build.level());
+            result = result.withProjectilesSpread(count, set.nova());
+        }
+        return result;
+    }
+
     /** 2026-10-23：動作中按下去的技能怎麼處理。 */
     enum Interrupt { QUEUE, INSTANT, MOVEMENT }
 
@@ -1726,6 +1768,7 @@ public final class SkillService {
     private void tickPlayerInner(final Player player, final SkillRuntime runtime, final long now) {
         signatures.tick(player, runtime, now); // 2026-10：蓄力放開、旋風、插地的矛、火星
         spears().tick(player, now); // 2026-10-27 照 PoE2：插著的炎爆矛時間到炸開
+        executor.tickDecompose(player, now); // 2026-10-28 照 PoE2：腐屍爆的毒雲（中毒、碰到燃燒的東西炸開）
         metas.cadence(player, now); // 2026-10-26 照 PoE2 基石：祭祀終章（祈喚技能每 2 秒觸發）
         if (runtime.leap != null) {
             updateLeap(player, runtime, now);
@@ -1902,17 +1945,13 @@ public final class SkillService {
         //   這次之前不保留精魂（掠閃每次花 [4, 8] 魔力）
         if (definition.reservesSpiritOnly() && !pressed.isDefault() && !auras.isActive(player.getUniqueId(), definition.id())) {
             fail(player, runtime, state, String.format(Locale.ROOT, "%s：精魂不夠，要保留 %.0f 精魂才能用（已經保留 %.0f／%.0f）",
-                    ItemRenderer.escape(definition.name()), build.reserve(), auras.totalReserve(player.getUniqueId()),
+                    ItemRenderer.escape(definition.name()), build.reserve(),
+                    auras.totalReserve(player.getUniqueId()) + auras.otherReserve(player.getUniqueId()), // 2026-10-28：含先祖魂約的圖騰
                     AuraService.capacity(sheet)), now);
             return;
         }
-        // 2026-10-23（照 PoE2：同一個技能只能有一顆）：放在宿主孔裡的技能自己不能再放（舊的面板可能兩邊都有）
-        final int hostOf = state.skills().findInner(definition.id());
-        if (hostOf >= 0 && state.skills().skill(hostOf) != null) {
-            fail(player, runtime, state, ItemRenderer.escape(definition.name()) + "放在" + ItemRenderer.escape(hostNameOf(state.skills().skill(hostOf)))
-                    + "的孔裡，不能自己再放（先取出一邊）", now);
-            return;
-        }
+        // 2026-10-28 照 PoE2：同一個技能可以放好幾顆：主要寶石孔裡有一顆（自動觸發），面板上這顆照樣能自己按（用這顆自己的輔助）。
+        //   這次之前（2026-10-23）放在宿主孔裡的技能自己不能再放
         // 2026-10-27 照 PoE2 雙持（巨人之血兩手各拿一把雙手武器）：攻擊輪流用主手、副手的武器（傷害、攻速、暴擊照出手的那一把）
         final tw.exilecore.character.DualWield.OffHand offHand = state.offHandAttack();
         // 2026-10-27：這裡只看輪到哪一手，真的出手（付了消耗）才換手（下面 flipHand）；這次之前按下就換，失敗的也換
@@ -2177,6 +2216,15 @@ public final class SkillService {
             runtime.startCooldown(definition.id(), now, build.cooldownTicks());
             showCooldown(player, definition.id(), build.cooldownTicks());
         }
+        // 2026-10-28 照 PoE2（melee_conditional_step_distance，MeleeStep）：近戰攻擊出手前往前踏一步（目標在打得到的距離外、或朝準心的地面），
+        //   踏完才打、才捲旋風、才砸鐘；被定住不動。這次之前都在原地打
+        final MeleeStep.Spec step = config.step(definition.id());
+        if (step != null && !supportMechanics().immobilised(player)) {
+            if (mounts().mounted(player) && config.mount(definition.id()) == null && !Mounts.usableWhileMounted(definition)) {
+                mounts().dismount(player); // 近戰技能本來就會下馬（下面那段）；要先下馬才踏得出去
+            }
+            executor.meleeStep(player, build, step, preferred);
+        }
         if (build.deploy() != null) {
             if (linked != null) {
                 deployables.place(player, build, List.of(), linked, moreLinked, 0); // 英靈（2026-10-20）：照英靈圖騰的 interval ÷ 攻速叫（SkillDeployables.totemTicks）
@@ -2407,8 +2455,15 @@ public final class SkillService {
             for (final List<String> round : rounds) {
                 final int element = resources.consumeOne(player, round, build.profile().effective(sheet), build.profile().tags());
                 if (element >= 0) {
-                    build = applyInfused(build, resourceSpec.infusedFor(SkillResources.INFUSION_ELEMENTS[element]));
+                    final SkillBuild plain = build;
+                    build = applyInfusedSet(applyInfused(build, resourceSpec.infusedFor(SkillResources.INFUSION_ELEMENTS[element])),
+                            resourceSpec.infusedSet());
                     used[element]++;
+                    // 2026-10-28 照 PoE2（游雷冰灌注「施法時間 +0.5 秒」）：灌注是放的時候才用掉，下一次能動作的時間補上多出來的施法時間
+                    final double extra = build.intervalTicks(sheet) - plain.intervalTicks(sheet);
+                    if (extra > 1e-9) {
+                        runtime.readyAt += extra / speed / onUse.speedMore();
+                    }
                 }
             }
             final String text = resources.infusionUsed(player, ItemRenderer.escape(definition.name()), used);
@@ -3995,6 +4050,15 @@ public final class SkillService {
         return build(state, sheet, resolved.definition(), resolved.entry());
     }
 
+    /** 2026-10-28 照 PoE2（melee_conditional_step_distance）：技能說明裡的近戰條件位移；沒有回傳 null。 */
+    static String stepLine(final MeleeStep.Spec step) {
+        if (step == null) {
+            return null;
+        }
+        return String.format(Locale.ROOT, "<gray>出手前往前踏一步：最多 <white>%s</white> 格%s", trimNumber(step.distance()),
+                step.conditional() ? "（準心的敵人已經打得到就不動，走到打得到就停；沒有目標就朝準心指的地面）" : "");
+    }
+
     /**
      * 2026-10-28 照 PoE2：技能說明裡每一段（skills.yml 的 stages）自己的傷害效益、轉換、半徑、攻速（這一級）。
      */
@@ -4026,6 +4090,9 @@ public final class SkillService {
     /** 面板上（或寶石裡）的一個技能在這個角色身上的數值。 */
     SkillBuild build(final PlayerState state, final StatSheet sheet, final SkillDefinition definition, final SkillLoadout.Entry entry) {
         // 2026-10-23：同一張屬性表（沒改過）、同一個技能、同樣的寶石：直接用上次算好的（按住攻擊一秒要施放好幾次）
+        if (SkillBuild.PREVIEW_LEVEL.get() != null) { // 2026-10-28：圖鑑的預覽等級不進快取（不然會被一般施放拿去用）
+            return minionSpirit(state, sheet, StageAttacks.withShield(plugin, state, buildFresh(state, sheet, definition, entry)));
+        }
         final BuildKey key = new BuildKey(config, definition, entry, state.level(), Set.copyOf(state.weaponTags()), sheet, sheet == null ? 0 : sheet.version());
         final SkillBuild cached = buildCache.get(key);
         if (cached != null) {
@@ -4261,6 +4328,26 @@ public final class SkillService {
     static final String QUALITY_SOURCE = "品質 ";
 
     /** 2026-10-23：品質的說明（寶石、技能面板用）。 */
+    /** 2026-10-28：額外的品質效果（gem_quality.yml 的 advanced；昇華「進階奇術」才有）的說明；沒有寫的技能是品質效果加倍（平衡等效）。 */
+    static String advancedQualityText(final SkillDefinition definition, final int quality) {
+        if (definition == null || quality <= 0) {
+            return null;
+        }
+        final List<tw.exilecore.stats.Modifier> mods = tw.exilecore.currency.GemQuality.advancedModifiers(definition.id(), quality, QUALITY_SOURCE);
+        if (mods == null) {
+            return "一般的品質效果再算一次（效果加倍）";
+        }
+        final List<String> lines = new ArrayList<>();
+        for (final tw.exilecore.stats.Modifier modifier : mods) {
+            final String special = qualityLine(modifier);
+            final String line = special != null ? special : ModifierText.describe(modifier);
+            if (line != null && !line.startsWith("特殊效果")) {
+                lines.add(definition.summon() != null && !line.startsWith("召喚物") && !line.startsWith("同時最多") ? "召喚物：" + line : line);
+            }
+        }
+        return lines.isEmpty() ? null : String.join("、", lines);
+    }
+
     static String qualityText(final SkillDefinition definition, final int quality) {
         if (definition == null || quality <= 0) {
             return null;
@@ -4488,6 +4575,7 @@ public final class SkillService {
         signatures.forget(player.getUniqueId()); // 2026-10-17：換角色也清掉插地的矛、蓄力這些（以前照舊角色的 build 繼續打）
         spears().forget(player.getUniqueId()); // 2026-10-27：插著的炎爆矛、血嗅印
         stageEffects().forget(player.getUniqueId()); // 2026-10-28：矛頭、震脈掌的增益
+        executor.forgetDecompose(player.getUniqueId()); // 2026-10-28：腐屍爆的毒雲
         // 2026-10-27：換角色也清掉魔湧的風暴、怒氣／連擊／灌注、榮耀與輔助的標記、移動懲罰（這次之前只有離線才清，會帶到另一個角色）
         manaTempest.clear(player.getUniqueId());
         resources.forget(player.getUniqueId());
@@ -4543,7 +4631,8 @@ public final class SkillService {
                 continue;
             }
             // 2026-10-26：併入別的技能（skills.yml 的 merged）：原地換成那個技能，等級、品質、孔、輔助、按鍵都保留；
-            //   面板上已經有那個技能（不能放兩個）就取下來成寶石放進背包
+            //   面板上已經有那個技能、而且是一個角色一顆的常駐、宿主（GemCopies）就取下來成寶石放進背包
+            //   （2026-10-28 照 PoE2：一般的技能可以放好幾顆，原地換；這次之前一律不能放兩個）
             final SkillLoadout.Entry merged = config.merge(original);
             if (merged != null && config.skill(merged.skillId()) != null) {
                 if (!merged.skillId().equals(original.skillId())) {
@@ -4552,7 +4641,7 @@ public final class SkillService {
                     merges.add(config.mergeNotice(original.inner().skillId()));
                 }
                 final int existing = loadout.find(merged.skillId());
-                if (existing >= 0 && existing != position) {
+                if (existing >= 0 && existing != position && GemCopies.singleCopy(config, merged.skillId())) {
                     loadout.remove(position);
                     give.add(gems.create(GemData.skill(merged), 1));
                     merges.set(merges.size() - 1, merges.getLast() + "（面板上已經有" + config.skill(merged.skillId()).name() + "，這顆放進背包）");
@@ -4644,7 +4733,7 @@ public final class SkillService {
                 }
             }
             // 2026-10-27：一個技能只能掛一顆血脈輔助：舊存檔掛了好幾顆的，第二顆以後拆下來放回背包
-            for (final int i : LineageRules.extraLineageSockets(entry, id -> config.support(id) != null && config.support(id).lineage())) {
+            for (final int i : java.util.List.<Integer>of()) { // 2026-10-28 照 PoE2：不同的血脈輔助可以一起掛，不再拆（這次之前第二顆以後拆下來）
                 final String support = entry.support(i);
                 give.add(gems.create(GemData.support(support, entry.resonant(i)), 1));
                 names.add("輔助 " + gems.supportName(support) + "（一個技能只能掛一顆血脈輔助）");
@@ -4868,6 +4957,14 @@ public final class SkillService {
         }
         if (quality != null) {
             top.add("<#8888ff>◆ " + ItemRenderer.escape(quality));
+            // 2026-10-28：額外的品質效果（進階奇術）也寫出來：配了就照常顏色，沒配就灰字提示；這次之前看不到
+            final String advanced = advancedQualityText(definition, entry.quality());
+            if (advanced != null) {
+                final boolean on = tw.exilecore.ascendancy.AscBuild.gem(plugin.players().sheet(player), definition,
+                        SupportDefinition.hostsSkill(definition) ? hostSupportsOf(entry) : supportsOf(entry)).twice();
+                top.add(on ? "<#c9a7ff>◆ 額外的品質效果（進階奇術）：" + ItemRenderer.escape(advanced)
+                        : "<dark_gray>◆ 額外的品質效果（要配昇華「進階奇術」）：" + ItemRenderer.escape(advanced));
+            }
         }
         if (entry.corrupted()) {
             top.add("<#d20000>◆ 已腐化 <dark_gray>（不能再升級、開孔、加品質）");
@@ -4876,6 +4973,13 @@ public final class SkillService {
             lines.addAll(1, top);
         }
         lines.addAll(GemAttributes.lines(config, entry, plugin.players().sheet(player))); // 2026-10-26 照 PoE2：屬性需求
+        if (!entry.granted()) { // 2026-10-28 照站長：未切割寶石不看角色等級就能升，角色等級不夠時自動降級，面板寫出來
+            final int byLevel = gems() == null ? entry.level() : gems().usableByCharacter(state.level(), entry.level());
+            if (byLevel < entry.level()) {
+                lines.add("<yellow>⚠ 角色等級 " + state.level() + "（Lv." + entry.level() + " 要 " + config.requiredLevel(entry.level())
+                        + "）：自動以 Lv." + byLevel + " 使用（裝備加的技能等級另外加上去）");
+            }
+        }
         if (SocketedWarcry.hosts(definition)) {
             lines.addAll(socketedCrySummary(definition, entry, build(state, plugin.players().sheet(player), definition, entry).level()));
         }
@@ -4947,11 +5051,6 @@ public final class SkillService {
                     : "<red>　插槽裡的" + ItemRenderer.escape(cry == null ? entry.inner().skillId() : cry.name()) + "不能用（" + ItemRenderer.escape(why) + "）");
         }
         return lines;
-    }
-
-    private String hostNameOf(final SkillLoadout.Entry entry) {
-        final SkillDefinition definition = config.skill(entry.skillId());
-        return definition == null ? entry.skillId() : definition.name();
     }
 
     /**
@@ -5026,6 +5125,18 @@ public final class SkillService {
     }
 
     /** 圖鑑（2026-10）：看 Lv.30、Lv.40 這種超過寶石上限的數值——寶石當 20 級，多的當成「+x 技能等級」（再加上你裝備本來的）。 */
+    /** 2026-10-28：圖鑑用：照指定的寶石等級（1–40）算，不受角色等級、屬性需求限制，也不加裝備的 +等級；沒有輔助。 */
+    public List<String> describePreview(final Player player, final SkillDefinition definition, final int level) {
+        final PlayerState state = plugin.players().get(player);
+        SkillBuild.PREVIEW_LEVEL.set(level);
+        try {
+            return describe(player, buildFresh(state, plugin.players().sheet(player), definition,
+                    new SkillLoadout.Entry(definition.id(), Math.min(SkillLoadout.MAX_LEVEL, level))));
+        } finally {
+            SkillBuild.PREVIEW_LEVEL.remove();
+        }
+    }
+
     public List<String> describeExtra(final Player player, final SkillDefinition definition, final int extraLevels) {
         final PlayerState state = plugin.players().get(player);
         final StatSheet sheet = plugin.players().sheet(player).overlay(List.of(
@@ -5084,6 +5195,10 @@ public final class SkillService {
                     "<gray>%d%% 物理傷害轉換為%s傷害", Math.round(fraction * 100), type.displayName())));
         }
         lines.addAll(stageLines(build)); // 2026-10-28 照 PoE2：每一段自己的傷害效益
+        final String stepLine = stepLine(config.step(definition.id())); // 2026-10-28 照 PoE2：近戰條件位移
+        if (stepLine != null) {
+            lines.add(stepLine);
+        }
         lines.addAll(resourceLines(player, definition));
         if (build.deploy() != null) {
             lines.addAll(deployLines(build, sheet, deployables.count(player.getUniqueId(), definition.id())));
@@ -5466,6 +5581,38 @@ public final class SkillService {
         return count;
     }
 
+    /** 2026-10-28：灌注版整組換掉的數值的說明（20 級的值）。 */
+    static List<String> infusedSetLines(final ResourceSpec.InfusedSet set) {
+        if (set == null) {
+            return List.of();
+        }
+        final int level = 20;
+        final List<String> lines = new ArrayList<>();
+        if (set.projectiles() != null) {
+            lines.add(String.format(Locale.ROOT, "<gray>　%s射出 <white>%d</white> 顆（%d 級）", set.nova() ? "改成往四周一圈" : "改成",
+                    set.projectiles().intAt(level), level));
+        } else if (set.nova()) {
+            lines.add("<gray>　改成往四周一圈射出");
+        }
+        if (!set.damage().isEmpty()) {
+            final List<String> parts = new ArrayList<>();
+            for (final tw.exilecore.stats.DamageType type : tw.exilecore.stats.DamageType.values()) {
+                final int[] table = set.damage().get(type);
+                if (table != null) {
+                    final double[] range = SkillProfiles.tableAt(table, level);
+                    parts.add(String.format(Locale.ROOT, "%d–%d %s", Math.round(range[0]), Math.round(range[1]), DAMAGE_WORD.get(type)));
+                }
+            }
+            lines.add(String.format(Locale.ROOT, "<gray>　基礎傷害改成 %s（%d 級）", String.join("＋", parts), level));
+        }
+        return lines;
+    }
+
+    private static final java.util.Map<tw.exilecore.stats.DamageType, String> DAMAGE_WORD = java.util.Map.of(
+            tw.exilecore.stats.DamageType.PHYSICAL, "物理", tw.exilecore.stats.DamageType.FIRE, "火焰",
+            tw.exilecore.stats.DamageType.COLD, "冰冷", tw.exilecore.stats.DamageType.LIGHTNING, "閃電",
+            tw.exilecore.stats.DamageType.CHAOS, "混沌");
+
     /** 以前付了連段、榮耀才有的加成（2026-10 拿掉資源之後一律算上）。 */
     static List<tw.exilecore.stats.Modifier> resourceBonus(final ResourceSpec spec) {
         if (spec == null || spec.isEmpty() || spec.combo() <= 0 && spec.glory() <= 0) {
@@ -5512,6 +5659,7 @@ public final class SkillService {
             }
         } else if (!spec.infusion().isEmpty()) {
             lines.add("<gray>身上有" + String.join("或", spec.infusion().stream().map(SkillService::infusionWord).toList()) + "灌注時用掉一層，這一下：");
+            lines.addAll(infusedSetLines(spec.infusedSet())); // 2026-10-28 照 PoE2（游雷的冰灌注版）
             for (final String effect : ModifierText.describeAll(spec.infused())) {
                 lines.add("<gray>　" + effect);
             }
@@ -5662,8 +5810,23 @@ public final class SkillService {
             }
             case LEAP -> lines.add(String.format(Locale.ROOT, "<gray>最遠跳 <white>%.0f</white> 格，落地半徑 <white>%.1f</white> 格",
                     build.range(), build.radius()));
-            case CHAIN -> lines.add("<gray>連鎖 <white>" + build.chains() + "</white> 次");
+            case CHAIN -> {
+                // 2026-10-28 照 PoE2：鏈雷的閃電是投射物，多的投射物各放一道（SkillExecutor.chain）；這次之前不顯示（也只放一道）
+                final int beams = SkillExecutor.chainBeams(build.definition(), build.projectiles());
+                if (beams > 1) {
+                    lines.add("<gray>一次放出 <white>" + beams + "</white> 道" + (build.spread() >= 360 - 1e-9 ? "，往四周一圈" : "，扇形排開")
+                            + "<dark_gray>（同一個敵人一次只會被其中一道打到）");
+                }
+                lines.add("<gray>連鎖 <white>" + build.chains() + "</white> 次");
+            }
             case DASH -> {
+                if (params.dash().whirls()) {
+                    // 2026-10-28 照 PoE2 Whirling Assault：整個動作時間一路往前走、沿路轉好幾圈；這次之前跟別的位移一樣寫「瞬移」
+                    lines.add(String.format(Locale.ROOT, "<gray>整個動作時間裡往前方走最遠 <white>%.1f</white> 格（被牆擋住就停、被釘住就原地轉）", build.range()));
+                    lines.add(String.format(Locale.ROOT, "<gray>沿路轉 <white>%d</white> 圈，每一圈打身邊半徑 <white>%.1f</white> 格的敵人<dark_gray>（各是一個打擊範圍）",
+                            params.dash().spins(), params.dash().spinRadius() * build.areaScale()));
+                    break;
+                }
                 lines.add(String.format(Locale.ROOT, "<gray>往前方瞬移最遠 <white>%.0f</white> 格（被牆擋住就停）", build.range()));
                 if (params.dash().hitWidth() > 0) {
                     lines.add("<gray>順路打中沿途的敵人" + (build.knockback() > 0 ? "並擊退" : ""));
@@ -5784,9 +5947,25 @@ public final class SkillService {
             case DESECRATE -> lines.add(String.format(Locale.ROOT,
                     "<gray>準心 %.0f 格內的地方拖出 <white>%d</white> 具屍體，大小是同等級一般怪的 <white>%d%%</white>（同一處最多 8 具）",
                     build.range(), params.targets(), Math.round(params.percent().at(build.level()))));
-            case CORPSE -> lines.add(String.format(Locale.ROOT,
-                    "<gray>引爆準心附近 %.0f 格內最近的屍體（怪物死後 10 秒內）：半徑 <white>%.1f</white> 格，再加上屍體最大生命 <white>%d%%</white> 的火焰傷害",
-                    params.search(), build.radius(), Math.round(params.percent().at(build.level()))));
+            case CORPSE -> {
+                if (DecomposeClouds.is(build)) {
+                    // 2026-10-28 照 PoE2 Decompose：毒雲（這次之前跟骸爆一樣寫引爆屍體）
+                    final double seconds = build.durationTicks(DecomposeClouds.seconds(
+                            SkillZones.localFlat(build.profile(), tw.exilecore.stats.GemQualityKeys.DURATION_FLAT))) / 20.0;
+                    lines.add(String.format(Locale.ROOT, "<gray>消耗準心附近 %.0f 格內最近的屍體（怪物死後 10 秒內），在那裡留下一團易燃的毒雲："
+                                    + "半徑 <white>%.1f</white> 格，每秒擴大 20%%（最多 +80%%），持續 <white>%s</white> 秒，最多 <white>%d</white> 團",
+                            params.search(), build.radius(), GemQualityText.number(seconds),
+                            DecomposeClouds.limit(SkillLimits.bonus(null, build.profile()))));
+                    lines.add(String.format(Locale.ROOT, "<gray>雲裡的敵人中毒，像受到屍體最大生命 <white>%.0f%%</white> 的混沌傷害一樣", DecomposeClouds.POISON_PERCENT));
+                    lines.add("<gray>雲裡有點燃中的敵人、碰到點燃地面，或被你的引爆技能打到時炸開：對目前的範圍造成這個技能的火焰傷害，毒雲消失");
+                    break;
+                }
+                // 2026-10-28：屍體生命的部分照 PoE2 是物理（這次之前寫火焰）；沒有這個部分的（腐屍爆）不寫「0%」
+                final double percent = params.percent().at(build.level());
+                lines.add(String.format(Locale.ROOT, "<gray>引爆準心附近 %.0f 格內最近的屍體（怪物死後 10 秒內）：半徑 <white>%.1f</white> 格", params.search(), build.radius())
+                        + (percent > 0 ? String.format(Locale.ROOT, "，再加上屍體最大生命 <white>%s%%</white> 的物理傷害",
+                        percent == Math.rint(percent) ? String.valueOf((long) percent) : String.format(Locale.ROOT, "%.1f", percent)) : ""));
+            }
             case FLICKER -> {
                 lines.add(String.format(Locale.ROOT, "<gray>瞬移到準心指的敵人身旁打一下；沒指到敵人就找 <white>%.0f</white> 格內最近的（看得到的）", build.range()));
                 if (build.targets() != 1) {

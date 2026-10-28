@@ -101,12 +101,11 @@ class LineageSupportTest {
         final SupportDefinition pyre = support("xophs_pyre");
         final SkillLoadout.Entry entry = new SkillLoadout.Entry("fireball", 5).withSockets(4).withSupport(0, heart.id());
         assertNull(SupportDefinition.exclusiveConflict(entry, -1, flow, config::support), "專屬輔助旁邊可以掛血脈輔助");
-        // 2026-10-27 照站長：血脈輔助一個技能只能掛一顆，共鳴也不算例外（這次之前可以掛好幾顆）
-        assertEquals("一個技能只能掛一顆血脈輔助寶石（已經掛著" + flow.name() + "）",
-                SupportDefinition.exclusiveConflict(entry.withSupport(1, flow.id()), -1, pyre, true, config::support));
+        // 2026-10-28 照 PoE2：不同的血脈輔助可以掛在同一個技能上（這次之前一個技能只能一顆）
+        assertNull(SupportDefinition.exclusiveConflict(entry.withSupport(1, flow.id()), -1, pyre, true, config::support));
         assertNull(SupportDefinition.exclusiveConflict(entry.withSupport(1, flow.id()), 1, pyre, config::support), "換掉同一孔可以");
         final SkillBuild build = SkillBuild.of(config, config.skill("fireball"), 5, 60, false, List.of(heart, flow, pyre), Set.of(), new StatSheet());
-        assertEquals(heart.lineage() ? 1 : 2, build.supports().size(), "血脈輔助只有第一顆生效");
+        assertEquals(3, build.supports().size(), "2026-10-28：不同的血脈輔助都生效");
     }
 
     @Test

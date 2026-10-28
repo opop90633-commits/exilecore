@@ -119,6 +119,23 @@ public final class MonsterListener implements Listener {
             if (killer != null && plugin.combat().killEffects() != null) {
                 plugin.combat().killEffects().onKill(killer, entity, maxLife);
             }
+            // 2026-10-28 照 PoE2（幽墓束縛）：在你臨在範圍內被任何人殺死的敵人算是你殺的（擊殺效果）
+            if (plugin.combat().killEffects() != null) {
+                for (final Player near : entity.getWorld().getPlayers()) {
+                    if (near == killer || !near.isOnline() || near.isDead() || !plugin.players().get(near).hasCharacter()) {
+                        continue;
+                    }
+                    final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(near);
+                    if (!tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.PRESENCE_KILLS)) {
+                        continue;
+                    }
+                    final double radius = tw.exilecore.combat.Presence.radius(sheet);
+                    if (near.getLocation().distanceSquared(entity.getLocation()) <= radius * radius) {
+                        plugin.combat().killEffects().onKill(near, entity, maxLife);
+                        plugin.players().get(near).markRecent(tw.exilecore.stats.Recently.KILL, plugin.getServer().getCurrentTick());
+                    }
+                }
+            }
             if (killer != null) {
                 plugin.players().get(killer).markRecent(tw.exilecore.stats.Recently.KILL, plugin.getServer().getCurrentTick()); // 「最近擊殺過」
             }

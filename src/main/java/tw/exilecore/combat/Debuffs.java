@@ -455,6 +455,58 @@ public final class Debuffs {
     /** 目標死了、消失了。 */
     public void forget(final UUID target) {
         entries.remove(target);
+        curseLengths.remove(target);
+    }
+
+    /** 2026-10-28 照 PoE2 Contagion：目標 → 詛咒代號 → 放上去時的完整持續時間（tick；傳染出去照這個刷新）。 */
+    private final Map<UUID, Map<String, Long>> curseLengths = new HashMap<>();
+
+    /** 2026-10-28：記下這條詛咒放上去時的完整持續時間（tick），瘟疫傳出去的時候照這個刷新。 */
+    public void noteCurseLength(final UUID target, final String id, final long ticks) {
+        if (ticks > 0) {
+            curseLengths.computeIfAbsent(target, uuid -> new HashMap<>()).put(id, ticks);
+        }
+    }
+
+    /** 是不是詛咒（照詛咒的規則放的，或代號帶 _curse 的）。 */
+    public boolean isCurse(final String id) {
+        return curseSkills.containsKey(id) || id.contains("_curse");
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Contagion（瘟疫）：from 身上還在的詛咒傳給 to，持續時間刷新（放上去時的完整時間；不知道的照剩下的）。
+     * 照詛咒的規則放（一個施放者在一隻敵人身上的詛咒數上限照 from 身上那個施放者的詛咒有幾種算，至少 1）。回傳傳了幾條。
+     * 這次之前瘟疫不傳詛咒。
+     */
+    public int spreadCurses(final UUID from, final UUID to, final long now) {
+        final List<Debuff> curses = new ArrayList<>();
+        for (final Debuff debuff : active(from, now)) {
+            if (isCurse(debuff.id())) {
+                curses.add(debuff);
+            }
+        }
+        final Map<UUID, java.util.Set<String>> kinds = new HashMap<>();
+        for (final Debuff curse : curses) {
+            if (curse.source() != null) {
+                kinds.computeIfAbsent(curse.source(), uuid -> new java.util.HashSet<>()).add(curseSkills.getOrDefault(curse.id(), curse.id()));
+            }
+        }
+        final Map<String, Long> lengths = curseLengths.getOrDefault(from, Map.of());
+        for (final Debuff curse : curses) {
+            final Long length = lengths.get(curse.id());
+            final long until = curse.untilTick() >= Long.MAX_VALUE / 8 ? curse.untilTick() : length != null ? now + length : curse.untilTick();
+            final Debuff passed = new Debuff(curse.id(), curse.source(), until, curse.taken(), curse.selfOnly(), curse.tag(), curse.mods(), curse.slow());
+            final String skill = curseSkills.get(curse.id());
+            if (skill != null && curse.source() != null) {
+                applyCurse(to, passed, skill, Math.max(1, kinds.getOrDefault(curse.source(), java.util.Set.of()).size()));
+            } else if (!curseImmunity.test(to)) {
+                apply(to, passed);
+            }
+            if (length != null) {
+                noteCurseLength(to, curse.id(), length);
+            }
+        }
+        return curses.size();
     }
 
     /** 清掉過期的（每隔一陣子呼叫）。 */
@@ -467,6 +519,7 @@ public final class Debuffs {
                 iterator.remove();
             }
         }
+        curseLengths.keySet().retainAll(entries.keySet());
     }
 
     /** 身上帶著減益的目標（畫印記用）。 */

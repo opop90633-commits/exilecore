@@ -382,8 +382,9 @@ public final class PlayerState {
             return 0; // 血魔法：沒有魔力
         }
         final double mana = Math.max(0, sheet.get(StatKeys.MANA_MAX)); // 2026-10：光環改保留精魂，魔力只給技能用
-        // 靈能電池：能量護盾全部變成最大魔力
-        return StatKeys.flag(sheet, StatKeys.FLAG_ELDRITCH_BATTERY) ? mana + Math.max(0, sheet.get(StatKeys.ES_MAX)) : mana;
+        // 靈能電池：能量護盾全部變成最大魔力（2026-10-28 照 PoE2 吉爾菲的聖殿：「最大能量護盾無法被轉換」的不換）
+        return StatKeys.flag(sheet, StatKeys.FLAG_ELDRITCH_BATTERY) && esEqualToStr(sheet) <= 0
+                ? mana + Math.max(0, sheet.get(StatKeys.ES_MAX)) : mana;
     }
 
     /** 被光環保留的最大魔力比例：2026-10 改成精魂之後一律 0（留著給舊的呼叫）。 */
@@ -411,10 +412,20 @@ public final class PlayerState {
 
     /** 某張屬性表的最大能量護盾。 */
     public static double maxEnergyShield(final StatSheet sheet) {
+        // 2026-10-28 照 PoE2（吉爾菲的聖殿）：最大能量護盾等於力量的 x%（其他的護盾加成都不算），而且不能被轉換（靈能電池不換）
+        final double fromStr = esEqualToStr(sheet);
+        if (fromStr > 0) {
+            return Math.floor(Math.max(0, sheet.get(StatKeys.STR)) * fromStr / 100.0);
+        }
         if (StatKeys.flag(sheet, StatKeys.FLAG_ELDRITCH_BATTERY)) {
             return 0;
         }
         return Math.max(0, sheet.get(StatKeys.ES_MAX));
+    }
+
+    /** 2026-10-28：「最大能量護盾等於力量的 x%」的 x（沒有回傳 0）。 */
+    static double esEqualToStr(final StatSheet sheet) {
+        return sheet.flat(tw.exilecore.item.unique.UniqueStats.ES_EQUAL_TO_STR, java.util.Set.of());
     }
 
     public void setLife(final double value) {

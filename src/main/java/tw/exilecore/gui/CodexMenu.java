@@ -334,7 +334,7 @@ public final class CodexMenu extends Menu {
             case SKILLS -> {
                 set(SLOT_OPTION, icon(Material.EXPERIENCE_BOTTLE, "<white>寶石等級：<#f5b942>Lv." + gemLevel,
                         "<gray>看 Lv.1、20、30、40 的數值",
-                        "<dark_gray>（30、40 級＝20 級寶石再加 +10、+20 技能等級，裝備的「+x 技能等級」能做到，最高 40）",
+                        "<dark_gray>（照這個等級直接算：不受你的角色等級、屬性需求限制，也不加裝備的 +技能等級；最高 40）",
                         "", "<yellow>左鍵：下一個　右鍵：上一個"));
                 if (plugin.skills() != null) {
                     final String[] names = new String[SKILL_FILTERS.length];
@@ -602,6 +602,15 @@ public final class CodexMenu extends Menu {
                 lines.add("<white>　· " + source);
             }
         }
+        // 2026-10-28 照 PoE2：限定掉落／全域掉落、稀有度、禁止掉落
+        if (tw.exilecore.item.UniqueRarity.disabled(unique)) {
+            lines.add("<red>禁止掉落（已經掉出來的照常能用）");
+        } else if (!unique.chase()) {
+            final tw.exilecore.item.UniqueRarity rarity = plugin.items().repository().uniqueRarity(unique.id());
+            lines.add(tw.exilecore.item.UniqueRarity.global(unique)
+                    ? "<gray>全域掉落" + (rarity == null ? "" : "<dark_gray>・<white>稀有度：" + rarity.label())
+                    : "<gray>限定掉落（只有上面的來源）");
+        }
         final ItemBase uniqueBase = plugin.items().repository().base(unique.base());
         // 2026-10：同一種（前綴／後綴）有好幾條時只列一次清單，寫「×2」（以前每一條都印一次一樣的清單）
         final List<AffixType> veiled = plugin.items().repository().uniqueVeiled(unique.id());
@@ -791,9 +800,7 @@ public final class CodexMenu extends Menu {
         final List<String> lines = new ArrayList<>();
         if (personal) {
             try {
-                lines.addAll(gemLevel > SkillLoadout.MAX_LEVEL
-                        ? plugin.skills().describeExtra(player, definition, gemLevel - SkillLoadout.MAX_LEVEL) // 2026-10：Lv.30、Lv.40
-                        : plugin.skills().describe(player, definition, entry));
+                lines.addAll(plugin.skills().describePreview(player, definition, gemLevel)); // 2026-10-28：直接照選的等級算（這次之前被角色等級、屬性壓低，切等級數值不變）
             } catch (final RuntimeException e) {
                 lines.clear();
             }
@@ -819,7 +826,7 @@ public final class CodexMenu extends Menu {
         } else {
             lines.add("<gray>第 <white>" + definition.tier() + "</white> 階：未切割技能寶石等級 ≥ " + definition.tier() + " 才雕得出來");
         }
-        lines.add(personal ? "<dark_gray>數值照你目前的屬性、武器算（Lv." + gemLevel + "、沒有輔助" + (gemLevel > SkillLoadout.MAX_LEVEL ? "；另外加你裝備的 +等級" : "") + "）"
+        lines.add(personal ? "<dark_gray>數值照你目前的屬性、武器算（技能 Lv." + gemLevel + "、沒有輔助、不加裝備的 +等級）"
                 : "<dark_gray>選一個角色之後，這裡會照你的屬性算出數值");
         stack.editMeta(meta -> {
             meta.lore(tw.exilecore.core.text.TextWrap.lines(lines)); // 2026-10-26：長行自動換行
@@ -1029,8 +1036,9 @@ public final class CodexMenu extends Menu {
             final List<String> lore = new ArrayList<>();
             lore.add(kindLabel(affix));
             if (corruptionAffix(affix)) {
-                lore.add("<gray>一般掉落、通貨擲不到：用<white>蝕變石</white>腐化時約 25% 加上一條");
-                lore.add("<gray>（不能再開符文孔的裝備約 50%）；一件只會有一條，不佔前綴、後綴的位子");
+                // 2026-10-28 修正：拿掉「不能再開符文孔的裝備約 50%」（CurrencyOperation.CORRUPT：那一格是沒有變化，一律 25%）
+                lore.add("<gray>一般掉落、通貨擲不到：用<white>蝕變石</white>腐化時 25% 加上一條");
+                lore.add("<gray>一件只會有一條，不佔前綴、後綴的位子");
             }
             if (unveiled) {
                 lore.add("<gray>一般掉落、通貨擲不到：裝備上的<white>隱匿" + (prefix ? "前綴" : "後綴") + "</white>帶去營地找盜賊首領，");

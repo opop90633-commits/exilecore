@@ -87,6 +87,15 @@ public final class KillEffects implements Listener {
         if (killer == null || !killer.isOnline()) {
             return;
         }
+        onKillOnce(killer, victim, victimMaxLife);
+        // 2026-10-28 照 PoE2（掃興之人）：擊殺效果觸發兩次
+        if (plugin.players().get(killer).hasCharacter()
+                && StatKeys.flag(plugin.players().sheet(killer), tw.exilecore.item.unique.UniqueStats.ON_KILL_TWICE)) {
+            onKillOnce(killer, victim, victimMaxLife);
+        }
+    }
+
+    private void onKillOnce(final Player killer, final LivingEntity victim, final double victimMaxLife) {
         final PlayerState state = plugin.players().get(killer);
         if (!state.hasCharacter() || state.isDead()) {
             return;

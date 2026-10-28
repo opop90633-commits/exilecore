@@ -780,18 +780,23 @@ public final class MinionService implements Listener, MinionHooks {
      * 2026-10-27 照 PoE2 Unearth（掘骸）：在這幾個點各叫一隻（屍體已經由呼叫的人用掉；超過上限照樣收掉最舊的）。
      */
     void summonAt(final Player player, final SkillBuild build, final List<Location> points) {
+        summonAt(player, build, points, null);
+    }
+
+    /** 同上；carried：2026-10-28 照 PoE2 Contagion，每個點的屍體帶著的瘟疫（跟 points 一一對應，null／裡面的 null = 沒有）。 */
+    void summonAt(final Player player, final SkillBuild build, final List<Location> points, final List<Corpses.Contagion> carried) {
         if (build.definition().summon() == null || points.isEmpty()) {
             return;
         }
-        summon(player, build, points.size(), false, List.of(), points);
+        summon(player, build, points.size(), false, List.of(), points, carried);
     }
 
     private void summon(final Player player, final SkillBuild build, final int count, final boolean useCorpse, final List<Modifier> first) {
-        summon(player, build, count, useCorpse, first, null);
+        summon(player, build, count, useCorpse, first, null, null);
     }
 
     private void summon(final Player player, final SkillBuild build, final int count, final boolean useCorpse, final List<Modifier> first,
-                        final List<Location> fixed) {
+                        final List<Location> fixed, final List<Corpses.Contagion> fixedCarried) {
         final SummonSpec spec = build.definition().summon();
         final long now = now();
         final UUID owner = player.getUniqueId();
@@ -804,13 +809,16 @@ public final class MinionService implements Listener, MinionHooks {
         for (int i = 0; i < count; i++) {
             Location at;
             String spectreKind = null;
+            Corpses.Contagion carried = null; // 2026-10-28 照 PoE2 Contagion：復活帶著瘟疫的屍體，召喚物擊中時傳出瘟疫
             if (fixed != null) {
                 at = ground(fixed.get(i).clone()); // 2026-10-27 掘骸：屍體的位置
+                carried = fixedCarried != null && i < fixedCarried.size() ? fixedCarried.get(i) : null;
             } else if (useCorpse) {
                 final Corpses.Corpse corpse = corpseNear(player, spec);
                 if (corpse == null) {
                     break; // 第二隻沒屍體就算了
                 }
+                carried = plugin.combat().corpses().contagion(corpse);
                 if (!tw.exilecore.stats.TreeEffectKeys.corpseSaved(plugin.players().sheet(player), plugin.random())) { // 2026-10-26 照 PoE2 天賦樹：x% 機率不毀掉屍體
                     plugin.combat().corpses().remove(corpse);
                 }
@@ -857,6 +865,9 @@ public final class MinionService implements Listener, MinionHooks {
             final Mob mob = spawn(player, build, spec, at, name, spectreKind);
             if (mob == null) {
                 continue;
+            }
+            if (carried != null && plugin.ailments() != null) {
+                plugin.ailments().carryContagion(mob, carried);
             }
             // 2026-10-26 照 PoE2 附魂術：附身的召喚物用那種怪物原本的倍率（monsters.yml 的 types；生命、傷害）
             final SummonSpec own = spec.spectre() && spectreKind != null ? spectreSpec(spec, spectreKind) : spec;

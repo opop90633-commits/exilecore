@@ -460,9 +460,10 @@ public final class AscBuild {
         if (threshold > 0) {
             sheet.add(Modifier.flat(StatKeys.AILMENT_THRESHOLD, sheet.get(StatKeys.EVASION) * threshold / 100.0, "為齒輪拋光"));
         }
-        // 2026-10-27 照 PoE2 0.5 補上的昇華：偶像崇敬、石拳之道、符文子午線
+        // 2026-10-27 照 PoE2 0.5 補上的昇華：偶像崇敬、符文子午線
+        // 2026-10-28 照 PoE2：石拳之道改成穿上時整件換成磐石之拳（tw.exilecore.item.Stonefist，PlayerStateService 收集裝備時換）；
+        // 這次之前在這裡把腿甲的防禦換掉、詞綴數值增加 50%
         idolatry(plugin, sheet, gear);
-        stonefist(sheet, state, gear);
         meridians(plugin, sheet, state, gear);
     }
 
@@ -509,42 +510,23 @@ public final class AscBuild {
         }
     }
 
-    /** 石拳之道：腿甲（原作的手套）不需要能力值（PlayerStateService 檢查裝備需求時呼叫）。 */
+    /**
+     * 石拳之道：裝備腿甲不需要能力值（原作 ignore_attribute_requirements_for_gloves；我們沒有手套欄，PoE2 的手套是腿甲）。
+     * PlayerStateService 檢查裝備需求時呼叫。
+     */
     public static boolean ignoresRequirements(final List<Modifier> ascendancy, final ItemSlot slot) {
-        return slot == ItemSlot.LEGS && flatOf(ascendancy, AscKeys.STONEFIST) > 0;
+        return slot == ItemSlot.LEGS && stonefist(ascendancy);
     }
 
     /** 能力值需求不看的時候拿來比的能力值（夠大就好）。 */
     public static final double[] NO_REQUIREMENT = {1e9, 1e9, 1e9};
 
     /**
-     * 2026-10-27 照 PoE2 石拳之道（Way of the Stonefist）：裝備的手套變成石拳（Fists of Stone：固定詞綴每角色等級 +3 閃避、+1 能量護盾），
-     * 詞綴換成更強的相關詞綴。原作的手套在這裡是腿甲；腿甲本身的防禦換成石拳的固定詞綴，詞綴（不含固定詞綴、符文）的數值增加 x%（50）。
+     * 2026-10-28 照 PoE2 石拳之道（Way of the Stonefist）：有沒有點（穿上的腿甲變成磐石之拳，見 {@link tw.exilecore.item.Stonefist}）。
+     * 這次之前（2026-10-27）在這裡把腿甲本身的防禦換成每角色等級 +3 閃避、+1 能量護盾，詞綴數值增加 asc.stonefist（50）%。
      */
-    static void stonefist(final StatSheet sheet, final PlayerState state, final List<Gear> gear) {
-        final double boost = sheet.flat(AscKeys.STONEFIST, Set.of());
-        if (boost <= 0) {
-            return;
-        }
-        for (final Gear item : gear) {
-            if (item.slot() != ItemSlot.LEGS || item.base() == null) {
-                continue;
-            }
-            final String name = item.base().name();
-            for (final Modifier mod : item.modifiers()) {
-                final String source = mod.source() == null ? "" : mod.source();
-                if (source.equals(name) && mod.type() == ModType.FLAT && mod.tags().isEmpty()
-                        && (StatKeys.ARMOUR.equals(mod.stat()) || StatKeys.EVASION.equals(mod.stat()) || StatKeys.ES_MAX.equals(mod.stat()))) {
-                    sheet.add(Modifier.flat(mod.stat(), -mod.value(), "石拳之道")); // 腿甲本身的防禦換掉
-                } else if (source.startsWith(name + " ") && !source.contains("固定詞綴") && mod.type() != ModType.MORE
-                        && !mod.stat().startsWith("flag.")) {
-                    sheet.add(new Modifier(mod.stat(), mod.type(), mod.value() * boost / 100.0, mod.tags(), "石拳之道")); // 詞綴更強
-                }
-            }
-            final int level = state == null ? 1 : Math.max(1, state.level());
-            sheet.add(Modifier.flat(StatKeys.EVASION, 3.0 * level, "石拳之道"));
-            sheet.add(Modifier.flat(StatKeys.ES_MAX, 1.0 * level, "石拳之道"));
-        }
+    public static boolean stonefist(final List<Modifier> ascendancy) {
+        return flatOf(ascendancy, AscKeys.STONEFIST) > 0;
     }
 
     /** 2026-10-27 照 PoE2 符文子午線（Runic Meridians）：紋在身上的符文（角色進度 asc.meridians：頭、胸、胸、腿、腳，「|」分開）。 */

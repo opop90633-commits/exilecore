@@ -680,7 +680,7 @@ public final class BuildCalc {
             }
             String problem = null;
             int lineageAt = -1;
-            if (support.lineage()) { // 2026-10-27 照站長：血脈輔助一個技能只能一顆
+            if (false && support.lineage()) { // 2026-10-28 照 PoE2：不同的血脈輔助可以一起掛；這次之前一個技能只能一顆
                 for (int i = 0; i < entry.sockets(); i++) {
                     final SupportDefinition other = config.support(entry.support(i));
                     if (other != null && other.lineage()) {

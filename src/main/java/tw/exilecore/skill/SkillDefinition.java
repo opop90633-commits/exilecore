@@ -140,7 +140,7 @@ public record SkillDefinition(String id, String name, String description, String
         }
         if (mechanic == Mechanic.DASH) {
             final SkillParams.Dash dash = params.dash();
-            return dash.hitWidth() > 0 || dash.startRadius().last() > 0 || dash.endRadius().last() > 0 || params.ground() != null;
+            return dash.hitWidth() > 0 || dash.whirls() || dash.startRadius().last() > 0 || dash.endRadius().last() > 0 || params.ground() != null;
         }
         return true;
     }
@@ -404,7 +404,7 @@ public record SkillDefinition(String id, String name, String description, String
                 || mechanic == Mechanic.AURA
                 || mechanic == Mechanic.WARCRY || mechanic == Mechanic.RALLY || mechanic == Mechanic.DESECRATE || mechanic == Mechanic.META
                 || mechanic == Mechanic.GUARD
-                || (mechanic == Mechanic.DASH && params.dash().hitWidth() <= 0 && params.dash().startRadius().last() <= 0
+                || (mechanic == Mechanic.DASH && params.dash().hitWidth() <= 0 && !params.dash().whirls() && params.dash().startRadius().last() <= 0
                 && params.dash().endRadius().last() <= 0 && params.ground() == null);
         if (mechanic == Mechanic.SUMMON && node.has("damage")) {
             throw new IllegalArgumentException(where + ".damage：召喚技能自己不造成傷害（召喚物的傷害寫在 summon.damage，是同等級怪物的倍數）");
@@ -480,7 +480,9 @@ public record SkillDefinition(String id, String name, String description, String
         // 2026-10-16：不會造成傷害的技能（增益光環、印記、詛咒、戰吼、護體、引星…）不帶傷害類型的標籤：
         // 「冰冷傷害增加」這種本來就吃不到，「+冰冷技能等級」也不再算——不要讓人以為它吃元素的加成。
         // 召喚物（召喚物打的傷害類型）與捷（擊殺時的爆炸會打人）照留
-        if (!parsed.dealsDamage() && summon == null && !tags.contains(Tags.HERALD) && tags.removeAll(DAMAGE_TYPE_TAGS)) {
+        // 2026-10-28 照站長：寫 keep_type_tags: true 的照 PoE2 留著（凋蝕術、凋息、凋魂詛咒、夏烏拉統治者的混沌）
+        if (!parsed.dealsDamage() && summon == null && !tags.contains(Tags.HERALD) && !node.bool("keep_type_tags", false)
+                && tags.removeAll(DAMAGE_TYPE_TAGS)) {
             return new SkillDefinition(id, name, parsed.description(), parsed.icon(), type, Set.copyOf(tags), parsed.weapons(), parsed.starter(),
                     parsed.hidden(), tier, mechanic, attackSpeed, castTime, effectiveness, mana, damage, damageTypes, conversion,
                     params, visual, parsed.modifiers(), cooldown, deploy, summon, aura, warcry, cooldownBypass, parsed.source(), typedDamage);

@@ -360,7 +360,7 @@ SPEC = {
              '被輔助的近戰攻擊打死流血中的敵人時，50% 機率擊殺效果（擊殺回復、藥劑充能、戰星）發生兩次。', 'exact', ''),
     'thrill_of_the_kill_ii': ('Thrill of the Kill II', 3, 'b', 1.0, '殺意 II', 'BLAZE_ROD', ['attack', 'spell'], ['persistent', 'aura'],
                               [m('cull.thrill_lightning', 'FLAT', 25), m('cull.thrill_shock', 'FLAT', 40)],
-                              '被輔助的技能撲殺敵人時，8 秒內你的攻擊獲得 25% 傷害為額外閃電傷害、感電機率增加 40%（技能要能撲殺，例如掛斷命）。', 'exact', ''),
+                              '被輔助的技能撲殺敵人時，8 秒內你的攻擊獲得 25% 傷害為額外閃電傷害、感電機率增加 40%（技能要能撲殺，例如掛撲殺）。', 'exact', ''),
     'tumult': ('Tumult', 0, 'g', 1.0, '騷動', 'FEATHER', ['attack', 'spell'], ['persistent', 'aura'],
                [m('charge.frenzy_armour_break', 'FLAT', 50)],
                '被輔助的技能放的時候消耗一顆{charge:frenzy}，這一下破甲，等同物理傷害的 50%。', 'exact', ''),

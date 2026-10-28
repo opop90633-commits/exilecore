@@ -881,6 +881,9 @@ public final class CombatListener implements Listener {
             final StatSheet ailmentSheet = plugin.skills() == null ? attackerSheet
                     : plugin.skills().supportMechanics().lineage().ailmentSheet(attacker, // 2026-10-27 照 PoE2 怒毒：怒氣讓中毒更快
                     plugin.skills().supportMechanics().ailmentSheet(credit != null ? credit : attacker, attackerSheet, skillSheet, skill, defender, defenderMonster), skillSheet, skill); // 2026-10-27：多帶攻擊方
+            if (attackerIsMinion && rawResult.hit() && !rawResult.blocked()) {
+                ailments.carrierHit(attacker, defender); // 2026-10-28 照 PoE2 Contagion：復活帶著瘟疫的屍體的召喚物擊中時傳出瘟疫
+            }
             pendingAilments.put(defender.getUniqueId(),
                     new PendingAilment(credit != null ? credit : attacker, KeystoneEffects.critSkill(calcSkill, rawResult.crit()), ailmentSheet, defenderSheet, rawResult, taken, defenderMonster,
                             typeTaken));
@@ -896,9 +899,14 @@ public final class CombatListener implements Listener {
             if (result.deflected()) {
                 numbers.takenWord((Player) defender, "偏斜"); // 2026-10：偏斜的那一下傷害更少
             }
+            // 2026-10-28 照 PoE2（主宰之觸）：受到稀有、傳奇敵人的傷害另外補償為生命
+            hitByRare = !attackerIsPlayer && !attackerIsMinion && plugin.monsters() != null && plugin.monsters().data(attacker)
+                    .map(data -> data.rarity() == tw.exilecore.monster.MonsterRarity.RARE || data.rarity() == tw.exilecore.monster.MonsterRarity.UNIQUE)
+                    .orElse(false);
             applyToPlayer((Player) defender, defenderState, result.esDamage(), result.lifeDamage(), event,
                     describeSource(attacker), describeSkill(attacker, skill, event.getCause()), result.dealt(), result.outgoing(), thornsTarget,
                     (!attackerIsPlayer && !attackerIsMinion) || pvpAttacker != null, pvpAttacker);
+            hitByRare = false;
             if (pvpAttacker != null) {
                 pvpRewards(attackerIsPlayer, credit, attackerSheet, skill, result, defender);
             }
@@ -951,7 +959,7 @@ public final class CombatListener implements Listener {
             event.setDamage(blocked ? 0 : plugin.monsters().toVanillaDamage(defender, defenderMonster, total));
             // 撲殺（2026-10，輔助寶石）：這一下之後生命低於門檻就直接打死
             // 撲殺：換階段鎖血中的 Boss 不能撲殺（2026-10：不然收命、收魂照給，Boss 卻沒死）
-            // 2026-10-26：斷命 I／II（PoE2）只對稀有、傳奇；斷命 II 打死之後門檻增加
+            // 2026-10-26：撲殺 I／II（PoE2）只對稀有、傳奇；撲殺 II 打死之後門檻增加
             // 2026-10-26 照 PoE2 天賦樹：撲殺與撲殺門檻帶這一下的情境（弓的攻擊、對被標記的、對野獸、對稀有傳奇、對被禁錮的）
             if (!blocked && (attackerIsPlayer || attackerIsMinion) && (StatKeys.flag(skillSheet, StatKeys.FLAG_CULLING)
                     || tw.exilecore.stats.AttributeScalingKeys.culls(skillSheet, calcSkill.tags())
@@ -980,7 +988,7 @@ public final class CombatListener implements Listener {
                     }
                 }
                 if (culled && attackerIsPlayer) {
-                    // 2026-10：收命、收魂（斷命打死時回復）
+                    // 2026-10：收命、收魂（撲殺打死時回復）
                     // 2026-10-18：撲殺的戰星與回復等事件確定沒被取消（MONITOR）才給
                     defer(defender, () -> {
                         final StatSheet cullSheet = skillSheet;
@@ -1069,7 +1077,7 @@ public final class CombatListener implements Listener {
         return cull(event, defender, monster, 1.0);
     }
 
-    /** 同上，門檻再乘 scale（2026-10-26：斷命 II 的「斷命門檻增加」）。 */
+    /** 同上，門檻再乘 scale（2026-10-26：撲殺 II 的「撲殺門檻增加」）。 */
     private static boolean cull(final EntityDamageByEntityEvent event, final LivingEntity defender, final MonsterData monster, final double scale) {
         final double threshold = cullThreshold(monster) * scale;
         final org.bukkit.attribute.AttributeInstance max = defender.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
@@ -1152,6 +1160,9 @@ public final class CombatListener implements Listener {
         if (skill.isSpell()) { // 2026-10：只算法術（反傷、擊殺爆炸、臨在灼燒不是法術）
             life += result.dealt().total() * effective.flat(StatKeys.LEECH_SPELL, java.util.Set.of()) / 100.0;
         }
+        if (StatKeys.flag(effective, tw.exilecore.item.unique.UniqueStats.CANNOT_LEECH_MANA)) {
+            mana = 0; // 2026-10-28 照 PoE2（磐石之拳的意識之緣）：無法偷取魔力
+        }
         if (life <= 0 && mana <= 0) {
             return;
         }
@@ -1163,6 +1174,20 @@ public final class CombatListener implements Listener {
                 : Math.max(0, Math.min(1, effective.flat(StatKeys.LEECH_INSTANT, java.util.Set.of()) / 100.0));
         final PlayerState state = plugin.players().get(player);
         boolean changed = false;
+        // 2026-10-28 照 PoE2：生命偷取改成偷取能量護盾（精華收割器）、魔力偷取也回復能量護盾（磐石之拳的精華收割器）。
+        // 我們沒有能量護盾的偷取池：照偷取一份的上限（最大能量護盾 10%）直接回
+        double esLeech = 0;
+        if (life > 0 && StatKeys.flag(effective, tw.exilecore.item.unique.UniqueStats.LIFE_LEECH_TO_ES)) {
+            esLeech += life;
+            life = 0;
+        }
+        if (mana > 0 && StatKeys.flag(effective, tw.exilecore.item.unique.UniqueStats.MANA_LEECH_ALSO_ES)) {
+            esLeech += mana;
+        }
+        if (esLeech > 0 && state.energyShield() < state.maxEnergyShield()) {
+            state.setEnergyShield(Math.min(state.maxEnergyShield(), state.energyShield() + Math.min(esLeech, state.maxEnergyShield() * ES_LEECH_CAP)));
+            changed = true;
+        }
         if (life > 0) {
             final double now = Math.min(life * instant, state.maxLife() * INSTANT_LEECH_CAP);
             if (now > 0 && state.life() < state.maxLife()) {
@@ -1186,6 +1211,9 @@ public final class CombatListener implements Listener {
             plugin.players().display(player, state);
         }
     }
+
+    /** 2026-10-28：偷取為能量護盾一下最多回多少（最大能量護盾的比例；照 PoE2 偷取一份最多 10%）。 */
+    static final double ES_LEECH_CAP = 0.10;
 
     /** 立即偷取一下最多回多少（最大生命／魔力的比例）。 */
     static final double INSTANT_LEECH_CAP = 0.06;
@@ -1343,6 +1371,9 @@ public final class CombatListener implements Listener {
      * 準備扣玩家的護盾與生命：原版傷害改成 0，致死時改成致死值讓原版處理死亡。
      * 真正扣血在 {@link #onDamageMonitor}，這樣後面優先度更高的插件（領地保護、PvP 開關）取消事件時我們不會白扣。
      */
+    /** 2026-10-28：這一下是稀有、傳奇怪物打的（applyToPlayer 的補償用；主執行緒，呼叫完就清掉）。 */
+    private boolean hitByRare;
+
     /** 上一次 applyToPlayer 的競技場上限比例（主執行緒；緊接著的 pvpRewards 用）。 */
     private double lastPvpCapScale = 1.0;
 
@@ -1446,7 +1477,8 @@ public final class CombatListener implements Listener {
         }
         // 傳奇「受到的傷害先從魔力扣」與「受到的傷害有 x% 之後慢慢回成生命」
         final IncomingDamage rawSplit = IncomingDamage.split(esTaken, lifeTaken, Math.max(0, state.mana() - ascMana),
-                sheet.flat(StatKeys.DAMAGE_FROM_MANA, java.util.Set.of()), sheet.flat(StatKeys.LIFE_RECOUP, java.util.Set.of()));
+                sheet.flat(StatKeys.DAMAGE_FROM_MANA, java.util.Set.of()), sheet.flat(StatKeys.LIFE_RECOUP, java.util.Set.of())
+                        + (hitByRare ? sheet.flat(tw.exilecore.item.unique.UniqueStats.LIFE_RECOUP_VS_RARE, java.util.Set.of()) : 0));
         final IncomingDamage split = ascMana > 0
                 ? new IncomingDamage(rawSplit.es(), rawSplit.life(), rawSplit.mana() + ascMana, rawSplit.recoup()) : rawSplit;
         final boolean lethal = state.life() - split.life() <= 0;

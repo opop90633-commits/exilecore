@@ -374,6 +374,7 @@ public final class ModifierText {
             case StatKeys.AILMENT_DURATION -> scaled(modifier, "異常狀態持續時間", percent);
             case StatKeys.SKILL_RECOIL -> "放完往後跳開";
             case SkillProfiles.ADDED_TIME -> "總時間 +" + number(value) + " 秒（不吃攻擊、施法速度）"; // 2026-10-26 照 PoE2
+            case SkillProfiles.BASE_CAST_TIME -> "施法時間 +" + number(value) + " 秒"; // 2026-10-28 照 PoE2（游雷冰灌注）
             case StatKeys.FLAG_POWER_RAISE -> "附近沒有屍體時改吃一顆銳星：叫出一隻強化殭屍（生命更多 40%、傷害更多 100%、移動更快 25%）再加兩隻一般的";
             case StatKeys.FLAG_TOTEM_LINKED -> "圖騰每隔一段時間在附近的敵人身邊叫出一個英靈，用技能面板上下一格的錘子攻擊技能打一次";
             case StatKeys.FLAG_SUMMON_ON_FIRE -> "你自己放火焰法術時叫出焚魂（範圍法術兩隻）";
@@ -422,17 +423,20 @@ public final class ModifierText {
             case LightningRods.EXTRA_BURST -> number(value) + "% 機率落地時多炸一次"; // 2026-10-28 照 PoE2 Lightning Rod 的品質
             case LightningRods.BURST_DELAY -> "雷束連到你插在地上的雷樁矢箭時，箭充能 " + number(value) + " 秒就炸開（同一支箭最快每 0.1 秒一次）"; // 2026-10-28 照 PoE2 Lightning Arrow
             case StatKeys.DEBUFF_DURATION ->"混沌持續傷害持續 " + number(value) + " 秒";
-            case StatKeys.FLAG_DEBUFF_SPREAD -> "掛著的敵人死掉時傳給附近的敵人，每傳一手更多 100% 傷害（最多更多 300%）";
+            // 2026-10-28 照 PoE2 Contagion：連同詛咒、其他混沌持續傷害減益一起傳、時間刷新；這次之前只傳自己
+            case StatKeys.FLAG_DEBUFF_SPREAD -> "掛著的敵人死掉時，把它自己、目標身上的詛咒與其他混沌持續傷害減益傳給附近的敵人（持續時間刷新），"
+                    + "每傳一手更多 100% 傷害（最多更多 300%）";
+            case tw.exilecore.stats.SkillMechanicKeys.DEBUFF_SPREAD_RADIUS -> "傳染半徑 " + number(value) + " 格"; // 2026-10-28 照 PoE2 Contagion
             case StatKeys.CHANNEL_STAGES -> "持續施放（按住）：每放一次加一層蓄力，最多 " + number(value) + " 層";
             case StatKeys.CHANNEL_MORE -> "每層蓄力更多 " + number(value) + "% 傷害";
             case StatKeys.TRIGGER_CRIT -> "攻擊暴擊時自動施放這個法術（不花魔力，間隔至少 0.75 秒）";
             case StatKeys.TRIGGER_HIT_TAKEN -> "被敵人擊中時自動施放這個法術（不花魔力，間隔至少 0.75 秒）";
             case StatKeys.TRIGGER_KILL -> "擊殺敵人時自動施放這個法術（不花魔力，間隔至少 0.75 秒）";
             case StatKeys.TRIGGER_AILMENT -> "讓敵人點燃、冰緩、凍結或感電時自動施放這個法術（不花魔力，間隔至少 0.75 秒）";
-            case StatKeys.LIFE_ON_CULL -> "斷命打死敵人時回復 " + number(value) + "% 最大生命";
-            case StatKeys.MANA_ON_CULL -> "斷命打死敵人時回復 " + number(value) + "% 最大魔力";
-            case StatKeys.LIFE_ON_CULL_OVER_TIME -> "斷命打死敵人時，4 秒內回復 " + number(value) + "% 最大生命"; // 2026-10-28 照 PoE2 斷魂掌品質
-            case StatKeys.MANA_ON_CULL_OVER_TIME -> "斷命打死敵人時，4 秒內回復 " + number(value) + "% 最大魔力"; // 2026-10-28 照 PoE2 斷魂掌品質
+            case StatKeys.LIFE_ON_CULL -> "撲殺打死敵人時回復 " + number(value) + "% 最大生命";
+            case StatKeys.MANA_ON_CULL -> "撲殺打死敵人時回復 " + number(value) + "% 最大魔力";
+            case StatKeys.LIFE_ON_CULL_OVER_TIME -> "撲殺打死敵人時，4 秒內回復 " + number(value) + "% 最大生命"; // 2026-10-28 照 PoE2 斷魂掌品質
+            case StatKeys.MANA_ON_CULL_OVER_TIME -> "撲殺打死敵人時，4 秒內回復 " + number(value) + "% 最大魔力"; // 2026-10-28 照 PoE2 斷魂掌品質
             case StatKeys.FLAG_PROJECTILE_NOVA -> "投射物改成往四周一圈射出";
             case StatKeys.FLAG_DODGE_CALTROPS -> "翻滾時在腳下撒一片鐵蒺";
             case StatKeys.FLAG_MIRAGE -> "弓的攻擊過一下由身旁的幻影再射一次（傷害少 30%）";
@@ -571,9 +575,9 @@ public final class ModifierText {
                     + number(value) + "% 元素傷害";
             case tw.exilecore.stats.SupportKeys.VOLT -> "每移動 1 格累積 2 點電荷（最多 " + number(value) + " 點），放的時候全部用掉，每點獲得 1% 傷害為額外閃電傷害";
             case tw.exilecore.stats.SupportKeys.CRIT_VS_IMMOBILISED -> scaled(modifier, "對被定住（凍結、重暈、定身、電擊）的敵人的暴擊率", percent);
-            case tw.exilecore.stats.SupportKeys.FLAG_CULLING_RARE -> "對稀有、傳奇怪物與 Boss 有斷命（生命掉到稀有 10%、傳奇與 Boss 5% 以下直接倒下）";
-            case tw.exilecore.stats.SupportKeys.CULL_THRESHOLD_ON_CULL -> "斷命打死敵人後 20 秒內，斷命門檻增加 " + number(value) + "%";
-            case tw.exilecore.stats.SupportKeys.CULL_THRESHOLD -> scaled(modifier, "斷命門檻", percent);
+            case tw.exilecore.stats.SupportKeys.FLAG_CULLING_RARE -> "對稀有、傳奇怪物與 Boss 有撲殺（生命掉到稀有 10%、傳奇與 Boss 5% 以下直接倒下）";
+            case tw.exilecore.stats.SupportKeys.CULL_THRESHOLD_ON_CULL -> "撲殺打死敵人後 20 秒內，撲殺門檻增加 " + number(value) + "%";
+            case tw.exilecore.stats.SupportKeys.CULL_THRESHOLD -> scaled(modifier, "撲殺門檻", percent);
             case tw.exilecore.stats.SupportKeys.FLAG_PIN_BUILDUP -> "物理傷害累積定身（暈眩累積的加成改成加在定身累積上），不會累積重暈";
             case tw.exilecore.stats.SupportKeys.PIN_BUILDUP -> scaled(modifier, "定身累積", percent);
             case tw.exilecore.stats.SupportKeys.PIN_DURATION -> scaled(modifier, "定身持續時間", percent);
@@ -626,7 +630,7 @@ public final class ModifierText {
             case tw.exilecore.stats.SupportKeys.SHATTER_FANG -> "凍結敵人時，你身上每 2 點怒氣讓你和身邊的隊友 " + number(value) + " 秒內獲得 1% 傷害為額外冰冷傷害";
             case tw.exilecore.stats.SupportKeys.ICE_BITE -> "凍結敵人時獲得 " + number(value) + "% 傷害為額外冰冷傷害";
             case tw.exilecore.stats.SupportKeys.ICE_BITE_SECONDS -> "（持續 " + number(value) + " 秒）";
-            case tw.exilecore.stats.SupportKeys.FLAG_EMPOWERED_CULL -> "被這個戰吼強化的攻擊有斷命";
+            case tw.exilecore.stats.SupportKeys.FLAG_EMPOWERED_CULL -> "被這個戰吼強化的攻擊有撲殺";
             case tw.exilecore.stats.SupportKeys.FLAG_UNERRING -> "被戰吼強化時，這個攻擊的消耗更少 30%、命中更多 30%";
             default -> null;
         };

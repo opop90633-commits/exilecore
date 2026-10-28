@@ -15,6 +15,35 @@
 #     uber_終局代號                       那隻極境 Boss 的專屬（maps.yml 的 uber.drops.exclusive_chance）
 #     awakener                           巔峰 Boss 覺醒之主・虛星（萬界之巔）的專屬（maps.yml 巔峰的 drops.unique_chance）
 #   weight：同一個來源裡的權重；drop_level：物品等級（= 怪物等級）至少多少
+#
+#   ==== 2026-10-28 照 PoE2：限定掉落／全域掉落、稀有度（這次之前全域傳奇一律 weight 100，賭博、僥倖石每個基底機率一樣）====
+#   全域掉落（全域）：sources 有 map_boss、chance、gamble 其中一個（或 chase: true）——任何地圖 Boss、一般怪物、僥倖石、商人賭博。
+#   限定掉落（限定）：只有 final、地圖代號、終局／巔峰代號、uber_…、地圖事件、heist、world_boss、abyss_whale 這些專屬來源。
+#   sources: [] 是禁止掉落（poe2db「禁止掉落」，照 PoE2 的 No longer obtainable；已經掉出來的照常能用，兌換券、三換一也換不到）。
+#   對照 poe2db 每件傳奇頁的「限定」（Limit）欄（跟 Path of Building PoE2 的 Source 一致）：
+#     原作沒有限定 → 全域（以前是內容專屬的加上 map_boss、chance、gamble，原本的內容照樣會掉）；
+#     原作「某某 Dropped by」→ 限定，放到我們對應的內容：萬眾歸一．烈許（裂隙）→ breach_lord、迷霧之王（祭壇）→ ritual_priest、
+#       天譴啟示．科賽斯（幻霧）→ delirium_mirror、灰燼仲裁者 → final、試煉大師（混沌試煉）／阿茲里的寶庫（瓦爾神殿）我們沒有 → final、
+#       庫勒馬克之器（深淵）→ abyss_lich、奧爾羅斯 → final（永恆珠寶照 drop_chance）。
+#     例外（跟原作不同，見各件的註解）：追逐級（chase）照站長留在追逐級（原作的 Temporalis、Ingenuity、Choir of the Storm、
+#       Atziri's Step 是 Boss 限定）；劫盜的隱匿傳奇（heist）原作沒有劫盜，維持劫盜專屬。
+#   rarity：稀有度（只有全域掉落的要寫）。poe2db 的傳奇頁沒有稀有度欄位，照社群通用的 PoE2 傳奇分級
+#     （NeverSink 的 PoE2 物品過濾器 0.10.4a 的傳奇分層，照原作基底；同一個基底好幾件的個別調整，見各件的註解）：
+#
+#       稀有度              分層（NeverSink）           weight（全域掉落池）  賭博權重（gamble_weight）
+#       common     常見     hideable                     100                   100
+#       uncommon   少見     t3、t3boss                    50                    40
+#       rare       稀有     t2、multispecial              20                    12
+#       very_rare  很稀有   t1、multispecialhigh           8                     4
+#       （追逐級）  極稀有   原作的頂級傳奇                chase 池 6（不變）     照追逐級的機率（不變）
+#       extremely_rare      （沒標追逐級卻要極稀有的）      3                     1
+#
+#     weight：全域掉落池裡挑哪一件（地圖 Boss 的 map_boss 池）；一般怪物掉全域傳奇時，同一個基底的權重加起來 ÷ 100（最多 1）
+#       乘在那個基底變成傳奇的機率上（monster/DropTable）。寫了 weight 的照 weight（蓋過稀有度）。
+#     賭博權重：商人賭博、僥倖石同一個基底能出的傳奇的賭博權重加起來 ÷ 100（最多 1）乘在賭到傳奇的機率上（常見一件 = 原本的機率，
+#       只有一件很稀有的 = 4%），賭到時照賭博權重挑哪一件（vendor/VendorService、currency/CurrencyService）；要個別調可以寫 gamble_weight。
+#     原作沒有、我們自己的全域傳奇照常見（維持以前的 100）。
+#
 #   drop_chance：固定掉落機率（單位 %，2026-10-26 照 PoE2 的永恆珠寶）。有寫的不進來源的權重池（不跟其他傳奇搶），
 #     改成來源 Boss（final = 天穹熔爐的終局 Boss 與它的極境；地圖代號 = 那隻終局／巔峰 Boss）每次擊殺、每個有份的人各自擲一次；
 #     不吃物品稀有度、星圖天賦。沒寫 = 照 weight 在池子裡抽
@@ -60,8 +89,8 @@ celestial_pivot:
   name: 天樞墜
   base: jamulet_09        # 2026-10-26 照 PoE2 的基底（Stellar Amulet：星輝墜飾）；這次之前 jamulet_09
   drop_level: 60
-  sources: [final]
-  weight: 100
+  sources: [final, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [final]
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（Astramentis／Stellar Amulet：multispecial）；這次之前 weight: 100
   flavour:
     - "「群星繞著它轉，你也是。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Astramentis」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -82,8 +111,8 @@ meteor_anvil:
   base: mace2_26        # 2026-10-26 照 PoE2 的基底（Giant Maul：隕鐵巨錘）；這次之前 mace2_26（stat_base mace2_17）
   stat_base: mace2_19          # 原作基底那一階的數值
   drop_level: 60
-  sources: [final]
-  weight: 100
+  sources: [final, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [final]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（The Hammer of Faith／Giant Maul：t3）；這次之前 weight: 100
   flavour:
     - "「先落下來的是火，然後才是錘。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「The Hammer of Faith」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -237,8 +266,8 @@ rime_halo:
   base: helm_dex_20        # 2026-10-26 照 PoE2 的基底（Velvet Cap：熔鋼皮帽）；這次之前 helm_int_20（stat_base helm_int_15）
   stat_base: helm_dex_12          # 原作基底那一階的數值
   drop_level: 60
-  sources: [frost_throne]
-  weight: 100
+  sources: [frost_throne, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [frost_throne]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Heatshiver／Velvet Cap：t3）；這次之前 weight: 100
   flavour:
     - "「冷到最後，連時間都停了。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Heatshiver」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -303,8 +332,8 @@ molten_aegis:
   base: body_str_25        # 2026-10-26 照 PoE2 的基底（Fur Plate：舊木胸鎧）；這次之前 body_str_25（stat_base body_str_17）
   stat_base: body_str_02          # 原作基底那一階的數值
   drop_level: 60
-  sources: [ember_citadel]
-  weight: 100
+  sources: [ember_citadel, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [ember_citadel]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Blackbraid／Fur Plate：hideable）；這次之前 weight: 100
   flavour:
     - "「熔掉的是盔甲，留下來的是你。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Blackbraid」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -341,8 +370,8 @@ gravewarden_maul:
   base: mace2_26        # 2026-10-26 照 PoE2 的基底（Totemic Greatclub：熔鋼巨錘）；這次之前 mace2_26（stat_base mace2_17）
   stat_base: mace2_12          # 原作基底那一階的數值
   drop_level: 60
-  sources: [royal_tomb]
-  weight: 100
+  sources: [royal_tomb, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [royal_tomb]
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（Marohi Erqi／Totemic Greatclub：t2）；這次之前 weight: 100
   flavour:
     - "「它為死者守夜，也為你送葬。」"
   version: 4        # 2026-10-26 照 PoE2 0.5 的「Marohi Erqi」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -377,8 +406,8 @@ astrolabe_wand:
   name: 星軌魔杖
   base: cwand_04        # 2026-10-26 照 PoE2 的基底（Siphoning Wand：虹吸法杖）；這次之前 wand_14（stat_base wand_12）
   drop_level: 60
-  sources: [observatory]
-  weight: 100
+  sources: [observatory, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [observatory]
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（Adonia's Ego／Siphoning Wand：t2）；這次之前 weight: 100
   flavour:
     - "「把星星排好，咒語自己就會念。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Adonia's Ego」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -412,13 +441,11 @@ undertow_band:
   base: jring_12        # 2026-10-26 照 PoE2 的基底（Two-Stone Ring：霜雷指環）；這次之前 jring_12
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（Two-Stone Ring 有三件貝雷克，t1 是整個基底的分層，個別調成稀有）；這次之前 weight: 100
   flavour:
     - "「退去的潮水會把東西帶走。」"
-  version: 3        # 2026-10-26 照 PoE2 0.5 的「Berek's Grip」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
-  legacy: { 1: [0, 1, 0, 0], 2: [0, 1, 0, 0] }
-  # 2026-10-26 原作的「Wind Skills which can be boosted by Elemental Ground Surfaces count」做不出來（改成平衡等效，見最後一條）
-  # 2026-10-26 原作的「as being boosted by Shocked Ground」做不出來（改成平衡等效，見最後一條）
+  version: 4        # 2026-10-28 照 PoE2：最後一條換回原作的疾風技能視為受到感電地面強化（skill.WindGround）；這次之前 3（2026-10-26 照 PoE2 0.5 的「Berek's Grip」重做）
+  legacy: { 1: [0, 1, 0, 0], 2: [0, 1, 0, 0], 3: [1, 2, 3, 0] }
   mods:
     - text: "+{value} 敏捷與智慧"
       value: [10, 20]
@@ -434,9 +461,9 @@ undertow_band:
       value: [35, 50]
       stats:
         - { stat: crit.chance_taken_chilled, type: INCREASED, value: "-{value}" }
-    - text: "對感電的敵人增加 20% 傷害"        # 2026-10-26 原作的風系技能算是在感電地面上（敵人受到的傷害增加）做不出來，改成強度相當的這條
+    - text: "可被元素地面強化的疾風技能視為受到感電地面強化"   # 2026-10-28 照 PoE2（skill.WindGround）；這次之前做不出來，寫「對感電的敵人增加 20% 傷害」
       stats:
-        - { stat: damage.vs_shocked, type: INCREASED, value: 20 }
+        - { stat: wind.ground.lightning, type: FLAT, value: 1 }
 
 windrunner_coat:
   name: 逐風者外衣
@@ -444,7 +471,7 @@ windrunner_coat:
   stat_base: body_dex_05          # 原作基底那一階的數值
   drop_level: 53
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Briskwrap／Rhoahide Coat：hideable）；這次之前 weight: 100
   flavour:
     - "「他們說看見他的時候，他已經走了。」"
   version: 4        # 2026-10-26 照 PoE2 0.5 的「Briskwrap」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -481,7 +508,7 @@ prism_wall:
   stat_base: cshield_05          # 原作基底那一階的數值
   drop_level: 68
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Sectarian Crest Shield 不在分層裡（常見））；這次之前 weight: 100
   flavour:
     - "「光打在上面，碎成三種顏色。」"
   version: 5        # 2026-10-26 照 PoE2 0.5 的「Prism Guardian」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -515,7 +542,7 @@ cinder_robe:
   stat_base: body_int_05          # 原作基底那一階的數值
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Cloak of Flame／Silk Robe：t3boss）；這次之前 weight: 100
   flavour:
     - "「它燒的不是布，是穿的人。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Cloak of Flame」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -547,7 +574,7 @@ glacial_tread:
   stat_base: boots_str_dex_03          # 原作基底那一階的數值
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Obern's Bastion／Stacked Sabatons：hideable）；這次之前 weight: 100
   flavour:
     - "「冰面不會滑，因為它認得你。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Obern's Bastion」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -583,7 +610,7 @@ ironclad_belt:
   base: jbelt_03        # 2026-10-26 照 PoE2 的基底（Plate Belt：鐵片束帶）；這次之前 jbelt_03
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「規矩是鐵打的。」"
   version: 4        # 2026-10-27 照 PoE2：護符欄位是基底的固定詞綴（有 1–3 個），拿掉重複的「+1–3 護符欄位」
@@ -610,7 +637,7 @@ siegebreaker:
   stat_base: xbow_02          # 原作基底那一階的數值
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Rampart Raptor／Tense Crossbow：hideable）；這次之前 weight: 100
   flavour:
     - "「城牆比人好打。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Rampart Raptor」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -637,7 +664,7 @@ thunder_spine:
   stat_base: qstaff_05          # 原作基底那一階的數值
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Matsya／Crescent Quarterstaff：hideable）；這次之前 weight: 100
   flavour:
     - "「第一聲雷響，萬物就醒了。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Matsya」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -676,7 +703,7 @@ skypierce:
   stat_base: spear_04          # 原作基底那一階的數值
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（Skysliver／Winged Spear：t2）；這次之前 weight: 100
   flavour:
     - "「它從來沒有偏過。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Skysliver」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -707,7 +734,7 @@ marrowblight:
   base: cwand_07        # 2026-10-26 照 PoE2 的基底（Acrid Wand：腐蝕法杖）；這次之前 wand_14（stat_base wand_12）
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Cursecarver／Acrid Wand：hideable）；這次之前 weight: 100
   flavour:
     - "「它從裡面開始爛。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Cursecarver」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -737,7 +764,7 @@ pyre_staff:
   base: cstaff_05        # 2026-10-26 照 PoE2 的基底（Pyrophyte Staff：炎木長杖）；這次之前 staff_17（stat_base staff_15）
   drop_level: 68
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（The Searing Touch／Pyrophyte Staff：hideable）；這次之前 weight: 100
   flavour:
     - "「讓它燒，燒到只剩下灰。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「The Searing Touch」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -767,7 +794,7 @@ quiet_mind:
   stat_base: helm_int_10          # 原作基底那一階的數值
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Scold's Bridle／Jade Tiara：hideable）；這次之前 weight: 100
   flavour:
     - "「什麼都不想的時候，咒語最準。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Scold's Bridle」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -799,7 +826,7 @@ crimson_coil:
   stat_base: jring_01          # 原作基底那一階的數值
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Venopuncture／Iron Ring：hideable）；這次之前 weight: 100
   flavour:
     - "「每一次見血，它就亮一點。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Venopuncture」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -835,7 +862,7 @@ husk_amulet:
   base: jamulet_05        # 2026-10-26 照 PoE2 的基底（Lapis Amulet：藍智墜飾）；這次之前 jamulet_07
   drop_level: 68
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Ligurium Talisman／Lapis Amulet：t3boss）；這次之前 weight: 100
   flavour:
     - "「它裡面什麼都沒有，所以什麼都裝得下。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Ligurium Talisman」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -863,7 +890,7 @@ stoneguard_plate:
   stat_base: body_str_16          # 原作基底那一階的數值
   drop_level: 68
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（The Brass Dome／Champion Cuirass：t3）；這次之前 weight: 100
   flavour:
     - "「站在那裡，就是一道牆。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「The Brass Dome」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -893,7 +920,7 @@ falconer_bow:
   stat_base: bow_19          # 原作基底那一階的數值
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Lioneye's Glare／Heavy Bow：t3）；這次之前 weight: 100
   flavour:
     - "「先看見的人，先開弓。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Lioneye's Glare」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -931,7 +958,7 @@ roamers_boots:
   stat_base: boots_int_02          # 原作基底那一階的數值
   drop_level: 1
   sources: [chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Wanderlust／Wrapped Sandals：hideable）；這次之前 weight: 100
   flavour:
     - "「家在路的盡頭——或者根本沒有盡頭。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Wanderlust」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -958,7 +985,7 @@ goldleaf_hood:
   stat_base: helm_dex_02          # 原作基底那一階的數值
   drop_level: 1
   sources: [chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Felt Cap 的 t2 不是金縷帽（練功用的常見傳奇））；這次之前 weight: 100
   flavour:
     - "「看起來值錢，其實也真的值錢。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Goldrim」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1010,8 +1037,8 @@ raincaller:
   base: xbow_23        # 2026-10-26 照 PoE2 的基底（Makeshift Crossbow：樸素弩）；這次之前 xbow_26（stat_base xbow_17）
   stat_base: xbow_01          # 原作基底那一階的數值
   drop_level: 60
-  sources: [shrine]
-  weight: 100
+  sources: [shrine, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [shrine]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Mist Whisper／Makeshift Crossbow：hideable）；這次之前 weight: 100
   flavour:
     - "「求雨的人，要先學會等。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Mist Whisper」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1042,8 +1069,8 @@ sanctum_helm:
   base: helm_str_20        # 2026-10-26 照 PoE2 的基底（Soldier Greathelm：舊木戰盔）；這次之前 helm_str_20（stat_base helm_str_15）
   stat_base: helm_str_02          # 原作基底那一階的數值
   drop_level: 60
-  sources: [shrine]
-  weight: 100
+  sources: [shrine, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [shrine]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Ezomyte Peak／Soldier Greathelm：hideable）；這次之前 weight: 100
   flavour:
     - "「它守著的不是神，是相信的人。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Ezomyte Peak」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1075,8 +1102,8 @@ prayerbead_wand:
   drop_level: 60
   rune_sockets: 3        # 2026-10：照 PoE2 的符文叉，多開符文孔
   rune_effect: 100       # 嵌在這件上的符文效果增加 100%
-  sources: [shrine]
-  weight: 100
+  sources: [shrine, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [shrine]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Lifesprig／Attuned Wand：hideable）；這次之前 weight: 100
   flavour:
     - "「一顆珠子，一句禱詞。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Lifesprig」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1102,8 +1129,8 @@ censer_charm:
   name: 香爐墜
   base: jamulet_05        # 2026-10-26 照 PoE2 的基底（Lapis Amulet：藍智墜飾）；這次之前 jamulet_02
   drop_level: 60
-  sources: [shrine]
-  weight: 100
+  sources: [shrine, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [shrine]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Stone of Lazhwar／Lapis Amulet：t3boss）；這次之前 weight: 100
   flavour:
     - "「煙往上飄，願望也是。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Stone of Lazhwar」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1126,8 +1153,8 @@ keymasters_ring:
   name: 鑰主之戒
   base: jring_13        # 2026-10-26 照 PoE2 的基底（Gold Ring：金耀指環）；這次之前 jring_13
   drop_level: 60
-  sources: [strongbox]
-  weight: 100
+  sources: [strongbox, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [strongbox]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Andvarius／Gold Ring：t3）；這次之前 weight: 100
   flavour:
     - "「沒有打不開的鎖，只有不想開的人。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Andvarius」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1152,8 +1179,8 @@ forgefather:
   stat_base: mace2_02          # 原作基底那一階的數值
   drop_level: 60
   rune_sockets: 3        # 2026-10：照 PoE2 的鍛錘，3 個符文孔
-  sources: [strongbox]
-  weight: 100
+  sources: [strongbox, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [strongbox]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Hrimnor's Hymn／Oak Greathammer：hideable）；這次之前 weight: 100
   flavour:
     - "「每一把好刀，都是它敲出來的。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Hrimnor's Hymn」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1179,8 +1206,8 @@ linked_quiver:
   name: 寒息箭袋
   base: quiver_01        # 2026-10-26 照 PoE2 的基底（Broadhead Quiver：寬鏃箭袋）；這次之前 quiver_01
   drop_level: 60
-  sources: [strongbox]
-  weight: 100
+  sources: [strongbox, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [strongbox]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Asphyxia's Wrath／Broadhead Quiver：t3）；這次之前 weight: 100
   flavour:
     - "「一支箭，打不只一個。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Asphyxia's Wrath」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1213,8 +1240,8 @@ prybar:
   base: mace1_24        # 2026-10-26 照 PoE2 的基底（Warpick：鍛紋戰錘）；這次之前 mace1_23（stat_base mace1_17）
   stat_base: mace1_05          # 原作基底那一階的數值
   drop_level: 60
-  sources: [strongbox]
-  weight: 100
+  sources: [strongbox, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [strongbox]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Sculpted Suffering／Warpick：hideable）；這次之前 weight: 100
   flavour:
     - "「門不開？那就讓它開。」"
   version: 4        # 2026-10-26 照 PoE2 0.5 的「Sculpted Suffering」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1245,8 +1272,8 @@ tally_ring:
   name: 計數之戒
   base: jring_07        # 2026-10-26 照 PoE2 的基底（Emerald Ring：鷹眼指環）；這次之前 jring_13
   drop_level: 60
-  sources: [strongbox]
-  weight: 100
+  sources: [strongbox, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [strongbox]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Thief's Torment／Emerald Ring：hideable）；這次之前 weight: 100
   flavour:
     - "「每一筆都記得。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Thief's Torment」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1279,8 +1306,8 @@ voidfont:
   name: 虛泉權杖
   base: csceptre_04        # 2026-10-26 照 PoE2 的基底（Omen Sceptre：凶兆權杖）；這次之前 sceptre_16（stat_base sceptre_15）
   drop_level: 60
-  sources: [breach]
-  weight: 100
+  sources: [breach, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [breach]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Font of Power／Omen Sceptre：hideable）；這次之前 weight: 100
   flavour:
     - "「從裂縫裡流出來的，不只是光。」"
   version: 4        # 2026-10-26 照 PoE2 0.5 的「Font of Power」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1339,8 +1366,8 @@ fracture_loop:
   name: 裂痕之戒
   base: jring_06        # 2026-10-26 照 PoE2 的基底（Amethyst Ring：紫蝕指環）；這次之前 jring_09
   drop_level: 60
-  sources: [breach]
-  weight: 100
+  sources: [breach, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [breach]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Ming's Heart／Amethyst Ring：hideable）；這次之前 weight: 100
   flavour:
     - "「兩邊的世界，它都碰得到。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Ming's Heart」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1364,8 +1391,8 @@ phaseboots:
   base: boots_dex_int_13        # 2026-10-26 照 PoE2 的基底（Threaded Shoes：舊木纏履）；這次之前 boots_dex_int_13（stat_base boots_dex_int_08）
   stat_base: boots_dex_int_02          # 原作基底那一階的數值
   drop_level: 60
-  sources: [breach]
-  weight: 100
+  sources: [breach, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [breach]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Ghostmarch／Threaded Shoes：hideable）；這次之前 weight: 100
   flavour:
     - "「一步在這裡，一步在那裡。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Ghostmarch」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1426,8 +1453,8 @@ outlaws_vest:
   base: body_str_dex_27        # 2026-10-26 照 PoE2 的基底（Explorer Armour：鍛紋鱗甲）；這次之前 body_str_dex_27（stat_base body_str_dex_15）
   stat_base: body_str_dex_05          # 原作基底那一階的數值
   drop_level: 60
-  sources: [exile]
-  weight: 100
+  sources: [exile, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [exile]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Belly of the Beast／Explorer Armour：hideable）；這次之前 weight: 100
   flavour:
     - "「他們發過誓，也背棄過。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Belly of the Beast」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1461,8 +1488,8 @@ turncoat_spear:
   base: spear_25        # 2026-10-26 照 PoE2 的基底（Barbed Spear：鋼脊長矛）；這次之前 spear_25（stat_base spear_17）
   stat_base: spear_07          # 原作基底那一階的數值
   drop_level: 60
-  sources: [exile]
-  weight: 100
+  sources: [exile, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [exile]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Saitha's Spear／Barbed Spear：hideable）；這次之前 weight: 100
   flavour:
     - "「它刺過朋友，也刺過敵人。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Saitha's Spear」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1502,8 +1529,8 @@ fugitive_greaves:
   base: legs_str_dex_14        # 2026-10-26 照 PoE2 的基底（Doubled Gauntlets：鐵箍鱗護腿）；這次之前 legs_str_dex_14（stat_base legs_str_dex_08）
   stat_base: legs_str_dex_03          # 原作基底那一階的數值
   drop_level: 60
-  sources: [exile]
-  weight: 100
+  sources: [exile, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [exile]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Deathblow／Doubled Gauntlets：hideable）；這次之前 weight: 100
   flavour:
     - "「腿比良心快。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Deathblow」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1526,7 +1553,7 @@ fugitive_greaves:
       value: [20, 30]
       stats:
         - { stat: mana.per_kill, type: FLAT, value: "{value}" }
-    - text: "斷命：擊中後生命太低的敵人直接倒下"
+    - text: "撲殺：擊中後生命太低的敵人直接倒下"
       stats:
         - { stat: flag.culling, type: FLAT, value: 1 }
 
@@ -1535,8 +1562,8 @@ bandit_longbow:
   base: bow_24        # 2026-10-26 照 PoE2 的基底（Dualstring Bow：精鐵弓）；這次之前 bow_26（stat_base bow_17）
   stat_base: bow_06          # 原作基底那一階的數值
   drop_level: 60
-  sources: [exile]
-  weight: 100
+  sources: [exile, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [exile]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Death's Harp／Dualstring Bow：hideable）；這次之前 weight: 100
   flavour:
     - "「先射馬，再射人。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Death's Harp」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1567,8 +1594,8 @@ insurgent_shield:
   base: tshield_24        # 2026-10-26 照 PoE2 的基底（Heraldric Tower Shield：鋼脊塔盾）；這次之前 kshield_22（stat_base kshield_15）
   stat_base: tshield_07          # 原作基底那一階的數值
   drop_level: 60
-  sources: [exile]
-  weight: 100
+  sources: [exile, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [exile]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Redblade Banner／Heraldric Tower Shield：t3）；這次之前 weight: 100
   flavour:
     - "「舉起它的人，就不回頭了。」"
   version: 4        # 2026-10-26 照 PoE2 0.5 的「Redblade Banner」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1600,8 +1627,8 @@ sanguine_idol:
   base: mace2_25        # 2026-10-26 照 PoE2 的基底（Cultist Greathammer：鍛紋巨錘）；這次之前 mace2_26（stat_base mace2_17）
   stat_base: mace2_05          # 原作基底那一階的數值
   drop_level: 60
-  sources: [ritual]
-  weight: 100
+  sources: [ritual, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [ritual]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（The Empty Roar／Cultist Greathammer：hideable）；這次之前 weight: 100
   flavour:
     - "「獻上的血越多，它越重。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「The Empty Roar」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1635,8 +1662,8 @@ oathblood:
   name: 歃盟弩   # 2026-10：原名「血誓弩」跟 PoE 的傳奇太像
   base: xbow_23        # 2026-10-26 照 PoE2 的基底（Desolate Crossbow：天鐵弩）；這次之前 xbow_26（stat_base xbow_17）
   drop_level: 60
-  sources: [ritual]
-  weight: 100
+  sources: [ritual, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [ritual]
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（The Last Lament／Desolate Crossbow：t2）；這次之前 weight: 100
   flavour:
     - "「簽了名，就要付帳。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「The Last Lament」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1697,8 +1724,8 @@ dirge_staff:
   name: 葬吟長杖   # 2026-10：原名「輓歌長杖」跟 PoE 的傳奇太像
   base: cstaff_16        # 2026-10-26 照 PoE2 的基底（Perching Staff：棲鴉長杖）；這次之前 staff_17（stat_base staff_12）
   drop_level: 60
-  sources: [ritual]
-  weight: 100
+  sources: [ritual, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [ritual]
+  rarity: very_rare        # 2026-10-28 照 PoE2 稀有度（The Raven's Flock／Perching Staff：t1）；這次之前 weight: 100
   flavour:
     - "「它吹起來，死人就站起來。」"
   version: 5        # 2026-10-26 照 PoE2 0.5 的「The Raven's Flock」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1730,8 +1757,8 @@ hierophant_robe:
   base: body_dex_int_22        # 2026-10-26 照 PoE2 的基底（Assassin Garb：霜晶纏衣）；這次之前 body_dex_int_18（stat_base body_dex_int_15）
   stat_base: body_dex_int_21          # 原作基底那一階的數值
   drop_level: 60
-  sources: [ritual]
-  weight: 100
+  sources: [ritual, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [ritual]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Cospri's Will／Assassin Garb：hideable）；這次之前 weight: 100
   flavour:
     - "「儀式要照順序來。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Cospri's Will」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1762,8 +1789,8 @@ dreamglass_mask:
   base: helm_dex_int_17        # 2026-10-26 照 PoE2 的基底（Veiled Mask：淬鐵兜帽）；這次之前 helm_dex_int_17（stat_base helm_dex_int_12）
   stat_base: helm_dex_int_04          # 原作基底那一階的數值
   drop_level: 60
-  sources: [delirium]
-  weight: 100
+  sources: [delirium, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [delirium]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Atsak's Sight／Veiled Mask：hideable）；這次之前 weight: 100
   flavour:
     - "「鏡子裡的那個人，比你還像你。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Atsak's Sight」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1795,8 +1822,8 @@ lucid_repeater:
   base: xbow_24        # 2026-10-26 照 PoE2 的基底（Dyad Crossbow：鍛紋弩）；這次之前 xbow_26（stat_base xbow_17）
   stat_base: xbow_05          # 原作基底那一階的數值
   drop_level: 60
-  sources: [delirium]
-  weight: 100
+  sources: [delirium, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [delirium]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Double Vision／Dyad Crossbow：hideable）；這次之前 weight: 100
   flavour:
     - "「醒著的時候，它射得更準。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Double Vision」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1827,8 +1854,8 @@ nightmare_pole:
   base: qstaff_25        # 2026-10-26 照 PoE2 的基底（Steelpoint Quarterstaff：精鐵長棍）；這次之前 qstaff_25（stat_base qstaff_17）
   stat_base: qstaff_06          # 原作基底那一階的數值
   drop_level: 60
-  sources: [delirium]
-  weight: 100
+  sources: [delirium, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [delirium]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Nazir's Judgement／Steelpoint Quarterstaff：hideable）；這次之前 weight: 100
   flavour:
     - "「做過一次惡夢，就不會再怕了。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Nazir's Judgement」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1861,8 +1888,8 @@ reverie_spear:
   base: spear_24        # 2026-10-26 照 PoE2 的基底（Forked Spear：精鐵長矛）；這次之前 spear_25（stat_base spear_17）
   stat_base: spear_06          # 原作基底那一階的數值
   drop_level: 60
-  sources: [delirium]
-  weight: 100
+  sources: [delirium, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [delirium]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Tangletongue／Forked Spear：t3）；這次之前 weight: 100
   flavour:
     - "「它刺出去的時候，你在作夢。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Tangletongue」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1895,8 +1922,8 @@ somnambulist:
   base: boots_int_16        # 2026-10-26 照 PoE2 的基底（Feathered Sandals：鍛紋絲履）；這次之前 boots_int_16（stat_base boots_int_11）
   stat_base: boots_int_05          # 原作基底那一階的數值
   drop_level: 60
-  sources: [delirium]
-  weight: 100
+  sources: [delirium, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [delirium]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Windscream／Feathered Sandals：hideable）；這次之前 weight: 100
   flavour:
     - "「閉著眼睛也知道路。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Windscream」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1929,7 +1956,7 @@ cleaver_of_kings:
   stat_base: mace2_03          # 原作基底那一階的數值
   drop_level: 50
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Trephina／Forge Maul：hideable）；這次之前 weight: 100
   flavour:
     - "「王也是肉做的。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Trephina」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -1962,7 +1989,7 @@ serpent_staff:
   stat_base: qstaff_12          # 2026-10：基底合併了，傷害／防禦／需求還是照原本那一階（熔鋼長棍）的數值
   drop_level: 50
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「它響的時候，已經咬下去了。」"
   version: 2        # 2026-10：照 PoE2 同部位的傳奇重做（舊的登入時重擲）
@@ -1994,7 +2021,7 @@ floe_buckler:
   stat_base: buckler_05          # 原作基底那一階的數值
   drop_level: 50
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Kaltenhalt／Ridged Buckler：hideable）；這次之前 weight: 100
   flavour:
     - "「它擋下的，都會變冷。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Kaltenhalt」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -2026,7 +2053,7 @@ barrage_crossbow:
   stat_base: xbow_01          # 原作基底那一階的數值
   drop_level: 55
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Mist Whisper／Makeshift Crossbow：hideable）；這次之前 weight: 100
   flavour:
     - "「一次一支太慢了。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Mist Whisper」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -2057,7 +2084,7 @@ ascetic_sash:
   base: jbelt_01        # 2026-10-26 照 PoE2 的基底（Rawhide Belt：鞣皮束帶）；這次之前 jbelt_02
   drop_level: 45
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「少吃一口，多走一步。」"
   version: 4        # 2026-10-27 照 PoE2：護符欄位是基底的固定詞綴（有 1–3 個），拿掉重複的「+1–3 護符欄位」
@@ -2082,7 +2109,7 @@ blaze_loop:
   base: jring_03        # 2026-10-26 照 PoE2 的基底（Ruby Ring：炎晶指環）；這次之前 jring_03
   drop_level: 45
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Cracklecreep／Ruby Ring：hideable）；這次之前 weight: 100
   flavour:
     - "「它點著的，自己就會燒下去。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Cracklecreep」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -2110,7 +2137,7 @@ rampart_greaves:
   stat_base: legs_str_09          # 原作基底那一階的數值
   drop_level: 50
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Empire's Grasp／Titan Mitts：hideable）；這次之前 weight: 100
   flavour:
     - "「站穩了，就不會倒。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Empire's Grasp」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -2142,7 +2169,7 @@ sages_wraps:
   stat_base: legs_int_07          # 2026-10：基底合併了，傷害／防禦／需求還是照原本那一階（鋼脊絲褲）的數值
   drop_level: 45
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「讀過的書，都綁在腿上。」"
   version: 2        # 2026-10：照 PoE2 同部位的傳奇重做（舊的登入時重擲）
@@ -2168,7 +2195,7 @@ tailwind_quiver:
   name: 穿雲箭袋
   base: quiver_09        # 2026-10-26 照 PoE2 的基底（Penetrating Quiver：貫甲箭袋）；這次之前 quiver_08
   drop_level: 60
-  sources: [map_boss, chance, gamble]
+  sources: [final]        # 2026-10-28 照 PoE2：poe2db 限定「阿茲里的寶庫（瓦爾命途）」掉落 → 我們沒有瓦爾神殿，放終局 Boss（天穹熔爐）（做不出來、賭不到）；這次之前 [map_boss, chance, gamble]
   weight: 100
   flavour:
     - "「風往哪裡吹，箭就往哪裡飛。」"
@@ -2237,8 +2264,8 @@ winterbound_ring:
   name: 長冬之戒
   base: jring_04        # 2026-10-26 照 PoE2 的基底（Sapphire Ring：霜晶指環）；這次之前 jring_04
   drop_level: 80
-  sources: [uber_frost_throne]
-  weight: 100
+  sources: [uber_frost_throne, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [uber_frost_throne]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Polcirkeln／Sapphire Ring：t3）；這次之前 weight: 100
   flavour:
     - "「它戴上去，春天就不來了。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Polcirkeln」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -2265,8 +2292,8 @@ styxguard:
   base: focus_23        # 2026-10-26 照 PoE2 的基底（Engraved Focus：淬鐵法器）；這次之前 focus_23
   stat_base: focus_04          # 原作基底那一階的數值
   drop_level: 80
-  sources: [uber_bone_throne]
-  weight: 100
+  sources: [uber_bone_throne, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [uber_bone_throne]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Carrion Call／Engraved Focus：hideable）；這次之前 weight: 100
   flavour:
     - "「渡過去的，就回不來了。」"
   version: 5        # 2026-10-26 照 PoE2 0.5 的「Carrion Call」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -2297,8 +2324,8 @@ ashwalker_boots:
   base: boots_str_16        # 2026-10-26 照 PoE2 的基底（Stone Greaves：鍛紋戰靴）；這次之前 boots_str_16
   stat_base: boots_str_05          # 原作基底那一階的數值
   drop_level: 80
-  sources: [uber_ember_citadel]
-  weight: 100
+  sources: [uber_ember_citadel, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [uber_ember_citadel]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Birth of Fury／Stone Greaves：t3）；這次之前 weight: 100
   flavour:
     - "「走過的地方，只剩下灰。」"
   version: 4        # 2026-10-26 照 PoE2 0.5 的「Birth of Fury」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -2324,8 +2351,8 @@ genesis_crown:
   base: helm_str_int_18        # 2026-10-26 照 PoE2 的基底（Iron Crown：樸素聖盔）；這次之前 helm_int_20
   stat_base: helm_str_int_01          # 原作基底那一階的數值
   drop_level: 80
-  sources: [world_boss]
-  weight: 100
+  sources: [world_boss, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [world_boss]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Crown of the Victor／Iron Crown：hideable）；這次之前 weight: 100
   flavour:
     - "「一切開始的地方。」"
   version: 5        # 2026-10-26 照 PoE2 0.5 的「Crown of the Victor」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -2349,8 +2376,8 @@ worldsplitter:
   name: 劈世巨鎚
   base: mace2_09        # 2026-10-26 照 PoE2 的基底（Pointed Maul：戰痕巨錘）；這次之前 mace2_27
   drop_level: 80
-  sources: [world_boss]
-  weight: 100
+  sources: [world_boss, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [world_boss]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Tidebreaker／Pointed Maul：hideable）；這次之前 weight: 100
   flavour:
     - "「天裂開一次，就不會合起來。」"
   version: 3        # 2026-10-26 照 PoE2 0.5 的「Tidebreaker」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -2803,8 +2830,8 @@ blinkstep_shroud:
   base: body_dex_24        # 2026-10-26 照 PoE2 的基底（Armoured Vest：天鐵皮甲）；這次之前 body_dex_22
   stat_base: body_dex_23          # 原作基底那一階的數值
   drop_level: 85
-  sources: [awakener]
-  weight: 100
+  sources: [awakener, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [awakener]
+  rarity: very_rare        # 2026-10-28 照 PoE2 稀有度（Hyrri's Ire／Armoured Vest：t1）；這次之前 weight: 100
   flavour:
     - "「你看見祂的時候，祂已經在你背後了。」"
   version: 2        # 2026-10-26 照 PoE2 0.5 的「Hyrri's Ire」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -2986,7 +3013,7 @@ ember_king_talisman:
   base: talis_19        # 2026-10-26 照 PoE2 的基底（Ashbark Talisman：隕鐵獸符）；這次之前 talis_19
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: very_rare        # 2026-10-28 照 PoE2 稀有度（Fury of the King／Ashbark Talisman：t1）；這次之前 weight: 100
   flavour:
     - "「熊王倒下的那一夜，牠的怒火沒有熄。」"
   version: 2        # 2026-10-26 照 PoE2 0.5 的「Fury of the King」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -3027,7 +3054,7 @@ wrathroot_talisman:
   base: talis_25        # 聖紋獸符（內建：+怒氣上限）
   drop_level: 45
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「從地底挖出來的時候，它還在發抖。」"
   mods:
@@ -3061,7 +3088,7 @@ moonhowl_talisman:
   base: talis_23        # 天鐵獸符（攻速快）
   drop_level: 55
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「月亮升起來之前，牠還記得自己是人。」"
   mods:
@@ -3095,7 +3122,7 @@ cinderscale_talisman:
   base: talis_22        # 炎晶獸符
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「龍死了很久，鱗片還是燙的。」"
   mods:
@@ -3261,7 +3288,7 @@ godslayer_spear:
   # 2026-10-27 照站長比照 poe2db 檢查過、數值不變：84 級無品質物理 DPS 約 590–772（中位 678），暴擊 8–9%；
   #   原作頂級稀有矛（Grand Spear：增加物理 170–179% ＋ 混合 75–79% ＋ 附加 26–39 到 44–66 ＋ 攻速 26–28% ＋ 暴擊 +4.41–5%）全頂約 786、
   #   六條好詞綴約 660；原作頂級傳奇矛 The Ordained（150–250% 物理＋1 到 200–300 閃電、+5–8% 暴擊）中位約 470、Atziri's Contempt（物理＋火焰＋閃電）中位約 595。
-  #   加上對 Boss 增傷與斷命，剛好在「略強於好的稀有、不超過全頂稀有」
+  #   加上對 Boss 增傷與撲殺，剛好在「略強於好的稀有、不超過全頂稀有」
   mods:
     - text: "增加 {value}% 物理傷害"
       value: [170, 210]
@@ -3285,7 +3312,7 @@ godslayer_spear:
       value: [40, 60]
       stats:
         - { stat: damage.vs_unique, type: INCREASED, value: "{value}" }
-    - text: "斷命：擊中後生命太低的敵人直接倒下"
+    - text: "撲殺：擊中後生命太低的敵人直接倒下"
       stats:
         - { stat: flag.culling, type: FLAT, value: 1 }
 
@@ -3394,7 +3421,7 @@ ashfall_maul:
   base: mace2_27
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「砸下去的地方，三天都還是燙的。」"
   mods:
@@ -3425,7 +3452,7 @@ frostwhisper_wand:
   base: wand_14
   drop_level: 55
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「它說話的時候，空氣會結霜。」"
   mods:
@@ -3454,7 +3481,7 @@ bloodoath_ring:
   base: jring_14
   drop_level: 50
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「拿走的血，總要還回來。」"
   mods:
@@ -3480,7 +3507,7 @@ hawkgaze_hood:
   base: helm_dex_20
   drop_level: 55
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「牠看得見你，在你看見牠之前。」"
   mods:
@@ -3510,7 +3537,7 @@ moltencore_belt:
   base: jbelt_07
   drop_level: 55
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「腰間繫著一團不會熄的火。」"
   mods:
@@ -3540,7 +3567,7 @@ spiritcall_amulet:
   base: jamulet_10
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「叫一聲，牠們就來。」"
   mods:
@@ -3574,8 +3601,8 @@ spider_bulwark:
   base: tshield_24        # 2026-10-26 照 PoE2 的基底（Rampart Tower Shield：精鐵塔盾）；這次之前 tshield_24
   stat_base: tshield_06          # 原作基底那一階的數值
   drop_level: 60
-  sources: [final, frost_throne, bone_throne, ember_citadel]   # 2026-10-15：從萬界之巔改到四個終局 Boss（跟各自的專屬傳奇一起抽）
-  weight: 100
+  sources: [final, frost_throne, bone_throne, ember_citadel, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [final, frost_throne, bone_throne, ember_citadel]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Lycosidae／Rampart Tower Shield：hideable）；這次之前 weight: 100
   flavour:
     - "「撞上來的，都會被纏住。」"
   version: 2        # 2026-10-26 照 PoE2 0.5 的「Lycosidae」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -3600,8 +3627,8 @@ oracle_spear:
   name: 神諭之矛
   base: spear_28        # 2026-10-26 照 PoE2 的基底（Grand Spear：星骸長矛）；這次之前 spear_28
   drop_level: 85
-  sources: [awakener]
-  weight: 100
+  sources: [awakener, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [awakener]
+  rarity: very_rare        # 2026-10-28 照 PoE2 稀有度（The Ordained／Grand Spear：t1）；這次之前 weight: 100
   flavour:
     - "「神沒有開口，矛替祂說了。」"
   version: 2        # 2026-10-26 照 PoE2 0.5 的「The Ordained」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -3639,7 +3666,7 @@ ancestor_crown:
   base: helm_str_20
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「戴上它的人，身後總站著好幾個影子。」"
   mods:
@@ -3668,7 +3695,7 @@ grudgecarver_mace:
   base: mace1_26
   drop_level: 55
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「刻在圖騰上的，不是名字，是仇。」"
   mods:
@@ -3700,7 +3727,7 @@ totemkeeper_amulet:
   base: jamulet_03
   drop_level: 55
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「牠們替你站著，你替牠們記著。」"
   mods:
@@ -3869,14 +3896,14 @@ bonewalker:
   base: boots_str_16        # 2026-10-26 照 PoE2 的基底（Iron Greaves：舊木戰靴）；這次之前 boots_dex_int_13（stat_base boots_dex_int_07）
   stat_base: boots_str_02          # 原作基底那一階的數值
   drop_level: 55
-  sources: [gamble]
-  weight: 100
+  sources: [gamble, map_boss, chance]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [gamble]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Corpsewade／Iron Greaves：t3）；這次之前 weight: 100
   flavour:
     - "「走過的地方，總會留下些什麼。」"
   version: 2        # 2026-10-26 照 PoE2 0.5 的「Corpsewade」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
   legacy: { 1: [0, 0, 0, 0, 0] }
   mods:
-    - text: "賦予技能：潰骸（等級照物品等級）"
+    - text: "賦予技能：腐屍爆（等級照物品等級）"
       stats:
         - { stat: grant_skill.decompose, type: FLAT, value: 1 }
     - text: "增加 10% 移動速度"
@@ -3890,7 +3917,7 @@ bonewalker:
       value: [5, 10]
       stats:
         - { stat: attr.str, type: FLAT, value: "{value}" }
-    - text: "每移動 1.2 格觸發一次潰骸"
+    - text: "每移動 1.2 格觸發一次腐屍爆"
       stats:
         - { stat: trigger.decompose_metres, type: FLAT, value: 12 }
 
@@ -3901,7 +3928,7 @@ thornwall_aegis:
   stat_base: tshield_18          # 數值照 60 級那一階的塔盾
   drop_level: 60
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
   flavour:
     - "「想打穿我？先嚐嚐你自己的力氣。」"
   mods:
@@ -4720,7 +4747,7 @@ star_warden_vestments:     # Voll's Protector
   base: body_str_int_23        # 2026-10-26 照 PoE2 的基底（原作：天鐵聖鎧）；這次之前 body_str_int_23
   drop_level: 59
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（Ironclad Vestments：t2）；這次之前 weight: 100
   flavour:
     - "「誓言比盔甲還重，所以他兩樣都扛得住。」"
   version: 2        # 2026-10-26 照 PoE2 0.5 的「Voll's Protector」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -4743,7 +4770,7 @@ redflare_wrap:             # Redflare Conduit
   stat_base: body_dex_int_05          # 原作基底那一階的數值
   drop_level: 33
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Redflare Conduit／Anchorite Garb：t3）；這次之前 weight: 100
   flavour:
     - "「電流會找最短的路，它剛好穿過你。」"
   version: 2        # 2026-10-26 照 PoE2 0.5 的「Redflare Conduit」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -4769,7 +4796,7 @@ hateforge_greaves:         # Hateforge
   base: legs_str_16        # 2026-10-26 照 PoE2 的基底（Moulded Mitts：鍛紋腿鎧）；這次之前 legs_str_16
   stat_base: legs_str_05          # 原作基底那一階的數值
   drop_level: 60
-  sources: [map_boss, chance, gamble]
+  sources: [final]        # 2026-10-28 照 PoE2：poe2db 限定「試煉大師（混沌試煉）」掉落 → 我們沒有混沌試煉，放終局 Boss（天穹熔爐）（做不出來、賭不到）；這次之前 [map_boss, chance, gamble]
   weight: 100
   flavour:
     - "「火越大，鐵越恨。」"
@@ -4797,7 +4824,7 @@ serpent_egg_amulet:        # Serpent's Egg
   base: jamulet_11        # 2026-10-26 照 PoE2 的基底（Gold Amulet：金耀墜飾）；這次之前 jamulet_11
   drop_level: 35
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（Serpent's Egg／Gold Amulet：multispecial）；這次之前 weight: 100
   flavour:
     - "「一顆孵出兩條，兩條各自又是一顆蛋。」"
   version: 2        # 2026-10-26 照 PoE2 0.5 的「Serpent's Egg」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
@@ -4826,7 +4853,7 @@ mountain_breath_charm:     # Breath of the Mountains
   base: sapphire_charm
   drop_level: 5
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Breath of the Mountains／Sapphire Charm：t3）；這次之前 weight: 100
   flavour:
     - "「山頂的風很冷，冷到會讓人清醒。」"
   mods:
@@ -4846,7 +4873,7 @@ thunder_roar_charm:        # Valako's Roar
   base: topaz_charm
   drop_level: 5
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Valako's Roar／Topaz Charm：t3）；這次之前 weight: 100
   flavour:
     - "「雷打下來的時候，有人會跟著吼回去。」"
   mods:
@@ -4871,7 +4898,7 @@ tempered_anvil_amulet:        # 2026-10-26 照 PoE2 0.5 的「The Anvil」（原
   base: jamulet_08        # 原作基底 Bloodstone Amulet（血晶墜飾）
   drop_level: 18
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（The Anvil／Bloodstone Amulet：multispecial）；這次之前 weight: 100
   flavour:
     - "「打在它身上的，都只會讓它更硬。」"
   mods:
@@ -4899,7 +4926,7 @@ amber_heart_amulet:        # 2026-10-26 照 PoE2 0.5 的「Revered Resin」（�
   base: jamulet_03        # 原作基底 Amber Amulet（烈珀墜飾）
   drop_level: 8
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Revered Resin／Amber Amulet：hideable）；這次之前 weight: 100
   flavour:
     - "「凝住的那一滴，是千年前的一口氣。」"
   mods:
@@ -4921,7 +4948,7 @@ brittle_moon_amulet:        # 2026-10-26 照 PoE2 0.5 的「Rondel of Fragility�
   base: jamulet_07        # 原作基底 Lunar Amulet（月盾墜飾）
   drop_level: 14
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Rondel of Fragility／Lunar Amulet：t3）；這次之前 weight: 100
   flavour:
     - "「快得像月光，也薄得像月光。」"
   mods:
@@ -4949,7 +4976,7 @@ stormward_cord:        # 2026-10-26 照 PoE2 0.5 的「Byrnabas」（原作有�
   base: jbelt_wide        # 原作基底 Wide Belt（寬幅束帶）
   drop_level: 14
   sources: [map_boss, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Byrnabas／Wide Belt：t3boss）；這次之前 weight: 100
   flavour:
     - "「雷落在別處，你在這裡。」"
   version: 2        # 2026-10-27 照 PoE2：護符欄位是基底的固定詞綴（有 1–3 個），拿掉重複的「+1–3 護符欄位」
@@ -4972,10 +4999,12 @@ stormward_cord:        # 2026-10-26 照 PoE2 0.5 的「Byrnabas」（原作有�
         - { stat: avoid.shock, type: FLAT, value: 100 }
 
 flameclasp_belt:        # 2026-10-26 照 PoE2 0.5 的「Infernoclasp」（原作有、我們以前沒有的）
+  retired: true
+  deleted: true        # 2026-10-28 照站長：原作已經拿不到（PoE2 0.5 Drop disabled），直接刪除；玩家手上的登入時拿掉、不給兌換券
   name: 焰扣束帶
   base: jbelt_03        # 原作基底 Plate Belt（鐵片束帶）
   drop_level: 25
-  sources: [map_boss, chance, gamble]
+  sources: []        # 2026-10-28 照 PoE2：poe2db「禁止掉落」（已經掉出來的照常能用）；這次之前 [map_boss, chance, gamble]
   weight: 100
   flavour:
     - "「扣上它，火就繞著你走。」"
@@ -5004,7 +5033,7 @@ towline_belt:        # 2026-10-26 照 PoE2 0.5 的「Keelhaul」（原作有、�
   base: jbelt_02        # 原作基底 Linen Belt（麻紋束帶）
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Keelhaul／Linen Belt：t3）；這次之前 weight: 100
   flavour:
     - "「慢慢來，總會回來的。」"
   version: 2        # 2026-10-27 照 PoE2：護符欄位是基底的固定詞綴（有 1–3 個），拿掉重複的「+1–3 護符欄位」
@@ -5030,7 +5059,7 @@ giantgrip_girdle:        # 2026-10-26 照 PoE2 0.5 的「Meginord's Girdle」（
   base: jbelt_01        # 原作基底 Rawhide Belt（鞣皮束帶）
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Meginord's Girdle／Rawhide Belt：hideable）；這次之前 weight: 100
   flavour:
     - "「力氣大的人，喝得也多。」"
   version: 2        # 2026-10-27 照 PoE2：護符欄位是基底的固定詞綴（有 1–3 個），拿掉重複的「+1–3 護符欄位」
@@ -5057,7 +5086,7 @@ wildtusk_plate:        # 2026-10-26 照 PoE2 0.5 的「Edyrn's Tusks」（原作
   stat_base: body_str_03          # 原作基底那一階的數值
   drop_level: 11
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Edyrn's Tusks／Iron Cuirass：hideable）；這次之前 weight: 100
   flavour:
     - "「撞上來的，都得留下一點血。」"
   mods:
@@ -5084,7 +5113,7 @@ scorchrend_vest:        # 2026-10-26 照 PoE2 0.5 的「Ashrend」（原作有�
   stat_base: body_dex_03          # 原作基底那一階的數值
   drop_level: 11
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Ashrend／Pathfinder Coat：hideable）；這次之前 weight: 100
   flavour:
     - "「火燒過一次，就不會再燒第二次。」"
   mods:
@@ -5113,7 +5142,7 @@ shedscale_coat:        # 2026-10-26 照 PoE2 0.5 的「Quatl's Molt」（原作�
   stat_base: body_dex_08          # 原作基底那一階的數值
   drop_level: 36
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Quatl's Molt／Serpentscale Coat：hideable）；這次之前 weight: 100
   flavour:
     - "「舊皮留下了毒，新皮什麼都不怕。」"
   mods:
@@ -5147,7 +5176,7 @@ defiant_robe:        # 2026-10-26 照 PoE2 0.5 的「Cloak of Defiance」（原�
   stat_base: body_int_19          # 原作基底那一階的數值
   drop_level: 65
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Cloak of Defiance／Havoc Raiment：hideable）；這次之前 weight: 100
   flavour:
     - "「先用魔力擋，擋不住再說。」"
   mods:
@@ -5173,7 +5202,7 @@ phalanx_greaves:        # 2026-10-26 照 PoE2 0.5 的「Legionstride」（原作
   stat_base: boots_str_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Legionstride／Rough Greaves：hideable）；這次之前 weight: 100
   flavour:
     - "「箭雨落下，陣腳不亂。」"
   mods:
@@ -5193,11 +5222,13 @@ phalanx_greaves:        # 2026-10-26 照 PoE2 0.5 的「Legionstride」（原作
         - { stat: taken.attack_physical, type: FLAT, value: 10, tags: [projectile] }
 
 thunderdash_boots:        # 2026-10-26 照 PoE2 0.5 的「Thunderstep」（原作有、我們以前沒有的）
+  retired: true
+  deleted: true        # 2026-10-28 照站長：原作已經拿不到（PoE2 0.5 Drop disabled），直接刪除；玩家手上的登入時拿掉、不給兌換券
   name: 奔雷皮靴
   base: boots_dex_16        # 原作基底 Steeltoe Boots（淬鐵皮靴）
   stat_base: boots_dex_04          # 原作基底那一階的數值
   drop_level: 28
-  sources: [map_boss, chance, gamble]
+  sources: []        # 2026-10-28 照 PoE2：poe2db「禁止掉落」（已經掉出來的照常能用）；這次之前 [map_boss, chance, gamble]
   weight: 100
   flavour:
     - "「腳步聲比雷聲還快。」"
@@ -5225,7 +5256,7 @@ glimmer_sandals:        # 2026-10-26 照 PoE2 0.5 的「Luminous Pace」（原�
   stat_base: boots_int_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Luminous Pace／Straw Sandals：hideable）；這次之前 weight: 100
   flavour:
     - "「一點光，就夠照亮下一步。」"
   mods:
@@ -5254,7 +5285,7 @@ wintergrasp_wraps:        # 2026-10-26 照 PoE2 0.5 的「Grip of Winter」（�
   stat_base: legs_dex_02          # 原作基底那一階的數值
   drop_level: 11
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Grip of Winter／Firm Bracers：hideable）；這次之前 weight: 100
   flavour:
     - "「碰過它的東西，都慢了下來。」"
   mods:
@@ -5287,7 +5318,7 @@ hexwife_wraps:        # 2026-10-26 照 PoE2 0.5 的「Doedre's Tenure」（原�
   stat_base: legs_int_03          # 原作基底那一階的數值
   drop_level: 16
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Doedre's Tenure／Stitched Gloves：hideable）；這次之前 weight: 100
   flavour:
     - "「咒語要唸得慢，才會靈。」"
   mods:
@@ -5313,7 +5344,7 @@ goldsnatch_greaves:        # 2026-10-26 照 PoE2 0.5 的「Aurseize」（原作�
   stat_base: legs_str_dex_02          # 原作基底那一階的數值
   drop_level: 16
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Aurseize／Layered Gauntlets：hideable）；這次之前 weight: 100
   flavour:
     - "「每拿一份，就付一份。」"
   mods:
@@ -5336,7 +5367,7 @@ tidedepth_hood:        # 2026-10-26 照 PoE2 0.5 的「Innsmouth」（原作有�
   stat_base: helm_dex_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Innsmouth／Shabby Hood：hideable）；這次之前 weight: 100
   flavour:
     - "「海水灌進來的時候，腦子反而清楚了。」"
   mods:
@@ -5365,7 +5396,7 @@ patchwork_helm:        # 2026-10-26 照 PoE2 0.5 的「Erian's Cobble」（原�
   stat_base: helm_str_dex_02          # 原作基底那一階的數值
   drop_level: 11
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Erian's Cobble／Guarded Helm：hideable）；這次之前 weight: 100
   flavour:
     - "「每一塊都是撿來的，合起來剛剛好。」"
   mods:
@@ -5436,7 +5467,7 @@ bloodhex_mask:        # 2026-10-26 照 PoE2 0.5 的「Mask of the Sanguimancer�
   stat_base: helm_dex_int_02          # 原作基底那一階的數值
   drop_level: 10
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Mask of the Sanguimancer／Face Mask：t3）；這次之前 weight: 100
   flavour:
     - "「它不要你的魔力，它要你的血。」"
   mods:
@@ -5469,7 +5500,7 @@ rearguard_quiver:        # 2026-10-26 照 PoE2 0.5 的「Rearguard」（原作�
   base: quiver_05        # 原作基底 Blunt Quiver（鈍鏃箭袋）
   drop_level: 33
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Rearguard／Blunt Quiver：hideable）；這次之前 weight: 100
   flavour:
     - "「最後一個走的人，背上要有東西擋。」"
   mods:
@@ -5497,7 +5528,7 @@ deathdash_ring:        # 2026-10-26 照 PoE2 0.5 的「Death Rush」（原作有
   base: jring_07        # 原作基底 Emerald Ring（鷹眼指環）
   drop_level: 26
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Death Rush／Emerald Ring：hideable）；這次之前 weight: 100
   flavour:
     - "「殺了一個，就往下一個跑。」"
   mods:
@@ -5521,7 +5552,7 @@ dreamshard_ring:        # 2026-10-26 照 PoE2 0.5 的「Dream Fragments」（原
   base: jring_04        # 原作基底 Sapphire Ring（霜晶指環）
   drop_level: 12
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Dream Fragments／Sapphire Ring：t3）；這次之前 weight: 100
   flavour:
     - "「醒來的時候，冷也忘了。」"
   mods:
@@ -5543,7 +5574,7 @@ stormseek_ring:        # 2026-10-26 照 PoE2 0.5 的「Levinstone」（原作有
   base: jring_05        # 原作基底 Topaz Ring（雷晶指環）
   drop_level: 16
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Levinstone／Topaz Ring：hideable）；這次之前 weight: 100
   flavour:
     - "「雷總會找到下一個人。」"
   mods:
@@ -5568,7 +5599,7 @@ gamblers_band:        # 2026-10-26 照 PoE2 0.5 的「Ventor's Gamble」（原�
   base: jring_13        # 原作基底 Gold Ring（金耀指環）
   drop_level: 64
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Ventor's Gamble／Gold Ring：t3）；這次之前 weight: 100
   flavour:
     - "「有時候贏，有時候學到教訓。」"
   mods:
@@ -5603,7 +5634,7 @@ sunshard_buckler:        # 2026-10-26 照 PoE2 0.5 的「Sunsplinter」（原作
   stat_base: buckler_16          # 原作基底那一階的數值
   drop_level: 55
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（Sunsplinter／Array Buckler：t2）；這次之前 weight: 100
   flavour:
     - "「太陽碎了，每一片都還在燒。」"
   mods:
@@ -5627,7 +5658,7 @@ turning_targe:        # 2026-10-26 照 PoE2 0.5 的「Arvil's Wheel」（原作�
   stat_base: kshield_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Arvil's Wheel／Hardwood Targe：hideable）；這次之前 weight: 100
   flavour:
     - "「轉得越久，掉得越多。」"
   mods:
@@ -5661,7 +5692,7 @@ chiming_crest:        # 2026-10-26 照 PoE2 0.5 的「Crest of Ardura」（原�
   stat_base: cshield_04          # 原作基底那一階的數值
   drop_level: 28
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Crest of Ardura／Jingling Crest Shield：hideable）；這次之前 weight: 100
   flavour:
     - "「鈴聲一響，下一次就來得更快。」"
   mods:
@@ -5689,7 +5720,7 @@ oathoak_crest:        # 2026-10-26 照 PoE2 0.5 的「Oaksworn」（原作有、
   stat_base: cshield_02          # 原作基底那一階的數值
   drop_level: 7
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Sigil Crest Shield：hideable）；這次之前 weight: 100
   flavour:
     - "「橡樹不說話，但它記得每一道傷。」"
   mods:
@@ -5716,7 +5747,7 @@ bloodthorn_staff:        # 2026-10-26 照 PoE2 0.5 的「The Blood Thorn」（�
   stat_base: qstaff_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（The Blood Thorn／Wrapped Quarterstaff：hideable）；這次之前 weight: 100
   flavour:
     - "「刺進去的，總會流出來。」"
   mods:
@@ -5792,6 +5823,299 @@ undying_hate:            # Undying Hate
     - text: "僅限：同時只能配一顆永恆珠寶"   # PoE2 的 Historic（Limited to: 1 Historic）；JewelSockets.socket 擋第二顆
       stats:
         - { stat: timeless.historic, type: FLAT, value: 1 }
+
+# =====================================================================================================
+# 2026-10-28 照 PoE2 0.5（站長點名查的那幾件裡，我們以前沒有的）：名字照 poe2db 繁中，詞綴、基底、數值照原作。
+# 原作沒有掉落限制的是全域掉落（rarity 見檔頭的對照表）；神聖烈焰（灰燼仲裁者）、阿茲里的輕視（阿茲里的寶庫）照原作是 Boss 限定。
+# 做不出來的機制（見各件的註解）照強度相當的寫法。
+# =====================================================================================================
+
+reverie:                 # 2026-10-28 照 PoE2 0.5 的「Reverie」（poe2db：綺夢；原作有、我們以前沒有的）
+  name: 綺夢
+  base: body_str_int_23        # 原作基底 Shaman Mantle（薩滿披肩）
+  stat_base: body_str_int_04   # 原作基底那一階的數值（淬鐵聖鎧＝Shaman Mantle）
+  drop_level: 28
+  sources: [map_boss, chance, gamble]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Reverie／Shaman Mantle：t3）
+  flavour:
+    - "「抽乾你自己，為遐想騰出空間。」"
+  mods:
+    - text: "賦予技能：新生之儀（等級照物品等級）"   # 原作 Level 8 Rite of Restoration；法印改成自己身上的架勢，階數固定 2 階（skills.yml）
+      stats:
+        - { stat: grant_skill.rite_of_restoration, type: FLAT, value: 1 }
+    - text: "增加 {value}% 護甲與能量護盾"
+      value: [100, 150]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "-10% 火焰抗性"
+      stats:
+        - { stat: resist.fire, type: FLAT, value: -10 }
+    - text: "+{value}% 混沌抗性"
+      value: [17, 23]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "無法使用生命藥劑；非傳奇生命藥劑的效果一直套用（不會立即回復、只套用在你身上）"   # 原作四行併成一行（FlaskService）
+      stats:
+        - { stat: flag.flask_life_constant, type: FLAT, value: 1 }
+    - text: "生命藥劑回復更少 {value}%"
+      value: [40, 60]
+      stats:
+        - { stat: flask.life_recovery, type: MORE, value: "-{value}" }
+
+atziris_contempt:        # 2026-10-28 照 PoE2 0.5 的「Atziri's Contempt」（poe2db：阿茲里的輕視；原作有、我們以前沒有的）
+  name: 阿茲里的輕視
+  base: spear_24        # 原作基底 Pronged Spear（尖叉長矛）
+  stat_base: spear_22          # 原作基底那一階的數值（炎晶長矛＝Pronged Spear）
+  drop_level: 72
+  sources: [final]        # 2026-10-28 照 PoE2：poe2db 限定「阿茲里的寶庫（瓦爾命途）」掉落 → 我們沒有瓦爾神殿，放終局 Boss（天穹熔爐）
+  weight: 100
+  flavour:
+    - "「我的子民？我才不是為了他們而這麼做的。"
+    - "他們隸屬於我。他們想要我獲得這一切。"
+    - "他們甘願為我獻出名為愛與崇敬的贈禮，"
+    - "而我值得。我是他們的女王。」"
+  # 2026-10-28 原作的「賦予技能：憎惡碎綻」與「長矛技能擊中時施加血石之槍，每個目標最多 30 支」做不出來
+  #   （血石之槍要配憎惡碎綻在存在範圍內一起引爆）：改成強度相當的「殺死的敵人爆炸」，見最後一條；長矛投擲是長矛基底本來就賦予的
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [100, 120]
+      stats:
+        - { stat: local.physical, type: INCREASED, value: "{value}" }
+    - text: "附加 {min} 到 {max} 火焰傷害"
+      min: [83, 97]
+      max: [123, 153]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, fire] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, fire] }
+    - text: "附加 1 到 {max} 閃電傷害"
+      max: [193, 207]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: 1, tags: [attack, lightning] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, lightning] }
+    - text: "增加 {value}% 攻擊速度"
+      value: [10, 16]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 存在範圍"
+      value: [60, 80]
+      stats:
+        - { stat: presence.area, type: INCREASED, value: "{value}" }
+    - text: "你殺死的敵人爆炸，對周圍造成牠最大生命 10% 的火焰傷害"   # 原作血石之槍＋憎惡碎綻的平衡等效
+      stats:
+        - { stat: kill.explode, type: FLAT, value: 10 }
+
+the_vertex:              # 2026-10-28 照 PoE2 0.5 的「The Vertex」（poe2db：謎容；原作有、我們以前沒有的）
+  name: 謎容
+  base: helm_dex_int_17        # 原作基底 Tribal Mask（部落之面）
+  stat_base: helm_dex_int_05   # 原作基底那一階的數值（鍛紋兜帽＝Tribal Mask）
+  drop_level: 33
+  sources: [map_boss, chance, gamble]
+  rarity: very_rare        # 2026-10-28 照 PoE2 稀有度（The Vertex／Tribal Mask：multispecialhigh）
+  flavour:
+    - "「女王應被遠觀、景仰、卻不可觸碰。」"
+  mods:
+    - text: "沒有能力值需求"
+      stats:
+        - { stat: local.requirements, type: INCREASED, value: -100 }
+    - text: "增加 {value}% 閃避與能量護盾"
+      value: [100, 150]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 暴擊率"
+      value: [20, 30]
+      stats:
+        - { stat: crit.chance, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 混沌抗性"
+      value: [13, 17]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "{kind:裝備|技能寶石}沒有能力值需求"   # 原作兩種（掉落時決定，不能重擲）：TreeEffectKeys、GemAttributes
+      kind: [1, 2]
+      stats:
+        - { stat: attr_req.none, type: FLAT, value: "{kind}" }
+
+sacred_flame:            # 2026-10-28 照 PoE2 0.5 的「Sacred Flame」（poe2db：神聖烈焰；原作有、我們以前沒有的）
+  name: 神聖烈焰
+  base: csceptre_06        # 原作基底 Shrine Sceptre（神殿權杖，賦予火焰淨化）
+  drop_level: 55
+  sources: [final]        # 2026-10-28 照 PoE2：poe2db 限定「灰燼仲裁者」掉落 → 終局 Boss（天穹熔爐）
+  weight: 100
+  flavour:
+    - "「火能焚盡萬物，亦能淨化眾生。"
+    - "生命，總會於灰燼中復甦。」"
+  mods:
+    - text: "獲得 {value}% 傷害為額外火焰傷害"
+      value: [40, 60]
+      stats:
+        - { stat: damage.extra.fire, type: FLAT, value: "{value}" }
+    - text: "處於你的存在範圍中的友方每秒回復 {value}% 最大生命"   # 同隊、在存在範圍內的隊友（AuraService）
+      value: [2, 3]
+      stats:
+        - { stat: presence.ally_regen, type: FLAT, value: "{value}" }
+    - text: "在你存在範圍內的友方獲得 {value}% 傷害為額外火焰傷害"
+      value: [20, 30]
+      stats:
+        - { stat: presence.ally_extra_fire, type: FLAT, value: "{value}" }
+    - text: "敵人身處你的存在範圍時，照牠最低的元素抗性抵抗元素傷害"   # combat.Presence
+      stats:
+        - { stat: flag.presence_lowest_resist, type: FLAT, value: 1 }
+
+the_taming:              # 2026-10-28 照 PoE2 0.5 的「The Taming」（poe2db：元素之章；原作有、我們以前沒有的）
+  name: 元素之章
+  base: jring_09        # 原作基底 Prismatic Ring（三相戒指：+7–10% 全部元素抗性）
+  drop_level: 42
+  sources: [map_boss, chance, gamble]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（The Taming／Prismatic Ring：t3）
+  flavour:
+    - "「月復一月，貝雷克無情捉弄了強大的三位抗馴者，"
+    - "直到這三兄弟的惡意消滅了彼此的憎恨。"
+    - "貝雷克獨自完成狩獵並獲得了自由。」"
+  mods:
+    - text: "+{value}% 全部元素抗性"
+      value: [10, 20]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - text: "敵人身上每有一種元素異常狀態，增加 {value}% 傷害"   # 擊中時照目標身上的元素異常種類（vs_eleail1～3）
+      value: [10, 20]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [vs_eleail1] }
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [vs_eleail2] }
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [vs_eleail3] }
+    - text: "可被元素地面強化的疾風技能可被多個元素地面強化"   # skill.WindGround（旋矛擊的旋風、旋風矛）
+      stats:
+        - { stat: flag.wind_ground_multiple, type: FLAT, value: 1 }
+    - text: "可被元素地面強化的疾風技能視為受到點燃、感電和冰緩地面強化"
+      stats:
+        - { stat: wind.ground.fire, type: FLAT, value: 1 }
+        - { stat: wind.ground.cold, type: FLAT, value: 1 }
+        - { stat: wind.ground.lightning, type: FLAT, value: 1 }
+
+bereks_pass:             # 2026-10-28 照 PoE2 0.5 的「Berek's Pass」（poe2db：貝雷克的冰與火之歌；原作有、我們以前沒有的）
+  name: 貝雷克的冰與火之歌
+  base: jring_10        # 原作基底 Two-Stone Ring（炎霜：+12–16% 火焰與冰冷抗性）
+  drop_level: 42
+  sources: [map_boss, chance, gamble]
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（Two-Stone Ring 有三件貝雷克，t1 是整個基底的分層，個別調成稀有，同暗潮指環）
+  flavour:
+    - "「在滿是冰霜的小道上，貝雷克不斷嘲諷，"
+    - "直到憤怒的烈焰拔地而起。"
+    - "貝雷克順著融雪逃開了，留下冰霜無盡的哀鳴。」"
+  mods:
+    - text: "+{value} 力量與智慧"
+      value: [10, 20]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "+{value}% 火焰與冰冷抗性"
+      value: [10, 20]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - text: "點燃時每秒回復 {value}% 最大生命"
+      value: [1, 2]
+      stats:
+        - { stat: life.regen_percent@ignited, type: FLAT, value: "{value}" }
+    - text: "可被元素地面強化的疾風技能視為受到冰緩地面強化"   # skill.WindGround
+      stats:
+        - { stat: wind.ground.cold, type: FLAT, value: 1 }
+
+bereks_respite:          # 2026-10-28 照 PoE2 0.5 的「Berek's Respite」（poe2db：貝雷克的火與雷之樂；原作有、我們以前沒有的）
+  name: 貝雷克的火與雷之樂
+  base: jring_11        # 原作基底 Two-Stone Ring（炎雷：+12–16% 火焰與閃電抗性）
+  drop_level: 42
+  sources: [map_boss, chance, gamble]
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（同貝雷克的冰與火之歌）
+  flavour:
+    - "「烈焰緊隨著他的腳後跟追，"
+    - "但貝雷克只顧訓斥雲朵，"
+    - "直到滿腔怒火的風暴下起滂沱大雨。"
+    - "貝雷克穩住陣腳，"
+    - "而火焰也只能冒著蒸氣哀號，"
+    - "最終無奈逃竄。」"
+  mods:
+    - text: "+{value} 力量與敏捷"
+      value: [10, 20]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+    - text: "+{value}% 火焰與閃電抗性"
+      value: [10, 20]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - text: "被感電時增加 {value}% 暴擊傷害加成"   # 條件 @shocked（自己被感電，ConditionTracker）
+      value: [15, 25]
+      stats:
+        - { stat: crit.bonus@shocked, type: INCREASED, value: "{value}" }
+    - text: "可被元素地面強化的疾風技能視為受到點燃地面強化"   # skill.WindGround
+      stats:
+        - { stat: wind.ground.fire, type: FLAT, value: 1 }
+
+shavronnes_satchel:      # 2026-10-28 照 PoE2 0.5 的「Shavronne's Satchel」（poe2db：薛朗的背包；原作有、我們以前沒有的）
+  name: 薛朗的背包
+  base: jbelt_fine        # 原作基底 Fine Belt（精工束帶：1–3 個護符欄位、藥劑每秒獲得 0.17 充能）
+  drop_level: 62
+  sources: [map_boss, chance, gamble]
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（Shavronne's Satchel／Fine Belt：multispecial）
+  flavour:
+    - "「讓神祕躍然於世。循環往復。」"
+  mods:
+    - text: "減少 {value}% 藥劑生命回復速率"
+      value: [20, 30]
+      stats:
+        - { stat: flask.life_rate, type: INCREASED, value: "-{value}" }
+    - text: "+{value} 智慧"
+      value: [20, 30]
+      stats:
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 藥劑充能獲取"
+      value: [20, 30]
+      stats:
+        - { stat: flask.charges_gained, type: INCREASED, value: "{value}" }
+    - text: "藥劑的生命恢復同時套用至能量護盾"   # FlaskService
+      stats:
+        - { stat: flag.flask_life_to_es, type: FLAT, value: 1 }
+
+geofris_sanctuary:       # 2026-10-28 照 PoE2 0.5 的「Geofri's Sanctuary」（poe2db：吉爾菲的聖殿；原作有、我們以前沒有的）
+  name: 吉爾菲的聖殿
+  base: body_str_int_23        # 原作基底 Revered Vestments（尊敬法衣）
+  stat_base: body_str_int_17   # 原作基底那一階的數值（暗鋼聖鎧＝Revered Vestments）
+  drop_level: 65
+  sources: [map_boss, chance, gamble]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Geofri's Sanctuary／Revered Vestments：t3boss）
+  flavour:
+    - "「信念並不會讓我們堅不可摧。"
+    - "只會讓我們永生不朽。」"
+  mods:
+    - text: "+1% 全部最大元素抗性"   # 原作的固定詞綴
+      stats:
+        - { stat: resist.max.fire, type: FLAT, value: 1 }
+        - { stat: resist.max.cold, type: FLAT, value: 1 }
+        - { stat: resist.max.lightning, type: FLAT, value: 1 }
+    - text: "增加 {value}% 護甲"
+      value: [150, 200]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 全部元素抗性"
+      value: [10, 20]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - text: "你的最大能量護盾等於你 {value}% 的力量；最大能量護盾無法被轉換"   # 原作兩行併成一行（PlayerState.maxEnergyShield）
+      value: [200, 300]
+      stats:
+        - { stat: es.equal_to_str, type: FLAT, value: "{value}" }
+    - text: "每 10 點智慧每秒回復 2 生命"
+      stats:
+        - { stat: per_int.life_regen, type: FLAT, value: 2 }
+    - text: "狂熱者的誓言"   # 原作的基石（Zealot's Oath）：我們的溢生為盾（溢出的生命回復變成護盾）
+      stats:
+        - { stat: flag.zealots_oath, type: FLAT, value: 1 }
 
 # =====================================================================================================
 # 2026-10-27 照 PoE2 0.5（第二批）：原作有、我們以前沒有的傳奇，名字是自己的。
@@ -5986,7 +6310,7 @@ void_eye_amulet:        # 2026-10-27 照 PoE2 0.5 的「Eye of Chayula」（原�
   base: jamulet_11        # 原作基底 Gold Amulet（金耀墜飾）
   drop_level: 35
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（Eye of Chayula／Gold Amulet：multispecial）；這次之前 weight: 100
   flavour:
     - "「閉上眼睛，就什麼也撼不動你。」"
   mods:
@@ -6009,7 +6333,7 @@ carnage_heart_amulet:        # 2026-10-27 照 PoE2 0.5 的「Carnage Heart」（
   base: jamulet_03        # 原作基底 Amber Amulet（烈珀墜飾）
   drop_level: 8
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Carnage Heart／Amber Amulet：hideable）；這次之前 weight: 100
   flavour:
     - "「血流進來的時候，心跳得更兇。」"
   mods:
@@ -6042,7 +6366,7 @@ surestep_sigil:        # 2026-10-27 照 PoE2 0.5 的「Surefooted Sigil」（原
   base: jamulet_04        # 原作基底 Jade Amulet（青翠墜飾）
   drop_level: 8
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（Surefooted Sigil／Jade Amulet：multispecial）；這次之前 weight: 100
   flavour:
     - "「腳下有根，滾得再遠也站得住。」"
   mods:
@@ -6066,7 +6390,7 @@ everwatch_amulet:        # 2026-10-27 照 PoE2 0.5 的「The Everlasting Gaze」
   base: jamulet_02        # 原作基底 Azure Amulet（蒼泉墜飾）
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（The Everlasting Gaze／Azure Amulet：t3）；這次之前 weight: 100
   flavour:
     - "「它從不眨眼，所以你也不必。」"
   mods:
@@ -6088,7 +6412,7 @@ sunbeacon_amulet:        # 2026-10-27 照 PoE2 0.5 的「Beacon of Azis」（原
   base: jamulet_10        # 原作基底 Solar Amulet（日魄墜飾）
   drop_level: 30
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Beacon of Azis／Solar Amulet：t3）；這次之前 weight: 100
   flavour:
     - "「在它的光底下，什麼都藏不住。」"
   # 2026-10-27 原作的「30% increased Light Radius」沒做（我們沒有光照範圍）
@@ -6109,7 +6433,7 @@ still_harmony_amulet:        # 2026-10-27 照 PoE2 0.5 的「Ungil's Harmony」�
   base: jamulet_02        # 原作基底 Azure Amulet（蒼泉墜飾）
   drop_level: 25
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Ungil's Harmony／Azure Amulet：t3）；這次之前 weight: 100
   flavour:
     - "「不求重擊，只求每一下都準。」"
   mods:
@@ -6138,7 +6462,7 @@ many_hands_idol:        # 2026-10-27 照 PoE2 0.5 的「Idol of Uldurn」（原�
   base: jamulet_01        # 原作基底 Crimson Amulet（赤血墜飾）
   drop_level: 24
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Idol of Uldurn／Crimson Amulet：t3）；這次之前 weight: 100
   flavour:
     - "「一雙手不夠，就再多一雙。」"
   mods:
@@ -6168,7 +6492,7 @@ wraithwrap_robe:        # 2026-10-27 照 PoE2 0.5 的「Ghostwrithe」（原作�
   stat_base: body_int_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Ghostwrithe／Tattered Robe：hideable）；這次之前 weight: 100
   flavour:
     - "「肉身是借來的，魂才是自己的。」"
   mods:
@@ -6189,7 +6513,7 @@ foxshade_vest:        # 2026-10-27 照 PoE2 0.5 的「Foxshade」（原作有、
   stat_base: body_dex_02          # 原作基底那一階的數值
   drop_level: 4
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Foxshade／Quilted Vest：hideable）；這次之前 weight: 100
   flavour:
     - "「一點傷都沒有的時候，誰也追不上你。」"
   mods:
@@ -6214,7 +6538,7 @@ gilded_greed_plate:        # 2026-10-27 照 PoE2 0.5 的「Greed's Embrace」（
   stat_base: body_str_08          # 原作基底那一階的數值
   drop_level: 37
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Greed's Embrace／Vaal Cuirass：t3）；這次之前 weight: 100
   flavour:
     - "「穿得越重，撿得越多。」"
   mods:
@@ -6243,7 +6567,7 @@ gloaming_gown:        # 2026-10-27 照 PoE2 0.5 的「Gloamgown」（原作有�
   stat_base: body_int_10          # 原作基底那一階的數值
   drop_level: 45
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Gloamgown／Elementalist Robe：hideable）；這次之前 weight: 100
   flavour:
     - "「它等得很久，但一回來就是全部。」"
   mods:
@@ -6271,7 +6595,7 @@ pragmatist_armour:        # 2026-10-27 照 PoE2 0.5 的「Pragmatism」（原作
   base: body_str_dex_27        # 原作基底 Explorer Armour（鍛紋鱗甲）
   stat_base: body_str_dex_05          # 原作基底那一階的數值
   drop_level: 52
-  sources: [map_boss, chance, gamble]
+  sources: [ritual_priest]        # 2026-10-28 照 PoE2：poe2db 限定「迷霧之王（祭壇的巔峰）」掉落 → 祭壇巔峰 Boss（做不出來、賭不到）；這次之前 [map_boss, chance, gamble]
   weight: 100
   flavour:
     - "「能用的就用，不必省。」"
@@ -6300,7 +6624,7 @@ titanrot_plate:        # 2026-10-27 照 PoE2 0.5 的「Titanrot Cataphract」（
   stat_base: body_str_05          # 原作基底那一階的數值
   drop_level: 20
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Titanrot Cataphract／Maraketh Cuirass：hideable）；這次之前 weight: 100
   flavour:
     - "「它重到連血都流不動。」"
   mods:
@@ -6329,7 +6653,7 @@ wandering_reliquary:        # 2026-10-27 照 PoE2 0.5 的「Wandering Reliquary�
   stat_base: body_str_06          # 原作基底那一階的數值
   drop_level: 27
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Wandering Reliquary／Steel Plate：hideable）；這次之前 weight: 100
   flavour:
     - "「擋下來的每一下，都還給你。」"
   mods:
@@ -6359,7 +6683,7 @@ gravecloak_raiment:        # 2026-10-27 照 PoE2 0.5 的「Necromantle」（原�
   stat_base: body_int_04          # 原作基底那一階的數值
   drop_level: 16
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Necromantle／Bone Raiment：hideable）；這次之前 weight: 100
   flavour:
     - "「死過一次的，第二次就比較快回來。」"
   mods:
@@ -6389,7 +6713,7 @@ deathforce_raiment:        # 2026-10-27 照 PoE2 0.5 的「Vis Mortis」（原�
   stat_base: body_int_16          # 原作基底那一階的數值
   drop_level: 58
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Vis Mortis／Plated Raiment：hideable）；這次之前 weight: 100
   flavour:
     - "「僕從的力量，來自更深的黑暗。」"
   mods:
@@ -6414,7 +6738,7 @@ barrow_coat:        # 2026-10-27 照 PoE2 0.5 的「The Barrow Dweller」（原�
   stat_base: body_str_dex_02          # 原作基底那一階的數值
   drop_level: 11
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（The Barrow Dweller／Rogue Armour：hideable）；這次之前 weight: 100
   flavour:
     - "「躺在墳裡的人，最不怕死。」"
   mods:
@@ -6443,7 +6767,7 @@ icetomb_vestments:        # 2026-10-27 照 PoE2 0.5 的「Icetomb」（原作有
   stat_base: body_str_int_03          # 原作基底那一階的數值
   drop_level: 16
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Icetomb／Mail Vestments：hideable）；這次之前 weight: 100
   flavour:
     - "「魔力越深，寒意越重。」"
   mods:
@@ -6470,7 +6794,7 @@ silksand_vest:        # 2026-10-27 照 PoE2 0.5 的「Sands of Silk」（原作�
   stat_base: body_dex_04          # 原作基底那一階的數值
   drop_level: 16
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Sands of Silk／Shrouded Vest：hideable）；這次之前 weight: 100
   flavour:
     - "「一眨眼，你已經在別處。」"
   mods:
@@ -6508,7 +6832,7 @@ butcher_apron:        # 2026-10-27 照 PoE2 0.5 的「Apron of Emiran」（原�
   stat_base: body_dex_int_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Apron of Emiran／Hermit Garb：hideable）；這次之前 weight: 100
   flavour:
     - "「傷口一旦開了，就只會越來越大。」"
   mods:
@@ -6535,7 +6859,7 @@ kingsguard_plate:        # 2026-10-27 照 PoE2 0.5 的「Kingsguard」（原作�
   stat_base: body_str_07          # 原作基底那一階的數值
   drop_level: 33
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Kingsguard／Full Plate：hideable）；這次之前 weight: 100
   flavour:
     - "「守住的每一刻，都要付出代價。」"
   mods:
@@ -6566,7 +6890,7 @@ dancing_mirage_jacket:        # 2026-10-27 照 PoE2 0.5 的「The Dancing Mirage
   stat_base: body_dex_int_04          # 原作基底那一階的數值
   drop_level: 28
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（The Dancing Mirage／Wayfarer Jacket：hideable）；這次之前 weight: 100
   flavour:
     - "「被打中一次，它就學會怎麼躲。」"
   mods:
@@ -6596,7 +6920,7 @@ darkray_sabatons:        # 2026-10-27 照 PoE2 0.5 的「Darkray Vectors」（�
   stat_base: boots_str_dex_02          # 原作基底那一階的數值
   drop_level: 16
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Darkray Vectors／Braced Sabatons：hideable）；這次之前 weight: 100
   flavour:
     - "「跑得越快，影子越黑。」"
   # 2026-10-27 原作的「25% reduced Light Radius」沒做（我們沒有光照範圍）
@@ -6623,7 +6947,7 @@ powertread_shoes:        # 2026-10-27 照 PoE2 0.5 的「Powertread」（原作�
   stat_base: boots_dex_int_03          # 原作基底那一階的數值
   drop_level: 33
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Powertread／Hunting Shoes：hideable）；這次之前 weight: 100
   flavour:
     - "「每一步，都踩在要害上。」"
   mods:
@@ -6653,7 +6977,7 @@ briarpatch_boots:        # 2026-10-27 照 PoE2 0.5 的「Briarpatch」（原作�
   stat_base: boots_dex_02          # 原作基底那一階的數值
   drop_level: 11
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Briarpatch／Laced Boots：hideable）；這次之前 weight: 100
   flavour:
     - "「踩到它的，都會記得痛。」"
   mods:
@@ -6685,7 +7009,7 @@ wondertrap_slippers:        # 2026-10-27 照 PoE2 0.5 的「Wondertrap」（原�
   stat_base: boots_int_04          # 原作基底那一階的數值
   drop_level: 27
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Wondertrap／Silk Slippers：hideable）；這次之前 weight: 100
   flavour:
     - "「快死的時候，運氣最好。」"
   mods:
@@ -6719,7 +7043,7 @@ errant_sabatons:        # 2026-10-27 照 PoE2 0.5 的「The Knight-errant」（�
   stat_base: boots_str_dex_01          # 原作基底那一階的數值
   drop_level: 6
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（The Knight-errant／Mail Sabatons：hideable）；這次之前 weight: 100
   flavour:
     - "「走到哪裡，就站穩在哪裡。」"
   mods:
@@ -6749,7 +7073,7 @@ quillstorm_bow:        # 2026-10-27 照 PoE2 0.5 的「Quill Rain」（原作有
   stat_base: bow_02          # 原作基底那一階的數值
   drop_level: 5
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Quill Rain／Shortbow：hideable）；這次之前 weight: 100
   flavour:
     - "「數量本身就是一種力量。」"
   mods:
@@ -6774,7 +7098,7 @@ widowsong_bow:        # 2026-10-27 照 PoE2 0.5 的「Widowhail」（原作有�
   stat_base: bow_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Widowhail／Crude Bow：t3）；這次之前 weight: 100
   flavour:
     - "「弓本身什麼都不是，是箭袋讓它變成武器。」"
   mods:
@@ -6789,7 +7113,7 @@ doomfletch_bow:        # 2026-10-27 照 PoE2 0.5 的「Doomfletch」（原作有
   stat_base: bow_05          # 原作基底那一階的數值
   drop_level: 22
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Doomfletch／Composite Bow：hideable）；這次之前 weight: 100
   flavour:
     - "「一支箭，三種死法。」"
   mods:
@@ -6818,7 +7142,7 @@ blueflame_cuffs:        # 2026-10-27 照 PoE2 0.5 的「Blueflame Bracers」（�
   stat_base: legs_str_int_03          # 原作基底那一階的數值
   drop_level: 33
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Blueflame Bracers／Goldcast Cuffs：hideable）；這次之前 weight: 100
   flavour:
     - "「火燒到最熱，就是冰的顏色。」"
   mods:
@@ -6847,7 +7171,7 @@ stormvice_gauntlets:        # 2026-10-27 照 PoE2 0.5 的「Valako's Vice」（�
   stat_base: legs_str_dex_05          # 原作基底那一階的數值
   drop_level: 45
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Valako's Vice／Plate Gauntlets：hideable）；這次之前 weight: 100
   flavour:
     - "「握住火，放出來的是雷。」"
   mods:
@@ -6882,7 +7206,7 @@ treefinger_mitts:        # 2026-10-27 照 PoE2 0.5 的「Treefingers」（原作
   stat_base: legs_str_02          # 原作基底那一階的數值
   drop_level: 11
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Treefingers／Riveted Mitts：t3）；這次之前 weight: 100
   flavour:
     - "「握得住整棵樹的手，什麼武器都拿得動。」"
   mods:
@@ -6917,7 +7241,7 @@ northpaw_bracers:        # 2026-10-27 照 PoE2 0.5 的「Northpaw」（原作有
   stat_base: legs_dex_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Northpaw／Suede Bracers：hideable）；這次之前 weight: 100
   flavour:
     - "「熊從來不瞄準，牠只是一定會打中要害。」"
   mods:
@@ -6945,7 +7269,7 @@ applause_gloves:        # 2026-10-27 照 PoE2 0.5 的「Leopold's Applause」（
   stat_base: legs_int_09          # 原作基底那一階的數值
   drop_level: 52
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Leopold's Applause／Embroidered Gloves：t3）；這次之前 weight: 100
   flavour:
     - "「讓他們鼓掌，順便放下防備。」"
   # 2026-10-27 原作的「Your Hits can Penetrate Elemental Resistances down to a minimum of -50%」沒做（我們的穿透本來就能把抗性穿到負的（沒有下限），效果已經包含在內）
@@ -6974,7 +7298,7 @@ snakebite_bracers:        # 2026-10-27 照 PoE2 0.5 的「Snakebite」（原作�
   stat_base: legs_dex_05          # 原作基底那一階的數值
   drop_level: 33
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Snakebite／Spined Bracers：t3）；這次之前 weight: 100
   flavour:
     - "「一口不夠，就再咬一口。」"
   mods:
@@ -7003,7 +7327,7 @@ wisdom_action_wraps:        # 2026-10-27 照 PoE2 0.5 的「Hand of Wisdom and A
   base: legs_dex_int_13        # 原作基底 Spiral Wraps（鐵箍纏腿）
   stat_base: legs_dex_int_03          # 原作基底那一階的數值
   drop_level: 33
-  sources: [map_boss, chance, gamble]
+  sources: [breach_lord]        # 2026-10-28 照 PoE2：poe2db 限定「萬眾歸一．烈許（裂隙的巔峰）」掉落 → 裂隙巔峰 Boss（做不出來、賭不到）；這次之前 [map_boss, chance, gamble]
   weight: 100
   flavour:
     - "「想得快，手就快。」"
@@ -7029,7 +7353,7 @@ death_articulated:        # 2026-10-27 照 PoE2 0.5 的「Death Articulated」�
   stat_base: legs_str_dex_09          # 原作基底那一階的數值
   drop_level: 65
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: very_rare        # 2026-10-28 照 PoE2 稀有度（Death Articulated／Ornate Gauntlets：t1）；這次之前 weight: 100
   flavour:
     - "「每一個關節，都在燒著自己。」"
   mods:
@@ -7062,7 +7386,7 @@ nightscale_gloves:        # 2026-10-27 照 PoE2 0.5 的「Nightscale」（原作
   stat_base: legs_int_07          # 原作基底那一階的數值
   drop_level: 45
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Nightscale／Pauascale Gloves：t3）；這次之前 weight: 100
   flavour:
     - "「只有見血之後，它才肯給你力量。」"
   mods:
@@ -7095,7 +7419,7 @@ windvane_gauntlets:        # 2026-10-27 照 PoE2 0.5 的「Aerisvane's Wings」�
   stat_base: legs_str_dex_07          # 原作基底那一階的數值
   drop_level: 52
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Aerisvane's Wings／Burnished Gauntlets：t3）；這次之前 weight: 100
   flavour:
     - "「風吹過的地方，草都折了。」"
   mods:
@@ -7122,7 +7446,7 @@ alpha_howl_cap:        # 2026-10-27 照 PoE2 0.5 的「Alpha's Howl」（原作�
   stat_base: helm_dex_16          # 原作基底那一階的數值
   drop_level: 65
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: very_rare        # 2026-10-28 照 PoE2 稀有度（Alpha's Howl／Armoured Cap：t1）；這次之前 weight: 100
   flavour:
     - "「頭狼一嚎，整片山谷都聽見。」"
   mods:
@@ -7147,7 +7471,7 @@ blacksun_greathelm:        # 2026-10-27 照 PoE2 0.5 的「Black Sun Crest」（
   stat_base: helm_str_03          # 原作基底那一階的數值
   drop_level: 16
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Black Sun Crest／Wrapped Greathelm：t3）；這次之前 weight: 100
   flavour:
     - "「太陽是黑的，你就看得更清楚。」"
   # 2026-10-27 原作的「20% reduced Light Radius」沒做（我們沒有光照範圍）
@@ -7175,7 +7499,7 @@ bronzebeard_crown:        # 2026-10-27 照 PoE2 0.5 的「Bronzebeard」（原�
   stat_base: helm_str_int_02          # 原作基底那一階的數值
   drop_level: 10
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Bronzebeard／Horned Crown：hideable）；這次之前 weight: 100
   flavour:
     - "「老骨頭硬，什麼都撐得住。」"
   mods:
@@ -7209,7 +7533,7 @@ scholar_crown:        # 2026-10-27 照 PoE2 0.5 的「Cornathaum」（原作有�
   stat_base: helm_str_int_05          # 原作基底那一階的數值
   drop_level: 33
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Cornathaum／Heavy Crown：t3）；這次之前 weight: 100
   flavour:
     - "「讀得越多，路就越亮。」"
   # 2026-10-27 原作的「30% increased Light Radius」沒做（我們沒有光照範圍）
@@ -7227,11 +7551,13 @@ scholar_crown:        # 2026-10-27 照 PoE2 0.5 的「Cornathaum」（原作有�
         - { stat: experience.gain, type: INCREASED, value: 5 }
 
 forbidden_tiara:        # 2026-10-27 照 PoE2 0.5 的「Forbidden Gaze」（原作有、我們以前沒有的）
+  retired: true
+  deleted: true        # 2026-10-28 照站長：原作已經拿不到（PoE2 0.5 Drop disabled），直接刪除；玩家手上的登入時拿掉、不給兌換券
   name: 禁視鏈冠
   base: helm_int_20        # 原作基底 Chain Tiara（淬鐵頭冠）
   stat_base: helm_int_04          # 原作基底那一階的數值
   drop_level: 26
-  sources: [map_boss, chance, gamble]
+  sources: []        # 2026-10-28 照 PoE2：poe2db「禁止掉落」（已經掉出來的照常能用）；這次之前 [map_boss, chance, gamble]
   weight: 100
   flavour:
     - "「有些東西，看了就回不了頭。」"
@@ -7256,7 +7582,7 @@ myris_hood:        # 2026-10-27 照 PoE2 0.5 的「Myris Uxor」（原作有、�
   stat_base: helm_dex_14          # 原作基底那一階的數值
   drop_level: 56
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Myris Uxor／Covert Hood：hideable）；這次之前 weight: 100
   flavour:
     - "「她只動手一次，而且只需要一次。」"
   mods:
@@ -7272,7 +7598,7 @@ myris_hood:        # 2026-10-27 照 PoE2 0.5 的「Myris Uxor」（原作有、�
       value: [40, 60]
       stats:
         - { stat: mana.max, type: FLAT, value: "{value}" }
-    - text: "增加 100% 斷命門檻"
+    - text: "增加 100% 撲殺門檻"
       stats:
         - { stat: culling.threshold, type: INCREASED, value: 100 }
 
@@ -7282,7 +7608,7 @@ ironride_helm:        # 2026-10-27 照 PoE2 0.5 的「Ironride」（原作有、
   stat_base: helm_str_dex_03          # 原作基底那一階的數值
   drop_level: 16
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Ironride／Visored Helm：hideable）；這次之前 weight: 100
   flavour:
     - "「再遠的目標，在鐵騎眼裡都很近。」"
   mods:
@@ -7313,7 +7639,7 @@ elevore_hood:        # 2026-10-27 照 PoE2 0.5 的「Elevore」（原作有、�
   stat_base: helm_dex_05          # 原作基底那一階的數值
   drop_level: 33
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Elevore／Hunter Hood：hideable）；這次之前 weight: 100
   flavour:
     - "「護符一直在響，你一直在跑。」"
   mods:
@@ -7339,7 +7665,7 @@ rage_horns:        # 2026-10-27 照 PoE2 0.5 的「Horns of Bynden」（原作�
   stat_base: helm_str_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Horns of Bynden／Rusted Greathelm：hideable）；這次之前 weight: 100
   flavour:
     - "「越氣，皮越硬。」"
   mods:
@@ -7376,7 +7702,7 @@ caelyn_wings:        # 2026-10-27 照 PoE2 0.5 的「Wings of Caelyn」（原作
   stat_base: helm_str_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Wings of Caelyn／Rusted Greathelm：hideable）；這次之前 weight: 100
   flavour:
     - "「越氣，站得越穩。」"
   mods:
@@ -7413,7 +7739,7 @@ thorncrown_circlet:        # 2026-10-27 照 PoE2 0.5 的「Crown of Thorns」（
   stat_base: helm_int_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Crown of Thorns／Twig Circlet：hideable）；這次之前 weight: 100
   flavour:
     - "「每一次出手，都先刺自己一下。」"
   mods:
@@ -7440,7 +7766,7 @@ beastlord_hood:        # 2026-10-27 照 PoE2 0.5 的「Starkonja's Head」（原
   stat_base: helm_dex_10          # 原作基底那一階的數值
   drop_level: 50
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Starkonja's Head／Leatherbound Hood：hideable）；這次之前 weight: 100
   flavour:
     - "「野獸的頭還戴在你身上，牠的本能也是。」"
   mods:
@@ -7469,7 +7795,7 @@ devouring_diadem:        # 2026-10-27 照 PoE2 0.5 的「The Devouring Diadem」
   stat_base: helm_int_02          # 原作基底那一階的數值
   drop_level: 10
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（The Devouring Diadem／Wicker Tiara：hideable）；這次之前 weight: 100
   flavour:
     - "「屍體不會浪費，它全都吃下去。」"
   mods:
@@ -7499,7 +7825,7 @@ smiling_knight_helm:        # 2026-10-27 照 PoE2 0.5 的「The Smiling Knight�
   stat_base: helm_str_dex_04          # 原作基底那一階的數值
   drop_level: 26
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（The Smiling Knight／Cowled Helm：hideable）；這次之前 weight: 100
   flavour:
     - "「他笑著揮劍，你哭著流血。」"
   mods:
@@ -7526,7 +7852,7 @@ nightveil_crown:        # 2026-10-27 照 PoE2 0.5 的「Veil of the Night」（�
   stat_base: helm_str_int_04          # 原作基底那一階的數值
   drop_level: 28
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Veil of the Night／Martyr Crown：t3）；這次之前 weight: 100
   flavour:
     - "「黑夜裡，什麼元素都沒有意義。」"
   # 2026-10-27 原作的「40% reduced Light Radius」沒做（我們沒有光照範圍）
@@ -7551,7 +7877,7 @@ brotherhood_call_ring:        # 2026-10-27 照 PoE2 0.5 的「Call of the Brothe
   base: jring_05        # 原作基底 Topaz Ring（雷晶指環）
   drop_level: 32
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Call of the Brotherhood／Topaz Ring：hideable）；這次之前 weight: 100
   flavour:
     - "「雷聲一起，就凍成一片。」"
   mods:
@@ -7580,7 +7906,7 @@ brotherhood_whisper_ring:        # 2026-10-27 照 PoE2 0.5 的「Whisper of the 
   base: jring_04        # 原作基底 Sapphire Ring（霜晶指環）
   drop_level: 32
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Whisper of the Brotherhood／Sapphire Ring：t3）；這次之前 weight: 100
   flavour:
     - "「寒氣一碰，就炸成雷光。」"
   mods:
@@ -7610,7 +7936,7 @@ damning_ring:        # 2026-10-27 照 PoE2 0.5 的「Doedre's Damning」（原�
   base: jring_02        # 原作基底 Lazuli Ring（青晶指環）
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（Doedre's Damning／Lazuli Ring：multispecial）；這次之前 weight: 100
   flavour:
     - "「一個詛咒不夠，那就兩個。」"
   mods:
@@ -7633,7 +7959,7 @@ merchant_seal_ring:        # 2026-10-27 照 PoE2 0.5 的「Perandus Seal」（�
   base: jring_13        # 原作基底 Gold Ring（金耀指環）
   drop_level: 40
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Perandus Seal／Gold Ring：t3）；這次之前 weight: 100
   flavour:
     - "「帳要算清楚，錢要撿乾淨。」"
   mods:
@@ -7657,7 +7983,7 @@ vigilant_ring:        # 2026-10-27 照 PoE2 0.5 的「Vigilant View」（原作�
   base: jring_07        # 原作基底 Emerald Ring（鷹眼指環）
   drop_level: 26
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Vigilant View／Emerald Ring：hideable）；這次之前 weight: 100
   flavour:
     - "「離我越遠，就越打不中我。」"
   mods:
@@ -7690,7 +8016,7 @@ feather_fortress:        # 2026-10-27 照 PoE2 0.5 的「Feathered Fortress」�
   stat_base: kshield_04          # 原作基底那一階的數值
   drop_level: 26
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Feathered Fortress／Crescent Targe：hideable）；這次之前 weight: 100
   flavour:
     - "「舉著盾，也能跑得像風。」"
   mods:
@@ -7720,7 +8046,7 @@ surrender_tower:        # 2026-10-27 照 PoE2 0.5 的「The Surrender」（原�
   stat_base: tshield_23          # 原作基底那一階的數值
   drop_level: 75
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Stone Tower Shield：t3）；這次之前 weight: 100
   flavour:
     - "「每擋下一次，就多撐一口氣。」"
   mods:
@@ -7746,7 +8072,7 @@ doomgate_tower:        # 2026-10-27 照 PoE2 0.5 的「Doomgate」（原作有�
   stat_base: tshield_03          # 原作基底那一階的數值
   drop_level: 12
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Doomgate／Braced Tower Shield：hideable）；這次之前 weight: 100
   flavour:
     - "「擋在門外的，就留在門外。」"
   mods:
@@ -7766,7 +8092,7 @@ doomgate_tower:        # 2026-10-27 照 PoE2 0.5 的「Doomgate」（原作有�
       value: [25, 40]
       stats:
         - { stat: block.taken, type: FLAT, value: "{value}" }
-    - text: "格擋時，生命低於斷命門檻的攻擊者直接倒下"
+    - text: "格擋時，生命低於撲殺門檻的攻擊者直接倒下"
       stats:
         - { stat: block.cull, type: FLAT, value: 1 }
 
@@ -7776,7 +8102,7 @@ darkhold_buckler:        # 2026-10-27 照 PoE2 0.5 的「Dunkelhalt」（原作�
   stat_base: buckler_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Dunkelhalt／Leather Buckler：hideable）；這次之前 weight: 100
   flavour:
     - "「擋住之後，才是真正的反擊。」"
   mods:
@@ -7801,7 +8127,7 @@ phoenix_crest:        # 2026-10-27 照 PoE2 0.5 的「Rise of the Phoenix」（�
   stat_base: cshield_06          # 原作基底那一階的數值
   drop_level: 36
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Rise of the Phoenix／Omen Crest Shield：t3boss）；這次之前 weight: 100
   flavour:
     - "「燒到只剩灰的時候，才是它飛起來的時候。」"
   mods:
@@ -7828,7 +8154,7 @@ dionadair_tower:        # 2026-10-27 照 PoE2 0.5 的「Dionadair」（原作有
   stat_base: tshield_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Dionadair／Splintered Tower Shield：hideable）；這次之前 weight: 100
   flavour:
     - "「盾舉起來的時候，誰也推不動你。」"
   mods:
@@ -7857,7 +8183,7 @@ blackgod_pillar:        # 2026-10-27 照 PoE2 0.5 的「Chernobog's Pillar」（
   stat_base: tshield_19          # 原作基底那一階的數值
   drop_level: 65
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Chernobog's Pillar／Blacksteel Tower Shield：t3）；這次之前 weight: 100
   flavour:
     - "「擋得越多，燒得越旺。」"
   mods:
@@ -7887,7 +8213,7 @@ nightfall_tower:        # 2026-10-27 照 PoE2 0.5 的「Nightfall」（原作有
   stat_base: tshield_21          # 原作基底那一階的數值
   drop_level: 70
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Fortress Tower Shield 不在分層裡（常見））；這次之前 weight: 100
   flavour:
     - "「天一黑，什麼都冷下來。」"
   mods:
@@ -7921,7 +8247,7 @@ brynhand_club:        # 2026-10-27 照 PoE2 0.5 的「Brynhand's Mark」（原�
   stat_base: mace1_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Brynhand's Mark／Wooden Club：hideable）；這次之前 weight: 100
   flavour:
     - "「打一下，就像打了兩下。」"
   mods:
@@ -7952,7 +8278,7 @@ seeing_stars_mace:        # 2026-10-27 照 PoE2 0.5 的「Seeing Stars」（原�
   stat_base: mace1_15          # 原作基底那一階的數值
   drop_level: 54
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（Plated Mace：t3）；這次之前 weight: 100
   flavour:
     - "「打中頭的時候，滿天都是星星。」"
   mods:
@@ -7982,7 +8308,7 @@ shyaba_maul:        # 2026-10-27 照 PoE2 0.5 的「Shyaba」（原作有、我�
   stat_base: mace2_06          # 原作基底那一階的數值
   drop_level: 28
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Shyaba／Temple Maul：hideable）；這次之前 weight: 100
   flavour:
     - "「它從不落空，因為它從不猶豫。」"
   # 2026-10-27 原作的「(15-25)% increased Light Radius」沒做（我們沒有光照範圍）
@@ -8010,7 +8336,7 @@ daevata_spear:        # 2026-10-27 照 PoE2 0.5 的「Daevata's Wind」（原作
   stat_base: spear_05          # 原作基底那一階的數值
   drop_level: 21
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Daevata's Wind／War Spear：hideable）；這次之前 weight: 100
   flavour:
     - "「近的刺，遠的擲，風從不停。」"
   mods:
@@ -8041,7 +8367,7 @@ taryn_shiver:        # 2026-10-27 照 PoE2 0.5 的「Taryn's Shiver」（原作�
   base: cstaff_02        # 原作基底 Gelid Staff（凝冰長杖）
   drop_level: 2
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Taryn's Shiver／Gelid Staff：hideable）；這次之前 weight: 100
   flavour:
     - "「凍住的東西，最好打碎。」"
   mods:
@@ -8065,7 +8391,7 @@ earthbound_staff:        # 2026-10-27 照 PoE2 0.5 的「Earthbound」（原作�
   base: cstaff_03        # 原作基底 Voltaic Staff（雷鳴長杖）
   drop_level: 2
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Earthbound／Voltaic Staff：hideable）；這次之前 weight: 100
   flavour:
     - "「雷落地之後，還會繼續跑。」"
   mods:
@@ -8097,7 +8423,7 @@ shardsire_staff:        # 2026-10-27 照 PoE2 0.5 的「Sire of Shards」（原�
   base: cstaff_06        # 原作基底 Chiming Staff（鳴鐘長杖）
   drop_level: 25
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Sire of Shards／Chiming Staff：hideable）；這次之前 weight: 100
   flavour:
     - "「一發不夠，那就一圈。」"
   # 2026-10-27 原作的「20% increased Light Radius」沒做（我們沒有光照範圍）
@@ -8128,7 +8454,7 @@ enezun_wand:        # 2026-10-27 照 PoE2 0.5 的「Enezun's Charge」（原作�
   base: cwand_05        # 原作基底 Volatile Wand（炎屍法杖）
   drop_level: 16
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Enezun's Charge／Volatile Wand：hideable）；這次之前 weight: 100
   flavour:
     - "「屍體用過還能再用，才叫節儉。」"
   mods:
@@ -8153,7 +8479,7 @@ blood_diviner_wand:        # 2026-10-27 照 PoE2 0.5 的「Sanguine Diviner」�
   base: cwand_02        # 原作基底 Bone Wand（骸骨法杖）
   drop_level: 2
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Sanguine Diviner／Bone Wand：hideable）；這次之前 weight: 100
   flavour:
     - "「用血寫的預言，從不出錯。」"
   mods:
@@ -8177,7 +8503,7 @@ collapsing_horizon:        # 2026-10-27 照 PoE2 0.5 的「Collapsing Horizon」
   base: qstaff_25        # 原作基底 Wyrm Quarterstaff（隕鐵長棍）
   stat_base: qstaff_19          # 原作基底那一階的數值
   drop_level: 65
-  sources: [map_boss, chance, gamble]
+  sources: [delirium_mirror]        # 2026-10-28 照 PoE2：poe2db 限定「天譴啟示．科賽斯（譫妄的巔峰）」掉落 → 幻霧巔峰 Boss（做不出來、賭不到）；這次之前 [map_boss, chance, gamble]
   weight: 100
   flavour:
     - "「天邊塌下來的時候，力量回到你手上。」"
@@ -8203,7 +8529,7 @@ caged_god_pillar:        # 2026-10-27 照 PoE2 0.5 的「Pillar of the Caged God
   stat_base: qstaff_02          # 原作基底那一階的數值
   drop_level: 4
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Long Quarterstaff：hideable）；這次之前 weight: 100
   flavour:
     - "「神被關起來了，力量還在。」"
   mods:
@@ -8226,7 +8552,7 @@ sentry_staff:        # 2026-10-27 照 PoE2 0.5 的「The Sentry」（原作有�
   stat_base: qstaff_03          # 原作基底那一階的數值
   drop_level: 11
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（The Sentry／Gothic Quarterstaff：hideable）；這次之前 weight: 100
   flavour:
     - "「守夜的人，帶著火。」"
   # 2026-10-27 原作的「30% increased Light Radius」沒做（我們沒有光照範圍）
@@ -8256,7 +8582,7 @@ dark_defiler_sceptre:        # 2026-10-27 照 PoE2 0.5 的「The Dark Defiler」
   base: csceptre_01        # 原作基底 Rattling Sceptre（骸鈴權杖）
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（The Dark Defiler／Rattling Sceptre：hideable）；這次之前 weight: 100
   flavour:
     - "「亡者越多，黑暗越濃。」"
   mods:
@@ -8293,7 +8619,7 @@ eternal_spark_focus:        # 2026-10-27 照 PoE2 0.5 的「The Eternal Spark」
   stat_base: focus_06          # 原作基底那一階的數值
   drop_level: 26
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（The Eternal Spark／Crystal Focus：hideable）；這次之前 weight: 100
   flavour:
     - "「站著不動，火也不會熄。」"
   mods:
@@ -8321,7 +8647,7 @@ threaded_light_focus:        # 2026-10-27 照 PoE2 0.5 的「Threaded Light」�
   stat_base: focus_02          # 原作基底那一階的數值
   drop_level: 6
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Threaded Light／Woven Focus：hideable）；這次之前 weight: 100
   flavour:
     - "「靈魂越亮，法術越強。」"
   # 2026-10-27 原作的「20% increased Light Radius」沒做（我們沒有光照範圍）
@@ -8345,7 +8671,7 @@ deathrattle_focus:        # 2026-10-27 照 PoE2 0.5 的「Deathrattle」（原�
   stat_base: focus_01          # 原作基底那一階的數值
   drop_level: 1
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Deathrattle／Twig Focus：hideable）；這次之前 weight: 100
   flavour:
     - "「每一聲喪鈴，都替你重新武裝。」"
   mods:
@@ -8370,7 +8696,7 @@ blackflame:        # 2026-10-28 照 PoE2 0.5 的「Blackflame」（原作有、�
   base: jring_06        # 原作基底 Amethyst Ring（紫蝕指環），需求等級 20
   drop_level: 20
   sources: [map_boss, chance, gamble]
-  weight: 100
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（Blackflame／Amethyst Ring：hideable）；這次之前 weight: 100
   flavour:
     - "「除了死亡的面紗之外，還有熊熊燃燒的烈火，燃燒著它的夜晚。」"
   mods:
@@ -8395,3 +8721,699 @@ blackflame:        # 2026-10-28 照 PoE2 0.5 的「Blackflame」（原作有、�
     - text: "被點燃的敵人身上你施加的凋零不會失效"        # 點燃期間暫停計時，點燃結束後照剩下的時間繼續倒數
       stats:
         - { stat: flag.withered_no_expire_ignited, type: FLAT, value: 1 }
+
+# =====================================================================================================
+# 2026-10-28 照 PoE2 0.5：石拳之道（Way of the Stonefist）的「磐石之拳 Uniques」37 件手套傳奇裡，我們以前沒有的 21 件。
+# 名稱、基底、數值照 poe2db（tw）與 RePoE；PoE2 的手套照這裡的慣例放在腿甲（base 是那一類的分階基底，stat_base 是原作基底那一階）。
+# 掉落照 PoE2：全域掉落的寫 [map_boss, chance, gamble]；Boss 限定的寫那隻 Boss（無與倫比：灰燼仲裁者 → 巔峰 Boss awakener；
+#   主宰之觸：被巫妖完整強化的骷髏馬克的容器 → 淵底之王・骨潮 abyss_lich；驚懼飛掠：渡鴉欺詐者 → 地圖 Boss，做不出來、賭不到）。
+# 穿在石拳之道的角色身上時換成磐石之拳版本（data/stonefist.yml 的 uniques）。
+# 這次之前沒有這 21 件（已經有的 16 件：風羽鐵手、攫金護腿、藍焰護腕、骸節鐵手、逃亡者脛甲、咒婦絲褲、堞衛脛甲、寒握皮褲、知行捲布、
+#   憎鑄腿鎧、喝采手套、夜鱗手套、北爪護腕、蛇咬護腕、樹指鐵手、雷鉗鐵手）。
+# =====================================================================================================
+
+atziri_acuity:        # 2026-10-28 照 PoE2 0.5 的「Atziri's Acuity」（原作有、我們以前沒有的）
+  name: 阿茲里的捷思
+  base: legs_str_16        # 原作基底 Moulded Mitts（鑄模長手套：鍛紋腿鎧）
+  stat_base: legs_str_05          # 原作基底那一階的數值
+  drop_level: 33
+  sources: [map_boss, chance, gamble]
+  rarity: very_rare        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "「心臟是最佳傳令官，讓我知道何時該出擊迎戰。」"
+    - "——瓦爾女王阿茲里"
+  # 原作的「賦予技能：等級 1–20 皇后傳令」沒做（我們沒有這個技能；不碰技能程式）
+  mods:
+    - text: "增加 {value}% 護甲"
+      value: [150, 200]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [100, 150]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "攻擊造成的物理傷害有 10% 偷取為生命"
+      stats:
+        - { stat: leech.life, type: FLAT, value: 10, tags: [attack] }
+    - text: "你擊中造成的物理傷害有 10% 會造成失血"
+      stats:
+        - { stat: blood_loss.on_hit, type: FLAT, value: 10 }
+    - text: "瓦爾冥約：更多 50% 生命偷取量、更少 67% 生命偷取速度、除了偷取以外無法回復生命"   # 照天賦樹的瓦爾冥約基石
+      stats:
+        - { stat: leech.effect, type: MORE, value: 50 }
+        - { stat: leech.rate, type: MORE, value: -67 }
+        - { stat: life.regen, type: MORE, value: -100 }
+        - { stat: life.regen_percent, type: MORE, value: -100 }
+        - { stat: flask.life_recovery, type: MORE, value: -100 }
+
+candlemaker:        # 2026-10-28 照 PoE2 0.5 的「Candlemaker」（原作有、我們以前沒有的）
+  name: 製燭者
+  base: legs_int_16        # 原作基底 Sombre Gloves（暗淡手套：舊木絲褲）
+  stat_base: legs_int_02          # 原作基底那一階的數值
+  drop_level: 12
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "你可以成為燈芯或蠟。不論如何，你的火光會熄滅，我的會繼續燃燒。"
+  mods:
+    - text: "增加 {value}% 能量護盾"
+      value: [50, 80]
+      stats:
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 火焰傷害"
+      value: [20, 40]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
+    - text: "減少 {value}% 冰冷傷害"
+      value: [10, 20]
+      stats:
+        - { stat: damage, type: INCREASED, value: "-{value}", tags: [cold] }
+    - text: "+{value}% 火焰抗性"
+      value: [20, 40]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+    - text: "-{value}% 冰冷抗性"
+      value: [10, 20]
+      stats:
+        - { stat: resist.cold, type: FLAT, value: "-{value}" }
+    - text: "易燃幅度加倍"   # 易燃（Flammability）= 我們的點燃機率
+      stats:
+        - { stat: ignite.chance, type: MORE, value: 100 }
+
+demon_stitcher:        # 2026-10-28 照 PoE2 0.5 的「Demon Stitcher」（原作有、我們以前沒有的）
+  name: 縫魔
+  base: legs_int_16        # 原作基底 Intricate Gloves（精妙手套：鍛紋絲褲）
+  stat_base: legs_int_05          # 原作基底那一階的數值
+  drop_level: 33
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "賽巴昆的背叛遭到了聖怒。"
+    - "眾神一個接一個地喚回他們的肉體，"
+    - "直到剩下的只是一縷純光：初始瓦爾。"
+  mods:
+    - text: "+{value} 最大能量護盾"
+      value: [40, 60]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [80, 120]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 施法速度"
+      value: [6, 12]
+      stats:
+        - { stat: cast.speed, type: INCREASED, value: "{value}" }
+    - text: "施放法術時犧牲 {value}% 最大生命，獲得等量的能量護盾"
+      value: [5, 15]
+      stats:
+        - { stat: sacrifice.es_on_spell, type: FLAT, value: "{value}" }
+
+dreadfist:        # 2026-10-28 照 PoE2 0.5 的「Dreadfist」（原作有、我們以前沒有的）
+  name: 驚懼之拳
+  base: legs_str_16        # 原作基底 Bolstered Mitts（加固長手套：淬鐵腿鎧）
+  stat_base: legs_str_04          # 原作基底那一階的數值
+  drop_level: 27
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "究竟是過往的瘡疤、當下的苦痛，還是對未來的恐懼，會讓人們更加驚怖？"
+  mods:
+    - text: "增加 {value}% 護甲"
+      value: [60, 100]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 暴擊傷害加成"
+      value: [20, 30]
+      stats:
+        - { stat: crit.bonus, type: INCREASED, value: "{value}" }
+    - text: "暴擊會造成穿刺"
+      stats:
+        - { stat: impale.on_crit, type: FLAT, value: 100 }
+    - text: "擊中不會引出穿刺"   # 原作「暴擊無法引出穿刺」；我們的穿刺沒有分暴擊與否引出，照穿刺的「無法引出」（只存不引）
+      stats:
+        - { stat: flag.cannot_extract_impale, type: FLAT, value: 1 }
+    - text: "{min} 到 {max} 物理荊棘傷害"
+      min: [20, 31]
+      max: [32, 49]
+      stats:
+        - { stat: thorns.min, type: FLAT, value: "{min}" }
+        - { stat: thorns.max, type: FLAT, value: "{max}" }
+
+essentia_sanguis:        # 2026-10-28 照 PoE2 0.5 的「Essentia Sanguis」（原作有、我們以前沒有的）
+  name: 精華收割器
+  base: legs_dex_int_13        # 原作基底 Furtive Wraps（隱秘裹手：鋼脊纏腿）
+  stat_base: legs_dex_int_07          # 原作基底那一階的數值
+  drop_level: 52
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "烏雲密布，相互碰撞交疊，激發出四道仇恨的雷電。"
+  mods:
+    - text: "增加 {value}% 閃避與能量護盾"
+      value: [50, 70]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "攻擊附加 1 到 {max} 閃電傷害"
+      max: [30, 50]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: 1, tags: [attack, lightning] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, lightning] }
+    - text: "+{value} 智慧"
+      value: [15, 25]
+      stats:
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "+{value}% 閃電抗性"
+      value: [25, 35]
+      stats:
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - text: "生命偷取改成偷取能量護盾"   # 我們沒有能量護盾的偷取池：照偷取一份的上限（最大能量護盾 10%）直接回
+      stats:
+        - { stat: flag.life_leech_to_es, type: FLAT, value: 1 }
+
+facebreaker:        # 2026-10-28 照 PoE2 0.5 的「Facebreaker」（原作有、我們以前沒有的；阿德爾的符文聯盟 0.5.0 新增）
+  name: 毀面者
+  base: legs_str_16        # 原作基底 Stocky Mitts（結實長手套：樸素腿鎧）
+  stat_base: legs_str_01          # 原作基底那一階的數值
+  drop_level: 1
+  sources: [map_boss, chance, gamble]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "「你以為我們是野蠻人？」紅狼一邊沉思，"
+    - "一邊從永恆者的頭骨中拔出牙齒。"
+    - "「我會讓你們這類人見識一下，什麼叫做齒爪之道。」"
+  # 原作「頭目每被打爛一張臉即 +3 至 +4」（照這件打倒過的 Boss 數成長）沒做：物品沒有記打倒 Boss 的數字，固定 8 到 12
+  # 原作「空手時，近戰打擊範圍 +0.3 公尺」：我們的近戰距離是增加百分比，約 3 公尺的基礎 +0.3 公尺 = 增加 10%
+  mods:
+    - text: "空手攻擊的基礎物理傷害是 8 到 12"
+      stats:
+        - { stat: unarmed.base_min, type: FLAT, value: 8 }
+        - { stat: unarmed.base_max, type: FLAT, value: 12 }
+    - text: "增加 {value}% 暈眩累積"
+      value: [30, 50]
+      stats:
+        - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+    - text: "空手時，每 5 點力量空手攻擊傷害更多 1%"
+      stats:
+        - { stat: per_str.unarmed_more, type: FLAT, value: 1 }
+    - text: "空手時增加 10% 近戰打擊範圍"
+      stats:
+        - { stat: melee.range@unarmed, type: INCREASED, value: 10 }
+    - text: "每 1 點力量 +1 護甲"
+      stats:
+        - { stat: per_str.armour, type: FLAT, value: 1 }
+    - text: "雙手都空著時可以當作拿單手錘攻擊，用這件的傷害"
+      stats:
+        - { stat: flag.unarmed_mace, type: FLAT, value: 1 }
+
+gravebind:        # 2026-10-28 照 PoE2 0.5 的「Gravebind」（原作有、我們以前沒有的）
+  name: 幽墓束縛
+  base: legs_str_int_14        # 原作基底 Rope Cuffs（繩索腕帶：樸素聖護腿）
+  stat_base: legs_str_int_01          # 原作基底那一階的數值
+  drop_level: 5
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "想怎麼隱藏你手上的血就試試吧。你還是會知道真相的。"
+  mods:
+    - text: "增加 {value}% 護甲與能量護盾"
+      value: [40, 60]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "增加 20% 物品掉落稀有度"
+      stats:
+        - { stat: drop.rarity, type: INCREASED, value: 20 }
+    - text: "你其他的物品稀有度加成無效"
+      stats:
+        - { stat: flag.rarity_only_this, type: FLAT, value: 1 }
+    - text: "+{value}% 冰冷抗性"
+      value: [10, 15]
+      stats:
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - text: "每擊殺一個敵人回復 {value} 生命"
+      value: [7, 10]
+      stats:
+        - { stat: life.per_kill, type: FLAT, value: "{value}" }
+    - text: "每擊殺一個敵人回復 {value} 魔力"
+      value: [4, 6]
+      stats:
+        - { stat: mana.per_kill, type: FLAT, value: "{value}" }
+    - text: "在你臨在範圍內被任何人擊殺的敵人，算是你擊殺的"
+      stats:
+        - { stat: flag.presence_kills, type: FLAT, value: 1 }
+
+horrors_flight:        # 2026-10-28 照 PoE2 0.5 的「Horror's Flight」（原作有、我們以前沒有的；阿德爾的符文聯盟 0.5.0 新增）
+  name: 驚懼飛掠
+  base: legs_dex_16        # 原作基底 Engraved Bracers（紋刻護腕：熔鋼皮褲）
+  stat_base: legs_dex_12          # 原作基底那一階的數值
+  drop_level: 65
+  sources: [map_boss]        # 原作只有「渡鴉欺詐者」掉（Boss 限定）：地圖 Boss，僥倖石做不出來、賭不到
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "若恐懼沒能殺死你，我會。"
+  # 原作的「賦予技能：等級 1–20 死懼碎擊」「撲殺目標時獲得 1 層恐懼化型」（給那個技能用）、「渡鴉之觸」（可以注入）沒做：
+  #   我們沒有這個技能與恐懼化型（不碰技能程式）
+  mods:
+    - text: "增加 {value}% 閃避"
+      value: [200, 300]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 攻擊速度"
+      value: [7, 17]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "+{value} 敏捷"
+      value: [13, 23]
+      stats:
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+    - text: "攻擊附加 {min} 到 {max} 混沌傷害"
+      min: [19, 23]
+      max: [31, 37]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, chaos] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, chaos] }
+
+idle_hands:        # 2026-10-28 照 PoE2 0.5 的「Idle Hands」（原作有、我們以前沒有的）
+  name: 遊手好閒
+  base: legs_dex_16        # 原作基底 Sectioned Bracers（分段護腕：淬鐵皮褲）
+  stat_base: legs_dex_04          # 原作基底那一階的數值
+  drop_level: 28
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "閒手易為惡魔所用。"
+  mods:
+    - text: "增加 {value}% 閃避"
+      value: [40, 60]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "+{value} 命中"
+      value: [60, 100]
+      stats:
+        - { stat: accuracy, type: FLAT, value: "{value}" }
+    - text: "+{value} 智慧"
+      value: [5, 10]
+      stats:
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "滿魔力時增加 25% 攻擊速度"
+      stats:
+        - { stat: attack.speed@fullmana, type: INCREASED, value: 25 }
+    - text: "魔力在最大魔力的 90% 以上就算滿魔力"
+      stats:
+        - { stat: mana.full_threshold, type: FLAT, value: 90 }
+
+jarngreipr:        # 2026-10-28 照 PoE2 0.5 的「Jarngreipr」（原作有、我們以前沒有的）
+  name: 雅恩格利佩爾
+  base: legs_str_dex_14        # 原作基底 Ringmail Gauntlets（環鎖護手：樸素鱗護腿）
+  stat_base: legs_str_dex_01          # 原作基底那一階的數值
+  drop_level: 6
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "「古老諸神的低語在鐵器中回蕩。他們需要的是一位英雄。」"
+  # 原作「…近戰武器和近戰技能的其他能力值需求」：我們的技能寶石沒有能力值需求，只有近戰武器
+  mods:
+    - text: "增加 50% 護甲與閃避"
+      stats:
+        - { stat: armour, type: INCREASED, value: 50 }
+        - { stat: evasion, type: INCREASED, value: 50 }
+    - text: "攻擊附加 {min} 到 {max} 物理傷害"
+      min: [2, 3]
+      max: [5, 6]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
+    - text: "+{value} 最大生命"
+      value: [30, 50]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 攻擊速度"
+      value: [4, 8]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "力量可以滿足近戰武器的其他能力值需求"
+      stats:
+        - { stat: flag.str_melee_requirements, type: FLAT, value: 1 }
+
+killjoy:        # 2026-10-28 照 PoE2 0.5 的「Killjoy」（原作有、我們以前沒有的）
+  name: 掃興之人
+  base: legs_dex_int_13        # 原作基底 Linen Wraps（麻布裹手：舊木纏腿）
+  stat_base: legs_dex_int_02          # 原作基底那一階的數值
+  drop_level: 16
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "「縫起來？那不就沒意義了嗎？」"
+    - "——傑弗里，刑求師的學徒"
+  mods:
+    - text: "增加 {value}% 閃避與能量護盾"
+      value: [30, 60]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [30, 50]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 暴擊傷害加成"
+      value: [20, 30]
+      stats:
+        - { stat: crit.bonus, type: INCREASED, value: "{value}" }
+    - text: "藥劑無法回復生命"
+      stats:
+        - { stat: flask.life_recovery, type: MORE, value: -100 }
+    - text: "擊殺效果觸發兩次"
+      stats:
+        - { stat: flag.on_kill_twice, type: FLAT, value: 1 }
+
+kitoko_current:        # 2026-10-28 照 PoE2 0.5 的「Kitoko's Current」（原作有、我們以前沒有的）
+  name: 奇多可之流
+  base: legs_int_16        # 原作基底 Jewelled Gloves（寶石手套：淬鐵絲褲）
+  stat_base: legs_int_04          # 原作基底那一階的數值
+  drop_level: 26
+  sources: [map_boss, chance, gamble]
+  rarity: uncommon        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "現實如同謎題，智慧即是力量。"
+  mods:
+    - text: "增加 {value}% 能量護盾"
+      value: [30, 50]
+      stats:
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value} 敏捷"
+      value: [10, 20]
+      stats:
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+    - text: "減少 {value}% 攻擊與施法速度"
+      value: [10, 15]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "-{value}" }
+        - { stat: cast.speed, type: INCREASED, value: "-{value}" }
+    - text: "擊中造成的閃電傷害會累積電擊"
+      stats:
+        - { stat: electrocute.chance, type: FLAT, value: 100 }
+
+lochtonial_caress:        # 2026-10-28 照 PoE2 0.5 的「Lochtonial Caress」（原作有、我們以前沒有的）
+  name: 意識之緣
+  base: legs_str_16        # 原作基底 Tempered Mitts（淬鍊長手套：鐵箍腿鎧）
+  stat_base: legs_str_03          # 原作基底那一階的數值
+  drop_level: 16
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "遷就理智，你將一無所獲，"
+    - "屈服於我，你將收穫豐碩。"
+  mods:
+    - text: "增加 {value}% 技能速度"
+      value: [10, 15]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+        - { stat: cast.speed, type: INCREASED, value: "{value}" }
+    - text: "+{value} 護甲"
+      value: [15, 25]
+      stats:
+        - { stat: armour, type: FLAT, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [40, 60]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "減少 {value}% 最大魔力"
+      value: [10, 15]
+      stats:
+        - { stat: mana.max, type: INCREASED, value: "-{value}" }
+    - text: "與臨在範圍內的隊友共享戰星：你獲得戰星時，他們也獲得一顆"
+      stats:
+        - { stat: flag.share_charges, type: FLAT, value: 1 }
+
+maligaro_virtuosity:        # 2026-10-28 照 PoE2 0.5 的「Maligaro's Virtuosity」（原作有、我們以前沒有的）
+  name: 馬雷葛蘿的血染手套
+  base: legs_dex_16        # 原作基底 Fine Bracers（精良護腕：精鐵皮褲）
+  stat_base: legs_dex_06          # 原作基底那一階的數值
+  drop_level: 45
+  sources: [map_boss, chance, gamble]
+  rarity: rare        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "馬雷葛蘿奇術出眾卓越，無比迅捷，帶來無盡浩劫。"
+  mods:
+    - text: "增加 {value}% 閃避"
+      value: [60, 80]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 暴擊率"
+      value: [20, 30]
+      stats:
+        - { stat: crit.chance, type: INCREASED, value: "{value}" }
+    - text: "增加 5% 攻擊速度"
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: 5 }
+    - text: "+{value} 敏捷"
+      value: [10, 20]
+      stats:
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+    - text: "你的暴擊率無法被重骰"   # 我們的暴擊沒有幸運重擲（暴擊幸運），這條本來就成立
+      stats:
+        - { stat: flag.crit_no_reroll, type: FLAT, value: 1 }
+    - text: "你的暴擊傷害加成為 250%"
+      stats:
+        - { stat: crit.bonus_override, type: FLAT, value: 250 }
+
+painters_servant:        # 2026-10-28 照 PoE2 0.5 的「Painter's Servant」（原作有、我們以前沒有的）
+  name: 畫家的侍從
+  base: legs_int_16        # 原作基底 Torn Gloves（撕裂手套：樸素絲褲）
+  stat_base: legs_int_01          # 原作基底那一階的數值
+  drop_level: 1
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "血濺赤紅海岸，渴求無盡之海。"
+    - "寶藏、生命，我願獻上一切，只為將你俘獲。"
+  mods:
+    - text: "獲得等同於元素傷害 {value}% 的額外冰冷傷害"
+      value: [5, 10]
+      stats:
+        - { stat: damage.gain_from.fire.cold, type: FLAT, value: "{value}" }
+        - { stat: damage.gain_from.cold.cold, type: FLAT, value: "{value}" }
+        - { stat: damage.gain_from.lightning.cold, type: FLAT, value: "{value}" }
+    - text: "獲得等同於元素傷害 {value}% 的額外火焰傷害"
+      value: [5, 10]
+      stats:
+        - { stat: damage.gain_from.fire.fire, type: FLAT, value: "{value}" }
+        - { stat: damage.gain_from.cold.fire, type: FLAT, value: "{value}" }
+        - { stat: damage.gain_from.lightning.fire, type: FLAT, value: "{value}" }
+    - text: "獲得等同於元素傷害 {value}% 的額外閃電傷害"
+      value: [5, 10]
+      stats:
+        - { stat: damage.gain_from.fire.lightning, type: FLAT, value: "{value}" }
+        - { stat: damage.gain_from.cold.lightning, type: FLAT, value: "{value}" }
+        - { stat: damage.gain_from.lightning.lightning, type: FLAT, value: "{value}" }
+    - text: "33% 的元素傷害轉換為冰冷傷害"
+      stats:
+        - { stat: damage.convert_from.fire.cold, type: FLAT, value: 33 }
+        - { stat: damage.convert_from.lightning.cold, type: FLAT, value: 33 }
+    - text: "33% 的元素傷害轉換為火焰傷害"
+      stats:
+        - { stat: damage.convert_from.cold.fire, type: FLAT, value: 33 }
+        - { stat: damage.convert_from.lightning.fire, type: FLAT, value: 33 }
+    - text: "33% 的元素傷害轉換為閃電傷害"
+      stats:
+        - { stat: damage.convert_from.fire.lightning, type: FLAT, value: 33 }
+        - { stat: damage.convert_from.cold.lightning, type: FLAT, value: 33 }
+
+plaguefinger:        # 2026-10-28 照 PoE2 0.5 的「Plaguefinger」（原作有、我們以前沒有的）
+  name: 瘟疫之指
+  base: legs_dex_int_13        # 原作基底 Gauze Wraps（紗布裹手：樸素纏腿）
+  stat_base: legs_dex_int_01          # 原作基底那一階的數值
+  drop_level: 4
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "潰瘍、結痂、膿瘡，第三支軍隊向世界宣揚了自己的存在。"
+  mods:
+    - text: "增加 {value}% 閃避與能量護盾"
+      value: [30, 50]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 攻擊速度"
+      value: [4, 6]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "無法施加元素異常狀態"
+      stats:
+        - { stat: flag.no_elemental_ailments, type: FLAT, value: 1 }
+    - text: "擊中時 {value}% 機率造成中毒"
+      value: [20, 30]
+      stats:
+        - { stat: poison.chance, type: FLAT, value: "{value}" }
+    - text: "擊中的所有傷害都算進中毒幅度"
+      stats:
+        - { stat: flag.all_damage_poisons, type: FLAT, value: 1 }
+
+shackles_wretched:        # 2026-10-28 照 PoE2 0.5 的「Shackles of the Wretched」（原作有、我們以前沒有的）
+  name: 悲運之縛
+  base: legs_str_int_14        # 原作基底 Aged Cuffs（陳舊腕帶：舊木聖護腿）
+  stat_base: legs_str_int_02          # 原作基底那一階的數值
+  drop_level: 16
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "「唯有身處牢籠，才能孕育極致的想像力。」"
+  mods:
+    - text: "增加 {value}% 護甲與能量護盾"
+      value: [30, 50]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "你在被冰緩後，有 6 秒無法被冰緩"
+      stats:
+        - { stat: ailment.immune_after.chill, type: FLAT, value: 6 }
+    - text: "你在被冰凍後，有 6 秒無法被冰凍"
+      stats:
+        - { stat: ailment.immune_after.freeze, type: FLAT, value: 6 }
+    - text: "你在被點燃後，有 6 秒無法被點燃"
+      stats:
+        - { stat: ailment.immune_after.ignite, type: FLAT, value: 6 }
+    - text: "你在被感電後，有 6 秒無法被感電"
+      stats:
+        - { stat: ailment.immune_after.shock, type: FLAT, value: 6 }
+    - text: "你造成的詛咒會反射給你"
+      stats:
+        - { stat: flag.curse_reflect_self, type: FLAT, value: 1 }
+
+sine_aequo:        # 2026-10-28 照 PoE2 0.5 的「Sine Aequo」（原作有、我們以前沒有的）
+  name: 無與倫比
+  base: legs_str_dex_14        # 原作基底 Grand Manchettes（宏偉手鐲，力敏智三防）；我們的腿甲沒有三防的，用力敏那一類
+  stat_base: legs_str_dex_09          # 同樣 65 級那一階的數值
+  drop_level: 85        # 巔峰 Boss 的專屬一律物品等級 85 起（需求等級照基底，65）
+  sources: [awakener]        # 原作只有「灰燼仲裁者」（燃燒巨石的巔峰 Boss）掉 → 我們的巔峰 Boss
+  weight: 100
+  flavour:
+    - "他的時代最偉大的戰士心懷榮耀作戰。"
+  # 原作「受禁錮敵人的累積效率為 50%，而非 100%」：只要累積到一半就禁錮 = 暈眩、凍結累積更多 100%
+  mods:
+    - text: "增加 {value}% 技能速度"
+      value: [10, 15]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+        - { stat: cast.speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 護甲、閃避與能量護盾"
+      value: [150, 200]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "禁錮敵人只要累積到 50%"
+      stats:
+        - { stat: stun.buildup, type: MORE, value: 100 }
+        - { stat: freeze.buildup, type: MORE, value: 100 }
+    - text: "對禁錮的敵人增加 {value}% 傷害"
+      value: [30, 50]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [vs_immobilised] }
+
+prisoners_manacles:        # 2026-10-28 照 PoE2 0.5 的「The Prisoner's Manacles」（原作有、我們以前沒有的）
+  name: 囚犯的鐐銬
+  base: legs_str_int_14        # 原作基底 Kalguuran Cuffs（卡爾葛腕帶：淬鐵聖護腿）
+  stat_base: legs_str_int_04          # 原作基底那一階的數值
+  drop_level: 45
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "馬雷葛蘿認為他唯一的失算，"
+    - "是他最偉大的造物動用三個軍團才得以制服。"
+  mods:
+    - text: "增加 {value}% 護甲與能量護盾"
+      value: [200, 300]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+100 最大生命"
+      stats:
+        - { stat: life.max, type: FLAT, value: 100 }
+    - text: "增加 100% 能力值需求"
+      stats:
+        - { stat: local.requirements, type: INCREASED, value: 100 }
+    - text: "+{value}% 閃電抗性"
+      value: [20, 40]
+      stats:
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - text: "每秒回復 {value} 生命"
+      value: [15, 30]
+      stats:
+        - { stat: life.regen, type: FLAT, value: "{value}" }
+    - text: "你施加的減益增加 {value}% 緩速幅度"
+      value: [20, 30]
+      stats:
+        - { stat: slow.magnitude, type: INCREASED, value: "{value}" }
+    - text: "無法禁錮敵人"   # 禁錮 = 重暈、凍結、電擊
+      stats:
+        - { stat: stun.buildup, type: MORE, value: -100 }
+        - { stat: freeze.buildup, type: MORE, value: -100 }
+        - { stat: electrocute.buildup, type: MORE, value: -100 }
+
+thunderfist:        # 2026-10-28 照 PoE2 0.5 的「Thunderfist」（原作有、我們以前沒有的；深淵的崛起新增）
+  name: 轟天雷
+  base: legs_dex_int_13        # 原作基底 Utility Wraps（實用裹手：戰痕纏腿）
+  stat_base: legs_dex_int_09          # 原作基底那一階的數值
+  drop_level: 65
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
+  flavour:
+    - "一聲吶喊發自天邊，震懾地上凡人更勝雷霆閃電。"
+  # 原作的「賦予技能：等級 1–20 閃光掌」沒做（我們沒有這個技能；不碰技能程式）
+  mods:
+    - text: "增加 {value}% 閃避與能量護盾"
+      value: [1, 111]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 攻擊速度"
+      value: [1, 11]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 閃電抗性"
+      value: [1, 33]
+      stats:
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - text: "空手近戰擊中附加 1 到 {max} 閃電傷害"
+      max: [77, 111]
+      stats:
+        - { stat: damage.added.min@unarmed, type: FLAT, value: 1, tags: [attack, melee, lightning] }
+        - { stat: damage.added.max@unarmed, type: FLAT, value: "{max}", tags: [attack, melee, lightning] }
+    - text: "+{value/10}% 空手近戰攻擊的暴擊率"
+      value: [1, 11]
+      stats:
+        - { stat: crit.base_extra@unarmed, type: FLAT, value: "{value/10}", tags: [attack, melee] }
+
+masters_reach:        # 2026-10-28 照 PoE2 0.5 的「The Master's Reach」（原作有、我們以前沒有的；0.5.4 新增）
+  name: 主宰之觸
+  base: legs_str_int_14        # 原作基底 Tethering Bands（解脫纏帶：戰痕聖護腿）
+  stat_base: legs_str_int_09          # 原作基底那一階的數值
+  drop_level: 65
+  sources: [abyss_lich]        # 原作只有被巫妖完整強化的「骷髏馬克的容器」掉 → 淵底之王・骨潮
+  weight: 100
+  drop_chance: 1          # 原作是那場巔峰戰的機率掉落（跟同一隻 Boss 的不朽恨意一樣固定 1%，不佔專屬傳奇的權重池）
+  flavour:
+    - "主人的束縛緊緊纏繞著靈魂。若他遭到拒絕，他將會毫不留情地將其釋放。"
+  # 原作的「賦予技能：等級 15 解脫」「當你擊中一名擁有暴露破綻的敵人時吞噬一個靈魂」沒做（我們沒有這個技能與靈魂）；
+  # 「使稀有和傳奇敵人暴露弱點」＋「承受來自擁有暴露破綻敵人的 (80—100)% 傷害會補償為生命」合成一行：受到稀有、傳奇敵人的傷害補償為生命
+  mods:
+    - text: "增加 {value}% 護甲與能量護盾"
+      value: [200, 300]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [75, 125]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "+{value} 智慧"
+      value: [15, 25]
+      stats:
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "稀有和傳奇敵人暴露弱點：承受它們的傷害有 {value}% 會補償為生命"
+      value: [80, 100]
+      stats:
+        - { stat: life.recoup_vs_rare, type: FLAT, value: "{value}" }

@@ -50,6 +50,37 @@ public final class LightningWarp {
         return anyEnemy ? Pick.MARK : Pick.NONE;
     }
 
+    /**
+     * 2026-10-28 照 PoE2：主要寶石觸發的雷遁挑目標（不看準心）。觸發的目標在範圍內就對牠（撲殺得到 → 瞬移，不然標記）；
+     * 沒有目標就找範圍內撲殺得到的、再來任何一隻（標記）；都沒有回傳 NONE（照準心找滾雷珠）。
+     *
+     * @param preferred          觸發的目標（暴擊打到的那隻）在範圍內
+     * @param preferredCullable  那隻撲殺得到
+     * @param cullNear           沒有觸發的目標時，範圍內有撲殺得到、看得到的敵人
+     * @param anyNear            沒有觸發的目標時，範圍內有看得到的敵人
+     */
+    static Pick chooseTriggered(final boolean preferred, final boolean preferredCullable, final boolean cullNear, final boolean anyNear) {
+        if (preferred) {
+            return preferredCullable ? Pick.CULL : Pick.MARK;
+        }
+        if (cullNear) {
+            return Pick.CULL;
+        }
+        return anyNear ? Pick.MARK : Pick.NONE;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2：法術圖騰放的雷遁挑目標。原作的圖騰只對撲殺範圍內的敵人放雷遁（官方論壇 Early Access Bug Reports
+     * 「Spell Totem Lightning Warp Targeting Issue」：totems only cast it on enemies in culling range、不瞄準滾雷珠；
+     * 「Lightning warp + spell totems interaction」：圖騰掛不上標記），撲殺得到 → 圖騰自己瞬移進去炸開；
+     * 沒有撲殺得到的 → NONE（圖騰換放孔裡別的法術，只有雷遁就等）。這次之前雷遁不能插進星咒圖騰。
+     *
+     * @param cullNear 圖騰範圍內有撲殺得到、看得到的敵人
+     */
+    static Pick chooseTotem(final boolean cullNear) {
+        return cullNear ? Pick.CULL : Pick.NONE;
+    }
+
     /** 這種目標要不要留感電地面：瞄準敵人才留，瞄準滾雷珠不留（原作 0.2.0）。 */
     static boolean shockedGround(final Pick pick) {
         return pick == Pick.CULL || pick == Pick.MARK;

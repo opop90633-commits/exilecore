@@ -100,6 +100,9 @@ public final class ConditionTracker {
         double surroundedRadius = TreeConditions.SURROUNDED_RADIUS;
         /** 2026-10-26：生命藥劑一次都喝不了。 */
         boolean noLifeFlask;
+        /** 2026-10-28：魔力在這個比例以下算貧魔、以上算滿魔（遊手好閒：滿魔 90%；磐石之拳：貧魔 50%）。 */
+        double lowManaFraction = TreeConditions.LOW_FRACTION;
+        double fullManaFraction = 0.999;
         /** 2026-10-26：上次看是不是獸形、從哪個 tick 開始（變回人形的效果用）。 */
         boolean shapeshifted;
         long formSince;
@@ -152,6 +155,11 @@ public final class ConditionTracker {
         sample.tick = now;
         sample.lifeFraction = fraction(state.life(), state.maxLife());
         sample.manaFraction = fraction(state.mana(), state.maxMana());
+        // 2026-10-28 照 PoE2：貧魔、滿魔的門檻（傳奇改的）
+        final double lowMana = state.sheet().flat(tw.exilecore.item.unique.UniqueStats.LOW_MANA_THRESHOLD, Set.of());
+        final double fullMana = state.sheet().flat(tw.exilecore.item.unique.UniqueStats.FULL_MANA_THRESHOLD, Set.of());
+        sample.lowManaFraction = lowMana > 0 ? Math.max(lowMana, TreeConditions.LOW_FRACTION * 100) / 100.0 : TreeConditions.LOW_FRACTION;
+        sample.fullManaFraction = fullMana > 0 ? Math.min(0.999, fullMana / 100.0) : 0.999;
         sample.es = state.energyShield();
         sample.maxEs = state.maxEnergyShield();
         sample.presenceRadius = tw.exilecore.combat.Presence.BASE_RADIUS
@@ -457,10 +465,12 @@ public final class ConditionTracker {
             case TreeConditions.TOTEM -> skills != null && skills.totemCount(player) > 0;
             case TreeConditions.IGNITED -> plugin.ailments() != null && plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.IGNITE);
             case TreeConditions.CHILLED -> plugin.ailments() != null && plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.CHILL);
+            case TreeConditions.SHOCKED -> plugin.ailments() != null && plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.SHOCK); // 2026-10-28
             case TreeConditions.DAMAGING_AILMENT -> plugin.ailments() != null && (plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.IGNITE)
                     || plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.BLEED)
                     || plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.POISON));
-            case TreeConditions.FULL_MANA -> fullLife(sample == null ? 1 : sample.manaFraction);
+            // 2026-10-28 照 PoE2（遊手好閒）：「最大魔力的 90% 以上視為滿魔」
+            case TreeConditions.FULL_MANA -> sample == null || sample.manaFraction >= sample.fullManaFraction;
             case TreeConditions.LIFE_LEECHING -> state.leechPool() > 0;
             case TreeConditions.MANA_LEECHING -> state.manaLeechPool() > 0;
             case TreeConditions.NO_LIFE_FLASK -> sample != null && sample.noLifeFlask;
@@ -472,7 +482,8 @@ public final class ConditionTracker {
             case TreeConditions.STATIONARY -> sample == null || !sample.moving;
             case TreeConditions.LOW_LIFE -> lowLife(sample == null ? 1 : sample.lifeFraction);
             case TreeConditions.FULL_LIFE -> fullLife(sample == null ? 1 : sample.lifeFraction);
-            case TreeConditions.LOW_MANA -> lowLife(sample == null ? 1 : sample.manaFraction);
+            // 2026-10-28 照 PoE2（磐石之拳的遊手好閒）：「最大魔力的 50% 以下視為貧魔」
+            case TreeConditions.LOW_MANA -> sample == null ? false : sample.manaFraction <= sample.lowManaFraction + 1e-9;
             case TreeConditions.FULL_ES -> sample != null && sample.maxEs > 0 && sample.es >= sample.maxEs - 1e-6;
             case TreeConditions.HAS_ES -> sample != null && sample.es > 0;
             // 2026-10-27 照 PoE2：低能量護盾（35% 以下；沒有護盾也算）
@@ -487,6 +498,7 @@ public final class ConditionTracker {
                     && !hasTag(state, OFF_HAND, "sceptre"); // 2026-10-27：荒野領主副手的權杖不算雙持（權杖不能攻擊）
             case TreeConditions.SHIELD -> hasTag(state, OFF_HAND, "shield");
             case TreeConditions.MELEE_WEAPON -> weapon(state, MAIN_HAND) && !hasTag(state, MAIN_HAND, "ranged");
+            case TreeConditions.UNARMED -> !weapon(state, MAIN_HAND) && !weapon(state, OFF_HAND); // 2026-10-28
             case TreeConditions.SURROUNDED -> enemiesNear(player, sample == null ? TreeConditions.SURROUNDED_RADIUS : sample.surroundedRadius, false)
                     >= TreeConditions.SURROUNDED_COUNT; // 2026-10-27：範圍吃「增加被包圍的範圍」
             case TreeConditions.RARE_NEARBY -> enemiesNear(player, sample == null ? tw.exilecore.combat.Presence.BASE_RADIUS : sample.presenceRadius, true) > 0;

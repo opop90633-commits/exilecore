@@ -535,6 +535,11 @@ public final class FlaskService {
             return true;
         }
         final boolean life = base.kind() == FlaskKind.LIFE;
+        if (life && constantLife(plugin.players().sheet(player))) {
+            // 2026-10-28 照 PoE2（綺夢）：無法使用生命藥劑（效果一直套用，見 tickConstant）
+            fail(player, state, "無法使用生命藥劑（生命藥劑的效果一直套用中）");
+            return true;
+        }
         final boolean full = life ? state.life() >= state.maxLife() - 1e-6 : state.mana() >= state.maxMana() - 1e-6;
         if (full) {
             fail(player, state, base.kind().displayName() + "已經是滿的");
@@ -574,6 +579,7 @@ public final class FlaskService {
         if (instant > 0) {
             if ((life || both) && !noLife) {
                 state.setLife(state.life() + instant);
+                lifeToEs(state, sheet, instant); // 2026-10-28 照 PoE2（薛朗的背包）
             }
             if (!life || both) {
                 state.setMana(state.mana() + instant);
@@ -628,8 +634,68 @@ public final class FlaskService {
                 : tw.exilecore.stats.TreeEffectKeys.MANA_RECOVERY_RATE);
     }
 
+    // ---- 2026-10-28 照 PoE2：綺夢（生命藥劑的效果一直套用）、薛朗的背包（藥劑的生命回復也套用在能量護盾） ----
+
+    /** 綺夢：無法使用生命藥劑，非傳奇生命藥劑的效果一直套用。 */
+    static boolean constantLife(final tw.exilecore.stats.StatSheet sheet) {
+        return sheet != null && tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.FLASK_LIFE_CONSTANT);
+    }
+
+    /** 薛朗的背包：藥劑回復的生命 amount 也回到能量護盾。 */
+    private static void lifeToEs(final PlayerState state, final tw.exilecore.stats.StatSheet sheet, final double amount) {
+        if (amount > 0 && sheet != null && tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.FLASK_LIFE_TO_ES)) {
+            state.setEnergyShield(state.energyShield() + amount);
+        }
+    }
+
+    /**
+     * 綺夢：一瓶生命藥劑每秒回復多少（同一瓶喝下去的回復量 ÷ 回復時間；吃藥劑回復的增加／更多、回復速度，不立即）。
+     * 純函式：recovery 是這瓶的回復量（已乘全域的加成），seconds 是回復時間（已除回復速度）。
+     */
+    static double constantPerSecond(final double recovery, final double seconds) {
+        return seconds <= 0 ? 0 : Math.max(0, recovery) / seconds;
+    }
+
+    /** 每秒：有綺夢的人，生命藥劑欄那瓶（非傳奇）照它的回復速度一直回生命，不花充能、不立即、只回自己。 */
+    private void tickConstant() {
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            if (!eligible(player)) {
+                continue;
+            }
+            final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+            if (!constantLife(sheet)) {
+                continue;
+            }
+            final ItemStack item = player.getInventory().getItem(slotFor(player, FlaskKind.LIFE));
+            final FlaskData data = item == null || isPlaceholder(item) ? null : read(item).orElse(null);
+            final FlaskBase base = data == null ? null : config.base(data.base());
+            if (base == null || base.kind() != FlaskKind.LIFE) {
+                continue;
+            }
+            final PlayerState state = plugin.players().get(player);
+            if (state.life() >= state.maxLife() - 1e-6 || tw.exilecore.ascendancy.AscendancyEffects.flaskNoLife(player)) {
+                continue;
+            }
+            final FlaskMods mods = mods(item, base);
+            final double recovery = mods.recoveryAmount(base.recovery(), false)
+                    * Math.max(0, 1 + sheet.increased(tw.exilecore.stats.StatKeys.FLASK_LIFE_RECOVERY, java.util.Set.of()))
+                    * Math.max(0, sheet.more(tw.exilecore.stats.StatKeys.FLASK_LIFE_RECOVERY, java.util.Set.of()));
+            final double seconds = mods.recoveryTime(base.duration())
+                    * Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.StatKeys.FLASK_DURATION, java.util.Set.of())) / flaskRate(sheet, true);
+            final double heal = constantPerSecond(recovery, seconds);
+            if (heal > 0) {
+                state.setLife(state.life() + heal);
+                lifeToEs(state, sheet, heal);
+                plugin.players().display(player, state);
+            }
+        }
+    }
+
     /** 這個玩家的某一種藥劑效果還在進行中嗎（「藥劑效果中」的條件詞綴）。 */
     public boolean recovering(final Player player, final FlaskKind kind) {
+        if (kind == FlaskKind.LIFE && constantLife(plugin.players().sheet(player))) {
+            return true; // 2026-10-28 照 PoE2（綺夢）：生命藥劑的效果一直套用
+        }
         final List<Recovery> list = active.get(player.getUniqueId());
         if (list == null) {
             return false;
@@ -653,6 +719,9 @@ public final class FlaskService {
         // 2026-10-27 效能：空瓶提示攤開補（每 2 tick 一小批，每個人一樣每 2 秒一次）；這次之前每 2 秒所有人同一個 tick 一起補
         sweepSlice();
         minuteTicks += TICK_INTERVAL;
+        if (minuteTicks % 20 == 0) {
+            tickConstant(); // 2026-10-28 照 PoE2（綺夢）：生命藥劑的效果一直套用，每秒一次
+        }
         if (minuteTicks >= 1200) {
             minuteTicks = 0;
             tickPerMinute();
@@ -682,6 +751,7 @@ public final class FlaskService {
             }
             if (life > 0) {
                 state.setLife(state.life() + life);
+                lifeToEs(state, plugin.players().sheet(player), life); // 2026-10-28 照 PoE2（薛朗的背包）
             }
             if (mana > 0) {
                 state.setMana(state.mana() + mana);

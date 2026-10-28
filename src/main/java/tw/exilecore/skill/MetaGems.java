@@ -189,25 +189,61 @@ public final class MetaGems {
         if (spell.hidden() || spell.type() != SkillType.SPELL || !spell.tags().contains(tw.exilecore.stats.Tags.SPELL)) {
             return "不是法術（只能插法術）";
         }
-        final Mechanic mechanic = spell.mechanic();
-        if (mechanic == Mechanic.AURA || mechanic == Mechanic.SUMMON || mechanic == Mechanic.WARCRY || mechanic == Mechanic.DASH
-                || mechanic == Mechanic.LEAP || mechanic == Mechanic.FLICKER || mechanic == Mechanic.RALLY || mechanic == Mechanic.GUARD
-                || mechanic == Mechanic.META || mechanic == Mechanic.DESECRATE) {
-            return "不能插（常駐、召喚、戰吼、位移、增益、主要寶石不行）";
-        }
-        if (spec.kind() == MetaSpec.Kind.MELEE_HIT && !spell.tags().contains(tw.exilecore.stats.Tags.FIRE)) {
-            return "只能插火焰法術"; // 2026-10-26（昇華・擊中時火焰法術）
+        // 2026-10-28 照 PoE2：先看我們的引擎放不放得出來（engineProblem），再照原作輔助那一面的技能類型（MetaSocketRules、TotemRules）；
+        //   這次之前一律照機制擋（常駐、召喚、戰吼、位移、增益、主要寶石不行），雷遁（原作 Triggerable）插不進暴擊引星
+        final String engine = engineProblem(spell);
+        if (engine != null) {
+            return engine;
         }
         if (spell.tags().contains("command")) {
             return "不能插（指令召喚物的技能要有召喚物才能放）"; // 2026-10-17：以前觸發時沒有召喚物也從自己身上放出來
         }
-        if (spec.totem() && (spell.cooldown() > 0 || !SkillBuild.deployable(spell) || spell.deploy() != null)) {
-            return "不能交給法術圖騰放（有冷卻、本來就是圖騰／陷阱的不行）";
-        }
         if (spec.totem()) {
+            // 2026-10-28 照 PoE2 Spell Totem（Spell 而且 Totemable，不能有冷卻）：雷遁、骸爆、詛咒、縛根也交給圖騰（TotemRules.spellTotemCastable）；
+            //   這次之前位移、印記、屍體一律擋（我們的圖騰放不出來）
+            if (spell.cooldown() > 0 || !TotemRules.spellTotemCastable(spell) || spell.deploy() != null) {
+                return "不能交給法術圖騰放（有冷卻、本來就是圖騰、一般位移、印記的不行）";
+            }
             return TotemRules.spellTotemProblem(spell); // 2026-10-27 照 PoE2 Spell Totem：原作不能由圖騰施放的法術（穢陣、骨綻、雷流場）也擋掉
         }
+        if (!MetaSocketRules.triggerable(spell)) {
+            // 2026-10-28 照 PoE2（allowed_types Spell + Triggerable）：引導、印記、本來就放圖騰的、原作不能被觸發的；這次之前這些都插得進去
+            return "不能插（這個法術不能被觸發：引導、印記、放圖騰的…不行）";
+        }
+        if (spec.kind() == MetaSpec.Kind.MINION_DEATH && MetaSocketRules.createsMinion(spell)) {
+            return "不能插（殞從引星不能放會產生召喚物的法術）"; // 2026-10-28 照 PoE2 excluded_types CreatesMinion；這次之前可以
+        }
+        if (spec.kind() == MetaSpec.Kind.MELEE_HIT && !MetaSocketRules.fire(spell)) {
+            return "只能插火焰法術"; // 2026-10-26（昇華・擊中時火焰法術）；2026-10-28 照 PoE2 Fire 類型：元素要害也算（這次之前只看 fire 標籤）
+        }
         return null;
+    }
+
+    /**
+     * 2026-10-28：被觸發的路徑（{@link SkillService#metaCast} → SkillExecutor.execute）放不出來的機制；可以回傳 null。
+     * 跟原作類型無關，是我們的引擎做不到（或放出來不安全）的：
+     * <ul>
+     *   <li>常駐（光環、精魂召喚物）、召喚、戰吼、集結、褻瀆、主要寶石、增益（guard：跟著你的增益，力印、聖地這些）：
+     *       都是 SkillService 自己的施放路徑，execute 不認得（會丟例外）。原作的力印、聖地、噬屍宴是 Triggerable，但都是武器賦予的，本來就插不進來。</li>
+     *   <li>跳躍、瞬影：要鎖住玩家滯空／衝到目標身邊的流程（readyAt、滯空 tick），被觸發時沒有人接，原作也沒有能被觸發的。</li>
+     *   <li>一般的衝刺（閃現、鏡影穿霧）：被觸發時會把你往準心方向拉走；原作的閃現不是 Triggerable、鏡影穿霧原作沒有。
+     *       雷遁（PoE2 Triggerable）例外：被觸發時對觸發的目標（撲殺得到就瞬移進去，不然掛標記）。</li>
+     * </ul>
+     * metaCast 的保險只看這個（命運同調、預告射擊免費放面板上的法術也走 metaCast）。這次之前保險用暴擊引星的整套規則（含位移一律不行）。
+     */
+    static String engineProblem(final SkillDefinition spell) {
+        return switch (spell.mechanic()) {
+            case AURA -> "不能插（常駐技能不能被觸發）";
+            case SUMMON -> "不能插（召喚技能不能被觸發）";
+            case WARCRY, RALLY -> "不能插（戰吼不能被觸發）";
+            case GUARD -> "不能插（增益技能不能被觸發）";
+            case DESECRATE -> "不能插（褻瀆不能被觸發）";
+            case META -> "不能插（主要寶石不能插主要寶石）";
+            case LEAP, FLICKER -> "不能插（跳躍、瞬影類的位移不能被觸發）";
+            case DASH -> SkillExecutor.hasFlag(spell, tw.exilecore.stats.StatKeys.FLAG_LIGHTNING_WARP) ? null
+                    : "不能插（衝刺類的位移不能被觸發；雷遁可以）";
+            default -> spell.tags().contains("persistent") ? "不能插（常駐技能不能被觸發）" : null;
+        };
     }
 
     // ---- 能量 ----

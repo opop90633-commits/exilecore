@@ -334,7 +334,10 @@ public final class DamageCalculator {
      * defender 不是 null 時再乘防禦方的「擊中你的暴擊傷害加成減少」。
      */
     public static double critMultiplier(final StatSheet attacker, final Set<String> tags, final StatSheet defender) {
-        double bonus = Math.max(0, attacker.get(StatKeys.CRIT_MULTI, tags) - 100) / 100.0 * Math.max(0, 1 + attacker.increased(StatKeys.CRIT_BONUS, tags))
+        final double fixed = attacker.flat(tw.exilecore.item.unique.UniqueStats.CRIT_BONUS_OVERRIDE, Set.of());
+        // 2026-10-28 照 PoE2（馬雷葛蘿的血染手套）：「你的暴擊傷害加成為 250%」——固定，不吃增加／更多
+        double bonus = fixed > 0 ? fixed / 100.0
+                : Math.max(0, attacker.get(StatKeys.CRIT_MULTI, tags) - 100) / 100.0 * Math.max(0, 1 + attacker.increased(StatKeys.CRIT_BONUS, tags))
                 * Math.max(0, attacker.more(StatKeys.CRIT_BONUS, tags));
         if (defender != null) {
             bonus *= Math.max(0, 1 + defender.increased(StatKeys.CRIT_BONUS_TAKEN, Set.of()));
@@ -354,6 +357,15 @@ public final class DamageCalculator {
     public static double resistCap(final StatSheet sheet, final DamageType type) {
         final double max = sheet.get(StatKeys.RESIST_MAX);
         return type == DamageType.PHYSICAL ? max : max + sheet.flat(StatKeys.resistMax(type), Set.of());
+    }
+
+    /** 2026-10-28：防禦方火焰、冰冷、閃電抗性（各自照上限）裡最低的那個。 */
+    static double lowestElementalResist(final StatSheet defender) {
+        double lowest = Double.MAX_VALUE;
+        for (final DamageType type : new DamageType[] {DamageType.FIRE, DamageType.COLD, DamageType.LIGHTNING}) {
+            lowest = Math.min(lowest, Math.min(defender.get(type.mitigationStat()), resistCap(defender, type)));
+        }
+        return lowest;
     }
 
     /** 同上，攻擊方的穿透（penetration，tags 限定類型）在抗性上限之後扣。 */
@@ -377,6 +389,9 @@ public final class DamageCalculator {
                 rawResist *= 2; // 夏烏拉的禮物：混沌抗性加倍
             }
             double resist = type == DamageType.PHYSICAL ? 0 : Math.min(rawResist, typeMax);
+            if (attacker != null && type.isElemental() && StatKeys.flag(attacker, tw.exilecore.item.unique.UniqueStats.LOWEST_RESIST)) {
+                resist = lowestElementalResist(defender); // 2026-10-28 照 PoE2（磐石之拳的里歐波德的掌聲）：照敵人最低的元素抗性算
+            }
             if (attacker != null && type != DamageType.PHYSICAL) {
                 final Set<String> context = new HashSet<>(skillTags);
                 context.addAll(type.tags());
@@ -569,6 +584,8 @@ public final class DamageCalculator {
                 if (source == DamageType.PHYSICAL && extra != DamageType.PHYSICAL) {
                     percent += attacker.flat(StatKeys.damageGain(extra), context);
                 }
+                // 2026-10-28 照 PoE2（畫家的侍從、藍焰護腕／雷鉗鐵手的磐石之拳版本）：獲得某一種傷害的 x% 為額外的另一種
+                percent += attacker.flat(tw.exilecore.item.unique.UniqueStats.gainFrom(source, extra), context);
                 if (percent > 0) {
                     final DamageType gained = asCold ? DamageType.COLD : extra;
                     summed[gained.ordinal()] += amount * percent / 100.0;
@@ -679,6 +696,11 @@ public final class DamageCalculator {
     private static double critChanceOn(final StatSheet attacker, final SkillProfile skill) {
         if (StatKeys.flag(attacker, StatKeys.FLAG_NO_CRIT)) {
             return 0;
+        }
+        // 2026-10-28 照 PoE2（磐石之拳的馬雷葛蘿）：「攻擊的暴擊率為 x%」——固定
+        final double attackOverride = skill.isAttack() ? attacker.flat(tw.exilecore.item.unique.UniqueStats.CRIT_ATTACK_OVERRIDE, Set.of()) : 0;
+        if (attackOverride > 0) {
+            return Math.min(1.0, attackOverride / 100.0);
         }
         double baseCrit = weaponless(skill) ? WEAPONLESS_BASE_CRIT // 2026-10-27 照 PoE2：不用武器的攻擊不看武器的暴擊率
                 : skill.isAttack() ? tw.exilecore.item.unique.UniqueHits.weaponCrit(attacker, attacker.flat(StatKeys.WEAPON_CRIT, skill.tags())) // 2026-10-27（北爪護腕）

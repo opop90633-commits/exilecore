@@ -40,7 +40,7 @@ import java.util.UUID;
  * 2026-10-26 照 PoE2 0.5 重做的輔助寶石與戰吼需要的機制（屬性鍵見 {@link SupportKeys}）：
  * <ul>
  *   <li>擊中前的條件加成（炙獵、遠穿、釘地 II）、只減擊中的傷害（燎原）、條件破甲（霜裂甲、烙印深）、異常的條件加成（寒焚、淬毒 III、急蝕、速蝕）</li>
- *   <li>擊中之後：定身累積（釘地）、凋零機率（枯觸）、元素崩解（元崩）、中毒破甲（鏽甲）、點燃用掉凍結（寒焚）、斷命 II、火山噴發</li>
+ *   <li>擊中之後：定身累積（釘地）、凋零機率（枯觸）、元素崩解（元崩）、中毒破甲（鏽甲）、點燃用掉凍結（寒焚）、撲殺 II、火山噴發</li>
  *   <li>放技能時：電荷（引雷）、最近用過的元素（元湧）、獻祭生命（捐命）、榮耀（熔魂嘯、澤嘯）、移動距離（震嘯）</li>
  *   <li>戰吼的強化被用掉時：各戰吼的效果、餘震、盾波、冰緩地面、不竭嘯、決嘯、嘯準</li>
  *   <li>戰吼輔助：碎甲吼、契血嘯、碎晶嘯；凍結時：冰嚙、霜仇嘯</li>
@@ -816,8 +816,8 @@ public final class SupportMechanics implements Listener {
         return list;
     }
 
-    /** 被定住（PoE2 的 Immobilised：凍結、重暈、定身、電擊）。 */
-    private boolean immobilised(final LivingEntity target) {
+    /** 被定住（PoE2 的 Immobilised：凍結、重暈、定身、電擊）。2026-10-28：近戰條件位移（{@link MeleeStep}）也看這個，玩家被定住就不踏步。 */
+    boolean immobilised(final LivingEntity target) {
         if (plugin.ailments() != null && (plugin.ailments().isFrozen(target) || plugin.ailments().heavyStunned(target)
                 || plugin.ailments().has(target, AilmentType.ELECTROCUTE))) {
             return true;
@@ -850,23 +850,23 @@ public final class SupportMechanics implements Listener {
                 new DamagePacket(result.dealt()).scale(factor), result.esDamage() * factor, result.lifeDamage() * factor, result.deflected());
     }
 
-    /** 斷命 I／II：只對稀有、傳奇（含 Boss）。 */
+    /** 撲殺 I／II：只對稀有、傳奇（含 Boss）。 */
     public static boolean cullsRare(final StatSheet skillSheet, final MonsterData monster) {
         return monster != null && (monster.boss() || monster.rarity() == MonsterRarity.RARE || monster.rarity() == MonsterRarity.UNIQUE)
                 && StatKeys.flag(skillSheet, SupportKeys.FLAG_CULLING_RARE);
     }
 
-    /** 斷命門檻的倍率（斷命 II 的增益）。 */
+    /** 撲殺門檻的倍率（撲殺 II 的增益）。 */
     public static double cullScale(final StatSheet skillSheet) {
         return Math.max(0, 1 + skillSheet.increased(SupportKeys.CULL_THRESHOLD, Set.of()));
     }
 
-    /** 斷命打死敵人（CombatListener 呼叫）：斷命 II 給 20 秒「斷命門檻增加 20%」。 */
+    /** 撲殺打死敵人（CombatListener 呼叫）：撲殺 II 給 20 秒「撲殺門檻增加 20%」。 */
     public void onCull(final Player player, final StatSheet skillSheet, final Set<String> tags) {
         extras.onCull(player, skillSheet, tags); // 2026-10-27 照 PoE2 Thrill of the Kill
         final double bonus = skillSheet.flat(SupportKeys.CULL_THRESHOLD_ON_CULL, tags);
         if (bonus > 0) {
-            service.buff(player, "cull_threshold", "斷命", 400, List.of(Modifier.increased(SupportKeys.CULL_THRESHOLD, bonus / 100.0, "斷命")));
+            service.buff(player, "cull_threshold", "撲殺", 400, List.of(Modifier.increased(SupportKeys.CULL_THRESHOLD, bonus / 100.0, "撲殺")));
         }
     }
 

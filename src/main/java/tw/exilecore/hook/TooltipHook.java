@@ -45,6 +45,8 @@ public final class TooltipHook {
     private static final Map<UUID, List<SkillService.SkillHint>> HINTS = new ConcurrentHashMap<>();
     /** 展開「對你的技能」說明的人（2026-10；按 F 切換）。 */
     private static final java.util.Set<UUID> EXPANDED = ConcurrentHashMap.newKeySet();
+    /** 2026-10-28 照 PoE2 石拳之道：點了的人 → 角色等級（腿甲的說明多加「穿上時變成磐石之拳」的樣子；主執行緒每次重算時更新）。 */
+    private static final Map<UUID, Integer> STONEFIST = new ConcurrentHashMap<>();
     private static volatile ExileCore plugin;
     private static Object listener;
 
@@ -71,6 +73,7 @@ public final class TooltipHook {
             public void onQuit(final PlayerQuitEvent event) {
                 HINTS.remove(event.getPlayer().getUniqueId());
                 EXPANDED.remove(event.getPlayer().getUniqueId());
+                STONEFIST.remove(event.getPlayer().getUniqueId());
             }
 
             /** 對著有「對你的技能」說明的物品按 F：展開／收起（不換到副手）。 */
@@ -119,6 +122,7 @@ public final class TooltipHook {
         }
         plugin = null;
         HINTS.clear();
+        STONEFIST.clear();
     }
 
     /** 主執行緒：每個人的技能面板重算一次；變了就重送背包（說明跟著更新）。 */
@@ -128,6 +132,7 @@ public final class TooltipHook {
             return;
         }
         for (final Player player : core.getServer().getOnlinePlayers()) {
+            stonefist(core, player);
             final List<SkillService.SkillHint> fresh;
             try {
                 fresh = List.copyOf(core.skills().skillHints(player));
@@ -139,6 +144,41 @@ public final class TooltipHook {
                 player.updateInventory();
             }
         }
+    }
+
+    /** 2026-10-28：記下這個人有沒有點石拳之道（與等級）；變了就重送背包。 */
+    private static void stonefist(final ExileCore core, final Player player) {
+        Integer level = null;
+        try {
+            final tw.exilecore.character.PlayerState state = core.players().get(player);
+            if (core.ascendancy() != null && state.hasCharacter()
+                    && tw.exilecore.ascendancy.AscBuild.stonefist(core.ascendancy().ascension(state).modifiers())) {
+                level = state.level();
+            }
+        } catch (final RuntimeException e) {
+            return;
+        }
+        final Integer old = level == null ? STONEFIST.remove(player.getUniqueId()) : STONEFIST.put(player.getUniqueId(), level);
+        if (!java.util.Objects.equals(old, level)) {
+            player.updateInventory();
+        }
+    }
+
+    /** 2026-10-28 照 PoE2 石拳之道：腿甲（原作的手套）穿上時會變成什麼（沒點、不是腿甲回傳空的）。 */
+    static List<String> stonefistLines(final ExileCore core, final Player viewer, final ItemStack stack) {
+        final Integer level = STONEFIST.get(viewer.getUniqueId());
+        if (level == null) {
+            return List.of();
+        }
+        final Optional<tw.exilecore.item.ItemData> data = core.items().read(stack);
+        if (data.isEmpty()) {
+            return List.of();
+        }
+        final ItemBase base = core.items().repository().base(data.get().base());
+        if (base == null || base.slot() != ItemSlot.LEGS) {
+            return List.of();
+        }
+        return tw.exilecore.item.Stonefist.lines(core.items().repository(), data.get(), level);
     }
 
     private static boolean same(final List<SkillService.SkillHint> a, final List<SkillService.SkillHint> b) {
@@ -160,17 +200,19 @@ public final class TooltipHook {
             return List.of(); // 創造模式的物品會整個傳回伺服器，加了就會被寫進物品
         }
         final List<SkillService.SkillHint> hints = HINTS.get(viewer.getUniqueId());
-        if (hints == null || hints.isEmpty()) {
-            return List.of();
-        }
         try {
-            final List<String> lines = lines(core, hints, stack, EXPANDED.contains(viewer.getUniqueId()));
-            if (lines.isEmpty()) {
-                return List.of();
-            }
             final List<Component> out = new ArrayList<>();
-            out.add(Component.empty());
-            out.addAll(tw.exilecore.core.text.TextWrap.lines(lines)); // 2026-10-26：長行自動換行
+            // 2026-10-28 照 PoE2 石拳之道：腿甲穿上時變成磐石之拳的樣子
+            final List<String> stonefist = stonefistLines(core, viewer, stack);
+            if (!stonefist.isEmpty()) {
+                out.add(Component.empty());
+                out.addAll(tw.exilecore.core.text.TextWrap.lines(stonefist));
+            }
+            final List<String> lines = hints == null || hints.isEmpty() ? List.of() : lines(core, hints, stack, EXPANDED.contains(viewer.getUniqueId()));
+            if (!lines.isEmpty()) {
+                out.add(Component.empty());
+                out.addAll(tw.exilecore.core.text.TextWrap.lines(lines)); // 2026-10-26：長行自動換行
+            }
             return out;
         } catch (final RuntimeException e) {
             return List.of();

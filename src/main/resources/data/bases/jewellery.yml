@@ -281,6 +281,7 @@ jbelt_fine:
 jring_biostatic:
   # PoE2 Biostatic Ring
   name: 恆息指環
+  heist_only: true     # 2026-10-28 照站長：特殊戒指也只在劫盜掉（跟特殊項鍊一樣）；這次之前一般掉落、賭裝商人都拿得到
   family: jring
   drop_weight: 40
   material: HEART_OF_THE_SEA
@@ -300,6 +301,7 @@ jring_biostatic:
 jring_unset:
   # PoE2 Unset Ring：「多 1 個技能欄位」先略過（還沒有這個機制）
   name: 空座指環
+  heist_only: true     # 2026-10-28 照站長：特殊戒指也只在劫盜掉（跟特殊項鍊一樣）；這次之前一般掉落、賭裝商人都拿得到
   family: jring_special
   drop_weight: 4
   material: QUARTZ
@@ -312,6 +314,7 @@ jring_unset:
 jring_breach:
   # PoE2 Breach Ring：「+20% 品質上限」先略過（還沒有這個機制）
   name: 裂隙指環
+  heist_only: true     # 2026-10-28 照站長：特殊戒指也只在劫盜掉（跟特殊項鍊一樣）；這次之前一般掉落、賭裝商人都拿得到
   family: jring_special
   drop_weight: 4
   material: FERMENTED_SPIDER_EYE
@@ -324,6 +327,7 @@ jring_breach:
 jring_breach_refined:
   # PoE2 Refined Breach Ring：「+25% 品質上限」先略過（還沒有這個機制）
   name: 精煉裂隙指環
+  heist_only: true     # 2026-10-28 照站長：特殊戒指也只在劫盜掉（跟特殊項鍊一樣）；這次之前一般掉落、賭裝商人都拿得到
   family: jring_special
   drop_weight: 4
   material: BLAZE_POWDER
@@ -336,6 +340,7 @@ jring_breach_refined:
 jring_abyssal:
   # PoE2 Abyssal Signet：「擊中時造成深淵消蝕」先略過（還沒有這個機制）
   name: 淵印指環
+  heist_only: true     # 2026-10-28 照站長：特殊戒指也只在劫盜掉（跟特殊項鍊一樣）；這次之前一般掉落、賭裝商人都拿得到
   family: jring_special
   drop_weight: 4
   material: INK_SAC
@@ -373,6 +378,7 @@ jring_grasping:
 jring_dusk:
   # PoE2 Dusk Ring
   name: 暮光指環
+  heist_only: true     # 2026-10-28 照站長：特殊戒指也只在劫盜掉（跟特殊項鍊一樣）；這次之前一般掉落、賭裝商人都拿得到
   family: jring_special
   drop_weight: 4
   material: FIRE_CHARGE
@@ -390,6 +396,7 @@ jring_dusk:
 jring_gloam:
   # PoE2 Gloam Ring
   name: 幽微指環
+  heist_only: true     # 2026-10-28 照站長：特殊戒指也只在劫盜掉（跟特殊項鍊一樣）；這次之前一般掉落、賭裝商人都拿得到
   family: jring_special
   drop_weight: 4
   material: GLOWSTONE_DUST
@@ -407,6 +414,7 @@ jring_gloam:
 jring_penumbra:
   # PoE2 Penumbra Ring
   name: 半影指環
+  heist_only: true     # 2026-10-28 照站長：特殊戒指也只在劫盜掉（跟特殊項鍊一樣）；這次之前一般掉落、賭裝商人都拿得到
   family: jring_special
   drop_weight: 4
   material: COAL
@@ -424,6 +432,7 @@ jring_penumbra:
 jring_tenebrous:
   # PoE2 Tenebrous Ring
   name: 冥暗指環
+  heist_only: true     # 2026-10-28 照站長：特殊戒指也只在劫盜掉（跟特殊項鍊一樣）；這次之前一般掉落、賭裝商人都拿得到
   family: jring_special
   drop_weight: 4
   material: OBSIDIAN

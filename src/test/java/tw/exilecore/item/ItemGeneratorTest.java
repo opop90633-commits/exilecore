@@ -372,8 +372,9 @@ class ItemGeneratorTest {
         assertTrue(chance.canApply(ring, generator), "勁擊指環有能用僥倖石做出來的傳奇");
         final ItemData lowRing = generator.generate(repository.base("jring_16"), Rarity.NORMAL, 59, new Random(3));
         assertFalse(chance.canApply(lowRing, generator), "物品等級不夠（傳奇 60 級才有）");
-        final ItemData amulet = generator.generate(repository.base("jamulet_09"), Rarity.NORMAL, 60, new Random(3));
-        assertFalse(chance.canApply(amulet, generator), "天樞墜是終局 Boss 專屬，做不出來");
+        // 2026-10-28 照 PoE2：天樞墜（Astramentis）原作沒有掉落限制，改成全域（做得出來）；改用穿雲箭袋（Drillneck，原作限定 Boss 掉）
+        final ItemData quiver = generator.generate(repository.base("quiver_09"), Rarity.NORMAL, 60, new Random(3));
+        assertFalse(chance.canApply(quiver, generator), "穿雲箭袋是 Boss 限定，做不出來");
         final ItemData magic = generator.generate(repository.base("jring_16"), Rarity.MAGIC, 60, new Random(3));
         assertFalse(chance.canApply(magic, generator), "只能用在普通物品");
         final ItemData starter = generator.generate(repository.base("jring_16"), Rarity.NORMAL, 60, new Random(3));

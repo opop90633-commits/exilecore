@@ -55,6 +55,9 @@ class UniqueDataTest {
     static final Map<String, Integer> FEW_LINES = Map.of("celestial_pivot", 2, "colossus_heart", 2, "mirror_touch_ring", 1,
             "widowsong_bow", 1, "tainted_origin_ring", 2);
 
+    /** 2026-10-28 照 PoE2：禁止掉落（poe2db「禁止掉落」：Infernoclasp、Thunderstep、Forbidden Gaze）。 */
+    static final Set<String> DISABLED = Set.of("flameclasp_belt", "thunderdash_boots", "forbidden_tiara");
+
     @BeforeAll
     static void load() throws IOException, IllegalAccessException {
         repository = new ItemRepository();
@@ -101,14 +104,18 @@ class UniqueDataTest {
         // 2026-10-27 照 PoE2：藥劑生命／魔力回復速率（Flask Life/Mana Recovery rate；FlaskService.flaskRate 讀）
         stats.add(tw.exilecore.stats.KeystoneKeys.FLASK_LIFE_RATE);
         stats.add(tw.exilecore.stats.TreeEffectKeys.FLASK_MANA_RATE);
-        for (final String skill : List.of("decompose", "withering_presence", "lightning_bolt", "spark", "blink")) { // 2026-10-27：＋雷頌墜、縛地長杖、絲沙背心
+        for (final String skill : List.of("decompose", "withering_presence", "lightning_bolt", "spark", "blink",
+                "rite_of_restoration")) { // 2026-10-27：＋雷頌墜、縛地長杖、絲沙背心；2026-10-28：＋綺夢
             stats.add(tw.exilecore.item.unique.UniqueStats.GRANT_SKILL + skill);
         }
         tags = constants(Tags.class);
+        // 2026-10-28：敵人狀態的條件標籤（vs_immobilised、vs_cursed…；TargetConditions 照目標的狀態加進擊中的情境，帶這些標籤的修飾器才算）
+        tags.addAll(tw.exilecore.stats.TreeConditions.ENEMY);
         // 2026-10-27（王衛全鎧）：只對某一種球（charge.duration 寫 endurance 標籤，ChargeType.durationTicksFor）
         tags.addAll(tw.exilecore.charge.ChargeConfig.parse(YamlNode.load(DATA.resolve(tw.exilecore.charge.ChargeConfig.FILE))).keySet());
         tags.add(tw.exilecore.item.unique.UniqueStats.SKILL_TAG_PREFIX + "temporal_curse"); // 2026-10-26：只對某個技能（SkillBuild 的 skill:技能 標籤）
         tags.add("curse"); // 2026-10：詛咒技能的標籤（SkillDefinition 給範圍印記加的，Tags 沒有常數）
+        tags.addAll(tw.exilecore.stats.TreeConditions.ENEMY); // 2026-10-28（元素之章）：對敵人狀態的條件標籤（擊中時 TargetConditions 加進情境）
         final YamlNode mapsYml = YamlNode.load(DATA.resolve("maps.yml"));
         maps = new HashSet<>(mapsYml.node("maps").keys());
         maps.addAll(mapsYml.node("finals").keys()); // 其他終局 Boss 各自的傳奇寫終局的代號
@@ -130,7 +137,7 @@ class UniqueDataTest {
         assertTrue(repository.warnings().isEmpty(), String.join("\n", repository.warnings()));
         // 2026-10 PoE2 改版：舊的傳奇退役（retired，不算在 uniques() 裡），換成照 PoE2 的一批，加上劫盜、世界 Boss 的專屬
         // 2026-10-26 照 PoE2 0.5：＋30 件原作有、我們以前沒有的傳奇（淵握墜退役換成淵握戒，件數不變）
-        assertEquals(127 + 21 + 5 + 2 + 6 + 2 + 30 + 91 + 1, repository.uniques().size(), // 2026-10-27：＋91 件照 PoE2 0.5 的第二批（84 件一般、7 件追逐級）；2026-10-28：＋黯炎
+        assertEquals(127 + 21 + 5 + 2 + 6 + 2 + 30 + 91 + 1 + 9 + 21 - 3, repository.uniques().size(), // 2026-10-28 照站長刪掉焰扣束帶、奔雷皮靴、禁視鏈冠（－3）；2026-10-27：＋91 件照 PoE2 0.5 的第二批（84 件一般、7 件追逐級）；2026-10-28：＋黯炎；2026-10-28：＋9 件照 PoE2（綺夢、阿茲里的輕視、謎容、神聖烈焰、元素之章、貝雷克的兩枚、薛朗的背包、吉爾菲的聖殿）
                 // 2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件、淵鯨再 2 件；2026-10-24：＋6 件戰星傳奇；2026-10-26：＋永恆珠寶 2 件（英雄悲劇、不朽恨意）
                 "（2026-10-27 第二批 ＋91）終局 2 + 追逐級 13 + 其他終局 3 + 具名 Boss 2 + 共通 41（2026-10：＋德魯伊的獸魂符 4 件；2026-10-15 ＋6 件、＋3 件圖騰；2026-10-17 ＋棘壘） + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 11（2026-10-15 ＋1） + 四個終局共通 1（蛛巢壁壘） + 星骸之海的淵鯨 3 + 只能賭的 1（2026-10-17 踏骸之履）");
         final Set<String> names = new HashSet<>();
@@ -143,7 +150,8 @@ class UniqueDataTest {
             // 2026-10-27 照 PoE2 0.5：映鏡指環（Kalandra's Touch）、孀雨粗弓（Widowhail）原作只有一條，濁源指環（Original Sin）兩條
             final int least = FEW_LINES.getOrDefault(where, 3);
             assertTrue(unique.affixIds().size() + repository.uniqueVeiled(where).size() >= least, where + " 至少三條詞綴（隱匿傳奇的隱匿詞綴也算）");
-            assertFalse(unique.sources().isEmpty(), where + " 要有掉落來源");
+            // 2026-10-28 照 PoE2：poe2db「禁止掉落」的三件（焰扣束帶、奔雷皮靴、禁視鏈冠）sources 是空的
+            assertEquals(DISABLED.contains(where), unique.sources().isEmpty(), where + " 要有掉落來源（禁止掉落的才是空的）");
             for (final String source : unique.sources()) {
                 assertTrue(Set.of("final", "map_boss", "chance", "gamble", "chase").contains(source) || maps.contains(source)
                                 || EVENT_SOURCES.contains(source) || OTHER_SOURCES.contains(source)
@@ -191,9 +199,12 @@ class UniqueDataTest {
         final Set<String> finals = ids(repository.uniquesFor("final", 84));
         // 2026-10-15：＋蛛巢壁壘（四個終局都掉）；2026-10-26：＋英雄悲劇（照 PoE2 是終局級 Boss 奧爾羅斯掉的永恆珠寶）
         // 2026-10-26：英雄悲劇改成固定 1%（drop_chance），不在 final 的權重池裡，改由 fixedChanceUniques 擲
-        assertEquals(Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark"), finals);
+        // 2026-10-28 照 PoE2：＋原作限定 Boss 掉、我們沒有那個內容的（試煉大師的憎鑄腿鎧、阿茲里寶庫的穿雲箭袋與阿茲里的輕視、
+        //   灰燼仲裁者的神聖烈焰）；天樞墜、隕砧、蛛巢壁壘原作沒有限定，另外也是全域掉落
+        assertEquals(Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark", "hateforge_greaves", "tailwind_quiver",
+                "sacred_flame", "atziris_contempt"), finals);
         assertEquals(Set.of("heroic_tragedy"), ids(repository.fixedChanceUniques("final", 84)));
-        assertEquals(Set.of("undying_hate"), ids(repository.fixedChanceUniques("abyss_lich", 84)));
+        assertEquals(Set.of("undying_hate", "masters_reach"), ids(repository.fixedChanceUniques("abyss_lich", 84))); // 2026-10-28：＋主宰之觸（同一隻 Boss）
         assertFalse(ids(repository.uniquesFor("abyss_lich", 84)).contains("undying_hate"));
         assertEquals(0.01, repository.dropChance("heroic_tragedy"), 1e-12);
         assertEquals(0.01, repository.dropChance("undying_hate"), 1e-12);
@@ -212,14 +223,22 @@ class UniqueDataTest {
         // 練功用的兩件：劇情就賭得到，地圖 Boss 不掉
         assertTrue(ids(repository.uniquesFor("gamble", 5)).containsAll(Set.of("roamers_boots", "goldleaf_hood")));
         assertFalse(ids(repository.uniquesFor("map_boss", 84)).contains("roamers_boots"));
-        // Boss 專屬、地圖事件專屬、極境專屬、劫盜、世界 Boss 的做不出來、賭不到
+        // 2026-10-28 照 PoE2：限定掉落（Boss、地圖事件、極境、劫盜、世界 Boss 專屬）的做不出來、賭不到；
+        // 原作沒有掉落限制的（以前是內容專屬的）也是全域掉落，原本的內容照樣會掉。這次之前內容專屬的一律做不出來、賭不到
         for (final UniqueItem unique : repository.uniques()) {
-            final boolean exclusive = unique.droppedBy("final") || unique.droppedBy("royal_tomb") || unique.droppedBy("observatory")
-                    || unique.sources().stream().anyMatch(source -> EVENT_SOURCES.contains(source) || OTHER_SOURCES.contains(source)
-                    || source.startsWith("uber_"));
-            if (exclusive) {
+            if (!UniqueRarity.global(unique)) {
                 assertFalse(unique.droppedBy("chance") || unique.droppedBy("gamble") || unique.droppedBy("map_boss"), unique.id());
             }
+        }
+        for (final String id : List.of("hateforge_greaves", "tailwind_quiver", "pragmatist_armour", "wisdom_action_wraps", "collapsing_horizon",
+                "sacred_flame", "atziris_contempt", "votive_flame", "voidgaze_helm", "heroic_tragedy", "undying_hate")) {
+            assertFalse(UniqueRarity.global(repository.unique(id)), id + "：原作限定 Boss 掉");
+        }
+        for (final String id : List.of("sanctum_helm", "keymasters_ring", "phaseboots", "outlaws_vest", "dirge_staff", "somnambulist",
+                "celestial_pivot", "rime_halo", "gravewarden_maul", "blinkstep_shroud", "winterbound_ring", "worldsplitter")) {
+            final UniqueItem unique = repository.unique(id);
+            assertTrue(unique.droppedBy("map_boss") && unique.droppedBy("gamble") && UniqueRarity.global(unique), id + "：原作沒有掉落限制");
+            assertTrue(unique.sources().size() > 3, id + "：原本的內容照樣會掉");
         }
         // 每種地圖事件各五件（2026-10 擴充兩次，各多兩件；2026-10-18 深淵裂縫也五件）；每個極境各一件，而且物品等級 80 起
         for (final String event : EVENT_SOURCES) {
@@ -232,10 +251,15 @@ class UniqueDataTest {
         }
         // 2026-10：巔峰 Boss（覺醒之主・虛星）自己的十件，物品等級 85 起；做不出來、賭不到、一般地圖 Boss 不掉
         final List<UniqueItem> awakener = repository.uniquesFor("awakener", 92);
-        assertEquals(11, awakener.size(), "虛星的專屬傳奇（2026-10-15：＋神諭之矛）");
+        assertEquals(12, awakener.size(), "虛星的專屬傳奇（2026-10-15：＋神諭之矛；2026-10-28：＋無與倫比，原作灰燼仲裁者掉）");
         assertTrue(repository.uniquesFor("awakener", 84).isEmpty(), "虛星的傳奇物品等級 85 起");
         for (final UniqueItem unique : awakener) {
-            assertEquals(Set.of("awakener"), Set.copyOf(unique.sources()), unique.id());
+            // 2026-10-28 照 PoE2：瞬閃之影（Hyrri's Ire）、神諭之矛（The Ordained）原作沒有掉落限制，另外也是全域掉落
+            if (Set.of("blinkstep_shroud", "oracle_spear").contains(unique.id())) {
+                assertTrue(UniqueRarity.global(unique), unique.id());
+            } else {
+                assertEquals(Set.of("awakener"), Set.copyOf(unique.sources()), unique.id());
+            }
         }
         // 2026-10：星骸之海的淵鯨（比照巔峰）三件，物品等級 85 起，只有淵鯨會掉
         assertEquals(Set.of("abyss_echo", "tidewhisper_bow", "tide_devourer", "undertow_coil", "whalesong_pearl"), ids(repository.uniquesFor("abyss_whale", 92))); // 2026-10-18：＋暗流束帶、鯨歌珠
@@ -321,7 +345,13 @@ class UniqueDataTest {
         for (final UniqueItem unique : repository.uniques()) {
             if (!unique.chase()) {
                 // 劫盜的隱匿傳奇（2026-10）有 70–90 的，其他 100
-                assertTrue(unique.weight() >= (unique.droppedBy("heist") ? 70 : 100), unique.id() + "：一般傳奇權重 100");
+                // 2026-10-28 照 PoE2：全域掉落的照稀有度（常見 100…很稀有 8），但都比追逐級（≤ 10）的池子另外算；限定掉落的照舊 100
+                final UniqueRarity rarity = repository.uniqueRarity(unique.id());
+                if (rarity != null) {
+                    assertEquals(rarity.dropWeight(), unique.weight(), unique.id() + "：沒寫 weight 照稀有度");
+                } else {
+                    assertTrue(unique.weight() >= (unique.droppedBy("heist") ? 70 : 100), unique.id() + "：一般傳奇權重 100");
+                }
                 continue;
             }
             chase++;

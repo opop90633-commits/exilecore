@@ -196,8 +196,21 @@ S = {
     ('nova.radius', ('IceNovaPlayer', 'active_skill_base_area_of_effect_radius'), DM),
     ('level_modifiers[chill.effect/MORE].value', ('IceNovaPlayer', 'active_skill_chill_effect_+%_final'), ID),
     ('level_modifiers[freeze.buildup/MORE].value', ('IceNovaPlayer', 'active_skill_hit_damage_freeze_multiplier_+%_final'), ID)]),
+ # 2026-10-28 照 PoE2：加上持續時間、游走寬度、同一次施放打同一目標的間隔、冰灌注版（SparkColdInfusedPlayer）整組；這次之前只比投射物數
  'spark': dict(main='SparkPlayer', dmg=('SparkPlayer', 0), checks=[
-    ('projectile.count', ('SparkPlayer', 'base_number_of_projectiles', 0), ID)]),
+    ('projectile.count', ('SparkPlayer', 'base_number_of_projectiles', 0), ID),
+    ('projectile.speed', 10, lambda x: x / 20),                       # 每秒 10 公尺 → 每 tick 0.5 格
+    ('projectile.wander.duration', ('SparkPlayer', 'base_skill_effect_duration', 0), MS),
+    ('projectile.wander.width', ('SparkPlayer', 'spark_pathing_width_bounds', 0), DM),
+    ('projectile.wander.hit_cooldown', ('SparkPlayer', 'spark_min_time_between_target_clearing_ms', 0), MS),
+    ('resource.infused_set.projectiles', ('SparkPlayer', 'base_number_of_projectiles', 'SparkColdInfusedPlayer'), ID),
+    ('resource.infused_set.damage_by_type.cold', ('SparkPlayer', 'spell_minimum_base_cold_damage', 'SparkColdInfusedPlayer'), ID, 1e-6, 0),
+    ('resource.infused_set.damage_by_type.cold', ('SparkPlayer', 'spell_maximum_base_cold_damage', 'SparkColdInfusedPlayer'), ID, 1e-6, 1),
+    ('resource.infused_set.damage_by_type.lightning', ('SparkPlayer', 'spell_minimum_base_lightning_damage', 'SparkColdInfusedPlayer'), ID, 1e-6, 0),
+    ('resource.infused_set.damage_by_type.lightning', ('SparkPlayer', 'spell_maximum_base_lightning_damage', 'SparkColdInfusedPlayer'), ID, 1e-6, 1),
+    ('resource.infused[spell.base_crit/FLAT].value', '_crit:SparkPlayer:1', ID),
+    ('resource.infused[skill.base_cast_time/FLAT].value', ('SparkPlayer', 'base_spell_cast_time_ms', 'SparkColdInfusedPlayer'), MS)],
+    unrep=['施放時移動速度更少 70%（站長 2026-10-27「放技能減速全部移除」）']),
  'arc': dict(main='ArcPlayer', dmg=('ArcPlayer', 0), checks=[
     ('chain.chains', ('ArcPlayer', 'number_of_chains'), ID)]),
  'comet': dict(main='CometPlayer', dmg=('CometPlayer', 0), checks=[
@@ -410,6 +423,7 @@ S = {
  'contagion': dict(main='ContagionPlayer', checks=[
     ('modifiers[debuff.duration/FLAT].value', ('ContagionPlayer', 'base_skill_effect_duration'), MS),
     ('impact.radius', ('ContagionPlayer', 'active_skill_base_area_of_effect_radius'), DM),
+    ('modifiers[debuff.spread_radius/FLAT].value', ('ContagionPlayer', 'active_skill_base_area_of_effect_radius'), DM),   # 2026-10-28 傳染半徑
     ('level_modifiers[debuff.chaos_base/FLAT].value', ('ContagionPlayer', 'base_chaos_damage_to_deal_per_minute'), PM, 0.051)]),
  'arctic_howl': dict(main='WolfArcticHowlPlayer', dmg=('WolfArcticHowlPlayer', 0), checks=[
     ('warcry.radius', ('WolfArcticHowlPlayer', 'active_skill_base_area_of_effect_radius'), DM),

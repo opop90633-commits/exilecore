@@ -27,7 +27,10 @@ class HeistSpecialAmuletTest {
 
     static final Path DATA = Path.of("src/main/resources/data");
     static final Set<String> SPECIAL = Set.of("jamulet_twisted", "jamulet_distorted", "jamulet_dusk", "jamulet_gloam", "jamulet_penumbra",
-            "jamulet_tenebrous", "jamulet_corona");
+            "jamulet_tenebrous", "jamulet_corona",
+            // 2026-10-28 照站長：特殊戒指也只在劫盜掉
+            "jring_biostatic", "jring_unset", "jring_breach", "jring_breach_refined", "jring_abyssal", "jring_dusk", "jring_gloam",
+            "jring_penumbra", "jring_tenebrous");
     static final Set<String> RETIRED_SPECIAL = Set.of("jamulet_lament", "jamulet_portent", "jamulet_absent");
     static ItemRepository repository;
     static HeistConfig heist;
@@ -105,7 +108,7 @@ class HeistSpecialAmuletTest {
         assertEquals(0.005, amulets.chestChance(), 1e-9);
         assertEquals(0.005, amulets.vaultChance(), 1e-9);
         assertTrue(amulets.rare() > 0 && amulets.rare() < 1);
-        assertEquals(0.1, amulets.finaleWeight(), 1e-9);
+        assertEquals(0.045, amulets.finaleWeight(), 1e-9); // 2026-10-28：加了 9 種特殊戒指，0.1 → 0.045（總量不變）
         // 沒寫 special_amulet 的 heist.yml 用預設值
         final HeistConfig bare = new HeistConfig();
         bare.load(YamlNode.load("bare.yml", new java.io.StringReader("settings: {}\nsites:\n  a:\n    name: A\n    monsters: { ZOMBIE: 1 }\n    boss: { name: B, type: ZOMBIE }\n")));
@@ -119,7 +122,7 @@ class HeistSpecialAmuletTest {
             entries.add(FinalePool.Entry.unique("u" + i));
         }
         for (final String id : SPECIAL) {
-            entries.add(FinalePool.Entry.base(id, 0.1));
+            entries.add(FinalePool.Entry.base(id, 0.045));
         }
         final Random random = new Random(11);
         int withAmulet = 0;

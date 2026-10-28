@@ -52,10 +52,17 @@ class EventPinnacleContentTest {
 
     @Test
     void everyEventBossHasThreeUniquesTwoSkillsAndThreeSupports() {
+        // 2026-10-28 照 PoE2：原作限定那隻巔峰 Boss 掉的傳奇（物品等級照原作）也放進來：裂隙 ← 知行捲布、祭壇 ← 務實戰甲、幻霧 ← 崩落地平
+        final java.util.Map<String, Set<String>> poe2 = java.util.Map.of("breach_lord", Set.of("wisdom_action_wraps"),
+                "ritual_priest", Set.of("pragmatist_armour"), "delirium_mirror", Set.of("collapsing_horizon"));
         for (final String boss : BOSSES.keySet()) {
-            final List<UniqueItem> uniques = repository.uniquesFor(boss, 92);
+            final Set<String> extra = poe2.getOrDefault(boss, Set.of());
+            final List<UniqueItem> uniques = repository.uniquesFor(boss, 92).stream().filter(u -> !extra.contains(u.id())).toList();
             assertEquals(3, uniques.size(), boss + " 的專屬傳奇");
-            assertTrue(repository.uniquesFor(boss, 84).isEmpty(), boss + "：專屬傳奇物品等級 85 起");
+            assertTrue(repository.uniquesFor(boss, 84).stream().allMatch(u -> extra.contains(u.id())), boss + "：專屬傳奇物品等級 85 起");
+            for (final String id : extra) {
+                assertEquals(Set.of(boss), Set.copyOf(repository.unique(id).sources()), id + "：原作限定這隻 Boss 掉");
+            }
             int jewels = 0;
             for (final UniqueItem unique : uniques) {
                 assertEquals(Set.of(boss), Set.copyOf(unique.sources()), unique.id());

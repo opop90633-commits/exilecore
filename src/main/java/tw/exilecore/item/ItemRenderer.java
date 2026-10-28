@@ -80,6 +80,18 @@ public final class ItemRenderer {
         this.omens = omens;
     }
 
+    /** 2026-10-28：法杖、長杖、權杖賦予的技能顯示文字（基底代號, 物品等級 → 「Lv.x 名稱」；技能模組接上，沒有就不寫）。 */
+    private java.util.function.BiFunction<String, Integer, String> grantedLabel;
+
+    public void setGrantedLabel(final java.util.function.BiFunction<String, Integer, String> label) {
+        this.grantedLabel = label;
+    }
+
+    /** 這個基底在這個物品等級賦予的技能（「Lv.x 名稱」）；沒有回傳 null。 */
+    public String grantedLabel(final String baseId, final int itemLevel) {
+        return grantedLabel == null || repository.grantedSkill(baseId) == null ? null : grantedLabel.apply(baseId, itemLevel);
+    }
+
     /** 建立一個全新的 ItemStack（不含 PDC，由 ItemService 補上）。 */
     public ItemStack create(final ItemData data) {
         final ItemBase base = repository.requireBase(data.base());
@@ -296,6 +308,11 @@ public final class ItemRenderer {
         }
         if (base.isMap()) {
             return buildMapLore(base, data, lore);
+        }
+        // 2026-10-28 照站長（PoE2 的 Grants Skill）：法杖、長杖、權杖直接寫賦予的技能；這次之前要拿在手上看技能面板才知道
+        final String granted = grantedLabel(data.base(), Math.max(1, data.ilvl()));
+        if (granted != null) {
+            lore.add(line("<gray>賦予技能：<#c9a7ff>" + escape(granted)));
         }
 
         // 基底數值

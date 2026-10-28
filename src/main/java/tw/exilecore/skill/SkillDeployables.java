@@ -84,6 +84,8 @@ final class SkillDeployables implements Listener {
         final Map<UUID, Long> attacks = new HashMap<>();
         /** 2026-10-26 照 PoE2 先祖魂約：這根圖騰保留精魂（放的時候有那顆基石）。 */
         boolean spiritBond;
+        /** 2026-10-28 照站長：這根圖騰保留多少精魂（75 × 精魂保留效率，放的時候算好）。 */
+        double bondSpirit = tw.exilecore.stats.TotemKeys.ANCESTRAL_BOND_SPIRIT;
         /** 2026-10-26 照 PoE2 天賦：圖騰每秒回復最大生命的 x%。 */
         double regen;
         /** 2026-10-26 照 PoE2「砲彈準備好了！」：這根圖騰只在你發射攻擊投射物時用技能；上一次用掉的是哪一次發射（tick）。 */
@@ -325,20 +327,51 @@ final class SkillDeployables implements Listener {
         return count;
     }
 
+    /** 先祖魂約保留精魂的來源名稱（屬性表、角色面板的保留明細）。 */
+    static final String BOND_SOURCE = "先祖魂約";
+
+    /** 這個玩家放著、保留精魂（先祖魂約）的圖騰有幾根。 */
+    int bondedTotems(final UUID owner) {
+        int bonded = 0;
+        for (final Deployed item : deployed) {
+            if (item.owner.equals(owner) && item.spiritBond) {
+                bonded++;
+            }
+        }
+        return bonded;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2：先祖魂約的圖騰保留了多少精魂（每根 75）。光環、精魂召喚、主要寶石算還剩多少精魂時要先扣掉這些
+     * （{@link AuraService#capacity(Player)}，全部的保留共用同一個精魂池）；這次之前光環那邊只看最大精魂。
+     */
+    double spiritReserved(final UUID owner) {
+        double total = 0;
+        for (final Deployed item : deployed) {
+            if (item.owner.equals(owner) && item.spiritBond) {
+                total += item.bondSpirit; // 2026-10-28：每根照放的時候的保留效率；這次之前固定每根 75
+            }
+        }
+        return total;
+    }
+
+    /** 2026-10-28 照站長：先祖魂約每根圖騰保留的精魂＝75 × 保留效率（跟光環一樣：SkillBuild.reservationFactor、更多／更少另外乘）。 */
+    static double bondSpirit(final tw.exilecore.stats.StatSheet effective, final SkillBuild build) {
+        final java.util.Set<String> context = build.profile().tags();
+        final double factor = SkillBuild.reservationFactor(effective.increased(tw.exilecore.stats.StatKeys.AURA_RESERVATION, context))
+                * Math.max(0, effective.more(tw.exilecore.stats.StatKeys.AURA_RESERVATION, context));
+        return Math.max(0, tw.exilecore.stats.TotemKeys.ANCESTRAL_BOND_SPIRIT * factor);
+    }
+
     /** 圖騰給施放者的增益（屬性表的來源）。 */
     List<Modifier> modifiers(final Player player) {
         List<Modifier> list = null;
         final java.util.Set<String> counted = new java.util.HashSet<>();
-        int bonded = 0;
-        for (final Deployed item : deployed) {
-            if (item.owner.equals(player.getUniqueId()) && item.spiritBond) {
-                bonded++;
-            }
-        }
-        if (bonded > 0) {
+        final double bondReserve = spiritReserved(player.getUniqueId());
+        if (bondReserve > 0) {
             // 2026-10-26 照 PoE2 先祖魂約：每個圖騰保留 75 精魂（這次之前沒有保留，反而讓圖騰技能不花魔力）
             list = new ArrayList<>();
-            list.add(Modifier.flat(tw.exilecore.stats.StatKeys.SPIRIT_RESERVED, bonded * tw.exilecore.stats.TotemKeys.ANCESTRAL_BOND_SPIRIT, "先祖魂約"));
+            list.add(Modifier.flat(tw.exilecore.stats.StatKeys.SPIRIT_RESERVED, bondReserve, BOND_SOURCE));
         }
         for (final Deployed item : deployed) {
             if (item.owner.equals(player.getUniqueId()) && item.spec.kind() == DeploySpec.Kind.TOTEM && !item.spec.buff().isEmpty()
@@ -485,6 +518,7 @@ final class SkillDeployables implements Listener {
             item.vengefulLife = Math.max(1, plugin.players().get(player).maxLife() * totemLifeFactor(build.level()) * lifeScale);
             item.life = item.maxLife;
             item.spiritBond = tw.exilecore.stats.StatKeys.flag(effective, tw.exilecore.stats.StatKeys.FLAG_ANCESTRAL_BOND);
+            item.bondSpirit = bondSpirit(effective, build); // 2026-10-28 照站長：吃精魂保留效率；這次之前固定 75
             item.regen = Math.max(0, effective.flat(tw.exilecore.stats.TotemKeys.REGEN, tags));
             item.onProjectile = tw.exilecore.stats.StatKeys.flag(effective, tw.exilecore.stats.TotemKeys.FLAG_ON_ATTACK_PROJECTILE);
             item.usedFire = lastFire.getOrDefault(player.getUniqueId(), Long.MIN_VALUE);
@@ -850,9 +884,10 @@ final class SkillDeployables implements Listener {
                 final boolean replacing = mine >= Math.max(1, build.totems()) && freesBonded;
                 final tw.exilecore.character.PlayerState state = plugin.players().get(player);
                 final double free = state.maxSpirit() - state.reservedSpirit();
-                if (!replacing && free + 1e-9 < tw.exilecore.stats.TotemKeys.ANCESTRAL_BOND_SPIRIT) {
+                final double need = bondSpirit(effective, build); // 2026-10-28：吃精魂保留效率
+                if (!replacing && free + 1e-9 < need) {
                     return String.format(java.util.Locale.ROOT, "精魂不足：先祖魂約每個圖騰要保留 %.0f 精魂（剩 %.0f）",
-                            tw.exilecore.stats.TotemKeys.ANCESTRAL_BOND_SPIRIT, Math.max(0, free));
+                            need, Math.max(0, free));
                 }
             }
         }
@@ -981,15 +1016,91 @@ final class SkillDeployables implements Listener {
             return;
         }
         // 2026-10-20：吃攻速／施法速度；2026-10-26 照 PoE2：崩震圖騰照武器攻速的一半、星咒圖騰品質照召喚中的圖騰數加施法速度
-        final SkillBuild cast = rotate(item.build, item.moreCasts, item.turn++); // 2026-10-27 照 PoE2 星咒圖騰：輪流放孔裡的法術
+        // 2026-10-27 照 PoE2 星咒圖騰：輪流放孔裡的法術。
+        // 2026-10-28 照 PoE2：現在放不出來的跳過、換下一個（雷遁要有撲殺得到的敵人、骸爆要有屍體；論壇回報圖騰會一直放別的法術，
+        //   等到有撲殺得到的才放雷遁）；都放不出來就等一下再看。這次之前照順序輪，雷遁、骸爆不能交給圖騰
+        final LivingEntity aimed = target;
+        final LivingEntity[] cull = new LivingEntity[1];
+        final int size = 1 + item.moreCasts.size();
+        final int skip = firstUsable(item.turn, size, index -> {
+            final SkillBuild candidate = rotate(item.build, item.moreCasts, index);
+            if (SkillExecutor.hasFlag(candidate.definition(), tw.exilecore.stats.StatKeys.FLAG_LIGHTNING_WARP)) {
+                cull[0] = cullTarget(item, owner, candidate);
+                return LightningWarp.chooseTotem(cull[0] != null) == LightningWarp.Pick.CULL;
+            }
+            if (candidate.definition().mechanic() == Mechanic.CORPSE) {
+                return executor.corpseNear(Origin.towards(owner, item.feet, aimed), candidate, aimed) != null;
+            }
+            return true;
+        });
+        if (skip < 0) {
+            item.nextTick = now + 5;
+            return;
+        }
+        final SkillBuild cast = rotate(item.build, item.moreCasts, item.turn + skip);
+        item.turn += skip + 1;
         item.nextTick = now + totemTicks(cast, plugin.players().sheet(owner), totemsOf(owner.getUniqueId()));
         item.usedFire = fired;
-        final Origin origin = Origin.towards(owner, item.feet, target);
+        final SkillBuild lineaged = plugin.skills() == null ? cast
+                : plugin.skills().supportMechanics().lineage().totemCast(owner, item.feet, cast); // 2026-10-27 照 PoE2：林樁
         visuals.deployCast(cast.definition().visual(), item.feet);
-        executor.executeFrom(origin, plugin.skills() == null ? cast
-                : plugin.skills().supportMechanics().lineage().totemCast(owner, item.feet, cast), target); // 2026-10-27 照 PoE2：林樁
+        if (SkillExecutor.hasFlag(cast.definition(), tw.exilecore.stats.StatKeys.FLAG_LIGHTNING_WARP)) {
+            // 2026-10-28 照 PoE2：圖騰放雷遁 → 圖騰自己瞬移進撲殺得到的那隻炸開（感電地面、撲殺、炸周圍），然後站在那裡繼續放
+            moveTotem(item, executor.totemWarp(owner, lineaged, cull[0]));
+        } else {
+            executor.executeFrom(Origin.towards(owner, item.feet, target), lineaged, target);
+        }
         jaggedEruption(item, owner);
         splinter(item, owner, now); // 2026-10-27 照 PoE2 Splinter Totem
+    }
+
+    /**
+     * 2026-10-28：從第 turn 個開始輪（共 size 個），第一個 usable 的離 turn 幾個；都不行回傳 -1。
+     * usable 收到的是輪到的那個的序號（0 是第一孔）。
+     */
+    static int firstUsable(final int turn, final int size, final java.util.function.IntPredicate usable) {
+        for (int i = 0; i < size; i++) {
+            if (usable.test(Math.floorMod(turn + i, size))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** 2026-10-28 照 PoE2：圖騰放雷遁的目標：圖騰範圍（也在雷遁距離內）裡看得到、撲殺得到的最近一隻；沒有回傳 null。 */
+    private LivingEntity cullTarget(final Deployed item, final Player owner, final SkillBuild warp) {
+        final double range = Math.min(item.spec.range(), Math.max(1, warp.range()));
+        final Origin look = Origin.at(owner, item.feet, item.feet.getDirection());
+        LivingEntity best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (final LivingEntity candidate : targets.around(item.feet, range, owner)) {
+            final double distance = candidate.getLocation().distanceSquared(item.feet);
+            if (distance < bestDistance && look.canSee(candidate) && executor.cullable(candidate)) {
+                bestDistance = distance;
+                best = candidate;
+            }
+        }
+        return best;
+    }
+
+    /** 2026-10-28 照 PoE2：圖騰瞬移（雷遁）：圖騰、頭上的名字搬到 to 的地面上，面向不變。 */
+    private void moveTotem(final Deployed item, final Location to) {
+        if (to == null || to.getWorld() == null) {
+            return;
+        }
+        final Location landing = ground(to);
+        final Location at = landing == null ? to : landing;
+        item.feet.setWorld(at.getWorld());
+        item.feet.setX(at.getX());
+        item.feet.setY(at.getY());
+        item.feet.setZ(at.getZ());
+        if (item.stand.isValid()) {
+            item.stand.teleport(item.feet);
+        }
+        if (item.tag != null && item.tag.isValid()) {
+            item.tag.teleport(item.feet.clone().add(0, TAG_HEIGHT, 0));
+        }
+        visuals.deploy(item.build.definition().visual(), item.spec.kind(), item.feet);
     }
 
     // ---- 2026-10-27 照 PoE2 Splinter Totem（裂樁）----

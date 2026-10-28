@@ -342,13 +342,13 @@ public final class CharacterService {
             final ItemStack voucher = items.retiredReplacement(stack);
             if (i < STORAGE_SLOTS) {
                 if (voucher != null) {
-                    inventory.setItem(i, voucher);
-                    count++;
+                    inventory.setItem(i, voucher.isEmpty() ? null : voucher);
+                    count += voucher.isEmpty() ? 0 : 1; // 2026-10-28：刪除的傳奇不算
                 }
             } else if (voucher != null || isVoucher(stack)) {
                 inventory.setItem(i, null);
                 give.add(voucher != null ? voucher : stack);
-                count += voucher != null ? 1 : 0;
+                count += voucher != null && !voucher.isEmpty() ? 1 : 0;
             }
         }
         for (int i = 0; i < state.jewellery().length; i++) {
@@ -357,7 +357,7 @@ public final class CharacterService {
             if (voucher != null || isVoucher(stack)) {
                 state.setJewellery(i, null);
                 give.add(voucher != null ? voucher : stack);
-                count += voucher != null ? 1 : 0;
+                count += voucher != null && !voucher.isEmpty() ? 1 : 0;
             }
         }
         for (int set = 0; set < PlayerState.GEAR_SETS; set++) {
@@ -366,7 +366,7 @@ public final class CharacterService {
                 final ItemStack voucher = items.retiredReplacement(gear[i]);
                 if (voucher != null || isVoucher(gear[i])) {
                     give.add(voucher != null ? voucher : gear[i]);
-                    count += voucher != null ? 1 : 0;
+                    count += voucher != null && !voucher.isEmpty() ? 1 : 0;
                     gear[i] = null;
                 }
             }
@@ -376,6 +376,7 @@ public final class CharacterService {
                 count += items.replaceRetired(state.bag().page(page));
             }
         }
+        give.removeIf(stack -> stack == null || stack.isEmpty()); // 2026-10-28：刪除的傳奇（空格）不用放回背包
         for (final ItemStack stack : give) {
             for (final ItemStack rest : inventory.addItem(stack).values()) {
                 plugin.personalDrops().dropForever(player, rest);

@@ -28,13 +28,13 @@ public final class SupportKeys {
     /** INCREASED：對被定住（凍結、重暈、定身、電擊）的敵人的暴擊率（釘地 II）。 */
     public static final String CRIT_VS_IMMOBILISED = "crit.vs_immobilised";
 
-    // ---- 斷命 ----
+    // ---- 撲殺 ----
 
-    /** FLAG：只對稀有與傳奇（含 Boss）的敵人斷命（斷命 I／II）。 */
+    /** FLAG：只對稀有與傳奇（含 Boss）的敵人撲殺（撲殺 I／II）。 */
     public static final String FLAG_CULLING_RARE = "flag.culling_rare";
-    /** FLAT：斷命打死敵人後 20 秒內，斷命門檻增加 x%（斷命 II）。 */
+    /** FLAT：撲殺打死敵人後 20 秒內，撲殺門檻增加 x%（撲殺 II）。 */
     public static final String CULL_THRESHOLD_ON_CULL = "culling.threshold_on_cull";
-    /** INCREASED：斷命的門檻（給你自己的增益）。 */
+    /** INCREASED：撲殺的門檻（給你自己的增益）。 */
     public static final String CULL_THRESHOLD = "culling.threshold";
 
     // ---- 定身累積（釘地）----
@@ -80,6 +80,9 @@ public final class SupportKeys {
     public static final String WITHER_SECONDS = "withered.seconds";
 
     // ---- 投射物 ----
+
+    /** FLAG：投射物速度的增加與減少也套用在被輔助技能的投射物傷害上（2026-10-28 照 PoE2 Projectile Acceleration III：疾矢 III，SkillBuild）。 */
+    public static final String FLAG_PROJECTILE_SPEED_TO_DAMAGE = "flag.projectile_speed_to_damage";
 
     /** FLAG：投射物穿透點燃中的敵人（穿燼）。 */
     public static final String PIERCE_IGNITED = "projectile.pierce_ignited";
@@ -146,7 +149,7 @@ public final class SupportKeys {
     public static final String ICE_BITE = "freeze.ice_bite";
     /** FLAT：冰嚙的秒數。 */
     public static final String ICE_BITE_SECONDS = "freeze.ice_bite_seconds";
-    /** FLAG：被強化的技能有斷命（決嘯）。 */
+    /** FLAG：被強化的技能有撲殺（決嘯）。 */
     public static final String FLAG_EMPOWERED_CULL = "flag.empowered_cull";
     /** FLAG：被強化的攻擊消耗更少 30%、命中更多 30%（嘯準）。 */
     public static final String FLAG_UNERRING = "flag.unerring_power";

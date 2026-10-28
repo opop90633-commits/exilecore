@@ -286,6 +286,9 @@ class MapTest {
         // 換界石掉落更多：四條相乘（萎力 20%、地面 15%、火焰 15%、傷害 20%）
         assertEquals((1.2 * 1.15 * 1.15 * 1.2 - 1) * 100, stats.extra("map.waystones"), 1e-6);
         assertEquals(-0.29, MapHazards.debuff("enfeeble", 100).mods().getFirst().value(), 1e-9);
+        // 2026-10-28 照 PoE2 Ignited Ground：6000 ÷ 10 ＝ 視同 600 點火焰傷害（68 級），照怪物傷害表換等級
+        assertEquals(600, MapHazards.groundFire(6000, new double[] {MapHazards.FIRE_REFERENCE_DAMAGE, MapHazards.FIRE_REFERENCE_DAMAGE}), 1e-9);
+        assertEquals(1200, MapHazards.groundFire(6000, new double[] {MapHazards.FIRE_REFERENCE_DAMAGE * 2, MapHazards.FIRE_REFERENCE_DAMAGE * 2}), 1e-9);
     }
 
     @Test
@@ -402,11 +405,12 @@ class MapTest {
 
     @Test
     void uniquesLoadAndRoll() {
-        assertEquals(127 + 21 + 5 + 2 + 6 + 30 + 2 + 91 + 1, repository.uniques().size(), "2026-10-28：＋黯炎；2026-10-27：＋91 件照 PoE2 的第二批傳奇（7 件追逐級）；2026-10-26：＋30 件照 PoE2 的新傳奇、永恆珠寶 2 件（英雄悲劇、不朽恨意）；2026-10-24：＋6 件戰星傳奇；2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件；2026-10 照 PoE2 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件、德魯伊的獸魂符 4 件；2026-10-15 追逐級多 8 件、共通多 6 件；星骸之海的淵鯨 3 件；2026-10-17 只能賭的踏骸之履；共通的荊棘盾棘壘）");
+        assertEquals(127 + 21 + 5 + 2 + 6 + 30 + 2 + 91 + 1 + 9 + 21 - 3, repository.uniques().size(), "2026-10-28 照站長刪掉焰扣束帶、奔雷皮靴、禁視鏈冠（－3）；2026-10-28：＋9 件照 PoE2（綺夢、阿茲里的輕視、謎容、神聖烈焰、元素之章、貝雷克的兩枚、薛朗的背包、吉爾菲的聖殿）；2026-10-28：＋黯炎；2026-10-27：＋91 件照 PoE2 的第二批傳奇（7 件追逐級）；2026-10-26：＋30 件照 PoE2 的新傳奇、永恆珠寶 2 件（英雄悲劇、不朽恨意）；2026-10-24：＋6 件戰星傳奇；2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件；2026-10 照 PoE2 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件、德魯伊的獸魂符 4 件；2026-10-15 追逐級多 8 件、共通多 6 件；星骸之海的淵鯨 3 件；2026-10-17 只能賭的踏骸之履；共通的荊棘盾棘壘）");
         final ItemData dropped = MapDrops.unique(generator, "final", 68, new Random(5));
         assertNotNull(dropped);
         assertEquals(Rarity.UNIQUE, dropped.rarity());
-        assertTrue(java.util.Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark").contains(dropped.unique()), "終局掉的是終局的傳奇（2026-10：天穹之心、星鑄退役，換成新的兩件）");
+        assertTrue(java.util.Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark", "hateforge_greaves", "tailwind_quiver", "sacred_flame",
+                "atziris_contempt").contains(dropped.unique()), "終局掉的是終局的傳奇（2026-10：天穹之心、星鑄退役，換成新的兩件；2026-10-28 照 PoE2：＋原作 Boss 限定的四件）");
         assertNull(repository.unique("sky_heart"), "退役的傳奇定義刪掉了（2026-10-15）");
         final ItemData pivot = generator.generateUnique(repository.unique("celestial_pivot"), 68, new Random(5));
         assertEquals("celestial_pivot", pivot.unique());

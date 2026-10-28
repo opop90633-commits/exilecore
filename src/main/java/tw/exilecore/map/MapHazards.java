@@ -169,6 +169,15 @@ final class MapHazards {
         return "map:" + instanceId;
     }
 
+    /**
+     * 2026-10-28 照 PoE2 Ignited Ground：地圖的點燃地面「視同多少火焰傷害」＝ map_base_ground_fire_damage_to_deal_per_10_seconds ÷ 10，
+     * 照怪物傷害表換到這張圖的等級（68 級為準）。玩家踩上去疊易燃（÷ 異常門檻），到 50% 才點燃，點燃每秒是這個數的 20%。
+     * 這次之前同一個數字直接當成每秒傷害（每 0.25 秒點燃 2 秒），是 PoE2 的 5 倍。
+     */
+    static double groundFire(final double fire, final double[] damageAtLevel) {
+        return fire / 10.0 * ((damageAtLevel[0] + damageAtLevel[1]) / 2) / FIRE_REFERENCE_DAMAGE;
+    }
+
     /** 開地圖之後第一次看到：照詞綴撒地面效果（一張圖只撒一次）。 */
     private void ground(final MapInstance instance, final MapStats stats) {
         if (grounded.contains(instance.id())) {
@@ -202,7 +211,7 @@ final class MapHazards {
         final double value;
         if (fire > 0) {
             final double[] damage = plugin.monsters() == null ? new double[] {1, 1} : plugin.monsters().config().damageAt(instance.level());
-            value = fire / 10.0 * ((damage[0] + damage[1]) / 2) / FIRE_REFERENCE_DAMAGE; // 每秒火焰傷害
+            value = groundFire(fire, damage);
         } else if (chill > 0) {
             value = chill / 100.0;
         } else {

@@ -15,6 +15,12 @@ public final class SkillMechanicKeys {
      */
     public static final String DEBUFF_CHAOS_BASE = "debuff.chaos_base";
 
+    /**
+     * FLAT：掛著會傳染的減益（flag.debuff_spread，瘟疫）的敵人死掉時傳染的半徑（格），乘這個技能的範圍加成（√ 增加／更多範圍）。
+     * 2026-10-28 照 PoE2 Contagion（Spread radius 1.7 公尺）；這次之前固定 4 格。
+     */
+    public static final String DEBUFF_SPREAD_RADIUS = "debuff.spread_radius";
+
     /** FLAG：這個技能留下的地面效果不打人，每一跳像打中一樣讓裡面的敵人中毒（蝕毒箭、瘴氣榴彈的毒霧）。 */
     public static final String FLAG_GROUND_POISON_ONLY = "flag.ground_poison_only";
 

@@ -373,17 +373,65 @@ public final class Gear {
             return null; // 2026-10-27 照 PoE2 基石・巨人之血：兩手各拿一把雙手斧、錘、劍（雙持，DualWield）
         }
         if (off != null && off.slot() == tw.exilecore.item.ItemSlot.MAIN_HAND) {
-            // 2026-10-27 照 PoE2 基石・荒野領主：持用獸魂符時可以在副手再裝一把非傳奇權杖；這次之前副手放不了權杖（平衡等效給 100 精魂）
-            return sceptreOffHand(main, off, sheet) ? null
-                    : "副手不能放武器（荒野領主：持用獸魂符時可以再裝一把權杖；巨人之血：兩手各拿一把雙手斧、錘、劍）";
+            // 2026-10-28 照 PoE2 0.5（poe2db Sceptres：「Sceptres can be equipped in your main hand or off hand」「you cannot Dual Wield two Sceptres」）：
+            // 權杖可以放副手（主手是單手武器或空著）；不能兩把權杖；雙手武器配權杖要荒野領主（獸魂符）。
+            // 這次之前副手的權杖只有荒野領主才行
+            if (off.tags().contains("sceptre")) {
+                return sceptreOffHand(main, off, sheet) ? null : sceptreOffHandProblem(main);
+            }
+            return "副手不能放武器（權杖除外；巨人之血：兩手各拿一把雙手斧、錘、劍）";
         }
         return pairProblem(main, off);
     }
 
-    /** 荒野領主（PoE2）：主手是獸魂符、點了荒野領主，副手可以裝權杖（傳奇另外在裝上時擋：{@link #uniqueSceptre}）。 */
+    /**
+     * 副手能不能放這把權杖（2026-10-28 照 PoE2 0.5）：權杖是單手武器，主手、副手都能放——主手空著、或拿單手武器（不是權杖：不能雙持兩把權杖）；
+     * 主手是雙手武器時只有荒野領主（點了、主手是獸魂符）可以（傳奇另外擋：{@link #lordOfWildsSceptre}、{@link #uniqueSceptre}）。
+     * 這次之前只有荒野領主那一種。
+     */
     public static boolean sceptreOffHand(final ItemBase main, final ItemBase off, final tw.exilecore.stats.StatSheet sheet) {
-        return main != null && off != null && sheet != null && off.tags().contains("sceptre") && main.tags().contains(tw.exilecore.stats.Tags.TALISMAN)
+        if (off == null || !off.tags().contains("sceptre")) {
+            return false;
+        }
+        if (main == null) {
+            return true;
+        }
+        if (main.tags().contains("sceptre")) {
+            return false;
+        }
+        if (main.hasTag(tw.exilecore.stats.Tags.TWO_HAND)) {
+            return lordOfWildsSceptre(main, sheet);
+        }
+        return main.isWeapon();
+    }
+
+    /** 荒野領主（PoE2）：主手是獸魂符、點了荒野領主，副手可以再裝一把非傳奇權杖。 */
+    public static boolean lordOfWildsSceptre(final ItemBase main, final tw.exilecore.stats.StatSheet sheet) {
+        return main != null && sheet != null && main.tags().contains(tw.exilecore.stats.Tags.TALISMAN)
                 && tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_LORD_OF_WILDS);
+    }
+
+    /** 副手的權杖不能放的原因（{@link #sceptreOffHand} 不成立時）。 */
+    static String sceptreOffHandProblem(final ItemBase main) {
+        if (main != null && main.tags().contains("sceptre")) {
+            return "不能同時拿兩把權杖";
+        }
+        if (main != null && main.hasTag(tw.exilecore.stats.Tags.TWO_HAND)) {
+            return "雙手武器不能配權杖（荒野領主：持用獸魂符時可以再裝一把非傳奇權杖）";
+        }
+        return "副手的權杖要配單手武器";
+    }
+
+    /** 2026-10-28：副手的權杖有沒有問題（含荒野領主只收非傳奇）；沒問題回傳 null。 */
+    public static String offHandSceptreProblem(final ItemBase main, final ItemBase off, final ItemData data,
+                                               final tw.exilecore.stats.StatSheet sheet) {
+        if (!sceptreOffHand(main, off, sheet)) {
+            return sceptreOffHandProblem(main);
+        }
+        if (main != null && main.hasTag(tw.exilecore.stats.Tags.TWO_HAND) && uniqueSceptre(data)) {
+            return "荒野領主只能在副手裝非傳奇的權杖";
+        }
+        return null;
     }
 
     /**
@@ -403,22 +451,50 @@ public final class Gear {
 
     /**
      * 裝上的時候放哪一格（2026-10-27）：權杖本來是主手；荒野領主拿著獸魂符時放副手（換掉獸魂符不合理）。
+     * 2026-10-28 照 PoE2：主手拿著單手武器（不是權杖）時，權杖放副手（換下副手的盾、法器或舊權杖）；這次之前一律換掉主手。
      *
-     * 傳奇權杖照常放主手（原作只收非傳奇）。
+     * 傳奇權杖配獸魂符照常放主手（原作荒野領主只收非傳奇）。
      *
      * @return 欄位（{@link #index}）
      */
     int target(final PlayerState state, final ItemBase base, final ItemStack stack) {
+        return target(state, base, stack, -1);
+    }
+
+    /** preferred：拿著裝備點了哪一格（{@link #index}；-1 = 沒指定）——點副手那格的權杖放副手（能放的話）。 */
+    int target(final PlayerState state, final ItemBase base, final ItemStack stack, final int preferred) {
         final int target = index(base.slot());
-        if (target == MAIN && base.tags().contains("sceptre") && sceptreOffHand(baseOf(state.jewellery(MAIN)), base, state.sheet())
-                && !uniqueSceptre(plugin.items().read(stack).orElse(null))) {
-            return OFF;
+        if (target == MAIN && base.tags().contains("sceptre")) {
+            final ItemBase main = baseOf(state.jewellery(MAIN));
+            final boolean offOk = offHandSceptreProblem(main, base, plugin.items().read(stack).orElse(null), state.sheet()) == null;
+            if (offOk && (main != null || preferred == OFF)) {
+                return OFF;
+            }
         }
         // 2026-10-27 巨人之血：主手已經拿著雙手斧、錘、劍、副手空著，再裝一把就放副手（雙持）；副手有東西的話照常換主手
         if (target == MAIN && state.jewellery(OFF) == null && giantOffHand(baseOf(state.jewellery(MAIN)), base, state.sheet())) {
             return OFF;
         }
         return target;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2（權杖主手、副手都能放）：主手拿著權杖、副手空著，再裝一把單手武器（不是權杖）時，權杖移到副手、
+     * 新的武器放主手（攻擊用主手；權杖不能攻擊）。有移回傳 true（之後主手是空的）。這次之前直接換掉主手的權杖。
+     */
+    boolean moveSceptreToOff(final PlayerState state, final ItemBase incoming, final int target) {
+        if (target != MAIN || incoming == null || !incoming.isWeapon() || incoming.tags().contains("sceptre")
+                || incoming.hasTag(tw.exilecore.stats.Tags.TWO_HAND) || state.jewellery(OFF) != null) {
+            return false;
+        }
+        final ItemStack main = state.jewellery(MAIN);
+        final ItemBase mainBase = baseOf(main);
+        if (mainBase == null || !mainBase.tags().contains("sceptre")) {
+            return false;
+        }
+        state.setJewellery(OFF, main);
+        state.setJewellery(MAIN, null);
+        return true;
     }
 
     public static String pairProblem(final ItemBase main, final ItemBase off) {
@@ -748,6 +824,7 @@ public final class Gear {
                 return problem;
             }
         }
+        moveSceptreToOff(state, base, target); // 2026-10-28 照 PoE2：主手的權杖讓到副手
         final ItemStack previous = state.jewellery(target);
         state.setJewellery(target, stack.clone());
         inventory.setItem(inventorySlot, previous);
@@ -774,7 +851,7 @@ public final class Gear {
         }
         final int natural = index(base.slot());
         if (natural != index && !(base.slot() == ItemSlot.RING && (index == 0 || index == 1 || index == PlayerState.RING3_SLOT))
-                && !(index == OFF && (target(state, base, stack) == OFF // 2026-10-27 荒野領主：副手的權杖
+                && !(index == OFF && (target(state, base, stack, OFF) == OFF // 2026-10-27 荒野領主、2026-10-28 照 PoE2：副手的權杖
                         || giantOffHand(baseOf(state.jewellery(MAIN)), base, state.sheet())))) { // 2026-10-27 巨人之血：副手的雙手武器
             return "放錯欄位";
         }

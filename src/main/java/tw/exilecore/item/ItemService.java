@@ -196,7 +196,12 @@ public final class ItemService {
 
     /** 退役的傳奇換成的傳奇兌換券；不是退役傳奇（或兌換券做不出來）回傳 null。 */
     public ItemStack retiredReplacement(final ItemStack stack) {
-        return isRetiredUnique(stack) ? voucher() : null;
+        if (!isRetiredUnique(stack)) {
+            return null;
+        }
+        // 2026-10-28 照站長：刪除的傳奇直接拿掉（換成空格），不給兌換券
+        final Optional<ItemData> data = codec.read(stack);
+        return data.isPresent() && repository.deletedUnique(data.get().unique()) ? ItemStack.empty() : voucher();
     }
 
     /** 陣列裡的退役傳奇原地換成傳奇兌換券（倉庫、隨身背包、離線資料）；回傳換了幾件。 */

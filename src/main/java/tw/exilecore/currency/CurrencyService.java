@@ -79,7 +79,8 @@ public final class CurrencyService {
             for (final UniqueItem unique : candidates) {
                 bossPool |= unique.droppedBy("map_boss");
             }
-            return core.economy().config().gambleUniqueChance(bossPool);
+            // 2026-10-28 照 PoE2 的稀有度：乘這個基底能做出的傳奇的賭博權重倍率（UniqueRarity.factor）；這次之前每個基底一樣
+            return core.economy().config().gambleUniqueChance(bossPool) * items.repository().gambleFactor(candidates);
         }
         return type.success();
     }
@@ -281,6 +282,7 @@ public final class CurrencyService {
         }
         final String before = items.toJson(data);
         final List<String> linesBefore = affixTexts(data);
+        final ItemData snapshot = type.operation() == CurrencyOperation.CORRUPT ? data.copy() : null; // 2026-10-28：腐化結果要寫在聊天
         final Outcome outcome = run(type, data, random(data, type));
         if (outcome.result() == Result.NOT_APPLICABLE) {
             return Result.NOT_APPLICABLE;
@@ -295,6 +297,9 @@ public final class CurrencyService {
         }
         items.update(target, data);
         lastChanges = diff(linesBefore, affixTexts(data)); // 2026-10-27 照站長：移除、新增了哪一條（星籤移除最低那條也看得出來）
+        if (snapshot != null) {
+            lastChanges = lastChanges.withHeader(corruptionSummary(snapshot, data, lastChanges, target)); // 2026-10-28 照站長：腐化結果顯示在聊天
+        }
         final String after = items.toJson(data);
         // 寫進資料庫的 currency_log（查作弊、看經濟），主控台也留一行
         usageLog.record(characterId, playerName, data.uuid(), type.id(), before, after);
@@ -443,17 +448,26 @@ public final class CurrencyService {
     }
 
     /** 2026-10-27：上一次 apply 移除、新增的詞綴（玩家看得到的那一行字；沒變是空的）。 */
-    public record Changes(List<String> removed, List<String> added) {
+    public record Changes(List<String> removed, List<String> added, String header) {
+        public Changes(final List<String> removed, final List<String> added) {
+            this(removed, added, null);
+        }
+
+        /** 2026-10-28：最前面多一行（腐化結果）。 */
+        public Changes withHeader(final String header) {
+            return new Changes(removed, added, header);
+        }
+
         public boolean isEmpty() {
             return removed.isEmpty() && added.isEmpty();
         }
 
-        /** 給聊天用的一段 MiniMessage（沒變回傳 null）。 */
+        /** 給聊天用的一段 MiniMessage（沒變、也沒有開頭那行回傳 null）。 */
         public String message() {
-            if (isEmpty()) {
+            if (isEmpty() && header == null) {
                 return null;
             }
-            final StringBuilder out = new StringBuilder();
+            final StringBuilder out = new StringBuilder(header == null ? "" : header);
             for (final String line : removed) {
                 out.append(out.isEmpty() ? "" : "\n").append("<#ff7070>－ 移除：<gray>").append(ItemRenderer.escape(line));
             }
@@ -471,6 +485,35 @@ public final class CurrencyService {
         final Changes changes = lastChanges;
         lastChanges = new Changes(List.of(), List.of());
         return changes;
+    }
+
+    /**
+     * 2026-10-28 照站長：腐化的結果（一行 MiniMessage）：物品名稱＋沒有變化／品質＋x%／多一個符文孔／階級 a → b／詞綴、數值變了（下面列出）。
+     */
+    String corruptionSummary(final ItemData before, final ItemData after, final Changes changes, final ItemStack stack) {
+        final String name = stack == null ? "裝備" : net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+                .serialize(stack.effectiveName());
+        final List<String> parts = new ArrayList<>();
+        if (after.quality() != before.quality()) {
+            parts.add("品質 +" + (after.quality() - before.quality()) + "%（" + after.quality() + "%）");
+        }
+        if (after.corruptSockets() != before.corruptSockets()) {
+            parts.add("多一個符文孔");
+        }
+        final tw.exilecore.item.ItemBase base = items.repository().base(after.base());
+        if (base != null && base.isMap()) {
+            final int from = tw.exilecore.item.ItemStats.mapTier(base, before);
+            final int to = tw.exilecore.item.ItemStats.mapTier(base, after);
+            if (from != to) {
+                parts.add("階級 T" + from + " → T" + to);
+            }
+        }
+        if (!changes.isEmpty()) {
+            parts.add(after.rarity() == tw.exilecore.item.Rarity.UNIQUE && changes.added().size() == changes.removed().size()
+                    && !changes.added().isEmpty() ? "數值重新擲骰" : "詞綴有變化");
+        }
+        final String result = parts.isEmpty() ? "<gray>沒有變化" : "<#d20000>" + String.join("、", parts);
+        return "<#d20000>腐化 <white>" + ItemRenderer.escape(name) + "<gray>：" + result;
     }
 
     private List<String> affixTexts(final ItemData data) {
@@ -544,7 +587,7 @@ public final class CurrencyService {
         final List<UniqueItem> candidates = CurrencyOperation.chanceUniques(data, items.generator());
         if (!candidates.isEmpty() && random.nextDouble() < chanceOdds(type, candidates)) {
             final List<UniqueItem> pool = ancients ? ancientUniques(data) : candidates;
-            final UniqueItem pick = ItemGenerator.pickUnique(pool.isEmpty() ? candidates : pool, random);
+            final UniqueItem pick = items.repository().pickGamble(pool.isEmpty() ? candidates : pool, random); // 2026-10-28：照賭博權重挑
             if (!pick.base().equals(data.base())) {
                 // 同一類的別的基底：物品換成那個基底（固定詞綴照新的基底擲）
                 final ItemData fresh = items.generator().generate(items.repository().requireBase(pick.base()),

@@ -21,6 +21,10 @@ import java.util.Locale;
  *   infused_fire / infused_cold / infused_lightning: [ ... ]   用掉那一種時的加成（沒寫就用 infused）
  *   remnant: cold          2026-10-26：放完過 remnant_delay 秒在落點留下一個灌注殘骸（fire／cold／lightning／random），主人走過去撿到獲得那種灌注
  *   remnant_delay: 4       （PoE2 Frost Bomb 引爆、Living Bomb 爆開、Orb of Storms 消失時留下殘骸）
+ *   infused_set:          2026-10-28 照 PoE2（游雷的 Cold-Infused 這一組數值）：用掉灌注時整組換掉——
+ *     damage_by_type: { cold: [[..]], lightning: [[..]] }   這一下的基礎傷害改成這幾張逐級表（不是附加）
+ *     projectiles: [12, …]   基礎投射物數改成這個（逐級；+x 投射物照樣加上去）
+ *     nova: true             改成往四周一圈射出
  *   glory_from: attack_hit   2026-10-26：榮耀從哪裡來（attack_hit 攻擊打中照怪物強度、ailment 讓敵人冰凍／感電／點燃各 1 點、
  *                         heavy_stun 重暈敵人照怪物強度、ignite 點燃敵人照怪物強度）；戰吼的 warcry.glory 沒寫就是 ignite
  * </pre>
@@ -29,10 +33,30 @@ import java.util.Locale;
  */
 public record ResourceSpec(boolean comboGain, int combo, List<Modifier> perCombo, int glory, List<String> infusion,
                            List<Modifier> infused, List<Modifier> empowered, String gloryFrom, boolean infusionEach,
-                           java.util.Map<String, List<Modifier>> infusedBy, String remnant, double remnantDelay) {
+                           java.util.Map<String, List<Modifier>> infusedBy, String remnant, double remnantDelay, InfusedSet infusedSet) {
 
     public static final ResourceSpec NONE = new ResourceSpec(false, 0, List.of(), 0, List.of(), List.of(), List.of(), null, false,
-            java.util.Map.of(), null, 0);
+            java.util.Map.of(), null, 0, null);
+
+    /**
+     * 2026-10-28 照 PoE2（RePoE SparkColdInfusedPlayer）：用掉灌注時改用的另一組數值。damage = 每種傷害的逐級表（空的 = 照原本的傷害）、
+     * projectiles = 基礎投射物數（null = 照原本的）、nova = 往四周一圈射出。這次之前灌注只能給固定的修飾器（游雷做成多 7 顆、120% 額外冰冷）。
+     */
+    public record InfusedSet(java.util.Map<tw.exilecore.stats.DamageType, int[]> damage, Scaled projectiles, boolean nova) {
+        public InfusedSet {
+            damage = damage == null ? java.util.Map.of() : java.util.Map.copyOf(damage);
+        }
+
+        static InfusedSet parse(final YamlNode node) {
+            final java.util.Map<tw.exilecore.stats.DamageType, int[]> damage = node.has("damage_by_type")
+                    ? SkillDefinition.typedTables(node.path() + ".damage_by_type", node.node("damage_by_type")) : java.util.Map.of();
+            final Scaled projectiles = node.has("projectiles") ? Scaled.parse(node.path() + ".projectiles", node.raw("projectiles"), 1) : null;
+            if (projectiles != null && (projectiles.min() < 1 || projectiles.last() > SkillBuild.MAX_PROJECTILES)) {
+                throw new IllegalArgumentException(node.path() + ".projectiles：要在 1 到 " + SkillBuild.MAX_PROJECTILES + " 之間");
+            }
+            return new InfusedSet(damage, projectiles, node.bool("nova", false));
+        }
+    }
 
     /** 灌注殘骸可以寫的元素（random = 三種隨機一種）。 */
     public static final List<String> REMNANT_ELEMENTS = List.of("fire", "cold", "lightning", "random");
@@ -93,6 +117,7 @@ public record ResourceSpec(boolean comboGain, int combo, List<Modifier> perCombo
         return new ResourceSpec(node.bool("combo_gain", false), Math.max(0, node.integer("combo", 0)),
                 mods(node, "per_combo", id), Math.max(0, node.integer("glory", 0)), infusion,
                 mods(node, "infused", id), mods(node, "empowered", id), gloryFrom, node.bool("infusion_each", false), infusedBy,
-                remnant, Math.max(0, node.decimal("remnant_delay", 0)));
+                remnant, Math.max(0, node.decimal("remnant_delay", 0)),
+                node.has("infused_set") ? InfusedSet.parse(node.node("infused_set")) : null);
     }
 }

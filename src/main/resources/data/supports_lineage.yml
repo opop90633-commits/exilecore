@@ -6,6 +6,7 @@
 # 血脈輔助的規則：
 #   - 切不出來（未切割輔助寶石切不出血脈輔助，照 PoE2）；只有怪物、Boss 會掉（下面的 drops）。
 #   - 不算「一個技能只能掛一顆專屬輔助」的專屬輔助（PoE2 沒有這條限制）；同一顆血脈輔助照 once_per_character 的規則。
+#   - 2026-10-28 照 PoE2（站長）：不同的血脈輔助可以掛在同一個技能上，不互相衝突（這次之前一個技能只能一顆）。
 #   - source 寫掉落的等級：lineage（一般）、lineage_rare（稀有）、lineage_pinnacle（巔峰）。
 #   - 有 I／II／III 的只留最高階（PoE2 的血脈輔助本來就只有一階）。
 #   - 新的屬性鍵寫在 tw.exilecore.stats.LineageKeys（lineage.u. 不用擊中、lineage.h. 要擊中），機制在 LineageRules、LineageMechanics。
@@ -656,7 +657,7 @@ supports:
     requires: [warcry]
     mana_multiplier: 2.0
     notes:
-      - 原作另外花等量的符文守護；我們沒有符文守護，改成消耗多一倍。
+      - 消耗多一倍。   # 2026-10-28 照站長拿掉說明裡的原作：原作另外花等量的符文守護，我們沒有符文守護
     # 2026-10-27 照 PoE2 0.5 Olroth's Conviction（poe2db：符文守護消耗 = 生命與魔力消耗的 100% → 平衡等效成魔耗 200%）；這次新增
     modifiers:
       - { stat: warcry.exerts, type: FLAT, value: 2 }
@@ -764,7 +765,7 @@ supports:
     requires: [attack]
     excludes: [minion, channelling]
     notes:
-      - 原作花的是符文守護（最大守護的 20%）；我們沒有符文守護，改成花最大魔力的 20%，附加傷害照這筆消耗算。
+      - 花最大魔力的 20%，附加傷害照這筆消耗算。   # 2026-10-28 照站長拿掉說明裡的原作：原作花的是符文守護（最大守護的 20%）
     # 2026-10-27 照 PoE2 0.5 Olroth's Hubris（poe2db：奧洛斯）；這次新增
     modifiers:
       - { stat: lineage.u.hubris, type: FLAT, value: 20 }

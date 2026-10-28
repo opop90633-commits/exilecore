@@ -30,6 +30,21 @@ public final class Corpses {
 
     private final Deque<Corpse> corpses = new ArrayDeque<>();
 
+    /**
+     * 2026-10-28 照 PoE2 Contagion（瘟疫）：死的時候身上掛著瘟疫的屍體帶著的瘟疫（復活這具屍體的召喚物、引爆它的爆炸擊中時傳出去）。
+     *
+     * @param source  施放的玩家
+     * @param base    第一手的每秒傷害
+     * @param spreads 傳出去算第幾手（已經加過這一手；每手更多 100%，最多更多 300%）
+     * @param length  持續時間（tick，傳出去照這個重新算）
+     * @param radius  死掉時傳染的半徑（格）
+     */
+    public record Contagion(UUID source, double base, int spreads, long length, double radius) {
+    }
+
+    /** 2026-10-28：屍體 → 它帶著的瘟疫（同一個物件；用掉、過期就忘掉）。這次之前屍體不記瘟疫。 */
+    private final java.util.Map<Corpse, Contagion> contagions = new java.util.IdentityHashMap<>();
+
     public void add(final UUID world, final double x, final double y, final double z, final double maxLife, final long now) {
         add(world, x, y, z, maxLife, now, null);
     }
@@ -41,8 +56,31 @@ public final class Corpses {
         }
         corpses.addLast(new Corpse(world, x, y, z, maxLife, now + LIFETIME, type));
         while (corpses.size() > MAX) {
-            corpses.removeFirst();
+            contagions.remove(corpses.removeFirst());
         }
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Contagion：剛死在 (x, z) 的那具屍體（最新加的、還在的）帶著瘟疫。找不到屍體回傳 false。
+     */
+    public boolean markContagion(final UUID world, final double x, final double z, final Contagion contagion, final long now) {
+        if (contagion == null) {
+            return false;
+        }
+        final Iterator<Corpse> newest = corpses.descendingIterator();
+        while (newest.hasNext()) {
+            final Corpse corpse = newest.next();
+            if (corpse.until() > now && corpse.world().equals(world) && corpse.distanceSquared(x, z) <= 0.01 * 0.01) {
+                contagions.put(corpse, contagion);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 2026-10-28 照 PoE2 Contagion：這具屍體帶著的瘟疫；沒有回傳 null（用掉之前先拿）。 */
+    public Contagion contagion(final Corpse corpse) {
+        return corpse == null ? null : contagions.get(corpse);
     }
 
     /** 某個點附近 radius 內（水平距離）最近、還在的屍體；沒有回傳 null。 */
@@ -76,14 +114,17 @@ public final class Corpses {
     /** 用掉一具。 */
     public void remove(final Corpse corpse) {
         corpses.remove(corpse);
+        contagions.remove(corpse);
     }
 
     /** 清掉過期的。 */
     public void expire(final long now) {
         final Iterator<Corpse> iterator = corpses.iterator();
         while (iterator.hasNext()) {
-            if (iterator.next().until() <= now) {
+            final Corpse corpse = iterator.next();
+            if (corpse.until() <= now) {
                 iterator.remove();
+                contagions.remove(corpse);
             }
         }
     }

@@ -497,6 +497,11 @@ public final class GemService {
             final String text = SkillService.qualityText(config().skill(data.entry().skillId()), data.entry().quality()); // 2026-10-23
             if (text != null) {
                 lines.add("<#8888ff>" + ItemRenderer.escape(text));
+                // 2026-10-28：額外的品質效果（昇華「進階奇術」才有）也寫出來
+                final String advanced = SkillService.advancedQualityText(config().skill(data.entry().skillId()), data.entry().quality());
+                if (advanced != null) {
+                    lines.add("<dark_gray>額外的品質效果（進階奇術）：" + ItemRenderer.escape(advanced));
+                }
             }
         }
         if (data.entry() != null && data.entry().corrupted()) {
@@ -563,7 +568,7 @@ public final class GemService {
         lines.add(GemAttributes.supportLine(support.id())); // 2026-10-26 照 PoE2：第一行寫輔助寶石的顏色與加的屬性需求
         if (support.lineage()) {
             lines.add("<#ff9f43>✦ 血脈輔助寶石<dark_gray>（未切割輔助寶石切不出來）");
-            lines.add("<#ff9f43>一個技能只能掛一顆血脈輔助寶石<dark_gray>（不能用共鳴石）"); // 2026-10-27 照站長
+            lines.add("<#ff9f43>血脈輔助寶石<dark_gray>（不同的血脈輔助可以掛在同一個技能上；不能用共鳴石）"); // 2026-10-28 照 PoE2；這次之前「一個技能只能掛一顆血脈輔助寶石」
         } else if (!support.cuttable()) {
             lines.add("<#ff9f43>✦ 專屬掉落的輔助寶石<dark_gray>（未切割輔助寶石切不出來）");
             if (resonant) {
@@ -821,14 +826,17 @@ public final class GemService {
         final SkillLoadout.Entry entry = new SkillLoadout.Entry(definition.id(), uncut.level());
         // 同系列（異質寶石）已經在面板上：放進背包（2026-10）
         final boolean sibling = config().familyConflict(state.skills(), entry.skillId(), -1) >= 0;
-        final int position = sibling ? -3 : state.skills().add(entry);
+        // 2026-10-28 照 PoE2：同一個技能可以放好幾顆，面板上有也照樣放進空格；只有一個角色一顆的常駐、宿主放進背包
+        //   （這次之前面板上有這個技能就放進背包）
+        final boolean single = GemCopies.placeProblem(config(), state.skills(), entry, -1) != null;
+        final int position = sibling ? -3 : single ? -2 : state.skills().add(entry);
         if (position >= 0) {
             player.sendMessage(plugin.text().prefixed("<green>做出 " + ItemRenderer.escape(definition.name()) + " Lv." + entry.level()
                     + "，已經放進技能面板（<white>/skills</white> 綁到按鍵上）"));
         } else {
             give(player, create(GemData.skill(entry), 1));
             player.sendMessage(plugin.text().prefixed("<green>做出技能寶石：" + ItemRenderer.escape(definition.name()) + " Lv." + entry.level()
-                    + (position == -2 ? "<gray>（面板上已經有這個技能，寶石放進背包）"
+                    + (position == -2 ? "<gray>（面板上已經有這個技能，常駐、宿主技能一個角色只能放一顆，寶石放進背包）"
                     : position == -3 ? "<gray>（面板上有它的異質寶石，同系列只能放一個，寶石放進背包）" : "<gray>（技能面板滿了，寶石放進背包）")));
         }
         plugin.characters().save(player); // 寶石扣掉以後才存，當機時才不會兩邊都在
@@ -868,8 +876,10 @@ public final class GemService {
         final int next = levelUpTarget(entry, uncutLevel); // 2026-10-27 照 PoE2：直接升到未切割寶石的等級（這次之前 entry.level() + 1）
         state.skills().set(position, entry.withLevel(next));
         final SkillDefinition definition = config().skill(entry.skillId());
+        final int usable = usableByCharacter(state.level(), next);
         player.sendMessage(plugin.text().prefixed("<green>" + ItemRenderer.escape(definition == null ? entry.skillId() : definition.name())
-                + " 升到 Lv." + next));
+                + " 升到 Lv." + next + (usable < next
+                ? "<yellow>（角色等級 " + state.level() + "：先自動以 Lv." + usable + " 使用，升級後自動恢復）" : "")));
         return null;
     }
 
@@ -892,11 +902,15 @@ public final class GemService {
         if (next <= entry.level()) {
             return "要 Lv." + (entry.level() + 1) + " 以上的未切割技能寶石才能升級（會直接升到未切割寶石的等級）";
         }
-        final int required = config().requiredLevel(next);
-        if (state.level() < required) {
-            return "角色等級要 " + required + " 才能升到 Lv." + next + "（未切割寶石的等級）";
-        }
+        // 2026-10-28 照站長：不看角色等級，直接升到未切割寶石的等級；用的時候照角色等級、屬性自動降到能用的等級（SkillBuild）
         return null;
+    }
+
+    /** 2026-10-28：這個角色等級用 Lv.gemLevel 的寶石實際能用幾級（跟 SkillBuild 一樣：Lv.21 跟 Lv.20 同樣門檻）。 */
+    int usableByCharacter(final int characterLevel, final int gemLevel) {
+        final int usable = gemLevel > SkillLoadout.MAX_LEVEL && characterLevel >= config().requiredLevel(SkillLoadout.MAX_LEVEL)
+                ? Math.min(gemLevel, SkillLoadout.GEM_CAP) : config().maxLevelFor(characterLevel);
+        return Math.max(1, Math.min(gemLevel, usable));
     }
 
     /** 2026-10-27 照 PoE2：用 Lv.uncutLevel 的未切割技能寶石升級後的等級（＝未切割寶石的等級，最高 Lv.21）。 */
@@ -1051,13 +1065,11 @@ public final class GemService {
         if (target < 0) {
             return Change.fail("技能面板滿了（最多 " + SkillLoadout.MAX_SKILLS + " 個），先取出一個");
         }
-        final int existing = loadout.find(entry.skillId());
-        if (existing >= 0 && existing != target) {
-            return Change.fail("面板上已經有" + definition.name() + "了");
-        }
-        final int insideOf = loadout.findInner(entry.skillId()); // 2026-10-22
-        if (insideOf >= 0) {
-            return Change.fail(definition.name() + "已經放在" + skillName(loadout.skill(insideOf)) + "的孔裡了");
+        // 2026-10-28 照 PoE2：同一個技能可以放好幾顆（面板上、主要寶石孔裡都可以），各自的輔助；只擋一個角色一顆的常駐、宿主。
+        //   這次之前面板上、宿主孔裡已經有就不能放
+        final String copies = GemCopies.placeProblem(config(), loadout, entry, target);
+        if (copies != null) {
+            return Change.fail(copies);
         }
         final int sibling = config().familyConflict(loadout, entry.skillId(), target);
         if (sibling >= 0) {
@@ -1066,17 +1078,8 @@ public final class GemService {
         if (entry.inner() != null && !SupportDefinition.hostsSkill(definition) && !SocketedWarcry.hosts(definition)) { // 2026-10-27：裂甲熊咆也可以
             return Change.fail("這顆寶石裡放著技能，但" + definition.name() + "不是英靈圖騰、星咒圖騰或暴擊引星"); // 不該發生
         }
-        for (final SkillLoadout.Entry spell : entry.spells()) { // 2026-10-26：主要寶石每一孔的技能寶石都要看
-            // 2026-10-23（照 PoE2：同一個技能只能有一顆）：宿主裡放著的技能，面板上不能再有一顆（以前只擋反過來的順序）
-            final int outside = loadout.find(spell.skillId());
-            if (outside >= 0 && outside != target) {
-                return Change.fail("面板上已經有" + skillName(spell) + "了，宿主孔裡的技能不能再綁在自己的按鍵上（先取出一邊）");
-            }
-            final int elsewhere = loadout.findInner(spell.skillId());
-            if (elsewhere >= 0 && elsewhere != target) {
-                return Change.fail(skillName(spell) + "已經放在" + skillName(loadout.skill(elsewhere)) + "的孔裡了");
-            }
-        }
+        // 2026-10-28 照 PoE2：宿主孔裡放著的技能面板上也可以再有一顆（自己按的那顆用自己的輔助）；
+        //   這次之前（2026-10-23）宿主裡放著的技能面板上不能再有一顆
         {
             for (final String supportId : entry.supportIds()) {
                 final int used = config().oncePerCharacter(supportId) ? loadout.supportUsedBy(supportId) : -1;
@@ -1230,14 +1233,13 @@ public final class GemService {
         if (why != null) {
             return Change.fail(definition.name() + "不能放進" + hostDefinition.name() + "（" + why + "）");
         }
-        if (loadout.find(entry.skillId()) >= 0) {
-            return Change.fail("面板上已經有" + definition.name() + "了，先取出來");
+        // 2026-10-28 照 PoE2：面板上有一顆自己按的、別的主要寶石裡有、同一個主要寶石別孔有都可以再放（每一顆各自觸發）；
+        //   只擋一個角色一顆的常駐、宿主。這次之前面板上或任何宿主孔裡已經有就不能放
+        final String copies = GemCopies.socketProblem(config(), loadout, entry, position, index);
+        if (copies != null) {
+            return Change.fail(copies);
         }
-        final int insideOf = loadout.findInner(entry.skillId());
         final SkillLoadout.Entry replaced = host.spellAt(index);
-        if (insideOf >= 0 && (insideOf != position || replaced == null || !replaced.skillId().equals(entry.skillId()))) {
-            return Change.fail(definition.name() + "已經放在" + skillName(loadout.skill(insideOf)) + "的孔裡了");
-        }
         if (!entry.spells().isEmpty()) {
             return Change.fail("這顆寶石裡還放著別的技能，先拿出來");
         }

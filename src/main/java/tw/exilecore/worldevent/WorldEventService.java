@@ -600,7 +600,8 @@ public final class WorldEventService {
                 event.bar.progress((float) Math.max(0, Math.min(1, event.boss.getHealth() / Math.max(1, max == null ? 1 : max.getValue()))));
             }
             event.bar.name(plugin.text().parse("<#ffb347>" + ItemRenderer.escape(config.boss().name()) + " <gray>Lv." + config.boss().level()
-                    + " <dark_gray>｜ <white>" + time));
+                    + " <dark_gray>｜ <white>" + time
+                    + (plugin.ailments() == null || event.boss == null || !event.boss.isValid() ? "" : plugin.ailments().bossBarSuffix(event.boss)))); // 2026-10-28 照站長：Boss 身上的異常
         } else {
             final WorldEventConfig.Invasion invasion = config.invasion();
             final int shownWave = Math.max(1, Math.min(invasion.waves(), event.wave));

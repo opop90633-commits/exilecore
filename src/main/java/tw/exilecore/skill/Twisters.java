@@ -82,6 +82,8 @@ final class Twisters {
         /** 用掉的旋風加起來幾階。 */
         int stages;
         DamageType element;
+        /** 2026-10-28 照 PoE2（貝雷克的戒指、元素之章）：視為受到哪幾種元素地面強化。 */
+        WindGround wind = WindGround.NONE;
         SkillProfile profile;
 
         Twister(final SkillBuild build, final Volley volley, final boolean primary, final Location at, final Vector direction, final int ticks) {
@@ -137,9 +139,16 @@ final class Twisters {
         final Volley volley = new Volley();
         final int ticks = build.durationTicks(DURATION);
         final Location feet = origin.feet().clone();
+        final WindGround wind = WindGround.of(plugin.players().sheet(owner)); // 2026-10-28 照 PoE2（貝雷克的戒指、元素之章）
         for (int i = 0; i < count; i++) {
             final Vector direction = forward.clone().rotateAroundY(Math.toRadians(offset(i, count)));
-            add(owner.getUniqueId(), new Twister(build, volley, true, feet.clone().add(direction.clone().multiply(0.6)), direction, ticks));
+            final Twister twister = new Twister(build, volley, true, feet.clone().add(direction.clone().multiply(0.6)), direction, ticks);
+            if (wind != WindGround.NONE) {
+                twister.wind = wind;
+                twister.element = wind.primary();
+                refresh(twister);
+            }
+            add(owner.getUniqueId(), twister);
         }
         feet.getWorld().playSound(feet, Sound.ENTITY_BREEZE_SHOOT, SoundCategory.PLAYERS, 0.7f, 1.2f);
     }
@@ -251,6 +260,7 @@ final class Twisters {
                     twister.build.durationTicks(DURATION));
             extra.stages = twister.stages;
             extra.element = twister.element;
+            extra.wind = twister.wind;
             refresh(extra);
             born.add(extra);
             twister.at.getWorld().playSound(twister.at, Sound.ENTITY_BREEZE_WIND_BURST, SoundCategory.PLAYERS, 0.6f, 1.3f);
@@ -259,8 +269,10 @@ final class Twisters {
 
     private static void refresh(final Twister twister) {
         SkillProfile profile = twister.build.profile().scaled(more(twister.stages), "旋風階數");
-        if (twister.element != null) {
-            profile = profile.withLocal(List.of(Modifier.flat(StatKeys.damageExtra(twister.element), ELEMENT_GAIN, "元素旋風")));
+        // 2026-10-28 照 PoE2（元素之章）：可以同時被好幾種元素地面強化時每一種各獲得；這次之前只有踩到的那一種
+        final List<Modifier> gains = twister.wind.gains(twister.element, ELEMENT_GAIN, "元素旋風");
+        if (!gains.isEmpty()) {
+            profile = profile.withLocal(gains);
         }
         twister.profile = profile;
     }

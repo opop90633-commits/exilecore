@@ -46,7 +46,7 @@ import java.util.UUID;
  *       你施加的詛咒、凋零沒有持續時間限制（司祭法衣）。</li>
  *   <li>藥劑：生命藥劑也回復召喚物、召喚物在藥劑效果中不會死（骸骨束帶）。</li>
  *   <li>2026-10-27 第二批：暴擊觸發落雷（雷頌墜）、殺死感電的敵人觸發游雷（縛地長杖）、擊殺時護盾立刻回充（喪鈴法器）、
- *       格擋回復生命（降伏塔盾）與格擋斷命（厄門塔盾）、每秒失去生命（骸節鐵手）、每 3 秒吃一具屍體回血（噬屍頭環）。</li>
+ *       格擋回復生命（降伏塔盾）與格擋撲殺（厄門塔盾）、每秒失去生命（骸節鐵手）、每 3 秒吃一具屍體回血（噬屍頭環）。</li>
  * </ul>
  * 打中之前要疊的條件加成（{@link #attackerConditional}、{@link #defenderConditional}、{@link #pierceProfile}）是純函式，戰鬥與投射物呼叫。
  */
@@ -241,7 +241,7 @@ public final class UniqueMechanics implements Listener {
         plugin.skills().triggerSkill(player, skillId, at);
     }
 
-    /** 2026-10-27：你格擋了一下（降伏塔盾：回復生命；厄門塔盾：生命低於斷命門檻的攻擊者直接倒下）。 */
+    /** 2026-10-27：你格擋了一下（降伏塔盾：回復生命；厄門塔盾：生命低於撲殺門檻的攻擊者直接倒下）。 */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onBlocked(final HitEvent event) {
         if (!(event.defender() instanceof Player player) || !event.result().blocked()) {
@@ -373,6 +373,7 @@ public final class UniqueMechanics implements Listener {
             forever(player, sheet, now);
             witherWhileIgnited(player, sheet, now);
             lifeLoss(player, state, sheet, now);
+            manaLoss(player, state, sheet);
             devour(player, state, sheet, now);
         }
         triggerReady.values().removeIf(until -> until < now);
@@ -513,6 +514,16 @@ public final class UniqueMechanics implements Listener {
             return;
         }
         state.setLife(Math.max(1, state.life() - state.maxLife() * percent / 100.0 * PERIOD / 20.0));
+        plugin.players().display(player, state);
+    }
+
+    /** 2026-10-28 照 PoE2（磐石之拳的骸節鐵手）：每秒失去 x% 最大魔力（每半秒扣一次）。 */
+    private void manaLoss(final Player player, final PlayerState state, final StatSheet sheet) {
+        final double percent = sheet.flat(UniqueStats.MANA_LOSS_PERCENT, Set.of());
+        if (percent <= 0 || state.mana() <= 0) {
+            return;
+        }
+        state.setMana(Math.max(0, state.mana() - state.maxMana() * percent / 100.0 * PERIOD / 20.0));
         plugin.players().display(player, state);
     }
 

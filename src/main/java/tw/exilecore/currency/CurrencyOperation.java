@@ -259,7 +259,13 @@ public enum CurrencyOperation {
                 }
                 return;
             }
-            switch (outcome) {
+            // 2026-10-28 修正（必變籤）：戒指、項鍊、腰帶這類「特殊」那一格本來就沒有變化（不能開孔、不加品質），
+            //   掛了必變籤抽到它等於沒變、星籤還被用掉；改成只在「換詞綴／重骰數值」與「加腐化詞綴」之間抽。
+            //   這次之前必變籤用在這類飾品上仍有 1/3 機率完全沒變。
+            final boolean special = base != null && (base.hasTag("caster") || tw.exilecore.item.Runes.slots(base) > 0
+                    || tw.exilecore.item.Runes.slots(generator.repository(), base, data) > 0);
+            final int finalOutcome = always && outcome == 3 && !special ? 1 + random.nextInt(2) : outcome;
+            switch (finalOutcome) {
                 case 0 -> {
                     // 沒有變化
                 }

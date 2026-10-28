@@ -97,6 +97,8 @@ final class Signatures {
         double area;
         /** 2026-10-28 照 PoE2：捲在元素地面上的是元素旋風（null = 一般的）。 */
         tw.exilecore.stats.DamageType element;
+        /** 2026-10-28 照 PoE2（貝雷克的戒指、元素之章）：視為受到哪幾種元素地面強化。 */
+        WindGround wind = WindGround.NONE;
 
         Whirl(final Location center, final SkillBuild build, final long now, final double area) {
             this.center = center;
@@ -467,6 +469,7 @@ final class Signatures {
             old.expires = now + WHIRL_LIFE;
             old.build = build;
             old.area = area;
+            old.wind = WindGround.of(plugin.players().sheet(player));
             elementalize(old); // 2026-10-28 照 PoE2：在元素地面上疊階也會變成元素旋風
             if (old.stage > 1) {
                 player.playSound(player.getLocation(), Sound.ITEM_ELYTRA_FLYING, SoundCategory.PLAYERS, 0.4f, 0.8f + 0.3f * old.stage);
@@ -480,6 +483,7 @@ final class Signatures {
             collapse(player, old);
         }
         final Whirl created = new Whirl(player.getLocation(), build, now, area);
+        created.wind = WindGround.of(plugin.players().sheet(player)); // 2026-10-28 照 PoE2（貝雷克的戒指、元素之章）
         elementalize(created);
         whirls.put(uuid, created);
     }
@@ -488,6 +492,9 @@ final class Signatures {
     private void elementalize(final Whirl whirl) {
         if (whirl.element == null) {
             whirl.element = ElementalGround.at(plugin, whirl.center, whirl.radius());
+        }
+        if (whirl.element == null) {
+            whirl.element = whirl.wind.primary(); // 2026-10-28 照 PoE2（貝雷克的戒指）：沒踩到也視為受到裝備寫的那種地面強化
         }
     }
 
@@ -516,9 +523,11 @@ final class Signatures {
         if (sub == null) {
             return;
         }
-        if (whirl.element != null) {
-            // 2026-10-28 照 PoE2：元素旋風獲得 50% 傷害為那種元素的額外傷害；這次之前沒有元素旋風
-            sub = sub.withProfile(sub.profile().withLocal(List.of(Modifier.flat(StatKeys.damageExtra(whirl.element), WHIRL_ELEMENT_GAIN, "元素旋風"))));
+        // 2026-10-28 照 PoE2：元素旋風獲得 50% 傷害為那種元素的額外傷害；這次之前沒有元素旋風
+        // 2026-10-28 照 PoE2（元素之章）：可以同時被好幾種元素地面強化時每一種各獲得
+        final List<Modifier> gains = whirl.wind.gains(whirl.element, WHIRL_ELEMENT_GAIN, "元素旋風");
+        if (!gains.isEmpty()) {
+            sub = sub.withProfile(sub.profile().withLocal(gains));
         }
         final double radius = whirl.radius();
         final SkillDefinition def = sub.definition();

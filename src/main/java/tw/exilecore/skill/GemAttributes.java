@@ -276,7 +276,11 @@ public final class GemAttributes {
 
     /** 寶石屬性需求的倍率（天賦樹、昇華的「減少 x% 裝備與技能寶石的屬性需求」）。 */
     public static double scale(final StatSheet sheet) {
-        return sheet == null ? 1 : TreeEffectKeys.requirementScale(sheet);
+        if (sheet == null) {
+            return 1;
+        }
+        // 2026-10-28 照 PoE2（謎容「技能寶石沒有能力值需求」）：attr_req.none 是 2 → 0；裝備的那一種（1）不影響寶石
+        return TreeEffectKeys.noAttributeRequirements(sheet) == 2 ? 0 : TreeEffectKeys.attributeScale(sheet);
     }
 
     /** 角色現在的力量、敏捷、智慧與能不能用最高屬性滿足。 */

@@ -211,7 +211,7 @@ final class SkillRuntime {
      * @param level     戰吼的等級（強化的數值隨等級）
      * @param power     吼的時候算到的強度（每 5 點強度附加冰冷這種）
      * @param tireless  被強化的攻擊有幾 % 機率不算次數（不竭嘯）
-     * @param cull      被強化的攻擊有斷命（決嘯）
+     * @param cull      被強化的攻擊有撲殺（決嘯）
      * @param extra     2026-10-27：被強化的攻擊另外加的修飾器（戰吼品質的額外火焰、裂甲熊咆插槽的增加傷害）
      * @param aftershockMore 2026-10-27：被強化的猛擊的餘震更多 x% 傷害（震地戰吼的品質）
      * @param triggerRadius  2026-10-27：被強化的攻擊觸發的隱藏技能半徑 +x 格（堅壁戰吼的品質：盾波）

@@ -564,7 +564,9 @@ final class AscPaths implements Listener {
         if (max <= 0) {
             return;
         }
-        final double chance = effects.power(target) * 100;
+        // 2026-10-28 照 PoE2（磐石之拳的無與倫比）：每點強度再多 x% 超越機率
+        final double chance = effects.power(target) * (100 + Math.max(0, effects.sheet(player).flat(
+                tw.exilecore.item.unique.UniqueStats.MOUNTAIN_EXTRA_CHANCE, java.util.Set.of())));
         if (chance <= 0) {
             return;
         }

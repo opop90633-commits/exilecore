@@ -22,6 +22,15 @@ public final class DashPath {
     /** 落點：[x, y, z]（y 是腳底的整數高度；x、z 是實際座標）；走不出去（第一步就被擋）回傳 null。 */
     public static double[] destination(final double startX, final double startY, final double startZ,
                                        final double dirX, final double dirZ, final double range, final Blocks blocks) {
+        return destination(startX, startY, startZ, dirX, dirZ, range, blocks, STEP);
+    }
+
+    /**
+     * 2026-10-28：同上，每一步走 {@code step} 格（近戰條件位移 {@link MeleeStep}：踏 1.7 格要剛好走到 1.7，
+     * 用 {@link #evenStep(double)} 把距離切成不超過 0.5 格的等分；這次之前只有固定 0.5 格一步）。
+     */
+    public static double[] destination(final double startX, final double startY, final double startZ,
+                                       final double dirX, final double dirZ, final double range, final Blocks blocks, final double step) {
         final double length = Math.sqrt(dirX * dirX + dirZ * dirZ);
         if (length < 1e-9 || range <= 0) {
             return null;
@@ -32,7 +41,8 @@ public final class DashPath {
         double z = startZ;
         int y = (int) Math.floor(startY + 1e-6);
         double[] best = null;
-        for (double travelled = STEP; travelled <= range + 1e-9; travelled += STEP) {
+        final double stride = step > 1e-3 ? Math.min(STEP, step) : STEP;
+        for (double travelled = stride; travelled <= range + 1e-9; travelled += stride) {
             final double nx = startX + ux * travelled;
             final double nz = startZ + uz * travelled;
             final int bx = (int) Math.floor(nx);
@@ -47,6 +57,11 @@ public final class DashPath {
             best = new double[] {x, y, z};
         }
         return best;
+    }
+
+    /** 把 range 切成不超過 {@link #STEP} 的等分，最後一步剛好走到 range。 */
+    public static double evenStep(final double range) {
+        return range <= 0 ? STEP : range / Math.max(1, Math.ceil(range / STEP - 1e-9));
     }
 
     /** 從 y 往上 CLIMB、往下 DROP 找站得住的高度（先看同高度，再往上，再往下）；沒有回傳 MIN_VALUE。 */

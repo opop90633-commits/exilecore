@@ -586,6 +586,7 @@ supports:
   burgeon: b
   cold_attunement: b
   lightning_attunement: g
+  chaos_attunement: b   # 2026-10-28 照 PoE2 Chaos Attunement（+5 智慧）
   danse_macabre: b
   dazing_cry: r
   dazzle: g

@@ -61,15 +61,17 @@ final class Unearth {
         found.sort(Comparator.comparingDouble(c -> (c.x() - feet.getX()) * (c.x() - feet.getX()) + (c.z() - feet.getZ()) * (c.z() - feet.getZ())));
         final int limit = Math.max(1, minions.minions());
         final List<Location> points = new ArrayList<>();
+        final List<Corpses.Contagion> carried = new ArrayList<>(); // 2026-10-28 照 PoE2 Contagion：屍體帶著的瘟疫，骨構體擊中時傳出去
         for (final Corpses.Corpse corpse : found) {
             if (points.size() >= limit) {
                 break;
             }
+            carried.add(plugin.combat().corpses().contagion(corpse));
             if (!tw.exilecore.stats.TreeEffectKeys.corpseSaved(plugin.players().sheet(player), plugin.random())) { // 照 PoE2 天賦樹：x% 機率不毀掉屍體
                 plugin.combat().corpses().remove(corpse);
             }
             points.add(new Location(feet.getWorld(), corpse.x(), corpse.y(), corpse.z()));
         }
-        plugin.skills().minions().summonAt(player, minions, points);
+        plugin.skills().minions().summonAt(player, minions, points, carried);
     }
 }

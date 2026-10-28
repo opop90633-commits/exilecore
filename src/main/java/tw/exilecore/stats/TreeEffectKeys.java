@@ -190,9 +190,19 @@ public final class TreeEffectKeys {
         return chance > 0 && random.nextDouble() * 100 < chance;
     }
 
-    /** 裝備的屬性需求倍率（減少 4% → 0.96）。 */
+    /** 裝備的屬性需求倍率（減少 4% → 0.96）。2026-10-28 照 PoE2（謎容「裝備沒有能力值需求」）：attr_req.none 是 1 → 0。 */
     public static double requirementScale(final StatSheet sheet) {
+        return noAttributeRequirements(sheet) == 1 ? 0 : attributeScale(sheet);
+    }
+
+    /** 「減少 x% 裝備與技能寶石的屬性需求」的倍率（裝備、寶石共用；不看謎容）。 */
+    public static double attributeScale(final StatSheet sheet) {
         return Math.max(0, 1 + sheet.increased(ITEM_ATTR_REQUIREMENT, Set.of()));
+    }
+
+    /** 2026-10-28（謎容）：1 = 裝備沒有屬性需求、2 = 技能寶石沒有屬性需求、0 = 都有。 */
+    public static int noAttributeRequirements(final StatSheet sheet) {
+        return (int) Math.round(sheet.flat(tw.exilecore.item.unique.UniqueStats.NO_ATTR_REQ, Set.of()));
     }
 
     /**

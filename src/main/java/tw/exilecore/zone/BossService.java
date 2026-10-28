@@ -58,6 +58,8 @@ final class BossService implements Listener {
         final Zone zone;
         final LivingEntity entity;
         final BossBar bar;
+        /** 2026-10-28：血條原本的標題（後面接異常）。 */
+        String title = "";
         final Set<UUID> damagers = new HashSet<>();
         final Set<UUID> viewers = new HashSet<>();
         long lastPlayerTick;
@@ -122,6 +124,9 @@ final class BossService implements Listener {
         final AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
         final double maxHealth = max == null ? boss.getHealth() : max.getValue();
         fight.bar.progress((float) Math.max(0, Math.min(1, boss.getHealth() / Math.max(1, maxHealth))));
+        if (plugin.ailments() != null) { // 2026-10-28 照站長：血條寫 Boss 身上的異常
+            fight.bar.name(plugin.text().parse(fight.title + plugin.ailments().bossBarSuffix(boss)));
+        }
         // 「附近」以 Boss 現在的位置算：追著人跑出場地也不算沒人
         final List<Player> near = challengers(boss.getLocation(), settings.radius() + BAR_EXTRA);
         final Set<UUID> nearIds = new HashSet<>();
@@ -229,9 +234,10 @@ final class BossService implements Listener {
         if (follow != null && follow.getBaseValue() < FOLLOW_RANGE) {
             follow.setBaseValue(FOLLOW_RANGE);
         }
-        final BossBar bar = BossBar.bossBar(plugin.text().parse("<#af6025>" + ItemRenderer.escape(definition.name())
-                + " <gray>Lv." + level), 1f, BossBar.Color.RED, BossBar.Overlay.NOTCHED_12);
+        final String title = "<#af6025>" + ItemRenderer.escape(definition.name()) + " <gray>Lv." + level;
+        final BossBar bar = BossBar.bossBar(plugin.text().parse(title), 1f, BossBar.Color.RED, BossBar.Overlay.NOTCHED_12);
         final Fight fight = new Fight(zone, entity, bar, plugin.getServer().getCurrentTick());
+        fight.title = title;
         fights.put(zone.id(), fight);
         attachSkills(zone, definition, entity, level);
 

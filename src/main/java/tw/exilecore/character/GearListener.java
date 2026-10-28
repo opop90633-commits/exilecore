@@ -86,7 +86,7 @@ final class GearListener implements Listener {
                 if (held != null && plugin.currencies() != null && plugin.currencies().isCurrency(held)) {
                     tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>通貨要用在背包裡的裝備<gray>：先在角色面板（Shift＋F → 角色）卸下"));
                 } else if (held != null) {
-                    equipFromCursor(player, event.getView(), held); // 拿著裝備點顯示用的格子：直接裝上，換下來的放回游標
+                    equipFromCursor(player, event.getView(), held, Gear.indexAt(event.getSlot())); // 拿著裝備點顯示用的格子：直接裝上，換下來的放回游標
                 } else if (event.getClick().isLeftClick() || event.getClick().isRightClick()) {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
                         if (player.isOnline()) {
@@ -101,7 +101,7 @@ final class GearListener implements Listener {
     }
 
     /** 游標上的裝備裝上（換下來的放回游標）。 */
-    private void equipFromCursor(final Player player, final InventoryView view, final ItemStack stack) {
+    private void equipFromCursor(final Player player, final InventoryView view, final ItemStack stack, final int clicked) {
         final PlayerState state = plugin.players().get(player);
         final Optional<ItemData> data = plugin.items().read(stack);
         final ItemBase base = data.map(value -> plugin.items().repository().base(value.base())).orElse(null);
@@ -114,7 +114,7 @@ final class GearListener implements Listener {
             tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(blocked)));
             return;
         }
-        int index = gear.target(state, base, stack); // 2026-10-27 荒野領主：權杖放副手
+        int index = gear.target(state, base, stack, clicked); // 2026-10-27 荒野領主、2026-10-28 照 PoE2：權杖放副手（點副手那格也放副手）
         if (base.slot() == tw.exilecore.item.ItemSlot.RING) {
             index = Gear.ringTarget(state, gear.ringSlotOpen(player)); // 2026-10-26：展露之指的第三個戒指欄
         }
@@ -128,6 +128,7 @@ final class GearListener implements Listener {
                 return;
             }
         }
+        gear.moveSceptreToOff(state, base, index); // 2026-10-28 照 PoE2：主手的權杖讓到副手
         final ItemStack previous = state.jewellery(index);
         state.setJewellery(index, stack.clone());
         view.setCursor(previous); // 同一個事件裡換掉游標，不會有一瞬間兩邊都有

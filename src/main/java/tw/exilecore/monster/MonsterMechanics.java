@@ -637,7 +637,8 @@ public final class MonsterMechanics implements Listener {
         final double hit = sheet == null ? 0 : averageHit(sheet);
         final UUID world = at.getWorld().getUID();
         if (fire) {
-            patches.add(new Patch(world, at.getX(), at.getY(), at.getZ(), AilmentType.IGNITE, hit * 0.25, now + 60));
+            // 2026-10-28 照 PoE2 Ignited Ground：視同這隻怪一下的火焰傷害（疊易燃到 50% 才點燃，點燃每秒 20%）；這次之前直接每秒 25%
+            patches.add(new Patch(world, at.getX(), at.getY(), at.getZ(), AilmentType.IGNITE, hit, now + 60));
         }
         if (cold) {
             patches.add(new Patch(world, at.getX(), at.getY(), at.getZ(), AilmentType.CHILL, 0.3, now + 80));
@@ -661,6 +662,8 @@ public final class MonsterMechanics implements Listener {
             return;
         }
         final Map<UUID, List<Player>> players = new HashMap<>();
+        // 2026-10-28 照 PoE2：同一種地面不疊加——一個玩家同時踩在好幾塊上，每種只算最強的一塊（這次之前每一塊各上一次，易燃／點燃疊得更快）
+        final Map<Player, Map<AilmentType, Double>> standing = new HashMap<>();
         final List<Patch> all = new ArrayList<>(patches.size() + mapPatches.size());
         all.addAll(patches);
         all.addAll(mapPatches);
@@ -683,7 +686,7 @@ public final class MonsterMechanics implements Listener {
                     seen = true;
                 }
                 if (plugin.ailments() != null && flat <= patch.radius() * patch.radius() && Math.abs(dy) <= 1.5 && !player.isDead()) {
-                    plugin.ailments().groundAilment(player, patch.type(), patch.value(), 2.0);
+                    standing.computeIfAbsent(player, key -> new java.util.EnumMap<>(AilmentType.class)).merge(patch.type(), patch.value(), Math::max);
                     // 2026-10-27 照 PoE2 天賦樹（「站在感電／冰緩／點燃地面上時」）
                     plugin.players().get(player).markRecent(switch (patch.type()) {
                         case IGNITE -> tw.exilecore.stats.TreeLastKeys.EVENT_GROUND_FIRE;
@@ -705,6 +708,11 @@ public final class MonsterMechanics implements Listener {
                     tw.exilecore.skill.Fx.groundOutline(new Location(world, patch.x(), patch.y(), patch.z()), patch.radius(),
                             tw.exilecore.skill.Fx.BURNING_EDGE);
                 }
+            }
+        }
+        for (final Map.Entry<Player, Map<AilmentType, Double>> entry : standing.entrySet()) {
+            for (final Map.Entry<AilmentType, Double> ground : entry.getValue().entrySet()) {
+                plugin.ailments().groundAilment(entry.getKey(), ground.getKey(), ground.getValue(), 2.0);
             }
         }
     }

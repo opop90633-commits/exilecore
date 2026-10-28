@@ -169,14 +169,19 @@ final class SkillZones implements SkillTargets.Strikeable {
     /** 2026-10-28：瞬移到某個地方炸開（周圍 3 格）、給一層閃電灌注（瞄準滾雷珠時用；撲殺敵人也走這裡）。 */
     void warpTo(final Player owner, final Location at, final SkillBuild build) {
         owner.teleport(at);
+        warpBlast(owner, at, build);
+        if (plugin.skills() != null) {
+            plugin.skills().resources().addInfusion(owner, 2, 1);
+        }
+    }
+
+    /** 雷遁的爆炸（周圍 3 格閃電傷害；技能本身有撲殺）：不瞬移、不給灌注。 */
+    void warpBlast(final Player owner, final Location at, final SkillBuild build) {
         final double radius = Math.max(0.5, build.params().dash().endRadius().at(build.level()) * build.areaScale());
         for (final LivingEntity hit : targets.around(at, radius, owner)) {
             damage.hit(owner, hit, build.profile(), null);
         }
         Fx.as(owner.getUniqueId(), () -> visuals.blast(build.definition().visual(), at, radius));
-        if (plugin.skills() != null) {
-            plugin.skills().resources().addInfusion(owner, 2, 1);
-        }
     }
 
     private void tickWarps(final long now) {
@@ -403,19 +408,40 @@ final class SkillZones implements SkillTargets.Strikeable {
         if (zone.boltsLeft > 0 && --zone.boltsLeft == 0) {
             zone.gone = true; // 2026-10-28 照 PoE2：放完 6 道就消失（這一道照放）
         }
-        final List<LivingEntity> candidates = targets.around(center, zone.boltRange + zone.chainRange * Math.max(0, zone.boltChains), owner);
-        final List<LivingEntity> chain = ZonePulses.boltChain(inRange, candidates, zone.boltChains, zone.chainRange,
-                (a, b) -> a.getLocation().distance(b.getLocation()), plugin.random());
+        final double reach = zone.boltRange + zone.chainRange * Math.max(0, zone.boltChains);
+        // 2026-10-28 照 PoE2 Lightning Rod：雷雲的連鎖閃電也可以連到自己插在地上的雷霆之杖（雷樁矢、電鍊箭矢插的都算；算一次連鎖、箭充能後炸開，
+        // 再從箭上往下連）。PoE2 論壇（0.1 起）列出能連到雷霆之杖的有 Lightning Arrow、Arc、Orb of Storms、Galvanic Shards；這次之前雷雲只連敵人
+        final List<Object> candidates = new ArrayList<>(targets.around(center, reach, owner));
+        if (chainsToRods(zone.profile)) {
+            candidates.addAll(rods.around(owner.getUniqueId(), center.getWorld().getUID(), center.toVector(), reach));
+        }
+        final List<Object> chain = ZonePulses.boltChain(new ArrayList<>(inRange), candidates, zone.boltChains, zone.chainRange,
+                (a, b) -> nodePosition(a).distance(nodePosition(b)), plugin.random());
         final List<Location> path = new ArrayList<>();
         path.add(center.clone().add(0, 1.2, 0));
-        for (final LivingEntity target : chain) {
-            if (zone.gone || !target.isValid() || target.isDead()) {
+        for (final Object node : chain) {
+            if (zone.gone) {
+                continue;
+            }
+            if (node instanceof LightningRods.Rod rod) {
+                if (chainToRod(owner, rod, zone.profile)) {
+                    path.add(rodTop(rod.at.toLocation(center.getWorld())));
+                }
+                continue;
+            }
+            final LivingEntity target = (LivingEntity) node;
+            if (!target.isValid() || target.isDead()) {
                 continue;
             }
             path.add(target.getLocation().add(0, target.getHeight() / 2, 0));
             damage.hit(owner, target, zone.profile, null);
         }
         Fx.as(zone.owner, () -> visuals.chain(path));
+    }
+
+    /** 2026-10-28：連鎖節點（敵人或雷霆之杖）的位置（雷雲連鎖量距離用；杖量頂端）。 */
+    private static Vector nodePosition(final Object node) {
+        return node instanceof LightningRods.Rod rod ? rod.at.clone().add(new Vector(0, 0.8, 0)) : ((LivingEntity) node).getLocation().toVector();
     }
 
     /** 2026-10-28 照 PoE2 Volcano：這一波的火山彈（每顆落在範圍內隨機一點，炸到落點附近的敵人；同一隻可以被好幾顆打到）。 */

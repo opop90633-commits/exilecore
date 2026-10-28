@@ -54,6 +54,26 @@ public final class Presence {
         return BASE_RADIUS * Math.sqrt(Math.max(0.1, 1 + sheet.increased(StatKeys.PRESENCE_AREA, Set.of())));
     }
 
+    /**
+     * 2026-10-28 照 PoE2（神聖烈焰：Enemies in your Presence Resist Elemental Damage based on their Lowest Resistance）：
+     * 把火焰、冰冷、閃電抗性都降到三種裡最低的那個（純函式；回傳要疊上去的修飾器，三種一樣就沒有）。
+     */
+    public static List<Modifier> lowestResist(final StatSheet monster) {
+        final DamageType[] types = {DamageType.FIRE, DamageType.COLD, DamageType.LIGHTNING};
+        double min = Double.MAX_VALUE;
+        for (final DamageType type : types) {
+            min = Math.min(min, monster.get(type.mitigationStat()));
+        }
+        final List<Modifier> list = new ArrayList<>();
+        for (final DamageType type : types) {
+            final double diff = min - monster.get(type.mitigationStat());
+            if (diff < 0) {
+                list.add(Modifier.flat(type.mitigationStat(), diff, "最低抗性"));
+            }
+        }
+        return list;
+    }
+
     public void tick() {
         ticks += PERIOD;
         final boolean burnTick = ticks % 20 == 0;
@@ -86,7 +106,9 @@ public final class Presence {
             final double slow = Math.max(0, Math.min(90, sheet.flat(StatKeys.PRESENCE_SLOW, Set.of())
                     * Math.max(0, 1 + sheet.increased(StatKeys.SLOW_MAGNITUDE, Set.of())))) / 100.0; // 2026-10-21：吃減速幅度
             final double burn = sheet.flat(StatKeys.PRESENCE_BURN, Set.of());
-            if (mods.isEmpty() && taken <= 0 && slow <= 0 && burn <= 0) {
+            // 2026-10-28 照 PoE2（神聖烈焰）：存在範圍內的敵人照牠最低的元素抗性抵抗元素傷害
+            final boolean lowest = StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.PRESENCE_LOWEST_RESIST);
+            if (mods.isEmpty() && taken <= 0 && slow <= 0 && burn <= 0 && !lowest) {
                 continue;
             }
             final double radius = radius(sheet);
@@ -100,8 +122,17 @@ public final class Presence {
                         || (plugin.training() != null && !plugin.training().canTarget(target, player))) {
                     continue;
                 }
-                if (!mods.isEmpty() || taken > 0 || slow > 0) {
-                    debuffs.apply(target.getUniqueId(), new Debuffs.Debuff(id, player.getUniqueId(), now + LINGER, taken, false, null, mods, slow));
+                List<Modifier> targetMods = mods;
+                if (lowest) {
+                    final var data = plugin.monsters().data(target).orElse(null);
+                    final List<Modifier> toLowest = data == null ? List.of() : lowestResist(plugin.monsters().sheet(target, data));
+                    if (!toLowest.isEmpty()) {
+                        targetMods = new ArrayList<>(mods);
+                        targetMods.addAll(toLowest);
+                    }
+                }
+                if (!targetMods.isEmpty() || taken > 0 || slow > 0) {
+                    debuffs.apply(target.getUniqueId(), new Debuffs.Debuff(id, player.getUniqueId(), now + LINGER, taken, false, null, targetMods, slow));
                 }
                 if (burn > 0) {
                     burning.add(target);

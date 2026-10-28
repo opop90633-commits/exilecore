@@ -99,7 +99,7 @@ concussion_grenade:   # Flash Grenade
 consecrate:   # Consecrate（2026-10-28 照 PoE2：(0—10)% 增加施法速度；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: cast.speed, type: INCREASED, per: 0.5 }   # 施法速度
 contagion:   # Contagion（2026-10-28 照 PoE2：施放時另外感染 (0—2) 個敵人（無條件捨去）；這次之前照通用規則）
-  - { stat: skill.extra_targets, type: FLAT, per: 0.1 }   # 準心範圍外最近的敵人（SkillExecutor.impact）
+  - { stat: skill.extra_targets, type: FLAT, per: 0.1 }   # 2026-10-28 照 PoE2：第一隻身邊最近的敵人各多掛一個（SkillExecutor.singleImpact，單體）；這次之前在準心範圍外最近的幾隻身上各落一整圈
 convalescence:   # Convalescence（2026-10-28 照 PoE2：增益持續時間 +(0—0.5) 秒；這次之前照通用規則）
   - { stat: convalescence.duration, type: FLAT, per: 0.025 }   # 加在逐級的秒數上（OriginalSkills）
 cross_slash:   # Cross Slash（2026-10-28 照 PoE2：撕裂寬度 +(0—0.4) 格；這次之前照通用規則每 1% 增加 1% 傷害）
@@ -110,13 +110,15 @@ dark_idol:   # Dark Effigy（2026-10-28 照 PoE2：衝擊半徑 +(0—0.2) 格�
   - { stat: skill.area, type: INCREASED, per: 1.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
 dark_pact:   # Dark Pact（2026-10-28 照 PoE2：另外犧牲召喚物 (0—2.5)% 生命造成混沌傷害——我們的冥契沒有犧牲召喚物生命，照原作 13% 的比例換成更多 (0—19.2)% 傷害；這次之前照通用規則）
   - { stat: damage, type: MORE, per: 0.9615 }   # 2.5 ÷ 13 換算
-decompose: []   # Decompose（2026-10-28 照 PoE2：毒雲持續時間 +(0—1) 秒——我們的腐屍爆沒有毒雲，所以沒有效果；這次之前照通用規則）
+decompose:   # Decompose（2026-10-28 照 PoE2：毒雲持續時間 +(0—1) 秒；這次之前 []（腐屍爆沒有毒雲），再之前照通用規則）
+  - { stat: skill.base_duration_flat, type: FLAT, per: 0.05 }   # 毒雲持續時間 +秒（DecomposeClouds）
 defiance_banner:   # Defiance Banner（2026-10-28 照 PoE2：(0—10)% 增加保留效率；這次之前照通用規則每 1% 增加 0.5% 戰吼效果）
   - { stat: aura.reservation, type: INCREASED, per: -0.5 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
 despair_curse:   # Despair（2026-10-28 照 PoE2：(0—10)% 增加詛咒幅度；這次之前照通用規則，數值一樣）
   - { stat: curse.effect, type: INCREASED, per: 0.5 }   # 詛咒效果
-detonate_dead:   # Detonate Dead
+detonate_dead:   # Detonate Dead（2026-10-28 照 PoE2：爆炸半徑 +(0—0.4) 公尺、(0—60)% 物理傷害轉換為火焰；這次之前只有範圍）
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+  - { stat: damage.convert.fire, type: FLAT, per: 3.0 }   # 物理轉火焰（屍體生命的那部分是物理）
 devour:   # Devour（2026-10-28 照 PoE2：每吃一具屍體 (0—50)% 機率當作擊殺獲得藥劑與護符充能；這次之前照通用規則）
   - { stat: corpse.flask_charge_chance, type: FLAT, per: 2.5 }   # 屍體照普通怪（OriginalSkills.devour）
 discipline:   # Discipline（2026-10-28 照 PoE2：光環給的能量護盾回充速度增加 (0—20)%；這次之前照通用規則）
@@ -539,7 +541,7 @@ walking_calamity:   # Walking Calamity（2026-10-28 照 PoE2：增益另外獲�
   - { stat: effect.damage.extra.fire, type: FLAT, per: 0.5 }   # 增益（OriginalSkills）
 war_banner:   # War Banner（2026-10-28 照 PoE2：(0—10)% 增加保留效率；這次之前照通用規則每 1% 增加 0.5% 戰吼效果）
   - { stat: aura.reservation, type: INCREASED, per: -0.5 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
-whirling_rush:   # Whirling Assault
+whirling_rush:   # Whirling Assault（2026-10-28 照 PoE2 對過：(0—20)% 增加攻擊速度，跟這次之前一樣）
   - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
 whirling_slash:   # Whirling Slash（2026-10-28 照 PoE2：崩散每多一階再更多 +(0—40)%；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: whirl.collapse_more_per_stage, type: FLAT, per: 2.0 }   # 加在每多一階更多 150% 上（Signatures.WHIRL_QUALITY_MORE）
@@ -614,7 +616,7 @@ advanced:
     - { stat: damage.extra.cold, type: FLAT, per: 0.5 }
     - { stat: damage.extra.lightning, type: FLAT, per: 0.5 }
   contagion:   # Contagion：(0—50)% 更多範圍
-    - { stat: skill.area, type: MORE, per: 2.5 }
+    - { stat: skill.area, type: MORE, per: 2.5 }   # 2026-10-28 照 PoE2：傳染半徑 1.7 格乘 √ 範圍（AilmentService.spreadRadius）；這次之前只放大準心那一圈
   convalescence:   # Convalescence：(0—30)% 增加冷卻回復速度
     - { stat: cooldown.recovery, type: INCREASED, per: 1.5 }
   defiance_banner:   # Defiance Banner：(0—30)% 更多範圍
@@ -708,6 +710,8 @@ advanced:
     - { stat: attack.speed, type: MORE, per: 2.0 }
   voltaic_grenade:   # Voltaic Grenade：(0—20)% 更多閃電傷害
     - { stat: damage, type: MORE, per: 1.0, tags: [lightning] }
+  whirling_rush:   # Whirling Assault：(0—20)% 更多物理傷害（2026-10-28 照 PoE2（poe2db 寶石頁第二條）；這次之前沒有，進階奇術把一般品質再算一次）
+    - { stat: damage, type: MORE, per: 1.0, tags: [physical] }
   whirling_slash:   # Whirling Slash：(0—10)% 更多攻擊速度（2026-10-28 照 PoE2）
     - { stat: attack.speed, type: MORE, per: 0.5 }
   emergency_reload:   # Emergency Reload：增益強化的弩矢 (0—10)% 更多傷害（2026-10-28 照 PoE2：這次之前是一般品質效果）

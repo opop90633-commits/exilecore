@@ -443,6 +443,8 @@ public final class StatKeys {
     public static final String KILL_EXPLODE = "kill.explode";
     /** 擊殺時 x% 機率獲得疾速（4 秒：增加 20% 攻擊、施法與移動速度）。 */
     public static final String ONSLAUGHT_ON_KILL = "onslaught.on_kill";
+    /** 2026-10-28 照 PoE2（石拳之道的手套）：擊中時 x% 機率獲得疾速 4 秒（HitEffects；跟擊殺的一樣）。 */
+    public static final String ONSLAUGHT_ON_HIT = "onslaught.on_hit";
     /** 殺死稀有怪物時獲得牠的詞綴幾秒（追逐級傳奇「逐星者」；FLAT 秒數，0 = 沒有）。 */
     public static final String STEAL_MODS = "steal.mods";
     /** 擊中時 x% 機率造成雙倍傷害（跟技能標籤）。 */
@@ -571,7 +573,7 @@ public final class StatKeys {
     public static final String FLAG_RELOAD_ON_STUN = "flag.reload_on_stun";
     /** 2026-10：技能自己帶的：放了就把所有弩技能裝滿（急裝）。 */
     public static final String FLAG_RELOAD_ALL = "flag.reload_all";
-    /** 2026-10：斷命打死時回復最大生命／魔力的 x%（FLAT）。 */
+    /** 2026-10：撲殺打死時回復最大生命／魔力的 x%（FLAT）。 */
     public static final String LIFE_ON_CULL = "life.on_cull";
     public static final String MANA_ON_CULL = "mana.on_cull";
     /**

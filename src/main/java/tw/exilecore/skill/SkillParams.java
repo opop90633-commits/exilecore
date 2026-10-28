@@ -40,13 +40,27 @@ import tw.exilecore.core.config.YamlNode;
  * @param mark        mark：持續多久、受到的傷害增加多少、只對自己的攻擊
  * @param search      corpse：準心指的點附近多遠內找屍體
  * @param percent     corpse：屍體最大生命的幾 % 當火焰傷害
+ * @param wander      projectile（2026-10-28 照 PoE2 Spark）：貼著地面不規則游走、照持續時間消失、同一次施放打同一個目標有間隔（null = 不是這種）
  */
 public record SkillParams(double reach, double angle, int targets, double knockback, Execute execute,
                           Scaled projectiles, double spread, double speed, double range, double size, int pierce,
                           Scaled explode, double wobble, boolean arrow, double gravity, double fuse, boolean blink,
                           Splash splash, Burst burst, Vortex vortex, Scatter scatter, Zone ground,
                           Scaled radius, Scaled length, Scaled chains, double chainRange, Aftershock aftershock,
-                          Dash dash, double delay, Zone zone, Mark mark, double search, Scaled percent) {
+                          Dash dash, double delay, Zone zone, Mark mark, double search, Scaled percent, Wander wander) {
+
+    /**
+     * 2026-10-28 照 PoE2 Spark（RePoE SparkPlayer）：投射物貼著地面不規則游走（spark_pathing_width_bounds：離自己那條射出去的線左右最多
+     * width 格），飛 duration 秒（base_skill_effect_duration，吃技能持續時間，不看射程；投射物速度變快就飛得遠），
+     * 同一次施放的投射物打同一個目標至少隔 hitCooldown 秒（spark_min_time_between_target_clearing_ms：同一隻可以被同一次的好幾顆打到，
+     * 但 0.66 秒內只會被打一次）。這次之前游雷在眼睛的高度亂飛（wobble 一直累積轉向，會轉回頭）、飛 range 格、同一次施放一個敵人只打一次。
+     */
+    public record Wander(double duration, double width, double hitCooldown) {
+        /** 同一次施放打同一個目標的間隔（tick，無條件進位：0.66 秒 → 14 tick，才不會比原作更快打第二下）。 */
+        public int hitCooldownTicks() {
+            return hitCooldown <= 0 ? 0 : (int) Math.ceil(hitCooldown * 20 - 1e-9);
+        }
+    }
 
     /** 處決：目標生命低於 below（0.35 = 35%）時更多 more%（150 = 更多 150%）傷害。 */
     public record Execute(double below, double more) {
@@ -166,9 +180,21 @@ public record SkillParams(double reach, double angle, int targets, double knockb
      * 位移的細節：hitWidth > 0 時順路打到離路線這麼近的敵人；startRadius、endRadius > 0 時在起點、終點炸一圈；
      * ground 不是 null 時沿路留下地面效果（寫在 dash 區塊的 ground）。
      */
-    public record Dash(double hitWidth, Scaled startRadius, Scaled endRadius, Scaled rangeByLevel) {
+    public record Dash(double hitWidth, Scaled startRadius, Scaled endRadius, Scaled rangeByLevel, int spins, double spinRadius) {
         public Dash(final double hitWidth, final Scaled startRadius, final Scaled endRadius) {
-            this(hitWidth, startRadius, endRadius, null);
+            this(hitWidth, startRadius, endRadius, null, 0, 0);
+        }
+
+        public Dash(final double hitWidth, final Scaled startRadius, final Scaled endRadius, final Scaled rangeByLevel) {
+            this(hitWidth, startRadius, endRadius, rangeByLevel, 0, 0);
+        }
+
+        /**
+         * 2026-10-28 照 PoE2 Whirling Assault（{@link WhirlingAssault}）：spins > 0 = 不是瞬移，而是在整個動作時間裡一路往前走、
+         * 沿路轉 spins 圈，每一圈在當下的位置打一圈半徑 spinRadius 格的範圍（各是一個打擊範圍）；這次之前位移只有瞬移＋順路一條線。
+         */
+        public boolean whirls() {
+            return spins > 0 && spinRadius > 0;
         }
 
         /** 2026-10-28 照 PoE2（掠閃 4 → 4.9 → 5.5 米）：這個等級最遠幾格；沒寫逐級的回傳 fallback（{@link SkillParams#range()}）。 */
@@ -256,6 +282,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
         Mark mark = null;
         double search = 6;
         Scaled percent = Scaled.of(10);
+        Wander wander = null;
         switch (mechanic) {
             case STRIKE -> {
                 reach = check(where, "reach", node.decimal("reach", reach), 1, 8);
@@ -281,6 +308,12 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 gravity = check(where, "gravity", node.decimal("gravity", 0), 0, 0.3);
                 fuse = check(where, "fuse", node.decimal("fuse", 0), 0, 10);
                 blink = node.bool("blink", false);
+                if (node.has("wander")) {
+                    final YamlNode sub = node.node("wander");
+                    wander = new Wander(check(sub.path(), "duration", sub.decimal("duration", 2), 0.2, 10),
+                            check(sub.path(), "width", sub.decimal("width", 2), 0, 10),
+                            check(sub.path(), "hit_cooldown", sub.decimal("hit_cooldown", 0), 0, 5));
+                }
                 if (arrow && (gravity > 0 || fuse > 0)) {
                     throw new IllegalArgumentException(where + "：原版箭矢（arrow: true）不能寫 gravity 或 fuse（榴彈用魔法彈）");
                 }
@@ -376,7 +409,9 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 knockback = check(where, "knockback", node.decimal("knockback", 0), 0, 3);
                 dash = new Dash(check(where, "hit_width", node.decimal("hit_width", 0), 0, 4),
                         scaled(where, node, "start_radius", 0, 0, 8), scaled(where, node, "end_radius", 0, 0, 8),
-                        dashRange.first() == dashRange.last() && !dashRange.isTable() ? null : dashRange);
+                        dashRange.first() == dashRange.last() && !dashRange.isTable() ? null : dashRange,
+                        (int) check(where, "spins", node.integer("spins", 0), 0, 12), // 2026-10-28 照 PoE2 Whirling Assault：一路轉幾圈
+                        check(where, "spin_radius", node.decimal("spin_radius", 0), 0, 8));
                 if (node.has("ground")) {
                     ground = zone(node.node("ground"), false);
                 }
@@ -389,6 +424,9 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 // spread：多的那幾發散在準心周圍幾格（0 = 照半徑估）。這次之前一律 1 發
                 projectiles = scaled(where, node, "count", 1, 1, 20);
                 spread = check(where, "spread", node.decimal("spread", 0), 0, 10);
+                // 2026-10-28 照 PoE2 Contagion（瘟疫「使一名敵人」）：targets 有寫就是單體——準心指的（或準心 radius 內最近的）那隻敵人，
+                // 不是一整圈；沒寫（0）照舊打半徑內全部。這次之前 impact 一律打一整圈
+                targets = node.has("targets") ? (int) check(where, "targets", node.integer("targets", 1), 1, 10) : 0;
             }
             case ZONE -> {
                 range = check(where, "range", node.decimal("range", 0), 0, 40);
@@ -447,7 +485,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
         }
         return new SkillParams(reach, angle, targets, knockback, execute, projectiles, spread, speed, range, size, pierce,
                 explode, wobble, arrow, gravity, fuse, blink, splash, burst, vortex, scatter, ground,
-                radius, length, chains, chainRange, aftershock, dash, delay, zone, mark, search, percent);
+                radius, length, chains, chainRange, aftershock, dash, delay, zone, mark, search, percent, wander);
     }
 
     /** 地面效果的區塊（zone 運作方式自己、投射物停下來留下的、位移沿路留下的）。 */

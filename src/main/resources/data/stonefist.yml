@@ -1,0 +1,1675 @@
+# 2026-10-28 照 PoE2 0.5 的昇華「石拳之道」（Way of the Stonefist，武聖）：穿著的手套變成磐石之拳（Fists of Stone），
+# 每條詞綴換成原作的強化版本（RePoE mods.json 的 HandWraps* 詞綴，一條換一條；poe2db「磐石之拳」）。
+# 我們沒有手套欄，PoE2 的手套一律是腿甲（uniques.yml、bases 的慣例），所以這裡換的是腿甲（tw.exilecore.item.Stonefist）。
+#
+# 磐石之拳本身：需求等級 1、不需要能力值、沒有基礎防禦，固定詞綴「每一玩家等級 +3 閃避值」「每一玩家等級 +1 最大能量護盾」（寫在程式裡）。
+# 原本那件的基底防禦、本地防禦詞綴、固定詞綴都不算；嵌著的符文照常。
+#
+# affixes：我們的詞綴代號 → 換成的那條。tiers 的 tier 跟原本那條的階級代號一樣（照原作同一階的 HandWraps 數值，原作那一族
+#   以需求等級對上）。數值照原本那條在範圍裡的位置換到新的範圍。沒寫在這裡的（腐化詞綴、原作沒有對應的揭露詞綴）照原本的生效。
+# uniques：見下面。
+#
+# 特別的屬性鍵：local.hand_wraps_evasion_per_level／local.hand_wraps_es_per_level（每一玩家等級 +x 閃避值／最大能量護盾，
+#   原作 local_hand_wraps_*_per_level；換算時乘上角色等級）。
+# 「低血時受到的傷害更少 x%」（原作 hand_wraps_damage_taken_+%_final_on_low_life，更少）用每一種傷害的 debuff.taken.*@lowlife 寫，
+#   跟其他「受到的傷害增加／減少」相加（不是另外乘）。
+# 「能量護盾提前 x% 開始回充」（原作 faster start of Energy Shield Recharge）跟腐化詞綴一樣用 es.delay 減少 x%。
+#
+# 這次之前（2026-10-27）：腿甲的防禦換成每角色等級 +3 閃避、+1 能量護盾，詞綴（固定詞綴、符文以外）的數值增加 50%。
+
+affixes:
+  added_cold:   # 原本「攻擊附加 {min} 到 {max} 冰冷傷害」
+    text: "攻擊獲得等同於傷害 {value}% 的額外冰冷傷害"
+    tiers:
+      - { tier: 1, value: [21, 23] }   # HandWrapsAddedColdDamage9
+      - { tier: 2, value: [19, 20] }   # HandWrapsAddedColdDamage8
+      - { tier: 3, value: [17, 18] }   # HandWrapsAddedColdDamage7
+      - { tier: 4, value: [15, 16] }   # HandWrapsAddedColdDamage6
+      - { tier: 5, value: [14, 14] }   # HandWrapsAddedColdDamage5
+      - { tier: 6, value: [13, 13] }   # HandWrapsAddedColdDamage4
+      - { tier: 7, value: [12, 12] }   # HandWrapsAddedColdDamage3
+      - { tier: 8, value: [11, 11] }   # HandWrapsAddedColdDamage2
+      - { tier: 9, value: [10, 10] }   # HandWrapsAddedColdDamage1
+    mods:
+      - { stat: damage.extra.cold, type: FLAT, value: "{value}", tags: [attack] }
+  added_fire:   # 原本「攻擊附加 {min} 到 {max} 火焰傷害」
+    text: "攻擊獲得等同於傷害 {value}% 的額外火焰傷害"
+    tiers:
+      - { tier: 1, value: [21, 23] }   # HandWrapsAddedFireDamage9
+      - { tier: 2, value: [19, 20] }   # HandWrapsAddedFireDamage8
+      - { tier: 3, value: [17, 18] }   # HandWrapsAddedFireDamage7
+      - { tier: 4, value: [15, 16] }   # HandWrapsAddedFireDamage6
+      - { tier: 5, value: [14, 14] }   # HandWrapsAddedFireDamage5
+      - { tier: 6, value: [13, 13] }   # HandWrapsAddedFireDamage4
+      - { tier: 7, value: [12, 12] }   # HandWrapsAddedFireDamage3
+      - { tier: 8, value: [11, 11] }   # HandWrapsAddedFireDamage2
+      - { tier: 9, value: [10, 10] }   # HandWrapsAddedFireDamage1
+    mods:
+      - { stat: damage.extra.fire, type: FLAT, value: "{value}", tags: [attack] }
+  accuracy:   # 原本「+{value} 命中」
+    text: "攻擊擊中時有 {value}% 機率致盲敵人"
+    tiers:
+      - { tier: 1, value: [36, 38] }   # HandWrapsIncreasedAccuracy9
+      - { tier: 2, value: [33, 35] }   # HandWrapsIncreasedAccuracy8
+      - { tier: 3, value: [30, 32] }   # HandWrapsIncreasedAccuracy7
+      - { tier: 4, value: [27, 29] }   # HandWrapsIncreasedAccuracy6
+      - { tier: 5, value: [24, 26] }   # HandWrapsIncreasedAccuracy5
+      - { tier: 6, value: [21, 23] }   # HandWrapsIncreasedAccuracy4
+      - { tier: 7, value: [18, 20] }   # HandWrapsIncreasedAccuracy3
+      - { tier: 8, value: [15, 17] }   # HandWrapsIncreasedAccuracy2
+      - { tier: 9, value: [12, 14] }   # HandWrapsIncreasedAccuracy1
+    mods:
+      - { stat: blind.chance, type: FLAT, value: "{value}", tags: [attack] }
+  life_flat:   # 原本「+{value} 最大生命」
+    text: "低血時受到的傷害更少 {value}%"
+    tiers:
+      - { tier: 1, value: [13, 13] }   # HandWrapsIncreasedLife9
+      - { tier: 2, value: [12, 12] }   # HandWrapsIncreasedLife8
+      - { tier: 3, value: [11, 11] }   # HandWrapsIncreasedLife7
+      - { tier: 4, value: [10, 10] }   # HandWrapsIncreasedLife6
+      - { tier: 5, value: [9, 9] }   # HandWrapsIncreasedLife5
+      - { tier: 6, value: [8, 8] }   # HandWrapsIncreasedLife4
+      - { tier: 7, value: [7, 7] }   # HandWrapsIncreasedLife3
+      - { tier: 8, value: [6, 6] }   # HandWrapsIncreasedLife2
+      - { tier: 9, value: [5, 5] }   # HandWrapsIncreasedLife1
+    mods:
+      - { stat: debuff.taken.physical@lowlife, type: FLAT, value: "-{value}" }
+      - { stat: debuff.taken.fire@lowlife, type: FLAT, value: "-{value}" }
+      - { stat: debuff.taken.cold@lowlife, type: FLAT, value: "-{value}" }
+      - { stat: debuff.taken.lightning@lowlife, type: FLAT, value: "-{value}" }
+      - { stat: debuff.taken.chaos@lowlife, type: FLAT, value: "-{value}" }
+  mana_flat:   # 原本「+{value} 最大魔力」
+    text: "低魔力時攻擊傷害更多 {value}%"
+    tiers:
+      - { tier: 1, value: [26, 27] }   # HandWrapsIncreasedMana9
+      - { tier: 2, value: [24, 25] }   # HandWrapsIncreasedMana8
+      - { tier: 3, value: [22, 23] }   # HandWrapsIncreasedMana7
+      - { tier: 4, value: [20, 21] }   # HandWrapsIncreasedMana6
+      - { tier: 5, value: [18, 19] }   # HandWrapsIncreasedMana5
+      - { tier: 6, value: [16, 17] }   # HandWrapsIncreasedMana4
+      - { tier: 7, value: [14, 15] }   # HandWrapsIncreasedMana3
+      - { tier: 8, value: [12, 13] }   # HandWrapsIncreasedMana2
+      - { tier: 9, value: [10, 11] }   # HandWrapsIncreasedMana1
+    mods:
+      - { stat: damage@lowmana, type: MORE, value: "{value}", tags: [attack] }
+  added_lightning:   # 原本「攻擊附加 {min} 到 {max} 閃電傷害」
+    text: "攻擊獲得等同於傷害 {value}% 的額外閃電傷害"
+    tiers:
+      - { tier: 1, value: [21, 23] }   # HandWrapsAddedLightningDamage9
+      - { tier: 2, value: [19, 20] }   # HandWrapsAddedLightningDamage8
+      - { tier: 3, value: [17, 18] }   # HandWrapsAddedLightningDamage7
+      - { tier: 4, value: [15, 16] }   # HandWrapsAddedLightningDamage6
+      - { tier: 5, value: [14, 14] }   # HandWrapsAddedLightningDamage5
+      - { tier: 6, value: [13, 13] }   # HandWrapsAddedLightningDamage4
+      - { tier: 7, value: [12, 12] }   # HandWrapsAddedLightningDamage3
+      - { tier: 8, value: [11, 11] }   # HandWrapsAddedLightningDamage2
+      - { tier: 9, value: [10, 10] }   # HandWrapsAddedLightningDamage1
+    mods:
+      - { stat: damage.extra.lightning, type: FLAT, value: "{value}", tags: [attack] }
+  armour_evasion_inc:   # 原本「增加 {value}% 護甲與閃避」
+    text: "全域閃避值和能量護盾更多 {value}%"
+    tiers:
+      - { tier: 1, value: [19, 20] }   # HandWrapsLocalIncreasedArmourAndEvasion7
+      - { tier: 2, value: [17, 18] }   # HandWrapsLocalIncreasedArmourAndEvasion6
+      - { tier: 3, value: [15, 16] }   # HandWrapsLocalIncreasedArmourAndEvasion5
+      - { tier: 4, value: [13, 14] }   # HandWrapsLocalIncreasedArmourAndEvasion4
+      - { tier: 5, value: [11, 12] }   # HandWrapsLocalIncreasedArmourAndEvasion3
+      - { tier: 6, value: [9, 10] }   # HandWrapsLocalIncreasedArmourAndEvasion2
+      - { tier: 7, value: [7, 8] }   # HandWrapsLocalIncreasedArmourAndEvasion1
+    mods:
+      - { stat: evasion, type: MORE, value: "{value}" }
+      - { stat: es.max, type: MORE, value: "{value}" }
+  armour_evasion_flat:   # 原本「+{armour} 護甲、+{evasion} 閃避」
+    text: "每一玩家等級 +{evasion} 閃避值、+{es} 最大能量護盾"
+    tiers:
+      - { tier: 1, evasion: [4, 4], es: [1, 1] }   # HandWrapsLocalBaseArmourAndEvasionRating4
+      - { tier: 2, evasion: [3, 3], es: [1, 1] }   # HandWrapsLocalBaseArmourAndEvasionRating3
+      - { tier: 3, evasion: [2, 2], es: [1, 1] }   # HandWrapsLocalBaseArmourAndEvasionRating2
+      - { tier: 4, evasion: [1, 1], es: [1, 1] }   # HandWrapsLocalBaseArmourAndEvasionRating1
+    mods:
+      - { stat: local.hand_wraps_evasion_per_level, type: FLAT, value: "{evasion}" }
+      - { stat: local.hand_wraps_es_per_level, type: FLAT, value: "{es}" }
+  evasion_es_flat:   # 原本「+{evasion} 閃避、+{es} 最大能量護盾」
+    text: "每一玩家等級 +{evasion} 閃避值、+{es} 最大能量護盾"
+    tiers:
+      - { tier: 1, evasion: [4, 4], es: [1, 1] }   # HandWrapsLocalBaseEvasionRatingAndEnergyShield4
+      - { tier: 2, evasion: [3, 3], es: [1, 1] }   # HandWrapsLocalBaseEvasionRatingAndEnergyShield3
+      - { tier: 3, evasion: [2, 2], es: [1, 1] }   # HandWrapsLocalBaseEvasionRatingAndEnergyShield2
+      - { tier: 4, evasion: [1, 1], es: [1, 1] }   # HandWrapsLocalBaseEvasionRatingAndEnergyShield1
+    mods:
+      - { stat: local.hand_wraps_evasion_per_level, type: FLAT, value: "{evasion}" }
+      - { stat: local.hand_wraps_es_per_level, type: FLAT, value: "{es}" }
+  es_local:   # 原本「+{value} 最大能量護盾」
+    text: "每一玩家等級 +{evasion} 閃避值、+{es} 最大能量護盾"
+    tiers:
+      - { tier: 1, evasion: [4, 4], es: [1, 1] }   # HandWrapsLocalIncreasedEnergyShield7
+      - { tier: 2, evasion: [3, 3], es: [1, 1] }   # HandWrapsLocalIncreasedEnergyShield6
+      - { tier: 3, evasion: [3, 3], es: [1, 1] }   # HandWrapsLocalIncreasedEnergyShield5
+      - { tier: 4, evasion: [2, 2], es: [1, 1] }   # HandWrapsLocalIncreasedEnergyShield4
+      - { tier: 5, evasion: [2, 2], es: [1, 1] }   # HandWrapsLocalIncreasedEnergyShield3
+      - { tier: 6, evasion: [1, 1], es: [1, 1] }   # HandWrapsLocalIncreasedEnergyShield2
+      - { tier: 7, evasion: [1, 1], es: [1, 1] }   # HandWrapsLocalIncreasedEnergyShield1
+    mods:
+      - { stat: local.hand_wraps_evasion_per_level, type: FLAT, value: "{evasion}" }
+      - { stat: local.hand_wraps_es_per_level, type: FLAT, value: "{es}" }
+  es_inc:   # 原本「增加 {value}% 能量護盾」
+    text: "全域閃避值和能量護盾更多 {value}%"
+    tiers:
+      - { tier: 1, value: [17, 18] }   # HandWrapsLocalIncreasedEnergyShieldPercent6
+      - { tier: 2, value: [17, 18] }   # HandWrapsLocalIncreasedEnergyShieldPercent6
+      - { tier: 3, value: [15, 16] }   # HandWrapsLocalIncreasedEnergyShieldPercent5
+      - { tier: 4, value: [13, 14] }   # HandWrapsLocalIncreasedEnergyShieldPercent4
+      - { tier: 5, value: [11, 12] }   # HandWrapsLocalIncreasedEnergyShieldPercent3
+      - { tier: 6, value: [9, 10] }   # HandWrapsLocalIncreasedEnergyShieldPercent2
+      - { tier: 7, value: [7, 8] }   # HandWrapsLocalIncreasedEnergyShieldPercent1
+    mods:
+      - { stat: evasion, type: MORE, value: "{value}" }
+      - { stat: es.max, type: MORE, value: "{value}" }
+  evasion_es_inc:   # 原本「增加 {value}% 閃避與能量護盾」
+    text: "全域閃避值和能量護盾更多 {value}%"
+    tiers:
+      - { tier: 1, value: [19, 20] }   # HandWrapsLocalIncreasedEvasionAndEnergyShield7
+      - { tier: 2, value: [17, 18] }   # HandWrapsLocalIncreasedEvasionAndEnergyShield6
+      - { tier: 3, value: [17, 18] }   # HandWrapsLocalIncreasedEvasionAndEnergyShield6
+      - { tier: 4, value: [13, 14] }   # HandWrapsLocalIncreasedEvasionAndEnergyShield4
+      - { tier: 5, value: [11, 12] }   # HandWrapsLocalIncreasedEvasionAndEnergyShield3
+      - { tier: 6, value: [9, 10] }   # HandWrapsLocalIncreasedEvasionAndEnergyShield2
+      - { tier: 7, value: [7, 8] }   # HandWrapsLocalIncreasedEvasionAndEnergyShield1
+    mods:
+      - { stat: evasion, type: MORE, value: "{value}" }
+      - { stat: es.max, type: MORE, value: "{value}" }
+  evasion_flat:   # 原本「+{value} 閃避」
+    text: "每一玩家等級 +{evasion} 閃避值、+{es} 最大能量護盾"
+    tiers:
+      - { tier: 1, evasion: [3, 3], es: [1, 1] }   # HandWrapsLocalIncreasedEvasionRating6
+      - { tier: 2, evasion: [3, 3], es: [1, 1] }   # HandWrapsLocalIncreasedEvasionRating6
+      - { tier: 3, evasion: [3, 3], es: [1, 1] }   # HandWrapsLocalIncreasedEvasionRating5
+      - { tier: 4, evasion: [2, 2], es: [1, 1] }   # HandWrapsLocalIncreasedEvasionRating4
+      - { tier: 5, evasion: [2, 2], es: [1, 1] }   # HandWrapsLocalIncreasedEvasionRating3
+      - { tier: 6, evasion: [1, 1], es: [1, 1] }   # HandWrapsLocalIncreasedEvasionRating2
+      - { tier: 7, evasion: [1, 1], es: [1, 1] }   # HandWrapsLocalIncreasedEvasionRating1
+    mods:
+      - { stat: local.hand_wraps_evasion_per_level, type: FLAT, value: "{evasion}" }
+      - { stat: local.hand_wraps_es_per_level, type: FLAT, value: "{es}" }
+  evasion_inc:   # 原本「增加 {value}% 閃避」
+    text: "全域閃避值和能量護盾更多 {value}%"
+    tiers:
+      - { tier: 1, value: [19, 20] }   # HandWrapsLocalIncreasedEvasionRatingPercent7
+      - { tier: 2, value: [17, 18] }   # HandWrapsLocalIncreasedEvasionRatingPercent6
+      - { tier: 3, value: [15, 16] }   # HandWrapsLocalIncreasedEvasionRatingPercent5
+      - { tier: 4, value: [13, 14] }   # HandWrapsLocalIncreasedEvasionRatingPercent4
+      - { tier: 5, value: [11, 12] }   # HandWrapsLocalIncreasedEvasionRatingPercent3
+      - { tier: 6, value: [9, 10] }   # HandWrapsLocalIncreasedEvasionRatingPercent2
+      - { tier: 7, value: [7, 8] }   # HandWrapsLocalIncreasedEvasionRatingPercent1
+    mods:
+      - { stat: evasion, type: MORE, value: "{value}" }
+      - { stat: es.max, type: MORE, value: "{value}" }
+  armour_evasion_life:   # 原本「增加 {value}% 護甲與閃避、+{life} 最大生命」
+    text: "受到的傷害有 {value}% 補償為生命、魔力和能量護盾"
+    tiers:
+      - { tier: 1, value: [8, 8] }   # HandWrapsLocalIncreasedArmourAndEvasionAndLife6
+      - { tier: 2, value: [7, 7] }   # HandWrapsLocalIncreasedArmourAndEvasionAndLife5
+      - { tier: 3, value: [6, 6] }   # HandWrapsLocalIncreasedArmourAndEvasionAndLife4
+      - { tier: 4, value: [5, 5] }   # HandWrapsLocalIncreasedArmourAndEvasionAndLife3
+      - { tier: 5, value: [4, 4] }   # HandWrapsLocalIncreasedArmourAndEvasionAndLife2
+      - { tier: 6, value: [3, 3] }   # HandWrapsLocalIncreasedArmourAndEvasionAndLife1
+    mods:
+      - { stat: life.recoup, type: FLAT, value: "{value}" }
+      - { stat: mana.recoup, type: FLAT, value: "{value}" }
+      - { stat: es.recoup, type: FLAT, value: "{value}" }
+  armour_life:   # 原本「增加 {value}% 護甲、+{life} 最大生命」
+    text: "受到的傷害有 {value}% 補償為生命、魔力和能量護盾"
+    tiers:
+      - { tier: 1, value: [8, 8] }   # HandWrapsLocalIncreasedArmourAndLife6
+      - { tier: 2, value: [7, 7] }   # HandWrapsLocalIncreasedArmourAndLife5
+      - { tier: 3, value: [6, 6] }   # HandWrapsLocalIncreasedArmourAndLife4
+      - { tier: 4, value: [5, 5] }   # HandWrapsLocalIncreasedArmourAndLife3
+      - { tier: 5, value: [4, 4] }   # HandWrapsLocalIncreasedArmourAndLife2
+      - { tier: 6, value: [3, 3] }   # HandWrapsLocalIncreasedArmourAndLife1
+    mods:
+      - { stat: life.recoup, type: FLAT, value: "{value}" }
+      - { stat: mana.recoup, type: FLAT, value: "{value}" }
+      - { stat: es.recoup, type: FLAT, value: "{value}" }
+  es_life:   # 原本「增加 {value}% 能量護盾、+{life} 最大生命」
+    text: "受到的傷害有 {value}% 補償為生命、魔力和能量護盾"
+    tiers:
+      - { tier: 1, value: [8, 8] }   # HandWrapsLocalIncreasedEnergyShieldAndLife6
+      - { tier: 2, value: [7, 7] }   # HandWrapsLocalIncreasedEnergyShieldAndLife5
+      - { tier: 3, value: [6, 6] }   # HandWrapsLocalIncreasedEnergyShieldAndLife4
+      - { tier: 4, value: [5, 5] }   # HandWrapsLocalIncreasedEnergyShieldAndLife3
+      - { tier: 5, value: [4, 4] }   # HandWrapsLocalIncreasedEnergyShieldAndLife2
+      - { tier: 6, value: [3, 3] }   # HandWrapsLocalIncreasedEnergyShieldAndLife1
+    mods:
+      - { stat: life.recoup, type: FLAT, value: "{value}" }
+      - { stat: mana.recoup, type: FLAT, value: "{value}" }
+      - { stat: es.recoup, type: FLAT, value: "{value}" }
+  evasion_es_life:   # 原本「增加 {value}% 閃避與能量護盾、+{life} 最大生命」
+    text: "受到的傷害有 {value}% 補償為生命、魔力和能量護盾"
+    tiers:
+      - { tier: 1, value: [8, 8] }   # HandWrapsLocalIncreasedEvasionAndEnergyShieldAndLife6
+      - { tier: 2, value: [7, 7] }   # HandWrapsLocalIncreasedEvasionAndEnergyShieldAndLife5
+      - { tier: 3, value: [6, 6] }   # HandWrapsLocalIncreasedEvasionAndEnergyShieldAndLife4
+      - { tier: 4, value: [5, 5] }   # HandWrapsLocalIncreasedEvasionAndEnergyShieldAndLife3
+      - { tier: 5, value: [4, 4] }   # HandWrapsLocalIncreasedEvasionAndEnergyShieldAndLife2
+      - { tier: 6, value: [3, 3] }   # HandWrapsLocalIncreasedEvasionAndEnergyShieldAndLife1
+    mods:
+      - { stat: life.recoup, type: FLAT, value: "{value}" }
+      - { stat: mana.recoup, type: FLAT, value: "{value}" }
+      - { stat: es.recoup, type: FLAT, value: "{value}" }
+  evasion_life:   # 原本「增加 {value}% 閃避、+{life} 最大生命」
+    text: "受到的傷害有 {value}% 補償為生命、魔力和能量護盾"
+    tiers:
+      - { tier: 1, value: [8, 8] }   # HandWrapsLocalIncreasedEvasionAndLife6
+      - { tier: 2, value: [7, 7] }   # HandWrapsLocalIncreasedEvasionAndLife5
+      - { tier: 3, value: [6, 6] }   # HandWrapsLocalIncreasedEvasionAndLife4
+      - { tier: 4, value: [5, 5] }   # HandWrapsLocalIncreasedEvasionAndLife3
+      - { tier: 5, value: [4, 4] }   # HandWrapsLocalIncreasedEvasionAndLife2
+      - { tier: 6, value: [3, 3] }   # HandWrapsLocalIncreasedEvasionAndLife1
+    mods:
+      - { stat: life.recoup, type: FLAT, value: "{value}" }
+      - { stat: mana.recoup, type: FLAT, value: "{value}" }
+      - { stat: es.recoup, type: FLAT, value: "{value}" }
+  armour_flat:   # 原本「+{value} 護甲」
+    text: "每一玩家等級 +{evasion} 閃避值、+{es} 最大能量護盾"
+    tiers:
+      - { tier: 1, evasion: [3, 3], es: [1, 1] }   # HandWrapsLocalIncreasedPhysicalDamageReductionRating6
+      - { tier: 2, evasion: [3, 3], es: [1, 1] }   # HandWrapsLocalIncreasedPhysicalDamageReductionRating6
+      - { tier: 3, evasion: [3, 3], es: [1, 1] }   # HandWrapsLocalIncreasedPhysicalDamageReductionRating5
+      - { tier: 4, evasion: [2, 2], es: [1, 1] }   # HandWrapsLocalIncreasedPhysicalDamageReductionRating4
+      - { tier: 5, evasion: [2, 2], es: [1, 1] }   # HandWrapsLocalIncreasedPhysicalDamageReductionRating3
+      - { tier: 6, evasion: [1, 1], es: [1, 1] }   # HandWrapsLocalIncreasedPhysicalDamageReductionRating2
+      - { tier: 7, evasion: [1, 1], es: [1, 1] }   # HandWrapsLocalIncreasedPhysicalDamageReductionRating1
+    mods:
+      - { stat: local.hand_wraps_evasion_per_level, type: FLAT, value: "{evasion}" }
+      - { stat: local.hand_wraps_es_per_level, type: FLAT, value: "{es}" }
+  armour_inc:   # 原本「增加 {value}% 護甲」
+    text: "全域閃避值和能量護盾更多 {value}%"
+    tiers:
+      - { tier: 1, value: [19, 20] }   # HandWrapsLocalIncreasedPhysicalDamageReductionRatingPercent7
+      - { tier: 2, value: [17, 18] }   # HandWrapsLocalIncreasedPhysicalDamageReductionRatingPercent6
+      - { tier: 3, value: [15, 16] }   # HandWrapsLocalIncreasedPhysicalDamageReductionRatingPercent5
+      - { tier: 4, value: [13, 14] }   # HandWrapsLocalIncreasedPhysicalDamageReductionRatingPercent4
+      - { tier: 5, value: [11, 12] }   # HandWrapsLocalIncreasedPhysicalDamageReductionRatingPercent3
+      - { tier: 6, value: [9, 10] }   # HandWrapsLocalIncreasedPhysicalDamageReductionRatingPercent2
+      - { tier: 7, value: [7, 8] }   # HandWrapsLocalIncreasedPhysicalDamageReductionRatingPercent1
+    mods:
+      - { stat: evasion, type: MORE, value: "{value}" }
+      - { stat: es.max, type: MORE, value: "{value}" }
+  added_phys:   # 原本「攻擊附加 {min} 到 {max} 物理傷害」
+    text: "攻擊獲得等同於傷害 {value}% 的額外物理傷害"
+    tiers:
+      - { tier: 1, value: [21, 23] }   # HandWrapsAddedPhysicalDamage9
+      - { tier: 2, value: [19, 20] }   # HandWrapsAddedPhysicalDamage8
+      - { tier: 3, value: [17, 18] }   # HandWrapsAddedPhysicalDamage7
+      - { tier: 4, value: [15, 16] }   # HandWrapsAddedPhysicalDamage6
+      - { tier: 5, value: [14, 14] }   # HandWrapsAddedPhysicalDamage5
+      - { tier: 6, value: [13, 13] }   # HandWrapsAddedPhysicalDamage4
+      - { tier: 7, value: [12, 12] }   # HandWrapsAddedPhysicalDamage3
+      - { tier: 8, value: [11, 11] }   # HandWrapsAddedPhysicalDamage2
+      - { tier: 9, value: [10, 10] }   # HandWrapsAddedPhysicalDamage1
+    mods:
+      - { stat: damage.extra.physical, type: FLAT, value: "{value}", tags: [attack] }
+  armour_es_inc:   # 原本「增加 {value}% 護甲與能量護盾」
+    text: "全域閃避值和能量護盾更多 {value}%"
+    tiers:
+      - { tier: 1, value: [19, 20] }   # HandWrapsLocalIncreasedArmourAndEnergyShield7
+      - { tier: 2, value: [17, 18] }   # HandWrapsLocalIncreasedArmourAndEnergyShield6
+      - { tier: 3, value: [15, 16] }   # HandWrapsLocalIncreasedArmourAndEnergyShield5
+      - { tier: 4, value: [13, 14] }   # HandWrapsLocalIncreasedArmourAndEnergyShield4
+      - { tier: 5, value: [11, 12] }   # HandWrapsLocalIncreasedArmourAndEnergyShield3
+      - { tier: 6, value: [9, 10] }   # HandWrapsLocalIncreasedArmourAndEnergyShield2
+      - { tier: 7, value: [7, 8] }   # HandWrapsLocalIncreasedArmourAndEnergyShield1
+    mods:
+      - { stat: evasion, type: MORE, value: "{value}" }
+      - { stat: es.max, type: MORE, value: "{value}" }
+  armour_es_flat:   # 原本「+{armour} 護甲、+{es} 最大能量護盾」
+    text: "每一玩家等級 +{evasion} 閃避值、+{es} 最大能量護盾"
+    tiers:
+      - { tier: 1, evasion: [4, 4], es: [1, 1] }   # HandWrapsLocalBaseArmourAndEnergyShield4
+      - { tier: 2, evasion: [3, 3], es: [1, 1] }   # HandWrapsLocalBaseArmourAndEnergyShield3
+      - { tier: 3, evasion: [1, 1], es: [1, 1] }   # HandWrapsLocalBaseArmourAndEnergyShield1
+      - { tier: 4, evasion: [1, 1], es: [1, 1] }   # HandWrapsLocalBaseArmourAndEnergyShield1
+    mods:
+      - { stat: local.hand_wraps_evasion_per_level, type: FLAT, value: "{evasion}" }
+      - { stat: local.hand_wraps_es_per_level, type: FLAT, value: "{es}" }
+  armour_es_life:   # 原本「增加 {value}% 護甲與能量護盾、+{life} 最大生命」
+    text: "受到的傷害有 {value}% 補償為生命、魔力和能量護盾"
+    tiers:
+      - { tier: 1, value: [8, 8] }   # HandWrapsLocalIncreasedArmourAndEnergyShieldAndLife6
+      - { tier: 2, value: [7, 7] }   # HandWrapsLocalIncreasedArmourAndEnergyShieldAndLife5
+      - { tier: 3, value: [6, 6] }   # HandWrapsLocalIncreasedArmourAndEnergyShieldAndLife4
+      - { tier: 4, value: [5, 5] }   # HandWrapsLocalIncreasedArmourAndEnergyShieldAndLife3
+      - { tier: 5, value: [4, 4] }   # HandWrapsLocalIncreasedArmourAndEnergyShieldAndLife2
+      - { tier: 6, value: [3, 3] }   # HandWrapsLocalIncreasedArmourAndEnergyShieldAndLife1
+    mods:
+      - { stat: life.recoup, type: FLAT, value: "{value}" }
+      - { stat: mana.recoup, type: FLAT, value: "{value}" }
+      - { stat: es.recoup, type: FLAT, value: "{value}" }
+  armour_elemental:   # 原本「護甲的 {value}% 也套用在元素傷害上」
+    text: "+{value}% 全部元素抗性"
+    tiers:
+      - { tier: 1, value: [22, 24] }   # HandWrapsArmourAppliesToElementalDamage5
+      - { tier: 2, value: [19, 21] }   # HandWrapsArmourAppliesToElementalDamage4
+      - { tier: 3, value: [16, 18] }   # HandWrapsArmourAppliesToElementalDamage3
+      - { tier: 4, value: [13, 15] }   # HandWrapsArmourAppliesToElementalDamage2
+      - { tier: 5, value: [10, 12] }   # HandWrapsArmourAppliesToElementalDamage1
+    mods:
+      - { stat: resist.fire, type: FLAT, value: "{value}" }
+      - { stat: resist.cold, type: FLAT, value: "{value}" }
+      - { stat: resist.lightning, type: FLAT, value: "{value}" }
+  resist_chaos:   # 原本「+{value}% 混沌抗性」
+    text: "+{value}% 混沌抗性、+{max}% 最大混沌抗性"
+    tiers:
+      - { tier: 1, value: [22, 25], max: [2, 2] }   # HandWrapsChaosResist6
+      - { tier: 2, value: [22, 25], max: [1, 1] }   # HandWrapsChaosResist5
+      - { tier: 3, value: [18, 21], max: [1, 1] }   # HandWrapsChaosResist4
+      - { tier: 4, value: [14, 17], max: [1, 1] }   # HandWrapsChaosResist3
+      - { tier: 5, value: [10, 13], max: [1, 1] }   # HandWrapsChaosResist2
+      - { tier: 6, value: [6, 9], max: [1, 1] }   # HandWrapsChaosResist1
+    mods:
+      - { stat: resist.chaos, type: FLAT, value: "{value}" }
+      - { stat: resist.max.chaos, type: FLAT, value: "{max}" }
+  resist_cold:   # 原本「+{value}% 冰冷抗性」
+    text: "+{value}% 冰冷抗性、+{max}% 最大冰冷抗性"
+    tiers:
+      - { tier: 1, value: [36, 40], max: [3, 3] }   # HandWrapsColdResist8
+      - { tier: 2, value: [36, 40], max: [2, 2] }   # HandWrapsColdResist7
+      - { tier: 3, value: [31, 35], max: [2, 2] }   # HandWrapsColdResist6
+      - { tier: 4, value: [26, 30], max: [2, 2] }   # HandWrapsColdResist5
+      - { tier: 5, value: [21, 25], max: [2, 2] }   # HandWrapsColdResist4
+      - { tier: 6, value: [21, 25], max: [1, 1] }   # HandWrapsColdResist3
+      - { tier: 7, value: [16, 20], max: [1, 1] }   # HandWrapsColdResist2
+      - { tier: 8, value: [11, 15], max: [1, 1] }   # HandWrapsColdResist1
+    mods:
+      - { stat: resist.cold, type: FLAT, value: "{value}" }
+      - { stat: resist.max.cold, type: FLAT, value: "{max}" }
+  crit_bonus:   # 原本「增加 {value}% 暴擊傷害加成」
+    text: "+{value/100}% 暴擊率"
+    tiers:
+      - { tier: 1, value: [250, 300] }   # HandWrapsCriticalMultiplier5
+      - { tier: 2, value: [210, 250] }   # HandWrapsCriticalMultiplier4
+      - { tier: 3, value: [160, 200] }   # HandWrapsCriticalMultiplier3
+      - { tier: 4, value: [110, 150] }   # HandWrapsCriticalMultiplier2
+      - { tier: 5, value: [50, 100] }   # HandWrapsCriticalMultiplier1
+    mods:
+      - { stat: crit.base_extra, type: FLAT, value: "{value/100}" }
+  requirements_reduced:   # 原本「減少 {value}% 屬性需求」
+    text: "+{value} 全部能力值"
+    tiers:
+      - { tier: 1, value: [26, 30] }   # HandWrapsReducedLocalAttributeRequirements5
+      - { tier: 2, value: [21, 25] }   # HandWrapsReducedLocalAttributeRequirements4
+      - { tier: 3, value: [16, 20] }   # HandWrapsReducedLocalAttributeRequirements3
+      - { tier: 4, value: [11, 15] }   # HandWrapsReducedLocalAttributeRequirements2
+      - { tier: 5, value: [5, 10] }   # HandWrapsReducedLocalAttributeRequirements1
+    mods:
+      - { stat: attr.str, type: FLAT, value: "{value}" }
+      - { stat: attr.dex, type: FLAT, value: "{value}" }
+      - { stat: attr.int, type: FLAT, value: "{value}" }
+  dex_flat_legs:   # 原本「+{value} 敏捷」
+    text: "+{value}% 滿溢機率發射一發額外投射物"
+    tiers:
+      - { tier: 1, value: [51, 60] }   # HandWrapsDexterity9
+      - { tier: 2, value: [46, 50] }   # HandWrapsDexterity8
+      - { tier: 3, value: [41, 45] }   # HandWrapsDexterity7
+      - { tier: 4, value: [36, 40] }   # HandWrapsDexterity6
+      - { tier: 5, value: [31, 35] }   # HandWrapsDexterity5
+      - { tier: 6, value: [27, 30] }   # HandWrapsDexterity4
+      - { tier: 7, value: [23, 26] }   # HandWrapsDexterity3
+      - { tier: 8, value: [19, 22] }   # HandWrapsDexterity2
+      - { tier: 9, value: [15, 18] }   # HandWrapsDexterity1
+    mods:
+      - { stat: skill.projectile_chance, type: FLAT, value: "{value}" }
+  es_recharge:   # 原本「增加 {value}% 能量護盾回充速度」
+    text: "能量護盾提前 {value}% 開始回充"
+    tiers:
+      - { tier: 1, value: [41, 45] }   # HandWrapsEnergyShieldRechargeRate4
+    mods:
+      - { stat: es.delay, type: INCREASED, value: "-{value}" }
+  resist_fire:   # 原本「+{value}% 火焰抗性」
+    text: "+{value}% 火焰抗性、+{max}% 最大火焰抗性"
+    tiers:
+      - { tier: 1, value: [36, 40], max: [3, 3] }   # HandWrapsFireResist8
+      - { tier: 2, value: [36, 40], max: [2, 2] }   # HandWrapsFireResist7
+      - { tier: 3, value: [31, 35], max: [2, 2] }   # HandWrapsFireResist6
+      - { tier: 4, value: [26, 30], max: [2, 2] }   # HandWrapsFireResist5
+      - { tier: 5, value: [21, 25], max: [2, 2] }   # HandWrapsFireResist4
+      - { tier: 6, value: [21, 25], max: [1, 1] }   # HandWrapsFireResist3
+      - { tier: 7, value: [16, 20], max: [1, 1] }   # HandWrapsFireResist2
+      - { tier: 8, value: [11, 15], max: [1, 1] }   # HandWrapsFireResist1
+    mods:
+      - { stat: resist.fire, type: FLAT, value: "{value}" }
+      - { stat: resist.max.fire, type: FLAT, value: "{max}" }
+  skill_level_melee_amulet:   # 原本「+{value} 全部近戰攻擊技能等級」
+    text: "+{quality}% 全部技能的品質{lv:|、+1 全部近戰技能等級}"
+    tiers:
+      - { tier: 1, quality: [10, 12], lv: [2, 2], level: [1, 1] }   # HandWrapsGlobalMeleeSkillGemLevel2
+      - { tier: 2, quality: [10, 12], lv: [1, 1], level: [0, 0] }   # HandWrapsGlobalMeleeSkillGemLevel1
+    mods:
+      - { stat: skill.quality, type: FLAT, value: "{quality}" }
+      - { stat: skill.level, type: FLAT, value: "{level}", tags: [melee] }
+  attack_speed:   # 原本「增加 {value}% 攻擊速度」
+    text: "擊中時有 {value}% 機率獲得疾速 4 秒"
+    tiers:
+      - { tier: 1, value: [26, 30] }   # HandWrapsIncreasedAttackSpeed4
+      - { tier: 2, value: [20, 24] }   # HandWrapsIncreasedAttackSpeed3
+      - { tier: 3, value: [14, 18] }   # HandWrapsIncreasedAttackSpeed2
+      - { tier: 4, value: [8, 12] }   # HandWrapsIncreasedAttackSpeed1
+    mods:
+      - { stat: onslaught.on_hit, type: FLAT, value: "{value}" }
+  int_flat:   # 原本「+{value} 智慧」
+    text: "增加 {value}% 冷卻時間回復速度"
+    tiers:
+      - { tier: 1, value: [33, 36] }   # HandWrapsIntelligence8
+      - { tier: 2, value: [29, 32] }   # HandWrapsIntelligence7
+      - { tier: 3, value: [25, 28] }   # HandWrapsIntelligence6
+      - { tier: 4, value: [21, 24] }   # HandWrapsIntelligence5
+      - { tier: 5, value: [17, 20] }   # HandWrapsIntelligence4
+      - { tier: 6, value: [13, 16] }   # HandWrapsIntelligence3
+      - { tier: 7, value: [9, 12] }   # HandWrapsIntelligence2
+      - { tier: 8, value: [5, 8] }   # HandWrapsIntelligence1
+    mods:
+      - { stat: cooldown.recovery, type: INCREASED, value: "{value}" }
+  rarity_suffix:   # 原本「增加 {value}% 物品掉落稀有度」
+    text: "增加 {value}% 怪物掉落的金幣數量"
+    tiers:
+      - { tier: 1, value: [26, 30] }   # HandWrapsItemFoundRarityIncrease3
+      - { tier: 2, value: [21, 25] }   # HandWrapsItemFoundRarityIncrease2
+      - { tier: 3, value: [15, 20] }   # HandWrapsItemFoundRarityIncrease1
+    mods:
+      - { stat: gold.find, type: INCREASED, value: "{value}" }
+  life_on_hit:   # 原本「攻擊每擊中一個敵人回復 {value} 生命」
+    text: "最近暴擊過，則攻擊每擊中一個敵人回復 {value} 生命"
+    tiers:
+      - { tier: 1, value: [13, 15] }   # HandWrapsLifeGainPerTarget4
+      - { tier: 2, value: [10, 12] }   # HandWrapsLifeGainPerTarget3
+      - { tier: 3, value: [7, 9] }   # HandWrapsLifeGainPerTarget2
+      - { tier: 4, value: [4, 6] }   # HandWrapsLifeGainPerTarget1
+    mods:
+      - { stat: life.on_hit@crit, type: FLAT, value: "{value}", tags: [attack] }
+  life_per_kill:   # 原本「每擊殺一個敵人回復 {value} 生命」
+    text: "擊殺時回復 {value}% 最大生命"
+    tiers:
+      - { tier: 1, value: [3, 3] }   # HandWrapsLifeGainedFromEnemyDeath8
+      - { tier: 2, value: [2, 2] }   # HandWrapsLifeGainedFromEnemyDeath7
+      - { tier: 3, value: [2, 2] }   # HandWrapsLifeGainedFromEnemyDeath6
+      - { tier: 4, value: [2, 2] }   # HandWrapsLifeGainedFromEnemyDeath5
+      - { tier: 5, value: [2, 2] }   # HandWrapsLifeGainedFromEnemyDeath4
+      - { tier: 6, value: [1, 1] }   # HandWrapsLifeGainedFromEnemyDeath3
+      - { tier: 7, value: [1, 1] }   # HandWrapsLifeGainedFromEnemyDeath2
+      - { tier: 8, value: [1, 1] }   # HandWrapsLifeGainedFromEnemyDeath1
+    mods:
+      - { stat: life.on_kill, type: FLAT, value: "{value}" }
+  leech_life:   # 原本「攻擊造成的物理傷害有 {value/100}% 偷取為生命」
+    text: "攻擊造成的物理傷害有 {value/100}% 偷取為生命、偷取速度減緩 {slow}%"
+    tiers:
+      - { tier: 1, value: [1400, 1500], slow: [25, 20] }   # HandWrapsLifeLeech5
+      - { tier: 2, value: [1200, 1390], slow: [25, 20] }   # HandWrapsLifeLeech4
+      - { tier: 3, value: [1100, 1190], slow: [25, 20] }   # HandWrapsLifeLeech3
+      - { tier: 4, value: [900, 1090], slow: [25, 20] }   # HandWrapsLifeLeech2
+    mods:
+      - { stat: leech.life, type: FLAT, value: "{value/100}", tags: [attack] }
+      - { stat: leech.rate, type: INCREASED, value: "-{slow}" }
+  resist_lightning:   # 原本「+{value}% 閃電抗性」
+    text: "+{value}% 閃電抗性、+{max}% 最大閃電抗性"
+    tiers:
+      - { tier: 1, value: [36, 40], max: [3, 3] }   # HandWrapsLightningResist8
+      - { tier: 2, value: [36, 40], max: [2, 2] }   # HandWrapsLightningResist7
+      - { tier: 3, value: [31, 35], max: [2, 2] }   # HandWrapsLightningResist6
+      - { tier: 4, value: [26, 30], max: [2, 2] }   # HandWrapsLightningResist5
+      - { tier: 5, value: [21, 25], max: [2, 2] }   # HandWrapsLightningResist4
+      - { tier: 6, value: [21, 25], max: [1, 1] }   # HandWrapsLightningResist3
+      - { tier: 7, value: [16, 20], max: [1, 1] }   # HandWrapsLightningResist2
+      - { tier: 8, value: [11, 15], max: [1, 1] }   # HandWrapsLightningResist1
+    mods:
+      - { stat: resist.lightning, type: FLAT, value: "{value}" }
+      - { stat: resist.max.lightning, type: FLAT, value: "{max}" }
+  mana_per_kill:   # 原本「每擊殺一個敵人回復 {value} 魔力」
+    text: "擊殺時回復 {value}% 最大魔力"
+    tiers:
+      - { tier: 1, value: [3, 3] }   # HandWrapsManaGainedFromEnemyDeath8
+      - { tier: 2, value: [2, 2] }   # HandWrapsManaGainedFromEnemyDeath7
+      - { tier: 3, value: [2, 2] }   # HandWrapsManaGainedFromEnemyDeath6
+      - { tier: 4, value: [2, 2] }   # HandWrapsManaGainedFromEnemyDeath5
+      - { tier: 5, value: [2, 2] }   # HandWrapsManaGainedFromEnemyDeath4
+      - { tier: 6, value: [1, 1] }   # HandWrapsManaGainedFromEnemyDeath3
+      - { tier: 7, value: [1, 1] }   # HandWrapsManaGainedFromEnemyDeath2
+      - { tier: 8, value: [1, 1] }   # HandWrapsManaGainedFromEnemyDeath1
+    mods:
+      - { stat: mana.on_kill, type: FLAT, value: "{value}" }
+  leech_mana:   # 原本「攻擊造成的物理傷害有 {value/100}% 偷取為魔力」
+    text: "攻擊造成的物理傷害有 {value/100}% 偷取為魔力、偷取速度減緩 {slow}%"
+    tiers:
+      - { tier: 1, value: [1200, 1300], slow: [25, 20] }   # HandWrapsManaLeech5
+      - { tier: 2, value: [1100, 1190], slow: [25, 20] }   # HandWrapsManaLeech4
+      - { tier: 3, value: [900, 1090], slow: [25, 20] }   # HandWrapsManaLeech3
+      - { tier: 4, value: [800, 890], slow: [25, 20] }   # HandWrapsManaLeech2
+    mods:
+      - { stat: leech.mana, type: FLAT, value: "{value/100}", tags: [attack] }
+      - { stat: leech.rate, type: INCREASED, value: "-{slow}" }
+  str_flat:   # 原本「+{value} 力量」
+    text: "增加 {value}% 攻擊範圍效果"
+    tiers:
+      - { tier: 1, value: [29, 32] }   # HandWrapsStrength8
+      - { tier: 2, value: [26, 28] }   # HandWrapsStrength7
+      - { tier: 3, value: [23, 25] }   # HandWrapsStrength6
+      - { tier: 4, value: [20, 22] }   # HandWrapsStrength5
+      - { tier: 5, value: [17, 19] }   # HandWrapsStrength4
+      - { tier: 6, value: [14, 16] }   # HandWrapsStrength3
+      - { tier: 7, value: [11, 13] }   # HandWrapsStrength2
+      - { tier: 8, value: [7, 10] }   # HandWrapsStrength1
+    mods:
+      - { stat: skill.area, type: INCREASED, value: "{value}", tags: [attack] }
+  deflection_evasion:   # 原本「獲得閃避值 {value}% 的偏斜值」
+    text: "偏斜的擊中再多擋 +{value}% 傷害"
+    tiers:
+      - { tier: 1, value: [7, 7] }   # HandWrapsEvasionGrantsDeflection5
+      - { tier: 2, value: [7, 7] }   # HandWrapsEvasionGrantsDeflection5
+      - { tier: 3, value: [6, 6] }   # HandWrapsEvasionGrantsDeflection4
+      - { tier: 4, value: [5, 5] }   # HandWrapsEvasionGrantsDeflection3
+      - { tier: 5, value: [4, 4] }   # HandWrapsEvasionGrantsDeflection2
+      - { tier: 6, value: [3, 3] }   # HandWrapsEvasionGrantsDeflection1
+    mods:
+      - { stat: deflection.prevent, type: FLAT, value: "{value}" }
+  ess_gold:   # 原本「增加 {value}% 怪物掉落金幣」
+    text: "護符每分鐘獲得 {value} 次充能"
+    tiers:
+      - { tier: 1, value: [8, 16] }   # HandWrapsEssenceGoldDropped1
+    mods:
+      - { stat: charm.charges_per_minute, type: FLAT, value: "{value}" }
+  ess_hys_crit_bonus:   # 原本「增加 {value}% 暴擊傷害加成」
+    text: "+{value/100}% 暴擊率"
+    tiers:
+      - { tier: 1, value: [250, 300] }   # HandWrapsCriticalMultiplier5
+    mods:
+      - { stat: crit.base_extra, type: FLAT, value: "{value/100}" }
+  unveiled_d_res_cold_chaos:   # 原本「+{value}% 冰冷與混沌抗性」
+    text: "+{value}% 混沌抗性、+{max}% 最大冰冷抗性"
+    tiers:
+      - { tier: 1, value: [16, 17], max: [2, 3] }   # HandWrapsAbyssModArmourJewelleryKurgalSuffixColdChaosResistance
+      - { tier: 2, value: [13, 15], max: [2, 3] }   # HandWrapsAbyssModArmourJewelleryKurgalSuffixColdChaosResistance
+    mods:
+      - { stat: resist.chaos, type: FLAT, value: "{value}" }
+      - { stat: resist.max.cold, type: FLAT, value: "{max}" }
+  unveiled_d_res_fire_chaos:   # 原本「+{value}% 火焰與混沌抗性」
+    text: "+{value}% 混沌抗性、+{max}% 最大火焰抗性"
+    tiers:
+      - { tier: 1, value: [16, 17], max: [2, 3] }   # HandWrapsAbyssModArmourJewelleryAmanamuSuffixFireChaosResistance
+      - { tier: 2, value: [13, 15], max: [2, 3] }   # HandWrapsAbyssModArmourJewelleryAmanamuSuffixFireChaosResistance
+    mods:
+      - { stat: resist.chaos, type: FLAT, value: "{value}" }
+      - { stat: resist.max.fire, type: FLAT, value: "{max}" }
+  unveiled_d_res_lightning_chaos:   # 原本「+{value}% 閃電與混沌抗性」
+    text: "+{value}% 混沌抗性、+{max}% 最大閃電抗性"
+    tiers:
+      - { tier: 1, value: [16, 17], max: [2, 3] }   # HandWrapsAbyssModArmourJewelleryUlamanSuffixLightningChaosResistance
+      - { tier: 2, value: [13, 15], max: [2, 3] }   # HandWrapsAbyssModArmourJewelleryUlamanSuffixLightningChaosResistance
+    mods:
+      - { stat: resist.chaos, type: FLAT, value: "{value}" }
+      - { stat: resist.max.lightning, type: FLAT, value: "{max}" }
+  unveiled_d_attr_str_dex:   # 原本「+{value} 力量與敏捷」
+    text: "增加 {value}% 力量和敏捷"
+    tiers:
+      - { tier: 1, value: [9, 9] }   # HandWrapsAbyssModArmourJewelleryUlamanSuffixStrengthAndDexterity
+      - { tier: 2, value: [7, 8] }   # HandWrapsAbyssModArmourJewelleryUlamanSuffixStrengthAndDexterity
+    mods:
+      - { stat: attr.str, type: INCREASED, value: "{value}" }
+      - { stat: attr.dex, type: INCREASED, value: "{value}" }
+  unveiled_d_attr_str_int:   # 原本「+{value} 力量與智慧」
+    text: "增加 {value}% 力量和智慧"
+    tiers:
+      - { tier: 1, value: [9, 9] }   # HandWrapsAbyssModArmourJewelleryAmanamuSuffixStrengthAndIntelligence
+      - { tier: 2, value: [7, 8] }   # HandWrapsAbyssModArmourJewelleryAmanamuSuffixStrengthAndIntelligence
+    mods:
+      - { stat: attr.str, type: INCREASED, value: "{value}" }
+      - { stat: attr.int, type: INCREASED, value: "{value}" }
+  unveiled_d_attr_dex_int:   # 原本「+{value} 敏捷與智慧」
+    text: "增加 {value}% 敏捷和智慧"
+    tiers:
+      - { tier: 1, value: [9, 9] }   # HandWrapsAbyssModArmourJewelleryKurgalSuffixDexterityAndIntelligence
+      - { tier: 2, value: [7, 8] }   # HandWrapsAbyssModArmourJewelleryKurgalSuffixDexterityAndIntelligence
+    mods:
+      - { stat: attr.dex, type: INCREASED, value: "{value}" }
+      - { stat: attr.int, type: INCREASED, value: "{value}" }
+  unveiled_d_cost:   # 原本「增加 {value}% 魔力消耗效率」
+    text: "增加 {value}% 技能的保留效率"
+    tiers:
+      - { tier: 1, value: [9, 10] }   # HandWrapsAbyssModFourCatKurgalSuffixManaCostEfficiency
+      - { tier: 2, value: [6, 8] }   # HandWrapsAbyssModFourCatKurgalSuffixManaCostEfficiency
+    mods:
+      - { stat: aura.reservation, type: INCREASED, value: "-{value}" }
+  unveiled_d_daze:   # 原本「擊中時 {value}% 機率讓敵人眩暈」
+    text: "對眩暈的敵人，獲得等同於物理傷害 {value}% 的額外冰冷傷害"
+    tiers:
+      - { tier: 1, value: [14, 15] }   # HandWrapsAbyssModGlovesAmanamuSuffixDazeChance
+      - { tier: 2, value: [11, 13] }   # HandWrapsAbyssModGlovesAmanamuSuffixDazeChance
+    mods:
+      - { stat: damage.gain.cold, type: FLAT, value: "{value}", tags: [vs_dazed] }
+  unveiled_d_immobilise:   # 原本「增加 {value}% 暈眩累積與凍結累積」
+    text: "對禁錮的敵人增加 {value}% 傷害"
+    tiers:
+      - { tier: 1, value: [31, 35] }   # HandWrapsAbyssModGlovesAmanamuSuffixImmobilisationBuildUp
+      - { tier: 2, value: [26, 30] }   # HandWrapsAbyssModGlovesAmanamuSuffixImmobilisationBuildUp
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [vs_immobilised] }
+  unveiled_d_gloves_speed_frenzy:   # 原本「最近消耗過怒星，則增加 {value}% 攻擊速度與施放速度」
+    text: "最近沒有被擊中過，則增加 {value}% 攻擊速度"
+    tiers:
+      - { tier: 1, value: [16, 17] }   # HandWrapsAbyssModGlovesUlamanSuffixFrenzyChargeConsumedSkillSpeed
+      - { tier: 2, value: [13, 15] }   # HandWrapsAbyssModGlovesUlamanSuffixFrenzyChargeConsumedSkillSpeed
+    mods:
+      - { stat: attack.speed@nohit, type: INCREASED, value: "{value}" }
+
+# ---- 37 件手套傳奇的磐石之拳版本（poe2db「磐石之拳 Uniques」；數值照 poe2db 與 RePoE 的 HandWraps 詞綴）----
+# 每一行寫 from：接原本（uniques.yml）第幾行的擲骰（1 起算；0 = 原作多出來的一行，沒有對應）。原本的行沒有被任何一行接到的就是原作拿掉了。
+# 原作的符文保護（Runic Ward）我們沒有，換成同樣數值的能量護盾（下面各自註明）。
+uniques:
+  fugitive_greaves:   # 致命一擊（Deathblow）
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [15, 20]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2   # 原作「最近撲殺過，則增加 (30—40)% 撲殺門檻」；我們撲殺之後的門檻加成是 20 秒（撲殺 II 那一套）
+      text: "撲殺敵人後 20 秒內，增加 {value}% 撲殺門檻"
+      value: [30, 40]
+      stats:
+        - { stat: culling.threshold_on_cull, type: FLAT, value: "{value}" }
+    - from: 3
+      text: "擊殺時回復 3% 最大生命"
+      stats:
+        - { stat: life.on_kill, type: FLAT, value: 3 }
+    - from: 4
+      text: "擊殺時回復 3% 最大魔力"
+      stats:
+        - { stat: mana.on_kill, type: FLAT, value: 3 }
+    - from: 5
+      text: "撲殺：擊中後生命太低的敵人直接倒下"
+      stats:
+        - { stat: flag.culling, type: FLAT, value: 1 }
+
+  rampart_greaves:   # 帝國之掌（Empire's Grasp）
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [15, 20]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "增加 {value}% 攻擊範圍效果"
+      value: [18, 24]
+      stats:
+        - { stat: skill.area, type: INCREASED, value: "{value}", tags: [attack] }
+    - from: 3
+      text: "擊殺時回復 3% 最大生命"
+      stats:
+        - { stat: life.on_kill, type: FLAT, value: 3 }
+    - from: 4
+      text: "被包圍時，攻擊的擊中傷害幸運"
+      stats:
+        - { stat: flag.lucky_when_surrounded, type: FLAT, value: 1 }
+    - from: 5
+      text: "擊退的方向反過來（把敵人拉向你）"
+      stats:
+        - { stat: flag.knockback_reversed, type: FLAT, value: 1 }
+
+  hateforge_greaves:   # 怨恨鍛造（Hateforge）
+    - from: 1   # 原作「+(70—100) 最大符文保護」
+      text: "+{value} 最大能量護盾"
+      value: [70, 100]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - from: 2
+      text: "擊中時獲得 {value} 點怒氣"
+      value: [6, 8]
+      stats:
+        - { stat: rage.on_hit, type: FLAT, value: "{value}" }
+    - from: 3   # 原作「怒氣滿時回復 (3—5)% 最大符文保護」
+      text: "怒氣滿時回復 {value}% 最大能量護盾"
+      value: [3, 5]
+      stats:
+        - { stat: es.on_max_rage, type: FLAT, value: "{value}" }
+    - from: 4
+      text: "怒氣滿時失去全部怒氣"
+      stats:
+        - { stat: flag.lose_rage_at_max, type: FLAT, value: 1 }
+
+  wintergrasp_wraps:   # 凜冬之握（Grip of Winter）
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [10, 15]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "攻擊獲得等同於傷害 {value}% 的額外冰冷傷害"
+      value: [10, 15]
+      stats:
+        - { stat: damage.extra.cold, type: FLAT, value: "{value}", tags: [attack] }
+    - from: 3
+      text: "+{value}% 冰冷抗性、+{max}% 最大冰冷抗性"
+      value: [15, 25]
+      max: [2, 3]
+      stats:
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+        - { stat: resist.max.cold, type: FLAT, value: "{max}" }
+    - from: 4
+      text: "擊中的所有傷害都算進凍結累積"
+      stats:
+        - { stat: flag.all_damage_freezes, type: FLAT, value: 1 }
+    - from: 5
+      text: "擊中的所有傷害都算進冰緩幅度"
+      stats:
+        - { stat: flag.all_damage_chills, type: FLAT, value: 1 }
+
+  hexwife_wraps:   # 德瑞的精神手套（Doedre's Tenure）
+    - from: 1
+      text: "每一玩家等級 +{evasion} 閃避值、+{es} 最大能量護盾"
+      evasion: [2, 2]
+      es: [1, 1]
+      stats:
+        - { stat: local.hand_wraps_evasion_per_level, type: FLAT, value: "{evasion}" }
+        - { stat: local.hand_wraps_es_per_level, type: FLAT, value: "{es}" }
+    - from: 2
+      text: "增加 100% 攻擊傷害"
+      stats:
+        - { stat: damage, type: INCREASED, value: 100, tags: [attack] }
+    - from: 3
+      text: "減少 {value}% 攻擊速度"
+      value: [15, 25]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "-{value}" }
+    - from: 4
+      text: "增加 15% 冷卻時間回復速度"
+      stats:
+        - { stat: cooldown.recovery, type: INCREASED, value: 15 }
+
+  goldsnatch_greaves:   # 富貴之運（Aurseize）
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [15, 20]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "增加 {value}% 怪物掉落的金幣數量"
+      value: [50, 80]
+      stats:
+        - { stat: gold.find, type: INCREASED, value: "{value}" }
+    - from: 3
+      text: "擊殺時失去 2% 最大生命"
+      stats:
+        - { stat: life.on_kill, type: FLAT, value: -2 }
+
+  blueflame_cuffs:   # 藍焰護腕（Blueflame Bracers）
+    - from: 1
+      text: "每一玩家等級 +{evasion} 閃避值、+{es} 最大能量護盾"
+      evasion: [1, 1]
+      es: [1, 1]
+      stats:
+        - { stat: local.hand_wraps_evasion_per_level, type: FLAT, value: "{evasion}" }
+        - { stat: local.hand_wraps_es_per_level, type: FLAT, value: "{es}" }
+    - from: 2
+      text: "增加 {value}% 冷卻時間回復速度"
+      value: [10, 15]
+      stats:
+        - { stat: cooldown.recovery, type: INCREASED, value: "{value}" }
+    - from: 3
+      text: "+{value}% 火焰抗性、+1% 最大火焰抗性"
+      value: [5, 15]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.max.fire, type: FLAT, value: 1 }
+    - from: 4
+      text: "獲得等同於火焰傷害 {value}% 的額外閃電傷害"
+      value: [10, 20]
+      stats:
+        - { stat: damage.gain_from.fire.lightning, type: FLAT, value: "{value}" }
+    - from: 5
+      text: "火焰傷害 100% 轉換為閃電傷害"
+      stats:
+        - { stat: damage.convert_from.fire.lightning, type: FLAT, value: 100 }
+
+  stormvice_gauntlets:   # 瓦拉庫之惡（Valako's Vice）
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [10, 15]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "擊中時有 10% 機率獲得疾速 4 秒"
+      stats:
+        - { stat: onslaught.on_hit, type: FLAT, value: 10 }
+    - from: 3
+      text: "增加 {value}% 攻擊範圍效果"
+      value: [18, 24]
+      stats:
+        - { stat: skill.area, type: INCREASED, value: "{value}", tags: [attack] }
+    - from: 4
+      text: "+{value}% 滿溢機率發射一發額外投射物"
+      value: [25, 50]
+      stats:
+        - { stat: skill.projectile_chance, type: FLAT, value: "{value}" }
+    - from: 5
+      text: "獲得等同於閃電傷害 {value}% 的額外冰冷傷害"
+      value: [15, 25]
+      stats:
+        - { stat: damage.gain_from.lightning.cold, type: FLAT, value: "{value}" }
+    - from: 6
+      text: "閃電傷害 100% 轉換為冰冷傷害"
+      stats:
+        - { stat: damage.convert_from.lightning.cold, type: FLAT, value: 100 }
+
+  treefinger_mitts:   # 樹木之指（Treefingers）
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [10, 15]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "攻擊獲得等同於傷害 {value}% 的額外物理傷害"
+      value: [10, 15]
+      stats:
+        - { stat: damage.extra.physical, type: FLAT, value: "{value}", tags: [attack] }
+    - from: 3
+      text: "減少 5% 施法速度"
+      stats:
+        - { stat: cast.speed, type: INCREASED, value: -5 }
+    - from: 4
+      text: "增加 {value}% 攻擊範圍效果"
+      value: [15, 20]
+      stats:
+        - { stat: skill.area, type: INCREASED, value: "{value}", tags: [attack] }
+    - from: 5   # 禁錮累積 = 暈眩累積與凍結累積
+      text: "增加 {value}% 禁錮累積"
+      value: [20, 30]
+      stats:
+        - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+        - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
+    - from: 6
+      text: "空掌之術：雙手欄位皆空時，可如同使用長棍般攻擊"
+      stats:
+        - { stat: flag.hollow_palm, type: FLAT, value: 1 }
+
+  northpaw_bracers:   # 北方之爪（Northpaw）
+    - from: 1
+      text: "每一玩家等級 +{evasion} 閃避值、+{es} 最大能量護盾"
+      evasion: [2, 2]
+      es: [1, 1]
+      stats:
+        - { stat: local.hand_wraps_evasion_per_level, type: FLAT, value: "{evasion}" }
+        - { stat: local.hand_wraps_es_per_level, type: FLAT, value: "{es}" }
+    - from: 2
+      text: "攻擊獲得等同於傷害 {value}% 的額外物理傷害"
+      value: [11, 15]
+      stats:
+        - { stat: damage.extra.physical, type: FLAT, value: "{value}", tags: [attack] }
+    - from: 3
+      text: "增加 {value}% 暴擊傷害加成"
+      value: [15, 20]
+      stats:
+        - { stat: crit.bonus, type: INCREASED, value: "{value}" }
+    - from: 4
+      text: "+{value}% 空手近戰攻擊的暴擊率"
+      value: [3, 6]
+      stats:
+        - { stat: crit.base_extra@unarmed, type: FLAT, value: "{value}", tags: [attack, melee] }
+
+  applause_gloves:   # 里歐波德的掌聲（Leopold's Applause）
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [15, 20]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "低魔力時攻擊傷害更多 {value}%"
+      value: [15, 25]
+      stats:
+        - { stat: damage@lowmana, type: MORE, value: "{value}", tags: [attack] }
+    - from: 3
+      text: "增加 {value}% 怪物掉落的金幣數量"
+      value: [15, 25]
+      stats:
+        - { stat: gold.find, type: INCREASED, value: "{value}" }
+    - from: 4
+      text: "+{value}% 全部元素抗性"
+      value: [15, 25]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - from: 0   # 原作第五行「擊中可以把元素抗性穿透到 -50%」換成的；我們的喝采手套沒有那一行
+      text: "你擊中造成的元素傷害照敵人最低的元素抗性算"
+      stats:
+        - { stat: flag.lowest_elemental_resist, type: FLAT, value: 1 }
+
+  snakebite_bracers:   # 蝮吻（Snakebite）
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [10, 15]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "+{value}% 混沌抗性、+1% 最大混沌抗性"
+      value: [7, 17]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+        - { stat: resist.max.chaos, type: FLAT, value: 1 }
+    - from: 3
+      text: "每秒回復 {value/10}% 最大生命"
+      value: [5, 15]
+      stats:
+        - { stat: life.regen_percent, type: FLAT, value: "{value/10}" }
+    - from: 4
+      text: "增加 {value}% 冰緩效果"
+      value: [20, 30]
+      stats:
+        - { stat: chill.effect, type: INCREASED, value: "{value}" }
+    - from: 5
+      text: "目標可以同時受到你兩個冰緩影響"
+      stats:
+        - { stat: asc.double_chill, type: FLAT, value: 1 }
+
+  wisdom_action_wraps:   # 智行之手（Hand of Wisdom and Action）
+    - from: 1
+      text: "增加 {value}% 敏捷"
+      value: [11, 13]
+      stats:
+        - { stat: attr.dex, type: INCREASED, value: "{value}" }
+    - from: 2
+      text: "增加 {value}% 智慧"
+      value: [5, 10]
+      stats:
+        - { stat: attr.int, type: INCREASED, value: "{value}" }
+    - from: 3
+      text: "每 20 點智慧增加 1% 範圍效果"
+      stats:
+        - { stat: per_int.area, type: FLAT, value: 1 }
+    - from: 4
+      text: "每 20 點敏捷，攻擊附加 6 到 8 冰冷傷害"
+      stats:
+        - { stat: per_dex.attack_cold_min, type: FLAT, value: 6 }
+        - { stat: per_dex.attack_cold_max, type: FLAT, value: 8 }
+
+  death_articulated:   # 死亡之聲（Death Articulated）
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [15, 20]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "擊中時有 {value}% 機率獲得疾速 4 秒"
+      value: [10, 15]
+      stats:
+        - { stat: onslaught.on_hit, type: FLAT, value: "{value}" }
+    - from: 3
+      text: "+{value}% 混沌抗性、+2% 最大混沌抗性"
+      value: [17, 23]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+        - { stat: resist.max.chaos, type: FLAT, value: 2 }
+    - from: 4
+      text: "每秒失去 5% 最大魔力"
+      stats:
+        - { stat: mana.loss_percent, type: FLAT, value: 5 }
+    - from: 5
+      text: "每秒回復 5 點怒氣"
+      stats:
+        - { stat: rage.regen, type: FLAT, value: 5 }
+    - from: 6
+      text: "怒氣不會自己流失"
+      stats:
+        - { stat: rage.decay, type: INCREASED, value: -100 }
+
+  nightscale_gloves:   # 夜鱗（Nightscale）
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [15, 25]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "增加 {value}% 暴擊率"
+      value: [40, 60]
+      stats:
+        - { stat: crit.chance, type: INCREASED, value: "{value}" }
+    - from: 3
+      text: "增加 15% 冷卻時間回復速度"
+      stats:
+        - { stat: cooldown.recovery, type: INCREASED, value: 15 }
+    - from: 4
+      text: "+{value}% 冰冷抗性、+2% 最大冰冷抗性"
+      value: [20, 30]
+      stats:
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+        - { stat: resist.max.cold, type: FLAT, value: 2 }
+    - from: 5
+      text: "最近暴擊過，則增加 {value}% 魔力偷取量"
+      value: [100, 150]
+      stats:
+        - { stat: leech.mana_effect@crit, type: INCREASED, value: "{value}" }
+    - from: 6
+      text: "你沒有魔力再生"
+      stats:
+        - { stat: mana.regen, type: MORE, value: -100 }
+
+  windvane_gauntlets:   # 艾瑞斯凡恩之翼（Aerisvane's Wings）
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [10, 15]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "擊中時有 10% 機率獲得疾速 4 秒"
+      stats:
+        - { stat: onslaught.on_hit, type: FLAT, value: 10 }
+    - from: 3
+      text: "增加 {value}% 冷卻時間回復速度"
+      value: [20, 25]
+      stats:
+        - { stat: cooldown.recovery, type: INCREASED, value: "{value}" }
+    - from: 4
+      text: "對滿血的敵人造成雙倍傷害"
+      stats:
+        - { stat: damage.vs_full_life, type: MORE, value: 100 }
+
+  atziri_acuity:   # 阿茲里的捷思
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [20, 25]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "低血時受到的傷害更少 {value}%"
+      value: [12, 15]
+      stats:
+        - { stat: debuff.taken.physical@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.fire@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.cold@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.lightning@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.chaos@lowlife, type: FLAT, value: "-{value}" }
+    - from: 3
+      text: "攻擊造成的物理傷害有 {value}% 偷取為生命、偷取速度減緩 {slow}%"
+      value: [13, 17]
+      slow: [25, 20]
+      stats:
+        - { stat: leech.life, type: FLAT, value: "{value}", tags: [attack] }
+        - { stat: leech.rate, type: INCREASED, value: "-{slow}" }
+    - from: 4
+      text: "你擊中造成的物理傷害有 10% 會造成失血"
+      stats:
+        - { stat: blood_loss.on_hit, type: FLAT, value: 10 }
+    - from: 5
+      text: "青春永駐：生命像能量護盾一樣回充，能量護盾不回充"
+      stats:
+        - { stat: flag.eternal_youth, type: FLAT, value: 1 }
+
+  candlemaker:   # 製燭者
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [10, 15]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "攻擊獲得等同於傷害 {value}% 的額外火焰傷害"
+      value: [4, 7]
+      stats:
+        - { stat: damage.extra.fire, type: FLAT, value: "{value}", tags: [attack] }
+    - from: 3
+      text: "攻擊獲得等同於傷害 {value}% 的額外冰冷傷害"
+      value: [4, 7]
+      stats:
+        - { stat: damage.extra.cold, type: FLAT, value: "{value}", tags: [attack] }
+    - from: 4
+      text: "+{value}% 火焰抗性、+{max}% 最大火焰抗性"
+      value: [15, 25]
+      max: [2, 3]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.max.fire, type: FLAT, value: "{max}" }
+    - from: 5
+      text: "增加 {value}% 你身上的冰緩持續時間"
+      value: [30, 50]
+      stats:
+        - { stat: ailment.self_duration.chill, type: INCREASED, value: "{value}" }
+    - from: 6   # 原作「被你點燃或冰緩的敵人 -x% 元素抗性」：對身上有你的元素異常的敵人穿透同樣多（冰凍、感電、電擊也算）
+      text: "被你點燃或冰緩的敵人 -{value}% 元素抗性"
+      value: [15, 25]
+      stats:
+        - { stat: penetration, type: FLAT, value: "{value}", tags: [fire, vs_elementalailment] }
+        - { stat: penetration, type: FLAT, value: "{value}", tags: [cold, vs_elementalailment] }
+        - { stat: penetration, type: FLAT, value: "{value}", tags: [lightning, vs_elementalailment] }
+
+  demon_stitcher:   # 縫魔
+    - from: 1   # 原作「+(60—80) 最大符文保護」
+      text: "+{value} 最大能量護盾"
+      value: [60, 80]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - from: 2
+      text: "+{value} 最大生命"
+      value: [130, 160]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - from: 3
+      text: "增加 {value}% 攻擊速度"
+      value: [9, 15]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - from: 4   # 原作「…獲得等同於其數值一半的符文保護」
+      text: "攻擊時犧牲 {value}% 最大生命，獲得一半的能量護盾"
+      value: [10, 30]
+      stats:
+        - { stat: sacrifice.es_on_attack, type: FLAT, value: "{value}" }
+
+  dreadfist:   # 驚懼之拳
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [15, 20]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "+{value/10}% 暴擊率"
+      value: [15, 20]
+      stats:
+        - { stat: crit.base_extra, type: FLAT, value: "{value/10}" }
+    - from: 3
+      text: "用近戰攻擊暴擊敵人時，對牠造成你的荊棘傷害"
+      stats:
+        - { stat: flag.thorns_on_melee_crit, type: FLAT, value: 1 }
+    - from: 4
+      text: "增加 {value}% 荊棘的暴擊傷害加成"
+      value: [25, 35]
+      stats:
+        - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [thorns] }
+    - from: 5
+      text: "{min} 到 {max} 冰冷荊棘傷害"
+      min: [24, 35]
+      max: [36, 57]
+      stats:
+        - { stat: thorns.cold.min, type: FLAT, value: "{min}" }
+        - { stat: thorns.cold.max, type: FLAT, value: "{max}" }
+
+  essentia_sanguis:   # 精華收割器
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [15, 20]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "攻擊獲得等同於傷害 {value}% 的額外閃電傷害"
+      value: [17, 21]
+      stats:
+        - { stat: damage.extra.lightning, type: FLAT, value: "{value}", tags: [attack] }
+    - from: 3
+      text: "增加 {value}% 冷卻時間回復速度"
+      value: [20, 30]
+      stats:
+        - { stat: cooldown.recovery, type: INCREASED, value: "{value}" }
+    - from: 4
+      text: "+{value}% 閃電抗性、+2% 最大閃電抗性"
+      value: [25, 35]
+      stats:
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+        - { stat: resist.max.lightning, type: FLAT, value: 2 }
+    - from: 5
+      text: "魔力偷取也會回復能量護盾"
+      stats:
+        - { stat: flag.mana_leech_also_es, type: FLAT, value: 1 }
+
+  facebreaker:   # 毀面者（原作另外「賦予技能：等級 1 轟碎重擊」沒做，我們沒有這個技能）
+    - from: 1
+      text: "空手攻擊的基礎傷害是 9 到 14 火焰傷害"
+      stats:
+        - { stat: unarmed.base_min, type: FLAT, value: 9 }
+        - { stat: unarmed.base_max, type: FLAT, value: 14 }
+        - { stat: flag.unarmed_base_fire, type: FLAT, value: 1 }
+    - from: 3
+      text: "空手時，每 5 點智慧獲得等同於空手傷害 1% 的額外火焰傷害"
+      stats:
+        - { stat: per_int.unarmed_fire, type: FLAT, value: 1 }
+    - from: 4
+      text: "空手時增加 10% 近戰打擊範圍"
+      stats:
+        - { stat: melee.range@unarmed, type: INCREASED, value: 10 }
+    - from: 5
+      text: "空手時，每 10 點智慧增加 1% 空手攻擊的範圍效果"
+      stats:
+        - { stat: per_int.unarmed_area, type: FLAT, value: 1 }
+    - from: 6
+      text: "雙手都空著時可以當作拿單手錘攻擊，用這件的傷害"
+      stats:
+        - { stat: flag.unarmed_mace, type: FLAT, value: 1 }
+
+  gravebind:   # 幽墓束縛
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [15, 20]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "增加 20% 物品掉落稀有度"
+      stats:
+        - { stat: drop.rarity, type: INCREASED, value: 20 }
+    - from: 3
+      text: "你其他的物品稀有度加成無效"
+      stats:
+        - { stat: flag.rarity_only_this, type: FLAT, value: 1 }
+    - from: 4
+      text: "擊殺時有 {value}% 機率獲得 1 層易爆"
+      value: [30, 50]
+      stats:
+        - { stat: volatility.on_kill, type: FLAT, value: "{value}" }
+    - from: 5
+      text: "擊殺時回復 3% 最大生命"
+      stats:
+        - { stat: life.on_kill, type: FLAT, value: 3 }
+    - from: 6
+      text: "擊殺時回復 3% 最大魔力"
+      stats:
+        - { stat: mana.on_kill, type: FLAT, value: 3 }
+    - from: 7
+      text: "在你臨在範圍內被任何人擊殺的敵人，算是你擊殺的"
+      stats:
+        - { stat: flag.presence_kills, type: FLAT, value: 1 }
+
+  horrors_flight:   # 驚懼飛掠（原作的「當你撲殺目標時獲得 1 層壓倒性恐懼」與賦予的技能沒做，見 uniques.yml）
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [20, 25]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "擊中時有 {value}% 機率獲得疾速 4 秒"
+      value: [10, 20]
+      stats:
+        - { stat: onslaught.on_hit, type: FLAT, value: "{value}" }
+    - from: 3
+      text: "+{value}% 滿溢機率發射一發額外投射物"
+      value: [25, 35]
+      stats:
+        - { stat: skill.projectile_chance, type: FLAT, value: "{value}" }
+    - from: 4
+      text: "攻擊獲得等同於傷害 {value}% 的額外混沌傷害"
+      value: [17, 23]
+      stats:
+        - { stat: damage.extra.chaos, type: FLAT, value: "{value}", tags: [attack] }
+
+  idle_hands:   # 遊手好閒
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [10, 15]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "攻擊擊中時有 {value}% 機率致盲敵人"
+      value: [10, 20]
+      stats:
+        - { stat: blind.chance, type: FLAT, value: "{value}", tags: [attack] }
+    - from: 3
+      text: "增加 {value}% 冷卻時間回復速度"
+      value: [10, 15]
+      stats:
+        - { stat: cooldown.recovery, type: INCREASED, value: "{value}" }
+    - from: 4
+      text: "低魔力時攻擊傷害更多 25%"
+      stats:
+        - { stat: damage@lowmana, type: MORE, value: 25, tags: [attack] }
+    - from: 5
+      text: "魔力在最大魔力的 50% 以下就算低魔力"
+      stats:
+        - { stat: mana.low_threshold, type: FLAT, value: 50 }
+
+  jarngreipr:   # 雅恩格利佩爾
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [15, 20]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "攻擊獲得等同於傷害 {value}% 的額外物理傷害"
+      value: [10, 15]
+      stats:
+        - { stat: damage.extra.physical, type: FLAT, value: "{value}", tags: [attack] }
+    - from: 3
+      text: "低血時受到的傷害更多 {value}%"
+      value: [6, 8]
+      stats:
+        - { stat: debuff.taken.physical@lowlife, type: FLAT, value: "{value}" }
+        - { stat: debuff.taken.fire@lowlife, type: FLAT, value: "{value}" }
+        - { stat: debuff.taken.cold@lowlife, type: FLAT, value: "{value}" }
+        - { stat: debuff.taken.lightning@lowlife, type: FLAT, value: "{value}" }
+        - { stat: debuff.taken.chaos@lowlife, type: FLAT, value: "{value}" }
+    - from: 4
+      text: "擊中時有 {value}% 機率獲得疾速 4 秒"
+      value: [10, 15]
+      stats:
+        - { stat: onslaught.on_hit, type: FLAT, value: "{value}" }
+    - from: 5
+      text: "敏捷可以滿足近戰武器的其他能力值需求"
+      stats:
+        - { stat: flag.dex_melee_requirements, type: FLAT, value: 1 }
+
+  killjoy:   # 掃興之人
+    - from: 1   # 原作「+(30—50) 最大符文保護」
+      text: "+{value} 最大能量護盾"
+      value: [30, 50]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - from: 2
+      text: "低血時受到的傷害更少 {value}%"
+      value: [6, 7]
+      stats:
+        - { stat: debuff.taken.physical@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.fire@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.cold@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.lightning@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.chaos@lowlife, type: FLAT, value: "-{value}" }
+    - from: 3
+      text: "+{value/10}% 暴擊率"
+      value: [10, 20]
+      stats:
+        - { stat: crit.base_extra, type: FLAT, value: "{value/10}" }
+    - from: 4   # 原作「擊殺時恢復 1% 最大符文保護」
+      text: "擊殺時回復 1% 最大能量護盾"
+      stats:
+        - { stat: es.on_kill, type: FLAT, value: 1 }
+    - from: 5
+      text: "擊殺效果觸發兩次"
+      stats:
+        - { stat: flag.on_kill_twice, type: FLAT, value: 1 }
+
+  kitoko_current:   # 奇多可之流
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [10, 15]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "+{value}% 滿溢機率發射一發額外投射物"
+      value: [20, 40]
+      stats:
+        - { stat: skill.projectile_chance, type: FLAT, value: "{value}" }
+    - from: 3
+      text: "減少 {value}% 攻擊與施法速度"
+      value: [10, 15]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "-{value}" }
+        - { stat: cast.speed, type: INCREASED, value: "-{value}" }
+    - from: 4
+      text: "攻擊的所有傷害都會累積電擊"
+      stats:
+        - { stat: flag.attack_all_electrocute, type: FLAT, value: 1 }
+
+  lochtonial_caress:   # 意識之緣
+    - from: 1
+      text: "增加 {value}% 攻擊速度"
+      value: [13, 20]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - from: 2
+      text: "每一玩家等級 +{evasion} 閃避值、+{es} 最大能量護盾"
+      evasion: [1, 1]
+      es: [1, 1]
+      stats:
+        - { stat: local.hand_wraps_evasion_per_level, type: FLAT, value: "{evasion}" }
+        - { stat: local.hand_wraps_es_per_level, type: FLAT, value: "{es}" }
+    - from: 3
+      text: "低血時受到的傷害更少 {value}%"
+      value: [7, 9]
+      stats:
+        - { stat: debuff.taken.physical@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.fire@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.cold@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.lightning@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.chaos@lowlife, type: FLAT, value: "-{value}" }
+    - from: 4
+      text: "無法偷取魔力"
+      stats:
+        - { stat: flag.cannot_leech_mana, type: FLAT, value: 1 }
+    - from: 5
+      text: "擊中時各有 {value}% 機率讓臨在範圍內的隊友獲得一顆怒星、磐星、銳星"
+      value: [5, 10]
+      stats:
+        - { stat: charge.ally_on_hit.frenzy, type: FLAT, value: "{value}" }
+        - { stat: charge.ally_on_hit.endurance, type: FLAT, value: "{value}" }
+        - { stat: charge.ally_on_hit.power, type: FLAT, value: "{value}" }
+
+  maligaro_virtuosity:   # 馬雷葛蘿的血染手套
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [10, 15]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "增加 {value}% 暴擊傷害加成"
+      value: [20, 30]
+      stats:
+        - { stat: crit.bonus, type: INCREASED, value: "{value}" }
+    - from: 3
+      text: "擊中時有 10% 機率獲得疾速 4 秒"
+      stats:
+        - { stat: onslaught.on_hit, type: FLAT, value: 10 }
+    - from: 4
+      text: "+{value}% 滿溢機率發射一發額外投射物"
+      value: [45, 60]
+      stats:
+        - { stat: skill.projectile_chance, type: FLAT, value: "{value}" }
+    - from: 6
+      text: "攻擊的暴擊率為 {value}%"
+      value: [25, 40]
+      stats:
+        - { stat: crit.attack_override, type: FLAT, value: "{value}" }
+
+  painters_servant:   # 畫家的侍從
+    - from: 1
+      text: "獲得等同於冰冷傷害 {value}% 的額外物理傷害"
+      value: [6, 15]
+      stats:
+        - { stat: damage.gain_from.cold.physical, type: FLAT, value: "{value}" }
+    - from: 2
+      text: "獲得等同於火焰傷害 {value}% 的額外物理傷害"
+      value: [6, 15]
+      stats:
+        - { stat: damage.gain_from.fire.physical, type: FLAT, value: "{value}" }
+    - from: 3
+      text: "獲得等同於閃電傷害 {value}% 的額外物理傷害"
+      value: [6, 15]
+      stats:
+        - { stat: damage.gain_from.lightning.physical, type: FLAT, value: "{value}" }
+    - from: 5
+      text: "擊中的物理傷害會算進易燃與點燃幅度、凍結累積和感電機率"
+      stats:
+        - { stat: flag.physical_elemental_ailments, type: FLAT, value: 1 }
+
+  plaguefinger:   # 瘟疫之指
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [15, 20]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "擊中時有 {value}% 機率獲得疾速 4 秒"
+      value: [8, 12]
+      stats:
+        - { stat: onslaught.on_hit, type: FLAT, value: "{value}" }
+    - from: 4
+      text: "暴擊時使敵人中毒"
+      stats:
+        - { stat: poison.on_crit, type: FLAT, value: 100 }
+    - from: 5
+      text: "增加 {value}% 你以暴擊施加的中毒幅度"
+      value: [30, 40]
+      stats:
+        - { stat: poison.magnitude_crit, type: INCREASED, value: "{value}" }
+
+  shackles_wretched:   # 悲運之縛
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [10, 15]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "被詛咒時受到的傷害更多 {value}%"
+      value: [15, 20]
+      stats:
+        - { stat: debuff.taken.physical@selfcurses1, type: FLAT, value: "{value}" }
+        - { stat: debuff.taken.fire@selfcurses1, type: FLAT, value: "{value}" }
+        - { stat: debuff.taken.cold@selfcurses1, type: FLAT, value: "{value}" }
+        - { stat: debuff.taken.lightning@selfcurses1, type: FLAT, value: "{value}" }
+        - { stat: debuff.taken.chaos@selfcurses1, type: FLAT, value: "{value}" }
+    - from: 3
+      text: "你詛咒的敵人受到的傷害增加 {value}%"
+      value: [20, 30]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [vs_cursed] }
+    - from: 4
+      text: "被詛咒時減少 {value}% 移動速度"
+      value: [4, 6]
+      stats:
+        - { stat: movement.speed@selfcurses1, type: INCREASED, value: "-{value}" }
+    - from: 6
+      text: "你造成的詛咒會反射給你"
+      stats:
+        - { stat: flag.curse_reflect_self, type: FLAT, value: 1 }
+
+  sine_aequo:   # 無與倫比
+    - from: 1
+      text: "最近暴擊過，則增加 {value}% 攻擊速度"
+      value: [15, 25]
+      stats:
+        - { stat: attack.speed@crit, type: INCREASED, value: "{value}" }
+    - from: 2
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [15, 20]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 3
+      text: "禁錮敵人只要累積到 50%"
+      stats:
+        - { stat: stun.buildup, type: MORE, value: 100 }
+        - { stat: freeze.buildup, type: MORE, value: 100 }
+    - from: 4
+      text: "點了山巒之道時，禁錮敵人獲得山巒之教的機率每點敵人強度再多 {value}% 超越機率"
+      value: [25, 35]
+      stats:
+        - { stat: asc.mountain_extra_chance, type: FLAT, value: "{value}" }
+
+  prisoners_manacles:   # 囚犯的鐐銬
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [20, 25]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "低血時受到的傷害更少 {value}%"
+      value: [10, 12]
+      stats:
+        - { stat: debuff.taken.physical@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.fire@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.cold@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.lightning@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.chaos@lowlife, type: FLAT, value: "-{value}" }
+    - from: 3
+      text: "增加 100% 能力值需求"
+      stats:
+        - { stat: local.requirements, type: INCREASED, value: 100 }
+    - from: 4
+      text: "+{value}% 閃電抗性、+{max}% 最大閃電抗性"
+      value: [15, 25]
+      max: [2, 3]
+      stats:
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+        - { stat: resist.max.lightning, type: FLAT, value: "{max}" }
+    - from: 5
+      text: "每秒回復 {value/10}% 最大生命"
+      value: [15, 30]
+      stats:
+        - { stat: life.regen_percent, type: FLAT, value: "{value/10}" }
+    - from: 6
+      text: "增加 {value}% 禁錮累積"
+      value: [25, 50]
+      stats:
+        - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+        - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
+    - from: 7
+      text: "你的擊中無法暈眩敵人"
+      stats:
+        - { stat: stun.buildup, type: MORE, value: -100 }
+
+  thunderfist:   # 轟天雷（原作賦予的技能換成「等級 1 冰冽掌」，我們沒有這兩個技能，見 uniques.yml）
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [15, 20]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "擊中時有 {value}% 機率獲得疾速 4 秒"
+      value: [10, 15]
+      stats:
+        - { stat: onslaught.on_hit, type: FLAT, value: "{value}" }
+    - from: 3
+      text: "+{value}% 冰冷抗性、+{max}% 最大冰冷抗性"
+      value: [10, 25]
+      max: [2, 3]
+      stats:
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+        - { stat: resist.max.cold, type: FLAT, value: "{max}" }
+    - from: 4
+      text: "空手近戰擊中附加 44 到 66 冰冷傷害"
+      stats:
+        - { stat: damage.added.min@unarmed, type: FLAT, value: 44, tags: [attack, melee, cold] }
+        - { stat: damage.added.max@unarmed, type: FLAT, value: 66, tags: [attack, melee, cold] }
+    - from: 5
+      text: "+{value/10}% 空手近戰攻擊的暴擊率"
+      value: [8, 15]
+      stats:
+        - { stat: crit.base_extra@unarmed, type: FLAT, value: "{value/10}", tags: [attack, melee] }
+
+  masters_reach:   # 主宰之觸（原作賦予的技能換成等級 1、吞噬靈魂照舊，我們都沒做，見 uniques.yml）
+    - from: 1
+      text: "全域閃避值和能量護盾更多 {value}%"
+      value: [20, 25]
+      stats:
+        - { stat: evasion, type: MORE, value: "{value}" }
+        - { stat: es.max, type: MORE, value: "{value}" }
+    - from: 2
+      text: "低血時受到的傷害更少 {value}%"
+      value: [8, 13]
+      stats:
+        - { stat: debuff.taken.physical@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.fire@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.cold@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.lightning@lowlife, type: FLAT, value: "-{value}" }
+        - { stat: debuff.taken.chaos@lowlife, type: FLAT, value: "-{value}" }
+    - from: 3
+      text: "增加 {value}% 冷卻時間回復速度"
+      value: [15, 25]
+      stats:
+        - { stat: cooldown.recovery, type: INCREASED, value: "{value}" }
+    - from: 4   # 原作「…會補償為生命和能量護盾」；我們的能量護盾補償不分敵人，這裡只補生命
+      text: "稀有和傳奇敵人暴露弱點：承受它們的傷害有 {value}% 會補償為生命"
+      value: [55, 65]
+      stats:
+        - { stat: life.recoup_vs_rare, type: FLAT, value: "{value}" }

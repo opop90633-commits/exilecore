@@ -35,7 +35,8 @@ final class GemQualityText {
             Map.entry("comet", "{spell.echo_chance}% 機率回響"),
             Map.entry("contagion", "施放時另外感染 {i:skill.extra_targets} 個敵人"),
             Map.entry("convalescence", "增益持續時間 +{convalescence.duration} 秒"),
-            Map.entry("dark_pact", "更多 {damage}% 傷害（原作另外犧牲召喚物生命，這裡照比例換算）"),
+            Map.entry("dark_pact", "更多 {damage}% 傷害"),
+            Map.entry("decompose", "毒雲持續時間 +{skill.base_duration_flat} 秒"), // 2026-10-28：腐屍爆有毒雲了（這次之前列在 NO_EFFECT）
             Map.entry("devour", "每吃一具屍體 {corpse.flask_charge_chance}% 機率當作擊殺獲得藥劑與護符充能"),
             Map.entry("discipline", "光環另外增加 {effect.es.recharge}% 能量護盾回充速度"),
             Map.entry("disengage", "{shockwave.extra_chance}% 機率多一道震波"),
@@ -70,7 +71,7 @@ final class GemQualityText {
             Map.entry("magma_barrier", "增益另外增加 {effect.block.chance}% 格擋機率"),
             Map.entry("malice", "暴擊弱點持續時間 +{malice.weakness_seconds} 秒"),
             Map.entry("mana_drain", "吸取的魔力 +{mana.on_hit}"),
-            Map.entry("mana_remnants", "增益另外增加 {effect.mana.regen}% 魔力回復、擊殺回魔另外 +{effect.mana.on_kill}（原作每顆殘留物多回魔，照比例換算）"),
+            Map.entry("mana_remnants", "增益另外增加 {effect.mana.regen}% 魔力回復、擊殺回魔另外 +{effect.mana.on_kill}"),
             Map.entry("mana_storm", "離開之後效果再延續 {mana_tempest.linger} 秒"),
             Map.entry("meta_elemental_invocation", "最大能量 +{meta.max_energy_flat}"),
             Map.entry("mirage_archer", "幻影持續時間 +{skill.base_duration_flat} 秒（你停手之後幻影再多射這麼久）"),
@@ -93,7 +94,7 @@ final class GemQualityText {
             Map.entry("ruin_mantra", "需要的連擊少 {-i:mantra.combo}"),
             Map.entry("sacrifice", "召喚物復活另外快 {sacrifice.slower}%"),
             Map.entry("savage_fury", "狂暴另外更多 {effect.damage}% 傷害"),
-            Map.entry("scavenged_plating", "增益另外增加 {effect.armour}% 護甲、{effect.armour.break}% 破甲（原作甲片持續時間更長，照平均層數換算）"),
+            Map.entry("scavenged_plating", "增益另外增加 {effect.armour}% 護甲、{effect.armour.break}% 破甲"),
             Map.entry("serpent_fury", "擊退距離更多 {skill.knockback}%"),
             Map.entry("shatter_spikes", "每根還在的地刺更多 {spike.more_per_spike}% 擊中傷害"),
             Map.entry("shield_rush", "照衝刺距離更多傷害的上限另外 +{charge.distance_more}%"),
@@ -108,7 +109,7 @@ final class GemQualityText {
             Map.entry("spiraling_conspiracy", "烏鴉群增加 {skill.area}% 範圍"),
             Map.entry("stampede", "{slam.aftershock_chance}% 機率多一次餘震"),
             Map.entry("storm_javelin", "超載的矛上限 +{i:lance.overcharged_extra}"),
-            Map.entry("summon_mount", "騎著時的重暈門檻更多 {mount.life_more}%（原作坐騎更多最大生命）"),
+            Map.entry("summon_mount", "騎著時的重暈門檻更多 {mount.life_more}%"),
             Map.entry("sunder", "照距離的命中懲罰減少 {-accuracy.range_penalty}%"),
             Map.entry("sunfire_spear", "{glory.retain_chance}% 機率用的時候保留 40% 榮耀"),
             Map.entry("supercharged_slam", "最大階段 +{i:charge.stages_flat}"),
@@ -127,13 +128,12 @@ final class GemQualityText {
 
     /** 原作的品質效果我們沒有對應機制（品質寫 []）的：技能代號 → {原因樣板, 每 1% 品質的原作數值}；{v} 換成這個品質的數值。 */
     static final Map<String, Object[]> NO_EFFECT = Map.ofEntries(
-            Map.entry("beast_companion", new Object[] {"原作是鬼火持續時間 +{v} 秒（只跟捕捉野獸有關），我們沒有捕捉野獸，所以沒有效果", 0.08}),
-            Map.entry("bramble_arrow", new Object[] {"原作是藤蔓另外照中毒每秒傷害的 {v}% 造成混沌傷害，我們的荊棘矢沒有「植物中毒」，所以沒有效果", 0.5}),
-            Map.entry("decompose", new Object[] {"原作是毒雲持續時間 +{v} 秒，我們的腐屍爆沒有毒雲，所以沒有效果", 0.05}),
-            Map.entry("profane_ritual", new Object[] {"原作是 {v}% 機率不毀掉屍體，我們的穢陣不用屍體，所以沒有效果", 0.5}),
-            Map.entry("sigil_of_power", new Object[] {"原作是力印半徑 +{v} 公尺，我們的力印是跟著你的增益（不用站在印裡），所以沒有效果", 0.04}),
-            Map.entry("vault_strike", new Object[] {"原作是破勢多撐 {v} 次擊中，我們的躍棍崩擊沒有破勢，所以沒有效果", 0.1}),
-            Map.entry("wind_dancer", new Object[] {"原作是疾風爆炸半徑 +{v} 公尺，我們的風之舞步沒有被擊中時的疾風爆炸，所以沒有效果", 0.02}));
+            Map.entry("beast_companion", new Object[] {"這個技能的品質沒有效果", 0.08}),
+            Map.entry("bramble_arrow", new Object[] {"這個技能的品質沒有效果", 0.5}),
+            Map.entry("profane_ritual", new Object[] {"這個技能的品質沒有效果", 0.5}),
+            Map.entry("sigil_of_power", new Object[] {"這個技能的品質沒有效果", 0.04}),
+            Map.entry("vault_strike", new Object[] {"這個技能的品質沒有效果", 0.1}),
+            Map.entry("wind_dancer", new Object[] {"這個技能的品質沒有效果", 0.02}));
 
     /** 這個技能 quality% 的說明本體（不含「品質 +x%：」）；不是這次接上的回傳 null。 */
     static String body(final String skillId, final List<Modifier> mods, final int quality) {

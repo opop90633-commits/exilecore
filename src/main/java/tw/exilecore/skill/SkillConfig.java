@@ -190,6 +190,8 @@ public final class SkillConfig {
     private Map<String, ChargeSpec> charges = Map.of();
     /** 專屬機制（2026-10，PoE2）：技能代號 → whirl（旋矛擊的旋風）、lance（霆落矛插地放電）、ember（星火連珠懸浮）。 */
     private Map<String, String> signatures = Map.of();
+    /** 2026-10-28 照 PoE2 melee_conditional_step_distance：技能代號 → 近戰條件位移（skills.yml 的 step；{@link MeleeStep}）。 */
+    private Map<String, MeleeStep.Spec> steps = Map.of();
     /** signature 可以寫的值。 */
     static final java.util.Set<String> SIGNATURES = union(java.util.Set.of("whirl", "lance", "ember", "bolt_spear", "hexblast", "sunder", // 2026-10-15：bolt_spear（擲雷槍）；2026-10-26：hexblast（蝕咒裂）、sunder（稜光裂）
                     Twisters.SIGNATURE), // 2026-10-28 照 PoE2：旋風矛的旋風
@@ -281,6 +283,7 @@ public final class SkillConfig {
         final Map<String, BarrageSpec> parsedBarrages = new HashMap<>();
         final Map<String, ChargeSpec> parsedCharges = new HashMap<>();
         final Map<String, String> parsedSignatures = new HashMap<>();
+        final Map<String, MeleeStep.Spec> parsedSteps = new HashMap<>();
         final Map<String, MetaSpec> parsedMetas = new HashMap<>();
         final Map<String, TornadoSpec> parsedTornados = new HashMap<>();
         final YamlNode section = root.node("skills");
@@ -383,6 +386,14 @@ public final class SkillConfig {
                     throw new IllegalArgumentException(node.path() + ".signature：要寫 " + String.join("、", SIGNATURES) + "，卻是「" + signature + "」");
                 }
                 parsedSignatures.put(id, signature);
+            }
+            final MeleeStep.Spec step = MeleeStep.parse(node); // 2026-10-28 照 PoE2：近戰條件位移
+            if (step != null) {
+                if (!definition.isAttack() || !definition.tags().contains(tw.exilecore.stats.Tags.MELEE)
+                        || !Set.of(Mechanic.STRIKE, Mechanic.NOVA, Mechanic.CONE, Mechanic.ZONE).contains(definition.mechanic())) {
+                    throw new IllegalArgumentException(node.path() + ".step：只有近戰攻擊的 strike、nova、cone、zone 能寫");
+                }
+                parsedSteps.put(id, step);
             }
             final BarrageSpec barrage = BarrageSpec.parse(node);
             if (barrage != null) {
@@ -560,6 +571,7 @@ public final class SkillConfig {
         this.barrages = Map.copyOf(parsedBarrages);
         this.charges = Map.copyOf(parsedCharges);
         this.signatures = Map.copyOf(parsedSignatures);
+        this.steps = Map.copyOf(parsedSteps);
         this.metas = Map.copyOf(parsedMetas);
         this.tornados = Map.copyOf(parsedTornados);
         this.variants = Map.copyOf(variantMap);
@@ -818,6 +830,11 @@ public final class SkillConfig {
     /** 蓄力放開的設定（沒有回傳 null）。 */
     public ChargeSpec charge(final String id) {
         return id == null ? null : charges.get(id);
+    }
+
+    /** 2026-10-28 照 PoE2：近戰條件位移（skills.yml 的 step；沒有回傳 null）。 */
+    public MeleeStep.Spec step(final String id) {
+        return id == null ? null : steps.get(id);
     }
 
     /** 專屬機制（whirl、lance、ember；沒有回傳 null）。 */

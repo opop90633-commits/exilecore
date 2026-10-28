@@ -220,8 +220,126 @@ public final class UniqueStats {
     public static final String ES_RECHARGE_ON_KILL = "es.recharge_on_kill";
     /** 格擋時回復 x% 最大生命（降伏塔盾）。 */
     public static final String BLOCK_RECOVER_LIFE = "block.recover_life";
-    /** 格擋時，生命低於斷命門檻的攻擊者直接倒下（厄門塔盾）。 */
+    /** 格擋時，生命低於撲殺門檻的攻擊者直接倒下（厄門塔盾）。 */
     public static final String BLOCK_CULL = "block.cull";
+
+    // ---- 2026-10-28 照 PoE2 0.5：石拳之道的手套（磐石之拳版本）與補上的手套傳奇 ----
+    /** 每秒失去 x% 最大魔力（磐石之拳的骸節鐵手；最少留 0）。 */
+    public static final String MANA_LOSS_PERCENT = "mana.loss_percent";
+    /** 每 20 點敏捷，攻擊附加 min 到 max 冰冷傷害（磐石之拳的智行之手）。 */
+    public static final String PER_DEX_ATTACK_COLD_MIN = "per_dex.attack_cold_min";
+    public static final String PER_DEX_ATTACK_COLD_MAX = "per_dex.attack_cold_max";
+    /** 每 20 點智慧增加 x% 範圍效果（全部技能；磐石之拳的智行之手）。 */
+    public static final String PER_INT_AREA = "per_int.area";
+    /** 每 1 點力量 +x 護甲（毀面者）。 */
+    public static final String PER_STR_ARMOUR = "per_str.armour";
+    /** 空手時，每 5 點力量空手攻擊傷害更多 x%（毀面者；PlayerStateService 照有沒有拿武器加）。 */
+    public static final String PER_STR_UNARMED_MORE = "per_str.unarmed_more";
+    /** 空手攻擊的基礎物理傷害改成這個（毀面者：8 到 12；PlayerStateService 的徒手傷害）。 */
+    public static final String UNARMED_MIN = "unarmed.base_min";
+    public static final String UNARMED_MAX = "unarmed.base_max";
+    /** 雙手都空著時當作拿單手錘（錘的技能能用、吃錘的修飾器；毀面者）。 */
+    public static final String UNARMED_MACE = "flag.unarmed_mace";
+    /** 獲得某種傷害的 x% 為額外的另一種傷害（damage.gain_from.來源.目標；畫家的侍從、藍焰護腕、雷鉗鐵手的磐石之拳版本）。 */
+    public static final String GAIN_FROM = "damage.gain_from.";
+    /** 施放法術時犧牲 x% 最大生命，獲得等量的能量護盾（縫魔）。 */
+    public static final String SACRIFICE_ES_ON_SPELL = "sacrifice.es_on_spell";
+    /** 攻擊時犧牲 x% 最大生命，獲得一半的能量護盾（磐石之拳的縫魔；原作是符文保護）。 */
+    public static final String SACRIFICE_ES_ON_ATTACK = "sacrifice.es_on_attack";
+    /** 怒氣滿時回復 x% 最大能量護盾（磐石之拳的憎鑄；原作是符文保護）。 */
+    public static final String ES_ON_MAX_RAGE = "es.on_max_rage";
+    /** 你擊中的元素傷害照敵人最低的元素抗性算（磐石之拳的里歐波德的掌聲）。 */
+    public static final String LOWEST_RESIST = "flag.lowest_elemental_resist";
+    /** 攻擊的暴擊率固定是 x%（磐石之拳的馬雷葛蘿）。 */
+    public static final String CRIT_ATTACK_OVERRIDE = "crit.attack_override";
+    /** 你的暴擊傷害加成固定是 x%（馬雷葛蘿的血染手套）。 */
+    public static final String CRIT_BONUS_OVERRIDE = "crit.bonus_override";
+    /** 你的暴擊率不會被重擲（馬雷葛蘿；引擎的暴擊沒有幸運重擲，這條本來就成立）。 */
+    public static final String CRIT_NO_REROLL = "flag.crit_no_reroll";
+    /** 魔力在最大魔力的 x% 以下就算貧魔（磐石之拳的遊手好閒：50）／以上就算滿魔（遊手好閒：90）。ConditionTracker 讀。 */
+    public static final String LOW_MANA_THRESHOLD = "mana.low_threshold";
+    public static final String FULL_MANA_THRESHOLD = "mana.full_threshold";
+    /** 你擊中造成的物理傷害有 x% 算進敵人的失血（阿茲里的捷思）。 */
+    public static final String BLOOD_LOSS_ON_HIT = "blood_loss.on_hit";
+    /** 生命偷取改成偷取能量護盾（精華收割器）。 */
+    public static final String LIFE_LEECH_TO_ES = "flag.life_leech_to_es";
+    /** 魔力偷取也回復能量護盾（磐石之拳的精華收割器）。 */
+    public static final String MANA_LEECH_ALSO_ES = "flag.mana_leech_also_es";
+    /** 擊殺效果觸發兩次（掃興之人）。 */
+    public static final String ON_KILL_TWICE = "flag.on_kill_twice";
+    /** 你臨在範圍內被任何人殺死的敵人算是你殺的（擊殺效果；幽墓束縛）。 */
+    public static final String PRESENCE_KILLS = "flag.presence_kills";
+    /** 你其他的物品稀有度加成無效（只剩這件的；幽墓束縛）。 */
+    public static final String RARITY_ONLY_THIS = "flag.rarity_only_this";
+    /** 力量可以滿足近戰武器的其他能力值需求（雅恩格利佩爾）；敏捷可以（磐石之拳版本）。 */
+    public static final String STR_MELEE_REQUIREMENTS = "flag.str_melee_requirements";
+    public static final String DEX_MELEE_REQUIREMENTS = "flag.dex_melee_requirements";
+    /** 被某種元素異常之後 x 秒內不會再中（悲運之縛：ailment.immune_after.chill／freeze／ignite／shock）。 */
+    public static final String IMMUNE_AFTER = "ailment.immune_after.";
+    /** 你施加的詛咒也會落在你自己身上（悲運之縛；跟魅咒一樣，但不會無視詛咒上限）。 */
+    public static final String CURSE_REFLECT_SELF = "flag.curse_reflect_self";
+    /** 暴擊時 x% 機率穿刺（驚懼之拳：100）。 */
+    public static final String IMPALE_ON_CRIT = "impale.on_crit";
+    /** 用近戰攻擊暴擊敵人時，對牠造成你的荊棘傷害（磐石之拳的驚懼之拳）。 */
+    public static final String THORNS_ON_MELEE_CRIT = "flag.thorns_on_melee_crit";
+    /** 擊中的所有傷害都算進中毒幅度（瘟疫之指）。 */
+    public static final String ALL_DAMAGE_POISONS = "flag.all_damage_poisons";
+    /** 你以暴擊施加的中毒幅度增加 x%（INCREASED；磐石之拳的瘟疫之指）。 */
+    public static final String POISON_MAGNITUDE_CRIT = "poison.magnitude_crit";
+    /** 擊中的物理傷害也算進易燃、點燃幅度、凍結累積與感電機率（磐石之拳的畫家的侍從）。 */
+    public static final String PHYSICAL_ELEMENTAL_AILMENTS = "flag.physical_elemental_ailments";
+    /** 攻擊的所有傷害都累積電擊（磐石之拳的奇多可之流）。 */
+    public static final String ATTACK_ALL_ELECTROCUTE = "flag.attack_all_electrocute";
+    /** 擊中時 x% 機率讓臨在範圍內的隊友獲得一顆怒星／磐星／銳星（磐石之拳的意識之緣）。 */
+    public static final String ALLY_CHARGE_ON_HIT = "charge.ally_on_hit.";
+    /**
+     * 受到稀有、傳奇敵人的傷害有 x% 之後慢慢回成生命（主宰之觸；原作是「暴露破綻的敵人」——它對稀有、傳奇敵人暴露弱點）。
+     * CombatListener 照打你的是不是稀有、傳奇怪物加在生命補償上。
+     */
+    public static final String LIFE_RECOUP_VS_RARE = "life.recoup_vs_rare";
+    /** 點了山巒之道時，禁錮敵人獲得山巒之教的機率每點敵人強度再多 x% 超越機率（磐石之拳的無與倫比；AscPaths 讀）。 */
+    public static final String MOUNTAIN_EXTRA_CHANCE = "asc.mountain_extra_chance";
+    /** 擊中的所有傷害都算進凍結累積（磐石之拳的凜冬之握）。 */
+    public static final String ALL_DAMAGE_FREEZES = "flag.all_damage_freezes";
+    /** 空手攻擊的基礎傷害（unarmed.base_min／max）是火焰而不是物理（磐石之拳的毀面者）。 */
+    public static final String UNARMED_FIRE = "flag.unarmed_base_fire";
+    /** 空手時，每 5 點智慧獲得等同於空手傷害 x% 的額外火焰傷害（磐石之拳的毀面者）。 */
+    public static final String PER_INT_UNARMED_FIRE = "per_int.unarmed_fire";
+    /** 空手時，每 10 點智慧增加 x% 空手攻擊的範圍效果（磐石之拳的毀面者）。 */
+    public static final String PER_INT_UNARMED_AREA = "per_int.unarmed_area";
+    /** 無法偷取魔力（磐石之拳的意識之緣）。 */
+    public static final String CANNOT_LEECH_MANA = "flag.cannot_leech_mana";
+    /** 你獲得戰星時，臨在範圍內的隊友也獲得一顆（意識之緣：與存在範圍內的友方共享能量球）。 */
+    public static final String SHARE_CHARGES = "flag.share_charges";
+
+    /** 獲得某種傷害為額外另一種的屬性鍵（{@link #GAIN_FROM}）。 */
+    public static String gainFrom(final tw.exilecore.stats.DamageType from, final tw.exilecore.stats.DamageType to) {
+        return GAIN_FROM + from.tag() + "." + to.tag();
+    }
+    // ---- 2026-10-28 照 PoE2 補的傳奇（綺夢、謎容、神聖烈焰、元素之章、貝雷克的兩枚、薛朗的背包、吉爾菲的聖殿）----
+
+    /** FLAT 1：無法使用生命藥劑；生命藥劑（非傳奇）的效果一直套用（不立即、只給你；綺夢，FlaskService）。 */
+    public static final String FLASK_LIFE_CONSTANT = "flag.flask_life_constant";
+    /** FLAT 1：藥劑的生命回復同時套用在能量護盾（薛朗的背包，FlaskService）。 */
+    public static final String FLASK_LIFE_TO_ES = "flag.flask_life_to_es";
+    /** FLAT %：最大能量護盾等於力量的 x%，而且不能被轉換（吉爾菲的聖殿，PlayerState.maxEnergyShield）。 */
+    public static final String ES_EQUAL_TO_STR = "es.equal_to_str";
+    /** FLAT：每 10 點智慧每秒回復 x 生命（吉爾菲的聖殿，UniqueDerived）。 */
+    public static final String PER_INT_LIFE_REGEN = "per_int.life_regen";
+    /** FLAT %：存在範圍內的盟友每秒回復 x% 最大生命（神聖烈焰，AuraService 給隊友）。 */
+    public static final String PRESENCE_ALLY_REGEN = "presence.ally_regen";
+    /** FLAT %：存在範圍內的盟友獲得 x% 傷害為額外火焰傷害（神聖烈焰，AuraService 給隊友）。 */
+    public static final String PRESENCE_ALLY_EXTRA_FIRE = "presence.ally_extra_fire";
+    /** FLAT 1：存在範圍內的敵人照牠最低的元素抗性抵抗元素傷害（神聖烈焰，combat.Presence）。 */
+    public static final String PRESENCE_LOWEST_RESIST = "flag.presence_lowest_resist";
+    /** FLAT：1 = 裝備沒有屬性需求、2 = 技能寶石沒有屬性需求（謎容的兩種，掉落時決定；TreeEffectKeys、GemAttributes）。 */
+    public static final String NO_ATTR_REQ = "attr_req.none";
+    /** FLAT 1：會被元素地面強化的疾風技能（旋矛擊的旋風、旋風矛）視為受到點燃／冰緩／感電地面強化（貝雷克的戒指、元素之章；skill.WindGround）。 */
+    public static final String WIND_GROUND_FIRE = "wind.ground.fire";
+    public static final String WIND_GROUND_COLD = "wind.ground.cold";
+    public static final String WIND_GROUND_LIGHTNING = "wind.ground.lightning";
+    /** FLAT 1：疾風技能可以同時被好幾種元素地面強化（元素之章）。 */
+    public static final String WIND_GROUND_MULTIPLE = "flag.wind_ground_multiple";
 
     /**
      * 2026-10-27：傳奇直接沿用的天賦樹、昇華、輔助的屬性鍵（那邊已經有程式在讀；裝備的詞綴一樣進角色屬性表）。
@@ -243,7 +361,13 @@ public final class UniqueStats {
             tw.exilecore.stats.SupportKeys.POISON_STACKS, tw.exilecore.stats.ConditionKeys.GUARD_SLOW,
             tw.exilecore.stats.ConditionKeys.LIFE_PER_ENDURANCE_SPENT, tw.exilecore.skill.SkillResources.RAGE_REGEN,
             tw.exilecore.ascendancy.AscKeys.DECIMATING, tw.exilecore.ascendancy.AscKeys.ENEMY_ACCURACY_FALLOFF,
-            tw.exilecore.ascendancy.AscKeys.AVOID_DEATH);
+            tw.exilecore.ascendancy.AscKeys.AVOID_DEATH,
+            // 2026-10-28 照 PoE2：補上的手套傳奇與它們的磐石之拳版本
+            tw.exilecore.stats.KeystoneKeys.FLAG_HOLLOW_PALM, tw.exilecore.stats.KeystoneKeys.ES_RECOUP,
+            tw.exilecore.stats.SupportExtraKeys.FLAG_LUCKY_SURROUNDED, tw.exilecore.stats.SupportExtraKeys.FLAG_NO_EXTRACT,
+            tw.exilecore.stats.SupportKeys.CULL_THRESHOLD_ON_CULL, tw.exilecore.stats.TreeNewMechanicKeys.CRIT_BASE_EXTRA,
+            tw.exilecore.stats.TreeNewMechanicKeys.VOLATILITY_ON_KILL, tw.exilecore.stats.TreeEffectKeys.SKILL_QUALITY,
+            tw.exilecore.ascendancy.AscKeys.DOUBLE_CHILL);
 
     /** 這件物品自己的（local.）屬性：不進角色屬性表，由 Runes、ItemStats 讀物品的詞綴。 */
     public static final Set<String> LOCAL_ITEM = Set.of(LOCAL_RUNE_EFFECT, LOCAL_RUNE_AS_SHIELD, LOCAL_REQUIREMENT_STR,
@@ -261,6 +385,7 @@ public final class UniqueStats {
             // 2026-10-27（舞影外套）：受到的某種傷害增加／減少（減益用的 debuff.taken.類型，傷害計算照類型讀）
             keys.add(tw.exilecore.stats.StatKeys.DEBUFF_TAKEN + from.tag());
             for (final tw.exilecore.stats.DamageType to : tw.exilecore.stats.DamageType.values()) {
+                keys.add(gainFrom(from, to)); // 2026-10-28（畫家的侍從：元素傷害也獲得為同一種）
                 if (from != to) {
                     keys.add(convertFrom(from, to));
                     // 2026-10-27（夜落塔盾）：受到的某種傷害視為另一種（昇華的 asc.taken.來源.目標，AscendancyEffects.reroute 讀）
@@ -271,13 +396,21 @@ public final class UniqueStats {
         for (final Field field : UniqueStats.class.getFields()) {
             if (Modifier.isStatic(field.getModifiers()) && field.getType() == String.class
                     && !field.getName().equals("GRANT_SKILL") && !field.getName().equals("SKILL_TAG_PREFIX")
-                    && !field.getName().equals("RECENT_RELOAD") && !field.getName().equals("CONVERT_FROM")) {
+                    && !field.getName().equals("RECENT_RELOAD") && !field.getName().equals("CONVERT_FROM")
+                    && !field.getName().equals("GAIN_FROM") && !field.getName().equals("IMMUNE_AFTER")
+                    && !field.getName().equals("ALLY_CHARGE_ON_HIT")) {
                 try {
                     keys.add((String) field.get(null));
                 } catch (final IllegalAccessException e) {
                     throw new IllegalStateException(e);
                 }
             }
+        }
+        for (final String ailment : java.util.List.of("chill", "freeze", "ignite", "shock")) {
+            keys.add(IMMUNE_AFTER + ailment); // 2026-10-28（悲運之縛）
+        }
+        for (final String charge : java.util.List.of("frenzy", "endurance", "power")) {
+            keys.add(ALLY_CHARGE_ON_HIT + charge); // 2026-10-28（磐石之拳的意識之緣）
         }
         return keys;
     }

@@ -126,14 +126,26 @@ final class ProjectileEngine implements Listener {
         boolean noTerrain;
         /**
          * 2026-10-28 照 PoE2 Shockchain Arrow（電鍊箭矢，{@link ShockchainArrows}）：打中閃電異常的敵人多連鎖幾次（0 = 不是這種）、
-         * 已經連鎖過幾次、追不追蹤閃電異常的敵人、打中時用不用掉感電、正在追的敵人（追的是不是閃電異常的）。
+         * 已經連鎖過幾次、追不追蹤閃電異常的敵人、打中時用不用掉感電、正在追的敵人（追的是不是感電中的）、
+         * 2026-10-28 照 PoE2：箭充能了沒（第一次打中閃電異常的敵人；之後是連鎖的次級投射物，不再多給連鎖、不用掉感電、最後插成雷霆之杖）。
+         * 這次之前沒有 shockcharged，追的目標記「閃電異常」（homingAfflicted）。
          */
         int shockchain;
         int shockchained;
         boolean homes;
         boolean consumesShock;
         UUID homing;
-        boolean homingAfflicted;
+        boolean homingShocked;
+        boolean shockcharged;
+        /**
+         * 2026-10-28 照 PoE2 Spark（游雷）：貼著地面游走（null = 不是這種）、射出去的那條線（起點、水平方向）、現在偏離那條線幾度；
+         * hitClear = 同一次施放共用的「這個目標到哪個 tick 才能再被打」（到了就從 hit 拿掉；null = 一次施放一個目標只打一次）。
+         */
+        SkillParams.Wander wander;
+        Vector wanderOrigin;
+        Vector wanderBase;
+        double wanderAngle;
+        Map<UUID, Long> hitClear;
 
         Shot(final long id, final UUID owner, final SkillBuild build, final SkillProfile profile, final World world, final Vector position,
              final Vector direction, final double speed, final double range, final Arrow arrow, final Set<UUID> hit, final boolean secondary) {
@@ -282,7 +294,9 @@ final class ProjectileEngine implements Listener {
         final Player owner = origin.owner();
         final Location eye = origin.eye();
         // 整圈散開的（雷網陷阱）用水平的方向，不然朝下看時整圈都射進地裡
-        final Vector look = build.spread() >= 360 - 1e-9 ? origin.facing() : origin.direction();
+        // 2026-10-28 照 PoE2 Spark：貼地游走的也用水平的方向（沿著地面跑，不往天上、地裡射）
+        final SkillParams.Wander wander = build.params().wander();
+        final Vector look = build.spread() >= 360 - 1e-9 || wander != null ? origin.facing() : origin.direction();
         int count = build.projectiles();
         // 2026-10-28 照 PoE2（纏蝕箭）：投射物數量的修飾器改加在分裂目標數上——機率多射的也一樣，擲到幾發就多分裂幾個目標（每一發的 splitBonus）；
         // 這次之前一律多射
@@ -337,10 +351,13 @@ final class ProjectileEngine implements Listener {
         final Map<UUID, Integer> pellets = merging && SkillZones.localFlat(build.profile(), tw.exilecore.stats.GemQualityKeys.IGNITE_DURATION_PER_PELLET) > 0
                 ? new java.util.HashMap<>() : null;
         final double variation = SkillStages.mark(build.profile(), SPEED_VARIATION);
+        // 2026-10-28 照 PoE2 Spark：同一次施放的投射物打同一個目標至少隔 0.66 秒（共用一份「什麼時候可以再打」）
+        final Map<UUID, Long> hitClear = wander != null && wander.hitCooldownTicks() > 0 ? new HashMap<>() : null;
         int index = 0;
         for (final double[] d : directions) {
             final Vector direction = new Vector(d[0], d[1], d[2]);
-            final Vector start = eye.toVector().add(direction.clone().multiply(0.4)).add(new Vector(0, -0.15, 0));
+            final Vector start = wander != null ? wanderStart(origin.world(), eye.toVector(), direction)
+                    : eye.toVector().add(direction.clone().multiply(0.4)).add(new Vector(0, -0.15, 0));
             final SkillProfile profile = split.isEmpty() ? build.profile() : split.get(index++ % split.size());
             final double factor = speedFactor(variation, variation > 0 ? random.nextDouble() : 0.5);
             final Shot shot = spawn(owner, build, profile, origin.world(), start, direction, build.speed() * factor, build.range() * factor,
@@ -348,9 +365,185 @@ final class ProjectileEngine implements Listener {
             if (shot != null) {
                 shot.splitBonus = splitBonus;
                 shot.pelletHits = pellets;
+                if (wander != null && shot.arrow == null) {
+                    startWander(shot, wander, hitClear);
+                }
             }
         }
         visuals.cast(visual, eye);
+    }
+
+    /** 2026-10-28 照 PoE2 Spark：投射物離地面多高（格）。 */
+    static final double WANDER_HOVER = 0.35;
+    /** 貼地的投射物一次最多爬上幾格高的台階、最多往下掉幾格（再高是牆、再低是懸崖：消失）。 */
+    static final double WANDER_STEP_UP = 1.05;
+    static final double WANDER_DROP = 3.0;
+    /** 偏離射出去的那條線最多幾度（每 tick 再隨機轉 ±wobble 度）。 */
+    static final double WANDER_MAX_ANGLE = 60;
+    /**
+     * 2026-10-28 照 PoE2（projectiles_should_collide_with_flying_monsters）：貼地的投射物打得到飛在多高的怪
+     *（腳離地、在投射物上方這麼多格內；站在地上的照原本的碰撞箱）。
+     */
+    static final double WANDER_FLYING_REACH = 3.0;
+
+    /** 貼地投射物的起點：施放者面前 0.4 格的地面上方 {@link #WANDER_HOVER}（往下找不到地面就在眼睛下面 1.2 格）。 */
+    private static Vector wanderStart(final World world, final Vector eye, final Vector direction) {
+        final Vector flat = direction.clone().setY(0);
+        final Vector at = eye.clone().add(flat.lengthSquared() < 1e-9 ? new Vector() : flat.normalize().multiply(0.4));
+        final RayTraceResult floor = world.rayTraceBlocks(at.toLocation(world), new Vector(0, -1, 0), 4, FluidCollisionMode.ALWAYS, true);
+        return floor == null ? at.add(new Vector(0, -1.2, 0)) : floor.getHitPosition().add(new Vector(0, WANDER_HOVER, 0));
+    }
+
+    /** 2026-10-28 照 PoE2 Spark：這一發改成貼地游走、照持續時間（吃技能持續時間）消失、同一次施放共用打擊間隔。 */
+    private static void startWander(final Shot shot, final SkillParams.Wander wander, final Map<UUID, Long> hitClear) {
+        shot.wander = wander;
+        final Vector flat = shot.direction.clone().setY(0);
+        shot.wanderBase = flat.lengthSquared() < 1e-9 ? new Vector(1, 0, 0) : flat.normalize();
+        shot.direction = shot.wanderBase.clone();
+        shot.wanderOrigin = shot.position.clone();
+        shot.wanderAngle = 0;
+        shot.hitClear = hitClear;
+        shot.ticksLeft = shot.build.durationTicks(wander.duration());
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Spark：下一個 tick 偏離射出去那條線的角度：隨機轉 turn 度、夾在 ±maxAngle；已經偏到 half 格（寬度的一半）
+     * 還要再往外的話轉回來。lateralSign = 角度變大時往哪一邊偏（+1 = 往 lateral 正的那邊）。純函式（測試用）。
+     */
+    static double steerWander(final double angle, final double turn, final double maxAngle, final double lateral, final double half,
+                              final double lateralSign) {
+        double next = Math.max(-maxAngle, Math.min(maxAngle, angle + turn));
+        if (half > 0 && Math.abs(lateral) >= half && Math.signum(next) * lateralSign * Math.signum(lateral) > 0) {
+            next = -next; // 碰到邊界：往回走
+        }
+        return next;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Spark（spark_min_time_between_target_clearing_ms）：同一次施放裡，間隔到了的目標從「打過了」拿掉（可以再被打）。
+     * 回傳拿掉幾個。純函式（測試用）。
+     */
+    static int expireHits(final Set<UUID> hit, final Map<UUID, Long> clearAt, final long now) {
+        int freed = 0;
+        final java.util.Iterator<Map.Entry<UUID, Long>> it = clearAt.entrySet().iterator();
+        while (it.hasNext()) {
+            final Map.Entry<UUID, Long> entry = it.next();
+            if (entry.getValue() <= now) {
+                hit.remove(entry.getKey());
+                it.remove();
+                freed++;
+            }
+        }
+        return freed;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Spark：貼地游走的一 tick——方向在射出去的那條線左右 width/2 格內亂竄，沿著地面走（爬得上一格高的台階、
+     * 掉得下 {@link #WANDER_DROP} 格；再高是牆、再低是懸崖：停下）；打中敵人就停（同一次施放的其他幾顆 0.66 秒內穿過牠）。
+     */
+    private void tickWander(final Shot shot, final Player owner) {
+        final long now = plugin.getServer().getCurrentTick();
+        if (shot.hitClear != null && !shot.hitClear.isEmpty()) {
+            expireHits(shot.hit, shot.hitClear, now);
+        }
+        final Vector perp = new Vector(-shot.wanderBase.getZ(), 0, shot.wanderBase.getX());
+        final double lateral = shot.position.clone().subtract(shot.wanderOrigin).dot(perp);
+        final double lateralSign = Math.signum(shot.wanderBase.clone().rotateAroundY(Math.toRadians(1)).dot(perp));
+        final double turn = shot.wobble > 0 ? (random.nextDouble() * 2 - 1) * shot.wobble : 0;
+        shot.wanderAngle = steerWander(shot.wanderAngle, turn, WANDER_MAX_ANGLE, lateral, shot.wander.width() / 2, lateralSign);
+        final Vector heading = shot.wanderBase.clone().rotateAroundY(Math.toRadians(shot.wanderAngle));
+        final Vector from = shot.position.clone();
+        final Location start = from.toLocation(shot.world);
+        if (!shot.world.isChunkLoaded(start.getBlockX() >> 4, start.getBlockZ() >> 4)) {
+            remove(shot);
+            return;
+        }
+        // 下一步的地面：從上面一格往下找（爬台階、下坡）；上面那格是實心的 = 牆
+        final Vector ahead = from.clone().add(heading.clone().multiply(shot.speed));
+        final double probeY = from.getY() - WANDER_HOVER + WANDER_STEP_UP;
+        final Location probe = new Location(shot.world, ahead.getX(), probeY, ahead.getZ());
+        Vector next = null;
+        if (shot.noTerrain) {
+            next = ahead;
+        } else if (probe.getBlock().isPassable()) {
+            final RayTraceResult floor = shot.world.rayTraceBlocks(probe, new Vector(0, -1, 0), WANDER_STEP_UP + WANDER_DROP,
+                    FluidCollisionMode.ALWAYS, true);
+            if (floor != null) {
+                next = new Vector(ahead.getX(), floor.getHitPosition().getY() + WANDER_HOVER, ahead.getZ());
+            }
+        }
+        final Vector step = (next != null ? next : ahead).clone().subtract(from);
+        final double travel = step.length();
+        final Vector direction = travel > 1e-6 ? step.clone().multiply(1 / travel) : heading;
+        shot.direction = direction;
+        final RayTraceResult entity = travel <= 1e-6 ? null : wanderTarget(shot, owner, from, direction, travel);
+        if (travel > 1e-6) { // 飛過的路上的冰晶、鐘直接被打到
+            final double reach = entity != null ? entity.getHitPosition().distance(from) : travel;
+            targets.strike(owner, shot.profile, SkillTargets.segment(start, start.clone().add(direction.clone().multiply(reach)), shot.size), shot);
+        }
+        if (entity != null && entity.getHitEntity() instanceof LivingEntity target) {
+            final Vector at = entity.getHitPosition();
+            visuals.trail(shot.visual(), shot.world, from, at);
+            shot.position = at;
+            final Vector turned = onEntityHit(shot, owner, target, at.toLocation(shot.world));
+            if (turned != null) {
+                // 連鎖：轉向下一個敵人，從這裡重新沿著地面游走
+                final Vector flat = turned.clone().setY(0);
+                if (flat.lengthSquared() > 1e-9) {
+                    shot.wanderBase = flat.normalize();
+                    shot.wanderOrigin = at.clone();
+                    shot.wanderAngle = 0;
+                }
+            }
+            return;
+        }
+        if (next == null) {
+            // 牆、懸崖：停在這裡
+            stop(shot, owner, start);
+            return;
+        }
+        visuals.trail(shot.visual(), shot.world, from, next);
+        shot.position = next;
+        if (--shot.ticksLeft <= 0) {
+            if (shot.build.returning() && !shot.secondary) {
+                stopEffects(shot, owner, next.toLocation(shot.world), false);
+                startReturn(shot);
+                return;
+            }
+            visuals.fizzle(shot.visual(), next.toLocation(shot.world));
+            stopEffects(shot, owner, next.toLocation(shot.world), false);
+            remove(shot);
+        }
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Spark：貼地的投射物這一步碰到的敵人（最近的）：站在地上的照碰撞箱，飛在空中的（腳不在地上）碰撞箱往下拉
+     * {@link #WANDER_FLYING_REACH} 格（照 PoE2 打得到飛行的怪）；同一次施放間隔還沒到的略過。
+     */
+    private RayTraceResult wanderTarget(final Shot shot, final Player owner, final Vector from, final Vector direction, final double travel) {
+        final Vector to = from.clone().add(direction.clone().multiply(travel));
+        final org.bukkit.util.BoundingBox sweep = org.bukkit.util.BoundingBox.of(from, to)
+                .expand(shot.size + 0.5, 0, shot.size + 0.5, shot.size + 0.5, WANDER_FLYING_REACH + 0.5, shot.size + 0.5)
+                .expand(0, 0.5, 0, 0, 0, 0);
+        RayTraceResult best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (final org.bukkit.entity.Entity candidate : shot.world.getNearbyEntities(sweep)) {
+            if (!(candidate instanceof LivingEntity) || shot.hit.contains(candidate.getUniqueId()) || !targets.valid(candidate, owner)) {
+                continue;
+            }
+            final double below = candidate.isOnGround() ? 0 : WANDER_FLYING_REACH;
+            final org.bukkit.util.BoundingBox box = candidate.getBoundingBox().clone().expand(shot.size, below, shot.size, shot.size, 0, shot.size);
+            final RayTraceResult hit = box.rayTrace(from, direction, travel);
+            if (hit == null) {
+                continue;
+            }
+            final double distance = hit.getHitPosition().distanceSquared(from);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = new RayTraceResult(hit.getHitPosition(), candidate, hit.getHitBlockFace());
+            }
+        }
+        return best;
     }
 
     /**
@@ -664,6 +857,9 @@ final class ProjectileEngine implements Listener {
                 return;
             }
             shot.direction = to.multiply(1 / distance);
+        } else if (shot.wander != null) {
+            tickWander(shot, owner); // 2026-10-28 照 PoE2 Spark：貼地游走
+            return;
         } else if (shot.wobble > 0) {
             final double degrees = (random.nextDouble() * 2 - 1) * shot.wobble;
             shot.direction.rotateAroundY(Math.toRadians(degrees));
@@ -894,6 +1090,9 @@ final class ProjectileEngine implements Listener {
      */
     private Vector onEntityHit(final Shot shot, final Player owner, final LivingEntity target, final Location at) {
         shot.hit.add(target.getUniqueId());
+        if (shot.hitClear != null) { // 2026-10-28 照 PoE2 Spark：同一次施放 0.66 秒後才能再打這個目標
+            shot.hitClear.put(target.getUniqueId(), (long) plugin.getServer().getCurrentTick() + shot.wander.hitCooldownTicks());
+        }
         shot.struck.add(target.getUniqueId());
         final tw.exilecore.stats.StatSheet ownerSheet = plugin.players().sheet(owner);
         // 2026-10-26（穿燼、霜岔、躍霆，PoE2）：打中前看目標身上的異常——穿透點燃中的、從凍結的分裂、第一次打中感電的一定連鎖
@@ -912,9 +1111,11 @@ final class ProjectileEngine implements Listener {
             chainShocked = !shot.chainedShocked && tw.exilecore.stats.StatKeys.flag(effective, tw.exilecore.stats.SupportKeys.CHAIN_SHOCKED)
                     && plugin.ailments().has(target, tw.exilecore.ailment.AilmentType.SHOCK);
         }
-        // 2026-10-28 照 PoE2 Shockchain Arrow（電鍊箭矢）：目標身上有沒有閃電異常（感電、電擊）；追著閃電異常的敵人飛時穿過路上沒有的
+        // 2026-10-28 照 PoE2 Shockchain Arrow（電鍊箭矢）：目標身上有沒有閃電異常（感電、電擊）；
+        // 追著感電的敵人飛時穿過路上沒有感電的（RePoE always_pierce_non_shocked_enemies_if_targeting_shocked_enemy；這次之前照閃電異常算）
         final boolean afflicted = shot.shockchain > 0 && lightningAfflicted(target);
-        if (!pierceFree && shot.shockchain > 0 && shot.homingAfflicted && shot.homing != null && !shot.homing.equals(target.getUniqueId()) && !afflicted) {
+        if (!pierceFree && shot.shockchain > 0 && ShockchainArrows.piercesOnTheWay(shot.homingShocked,
+                shot.homing != null && !shot.homing.equals(target.getUniqueId()), shocked(target), afflicted && !shot.shockcharged)) {
             pierceFree = true;
         }
         // 2026-10-27 照 PoE2 天賦樹：「投射物 x% 機率穿透你 3 格內的敵人」（不算穿透次數）
@@ -954,12 +1155,18 @@ final class ProjectileEngine implements Listener {
             hitProfile = hitProfile.scaled(1 + pierced / 100.0, "穿透之後");
         }
         damage.hit(owner, target, tw.exilecore.item.unique.UniqueMechanics.pierceProfile(hitProfile, shot.pierced, ownerSheet), null);
-        if (shot.consumesShock && plugin.ailments() != null && plugin.ailments().has(target, tw.exilecore.ailment.AilmentType.SHOCK)) {
-            plugin.ailments().consume(target, tw.exilecore.ailment.AilmentType.SHOCK, owner); // 2026-10-28 照 PoE2：箭用掉感電（電擊不用掉）
+        // 2026-10-28 照 PoE2 0.4.0：只有初始的箭（還沒充能）用掉感電（電擊不用掉），連鎖的次級投射物不用掉；這次之前每一下都用掉。
+        // 順序照原作「用掉感電替箭充能，再放出震波」：上面這一箭的傷害還吃得到感電，震波在用掉之後才放
+        if (ShockchainArrows.consumesShock(shot.consumesShock, shot.shockcharged) && shocked(target)) {
+            plugin.ailments().consume(target, tw.exilecore.ailment.AilmentType.SHOCK, owner);
         }
         if (shot.shockchain > 0) {
-            // 2026-10-28 照 PoE2 Shockchain Arrow：打中閃電異常的敵人放震波、多連鎖 3 次；連鎖過來的每一下也放震波
-            final ShockchainArrows.Outcome outcome = ShockchainArrows.onHit(shot.shockchain, afflicted, shot.shockchained > 0);
+            // 2026-10-28 照 PoE2 Shockchain Arrow：第一次打中閃電異常的敵人充能、放震波、多連鎖 3 次（每支箭一次）；之後打中的每一下都放震波。
+            // 這次之前連鎖打中另一隻閃電異常的再多 3 次
+            final ShockchainArrows.Outcome outcome = ShockchainArrows.onHit(shot.shockchain, afflicted, shot.shockcharged);
+            if (outcome.charges()) {
+                shot.shockcharged = true;
+            }
             if (outcome.shockwave()) {
                 shockwave(shot, owner, target);
             }
@@ -1019,7 +1226,7 @@ final class ProjectileEngine implements Listener {
                 if (shot.shockchain > 0) {
                     shot.shockchained++;
                     shot.homing = next.getUniqueId();
-                    shot.homingAfflicted = lightningAfflicted(next);
+                    shot.homingShocked = shocked(next);
                 }
                 final Vector to = SkillTargets.center(next).toVector();
                 final Vector direction = to.subtract(at.toVector());
@@ -1099,6 +1306,11 @@ final class ProjectileEngine implements Listener {
         }
     }
 
+    /** 2026-10-28 照 PoE2：感電中（電鍊箭矢穿過路上沒感電的、只用掉感電）。 */
+    private boolean shocked(final LivingEntity target) {
+        return plugin.ailments() != null && plugin.ailments().has(target, tw.exilecore.ailment.AilmentType.SHOCK);
+    }
+
     /** 2026-10-28 照 PoE2：受到閃電異常（感電、電擊）。 */
     private boolean lightningAfflicted(final LivingEntity target) {
         return plugin.ailments() != null && (plugin.ailments().has(target, tw.exilecore.ailment.AilmentType.SHOCK) || plugin.ailments().electrocuted(target));
@@ -1151,10 +1363,10 @@ final class ProjectileEngine implements Listener {
                 target = living;
             } else {
                 shot.homing = null;
-                shot.homingAfflicted = false;
+                shot.homingShocked = false;
             }
         }
-        if (target == null && shot.shockchained == 0 && (shot.ticksLeft & 1) == 0) {
+        if (target == null && !shot.shockcharged && (shot.ticksLeft & 1) == 0) {
             double bestDistance = ShockchainArrows.HOMING_RANGE * ShockchainArrows.HOMING_RANGE;
             for (final LivingEntity living : targets.around(from, ShockchainArrows.HOMING_RANGE, owner)) {
                 if (shot.hit.contains(living.getUniqueId()) || !lightningAfflicted(living)) {
@@ -1169,7 +1381,7 @@ final class ProjectileEngine implements Listener {
             }
             if (target != null) {
                 shot.homing = target.getUniqueId();
-                shot.homingAfflicted = true;
+                shot.homingShocked = shocked(target);
             }
         }
         if (target == null) {
@@ -1316,8 +1528,10 @@ final class ProjectileEngine implements Listener {
         if (!shot.secondary && !shot.returning && owner != null && plugin.skills() != null) {
             plugin.skills().spears().landed(owner, shot.build, shot.profile, at, shot.direction); // 2026-10-27 照 PoE2：擲矛（怒星炸開）、炎爆矛（插地；怒星十字照飛的方向）
         }
-        if (zones != null && owner != null && !shot.returning && ShockchainArrows.lodgesRod(shot.shockchain, shot.shockchained)) {
-            // 2026-10-28 照 PoE2 Shockchain Arrow：最後一次連鎖之後箭掉到地上變成雷霆之杖（被閃電連鎖連到時用震波的傷害炸開）
+        if (zones != null && owner != null && !shot.returning && ShockchainArrows.lodgesRod(shot.shockchain, shot.shockcharged)) {
+            // 2026-10-28 照 PoE2 Shockchain Arrow：充能過的箭最後一次連鎖之後在最後一個目標附近掉到地上變成雷霆之杖（PoE2 0.4.0；這次之前看連鎖過幾次）。
+            // 被閃電連鎖連到時充能 1 秒、用震波那一段的傷害、半徑炸開：原作這支杖沒有自己的爆發數值，雷霆之杖的兩條數值
+            // （number_of_lightning_rods_allowed、lightning_rod_number_of_chains_allowed）也寫在震波那一段（ShockchainArrowExplosionPlayer）上
             zones.placeRod(owner, shot.build.definition().id(), ground(at), SkillStages.profile(shot.build, shot.profile, ShockchainArrows.SHOCKWAVE),
                     shockwaveRadius(shot), shot.visual());
         }

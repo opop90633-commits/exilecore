@@ -209,6 +209,7 @@ skills:
     type: attack
     tags: [attack, melee, area, strike]   # 2026-10-26 照 PoE2（Mace Strike 是打擊、範圍）；這次之前 [attack, melee]
     mechanic: strike
+    step: { distance: 1 }   # 2026-10-28 照 PoE2（RePoE MeleePlayer、Melee1HMacePlayer、Melee2HSwordPlayer…近戰普攻都是 melee_conditional_step_distance 10）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 3.5, angle: 70, targets: 1 }
     visual: slash
 
@@ -260,6 +261,7 @@ skills:
     type: attack
     tags: [attack, melee, area, strike]   # 2026-10-26 照 PoE2；這次之前 [attack, melee]
     mechanic: strike
+    step: { distance: 1 }   # 2026-10-28 照 PoE2（RePoE MeleeQuarterstaffPlayer 的 melee_conditional_step_distance 10）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 4.0, angle: 100, targets: 1 }   # 2026-10-26 照 PoE2（Quarterstaff Strike 打單一目標）；這次之前 targets 2
     visual: staff_sweep
 
@@ -270,6 +272,7 @@ skills:
     type: attack
     tags: [attack, melee, area, strike]   # 2026-10-26 照 PoE2（Spear Stab）；這次之前 [attack, melee]
     mechanic: strike
+    step: { distance: 1.5 }   # 2026-10-28 照 PoE2（RePoE MeleeSpearPlayer 的 melee_conditional_step_distance 15）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 4.6, angle: 30, targets: 1 }
     visual: spear_thrust
 
@@ -303,6 +306,7 @@ skills:
     tags: [attack, melee, area, slam, duration]   # 2026-10-26 照 PoE2（加持續）
     weapons: [mace]   # 2026-10-26 照 PoE2（Earthquake 要錘）；這次之前 [melee]
     mechanic: nova
+    step: { distance: 1 }   # 2026-10-28 照 PoE2（RePoE EarthquakePlayer 的 melee_conditional_step_distance 10）：出手前往前踏一步（MeleeStep）；這次之前原地打
     nova: { radius: 1.8, aftershock: { delay: 4, radius: [1.333, 1.333, 1.333, 1.389, 1.389, 1.389, 1.444, 1.444, 1.444, 1.5, 1.5, 1.5, 1.556, 1.556, 1.556, 1.611, 1.611, 1.611, 1.667, 1.667, 1.667, 1.722, 1.722, 1.722, 1.778, 1.778, 1.778, 1.833, 1.833, 1.833, 1.833, 1.889, 1.889, 1.889, 1.889, 1.889, 1.889, 1.944, 1.944, 1.944], more: [360, 359, 365, 358, 361, 366, 362, 371, 371, 373, 381, 386, 385, 394, 397, 403, 410, 419, 425, 433, 443, 449, 462, 468, 479, 487, 495, 507, 514, 526, 536, 545, 556, 566, 577, 587, 598, 609, 621, 631] } }   # 2026-10-26 照 PoE2 Earthquake：衝擊 1.8 格；4 秒後（鋸齒地面消失時）餘震，半徑 2.4→3.0→3.5 格（寫成衝擊半徑的倍數）、傷害照餘震自己的表 184%→666%→2421%（寫成比衝擊更多幾 %）；這次之前 radius [3.0, 3.6]、0.9 秒、1.6 倍、更多 300%（鋸齒地面本身沒做）
     attack_speed: 0.75
     effectiveness: [0.4, 0.44, 0.48, 0.53, 0.57, 0.61, 0.66, 0.69, 0.73, 0.77, 0.8, 0.84, 0.89, 0.93, 0.98, 1.03, 1.08, 1.13, 1.19, 1.25, 1.31, 1.38, 1.44, 1.52, 1.59, 1.67, 1.76, 1.84, 1.94, 2.03, 2.13, 2.24, 2.35, 2.47, 2.59, 2.72, 2.86, 3, 3.15, 3.31]   # 2026-10-26 照 PoE2（poe2db Earthquake 1–40 級）；這次之前 [0.49, 0.69]
@@ -325,6 +329,7 @@ skills:
     starter: marauder
     weapons: [mace]
     mechanic: strike
+    step: { distance: 1.7 }   # 2026-10-28 照 PoE2（RePoE BoneshatterPlayer 的 melee_conditional_step_distance 17）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 3.8, angle: 70, targets: 1 }   # 2026-10-26 照 PoE2：不擊退；這次之前 knockback 0.5
     attack_speed: 0.6
     effectiveness: [1, 1.1, 1.21, 1.32, 1.42, 1.53, 1.64, 1.74, 1.82, 1.91, 2.01, 2.11, 2.22, 2.33, 2.44, 2.57, 2.69, 2.83, 2.97, 3.12, 3.27, 3.44, 3.61, 3.79, 3.98, 4.18, 4.39, 4.61, 4.84, 5.08, 5.33, 5.6, 5.88, 6.18, 6.48, 6.81, 7.15, 7.51, 7.88, 8.28]   # 2026-10-26 照 PoE2（poe2db Boneshatter 1–40 級）；這次之前 [1.23, 1.72]
@@ -676,6 +681,7 @@ skills:
     tags: [attack, melee, strike, area, cold]   # 2026-10-26 照 PoE2（加打擊）
     weapons: [quarterstaff]
     mechanic: strike   # 2026-10-26 照 PoE2 Ice Strike：近戰打擊單一目標；這次之前前方扇形 [4.5, 5.5]、60 度
+    step: { distance: 1 }   # 2026-10-28 照 PoE2（RePoE IceStrikePlayer 的 melee_conditional_step_distance 10）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 4.0, angle: 70, targets: 1 }
     convert: { cold: 0.8 }   # 2026-10-26 照 PoE2；這次之前 0.6（三連的終結打擊沒做）
     attack_speed: 1.4
@@ -736,6 +742,7 @@ skills:
     tags: [attack, melee, area]   # 2026-10-26 照 PoE2：物理（拿掉 50% 轉閃電）
     weapons: [quarterstaff]
     mechanic: nova
+    step: { distance: 2.1 }   # 2026-10-28 照 PoE2（RePoE TempestBellPlayer 的 melee_conditional_step_distance 21）：出手前往前踏一步（MeleeStep）；這次之前原地打
     nova: { radius: 2.6 }   # 2026-10-26 照 PoE2（震波 2.6 格）；這次之前 [3.5, 4.2]
     bell: { duration: 6, interval: 0.3, range: 4, rings: 10, head: BELL }   # 2026-10-26 照 PoE2（打 10 下才碎、最快 0.3 秒一次）；這次之前 0.25、8
     cooldown: 0.5   # 2026-10-26 照 PoE2（冷卻 0.5 秒、要 4 點連擊）；這次之前連擊沒做，用 3 秒冷卻代替
@@ -785,7 +792,8 @@ skills:
   whirling_slash:
     name: 旋矛擊
     # 2026-10-28 照 PoE2（poe2db Whirling Slash）改說明；這次之前「打傷周圍一圈的敵人…裡面的敵人變慢…階數越高越痛、越大」
-    description: 揮矛轉一圈，打中並擊退身邊的敵人，在身邊捲起旋風（1.8 格），旋風裡的敵人移動變慢 30% 並被致盲；在旋風裡再揮一次升一階（最多 3 階，每多一階半徑 +0.3 格，揮的那一圈跟著變大）。走出旋風時它崩散，打裡面的敵人並往外擊退，每多一階更多 150% 傷害、擊退更遠 10%。捲在點燃、冰緩、感電地面上的是元素旋風，崩散獲得 50% 傷害為那種元素的額外傷害。旋風矛碰到旋風會把它用掉。
+    # 2026-10-28 照 PoE2（melee_conditional_step_distance 26）說明補上往前踏步；這次之前「揮矛轉一圈，打中並擊退身邊的敵人…」（原地揮）
+    description: 往前踏一步（最多 2.6 格，會被牆擋住；準心的敵人已經打得到就不動、走到打得到就停，沒有目標就朝準心指的地面）再揮矛轉一圈，打中並擊退身邊的敵人，在落腳處捲起旋風（1.8 格），旋風裡的敵人移動變慢 30% 並被致盲；在旋風裡再揮一次升一階（最多 3 階，每多一階半徑 +0.3 格，揮的那一圈跟著變大）。走出旋風時它崩散，打裡面的敵人並往外擊退，每多一階更多 150% 傷害、擊退更遠 10%。捲在點燃、冰緩、感電地面上的是元素旋風，崩散獲得 50% 傷害為那種元素的額外傷害。旋風矛碰到旋風會把它用掉。
     icon: BREEZE_ROD   # 2026-10：原本 WIND_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 1   # 2026-10-27 照 PoE2（Whirling Slash 第 1 階）；這次之前 3
@@ -793,6 +801,9 @@ skills:
     # （更早）2026-10-26 照 PoE2（打擊，不是新星）；這次之前 [attack, melee, area, nova]
     weapons: [spear]
     mechanic: nova
+    step: { distance: 2.6 }   # 2026-10-28 照 PoE2（RePoE WhirlingSlashPlayer 的 melee_conditional_step_distance 26）：出手前往前踏一步（MeleeStep）；這次之前原地打
+    #   踏完才揮、旋風捲在落腳處；踏出舊的旋風就跟走出去一樣崩散，還在裡面就升階（Signatures 照踏完的位置判斷）。
+    #   原作 0.3.0b「修正迴旋斬的移動距離不再隨攻擊速度改變的錯誤」（＝距離會隨攻速變），換算方式沒公開：我們固定 2.6 格
     # 2026-10-28 照 PoE2：揮的那一圈跟這一下之後的旋風一樣大（1.8 格、每多一階 +0.3：sandstorm_swipe_nova_radius_+_per_stage，Signatures.slashScale），
     #   並擊退（global_knockback；原作沒寫基礎距離，取崩散的八成）；這次之前 radius: [3.0, 3.8]（隨等級）、不擊退
     nova: { radius: 1.8, knockback: 0.4 }
@@ -908,13 +919,19 @@ skills:
 
   spark:
     name: 游雷
-    description: 放出好幾顆亂竄的游雷，碰到敵人就放電消失。身上有冰灌注時用掉一層：多 7 顆，並附加大量冰冷傷害。
+    description: 放出好幾顆游雷，貼著地面不規則地游走，直到擊中敵人或 2 秒持續時間結束。同一次放出的游雷 0.66 秒內只會擊中同一個敵人一次（隔了 0.66 秒同一次的其他游雷還能再打牠）。身上有冰灌注時用掉一層：改成往四周一圈射出大量游雷，並造成冰冷傷害（施法時間 +0.5 秒）。
+    # 2026-10-28 照 PoE2 Spark（電球）0.5 的說明；這次之前「放出好幾顆亂竄的游雷，碰到敵人就放電消失。身上有冰灌注時用掉一層：多 7 顆，並附加大量冰冷傷害。」
+    # 名字照舊「游雷」（雷星游雷、縛地長杖、補助說明都叫游雷）
     icon: GLOWSTONE_DUST   # 2026-10：原本 GLOWSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 1
     tags: [spell, projectile, lightning, duration]   # 2026-10-26 照 PoE2（加持續）
     mechanic: projectile
-    projectile: { count: [4, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12, 12, 12, 12, 12, 12, 13, 13, 13, 13], spread: 30, speed: 0.5, range: 20, size: 0.3, wobble: 25 }   # 2026-10-28 照 PoE2（poe2db Spark 1–40 級）；這次之前 [4, 9]（兩點內插）
+    projectile: { count: [4, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12, 12, 12, 12, 12, 12, 13, 13, 13, 13], spread: 30, speed: 0.5, range: 20, size: 0.3, wobble: 25, wander: { duration: 2, width: 2, hit_cooldown: 0.66 } }   # 2026-10-28 照 PoE2（poe2db Spark 1–40 級）；這次之前 [4, 9]（兩點內插）
+    # 2026-10-28 照 PoE2 Spark（RePoE SparkPlayer）：wander = 貼著地面不規則游走（spark_pathing_width_bounds 20 = 左右 2 公尺寬）、
+    #   投射物持續 2 秒（base_skill_effect_duration，吃技能持續時間；投射物速度變快飛得更遠，range 不再用）、
+    #   同一次施放的投射物打同一個目標至少隔 0.66 秒（spark_min_time_between_target_clearing_ms 660：可以散彈，但 0.66 秒一下）、打得到飛行的怪；
+    #   這次之前在眼睛高度亂飛（每 tick 隨機轉 ±25 度一直累積）、飛 20 格（速度變快飛得更短）、同一次施放一個敵人只打一次（不能散彈）
     # （更早）2026-10 PoE2：4–9 顆、2 秒
     damage: [[1, 10], [1, 13], [1, 17], [1, 21], [1, 26], [2, 32], [2, 38], [2, 45], [3, 53], [3, 61], [4, 71], [4, 81], [5, 93], [6, 106], [6, 120], [7, 135], [8, 153], [9, 172], [10, 193], [11, 216], [13, 242], [14, 271], [16, 303], [18, 338], [20, 378], [22, 421], [25, 470], [28, 524], [31, 584], [34, 651], [38, 726], [43, 809], [47, 902], [53, 1006], [59, 1122], [66, 1252], [74, 1398], [82, 1561], [92, 1744], [103, 1949]]   # 2026-10-26 照 PoE2（poe2db Spark 1–40 級；7～12 級以前抄錯）
     # （更早）2026-10-23 直傷法術第二輪 ×1.4（90 級以上實測中位數只有錘的三成；法術不吃武器，前幾輪武器補強都沒補到）；這次之前 [1, 10]
@@ -924,12 +941,19 @@ skills:
     # （更早）法術附加乘這個
     mana: [5, 6, 7, 8, 10, 11, 13, 15, 17, 19, 21, 24, 27, 30, 33, 37, 41, 46, 51, 56, 62, 68, 75, 83, 91, 100, 109, 120, 131, 143, 157, 171, 187, 204, 223, 243, 264, 288, 313, 341]   # 2026-10-26 照 PoE2（poe2db）；這次之前 [4, 12]
     visual: spark
-    resource:   # 2026-10-26 照 PoE2 Spark：用掉一層冰灌注，改成往四周射出 16 顆（多 7 顆）、附加冰冷（20 級 207–310）、施法 +0.5 秒；
-      #   一圈射出去打到同一隻的比較少、施法變慢沒做，做成平衡等效：多 7 顆投射物、獲得 120% 傷害為額外冰冷
+    resource:   # 2026-10-28 照 PoE2 Spark（RePoE SparkColdInfusedPlayer）：用掉一層冰灌注，整組換成冰灌注版——往四周一圈射出 12 → 16 → 20 顆、
+      #   基礎傷害改成冰冷 7–11 → 207–310 → 2379–3568 加閃電 1–10 → 13–245 → 149–2825（閃電也比一般版高）、暴擊率 +2%（11%）、施法時間 +0.5 秒（1.2 秒，吃施法速度）；
+      #   這次之前（2026-10-26）做成平衡等效：多 7 顆投射物、獲得 120% 傷害為額外冰冷，沒有整圈、沒有施法變慢、暴擊率照 9%
       infusion: [cold]
       infused:
-        - { stat: skill.projectiles, type: FLAT, value: 7 }
-        - { stat: damage.extra.cold, type: FLAT, value: 120 }
+        - { stat: spell.base_crit, type: FLAT, value: 2 }   # crit_chance 200（加在 9% 上 = 11%，poe2db Cold-Infused 11%）
+        - { stat: skill.base_cast_time, type: FLAT, value: 0.5 }   # base_spell_cast_time_ms 500
+      infused_set:
+        nova: true   # projectiles_nova
+        projectiles: [12, 12, 12, 12, 13, 13, 13, 13, 14, 14, 14, 14, 15, 15, 15, 15, 16, 16, 16, 16, 17, 17, 17, 17, 18, 18, 18, 18, 19, 19, 19, 19, 19, 19, 19, 20, 20, 20, 20, 20]
+        damage_by_type:
+          cold: [[7, 11], [10, 15], [14, 20], [18, 26], [22, 33], [27, 41], [33, 49], [39, 59], [46, 69], [54, 81], [63, 94], [73, 109], [84, 125], [96, 144], [109, 164], [125, 187], [142, 213], [161, 242], [182, 274], [207, 310], [233, 350], [264, 396], [298, 447], [336, 504], [379, 569], [428, 641], [482, 723], [544, 816], [614, 920], [692, 1038], [781, 1172], [882, 1323], [997, 1495], [1126, 1689], [1274, 1910], [1441, 2162], [1632, 2447], [1849, 2773], [2096, 3144], [2379, 3568]]
+          lightning: [[1, 10], [1, 13], [1, 17], [1, 21], [1, 26], [2, 32], [2, 39], [2, 47], [3, 55], [3, 64], [4, 75], [5, 86], [5, 99], [6, 114], [7, 130], [8, 148], [9, 168], [10, 191], [11, 217], [13, 245], [15, 277], [16, 313], [19, 354], [21, 399], [24, 450], [27, 508], [30, 573], [34, 646], [38, 729], [43, 822], [49, 928], [55, 1048], [62, 1183], [70, 1337], [80, 1512], [90, 1711], [102, 1938], [116, 2195], [131, 2489], [149, 2825]]
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 9 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
 
@@ -1046,7 +1070,7 @@ skills:
 
   detonate_dead:
     name: 骸爆
-    description: 引爆準心附近最近的一具屍體（怪物死後十秒內都算），對周圍造成火焰傷害，再加上那具屍體最大生命一成的火焰傷害。屍體越大，炸得越痛。
+    description: 引爆準心附近最近的一具屍體（怪物死後十秒內都算），0.4 秒後爆炸，對周圍造成火焰傷害，再加上那具屍體最大生命一定比例的物理傷害。屍體越大，炸得越痛。由法術圖騰施放時引爆圖騰目標附近的屍體（沒有就圖騰身邊的），附近沒有屍體圖騰就換放別的法術。
     icon: BONE   # 2026-10：原本 SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7   # 2026-10-27 照 PoE2（Detonate Dead 第 7 階）；這次之前 3
@@ -1424,7 +1448,8 @@ skills:
     icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9   # 2026-10-27 照 PoE2（Despair 第 9 階）；這次之前 5
-    tags: [spell]
+    keep_type_tags: true   # 2026-10-28 照站長：照 PoE2 顯示混沌標籤（不造成傷害也留著）
+    tags: [spell, chaos]
     mechanic: mark
     # 2026-10-26 照 PoE2 Despair：詛咒範圍 1.5→3.1→3.7 格、持續 6→7.4→8.6 秒（逐級）；混沌抗性 -35→-49→-60（逐級）；這次之前 3 格、6 秒、[-35, -49]
     mark: { range: 22, radius: [1.5, 1.6, 1.7, 1.8, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.8, 2.9, 3, 3.1, 3.1, 3.1, 3.2, 3.2, 3.2, 3.3, 3.3, 3.3, 3.4, 3.4, 3.4, 3.5, 3.5, 3.5, 3.6, 3.6, 3.6, 3.7, 3.7, 3.7], duration: [6, 6.2, 6.2, 6.2, 6.4, 6.4, 6.4, 6.6, 6.6, 6.6, 6.8, 6.8, 6.8, 7, 7, 7, 7.2, 7.2, 7.2, 7.4, 7.4, 7.4, 7.6, 7.6, 7.6, 7.8, 7.8, 7.8, 8, 8, 8, 8.2, 8.2, 8.2, 8.4, 8.4, 8.4, 8.6, 8.6, 8.6], effects: [ { stat: resist.chaos, type: FLAT, value: [-35, -35, -36, -37, -38, -38, -39, -40, -41, -41, -42, -43, -44, -44, -45, -46, -47, -47, -48, -49, -50, -50, -51, -52, -53, -53, -54, -55, -56, -56, -57, -57, -57, -58, -58, -59, -59, -59, -60, -60] } ] }
@@ -1566,6 +1591,7 @@ skills:
     tags: [attack, melee, area, slam, physical]
     weapons: [mace]
     mechanic: cone
+    step: { distance: 1.5 }   # 2026-10-28 照 PoE2（RePoE RollingSlamPlayer 的 melee_conditional_step_distance 15）：出手前往前踏一步（MeleeStep）；這次之前原地打
     # 2026-10-26 照 PoE2：第二下自己的表 150%→543%→1973% 剛好是第一下的兩倍（更多 100%）；這次之前 more 60
     cone: { length: [5, 6], angle: 60, aftershock: { delay: 0.5, radius: 0.6, more: 100 } }
     attack_speed: 1   # 2026-10-26 照 PoE2（poe2db Rolling Slam Attack Speed 100% of base）；這次之前 0.7
@@ -1587,6 +1613,7 @@ skills:
     tags: [attack, melee, area, slam, fire, fissure]   # 2026-10-26 照 PoE2 加 fissure（裂地技能，天賦樹用）；這次之前沒有
     weapons: [mace]
     mechanic: zone
+    step: { distance: 0.8 }   # 2026-10-28 照 PoE2（RePoE VolcanicFissurePlayer 的 melee_conditional_step_distance 8）：出手前往前踏一步（MeleeStep）；這次之前原地打
     zone: { shape: line, length: [7, 9], radius: 1.2, duration: 4, interval: 4, damage: 100, max: 8 }   # 2026-10-26 照 PoE2：最多 8 道、出現時只打一下全額（原作延伸時打一次）；這次之前最多 2 道、每 0.5 秒 60%（留 12 秒給別的猛擊引爆沒做）
     convert: { fire: 0.8 }   # 2026-10-26 照 PoE2；這次之前 0.6
     attack_speed: 0.8
@@ -1606,6 +1633,7 @@ skills:
     tags: [attack, melee, strike, area, physical]   # 2026-10-26 照 PoE2（加範圍）
     weapons: [mace]
     mechanic: strike
+    step: { distance: 1.7 }   # 2026-10-28 照 PoE2（RePoE ArmourBreakerPlayer 的 melee_conditional_step_distance 17）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 3.8, angle: 60, targets: 1, knockback: 0.3 }
     attack_speed: 0.8   # 2026-10-26 照 PoE2（poe2db Armour Breaker Attack Speed 80% of base）；這次之前 0.75
     effectiveness: [0.5, 0.55, 0.61, 0.66, 0.72, 0.77, 0.83, 0.88, 0.93, 0.99, 1.05, 1.11, 1.17, 1.25, 1.32, 1.41, 1.5, 1.59, 1.7, 1.81, 1.93, 2.06, 2.2, 2.34, 2.5, 2.67, 2.84, 3.03, 3.24, 3.45, 3.68, 3.93, 4.19, 4.47, 4.76, 5.08, 5.42, 5.78, 6.17, 6.58]   # 2026-10-26 照 PoE2（poe2db Armour Breaker 1–40 級）；這次之前 [1.48, 2.69]
@@ -1684,14 +1712,18 @@ skills:
 
   whirling_rush:
     name: 迴旋棍步
-    description: 轉著長棍往前衝，打穿路上的敵人。寶石每一級範圍更多 1%。
+    description: 一邊往前推進，一邊轉著長棍連續打擊身邊的敵人（沿路轉 4 圈，每一圈各打一次）。寶石每一級範圍更多 1%。   # 2026-10-28 照 PoE2 Whirling Assault；這次之前「轉著長棍往前衝，打穿路上的敵人」
     icon: BREEZE_ROD
     type: attack
     tier: 11   # 2026-10-27 照 PoE2（Whirling Assault 第 11 階）；這次之前 3
     tags: [attack, melee, area, strike]   # 2026-10-26 照 PoE2（拿掉冷卻 1.5 秒）
     weapons: [quarterstaff]
     mechanic: dash
-    dash: { range: 7, hit_width: 1.4, knockback: 0.3 }
+    # 2026-10-28 照 PoE2 Whirling Assault（WhirlingAssault.java）：整個動作時間（攻擊時間 + 1 秒）一路往前走 4.2 格
+    #   （RePoE attack_maximum_action_distance_+ 42），沿路轉 4 圈（原作沒寫幾圈，照動畫取 4），每一圈打身邊半徑 2.8 格
+    #   （長棍近戰打擊距離 1.4 米 + 寶石的 +1.4 米），各是一個打擊範圍；原作沒有擊退。
+    #   這次之前 { range: 7, hit_width: 1.4, knockback: 0.3 }（瞬移 7 格、順路打一條寬 1.4 格的線一下並擊退）
+    dash: { range: 4.2, spins: 4, spin_radius: 2.8 }
     attack_speed: 0.85   # 2026-10-26 照 PoE2（poe2db Whirling Assault Attack Speed 85% of base）；這次之前 0.7
     effectiveness: [0.4, 0.44, 0.49, 0.53, 0.58, 0.63, 0.68, 0.73, 0.77, 0.82, 0.87, 0.93, 1, 1.06, 1.14, 1.22, 1.31, 1.41, 1.52, 1.63, 1.76, 1.9, 2.04, 2.2, 2.37, 2.55, 2.75, 2.96, 3.19, 3.44, 3.7, 3.99, 4.3, 4.63, 4.99, 5.37, 5.79, 6.24, 6.72, 7.24]   # 2026-10-26 照 PoE2（poe2db Whirling Assault 1–40 級）；這次之前 [1.25, 1.75]
     # （更早）2026-10 平衡：長棍的攻擊技能 ×1.25（統計：同等級只有別人的四分之一左右）（原本 [1.0, 1.4]）
@@ -1711,6 +1743,7 @@ skills:
     tags: [attack, melee, strike, area, lightning]   # 2026-10-26 照 PoE2
     weapons: [quarterstaff]
     mechanic: strike
+    step: { distance: 1 }   # 2026-10-28 照 PoE2（RePoE SiphoningStrikePlayer 的 melee_conditional_step_distance 10）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 4.0, angle: 70, targets: 1 }
     attack_speed: 1.0
     effectiveness: [0.75, 0.82, 0.91, 0.99, 1.07, 1.15, 1.23, 1.3, 1.37, 1.44, 1.51, 1.58, 1.66, 1.75, 1.83, 1.92, 2.02, 2.12, 2.23, 2.34, 2.46, 2.58, 2.71, 2.84, 2.99, 3.13, 3.29, 3.46, 3.63, 3.81, 4, 4.2, 4.41, 4.63, 4.86, 5.11, 5.36, 5.63, 5.91, 6.21]   # 2026-10-26 照 PoE2（poe2db Siphoning Strike 1–40 級）；這次之前 [1.44, 3.01]
@@ -1901,6 +1934,7 @@ skills:
     tags: [attack, melee, strike, area, physical, duration]   # 2026-10-26 照 PoE2（加範圍、持續）
     weapons: [spear]
     mechanic: strike
+    step: { distance: 1.3 }   # 2026-10-28 照 PoE2（RePoE RapidAssaultPlayer 的 melee_conditional_step_distance 13）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 4.2, angle: 70, targets: 1 }   # 2026-10-26 照 PoE2（單一目標）；這次之前 targets 2   # 2026-10 手感：40° → 70°（全遊戲最窄，常打空）
     attack_speed: 0.4   # 2026-10-26 照 PoE2（poe2db Rapid Assault Attack Speed 40% of base）；這次之前 1.3
     effectiveness: [0.25, 0.27, 0.3, 0.33, 0.36, 0.38, 0.41, 0.43, 0.46, 0.48, 0.5, 0.53, 0.55, 0.58, 0.61, 0.64, 0.67, 0.71, 0.74, 0.78, 0.82, 0.86, 0.9, 0.95, 1, 1.04, 1.1, 1.15, 1.21, 1.27, 1.33, 1.4, 1.47, 1.54, 1.62, 1.7, 1.79, 1.88, 1.97, 2.07]   # 2026-10-26 照 PoE2（poe2db Rapid Assault 1–40 級）；這次之前 [1.78, 4.86]
@@ -2320,6 +2354,7 @@ skills:
     tags: [attack, melee, strike, physical]
     weapons: [quarterstaff]
     mechanic: strike
+    step: { distance: 1 }   # 2026-10-28 照 PoE2（RePoE StaggeringPalmPlayer 的 melee_conditional_step_distance 10）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 4.0, angle: 60, targets: 1 }   # 2026-10-26 照 PoE2 Staggering Palm；2026-10-28 照 PoE2 補上重暈後的投射物增益（stages.projectile）
     attack_speed: 0.75
     effectiveness: [0.8, 0.88, 0.97, 1.06, 1.14, 1.22, 1.31, 1.39, 1.46, 1.53, 1.61, 1.69, 1.77, 1.86, 1.96, 2.05, 2.16, 2.26, 2.38, 2.5, 2.62, 2.75, 2.89, 3.03, 3.18, 3.34, 3.51, 3.69, 3.87, 4.06, 4.27, 4.48, 4.7, 4.94, 5.19, 5.45, 5.72, 6.0, 6.31, 6.62]   # 2026-10-26 照 PoE2（poe2db Staggering Palm 1–40 級）
@@ -2353,6 +2388,7 @@ skills:
     tags: [attack, melee, strike, area, cold]
     weapons: [quarterstaff]
     mechanic: strike
+    step: { distance: 1 }   # 2026-10-28 照 PoE2（RePoE ShatteringPalmPlayer 的 melee_conditional_step_distance 10）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 4.0, angle: 60, targets: 1 }   # 2026-10-26 照 PoE2 Shattering Palm：打一下＋冰晶爆炸（2026-10-28 照 PoE2 改成冰片累積傷害到門檻才碎；這次之前打中就炸）
     convert: { cold: 0.6 }
     attack_speed: 0.75
@@ -2479,7 +2515,9 @@ skills:
   chain_arrow:
     name: 電鍊箭矢   # 2026-10-28 照 PoE2 0.5 繁中名（Shockchain Arrow）；這次之前叫跳電矢
     # 2026-10-28 照 PoE2 0.5 Shockchain Arrow 的說明（ShockchainArrows）；這次之前「射出一支帶電的箭，打中後跳到附近的敵人身上好幾次，每打中一個都在牠身邊炸出一圈電擊波。物理傷害大部分轉成閃電；不會造成感電。」
-    description: 射出一支帶有閃電能量的箭，會自動追蹤受到閃電異常狀態（感電、電擊）的敵人。打中這種敵人時箭充能，放出 2.5 格的震波，再多連鎖 3 次（最遠 8 格），連鎖的每一下也都放出震波；連鎖的箭打中另一個受到閃電異常的敵人時再多 3 次。最後一次連鎖後箭掉到地上變成雷霆之杖（20 秒，最多 10 支）：你的閃電連鎖可以連到它上面，充能 1 秒後用震波的傷害炸開，被連到 8 次就消失。箭會消耗敵人身上的感電，但不會消耗電擊；箭和震波都不會造成感電。
+    # 2026-10-28 照 PoE2 0.4.0 改版說明、RePoE「on first hitting」：每支箭只在第一次打中閃電異常的敵人時多連鎖 3 次、只有初始的箭消耗感電、追著感電的敵人時穿過沒感電的；
+    #   這次之前「連鎖的箭打中另一個受到閃電異常的敵人時再多 3 次」、連鎖的每一下也消耗感電
+    description: 射出一支帶有閃電能量的箭，會自動追蹤受到閃電異常狀態（感電、電擊）的敵人，追著感電的敵人時穿過路上沒有感電的敵人。第一次打中這種敵人時用掉牠的感電替箭充能，放出 2.5 格的震波，再連鎖 3 次（最遠 8 格），連鎖的每一下也都放出震波。最後一次連鎖後箭在最後一個目標附近掉到地上變成雷霆之杖（20 秒，最多 10 支）：你的閃電連鎖、雷束可以連到它上面，充能 1 秒後用震波的傷害炸開，被連到 8 次就消失。只有初始的箭會消耗感電（連鎖的箭不會），也不會消耗電擊；箭和震波都不會造成感電。
     icon: COPPER_INGOT
     type: attack
     tier: 11   # 2026-10-27 照 PoE2（Shockchain Arrow 第 11 階）；這次之前 7
@@ -2498,7 +2536,7 @@ skills:
       shockwave: { name: 震波, effectiveness: [1.4, 1.54, 1.7, 1.85, 2.0, 2.16, 2.32, 2.48, 2.62, 2.77, 2.93, 3.1, 3.29, 3.49, 3.71, 3.94, 4.19, 4.46, 4.75, 5.07, 5.41, 5.77, 6.15, 6.56, 7.0, 7.47, 7.96, 8.49, 9.06, 9.66, 10.31, 10.99, 11.73, 12.51, 13.34, 14.23, 15.18, 16.19, 17.27, 18.42], convert: { lightning: 1.0 }, radius: 2.5 }
     rod: { duration: 20, max: 10, chains: 8, charge: 1.0 }   # 2026-10-28 照 PoE2（RePoE base_skill_effect_duration 20000、number_of_lightning_rods_allowed 10、lightning_rod_number_of_chains_allowed 8；最後一次連鎖後插成雷霆之杖，充能照雷樁矢 1 秒）；這次之前沒有
     modifiers:
-      # 2026-10-28 照 PoE2：本身不連鎖，第一次打中感電或電擊中的敵人多連鎖 3 次（可重複）、追蹤閃電異常的敵人、消耗感電；
+      # 2026-10-28 照 PoE2：本身不連鎖，第一次打中感電或電擊中的敵人多連鎖 3 次（每支箭一次；稍早同日版本可重複）、追蹤閃電異常的敵人、初始的箭消耗感電；
       #   這次之前（原作：最多連鎖 8 次（第一次打到感電中的敵人多 3 次）；連鎖完插地變雷樁、追蹤異常的敵人沒做）固定連鎖 5 次、每一下都炸震波
       - { stat: projectile.chains_on_lightning_ailment, type: FLAT, value: 3 }
       - { stat: flag.home_lightning_ailment, type: FLAT, value: 1 }
@@ -2887,7 +2925,7 @@ skills:
 
   storm_blink:
     name: 雷遁
-    description: 瞄準一個敵人，在牠腳下留下 8 秒的感電地面。牠的生命已經低到可以撲殺（普通 35%、魔法 20%、稀有 10%、傳奇 5%）就瞬移進去把牠炸掉，炸到周圍 3 格，並獲得一層閃電灌注；還沒低到就掛 4 秒標記，期間掉到門檻就自動瞬移過去。也可以瞄準自己的滾雷珠：瞬移到雷珠那裡，雷珠在同一個爆炸裡消失，一樣獲得閃電灌注，但不留感電地面。準心上有可以撲殺的敵人或滾雷珠時，優先選它們（兩個都有就選近的那個），不會選到前面還不能撲殺的敵人。
+    description: 瞄準一個敵人，在牠腳下留下 8 秒的感電地面。牠的生命已經低到可以撲殺（普通 35%、魔法 20%、稀有 10%、傳奇 5%）就瞬移進去把牠炸掉，炸到周圍 3 格，並獲得一層閃電灌注；還沒低到就掛 4 秒標記，期間掉到門檻就自動瞬移過去。也可以瞄準自己的滾雷珠：瞬移到雷珠那裡，雷珠在同一個爆炸裡消失，一樣獲得閃電灌注，但不留感電地面。準心上有可以撲殺的敵人或滾雷珠時，優先選它們（兩個都有就選近的那個），不會選到前面還不能撲殺的敵人。被主要寶石（暴擊引星…）觸發時對觸發的目標：撲殺得到就瞬移進去，不然掛標記；沒有目標就找附近撲殺得到的敵人。由法術圖騰施放時，圖騰只對範圍內撲殺得到的敵人放：圖騰自己瞬移進去炸開、留感電地面（閃電灌注給圖騰，你拿不到；不掛標記、不瞄準滾雷珠）。
     # 2026-10-28 照 PoE2 0.5 Lightning Warp：可以瞄準自己的滾雷珠（不留感電地面）、可以撲殺的敵人與滾雷珠比還不能撲殺的敵人優先；這次之前只能瞄準準心第一個碰到的敵人
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
@@ -3329,6 +3367,7 @@ skills:
     tags: [attack, melee, area, slam, projectile, lightning]   # 2026-10-28 照 PoE2（Falling Thunder：攻擊、範圍、近戰、猛擊、投射物、閃電；猛擊那一下不算投射物，SkillProfiles）；這次之前沒有投射物
     weapons: [quarterstaff]
     mechanic: cone
+    step: { distance: 2.1 }   # 2026-10-28 照 PoE2（RePoE FallingThunderPlayer 的 melee_conditional_step_distance 21）：出手前往前踏一步（MeleeStep）；這次之前原地打
     cone: { length: 4, angle: 40 }   # 2026-10-26 照 PoE2（4 格）；這次之前 [6.0, 7.5]
     convert: { lightning: 0.6 }
     attack_speed: 0.6   # 2026-10-26 照 PoE2（poe2db Falling Thunder Attack Speed 60% of base）；這次之前 0.8
@@ -3437,6 +3476,7 @@ skills:
     tags: [attack, melee, strike, area, cold]   # 2026-10-26 照 PoE2：補上範圍
     weapons: [spear]
     mechanic: strike
+    step: { distance: 1.5 }   # 2026-10-28 照 PoE2（RePoE FangsOfFrostPlayer 的 melee_conditional_step_distance 15）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 4.5, angle: 70, targets: 1 }   # 2026-10-26 照 PoE2（單體打擊）；這次之前 targets 3
     convert: { cold: 0.8 }   # 2026-10-26 照 PoE2（80% 轉冰冷）；這次之前 0.5
     attack_speed: 0.85   # 2026-10-26 照 PoE2（poe2db Fangs of Frost Attack Speed 85% of base）；這次之前 1.0
@@ -3552,14 +3592,16 @@ skills:
       - { stat: debuff.chaos_base, type: FLAT, value: [9.2, 13.3, 19.3, 26.1, 33.9, 42.9, 53, 64.7, 78, 93.2, 110.6, 130.5, 153.4, 179.6, 209.7, 244.2, 284, 329.8, 382.6, 443.5, 513.9, 595.3, 689.7, 799.2, 926.3, 1074.1, 1246.3, 1447.1, 1681.6, 1955.8, 2277.1, 2653.9, 3096.5, 3617.3, 4231.1, 4955.5, 5811.8, 6825.8, 8028.3, 9456.9], percent: false }   # 2026-10-28 照 PoE2（poe2db Essence Drain 1–40 級，每秒混沌傷害）；這次之前 [9.2, 13.3, 19.3, 26.2, 34, 42.9, 53.1, 64.6, 78.1, 93.1, 110.4, 130.7, 153.2, 179.7, 210.1, 244.5, 284.6, 329.4, 381.7, 443.5, 514.1, 595.3, 690.2, 799.5, 927.5, 1074, 1244.8, 1445.4, 1680.8, 1952.7, 2276.7, 2654.9, 3096.2, 3613, 4226, 4962.7, 5810.1, 6822.5, 8038.8, 9457]
 
   contagion:
-    name: 疫潮
-    description: 在準心指的地方爆出一小團瘟疫，讓敵人受到混沌持續傷害 5 秒（每秒基礎 2 點（1 級）～93.9 點（20 級）～2002.6 點（40 級），吃法術、混沌傷害的加成；本身不造成擊中傷害）。掛著的敵人死掉時傳給附近的敵人，每傳一手更多 100% 傷害（最多更多 300%）。持續時間吃技能持續時間的加成（傳出去的照這個時間重新算）。
+    name: 瘟疫   # 2026-10-28 照 PoE2 繁中（Contagion＝瘟疫；沒有別的技能、輔助叫這個名字）；這次之前「疫潮」
+    # 2026-10-28 照 PoE2（poe2db 瘟疫）：單體、連同詛咒與其他混沌持續傷害減益一起傳、屍體復活／引爆時也傳；這次之前在準心爆一小團（打一整圈）、死掉時只傳自己
+    description: 使一名敵人（準心指的那隻，沒指到就準心附近最近的）受到混沌持續傷害的減益效果 5 秒（每秒基礎 2 點（1 級）～93.9 點（20 級）～2002.6 點（40 級），法術傷害的加成同時影響此減益效果；本身不造成擊中傷害）。如果該敵人在受到瘟疫影響時死亡，其會擴散瘟疫自身、目標上的詛咒、和其他混沌持續傷害減益效果至附近 1.7 格內的敵人身上，並刷新它們的持續時間；減益效果每次擴散時造成更多 100% 傷害，最高可達更多 300%。若復活或引爆受到瘟疫影響的屍體，召喚物或爆炸則會在擊中時散播瘟疫。持續時間吃技能持續時間的加成，擴散範圍吃範圍的加成。
     icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 1   # 2026-10-27 照 PoE2（Contagion 第 1 階）；這次之前 5
     tags: [spell, area, chaos, duration]   # 2026-10-26 照 PoE2 加 duration（減益 5 秒吃技能持續時間的加成）；這次之前 [spell, area, chaos]
     mechanic: impact
-    impact: { range: 20, delay: 0.3, radius: 1.7 }   # 2026-10-28 照 PoE2（Contagion 傳染半徑 1.7 米，不隨等級）；這次之前 [1.6, 2.0]
+    impact: { range: 20, delay: 0.3, radius: 1.7, targets: 1 }   # 2026-10-28 照 PoE2（Contagion 傳染半徑 1.7 米，不隨等級）；這次之前 [1.6, 2.0]
+    # 2026-10-28 照 PoE2「使一名敵人」：targets 1＝單體（準心指的那隻，沒指到就準心 radius 內最近的；品質另外多感染幾隻），半徑只拿來找目標；這次之前打半徑內全部
     # （更早）2026-10 照 PoE2 改機制（Contagion）：本來就是點單體再傳染；這次之前半徑 [3.0, 3.8]
     damage: [[1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1]]   # 2026-10-28 照 PoE2（poe2db Contagion：原作不造成擊中傷害；這裡每下 1 點，才掛得上減益，同吸魔術）；這次之前 [3, 6]（乘成長與 0.7，減益每秒是它的 400%）
     # （更早）2026-10 照 PoE2 改機制：主要傷害改成持續傷害；這次之前 [6, 10]
@@ -3572,6 +3614,7 @@ skills:
       - { stat: flag.no_crit, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2：原作不擊中、不會暴擊；這次之前基礎暴擊率 7%
       - { stat: debuff.duration, type: FLAT, value: 5 }   # 2026-10-26 照 PoE2：基礎 5 秒，乘技能持續時間的加成；傳染出去的也照這個時間（這次之前固定 5 秒、傳出去最多 5 秒）
       - { stat: flag.debuff_spread, type: FLAT, value: 1 }
+      - { stat: debuff.spread_radius, type: FLAT, value: 1.7 }   # 2026-10-28 照 PoE2（Spread radius 1.7 公尺，乘範圍加成）；這次之前固定 4 格的方塊
     level_modifiers:   # 2026-10-28 照 PoE2（poe2db Contagion 1–40 級）：持續傷害有自己的每秒基礎傷害（base_chaos_damage_to_deal_per_minute ÷ 60），法術、混沌傷害的加成也套用；這次之前 debuff.chaos 400（每秒是這一下的 400%）
       - { stat: debuff.chaos_base, type: FLAT, value: [2, 2.8, 4.1, 5.5, 7.2, 9.1, 11.2, 13.7, 16.5, 19.7, 23.4, 27.6, 32.5, 38, 44.4, 51.7, 60.1, 69.8, 81, 93.9, 108.8, 126.1, 146.1, 169.2, 196.2, 227.5, 263.9, 306.4, 356.1, 414.2, 482.2, 562, 655.7, 766, 896, 1049.4, 1230.7, 1445.5, 1700.1, 2002.6], percent: false }
 
@@ -3593,6 +3636,7 @@ skills:
     starter: druid   # 2026-10：德魯伊的起始技能（沒選武器時也有技能可用）
     weapons: [talisman]
     mechanic: strike
+    step: { distance: 0.5 }   # 2026-10-28 照 PoE2（RePoE BearMaulPlayer 的 melee_conditional_step_distance 5）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 3.8, angle: 80, targets: 1 }   # 2026-10-26 照 PoE2（單體打擊、沒有擊退）；這次之前 targets 3、knockback 0.4
     attack_speed: 1   # 2026-10-26 照 PoE2（poe2db Maul Attack Speed 100% of base）；這次之前 0.9
     effectiveness: [0.8, 0.88, 0.97, 1.06, 1.15, 1.24, 1.33, 1.42, 1.5, 1.58, 1.67, 1.77, 1.88, 1.99, 2.12, 2.25, 2.39, 2.55, 2.72, 2.9, 3.09, 3.3, 3.52, 3.75, 4, 4.27, 4.55, 4.85, 5.18, 5.52, 5.89, 6.28, 6.7, 7.15, 7.62, 8.13, 8.67, 9.25, 9.87, 10.52]   # 2026-10-26 照 PoE2（poe2db Maul 1–40 級）；這次之前 [1.2, 2.69]
@@ -3684,6 +3728,7 @@ skills:
     tags: [attack, melee, strike, area, physical, shapeshift, werewolf]   # 2026-10-26 照 PoE2：補上範圍
     weapons: [talisman]
     mechanic: strike
+    step: { distance: 1 }   # 2026-10-28 照 PoE2（RePoE WolfShredPlayer 的 melee_conditional_step_distance 10）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 3.2, angle: 70, targets: 1 }   # 2026-10-26 照 PoE2（單體打擊）；這次之前 targets 2
     attack_speed: 2   # 2026-10-26 照 PoE2（poe2db Shred Attack Speed 200% of base）；這次之前 1.4
     effectiveness: [0.4, 0.44, 0.48, 0.53, 0.57, 0.61, 0.66, 0.69, 0.73, 0.77, 0.8, 0.84, 0.89, 0.93, 0.98, 1.03, 1.08, 1.13, 1.19, 1.25, 1.31, 1.38, 1.44, 1.52, 1.59, 1.67, 1.76, 1.84, 1.94, 2.03, 2.13, 2.24, 2.35, 2.47, 2.59, 2.72, 2.86, 3, 3.15, 3.31]   # 2026-10-26 照 PoE2（poe2db Shred 1–40 級）；這次之前 [0.7, 1.57]
@@ -3706,6 +3751,7 @@ skills:
     tags: [attack, melee, strike, area, cold, shapeshift, werewolf]
     weapons: [talisman]
     mechanic: cone
+    step: { distance: 1.2 }   # 2026-10-28 照 PoE2（RePoE LunarAssaultPlayer 的 melee_conditional_step_distance 12）：出手前往前踏一步（MeleeStep）；這次之前原地打
     cone: { length: 4.5, angle: 90 }
     convert: { cold: 0.8 }
     attack_speed: 1.1
@@ -3974,6 +4020,7 @@ skills:
     tags: [attack, melee, strike, area, physical, shapeshift, wyvern]
     weapons: [talisman]
     mechanic: cone
+    step: { distance: 1 }   # 2026-10-28 照 PoE2（RePoE WyvernRendPlayer 的 melee_conditional_step_distance 10）：出手前往前踏一步（MeleeStep）；這次之前原地打
     cone: { length: 3.5, angle: 120 }
     attack_speed: 0.9
     effectiveness: [1.1, 1.21, 1.33, 1.45, 1.57, 1.68, 1.8, 1.91, 2.01, 2.11, 2.21, 2.32, 2.44, 2.56, 2.69, 2.82, 2.96, 3.11, 3.27, 3.43, 3.6, 3.78, 3.97, 4.17, 4.38, 4.6, 4.83, 5.07, 5.32, 5.59, 5.87, 6.16, 6.47, 6.79, 7.13, 7.49, 7.86, 8.26, 8.67, 9.1]
@@ -4292,6 +4339,7 @@ skills:
     tags: [attack, melee, area, slam, physical]
     weapons: [mace]
     mechanic: cone
+    step: { distance: 1.1 }   # 2026-10-28 照 PoE2（RePoE SunderPlayer 的 melee_conditional_step_distance 11）：出手前往前踏一步（MeleeStep）；這次之前原地打
     cone: { length: [9, 11], angle: 30, aftershock: { delay: 0.4, radius: 0.5, more: [-59, -59, -59, -59, -59, -59, -59, -59, -60, -60, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59] } }   # 2026-10-28 照 PoE2（poe2db Sunder 1–40 級）：震波自己的表 65%→265%→1176% ÷ 主波 160%→653%→2896%＝更少 59%；這次之前更多 40%
     attack_speed: 0.4   # 2026-10-26 照 PoE2（poe2db Sunder Attack Speed 40% of base）；這次之前 0.75
     effectiveness: [1.6, 1.76, 1.95, 2.14, 2.32, 2.51, 2.71, 2.91, 3.09, 3.29, 3.5, 3.73, 3.98, 4.26, 4.56, 4.89, 5.24, 5.64, 6.06, 6.53, 7.04, 7.58, 8.17, 8.8, 9.48, 10.21, 11, 11.85, 12.77, 13.75, 14.82, 15.96, 17.2, 18.52, 19.96, 21.5, 23.16, 24.95, 26.88, 28.96]   # 2026-10-26 照 PoE2（poe2db Sunder 1–40 級）；這次之前 [1.69, 3.08]
@@ -4476,6 +4524,7 @@ skills:
     tags: [attack, melee, strike, area, lightning]   # 2026-10-26 照 PoE2：補上範圍
     weapons: [spear]
     mechanic: strike
+    step: { distance: 1.5 }   # 2026-10-28 照 PoE2（RePoE PrimalStrikesPlayer 的 melee_conditional_step_distance 15）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 4.2, angle: 70, targets: 1 }   # 2026-10 手感：40° → 70°
     convert: { lightning: 0.4 }   # 2026-10-26 照 PoE2：單體打擊（targets 3 → 1）、40% 轉閃電（這次之前 0.5）
     attack_speed: 0.8   # 2026-10-26 照 PoE2（poe2db Primal Strikes Attack Speed 80% of base）；這次之前 1.15
@@ -4516,6 +4565,7 @@ skills:
     tags: [attack, melee, strike, area, physical]   # 2026-10-26 照 PoE2：補上範圍
     weapons: [spear]
     mechanic: strike
+    step: { distance: 1.5 }   # 2026-10-28 照 PoE2（RePoE CullTheWeakPlayer 的 melee_conditional_step_distance 15）：出手前往前踏一步（MeleeStep）；這次之前原地打
     strike: { reach: 4.0, angle: 70, targets: 1 }   # 2026-10 手感：40° → 70°；2026-10-24 照 PoE2 拿掉「低血傷害更多」（以前 35% 以下更多 120%）
     attack_speed: 0.75   # 2026-10-24：照 PoE2（攻擊速度 75%；以前 0.9）
     effectiveness: [0.9, 0.99, 1.09, 1.19, 1.28, 1.38, 1.47, 1.56, 1.64, 1.72, 1.81, 1.9, 1.99, 2.09, 2.2, 2.31, 2.42, 2.55, 2.67, 2.81, 2.95, 3.09, 3.25, 3.41, 3.58, 3.76, 3.95, 4.15, 4.35, 4.57, 4.8, 5.04, 5.29, 5.56, 5.84, 6.13, 6.43, 6.76, 7.09, 7.45]   # 2026-10-26 照 PoE2（poe2db Cull The Weak 1–40 級）；這次之前 [1.93, 5.3]
@@ -4765,6 +4815,7 @@ skills:
     icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 4
+    keep_type_tags: true   # 2026-10-28 照站長：照 PoE2 顯示混沌標籤（不造成傷害也留著）
     tags: [persistent, chaos]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、chaos（常駐增益：可靠的計畫這類「常駐增益」的加成看它、混沌）；這次之前 []
     mechanic: aura
     aura:
@@ -6905,7 +6956,8 @@ skills:
   lightning_rod:
     name: 雷樁矢
     # 2026-10-28 照 PoE2 Lightning Rod：箭落地炸開後插在地上（LightningRods）；這次之前只做成落下的雷擊
-    description: 往準心指的地方射一支從天而降的箭，落地炸出 2 格的閃電，之後插在地上 20 秒（同時最多 10 支）。你的閃電連鎖（鏈雷這類連鎖技能、雷鳴箭的雷束）可以連到插著的箭上，箭充能 1 秒後再炸一次（雷鳴箭只要 0.1 秒）；每支箭被連到 8 次就消失。
+    # 2026-10-28 照 PoE2（論壇 0.1 起列出能連到杖的 Lightning Arrow、Arc、Orb of Storms、Galvanic Shards）：雷雲的雷也能連到杖上；這次之前說明沒寫雷雲、雷雲也不連
+    description: 往準心指的地方射一支從天而降的箭，落地炸出 2 格的閃電，之後插在地上 20 秒（同時最多 10 支）。你的閃電連鎖（鏈雷這類連鎖技能、雷雲的雷、雷鳴箭的雷束）可以連到插著的箭上，箭充能 1 秒後再炸一次（雷鳴箭只要 0.1 秒）；每支箭被連到 8 次就消失。
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 1
@@ -7521,7 +7573,7 @@ skills:
   totem_casting:
     name: 星咒圖騰
     # 2026-10-26 照站長「有些敘述有點長」精簡說明（數值不變）；這次之前 301 字
-    description: 主要寶石：法術寶石放進它的孔（可放好幾個），其他孔的輔助套在那些法術上（法術自己的輔助會拆下來）。消耗 3 顆銳星或磐星（銳星先用）放下圖騰，照孔的順序輪流施放裡面的法術；每顆銳星法術更多 10% 傷害，每顆磐星圖騰更多 20% 生命與持續時間。施法速度更少 25%，不能放有冷卻的法術（穢陣、骨綻、雷流場也不行）。圖騰持續 8 秒，最多 1 根（14 級起 2 根、23 級起 3 根），元素／混沌抗性隨等級提高（20 級 75%／35%）。圖騰輔助（疾樁、過剩 II、樁怒…）與施法速度、持續時間加成也套到圖騰本身。
+    description: 主要寶石：法術寶石放進它的孔（可放好幾個），其他孔的輔助套在那些法術上（法術自己的輔助會拆下來）。消耗 3 顆銳星或磐星（銳星先用）放下圖騰，照孔的順序輪流施放裡面的法術；每顆銳星法術更多 10% 傷害，每顆磐星圖騰更多 20% 生命與持續時間。施法速度更少 25%，不能放有冷卻的法術（穢陣、骨綻、雷流場也不行）；雷遁只對撲殺得到的敵人放（圖騰自己瞬移進去炸開），骸爆引爆目標附近的屍體，詛咒落在目標身上（算你的詛咒）；現在放不出來的法術會跳過、換下一個。圖騰持續 8 秒，最多 1 根（14 級起 2 根、23 級起 3 根），元素／混沌抗性隨等級提高（20 級 75%／35%）。圖騰輔助（疾樁、過剩 II、樁怒…）與施法速度、持續時間加成也套到圖騰本身。
     icon: NAUTILUS_SHELL
     type: spell
     tier: 7
@@ -7589,7 +7641,7 @@ skills:
   meta_minion_death:
     name: 殞從引星
     # 2026-10-26 照站長「有些敘述有點長」精簡說明（數值不變）；這次之前 240 字
-    description: 主要寶石（常駐，綁在上方按鍵格，保留 30 精魂）：持續型召喚物（沒有持續時間的）每死一隻獲得 50 × 召喚物強度點能量（強度＝牠的相對生命，一般 1；召喚物等級比區域低超過 10 級時每多低 1 級少 5%，最少剩 10%）。能量滿（上限＝插槽法術的基礎施法時間合計每 0.1 秒 10 點）就在牠倒下處附近觸發所有插槽法術並清空能量。插在它裡面的法術（可放好幾個）一起觸發，其他孔的輔助套在它們上面（不能是召喚法術），不花魔力。
+    description: 主要寶石（常駐，綁在上方按鍵格，保留 30 精魂）：持續型召喚物（沒有持續時間的）每死一隻獲得 50 × 召喚物強度點能量（強度＝牠的相對生命，一般 1；召喚物等級比區域低超過 10 級時每多低 1 級少 5%，最少剩 10%）。能量滿（上限＝插槽法術的基礎施法時間合計每 0.1 秒 10 點）就在牠倒下處附近觸發所有插槽法術並清空能量。插在它裡面的法術（可放好幾個）一起觸發，其他孔的輔助套在它們上面（不能是召喚或會產生召喚物的法術，例如掘骸），不花魔力。
     icon: BONE
     type: spell
     tier: 8
@@ -7916,14 +7968,14 @@ skills:
 
   decompose:
     name: 腐屍爆
-    description: 讓準心附近的一具屍體腐爛爆開，火焰波及周圍一小圈的敵人。法杖賦予。
+    description: 讓準心附近的一具屍體腐爛，化成一團會慢慢擴大的易燃毒雲，雲裡的敵人中毒（屍體越大毒越重）。雲裡有點燃中的敵人、碰到點燃地面，或被你的引爆技能（例如骸爆）打到時，毒雲轟然炸開，造成火焰傷害。同時最多 6 團。法杖賦予。   # 2026-10-28 照 PoE2 Decompose（毒雲）；這次之前「讓準心附近的一具屍體腐爛爆開，火焰波及周圍一小圈的敵人。」
     icon: GUNPOWDER   # 2026-10-27 圖示：屍體炸開；這次之前 ROTTEN_FLESH（右鍵會吃掉）
     type: spell
     tier: 1
     tags: [spell, area, fire, chaos, duration]
     source: weapon   # 2026-10-26：法杖、長杖、權杖賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: corpse
-    corpse: { range: 16, search: 6, radius: 1.6, percent: 0 }   # PoE2：1.6 格
+    corpse: { range: 16, search: 6, radius: 1.6, percent: 0 }   # PoE2：毒雲一開始 1.6 格（每秒更多 20%、最多 80%，DecomposeClouds）；percent 0：炸開不加屍體生命（屍體生命 10% 是毒）
     damage: [[9, 14], [13, 19], [18, 27], [24, 36], [31, 46], [39, 59], [49, 73], [60, 91], [73, 110], [89, 133], [107, 161], [125, 188], [146, 219], [170, 254], [196, 295], [227, 340], [262, 392], [301, 452], [347, 520], [398, 598], [458, 687], [526, 789], [604, 906], [694, 1040], [797, 1195], [916, 1373], [1052, 1579], [1210, 1816], [1393, 2090], [1604, 2407], [1849, 2774], [2133, 3200], [2464, 3695], [2848, 4271], [3295, 4943], [3817, 5725], [4427, 6640], [5140, 7710], [5976, 8964], [6957, 10435]]   # 2026-10-26 照 PoE2（poe2db Decompose 1–40 級）
     damage_types: { fire: 1.0 }
     effectiveness: 1.0
@@ -7959,6 +8011,7 @@ skills:
     icon: COAL
     type: spell
     tier: 1
+    keep_type_tags: true   # 2026-10-28 照站長：照 PoE2 顯示混沌標籤（不造成傷害也留著）
     tags: [spell, area, chaos, duration, channelling]   # 2026-10-26 照 PoE2 加 channelling 標籤（天賦樹的系統）；這次之前 [spell, area, chaos, duration]
     source: weapon   # 2026-10-26：法杖、長杖、權杖賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: mark
@@ -8073,6 +8126,33 @@ skills:
     visual: aura_purity
     level_modifiers:
       - { stat: skill.duration, type: INCREASED, value: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0, 32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0] }   # 2026-10-26 照 PoE2：法印持續 10 → 11.9 → 13.9 秒（逐級）
+
+  # 2026-10-28 照 PoE2 Rite of Restoration（poe2db／RePoE SacredGroundPlayer；綺夢賦予）：原作是地上的法印，站在裡面的你與盟友得到增益，
+  #   法印裡每花掉 35% 最大魔力多一階（最多 4 階）。我們的法印類技能是自己身上的架勢（同力印），階數固定算 2 階（原作 1–4 階的中間），
+  #   數值照原作每階 × 2：更多護甲、閃避、能量護盾（每階 10 → 14 → 20%）、每秒回復生命（每階 1.1 → 21.7 → 43.3）。這次之前沒有這個技能
+  rite_of_restoration:
+    name: 新生之儀
+    description: 畫下新生法印：10 秒內你更多護甲、閃避與能量護盾，並每秒回復生命（隨技能等級）。冷卻 10 秒。綺夢賦予。
+    icon: GLISTERING_MELON_SLICE
+    type: spell
+    tier: 1
+    tags: [spell, duration, area]
+    source: weapon   # 武器、裝備賦予（PoE2 的 Grants Skill），沒有寶石
+    mechanic: guard
+    guard:
+      duration: 10
+      slow: 0
+      effects:
+        - { stat: armour, type: MORE, value: [20, 20, 20, 20, 22, 22, 22, 22, 24, 24, 24, 24, 26, 26, 26, 26, 28, 28, 28, 28, 30, 30, 30, 30, 32, 32, 32, 32, 34, 34, 34, 34, 36, 36, 36, 36, 38, 38, 38, 40] }
+        - { stat: evasion, type: MORE, value: [20, 20, 20, 20, 22, 22, 22, 22, 24, 24, 24, 24, 26, 26, 26, 26, 28, 28, 28, 28, 30, 30, 30, 30, 32, 32, 32, 32, 34, 34, 34, 34, 36, 36, 36, 36, 38, 38, 38, 40] }
+        - { stat: es.max, type: MORE, value: [20, 20, 20, 20, 22, 22, 22, 22, 24, 24, 24, 24, 26, 26, 26, 26, 28, 28, 28, 28, 30, 30, 30, 30, 32, 32, 32, 32, 34, 34, 34, 34, 36, 36, 36, 36, 38, 38, 38, 40] }
+        - { stat: life.regen, type: FLAT, value: [2.2, 4.4, 6.4, 8.6, 10.8, 13.0, 15.2, 17.4, 19.6, 21.6, 23.8, 26.0, 28.2, 30.4, 32.4, 34.6, 36.8, 39.0, 41.2, 43.4, 45.6, 47.6, 49.8, 52.0, 54.2, 56.4, 58.4, 60.6, 62.8, 65.0, 67.2, 69.4, 71.6, 73.6, 75.8, 78.0, 80.2, 82.4, 84.4, 86.6] }
+    cooldown: 10
+    cast_time: 0.6
+    mana: 0   # PoE2：Rite of Restoration 不花魔力
+    visual: aura_purity
+    level_modifiers:
+      - { stat: skill.duration, type: INCREASED, value: [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0, 32.0, 33.0, 34.0, 35.0, 36.0, 37.0, 38.0, 39.0] }   # 照 PoE2：法印持續 10 → 11.9 → 13.9 秒（逐級）
 
   soulrend:
     name: 裂魂彈
@@ -8991,6 +9071,7 @@ skills:
     icon: NETHERITE_SCRAP   # 2026-10-27 圖示：這次之前 ECHO_SHARD（跟虛空幻影一樣）
     type: spell
     tier: 1
+    keep_type_tags: true   # 2026-10-28 照站長：照 PoE2 顯示混沌標籤（不造成傷害也留著）
     tags: [duration, chaos]
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: warcry
@@ -9522,7 +9603,7 @@ skills:
 
   life_remnants:
     name: 生命痕跡
-    description: 常駐：擊殺敵人時 25% 機率、擊中敵人時（最多每 3 秒一次）產生一個生命痕跡（8 秒），走過去撿起回復生命（可以溢出到 1.5 倍最大生命，溢出的部分變成守護）。不保留精魂。
+    description: 常駐：擊殺敵人時 25% 機率、擊中敵人時（最多每 3 秒一次）產生一個生命痕跡（8 秒），走過去撿起回復生命（可以溢出：超過最大生命的部分變成守護，連撿會疊加，最多 0.5 倍最大生命，8 秒）。不保留精魂。
     icon: GLISTERING_MELON_SLICE
     type: spell
     tier: 1

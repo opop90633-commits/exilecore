@@ -433,6 +433,9 @@ public final class PlayerStateService {
         final double dex = sheet.get(StatKeys.DEX);
         final double intelligence = sheet.get(StatKeys.INT);
         final double requirementScale = tw.exilecore.stats.TreeEffectKeys.requirementScale(sheet); // 2026-10-26 照 PoE2 天賦樹：減少屬性需求
+        // 2026-10-28 照 PoE2（雅恩格利佩爾）：力量（磐石之拳版本：敏捷）可以滿足近戰武器的其他能力值需求
+        final boolean strMelee = StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.STR_MELEE_REQUIREMENTS);
+        final boolean dexMelee = StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.DEX_MELEE_REQUIREMENTS);
 
         // 第二輪：剔除需求不符的裝備
         sheet.clearModifiers();
@@ -455,7 +458,8 @@ public final class PlayerStateService {
             final double reqScale = giantsBlood && item.base().isWeapon() && tw.exilecore.stats.KeystoneKeys.martial(item.base().tags()) ? 3 : 1;
             // 2026-10-27 照 PoE2（昇華・石拳之道）：腿甲不需要能力值
             final double[] attrs = tw.exilecore.ascendancy.AscBuild.ignoresRequirements(extra, item.base().slot())
-                    ? tw.exilecore.ascendancy.AscBuild.NO_REQUIREMENT : reqAttr;
+                    ? tw.exilecore.ascendancy.AscBuild.NO_REQUIREMENT
+                    : item.base().isWeapon() && !item.base().tags().contains("ranged") ? meleeSatisfy(reqAttr, strMelee, dexMelee) : reqAttr;
             final String why = soloRing != null && item != soloRing && item.base().slot() == tw.exilecore.item.ItemSlot.RING
                     ? "不能跟另一隻戒指一起用" : requirementProblem(reqScale == 1 ? req
                     : new ItemBase.Requirements(req.level(), req.str() * 3, req.dex() * 3, req.intelligence() * 3), level, attrs[0], attrs[1], attrs[2]);
@@ -514,6 +518,11 @@ public final class PlayerStateService {
                         || item.base().slot() == tw.exilecore.item.ItemSlot.OFF_HAND);
         if (hollowPalm) {
             weaponTags = Set.of("weapon", Tags.TWO_HAND, Tags.QUARTERSTAFF, Tags.MELEE);
+        }
+        // 2026-10-28 照 PoE2（毀面者）：雙手都空著時當作拿單手錘攻擊（錘的技能能用、吃錘的修飾器），傷害用這件的（unarmed.base_min／max）
+        if (!hasWeapon && !hollowPalm && StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.UNARMED_MACE)
+                && active.stream().noneMatch(item -> item.offHandWeapon() || item.base().slot() == tw.exilecore.item.ItemSlot.OFF_HAND)) {
+            weaponTags = Set.of("weapon", Tags.ONE_HAND, Tags.MACE, Tags.MELEE);
         }
         final List<tw.exilecore.stats.KeystoneKeys.Piece> armourPieces = new ArrayList<>();
         for (final EquippedItem item : active) {
@@ -574,7 +583,8 @@ public final class PlayerStateService {
         // 與死共舞（2026-10 PoE2 基石）：主手單手武器（魔杖、權杖除外）、副手空著：技能速度更多 25%
         if (StatKeys.flag(sheet, StatKeys.FLAG_DANCE_WITH_DEATH) && weaponTags.contains("one_hand")
                 && !weaponTags.contains("wand") && !weaponTags.contains("sceptre")
-                && equipped.stream().noneMatch(item -> item.base().slot() == tw.exilecore.item.ItemSlot.OFF_HAND)) {
+                && equipped.stream().noneMatch(item -> item.base().slot() == tw.exilecore.item.ItemSlot.OFF_HAND
+                        || item.offHandWeapon())) { // 2026-10-28：副手的權杖也不是空著（這次之前副手拿權杖照樣算空手）
             sheet.add(Modifier.more(StatKeys.ATTACK_SPEED, 0.25, "單刃疾舞"));
             sheet.add(Modifier.more(StatKeys.CAST_SPEED, 0.25, "單刃疾舞"));
         }
@@ -599,10 +609,21 @@ public final class PlayerStateService {
         } else if (!hasWeapon) {
             // 徒手：2-6 物理，每秒 1.2 次，暴擊 5%
             // 2026-10-26 照 PoE2：徒手 1.65 次／秒（攻擊時間 0.606 秒），傷害照職業：戰士 2–8、傭兵與德魯伊 2–6、其他 2–5
-            sheet.add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, 2, Set.of(Tags.PHYSICAL), "徒手"));
-            sheet.add(new Modifier(StatKeys.WEAPON_MAX, ModType.FLAT, unarmedMax(characterClass), Set.of(Tags.PHYSICAL), "徒手"));
+            // 2026-10-28 照 PoE2（毀面者）：空手攻擊的基礎物理傷害換成這件的（8 到 12）
+            final double overrideMin = sheet.flat(tw.exilecore.item.unique.UniqueStats.UNARMED_MIN, Set.of());
+            final double overrideMax = sheet.flat(tw.exilecore.item.unique.UniqueStats.UNARMED_MAX, Set.of());
+            final boolean override = overrideMax > 0;
+            // 2026-10-28 照 PoE2（磐石之拳的毀面者）：基礎傷害是火焰
+            final Set<String> unarmedType = override && StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.UNARMED_FIRE)
+                    ? Set.of(tw.exilecore.stats.DamageType.FIRE.tag()) : Set.of(Tags.PHYSICAL);
+            sheet.add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, override ? overrideMin : 2, unarmedType, override ? "毀面者" : "徒手"));
+            sheet.add(new Modifier(StatKeys.WEAPON_MAX, ModType.FLAT, override ? overrideMax : unarmedMax(characterClass), unarmedType,
+                    override ? "毀面者" : "徒手"));
             sheet.add(Modifier.flat(StatKeys.WEAPON_APS, 1.65, "徒手"));
             sheet.add(Modifier.flat(StatKeys.WEAPON_CRIT, 5, "徒手"));
+        }
+        if (!hasWeapon) {
+            sheet.addAll(tw.exilecore.item.unique.UniqueDerived.unarmed(sheet)); // 2026-10-28（毀面者）：空手時每 5 點力量更多空手傷害
         }
 
         // 等級與屬性值的基礎
@@ -737,7 +758,9 @@ public final class PlayerStateService {
             return Gear.giantOffHand(main, off.base(), sheet) ? null : "副手的雙手武器要點了巨人之血、主手也是雙手斧、錘、劍";
         }
         if (off.offHandWeapon()) {
-            return Gear.sceptreOffHand(main, off.base(), sheet) && !Gear.uniqueSceptre(off.data()) ? null : "副手的權杖要持用獸魂符並點了荒野領主（非傳奇）";
+            // 2026-10-28 照 PoE2：副手的權杖配單手武器（或主手空著）就生效，不能兩把權杖；雙手武器只有荒野領主（獸魂符、非傳奇）。
+            // 這次之前只有荒野領主
+            return Gear.offHandSceptreProblem(main, off.base(), off.data(), sheet);
         }
         if (main == null || !off.base().isShield() || !main.hasTag(Tags.TWO_HAND)) {
             return null;
@@ -905,10 +928,35 @@ public final class PlayerStateService {
         if (own != null) {
             return "穿不上去：" + own;
         }
-        final double[] attrs = tw.exilecore.ascendancy.AscBuild.ignoresRequirements(asc, base.slot())
-                ? tw.exilecore.ascendancy.AscBuild.NO_REQUIREMENT : attr; // 2026-10-27（昇華・石拳之道）
-        return equipProblem(data, scaledRequirements(ItemStats.requirements(plugin.items().repository(), base, data),
+        final boolean stonefist = tw.exilecore.ascendancy.AscBuild.ignoresRequirements(asc, base.slot());
+        final double[] attrs = stonefist ? tw.exilecore.ascendancy.AscBuild.NO_REQUIREMENT // 2026-10-27（昇華・石拳之道）
+                : base.isWeapon() && !base.tags().contains("ranged") ? meleeSatisfy(attr, // 2026-10-28（雅恩格利佩爾）
+                StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.STR_MELEE_REQUIREMENTS),
+                StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.DEX_MELEE_REQUIREMENTS)) : attr;
+        final ItemBase.Requirements req = ItemStats.requirements(plugin.items().repository(), base, data);
+        // 2026-10-28 照 PoE2：穿上就變成磐石之拳，需求等級 1
+        return equipProblem(data, scaledRequirements(stonefist ? tw.exilecore.item.Stonefist.requirements(req) : req,
                         tw.exilecore.stats.TreeEffectKeys.requirementScale(sheet)), get(player).level(), attrs[0], attrs[1], attrs[2]);
+    }
+
+    /**
+     * 2026-10-28 照 PoE2（雅恩格利佩爾）：力量可以滿足近戰武器的其他能力值需求（敏捷、智慧至少當作有力量那麼多）；
+     * 磐石之拳版本是敏捷。
+     */
+    static double[] meleeSatisfy(final double[] attrs, final boolean byStr, final boolean byDex) {
+        if (!byStr && !byDex) {
+            return attrs;
+        }
+        final double[] out = attrs.clone();
+        if (byStr) {
+            out[1] = Math.max(out[1], attrs[0]);
+            out[2] = Math.max(out[2], attrs[0]);
+        }
+        if (byDex) {
+            out[0] = Math.max(out[0], attrs[1]);
+            out[2] = Math.max(out[2], attrs[1]);
+        }
+        return out;
     }
 
     /** 同上，純邏輯。 */
@@ -1057,10 +1105,25 @@ public final class PlayerStateService {
                 }
             }
             if (parsed.item() != null) {
-                list.add(withInstil(state, parsed.item()));
+                list.add(withStonefist(state, withInstil(state, parsed.item())));
             }
         }
         return list;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 昇華・石拳之道：穿著的腿甲（原作的手套）變成磐石之拳——詞綴換成原作的強化版本、
+     * 防禦換成每一玩家等級 +3 閃避值、+1 最大能量護盾、需求等級 1（{@link tw.exilecore.item.Stonefist}）。
+     * 照現在的昇華、等級算（不放進每一格的快取）。
+     */
+    private EquippedItem withStonefist(final PlayerState state, final EquippedItem item) {
+        if (item.base().slot() != ItemSlot.LEGS || item.offHandWeapon() || plugin.ascendancy() == null || !state.hasCharacter()
+                || !tw.exilecore.ascendancy.AscBuild.stonefist(plugin.ascendancy().ascension(state).modifiers())) {
+            return item;
+        }
+        return new EquippedItem(item.base(), item.data(),
+                tw.exilecore.item.Stonefist.modifiers(plugin.items().repository(), item.base(), item.data(), state.level()),
+                tw.exilecore.item.Stonefist.requirements(item.requirements()), item.offHandWeapon());
     }
 
     /** 2026-10-23：解好的裝備（每個玩家每一格一份）。 */
@@ -1092,6 +1155,7 @@ public final class PlayerStateService {
                 collect(list, state, gear.get(i), PlayerState.GEAR_SLOTS[i]);
             }
         }
+        list.replaceAll(item -> withStonefist(state, item)); // 2026-10-28（昇華・石拳之道）
         return list;
     }
 
@@ -1953,6 +2017,10 @@ public final class PlayerStateService {
         final net.kyori.adventure.text.TextComponent.Builder stats = Component.text();
         final StringBuilder statsPlain = new StringBuilder();
         stat(stats, statsPlain, "", LIFE_COLOR, "❤ " + grouped(Math.round(state.life())) + " / " + grouped(Math.round(state.maxLife())));
+        final double guard = state.guard(plugin.getServer().getCurrentTick()); // 2026-10-28：守護（生命痕跡溢出、護符…）顯示在生命後面；這次之前看不到
+        if (guard >= 1) {
+            stat(stats, statsPlain, " ", GUARD_COLOR, "+" + grouped(Math.round(guard)) + " 守護");
+        }
         if (state.maxEnergyShield() > 0) {
             stat(stats, statsPlain, "  ", ES_COLOR, "⛨ " + grouped(Math.round(state.energyShield())) + " / " + grouped(Math.round(state.maxEnergyShield())));
         }
@@ -2030,6 +2098,8 @@ public final class PlayerStateService {
     }
 
     private static final net.kyori.adventure.text.format.TextColor LIFE_COLOR = net.kyori.adventure.text.format.TextColor.color(0xff5555);
+    /** 2026-10-28：守護的顏色。 */
+    private static final net.kyori.adventure.text.format.TextColor GUARD_COLOR = net.kyori.adventure.text.format.TextColor.color(0xc8c8ff);
     private static final net.kyori.adventure.text.format.TextColor ES_COLOR = net.kyori.adventure.text.format.TextColor.color(0x77ccff);
     private static final net.kyori.adventure.text.format.TextColor MANA_COLOR = net.kyori.adventure.text.format.TextColor.color(0x5599ff);
     private static final net.kyori.adventure.text.format.TextColor LEVEL_COLOR = net.kyori.adventure.text.format.TextColor.color(0xf5b942);

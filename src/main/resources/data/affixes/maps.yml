@@ -502,7 +502,7 @@ map_ground_ignited:
     - { tier: 2, ilvl: 66, weight: 1000, value: [5, 5], fire: [4000, 4000] }
     - { tier: 3, ilvl: 1, weight: 1000, value: [4, 4], fire: [2000, 2000] }
   mods:
-    - { stat: map.ground.fire, type: FLAT, value: "{fire}" }   # 每 10 秒的火焰傷害（68 級怪物的強度，照等級換算）
+    - { stat: map.ground.fire, type: FLAT, value: "{fire}" }   # PoE2 map_base_ground_fire_damage_to_deal_per_10_seconds：÷10 = 視同的火焰傷害（68 級為準，照等級換算；疊易燃到 50% 才點燃，點燃每秒 20%）
     - { stat: map.ground.patches, type: FLAT, value: "{value}" }   # 每 100 個地圖區塊幾塊
     - { stat: map.ground.radius, type: FLAT, value: 20 }   # 原作的單位（÷10 = 格）
     - { stat: map.waystones, type: FLAT, value: 15 }   # 換界石掉落更多 15%

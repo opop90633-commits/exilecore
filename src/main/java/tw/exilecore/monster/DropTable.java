@@ -514,7 +514,9 @@ public final class DropTable {
             return null;
         }
         final double bonus = Math.max(0, 1 + rarityBonus);
-        final double weight = (boss ? bossUniqueWeight : uniqueWeight) * bonus;
+        // 2026-10-28 照 PoE2 的稀有度：乘這個基底的傳奇的掉落權重倍率（權重加起來 ÷ 100，最多 1；UniqueRarity.factor）
+        final double weight = (boss ? bossUniqueWeight : uniqueWeight) * bonus
+                * tw.exilecore.item.UniqueRarity.factor(pool, tw.exilecore.item.UniqueItem::weight);
         final double total = rarityWeights.getOrDefault(Rarity.NORMAL, 0)
                 + (rarityWeights.getOrDefault(Rarity.MAGIC, 0) + rarityWeights.getOrDefault(Rarity.RARE, 0)) * bonus + weight;
         if (weight <= 0 || total <= 0 || random.nextDouble() * total >= weight) {

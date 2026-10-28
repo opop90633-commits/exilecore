@@ -151,6 +151,8 @@ OVERRIDE_Q = {
     'briarpatch': {'spells_chance_to_hinder_on_hit_%': ('effect.hinder.on_hit', 'FLAT', 1.0, ['spell'])},
     'combat_frenzy': {'chance_to_gain_1_more_charge_%': [('effect.charge.event_extra.freeze', 'FLAT', 2.0, None), ('effect.charge.event_extra.electrocute', 'FLAT', 2.0, None), ('effect.charge.event_extra.pin', 'FLAT', 2.0, None)]},
     'comet': {'base_spell_%_chance_to_echo': ('spell.echo_chance', 'FLAT', 1.0, None)},
+    # 2026-10-28：瘟疫改成單體（SkillExecutor.singleImpact），多感染的敵人照原作是多一個目標；這次之前列在 APPROX（範圍落點各多落一下）
+    'contagion': {'contagion_number_of_additional_targets': ('skill.extra_targets', 'FLAT', 1.0, None)},
     'convalescence': {'base_skill_effect_duration': ('convalescence.duration', 'FLAT', 0.001, None)},
     'devour': {'wyvern_devour_flask_charm_charge_gain_chance_%': ('corpse.flask_charge_chance', 'FLAT', 1.0, None)},
     'discipline': {'base_skill_buff_energy_shield_recharge_rate_+%_to_apply': ('effect.es.recharge', 'INCREASED', 1.0, None)},
@@ -243,7 +245,6 @@ APPROX = {
     'summon_mount': ([('mount.life_more', 'FLAT', 1.0, ())], '坐騎打不死、沒有生命：更多 20% 最大生命換成騎著時的重暈門檻更多 20%'),
     'feast_of_flesh': ([('corpses.flat', 'FLAT', 0.15, ())], '噬屍宴固定算 3 具屍體（不用屍體）：品質多的 3 具照原作是超過 5 具的部分，身邊超過 5 具時才多吃'),
     'mirage_archer': ([('skill.base_duration_flat', 'FLAT', 0.05, ())], '幻弓影的幻影跟著每一次弓攻擊（沒有持續時間）：+1 秒換成你停手之後幻影再多射 1 秒'),
-    'contagion': ([('skill.extra_targets', 'FLAT', 0.1, ())], '疫潮是範圍落點：多感染的 2 個敵人是在牠們身上各多落一下（一樣的小範圍）'),
     'shatter_spikes': ([('spike.more_per_spike', 'FLAT', 0.3, ())], '地刺崩裂沒有實體的地刺：照最近 6 秒內用了幾次算地刺數（最多 6 根）'),
     'bone_offering': ([('offering.shield_lost_less', 'FLAT', 1.5, ())], '骸骨祭用物理減傷代替護盾：護盾「第一下超過最大生命 25% 的擊中」時算消失'),
     'beast_companion': ([], '沒有捕捉野獸的鬼火（原作這條只影響捕捉、不影響戰鬥）：沒有效果'),

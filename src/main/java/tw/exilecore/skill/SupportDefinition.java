@@ -90,7 +90,7 @@ public record SupportDefinition(String id, String name, String description, Stri
                                            final SupportDefinition adding, final boolean addingResonant,
                                            final java.util.function.Function<String, SupportDefinition> lookup) {
         if (adding != null && adding.lineage()) {
-            return lineageConflict(entry, socket, adding, lookup); // 2026-10-27 照站長：血脈輔助一個技能只能一顆、共鳴不算
+            return null; // 2026-10-28 照 PoE2（站長）：不同的血脈輔助可以掛在同一個技能上，不互相衝突；這次之前一個技能只能一顆
         }
         if (adding == null || adding.cuttable() || addingResonant) { // 2026-10-27：血脈輔助不算專屬的名額（照 PoE2）
             return null;
@@ -261,7 +261,9 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (flags(StatKeys.CHANNEL_STAGES) && channels(skill)) {
             return "本身會蓄力的技能不行"; // 2026-10：蓄勢不能疊在本來就會蓄力的技能上（熾息、蓄力射擊…）
         }
-        if ((flags(tw.exilecore.stats.StatKeys.FLAG_SPELL_TOTEM) || flags(tw.exilecore.stats.StatKeys.FLAG_TRAP)) && !SkillBuild.deployable(skill)) {
+        // 2026-10-28 照 PoE2 Spell Totem：圖騰照 TotemRules.spellTotemCastable（雷遁、骸爆、詛咒也行）；這次之前圖騰也只看 deployable
+        if (flags(tw.exilecore.stats.StatKeys.FLAG_SPELL_TOTEM) ? !TotemRules.spellTotemCastable(skill)
+                : flags(tw.exilecore.stats.StatKeys.FLAG_TRAP) && !SkillBuild.deployable(skill)) {
             return "這種技能不能交給圖騰或陷阱放"; // 2026-10：掘墳、號召這些只有 spell 標籤，以前掛得上去卻沒效果
         }
         if (!matchesRequires(skill)) {
@@ -317,7 +319,8 @@ public record SupportDefinition(String id, String name, String description, Stri
     private static final Set<String> UTILITY_STATS = Set.of(StatKeys.SKILL_ADDED_COOLDOWN, StatKeys.SKILL_COST, StatKeys.SKILL_LEVEL,
             StatKeys.SKILL_MINIONS, StatKeys.SKILL_TOTEMS, StatKeys.SUPPORT_SPIRIT, StatKeys.CURSE_EFFECT, StatKeys.MARK_EFFECT, StatKeys.CAST_SPEED, StatKeys.FLAG_ECHO,
             StatKeys.FLAG_BLOOD_MAGIC, StatKeys.MANA_ON_MINION_DEATH, StatKeys.MINION_DEATH_HEAL,
-            tw.exilecore.stats.KeystoneKeys.SKILL_LIMIT); // 2026-10-28 照 PoE2 過剩：+x 上限不用擊中（印記、祭品、折光之鏡也有用）
+            tw.exilecore.stats.KeystoneKeys.SKILL_LIMIT, // 2026-10-28 照 PoE2 過剩：+x 上限不用擊中（印記、祭品、折光之鏡也有用）
+            StatKeys.FLAG_SPELL_TOTEM); // 2026-10-28 照 PoE2 Spell Totem：交給圖騰放不用擊中（詛咒也能交給圖騰）；這次之前只靠星咒圖騰的施法速度那條
     private static final List<String> UTILITY_PREFIXES = List.of(StatKeys.GRANT_PREFIX, "warcry.", "aura.", "herald.", "trigger.", "seal.", "meta.",
             "infusion.", "proc.use", "proc.minion_death", "charge.sup.",
             // 2026-10-26：照 PoE2 重做的輔助：戰吼輔助、榮耀、凍結時的增益、印記、詛咒、圖騰、召喚物、獻祭生命
@@ -582,6 +585,10 @@ public record SupportDefinition(String id, String name, String description, Stri
      * @param skills 全部技能：排除的種類只列真的會碰到的（玩家學得到、本來符合 requires、又有那個標籤）；null = excludes 全部列
      */
     public String supportsText(final java.util.Collection<SkillDefinition> skills) {
+        // 2026-10-28：雙詠、虛星分身、連瀑只能掛可以連瀑的（SupportGuards）；這次之前寫「法術技能（…除外）」，看起來碎骨飛矢這類也能掛
+        if (flags(StatKeys.FLAG_ECHO) || flags(tw.exilecore.stats.SupportExtraKeys.CASCADE)) {
+            return "可以連瀑的範圍法術（落在目標區域、身邊一圈的，或詛咒）";
+        }
         final List<String> names = new ArrayList<>();
         for (final String tag : relevantExcludes(skills)) {
             names.add(ModifierText.tagName(tag));

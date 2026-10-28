@@ -15,6 +15,7 @@ import java.util.Set;
  *   <li>{@link UniqueStats#LEECH_LIFE_ON_CAST}：施放法術時偷取 x% 最大生命（念珠魔杖）。</li>
  *   <li>{@link UniqueStats#NO_WARCRY}：不能使用戰吼（血偶巨鎚）。</li>
  *   <li>{@link UniqueStats#LIFE_LOSE_ON_SKILL}：使用技能時失去 x 生命（荊冠細環，2026-10-27）。</li>
+ *   <li>{@link UniqueStats#SACRIFICE_ES_ON_SPELL}、{@link UniqueStats#SACRIFICE_ES_ON_ATTACK}：犧牲生命換能量護盾（縫魔，2026-10-28）。</li>
  * </ul>
  */
 public final class UniqueCosts {
@@ -51,10 +52,30 @@ public final class UniqueCosts {
         if (percent > 0 && skillTags.contains(Tags.SPELL) && state.maxLife() > 0) {
             state.addLeech(state.maxLife() * percent / 100.0);
         }
+        // 2026-10-28 照 PoE2（縫魔）：施放法術時犧牲 x% 最大生命，獲得等量的能量護盾；
+        // 磐石之拳版本：攻擊時犧牲 x% 最大生命，獲得一半（原作是符文保護，我們沒有，換成能量護盾）
+        if (skillTags.contains(Tags.SPELL)) {
+            sacrifice(state, sheet.flat(UniqueStats.SACRIFICE_ES_ON_SPELL, Set.of()), 1.0);
+        }
+        if (skillTags.contains(Tags.ATTACK)) {
+            sacrifice(state, sheet.flat(UniqueStats.SACRIFICE_ES_ON_ATTACK, Set.of()), 0.5);
+        }
         // 2026-10-27（荊冠細環）：使用技能時失去 x 生命（最少留 1 點）
         final double lose = sheet.flat(UniqueStats.LIFE_LOSE_ON_SKILL, Set.of());
         if (lose > 0 && state.life() > 1) {
             state.setLife(Math.max(1, state.life() - lose));
+        }
+    }
+
+    /** 犧牲 x% 最大生命（最少留 1 點），獲得 ratio 倍的能量護盾（不超過上限）。 */
+    static void sacrifice(final PlayerState state, final double percent, final double ratio) {
+        if (percent <= 0 || state.maxLife() <= 0 || state.life() <= 1) {
+            return;
+        }
+        final double amount = Math.min(state.life() - 1, state.maxLife() * percent / 100.0);
+        state.setLife(state.life() - amount);
+        if (state.maxEnergyShield() > 0) {
+            state.setEnergyShield(Math.min(state.maxEnergyShield(), state.energyShield() + amount * ratio));
         }
     }
 

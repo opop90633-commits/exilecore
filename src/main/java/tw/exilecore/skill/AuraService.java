@@ -257,6 +257,26 @@ final class AuraService implements Listener {
         return Math.max(0, sheet.get(tw.exilecore.stats.StatKeys.SPIRIT_MAX)); // 2026-10：精魂（PoE2）
     }
 
+    /**
+     * 2026-10-28 照 PoE2：光環、精魂召喚、主要寶石能用的精魂＝最大精魂扣掉別的保留（先祖魂約的圖騰每根 75），全部的保留共用同一個精魂池。
+     * 這次之前只看最大精魂：放了圖騰之後，照隻數算的召喚（付得起幾隻叫幾隻）還是照整個精魂池叫，光環也照開，
+     * 加起來的保留超過最大精魂（例如 4 根圖騰 300 再加召喚，已用比上限還多）。
+     */
+    static double capacity(final tw.exilecore.stats.StatSheet sheet, final double otherReserve) {
+        return Math.max(0, capacity(sheet) - Math.max(0, otherReserve));
+    }
+
+    /** 2026-10-28：光環以外保留的精魂（先祖魂約的圖騰）。 */
+    double otherReserve(final UUID player) {
+        final SkillDeployables deployables = service == null ? null : service.deployables();
+        return deployables == null ? 0 : deployables.spiritReserved(player);
+    }
+
+    /** 2026-10-28：這個玩家的光環、精魂召喚還能用多少精魂（扣掉圖騰的保留）；這次之前是 {@link #capacity(tw.exilecore.stats.StatSheet)}。 */
+    double capacity(final Player player) {
+        return capacity(plugin.players().sheet(player), otherReserve(player.getUniqueId()));
+    }
+
     /** 一個光環實際保留多少、照隻數算精魂的召喚養得起幾隻。 */
     record Fit(double reserve, int minions) {
     }
@@ -392,10 +412,11 @@ final class AuraService implements Listener {
                     + (totalReserve(player.getUniqueId()) > 0 ? String.format(Locale.ROOT, "（還保留 %.0f 精魂）", totalReserve(player.getUniqueId())) : "");
         }
         final tw.exilecore.stats.StatSheet toggleSheet = plugin.players().sheet(player);
-        final Fit fit = fit(build, capacity(toggleSheet) - totalReserve(player.getUniqueId()));
+        final Fit fit = fit(build, capacity(toggleSheet, otherReserve(player.getUniqueId())) - totalReserve(player.getUniqueId()));
         if (fit == null) {
+            // 2026-10-28：已經保留的含先祖魂約的圖騰（這次之前只算光環，跟最大精魂比）
             return String.format(Locale.ROOT, "<red>精魂不夠：已經保留 %.0f／%.0f，%s 要 %.0f",
-                    totalReserve(player.getUniqueId()), capacity(toggleSheet), tw.exilecore.item.ItemRenderer.escape(build.definition().name()),
+                    totalReserve(player.getUniqueId()) + otherReserve(player.getUniqueId()), capacity(toggleSheet), tw.exilecore.item.ItemRenderer.escape(build.definition().name()),
                     build.reserve() + build.minionReserve());
         }
         final double lifeSoFar = communionReserved(mine.values());
@@ -755,7 +776,7 @@ final class AuraService implements Listener {
                 continue;
             }
             final SkillBuild build = service.build(state, sheet, definition, state.skills().skill(position));
-            final Fit fit = fit(build, capacity(sheet) - total);
+            final Fit fit = fit(build, capacity(sheet, otherReserve(player.getUniqueId())) - total); // 2026-10-28：扣掉圖騰的保留
             final double lifeSoFar = communionReserved(mine.values());
             if (fit == null || !lifeFits(build, PlayerState.maxLife(sheet), lifeLocked(sheet), lifeSoFar)) {
                 continue;
@@ -946,7 +967,7 @@ final class AuraService implements Listener {
                     continue;
                 }
                 final SkillBuild build = service.build(state, sheet, definition, entry);
-                final Fit fit = fit(build, capacity(sheet) - total);
+                final Fit fit = fit(build, capacity(sheet, otherReserve(player.getUniqueId())) - total); // 2026-10-28：扣掉圖騰的保留
                 if (fit == null || !lifeFits(build, lifeBase, lifeLocked(sheet), lifeTotal)) {
                     skipped.add(definition.name());
                     continue;
@@ -1218,7 +1239,7 @@ final class AuraService implements Listener {
         boolean changed = false;
         final List<String> closed = new ArrayList<>();
         double running = 0; // 照按鍵順序（3→8、左、右、蹲左、蹲右），前面的先拿精魂（照隻數算的召喚要知道還剩多少）
-        final double capacityNow = capacity(plugin.players().sheet(player));
+        final double capacityNow = capacity(player); // 2026-10-28：扣掉先祖魂約圖騰的保留（這次之前是整個最大精魂）
         // 2026-10-27 照 PoE2 血契：保留生命付不起了（拿到無垢之軀、最大生命掉了）也照按鍵順序關掉後面的
         final tw.exilecore.stats.StatSheet lifeSheet = plugin.players().sheet(player);
         final double lifeBase = baseLife(lifeSheet, communionReserved(mine.values()));
@@ -1263,7 +1284,7 @@ final class AuraService implements Listener {
         }
         // 保留超過 100%（保留增加的裝備、天賦）：按鍵順序排在最後的先關（照按鍵的順序開）
         double total = totalReserve(player.getUniqueId());
-        final double limit = capacity(plugin.players().sheet(player));
+        final double limit = capacity(player); // 2026-10-28：同上，圖騰占掉的精魂不算光環的
         while (total > limit + 1e-9 && !mine.isEmpty()) {
             Active last = null;
             for (final Active aura : mine.values()) {
@@ -1320,6 +1341,7 @@ final class AuraService implements Listener {
                     }
                 }
             }
+            presenceAllies(next, keys);
         }
         final java.util.Set<UUID> affected = new java.util.HashSet<>(received.keySet());
         affected.addAll(next.keySet());
@@ -1340,6 +1362,48 @@ final class AuraService implements Listener {
                 plugin.players().markDirty(player);
             }
         }
+    }
+
+    /**
+     * 2026-10-28 照 PoE2（神聖烈焰）：「你存在範圍內的盟友每秒回復 x% 最大生命」「…獲得 x% 傷害為額外火焰傷害」——
+     * 不用開光環，同隊、在存在範圍內的隊友就有（跟光環給隊友的效果走同一條，誰收到什麼變了才重算）。
+     */
+    private void presenceAllies(final Map<UUID, List<Modifier>> next, final Map<UUID, StringBuilder> keys) {
+        for (final Player caster : plugin.getServer().getOnlinePlayers()) {
+            final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(caster);
+            final List<Modifier> effects = presenceAllyEffects(sheet);
+            if (effects.isEmpty()) {
+                continue;
+            }
+            final double radius = tw.exilecore.combat.Presence.radius(sheet);
+            for (final UUID member : plugin.party().groupMembers(caster.getUniqueId())) {
+                final Player ally = member.equals(caster.getUniqueId()) ? null : plugin.getServer().getPlayer(member);
+                if (ally == null || !ally.getWorld().equals(caster.getWorld())
+                        || ally.getLocation().distanceSquared(caster.getLocation()) > radius * radius) {
+                    continue;
+                }
+                next.computeIfAbsent(member, uuid -> new ArrayList<>()).addAll(effects);
+                final StringBuilder key = keys.computeIfAbsent(member, uuid -> new StringBuilder()).append(caster.getUniqueId()).append(":presence");
+                for (final Modifier effect : effects) {
+                    key.append(':').append(Math.round(effect.value() * 1000));
+                }
+                key.append(';');
+            }
+        }
+    }
+
+    /** 2026-10-28（神聖烈焰）：這張屬性表給存在範圍內的盟友的效果（純函式）。 */
+    static List<Modifier> presenceAllyEffects(final tw.exilecore.stats.StatSheet sheet) {
+        final List<Modifier> list = new ArrayList<>();
+        final double regen = sheet.flat(tw.exilecore.item.unique.UniqueStats.PRESENCE_ALLY_REGEN, Set.of());
+        if (regen > 0) {
+            list.add(Modifier.flat(StatKeys.LIFE_REGEN_PERCENT, regen, "盟友的存在"));
+        }
+        final double fire = sheet.flat(tw.exilecore.item.unique.UniqueStats.PRESENCE_ALLY_EXTRA_FIRE, Set.of());
+        if (fire > 0) {
+            list.add(Modifier.flat(StatKeys.damageExtra(tw.exilecore.stats.DamageType.FIRE), fire, "盟友的存在"));
+        }
+        return list;
     }
 
     // ---- 2026-10：開著的代價（赤怒）----
@@ -1858,8 +1922,11 @@ final class AuraService implements Listener {
                         : tags.contains(tw.exilecore.stats.Tags.AURA) ? "光環" : "精魂技能";
                 groups.get(group).add(tw.exilecore.item.ItemRenderer.escape(aura.name()));
             }
-            lines.add(String.format(Locale.ROOT, "<#8fd3ff>精魂<gray>：保留 <white>%.0f</white>／%.0f",
-                    totalReserve(player.getUniqueId()), capacity(plugin.players().sheet(player))));
+            // 2026-10-28：保留含先祖魂約的圖騰（這次之前只算光環）
+            final double totems = otherReserve(player.getUniqueId());
+            lines.add(String.format(Locale.ROOT, "<#8fd3ff>精魂<gray>：保留 <white>%.0f</white>／%.0f%s",
+                    totalReserve(player.getUniqueId()) + totems, capacity(plugin.players().sheet(player)),
+                    totems > 0 ? String.format(Locale.ROOT, "<dark_gray>（先祖魂約的圖騰 %.0f）", totems) : ""));
             groups.forEach((group, names) -> {
                 if (!names.isEmpty()) {
                     lines.add("<gray>　" + group + "：<white>" + String.join("<gray>、<white>", names));

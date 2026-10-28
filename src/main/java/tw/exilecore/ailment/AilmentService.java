@@ -437,14 +437,16 @@ public final class AilmentService {
         // 2026-10-27 照 PoE2 血脈輔助：燼蝕（混沌算進點燃）、霆蝕（混沌算進感電）、寂寒（混沌算進凍結）、傲寒（物理算進凍結）、霆爆（不能感電）
         final boolean chaosIgnites = StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.CHAOS_IGNITES);
         final boolean chaosShocks = StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.CHAOS_SHOCKS);
+        // 2026-10-28 照 PoE2（磐石之拳的畫家的侍從）：擊中的物理傷害也算進易燃、點燃幅度、凍結累積、感電機率
+        final double physicalElemental = StatKeys.flag(attack, tw.exilecore.item.unique.UniqueStats.PHYSICAL_ELEMENTAL_AILMENTS) ? physical : 0;
         final double igniteBase = noElemental ? 0 : StatKeys.flag(attack, StatKeys.FLAG_ALL_IGNITE) ? allDamage
-                : fire + (unravel == 1 || chaosIgnites ? chaos : 0);
+                : fire + physicalElemental + (unravel == 1 || chaosIgnites ? chaos : 0);
         // 2026-10-26（赤紋之戒）：對流血中的敵人／你流血時被打，擊中的所有傷害都算進冰緩
         final boolean bleedingChill = entry != null && (StatKeys.flag(attack, tw.exilecore.item.unique.UniqueStats.BLEEDING_TARGET_CHILL)
                 || StatKeys.flag(defenderSheet, tw.exilecore.item.unique.UniqueStats.BLEEDING_SELF_CHILL)) && entry.state.bleed(now) != null;
         final double chillBase = noElemental ? 0 : StatKeys.flag(attack, StatKeys.FLAG_ALL_CHILL) || bleedingChill ? allDamage : cold;
         final double shockBase = noElemental || StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.LIGHTNING_ELECTROCUTES) ? 0
-                : StatKeys.flag(attack, StatKeys.FLAG_ALL_SHOCK) ? allDamage : lightning + (unravel == 2 || chaosShocks ? chaos : 0);
+                : StatKeys.flag(attack, StatKeys.FLAG_ALL_SHOCK) ? allDamage : lightning + physicalElemental + (unravel == 2 || chaosShocks ? chaos : 0);
         // 2026-10-27 照 PoE2 Chaotic Freeze：對受到持續傷害（混沌減益、中毒）的敵人，混沌傷害也累積凍結；這次之前沒有
         final double chaoticFreeze = chaos > 0 && unravel != 0 && StatKeys.flag(attack, tw.exilecore.stats.SupportExtraKeys.FLAG_CHAOTIC_FREEZE)
                 && entry != null && (debuffDps(defender) > 0 || !entry.state.poisons(now).isEmpty()) ? chaos : 0;
@@ -458,6 +460,7 @@ public final class AilmentService {
             entry = entry == null ? track(defender) : entry;
             final double chance = Math.min(1.0, entry.state.addFlammability(flammable, now + ticks(config.flammabilityDuration(playerTarget)), now) / 100.0);
             if (chance > 0 && random.nextDouble() < chance && !avoided(defenderSheet, StatKeys.AVOID_IGNITE, random)
+                    && !immuneAfter(defender, defenderSheet, "ignite", now) // 2026-10-28（悲運之縛）
                     && !oneDamagingAilment(defender, defenderSheet)) { // 2026-10-26 照 PoE2 天賦樹：身上已經有傷害型異常就不會再中
                 // 2026-10-26 照 PoE2 天賦樹：點燃（傷害型異常）造成傷害快 x%：每秒傷害乘、時間除（總傷害不變）
                 final double igniteFaster = tw.exilecore.stats.TreeEffectKeys.ailmentSpeed(attack, tw.exilecore.stats.TreeEffectKeys.IGNITE_SPEED, context);
@@ -496,7 +499,8 @@ public final class AilmentService {
                 changed = true;
             }
         }
-        if (chillBase > 0 || chaoticFreeze > 0) {
+        if (chillBase > 0 || chaoticFreeze > 0 || !noElemental && allDamage > 0
+                && StatKeys.flag(attack, tw.exilecore.item.unique.UniqueStats.ALL_DAMAGE_FREEZES)) { // 2026-10-28（磐石之拳的凜冬之握）
             final Set<String> context = skill.contextFor(DamageType.COLD);
             // 2026-10：「更多」的冰緩效果也算；2026-10-21：攻擊方的減速幅度（slow.magnitude）、玩家身上的減速幅度（slow.taken）也乘進去
             final double slowScale = Math.max(0, 1 + attack.increased(StatKeys.SLOW_MAGNITUDE, context));
@@ -504,7 +508,8 @@ public final class AilmentService {
             final double slowTaken = Math.max(0, defenderSheet.apply(StatKeys.SLOW_TAKEN, 1.0, Set.of()));
             final double magnitude = config.chillMagnitude(chillBase, threshold, attack.apply(StatKeys.CHILL_EFFECT, 1.0, context) * slowScale
                     * tw.exilecore.stats.TreeKeys.selfEffect(defenderSheet, tw.exilecore.stats.TreeKeys.CHILL_EFFECT_ON_SELF) - 1) * slowTaken; // 2026-10-26：身上的冰緩效果
-            if (magnitude > 0 && !StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE) && !avoided(defenderSheet, StatKeys.AVOID_CHILL, random)) {
+            if (magnitude > 0 && !StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE) && !avoided(defenderSheet, StatKeys.AVOID_CHILL, random)
+                    && !immuneAfter(defender, defenderSheet, "chill", now)) { // 2026-10-28（悲運之縛）
                 final double seconds = AilmentConfig.duration(config.chillDuration(playerTarget),
                         attack.increased(StatKeys.CHILL_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context),
                         selfDuration + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".chill", Set.of()));
@@ -520,15 +525,22 @@ public final class AilmentService {
             // 天賦樹的凍結門檻（增加凍結門檻、等同最大護盾 x% 的凍結門檻）也算
             entry = entry == null ? track(defender) : entry;
             final AilmentConfig.MeterSettings freezeSettings = config.freeze();
-            final double buildup = noElemental ? 0 : freezeSettings.buildupFor(cold
+            // 2026-10-28 照 PoE2（磐石之拳的凜冬之握）：擊中的所有傷害都算進凍結累積
+            final boolean allFreeze = StatKeys.flag(attack, tw.exilecore.item.unique.UniqueStats.ALL_DAMAGE_FREEZES);
+            final double buildup = noElemental ? 0 : allFreeze ? freezeSettings.buildupFor(allDamage,
+                    tw.exilecore.stats.TreeKeys.freezeThreshold(freezePoise, defenderSheet) * entry.state.freezeMeter().thresholdMultiplier(now),
+                    attack.apply(StatKeys.FREEZE_BUILDUP, 1.0, context)
+                            * defenderSheet.more(tw.exilecore.stats.SupportExtraKeys.FREEZE_BUILDUP_TAKEN, Set.of()), playerTarget)
+                    : freezeSettings.buildupFor(cold
                             + (unravel == 0 || StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.CHAOS_FREEZES) ? chaos : 0)
-                            + (StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.PHYSICAL_FREEZES) ? physical : 0) + chaoticFreeze,
+                            + (StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.PHYSICAL_FREEZES) ? physical : physicalElemental) + chaoticFreeze,
                     tw.exilecore.stats.TreeKeys.freezeThreshold(freezePoise, defenderSheet) * entry.state.freezeMeter().thresholdMultiplier(now),
                     attack.apply(StatKeys.FREEZE_BUILDUP, 1.0, context)
                             * defenderSheet.more(tw.exilecore.stats.SupportExtraKeys.FREEZE_BUILDUP_TAKEN, Set.of()), playerTarget); // 2026-10-27 照 PoE2：濕透
             if (buildup > 0) {
                 if (entry.state.addBuildup(buildup, now, freezeSettings.decayDelayTicks(playerTarget), freezeSettings.decayPerTick(playerTarget))) {
-                    if (StatKeys.flag(defenderSheet, StatKeys.FLAG_FREEZE_IMMUNE) || avoided(defenderSheet, StatKeys.AVOID_FREEZE, random)) {
+                    if (StatKeys.flag(defenderSheet, StatKeys.FLAG_FREEZE_IMMUNE) || avoided(defenderSheet, StatKeys.AVOID_FREEZE, random)
+                            || immuneAfter(defender, defenderSheet, "freeze", now)) { // 2026-10-28（悲運之縛）
                         entry.state.resetBuildup();
                     } else {
                         final double seconds = AilmentConfig.duration(config.freezeDuration(playerTarget),
@@ -563,7 +575,8 @@ public final class AilmentService {
                     attack.increased(StatKeys.SHOCK_CHANCE, context))
                     * attack.more(StatKeys.SHOCK_CHANCE, context) // 2026-10：輔助的「更多／更少機率」
                     * defenderSheet.more(tw.exilecore.stats.SupportExtraKeys.SHOCK_CHANCE_TAKEN, Set.of());
-            if (chance > 0 && random.nextDouble() < chance && !avoided(defenderSheet, StatKeys.AVOID_SHOCK, random)) {
+            if (chance > 0 && random.nextDouble() < chance && !avoided(defenderSheet, StatKeys.AVOID_SHOCK, random)
+                    && !immuneAfter(defender, defenderSheet, "shock", now)) { // 2026-10-28（悲運之縛）
                 final double effect = config.shockEffect(attack.increased(StatKeys.SHOCK_EFFECT, context))
                         * tw.exilecore.stats.TreeKeys.selfEffect(defenderSheet, tw.exilecore.stats.TreeKeys.SHOCK_EFFECT_ON_SELF); // 2026-10-26：身上的感電效果
                 final double seconds = AilmentConfig.duration(config.shockDuration(playerTarget),
@@ -621,17 +634,21 @@ public final class AilmentService {
             }
         }
         // 中毒（PoE2）：物理與混沌傷害都算，可以疊加
-        if (physical + chaos > 0) {
+        // 2026-10-28 照 PoE2（瘟疫之指）：擊中的所有傷害都算進中毒幅度
+        final double poisonBase = StatKeys.flag(attack, tw.exilecore.item.unique.UniqueStats.ALL_DAMAGE_POISONS) ? allDamage : physical + chaos;
+        if (poisonBase > 0) {
             final Set<String> context = skill.contextFor(DamageType.CHAOS);
             final double onCrit = result.crit() ? attack.flat(tw.exilecore.item.unique.UniqueStats.POISON_ON_CRIT, context) / 100.0 : 0; // 2026-10-26（夢鏡面具）
-            final double chance = Math.max(onCrit, config.poisonChance(physical + chaos, threshold, attack.flat(StatKeys.POISON_CHANCE, context),
+            final double chance = Math.max(onCrit, config.poisonChance(poisonBase, threshold, attack.flat(StatKeys.POISON_CHANCE, context),
                     attack.increased(StatKeys.POISON_CHANCE, context))
                     * attack.more(StatKeys.POISON_CHANCE, context)); // 2026-10：輔助的「更多／更少機率」
             if (chance > 0 && random.nextDouble() < chance && !avoided(defenderSheet, StatKeys.AVOID_POISON, random)
                     && !StatKeys.flag(defenderSheet, StatKeys.FLAG_CHAOS_IMMUNE) // 2026-10：混沌免疫也免疫中毒
                     && !oneDamagingAilment(defender, defenderSheet)) {
                 final double poisonFaster = tw.exilecore.stats.TreeEffectKeys.ailmentSpeed(attack, null, context); // 2026-10-26 照 PoE2 天賦樹：傷害型異常快 x%
-                final double dps = config.poisonDps(physical + chaos, attack.increased(StatKeys.POISON_MAGNITUDE, context),
+                // 2026-10-28 照 PoE2（磐石之拳的瘟疫之指）：以暴擊施加的中毒幅度另外增加
+                final double critMagnitude = result.crit() ? attack.increased(tw.exilecore.item.unique.UniqueStats.POISON_MAGNITUDE_CRIT, context) : 0;
+                final double dps = config.poisonDps(poisonBase, attack.increased(StatKeys.POISON_MAGNITUDE, context) + critMagnitude,
                         attack.more(StatKeys.POISON_MAGNITUDE, context)) * resistFactor(defenderSheet, DamageType.CHAOS) // 2026-10-26：減免前的傷害，再吃混沌抗性
                         * poisonFaster;
                 final double seconds = AilmentConfig.duration(config.poisonDuration(),
@@ -709,8 +726,10 @@ public final class AilmentService {
             final double seconds = debuffSeconds(attack, skill); // 2026-10-26 照 PoE2：吃技能持續時間的加成；這次之前固定
             final double dps = allDamage * debuffPercent / 100.0 + debuffBase * resistFactor(defenderSheet, DamageType.CHAOS);
             entry = entry == null ? track(defender) : entry;
+            final boolean spreads = StatKeys.flag(attack, StatKeys.FLAG_DEBUFF_SPREAD);
             entry.state.addDebuff(debuffKey(skill.id()), new AilmentState.Debuff(dps, now + ticks(seconds),
-                    attacker instanceof Player ? attacker.getUniqueId() : null, StatKeys.flag(attack, StatKeys.FLAG_DEBUFF_SPREAD), 0, dps, ticks(seconds)));
+                    attacker instanceof Player ? attacker.getUniqueId() : null, spreads, 0, dps, ticks(seconds),
+                    spreads ? spreadRadius(attack, skill) : 0)); // 2026-10-28 照 PoE2 Contagion：傳染半徑 1.7 格 × 範圍加成
             changed = true;
         }
         // 暈眩（PoE2 的重暈）：任何傷害都累積，物理算 100%、其他算幾成；滿了就暈一段時間。
@@ -828,10 +847,13 @@ public final class AilmentService {
             }
         }
         // 電擊（PoE2）：要有「電擊機率」的來源，閃電傷害才會累積；滿了就麻一段時間
-        if (lightning > 0) {
+        // 2026-10-28 照 PoE2（磐石之拳的奇多可之流）：攻擊的所有傷害都累積電擊
+        final boolean attackAllElectrocute = skill.isAttack() && StatKeys.flag(attack, tw.exilecore.item.unique.UniqueStats.ATTACK_ALL_ELECTROCUTE);
+        final double electrocuteBase = attackAllElectrocute ? allDamage : lightning;
+        if (electrocuteBase > 0) {
             final Set<String> context = skill.contextFor(DamageType.LIGHTNING);
             // 2026-10-27 照 PoE2 霆爆（Eonyr's Thunder）：閃電傷害本身就累積電擊（等於 100% 的來源）
-            final double chance = StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.LIGHTNING_ELECTROCUTES) ? 1.0
+            final double chance = StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.LIGHTNING_ELECTROCUTES) || attackAllElectrocute ? 1.0
                     : Math.max(0, attack.flat(StatKeys.ELECTROCUTE_CHANCE, context))
                     * Math.max(0, 1 + attack.increased(StatKeys.ELECTROCUTE_CHANCE, context))
                     * Math.max(0, attack.more(StatKeys.ELECTROCUTE_CHANCE, context)) / 100.0; // 2026-10-27：更多（風暴箭的 −100%）以前沒算到
@@ -840,7 +862,7 @@ public final class AilmentService {
             if (chance > 0) {
                 // 2026-10-26 照 PoE2：閃電 × 1.7 ÷ 暈眩門檻（這次之前 150% × 閃電 ÷ 異常門檻，傳奇怪 50%）
                 entry = entry == null ? track(defender) : entry;
-                final double buildup = config.electrocute().buildupFor(lightning, freezePoise * entry.state.electrocute().thresholdMultiplier(now),
+                final double buildup = config.electrocute().buildupFor(electrocuteBase, freezePoise * entry.state.electrocute().thresholdMultiplier(now),
                         electrocuteBuildupScale(attack.increased(StatKeys.ELECTROCUTE_BUILDUP, context), attack.more(StatKeys.ELECTROCUTE_BUILDUP, context),
                                 defenderSheet.increased(tw.exilecore.stats.SpellParityKeys.ELECTROCUTE_BUILDUP_TAKEN, Set.of()))
                                 * Math.min(1.0, chance), playerTarget);
@@ -951,14 +973,116 @@ public final class AilmentService {
         return skillId == null ? "?" : dot < 0 ? skillId : skillId.substring(0, dot);
     }
 
-    /** 傳染的半徑（格）。 */
-    static final double SPREAD_RADIUS = 4.0;
+    /** 傳染的半徑（格）：2026-10-28 照 PoE2 Contagion（Spread radius 1.7 公尺）；這次之前 4 格的方塊。 */
+    static final double SPREAD_RADIUS = 1.7;
     /** 每傳一手更多幾倍、最多幾手（PoE2：每手更多 100%，最多更多 300%）。 */
     static final int SPREAD_MAX = 3;
+    /** 2026-10-28：屍體、召喚物帶著的瘟疫掛上去用的減益代號（跟施放時的同一個，不疊加）。 */
+    static final String CONTAGION_KEY = "contagion";
+
+    /** 2026-10-28 照 PoE2 Contagion：召喚物（復活帶著瘟疫的屍體叫出來的）→ 牠擊中時傳出去的瘟疫。 */
+    private final Map<UUID, tw.exilecore.combat.Corpses.Contagion> carriers = new HashMap<>();
 
     /**
-     * 疫潮（2026-10，PoE2）：掛著會傳染的減益的敵人死掉時，傳給附近的敵人（怪物），每傳一手更多 100% 傷害（最多更多 300%）、
-     * 時間重新算。被傳到的敵人身上已經有更強的就不換。
+     * 2026-10-28 照 PoE2 Contagion：傳染半徑 = debuff.spread_radius（沒寫照 1.7 格）×（技能有範圍標籤時）√ 範圍的增加／更多
+     * （瘟疫品質的「更多範圍」、增幅範圍這些都算）。純函式（測試用）。
+     */
+    public static double spreadRadius(final StatSheet attack, final SkillProfile skill) {
+        final double base = attack.flat(tw.exilecore.stats.SkillMechanicKeys.DEBUFF_SPREAD_RADIUS, Set.of());
+        final Set<String> tags = skill.tags() == null ? Set.of() : skill.tags();
+        final double scale = tags.contains(tw.exilecore.stats.Tags.AREA)
+                ? Math.sqrt(Math.max(0.05, attack.apply(StatKeys.SKILL_AREA, 1.0, tags))) : 1.0;
+        return (base > 0 ? base : SPREAD_RADIUS) * scale;
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Contagion：死掉的敵人身上會傳出去的減益（純函式，測試用）。身上沒有會傳染的（瘟疫）就什麼都不傳；有的話：
+     * 瘟疫自己多傳一手（每手更多 100%，最多更多 300%），其他的混沌持續傷害減益（汲魂彈、裂魂這類）照原本的每秒傷害、
+     * 持續時間都照掛上時的完整時間刷新（不知道的照剩下的）。這次之前只傳瘟疫自己。
+     */
+    static Map<String, AilmentState.Debuff> spreadSet(final Map<String, AilmentState.Debuff> on, final long now) {
+        boolean contagion = false;
+        for (final AilmentState.Debuff debuff : on.values()) {
+            contagion |= debuff.spread() && debuff.endTick() > now;
+        }
+        if (!contagion) {
+            return Map.of();
+        }
+        final Map<String, AilmentState.Debuff> passed = new java.util.LinkedHashMap<>();
+        for (final Map.Entry<String, AilmentState.Debuff> one : on.entrySet()) {
+            final AilmentState.Debuff debuff = one.getValue();
+            if (debuff.endTick() <= now) {
+                continue;
+            }
+            if (debuff.spread()) {
+                final int spreads = Math.min(SPREAD_MAX, debuff.spreads() + 1);
+                // 2026-10-26 照 PoE2：傳出去的照掛上時的完整持續時間（含技能持續時間的加成）重新算；這次之前 min(5 秒, 剩下 + 2 秒)
+                final long length = debuff.length() > 0 ? debuff.length() : Math.min(ticks(5), Math.max(ticks(1), debuff.endTick() - now) + ticks(2));
+                passed.put(one.getKey(), new AilmentState.Debuff(debuff.base() * (1 + spreads), now + length, debuff.source(), true, spreads,
+                        debuff.base(), length, debuff.radius()));
+            } else {
+                final long length = debuff.length() > 0 ? debuff.length() : Math.max(1, debuff.endTick() - now);
+                passed.put(one.getKey(), new AilmentState.Debuff(debuff.dps(), now + length, debuff.source(), false, debuff.spreads(),
+                        debuff.base(), length, debuff.radius()));
+            }
+        }
+        return passed;
+    }
+
+    /** 2026-10-28：一組傳出去的減益裡瘟疫自己的那個（傳染半徑、屍體帶著的照它）；沒有回傳 null。 */
+    static AilmentState.Debuff spreader(final Map<String, AilmentState.Debuff> passed) {
+        AilmentState.Debuff best = null;
+        for (final AilmentState.Debuff debuff : passed.values()) {
+            if (debuff.spread() && (best == null || debuff.dps() > best.dps())) {
+                best = debuff;
+            }
+        }
+        return best;
+    }
+
+    /** 2026-10-28 照 PoE2 Contagion：屍體、召喚物帶著的瘟疫掛到目標身上的樣子（純函式，測試用）。 */
+    static AilmentState.Debuff contagionDebuff(final tw.exilecore.combat.Corpses.Contagion carried, final long now) {
+        final int spreads = Math.max(0, Math.min(SPREAD_MAX, carried.spreads()));
+        final long length = carried.length() > 0 ? carried.length() : ticks(5);
+        return new AilmentState.Debuff(carried.base() * (1 + spreads), now + length, carried.source(), true, spreads, carried.base(), length,
+                carried.radius());
+    }
+
+    /** 2026-10-28 照 PoE2 Contagion：這隻召喚物（復活帶著瘟疫的屍體叫出來的）擊中時傳出瘟疫，直到牠死掉、消失。 */
+    public void carryContagion(final LivingEntity carrier, final tw.exilecore.combat.Corpses.Contagion carried) {
+        if (carrier != null && carried != null) {
+            carriers.put(carrier.getUniqueId(), carried);
+        }
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Contagion：復活帶著瘟疫的屍體的召喚物擊中 target 時把瘟疫傳出去（CombatListener 在召喚物擊中時呼叫）。
+     * 這隻不是帶著瘟疫的召喚物回傳 false。這次之前沒有。
+     */
+    public boolean carrierHit(final LivingEntity carrier, final LivingEntity target) {
+        return carrier != null && applyContagion(target, carriers.get(carrier.getUniqueId()));
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Contagion：把屍體、召喚物帶著的瘟疫掛到這隻敵人（怪物）身上（引爆屍體的爆炸、復活的召喚物擊中時）。
+     * 回傳有沒有掛上。
+     */
+    public boolean applyContagion(final LivingEntity target, final tw.exilecore.combat.Corpses.Contagion carried) {
+        if (carried == null || target == null || target instanceof Player || !target.isValid() || target.isDead()
+                || plugin.monsters() == null || plugin.monsters().data(target).isEmpty()) {
+            return false;
+        }
+        Tracked entry = tracked.get(target.getUniqueId());
+        entry = entry == null ? track(target) : entry;
+        entry.state.addDebuff(CONTAGION_KEY, contagionDebuff(carried, now()));
+        return true;
+    }
+
+    /**
+     * 瘟疫（2026-10，PoE2 Contagion）：掛著瘟疫的敵人死掉時，把瘟疫自己、目標身上的詛咒、其他混沌持續傷害減益傳給 1.7 格（× 範圍加成）內
+     * 的敵人（怪物），持續時間刷新；瘟疫每傳一手更多 100% 傷害（最多更多 300%）。被傳到的敵人身上已經有更強的就不換。
+     * 牠留下的屍體也帶著瘟疫（復活、引爆時傳出去）。
+     * 2026-10-28 照 PoE2；這次之前只傳瘟疫自己、固定 4 格的方塊、屍體不帶。
      */
     public void spreadDebuffs(final LivingEntity dead) {
         final Tracked entry = tracked.get(dead.getUniqueId());
@@ -966,28 +1090,41 @@ public final class AilmentService {
             return;
         }
         final long now = now();
-        for (final java.util.Map.Entry<String, AilmentState.Debuff> one : entry.state.debuffs(now).entrySet()) {
-            final AilmentState.Debuff debuff = one.getValue();
-            if (!debuff.spread()) {
+        final Map<String, AilmentState.Debuff> passed = spreadSet(entry.state.debuffs(now), now);
+        final AilmentState.Debuff contagion = spreader(passed);
+        if (contagion == null) {
+            return;
+        }
+        final double radius = contagion.radius() > 0 ? contagion.radius() : SPREAD_RADIUS;
+        final Location at = dead.getLocation();
+        final double reach = radius + 3;
+        for (final org.bukkit.entity.Entity near : dead.getNearbyEntities(reach, reach, reach)) {
+            if (!(near instanceof LivingEntity living) || near instanceof Player || !living.isValid() || living.isDead()
+                    || plugin.monsters() == null || plugin.monsters().data(living).isEmpty()
+                    || !withinRadius(at, living.getBoundingBox(), radius)) {
                 continue;
             }
-            final int spreads = Math.min(SPREAD_MAX, debuff.spreads() + 1);
-            // 2026-10-26 照 PoE2：傳出去的照掛上時的完整持續時間（含技能持續時間的加成）重新算；這次之前 min(5 秒, 剩下 + 2 秒)
-            final long length = debuff.length() > 0 ? debuff.length() : Math.min(ticks(5), Math.max(ticks(1), debuff.endTick() - now) + ticks(2));
-            final AilmentState.Debuff passed = new AilmentState.Debuff(debuff.base() * (1 + spreads), now + length,
-                    debuff.source(), true, spreads, debuff.base(), length);
-            for (final org.bukkit.entity.Entity near : dead.getNearbyEntities(SPREAD_RADIUS, SPREAD_RADIUS, SPREAD_RADIUS)) {
-                if (!(near instanceof LivingEntity living) || near instanceof Player || !living.isValid() || living.isDead()
-                        || plugin.monsters() == null || plugin.monsters().data(living).isEmpty()) {
-                    continue;
-                }
-                Tracked other = tracked.get(living.getUniqueId());
-                other = other == null ? track(living) : other;
-                other.state.addDebuff(one.getKey(), passed);
+            Tracked other = tracked.get(living.getUniqueId());
+            other = other == null ? track(living) : other;
+            for (final Map.Entry<String, AilmentState.Debuff> one : passed.entrySet()) {
+                other.state.addDebuff(one.getKey(), one.getValue());
             }
-            dead.getWorld().spawnParticle(org.bukkit.Particle.SQUID_INK, dead.getLocation().add(0, 1, 0), 30, SPREAD_RADIUS / 2, 0.6,
-                    SPREAD_RADIUS / 2, 0.02);
+            if (plugin.combat() != null) {
+                plugin.combat().debuffs().spreadCurses(dead.getUniqueId(), living.getUniqueId(), now); // 詛咒也傳（時間刷新）
+            }
         }
+        if (plugin.combat() != null && at.getWorld() != null) {
+            plugin.combat().corpses().markContagion(at.getWorld().getUID(), at.getX(), at.getZ(), new tw.exilecore.combat.Corpses.Contagion(
+                    contagion.source(), contagion.base(), contagion.spreads(), contagion.length(), radius), now);
+        }
+        dead.getWorld().spawnParticle(org.bukkit.Particle.SQUID_INK, at.clone().add(0, 1, 0), 30, radius / 2, 0.6, radius / 2, 0.02);
+    }
+
+    /** 碰撞箱離 center 在 radius 格內（水平；上下 2 格內），跟技能的範圍判定一樣。 */
+    static boolean withinRadius(final Location center, final org.bukkit.util.BoundingBox box, final double radius) {
+        final double dx = Math.max(0, Math.max(box.getMinX() - center.getX(), center.getX() - box.getMaxX()));
+        final double dz = Math.max(0, Math.max(box.getMinZ() - center.getZ(), center.getZ() - box.getMaxZ()));
+        return dx * dx + dz * dz <= radius * radius && box.getMaxY() >= center.getY() - 2 && box.getMinY() <= center.getY() + 2;
     }
 
     /**
@@ -1062,6 +1199,13 @@ public final class AilmentService {
     public static double debuffSeconds(final StatSheet attack, final tw.exilecore.stats.SkillProfile skill) {
         final double base = attack.flat(StatKeys.DEBUFF_DURATION, Set.of());
         return (base > 0 ? base : 4) * Math.max(0.1, attack.apply(StatKeys.SKILL_DURATION, 1.0, skill.tags()));
+    }
+
+    /** 2026-10-28 照 PoE2（阿茲里的捷思）：擊中的物理傷害有 x% 直接算進這隻怪的失血。 */
+    public void addBloodLoss(final LivingEntity entity, final double amount) {
+        if (amount > 0 && !(entity instanceof Player)) {
+            track(entity).bloodLoss += amount;
+        }
     }
 
     /** 2026-10-28 照 PoE2 Blood Hunt：用掉這隻怪累積的失血（回傳用掉多少，之後從 0 再累積）。 */
@@ -1449,6 +1593,30 @@ public final class AilmentService {
         }
         final double chance = AilmentConfig.avoidChance(defender.get(stat));
         return chance > 0 && random.nextDouble() < chance;
+    }
+
+    /** 2026-10-28（悲運之縛）：玩家 → 元素異常 → 上次中的 tick。 */
+    private final Map<UUID, Map<String, Long>> lastSelfAilment = new java.util.HashMap<>();
+
+    /**
+     * 2026-10-28 照 PoE2（悲運之縛）：「你在被冰緩後，有 6 秒無法被冰緩」這種（ailment.immune_after.類型，秒）。
+     * 還在免疫期回傳 true；不在免疫期回傳 false 並記下這次（呼叫的地方接著就會讓他中這個異常）。
+     */
+    private boolean immuneAfter(final LivingEntity defender, final StatSheet defenderSheet, final String ailment, final long now) {
+        if (!(defender instanceof Player)) {
+            return false;
+        }
+        final double seconds = defenderSheet.flat(tw.exilecore.item.unique.UniqueStats.IMMUNE_AFTER + ailment, Set.of());
+        if (seconds <= 0) {
+            return false;
+        }
+        final Map<String, Long> last = lastSelfAilment.computeIfAbsent(defender.getUniqueId(), id -> new java.util.HashMap<>());
+        final Long at = last.get(ailment);
+        if (at != null && now - at < Math.round(seconds * 20)) {
+            return true;
+        }
+        last.put(ailment, now);
+        return false;
     }
 
     private Tracked track(final LivingEntity entity) {
@@ -2009,8 +2177,10 @@ public final class AilmentService {
     }
 
     /**
-     * 站在點燃／冰緩／感電的地面上（怪物的足跡、時間泡泡）：直接上異常，不看機率。
-     * value：點燃是每秒傷害、冰緩是減速比例（0.3）、感電是受到的傷害增加（0.2）。免疫元素異常的不算。
+     * 站在點燃／冰緩／感電的地面上（怪物的足跡、地圖詞綴、時間泡泡）。
+     * value：點燃是「視同這麼多火焰傷害」（2026-10-28 照 PoE2 Ignited Ground：每次疊易燃，總和到 50% 才點燃；
+     * 點燃每秒 20%、4 秒；這次之前 value 是每秒傷害、每 0.25 秒直接點燃 2 秒）、冰緩是減速比例（0.3）、感電是受到的傷害增加（0.2）。
+     * 免疫元素異常、免疫這種異常（護符）的不算。
      */
     public void groundAilment(final Player player, final AilmentType type, final double value, final double seconds) {
         if (!canBeAilmented(player) || value <= 0 || plugin.zones() != null && plugin.zones().inTown(player.getLocation())) {
@@ -2023,20 +2193,53 @@ public final class AilmentService {
         final long now = now();
         final Tracked entry = track(player);
         switch (type) {
-            // 2026-10-28 修正：燃燒地面（怪物的拖痕、地圖詞綴）是火焰持續傷害，吃火焰抗性（照抗性上限）；這次之前不吃抗性
-            case IGNITE -> entry.state.addIgnite(value * igniteResist(sheet, DamageType.FIRE), now + ticks(seconds), null);
-            case CHILL -> {
-                if (StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE)) {
+            case IGNITE -> {
+                // 2026-10-28 照 PoE2 Ignited Ground：站在上面每次疊易燃（視同 value 點火焰傷害 ÷ 異常門檻），總和到 50% 才點燃（不擲機率）；
+                // 點燃 = value 的 20%／秒、4 秒（吃自己身上的異常持續時間、點燃效果），吃火焰抗性；免疫點燃、避免點燃有用。
+                // 這次之前：每 0.25 秒直接上 2 秒的點燃（value 就是每秒傷害），不看易燃、免疫點燃（護符）、避免點燃
+                if (StatKeys.flag(sheet, "flag.immune.ignite")) {
                     return;
+                }
+                final double threshold = AilmentConfig.threshold(baseThreshold(player, null, sheet)
+                        + Math.max(0, sheet.flat(StatKeys.AILMENT_THRESHOLD, Set.of())), sheet.increased(StatKeys.AILMENT_THRESHOLD, Set.of()));
+                final double total = entry.state.addFlammability(config.flammability(value, threshold, 0, 0),
+                        now + ticks(config.flammabilityDuration(true)), now);
+                if (total < GROUND_FLAMMABILITY || avoided(sheet, StatKeys.AVOID_IGNITE, plugin.items().random())
+                        || StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.ONE_DAMAGING_AILMENT) && (has(player, AilmentType.BLEED) || has(player, AilmentType.POISON))) {
+                    update(player, entry, now);
+                    return;
+                }
+                final double dps = groundIgniteDps(config, value, igniteResist(sheet, DamageType.FIRE),
+                        tw.exilecore.stats.TreeKeys.selfEffect(sheet, tw.exilecore.stats.TreeKeys.IGNITE_EFFECT_ON_SELF));
+                final double duration = AilmentConfig.duration(config.igniteDuration(), 0, sheet.increased(StatKeys.SELF_AILMENT_DURATION, Set.of())
+                        + sheet.increased(StatKeys.SELF_AILMENT_DURATION + ".ignite", Set.of()));
+                entry.state.addIgnite(dps, now + ticks(duration), null);
+            }
+            case CHILL -> {
+                if (StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) || StatKeys.flag(sheet, "flag.immune.chill")) {
+                    return; // 2026-10-28：免疫冰緩（護符）也擋地面；這次之前只看免疫元素異常
                 }
                 entry.state.applyChill(value * Math.max(0, sheet.apply(StatKeys.SLOW_TAKEN, 1.0, Set.of())), now + ticks(seconds), now);
             }
-            case SHOCK -> entry.state.applyShock(value, now + ticks(seconds), now);
+            case SHOCK -> {
+                if (StatKeys.flag(sheet, "flag.immune.shock")) {
+                    return; // 2026-10-28：免疫感電（護符）也擋地面
+                }
+                entry.state.applyShock(value, now + ticks(seconds), now);
+            }
             default -> {
                 return;
             }
         }
         update(player, entry, now);
+    }
+
+    /**
+     * 2026-10-28 照 PoE2：點燃地面點燃玩家的每秒傷害 = 視同的火焰傷害 × 點燃每秒 20% × 火焰抗性 × 身上的點燃效果。
+     * resist：{@link #igniteResist} 的倍率（0.25 = 75% 抗性）。
+     */
+    static double groundIgniteDps(final AilmentConfig config, final double fire, final double resist, final double selfEffect) {
+        return config.igniteDps(fire, 0, 1) * Math.max(0, resist) * Math.max(0, selfEffect);
     }
 
     /** 自己著火（煉獄使者的獰笑焚身）：每秒 dps 火焰傷害，持續 seconds 秒；已經在燒更強的就不換。 */
@@ -2499,6 +2702,7 @@ public final class AilmentService {
     /** 清掉一個實體身上的異常並還原（死亡、登出、換角色、卸載）。 */
     public void clear(final LivingEntity entity) {
         fullLifeHits.remove(entity.getUniqueId());
+        carriers.remove(entity.getUniqueId()); // 2026-10-28：帶著瘟疫的召喚物死掉、消失
         final Tracked entry = tracked.remove(entity.getUniqueId());
         if (entry != null) {
             entry.state.clear();
@@ -2527,7 +2731,24 @@ public final class AilmentService {
 
     /** 玩家動作列上的異常（沒有回傳空字串）：燃 2.5s、寒 25%、凍 1.2s、凍結 40%、電 +20%、血、毒、暈 0.8s／暈眩 45%、麻／電擊 60%。 */
     public String statusText(final Player player) {
-        final Tracked entry = tracked.get(player.getUniqueId());
+        return statusText(player.getUniqueId());
+    }
+
+    /**
+     * 2026-10-28 照站長：Boss 血條上寫 Boss 身上的異常（前面帶兩個空白；沒有回傳空字串）。
+     * 每個血條更新名稱時接在後面（BossService、MapBosses、FestivalService、WorldEventService）。
+     */
+    public String bossBarSuffix(final org.bukkit.entity.Entity boss) {
+        if (boss == null) {
+            return "";
+        }
+        final String text = statusText(boss.getUniqueId());
+        return text.isEmpty() ? "" : "  " + text;
+    }
+
+    /** 同 {@link #statusText(Player)}，任何追蹤中的實體都可以（怪物、Boss）。 */
+    public String statusText(final UUID id) {
+        final Tracked entry = tracked.get(id);
         if (entry == null) {
             return "";
         }

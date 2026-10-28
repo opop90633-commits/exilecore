@@ -1367,7 +1367,8 @@ public final class SupportExtras implements Listener {
             }
         }
         // Impale：擊中時穿刺（存下減免前物理傷害的 30%）
-        final double impale = effective.flat(SupportExtraKeys.IMPALE_ON_HIT, tags);
+        final double impale = effective.flat(SupportExtraKeys.IMPALE_ON_HIT, tags)
+                + (result.crit() ? effective.flat(tw.exilecore.item.unique.UniqueStats.IMPALE_ON_CRIT, tags) : 0); // 2026-10-28（驚懼之拳：暴擊會造成穿刺）
         if (impale > 0 && result.outgoing().get(DamageType.PHYSICAL) > 0 && roll(impale)) {
             tw.exilecore.combat.Impales.shared().add(target, player.getUniqueId(), tw.exilecore.stats.KeystoneOriginKeys.impaleAmount(
                     result.outgoing().get(DamageType.PHYSICAL), effective.increased(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_MAGNITUDE, tags)));

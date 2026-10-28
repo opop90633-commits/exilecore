@@ -18,7 +18,8 @@ import java.util.Set;
  *   base: jade_amulet
  *   drop_level: 66
  *   sources: [final]               # 誰會掉：final（終局 Boss）、map_boss（任何地圖 Boss）、地圖代號（那張圖的 Boss）
- *   weight: 100                    # 同一個來源裡的權重
+ *   weight: 100                    # 同一個來源裡的權重（2026-10-28：沒寫的照 rarity，見 UniqueRarity）
+ *   rarity: uncommon               # 2026-10-28 照 PoE2 的稀有度：全域掉落、賭博、僥倖石的權重（UniqueRarity）
  *   flavour: ["它曾經照亮整片天空。"]
  *   mods:
  *     - { text: "+{value} 最大生命", value: [60, 80], stats: [{ stat: life.max, type: FLAT, value: "{value}" }] }
@@ -153,8 +154,11 @@ public record UniqueItem(String id, String name, String base, List<String> affix
                 legacy.put(from, mapping);
             }
         }
+        // 2026-10-28 照 PoE2：沒寫 weight 的照 rarity（UniqueRarity 的全域掉落權重）；這次之前一律 100
+        final UniqueRarity rarity = UniqueRarity.parse(node.string("rarity", null));
+        final int weight = node.integer("weight", rarity == null ? 100 : rarity.dropWeight());
         return new UniqueItem(id, name, base, affixIds, node.strings("flavour"), Math.max(1, node.integer("drop_level", 1)),
-                Math.max(0, node.integer("weight", 100)), sources, version, legacy, !retired && node.bool("chase", false));
+                Math.max(0, weight), sources, version, legacy, !retired && node.bool("chase", false));
     }
 
     /** 這個來源（final、map_boss、地圖代號）會不會掉這件。 */

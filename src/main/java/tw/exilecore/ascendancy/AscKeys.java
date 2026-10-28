@@ -317,7 +317,10 @@ public final class AscKeys {
     public static final String MERIDIANS = "asc.meridians";
     /** 山巒之道：山巒之教的上限（30）。 */
     public static final String MOUNTAIN = "asc.mountain";
-    /** 石拳之道：腿甲變成石拳（詞綴數值增加 x%、防禦換成每等級 +3 閃避 +1 能量護盾、不需要能力值；50）。 */
+    /**
+     * 石拳之道（FLAT 1）：穿上的腿甲（原作的手套）變成磐石之拳（tw.exilecore.item.Stonefist）、裝備腿甲不需要能力值。
+     * 2026-10-28 照 PoE2；這次之前是 50（詞綴數值增加 50%、防禦換成每等級 +3 閃避 +1 能量護盾）。
+     */
     public static final String STONEFIST = "asc.stonefist";
     /** 使用技能時每用掉 1 層連擊，能量護盾回充延遲 -x 秒（武術精通 0.2）。 */
     public static final String COMBO_ES_DELAY = "asc.combo_es_delay";

@@ -65,6 +65,7 @@ class ShockchainArrowTest {
         assertNull(config.skill("proc_shockchain_wave"));
         assertTrue(arrow.description().contains("雷霆之杖"));
         assertTrue(arrow.description().contains("不會消耗電擊"));
+        assertFalse(arrow.description().contains("再多 3 次"), "每支箭只充能一次");
     }
 
     @Test
@@ -81,29 +82,70 @@ class ShockchainArrowTest {
         assertEquals(20, rod.duration(), 1e-9);
         assertEquals(10, rod.max());
         assertEquals(8, rod.chains());
+        assertEquals(1.0, rod.charge(), 1e-9); // PoE2 0.2.0：被連到後充能 1 秒
+        assertEquals(8, ShockchainArrows.CHAIN_RANGE, 1e-9); // PoE2 0.2.0：連鎖最遠 8 公尺
     }
 
     @Test
-    void chainsOnlyFromLightningAilmentsAndRepeats() {
-        // 第一下打到沒有閃電異常的：普通的一箭（不連鎖、不放震波、不插杖）
-        ShockchainArrows.Outcome plain = ShockchainArrows.onHit(3, false, false);
+    void orbBoltChainsThroughRods() {
+        // 2026-10-28 照 PoE2：雷雲的連鎖可以連到雷霆之杖，再從杖往下連（SkillZones.bolt 把杖跟敵人放在同一串候選）
+        final LightningRods.Rod rod = new LightningRods.Rod(UUID.randomUUID(), UUID.randomUUID(), new Vector(3, 0, 0), 0, 400, 8, 20, null, 2.5,
+                "lightning_arrow", "chain_arrow");
+        final Object first = new Vector(0, 0, 0);
+        final Object far = new Vector(6, 0, 0);
+        final List<Object> chain = ZonePulses.boltChain(List.of(first), List.of(first, rod, far), 5, 3.5,
+                (a, b) -> position(a).distance(position(b)), new java.util.Random(1));
+        assertEquals(List.of(first, rod, far), chain, "敵人 → 杖 → 杖那邊的敵人");
+    }
+
+    private static Vector position(final Object node) {
+        return node instanceof LightningRods.Rod rod ? rod.at : (Vector) node;
+    }
+
+    @Test
+    void chargesOnceOnFirstLightningAilmentHit() {
+        // 第一下打到沒有閃電異常的：普通的一箭（不連鎖、不放震波、不充能、不插杖）
+        final ShockchainArrows.Outcome plain = ShockchainArrows.onHit(3, false, false);
         assertEquals(0, plain.addChains());
         assertFalse(plain.shockwave());
-        assertFalse(ShockchainArrows.lodgesRod(3, 0));
-        // 打到感電／電擊中的：震波＋多 3 次連鎖
-        ShockchainArrows.Outcome charged = ShockchainArrows.onHit(3, true, false);
+        assertFalse(plain.charges());
+        assertFalse(ShockchainArrows.lodgesRod(3, false));
+        // 2026-10-28 照 PoE2「on first hitting」：第一次打到感電／電擊中的：充能、震波、多 3 次連鎖
+        final ShockchainArrows.Outcome charged = ShockchainArrows.onHit(3, true, false);
         assertEquals(3, charged.addChains());
         assertTrue(charged.shockwave());
-        // 連鎖過來的每一下都放震波；再打到閃電異常的再多 3 次
-        ShockchainArrows.Outcome chainedPlain = ShockchainArrows.onHit(3, false, true);
+        assertTrue(charged.charges());
+        // 充能之後（連鎖的次級投射物）每一下都放震波，但再打到閃電異常的也不會再多 3 次（這次之前可重複）
+        final ShockchainArrows.Outcome chainedPlain = ShockchainArrows.onHit(3, false, true);
         assertEquals(0, chainedPlain.addChains());
         assertTrue(chainedPlain.shockwave());
-        assertEquals(3, ShockchainArrows.onHit(3, true, true).addChains());
-        assertTrue(ShockchainArrows.lodgesRod(3, 1));
+        final ShockchainArrows.Outcome chainedAfflicted = ShockchainArrows.onHit(3, true, true);
+        assertEquals(0, chainedAfflicted.addChains());
+        assertTrue(chainedAfflicted.shockwave());
+        assertFalse(chainedAfflicted.charges());
+        assertTrue(ShockchainArrows.lodgesRod(3, true));
         // 不是電鍊箭矢的投射物不受影響
         assertEquals(0, ShockchainArrows.onHit(0, true, true).addChains());
-        assertFalse(ShockchainArrows.onHit(0, true, true).shockwave());
-        assertFalse(ShockchainArrows.lodgesRod(0, 5));
+        assertFalse(ShockchainArrows.onHit(0, true, false).shockwave());
+        assertFalse(ShockchainArrows.lodgesRod(0, true));
+    }
+
+    @Test
+    void onlyInitialArrowConsumesShock() {
+        // PoE2 0.4.0：初始的箭用掉感電；次級投射物（連鎖的箭）不用掉
+        assertTrue(ShockchainArrows.consumesShock(true, false));
+        assertFalse(ShockchainArrows.consumesShock(true, true));
+        assertFalse(ShockchainArrows.consumesShock(false, false));
+    }
+
+    @Test
+    void piercesNonShockedOnlyWhileTargetingShocked() {
+        // RePoE always_pierce_non_shocked_enemies_if_targeting_shocked_enemy
+        assertTrue(ShockchainArrows.piercesOnTheWay(true, true, false, false), "追感電的，路上沒感電的穿過");
+        assertFalse(ShockchainArrows.piercesOnTheWay(false, true, false, false), "追的只有電擊（沒感電）：不穿");
+        assertFalse(ShockchainArrows.piercesOnTheWay(true, true, true, false), "路上感電的照打");
+        assertFalse(ShockchainArrows.piercesOnTheWay(true, false, false, false), "就是追的那一隻");
+        assertFalse(ShockchainArrows.piercesOnTheWay(true, true, false, true), "電擊中、會讓箭充能的照打（第一次打中）");
     }
 
     @Test

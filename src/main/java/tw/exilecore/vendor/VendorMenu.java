@@ -290,6 +290,10 @@ public final class VendorMenu extends Menu {
         if (!defence.isEmpty()) {
             lines.add("<gray>" + String.join("・", defence));
         }
+        final String granted = plugin.items().renderer().grantedLabel(base.id(), itemLevel); // 2026-10-28 照站長：賭博也寫賦予的技能
+        if (granted != null) {
+            lines.add("<gray>賦予技能：<#c9a7ff>" + tw.exilecore.item.ItemRenderer.escape(granted));
+        }
         final tw.exilecore.item.Implicit implicit = tw.exilecore.item.ItemStats.implicit(repository, base, sample);
         if (implicit != null) {
             lines.add("<#a0a0ff>" + implicit.rangeText() + " <dark_gray>(固定)"

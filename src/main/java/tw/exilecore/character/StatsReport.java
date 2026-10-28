@@ -260,6 +260,26 @@ public final class StatsReport {
                 "<dark_gray>每點力量 +2 生命、每點敏捷 +6 命中、每點智慧 +2 魔力。裝備的屬性需求也看這三個");
     }
 
+    /**
+     * 2026-10-28：保留精魂的來源與數量，例如「先祖魂約 300、光環保留 35」（同一個來源加總；只有一個來源也列，才知道是誰）。
+     * 沒有保留回傳空字串。
+     */
+    public static String spiritBreakdown(final StatSheet sheet) {
+        final Map<String, Double> bySource = new java.util.LinkedHashMap<>();
+        for (final tw.exilecore.stats.Modifier modifier : sheet.modifiersOf(StatKeys.SPIRIT_RESERVED)) {
+            if (modifier.type() == tw.exilecore.stats.ModType.FLAT) {
+                bySource.merge(modifier.source(), modifier.value(), Double::sum);
+            }
+        }
+        final List<String> parts = new ArrayList<>();
+        bySource.forEach((source, value) -> {
+            if (value > 1e-9) {
+                parts.add(String.format(Locale.ROOT, "%s %.0f", tw.exilecore.item.ItemRenderer.escape(source == null ? "" : source), value));
+            }
+        });
+        return String.join("、", parts);
+    }
+
     public static List<String> defence(final ExileCore plugin, final Player player) {
         return defence(plugin, player, false);
     }
@@ -280,6 +300,11 @@ public final class StatsReport {
         lines.add(String.format(Locale.ROOT, "<#c9a7ff>✧ 精魂 <white>%.0f</white><gray>（已用 %.0f，剩 %.0f）%s",
                 state.maxSpirit(), state.reservedSpirit(), Math.max(0, state.maxSpirit() - state.reservedSpirit()),
                 chat ? "" : " <dark_gray>精魂技能、捷光環用；劇情 Boss、權杖、胸甲與項鍊給"));
+        // 2026-10-28：已用的精魂分來源列出（先祖魂約的圖騰、光環與精魂召喚）；這次之前只有總數，看不出被誰保留
+        final String spiritSources = spiritBreakdown(state.sheet());
+        if (!spiritSources.isEmpty()) {
+            lines.add("<dark_gray>　已用：" + spiritSources);
+        }
         final double block = sheet.get(StatKeys.BLOCK_CHANCE);
         final double blockCap = DamageCalculator.blockCap(sheet); // 2026-10-27：含格擋上限加成，最多 90%（PoE2；這次之前固定顯示 50）
         lines.add(String.format(Locale.ROOT, "%s✦ 能量護盾 <white>%d%s%s⛨ 格擋 <white>%d%%%s",

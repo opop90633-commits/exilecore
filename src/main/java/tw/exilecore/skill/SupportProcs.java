@@ -69,10 +69,13 @@ public final class SupportProcs implements Listener {
         return plugin.getServer().getCurrentTick();
     }
 
-    /** 2026-10-22：技能在面板上的位置；放在英靈圖騰、星咒圖騰、引星孔裡的技能用宿主那一格（宿主孔裡的輔助就是它的）。 */
-    private static int positionOf(final PlayerState state, final String skillId) {
-        final int position = state.skills().find(skillId);
-        return position >= 0 ? position : state.skills().findInner(skillId);
+    /**
+     * 2026-10-22：技能在面板上的位置；放在英靈圖騰、星咒圖騰、引星孔裡的技能用宿主那一格（宿主孔裡的輔助就是它的）。
+     * 2026-10-28 照 PoE2（同一個技能可以放好幾顆）：主要寶石觸發的那一下（代號帶 .meta，或正在處理觸發的那一下打中）先找宿主孔裡的那顆，
+     * 自己按的先找面板上的，輔助才不會用到另一顆的；這次之前一個技能只有一顆，一律先找面板上的。
+     */
+    private int positionOf(final PlayerState state, final String skillId) {
+        return state.skills().locate(baseId(skillId), metaHit || skillId.contains(MetaGems.TRIGGERED_SUFFIX));
     }
 
     /** 這個技能（面板上的）掛的輔助裡，事件符合的 proc 修飾器。 */
@@ -123,7 +126,14 @@ public final class SupportProcs implements Listener {
     void event(final Player player, final String skillId, final String event, final Location at, final LivingEntity target) {
         final String id = baseId(skillId);
         final Location where = at != null ? at : target != null ? target.getLocation() : player.getLocation();
-        fireAll(player, id, event, where, target, null);
+        // 2026-10-28：主要寶石觸發的（代號帶 .meta）照宿主孔裡那顆的輔助（同一個技能面板上也可能有一顆）
+        final boolean previous = metaHit;
+        metaHit = previous || skillId.contains(MetaGems.TRIGGERED_SUFFIX);
+        try {
+            fireAll(player, id, event, where, target, null);
+        } finally {
+            metaHit = previous;
+        }
     }
 
     /** 最後一下打這隻怪的是不是這個玩家；是的話回傳用的技能。 */
@@ -135,7 +145,7 @@ public final class SupportProcs implements Listener {
     /** 這個技能掛的輔助裡某個屬性的 FLAT 加總。 */
     double supportFlat(final Player player, final String skillId, final String stat) {
         final PlayerState state = plugin.players().get(player);
-        final int position = positionOf(state, baseId(skillId));
+        final int position = positionOf(state, skillId); // 2026-10-28：代號帶 .meta 的找宿主孔裡那顆（positionOf 自己去掉後綴）
         if (position < 0) {
             return 0;
         }

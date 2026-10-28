@@ -153,6 +153,15 @@ public final class HitEffects implements Listener {
                 feedback(viewer, defender, "眩暈", Particle.WAX_OFF);
             }
         }
+        if (event.attacker() instanceof Player owner && !tags.contains(Tags.TOTEM_HIT)) {
+            uniqueOnHit(owner, defender, skill, result, effective, tags);
+        }
+        // 2026-10-28 照 PoE2（石拳之道的手套 HandWraps：base_onlsaught_on_hit_%_chance）：擊中時 x% 機率獲得疾速
+        final double onslaught = effective.flat(StatKeys.ONSLAUGHT_ON_HIT, tags);
+        if (onslaught > 0 && event.attacker() instanceof Player hitter && !tags.contains(Tags.TOTEM_HIT) && plugin.combat() != null
+                && roll(onslaught)) {
+            plugin.combat().killEffects().grantOnslaught(hitter);
+        }
         final double blind = effective.flat(StatKeys.BLIND_CHANCE, tags);
         if (blind > 0 && !StatKeys.flag(effective, tw.exilecore.stats.SupportExtraKeys.FLAG_CANNOT_BLIND) && roll(blind)) { // 2026-10-27 照 PoE2 Blindside：不會致盲
             final boolean wasBlind = debuffs.has(target, "blind", now); // 2026-10-28：已經致盲的不再冒字
@@ -189,6 +198,46 @@ public final class HitEffects implements Listener {
                     List.of(Modifier.increased(StatKeys.EVASION, -MAIM_EVASION, "癱瘓")), maimSlow(effective.increased(StatKeys.SLOW_MAGNITUDE, tags))));
             if (!wasMaimed) {
                 feedback(viewer, defender, "癱瘓", Particle.DAMAGE_INDICATOR);
+            }
+        }
+    }
+
+    /** 2026-10-28：荊棘反擊（磐石之拳的驚懼之拳）同一個玩家多久最多一次（tick）。 */
+    static final long THORNS_ON_CRIT_TICKS = 5;
+    private final Map<UUID, Long> thornsOnCrit = new HashMap<>();
+
+    /**
+     * 2026-10-28 照 PoE2 的手套傳奇：擊中造成失血（阿茲里的捷思）、近戰暴擊時打出荊棘傷害（磐石之拳的驚懼之拳）、
+     * 擊中時讓隊友獲得戰星（磐石之拳的意識之緣）。
+     */
+    private void uniqueOnHit(final Player player, final LivingEntity defender, final SkillProfile skill, final HitResult result,
+                             final StatSheet effective, final Set<String> tags) {
+        final double bloodLoss = effective.flat(tw.exilecore.item.unique.UniqueStats.BLOOD_LOSS_ON_HIT, tags);
+        final double physical = result.dealt().get(DamageType.PHYSICAL);
+        if (bloodLoss > 0 && physical > 0 && plugin.ailments() != null) {
+            plugin.ailments().addBloodLoss(defender, physical * bloodLoss / 100.0);
+        }
+        if (result.crit() && tags.contains(Tags.MELEE) && tags.contains(Tags.ATTACK) && !Thorns.ID.equals(skill.id())
+                && StatKeys.flag(effective, tw.exilecore.item.unique.UniqueStats.THORNS_ON_MELEE_CRIT) && plugin.combat() != null) {
+            final long now = now();
+            if (thornsOnCrit.getOrDefault(player.getUniqueId(), 0L) <= now) {
+                thornsOnCrit.put(player.getUniqueId(), now + THORNS_ON_CRIT_TICKS);
+                final SkillProfile thorns = Thorns.profile(plugin.players().sheet(player));
+                if (thorns != null && defender.isValid() && !defender.isDead()) {
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        if (defender.isValid() && !defender.isDead() && player.isOnline()) {
+                            plugin.combat().skillDamage().hit(player, defender, thorns, null);
+                        }
+                    });
+                }
+            }
+        }
+        if (plugin.combat() != null && plugin.combat().charges() != null) {
+            for (final String charge : new String[] {"frenzy", "endurance", "power"}) {
+                final double chance = effective.flat(tw.exilecore.item.unique.UniqueStats.ALLY_CHARGE_ON_HIT + charge, tags);
+                if (chance > 0 && roll(chance)) {
+                    plugin.combat().charges().grantAllies(player, charge);
+                }
             }
         }
     }

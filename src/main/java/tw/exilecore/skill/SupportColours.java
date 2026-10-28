@@ -74,7 +74,7 @@ public final class SupportColours {
                     + "neural_overload outmaneuver perfection punch_through pursuit_iii retreat_iii rearm_ii ricochet_iii "
                     + "second_wind_iii slow_potency spectral_volley tumult untouchable window_of_opportunity_ii",
             BLUE, // PoE2 RePoE 藍色
-            "bhatairs_vengeance cold_penetration concentrated_effect considered_casting controlled_destruction deep_cold elemental_army "
+            "chaos_attunement bhatairs_vengeance cold_penetration concentrated_effect considered_casting controlled_destruction deep_cold elemental_army "
                     + "elemental_focus faster_casting glacial increased_area mana_leech spell_echo "
                     // 自己歸類（法術、冰冷、混沌、召喚、詛咒、光環、銳星、暴擊率）
                     + "critical_strikes lingering minion_damage minion_life minion_speed minion_haste minion_frenzy giant_minions styx_ferry "

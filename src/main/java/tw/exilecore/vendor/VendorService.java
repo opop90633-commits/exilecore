@@ -257,7 +257,8 @@ public final class VendorService {
      * 只有能賭的（劇情期間用的）→ unique；沒有 → 0。
      */
     double uniqueWeight(final List<UniqueItem> uniques) {
-        return config().gambleUniqueWeight(!uniques.isEmpty(), bossRate(uniques));
+        // 2026-10-28 照 PoE2 的稀有度：再乘這個基底能賭到的傳奇的賭博權重倍率（常見 1、很稀有 0.04，UniqueRarity）；這次之前每個基底一樣
+        return config().gambleUniqueWeight(!uniques.isEmpty(), bossRate(uniques)) * plugin.items().repository().gambleFactor(uniques);
     }
 
     /** 這個基底賭傳奇用 boss_unique 的權重：有地圖 Boss 也會掉的，或寫在 economy.yml 的 gamble.boss_rate_uniques（2026-10-17）。 */
@@ -343,7 +344,7 @@ public final class VendorService {
         if (chaseHit) {
             data = plugin.items().generator().generateUnique(ItemGenerator.pickUnique(chase, random), level, random);
         } else if (rarity == Rarity.UNIQUE) {
-            data = plugin.items().generator().generateUnique(ItemGenerator.pickUnique(uniques, random), level, random);
+            data = plugin.items().generator().generateUnique(plugin.items().repository().pickGamble(uniques, random), level, random); // 2026-10-28：照賭博權重挑
         } else {
             data = plugin.items().generator().generate(base, rarity, level, random);
         }

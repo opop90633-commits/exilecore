@@ -474,4 +474,25 @@ class AilmentTest {
         assertEquals("增加 40% 暈眩門檻", ModifierText.describe(new Modifier(StatKeys.STUN_THRESHOLD, ModType.INCREASED, 0.4, Set.of(), "x")));
         assertEquals("25% 機率避免電擊", ModifierText.describe(new Modifier(StatKeys.AVOID_ELECTROCUTE, ModType.FLAT, 25, Set.of(), "x")));
     }
+
+    /**
+     * 2026-10-28 照 PoE2 Ignited Ground（燃燒地面太痛）：地面「視同 x 點火焰傷害」——每次疊易燃 x ÷ 門檻 × 20%，到 50% 才點燃；
+     * 點燃每秒 x 的 20%、吃火焰抗性與身上的點燃效果。這次之前 x 直接當每秒傷害、每 0.25 秒直接點燃。
+     */
+    @Test
+    void groundIgniteFollowsPoe2IgnitedGround() {
+        // 83 級 T16 地圖的點燃地面：視同 937 點；2500 生命（門檻 1250）每次疊 15%，第 4 次（1 秒）才點燃
+        final double threshold = 2500 * config.playerThresholdLife();
+        assertEquals(1250, threshold, 1e-9);
+        final double perApplication = config.flammability(937, threshold, 0, 0);
+        assertEquals(14.99, perApplication, 0.01);
+        assertTrue(perApplication * 3 < AilmentService.GROUND_FLAMMABILITY && perApplication * 4 >= AilmentService.GROUND_FLAMMABILITY);
+        // 每秒：937 × 20% = 187.4；75% 火抗 → 46.85（這次之前 937 × 25% = 234）
+        assertEquals(187.4, AilmentService.groundIgniteDps(config, 937, 1, 1), 1e-9);
+        assertEquals(46.85, AilmentService.groundIgniteDps(config, 937, 0.25, 1), 1e-9);
+        assertEquals(23.425, AilmentService.groundIgniteDps(config, 937, 0.25, 0.5), 1e-9, "身上的點燃效果減少 50%");
+        assertEquals(0, AilmentService.groundIgniteDps(config, 937, 0, 1), 1e-9);
+        assertEquals(4, config.igniteDuration(), 1e-9);
+        assertEquals(4, config.flammabilityDuration(true), 1e-9);
+    }
 }

@@ -5,12 +5,19 @@ import org.bukkit.util.Vector;
 /**
  * 2026-10-28 照 PoE2 0.5 Shockchain Arrow（電鍊箭矢，技能代號 chain_arrow）：
  * <ul>
- *   <li>箭自動追蹤受到閃電異常（感電、電擊）的敵人（{@link #FLAG_HOMING}）；追著這種敵人飛的時候穿過路上沒有閃電異常的敵人
- *       （RePoE always_pierce_non_shocked_enemies_if_targeting_shocked_enemy）。</li>
- *   <li>第一次打中感電或電擊中的敵人：箭充能，在那裡放出震波（skills.yml stages 的 shockwave），再多連鎖 3 次（{@link #CHAINS_ON_AILMENT}）；
- *       連鎖的每一下也都放出震波；連鎖打中另一隻有閃電異常的敵人時再多 3 次（可重複）。連鎖距離 8 公尺（PoE2 0.2.0）。</li>
- *   <li>最後一次連鎖之後箭掉到地上變成雷霆之杖（{@link LightningRods}；skills.yml 的 rod：20 秒、最多 10 支、被連鎖 8 次消失）。</li>
- *   <li>箭打中時用掉敵人身上的感電（{@link #FLAG_CONSUME_SHOCK}），電擊不用掉；箭和震波都不會感電。</li>
+ *   <li>箭自動追蹤受到閃電異常（感電、電擊）的敵人（{@link #FLAG_HOMING}）。2026-10-28 照 PoE2 RePoE
+ *       always_pierce_non_shocked_enemies_if_targeting_shocked_enemy：追著<b>感電</b>的敵人飛時穿過路上<b>沒有感電</b>的敵人
+ *       （{@link #piercesOnTheWay}；這次之前照「閃電異常」算，電擊中的也算）。</li>
+ *   <li>2026-10-28 照 PoE2 0.4.0 改版說明（「初始投射物消耗感電，產生一支會連鎖的次級投射物，最後一次連鎖後在最後一個目標附近插一根雷霆之杖；
+ *       次級投射物打中時不消耗感電」）與 RePoE shockchain_arrow_X_additional_chains_on_first_hitting_shocked_or_electrocuted_enemy 3：
+ *       箭<b>第一次</b>打中感電或電擊中的敵人時充能（{@link #onHit}），在那裡放出震波（skills.yml stages 的 shockwave），多連鎖 3 次
+ *       （{@link #CHAINS_ON_AILMENT}）；之後（次級投射物）打中的每一下都放震波。一支箭只充能一次：連鎖打中另一隻閃電異常的敵人不會再多 3 次
+ *       （這次之前「可重複」，每打中一隻閃電異常的都再 +3）。連鎖距離 8 公尺（PoE2 0.2.0）。</li>
+ *   <li>充能過的箭最後一次連鎖之後掉到地上變成雷霆之杖（{@link #lodgesRod}、{@link LightningRods}；skills.yml 的 rod：20 秒、最多 10 支、
+ *       被連鎖 8 次消失、被連到時充能 1 秒（PoE2 0.2.0）再用震波的傷害炸開）。</li>
+ *   <li>只有還沒充能的初始箭打中時用掉敵人身上的感電（{@link #consumesShock}；電擊不用掉）：先算這一箭的傷害（還吃得到感電），
+ *       用掉感電之後才放震波（震波吃不到被用掉的感電）；次級投射物（連鎖的箭）打中時不用掉感電（PoE2 0.4.0）。
+ *       這次之前連鎖的每一下也都用掉感電。箭和震波都不會感電。</li>
  * </ul>
  * 這次之前（跳電矢）固定連鎖 5 次、每一下都炸震波、不追蹤、不用掉感電、沒有雷霆之杖。這裡放純邏輯（可以單元測試），
  * 造成傷害、找目標在 {@link ProjectileEngine}。
@@ -27,7 +34,11 @@ final class ShockchainArrows {
     static final String SHOCKWAVE = "shockwave";
     /** PoE2 0.2.0：Shockchain Arrow 連鎖最遠 8 公尺。 */
     static final double CHAIN_RANGE = 8;
-    /** 追蹤：找多遠以內的閃電異常敵人（PoE2 沒寫，照箭的射程取一段）、只找前方幾度以內的、每 tick 最多轉幾度。 */
+    /**
+     * 追蹤：找多遠以內的閃電異常敵人、只找前方幾度以內的、每 tick 最多轉幾度。
+     * 2026-10-28 查過：PoE2 的追蹤寫在投射物本身（.ot／.ao），RePoE skills.json、stats、poe2db、官方改版說明都沒有任何追蹤的數值
+     * （ShockchainArrowPlayer 只有 always_pierce_non_shocked_enemies_if_targeting_shocked_enemy），只能照手感取：16 格、前方 120°、每 tick 12°。
+     */
     static final double HOMING_RANGE = 16;
     static final double HOMING_CONE = 120;
     static final double HOMING_TURN = 12;
@@ -40,24 +51,42 @@ final class ShockchainArrows {
      *
      * @param addChains 這一下多給幾次連鎖
      * @param shockwave 這一下要不要放震波
+     * @param charges   這一下讓箭充能（第一次打中閃電異常的敵人）
      */
-    record Outcome(int addChains, boolean shockwave) {
+    record Outcome(int addChains, boolean shockwave, boolean charges) {
     }
 
     /**
-     * 純函式：perAilment 是 {@link #CHAINS_ON_AILMENT}；afflicted＝目標身上有感電或電擊；chained＝這一下是連鎖過來的。
-     * 有閃電異常：多連鎖 perAilment 次、放震波；連鎖過來的每一下都放震波；兩個都不是：普通的一箭。
+     * 純函式：perAilment 是 {@link #CHAINS_ON_AILMENT}；afflicted＝目標身上有感電或電擊；charged＝箭已經充能過（變成連鎖的次級投射物）。
+     * 2026-10-28 照 PoE2「on first hitting」：還沒充能、打中閃電異常的：充能、多連鎖 perAilment 次、放震波；充能過的每一下都放震波、不再多給連鎖；
+     * 都不是：普通的一箭。這次之前（chained 參數）連鎖打中閃電異常的再多給一次。
      */
-    static Outcome onHit(final int perAilment, final boolean afflicted, final boolean chained) {
+    static Outcome onHit(final int perAilment, final boolean afflicted, final boolean charged) {
         if (perAilment <= 0) {
-            return new Outcome(0, false);
+            return new Outcome(0, false, false);
         }
-        return new Outcome(afflicted ? perAilment : 0, afflicted || chained);
+        if (charged) {
+            return new Outcome(0, true, false);
+        }
+        return afflicted ? new Outcome(perAilment, true, true) : new Outcome(0, false, false);
     }
 
-    /** 純函式：連鎖過至少一次的箭停下來（最後一次連鎖之後）插成雷霆之杖。 */
-    static boolean lodgesRod(final int perAilment, final int chainsDone) {
-        return perAilment > 0 && chainsDone > 0;
+    /** 純函式：2026-10-28 照 PoE2 0.4.0：只有初始的箭（還沒充能）打中時用掉感電，次級投射物不用掉。 */
+    static boolean consumesShock(final boolean flag, final boolean charged) {
+        return flag && !charged;
+    }
+
+    /**
+     * 純函式：2026-10-28 照 PoE2 always_pierce_non_shocked_enemies_if_targeting_shocked_enemy：正在追的是感電的敵人（homingShocked）、
+     * 打到的不是那一隻（otherTarget）、也沒有感電（targetShocked）就穿過去。這一下會讓箭充能（電擊中、還沒充能）的不穿，照原作「第一次打中」充能。
+     */
+    static boolean piercesOnTheWay(final boolean homingShocked, final boolean otherTarget, final boolean targetShocked, final boolean chargesHere) {
+        return homingShocked && otherTarget && !targetShocked && !chargesHere;
+    }
+
+    /** 純函式：2026-10-28 照 PoE2：充能過的箭（變成次級投射物）最後一次連鎖之後插成雷霆之杖；這次之前看連鎖過幾次。 */
+    static boolean lodgesRod(final int perAilment, final boolean charged) {
+        return perAilment > 0 && charged;
     }
 
     /**
@@ -91,9 +120,9 @@ final class ShockchainArrows {
     /** 技能說明（ModifierText）；不是這裡的回傳 null。 */
     static String describe(final String stat, final double value) {
         return switch (stat) {
-            case CHAINS_ON_AILMENT -> "第一次打中感電或電擊中的敵人時多連鎖 " + ModifierText.number(value) + " 次，打中的每一下都放出震波";
+            case CHAINS_ON_AILMENT -> "第一次打中感電或電擊中的敵人時多連鎖 " + ModifierText.number(value) + " 次（每支箭一次），之後打中的每一下都放出震波";
             case FLAG_HOMING -> "箭自動追蹤受到閃電異常狀態的敵人";
-            case FLAG_CONSUME_SHOCK -> "打中時消耗敵人身上的感電（不消耗電擊）";
+            case FLAG_CONSUME_SHOCK -> "打中時消耗敵人身上的感電（不消耗電擊；連鎖的箭不消耗）";
             default -> null;
         };
     }

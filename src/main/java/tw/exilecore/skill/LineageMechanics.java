@@ -86,10 +86,8 @@ public final class LineageMechanics implements Listener {
             return List.of();
         }
         final String id = SupportProcs.baseId(skillId);
-        int position = state.skills().find(id);
-        if (position < 0) {
-            position = state.skills().findInner(id);
-        }
+        // 2026-10-28 照 PoE2（同一個技能可以放好幾顆）：主要寶石觸發的（代號帶 .meta）先找宿主孔裡那顆；這次之前一律先找面板上的
+        final int position = state.skills().locate(id, skillId.contains(MetaGems.TRIGGERED_SUFFIX));
         return position < 0 ? List.of() : service.supportsOf(state.skills().skill(position));
     }
 
@@ -1320,11 +1318,15 @@ public final class LineageMechanics implements Listener {
     void cursePlaced(final Player player, final SkillBuild build, final LivingEntity target, final List<Debuffs.Debuff> placed,
                      final long applied, final long until) {
         final List<SupportDefinition> supports = build.supports();
-        if (!hasLineage(supports) || plugin.combat() == null) {
+        // 2026-10-28 照 PoE2（悲運之縛）：你施加的詛咒會反射給你（裝備的傳奇；不像魅咒會無視詛咒上限）
+        final boolean uniqueReflect = plugin.combat() != null
+                && StatKeys.flag(plugin.players().sheet(player), tw.exilecore.item.unique.UniqueStats.CURSE_REFLECT_SELF);
+        if (!hasLineage(supports) && !uniqueReflect || plugin.combat() == null) {
             return;
         }
         final Debuffs debuffs = plugin.combat().debuffs();
-        if (LineageRules.total(supports, LineageKeys.CURSE_REFLECT) > 0 && !Long.valueOf(applied).equals(reflected.get(player.getUniqueId()))) {
+        if ((uniqueReflect || LineageRules.total(supports, LineageKeys.CURSE_REFLECT) > 0)
+                && !Long.valueOf(applied).equals(reflected.get(player.getUniqueId()))) {
             reflected.put(player.getUniqueId(), applied);
             for (final Debuffs.Debuff debuff : placed) {
                 debuffs.apply(player.getUniqueId(), new Debuffs.Debuff(debuff.id() + ".self", player.getUniqueId(), debuff.untilTick(), debuff.taken(),

@@ -161,7 +161,7 @@ merged:
   lacerate_ii: { into: lacerate_iii, name: 割裂 II }
   envenom: { into: envenom_iii, name: 淬毒 }
   envenom_ii: { into: envenom_iii, name: 淬毒 II }
-  culling_strike: { into: culling_strike_ii, name: 斷命 }
+  culling_strike: { into: culling_strike_ii, name: 撲殺 }
   enraged_warcry: { into: enraged_warcry_ii, name: 怒嘯 }
   shatter_armour: { into: shatter_armour_iii, name: 碎甲 }
   shatter_armour_ii: { into: shatter_armour_iii, name: 碎甲 II }
@@ -208,15 +208,17 @@ supports:
       - { stat: skill.cost, type: MORE, value: -40 }
 
   faster_projectiles:
-    name: 疾矢
-    description: 投射物飛得更快。
+    name: 疾矢 III   # 2026-10-28 照 PoE2 Projectile Acceleration III（poe2db：投射物加速 III，第 5 階）；照站長「I II III 只留最高的」直接升級（代號不變）；這次之前是疾矢（I）
+    description: 投射物飛得更快；投射物速度的增加與減少也套用在被輔助技能的投射物傷害上。
     icon: FEATHER
-    tier: 1
+    tier: 3   # 2026-10-28 照 PoE2 III 是最高階（第 5 階）；這次之前 1
     requires: [projectile]
     mana_multiplier: 1.2
     # 2026-10-26 照 PoE2 Projectile Acceleration I（poe2db）；這次之前 tier 1、魔耗 1.15、stat: skill.projectile_speed, type: INCREASED, value: 50；stat: damage, type: MORE, value: 15, tags: [projectile]
+    # 2026-10-28 照 PoE2 Projectile Acceleration III：更多 40% 投射物速度（同 I）＋投射物速度的增減也套用在投射物傷害（SkillBuild）；原作 II 是 40% 機率穿透，這裡不留
     modifiers:
       - { stat: skill.projectile_speed, type: MORE, value: 40 }
+      - { stat: flag.projectile_speed_to_damage, type: FLAT, value: 1 }
 
   pierce:
     name: 貫穿
@@ -420,12 +422,12 @@ supports:
       - { stat: shock.chance, type: MORE, value: 100 }
 
   culling_strike_ii:
-    name: 斷命 II
-    description: 被輔助的攻擊對稀有、傳奇怪物與 Boss 有斷命（稀有 10%、傳奇與 Boss 5%）；斷命打死敵人後 20 秒內斷命門檻增加 20%。
+    name: 撲殺 II
+    description: 被輔助的攻擊對稀有、傳奇怪物與 Boss 有撲殺（稀有 10%、傳奇與 Boss 5%）；撲殺打死敵人後 20 秒內撲殺門檻增加 20%。
     icon: NETHERITE_SCRAP   # 2026-10：原本 NETHERITE_AXE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     requires: [attack]
-    # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次新增；2026-10-26 照站長「I II III 只留最高的」：斷命併入這顆（supports.yml 的 merged）
+    # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次新增；2026-10-26 照站長「I II III 只留最高的」：撲殺併入這顆（supports.yml 的 merged）
     modifiers:
       - { stat: flag.culling_rare, type: FLAT, value: 1 }
       - { stat: culling.threshold_on_cull, type: FLAT, value: 20 }
@@ -1349,7 +1351,7 @@ supports:
 
   phantom_double:
     name: 虛星分身
-    description: 你的影子學著你施法：法術放完 0.25 秒後自動再放一次（不花魔力），施法變慢的程度比雙詠輕。
+    description: 你的影子學著你施法：範圍法術放完 0.25 秒後自動再放一次（不花魔力），施法變慢的程度比雙詠輕。只能輔助可以連瀑的範圍法術（落在目標區域、身邊一圈的，或詛咒）。   # 2026-10-28：補上限制（跟雙詠一樣）
     icon: STICK   # 2026-10：原本 ARMOR_STAND（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     source: awakener
@@ -2614,7 +2616,7 @@ supports:
 
   life_drain:              # Life Drain
     name: 收命
-    description: 被輔助的技能用斷命打死敵人時回復 12% 最大生命（要另外有斷命）。
+    description: 被輔助的技能用撲殺打死敵人時回復 12% 最大生命（要另外有撲殺）。
     icon: GLISTERING_MELON_SLICE
     tier: 1
     excludes: [minion]
@@ -2625,7 +2627,7 @@ supports:
 
   soul_drain:              # Soul Drain
     name: 汲魂
-    description: 被輔助的技能用斷命打死敵人時回復 12% 最大魔力（要另外有斷命）。
+    description: 被輔助的技能用撲殺打死敵人時回復 12% 最大魔力（要另外有撲殺）。
     icon: LAPIS_LAZULI
     tier: 2
     excludes: [minion]
@@ -3221,7 +3223,7 @@ supports:
     tier: 2
     requires: [projectile]
     excludes: [spell, minion, cooldown]   # 2026-10-26 照 PoE2：Salvo 不能輔助有冷卻的技能；這次之前 [spell, minion]
-    mana_multiplier: 1.2
+    mana_multiplier: 1.0   # 2026-10-28 照 PoE2（poe2db Salvo：魔力 100%）；這次之前 1.2
     modifiers:
       - { stat: seal.max, type: FLAT, value: 6 }
       - { stat: seal.interval, type: FLAT, value: 1 }
@@ -3282,6 +3284,21 @@ supports:
       - { stat: damage.gain.lightning, type: FLAT, value: 25 }
       - { stat: damage, type: MORE, value: -50, tags: [fire] }
       - { stat: damage, type: MORE, value: -50, tags: [cold] }
+
+  chaos_attunement:        # Chaos Attunement（2026-10-28 照 PoE2 0.5 新增：poe2db SupportGemChaosInfusion，第 3 階、消耗 120%、+5 智慧）
+    name: 混沌同調
+    description: 被輔助的技能獲得等同於傷害 25% 的額外混沌傷害，但造成更少 50% 非混沌傷害。
+    icon: AMETHYST_SHARD
+    tier: 3
+    requires: [attack, spell]
+    excludes: [minion]
+    mana_multiplier: 1.2
+    modifiers:
+      - { stat: damage.extra.chaos, type: FLAT, value: 25 }
+      - { stat: damage, type: MORE, value: -50, tags: [physical] }
+      - { stat: damage, type: MORE, value: -50, tags: [fire] }
+      - { stat: damage, type: MORE, value: -50, tags: [cold] }
+      - { stat: damage, type: MORE, value: -50, tags: [lightning] }
 
   danse_macabre:           # Danse Macabre（多吃一具骷髏 → 祭品效果更強、冷卻更久）
     name: 骸舞
@@ -3388,7 +3405,7 @@ supports:
 
   overabundance_ii:        # Overabundance II
     name: 過剩 II
-    description: 輔助那些同時只能擁有有限數量效果的技能，增加該上限，但會縮短效果持續時間（被輔助的技能上限 +1、技能持續時間更少 40%）。僅適用於原作寫「上限」的限制：圖騰、鐘、地面效果、喚屍與焚魂這類有上限的召喚物、插著的矛、印記標記的目標、祭品的骨柱…
+    description: 輔助那些同時只能擁有有限數量效果的技能，增加該上限，但會縮短效果持續時間（被輔助的技能上限 +1、技能持續時間更少 40%）。僅適用於有「上限」的限制：圖騰、鐘、地面效果、喚屍與焚魂這類有上限的召喚物、插著的矛、印記標記的目標、祭品的骨柱…
     icon: NAUTILUS_SHELL   # 2026-10：原本 TOTEM_OF_UNDYING（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3   # PoE2 第 4 階
     requires: [limit]
@@ -3485,14 +3502,14 @@ supports:
       - { stat: withered.seconds, type: FLAT, value: 4 }
 
   # 強化（PoE2 的 Empowered）：我們的戰吼強化只有傷害，條件改成「戰吼增益期間你得到」
-  murderous_intent:        # Murderous Intent（強化的攻擊有斷命 → 戰吼增益期間你的擊中有斷命）
+  murderous_intent:        # Murderous Intent（強化的攻擊有撲殺 → 戰吼增益期間你的擊中有撲殺）
     name: 決嘯
-    description: 被輔助的戰吼強化的攻擊有斷命：擊中後敵人生命掉到一定比例以下直接倒下（普通 35%、魔法 20%、稀有 10%、傳奇與 Boss 5%）。只有會強化攻擊的戰吼能掛。
+    description: 被輔助的戰吼強化的攻擊有撲殺：擊中後敵人生命掉到一定比例以下直接倒下（普通 35%、魔法 20%、稀有 10%、傳奇與 Boss 5%）。只有會強化攻擊的戰吼能掛。
     icon: NETHERITE_SCRAP   # 2026-10：原本 NETHERITE_AXE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [warcry]
     mana_multiplier: 1.2
-    # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 增益期間你的擊中都有斷命
+    # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 增益期間你的擊中都有撲殺
     modifiers:
       - { stat: flag.empowered_cull, type: FLAT, value: 1 }
 
@@ -3839,8 +3856,8 @@ supports:
       - { stat: charge.extra_random, type: FLAT, value: 15 }   # 2026-10-15：照 PoE2 的充能滿盈 II，多一顆隨機種類的
 
   cull_frenzy:
-    name: 斷命聚怒
-    description: 被輔助的技能撲殺敵人時獲得一顆{charge:frenzy}，稀有怪多一顆、傳奇怪多兩顆（技能要能撲殺，例如掛斷命）。
+    name: 撲殺聚怒
+    description: 被輔助的技能撲殺敵人時獲得一顆{charge:frenzy}，稀有怪多一顆、傳奇怪多兩顆（技能要能撲殺，例如掛撲殺）。
     icon: RABBIT_FOOT
     tier: 3
     requires: [attack]
@@ -3961,7 +3978,7 @@ supports:
     name: 催綻
     description: 被輔助的植物技能放出去時，在那裡催生一朵花，1.2 秒後炸開（1.8 格，物理傷害，暴擊率 10%），致盲被炸到的敵人。
     notes:
-      - 原作是植物「過度生長」時才炸；我們沒有過度生長，改成放技能時（同一個玩家最快每秒一朵）。常駐的刺棘身不會「放出去」，不能掛。
+      - 放技能時催生（同一個玩家最快每秒一朵）。常駐的刺棘身不會「放出去」，不能掛。   # 2026-10-28 照站長拿掉說明裡的原作：原作是植物「過度生長」時才炸，我們沒有過度生長
     icon: STICK
     tier: 3   # PoE2 第 5 階
     requires: [plant]
@@ -5209,7 +5226,7 @@ supports:
 
   thrill_of_the_kill_ii:   # Thrill of the Kill II
     name: 殺意 II
-    description: 被輔助的技能撲殺敵人時，8 秒內你的攻擊獲得 25% 傷害為額外閃電傷害、感電機率增加 40%（技能要能撲殺，例如掛斷命）。
+    description: 被輔助的技能撲殺敵人時，8 秒內你的攻擊獲得 25% 傷害為額外閃電傷害、感電機率增加 40%（技能要能撲殺，例如掛撲殺）。
     icon: BLAZE_ROD
     tier: 2
     requires: [attack, spell]

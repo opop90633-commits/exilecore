@@ -131,7 +131,9 @@ public final class SkillProfiles {
             // 2026-10-26 照 PoE2：戰吼的使用時間只吃戰吼速度（不吃施法速度）
             return SkillMath.castInterval(definition.castTime(), warcrySpeed(effective, profile.tags())) + added;
         }
-        return SkillMath.castInterval(definition.castTime(), DamageCalculator.castSpeedMultiplier(effective, profile.tags())) / placement + added;
+        // 2026-10-28 照 PoE2（base_spell_cast_time_ms：游雷冰灌注「施法時間 +0.5 秒」）：加在基礎施法時間上，照樣吃施法速度
+        final double castTime = definition.castTime() + Math.max(0, effective.flat(BASE_CAST_TIME, profile.tags()));
+        return SkillMath.castInterval(castTime, DamageCalculator.castSpeedMultiplier(effective, profile.tags())) / placement + added;
     }
 
     /** 2026-10-26：戰吼速度倍率：（1 + 增加戰吼速度）× 更多。 */
@@ -141,4 +143,6 @@ public final class SkillProfiles {
 
     /** 2026-10-26：技能自己帶的「總攻擊／施法時間 +x 秒」（FLAT，秒；不吃攻擊、施法速度）。 */
     public static final String ADDED_TIME = "skill.added_time";
+    /** 2026-10-28 照 PoE2（base_spell_cast_time_ms）：法術的基礎施法時間 +x 秒（FLAT，秒；吃施法速度，跟 {@link #ADDED_TIME} 不一樣）。 */
+    public static final String BASE_CAST_TIME = "skill.base_cast_time";
 }
