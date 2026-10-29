@@ -1876,6 +1876,34 @@ final class ProjectileEngine implements Listener {
         return at;
     }
 
+    /**
+     * 2026-10-29：這個人的這種投射物裡，離 from 在 range 格內、離 center 最近的一顆的位置（被觸發的雷遁找滾雷珠）；consume 就順便拿掉。
+     * 沒有回傳 null。
+     */
+    Location shotNear(final UUID owner, final String skillId, final Location center, final Location from, final double range, final boolean consume) {
+        Shot best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (final Shot shot : shots.values()) {
+            if (!shot.owner.equals(owner) || !shot.build.definition().id().equals(skillId) || !shot.world.equals(from.getWorld())
+                    || shot.position.distanceSquared(from.toVector()) > range * range) {
+                continue;
+            }
+            final double d = shot.position.distanceSquared(center.toVector());
+            if (d < bestDistance) {
+                bestDistance = d;
+                best = shot;
+            }
+        }
+        if (best == null) {
+            return null;
+        }
+        final Location at = best.position.toLocation(best.world);
+        if (consume) {
+            remove(best);
+        }
+        return at;
+    }
+
     int active(final UUID owner) {
         return counts.getOrDefault(owner, 0);
     }

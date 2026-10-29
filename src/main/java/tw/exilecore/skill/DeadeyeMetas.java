@@ -121,7 +121,8 @@ public final class DeadeyeMetas {
 
     /** 常駐增益輔助：要光環／捷光環／常駐技能，效果是「技能開著時你獲得」（grant.、persistent.、血脈的 lineage.u.）。 */
     static boolean persistentBuff(final SupportDefinition support) {
-        if (!support.requires().contains(Tags.AURA) && !support.requires().contains(Tags.HERALD) && !support.requires().contains(Tags.PERSISTENT)) {
+        if (!support.requires().contains(Tags.AURA) && !support.requires().contains(Tags.HERALD) && !support.requires().contains(Tags.PERSISTENT)
+                && !support.requires().contains(SupportDefinition.PERSISTENT_BUFF)) { // 2026-10-29
             return false;
         }
         for (final Modifier modifier : support.modifiers()) {

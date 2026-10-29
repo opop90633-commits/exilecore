@@ -18,7 +18,8 @@ class TierParityTest {
         assertEquals(0.889, maps.parityLife(16), 1e-9, "T16：我們 84 級，原作 80 級");
         assertEquals(0.892, maps.parityDamage(16), 1e-9);
         assertEquals(1.0, maps.parityLife(0), 1e-9, "特殊實例（階級 0）不乘");
-        assertEquals(4.423, maps.finalBossLifeMultiplier(16), 1e-9, "終局 Boss 照 tier_life_table，不受影響");
+        assertEquals(8.846, maps.finalBossLifeMultiplier(16), 1e-9, // 2026-10-29 照站長 ×2（這次之前 4.423）
+                "終局 Boss 照 tier_life_table，不受影響");
         assertEquals(0.5, maps.monsterLifeScale(), 1e-9, "2026-10-27 照站長：一般怪物生命砍半");
     }
 }

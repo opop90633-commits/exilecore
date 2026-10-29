@@ -611,7 +611,7 @@ whale:
   name: 淵鯨
   type: HAPPY_GHAST
   like: awakener
-  life: 86.79   # 2026-10-26：比照巔峰（極境的兩倍生命）；這次之前 1195.7
+  life: 173.58   # 2026-10-29 照站長：血量 ×2（這次之前 86.79）；2026-10-26：比照巔峰（極境的兩倍生命）；更早 1195.7
   damage: 4.078   # 2026-10-26 照 PoE2（原作 Arbiter of Ash 990%／450%；這次之前 2.9）
   scale: 1.0
   mods: [swift, pinnacle_resist]

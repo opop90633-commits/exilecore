@@ -425,7 +425,7 @@ public final class StatKeys {
     public static final double AVOID_CAP = 75;
     /** 開關：無法被凍結（傳奇的「不會被凍結」）。避免凍結有上限，免疫用這個。 */
     public static final String FLAG_FREEZE_IMMUNE = "flag.freeze_immune";
-    /** 2026-10：FLAT 1：免疫元素異常（點燃、冰緩、凍結、感電；三元守護）。 */
+    /** 2026-10：FLAT 1：免疫元素異常（點燃、冰緩、凍結、感電、電擊；三元守護）。 */
     public static final String FLAG_ELEMENTAL_AILMENT_IMMUNE = "flag.elemental_ailment_immune";
 
     // 特殊效果（傳奇裝備）：一律用 FLAT

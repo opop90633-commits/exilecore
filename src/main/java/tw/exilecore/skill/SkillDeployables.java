@@ -985,6 +985,10 @@ final class SkillDeployables implements Listener {
             }
             item.cannonsSeen = fired;
         }
+        if (DARK_EFFIGY.equals(item.build.definition().id()) && item.linked == null && item.moreCasts.isEmpty()) {
+            darkEffigy(item, owner, now, fired);
+            return;
+        }
         LivingEntity target = null;
         double best = Double.MAX_VALUE;
         final Origin look = Origin.at(owner, item.feet, item.feet.getDirection());
@@ -1053,6 +1057,47 @@ final class SkillDeployables implements Listener {
         jaggedEruption(item, owner);
         splinter(item, owner, now); // 2026-10-27 照 PoE2 Splinter Totem
     }
+
+    /** 冥偶（PoE2 Dark Effigy）。 */
+    static final String DARK_EFFIGY = "dark_idol";
+
+    /**
+     * 2026-10-29 照 PoE2 Dark Effigy：對範圍內每一個身上有混沌持續傷害減益的敵人射一發，身上有好幾個就射好幾發（發數不吃多射）；
+     * 沒有這種敵人就不放。這次之前每 0.8 秒對最近的一隻（不管有沒有減益）射一發。
+     */
+    private void darkEffigy(final Deployed item, final Player owner, final long now, final long fired) {
+        final Origin look = Origin.at(owner, item.feet, item.feet.getDirection());
+        final List<LivingEntity> shots = new ArrayList<>();
+        if (plugin.ailments() != null) {
+            for (final LivingEntity candidate : targets.around(item.feet, item.spec.range(), owner)) {
+                if (!look.canSee(candidate)) {
+                    continue;
+                }
+                final int dots = Math.min(MAX_EFFIGY_SHOTS, plugin.ailments().chaosDots(candidate));
+                for (int i = 0; i < dots && shots.size() < MAX_EFFIGY_SHOTS; i++) {
+                    shots.add(candidate);
+                }
+            }
+        }
+        if (shots.isEmpty()) {
+            item.nextTick = now + 5; // 沒有帶混沌持續傷害的敵人：等一下再看
+            return;
+        }
+        item.nextTick = now + totemTicks(item.build, plugin.players().sheet(owner), totemsOf(owner.getUniqueId()));
+        item.usedFire = fired;
+        final SkillBuild cast = plugin.skills() == null ? item.build
+                : plugin.skills().supportMechanics().lineage().totemCast(owner, item.feet, item.build); // 林樁
+        final SkillBuild single = cast.withProjectilesSpread(1, false); // 原作：發數不能被修改（多射不吃）
+        visuals.deployCast(cast.definition().visual(), item.feet);
+        for (final LivingEntity target : shots) {
+            executor.executeFrom(Origin.towards(owner, item.feet, target), single, target);
+        }
+        jaggedEruption(item, owner);
+        splinter(item, owner, now);
+    }
+
+    /** 冥偶一次最多射幾發（中毒疊很多層時的保險）。 */
+    static final int MAX_EFFIGY_SHOTS = 30;
 
     /**
      * 2026-10-28：從第 turn 個開始輪（共 size 個），第一個 usable 的離 turn 幾個；都不行回傳 -1。

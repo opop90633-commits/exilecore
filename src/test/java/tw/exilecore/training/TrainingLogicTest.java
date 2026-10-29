@@ -27,7 +27,7 @@ class TrainingLogicTest {
         final DummyConfig config = new DummyConfig();
         config.load(DATA);
         assertEquals(DummyConfig.defaults(), config.dummies(), "dummies.yml 跟程式裡的預設一樣（沒有檔案時用預設）");
-        assertTrue(config.dummies().size() >= 5, "至少五隻");
+        assertEquals(List.of("boss"), config.dummies().stream().map(DummyConfig.Dummy::id).toList(), "2026-10-29 照站長：只保留首領");
         assertEquals(6, config.arenaMargin(), 1e-9);
         assertEquals(4, config.idleSeconds());
         final Set<String> spots = new HashSet<>();
@@ -44,20 +44,18 @@ class TrainingLogicTest {
         final DummyConfig.Dummy boss = config.dummy("boss");
         assertEquals(DummyConfig.LEVEL_MAP, boss.level());
         assertTrue(boss.boss());
-        assertEquals(40, config.dummy("resistant").fire(), 1e-9);
-        assertEquals(DummyConfig.LEVEL_PLAYER, config.dummy("plain").level());
-        assertEquals(0, config.dummy("plain").armour(), 1e-9);
+        assertEquals(40, boss.fire(), 1e-9);
     }
 
     @Test
     void badFilesNameTheField(@TempDir final Path dir) throws IOException {
         final String shipped = Files.readString(DATA.resolve(DummyConfig.FILE), StandardCharsets.UTF_8);
-        assertRejected(dir, shipped.replace("look: netherite", "look: wood"), "look");
-        assertRejected(dir, shipped.replace("offset: [12, 10]", "offset: [12]"), "offset");
+        assertRejected(dir, shipped.replace("look: diamond", "look: wood"), "look");
+        assertRejected(dir, shipped.replace("offset: [28, 20]", "offset: [28]"), "offset");
         assertRejected(dir, shipped.replace("level: map", "level: 120"), "level");
         assertRejected(dir, shipped.replace("arena_margin: 6", "arena_margin: 99"), "arena_margin");
-        assertRejected(dir, shipped.replace("fire: 40, cold: 40, lightning: 40, chaos: 25}\n    offset: [20, 20]",
-                "fire: 95, cold: 40, lightning: 40, chaos: 25}\n    offset: [20, 20]"), "fire");
+        assertRejected(dir, shipped.replace("fire: 40, cold: 40, lightning: 40, chaos: 25}\n    offset: [28, 20]",
+                "fire: 95, cold: 40, lightning: 40, chaos: 25}\n    offset: [28, 20]"), "fire");
     }
 
     @Test
@@ -133,6 +131,19 @@ class TrainingLogicTest {
     }
 
     @Test
+    void onlyBossDummiesAreLoaded(@TempDir final Path dir) throws IOException {
+        // 2026-10-29 照站長：伺服器上舊的 dummies.yml（自己改過、不會自動換新）寫了六隻也只放首領
+        Files.writeString(dir.resolve(DummyConfig.FILE), """
+                dummies:
+                  plain: { offset: [12, 10] }
+                  boss: { level: map, boss: true, offset: [28, 20] }
+                """, StandardCharsets.UTF_8);
+        final DummyConfig config = new DummyConfig();
+        config.load(dir);
+        assertEquals(List.of("boss"), config.dummies().stream().map(DummyConfig.Dummy::id).toList());
+    }
+
+    @Test
     void dummyRecordsConvertToBossDps() throws IOException {
         // 2026-10：打假人的紀錄換成打 Boss 的每秒傷害（終局、極境、巔峰的上限用）：白怪假人比首領好打很多
         final DummyConfig config = new DummyConfig();
@@ -140,6 +151,7 @@ class TrainingLogicTest {
         assertEquals(55000, config.bossDps(new DummyRecord(100000, 10, "訓練假人・無防禦（Lv.90）", 0, 0)), 1e-6);
         assertEquals(60000, config.bossDps(new DummyRecord(100000, 10, "訓練假人・一般（Lv.90）", 0, 0)), 1e-6);
         assertEquals(100000, config.bossDps(new DummyRecord(100000, 10, "訓練假人・首領（Lv.87）", 0, 0)), 1e-6, "打首領假人照算");
+        assertEquals(95000, config.bossDps(new DummyRecord(100000, 10, "訓練假人・抗性（Lv.90）", 0, 0)), 1e-6, "2026-10-29：拿掉的假人的舊紀錄照原本的倍率");
         assertEquals(100000 * DummyConfig.DEFAULT_BOSS_FACTOR, config.bossDps(new DummyRecord(100000, 10, "別的假人", 0, 0)), 1e-6);
         assertEquals(0, config.bossDps(null), 1e-9);
     }

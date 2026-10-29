@@ -78,6 +78,7 @@ final class EngraveMenu extends Menu {
             case "area" -> tags.contains(tw.exilecore.stats.Tags.AREA);
             case "minion" -> tags.contains(tw.exilecore.stats.Tags.MINION);
             case "buff" -> tags.contains(tw.exilecore.stats.Tags.AURA) || tags.contains(tw.exilecore.stats.Tags.HERALD)
+                    || tags.contains(tw.exilecore.stats.Tags.BUFF) // 2026-10-29 照 PoE2：增益標籤
                     || tags.contains(tw.exilecore.stats.Tags.WARCRY) || definition.mechanic() == Mechanic.GUARD;
             default -> tags.contains(category);
         };

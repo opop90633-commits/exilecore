@@ -186,6 +186,8 @@ merged:
   scattershot: { into: multiple_projectiles, name: 分矢 }
   # 2026-10-28 照 PoE2 0.5：Overabundance I 併進新加的 Overabundance II（過剩 II，所有原作寫「上限」的技能都能掛）；這次之前繁置只能掛圖騰
   overabundance: { into: overabundance_ii, name: 繁置 }
+  # 2026-10-29 照站長：導電跟雷殛重複（兩顆都是 PoE2 Shock：感電機率更多 100%、魔耗 ×1.2；PoE2 沒有 Conduction 這顆），併進雷殛
+  conduction: { into: static_charge, name: 導電 }
 
 supports:
 
@@ -879,17 +881,6 @@ supports:
     modifiers:
       - { stat: damage, type: MORE, value: -25 }
       - { stat: poison.magnitude, type: MORE, value: 75 }
-
-  conduction:
-    name: 導電
-    description: 被輔助的技能感電機率更多 100%。
-    icon: COPPER_INGOT
-    tier: 1
-    requires: [attack, spell]
-    mana_multiplier: 1.2
-    # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 魔耗 1.15、感電機率 +15、感電持續時間增加 40%
-    modifiers:
-      - { stat: shock.chance, type: MORE, value: 100 }
 
   point_blank:
     name: 近矢
@@ -2439,7 +2430,7 @@ supports:
     description: 掛在精魂技能上：技能開著時你的魔力再生速度更快。   # 2026-10-27 照 PoE2 Clarity（Mana Regeneration Rate）用語；這次之前「魔力回復更快」
     icon: PRISMARINE_SHARD   # 2026-10：原本 LIGHT_BLUE_DYE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
-    requires: [aura, herald]
+    requires: [persistent_buff]   # 2026-10-29 照 PoE2（Supports Persistent Buff skills）；這次之前 [aura, herald]
     # 2026-10-26 照 PoE2 Clarity I（poe2db）；這次之前 tier 1、魔耗 -、stat: support.spirit, type: FLAT, value: 15；stat: grant.mana.regen, type: INCREASED, value: 30
     modifiers:
       - { stat: support.spirit, type: FLAT, value: 10 }
@@ -2450,7 +2441,7 @@ supports:
     description: 掛在精魂技能上：技能開著時你每秒回復最大生命的 1%。
     icon: GLISTERING_MELON_SLICE
     tier: 1
-    requires: [aura, herald]
+    requires: [persistent_buff]   # 2026-10-29 照 PoE2（Supports Persistent Buff skills）；這次之前 [aura, herald]
     # 2026-10-26 照 PoE2 Vitality I（poe2db）；這次之前 tier 1、魔耗 -、效果不動
     modifiers:
       - { stat: support.spirit, type: FLAT, value: 20 }
@@ -2461,7 +2452,7 @@ supports:
     description: 掛在精魂技能上：技能開著時你擊殺敵人回復最大生命的 2%。
     icon: BONE   # 2026-10：原本 ROTTEN_FLESH（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
-    requires: [aura, herald]
+    requires: [persistent_buff]   # 2026-10-29 照 PoE2（Supports Persistent Buff skills）；這次之前 [aura, herald]
     # 2026-10-26 照 PoE2 Cannibalism I（poe2db）；這次之前 tier 1、魔耗 -、效果不動
     modifiers:
       - { stat: support.spirit, type: FLAT, value: 15 }
@@ -2472,7 +2463,7 @@ supports:
     description: 掛在精魂技能上：技能開著時你的荊棘傷害更高。
     icon: STICK   # 2026-10：原本 SWEET_BERRIES（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
-    requires: [aura, herald]
+    requires: [persistent_buff]   # 2026-10-29 照 PoE2（Supports Persistent Buff skills）；這次之前 [aura, herald]
     # 2026-10-26 照 PoE2 Thornskin I（poe2db）；這次之前 tier 2、魔耗 -、stat: support.spirit, type: FLAT, value: 15；stat: grant.thorns.damage, type: INCREASED, value: 40
     modifiers:
       - { stat: support.spirit, type: FLAT, value: 20 }
@@ -2483,7 +2474,7 @@ supports:
     description: 掛在精魂技能上：技能開著時你身上的點燃持續時間減半。
     icon: PRISMARINE_CRYSTALS   # 2026-10：原本 SNOWBALL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
-    requires: [aura, herald]
+    requires: [persistent_buff]   # 2026-10-29 照 PoE2（Supports Persistent Buff skills）；這次之前 [aura, herald]
     # 2026-10-26 照 PoE2 Cool Headed（poe2db）；這次之前 tier 1、魔耗 -、stat: support.spirit, type: FLAT, value: 10；stat: grant.ailment.self_duration.ignite, type: INCREASED, value: -50
     modifiers:
       - { stat: support.spirit, type: FLAT, value: 15 }
@@ -2494,7 +2485,7 @@ supports:
     description: 掛在精魂技能上：技能開著時你身上的感電持續時間減半。
     icon: COPPER_INGOT
     tier: 2
-    requires: [aura, herald]
+    requires: [persistent_buff]   # 2026-10-29 照 PoE2（Supports Persistent Buff skills）；這次之前 [aura, herald]
     # 2026-10-26 照 PoE2 Strong Hearted（poe2db）；這次之前 tier 1、魔耗 -、stat: support.spirit, type: FLAT, value: 10；stat: grant.ailment.self_duration.shock, type: INCREASED, value: -50
     modifiers:
       - { stat: support.spirit, type: FLAT, value: 15 }
@@ -2505,7 +2496,7 @@ supports:
     description: 掛在精魂技能上：技能開著時你身上的凍結持續時間減半。
     icon: MAGMA_CREAM
     tier: 2
-    requires: [aura, herald]
+    requires: [persistent_buff]   # 2026-10-29 照 PoE2（Supports Persistent Buff skills）；這次之前 [aura, herald]
     # 2026-10-26 照 PoE2 Warm Blooded（poe2db）；這次之前 tier 1、魔耗 -、stat: support.spirit, type: FLAT, value: 10；stat: grant.ailment.self_duration.freeze, type: INCREASED, value: -50
     modifiers:
       - { stat: support.spirit, type: FLAT, value: 15 }
@@ -2516,7 +2507,7 @@ supports:
     description: 掛在精魂技能上：技能開著時你的生命藥劑回復更多。
     icon: GHAST_TEAR   # 2026-10：原本 GLASS_BOTTLE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
-    requires: [aura, herald]
+    requires: [persistent_buff]   # 2026-10-29 照 PoE2（Supports Persistent Buff skills）；這次之前 [aura, herald]
     # 2026-10-26 照 PoE2 Herbalism I（poe2db）；這次之前 tier 1、魔耗 -、效果不動
     modifiers:
       - { stat: support.spirit, type: FLAT, value: 15 }
@@ -3002,14 +2993,15 @@ supports:
 
   blind:                   # Blind
     name: 目眩
-    description: 被輔助的技能擊中時讓敵人目眩四秒：牠的命中變差（比較打不到你）。
+    description: 被輔助的技能擊中時致盲敵人（牠的命中與閃避更少 20%，比較打不到你、也比較閃不掉），致盲的效果增加 20%。
     icon: COAL   # 2026-10：原本 INK_SAC（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     excludes: [minion]
     mana_multiplier: 1.1
     # 2026-10-27 照 PoE2 Blind II（第 5 階；poe2db／RePoE）；這次之前 tier 1
     modifiers:
-      - { stat: proc.hit, type: FLAT, value: 100, tags: [proc_blind] }
+      - { stat: blind.chance, type: FLAT, value: 100 }   # 2026-10-29 照 PoE2 Blind II：擊中時致盲（原作的致盲：命中與閃避更少 20%，HitEffects）；這次之前觸發隱藏的目眩印記（命中更少 20%～30%）
+      - { stat: blind.effect, type: INCREASED, value: 20 }   # 2026-10-29 照 PoE2 Blind II（poe2db：致盲效果增加 20%）；這次之前漏了這條
 
   hinder:                  # Hinder
     name: 拖滯
@@ -3236,7 +3228,7 @@ supports:
     icon: SLIME_BALL   # 2026-10：原本 SLIME_BLOCK（原版右鍵有動作：放方塊…會干擾施放）
     tier: 2
     requires: [area]
-    excludes: [attack, minion, aura, warcry, herald, cooldown]   # 2026-10-26 照 PoE2：Expand 不能輔助有冷卻的技能；這次之前 [attack, minion, aura, warcry, herald]
+    excludes: [attack, minion, aura, warcry, herald, cooldown, persistent]   # 2026-10-26 照 PoE2：Expand 不能輔助有冷卻的技能；這次之前 [attack, minion, aura, warcry, herald]；2026-10-29：常駐增益不再一律算光環，補 persistent（照舊掛不上）
     mana_multiplier: 1.15
     modifiers:
       - { stat: seal.max, type: FLAT, value: 3 }
@@ -3589,7 +3581,7 @@ supports:
     description: 掛在精魂技能上：技能開著時你的命中更高。
     icon: PRISMARINE_SHARD   # 2026-10：原本 SPYGLASS（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 1
-    requires: [aura, herald]
+    requires: [persistent_buff]   # 2026-10-29 照 PoE2（Supports Persistent Buff skills）；這次之前 [aura, herald]
     # 2026-10-26 照 PoE2 Precision I（poe2db）；這次之前 tier 1、魔耗 -、stat: support.spirit, type: FLAT, value: 15；stat: grant.accuracy, type: INCREASED, value: 30
     modifiers:
       - { stat: support.spirit, type: FLAT, value: 10 }
@@ -3600,7 +3592,7 @@ supports:
     description: 掛在精魂技能上：技能開著時你的法術傷害更高。
     icon: AMETHYST_SHARD
     tier: 2
-    requires: [aura, herald]
+    requires: [persistent_buff]   # 2026-10-29 照 PoE2（Supports Persistent Buff skills）；這次之前 [aura, herald]
     # 2026-10-26 照 PoE2 Mysticism I（poe2db）；這次之前 tier 2、魔耗 -、stat: support.spirit, type: FLAT, value: 20；stat: grant.damage, type: INCREASED, value: 20, tags: [spell]
     modifiers:
       - { stat: support.spirit, type: FLAT, value: 15 }
@@ -3611,7 +3603,7 @@ supports:
     description: 掛在精魂技能上：技能開著時你的召喚物傷害更高。
     icon: BONE
     tier: 2
-    requires: [aura, herald]
+    requires: [persistent_buff]   # 2026-10-29 照 PoE2（Supports Persistent Buff skills）；這次之前 [aura, herald]
     # 2026-10-26 照 PoE2 Upwelling I（poe2db）；這次之前 tier 2、魔耗 -、stat: support.spirit, type: FLAT, value: 20；stat: grant.damage, type: INCREASED, value: 20, tags: [minion]
     modifiers:
       - { stat: support.spirit, type: FLAT, value: 15 }
@@ -3719,7 +3711,7 @@ supports:
 
   innervate:               # Innervate
     name: 霆勢
-    description: 被輔助的技能打死感電中的敵人時，你五秒內的攻擊獲得額外閃電傷害。
+    description: 被輔助的技能打死感電中的敵人時，你五秒內的傷害獲得 25% 的額外閃電傷害（攻擊、法術都算）。
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     excludes: [minion]
@@ -3823,7 +3815,7 @@ supports:
     description: 被輔助的技能改扣生命，不扣魔力。
     icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
-    excludes: [aura, herald]
+    excludes: [aura, herald, persistent]   # 2026-10-29：常駐增益不再一律算光環，補 persistent（照舊掛不上）
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Lifetap（poe2db）；這次之前 tier 1、魔耗 1.0、效果不動
     modifiers:
@@ -4480,7 +4472,7 @@ supports:
     description: 被輔助的常駐增益開著時，你在低血（35% 以下）時攻擊傷害增加 70%。多保留 20 精魂。
     icon: NETHER_BRICK
     tier: 3
-    requires: [persistent]
+    requires: [persistent_buff]   # 2026-10-29 照 PoE2（Persistent Buff；常駐召喚物補了 persistent 標籤，只寫 persistent 會掛到骷髏）
     # 2026-10-27 照 PoE2 Direstrike II（第 4 階；poe2db／RePoE；照原作）；這次之前沒有這顆
     modifiers:
       - { stat: support.spirit, type: FLAT, value: 20 }

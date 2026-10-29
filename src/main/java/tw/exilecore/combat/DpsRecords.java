@@ -489,7 +489,8 @@ public final class DpsRecords {
                 return base <= 0 ? 1 : dummy.bossFactor() / base;
             }
         }
-        return 1;
+        final Double retired = tw.exilecore.training.DummyConfig.retiredFactor(target); // 2026-10-29：拿掉的假人的舊紀錄照原本的倍率
+        return retired == null || base <= 0 ? 1 : retired / base;
     }
 
     /** 2026-10-25：最近幾天的紀錄（0 = 全部），舊的在前；平衡報表用。 */

@@ -115,7 +115,8 @@ class Poe2GemParityTest {
         }
         assertTrue(less, "消耗更少 40%");
         assertFalse(efficiency.supports(config.skill("herald_of_ash")), "不能掛保留精魂的");
-        assertEquals("保留精魂的技能不行", efficiency.refusal(config.skill("skeletal_archers")));
+        // 2026-10-29 照 PoE2 寶石標籤：骸骨射手補上 persistent，先被「常駐技能不行」擋下（一樣掛不上）
+        assertFalse(efficiency.supports(config.skill("skeletal_archers")), "保留精魂的召喚也不行");
         assertTrue(efficiency.supports(config.skill("fireball")));
     }
 

@@ -666,6 +666,10 @@ final class AuraService implements Listener {
                         aura.hadCompanion = 0; // 營地裡收起來：出營地馬上出來
                         continue;
                     }
+                    if (MinionAbilities.MANIFEST.equals(aura.skillId) && minions.manifestForm(player) == null) {
+                        aura.hadCompanion = 0; // 2026-10-29 照 PoE2：主手不是近戰武鬥武器就收起來（不算死掉），換回來馬上出來
+                        continue;
+                    }
                     keep.add(aura.skillId);
                     // 2026-10：精魂召喚物可以好幾隻（骸骨兵…）：少了一隻就等一下補回滿
                     final int max = companionMax(minions, player.getUniqueId(), aura);

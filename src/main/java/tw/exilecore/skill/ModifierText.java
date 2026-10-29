@@ -71,6 +71,7 @@ public final class ModifierText {
             case SkillLimits.TAG -> "有上限"; // 2026-10-28 照 PoE2：原作有「上限」（Limit）的技能（過剩）
             case "fissure" -> "裂地"; // 2026-10-26：雙震（Tectonic Slams）照 PoE2 擋裂地技能，refusal 用
             case Tags.PERSISTENT -> "常駐";
+            case "persistent_buff" -> "常駐增益"; // 2026-10-29 照 PoE2（Persistent Buff）
             case Tags.BUFF -> "增益"; // 2026-10-28
             case Tags.META -> "主要寶石"; // 2026-10-22
             case Tags.SWORD -> "劍";
@@ -308,7 +309,7 @@ public final class ModifierText {
             case StatKeys.TOTEM_LIFE -> scaled(modifier, "圖騰生命", percent);
             case StatKeys.SPIRIT_MAX -> modifier.type() == tw.exilecore.stats.ModType.FLAT ? plus(value) + " 最大精魂"
                     : scaled(modifier, "精魂", percent);
-            case StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE -> "免疫元素異常（點燃、冰緩、凍結、感電）";
+            case StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE -> "免疫元素異常（點燃、冰緩、凍結、感電、電擊）";
             case StatKeys.TOTEM_VENGEFUL -> "圖騰被打（或你在圖騰 10 格內被打）時，往打的敵人丟一團怨燼：造成圖騰最大生命 " + number(value)
                     + "% 的火焰傷害（基礎值，冷卻 1 秒）";
             case StatKeys.FLAG_TOTEM_TAUNT -> "圖騰不施法，改成嘲諷附近的怪物過來打它（Boss 只被引走走位與普攻，每次 4 秒）";

@@ -110,7 +110,7 @@ class EventPinnacleTest {
             assertTrue(map.isFinal());
             assertTrue(map.boss().named(), map.id());
             assertEquals(2, pinnacle.attempts(), map.id());
-            assertEquals(2000000, pinnacle.dpsCap(), 1e-9, map.id()); // 2026-10-27 照站長：200 萬起遞減（這次之前 100 萬）
+            assertEquals(4000000, pinnacle.dpsCap(), 1e-9, map.id()); // 2026-10-29 照站長：400 萬起；2026-10-27 照站長：200 萬起遞減（這次之前 100 萬）
             assertFalse(pinnacle.dpsOver().isEmpty(), map.id());
             assertEquals(0.65, pinnacle.cooldown(), 1e-9, map.id());
             assertEquals(maps.tiers().max(), maps.pinnacleStats(map.id(), pinnacle).tier(), map.id());

@@ -749,6 +749,35 @@ public final class SkillService {
         return list;
     }
 
+    /**
+     * 2026-10-29：空無型態的孔裡放了技能、卻沒有一個現在能用的時候，每一顆為什麼不能用（「旋棍擊：要拿長棍」「破甲擊：力量不足…」）；
+     * 孔是空的回傳 null。這次之前一律說「孔裡要放近戰攻擊」，放了武器不對、能力值不夠的技能看不出原因（放了也沒反應）。
+     */
+    public String hollowUnusable(final Player player) {
+        final PlayerState state = plugin.players().get(player);
+        final int position = state.skills().find(HollowForm.ID);
+        final SkillLoadout.Entry host = position < 0 ? null : state.skills().skill(position);
+        if (host == null) {
+            return null;
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        final List<String> reasons = new ArrayList<>();
+        for (final SkillLoadout.Entry inner : innerEntries(host)) {
+            final SkillDefinition definition = config.skill(inner.skillId());
+            if (definition == null) {
+                continue;
+            }
+            final String problem = HollowForm.problem(definition);
+            final String attributes = GemAttributes.problem(config, inner, sheet);
+            final String why = problem != null ? problem : attributes != null ? attributes
+                    : !definition.usableWith(state.weaponTags()) ? "要拿" + definition.weaponText() : null;
+            if (why != null) {
+                reasons.add(definition.name() + "：" + why);
+            }
+        }
+        return reasons.isEmpty() ? null : String.join("；", reasons);
+    }
+
     /** 2026-10-28 照 PoE2：星矢主要寶石自己的數值（吃其他孔的迅返、長留：幻影的冷卻、持續時間）；面板上沒有回傳 null。 */
     public SkillBuild deadeyeHost(final Player player, final String hostId) {
         final PlayerState state = plugin.players().get(player);
@@ -2091,6 +2120,9 @@ public final class SkillService {
                 : config.mount(definition.id()) != null ? null // 2026-10：坐騎技能（叫坐騎／下馬）
                 : config.command(definition.id()) != null ? (minions.commandable(player, config.command(definition.id()), 1, false).isEmpty()
                         ? "附近沒有聽這個指令的召喚物" : null) // 2026-10：指令型召喚物技能
+                : MinionAbilities.MANIFEST.equals(definition.id()) && !auras.isActive(player.getUniqueId(), definition.id())
+                        && minions.manifestForm(player) == null
+                        ? "幻化武器要主手拿近戰武鬥武器（劍、斧、錘、矛、長棍、爪、匕首、鏈錘、獸魂符）" // 2026-10-29 照 PoE2
                 : executor.precheck(player, build, preferred);
         // 2026-10-26（血偶巨鎚）：不能使用戰吼
         final String noWarcry = definition.mechanic() == Mechanic.WARCRY ? tw.exilecore.item.unique.UniqueCosts.warcryProblem(state.sheet()) : null;
@@ -3234,7 +3266,9 @@ public final class SkillService {
         final ChargeSpec spec = config.charge(definition.id());
         final List<SkillBuild> socketed = hollowSocketed(player);
         if (spec == null || socketed.isEmpty()) {
-            fail(player, runtime, state, definition.name() + "：孔裡要放" + HollowForm.wants() + "的技能寶石（/skills 點它，拿技能寶石點一個孔）", now);
+            final String unusable = hollowUnusable(player); // 2026-10-29：放了但不能用的，說是哪一顆、為什麼
+            fail(player, runtime, state, definition.name() + "：" + (unusable != null ? "孔裡的技能現在不能用（" + unusable + "）"
+                    : "孔裡要放" + HollowForm.wants() + "的技能寶石（/skills 點它，拿技能寶石點一個孔）"), now);
             return;
         }
         if (signatures.press(player, runtime, state, key, definition, build, spec, preferred, sheet, now)) {
@@ -5119,7 +5153,13 @@ public final class SkillService {
     public List<String> describeDefault(final Player player, final SkillDefinition definition) {
         final PlayerState state = plugin.players().get(player);
         final StatSheet sheet = plugin.players().sheet(player);
-        return describe(player, SkillBuild.of(config, definition, 1, state.level(), true, List.of(), state.weaponTags(), sheet));
+        final List<String> lines = new ArrayList<>();
+        // 2026-10-29：裝著但沒生效的裝備（需求不符…）寫在普攻說明最上面——主手武器沒生效時普攻會變成空手的，不寫看不出原因
+        for (final String inactive : state.inactiveEquipment()) {
+            lines.add("<red>沒生效：" + tw.exilecore.item.ItemRenderer.escape(inactive));
+        }
+        lines.addAll(describe(player, SkillBuild.of(config, definition, 1, state.level(), true, List.of(), state.weaponTags(), sheet)));
+        return lines;
     }
 
     /** 面板上（或寶石裡）一個技能在這個玩家身上的說明。 */
@@ -5408,7 +5448,9 @@ public final class SkillService {
     /** 技能說明：數值都是用玩家目前的屬性與掛的輔助寶石算的。 */
     public List<String> describe(final Player player, final SkillBuild build) {
         final PlayerState state = plugin.players().get(player);
-        final StatSheet sheet = plugin.players().sheet(player);
+        // 2026-10-29：血術士的血棘（每 50 生命增加暴擊傷害加成）擊中時才算，技能說明也照滿血估一份（跟面板的每秒傷害一樣）；
+        //   這次之前技能說明的暴擊傷害沒算到，比角色面板低
+        final StatSheet sheet = withLifeCrit(plugin.players().sheet(player));
         final SkillDefinition definition = build.definition();
         final List<String> lines = new ArrayList<>();
         lines.add(headlineChips(definition)); // 2026-10：標籤改成小方塊
@@ -6635,7 +6677,7 @@ public final class SkillService {
     /** 技能的標籤（不含攻擊、法術），照 {@link #TAG_ORDER} 排好。 */
     static List<String> orderedTags(final SkillDefinition definition) {
         final List<String> tags = new ArrayList<>();
-        for (final String tag : definition.tags()) {
+        for (final String tag : definition.displayTags()) { // 2026-10-29：照原作寶石標籤顯示
             if (!Set.of("attack", "spell").contains(tag)) {
                 tags.add(tag);
             }
@@ -6675,7 +6717,13 @@ public final class SkillService {
                 // 2026-10：光環、捷光環、常駐不算法術，第一格寫它自己的種類（不再掛「法術」）
                 : definition.mechanic() == Mechanic.AURA ? (definition.tags().contains(Tags.HERALD) ? tw.exilecore.item.AffixChips.Chip.HERALD
                         : definition.tags().contains(Tags.PERSISTENT) ? tw.exilecore.item.AffixChips.Chip.PERSISTENT : tw.exilecore.item.AffixChips.Chip.AURA)
-                : definition.isAttack() ? tw.exilecore.item.AffixChips.Chip.ATTACK : tw.exilecore.item.AffixChips.Chip.CASTER);
+                // 2026-10-29 照 PoE2 寶石標籤（displayTags）：攻擊、法術照原作；不算法術的（印記、增益：獵殺印記、急裝…）第一格不再掛「法術」，
+                //   印記寫印記，增益直接接標籤
+                : definition.displayTags().contains(Tags.ATTACK) || definition.isAttack() && !definition.displayTags().contains(Tags.SPELL)
+                        ? tw.exilecore.item.AffixChips.Chip.ATTACK
+                : definition.displayTags().contains(Tags.SPELL) ? tw.exilecore.item.AffixChips.Chip.CASTER
+                : definition.displayTags().contains(Tags.MARK) ? tw.exilecore.item.AffixChips.Chip.MARK : null);
+        chips.remove(null);
         for (final String tag : orderedTags(definition)) {
             final tw.exilecore.item.AffixChips.Chip chip = tw.exilecore.item.AffixChips.byId(tag);
             if (chip != null && !chips.contains(chip)) {

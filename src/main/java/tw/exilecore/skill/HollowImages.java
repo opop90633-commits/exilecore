@@ -74,7 +74,8 @@ final class HollowImages {
         }
         final List<SkillBuild> socketed = service.hollowSocketed(player);
         if (socketed.isEmpty()) {
-            stop(player, runtime, state, "孔裡沒有能用的" + HollowForm.wants(), now);
+            final String unusable = service.hollowUnusable(player); // 2026-10-29：說是哪一顆、為什麼不能用
+            stop(player, runtime, state, unusable != null ? "孔裡的技能現在不能用（" + unusable + "）" : "孔裡沒有能用的" + HollowForm.wants(), now);
             return;
         }
         SkillBuild attack = null;

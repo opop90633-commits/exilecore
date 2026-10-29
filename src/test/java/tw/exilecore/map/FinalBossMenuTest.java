@@ -86,17 +86,17 @@ class FinalBossMenuTest {
         for (final MapConfig.MapDef map : config.regularFinals()) {
             final double top = MapService.recommendedDps(monsters, map.boss(), config.tiers().level(max) + config.finalLevelBonus(),
                     config.finalBossLifeMultiplier(max));
-            assertEquals(250000, top, 2500, map.id() + " T" + max);
+            assertEquals(500000, top, 5000, map.id() + " T" + max); // 2026-10-29 照站長：終局 Boss 血量 ×2（這次之前 25 萬）
             final double t1 = MapService.recommendedDps(monsters, map.boss(), config.tiers().level(1) + config.finalLevelBonus(),
                     config.finalBossLifeMultiplier(1));
-            assertTrue(t1 < 10000, map.id() + " T1 不比以前難（以前 0.92 萬）：" + t1);
+            assertTrue(t1 < 20000, map.id() + " T1：2026-10-29 照站長 ×2（以前 0.92 萬）：" + t1);
             final MapConfig.Uber uber = config.uber(map.id());
-            assertEquals(500000, MapService.recommendedDps(monsters, uber.merge(map.boss()), config.uberStats(map.id(), uber).monsterLevel(),
-                    config.uberLifeMultiplier()), 5000, map.id() + " 極境");
+            assertEquals(1000000, MapService.recommendedDps(monsters, uber.merge(map.boss()), config.uberStats(map.id(), uber).monsterLevel(),
+                    config.uberLifeMultiplier()), 10000, map.id() + " 極境（2026-10-29 照站長 ×2，這次之前 50 萬）");
         }
         assertEquals(8, config.pinnacles().size(), "萬界之巔＋7 隻事件巔峰");
         for (final MapConfig.MapDef map : config.pinnacles()) {
-            assertEquals(1000000, MapService.recommendedDps(monsters, map.boss(),
+            assertEquals(2000000, MapService.recommendedDps(monsters, map.boss(), // 2026-10-29 照站長 ×2（這次之前 100 萬）
                     config.pinnacleStats(map.id(), config.pinnacle(map.id())).monsterLevel(), config.pinnacleLifeMultiplier(map.id())),
                     10000, map.id() + " 巔峰");
         }

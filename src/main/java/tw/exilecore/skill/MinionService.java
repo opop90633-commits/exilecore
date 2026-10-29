@@ -1005,6 +1005,8 @@ public final class MinionService implements Listener, MinionHooks {
     }
 
     private Mob spawn(final Player player, final SkillBuild build, final SummonSpec spec, final Location at, final String name, final String kind) {
+        // 2026-10-29 照 PoE2 Manifest Weapon：幻化武器拿的是你主手那把武器的複製（外觀照你的武器）；這次之前一律拿鐵劍
+        final ItemStack copied = MinionAbilities.MANIFEST.equals(build.definition().id()) ? manifestItem(player) : null;
         final EntityType type;
         try {
             type = EntityType.valueOf(kind != null ? kind : spec.kind());
@@ -1067,7 +1069,9 @@ public final class MinionService implements Listener, MinionHooks {
                 if (helmet != null) {
                     equipment.setItem(EquipmentSlot.HEAD, new ItemStack(helmet), true);
                 }
-                if (weapon != null) {
+                if (copied != null) {
+                    equipment.setItem(EquipmentSlot.HAND, copied, true);
+                } else if (weapon != null) {
                     equipment.setItem(EquipmentSlot.HAND, new ItemStack(weapon), true);
                 }
                 for (final EquipmentSlot slot : EquipmentSlot.values()) {
@@ -1252,7 +1256,8 @@ public final class MinionService implements Listener, MinionHooks {
         final AttributeInstance speed = mob.getAttribute(Attribute.MOVEMENT_SPEED);
         if (speed != null) {
             speed.removeModifier(speedKey);
-            final double scale = minion.spec.speed() * MinionSheets.movementScale(minion.effective) - 1;
+            // 2026-10-29 照站長：召喚物移動速度基礎 ×2（skills.yml 的 minion_move_scale）
+            final double scale = minion.spec.speed() * SkillConfig.minionMoveScale() * MinionSheets.movementScale(minion.effective) - 1;
             if (Math.abs(scale) > 1e-6) {
                 speed.addModifier(new AttributeModifier(speedKey, scale, AttributeModifier.Operation.MULTIPLY_SCALAR_1));
             }
@@ -1339,6 +1344,9 @@ public final class MinionService implements Listener, MinionHooks {
         if (minion.untilTick > 0 && now >= minion.untilTick) {
             remove(minion, Gone.EXPIRED);
             return;
+        }
+        if (now % 20 == minion.bornTick % 20 && MinionAbilities.MANIFEST.equals(minion.skillId())) {
+            syncManifestWeapon(minion, owner); // 2026-10-29 照 PoE2：換了武器，幻化武器跟著換外觀
         }
         if (minion.decoy) {
             // 殘影：不動、不打、不跟著主人；換世界就收掉，每 taunt 秒嘲諷一次
@@ -1461,7 +1469,11 @@ public final class MinionService implements Listener, MinionHooks {
         if (minion.leapLandAt > 0) {
             return; // 躍擊在空中：落地才打
         }
-        if (wolf(minion) && now >= minion.nextAttack && !minion.onCooldown(LEAP, now) && distance >= MinionAbilities.LEAP_MIN
+        if (MinionAbilities.MANIFEST.equals(minion.skillId()) && now >= minion.nextAttack && !minion.onCooldown(MANIFEST_LUNGE, now)
+                && distance >= MinionAbilities.MANIFEST_LUNGE_MIN && distance <= MinionAbilities.MANIFEST_LUNGE_MAX
+                && manifestForm(owner) == MinionAbilities.ManifestForm.SPEAR && mob.hasLineOfSight(target)) {
+            minion.nextAttack = now + lunge(minion, target, owner, now); // 2026-10-29 照 PoE2：幻化成矛的突進（冷卻 3 秒）
+        } else if (wolf(minion) && now >= minion.nextAttack && !minion.onCooldown(LEAP, now) && distance >= MinionAbilities.LEAP_MIN
                 && distance <= MinionAbilities.LEAP_MAX && mob.isOnGround() && mob.hasLineOfSight(target)) {
             minion.nextAttack = now + leap(minion, target, distance, now); // 2026-10-26 照 PoE2：狼的躍擊（冷卻 7 秒）
         } else if (inReach && now >= minion.nextAttack && seesTarget) {
@@ -1872,6 +1884,10 @@ public final class MinionService implements Listener, MinionHooks {
     // ---- 2026-10-26 照 PoE2 0.5：召喚物自己的技能與指令（數值見 MinionAbilities）----
 
     private static final String LEAP = "leap";
+    private static final String MANIFEST_SLAM = "manifest_slam";
+    private static final String MANIFEST_SWEEP = "manifest_sweep";
+    private static final String MANIFEST_LUNGE = "manifest_lunge";
+    private static final String MANIFEST_RAKE = "manifest_rake";
     private static final String BONEBREAKER = "bonebreaker";
     private static final String HEAL = "heal";
     private static final String REVIVE = "revive";
@@ -2101,6 +2117,9 @@ public final class MinionService implements Listener, MinionHooks {
                 attack(minion, target, OriginalSkills.qualityInt(minion.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.EXTRA_PROJECTILES)));
                 return minion.attackTicks;
             }
+            case MinionAbilities.MANIFEST -> {
+                return manifestAct(minion, target, owner, now); // 2026-10-29 照 PoE2：照武器類型多一招
+            }
             case MinionAbilities.REAVER -> {
                 attack(minion, target, 0);
                 if (minion.enragedAt >= 0) {
@@ -2114,6 +2133,134 @@ public final class MinionService implements Listener, MinionHooks {
         }
         attack(minion, target, 0);
         return minion.attackTicks;
+    }
+
+    // ---- 幻化武器（2026-10-29 照 PoE2 Manifest Weapon）----
+
+    /** 主人裝備欄主手的那把武器（複製一份、數量 1）；沒拿回傳 null。 */
+    private ItemStack manifestItem(final Player owner) {
+        final tw.exilecore.character.PlayerState state = plugin.players().get(owner);
+        if (state == null) {
+            return null;
+        }
+        for (int i = 0; i < tw.exilecore.character.PlayerState.JEWELLERY_SLOTS.length; i++) {
+            if (tw.exilecore.character.PlayerState.JEWELLERY_SLOTS[i] == tw.exilecore.item.ItemSlot.MAIN_HAND) {
+                final ItemStack stack = state.jewellery(i);
+                if (stack == null || stack.isEmpty()) {
+                    return null;
+                }
+                final ItemStack copy = stack.clone();
+                copy.setAmount(1);
+                return copy;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 主人現在拿的武器幻化成哪一種（{@link MinionAbilities#manifestForm}）：看生效的主手武器（需求不符的不算），
+     * 主手真的有拿東西（空掌之術、毀面者這種「當作拿著」的不算）；不能幻化回傳 null。
+     */
+    MinionAbilities.ManifestForm manifestForm(final Player owner) {
+        if (owner == null || manifestItem(owner) == null) {
+            return null;
+        }
+        return MinionAbilities.manifestForm(plugin.players().get(owner).weaponTags());
+    }
+
+    /** 主人換了武器：手上拿的換成新的那把。 */
+    private void syncManifestWeapon(final Minion minion, final Player owner) {
+        final EntityEquipment equipment = minion.mob.getEquipment();
+        if (equipment == null) {
+            return;
+        }
+        final ItemStack wanted = manifestItem(owner);
+        final ItemStack holding = equipment.getItemInMainHand();
+        if (wanted == null || wanted.isSimilar(holding)) {
+            return;
+        }
+        equipment.setItem(EquipmentSlot.HAND, wanted, true);
+    }
+
+    /**
+     * 碰得到目標時的這一下：錘的重擊（180%、攻擊時間兩倍、冷卻 6 秒）、長棍的橫掃（90%、打身邊一圈、冷卻 6 秒）、
+     * 獸魂符的爪擊（160%、冷卻 3 秒）好了就用，不然普通的打擊。回傳幾 tick 後再出手。
+     */
+    private long manifestAct(final Minion minion, final LivingEntity target, final Player owner, final long now) {
+        final MinionAbilities.ManifestForm form = manifestForm(owner);
+        if (form == MinionAbilities.ManifestForm.MACE && !minion.onCooldown(MANIFEST_SLAM, now)) {
+            minion.startCooldown(MANIFEST_SLAM, now, MinionAbilities.MANIFEST_SLAM_COOLDOWN);
+            minion.mob.swingMainHand();
+            final Location at = target.getLocation();
+            manifestArea(minion, owner, target, at, MinionAbilities.MANIFEST_SLAM_RADIUS, "manifest_slam", MinionAbilities.MANIFEST_SLAM_DAMAGE,
+                    Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.SLAM));
+            Fx.spawn(at.getWorld(), org.bukkit.Particle.EXPLOSION, at.clone().add(0, 0.2, 0), 1, 0, 0, 0, 0);
+            Fx.spawn(at.getWorld(), org.bukkit.Particle.BLOCK_CRUMBLE, at, 16, 0.6, 0.1, 0.6, 0, Material.STONE.createBlockData());
+            return Math.max(4, Math.round(minion.attackTicks / MinionAbilities.MANIFEST_SLAM_SPEED));
+        }
+        if (form == MinionAbilities.ManifestForm.QUARTERSTAFF && !minion.onCooldown(MANIFEST_SWEEP, now)) {
+            minion.startCooldown(MANIFEST_SWEEP, now, MinionAbilities.MANIFEST_SWEEP_COOLDOWN);
+            minion.mob.swingMainHand();
+            final Location at = minion.mob.getLocation();
+            manifestArea(minion, owner, target, at, MinionAbilities.MANIFEST_SWEEP_RADIUS, "manifest_sweep", MinionAbilities.MANIFEST_SWEEP_DAMAGE,
+                    Set.of(tw.exilecore.stats.Tags.AREA));
+            Fx.spawn(at.getWorld(), org.bukkit.Particle.SWEEP_ATTACK, at.clone().add(0, 0.8, 0), 6,
+                    MinionAbilities.MANIFEST_SWEEP_RADIUS / 2, 0.1, MinionAbilities.MANIFEST_SWEEP_RADIUS / 2, 0);
+            return minion.attackTicks;
+        }
+        if (form == MinionAbilities.ManifestForm.TALISMAN && !minion.onCooldown(MANIFEST_RAKE, now)) {
+            minion.startCooldown(MANIFEST_RAKE, now, MinionAbilities.MANIFEST_RAKE_COOLDOWN);
+            minion.mob.swingMainHand();
+            final Location at = target.getLocation();
+            manifestArea(minion, owner, target, at, MinionAbilities.MANIFEST_RAKE_RADIUS, "manifest_rake", MinionAbilities.MANIFEST_RAKE_DAMAGE,
+                    Set.of(tw.exilecore.stats.Tags.AREA));
+            Fx.spawn(at.getWorld(), org.bukkit.Particle.SWEEP_ATTACK, at.clone().add(0, 1, 0), 4, 0.6, 0.3, 0.6, 0);
+            return minion.attackTicks;
+        }
+        attack(minion, target, 0);
+        return minion.attackTicks;
+    }
+
+    /** 矛的突進：衝到目標面前（3～20 公尺），落點 180% 範圍；回傳幾 tick 後再出手。 */
+    private long lunge(final Minion minion, final LivingEntity target, final Player owner, final long now) {
+        minion.startCooldown(MANIFEST_LUNGE, now, MinionAbilities.MANIFEST_LUNGE_COOLDOWN);
+        final Location from = minion.mob.getLocation();
+        final Vector direction = target.getLocation().toVector().subtract(from.toVector());
+        final double length = direction.length();
+        if (length < 1e-3) {
+            return minion.attackTicks;
+        }
+        direction.multiply(1 / length);
+        final double stop = Math.max(0, length - minion.spec.reach() - target.getWidth() / 2);
+        final Location to = from.clone().add(direction.clone().multiply(stop));
+        to.setDirection(direction);
+        minion.mob.getPathfinder().stopPathfinding();
+        for (double d = 0; d < stop; d += 0.6) {
+            Fx.spawn(from.getWorld(), org.bukkit.Particle.CRIT, from.clone().add(direction.clone().multiply(d)).add(0, 0.8, 0), 1, 0, 0, 0, 0);
+        }
+        minion.mob.teleport(to);
+        minion.mob.swingMainHand();
+        manifestArea(minion, owner, target, target.getLocation(), MinionAbilities.MANIFEST_LUNGE_RADIUS, "manifest_lunge",
+                MinionAbilities.MANIFEST_LUNGE_DAMAGE, Set.of(tw.exilecore.stats.Tags.AREA));
+        Fx.spawn(target.getWorld(), org.bukkit.Particle.SWEEP_ATTACK, target.getLocation().add(0, 1, 0), 2, 0.3, 0.2, 0.3, 0);
+        return minion.attackTicks;
+    }
+
+    /** 打 center 周圍 radius 格（吃召喚物的範圍加成）的敵人，瞄準的那隻一定算到。 */
+    private void manifestArea(final Minion minion, final Player owner, final LivingEntity aimed, final Location center, final double radius,
+                              final String id, final double factor, final Set<String> tags) {
+        if (owner == null) {
+            return;
+        }
+        final double reach = radius * areaScale(minion);
+        final List<LivingEntity> hits = new ArrayList<>(targets.around(center, reach, owner));
+        if (aimed != null && aimed.isValid() && !hits.contains(aimed)) {
+            hits.add(aimed);
+        }
+        final Attack hit = with(minion, attackProfile(minion, id, factor, tags, null, List.of()));
+        for (final LivingEntity near : hits) {
+            strike(minion, near, hit);
+        }
     }
 
     /** 碎骨：180%，重暈蓄勢待暈的敵人時接震波（480%、2 格）。 */

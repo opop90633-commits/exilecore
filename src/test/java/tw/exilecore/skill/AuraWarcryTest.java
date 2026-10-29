@@ -49,7 +49,8 @@ class AuraWarcryTest {
         assertEquals(30, aegis.aura().reserve(), 1e-9);
         assertFalse(aegis.aura().allies(), "2026-10-26 照 PoE2：Arctic Armour 只給自己");
         assertFalse(aegis.aura().herald());
-        assertTrue(aegis.tags().contains(Tags.AURA));
+        assertFalse(aegis.tags().contains(Tags.AURA), "2026-10-29 照 PoE2：Arctic Armour 是常駐增益（Buff、Persistent），不是光環");
+        assertTrue(aegis.tags().contains(Tags.BUFF) && aegis.tags().contains(Tags.PERSISTENT));
         assertFalse(aegis.tags().contains(Tags.AREA), "2026-10-26 照 PoE2：凜冬之殼沒有範圍（只打攻擊你的那隻）");
         assertFalse(aegis.tags().contains(Tags.SPELL), "光環不算法術（2026-10，照 PoE2）");
         assertFalse(aegis.dealsDamage());
@@ -350,7 +351,7 @@ class AuraWarcryTest {
         // 強效光環、慷慨這兩顆輔助寶石 2026-10 改版拿掉了（supports.yml 的 retired），引擎的 aura.effect、flag.generosity 還在：用自己做的輔助測
         assertNull(config.support("aura_effect"));
         assertNull(config.support("generosity"));
-        final SupportDefinition auraEffect = new SupportDefinition("aura_effect", "強效光環", "", "BEACON", 2, Set.of(Tags.AURA), Set.of(), 1.0,
+        final SupportDefinition auraEffect = new SupportDefinition("aura_effect", "強效光環", "", "BEACON", 2, Set.of(SupportDefinition.PERSISTENT_BUFF), Set.of(), 1.0,
                 List.of(new Modifier(StatKeys.AURA_EFFECT, ModType.INCREASED, 0.25, Set.of(), "強效光環"),
                         new Modifier(StatKeys.AURA_RESERVATION, ModType.INCREASED, 0.20, Set.of(), "強效光環")), List.of());
         final SkillBuild boosted = build("frost_aegis", 20, owner, auraEffect);
@@ -358,7 +359,7 @@ class AuraWarcryTest {
         assertEquals(1.45, boosted.auraEffect(), 1e-9, "增加 20% + 25%（增加相加）");
         assertEquals(30 * (1 - 0.10 + 0.20), boosted.reserve(), 1e-9, "保留 -10% + 20% = 增加 10%，照乘");
 
-        final SupportDefinition generosity = new SupportDefinition("generosity", "慷慨", "", "BEACON", 2, Set.of(Tags.AURA), Set.of(), 1.0,
+        final SupportDefinition generosity = new SupportDefinition("generosity", "慷慨", "", "BEACON", 2, Set.of(SupportDefinition.PERSISTENT_BUFF), Set.of(), 1.0,
                 List.of(Modifier.flat(StatKeys.FLAG_GENEROSITY, 1, "慷慨"),
                         new Modifier(StatKeys.AURA_EFFECT, ModType.INCREASED, 0.4, Set.of(), "慷慨")), List.of());
         final SkillBuild generous = build("frost_aegis", 20, owner, generosity);

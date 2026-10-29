@@ -292,6 +292,12 @@ public final class AilmentService {
     }
 
     /** 身上疊了幾層中毒。 */
+    /** 2026-10-29 照 PoE2 Dark Effigy：身上有幾個混沌持續傷害的減益（{@link AilmentState#chaosDots}）；沒追蹤的是 0。 */
+    public int chaosDots(final LivingEntity entity) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        return entry == null ? 0 : entry.state.chaosDots(now());
+    }
+
     public int poisonStacks(final LivingEntity entity) {
         final Tracked entry = tracked.get(entity.getUniqueId());
         return entry == null ? 0 : entry.state.poisons(now()).size();
@@ -1585,13 +1591,13 @@ public final class AilmentService {
     }
 
     /** 擲避免：最多 {@link StatKeys#AVOID_CAP}%（堆再多也一樣；要免疫用開關）。 */
-    private static boolean avoided(final StatSheet defender, final String stat, final RandomGenerator random) {
+    static boolean avoided(final StatSheet defender, final String stat, final RandomGenerator random) { // 2026-10-29：測試用（套件內）
         if (stat.startsWith("avoid.") && StatKeys.flag(defender, "flag.immune." + stat.substring("avoid.".length()))) {
             return true; // 2026-10-26：免疫（PoE2 護符的 Grants Immunity to X：flag.immune.ignite／shock／bleed／poison／stun…，不受 75% 上限）
         }
         if ((stat.equals(StatKeys.AVOID_IGNITE) || stat.equals(StatKeys.AVOID_CHILL) || stat.equals(StatKeys.AVOID_FREEZE)
-                || stat.equals(StatKeys.AVOID_SHOCK)) && StatKeys.flag(defender, StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE)) {
-            return true; // 免疫元素異常（2026-10，三元守護）
+                || stat.equals(StatKeys.AVOID_SHOCK) || stat.equals(StatKeys.AVOID_ELECTROCUTE)) && StatKeys.flag(defender, StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE)) {
+            return true; // 免疫元素異常（2026-10，三元守護）；2026-10-29 照 PoE2：電擊也是元素異常（這次之前漏了，穿疾影之靴還是會被電擊定住）
         }
         final double chance = AilmentConfig.avoidChance(defender.get(stat));
         return chance > 0 && random.nextDouble() < chance;

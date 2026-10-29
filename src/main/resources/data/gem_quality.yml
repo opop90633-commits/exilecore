@@ -110,6 +110,7 @@ cull_the_weak:   # Cull The Weak（2026-10-28 照 PoE2：(0—20)% 機率多獲�
   - { stat: charge.extra, type: FLAT, per: 1.0 }   # 多一顆同種戰星的機率（ChargeService）
 dark_idol:   # Dark Effigy（2026-10-28 照 PoE2：衝擊半徑 +(0—0.2) 格；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: skill.area, type: INCREASED, per: 1.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+  - { stat: skill.totems, type: FLAT, per: 0.05 }   # 2026-10-29 照 PoE2 Dark Effigy：圖騰上限 +(0—1)（無條件捨去，20% 品質 +1）；這次之前漏了
 dark_pact:   # Dark Pact（2026-10-28 照 PoE2：另外犧牲召喚物 (0—2.5)% 生命造成混沌傷害——我們的冥契沒有犧牲召喚物生命，照原作 13% 的比例換成更多 (0—19.2)% 傷害；這次之前照通用規則）
   - { stat: damage, type: MORE, per: 0.9615 }   # 2.5 ÷ 13 換算
 decompose:   # Decompose（2026-10-28 照 PoE2：毒雲持續時間 +(0—1) 秒；這次之前 []（腐屍爆沒有毒雲），再之前照通用規則）
@@ -405,6 +406,7 @@ ruin_mantra:   # Mantra of Destruction（2026-10-28 照 PoE2：需要的連擊�
   - { stat: mantra.combo, type: FLAT, per: -0.05 }   # OriginalSkills.mantraCombo
 sacrifice:   # Sacrifice（2026-10-28 照 PoE2：召喚物復活更快 (0—5)%（加在「更慢 x%」上）；這次之前照通用規則）
   - { stat: sacrifice.slower, type: FLAT, per: 0.25 }   # OriginalSkills.sacrifice
+  - { stat: effect.life.max, type: INCREASED, per: 2.0, tags: [minion] }   # 2026-10-29 照 PoE2 Sacrifice 的品質：召喚物最大生命增加 (0—40)%（光環的增益給召喚物）；這次之前漏了這一條
 savage_fury:   # Savage Fury（2026-10-28 照 PoE2：狂暴另外更多 (0—5)% 傷害（加在 20%～39% 上）；這次之前照通用規則）
   - { stat: effect.damage, type: MORE, per: 0.25 }   # 狂暴（AuraService.startFrenzy）
 scavenged_plating:   # Scavenged Plating（2026-10-28 照 PoE2：甲片持續時間 +(0—2) 秒——我們的拾鱗是一直有的增益（沒有甲片層數），照 8 秒 +25% 的持續時間估平均多約一成層數，換成護甲、破甲各另外增加 (0—4)%；這次之前照通用規則）

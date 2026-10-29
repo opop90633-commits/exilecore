@@ -385,7 +385,8 @@ public final class StatsReport {
         for (final String[] row : AVOIDS) {
             final double value = sheet.get(row[0]);
             final boolean elemental = row[0].equals(StatKeys.AVOID_IGNITE) || row[0].equals(StatKeys.AVOID_CHILL)
-                    || row[0].equals(StatKeys.AVOID_FREEZE) || row[0].equals(StatKeys.AVOID_SHOCK);
+                    || row[0].equals(StatKeys.AVOID_FREEZE) || row[0].equals(StatKeys.AVOID_SHOCK)
+                    || row[0].equals(StatKeys.AVOID_ELECTROCUTE); // 2026-10-29 照 PoE2：電擊也是元素異常
             if (value <= 0 || freezeImmune && row[0].equals(StatKeys.AVOID_FREEZE) || elementalImmune && elemental) {
                 continue;
             }

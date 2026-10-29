@@ -178,7 +178,7 @@ class EventPinnacleContentTest {
             final MapConfig.Pinnacle pinnacle = maps.pinnacle(id);
             assertNotNull(pinnacle, id + "：是巔峰");
             assertEquals(2, pinnacle.attempts(), id);
-            assertEquals(2000000, pinnacle.dpsCap(), 1e-9, id); // 2026-10-27 照站長：每秒 200 萬起遞減（這次之前 100 萬）
+            assertEquals(4000000, pinnacle.dpsCap(), 1e-9, id); // 2026-10-29 照站長：400 萬起；2026-10-27 照站長：每秒 200 萬起遞減（這次之前 100 萬）
             assertEquals(2, pinnacle.drops().maps(), id);
             assertEquals(0.02, pinnacle.drops().uniqueChance(), 1e-9, id);
             int own = 0;

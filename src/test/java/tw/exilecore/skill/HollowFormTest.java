@@ -60,7 +60,11 @@ class HollowFormTest {
         assertNotNull(spec, "按住引導");
         assertEquals(ChargeSpec.Mode.STREAM, spec.mode());
         assertFalse(spec.drain(), "消耗是每個幻影花孔裡攻擊的 80%，不逐秒扣");
-        assertTrue(form.usableWith(Set.of()), "徒手也行");
+        // 2026-10-29 照 PoE2（Any Melee Martial Weapon）：徒手、權杖不行；這次之前徒手也行
+        assertFalse(form.usableWith(Set.of()), "徒手不行");
+        assertFalse(form.usableWith(Set.of("weapon", "sceptre", "caster", Tags.MELEE)), "權杖不是武鬥武器");
+        assertTrue(form.usableWith(Set.of("weapon", Tags.QUARTERSTAFF, Tags.MELEE)));
+        assertTrue(form.usableWith(Set.of("weapon", Tags.MACE, Tags.MELEE)), "錘也行");
         assertFalse(form.usableWith(Set.of(Tags.BOW, Tags.RANGED)), "要近戰武器");
         assertEquals(0, form.cooldown(), 1e-9);
     }

@@ -60,13 +60,25 @@ public final class LightningWarp {
      * @param anyNear            沒有觸發的目標時，範圍內有看得到的敵人
      */
     static Pick chooseTriggered(final boolean preferred, final boolean preferredCullable, final boolean cullNear, final boolean anyNear) {
-        if (preferred) {
-            return preferredCullable ? Pick.CULL : Pick.MARK;
-        }
-        if (cullNear) {
+        return chooseTriggered(preferred, preferredCullable, false, cullNear, anyNear);
+    }
+
+    /**
+     * 2026-10-29 照 PoE2（0.5.0 修正：撲殺得到的敵人、滾雷珠比「選到但還不能撲殺的目標」優先）：主要寶石觸發的雷遁也會傳到自己的滾雷珠。
+     * 順序：觸發的目標撲殺得到 → 瞬移進去；沒有觸發的目標時範圍內撲殺得到的 → 瞬移進去；範圍內有自己的滾雷珠 → 傳過去；
+     * 都沒有才對觸發的目標（或範圍內最近一隻）掛標記。這次之前被觸發的雷遁只對敵人（觸發的目標還不能撲殺就掛標記，不看滾雷珠）。
+     *
+     * @param ballNear 範圍內有自己的滾雷珠（而且雷珠下面站得住）
+     */
+    static Pick chooseTriggered(final boolean preferred, final boolean preferredCullable, final boolean ballNear, final boolean cullNear,
+                                final boolean anyNear) {
+        if (preferred && preferredCullable || !preferred && cullNear) {
             return Pick.CULL;
         }
-        return anyNear ? Pick.MARK : Pick.NONE;
+        if (ballNear) {
+            return Pick.BALL;
+        }
+        return preferred || anyNear ? Pick.MARK : Pick.NONE;
     }
 
     /**

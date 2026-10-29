@@ -1582,7 +1582,13 @@ public final class UiPack {
     /** 原版物品的完整定義（web/vanilla_items/ 沒有的話用最簡單的原版模型）。 */
     private static JsonObject vanillaFull(final String item) {
         final JsonObject full = vanillaModel(item);
-        return full != null ? full : plain("minecraft:item/" + item);
+        if (full != null) {
+            return full;
+        }
+        // 2026-10-29：沒有 web/vanilla_items/ 那份的，先照 vanilla_item_models.txt（方塊類是 minecraft:block/…）；
+        //   這次之前一律 minecraft:item/代號——黑曜石這種方塊物品沒有那個模型，掛了特殊戒指外觀之後所有黑曜石都變成紫黑格子
+        final JsonObject known = Vanilla.MODELS.get(item);
+        return known != null ? known : plain("minecraft:item/" + item);
     }
 
     /** 實線外框（白色，著色後是 {@link #UNIQUE_OUTLINE}）：最外面 2 格（16 格的 1 格）實心，往裡淡一點，中間透明。 */

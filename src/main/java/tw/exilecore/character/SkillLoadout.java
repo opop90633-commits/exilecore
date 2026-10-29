@@ -760,8 +760,28 @@ public final class SkillLoadout {
      * quality：技能代號 → 武器的品質（沒寫的 0）。品質不存檔，每次重算照身上的武器同步。這次之前賦予的技能沒有品質。
      */
     public boolean syncGranted(final java.util.Map<String, Integer> desired, final java.util.Map<String, Integer> quality) {
+        return syncGranted(desired, quality, false);
+    }
+
+    /**
+     * 同上；removeMissing：2026-10-29 照站長，脫下法杖、長杖、權杖（或需求不符、昇華沒了）時，面板上那個賦予的技能馬上拿掉：
+     * 掛著的輔助寶石放進 {@link #drainOverflow}（還給玩家），綁著它的按鍵回到普攻。這次之前留在面板上變成不能用的（{@link #dormant}）。
+     * 舊存檔付費開孔的（{@link Entry#legacySockets}）先不拿，等 SkillService.migrateRemoved 退還鑿星石。
+     */
+    public boolean syncGranted(final java.util.Map<String, Integer> desired, final java.util.Map<String, Integer> quality,
+                               final boolean removeMissing) {
         grantedNow = desired == null ? java.util.Map.of() : java.util.Map.copyOf(desired);
         boolean changed = false;
+        if (removeMissing) {
+            for (int position = 0; position < MAX_SKILLS; position++) {
+                final Entry entry = skills[position];
+                if (entry != null && entry.granted() && !entry.legacySockets() && !grantedNow.containsKey(entry.skillId())) {
+                    pendingOverflow.addAll(overflow(entry, 0));
+                    remove(position);
+                    changed = true;
+                }
+            }
+        }
         for (final java.util.Map.Entry<String, Integer> grant : grantedNow.entrySet()) {
             final int weaponQuality = quality == null ? 0 : Math.max(0, quality.getOrDefault(grant.getKey(), 0));
             // 2026-10-28：同一個技能可以放好幾顆，先找賦予的那一顆（這次之前一個技能只有一顆，直接 find）

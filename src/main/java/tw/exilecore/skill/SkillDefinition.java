@@ -170,7 +170,7 @@ public record SkillDefinition(String id, String name, String description, String
         if (mechanic == Mechanic.MARK && !params.mark().curse()) {
             return ModifierText.tagName(Tags.MARK); // 2026-10-26 照 PoE2：印記不算法術
         }
-        if (type == SkillType.SPELL && tags.contains(Tags.BUFF)) {
+        if (type == SkillType.SPELL && tags.contains(Tags.BUFF) && mechanic != Mechanic.WARCRY) { // 2026-10-29：戰吼、祭品照舊寫戰吼
             return ModifierText.tagName(Tags.BUFF); // 2026-10-28 照 PoE2：增益技能（急裝）不算法術
         }
         return mechanic == Mechanic.WARCRY ? ModifierText.tagName(Tags.WARCRY) : type.displayName();
@@ -210,6 +210,7 @@ public record SkillDefinition(String id, String name, String description, String
                 case Tags.MACE -> "錘";
                 case Tags.DAGGER -> "匕首";
                 case Tags.CLAW -> "爪";
+                case "flail" -> "鏈錘"; // 2026-10-29
                 case Tags.ONE_HAND -> "單手武器";
                 case Tags.TWO_HAND -> "雙手武器";
                 case Tags.RANGED -> "遠程武器";
@@ -228,9 +229,11 @@ public record SkillDefinition(String id, String name, String description, String
             tags.add(Tags.META); // 2026-10-22：主要寶石（星咒圖騰、暴擊引星…）：技能寶石放在它自己的孔（每一孔都能放）
         }
         tags.remove(type == SkillType.ATTACK ? Tags.SPELL : Tags.ATTACK);
-        if (type == SkillType.SPELL && tags.contains(Tags.BUFF)) {
+        if (type == SkillType.SPELL && tags.contains(Tags.BUFF) && !lower(node.strings("tags")).contains(Tags.SPELL)
+                && !(node.has("aura") && node.node("aura").has("on_kill"))) { // 2026-10-29：捷光環（擊殺效果）的法術要留（擊殺效果的輔助）
             // 2026-10-28 照 PoE2：增益技能（急裝：Buff、Empower）不算法術——法術的輔助（疾詠…）掛不上、帶 spell 標籤的加成不吃；
             // type 還是 spell（動作照施法時間算）。這次之前急裝算法術
+            // 2026-10-29：yml 的 tags 自己寫了 spell 的（原作同時是增益、法術）照樣算法術
             tags.remove(Tags.SPELL);
         }
         // 2026-10 標籤統一：沒有轉成元素、混沌的攻擊打的就是武器的物理傷害，一律算物理技能（以前有的有寫、有的沒寫）
@@ -351,10 +354,13 @@ public record SkillDefinition(String id, String name, String description, String
                 // 捷光環（2026-10）：不算光環，另外一個標籤（光環的輔助、光環效果不吃；魔力保留的加成照吃）
                 tags.remove(Tags.AURA);
                 tags.add(Tags.HERALD);
-            } else {
+            } else if (!lower(node.strings("tags")).contains(Tags.PERSISTENT)) {
                 // （2026-10-17 試過把引星這類 yml 寫 persistent 的拿掉光環標籤：精魂輔助、雕琢的分類會跟著掛不上，先維持算光環）
                 tags.add(Tags.AURA);
             }
+            // 2026-10-29 照 PoE2 寶石標籤：yml 寫 persistent 的（常駐增益：僕骸替、引星、木甲…）不再一律算光環——原作是光環的（淨化、律盾、鎮懾…）
+            //   yml 自己寫 aura。精魂輔助改成 requires persistent_buff（光環、捷光環或常駐＋增益），雕琢的增益分類也看 buff，照樣掛得上。
+            //   這次之前常駐增益一律帶光環標籤（面板寫「光環」、吃光環效果與光環技能等級）
             // 隊友在範圍內才有效：範圍效果的加成讓它更大。2026-10-16：沒有任何效果會分給範圍內的人（引星：只是觸發別的技能）
             // 就不算範圍技能——擴散、凝聚這些範圍的輔助掛上去不會有作用，不要讓人誤會
             if (!aura.effects().isEmpty() || aura.enemy() != null || aura.onKill() != null) {
@@ -472,6 +478,17 @@ public record SkillDefinition(String id, String name, String description, String
         for (final YamlNode child : node.list("modifiers")) {
             modifiers.add(AffixMod.parse(child).toModifier(Map.of(), name));
         }
+        // 2026-10-29 照站長「標籤跟原作一樣」：上面自動加的標籤（攻擊一律算物理、召喚的近戰／遠程、光環的範圍…）跟原作寶石標籤不同的，
+        //   yml 用 tags_remove 拿掉、tags_add 補上（照 RePoE skill_gems.json 的寶石標籤）。只改顯示的標籤（寶石說明、技能面板的小方塊），
+        //   輔助能不能掛、吃哪些加成照舊看上面算好的標籤（改了會讓一堆輔助掛不上、或掛上去沒作用）
+        if (node.has("tags_remove") || node.has("tags_add")) {
+            final Set<String> shown = new LinkedHashSet<>(tags);
+            shown.removeAll(lower(node.strings("tags_remove")));
+            shown.addAll(lower(node.strings("tags_add")));
+            DISPLAY_TAGS.put(id, Set.copyOf(shown));
+        } else {
+            DISPLAY_TAGS.remove(id);
+        }
         final SkillDefinition parsed = new SkillDefinition(id, name, node.string("description", ""),
                 node.string("icon", "BOOK"), type, Set.copyOf(tags), Set.copyOf(lower(node.strings("weapons"))),
                 starter == null ? null : CharacterClass.parse(starter, null).id(), node.bool("hidden", false), tier, mechanic,
@@ -586,6 +603,14 @@ public record SkillDefinition(String id, String name, String description, String
     }
 
     /** 傷害類型的標籤。 */
+    /** 2026-10-29：跟原作寶石標籤對齊的顯示標籤（yml 的 tags_add／tags_remove）；沒寫的技能照 {@link #tags}。 */
+    private static final java.util.Map<String, Set<String>> DISPLAY_TAGS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** 顯示用的標籤（寶石說明、技能面板的小方塊；2026-10-29 照原作寶石標籤）。 */
+    public Set<String> displayTags() {
+        return DISPLAY_TAGS.getOrDefault(id, tags);
+    }
+
     static final Set<String> DAMAGE_TYPE_TAGS = Set.of(Tags.PHYSICAL, Tags.FIRE, Tags.COLD, Tags.LIGHTNING, Tags.CHAOS, Tags.ELEMENTAL);
 
     /** { fire: 1.0, cold: 0.5 } 這種類型比例；normalize = true 時總和調成 1。 */

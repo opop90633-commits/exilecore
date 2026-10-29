@@ -469,7 +469,7 @@ public final class CombatListener implements Listener {
             if (broken > 0) {
                 // 2026-10-17：照比例扣（rawArmour 已經含增加；以前用 FLAT 扣會再乘一次增加，有「增加護甲」的怪一下就被扣光）
                 hitDefender = defenderSheet.overlay(java.util.List.of(Modifier.more(StatKeys.ARMOUR, -Math.min(1.0, broken / rawArmour), "破甲")));
-                if (Double.isInfinite(broken) && (skill.tags().contains(Tags.PHYSICAL)
+                if (Double.isInfinite(broken) && (hitTags(skill).contains(Tags.PHYSICAL)
                         || attackerIsPlayer && StatKeys.flag(attackerSheet, StatKeys.FLAG_IMPLODING))) { // 內爆衝擊：所有擊中都增加
                     // 2026-10-26 照 PoE2 天賦樹：「增加完全破甲的效果」
                     brokenTaken = ailments.fullyBrokenTaken() * Math.max(0, 1 + attackerSheet.increased(tw.exilecore.stats.TreeKeys.ARMOUR_BREAK_EFFECT, java.util.Set.of()));

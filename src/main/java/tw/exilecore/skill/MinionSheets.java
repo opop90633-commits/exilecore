@@ -334,6 +334,12 @@ public final class MinionSheets {
         // 2026-10-26：還帶著條件標籤（夥伴、存在範圍內）的是呼叫的人沒挑過的：當作條件不成立（挑過的已經拿掉標籤）
         sheet.addAll(stripMinion(forMinion(ownerModifiers, Set.of())));
         sheet.addAll(spec.stats()); // 2026-10-26：召喚物自己的（骸骨戰士的格擋…）
+        // 2026-10-29 照站長：召喚物的攻擊、施法速度基礎 ×2（skills.yml 的 minion_speed_scale；「更多」）
+        final double speedScale = SkillConfig.minionSpeedScale();
+        if (Math.abs(speedScale - 1) > 1e-9) {
+            sheet.add(Modifier.more(StatKeys.ATTACK_SPEED, speedScale - 1, "伺服器基礎速度"));
+            sheet.add(Modifier.more(StatKeys.CAST_SPEED, speedScale - 1, "伺服器基礎速度"));
+        }
         return sheet;
     }
 

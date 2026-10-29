@@ -42,6 +42,74 @@ final class MinionAbilities {
     static final String MANIFEST = "manifest_weapon";
     static final double MANIFEST_STR_PER_DAMAGE = 1;
     static final double MANIFEST_DEX_PER_SPEED = 3;
+
+    /**
+     * 2026-10-29 照 PoE2 Manifest Weapon（RePoE skills.json：ManifestWeaponPlayer 與 GAAnimateWeapon…／DTTAnimateWeapon… 那幾招）：
+     * 主手要拿近戰武鬥武器（劍、斧、錘、矛、長棍、爪、匕首、鏈錘、獸魂符），召喚物是那把武器的複製（外觀照你的武器）；
+     * 普通的打擊之外照武器類型多一招：錘「重擊」、長棍「橫掃」、矛「突進」、獸魂符「爪擊」；其他武器類型原作沒有額外的招。
+     * 這次之前不檢查武器（法杖、弓、空手都叫得出來）、一律拿鐵劍、只有普通打擊。
+     */
+    enum ManifestForm {
+        /** 錘：Slam (Mace)。 */
+        MACE,
+        /** 長棍：Sweep (Quarterstaff)。 */
+        QUARTERSTAFF,
+        /** 矛：Lunge (Spear)。 */
+        SPEAR,
+        /** 獸魂符：Rake (Talisman)。 */
+        TALISMAN,
+        /** 劍、斧、爪、匕首、鏈錘：只有普通打擊。 */
+        STRIKE
+    }
+
+    /** 主手武器的標籤 → 幻化成哪一種；不是近戰武鬥武器（法杖、長杖、權杖、弓、弩、空手）回傳 null。 */
+    static ManifestForm manifestForm(final java.util.Set<String> weaponTags) {
+        if (weaponTags == null || weaponTags.isEmpty()) {
+            return null;
+        }
+        if (weaponTags.contains(tw.exilecore.stats.Tags.TALISMAN)) {
+            return ManifestForm.TALISMAN;
+        }
+        if (weaponTags.contains(tw.exilecore.stats.Tags.QUARTERSTAFF)) {
+            return ManifestForm.QUARTERSTAFF;
+        }
+        if (weaponTags.contains(tw.exilecore.stats.Tags.SPEAR)) {
+            return ManifestForm.SPEAR;
+        }
+        if (weaponTags.contains(tw.exilecore.stats.Tags.MACE)) {
+            return ManifestForm.MACE;
+        }
+        if (weaponTags.contains(tw.exilecore.stats.Tags.SWORD) || weaponTags.contains(tw.exilecore.stats.Tags.AXE)
+                || weaponTags.contains(tw.exilecore.stats.Tags.CLAW) || weaponTags.contains(tw.exilecore.stats.Tags.DAGGER)
+                || weaponTags.contains("flail")) {
+            return ManifestForm.STRIKE;
+        }
+        return null;
+    }
+
+    /** 錘的重擊（GAAnimateWeaponMaceSlam）：180%、範圍、攻擊時間兩倍（attack_speed_multiplier -50）、冷卻 6 秒。 */
+    static final double MANIFEST_SLAM_DAMAGE = 1.8;
+    static final double MANIFEST_SLAM_COOLDOWN = 6;
+    static final double MANIFEST_SLAM_SPEED = 0.5;
+    /** 長棍的橫掃（GAAnimateWeaponQuarterstaffSweep）：90%、範圍、冷卻 6 秒。 */
+    static final double MANIFEST_SWEEP_DAMAGE = 0.9;
+    static final double MANIFEST_SWEEP_COOLDOWN = 6;
+    /** 矛的突進（DTTAnimateWeaponSpearDashStab）：衝向 3～20 公尺外的目標（leap_slam_minimum_distance 30、skill_maximum_travel_distance 200），落點 180% 範圍、冷卻 3 秒。 */
+    static final double MANIFEST_LUNGE_DAMAGE = 1.8;
+    static final double MANIFEST_LUNGE_COOLDOWN = 3;
+    static final double MANIFEST_LUNGE_MIN = tw.exilecore.core.Units.metres(3);
+    static final double MANIFEST_LUNGE_MAX = tw.exilecore.core.Units.metres(20);
+    /** 獸魂符的爪擊（GAManifestWeaponTalismanRake）：160%、範圍、冷卻 3 秒。 */
+    static final double MANIFEST_RAKE_DAMAGE = 1.6;
+    static final double MANIFEST_RAKE_COOLDOWN = 3;
+    /**
+     * 這幾招的範圍半徑：RePoE 的技能資料沒有半徑（寫在原作的動畫、地面效果檔裡），照動作的大小估：
+     * 重擊 1.8 公尺、橫掃 2 公尺、突進落點 1.5 公尺、爪擊 2 公尺。
+     */
+    static final double MANIFEST_SLAM_RADIUS = tw.exilecore.core.Units.metres(1.8);
+    static final double MANIFEST_SWEEP_RADIUS = tw.exilecore.core.Units.metres(2.0);
+    static final double MANIFEST_LUNGE_RADIUS = tw.exilecore.core.Units.metres(1.5);
+    static final double MANIFEST_RAKE_RADIUS = tw.exilecore.core.Units.metres(2.0);
     /**
      * 2026-10-27 照 PoE2（MinionsAreUndamagable、只在你下指令時行動）：不會受傷、敵人不理、自己不會主動打的召喚物
      * （支援火力的砲手、三位巨靈）。不能被獻祭、引爆，也不聽「任何召喚物」的指令。

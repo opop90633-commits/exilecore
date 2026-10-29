@@ -53,7 +53,7 @@ public final class SpecialEffectLines {
         FLAGS.put(StatKeys.FLAG_CHAOS_IMMUNE, "免疫混沌傷害（最大生命 1）");
         FLAGS.put(StatKeys.FLAG_IRON_REFLEXES, "閃避全部轉為護甲");
         FLAGS.put(StatKeys.FLAG_FREEZE_IMMUNE, "無法被凍結");
-        FLAGS.put(StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE, "免疫元素異常（點燃、冰緩、凍結、感電）");
+        FLAGS.put(StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE, "免疫元素異常（點燃、冰緩、凍結、感電、電擊）");
         FLAGS.put(StatKeys.FLAG_MAIM_IMMUNE, "免疫癱瘓");
         FLAGS.put(StatKeys.FLAG_HINDER_IMMUNE, "不會被阻礙");
         FLAGS.put(StatKeys.FLAG_BLIND_IMMUNE, "不會被致盲");

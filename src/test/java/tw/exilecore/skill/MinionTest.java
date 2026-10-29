@@ -139,8 +139,10 @@ class MinionTest {
         final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, profile);
         final double baseAverage = (base.damageMin() + base.damageMax()) / 2 * spec.damage();
         assertEquals(baseAverage * 1.3, expected.get(DamageType.PHYSICAL), 1e-6, "傷害只吃「召喚物傷害 30%」，不吃主人的 50%、法術 40%");
-        assertEquals(spec.attackSpeed() * 1.1, MinionSheets.attacksPerSecond(effective, profile), 1e-9);
-        assertEquals(Math.round(20 / (spec.attackSpeed() * 1.1)), MinionSheets.attackTicks(MinionSheets.attacksPerSecond(effective, profile)));
+        // 2026-10-29 照站長：召喚物攻擊速度基礎 ×2（minion_speed_scale）
+        final double base2 = spec.attackSpeed() * SkillConfig.minionSpeedScale();
+        assertEquals(base2 * 1.1, MinionSheets.attacksPerSecond(effective, profile), 1e-9);
+        assertEquals(Math.round(20 / (base2 * 1.1)), MinionSheets.attackTicks(MinionSheets.attacksPerSecond(effective, profile)));
         assertEquals(1.0, MinionSheets.movementScale(effective), 1e-9);
         assertEquals(0, MinionSheets.regenPercent(effective), 1e-9);
         assertEquals(base.accuracy() * MinionSheets.ACCURACY_BONUS, sheet.get(StatKeys.ACCURACY), 1e-9);
@@ -183,7 +185,8 @@ class MinionTest {
         final StatSheet effective = boostedProfile.effective(boostedSheet);
         assertEquals(MinionSheets.life(plainProfile.effective(plainSheet)) * 1.4 * 0.85, MinionSheets.life(effective), 1e-6, "2026-10-26：堅韌召喚生命更多 40%、兇猛召喚更少 15%");
         assertEquals(1.0, MinionSheets.regenPercent(effective), 1e-9, "2026-10-26：回復 1.5% → 1%");
-        assertEquals(spec.attackSpeed() * 1.2, MinionSheets.attacksPerSecond(effective, boostedProfile), 1e-9, "2026-10-26：迅捷召喚改成增加 20%");
+        assertEquals(spec.attackSpeed() * SkillConfig.minionSpeedScale() * 1.2, MinionSheets.attacksPerSecond(effective, boostedProfile), 1e-9,
+                "2026-10-26：迅捷召喚改成增加 20%（2026-10-29：基礎 ×2）");
         assertEquals(1.25, MinionSheets.movementScale(effective), 1e-9, "2026-10-26：移動速度增加 25%");
         assertTrue(boosted.manaCost() >= plain.manaCost(), "魔力倍率照掛（2026-10-26 照 PoE2 這三顆都是 100%）");
         // 主人自己的屬性表不受影響（輔助只在技能描述的 local）

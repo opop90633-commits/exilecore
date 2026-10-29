@@ -247,6 +247,26 @@ public final class SkillConfig {
         return manaCostScale;
     }
 
+    /** 2026-10-29：玩家攻擊、施法速度的基礎倍率（skills.yml 的 player_speed_scale）。 */
+    private static volatile double playerSpeedScale = 2.0;
+    /** 2026-10-29：召喚物移動速度的基礎倍率（skills.yml 的 minion_move_scale）。 */
+    private static volatile double minionMoveScale = 2.0;
+
+    public static double playerSpeedScale() {
+        return playerSpeedScale;
+    }
+
+    public static double minionMoveScale() {
+        return minionMoveScale;
+    }
+
+    /** 2026-10-29：召喚物攻擊、施法速度的基礎倍率（skills.yml 的 minion_speed_scale）。 */
+    private static volatile double minionSpeedScale = 2.0;
+
+    public static double minionSpeedScale() {
+        return minionSpeedScale;
+    }
+
     public void load(final Path dataFolder) throws IOException {
         final YamlNode root = YamlNode.load(dataFolder.resolve(FILE));
         final int[] parsedRequirements = parseRequirements(root, "level_requirements");
@@ -258,6 +278,9 @@ public final class SkillConfig {
         final double extraLevelDamage = root.decimal("extra_level_damage", DEFAULT_EXTRA_LEVEL_DAMAGE);
         // 2026-10-27 照站長「所有技能的魔力消耗砍半」：每個技能的魔力消耗再乘這個（mana_cost_scale，0.1–10）
         manaCostScale = Math.max(0.1, Math.min(10, root.decimal("mana_cost_scale", 1.0)));
+        playerSpeedScale = Math.max(0.1, Math.min(10, root.decimal("player_speed_scale", 2.0))); // 2026-10-29 照站長
+        minionMoveScale = Math.max(0.1, Math.min(10, root.decimal("minion_move_scale", 2.0))); // 2026-10-29 照站長
+        minionSpeedScale = Math.max(0.1, Math.min(10, root.decimal("minion_speed_scale", 2.0))); // 2026-10-29 照站長
         if (extraLevelDamage < 0 || extraLevelDamage > 100) {
             throw new IllegalArgumentException(FILE + ".extra_level_damage：要在 0 到 100 之間（百分比）");
         }

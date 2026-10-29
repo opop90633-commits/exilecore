@@ -104,5 +104,10 @@ class MetaSocketRulesTest {
         assertEquals(LightningWarp.Pick.CULL, LightningWarp.chooseTriggered(false, false, true, true), "沒有目標：找撲殺得到的");
         assertEquals(LightningWarp.Pick.MARK, LightningWarp.chooseTriggered(false, false, false, true));
         assertEquals(LightningWarp.Pick.NONE, LightningWarp.chooseTriggered(false, false, false, false));
+        // 2026-10-29 照 PoE2：被觸發的也會傳到滾雷珠（撲殺得到的敵人優先，滾雷珠比掛標記優先）
+        assertEquals(LightningWarp.Pick.BALL, LightningWarp.chooseTriggered(true, false, true, false, true), "打到的那隻還撲殺不到、有滾雷珠：傳過去");
+        assertEquals(LightningWarp.Pick.CULL, LightningWarp.chooseTriggered(true, true, true, false, true), "撲殺得到比滾雷珠優先");
+        assertEquals(LightningWarp.Pick.CULL, LightningWarp.chooseTriggered(false, false, true, true, true));
+        assertEquals(LightningWarp.Pick.BALL, LightningWarp.chooseTriggered(false, false, true, false, false), "附近沒有敵人也傳到滾雷珠");
     }
 }

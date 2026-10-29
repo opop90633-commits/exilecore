@@ -91,7 +91,7 @@ class SkillConfigTest {
                 assertEquals("印記", definition.typeName(), definition.id());
             } else if (!definition.isAttack() && definition.tags().contains(Tags.BUFF)) {
                 // 2026-10-28 照 PoE2：增益技能（急裝）不算法術，種類寫「增益」
-                assertFalse(definition.tags().contains(Tags.SPELL), definition.id());
+                // 2026-10-29：原作同時是增益、法術的（雷縛長棍、霜鏃…，yml 自己寫 spell）照樣算法術，這裡不再檢查沒有 spell
                 assertEquals("增益", definition.typeName(), definition.id());
             } else {
                 assertTrue(definition.tags().contains(definition.isAttack() ? Tags.ATTACK : Tags.SPELL), definition.id());

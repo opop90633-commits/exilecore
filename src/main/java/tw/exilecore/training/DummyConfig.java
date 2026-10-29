@@ -13,7 +13,7 @@ import java.util.Set;
 
 /**
  * data/dummies.yml：營地的訓練假人（打它看自己的傷害）。純資料，不依賴 Bukkit。
- * 沒有這個檔時用這裡的預設值（六隻：無防禦、一般、重甲、閃避、抗性、首領）。
+ * 沒有這個檔時用這裡的預設值（2026-10-29 照站長：只有首領一隻；這次之前六隻：無防禦、一般、重甲、閃避、抗性、首領）。
  */
 public final class DummyConfig {
 
@@ -69,16 +69,18 @@ public final class DummyConfig {
         dummies = defaults();
     }
 
-    /** 跟出貨的 dummies.yml 一樣：營地東南邊兩排、每隻隔 8 格（2026-10），首領在第二排最後。 */
+    /** 跟出貨的 dummies.yml 一樣（2026-10-29 照站長：只保留首領；位置照舊，營地東南邊 [28, 20]）。 */
     public static List<Dummy> defaults() {
         return List.of(
-                new Dummy("plain", "訓練假人・無防禦", "沒有任何防禦：看你打出的原始傷害", LEVEL_PLAYER, false, 1, 0, 0, 0, 0, 0, 0, 12, 10, 180f, 1, "none", 0.55),
-                new Dummy("normal", "訓練假人・一般", "跟同等級的一般怪物一樣", LEVEL_PLAYER, false, 1, 1, 1, 0, 0, 0, 0, 20, 10, 180f, 1, "leather", 0.6),
-                new Dummy("armoured", "訓練假人・重甲", "護甲是一般怪物的 5 倍", LEVEL_PLAYER, false, 1, 5, 1, 0, 0, 0, 0, 28, 10, 180f, 1, "netherite", 0.75),
-                new Dummy("evasive", "訓練假人・閃避", "閃避是一般怪物的 3 倍", LEVEL_PLAYER, false, 1, 1, 3, 0, 0, 0, 0, 12, 20, 180f, 1, "chainmail", 0.65),
-                new Dummy("resistant", "訓練假人・抗性", "元素抗性 40%、混沌抗性 25%", LEVEL_PLAYER, false, 1, 1, 1, 40, 40, 40, 25, 20, 20, 180f, 1, "golden", 0.95),
                 new Dummy("boss", "訓練假人・首領", "像最高階地圖的首領：抗性 40%／25%", LEVEL_MAP, true, 10, 1, 1, 40, 40, 40, 25, 28, 20, 180f, 1.3, "diamond", 1));
     }
+
+    /**
+     * 2026-10-29：拿掉的五隻假人的 boss_factor（照拿掉前的 dummies.yml）。玩家身上還留著打它們的舊紀錄（換裝備前一直算數），
+     * 照原本的倍率換成打 Boss 的每秒傷害，不會因為假人拿掉就一律變成 {@link #DEFAULT_BOSS_FACTOR}。
+     */
+    static final java.util.Map<String, Double> RETIRED = java.util.Map.of(
+            "訓練假人・無防禦", 0.55, "訓練假人・一般", 0.6, "訓練假人・重甲", 0.75, "訓練假人・閃避", 0.65, "訓練假人・抗性", 0.95);
 
     /** 讀 dummies.yml；先讀進一份新的，全部檢查過才換上去（寫錯時保留原本的設定）。 */
     public void load(final Path dataFolder) throws IOException {
@@ -90,7 +92,9 @@ public final class DummyConfig {
         arenaMargin = fresh.arenaMargin;
         idleSeconds = fresh.idleSeconds;
         personalMax = fresh.personalMax;
-        dummies = fresh.dummies;
+        // 2026-10-29 照站長：訓練假人只保留首領。伺服器上自己改過（例如 /ec dummy move 搬過）的 dummies.yml 不會自動換新版，
+        // 所以讀檔時直接只留 boss: true 的；這次之前檔案裡寫幾隻就放幾隻
+        dummies = fresh.dummies.stream().filter(Dummy::boss).toList();
     }
 
     void parse(final YamlNode root) {
@@ -234,7 +238,21 @@ public final class DummyConfig {
                 return record.dps() * dummy.bossFactor();
             }
         }
-        return record.dps() * DEFAULT_BOSS_FACTOR;
+        final Double retired = retiredFactor(record.dummy());
+        return record.dps() * (retired == null ? DEFAULT_BOSS_FACTOR : retired);
+    }
+
+    /** 2026-10-29：拿掉的假人的 boss_factor（{@link #RETIRED}）；不是拿掉的那幾隻回傳 null。 */
+    public static Double retiredFactor(final String target) {
+        if (target == null) {
+            return null;
+        }
+        for (final java.util.Map.Entry<String, Double> entry : RETIRED.entrySet()) {
+            if (target.startsWith(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 
     public Dummy dummy(final String id) {

@@ -29,21 +29,22 @@ class YamlPatchTest {
 
     @Test
     void dummyOffsetAndYaw() throws IOException {
+        // 2026-10-29：假人只剩首領，改用首領測（這次之前用「一般」）
         final String text = Files.readString(DATA.resolve("dummies.yml"));
-        final String changed = YamlPatch.dummyPlacement(text, "normal", 5.25, -3, -90f);
+        final String changed = YamlPatch.dummyPlacement(text, "boss", 5.25, -3, -90f);
         final YamlNode root = YamlNode.load("test", new java.io.StringReader(changed));
-        final YamlNode normal = root.node("dummies").node("normal");
-        assertEquals(java.util.List.of(5.3, -3), normal.raw("offset"));
-        assertEquals(-90, normal.decimal("yaw", 0), 1e-9);
-        assertEquals(12, ((Number) ((java.util.List<?>) root.node("dummies").node("plain").raw("offset")).get(0)).intValue(), "別隻不動");
+        final YamlNode boss = root.node("dummies").node("boss");
+        assertEquals(java.util.List.of(5.3, -3), boss.raw("offset"));
+        assertEquals(-90, boss.decimal("yaw", 0), 1e-9);
+        assertEquals("diamond", boss.string("look", null), "別的欄位不動");
         assertEquals(text.split("\n", -1).length + 1, changed.split("\n", -1).length, "只多一行 yaw");
-        assertEquals(text.replace("    offset: [20, 10]", "    offset: [5.3, -3]"), changed.replace("    yaw: -90\n", ""), "其他都沒動");
+        assertEquals(text.replace("    offset: [28, 20]", "    offset: [5.3, -3]"), changed.replace("    yaw: -90\n", ""), "其他都沒動");
         assertTrue(changed.contains("# 營地的訓練假人"), "註解留著");
         assertNull(YamlPatch.dummyPlacement(text, "nobody", 0, 0, 0));
         // 再改一次：yaw 那行換掉，不會多一行
-        final String again = YamlPatch.dummyPlacement(changed, "normal", 1, 2, 180f);
+        final String again = YamlPatch.dummyPlacement(changed, "boss", 1, 2, 180f);
         assertEquals(changed.split("\n", -1).length, again.split("\n", -1).length);
-        assertEquals(180, YamlNode.load("test", new java.io.StringReader(again)).node("dummies").node("normal").decimal("yaw", 0), 1e-9);
+        assertEquals(180, YamlNode.load("test", new java.io.StringReader(again)).node("dummies").node("boss").decimal("yaw", 0), 1e-9);
     }
 
     @Test

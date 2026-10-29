@@ -417,6 +417,14 @@ public final class AilmentState {
     }
 
     /** 還在的減益（丟掉結束的）。 */
+    /**
+     * 2026-10-29 照 PoE2 Dark Effigy：身上有幾個混沌持續傷害的減益（每一層中毒、技能的混沌減益：汲魂彈、瘟疫…、黯炎的混沌點燃各算一個）。
+     */
+    public int chaosDots(final long now) {
+        final Ignite ignite = ignite(now);
+        return poisons(now).size() + debuffs(now).size() + (ignite != null && ignite.chaos() ? 1 : 0);
+    }
+
     public java.util.Map<String, Debuff> debuffs(final long now) {
         debuffs.values().removeIf(debuff -> debuff.endTick() <= now);
         return java.util.Map.copyOf(debuffs);

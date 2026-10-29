@@ -512,6 +512,12 @@ public final class PlayerStateService {
         sheet.addAll(tw.exilecore.item.unique.UniqueDerived.rings(sheet, active.stream()
                 .filter(item -> item.base().slot() == ItemSlot.RING).map(EquippedItem::modifiers).toList()));
         sheet.addAll(extra);
+        // 2026-10-29 照站長：玩家的攻擊、施法速度基礎 ×2（skills.yml 的 player_speed_scale；「更多」，跟其他加成相乘）
+        final double speedScale = tw.exilecore.skill.SkillConfig.playerSpeedScale();
+        if (Math.abs(speedScale - 1) > 1e-9) {
+            sheet.add(Modifier.more(StatKeys.ATTACK_SPEED, speedScale - 1, "伺服器基礎速度"));
+            sheet.add(Modifier.more(StatKeys.CAST_SPEED, speedScale - 1, "伺服器基礎速度"));
+        }
         // 2026-10-26 照 PoE2 基石：空掌之術——兩手都空著時當作拿長棍攻擊（長棍的技能能用、吃長棍的修飾器）
         final boolean hollowPalm = !hasWeapon && StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_HOLLOW_PALM)
                 && active.stream().noneMatch(item -> item.offHandWeapon() // 2026-10-27：副手拿的雙手武器、權杖也不是空手
@@ -554,7 +560,8 @@ public final class PlayerStateService {
             // 2026-10-26（昇華）：昇華天賦賦予的技能（grant_skill.代號，等級照角色等級）
             final Map<String, Integer> granted = new java.util.LinkedHashMap<>(grantedSkills(active));
             tw.exilecore.ascendancy.AscBuild.grantedSkills(plugin, extra, level, granted);
-            state.skills().syncGranted(granted, grantedQuality(active)); // 面板跟著角色一起存檔（定期、登出）；2026-10-27：＋武器的品質
+            // 面板跟著角色一起存檔（定期、登出）；2026-10-27：＋武器的品質；2026-10-29：脫下武器馬上拿掉賦予的技能（角色載入好了才拿）
+            state.skills().syncGranted(granted, grantedQuality(active), state.isLoaded());
             // 2026-10-28 照 PoE2：賦予的技能的孔照等級；換了等級低的武器、孔變少，多出來那幾孔的寶石放回背包
             final List<tw.exilecore.character.SkillLoadout.Overflow> overflow = state.skills().drainOverflow();
             if (!overflow.isEmpty() && plugin.skills() != null) {

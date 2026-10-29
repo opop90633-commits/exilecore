@@ -3240,7 +3240,7 @@ shadowstep_boots:
     - text: "不會被冰緩減速"
       stats:
         - { stat: flag.unslowable, type: FLAT, value: 1 }
-    - text: "免疫元素異常（點燃、冰緩、凍結、感電）"
+    - text: "免疫元素異常（點燃、冰緩、凍結、感電、電擊）"
       stats:
         - { stat: flag.elemental_ailment_immune, type: FLAT, value: 1 }
 

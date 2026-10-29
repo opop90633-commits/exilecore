@@ -143,7 +143,13 @@ uncut_level_scale: { 17: 0.5, 18: 0.15, 19: 0.165, 20: 0.33 }
 # （熾星彈有範圍；每個寶石等級從拿到到下一級之前平均起來是 8 成）。/ec balance 會重算。錨點寫在寶石的需求等級上最準。
 # 2026-10：法術成長拉高（80 級 ×1.8，中間照比例），20 級時法術跟攻擊一樣大約是 PoE2 係數的四成到一半（以前法術只有一到兩成）
 # 2026-10-27 照站長「所有技能的魔力消耗砍半」：每個技能算好的魔力消耗再乘這個（輔助倍率、增加／減少、消耗效率照算，最後乘；0.1–10）
-mana_cost_scale: 0.5
+mana_cost_scale: 0.25   # 2026-10-29 照站長：再減半；這次之前 0.5
+# 2026-10-29 照站長：玩家的攻擊速度、施法速度基礎 ×2（屬性表一條「更多 (x−1)×100%」；0.1–10，沒寫 = 2）
+player_speed_scale: 2.0
+# 2026-10-29 照站長：召喚物的移動速度基礎 ×2（乘在每種召喚物的 summon.speed 上；0.1–10，沒寫 = 2）
+minion_move_scale: 2.0
+# 2026-10-29 照站長：召喚物的攻擊速度、施法速度基礎 ×2（召喚物屬性表一條「更多 (x−1)×100%」；0.1–10，沒寫 = 2）
+minion_speed_scale: 2.0
 spell_damage_growth: { 1: 1.05, 10: 1.13, 20: 2.29, 30: 3.13, 40: 3.42, 50: 4.6, 64: 7.01, 80: 9.23 }
 
 # 傳奇裝備的「+1 技能等級」可以讓技能超過 20 級（最高 40 級；照 PoE：21 級以上只有靠裝備）。
@@ -282,6 +288,7 @@ skills:
     type: attack
     tier: 7   # 2026-10-27 照 PoE2（Leap Slam 第 7 階）；這次之前 5
     tags: [attack, melee, area, slam]   # 2026-10-26 照 PoE2（Leap Slam 不是位移技能；跳躍還是會自動補 movement、travel）
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Leap Slam）：自動規則加的拿掉／原作有的補上
     weapons: [mace]   # 2026-10-26 照 PoE2（Leap Slam 要錘）；這次之前 [melee]
     mechanic: leap
     leap: { range: 9, radius: 2.5 }   # 2026-10-26 照 PoE2（落地 2.5 格，不隨等級）；這次之前 [2.5, 3.2]
@@ -301,6 +308,7 @@ skills:
     type: attack
     tier: 1   # 2026-10-27 照 PoE2（Earthquake 第 1 階）；這次之前 5
     tags: [attack, melee, area, slam, duration]   # 2026-10-26 照 PoE2（加持續）
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Earthquake）：自動規則加的拿掉／原作有的補上
     weapons: [mace]   # 2026-10-26 照 PoE2（Earthquake 要錘）；這次之前 [melee]
     mechanic: nova
     nova: { radius: 1.8, aftershock: { delay: 4, radius: [1.333, 1.333, 1.333, 1.389, 1.389, 1.389, 1.444, 1.444, 1.444, 1.5, 1.5, 1.5, 1.556, 1.556, 1.556, 1.611, 1.611, 1.611, 1.667, 1.667, 1.667, 1.722, 1.722, 1.722, 1.778, 1.778, 1.778, 1.833, 1.833, 1.833, 1.833, 1.889, 1.889, 1.889, 1.889, 1.889, 1.889, 1.944, 1.944, 1.944], more: [360, 359, 365, 358, 361, 366, 362, 371, 371, 373, 381, 386, 385, 394, 397, 403, 410, 419, 425, 433, 443, 449, 462, 468, 479, 487, 495, 507, 514, 526, 536, 545, 556, 566, 577, 587, 598, 609, 621, 631] } }   # 2026-10-26 照 PoE2 Earthquake：衝擊 1.8 格；4 秒後（鋸齒地面消失時）餘震，半徑 2.4→3.0→3.5 格（寫成衝擊半徑的倍數）、傷害照餘震自己的表 184%→666%→2421%（寫成比衝擊更多幾 %）；這次之前 radius [3.0, 3.6]、0.9 秒、1.6 倍、更多 300%（鋸齒地面本身沒做）
@@ -322,6 +330,7 @@ skills:
     type: attack
     tier: 1   # 2026-10-27 照 PoE2（Boneshatter 第 1 階）；這次之前 3
     tags: [attack, melee, strike, area, physical]   # 2026-10-26 照 PoE2（加範圍）
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Boneshatter）：自動規則加的拿掉／原作有的補上
     starter: marauder
     weapons: [mace]
     mechanic: strike
@@ -344,6 +353,7 @@ skills:
     type: attack
     tier: 13   # 2026-10-26 照 PoE2（Ancestral Warrior Totem 13 階：未切割技能寶石 13 級以上才雕得出來）；這次之前 3
     tags: [attack, melee, area, duration, totem, meta]   # 2026-10-26 照 PoE2 補 duration、totem、meta（meta 不會讓能量輔助、骰運誤掛：SupportDefinition.matchesRequires 不把英靈圖騰當 meta）；這次之前 [attack, melee, area]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Ancestral Warrior Totem）：自動規則加的拿掉／原作有的補上
     weapons: [mace]
     mechanic: strike
     strike: { reach: 4.5, angle: 120, targets: 1 }
@@ -394,6 +404,7 @@ skills:
     type: attack
     tier: 9   # 2026-10-27 照 PoE2（Rain of Arrows 第 9 階）；這次之前 3
     tags: [attack, projectile, area]   # 2026-10-26 照 PoE2：Rain of Arrows 落下的箭算投射物；這次之前 [attack, area]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Rain of Arrows）：自動規則加的拿掉／原作有的補上
     weapons: [bow]
     mechanic: impact
     impact: { range: 20, delay: 0.7, radius: 0.7 }   # 2026-10-28 照 PoE2 Rain of Arrows：每一支箭 0.7 公尺，30 → 39 → 49 支每 0.08 秒一支、隨機落在 3.6 公尺內（StageAttacks）；這次之前整片 3.6 格只打一下；（更早）[3.0, 3.8]
@@ -460,6 +471,7 @@ skills:
     type: attack   # 2026-10-26 照 PoE2：Raise Shield 是攻擊（盾擊用盾牌當武器）；這次之前 spell
     tier: 1
     tags: [attack, melee, area, physical, channelling]   # 2026-10-26 照 PoE2（Attack、AoE、Melee、Physical、Channelling）；這次之前 [channelling]
+    tags_remove: [duration]   # 2026-10-29 照 PoE2 寶石標籤（Raise Shield）：自動規則加的拿掉／原作有的補上
     effectiveness: 0.8   # 2026-10-26 照 PoE2（盾擊 80% 傷害效益；基礎傷害是盾牌護甲換算的，見 Channelling.shieldBash）
     mechanic: guard
     guard:   # 2026-10-26：只用來檢查有沒有盾；舉盾的效果在 charge（Channelling 的 hold）
@@ -576,6 +588,8 @@ skills:
     type: attack
     tier: 5   # 2026-10-27 照 PoE2（Rapid Shot 第 5 階）；這次之前 1
     tags: [attack, projectile]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Rapid Shot）：自動規則加的拿掉／原作有的補上
+    tags_add: [fire]
     weapons: [crossbow]
     mechanic: projectile
     # 2026-10：每支多穿過兩個敵人（成群的怪也打得到後面的）
@@ -734,6 +748,7 @@ skills:
     type: attack
     tier: 3   # 2026-10-27 照 PoE2（Tempest Bell 第 3 階）；這次之前 5
     tags: [attack, melee, area]   # 2026-10-26 照 PoE2：物理（拿掉 50% 轉閃電）
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Tempest Bell）：自動規則加的拿掉／原作有的補上
     weapons: [quarterstaff]
     mechanic: nova
     nova: { radius: 2.6 }   # 2026-10-26 照 PoE2（震波 2.6 格）；這次之前 [3.5, 4.2]
@@ -791,6 +806,7 @@ skills:
     type: attack
     tier: 1   # 2026-10-27 照 PoE2（Whirling Slash 第 1 階）；這次之前 3
     tags: [attack, melee, area, strike, wind]   # 2026-10-28 照 PoE2（poe2db：AoE, Melee, Strike, Staged, Wind；Staged 我們沒有這個標籤）；這次之前 [attack, melee, area, strike]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Whirling Slash）：自動規則加的拿掉／原作有的補上
     # （更早）2026-10-26 照 PoE2（打擊，不是新星）；這次之前 [attack, melee, area, nova]
     weapons: [spear]
     mechanic: nova
@@ -813,7 +829,8 @@ skills:
     icon: PRISMARINE_SHARD   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 11   # 2026-10-27 照 PoE2（Whirlwind Lance 第 11 階）；這次之前 5
-    tags: [attack, projectile, area, duration]   # 2026-10-28 照 PoE2：旋風留 15 秒（拿掉 vortex 之後明寫持續標籤）；這次之前持續標籤由漩渦自動加上
+    tags: [attack, projectile, area, duration, wind]   # 2026-10-28 照 PoE2：旋風留 15 秒（拿掉 vortex 之後明寫持續標籤）；這次之前持續標籤由漩渦自動加上   # 2026-10-29 照 PoE2 寶石標籤補 wind
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Whirlwind Lance）：自動規則加的拿掉／原作有的補上
     weapons: [spear]
     mechanic: projectile
     # 2026-10-26 照 PoE2：旋風 1.8 格；這次之前 3
@@ -916,6 +933,7 @@ skills:
     type: spell
     tier: 1
     tags: [spell, projectile, lightning, duration]   # 2026-10-26 照 PoE2（加持續）
+    tags_add: [cold]   # 2026-10-29 照 PoE2 寶石標籤（Spark）：自動規則加的拿掉／原作有的補上
     mechanic: projectile
     projectile: { count: [4, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12, 12, 12, 12, 12, 12, 13, 13, 13, 13], spread: 30, speed: 0.5, range: 20, size: 0.3, wobble: 25, wander: { duration: 2, width: 2, hit_cooldown: 0.66 } }   # 2026-10-28 照 PoE2（poe2db Spark 1–40 級）；這次之前 [4, 9]（兩點內插）
     # 2026-10-28 照 PoE2 Spark（RePoE SparkPlayer）：wander = 貼著地面不規則游走（spark_pathing_width_bounds 20 = 左右 2 公尺寬）、
@@ -1041,6 +1059,7 @@ skills:
     type: attack
     tier: 3   # 2026-10-26 照 PoE2（Shockwave Totem 3 階）；這次之前 5
     tags: [attack, melee, slam, area, physical, nova]   # 2026-10-26 照 PoE2：Shockwave Totem 加新星；這次之前 [attack, melee, slam, area, physical]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Shockwave Totem）：自動規則加的拿掉／原作有的補上
     weapons: [melee]   # 2026-10-26 照 PoE2：任何近戰武器；這次之前 [mace]
     mechanic: nova
     nova: { radius: 3.0 }
@@ -1088,6 +1107,7 @@ skills:
     type: spell
     tier: 5   # 2026-10-27 照 PoE2（Raise Zombie 第 5 階）；這次之前 1
     tags: [minion, physical]
+    tags_remove: [melee]   # 2026-10-29 照 PoE2 寶石標籤（Raise Zombie）：自動規則加的拿掉／原作有的補上
     mechanic: summon
     # 2026-10 平衡：群體召喚太強，damage 0.7 → 0.32
     # 2026-10-23 弱勢補強：damage 0.32 → 0.42（90 級以上 3 人實測中位數只有 24 萬；殭屍要屍體、20 秒就消失，比骸骨兵難維持）
@@ -1107,7 +1127,8 @@ skills:
     icon: BONE
     type: spell
     tier: 3
-    tags: [minion, physical]
+    tags: [minion, physical, persistent]   # 2026-10-29 照 PoE2 寶石標籤補 persistent
+    tags_remove: [melee]   # 2026-10-29 照 PoE2 寶石標籤（Skeletal Warrior）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura: { reserve: 0, per_minion: [60, 44, 33, 27, 25, 25, 23, 23, 23, 22, 22, 22, 21, 21, 21, 21, 20, 20, 20, 20, 19, 19, 19, 19, 19, 18, 18, 18, 18, 18, 17, 17, 17, 17, 17, 16, 16, 16, 16, 16], free: 2, radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 60 → 20 級 20，前 2 隻不用），付得起幾隻叫幾隻
     # 2026-10：持續 20 → 30 秒、生命 1.0 → 1.5（不用一直補）
@@ -1129,7 +1150,8 @@ skills:
     icon: BLAZE_POWDER
     type: spell
     tier: 4   # 2026-10-27 照 PoE2（Raging Spirits 第 4 階）；這次之前 3
-    tags: [minion, fire]
+    tags: [minion, fire, buff, persistent]   # 2026-10-29 照 PoE2 寶石標籤補 buff、persistent
+    tags_remove: [melee]   # 2026-10-29 照 PoE2 寶石標籤（Raging Spirits）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura: { reserve: 30, radius: 8, allies: false }   # 2026-10：只活幾秒的召喚，照 PoE2 固定 30
     # 2026-10 平衡：群體召喚太強，damage 0.4 → 0.22
@@ -1164,7 +1186,8 @@ skills:
     icon: BONE
     type: spell
     tier: 7   # 2026-10-27 照 PoE2（Tame Beast 第 7 階）；這次之前 5
-    tags: [physical, companion]   # 2026-10-26 照 PoE2 加 companion 標籤（天賦樹的系統）；這次之前 [physical]
+    tags: [physical, companion, duration, persistent]   # 2026-10-26 照 PoE2 加 companion 標籤（天賦樹的系統）；這次之前 [physical]   # 2026-10-29 照 PoE2 寶石標籤補 duration、persistent
+    tags_remove: [melee, physical]   # 2026-10-29 照 PoE2 寶石標籤（Tame Beast）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 0
@@ -1192,7 +1215,7 @@ skills:
     icon: MAGMA_CREAM
     type: spell
     tier: 4   # 2026-10-27 照 PoE2（Herald of Ash 第 4 階）；這次之前 3
-    tags: [spell, fire]
+    tags: [spell, fire, buff, duration, persistent]   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration、persistent
     mechanic: aura
     aura:
       reserve: 30
@@ -1226,7 +1249,7 @@ skills:
     icon: COPPER_INGOT
     type: spell
     tier: 4   # 2026-10-27 照 PoE2（Herald of Thunder 第 4 階）；這次之前 3
-    tags: [attack, area, lightning]   # 2026-10-26 照 PoE2（Herald of Thunder 是攻擊：攻擊的輔助能掛、落雷是攻擊傷害）；這次之前 [spell, lightning]
+    tags: [attack, area, lightning, buff, persistent]   # 2026-10-26 照 PoE2（Herald of Thunder 是攻擊：攻擊的輔助能掛、落雷是攻擊傷害）；這次之前 [spell, lightning]   # 2026-10-29 照 PoE2 寶石標籤補 buff、persistent
     mechanic: aura
     aura:
       reserve: 30
@@ -1261,7 +1284,7 @@ skills:
     icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 4   # 2026-10-27 照 PoE2（Herald of Ice 第 4 階）；這次之前 3
-    tags: [attack, area, cold]   # 2026-10-26 照 PoE2（Herald of Ice 是攻擊：攻擊的輔助能掛、冰爆是攻擊傷害）；這次之前 [spell, cold]
+    tags: [attack, area, cold, buff, persistent]   # 2026-10-26 照 PoE2（Herald of Ice 是攻擊：攻擊的輔助能掛、冰爆是攻擊傷害）；這次之前 [spell, cold]   # 2026-10-29 照 PoE2 寶石標籤補 buff、persistent
     mechanic: aura
     aura:
       reserve: 30
@@ -1326,6 +1349,7 @@ skills:
     type: attack
     tier: 3   # 2026-10-27 照 PoE2（Flash Grenade 第 3 階）；這次之前 5
     tags: [attack, projectile, area, physical]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Flash Grenade）：自動規則加的拿掉／原作有的補上
     weapons: [crossbow]
     mechanic: projectile
     projectile: { speed: 1.6, range: 40, size: 0.25, gravity: 0.06, fuse: 0.85, explode: [2.6, 2.6, 2.7, 2.7, 2.7, 2.8, 2.8, 2.9, 2.9, 2.9, 3, 3, 3, 3.1, 3.1, 3.2, 3.2, 3.2, 3.3, 3.3, 3.3, 3.4, 3.4, 3.4, 3.5, 3.5, 3.6, 3.6, 3.6, 3.7, 3.7, 3.7, 3.7, 3.7, 3.8, 3.8, 3.8, 3.8, 3.8, 3.9] }   # 2026-10-26 照 PoE2 Flash Grenade：爆炸半徑逐級 2.6→3.3→3.9 格、引信 0.85 秒
@@ -1351,6 +1375,7 @@ skills:
     type: spell
     tier: 9   # 2026-10-27 照 PoE2（poe2db／RePoE：Fortifying Cry 第 9 階，要護甲盾）；這次之前 1
     tags: [warcry, nova]   # 2026-10-26 照 PoE2：Fortifying Cry 加新星；原作的 Attack／Melee／Physical／Trigger 是觸發的盾波的，這裡不加；這次之前 [warcry]
+    tags_add: [attack, melee, physical]   # 2026-10-29 照 PoE2 寶石標籤（Fortifying Cry）：自動規則加的拿掉／原作有的補上
     mechanic: warcry
     warcry:
       radius: 4
@@ -1374,6 +1399,7 @@ skills:
     type: spell
     tier: 3
     tags: [warcry, nova]   # 2026-10-26 照 PoE2：Infernal Cry 加新星；原作的 Fire 是燃爆的（不造成傷害的技能程式會拿掉傷害類型），這裡不加；這次之前 [warcry]
+    tags_add: [fire]   # 2026-10-29 照 PoE2 寶石標籤（Infernal Cry）：自動規則加的拿掉／原作有的補上
     mechanic: warcry
     warcry:
       radius: 4
@@ -1397,6 +1423,7 @@ skills:
     type: spell
     tier: 11   # 2026-10-27 照 PoE2（poe2db／RePoE：Seismic Cry 第 11 階）；這次之前 5
     tags: [warcry, physical, nova]   # 2026-10-17：會打物理傷害，補上物理（鐵髓這類物理輔助掛得上）；2026-10-26 照 PoE2：Seismic Cry 加新星；這次之前 [warcry, physical]
+    tags_remove: [duration]   # 2026-10-29 照 PoE2 寶石標籤（Seismic Cry）：自動規則加的拿掉／原作有的補上
     mechanic: warcry
     warcry:
       radius: 4
@@ -1426,6 +1453,7 @@ skills:
     type: spell
     tier: 7   # 2026-10-27 照 PoE2（Vulnerability 第 7 階）；這次之前 3
     tags: [spell]
+    tags_add: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Vulnerability）：自動規則加的拿掉／原作有的補上
     mechanic: mark
     # 2026-10-26 照 PoE2 Vulnerability：詛咒範圍 1.5→3.1→3.7 格、持續 6→7.4→8.6 秒（逐級）；護甲固定減少 16→19210→57100（逐級）；這次之前 3 格、6 秒、護甲更少 30%～50%（延遲 1.5 秒才生效沒做）
     mark: { range: 22, radius: [1.5, 1.6, 1.7, 1.8, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.8, 2.9, 3, 3.1, 3.1, 3.1, 3.2, 3.2, 3.2, 3.3, 3.3, 3.3, 3.4, 3.4, 3.4, 3.5, 3.5, 3.5, 3.6, 3.6, 3.6, 3.7, 3.7, 3.7], duration: [6, 6.2, 6.2, 6.2, 6.4, 6.4, 6.4, 6.6, 6.6, 6.6, 6.8, 6.8, 6.8, 7, 7, 7, 7.2, 7.2, 7.2, 7.4, 7.4, 7.4, 7.6, 7.6, 7.6, 7.8, 7.8, 7.8, 8, 8, 8, 8.2, 8.2, 8.2, 8.4, 8.4, 8.4, 8.6, 8.6, 8.6], effects: [ { stat: armour, type: FLAT, value: [-16, -30, -58, -108, -176, -266, -382, -536, -788, -1136, -1602, -2236, -3280, -4752, -6818, -9146, -10882, -12930, -16228, -19210, -20318, -21482, -22712, -24010, -25378, -26820, -28342, -29946, -31638, -33420, -35298, -37278, -39366, -41562, -43880, -46322, -48896, -51606, -54302, -57100] } ] }
@@ -1458,6 +1486,7 @@ skills:
     type: spell
     tier: 7   # 2026-10-27 照 PoE2（Elemental Weakness 第 7 階）；這次之前 9
     tags: [spell]
+    tags_add: [cold, fire, lightning]   # 2026-10-29 照 PoE2 寶石標籤（Elemental Weakness）：自動規則加的拿掉／原作有的補上
     mechanic: mark
     # 2026-10-26 照 PoE2 Elemental Weakness：詛咒範圍 1.5→3.1→3.7 格、持續 6→7.4→8.6 秒（逐級）；元素抗性 -40→-59→-74（逐級）；這次之前 3 格、6 秒、[-18, -24]
     mark: { range: 22, radius: [1.5, 1.6, 1.7, 1.8, 1.8, 1.9, 2, 2.1, 2.2, 2.3, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.8, 2.9, 3, 3.1, 3.1, 3.1, 3.2, 3.2, 3.2, 3.3, 3.3, 3.3, 3.4, 3.4, 3.4, 3.5, 3.5, 3.5, 3.6, 3.6, 3.6, 3.7, 3.7, 3.7], duration: [6, 6.2, 6.2, 6.2, 6.4, 6.4, 6.4, 6.6, 6.6, 6.6, 6.8, 6.8, 6.8, 7, 7, 7, 7.2, 7.2, 7.2, 7.4, 7.4, 7.4, 7.6, 7.6, 7.6, 7.8, 7.8, 7.8, 8, 8, 8, 8.2, 8.2, 8.2, 8.4, 8.4, 8.4, 8.6, 8.6, 8.6], effects: [ { stat: resist.fire, type: FLAT, value: [-40, -41, -42, -43, -44, -45, -46, -47, -48, -49, -50, -51, -52, -53, -54, -55, -56, -57, -58, -59, -60, -61, -62, -63, -64, -65, -66, -67, -68, -69, -69, -70, -70, -71, -71, -72, -72, -73, -73, -74] }, { stat: resist.cold, type: FLAT, value: [-40, -41, -42, -43, -44, -45, -46, -47, -48, -49, -50, -51, -52, -53, -54, -55, -56, -57, -58, -59, -60, -61, -62, -63, -64, -65, -66, -67, -68, -69, -69, -70, -70, -71, -71, -72, -72, -73, -73, -74] }, { stat: resist.lightning, type: FLAT, value: [-40, -41, -42, -43, -44, -45, -46, -47, -48, -49, -50, -51, -52, -53, -54, -55, -56, -57, -58, -59, -60, -61, -62, -63, -64, -65, -66, -67, -68, -69, -69, -70, -70, -71, -71, -72, -72, -73, -73, -74] } ] }
@@ -1509,7 +1538,7 @@ skills:
     icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5   # 2026-10-27 照 PoE2（Pain Offering 第 5 階）；這次之前 3
-    tags: [minion, offering, area, duration]   # 2026-10-26 照 PoE2：加 offering、area、duration 標籤（天賦樹的系統）；不是戰吼（cry: false）；這次之前 [minion]
+    tags: [minion, offering, area, duration, buff]   # 2026-10-26 照 PoE2：加 offering、area、duration 標籤（天賦樹的系統）；不是戰吼（cry: false）；這次之前 [minion]   # 2026-10-29 照 PoE2 寶石標籤補 buff
     mechanic: warcry
     warcry:
       cry: false   # 2026-10-26 照 PoE2：不是戰吼（cry: false：戰吼的輔助掛不上、不吃戰吼的加成）
@@ -1533,7 +1562,8 @@ skills:
     icon: BONE   # 2026-10：原本 BONE_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 11   # 2026-10-27 照 PoE2（Bone Offering 第 11 階）；這次之前 5
-    tags: [minion, offering, area, duration]   # 2026-10-26 照 PoE2：加 offering、area、duration 標籤（天賦樹的系統）；不是戰吼（cry: false）；這次之前 [minion]
+    tags: [minion, offering, area, duration, buff]   # 2026-10-26 照 PoE2：加 offering、area、duration 標籤（天賦樹的系統）；不是戰吼（cry: false）；這次之前 [minion]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_add: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Bone Offering）：自動規則加的拿掉／原作有的補上
     mechanic: warcry
     warcry:
       cry: false   # 2026-10-26 照 PoE2：不是戰吼（cry: false：戰吼的輔助掛不上、不吃戰吼的加成）
@@ -1555,7 +1585,8 @@ skills:
     icon: ECHO_SHARD   # 2026-10：原本 SOUL_LANTERN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 13   # 2026-10-27 照 PoE2（Soul Offering 第 13 階）；這次之前 7
-    tags: [minion, offering, area, duration]   # 2026-10-26 照 PoE2：加 offering、area、duration 標籤（天賦樹的系統）；不是戰吼（cry: false）；這次之前 [minion]
+    tags: [minion, offering, area, duration, buff]   # 2026-10-26 照 PoE2：加 offering、area、duration 標籤（天賦樹的系統）；不是戰吼（cry: false）；這次之前 [minion]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Soul Offering）：自動規則加的拿掉／原作有的補上
     mechanic: warcry
     warcry:
       cry: false   # 2026-10-26 照 PoE2：不是戰吼（cry: false：戰吼的輔助掛不上、不吃戰吼的加成）
@@ -1583,6 +1614,7 @@ skills:
     type: attack
     tier: 1   # 2026-10-27 照 PoE2（Rolling Slam 第 1 階）；這次之前 3
     tags: [attack, melee, area, slam, physical]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Rolling Slam）：自動規則加的拿掉／原作有的補上
     weapons: [mace]
     mechanic: cone
     # 2026-10-26 照 PoE2：第二下自己的表 150%→543%→1973% 剛好是第一下的兩倍（更多 100%）；這次之前 more 60
@@ -1668,7 +1700,8 @@ skills:
     icon: FEATHER   # 2026-10：原本 WIND_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
-    tags: [attack, melee, area, physical]   # 2026-10-26 照 PoE2：物理（拿掉 40% 轉冰冷）
+    tags: [attack, melee, area, physical, wind]   # 2026-10-26 照 PoE2：物理（拿掉 40% 轉冰冷）   # 2026-10-29 照 PoE2 寶石標籤補 wind
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Wind Blast）：自動規則加的拿掉／原作有的補上
     weapons: [quarterstaff]
     mechanic: cone
     cone: { length: 6, angle: 90 }   # 2026-10-26 照 PoE2（6 格）；這次之前 [5, 6]
@@ -1688,7 +1721,7 @@ skills:
     icon: STICK   # 2026-10：原本 BAMBOO（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 5
-    tags: [attack, melee, area, slam]   # 2026-10-26 照 PoE2（不是位移技能；跳躍還是會自動補 movement、travel）
+    tags: [attack, melee, area, slam, duration]   # 2026-10-26 照 PoE2（不是位移技能；跳躍還是會自動補 movement、travel）   # 2026-10-29 照 PoE2 寶石標籤補 duration
     weapons: [quarterstaff]
     mechanic: leap
     leap: { range: 9, radius: 2.4 }   # 2026-10-26 照 PoE2（2.4 格）；這次之前 [2.6, 3.3]
@@ -1708,6 +1741,7 @@ skills:
     type: attack
     tier: 11   # 2026-10-27 照 PoE2（Whirling Assault 第 11 階）；這次之前 3
     tags: [attack, melee, area, strike]   # 2026-10-26 照 PoE2（拿掉冷卻 1.5 秒）
+    tags_remove: [physical, travel]   # 2026-10-29 照 PoE2 寶石標籤（Whirling Assault）：自動規則加的拿掉／原作有的補上
     weapons: [quarterstaff]
     mechanic: dash
     # 2026-10-28 照 PoE2 Whirling Assault（WhirlingAssault.java）：整個動作時間（攻擊時間 + 1 秒）一路往前走 4.2 格
@@ -1820,6 +1854,7 @@ skills:
     type: attack
     tier: 13   # 2026-10-27 照 PoE2（Siege Cascade 第 13 階）；這次之前 7
     tags: [attack, area, projectile, physical]   # 2026-10-26 照 PoE2：拿掉 30% 轉火焰與火焰標籤；2026-10-26 照 PoE2：Siege Cascade 落下的彈算投射物；這次之前 [attack, area, physical]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Siege Cascade）：自動規則加的拿掉／原作有的補上
     weapons: [crossbow]
     mechanic: impact
     impact: { range: 26, delay: 0.5, radius: 4.0 }   # 2026-10-28 照 PoE2：半徑是找敵人的範圍（每隻敵人旁邊各落一發，stages.bolt）   # 2026-10-28 照 PoE2（poe2db Siege Cascade：落彈半徑 4 公尺，不隨等級）；這次之前 [3.6, 4.4]   # 2026-10-28 照 PoE2（RePoE siege_cascade_fall_time_ms 500）：弩彈 0.5 秒落地；這次之前 1.0 秒
@@ -1873,6 +1908,7 @@ skills:
     type: attack
     tier: 5
     tags: [attack, area, projectile, lightning, duration]   # 2026-10-17：擲出去的矛算投射物（投射物的傷害、等級加成照吃；多射、穿透這類輔助還是掛不上）；2026-10-18：加持續（矛插 6 秒、帶電地 8 秒）
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Storm Lance）：自動規則加的拿掉／原作有的補上
     weapons: [spear]
     mechanic: impact
     impact: { range: 20, delay: 0.5, radius: 2.0 }   # 2026-10-28 照 PoE2（poe2db Storm Lance：擲矛落地 2 公尺，不隨等級）；這次之前 [3.0, 3.8]
@@ -1898,6 +1934,7 @@ skills:
     type: attack
     tier: 5   # 2026-10-27 照 PoE2（Spearfield 第 5 階）；這次之前 7
     tags: [attack, melee, area, physical, duration, hazard]   # 2026-10-26 照 PoE2（加近戰）；另加天賦樹系統標籤 hazard
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Spearfield）：自動規則加的拿掉／原作有的補上
     weapons: [spear]
     mechanic: cone   # 2026-10-27 照 PoE2：面前扇形冒出矛；這次之前 zone（準心處持續打的範圍）
     cone: { length: [4.0, 4.2, 4.3, 4.5, 4.6, 4.8, 4.9, 5.1, 5.2, 5.4, 5.5, 5.7, 5.8, 6.0, 6.1, 6.3, 6.4, 6.6, 6.7, 6.9, 7.0, 7.2, 7.3, 7.5, 7.6, 7.8, 7.9, 8.1, 8.2, 8.4, 8.5, 8.7, 8.8, 9.0, 9.1, 9.3, 9.4, 9.6, 9.7, 9.9], angle: 60 }   # 2026-10-27 照 PoE2（扇形長度 1–40 級；原作沒寫角度，用 60°）
@@ -2099,7 +2136,8 @@ skills:
     icon: COAL   # 2026-10：原本 WITHER_SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 13   # 2026-10-27 照 PoE2（Skeletal Brute 第 13 階）；這次之前 7
-    tags: [minion, physical]
+    tags: [minion, physical, persistent]   # 2026-10-29 照 PoE2 寶石標籤補 persistent
+    tags_remove: [melee]   # 2026-10-29 照 PoE2 寶石標籤（Skeletal Brute）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura: { reserve: 0, per_minion: [165, 119, 91, 74, 63, 63, 58, 58, 58, 54, 54, 54, 51, 51, 51, 51, 48, 48, 48, 48, 46, 46, 46, 46, 46, 45, 45, 45, 45, 45, 44, 44, 44, 44, 44, 43, 43, 43, 43, 43], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 165 → 20 級 48），付得起幾隻叫幾隻
     # 2026-10-26 照 PoE2（Skeletal Brute）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
@@ -2123,7 +2161,8 @@ skills:
     icon: BONE   # 2026-10：原本 BOW（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 1   # 2026-10-27 照 PoE2（Skeletal Sniper 第 1 階）；這次之前 3
-    tags: [minion, physical]
+    tags: [minion, physical, persistent]   # 2026-10-29 照 PoE2 寶石標籤補 persistent
+    tags_add: [chaos, fire]   # 2026-10-29 照 PoE2 寶石標籤（Skeletal Sniper）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura: { reserve: 0, per_minion: [90, 65, 50, 41, 37, 37, 35, 35, 35, 33, 33, 33, 31, 31, 31, 31, 30, 30, 30, 30, 29, 29, 29, 29, 29, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 26, 26, 26, 26, 26], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 90 → 20 級 30），付得起幾隻叫幾隻
     # 2026-10-26 照 PoE2（Skeletal Sniper）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
@@ -2142,7 +2181,7 @@ skills:
     icon: BLAZE_ROD
     type: spell
     tier: 3   # 2026-10-27 照 PoE2（Skeletal Arsonist 第 3 階）；這次之前 5
-    tags: [minion, fire, detonator]   # 2026-10-26 照 PoE2 加 detonator 標籤（天賦樹的系統）；這次之前 [minion, fire]
+    tags: [minion, fire, detonator, persistent]   # 2026-10-26 照 PoE2 加 detonator 標籤（天賦樹的系統）；這次之前 [minion, fire]   # 2026-10-29 照 PoE2 寶石標籤補 persistent
     mechanic: aura
     aura: { reserve: 0, per_minion: [90, 65, 50, 47, 47, 47, 44, 44, 44, 42, 42, 42, 40, 40, 40, 40, 39, 39, 39, 39, 38, 38, 38, 38, 38, 37, 37, 37, 37, 37, 36, 36, 36, 36, 36, 35, 35, 35, 35, 35], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 90 → 20 級 39），付得起幾隻叫幾隻
     # 2026-10-26 照 PoE2（Skeletal Arsonist）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
@@ -2163,7 +2202,7 @@ skills:
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 11   # 2026-10-27 照 PoE2（Skeletal Storm Mage 第 11 階）；這次之前 7
-    tags: [minion, lightning]
+    tags: [minion, lightning, persistent]   # 2026-10-29 照 PoE2 寶石標籤補 persistent
     mechanic: aura
     aura: { reserve: 0, per_minion: [120, 87, 66, 54, 49, 49, 45, 45, 45, 42, 42, 42, 40, 40, 40, 40, 39, 39, 39, 39, 38, 38, 38, 38, 38, 37, 37, 37, 37, 37, 36, 36, 36, 36, 36, 35, 35, 35, 35, 35], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 120 → 20 級 39），付得起幾隻叫幾隻
     # 2026-10-26 照 PoE2（Skeletal Storm Mage）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
@@ -2184,7 +2223,7 @@ skills:
     icon: LAPIS_LAZULI   # 2026-10：原本 BLUE_BANNER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 8   # 2026-10-27 照 PoE2（Defiance Banner 第 8 階）；這次之前 3
-    tags: [banner, area, duration]   # 2026-10-26 照 PoE2：加 banner、area、duration 標籤（天賦樹的系統）；不是戰吼（cry: false：戰吼的輔助掛不上、不吃戰吼的加成）；這次之前 [warcry]
+    tags: [banner, area, duration, buff, persistent, aura]   # 2026-10-26 照 PoE2：加 banner、area、duration 標籤（天賦樹的系統）；不是戰吼（cry: false：戰吼的輔助掛不上、不吃戰吼的加成）；這次之前 [warcry]   # 2026-10-29 照 PoE2 寶石標籤補 buff、persistent   # 2026-10-29 照 PoE2 補 aura（原作是光環；2026-10-29 起常駐的要自己寫 aura 才算光環）
     mechanic: warcry
     warcry:
       cry: false   # 2026-10-26 照 PoE2：不是戰吼（cry: false：戰吼的輔助掛不上、不吃戰吼的加成）
@@ -2212,7 +2251,8 @@ skills:
     icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 4   # 2026-10-27 照 PoE2（Arctic Armour 第 4 階）；這次之前 5
-    tags: [persistent]   # 2026-10-26 照 PoE2：Arctic Armour 是常駐增益（「持續增益的保留」這類加成吃得到）；這次之前 []
+    tags: [spell, persistent, buff]   # 2026-10-26 照 PoE2：Arctic Armour 是常駐增益（「持續增益的保留」這類加成吃得到）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff；原作同時是法術（寫 spell 才不會被增益拿掉）
+    tags_add: [cold, spell]   # 2026-10-29 照 PoE2 寶石標籤（Arctic Armour）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30          # 2026-10：25 → 30（照 PoE2 的 Arctic Armour）
@@ -2235,6 +2275,7 @@ skills:
     type: attack
     tier: 7
     tags: [attack, melee, area, slam, physical, duration]   # 2026-10-26 照 PoE2（加持續）
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Earthshatter）：自動規則加的拿掉／原作有的補上
     weapons: [mace]
     mechanic: nova
     nova: { radius: [3.0, 3.6], aftershock: { delay: 1.0, radius: 1.5, more: [211, 214, 215, 214, 212, 213, 214, 218, 220, 222, 226, 226, 229, 232, 237, 243, 246, 251, 254, 262, 268, 272, 280, 284, 291, 297, 304, 310, 316, 322, 330, 336, 343, 350, 357, 365, 371, 379, 386, 395] } }   # 2026-10-28 照 PoE2（poe2db Earthshatter 1–40 級）：地刺自己的表 140%→507%→1842% ÷ 衝擊 45%→140%→372%，寫成更多 211% → 262% → 395%；這次之前固定更多 100%
@@ -2274,6 +2315,7 @@ skills:
     type: attack
     tier: 5   # 2026-10-27 照 PoE2（Perfect Strike 第 5 階）；這次之前 9
     tags: [attack, melee, strike, area, fire, physical, channelling]   # 2026-10-26 照 PoE2（加火焰、範圍）；另加天賦樹系統標籤 channelling
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Perfect Strike）：自動規則加的拿掉／原作有的補上
     weapons: [mace]
     mechanic: strike
     strike: { reach: 3.8, angle: 50, targets: 1 }   # 2026-10-26 照 PoE2：不擊退；這次之前 knockback 0.6
@@ -2295,7 +2337,8 @@ skills:
     icon: LEATHER   # 2026-10：原本 LEATHER_HORSE_ARMOR（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 11   # 2026-10-27 照 PoE2（Stampede 第 11 階）；這次之前 9
-    tags: [attack, melee, area, slam]   # 2026-10-26 照 PoE2（不是位移技能；衝刺還是會自動補 movement、travel）
+    tags: [attack, melee, area, slam, duration]   # 2026-10-26 照 PoE2（不是位移技能；衝刺還是會自動補 movement、travel）   # 2026-10-29 照 PoE2 寶石標籤補 duration
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Stampede）：自動規則加的拿掉／原作有的補上
     weapons: [mace]
     mechanic: dash
     dash: { range: 10, hit_width: 1.5, knockback: 0.4, end_radius: 3.2 }   # 2026-10-26 照 PoE2（終點 3.2 格）；這次之前 [3.0, 3.6]；拿掉冷卻 3 秒
@@ -2317,7 +2360,8 @@ skills:
     icon: IRON_INGOT
     type: attack
     tier: 9   # 2026-10-27 照 PoE2（Forge Hammer 第 9 階）；這次之前 7
-    tags: [attack, melee, slam, area, fire, physical]   # 2026-10-26 照 PoE2（不是投射物）；這次之前 [attack, projectile, fire, physical]
+    tags: [attack, melee, slam, area, fire, physical, duration]   # 2026-10-26 照 PoE2（不是投射物）；這次之前 [attack, projectile, fire, physical]   # 2026-10-29 照 PoE2 寶石標籤補 duration
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Forge Hammer）：自動規則加的拿掉／原作有的補上
     weapons: [mace]
     mechanic: projectile
     projectile: { speed: 1.2, range: 14, size: 0.6, pierce: 10 }
@@ -2344,7 +2388,7 @@ skills:
     icon: SLIME_BALL
     type: attack
     tier: 3
-    tags: [attack, melee, strike, physical]
+    tags: [attack, melee, strike, physical, area, buff, duration, projectile, wind]   # 2026-10-29 照 PoE2 寶石標籤補 area、buff、duration、projectile、wind
     weapons: [quarterstaff]
     mechanic: strike
     strike: { reach: 4.0, angle: 60, targets: 1 }   # 2026-10-26 照 PoE2 Staggering Palm；2026-10-28 照 PoE2 補上重暈後的投射物增益（stages.projectile）
@@ -2436,7 +2480,8 @@ skills:
     icon: STICK   # 2026-10：原本 SWEET_BERRIES（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 3
-    tags: [attack, area, physical, chaos, duration, plant]   # 2026-10-26 照 PoE2（落下的箭不算投射物、打中是物理；拿掉 30% 轉混沌）；另加天賦樹系統標籤 plant
+    tags: [attack, area, physical, chaos, duration, plant, projectile]   # 2026-10-26 照 PoE2（落下的箭不算投射物、打中是物理；拿掉 30% 轉混沌）；另加天賦樹系統標籤 plant   # 2026-10-29 照 PoE2 寶石標籤補 projectile
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Vine Arrow）：自動規則加的拿掉／原作有的補上
     weapons: [bow]
     mechanic: projectile
     projectile: { arrow: true, speed: 2.6, range: 28, ground: { duration: 8, interval: 0.5, radius: 2.4, damage: 35 } }   # 2026-10-26 照 PoE2 Vine Arrow：8 秒、2.4 格；這次之前 5 秒、2.2（藤蔓緩速、自己的持續傷害表沒做）
@@ -2474,6 +2519,7 @@ skills:
     type: attack
     tier: 13   # 2026-10-27 照 PoE2（Spiral Volley 第 13 階）；這次之前 7
     tags: [attack, projectile]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Spiral Volley）：自動規則加的拿掉／原作有的補上
     weapons: [bow]
     mechanic: projectile
     # 2026-10-26 照 PoE2 Spiral Volley：25 支（投射物上限 20 支）；這次之前 8 支（每個目標只中一支沒做）
@@ -2542,7 +2588,7 @@ skills:
     icon: IRON_NUGGET
     type: attack
     tier: 3   # 2026-10-27 照 PoE2（High Velocity Rounds 第 3 階）；這次之前 5
-    tags: [attack, projectile, physical]
+    tags: [attack, projectile, physical, duration]   # 2026-10-29 照 PoE2 寶石標籤補 duration
     weapons: [crossbow]
     mechanic: projectile
     projectile: { arrow: true, speed: 4.0, range: 50, pierce: 6 }   # 2026-10-26 弩照 PoE2（碎片數、穿透照 poe2db）
@@ -2586,6 +2632,7 @@ skills:
     type: attack
     tier: 5
     tags: [attack, projectile, area, cold, duration, hazard]   # 2026-10-26 照 PoE2 加 hazard 標籤（天賦樹的系統）；這次之前 [attack, projectile, area, cold, duration]
+    tags_remove: [duration]   # 2026-10-29 照 PoE2 寶石標籤（Ice Shards）：自動規則加的拿掉／原作有的補上
     weapons: [crossbow]
     mechanic: impact
     convert: { cold: 0.6 }   # 2026-10-26 弩照 PoE2（Ice Shards 60% 轉冰冷）；這次之前 { cold: 0.8 }
@@ -2609,6 +2656,7 @@ skills:
     type: attack
     tier: 11   # 2026-10-27 照 PoE2（Shockburst Rounds 第 11 階）；這次之前 7
     tags: [attack, projectile, lightning, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Shockburst Rounds）：自動規則加的拿掉／原作有的補上
     weapons: [crossbow]
     mechanic: projectile
     projectile: { arrow: true, speed: 3.2, range: 36 }   # 2026-10-26 弩照 PoE2（碎片數、穿透照 poe2db）
@@ -2683,6 +2731,7 @@ skills:
     type: attack
     tier: 13   # 2026-10-27 照 PoE2（Cluster Grenade 第 13 階）；這次之前 9
     tags: [attack, projectile, area, fire, physical]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Cluster Grenade）：自動規則加的拿掉／原作有的補上
     weapons: [crossbow]
     mechanic: projectile
     projectile: { speed: 1.5, range: 36, size: 0.3, gravity: 0.06, fuse: 2.0, explode: 2.5, scatter: { count: 12, spread: 360, damage: 58, range: 6 } }   # 2026-10-26 照 PoE2 Cluster Grenade：2 秒引爆、2.5 格；小榴彈 18 顆（散射上限 12 顆）、自己的表約主榴彈的 58%；這次之前 1.0 秒、[2.8, 3.4]、5 顆 50%
@@ -2705,6 +2754,7 @@ skills:
     type: attack
     tier: 1   # 2026-10-27 照 PoE2（Twister 第 1 階）；這次之前 3
     tags: [attack, projectile, area, duration, wind]   # 2026-10-28 照 PoE2（poe2db：AoE, Projectile, Duration, Repeatable, Wind；Repeatable 我們沒有這個標籤）；這次之前 [attack, projectile, area, duration]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Twister）：自動規則加的拿掉／原作有的補上
     weapons: [spear]
     mechanic: projectile
     # 2026-10-28 照 PoE2 Twister（poe2db Projectile Speed 7.5 metres per Second）：每秒 7.5 格（0.375 格／tick）、持續 3 秒（Twisters.DURATION，射程只是參考 7.5 × 3）、
@@ -2732,7 +2782,8 @@ skills:
     icon: PRISMARINE_CRYSTALS   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 13   # 2026-10-27 照 PoE2（Wind Serpent's Fury 第 13 階）；這次之前 9
-    tags: [attack, melee, area]
+    tags: [attack, melee, area, wind]   # 2026-10-29 照 PoE2 寶石標籤補 wind
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Wind Serpent's Fury）：自動規則加的拿掉／原作有的補上
     weapons: [spear]
     mechanic: cone
     cone: { length: 10, angle: 35 }   # 2026-10-26 照 PoE2（10 格長）；這次之前 [9, 11]   # 2026-10 手感：25° → 35°
@@ -2861,7 +2912,7 @@ skills:
     icon: AMETHYST_SHARD   # 2026-10：原本 AMETHYST_CLUSTER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 1   # 2026-10-27 照 PoE2（Frost Bomb 第 1 階）；這次之前 5
-    tags: [spell, area, cold, crystal, orb]   # 2026-10-26 照 PoE2：Frost Bomb 是法球（orb，天賦樹用）；crystal 是我們輔助用的標籤，保留；這次之前 [spell, area, cold, crystal]
+    tags: [spell, area, cold, crystal, orb, duration]   # 2026-10-26 照 PoE2：Frost Bomb 是法球（orb，天賦樹用）；crystal 是我們輔助用的標籤，保留；這次之前 [spell, area, cold, crystal]   # 2026-10-29 照 PoE2 寶石標籤補 duration
     mechanic: impact
     impact: { range: 20, delay: 4, radius: [2.4, 2.4, 2.5, 2.5, 2.5, 2.6, 2.6, 2.7, 2.7, 2.7, 2.8, 2.8, 2.8, 2.9, 2.9, 3, 3, 3, 3.1, 3.1, 3.1, 3.2, 3.2, 3.2, 3.3, 3.3, 3.4, 3.4, 3.4, 3.5, 3.5, 3.5, 3.5, 3.5, 3.6, 3.6, 3.6, 3.6, 3.6, 3.7] }   # 2026-10-26 照 PoE2 Frost Bomb：4 秒引爆、2.4→3.1→3.7 格；這次之前 1.6 秒、[3.2, 4.0]
     damage: [[7, 11], [10, 15], [14, 21], [18, 27], [23, 34], [28, 42], [34, 51], [41, 61], [48, 73], [57, 86], [67, 100], [78, 117], [90, 135], [104, 156], [120, 180], [138, 208], [159, 238], [182, 273], [208, 313], [238, 358], [273, 409], [311, 467], [356, 534], [406, 609], [464, 696], [530, 795], [606, 909], [692, 1038], [792, 1188], [906, 1359], [1037, 1556], [1188, 1783], [1363, 2044], [1564, 2346], [1796, 2695], [2065, 3098], [2377, 3566], [2739, 4108], [3159, 4739], [3648, 5472]]   # 2026-10-26 照 PoE2（poe2db Frost Bomb 1–40 級，每一級的實際傷害，不乘 spell_damage_growth）；這次之前 [25, 39]
@@ -2923,6 +2974,7 @@ skills:
     type: spell
     tier: 9   # 2026-10-27 照 PoE2（Lightning Warp 第 9 階）；這次之前 5
     tags: [spell, lightning, movement, area, duration]
+    tags_remove: [travel]   # 2026-10-29 照 PoE2 寶石標籤（Lightning Warp）：自動規則加的拿掉／原作有的補上
     mechanic: dash
     dash: { range: 20, end_radius: 3.0 }   # 2026-10-26 照 PoE2 Lightning Warp：爆炸 3 格、撲殺；沒有冷卻
     damage: [[2, 30], [2, 41], [3, 56], [4, 73], [5, 92], [6, 114], [7, 139], [9, 168], [11, 200], [12, 236], [15, 278], [17, 325], [20, 378], [23, 439], [27, 509], [31, 588], [36, 678], [41, 780], [47, 898], [54, 1032], [62, 1186], [72, 1362], [82, 1564], [95, 1797], [109, 2064], [125, 2371], [143, 2726], [165, 3136], [190, 3609], [219, 4156], [252, 4790], [291, 5526], [336, 6382], [388, 7376], [449, 8535], [520, 9887], [604, 11467], [701, 13315], [815, 15480], [948, 18020]]   # 2026-10-26 照 PoE2（poe2db Lightning Warp 1–40 級）
@@ -3029,7 +3081,7 @@ skills:
     icon: BONE   # 2026-10：原本 BONE_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 1   # 2026-10-27 照 PoE2（Unearth 第 1 階）；這次之前 5
-    tags: [spell, area, physical]
+    tags: [spell, area, physical, duration]   # 2026-10-29 照 PoE2 寶石標籤補 duration（原作還有 Minion：我們的 minion 標籤會擋掉法術的輔助，不補）
     mechanic: cone   # 2026-10-26 照 PoE2 Unearth：面前 6 格的錐形（以前是準心的一圈）
     cone: { length: 6, angle: 40 }   # 2026-10-26 照 PoE2（bone_cone_angle 40）；這次之前 60
     damage: [[4, 6], [5, 8], [7, 11], [9, 14], [12, 18], [14, 22], [18, 26], [21, 31], [25, 37], [29, 44], [34, 51], [40, 59], [46, 69], [53, 79], [60, 91], [69, 104], [79, 119], [90, 135], [103, 154], [117, 176], [133, 200], [151, 227], [172, 258], [195, 293], [222, 333], [252, 378], [286, 429], [325, 487], [369, 554], [420, 629], [477, 716], [543, 814], [618, 927], [704, 1057], [803, 1205], [917, 1375], [1047, 1571], [1197, 1796], [1370, 2055], [1569, 2353]]   # 2026-10-26 照 PoE2（poe2db Unearth 1–40 級）
@@ -3059,14 +3111,14 @@ skills:
 
   dark_idol:
     name: 冥偶
-    description: 放下一個黑色的雕像，8 秒內一直對附近的敵人放混沌彈。
+    description: 放下一個黑色的雕像（8 秒），每秒對附近每一個身上有混沌持續傷害減益（中毒、汲魂彈、瘟疫…）的敵人射混沌彈，身上有幾個這種減益就射幾發；周圍沒有這種敵人時不放。
     icon: COAL   # 2026-10：原本 WITHER_SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9   # 2026-10-27 照 PoE2（Dark Effigy 第 9 階）；這次之前 7
     tags: [spell, projectile, chaos, area]   # 2026-10-26 照 PoE2（加範圍；圖騰 8 秒，這次之前 10）
     mechanic: projectile
-    projectile: { speed: 1.2, range: 14, size: 0.35 }
-    totem: { duration: 8, interval: 0.8, range: 14, max: 1, place: 1.0, head: WITHER_SKELETON_SKULL }   # 2026-10-26 照 PoE2：放置 1 秒只吃放圖騰的速度（這次之前吃施法速度）
+    projectile: { speed: 1.2, range: 14, size: 0.35, explode: 1.2 }   # 2026-10-29 照 PoE2 Dark Effigy：衝擊半徑 1.2 公尺；這次之前打中單體
+    totem: { duration: 8, interval: 1.0, range: 14, max: 1, place: 1.0, head: WITHER_SKELETON_SKULL }   # 2026-10-29 照 PoE2：每 1 秒（施法時間 1 秒）對範圍內每個帶混沌持續傷害的敵人各射一發（SkillDeployables.darkEffigy）；這次之前每 0.8 秒對最近一隻   # 2026-10-26 照 PoE2：放置 1 秒只吃放圖騰的速度（這次之前吃施法速度）
     damage: [[2, 4], [3, 6], [4, 8], [6, 10], [7, 13], [9, 16], [10, 19], [12, 23], [15, 27], [17, 32], [20, 37], [23, 43], [27, 50], [31, 58], [36, 66], [41, 76], [47, 87], [53, 99], [61, 113], [69, 128], [79, 146], [89, 166], [101, 188], [115, 214], [131, 243], [149, 276], [169, 313], [192, 356], [218, 405], [248, 460], [282, 523], [321, 595], [365, 678], [416, 772], [474, 881], [541, 1005], [618, 1148], [707, 1312], [809, 1502], [926, 1720]]   # 2026-10-26 照 PoE2（poe2db Dark Effigy 1–40 級，每一級的實際傷害，不乘 spell_damage_growth）；這次之前 [10, 15]
     # （更早）2026-10-23 直傷法術第二輪 ×1.4（90 級以上實測中位數只有錘的三成；法術不吃武器，前幾輪武器補強都沒補到）；這次之前 [7, 11]
     damage_types: { chaos: 1.0 }
@@ -3089,7 +3141,8 @@ skills:
     icon: IRON_NUGGET   # 2026-10：原本 IRON_SWORD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9   # 2026-10-27 照 PoE2（Skeletal Reaver 第 9 階）；這次之前 5
-    tags: [minion, physical]
+    tags: [minion, physical, persistent]   # 2026-10-29 照 PoE2 寶石標籤補 persistent
+    tags_remove: [melee]   # 2026-10-29 照 PoE2 寶石標籤（Skeletal Reaver）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura: { reserve: 0, per_minion: [90, 65, 50, 41, 37, 37, 35, 35, 35, 33, 33, 33, 31, 31, 31, 31, 30, 30, 30, 30, 29, 29, 29, 29, 29, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 26, 26, 26, 26, 26], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 90 → 20 級 30），付得起幾隻叫幾隻
     # 2026-10 平衡：群體召喚太強，damage 0.45 → 0.28
@@ -3110,7 +3163,7 @@ skills:
     icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
-    tags: [minion, cold]
+    tags: [minion, cold, persistent]   # 2026-10-29 照 PoE2 寶石標籤補 persistent
     mechanic: aura
     aura: { reserve: 0, per_minion: [120, 87, 66, 54, 49, 49, 46, 46, 46, 43, 43, 43, 41, 41, 41, 41, 39, 39, 39, 39, 38, 38, 38, 38, 38, 37, 37, 37, 37, 37, 36, 36, 36, 36, 36, 35, 35, 35, 35, 35], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 120 → 20 級 39），付得起幾隻叫幾隻
     # 2026-10-26 照 PoE2（Skeletal Frost Mage）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
@@ -3133,7 +3186,8 @@ skills:
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9   # 2026-10-27 照 PoE2（Charged Staff 第 9 階）；這次之前 5
-    tags: [lightning, duration]   # 2026-10-26 照 PoE2（Charged Staff：Buff, Lightning, Duration；不是法術傷害，法術輔助掛不上）
+    tags: [spell, lightning, duration, area, buff]   # 2026-10-26 照 PoE2（Charged Staff：Buff, Lightning, Duration；不是法術傷害，法術輔助掛不上）   # 2026-10-29 照 PoE2 寶石標籤補 area、buff；原作同時是法術（寫 spell 才不會被增益拿掉）
+    tags_add: [attack, lightning]   # 2026-10-29 照 PoE2 寶石標籤（Charged Staff）：自動規則加的拿掉／原作有的補上
     mechanic: guard
     guard: { duration: 8, slow: 0, effects: [ { stat: charged_staff.ready, type: FLAT, value: 1 } ] }   # 2026-10-26：只是讓資料過得了（OriginalSkills 接手，不走一般的增益）
     signature: charged_staff   # 2026-10-26 照 PoE2 Charged Staff：用掉全部銳星（OriginalSkills）；這次之前是常駐光環「攻擊獲得 12～20% 物理為額外閃電、+5～10% 感電機率」（保留 30 精魂）
@@ -3151,7 +3205,8 @@ skills:
     icon: NETHER_STAR
     type: spell
     tier: 9
-    tags: [chaos, duration]   # 2026-10-26 照 PoE2（Buff, Chaos, Duration, ComboStacking）
+    tags: [chaos, duration, buff]   # 2026-10-26 照 PoE2（Buff, Chaos, Duration, ComboStacking）   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_add: [chaos]   # 2026-10-29 照 PoE2 寶石標籤（Mantra of Destruction）：自動規則加的拿掉／原作有的補上
     mechanic: guard
     guard: { duration: 8, slow: 0, effects: [ { stat: mantra.ready, type: FLAT, value: 1 } ] }   # 2026-10-26：只是讓資料過得了（OriginalSkills 接手，不走一般的增益）
     signature: mantra   # 2026-10-26 照 PoE2 Mantra of Destruction（OriginalSkills）；這次之前是常駐光環「更多 8～15% 傷害、增加 15～30% 暈眩累積」（保留 40 精魂）
@@ -3167,7 +3222,7 @@ skills:
     icon: CLOCK
     type: spell
     tier: 4   # 2026-10-27 照 PoE2（Attrition 第 4 階）；這次之前 7
-    tags: [persistent]   # 2026-10-26 照 PoE2：Attrition 是常駐增益（「持續增益的保留」這類加成吃得到）；這次之前 []
+    tags: [persistent, buff]   # 2026-10-26 照 PoE2：Attrition 是常駐增益（「持續增益的保留」這類加成吃得到）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff
     mechanic: aura
     aura:
       reserve: 30
@@ -3189,7 +3244,9 @@ skills:
     icon: LAPIS_LAZULI   # 2026-10：原本 LAPIS_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
-    tags: [spell, lightning, storm]   # 2026-10-26 照 PoE2（Spell、Buff、Lightning、Storm；冷卻自動補）；不造成傷害，lightning 會被自動拿掉；這次之前 []
+    tags: [spell, lightning, storm, buff]   # 2026-10-26 照 PoE2（Spell、Buff、Lightning、Storm；冷卻自動補）；不造成傷害，lightning 會被自動拿掉；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [duration]   # 2026-10-29 照 PoE2 寶石標籤（Mana Tempest）：自動規則加的拿掉／原作有的補上
+    tags_add: [lightning]
     mechanic: guard   # 2026-10-26：借用「放了給自己效果」那條路，風暴本身在 ManaTempest（modifiers 的 flag.mana_tempest）；這次之前 aura
     guard:
       duration: 2   # 只是格式需要；效果持續看 ManaTempest（站在風暴裡＋離開後 2 秒）
@@ -3211,7 +3268,7 @@ skills:
     icon: BLAZE_POWDER
     type: spell
     tier: 9   # 2026-10-27 照 PoE2（Incinerate 第 9 階）；這次之前 3
-    tags: [spell, area, fire, channelling]   # 2026-10-26 照 PoE2 加 channelling 標籤（天賦樹的系統）；這次之前 [spell, area, fire]
+    tags: [spell, area, fire, channelling, duration]   # 2026-10-26 照 PoE2 加 channelling 標籤（天賦樹的系統）；這次之前 [spell, area, fire]   # 2026-10-29 照 PoE2 寶石標籤補 duration
     mechanic: cone
     cone: { length: 5.8, angle: 20 }   # 2026-10-26 照 PoE2（Incinerate 5.8 格、20 度）；這次之前 { length: [5, 6], angle: 45 }
     damage: [[0, 1], [0, 1], [1, 1], [1, 1], [1, 2], [1, 2], [2, 2], [2, 3], [2, 3], [3, 4], [3, 5], [4, 5], [4, 6], [5, 7], [6, 9], [7, 10], [8, 11], [9, 13], [10, 15], [12, 17], [13, 20], [15, 23], [17, 26], [20, 30], [23, 35], [26, 40], [30, 46], [35, 52], [40, 60], [46, 70], [53, 80], [62, 92], [71, 107], [82, 123], [95, 143], [110, 165], [128, 192], [149, 223], [173, 259], [201, 301]]   # 2026-10-27 照 PoE2（poe2db Incinerate 0.5：每秒火焰傷害 1.7 → 57.6 → 1004.8；每 0.25 秒一下＝每秒的 1/4，±20%）；這次之前 [4, 7]
@@ -3238,7 +3295,8 @@ skills:
     icon: ECHO_SHARD   # 2026-10：原本 SOUL_LANTERN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
-    tags: [minion, physical]   # 2026-10-17：召回的怪打的是武器的物理傷害（以前寫混沌，混沌的加成其實吃不到）
+    tags: [minion, physical, persistent]   # 2026-10-17：召回的怪打的是武器的物理傷害（以前寫混沌，混沌的加成其實吃不到）   # 2026-10-29 照 PoE2 寶石標籤補 persistent
+    tags_remove: [melee, physical]   # 2026-10-29 照 PoE2 寶石標籤（Bind Spectre）：自動規則加的拿掉／原作有的補上
     # 2026-10-26 照 PoE2（Bind Spectre → Spectre）：改成精魂召喚（這次之前 mechanic: summon、每放一次用一具屍體、mana [12, 26]、最多 [2, 3] 隻）。
     #   召喚物等級 = 寶石等級 × 2；生命、傷害是附身那種怪的倍率（monsters.yml 的 types，程式 MinionService.spectreSpec）；
     #   damage 1.25 = PoE2 附身用怪物傷害表再補正，約等於召喚物表 × 1.25；每隻精魂 floor(50 × P^0.75)（這裡寫 50 = P 1，程式照附身的怪換）
@@ -3259,7 +3317,8 @@ skills:
     icon: GOLD_NUGGET   # 2026-10：原本 GOLDEN_HELMET（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 13   # 2026-10-27 照 PoE2（Skeletal Cleric 第 13 階）；這次之前 5
-    tags: [minion, physical]   # 2026-10-17：跟其他骷髏一樣標上打的傷害類型
+    tags: [minion, physical, persistent]   # 2026-10-17：跟其他骷髏一樣標上打的傷害類型   # 2026-10-29 照 PoE2 寶石標籤補 persistent
+    tags_remove: [melee, physical]   # 2026-10-29 照 PoE2 寶石標籤（Skeletal Cleric）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura: { reserve: 0, per_minion: [60, 44, 33, 27, 25, 25, 23, 23, 23, 22, 22, 22, 21, 21, 21, 21, 20, 20, 20, 20, 19, 19, 19, 19, 19, 18, 18, 18, 18, 18, 17, 17, 17, 17, 17, 16, 16, 16, 16, 16], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 60 → 20 級 20），付得起幾隻叫幾隻
     # 2026-10-26 照 PoE2（Skeletal Cleric）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
@@ -3279,7 +3338,7 @@ skills:
     icon: NETHER_BRICK   # 2026-10：原本 RED_BANNER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 4   # 2026-10-27 照 PoE2（War Banner 第 4 階）；這次之前 5
-    tags: [banner, area, duration]   # 2026-10-26 照 PoE2：加 banner、area、duration 標籤（天賦樹的系統）；不是戰吼（cry: false：戰吼的輔助掛不上、不吃戰吼的加成）；這次之前 [warcry]
+    tags: [banner, area, duration, buff, persistent, aura]   # 2026-10-26 照 PoE2：加 banner、area、duration 標籤（天賦樹的系統）；不是戰吼（cry: false：戰吼的輔助掛不上、不吃戰吼的加成）；這次之前 [warcry]   # 2026-10-29 照 PoE2 寶石標籤補 buff、persistent   # 2026-10-29 照 PoE2 補 aura（原作是光環；2026-10-29 起常駐的要自己寫 aura 才算光環）
     mechanic: warcry
     warcry:
       cry: false   # 2026-10-26 照 PoE2：不是戰吼（cry: false：戰吼的輔助掛不上、不吃戰吼的加成）
@@ -3306,7 +3365,7 @@ skills:
     icon: COAL   # 2026-10：原本 BLACK_BANNER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 14   # 2026-10-27 照 PoE2（Dread Banner 第 14 階）；這次之前 9
-    tags: [banner, area, duration]   # 2026-10-26 照 PoE2：加 banner、area、duration 標籤（天賦樹的系統）；不是戰吼（cry: false：戰吼的輔助掛不上、不吃戰吼的加成）；這次之前 [warcry]
+    tags: [banner, area, duration, buff, persistent, aura]   # 2026-10-26 照 PoE2：加 banner、area、duration 標籤（天賦樹的系統）；不是戰吼（cry: false：戰吼的輔助掛不上、不吃戰吼的加成）；這次之前 [warcry]   # 2026-10-29 照 PoE2 寶石標籤補 buff、persistent   # 2026-10-29 照 PoE2 補 aura（原作是光環；2026-10-29 起常駐的要自己寫 aura 才算光環）
     mechanic: warcry
     warcry:
       cry: false   # 2026-10-26 照 PoE2：不是戰吼（cry: false：戰吼的輔助掛不上、不吃戰吼的加成）
@@ -3340,7 +3399,8 @@ skills:
     icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 13
-    tags: [attack, melee, area, slam]
+    tags: [attack, melee, area, slam, duration]   # 2026-10-29 照 PoE2 寶石標籤補 duration
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Hammer of the Gods）：自動規則加的拿掉／原作有的補上
     weapons: [mace]
     mechanic: impact
     impact: { range: 14, delay: 2.5, radius: 2.4 }   # 2026-10-26 照 PoE2（2.5 秒後落下、半徑 2.4 格）；這次之前 delay 0.8、radius [4.0, 5.0]
@@ -3427,6 +3487,7 @@ skills:
     type: attack
     tier: 1
     tags: [attack, projectile, area]   # PoE2 Spear Throw：攻擊、投射物、範圍（怒星的爆炸）
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Spear Throw）：自動規則加的拿掉／原作有的補上
     weapons: [spear]
     source: weapon   # 每把矛都賦予（PlayerStateService.grantedSkills），沒有寶石
     mechanic: projectile
@@ -3519,7 +3580,7 @@ skills:
     icon: GHAST_TEAR   # 2026-10：原本 SNOWBALL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 5   # 2026-10-27 照 PoE2（Frostbolt 第 5 階）；這次之前 1
-    tags: [spell, projectile, cold]
+    tags: [spell, projectile, cold, area]   # 2026-10-29 照 PoE2 寶石標籤補 area
     mechanic: projectile
     projectile: { speed: 0.25, range: 20, size: 0.55, pierce: 20 }   # 2026-10 PoE2：很慢、貫穿全部；2026-10-26 照 PoE2：飛 4 秒（0.25 格 × 80 tick），這次之前射程 22
     damage: [[5, 8], [7, 10], [9, 14], [12, 18], [15, 23], [19, 28], [23, 34], [27, 41], [32, 48], [38, 56], [44, 66], [51, 76], [58, 87], [67, 100], [76, 114], [87, 130], [99, 148], [112, 168], [127, 190], [144, 216], [162, 244], [184, 275], [207, 311], [234, 351], [264, 396], [298, 446], [336, 503], [379, 568], [427, 640], [482, 723], [544, 816], [614, 921], [693, 1040], [784, 1176], [886, 1329], [1003, 1504], [1135, 1703], [1286, 1930], [1459, 2188], [1655, 2483]]   # 2026-10-26 照 PoE2（poe2db Frostbolt 1–40 級，每一級的實際傷害，不乘 spell_damage_growth）；這次之前 [7, 11]
@@ -3541,7 +3602,7 @@ skills:
     icon: GLOWSTONE_DUST
     type: spell
     tier: 11   # 2026-10-27 照 PoE2（Ball Lightning 第 11 階）；這次之前 5
-    tags: [spell, projectile, lightning, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
+    tags: [spell, projectile, lightning, area, chain, duration]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤   # 2026-10-29 照 PoE2 寶石標籤補 chain、duration
     mechanic: projectile
     projectile: { speed: 0.2, range: 18, size: 1.2, pierce: 20, splash: { targets: 3, radius: 1.8, damage: 40 } }   # 2026-10 PoE2：很慢
     damage: [[1, 4], [1, 5], [1, 7], [1, 9], [1, 12], [1, 14], [1, 17], [1, 21], [1, 24], [1, 28], [2, 33], [2, 38], [2, 44], [3, 50], [3, 57], [3, 64], [4, 73], [4, 83], [5, 93], [6, 105], [6, 118], [7, 133], [8, 150], [9, 169], [10, 189], [11, 213], [13, 239], [14, 268], [16, 301], [18, 338], [20, 380], [22, 427], [25, 480], [28, 539], [32, 607], [36, 683], [40, 769], [46, 866], [51, 977], [58, 1102]]   # 2026-10-26 照 PoE2（poe2db Ball Lightning 1–40 級，每一級的實際傷害，不乘 spell_damage_growth）；這次之前 [4, 17]
@@ -3628,6 +3689,7 @@ skills:
     type: attack
     tier: 1
     tags: [attack, melee, strike, area, physical, shapeshift, bear]   # 2026-10-26 照 PoE2：補上範圍
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Maul）：自動規則加的拿掉／原作有的補上
     starter: druid   # 2026-10：德魯伊的起始技能（沒選武器時也有技能可用）
     weapons: [talisman]
     mechanic: strike
@@ -3647,6 +3709,7 @@ skills:
     type: attack
     tier: 1   # 2026-10-27 照 PoE2（Furious Slam 第 1 階）；這次之前 3
     tags: [attack, melee, area, slam, physical, shapeshift, bear]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Furious Slam）：自動規則加的拿掉／原作有的補上
     weapons: [talisman]
     mechanic: cone
     cone: { length: [4.0, 5.0], angle: 90 }
@@ -3666,6 +3729,7 @@ skills:
     type: attack
     tier: 5
     tags: [attack, melee, area, slam, fire, duration, shapeshift, bear, channelling]   # 2026-10-26 照 PoE2 加 channelling 標籤（天賦樹的系統）；這次之前 [attack, melee, area, slam, fire, duration, shapeshift, bear]
+    tags_remove: [fire]   # 2026-10-29 照 PoE2 寶石標籤（Fury of the Mountain）：自動規則加的拿掉／原作有的補上
     weapons: [talisman]
     mechanic: nova
     nova: { radius: [3.0, 3.6], ground: { duration: 4, interval: 0.5, radius: 3.0, damage: 40 } }   # 2026-10-23：地上的火 30% → 40%
@@ -3684,6 +3748,7 @@ skills:
     type: attack
     tier: 11   # 2026-10-27 照 PoE2（Rampage 第 11 階）；這次之前 9
     tags: [attack, melee, area, slam, movement, physical, shapeshift, bear, channelling]   # 2026-10-26 照 PoE2 加 channelling 標籤（天賦樹的系統）；這次之前 [attack, melee, area, slam, movement, physical, shapeshift, bear]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Rampage）：自動規則加的拿掉／原作有的補上
     weapons: [talisman]
     mechanic: dash
     dash: { range: 10, hit_width: 1.5, knockback: 0.6, end_radius: 2.2 }   # 2026-10-26 照 PoE2（踏地 2.2 格）；這次之前 [3.0, 3.6]
@@ -3699,7 +3764,7 @@ skills:
     icon: MAGMA_CREAM   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 13
-    tags: [attack, area, fire, shapeshift, bear]
+    tags: [attack, area, fire, shapeshift, bear, buff, duration]   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration
     weapons: [talisman]
     mechanic: impact
     impact: { range: 22, delay: 0.9, radius: 1.4 }   # 2026-10-26 照 PoE2（大隕石 1.4 格）；這次之前 [4.0, 5.0]
@@ -3719,7 +3784,9 @@ skills:
     icon: BONE
     type: attack
     tier: 1
-    tags: [attack, melee, strike, area, physical, shapeshift, werewolf]   # 2026-10-26 照 PoE2：補上範圍
+    tags: [attack, melee, strike, area, physical, shapeshift, werewolf, projectile]   # 2026-10-26 照 PoE2：補上範圍   # 2026-10-29 照 PoE2 寶石標籤補 projectile
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Shred）：自動規則加的拿掉／原作有的補上
+    tags_add: [cold]
     weapons: [talisman]
     mechanic: strike
     strike: { reach: 3.2, angle: 70, targets: 1 }   # 2026-10-26 照 PoE2（單體打擊）；這次之前 targets 2
@@ -3760,6 +3827,7 @@ skills:
     type: attack
     tier: 3
     tags: [attack, melee, area, slam, movement, physical, shapeshift, werewolf]   # 2026-10-26 照 PoE2：Pounce 是猛擊（補上 slam）；這次之前 [attack, melee, area, movement, physical, shapeshift, werewolf]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤：原作沒有 Physical
     weapons: [talisman]
     mechanic: leap
     leap: { range: 9, radius: 2 }   # 2026-10-26 照 PoE2（2 格）；這次之前 [2.4, 3.0]
@@ -3779,6 +3847,7 @@ skills:
     type: attack
     tier: 7
     tags: [attack, melee, area, physical, shapeshift, werewolf]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Cross Slash）：自動規則加的拿掉／原作有的補上
     weapons: [talisman]
     mechanic: cone
     cone: { length: [4.5, 5.5], angle: 100 }   # 2026-10-18：範圍太小（原本 [3.5, 4.5]，面積只有嵐棍橫掃的六成），加長 1 格
@@ -3813,7 +3882,7 @@ skills:
     icon: QUARTZ   # 2026-10：原本 SNOWBALL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 5
-    tags: [warcry, shapeshift, werewolf, cold, nova]   # 2026-10-26 照 PoE2：補上 nova（以自己為中心）；這次之前 [warcry, shapeshift, werewolf, cold]
+    tags: [warcry, shapeshift, werewolf, cold, nova, buff]   # 2026-10-26 照 PoE2：補上 nova（以自己為中心）；這次之前 [warcry, shapeshift, werewolf, cold]   # 2026-10-29 照 PoE2 寶石標籤補 buff
     weapons: [talisman]   # 2026-10：變形技能都要拿獸魂符（照 PoE2；以前只有熊、狼人的攻擊技能有寫）
     mechanic: warcry
     warcry:
@@ -3851,7 +3920,8 @@ skills:
     icon: RABBIT_HIDE
     type: spell
     tier: 7
-    tags: [warcry, shapeshift, bear, nova]   # 2026-10-26 照 PoE2：補上 nova（以自己為中心）；這次之前 [warcry, shapeshift, bear]
+    tags: [warcry, shapeshift, bear, nova]   # 2026-10-26 照 PoE2：補上 nova（以自己為中心）；這次之前 [warcry, shapeshift, bear]（原作的 Meta 不補：我們的 meta 標籤代表「孔裡放技能寶石」的宿主）
+    tags_remove: [duration]   # 2026-10-29 照 PoE2 寶石標籤（Ferocious Roar）：自動規則加的拿掉／原作有的補上
     weapons: [talisman]
     mechanic: warcry
     warcry:
@@ -3959,7 +4029,8 @@ skills:
     # 2026-10-15 照 PoE2 的月光賜福重做：以前是常駐光環（附加 10～20% 冰冷、暴擊率），現在是會變身狼人的戰吼，
     #   冷卻 22 秒、增益 5 秒＋每點怒氣 0.2 秒；增益期間狼人攻擊打中落月光（lunar_moonbeam，SupportProcs）。
     #   poedb：額外獲得 40%～59% 冰冷、月光 65%～235%（我們的倍率約 PoE2 的 0.6）
-    tags: [shapeshift, werewolf]
+    tags: [shapeshift, werewolf, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_add: [attack, cold]   # 2026-10-29 照 PoE2 寶石標籤（Lunar Blessing）：自動規則加的拿掉／原作有的補上
     mechanic: warcry
     warcry:
       radius: 4
@@ -4009,7 +4080,8 @@ skills:
     icon: PHANTOM_MEMBRANE   # 2026-10-27 圖示：飛龍的翼膜；這次之前 AMETHYST_SHARD
     type: attack
     tier: 1
-    tags: [attack, melee, strike, area, physical, shapeshift, wyvern]
+    tags: [attack, melee, strike, area, physical, shapeshift, wyvern, duration]   # 2026-10-29 照 PoE2 寶石標籤補 duration
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Rend）：自動規則加的拿掉／原作有的補上
     weapons: [talisman]
     mechanic: cone
     cone: { length: 3.5, angle: 120 }
@@ -4025,7 +4097,8 @@ skills:
     icon: PHANTOM_MEMBRANE
     type: attack
     tier: 3
-    tags: [attack, melee, area, physical, shapeshift, wyvern]
+    tags: [attack, melee, area, physical, shapeshift, wyvern, wind]   # 2026-10-29 照 PoE2 寶石標籤補 wind
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Wing Blast）：自動規則加的拿掉／原作有的補上
     weapons: [talisman]
     mechanic: cone
     cone: { length: 6, angle: 80 }   # 2026-10-26 照 PoE2（6 格）；這次之前 [5, 6]
@@ -4049,6 +4122,7 @@ skills:
     type: attack
     tier: 3
     tags: [attack, projectile, area, fire, shapeshift, wyvern, detonator]   # 2026-10-26 照 PoE2 加 detonator 標籤（天賦樹的系統）；這次之前 [attack, projectile, area, fire, shapeshift, wyvern]
+    tags_remove: [grenade]   # 2026-10-29 照 PoE2 寶石標籤（Rolling Magma）：自動規則加的拿掉／原作有的補上
     weapons: [talisman]
     mechanic: projectile
     projectile: { speed: 0.9, range: 24, size: 0.5, gravity: 0.05, fuse: 1.6, explode: [1.4, 1.4, 1.4, 1.4, 1.5, 1.5, 1.5, 1.5, 1.5, 1.6, 1.6, 1.6, 1.6, 1.6, 1.7, 1.7, 1.7, 1.7, 1.7, 1.8, 1.8, 1.8, 1.8, 1.8, 1.9, 1.9, 1.9, 1.9, 1.9, 2, 2, 2, 2, 2, 2.1, 2.1, 2.1, 2.1, 2.1, 2.2] }   # 2026-10-26 照 PoE2：半徑逐級 1.4→1.8→2.2 格；這次之前 [2.2, 2.8]
@@ -4071,6 +4145,7 @@ skills:
     type: attack
     tier: 5
     tags: [attack, melee, area, slam, physical, shapeshift, wyvern]   # 2026-10-26 照 PoE2：Devour 是猛擊（補上 slam）；這次之前 [attack, melee, area, physical, shapeshift, wyvern]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Devour）：自動規則加的拿掉／原作有的補上
     weapons: [talisman]
     mechanic: cone
     cone: { length: [3.0, 3.5], angle: 50 }
@@ -4093,6 +4168,7 @@ skills:
     type: attack
     tier: 9
     tags: [attack, projectile, area, duration, shapeshift, wyvern, channelling]   # 2026-10-26 照 PoE2：油彈是物理（拿掉火焰）；另加天賦樹系統標籤 channelling
+    tags_remove: [duration, physical]   # 2026-10-29 照 PoE2 寶石標籤（Oil Barrage）：自動規則加的拿掉／原作有的補上
     weapons: [talisman]
     mechanic: projectile
     projectile: { count: 3, spread: 25, speed: 1.0, range: 16, size: 0.4, gravity: 0.04, explode: 2.1, ground: { duration: 6, interval: 0.5, radius: 2.1, damage: 10 } }
@@ -4119,7 +4195,7 @@ skills:
     icon: BLAZE_POWDER
     type: attack
     tier: 13
-    tags: [attack, area, fire, shapeshift, wyvern, channelling, detonator]   # 2026-10-26 照 PoE2：原作不是近戰（2026-10-22 補上的 melee 拿掉）；另加天賦樹系統標籤 channelling、detonator
+    tags: [attack, area, fire, shapeshift, wyvern, channelling, detonator, duration]   # 2026-10-26 照 PoE2：原作不是近戰（2026-10-22 補上的 melee 拿掉）；另加天賦樹系統標籤 channelling、detonator   # 2026-10-29 照 PoE2 寶石標籤補 duration
     weapons: [talisman]
     mechanic: cone
     cone: { length: 7, angle: 45 }   # 2026-10-26 照 PoE2（7 格）；這次之前 [6, 7]
@@ -4167,7 +4243,7 @@ skills:
     icon: RABBIT_HIDE   # 2026-10：原本 STRING（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 11
-    tags: [spell, area, physical, duration, storm]   # 2026-10-26 照 PoE2 加 storm（風暴法術，荒野湧浪咒用）；這次之前沒有
+    tags: [spell, area, physical, duration, storm, wind]   # 2026-10-26 照 PoE2 加 storm（風暴法術，荒野湧浪咒用）；這次之前沒有   # 2026-10-29 照 PoE2 寶石標籤補 wind
     mechanic: zone
     zone: { range: 18, radius: 3.0, duration: 8, interval: 0.5, damage: 50, pull: 0.25, max: 1 }   # 2026-10-26 照 PoE2（3 格、8 秒；每 0.5 秒打每秒傷害的 50%）；這次之前 radius [2.6, 3.2]、4 秒、每 0.4 秒 45%
     damage: [[3, 3], [4, 4], [6, 6], [9, 9], [11, 11], [14, 14], [17, 17], [21, 21], [26, 26], [31, 31], [36, 36], [43, 43], [51, 51], [59, 59], [69, 69], [80, 80], [94, 94], [109, 109], [126, 126], [146, 146], [169, 169], [196, 196], [227, 227], [263, 263], [305, 305], [354, 354], [411, 411], [477, 477], [554, 554], [644, 644], [750, 750], [874, 874], [1020, 1020], [1192, 1192], [1394, 1394], [1632, 1632], [1914, 1914], [2248, 2248], [2645, 2645], [3115, 3115]]   # 2026-10-26 照 PoE2（poe2db Tornado 每秒物理持續傷害 1–40 級）；這次之前 [6, 10]
@@ -4185,7 +4261,7 @@ skills:
     icon: STICK   # 2026-10：原本 VINE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9
-    tags: [spell, area, physical, plant]   # 2026-10-26 照 PoE2 加 plant 標籤（天賦樹的系統）；這次之前 [spell, area, physical]
+    tags: [spell, area, physical, plant, duration]   # 2026-10-26 照 PoE2 加 plant 標籤（天賦樹的系統）；這次之前 [spell, area, physical]   # 2026-10-29 照 PoE2 寶石標籤補 duration
     mechanic: impact
     impact: { range: 20, delay: 0.4, radius: 2.5 }   # 2026-10-28 照 PoE2（Thrashing Vines 藤蔓 2.5 米，不隨等級）；這次之前 [2.6, 3.2]
     damage: [[5, 8], [7, 11], [10, 15], [13, 19], [16, 24], [20, 30], [24, 36], [29, 43], [34, 51], [39, 59], [46, 69], [53, 79], [61, 91], [70, 105], [80, 120], [91, 136], [103, 155], [117, 176], [133, 200], [151, 226], [170, 255], [192, 289], [217, 326], [245, 368], [276, 415], [312, 468], [352, 527], [397, 595], [447, 671], [505, 757], [570, 855], [643, 965], [727, 1090], [821, 1232], [929, 1393], [1051, 1576], [1190, 1785], [1348, 2022], [1529, 2293], [1735, 2602]]   # 2026-10-26 照 PoE2（poe2db Thrashing Vines 1–40 級，每一級的實際傷害，不乘 spell_damage_growth）；這次之前 [14, 22]
@@ -4230,6 +4306,8 @@ skills:
     type: spell
     tier: 1   # 2026-10-27 照 PoE2（Entangle 第 1 階）；這次之前 3
     tags: [spell, plant, physical]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 physical（Entangle 有物理標籤）；這次之前 [spell, plant]；（更早）2026-10-26 照 PoE2 加 plant 標籤（天賦樹的系統）；這次之前 [spell]
+    tags_remove: [curse]   # 2026-10-29 照 PoE2 寶石標籤（Entangle）：自動規則加的拿掉／原作有的補上
+    tags_add: [physical]
     mechanic: mark
     mark: { range: 22, radius: 3.0, duration: 6, taken: 15, tags: [physical], slow: [25, 40] }
     cast_time: 0.9   # 2026-10-26 照 PoE2；這次之前 0.7
@@ -4243,7 +4321,8 @@ skills:
     icon: STICK   # 2026-10：原本 OAK_LOG（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 8   # 2026-10-27 照 PoE2（Barkskin 第 8 階）；這次之前 3
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [persistent, buff, duration]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Barkskin）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -4262,7 +4341,8 @@ skills:
     icon: FLINT   # 2026-10：原本 SWEET_BERRIES（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 4   # 2026-10-27 照 PoE2（Briarpatch 第 4 階）；這次之前 3
-    tags: [plant, persistent, physical]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、physical（常駐增益：可靠的計畫這類「常駐增益」的加成看它、物理（荊棘傷害））；這次之前 [plant]；（更早）2026-10-26 照 PoE2 加 plant 標籤（天賦樹的系統）；這次之前 []
+    tags: [spell, plant, persistent, physical, buff, duration]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、physical（常駐增益：可靠的計畫這類「常駐增益」的加成看它、物理（荊棘傷害））；這次之前 [plant]；（更早）2026-10-26 照 PoE2 加 plant 標籤（天賦樹的系統）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration；原作同時是法術（寫 spell 才不會被增益拿掉）
+    tags_add: [physical, spell]   # 2026-10-29 照 PoE2 寶石標籤（Briarpatch）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -4281,7 +4361,7 @@ skills:
     icon: BLAZE_POWDER
     type: spell
     tier: 4   # 2026-10-27 照 PoE2（Savage Fury 第 4 階）；這次之前 7
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent，拿掉 physical（常駐增益：可靠的計畫這類「常駐增益」的加成看它；原作沒有物理標籤）；這次之前 [physical]
+    tags: [persistent, buff, duration]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent，拿掉 physical（常駐增益：可靠的計畫這類「常駐增益」的加成看它；原作沒有物理標籤）；這次之前 [physical]   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration
     mechanic: aura
     aura:
       reserve: 30
@@ -4309,7 +4389,8 @@ skills:
     icon: BONE
     type: spell
     tier: 8   # 2026-10-27 照 PoE2（Wolf Pack 第 8 階）；這次之前 9
-    tags: [minion, physical, companion]   # 2026-10-26 照 PoE2 加 companion 標籤（天賦樹的系統）；這次之前 [minion, physical]
+    tags: [minion, physical, companion, persistent]   # 2026-10-26 照 PoE2 加 companion 標籤（天賦樹的系統）；這次之前 [minion, physical]   # 2026-10-29 照 PoE2 寶石標籤補 persistent
+    tags_remove: [melee]   # 2026-10-29 照 PoE2 寶石標籤（Wolf Pack）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura: { reserve: 60, radius: 8, allies: false }   # 2026-10-26 照 PoE2 Wolf Pack：整群固定保留 60 精魂，3 → 6 隻（40 級 9 隻）
     # 2026-10-26 照 PoE2（Wolf Pack 的 Wolf Companion）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
@@ -4328,7 +4409,8 @@ skills:
     icon: NETHERITE_SCRAP   # 2026-10：原本 NETHERITE_AXE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 9
-    tags: [attack, melee, area, slam, physical]
+    tags: [attack, melee, area, slam, physical, duration]   # 2026-10-29 照 PoE2 寶石標籤補 duration
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Sunder）：自動規則加的拿掉／原作有的補上
     weapons: [mace]
     mechanic: cone
     cone: { length: [9, 11], angle: 30, aftershock: { delay: 0.4, radius: 0.5, more: [-59, -59, -59, -59, -59, -59, -59, -59, -60, -60, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59, -59] } }   # 2026-10-28 照 PoE2（poe2db Sunder 1–40 級）：震波自己的表 65%→265%→1176% ÷ 主波 160%→653%→2896%＝更少 59%；這次之前更多 40%
@@ -4348,6 +4430,7 @@ skills:
     type: attack
     tier: 11
     tags: [attack, melee, area, slam, physical, channelling]   # 2026-10-26 照 PoE2 加 channelling 標籤（天賦樹的系統）；這次之前 [attack, melee, area, slam, physical]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Supercharged Slam）：自動規則加的拿掉／原作有的補上
     weapons: [mace]
     mechanic: nova
     nova: { radius: 1.6, aftershock: { delay: 0.6, radius: 2.0, more: 60 } }
@@ -4391,6 +4474,7 @@ skills:
     type: attack
     tier: 13
     tags: [attack, melee, strike, area]   # 2026-10-28 照 PoE2（寶石標籤 Attack、AoE、Melee、Strike；is area damage）：加回範圍——還是單體打擊（範圍大小不影響打到誰），但算範圍傷害、範圍輔助掛得上；這次之前 [attack, melee, strike]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Flicker Strike）：自動規則加的拿掉／原作有的補上
     weapons: [quarterstaff]
     mechanic: flicker
     flicker: { range: 12, reach: 3.5, targets: 1 }   # 2026-10-24：照 PoE2 拿掉冷卻，改成銳星連打（SkillExecutor.flickerChain）
@@ -4407,7 +4491,8 @@ skills:
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 13
-    tags: [attack, melee, area, lightning, movement, channelling]   # 2026-10-26 照 PoE2 加 channelling 標籤（天賦樹的系統）；這次之前 [attack, melee, area, lightning, movement]
+    tags: [attack, melee, area, lightning, movement, channelling, duration]   # 2026-10-26 照 PoE2 加 channelling 標籤（天賦樹的系統）；這次之前 [attack, melee, area, lightning, movement]   # 2026-10-29 照 PoE2 寶石標籤補 duration
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Gathering Storm）：自動規則加的拿掉／原作有的補上
     weapons: [quarterstaff]
     mechanic: dash
     dash: { range: 7.5, hit_width: 1.5 }   # 2026-10-26 照 PoE2（一般突進 7.5 格；完美時機 10 格，終點不另外炸一圈）；這次之前 range 10、end_radius [2.6, 3.2]
@@ -4430,7 +4515,8 @@ skills:
     icon: FEATHER   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 1
-    tags: [attack, melee, area, strike, physical, movement]
+    tags: [attack, melee, area, strike, physical, movement, travel]   # 2026-10-29 照 PoE2 寶石標籤補 travel
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Disengage）：自動規則加的拿掉／原作有的補上
     weapons: [spear]
     mechanic: cone
     cone: { length: [3.5, 4.2], angle: 68 }   # 2026-10-26 照 PoE2（68 度）；這次之前 70
@@ -4453,6 +4539,8 @@ skills:
     type: spell
     tier: 1
     tags: [duration, parry, channelling]   # 2026-10-26 照 PoE2 加 parry、channelling 標籤（天賦樹的系統）；這次之前 [duration]
+    tags_remove: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Parry）：自動規則加的拿掉／原作有的補上
+    tags_add: [attack, melee, physical]
     mechanic: guard
     guard:
       duration: 0.5              # 2026-10-24：縮短成抓時機（原 1 秒）
@@ -4513,6 +4601,7 @@ skills:
     type: attack
     tier: 9
     tags: [attack, melee, strike, area, lightning]   # 2026-10-26 照 PoE2：補上範圍
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Primal Strikes）：自動規則加的拿掉／原作有的補上
     weapons: [spear]
     mechanic: strike
     strike: { reach: 4.2, angle: 70, targets: 1 }   # 2026-10 手感：40° → 70°
@@ -4553,6 +4642,7 @@ skills:
     type: attack
     tier: 3   # 2026-10-27 照 PoE2（Cull The Weak 第 3 階）；這次之前 5
     tags: [attack, melee, strike, area, physical]   # 2026-10-26 照 PoE2：補上範圍
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Cull The Weak）：自動規則加的拿掉／原作有的補上
     weapons: [spear]
     mechanic: strike
     strike: { reach: 4.0, angle: 70, targets: 1 }   # 2026-10 手感：40° → 70°；2026-10-24 照 PoE2 拿掉「低血傷害更多」（以前 35% 以下更多 120%）
@@ -4576,6 +4666,7 @@ skills:
     type: attack
     tier: 5
     tags: [attack, projectile, area, physical, plant, chaos]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 chaos，拿掉 duration（Toxic Growth 有混沌標籤、沒有持續時間標籤）；這次之前 [attack, projectile, area, physical, duration, plant]；（更早）2026-10-26 照 PoE2：毒苞是物理（拿掉混沌）；另加天賦樹系統標籤 plant
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Toxic Growth）：自動規則加的拿掉／原作有的補上
     weapons: [bow]
     mechanic: projectile
     projectile: { count: 5, spread: 50, speed: 1.6, range: 18, size: 0.4, gravity: 0.04, explode: 0.8 }   # 2026-10-26 照 PoE2 Toxic Growth：毒苞落地打一下（0.8 格），留在地上 15 秒後引爆；這次之前落地炸 [1.8, 2.3] 並留 3 秒毒地
@@ -4676,7 +4767,7 @@ skills:
     icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 3
-    tags: [spell, projectile, cold]
+    tags: [spell, projectile, cold, area]   # 2026-10-29 照 PoE2 寶石標籤補 area
     mechanic: projectile
     projectile: { count: 3, spread: 20, speed: 1.8, range: 24, size: 0.4 }
     damage: [[2, 3], [2, 3], [3, 5], [4, 6], [5, 8], [6, 9], [7, 11], [9, 13], [10, 16], [12, 18], [14, 21], [16, 24], [19, 28], [21, 32], [24, 36], [28, 41], [31, 47], [35, 53], [40, 60], [45, 68], [51, 76], [57, 86], [64, 96], [72, 108], [81, 122], [91, 137], [102, 154], [115, 173], [129, 194], [145, 218], [163, 244], [183, 275], [206, 309], [231, 347], [260, 390], [293, 439], [330, 495], [372, 557], [419, 628], [473, 709]]   # 2026-10-28 照 PoE2（RePoE FrostDartsPlayer 冰梭本身 1–40 級：2–3 → 45–68 → 473–709）；這次之前誤用了插進敵人後噴出的冰塊（Ice Chunk）那一欄 2–3 → 53–80 → 559–838
@@ -4722,7 +4813,7 @@ skills:
     icon: NETHER_BRICK   # 2026-10：原本 REDSTONE_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 4
-    tags: [attack, area, physical, persistent]   # 2026-10-27 照 PoE2（Herald of Blood 寶石標籤：攻擊、範圍、物理、常駐；血爆是不用武器的攻擊：攻擊的輔助能掛）；這次之前 [spell, physical, persistent]；（更早）2026-10-26 加 persistent
+    tags: [attack, area, physical, persistent, buff]   # 2026-10-27 照 PoE2（Herald of Blood 寶石標籤：攻擊、範圍、物理、常駐；血爆是不用武器的攻擊：攻擊的輔助能掛）；這次之前 [spell, physical, persistent]；（更早）2026-10-26 加 persistent   # 2026-10-29 照 PoE2 寶石標籤補 buff
     mechanic: aura
     aura:
       reserve: 30
@@ -4760,7 +4851,8 @@ skills:
     icon: NETHER_BRICK   # 2026-10：原本 NETHER_WART（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 14   # 2026-10-27 照 PoE2（Berserk 第 14 階）；這次之前 13
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [persistent, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Berserk）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -4782,7 +4874,8 @@ skills:
     icon: NAUTILUS_SHELL   # 2026-10：原本 GOAT_HORN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 8
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [persistent, buff, aura]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff   # 2026-10-29 照 PoE2 補 aura（原作是光環；2026-10-29 起常駐的要自己寫 aura 才算光環）
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Overwhelming Presence）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30          # 2026-10：60 → 30（照 PoE2 的 Overwhelming Presence）
@@ -4805,7 +4898,8 @@ skills:
     type: spell
     tier: 4
     keep_type_tags: true   # 2026-10-28 照站長：照 PoE2 顯示混沌標籤（不造成傷害也留著）
-    tags: [persistent, chaos]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、chaos（常駐增益：可靠的計畫這類「常駐增益」的加成看它、混沌）；這次之前 []
+    tags: [persistent, chaos, buff, duration, aura]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、chaos（常駐增益：可靠的計畫這類「常駐增益」的加成看它、混沌）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration   # 2026-10-29 照 PoE2 補 aura（原作是光環；2026-10-29 起常駐的要自己寫 aura 才算光環）
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Withering Presence）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -4824,7 +4918,8 @@ skills:
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
-    tags: [spell, lightning]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 lightning（Voltaic Mark 有閃電標籤）；這次之前 [spell]
+    tags: [spell, lightning, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 lightning（Voltaic Mark 有閃電標籤）；這次之前 [spell]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_add: [lightning]   # 2026-10-29 照 PoE2 寶石標籤（Voltaic Mark）：自動規則加的拿掉／原作有的補上
     mechanic: mark
     # 2026-10-28 照 PoE2 Voltaic Mark：擊中被標記的敵人時電擊累積增加 25% → 35% → 45%（誰打都算）；被電擊時觸發（modifiers 的 mark.activation_*）；
     #   這次之前降閃電抗性 [-15, -30]、只對自己受到的傷害增加 10%
@@ -4843,7 +4938,8 @@ skills:
     icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
-    tags: [spell, cold]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 cold（Freezing Mark 有冰冷標籤）；這次之前 [spell]
+    tags: [spell, cold, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 cold（Freezing Mark 有冰冷標籤）；這次之前 [spell]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_add: [cold]   # 2026-10-29 照 PoE2 寶石標籤（Freezing Mark）：自動規則加的拿掉／原作有的補上
     mechanic: mark
     # 2026-10-28 照 PoE2 Freezing Mark：擊中被標記的敵人時凍結累積更多 25% → 35% → 45%（誰打都算）；被凍結時觸發（modifiers 的 mark.activation_*）；
     #   這次之前降冰冷抗性 [-15, -30]、異常門檻減少 30%、只對自己受到的傷害增加 10%
@@ -4864,7 +4960,8 @@ skills:
     icon: NETHER_BRICK   # 2026-10：原本 RED_DYE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 9
-    tags: [spell, physical]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 physical（Bloodhound's Mark 有物理標籤）；這次之前 [spell]（印記會自動拿掉法術標籤）
+    tags: [spell, physical, area]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 physical（Bloodhound's Mark 有物理標籤）；這次之前 [spell]（印記會自動拿掉法術標籤）   # 2026-10-29 照 PoE2 寶石標籤補 area
+    tags_add: [attack, physical]   # 2026-10-29 照 PoE2 寶石標籤（Bloodhound's Mark）：自動規則加的拿掉／原作有的補上
     mechanic: mark
     mark: { range: 22, duration: 8, self_only: true, taken: 0 }   # 2026-10-27 照 PoE2：拿掉原作沒有的護甲更少 30～50%、受到傷害增加 10%
     cooldown: 0.5   # 2026-10-26 照 PoE2（印記冷卻 0.5 秒、施放 0.5 秒）；這次之前 cooldown 3、cast_time 0.4、mana [4, 8]
@@ -4878,7 +4975,8 @@ skills:
     icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 5
-    tags: [duration, cold]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 cold（Ice-Tipped Arrows 有冰冷標籤）；這次之前 [duration]
+    tags: [spell, duration, cold, area, buff, projectile]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 cold（Ice-Tipped Arrows 有冰冷標籤）；這次之前 [duration]   # 2026-10-29 照 PoE2 寶石標籤補 area、buff、projectile；原作同時是法術（寫 spell 才不會被增益拿掉）
+    tags_add: [attack, cold]   # 2026-10-29 照 PoE2 寶石標籤（Ice-Tipped Arrows）：自動規則加的拿掉／原作有的補上
     weapons: [bow, spear]   # 2026-10-26 照 PoE2：弓或矛；這次之前只有弓
     mechanic: guard
     guard:
@@ -4908,7 +5006,7 @@ skills:
     icon: RABBIT_HIDE   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: spell
     tier: 5
-    tags: [duration]
+    tags: [spell, duration, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff；原作同時是法術（寫 spell 才不會被增益拿掉）
     weapons: [bow, spear]
     mechanic: guard
     guard:
@@ -4955,7 +5053,7 @@ skills:
     icon: SLIME_BALL   # 2026-10：原本 SPORE_BLOSSOM（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 13
-    tags: [attack, area, physical, duration, plant, chaos]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 chaos（Toxic Domain 有混沌標籤（中毒））；這次之前 [attack, area, physical, duration, plant]；（更早）2026-10-26 照 PoE2：拿掉原作沒有的 60% 轉混沌；另加天賦樹系統標籤 plant
+    tags: [attack, area, physical, duration, plant, chaos, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 chaos（Toxic Domain 有混沌標籤（中毒））；這次之前 [attack, area, physical, duration, plant]；（更早）2026-10-26 照 PoE2：拿掉原作沒有的 60% 轉混沌；另加天賦樹系統標籤 plant   # 2026-10-29 照 PoE2 寶石標籤補 buff
     weapons: [bow, crossbow, spear]   # 2026-10-26 照 PoE2：投射物攻擊的武器都能用；這次之前只有弓
     mechanic: zone
     zone: { range: 0, radius: 3.0, duration: 8, interval: 0.5, damage: 35, max: 1 }   # 2026-10-28 照 PoE2（poe2db Toxic Domain：3 公尺，不隨等級）；這次之前 [3.5, 4.2]
@@ -4995,7 +5093,7 @@ skills:
     icon: ECHO_SHARD   # 2026-10：原本 ENDER_PEARL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 8   # 2026-10-27 照 PoE2（Blink 第 8 階）；這次之前 7
-    tags: [spell, movement]
+    tags: [spell, movement, buff, persistent]   # 2026-10-29 照 PoE2 寶石標籤補 buff、persistent
     mechanic: dash
     dash: { range: [4, 4, 4.1, 4.1, 4.2, 4.2, 4.3, 4.3, 4.4, 4.4, 4.5, 4.5, 4.6, 4.6, 4.7, 4.7, 4.8, 4.8, 4.9, 4.9, 5, 5, 5, 5.1, 5.1, 5.1, 5.2, 5.2, 5.2, 5.3, 5.3, 5.3, 5.3, 5.4, 5.4, 5.4, 5.4, 5.5, 5.5, 5.5], hit_width: 0 }   # 2026-10-28 照 PoE2（poe2db Blink 1–40 級：4 → 4.9 → 5.5 米，逐級）；這次之前固定 5（更早 8）
     cooldown: 4.5   # 2026-10-26 照 PoE2：4.5 秒 → 3.5 秒（20 級）→ 2.5 秒（40 級），逐級寫在 level_modifiers；這次之前 3
@@ -5012,7 +5110,8 @@ skills:
     icon: GOLD_INGOT   # 2026-10：原本 GOLDEN_APPLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 8
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [persistent, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Time of Need）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -5034,7 +5133,8 @@ skills:
     icon: PHANTOM_MEMBRANE
     type: spell
     tier: 4
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [persistent, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Ghost Dance）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -5056,7 +5156,9 @@ skills:
     icon: IRON_INGOT   # 2026-10：原本 IRON_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 4
-    tags: [persistent, physical]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、physical（常駐增益：可靠的計畫這類「常駐增益」的加成看它、物理）；這次之前 []
+    tags: [persistent, physical, buff, duration]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、physical（常駐增益：可靠的計畫這類「常駐增益」的加成看它、物理）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Scavenged Plating）：自動規則加的拿掉／原作有的補上
+    tags_add: [physical]
     mechanic: aura
     aura:
       reserve: 30
@@ -5076,7 +5178,8 @@ skills:
     icon: BLAZE_POWDER
     type: spell
     tier: 14
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [persistent, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Eternal Rage）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 100         # 2026-10：45 → 100（照 PoE2 的 Eternal Rage）
@@ -5096,7 +5199,8 @@ skills:
     icon: LAPIS_LAZULI
     type: spell
     tier: 4
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [persistent, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Mana Remnants）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -5116,7 +5220,8 @@ skills:
     icon: BLAZE_ROD   # 2026-10：原本 BREWING_STAND（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 14
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [persistent, buff, aura]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff   # 2026-10-29 照 PoE2 補 aura（原作是光環；2026-10-29 起常駐的要自己寫 aura 才算光環）
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Alchemist's Boon）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -5137,7 +5242,8 @@ skills:
     icon: FERMENTED_SPIDER_EYE   # 2026-10：原本 SPIDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 4
-    tags: [minion, physical, chaos, persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它（原作是增益＋召喚物））；這次之前 [minion, physical, chaos]
+    tags: [minion, physical, chaos, persistent, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它（原作是增益＋召喚物））；這次之前 [minion, physical, chaos]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [melee]   # 2026-10-29 照 PoE2 寶石標籤（Ravenous Swarm）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura: { reserve: 30, radius: 8, allies: false }   # 2026-10-26 照 PoE2：固定保留 30 精魂
     # 2026-10-26 照 PoE2（Ravenous Swarm）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
@@ -5161,6 +5267,8 @@ skills:
     type: spell
     tier: 8
     tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Lingering Illusion）：自動規則加的拿掉／原作有的補上
+    tags_add: [buff, duration]
     mechanic: aura
     aura:
       reserve: 30
@@ -6387,7 +6495,8 @@ skills:
     icon: IRON_NUGGET
     type: spell
     tier: 8
-    tags: [hazard, persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 [hazard]；（更早）2026-10-26 照 PoE2 加 hazard 標籤（天賦樹的系統）；這次之前 []
+    tags: [hazard, persistent, buff, duration, projectile]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 [hazard]；（更早）2026-10-26 照 PoE2 加 hazard 標籤（天賦樹的系統）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration、projectile
+    tags_add: [attack, physical]   # 2026-10-29 照 PoE2 寶石標籤（Trail of Caltrops）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -6411,7 +6520,8 @@ skills:
     icon: LEATHER   # 2026-10：原本 SADDLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 14   # 2026-10-26 照 PoE2 Rhoa Mount（第 14 階）；這次之前 2
-    tags: [spell, movement]
+    tags: [spell, movement, buff, companion, minion, persistent]   # 2026-10-29 照 PoE2 寶石標籤補 buff、companion、minion、persistent
+    tags_remove: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Rhoa Mount）：自動規則加的拿掉／原作有的補上
     weapons: [bow, spear]   # 2026-10-26 照 PoE2 Rhoa Mount：拿弓或長矛才能騎；這次之前什麼武器都行
     mount: { kind: HORSE, speed: 0.52 }   # 2026-10-26 照 PoE2（0.4 拿掉坐騎的移動速度加成）：0.52 ≈ 跑步的速度（再乘你的移動速度加成）；這次之前 0.6（比跑步快）
     mechanic: dash
@@ -6429,7 +6539,8 @@ skills:
     icon: PHANTOM_MEMBRANE   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: spell
     tier: 8   # 2026-10-27 照 PoE2（Mirage Archer 第 8 階）；這次之前 11
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [persistent, buff, duration]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration（原作的 Meta 不補：我們的 meta 標籤代表「孔裡放技能寶石」的宿主）
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Mirage Archer）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 60          # 2026-10：45 → 60（照 PoE2 的 Mirage Archer）
@@ -6450,7 +6561,8 @@ skills:
     icon: SLIME_BALL
     type: spell
     tier: 4
-    tags: [persistent, area, physical, chaos]
+    tags: [persistent, area, physical, chaos, buff, nova]   # 2026-10-29 照 PoE2 寶石標籤補 buff、nova
+    tags_add: [chaos, physical]   # 2026-10-29 照 PoE2 寶石標籤（Plague Bearer）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura: { reserve: 30, radius: 8, allies: false, effects: [ { stat: flag.plague_bearer, type: FLAT, value: 1 } ] }   # 存毒（StoredReleases）
     mana: 0
@@ -6484,7 +6596,8 @@ skills:
     icon: IRON_INGOT   # 2026-10：原本 IRON_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 4
-    tags: [persistent, area, physical]
+    tags: [persistent, area, physical, buff, nova]   # 2026-10-29 照 PoE2 寶石標籤補 buff、nova
+    tags_add: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Iron Ward）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura: { reserve: 30, radius: 8, allies: false, effects: [ { stat: flag.iron_ward, type: FLAT, value: 1 } ] }   # 存擋下的傷害（StoredReleases）
     mana: 0
@@ -6542,7 +6655,8 @@ skills:
     icon: FEATHER
     type: spell
     tier: 4   # 2026-10-27 照 PoE2（Wind Dancer 第 4 階）；這次之前 3
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [persistent, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_add: [attack, melee]   # 2026-10-29 照 PoE2 寶石標籤（Wind Dancer）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -6561,7 +6675,8 @@ skills:
     icon: MAGMA_CREAM   # 2026-10：原本 MAGMA_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 4   # 2026-10-27 照 PoE2（Magma Barrier 第 4 階）；這次之前 3
-    tags: [persistent, fire]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、fire（常駐增益：可靠的計畫這類「常駐增益」的加成看它、火焰）；這次之前 []
+    tags: [persistent, fire, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、fire（常駐增益：可靠的計畫這類「常駐增益」的加成看它、火焰）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_add: [attack, fire, melee]   # 2026-10-29 照 PoE2 寶石標籤（Magma Barrier）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -6580,7 +6695,8 @@ skills:
     icon: SUGAR
     type: spell
     tier: 8   # 2026-10-27 照 PoE2（Combat Frenzy 第 8 階）；這次之前 5
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [persistent, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Combat Frenzy）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30          # 2026-10：60 → 30（照 PoE2 的 Combat Frenzy）
@@ -6606,7 +6722,9 @@ skills:
     icon: LAPIS_LAZULI
     type: spell
     tier: 14   # 2026-10-27 照 PoE2（Archmage 第 14 階）；這次之前 5
-    tags: [persistent, lightning]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、lightning（常駐增益：可靠的計畫這類「常駐增益」的加成看它、閃電）；這次之前 []
+    tags: [persistent, lightning, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、lightning（常駐增益：可靠的計畫這類「常駐增益」的加成看它、閃電）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Archmage）：自動規則加的拿掉／原作有的補上
+    tags_add: [lightning]
     mechanic: aura
     aura:
       reserve: 100
@@ -6630,7 +6748,9 @@ skills:
     icon: PRISMARINE_CRYSTALS
     type: spell
     tier: 14   # 2026-10-27 照 PoE2（Elemental Conflux 第 14 階）；這次之前 5
-    tags: [persistent, fire, cold, lightning]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、fire、cold、lightning（常駐增益：可靠的計畫這類「常駐增益」的加成看它、火焰、冰冷、閃電）；這次之前 []
+    tags: [persistent, fire, cold, lightning, buff, duration]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、fire、cold、lightning（常駐增益：可靠的計畫這類「常駐增益」的加成看它、火焰、冰冷、閃電）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Elemental Conflux）：自動規則加的拿掉／原作有的補上
+    tags_add: [cold, fire, lightning]
     mechanic: aura
     aura:
       reserve: 60
@@ -6651,7 +6771,8 @@ skills:
     icon: SLIME_BALL   # 2026-10：原本 SPIDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 8   # 2026-10-27 照 PoE2（Herald of Plague 第 8 階）；這次之前 3
-    tags: [chaos, persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 [chaos]；（更早）2026-10-26 照 PoE2：不算法術；這次之前 [spell, chaos]
+    tags: [chaos, persistent, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 [chaos]；（更早）2026-10-26 照 PoE2：不算法術；這次之前 [spell, chaos]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Herald of Plague）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -6694,7 +6815,8 @@ skills:
     type: spell
     tier: 13
     weapons: [melee]   # 2026-10-27 照 PoE2：Ancestral Cry 要任何近戰武器或徒手（不限錘）；這次之前什麼武器都行（弓、法杖也能吼）
-    tags: [warcry, area, fire, duration]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 area、fire、duration（Ancestral Cry 有範圍、火焰、持續時間標籤（戰吼範圍、持續時間吃這些加成））；這次之前 [warcry]
+    tags: [warcry, area, fire, duration, buff, nova, projectile]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 area、fire、duration（Ancestral Cry 有範圍、火焰、持續時間標籤（戰吼範圍、持續時間吃這些加成））；這次之前 [warcry]   # 2026-10-29 照 PoE2 寶石標籤補 buff、nova、projectile
+    tags_add: [attack, fire, melee, slam]   # 2026-10-29 照 PoE2 寶石標籤（Ancestral Cry）：自動規則加的拿掉／原作有的補上
     mechanic: warcry
     warcry:
       radius: 4
@@ -6775,7 +6897,8 @@ skills:
     icon: NETHER_STAR
     type: spell
     tier: 14
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [persistent, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Charge Regulation）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -6799,7 +6922,8 @@ skills:
     icon: PRISMARINE_SHARD
     type: spell
     tier: 4
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [spell, persistent, buff, duration]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration；原作同時是法術（寫 spell 才不會被增益拿掉）
+    tags_add: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Convalescence）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -6817,7 +6941,8 @@ skills:
     icon: BONE   # 2026-10：原本 ROTTEN_FLESH（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 4
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [spell, persistent, buff, minion]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff、minion；原作同時是法術（寫 spell 才不會被增益拿掉）
+    tags_add: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Grim Feast）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -6835,7 +6960,7 @@ skills:
     icon: BONE   # 2026-10：原本 SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 14
-    tags: [persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []
+    tags: [persistent, buff, minion]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff、minion
     mechanic: aura
     aura:
       reserve: 60          # 2026-10：30 → 60（照 PoE2 的 Sacrifice）
@@ -6853,7 +6978,8 @@ skills:
     icon: AMETHYST_SHARD
     type: spell
     tier: 8
-    tags: [persistent, physical, fire, cold, lightning]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、physical、fire、cold、lightning（常駐增益：可靠的計畫這類「常駐增益」的加成看它、物理、火焰、冰冷、閃電）；這次之前 []
+    tags: [persistent, physical, fire, cold, lightning, buff, duration]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、physical、fire、cold、lightning（常駐增益：可靠的計畫這類「常駐增益」的加成看它、物理、火焰、冰冷、閃電）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration
+    tags_add: [cold, fire, lightning, physical]   # 2026-10-29 照 PoE2 寶石標籤（Shard Scavenger）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura:
       reserve: 30
@@ -6874,7 +7000,9 @@ skills:
     icon: LAPIS_LAZULI
     type: spell
     tier: 8
-    tags: [persistent, fire, cold, lightning]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、fire、cold、lightning（常駐增益：可靠的計畫這類「常駐增益」的加成看它、火焰、冰冷、閃電）；這次之前 []
+    tags: [persistent, fire, cold, lightning, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、fire、cold、lightning（常駐增益：可靠的計畫這類「常駐增益」的加成看它、火焰、冰冷、閃電）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Siphon Elements）：自動規則加的拿掉／原作有的補上
+    tags_add: [cold, fire, lightning]
     mechanic: aura
     aura:
       reserve: 30
@@ -6893,7 +7021,9 @@ skills:
     icon: HEART_OF_THE_SEA   # 2026-10：原本 END_CRYSTAL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: spell
     tier: 14
-    tags: [persistent, fire, cold, lightning]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、fire、cold、lightning（常駐增益：可靠的計畫這類「常駐增益」的加成看它、火焰、冰冷、閃電）；這次之前 []
+    tags: [persistent, fire, cold, lightning, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、fire、cold、lightning（常駐增益：可靠的計畫這類「常駐增益」的加成看它、火焰、冰冷、閃電）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Trinity）：自動規則加的拿掉／原作有的補上
+    tags_add: [cold, fire, lightning]
     mechanic: aura
     aura:
       reserve: 100
@@ -6916,7 +7046,7 @@ skills:
     icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 1
-    tags: [attack, melee, area, cold, crystal]
+    tags: [attack, melee, area, cold, crystal, duration]   # 2026-10-29 照 PoE2 寶石標籤補 duration
     weapons: [quarterstaff]
     mechanic: cone
     cone: { length: [3.5, 4.2], angle: 100 }
@@ -6939,6 +7069,7 @@ skills:
     type: attack
     tier: 3
     tags: [attack, melee, strike, physical, area]   # 2026-10：有範圍效果（電到附近／落點範圍），補上範圍標籤
+    tags_remove: [travel]   # 2026-10-29 照 PoE2 寶石標籤（Rake）：自動規則加的拿掉／原作有的補上
     weapons: [spear]
     mechanic: dash
     dash: { range: 5, end_radius: [2.2, 2.8] }   # 2026-10-26 照 PoE2 Rake：衝 5 格、沒有冷卻；這次之前 6、冷卻 1 秒（原作衝得越遠越痛、最多更多 100%，沒做）
@@ -6984,6 +7115,7 @@ skills:
     type: attack
     tier: 1
     tags: [attack, projectile, physical, merging, area]   # 2026-10-26 照 PoE2：＋area
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Fragmentation Rounds）：自動規則加的拿掉／原作有的補上
     weapons: [crossbow]
     mechanic: projectile
     projectile: { arrow: true, count: 10, spread: 24, speed: 3.0, range: 30 }   # 2026-10-26 弩照 PoE2（碎片數、穿透照 poe2db）
@@ -7079,6 +7211,7 @@ skills:
     type: attack
     tier: 7
     tags: [attack, area, projectile, duration, ballista]   # 2026-10-28 照 PoE2（寶石標籤 Attack、Totem、AoE、Projectile、Sustained、Duration）加 duration；physical 照本專案的規則由程式自動加（打武器物理的攻擊都算物理技能，物理輔助掛得上）；這次之前 [attack, area, projectile, physical, ballista]
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Artillery Ballista）：自動規則加的拿掉／原作有的補上
     # （更早）2026-10-26 照 PoE2 加 ballista 標籤（天賦樹的系統）
     weapons: [crossbow]
     mechanic: impact
@@ -7595,7 +7728,7 @@ skills:
     icon: ECHO_SHARD
     type: spell
     tier: 14
-    tags: [persistent, meta]   # 2026-10-25：meta＝主要寶石（能量輔助可掛）；invocation＝PoE2 的 Invocation（祈喚：元祈、刈祈、障祈引星）
+    tags: [persistent, meta, buff]   # 2026-10-25：meta＝主要寶石（能量輔助可掛）；invocation＝PoE2 的 Invocation（祈喚：元祈、刈祈、障祈引星）   # 2026-10-29 照 PoE2 寶石標籤補 buff
     # 2026-10-26 照 PoE2「Triggers all Socketed Spells and loses all Energy on reaching maximum Energy」（MetaGems）：觸發所有插槽法術、失去全部能量；
     #   這次之前只觸發第 1 孔、多出來的能量留著（最多 99%）、兩次觸發至少隔 4 tick（暴擊、異變、翻滾、殞從引星都一樣）
     mechanic: aura
@@ -7615,7 +7748,7 @@ skills:
     icon: WITHER_SKELETON_SKULL
     type: spell
     tier: 8
-    tags: [persistent, area, meta]   # 照 PoE2（Persistent、AoE、Aura、Meta；aura 由 mechanic: aura 自動算）；meta＝主要寶石（孔裡放技能，沒有 meta 區塊：不是能量觸發）
+    tags: [persistent, area, meta, buff, aura]   # 照 PoE2（Persistent、AoE、Aura、Meta；aura 由 mechanic: aura 自動算）；meta＝主要寶石（孔裡放技能，沒有 meta 區塊：不是能量觸發）   # 2026-10-29 照 PoE2 寶石標籤補 buff   # 2026-10-29 照 PoE2 補 aura（原作是光環；2026-10-29 起常駐的要自己寫 aura 才算光環）
     mechanic: aura
     aura: { reserve: 60, radius: 8, allies: false, effects: [] }
     mana: 0
@@ -7628,7 +7761,8 @@ skills:
     icon: PRISMARINE_CRYSTALS
     type: spell
     tier: 14
-    tags: [persistent, meta]   # 2026-10-26 照 PoE2：Cast on Elemental Ailment 不是 Invocation（原作的 Invocation 是元祈引星）；這次之前帶 invocation
+    tags: [persistent, meta, buff]   # 2026-10-26 照 PoE2：Cast on Elemental Ailment 不是 Invocation（原作的 Invocation 是元祈引星）；這次之前帶 invocation   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_add: [cold, fire, lightning]   # 2026-10-29 照 PoE2 寶石標籤（Cast on Elemental Ailment）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura: { reserve: 100, radius: 8, allies: false }
     meta: { kind: ailment, energy: 1, energy_more: [0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69, 72, 75, 78, 81, 84, 87, 90, 93, 96, 99, 102, 105, 108, 111, 114, 117] }   # 2026-10-26 照 PoE2：每點怪物強度感電 1、冰凍 10、點燃 1 × 打掉異常門檻的 %（SkillTriggers；這次之前點燃固定 1）；更早之前感電、點燃 10、冰凍 30
@@ -7643,7 +7777,7 @@ skills:
     icon: FEATHER
     type: spell
     tier: 14
-    tags: [persistent, meta]   # 2026-10-25：meta＝主要寶石（能量輔助可掛）
+    tags: [persistent, meta, buff]   # 2026-10-25：meta＝主要寶石（能量輔助可掛）   # 2026-10-29 照 PoE2 寶石標籤補 buff
     mechanic: aura
     aura: { reserve: 100, radius: 8, allies: false }
     # 2026-10-26 照 PoE2 Cast on Dodge（poe2db「Gain 2 Energy per metre travelled while dodge rolling」）：每格 2；這次之前每次翻滾固定 12
@@ -7661,7 +7795,7 @@ skills:
     icon: BONE
     type: spell
     tier: 8
-    tags: [persistent, meta]   # 2026-10-25：meta＝主要寶石（能量輔助可掛）
+    tags: [persistent, meta, buff, minion]   # 2026-10-25：meta＝主要寶石（能量輔助可掛）   # 2026-10-29 照 PoE2 寶石標籤補 buff、minion
     mechanic: aura
     aura: { reserve: 30, radius: 8, allies: false }
     # 2026-10-26 照 PoE2 Cast on Minion Death：只算持續型召喚物（原作描述「one of your Persistent Minions」；這次之前有持續時間的也算）
@@ -7681,6 +7815,7 @@ skills:
     type: spell
     tier: 8
     tags: [persistent, meta, invocation]
+    tags_add: [buff, cold, fire, lightning]   # 2026-10-29 照 PoE2 寶石標籤（Elemental Invocation）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura: { reserve: 60, radius: 8, allies: false }
     # 照 PoE2（poe2db／PoB）：感電每點強度 1、冰凍 10、點燃 1 × 打掉異常門檻的 %（SkillTriggers；2026-10-26 補上，這次之前點燃固定 1）；能量上限 500；能量獲得增加 0→68%（20 級）→140%（40 級）
@@ -7698,6 +7833,7 @@ skills:
     type: spell
     tier: 14
     tags: [persistent, meta, invocation]
+    tags_add: [buff]   # 2026-10-29 照 PoE2 寶石標籤（Reaper's Invocation）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura: { reserve: 30, radius: 8, allies: false }
     # 照 PoE2（poe2db／PoB）：每點強度 30 能量；能量上限 500；能量獲得增加 0→57%（20 級）→117%（40 級）
@@ -7715,6 +7851,7 @@ skills:
     type: spell
     tier: 8
     tags: [persistent, meta, invocation]
+    tags_add: [buff]   # 2026-10-29 照 PoE2 寶石標籤（Barrier Invocation）：自動規則加的拿掉／原作有的補上
     mechanic: aura
     aura: { reserve: 30, radius: 8, allies: false }
     # 照 PoE2（poe2db／PoB）：每 10 點能量護盾傷害 1 能量（energy 0.1 × 扣掉的護盾）；能量上限 500；能量獲得增加 0→57%（20 級）→117%（40 級）
@@ -7969,7 +8106,7 @@ skills:
     icon: COPPER_INGOT
     type: spell
     tier: 1
-    tags: [spell, area, lightning, duration, chain, orb]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 orb（Galvanic Field 是法球：天賦樹「法球技能」的加成看它）；這次之前 [spell, area, lightning, duration, chain]
+    tags: [spell, area, lightning, duration, chain, orb, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 orb（Galvanic Field 是法球：天賦樹「法球技能」的加成看它）；這次之前 [spell, area, lightning, duration, chain]   # 2026-10-29 照 PoE2 寶石標籤補 buff
     source: weapon   # 2026-10-26：法杖、長杖、權杖賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: zone
     zone: { range: 18, radius: 1.9, duration: 6, interval: 0.6, damage: 100, max: 1 }   # PoE2：1.9 格、6 秒、每 0.6 秒
@@ -8030,6 +8167,7 @@ skills:
     tier: 1
     keep_type_tags: true   # 2026-10-28 照站長：照 PoE2 顯示混沌標籤（不造成傷害也留著）
     tags: [spell, area, chaos, duration, channelling]   # 2026-10-26 照 PoE2 加 channelling 標籤（天賦樹的系統）；這次之前 [spell, area, chaos, duration]
+    tags_remove: [curse]   # 2026-10-29 照 PoE2 寶石標籤（Wither）：自動規則加的拿掉／原作有的補上
     source: weapon   # 2026-10-26：法杖、長杖、權杖賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: mark
     charge: { mode: pulse }   # 2026-10-26 照 PoE2 的引導（Wither：按住期間一直作用；這次之前一按一次、一次給 2 層）；2026-10-27 照站長「放技能減速全部移除」：引導中不再移動更少 70%，說明跟著改
@@ -8284,7 +8422,8 @@ skills:
     icon: BONE   # 2026-10-27 圖示：吞屍體；這次之前 ROTTEN_FLESH（右鍵會吃掉）
     type: spell
     tier: 1
-    tags: [spell, area, nova]
+    tags: [spell, area, nova, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [duration]   # 2026-10-29 照 PoE2 寶石標籤（Feast of Flesh）：自動規則加的拿掉／原作有的補上
     source: weapon   # 2026-10-26：法杖、長杖、權杖賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: guard
     weapons: [staff]
@@ -8305,7 +8444,8 @@ skills:
     icon: PRISMARINE_CRYSTALS
     type: spell
     tier: 1
-    tags: [spell, aura, persistent, cold]   # 2026-10-28 照 PoE2（poe2db 寶石標籤 Buff、Persistent、Aura、Cold、Spell）；這次之前 [spell, area, cold, nova]
+    tags: [spell, aura, persistent, cold, buff]   # 2026-10-28 照 PoE2（poe2db 寶石標籤 Buff、Persistent、Aura、Cold、Spell）；這次之前 [spell, area, cold, nova]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_add: [cold, spell]   # 2026-10-29 照 PoE2 寶石標籤（Heart of Ice）：自動規則加的拿掉／原作有的補上
     source: weapon   # 2026-10-26：法杖、長杖、權杖賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura   # 2026-10-28 照 PoE2 Heart of Ice：常駐光環（瞬發開關），冰緩存在範圍內的敵人（AuraService.presenceChill）；這次之前 mechanic: nova、冷卻 4 秒、真的打一下 [26, 39]～[15509, 23263] 冰冷傷害、冰緩效果更多 100%
     aura:
@@ -8327,7 +8467,8 @@ skills:
     icon: AMETHYST_SHARD
     type: spell
     tier: 1
-    tags: [aura]
+    tags: [aura, buff, persistent]   # 2026-10-29 照 PoE2 寶石標籤補 buff、persistent
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Discipline）：自動規則加的拿掉／原作有的補上
     source: weapon   # 2026-10-26：權杖賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura:
@@ -8346,7 +8487,8 @@ skills:
     icon: COAL
     type: spell
     tier: 1
-    tags: [aura]
+    tags: [aura, buff, duration, persistent]   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration、persistent
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Malice）：自動規則加的拿掉／原作有的補上
     source: weapon   # 2026-10-26：權杖賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura:
@@ -8364,7 +8506,9 @@ skills:
     icon: MAGMA_CREAM   # 2026-10-27 圖示：火焰；這次之前 GLOWSTONE_DUST（三種守都一樣）
     type: spell
     tier: 1
-    tags: [aura, fire]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 fire（Purity of 系列有那種元素的標籤）；這次之前 [aura]
+    tags: [aura, fire, buff, persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 fire（Purity of 系列有那種元素的標籤）；這次之前 [aura]   # 2026-10-29 照 PoE2 寶石標籤補 buff、persistent
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Purity of Fire）：自動規則加的拿掉／原作有的補上
+    tags_add: [fire]
     source: weapon   # 2026-10-26：權杖賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura:
@@ -8383,7 +8527,9 @@ skills:
     icon: QUARTZ   # 2026-10-27 圖示：冰冷；這次之前 GLOWSTONE_DUST（三種守都一樣）
     type: spell
     tier: 1
-    tags: [aura, cold]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 cold（Purity of 系列有那種元素的標籤）；這次之前 [aura]
+    tags: [aura, cold, buff, persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 cold（Purity of 系列有那種元素的標籤）；這次之前 [aura]   # 2026-10-29 照 PoE2 寶石標籤補 buff、persistent
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Purity of Ice）：自動規則加的拿掉／原作有的補上
+    tags_add: [cold]
     source: weapon   # 2026-10-26：權杖賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura:
@@ -8402,7 +8548,9 @@ skills:
     icon: GLOWSTONE_DUST
     type: spell
     tier: 1
-    tags: [aura, lightning]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 lightning（Purity of 系列有那種元素的標籤）；這次之前 [aura]
+    tags: [aura, lightning, buff, persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 lightning（Purity of 系列有那種元素的標籤）；這次之前 [aura]   # 2026-10-29 照 PoE2 寶石標籤補 buff、persistent
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Purity of Lightning）：自動規則加的拿掉／原作有的補上
+    tags_add: [lightning]
     source: weapon   # 2026-10-26：權杖賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura:
@@ -8421,7 +8569,9 @@ skills:
     icon: COAL
     type: spell
     tier: 1
-    tags: [aura, chaos]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 chaos（Impurity 有混沌標籤）；這次之前 [aura]
+    tags: [aura, chaos, buff, persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 chaos（Impurity 有混沌標籤）；這次之前 [aura]   # 2026-10-29 照 PoE2 寶石標籤補 buff、persistent
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Impurity）：自動規則加的拿掉／原作有的補上
+    tags_add: [chaos]
     source: weapon   # 2026-10-26：權杖賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura:
@@ -8441,7 +8591,7 @@ skills:
     icon: ECHO_SHARD
     type: spell
     tier: 1
-    tags: [persistent, meta, invocation]
+    tags: [persistent, meta, invocation, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
     source: weapon   # 2026-10-26：法杖賦予（PoE2 的 Spellslinger），沒有寶石
     mechanic: aura
     # 2026-10-26 照 PoE2：只有決鬥法杖（Dueling Wand，bases/weapons_casters.yml 的 grants）賦予；RePoE 的 MetaSpellslingerPlayer 沒有 reservations、
@@ -8460,7 +8610,7 @@ skills:
     icon: ENCHANTED_BOOK
     type: spell
     tier: 1
-    tags: [duration, cooldown]
+    tags: [spell, duration, cooldown, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff；原作同時是法術（寫 spell 才不會被增益拿掉）
     source: weapon   # 2026-10-26：長杖賦予（PoE2 的 Unleash），沒有寶石
     weapons: [staff]
     mechanic: guard
@@ -8485,7 +8635,8 @@ skills:
     icon: GLOWSTONE_DUST
     type: spell
     tier: 1
-    tags: [aura, persistent, lightning]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、lightning（Fulmination 是常駐增益、閃電）；這次之前 [aura]
+    tags: [aura, persistent, lightning, buff]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、lightning（Fulmination 是常駐增益、閃電）；這次之前 [aura]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_add: [lightning]   # 2026-10-29 照 PoE2 寶石標籤（Fulmination）：自動規則加的拿掉／原作有的補上
     source: weapon   # 2026-10-26：武器賦予（PoE2），沒有寶石；效果在程式 GrantedAuras
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false }
@@ -8501,7 +8652,7 @@ skills:
     icon: AMETHYST_SHARD
     type: spell
     tier: 1
-    tags: [aura, persistent]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（Mirror of Refraction 是常駐增益）；這次之前 [aura]
+    tags: [persistent, buff, duration]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（Mirror of Refraction 是常駐增益）；這次之前 [aura]   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration   # 2026-10-29 照 PoE2 拿掉 aura（原作不是光環）
     source: weapon   # 2026-10-26：武器賦予（PoE2），沒有寶石；效果在程式 GrantedAuras
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false }
@@ -8518,7 +8669,8 @@ skills:
     icon: FEATHER
     type: spell
     tier: 1
-    tags: [aura, persistent, physical, chaos]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、physical、chaos（Spiraling Conspiracy 是常駐、物理、混沌）；這次之前 [aura]
+    tags: [persistent, physical, chaos, area, duration, minion]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent、physical、chaos（Spiraling Conspiracy 是常駐、物理、混沌）；這次之前 [aura]   # 2026-10-29 照 PoE2 寶石標籤補 area、duration、minion   # 2026-10-29 照 PoE2 拿掉 aura（原作不是光環）
+    tags_add: [chaos, physical]   # 2026-10-29 照 PoE2 寶石標籤（Spiraling Conspiracy）：自動規則加的拿掉／原作有的補上
     source: weapon   # 2026-10-26：武器賦予（PoE2），沒有寶石；效果在程式 GrantedAuras
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false }
@@ -8552,7 +8704,9 @@ skills:
     icon: EMERALD
     type: spell
     tier: 1
-    tags: [physical, duration]
+    tags: [spell, physical, duration, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff；原作同時是法術（寫 spell 才不會被增益拿掉）
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Encase in Jade）：自動規則加的拿掉／原作有的補上
+    tags_add: [physical, spell]
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: warcry
     warcry:
@@ -8588,7 +8742,9 @@ skills:
     icon: IRON_INGOT
     type: spell
     tier: 1
-    tags: [duration, fire]
+    tags: [duration, fire, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [duration]   # 2026-10-29 照 PoE2 寶石標籤（Temper Weapon）：自動規則加的拿掉／原作有的補上
+    tags_add: [attack, channelling, fire, melee]
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: warcry
     warcry:
@@ -8622,11 +8778,12 @@ skills:
 
   manifest_weapon:
     name: 幻化武器
-    description: 常駐：複製你主手的近戰武器，變成一把不會受傷、不會死的夥伴跟著你戰鬥（召喚物等級 = 技能等級 × 2）。每 1 點力量增加 1% 傷害、每 3 點敏捷增加 1% 攻擊速度。不保留精魂。
+    description: 常駐：複製你主手的近戰武鬥武器（劍、斧、錘、矛、長棍、爪、匕首、鏈錘、獸魂符），變成一把不會受傷、不會死的夥伴跟著你戰鬥（召喚物等級 = 技能等級 × 2），外觀跟著你的武器；主手不是近戰武鬥武器時收起來。普通的打擊之外照武器類型多一招：錘「重擊」（180%、範圍、出手慢一倍、冷卻 6 秒）、長棍「橫掃」（90%、身邊一圈、冷卻 6 秒）、矛「突進」（衝向 3～20 公尺外的敵人，落點 180% 範圍、冷卻 3 秒）、獸魂符「爪擊」（160%、範圍、冷卻 3 秒）。每 1 點力量增加 1% 傷害、每 3 點敏捷增加 1% 攻擊速度。不保留精魂。
     icon: NETHERITE_INGOT   # 2026-10-27 圖示：這次之前 IRON_SWORD（劍會干擾施放）
     type: spell
     tier: 1
-    tags: [minion, persistent]
+    tags: [minion, persistent, companion]   # 2026-10-29 照 PoE2 寶石標籤補 companion
+    tags_remove: [melee]   # 2026-10-29 照 PoE2 寶石標籤（Manifest Weapon）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false }
@@ -8634,7 +8791,8 @@ skills:
     # 2026-10-29 照 PoE2 Manifest Weapon：召喚物等級 = 技能等級 × 2（ally 表，20 級 40、40 級 80）；Base Damage 100%（damage 1.0，跟支援火力、巨靈一樣照 ally 表原樣）；
     #   MinionsAreUndamagable（immortal：完全不會受傷、不會死，敵人不去打）；說明寫「幻化武器」（外觀照舊是拿劍的惱鬼）。
     #   這次之前用「同等級普通怪」算（召喚物等級跟角色等級走）、生命 10 倍、抗性 75%、傷害 1.6 倍，說明寫成「焚魂」。
-    #   原作「照武器類型多一種攻擊」我們沒做（只有普通的打擊）
+    #   2026-10-29 照 PoE2（RePoE skills.json）：要主手拿近戰武鬥武器、外觀照你的武器、照武器類型多一招（MinionAbilities.ManifestForm）；
+    #   這次之前不檢查武器、一律拿鐵劍、只有普通的打擊
     summon: { minion_tags: [attack, melee], kind: VEX, name: 幻化武器, ally: true, immortal: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.0, damage: 1.0,
               attack_speed: 1.0, speed: 1.4, reach: 2.5, weapon: IRON_SWORD }
     cast_time: 0.5
@@ -8648,7 +8806,8 @@ skills:
     icon: FLINT
     type: spell
     tier: 1
-    tags: [persistent, meta, fire]
+    tags: [persistent, meta, fire, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_add: [fire]   # 2026-10-29 照 PoE2 寶石標籤（Fire Spell on Hit）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false }
@@ -8662,7 +8821,8 @@ skills:
     icon: PRISMARINE_CRYSTALS
     type: spell
     tier: 1
-    tags: [persistent, fire, cold, lightning]
+    tags: [spell, persistent, fire, cold, lightning, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff；原作同時是法術（寫 spell 才不會被增益拿掉）
+    tags_add: [cold, fire, lightning, spell]   # 2026-10-29 照 PoE2 寶石標籤（Sorcery Ward）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -8678,6 +8838,7 @@ skills:
     type: spell
     tier: 1
     tags: [minion, persistent, command]
+    tags_remove: [melee]   # 2026-10-29 照 PoE2 寶石標籤（Supporting Fire）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false }
@@ -8694,7 +8855,7 @@ skills:
     icon: AMETHYST_SHARD
     type: spell
     tier: 1
-    tags: [persistent]
+    tags: [persistent, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -8751,7 +8912,8 @@ skills:
     icon: NETHER_BRICK
     type: spell
     tier: 1
-    tags: [persistent, physical, duration, area]
+    tags: [persistent, physical, duration, area, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_add: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Blood Boil）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -8766,7 +8928,8 @@ skills:
     icon: BONE
     type: spell
     tier: 1
-    tags: [duration]
+    tags: [duration, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Ritual Sacrifice）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: warcry
     warcry:
@@ -8790,7 +8953,8 @@ skills:
     icon: SUGAR
     type: spell
     tier: 1
-    tags: [persistent, physical, area]
+    tags: [persistent, physical, area, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_add: [attack, physical]   # 2026-10-29 照 PoE2 寶石標籤（Queen's Procession）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -8811,7 +8975,7 @@ skills:
     icon: GLOW_INK_SAC   # 2026-10-27 圖示：發光的標記；這次之前 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥）
     type: spell
     tier: 1
-    tags: [persistent, mark, area]   # 2026-10-28 照 PoE2（Called Shots 有 Area：放印記的範圍吃範圍加成）
+    tags: [persistent, mark, area, buff]   # 2026-10-28 照 PoE2（Called Shots 有 Area：放印記的範圍吃範圍加成）   # 2026-10-29 照 PoE2 寶石標籤補 buff（原作的 Meta 不補：我們的 meta 標籤代表「孔裡放技能寶石」的宿主）
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -8831,7 +8995,7 @@ skills:
     icon: PHANTOM_MEMBRANE
     type: spell
     tier: 1
-    tags: [persistent, duration, cooldown]
+    tags: [persistent, duration, cooldown, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff（原作的 Meta 不補：我們的 meta 標籤代表「孔裡放技能寶石」的宿主）
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -8847,6 +9011,7 @@ skills:
     type: attack
     tier: 1
     tags: [attack, projectile, area, grenade, physical]
+    tags_remove: [grenade]   # 2026-10-29 照 PoE2 寶石標籤（Bleeding Concoction）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: impact
     impact: { range: 16, delay: 0.6, radius: 1.8 }   # 2026-10-26 照 PoE2（1.8 格）
@@ -8867,6 +9032,7 @@ skills:
     type: attack
     tier: 1
     tags: [attack, projectile, area, grenade, cold]
+    tags_remove: [grenade]   # 2026-10-29 照 PoE2 寶石標籤（Shattering Concoction）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: impact
     impact: { range: 16, delay: 0.6, radius: 1.8 }   # 2026-10-26 照 PoE2（1.8 格）
@@ -8886,6 +9052,7 @@ skills:
     type: attack
     tier: 1
     tags: [attack, projectile, area, grenade, fire]
+    tags_remove: [grenade]   # 2026-10-29 照 PoE2 寶石標籤（Explosive Concoction）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: impact
     impact: { range: 16, delay: 0.6, radius: 1.8 }   # 2026-10-26 照 PoE2（1.8 格）
@@ -8907,6 +9074,7 @@ skills:
     type: attack
     tier: 1
     tags: [attack, projectile, area, grenade, lightning]
+    tags_remove: [grenade]   # 2026-10-29 照 PoE2 寶石標籤（Fulminating Concoction）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: impact
     impact: { range: 16, delay: 0.6, radius: 1.8 }   # 2026-10-26 照 PoE2（1.8 格）
@@ -8927,6 +9095,7 @@ skills:
     type: attack
     tier: 1
     tags: [attack, projectile, area, grenade, physical]
+    tags_remove: [grenade]   # 2026-10-29 照 PoE2 寶石標籤（Acidic Concoction）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: impact
     impact: { range: 16, delay: 0.6, radius: 1.8 }   # 2026-10-26 照 PoE2（1.8 格）
@@ -8997,7 +9166,9 @@ skills:
     icon: NETHER_STAR
     type: spell
     tier: 1
-    tags: [duration, fire, cold, lightning]
+    tags: [duration, fire, cold, lightning, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Unbound Avatar）：自動規則加的拿掉／原作有的補上
+    tags_add: [cold, fire, lightning]
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: warcry
     warcry:
@@ -9028,6 +9199,8 @@ skills:
     type: spell
     tier: 1
     tags: [duration]
+    tags_remove: [area, duration]   # 2026-10-29 照 PoE2 寶石標籤（Meditate）：自動規則加的拿掉／原作有的補上
+    tags_add: [channelling, spell]
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: warcry
     warcry:
@@ -9050,7 +9223,8 @@ skills:
     icon: ECHO_SHARD
     type: spell
     tier: 1
-    tags: [persistent, duration]
+    tags: [persistent, duration, area, buff]   # 2026-10-29 照 PoE2 寶石標籤補 area、buff
+    tags_add: [attack]   # 2026-10-29 照 PoE2 寶石標籤（Void Illusion）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -9078,7 +9252,7 @@ skills:
     icon: POPPED_CHORUS_FRUIT   # 2026-10-27 圖示：遁入裂痕；這次之前 AMETHYST_SHARD（跟高尚禦盾一樣）
     type: spell
     tier: 1
-    tags: [persistent]
+    tags: [persistent, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -9095,7 +9269,8 @@ skills:
     type: spell
     tier: 1
     keep_type_tags: true   # 2026-10-28 照站長：照 PoE2 顯示混沌標籤（不造成傷害也留著）
-    tags: [duration, chaos]
+    tags: [duration, chaos, buff, storm]   # 2026-10-29 照 PoE2 寶石標籤補 buff、storm
+    tags_add: [attack, physical]   # 2026-10-29 照 PoE2 寶石標籤（Archon of Chayula）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: warcry
     warcry:
@@ -9189,6 +9364,8 @@ skills:
     type: spell
     tier: 1
     tags: []
+    tags_remove: [area, duration]   # 2026-10-29 照 PoE2 寶石標籤（Time Snap）：自動規則加的拿掉／原作有的補上
+    tags_add: [spell]
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: warcry
     warcry:
@@ -9211,6 +9388,7 @@ skills:
     type: spell
     tier: 1
     tags: [area, duration]
+    tags_add: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Time Freeze）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: warcry
     warcry:
@@ -9233,6 +9411,7 @@ skills:
     type: spell
     tier: 1
     tags: [area, duration]
+    tags_add: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Inevitable Agony）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: warcry
     warcry:
@@ -9256,7 +9435,9 @@ skills:
     icon: RECOVERY_COMPASS
     type: spell
     tier: 1
-    tags: [movement]
+    tags: [spell, movement, buff, persistent]   # 2026-10-29 照 PoE2 寶石標籤補 buff、persistent；原作同時是法術（寫 spell 才不會被增益拿掉）
+    tags_remove: [area, duration]   # 2026-10-29 照 PoE2 寶石標籤（Temporal Rift）：自動規則加的拿掉／原作有的補上
+    tags_add: [spell]
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: warcry
     warcry:
@@ -9278,7 +9459,9 @@ skills:
     icon: GOLD_NUGGET
     type: spell
     tier: 1
-    tags: [persistent, minion]
+    tags: [persistent, minion, command]   # 2026-10-29 照 PoE2 寶石標籤補 command
+    tags_remove: [melee]   # 2026-10-29 照 PoE2 寶石標籤（Kelari, the Tainted Sands）：自動規則加的拿掉／原作有的補上
+    tags_add: [physical]
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -9294,7 +9477,9 @@ skills:
     icon: HEART_OF_THE_SEA
     type: spell
     tier: 1
-    tags: [persistent, minion]
+    tags: [persistent, minion, command]   # 2026-10-29 照 PoE2 寶石標籤補 command
+    tags_remove: [melee]   # 2026-10-29 照 PoE2 寶石標籤（Navira, the Last Mirage）：自動規則加的拿掉／原作有的補上
+    tags_add: [cold]
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -9310,7 +9495,9 @@ skills:
     icon: BLAZE_ROD
     type: spell
     tier: 1
-    tags: [persistent, minion]
+    tags: [persistent, minion, command]   # 2026-10-29 照 PoE2 寶石標籤補 command
+    tags_remove: [melee]   # 2026-10-29 照 PoE2 寶石標籤（Ruzhan, the Blazing Sword）：自動規則加的拿掉／原作有的補上
+    tags_add: [fire]
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -9326,7 +9513,8 @@ skills:
     icon: GUNPOWDER   # 2026-10-27 圖示：會炸開的沙分身；這次之前 GOLD_NUGGET（跟克拉里本身一樣）
     type: spell
     tier: 1
-    tags: [spell, area, physical, command]
+    tags: [spell, area, physical, command, duration]   # 2026-10-29 照 PoE2 寶石標籤補 duration
+    tags_remove: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Kelari's Deception）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: impact
     impact: { range: 20, delay: 0.1, radius: 2.5 }
@@ -9363,11 +9551,13 @@ skills:
 
   kelari_judgment:
     name: 克拉里的審判
-    description: 指令（要先召喚克拉里）：克拉里在準心的地方懸起一排刀刃，落下時造成震波（5.25 格）的物理法術傷害，暈眩累積更多 100%、多 4 層暴擊弱點。原作要引導（最多 4 段，每段更多 125% 傷害），這裡照 3 段算。冷卻 12 秒。
+    description: 指令（要先召喚克拉里）：克拉里在準心的地方懸起一排刀刃，落下時造成震波（5.25 格）的物理法術傷害，暈眩累積更多 100%、多 4 層暴擊弱點。冷卻 12 秒。
     icon: GOLD_INGOT   # 2026-10-27 圖示：這次之前 GOLD_NUGGET（跟克拉里本身一樣）
     type: spell
     tier: 1
     tags: [spell, area, physical, command]
+    tags_remove: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Kelari's Judgment）：自動規則加的拿掉／原作有的補上
+    tags_add: [channelling]
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: impact
     impact: { range: 20, delay: 0.6, radius: 3.5 }
@@ -9390,7 +9580,7 @@ skills:
     icon: RABBIT_FOOT
     type: spell
     tier: 1
-    tags: [persistent, minion]
+    tags: [persistent, minion, command, duration]   # 2026-10-29 照 PoE2 寶石標籤補 command、duration
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -9450,6 +9640,7 @@ skills:
     type: spell
     tier: 1
     tags: [duration, command]
+    tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Navira's Well）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: warcry
     warcry:
@@ -9472,6 +9663,7 @@ skills:
     type: spell
     tier: 1
     tags: [spell, area, cold, command]
+    tags_remove: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Navira's Fracturing）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: impact
     impact: { range: 20, delay: 0.3, radius: 6 }
@@ -9495,6 +9687,7 @@ skills:
     type: spell
     tier: 1
     tags: [spell, area, fire, command]
+    tags_remove: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Ruzhan's Reckoning）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: impact
     impact: { range: 20, delay: 0.4, radius: 1.5 }
@@ -9533,6 +9726,7 @@ skills:
     type: spell
     tier: 1
     tags: [spell, projectile, area, fire, command]
+    tags_remove: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Ruzhan's Fury）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: projectile
     projectile: { count: 20, spread: 50, speed: 1.4, range: 22, size: 0.3, explode: 0.9, burst: { count: 2, interval: 6 } }
@@ -9552,7 +9746,8 @@ skills:
     icon: COAL   # 2026-10-27 圖示：悶燒的陷阱；這次之前 BLAZE_ROD（跟魯兹安本身一樣）
     type: spell
     tier: 1
-    tags: [spell, area, fire, duration, command]
+    tags: [spell, area, fire, duration, command, hazard, projectile]   # 2026-10-29 照 PoE2 寶石標籤補 hazard、projectile
+    tags_remove: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Ruzhan's Trap）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: zone
     zone: { range: 20, radius: 5, duration: 6, interval: 0.7, damage: 100, max: 3 }   # 原作 8 個符文、踩到才噴；引擎照一塊 5 格的地面每 0.7 秒打一下
@@ -9590,7 +9785,8 @@ skills:
     icon: BLAZE_POWDER
     type: spell
     tier: 1
-    tags: [minion, persistent, fire]
+    tags: [minion, persistent, fire, companion]   # 2026-10-29 照 PoE2 寶石標籤補 companion
+    tags_remove: [melee]   # 2026-10-29 照 PoE2 寶石標籤（Summon Infernal Hound）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false }
@@ -9607,7 +9803,8 @@ skills:
     icon: FERMENTED_SPIDER_EYE   # 2026-10-27 圖示：這次之前 MAGMA_CREAM（跟魯兹安的清算一樣）
     type: spell
     tier: 1
-    tags: [shapeshift, duration]
+    tags: [shapeshift, duration, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_remove: [area, duration]   # 2026-10-29 照 PoE2 寶石標籤（Demon Form）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: warcry
     warcry:
@@ -9631,7 +9828,7 @@ skills:
     icon: GLISTERING_MELON_SLICE
     type: spell
     tier: 1
-    tags: [persistent]
+    tags: [persistent, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -9646,7 +9843,8 @@ skills:
     icon: FLINT   # 2026-10-27 圖示：破綻；這次之前 CLOCK（跟時間短縮一樣）
     type: spell
     tier: 1
-    tags: [spell, area, physical]
+    tags: [spell, area, physical, nova]   # 2026-10-29 照 PoE2 寶石標籤補 nova
+    tags_remove: [physical]   # 2026-10-29 照 PoE2 寶石標籤（Moment of Vulnerability）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: nova
     nova: { radius: 4 }
@@ -9666,7 +9864,7 @@ skills:
     icon: COMPASS
     type: spell
     tier: 1
-    tags: [persistent]
+    tags: [persistent, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -9681,7 +9879,8 @@ skills:
     icon: FIREWORK_STAR   # 2026-10-27 圖示：天降隕石、冰雹、雷擊；這次之前 NETHER_STAR（跟無縛化身一樣）
     type: spell
     tier: 1
-    tags: [area, duration, fire, cold, lightning]
+    tags: [spell, area, duration, fire, cold, lightning, buff, storm]   # 2026-10-29 照 PoE2 寶石標籤補 buff、storm；原作同時是法術（寫 spell 才不會被增益拿掉）
+    tags_add: [cold, fire, lightning, spell]   # 2026-10-29 照 PoE2 寶石標籤（Apocalypse）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: warcry
     warcry:
@@ -9966,6 +10165,8 @@ skills:
     type: spell
     tier: 1
     tags: [persistent, lightning, area, duration]
+    tags_remove: [persistent]   # 2026-10-29 照 PoE2 寶石標籤（Vivid Stampede）：自動規則加的拿掉／原作有的補上
+    tags_add: [attack, lightning]
     source: ascendancy   # 2026-10-27：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -10015,6 +10216,7 @@ skills:
     type: spell
     tier: 1
     tags: [minion, companion, persistent, physical]
+    tags_remove: [melee]   # 2026-10-29 照 PoE2 寶石標籤（Wild Protector）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-27：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false }
@@ -10035,6 +10237,7 @@ skills:
     type: spell
     tier: 1
     tags: [persistent, projectile, buff]
+    tags_remove: [persistent, projectile]   # 2026-10-29 照 PoE2 寶石標籤（Primal Bounty）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-27：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -10049,7 +10252,8 @@ skills:
     icon: RAW_GOLD
     type: spell
     tier: 1
-    tags: [persistent, attack, area, duration]
+    tags: [persistent, attack, area, duration, buff]   # 2026-10-29 照 PoE2 寶石標籤補 buff
+    tags_add: [attack]   # 2026-10-29 照 PoE2 寶石標籤（Hollow Focus）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-27：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -10087,7 +10291,7 @@ skills:
     tier: 1
     tags: [attack, melee, channelling, meta]   # 2026-10-28 照 PoE2（Attack、Melee、Channelling、Meta）
     source: ascendancy   # 2026-10-27：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
-    weapons: [melee]   # 2026-10-28 照 PoE2：要近戰武器（徒手也算）
+    weapons: [sword, axe, mace, spear, quarterstaff, claw, dagger, flail, talisman]   # 2026-10-29 照 PoE2（poe2db：Any Melee Martial Weapon）：要近戰武鬥武器，徒手、權杖不行；這次之前 [melee]（徒手、權杖也算）
     mechanic: meta   # 2026-10-28：沒有 meta 區塊，由 SkillService／HollowImages 處理（SkillConfig 放行）
     attack_speed: 0.7   # 照 PoE2（攻擊速度為基礎的 70%；實際間隔照孔裡的攻擊算，見 HollowForm.stepTicks）
     charge: { mode: stream }   # 2026-10-28 照 PoE2：引導（每一下由 HollowImages 顯現幻影；消耗是每個幻影花孔裡攻擊的 80%，不逐秒扣）
@@ -10101,6 +10305,8 @@ skills:
     type: spell
     tier: 1
     tags: [persistent, attack, area]
+    tags_remove: [persistent]   # 2026-10-29 照 PoE2 寶石標籤（Hollow Resonance）：自動規則加的拿掉／原作有的補上
+    tags_add: [attack]
     source: ascendancy   # 2026-10-27：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
@@ -10131,6 +10337,8 @@ skills:
     type: spell
     tier: 1
     tags: [persistent, spell]
+    tags_remove: [persistent]   # 2026-10-29 照 PoE2 寶石標籤（Abyssal Apparition）：自動規則加的拿掉／原作有的補上
+    tags_add: [spell]
     source: ascendancy   # 2026-10-27：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }

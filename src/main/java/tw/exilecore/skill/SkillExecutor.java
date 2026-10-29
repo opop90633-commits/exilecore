@@ -1648,9 +1648,13 @@ final class SkillExecutor {
         switch (aim.pick()) {
             case CULL -> zones.warpInto(player, aim.enemy(), build);
             case BALL -> {
-                final Origin origin = Origin.of(player);
-                projectiles.aimedShot(player.getUniqueId(), LightningWarp.BALL, origin.eye(), origin.direction(),
-                        targets.aimReach(origin, build.range()), LightningWarp.BALL_TOLERANCE, true); // 雷珠在爆炸裡消失
+                if (aim.ball() != null) {
+                    projectiles.shotNear(player.getUniqueId(), LightningWarp.BALL, aim.ball(), aim.ball(), 0.01, true); // 2026-10-29：被觸發的，用掉挑到的那顆
+                } else {
+                    final Origin origin = Origin.of(player);
+                    projectiles.aimedShot(player.getUniqueId(), LightningWarp.BALL, origin.eye(), origin.direction(),
+                            targets.aimReach(origin, build.range()), LightningWarp.BALL_TOLERANCE, true); // 雷珠在爆炸裡消失
+                }
                 player.setFallDistance(0);
                 player.setVelocity(new Vector());
                 zones.warpTo(player, aim.landing(), build);
@@ -1665,7 +1669,10 @@ final class SkillExecutor {
     }
 
     /** 雷遁這一下要對誰：種類、敵人（撲殺／標記）、滾雷珠那裡的落點。 */
-    private record WarpAim(LightningWarp.Pick pick, LivingEntity enemy, Location landing) {
+    private record WarpAim(LightningWarp.Pick pick, LivingEntity enemy, Location landing, Location ball) {
+        WarpAim(final LightningWarp.Pick pick, final LivingEntity enemy, final Location landing) {
+            this(pick, enemy, landing, null);
+        }
     }
 
     /** 2026-10-28：這一下是不是主要寶石觸發的（技能描述的代號帶 {@link MetaGems#TRIGGERED_SUFFIX}）。 */
@@ -1704,9 +1711,18 @@ final class SkillExecutor {
                 }
             }
         }
-        final LightningWarp.Pick pick = LightningWarp.chooseTriggered(hasPreferred, hasPreferred && zones.cullable(preferred), cull != null, any != null);
+        // 2026-10-29 照 PoE2：觸發的雷遁也會傳到自己的滾雷珠（範圍內、離觸發的目標最近的那顆；沒有目標就離你最近的）
+        final boolean preferredCull = hasPreferred && zones.cullable(preferred);
+        Location ball = null;
+        Location landing = null;
+        if (!preferredCull) {
+            ball = projectiles.shotNear(player.getUniqueId(), LightningWarp.BALL, hasPreferred ? preferred.getLocation() : feet, feet, range, false);
+            landing = ball == null ? null : ballLanding(player, ball);
+        }
+        final LightningWarp.Pick pick = LightningWarp.chooseTriggered(hasPreferred, preferredCull, landing != null, cull != null, any != null);
         return switch (pick) {
             case CULL -> new WarpAim(pick, hasPreferred ? preferred : cull, null);
+            case BALL -> new WarpAim(pick, null, landing, ball);
             case MARK -> new WarpAim(pick, hasPreferred ? preferred : any, null);
             default -> warpAim(player, build);
         };

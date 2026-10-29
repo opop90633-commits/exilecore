@@ -170,7 +170,10 @@ class SupportHitRulesTest {
         assertEquals("本身會蓄力的技能不行", support("hit_and_run").refusal(skill("flame_stream")), "2026-10-26：蓄力射擊照 PoE2 改成爆破矢（放開型引導，不是 channel.stages），改用焚流");
         assertEquals("要祭品技能", support("danse_macabre").refusal(skill("skeletal_archers")), "2026-10-26 照 PoE2：骸舞只能掛祭品");
         assertNull(support("danse_macabre").refusal(skill("bone_offering")));
-        assertTrue(skill("meta_crit").tags().contains(tw.exilecore.stats.Tags.AURA), "引星維持算光環（精魂輔助掛得上）");
+        // 2026-10-29 照 PoE2：引星是常駐增益、不是光環；精魂輔助改看 persistent_buff，照樣掛得上
+        assertFalse(skill("meta_crit").tags().contains(tw.exilecore.stats.Tags.AURA), "引星不算光環");
+        assertTrue(SupportDefinition.persistentBuff(skill("meta_crit")));
+        assertTrue(support("clarity").supports(skill("meta_crit")), "泉魔照樣掛得上引星");
         assertFalse(skill("summon_mount").tags().contains(tw.exilecore.stats.Tags.TRAVEL), "坐騎不算突進");
         assertTrue(skill("rake").tags().contains(tw.exilecore.stats.Tags.TRAVEL), "裂血掠還是突進");
         assertTrue(skill("bramble_arrow").tags().contains(tw.exilecore.stats.Tags.PHYSICAL), "剩 70% 物理");

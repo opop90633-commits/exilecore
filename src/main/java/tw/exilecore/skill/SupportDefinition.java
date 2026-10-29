@@ -540,11 +540,29 @@ public record SupportDefinition(String id, String name, String description, Stri
         return false;
     }
 
+    /**
+     * 2026-10-29 照 PoE2（Supports Persistent Buff skills：泉魔、泉命、凝準…）：requires 寫這個＝光環、捷光環，或同時是常駐、增益的技能
+     * （僕骸替、骸餘饗、引星…）。這次之前這些輔助寫 [aura, herald]，常駐增益靠「一律算光環」才掛得上。
+     */
+    public static final String PERSISTENT_BUFF = "persistent_buff";
+
+    /** 光環、捷光環，或同時是常駐、增益的技能（{@link #PERSISTENT_BUFF}）。 */
+    public static boolean persistentBuff(final SkillDefinition skill) {
+        final Set<String> tags = skill.tags();
+        return tags.contains(Tags.AURA) || tags.contains(Tags.HERALD) || tags.contains(Tags.PERSISTENT) && tags.contains(Tags.BUFF);
+    }
+
     private boolean matchesRequires(final SkillDefinition skill) {
         if (requires.isEmpty()) {
             return true;
         }
         for (final String tag : requires) {
+            if (PERSISTENT_BUFF.equals(tag)) {
+                if (persistentBuff(skill)) {
+                    return true;
+                }
+                continue;
+            }
             if (Tags.META.equals(tag) && !metaHost(skill)) {
                 continue; // 2026-10-26：英靈圖騰補了 meta 標籤（照 PoE2），能量輔助、骰運還是不能掛在圖騰上
             }

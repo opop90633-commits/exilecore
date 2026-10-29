@@ -94,7 +94,7 @@ final class GemQualityText {
             Map.entry("rolling_magma", "每彈（連鎖）過一次更多 {damage.more_per_chain}% 傷害"),
             Map.entry("rolling_slam", "使用這個技能的動作期間暈眩門檻增加 {action.stun_threshold}%"),
             Map.entry("ruin_mantra", "需要的連擊少 {-i:mantra.combo}"),
-            Map.entry("sacrifice", "召喚物復活另外快 {sacrifice.slower}%"),
+            Map.entry("sacrifice", "召喚物復活另外快 {sacrifice.slower}%、召喚物最大生命增加 {effect.life.max}%"), // 2026-10-29 照 PoE2：補上最大生命
             Map.entry("savage_fury", "狂暴另外更多 {effect.damage}% 傷害"),
             Map.entry("scavenged_plating", "增益另外增加 {effect.armour}% 護甲、{effect.armour.break}% 破甲"),
             Map.entry("serpent_fury", "擊退距離更多 {skill.knockback}%"),
