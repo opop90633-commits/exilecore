@@ -51,11 +51,11 @@ class GrantedSkillTest {
 
     @Test
     void oldCasterBasesFollowTheMergeChain() {
-        // wand_01 → wand_14 → cwand_01（兩層合併）
-        assertEquals("cwand_01", items.canonicalBase("wand_01"));
-        assertEquals("chaos_bolt", items.grantedSkill("wand_01"));
-        assertEquals("chaos_bolt", items.grantedSkill("wand_14"));
-        assertEquals("firebolt", items.grantedSkill("staff_17"));
+        // wand_01 → wand_14 → cwand_13（兩層合併；2026-10-29 照站長：舊的換成原作施法基底最高階，這次之前到 1 等的 cwand_01、cstaff_01、csceptre_01）
+        assertEquals("cwand_13", items.canonicalBase("wand_01"));
+        assertEquals("coiling_bolts", items.grantedSkill("wand_01"));
+        assertEquals("coiling_bolts", items.grantedSkill("wand_14"));
+        assertEquals("heart_of_ice", items.grantedSkill("staff_17"));
         assertEquals("summon_skeletons", items.grantedSkill("sceptre_16"));
         assertEquals("sun_orb", items.grantedSkill("cstaff_05"));
         assertNull(items.grantedSkill("mace1_23"));

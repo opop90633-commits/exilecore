@@ -449,6 +449,42 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     }
 
     /** 2026-10-26：每一隻保留的精魂換掉（附魂術照附身的怪物強度、荒原狼伴照最大精魂的百分比，照 PoE2）。 */
+    /**
+     * 2026-10-29 照站長：權杖自帶的光環（律盾、焰守…）上掛的輔助不用精魂：拿掉輔助加的那一份（{@code support.spirit}），
+     * 技能自己的保留照舊（照保留效率等比例）。沒有輔助的精魂就原樣回傳。
+     */
+    public SkillBuild withoutSupportSpirit() {
+        final AuraSpec aura = definition.aura();
+        final double extra = supportSpirit(supports);
+        if (aura == null || extra <= 0 || reserve <= 0) {
+            return this;
+        }
+        final double base = Math.max(0, aura.reserve());
+        final double newReserve = reserve * base / (base + extra);
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
+                reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
+                radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
+                deploy, totems, minions, newReserve, minionReserve, auraEffect, generosity, exerts, repeats);
+    }
+
+    /**
+     * 2026-10-29 照 PoE2 Blasphemy（咒環）：skills.yml 的 aura.reserve 是「每一份」的保留，實際保留 = 每一份 × count
+     * （輔助加的精魂只算一次，保留效率照原本的倍率）；count ≤ 0 不保留。沒有光環原樣回傳。
+     */
+    public SkillBuild withReserveCount(final int count) {
+        final AuraSpec aura = definition.aura();
+        if (aura == null) {
+            return this;
+        }
+        final double base = Math.max(0, aura.reserve());
+        final double extra = supportSpirit(supports);
+        final double newReserve = count <= 0 || reserve <= 0 || base + extra <= 0 ? 0 : reserve * (base * count + extra) / (base + extra);
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
+                reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
+                radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
+                deploy, totems, minions, newReserve, minionReserve, auraEffect, generosity, exerts, repeats);
+    }
+
     public SkillBuild withMinionReserve(final double newMinionReserve) {
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
                 reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,

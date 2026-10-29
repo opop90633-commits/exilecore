@@ -167,6 +167,10 @@ public final class SupportGuards {
                 return "本來就有使用條件的技能不行";
             }
         }
+        // 2026-10-29 照 PoE2 Hit and Run：只能輔助原本沒有使用條件的技能
+        if (support.flags(tw.exilecore.stats.SupportKeys.HIT_AND_RUN) && conditional(skill)) {
+            return "本來就有使用條件的技能不行";
+        }
         if (support.flags(SupportExtraKeys.GRATIFICATION) && !conditional(skill)) {
             return "要有使用條件的技能（要榮耀、連擊才能用的）";
         }

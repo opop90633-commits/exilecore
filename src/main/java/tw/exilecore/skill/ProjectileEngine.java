@@ -1161,8 +1161,8 @@ final class ProjectileEngine implements Listener {
             plugin.ailments().consume(target, tw.exilecore.ailment.AilmentType.SHOCK, owner);
         }
         if (shot.shockchain > 0) {
-            // 2026-10-28 照 PoE2 Shockchain Arrow：第一次打中閃電異常的敵人充能、放震波、多連鎖 3 次（每支箭一次）；之後打中的每一下都放震波。
-            // 這次之前連鎖打中另一隻閃電異常的再多 3 次
+            // 2026-10-28 照 PoE2 Shockchain Arrow：第一次打中閃電異常的敵人充能、放震波、多連鎖 3 次；之後打中的每一下都放震波。
+            // 2026-10-29 照站長還原原作：連鎖的箭打中另一隻閃電異常的再多 3 次（重複），總共最多連鎖 8 次
             final ShockchainArrows.Outcome outcome = ShockchainArrows.onHit(shot.shockchain, afflicted, shot.shockcharged);
             if (outcome.charges()) {
                 shot.shockcharged = true;
@@ -1170,7 +1170,7 @@ final class ProjectileEngine implements Listener {
             if (outcome.shockwave()) {
                 shockwave(shot, owner, target);
             }
-            shot.chainsLeft += outcome.addChains();
+            shot.chainsLeft = ShockchainArrows.capChains(shot.chainsLeft + outcome.addChains(), shot.shockchained); // 2026-10-29 照 PoE2：總共最多 8 次
         }
         splash(shot, owner, target, at);
         if (!shot.secondary && shot.build.params().scatter() != null && shot.build.params().scatter().onHit()) {

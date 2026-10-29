@@ -139,7 +139,8 @@ public final class GemAttributes {
                     + "elemental_pulse infusion_bolt archmage "
                     + "elemental_conflux bone_cage snap convalescence grim_feast sacrifice siphon_elements void_meteor oblivion_ray "
                     + "storm_labyrinth fourfold_ray tide_call abyssal_pull dawn_pillar coin_barrage rift_hand breach_ring "
-                    + "blood_altar tribute_spears mirror_shards mirror_step abyss_grasp meta_crit meta_ailment meta_minion_death "),
+                    + "blood_altar tribute_spears mirror_shards mirror_step abyss_grasp meta_crit meta_ailment meta_minion_death "
+                    + "blasphemy "), // 2026-10-29 照 PoE2 Blasphemy（咒環）：智慧
             // 德魯伊：原作的變身寶石是力量＋智慧（撼山爪、疾爪、血牙在原作是形態賦予的，照同一型的變身技能算）
             entry("SI", "bear_maul bear_slam mountain_fury rampage walking_calamity wolf_shred lunar_assault wolf_rend pounce "
                     + "cross_slash arctic_howl ferocious_roar lunar_blessing wyvern_rend wing_blast rolling_magma devour oil_barrage "

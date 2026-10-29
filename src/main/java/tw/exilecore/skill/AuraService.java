@@ -1085,6 +1085,13 @@ final class AuraService implements Listener {
                         plugin.getSLF4JLogger().error("對敵人的光環 {} 出錯", aura.skillId, e);
                     }
                 }
+                if (!aura.paused && Blasphemy.hosts(aura.build.definition())) {
+                    try {
+                        service.blasphemyPulse(player, now); // 2026-10-29 照 PoE2 Blasphemy：咒環孔裡的詛咒一直詛咒身邊的敵人
+                    } catch (final RuntimeException e) {
+                        plugin.getSLF4JLogger().error("咒環 {} 出錯", aura.skillId, e);
+                    }
+                }
                 if (!aura.paused) {
                     try {
                         presenceChill(player, aura); // 2026-10-28 照 PoE2 寒心：存在範圍內的敵人一直被冰緩

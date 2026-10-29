@@ -1304,6 +1304,9 @@ public final class GemService {
         if (HollowForm.hosts(host)) {
             return HollowForm.problem(inner); // 2026-10-28 照 PoE2 Hollow Form：放近戰攻擊（引導、有使用條件的不行）
         }
+        if (Blasphemy.hosts(host)) {
+            return Blasphemy.problem(inner); // 2026-10-29 照 PoE2 Blasphemy：咒環只能放詛咒
+        }
         final MetaSpec spec = config().meta(host.id());
         return spec == null ? "不是宿主寶石" : MetaGems.problem(spec, inner);
     }

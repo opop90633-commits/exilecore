@@ -2229,7 +2229,7 @@ tailwind_quiver:
 
 solar_sceptre:
   name: 炎陽長杖
-  base: staff_17        # 2026-10：staff → PoE2 分階基底
+  base: cstaff_14        # 2026-10-29 照站長：舊的分階基底（已合併掉）換成永凍長杖（75 等，原作施法長杖最高階）；這次之前 staff_17
   drop_level: 80
   sources: [uber_sky_crucible]
   weight: 100
@@ -2342,7 +2342,8 @@ ashwalker_boots:
       value: [20, 30]
       stats:
         - { stat: resist.fire, type: FLAT, value: "{value}" }
-    - text: "移動時在腳下留下燃燒地面（8 秒），點燃上面的敵人，視同造成你最大生命 10% 的火焰傷害"
+    # 2026-10-29 照站長補上說明：照 PoE2 點燃地面（AilmentService.groundIgnite），先累積易燃到 50% 才點燃；這次之前寫「點燃上面的敵人」
+    - text: "移動時在腳下留下燃燒地面（8 秒）：上面的敵人每秒累積易燃（視同受到你最大生命 10% 的火焰傷害），易燃累積到 50% 時被點燃"
       stats:
         - { stat: ground.ignite_moving, type: FLAT, value: 10 }
 
@@ -2731,7 +2732,7 @@ voidstar_diadem:
 
 deathgaze_staff:
   name: 死光之眼
-  base: staff_17
+  base: cstaff_14        # 2026-10-29 照站長：舊的分階基底（已合併掉）換成永凍長杖（75 等，原作施法長杖最高階）；這次之前 staff_17
   drop_level: 85
   sources: [awakener]
   weight: 100
@@ -3318,7 +3319,7 @@ godslayer_spear:
 
 omniscience_staff:
   name: 萬象之杖
-  base: staff_17
+  base: cstaff_14        # 2026-10-29 照站長：舊的分階基底（已合併掉）換成永凍長杖（75 等，原作施法長杖最高階）；這次之前 staff_17
   drop_level: 75
   sources: [chase]
   chase: true
@@ -3449,7 +3450,7 @@ ashfall_maul:
 
 frostwhisper_wand:
   name: 霜語法杖
-  base: wand_14
+  base: cwand_13        # 2026-10-29 照站長：舊的分階基底（已合併掉）換成纏蝕法杖（65 等，原作施法法杖最高階）；這次之前 wand_14
   drop_level: 55
   sources: [map_boss, chance, gamble]
   rarity: common        # 2026-10-28 照 PoE2 稀有度（原作沒有這件（我們自己的），照常見）；這次之前 weight: 100
@@ -4298,7 +4299,7 @@ stolen_memory:
 # ---- 祭司・血契（ritual_priest）：獻祭、生命換傷害、召喚、血 ----
 bloodpact_sceptre:
   name: 血契權杖
-  base: sceptre_16
+  base: csceptre_15        # 2026-10-29 照站長：舊的分階基底（已合併掉）換成聖化權杖（65 等，原作施法權杖最高階，賦予召喚骸骨兵）；這次之前 sceptre_16
   drop_level: 85
   sources: [ritual_priest]
   weight: 100
@@ -9417,3 +9418,34 @@ masters_reach:        # 2026-10-28 照 PoE2 0.5 的「The Master's Reach」（�
       value: [80, 100]
       stats:
         - { stat: life.recoup_vs_rare, type: FLAT, value: "{value}" }
+
+crown_of_eyes:        # 2026-10-29 照 PoE2 0.5 的「Crown of Eyes」（原作有、我們以前沒有的）
+  name: 百目冠
+  base: helm_int_20        # 原作基底 Vermeil Circlet（鍍金頭環：等級 45、64 智慧 → 鋼脊頭冠）
+  stat_base: helm_int_07          # 原作基底那一階的數值（能量護盾 68，增加 100～140% 後 136～163，跟原作一樣）
+  drop_level: 45
+  sources: [map_boss, chance, gamble]
+  rarity: rare        # 原作的熱門傳奇（法術傷害套用到攻擊），NeverSink 分層 t2
+  flavour:
+    - "「每一隻眼睛都在看你，也都在替你瞄準。」"
+  mods:
+    - text: "增加 {value}% 能量護盾"
+      value: [100, 140]
+      stats:
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value} 命中值"
+      value: [150, 200]
+      stats:
+        - { stat: accuracy, type: FLAT, value: "{value}" }
+    - text: "+{value} 全部屬性"
+      value: [10, 15]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "-10% 火焰抗性"
+      stats:
+        - { stat: resist.fire, type: FLAT, value: -10 }
+    - text: "法術傷害的增加與減少也套用在攻擊上"
+      stats:
+        - { stat: flag.spell_damage_to_attacks, type: FLAT, value: 1 }

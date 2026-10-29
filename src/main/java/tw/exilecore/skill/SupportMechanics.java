@@ -88,6 +88,14 @@ public final class SupportMechanics implements Listener {
     private final Map<String, Double> echoMark = new HashMap<>();
     /** 引雷：上次放這個技能時走到幾格（玩家/技能）。 */
     private final Map<String, Double> voltMark = new HashMap<>();
+    /** 2026-10-29 照 PoE2 Hit and Run（迅鋒）：上次用這個技能時走到幾格（玩家/技能）。 */
+    private final Map<String, Double> hitRunMark = new HashMap<>();
+    /**
+     * 2026-10-29 照 PoE2 Momentum（衝勢）：這次使用（玩家/技能）→ {用的時候走到幾格, 使用結束時這次走了幾格（還沒結束是 -1）, 結束的 tick}。
+     */
+    private final Map<String, double[]> momentumUses = new HashMap<>();
+    /** 衝勢：使用結束後，這次使用後來才打到的（飛行中的投射物、地面效果）再算多久（tick）。 */
+    static final long MOMENTUM_AFTER_TICKS = 200;
 
     double travelled(final Player player) {
         return travelled.getOrDefault(player.getUniqueId(), 0.0);
@@ -107,6 +115,55 @@ public final class SupportMechanics implements Listener {
             stepped(player, step);
         }
     }
+
+    /** 2026-10-29：現在走到幾格（最後一次取樣之後走的也算進去，衝勢用）。 */
+    double travelledNow(final Player player) {
+        final Location before = lastAt.get(player.getUniqueId());
+        final Location at = player.getLocation();
+        double live = 0;
+        if (before != null && before.getWorld().equals(at.getWorld())) {
+            final double dx = at.getX() - before.getX();
+            final double dz = at.getZ() - before.getZ();
+            final double step = Math.sqrt(dx * dx + dz * dz);
+            live = step < 8 ? step : 0; // 傳送不算
+        }
+        return travelled(player) + live;
+    }
+
+    /**
+     * 2026-10-29 照 PoE2 Momentum：這次使用到現在（使用結束了就是到結束為止）移動了幾格。
+     *
+     * @param use     {開始時走到幾格, 結束時這次走了幾格（-1 = 還在用）, 結束的 tick}
+     * @param nowAt   現在走到幾格
+     */
+    static double momentumMoved(final double[] use, final double nowAt) {
+        return use[1] >= 0 ? use[1] : Math.max(0, nowAt - use[0]);
+    }
+
+    /** 衝勢：這次使用結束了（動作做完）就把移動距離定下來；結束太久的丟掉。 */
+    private void tickMomentum(final long now) {
+        final Iterator<Map.Entry<String, double[]>> it = momentumUses.entrySet().iterator();
+        while (it.hasNext()) {
+            final Map.Entry<String, double[]> entry = it.next();
+            final double[] use = entry.getValue();
+            if (use[1] >= 0) {
+                if (now - use[2] > MOMENTUM_AFTER_TICKS) {
+                    it.remove();
+                }
+                continue;
+            }
+            final Player player = plugin.getServer().getPlayer(UUID.fromString(entry.getKey().substring(0, entry.getKey().indexOf('/'))));
+            if (player == null) {
+                it.remove();
+            } else if (now + 1e-9 >= service.runtime(player).readyAt) {
+                use[1] = momentumMoved(use, travelledNow(player));
+                use[2] = now;
+            }
+        }
+    }
+
+    /** 2026-10-29 照 PoE2 Momentum：使用技能期間至少移動 2 公尺（3 格）才有加成。 */
+    static final double MOMENTUM_TRAVEL = tw.exilecore.core.Units.metres(2);
 
     private static String key(final Player player, final String skillId) {
         return player.getUniqueId() + "/" + skillId;
@@ -255,6 +312,17 @@ public final class SupportMechanics implements Listener {
                 return String.format(Locale.ROOT, "%s 要先移動 %.0f 格（還差 %.1f）", build.definition().name(), ECHO_TRAVEL, ECHO_TRAVEL - moved);
             }
         }
+        // 2026-10-29 照 PoE2 Hit and Run（迅鋒）：用過之後要再移動 10 公尺（15 格）才能再用
+        final double hitRun = effective.flat(SupportKeys.HIT_AND_RUN, build.profile().tags());
+        if (hitRun > 0) {
+            final Double mark = hitRunMark.get(key(player, build.definition().id()));
+            final double need = tw.exilecore.core.Units.metres(hitRun);
+            final double moved = mark == null ? Double.MAX_VALUE : travelled(player) - mark;
+            if (moved + 1e-9 < need) {
+                return String.format(Locale.ROOT, "%s 要先移動 %s 格（還差 %.1f）", build.definition().name(),
+                        ModifierText.number(need), need - moved);
+            }
+        }
         return extras.usageProblem(player, build, effective); // 2026-10-27：先祖援助、無畏、淨化…
     }
 
@@ -295,6 +363,13 @@ public final class SupportMechanics implements Listener {
         }
         if (build.profile().effective(sheet).flat(SupportKeys.WARCRY_ECHOES, build.profile().tags()) > 0) {
             echoMark.put(key(player, build.definition().id()), travelled(player));
+        }
+        // 2026-10-29 照 PoE2：迅鋒（用了之後要再移動才能用）、衝勢（這次使用期間移動了多遠）
+        if (build.profile().effective(sheet).flat(SupportKeys.HIT_AND_RUN, build.profile().tags()) > 0) {
+            hitRunMark.put(key(player, build.definition().id()), travelled(player));
+        }
+        if (build.profile().effective(sheet).flat(SupportKeys.MOMENTUM, build.profile().tags()) > 0) {
+            momentumUses.put(key(player, build.definition().id()), new double[] {travelledNow(player), -1, now()});
         }
         lineage.used(player, build); // 2026-10-27 照 PoE2：血脈輔助（焦血、狂伐、聖杯、縛魔…）
     }
@@ -809,6 +884,17 @@ public final class SupportMechanics implements Listener {
                 list.add(new Modifier(StatKeys.DAMAGE, ModType.MORE, far * scale / 100.0, Set.of(Tags.ATTACK), "遠穿"));
             }
         }
+        // 2026-10-29 照 PoE2 Momentum（衝勢）：這次使用期間移動了至少 2 公尺（3 格）之後，這次使用的傷害更多 x%
+        final double momentum = skillSheet.flat(SupportKeys.MOMENTUM, tags);
+        if (momentum > 0 && skill != null) {
+            double[] use = momentumUses.get(key(attacker, skill.id()));
+            if (use == null && skill.id() != null && skill.id().indexOf('.') > 0) {
+                use = momentumUses.get(key(attacker, skill.id().substring(0, skill.id().indexOf('.')))); // 餘震、觸發這類子傷害（代號.後綴）
+            }
+            if (use != null && momentumMoved(use, travelledNow(attacker)) + 1e-9 >= MOMENTUM_TRAVEL) {
+                list.add(new Modifier(StatKeys.DAMAGE, ModType.MORE, momentum / 100.0, Set.of(), "衝勢"));
+            }
+        }
         final double vsImmobile = skillSheet.increased(SupportKeys.CRIT_VS_IMMOBILISED, tags);
         if (vsImmobile != 0 && immobilised(defender)) {
             list.add(Modifier.increased(StatKeys.CRIT_CHANCE, vsImmobile, "對被定住的敵人"));
@@ -1195,6 +1281,7 @@ public final class SupportMechanics implements Listener {
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             sampleTravel(player);
         }
+        tickMomentum(now); // 2026-10-29 衝勢
         lineage.tick(now); // 2026-10-27 照 PoE2：血脈輔助
         extras.tick(now); // 2026-10-27
         if (now % 10 == 0) {
@@ -1348,6 +1435,8 @@ public final class SupportMechanics implements Listener {
         final String prefix = id + "/";
         glory.keySet().removeIf(key -> key.startsWith(prefix));
         echoMark.keySet().removeIf(key -> key.startsWith(prefix));
+        hitRunMark.keySet().removeIf(key -> key.startsWith(prefix)); // 2026-10-29 迅鋒
+        momentumUses.keySet().removeIf(key -> key.startsWith(prefix)); // 2026-10-29 衝勢
         voltMark.keySet().removeIf(key -> key.startsWith(prefix));
         hiddenReady.keySet().removeIf(key -> key.startsWith(prefix));
         corrupted.values().removeIf(each -> each.owner.equals(id));

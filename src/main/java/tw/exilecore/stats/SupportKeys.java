@@ -25,6 +25,10 @@ public final class SupportKeys {
     public static final String ELEMENTAL_PER_RECENT_TYPE = "damage.elemental_per_recent_type";
     /** FLAT：每移動 1 格累積 2 點電荷（最多 30），放的時候用掉，每點獲得 1% 傷害為額外閃電傷害（引雷）。 */
     public static final String VOLT = "volt.max";
+    /** FLAT：單次使用期間至少移動 2 公尺（3 格）後，這次使用後續更多 x% 傷害（衝勢，2026-10-29 照 PoE2 Momentum）。 */
+    public static final String MOMENTUM = "momentum.damage";
+    /** FLAT：公尺。移動這麼遠之後才能用，用了之後要再移動（迅鋒，2026-10-29 照 PoE2 Hit and Run）。 */
+    public static final String HIT_AND_RUN = "hit_and_run.travel";
     /** INCREASED：對被定住（凍結、重暈、定身、電擊）的敵人的暴擊率（釘地 II）。 */
     public static final String CRIT_VS_IMMOBILISED = "crit.vs_immobilised";
 

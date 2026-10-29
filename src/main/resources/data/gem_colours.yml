@@ -256,6 +256,7 @@ skills:
   abyss_grasp: b
   totem_casting: r
   meta_crit: b
+  blasphemy: b   # 2026-10-29 照 PoE2 Blasphemy（咒環，智慧）
   meta_ailment: b
   meta_dodge: g
   meta_minion_death: b

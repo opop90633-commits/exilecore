@@ -702,6 +702,7 @@ public final class PlayerStateService {
         tw.exilecore.stats.TreeKeys.applyEsThresholds(sheet); // 2026-10-26 照 PoE2 天賦樹：等同最大護盾 x% 的暈眩／異常／凍結門檻
         // 2026-10-27：夥伴傷害的增加也給你（天賦樹）——只看屬性表，比對用的表、網頁的虛擬角色也算；這次之前是暫時增益（網頁沒算）
         sheet.addAll(tw.exilecore.skill.TreeMechanics.companionDamageModifiers(sheet));
+        sheet.addAll(tw.exilecore.item.unique.UniqueStats.spellDamageToAttacks(sheet)); // 2026-10-29 照 PoE2 Crown of Eyes（百目冠）
         if (!live) {
             return; // 比對用的表：到這裡就算完了，下面都是更新玩家狀態
         }

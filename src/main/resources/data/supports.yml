@@ -147,7 +147,7 @@ retired:
   fusillade: 2           # 箭幕（0.5 資料標成 DNT-UNUSED，還沒開放；原作是射上天落下的箭雨）
   hobble: 2              # 跛行（0.5 資料沒有任何數值）
   living_lightning_ii: 3 # 活雷 II（原作的活雷是不會被打、會瞬移的召喚物）
-  momentum: 2            # 衝勢（我們的技能大多按一下就瞬間出手，沒有「使用的那段時間」可以邊走邊用）
+  # momentum: 2          # 衝勢：2026-10-29 照站長加回來（見 supports 的 momentum）
   # 2026-10-28 照站長：刪掉震符、符刃環（原作要付符文護盾，我們沒有這個防禦），換成同階的未切割輔助寶石
   concussive_runes: 2    # 震符印
   runeforged_blades: 2   # 符刃
@@ -2385,16 +2385,32 @@ supports:
     modifiers:
       - { stat: attack.speed, type: MORE, value: 20 }
 
-  hit_and_run:             # Hit and Run（要先移動一段距離那段沒做，改成魔力消耗更高）
+  hit_and_run:             # Hit and Run（2026-10-29 照站長改成原作）
     name: 迅鋒
-    description: 被輔助的攻擊更快，但魔力消耗更高。
+    description: 被輔助的攻擊要在你移動 15 格後才能使用，用了之後又要再移動才能用；技能速度更多 40%。只能輔助原本沒有使用條件、沒有冷卻時間的攻擊。
     icon: RABBIT_FOOT
-    tier: 3
+    tier: 3   # PoE2 是第 4 階，我們最高第 3 階
     requires: [attack]
     excludes: [minion, channel, cooldown]   # 2026-10-26 照 PoE2：Hit and Run 不能輔助有冷卻的技能；這次之前 [minion, channel]
-    mana_multiplier: 1.4
+    mana_multiplier: 1.0
+    # 2026-10-29 照 PoE2 Hit and Run（移動 10 公尺 = 15 格後才能用、用了變成不能用；40% 更多技能速度；沒有消耗加成）；
+    #   這次之前沒做移動條件，改成攻擊速度更多 25%、魔力消耗 140%
     modifiers:
-      - { stat: attack.speed, type: MORE, value: 25 }
+      - { stat: hit_and_run.travel, type: FLAT, value: 10 }
+      - { stat: attack.speed, type: MORE, value: 40 }
+      - { stat: cast.speed, type: MORE, value: 40 }
+
+  momentum:                # Momentum（2026-10-29 照站長加回來，照原作）
+    name: 衝勢
+    description: 單次使用被輔助的技能期間（出手到動作做完），你至少移動了 3 格之後，這次使用後續造成的傷害更多 40%（位移技能、引導技能、還在飛的投射物、地面效果都算）。傳送不算移動的距離。
+    icon: SUGAR
+    tier: 2
+    requires: [attack, spell]
+    excludes: [minion, aura, herald, totem, trap, bell, persistent, mark]
+    mana_multiplier: 1.2
+    # 2026-10-29 照 PoE2 Momentum（第 2 階、消耗 120%、單次使用期間移動 2 公尺 = 3 格後更多 40% 傷害）；2026-10-27 曾刪掉換成未切割輔助寶石
+    modifiers:
+      - { stat: momentum.damage, type: FLAT, value: 40 }
 
   overextend:              # Overextend（暴擊時自己被眩暈那段沒做，改成魔力消耗更高）
     name: 孤注

@@ -48,6 +48,8 @@ bear_slam:   # Furious Slam（2026-10-28 照 PoE2：使用技能的動作期間�
 beast_companion: []   # Tame Beast（2026-10-28 照 PoE2：鬼火持續時間 +(0—1.6) 秒——我們沒有捕捉野獸的鬼火，原作這條只影響捕捉、不影響戰鬥，所以沒有效果；這次之前照通用規則）
 berserk:   # Berserk（2026-10-28 照 PoE2：增益讓怒氣效果另外增加 (0—10)%；這次之前照通用規則）
   - { stat: effect.rage.effect, type: INCREASED, per: 0.5 }   # 增益：怒氣效果
+blasphemy:   # Blasphemy（2026-10-29 照 PoE2：(0—10)% 增加保留效率；另一條插槽詛咒 (0—20)% 增加效果是額外的品質效果，寫在下面 advanced）
+  - { stat: aura.reservation, type: INCREASED, per: -0.5 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
 blast_arrow:   # Detonating Arrow（2026-10-28 照 PoE2：最大階段 +(0—1)（無條件捨去）；這次之前照通用規則）
   - { stat: charge.stages_flat, type: FLAT, per: 0.05 }   # 引導最大層數（ChargeSpec.withQuality）
 blink:   # Blink（2026-10-28 照 PoE2：(0—10)% 增加冷卻回復速度；這次之前照通用規則每 1% 增加 1% 傷害）
@@ -78,8 +80,8 @@ briarpatch:   # Briarpatch（2026-10-28 照 PoE2：法術擊中時 (0—5)% 機�
   - { stat: effect.hinder.on_hit, type: FLAT, per: 0.25, tags: [spell] }   # 增益：法術擊中阻礙的機率
 caustic_arrow:   # Gas Arrow
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
-chain_arrow:   # Shockchain Arrow（2026-10-28 照 PoE2：(0—20)% 更多閃電傷害；這次之前照通用規則每 1% 增加 1% 傷害）
-  - { stat: damage, type: MORE, per: 1.0, tags: [lightning] }   # 閃電傷害（更多）
+chain_arrow:   # Shockchain Arrow（2026-10-29 照 PoE2 寶石頁「增加 (0—20)% 閃電傷害」：增加，不是更多；2026-10-28 寫成更多；更早照通用規則每 1% 增加 1% 傷害）
+  - { stat: damage, type: INCREASED, per: 1.0, tags: [lightning] }   # 閃電傷害（增加）
 chaos_bolt:   # Chaos Bolt
   - { stat: skill.projectile_speed, type: INCREASED, per: 2.0 }   # 投射物速度
 charge_regulation:   # Charge Regulation（2026-10-28 照 PoE2：消耗戰星的間隔 +(0—2.4) 秒；這次之前寫在 SkillService.qualityModifiers，另外多一條每顆戰星增加傷害（那條是額外的品質效果，移到下面 advanced））
@@ -601,6 +603,8 @@ advanced:
     - { stat: skill.projectile_speed, type: MORE, per: -1.5 }
   barkskin:   # Barkskin：(0—20)% 更多技能持續時間
     - { stat: skill.duration, type: MORE, per: 1.0 }
+  blasphemy:   # Blasphemy：插槽詛咒 (0—20)% 增加效果（2026-10-29 照 PoE2）
+    - { stat: blasphemy.curse_magnitude, type: FLAT, per: 1.0 }   # 插槽詛咒增加 x% 效果（Blasphemy.curseModifiers）
   bloodhounds_mark:   # Bloodhound's Mark：(0—20)% 更多物理傷害
     - { stat: damage, type: MORE, per: 1.0, tags: [physical] }
   bone_cage:   # Bone Cage：(0—40)% 更多流血幅度

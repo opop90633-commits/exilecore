@@ -127,6 +127,32 @@ public final class UniqueStats {
     public static final String MINION_RESIST_MIRROR = "flag.minion_resist_mirror";
     /** 移動時留下燃燒地面，點燃上面的敵人，視同造成你最大生命 x% 的火焰傷害（行灰之履）。 */
     public static final String GROUND_IGNITE_MOVING = "ground.ignite_moving";
+    /** 2026-10-29 照 PoE2 Crown of Eyes（百目冠）：法術傷害的增加與減少也套用在攻擊上（FLAT 1）。 */
+    public static final String SPELL_DAMAGE_TO_ATTACKS = "flag.spell_damage_to_attacks";
+
+    /**
+     * 純函式：2026-10-29 照 PoE2 Crown of Eyes：屬性表裡每一條「增加／減少（INCREASED）傷害、標籤有法術」的，複製一份把法術換成攻擊
+     * （例如 [spell, fire] → [attack, fire]）；更多（MORE）不算。沒有旗標回傳空的（PlayerStateService 重算屬性表的最後呼叫）。
+     */
+    public static java.util.List<tw.exilecore.stats.Modifier> spellDamageToAttacks(final tw.exilecore.stats.StatSheet sheet) {
+        if (!tw.exilecore.stats.StatKeys.flag(sheet, SPELL_DAMAGE_TO_ATTACKS)) {
+            return java.util.List.of();
+        }
+        final java.util.List<tw.exilecore.stats.Modifier> copies = new java.util.ArrayList<>();
+        for (final tw.exilecore.stats.Modifier modifier : sheet.modifiersOf(tw.exilecore.stats.StatKeys.DAMAGE)) {
+            if (modifier.type() != tw.exilecore.stats.ModType.INCREASED || !modifier.tags().contains(tw.exilecore.stats.Tags.SPELL)
+                    || modifier.tags().contains(tw.exilecore.stats.Tags.ATTACK)) {
+                continue;
+            }
+            final Set<String> tags = new HashSet<>(modifier.tags());
+            tags.remove(tw.exilecore.stats.Tags.SPELL);
+            tags.add(tw.exilecore.stats.Tags.ATTACK);
+            copies.add(new tw.exilecore.stats.Modifier(modifier.stat(), modifier.type(), modifier.value(), Set.copyOf(tags),
+                    modifier.source() + "（法術傷害套用至攻擊）"));
+        }
+        return copies;
+    }
+
     /** 每移動 x/10 格（格）觸發一次潰骸（踏骸之履）。 */
     public static final String TRIGGER_DECOMPOSE_METRES = "trigger.decompose_metres";
     /** 武器以外的裝備賦予技能（grant_skill.技能代號，FLAT 1；等級照物品等級，跟法杖賦予的一樣）。 */

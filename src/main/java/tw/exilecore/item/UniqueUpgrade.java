@@ -89,7 +89,21 @@ public final class UniqueUpgrade {
         data.affixes().addAll(special);
         data.setName(unique.name());
         data.setUniqueVersion(unique.version());
+        if (baseChanged(repository, data, unique)) {
+            // 2026-10-29：傳奇的基底換了（uniques.yml 的 base，例如 2026-10-26 照 PoE2 把法杖、長杖、權杖換成施法基底）：已經掉出來的也換過去；
+            //   固有詞綴的數值清掉，讀物品時 AffixUpgrade 照新基底補。這次之前只補詞綴，舊的物品一直留在舊基底
+            data.setBase(unique.base());
+            data.setImplicitVars(new java.util.LinkedHashMap<>());
+        }
         return true;
+    }
+
+    /** 2026-10-29：物品的基底跟傳奇定義的不一樣（合併掉的分階照合併後的比；定義的基底不存在就不動）。 */
+    static boolean baseChanged(final ItemRepository repository, final ItemData data, final UniqueItem unique) {
+        if (data.base() == null || repository.base(unique.base()) == null) {
+            return false;
+        }
+        return !repository.canonicalBase(data.base()).equals(repository.canonicalBase(unique.base()));
     }
 
     private static UniqueItem definition(final ItemRepository repository, final ItemData data) {
@@ -100,7 +114,7 @@ public final class UniqueUpgrade {
     }
 
     private static boolean outdated(final ItemRepository repository, final ItemData data, final UniqueItem unique) {
-        if (data.uniqueVersion() != unique.version() || !unique.name().equals(data.name())) {
+        if (data.uniqueVersion() != unique.version() || !unique.name().equals(data.name()) || baseChanged(repository, data, unique)) {
             return true;
         }
         final List<String> expected = new ArrayList<>();

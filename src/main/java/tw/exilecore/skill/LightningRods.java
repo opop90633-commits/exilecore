@@ -60,6 +60,8 @@ final class LightningRods {
         boolean spent;
         /** 畫面用的展示實體（null = 沒有）。 */
         UUID display;
+        /** 2026-10-29 照站長「更明顯」：頭上的字（剩幾秒、還能被連幾次；null = 沒有）。 */
+        UUID label;
         /** 2026-10-28：插它的技能（上限各算各的；null = 不分）。 */
         final String skill;
 
@@ -86,6 +88,25 @@ final class LightningRods {
         boolean charging() {
             return !pending.isEmpty();
         }
+    }
+
+    /** 2026-10-29：最後幾秒開始閃（tick）。 */
+    static final long BLINK_TICKS = 60;
+
+    /**
+     * 純函式：2026-10-29 照站長「更明顯」：頭上那行字（MiniMessage）。ticksLeft 剩幾 tick、chainsLeft 還能被連幾次、charging 正在充能；
+     * 最後 3 秒紅白交替閃（blinkOn 決定這一刻亮哪個顏色）。
+     */
+    static String labelText(final long ticksLeft, final int chainsLeft, final boolean charging, final boolean blinkOn) {
+        final long seconds = Math.max(0, (ticksLeft + 19) / 20);
+        final String colour = charging ? "<aqua>" : ticksLeft <= BLINK_TICKS ? (blinkOn ? "<red>" : "<white>") : "<yellow>";
+        return colour + "⚡ 雷霆之杖 <white>" + seconds + " 秒 <gray>・ " + colour + "剩 " + Math.max(0, chainsLeft) + " 次"
+                + (charging ? " <aqua>充能中" : "");
+    }
+
+    /** 純函式：最後幾秒每 0.25 秒換一次顏色。 */
+    static boolean blinkOn(final long now) {
+        return (now / 5) % 2 == 0;
     }
 
     private final List<Rod> rods = new ArrayList<>();

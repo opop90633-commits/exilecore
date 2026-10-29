@@ -10757,3 +10757,28 @@ item masters_reach
   ..faaaaffaaaaf..
   ...ffff..ffff...
 
+item crown_of_eyes
+  o=1e140a
+  g=8a6a1e
+  y=d8b048
+  h=f4e09a
+  w=f0ece0
+  p=c86a8a
+  b=3a5ab8
+  m=5a6a3a
+  ................
+  ..w.....w.....w.
+  .wbw...wbw...wbw
+  ..w.....w.....w.
+  ..g..w..g..w..g.
+  ..g.wbw.g.wbw.g.
+  .gy..w.gyg.w..yg
+  .gyg.g.gyg.g.gyg
+  oyhyyyyyhyyyyyho
+  ogwbwgwbwgwbwgyo
+  oyypyyyypyyyypyo
+  ogmgggmgggmgggmo
+  .oooooooooooooo.
+  ................
+  ................
+  ................

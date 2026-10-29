@@ -65,7 +65,7 @@ class ShockchainArrowTest {
         assertNull(config.skill("proc_shockchain_wave"));
         assertTrue(arrow.description().contains("雷霆之杖"));
         assertTrue(arrow.description().contains("不會消耗電擊"));
-        assertFalse(arrow.description().contains("再多 3 次"), "每支箭只充能一次");
+        assertTrue(arrow.description().contains("重複這個過程") && arrow.description().contains("連鎖 8 次後消失"), "2026-10-29 照原作：連鎖的箭會重複，總共 8 次");
     }
 
     @Test
@@ -103,7 +103,7 @@ class ShockchainArrowTest {
     }
 
     @Test
-    void chargesOnceOnFirstLightningAilmentHit() {
+    void chargesAndRepeatsOnLightningAilmentHits() {
         // 第一下打到沒有閃電異常的：普通的一箭（不連鎖、不放震波、不充能、不插杖）
         final ShockchainArrows.Outcome plain = ShockchainArrows.onHit(3, false, false);
         assertEquals(0, plain.addChains());
@@ -115,12 +115,15 @@ class ShockchainArrowTest {
         assertEquals(3, charged.addChains());
         assertTrue(charged.shockwave());
         assertTrue(charged.charges());
-        // 充能之後（連鎖的次級投射物）每一下都放震波，但再打到閃電異常的也不會再多 3 次（這次之前可重複）
+        // 充能之後（連鎖的次級投射物）每一下都放震波；2026-10-29 照原作：再打到閃電異常的重複（再多 3 次），總共最多 8 次
         final ShockchainArrows.Outcome chainedPlain = ShockchainArrows.onHit(3, false, true);
         assertEquals(0, chainedPlain.addChains());
         assertTrue(chainedPlain.shockwave());
         final ShockchainArrows.Outcome chainedAfflicted = ShockchainArrows.onHit(3, true, true);
-        assertEquals(0, chainedAfflicted.addChains());
+        assertEquals(3, chainedAfflicted.addChains());
+        assertEquals(5, ShockchainArrows.capChains(2 + 3, 3), "連鎖過 3 次：最多再 5 次");
+        assertEquals(2, ShockchainArrows.capChains(2 + 3, 6), "連鎖過 6 次：只剩 2 次（總共 8 次）");
+        assertEquals(0, ShockchainArrows.capChains(3, 8), "連鎖 8 次後消失");
         assertTrue(chainedAfflicted.shockwave());
         assertFalse(chainedAfflicted.charges());
         assertTrue(ShockchainArrows.lodgesRod(3, true));
@@ -185,10 +188,11 @@ class ShockchainArrowTest {
     }
 
     @Test
-    void qualityIsMoreLightningAndMoreAttackSpeed() {
+    void qualityIsIncreasedLightningAndMoreAttackSpeed() {
+        // 2026-10-29 照 poe2db 寶石頁「增加 (0—20)% 閃電傷害」（2026-10-28 寫成更多）
         final List<Modifier> normal = GemQuality.modifiers("chain_arrow", 20, "q");
         assertNotNull(normal);
-        assertTrue(normal.stream().anyMatch(m -> m.stat().equals(StatKeys.DAMAGE) && m.type() == ModType.MORE && m.tags().contains("lightning")));
+        assertTrue(normal.stream().anyMatch(m -> m.stat().equals(StatKeys.DAMAGE) && m.type() == ModType.INCREASED && m.tags().contains("lightning")));
         final List<Modifier> advanced = GemQuality.advancedModifiers("chain_arrow", 20, "q");
         assertNotNull(advanced);
         assertTrue(advanced.stream().anyMatch(m -> m.stat().equals(StatKeys.ATTACK_SPEED) && m.type() == ModType.MORE));
@@ -199,5 +203,17 @@ class ShockchainArrowTest {
         assertTrue(ModifierText.describe(Modifier.flat(ShockchainArrows.CHAINS_ON_AILMENT, 3, "x")).contains("多連鎖 3 次"));
         assertTrue(ModifierText.describe(Modifier.flat(ShockchainArrows.FLAG_CONSUME_SHOCK, 1, "x")).contains("不消耗電擊"));
         assertTrue(ModifierText.describe(Modifier.flat(ShockchainArrows.FLAG_HOMING, 1, "x")).contains("追蹤"));
+    }
+
+    @Test
+    void rodLabelShowsTimeAndChainsAndBlinks() {
+        // 2026-10-29 照站長「更明顯」：杖頭上顯示剩幾秒、還能被連幾次；最後 3 秒紅白交替；充能中改成青色
+        final String calm = LightningRods.labelText(15 * 20, 6, false, true);
+        assertTrue(calm.contains("15 秒") && calm.contains("剩 6 次") && calm.startsWith("<yellow>"), calm);
+        assertTrue(LightningRods.labelText(41, 2, false, true).startsWith("<red>"), "最後 3 秒：紅");
+        assertTrue(LightningRods.labelText(41, 2, false, false).startsWith("<white>"), "最後 3 秒：白（閃）");
+        assertTrue(LightningRods.labelText(41, 2, false, true).contains("3 秒"), "41 tick 進位成 3 秒");
+        assertTrue(LightningRods.labelText(200, 5, true, true).contains("充能中"));
+        assertTrue(LightningRods.blinkOn(0) != LightningRods.blinkOn(5), "每 0.25 秒換一次");
     }
 }

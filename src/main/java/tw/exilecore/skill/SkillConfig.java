@@ -399,7 +399,8 @@ public final class SkillConfig {
                         || !Set.of(Mechanic.STRIKE, Mechanic.NOVA, Mechanic.CONE, Mechanic.ZONE).contains(definition.mechanic())) {
                     throw new IllegalArgumentException(node.path() + ".step：只有近戰攻擊的 strike、nova、cone、zone 能寫");
                 }
-                parsedSteps.put(id, step);
+                // 2026-10-29 照站長：出手前踏步全部拿掉——伺服器上舊的 skills.yml 還寫著 step 也不會踏（要恢復把這行打開）
+                // parsedSteps.put(id, step);
             }
             final BarrageSpec barrage = BarrageSpec.parse(node);
             if (barrage != null) {

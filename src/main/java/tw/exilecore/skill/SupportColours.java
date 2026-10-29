@@ -61,7 +61,7 @@ public final class SupportColours {
                     + "cull_frenzy "
                     // 2026-10-26 補齊（照 RePoE；疾樁 III、不倦是紅、冰噬 II 是藍——這次之前寫錯成藍／綠／綠）：沒列的原本都當白色
                     + "deliberation overreach lasting_shock escalating_poison volt corrosion excoriate stormchain cadence "
-                    + "hit_and_run overextend warm_blooded projectile_deceleration deadly_herald "
+                    + "hit_and_run momentum overextend warm_blooded projectile_deceleration deadly_herald "
                     + "nova_projectiles life_drain soul_drain frozen_spite bursting_plague wind_wave charged_mark "
                     + "poison_spores caltrops maim blind ammo_conservation streamlined_rounds nimble_reload combo_finisher "
                     + "culmination practiced_combo flow lightning_attunement admixture dazzle lockdown overabundance_ii "

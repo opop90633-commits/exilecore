@@ -12,10 +12,19 @@ public enum OmenRarity {
     COMMON("普通", 0xC9D3DE, 180),
     /** 權重 25～179（至臻前後綴、古代、恩澤、星魄去前後綴；現在 75～135）：藍。 */
     RARE("稀有", 0x4FA8FF, 25),
-    /** 權重 6～24（聖化、光明）：紫。 */
+    /** 權重 6～24（聖化、光明；2026-10-29 起這兩個權重調高，改照 {@link #FIXED} 標示）：紫。 */
     PRECIOUS("珍貴", 0xC77DFF, 6),
-    /** 權重 5 以下（去劣、湮滅／亂流去前後綴、不碎）：金橘。 */
+    /** 權重 5 以下（去劣、湮滅／亂流去前後綴、不碎；2026-10-29 起權重調高，改照 {@link #FIXED} 標示）：金橘。 */
     EXALTED("極稀有", 0xFFB43C, 0);
+
+    /**
+     * 2026-10-29 照站長：最貴的 8 種星籤權重調高（×12），掉落變多，但稀有度標示照原本的（照 poe2db 市價）：
+     * 這幾個不照權重算。這次之前（同日稍早 ×4 時）是把門檻改成 20／50。
+     */
+    static final java.util.Map<String, OmenRarity> FIXED = java.util.Map.of(
+            "omen_whittling", EXALTED, "omen_sinistral_guard", EXALTED, "omen_dextral_guard", EXALTED,
+            "omen_dextral_erasure", EXALTED, "omen_sinistral_erasure", EXALTED, "omen_chance", EXALTED,
+            "omen_light", PRECIOUS, "omen_sanctification", PRECIOUS);
 
     private final String label;
     private final int rgb;
@@ -63,6 +72,10 @@ public enum OmenRarity {
 
     /** 這種通貨是星籤的話回傳它的稀有度，不是回傳 null。 */
     public static OmenRarity of(final CurrencyType type) {
-        return type == null || type.operation() != CurrencyOperation.OMEN || type.omen() == null ? null : ofWeight(type.omen().weight());
+        if (type == null || type.operation() != CurrencyOperation.OMEN || type.omen() == null) {
+            return null;
+        }
+        final OmenRarity fixed = FIXED.get(type.id());
+        return fixed != null ? fixed : ofWeight(type.omen().weight());
     }
 }

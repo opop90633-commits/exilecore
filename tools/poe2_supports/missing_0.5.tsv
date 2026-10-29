@@ -135,7 +135,7 @@ Sacrificial Lamb	Sacrificial Lamb	T3	b				skipped	我們沒有會引爆召喚物
 Fusillade	Fusillade	T0	g	fusillade	箭幕		removed	2026-10-27 照站長刪掉（0.5 資料標成 DNT-UNUSED（還沒開放），做不出原作射上天落下的箭雨）
 Hobble	Hobble	T0	g	hobble	跛行		removed	2026-10-27 照站長刪掉（0.5 資料沒有任何數值，做不出原作的強度）
 Living Lightning	Living Lightning II	T4	b	living_lightning_ii	活雷 II		removed	2026-10-27 照站長刪掉（原作的活雷是不會被打、會瞬移的召喚物，我們做不出來）
-Momentum	Momentum	T2	g	momentum	衝勢		removed	2026-10-27 照站長刪掉（我們的技能大多按一下就瞬間出手，沒有「使用的那段時間」可以邊走邊用）
+Momentum	Momentum	T2	g	momentum	衝勢	2	exact	2026-10-29 照站長加回來，照原作（單次使用期間移動 3 格後更多傷害；2026-10-27 曾刪掉）
 Break Endurance	Break Endurance			break_endurance			already	代號沒寫英文名，其實已經有：break_endurance
 Charge Profusion	Charge Profusion			charge_profusion			already	代號沒寫英文名，其實已經有：charge_profusion
 Culling Strike	Culling Strike			culling_strike_ii			already	代號沒寫英文名，其實已經有：culling_strike_ii

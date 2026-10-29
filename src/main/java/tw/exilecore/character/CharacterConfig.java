@@ -128,9 +128,9 @@ public final class CharacterConfig {
                 List.of("helm_dex_01", "body_dex_01", "legs_dex_01", "boots_dex_01"), "buckler_01"));
         map.put("monk", new StarterClass(List.of("qstaff_01"),
                 List.of("helm_dex_01", "body_dex_int_01", "legs_int_01", "boots_dex_01"), "buckler_01")); // 2026-10-26 見 character.yml
-        map.put("sorceress", new StarterClass(List.of("staff_01", "wand_01"),
+        map.put("sorceress", new StarterClass(List.of("cstaff_01", "cwand_01"), // 2026-10-29：直接寫施法基底（舊的 staff_01、wand_01 現在合併到最高階）
                 List.of("helm_int_01", "body_int_01", "legs_int_01", "boots_int_01"), "focus_01"));
-        map.put("witch", new StarterClass(List.of("wand_01", "staff_01"),
+        map.put("witch", new StarterClass(List.of("cwand_01", "cstaff_01"), // 2026-10-29：同上
                 List.of("helm_int_01", "body_int_01", "legs_int_01", "boots_int_01"), "focus_01"));
         map.put("druid", new StarterClass(List.of("talis_01"),
                 List.of("helm_str_01", "body_str_01", "legs_str_01", "boots_str_01"), "tshield_01"));

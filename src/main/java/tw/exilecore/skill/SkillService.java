@@ -2330,7 +2330,10 @@ public final class SkillService {
         }
         if (definition.mechanic() == Mechanic.AURA) {
             // 2026-10：光環放在技能面板上就一直開著，按鍵不用開關（魔力不扣回來：這一下也沒花魔力，光環的 mana 是 0）
-            final String socketProblem = config.meta(definition.id()) == null ? null
+            final String socketProblem = config.meta(definition.id()) == null
+                    // 2026-10-29 照 PoE2 Blasphemy：咒環孔裡沒有能用的詛咒，按下去說清楚
+                    ? (Blasphemy.hosts(definition) && blasphemyCurses(player).isEmpty()
+                    ? definition.name() + "：孔裡要放" + Blasphemy.wants() + "的技能寶石（/skills 點它，拿技能寶石點一個孔），沒放就沒有效果" : null)
                     : metas().socketProblem(state, state.skills().find(definition.id()));
             state.notice(socketProblem != null ? "<red>" + ItemRenderer.escape(socketProblem) // 2026-10：主要寶石插槽放錯，按下去說清楚
                     : auras.isActive(player.getUniqueId(), definition.id())
@@ -4254,8 +4257,92 @@ public final class SkillService {
         final StatSheet gemSheet = gem.levels() > 0 && sheet != null
                 ? sheet.overlay(List.of(tw.exilecore.stats.Modifier.flat(StatKeys.SKILL_LEVEL, gem.levels(), "鑲嵌物"))) : sheet;
         // 2026-10-23：品質放進去一起算（光環、戰吼、詛咒的品質是加效果倍率，算完才補上就沒用了）
-        return SkillBuild.of(config, definition, entry.level(), state.level(), false, supports, state.weaponTags(), gemSheet,
+        final SkillBuild built = SkillBuild.of(config, definition, entry.level(), state.level(), false, supports, state.weaponTags(), gemSheet,
                 resonantOf(entry), extra); // 2026-10-18：共鳴的專屬輔助不佔名額
+        if (Blasphemy.hosts(definition)) {
+            return built.withReserveCount(Blasphemy.curses(config, entry)); // 2026-10-29 照 PoE2 Blasphemy：咒環每個插槽詛咒保留 60 精魂
+        }
+        return sceptreAura(definition, entry) ? built.withoutSupportSpirit() : built; // 2026-10-29 照站長：權杖自帶的光環上的輔助免精魂
+    }
+
+    /** 2026-10-29 照 PoE2 Blasphemy：咒環插槽詛咒的快取（同一張屬性表、同樣的寶石不重算；光環每 0.5 秒要用一次）。 */
+    private record BlasphemyKey(SkillLoadout.Entry host, int level, java.util.Set<String> weaponTags, StatSheet sheet, long version) {
+    }
+
+    private final Map<java.util.UUID, Map.Entry<BlasphemyKey, List<SkillBuild>>> blasphemyCache = new HashMap<>();
+
+    /**
+     * 2026-10-29 照 PoE2 Blasphemy：咒環孔裡能用的詛咒（照孔的順序），已經套上咒環的「效果更少」與額外品質效果；
+     * 輔助是咒環其他孔的（不合的略過）。屬性需求不足、放錯的略過；面板上沒有咒環或孔裡沒有回傳空的。
+     */
+    public List<SkillBuild> blasphemyCurses(final Player player) {
+        final PlayerState state = plugin.players().get(player);
+        final int position = state.skills().find(Blasphemy.ID);
+        final SkillLoadout.Entry host = position < 0 ? null : state.skills().skill(position);
+        final SkillDefinition hostDefinition = config.skill(Blasphemy.ID);
+        if (host == null || !Blasphemy.hosts(hostDefinition) || host.spells().isEmpty()) {
+            return List.of();
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        final BlasphemyKey key = new BlasphemyKey(host, state.level(), Set.copyOf(state.weaponTags()), sheet, sheet == null ? 0 : sheet.version());
+        final Map.Entry<BlasphemyKey, List<SkillBuild>> cached = blasphemyCache.get(player.getUniqueId());
+        if (cached != null && cached.getKey().equals(key)) {
+            return cached.getValue();
+        }
+        final SkillBuild hostBuild = build(state, sheet, hostDefinition, host);
+        final List<tw.exilecore.stats.Modifier> more = Blasphemy.curseModifiers(hostBuild.level(), hostBuild.qualityFlat(Blasphemy.CURSE_MAGNITUDE));
+        final List<SkillBuild> list = new ArrayList<>();
+        for (final SkillLoadout.Entry inner : GemAttributes.usable(config, innerEntries(host), sheet)) {
+            final SkillDefinition definition = config.skill(inner.skillId());
+            if (definition != null && Blasphemy.problem(definition) == null && definition.usableWith(state.weaponTags())) {
+                list.add(buildFresh(state, sheet, definition, inner, more));
+            }
+        }
+        final List<SkillBuild> result = List.copyOf(list);
+        blasphemyCache.put(player.getUniqueId(), Map.entry(key, result));
+        return result;
+    }
+
+    /**
+     * 2026-10-29 照 PoE2 Blasphemy：咒環開著時（AuraService 每 0.5 秒呼叫）孔裡每個詛咒對你身邊的敵人重套一次
+     * （半徑 = 詛咒這一級的半徑 + 1 公尺，再乘詛咒的範圍倍率；延續 {@link Blasphemy#LINGER_TICKS} tick，離開範圍很快就消失）。
+     */
+    void blasphemyPulse(final Player player, final long now) {
+        if (player.isDead() || executor == null) {
+            return;
+        }
+        for (final SkillBuild curse : blasphemyCurses(player)) {
+            final SkillParams.Mark spec = curse.params().mark();
+            if (spec != null) {
+                executor.applyCurseAt(player, curse, player.getLocation(), Blasphemy.widened(spec, curse.level()), now + Blasphemy.LINGER_TICKS);
+            }
+        }
+    }
+
+    /**
+     * 2026-10-29 照站長：這一格是權杖賦予的光環（律盾、惡念、焰守、霜守、雷守、蝕守、寒心、雷霆共鳴）：上面掛的輔助不用精魂。
+     * 只看光環（叫召喚物、照隻數保留的不算），而且要是武器賦予的那一格（自己插的同名寶石照舊）。
+     */
+    boolean sceptreAura(final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        if (entry == null || !entry.granted() || definition.mechanic() != Mechanic.AURA || definition.aura() == null
+                || definition.aura().perMinion() != null || definition.summon() != null
+                || plugin == null || plugin.items() == null || plugin.items().repository() == null) {
+            return false;
+        }
+        return sceptreGrants(plugin.items().repository(), definition.id());
+    }
+
+    /** 有沒有權杖（基底帶 sceptre 標籤）賦予這個技能。 */
+    static boolean sceptreGrants(final tw.exilecore.item.ItemRepository repository, final String skillId) {
+        for (final Map.Entry<String, String> grant : repository.grantedSkills().entrySet()) {
+            if (skillId.equals(grant.getValue())) {
+                final tw.exilecore.item.ItemBase base = repository.base(grant.getKey());
+                if (base != null && base.tags().contains("sceptre")) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** 2026-10-22：宿主寶石本身吃的輔助（孔裡要圖騰的、只加攻擊／施法速度或持續時間的）。 */
@@ -4520,6 +4607,7 @@ public final class SkillService {
             case tw.exilecore.stats.WarcryKeys.RADIUS_FLAT -> "增益半徑 +" + trimNumber(tw.exilecore.core.Units.metres(value)) + " 格"; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算
             case StatKeys.DEBUFF_DURATION -> "減益持續時間 +" + trimNumber(value) + " 秒";
             case StatKeys.META_ENERGY_GAIN -> "獲得的能量增加 " + trimNumber(value * 100) + "%";
+            case Blasphemy.CURSE_MAGNITUDE -> "插槽詛咒的效果增加 " + trimNumber(value) + "%"; // 2026-10-29 照 PoE2 Blasphemy（額外的品質效果）
             case StatKeys.DAMAGE -> modifier.tags().contains(tw.exilecore.stats.TreeConditions.VS_BROKEN_ARMOUR)
                     ? "對護甲完全破碎的敵人擊中更多 " + trimNumber(value * 100) + "% 傷害"
                     : modifier.tags().contains(tw.exilecore.stats.TreeConditions.VS_IMMOBILISED)
@@ -5068,6 +5156,34 @@ public final class SkillService {
         if (HollowForm.hosts(definition)) {
             lines.addAll(hollowSummary(player)); // 2026-10-28 照 PoE2 Hollow Form：幻影的間隔、消耗與孔裡放了什麼
         }
+        if (Blasphemy.hosts(definition)) {
+            lines.addAll(blasphemySummary(player, definition, entry)); // 2026-10-29 照 PoE2 Blasphemy：咒環的詛咒、範圍與保留
+        }
+        return lines;
+    }
+
+    /** 2026-10-29 照 PoE2 Blasphemy：說明上咒環這一級的效果更少、每個插槽詛咒的半徑與效果，和實際保留的精魂。 */
+    private List<String> blasphemySummary(final Player player, final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        final List<String> lines = new ArrayList<>();
+        final PlayerState state = plugin.players().get(player);
+        final SkillBuild host = build(state, plugin.players().sheet(player), definition, entry);
+        lines.add(String.format(Locale.ROOT, "<#c9a7ff>咒環<gray>：插槽詛咒效果更少 <white>%s%%</white>、基礎半徑 +<white>%s</white> 格（%s 公尺），每個保留 %s 精魂",
+                ModifierText.number(Blasphemy.lessMagnitude(host.level())), ModifierText.number(tw.exilecore.core.Units.metres(Blasphemy.EXTRA_RADIUS_METRES)),
+                ModifierText.number(Blasphemy.EXTRA_RADIUS_METRES), ModifierText.number(Blasphemy.RESERVE_PER_CURSE)));
+        final List<SkillBuild> curses = state.skills().find(Blasphemy.ID) < 0 ? List.of() : blasphemyCurses(player);
+        if (curses.isEmpty()) {
+            lines.add("<red>孔裡要放" + Blasphemy.wants() + "的技能寶石（/skills 點它，拿技能寶石點一個孔），沒放就沒有效果、也不保留精魂");
+            return lines;
+        }
+        for (final SkillBuild curse : curses) {
+            final SkillParams.Mark spec = curse.params().mark();
+            lines.add(String.format(Locale.ROOT, "<#c9a7ff>光環詛咒<gray>：%s，你身邊 <white>%s</white> 格內的敵人一直被詛咒（詛咒效果 <white>%d%%</white>）",
+                    ItemRenderer.escape(curse.definition().name()),
+                    ModifierText.number(Math.round(Blasphemy.baseRadius(spec, curse.level()) * curse.areaScale() * 10) / 10.0),
+                    Math.round(curse.auraEffect() * 100)));
+        }
+        lines.add(String.format(Locale.ROOT, "<gray>實際保留 <white>%s</white> 精魂（%d 個詛咒，已算保留效率）",
+                ModifierText.number(Math.round(host.reserve() * 10) / 10.0), Blasphemy.curses(config, entry)));
         return lines;
     }
 
@@ -5185,7 +5301,10 @@ public final class SkillService {
         lines.add("<#e7c56b>" + ItemRenderer.escape(spell.name()) + "<gray>（由" + ItemRenderer.escape(host.name())
                 + (DeadeyeMetas.MIRAGE.equals(host.id()) ? "的幻影使用、傷害更少 " + ModifierText.number(DeadeyeMetas.MIRAGE_LESS) + "%" // 2026-10-28 照 PoE2
                         : HollowForm.hosts(host) ? "的幻影使用、傷害更少 " + ModifierText.number(HollowForm.LESS_DAMAGE) + "%、攻擊速度更少 "
-                        + ModifierText.number(HollowForm.LESS_ATTACK_SPEED) + "%" : "施放") // 2026-10-28 照 PoE2 Hollow Form
+                        + ModifierText.number(HollowForm.LESS_ATTACK_SPEED) + "%" // 2026-10-28 照 PoE2 Hollow Form
+                        : Blasphemy.hosts(host) ? "變成光環一直詛咒你身邊的敵人、詛咒效果更少 " // 2026-10-29 照 PoE2 Blasphemy
+                        + ModifierText.number(Blasphemy.lessMagnitude(hostEntry == null ? 1 : hostEntry.level())) + "%、半徑 +"
+                        + ModifierText.number(tw.exilecore.core.Units.metres(Blasphemy.EXTRA_RADIUS_METRES)) + " 格" : "施放")
                 + "、吃其他孔的輔助）：");
         for (final String line : describe(player, spell, inner)) {
             lines.add("<gray>　" + line);

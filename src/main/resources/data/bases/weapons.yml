@@ -3914,7 +3914,7 @@ wand_13:
 wand_14:
   name: 雷紋法杖
   retired: true          # 2026-10-26：換成照 PoE2 的法杖、長杖、權杖（bases/weapons_casters.yml，沒有傷害、賦予技能）；舊物品照常能用
-  merged_into: cwand_01
+  merged_into: cwand_13        # 2026-10-29 照站長：玩家手上的舊法杖換成纏蝕法杖（65 等、114 智慧，原作施法法杖最高階），物品等級保留；這次之前 cwand_01（1 等，舊武器變成 1 等）
   base_level: 65          # 數值是物品等級 65 的值，照物品等級縮放
   implicit_level: 1
   family: wand
@@ -4289,7 +4289,7 @@ staff_16:
 staff_17:
   name: 暗鋼長杖
   retired: true          # 2026-10-26：換成照 PoE2 的法杖、長杖、權杖（bases/weapons_casters.yml，沒有傷害、賦予技能）；舊物品照常能用
-  merged_into: cstaff_01
+  merged_into: cstaff_14        # 2026-10-29 照站長：玩家手上的舊長杖換成永凍長杖（75 等、114 智慧，原作施法長杖最高階），物品等級保留；這次之前 cstaff_01（1 等，舊武器變成 1 等）
   base_level: 75          # 數值是物品等級 75 的值，照物品等級縮放
   implicit_level: 1
   family: staff
@@ -4642,7 +4642,7 @@ sceptre_15:
 sceptre_16:
   name: 秘銀權杖
   retired: true          # 2026-10-26：換成照 PoE2 的法杖、長杖、權杖（bases/weapons_casters.yml，沒有傷害、賦予技能）；舊物品照常能用
-  merged_into: csceptre_01
+  merged_into: csceptre_15        # 2026-10-29 照站長：玩家手上的舊權杖換成聖化權杖（65 等、114 智慧，原作施法權杖最高階），物品等級保留；這次之前 csceptre_01（1 等，舊武器變成 1 等）
   base_level: 65          # 數值是物品等級 65 的值，照物品等級縮放
   implicit_level: 1
   family: sceptre

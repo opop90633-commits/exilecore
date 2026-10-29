@@ -270,7 +270,8 @@ public record AuraSpec(double reserve, double radius, boolean allies, List<Scale
         // 2026-10-28：不是光環的技能（戰旗、掠閃、喚駒）寫 aura 區塊 = 只保留精魂，可以沒有效果
         final boolean persistentReserve = !"aura".equals(skill.string("mechanic", "").trim().toLowerCase(Locale.ROOT));
         if (effects.isEmpty() && onKill == null && enemy == null && fury == null && !skill.has("summon") && !skill.has("meta")
-                && !skill.has("level_modifiers") && !persistentReserve) { // 2026-10-26：雷霆共鳴、折光之鏡、鴉群密謀的效果寫在程式裡（GrantedAuras），逐級數值在 level_modifiers // 2026-10：夥伴（aura ＋ summon）、主要寶石（只保留精魂）可以沒有效果
+                && !skill.has("level_modifiers") && !persistentReserve
+                && !skill.strings("tags").contains(tw.exilecore.stats.Tags.META)) { // 2026-10-29 照 PoE2 Blasphemy：咒環（主要寶石）的效果是孔裡的詛咒 // 2026-10-26：雷霆共鳴、折光之鏡、鴉群密謀的效果寫在程式裡（GrantedAuras），逐級數值在 level_modifiers // 2026-10：夥伴（aura ＋ summon）、主要寶石（只保留精魂）可以沒有效果
             throw new IllegalArgumentException(where + "：光環至少要有 effects、enemy、on_kill 或 fury");
         }
         final Scaled perMinion = node.has("per_minion") ? Scaled.parse(where + ".per_minion", node.raw("per_minion"), 0) : null;

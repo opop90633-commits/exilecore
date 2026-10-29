@@ -121,6 +121,7 @@ public final class ItemService {
 
     private Optional<ItemData> upgrade(final Optional<ItemData> data, final boolean rescale) {
         data.ifPresent(value -> {
+            BaseUpgrade.apply(repository, value); // 2026-10-29：舊的長杖、法杖、權杖換成照 PoE2 的施法基底（最高階）
             UniqueUpgrade.apply(repository, value);
             if (rescale) {
                 try {
@@ -242,6 +243,18 @@ public final class ItemService {
         // 2026-10-17：舊 bug 揭露出兩條同一種的：第二條換回隱匿詞綴（重新揭露）
         try {
             if (Veiled.dedupe(data.get(), repository, random())) {
+                codec.write(stack, data.get());
+                renderer.render(stack, data.get());
+                return true;
+            }
+        } catch (final RuntimeException ignored) {
+            // 畫不出來就原樣不動
+        }
+        // 2026-10-29：舊的長杖、法杖、權杖（合併到固定等級的施法基底）換成新基底，寫回、照新基底重畫
+        try {
+            if (BaseUpgrade.apply(repository, data.get())) {
+                UniqueUpgrade.apply(repository, data.get());
+                AffixUpgrade.apply(repository, data.get());
                 codec.write(stack, data.get());
                 renderer.render(stack, data.get());
                 return true;

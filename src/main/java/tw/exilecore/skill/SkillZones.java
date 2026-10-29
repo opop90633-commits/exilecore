@@ -617,6 +617,7 @@ final class SkillZones implements SkillTargets.Strikeable {
                 now + Math.round(spec.duration() * 20 * durationScale), spec.chains(), Math.round(spec.charge() * 20), profile,
                 radius, visual, skill);
         rod.display = spawnRodDisplay(at);
+        rod.label = spawnRodLabel(at, rod, now); // 2026-10-29 照站長「更明顯」：頭上顯示剩幾秒、還能被連幾次
         rods.place(rod, spec.max(), this::rodRemoved);
         final double extra = effective.flat(LightningRods.EXTRA_BURST, profile.tags());
         if (extra > 0 && plugin.random().nextDouble() * 100 < extra) {
@@ -632,6 +633,8 @@ final class SkillZones implements SkillTargets.Strikeable {
                 created.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(), new org.joml.AxisAngle4f(),
                         new org.joml.Vector3f(0.3f, 0.9f, 0.3f), new org.joml.AxisAngle4f()));
                 created.setBrightness(new org.bukkit.entity.Display.Brightness(15, 15));
+                created.setGlowing(true); // 2026-10-29 照站長「更明顯」：外框發光（隔著方塊也看得到）
+                created.setGlowColorOverride(org.bukkit.Color.fromRGB(0xffe14d));
                 created.setPersistent(false);
             });
             return display.getUniqueId();
@@ -640,7 +643,46 @@ final class SkillZones implements SkillTargets.Strikeable {
         }
     }
 
+    /** 2026-10-29 照站長「更明顯」：杖頭上的字（剩幾秒、還能被連幾次、充能中）。 */
+    private UUID spawnRodLabel(final Location at, final LightningRods.Rod rod, final long now) {
+        try {
+            final org.bukkit.entity.TextDisplay label = at.getWorld().spawn(rodTop(at).add(0, 0.55, 0), org.bukkit.entity.TextDisplay.class, created -> {
+                created.text(plugin.text().parse(rodLabel(rod, now)));
+                created.setBillboard(org.bukkit.entity.Display.Billboard.CENTER);
+                created.setSeeThrough(true);
+                created.setShadowed(true);
+                created.setBrightness(new org.bukkit.entity.Display.Brightness(15, 15));
+                created.setPersistent(false);
+            });
+            return label.getUniqueId();
+        } catch (final RuntimeException ignored) {
+            return null;
+        }
+    }
+
+    private static String rodLabel(final LightningRods.Rod rod, final long now) {
+        return LightningRods.labelText(rod.until - now, rod.maxChains - rod.chained, rod.charging(), LightningRods.blinkOn(now));
+    }
+
+    /** 2026-10-29：每 0.25 秒更新頭上的字；最後 3 秒外框紅黃交替閃。 */
+    private void refreshRodLabel(final LightningRods.Rod rod, final long now) {
+        if (rod.label != null && plugin.getServer().getEntity(rod.label) instanceof org.bukkit.entity.TextDisplay label) {
+            label.text(plugin.text().parse(rodLabel(rod, now)));
+        }
+        if (rod.display != null && plugin.getServer().getEntity(rod.display) instanceof org.bukkit.entity.Display display) {
+            final boolean urgent = rod.until - now <= LightningRods.BLINK_TICKS && !LightningRods.blinkOn(now);
+            display.setGlowColorOverride(org.bukkit.Color.fromRGB(urgent ? 0xff3b3b : rod.charging() ? 0x6ff3ff : 0xffe14d));
+        }
+    }
+
     private void rodRemoved(final LightningRods.Rod rod) {
+        if (rod.label != null) {
+            final org.bukkit.entity.Entity label = plugin.getServer().getEntity(rod.label);
+            if (label != null) {
+                label.remove();
+            }
+            rod.label = null;
+        }
         if (rod.display != null) {
             final org.bukkit.entity.Entity entity = plugin.getServer().getEntity(rod.display);
             if (entity != null) {
@@ -740,6 +782,9 @@ final class SkillZones implements SkillTargets.Strikeable {
             Fx.as(rod.owner, () -> visuals.blast(rod.visual, at, rod.radius));
         }, this::rodRemoved);
         for (final LightningRods.Rod rod : rods.all()) {
+            if (now % 5 == 0) {
+                refreshRodLabel(rod, now); // 2026-10-29 照站長「更明顯」
+            }
             final boolean charging = rod.charging();
             if (charging ? now % 2 == 0 : (now - rod.placed) % 10 == 0) {
                 final Location at = rodLocation(rod);
