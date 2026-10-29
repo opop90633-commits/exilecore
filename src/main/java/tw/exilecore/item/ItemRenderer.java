@@ -513,7 +513,7 @@ public final class ItemRenderer {
         lore.add(line(SEPARATOR));
         lore.add(line("<dark_gray>物品等級 " + data.ilvl() + (data.starter() ? "・新手裝備（拆解沒有東西）" : "")));
         if (data.corrupted()) {
-            lore.add(line("<#d20000>已腐化 <dark_gray>（不能再用通貨改造；空的符文孔還能嵌符文）"));
+            lore.add(line("<#d20000>已腐化 <dark_gray>（不能再用通貨改造；符文還能嵌、還能替換）"));
         }
         if (data.fractured() != null) {
             lore.add(line("<#c9a66b>✦破裂 <dark_gray>（那一條詞綴通貨動不到，會一直留著）"));

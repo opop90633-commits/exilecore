@@ -248,10 +248,10 @@ public final class CurrencyListener implements Listener {
         }
     }
 
-    /** 這件裝備有符文孔、已鑑定、沒腐化，而且孔都滿了。 */
+    /** 這件裝備有符文孔、已鑑定，而且孔都滿了（2026-10-29 照站長：已腐化的也能替換符文；這次之前腐化的只能嵌空孔）。 */
     private boolean runesFull(final ItemStack target) {
         final tw.exilecore.item.ItemData data = plugin.items().read(target).orElse(null);
-        if (data == null || !data.identified() || data.corrupted() || data.mirrored()) {
+        if (data == null || !data.identified() || data.mirrored()) {
             return false;
         }
         final tw.exilecore.item.ItemBase base = plugin.items().repository().base(data.base());
