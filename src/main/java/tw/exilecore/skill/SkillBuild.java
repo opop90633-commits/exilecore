@@ -138,9 +138,13 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             boolean exclusive = false;
             boolean lineage = false;
             boolean multiProjectile = false;
+            final Set<String> families = new java.util.HashSet<>();
             for (final SupportDefinition support : supports) {
                 if (support == null || !support.supports(definition)) {
                     continue;
+                }
+                if (!families.add(family(support.id()))) {
+                    continue; // 2026-10-30 照 PoE2：同系列（I／II／III）的輔助一個技能只算第一顆
                 }
                 if (support.lineage()) {
                     lineage = true; // 2026-10-28 照 PoE2（站長）：不同的血脈輔助都生效；這次之前一個技能只有第一顆生效
@@ -166,6 +170,11 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             }
         }
         return active;
+    }
+
+    /** 2026-10-30 照 PoE2：輔助的系列（骸令、骸令 II 同一系列）：代號去掉結尾的 _ii／_iii。 */
+    public static String family(final String supportId) {
+        return supportId == null ? "" : supportId.replaceFirst("_(ii|iii|iv)$", "");
     }
 
     /**

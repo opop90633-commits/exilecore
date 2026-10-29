@@ -9475,3 +9475,21 @@ crown_of_eyes:        # 2026-10-29 照 PoE2 0.5 的「Crown of Eyes」（原作�
     - text: "法術傷害的增加與減少也套用在攻擊上"
       stats:
         - { stat: flag.spell_damage_to_attacks, type: FLAT, value: 1 }
+
+lavianga_spirits:        # 2026-10-30 照 PoE2 0.3 的「Lavianga's Spirits」（poe2db.tw/tw/Laviangas_Spirits；原作有、我們以前沒有的）
+  name: 拉維安加之泉
+  base: starlit_mana_flask        # 原作基底 Gargantuan Mana Flask（2 秒內恢復 185 魔力，跟星輝魔力藥劑一樣）
+  drop_level: 49
+  sources: [map_boss, gamble]
+  rarity: uncommon
+  flavour:
+    - "「我該如何面對我在瓦爾克拉斯所目睹的一切？」"
+    - "— 拉維安加，岡姆的前任顧問"
+  mods:
+    - text: "減少 {value}% 恢復量"
+      value: [70, 80]
+      stats:
+        - { stat: flask.local.recovery, type: INCREASED, value: "-{value}" }
+    - text: "此藥劑無法使用，但會持續套用其效果"
+      stats:
+        - { stat: flask.local.always, type: FLAT, value: 1 }

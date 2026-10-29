@@ -813,6 +813,9 @@ public final class BossSkills implements Listener {
             if (skill.kind() == BossSkill.Kind.ARENA && brain.arena != null) {
                 continue; // 場地已經在收縮了（維持到這場打完）
             }
+            if (skill.at() == BossSkill.Target.MAZE && mazeUp(brain, now)) {
+                continue; // 2026-10-30 照站長：上一個殞星迷宮還沒消失，不放下一個（兩、三、四圈的版本都算）
+            }
             if (skill.kind() == BossSkill.Kind.SANCTUARY && (!brain.orbs.isEmpty() || !brain.marks.isEmpty())) {
                 continue; // 2026-10-15：追人的光球、點名標記還在：綠色安全區的大招等它們結束才放（安全區期間只有這一招）
             }
@@ -1067,6 +1070,16 @@ public final class BossSkills implements Listener {
     }
 
     /** Boss 原本盯著的玩家（夠近）或最近的玩家（遠的要看得到）。 */
+    /** 2026-10-30：場上還有沒消失的迷宮牆（任何一種迷宮）。 */
+    private static boolean mazeUp(final Brain brain, final long now) {
+        for (final ZoneArea zone : brain.zones) {
+            if (zone.skill.at() == BossSkill.Target.MAZE && zone.untilTick > now) {
+                return true;
+            }
+        }
+        return brain.cast != null && brain.cast.skill.at() == BossSkill.Target.MAZE;
+    }
+
     private LivingEntity pickTarget(final Brain brain) {
         final LivingEntity boss = brain.boss;
         final double search = brain.host.boss() ? SEARCH : SEARCH_MINION;

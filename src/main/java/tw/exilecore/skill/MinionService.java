@@ -130,6 +130,8 @@ public final class MinionService implements Listener, MinionHooks {
         List<Modifier> empowered = List.of();
         /** 殘影（2026-10）：站著不動、不打人，只負責嘲諷；不算數量上限、不顯示在快捷欄、死了不觸發。 */
         boolean decoy;
+        /** 2026-10-30（群鋒）：現在的更多傷害（0.21 = 更多 21%；每秒照主人有幾種復活型召喚物重算）。 */
+        double musterMore;
         // ---- 2026-10-26 照 PoE2 ----
         /** 能量護盾（我們的單位）與上限；最後一次受傷的 tick（4 秒後開始回充）。 */
         double es;
@@ -556,6 +558,18 @@ public final class MinionService implements Listener, MinionHooks {
      * 2026-10-26（群鋒，PoE2 Muster）：掛了群鋒的召喚物，主人每有一種不同的復活型召喚物（永久的召喚物），更多 x% 傷害。
      */
     private SkillProfile musterProfile(final Minion minion) {
+        updateMuster(minion);
+        return minion.musterMore <= 0 ? minion.profile
+                : minion.profile.withLocal(List.of(Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, minion.musterMore, "群鋒")));
+    }
+
+    /** 2026-10-30：群鋒也套用在召喚物的技能（法術、射擊、碎骨…）與狂卒的怒氣攻擊上（這次之前只有普攻有）。 */
+    private static List<Modifier> musterModifiers(final Minion minion) {
+        return minion.musterMore <= 0 ? List.of() : List.of(Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, minion.musterMore, "群鋒"));
+    }
+
+    /** 每秒重算一次群鋒：掛的群鋒 x% × 主人有幾種不同的復活型召喚物。 */
+    private void updateMuster(final Minion minion) {
         double per = 0;
         for (final SupportDefinition support : minion.build.supports()) {
             for (final Modifier modifier : support.modifiers()) {
@@ -565,7 +579,8 @@ public final class MinionService implements Listener, MinionHooks {
             }
         }
         if (per <= 0) {
-            return minion.profile;
+            minion.musterMore = 0;
+            return;
         }
         final Set<String> kinds = new java.util.HashSet<>();
         for (final Minion other : minions) {
@@ -573,8 +588,7 @@ public final class MinionService implements Listener, MinionHooks {
                 kinds.add(other.skillId());
             }
         }
-        return kinds.isEmpty() ? minion.profile
-                : minion.profile.withLocal(List.of(Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, per * kinds.size() / 100.0, "群鋒")));
+        minion.musterMore = per * kinds.size() / 100.0;
     }
 
     /** 祭柱：附近有沒有自己的召喚物可以獻祭（花魔力之前看）。 */
@@ -662,6 +676,20 @@ public final class MinionService implements Listener, MinionHooks {
                     remove(minion, Gone.EXPIRED);
                 }
             }
+        }
+    }
+
+    /** 2026-10-29：這種召喚物只留最新的 keep 隻（多的從最早叫出來的開始收掉；先祖之魂跟著圖騰）。 */
+    void trimOldest(final UUID owner, final String skillId, final int keep) {
+        final List<Minion> mine = new ArrayList<>();
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner) && minion.skillId().equals(skillId)) {
+                mine.add(minion);
+            }
+        }
+        mine.sort(java.util.Comparator.comparingLong(minion -> minion.bornTick));
+        for (int i = 0; i < mine.size() - Math.max(0, keep); i++) {
+            remove(mine.get(i), Gone.EXPIRED);
         }
     }
 
@@ -1285,6 +1313,11 @@ public final class MinionService implements Listener, MinionHooks {
         }
         if (now % 20 == 0) {
             syncVisibility();
+            for (final Minion minion : minions) {
+                if (!minion.decoy) {
+                    updateMuster(minion); // 2026-10-30：群鋒（技能、怒氣攻擊讀這個）
+                }
+            }
         }
         for (final Minion minion : new ArrayList<>(minions)) {
             if (!byEntity.containsKey(minion.mob.getUniqueId())) {
@@ -1502,7 +1535,7 @@ public final class MinionService implements Listener, MinionHooks {
         mob.swingMainHand();
         // 2026-10-26 照 PoE2：狂卒每點怒氣攻擊傷害更多 1%
         // 2026-10-28 照 PoE2 Skeletal Reaver 的品質：召喚物的怒氣效果增加 (0—20)%
-        final Attack raged = minion.rage > 0 && minion.profile != null ? with(minion, minion.profile.withLocal(List.of(Modifier.more(
+        final Attack raged = minion.rage > 0 && minion.profile != null ? with(minion, musterProfile(minion).withLocal(List.of(Modifier.more(
                 tw.exilecore.stats.StatKeys.DAMAGE, MinionAbilities.RAGE_DAMAGE * minion.rage * rageEffect(minion), "怒氣")))) : null;
         // 2026-10-29 照 PoE2（Knockback 可以輔助骸骨戰士）：從召喚物這邊掛的擊退（skill.knockback）讓普攻把敵人往外推；Boss 不會被推
         final double knockback = minion.effective == null || minion.profile == null ? 0
@@ -2057,6 +2090,7 @@ public final class MinionService implements Listener, MinionHooks {
         final Set<String> tags = new HashSet<>(base.tags());
         tags.addAll(extraTags);
         final List<Modifier> local = new ArrayList<>(base.local());
+        local.addAll(musterModifiers(minion)); // 2026-10-30：群鋒
         if (Math.abs(factor - 1) > 1e-9) {
             local.add(Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, factor - 1, id));
         }
@@ -2083,6 +2117,7 @@ public final class MinionService implements Listener, MinionHooks {
         final tw.exilecore.stats.DamagePacket min = new tw.exilecore.stats.DamagePacket().set(type, poe2[0] * factor);
         final tw.exilecore.stats.DamagePacket max = new tw.exilecore.stats.DamagePacket().set(type, Math.max(poe2[0], poe2[1]) * factor);
         final List<Modifier> local = new ArrayList<>(base.local());
+        local.addAll(musterModifiers(minion)); // 2026-10-30：群鋒
         local.add(Modifier.flat(tw.exilecore.stats.StatKeys.SPELL_BASE_CRIT, crit, id));
         local.addAll(extra);
         return new SkillProfile(base.id() + "." + id, tags, 1.0, min, max, Map.of(), local);

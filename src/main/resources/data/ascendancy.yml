@@ -501,6 +501,7 @@ ascendancies:
         stats:
           - { stat: skill.totems, type: FLAT, value: 1 }
           - { stat: asc.ancestral_spirits, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.ancestral_spirits, type: FLAT, value: 1 }   # 2026-10-29 照 PoE2：先祖之魂放進技能面板（可以插輔助）
       totem_life_2:
         name: 圖騰生命          # Totem Life
         requires: answered_call

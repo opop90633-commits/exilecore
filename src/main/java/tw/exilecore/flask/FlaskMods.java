@@ -68,6 +68,25 @@ public record FlaskMods(double recovery, double recoveryLow, double speed, doubl
         return of(modifiers);
     }
 
+    /** 2026-10-30 照 PoE2（拉維安加之泉）：這瓶有沒有「無法使用，但會持續套用其效果」。 */
+    public static boolean always(final ItemRepository repository, final ItemData data) {
+        if (repository == null || data == null) {
+            return false;
+        }
+        for (final RolledAffix rolled : data.affixes()) {
+            final Affix affix = repository.affix(rolled.id());
+            if (affix == null) {
+                continue;
+            }
+            for (final AffixMod mod : affix.mods()) {
+                if (StatKeys.FLASK_LOCAL_ALWAYS.equals(mod.stat())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /** 從修飾器算（測試、說明用）。 */
     public static FlaskMods of(final List<Modifier> modifiers) {
         double lowMore = 1; // 2026-10-26 照 PoE2：低生命／低魔力的藥劑前綴是「更多」回復（MORE，各自相乘）；這次之前寫成 INCREASED 但也是另外乘

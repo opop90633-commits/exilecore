@@ -53,7 +53,8 @@ class UniqueDataTest {
 
     /** 原作就不到三條詞綴的傳奇（2026-10-26 天樞墜、巨像之心；2026-10-27 映鏡指環、孀雨粗弓、濁源指環）：最少幾條。 */
     static final Map<String, Integer> FEW_LINES = Map.of("celestial_pivot", 2, "colossus_heart", 2, "mirror_touch_ring", 1,
-            "widowsong_bow", 1, "tainted_origin_ring", 2);
+            "widowsong_bow", 1, "tainted_origin_ring", 2,
+            "lavianga_spirits", 2); // 2026-10-30：拉維安加之泉原作兩條
 
     /** 2026-10-28 照 PoE2：禁止掉落（poe2db「禁止掉落」：Infernoclasp、Thunderstep、Forbidden Gaze）。 */
     static final Set<String> DISABLED = Set.of("flameclasp_belt", "thunderdash_boots", "forbidden_tiara");
@@ -138,7 +139,7 @@ class UniqueDataTest {
         assertTrue(repository.warnings().isEmpty(), String.join("\n", repository.warnings()));
         // 2026-10 PoE2 改版：舊的傳奇退役（retired，不算在 uniques() 裡），換成照 PoE2 的一批，加上劫盜、世界 Boss 的專屬
         // 2026-10-26 照 PoE2 0.5：＋30 件原作有、我們以前沒有的傳奇（淵握墜退役換成淵握戒，件數不變）
-        assertEquals(127 + 21 + 5 + 2 + 6 + 2 + 30 + 91 + 1 + 9 + 21 - 3 + 1 + 1, repository.uniques().size(), // 2026-10-29：＋鮮血屏障（Bloodbarrier）；＋百目冠（Crown of Eyes） // 2026-10-28 照站長刪掉焰扣束帶、奔雷皮靴、禁視鏈冠（－3）；2026-10-27：＋91 件照 PoE2 0.5 的第二批（84 件一般、7 件追逐級）；2026-10-28：＋黯炎；2026-10-28：＋9 件照 PoE2（綺夢、阿茲里的輕視、謎容、神聖烈焰、元素之章、貝雷克的兩枚、薛朗的背包、吉爾菲的聖殿）
+        assertEquals(127 + 21 + 5 + 2 + 6 + 2 + 30 + 91 + 1 + 9 + 21 - 3 + 1 + 1 + 1, repository.uniques().size(), // 2026-10-30：＋拉維安加之泉（Lavianga's Spirits）；2026-10-29：＋鮮血屏障（Bloodbarrier）；＋百目冠（Crown of Eyes） // 2026-10-28 照站長刪掉焰扣束帶、奔雷皮靴、禁視鏈冠（－3）；2026-10-27：＋91 件照 PoE2 0.5 的第二批（84 件一般、7 件追逐級）；2026-10-28：＋黯炎；2026-10-28：＋9 件照 PoE2（綺夢、阿茲里的輕視、謎容、神聖烈焰、元素之章、貝雷克的兩枚、薛朗的背包、吉爾菲的聖殿）
                 // 2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件、淵鯨再 2 件；2026-10-24：＋6 件戰星傳奇；2026-10-26：＋永恆珠寶 2 件（英雄悲劇、不朽恨意）
                 "（2026-10-27 第二批 ＋91）終局 2 + 追逐級 13 + 其他終局 3 + 具名 Boss 2 + 共通 41（2026-10：＋德魯伊的獸魂符 4 件；2026-10-15 ＋6 件、＋3 件圖騰；2026-10-17 ＋棘壘） + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 11（2026-10-15 ＋1） + 四個終局共通 1（蛛巢壁壘） + 星骸之海的淵鯨 3 + 只能賭的 1（2026-10-17 踏骸之履）");
         final Set<String> names = new HashSet<>();

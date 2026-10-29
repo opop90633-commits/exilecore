@@ -581,7 +581,9 @@ public final class SkillService {
             return;
         }
         final PlayerState state = plugin.players().get(player);
-        final SkillBuild build = SkillBuild.of(config, definition, config.maxLevelFor(state.level()), state.level(), false, List.of(),
+        // 2026-10-29 照 PoE2：技能面板上有這個技能（先祖之魂這類賦予的技能可以插輔助）就用面板上的組合（等級、輔助）；這次之前一律沒有輔助
+        final SkillBuild equipped = equippedBuild(player, skillId);
+        final SkillBuild build = equipped != null ? equipped : SkillBuild.of(config, definition, config.maxLevelFor(state.level()), state.level(), false, List.of(),
                 state.weaponTags(), plugin.players().sheet(player));
         procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), build, null);
     }
@@ -1120,6 +1122,14 @@ public final class SkillService {
             }
         }
         return false;
+    }
+
+    /**
+     * 2026-10-29 照 PoE2 Ancestral Spirits（先祖之引）：先祖之魂跟著召喚它的圖騰——圖騰沒了它也沒了。
+     * 每秒（AscendancyEffects）照現在放著的圖騰數只留最新的那幾隻；沒有這個天賦就全部收掉。
+     */
+    public void tetherSpirits(final Player player, final boolean active) {
+        minions.trimOldest(player.getUniqueId(), "ancestral_spirits", active ? totemCount(player) : 0);
     }
 
     /** 2026-10-26（天賦樹「有圖騰時」「每個圖騰」）：放著幾個圖騰。 */
@@ -2091,6 +2101,12 @@ public final class SkillService {
         }
         // 2026-10-26 照 PoE2：要連擊才能用的技能（驚雷之鐘 4 點：用其他長棍技能打擊敵人累積）；這次之前用冷卻代替
         // 2026-10-27 照 PoE2 Delayed Gratification：連擊也是使用條件（更難 150%；達成後 10 秒內多一次不用連擊）
+        if ("ancestral_spirits".equals(definition.id())) {
+            // 2026-10-29 照 PoE2 Ancestral Spirits：召喚圖騰時自動觸發（面板上可以插輔助），不能自己按
+            state.notice("<gray>先祖之魂：放下圖騰時自動觸發，不用按", now + 30);
+            plugin.players().display(player, state);
+            return;
+        }
         final int comboNeeded = supportMechanics().comboRequired(player, build, config.resource(definition.id()).combo());
         if (comboNeeded > 0 && resources.combo(player) < comboNeeded) {
             state.notice(String.format(Locale.ROOT, "<gray>%s 要 %d 點連擊（現在 %d；用打擊打中敵人累積）", ItemRenderer.escape(definition.name()),

@@ -1134,7 +1134,11 @@ final class MapTwists implements Listener {
         blocks.put(MapEvents.key(bottom), state);
         blocks.put(MapEvents.key(bottom.getRelative(0, 1, 0)), state);
         state.cursed = base;
-        state.labels.add(new Label(base.clone().add(0.5, 2.4, 0.5), "<#c48bff>詛咒寶匣<newline><gray>右鍵看看裡面有什麼"));
+        // 2026-10-30 照站長：效果直接寫在懸浮文字上，右鍵就接受（這次之前右鍵打開對話框選接受／拒絕）
+        final int power = (int) Math.round(settings().cursedPower());
+        state.labels.add(new Label(base.clone().add(0.5, 2.9, 0.5), "<#c48bff>詛咒寶匣<newline><gray>裡面有一份豐厚的寶物（附近的人各一份）"
+                + "<newline><gray>接受之後，這張圖之後的怪生命與傷害 <red>+" + power + "%</red><gray>，Boss <red>+" + power / 2 + "%"
+                + "<newline><yellow>右鍵：接受詛咒<dark_gray>（不要就別碰）"));
     }
 
     private void offerCursed(final State state, final Player player) {
@@ -1144,11 +1148,7 @@ final class MapTwists implements Listener {
             player.sendMessage(plugin.text().prefixed("<gray>太晚了：這張圖已經走了一大半，詛咒寶匣化成了灰"));
             return;
         }
-        final int power = (int) Math.round(settings().cursedPower());
-        plugin.dialogs().confirm(player, "<#c48bff>詛咒寶匣", List.of(
-                "<gray>裡面有一份豐厚的寶物（附近的人各一份）。",
-                "<gray>但接受之後，這張圖之後出現的怪生命與傷害 <red>+" + power + "%</red>，Boss <red>+" + power / 2 + "%</red>。",
-                "<dark_gray>拒絕的話，寶匣就消失了。"), "接受詛咒", () -> acceptCursed(state, player), () -> refuseCursed(state, player));
+        acceptCursed(state, player); // 2026-10-30 照站長：右鍵就接受（效果寫在懸浮文字上）
     }
 
     private void acceptCursed(final State state, final Player player) {
@@ -1171,16 +1171,6 @@ final class MapTwists implements Listener {
         return !state.cursedDone && state.instance.state() == MapInstance.State.OPEN && byInstance.get(state.instance.id()) == state;
     }
 
-    private void refuseCursed(final State state, final Player player) {
-        if (!alive(state)) {
-            return;
-        }
-        state.cursedDone = true;
-        removeCursed(state, Material.AIR);
-        state.cursed.getWorld().spawnParticle(Particle.SMOKE, state.cursed.clone().add(0.5, 1, 0.5), 30, 0.3, 0.5, 0.3, 0.02);
-        broadcast(state.instance, "<gray>" + ItemRenderer.escape(player.getName()) + " 拒絕了詛咒寶匣，它化成了灰");
-    }
-
     private void removeCursed(final State state, final Material base) {
         final Block bottom = state.cursed.getBlock();
         blocks.remove(MapEvents.key(bottom));
@@ -1188,7 +1178,7 @@ final class MapTwists implements Listener {
         bottom.getRelative(0, 1, 0).setType(Material.AIR, false);
         bottom.setType(base, false);
         for (final Label label : state.labels) {
-            if (label.near(state.cursed, 2.4)) {
+            if (label.near(state.cursed, 2.9)) {
                 label.remove();
             }
         }

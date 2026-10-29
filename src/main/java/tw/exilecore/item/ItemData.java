@@ -336,6 +336,18 @@ public final class ItemData {
         }
     }
 
+    /** 2026-10-30 照站長：取出第 index 顆符文（沒腐化的裝備才能取出）。 */
+    public String removeRune(final int index) {
+        if (runes == null || index < 0 || index >= runes.size()) {
+            return null;
+        }
+        final String removed = runes.remove(index);
+        if (runes.isEmpty()) {
+            runes = null;
+        }
+        return removed;
+    }
+
     /** 換一個新的 uuid（複製物品時用，讓兩件不同）。 */
     public void regenerateUuid() {
         this.uuid = UUID.randomUUID().toString();

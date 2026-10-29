@@ -865,13 +865,20 @@ public final class SkillMenu extends Menu {
                 lore.add("<gray>要本身會消耗戰星的技能，或一起掛狂速／綿咒／碎地／蔓寒");
             }
         }
-        if (!support.cuttable()) {
+        for (int j = 0; j < index; j++) {
+            final SupportDefinition before = service.config().support(entry.support(j));
+            if (before != null && before != support && SkillBuild.family(before.id()).equals(SkillBuild.family(support.id()))) {
+                lore.add("<red>不會生效：同系列的輔助一個技能只算一顆（前面已經有" + ItemRenderer.escape(before.name()) + "）"); // 2026-10-30
+                break;
+            }
+        }
+        if (!support.cuttable() && !support.lineage()) { // 2026-10-30：血脈輔助不佔專屬名額（SkillBuild 本來就這樣算，只是說明誤標成不會生效）
             if (resonant) {
                 lore.add("<#c48bff>共鳴：不佔專屬輔助名額"); // 2026-10-18
             } else {
                 for (int j = 0; j < index; j++) {
                     final SupportDefinition before = service.config().support(entry.support(j));
-                    if (before != null && !before.cuttable() && !entry.resonant(j)
+                    if (before != null && !before.cuttable() && !before.lineage() && !entry.resonant(j)
                             && (definition == null || (host ? before.hostRefusal(definition, service.innerSkill(entry)) == null : before.supports(definition)))) {
                         lore.add("<red>不會生效：一個技能只能掛一顆沒有共鳴的專屬掉落輔助寶石（前面已經有" + ItemRenderer.escape(before.name()) + "）");
                         break;

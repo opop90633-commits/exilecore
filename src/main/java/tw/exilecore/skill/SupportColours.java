@@ -91,7 +91,7 @@ public final class SupportColours {
                     + "frozen_vortex hinder glacier icicle hoarfrost crystalline_shards verglas unleash expand burgeon "
                     + "cold_attunement danse_macabre frost_nexus impending_doom minion_mastery pinpoint_critical "
                     + "potent_exposure spreading_frost withering_touch sacrificial_offering mysticism upwelling "
-                    + "blazing_critical enervation bidding essence_harvest deathmarch last_rites fluke supercritical "
+                    + "blazing_critical enervation bidding bidding_ii essence_harvest deathmarch last_rites fluke supercritical "
                     + "perpetual_charge creeping_chill empowered_sparks guatelitzi_ablation boundless_energy "
                     + "energy_retention energy_capacitor "
                     + "accelerated_growth advancing_storm morganas_tempest "

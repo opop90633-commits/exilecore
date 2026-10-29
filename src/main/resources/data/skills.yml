@@ -8746,12 +8746,14 @@ skills:
 
   ancestral_spirits:
     name: 先祖之魂
+    description: 放下圖騰時自動觸發（不用按）：在圖騰旁召喚一隻先祖之靈幫你作戰，圖騰沒了牠也跟著消失。每 1 點力量讓先祖之靈多 1% 傷害、每 3 點敏捷多 1% 攻擊速度；加圖騰生命的也加在牠的生命上。可以插輔助寶石。
     icon: PHANTOM_MEMBRANE   # 2026-10-27 圖示：照元素、作用補上；這次之前沒寫，顯示成書
-    hidden: true
     type: spell
+    tier: 1
+    source: ascendancy   # 2026-10-29 照 PoE2：先祖之引賦予（面板上看得到、可以插輔助）；這次之前是隱藏技能
     tags: [minion, duration]
     mechanic: summon
-    summon: { kind: WITHER_SKELETON, count: 1, max: 10, fixed_max: true, duration: 8, life: 1.0, damage: 1.0, attack_speed: 1.0, speed: 1.2, reach: 2.5, weapon: STONE_AXE }   # 2026-10-26 照 PoE2 Ancestral Spirits：召喚圖騰時觸發（跟圖騰一起消失：圖騰撐 8 秒）
+    summon: { minion_tags: [attack, melee, area, duration], kind: WITHER_SKELETON, count: 1, max: 12, fixed_max: true, duration: 0, life: 1.0, damage: 1.0, attack_speed: 1.0, speed: 1.2, reach: 2.5, weapon: STONE_AXE }   # 2026-10-29 照 PoE2：跟著召喚它的圖騰（圖騰死了它也死，SkillService.tetherSpirits；圖騰最多 12 根）；這次之前固定 8 秒、最多 10 隻   # 2026-10-26 照 PoE2 Ancestral Spirits：召喚圖騰時觸發（跟圖騰一起消失：圖騰撐 8 秒）
     cast_time: 0.1
     mana: 0
     visual: ancestral_totem

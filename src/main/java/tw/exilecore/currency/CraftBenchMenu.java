@@ -56,6 +56,8 @@ public final class CraftBenchMenu extends Menu {
     private static final int SLOT_USE = 40; // 2026-10-23：使用鈕在上、說明在最下排中間（跟其他選單一樣）
     private static final int SLOT_HELP = 52; // 2026-10-23：說明放關閉鈕旁邊，最下排中間只剩翻頁
     private static final int SLOT_CLEAR = 46;
+    /** 2026-10-30 照站長：裝備右邊「取出符文」（沒腐化的裝備才能取出）。 */
+    private static final int SLOT_RUNES = 23;
 
     private String omenId;
     private String currencyId;
@@ -283,6 +285,7 @@ public final class CraftBenchMenu extends Menu {
                     "<dark_gray>（裝備留在背包裡，直接改那一件）"));
         } else {
             set(SLOT_ITEM, appendLore(stack.clone(), List.of("", "<yellow>左鍵：換一件（再點背包裡的）")));
+            drawRunes(stack);
         }
 
         final String problem = problem(stack);
@@ -369,6 +372,99 @@ public final class CraftBenchMenu extends Menu {
         return selected ? highlight(stack) : stack;
     }
 
+    /** 2026-10-30 照站長：選的裝備有符文時，右邊多一個「取出符文」。 */
+    private void drawRunes(final ItemStack stack) {
+        final ItemData data = plugin.items().read(stack).orElse(null);
+        if (data == null || data.runes().isEmpty()) {
+            return;
+        }
+        final tw.exilecore.item.ItemBase base = plugin.items().repository().base(data.base());
+        final List<String> lore = new ArrayList<>();
+        for (final String id : data.runes()) {
+            final tw.exilecore.item.Runes.Rune rune = plugin.items().repository().rune(id);
+            lore.add("<white>" + ItemRenderer.escape(rune == null ? id : rune.name())
+                    + (rune == null || base == null ? "" : "<gray>（" + ItemRenderer.escape(String.join("、",
+                    rune.on(base).stream().map(tw.exilecore.item.Runes.Line::text).toList())) + "）"));
+        }
+        lore.add("");
+        final String problem = runeProblem(data);
+        lore.add(problem == null ? "<yellow>左鍵：選一顆取出（還給你）" : "<red>" + ItemRenderer.escape(problem));
+        set(SLOT_RUNES, icon(problem == null ? Material.LAPIS_LAZULI : Material.GRAY_DYE, "<#7fe0c8>取出符文", lore));
+    }
+
+    /** 不能取出符文的原因；可以回傳 null。 */
+    private static String runeProblem(final ItemData data) {
+        if (data.corrupted()) {
+            return "已腐化：不能取出符文（拿新的符文點它可以換掉）";
+        }
+        if (data.mirrored()) {
+            return "鏡像複製品不能改";
+        }
+        return null;
+    }
+
+    /** 選一顆符文取出：從裝備上拿掉，還給玩家。 */
+    private void extractRune() {
+        final ItemStack stack = item();
+        final ItemData data = stack == null ? null : plugin.items().read(stack).orElse(null);
+        if (data == null || data.runes().isEmpty()) {
+            return;
+        }
+        final String problem = runeProblem(data);
+        if (problem != null) {
+            fail(problem);
+            return;
+        }
+        final tw.exilecore.item.ItemBase base = plugin.items().repository().base(data.base());
+        final List<tw.exilecore.gui.Dialogs.Option> options = new ArrayList<>();
+        for (int i = 0; i < data.runes().size(); i++) {
+            final tw.exilecore.item.Runes.Rune rune = plugin.items().repository().rune(data.runes().get(i));
+            final String text = rune == null ? data.runes().get(i) : rune.name()
+                    + (base == null ? "" : "（" + String.join("、", rune.on(base).stream().map(tw.exilecore.item.Runes.Line::text).toList()) + "）");
+            options.add(new tw.exilecore.gui.Dialogs.Option(String.valueOf(i), "第 " + (i + 1) + " 孔：" + text));
+        }
+        final int slot = itemSlot;
+        final String uuid = data.uuid();
+        player.closeInventory();
+        plugin.dialogs().form(player, "<dark_gray>取出符文",
+                List.of("<gray>選一顆符文從裝備上取出，取出的符文會還給你。"),
+                List.of(new tw.exilecore.gui.Dialogs.Choice("slot", "要取出哪一顆", options, "0")),
+                "取出", answers -> {
+                    final ItemStack now = player.getInventory().getItem(slot);
+                    final ItemData current = now == null ? null : plugin.items().read(now).orElse(null);
+                    if (current == null || !uuid.equals(current.uuid()) || runeProblem(current) != null) {
+                        fail("裝備不在原來的格子了");
+                        return;
+                    }
+                    final int index;
+                    try {
+                        index = Integer.parseInt(answers.get("slot"));
+                    } catch (final NumberFormatException e) {
+                        return;
+                    }
+                    if (index < 0 || index >= current.runes().size()) {
+                        return;
+                    }
+                    final String id = current.runes().get(index);
+                    if (currencies().runeType(id) == null) {
+                        fail("這顆符文拿不出來");
+                        return;
+                    }
+                    final String before = plugin.items().toJson(current);
+                    current.removeRune(index);
+                    plugin.items().update(now, current);
+                    player.getInventory().setItem(slot, now);
+                    currencies().returnRune(player, plugin.economy().wallet(), id);
+                    final PlayerState state = plugin.players().get(player);
+                    currencies().recordUse(state.hasCharacter() ? state.character().id() : null, player.getName(), current.uuid(),
+                            currencies().runeType(id).id(), before, plugin.items().toJson(current));
+                    plugin.players().markDirty(player);
+                    player.playSound(player.getLocation(), Sound.BLOCK_GRINDSTONE_USE, 0.7f, 1.3f);
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#7fe0c8>取出了" + ItemRenderer.escape(currencies().runeType(id).name())));
+                    open();
+                }, this::open);
+    }
+
     // ---- 點擊 ----
 
     @Override
@@ -412,6 +508,11 @@ public final class CraftBenchMenu extends Menu {
             case SLOT_USE -> {
                 if (acceptAction(click)) {
                     use();
+                }
+            }
+            case SLOT_RUNES -> {
+                if (acceptAction(click)) {
+                    extractRune();
                 }
             }
             case SLOT_CLEAR -> {

@@ -626,6 +626,7 @@ supports:
   enervation: b
   innervate: g
   bidding: b
+  bidding_ii: b   # 2026-10-30 照 PoE2 Bidding II（智慧）
   essence_harvest: b
   deathmarch: b
   last_rites: b

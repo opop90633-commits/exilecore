@@ -39,6 +39,20 @@ final class MinionEstimates {
             out.add(Modifier.increased(StatKeys.DAMAGE, Math.max(0, ownerSheet.get(StatKeys.STR)) / MinionAbilities.MANIFEST_STR_PER_DAMAGE / 100.0, "幻化武器：力量"));
             out.add(Modifier.increased(StatKeys.ATTACK_SPEED, Math.max(0, ownerSheet.get(StatKeys.DEX)) / MinionAbilities.MANIFEST_DEX_PER_SPEED / 100.0, "幻化武器：敏捷"));
         }
+        if ("ancestral_spirits".equals(build.definition().id())) {
+            // 2026-10-29 照 PoE2 Ancestral Spirits（先祖之引）：每 1 點力量增加 1% 傷害、每 3 點敏捷增加 1% 攻擊速度；
+            //   加圖騰生命的也加在先祖之靈的生命上。這次之前都沒有
+            out.add(Modifier.increased(StatKeys.DAMAGE, Math.max(0, ownerSheet.get(StatKeys.STR)) / 100.0, "先祖之魂：力量"));
+            out.add(Modifier.increased(StatKeys.ATTACK_SPEED, Math.max(0, ownerSheet.get(StatKeys.DEX)) / 3.0 / 100.0, "先祖之魂：敏捷"));
+            final double totemIncreased = ownerSheet.increased(StatKeys.TOTEM_LIFE, java.util.Set.of());
+            final double totemMore = ownerSheet.more(StatKeys.TOTEM_LIFE, java.util.Set.of());
+            if (totemIncreased != 0) {
+                out.add(Modifier.increased(StatKeys.LIFE_MAX, totemIncreased, "先祖之魂：圖騰生命"));
+            }
+            if (Math.abs(totemMore - 1) > 1e-9) {
+                out.add(Modifier.more(StatKeys.LIFE_MAX, totemMore - 1, "先祖之魂：圖騰生命"));
+            }
+        }
         if (companion && build.definition().tags().contains(tw.exilecore.stats.TreeMechanicKeys.COMPANION)
                 && StatKeys.flag(ownerSheet, tw.exilecore.stats.TreeNewMechanicKeys.FLAG_COMPANION_STRENGTH)) {
             out.add(Modifier.flat(StatKeys.LIFE_MAX, tw.exilecore.stats.Formulas.lifeFromStrength(
@@ -50,6 +64,20 @@ final class MinionEstimates {
     /** 估計用（召喚物說明、召喚物每秒傷害）：上面那些，再加看看我怎麼辦事的（當作在存在範圍內）。 */
     static List<Modifier> estimate(final SkillBuild build, final StatSheet ownerSheet, final double lifeFactor) {
         final List<Modifier> out = ownerDerived(build, ownerSheet, lifeFactor, true);
+        // 2026-10-30（群鋒）：估計時至少算自己這一種（復活型召喚物才算；實際戰鬥照你身上有幾種）
+        if (build.definition().summon() != null && build.definition().summon().permanent()) {
+            double per = 0;
+            for (final SupportDefinition support : build.supports()) {
+                for (final Modifier modifier : support.modifiers()) {
+                    if (modifier.stat().equals(tw.exilecore.stats.SupportKeys.MUSTER)) {
+                        per += modifier.value();
+                    }
+                }
+            }
+            if (per > 0) {
+                out.add(Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, per / 100.0, "群鋒"));
+            }
+        }
         if (ownerSheet != null) {
             out.addAll(tw.exilecore.ascendancy.AscendancyEffects.minionWeaponFrom(ownerSheet));
         }

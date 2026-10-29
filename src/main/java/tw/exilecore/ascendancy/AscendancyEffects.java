@@ -1401,6 +1401,9 @@ public final class AscendancyEffects implements Listener {
             try {
                 state.bag().setBonusPages(has(state.sheet(), AscKeys.CHEST_SLOTS) ? 1 : 0); // 巨量承載：攜帶一個箱子（背包多一頁）
                 tickPlayer(player, state, now);
+                if (plugin.skills() != null) {
+                    plugin.skills().tetherSpirits(player, has(state.sheet(), AscKeys.ANCESTRAL_SPIRITS)); // 2026-10-29 照 PoE2：先祖之魂跟著圖騰
+                }
                 // 2026-10-26：看看我怎麼辦事的（隊友的武器傷害）、導管給附近的效果：靠近、離開別人時重算
                 // 2026-10-27（效能）：改成「給效果的隊友、距離內與否、他們的數值」有變才重算；這次之前只要同世界有任何人
                 //   帶著這兩種天賦，整個世界每個人每 2 秒（而且是同一個 tick）都整張屬性表重算——營地人多時固定卡一下

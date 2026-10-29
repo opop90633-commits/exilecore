@@ -67,6 +67,8 @@ public final class AilmentService {
     private final ExileCore plugin;
     private final AilmentConfig config;
     private final Map<UUID, Tracked> tracked = new HashMap<>();
+    /** 2026-10-30：沒有異常、只有詛咒／印記的怪物，名字後面現在顯示的標記（變了才重設名字）。 */
+    private final Map<UUID, String> hexShown = new HashMap<>();
     private final NamespacedKey slowKey;
     private final NamespacedKey jumpKey;
     private final NamespacedKey unawareKey;
@@ -1689,6 +1691,7 @@ public final class AilmentService {
 
     public void tick() {
         final long now = now();
+        tickHexes(now);
         for (final UUID uuid : List.copyOf(tracked.keySet())) {
             final Tracked entry = tracked.get(uuid);
             if (entry == null) {
@@ -2524,7 +2527,12 @@ public final class AilmentService {
         if (poisons > 0) {
             marks.append(mark(AilmentType.POISON)).append(poisons > 1 ? "×" + poisons : "");
         }
+        final String hex = hexText(living.getUniqueId(), markNow, false); // 2026-10-30：詛咒、印記
+        if (!hex.isEmpty()) {
+            marks.append(marks.length() > 0 ? " " : "").append(hex);
+        }
         final String text = marks.toString();
+        hexShown.remove(living.getUniqueId()); // 有在追蹤的交給這裡畫
         if (text.equals(entry.marks)) {
             return;
         }
@@ -2756,8 +2764,94 @@ public final class AilmentService {
         if (boss == null) {
             return "";
         }
-        final String text = statusText(boss.getUniqueId());
+        final String status = statusText(boss.getUniqueId());
+        final String hex = hexText(boss.getUniqueId(), now(), true); // 2026-10-30：詛咒、印記（剩幾秒）
+        final String text = status.isEmpty() ? hex : hex.isEmpty() ? status : status + "  " + hex;
         return text.isEmpty() ? "" : "  " + text;
+    }
+
+    // ---- 2026-10-30 照站長：怪物身上的詛咒、印記（名字後面、Boss 血條後面） ----
+
+    private static final String CURSE_COLOR = "#c48bff";
+    private static final String MARK_COLOR = "#ffcf5a";
+
+    /**
+     * 這隻身上的詛咒與印記：「咒·萎力 印·狩獵」；seconds＝後面加剩幾秒（Boss 血條）。
+     * 同一個技能（分好幾種標籤的）只寫一次；隱藏的（輔助觸發的殘肢、目眩這種）不寫。
+     */
+    String hexText(final UUID id, final long now, final boolean seconds) {
+        if (plugin.combat() == null || plugin.skills() == null) {
+            return "";
+        }
+        final tw.exilecore.combat.Debuffs debuffs = plugin.combat().debuffs();
+        final List<String> parts = new ArrayList<>();
+        final java.util.Set<String> seen = new java.util.HashSet<>();
+        for (final tw.exilecore.combat.Debuffs.Debuff debuff : debuffs.active(id, now)) {
+            final int dot = debuff.id().indexOf('.');
+            final String skillId = dot < 0 ? debuff.id() : debuff.id().substring(0, dot);
+            if (!seen.add(skillId)) {
+                continue;
+            }
+            final tw.exilecore.skill.SkillDefinition skill = plugin.skills().config().skill(skillId);
+            if (skill == null || skill.hidden() || skill.params() == null || skill.params().mark() == null) {
+                continue;
+            }
+            final boolean curse = skill.params().mark().curse();
+            final String name = shortHexName(skill.name(), curse);
+            final String color = curse ? CURSE_COLOR : MARK_COLOR;
+            String part = "<" + color + ">" + (curse ? "咒" : "印") + "·" + tw.exilecore.item.ItemRenderer.escape(name);
+            if (seconds && debuff.untilTick() > now) {
+                part += String.format(Locale.ROOT, " %.1fs", (debuff.untilTick() - now) / 20.0);
+            }
+            parts.add(part);
+        }
+        return String.join(" ", parts);
+    }
+
+    /** 「萎力詛咒」→「萎力」、「獵殺印記」→「獵殺」（拿掉了就沒字的照原名）。 */
+    static String shortHexName(final String name, final boolean curse) {
+        if (name == null) {
+            return "";
+        }
+        final String trimmed = name.replace(curse ? "詛咒" : "印記", "").trim();
+        return trimmed.isEmpty() ? name : trimmed;
+    }
+
+    /** 每半秒：沒在追蹤異常、只有詛咒／印記的怪物，名字後面補上（有追蹤的在 updateMarks 一起畫）。 */
+    private void tickHexes(final long now) {
+        if (plugin.combat() == null || plugin.monsters() == null) {
+            return;
+        }
+        final java.util.Set<UUID> ids = new java.util.HashSet<>(plugin.combat().debuffs().targets());
+        ids.addAll(hexShown.keySet());
+        for (final UUID id : ids) {
+            if (tracked.containsKey(id)) {
+                continue;
+            }
+            final Entity entity = plugin.getServer().getEntity(id);
+            if (!(entity instanceof LivingEntity living) || entity instanceof Player || !living.isValid() || living.isDead()) {
+                hexShown.remove(id);
+                continue;
+            }
+            final String hex = hexText(id, now, false);
+            final String before = hexShown.getOrDefault(id, "");
+            if (hex.equals(before)) {
+                continue;
+            }
+            final java.util.Optional<MonsterData> data = plugin.monsters().data(living);
+            if (data.isEmpty()) {
+                continue;
+            }
+            final Component name = plugin.monsters().displayName(data.get());
+            if (hex.isEmpty()) {
+                hexShown.remove(id);
+                living.customName(name);
+            } else {
+                hexShown.put(id, hex);
+                markTouched(living);
+                living.customName(name.append(plugin.text().parse(" " + hex)));
+            }
+        }
     }
 
     /** 同 {@link #statusText(Player)}，任何追蹤中的實體都可以（怪物、Boss）。 */

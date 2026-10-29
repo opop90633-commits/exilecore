@@ -660,6 +660,8 @@ public final class StatKeys {
     // ---- 藥劑、護符本身的詞綴（2026-10，PoE2 的藥劑詞綴；只在那一瓶上生效，角色屬性表不讀） ----
     /** INCREASED：這瓶的回復量。 */
     public static final String FLASK_LOCAL_RECOVERY = "flask.local.recovery";
+    /** 2026-10-30 照 PoE2（拉維安加之泉 local_flask_always_drinking）：這瓶不能喝，效果一直套用。 */
+    public static final String FLASK_LOCAL_ALWAYS = "flask.local.always";
     /** INCREASED：生命（魔力）低於 35% 時喝，這瓶的回復量另外再增加。 */
     public static final String FLASK_LOCAL_RECOVERY_LOW = "flask.local.recovery_low";
     /** INCREASED：這瓶的回復速度（同樣的量在更短的時間內回完）。 */

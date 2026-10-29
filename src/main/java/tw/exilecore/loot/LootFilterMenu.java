@@ -83,13 +83,18 @@ public final class LootFilterMenu extends Menu {
     private static final int SLOT_CHARMS = slot(3, 2);
     // ---- 通貨：三組，標籤在最左邊（右鍵整組切換），後面 8 格是通貨；一組超過 8 種就往下多佔一排（2026-10）；
     //      四排放不下時一組接著一組排、標籤跟在上一組後面（2026-10-23） ----
-    private static final int GROUP_COUNT = 3;
+    // 2026-10-30 照站長「通貨分區要更明確」：符文另外照階級分四組（以前符文沒有參考價值，連完美符文都被歸到低價通貨）；
+    //   沒有參考價值的其他通貨（星諭牌堆）放中價
+    private static final int GROUP_COUNT = 7;
     private static final int GROUP_SIZE = 8;
     /** 通貨可以用的排（第 1～4 排；第 5 排是下面的按鈕）。 */
     private static final int FIRST_GROUP_ROW = 1;
     private static final int LAST_GROUP_ROW = 4;
-    private static final String[] GROUP_NAMES = {"低價通貨", "中價通貨", "高價通貨"};
-    private static final String[] GROUP_HINTS = {"微光石這一類，掉很多、不值錢", "改造會用到的", "少見、值錢的（通常都想撿）"};
+    private static final String[] GROUP_NAMES = {"低價通貨", "中價通貨", "高價通貨", "次級符文", "符文", "高階符文", "完美符文"};
+    private static final String[] GROUP_HINTS = {"微光石這一類，掉很多、不值錢", "改造會用到的", "少見、值錢的（通常都想撿）",
+            "最低階的符文", "一般的符文", "高階的符文", "最高階的符文（很少掉）"};
+    /** 符文的第一組（次級符文）。 */
+    private static final int RUNE_GROUP = 3;
     /** 參考價值低於這個是低價、低於這個是中價（照 economy.yml 的 values，金幣）。 */
     private static final long[] GROUP_BOUNDS = {100, 1500};
 
@@ -530,9 +535,7 @@ public final class LootFilterMenu extends Menu {
             if (type.dropWeight() <= 0 && !tw.exilecore.heist.HeistService.CONTRACT.equals(type.id())) {
                 continue; // 怪物不會掉的（鑑定卷軸、地圖機制的、未切割寶石）；劫盜合約另外掉（星圖裡的怪），也可以過濾（2026-10-16）
             }
-            final long value = value(type);
-            final int group = value < GROUP_BOUNDS[0] ? 0 : value < GROUP_BOUNDS[1] ? 1 : 2;
-            byGroup.get(group).add(type);
+            byGroup.get(groupOf(type)).add(type);
         }
         // 2026-10-29：排不下的換頁（每頁四排；每組從新的一排開始，標籤在第一格、通貨在後面 8 格），全部種類都看得到、點得到；
         //   這次之前四排塞不下就一組接著一組擠，再塞不下的直接不顯示（標籤寫「還有幾種排不下」）
@@ -540,7 +543,8 @@ public final class LootFilterMenu extends Menu {
         java.util.Arrays.fill(groupLabels, -1);
         final List<int[]> rows = new ArrayList<>(); // {組, 這一排第一種的序號}
         for (int group = 0; group < GROUP_COUNT; group++) {
-            byGroup.get(group).sort((a, b) -> Long.compare(value(a), value(b)));
+            byGroup.get(group).sort(group >= RUNE_GROUP ? java.util.Comparator.comparing(CurrencyType::id)
+                    : (a, b) -> Long.compare(value(a), value(b)));
             final int size = byGroup.get(group).size();
             for (int start = 0; start == 0 || start < size; start += GROUP_SIZE) {
                 rows.add(new int[] {group, start});
@@ -566,12 +570,18 @@ public final class LootFilterMenu extends Menu {
                     : "<gray>撿 " + shown + "、藏 " + hidden;
             final List<String> lore = new ArrayList<>();
             lore.add("<gray>" + GROUP_HINTS[group]);
-            lore.add("<dark_gray>照參考價值分（" + (group == 0 ? "低於 " + GROUP_BOUNDS[0] : group == 1 ? GROUP_BOUNDS[0] + "–" + (GROUP_BOUNDS[1] - 1)
-                    : GROUP_BOUNDS[1] + " 以上") + " 金幣）");
+            if (group < RUNE_GROUP) {
+                lore.add("<dark_gray>照參考價值分（" + (group == 0 ? "低於 " + GROUP_BOUNDS[0] : group == 1 ? GROUP_BOUNDS[0] + "–" + (GROUP_BOUNDS[1] - 1)
+                        : GROUP_BOUNDS[1] + " 以上") + " 金幣）" + (group == 1 ? "<dark_gray>；沒有參考價值的也在這" : ""));
+            } else {
+                lore.add("<dark_gray>符文照階級分（次級 → 一般 → 高階 → 完美）");
+            }
             lore.add(state);
             lore.add("");
             lore.add("<yellow>右鍵：這一組" + (shown == 0 ? "全部改成會撿" : "全部隱藏"));   // 有會撿的就全部隱藏（跟 click 一樣）
-            labels.add(icon(group == 0 ? Material.GLOWSTONE_DUST : group == 1 ? Material.GOLD_NUGGET : Material.NETHER_STAR,
+            labels.add(icon(group == 0 ? Material.GLOWSTONE_DUST : group == 1 ? Material.GOLD_NUGGET : group == 2 ? Material.NETHER_STAR
+                    : group == RUNE_GROUP ? Material.CLAY_BALL : group == RUNE_GROUP + 1 ? Material.LAPIS_LAZULI
+                    : group == RUNE_GROUP + 2 ? Material.AMETHYST_SHARD : Material.ECHO_SHARD,
                     "<#f5b942>【" + GROUP_NAMES[group] + "】", lore));
         }
         int lastGroup = -1;
@@ -879,6 +889,16 @@ public final class LootFilterMenu extends Menu {
             }
         }
         apply(next);
+    }
+
+    /** 2026-10-30：這種通貨在哪一組（符文照階級；其他照參考價值，沒有參考價值的放中價）。 */
+    private int groupOf(final CurrencyType type) {
+        if (type.operation() == tw.exilecore.currency.CurrencyOperation.RUNE) {
+            final String id = type.id();
+            return RUNE_GROUP + (id.endsWith("_lesser") ? 0 : id.endsWith("_greater") ? 2 : id.endsWith("_perfect") ? 3 : 1);
+        }
+        final long value = value(type);
+        return value <= 0 ? 1 : value < GROUP_BOUNDS[0] ? 0 : value < GROUP_BOUNDS[1] ? 1 : 2;
     }
 
     private int groupOf(final int slot) {

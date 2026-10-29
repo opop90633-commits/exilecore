@@ -3732,6 +3732,18 @@ supports:
       - { stat: damage, type: MORE, value: 20 }
       - { stat: skill.cooldown, type: INCREASED, value: -17 }
 
+  bidding_ii:              # Bidding II
+    name: 骸令 II
+    description: 被輔助的召喚物的指令技能更痛、冷卻回復更快。
+    icon: GOLD_BLOCK
+    tier: 3   # 原作第 4 階（我們的第 3 階）
+    requires: [command]
+    mana_multiplier: 1.0
+    # 2026-10-30 照 PoE2 Bidding II（poe2db.tw/tw/Bidding_II）：指令技能更多 30% 傷害、冷卻回復速度增加 30%；跟骸令同系列，一個技能只算一顆
+    modifiers:
+      - { stat: damage, type: MORE, value: 30 }
+      - { stat: cooldown.recovery, type: INCREASED, value: 30 }
+
   essence_harvest:         # Essence Harvest
     name: 魂收
     description: 被輔助的召喚技能叫出來的召喚物死掉時，你回復一部分魔力。

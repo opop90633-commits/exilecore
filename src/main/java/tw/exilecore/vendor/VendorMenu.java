@@ -197,7 +197,7 @@ public final class VendorMenu extends Menu {
             lore.addAll(baseLines(base, level));
             final double weight = uniqueWeights.getOrDefault(base.id(), 0.0);
             lore.add("<gray>魔法 " + percent(Rarity.MAGIC, weight) + "、稀有 " + percent(Rarity.RARE, weight)
-                    + (unique ? "、<#af6025>傳奇 " + percent(Rarity.UNIQUE, weight) : ""));
+                    + (unique && weight > 0 ? "、<#af6025>傳奇 " + percent(Rarity.UNIQUE, weight) : "")); // 2026-10-30：只有追逐級的基底不寫「傳奇 0%」（追逐級的機率在下一行）
             lore.addAll(chaseLines(base, level));
             lore.add(String.format(Locale.ROOT, "%s價格：%,d 金幣", gold >= price ? "<#f5b942>" : "<red>", price));
             lore.add("");

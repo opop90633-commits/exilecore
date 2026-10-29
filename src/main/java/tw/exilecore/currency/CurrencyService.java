@@ -410,6 +410,29 @@ public final class CurrencyService {
     }
 
     /** 複製裝備的通貨（operation: MIRROR，預設是映星鏡）；currencies.yml 沒有這種通貨回傳 null。 */
+    /** 2026-10-30：符文代號（runes.yml）對應的符文通貨（取出、換下來的符文還給玩家用）；找不到回傳 null。 */
+    public CurrencyType runeType(final String affix) {
+        if (affix == null) {
+            return null;
+        }
+        for (final CurrencyType type : repository.all()) {
+            if (type.operation() == CurrencyOperation.RUNE && affix.equals(type.affix())) {
+                return type;
+            }
+        }
+        return null;
+    }
+
+    /** 2026-10-30：把一顆符文還給玩家（背包 → 隨身背包 → 腳下只有自己撿得到）；認不得的符文回傳 false。 */
+    public boolean returnRune(final org.bukkit.entity.Player player, final tw.exilecore.economy.Wallet wallet, final String affix) {
+        final CurrencyType type = runeType(affix);
+        if (type == null || wallet == null) {
+            return false;
+        }
+        wallet.dropFor(player, wallet.give(player, create(type, 1)));
+        return true;
+    }
+
     public CurrencyType mirrorType() {
         return repository.firstWith(CurrencyOperation.MIRROR).orElse(null);
     }

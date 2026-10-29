@@ -81,7 +81,7 @@ public final class CurrencyListener implements Listener {
         final String why = currencies.explain(cursor, target); // 星魄、催化劑、星籤不能用的原因（先問，apply 之後資料就變了）
         final CurrencyType clicked = currencies.read(cursor).orElse(null);
         if (clicked != null && clicked.operation() == CurrencyOperation.RUNE && runesFull(target)) {
-            // 2026-10：符文孔都滿了：選一個舊的符文覆蓋掉（舊的那顆會消失）
+            // 2026-10：符文孔都滿了：選一個舊的符文換掉（2026-10-30 照站長：沒腐化的換下來的那顆還給你；腐化的才會消失）
             overwriteRune(player, event, clicked, target);
             return;
         }
@@ -290,7 +290,7 @@ public final class CurrencyListener implements Listener {
         player.closeInventory();
         plugin.dialogs().form(player, "<dark_gray>覆蓋符文",
                 List.of("<gray>這件的符文孔都滿了。", "<gray>選一顆舊的符文換成「<white>" + tw.exilecore.item.ItemRenderer.escape(rune.name()) + "</white>」",
-                        "<red>被換掉的那顆會消失（拿不回來）"),
+                        data.corrupted() ? "<red>已腐化：被換掉的那顆會消失（拿不回來）" : "<green>被換掉的那顆會還給你"),
                 List.of(new tw.exilecore.gui.Dialogs.Choice("slot", "要覆蓋哪一顆", options, "0")),
                 "覆蓋", answers -> {
                     final ItemStack stack = player.getInventory().getItem(slot);
@@ -313,6 +313,8 @@ public final class CurrencyListener implements Listener {
                         return;
                     }
                     final String before = plugin.items().toJson(now);
+                    final String old = now.runes().get(index);
+                    final boolean refund = !now.corrupted() && currencies.returnRune(player, plugin.economy().wallet(), old);
                     now.replaceRune(index, rune.affix());
                     plugin.items().update(stack, now);
                     player.getInventory().setItem(slot, stack);
@@ -321,7 +323,8 @@ public final class CurrencyListener implements Listener {
                             before, plugin.items().toJson(now));
                     plugin.players().markDirty(player);
                     player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 0.6f, 1.4f);
-                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#7fe0c8>第 " + (index + 1) + " 孔換成了" + tw.exilecore.item.ItemRenderer.escape(rune.name())));
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#7fe0c8>第 " + (index + 1) + " 孔換成了" + tw.exilecore.item.ItemRenderer.escape(rune.name())
+                            + (refund ? "<gray>（換下來的那顆還給你了）" : "")));
                 }, () -> { });
     }
 

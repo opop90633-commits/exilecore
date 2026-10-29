@@ -237,7 +237,7 @@ public final class FlaskService {
         final int charges = Math.max(0, Math.min(max, read(stack).map(FlaskData::charges).orElse(max)));
         stack.editMeta(meta -> {
             final List<Component> lore = new ArrayList<>();
-            for (final String line : lore(base, mods, charges, data.identified())) {
+            for (final String line : lore(base, mods, charges, data.identified(), FlaskMods.always(plugin.items().repository(), data))) {
                 lore.add(ItemRenderer.line(line));
             }
             final List<Component> affixLines = meta.lore();
@@ -277,7 +277,7 @@ public final class FlaskService {
         stack.editMeta(meta -> {
             meta.displayName(ItemRenderer.line("<white>" + ItemRenderer.escape(base.name())));
             final List<Component> lore = new ArrayList<>();
-            for (final String line : lore(base, FlaskMods.NONE, clamped, true)) {
+            for (final String line : lore(base, FlaskMods.NONE, clamped, true, false)) {
                 lore.add(ItemRenderer.line(line));
             }
             meta.lore(tw.exilecore.core.text.TextWrap.lore(lore)); // 2026-10-26：長行自動換行
@@ -293,7 +293,7 @@ public final class FlaskService {
         potionLook(stack, base, base.charges(), clamped);
     }
 
-    private List<String> lore(final FlaskBase base, final FlaskMods mods, final int charges, final boolean identified) {
+    private List<String> lore(final FlaskBase base, final FlaskMods mods, final int charges, final boolean identified, final boolean always) {
         final List<String> lines = new ArrayList<>();
         final String color = base.kind().color();
         final int max = mods.maxCharges(base.charges());
@@ -314,6 +314,13 @@ public final class FlaskService {
         if (mods.recoveryLow() != 1) {
             lines.add(String.format(Locale.ROOT, "<gray>%s低於 %d%% 時回復 <#8888ff>%d</#8888ff>", base.kind().displayName(),
                     Math.round(FlaskMods.LOW_FRACTION * 100), Math.round(mods.recoveryAmount(base.recovery(), true))));
+        }
+        if (always) {
+            // 2026-10-30 照 PoE2（拉維安加之泉）：不能喝，放在藥劑欄就一直照回復速度回復
+            lines.add(String.format(Locale.ROOT, "<gray>放在藥劑欄時每秒回復 <%s>%s</%s> %s<dark_gray>（不花充能）", color,
+                    trim(constantPerSecond(amount, seconds)), color, base.kind().displayName()));
+            lines.add("<gray>需求：等級 <white>" + base.level());
+            return lines;
         }
         lines.add("<gray>充能 <white>" + charges + "</white>／" + number + max + "</" + (boosted ? "#8888ff" : "white") + ">，每次用 "
                 + number + perUse + "</" + (boosted ? "#8888ff" : "white") + ">（還能喝 <white>" + charges / perUse + "</white> 次）");
@@ -528,6 +535,11 @@ public final class FlaskService {
             fail(player, state, base.name() + "需要等級 " + base.level());
             return true;
         }
+        if (always(item, base)) {
+            // 2026-10-30 照 PoE2（拉維安加之泉）：這瓶不能喝，效果一直套用（見 tickConstant）
+            fail(player, state, base.name() + "無法使用（效果一直套用中）");
+            return true;
+        }
         final FlaskMods mods = mods(item, base);
         final int perUse = perUse(player, base, mods);
         if (data.charges() < perUse) {
@@ -663,6 +675,7 @@ public final class FlaskService {
                 continue;
             }
             final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+            tickAlways(player, sheet);
             if (!constantLife(sheet)) {
                 continue;
             }
@@ -691,10 +704,69 @@ public final class FlaskService {
         }
     }
 
+    // ---- 2026-10-30 照 PoE2：拉維安加之泉（local_flask_always_drinking：無法使用，但會持續套用其效果） ----
+
+    /** 這瓶有沒有「無法使用，但會持續套用其效果」。 */
+    boolean always(final ItemStack stack, final FlaskBase base) {
+        final ItemData data = itemData(stack, base);
+        return data != null && FlaskMods.always(plugin.items().repository(), data);
+    }
+
+    /** 這種藥劑欄放的是一直套用的那種（而且等級夠）就回傳那瓶，不然 null。 */
+    private ItemStack alwaysSlot(final Player player, final FlaskKind kind) {
+        if (player == null || !eligible(player)) {
+            return null;
+        }
+        final ItemStack item = player.getInventory().getItem(slotFor(player, kind));
+        final FlaskData data = item == null || isPlaceholder(item) ? null : read(item).orElse(null);
+        final FlaskBase base = data == null ? null : config.base(data.base());
+        if (base == null || base.kind() != kind || plugin.players().get(player).level() < base.level() || !always(item, base)) {
+            return null;
+        }
+        return item;
+    }
+
+    /** 每秒：藥劑欄裡一直套用的藥劑照它的回復速度回復（不花充能、不立即）。 */
+    private void tickAlways(final Player player, final tw.exilecore.stats.StatSheet sheet) {
+        for (final FlaskKind kind : FlaskKind.values()) {
+            final ItemStack item = alwaysSlot(player, kind);
+            if (item == null) {
+                continue;
+            }
+            final boolean life = kind == FlaskKind.LIFE;
+            final PlayerState state = plugin.players().get(player);
+            if (life ? state.life() >= state.maxLife() - 1e-6 || tw.exilecore.ascendancy.AscendancyEffects.flaskNoLife(player)
+                    : state.mana() >= state.maxMana() - 1e-6) {
+                continue;
+            }
+            final FlaskBase base = config.base(read(item).orElseThrow().base());
+            final FlaskMods mods = mods(item, base);
+            final String stat = life ? tw.exilecore.stats.StatKeys.FLASK_LIFE_RECOVERY : tw.exilecore.stats.StatKeys.FLASK_MANA_RECOVERY;
+            final double recovery = mods.recoveryAmount(base.recovery(), false)
+                    * Math.max(0, 1 + sheet.increased(stat, java.util.Set.of())) * Math.max(0, sheet.more(stat, java.util.Set.of()));
+            final double seconds = mods.recoveryTime(base.duration())
+                    * Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.StatKeys.FLASK_DURATION, java.util.Set.of())) / flaskRate(sheet, life);
+            final double amount = constantPerSecond(recovery, seconds);
+            if (amount <= 0) {
+                continue;
+            }
+            if (life) {
+                state.setLife(state.life() + amount);
+                lifeToEs(state, sheet, amount);
+            } else {
+                state.setMana(state.mana() + amount);
+            }
+            plugin.players().display(player, state);
+        }
+    }
+
     /** 這個玩家的某一種藥劑效果還在進行中嗎（「藥劑效果中」的條件詞綴）。 */
     public boolean recovering(final Player player, final FlaskKind kind) {
         if (kind == FlaskKind.LIFE && constantLife(plugin.players().sheet(player))) {
             return true; // 2026-10-28 照 PoE2（綺夢）：生命藥劑的效果一直套用
+        }
+        if (alwaysSlot(player, kind) != null) {
+            return true; // 2026-10-30 照 PoE2（拉維安加之泉）：效果一直套用
         }
         final List<Recovery> list = active.get(player.getUniqueId());
         if (list == null) {
