@@ -1288,7 +1288,8 @@ public final class MapService {
      */
     public double phaseFloor(final LivingEntity entity) {
         if (!entity.getPersistentDataContainer().has(bossKey())) {
-            return 0;
+            // 2026-10-29 照站長：星骸之海的淵鯨、鯊王（有傷害遞減的 Boss）也換階段鎖血
+            return plugin.life() == null ? 0 : plugin.life().phaseFloor(entity);
         }
         return bosses.phaseFloor(instanceOf(entity), entity);
     }

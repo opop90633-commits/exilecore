@@ -117,6 +117,23 @@ public final class Corpses {
         contagions.remove(corpse);
     }
 
+    /**
+     * 2026-10-29 照 PoE2 Profane Ritual（穢陣把屍體標上符文）：把先拿走（{@link #remove}）的屍體放回去（同一個物件、原本的消失時間、
+     * 帶著的瘟疫）；穢陣沒撐到結束、或用掉時機率不毀掉屍體時用。已經過期的不放回去。
+     */
+    public void restore(final Corpse corpse, final Contagion contagion, final long now) {
+        if (corpse == null || corpse.until() <= now || corpses.contains(corpse)) {
+            return;
+        }
+        corpses.addLast(corpse);
+        if (contagion != null) {
+            contagions.put(corpse, contagion);
+        }
+        while (corpses.size() > MAX) {
+            contagions.remove(corpses.removeFirst());
+        }
+    }
+
     /** 清掉過期的。 */
     public void expire(final long now) {
         final Iterator<Corpse> iterator = corpses.iterator();

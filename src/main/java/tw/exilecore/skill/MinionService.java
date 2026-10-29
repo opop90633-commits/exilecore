@@ -160,6 +160,11 @@ public final class MinionService implements Listener, MinionHooks {
         Attack override;
         /** 附身的那種怪物（原版生物代號）；不是附身是 null。 */
         String spectreType;
+        /**
+         * 2026-10-29 照 PoE2：召喚物自己的生命偷取（一份最多牠最大生命的 10%、1 秒回完、每秒最多 20%，跟玩家的 {@link tw.exilecore.character.Leech} 一樣）；
+         * 這次之前召喚物的偷取一下直接回。
+         */
+        final tw.exilecore.character.Leech leech = new tw.exilecore.character.Leech();
 
         boolean onCooldown(final String ability, final long now) {
             return ready.getOrDefault(ability, 0L) > now;
@@ -168,9 +173,13 @@ public final class MinionService implements Listener, MinionHooks {
         void startCooldown(final String ability, final long now, final double seconds) {
             // 2026-10-26 照 PoE2：召喚物的冷卻回復速度（主人的「召喚物的冷卻回復速度」）；這次之前不吃
             // 2026-10-27 照 PoE2 Commandment：掛了號令的召喚物，指令的冷卻回復速度另外增加 100%
-            final double recovery = (sheet == null ? 0 : sheet.increased(tw.exilecore.stats.StatKeys.COOLDOWN_RECOVERY, Set.of()))
+            // 2026-10-29 照 PoE2 的 Minion Types（Cooldown）：從召喚物這邊掛的迅返、爆發這類（skill.cooldown、cooldown.recovery）也算；
+            // 這次之前只看主人給的召喚物冷卻回復速度
+            final StatSheet stats = effective != null ? effective : sheet;
+            final double recovery = (stats == null ? 0 : stats.increased(tw.exilecore.stats.StatKeys.COOLDOWN_RECOVERY, Set.of()))
                     + (COMMAND.equals(ability) && commandment(this) ? tw.exilecore.stats.SupportExtraKeys.COMMANDMENT_RECOVERY : 0);
-            ready.put(ability, now + Math.round(seconds * 20 / Math.max(0.1, 1 + recovery)));
+            final double scale = stats == null ? 1.0 : Math.max(0.1, stats.apply(tw.exilecore.stats.StatKeys.SKILL_COOLDOWN, 1.0, Set.of()));
+            ready.put(ability, now + Math.round(seconds * scale * 20 / Math.max(0.1, 1 + recovery)));
         }
 
         Minion(final UUID owner, final SkillBuild build, final SummonSpec spec, final Mob mob, final String name, final long now,
@@ -187,6 +196,14 @@ public final class MinionService implements Listener, MinionHooks {
 
         String skillId() {
             return build.definition().id();
+        }
+
+        /**
+         * 2026-10-29 照 PoE2（MinionsAreUndamagable）：不會受傷的召喚物——砲手、巨靈（只聽指令）與 summon.immortal 的（幻化武器）。
+         * 這次之前只有砲手、巨靈（幻化武器用生命 10 倍、抗性 75% 硬撐，還是會死）。
+         */
+        boolean undamageable() {
+            return MinionAbilities.commandOnly(skillId()) || spec.immortal();
         }
     }
 
@@ -226,6 +243,8 @@ public final class MinionService implements Listener, MinionHooks {
     private final SkillConfig config;
     private final SkillTargets targets;
     private final SkillVisuals visuals;
+    /** 2026-10-29 照 PoE2：遠程召喚物射出的投射物（真的會飛）。 */
+    private final MinionProjectiles projectiles;
     private final NamespacedKey key;
     private final NamespacedKey skillKey;
     private final NamespacedKey speedKey;
@@ -245,6 +264,7 @@ public final class MinionService implements Listener, MinionHooks {
         this.config = config;
         this.targets = targets;
         this.visuals = visuals;
+        this.projectiles = new MinionProjectiles(plugin, targets);
         this.key = new NamespacedKey(plugin, "minion");
         this.skillKey = new NamespacedKey(plugin, "minion_skill");
         this.speedKey = new NamespacedKey(plugin, "minion_speed");
@@ -490,7 +510,7 @@ public final class MinionService implements Listener, MinionHooks {
         Minion pick = null;
         for (final Minion minion : minions) {
             if (minion.owner.equals(owner.getUniqueId()) && !minion.decoy && minion.mob.isValid() && minion.mob.getWorld().equals(near.getWorld())
-                    && !MinionAbilities.commandOnly(minion.skillId()) // 2026-10-27：不會受傷的砲手、巨靈不能獻祭
+                    && !minion.undamageable() // 2026-10-27：不會受傷的砲手、巨靈不能獻祭（2026-10-29：幻化武器也不能）
                     && minion.mob.getLocation().distanceSquared(near) <= search * search && (pick == null || minion.bornTick < pick.bornTick)) {
                 pick = minion;
             }
@@ -1008,8 +1028,8 @@ public final class MinionService implements Listener, MinionHooks {
             mob.setCustomNameVisible(true);
             mob.getPersistentDataContainer().set(key, PersistentDataType.STRING, player.getUniqueId().toString());
             mob.getPersistentDataContainer().set(skillKey, PersistentDataType.STRING, build.definition().id());
-            if (MinionAbilities.commandOnly(build.definition().id())) {
-                mob.setInvulnerable(true); // 2026-10-27 照 PoE2：砲手、巨靈不會受傷
+            if (MinionAbilities.commandOnly(build.definition().id()) || spec.immortal()) {
+                mob.setInvulnerable(true); // 2026-10-27 照 PoE2：砲手、巨靈不會受傷（2026-10-29：幻化武器也是）
             }
             if (mob instanceof Zombie zombie) {
                 zombie.setShouldBurnInDay(false);
@@ -1187,6 +1207,13 @@ public final class MinionService implements Listener, MinionHooks {
         minion.profile = MinionSheets.profile(minion.build);
         minion.effective = minion.profile.local().isEmpty() ? minion.sheet // 2026-10：輔助寶石給召喚物的也拿掉 minion 標籤（防禦類才讀得到）
                 : minion.sheet.overlay(MinionSheets.stripMinion(minion.profile.local()));
+        // 2026-10-29 照 PoE2 Projectile Acceleration III（疾矢 III 從召喚物這邊掛）：投射物速度的增減也套用在召喚物的投射物傷害上
+        final double speedDamage = MinionTypes.speedAsDamage(minion.effective, minion.profile.tags());
+        if (Math.abs(speedDamage) > 1e-9) {
+            minion.profile = minion.profile.withLocal(List.of(new Modifier(tw.exilecore.stats.StatKeys.DAMAGE, tw.exilecore.stats.ModType.INCREASED,
+                    speedDamage, Set.of(tw.exilecore.stats.Tags.PROJECTILE), "投射物速度")));
+            minion.effective = minion.sheet.overlay(MinionSheets.stripMinion(minion.profile.local()));
+        }
         minion.attackTicks = MinionSheets.attackTicks(MinionSheets.attacksPerSecond(minion.effective, minion.profile));
         minion.regenPercent = MinionSheets.regenPercent(minion.effective);
         final double life = MinionSheets.life(minion.effective);
@@ -1236,6 +1263,7 @@ public final class MinionService implements Listener, MinionHooks {
 
     void tick() {
         final long now = now();
+        projectiles.tick(); // 2026-10-29 照 PoE2：遠程召喚物的投射物往前飛
         tickClouds(now); // 2026-10-26：射手的毒雲
         if (now % 200 == 0) {
             fallen.removeIf(down -> down.until() <= now);
@@ -1348,6 +1376,9 @@ public final class MinionService implements Listener, MinionHooks {
         if (minion.regenPercent > 0 && now % 20 == 0) {
             healFraction(mob, minion.regenPercent / 100.0);
         }
+        if (minion.spec.immortal() && now % 20 == minion.bornTick % 20) {
+            healFraction(mob, 1.0); // 2026-10-29 照 PoE2（幻化武器不會受傷）：保險，萬一哪裡直接扣了血，每秒補滿（砲手、巨靈在下面同樣補）
+        }
         if (minion.spec.heal() > 0 && now % 20 == minion.bornTick % 20) {
             healAllies(minion, owner); // 治療的召喚物（2026-10）
         }
@@ -1446,38 +1477,118 @@ public final class MinionService implements Listener, MinionHooks {
         }
     }
 
-    private void attack(final Minion minion, final LivingEntity target) {
+    /**
+     * 普攻：近戰的直接打目標；遠程的（骸骨射手的箭、焰術士的火彈）射出真的會飛的投射物（{@link #shoot}），打中時才算傷害。
+     * 2026-10-29 照 PoE2：投射物有速度（吃投射物速度）、多射的一律散開射出、各自穿透／分裂／連鎖（{@link MinionProjectiles}）；
+     * 打中時連周圍一起打的（焰術士的火彈）每一發打中的地方各炸一次，沒打中敵人落在地上也炸。
+     * 這次之前遠程的是直接命中的彈道，回傳打中的那幾隻，多射的只打 60° 內其他的敵人。
+     *
+     * @param bonus 焰術士品質的「多丟幾顆火彈」（照 PoE2 Fires +(0—2) Projectiles，算多射）
+     */
+    private void attack(final Minion minion, final LivingEntity target, final int bonus) {
         final Mob mob = minion.mob;
         mob.swingMainHand();
-        if (minion.spec.isRanged()) {
-            bolt(mob, target, minion.spec.bolt()); // 遠程（2026-10）：從身上畫一道彈道到目標
-        }
-        visuals.minionAttack(minion.build.definition().visual(), mob, target);
-        final List<LivingEntity> hits = new ArrayList<>();
-        hits.add(target);
-        if (minion.spec.radius() > 0) {
-            // 2026-10-17：「召喚物範圍」的加成以前讀不到——半徑照範圍效果開根號放大（跟技能的範圍一樣算法）
-            final double area = minion.effective == null || minion.profile == null ? 1.0
-                    : Math.sqrt(Math.max(0.05, minion.effective.apply(tw.exilecore.stats.StatKeys.SKILL_AREA, 1.0, minion.profile.tags())));
-            for (final LivingEntity other : targets.around(target.getLocation(), minion.spec.radius() * area, plugin.getServer().getPlayer(minion.owner))) {
-                if (other != target && !hits.contains(other)) {
-                    hits.add(other);
-                }
-            }
-        }
         // 2026-10-26 照 PoE2：狂卒每點怒氣攻擊傷害更多 1%
         // 2026-10-28 照 PoE2 Skeletal Reaver 的品質：召喚物的怒氣效果增加 (0—20)%
         final Attack raged = minion.rage > 0 && minion.profile != null ? with(minion, minion.profile.withLocal(List.of(Modifier.more(
                 tw.exilecore.stats.StatKeys.DAMAGE, MinionAbilities.RAGE_DAMAGE * minion.rage * rageEffect(minion), "怒氣")))) : null;
-        for (final LivingEntity hit : hits) {
-            if (hit.isValid() && !hit.isDead()) {
-                if (raged != null) {
-                    strike(minion, hit, raged);
-                } else {
-                    hit.damage(1.0, mob); // 數字由 CombatListener 換掉（MinionHooks），這裡的 1 只是觸發
+        // 2026-10-29 照 PoE2（Knockback 可以輔助骸骨戰士）：從召喚物這邊掛的擊退（skill.knockback）讓普攻把敵人往外推；Boss 不會被推
+        final double knockback = minion.effective == null || minion.profile == null ? 0
+                : Math.max(0, minion.effective.apply(tw.exilecore.stats.StatKeys.SKILL_KNOCKBACK,
+                minion.effective.flat(tw.exilecore.stats.StatKeys.SKILL_KNOCKBACK, minion.profile.tags()), minion.profile.tags()));
+        if (!minion.spec.isRanged()) {
+            visuals.minionAttack(minion.build.definition().visual(), mob, target);
+            impact(minion, target, target.getLocation(), raged, knockback, 1.0);
+            return;
+        }
+        shoot(minion, target, minion.spec.bolt(), bonus, new MinionProjectiles.Handler() {
+            @Override
+            public void hit(final MinionProjectiles.Shot shot, final LivingEntity struck, final Location at) {
+                if (mob.isValid()) {
+                    visuals.minionAttack(minion.build.definition().visual(), mob, struck); // 2026-10-29：打中的特效在投射物飛到時才放
+                }
+                impact(minion, struck, at, raged, knockback, shot.damage());
+            }
+
+            @Override
+            public void stop(final MinionProjectiles.Shot shot, final Location at, final boolean afterHit) {
+                if (!afterHit && minion.spec.radius() > 0) {
+                    impact(minion, null, at, raged, knockback, shot.damage()); // 火彈沒打中敵人：落地照樣炸
+                }
+            }
+        });
+    }
+
+    /**
+     * 2026-10-29：普攻打到的那一下（近戰的目標、投射物打中的、火彈落地的地方）：直接打中的 struck（可以是 null）＋範圍內的
+     * （summon.radius：焰術士的火彈），每一隻照普攻的傷害（怒氣、分裂的更少 20% 另外算）、擊退；焰術士的火彈再引爆附近的毒雲。
+     */
+    private void impact(final Minion minion, final LivingEntity struck, final Location at, final Attack raged, final double knockback,
+                        final double scale) {
+        final Mob mob = minion.mob;
+        if (!mob.isValid() || mob.isDead()) {
+            return;
+        }
+        final List<LivingEntity> hits = new ArrayList<>();
+        if (struck != null) {
+            hits.add(struck);
+        }
+        if (minion.spec.radius() > 0) {
+            // 2026-10-17：「召喚物範圍」的加成以前讀不到——半徑照範圍效果開根號放大（跟技能的範圍一樣算法）
+            final double area = minion.effective == null || minion.profile == null ? 1.0
+                    : Math.sqrt(Math.max(0.05, minion.effective.apply(tw.exilecore.stats.StatKeys.SKILL_AREA, 1.0, minion.profile.tags())));
+            final Location center = struck != null ? struck.getLocation() : at;
+            for (final LivingEntity other : targets.around(center, minion.spec.radius() * area, plugin.getServer().getPlayer(minion.owner))) {
+                if (!hits.contains(other)) {
+                    hits.add(other);
                 }
             }
         }
+        // 分裂出來的投射物傷害更少 20%（跟玩家的一樣）：換成帶倍率的這一下
+        Attack with = raged;
+        if (Math.abs(scale - 1) > 1e-9 && minion.profile != null) {
+            with = new Attack(plugin.getServer().getPlayer(minion.owner), minion.sheet,
+                    (raged != null ? raged.profile() : commanded(minion, musterProfile(minion))).scaled(scale, "分裂"));
+        }
+        for (final LivingEntity hit : hits) {
+            if (hit.isValid() && !hit.isDead()) {
+                if (with != null) {
+                    strike(minion, hit, with);
+                } else {
+                    hit.damage(1.0, mob); // 數字由 CombatListener 換掉（MinionHooks），這裡的 1 只是觸發
+                }
+                if (knockback > 0 && hit.isValid() && !hit.isDead() && plugin.monsters() != null
+                        && !plugin.monsters().data(hit).map(data -> data.boss()).orElse(false)) {
+                    final Vector push = hit.getLocation().toVector().subtract(mob.getLocation().toVector()).setY(0);
+                    if (push.lengthSquared() < 1e-6) {
+                        push.setX(1);
+                    }
+                    hit.setVelocity(push.normalize().multiply(knockback).setY(0.3)); // 跟技能的擊退一樣（SkillExecutor.knockback）
+                }
+            }
+        }
+        if (MinionAbilities.ARSONIST.equals(minion.skillId())) {
+            // 火彈：1.6 格、70% 轉火焰（summon 的 radius、convert）；每一發落點都會引爆毒雲（2026-10-29：投射物真的飛到才引爆）
+            detonate(minion.owner, struck != null ? struck.getLocation() : at, MinionAbilities.FIRE_BOMB_RADIUS * areaScale(minion), minion);
+            Fx.spawn(at.getWorld(), org.bukkit.Particle.FLAME, at.clone().add(0, 0.3, 0), 10, 0.5, 0.2, 0.5, 0.02);
+        }
+    }
+
+    /**
+     * 2026-10-29 照 PoE2：遠程召喚物朝 target 射一次（{@link MinionProjectiles}）：速度＝基礎速度（{@link MinionAbilities#projectileSpeed}）×
+     * 投射物速度，射程＝射擊距離 × {@value MinionAbilities#PROJECTILE_RANGE_SCALE}；多射、穿透、分裂、連鎖照召喚物疊好輔助的屬性表。
+     */
+    private void shoot(final Minion minion, final LivingEntity target, final String kind, final int bonus, final MinionProjectiles.Handler handler) {
+        final Player owner = plugin.getServer().getPlayer(minion.owner);
+        if (owner == null) {
+            return;
+        }
+        final MinionTypes.Projectiles shot = minion.profile == null ? MinionTypes.Projectiles.NONE
+                : MinionTypes.projectiles(minion.effective, minion.profile.tags());
+        final double base = MinionAbilities.projectileSpeed(minion.skillId());
+        final double speed = shot.speedOf(base > 0 ? base : MinionAbilities.SHARD_SPEED);
+        projectiles.launch(minion.owner, minion.mob, SkillTargets.center(target), kind, shot, bonus, speed,
+                Math.max(6, minion.spec.ranged() * MinionAbilities.PROJECTILE_RANGE_SCALE), handler);
     }
 
     /** 遠程召喚物的彈道：一串粒子從手邊到目標身上。 */
@@ -1804,7 +1915,8 @@ public final class MinionService implements Listener, MinionHooks {
             this.sniper = sniper;
             this.at = at;
             this.born = born;
-            this.until = born + Math.round(MinionAbilities.GAS_SECONDS * 20);
+            // 2026-10-29 照 PoE2（Skeletal Sniper 的 Minion Types 有 Duration）：毒雲的持續時間吃召喚物的持續時間加成（長留這類）；這次之前固定 8 秒
+            this.until = born + Math.round(MinionAbilities.GAS_SECONDS * durationScale(sniper) * 20);
             this.baseRadius = baseRadius;
             this.poisonBase = poisonBase;
             this.sheet = sheet;
@@ -1826,7 +1938,7 @@ public final class MinionService implements Listener, MinionHooks {
     /** 焚魂、蟲群：敵人不會主動去打（PoE2）。 */
     private static boolean ignoredByEnemies(final Minion minion) {
         return MinionAbilities.SPIRITS.equals(minion.skillId()) || MinionAbilities.SWARM.equals(minion.skillId())
-                || MinionAbilities.commandOnly(minion.skillId()); // 2026-10-27：砲手、巨靈不會受傷（敵人也不去打）
+                || minion.undamageable(); // 2026-10-27：砲手、巨靈不會受傷（敵人也不去打）；2026-10-29：幻化武器也是（原作沒寫敵人會不會打牠，打了也沒用，乾脆不去打）
     }
 
     /** 蟲群只打主人身邊 4 格內的敵人；其他召喚物都算。 */
@@ -1848,6 +1960,12 @@ public final class MinionService implements Listener, MinionHooks {
     /** 2026-10-28 照 PoE2 Skeletal Reaver 的品質：召喚物的怒氣效果倍率（1 + 品質的 x%）。 */
     private static double rageEffect(final Minion minion) {
         return Math.max(0, 1 + (minion.build == null ? 0 : minion.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.MINION_RAGE_EFFECT)) / 100.0);
+    }
+
+    /** 2026-10-29 照 PoE2 的 Minion Types（Duration）：召喚物自己的技能效果持續時間倍率（從召喚物這邊掛的長留這類）。 */
+    static double durationScale(final Minion minion) {
+        return minion == null || minion.effective == null || minion.profile == null ? 1.0
+                : Math.max(0.1, minion.effective.apply(tw.exilecore.stats.StatKeys.SKILL_DURATION, 1.0, minion.profile.tags()));
     }
 
     private static double areaScale(final Minion minion) {
@@ -1873,10 +1991,18 @@ public final class MinionService implements Listener, MinionHooks {
         if (minion.regenUntil > now && second) {
             heal(minion.mob, minion.regenPerSecond);
         }
+        if (minion.leech.pending() > 0 && minion.effective != null && minion.healthScale > 0) {
+            // 2026-10-29 照 PoE2：召喚物的偷取每 tick 回一點（每份 1 秒回完、每秒最多最大生命 20%）；滿血剩下的結束
+            final double recovered = MinionTypes.recoverLeech(minion.leech, 0.05, MinionSheets.life(minion.effective),
+                    minion.mob.getHealth() / minion.healthScale, minion.effective);
+            if (recovered > 0) {
+                heal(minion.mob, recovered);
+            }
+        }
         if (minion.rage > 0 && second && now - minion.rageGainedAt >= MinionAbilities.RAGE_DECAY_DELAY) {
             minion.rage = Math.max(0, minion.rage - (int) MinionAbilities.RAGE_DECAY_PER_SECOND);
         }
-        if (minion.enragedAt >= 0 && second && now > minion.enragedAt) {
+        if (minion.enragedAt >= 0 && second && now > minion.enragedAt && !minion.undamageable()) { // 2026-10-29：不會受傷的不會失血
             // 激怒：每秒失去最大生命 1%，每過一秒失去的速度更多 20%
             final double loss = MinionSheets.life(minion.effective) * MinionAbilities.enrageDegen((now - minion.enragedAt) / 20.0 - 1)
                     * minion.healthScale;
@@ -1969,28 +2095,14 @@ public final class MinionService implements Listener, MinionHooks {
                 }
             }
             case MinionAbilities.ARSONIST -> {
-                attack(minion, target); // 火彈：1.6 格、70% 轉火焰（summon 的 radius、convert）
-                detonate(minion.owner, target.getLocation(), MinionAbilities.FIRE_BOMB_RADIUS * areaScale(minion), minion);
-                // 2026-10-28 照 PoE2 Skeletal Arsonist 的品質：多丟 (0—2) 顆火彈（無條件捨去），散開落在附近其他的敵人身上（附近沒有別的就不丟）
-                final int extra = OriginalSkills.qualityInt(minion.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.EXTRA_PROJECTILES));
-                if (extra > 0) {
-                    int thrown = 0;
-                    for (final LivingEntity other : targets.around(target.getLocation(), MinionAbilities.EXTRA_BOMB_SPREAD, owner)) {
-                        if (thrown >= extra) {
-                            break;
-                        }
-                        if (other == target || other.getLocation().distanceSquared(target.getLocation()) < 1e-4) {
-                            continue;
-                        }
-                        attack(minion, other);
-                        detonate(minion.owner, other.getLocation(), MinionAbilities.FIRE_BOMB_RADIUS * areaScale(minion), minion);
-                        thrown++;
-                    }
-                }
+                // 火彈：1.6 格、70% 轉火焰（summon 的 radius、convert），落點引爆毒雲（impact）。
+                // 2026-10-28 照 PoE2 Skeletal Arsonist 的品質（Fires +(0—2) Projectiles，無條件捨去）：
+                // 2026-10-29 照 PoE2 改成多射——跟輔助的多射一起散開射出（附近沒有別的敵人也射）；這次之前落在附近其他的敵人身上、沒有別的就不丟
+                attack(minion, target, OriginalSkills.qualityInt(minion.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.EXTRA_PROJECTILES)));
                 return minion.attackTicks;
             }
             case MinionAbilities.REAVER -> {
-                attack(minion, target);
+                attack(minion, target, 0);
                 if (minion.enragedAt >= 0) {
                     minion.rage = Math.min(MinionAbilities.RAGE_MAX, minion.rage + MinionAbilities.RAGE_ON_HIT); // 激怒：擊中獲得 2 點怒氣
                     minion.rageGainedAt = now;
@@ -2000,7 +2112,7 @@ public final class MinionService implements Listener, MinionHooks {
             default -> {
             }
         }
-        attack(minion, target);
+        attack(minion, target, 0);
         return minion.attackTicks;
     }
 
@@ -2034,7 +2146,9 @@ public final class MinionService implements Listener, MinionHooks {
         final List<LivingEntity> chain = new ArrayList<>();
         chain.add(target);
         LivingEntity last = target;
-        for (int i = 0; i < MinionAbilities.ARC_CHAINS; i++) {
+        // 2026-10-29 照 PoE2（Skeletal Storm Mage 的 Minion Types 有 Chains）：連環這類「多連鎖 x 次」加在電弧的 2 次上
+        final int chains = MinionAbilities.ARC_CHAINS + MinionTypes.projectiles(minion.effective, hit.profile().tags()).chains();
+        for (int i = 0; i < chains; i++) {
             LivingEntity next = null;
             for (final LivingEntity near : targets.around(last.getLocation(), MinionAbilities.ARC_CHAIN_RANGE, owner)) {
                 if (!chain.contains(near)) {
@@ -2077,17 +2191,29 @@ public final class MinionService implements Listener, MinionHooks {
     private void iceShard(final Minion minion, final LivingEntity target, final Player owner) {
         final int level = minion.build.level();
         final List<Modifier> freeze = List.of(Modifier.more(tw.exilecore.stats.StatKeys.FREEZE_BUILDUP, 1.0, "冰箭"));
-        bolt(minion.mob, target, "cold");
-        strike(minion, target, with(minion, spellProfile(minion, "ice_shard", tw.exilecore.stats.DamageType.COLD,
-                MinionAbilities.range(MinionAbilities.SHARD_COLD, level), MinionAbilities.SHARD_CRIT, Set.of(tw.exilecore.stats.Tags.PROJECTILE), freeze)));
+        final Attack shard = with(minion, spellProfile(minion, "ice_shard", tw.exilecore.stats.DamageType.COLD,
+                MinionAbilities.range(MinionAbilities.SHARD_COLD, level), MinionAbilities.SHARD_CRIT, Set.of(tw.exilecore.stats.Tags.PROJECTILE), freeze));
         final Attack explosion = with(minion, spellProfile(minion, "ice_shard_explosion", tw.exilecore.stats.DamageType.COLD,
                 MinionAbilities.range(MinionAbilities.SHARD_EXPLOSION_COLD, level), MinionAbilities.SHARD_EXPLOSION_CRIT,
                 Set.of(tw.exilecore.stats.Tags.AREA), freeze));
-        final Location at = target.getLocation();
-        for (final LivingEntity near : targets.around(at, MinionAbilities.SHARD_RADIUS * areaScale(minion) + target.getWidth() / 2, owner)) {
-            strike(minion, near, explosion);
-        }
-        Fx.spawn(at.getWorld(), org.bukkit.Particle.SNOWFLAKE, at.clone().add(0, 1, 0), 8, 0.3, 0.3, 0.3, 0.02);
+        // 2026-10-29 照 PoE2（Skeletal Frost Mage 的 Minion Types 有 Projectile）：冰箭吃多射、穿透、分裂、連鎖，每一發打中的都炸開；
+        // 這次之前只打目標一隻。2026-10-29 照 PoE2：冰箭真的會飛（MinionProjectiles，吃投射物速度），多射的一律散開射出；這次之前直接命中
+        minion.mob.swingMainHand();
+        shoot(minion, target, "cold", 0, (shot, hit, where) -> {
+            final boolean forked = Math.abs(shot.damage() - 1) > 1e-9; // 分裂出來的更少 20%（跟玩家的一樣）
+            strike(minion, hit, forked ? scaled(shard, shot.damage()) : shard);
+            final Location at = hit.getLocation();
+            final Attack blast = forked ? scaled(explosion, shot.damage()) : explosion;
+            for (final LivingEntity near : targets.around(at, MinionAbilities.SHARD_RADIUS * areaScale(minion) + hit.getWidth() / 2, owner)) {
+                strike(minion, near, blast);
+            }
+            Fx.spawn(at.getWorld(), org.bukkit.Particle.SNOWFLAKE, at.clone().add(0, 1, 0), 8, 0.3, 0.3, 0.3, 0.02);
+        });
+    }
+
+    /** 2026-10-29：同一招的傷害乘 factor（分裂出來的投射物）。 */
+    private static Attack scaled(final Attack attack, final double factor) {
+        return new Attack(attack.owner(), attack.sheet(), attack.profile().scaled(factor, "分裂"));
     }
 
     /** 躍擊：往目標跳過去，落地時打 1 格內的敵人並擊退；回傳幾 tick 後再出手。 */
@@ -2352,7 +2478,7 @@ public final class MinionService implements Listener, MinionHooks {
 
     private void obeyed(final Player owner, final Minion minion) {
         final double percent = plugin.players().sheet(owner).flat(tw.exilecore.passive.ConquestEffects.COMMAND_LIFE_LOSS, MinionSheets.CONTEXT);
-        if (percent <= 0 || !minion.mob.isValid()) {
+        if (percent <= 0 || !minion.mob.isValid() || minion.undamageable()) { // 2026-10-29：不會受傷的召喚物不扣
             return;
         }
         final AttributeInstance max = minion.mob.getAttribute(Attribute.MAX_HEALTH);
@@ -2393,7 +2519,7 @@ public final class MinionService implements Listener, MinionHooks {
         for (final LivingEntity near : targets.around(at, radius, owner)) {
             if (plugin.combat() != null) {
                 plugin.combat().debuffs().apply(near.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff("minion_intimidate", owner.getUniqueId(),
-                        now + Math.round(MinionAbilities.ROAR_SECONDS * 20), MinionAbilities.INTIMIDATE_TAKEN, false));
+                        now + Math.round(MinionAbilities.ROAR_SECONDS * durationScale(brute) * 20), MinionAbilities.INTIMIDATE_TAKEN, false)); // 2026-10-29：恫嚇吃持續時間
             }
             if (plugin.ailments() != null && plugin.ailments().isFrozen(near)) {
                 plugin.ailments().cure(near, tw.exilecore.ailment.AilmentType.FREEZE);
@@ -2543,7 +2669,7 @@ public final class MinionService implements Listener, MinionHooks {
             Minion victim = null;
             for (final Minion other : minions) {
                 if (other == arsonist || taken.contains(other) || !other.owner.equals(arsonist.owner) || other.decoy || !other.mob.isValid()
-                        || other.mob.isDead() || MinionAbilities.SWARM.equals(other.skillId()) || MinionAbilities.commandOnly(other.skillId())
+                        || other.mob.isDead() || MinionAbilities.SWARM.equals(other.skillId()) || other.undamageable() // 2026-10-29：幻化武器也不能引爆
                         || !other.mob.getWorld().equals(point.getWorld())
                         || other.mob.getLocation().distanceSquared(point) > MinionAbilities.DEMISE_SEARCH * MinionAbilities.DEMISE_SEARCH
                         || other.mob.getHealth() / other.healthScale >= threshold) {
@@ -2639,7 +2765,7 @@ public final class MinionService implements Listener, MinionHooks {
                         || ally.mob.getLocation().distanceSquared(point) > radius * radius) {
                     continue;
                 }
-                ally.iceArmourUntil = now + Math.round(MinionAbilities.ARMOUR_SECONDS * 20);
+                ally.iceArmourUntil = now + Math.round(MinionAbilities.ARMOUR_SECONDS * durationScale(mage) * 20); // 2026-10-29：冰甲吃持續時間
                 ally.iceArmourCold = new double[] {cold[0] * mage.factors[0], cold[1] * mage.factors[0]};
                 rebuild(ally, plugin.players().sheet(owner), false);
                 Fx.spawn(ally.mob.getWorld(), org.bukkit.Particle.SNOWFLAKE, ally.mob.getLocation().add(0, 1, 0), 12, 0.4, 0.6, 0.4, 0.02);
@@ -2772,6 +2898,7 @@ public final class MinionService implements Listener, MinionHooks {
             }
         }
         focus.remove(owner);
+        projectiles.forget(owner); // 2026-10-29
         deaths.keySet().removeIf(key -> key.startsWith(owner + ":")); // 2026-10-27
         clouds.removeIf(cloud -> cloud.owner.equals(owner)); // 2026-10-26
         fallen.removeIf(down -> down.owner().equals(owner));
@@ -2784,6 +2911,7 @@ public final class MinionService implements Listener, MinionHooks {
         }
         clouds.clear(); // 2026-10-26
         fallen.clear();
+        projectiles.clear(); // 2026-10-29
         sweep();
     }
 
@@ -2949,7 +3077,8 @@ public final class MinionService implements Listener, MinionHooks {
             return 0;
         }
         for (final Minion minion : minions) {
-            if (!minion.owner.equals(owner) || !isCompanion(minion) || !minion.mob.isValid() || minion.mob.isDead()) {
+            if (!minion.owner.equals(owner) || !isCompanion(minion) || !minion.mob.isValid() || minion.mob.isDead()
+                    || minion.undamageable()) { // 2026-10-29：不會受傷的召喚物不替你承受
                 continue;
             }
             final double life = minion.mob.getHealth() / Math.max(1e-6, minion.healthScale);
@@ -2972,6 +3101,15 @@ public final class MinionService implements Listener, MinionHooks {
             if (minion.owner.equals(owner.getUniqueId()) && !minion.decoy && minion.mob.isValid()) {
                 heal(minion.mob, amount);
             }
+        }
+    }
+
+    @Override
+    public void leech(final LivingEntity entity, final double amount) {
+        // 2026-10-29 照 PoE2：召喚物擊中偷到的生命存進牠自己的偷取（一份最多牠最大生命的 10%），poe2Tick 慢慢回；這次之前直接回
+        final Minion minion = byEntity.get(entity.getUniqueId());
+        if (minion != null && amount > 0 && minion.effective != null) {
+            MinionTypes.addLeech(minion.leech, amount, MinionSheets.life(minion.effective));
         }
     }
 
@@ -3119,7 +3257,7 @@ public final class MinionService implements Listener, MinionHooks {
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onSwarmHit(final EntityDamageByEntityEvent event) {
         final Minion target = byEntity.get(event.getEntity().getUniqueId());
-        if (target != null && (MinionAbilities.SWARM.equals(target.skillId()) || MinionAbilities.commandOnly(target.skillId())
+        if (target != null && (MinionAbilities.SWARM.equals(target.skillId()) || target.undamageable() // 2026-10-29：幻化武器也不會受傷
                 || target.immuneUntil > now())) { // 2026-10-28 照 PoE2 Skeletal Cleric 的品質：剛復活的骷髏
             event.setCancelled(true); // 2026-10-27：砲手、巨靈也不會受傷（PoE2 MinionsAreUndamagable）
         }

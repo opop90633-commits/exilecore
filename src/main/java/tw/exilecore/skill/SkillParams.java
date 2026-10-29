@@ -127,12 +127,14 @@ public record SkillParams(double reach, double angle, int targets, double knockb
      * 地面效果：留 duration 秒，每 interval 秒對裡面的敵人造成技能 damage%（30 = 三成）的傷害。
      * zone 運作方式的形狀：circle（準心指的地方一圈）或 line（面前橫向的一道，length 長）；pull 是每波往中心拉幾格；
      * max 同一個玩家這個技能的地面效果同時最多幾個（0 = 不另外限制；超過的話最舊的那個消失）。
+     * corpse（2026-10-29 照 PoE2 Profane Ritual）：要一具屍體才放得出來，地面效果的中心是那具屍體（準心附近 search 格內最近的，
+     * 沒有就找自己身邊的），撐到結束時用掉屍體（見 SkillZones）；這次之前穢陣不用屍體、畫在準心指的地方。
      */
     public record Zone(double duration, double interval, Scaled radius, double damage, String shape, Scaled length, double pull, int max,
-                       Bolts bolts, Shower shower) {
+                       Bolts bolts, Shower shower, boolean corpse) {
         public Zone(final double duration, final double interval, final Scaled radius, final double damage, final String shape, final Scaled length,
                     final double pull, final int max) {
-            this(duration, interval, radius, damage, shape, length, pull, max, null, null);
+            this(duration, interval, radius, damage, shape, length, pull, max, null, null, false);
         }
 
         public boolean line() {
@@ -512,7 +514,8 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                         m(f, check(where + ".bolts", "range", node.node("bolts").decimal("range", 5.6), 1, 16)),
                         m(f, check(where + ".bolts", "chain_range", node.node("bolts").decimal("chain_range", 3.5), 1, 16))) : null,
                 node.has("shower") ? new Shower(scaled(where + ".shower", node.node("shower"), "count", 3, 1, 20),
-                        m(f, check(where + ".shower", "radius", node.node("shower").decimal("radius", 0.6), 0.2, 4))) : null);
+                        m(f, check(where + ".shower", "radius", node.node("shower").decimal("radius", 0.6), 0.2, 4))) : null,
+                node.bool("corpse", false)); // 2026-10-29 照 PoE2 Profane Ritual：要屍體
     }
 
     /** 2026-10-29：照 PoE2 公尺寫的距離換成格（{@link tw.exilecore.core.Units}；先照公尺檢查範圍再換）。 */

@@ -384,15 +384,16 @@ final class MapBosses {
     private void checkPhases(final MapInstance instance, final LivingEntity boss) {
         final List<MapConfig.Phase> phases = instance.bossDef().phases();
         final AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
+        final long now = plugin.getServer().getCurrentTick();
         if (max == null || instance.bossPhase() >= phases.size()) {
-            holdPhase(instance, boss, false);
+            holdPhase(instance, boss, PhaseStep.transitioning(now, instance.phaseTick())); // 2026-10-29：最後一個階段也有 2.5 秒的換階段
             return;
         }
         final double fraction = boss.getHealth() / Math.max(1, max.getValue());
-        final long now = plugin.getServer().getCurrentTick();
         final MapConfig.Phase phase = phases.get(instance.bossPhase());
         final PhaseStep.Step step = PhaseStep.step(phase.at(), fraction, now, instance.phaseTick(), instance.shielded());
-        holdPhase(instance, boss, step == PhaseStep.Step.WAIT);
+        // 2026-10-29 照站長：剛進新階段的 2.5 秒也打不動（PhaseStep.TRANSITION_TICKS）
+        holdPhase(instance, boss, step == PhaseStep.Step.WAIT || PhaseStep.transitioning(now, instance.phaseTick()));
         if (step != PhaseStep.Step.ENTER) {
             return;
         }
@@ -400,9 +401,8 @@ final class MapBosses {
         instance.setPhaseTick(now);
         service.bossLog().note(boss, "進入第 " + instance.bossPhase() + " 階段：" + phase.name());
         enterPhase(instance, boss, phase);
-        if (!instance.shielded() && instance.bossPhase() < phases.size() && fraction <= phases.get(instance.bossPhase()).at()) {
-            holdPhase(instance, boss, true); // 血已經到下一個階段：馬上開始等（不用等到下一次檢查，中間 0.5 秒也打不動）
-        }
+        // 2026-10-29 照站長：進了新階段馬上無敵 2.5 秒（換階段）；這次之前只有血已經到下一個門檻時才馬上開始等
+        holdPhase(instance, boss, true);
         // 新階段的屬性：屬性表重算、原版速度同步（血量比例不變）
         plugin.monsters().refreshVanilla(boss);
         final AttributeInstance speed = boss.getAttribute(Attribute.MOVEMENT_SPEED);

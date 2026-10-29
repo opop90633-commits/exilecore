@@ -18,7 +18,8 @@ final class MinionEstimates {
     }
 
     /**
-     * 巨伴（Tangmazu's Thurible：召喚物獲得你 x% 的閃避值與偏斜值）、夥伴獲得你的力量（天賦：力量給的生命，每點 2，換成召喚物的單位）。純函式（測試用）。
+     * 巨伴（Tangmazu's Thurible：召喚物獲得你 x% 的閃避值與偏斜值）、夥伴獲得你的力量（天賦：力量給的生命，每點 2，換成召喚物的單位）、
+     * 幻化武器的力量、敏捷加成（2026-10-29）。純函式（測試用）。
      *
      * @param lifeFactor PoE2 生命換成我們的單位（{@link MinionSheets#poe2Factors} 的第二格）
      * @param companion  這隻算不算夥伴（殘影不算）
@@ -32,6 +33,11 @@ final class MinionEstimates {
         if (gigantic > 0) {
             out.add(Modifier.flat(StatKeys.EVASION, Math.max(0, ownerSheet.get(StatKeys.EVASION)) * gigantic / 100.0, "巨伴"));
             out.add(Modifier.flat(StatKeys.DEFLECTION, Math.max(0, ownerSheet.get(StatKeys.DEFLECTION)) * gigantic / 100.0, "巨伴"));
+        }
+        if (MinionAbilities.MANIFEST.equals(build.definition().id())) {
+            // 2026-10-29 照 PoE2 Manifest Weapon：每 1 點力量增加 1% 傷害、每 3 點敏捷增加 1% 攻擊速度（戰鬥、說明、每秒傷害共用）；這次之前沒有效果
+            out.add(Modifier.increased(StatKeys.DAMAGE, Math.max(0, ownerSheet.get(StatKeys.STR)) / MinionAbilities.MANIFEST_STR_PER_DAMAGE / 100.0, "幻化武器：力量"));
+            out.add(Modifier.increased(StatKeys.ATTACK_SPEED, Math.max(0, ownerSheet.get(StatKeys.DEX)) / MinionAbilities.MANIFEST_DEX_PER_SPEED / 100.0, "幻化武器：敏捷"));
         }
         if (companion && build.definition().tags().contains(tw.exilecore.stats.TreeMechanicKeys.COMPANION)
                 && StatKeys.flag(ownerSheet, tw.exilecore.stats.TreeNewMechanicKeys.FLAG_COMPANION_STRENGTH)) {

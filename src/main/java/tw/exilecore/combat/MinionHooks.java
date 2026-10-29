@@ -35,6 +35,14 @@ public interface MinionHooks {
     /** 回復召喚物的生命（我們的單位；擊中回復生命輔助）。 */
     void heal(LivingEntity minion, double amount);
 
+    /**
+     * 2026-10-29 照 PoE2：召喚物擊中偷到的生命（我們的單位，還沒封頂）存進牠自己的偷取，之後慢慢回
+     * （一份最多牠最大生命的 10%、1 秒回完、每秒最多 20%）。這次之前沒有這個，偷取直接用 {@link #heal} 回。
+     */
+    default void leech(final LivingEntity minion, final double amount) {
+        heal(minion, amount);
+    }
+
     /** 2026-10-26 照 PoE2：召喚物目前的能量護盾（我們的單位；沒有回傳 0）。擊中先扣護盾再扣生命。 */
     default double energyShield(final LivingEntity minion) {
         return 0;

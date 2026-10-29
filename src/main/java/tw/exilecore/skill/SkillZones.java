@@ -72,6 +72,12 @@ final class SkillZones implements SkillTargets.Strikeable {
         /** 2026-10-28 照 PoE2 Volcano：每一波噴幾顆火山彈（0 = 照舊整圈都打）、每顆炸多大。 */
         int shards;
         double shardRadius;
+        /**
+         * 2026-10-29 照 PoE2 Profane Ritual：這個穢陣標上符文的屍體（施放時從屍體清單拿走，別的技能、別的穢陣用不到）、它帶著的瘟疫；
+         * null = 不用屍體。撐到結束才用掉（{@link #completed}），沒撐到就放回去（{@link #release}）。
+         */
+        tw.exilecore.combat.Corpses.Corpse corpse;
+        tw.exilecore.combat.Corpses.Contagion contagion;
 
         Zone(final UUID owner, final String skill, final World world, final List<Location> points, final double radius, final SkillProfile profile,
              final String visual, final long untilTick, final int intervalTicks, final double pull, final long now, final String exclusive) {
@@ -92,10 +98,26 @@ final class SkillZones implements SkillTargets.Strikeable {
 
     /** 2026-10-24（穢陣，PoE2 Profane Ritual 的「儀式完成時獲得一顆銳星」）：地面效果自然結束時照 charge.zone_end.代號 給戰星。 */
     private void completed(final Player owner, final Zone zone) {
-        if (plugin.combat() == null || plugin.combat().charges() == null || zone.profile == null) {
+        if (plugin.combat() == null || zone.profile == null) {
+            release(zone);
             return;
         }
         final tw.exilecore.stats.StatSheet effective = zone.profile.effective(plugin.players().sheet(owner));
+        if (zone.corpse != null) {
+            // 2026-10-29 照 PoE2 Profane Ritual：儀式完成時用掉屍體（品質 (0—10)% 機率不毀掉、天賦樹與惜屍的機率一樣算：corpse.save_chance）；
+            // 這次之前穢陣不用屍體
+            final tw.exilecore.combat.Corpses.Corpse used = zone.corpse;
+            final tw.exilecore.combat.Corpses.Contagion carried = zone.contagion;
+            zone.corpse = null;
+            zone.contagion = null;
+            if (tw.exilecore.stats.TreeEffectKeys.corpseSaved(effective, plugin.random())) {
+                plugin.combat().corpses().restore(used, carried, now());
+            }
+            plugin.players().get(owner).markRecent(tw.exilecore.stats.Recently.CORPSE, plugin.getServer().getCurrentTick()); // 「最近消耗過屍體」
+        }
+        if (plugin.combat().charges() == null) {
+            return;
+        }
         for (final tw.exilecore.charge.ChargeType type : plugin.combat().charges().config().types()) {
             final int count = (int) Math.round(effective.flat(tw.exilecore.charge.ChargeService.ZONE_END + type.id(), zone.profile.tags()));
             if (count > 0) {
@@ -288,6 +310,7 @@ final class SkillZones implements SkillTargets.Strikeable {
             if (same >= limit + tw.exilecore.ascendancy.AscendancyEffects.limitBonus(owner, profile.tags()) && oldestSame != null) {
                 oldestSame.gone = true;
                 zones.remove(oldestSame);
+                release(oldestSame); // 2026-10-29 照 PoE2 Profane Ritual：被擠掉的穢陣沒完成，屍體放回去
                 oldestSame.onExpire = null; // 2026-10-29 照站長：雷雲被新的擠掉不留殘骸（放完雷、時間到才給）；同日稍早擠掉也給，連放就一直給
             }
         }
@@ -304,6 +327,7 @@ final class SkillZones implements SkillTargets.Strikeable {
         if (mine >= MAX_PER_PLAYER && oldest != null) {
             oldest.gone = true;
             zones.remove(oldest);
+            release(oldest); // 2026-10-29：同上
         }
         final int interval = (int) Math.max(1, Math.round(intervalSeconds * 20));
         // 地面效果不是投射物、不是近戰打擊：拿掉這些標籤，加上範圍（吃「增加範圍傷害」）
@@ -393,6 +417,42 @@ final class SkillZones implements SkillTargets.Strikeable {
         }
         newest.onExpire = action;
         return true;
+    }
+
+    /**
+     * 2026-10-29 照 PoE2 Profane Ritual：owner 剛放下的這個技能的地面效果標上 corpse 這具屍體（呼叫的人已經把它從屍體清單拿走）。
+     * 找不到剛放的地面效果就把屍體放回去，回傳 false。
+     */
+    boolean ritual(final UUID owner, final String skill, final tw.exilecore.combat.Corpses.Corpse corpse,
+                   final tw.exilecore.combat.Corpses.Contagion carried) {
+        Zone newest = null;
+        for (final Zone zone : zones) {
+            if (!zone.gone && zone.owner.equals(owner) && skill.equals(zone.skill)) {
+                newest = zone; // 清單照放的順序，最後一個是剛放的
+            }
+        }
+        if (newest == null || newest.corpse != null) {
+            if (plugin.combat() != null) {
+                plugin.combat().corpses().restore(corpse, carried, now());
+            }
+            return false;
+        }
+        newest.corpse = corpse;
+        newest.contagion = carried;
+        return true;
+    }
+
+    /**
+     * 2026-10-29 照 PoE2 Profane Ritual：穢陣沒撐到結束（被第 6 個擠掉、主人下線或換世界）：不給銳星，屍體不用掉、放回去
+     * （原作沒寫儀式中斷時屍體怎麼辦，照「儀式完成時才用掉屍體」推：沒完成就不用掉）。
+     */
+    private void release(final Zone zone) {
+        final tw.exilecore.combat.Corpses.Corpse corpse = zone.corpse;
+        zone.corpse = null;
+        if (corpse != null && plugin.combat() != null) {
+            plugin.combat().corpses().restore(corpse, zone.contagion, now());
+        }
+        zone.contagion = null;
     }
 
     /** 2026-10-29：地面效果真的消失了（不是主人下線、換世界）：跑一次 onExpire。 */
@@ -1047,8 +1107,10 @@ final class SkillZones implements SkillTargets.Strikeable {
                 zone.gone = true;
                 expired = true;
                 if (now >= zone.untilTick && owner != null && owner.getWorld().equals(zone.world)) {
-                    completed(owner, zone); // 2026-10-24（穢陣）：撐到結束給戰星
+                    completed(owner, zone); // 2026-10-24（穢陣）：撐到結束給戰星（2026-10-29：用掉屍體）
                     expired(zone); // 2026-10-29：雷雲時間到留下殘骸
+                } else {
+                    release(zone); // 2026-10-29 照 PoE2 Profane Ritual：主人下線、換世界，穢陣沒完成，屍體放回去
                 }
                 continue;
             }
@@ -1277,6 +1339,7 @@ final class SkillZones implements SkillTargets.Strikeable {
         zones.removeIf(zone -> {
             if (zone.owner.equals(owner)) {
                 zone.gone = true;
+                release(zone); // 2026-10-29：穢陣標的屍體放回去
                 return true;
             }
             return false;
@@ -1291,6 +1354,7 @@ final class SkillZones implements SkillTargets.Strikeable {
     void clear() {
         for (final Zone zone : zones) {
             zone.gone = true;
+            release(zone); // 2026-10-29：穢陣標的屍體放回去
         }
         zones.clear();
         impacts.clear();

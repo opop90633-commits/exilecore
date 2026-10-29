@@ -807,7 +807,10 @@ class MapTest {
         assertEquals(264300, DpsCap.effective(20000000, 150000, over), 1e-6);
         assertEquals(150000, DpsCap.effective(1000000, 150000, List.of()), 1e-6, "沒寫分段：超過的全部不算");
         final DpsCap cap = new DpsCap();
-        assertEquals(1000 * 162000 / 300000.0, cap.apply("a", 1000, 150000, over, 0, 300000), 1e-6, "照打假人的紀錄：每一下乘同一個比例");
+        // 2026-10-29 照站長：遞減看這一下之前的平均（不含這一下、不看假人紀錄）——單發大傷害照算，下一下才遞減
+        assertEquals(10_000_000, cap.apply("a", 10_000_000, 150000, over, 0, 300000), 1e-6, "第一下一千萬照算");
+        final double next = cap.apply("a", 10_000_000, 150000, over, 2, 300000);
+        assertTrue(next < 10_000_000 * 0.2, "緊接著的下一下大幅遞減：" + next);
         // 沒打過假人、實際每秒打 50 萬：打一陣子之後等效大約 17.1 萬
         double dealt = 0;
         for (int tick = 0; tick < 20 * 20; tick += 2) {
@@ -816,7 +819,7 @@ class MapTest {
                 dealt += hit;
             }
         }
-        assertEquals(171000, dealt / 10, 5000, "後 10 秒平均每秒");
+        assertEquals(171000, dealt / 10, 10000, "後 10 秒平均每秒"); // 2026-10-29：看 4 秒平均、不含這一下，穩定值略高（約 17.8 萬）；這次之前容差 5000
         assertEquals(10, cap.apply("x", 10, 0, over, 0, 999999), 1e-9, "上限 0 = 不限");
         // 2026-10-21：開場 4 秒後只看實際打出來的：紀錄 47 萬、實際每秒 10 萬（每 2 tick 1 萬）的人不被減
         double last = 0;

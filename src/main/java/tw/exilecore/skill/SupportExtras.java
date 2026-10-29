@@ -443,7 +443,8 @@ public final class SupportExtras implements Listener {
         MinionService.Minion best = null;
         double distance = tw.exilecore.core.Units.metres(SupportExtraKeys.MINION_PACT_RANGE) * tw.exilecore.core.Units.metres(SupportExtraKeys.MINION_PACT_RANGE); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（常數在 SupportExtraKeys，照公尺，在這裡乘）
         for (final MinionService.Minion minion : service.minions().all()) {
-            if (!minion.owner.equals(player.getUniqueId()) || !minion.mob.isValid() || !minion.mob.getWorld().equals(player.getWorld())) {
+            if (!minion.owner.equals(player.getUniqueId()) || !minion.mob.isValid() || !minion.mob.getWorld().equals(player.getWorld())
+                    || minion.undamageable()) { // 2026-10-29 照 PoE2：不會受傷的召喚物（幻化武器、砲手、巨靈）不能拿來扣血
                 continue;
             }
             final double d = minion.mob.getLocation().distanceSquared(player.getLocation());

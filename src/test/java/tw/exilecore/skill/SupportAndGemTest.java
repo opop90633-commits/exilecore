@@ -123,10 +123,12 @@ class SupportAndGemTest {
         assertEquals(null, power.refusal(skill("fireball")));
         assertEquals(null, power.refusal(skill("boneshatter")));
         assertEquals("要攻擊技能", support("life_leech").refusal(skill("fireball")), "沒有排除的：照 requires 講");
-        assertEquals("攻擊技能", support("life_leech").supportsText(config.all()));
+        // 2026-10-29 照 PoE2 的 Minion Types：飲血照召喚物的攻擊也能掛在召喚技能上，說明多寫一句；這次之前只寫「攻擊技能」
+        assertEquals("攻擊技能；召喚物的技能符合時也能掛在召喚技能上（效果給召喚物）", support("life_leech").supportsText(config.all()));
         assertEquals("近戰技能（召喚物除外）", support("rage").supportsText(config.all()),
                 "召喚物用近戰打（melee 標籤）：真的會碰到");
-        assertEquals("任何技能", support("starfall_resonance").supportsText(config.all()));
+        // 2026-10-29 照 PoE2 的 Minion Types：星骸共鳴也能照召喚物的範圍技能掛在召喚技能上；這次之前只寫「任何技能」
+        assertEquals("任何技能；召喚物的技能符合時也能掛在召喚技能上（效果給召喚物）", support("starfall_resonance").supportsText(config.all()));
         // 說明裡寫的排除，都真的有玩家學得到的技能被它擋下來
         for (final SupportDefinition support : config.supports()) {
             for (final String tag : support.relevantExcludes(config.all())) {

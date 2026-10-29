@@ -75,6 +75,11 @@ final class SkillExecutor {
                     return "附近沒有屍體";
                 }
             }
+            case ZONE -> { // 2026-10-29 照 PoE2 Profane Ritual：穢陣要一具屍體（花魔力之前就擋下來）；這次之前不用屍體
+                if (needsCorpse(build) && corpseNear(Origin.of(player), build) == null) {
+                    return "附近沒有屍體";
+                }
+            }
             case FLICKER -> {
                 return flickerCheck(player, build, preferred);
             }
@@ -2120,7 +2125,16 @@ final class SkillExecutor {
             }
         } else {
             final Location center;
-            if (build.range() <= 0) {
+            tw.exilecore.combat.Corpses.Corpse corpse = null;
+            if (needsCorpse(build)) {
+                // 2026-10-29 照 PoE2 Profane Ritual：在一具屍體上畫符文（準心附近 search 格內最近的，沒有就找自己身邊的；跟骸爆同一套），
+                // 穢陣的中心是那具屍體；沒有屍體就放不出來（圖騰、連瀑放的也一樣，各自要一具）。這次之前畫在準心指的地方
+                corpse = origin.owner() == null || plugin.combat() == null ? null : corpseNear(origin, build);
+                if (corpse == null) {
+                    return;
+                }
+                center = new Location(origin.world(), corpse.x(), corpse.y(), corpse.z());
+            } else if (build.range() <= 0) {
                 center = origin.feet().clone();
             } else {
                 final LivingEntity aimed = targets.aimed(origin, build.range(), 1.0);
@@ -2128,6 +2142,13 @@ final class SkillExecutor {
             }
             zones.addCircle(origin.owner(), center, radius, profile, visual, build.durationTicks(params.duration()), params.interval(), params.pull(),
                     build.definition().id(), zoneMax(origin, build, params.max()));
+            if (corpse != null) {
+                // 2026-10-29 照 PoE2 Profane Ritual：屍體被符文標住——先從屍體清單拿走（同一具屍體不會同時有兩個穢陣、別的技能也用不到），
+                // 撐到結束才真的用掉、給銳星；沒撐到就放回去（SkillZones.ritual／release）
+                final tw.exilecore.combat.Corpses.Contagion carried = plugin.combat().corpses().contagion(corpse);
+                plugin.combat().corpses().remove(corpse);
+                zones.ritual(origin.owner().getUniqueId(), build.definition().id(), corpse, carried);
+            }
             if (origin.owner() != null && (params.bolts() != null || params.shower() != null)) {
                 // 2026-10-28 照 PoE2：雷雲每一波一道會連鎖的雷（連鎖 3 → 5 → 9 次，再加連鎖的輔助）、地火柱每一波噴 3 → 5 → 6 顆火山彈（再加投射物數量）
                 final tw.exilecore.stats.StatSheet effective = build.profile().effective(plugin.players().sheet(origin.owner()));
@@ -2244,6 +2265,12 @@ final class SkillExecutor {
             corpse = corpses.nearest(origin.world().getUID(), origin.feet().getX(), origin.feet().getZ(), build.range(), now);
         }
         return corpse;
+    }
+
+    /** 2026-10-29 照 PoE2 Profane Ritual：這個地面效果要不要一具屍體（skills.yml 的 zone.corpse）。 */
+    static boolean needsCorpse(final SkillBuild build) {
+        final SkillParams.Zone zone = build.definition().mechanic() == Mechanic.ZONE ? build.params().zone() : null;
+        return zone != null && zone.corpse() && !zone.line();
     }
 
     /** 準心指的點附近最近的屍體；沒有回傳 null。 */

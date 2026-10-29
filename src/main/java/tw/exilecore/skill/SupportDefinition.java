@@ -227,8 +227,21 @@ public record SupportDefinition(String id, String name, String description, Stri
     /**
      * 不能掛在這個技能上的原因（接在「X 不能輔助 Y」後面的括號裡）：「召喚物技能不行」「要攻擊技能或法術技能」；可以掛回傳 null。
      * 以前一律寫「要 requires」，被 excludes 擋下來的也這樣寫——聚銳不能輔助召喚骷髏（要攻擊技能或法術技能），召喚骷髏明明是法術。
+     * <p>
+     * 2026-10-29 照 PoE2 的 Minion Types：技能自己的標籤不行時，召喚技能再照召喚物的技能標籤驗一次（{@link MinionTypes#check}），
+     * 可以的話掛上去、效果給召喚物；requires 也不符合召喚物的技能時照舊回傳技能自己的原因。這次之前只看技能自己的標籤。
      */
     public String refusal(final SkillDefinition skill) {
+        final String own = ownRefusal(skill);
+        if (own == null || MinionTypes.of(skill).isEmpty()) {
+            return own;
+        }
+        final MinionTypes.Verdict viaMinions = MinionTypes.check(this, skill);
+        return viaMinions.ok() ? null : viaMinions.matched() ? viaMinions.reason() : own;
+    }
+
+    /** 只看技能自己的標籤能不能掛（{@link #refusal} 再補上召喚物的技能標籤）；可以回傳 null。 */
+    String ownRefusal(final SkillDefinition skill) {
         if (skill.hidden() && skill.isAttack()) {
             return "普攻不能掛輔助寶石";
         }
@@ -307,7 +320,8 @@ public record SupportDefinition(String id, String name, String description, Stri
             return "不會造成傷害的技能不行";
         }
         // 2026-10：投射物的機制（多射幾發、穿透、分裂、連鎖、飛行速度…）只有真的射出投射物的技能才吃得到：
-        // 落釘弩台是 impact 機制帶 projectile 標籤（定身用），遠程召喚物也只是畫一道彈道
+        // 落釘弩台是 impact 機制帶 projectile 標籤（定身用）；召喚技能本身不射投射物
+        // （2026-10-29 照 PoE2：遠程召喚物的投射物真的會飛，從召喚物這邊掛的照 MinionTypes.check，連投射物速度都吃得到；這次之前「只是畫一道彈道」）
         // 2026-10-24：從天上掉下來的彈（弩台這種延遲落下的投射物）吃投射物速度（落下更快）：只動速度的輔助（疾矢…）可以掛
         // 2026-10-27：射到地上再落下的投射物技能（召霆矢…）多的投射物各落一道（SkillExecutor.impact）：動到投射物數量的輔助也可以掛
         // 2026-10-28 照 PoE2 Falling Thunder：猛擊之後另外射投射物的（skills.yml stages.thunder，SkillExecutor.thunderBolts）也算
@@ -646,7 +660,18 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (hitsOnly() && !Set.of(Tags.ATTACK, Tags.MELEE, Tags.PROJECTILE, Tags.STRIKE, Tags.SLAM, Tags.GRENADE).containsAll(requires)) {
             names.add("不會造成傷害的技能"); // 只要攻擊的（攻擊一定會打到敵人）就不用寫
         }
-        return names.isEmpty() ? requiresText() : requiresText() + "（" + String.join("、", names) + "除外）";
+        final String text = names.isEmpty() ? requiresText() : requiresText() + "（" + String.join("、", names) + "除外）";
+        return skills != null && minionCapable(skills) ? text + "；召喚物的技能符合時也能掛在召喚技能上（效果給召喚物）" : text;
+    }
+
+    /** 2026-10-29 照 PoE2 的 Minion Types：有沒有召喚技能是只靠召喚物的技能標籤才掛得上這顆的（說明用）。 */
+    private boolean minionCapable(final java.util.Collection<SkillDefinition> skills) {
+        for (final SkillDefinition skill : skills) {
+            if (!skill.hidden() && MinionTypes.throughMinions(this, skill)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 排除的標籤裡，真的有技能會碰到的（玩家學得到、本來符合 requires、又有這個標籤），照 excludes 的順序；skills 是 null 回傳全部。 */

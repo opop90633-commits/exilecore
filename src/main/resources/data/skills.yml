@@ -1092,7 +1092,8 @@ skills:
     # 2026-10 平衡：群體召喚太強，damage 0.7 → 0.32
     # 2026-10-23 弱勢補強：damage 0.32 → 0.42（90 級以上 3 人實測中位數只有 24 萬；殭屍要屍體、20 秒就消失，比骸骨兵難維持）
     # 2026-10-26 照 PoE2（Raised Zombie）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
-    summon: { kind: ZOMBIE, ally: true, count: 1, max: 10, duration: 20, life: 0.7, damage: 0.75, attack_speed: 0.8, speed: 1.25, reach: 2.0,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Raise Zombie 的 Minion Types（Attack, Melee, MeleeSingleTarget, Area）；殭屍沒有範圍攻擊，範圍不列
+    summon: { minion_tags: [attack, melee], kind: ZOMBIE, ally: true, count: 1, max: 10, duration: 20, life: 0.7, damage: 0.75, attack_speed: 0.8, speed: 1.25, reach: 2.0,
               corpse: true, search: 10, helmet: IRON_HELMET }
     cast_time: 0.6
     mana: [10, 11, 13, 16, 18, 21, 24, 27, 31, 35, 39, 44, 49, 55, 61, 68, 75, 83, 92, 102, 113, 124, 137, 150, 165, 181, 199, 218, 238, 261, 285, 311, 340, 371, 404, 440, 480, 522, 568, 618]   # 2026-10-28 照 PoE2（poe2db Raise Zombie 1–40 級）；這次之前 [6, 18]
@@ -1112,7 +1113,8 @@ skills:
     # 2026-10：持續 20 → 30 秒、生命 1.0 → 1.5（不用一直補）
     # 2026-10 平衡：群體召喚太強，damage 0.45 → 0.27
     # 2026-10-26 照 PoE2（Skeletal Warrior）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
-    summon: { kind: SKELETON, ally: true, count: 2, max: 40, duration: 0, life: 0.88, damage: 0.7, attack_speed: 1.0, speed: 1.3, reach: 2.0,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Skeletal Warrior 的 Minion Types（Attack, Melee, MeleeSingleTarget, Area）；骸骨戰士沒有範圍攻擊，範圍不列
+    summon: { minion_tags: [attack, melee], kind: SKELETON, ally: true, count: 2, max: 40, duration: 0, life: 0.88, damage: 0.7, attack_speed: 1.0, speed: 1.3, reach: 2.0,
               weapon: IRON_SWORD, helmet: CHAINMAIL_HELMET,
               armour: 0.5, stats: [{ stat: block.chance, type: FLAT, value: 30 }] }
     cast_time: 0.5
@@ -1132,7 +1134,8 @@ skills:
     aura: { reserve: 30, radius: 8, allies: false }   # 2026-10：只活幾秒的召喚，照 PoE2 固定 30
     # 2026-10 平衡：群體召喚太強，damage 0.4 → 0.22
     # 2026-10-26 照 PoE2（Raging Spirit）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
-    summon: { kind: VEX, ally: true, count: 1, max: 10, duration: 5, life: 0.25, damage: 0.7, attack_speed: 1.4, speed: 1.0, reach: 1.6,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Raging Spirits 的 Minion Types（Attack, Melee, MeleeSingleTarget, Area, Fire）；焚魂只撲咬單體，範圍不列
+    summon: { minion_tags: [attack, melee, fire], kind: VEX, ally: true, count: 1, max: 10, duration: 5, life: 0.25, damage: 0.7, attack_speed: 1.4, speed: 1.0, reach: 1.6,
               spread: 0.2 }
     convert: { fire: 0.7 }
     cast_time: 0.5
@@ -1173,7 +1176,8 @@ skills:
     # 2026-10-26 照 PoE2（Wolf Companion）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
     # 2026-10-26 照 PoE2（Tame Beast 的夥伴）：傷害用怪物表再補正，約等於召喚物表 × 1.25（damage 0.7 × 1.25 = 0.875；這次之前 0.7）；
     #   原作沒有吼叫引怪（這次之前 taunt: 6、taunt_radius: 8）；躍擊（7 秒冷卻）在程式 MinionService
-    summon: { kind: WOLF, ally: true, count: 1, max: 1, duration: 0, life: 1.1, damage: 0.875, attack_speed: 1.25, speed: 1.2, reach: 1.8,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 PoE2 Tame Beast（原作照馴服的野獸而定，poe2db 沒有固定的 Minion Types）：我們的狼伴照狼（Wolf Pack）算，躍擊的落地是範圍
+    summon: { minion_tags: [attack, melee, area], kind: WOLF, ally: true, count: 1, max: 1, duration: 0, life: 1.1, damage: 0.875, attack_speed: 1.25, speed: 1.2, reach: 1.8,
               evasion: 0.3, spread: 0.2 }
     cast_time: 0.5   # 狼（Wolf Companion）沒有可以指令的技能，按鍵照舊提示（PoE2 指令夥伴是 0.7 秒）
     cooldown: 1.5
@@ -2101,7 +2105,8 @@ skills:
     # 2026-10-26 照 PoE2（Skeletal Brute）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
     # 2026-10-26 照 PoE2：普攻只打一個（範圍是碎骨的震波），沒有吼叫引怪（這次之前 radius: 2.0、taunt: 5、taunt_radius: 8）；
     #   碎骨、震地咆哮在程式 MinionService；cast_time = 指令的施放時間
-    summon: { kind: WITHER_SKELETON, ally: true, count: 1, max: 40, duration: 0, life: 1.2, damage: 2.0, attack_speed: 0.571, speed: 0.9, reach: 2.4,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Skeletal Brute 的 Minion Types（Attack, Melee, MeleeSingleTarget, Area, Duration, Cold, Warcry）：碎骨、震波、震地咆哮的範圍與恫嚇的持續時間吃得到
+    summon: { minion_tags: [attack, melee, area, duration, cold, warcry], kind: WITHER_SKELETON, ally: true, count: 1, max: 40, duration: 0, life: 1.2, damage: 2.0, attack_speed: 0.571, speed: 0.9, reach: 2.4,
               weapon: STONE_AXE,
               armour: 0.7, stats: [{ stat: stun.buildup, type: MORE, value: 50 }] }
     cast_time: 1.0
@@ -2122,7 +2127,8 @@ skills:
     mechanic: aura
     aura: { reserve: 0, per_minion: [90, 65, 50, 41, 37, 37, 35, 35, 35, 33, 33, 33, 31, 31, 31, 31, 30, 30, 30, 30, 29, 29, 29, 29, 29, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 26, 26, 26, 26, 26], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 90 → 20 級 30），付得起幾隻叫幾隻
     # 2026-10-26 照 PoE2（Skeletal Sniper）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
-    summon: { kind: SKELETON, ally: true, count: 2, max: 40, duration: 0, life: 0.55, damage: 1.15, attack_speed: 0.667, speed: 1.1, reach: 2.0,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Skeletal Sniper 的 Minion Types（Attack, Projectile, Duration, Area, CreatesGroundEffect）：箭吃穿透、連鎖、分裂、多射，毒雲吃範圍與持續時間
+    summon: { minion_tags: [attack, projectile, area, duration], kind: SKELETON, ally: true, count: 2, max: 40, duration: 0, life: 0.55, damage: 1.15, attack_speed: 0.667, speed: 1.1, reach: 2.0,
               ranged: 14, bolt: arrow, weapon: BOW, helmet: LEATHER_HELMET }
     cast_time: 1.25   # 2026-10-26 照 PoE2 指令（毒氣箭）的施放時間；這次之前 0.5
     cooldown: 1.5
@@ -2140,7 +2146,8 @@ skills:
     mechanic: aura
     aura: { reserve: 0, per_minion: [90, 65, 50, 47, 47, 47, 44, 44, 44, 42, 42, 42, 40, 40, 40, 40, 39, 39, 39, 39, 38, 38, 38, 38, 38, 37, 37, 37, 37, 37, 36, 36, 36, 36, 36, 35, 35, 35, 35, 35], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 90 → 20 級 39），付得起幾隻叫幾隻
     # 2026-10-26 照 PoE2（Skeletal Arsonist）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
-    summon: { kind: SKELETON, ally: true, count: 1, max: 40, duration: 0, life: 0.55, damage: 0.7, attack_speed: 1.0, speed: 1.0, reach: 2.0,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Skeletal Arsonist 的 Minion Types（Attack, Projectile, Area）：火彈吃穿透、連鎖、分裂、多射與範圍
+    summon: { minion_tags: [attack, projectile, area], kind: SKELETON, ally: true, count: 1, max: 40, duration: 0, life: 0.55, damage: 0.7, attack_speed: 1.0, speed: 1.0, reach: 2.0,
               ranged: 12, bolt: fire, radius: 1.6, weapon: BLAZE_ROD, helmet: GOLDEN_HELMET,
               resists: { fire: 50 }, es: 0.1 }   # 2026-10-26 照 PoE2：火彈 1.6 格（這次之前 1.5）、生命的 10% 是能量護盾
     convert: { fire: 0.7 }   # 2026-10-26 照 PoE2 火彈：物理 70% 轉火焰；這次之前 1.0
@@ -2160,7 +2167,8 @@ skills:
     mechanic: aura
     aura: { reserve: 0, per_minion: [120, 87, 66, 54, 49, 49, 45, 45, 45, 42, 42, 42, 40, 40, 40, 40, 39, 39, 39, 39, 38, 38, 38, 38, 38, 37, 37, 37, 37, 37, 36, 36, 36, 36, 36, 35, 35, 35, 35, 35], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 120 → 20 級 39），付得起幾隻叫幾隻
     # 2026-10-26 照 PoE2（Skeletal Storm Mage）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
-    summon: { kind: STRAY, ally: true, count: 1, max: 40, duration: 0, life: 0.53, damage: 0.65, attack_speed: 1.0, speed: 1.0, reach: 2.0,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Skeletal Storm Mage 的 Minion Types（Spell, Damage, Area, AreaSpell, Chains, CreatesGroundEffect, Duration）：電弧吃連鎖、死亡風暴吃範圍；感電地面的持續時間沒接上，持續不列
+    summon: { minion_tags: [spell, area, chain], kind: STRAY, ally: true, count: 1, max: 40, duration: 0, life: 0.53, damage: 0.65, attack_speed: 1.0, speed: 1.0, reach: 2.0,
               ranged: 12, bolt: lightning, weapon: LIGHTNING_ROD,
               resists: { lightning: 50 }, es: 0.15 }   # 2026-10-26 照 PoE2：生命的 15% 是能量護盾
     convert: { lightning: 1.0 }   # 2026-10-26：電弧、死亡風暴的傷害照 PoE2 的表（MinionAbilities），這個只剩萬一用到普攻時的轉換
@@ -3042,7 +3050,8 @@ skills:
     hidden: true
     tags: [minion, physical]
     mechanic: summon
-    summon: { kind: SKELETON, ally: true, count: 1, max: [8, 8, 8, 10, 10, 10, 12, 12, 12, 14, 14, 14, 16, 16, 16, 18, 18, 18, 20, 20, 20, 22, 22, 22, 24, 24, 24, 26, 26, 26, 28, 28, 28, 30, 30, 30, 32, 32, 32, 34], duration: 15, life: 0.35, damage: 0.75, attack_speed: 0.943, speed: 1.2, reach: 2.0,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Unearth 的 Minion Types（Attack, Melee, MeleeSingleTarget, Area）；骨構體沒有範圍攻擊，範圍不列（掘骸本身照 MinionTypes.HOSTED）
+    summon: { minion_tags: [attack, melee], kind: SKELETON, ally: true, count: 1, max: [8, 8, 8, 10, 10, 10, 12, 12, 12, 14, 14, 14, 16, 16, 16, 18, 18, 18, 20, 20, 20, 22, 22, 22, 24, 24, 24, 26, 26, 26, 28, 28, 28, 30, 30, 30, 32, 32, 32, 34], duration: 15, life: 0.35, damage: 0.75, attack_speed: 0.943, speed: 1.2, reach: 2.0,
               corpse: true, search: 6, weapon: STONE_SWORD }
     cast_time: 0.95
     mana: 0
@@ -3085,7 +3094,8 @@ skills:
     aura: { reserve: 0, per_minion: [90, 65, 50, 41, 37, 37, 35, 35, 35, 33, 33, 33, 31, 31, 31, 31, 30, 30, 30, 30, 29, 29, 29, 29, 29, 28, 28, 28, 28, 28, 27, 27, 27, 27, 27, 26, 26, 26, 26, 26], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 90 → 20 級 30），付得起幾隻叫幾隻
     # 2026-10 平衡：群體召喚太強，damage 0.45 → 0.28
     # 2026-10-26 照 PoE2（Skeletal Reaver）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
-    summon: { kind: WITHER_SKELETON, ally: true, count: 2, max: 40, duration: 0, life: 0.7, damage: 0.46, attack_speed: 1.205, speed: 1.4, reach: 2.0,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Skeletal Reaver 的 Minion Types（Attack, Melee, MeleeSingleTarget, Area）；狂卒沒有範圍攻擊，範圍不列
+    summon: { minion_tags: [attack, melee], kind: WITHER_SKELETON, ally: true, count: 2, max: 40, duration: 0, life: 0.7, damage: 0.46, attack_speed: 1.205, speed: 1.4, reach: 2.0,
               weapon: IRON_SWORD,
               armour: 0.2 }
     cast_time: 1.0   # 2026-10-26 照 PoE2 指令（激怒）的施放時間；這次之前 0.5
@@ -3104,7 +3114,8 @@ skills:
     mechanic: aura
     aura: { reserve: 0, per_minion: [120, 87, 66, 54, 49, 49, 46, 46, 46, 43, 43, 43, 41, 41, 41, 41, 39, 39, 39, 39, 38, 38, 38, 38, 38, 37, 37, 37, 37, 37, 36, 36, 36, 36, 36, 35, 35, 35, 35, 35], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 120 → 20 級 39），付得起幾隻叫幾隻
     # 2026-10-26 照 PoE2（Skeletal Frost Mage）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
-    summon: { kind: STRAY, ally: true, count: 1, max: 40, duration: 0, life: 0.53, damage: 0.6, attack_speed: 1.0, speed: 1.0, reach: 2.0,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Skeletal Frost Mage 的 Minion Types（Spell, Projectile, Damage, Area, Cascadable, Cooldown, Buff, Duration）：冰箭吃穿透、連鎖、分裂、多射，炸開與冰甲吃範圍，冰甲吃冷卻與持續時間
+    summon: { minion_tags: [spell, projectile, area, cooldown, duration], kind: STRAY, ally: true, count: 1, max: 40, duration: 0, life: 0.53, damage: 0.6, attack_speed: 1.0, speed: 1.0, reach: 2.0,
               ranged: 12, bolt: cold, weapon: PACKED_ICE,
               resists: { cold: 50 }, es: 0.15 }   # 2026-10-26 照 PoE2：生命的 15% 是能量護盾
     convert: { cold: 1.0 }   # 2026-10-26：冰箭的傷害照 PoE2 的表（MinionAbilities），這個只剩萬一用到普攻時的轉換
@@ -3233,7 +3244,8 @@ skills:
     #   damage 1.25 = PoE2 附身用怪物傷害表再補正，約等於召喚物表 × 1.25；每隻精魂 floor(50 × P^0.75)（這裡寫 50 = P 1，程式照附身的怪換）
     mechanic: aura
     aura: { reserve: 0, per_minion: 50, radius: 8, allies: false }
-    summon: { kind: ZOMBIE, ally: true, count: 1, max: 40, duration: 0, life: 1.0, damage: 1.25, attack_speed: 1.0, speed: 1.1, reach: 2.2,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 PoE2 Bind Spectre（原作照附身的怪物而定，poe2db 沒有固定的 Minion Types）：我們的幽魂一律用近戰打，自己推定
+    summon: { minion_tags: [attack, melee], kind: ZOMBIE, ally: true, count: 1, max: 40, duration: 0, life: 1.0, damage: 1.25, attack_speed: 1.0, speed: 1.1, reach: 2.2,
               spectre: true, search: 12 }
     cast_time: 1.0   # 按鍵附身的施放時間（PoE2 Bind Spectre 是 3 秒；按下去附近沒屍體也會卡住，這裡用 1 秒）
     cooldown: 1.5
@@ -3251,7 +3263,8 @@ skills:
     mechanic: aura
     aura: { reserve: 0, per_minion: [60, 44, 33, 27, 25, 25, 23, 23, 23, 22, 22, 22, 21, 21, 21, 21, 20, 20, 20, 20, 19, 19, 19, 19, 19, 18, 18, 18, 18, 18, 17, 17, 17, 17, 17, 16, 16, 16, 16, 16], radius: 8, allies: false }   # 2026-10：照 PoE2 改成每隻保留精魂（1 級 60 → 20 級 20），付得起幾隻叫幾隻
     # 2026-10-26 照 PoE2（Skeletal Cleric）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
-    summon: { kind: SKELETON, ally: true, count: 1, max: 40, duration: 0, life: 0.53, damage: 0.65, attack_speed: 1.0, speed: 1.1, reach: 2.0,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Skeletal Cleric 的 Minion Types（Spell, Cooldown）：祭司不打人，只有施法速度（治療）與冷卻（復活）吃得到
+    summon: { minion_tags: [spell, cooldown], kind: SKELETON, ally: true, count: 1, max: 40, duration: 0, life: 0.53, damage: 0.65, attack_speed: 1.0, speed: 1.1, reach: 2.0,
               helmet: GOLDEN_HELMET, weapon: GOLDEN_SHOVEL, es: 0.15 }   # 2026-10-26 照 PoE2：治療是固定的生命回復（MinionAbilities.HEAL_PER_MINUTE），只給召喚物；這次之前 heal: 2.5（每秒回你與召喚物最大生命 2.5%）
     cast_time: 0.5
     cooldown: 1.5
@@ -4300,7 +4313,8 @@ skills:
     mechanic: aura
     aura: { reserve: 60, radius: 8, allies: false }   # 2026-10-26 照 PoE2 Wolf Pack：整群固定保留 60 精魂，3 → 6 隻（40 級 9 隻）
     # 2026-10-26 照 PoE2（Wolf Pack 的 Wolf Companion）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
-    summon: { kind: WOLF, ally: true, count: 1, max: [3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9], duration: 0, life: 1.1, damage: 0.7, attack_speed: 1.25, speed: 1.4, reach: 1.8,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Wolf Pack 的 Minion Types（Attack, Melee, MeleeSingleTarget, Area）：躍擊的落地是範圍
+    summon: { minion_tags: [attack, melee, area], kind: WOLF, ally: true, count: 1, max: [3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9], duration: 0, life: 1.1, damage: 0.7, attack_speed: 1.25, speed: 1.4, reach: 1.8,
               evasion: 0.3, spread: 0.2 }
     cast_time: 0.5
     cooldown: 1.5
@@ -4685,13 +4699,13 @@ skills:
 
   profane_ritual:
     name: 穢陣
-    description: 在準心指的地方畫下一個穢陣，陣裡的敵人一直受到混沌傷害。穢陣撐到結束時給你一顆銳星。
+    description: 要一具屍體：在準心附近的屍體上畫下穢陣（沒有就找你身邊的），陣裡的敵人一直受到混沌傷害。穢陣撐到結束時用掉那具屍體、給你一顆銳星；同一具屍體同時只能有一個穢陣。
     icon: ECHO_SHARD   # 2026-10：原本 CRYING_OBSIDIAN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 7
     tags: [spell, area, chaos, duration]
     mechanic: zone
-    zone: { range: 18, radius: 2.2, duration: 2, interval: 0.5, damage: 50, max: 5 }   # 2026-10-26 照 PoE2（2.2 格、2 秒、最多 5 個；每 0.5 秒打每秒傷害的 50%）；這次之前 radius [2.6, 3.2]、4 秒、40%、最多 2 個
+    zone: { range: 18, radius: 2.2, duration: 2, interval: 0.5, damage: 50, max: 5, corpse: true }   # 2026-10-29 照 PoE2：要一具屍體（Marks a Corpse），中心是屍體；這次之前不用屍體、畫在準心。2026-10-26 照 PoE2（2.2 格、2 秒、最多 5 個；每 0.5 秒打每秒傷害的 50%）；這次之前 radius [2.6, 3.2]、4 秒、40%、最多 2 個
     damage: [[13, 13], [20, 20], [28, 28], [38, 38], [50, 50], [63, 63], [78, 78], [95, 95], [115, 115], [137, 137], [163, 163], [192, 192], [226, 226], [264, 264], [308, 308], [359, 359], [418, 418], [485, 485], [563, 563], [652, 652], [756, 756], [876, 876], [1014, 1014], [1175, 1175], [1362, 1362], [1580, 1580], [1833, 1833], [2128, 2128], [2473, 2473], [2876, 2876], [3349, 3349], [3903, 3903], [4554, 4554], [5320, 5320], [6222, 6222], [7287, 7287], [8547, 8547], [10038, 10038], [11806, 11806], [13907, 13907]]   # 2026-10-26 照 PoE2（poe2db Profane Ritual 每秒混沌持續傷害 1–40 級）；這次之前 [4, 7]
     damage_types: { chaos: 1.0 }
     cast_time: 1.0   # 2026-10-26 照 PoE2；這次之前 0.8
@@ -5127,7 +5141,8 @@ skills:
     mechanic: aura
     aura: { reserve: 30, radius: 8, allies: false }   # 2026-10-26 照 PoE2：固定保留 30 精魂
     # 2026-10-26 照 PoE2（Ravenous Swarm）：ally = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表；life／damage／攻擊時間是 PoE2 那隻怪的倍率
-    summon: { kind: VEX, ally: true, count: 1, max: 3, duration: 6, life: 0.7, damage: 0.84, attack_speed: 1.0, speed: 1.4, reach: 1.6,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Ravenous Swarm 的 Minion Types（Attack, Melee, Area, Chaos）：蟲群的攻擊半徑吃範圍
+    summon: { minion_tags: [attack, melee, area, chaos], kind: VEX, ally: true, count: 1, max: 3, duration: 6, life: 0.7, damage: 0.84, attack_speed: 1.0, speed: 1.4, reach: 1.6,
               interval: 6 }
     cast_time: 0.5
     cooldown: 1.5
@@ -8607,7 +8622,7 @@ skills:
 
   manifest_weapon:
     name: 幻化武器
-    description: 常駐：複製你主手的近戰武器，變成一把不會死的夥伴跟著你戰鬥。每 1 點力量增加 1% 傷害、每 3 點敏捷增加 1% 攻擊速度。不保留精魂。
+    description: 常駐：複製你主手的近戰武器，變成一把不會受傷、不會死的夥伴跟著你戰鬥（召喚物等級 = 技能等級 × 2）。每 1 點力量增加 1% 傷害、每 3 點敏捷增加 1% 攻擊速度。不保留精魂。
     icon: NETHERITE_INGOT   # 2026-10-27 圖示：這次之前 IRON_SWORD（劍會干擾施放）
     type: spell
     tier: 1
@@ -8615,8 +8630,13 @@ skills:
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false }
-    summon: { kind: VEX, count: 1, max: 1, fixed_max: true, duration: 0, life: 10, damage: 1.6, attack_speed: 1.0, speed: 1.4, reach: 2.5, weapon: IRON_SWORD,
-              resists: { fire: 75, cold: 75, lightning: 75, chaos: 75 } }   # 2026-10-26 照 PoE2 Manifest Weapon：不會死（生命 10 倍、抗性滿）
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Manifest Weapon 的 Minion Types（Attack, Melee, MeleeSingleTarget, Area）；幻化武器沒有範圍攻擊，範圍不列
+    # 2026-10-29 照 PoE2 Manifest Weapon：召喚物等級 = 技能等級 × 2（ally 表，20 級 40、40 級 80）；Base Damage 100%（damage 1.0，跟支援火力、巨靈一樣照 ally 表原樣）；
+    #   MinionsAreUndamagable（immortal：完全不會受傷、不會死，敵人不去打）；說明寫「幻化武器」（外觀照舊是拿劍的惱鬼）。
+    #   這次之前用「同等級普通怪」算（召喚物等級跟角色等級走）、生命 10 倍、抗性 75%、傷害 1.6 倍，說明寫成「焚魂」。
+    #   原作「照武器類型多一種攻擊」我們沒做（只有普通的打擊）
+    summon: { minion_tags: [attack, melee], kind: VEX, name: 幻化武器, ally: true, immortal: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.0, damage: 1.0,
+              attack_speed: 1.0, speed: 1.4, reach: 2.5, weapon: IRON_SWORD }
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
@@ -8661,7 +8681,8 @@ skills:
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false }
-    summon: { kind: SKELETON, ally: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.0, damage: 1.0, attack_speed: 1.0, speed: 1.2, reach: 2.0, weapon: CROSSBOW }   # 不會受傷、只聽指令（MinionAbilities.COMMAND_ONLY）
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Supporting Fire 的 Minion Types（Attack, RangedAttack, Rain, Area, Projectile, ProjectilesNumberModifiersNotApplied, Cooldown, CannotChain, GroundTargetedProjectile, ProjectileNoCollision）：箭雨吃範圍、指令吃冷卻；原作箭雨不吃投射物數量、連鎖、穿透（我們砲手只聽指令，攻擊速度也沒有作用）
+    summon: { minion_tags: [attack, projectile, area, cooldown], kind: SKELETON, ally: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.0, damage: 1.0, attack_speed: 1.0, speed: 1.2, reach: 2.0, weapon: CROSSBOW }   # 不會受傷、只聽指令（MinionAbilities.COMMAND_ONLY）
     cast_time: 0.7   # 照 PoE2 指令的施放時間
     cooldown: 1.5
     mana: 0   # 指令的魔力 8～83 照 MinionAbilities（從天而降）
@@ -9573,7 +9594,8 @@ skills:
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false }
-    summon: { kind: WOLF, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.5, damage: 1.0, attack_speed: 1.2, speed: 1.4, reach: 2.0 }   # 2026-10-26 照 PoE2 Summon Infernal Hound（點燃光環在 AscGranted）
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Summon Infernal Hound 的 Minion Types（Attack, Melee, MeleeSingleTarget, Area）；點燃光環在 AscGranted（不吃輔助），範圍不列
+    summon: { minion_tags: [attack, melee], kind: WOLF, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.5, damage: 1.0, attack_speed: 1.2, speed: 1.4, reach: 2.0 }   # 2026-10-26 照 PoE2 Summon Infernal Hound（點燃光環在 AscGranted）
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
@@ -9998,7 +10020,8 @@ skills:
     aura: { reserve: 0, radius: 8, allies: false }
     # 2026-10-27 照 PoE2（Minions.lua BearCompanion）：生命 1.5、傷害 4.5（不吃攻擊時間）、攻擊時間 0.8 秒、撕咬攻擊速度更多 20%、護甲 1；
     #   躍擊（8 秒）、重擊（5 秒，偷取 50%）、怒吼（12 秒，恫嚇 8 秒）在 AscPaths。外觀用狼（原版的熊沒有召喚物的行為）
-    summon: { kind: WOLF, ally: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.5, damage: 4.5, attack_speed: 1.5, speed: 1.1, reach: 2.6,
+    # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Wild Protector 的 Minion Types（Area, Warcry, Attack, Slam, Cooldown, Duration, Melee, MeleeSingleTarget）；熊靈的躍擊、重擊、怒吼在 AscPaths（固定的範圍、冷卻，不吃輔助），只列普攻用得到的
+    summon: { minion_tags: [attack, melee], kind: WOLF, ally: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.5, damage: 4.5, attack_speed: 1.5, speed: 1.1, reach: 2.6,
               armour: 1.0, spread: 0.2 }
     cast_time: 0.5
     cooldown: 1.5

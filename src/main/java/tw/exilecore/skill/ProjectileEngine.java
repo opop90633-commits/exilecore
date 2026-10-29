@@ -339,7 +339,7 @@ final class ProjectileEngine implements Listener {
             visuals.cast(build.definition().visual(), eye);
             return;
         }
-        final double spread = count > 1 && build.spread() < 1 ? Math.min(60, 12.0 * (count - 1)) : build.spread();
+        final double spread = SkillMath.projectileSpread(count, build.spread()); // 2026-10-29：搬到 SkillMath（召喚物的投射物共用）
         final List<double[]> directions = SkillMath.fan(look.getX(), look.getY(), look.getZ(), count, spread);
         final Set<UUID> volley = new HashSet<>();
         final String visual = build.definition().visual();

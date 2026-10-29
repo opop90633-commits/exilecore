@@ -131,6 +131,8 @@ final class AdminWeb {
         server.endpoint("/admin/api/builds/list", request -> api(request, false, session -> builds(null)), "GET");
         server.endpoint("/admin/api/builds/character", request -> api(request, false, session -> builds(request.param("name"))), "GET");
         server.endpoint("/admin/api/builds/meta", request -> api(request, false, session -> buildsMeta()), "GET");
+        // 2026-10-29 照站長：清除訓練假人的實測紀錄（網頁統計頁的「假人實測」）：{ name } 一個角色、{ all: true } 全部
+        server.endpoint("/admin/api/builds/clear-dummy", request -> api(request, true, session -> clearDummy(session, body(request))), "POST");
         // 2026-10：輸出紀錄（每場 Boss、每段假人：每個人打了多少、幾秒）
         server.endpoint("/admin/api/dps", request -> api(request, false, session -> tw.exilecore.combat.DpsRecords.get(plugin)
                 .json(parseDays(request.param("days")))), "GET");
@@ -320,6 +322,20 @@ final class AdminWeb {
             throw new IllegalArgumentException("沒有這個角色（還沒有快照，或已經刪掉）");
         }
         return com.google.gson.JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8));
+    }
+
+    private Object clearDummy(final AdminAuth.Session session, final JsonObject body) throws Exception {
+        final tw.exilecore.web.Profiles profiles = plugin.web() == null ? null : plugin.web().profiles();
+        if (profiles == null) {
+            throw new IllegalArgumentException("網頁角色頁沒有開");
+        }
+        final boolean all = bool(body, "all", false);
+        final String name = all ? null : string(body, "name").strip();
+        final int cleared = profiles.clearMeasured(name);
+        final String result = (all ? "清除全部角色" : "清除角色「" + name + "」") + "的假人實測紀錄（" + cleared + " 個角色）";
+        plugin.getSLF4JLogger().info("[管理網頁] {} {}", session.admin(), result);
+        record(session.admin(), "假人實測", result);
+        return Map.of("ok", true, "message", result, "cleared", cleared);
     }
 
     private Object buildsMeta() throws Exception {

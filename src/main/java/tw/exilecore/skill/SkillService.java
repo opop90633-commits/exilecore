@@ -5466,6 +5466,8 @@ public final class SkillService {
         }
         if (definition.summon() != null) {
             lines.addAll(summonLines(player, build, sheet, minions.count(player.getUniqueId(), definition.id())));
+        } else if (MinionTypes.line(definition) != null) {
+            lines.add(MinionTypes.line(definition)); // 2026-10-29 照 PoE2：掘骸的骨構體（召喚物的技能標籤）
         }
         if (definition.aura() != null) {
             lines.addAll(auraLines(player, build));
@@ -5578,7 +5580,8 @@ public final class SkillService {
         if (!build.supports().isEmpty()) {
             final List<String> names = new ArrayList<>();
             for (final SupportDefinition support : build.supports()) {
-                names.add(GemAttributes.supportTag(support.id()) + ItemRenderer.escape(support.name())); // 2026-10-26：照顏色（這次之前一律淡藍）
+                names.add(GemAttributes.supportTag(support.id()) + ItemRenderer.escape(support.name()) // 2026-10-26：照顏色（這次之前一律淡藍）
+                        + (MinionTypes.throughMinions(support, definition) ? "<dark_gray>（給召喚物）" : "")); // 2026-10-29 照 PoE2 的 Minion Types
             }
             lines.add("<gray>輔助：" + String.join("<gray>、", names));
         }
@@ -6320,8 +6323,14 @@ public final class SkillService {
         if (spec.corpse()) {
             lines.add(String.format(Locale.ROOT, "<gray>要用你 %.0f 格內的一具屍體（怪物死後十秒內）當材料，從屍體的位置爬出來", spec.search()));
         }
-        lines.add(spec.permanent() ? "<gray>不會消失：直到被打死、你下線或換角色"
+        // 2026-10-29 照 PoE2（MinionsAreUndamagable，幻化武器）：不會受傷的召喚物寫「不會受傷」；這次之前一律寫「直到被打死」
+        lines.add(spec.immortal() ? "<gray>不會受傷、不會死：一直跟著你，直到你關掉技能、下線或換角色"
+                : spec.permanent() ? "<gray>不會消失：直到被打死、你下線或換角色"
                 : String.format(Locale.ROOT, "<gray>持續 <white>%.1f</white> 秒", spec.duration() * build.durationScale()));
+        final String minionTypes = MinionTypes.line(build.definition()); // 2026-10-29 照 PoE2 的 Minion Types
+        if (minionTypes != null) {
+            lines.add(minionTypes);
+        }
         if (plugin.monsters() != null) {
             final tw.exilecore.monster.MonsterConfig monsters = plugin.monsters().config();
             final int ownerLevelNow = plugin.players().get(player).level();
@@ -6339,9 +6348,14 @@ public final class SkillService {
             final tw.exilecore.stats.SkillProfile profile = MinionSheets.profile(build);
             final StatSheet effective = profile.effective(minionSheet);
             final DamagePacket expected = DamageCalculator.expectedOutgoing(minionSheet, profile);
-            lines.add(String.format(Locale.ROOT, "<gray>召喚物等級 <white>%d</white>：生命 <white>%,d</white>、每下平均 <white>%s</white>、每秒 <white>%.2f</white> 次",
-                    level, Math.round(MinionSheets.life(effective)), expected.isEmpty() ? "0" : expected,
-                    MinionSheets.attacksPerSecond(effective, profile)));
+            if (spec.immortal()) { // 2026-10-29 照 PoE2：不會受傷的召喚物不寫生命（寫了也沒意義）
+                lines.add(String.format(Locale.ROOT, "<gray>召喚物等級 <white>%d</white>：不會受傷、每下平均 <white>%s</white>、每秒 <white>%.2f</white> 次",
+                        level, expected.isEmpty() ? "0" : expected, MinionSheets.attacksPerSecond(effective, profile)));
+            } else {
+                lines.add(String.format(Locale.ROOT, "<gray>召喚物等級 <white>%d</white>：生命 <white>%,d</white>、每下平均 <white>%s</white>、每秒 <white>%.2f</white> 次",
+                        level, Math.round(MinionSheets.life(effective)), expected.isEmpty() ? "0" : expected,
+                        MinionSheets.attacksPerSecond(effective, profile)));
+            }
             // 2026-10-16：召喚物的暴擊率、暴擊傷害（跟 /stats 的召喚物每秒傷害同一套算法：含主人身上「召喚物…」的加成、光環、輔助）
             lines.add(String.format(Locale.ROOT, "<gray>召喚物暴擊率 <white>%s%%</white>、暴擊傷害 <white>×%s%%</white>",
                     ModifierText.number(DamageCalculator.critChance(minionSheet, profile) * 100),
@@ -6349,6 +6363,14 @@ public final class SkillService {
             if (derived.stream().anyMatch(mod -> "巨伴".equals(mod.source()))) {
                 lines.add(String.format(Locale.ROOT, "<gray>召喚物閃避 <white>%,d</white>、偏斜 <white>%,d</white> <dark_gray>（含巨伴給的）",
                         Math.round(effective.get(StatKeys.EVASION)), Math.round(effective.get(StatKeys.DEFLECTION)))); // 2026-10-27
+            }
+            // 2026-10-29 照 PoE2 的 Minion Types：遠程召喚物的彈道吃從召喚物這邊掛的穿透、連鎖、分裂、多射
+            // 2026-10-29 照 PoE2：投射物真的會飛（MinionProjectiles），射真的投射物的召喚物一定寫每秒飛幾格（含投射物速度）；這次之前沒寫速度
+            final String projectileLine = spec.isRanged() ? MinionTypes.projectileLine(MinionTypes.projectiles(
+                    minionSheet.overlay(MinionSheets.stripMinion(profile.local())), profile.tags()), // 跟 MinionService 的 effective 一樣
+                    MinionAbilities.projectileSpeed(build.definition().id())) : null;
+            if (projectileLine != null) {
+                lines.add(projectileLine);
             }
             final double regen = MinionSheets.regenPercent(effective);
             if (regen > 0) {

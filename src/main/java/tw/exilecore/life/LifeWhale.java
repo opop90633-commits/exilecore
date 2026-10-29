@@ -84,6 +84,8 @@ final class LifeWhale {
         final Map<UUID, Down> down = new HashMap<>();
         boolean enraged;
         long shieldUntil;
+        /** 2026-10-29：上次換階段的時間（毫秒；0 = 還沒換過），換階段的 2.5 秒內打不動。 */
+        long phaseMillis;
         LifeConfig.WhalePhase shield;
         int level;
         boolean done;
@@ -194,6 +196,33 @@ final class LifeWhale {
     }
 
     /** 這是不是淵鯨（MapService：每秒傷害上限、掉落不吃加成）。 */
+    /** 2026-10-29 照站長：換階段時 Boss 無敵多久（毫秒；跟地圖 Boss 的 PhaseStep.TRANSITION_TICKS 一樣 2.5 秒）。 */
+    static final long PHASE_TRANSITION_MILLIS = 2500;
+
+    /**
+     * 2026-10-29 照站長（跟地圖 Boss 一樣的換階段鎖血）：這一下之後淵鯨的原版血量最低到哪裡——還沒進下一個階段時是下一個門檻
+     * （撞到門檻那一下多出來的傷害作廢，一刀最多打掉一個階段）；剛換階段的 2.5 秒內是現在的血量（打不動）。不是淵鯨回傳 0（不鎖）。
+     * 這次之前一下大傷害可以直接打穿好幾個階段、跳過潮核護盾。
+     */
+    double phaseFloor(final Entity entity) {
+        for (final Fight fight : fights.values()) {
+            if (fight.boss == null || !fight.boss.getUniqueId().equals(entity.getUniqueId())) {
+                continue;
+            }
+            if (fight.phaseMillis > 0 && System.currentTimeMillis() - fight.phaseMillis < PHASE_TRANSITION_MILLIS) {
+                return fight.boss.getHealth();
+            }
+            final List<LifeConfig.WhalePhase> phases = config().whale().phases();
+            final AttributeInstance max = fight.boss.getAttribute(Attribute.MAX_HEALTH);
+            if (max == null || fight.phase >= phases.size()) {
+                return 0;
+            }
+            final double floor = max.getValue() * phases.get(fight.phase).at() - 0.05;
+            return floor <= 0.5 ? 0 : floor;
+        }
+        return 0;
+    }
+
     boolean isWhale(final Entity entity) {
         final String tag = entity.getPersistentDataContainer().get(service.driftKey(), PersistentDataType.STRING);
         if (tag == null || !tag.startsWith(TAG)) {
@@ -607,6 +636,7 @@ final class LifeWhale {
         if (fight.shieldUntil == 0 && fight.phase < def.phases().size() && fraction <= def.phases().get(fight.phase).at()) {
             final LifeConfig.WhalePhase next = def.phases().get(fight.phase);
             fight.phase++;
+            fight.phaseMillis = now; // 2026-10-29 照站長：換階段 2.5 秒打不動
             plugin.monsters().invalidate(boss.getUniqueId());
             for (final Player member : audience(fight)) {
                 member.showTitle(Title.title(plugin.text().parse("<#5fd3ff>" + ItemRenderer.escape(next.name())),

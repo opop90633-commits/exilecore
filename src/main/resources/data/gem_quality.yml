@@ -318,6 +318,8 @@ mana_remnants:   # Mana Remnants（2026-10-28 照 PoE2：每顆殘留物多 (0�
   - { stat: effect.mana.on_kill, type: FLAT, per: 0.0142 }   # 增益：擊殺回魔（2 × 14.2%）
 mana_storm:   # Mana Tempest（2026-10-28 照 PoE2：離開之後效果再延續 (0—2) 秒（加在 2 秒上）；這次之前照通用規則）
   - { stat: mana_tempest.linger, type: FLAT, per: 0.1 }   # ManaTempest
+manifest_weapon:   # Manifest Weapon（2026-10-29 照 PoE2：(0—20)% 增加召喚物攻擊速度；昇華賦予的技能，品質照 SkillLoadout 的賦予技能品質；這次之前沒寫，照通用規則每 1% 增加 1% 召喚物傷害）
+  - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 召喚物攻擊速度（召喚技能自己的修飾器都給召喚物）
 meta_ailment:   # Cast on Elemental Ailment（2026-10-28 照 PoE2：(0—15)% 增加獲得的能量；這次之前照通用規則每 1% 增加 0.5% 光環效果）
   - { stat: meta.energy_gain, type: INCREASED, per: 0.75 }   # 獲得的能量（MetaGems.energyModifiers）
 meta_barrier_invocation:   # Barrier Invocation（2026-10-28 照 PoE2：(0—15)% 增加獲得的能量；這次之前照通用規則每 1% 增加 0.5% 光環效果）
@@ -364,7 +366,8 @@ primal_tornado:   # Tornado（2026-10-28 照 PoE2：旋風持續時間 +(0—2) 
   - { stat: skill.duration, type: INCREASED, per: 1.25 }   # 持續時間（+2 秒換算成 8 秒的 +25%：我們沒有「+秒」的技能持續時間屬性）
 prism_rend:   # Elemental Sundering
   - { stat: skill.area, type: INCREASED, per: 1.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
-profane_ritual: []   # Profane Ritual（2026-10-28 照 PoE2：(0—10)% 機率不毀掉屍體——我們的穢陣不用屍體，所以沒有效果；這次之前照通用規則）
+profane_ritual:   # Profane Ritual（2026-10-29 照 PoE2：(0—10)% 機率不毀掉用掉的屍體——穢陣改成要屍體了；這次之前 []（穢陣不用屍體，沒有效果）；更早照通用規則）
+  - { stat: corpse.save_chance, type: FLAT, per: 0.5 }   # 儀式完成時不毀掉屍體的機率（跟天賦樹同一個鍵，SkillZones.completed）
 purity_of_fire:   # Purity of Fire（2026-10-28 照 PoE2：光環另外給 +(0—8)% 火焰抗性；這次之前照通用規則）
   - { stat: effect.resist.fire, type: FLAT, per: 0.4 }   # 光環（隊友也有）
 purity_of_ice:   # Purity of Ice（2026-10-28 照 PoE2：光環另外給 +(0—8)% 冰冷抗性；這次之前照通用規則）

@@ -705,6 +705,14 @@ public final class CombatListener implements Listener {
             if (!conditional.isEmpty()) {
                 hitSheet = hitSheet.overlay(conditional);
             }
+        } else if (attackerIsMinion && !defenderIsPlayer) {
+            // 2026-10-29 照 PoE2 的 Minion Types：從召喚物這邊掛的處刑、潛鋒、趁寒、屠巨、貼身、炙獵、遠穿…召喚物打的也算
+            // （跟玩家的同一套條件，MinionTypes.conditional）；這次之前條件傷害只算玩家打的
+            final java.util.List<Modifier> conditional = tw.exilecore.skill.MinionTypes.conditional(skillSheet, hitTagSet,
+                    minionTarget(attacker, defender, defenderMonster, ailments, debuffTick));
+            if (!conditional.isEmpty()) {
+                hitSheet = hitSheet.overlay(conditional);
+            }
         }
         if (defenderIsPlayer) {
             hitSheet = tw.exilecore.item.unique.UniqueMechanics.defenderConditional(hitSheet, defenderSheet, ailments, defender); // 2026-10-26（暗潮指環）
@@ -808,6 +816,18 @@ public final class CombatListener implements Listener {
                         charges.onEvent((Player) attacker, "armour_broken", breakSheet, skill.tags(), defender); // 戰星：完全破甲時（2026-10）
                     }
                 }
+            }
+        }
+        if (attackerIsMinion && defenderMonster != null && ailments != null && result.hit() && !result.blocked()) {
+            // 2026-10-29 照 PoE2 的 Minion Types：從召喚物這邊掛的碎甲、重擊、拆甲、霜裂甲…召喚物打的物理傷害也破甲（完全破甲的戰星、觸發照舊只給玩家自己打的）；
+            // 這次之前只有玩家打的會破甲
+            final java.util.Set<String> breakContext = calcSkill.contextFor(DamageType.PHYSICAL);
+            final double frozenBreak = ailments.isFrozen(defender) ? skillSheet.flat(tw.exilecore.stats.SupportKeys.BREAK_VS_FROZEN, breakContext) : 0;
+            final double breakPercent = skillSheet.apply(StatKeys.ARMOUR_BREAK, skillSheet.flat(StatKeys.ARMOUR_BREAK, breakContext) + frozenBreak, breakContext);
+            final double breakBase = result.outgoing().get(DamageType.PHYSICAL) * Math.max(0, breakPercent) / 100.0;
+            if (breakBase > 0) {
+                ailments.breakArmour(defender, defenderMonster, breakBase, 100, rawArmour,
+                        tw.exilecore.stats.TreeEffectKeys.scale(skillSheet, tw.exilecore.stats.TreeEffectKeys.ARMOUR_BREAK_DURATION, java.util.Set.of(), 0.1));
             }
         }
         if (!attackerIsPlayer && !attackerIsMinion && defenderIsPlayer && result.hit() && !result.blocked() && rawArmour > 0) {
@@ -1029,8 +1049,21 @@ public final class CombatListener implements Listener {
                             pendingLifeGains.put(defender.getUniqueId(), new LifeGain(credit, lifeOnHit));
                         }
                     }
-                } else if (lifeOnHit > 0) {
-                    defer(defender, () -> minions.heal(attacker, lifeOnHit)); // 召喚物的擊中回復生命回給牠自己（2026-10-18：等事件確定沒被取消）
+                } else {
+                    // 2026-10-29 照 PoE2（Life Leech 可以輔助召喚技能）：召喚物的偷取回給召喚物自己，跟玩家一樣存成一份一份的偷取慢慢回
+                    // （MinionHooks.leech：一份最多牠最大生命的 10%、1 秒回完、每秒最多 20%）；這次之前一下直接回、最多最大生命的 10%
+                    final double leeched = tw.exilecore.skill.MinionTypes.leech(skillSheet, skill, result.dealt());
+                    final double heal = Math.max(0, lifeOnHit);
+                    if (heal > 0 || leeched > 0) {
+                        defer(defender, () -> { // 召喚物的擊中回復生命回給牠自己（2026-10-18：等事件確定沒被取消）
+                            if (heal > 0) {
+                                minions.heal(attacker, heal);
+                            }
+                            if (leeched > 0) {
+                                minions.leech(attacker, leeched);
+                            }
+                        });
+                    }
                 }
                 // 真正扣掉的生命（溢出的不算）：剩下的原版血量換回我們的生命
                 final double scale = plugin.monsters().healthScale(defender, defenderMonster);
@@ -1055,6 +1088,30 @@ public final class CombatListener implements Listener {
             signatures.dealt((Player) attacker, attackerSheet, skill, result); // 雷魂、血宴
         }
         feedback(attacker, defender, result);
+    }
+
+    /** 2026-10-29：召喚物打中的那一刻目標的狀態（MinionTypes.conditional 用；跟玩家那段一樣的判斷）。 */
+    private tw.exilecore.skill.MinionTypes.Target minionTarget(final LivingEntity attacker, final LivingEntity defender, final MonsterData monster,
+                                                             final AilmentService ailments, final long tick) {
+        final org.bukkit.attribute.AttributeInstance maxHealth = defender.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+        final double fraction = maxHealth == null || maxHealth.getValue() <= 0 ? 1 : defender.getHealth() / maxHealth.getValue();
+        final boolean unique = monster != null && (monster.boss() || monster.rarity() == tw.exilecore.monster.MonsterRarity.UNIQUE);
+        final boolean rare = unique || monster != null && monster.rarity() == tw.exilecore.monster.MonsterRarity.RARE;
+        final double distance = attacker.getWorld().equals(defender.getWorld()) ? attacker.getLocation().distance(defender.getLocation()) : Double.MAX_VALUE;
+        final java.util.Set<String> words = new java.util.HashSet<>();
+        boolean immobilised = debuffs.has(defender.getUniqueId(), "pin", tick);
+        if (ailments != null) {
+            for (final tw.exilecore.ailment.AilmentType type : new tw.exilecore.ailment.AilmentType[] {tw.exilecore.ailment.AilmentType.CHILL,
+                    tw.exilecore.ailment.AilmentType.FREEZE, tw.exilecore.ailment.AilmentType.IGNITE, tw.exilecore.ailment.AilmentType.SHOCK,
+                    tw.exilecore.ailment.AilmentType.POISON, tw.exilecore.ailment.AilmentType.BLEED}) {
+                if (type == tw.exilecore.ailment.AilmentType.FREEZE ? ailments.isFrozen(defender) : ailments.has(defender, type)) {
+                    words.add(ailmentWord(type));
+                }
+            }
+            immobilised |= ailments.isFrozen(defender) || ailments.heavyStunned(defender) || ailments.has(defender, tw.exilecore.ailment.AilmentType.ELECTROCUTE);
+        }
+        return new tw.exilecore.skill.MinionTypes.Target(fraction <= 0.35, fraction >= 0.999, rare, unique, debuffs.cursed(defender.getUniqueId(), tick),
+                distance <= StatKeys.CLOSE_RANGE, distance, words, immobilised);
     }
 
     /** 撲殺的門檻（剩下的生命比例）：普通 35%、魔法 20%、稀有 10%、傳奇與 Boss 5%（2026-10-27 照 PoE2 CullingStrikeNormalThreshold 35；這次之前普通 30%）。 */

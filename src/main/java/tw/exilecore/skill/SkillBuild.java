@@ -242,7 +242,8 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         if (!isDefault) {
             for (final SupportDefinition support : effectiveSupports(supports, definition, resonant)) {
                 active.add(support);
-                local.addAll(support.allModifiers());
+                // 2026-10-29 照 PoE2 的 Minion Types：掘骸這種自己會打人的，只靠召喚物的技能標籤掛上的輔助只給召喚物（MinionTypes.forHost）
+                local.addAll(MinionTypes.forHost(support, definition, support.allModifiers()));
                 local.addAll(LineageRules.buildModifiers(support, definition)); // 2026-10-27 照 PoE2：願晶的品質
             }
         }

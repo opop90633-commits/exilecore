@@ -363,6 +363,9 @@ public final class MinionSheets {
         tags.add(Tags.ATTACK);
         final SummonSpec spec = build.definition().summon();
         tags.add(spec != null && spec.isRanged() ? Tags.PROJECTILE : Tags.MELEE); // 2026-10：遠程召喚物的攻擊算投射物
+        if (spec != null && spec.radius() > 0) {
+            tags.add(Tags.AREA); // 2026-10-29 照 PoE2（Skeletal Arsonist 的火彈是投射物、範圍）：打中時連周圍一起打的攻擊算範圍（凝聚、震域吃得到）
+        }
         tags.add(Tags.MINION);
         return new SkillProfile(base.id() + ".minion", tags, 1.0, null, null, base.conversion(), base.local());
     }

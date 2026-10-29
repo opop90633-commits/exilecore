@@ -35,6 +35,14 @@ final class MinionAbilities {
     static final String NAVIRA = "navira_djinn";
     static final String RUZHAN = "ruzhan_djinn";
     /**
+     * 2026-10-29 照 PoE2 昇華（Living Weapon）：幻化武器（Manifest Weapon）。不會受傷（summon.immortal）；
+     * 每 1 點主人的力量增加 1% 傷害、每 3 點敏捷增加 1% 攻擊速度（minion_1%_damage_+%_per_X_player_strength 1、
+     * minion_1%_attack_speed_+%_per_X_player_dexterity 3）。這次之前說明有寫、實際沒有效果。
+     */
+    static final String MANIFEST = "manifest_weapon";
+    static final double MANIFEST_STR_PER_DAMAGE = 1;
+    static final double MANIFEST_DEX_PER_SPEED = 3;
+    /**
      * 2026-10-27 照 PoE2（MinionsAreUndamagable、只在你下指令時行動）：不會受傷、敵人不理、自己不會主動打的召喚物
      * （支援火力的砲手、三位巨靈）。不能被獻祭、引爆，也不聽「任何召喚物」的指令。
      */
@@ -136,6 +144,31 @@ final class MinionAbilities {
     static final int[][] ROAR_COLD = {
             {5, 8, 14, 21, 31, 44, 61, 83, 112, 152, 204, 274, 368, 495, 667, 902, 1223, 1664, 2273, 3119},
             {7, 12, 21, 32, 47, 66, 91, 124, 169, 228, 306, 411, 552, 743, 1001, 1353, 1834, 2495, 3409, 4678}};
+
+    // ---- 遠程召喚物的投射物速度（2026-10-29 照 PoE2：投射物真的會飛，MinionProjectiles）----
+    // 單位跟 skills.yml 的 projectile.speed 一樣（每 tick 幾格；每秒 = ×20）。poe2db 的 Skeletal Sniper／Arsonist／Frost Mage 頁面
+    // 只寫了指令（毒氣箭 Projectile Speed 7.5 m/s 是從天上落下的那支），自動攻擊的投射物速度原作資料沒寫，照我們類似的玩家技能取：
+
+    /** 射手的箭：跟玩家的毒氣箭、雷光箭（skills.yml arrow speed 3.0，每秒 60 格）一樣。 */
+    static final double SNIPER_ARROW_SPEED = 3.0;
+    /** 焰術士的火彈：丟出去的彈（比箭慢），取每秒 24 格（玩家的燼火連射 1.4、霜爆彈 1.2 之間）。 */
+    static final double FIRE_BOMB_SPEED = 1.2;
+    /** 霜術士的冰箭：法術投射物，取 skills.yml projectile 的預設 1.5（每秒 30 格）。 */
+    static final double SHARD_SPEED = 1.5;
+    /** 投射物最遠飛幾格：射擊距離（summon.ranged）的這麼多倍（原作的投射物飛滿射程才消失）。 */
+    static final double PROJECTILE_RANGE_SCALE = 2.0;
+
+    /**
+     * 2026-10-29：這種召喚物自動攻擊射出的投射物的基礎速度（每 tick 幾格）；不射真的投射物的（雷術士的電弧是連鎖、近戰的）回傳 0。
+     */
+    static double projectileSpeed(final String skillId) {
+        return switch (skillId) {
+            case SNIPER -> SNIPER_ARROW_SPEED;
+            case ARSONIST -> FIRE_BOMB_SPEED;
+            case FROST -> SHARD_SPEED;
+            default -> 0;
+        };
+    }
 
     // ---- 骸骨射手（Skeletal Sniper）----
 

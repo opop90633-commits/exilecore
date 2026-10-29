@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 地圖 Boss 換階段：一次一個、至少隔 3 秒（這段時間打不動）、護盾還在時不換。 */
 class PhaseStepTest {
@@ -48,5 +50,14 @@ class PhaseStepTest {
         }
         assertEquals(List.of(0L, PhaseStep.GAP_TICKS), entered);
         assertEquals(List.of(10L, 20L, 30L, 40L, 50L), held, "等第二個階段的這 3 秒 Boss 打不動");
+    }
+
+    @Test
+    void newPhaseIsInvulnerableForTwoAndAHalfSeconds() {
+        // 2026-10-29 照站長：進入新階段後 2.5 秒無敵（換階段），一刀最多打掉一個階段
+        assertFalse(PhaseStep.transitioning(1000, PhaseStep.NEVER), "還沒換過階段");
+        assertTrue(PhaseStep.transitioning(1000, 1000));
+        assertTrue(PhaseStep.transitioning(1000 + PhaseStep.TRANSITION_TICKS - 1, 1000));
+        assertFalse(PhaseStep.transitioning(1000 + PhaseStep.TRANSITION_TICKS, 1000));
     }
 }

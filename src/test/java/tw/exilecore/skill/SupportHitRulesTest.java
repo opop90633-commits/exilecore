@@ -60,8 +60,12 @@ class SupportHitRulesTest {
         assertFalse(skill("frost_aegis").tags().contains(tw.exilecore.stats.Tags.SPELL), "光環不算法術");
         assertTrue(skill("herald_of_ash").tags().contains(tw.exilecore.stats.Tags.SPELL), "捷光環例外：輔助要傳給擊殺效果");
         assertEquals(reason, support("deep_freeze").refusal(skill("fortifying_cry")), "戰吼沒有 attack／spell 標籤：只有不看標籤的輔助會走到這條");
-        assertEquals("召喚物技能不行", support("ruthless").refusal(skill("summon_skeletons")), "無情的傷害沒有 minion 標籤：召喚技能掛了只會落到主人身上");
-        assertEquals("要投射物技能", support("multiple_projectiles").refusal(skill("skeletal_archers")), "（2026-10-27：分矢併入分光）遠程召喚物標「遠程」不標投射物（2026-10）：投射物的輔助在標籤那一關就擋掉（2026-10-26：釘地照 PoE2 改成物理累積定身，換散射測）");
+        // 2026-10-29 照 PoE2 的 Minion Types：無情、分光照召喚物的技能標籤（攻擊、投射物）可以掛，效果給召喚物（MinionSupportTypesTest）；
+        // 這次之前無情「召喚物技能不行」、分光掛骸骨射手「要投射物技能」。主人自己的機制（怒火）照舊不行，骸骨戰士是近戰照舊掛不上分光
+        assertNull(support("ruthless").refusal(skill("summon_skeletons")));
+        assertEquals("召喚物技能不行", support("rage").refusal(skill("summon_skeletons")), "怒火給的是主人的怒氣");
+        assertNull(support("multiple_projectiles").refusal(skill("skeletal_archers")));
+        assertEquals("要投射物技能", support("multiple_projectiles").refusal(skill("summon_skeletons")), "近戰的骸骨戰士");
         // 真的會打到敵人的照舊
         assertNull(support("added_fire").refusal(skill("fireball")));
         assertNull(support("added_fire").refusal(skill("rolling_slam")));
@@ -100,7 +104,10 @@ class SupportHitRulesTest {
         assertNull(support("swift_cooldown").refusal(skill("hunters_mark")), "冷卻變短有用");
         assertNull(support("spell_echo").refusal(skill("vulnerability_curse")), "代價是傷害的不擋");
         assertEquals("要冷卻技能", support("burst").refusal(skill("raise_zombie")), "喚屍沒有冷卻");
-        assertEquals("不會造成傷害的技能不行", support("deliberation").refusal(skill("raise_zombie")), "純傷害的輔助掛召喚沒效果");
+        // 2026-10-29 照 PoE2 的 Minion Types：凝息照殭屍的攻擊（Attack, Melee）可以掛、效果給殭屍；這次之前「不會造成傷害的技能不行」。
+        // 不打人的骸骨祭司照舊不行
+        assertNull(support("deliberation").refusal(skill("raise_zombie")));
+        assertEquals("召喚物不會造成傷害", support("deliberation").refusal(skill("skeletal_cleric")), "純傷害的輔助掛不打人的召喚物沒效果");
     }
 
     @Test

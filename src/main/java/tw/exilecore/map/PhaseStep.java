@@ -10,6 +10,16 @@ final class PhaseStep {
 
     /** 兩個階段之間至少隔幾 tick（3 秒）。 */
     static final long GAP_TICKS = 3 * 20;
+    /**
+     * 2026-10-29 照站長：進入新階段後 Boss 無敵幾 tick（2.5 秒的換階段）：撞到門檻那一下多出來的傷害作廢（鎖血），
+     * 換階段這段時間也打不動——一下打很痛照算，但一刀最多打掉一個階段。這次之前進了新階段馬上就能打。
+     */
+    static final long TRANSITION_TICKS = 50;
+
+    /** 剛進新階段、還在換階段（無敵）。 */
+    static boolean transitioning(final long now, final long lastPhaseTick) {
+        return lastPhaseTick != NEVER && now - lastPhaseTick >= 0 && now - lastPhaseTick < TRANSITION_TICKS;
+    }
     /** 還沒換過階段（剛生出來、重置後）。 */
     static final long NEVER = Long.MIN_VALUE / 4;
 

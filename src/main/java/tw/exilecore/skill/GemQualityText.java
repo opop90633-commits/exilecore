@@ -80,6 +80,7 @@ final class GemQualityText {
             Map.entry("piercing_rounds", "穿透過敵人之後投射物更多 {projectile.pierced_more}% 傷害"),
             Map.entry("plague_bearer", "另外存中毒傷害的 {plague_bearer.percent}%"),
             Map.entry("pounce", "印記每個附近的敵人另外 +{pounce.mark_per_enemy}% 受到的傷害、上限另外 +{pounce.mark_cap}%"),
+            Map.entry("profane_ritual", "儀式完成時 {corpse.save_chance}% 機率不毀掉用掉的屍體"), // 2026-10-29 照 PoE2：穢陣要屍體了（這次之前列在 NO_EFFECT）
             Map.entry("purity_of_fire", "光環另外給 +{effect.resist.fire}% 火焰抗性"),
             Map.entry("purity_of_ice", "光環另外給 +{effect.resist.cold}% 冰冷抗性"),
             Map.entry("purity_of_lightning", "光環另外給 +{effect.resist.lightning}% 閃電抗性"),
@@ -132,7 +133,6 @@ final class GemQualityText {
     static final Map<String, Object[]> NO_EFFECT = Map.ofEntries(
             Map.entry("beast_companion", new Object[] {"這個技能的品質沒有效果", 0.08}),
             Map.entry("bramble_arrow", new Object[] {"這個技能的品質沒有效果", 0.5}),
-            Map.entry("profane_ritual", new Object[] {"這個技能的品質沒有效果", 0.5}),
             Map.entry("sigil_of_power", new Object[] {"這個技能的品質沒有效果", 0.04}),
             Map.entry("vault_strike", new Object[] {"這個技能的品質沒有效果", 0.1}),
             Map.entry("wind_dancer", new Object[] {"這個技能的品質沒有效果", 0.02}));

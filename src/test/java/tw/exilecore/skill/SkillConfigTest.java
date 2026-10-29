@@ -335,13 +335,16 @@ class SkillConfigTest {
 
     @Test
     void rangedMinionsAreTaggedRangedNotProjectile() {
-        // 2026-10：遠程召喚物（骸骨射手、術士）標「遠程」：「+x 投射物技能等級」吃不到、投射物的輔助（穿透、分光）掛不上
+        // 2026-10：遠程召喚物（骸骨射手、術士）標「遠程」：「+x 投射物技能等級」吃不到
+        // 2026-10-29 照 PoE2 的 Minion Types：射手、焰術士、霜術士的召喚物技能有 Projectile，穿透、分光照那個掛得上、效果給召喚物的彈道
+        //（MinionSupportTypesTest）；雷術士的電弧沒有 Projectile 照舊掛不上。這次之前四個都掛不上
         for (final String id : List.of("skeletal_archers", "skeletal_pyromancer", "skeletal_stormcaller", "skeletal_frostcaller")) {
             final SkillDefinition summon = config.skill(id);
             assertTrue(summon.tags().contains(Tags.RANGED), id);
             assertFalse(summon.tags().contains(Tags.PROJECTILE), id);
-            assertFalse(config.support("pierce").supports(summon), id + "：穿透掛不上");
-            assertFalse(config.support("multiple_projectiles").supports(summon), id + "：分光掛不上");
+            final boolean shoots = !"skeletal_stormcaller".equals(id);
+            assertEquals(shoots, config.support("pierce").supports(summon), id + "：穿透");
+            assertEquals(shoots, config.support("multiple_projectiles").supports(summon), id + "：分光");
         }
         assertTrue(config.skill("summon_skeletons").tags().contains(Tags.MELEE), "近戰的召喚物照舊");
     }

@@ -199,12 +199,14 @@ block('asc_combust', [
 ])
 block('manifest_weapon', [
     'name: 幻化武器',
-    'description: 常駐：複製你主手的近戰武器，變成一把不會死的夥伴跟著你戰鬥。每 1 點力量增加 1% 傷害、每 3 點敏捷增加 1% 攻擊速度。不保留精魂。',
+    'description: 常駐：複製你主手的近戰武器，變成一把不會受傷、不會死的夥伴跟著你戰鬥（召喚物等級 = 技能等級 × 2）。每 1 點力量增加 1% 傷害、每 3 點敏捷增加 1% 攻擊速度。不保留精魂。',
     'icon: IRON_SWORD', 'type: spell', 'tier: 1', 'tags: [minion, persistent]', ASC,
     'mechanic: aura',
     'aura: { reserve: 0, radius: 8, allies: false }',
-    'summon: { kind: VEX, count: 1, max: 1, fixed_max: true, duration: 0, life: 10, damage: 1.6, attack_speed: 1.0, speed: 1.4, reach: 2.5, weapon: IRON_SWORD,',
-    '          resists: { fire: 75, cold: 75, lightning: 75, chaos: 75 } }   # 2026-10-26 照 PoE2 Manifest Weapon：不會死（生命 10 倍、抗性滿）',
+    # 2026-10-29 照 PoE2 Manifest Weapon：ally 表（召喚物等級 = 技能等級 × 2）、Base Damage 100%、MinionsAreUndamagable（immortal）；
+    #   這次之前生命 10 倍、抗性 75%、傷害 1.6 倍（同等級普通怪）。minion_tags 照 skills.yml（2026-10-29 另外加的）
+    'summon: { minion_tags: [attack, melee], kind: VEX, name: 幻化武器, ally: true, immortal: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.0, damage: 1.0,',
+    '          attack_speed: 1.0, speed: 1.4, reach: 2.5, weapon: IRON_SWORD }',
     'cast_time: 0.5', 'cooldown: 1.5', 'mana: 0', 'visual: summon_skeletons',
 ])
 block('fire_spell_on_hit', [

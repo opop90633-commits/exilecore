@@ -817,6 +817,8 @@ final class LifeExtras {
         final UUID owner;
         int age;
         int phase;
+        /** 2026-10-29：上次換階段的時間（毫秒；0 = 還沒換過），換階段的 2.5 秒內打不動。 */
+        long phaseMillis;
         boolean enraged;
         final java.util.Set<UUID> adds = new java.util.HashSet<>();
         /** 2026-10-24：Boss 血條（跟淵鯨一樣掛在畫面上）；筏上的人都看得到。 */
@@ -852,6 +854,24 @@ final class LifeExtras {
     }
 
     /** 這是不是鯊王（MapService：每秒傷害上限照比照的極境）。 */
+    /** 2026-10-29 照站長（跟淵鯨、地圖 Boss 一樣的換階段鎖血）：這一下之後鯊王的原版血量最低到哪裡；不是鯊王回傳 0。 */
+    double phaseFloor(final Entity entity) {
+        final King king = kingOf(entity);
+        final LifeConfig.SharkKing def = config().sharkKing();
+        if (king == null || def == null) {
+            return 0;
+        }
+        if (king.phaseMillis > 0 && System.currentTimeMillis() - king.phaseMillis < LifeWhale.PHASE_TRANSITION_MILLIS) {
+            return king.entity.getHealth();
+        }
+        final org.bukkit.attribute.AttributeInstance max = king.entity.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+        if (max == null || king.phase >= def.phases().size()) {
+            return 0;
+        }
+        final double floor = max.getValue() * def.phases().get(king.phase).at() - 0.05;
+        return floor <= 0.5 ? 0 : floor;
+    }
+
     boolean isKing(final Entity entity) {
         return kingOf(entity) != null;
     }
@@ -1114,6 +1134,7 @@ final class LifeExtras {
                 while (king.phase < def.phases().size() && ratio <= def.phases().get(king.phase).at()) {
                     final LifeConfig.KingPhase phase = def.phases().get(king.phase);
                     king.phase++;
+                    king.phaseMillis = System.currentTimeMillis(); // 2026-10-29 照站長：換階段 2.5 秒打不動
                     plugin.monsters().invalidate(king.entity.getUniqueId());
                     for (final Player member : crew) {
                         member.sendMessage(plugin.text().prefixed("<#ff6b6b>" + ItemRenderer.escape(phase.name().isEmpty() ? "第 " + (king.phase + 1) + " 階段" : phase.name())

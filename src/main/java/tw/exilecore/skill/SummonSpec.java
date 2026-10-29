@@ -51,13 +51,18 @@ import java.util.Set;
  * @param stats       2026-10-26 召喚物自己身上的修飾器（骸骨戰士 30% 格擋、重卒更多暈眩累積…）
  * @param es          2026-10-26 照 PoE2（Energy Shield from Life）：生命的這個比例改成能量護盾（焰術士 0.10、霜術士／雷術士／祭司 0.15）；
  *                    4 秒沒受傷後每秒回充 12.5%（見 {@link MinionAbilities#ES_RECHARGE_PER_SECOND}）
+ * @param minionTags  2026-10-29 照 PoE2 的 Minion Types（召喚物自己的技能的種類：攻擊、近戰、投射物、範圍…）：輔助寶石的 requires
+ *                    符合這裡的標籤也能掛在這個召喚技能上，效果給召喚物（見 {@link MinionTypes}）；空的 = 只看技能自己的標籤
+ * @param immortal    2026-10-29 照 PoE2（MinionsAreUndamagable，幻化武器）：完全不會受傷、不會死（敵人不去打、不能獻祭或引爆）；
+ *                    這次之前幻化武器用「生命 10 倍、抗性 75%」硬撐，還是會被打死
+ * @param label       2026-10-29：技能說明裡「召出幾隻什麼」的名字（幻化武器外觀是惱鬼，名字不該寫成焚魂）；null = 照 kind（{@link #kindName}）
  */
 public record SummonSpec(String kind, int count, Scaled max, boolean fixedMax, double duration, double life, double damage,
                          double attackSpeed, double speed, double reach, double radius, boolean corpse, double search,
                          String helmet, String weapon, Map<DamageType, Double> resists, double taunt, double tauntRadius,
                          List<Modifier> buff, double ranged, String bolt, boolean spectre, double heal,
                          boolean ally, double armour, double evasion, double spread, double interval, List<Modifier> stats,
-                         double es) {
+                         double es, Set<String> minionTags, boolean immortal, String label) {
 
     /** 能當召喚物的原版生物（都有近戰 AI、能走路或飛；惱鬼會飛、穿牆）。 */
     public static final Set<String> KINDS = Set.of("ZOMBIE", "HUSK", "SKELETON", "STRAY", "WITHER_SKELETON", "VEX", "IRON_GOLEM", "WOLF");
@@ -66,6 +71,7 @@ public record SummonSpec(String kind, int count, Scaled max, boolean fixedMax, d
         buff = buff == null ? List.of() : List.copyOf(buff);
         stats = stats == null ? List.of() : List.copyOf(stats);
         resists = resists == null || resists.isEmpty() ? Map.of() : Map.copyOf(new EnumMap<>(resists));
+        minionTags = minionTags == null ? Set.of() : java.util.Collections.unmodifiableSet(new java.util.LinkedHashSet<>(minionTags));
     }
 
     /** 遠程的（2026-10）。 */
@@ -83,8 +89,11 @@ public record SummonSpec(String kind, int count, Scaled max, boolean fixedMax, d
         return duration <= 0;
     }
 
-    /** 顯示用的名字：殭屍、骷髏、焚魂、魔像…。 */
+    /** 顯示用的名字：殭屍、骷髏、焚魂、魔像…（2026-10-29：有寫 summon.name 就用那個）。 */
     public String kindName() {
+        if (label != null) {
+            return label;
+        }
         return switch (kind) {
             case "ZOMBIE", "HUSK" -> "殭屍";
             case "SKELETON", "STRAY" -> "骷髏";
@@ -148,7 +157,30 @@ public record SummonSpec(String kind, int count, Scaled max, boolean fixedMax, d
                 node.bool("ally", false), check(where, "armour", node.decimal("armour", 0), 0, 5),
                 check(where, "evasion", node.decimal("evasion", 0), 0, 5), check(where, "spread", node.decimal("spread", 0.3), 0, 0.9),
                 check(where, "interval", node.decimal("interval", 0), 0, 60), stats,
-                check(where, "es", node.decimal("es", 0), 0, 0.9));
+                check(where, "es", node.decimal("es", 0), 0, 0.9), minionTags(where, node),
+                node.bool("immortal", false), label(node)); // 2026-10-29 照 PoE2：不會受傷的召喚物、說明裡的名字
+    }
+
+    /** 2026-10-29：summon.name（說明裡的名字）；沒寫回傳 null。 */
+    private static String label(final YamlNode node) {
+        final String value = node.string("name", null);
+        return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    /** 2026-10-29 照 PoE2：召喚物的技能種類（summon.minion_tags）；只能寫 {@link MinionTypes#VOCABULARY} 裡的標籤。 */
+    private static Set<String> minionTags(final String where, final YamlNode node) {
+        final Set<String> tags = new java.util.LinkedHashSet<>();
+        for (final String raw : node.strings("minion_tags")) {
+            final String tag = raw.trim().toLowerCase(Locale.ROOT);
+            if (tag.isEmpty()) {
+                continue;
+            }
+            if (!MinionTypes.VOCABULARY.contains(tag)) {
+                throw new IllegalArgumentException(where + ".minion_tags：不認得「" + raw + "」，可用：" + String.join("、", MinionTypes.VOCABULARY));
+            }
+            tags.add(tag);
+        }
+        return tags;
     }
 
     /**
@@ -156,7 +188,8 @@ public record SummonSpec(String kind, int count, Scaled max, boolean fixedMax, d
      */
     public SummonSpec withMultipliers(final double newLife, final double newDamage) {
         return new SummonSpec(kind, count, max, fixedMax, duration, newLife, newDamage, attackSpeed, speed, reach, radius, corpse, search,
-                helmet, weapon, resists, taunt, tauntRadius, buff, ranged, bolt, spectre, heal, ally, armour, evasion, spread, interval, stats, es);
+                helmet, weapon, resists, taunt, tauntRadius, buff, ranged, bolt, spectre, heal, ally, armour, evasion, spread, interval, stats, es,
+                minionTags, immortal, label);
     }
 
     /** 附身召喚能用的怪物種類（都走得動、打得了近戰，不會自己爆炸或瞬移）。 */

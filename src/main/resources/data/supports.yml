@@ -11,6 +11,11 @@
 #                 aura 光環、warcry 戰吼、limit 原作寫「上限」的技能（2026-10-28，SkillLimits 補上）；
 #                 見 skills.yml 的「標籤自動補上」）
 # excludes        技能有其中一個標籤就不能掛（可省略）
+#                 2026-10-29 照 PoE2 的 Minion Types：召喚技能另外有「召喚物的技能」標籤（skills.yml 的 summon.minion_tags），
+#                 requires 符合那些標籤也能掛在召喚技能上，效果給召喚物（沉錘掛骸骨戰士、貫穿掛骸骨射手）；每一條修飾器都要是召喚物用得到的
+#                 （MinionTypes：傷害、速度、暴擊、異常、偷取、條件傷害、破甲、擊退、範圍、持續、冷卻、遠程召喚物的穿透／連鎖／分裂／多射／投射物速度
+#                 ——2026-10-29 照 PoE2 遠程召喚物的投射物真的會飛，投射物速度也吃得到；召喚物的偷取跟玩家一樣一份一份慢慢回）。
+#                 excludes 寫 minion 的照舊不能從召喚物這邊掛（主人自己的機制：怒氣、連擊、戰星、魔力、觸發…）
 # mana_multiplier 魔力消耗倍率（1.2 = 120%，好幾個輔助的倍率相乘）
 # modifiers       疊到被輔助的技能上的修飾器，寫法跟詞綴一樣：
 #                   INCREASED／MORE 的 value 是百分比（25 = 25%，負的是減少／更少）
@@ -773,7 +778,7 @@ supports:
     icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     requires: [melee]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Heavy Swing（poe2db）；這次之前 tier 2、魔耗 1.2、stat: attack.speed, type: INCREASED, value: -15；stat: damage, type: MORE, value: 30, tags: [melee]；stat: stun.buildup, type: MORE, value: 30
     modifiers:
@@ -821,7 +826,7 @@ supports:
     icon: IRON_NUGGET   # 2026-10：原本 IRON_BARS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
     # 2026-10-26 照 PoE2 Close Combat I（poe2db）；這次之前 tier 2、魔耗 1.15、stat: damage.close, type: MORE, value: 30
     modifiers:
@@ -892,7 +897,7 @@ supports:
     icon: IRON_NUGGET   # 2026-10：原本 ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 2
     requires: [projectile]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
     # 2026-10-26 照 PoE2 基準 Close Combat I：原作 1 格內擊中更多 20%（到 3.5 格遞減到 0）、消耗 120%；我們 3.5 格內一律算，更多 35% → 20%（跟貼身一樣）；這次之前 tier 2、魔耗 1.15、stat: damage.close, type: MORE, value: 35
     modifiers:
@@ -990,7 +995,7 @@ supports:
     icon: IRON_INGOT   # 2026-10：原本 IRON_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [melee]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.15
     # 2026-10-26 照 PoE2 基準 Armour Break III／Stun I：原作破甲 = 物理傷害的 15～20%（消耗 100%），暈眩是另一顆 Stun I（更多 50%、消耗 120%）；我們破甲 40% 太高，改成 20%，暈眩累積增加 30% 保留；這次之前 tier 2、魔耗 1.15、stat: armour.break, type: FLAT, value: 40；stat: stun.buildup, type: INCREASED, value: 30
     modifiers:
@@ -1122,7 +1127,7 @@ supports:
     icon: NETHERITE_SCRAP
     tier: 2
     requires: [attack]   # 2026-10-26 照 PoE2：Ruthless 輔助所有攻擊（Attack），不限近戰；這次之前 [melee]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
     modifiers:
       - { stat: damage, type: MORE, value: 15 }
@@ -1414,7 +1419,8 @@ supports:
     tier: 3
     source: abyss_whale
     requires: [attack, spell]
-    excludes: [minion, aura, warcry, herald]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
+    excludes: [aura, warcry, herald]
     mana_multiplier: 1.2
     # 2026-10-26 照 PoE2 基準 Cold Attunement：終局專屬略強：原作獲得 25% 為額外冰冷、火焰閃電更少 50%、消耗 100%；我們沒有扣分項還疊冰緩 40%、對冰緩更多 25%，補上火焰閃電更少 50%，冰緩增加 20%、對冰緩更多 15%（約強 15%），消耗 140% → 120%；這次之前 tier 3、魔耗 1.4、stat: damage.gain.cold, type: FLAT, value: 25；stat: chill.effect, type: INCREASED, value: 40；stat: damage.vs_chilled, type: MORE, value: 25
     modifiers:
@@ -1449,7 +1455,8 @@ supports:
     tier: 3
     source: abyss_whale
     requires: [attack, spell]
-    excludes: [minion, aura, warcry, herald]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
+    excludes: [aura, warcry, herald]
     mana_multiplier: 1.4
     # 2026-10-26 照 PoE2 基準 Cold Penetration：終局專屬略強：原作穿透 30% 冰冷抗性、消耗 120%；我們冰冷更多 30% ＋ 穿透 20%，改成穿透 30% ＋ 冰冷更多 10%（約強 10%），消耗 160% → 140%；這次之前 tier 3、魔耗 1.6、stat: damage, type: MORE, value: 30, tags: [cold]；stat: penetration, type: FLAT, value: 20, tags: [cold]
     modifiers:
@@ -1526,7 +1533,7 @@ supports:
     tier: 3
     source: strongbox_mimic
     requires: [melee]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.25
     # 2026-10-26 照 PoE2 基準 Stun I：終局專屬略強：原作暈眩更多 50%、消耗 120%；我們暈眩更多 60% 再加流血機率 +30、擊退換傷害更少 10%，流血機率 +30 → +20；這次之前 tier 3、魔耗 1.25、stat: stun.buildup, type: MORE, value: 60；stat: bleed.chance, type: FLAT, value: 30；stat: skill.knockback, type: FLAT, value: 1；stat: damage, type: MORE, value: -10
     modifiers:
@@ -1635,7 +1642,7 @@ supports:
     tier: 3
     source: exile_king
     requires: [attack]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.5
     # 2026-10-26 照 PoE2 基準 Execute I：終局專屬略強：原作對低血的敵人擊中更多 40%、消耗 110%；我們同樣 40% 再疊暈眩更多 40%、傷害更多 10%，拿掉傷害更多，暈眩 40% → 30%；這次之前 tier 3、魔耗 1.5、stat: damage.vs_low_life, type: FLAT, value: 40；stat: stun.buildup, type: MORE, value: 40；stat: damage, type: MORE, value: 10
     modifiers:
@@ -1729,7 +1736,7 @@ supports:
     tier: 3
     source: delirium_mirror
     requires: [attack, spell]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.35
     modifiers:
       - { stat: crit.chance, type: INCREASED, value: 60 }
@@ -1759,7 +1766,7 @@ supports:
     tier: 3
     source: abyss_lich
     requires: [attack, spell]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.35
     modifiers:
       - { stat: armour.break, type: FLAT, value: 30 }
@@ -1774,7 +1781,8 @@ supports:
     tier: 3
     source: abyss_lich
     requires: [attack, spell]
-    excludes: [minion, aura, warcry, herald]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
+    excludes: [aura, warcry, herald]
     mana_multiplier: 1.3
     # 2026-10-26 照 PoE2 基準 Cold Attunement／Freeze：終局專屬略強：原作 Cold Attunement 獲得 25% 為額外冰冷、火焰閃電更少 50%（消耗 100%），Freeze 凍結更多 50%（另一顆）；我們獲得 30% 加凍結更多 50% 沒有扣分項，補上火焰閃電更少 50%、凍結 50% → 30%，消耗 160% → 130%；這次之前 tier 3、魔耗 1.6、stat: damage.gain.cold, type: FLAT, value: 30；stat: freeze.buildup, type: MORE, value: 50
     modifiers:
@@ -1873,7 +1881,7 @@ supports:
     icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [melee]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Bloodlust（poe2db）；這次之前 tier 2、魔耗 1.15、效果不動
     modifiers:
@@ -1886,7 +1894,7 @@ supports:
     icon: NETHER_BRICK   # 2026-10：原本 RED_DYE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-27 照站長只留最高階：改成 Bleed II（PoE2 第 3 階 → 2、消耗 100%、流血機率 75%）；這次之前 Bleed I：名稱初裂、說明「被輔助的攻擊更容易造成流血。」、tier 1、魔耗 1.2、stat: bleed.chance, type: FLAT, value: 50
     # 2026-10-26 照 PoE2 Bleed I（poe2db）；這次之前 tier 1、魔耗 1.1、stat: bleed.chance, type: FLAT, value: 20
@@ -1898,7 +1906,7 @@ supports:
     description: 被輔助的技能凍結的時間更久。
     icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
     # 2026-10-26 照 PoE2 Deep Freeze（poe2db）；這次之前 tier 1、魔耗 1.1、效果不動
     modifiers:
@@ -1909,7 +1917,7 @@ supports:
     description: 被輔助的技能造成的感電持續兩倍久，但比較不容易感電。
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Lasting Shock（poe2db）；這次之前 tier 1、魔耗 1.1、效果不動
     modifiers:
@@ -1922,7 +1930,7 @@ supports:
     icon: FERMENTED_SPIDER_EYE   # 2026-10：原本 SPIDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     requires: [attack, spell]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 tier 2、魔耗 1.2、中毒傷害更多 20%、中毒持續時間更少 20%（中毒層數由異常模組的 poison.stacks 讀）
     modifiers:
       - { stat: poison.stacks, type: FLAT, value: 1 }
@@ -1946,7 +1954,7 @@ supports:
     icon: BLAZE_POWDER   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [attack]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 魔耗 1.2、物理的 10% 附加為火焰、對點燃中的敵人更多 25%
     modifiers:
       - { stat: damage.extra_fire_vs_ignited, type: FLAT, value: 30 }
@@ -1971,7 +1979,7 @@ supports:
     description: 被輔助的技能點燃更痛很多，但魔力消耗更高。
     icon: BLAZE_POWDER   # 2026-10：原本 CAMPFIRE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Scouring Flame（poe2db）；這次之前 tier 3、魔耗 1.35、效果不動
     modifiers:
@@ -1983,7 +1991,7 @@ supports:
     icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack, spell]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 tier 1、魔耗 1.15、物理的 10% 附加為冰冷
     modifiers:
@@ -2019,7 +2027,7 @@ supports:
     icon: IRON_NUGGET   # 2026-10：原本 CHAINMAIL_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [attack, spell]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 魔耗 1.15、破甲增加 30%、凍結累積增加 20%
     modifiers:
       - { stat: armour.break_vs_frozen, type: FLAT, value: 100 }
@@ -2029,7 +2037,7 @@ supports:
     description: 被輔助的技能更容易暈眩敵人，破甲也更強。
     icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
     # 2026-10-27 照 PoE2 Devastate（0.5 切不出來；poe2db／RePoE）；這次之前 魔耗 1.15
     modifiers:
@@ -2042,7 +2050,7 @@ supports:
     icon: FLINT   # 2026-10：原本 SHEARS（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [melee]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.15
     # 2026-10-27 照 PoE2 Excoriate（0.5 切不出來；poe2db／RePoE）核對過：階級、魔耗、效果跟原作一樣或已是平衡等效，不用改
     modifiers:
@@ -2058,7 +2066,7 @@ supports:
     icon: NETHER_BRICK   # 2026-10：原本 NETHER_WART（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [attack]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.1
     # 2026-10-27 照 PoE2 See Red（0.5 切不出來；poe2db／RePoE）核對過：階級、魔耗、效果跟原作一樣或已是平衡等效，不用改
     modifiers:
@@ -2283,7 +2291,7 @@ supports:
     description: 被輔助的技能對滿血的敵人暴擊率加倍。
     icon: PHANTOM_MEMBRANE   # 2026-10：原本 SPYGLASS（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 1
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Ambush（poe2db）；這次之前 tier 1、魔耗 1.1、效果不動
     modifiers:
@@ -2319,7 +2327,7 @@ supports:
     icon: PRISMARINE_CRYSTALS
     tier: 1
     requires: [attack]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
     # 2026-10-26 照 PoE2 Elemental Armament I（poe2db）；這次之前 tier 2、魔耗 1.15、效果不動
     modifiers:
@@ -2343,7 +2351,7 @@ supports:
     icon: IRON_INGOT   # 2026-10：原本 PISTON（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [melee]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Knockback（poe2db）；這次之前 tier 1、魔耗 1.05、效果不動
     modifiers:
@@ -2355,7 +2363,7 @@ supports:
     icon: SLIME_BALL   # 2026-10：原本 STICKY_PISTON（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [melee]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.1
     # 2026-10-27 照 PoE2 Arms Length（0.5 切不出來；poe2db／RePoE）；這次之前 stat: skill.knockback, type: FLAT, value: 0.5；stat: skill.knockback, type: MORE, value: 40、說明「被輔助的近戰攻擊擊退得更遠。」
     modifiers:
@@ -2419,7 +2427,7 @@ supports:
     icon: GUNPOWDER   # 2026-10：原本 TNT（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]   # 2026-10-26 照 PoE2：Overextend 只輔助攻擊（Attack）；這次之前沒寫
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.15
     # 2026-10-26 照 PoE2 Overextend（poe2db）；這次之前 tier 2、魔耗 1.3、效果不動
     modifiers:
@@ -2520,7 +2528,7 @@ supports:
     description: 被輔助的技能破甲強很多。
     icon: IRON_NUGGET   # 2026-10：原本 IRON_PICKAXE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Armour Demolisher I（poe2db）；這次之前 tier 2、魔耗 1.15、效果不動
     modifiers:
@@ -2531,7 +2539,7 @@ supports:
     description: 被輔助的技能造成的點燃持續兩倍久，但比較不容易點燃。
     icon: ECHO_SHARD   # 2026-10：原本 SOUL_TORCH（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
     # 2026-10-26 照 PoE2 Eternal Flame I（poe2db）；這次之前 tier 1、魔耗 1.1、效果不動
     modifiers:
@@ -2544,7 +2552,7 @@ supports:
     icon: NETHER_BRICK   # 2026-10：原本 CRIMSON_FUNGUS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [spell]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Extraction（poe2db）；這次之前 tier 3、魔耗 1.4、效果不動
     modifiers:
@@ -2556,7 +2564,7 @@ supports:
     icon: FEATHER   # 2026-10：原本 SPYGLASS（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 2
     requires: [attack]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次新增；2026-10-26 照站長「I II III 只留最高的」：遠穿併入這顆（supports.yml 的 merged）
     modifiers:
@@ -2568,7 +2576,7 @@ supports:
     icon: SLIME_BALL
     tier: 1
     requires: [projectile]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2（poe2db Skeletal Arsonist 推薦 Projectile Deceleration）：遠程召喚物的投射物真的會飛，照召喚物的技能標籤可以掛（MinionTypes）；這次之前 excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Projectile Deceleration I（poe2db）；這次之前 tier 1、魔耗 1.0、效果不動
     modifiers:
@@ -3253,7 +3261,7 @@ supports:
     description: 被輔助的技能對流血中的敵人造成的中毒更多 20%；流血也更痛一點。
     icon: FERMENTED_SPIDER_EYE
     tier: 2
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
     # 2026-10-27 照 PoE2 Admixture（第 2 階；poe2db／RePoE）；這次之前 tier 1、魔耗 1.1、stat: poison.magnitude, type: MORE, value: 10；stat: bleed.magnitude, type: MORE, value: 10、說明「被輔助的技能造成的中毒與流血都更痛。」
     modifiers:
@@ -3281,7 +3289,7 @@ supports:
     icon: GHAST_TEAR   # 2026-10：原本 SNOWBALL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     requires: [attack, spell]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Cold Attunement（poe2db）；這次之前 tier 1、魔耗 1.2、stat: damage.gain.cold, type: FLAT, value: 25
     modifiers:
@@ -3295,7 +3303,7 @@ supports:
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [attack, spell]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Lightning Attunement（poe2db）；這次之前 tier 1、魔耗 1.2、stat: damage.gain.lightning, type: FLAT, value: 25
     modifiers:
@@ -3309,7 +3317,7 @@ supports:
     icon: AMETHYST_SHARD
     tier: 3
     requires: [attack, spell]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
     modifiers:
       - { stat: damage.extra.chaos, type: FLAT, value: 25 }
@@ -3404,7 +3412,8 @@ supports:
     icon: IRON_NUGGET   # 2026-10：原本 IRON_CHAIN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [projectile]
-    excludes: [spell, minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
+    excludes: [spell]
     mana_multiplier: 1.1
     modifiers:
       - { stat: pin.chance, type: FLAT, value: 15 }
@@ -3441,7 +3450,7 @@ supports:
     description: 被輔助的技能暴擊率高很多，但暴擊傷害加成少一些。
     icon: QUARTZ   # 2026-10：原本 SPYGLASS（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 2
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Pinpoint Critical（poe2db）；這次之前 tier 2、魔耗 1.15、stat: crit.chance, type: MORE, value: 40；stat: crit.bonus, type: MORE, value: -30
     modifiers:
@@ -3840,7 +3849,7 @@ supports:
     icon: NETHER_STAR
     tier: 2
     requires: [attack, spell]
-    excludes: [minion]
+    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 tier 3、魔耗 1.25、20% 機率超暴擊（暴擊加成算兩次）、暴擊率更少 20%
     modifiers:
       - { stat: crit.bonus, type: INCREASED, value: 100 }

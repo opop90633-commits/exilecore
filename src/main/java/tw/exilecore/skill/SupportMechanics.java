@@ -1358,7 +1358,7 @@ public final class SupportMechanics implements Listener {
                     }
                 }
             }
-            if (percent <= 0 || !minion.mob.isValid() || minion.effective == null) {
+            if (percent <= 0 || !minion.mob.isValid() || minion.effective == null || minion.undamageable()) { // 2026-10-29：不會受傷的召喚物不會自己燒
                 continue;
             }
             final Player owner = plugin.getServer().getPlayer(minion.owner);

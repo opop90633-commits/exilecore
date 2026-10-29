@@ -712,6 +712,90 @@ public final class Profiles implements Listener {
     }
 
     /**
+     * 2026-10-29 照站長：管理員清除訓練假人的實測紀錄（網頁統計頁的「假人實測」）。name 是角色名稱（不分大小寫），null 清全部角色。
+     * 刪掉資料庫裡的紀錄（progress 的 training.best、training.best.gear）、改掉角色頁快照裡的 measured；在線上、正在用那隻角色的玩家
+     * 記憶體裡的紀錄也拿掉（不然下次存檔又寫回去）。回傳清了幾個角色。
+     */
+    public int clearMeasured(final String name) throws Exception {
+        if (name != null && (name.isBlank() || name.length() > 32)) {
+            throw new IllegalArgumentException("角色名稱不對");
+        }
+        final CompletableFuture<java.util.Set<Long>> future = plugin.database().async(connection -> {
+            final java.util.Set<Long> cleared = new java.util.HashSet<>();
+            final java.util.Map<Long, String> rewrite = new java.util.HashMap<>();
+            try (PreparedStatement select = connection.prepareStatement("SELECT character_id, data FROM character_profiles"
+                    + (name == null ? "" : " WHERE LOWER(name) = ?"))) {
+                if (name != null) {
+                    select.setString(1, name.trim().toLowerCase(Locale.ROOT));
+                }
+                try (ResultSet result = select.executeQuery()) {
+                    while (result.next()) {
+                        final long id = result.getLong(1);
+                        final JsonObject json = GSON.fromJson(result.getString(2), JsonObject.class);
+                        if (json != null && json.remove("measured") != null) {
+                            rewrite.put(id, GSON.toJson(json));
+                            cleared.add(id);
+                        }
+                    }
+                }
+            }
+            for (final Map.Entry<Long, String> entry : rewrite.entrySet()) {
+                try (PreparedStatement update = connection.prepareStatement("UPDATE character_profiles SET data = ? WHERE character_id = ?")) {
+                    update.setString(1, entry.getValue());
+                    update.setLong(2, entry.getKey());
+                    update.executeUpdate();
+                }
+            }
+            final String keys = "progress_key IN (?, ?)";
+            if (name == null) {
+                try (PreparedStatement delete = connection.prepareStatement("DELETE FROM progress WHERE " + keys)) {
+                    delete.setString(1, tw.exilecore.training.DummyRecord.KEY);
+                    delete.setString(2, tw.exilecore.training.DummyRecord.GEAR_KEY);
+                    delete.executeUpdate();
+                }
+            } else {
+                // 名字對到的角色（快照裡沒有實測的也清資料庫，免得下次快照又出現）
+                try (PreparedStatement ids = connection.prepareStatement("SELECT character_id FROM character_profiles WHERE LOWER(name) = ?")) {
+                    ids.setString(1, name.trim().toLowerCase(Locale.ROOT));
+                    try (ResultSet result = ids.executeQuery()) {
+                        while (result.next()) {
+                            final long id = result.getLong(1);
+                            try (PreparedStatement delete = connection.prepareStatement("DELETE FROM progress WHERE character_id = ? AND " + keys)) {
+                                delete.setLong(1, id);
+                                delete.setString(2, tw.exilecore.training.DummyRecord.KEY);
+                                delete.setString(3, tw.exilecore.training.DummyRecord.GEAR_KEY);
+                                if (delete.executeUpdate() > 0) {
+                                    cleared.add(id);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return cleared;
+        });
+        final java.util.Set<Long> cleared = future.get(10, TimeUnit.SECONDS);
+        // 線上的玩家：記憶體裡的也拿掉（主執行緒）
+        plugin.getServer().getScheduler().callSyncMethod(plugin, () -> {
+            for (final Player player : plugin.getServer().getOnlinePlayers()) {
+                final PlayerState state = plugin.players().get(player);
+                if (state == null || !state.hasCharacter()) {
+                    continue;
+                }
+                final boolean match = name == null ? state.progress().containsKey(tw.exilecore.training.DummyRecord.KEY)
+                        : state.character().name().equalsIgnoreCase(name.trim());
+                if (match) {
+                    plugin.characters().removeProgress(player, tw.exilecore.training.DummyRecord.KEY);
+                    plugin.characters().removeProgress(player, tw.exilecore.training.DummyRecord.GEAR_KEY);
+                    cleared.add(state.character().id());
+                }
+            }
+            return null;
+        }).get(10, TimeUnit.SECONDS);
+        return cleared.size();
+    }
+
+    /**
      * 管理員的統計頁（2026-10）：每個角色（含不公開的）一行精簡資料——等級、職業、昇華、每個技能的估計每秒傷害、
      * 技能與輔助、穿著的傳奇（裝備與珠寶）。統計在網頁上算（可以篩等級、職業）。
      */

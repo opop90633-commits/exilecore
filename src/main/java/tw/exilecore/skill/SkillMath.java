@@ -109,6 +109,14 @@ public final class SkillMath {
         return list;
     }
 
+    /**
+     * 2026-10-29：多發投射物的扇形角度（度）：本來只有一發（spread &lt; 1）的多了投射物，每多一發多 12°、最多 60°；
+     * 有寫 spread 的照寫的。玩家的 ProjectileEngine、召喚物的 MinionProjectiles 共用（這次之前寫在 ProjectileEngine 裡）。
+     */
+    public static double projectileSpread(final int count, final double spreadDegrees) {
+        return count > 1 && spreadDegrees < 1 ? Math.min(60, 12.0 * (count - 1)) : spreadDegrees;
+    }
+
     /** 回歸的投射物這一 tick 會不會經過施放者身邊：距離不到一步多一點（至少 1 格）就算到了，不會一直在旁邊打轉。 */
     public static boolean returnArrived(final double distance, final double speed) {
         return distance <= Math.max(1.0, speed * 0.75);

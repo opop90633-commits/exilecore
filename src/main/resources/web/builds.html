@@ -109,6 +109,11 @@
   .meta tbody tr.link { cursor: pointer; }
   /* 技能那一欄很長（召喚物合計會列出每一種）：讓它換行，不要把後面的欄位擠出畫面 */
   .meta td.wrap { white-space: normal; min-width: 160px; overflow-wrap: anywhere; }
+  /* 2026-10-29：管理員清除假人實測的小按鈕 */
+  button.mini { font: inherit; font-size: 12px; padding: 1px 8px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface-1); color: var(--text-secondary); }
+  button.mini.danger { color: #c0392b; border-color: rgba(192, 57, 43, 0.4); }
+  button.mini.danger:hover { background: rgba(192, 57, 43, 0.1); }
 </style>
 </head>
 <body>
@@ -218,6 +223,29 @@
     main.replaceChildren(el("div", { cls: "card" }, controls, el("div", { cls: "scroll" }, table), count));
   }
 
+  // ---- 2026-10-29 照站長：管理員清除訓練假人的實測紀錄 ----
+  let csrf = "";
+  function adminPost(path, body) {
+    const token = csrf ? Promise.resolve(csrf) : fetch("admin/api/state", { cache: "no-store", credentials: "same-origin" })
+      .then(r => { if (!r.ok) throw new Error("管理網頁登入過期了，請重新登入"); return r.json(); })
+      .then(json => { csrf = json.csrf || ""; return csrf; });
+    return token.then(t => fetch(path, { method: "POST", cache: "no-store", credentials: "same-origin",
+      headers: { "Content-Type": "application/json", "X-EC-CSRF": t }, body: JSON.stringify(body) }))
+      .then(r => r.json().then(json => { if (!r.ok) throw new Error(json.error || ("出錯了（" + r.status + "）")); return json; }));
+  }
+  function clearDummy(name) {
+    const what = name ? "「" + name + "」的假人實測紀錄" : "「全部角色」的假人實測紀錄";
+    if (!confirm("清除" + what + "？刪掉就救不回來。")) return;
+    if (!name && (prompt("再確認一次：請輸入「全部清除」四個字", "") || "").trim() !== "全部清除") { alert("輸入的字不對，沒有清除"); return; }
+    adminPost("admin/api/builds/clear-dummy", name ? { name } : { all: true })
+      .then(json => {
+        alert(json.message || "清掉了");
+        for (const c of (meta && meta.characters) || []) if (!name || c.name.toLowerCase() === name.toLowerCase()) delete c.measured;
+        renderMeta();
+      })
+      .catch(e => alert("沒有清除：" + e.message));
+  }
+
   // ---- 管理員統計（2026-10）：估計 DPS 排行、技能／輔助／傳奇使用率、昇華分布 ----
   let meta = null;
   const metaFilter = { min: 1, cls: "", sort: "estimate" };
@@ -267,6 +295,9 @@
       const td = el("td", { cls: "num", text: Number(m.dps).toLocaleString() + (times ? "　×" + (times >= 10 ? Math.round(times) : times.toFixed(1)) : "") });
       td.title = m.dummy + "・" + Number(m.seconds).toFixed(1) + " 秒" + (Number(m.dot) > 0 ? "・持續傷害佔 " + m.dot + "%" : "")
         + "・" + new Date(Number(m.at)).toLocaleString();
+      // 2026-10-29 照站長：管理員可以清掉這個角色的假人實測
+      td.append(" ", el("button", { type: "button", cls: "mini danger", text: "清除", title: "清掉 " + c.name + " 的假人實測紀錄",
+        onclick: e => { e.stopPropagation(); clearDummy(c.name); } }));
       return td;
     }
     function count(rows, keyFn) {
@@ -318,7 +349,8 @@
       const dpsCard = el("div", { cls: "card meta" }, el("h3", { text: "估計每秒傷害排行（自己放的技能取最高的一個＋召喚物全部加總）" }),
         el("p", { cls: "muted", style: "margin:0 0 8px", text: "估計值跟 /stats 的「✦ 技能 每秒」同一套算法：平均一下 × 暴擊期望 × 每秒次數（含連射的每一波與餘震）；召喚技能算「一隻召喚物 × 同時最多幾隻」。自己放的技能一次只能放一個，所以只取最高的；召喚物是同時在打的，全部加上去。估計值含點燃、流血、中毒與感電（對同等級一般怪物）、雙詠的第二發、蓄力滿層；「全開」再加上技能欄上的戰吼、戰旗、詛咒、印記都開著、投射物貼臉全中、灌注滿層、瞬影擊滿銳星連打。沒算怪物的護甲抗性、曝露、怒氣、對異常敵人更多這些打起來才有的加成——「假人實測」是這個角色打訓練假人（至少 15 秒）最高的一段，換過裝備就作廢，三天後較低的新紀錄也會取代舊的；後面的倍數是實測 ÷ 全開。點「每秒傷害」或「假人實測」換排序。" }),
         el("div", { cls: "scroll" }, el("table", null, el("thead", null, el("tr", null, el("th", { cls: "num", text: "#" }), el("th", { text: "角色" }),
-          el("th", { text: "職業" }), el("th", { cls: "num", text: "等級" }), sortHead("每秒傷害", "estimate"), el("th", { cls: "num", text: "全開", title: "技能欄上的戰吼、戰旗增益都開著、強化攻擊照冷卻平均，詛咒、印記都掛在敵人身上" }), sortHead("假人實測", "measured"), el("th", { text: "技能" }))), dpsBody)));
+          el("th", { text: "職業" }), el("th", { cls: "num", text: "等級" }), sortHead("每秒傷害", "estimate"), el("th", { cls: "num", text: "全開", title: "技能欄上的戰吼、戰旗增益都開著、強化攻擊照冷卻平均，詛咒、印記都掛在敵人身上" }), sortHead("假人實測", "measured"), el("th", { text: "技能" }))), dpsBody)),
+        el("p", null, el("button", { type: "button", cls: "mini danger", text: "清除全部角色的假人實測", onclick: () => clearDummy(null) })));
       const mainSkill = new Map();
       for (const x of ranked) mainSkill.set(x.b.main, (mainSkill.get(x.b.main) || 0) + 1);
       body.replaceChildren(

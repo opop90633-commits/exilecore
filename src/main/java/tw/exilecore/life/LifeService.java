@@ -289,6 +289,15 @@ public final class LifeService {
         return extras.likeUber();
     }
 
+    /** 2026-10-29 照站長：淵鯨、鯊王的換階段鎖血（{@link tw.exilecore.map.MapService#phaseFloor} 呼叫）；其他回傳 0。 */
+    public double phaseFloor(final org.bukkit.entity.Entity entity) {
+        if (world == null || !world.equals(entity.getWorld())) {
+            return 0;
+        }
+        final double whaleFloor = whale.phaseFloor(entity);
+        return whaleFloor > 0 ? whaleFloor : extras.phaseFloor(entity);
+    }
+
     public boolean isWhale(final org.bukkit.entity.Entity entity) {
         return world != null && world.equals(entity.getWorld()) && whale.isWhale(entity);
     }
