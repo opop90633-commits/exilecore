@@ -316,7 +316,7 @@ public final class SupportMechanics implements Listener {
         final double hitRun = effective.flat(SupportKeys.HIT_AND_RUN, build.profile().tags());
         if (hitRun > 0) {
             final Double mark = hitRunMark.get(key(player, build.definition().id()));
-            final double need = tw.exilecore.core.Units.metres(hitRun);
+            final double need = hitRun * SupportKeys.HIT_AND_RUN_BLOCKS_PER_METRE; // 2026-10-29 照站長：1 公尺 = 0.5 格（只有迅鋒）
             final double moved = mark == null ? Double.MAX_VALUE : travelled(player) - mark;
             if (moved + 1e-9 < need) {
                 return String.format(Locale.ROOT, "%s 要先移動 %s 格（還差 %.1f）", build.definition().name(),

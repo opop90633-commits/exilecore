@@ -29,6 +29,8 @@ public final class SupportKeys {
     public static final String MOMENTUM = "momentum.damage";
     /** FLAT：公尺。移動這麼遠之後才能用，用了之後要再移動（迅鋒，2026-10-29 照 PoE2 Hit and Run）。 */
     public static final String HIT_AND_RUN = "hit_and_run.travel";
+    /** 2026-10-29 照站長：迅鋒的移動距離 1 公尺算 0.5 格（10 公尺 = 5 格）；同日稍早照全服的 1.5 格（15 格），太遠。 */
+    public static final double HIT_AND_RUN_BLOCKS_PER_METRE = 0.5;
     /** INCREASED：對被定住（凍結、重暈、定身、電擊）的敵人的暴擊率（釘地 II）。 */
     public static final String CRIT_VS_IMMOBILISED = "crit.vs_immobilised";
 

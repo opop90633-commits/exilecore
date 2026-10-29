@@ -2387,13 +2387,14 @@ supports:
 
   hit_and_run:             # Hit and Run（2026-10-29 照站長改成原作）
     name: 迅鋒
-    description: 被輔助的攻擊要在你移動 15 格後才能使用，用了之後又要再移動才能用；技能速度更多 40%。只能輔助原本沒有使用條件、沒有冷卻時間的攻擊。
+    description: 被輔助的攻擊要在你移動 5 格後才能使用，用了之後又要再移動才能用；技能速度更多 40%。只能輔助原本沒有使用條件、沒有冷卻時間的攻擊。
     icon: RABBIT_FOOT
     tier: 3   # PoE2 是第 4 階，我們最高第 3 階
     requires: [attack]
     excludes: [minion, channel, cooldown]   # 2026-10-26 照 PoE2：Hit and Run 不能輔助有冷卻的技能；這次之前 [minion, channel]
     mana_multiplier: 1.0
-    # 2026-10-29 照 PoE2 Hit and Run（移動 10 公尺 = 15 格後才能用、用了變成不能用；40% 更多技能速度；沒有消耗加成）；
+    # 2026-10-29 照站長：迅鋒的距離 1 公尺算 0.5 格（10 公尺 = 5 格，SupportKeys.HIT_AND_RUN_BLOCKS_PER_METRE）；同日稍早 15 格
+    # 2026-10-29 照 PoE2 Hit and Run（移動 10 公尺後才能用、用了變成不能用；40% 更多技能速度；沒有消耗加成）；
     #   這次之前沒做移動條件，改成攻擊速度更多 25%、魔力消耗 140%
     modifiers:
       - { stat: hit_and_run.travel, type: FLAT, value: 10 }

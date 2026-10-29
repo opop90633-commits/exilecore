@@ -53,7 +53,7 @@ class MomentumSupportTest {
         assertTrue(hitRun.modifiers().stream().anyMatch(m -> m.stat().equals(SupportKeys.HIT_AND_RUN) && m.value() == 10), "移動 10 公尺");
         assertTrue(hitRun.modifiers().stream().anyMatch(m -> m.stat().equals("attack.speed") && m.type() == ModType.MORE && (Math.abs(m.value() - 40) < 1e-9 || Math.abs(m.value() - 0.4) < 1e-9)));
         final String text = ModifierText.describe(hitRun.modifiers().stream().filter(m -> m.stat().equals(SupportKeys.HIT_AND_RUN)).findFirst().orElseThrow());
-        assertTrue(text.contains("15 格"), text);
+        assertTrue(text.contains("5 格") && !text.contains("15 格"), text); // 2026-10-29 照站長：1 公尺 = 0.5 格
         for (final SkillDefinition skill : config.all()) {
             if (SupportGuards.conditional(skill)) {
                 assertNotNull(hitRun.refusal(skill), skill.id() + "：本來就有使用條件（要榮耀、連擊）的不行");

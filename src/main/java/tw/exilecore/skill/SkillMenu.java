@@ -224,7 +224,7 @@ public final class SkillMenu extends Menu {
         lore.add("<yellow>點一下：取消選取");
         lore.add("<yellow>Shift＋右鍵：看裝備對這個技能的加成");
         set(SLOT_SELECTED, highlight(SkillArt.decorate(icon(material(definition.icon(), Material.BOOK),
-                "<green>選取中：<#e0c080>" + ItemRenderer.escape(definition.name()) + " <gray>Lv." + entry.level() + SkillService.qualityTag(entry), lore), definition)));
+                "<green>選取中：<#e0c080>" + ItemRenderer.escape(definition.name()) + " <gray>Lv." + entry.level() + SkillService.qualityTag(entry, SkillService.extraQuality(plugin.players().sheet(player))), lore), definition)));
         // 升級（2026-10-27 照 PoE2：直接升到未切割寶石的等級）：自動挑背包、通貨袋或倉庫裡角色用得了的最高等級那顆
         final String problem = gems.levelUpProblem(state, entry, Math.min(SkillLoadout.GEM_CAP, entry.level() + 1));
         final GemService.UncutSource source = problem == null ? gems.bestForLevelUp(player, entry) : null;
@@ -417,7 +417,7 @@ public final class SkillMenu extends Menu {
         final boolean dormant = loadout.dormant(entry);
         final ItemStack stack = SkillArt.decorate(icon(material(definition.icon(), Material.BOOK),
                 (chosen || target ? "<green>▶ " : "") + (auraOn ? "<#8fd3ff>✦ " : "") + (dormant ? "<dark_gray>" : "<#e0c080>") + name
-                        + " <gray>Lv." + entry.level() + SkillService.qualityTag(entry)
+                        + " <gray>Lv." + entry.level() + SkillService.qualityTag(entry, SkillService.extraQuality(plugin.players().sheet(player)))
                         + (entry.granted() ? " <#b4a0ff>⚔賦予" : "") + (auraOn ? " <#8fd3ff>開啟中" : ""), lore), definition);
         final boolean framed = (chosen || target) && frames(stack);
         // 開著的光環一直發光，一眼看得出來
@@ -699,7 +699,7 @@ public final class SkillMenu extends Menu {
         lore.add("");
         lore.add(holding == Holding.SUPPORT_GEM ? "<red>這一孔不放輔助寶石" : "<yellow>點一下：拿出來");
         final ItemStack stack = icon(innerDefinition == null ? Material.BARRIER : material(innerDefinition.icon(), Material.ECHO_SHARD),
-                "<#ffd27f>" + ItemRenderer.escape(skillNameOf(inner)) + " <gray>Lv." + inner.level() + SkillService.qualityTag(inner), lore);
+                "<#ffd27f>" + ItemRenderer.escape(skillNameOf(inner)) + " <gray>Lv." + inner.level() + SkillService.qualityTag(inner, SkillService.extraQuality(plugin.players().sheet(player))), lore);
         return innerDefinition == null ? stack : SkillArt.decorate(stack, innerDefinition);
     }
 

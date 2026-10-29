@@ -575,7 +575,7 @@ public final class ModifierText {
                     + number(value) + "% 元素傷害";
             case tw.exilecore.stats.SupportKeys.VOLT -> "每移動 1 格累積 2 點電荷（最多 " + number(value) + " 點），放的時候全部用掉，每點獲得 1% 傷害為額外閃電傷害";
             case tw.exilecore.stats.SupportKeys.MOMENTUM -> "單次使用被輔助的技能期間至少移動 " + number(tw.exilecore.core.Units.metres(2)) + " 格後，這次使用後續造成更多 " + number(value) + "% 傷害（傳送不算）";
-            case tw.exilecore.stats.SupportKeys.HIT_AND_RUN -> "在你移動 " + number(tw.exilecore.core.Units.metres(value)) + " 格後，才可以使用被輔助的技能；用了之後要再移動才能用";
+            case tw.exilecore.stats.SupportKeys.HIT_AND_RUN -> "在你移動 " + number(value * tw.exilecore.stats.SupportKeys.HIT_AND_RUN_BLOCKS_PER_METRE) + " 格後，才可以使用被輔助的技能；用了之後要再移動才能用";
             case tw.exilecore.stats.SupportKeys.CRIT_VS_IMMOBILISED -> scaled(modifier, "對被定住（凍結、重暈、定身、電擊）的敵人的暴擊率", percent);
             case tw.exilecore.stats.SupportKeys.FLAG_CULLING_RARE -> "對稀有、傳奇怪物與 Boss 有撲殺（生命掉到稀有 10%、傳奇與 Boss 5% 以下直接倒下）";
             case tw.exilecore.stats.SupportKeys.CULL_THRESHOLD_ON_CULL -> "撲殺打死敵人後 20 秒內，撲殺門檻增加 " + number(value) + "%";

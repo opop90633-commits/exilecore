@@ -966,7 +966,7 @@ public final class SkillService {
     SkillBuild metaBuild(final PlayerState state, final StatSheet sheet, final SkillLoadout.Entry host, final SkillDefinition hostDefinition,
                          final SkillDefinition spell, final SkillLoadout.Entry spellEntry) {
         return SkillBuild.of(config, spell, spellEntry.level(), state.level(), false, innerSupportsOf(host, hostDefinition, spell),
-                state.weaponTags(), sheet, resonantOf(spellEntry), qualityModifiers(spell, spellEntry.quality() + bonusQuality(sheet)));
+                state.weaponTags(), sheet, resonantOf(spellEntry), qualityModifiers(spell, spellEntry.quality() + extraQuality(sheet)));
     }
 
     /** 2026-10-26 照 PoE2：主要寶石觸發的法術帶 triggered（天賦「被觸發的法術…」）；Invocation 類觸發的再帶 invocation。 */
@@ -2975,7 +2975,7 @@ public final class SkillService {
         // 2026-10-22：要圖騰的輔助（樁怒、疾樁…）也套到英靈的攻擊上（innerSupportsOf 併成一顆不挑技能的）
         // 2026-10-23 修正：放進去的錘子寶石的品質也要算（以前英靈這一下直接用 SkillBuild.of，品質沒套上）
         final SkillBuild built = SkillBuild.of(config, definition, next.level(), state.level(), false, innerSupportsOf(host, totem, definition),
-                state.weaponTags(), sheet, resonantOf(next), qualityModifiers(definition, next.quality() + bonusQuality(sheet)));
+                state.weaponTags(), sheet, resonantOf(next), qualityModifiers(definition, next.quality() + extraQuality(sheet)));
         if (built.cooldownTicks() > 0) {
             final List<String> names = new ArrayList<>();
             for (final SupportDefinition support : supportsOf(next)) {
@@ -4402,7 +4402,7 @@ public final class SkillService {
             return null;
         }
         final List<tw.exilecore.stats.Modifier> more = SocketedWarcry.modifiers(roarLevel,
-                qualityModifiers(roar, roarEntry.quality() + bonusQuality(sheet)));
+                qualityModifiers(roar, roarEntry.quality() + extraQuality(sheet)));
         return buildFresh(state, sheet, cry, spellEntry(roarEntry, roarEntry.inner()), more);
     }
 
@@ -4449,6 +4449,16 @@ public final class SkillService {
     /** 2026-10-26 照 PoE2 天賦樹：「所有技能的品質 +x%」（加在每顆技能寶石自己的品質上）。 */
     static int bonusQuality(final StatSheet sheet) {
         return sheet == null ? 0 : (int) Math.max(0, Math.round(sheet.flat(tw.exilecore.stats.TreeEffectKeys.SKILL_QUALITY, java.util.Set.of())));
+    }
+
+    /** 2026-10-29：昇華「技能寶石品質」（嵌晶：所有技能品質 +2%，配兩個 +4%）。 */
+    static int ascendancyQuality(final StatSheet sheet) {
+        return sheet == null ? 0 : (int) Math.max(0, Math.round(sheet.flat(tw.exilecore.ascendancy.AscKeys.SKILL_QUALITY, java.util.Set.of())));
+    }
+
+    /** 2026-10-29：寶石以外的技能品質（昇華＋天賦樹）——技能面板顯示、插槽裡的技能都照這個加。 */
+    static int extraQuality(final StatSheet sheet) {
+        return ascendancyQuality(sheet) + bonusQuality(sheet);
     }
 
     /**
@@ -5118,14 +5128,19 @@ public final class SkillService {
         final List<String> lines = new ArrayList<>(describe(player, build(state, plugin.players().sheet(player), definition, entry)));
         // 2026-10-23：品質、腐化放在標籤下面第一行（以前面板上看不到）
         final List<String> top = new ArrayList<>();
-        final String quality = qualityText(definition, entry.quality());
-        if (quality != null && entry.granted()) {
-            top.add("<#8888ff>◆ 品質 " + entry.quality() + "%（來自武器）"); // 2026-10-27 照 PoE2 0.5：法杖、長杖、權杖的品質加在賦予的技能上
+        // 2026-10-29 照站長：品質照實際生效的算（寶石＋昇華「技能寶石品質」＋天賦樹），寫出各自加了多少；這次之前只寫寶石自己的
+        final StatSheet qualitySheet = plugin.players().sheet(player);
+        final int ascQuality = ascendancyQuality(qualitySheet);
+        final int treeQuality = bonusQuality(qualitySheet);
+        final int totalQuality = entry.quality() + ascQuality + treeQuality;
+        final String quality = qualityText(definition, totalQuality);
+        if (totalQuality > 0) {
+            top.add("<#8888ff>◆ 品質 " + totalQuality + "%" + qualitySources(entry, ascQuality, treeQuality)); // 2026-10-27：武器賦予的寫「來自武器」
         }
         if (quality != null) {
             top.add("<#8888ff>◆ " + ItemRenderer.escape(quality));
             // 2026-10-28：額外的品質效果（進階奇術）也寫出來：配了就照常顏色，沒配就灰字提示；這次之前看不到
-            final String advanced = advancedQualityText(definition, entry.quality());
+            final String advanced = advancedQualityText(definition, totalQuality);
             if (advanced != null) {
                 final boolean on = tw.exilecore.ascendancy.AscBuild.gem(plugin.players().sheet(player), definition,
                         SupportDefinition.hostsSkill(definition) ? hostSupportsOf(entry) : supportsOf(entry)).twice();
@@ -5343,7 +5358,31 @@ public final class SkillService {
 
     /** 2026-10-23：名字後面的品質、腐化小標（技能面板的標題用）；都沒有回傳空字串。 */
     public static String qualityTag(final SkillLoadout.Entry entry) {
-        return (entry.quality() > 0 ? " <#8888ff>品質 " + entry.quality() + "%" : "") + (entry.corrupted() ? " <#d20000>腐化" : "");
+        return qualityTag(entry, 0);
+    }
+
+    /** 2026-10-29：同上，品質加上寶石以外的（昇華、天賦樹；{@link #extraQuality}）。 */
+    public static String qualityTag(final SkillLoadout.Entry entry, final int extra) {
+        final int total = entry.quality() + Math.max(0, extra);
+        return (total > 0 ? " <#8888ff>品質 " + total + "%" : "") + (entry.corrupted() ? " <#d20000>腐化" : "");
+    }
+
+    /** 2026-10-29：品質的來源（寶石／武器、昇華、天賦樹），只有一種來源的寶石不寫；例如「（寶石 10% ＋昇華 4%）」。 */
+    static String qualitySources(final SkillLoadout.Entry entry, final int ascQuality, final int treeQuality) {
+        final List<String> parts = new ArrayList<>();
+        if (entry.quality() > 0) {
+            parts.add((entry.granted() ? "武器 " : "寶石 ") + entry.quality() + "%");
+        }
+        if (ascQuality > 0) {
+            parts.add("昇華 " + ascQuality + "%");
+        }
+        if (treeQuality > 0) {
+            parts.add("天賦樹 " + treeQuality + "%");
+        }
+        if (parts.isEmpty() || parts.size() == 1 && entry.quality() > 0 && !entry.granted()) {
+            return "";
+        }
+        return "<gray>（" + String.join(" ＋", parts) + "）";
     }
 
     /** 圖鑑（2026-10）：看 Lv.30、Lv.40 這種超過寶石上限的數值——寶石當 20 級，多的當成「+x 技能等級」（再加上你裝備本來的）。 */

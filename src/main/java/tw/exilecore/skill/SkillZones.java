@@ -288,7 +288,7 @@ final class SkillZones implements SkillTargets.Strikeable {
             if (same >= limit + tw.exilecore.ascendancy.AscendancyEffects.limitBonus(owner, profile.tags()) && oldestSame != null) {
                 oldestSame.gone = true;
                 zones.remove(oldestSame);
-                expired(oldestSame); // 2026-10-29：雷雲被新的擠掉也留下殘骸
+                oldestSame.onExpire = null; // 2026-10-29 照站長：雷雲被新的擠掉不留殘骸（放完雷、時間到才給）；同日稍早擠掉也給，連放就一直給
             }
         }
         int mine = 0;
