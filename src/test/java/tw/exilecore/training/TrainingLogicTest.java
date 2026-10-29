@@ -27,8 +27,8 @@ class TrainingLogicTest {
         final DummyConfig config = new DummyConfig();
         config.load(DATA);
         assertEquals(DummyConfig.defaults(), config.dummies(), "dummies.yml 跟程式裡的預設一樣（沒有檔案時用預設）");
-        assertEquals(List.of("boss"), config.dummies().stream().map(DummyConfig.Dummy::id).toList(), "2026-10-29 照站長：只保留首領");
-        assertEquals(6, config.arenaMargin(), 1e-9);
+        assertEquals(List.of("boss", "boss_2", "boss_3", "boss_4", "boss_5", "boss_6"), config.dummies().stream().map(DummyConfig.Dummy::id).toList(), "2026-10-29 照站長：只保留首領，共 6 隻");
+        assertEquals(20, config.arenaMargin(), 1e-9); // 2026-10-29：6 → 20
         assertEquals(4, config.idleSeconds());
         final Set<String> spots = new HashSet<>();
         for (final DummyConfig.Dummy dummy : config.dummies()) {
@@ -53,7 +53,7 @@ class TrainingLogicTest {
         assertRejected(dir, shipped.replace("look: diamond", "look: wood"), "look");
         assertRejected(dir, shipped.replace("offset: [28, 20]", "offset: [28]"), "offset");
         assertRejected(dir, shipped.replace("level: map", "level: 120"), "level");
-        assertRejected(dir, shipped.replace("arena_margin: 6", "arena_margin: 99"), "arena_margin");
+        assertRejected(dir, shipped.replace("arena_margin: 20", "arena_margin: 99"), "arena_margin");
         assertRejected(dir, shipped.replace("fire: 40, cold: 40, lightning: 40, chaos: 25}\n    offset: [28, 20]",
                 "fire: 95, cold: 40, lightning: 40, chaos: 25}\n    offset: [28, 20]"), "fire");
     }

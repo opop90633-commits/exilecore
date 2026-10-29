@@ -51,6 +51,8 @@ public final class SkillMenu extends Menu {
     private static final int SLOT_SELECTED = 15;
     private static final int SLOT_LEVEL_UP = 16;
     private static final int SLOT_TAKE_OUT = 17;
+    /** 2026-10-29 照站長（PoE2 的 Set Minion Count）：選起來的是精魂召喚時，設定要帶幾隻。 */
+    private static final int SLOT_MINION_COUNT = 25;
     /** 換頁（技能三頁）。 */
     private static final int SLOT_PAGE = 26;
     /** 技能上面那一排：沒套用資源包時，用綠色玻璃片指著選起來的、可以放的技能。 */
@@ -209,6 +211,7 @@ public final class SkillMenu extends Menu {
             set(SLOT_TAKE_OUT, icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>取出成寶石", "<gray>先選一個技能"));
             return;
         }
+        drawMinionCount(state, definition, entry);
         final List<String> lore = new ArrayList<>(service.describe(player, definition, entry));
         lore.add("");
         lore.add("<gray>輔助孔 <white>" + entry.sockets() + "</white>／" + SkillLoadout.MAX_SOCKETS + "：" + supportSummary(entry));
@@ -248,6 +251,64 @@ public final class SkillMenu extends Menu {
         set(SLOT_TAKE_OUT, icon(Material.HEART_OF_THE_SEA, "<white>取出成技能寶石",
                 "<gray>帶著等級、輔助孔與掛著的輔助寶石放進背包", "<gray>（綁的按鍵改回普攻）", "", "<yellow>左鍵：取出",
                 "<dark_gray>也可以 Shift＋點技能"));
+    }
+
+    /** 2026-10-29：精魂召喚（每一隻保留精魂）的技能：這個技能現在的組合（不是的回傳 null）。 */
+    private SkillBuild minionBuild(final PlayerState state, final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        if (definition == null || entry == null || definition.aura() == null || definition.summon() == null) {
+            return null;
+        }
+        final SkillBuild build = service.build(state, plugin.players().sheet(player), definition, entry);
+        return build.minionReserve() > 0 ? build : null;
+    }
+
+    /** 2026-10-29 照站長（PoE2 的 Set Minion Count）：設定這種召喚物要帶幾隻（每種各自保留精魂，自由混搭）。 */
+    private void drawMinionCount(final PlayerState state, final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        final SkillBuild build = minionBuild(state, definition, entry);
+        if (build == null) {
+            return;
+        }
+        final int max = Math.max(1, build.minions());
+        final int wanted = AuraService.wantedCount(state, definition.id());
+        final int free = Math.min(max, definition.aura().freeMinions());
+        final boolean auto = wanted == Integer.MAX_VALUE;
+        final int shown = auto ? max : Math.min(max, wanted);
+        final int now = service.auras() == null ? -1 : service.auras().minionCap(player.getUniqueId(), definition.id());
+        final List<String> lore = new ArrayList<>();
+        lore.add("<gray>每一隻保留 <white>" + ModifierText.number(Math.round(build.minionReserve() * 10) / 10.0) + "</white> 精魂"
+                + (free > 0 ? "（前 " + free + " 隻不用）" : "") + "，上限 <white>" + max + "</white> 隻");
+        lore.add(auto ? "<gray>目前：<white>自動</white>（精魂付得起幾隻就帶幾隻）" : "<gray>目前設定：<white>" + shown + "</white> 隻");
+        if (now > 0 && now < Integer.MAX_VALUE) {
+            lore.add("<gray>現在帶著：<white>" + now + "</white> 隻" + (now < shown ? "<red>（精魂不夠，少帶了 " + (shown - now) + " 隻）" : ""));
+        }
+        lore.add("<dark_gray>少帶幾隻就少保留精魂，省下來給別種召喚物或光環（各種召喚物可以自由混搭）");
+        lore.add("");
+        lore.add("<yellow>左鍵：+1　右鍵：−1");
+        lore.add("<yellow>Shift＋左鍵：自動（帶滿）　Shift＋右鍵：1 隻");
+        set(SLOT_MINION_COUNT, icon(Material.SKELETON_SKULL, "<#c9a7ff>設定召喚物數量：<white>" + (auto ? "自動（" + max + "）" : shown + " 隻"), lore));
+    }
+
+    /** 2026-10-29：點了「設定召喚物數量」。 */
+    private void clickMinionCount(final SkillLoadout loadout, final ClickType click) {
+        final SkillLoadout.Entry entry = selected >= 0 ? loadout.skill(selected) : null;
+        final SkillDefinition definition = entry == null ? null : service.config().skill(entry.skillId());
+        final PlayerState state = plugin.players().get(player);
+        final SkillBuild build = minionBuild(state, definition, entry);
+        if (build == null || service.auras() == null) {
+            return;
+        }
+        final int max = Math.max(1, build.minions());
+        final int wanted = AuraService.wantedCount(state, definition.id());
+        final int current = wanted == Integer.MAX_VALUE ? max : Math.min(max, wanted);
+        final int next = switch (click) {
+            case SHIFT_LEFT -> 0; // 自動
+            case SHIFT_RIGHT -> 1;
+            case RIGHT -> Math.max(1, current - 1);
+            default -> Math.min(max, current + 1);
+        };
+        service.auras().setWantedCount(player, definition.id(), next >= max ? 0 : next); // 設成上限＝自動
+        click(1.2f);
+        redraw();
     }
 
     /** 2026-10-26：武器賦予的技能的說明（不是賦予的回傳空的）。 */
@@ -942,6 +1003,10 @@ public final class SkillMenu extends Menu {
         }
         if (slot == SLOT_LEVEL_UP) {
             levelUpSelected(loadout, click);
+            return;
+        }
+        if (slot == SLOT_MINION_COUNT) {
+            clickMinionCount(loadout, click);
             return;
         }
         if (slot == SLOT_TAKE_OUT) {

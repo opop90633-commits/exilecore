@@ -1703,7 +1703,7 @@ final class ProjectileEngine implements Listener {
                 final Location to = new Location(world, x + 0.5, y, z + 0.5, from.getYaw(), from.getPitch());
                 visuals.blink(from, to);
                 owner.setFallDistance(0);
-                tw.exilecore.core.Teleports.go(owner, to);
+                tw.exilecore.core.Teleports.glide(owner, to); // 2026-10-29：保留視角（這次之前視角會被拉回）
                 return;
             }
         }

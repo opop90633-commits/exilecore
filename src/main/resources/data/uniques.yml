@@ -2352,7 +2352,7 @@ genesis_crown:
   base: helm_str_int_18        # 2026-10-26 照 PoE2 的基底（Iron Crown：樸素聖盔）；這次之前 helm_int_20
   stat_base: helm_str_int_01          # 原作基底那一階的數值
   drop_level: 80
-  sources: [world_boss, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [world_boss]
+  sources: [world_boss]        # 2026-10-29 照站長：只有世界 Boss 會掉（2026-10-28 曾照 PoE2 改成全域掉落 [world_boss, map_boss, chance, gamble]）
   rarity: common        # 2026-10-28 照 PoE2 稀有度（Crown of the Victor／Iron Crown：hideable）；這次之前 weight: 100
   flavour:
     - "「一切開始的地方。」"
@@ -2377,7 +2377,7 @@ worldsplitter:
   name: 劈世巨鎚
   base: mace2_09        # 2026-10-26 照 PoE2 的基底（Pointed Maul：戰痕巨錘）；這次之前 mace2_27
   drop_level: 80
-  sources: [world_boss, map_boss, chance, gamble]        # 2026-10-28 照 PoE2：poe2db 沒有掉落限制＝全域掉落（任何地圖 Boss、僥倖石、賭博；原本的來源照樣會掉）；這次之前 [world_boss]
+  sources: [world_boss]        # 2026-10-29 照站長：只有世界 Boss 會掉（2026-10-28 曾照 PoE2 改成全域掉落 [world_boss, map_boss, chance, gamble]）
   rarity: common        # 2026-10-28 照 PoE2 稀有度（Tidebreaker／Pointed Maul：hideable）；這次之前 weight: 100
   flavour:
     - "「天裂開一次，就不會合起來。」"
@@ -5276,9 +5276,9 @@ glimmer_sandals:        # 2026-10-26 照 PoE2 0.5 的「Luminous Pace」（原�
       value: [20, 30]
       stats:
         - { stat: es.recharge, type: INCREASED, value: "-{value}" }
-    - text: "能量護盾開始回充的等待時間縮短 100%"
+    - text: "能量護盾提前 100% 開始回充（等待時間減半）"
       stats:
-        - { stat: es.delay, type: INCREASED, value: 100 }
+        - { stat: es.delay, type: MORE, value: -50 }   # 2026-10-29 修正：原作 100% faster start＝等待時間 ÷ 2；這次之前寫成 INCREASED +100，等待時間反而變兩倍（4 秒 → 8 秒）
 
 wintergrasp_wraps:        # 2026-10-26 照 PoE2 0.5 的「Grip of Winter」（原作有、我們以前沒有的）
   name: 寒握皮褲
@@ -7232,7 +7232,7 @@ treefinger_mitts:        # 2026-10-27 照 PoE2 0.5 的「Treefingers」（原作
       value: [20, 30]
       stats:
         - { stat: stun.buildup, type: INCREASED, value: "{value}" }
-    - text: "巨人之血：能拿的雙手武器變成單手拿"
+    - text: "巨人之血（詳細看天賦樹上的巨人之血）"   # 2026-10-29 照站長；這次之前「巨人之血：能拿的雙手武器變成單手拿」
       stats:
         - { stat: flag.giants_blood, type: FLAT, value: 1 }
 
@@ -8121,6 +8121,32 @@ darkhold_buckler:        # 2026-10-27 照 PoE2 0.5 的「Dunkelhalt」（原作�
     - text: "增加 50% 被招架減益的效果"
       stats:
         - { stat: parry.parried_effect, type: INCREASED, value: 50 }
+
+bloodbarrier:        # 2026-10-29 照 PoE2 0.5 的「Bloodbarrier」（poe2db.tw/tw/Bloodbarrier；原作有、我們以前沒有的；瓦爾栽培的變體沒做）
+  name: 鮮血屏障
+  base: buckler_23        # 原作基底 Iron Buckler（淬鐵圓盾）
+  stat_base: buckler_04          # 原作基底那一階的數值
+  drop_level: 16
+  sources: [map_boss, chance, gamble]
+  rarity: common
+  flavour:
+    - "「一扇通往紅色國度的門，夾雜著永無止境的哭喊聲……」"
+  mods:
+    - text: "增加 {value}% 格擋率"
+      value: [10, 15]
+      stats:
+        - { stat: block.chance, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 混沌抗性"
+      value: [13, 17]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "每秒回復 {value} 生命"
+      value: [5, 10]
+      stats:
+        - { stat: life.regen, type: FLAT, value: "{value}" }
+    - text: "格擋時對目標造成持續 5 秒的腐化之血，每秒造成等同於你最大生命 50% 的物理傷害"
+      stats:
+        - { stat: block.corrupted_blood, type: FLAT, value: 50 }
 
 phoenix_crest:        # 2026-10-27 照 PoE2 0.5 的「Rise of the Phoenix」（原作有、我們以前沒有的）
   name: 鳳起聖盾

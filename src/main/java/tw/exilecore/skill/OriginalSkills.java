@@ -1261,8 +1261,7 @@ public final class OriginalSkills implements Listener {
         // 照 PoE2：目標太遠就跳過去（4 格）再咬
         final Location land = player.getLocation().add(to.normalize().multiply(Math.min(DEVOUR_LEAP, distance - 1.5)));
         if (land.getBlock().isPassable() && land.clone().add(0, 1, 0).getBlock().isPassable()) {
-            land.setDirection(to);
-            player.teleport(land);
+            tw.exilecore.core.Teleports.glide(player, land); // 2026-10-29：保留視角（這次之前轉向目標、視角被拉走）
             Fx.spawn(player.getWorld(), Particle.CLOUD, land, 10, 0.4, 0.1, 0.4, 0.02);
         }
     }

@@ -335,6 +335,24 @@ final class AscGranted implements Listener {
                 own.cloneUntil = now + 80;
                 moveDjinn(player, "kelari_djinn", own.clone); // 2026-10-27 照 PoE2：克拉里瞬移到目標的地方炸開
             }
+            case "kelari_brutality" -> {
+                // 2026-10-29 照 PoE2 Kelari's Brutality：飛刀鑽進地面，3 公尺內 12 處短暫延遲後爆出刀刃（中間那一處是技能本身，另外 11 處撒在周圍）
+                final Location center = aim(player, target, 20);
+                final double spread = tw.exilecore.core.Units.metres(3) * build.areaScale();
+                final int level = build.level();
+                final List<Modifier> extra = List.copyOf(local);
+                final java.util.Random random = new java.util.Random();
+                for (int i = 0; i < 11; i++) {
+                    final double angle = random.nextDouble() * Math.PI * 2;
+                    final double distance = Math.sqrt(random.nextDouble()) * spread;
+                    final Location at = center.clone().add(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
+                    effects.later(12 + random.nextInt(6), () -> {
+                        if (plugin.skills() != null) {
+                            plugin.skills().triggerSkill(player, "asc_kelari_blade", at, level, extra);
+                        }
+                    });
+                }
+            }
             case "kelari_judgment" -> moveDjinn(player, "kelari_djinn", aim(player, target, 20)); // 2026-10-27：克拉里飛過去懸起刀刃
             case "ruzhan_reckoning" -> {
                 final Location at = aim(player, target, 20);

@@ -63,16 +63,25 @@ public final class DummyConfig {
     }
 
     private void reset() {
-        arenaMargin = 6;
+        arenaMargin = 20; // 2026-10-29 照站長：6 → 20（遠程要站遠一點測）
         idleSeconds = 4;
         personalMax = 10;
         dummies = defaults();
     }
 
-    /** 跟出貨的 dummies.yml 一樣（2026-10-29 照站長：只保留首領；位置照舊，營地東南邊 [28, 20]）。 */
+    /** 跟出貨的 dummies.yml 一樣（2026-10-29 照站長：只保留首領，共 6 隻一樣的；第一隻位置照舊，營地東南邊 [28, 20]）。 */
     public static List<Dummy> defaults() {
-        return List.of(
-                new Dummy("boss", "訓練假人・首領", "像最高階地圖的首領：抗性 40%／25%", LEVEL_MAP, true, 10, 1, 1, 40, 40, 40, 25, 28, 20, 180f, 1.3, "diamond", 1));
+        final List<Dummy> list = new java.util.ArrayList<>();
+        list.add(boss("boss", "訓練假人・首領", 28, 20));
+        final int[][] offsets = {{20, 20}, {12, 20}, {28, 12}, {20, 12}, {12, 12}};
+        for (int i = 0; i < offsets.length; i++) {
+            list.add(boss("boss_" + (i + 2), "訓練假人・首領 " + (i + 2), offsets[i][0], offsets[i][1]));
+        }
+        return List.copyOf(list);
+    }
+
+    private static Dummy boss(final String id, final String name, final double x, final double z) {
+        return new Dummy(id, name, "像最高階地圖的首領：抗性 40%／25%", LEVEL_MAP, true, 10, 1, 1, 40, 40, 40, 25, x, z, 180f, 1.3, "diamond", 1);
     }
 
     /**

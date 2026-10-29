@@ -287,6 +287,44 @@ final class AuraService implements Listener {
      * 連一隻都養不起（或固定的部分不夠）回傳 null。
      */
     static Fit fit(final SkillBuild build, final double available) {
+        return fit(build, available, Integer.MAX_VALUE);
+    }
+
+    /** 2026-10-29：角色進度裡存「這種召喚物要帶幾隻」的鍵（後面接技能代號）。 */
+    static final String COUNT_KEY = "minion_count.";
+
+    /**
+     * 2026-10-29 照站長（PoE2 的 Set Minion Count）：玩家自己設定這種精魂召喚要帶幾隻（1～技能的上限）；沒設定回傳 Integer.MAX_VALUE（照舊：付得起幾隻叫幾隻）。
+     * 每一種各自保留精魂，少帶幾隻就少保留，省下的精魂給別種召喚物或光環。
+     */
+    int wantedCount(final UUID player, final String skillId) {
+        final org.bukkit.entity.Player online = plugin.getServer().getPlayer(player);
+        return wantedCount(online == null ? null : plugin.players().get(online), skillId);
+    }
+
+    /** 同上，直接看角色的進度（虛擬角色、技能選單用）。 */
+    static int wantedCount(final PlayerState state, final String skillId) {
+        final String stored = state == null ? null : state.progress().get(COUNT_KEY + skillId);
+        if (stored == null || stored.isBlank()) {
+            return Integer.MAX_VALUE;
+        }
+        try {
+            return Math.max(1, Integer.parseInt(stored.trim()));
+        } catch (final NumberFormatException e) {
+            return Integer.MAX_VALUE;
+        }
+    }
+
+    /** 2026-10-29：設定這種精魂召喚要帶幾隻（0 或負數 = 取消設定，照舊付得起幾隻叫幾隻）；兩秒內照新的數量增減、重算保留。 */
+    void setWantedCount(final org.bukkit.entity.Player player, final String skillId, final int count) {
+        if (plugin.characters() == null) {
+            return;
+        }
+        plugin.characters().setProgress(player, COUNT_KEY + skillId, count <= 0 ? "" : String.valueOf(count));
+    }
+
+    /** 同上，另外最多 wanted 隻（玩家自己設定的數量）。 */
+    static Fit fit(final SkillBuild build, final double available, final int wanted) {
         if (LineageRules.communionLife(build) > 0) {
             return new Fit(0, Integer.MAX_VALUE); // 2026-10-27 照 PoE2 血契：不保留精魂，改成保留生命（modifiers 裡算）
         }
@@ -300,7 +338,7 @@ final class AuraService implements Listener {
         final int max = Math.max(1, build.minions());
         final int free = Math.min(max, build.definition().aura().freeMinions());
         final int paid = (int) Math.floor((Math.max(0, left) + 1e-9) / build.minionReserve());
-        final int count = Math.min(max, free + paid);
+        final int count = Math.min(Math.min(max, Math.max(1, wanted)), free + paid);
         if (count < 1) {
             return null;
         }
@@ -412,7 +450,8 @@ final class AuraService implements Listener {
                     + (totalReserve(player.getUniqueId()) > 0 ? String.format(Locale.ROOT, "（還保留 %.0f 精魂）", totalReserve(player.getUniqueId())) : "");
         }
         final tw.exilecore.stats.StatSheet toggleSheet = plugin.players().sheet(player);
-        final Fit fit = fit(build, capacity(toggleSheet, otherReserve(player.getUniqueId())) - totalReserve(player.getUniqueId()));
+        final Fit fit = fit(build, capacity(toggleSheet, otherReserve(player.getUniqueId())) - totalReserve(player.getUniqueId()),
+                wantedCount(player.getUniqueId(), id)); // 2026-10-29：玩家設定的數量
         if (fit == null) {
             // 2026-10-28：已經保留的含先祖魂約的圖騰（這次之前只算光環，跟最大精魂比）
             return String.format(Locale.ROOT, "<red>精魂不夠：已經保留 %.0f／%.0f，%s 要 %.0f",
@@ -1280,7 +1319,7 @@ final class AuraService implements Listener {
                 final List<Modifier> before = aura.effects;
                 final double reserveBefore = aura.reserve;
                 final int capBefore = aura.minionCap;
-                Fit fit = fit(build, capacityNow - running);
+                Fit fit = fit(build, capacityNow - running, wantedCount(player.getUniqueId(), aura.skillId)); // 2026-10-29：玩家設定的數量
                 if (fit == null) {
                     // 精魂不夠了：照隻數算的召喚先留一隻的份（下面「超過 100%」會照按鍵順序把後面的關掉）
                     fit = new Fit(build.reserve() + Math.max(0, 1 - build.definition().aura().freeMinions()) * build.minionReserve(),

@@ -2773,6 +2773,13 @@ public final class AilmentService {
             parts.add(String.format(Locale.ROOT, "<%s>%s %.1fs", AilmentType.IGNITE.color(), AilmentType.IGNITE.mark(),
                     (ignite.endTick() - now) / 20.0));
         }
+        // 2026-10-29：重暈、電擊也顯示（一樣站著不能動；這次之前沒顯示，被重暈還以為是被凍結）
+        if (entry.state.stun().active(now)) {
+            parts.add(String.format(Locale.ROOT, "<#f0c040>重暈 %.1fs", (entry.state.stun().activeUntil() - now) / 20.0));
+        }
+        if (entry.state.electrocute().active(now)) {
+            parts.add(String.format(Locale.ROOT, "<#9fd8ff>電擊 %.1fs", (entry.state.electrocute().activeUntil() - now) / 20.0));
+        }
         if (entry.state.frozen(now)) {
             parts.add(String.format(Locale.ROOT, "<%s>%s %.1fs", AilmentType.FREEZE.color(), AilmentType.FREEZE.mark(),
                     (entry.state.frozenUntil() - now) / 20.0));

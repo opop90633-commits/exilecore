@@ -32,7 +32,7 @@ public final class SkillCascade {
             "storm_orb", "sun_orb", "ember_seed", "contagion", "primal_tornado", "volcano", "galvanic_field", "reap", "dark_pact",
             "inferno_blast",
             // 精靈的指令、昇華（原作只有魯兹安的清算是 Cascadable）
-            "kelari_deception", "kelari_judgment", "navira_fracturing", "ruzhan_trap", "moment_of_vulnerability");
+            "kelari_deception", "kelari_judgment", "kelari_brutality", "navira_fracturing", "ruzhan_trap", "moment_of_vulnerability");
 
     private SkillCascade() {
     }

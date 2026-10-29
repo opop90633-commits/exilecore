@@ -60,7 +60,7 @@ final class TrainingListener implements Listener {
     /** 打中還沒套用的那一下：假人 → （誰打的、結果）。等傷害事件確定沒被取消（MONITOR）才算。 */
     private final Map<UUID, Pending> pending = new HashMap<>();
 
-    private record Pending(Player player, HitResult result) {
+    private record Pending(Player player, HitResult result, String source) {
     }
 
     /** 每一下的結果：沒打中、被格擋（或被別的插件取消）馬上算；打中的等傷害事件確定了再算。召喚物打的算主人的。 */
@@ -72,9 +72,9 @@ final class TrainingListener implements Listener {
         }
         final HitResult result = event.result();
         if (event.isCancelled() || !result.hit() || result.blocked()) {
-            service.onHit(player, event.defender(), result, event.isCancelled());
+            service.onHit(player, event.defender(), result, event.isCancelled(), null);
         } else {
-            pending.put(event.defender().getUniqueId(), new Pending(player, result));
+            pending.put(event.defender().getUniqueId(), new Pending(player, result, source(event)));
         }
     }
 
@@ -83,8 +83,25 @@ final class TrainingListener implements Listener {
     public void onDamageDone(final EntityDamageEvent event) {
         final Pending hit = pending.remove(event.getEntity().getUniqueId());
         if (hit != null && !event.isCancelled() && event.getEntity() instanceof LivingEntity dummy && hit.player().isOnline()) {
-            service.onHit(hit.player(), dummy, hit.result(), false);
+            service.onHit(hit.player(), dummy, hit.result(), false, hit.source());
         }
+    }
+
+    /** 2026-10-29：這一下是哪個技能打的（總結裡分來源）：技能的名字；召喚物打的寫「召喚物」；普攻、不知道回傳 null。 */
+    private String source(final HitEvent event) {
+        if (!(event.attacker() instanceof Player)) {
+            final String id = plugin.combat() == null ? null : plugin.combat().skillDamage().currentSkill(event.defender());
+            return id == null ? "召喚物" : "召喚物：" + skillName(id);
+        }
+        final String id = plugin.combat() == null ? null : plugin.combat().skillDamage().currentSkill(event.defender());
+        return id == null ? null : skillName(id);
+    }
+
+    private String skillName(final String profileId) {
+        final int dot = profileId.indexOf('.');
+        final String id = dot < 0 ? profileId : profileId.substring(0, dot);
+        final tw.exilecore.skill.SkillDefinition definition = plugin.skills() == null ? null : plugin.skills().config().skill(id);
+        return definition == null ? id : definition.name() + (dot < 0 ? "" : "（追加）");
     }
 
     /** 萬一還是死了（例如 /kill）：取消，生命補滿（怪物模組的掉落、經驗都不會跑）。 */

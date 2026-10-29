@@ -575,7 +575,13 @@ public final class TreeMechanics implements Listener {
                 damage -= es;
             }
             if (damage > 0) {
-                ps.setLife(Math.max(1, ps.life() - damage)); // 易爆不會讓你死（只會剩 1 點生命）
+                // 2026-10-29 照 PoE2（Volatility：每層對你造成 100 物理傷害，沒有保底）：扣到 0 就死；這次之前最多扣到剩 1 點生命
+                ps.setLife(ps.life() - damage);
+                ps.setLastDamageTick(now);
+                if (ps.life() <= 0) {
+                    player.setHealth(0);
+                    return;
+                }
             }
         }
         service.buffs().apply(player, "tree.volatile_power", "易爆之力", (int) VOLATILE_POWER_TICKS, volatilePower(stacks, sheet));

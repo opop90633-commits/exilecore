@@ -23,6 +23,8 @@ final class RitualMenu extends Menu {
     private static final int LIST_SIZE = (ROWS - 1) * 9;
     private static final int SLOT_INFO = 27;
     private static final int SLOT_REROLL = 31;
+    /** 2026-10-29：用貢品換祭壇的鑰匙。 */
+    private static final int SLOT_KEY = 29;
     private static final int SLOT_CLOSE = 35;
 
     private final RitualEvents rituals;
@@ -36,7 +38,9 @@ final class RitualMenu extends Menu {
 
     @Override
     protected void draw() {
-        final int tribute = ritual.tributeOf(player);
+        final int here = ritual.tributeOf(player);
+        final int banked = rituals.bank(player);
+        final int tribute = here + banked; // 2026-10-29 照站長：帳號存下的貢品也能直接用
         final List<RitualEvents.Offer> offers = rituals.offers(ritual, player);
         for (int i = 0; i < LIST_SIZE; i++) {
             if (i >= offers.size()) {
@@ -61,11 +65,18 @@ final class RitualMenu extends Menu {
             set(slot, filler());
         }
         final int rerollPrice = rituals.rerollPrice(ritual, player);
-        set(SLOT_INFO, glowing(icon(Material.REDSTONE, "<#ff5c6a>貢品 <white>" + tribute,
+        set(SLOT_INFO, glowing(icon(Material.REDSTONE, "<#ff5c6a>可用貢品 <white>" + tribute,
+                "<gray>這張圖的 <white>" + here + "<gray>＋帳號存下的 <white>" + banked,
                 "<gray>這張圖總共拿到 <white>" + ritual.earned.getOrDefault(player.getUniqueId(), 0),
-                "<gray>剩下的貢品在地圖關閉時存進帳號（現在 " + rituals.bank(player) + "／" + rituals.bankThreshold() + "）",
-                "<gray>存滿換一把祭壇的鑰匙（事件巔峰用）",
+                "<gray>花的時候先用這張圖的，不夠再用帳號存下的",
+                "<gray>剩下的貢品在地圖關閉時存進帳號，下次在任何祭壇都能直接用",
                 "<dark_gray>每個人的獎勵各自一組，別人換走的不影響你")));
+        final int keyPrice = rituals.bankThreshold();
+        if (keyPrice > 0) {
+            set(SLOT_KEY, icon(Material.TRIPWIRE_HOOK, "<#ff5c6a>換一把" + ItemRenderer.escape(rituals.keyName()),
+                    tribute >= keyPrice ? "<yellow>左鍵：花 " + keyPrice + " 貢品換一把" : "<red>要 " + keyPrice + " 貢品（你有 " + tribute + "）",
+                    "<dark_gray>在地圖裝置的「事件巔峰」用"));
+        }
         set(SLOT_REROLL, icon(Material.NETHER_STAR, "<#c48bff>重擲整組",
                 tribute >= rerollPrice ? "<yellow>左鍵：花 " + rerollPrice + " 貢品換一組新的" : "<red>要 " + rerollPrice + " 貢品（你有 " + tribute + "）",
                 "<dark_gray>每重擲一次更貴；已經換走的不會回來"));
@@ -86,6 +97,16 @@ final class RitualMenu extends Menu {
             player.closeInventory();
             return;
         }
+        if (slot == SLOT_KEY && rituals.bankThreshold() > 0) {
+            final String problem = rituals.exchangeKey(ritual, player);
+            if (problem != null) {
+                fail(problem);
+            } else {
+                player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.0f);
+            }
+            redraw();
+            return;
+        }
         if (slot == SLOT_REROLL) {
             final String problem = rituals.reroll(ritual, player);
             if (problem != null) {
@@ -104,7 +125,7 @@ final class RitualMenu extends Menu {
             fail(problem);
         } else {
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.4f);
-            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>換到了，剩 " + ritual.tributeOf(player) + " 貢品"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>換到了，剩 " + rituals.available(ritual, player) + " 貢品"));
         }
         redraw();
     }

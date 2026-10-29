@@ -23,6 +23,25 @@ public final class DpsMeter {
     private double dot;
     private double highest;
 
+    /** 2026-10-29：每個來源（技能）各打了多少（總結列出前幾名，查實測跟估計差很多的時候用）。 */
+    private final java.util.Map<String, Double> bySource = new java.util.HashMap<>();
+
+    /** 打中，記在 source 名下（null = 普攻／不知道）。 */
+    public void hit(final long nowMillis, final double damage, final boolean crit, final String source) {
+        bySource.merge(source == null ? "普攻／其他" : source, Math.max(0, damage), Double::sum);
+        hit(nowMillis, damage, crit);
+    }
+
+    /** 傷害最多的前 n 個來源（名字 → 傷害，由大到小）。 */
+    public java.util.List<java.util.Map.Entry<String, Double>> topSources(final int n) {
+        final java.util.List<java.util.Map.Entry<String, Double>> list = new java.util.ArrayList<>(bySource.entrySet());
+        if (dot > 0) {
+            list.add(java.util.Map.entry("流血、點燃、中毒", dot));
+        }
+        list.sort((x, y) -> Double.compare(y.getValue(), x.getValue()));
+        return list.subList(0, Math.min(n, list.size()));
+    }
+
     /** 打中（傷害是減免之後的）。 */
     public void hit(final long nowMillis, final double damage, final boolean crit) {
         attempt(nowMillis);

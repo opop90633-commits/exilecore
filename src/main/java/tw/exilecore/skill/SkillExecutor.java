@@ -993,7 +993,7 @@ final class SkillExecutor {
         }
         visuals.dash(visual, from, to);
         player.setFallDistance(0);
-        tw.exilecore.core.Teleports.go(player, to);
+        tw.exilecore.core.Teleports.glide(player, to);
         // 終點爆開
         final double endRadius = build.scaledRadius(params.endRadius());
         if (endRadius > 0) {
@@ -1048,22 +1048,32 @@ final class SkillExecutor {
                 return;
             }
             if (moving[0]) {
+                // 2026-10-29 照站長「移動順暢一點、視角能轉」：用速度推著走（客戶端每一幀自己算位置，不會一格一格跳），
+                //   視角完全不動；落後太多（卡到東西、延遲）才用保留視角的相對傳送拉回路線上。
+                //   這次之前每 tick 傳送一次：畫面一頓一頓、視角被拉回伺服器記的角度
                 final Location now = player.getLocation();
-                if (now.distanceSquared(last[0]) > 2.25
-                        || plugin.skills() != null && plugin.skills().supportMechanics().immobilised(player)) {
-                    moving[0] = false; // 被別的東西挪走了、或被釘住：不再往前走，照樣轉
+                if (plugin.skills() != null && plugin.skills().supportMechanics().immobilised(player)) {
+                    moving[0] = false; // 被釘住：不再往前走，照樣轉
+                    stopSliding(player);
                 } else {
-                    final double travel = distance * WhirlingAssault.progress(tick[0], total);
+                    final double travel = distance * WhirlingAssault.progress(Math.min(total, tick[0] + 1), total); // 下一個 tick 要到的地方
                     final Location point = travel < 1e-3 ? null
                             : pathDestination(player, from, facing, travel, DashPath.evenStep(travel), 0);
                     final Location step = point == null ? last[0].clone() : point; // 照 DashPath 走（高低、牆都跟落點算法一樣）
-                    step.setYaw(now.getYaw());
-                    step.setPitch(now.getPitch());
                     player.setFallDistance(0);
-                    if (tw.exilecore.core.Teleports.go(player, step)) {
-                        last[0] = step;
+                    final double dx = step.getX() - now.getX();
+                    final double dz = step.getZ() - now.getZ();
+                    if (dx * dx + dz * dz > WHIRL_RESYNC * WHIRL_RESYNC || step.getY() - now.getY() > 0.6) {
+                        if (!tw.exilecore.core.Teleports.glide(player, step)) {
+                            moving[0] = false;
+                        }
                     } else {
-                        moving[0] = false;
+                        final double vy = step.getY() > now.getY() + 0.05 && player.isOnGround() ? 0.42 : player.getVelocity().getY(); // 上台階
+                        player.setVelocity(new Vector(dx, vy, dz));
+                    }
+                    last[0] = step;
+                    if (tick[0] + 1 >= total) {
+                        stopSliding(player);
                     }
                 }
             }
@@ -1081,6 +1091,14 @@ final class SkillExecutor {
                 task[0].cancel();
             }
         }, 1L, 1L);
+    }
+
+    /** 2026-10-29：迴旋棍步落後路線超過幾格才用傳送拉回（平常用速度推）。 */
+    static final double WHIRL_RESYNC = 1.5;
+
+    /** 2026-10-29：走完了把水平速度歸零（不然會多滑一段）。 */
+    private static void stopSliding(final Player player) {
+        player.setVelocity(new Vector(0, player.getVelocity().getY(), 0));
     }
 
     /** 2026-10-28：衝刺了 distance 格，照距離更多幾（小數）：技能自己寫了 charge.distance_more 才有（裂血掠），品質的另外加。 */
@@ -1446,7 +1464,7 @@ final class SkillExecutor {
         if (to.distanceSquared(from) >= SkillMath.FLICKER_MIN_MOVE * SkillMath.FLICKER_MIN_MOVE) {
             player.setFallDistance(0);
             player.setVelocity(new Vector());
-            if (!tw.exilecore.core.Teleports.go(player, to)) {
+            if (!tw.exilecore.core.Teleports.glide(player, to)) {
                 return;
             }
             flickerMoved(player, from, to);
@@ -1510,7 +1528,7 @@ final class SkillExecutor {
             if (to.distanceSquared(from) >= SkillMath.FLICKER_MIN_MOVE * SkillMath.FLICKER_MIN_MOVE) {
                 player.setFallDistance(0);
                 player.setVelocity(new Vector());
-                if (!tw.exilecore.core.Teleports.go(player, to)) {
+                if (!tw.exilecore.core.Teleports.glide(player, to)) {
                     return;
                 }
                 flickerMoved(player, from, to);
@@ -1616,7 +1634,7 @@ final class SkillExecutor {
         }
         player.setFallDistance(0);
         player.setVelocity(new Vector());
-        if (!tw.exilecore.core.Teleports.go(player, to)) {
+        if (!tw.exilecore.core.Teleports.glide(player, to)) {
             return false;
         }
         flickerMoved(player, from, to); // 2026-10-29：衝過去也算移動的距離（衝勢、迅鋒）

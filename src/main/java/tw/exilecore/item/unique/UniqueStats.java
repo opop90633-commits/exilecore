@@ -248,6 +248,10 @@ public final class UniqueStats {
     public static final String BLOCK_RECOVER_LIFE = "block.recover_life";
     /** 格擋時，生命低於撲殺門檻的攻擊者直接倒下（厄門塔盾）。 */
     public static final String BLOCK_CULL = "block.cull";
+    /** 格擋時對攻擊者造成腐化之血：5 秒內每秒造成你最大生命 x% 的物理傷害（鮮血屏障；每次格擋各算一層，同一隻最多 10 層）。 */
+    public static final String BLOCK_CORRUPTED_BLOOD = "block.corrupted_blood";
+    public static final int BLOCK_CORRUPTED_BLOOD_SECONDS = 5;
+    public static final int BLOCK_CORRUPTED_BLOOD_MAX_STACKS = 10;
 
     // ---- 2026-10-28 照 PoE2 0.5：石拳之道的手套（磐石之拳版本）與補上的手套傳奇 ----
     /** 每秒失去 x% 最大魔力（磐石之拳的骸節鐵手；最少留 0）。 */

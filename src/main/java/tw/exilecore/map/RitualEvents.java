@@ -614,27 +614,61 @@ final class RitualEvents implements Listener {
         ritual.tribute.clear();
     }
 
-    /** 存 amount 貢品；滿門檻換入場券（ticket 的通貨），剩下的留著。 */
+    /**
+     * 存 amount 貢品進帳號。2026-10-29 照站長：存下的貢品可以在任何祭壇直接拿來換獎勵、重擲（{@link #available}），
+     * 也可以在祭壇的獎勵畫面自己決定換鑰匙（{@link #exchangeKey}）；這次之前滿門檻就自動換成鑰匙，存下的貢品不能用。
+     */
     void deposit(final Player player, final int amount) {
-        final int threshold = config.ritualBankThreshold();
-        int total = bank(player) + Math.max(0, amount);
-        final int tickets = threshold <= 0 ? 0 : total / threshold;
+        final int total = bank(player) + Math.max(0, amount);
+        service.atlasPut(player, BANK_KEY, String.valueOf(total));
+        player.sendMessage(plugin.text().prefixed("<#ff5c6a>祭壇剩下的 <white>" + amount + "</white> 貢品存進帳號<gray>（帳號共 "
+                + total + "；之後在任何祭壇都能直接用）"));
+    }
+
+    /** 2026-10-29：這個人在這個祭壇能用的貢品（這張圖拿到的＋帳號存下的）。 */
+    int available(final Ritual ritual, final Player player) {
+        return ritual.tributeOf(player) + bank(player);
+    }
+
+    /** 2026-10-29：花 price 貢品：先用這張圖拿到的，不夠再從帳號存下的扣（呼叫前先確定 {@link #available} 夠）。 */
+    private void spend(final Ritual ritual, final Player player, final int price) {
+        final int here = ritual.tributeOf(player);
+        final int fromHere = Math.min(here, price);
+        ritual.tribute.put(player.getUniqueId(), here - fromHere);
+        final int rest = price - fromHere;
+        if (rest > 0) {
+            service.atlasPut(player, BANK_KEY, String.valueOf(Math.max(0, bank(player) - rest)));
+        }
+    }
+
+    /** 2026-10-29：花 {@link #bankThreshold} 貢品換一把祭壇的鑰匙（事件巔峰用）；null = 成功，不然是原因。 */
+    String exchangeKey(final Ritual ritual, final Player player) {
+        final int price = config.ritualBankThreshold();
         final MapEventConfig.Ticket ticket = config.ticket(MapEventConfig.RITUAL_SOURCE);
         final tw.exilecore.currency.CurrencyType type = ticket == null || plugin.currencies() == null ? null
                 : plugin.currencies().repository().get(ticket.currency());
-        if (tickets > 0 && type != null) {
-            total -= tickets * threshold;
-            final boolean dropped = MapRewards.give(plugin, player, List.of(plugin.currencies().create(type, tickets)));
-            player.sendMessage(plugin.text().prefixed("<#ff5c6a>存下的貢品滿 " + threshold + "：換到 <white>" + tickets + "</white> 個 "
-                    + tw.exilecore.item.ItemRenderer.escape(type.name()) + "<gray>（在地圖裝置的「事件巔峰」用）"
-                    + (dropped ? "<yellow>；背包滿了，掉在腳下" : "")));
-            plugin.getSLF4JLogger().info("[ritual] {} 存下的貢品換了 {} 個 {}", player.getName(), tickets, type.id());
-        } else if (tickets > 0) {
-            plugin.getSLF4JLogger().warn("map_events.yml：祭壇的入場券不在 currencies.yml 裡，貢品先存著（{}）", player.getName());
+        if (price <= 0 || type == null) {
+            return "現在不能換鑰匙";
         }
-        service.atlasPut(player, BANK_KEY, String.valueOf(total));
-        player.sendMessage(plugin.text().prefixed("<#ff5c6a>祭壇剩下的 <white>" + amount + "</white> 貢品存進帳號<gray>（累積 "
-                + total + "／" + threshold + "）"));
+        final int have = available(ritual, player);
+        if (have < price) {
+            return "貢品不夠：換鑰匙要 " + price + "，你有 " + have;
+        }
+        spend(ritual, player, price);
+        final boolean dropped = MapRewards.give(plugin, player, List.of(plugin.currencies().create(type, 1)));
+        plugin.getSLF4JLogger().info("[ritual] {} 用 {} 貢品換了 1 個 {}", player.getName(), price, type.id());
+        if (dropped) {
+            player.sendMessage(plugin.text().prefixed("<yellow>背包滿了，鑰匙掉在腳下"));
+        }
+        return null;
+    }
+
+    /** 鑰匙的名字（畫面用；沒有回傳「祭壇的鑰匙」）。 */
+    String keyName() {
+        final MapEventConfig.Ticket ticket = config.ticket(MapEventConfig.RITUAL_SOURCE);
+        final tw.exilecore.currency.CurrencyType type = ticket == null || plugin.currencies() == null ? null
+                : plugin.currencies().repository().get(ticket.currency());
+        return type == null ? "祭壇的鑰匙" : type.name();
     }
 
     /** 重擲這個人的那組要幾貢品（總共拿到的 × cost × growth^次數）。 */
@@ -652,11 +686,11 @@ final class RitualEvents implements Listener {
             return "這一格已經買走了";
         }
         final Offer offer = list.get(index);
-        final int tribute = ritual.tributeOf(player);
+        final int tribute = available(ritual, player); // 2026-10-29：帳號存下的也能用
         if (tribute < offer.price) {
             return "貢品不夠：要 " + offer.price + "，你有 " + tribute;
         }
-        ritual.tribute.put(player.getUniqueId(), tribute - offer.price);
+        spend(ritual, player, offer.price);
         final boolean dropped = MapRewards.give(plugin, player, offer.bundle.items());
         plugin.getSLF4JLogger().info("[ritual] {} 在地圖 #{} 用 {} 貢品換了 {}", player.getName(), ritual.instance.id(), offer.price, offer.bundle.kind());
         offer.bundle = null;
@@ -669,11 +703,11 @@ final class RitualEvents implements Listener {
     /** 重擲整組；null = 成功。 */
     String reroll(final Ritual ritual, final Player player) {
         final int price = rerollPrice(ritual, player);
-        final int tribute = ritual.tributeOf(player);
+        final int tribute = available(ritual, player); // 2026-10-29：帳號存下的也能用
         if (tribute < price) {
             return "貢品不夠：重擲要 " + price + "，你有 " + tribute;
         }
-        ritual.tribute.put(player.getUniqueId(), tribute - price);
+        spend(ritual, player, price);
         ritual.rerolls.merge(player.getUniqueId(), 1, Integer::sum);
         ritual.offers.put(player.getUniqueId(), generate(ritual, player));
         return null;

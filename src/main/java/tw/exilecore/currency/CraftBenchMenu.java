@@ -303,6 +303,23 @@ public final class CraftBenchMenu extends Menu {
         if (currency != null) {
             lore.add("<dark_gray>" + ItemRenderer.escape(currency.name()) + "剩 " + have(currency.id()) + " 個");
         }
+        // 2026-10-29 照站長：用去劣籤時先寫出會移除哪一條（一樣差的寫「其中一條」）
+        final CurrencyType firing = omen != null ? omen
+                : hanging != null && currency != null && Crafting.triggers(hanging, currency) ? hanging : null;
+        if (firing != null && firing.omen() != null && firing.omen().effect() == CurrencyType.Omen.Effect.REMOVE_LOWEST
+                && data != null && data.identified() && !data.affixes().isEmpty()) {
+            final List<tw.exilecore.item.RolledAffix> worst = Crafting.lowestAffixes(data, plugin.items().repository());
+            if (!worst.isEmpty()) {
+                final ItemData only = data.copy();
+                only.affixes().clear();
+                only.affixes().addAll(worst);
+                final List<tw.exilecore.item.ItemStats.AffixLine> lines = tw.exilecore.item.ItemStats.affixLines(plugin.items().repository(), only);
+                lore.add("<#c48bff>" + ItemRenderer.escape(firing.name()) + "會移除" + (lines.size() > 1 ? "其中一條（一樣差，隨機）" : "") + "：");
+                for (final tw.exilecore.item.ItemStats.AffixLine each : lines) {
+                    lore.add("<#ff7070>　－ <gray>" + ItemRenderer.escape(each.text()) + (each.tier() > 0 ? " <dark_gray>(T" + each.tier() + ")" : ""));
+                }
+            }
+        }
         lore.add("");
         lore.add(problem == null ? "<yellow>左鍵：使用（可以一直按）" : "<red>" + ItemRenderer.escape(problem));
         final ItemStack use = icon(problem == null ? Material.SMITHING_TABLE : Material.BARRIER, problem == null ? "<#f5b942>使用" : "<gray>使用", lore);

@@ -10782,3 +10782,29 @@ item crown_of_eyes
   ................
   ................
   ................
+
+item bloodbarrier
+  o=1a0505
+  i=5a5a62
+  s=9a9aa6
+  h=d8d8e0
+  d=4a0606
+  r=8a0303
+  b=c41818
+  l=ff5a5a
+  .......oo.......
+  ....oooiiooo....
+  ...oiisssssio...
+  ..oisrrrrrrsio..
+  .oisrrbbbbrrsio.
+  .osrrblllbbrrso.
+  .osrbblhlbbbrso.
+  oisrbbllbbbbrsio
+  oisrbbbbbbbbrsio
+  .osrrbbbbbbrrso.
+  .osrrrbbbbrrrso.
+  .oisrrrddrrrsio.
+  ..oisrrddrrsio..
+  ...oiisrrssio...
+  ....oooiiooo....
+  .......oo.......

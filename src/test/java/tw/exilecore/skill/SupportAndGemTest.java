@@ -409,7 +409,7 @@ class SupportAndGemTest {
         final int granted = config.skillsFrom("weapon").size(); // 2026-10-26：法杖、長杖、權杖賦予的（27 個＋骸骨戰士）沒有寶石
         assertEquals(33 + 1 + 1 + 1, granted); // 2026-10-28：＋新生之儀（綺夢賦予）；2026-10-27 照 PoE2：＋每把矛賦予的擲矛；2026-10-26：＋咒擲、封釋、雷霆共鳴、折光之鏡、鴉群密謀；2026-10-28：＋烈陽珠（PoE2 0.5 只有長杖賦予）
         final int ascendancy = config.skillsFrom("ascendancy").size(); // 2026-10-26 照 PoE2：昇華天賦賦予的（看得到的 44 個）沒有寶石
-        assertEquals(44 + 7, ascendancy); // 2026-10-27 照 PoE2 0.5：＋靈狩者、鳴鐘武師、淵井骸主賦予的 7 個
+        assertEquals(44 + 7 + 1, ascendancy); // 2026-10-29 照 PoE2：＋克拉里的殘酷；2026-10-27 照 PoE2 0.5：＋靈狩者、鳴鐘武師、淵井骸主賦予的 7 個
         assertEquals(config.visible().size() - exclusive.size() - 2 - 14 - granted - ascendancy, config.engravable(14).size(), "Lv.14 起全部都能雕（專屬的除外；2026-10-18：事件巔峰的 14 顆、淵鯨的 2 顆也除外；2026-10-26：武器賦予的、昇華天賦賦予的也除外）");
         assertEquals(config.engravable(14).size(), config.engravable(20).size());
         for (final SkillDefinition skill : exclusive) {

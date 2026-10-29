@@ -192,7 +192,7 @@ final class SkillZones implements SkillTargets.Strikeable {
 
     /** 2026-10-28：瞬移到某個地方炸開（周圍 3 格）、給一層閃電灌注（瞄準滾雷珠時用；撲殺敵人也走這裡）。 */
     void warpTo(final Player owner, final Location at, final SkillBuild build) {
-        owner.teleport(at);
+        tw.exilecore.core.Teleports.glide(owner, at); // 2026-10-29：保留視角
         warpBlast(owner, at, build);
         if (plugin.skills() != null) {
             plugin.skills().resources().addInfusion(owner, 2, 1);

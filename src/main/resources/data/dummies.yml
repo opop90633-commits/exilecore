@@ -7,7 +7,7 @@
 
 settings:
   # 練習場的範圍：所有假人的外框往外幾格
-  arena_margin: 6
+  arena_margin: 20   # 2026-10-29 照站長：6 → 20（弓箭手要站遠一點測傷害）
   # 停手幾秒算打完一段（聊天框給總結）
   idle_seconds: 4
   # 每人一組自己的假人（2026-10）：走進練習場就在同樣的位置放一組只有你看得到、只有你打得到的假人，
@@ -31,6 +31,7 @@ settings:
 #   boss_factor  打這隻的每秒傷害換成打 Boss 的倍率（2026-10：終局、極境、巔峰的每秒傷害上限照「打假人的紀錄 × 這個」算；
 #                沒寫：首領 1、其他 0.6）
 # 2026-10-29 照站長：只保留首領（這次之前還有無防禦、一般、重甲、閃避、抗性五隻；程式讀檔時也只留 boss: true 的）
+# 2026-10-29 照站長：首領多放 5 隻（共 6 隻，數值都一樣，好幾個人同時打或分開測不同配置）；位置不對可以用指令搬
 dummies:
   boss:
     name: 訓練假人・首領
@@ -42,6 +43,71 @@ dummies:
     evasion: 1
     resist: {fire: 40, cold: 40, lightning: 40, chaos: 25}
     offset: [28, 20]
+    scale: 1.3
+    look: diamond
+    boss_factor: 1
+  boss_2:
+    name: 訓練假人・首領 2
+    note: 像最高階地圖的首領：抗性 40%／25%
+    level: map
+    boss: true
+    life: 10
+    armour: 1
+    evasion: 1
+    resist: {fire: 40, cold: 40, lightning: 40, chaos: 25}
+    offset: [20, 20]
+    scale: 1.3
+    look: diamond
+    boss_factor: 1
+  boss_3:
+    name: 訓練假人・首領 3
+    note: 像最高階地圖的首領：抗性 40%／25%
+    level: map
+    boss: true
+    life: 10
+    armour: 1
+    evasion: 1
+    resist: {fire: 40, cold: 40, lightning: 40, chaos: 25}
+    offset: [12, 20]
+    scale: 1.3
+    look: diamond
+    boss_factor: 1
+  boss_4:
+    name: 訓練假人・首領 4
+    note: 像最高階地圖的首領：抗性 40%／25%
+    level: map
+    boss: true
+    life: 10
+    armour: 1
+    evasion: 1
+    resist: {fire: 40, cold: 40, lightning: 40, chaos: 25}
+    offset: [28, 12]
+    scale: 1.3
+    look: diamond
+    boss_factor: 1
+  boss_5:
+    name: 訓練假人・首領 5
+    note: 像最高階地圖的首領：抗性 40%／25%
+    level: map
+    boss: true
+    life: 10
+    armour: 1
+    evasion: 1
+    resist: {fire: 40, cold: 40, lightning: 40, chaos: 25}
+    offset: [20, 12]
+    scale: 1.3
+    look: diamond
+    boss_factor: 1
+  boss_6:
+    name: 訓練假人・首領 6
+    note: 像最高階地圖的首領：抗性 40%／25%
+    level: map
+    boss: true
+    life: 10
+    armour: 1
+    evasion: 1
+    resist: {fire: 40, cold: 40, lightning: 40, chaos: 25}
+    offset: [12, 12]
     scale: 1.3
     look: diamond
     boss_factor: 1

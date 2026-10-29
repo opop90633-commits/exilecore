@@ -3523,7 +3523,7 @@ public final class SkillService {
                 continue;
             }
             final SkillBuild build = build(state, sheet, definition, entry);
-            final AuraService.Fit fit = AuraService.fit(build, AuraService.capacity(sheet) - total);
+            final AuraService.Fit fit = AuraService.fit(build, AuraService.capacity(sheet) - total, AuraService.wantedCount(state, definition.id())); // 2026-10-29：玩家設定的數量
             // 2026-10-27 照 PoE2 血契：保留生命付不起的也不開（跟 AuraService 一樣）
             if (fit == null || !AuraService.lifeFits(build, PlayerState.maxLife(sheet), AuraService.lifeLocked(sheet), lifeTotal)) {
                 skipped.add(definition.name());

@@ -510,9 +510,13 @@ public final class CodexMenu extends Menu {
             }
             list.add(unique);
         }
+        // 2026-10-29 照站長「預設排序照種類」：部位之後再照種類（劍、斧、弓…；力量、敏捷、智慧的防具…，跟基底圖鑑一樣的 CodexOrder.kindRank），
+        //   再照掉落等級、名字；這次之前同一個部位裡只照掉落等級，各種武器、防具混在一起
         list.sort(Comparator.<UniqueItem>comparingInt(unique -> unique.chase() ? 1 : 0)
                 .thenComparingInt(unique -> repository.base(unique.base()).slot().ordinal())
-                .thenComparingInt(UniqueItem::dropLevel));
+                .thenComparingInt(unique -> CodexOrder.kindRank(repository.base(unique.base())))
+                .thenComparingInt(UniqueItem::dropLevel)
+                .thenComparing(UniqueItem::name));
         final List<ItemStack> stacks = new ArrayList<>();
         final int from = Math.max(0, page * PER_PAGE);
         for (int i = 0; i < list.size(); i++) {

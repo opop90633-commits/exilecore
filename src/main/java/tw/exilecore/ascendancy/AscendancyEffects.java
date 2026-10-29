@@ -243,9 +243,10 @@ public final class AscendancyEffects implements Listener {
     /** 御風的混合物：每次用掉魔力藥劑幾點充能（照 PoE2 5 點）。 */
     static final int CONCOCTION_CHARGES = 5;
     /** 巨靈的指令要先召喚哪一位。 */
-    private static final Map<String, String> DJINN = Map.of("kelari_deception", "kelari_djinn", "kelari_judgment", "kelari_djinn",
-            "kelari_malediction", "kelari_djinn", "navira_oasis", "navira_djinn", "navira_well", "navira_djinn", "navira_fracturing", "navira_djinn",
-            "ruzhan_reckoning", "ruzhan_djinn", "ruzhan_fury", "ruzhan_djinn", "ruzhan_trap", "ruzhan_djinn");
+    private static final Map<String, String> DJINN = Map.ofEntries(Map.entry("kelari_brutality", "kelari_djinn"), Map.entry("kelari_deception", "kelari_djinn"), Map.entry("kelari_judgment", "kelari_djinn"),
+            Map.entry("kelari_malediction", "kelari_djinn"), Map.entry("navira_oasis", "navira_djinn"), Map.entry("navira_well", "navira_djinn"),
+            Map.entry("navira_fracturing", "navira_djinn"), Map.entry("ruzhan_reckoning", "ruzhan_djinn"), Map.entry("ruzhan_fury", "ruzhan_djinn"),
+            Map.entry("ruzhan_trap", "ruzhan_djinn"));
 
     public static Cost cost(final Player player, final PlayerState state, final SkillDefinition definition, final int cost) {
         final AscendancyEffects effects = instance;

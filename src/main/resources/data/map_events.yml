@@ -187,7 +187,7 @@ ritual:
   prices: { omen: [260, 420], unique: [280, 520] }   # 2026-10-27：unique 是共通傳奇的價格（這次之前 520–880，那時候全是專屬）
   exclusive_chance: 0.03            # 2026-10-27：傳奇獎勵是祭壇專屬傳奇的機率（其他是共通傳奇）
   exclusive_price: [520, 880]       # 2026-10-27：專屬傳奇的價格（跟以前的傳奇一樣）
-  tribute_bank: { threshold: 10000 }   # 2026-10-27：剩下的貢品存進帳號，滿 10000 換一張祭壇之鑰（0 = 不存）
+  tribute_bank: { threshold: 10000 }   # 2026-10-27：剩下的貢品存進帳號（0 = 不存）；2026-10-29 照站長：存下的貢品在任何祭壇都能直接拿來換獎勵、重擲，threshold 是在祭壇畫面換一把祭壇之鑰的價錢（這次之前存滿自動換）
   ticket: { currency: ticket_ritual, chance: 0.03 }       # 2026-10-18：入場券（祭壇全部完成時，這張圖裡的每個人各擲一次）；2026-10-27：0.056 → 0.03（貢品存起來也換得到）
 
 # ---- 幻霧（PoE2 的 Delirium）----
@@ -197,14 +197,14 @@ ritual:
 # emotions 是蒸餾情緒的通貨代號、照階級排（注入離天賦樹中心越遠的核心，要越後面的）；emotion_weights 是獎勵掉哪一階的權重。
 delirium:
   chance: 0.3
-  duration: 30            # 2026-10：75 → 30 秒（常常 Boss 打完還在等霧結束）；刷怪改快、改多，總數跟以前差不多
-  ramp_seconds: 25        # 60 → 25：照比例縮短
-  max_difficulty: 60
+  duration: 45            # 2026-10：75 → 30 秒（常常 Boss 打完還在等霧結束）；2026-10-29 照站長「層數高一些、獎勵豐富一些」：30 → 45 秒（多出來的時間給高層）
+  ramp_seconds: 40        # 60 → 25：照比例縮短；2026-10-29：25 → 40（跟著持續時間拉長）
+  max_difficulty: 100     # 2026-10-29：60 → 100（層數變多，後面更難）
   spawn_seconds: 2        # 4 → 2
   spawn: [3, 4]           # [2, 3] → [3, 4]
   progress: { normal: 1, magic: 3, rare: 10, unique: 25 }
-  rewards: 2
-  thresholds: [20, 50, 100, 170]
+  rewards: 3              # 2026-10-29 照站長：每人 2 → 3 條獎勵
+  thresholds: [20, 50, 100, 170, 260, 380, 520]   # 2026-10-29 照站長：4 層 → 7 層（這次之前 [20, 50, 100, 170]）
   reward_weights: { emotion: 40, currency: 25, essence: 10, jewel: 10, map: 10, catalyst: 5, unique: 1 }   # unique：幻霧的專屬傳奇（2026-10：2 → 1）
   # 2026-10-27 照 PoE2：十種蒸餾情緒（照 poe2db 的價值排序，便宜 → 稀有）；恐懼、苦難、孤寂照 currencies.yml 的 drop_level
   #   （69／73／77）只在夠高的地圖掉。權重 poe2db 沒有公開，照前四種的比例往下延伸（每一階約 ×0.6）。

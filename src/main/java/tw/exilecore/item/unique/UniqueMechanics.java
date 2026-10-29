@@ -255,6 +255,12 @@ public final class UniqueMechanics implements Listener {
             plugin.players().display(player, state);
         }
         final LivingEntity attacker = event.attacker();
+        // 2026-10-29 照 PoE2 Bloodbarrier（鮮血屏障）：格擋時對攻擊者造成腐化之血（5 秒，每秒你最大生命 x% 的物理）
+        final double bloodPercent = sheet.flat(UniqueStats.BLOCK_CORRUPTED_BLOOD, Set.of());
+        if (bloodPercent > 0 && state != null && attacker != null && !(attacker instanceof Player) && attacker.isValid() && !attacker.isDead()
+                && plugin.ailments() != null) {
+            corruptedBlood(player, attacker, state.maxLife() * bloodPercent / 100.0);
+        }
         if (StatKeys.flag(sheet, UniqueStats.BLOCK_CULL) && attacker != null && !(attacker instanceof Player) && attacker.isValid()
                 && !attacker.isDead() && plugin.monsters() != null) {
             final var data = plugin.monsters().data(attacker);
@@ -264,6 +270,32 @@ public final class UniqueMechanics implements Listener {
                 attacker.setKiller(player);
                 attacker.setHealth(0);
             }
+        }
+    }
+
+    /** 2026-10-29（鮮血屏障）：腐化之血在每隻敵人身上的層數（還在跑的）。 */
+    private final Map<UUID, Integer> bloodStacks = new HashMap<>();
+
+    /** 2026-10-29（鮮血屏障）：對 target 上一層腐化之血：接下來 5 秒每秒造成 perSecond 物理（固定值，不吃加成；同一隻最多 10 層）。 */
+    private void corruptedBlood(final Player source, final LivingEntity target, final double perSecond) {
+        final UUID id = target.getUniqueId();
+        if (perSecond <= 0 || bloodStacks.getOrDefault(id, 0) >= UniqueStats.BLOCK_CORRUPTED_BLOOD_MAX_STACKS) {
+            return;
+        }
+        bloodStacks.merge(id, 1, Integer::sum);
+        final UUID owner = source.getUniqueId();
+        target.getWorld().spawnParticle(org.bukkit.Particle.DUST, target.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0,
+                new org.bukkit.Particle.DustOptions(org.bukkit.Color.fromRGB(0x8a0303), 1.2f));
+        for (int i = 1; i <= UniqueStats.BLOCK_CORRUPTED_BLOOD_SECONDS; i++) {
+            final boolean last = i == UniqueStats.BLOCK_CORRUPTED_BLOOD_SECONDS;
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (target.isValid() && !target.isDead() && plugin.ailments() != null) {
+                    plugin.ailments().dealFlatPhysical(target, perSecond, owner);
+                }
+                if (last) {
+                    bloodStacks.computeIfPresent(id, (k, v) -> v <= 1 ? null : v - 1);
+                }
+            }, 20L * i);
         }
     }
 

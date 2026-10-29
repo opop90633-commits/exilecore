@@ -616,7 +616,7 @@ public final class TrainingService {
     }
 
     /** 一次命中算好了（打中、沒打中、被格擋）。 */
-    void onHit(final Player player, final LivingEntity entity, final HitResult result, final boolean cancelled) {
+    void onHit(final Player player, final LivingEntity entity, final HitResult result, final boolean cancelled, final String source) {
         final Session session = session(player, entity);
         final long now = System.currentTimeMillis();
         if (result.blocked()) {
@@ -624,7 +624,7 @@ public final class TrainingService {
         } else if (cancelled || !result.hit()) {
             session.meter.miss(now);
         } else {
-            session.meter.hit(now, result.total(), result.crit());
+            session.meter.hit(now, result.total(), result.crit(), source);
         }
         showBar(player, session, now);
     }
@@ -747,6 +747,15 @@ public final class TrainingService {
         player.sendMessage(plugin.text().parse("<gray>　命中 <white>" + meter.hits() + "<gray>・暴擊 <white>" + meter.crits()
                 + "<gray>（" + percent(meter.critRate()) + "）・未命中 <white>" + meter.misses() + "<gray>・格擋 <white>" + meter.blocks()
                 + "<gray>（命中率 " + percent(meter.hitRate()) + "）　最高一擊 <white>" + number(meter.highest())));
+        // 2026-10-29：分來源（哪個技能打了多少）
+        final StringBuilder sources = new StringBuilder("<gray>　來源：");
+        boolean first = true;
+        for (final java.util.Map.Entry<String, Double> entry : meter.topSources(5)) {
+            sources.append(first ? "" : "<dark_gray>・").append("<white>").append(ItemRenderer.escape(entry.getKey())).append(" <gray>")
+                    .append(percent(entry.getValue() / Math.max(1, meter.total())));
+            first = false;
+        }
+        player.sendMessage(plugin.text().parse(sources.toString()));
         remember(player, session);
         if (!sessionsOn(session.dummy)) {
             plugin.monsters().ledger().forget(session.dummy);

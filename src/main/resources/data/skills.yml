@@ -9543,10 +9543,62 @@ skills:
     cast_time: 0.8
     effectiveness: 1.0
     cooldown: 5
+    cooldown_uses: 3   # 2026-10-29 照 PoE2（冷卻 5 秒（3 次））；這次之前說明寫存 3 次、實際沒設定
     mana: [5, 6, 7, 9, 10, 12, 13, 15, 17, 19, 22, 25, 28, 31, 34, 38, 43, 47, 52, 58]   # 2026-10-29 照 PoE2（poe2db 5→47→58）；這次之前 0（指令其實要花魔力）
     visual: earthquake
     modifiers:
-      - { stat: spell.base_crit, type: FLAT, value: 15 }   # 2026-10-29 照 PoE2：主爆炸沒有暴擊弱點、沒有暴擊加成（這次之前多了 1 層弱點、50% 暴擊加成）
+      - { stat: spell.base_crit, type: FLAT, value: 15 }
+      # 2026-10-29 更正：克拉里本身（SummonSandDjinnPlayer）的擊中施加 1 層暴擊弱點、暴擊傷害加成增加 50%，克拉里的每個指令都有；稍早誤拿掉，這裡補回
+      - { stat: crit_weakness.on_hit, type: FLAT, value: 1 }
+      - { stat: crit.bonus, type: INCREASED, value: 50 }
+
+  # 2026-10-29 照 PoE2 Kelari's Brutality（RePoE KnifeThrowSandDjinn／CommandSandDjinnKnifeThrowPlayer）：克拉里本身的指令（召喚克拉里就有）。
+  #   朝準心擲出一把飛刀，鑽進地面 3 公尺內 12 處、短暫延遲後爆出刀刃（每處 1 公尺），1 級 6～8 物理法術傷害、擊中癱瘓；冷卻 5 秒（2 次）、施放 0.8 秒、暴擊 15%。
+  #   品質（加刀刃數）沒做（昇華賦予的技能沒有品質）。原作有、我們以前沒有。
+  kelari_brutality:
+    name: 克拉里的殘酷
+    description: 指令（要先召喚克拉里）：克拉里朝準心的地方擲出一把飛刀，飛刀鑽進地面，在 4.5 格內 12 處短暫延遲後爆出刀刃（每處 1.5 格），造成物理法術傷害，擊中癱瘓。最多存 2 次，冷卻 5 秒。
+    icon: IRON_NUGGET
+    type: spell
+    tier: 1
+    tags: [spell, area, physical, projectile, command, cooldown]
+    tags_remove: [spell]   # 照 PoE2 寶石標籤：指令技能不顯示法術
+    source: ascendancy
+    mechanic: impact
+    impact: { range: 20, delay: 0.6, radius: 1 }   # 中間那一處（另外 11 處 AscGranted 撒在 3 公尺內）
+    damage: [6, 8]   # 照 PoE2（1 級 6～8，照法術的等級成長）
+    damage_types: { physical: 1.0 }
+    cast_time: 0.8
+    effectiveness: 1.0
+    cooldown: 5
+    cooldown_uses: 2
+    mana: [3, 4, 5, 5, 6, 7, 8, 10, 11, 12, 14, 16, 18, 20, 22, 25, 27, 30, 34, 37]   # 照 PoE2（RePoE CommandSandDjinnKnifeThrowPlayer）
+    visual: earthquake
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 15 }
+      - { stat: maim.chance, type: FLAT, value: 100 }   # 擊中癱瘓
+      - { stat: crit_weakness.on_hit, type: FLAT, value: 1 }   # 克拉里本身
+      - { stat: crit.bonus, type: INCREASED, value: 50 }   # 克拉里本身
+
+  asc_kelari_blade:
+    name: 克拉里的刀刃
+    icon: IRON_NUGGET
+    hidden: true
+    type: spell
+    tags: [spell, area, physical]
+    mechanic: nova
+    nova: { radius: 1 }
+    damage: [6, 8]
+    damage_types: { physical: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    mana: 0
+    visual: earthquake
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 15 }
+      - { stat: maim.chance, type: FLAT, value: 100 }
+      - { stat: crit_weakness.on_hit, type: FLAT, value: 1 }
+      - { stat: crit.bonus, type: INCREASED, value: 50 }
 
   asc_kelari_clone:
     name: 克拉里的分身
@@ -9564,7 +9616,8 @@ skills:
     visual: earthquake
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 15 }
-      - { stat: crit_weakness.on_hit, type: FLAT, value: 2 }   # 2026-10-29 照 PoE2：分身爆炸 2 層暴擊弱點、沒有暴擊加成（這次之前 3 層＋50% 暴擊加成）
+      - { stat: crit_weakness.on_hit, type: FLAT, value: 3 }   # 照 PoE2：分身爆炸多 2 層＋克拉里本身 1 層（2026-10-29 稍早誤改成 2，已改回）
+      - { stat: crit.bonus, type: INCREASED, value: 50 }   # 克拉里本身：暴擊傷害加成增加 50%
 
   kelari_judgment:
     name: 克拉里的審判
@@ -9587,7 +9640,8 @@ skills:
     visual: earthquake
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 15 }
-      - { stat: crit_weakness.on_hit, type: FLAT, value: 4 }   # 2026-10-29 照 PoE2：4 層暴擊弱點、沒有暴擊加成（這次之前 5 層＋50% 暴擊加成）
+      - { stat: crit_weakness.on_hit, type: FLAT, value: 5 }   # 照 PoE2：審判多 4 層＋克拉里本身 1 層（2026-10-29 稍早誤改成 4，已改回）
+      - { stat: crit.bonus, type: INCREASED, value: 50 }   # 克拉里本身：暴擊傷害加成增加 50%
       - { stat: stun.buildup, type: MORE, value: 100 }
 
   kelari_malediction:

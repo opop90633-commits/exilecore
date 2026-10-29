@@ -142,16 +142,17 @@ class MapEventConfigTest {
 
         final MapEventConfig.Delirium delirium = config.delirium();
         assertEquals(0.3, delirium.chance(), 1e-9);
-        assertEquals(30, delirium.duration(), 1e-9, "2026-10：75 → 30 秒");
-        assertEquals(0.6, delirium.maxDifficulty(), 1e-9, "60% 寫成小數");
+        assertEquals(45, delirium.duration(), 1e-9, "2026-10：75 → 30 秒；2026-10-29：30 → 45 秒");
+        assertEquals(1.0, delirium.maxDifficulty(), 1e-9, "100% 寫成小數（2026-10-29：60 → 100）");
         assertEquals(0.0, delirium.difficultyAt(0), 1e-9);
-        assertEquals(0.3, delirium.difficultyAt(12.5), 1e-9, "25 秒升到最高（2026-10：60 → 25）：12.5 秒時一半");
-        assertEquals(0.6, delirium.difficultyAt(999), 1e-9);
-        assertEquals(List.of(20, 50, 100, 170), delirium.thresholds());
+        assertEquals(0.5, delirium.difficultyAt(20), 1e-9, "40 秒升到最高（2026-10-29：25 → 40）：20 秒時一半");
+        assertEquals(1.0, delirium.difficultyAt(999), 1e-9);
+        assertEquals(List.of(20, 50, 100, 170, 260, 380, 520), delirium.thresholds());
         assertEquals(0, delirium.sharesFor(19));
         assertEquals(1, delirium.sharesFor(20));
-        assertEquals(4, delirium.sharesFor(500));
-        assertEquals(2, delirium.rewards());
+        assertEquals(6, delirium.sharesFor(500));
+        assertEquals(7, delirium.sharesFor(520));
+        assertEquals(3, delirium.rewards(), "2026-10-29：2 → 3");
         assertEquals(40, delirium.rewardWeights().get(MapEventConfig.Reward.EMOTION));
         assertEquals("distilled_ire", delirium.emotion(1));
         assertEquals("distilled_paranoia", delirium.emotion(4));
