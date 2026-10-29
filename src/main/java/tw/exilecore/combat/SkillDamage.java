@@ -33,7 +33,18 @@ public final class SkillDamage implements Listener {
      * @return 目標在這一下之後是否還有效（活著）
      */
     public boolean hit(final Player attacker, final LivingEntity target, final SkillProfile profile, final Vector knockback) {
-        return hitAs(attacker, target, profile, knockback);
+        final LivingEntity by = proxy == null ? null : proxy.apply(attacker, profile);
+        return hitAs(by != null && by.isValid() ? by : attacker, target, profile, knockback);
+    }
+
+    /**
+     * 2026-10-29 照 PoE2：這一下其實是你的召喚物放的（巨靈的指令）：回傳那隻召喚物，CombatListener 用牠的屬性表結算；
+     * 不是回傳 null（照舊算你的）。技能模組接上（DjinnCommands）。
+     */
+    private java.util.function.BiFunction<Player, SkillProfile, LivingEntity> proxy;
+
+    public void setHitProxy(final java.util.function.BiFunction<Player, SkillProfile, LivingEntity> proxy) {
+        this.proxy = proxy;
     }
 
     /**

@@ -2402,13 +2402,13 @@ supports:
 
   momentum:                # Momentum（2026-10-29 照站長加回來，照原作）
     name: 衝勢
-    description: 單次使用被輔助的技能期間（出手到動作做完），你至少移動了 3 格之後，這次使用後續造成的傷害更多 40%（位移技能、引導技能、還在飛的投射物、地面效果都算）。傳送不算移動的距離。
+    description: 單次使用被輔助的技能期間（出手到動作做完），你至少移動了 1 格之後，這次使用後續造成的傷害更多 40%（位移技能、引導技能、還在飛的投射物、地面效果都算）。傳送不算移動的距離，但技能本身的瞬移（瞬影擊）算。
     icon: SUGAR
     tier: 2
     requires: [attack, spell]
     excludes: [minion, aura, herald, totem, trap, bell, persistent, mark]
     mana_multiplier: 1.2
-    # 2026-10-29 照 PoE2 Momentum（第 2 階、消耗 120%、單次使用期間移動 2 公尺 = 3 格後更多 40% 傷害）；2026-10-27 曾刪掉換成未切割輔助寶石
+    # 2026-10-29 照 PoE2 Momentum（第 2 階、消耗 120%、單次使用期間移動 2 公尺 = 3 格後更多 40% 傷害）；2026-10-29 照站長改成移動 1 格；2026-10-27 曾刪掉換成未切割輔助寶石
     modifiers:
       - { stat: momentum.damage, type: FLAT, value: 40 }
 

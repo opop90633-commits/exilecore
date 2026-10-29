@@ -102,6 +102,11 @@ public final class LootFilterMenu extends Menu {
     /** 每一組的標籤在第幾排（這次畫面算出來的）。 */
     /** 每一組的標籤在哪一格（2026-10-23：以前是 groupRows，標籤一定在每排的第一格）。 */
     private final int[] groupLabels = new int[GROUP_COUNT];
+    /** 2026-10-29：通貨分頁每一頁的組標籤格 → 第幾組（同一組換頁後在新的一頁再標一次）。 */
+    private final Map<Integer, Integer> labelGroup = new HashMap<>();
+    /** 2026-10-29：通貨分頁現在第幾頁、共幾頁（排不下時換頁，這次之前多的種類直接不顯示）。 */
+    private int currencyPage;
+    private int currencyPages = 1;
     /** 打開時的角色（換了角色就不能再改，免得把上一個角色的設定寫到新角色上）。 */
     private final long characterId;
     private LootFilter filter;
@@ -529,12 +534,24 @@ public final class LootFilterMenu extends Menu {
             final int group = value < GROUP_BOUNDS[0] ? 0 : value < GROUP_BOUNDS[1] ? 1 : 2;
             byGroup.get(group).add(type);
         }
-        // 2026-10：低價通貨有 10 種（微光石、光澤石、磨刀石、護甲碎片＋六種符文），以前只排得下 8 格，最後兩種不見了。
-        // 2026-10-23：每組各自從新的一排開始排不下時（星火石不見了），改成一組接著一組排（標籤也佔一格），四排 36 格都用上
-        final int[][] layout = layout(byGroup.stream().mapToInt(List::size).toArray());
+        // 2026-10-29：排不下的換頁（每頁四排；每組從新的一排開始，標籤在第一格、通貨在後面 8 格），全部種類都看得到、點得到；
+        //   這次之前四排塞不下就一組接著一組擠，再塞不下的直接不顯示（標籤寫「還有幾種排不下」）
+        labelGroup.clear();
+        java.util.Arrays.fill(groupLabels, -1);
+        final List<int[]> rows = new ArrayList<>(); // {組, 這一排第一種的序號}
+        for (int group = 0; group < GROUP_COUNT; group++) {
+            byGroup.get(group).sort((a, b) -> Long.compare(value(a), value(b)));
+            final int size = byGroup.get(group).size();
+            for (int start = 0; start == 0 || start < size; start += GROUP_SIZE) {
+                rows.add(new int[] {group, start});
+            }
+        }
+        final int rowsPerPage = LAST_GROUP_ROW - FIRST_GROUP_ROW + 1;
+        currencyPages = Math.max(1, (rows.size() + rowsPerPage - 1) / rowsPerPage);
+        currencyPage = Math.max(0, Math.min(currencyPages - 1, currencyPage));
+        final List<ItemStack> labels = new ArrayList<>();
         for (int group = 0; group < GROUP_COUNT; group++) {
             final List<CurrencyType> types = byGroup.get(group);
-            types.sort((a, b) -> Long.compare(value(a), value(b)));
             int shown = 0;
             int hidden = 0;
             for (final CurrencyType type : types) {
@@ -553,16 +570,29 @@ public final class LootFilterMenu extends Menu {
                     : GROUP_BOUNDS[1] + " 以上") + " 金幣）");
             lore.add(state);
             lore.add("");
-            if (types.size() > layout[group].length - 1) {
-                lore.add("<red>還有 " + (types.size() - layout[group].length + 1) + " 種排不下（整組切換照樣會切到）");
-            }
             lore.add("<yellow>右鍵：這一組" + (shown == 0 ? "全部改成會撿" : "全部隱藏"));   // 有會撿的就全部隱藏（跟 click 一樣）
-            groupLabels[group] = gridSlot(layout[group][0]);
-            set(groupLabels[group], icon(group == 0 ? Material.GLOWSTONE_DUST : group == 1 ? Material.GOLD_NUGGET : Material.NETHER_STAR,
+            labels.add(icon(group == 0 ? Material.GLOWSTONE_DUST : group == 1 ? Material.GOLD_NUGGET : Material.NETHER_STAR,
                     "<#f5b942>【" + GROUP_NAMES[group] + "】", lore));
-            for (int i = 0; i < Math.min(layout[group].length - 1, types.size()); i++) {
+        }
+        int lastGroup = -1;
+        for (int r = 0; r < rowsPerPage; r++) {
+            final int index = currencyPage * rowsPerPage + r;
+            if (index >= rows.size()) {
+                break;
+            }
+            final int group = rows.get(index)[0];
+            final int start = rows.get(index)[1];
+            if (group != lastGroup) {
+                final int labelSlot = slot(FIRST_GROUP_ROW + r, 0);
+                set(labelSlot, labels.get(group));
+                labelGroup.put(labelSlot, group);
+                groupLabels[group] = labelSlot;
+                lastGroup = group;
+            }
+            final List<CurrencyType> types = byGroup.get(group);
+            for (int i = start; i < Math.min(types.size(), start + GROUP_SIZE); i++) {
                 final CurrencyType type = types.get(i);
-                final int slot = gridSlot(layout[group][i + 1]);
+                final int slot = slot(FIRST_GROUP_ROW + r, 1 + (i - start));
                 final boolean isHidden = filter.hidesCurrency(type.id());
                 final long gold = service.goldEstimate(player, DropTable.Kind.CURRENCY, null, type.dropWeight());
                 final ItemStack icon = icon(Menu.material(type.material(), Material.EMERALD),
@@ -578,6 +608,10 @@ public final class LootFilterMenu extends Menu {
                 set(slot, isHidden ? offMark(decorated) : onMark(decorated));
                 currencyAt.put(slot, type.id());
             }
+        }
+        if (currencyPages > 1) {
+            set(SLOT_PREV, pageButton(false, currencyPage, currencyPages));
+            set(SLOT_NEXT, pageButton(true, currencyPage, currencyPages));
         }
     }
 
@@ -822,6 +856,12 @@ public final class LootFilterMenu extends Menu {
                 }
             }
             case CURRENCY -> {
+                if ((slot == SLOT_PREV || slot == SLOT_NEXT) && currencyPages > 1) {
+                    currencyPage = stepPage(currencyPage, currencyPages, slot == SLOT_NEXT, click); // 2026-10-29：通貨換頁
+                    player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.6f, 1.0f);
+                    redraw();
+                    return;
+                }
                 if (currencyAt.containsKey(slot)) {
                     next.toggleCurrency(currencyAt.get(slot));
                 } else {
@@ -842,12 +882,7 @@ public final class LootFilterMenu extends Menu {
     }
 
     private int groupOf(final int slot) {
-        for (int i = 0; i < GROUP_COUNT; i++) {
-            if (groupLabels[i] == slot) {
-                return i;
-            }
-        }
-        return -1;
+        return labelGroup.getOrDefault(slot, -1); // 2026-10-29：分頁後同一組可能換到下一頁才標
     }
 
     private void apply(final LootFilter next) {

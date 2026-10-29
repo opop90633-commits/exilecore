@@ -328,6 +328,18 @@ public final class OriginalSkills implements Listener {
                 plugin.players().sheet(player));
     }
 
+    /** 2026-10-29 照 PoE2：電震波吃雷縛長棍寶石上掛的輔助（能輔助攻擊的那些）；這次之前沒有輔助。 */
+    private SkillBuild staffWave(final Player player) {
+        final SkillDefinition definition = service.config().skill(STAFF_WAVE);
+        final SkillBuild host = service.equippedBuild(player, STAFF);
+        if (definition == null || host == null) {
+            return proc(player, STAFF_WAVE, gemLevel(player, STAFF));
+        }
+        final PlayerState state = plugin.players().get(player);
+        return SkillBuild.of(service.config(), definition, Math.max(1, gemLevel(player, STAFF)), state.level(), false, host.supports(),
+                state.weaponTags(), plugin.players().sheet(player));
+    }
+
     private void blast(final Player player, final Location at, final double radius, final SkillProfile profile) {
         final SkillDamage damage = damage();
         if (damage == null || at.getWorld() == null) {
@@ -543,7 +555,7 @@ public final class OriginalSkills implements Listener {
             }
         }
         if (definition.isAttack() && s.staffUntil > now && state.weaponTags().contains("quarterstaff") && !STAFF.equals(definition.id())) {
-            final SkillBuild wave = proc(player, STAFF_WAVE, gemLevel(player, STAFF));
+            final SkillBuild wave = staffWave(player);
             if (wave != null) {
                 service.executor().executeFrom(Origin.of(player), wave, preferred); // 照 PoE2：長棍攻擊放出電震波（5 格、45 度）
             }

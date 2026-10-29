@@ -12,7 +12,7 @@ import java.util.UUID;
 final class SkillRuntime {
 
     /** 排隊的按鍵最多等幾 tick，太久就丟掉（避免放開按鍵很久之後突然放出來）。 */
-    static final int QUEUE_TIMEOUT = 10;
+    static final int QUEUE_TIMEOUT = 8;   // 2026-10-29：0.4 秒；這次之前 10，而且會延長到動作結束（最多 MOUSE_QUEUE_MAX）
     /**
      * 數字鍵（戰吼、光環、位移…）排隊可以等多久（2026-10：慢的攻擊動作超過半秒，按了數字鍵會被丟掉，要再按一次）。
      */
@@ -23,11 +23,6 @@ final class SkillRuntime {
         return tw.exilecore.character.SkillLoadout.mouseKey(key) ? QUEUE_TIMEOUT : HOTBAR_QUEUE_TIMEOUT;
     }
 
-    /**
-     * 滑鼠鍵排隊最多等到動作結束（2026-10-17：慢的攻擊（擲雷槍、重錘）一下超過半秒，動作還沒做完就點的那一下
-     * 以前等 10 tick 就被丟掉：客戶端自己揮了手，卻什麼都沒放出去）。最多等 MOUSE_QUEUE_MAX tick。
-     */
-    static final int MOUSE_QUEUE_MAX = 40;
     /** 這個排隊的按鍵等到哪個 tick（含）。 */
     long queuedUntil;
     /** 這次是從排隊放出來的（左鍵的揮手早就做過了，客戶端不會再揮：伺服器補揮）。 */
@@ -299,11 +294,9 @@ final class SkillRuntime {
         queuedKey = key;
         queuedTarget = target;
         queuedAt = now;
-        final long ready = Double.isFinite(readyAt) ? (long) Math.ceil(readyAt) : now;
         queuedUntil = now + queueTimeout(key);
-        if (tw.exilecore.character.SkillLoadout.mouseKey(key)) {
-            queuedUntil = Math.max(queuedUntil, Math.min(now + MOUSE_QUEUE_MAX, ready + 1));
-        }
+        // 2026-10-29 照站長：滑鼠鍵不再等到動作結束（最多 2 秒）——慢的攻擊（弩）放開按鍵後還會自己多射一發。
+        //   現在只記最後按的 QUEUE_TIMEOUT tick；按住的時候客戶端一直送（左鍵每 tick 揮手、右鍵每 4 tick），會一直續上
     }
 
     void clearQueue() {

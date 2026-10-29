@@ -83,8 +83,8 @@ public final class MinionService implements Listener, MinionHooks {
     static final long FOCUS_TICKS = 60;
     /** 焚魂飛行速度（格／tick）。 */
     static final double FLY_SPEED = 0.32;
-    /** 一個玩家全部的召喚物最多幾隻（各技能的上限另外算；2026-10-16：40 → 50；2026-10-27 照站長：50 → 40）。 */
-    static final int MAX_PER_PLAYER = 40;
+    /** 一個玩家全部的召喚物最多幾隻（各技能的上限另外算；2026-10-16：40 → 50；2026-10-27 照站長：50 → 40；2026-10-29 照站長：40 → 60）。 */
+    static final int MAX_PER_PLAYER = 60;
 
     /** 一隻召喚物。 */
     static final class Minion {
@@ -2745,6 +2745,34 @@ public final class MinionService implements Listener, MinionHooks {
         minion.nextPath = now() + 20;
         visuals.minionBlink(spot);
         return true;
+    }
+
+    /** 2026-10-29 照 PoE2：那位巨靈的屬性表（巨靈的指令照這張算；沒叫出來回傳 null）。 */
+    public StatSheet djinnSheet(final UUID owner, final String djinn) {
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner) && minion.skillId().equals(djinn) && !minion.decoy && minion.mob.isValid() && minion.sheet != null) {
+                return minion.sheet;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 2026-10-29 照 PoE2：這一下是巨靈的指令的話，回傳放它的那隻巨靈（同一個世界就算，不管多遠：瞬移過去的也是牠打的）；
+     * 不是巨靈的指令、或巨靈沒叫出來回傳 null（{@link DjinnCommands}）。
+     */
+    public LivingEntity djinnHitter(final Player owner, final tw.exilecore.stats.SkillProfile profile) {
+        final String djinn = profile == null ? null : DjinnCommands.djinnFor(profile.id());
+        if (djinn == null) {
+            return null;
+        }
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner.getUniqueId()) && minion.skillId().equals(djinn) && !minion.decoy && minion.mob.isValid()
+                    && minion.mob.getWorld().equals(owner.getWorld())) {
+                return minion.mob;
+            }
+        }
+        return null;
     }
 
     private Minion commandOnlyMinion(final Player owner, final String skillId) {

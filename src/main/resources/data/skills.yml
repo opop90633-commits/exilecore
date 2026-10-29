@@ -741,6 +741,27 @@ skills:
       - { stat: flag.culling, type: FLAT, value: 1 }
       - { stat: charge.event.kill.power, type: FLAT, value: 100 }   # 2026-10-28 照 PoE2「這一掌打死的每個敵人給一顆銳星，稀有 2、傳奇 3」；這次之前 charge.event.cull.power（只有撲殺才給）
       - { stat: flag.always_hit, type: FLAT, value: 1 }   # 2026-10-28 照 PoE2（global_always_hit：不會被閃避）；這次之前會被閃避
+  # 2026-10-29 照 PoE2 Hand of Chayula（poe2db.tw/tw/Hand_of_Chayula；第 9 階長棍寶石，AoE、Melee、Strike、Chaos、Meta；ChayulaHand.java）：
+  # 衝向 6.5 公尺內的敵人打一掌，觸發孔裡的印記（效果增加 20%→29%）、套上孔裡的詛咒（持續時間增加 100%）。原作沒有這顆之前沒有。
+  hand_of_chayula:
+    name: 夏烏拉之手
+    description: 主要寶石：孔裡放印記或詛咒的技能寶石（可放好幾個）。衝向 9.75 格內的一個敵人打一掌（73% 物理轉混沌、總攻擊時間 +0.35 秒、不會被閃避），打完把孔裡的印記放在牠身上（印記效果增加 20%～29%），孔裡的詛咒套在牠的位置（詛咒持續時間增加 100%）。孔裡的技能吃其他孔的輔助。
+    icon: AMETHYST_SHARD
+    type: attack
+    tier: 9
+    tags: [attack, melee, strike, area, chaos, meta]   # 照 PoE2 寶石標籤（AoE、Melee、Strike、Chaos、Meta；meta＝主要寶石：孔裡放印記、詛咒）
+    weapons: [quarterstaff]
+    mechanic: strike
+    strike: { reach: 3.5, angle: 60, targets: 1 }   # MeleeSingleTarget（打一個），衝刺 6.5 公尺照斷魂掌（SkillExecutor.chayula）
+    convert: { chaos: 0.73 }
+    attack_speed: 0.89   # 照 PoE2（攻擊速度基礎的 89%）
+    effectiveness: [0.67, 0.74, 0.81, 0.88, 0.95, 1.03, 1.1, 1.16, 1.22, 1.28, 1.35, 1.41, 1.49, 1.56, 1.64, 1.72, 1.81, 1.9, 1.99, 2.09, 2.19, 2.3, 2.42, 2.54, 2.67, 2.8, 2.94, 3.09, 3.24, 3.4, 3.57, 3.75, 3.94, 4.14, 4.34, 4.56, 4.79, 5.03, 5.28, 5.54]   # 照 PoE2（RePoE HandOfChayulaPlayer damage_multiplier 1–40 級）
+    mana: [11, 13, 15, 17, 19, 22, 24, 27, 30, 33, 37, 40, 44, 48, 52, 57, 62, 67, 73, 79, 85, 91, 98, 106, 114, 122, 131, 141, 151, 161, 172, 184, 197, 210, 224, 239, 255, 271, 289, 307]   # 照 PoE2（poe2db 11→79）
+    visual: killing_palm
+    modifiers:
+      - { stat: flag.always_hit, type: FLAT, value: 1 }   # 不會被閃避
+      - { stat: skill.added_time, type: FLAT, value: 0.35 }   # 總攻擊時間 +0.35 秒（不吃攻擊速度）
+
   tempest_bell:
     name: 驚雷之鐘
     description: 在面前砸下一口鐘（要 4 點連擊才能放：用其他打擊打中敵人累積，放了就用掉），砸下來時打周圍一圈。你用近戰攻擊打到鐘（或鐘旁邊的敵人），鐘就響一次放出震波（最多十次）。打到鐘的那一下會讓鐘點燃、冰緩、凍結、感電（鐘有自己的異常門檻與暈眩門檻，隨等級 18 → 6357 → 148290），鐘身上每有一種元素異常，震波額外獲得 30% 物理傷害為那一種元素；會擊退的那一下讓震波範圍更大（每 0.1 格擊退更多 30%）。等級越高同時能放越多口鐘。   # 2026-10-28 照 PoE2 補上砸鐘傷害、鐘數；2026-10-28 照 PoE2 補上鐘的異常、擊退
@@ -932,8 +953,7 @@ skills:
     icon: GLOWSTONE_DUST   # 2026-10：原本 GLOWSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 1
-    tags: [spell, projectile, lightning, duration]   # 2026-10-26 照 PoE2（加持續）
-    tags_add: [cold]   # 2026-10-29 照 PoE2 寶石標籤（Spark）：自動規則加的拿掉／原作有的補上
+    tags: [spell, projectile, lightning, duration]   # 2026-10-26 照 PoE2（加持續）；2026-10-29 拿掉誤加的冰冷顯示標籤（那是傳奇觸發版 Spark 的標籤）
     mechanic: projectile
     projectile: { count: [4, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 9, 9, 9, 10, 10, 10, 10, 11, 11, 11, 11, 12, 12, 12, 12, 12, 12, 12, 13, 13, 13, 13], spread: 30, speed: 0.5, range: 20, size: 0.3, wobble: 25, wander: { duration: 2, width: 2, hit_cooldown: 0.66 } }   # 2026-10-28 照 PoE2（poe2db Spark 1–40 級）；這次之前 [4, 9]（兩點內插）
     # 2026-10-28 照 PoE2 Spark（RePoE SparkPlayer）：wander = 貼著地面不規則游走（spark_pathing_width_bounds 20 = 左右 2 公尺寬）、
@@ -9509,7 +9529,7 @@ skills:
 
   kelari_deception:
     name: 克拉里的欺瞞
-    description: 指令（要先召喚克拉里）：克拉里瞬移到準心的地方炸開 3.75 格，造成物理法術傷害，並留下一個 4 秒的分身；分身還在時再用，分身也會爆炸（多 2 層暴擊弱點）。連續使用每次更多 50% 傷害（最多 300%）。最多存 3 次，冷卻 5 秒。
+    description: 指令（要先召喚克拉里）：克拉里瞬移到準心的地方炸開 3.75 格，造成物理法術傷害，並留下一個 4 秒的分身；分身還在時再用，分身也會爆炸（擊中時多 2 層暴擊弱點）。連續使用每次更多 50% 傷害（最多 300%）。最多存 3 次，冷卻 5 秒。
     icon: GUNPOWDER   # 2026-10-27 圖示：會炸開的沙分身；這次之前 GOLD_NUGGET（跟克拉里本身一樣）
     type: spell
     tier: 1
@@ -9523,12 +9543,10 @@ skills:
     cast_time: 0.8
     effectiveness: 1.0
     cooldown: 5
-    mana: 0   # 照 PoE2：指令不花魔力
+    mana: [5, 6, 7, 9, 10, 12, 13, 15, 17, 19, 22, 25, 28, 31, 34, 38, 43, 47, 52, 58]   # 2026-10-29 照 PoE2（poe2db 5→47→58）；這次之前 0（指令其實要花魔力）
     visual: earthquake
     modifiers:
-      - { stat: spell.base_crit, type: FLAT, value: 15 }
-      - { stat: crit_weakness.on_hit, type: FLAT, value: 1 }
-      - { stat: crit.bonus, type: INCREASED, value: 50 }
+      - { stat: spell.base_crit, type: FLAT, value: 15 }   # 2026-10-29 照 PoE2：主爆炸沒有暴擊弱點、沒有暴擊加成（這次之前多了 1 層弱點、50% 暴擊加成）
 
   asc_kelari_clone:
     name: 克拉里的分身
@@ -9546,8 +9564,7 @@ skills:
     visual: earthquake
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 15 }
-      - { stat: crit_weakness.on_hit, type: FLAT, value: 3 }
-      - { stat: crit.bonus, type: INCREASED, value: 50 }
+      - { stat: crit_weakness.on_hit, type: FLAT, value: 2 }   # 2026-10-29 照 PoE2：分身爆炸 2 層暴擊弱點、沒有暴擊加成（這次之前 3 層＋50% 暴擊加成）
 
   kelari_judgment:
     name: 克拉里的審判
@@ -9566,12 +9583,11 @@ skills:
     cast_time: 1.5
     effectiveness: 1.0
     cooldown: 12
-    mana: 0   # 照 PoE2：指令不花魔力
+    mana: [6, 7, 8, 9, 11, 12, 14, 16, 18, 20, 23, 26, 29, 32, 36, 40, 44, 49, 54, 59]   # 2026-10-29 照 PoE2（poe2db Kelari's Judgment 每分鐘 232→2371，引導 1.5 秒照 1.5 秒算）；這次之前 0（指令其實要花魔力）
     visual: earthquake
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 15 }
-      - { stat: crit_weakness.on_hit, type: FLAT, value: 5 }
-      - { stat: crit.bonus, type: INCREASED, value: 50 }
+      - { stat: crit_weakness.on_hit, type: FLAT, value: 4 }   # 2026-10-29 照 PoE2：4 層暴擊弱點、沒有暴擊加成（這次之前 5 層＋50% 暴擊加成）
       - { stat: stun.buildup, type: MORE, value: 100 }
 
   kelari_malediction:
@@ -9630,7 +9646,7 @@ skills:
         - { stat: asc.skill_mark, type: FLAT, value: 1 }
     cast_time: 1.8
     cooldown: 8
-    mana: 0   # 照 PoE2：指令不花魔力
+    mana: [7, 8, 10, 11, 13, 15, 17, 20, 23, 25, 29, 32, 36, 40, 45, 50, 55, 61, 68, 75]   # 2026-10-29 照 PoE2（poe2db Navira's Oasis 7→75）；這次之前 0（指令其實要花魔力）
     visual: aura_mana
 
   navira_well:
@@ -9653,7 +9669,7 @@ skills:
         - { stat: es.recharge, type: INCREASED, value: 10 }
     cast_time: 2.1
     cooldown: 12
-    mana: 0   # 照 PoE2：指令不花魔力
+    mana: [6, 7, 8, 9, 11, 13, 15, 17, 19, 21, 24, 27, 30, 34, 38, 42, 46, 51, 57, 63]   # 2026-10-29 照 PoE2（poe2db Navira's Well 6→63）；這次之前 0（指令其實要花魔力）
     visual: aura_es
 
   navira_fracturing:
@@ -9672,7 +9688,7 @@ skills:
     cast_time: 1.2
     effectiveness: 1.0
     cooldown: 5
-    mana: 0   # 照 PoE2：指令不花魔力
+    mana: [3, 4, 4, 5, 6, 7, 8, 9, 10, 12, 13, 15, 17, 19, 21, 23, 26, 29, 32, 35]   # 2026-10-29 照 PoE2（poe2db Navira's Fracturing 3→35）；這次之前 0（指令其實要花魔力）
     visual: frost_nova
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 12 }
@@ -9696,7 +9712,7 @@ skills:
     cast_time: 2.3
     effectiveness: 1.0
     cooldown: 12
-    mana: 0   # 照 PoE2：指令不花魔力
+    mana: [6, 7, 9, 10, 12, 14, 16, 18, 20, 23, 26, 29, 33, 36, 41, 45, 50, 56, 62, 68]   # 2026-10-29 照 PoE2（poe2db Ruzhan's Reckoning 6→68）；這次之前 0（指令其實要花魔力）
     visual: comet
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 7 }
@@ -9735,7 +9751,7 @@ skills:
     cast_time: 2.3
     effectiveness: 1.0
     cooldown: 7
-    mana: 0   # 照 PoE2：指令不花魔力
+    mana: [4, 4, 5, 6, 7, 8, 9, 11, 12, 14, 16, 18, 20, 22, 25, 27, 30, 34, 37, 41]   # 2026-10-29 照 PoE2（poe2db Ruzhan's Fury 4→41）；這次之前 0（指令其實要花魔力）
     visual: fireball
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 7 }   # 對被禁錮的敵人更多 60%（AscGranted）
@@ -9756,7 +9772,7 @@ skills:
     cast_time: 1.0
     effectiveness: 1.0
     cooldown: 8
-    mana: 0   # 照 PoE2：指令不花魔力
+    mana: [4, 5, 6, 7, 8, 9, 11, 12, 14, 16, 18, 20, 22, 25, 28, 31, 34, 38, 42, 47]   # 2026-10-29 照 PoE2（poe2db Ruzhan's Trap 4→47）；這次之前 0（指令其實要花魔力）
     visual: flame_wall
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 7 }

@@ -82,8 +82,8 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     /** 2026-10-26：INCREASED／MORE：投射物射程（放在這裡，不動 StatKeys）。 */
     public static final String PROJECTILE_RANGE = "skill.projectile_range";
 
-    /** 一個召喚技能同時最多幾隻（連「+x 召喚物數量」都算進去的上限；2026-10-16：40 → 50）。 */
-    public static final int MAX_MINIONS = 50;
+    /** 一個召喚技能同時最多幾隻（連「+x 召喚物數量」都算進去的上限；2026-10-16：40 → 50；2026-10-29 照站長：50 → 60，跟總上限一樣）。 */
+    public static final int MAX_MINIONS = 60;
 
     /** 投射物連鎖時，下一個目標最遠幾格。 */
     public static final double PROJECTILE_CHAIN_RANGE = 10;
@@ -491,6 +491,14 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
                 radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
                 deploy, totems, minions, reserve, Math.max(0.01, newMinionReserve), auraEffect, generosity, exerts, repeats);
+    }
+
+    /** 2026-10-29：魔力消耗換掉（巨靈的指令：其他照巨靈的屬性表，魔力消耗照你的）。 */
+    public SkillBuild withManaCost(final int newManaCost) {
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
+                reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
+                radius, length, chainRange, newManaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
     }
 
     /** 2026-10-26：這一次打擊多打幾個目標（熔魂嘯強化的打擊：多打 2 個）。 */

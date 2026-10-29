@@ -97,6 +97,8 @@ final class SkillExecutor {
             case STRIKE -> {
                 if (KillingPalm.is(build)) {
                     palm(player, runtime, build, preferred); // 2026-10-28 照 PoE2 斷魂掌：衝過去打、撲殺就連衝；這次之前原地打一下
+                } else if (ChayulaHand.is(build)) {
+                    chayula(player, build, preferred); // 2026-10-29 照 PoE2 夏烏拉之手：衝過去打、觸發孔裡的印記與詛咒
                 } else {
                     strike(origin, build, preferred);
                 }
@@ -1447,6 +1449,7 @@ final class SkillExecutor {
             if (!tw.exilecore.core.Teleports.go(player, to)) {
                 return;
             }
+            flickerMoved(player, from, to);
             visuals.dash(build.definition().visual(), from, to);
         }
         strike(Origin.of(player), build, chosen.target());
@@ -1461,6 +1464,13 @@ final class SkillExecutor {
         hit.add(chosen.target().getUniqueId());
         charges.blockPower(player, now + step * FLICKER_PER_CHARGE + 5);
         flickerChain(player, build, hit, 0, step, 0);
+    }
+
+    /** 2026-10-29：瞬影擊的瞬移算移動的距離（衝勢、迅鋒）；這次之前當成傳送不算。 */
+    private void flickerMoved(final Player player, final Location from, final Location to) {
+        if (plugin.skills() != null) {
+            plugin.skills().supportMechanics().skillMoved(player, from, to);
+        }
     }
 
     /** 每顆銳星多瞬移打幾下。 */
@@ -1503,6 +1513,7 @@ final class SkillExecutor {
                 if (!tw.exilecore.core.Teleports.go(player, to)) {
                     return;
                 }
+                flickerMoved(player, from, to);
                 visuals.dash(build.definition().visual(), from, to);
             }
             hit.add(next.target().getUniqueId());
@@ -1551,6 +1562,38 @@ final class SkillExecutor {
         }
     }
 
+    /**
+     * 2026-10-29 照 PoE2 Hand of Chayula（{@link ChayulaHand}）：衝向 6.5 公尺內的敵人（打得到就不動）打一掌，
+     * 打完把孔裡的印記放在牠身上、詛咒套在牠的位置（SkillService.chayulaTrigger）。附近沒有敵人就原地打（不觸發）。
+     */
+    private void chayula(final Player player, final SkillBuild build, final LivingEntity preferred) {
+        final double reach = build.reach();
+        LivingEntity target = null;
+        Location spot = null;
+        for (final LivingEntity candidate : dashCandidates(player, ChayulaHand.DASH_RANGE, preferred)) {
+            if (candidate.getLocation().distanceSquared(player.getLocation()) <= reach * reach) {
+                target = candidate;
+                break;
+            }
+            spot = flickerSpot(player, candidate);
+            if (spot != null) {
+                target = candidate;
+                break;
+            }
+        }
+        if (target == null) {
+            strike(Origin.of(player), build, preferred);
+            return;
+        }
+        if (!palmDash(player, build, spot)) {
+            return;
+        }
+        strike(Origin.of(player), build, target);
+        if (plugin.skills() != null) {
+            plugin.skills().chayulaTrigger(player, target);
+        }
+    }
+
     /** 複擊（裂虛回響）的斷魂掌：算玩家自己再打一下，照樣衝過去、撲殺就連衝（這次之前複擊的那一下原地打）。 */
     void palmAgain(final Player player, final SkillRuntime runtime, final SkillBuild build, final LivingEntity preferred) {
         palm(player, runtime, build, preferred);
@@ -1576,6 +1619,7 @@ final class SkillExecutor {
         if (!tw.exilecore.core.Teleports.go(player, to)) {
             return false;
         }
+        flickerMoved(player, from, to); // 2026-10-29：衝過去也算移動的距離（衝勢、迅鋒）
         visuals.dash(build.definition().visual(), from, to);
         return true;
     }
@@ -2463,7 +2507,8 @@ final class SkillExecutor {
     /** 2026-10-26 照 PoE2：詛咒落地之後 1.5 秒才生效（捷咒：更少 50%）；輔助觸發的減益（隱藏技能）馬上生效。 */
     static final double CURSE_DELAY_SECONDS = 1.5;
 
-    private void curseAt(final Player player, final SkillBuild build, final Location center, final SkillParams.Mark spec) {
+    // 2026-10-29：夏烏拉之手也用（SkillService.chayulaTrigger），改成套件內可見
+    void curseAt(final Player player, final SkillBuild build, final Location center, final SkillParams.Mark spec) {
         if (build.definition().hidden()) {
             applyCurseAt(player, build, center, spec);
             return;

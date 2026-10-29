@@ -127,7 +127,7 @@ public final class GemAttributes {
                     + "whirling_rush siphon_strike reeling_palm frost_palm frost_wave storm_staff ruin_mantra falling_thunder "
                     + "glacial_cascade flicker_strike gathering_storm freezing_mark ghost_dance lingering_illusion charge_regulation "
                     + "elemental_trinity frozen_locus meta_dodge meta_elemental_invocation meta_reaper_invocation "
-                    + "meta_barrier_invocation "),
+                    + "meta_barrier_invocation hand_of_chayula "),
             entry("I", "fireball frost_nova spark arc comet flame_wall detonate_dead raise_zombie raging_spirits vulnerability_curse "
                     + "despair_curse elemental_weakness_curse enfeeble_curse temporal_curse blood_offering bone_offering "
                     + "soul_offering firestorm ember_volley storm_orb lightning_pillar hex_burst bone_storm "

@@ -35,7 +35,7 @@ class MomentumSupportTest {
         assertEquals(2, momentum.tier());
         assertEquals(1.2, momentum.manaMultiplier(), 1e-9);
         assertTrue(momentum.modifiers().stream().anyMatch(m -> m.stat().equals(SupportKeys.MOMENTUM) && m.value() == 40));
-        assertEquals(3.0, SupportMechanics.MOMENTUM_TRAVEL, 1e-9, "2 公尺 = 3 格");
+        assertEquals(1.0, SupportMechanics.MOMENTUM_TRAVEL, 1e-9, "照站長：1 格");
     }
 
     @Test
@@ -64,6 +64,6 @@ class MomentumSupportTest {
     @Test
     void tooltip() {
         final String text = ModifierText.describe(new Modifier(SupportKeys.MOMENTUM, ModType.FLAT, 40, Set.of(), "衝勢"));
-        assertTrue(text.contains("3 格") && text.contains("40%") && text.contains("單次使用"), text);
+        assertTrue(text.contains("1 格") && text.contains("40%") && text.contains("單次使用"), text);
     }
 }

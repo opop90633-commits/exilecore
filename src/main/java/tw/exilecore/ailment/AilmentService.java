@@ -533,7 +533,11 @@ public final class AilmentService {
             final AilmentConfig.MeterSettings freezeSettings = config.freeze();
             // 2026-10-28 照 PoE2（磐石之拳的凜冬之握）：擊中的所有傷害都算進凍結累積
             final boolean allFreeze = StatKeys.flag(attack, tw.exilecore.item.unique.UniqueStats.ALL_DAMAGE_FREEZES);
-            final double buildup = noElemental ? 0 : allFreeze ? freezeSettings.buildupFor(allDamage,
+            // 2026-10-29：免疫凍結（疾影之靴這類免疫元素異常、免疫凍結）的不累積凍結值：這次之前照樣累積到滿才擋掉，
+            //   畫面上一直跳「凍結 xx%」，看起來像會被凍住
+            final boolean freezeImmune = StatKeys.flag(defenderSheet, StatKeys.FLAG_FREEZE_IMMUNE)
+                    || StatKeys.flag(defenderSheet, StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE) || StatKeys.flag(defenderSheet, "flag.immune.freeze");
+            final double buildup = noElemental || freezeImmune ? 0 : allFreeze ? freezeSettings.buildupFor(allDamage,
                     tw.exilecore.stats.TreeKeys.freezeThreshold(freezePoise, defenderSheet) * entry.state.freezeMeter().thresholdMultiplier(now),
                     attack.apply(StatKeys.FREEZE_BUILDUP, 1.0, context)
                             * defenderSheet.more(tw.exilecore.stats.SupportExtraKeys.FREEZE_BUILDUP_TAKEN, Set.of()), playerTarget)
@@ -865,7 +869,9 @@ public final class AilmentService {
                     * Math.max(0, attack.more(StatKeys.ELECTROCUTE_CHANCE, context)) / 100.0; // 2026-10-27：更多（風暴箭的 −100%）以前沒算到
             // 2026-10-26 照 PoE2：電擊是累積條，有來源就每一擊都累積，不先擲機率；不到 100% 的「電擊機率」改成累積量乘那個比例
             //（期望值一樣）。這次之前先擲機率，擲中才累積
-            if (chance > 0) {
+            // 2026-10-29：免疫電擊（免疫元素異常）的不累積（這次之前累積到滿才擋掉）
+            if (chance > 0 && !StatKeys.flag(defenderSheet, StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE)
+                    && !StatKeys.flag(defenderSheet, "flag.immune.electrocute")) {
                 // 2026-10-26 照 PoE2：閃電 × 1.7 ÷ 暈眩門檻（這次之前 150% × 閃電 ÷ 異常門檻，傳奇怪 50%）
                 entry = entry == null ? track(defender) : entry;
                 final double buildup = config.electrocute().buildupFor(electrocuteBase, freezePoise * entry.state.electrocute().thresholdMultiplier(now),

@@ -192,6 +192,10 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (HollowForm.hosts(host) && HollowForm.appliesToHost(this) && refusal(host) == null) {
             return null;
         }
+        // 2026-10-29 照 PoE2 Hand of Chayula：夏烏拉之手自己是攻擊，能輔助這一掌的輔助孔裡放什麼都可以掛（套在這一掌上）
+        if (ChayulaHand.hosts(host) && refusal(host) == null) {
+            return null;
+        }
         if (inner == null) {
             return "先把技能寶石放進它的孔";
         }
@@ -233,7 +237,15 @@ public record SupportDefinition(String id, String name, String description, Stri
      */
     public String refusal(final SkillDefinition skill) {
         final String own = ownRefusal(skill);
-        if (own == null || MinionTypes.of(skill).isEmpty()) {
+        if (own == null) {
+            return null;
+        }
+        // 2026-10-29 照 PoE2：一顆寶石兩個技能（雷縛長棍＝增益＋電震波攻擊），能輔助其中一個就掛得上（SubSkills）
+        final SkillDefinition sub = SubSkills.of(skill);
+        if (sub != null && ownRefusal(sub) == null) {
+            return null;
+        }
+        if (MinionTypes.of(skill).isEmpty()) {
             return own;
         }
         final MinionTypes.Verdict viaMinions = MinionTypes.check(this, skill);
@@ -242,7 +254,7 @@ public record SupportDefinition(String id, String name, String description, Stri
 
     /** 只看技能自己的標籤能不能掛（{@link #refusal} 再補上召喚物的技能標籤）；可以回傳 null。 */
     String ownRefusal(final SkillDefinition skill) {
-        if (skill.hidden() && skill.isAttack()) {
+        if (skill.hidden() && skill.isAttack() && !SubSkills.isSub(skill.id())) {
             return "普攻不能掛輔助寶石";
         }
         for (final String tag : excludes) {
@@ -578,8 +590,8 @@ public record SupportDefinition(String id, String name, String description, Stri
      * 星咒圖騰沒有能量，能量輔助（meta.energy_*）不算（骰運照舊可以）。
      */
     private boolean metaHost(final SkillDefinition skill) {
-        if (flagged(skill, StatKeys.FLAG_TOTEM_LINKED) || HollowForm.hosts(skill)) {
-            return false; // 2026-10-28：空無型態也是（不觸發、沒有能量）
+        if (flagged(skill, StatKeys.FLAG_TOTEM_LINKED) || HollowForm.hosts(skill) || ChayulaHand.hosts(skill)) {
+            return false; // 2026-10-28：空無型態也是（不觸發、沒有能量）；2026-10-29：夏烏拉之手也是
         }
         if (skill.tags().contains(Tags.TOTEM)) {
             for (final Modifier modifier : modifiers) {

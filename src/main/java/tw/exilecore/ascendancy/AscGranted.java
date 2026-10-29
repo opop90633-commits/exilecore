@@ -325,8 +325,11 @@ final class AscGranted implements Listener {
                     local.add(Modifier.more(StatKeys.DAMAGE, 0.5 * own.deceptions, "克拉里的欺瞞"));
                 }
                 if (own.clone != null && own.cloneUntil > now && plugin.skills() != null) {
+                    // 2026-10-29 照 PoE2：分身爆炸跟欺瞞同一級、也吃連續使用的更多傷害（這次之前用角色能用的最高級、沒吃到）
                     final Location clone = own.clone;
-                    effects.later(2, () -> plugin.skills().triggerSkill(player, "asc_kelari_clone", clone));
+                    final int level = build.level();
+                    final List<Modifier> sequence = List.copyOf(local);
+                    effects.later(2, () -> plugin.skills().triggerSkill(player, "asc_kelari_clone", clone, level, sequence));
                 }
                 own.clone = aim(player, target, 20);
                 own.cloneUntil = now + 80;

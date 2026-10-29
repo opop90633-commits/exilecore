@@ -116,6 +116,28 @@ public final class SupportMechanics implements Listener {
         }
     }
 
+    /**
+     * 2026-10-29：技能本身把你移過去（瞬影擊的瞬移）也算移動的距離（衝勢、迅鋒…）。一般的傳送（一次跳 8 格以上）還是不算，
+     * 這裡是技能自己的位移所以照算。先把上次取樣到出發點之間走的補上，再加這段，取樣點移到落點（不會重複算）。
+     */
+    void skillMoved(final Player player, final Location from, final Location to) {
+        if (from.getWorld() == null || !from.getWorld().equals(to.getWorld())) {
+            return;
+        }
+        final Location before = lastAt.get(player.getUniqueId());
+        double moved = 0;
+        if (before != null && before.getWorld().equals(from.getWorld())) {
+            final double step = Math.hypot(from.getX() - before.getX(), from.getZ() - before.getZ());
+            moved += step < 8 ? step : 0;
+        }
+        moved += Math.hypot(to.getX() - from.getX(), to.getZ() - from.getZ());
+        if (moved > 0.01) {
+            travelled.merge(player.getUniqueId(), moved, Double::sum);
+            stepped(player, moved);
+        }
+        lastAt.put(player.getUniqueId(), to.clone());
+    }
+
     /** 2026-10-29：現在走到幾格（最後一次取樣之後走的也算進去，衝勢用）。 */
     double travelledNow(final Player player) {
         final Location before = lastAt.get(player.getUniqueId());
@@ -162,8 +184,8 @@ public final class SupportMechanics implements Listener {
         }
     }
 
-    /** 2026-10-29 照 PoE2 Momentum：使用技能期間至少移動 2 公尺（3 格）才有加成。 */
-    static final double MOMENTUM_TRAVEL = tw.exilecore.core.Units.metres(2);
+    /** 使用技能期間至少移動 1 格才有衝勢的加成（2026-10-29 照站長：1 格；這次之前照 PoE2 的 2 公尺 = 3 格）。 */
+    static final double MOMENTUM_TRAVEL = 1.0;
 
     private static String key(final Player player, final String skillId) {
         return player.getUniqueId() + "/" + skillId;

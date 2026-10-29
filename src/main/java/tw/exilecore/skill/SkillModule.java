@@ -96,6 +96,7 @@ public final class SkillModule implements Module {
         treeLeftovers.registerConditions(plugin.players().conditions());
         leftoverTask = plugin.repeat("tree-leftovers", treeLeftovers::tick, TreeLeftovers.PERIOD, TreeLeftovers.PERIOD);
         plugin.combat().setMinions(created.minions()); // 召喚物走戰鬥模組的傷害管道
+        plugin.combat().skillDamage().setHitProxy(created.minions()::djinnHitter); // 2026-10-29 照 PoE2：巨靈的指令照巨靈的數值算
         created.deployables().sweep(); // 上次當機留下的圖騰、陷阱
         created.minions().sweep(); // 上次當機留下的召喚物
         service = created;
@@ -168,6 +169,7 @@ public final class SkillModule implements Module {
         }
         if (plugin.combat() != null) {
             plugin.combat().setMinions(null);
+            plugin.combat().skillDamage().setHitProxy(null);
         }
         if (plugin.currencies() != null) {
             plugin.currencies().setGemHooks(null, null);

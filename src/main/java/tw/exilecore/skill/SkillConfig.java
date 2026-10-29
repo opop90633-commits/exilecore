@@ -583,6 +583,7 @@ public final class SkillConfig {
         this.minionExtraLevelGrowth = 1.0 + minionExtraLevelDamage / 100.0;
         this.growth = parsedGrowth;
         this.skills = parsed;
+        SubSkills.bind(parsed); // 2026-10-29 照 PoE2：一顆寶石兩個技能（雷縛長棍的電震波）
         this.clips = parsedClips;
         this.levelModifiers = Map.copyOf(parsedLevelMods);
         this.lodges = Map.copyOf(parsedLodges);

@@ -1307,6 +1307,9 @@ public final class GemService {
         if (Blasphemy.hosts(host)) {
             return Blasphemy.problem(inner); // 2026-10-29 照 PoE2 Blasphemy：咒環只能放詛咒
         }
+        if (ChayulaHand.hosts(host)) {
+            return ChayulaHand.problem(inner); // 2026-10-29 照 PoE2 Hand of Chayula：夏烏拉之手放印記、詛咒
+        }
         final MetaSpec spec = config().meta(host.id());
         return spec == null ? "不是宿主寶石" : MetaGems.problem(spec, inner);
     }

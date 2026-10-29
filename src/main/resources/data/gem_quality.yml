@@ -282,6 +282,9 @@ inferno_blast:   # Flameblast
   - { stat: cast.speed, type: MORE, per: 1.0 }   # 施法速度（更多）
 iron_ward:   # Iron Ward（2026-10-28 照 PoE2：爆開的暈眩累積更多 (0—50)%；這次之前照通用規則）
   - { stat: stun.buildup, type: MORE, per: 2.5 }   # 帶到爆開上（StoredReleases）
+hand_of_chayula:   # Hand of Chayula（2026-10-29 照 PoE2：插槽詛咒 (0—20)% 增加持續時間、插槽印記 (0—10)% 增加效果）
+  - { stat: chayula.curse_duration, type: FLAT, per: 1.0 }   # 插槽詛咒增加 x% 持續時間（ChayulaHand.modifiers）
+  - { stat: chayula.mark_effect, type: FLAT, per: 0.5 }   # 插槽印記增加 x% 效果（ChayulaHand.modifiers）
 killing_palm:   # Killing Palm（2026-10-28 照 PoE2：撲殺時回復 (0—4)% 最大魔力（RePoE recover_%_maximum_mana_on_cull 200 = 每 1% 品質 0.2%）；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: mana.on_cull_over_time, type: FLAT, per: 0.2 }   # 撲殺時 4 秒內回復 x% 最大魔力（CombatListener；2026-10-28 照 PoE2 改成 4 秒內，這次之前 mana.on_cull 一次回）
 leap_slam:   # Leap Slam（2026-10-28 照 PoE2：對護甲完全破碎的敵人擊中 (0—20)% 更多傷害；這次之前照通用規則每 1% 增加 1% 傷害）
@@ -738,5 +741,7 @@ advanced:
     - { stat: charge.extra_random, type: FLAT, per: 1.0 }   # 多一顆隨機種類戰星的機率（ChargeService）
   charge_regulation:   # Charge Regulation：增益每顆戰星 (0—2)% 增加傷害（2026-10-28 照 PoE2：這次之前寫在 SkillService，算一般品質效果）
     - { stat: grant.damage.per_charge, type: FLAT, per: 0.1 }   # 增益：每顆戰星增加 x% 傷害
+  hand_of_chayula:   # Hand of Chayula：(0—50)% 減少魔力消耗（2026-10-29 照 PoE2）
+    - { stat: skill.cost, type: INCREASED, per: -2.5 }
   killing_palm:   # Killing Palm：撲殺時 4 秒內回復 (0—10)% 最大生命（2026-10-28 照 PoE2）
     - { stat: life.on_cull_over_time, type: FLAT, per: 0.5 }   # 撲殺時 4 秒內回復 x% 最大生命（CombatListener；2026-10-28 照 PoE2 改成 4 秒內，這次之前 life.on_cull 一次回）

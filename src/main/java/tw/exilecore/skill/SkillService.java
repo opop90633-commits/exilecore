@@ -586,6 +586,20 @@ public final class SkillService {
         procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), build, null);
     }
 
+    /** 2026-10-29：在某個位置觸發一個技能，指定等級並多加 extra（克拉里的分身照欺瞞的等級、吃連續使用的更多傷害）。不花魔力、沒有冷卻。 */
+    public void triggerSkill(final Player player, final String skillId, final Location at, final int level, final List<Modifier> extra) {
+        final SkillDefinition definition = config.skill(skillId);
+        if (definition == null || at.getWorld() == null || !player.isOnline()) {
+            return;
+        }
+        final PlayerState state = plugin.players().get(player);
+        SkillBuild build = SkillBuild.of(config, definition, level, state.level(), false, List.of(), state.weaponTags(), plugin.players().sheet(player));
+        if (!extra.isEmpty()) {
+            build = build.withProfile(build.profile().withLocal(extra));
+        }
+        procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), build, null);
+    }
+
     // ---- 2026-10-26：昇華天賦原本（尚未生效）的機制（tw.exilecore.ascendancy.AscendancyEffects）用的入口 ----
 
     /** 用 parent 這一下的傷害（含輔助，乘 share）在 at 放隱藏技能 subId（餘震）。subId 不存在就不做。 */
@@ -4203,6 +4217,23 @@ public final class SkillService {
 
     /** 面板上（或寶石裡）的一個技能在這個角色身上的數值。 */
     SkillBuild build(final PlayerState state, final StatSheet sheet, final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        // 2026-10-29 照 PoE2：巨靈的指令是巨靈放的——範圍、持續時間、冷卻回復、暴擊、傷害照巨靈（召喚物）的屬性表；
+        //   魔力消耗是你付的，照你的（施法動作的時間由呼叫的地方用你的屬性表算 intervalTicks）。巨靈沒叫出來照舊用你的
+        final StatSheet djinn = djinnSheet(state, definition);
+        if (djinn != null && djinn != sheet) {
+            final SkillBuild yours = buildCached(state, sheet, definition, entry);
+            return buildCached(state, djinn, definition, entry).withManaCost(yours.manaCost());
+        }
+        return buildCached(state, sheet, definition, entry);
+    }
+
+    /** 2026-10-29：巨靈指令用的屬性表（那位巨靈的；不是巨靈的指令、或巨靈沒叫出來回傳 null）。 */
+    StatSheet djinnSheet(final PlayerState state, final SkillDefinition definition) {
+        final String djinn = definition == null ? null : DjinnCommands.djinnFor(definition.id());
+        return djinn == null || state == null || minions == null ? null : minions.djinnSheet(state.uuid(), djinn);
+    }
+
+    private SkillBuild buildCached(final PlayerState state, final StatSheet sheet, final SkillDefinition definition, final SkillLoadout.Entry entry) {
         // 2026-10-23：同一張屬性表（沒改過）、同一個技能、同樣的寶石：直接用上次算好的（按住攻擊一秒要施放好幾次）
         if (SkillBuild.PREVIEW_LEVEL.get() != null) { // 2026-10-28：圖鑑的預覽等級不進快取（不然會被一般施放拿去用）
             return minionSpirit(state, sheet, StageAttacks.withShield(plugin, state, buildFresh(state, sheet, definition, entry)));
@@ -4338,6 +4369,50 @@ public final class SkillService {
     }
 
     /**
+     * 2026-10-29 照 PoE2 Hand of Chayula：夏烏拉之手孔裡能用的印記、詛咒（照孔的順序），已經套上印記效果增加／詛咒持續時間增加（含品質）；
+     * 輔助是夏烏拉之手其他孔的（不合的略過）。屬性需求不足、放錯的略過；面板上沒有夏烏拉之手或孔裡沒有回傳空的。
+     */
+    public List<SkillBuild> chayulaSocketed(final Player player) {
+        final PlayerState state = plugin.players().get(player);
+        final int position = state.skills().find(ChayulaHand.ID);
+        final SkillLoadout.Entry host = position < 0 ? null : state.skills().skill(position);
+        final SkillDefinition hostDefinition = config.skill(ChayulaHand.ID);
+        if (host == null || !ChayulaHand.hosts(hostDefinition) || host.spells().isEmpty()) {
+            return List.of();
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        final SkillBuild hostBuild = build(state, sheet, hostDefinition, host);
+        final double markQuality = hostBuild.qualityFlat(ChayulaHand.MARK_EFFECT);
+        final double curseQuality = hostBuild.qualityFlat(ChayulaHand.CURSE_DURATION);
+        final List<SkillBuild> list = new ArrayList<>();
+        for (final SkillLoadout.Entry inner : GemAttributes.usable(config, innerEntries(host), sheet)) {
+            final SkillDefinition definition = config.skill(inner.skillId());
+            if (definition != null && ChayulaHand.problem(definition) == null && definition.usableWith(state.weaponTags())) {
+                list.add(buildFresh(state, sheet, definition, inner, ChayulaHand.modifiers(definition, hostBuild.level(), markQuality, curseQuality)));
+            }
+        }
+        return list;
+    }
+
+    /** 2026-10-29 照 PoE2 Hand of Chayula：這一掌打了 target，孔裡的印記放在牠身上、詛咒套在牠的位置。 */
+    void chayulaTrigger(final Player player, final LivingEntity target) {
+        if (target == null || !target.isValid() || target.isDead() || executor == null) {
+            return;
+        }
+        for (final SkillBuild socketed : chayulaSocketed(player)) {
+            final SkillParams.Mark spec = socketed.params().mark();
+            if (spec == null) {
+                continue;
+            }
+            if (spec.curse()) {
+                executor.curseAt(player, socketed, target.getLocation(), spec);
+            } else if (plugin.combat() != null) {
+                executor.markOn(player, socketed, target, false);
+            }
+        }
+    }
+
+    /**
      * 2026-10-29 照 PoE2 Blasphemy：咒環開著時（AuraService 每 0.5 秒呼叫）孔裡每個詛咒對你身邊的敵人重套一次
      * （半徑 = 詛咒這一級的半徑 + 1 公尺，再乘詛咒的範圍倍率；延續 {@link Blasphemy#LINGER_TICKS} tick，離開範圍很快就消失）。
      */
@@ -4385,9 +4460,10 @@ public final class SkillService {
         final SkillDefinition hostDefinition = config.skill(entry.skillId());
         final boolean deadeye = DeadeyeMetas.hosts(hostDefinition); // 2026-10-28 照 PoE2：幻影的冷卻、持續時間；常駐增益；預告射擊的範圍
         final boolean hollow = HollowForm.hosts(hostDefinition); // 2026-10-28 照 PoE2 Hollow Form：恆星、倍星（用掉銳星時）
+        final boolean chayula = ChayulaHand.hosts(hostDefinition); // 2026-10-29 照 PoE2 Hand of Chayula：能輔助這一掌的都套在這一掌上
         for (final SupportDefinition support : supportsOf(entry)) {
             if (support.worksOnHost() || deadeye && DeadeyeMetas.appliesToHost(support, hostDefinition)
-                    || hollow && HollowForm.appliesToHost(support)) {
+                    || hollow && HollowForm.appliesToHost(support) || chayula && support.supports(hostDefinition)) {
                 list.add(support);
             }
         }
@@ -4651,6 +4727,8 @@ public final class SkillService {
             case tw.exilecore.stats.WarcryKeys.RADIUS_FLAT -> "增益半徑 +" + trimNumber(tw.exilecore.core.Units.metres(value)) + " 格"; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算
             case StatKeys.DEBUFF_DURATION -> "減益持續時間 +" + trimNumber(value) + " 秒";
             case StatKeys.META_ENERGY_GAIN -> "獲得的能量增加 " + trimNumber(value * 100) + "%";
+            case ChayulaHand.CURSE_DURATION -> "插槽詛咒的持續時間增加 " + trimNumber(value) + "%"; // 2026-10-29 照 PoE2 Hand of Chayula
+            case ChayulaHand.MARK_EFFECT -> "插槽印記的效果增加 " + trimNumber(value) + "%";
             case Blasphemy.CURSE_MAGNITUDE -> "插槽詛咒的效果增加 " + trimNumber(value) + "%"; // 2026-10-29 照 PoE2 Blasphemy（額外的品質效果）
             case StatKeys.DAMAGE -> modifier.tags().contains(tw.exilecore.stats.TreeConditions.VS_BROKEN_ARMOUR)
                     ? "對護甲完全破碎的敵人擊中更多 " + trimNumber(value * 100) + "% 傷害"
@@ -5214,6 +5292,32 @@ public final class SkillService {
         if (Blasphemy.hosts(definition)) {
             lines.addAll(blasphemySummary(player, definition, entry)); // 2026-10-29 照 PoE2 Blasphemy：咒環的詛咒、範圍與保留
         }
+        if (ChayulaHand.hosts(definition)) {
+            lines.addAll(chayulaSummary(player, definition, entry)); // 2026-10-29 照 PoE2 Hand of Chayula：孔裡的印記、詛咒
+        }
+        return lines;
+    }
+
+    /** 2026-10-29 照 PoE2 Hand of Chayula：說明上這一級的印記效果、詛咒持續時間，和孔裡放了什麼。 */
+    private List<String> chayulaSummary(final Player player, final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        final List<String> lines = new ArrayList<>();
+        final PlayerState state = plugin.players().get(player);
+        final SkillBuild host = build(state, plugin.players().sheet(player), definition, entry);
+        lines.add(String.format(Locale.ROOT, "<#c9a7ff>夏烏拉之手<gray>：插槽印記效果增加 <white>%s%%</white>、插槽詛咒持續時間增加 <white>%s%%</white>",
+                ModifierText.number(ChayulaHand.markEffect(host.level()) + host.qualityFlat(ChayulaHand.MARK_EFFECT)),
+                ModifierText.number(ChayulaHand.CURSE_DURATION_INCREASED + host.qualityFlat(ChayulaHand.CURSE_DURATION))));
+        final List<SkillBuild> socketed = state.skills().find(ChayulaHand.ID) < 0 ? List.of() : chayulaSocketed(player);
+        if (socketed.isEmpty()) {
+            lines.add("<red>孔裡要放" + ChayulaHand.wants() + "的技能寶石（/skills 點它，拿技能寶石點一個孔），沒放就只是打一掌");
+            return lines;
+        }
+        for (final SkillBuild inner : socketed) {
+            final SkillParams.Mark spec = inner.params().mark();
+            final boolean curse = spec != null && spec.curse();
+            lines.add(String.format(Locale.ROOT, "<#c9a7ff>%s<gray>：%s（%s <white>%s</white> 秒）",
+                    curse ? "套上詛咒" : "放上印記", ItemRenderer.escape(inner.definition().name()), curse ? "持續" : "持續",
+                    ModifierText.number(Math.round(inner.durationTicks(spec == null ? 0 : spec.duration(inner.level())) / 2.0) / 10.0)));
+        }
         return lines;
     }
 
@@ -5359,7 +5463,9 @@ public final class SkillService {
                         + ModifierText.number(HollowForm.LESS_ATTACK_SPEED) + "%" // 2026-10-28 照 PoE2 Hollow Form
                         : Blasphemy.hosts(host) ? "變成光環一直詛咒你身邊的敵人、詛咒效果更少 " // 2026-10-29 照 PoE2 Blasphemy
                         + ModifierText.number(Blasphemy.lessMagnitude(hostEntry == null ? 1 : hostEntry.level())) + "%、半徑 +"
-                        + ModifierText.number(tw.exilecore.core.Units.metres(Blasphemy.EXTRA_RADIUS_METRES)) + " 格" : "施放")
+                        + ModifierText.number(tw.exilecore.core.Units.metres(Blasphemy.EXTRA_RADIUS_METRES)) + " 格"
+                        : ChayulaHand.hosts(host) ? "每一掌打中的敵人觸發" // 2026-10-29 照 PoE2 Hand of Chayula
+                        : "施放")
                 + "、吃其他孔的輔助）：");
         for (final String line : describe(player, spell, inner)) {
             lines.add("<gray>　" + line);
@@ -5450,8 +5556,11 @@ public final class SkillService {
         final PlayerState state = plugin.players().get(player);
         // 2026-10-29：血術士的血棘（每 50 生命增加暴擊傷害加成）擊中時才算，技能說明也照滿血估一份（跟面板的每秒傷害一樣）；
         //   這次之前技能說明的暴擊傷害沒算到，比角色面板低
-        final StatSheet sheet = withLifeCrit(plugin.players().sheet(player));
+        final StatSheet actionSheet = withLifeCrit(plugin.players().sheet(player));
         final SkillDefinition definition = build.definition();
+        // 2026-10-29 照 PoE2：巨靈的指令照巨靈的屬性表算傷害、暴擊（施法動作的時間照你的）
+        final StatSheet djinnSheet = djinnSheet(state, definition);
+        final StatSheet sheet = djinnSheet != null ? djinnSheet : actionSheet;
         final List<String> lines = new ArrayList<>();
         lines.add(headlineChips(definition)); // 2026-10：標籤改成小方塊
         if (!definition.description().isBlank()) {
@@ -5481,7 +5590,7 @@ public final class SkillService {
             }
             if (definition.mechanic() != Mechanic.AURA) { // 2026-10：光環、精魂召喚綁著就開著，不用施放（沒有施法時間）
                 // 2026-10-23：寫實際的施法時間（吃施法速度、捷咒這些輔助）；以前只寫基礎的，看起來像沒變
-                final double actual = build.intervalTicks(sheet) / 20.0;
+                final double actual = build.intervalTicks(actionSheet) / 20.0;
                 lines.add(Math.abs(actual - definition.castTime()) < 0.005
                         ? String.format(Locale.ROOT, "<gray>施法時間：<white>%.2f 秒", definition.castTime())
                         : String.format(Locale.ROOT, "<gray>施法時間：<white>%.2f 秒 <dark_gray>（基礎 %.2f 秒）", actual, definition.castTime()));
@@ -5581,7 +5690,7 @@ public final class SkillService {
             final DeploySpec deploy = build.deploy();
             if (deploy != null && deploy.kind() == DeploySpec.Kind.TOTEM) {
                 // 2026-10-20（照 PoE）：圖騰攻擊吃你的攻速（法術圖騰吃施法速度）；英靈圖騰叫出的英靈照固定間隔，不吃
-                lines.add(String.format(Locale.ROOT, "<gray>放圖騰：每秒最多 <white>%.2f<gray> 次", 20.0 / build.intervalTicks(sheet)));
+                lines.add(String.format(Locale.ROOT, "<gray>放圖騰：每秒最多 <white>%.2f<gray> 次", 20.0 / build.intervalTicks(actionSheet)));
                 if (deploy.interval() > 0) {
                     final boolean linked = SkillExecutor.hasFlag(definition, StatKeys.FLAG_TOTEM_LINKED);
                     final SkillBuild ancestor = linked && linkedMace(state, sheet, definition) instanceof SkillBuild found ? found : null;
@@ -5599,10 +5708,10 @@ public final class SkillService {
                 }
             } else if (config.meta(definition.id()) != null && config.meta(definition.id()).totem()) {
                 // 2026-10-21：法術圖騰寶石的施放速度是「放圖騰」的速度（圖騰放插槽法術的速度寫在上面的主要寶石那幾行）
-                lines.add(String.format(Locale.ROOT, "<gray>放圖騰：每秒最多 <white>%.2f<gray> 次", 20.0 / build.intervalTicks(sheet)));
+                lines.add(String.format(Locale.ROOT, "<gray>放圖騰：每秒最多 <white>%.2f<gray> 次", 20.0 / build.intervalTicks(actionSheet)));
             } else {
                 // 2026-10-22：有冷卻的照冷卻算（以前只看施放時間：掠閃寫每秒 10 次、印記 4.98 次、千鈞砸 1.12 次，實際被冷卻卡住）
-                final double interval = build.intervalTicks(sheet);
+                final double interval = build.intervalTicks(actionSheet);
                 if (build.cooldownTicks() > interval && definition.mechanic() != Mechanic.AURA) {
                     lines.add(String.format(Locale.ROOT, "<gray>每秒 <white>%.2f<gray> 次 <dark_gray>（受冷卻限制；不算冷卻每秒 %.2f 次）",
                             hitsPerSecond(repeatGap(build, interval), build.cooldownTicks(), build.repeats()), 20.0 / interval));

@@ -640,7 +640,8 @@ public final class SkillMenu extends Menu {
         final String wants = linked ? "錘子的攻擊技能" : SocketedWarcry.hosts(definition) ? "人形戰吼"
                 : DeadeyeMetas.hosts(definition) ? DeadeyeMetas.wants(definition)
                 : HollowForm.hosts(definition) ? HollowForm.wants()
-                : Blasphemy.hosts(definition) ? Blasphemy.wants() : "法術"; // 2026-10-27：裂甲熊咆；2026-10-28：預告射擊、幻影銳眼、空無型態；2026-10-29：咒環
+                : Blasphemy.hosts(definition) ? Blasphemy.wants()
+                : ChayulaHand.hosts(definition) ? ChayulaHand.wants() : "法術"; // 2026-10-27：裂甲熊咆；2026-10-28：預告射擊、幻影銳眼、空無型態；2026-10-29：咒環
         final SkillLoadout.Entry inner = entry.spellAt(index); // 2026-10-26：其他孔也可能放著技能寶石
         final String socketName = "第 " + (index + 1) + " 孔";
         if (holding == Holding.SKILL_GEM && heldGem != null && heldGem.entry() != null) {
@@ -662,6 +663,7 @@ public final class SkillMenu extends Menu {
                                     : !gems.multiSpell(definition) ? "" : linked ? "（其他孔也能放：英靈照孔的順序輪流用）" // 2026-10-27
                                     : DeadeyeMetas.hosts(definition) || HollowForm.hosts(definition) ? "（其他孔也能放：照孔的順序輪流用）" // 2026-10-28
                                     : Blasphemy.hosts(definition) ? "（其他孔也能放：每個詛咒各自變成光環，各保留 60 精魂）" // 2026-10-29 照 PoE2 Blasphemy
+                                    : ChayulaHand.hosts(definition) ? "（其他孔也能放：每一掌全部觸發）" // 2026-10-29 照 PoE2 Hand of Chayula
                                     : isSpellTotem(definition) ? "（其他孔也能放：圖騰照孔的順序輪流放）" : "（其他孔也能放：全部一起觸發）"),
                     holding == Holding.SUPPORT_GEM ? "<red>這一孔不放輔助寶石" : "");
         }

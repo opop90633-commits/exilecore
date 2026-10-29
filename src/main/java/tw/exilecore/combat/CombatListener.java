@@ -367,7 +367,9 @@ public final class CombatListener implements Listener {
                 return;
             }
             attackerBase = attack.sheet();
-            skill = attack.profile();
+            // 2026-10-29 照 PoE2：召喚物替你放的指令（巨靈的指令，SkillDamage 的 proxy）：技能描述照指令的，屬性表照召喚物的
+            final SkillDamage.Context context = skills.contextFor(defender);
+            skill = context != null && context.attacker() == attacker ? context.profile() : attack.profile();
             credit = attack.owner();
         } else {
             final Optional<MonsterData> data = plugin.monsters().data(attacker);

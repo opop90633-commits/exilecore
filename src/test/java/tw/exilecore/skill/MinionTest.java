@@ -431,9 +431,9 @@ class MinionTest {
 
     @Test
     void minionLimitClampedToPerPlayerRoom() {
-        // 2026-10-27：單一技能上限（最多 50）夾在一個人的總上限（40）剩下的空間；這次之前超過會一直叫新的擠掉舊的
+        // 2026-10-27：單一技能上限夾在一個人的總上限剩下的空間（2026-10-29：兩個都是 60）；這次之前超過會一直叫新的擠掉舊的
         assertEquals(MinionService.MAX_PER_PLAYER, MinionService.clampToRoom(SkillBuild.MAX_MINIONS, 0));
-        assertEquals(15, MinionService.clampToRoom(20, 25), "其他技能占了 25 隻：只剩 15");
+        assertEquals(15, MinionService.clampToRoom(20, MinionService.MAX_PER_PLAYER - 15), "其他技能占滿到只剩 15");
         assertEquals(6, MinionService.clampToRoom(6, 10));
         assertEquals(0, MinionService.clampToRoom(5, MinionService.MAX_PER_PLAYER), "滿了就不再叫");
     }
@@ -442,9 +442,9 @@ class MinionTest {
     void companionRoomIsReservedInOrder() {
         // 2026-10-27：精魂召喚照開的順序分總上限：先開的預留它要的隻數，後開的不能補進先開的那種死掉留下的空位
         assertEquals(30, AuraService.companionLimit(30, 40, 0));
-        assertEquals(10, AuraService.companionLimit(20, 40, 30), "先開的要 30 隻：後開的最多 10 隻（就算現在有空位）");
+        assertEquals(10, AuraService.companionLimit(20, 40, MinionService.MAX_PER_PLAYER - 10), "先開的預留到只剩 10 隻：後開的最多 10 隻（就算現在有空位）");
         assertEquals(5, AuraService.companionLimit(20, 5, 30), "活著的別的召喚物還沒收掉：先照現在的空間");
-        assertEquals(0, AuraService.companionLimit(20, 40, 45));
+        assertEquals(0, AuraService.companionLimit(20, 40, MinionService.MAX_PER_PLAYER + 5));
     }
 
     @Test
