@@ -582,7 +582,7 @@ public final class MetaGems {
     int usableLevel(final PlayerState state, final SkillLoadout.Entry entry) {
         final int usable = entry.level() > SkillLoadout.MAX_LEVEL
                 && state.level() >= service.config().requiredLevel(SkillLoadout.MAX_LEVEL)
-                ? Math.min(entry.level(), SkillLoadout.GEM_CAP) : service.config().maxLevelFor(state.level());
+                ? Math.min(entry.level(), SkillLoadout.CORRUPT_CAP) : service.config().maxLevelFor(state.level()); // 2026-10-30：腐化的 Lv.22
         // 2026-10-27 照站長：屬性不夠時也照自動降到的等級算能量（跟 SkillBuild 一樣；這次之前只看角色等級）
         final int attributes = GemAttributes.usableLevel(service.config(), entry, state.sheet());
         return Math.max(1, Math.min(Math.min(entry.level(), usable), attributes));

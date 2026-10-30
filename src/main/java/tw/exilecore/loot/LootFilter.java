@@ -152,6 +152,43 @@ public final class LootFilter {
      */
     /** 2026-10-22：候選物的標籤裡有這個 = 永遠撿的傳奇（追逐級、頂級專屬；就算傳奇被勾成隱藏也一定撿）。 */
     public static final String ALWAYS_KEEP_TAG = "exilecore:keep_unique";
+    /** 2026-10-30：劫盜專屬基底（特殊項鍊）的記號：照 {@link HeistBaseRule} 過濾，不看其他規則。 */
+    public static final String HEIST_BASE_TAG = "exilecore:heist_base";
+
+    /** 2026-10-30 照站長：劫盜特殊基底的過濾（預設一定撿）。 */
+    public enum HeistBaseRule {
+        /** 一定撿（不管稀有度、等級差、同類同系、只撿的基底）。 */
+        ALWAYS("一定撿", "always"),
+        /** 照一般裝備的規則。 */
+        NORMAL("照一般規則", "normal"),
+        /** 一律不撿（換成金幣）。 */
+        HIDE("不撿", "hide");
+
+        private final String display;
+        private final String id;
+
+        HeistBaseRule(final String display, final String id) {
+            this.display = display;
+            this.id = id;
+        }
+
+        public String display() {
+            return display;
+        }
+
+        public String id() {
+            return id;
+        }
+
+        static HeistBaseRule parse(final String value) {
+            for (final HeistBaseRule rule : values()) {
+                if (rule.id.equalsIgnoreCase(value)) {
+                    return rule;
+                }
+            }
+            return ALWAYS;
+        }
+    }
 
     public record Candidate(DropTable.Kind kind, Rarity rarity, String currencyId, boolean flaskUpgrade, int itemLevel,
                             Set<String> tags, int mapTier, int gemLevel, int bestAffixRank, String baseId) {
@@ -259,6 +296,8 @@ public final class LootFilter {
     private boolean hideCharms;
     /** 2026-10：「保留好詞綴」也只撿跟我同類的（武器種類、防具系別）。 */
     private boolean keepAffixLikeMine;
+    /** 2026-10-30：劫盜特殊基底（預設一定撿）。 */
+    private HeistBaseRule heistBases = HeistBaseRule.ALWAYS;
     /**
      * 2026-10-26：「只撿的基底」也要符合「保留好詞綴」的門檻（兩個一起算）。開著且門檻不是「關」時，
      * 有挑基底的那幾類只撿「在清單內、而且有一條詞綴是 T1～T門檻」的普通、魔法、稀有裝備；這次之前兩條各算各的。
@@ -571,6 +610,9 @@ public final class LootFilter {
             // 2026-10：珠寶也能過濾（傳奇珠寶永遠撿）；被藏起來的珠寶有夠好的詞綴（保留好詞綴）照樣撿
             return hidesJewel(candidate.rarity()) && !keptByAffixTier(candidate);
         }
+        if (candidate.tags().contains(HEIST_BASE_TAG) && heistBases != HeistBaseRule.NORMAL) {
+            return heistBases == HeistBaseRule.HIDE; // 2026-10-30 照站長：劫盜特殊基底照自己那條規則（預設一定撿）
+        }
         if (candidate.rarity() == Rarity.UNIQUE) {
             // 2026-10-22：傳奇裝備也能勾成隱藏（換成金幣）；追逐級、頂級專屬例外，永遠撿。只看稀有度，其他進階規則不管傳奇
             return hiddenEquipment.contains(Rarity.UNIQUE) && !candidate.tags().contains(ALWAYS_KEEP_TAG);
@@ -762,6 +804,16 @@ public final class LootFilter {
         return keepBasesNeedAffix && rules.keepAffixTier() > 0 && !keepBases.isEmpty();
     }
 
+    public HeistBaseRule heistBases() {
+        return heistBases;
+    }
+
+    /** 2026-10-30：劫盜特殊基底換下一種（一定撿 → 照一般規則 → 不撿）；跟護符一樣另外記，換預設組合也留著。 */
+    public void cycleHeistBases(final boolean backwards) {
+        final HeistBaseRule[] all = HeistBaseRule.values();
+        heistBases = all[Math.floorMod(heistBases.ordinal() + (backwards ? -1 : 1), all.length)];
+    }
+
     /** 跟好詞綴也只撿同類一樣另外記：不會讓預設組合變成自訂，換預設組合也留著。 */
     public void toggleKeepBasesNeedAffix() {
         keepBasesNeedAffix = !keepBasesNeedAffix;
@@ -782,6 +834,7 @@ public final class LootFilter {
         hideCharms = from.hideCharms;
         keepAffixLikeMine = from.keepAffixLikeMine;
         keepBasesNeedAffix = from.keepBasesNeedAffix; // 2026-10-26
+        heistBases = from.heistBases; // 2026-10-30
         // 2026-10-22：傳奇隱藏也帶過去（預設組合不會藏傳奇，換組合不能把玩家自己勾的重設）
         if (from.hiddenEquipment.contains(Rarity.UNIQUE)) {
             hiddenEquipment.add(Rarity.UNIQUE);
@@ -850,6 +903,7 @@ public final class LootFilter {
         hideCharms = false;
         keepAffixLikeMine = false;
         keepBasesNeedAffix = false;
+        heistBases = HeistBaseRule.ALWAYS; // 2026-10-30
         hideSupportGems = false;
         flasks = FlaskRule.ALL;
         rules = Rules.NONE;
@@ -901,6 +955,7 @@ public final class LootFilter {
         final String kept = (keepBases.isEmpty() ? "" : ";kb=" + String.join(",", keepBases)) + (jewelRarity > 0 ? ";jr=" + jewelRarity : "")
                 + (timeLostRarity > 0 ? ";tr=" + timeLostRarity : "") + (timeLostHidden.isEmpty() ? "" : ";th=" + String.join(",", timeLostHidden))
                 + (dropSounds ? "" : ";ds=0") + (hideCharms ? ";ch=1" : "") + (keepAffixLikeMine ? ";kl=1" : "") + (keepBasesNeedAffix ? ";kn=1" : "")
+                + (heistBases == HeistBaseRule.ALWAYS ? "" : ";hb=" + heistBases.id())
                 + (!CUSTOM.equals(preset) && hiddenEquipment.contains(Rarity.UNIQUE) ? ";hu=1" : ""); // 預設組合只記代號：傳奇隱藏另外記
         if (!CUSTOM.equals(preset)) {
             return "p=" + preset + kept;
@@ -959,6 +1014,7 @@ public final class LootFilter {
                 case "ch" -> filter.hideCharms = "1".equals(value);
                 case "kl" -> filter.keepAffixLikeMine = "1".equals(value);
                 case "kn" -> filter.keepBasesNeedAffix = "1".equals(value); // 2026-10-26：舊存檔沒有這欄 = 關
+                case "hb" -> filter.heistBases = HeistBaseRule.parse(value); // 2026-10-30：舊存檔沒有這欄 = 一定撿
                 case "ug" -> filter.hideSupportGems = "1".equals(value);
                 case "fl" -> filter.flasks = FlaskRule.parse(value, FlaskRule.ALL);
                 case "wl" -> filter.rules = filter.rules.withWeaponsLikeMine("1".equals(value));
@@ -1025,6 +1081,7 @@ public final class LootFilter {
         copy.hideCharms = hideCharms;
         copy.keepAffixLikeMine = keepAffixLikeMine;
         copy.keepBasesNeedAffix = keepBasesNeedAffix;
+        copy.heistBases = heistBases; // 2026-10-30
         copy.hideSupportGems = hideSupportGems;
         copy.flasks = flasks;
         copy.rules = rules;
@@ -1045,14 +1102,14 @@ public final class LootFilter {
         }
         return hiddenEquipment.equals(that.hiddenEquipment) && hiddenCurrencies.equals(that.hiddenCurrencies)
                 && hideSkillGems == that.hideSkillGems && hideSupportGems == that.hideSupportGems && hideCharms == that.hideCharms && keepAffixLikeMine == that.keepAffixLikeMine
-                && keepBasesNeedAffix == that.keepBasesNeedAffix
+                && keepBasesNeedAffix == that.keepBasesNeedAffix && heistBases == that.heistBases
                 && flasks == that.flasks && rules.equals(that.rules) && preset.equals(that.preset) && keepBases.equals(that.keepBases) && jewelRarity == that.jewelRarity
                 && timeLostRarity == that.timeLostRarity && hiddenTimeLost.equals(that.hiddenTimeLost) && dropSounds == that.dropSounds;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(hiddenEquipment, hiddenCurrencies, hideSkillGems, hideSupportGems, hideCharms, keepAffixLikeMine, keepBasesNeedAffix, flasks, rules, preset, keepBases, jewelRarity, timeLostRarity, hiddenTimeLost, dropSounds);
+        return Objects.hash(hiddenEquipment, hiddenCurrencies, hideSkillGems, hideSupportGems, hideCharms, keepAffixLikeMine, keepBasesNeedAffix, heistBases, flasks, rules, preset, keepBases, jewelRarity, timeLostRarity, hiddenTimeLost, dropSounds);
     }
 
     @Override

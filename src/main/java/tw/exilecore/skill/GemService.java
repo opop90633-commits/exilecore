@@ -909,7 +909,7 @@ public final class GemService {
     /** 2026-10-28：這個角色等級用 Lv.gemLevel 的寶石實際能用幾級（跟 SkillBuild 一樣：Lv.21 跟 Lv.20 同樣門檻）。 */
     int usableByCharacter(final int characterLevel, final int gemLevel) {
         final int usable = gemLevel > SkillLoadout.MAX_LEVEL && characterLevel >= config().requiredLevel(SkillLoadout.MAX_LEVEL)
-                ? Math.min(gemLevel, SkillLoadout.GEM_CAP) : config().maxLevelFor(characterLevel);
+                ? Math.min(gemLevel, SkillLoadout.CORRUPT_CAP) : config().maxLevelFor(characterLevel); // 2026-10-30：腐化的 Lv.22
         return Math.max(1, Math.min(gemLevel, usable));
     }
 
@@ -1471,7 +1471,8 @@ public final class GemService {
         final String result;
         switch (random.nextInt(4)) {
             case 1 -> {
-                final int next = Math.max(1, Math.min(SkillLoadout.GEM_CAP, entry.level() + (random.nextBoolean() ? 1 : -1)));
+                // 2026-10-30 照站長：Lv.21 腐化可以變 Lv.22（這次之前最高 21，21 級 +1 等於沒變化）
+                final int next = Math.max(1, Math.min(SkillLoadout.CORRUPT_CAP, entry.level() + (random.nextBoolean() ? 1 : -1)));
                 updated = updated.withLevel(next);
                 result = next == entry.level() ? "沒有變化" : next > entry.level() ? "等級 +1（Lv." + next + "）" : "等級 −1（Lv." + next + "）";
             }

@@ -212,7 +212,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         // 2026-10：Lv.21 的寶石（劫盜大金庫、金庫之主）跟 Lv.20 一樣要 80 級，角色夠了就照 21 級算（以前一律被壓回 20）
         final int usable = gemLevel > tw.exilecore.character.SkillLoadout.MAX_LEVEL
                 && characterLevel >= config.requiredLevel(tw.exilecore.character.SkillLoadout.MAX_LEVEL)
-                ? Math.min(gemLevel, tw.exilecore.character.SkillLoadout.GEM_CAP) : config.maxLevelFor(characterLevel);
+                ? Math.min(gemLevel, tw.exilecore.character.SkillLoadout.CORRUPT_CAP) : config.maxLevelFor(characterLevel); // 2026-10-30：腐化的 Lv.22 也照 22 級
         final int levelCap = isDefault ? 1 : Math.max(1, Math.min(gemLevel, usable));
         // 2026-10-27 照站長：屬性不夠這個等級的需求時，自動降到屬性夠的最高等級（裝備、輔助加的等級不算需求，下面再加）
         final int baseLevel = isDefault ? 1 : GemAttributes.usableLevel(config, definition, levelCap,

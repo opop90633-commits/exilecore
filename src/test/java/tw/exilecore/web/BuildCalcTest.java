@@ -184,7 +184,7 @@ class BuildCalcTest {
         final int position = loadout.find(skill.id());
         assertTrue(position >= 0);
         final SkillLoadout.Entry entry = loadout.skill(position);
-        assertEquals(SkillLoadout.GEM_CAP, entry.level(), "等級夾在上限內");
+        assertEquals(SkillLoadout.CORRUPT_CAP, entry.level(), "等級夾在上限內（腐化的 Lv.22）");
         assertEquals(3, entry.sockets());
         assertEquals(List.of(support), entry.supportIds(), "不認得的輔助當成空孔");
         assertEquals(position, loadout.bound(SkillLoadout.KEY_LEFT));

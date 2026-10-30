@@ -236,8 +236,18 @@ public record SupportDefinition(String id, String name, String description, Stri
      * 可以的話掛上去、效果給召喚物；requires 也不符合召喚物的技能時照舊回傳技能自己的原因。這次之前只看技能自己的標籤。
      */
     public String refusal(final SkillDefinition skill) {
+        if (Unearth.ID.equals(skill.id()) && Unearth.BLOCKED.contains(id)) {
+            return "掘骸不能掛"; // 2026-10-30 照 PoE2
+        }
+        if (Unearth.ID.equals(skill.id()) && Unearth.PERSISTENT_ONLY.contains(id)) {
+            return "骨構體不是常駐的召喚物"; // 2026-10-30 照 PoE2（只能輔助常駐召喚物）
+        }
         final String own = ownRefusal(skill);
         if (own == null) {
+            return null;
+        }
+        // 2026-10-30 照 PoE2：掘骸也是召喚技能（CreatesMinion）：召喚物輔助掛得上，效果只給叫出來的骨構體（SkillBuild 算骨刺時略過）
+        if (unearthMinionSupport(skill)) {
             return null;
         }
         // 2026-10-29 照 PoE2：一顆寶石兩個技能（雷縛長棍＝增益＋電震波攻擊），能輔助其中一個就掛得上（SubSkills）
@@ -250,6 +260,12 @@ public record SupportDefinition(String id, String name, String description, Stri
         }
         final MinionTypes.Verdict viaMinions = MinionTypes.check(this, skill);
         return viaMinions.ok() ? null : viaMinions.matched() ? viaMinions.reason() : own;
+    }
+
+    /** 2026-10-30：掛在掘骸上的召喚物輔助（要 minion 的；只能輔助常駐召喚物的不算）。 */
+    boolean unearthMinionSupport(final SkillDefinition skill) {
+        return Unearth.ID.equals(skill.id()) && requires.contains(Tags.MINION) && !excludes.contains(Tags.MINION)
+                && !Unearth.PERSISTENT_ONLY.contains(id);
     }
 
     /** 只看技能自己的標籤能不能掛（{@link #refusal} 再補上召喚物的技能標籤）；可以回傳 null。 */

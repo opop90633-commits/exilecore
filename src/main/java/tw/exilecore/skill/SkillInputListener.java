@@ -71,6 +71,9 @@ final class SkillInputListener implements Listener {
         if (event.getAction() == Action.PHYSICAL) {
             return;
         }
+        if (tw.exilecore.life.LifeService.isDemolish(event.getItem())) {
+            return; // 2026-10-30：拿著拆筏錘點方塊是拆東西（LifeModule），不放技能
+        }
         final Player player = event.getPlayer();
         final boolean right = event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK;
         if (right && event.getItem() != null && plugin.currencies() != null && plugin.currencies().isCurrency(event.getItem())
@@ -209,6 +212,9 @@ final class SkillInputListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onSwing(final PlayerArmSwingEvent event) {
         final Player player = event.getPlayer();
+        if (tw.exilecore.life.LifeService.isDemolish(player.getInventory().getItemInMainHand())) {
+            return; // 2026-10-30：拿著拆筏錘揮手不放技能
+        }
         final SkillRuntime runtime = service.runtime(player);
         final long now = now();
         final boolean held = event.getHand() == EquipmentSlot.HAND && service.hold().active(player)

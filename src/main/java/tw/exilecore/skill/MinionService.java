@@ -884,6 +884,7 @@ public final class MinionService implements Listener, MinionHooks {
             if (at == null) {
                 at = player.getLocation();
             }
+            at = spread(owner, at); // 2026-10-30 照站長：召喚時不要疊在同一格（旁邊有自己的召喚物就往外找空格）
             if (spec.spectre() && !useCorpse) {
                 spectreKind = boundSpectre(player); // 2026-10-26 附魂術（精魂召喚）：叫附身的那種怪
             }
@@ -1151,6 +1152,42 @@ public final class MinionService implements Listener, MinionHooks {
     }
 
     /** 這個點往下找地面（最多 4 格）；找不到回傳 null。 */
+    /** 2026-10-30：離 at 最近、沒有自己的召喚物站著的地面（同一格、或水平 0.9 格內算有人）；找不到照原本的位置。 */
+    private Location spread(final UUID owner, final Location at) {
+        if (at.getWorld() == null || !occupied(owner, at)) {
+            return at;
+        }
+        for (int ring = 1; ring <= 3; ring++) {
+            final int steps = 8 * ring;
+            final double offset = plugin.random().nextDouble() * Math.PI * 2; // 每次從不同方向開始找，不會都往同一邊排
+            for (int i = 0; i < steps; i++) {
+                final double angle = offset + i * Math.PI * 2 / steps;
+                final Location probe = at.clone().add(Math.cos(angle) * ring, 0, Math.sin(angle) * ring);
+                final Location spot = ground(probe);
+                if (spot != null && Math.abs(spot.getY() - at.getY()) <= 1.5 && !occupied(owner, spot)) {
+                    spot.setYaw(at.getYaw());
+                    return spot;
+                }
+            }
+        }
+        return at;
+    }
+
+    private boolean occupied(final UUID owner, final Location at) {
+        for (final Minion minion : minions) {
+            if (!minion.owner.equals(owner) || !minion.mob.isValid() || !minion.mob.getWorld().equals(at.getWorld())) {
+                continue;
+            }
+            final Location there = minion.mob.getLocation();
+            final double dx = there.getX() - at.getX();
+            final double dz = there.getZ() - at.getZ();
+            if (dx * dx + dz * dz < 0.81 && Math.abs(there.getY() - at.getY()) < 2) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static Location ground(final Location point) {
         final World world = point.getWorld();
         final int x = point.getBlockX();

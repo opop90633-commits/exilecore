@@ -24,7 +24,7 @@ class SkillLoadoutTest {
         assertEquals(7, loadout.skill(fireball).level());
         assertEquals(2, loadout.size());
         assertEquals(-1, loadout.find("spark"));
-        assertEquals(SkillLoadout.GEM_CAP, new SkillLoadout.Entry("x", 99).level(), "等級夾在 1–21（Lv.21 的未切割寶石）");
+        assertEquals(SkillLoadout.CORRUPT_CAP, new SkillLoadout.Entry("x", 99).level(), "等級夾在 1–22（Lv.21 的未切割寶石，腐化可以再 +1）");
         assertEquals(1, new SkillLoadout.Entry("x", 0).level());
         assertThrows(IllegalArgumentException.class, () -> new SkillLoadout.Entry(" ", 1));
 

@@ -69,6 +69,8 @@ public final class LifeService {
     static final String KING = "life.king";
     static final String CHAMP = "life.champ";
     static final String HOOK_ITEM = "hook";
+    /** 2026-10-30 照站長：拆筏錘（點一下就把自己筏上的東西拆回背包）。 */
+    static final String DEMOLISH_ITEM = "demolish";
 
     /** 一個人的生活資料（帳號共用；記憶體裡改，定時寫進帳號進度）。 */
     static final class Profile {
@@ -1844,6 +1846,12 @@ public final class LifeService {
      * 2026-10-27：是不是星索鉤（帳號綁定、身上沒有就能再領）。公會倉庫、市集、丟在地上都擋掉——
      * 這次之前可以放進公會倉庫／上架／丟地上，再到選單領一把新的，一直複製。
      */
+    /** 2026-10-30：是不是拆筏錘（拿著拆東西的時候不放技能）。 */
+    public static boolean isDemolish(final ItemStack stack) {
+        return stack != null && !stack.isEmpty() && stack.hasItemMeta()
+                && DEMOLISH_ITEM.equals(stack.getItemMeta().getPersistentDataContainer().get(LIFE_ITEM_KEY, PersistentDataType.STRING));
+    }
+
     public static boolean isHook(final ItemStack stack) {
         return stack != null && !stack.isEmpty() && stack.hasItemMeta()
                 && HOOK_ITEM.equals(stack.getItemMeta().getPersistentDataContainer().get(LIFE_ITEM_KEY, PersistentDataType.STRING));
@@ -1883,6 +1891,60 @@ public final class LifeService {
             }
         }
         return false;
+    }
+
+    // ---- 2026-10-30 照站長：拆筏錘 ----
+
+    /** 拆筏錘：拿著對自己筏上的方塊按左鍵或右鍵，一下就拆回背包（跟手拆一樣的規則：上面有東西先拆上面的、筏心不能拆）。 */
+    ItemStack demolishItem() {
+        final ItemStack stack = new ItemStack(Material.IRON_PICKAXE);
+        stack.editMeta(meta -> {
+            meta.displayName(ItemRenderer.line("<" + config.color() + ">拆筏錘"));
+            final List<net.kyori.adventure.text.Component> lore = new ArrayList<>();
+            lore.add(ItemRenderer.line("<gray>在" + ItemRenderer.escape(config.name()) + "：對自己筏上（或共用的筏）的東西按左鍵或右鍵，一下就拆回背包"));
+            lore.add(ItemRenderer.line("<gray>規則跟手拆一樣：上面有東西要先拆上面的、筏心不能拆、攔截網裡的東西一起收"));
+            lore.add(ItemRenderer.line("<dark_gray>生活工具"));
+            lore.add(ItemRenderer.line("<dark_gray>綁定帳號：弄丟了可以在選單 /sea 再拿"));
+            meta.lore(lore);
+            meta.setUnbreakable(true);
+            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES, org.bukkit.inventory.ItemFlag.HIDE_UNBREAKABLE);
+            tw.exilecore.item.AccountBound.mark(meta);
+            meta.getPersistentDataContainer().set(itemKey, PersistentDataType.STRING, DEMOLISH_ITEM);
+        });
+        return stack;
+    }
+
+    /** 給拆筏錘（選單；背包、游標上沒有才給）。 */
+    String giveDemolish(final Player player) {
+        if (DEMOLISH_ITEM.equals(itemId(player.getItemOnCursor()))) {
+            return "你已經有拆筏錘了";
+        }
+        for (final ItemStack stack : player.getInventory().getContents()) {
+            if (DEMOLISH_ITEM.equals(itemId(stack))) {
+                return "你已經有拆筏錘了（在背包裡）";
+            }
+        }
+        giveItem(player, demolishItem());
+        return null;
+    }
+
+    /** 用拆筏錘拆一格；拆掉回傳 null，不行回傳原因。 */
+    String demolish(final Player player, final Block block) {
+        if (block == null || block.getType().isAir()) {
+            return null;
+        }
+        if (!raftArea(block.getLocation())) {
+            return "拆筏錘只能拆海上木筏的東西";
+        }
+        final String problem = breakBlock(player, block);
+        if (problem != null) {
+            return problem;
+        }
+        final Location at = block.getLocation().add(0.5, 0.5, 0.5);
+        block.getWorld().spawnParticle(org.bukkit.Particle.BLOCK, at, 16, 0.3, 0.3, 0.3, 0, block.getBlockData());
+        block.getWorld().playSound(at, block.getBlockData().getSoundGroup().getBreakSound(), 1f, 1f);
+        block.setType(Material.AIR, false);
+        return null;
     }
 
     /** 給星索鉤（選單；身上沒有才給）。 */

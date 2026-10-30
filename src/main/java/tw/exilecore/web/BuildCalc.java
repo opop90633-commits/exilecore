@@ -883,7 +883,7 @@ public final class BuildCalc {
             o.addProperty("summon", definition.summon() != null);
             o.addProperty("damage", definition.dealsDamage() || definition.summon() != null);
             final JsonArray tags = new JsonArray();
-            definition.tags().stream().sorted().forEach(tags::add);
+            definition.displayTags().stream().sorted().forEach(tags::add); // 2026-10-30：照原作寶石標籤顯示（只拿來搜尋）
             o.add("tags", tags);
             skills.add(o);
         }
@@ -899,7 +899,7 @@ public final class BuildCalc {
             supports.add(o);
         }
         root.add("supports", supports);
-        root.addProperty("maxLevel", SkillLoadout.GEM_CAP);
+        root.addProperty("maxLevel", SkillLoadout.CORRUPT_CAP); // 2026-10-30：腐化可以到 Lv.22
         root.addProperty("maxSockets", SkillLoadout.MAX_SOCKETS);
         root.addProperty("maxSkills", SkillLoadout.MAX_SKILLS);
         root.addProperty("oncePerCharacter", config.supportOncePerCharacter());

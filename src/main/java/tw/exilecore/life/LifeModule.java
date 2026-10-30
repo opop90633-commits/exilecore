@@ -221,6 +221,18 @@ public final class LifeModule implements Module, Listener {
             return;
         }
         final Action action = event.getAction();
+        if (LifeService.DEMOLISH_ITEM.equals(service.itemId(event.getItem()))) {
+            // 2026-10-30 照站長：拆筏錘：左鍵、右鍵點方塊一下就拆
+            event.setCancelled(true);
+            event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+            if ((action == Action.LEFT_CLICK_BLOCK || action == Action.RIGHT_CLICK_BLOCK) && event.getClickedBlock() != null) {
+                final String problem = service.demolish(event.getPlayer(), event.getClickedBlock());
+                if (problem != null) {
+                    tw.exilecore.gui.ActionBar.send(event.getPlayer(), plugin.text().parse("<red>" + ItemRenderer.escape(problem)));
+                }
+            }
+            return;
+        }
         if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) {
             return;
         }

@@ -215,8 +215,8 @@ public final class CodexValues {
                 s.add("grantedBy", strings(grantedBy.get(skill.id())));
             }
             final JsonArray tags = new JsonArray();
-            if (skill.tags() != null) {
-                skill.tags().stream().sorted().forEach(tag -> {
+            if (skill.displayTags() != null) {
+                skill.displayTags().stream().sorted().forEach(tag -> { // 2026-10-30：照原作寶石標籤顯示
                     tags.add(tag);
                     tagNames.addProperty(tag, ModifierText.tagName(tag));
                 });

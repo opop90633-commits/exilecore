@@ -20,6 +20,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -416,5 +417,24 @@ class SupportAndGemTest {
             assertFalse(skill.engravable(), skill.id());
             assertFalse(config.engravable(20).contains(skill), skill.id() + "：未切割技能寶石雕不出來");
         }
+    }
+
+    /** 2026-10-30 照 PoE2：掘骸也吃召喚物輔助（只給骨構體），原作不能輔助掘骸的 8 顆、只給常駐召喚物的 3 顆掛不上。 */
+    @Test
+    void unearthTakesMinionSupportsLikePoe2() {
+        final SkillDefinition unearth = config.skill("bone_spikes");
+        for (final String ok : List.of("minion_damage", "meat_shield", "muster", "controlled_destruction")) {
+            assertNull(config.support(ok).refusal(unearth), ok);
+        }
+        for (final String no : List.of("hinder", "perpetual_charge", "intense_agony", "persistent_ground", "static_shocks",
+                "charge_profusion", "heightened_charges", "empowered_sparks", "essence_harvest", "deathmarch", "giant_minions")) {
+            assertNotNull(config.support(no).refusal(unearth), no);
+        }
+        final SkillBuild build = SkillBuild.of(config, unearth, 20, 90, false, List.of(config.support("minion_damage")), Set.of(),
+                new tw.exilecore.stats.StatSheet());
+        assertTrue(build.profile().local().stream().filter(m -> m.stat().equals(tw.exilecore.stats.StatKeys.DAMAGE))
+                .allMatch(m -> m.tags().contains(tw.exilecore.stats.Tags.MINION)), "骨刺吃不到召喚物輔助的傷害");
+        assertEquals(List.of("minion_damage"), SkillBuild.of(config, config.skill("unearth_construct"), 20, 90, false, build.supports(), Set.of(),
+                new tw.exilecore.stats.StatSheet()).supports().stream().map(SupportDefinition::id).toList(), "骨構體吃得到");
     }
 }

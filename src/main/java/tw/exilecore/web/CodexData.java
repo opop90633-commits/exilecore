@@ -49,8 +49,8 @@ public final class CodexData {
         }
         s.add("weapons", weapons);
         final JsonArray tags = new JsonArray();
-        if (skill.tags() != null) {
-            skill.tags().stream().sorted().forEach(tag -> {
+        if (skill.displayTags() != null) {
+            skill.displayTags().stream().sorted().forEach(tag -> { // 2026-10-30：照原作寶石標籤顯示（tags_add／tags_remove）
                 tags.add(tag);
                 if (!tagNames.has(tag)) {
                     tagNames.addProperty(tag, ModifierText.tagName(tag));

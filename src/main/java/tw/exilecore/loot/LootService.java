@@ -337,6 +337,12 @@ public final class LootService {
      * 以及頂級專屬（巔峰、極境、覺醒者、世界 Boss 這些：掉落等級 {@value #PROTECTED_UNIQUE_LEVEL} 以上、賭博與機會石都拿不到的）。
      */
     private java.util.Set<String> withChase(final java.util.Set<String> tags, final tw.exilecore.item.ItemData item) {
+        if (item.base() != null && plugin.items().repository().heistOnlyBase(item.base())) {
+            // 2026-10-30 照站長：劫盜專屬基底（特殊項鍊）另外照「劫盜特殊基底」那條過濾規則（預設一定撿）
+            final java.util.Set<String> marked = new java.util.HashSet<>(tags);
+            marked.add(LootFilter.HEIST_BASE_TAG);
+            return marked;
+        }
         if (item.unique() == null) {
             return tags;
         }

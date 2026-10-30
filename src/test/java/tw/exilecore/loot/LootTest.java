@@ -537,4 +537,23 @@ class LootTest {
         assertEquals(999_999, big.amount("zenith_orb"), "讀進來不裁掉");
         assertEquals(0, big.deposit("zenith_orb", 1), "已經超過上限就不再收");
     }
+
+    /** 2026-10-30 照站長：劫盜特殊基底預設一定撿（稀有度藏起來也撿），可以改成照一般規則或不撿，存檔讀得回來。 */
+    @Test
+    void heistBasesAreKeptByDefault() {
+        final LootFilter filter = LootFilter.decode("p=custom;eq=normal,magic,rare", config);
+        final LootFilter.Candidate heist = new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, Rarity.RARE, null, false, 1,
+                Set.of("amulet", LootFilter.HEIST_BASE_TAG), 0, 0, 0, "jamulet_special");
+        final LootFilter.Candidate plain = new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, Rarity.RARE, null, false, 1,
+                Set.of("amulet"), 0, 0, 0, "jamulet_01");
+        assertTrue(filter.hides(plain, LootFilter.Viewer.NONE));
+        assertFalse(filter.hides(heist, LootFilter.Viewer.NONE), "預設一定撿");
+        filter.cycleHeistBases(false);
+        assertEquals(LootFilter.HeistBaseRule.NORMAL, filter.heistBases());
+        assertTrue(filter.hides(heist, LootFilter.Viewer.NONE), "照一般規則：稀有被藏");
+        filter.cycleHeistBases(false);
+        assertEquals(LootFilter.HeistBaseRule.HIDE, filter.heistBases());
+        assertEquals(LootFilter.HeistBaseRule.HIDE, LootFilter.decode(filter.encode(), config).heistBases(), "存檔讀得回來");
+        assertEquals(LootFilter.HeistBaseRule.ALWAYS, LootFilter.decode("p=standard", config).heistBases(), "舊存檔一定撿");
+    }
 }

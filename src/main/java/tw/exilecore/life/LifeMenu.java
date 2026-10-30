@@ -32,6 +32,8 @@ public final class LifeMenu extends Menu {
     private static final int SLOT_DEX = 11;
     private static final int SLOT_ORDERS = 13;
     private static final int SLOT_BOARD = 15;
+    /** 2026-10-30 照站長：拆筏錘。 */
+    private static final int SLOT_DEMOLISH = 26;
     private static final int RECIPE_SLOTS = 18;
 
     private final LifeService service;
@@ -103,6 +105,8 @@ public final class LifeMenu extends Menu {
         set(SLOT_MATERIALS, icon(Material.BARREL, "<#f5b942>材料", mats));
 
         set(SLOT_HOOK, icon(Material.FISHING_ROD, "<" + color() + ">拿一把星索鉤", "<gray>弄丟了可以再拿（身上有就不給）", "", "<yellow>左鍵：拿"));
+        set(SLOT_DEMOLISH, icon(Material.IRON_PICKAXE, "<" + color() + ">拿一把拆筏錘", "<gray>對筏上的東西按左鍵或右鍵，一下就拆回背包",
+                "<gray>弄丟了可以再拿（背包裡有就不給）", "", "<yellow>左鍵：拿")); // 2026-10-30
 
         set(SLOT_GUIDE, icon(Material.WRITABLE_BOOK, "<#f5b942>怎麼玩",
                 "<gray>1. 拿著星索鉤，對準從東邊漂過來的東西按右鍵",
@@ -281,6 +285,11 @@ public final class LifeMenu extends Menu {
                 player.sendMessage(plugin.text().prefixed("<gray>" + ItemRenderer.escape(problem)));
             }
             redraw();
+            return;
+        }
+        if (slot == SLOT_DEMOLISH) {
+            final String problem = service.giveDemolish(player);
+            player.sendMessage(plugin.text().prefixed(problem == null ? "<green>拿到拆筏錘了" : "<gray>" + ItemRenderer.escape(problem)));
             return;
         }
         if (slot == SLOT_HOOK) {

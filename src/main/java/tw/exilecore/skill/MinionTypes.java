@@ -242,7 +242,11 @@ public final class MinionTypes {
 
     /** 這顆輔助在這個技能上只靠召喚物的技能標籤掛上去（效果只給召喚物；說明列輔助時標「召喚物」）。 */
     public static boolean throughMinions(final SupportDefinition support, final SkillDefinition skill) {
-        return !of(skill).isEmpty() && support.ownRefusal(skill) != null && check(support, skill).ok();
+        if (support.ownRefusal(skill) == null) {
+            return false;
+        }
+        // 2026-10-30 照 PoE2：掘骸上的召喚物輔助（要 minion 的）也是只給骨構體
+        return support.unearthMinionSupport(skill) || !of(skill).isEmpty() && check(support, skill).ok();
     }
 
     /**

@@ -30,6 +30,8 @@ public final class SkillLoadout {
     public static final int MAX_LEVEL = 20;
     /** 2026-10：技能寶石最高 Lv.21（只有 Lv.21 的未切割技能寶石做得到：劫盜大金庫、金庫之主掉）。 */
     public static final int GEM_CAP = 21;
+    /** 2026-10-30 照站長（PoE2：腐化可以超過上限）：Lv.21 的寶石腐化可以變 Lv.22（只有腐化做得到）。 */
+    public static final int CORRUPT_CAP = GEM_CAP + 1;
 
     public static final int KEY_LEFT = 0;
     public static final int KEY_RIGHT = 1;
@@ -137,7 +139,7 @@ public final class SkillLoadout {
             if (skillId == null || skillId.isBlank()) {
                 throw new IllegalArgumentException("技能代號不能是空的");
             }
-            level = Math.max(1, Math.min(GEM_CAP, level));
+            level = Math.max(1, Math.min(CORRUPT_CAP, level)); // 2026-10-30：腐化的可以到 Lv.22
             legacySockets = granted && legacySockets;
             if (granted && !legacySockets) {
                 // 2026-10-28 照 PoE2：賦予的技能的孔數一律照等級（換等級時多出來的輔助由 syncGranted 先拿出來還給玩家）

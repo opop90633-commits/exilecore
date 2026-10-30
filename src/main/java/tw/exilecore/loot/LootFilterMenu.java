@@ -73,6 +73,8 @@ public final class LootFilterMenu extends Menu {
     private static final int SLOT_KEEP_BASES = slot(4, 1);
     /** 只撿的基底也要符合好詞綴門檻（2026-10-26：兩條一起算）。 */
     private static final int SLOT_KEEP_BASES_AFFIX = slot(4, 2);
+    /** 2026-10-30 照站長：劫盜特殊基底（預設一定撿）。 */
+    private static final int SLOT_HEIST_BASES = slot(4, 3);
     // ---- 寶石與藥劑 ----
     private static final int SLOT_SKILL_GEMS = slot(1, 1);
     private static final int SLOT_SKILL_GEM_LEVEL = slot(1, 2);
@@ -236,6 +238,9 @@ public final class LootFilterMenu extends Menu {
         }
         if (!rarities.isEmpty()) {
             lines.add(String.join("、", rarities) + "裝備");
+        }
+        if (filter.heistBases() == LootFilter.HeistBaseRule.HIDE) {
+            lines.add("劫盜特殊基底（特殊項鍊）"); // 2026-10-30
         }
         if (!filter.keepBases().isEmpty()) {
             lines.add("只撿 " + filter.keepBases().size() + " 種基底：有挑的那幾類裡，其他基底的普通、魔法、稀有裝備"); // 2026-10：以前總覽沒列
@@ -478,6 +483,20 @@ public final class LootFilterMenu extends Menu {
                         "<dark_gray>清單外的照樣不撿；沒挑基底的類別照原本的規則；未鑑定的也算",
                         keep == 0 ? "<red>「保留好詞綴的裝備」是關：先在上面設定詞綴門檻，這條才會生效" : "<dark_gray>目前門檻：T" + keep + " 以上"),
                 List.of("<yellow>左鍵：" + (needAffix ? "關" : "開"))));
+        // 2026-10-30 照站長：劫盜特殊基底（只在劫盜掉的特殊項鍊）預設一定撿，可以改成照一般規則或不撿
+        final LootFilter.HeistBaseRule heist = filter.heistBases();
+        final List<String> heistChoices = new ArrayList<>();
+        for (final LootFilter.HeistBaseRule rule : LootFilter.HeistBaseRule.values()) {
+            heistChoices.add((rule == heist ? "<green>▶ " : "<dark_gray>　 ") + rule.display());
+        }
+        heistChoices.add("");
+        heistChoices.add("<yellow>左鍵：下一種　右鍵：上一種");
+        set(SLOT_HEIST_BASES, option(Material.ECHO_SHARD, "劫盜特殊基底", heist.display(), heist != LootFilter.HeistBaseRule.HIDE,
+                List.of("<gray>只在劫盜掉的特殊基底（特殊項鍊）",
+                        "<white>一定撿</white><gray>：不管稀有度、等級差、同類同系、只撿的基底，一律撿（預設）",
+                        "<white>照一般規則</white><gray>：跟其他裝備一樣過濾",
+                        "<white>不撿</white><gray>：一律不撿（換成金幣）"),
+                heistChoices));
     }
 
     // ---- 寶石與藥劑 ----
@@ -826,6 +845,8 @@ public final class LootFilterMenu extends Menu {
                     if (next.keepBasesNeedAffix() && next.rules().keepAffixTier() == 0) {
                         tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>先在「保留好詞綴的裝備」設定詞綴門檻（例如 T1），這條才會生效"));
                     }
+                } else if (slot == SLOT_HEIST_BASES) {
+                    next.cycleHeistBases(backwards); // 2026-10-30
                 } else if (slot == SLOT_MAPS) {
                     next.cycleMapRarity(backwards);
                 } else if (slot == SLOT_JEWELS) {
