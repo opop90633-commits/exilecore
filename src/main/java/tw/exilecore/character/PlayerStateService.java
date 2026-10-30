@@ -786,6 +786,17 @@ public final class PlayerStateService {
      */
     /** 2026-10-27 照 PoE2：每把矛都賦予的擲矛（skills.yml 的代號）。 */
     static final String SPEAR_THROW = "spear_throw";
+    /** 2026-10-30 照 PoE2：盾牌賦予的架盾、圓盾賦予的招架（skills.yml 的代號）。 */
+    static final String RAISE_SHIELD = "raise_guard";
+    static final String PARRY = "parry";
+
+    /** 2026-10-30 照 PoE2：這面副手賦予的技能：法器沒有、圓盾（只有敏捷的盾）招架、其他盾牌架盾；不是盾回傳 null。 */
+    static String shieldSkill(final tw.exilecore.item.ItemBase base) {
+        if (base == null || !base.isShield() || base.tags().contains("focus")) {
+            return null;
+        }
+        return base.tags().contains("dex_only") ? PARRY : RAISE_SHIELD;
+    }
 
     private Map<String, Integer> grantedSkills(final List<EquippedItem> active) {
         if (plugin.items() == null || plugin.skills() == null) {
@@ -798,6 +809,12 @@ public final class PlayerStateService {
                 if (plugin.skills().config().skill(own) != null) {
                     granted.merge(own, plugin.skills().config().maxLevelFor(Math.max(1, item.data().ilvl())), Math::max);
                 }
+            }
+            // 2026-10-30 照 PoE2（RePoE base_items skills_granted）：盾牌賦予架盾（Raise Shield）、圓盾（敏捷盾）賦予招架（Parry），法器不賦予；
+            // 等級照盾的物品等級。這次之前架盾、招架是要雕的技能寶石
+            final String shieldSkill = shieldSkill(item.base());
+            if (shieldSkill != null && plugin.skills().config().skill(shieldSkill) != null) {
+                granted.merge(shieldSkill, plugin.skills().config().maxLevelFor(Math.max(1, item.data().ilvl())), Math::max);
             }
             if (!item.base().isWeapon() && !item.base().tags().contains("sceptre")) {
                 continue;

@@ -1117,6 +1117,20 @@ final class MapEvents implements Listener {
         return MapRewards.pickCurrency(plugin, operation, level, random);
     }
 
+    /** 2026-10-30 照站長：裂隙怪掉催化劑的機率 ×（1 + 物品數量）×（1 + 物品稀有度）（自己的＋全服＋主題＋地圖的），最多 100%。 */
+    private double catalystChance(final Player killer, final MapInstance instance) {
+        tw.exilecore.loot.LootBonus.Bonus bonus = tw.exilecore.loot.LootBonus.of(plugin, killer);
+        if (instance != null) {
+            bonus = bonus.plus(instance.stats().quantity() / 100.0, instance.stats().rarity() / 100.0);
+        }
+        return Math.min(1, bonus.rare(bonus.more(config.catalystChance())));
+    }
+
+    /** 2026-10-30 照站長：流寇的稀有裝備每件有（物品稀有度 × 10%，最多 50%）的機率換成一件共通傳奇。 */
+    static double exileUniqueChance(final double rarity) {
+        return Math.max(0, Math.min(0.5, rarity * 0.1));
+    }
+
     /** 流寇死了：殺的人（與有份的隊友）各多拿幾件稀有裝備與星籤；裂隙的怪死了有機率掉催化劑。 */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(final EntityDeathEvent event) {
@@ -1127,7 +1141,7 @@ final class MapEvents implements Listener {
         if (found == null) {
             // 裂隙的怪：催化劑
             if (killer != null && entity.getPersistentDataContainer().has(quantityKey)
-                    && random.nextDouble() < tw.exilecore.loot.LootBonus.of(plugin, killer).more(config.catalystChance())) { // 2026-10：吃物品數量
+                    && random.nextDouble() < catalystChance(killer, service.instanceOf(entity))) { // 2026-10：吃物品數量；2026-10-30 照站長：也吃物品稀有度
                 final MapInstance instance = service.instanceOf(entity);
                 final int level = instance == null ? plugin.monsters().data(entity).map(MonsterData::level).orElse(1) : instance.level();
                 final tw.exilecore.currency.CurrencyType catalyst = pickCurrency(tw.exilecore.currency.CurrencyOperation.CATALYST, level, random);
@@ -1152,9 +1166,19 @@ final class MapEvents implements Listener {
             final int extra = found.instance.atlas().count("atlas.exile.drops"); // 星圖天賦：多掉幾件
             final tw.exilecore.item.LootBias bias = plugin.characters().lootBias(player); // 2026-10：照職業、照分類抽基底
             // 2026-10：件數、星籤數吃這個人的物品數量（自己的＋全服＋主題＋地圖的）
-            final tw.exilecore.loot.LootBonus.Bonus bonus = tw.exilecore.loot.LootBonus.of(plugin, player).plus(found.instance.stats().quantity() / 100.0, 0);
+            final tw.exilecore.loot.LootBonus.Bonus bonus = tw.exilecore.loot.LootBonus.of(plugin, player)
+                    .plus(found.instance.stats().quantity() / 100.0, found.instance.stats().rarity() / 100.0);
             final int pieces = bonus.amount(config.exileDrops() + extra, random);
+            final double uniqueChance = exileUniqueChance(bonus.rarity()); // 2026-10-30 照站長：流寇也吃物品稀有度
             for (int i = 0; i < pieces && anyBase; i++) {
+                if (random.nextDouble() < uniqueChance) {
+                    final tw.exilecore.item.UniqueItem unique = tw.exilecore.item.ItemGenerator.pickUnique(
+                            plugin.items().repository().uniquesFor("map_boss", level), random);
+                    if (unique != null) {
+                        rolled.add(DropTable.Drop.equipment(plugin.items().generator().generateUnique(unique, level, random)));
+                        continue;
+                    }
+                }
                 final ItemBase base = plugin.items().repository().pickSold(level, random, bias);
                 if (base == null) {
                     break;

@@ -192,7 +192,9 @@ final class AscPaths implements Listener {
     }
 
     private double level(final Player player, final String skillId, final String stat) {
-        return plugin.skills() == null ? 0 : plugin.skills().levelValue(skillId, stat, plugin.skills().grantedLevel(player));
+        // 2026-10-30 照 PoE2：昇華技能的品質（gem_quality.yml）加在照等級的數值上；只有品質才有的屬性（等級表沒有）就是品質給的值
+        return plugin.skills() == null ? 0 : plugin.skills().levelValue(skillId, stat, plugin.skills().grantedLevel(player))
+                + plugin.skills().ascQualityFlat(player, skillId, stat);
     }
 
     void forget(final UUID player) {
@@ -343,7 +345,14 @@ final class AscPaths implements Listener {
                 final Own own = own(player);
                 own.leap = n;
                 own.leapTick = now();
-                plugin.skills().triggerSkill(player, "asc_vivid_stag", land);
+                // 2026-10-30 照 PoE2 Vivid Stampede 的品質：震波半徑 +(0—0.5) 公尺（2 格的震波，範圍照半徑平方換算）
+                final double extra = tw.exilecore.core.Units.metres(Math.max(0, level(player, "vivid_stampede", "asc.stag_radius")));
+                if (extra > 0) {
+                    plugin.skills().triggerSkill(player, "asc_vivid_stag", land, plugin.skills().grantedLevel(player),
+                            List.of(Modifier.increased(StatKeys.SKILL_AREA, Math.pow((2 + extra) / 2, 2) - 1, "靈現奔竄品質")));
+                } else {
+                    plugin.skills().triggerSkill(player, "asc_vivid_stag", land);
+                }
                 if (n >= STAG_LEAPS) {
                     plugin.skills().triggerSkill(player, "asc_stag_ground", land); // 跳完全程：感電地面
                 }
@@ -408,7 +417,16 @@ final class AscPaths implements Listener {
             own.resonanceNext = now() + cooldownTicks(player, resonanceTicks(player));
         }
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_BELL_RESONATE, 0.6f, 1.6f);
-        effects.later(1, () -> plugin.skills().triggerSkill(player, "asc_hollow_ring", player.getLocation()));
+        // 2026-10-30 照 PoE2 Hollow Resonance 的品質：更多 (0—30)% 暈眩累積
+        final double stun = Math.max(0, level(player, "hollow_resonance", "asc.resonance_stun"));
+        effects.later(1, () -> {
+            if (stun > 0) {
+                plugin.skills().triggerSkill(player, "asc_hollow_ring", player.getLocation(), plugin.skills().grantedLevel(player),
+                        List.of(Modifier.more(StatKeys.STUN_BUILDUP, stun / 100.0, "空無共鳴品質")));
+            } else {
+                plugin.skills().triggerSkill(player, "asc_hollow_ring", player.getLocation());
+            }
+        });
     }
 
     /** 空無共鳴回一次要幾 tick（技能的冷卻 0.5 秒）。 */
@@ -1051,7 +1069,9 @@ final class AscPaths implements Listener {
         }
         own.bellNext = now + interval;
         final double angle = plugin.random().nextDouble() * Math.PI * 2;
-        final double r = 1.2 + plugin.random().nextDouble() * (BELL_SPAWN - 1.2);
+        // 2026-10-30 照 PoE2 Hollow Focus 的品質：鐘出現的半徑 -(0—0.4) 公尺（離你近一點）
+        final double spawn = Math.max(1.2, BELL_SPAWN + tw.exilecore.core.Units.metres(Math.min(0, level(player, "hollow_focus", "asc.bell_spawn"))));
+        final double r = 1.2 + plugin.random().nextDouble() * (spawn - 1.2);
         final Location at = player.getLocation().add(Math.cos(angle) * r, 1.3, Math.sin(angle) * r);
         final ItemDisplay display = at.getWorld().spawn(at, ItemDisplay.class, d -> {
             d.setItemStack(new ItemStack(Material.BELL));

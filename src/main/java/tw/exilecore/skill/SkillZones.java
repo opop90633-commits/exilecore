@@ -674,7 +674,9 @@ final class SkillZones implements SkillTargets.Strikeable {
         final double durationScale = Math.max(0.1, effective.apply(tw.exilecore.stats.StatKeys.SKILL_DURATION, 1.0, profile.tags()));
         final Location at = center.clone();
         final LightningRods.Rod rod = new LightningRods.Rod(owner.getUniqueId(), at.getWorld().getUID(), at.toVector(), now,
-                now + Math.round(spec.duration() * 20 * durationScale), spec.chains(), Math.round(spec.charge() * 20), profile,
+                now + Math.round(spec.duration() * 20 * durationScale),
+                spec.chains() + (int) Math.round(localFlat(profile, tw.exilecore.stats.SupportExtraKeys.DURABILITY)), // 2026-10-30 照 PoE2 Durability：多被連幾次
+                Math.round(spec.charge() * 20), profile,
                 radius, visual, skill);
         rod.display = spawnRodDisplay(at);
         rod.label = spawnRodLabel(at, rod, now); // 2026-10-29 照站長「更明顯」：頭上顯示剩幾秒、還能被連幾次

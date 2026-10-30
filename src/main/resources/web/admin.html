@@ -1016,6 +1016,17 @@
       line.appendChild(h('label', null, '階級', select('', '階級', affix.tiers.map(function (t) { return { id: String(t.tier), text: 'T' + t.rank + '（物品等級 ' + t.ilvl + '+）' }; }),
         String(entry.tier), function (v) { entry.tier = Number(v); entry.vals = {}; renderItems(); })));
       line.appendChild(varInputs(entry, affix, tierOf(affix, entry.tier), renderSummary));
+      if (item.kind === 'item' && affix.kind !== 'corrupted') {
+        // 2026-10-30：指定這一條破裂（一件只能一條：勾了別條會取消這條）
+        var fracture = h('input', { type: 'checkbox', 'aria-label': '破裂' });
+        fracture.checked = !!entry.fractured;
+        fracture.addEventListener('change', function () {
+          item.affixList.forEach(function (other) { other.fractured = false; });
+          entry.fractured = fracture.checked;
+          renderItems();
+        });
+        line.appendChild(h('label', { cls: 'check' }, fracture, '破裂'));
+      }
       line.appendChild(h('button', { type: 'button', cls: 'small', text: '拿掉', onclick: function () { item.affixList.splice(index, 1); renderItems(); } }));
       box.appendChild(line);
     });
@@ -1046,7 +1057,8 @@
         return name + '=' + Math.round(Number(entry.vals[name]) * div);
       });
       if (item.kind === 'unique' && !vars.length) { return; }
-      parts.push(entry.id + (item.kind === 'item' && entry.tier !== null && entry.tier !== undefined ? '@' + entry.tier : '') + (vars.length ? ':' + vars.join(',') : ''));
+      parts.push(entry.id + (item.kind === 'item' && entry.tier !== null && entry.tier !== undefined ? '@' + entry.tier : '')
+        + (item.kind === 'item' && entry.fractured ? '!' : '') + (vars.length ? ':' + vars.join(',') : ''));
     });
     return parts.length ? parts.join(';') : null;
   }
@@ -1060,7 +1072,7 @@
       if (!affix || (item.kind === 'unique' && !Object.keys(entry.vals).length)) { return; }
       var tier = item.kind === 'item' ? tierOf(affix, entry.tier) : affix.tiers[0];
       var text = affix.text.replace(/\{([A-Za-z0-9_]+)(?:\/\d+)?\}/g, function (m, name) { return entry.vals[name] !== undefined ? entry.vals[name] : '?'; });
-      texts.push((affix.kind === 'corrupted' ? '腐化：' : '') + (item.kind === 'item' ? 'T' + tier.rank + ' ' : '') + text);
+      texts.push((affix.kind === 'corrupted' ? '腐化：' : '') + (item.kind === 'item' && entry.fractured ? '破裂：' : '') + (item.kind === 'item' ? 'T' + tier.rank + ' ' : '') + text);
     });
     texts = texts.concat(flags);
     return texts.length ? '［' + texts.join('、') + '］' : '';

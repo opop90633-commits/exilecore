@@ -293,9 +293,16 @@ final class AuraService implements Listener {
     /** 2026-10-29：角色進度裡存「這種召喚物要帶幾隻」的鍵（後面接技能代號）。 */
     static final String COUNT_KEY = "minion_count.";
 
+    /** 2026-10-30：wantedCount 的「沒設定」：照 PoE2 的預設隻數（{@link #defaultCount}）。 */
+    static final int DEFAULT_COUNT = 0;
+    /** 2026-10-30：wantedCount 的「自動」：精魂付得起幾隻就帶幾隻（玩家自己選的）。 */
+    static final int AUTO_COUNT = Integer.MAX_VALUE;
+    private static final String AUTO_TEXT = "auto";
+
     /**
-     * 2026-10-29 照站長（PoE2 的 Set Minion Count）：玩家自己設定這種精魂召喚要帶幾隻（1～技能的上限）；沒設定回傳 Integer.MAX_VALUE（照舊：付得起幾隻叫幾隻）。
-     * 每一種各自保留精魂，少帶幾隻就少保留，省下的精魂給別種召喚物或光環。
+     * 2026-10-29 照站長（PoE2 的 Set Minion Count）：玩家自己設定這種精魂召喚要帶幾隻（1～技能的上限）。
+     * 2026-10-30 照 PoE2：沒設定回傳 {@link #DEFAULT_COUNT}（照原作的預設隻數，附魂術 1 隻、骸骨戰士 2 隻）；
+     * 選了「自動」回傳 {@link #AUTO_COUNT}。這次之前沒設定＝付得起幾隻叫幾隻（精魂全被吃光）。
      */
     int wantedCount(final UUID player, final String skillId) {
         final org.bukkit.entity.Player online = plugin.getServer().getPlayer(player);
@@ -306,21 +313,39 @@ final class AuraService implements Listener {
     static int wantedCount(final PlayerState state, final String skillId) {
         final String stored = state == null ? null : state.progress().get(COUNT_KEY + skillId);
         if (stored == null || stored.isBlank()) {
-            return Integer.MAX_VALUE;
+            return DEFAULT_COUNT;
+        }
+        if (AUTO_TEXT.equals(stored.trim())) {
+            return AUTO_COUNT;
         }
         try {
             return Math.max(1, Integer.parseInt(stored.trim()));
         } catch (final NumberFormatException e) {
-            return Integer.MAX_VALUE;
+            return DEFAULT_COUNT;
         }
     }
 
-    /** 2026-10-29：設定這種精魂召喚要帶幾隻（0 或負數 = 取消設定，照舊付得起幾隻叫幾隻）；兩秒內照新的數量增減、重算保留。 */
+    /**
+     * 2026-10-30 照 PoE2：沒設定時帶幾隻。原作的 skill_desired_initial_amount（骸骨戰士 2，其他沒寫＝1），
+     * 剛好跟「前幾隻不保留精魂」一樣，所以取 max(1, 免費隻數)，再夾在技能的上限。
+     */
+    static int defaultCount(final SkillBuild build) {
+        final int free = build.definition().aura() == null ? 0 : build.definition().aura().freeMinions();
+        return Math.max(1, Math.min(Math.max(1, build.minions()), free));
+    }
+
+    /** 玩家設定（wantedCount 的回傳值）換成實際想帶的隻數。 */
+    static int resolveWanted(final SkillBuild build, final int wanted) {
+        return wanted == DEFAULT_COUNT ? defaultCount(build) : wanted;
+    }
+
+    /** 2026-10-29：設定這種精魂召喚要帶幾隻（{@link #DEFAULT_COUNT} 或負數 = 取消設定、照預設；{@link #AUTO_COUNT} = 自動）；兩秒內照新的數量增減、重算保留。 */
     void setWantedCount(final org.bukkit.entity.Player player, final String skillId, final int count) {
         if (plugin.characters() == null) {
             return;
         }
-        plugin.characters().setProgress(player, COUNT_KEY + skillId, count <= 0 ? "" : String.valueOf(count));
+        plugin.characters().setProgress(player, COUNT_KEY + skillId,
+                count <= 0 ? "" : count == AUTO_COUNT ? AUTO_TEXT : String.valueOf(count));
     }
 
     /** 同上，另外最多 wanted 隻（玩家自己設定的數量）。 */
@@ -338,7 +363,7 @@ final class AuraService implements Listener {
         final int max = Math.max(1, build.minions());
         final int free = Math.min(max, build.definition().aura().freeMinions());
         final int paid = (int) Math.floor((Math.max(0, left) + 1e-9) / build.minionReserve());
-        final int count = Math.min(Math.min(max, Math.max(1, wanted)), free + paid);
+        final int count = Math.min(Math.min(max, Math.max(1, resolveWanted(build, wanted))), free + paid);
         if (count < 1) {
             return null;
         }
@@ -531,7 +556,26 @@ final class AuraService implements Listener {
      * 死掉之後多久回來。2026-10-26 照 PoE2：骷髏、附身、夥伴（荒原狼伴）12 秒（minion_base_resummon_time_ms），
      * 灰狼隨沒有覆寫，照全域 7.5 秒；這次之前附身不是精魂召喚、狼伴與灰狼隨都是 8 秒。
      */
+    /** 2026-10-30 照 PoE2 Rhoa Mount：喚駒（沒騎的時候是陪你打的夥伴）。 */
+    static final String MOUNT = "summon_mount";
+
+    /**
+     * 2026-10-30 照 PoE2 Rhoa Mount：這個夥伴被打死、還要等幾 tick 才回來（活著或沒開回傳 0）；死掉的時候騎不上去。
+     */
+    long companionWait(final Player player, final String skillId) {
+        final Map<String, Active> mine = active.get(player.getUniqueId());
+        final Active aura = mine == null ? null : mine.get(skillId);
+        final MinionService minions = service.minions();
+        if (aura == null || minions == null || minions.count(player.getUniqueId(), skillId) > 0) {
+            return 0;
+        }
+        return Math.max(0, aura.companionReady - now());
+    }
+
     static long respawnTicks(final String skillId) {
+        if (MOUNT.equals(skillId)) {
+            return SKELETON_RESPAWN; // 2026-10-30 照 PoE2：陸行鳥被打死 12 秒後再出來
+        }
         if (MinionAbilities.WOLVES.equals(skillId)) {
             return MinionAbilities.GLOBAL_RESUMMON_TICKS;
         }
@@ -543,42 +587,16 @@ final class AuraService implements Listener {
      * 2026-10-26 照 PoE2 骸骨祭司的復活骷髏：有一種骷髏正在等 12 秒復活的話，馬上叫一隻回來；回傳有沒有叫。
      */
     /**
-     * 2026-10-27：精魂召喚這個技能最多幾隻：技能的隻數、精魂養得起的隻數，再夾在一個人總上限剩下的空間（其他技能的召喚物占掉的不算）。
-     * 這次之前沒夾總上限：加起來超過 40 隻會每 0.5 秒叫新的、擠掉最舊的一直輪替（還被當成死掉復活）。
+     * 精魂召喚這個技能最多幾隻：玩家設定的隻數、精魂養得起的隻數。
+     * 2026-10-30 照 PoE2：精魂召喚不再算進一個人的召喚物總上限（原作只受精魂限制）；這次之前跟別的召喚物合計最多 80 隻、照開的順序分。
      */
     private int companionMax(final MinionService minions, final UUID player, final Active aura) {
-        return companionLimit(companionWanted(aura), minions.room(player, aura.skillId), reservedBefore(player, aura));
+        return companionWanted(aura);
     }
 
     /** 這個精魂召喚自己想要幾隻（技能的隻數、精魂養得起的隻數）。 */
     private static int companionWanted(final Active aura) {
         return Math.max(1, Math.min(aura.build.minions(), aura.minionCap));
-    }
-
-    /**
-     * 2026-10-27：排在這個前面（先開的）精魂召喚預留的隻數。總上限照開的順序分：先開的先拿滿它要的，後開的只能用剩下的——
-     * 這次之前只看「現在活著的別的召喚物」，一種死了一隻，另一種馬上補進那個空位，死掉的那種就再也復活不了。
-     */
-    private int reservedBefore(final UUID player, final Active aura) {
-        final Map<String, Active> mine = active.get(player);
-        int reserved = 0;
-        if (mine != null) {
-            for (final Active other : mine.values()) {
-                if (other == aura) {
-                    break;
-                }
-                if (other.build.definition().summon() != null
-                        && !SkillExecutor.hasFlag(other.build.definition(), tw.exilecore.stats.StatKeys.FLAG_SUMMON_ON_FIRE)) {
-                    reserved += companionWanted(other);
-                }
-            }
-        }
-        return reserved;
-    }
-
-    /** 2026-10-27：精魂召喚的上限：想要的、總上限剩下的空間（活著的別的召喚物占掉的）、先開的預留之後剩下的，取最小（測試用）。 */
-    static int companionLimit(final int wanted, final int liveRoom, final int reservedBefore) {
-        return Math.max(0, Math.min(Math.min(wanted, liveRoom), MinionService.MAX_PER_PLAYER - reservedBefore));
     }
 
     String reviveSkeleton(final UUID player, final long now) {
@@ -705,6 +723,10 @@ final class AuraService implements Listener {
                         aura.hadCompanion = 0; // 營地裡收起來：出營地馬上出來
                         continue;
                     }
+                    if (MOUNT.equals(aura.skillId) && service.mounted(player)) {
+                        aura.hadCompanion = 0; // 2026-10-30 照 PoE2 Rhoa Mount：騎上去時夥伴就是你的坐騎（收起來，不算死掉），下馬再出來
+                        continue;
+                    }
                     if (MinionAbilities.MANIFEST.equals(aura.skillId) && minions.manifestForm(player) == null) {
                         aura.hadCompanion = 0; // 2026-10-29 照 PoE2：主手不是近戰武鬥武器就收起來（不算死掉），換回來馬上出來
                         continue;
@@ -819,7 +841,8 @@ final class AuraService implements Listener {
                 continue;
             }
             final SkillBuild build = service.build(state, sheet, definition, state.skills().skill(position));
-            final Fit fit = fit(build, capacity(sheet, otherReserve(player.getUniqueId())) - total); // 2026-10-28：扣掉圖騰的保留
+            final Fit fit = fit(build, capacity(sheet, otherReserve(player.getUniqueId())) - total,
+                    wantedCount(state, id.trim())); // 2026-10-28：扣掉圖騰的保留；2026-10-30：照玩家設定的數量（這次之前上線時先帶滿）
             final double lifeSoFar = communionReserved(mine.values());
             if (fit == null || !lifeFits(build, PlayerState.maxLife(sheet), lifeLocked(sheet), lifeSoFar)) {
                 continue;
@@ -1010,7 +1033,8 @@ final class AuraService implements Listener {
                     continue;
                 }
                 final SkillBuild build = service.build(state, sheet, definition, entry);
-                final Fit fit = fit(build, capacity(sheet, otherReserve(player.getUniqueId())) - total); // 2026-10-28：扣掉圖騰的保留
+                final Fit fit = fit(build, capacity(sheet, otherReserve(player.getUniqueId())) - total,
+                    wantedCount(state, definition.id())); // 2026-10-28：扣掉圖騰的保留；2026-10-30：照玩家設定的數量（這次之前上線時先帶滿）
                 if (fit == null || !lifeFits(build, lifeBase, lifeLocked(sheet), lifeTotal)) {
                     skipped.add(definition.name());
                     continue;

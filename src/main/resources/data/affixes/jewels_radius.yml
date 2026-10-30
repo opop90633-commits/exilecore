@@ -396,7 +396,7 @@ jr_corpses:
 jr_critical_chance:
   # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
-  group: jr_critical_chance
+  group: jr_attack_critical_chance   # 2026-10-30 照 PoE2：跟同一類（mod group CriticalStrikeChanceIncrease）共用，同一顆只出一條；這次之前 jr_critical_chance
   spawn_tags: [r_sapphire]
   names: [之遺時]
   text: "範圍內的核心天賦也各給：增加 {value}% 暴擊率"
@@ -408,7 +408,7 @@ jr_critical_chance:
 jr_critical_damage:
   # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
-  group: jr_critical_damage
+  group: jr_attack_critical_damage   # 2026-10-30 照 PoE2：跟同一類（mod group CriticalStrikeMultiplier）共用，同一顆只出一條；這次之前 jr_critical_damage
   spawn_tags: [r_sapphire]
   names: [之遺時]
   text: "範圍內的核心天賦也各給：增加 {value}% 暴擊傷害加成"
@@ -820,7 +820,7 @@ jr_lightning_penetration:
 
 jr_mace_damage:
   type: prefix
-  group: jr_mace_damage
+  group: jr_bow_damage   # 2026-10-30 照 PoE2：跟同一類（mod group SpecificWeaponDamage）共用，同一顆只出一條；這次之前 jr_mace_damage
   spawn_tags: [r_ruby]
   names: [遺時的]
   text: "範圍內的小天賦也各給：使用錘時增加 {value}% 傷害"
@@ -858,7 +858,7 @@ jr_mana_flask_recovery:
 jr_mana_flask_charge_gen:
   # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
-  group: jr_mana_flask_charge_gen
+  group: jr_life_flask_charge_gen   # 2026-10-30 照 PoE2：跟同一類（mod group FlaskChargeGenerationPercent）共用，同一顆只出一條；這次之前 jr_mana_flask_charge_gen
   spawn_tags: [r_emerald]
   names: [之遺時]
   text: "範圍內的核心天賦也各給：增加 {value}% 魔力藥劑拿到的充能"
@@ -905,7 +905,7 @@ jr_mark_duration:
 jr_mark_effect:
   # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: prefix
-  group: jr_mark_effect
+  group: jr_curse_effect   # 2026-10-30 照 PoE2：跟同一類（mod group CurseEffectiveness）共用，同一顆只出一條；這次之前 jr_mark_effect
   spawn_tags: [r_emerald]
   names: [遺時的]
   text: "範圍內的核心天賦也各給：增加 {value}% 印記效果"
@@ -1118,7 +1118,7 @@ jr_projectile_speed:
 
 jr_quarterstaff_damage:
   type: prefix
-  group: jr_quarterstaff_damage
+  group: jr_bow_damage   # 2026-10-30 照 PoE2：跟同一類（mod group SpecificWeaponDamage）共用，同一顆只出一條；這次之前 jr_quarterstaff_damage
   spawn_tags: [r_emerald]
   names: [遺時的]
   text: "範圍內的小天賦也各給：使用長棍時增加 {value}% 傷害"
@@ -1144,7 +1144,7 @@ jr_quarterstaff_freeze_buildup:
 jr_quarterstaff_speed:
   # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
-  group: jr_quarterstaff_speed
+  group: jr_bow_speed   # 2026-10-30 照 PoE2：跟同一類（mod group SpecificWeaponSpeed）共用，同一顆只出一條；這次之前 jr_quarterstaff_speed
   spawn_tags: [r_emerald]
   names: [之遺時]
   text: "範圍內的核心天賦也各給：使用長棍時增加 {value}% 攻擊速度"
@@ -1542,7 +1542,7 @@ unveiled_jr_charm_charges_per_second:
 jr_shapeshift_speed:
   # 2026-10-26 照 PoE2：範圍內的「核心天賦」也各給；這次之前是小天賦
   type: suffix
-  group: jr_shapeshift_speed
+  group: jr_bow_speed   # 2026-10-30 照 PoE2：跟同一類（mod group SpecificWeaponSpeed）共用，同一顆只出一條；這次之前 jr_shapeshift_speed
   spawn_tags: [r_ruby, r_sapphire]
   names: [之遺時]
   text: "範圍內的核心天賦也各給：變身技能增加 {value}% 攻擊與施放速度"
@@ -1555,7 +1555,7 @@ jr_shapeshift_speed:
 
 jr_shapeshift_damage:
   type: prefix
-  group: jr_shapeshift_damage
+  group: jr_plant_damage   # 2026-10-30 照 PoE2：跟同一類（mod group DamageForm）共用，同一顆只出一條；這次之前 jr_shapeshift_damage
   spawn_tags: [r_ruby, r_sapphire]
   names: [遺時的]
   text: "範圍內的小天賦也各給：變身技能增加 {value}% 傷害"
@@ -1674,3 +1674,462 @@ unveiled_jr_reduced_crit_chance_against_you:
     - { tier: 2, ilvl: 1, weight: 700, value: [3, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: radius:crit.chance_taken, type: INCREASED, value: "-{value}" }
+
+# ---- 2026-10-30 照 PoE2 0.5 補齊（tools/apply_poe2_jewel_missing.py）----
+
+jr_armour_break_duration:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusArmourBreakDuration：armour_break_and_sundered_armour_duration_+% 5～10）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_armour_break_duration
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：增加 {value}% 破甲持續時間"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius_notable:armour.break_duration, type: INCREASED, value: "{value}" }
+
+jr_blind_effect:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusBlindEffect：blind_effect_+% 3～5）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_blind_effect
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的核心天賦也各給：增加 {value}% 致盲效果"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: radius_notable:blind.effect, type: INCREASED, value: "{value}" }
+
+jr_critical_ailment_effect:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusCriticalAilmentEffect：critical_hit_damaging_ailment_effect_+% 5～10）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_critical_ailment_effect
+  spawn_tags: [r_emerald, r_sapphire]
+  names: [遺時的]
+  text: "範圍內的核心天賦也各給：增加 {value}% 你以暴擊造成的傷害型異常狀態幅度"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius_notable:ignite.magnitude, type: INCREASED, value: "{value}", tags: [crit_hit] }
+    - { stat: radius_notable:bleed.magnitude, type: INCREASED, value: "{value}", tags: [crit_hit] }
+    - { stat: radius_notable:poison.magnitude, type: INCREASED, value: "{value}", tags: [crit_hit] }
+
+jr_damage_vs_armour_broken:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusDamagevsArmourBrokenEnemies：damage_+%_against_enemies_with_fully_broken_armour 2～4）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_damage_vs_armour_broken
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：對完全破甲的敵人增加 {value}% 傷害"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 4] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [vs_brokenarmour] }
+
+jr_debuff_expiry:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusDebuffExpiry：debuff_time_passed_+% 3～5）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_debuff_expiry
+  spawn_tags: [r_emerald, r_sapphire]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：你身上的減益效果消退速度加快 {value}%"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: radius_notable:ailment.self_duration, type: INCREASED, value: "-{value}" }
+
+jr_empowered_attack_damage:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusEmpoweredAttackDamage：empowered_attack_damage_+% 2～3）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_empowered_attack_damage
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 強化攻擊的傷害"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [attack, empowered] }
+
+jr_energy:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusEnergy：energy_generated_+% 2～4）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_energy
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：增加 {value}% 引星獲得的能量"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 4] }
+  mods:
+    - { stat: radius_notable:meta.energy_gain, type: INCREASED, value: "{value}" }
+
+jr_faster_ailments:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusFasterAilments：damaging_ailments_deal_damage_+%_faster 2～3）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_faster_ailments
+  spawn_tags: [r_emerald, r_sapphire]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：傷害型異常狀態的傷害速度加快 {value}%"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius_notable:ailment.speed, type: INCREASED, value: "{value}" }
+
+jr_focus_energy_shield:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusFocusEnergyShield：energy_shield_from_focus_+% 15～25）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_focus_energy_shield
+  spawn_tags: [r_sapphire]
+  names: [遺時的]
+  text: "範圍內的核心天賦也各給：增加 {value}% 已裝備法器的能量護盾"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [15, 25] }
+  mods:
+    - { stat: radius_notable:focus.es, type: INCREASED, value: "{value}" }
+
+jr_forking_projectiles:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusForkingProjectiles：chance_to_fork_extra_projectile_% 5～7）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_forking_projectiles
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：投射物分裂時有 {value}% 機率額外產生 1 個投射物"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 7] }
+  mods:
+    - { stat: radius_notable:skill.fork_extra_chance, type: FLAT, value: "{value}" }
+
+jr_freeze_threshold:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusFreezeThreshold：freeze_threshold_+% 2～4）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_freeze_threshold
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 凍結門檻"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 4] }
+  mods:
+    - { stat: radius:freeze.threshold, type: INCREASED, value: "{value}" }
+
+jr_life_cost:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusLifeCost：base_skill_cost_life_instead_of_mana_% 2～3）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_life_cost
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：{value}% 的技能魔力消耗轉換為生命消耗"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius_notable:skill.life_cost_percent, type: FLAT, value: "{value}" }
+
+jr_mark_cast_speed:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusMarkCastSpeed：mark_use_speed_+% 2～3）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_mark_cast_speed
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 印記技能的使用速度"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:cast.speed, type: INCREASED, value: "{value}", tags: [mark] }
+
+jr_offering_duration:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusOfferingDuration：offering_duration_+% 6～12）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_offering_duration
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：增加 {value}% 祭品的持續時間"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [6, 12] }
+  mods:
+    - { stat: radius_notable:skill.duration, type: INCREASED, value: "{value}", tags: [offering] }
+
+jr_offering_life:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusOfferingLife：offering_life_+% 2～3）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_offering_life
+  spawn_tags: [r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 祭品的最大生命"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:offering.life, type: INCREASED, value: "{value}" }   # 2026-10-30 照 PoE2：骨柱有生命了；這次之前是一半的祭品持續時間
+
+jr_pin_buildup:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusPinBuildup：hit_damage_pin_multiplier_+% 5～10）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_pin_buildup
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：增加 {value}% 釘身累積"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius_notable:pin.buildup, type: INCREASED, value: "{value}" }
+
+jr_quiver_effect:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusQuiverEffect：quiver_mod_effect_+% 2～3）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_quiver_effect
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的核心天賦也各給：增加 {value}% 已裝備箭袋提供的加成"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius_notable:quiver.effect, type: INCREASED, value: "{value}" }
+
+jr_shield_defences:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusShieldDefences：shield_armour_evasion_energy_shield_+% 8～15）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_shield_defences
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的核心天賦也各給：增加 {value}% 已裝備盾牌的護甲、閃避值與能量護盾"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [8, 15] }
+  mods:
+    - { stat: radius_notable:shield.defences, type: INCREASED, value: "{value}" }
+
+jr_stun_threshold_from_es:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusStunThresholdfromEnergyShield：stun_threshold_+_from_%_maximum_energy_shield 1～2）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_stun_threshold_from_es
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：獲得額外暈眩門檻，等同最大能量護盾的 {value}%"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:stun.threshold_from_es, type: FLAT, value: "{value}" }
+
+jr_ailment_threshold_from_es:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusAilmentThresholdfromEnergyShield：ailment_threshold_+_from_%_maximum_energy_shield 1～2）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_ailment_threshold_from_es
+  spawn_tags: [r_sapphire]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：獲得額外異常狀態門檻，等同最大能量護盾的 {value}%"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:ailment.threshold_from_es, type: FLAT, value: "{value}" }
+
+jr_totem_placement_speed:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusTotemPlacementSpeed：summon_totem_cast_speed_+% 2～3）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_totem_placement_speed
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 圖騰放置速度"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:totem.placement_speed, type: INCREASED, value: "{value}" }
+
+jr_triggered_spell_damage:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusTriggeredSpellDamage：triggered_spell_spell_damage_+% 2～3）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_triggered_spell_damage
+  spawn_tags: [r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：觸發的法術，增加 {value}% 法術傷害"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [spell, triggered] }
+
+jr_warcry_speed:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusWarcrySpeed：warcry_speed_+% 2～3）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_warcry_speed
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 戰吼速度"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:warcry.speed, type: INCREASED, value: "{value}" }
+
+jr_withered_effect:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusWitheredEffect：withered_magnitude_+% 3～5）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_withered_effect
+  spawn_tags: [r_sapphire]
+  names: [遺時的]
+  text: "範圍內的核心天賦也各給：增加 {value}% 凋零幅度"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: radius_notable:withered.effect, type: INCREASED, value: "{value}" }
+
+jr_parry_damage:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusParryDamage：parry_damage_+% 2～3）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_corpses   # 2026-10-30 照 PoE2：跟同一類（mod group AllDamage）共用，同一顆只出一條；這次之前 jr_parry_damage
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 招架傷害"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [parry] }
+
+jr_parried_debuff_duration:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusParriedDebuffDuration：parry_skill_effect_duration_+% 5～10）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_parried_debuff_duration
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：增加 {value}% 被招架減益持續時間"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: radius_notable:parry.parried_duration, type: INCREASED, value: "{value}" }
+
+jr_stun_threshold_during_parry:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusStunThresholdDuringParry：parry_stun_threshold_+%_during_parry 8～12）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_stun_threshold_during_parry
+  spawn_tags: [r_emerald]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：招架時，增加 {value}% 暈眩門檻"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: radius_notable:stun.threshold@parrying, type: INCREASED, value: "{value}" }
+
+jr_companion_damage:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusCompanionDamage：companion_damage_+% 2～3）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_companion_damage
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 夥伴的傷害"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [minion, companion] }
+
+jr_companion_life:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusCompanionLife：companion_maximum_life_+% 2～3）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_companion_life
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 夥伴的最大生命"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:life.max, type: INCREASED, value: "{value}", tags: [minion, companion] }
+
+jr_hazard_damage:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusHazardDamage：hazard_damage_+% 2～3）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_hazard_damage
+  spawn_tags: [r_emerald]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 危害傷害"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [hazard] }
+
+jr_incision_chance:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusIncisionChance：chance_to_inflict_incision_on_attack_hit_% 3～5）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_incision_chance
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：攻擊擊中有 {value}% 機率施加切割"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
+  mods:
+    - { stat: radius:incision.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+jr_banner_glory:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusBannerValourGained：glory_generation_+%_for_banners 8～12）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_banner_glory
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的核心天賦也各給：增加 {value}% 榮耀產生"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [8, 12] }
+  mods:
+    - { stat: radius_notable:cooldown.recovery, type: INCREASED, value: "{value}", tags: [banner] }
+
+jr_banner_area:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusBannerArea：banner_area_of_effect_+% 2～3）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_banner_area
+  spawn_tags: [r_ruby]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 旗幟技能的範圍效果"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [2, 3] }
+  mods:
+    - { stat: radius:skill.area, type: INCREASED, value: "{value}", tags: [banner] }
+
+jr_banner_duration:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusBannerDuration：banner_duration_+% 3～4）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: jr_banner_duration
+  spawn_tags: [r_ruby]
+  names: [之遺時]
+  text: "範圍內的小天賦也各給：增加 {value}% 旗幟技能的持續時間"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [3, 4] }
+  mods:
+    - { stat: radius:skill.duration, type: INCREASED, value: "{value}", tags: [banner] }
+
+jr_plant_damage:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusPlantDamage：plant_skill_damage_+% 1～2）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: jr_plant_damage
+  spawn_tags: [r_ruby, r_emerald, r_sapphire]
+  names: [遺時的]
+  text: "範圍內的小天賦也各給：增加 {value}% 植物技能的傷害"
+  chips: []
+  tiers:
+    - { tier: 1, ilvl: 1, weight: 1000, value: [1, 2] }
+  mods:
+    - { stat: radius:damage, type: INCREASED, value: "{value}", tags: [plant] }

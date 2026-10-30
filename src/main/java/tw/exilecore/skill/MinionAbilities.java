@@ -125,11 +125,13 @@ final class MinionAbilities {
 
     // ---- 支援火力（Supporting Fire，2026-10-27 照 PoE2 0.5：RePoE DeathFromAboveDaemonMinion／CommandDeathFromAbovePlayer）----
 
-    /** 從天而降（Death From Above，指令）：每一輪 763% 傷害、共 6 輪、每 0.75 秒一輪，落在 14 × 14 格（換成同面積的圓：半徑 7.9 格）。 */
+    /** 從天而降（Death From Above，指令）：每一輪 763% 傷害、共 6 輪、每 0.75 秒一輪，落在 14 × 14 公尺（換成同面積的圓：半徑 7.9 公尺）。 */
     static final double VOLLEY_DAMAGE = 7.63;
     static final int VOLLEYS = 6;
     static final long VOLLEY_TICKS = 15;
     static final double VOLLEY_RADIUS = tw.exilecore.core.Units.metres(7.9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    /** 2026-10-30：信號彈落點幾格內有敵人就黏在牠身上（箭雨跟著牠）。 */
+    static final double FLARE_ATTACH = 1.5;
     /** 每一輪箭落地前的延遲（explosion_delay_ms 250）。 */
     static final long VOLLEY_DELAY = 5;
     /** 砲手每 1 點力量增加 1% 傷害、每 3 點敏捷增加 1% 範圍（minion_1%_damage_+%_per_X_player_strength 1、…_area_…_dexterity 3）。 */

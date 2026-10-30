@@ -129,7 +129,7 @@ class FallingThunderTest {
                 "機率不用掉戰星是額外的品質效果（進階奇術）");
         assertEquals(20, GemQuality.advancedModifiers("falling_thunder", 20, "q").stream()
                 .filter(m -> m.stat().equals(ChargeService.SUP_KEEP)).mapToDouble(Modifier::value).sum(), 1e-9);
-        assertEquals("品質 +20%：每用掉一顆銳星，投射物再更多 20% 傷害（加在 50% 上）", SkillService.qualityText(thunder, 20));
+        assertEquals("品質 +20%：每用掉一顆銳星，猛擊與投射物各更多 20% 傷害（投射物的加在 50% 上）", SkillService.qualityText(thunder, 20));
         // 20% 品質：每顆 70%
         final StatSheet sheet = new StatSheet();
         final SkillBuild slam = build(20, List.of());

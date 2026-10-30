@@ -767,6 +767,14 @@ public final class MetaGems {
                 lines.add("<gray>插槽法術更多 <white>" + number(spec.moreDamage()) + "%</white> 傷害");
             }
         }
+        if (!spec.totem() && spec.energyMore() != null && spec.energyMore().at(40) > 0) {
+            // 2026-10-30 照站長（能量獲得增加沒顯示）：寶石等級給的能量獲得增加（PoE2 energy_generated_+%，例如殞從引星 1 級 0%、20 級 57%）
+            final int level = position >= 0 ? usableLevel(state, state.skills().skill(position)) : 1;
+            final double more = spec.energyMore().at(level);
+            final double at20 = spec.energyMore().at(20);
+            lines.add("<gray>能量獲得增加 <white>" + number(more) + "%</white>（Lv." + level + "，隨寶石等級"
+                    + (level != 20 ? "；20 級 " + number(at20) + "%" : "") + "）");
+        }
         if (position < 0) {
             return lines;
         }

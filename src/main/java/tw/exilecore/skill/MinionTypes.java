@@ -389,6 +389,10 @@ public final class MinionTypes {
         if (vsLow > 0 && target.lowLife()) {
             list.add(Modifier.increased(StatKeys.DAMAGE, vsLow / 100.0, "低血的敵人"));
         }
+        final double vsLowMore = skillSheet.more(StatKeys.DAMAGE_VS_LOW_LIFE, tags); // 2026-10-30 照 PoE2：處刑是更多
+        if (vsLowMore > 1 + 1e-9 && target.lowLife()) {
+            list.add(Modifier.more(StatKeys.DAMAGE, vsLowMore - 1, "處刑（低血的敵人）"));
+        }
         if (target.fullLife()) {
             scaled(list, skillSheet, StatKeys.DAMAGE_VS_FULL_LIFE, StatKeys.DAMAGE, tags, "對滿血的敵人");
             scaled(list, skillSheet, StatKeys.CRIT_VS_FULL_LIFE, StatKeys.CRIT_CHANCE, tags, "對滿血的敵人");

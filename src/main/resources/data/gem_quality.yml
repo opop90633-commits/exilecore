@@ -80,8 +80,8 @@ briarpatch:   # Briarpatch（2026-10-28 照 PoE2：法術擊中時 (0—5)% 機�
   - { stat: effect.hinder.on_hit, type: FLAT, per: 0.25, tags: [spell] }   # 增益：法術擊中阻礙的機率
 caustic_arrow:   # Gas Arrow
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
-chain_arrow:   # Shockchain Arrow（2026-10-29 照 PoE2 寶石頁「增加 (0—20)% 閃電傷害」：增加，不是更多；2026-10-28 寫成更多；更早照通用規則每 1% 增加 1% 傷害）
-  - { stat: damage, type: INCREASED, per: 1.0, tags: [lightning] }   # 閃電傷害（增加）
+chain_arrow:   # Shockchain Arrow（2026-10-30 照 PoE2：RePoE quality_stats 與 poe2db 英文頁都是「(0—20)% more Lightning Damage」＝更多；2026-10-29 照中文頁寫成增加；2026-10-28 更多；更早照通用規則）
+  - { stat: damage, type: MORE, per: 1.0, tags: [lightning] }   # 閃電傷害（更多）
 chaos_bolt:   # Chaos Bolt
   - { stat: skill.projectile_speed, type: INCREASED, per: 2.0 }   # 投射物速度
 charge_regulation:   # Charge Regulation（2026-10-28 照 PoE2：消耗戰星的間隔 +(0—2.4) 秒；這次之前寫在 SkillService.qualityModifiers，另外多一條每顆戰星增加傷害（那條是額外的品質效果，移到下面 advanced））
@@ -110,7 +110,6 @@ cull_the_weak:   # Cull The Weak（2026-10-28 照 PoE2：(0—20)% 機率多獲�
   - { stat: charge.extra, type: FLAT, per: 1.0 }   # 多一顆同種戰星的機率（ChargeService）
 dark_idol:   # Dark Effigy（2026-10-28 照 PoE2：衝擊半徑 +(0—0.2) 格；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: skill.area, type: INCREASED, per: 1.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
-  - { stat: skill.totems, type: FLAT, per: 0.05 }   # 2026-10-29 照 PoE2 Dark Effigy：圖騰上限 +(0—1)（無條件捨去，20% 品質 +1）；這次之前漏了
 dark_pact:   # Dark Pact（2026-10-28 照 PoE2：另外犧牲召喚物 (0—2.5)% 生命造成混沌傷害——我們的冥契沒有犧牲召喚物生命，照原作 13% 的比例換成更多 (0—19.2)% 傷害；這次之前照通用規則）
   - { stat: damage, type: MORE, per: 0.9615 }   # 2.5 ÷ 13 換算
 decompose:   # Decompose（2026-10-28 照 PoE2：毒雲持續時間 +(0—1) 秒；這次之前 []（腐屍爆沒有毒雲），再之前照通用規則）
@@ -121,7 +120,6 @@ despair_curse:   # Despair（2026-10-28 照 PoE2：(0—10)% 增加詛咒幅度�
   - { stat: curse.effect, type: INCREASED, per: 0.5 }   # 詛咒效果
 detonate_dead:   # Detonate Dead（2026-10-28 照 PoE2：爆炸半徑 +(0—0.4) 公尺、(0—60)% 物理傷害轉換為火焰；這次之前只有範圍）
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
-  - { stat: damage.convert.fire, type: FLAT, per: 3.0 }   # 物理轉火焰（屍體生命的那部分是物理）
 devour:   # Devour（2026-10-28 照 PoE2：每吃一具屍體 (0—50)% 機率當作擊殺獲得藥劑與護符充能；這次之前照通用規則）
   - { stat: corpse.flask_charge_chance, type: FLAT, per: 2.5 }   # 屍體照普通怪（OriginalSkills.devour）
 discipline:   # Discipline（2026-10-28 照 PoE2：光環給的能量護盾回充速度增加 (0—20)%；這次之前照通用規則）
@@ -167,7 +165,7 @@ explosive_spear:   # Explosive Spear
   - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
 exsanguinate:   # Exsanguinate（2026-10-28 照 PoE2：多一道血脈（目標 +(0—1)，無條件捨去）；這次之前照通用規則）
   - { stat: skill.chains, type: FLAT, per: 0.05 }   # 連鎖次數
-falling_thunder:   # Falling Thunder（2026-10-28 照 PoE2：每用掉一顆銳星投射物再更多 (0—20)%（加在 50% 上）；這次之前照通用規則每 1% 增加 1% 傷害）
+falling_thunder:   # Falling Thunder（2026-10-30 照 PoE2：猛擊那一段也吃（RePoE 兩個 stat set 都有）；2026-10-28 照 PoE2：每用掉一顆銳星投射物再更多 (0—20)%（加在 50% 上）；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: falling_thunder.per_charge_more, type: FLAT, per: 1.0 }   # 每顆銳星更多 x%（SkillExecutor.THUNDER_QUALITY）
 fangs_of_frost:   # Fangs of Frost（2026-10-28 照 PoE2：(0—15)% 機率不用掉被招架的減益；這次之前照通用規則）
   - { stat: parried.keep_chance, type: FLAT, per: 0.75 }   # StageEffects
@@ -409,7 +407,6 @@ ruin_mantra:   # Mantra of Destruction（2026-10-28 照 PoE2：需要的連擊�
   - { stat: mantra.combo, type: FLAT, per: -0.05 }   # OriginalSkills.mantraCombo
 sacrifice:   # Sacrifice（2026-10-28 照 PoE2：召喚物復活更快 (0—5)%（加在「更慢 x%」上）；這次之前照通用規則）
   - { stat: sacrifice.slower, type: FLAT, per: 0.25 }   # OriginalSkills.sacrifice
-  - { stat: effect.life.max, type: INCREASED, per: 2.0, tags: [minion] }   # 2026-10-29 照 PoE2 Sacrifice 的品質：召喚物最大生命增加 (0—40)%（光環的增益給召喚物）；這次之前漏了這一條
 savage_fury:   # Savage Fury（2026-10-28 照 PoE2：狂暴另外更多 (0—5)% 傷害（加在 20%～39% 上）；這次之前照通用規則）
   - { stat: effect.damage, type: MORE, per: 0.25 }   # 狂暴（AuraService.startFrenzy）
 scavenged_plating:   # Scavenged Plating（2026-10-28 照 PoE2：甲片持續時間 +(0—2) 秒——我們的拾鱗是一直有的增益（沒有甲片層數），照 8 秒 +25% 的持續時間估平均多約一成層數，換成護甲、破甲各另外增加 (0—4)%；這次之前照通用規則）
@@ -483,15 +480,14 @@ storm_javelin:   # Storm Lance（2026-10-28 照 PoE2：超載的矛上限 +(0—
   - { stat: lance.overcharged_extra, type: FLAT, per: 0.05 }   # Signatures.lodge
 storm_orb:   # Orb of Storms
   - { stat: skill.chains, type: FLAT, per: 0.15 }   # 連鎖次數
-  - { stat: orb.extra_bolts, type: FLAT, per: 0.3 }   # 2026-10-29 照 PoE2（Orb expires after firing (0—6) bolts）：雷雲多放幾道雷才消失（SkillZones）
 storm_staff:   # Charged Staff（2026-10-28 照 PoE2：(0—20)% 增加技能效果持續時間；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: skill.duration, type: INCREASED, per: 1.0 }   # 持續時間
 storm_wave:   # Storm Wave（2026-10-28 照 PoE2：波寬 +(0—1) 格；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: skill.area, type: INCREASED, per: 5.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
 stormblast_bolts:   # Stormblast Bolts（2026-10-28 照 PoE2：穿透 (0—20)% 閃電抗性；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: penetration, type: FLAT, per: 1.0, tags: [lightning] }   # 穿透閃電抗性（DamageCalculator）
-summon_mount:   # Rhoa Mount（2026-10-28 照 PoE2：坐騎更多 (0—20)% 最大生命——坐騎打不死，換成騎著時的重暈門檻更多 (0—20)%；這次之前照通用規則）
-  - { stat: mount.life_more, type: FLAT, per: 1.0 }   # AilmentService
+summon_mount:   # Rhoa Mount（2026-10-30 照 PoE2：召喚物更多 (0—20)% 最大生命——沒騎時陪你打的戰馬會被打了；2026-10-28～29 坐騎打不死，換成騎著時的重暈門檻更多 (0—20)%）
+  - { stat: life.max, type: MORE, per: 1.0 }   # 召喚物最大生命（更多；MinionSheets）
 summon_skeletons:   # Skeletal Warrior（2026-10-28 照 PoE2：召喚物 (0—20)% 更多最大生命；這次之前照通用規則每 1% 增加 1% 召喚物傷害）
   - { stat: life.max, type: MORE, per: 1.0 }   # 召喚物最大生命（更多；MinionSheets）
 sun_orb:   # Solar Orb（2026-10-28 照 PoE2：對燃燒的敵人擊中 (0—20)% 更多傷害；這次之前照通用規則每 1% 增加 1% 傷害）
@@ -580,7 +576,114 @@ wolf_shred:   # Shred
 wyvern_rend:   # Rend（2026-10-28 照 PoE2：增益另外獲得 (0—10)% 傷害為閃電（加在 50% 上）；這次之前照通用規則）
   - { stat: effect.damage.gain.lightning, type: FLAT, per: 0.5 }   # 增益（StageAttacks.rend）
 
+
+# 2026-10-30 照 PoE2（RePoE skill_gems 的 SkillGemAscendancy＊ 寶石的 quality_stats；站長「照原作改」）：昇華賦予的技能也有自己的品質效果
+#   （面板上那顆的品質：嵌晶、天賦樹加的品質）。asc.＊ 是昇華那邊（AscGranted、AscPaths）照等級讀的數值，品質加在上面；
+#   這次之前照通用規則（增益技能寫成「增加 x% 戰吼效果」、召喚寫成增加召喚物傷害）。原作沒有品質效果的（巨靈與指令、女王進軍）寫 []。
+align_fate:   # Align Fate：殘影施放的頻率更多 (0—20)%
+  - { stat: asc.visage_frequency, type: FLAT, per: 1.0 }
+ancestral_spirits:   # Ancestral Spirits：召喚物更多 (0—20)% 最大生命
+  - { stat: life.max, type: MORE, per: 1.0 }
+apocalypse:   # Apocalypse：天災觸發的頻率增加 (0—15)%
+  - { stat: asc.apocalypse_frequency, type: FLAT, per: 0.75 }
+archon_of_chayula:   # Archon of Chayula：增益另外更多 (0—5)% 物理與混沌傷害（加在增益的 20% 上）
+  - { stat: effect.damage, type: MORE, per: 0.25, tags: [physical] }
+  - { stat: effect.damage, type: MORE, per: 0.25, tags: [chaos] }
+bleeding_concoction:   # Bleeding Concoction：爆炸半徑 +(0—0.4) 公尺（照「+0.1 格 ≈ +10% 範圍」）
+  - { stat: skill.area, type: INCREASED, per: 2.0 }
+acidic_concoction:   # Acidic Concoction：同上
+  - { stat: skill.area, type: INCREASED, per: 2.0 }
+blood_boil:   # Blood Boil：腐化之血持續時間 +(0—1.5) 秒
+  - { stat: asc.boil_seconds, type: FLAT, per: 0.075 }
+called_shots:   # Called Shots：範圍半徑 +(0—0.4) 公尺（放印記的範圍吃範圍效果）
+  - { stat: skill.area, type: INCREASED, per: 2.0 }
+demon_form:   # Demon Form：惡魔變身時增加 (0—10)% 施法速度（加在增益上）
+  - { stat: effect.cast.speed, type: INCREASED, per: 0.5 }
+encase_in_jade:   # Encase in Jade：每層玉石的守護 +(0—1)% 最大生命
+  - { stat: asc.jade_guard_percent, type: FLAT, per: 0.05 }
+explosive_concoction:   # Explosive Concoction：多丟給 +(0—2) 個點燃中的敵人
+  - { stat: asc.explosive_extra, type: FLAT, per: 0.1 }
+fire_spell_on_hit:   # Fire Spell on Hit：增加 (0—15)% 獲得的能量
+  - { stat: meta.energy_gain, type: INCREASED, per: 0.75 }
+fulminating_concoction:   # Fulminating Concoction：更多 (0—40)% 感電機率
+  - { stat: shock.chance, type: MORE, per: 2.0 }
+hollow_focus:   # Hollow Focus：鐘出現的半徑 -(0—0.4) 公尺
+  - { stat: asc.bell_spawn, type: FLAT, per: -0.02 }
+hollow_form:   # Hollow Form：(0—10)% 機率不拿掉銳星但照樣算用掉
+  - { stat: charge.sup.keep, type: FLAT, per: 0.5 }
+hollow_resonance:   # Hollow Resonance：鐘響更多 (0—30)% 暈眩累積
+  - { stat: asc.resonance_stun, type: FLAT, per: 1.5 }
+inevitable_agony:   # Inevitable Agony：一開始的半徑 +(0—0.5) 公尺
+  - { stat: asc.agony_radius, type: FLAT, per: 0.025 }   # 0.025 公尺（1 公尺 = 1 格）
+infernal_hound:   # Summon Infernal Hound：召喚物更多 (0—20)% 最大生命
+  - { stat: life.max, type: MORE, per: 1.0 }
+into_the_breach:   # Into the Breach：夏烏拉之炎的效果增加 (0—15)%
+  - { stat: asc.flame_effect_inc, type: FLAT, per: 0.75 }
+kelari_malediction:   # Kelari's Malediction（原作 Corpse Beetles）：甲蟲上限 +(0—4)
+  - { stat: asc.beetle_max, type: FLAT, per: 0.2 }
+life_remnants:   # Life Remnants：擊殺時產生痕跡的機率 +(0—10)%
+  - { stat: asc.remnant_kill_chance, type: FLAT, per: 0.5 }
+meditate:   # Meditate：能量護盾回充速度另外更多 (0—10)%（加在增益上）
+  - { stat: effect.es.recharge, type: MORE, per: 0.5 }
+mirage_deadeye:   # Mirage Deadeye：幻影持續時間 +(0—1) 秒
+  - { stat: asc.mirage_seconds, type: FLAT, per: 0.05 }
+moment_of_vulnerability: []   # Moment of Vulnerability：打殘影的 (0—20)% 傷害也給本體——我們沒有時空殘影，所以沒有效果
+primal_bounty:   # Primal Bounty：強化的投射物速度增加 (0—30)%
+  - { stat: asc.bounty_speed, type: FLAT, per: 1.5 }
+ritual_sacrifice:   # Ritual Sacrifice：詞綴持續時間 +(0—20) 秒
+  - { stat: asc.sacrifice_seconds, type: FLAT, per: 1.0 }
+shattering_concoction:   # Shattering Concoction：增加 (0—20)% 凍結持續時間
+  - { stat: freeze.duration, type: INCREASED, per: 1.0 }
+sorcery_ward:   # Sorcery Ward：屏障另外吸收護甲與閃避的 (0—5)%
+  - { stat: asc.ward_percent, type: FLAT, per: 0.25 }
+supporting_fire:   # Supporting Fire：召喚物更多 (0—20)% 傷害
+  - { stat: damage, type: MORE, per: 1.0 }
+temper_weapon:   # Temper Weapon：增加 (0—20)% 技能速度（攻擊與施法速度）
+  - { stat: attack.speed, type: INCREASED, per: 1.0 }
+  - { stat: cast.speed, type: INCREASED, per: 1.0 }
+temporal_rift:   # Temporal Rift：增加 (0—10)% 冷卻回復速度
+  - { stat: cooldown.recovery, type: INCREASED, per: 0.5 }
+time_freeze:   # Time Freeze：同上
+  - { stat: cooldown.recovery, type: INCREASED, per: 0.5 }
+time_snap:   # Time Snap：同上
+  - { stat: cooldown.recovery, type: INCREASED, per: 0.5 }
+unbound_avatar:   # Unbound Avatar：無縛持續時間 +(0—1) 秒
+  - { stat: asc.buff_seconds, type: FLAT, per: 0.05 }
+virtuous_barrier:   # Virtuous Barrier：每顆智慧寶珠另外增加 (0—2.5)% 生命與魔力再生
+  - { stat: asc.mote_regen, type: FLAT, per: 0.125 }
+vivid_stampede:   # Vivid Stampede：震波半徑 +(0—0.5) 公尺
+  - { stat: asc.stag_radius, type: FLAT, per: 0.025 }
+void_illusion:   # Void Illusion：爆炸半徑 +(0—0.4) 公尺
+  - { stat: asc.void_radius, type: FLAT, per: 0.02 }
+wild_protector:   # Wild Protector：召喚物更多 (0—20)% 傷害與最大生命
+  - { stat: damage, type: MORE, per: 1.0 }
+  - { stat: life.max, type: MORE, per: 1.0 }
+queens_procession: []   # Queen's Procession：原作品質沒有效果
+abyssal_apparition: []   # Abyssal Apparition：原作品質沒有效果
+kelari_djinn: []   # 巨靈與指令：原作品質沒有效果
+navira_djinn: []
+ruzhan_djinn: []
+kelari_deception: []
+kelari_brutality: []
+kelari_judgment: []
+navira_oasis: []
+navira_well: []
+navira_fracturing: []
+ruzhan_reckoning: []
+ruzhan_fury: []
+ruzhan_trap: []
+
 advanced:
+  meta_minion_death:   # Cast on Minion Death：插槽法術被觸發時傷害增加 (0—20)%（2026-10-30 照 PoE2 poe2db 寶石頁第二條；這次之前沒寫，一般的品質效果再算一次）
+    - { stat: meta.triggered_damage, type: FLAT, per: 1.0 }   # SkillService.metaCast
+  storm_orb:   # Orb of Storms：雷雲多放 (0—6) 道雷才消失（2026-10-30 照 PoE2：這條是額外的品質效果（RePoE quality_stats 只有另一條），從一般品質移過來）
+    - { stat: orb.extra_bolts, type: FLAT, per: 0.3 }   # 2026-10-29 照 PoE2（Orb expires after firing (0—6) bolts）：雷雲多放幾道雷才消失（SkillZones）
+  dark_idol:   # Dark Effigy：圖騰上限 +(0—1)（2026-10-30 照 PoE2：這條是額外的品質效果（RePoE quality_stats 只有另一條），從一般品質移過來）
+    - { stat: skill.totems, type: FLAT, per: 0.05 }   # 2026-10-29 照 PoE2 Dark Effigy：圖騰上限 +(0—1)（無條件捨去，20% 品質 +1）；這次之前漏了
+  sacrifice:   # Sacrifice：召喚物最大生命增加 (0—40)%（2026-10-30 照 PoE2：這條是額外的品質效果（RePoE quality_stats 只有另一條），從一般品質移過來）
+    - { stat: effect.life.max, type: INCREASED, per: 2.0, tags: [minion] }   # 2026-10-29 照 PoE2 Sacrifice 的品質：召喚物最大生命增加 (0—40)%（光環的增益給召喚物）；這次之前漏了這一條
+  detonate_dead:   # Detonate Dead：(0—60)% 物理傷害轉換為火焰（2026-10-30 照 PoE2：這條是額外的品質效果（RePoE quality_stats 只有另一條），從一般品質移過來）
+    - { stat: damage.convert.fire, type: FLAT, per: 3.0 }   # 物理轉火焰（屍體生命的那部分是物理）
   ancestral_cry:   # Ancestral Cry：增益給 (0—10)% 更多火焰傷害
     - { stat: grant.damage, type: MORE, per: 0.5, tags: [fire] }   # 增益：更多火焰傷害（grant.＝給你自己的增益；SkillBuild.qualityGrants）（2026-10-27 照 PoE2：這次之前是一般品質效果）
   ancestral_totem:   # Ancestral Warrior Totem：(0—50)% 增加圖騰生命
@@ -703,6 +806,8 @@ advanced:
   snipe:   # Snipe：(0—20)% 更多攻擊速度、(0—20)% 更長的完美時機區間（2026-10-28 補上完美時機；這次之前沒做）
     - { stat: attack.speed, type: MORE, per: 1.0 }
     - { stat: perfect_timing.window, type: INCREASED, per: 1.0 }   # 完美時機的區間（Signatures）
+  arc:   # Arc：投射物每剩一次連鎖，擊中傷害更多 (0—3)%（2026-10-30 照 PoE2；這次之前沒寫，一般的品質效果再算一次＝連鎖 +2）
+    - { stat: chain.more_per_remaining, type: FLAT, per: 0.15 }   # SkillExecutor.chainBeam
   spark:   # Spark：+(0—4) 投射物
     - { stat: skill.projectiles, type: FLAT, per: 0.2 }
   stampede:   # Stampede：(0—20)% 更多範圍

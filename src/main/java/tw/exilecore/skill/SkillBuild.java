@@ -370,8 +370,11 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         final AuraSpec aura = definition.aura();
         // 2026-10：照 PoE 的「保留效率」：減少的部分加總成效率，保留 = 原本 ÷ (1 + 效率)；增加的照乘（以前減少直接相加，疊到 -100% 就不用保留）
         // 2026-10-26（雷脊長棍）：「技能保留的精魂少 50%」是 MORE（另外乘）
-        final double reserveFactor = reservationFactor(effective.increased(StatKeys.AURA_RESERVATION, context))
-                * Math.max(0, effective.more(StatKeys.AURA_RESERVATION, context));
+        // 2026-10-30 照 PoE2（烏勒爾之骨「產生不死召喚物技能的保留效率」）：叫不死召喚物（殭屍、骷髏、附魂）的技能，保留另外看 undead 標籤
+        final Set<String> reserveContext = summon != null && tw.exilecore.passive.ConquestEffects.undead(summon.kind())
+                ? union(context, tw.exilecore.passive.ConquestEffects.UNDEAD) : context;
+        final double reserveFactor = reservationFactor(effective.increased(StatKeys.AURA_RESERVATION, reserveContext))
+                * Math.max(0, effective.more(StatKeys.AURA_RESERVATION, reserveContext));
         final double reserve = aura == null ? 0
                 : Math.max(0, Math.min(10000, (aura.reserve() + supportSpirit(active)) * reserveFactor));
         // 2026-10（照 PoE2）：精魂召喚每一隻保留多少（已經算進保留效率）；0 = 不是照隻數算。2026-10-28 照 poe2db：21～40 級繼續照表變少（這次之前超過 20 級停在 20 級的值）
@@ -722,7 +725,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             list.add(mod.toModifier(level, auraEffect, "戰吼 " + definition.name())); // 2026-10：戰吼效果
         }
         list.addAll(qualityGrants()); // 2026-10-27 照 PoE2：戰吼品質的「增益給 x」（熔魂嘯更多火焰傷害、銀月庇獲得冰冷）
-        return list;
+        return withQualityEffects(list, auraEffect, "戰吼 " + definition.name()); // 2026-10-30 照 PoE2：昇華增益技能（冥想、惡魔變身、夏烏拉統治者）的品質加在增益本身
     }
 
     /** 2026-10-27：品質給的增益（寫成 grant.* 放在技能自己的修飾器裡；戰吼的增益、給狼群的增益用）。 */
@@ -805,5 +808,12 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             return 0;
         }
         return effective.increased(StatKeys.SKILL_PROJECTILE_SPEED, context);
+    }
+
+    /** 2026-10-30：標籤集合多加一個（不改原本的）。 */
+    static Set<String> union(final Set<String> tags, final String extra) {
+        final Set<String> out = new java.util.HashSet<>(tags);
+        out.add(extra);
+        return Set.copyOf(out);
     }
 }

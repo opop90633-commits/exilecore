@@ -287,7 +287,8 @@ class MinionSupportTypesTest {
         final List<Modifier> vsLow = MinionTypes.conditional(sheet, tags, low);
         assertEquals(1, vsLow.size());
         assertEquals(StatKeys.DAMAGE, vsLow.getFirst().stat());
-        assertEquals(0.4, vsLow.getFirst().value(), 1e-9, "處刑：對低血的敵人增加 40%");
+        assertEquals(0.4, vsLow.getFirst().value(), 1e-9, "處刑：對低血的敵人更多 40%（2026-10-30 照 PoE2；這次之前增加）");
+        assertEquals(tw.exilecore.stats.ModType.MORE, vsLow.getFirst().type());
         final MinionTypes.Target full = new MinionTypes.Target(false, true, false, false, false, false, 10, Set.of("ignited"), false);
         assertTrue(MinionTypes.conditional(sheet, tags, full).stream().anyMatch(m -> m.stat().equals(StatKeys.CRIT_CHANCE)), "潛鋒：對滿血的敵人暴擊率");
 

@@ -836,7 +836,7 @@ public final class GemService {
         } else {
             give(player, create(GemData.skill(entry), 1));
             player.sendMessage(plugin.text().prefixed("<green>做出技能寶石：" + ItemRenderer.escape(definition.name()) + " Lv." + entry.level()
-                    + (position == -2 ? "<gray>（面板上已經有這個技能，常駐、宿主技能一個角色只能放一顆，寶石放進背包）"
+                    + (position == -2 ? "<gray>（面板上已經有這個技能，同一個技能寶石面板上只能放一顆，寶石放進背包）"
                     : position == -3 ? "<gray>（面板上有它的異質寶石，同系列只能放一個，寶石放進背包）" : "<gray>（技能面板滿了，寶石放進背包）")));
         }
         plugin.characters().save(player); // 寶石扣掉以後才存，當機時才不會兩邊都在

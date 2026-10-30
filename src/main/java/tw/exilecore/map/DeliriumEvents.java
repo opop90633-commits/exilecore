@@ -335,9 +335,14 @@ final class DeliriumEvents implements Listener {
             }
             final List<ItemStackHolder> got = new ArrayList<>();
             final List<DropTable.Drop> none = List.of();
+            // 2026-10-30 照站長：幻霧的獎勵吃物品數量與物品稀有度（自己的＋全服＋主題＋地圖的）：
+            //   其他種類的份數 ×（1 + 數量）、傳奇那一條 1 件 ×（1 + 稀有度）（小數照機率多一件）
+            final tw.exilecore.loot.LootBonus.Bonus bonus = tw.exilecore.loot.LootBonus.of(plugin, player)
+                    .plus(fog.instance.stats().quantity() / 100.0, fog.instance.stats().rarity() / 100.0);
+            final tw.exilecore.loot.LootBonus.Bonus rarityAsCount = new tw.exilecore.loot.LootBonus.Bonus(bonus.rarity(), 0);
             for (final MapEventConfig.Reward kind : fog.tracks) {
-                // 傳奇那一條固定一件（份數只加其他種類的數量）
-                final int times = kind == MapEventConfig.Reward.UNIQUE ? 1 : shares;
+                // 傳奇那一條固定一件（份數只加其他種類的數量）；2026-10-30：再照稀有度多
+                final int times = kind == MapEventConfig.Reward.UNIQUE ? rarityAsCount.amount(1, random) : bonus.amount(shares, random);
                 for (int i = 0; i < times; i++) {
                     final MapRewards.Bundle bundle = MapRewards.roll(plugin, service, kind, fog.instance, player, settings, MapEventConfig.DELIRIUM_SOURCE, random);
                     if (bundle != null) {

@@ -132,6 +132,9 @@ public final class DodgeRoll implements Listener {
         player.setSprinting(false);
         rolledAt.put(player.getUniqueId(), now);
         plugin.players().get(player).markRecent(tw.exilecore.stats.Recently.DODGE, now); // 「最近翻滾過」
+        if (plugin.guide() != null) {
+            plugin.guide().milestone(player, tw.exilecore.guide.GuideService.DODGE); // 2026-10-30 新手教學
+        }
         final Location at = player.getLocation().add(0, 0.3, 0);
         player.getWorld().spawnParticle(Particle.CLOUD, at, 8, 0.3, 0.1, 0.3, 0.02);
         player.getWorld().playSound(at, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.5f, 1.6f);

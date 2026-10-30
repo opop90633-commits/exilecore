@@ -1,7 +1,8 @@
 package tw.exilecore.core;
 
 /**
- * 2026-10-29 照站長：PoE2 的公尺換成 Minecraft 的格，1 公尺 = 1.5 格（2026-10-29 先改成 2 格、同一天改成 1.5 格；這次之前 1 公尺 = 1 格，資料檔直接填公尺數當格數）。
+ * 2026-10-30 照站長：PoE2 的公尺換成 Minecraft 的格，1 公尺 = 1 格（迅鋒、衝勢的移動距離另外算，不看這裡）。
+ * 2026-10-29～30 是 1 公尺 = 1.5 格（同一天先改成 2 格）；更早之前 1 公尺 = 1 格，資料檔直接填公尺數當格數。
  * <p>
  * 資料檔（skills.yml 等）照原作寫公尺，讀進來的時候乘上 {@link #BLOCKS_PER_METRE}；程式裡照 PoE2 公尺寫死的常數用 {@link #metres}。
  * 只有玩家這邊照 PoE2 公尺來的距離換算（範圍半徑、扇形與直線長度、連鎖距離、「x 公尺內」的條件、位移距離…）；
@@ -11,7 +12,7 @@ package tw.exilecore.core;
 public final class Units {
 
     /** 1 公尺幾格。 */
-    public static final double BLOCKS_PER_METRE = 1.5;
+    public static final double BLOCKS_PER_METRE = 1.0; // 2026-10-30 照站長改回 1 格（2026-10-29～30 是 1.5）
 
     private Units() {
     }

@@ -18,30 +18,32 @@ class GuideTest {
         assertEquals(2, Guide.current(new Guide.Snapshot(true, true, false, false, false, false, false, 1)));
         // 跳著完成：還是停在第一個沒完成的
         assertEquals(4, Guide.current(new Guide.Snapshot(true, true, false, true, true, true, true, 9)), "任務還沒接：停在接任務");
-        assertEquals(7, Guide.current(new Guide.Snapshot(true, true, true, true, true, true, true, 4)));
-        assertEquals(Guide.STEPS.size(), Guide.current(new Guide.Snapshot(true, true, true, true, true, true, true, 5)), "全部完成");
+        assertEquals("dodge", Guide.STEPS.get(Guide.current(new Guide.Snapshot(true, true, true, true, true, true, true, 4))).id(),
+                "2026-10-30：碰到檢查點之後教翻滾");
+        assertEquals("level5", Guide.STEPS.get(Guide.current(done(new Guide.Snapshot(true, true, true, true, true, true, true, 4)))).id());
+        assertEquals(Guide.STEPS.size(), Guide.current(done(new Guide.Snapshot(true, true, true, true, true, true, true, 5))), "全部完成");
     }
 
     /** 2026-10-20 第二階段：跟主線章節連動——還沒到那一章的步驟不出現、也不擋住後面的；真的全做完才算完成。 */
     @Test
     void secondPhaseFollowsTheStory() {
-        final Guide.Snapshot fresh = new Guide.Snapshot(true, true, true, true, true, true, true, 5);
+        final Guide.Snapshot fresh = done(new Guide.Snapshot(true, true, true, true, true, true, true, 5));
         assertEquals(Guide.STEPS.size(), Guide.current(fresh), "第一階段做完、主線還沒接：沒有可以做的步驟");
         assertFalse(Guide.allDone(fresh), "但不算全部完成（主線往前走會有下一步）");
-        final Guide.Snapshot chapter1 = new Guide.Snapshot(true, true, true, true, true, true, true, 8,
-                1, 0, 1, false, false, false, false, 1, false, false, false, false, 0);
+        final Guide.Snapshot chapter1 = done(new Guide.Snapshot(true, true, true, true, true, true, true, 8,
+                1, 0, 1, false, false, false, false, 1, false, false, false, false, 0));
         assertEquals("gem", Guide.STEPS.get(Guide.current(chapter1)).id(), "第 1 章開始：先教雕琢寶石");
-        final Guide.Snapshot gemDone = new Guide.Snapshot(true, true, true, true, true, true, true, 8,
-                1, 0, 2, false, false, false, false, 1, false, false, false, false, 0);
+        final Guide.Snapshot gemDone = done(new Guide.Snapshot(true, true, true, true, true, true, true, 8,
+                1, 0, 2, false, false, false, false, 1, false, false, false, false, 0));
         assertEquals("support", Guide.STEPS.get(Guide.current(gemDone)).id());
-        final Guide.Snapshot chapter2 = new Guide.Snapshot(true, true, true, true, true, true, true, 20,
-                2, 2, 3, true, true, true, false, 4, false, false, false, false, 0);
+        final Guide.Snapshot chapter2 = done(new Guide.Snapshot(true, true, true, true, true, true, true, 20,
+                2, 2, 3, true, true, true, false, 4, false, false, false, false, 0));
         assertEquals("salvage", Guide.STEPS.get(Guide.current(chapter2)).id(), "通貨、倉庫做了：第 2 章完成教拆解");
-        final Guide.Snapshot trialDone = new Guide.Snapshot(true, true, true, true, true, true, true, 40,
-                4, 4, 3, true, true, true, true, Guide.FLASK_LEVEL, true, true, false, false, 0);
+        final Guide.Snapshot trialDone = done(new Guide.Snapshot(true, true, true, true, true, true, true, 40,
+                4, 4, 3, true, true, true, true, Guide.FLASK_LEVEL, true, true, false, false, 0));
         assertEquals("ascend", Guide.STEPS.get(Guide.current(trialDone)).id(), "試煉過了就教選昇華");
-        final Guide.Snapshot all = new Guide.Snapshot(true, true, true, true, true, true, true, 70,
-                6, 6, 3, true, true, true, true, Guide.FLASK_LEVEL, true, true, true, true, 3);
+        final Guide.Snapshot all = done(new Guide.Snapshot(true, true, true, true, true, true, true, 70,
+                6, 6, 3, true, true, true, true, Guide.FLASK_LEVEL, true, true, true, true, 3));
         assertEquals(Guide.STEPS.size(), Guide.current(all));
         assertTrue(Guide.allDone(all));
         final List<String> chat = Guide.chat(chapter1, Guide.current(chapter1));
@@ -77,5 +79,29 @@ class GuideTest {
         assertEquals(Guide.STEPS.size() + 2, chat.size());
         assertTrue(chat.get(1).contains("✔"));
         assertTrue(chat.get(3).contains("➜"));
+    }
+
+    /** 2026-10-30：新加的步驟（翻滾、符文、掉落過濾、護符）都做過了。 */
+    private static Guide.Snapshot done(final Guide.Snapshot s) {
+        return new Guide.Snapshot(s.hasCharacter(), s.menuOpened(), s.questStarted(), s.skillBound(), s.flasksPlaced(), s.checkpoint(),
+                s.passiveAllocated(), s.level(), s.storyStarted(), s.storyDone(), s.skills(), s.supportSocketed(), s.currencyUsed(), s.stashUsed(),
+                s.salvaged(), s.flaskLevel(), s.boardSeen(), s.trialDone(), s.ascended(), s.atlasAllocated(), s.mapsDone(),
+                java.util.Set.of(GuideService.DODGE, GuideService.RUNE, GuideService.FILTER), true);
+    }
+
+    /** 2026-10-30：新的步驟照主線出現：第 1 章完成教符文、第 2 章完成教掉落過濾、第 3 章完成教護符。 */
+    @Test
+    void newStepsFollowTheStory() {
+        final Guide.Snapshot chapter1 = new Guide.Snapshot(true, true, true, true, true, true, true, 15,
+                2, 1, 2, true, true, false, false, 4, false, false, false, false, 0, java.util.Set.of(GuideService.DODGE), false);
+        assertEquals("rune", Guide.STEPS.get(Guide.current(chapter1)).id());
+        final Guide.Snapshot chapter2 = new Guide.Snapshot(true, true, true, true, true, true, true, 25,
+                3, 2, 2, true, true, true, true, Guide.FLASK_LEVEL, false, false, false, false, 0,
+                java.util.Set.of(GuideService.DODGE, GuideService.RUNE), false);
+        assertEquals("filter", Guide.STEPS.get(Guide.current(chapter2)).id());
+        final Guide.Snapshot chapter3 = new Guide.Snapshot(true, true, true, true, true, true, true, 35,
+                4, 3, 2, true, true, true, true, Guide.FLASK_LEVEL, true, false, false, false, 0,
+                java.util.Set.of(GuideService.DODGE, GuideService.RUNE, GuideService.FILTER), false);
+        assertEquals("charm", Guide.STEPS.get(Guide.current(chapter3)).id());
     }
 }

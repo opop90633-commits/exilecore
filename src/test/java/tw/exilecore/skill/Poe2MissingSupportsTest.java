@@ -101,8 +101,12 @@ class Poe2MissingSupportsTest {
         assertNull(support("holy_descent").refusal(skill("leap_slam")));
         assertEquals("要跳躍技能", support("holy_descent").refusal(skill("fireball")));
         // 冰晶多打兩下：要會留下冰晶的技能
-        assertNull(support("durability").refusal(skill("ice_wall")));
-        assertEquals("要會留下冰晶的技能", support("durability").refusal(skill("fireball")));
+        // 2026-10-30 照 PoE2：鐘、雷樁矢、龍捲風多用 2 次（這次之前是冰晶多打兩下）
+        assertNull(support("durability").refusal(skill("tempest_bell")));
+        assertNull(support("durability").refusal(skill("lightning_rod")));
+        assertNull(support("durability").refusal(skill("tornado_shot")));
+        assertNotNull(support("durability").refusal(skill("ice_wall")));
+        assertNotNull(support("durability").refusal(skill("fireball")));
         // 冷卻次數加倍：要有冷卻
         assertNotNull(support("second_wind_iii").refusal(skill("fireball")));
         // 點燃時曝露：冰冷法術不會點燃

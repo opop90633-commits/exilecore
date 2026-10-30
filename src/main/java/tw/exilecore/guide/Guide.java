@@ -38,12 +38,30 @@ public final class Guide {
      * @param ascended         選了昇華
      * @param atlasAllocated   星圖點過
      * @param mapsDone         完成過幾張不同的地圖
+     * @param milestones       2026-10-30：做過的事（{@link GuideService#milestone}：dodge 翻滾、rune 嵌符文、filter 打開掉落過濾）
+     * @param charmEquipped    2026-10-30：護符欄裝了護符
      */
     public record Snapshot(boolean hasCharacter, boolean menuOpened, boolean questStarted, boolean skillBound, boolean flasksPlaced,
                            boolean checkpoint, boolean passiveAllocated, int level,
                            int storyStarted, int storyDone, int skills, boolean supportSocketed, boolean currencyUsed, boolean stashUsed,
                            boolean salvaged, int flaskLevel, boolean boardSeen, boolean trialDone, boolean ascended, boolean atlasAllocated,
-                           int mapsDone) {
+                           int mapsDone, java.util.Set<String> milestones, boolean charmEquipped) {
+
+        /** 2026-10-30 之前的欄位（測試、舊呼叫）：新加的步驟當作還沒做。 */
+        public Snapshot(final boolean hasCharacter, final boolean menuOpened, final boolean questStarted, final boolean skillBound,
+                        final boolean flasksPlaced, final boolean checkpoint, final boolean passiveAllocated, final int level,
+                        final int storyStarted, final int storyDone, final int skills, final boolean supportSocketed, final boolean currencyUsed,
+                        final boolean stashUsed, final boolean salvaged, final int flaskLevel, final boolean boardSeen, final boolean trialDone,
+                        final boolean ascended, final boolean atlasAllocated, final int mapsDone) {
+            this(hasCharacter, menuOpened, questStarted, skillBound, flasksPlaced, checkpoint, passiveAllocated, level, storyStarted, storyDone,
+                    skills, supportSocketed, currencyUsed, stashUsed, salvaged, flaskLevel, boardSeen, trialDone, ascended, atlasAllocated, mapsDone,
+                    java.util.Set.of(), false);
+        }
+
+        /** 做過這件事（{@link GuideService#milestone}）。 */
+        public boolean did(final String milestone) {
+            return milestones != null && milestones.contains(milestone);
+        }
 
         /** 只有第一階段的狀態（測試、舊呼叫）：第二階段全部當作還沒開始。 */
         public Snapshot(final boolean hasCharacter, final boolean menuOpened, final boolean questStarted, final boolean skillBound,
@@ -77,6 +95,9 @@ public final class Guide {
             new Step("flask", "放好藥劑", "紅藥水、藍藥水放快捷欄的藥劑欄（預設 1、2；設定裡可以改到 1–8 任一格），按那一格的數字鍵喝", null, Snapshot::flasksPlaced),
             new Step("quest", "接任務", "找頭上有光點的 NPC，右鍵跟他說話", null, Snapshot::questStarted),
             new Step("checkpoint", "出發冒險", "走出營地，碰到第一個發光的檢查點（會記住重生點）", null, Snapshot::checkpoint),
+            // 2026-10-30：翻滾是最重要的保命動作
+            new Step("dodge", "學會翻滾", "按 Ctrl（衝刺鍵）往移動的方向翻滾：翻滾開始時躲得開近戰攻擊和投射物", null,
+                    Snapshot::checkpoint, snapshot -> snapshot.did(GuideService.DODGE)),
             new Step("passive", "點天賦", "升級會拿到天賦點：選單 →「天賦」→ 點亮一格", "/tree", Snapshot::passiveAllocated),
             new Step("level5", "升到 5 級", "照任務打怪就會升級；不知道去哪就看側欄的任務", null, snapshot -> snapshot.level() >= 5),
             // ---- 第二階段（2026-10-20）：跟主線章節連動 ----
@@ -86,14 +107,20 @@ public final class Guide {
                     started(1), Snapshot::supportSocketed),
             new Step("currency", "用通貨改造裝備", "打開背包，把微光石或添輝石拿在游標上點一下裝備：白色變魔法、魔法多一條詞綴", null,
                     finished(1), Snapshot::currencyUsed),
+            new Step("rune", "嵌一顆符文", "符文拿在游標上點有符文孔的武器或防具；沒腐化的裝備之後可以在洗裝台 /craft 把符文取出來", null,
+                    finished(1), snapshot -> snapshot.did(GuideService.RUNE)), // 2026-10-30
             new Step("stash", "把東西存進倉庫", "營地的倉庫或輸入 /stash：通貨、地圖有自己的分頁，換角色也拿得到", "/stash",
                     finished(1), Snapshot::stashUsed),
             new Step("salvage", "拆解一件裝備", "營地的拆解師：不要的裝備拆成通貨與金幣，比丟掉划算", null,
                     finished(2), Snapshot::salvaged),
             new Step("flask_upgrade", "換更好的藥劑", "怪會掉更高等級的藥劑，放進藥劑欄換掉粗製藥劑（委託板的功勳也能換）", null,
                     finished(2), snapshot -> snapshot.flaskLevel() >= FLASK_LEVEL),
+            new Step("filter", "設定掉落過濾", "輸入 /filter：不想撿的稀有度、通貨可以藏起來（換成金幣），地上就不會一堆垃圾", "/filter",
+                    finished(2), snapshot -> snapshot.did(GuideService.FILTER)), // 2026-10-30
             new Step("bounty", "看看委託板", "營地的委託板：每日委託換功勳，功勳能買倉庫頁、角色格、稱號", null,
                     finished(3), Snapshot::boardSeen),
+            new Step("charm", "裝上護符", "護符欄是腰帶給的：先裝一條腰帶，再把護符拿在手上右鍵裝上（被凍結、點燃時會自動觸發）", null,
+                    finished(3), Snapshot::charmEquipped), // 2026-10-30
             new Step("trial", "完成第一個試煉", "找營地的試煉 NPC 打開試煉，通過就能選昇華職業（昇華天賦很強）", null,
                     finished(4), Snapshot::trialDone),
             new Step("ascend", "選一個昇華", "回試煉 NPC 選昇華，再到選單 →「天賦」點昇華天賦", null,

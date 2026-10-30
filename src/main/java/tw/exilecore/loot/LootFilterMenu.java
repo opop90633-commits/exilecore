@@ -126,6 +126,9 @@ public final class LootFilterMenu extends Menu {
         this.filter = service.filter(player);
         final var character = plugin.players().get(player).character();
         this.characterId = character == null ? -1 : character.id();
+        if (plugin.guide() != null) {
+            plugin.guide().milestone(player, tw.exilecore.guide.GuideService.FILTER); // 2026-10-30 新手教學
+        }
     }
 
     /** 打開並停在某個分頁（從「一定要撿的基底」回來時用）。 */

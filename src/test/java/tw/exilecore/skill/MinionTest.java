@@ -439,15 +439,6 @@ class MinionTest {
     }
 
     @Test
-    void companionRoomIsReservedInOrder() {
-        // 2026-10-27：精魂召喚照開的順序分總上限：先開的預留它要的隻數，後開的不能補進先開的那種死掉留下的空位
-        assertEquals(30, AuraService.companionLimit(30, 40, 0));
-        assertEquals(10, AuraService.companionLimit(20, 40, MinionService.MAX_PER_PLAYER - 10), "先開的預留到只剩 10 隻：後開的最多 10 隻（就算現在有空位）");
-        assertEquals(5, AuraService.companionLimit(20, 5, 30), "活著的別的召喚物還沒收掉：先照現在的空間");
-        assertEquals(0, AuraService.companionLimit(20, 40, MinionService.MAX_PER_PLAYER + 5));
-    }
-
-    @Test
     void mountCannotJumpWalls() {
         // 2026-10-27：坐騎跳躍力、自動踏上高度跟玩家自己差不多（這次之前 0.75、1.5，能跳過 3 格牆）
         assertTrue(Mounts.JUMP_STRENGTH <= 0.5);

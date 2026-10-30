@@ -105,6 +105,9 @@ public final class CurrencyListener implements Listener {
             case APPLIED -> {
                 if (plugin.guide() != null) {
                     plugin.guide().milestone(player, "currency"); // 2026-10-20 新手教學
+                    if (used != null && used.operation() == CurrencyOperation.RUNE) {
+                        plugin.guide().milestone(player, tw.exilecore.guide.GuideService.RUNE); // 2026-10-30
+                    }
                 }
                 cursor.setAmount(cursor.getAmount() - 1);
                 event.getView().setCursor(cursor.getAmount() <= 0 ? ItemStack.empty() : cursor);
@@ -316,6 +319,9 @@ public final class CurrencyListener implements Listener {
                     final String old = now.runes().get(index);
                     final boolean refund = !now.corrupted() && currencies.returnRune(player, plugin.economy().wallet(), old);
                     now.replaceRune(index, rune.affix());
+                    if (plugin.guide() != null) {
+                        plugin.guide().milestone(player, tw.exilecore.guide.GuideService.RUNE); // 2026-10-30 新手教學
+                    }
                     plugin.items().update(stack, now);
                     player.getInventory().setItem(slot, stack);
                     final PlayerState state = plugin.players().get(player);

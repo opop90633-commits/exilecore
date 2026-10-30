@@ -211,6 +211,15 @@ public final class CharacterPanelMenu extends Menu {
         if (!twoHand) {
             return null;
         }
+        // 2026-10-30 照站長（巨人之血好像沒作用）：點了巨人之血、主手是雙手斧、錘、劍時是單手持用，副手是空的（可以放盾、法器或再一把雙手斧、錘、劍）；
+        // 這次之前一樣顯示「雙手武器同時佔用副手」，看起來像副手不能用
+        final ItemBase mainBase = plugin.items().read(main).map(data -> plugin.items().repository().base(data.base())).orElse(null);
+        if (mainBase != null && tw.exilecore.stats.KeystoneKeys.giantWeapon(mainBase.tags())
+                && tw.exilecore.stats.StatKeys.flag(plugin.players().sheet(player), tw.exilecore.stats.KeystoneKeys.FLAG_GIANTS_BLOOD)) {
+            return uiIcon(slotShape(ItemSlot.OFF_HAND), emptyIcon(ItemSlot.OFF_HAND), "<gray>副手欄（巨人之血：單手持用）",
+                    "<dark_gray>主手的雙手武器只用一隻手", "<dark_gray>可以放盾、法器，或再一把雙手斧、錘、劍（雙持）",
+                    "<dark_gray>點下方自己背包裡的裝備裝上");
+        }
         final ItemStack ghost = main.clone();
         ghost.setAmount(1);
         ghost.editMeta(meta -> {

@@ -236,6 +236,10 @@ public record SupportDefinition(String id, String name, String description, Stri
      * 可以的話掛上去、效果給召喚物；requires 也不符合召喚物的技能時照舊回傳技能自己的原因。這次之前只看技能自己的標籤。
      */
     public String refusal(final SkillDefinition skill) {
+        final String poe2 = Poe2SupportRules.refusal(id, skill.id()); // 2026-10-30：照 PoE2 的技能類型（support_poe2.yml）
+        if (poe2 != null) {
+            return poe2;
+        }
         if (Unearth.ID.equals(skill.id()) && Unearth.BLOCKED.contains(id)) {
             return "掘骸不能掛"; // 2026-10-30 照 PoE2
         }

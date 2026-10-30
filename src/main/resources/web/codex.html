@@ -44,6 +44,9 @@
   }
   .tabs button { cursor: pointer; }
   .tabs button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); font-weight: 600; }
+  .qual { margin: 4px 0 6px; padding-left: 18px; color: #c9e8a0; font-size: 13px; line-height: 1.45; }
+  .qual .adv { color: #e0b8ff; }
+  .qual b { font-weight: 600; }
   .fx { margin: 4px 0 6px; padding-left: 18px; color: #8fd3ff; font-size: 13px; line-height: 1.45; }
   .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
   .filters input { flex: 1; min-width: 180px; }
@@ -178,9 +181,9 @@
     }
     if (tab === 'affixes') {
       return (e.name + ' ' + e.tiers.map(function (t) { return t.text + ' ' + t.name; }).join(' ') + ' ' + (e.bases || []).join(' ')
-        + ' ' + AFFIX_TYPE[e.type] + ' ' + e.slots.map(function (x) { return SLOT[x] || x; }).join(' ')).toLowerCase();
+        + ' ' + AFFIX_TYPE[e.type] + ' ' + e.slots.map(function (x) { return SLOT[x] || x; }).join(' ') + ' ' + (e.tags || []).join(' ')).toLowerCase();
     }
-    return (e.name + ' ' + (e.text || '') + ' ' + (e.effects || []).join(' ') + ' ' + (e.requires || '') + ' ' + (e.flavor || '') + ' '
+    return (e.name + ' ' + (e.text || '') + ' ' + (e.effects || []).join(' ') + ' ' + (e.quality || '') + ' ' + (e.advancedQuality || '') + ' ' + (e.requires || '') + ' ' + (e.flavor || '') + ' '
       + (e.mods || []).join(' ') + ' ' + (e.source || '') + ' ' + (e.tags || []).map(tagName).join(' ')).toLowerCase();
   }
   /** 2026-10-22：傳奇的圖鑑資訊（追逐級、哪裡會掉、隱匿詞綴）。 */
@@ -354,6 +357,11 @@
     } else if (tab === 'affixes') {
       Object.keys(SLOT).forEach(function (s) { options.push(['a:' + s, '部位：' + SLOT[s]]); });
       options.push(['y:prefix', '前綴'], ['y:suffix', '後綴'], ['y:unveiled', '揭露（隱匿詞綴找盜賊首領）'], ['y:corrupted', '腐化（蝕變石）']);
+      var chipSeen = {}; // 2026-10-30：照詞綴的標籤篩
+      rows().forEach(function (a) { (a.tags || []).forEach(function (t) { chipSeen[t] = true; }); });
+      var chipOrder = (data && data.affixTagOrder) || [];
+      Object.keys(chipSeen).sort(function (a, b) { var x = chipOrder.indexOf(a), y = chipOrder.indexOf(b); return (x < 0 ? 999 : x) - (y < 0 ? 999 : y) || a.localeCompare(b, 'zh-Hant'); })
+        .forEach(function (t) { options.push(['c:' + t, '標籤：' + t]); });
     }
     select.textContent = '';
     options.forEach(function (o) { var opt = el('option', null, o[1]); opt.value = o[0]; select.appendChild(opt); });
@@ -374,6 +382,7 @@
     if (kind === 'l') { return String(e.level > 1 ? e.level : 1) === value; }
     if (kind === 'a') { return (e.slots || []).indexOf(value) >= 0; }
     if (kind === 'y') { return e.type === value; }
+    if (kind === 'c') { return (e.tags || []).indexOf(value) >= 0; }
     return true;
   }
   function card(e) {
@@ -393,6 +402,12 @@
         var fx = el('ul', 'fx');
         e.effects.forEach(function (t) { fx.appendChild(el('li', null, t)); });
         box.appendChild(fx);
+      }
+      if (e.quality || e.advancedQuality) { // 2026-10-30：品質效果、嵌晶戰團「進階奇術」的額外品質效果（都是 20% 品質）
+        var q = el('ul', 'qual');
+        if (e.quality) { var li = el('li'); li.appendChild(el('b', null, '品質 20%：')); li.appendChild(document.createTextNode(e.quality)); q.appendChild(li); }
+        if (e.advancedQuality) { var li2 = el('li', 'adv'); li2.appendChild(el('b', null, '進階奇術（嵌晶戰團）額外效果：')); li2.appendChild(document.createTextNode(e.advancedQuality)); q.appendChild(li2); }
+        box.appendChild(q);
       }
       if (e.tags && e.tags.length) { box.appendChild(tagRow(e.tags, pickTag)); }
       box.appendChild(sourceBox(e, '技能'));
@@ -428,6 +443,17 @@
       var table = el('ul', 'fx');
       e.tiers.forEach(function (t) { table.appendChild(el('li', null, 'T' + t.t + '　ilvl ' + t.ilvl + (t.name ? '・' + t.name : '') + '　' + t.text)); });
       box.appendChild(table);
+      if (e.tags && e.tags.length) { // 2026-10-30：詞綴的標籤（點一下只看這個標籤）
+        var chips = el('div', 'tags');
+        e.tags.forEach(function (t) {
+          var c = el('button', 'tag', t);
+          c.type = 'button';
+          c.title = '只看「' + t + '」標籤的詞綴';
+          c.addEventListener('click', function (ev) { ev.stopPropagation(); pick = 'c:' + t; $('filter').value = pick; show(tab); });
+          chips.appendChild(c);
+        });
+        box.appendChild(chips);
+      }
       if (e.bases && e.bases.length) {
         box.appendChild(el('div', 'muted', '擲得到：' + e.bases.slice(0, 8).join('、') + (e.bases.length > 8 ? ' 等 ' + e.bases.length + ' 種基底' : '')));
       }

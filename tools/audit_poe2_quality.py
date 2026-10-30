@@ -242,7 +242,6 @@ APPROX = {
     'dark_pact': ([('damage', 'MORE', 0.9615, ())], '冥契沒有犧牲召喚物生命：照原作 13% 的比例把 +2.5% 換成更多 19.2% 傷害'),
     'mana_remnants': ([('effect.mana.regen', 'INCREASED', 0.285, ()), ('effect.mana.on_kill', 'FLAT', 0.0142, ())], '魔泉湧沒有殘留物（魔力回復＋擊殺回魔）：照 20 級每顆 281 魔力的比例把 +40 換成兩者各多 14.2%'),
     'scavenged_plating': ([('effect.armour', 'INCREASED', 0.2, ()), ('effect.armour.break', 'INCREASED', 0.2, ())], '拾鱗是一直有的增益（沒有甲片層數）：8 秒 +2 秒的持續時間估平均多一成層數，換成護甲、破甲各增加 4%'),
-    'summon_mount': ([('mount.life_more', 'FLAT', 1.0, ())], '坐騎打不死、沒有生命：更多 20% 最大生命換成騎著時的重暈門檻更多 20%'),
     'feast_of_flesh': ([('corpses.flat', 'FLAT', 0.15, ())], '噬屍宴固定算 3 具屍體（不用屍體）：品質多的 3 具照原作是超過 5 具的部分，身邊超過 5 具時才多吃'),
     'mirage_archer': ([('skill.base_duration_flat', 'FLAT', 0.05, ())], '幻弓影的幻影跟著每一次弓攻擊（沒有持續時間）：+1 秒換成你停手之後幻影再多射 1 秒'),
     'shatter_spikes': ([('spike.more_per_spike', 'FLAT', 0.3, ())], '地刺崩裂沒有實體的地刺：照最近 6 秒內用了幾次算地刺數（最多 6 根）'),

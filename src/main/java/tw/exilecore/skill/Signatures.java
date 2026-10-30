@@ -546,7 +546,21 @@ final class Signatures {
         whirl.center.getWorld().playSound(whirl.center, Sound.ENTITY_BREEZE_WIND_BURST, SoundCategory.PLAYERS, 0.8f, 1.0f);
     }
 
+    /**
+     * 2026-10-30：別的地方放的霆落矛（幻影銳眼的幻影）也插在落點、照常放電與炸開；不碰你自己這一支的怒星。
+     * 這次之前幻影放的霆落矛只有落地那一下，不會插地。
+     */
+    void proxyLanded(final Player player, final SkillBuild build, final Location at, final long now) {
+        if (at != null && "lance".equals(service.config().signature(build.definition().id()))) {
+            lodge(player, build, at, now, false);
+        }
+    }
+
     private void lodge(final Player player, final SkillBuild build, final Location at, final long now) {
+        lodge(player, build, at, now, true);
+    }
+
+    private void lodge(final Player player, final SkillBuild build, final Location at, final long now, final boolean own) {
         final Deque<Lance> mine = lances.computeIfAbsent(player.getUniqueId(), uuid -> new ArrayDeque<>());
         // 2026-10-28 照 PoE2 Storm Lance 的品質：超載的矛上限 +(0—1)（無條件捨去）
         // 2026-10-28 照 PoE2：「上限 3 支插著的矛」吃 +x 上限（過剩）
@@ -554,9 +568,9 @@ final class Signatures {
                 + SkillLimits.bonus(plugin.players().sheet(player), build)) {
             detonate(player, mine.pollFirst()); // 第 4 支：最舊的提早炸開
         }
-        final Integer chargedBenefit = chargedLance.remove(player.getUniqueId());
+        final Integer chargedBenefit = own ? chargedLance.remove(player.getUniqueId()) : null;
         final boolean charged = chargedBenefit != null;
-        final SkillBuild unstaged = unstagedLance.remove(player.getUniqueId());
+        final SkillBuild unstaged = own ? unstagedLance.remove(player.getUniqueId()) : null;
         final SkillBuild lodged = charged && unstaged != null ? unstaged : build;
         // 2026-10-24：倍星觸發（算兩顆）：放電間隔減半 = 放電次數加倍
         final long zap = charged ? Math.max(1, LANCE_CHARGED_ZAP / Math.max(1, chargedBenefit)) : LANCE_ZAP;

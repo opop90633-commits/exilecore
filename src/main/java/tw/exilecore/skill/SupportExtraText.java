@@ -172,7 +172,7 @@ final class SupportExtraText {
             case SupportExtraKeys.DIRESTRIKE -> "這個增益開著時，你在低血時攻擊傷害增加 " + n(value) + "%";
             case SupportExtraKeys.POISE_STUN -> "擊中的暈眩像多造成「你重暈條百分比 × " + n(value / 100) + "」的傷害";
             case SupportExtraKeys.POISE_DAMAGE -> "攻擊傷害照你的重暈條最多更多 " + n(value) + "%";
-            case SupportExtraKeys.DURABILITY -> "留下的冰晶要多打幾下才碎";
+            case SupportExtraKeys.DURABILITY -> "留下的物件多用幾次才消失"; // 2026-10-30 照 PoE2
             case SupportExtraKeys.SLOW_POTENCY -> "施加的緩速效果更強";
             default -> null;
         };

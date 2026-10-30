@@ -24,7 +24,7 @@ public final class SupportColours {
 
     private static final Map<Character, String> LISTS = Map.of(
             RED, // PoE2 RePoE 紅色
-            "bludgeon brutality concussive deep_cuts enraged_warcry_ii execute fire_penetration heavy_swing heft ignition "
+            "bludgeon brutality concussive deep_cuts enraged_warcry_ii execute execute_ii execute_iii fire_penetration heavy_swing heft ignition "
                     + "infernal_legion_ii lacerate_iii life_leech mark_for_death_ii meat_shield paquates_pact "
                     + "prolonged_duration rage ruthless sturdy_totem zerphis_infamy "
                     // 自己歸類（火焰、物理近戰、護甲、戰吼、圖騰、流血、磐星）

@@ -1035,7 +1035,7 @@ j2_cold_resistance_penetration:
 
 j2_critical_strike_chance:
   type: suffix
-  group: j2_critical_strike_chance
+  group: j2_attack_critical_strike_chance   # 2026-10-30 照 PoE2：跟同一類（mod group CriticalStrikeChanceIncrease）共用，同一顆只出一條；這次之前 j2_critical_strike_chance
   spawn_tags: [sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 暴擊率"
@@ -1047,7 +1047,7 @@ j2_critical_strike_chance:
 
 j2_critical_strike_multiplier:
   type: suffix
-  group: j2_critical_strike_multiplier
+  group: j2_attack_critical_strike_multiplier   # 2026-10-30 照 PoE2：跟同一類（mod group CriticalStrikeMultiplier）共用，同一顆只出一條；這次之前 j2_critical_strike_multiplier
   spawn_tags: [sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 暴擊傷害加成"
@@ -1372,7 +1372,7 @@ j2_increased_chill_duration:
 
 j2_increased_mace_damage:
   type: prefix
-  group: j2_increased_mace_damage
+  group: j2_increased_bow_damage   # 2026-10-30 照 PoE2：跟同一類（mod group SpecificWeaponDamage）共用，同一顆只出一條；這次之前 j2_increased_mace_damage
   spawn_tags: [ruby]
   names: [星骸的, 精煉的, 雕琢的]
   text: "使用錘時增加 {value}% 傷害"
@@ -1385,7 +1385,7 @@ j2_increased_mace_damage:
 
 j2_increased_staff_damage:
   type: prefix
-  group: j2_increased_staff_damage
+  group: j2_increased_bow_damage   # 2026-10-30 照 PoE2：跟同一類（mod group SpecificWeaponDamage）共用，同一顆只出一條；這次之前 j2_increased_staff_damage
   spawn_tags: [emerald]
   names: [星骸的, 精煉的, 雕琢的]
   text: "使用長棍時增加 {value}% 傷害"
@@ -1798,7 +1798,7 @@ j2_spell_critical_strike_chance:
 
 j2_staff_attack_speed:
   type: suffix
-  group: j2_staff_attack_speed
+  group: j2_bow_attack_speed   # 2026-10-30 照 PoE2：跟同一類（mod group SpecificWeaponSpeed）共用，同一顆只出一條；這次之前 j2_staff_attack_speed
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "使用長棍時增加 {value}% 攻擊速度"
@@ -1910,7 +1910,7 @@ j2_exposure_chance:
 # ---- 2026-10：變身、詛咒、印記、捷光環、戰吼效果、弩裝填 ----
 j2_shapeshift_damage:
   type: prefix
-  group: j2_shapeshift_damage
+  group: j2_plant_damage   # 2026-10-30 照 PoE2：跟同一類（mod group DamageForm）共用，同一顆只出一條；這次之前 j2_shapeshift_damage
   spawn_tags: [ruby, sapphire]
   names: [星骸的, 精煉的, 雕琢的]
   text: "變身技能增加 {value}% 傷害"
@@ -1921,7 +1921,7 @@ j2_shapeshift_damage:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [shapeshift] }
 j2_shapeshift_speed:
   type: suffix
-  group: j2_shapeshift_speed
+  group: j2_bow_attack_speed   # 2026-10-30 照 PoE2：跟同一類（mod group SpecificWeaponSpeed）共用，同一顆只出一條；這次之前 j2_shapeshift_speed
   spawn_tags: [ruby, sapphire]
   names: [之星骸, 之精煉, 之雕琢]
   text: "變身技能增加 {value}% 攻擊與施放速度"
@@ -1959,7 +1959,7 @@ j2_curse_duration:
     - { stat: skill.duration, type: INCREASED, value: "{value}", tags: [curse] }
 j2_mark_effect:
   type: prefix
-  group: j2_mark_effect
+  group: j2_curse_effect   # 2026-10-30 照 PoE2：跟同一類（mod group CurseEffectiveness）共用，同一顆只出一條；這次之前 j2_mark_effect
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 印記效果"
@@ -2297,7 +2297,7 @@ j2_life_flask_charges_gained:
 
 j2_mana_flask_charges_gained:
   type: suffix
-  group: j2_mana_flask_charges_gained
+  group: j2_life_flask_charges_gained   # 2026-10-30 照 PoE2：跟同一類（mod group FlaskChargeGenerationPercent）共用，同一顆只出一條；這次之前 j2_mana_flask_charges_gained
   spawn_tags: [emerald]
   names: [之星骸, 之精煉, 之雕琢]
   text: "增加 {value}% 魔力藥劑拿到的充能"
@@ -2491,3 +2491,475 @@ j2_minion_chaos_resistance:
     - { tier: 3, ilvl: 1, weight: 1000, value: [7, 13] }
   mods:
     - { stat: resist.chaos, type: FLAT, value: "{value}", tags: [minion] }
+
+# ---- 2026-10-30 照 PoE2 0.5 補齊（tools/apply_poe2_jewel_missing.py）----
+
+j2_armour_break_duration:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelArmourBreakDuration：armour_break_and_sundered_armour_duration_+% 10～20）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_armour_break_duration
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 破甲持續時間"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: armour.break_duration, type: INCREASED, value: "{value}" }
+
+j2_blind_effect:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelBlindEffect：blind_effect_+% 5～10）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_blind_effect
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 致盲效果"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: blind.effect, type: INCREASED, value: "{value}" }
+
+j2_critical_ailment_effect:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelCriticalAilmentEffect：critical_hit_damaging_ailment_effect_+% 10～20）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_critical_ailment_effect
+  spawn_tags: [emerald, sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 你以暴擊造成的傷害型異常狀態幅度"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: ignite.magnitude, type: INCREASED, value: "{value}", tags: [crit_hit] }
+    - { stat: bleed.magnitude, type: INCREASED, value: "{value}", tags: [crit_hit] }
+    - { stat: poison.magnitude, type: INCREASED, value: "{value}", tags: [crit_hit] }
+
+j2_curse_delay:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelCurseDelay：curse_delay_+% -15～-5）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_curse_delay
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "詛咒生效速度加快 {value}%"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
+  mods:
+    - { stat: curse.delay, type: INCREASED, value: "-{value}" }
+
+j2_damage_vs_armour_broken:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelDamagevsArmourBrokenEnemies：damage_+%_against_enemies_with_fully_broken_armour 15～25）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_damage_vs_armour_broken
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "對完全破甲的敵人增加 {value}% 傷害"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [vs_brokenarmour] }
+
+j2_debuff_expiry:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelDebuffExpiry：debuff_time_passed_+% 5～10）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_debuff_expiry
+  spawn_tags: [emerald, sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "你身上的減益效果消退速度加快 {value}%"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: ailment.self_duration, type: INCREASED, value: "-{value}" }
+
+j2_empowered_attack_damage:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelEmpoweredAttackDamage：empowered_attack_damage_+% 10～20）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_empowered_attack_damage
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 強化攻擊的傷害"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [attack, empowered] }
+
+j2_energy:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelEnergy：energy_generated_+% 4～8）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_energy
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 引星獲得的能量"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [4, 8] }
+  mods:
+    - { stat: meta.energy_gain, type: INCREASED, value: "{value}" }
+
+j2_faster_ailments:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelFasterAilments：damaging_ailments_deal_damage_+%_faster 3～7）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_faster_ailments
+  spawn_tags: [emerald, sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "傷害型異常狀態的傷害速度加快 {value}%"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [3, 7] }
+  mods:
+    - { stat: ailment.speed, type: INCREASED, value: "{value}" }
+
+j2_focus_energy_shield:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelFocusEnergyShield：energy_shield_from_focus_+% 30～50）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_focus_energy_shield
+  spawn_tags: [sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 已裝備法器的能量護盾"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [30, 50] }
+  mods:
+    - { stat: focus.es, type: INCREASED, value: "{value}" }
+
+j2_forking_projectiles:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelForkingProjectiles：chance_to_fork_extra_projectile_% 10～15）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_forking_projectiles
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "投射物分裂時有 {value}% 機率額外產生 1 個投射物"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 15] }
+  mods:
+    - { stat: skill.fork_extra_chance, type: FLAT, value: "{value}" }
+
+j2_freeze_threshold:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelFreezeThreshold：freeze_threshold_+% 18～32）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_freeze_threshold
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 凍結門檻"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [18, 32] }
+  mods:
+    - { stat: freeze.threshold, type: INCREASED, value: "{value}" }
+
+j2_life_cost:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelLifeCost：base_skill_cost_life_instead_of_mana_% 4～6）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_life_cost
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "{value}% 的技能魔力消耗轉換為生命消耗"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [4, 6] }
+  mods:
+    - { stat: skill.life_cost_percent, type: FLAT, value: "{value}" }
+
+j2_mark_cast_speed:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelMarkCastSpeed：mark_use_speed_+% 5～15）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_mark_cast_speed
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 印記技能的使用速度"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
+  mods:
+    - { stat: cast.speed, type: INCREASED, value: "{value}", tags: [mark] }
+
+j2_offering_duration:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelOfferingDuration：offering_duration_+% 15～25）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_offering_duration
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 祭品的持續時間"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
+  mods:
+    - { stat: skill.duration, type: INCREASED, value: "{value}", tags: [offering] }
+
+j2_offering_life:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelOfferingLife：offering_life_+% 15～25）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_offering_life
+  spawn_tags: [sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 祭品的最大生命"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
+  mods:
+    - { stat: offering.life, type: INCREASED, value: "{value}" }   # 2026-10-30 照 PoE2：骨柱有生命了；這次之前是一半的祭品持續時間
+
+j2_pin_buildup:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelPinBuildup：hit_damage_pin_multiplier_+% 10～20）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_pin_buildup
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 釘身累積"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: pin.buildup, type: INCREASED, value: "{value}" }
+
+j2_quiver_effect:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelQuiverEffect：quiver_mod_effect_+% 4～6）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_quiver_effect
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 已裝備箭袋提供的加成"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [4, 6] }
+  mods:
+    - { stat: quiver.effect, type: INCREASED, value: "{value}" }
+
+j2_shield_defences:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelShieldDefences：shield_armour_evasion_energy_shield_+% 18～32）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_shield_defences
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 已裝備盾牌的護甲、閃避值與能量護盾"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [18, 32] }
+  mods:
+    - { stat: shield.defences, type: INCREASED, value: "{value}" }
+
+j2_stun_threshold_from_es:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelStunThresholdfromEnergyShield：stun_threshold_+_from_%_maximum_energy_shield 5～15）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_stun_threshold_from_es
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "獲得額外暈眩門檻，等同最大能量護盾的 {value}%"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
+  mods:
+    - { stat: stun.threshold_from_es, type: FLAT, value: "{value}" }
+
+j2_ailment_threshold_from_es:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelAilmentThresholdfromEnergyShield：ailment_threshold_+_from_%_maximum_energy_shield 5～15）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_ailment_threshold_from_es
+  spawn_tags: [sapphire]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "獲得額外異常狀態門檻，等同最大能量護盾的 {value}%"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
+  mods:
+    - { stat: ailment.threshold_from_es, type: FLAT, value: "{value}" }
+
+j2_totem_placement_speed:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelTotemPlacementSpeed：summon_totem_cast_speed_+% 10～20）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_totem_placement_speed
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 圖騰放置速度"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: totem.placement_speed, type: INCREASED, value: "{value}" }
+
+j2_triggered_spell_damage:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelTriggeredSpellDamage：triggered_spell_spell_damage_+% 10～18）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_triggered_spell_damage
+  spawn_tags: [sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "觸發的法術，增加 {value}% 法術傷害"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 18] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [spell, triggered] }
+
+j2_warcry_speed:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelWarcrySpeed：warcry_speed_+% 10～20）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_warcry_speed
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 戰吼速度"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: warcry.speed, type: INCREASED, value: "{value}" }
+
+j2_withered_effect:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelWitheredEffect：withered_magnitude_+% 5～10）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_withered_effect
+  spawn_tags: [sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 凋零幅度"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 10] }
+  mods:
+    - { stat: withered.effect, type: INCREASED, value: "{value}" }
+
+j2_parry_damage:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelParryDamage：parry_damage_+% 15～25）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_damage_corpse   # 2026-10-30 照 PoE2：跟同一類（mod group AllDamage）共用，同一顆只出一條；這次之前 j2_parry_damage
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 招架傷害"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [parry] }
+
+j2_parried_debuff_duration:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelParriedDebuffDuration：parry_skill_effect_duration_+% 10～15）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_parried_debuff_duration
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 被招架減益持續時間"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 15] }
+  mods:
+    - { stat: parry.parried_duration, type: INCREASED, value: "{value}" }
+
+j2_stun_threshold_during_parry:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelStunThresholdDuringParry：parry_stun_threshold_+%_during_parry 15～25）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_stun_threshold_during_parry
+  spawn_tags: [emerald]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "招架時，增加 {value}% 暈眩門檻"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
+  mods:
+    - { stat: stun.threshold@parrying, type: INCREASED, value: "{value}" }
+
+j2_companion_damage:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelCompanionDamage：companion_damage_+% 10～20）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_companion_damage
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 夥伴的傷害"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [minion, companion] }
+
+j2_companion_life:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelCompanionLife：companion_maximum_life_+% 10～20）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_companion_life
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 夥伴的最大生命"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion, companion] }
+
+j2_hazard_damage:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelHazardDamage：hazard_damage_+% 10～20）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_hazard_damage
+  spawn_tags: [emerald]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 危害傷害"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [10, 20] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [hazard] }
+
+j2_incision_chance:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelIncisionChance：chance_to_inflict_incision_on_attack_hit_% 15～25）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_incision_chance
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "攻擊擊中有 {value}% 機率施加切割"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
+  mods:
+    - { stat: incision.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+j2_banner_glory:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelBannerValourGained：glory_generation_+%_for_banners 15～20）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_banner_glory
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 榮耀產生"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 20] }
+  mods:
+    - { stat: cooldown.recovery, type: INCREASED, value: "{value}", tags: [banner] }
+
+j2_banner_area:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelBannerArea：banner_area_of_effect_+% 6～16）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_banner_area
+  spawn_tags: [ruby]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 旗幟技能的範圍效果"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [6, 16] }
+  mods:
+    - { stat: skill.area, type: INCREASED, value: "{value}", tags: [banner] }
+
+j2_banner_duration:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelBannerDuration：banner_duration_+% 15～25）補上；屬性換算照天賦樹同一條
+  type: suffix
+  group: j2_banner_duration
+  spawn_tags: [ruby]
+  names: [之星骸, 之精煉, 之雕琢]
+  text: "增加 {value}% 旗幟技能的持續時間"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
+  mods:
+    - { stat: skill.duration, type: INCREASED, value: "{value}", tags: [banner] }
+
+j2_plant_damage:
+  # 2026-10-30 照 PoE2 0.5（RePoE JewelPlantDamage：plant_skill_damage_+% 5～15）補上；屬性換算照天賦樹同一條
+  type: prefix
+  group: j2_plant_damage
+  spawn_tags: [ruby, emerald, sapphire]
+  names: [星骸的, 精煉的, 雕琢的]
+  text: "增加 {value}% 植物技能的傷害"
+  chips: []
+  tiers:
+    - { tier: 3, ilvl: 1, weight: 1000, value: [5, 15] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [plant] }

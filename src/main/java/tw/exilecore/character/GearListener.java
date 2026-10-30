@@ -117,6 +117,11 @@ final class GearListener implements Listener {
         int index = gear.target(state, base, stack, clicked); // 2026-10-27 荒野領主、2026-10-28 照 PoE2：權杖放副手（點副手那格也放副手）
         if (base.slot() == tw.exilecore.item.ItemSlot.RING) {
             index = Gear.ringTarget(state, gear.ringSlotOpen(player)); // 2026-10-26：展露之指的第三個戒指欄
+            final String solo = Gear.soloRingProblem(plugin, state, stack, index); // 2026-10-30：計數之戒
+            if (solo != null) {
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(solo)));
+                return;
+            }
         }
         if (index == Gear.OFF) {
             final ItemStack main = state.jewellery(Gear.MAIN);

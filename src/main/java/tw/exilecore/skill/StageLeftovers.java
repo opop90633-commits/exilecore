@@ -266,7 +266,7 @@ public final class StageLeftovers implements Listener {
             case "limit.blood_per" -> "每用掉 " + number + " 點失血，血爆範圍更多 10%（最多 500%）";
             case "limit.exposure_level" -> "不會曝露等級高於 " + number + " 的敵人";
             case PUSTULE_MORE_PER -> "毒苞每存 " + number + " 點毒，爆炸更多 1% 傷害（最多 300%）";
-            case PUSTULE_RADIUS_PER -> "毒苞每存 " + number + " 點毒，爆炸半徑 +0.15 格（最多 +2.25 格）"; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前「+0.1 公尺（最多 +1.5）」）
+            case PUSTULE_RADIUS_PER -> "毒苞每存 " + number + " 點毒，爆炸半徑 +0.1 格（最多 +1.5 格）"; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前「+0.1 公尺（最多 +1.5）」）
             case PUSTULE_FASTER_PER -> "毒苞存的毒 × 60 每 " + number + " 點，倒數快 1%";
             default -> null;
         };

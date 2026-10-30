@@ -178,7 +178,9 @@ final class AscGranted implements Listener {
     }
 
     private double level(final Player player, final String skillId, final String stat) {
-        return plugin.skills() == null ? 0 : plugin.skills().levelValue(skillId, stat, plugin.skills().grantedLevel(player));
+        // 2026-10-30 照 PoE2：昇華技能的品質（gem_quality.yml）加在照等級的數值上；只有品質才有的屬性（等級表沒有）就是品質給的值
+        return plugin.skills() == null ? 0 : plugin.skills().levelValue(skillId, stat, plugin.skills().grantedLevel(player))
+                + plugin.skills().ascQualityFlat(player, skillId, stat);
     }
 
     void forget(final UUID player) {
@@ -259,9 +261,10 @@ final class AscGranted implements Listener {
                 final AscendancyEffects.AscState s = effects.state(player);
                 if (s.jade > 0) {
                     final double seconds = Math.max(4, level(player, id, "asc.jade_guard_seconds"));
-                    state.addGuard(state.maxLife() * 0.06 * s.jade, now + Math.round(seconds * 20));
+                    final double perJade = 0.06 + level(player, id, "asc.jade_guard_percent") / 100.0; // 2026-10-30 照 PoE2：品質每層 +(0—1)% 最大生命
+                    state.addGuard(state.maxLife() * perJade * s.jade, now + Math.round(seconds * 20));
                     tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#5fd38a>包覆於翠玉中：用掉 " + s.jade + " 層玉石，獲得 "
-                            + Math.round(state.maxLife() * 0.06 * s.jade) + " 守護"));
+                            + Math.round(state.maxLife() * perJade * s.jade) + " 守護"));
                     s.jade = 0;
                     plugin.players().markDirty(player);
                 }
@@ -368,7 +371,7 @@ final class AscGranted implements Listener {
                 final SkillBuild smaller = mini.withAreaAndProjectiles(mini.areaScale() * 12.0 / 18.0, mini.projectiles());
                 int thrown = 0;
                 for (final LivingEntity enemy : effects.enemiesNear(player, at, 8)) {
-                    if (thrown >= 4) {
+                    if (thrown >= 4 + (int) Math.floor(build.qualityFlat("asc.explosive_extra") + 1e-9)) { // 2026-10-30 照 PoE2：品質多丟 (0—2) 個
                         break;
                     }
                     if (plugin.ailments() != null && plugin.ailments().has(enemy, AilmentType.IGNITE)) {
@@ -699,11 +702,14 @@ final class AscGranted implements Listener {
                 dead.getWorld().spawnParticle(Particle.DUST, dead.getLocation().add(0, 1, 0), 30, radius / 2, 0.5, radius / 2, 0,
                         new Particle.DustOptions(org.bukkit.Color.fromRGB(0x8a0303), 1.4f));
                 final double perSecond = maxLife * 0.02 * Math.min(BOIL_MAX, boil);
-                for (int i = 1; i <= 5; i++) {
+                // 2026-10-30 照 PoE2 Blood Boil 的品質：腐化之血持續時間 +(0—1.5) 秒（最後不滿一秒的照比例）；這次之前固定 5 秒
+                final double seconds = 5 + Math.max(0, level(source, "blood_boil", "asc.boil_seconds"));
+                for (int i = 1; i <= (int) Math.ceil(seconds - 1e-9); i++) {
+                    final double share = Math.min(1, seconds - (i - 1));
                     effects.later(20L * i, () -> {
                         for (final LivingEntity victim : victims) {
                             if (victim.isValid() && !victim.isDead()) {
-                                plugin.ailments().dealFlatPhysical(victim, perSecond, source.getUniqueId());
+                                plugin.ailments().dealFlatPhysical(victim, perSecond * share, source.getUniqueId());
                             }
                         }
                     });
@@ -722,7 +728,8 @@ final class AscGranted implements Listener {
             }
         }
         // 生命痕跡：擊殺 25% 機率
-        if (killer != null && on(killer, "life_remnants") && plugin.random().nextDouble() < 0.25) {
+        if (killer != null && on(killer, "life_remnants")
+                && plugin.random().nextDouble() < 0.25 + level(killer, "life_remnants", "asc.remnant_kill_chance") / 100.0) { // 2026-10-30 照 PoE2：品質 +(0—10)%
             spawnRemnant(killer, dead.getLocation(), "life", level(killer, "life_remnants", "asc.remnant_life"), 160);
         }
     }
@@ -749,10 +756,18 @@ final class AscGranted implements Listener {
         tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.REVERSE_PORTAL, at.clone().add(0, 1, 0), 30, 0.3, 0.8, 0.3, 0.02);
         effects.later(Math.round(Math.max(1, level(player, "void_illusion", "asc.illusion_seconds")) * 20), () -> {
             // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（虛空幻影爆炸 3 公尺，跟 asc_void_explosion 的範圍一樣；這次之前 3 格）
-            if (!player.isOnline() || effects.enemiesNear(player, at, tw.exilecore.core.Units.metres(3)).isEmpty() || plugin.skills() == null) {
+            // 2026-10-30 照 PoE2 Void Illusion 的品質：爆炸半徑 +(0—0.4) 公尺（範圍照半徑平方換算）
+            final double extra = Math.max(0, level(player, "void_illusion", "asc.void_radius"));
+            if (!player.isOnline() || effects.enemiesNear(player, at, tw.exilecore.core.Units.metres(3 + extra)).isEmpty() || plugin.skills() == null) {
                 return;
             }
-            plugin.skills().triggerSkill(player, "asc_void_explosion", at);
+            if (extra > 0) {
+                final double area = Math.pow((3 + extra) / 3, 2) - 1;
+                plugin.skills().triggerSkill(player, "asc_void_explosion", at, plugin.skills().grantedLevel(player),
+                        List.of(Modifier.increased(StatKeys.SKILL_AREA, area, "虛空幻影品質")));
+            } else {
+                plugin.skills().triggerSkill(player, "asc_void_explosion", at);
+            }
         });
     }
 
@@ -774,7 +789,8 @@ final class AscGranted implements Listener {
         }
         final Own o = own(player);
         final long now = now();
-        final double max = Math.min(32000, (sheet.get(StatKeys.ARMOUR) + sheet.get(StatKeys.EVASION)) * 0.30);
+        final double max = Math.min(32000, (sheet.get(StatKeys.ARMOUR) + sheet.get(StatKeys.EVASION))
+                * (0.30 + Math.max(0, level(player, "sorcery_ward", "asc.ward_percent")) / 100.0)); // 2026-10-30 照 PoE2：品質 +(0—5)%
         if (o.ward < 0 || now >= o.wardReady && o.ward < max) {
             o.ward = max;
         }
@@ -897,7 +913,8 @@ final class AscGranted implements Listener {
         if (kind.equals("life")) {
             return 0;
         }
-        return level(owner, "into_the_breach", "asc.flame_effect") / 100.0;
+        return level(owner, "into_the_breach", "asc.flame_effect") / 100.0
+                * (1 + Math.max(0, level(owner, "into_the_breach", "asc.flame_effect_inc")) / 100.0); // 2026-10-30 照 PoE2：品質增加 (0—15)% 夏烏拉之炎效果
     }
 
     // =====================================================================
@@ -1063,7 +1080,8 @@ final class AscGranted implements Listener {
         if (on(player, "align_fate") && now >= o.alignNext) {
             final List<String> spells = alignSpells(state);
             final double base = Math.max(9, level(player, "align_fate", "asc.visage_interval"));
-            final double speed = Math.max(0.1, 1 + sheet.increased(StatKeys.COOLDOWN_RECOVERY, Set.of())) * (1 + 0.25 * spells.size());
+            final double speed = Math.max(0.1, 1 + sheet.increased(StatKeys.COOLDOWN_RECOVERY, Set.of())) * (1 + 0.25 * spells.size())
+                    * (1 + Math.max(0, level(player, "align_fate", "asc.visage_frequency")) / 100.0); // 2026-10-30 照 PoE2：品質更多 (0—20)% 殘影頻率
             o.alignNext = now + Math.round(base * 20 / speed);
             if (!spells.isEmpty()) {
                 final String spell = spells.get(plugin.random().nextInt(spells.size()));
@@ -1135,7 +1153,7 @@ final class AscGranted implements Listener {
         }
         // 壞滅災變：每 0.75 秒一種天災
         if (o.apocalypseUntil > now && now >= o.apocalypseNext) {
-            o.apocalypseNext = now + 15;
+            o.apocalypseNext = now + Math.max(1, Math.round(15 / (1 + Math.max(0, level(player, "apocalypse", "asc.apocalypse_frequency")) / 100.0))); // 2026-10-30 照 PoE2：品質增加 (0—15)% 頻率
             final List<LivingEntity> near = effects.enemiesNear(player, player.getLocation(), 7);
             final Location at = near.isEmpty() ? player.getLocation().add(plugin.random().nextGaussian() * 3, 0, plugin.random().nextGaussian() * 3)
                     : near.get(plugin.random().nextInt(near.size())).getLocation();
@@ -1379,6 +1397,7 @@ final class AscGranted implements Listener {
         }
         final Location from = o.mirageAt.clone();
         plugin.skills().recast(player, fired, from, target.getLocation().toVector().subtract(from.toVector()).normalize(), target);
+        plugin.skills().proxyLanded(player, fired, target.getLocation()); // 2026-10-30：幻影擲的霆落矛也插在落點（這次之前只有落地那一下）
         from.getWorld().spawnParticle(Particle.END_ROD, from.clone().add(0, 1, 0), 8, 0.2, 0.5, 0.2, 0.01);
     }
 
@@ -1414,8 +1433,9 @@ final class AscGranted implements Listener {
             out.add(Modifier.increased(StatKeys.ES_MAX, 0.05 * own.motes[1], "高尚禦盾"));
         }
         if (own.motes[2] > 0) {
-            out.add(Modifier.increased(StatKeys.LIFE_REGEN, 0.05 * own.motes[2], "高尚禦盾"));
-            out.add(Modifier.increased(StatKeys.MANA_REGEN, 0.05 * own.motes[2], "高尚禦盾"));
+            final double regen = 0.05 + Math.max(0, level(player, "virtuous_barrier", "asc.mote_regen")) / 100.0; // 2026-10-30 照 PoE2：品質每顆 +(0—2.5)%
+            out.add(Modifier.increased(StatKeys.LIFE_REGEN, regen * own.motes[2], "高尚禦盾"));
+            out.add(Modifier.increased(StatKeys.MANA_REGEN, regen * own.motes[2], "高尚禦盾"));
         }
         if (own.purple > 0) {
             final double effect = 1 + state.sheet().increased(AscKeys.REMNANT_EFFECT, Set.of()) + flameEffect(player, "purple");

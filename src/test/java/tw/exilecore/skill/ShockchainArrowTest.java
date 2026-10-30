@@ -192,7 +192,8 @@ class ShockchainArrowTest {
         // 2026-10-29 照 poe2db 寶石頁「增加 (0—20)% 閃電傷害」（2026-10-28 寫成更多）
         final List<Modifier> normal = GemQuality.modifiers("chain_arrow", 20, "q");
         assertNotNull(normal);
-        assertTrue(normal.stream().anyMatch(m -> m.stat().equals(StatKeys.DAMAGE) && m.type() == ModType.INCREASED && m.tags().contains("lightning")));
+        // 2026-10-30 照 RePoE quality_stats 與 poe2db 英文頁：更多（more）
+        assertTrue(normal.stream().anyMatch(m -> m.stat().equals(StatKeys.DAMAGE) && m.type() == ModType.MORE && m.tags().contains("lightning")));
         final List<Modifier> advanced = GemQuality.advancedModifiers("chain_arrow", 20, "q");
         assertNotNull(advanced);
         assertTrue(advanced.stream().anyMatch(m -> m.stat().equals(StatKeys.ATTACK_SPEED) && m.type() == ModType.MORE));

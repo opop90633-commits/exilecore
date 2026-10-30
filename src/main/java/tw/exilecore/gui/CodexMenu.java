@@ -675,7 +675,7 @@ public final class CodexMenu extends Menu {
         final String key = source.toLowerCase(Locale.ROOT);
         switch (key) {
             case "weapon":
-                return "法杖、長杖、權杖賦予";
+                return "武器、盾牌賦予"; // 2026-10-30
             case "gamble":
                 return "賭博（商人的未鑑定裝備）";
             case "chance":
@@ -821,7 +821,7 @@ public final class CodexMenu extends Menu {
         lines.add("");
         lines.add("<#f5b942>━━ 圖鑑 ━━");
         if ("weapon".equals(definition.source())) { // 2026-10-26：法杖、長杖、權杖賦予（沒有寶石）
-            lines.add("<#d4a017>法杖、長杖、權杖賦予<gray>：裝備賦予這個技能的武器就會出現在技能面板，沒有寶石");
+            lines.add("<#d4a017>武器、盾牌賦予<gray>：裝備賦予這個技能的武器或盾牌就會出現在技能面板，沒有寶石"); // 2026-10-30：盾牌也會賦予
         } else if ("ascendancy".equalsIgnoreCase(definition.source())) { // 2026-10-27 照站長：寫出是哪個昇華專屬
             lines.add("<#d4a017>" + ItemRenderer.escape(skillSourceLabel(plugin, definition)) + "<gray>：點了那個天賦就會出現在技能面板，沒有寶石");
         } else if (!definition.engravable()) {

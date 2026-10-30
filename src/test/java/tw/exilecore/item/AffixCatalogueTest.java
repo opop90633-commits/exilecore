@@ -107,7 +107,15 @@ class AffixCatalogueTest {
         for (final String ailment : List.of("chilled", "frozen", "ignited", "shocked", "poisoned", "bleeding")) {
             stats.add(StatKeys.DAMAGE_VS_AILMENT + ailment);
         }
+        // 2026-10-30 照 PoE2 補的珠寶詞綴：跟天賦樹同一批屬性鍵（天賦樹讀的屬性表跟珠寶是同一張）
+        for (final Class<?> keys : List.of(tw.exilecore.stats.TreeEffectKeys.class, tw.exilecore.stats.SupportKeys.class,
+                tw.exilecore.stats.TreeKeys.class, tw.exilecore.stats.TreeMechanicKeys.class, tw.exilecore.stats.TreeNewMechanicKeys.class)) {
+            stats.addAll(constants(keys));
+        }
         tags = constants(Tags.class);
+        // 2026-10-30：天賦樹也用的標籤（暴擊造成的、對完全破甲、強化攻擊、祭品、觸發、招架、夥伴、危害、旗幟、植物）
+        tags.addAll(List.of("crit_hit", tw.exilecore.stats.TreeConditions.VS_BROKEN_ARMOUR, "empowered", "offering", "triggered", "parry",
+                "companion", "hazard", "banner", "plant"));
         tags.add("curse"); // 2026-10：詛咒技能的標籤（SkillDefinition 給範圍印記加的，Tags 沒有常數）
     }
 

@@ -96,6 +96,62 @@ public final class Gear {
     /**
      * 戒指要裝進哪一格（2026-10-26）：第一個空的戒指欄（第一、第二，開了的話第三）；都滿了換掉第一格。
      */
+    /** 2026-10-30 照站長：戒指欄（第一、第二、展露之指的第三個）。 */
+    private static final int[] RING_SLOTS = {0, 1, PlayerState.RING3_SLOT};
+
+    /** 這件有沒有「不能使用其他戒指」（計數之戒）。 */
+    public static boolean onlyRing(final ExileCore plugin, final ItemStack stack) {
+        if (stack == null || stack.isEmpty() || plugin.items() == null) {
+            return false;
+        }
+        final ItemData data = plugin.items().read(stack).orElse(null);
+        if (data == null) {
+            return false;
+        }
+        for (final tw.exilecore.item.RolledAffix rolled : data.affixes()) {
+            final tw.exilecore.item.Affix affix = plugin.items().repository().affix(rolled.id());
+            if (affix == null) {
+                continue;
+            }
+            for (final tw.exilecore.item.AffixMod mod : affix.mods()) {
+                if (tw.exilecore.item.unique.UniqueStats.ONLY_RING.equals(mod.stat())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 2026-10-30 照站長：戴著「不能使用其他戒指」（計數之戒）時另一個戒指欄放不進去；要戴計數之戒，其他戒指欄要先空著。
+     * 放進 target 那一格（原本那一格的東西會換下來，不算）。不是戒指、沒問題回傳 null。
+     */
+    public static String soloRingProblem(final ExileCore plugin, final PlayerState state, final ItemStack incoming, final int target) {
+        final boolean incomingSolo = onlyRing(plugin, incoming);
+        for (final int slot : RING_SLOTS) {
+            if (slot == target) {
+                continue;
+            }
+            final ItemStack other = state.jewellery(slot);
+            if (other == null || other.isEmpty()) {
+                continue;
+            }
+            if (onlyRing(plugin, other)) {
+                return "戴著" + itemName(plugin, other) + "（不能使用其他戒指）：另一個戒指欄不能放戒指";
+            }
+            if (incomingSolo) {
+                return itemName(plugin, incoming) + "不能使用其他戒指：先把其他戒指拿下來";
+            }
+        }
+        return null;
+    }
+
+    private static String itemName(final ExileCore plugin, final ItemStack stack) {
+        final ItemData data = plugin.items() == null ? null : plugin.items().read(stack).orElse(null);
+        final tw.exilecore.item.UniqueItem unique = data == null || data.unique() == null ? null : plugin.items().repository().unique(data.unique());
+        return unique == null ? "這枚戒指" : unique.name();
+    }
+
     public static int ringTarget(final PlayerState state, final boolean thirdOpen) {
         if (state.jewellery(0) == null) {
             return 0;
@@ -817,6 +873,10 @@ public final class Gear {
         }
         if (base.slot() == ItemSlot.RING) {
             target = ringTarget(state, ringSlotOpen(player)); // 2026-10-26：展露之指的第三個戒指欄
+            final String solo = soloRingProblem(plugin, state, stack, target); // 2026-10-30：計數之戒
+            if (solo != null) {
+                return solo;
+            }
         }
         if (target == OFF) {
             final String problem = pairProblem(baseOf(state.jewellery(MAIN)), base, plugin, state);
@@ -857,6 +917,12 @@ public final class Gear {
         }
         if (index == PlayerState.RING3_SLOT && !ringSlotOpen(player)) {
             return "沒有第三個戒指欄（要「+1 戒指欄位」）";
+        }
+        if (base.slot() == ItemSlot.RING) {
+            final String solo = soloRingProblem(plugin, state, stack, index); // 2026-10-30：計數之戒
+            if (solo != null) {
+                return solo;
+            }
         }
         final String blocked = plugin.players().equipProblem(player, stack); // 2026-10：未鑑定、需求不夠的穿不上
         if (blocked != null) {

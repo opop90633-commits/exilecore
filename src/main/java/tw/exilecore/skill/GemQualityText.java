@@ -112,7 +112,7 @@ final class GemQualityText {
             Map.entry("stampede", "{slam.aftershock_chance}% 機率多一次餘震"),
             Map.entry("storm_orb", "連鎖 +{i:skill.chains} 次、雷雲多放 {i:orb.extra_bolts} 道雷才消失"), // 2026-10-29 照 PoE2
             Map.entry("storm_javelin", "超載的矛上限 +{i:lance.overcharged_extra}"),
-            Map.entry("summon_mount", "騎著時的重暈門檻更多 {mount.life_more}%"),
+            Map.entry("summon_mount", "戰馬更多 {life.max}% 最大生命"), // 2026-10-30 照 PoE2：沒騎時陪你打的戰馬會被打了（這次之前坐騎打不死，換成騎著時的重暈門檻）
             Map.entry("sunder", "照距離的命中懲罰減少 {-accuracy.range_penalty}%"),
             Map.entry("sunfire_spear", "{glory.retain_chance}% 機率用的時候保留 40% 榮耀"),
             Map.entry("supercharged_slam", "最大階段 +{i:charge.stages_flat}"),
@@ -127,7 +127,31 @@ final class GemQualityText {
             Map.entry("whirlwind_lance", "旋風崩散每多一階再更多 {whirl.collapse_more_per_stage}% 傷害"),
             Map.entry("wing_blast", "重暈蓄勢待暈的敵人時另外 {charge.event.stun_primed.power}% 機率獲得銳星"),
             Map.entry("withering_presence", "凋零持續時間 +{withering.seconds} 秒"),
-            Map.entry("wyvern_rend", "增益另外獲得 {effect.damage.gain.lightning}% 傷害為閃電"));
+            Map.entry("wyvern_rend", "增益另外獲得 {effect.damage.gain.lightning}% 傷害為閃電"),
+            // 2026-10-30 照 PoE2：昇華賦予的技能（gem_quality.yml 的 asc.＊ 是昇華那邊照等級讀的數值，品質加在上面）
+            Map.entry("align_fate", "殘影施放的頻率更多 {asc.visage_frequency}%"),
+            Map.entry("apocalypse", "天災觸發的頻率增加 {asc.apocalypse_frequency}%"),
+            Map.entry("archon_of_chayula", "增益另外更多 {effect.damage}% 物理與混沌傷害"),
+            Map.entry("blood_boil", "腐化之血持續時間 +{asc.boil_seconds} 秒"),
+            Map.entry("demon_form", "惡魔變身時另外增加 {effect.cast.speed}% 施法速度"),
+            Map.entry("encase_in_jade", "每層玉石的守護 +{asc.jade_guard_percent}% 最大生命"),
+            Map.entry("explosive_concoction", "多丟給 {i:asc.explosive_extra} 個點燃中的敵人"),
+            Map.entry("hollow_focus", "鐘出現的半徑 -{-m:asc.bell_spawn} 格"),
+            Map.entry("hollow_form", "{charge.sup.keep}% 機率不拿掉銳星但照樣算用掉"),
+            Map.entry("hollow_resonance", "鐘響更多 {asc.resonance_stun}% 暈眩累積"),
+            Map.entry("inevitable_agony", "一開始的半徑 +{asc.agony_radius} 格"),
+            Map.entry("into_the_breach", "夏烏拉之炎的效果增加 {asc.flame_effect_inc}%"),
+            Map.entry("kelari_malediction", "甲蟲上限 +{i:asc.beetle_max}"),
+            Map.entry("life_remnants", "擊殺時產生痕跡的機率 +{asc.remnant_kill_chance}%"),
+            Map.entry("meditate", "能量護盾回充速度另外更多 {effect.es.recharge}%"),
+            Map.entry("mirage_deadeye", "幻影持續時間 +{asc.mirage_seconds} 秒"),
+            Map.entry("primal_bounty", "強化的投射物速度另外增加 {asc.bounty_speed}%"),
+            Map.entry("ritual_sacrifice", "獲得的怪物詞綴持續時間 +{asc.sacrifice_seconds} 秒"),
+            Map.entry("sorcery_ward", "屏障另外吸收護甲與閃避總和的 {asc.ward_percent}%"),
+            Map.entry("unbound_avatar", "無縛持續時間 +{asc.buff_seconds} 秒"),
+            Map.entry("virtuous_barrier", "每顆智慧寶珠另外增加 {asc.mote_regen}% 生命與魔力再生"),
+            Map.entry("vivid_stampede", "震波半徑 +{m:asc.stag_radius} 格"),
+            Map.entry("void_illusion", "爆炸半徑 +{m:asc.void_radius} 格"));
 
     /** 原作的品質效果我們沒有對應機制（品質寫 []）的：技能代號 → {原因樣板, 每 1% 品質的原作數值}；{v} 換成這個品質的數值。 */
     static final Map<String, Object[]> NO_EFFECT = Map.ofEntries(
@@ -135,7 +159,8 @@ final class GemQualityText {
             Map.entry("bramble_arrow", new Object[] {"這個技能的品質沒有效果", 0.5}),
             Map.entry("sigil_of_power", new Object[] {"這個技能的品質沒有效果", 0.04}),
             Map.entry("vault_strike", new Object[] {"這個技能的品質沒有效果", 0.1}),
-            Map.entry("wind_dancer", new Object[] {"這個技能的品質沒有效果", 0.02}));
+            Map.entry("wind_dancer", new Object[] {"這個技能的品質沒有效果", 0.02}),
+            Map.entry("moment_of_vulnerability", new Object[] {"這個技能的品質沒有效果", 1.0})); // 2026-10-30：原作打殘影的傷害給本體，我們沒有時空殘影
 
     /** 這個技能 quality% 的說明本體（不含「品質 +x%：」）；不是這次接上的回傳 null。 */
     static String body(final String skillId, final List<Modifier> mods, final int quality) {

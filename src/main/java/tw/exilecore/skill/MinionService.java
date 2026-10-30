@@ -83,7 +83,7 @@ public final class MinionService implements Listener, MinionHooks {
     static final long FOCUS_TICKS = 60;
     /** 焚魂飛行速度（格／tick）。 */
     static final double FLY_SPEED = 0.32;
-    /** 一個玩家全部的召喚物最多幾隻（各技能的上限另外算；2026-10-16：40 → 50；2026-10-27 照站長：50 → 40；2026-10-29 照站長：40 → 60 → 80）。 */
+    /** 一個玩家全部的召喚物最多幾隻（各技能的上限另外算；2026-10-30 照 PoE2：精魂召喚不算在內；2026-10-16：40 → 50；2026-10-27 照站長：50 → 40；2026-10-29 照站長：40 → 60 → 80）。 */
     static final int MAX_PER_PLAYER = 80;
 
     /** 一隻召喚物。 */
@@ -128,8 +128,17 @@ public final class MinionService implements Listener, MinionHooks {
         long treeBuffUntil;
         /** 強化（2026-10 PoE2 喚屍：吃銳星叫出來的那隻）：一直有效的修飾器。 */
         List<Modifier> empowered = List.of();
+        /** 2026-10-30 照 PoE2 Tame Beast：收服的野獸帶著的怪物詞綴（最多 4 個）。 */
+        List<Modifier> tamed = List.of();
+        /** 2026-10-30 照 PoE2 Tame Beast：收服的野獸自己的招式（那種怪的招式＋詞綴給的招式，boss_skills.yml）。 */
+        List<BossSkillUse> tamedSkills = List.of();
         /** 殘影（2026-10）：站著不動、不打人，只負責嘲諷；不算數量上限、不顯示在快捷欄、死了不觸發。 */
         boolean decoy;
+        /**
+         * 2026-10-30 照 PoE2（Offering Spike）：祭品的骨柱。也是 decoy（不動、不打、不算數量、不在快捷欄），
+         * 但不嘲諷，只像一般召喚物一樣讓附近還沒有目標的怪去打它；被打死祭品的效果就結束。
+         */
+        boolean spike;
         /** 2026-10-30（群鋒）：現在的更多傷害（0.21 = 更多 21%；每秒照主人有幾種復活型召喚物重算）。 */
         double musterMore;
         // ---- 2026-10-26 照 PoE2 ----
@@ -320,11 +329,16 @@ public final class MinionService implements Listener, MinionHooks {
         int others = 0;
         for (final Minion minion : minions) {
             // 2026-10-27：殘影（分身）不算召喚物上限（這次之前算進去，放一個殘影精魂召喚的上限就少一隻、被收掉一隻）
-            if (minion.owner.equals(owner) && !minion.decoy && !minion.skillId().equals(skillId)) {
+            if (minion.owner.equals(owner) && !minion.decoy && !spirit(minion) && !minion.skillId().equals(skillId)) { // 2026-10-30：精魂召喚不算總上限
                 others++;
             }
         }
         return clampToRoom(Integer.MAX_VALUE, others);
+    }
+
+    /** 2026-10-30 照 PoE2：精魂召喚（每隻保留精魂）只受精魂限制，不算進一個人的召喚物總上限、也不會被別的召喚擠掉。 */
+    static boolean spirit(final Minion minion) {
+        return minion.build.definition().aura() != null;
     }
 
     /** 2026-10-27：上限 wanted 夾在總上限剩下的空間裡（測試用）。 */
@@ -495,7 +509,8 @@ public final class MinionService implements Listener, MinionHooks {
                 continue;
             }
             final boolean fresh = minion.offeringUntil <= now;
-            minion.offering = List.copyOf(mods);
+            // 2026-10-30 照 PoE2 Bone Offering：這一輪護盾已經爆掉的召喚物，骨柱還立著時不再拿到護盾（減傷與吸收）
+            minion.offering = !fresh && minion.shieldLostAt >= 0 ? withoutShield(mods) : List.copyOf(mods);
             minion.offeringUntil = now + ticks;
             if (fresh) {
                 minion.shieldLostAt = -1; // 2026-10-28：新的一輪祭品，護盾重新有
@@ -852,11 +867,15 @@ public final class MinionService implements Listener, MinionHooks {
         final Vector facing = SkillTargets.facing(player);
         final String ownerName = plugin.players().get(player).character() == null ? player.getName()
                 : plugin.players().get(player).character().name();
-        final String name = "<#8fd3ff>" + tw.exilecore.item.ItemRenderer.escape(build.definition().name())
+        // 2026-10-30 照 PoE2 Tame Beast：收服了野獸的狼伴叫的是那隻野獸（名字、種類、強度照那種怪，帶著牠最多 4 個怪物詞綴）
+        final boolean beast = MinionAbilities.BEAST.equals(build.definition().id());
+        final String tamedKind = beast ? tamedKind(player) : null;
+        final String name = "<#8fd3ff>" + tw.exilecore.item.ItemRenderer.escape(tamedKind != null
+                ? "夥伴：" + spectreName(plugin.monsters().config(), tamedKind) : beast ? "夥伴：狼" : build.definition().name())
                 + " <gray>（" + tw.exilecore.item.ItemRenderer.escape(ownerName) + "）";
         for (int i = 0; i < count; i++) {
             Location at;
-            String spectreKind = null;
+            String spectreKind = tamedKind;
             Corpses.Contagion carried = null; // 2026-10-28 照 PoE2 Contagion：復活帶著瘟疫的屍體，召喚物擊中時傳出瘟疫
             if (fixed != null) {
                 at = ground(fixed.get(i).clone()); // 2026-10-27 掘骸：屍體的位置
@@ -897,7 +916,9 @@ public final class MinionService implements Listener, MinionHooks {
             final List<Minion> all = new ArrayList<>();
             for (final Minion minion : minions) {
                 if (minion.owner.equals(owner) && !minion.decoy) { // 2026-10-27：殘影不算總上限（跟 room 一樣）
-                    all.add(minion);
+                    if (!spirit(minion)) { // 2026-10-30：精魂召喚不算總上限
+                        all.add(minion);
+                    }
                     if (minion.skillId().equals(build.definition().id())) {
                         mine.add(minion);
                     }
@@ -908,7 +929,7 @@ public final class MinionService implements Listener, MinionHooks {
                 all.remove(oldest);
                 remove(oldest, Gone.REPLACED);
             }
-            while (all.size() >= MAX_PER_PLAYER) {
+            while (build.definition().aura() == null && all.size() >= MAX_PER_PLAYER) {
                 remove(all.removeFirst(), Gone.REPLACED);
             }
             final Mob mob = spawn(player, build, spec, at, name, spectreKind);
@@ -919,9 +940,14 @@ public final class MinionService implements Listener, MinionHooks {
                 plugin.ailments().carryContagion(mob, carried);
             }
             // 2026-10-26 照 PoE2 附魂術：附身的召喚物用那種怪物原本的倍率（monsters.yml 的 types；生命、傷害）
-            final SummonSpec own = spec.spectre() && spectreKind != null ? spectreSpec(spec, spectreKind) : spec;
+            final SummonSpec own = spec.spectre() && spectreKind != null ? spectreSpec(spec, spectreKind)
+                    : tamedKind != null ? tamedSpec(spec, tamedKind) : spec;
             final Minion minion = new Minion(owner, build, own, mob, name, now, spec.permanent() ? 0 : now + build.durationTicks(spec.duration() + durationFlat(build)));
             minion.spectreType = spec.spectre() ? spectreKind : null;
+            if (tamedKind != null) {
+                minion.tamed = tamedModifiers(player);
+                minion.tamedSkills = tamedSkillUses(player, tamedKind);
+            }
             if (i == 0 && !first.isEmpty()) {
                 minion.empowered = first;
                 mob.setGlowing(true); // 強化的那隻發光，好認
@@ -938,6 +964,109 @@ public final class MinionService implements Listener, MinionHooks {
         refreshHud(owner);
     }
 
+    /** 2026-10-30 照 PoE2 Offering Spike：骨柱的生命是同等級召喚物的幾倍（Pain／Power 0.18、Bone 0.35，poe2db Offering Spike 的 Life%）。 */
+    static final double SPIKE_LIFE = 0.18;
+    static final double SPIKE_LIFE_BONE = 0.35;
+
+    /**
+     * 2026-10-30 照 PoE2（Pain／Bone／Soul Offering）：在 at 立一根骨柱，骨柱本身是召喚物（等級＝寶石等級 × 2，生命照召喚物表 × lifeMultiplier，
+     * 吃召喚物生命的加成與「祭品的最大生命」），不動、不打人；ticks 後或被打死就倒。own 是一直給骨柱的修飾器（骸骨祭：骨柱也有護盾）。
+     * 回傳骨柱的實體代號（叫不出來回傳 null）。
+     */
+    UUID spike(final Player player, final SkillBuild build, final Location at, final double lifeMultiplier, final int ticks, final List<Modifier> own) {
+        if (at.getWorld() == null) {
+            return null;
+        }
+        final java.util.Map<String, Object> summon = new java.util.LinkedHashMap<>();
+        summon.put("kind", "SKELETON");
+        summon.put("ally", true);
+        summon.put("life", lifeMultiplier);
+        summon.put("armour", 1.0); // poe2db：Armour 2413 = 同等級召喚物的護甲
+        summon.put("duration", Math.max(0.5, Math.min(120, ticks / 20.0)));
+        summon.put("speed", 0.5);
+        final SummonSpec spec = SummonSpec.parse(tw.exilecore.core.config.YamlNode.of("祭品骨柱", java.util.Map.of("summon", summon)),
+                build.definition().name());
+        Location spot = ground(at.clone());
+        if (spot == null) {
+            spot = at.clone();
+        }
+        final String name = "<#e0d6b8>" + tw.exilecore.item.ItemRenderer.escape(build.definition().name()) + "骨柱";
+        final Mob mob = spawn(player, build, spec, spot, name, null);
+        if (mob == null) {
+            return null;
+        }
+        mob.setAI(false);
+        mob.setInvisible(true); // 外觀是 Warcries 立的骨柱方塊
+        final EntityEquipment equipment = mob.getEquipment();
+        if (equipment != null) {
+            equipment.clear();
+        }
+        final long now = now();
+        final Minion minion = new Minion(player.getUniqueId(), build, spec, mob, name, now, now + ticks);
+        minion.decoy = true;
+        minion.spike = true;
+        final StatSheet ownerSheet = plugin.players().sheet(player);
+        final double offeringLife = ownerSheet == null ? 0
+                : ownerSheet.increased(tw.exilecore.stats.TreeMechanicKeys.OFFERING_LIFE, build.profile().tags());
+        final List<Modifier> always = new ArrayList<>(own);
+        if (Math.abs(offeringLife) > 1e-9) {
+            always.add(new Modifier(tw.exilecore.stats.StatKeys.LIFE_MAX, tw.exilecore.stats.ModType.INCREASED, offeringLife, Set.of(), "祭品的最大生命"));
+        }
+        minion.empowered = List.copyOf(always);
+        rebuild(minion, ownerSheet, true);
+        final AttributeInstance speed = mob.getAttribute(Attribute.MOVEMENT_SPEED);
+        if (speed != null) {
+            speed.removeModifier(speedKey);
+            speed.setBaseValue(0);
+        }
+        minions.add(minion);
+        byEntity.put(mob.getUniqueId(), minion);
+        syncName(minion, now);
+        return mob.getUniqueId();
+    }
+
+    /** 2026-10-30：這根骨柱還立著嗎（沒被打死、沒到期）。 */
+    boolean spikeStanding(final UUID mob) {
+        final Minion minion = mob == null ? null : byEntity.get(mob);
+        return minion != null && minion.spike && minion.mob.isValid() && !minion.mob.isDead();
+    }
+
+    /** 2026-10-30：祭品結束（時間到、被新的換掉）：把骨柱收掉。 */
+    void removeSpike(final UUID mob) {
+        final Minion minion = mob == null ? null : byEntity.get(mob);
+        if (minion != null && minion.spike) {
+            remove(minion, Gone.QUIET);
+        }
+    }
+
+    /**
+     * 2026-10-30 照 PoE2（Skewer a Skeleton on a bone spike）：祭品要串一隻你的骷髏（骸骨戰士、狂卒、射手、術士、祭司…）。
+     * 找 near 附近 search 格內最近的一隻，獻祭掉，回傳牠的位置；沒有回傳 null（take = false 只看有沒有）。
+     */
+    Location offeringSkeleton(final Player owner, final Location near, final double search, final boolean take) {
+        Minion pick = null;
+        double best = Double.MAX_VALUE;
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner.getUniqueId()) && !minion.decoy && minion.mob.isValid() && !minion.mob.isDead()
+                    && SKELETONS.contains(minion.skillId()) && minion.mob.getWorld().equals(near.getWorld())) {
+                final double d = minion.mob.getLocation().distanceSquared(near);
+                if (d <= search * search && d < best) {
+                    best = d;
+                    pick = minion;
+                }
+            }
+        }
+        if (pick == null) {
+            return null;
+        }
+        final Location at = pick.mob.getLocation();
+        if (take) {
+            pick.mob.getWorld().spawnParticle(org.bukkit.Particle.SOUL, at.clone().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.03);
+            remove(pick, Gone.EXPIRED);
+        }
+        return at;
+    }
+
     /**
      * 殘影（2026-10）：在 at 留一個主人模樣的分身（戴主人的頭、穿主人的盔甲外觀），站著不動、一直嘲諷附近的怪，
      * 時間到或被打爆就消失。同一個人同時只有一個（新的換掉舊的）；不算召喚物數量上限。
@@ -949,7 +1078,7 @@ public final class MinionService implements Listener, MinionHooks {
         }
         final UUID owner = player.getUniqueId();
         for (final Minion minion : new ArrayList<>(minions)) {
-            if (minion.owner.equals(owner) && minion.decoy) {
+            if (minion.owner.equals(owner) && minion.decoy && !minion.spike) { // 2026-10-30：祭品的骨柱不是殘影
                 remove(minion, Gone.REPLACED);
             }
         }
@@ -1057,6 +1186,19 @@ public final class MinionService implements Listener, MinionHooks {
             mob.setCollidable(false);
             mob.customName(plugin.text().parse(name));
             mob.setCustomNameVisible(true);
+            // 2026-10-30 馴獸：收服的苦力怕不會爆、史萊姆固定大小（死掉不分裂：onSlimeSplit）
+            if (mob instanceof org.bukkit.entity.Creeper creeper) {
+                creeper.setExplosionRadius(0);
+                creeper.setMaxFuseTicks(Integer.MAX_VALUE);
+            }
+            if (mob instanceof org.bukkit.entity.Slime slime) {
+                slime.setSize(2);
+            }
+            if (mob instanceof org.bukkit.entity.Horse horse) { // 2026-10-30 喚駒：陪你打的戰馬跟騎的那匹長一樣（不能被騎：Mounts.onInteract）
+                horse.setColor(org.bukkit.entity.Horse.Color.BLACK);
+                horse.setStyle(org.bukkit.entity.Horse.Style.WHITE);
+                horse.getInventory().setArmor(new ItemStack(Material.IRON_HORSE_ARMOR));
+            }
             mob.getPersistentDataContainer().set(key, PersistentDataType.STRING, player.getUniqueId().toString());
             mob.getPersistentDataContainer().set(skillKey, PersistentDataType.STRING, build.definition().id());
             if (MinionAbilities.commandOnly(build.definition().id()) || spec.immortal()) {
@@ -1221,6 +1363,7 @@ public final class MinionService implements Listener, MinionHooks {
             ownerModifiers.addAll(auras.effectsFor(minion.owner)); // 光環給召喚物的是完整效果（PoE 的規矩）
         }
         ownerModifiers.addAll(minion.empowered);
+        ownerModifiers.addAll(minion.tamed); // 2026-10-30 照 PoE2 Tame Beast：收服的野獸保留的怪物詞綴
         if (tw.exilecore.ascendancy.AscendancyEffects.get() != null) {
             ownerModifiers.addAll(tw.exilecore.ascendancy.AscendancyEffects.get().minionWeapon(minion.owner, minion.mob.getLocation())); // 2026-10-27 照 PoE2：看看我怎麼辦事的（友軍含召喚物）
         }
@@ -1333,6 +1476,7 @@ public final class MinionService implements Listener, MinionHooks {
 
     void tick() {
         final long now = now();
+        tickTaming(now); // 2026-10-30 照 PoE2 Tame Beast：鬼火纏住的野獸
         projectiles.tick(); // 2026-10-29 照 PoE2：遠程召喚物的投射物往前飛
         tickClouds(now); // 2026-10-26：射手的毒雲
         if (now % 200 == 0) {
@@ -1430,6 +1574,10 @@ public final class MinionService implements Listener, MinionHooks {
             if (minion.spec.taunt() > 0 && now >= minion.nextTaunt) {
                 minion.nextTaunt = now + Math.round(minion.spec.taunt() * 20);
                 taunt(minion, minion.spec.tauntRadius(), true);
+            }
+            if (minion.spike && now >= minion.nextTaunt) {
+                minion.nextTaunt = now + 20;
+                taunt(minion, PASSIVE_TAUNT, false); // 2026-10-30 照 PoE2：骨柱是召喚物，附近還沒有目標的怪會去打它（不強制嘲諷）
             }
             return;
         }
@@ -2192,6 +2340,13 @@ public final class MinionService implements Listener, MinionHooks {
             case MinionAbilities.MANIFEST -> {
                 return manifestAct(minion, target, owner, now); // 2026-10-29 照 PoE2：照武器類型多一招
             }
+            case MinionAbilities.BEAST -> {
+                // 2026-10-30 照 PoE2 Tame Beast：收服的野獸用那種怪自己的招式與詞綴給的招式（冷卻好了就放，沒有就普攻）
+                final long used = minion.tamedSkills.isEmpty() ? 0 : beastSkill(minion, target, owner, now);
+                if (used > 0) {
+                    return used;
+                }
+            }
             case MinionAbilities.REAVER -> {
                 attack(minion, target, 0);
                 if (minion.enragedAt >= 0) {
@@ -2860,7 +3015,7 @@ public final class MinionService implements Listener, MinionHooks {
 
     /**
      * 2026-10-27 照 PoE2 0.5（Supporting Fire 的 Command: Death From Above）：砲手朝目標射一發信號彈，之後每 0.75 秒一輪箭雨，共 6 輪，
-     * 每一輪打 14 × 14 格（半徑 7.9 格的圓）內的敵人 763% 傷害。砲手每 1 點主人的力量增加 1% 傷害、每 3 點敏捷增加 1% 範圍。
+     * 每一輪打 14 × 14 公尺（半徑 7.9 公尺的圓）內的敵人 763% 傷害。砲手每 1 點主人的力量增加 1% 傷害、每 3 點敏捷增加 1% 範圍。
      */
     private void deathFromAbove(final Minion artillery, final Player owner, final Location point) {
         final Location at = point.clone();
@@ -2872,11 +3027,28 @@ public final class MinionService implements Listener, MinionHooks {
                 Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.PROJECTILE), null,
                 List.of(Modifier.increased(tw.exilecore.stats.StatKeys.DAMAGE, str / MinionAbilities.STR_PER_DAMAGE / 100.0, "支援火力：力量")));
         final Attack hit = with(artillery, volley);
+        // 2026-10-30 照 PoE2 Death From Above（attaching to an enemy if it lands on one）：信號彈落在敵人身上就黏著牠，之後每一輪箭雨照牠現在的位置；
+        // 這次之前箭雨一律落在原地
+        LivingEntity attached = null;
+        double closest = MinionAbilities.FLARE_ATTACH * MinionAbilities.FLARE_ATTACH;
+        for (final LivingEntity near : targets.around(at, MinionAbilities.FLARE_ATTACH, owner)) {
+            final double distance = near.getLocation().distanceSquared(at);
+            if (distance <= closest) {
+                closest = distance;
+                attached = near;
+            }
+        }
+        final LivingEntity flare = attached;
         Fx.spawn(at.getWorld(), org.bukkit.Particle.FIREWORK, at.clone().add(0, 0.5, 0), 12, 0.2, 0.6, 0.2, 0.05);
         for (int i = 0; i < MinionAbilities.VOLLEYS; i++) {
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                 if (!byEntity.containsKey(artillery.mob.getUniqueId()) || !owner.isOnline() || !owner.getWorld().equals(at.getWorld())) {
                     return;
+                }
+                if (flare != null && flare.isValid() && !flare.isDead() && flare.getWorld().equals(at.getWorld())) {
+                    at.setX(flare.getLocation().getX());
+                    at.setY(flare.getLocation().getY());
+                    at.setZ(flare.getLocation().getZ());
                 }
                 Fx.spawn(at.getWorld(), org.bukkit.Particle.CRIT, at.clone().add(0, 4, 0), 40, radius * 0.5, 0.5, radius * 0.5, 0.0);
                 at.getWorld().playSound(at, org.bukkit.Sound.ENTITY_ARROW_HIT, 0.6f, 0.8f);
@@ -3105,6 +3277,431 @@ public final class MinionService implements Listener, MinionHooks {
                 + "（每隻保留 " + MinionAbilities.spectreSpirit(power) + " 精魂）";
     }
 
+    // ---- 馴獸（2026-10-30 照 PoE2 Tame Beast）----
+
+    /** 收服的野獸（角色進度）：原版生物代號、保留的怪物詞綴（逗號分隔）。 */
+    static final String TAME_KIND_KEY = "tame.kind";
+    static final String TAME_MODS_KEY = "tame.mods";
+    /** 原作：鬼火持續 8 秒、阻礙 30%，收服的野獸最多保留 4 個怪物詞綴。 */
+    static final long TAME_TICKS = 160;
+    static final double TAME_HINDER = 0.3;
+    static final int TAME_MOD_LIMIT = 4;
+    static final double TAME_RANGE = 20;
+
+    private record Engulf(LivingEntity target, UUID owner, long until, String kind, List<String> mods) {
+    }
+
+    /** 被鬼火纏住的野獸（實體 → 誰放的）。 */
+    private final Map<UUID, Engulf> engulfed = new HashMap<>();
+
+    /** 可以收服的：天賦樹「野獸」名單上的原版生物。 */
+    static boolean tameable(final org.bukkit.entity.EntityType type) {
+        return tw.exilecore.stats.TreeConditions.VS_BEAST.equals(tw.exilecore.combat.TargetConditions.family(type));
+    }
+
+    /** 收服的野獸種類（沒有回傳 null = 照技能寫的狼）。 */
+    String tamedKind(final Player player) {
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        return state == null ? null : tamedKind(state);
+    }
+
+    static String tamedKind(final tw.exilecore.character.PlayerState state) {
+        final String kind = state.progress().get(TAME_KIND_KEY);
+        if (kind == null || kind.isBlank()) {
+            return null;
+        }
+        try {
+            return tameable(org.bukkit.entity.EntityType.valueOf(kind)) ? kind : null;
+        } catch (final IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    static List<String> tamedMods(final tw.exilecore.character.PlayerState state) {
+        final String mods = state.progress().get(TAME_MODS_KEY);
+        if (tamedKind(state) == null || mods == null || mods.isBlank()) {
+            return List.of();
+        }
+        final List<String> out = new ArrayList<>();
+        for (final String id : mods.split(",")) {
+            if (!id.isBlank() && out.size() < TAME_MOD_LIMIT) {
+                out.add(id.trim());
+            }
+        }
+        return out;
+    }
+
+    /** 收服的野獸的強度 P（monsters.yml 的生命倍率；沒收服回傳 fallback）。 */
+    static double tamedPower(final tw.exilecore.character.PlayerState state, final MonsterConfig monsters, final double fallback) {
+        final String kind = tamedKind(state);
+        return kind == null || monsters == null ? fallback : Math.max(0.05, monsters.type(kind).lifeMultiplier());
+    }
+
+    /** 收服的野獸用那種怪的倍率（生命；傷害跟附魂術一樣再乘隱藏等級補正）。 */
+    private SummonSpec tamedSpec(final SummonSpec spec, final String kind) {
+        final MonsterConfig.TypeSettings type = plugin.monsters().config().type(kind);
+        return type == null ? spec : spec.withMultipliers(type.lifeMultiplier(), type.damageMultiplier() * MinionAbilities.SPECTRE_BEAST_FIXUP);
+    }
+
+    /** 收服的野獸保留的怪物詞綴換成修飾器（跟儀式獻祭拿到的一樣算法）。 */
+    private List<Modifier> tamedModifiers(final Player player) {
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        if (state == null) {
+            return List.of();
+        }
+        final List<Modifier> out = new ArrayList<>();
+        for (final String id : tamedMods(state)) {
+            final MonsterConfig.MonsterMod mod = plugin.monsters().config().mod(id);
+            if (mod == null) {
+                continue;
+            }
+            final String source = "夥伴詞綴：" + mod.name();
+            for (final tw.exilecore.item.AffixMod affixMod : mod.mods()) {
+                out.add(affixMod.toModifier(Map.of(), source));
+            }
+            for (final Map.Entry<tw.exilecore.stats.DamageType, Double> entry : mod.addedFromPhysical().entrySet()) {
+                out.add(Modifier.flat(tw.exilecore.stats.StatKeys.damageGain(entry.getKey()), entry.getValue() * 100, source));
+            }
+            if (mod.vanillaSpeedBonus() > 0) {
+                out.add(Modifier.increased(tw.exilecore.stats.StatKeys.MOVEMENT_SPEED, mod.vanillaSpeedBonus(), source));
+            }
+            if (mod.aura() != null) {
+                for (final tw.exilecore.item.AffixMod affixMod : mod.aura().stats()) {
+                    out.add(affixMod.toModifier(Map.of(), source));
+                }
+            }
+        }
+        return List.copyOf(out);
+    }
+
+    /** 收服的野獸保留的詞綴名字（說明用）。 */
+    List<String> tamedModNames(final Player player) {
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        final List<String> out = new ArrayList<>();
+        if (state != null) {
+            for (final String id : tamedMods(state)) {
+                final MonsterConfig.MonsterMod mod = plugin.monsters().config().mod(id);
+                out.add(mod == null ? id : mod.name());
+            }
+        }
+        return out;
+    }
+
+    /**
+     * 按狼伴的鍵：用鬼火纏住準心（或面前最近）的稀有野獸 8 秒（阻礙 30%）；這段時間內牠被打倒就收服（之後狼伴叫的是那隻野獸）。
+     */
+    String startTame(final Player player, final LivingEntity preferred) {
+        if (ownerInTown(player)) {
+            return "<red>營地裡不能馴獸";
+        }
+        LivingEntity pick = tameTarget(player, preferred) ? preferred : null;
+        if (pick == null) {
+            double best = Double.MAX_VALUE;
+            final Vector facing = SkillTargets.facing(player);
+            for (final Entity entity : player.getNearbyEntities(TAME_RANGE, 8, TAME_RANGE)) {
+                if (entity instanceof LivingEntity living && tameTarget(player, living)) {
+                    final Vector to = living.getLocation().toVector().subtract(player.getLocation().toVector());
+                    final double distance = to.length();
+                    if (distance > TAME_RANGE) {
+                        continue;
+                    }
+                    // 面前的優先：距離乘上偏離準心的程度
+                    final double score = distance * (2 - (distance < 1e-6 ? 1 : to.normalize().dot(facing)));
+                    if (score < best) {
+                        best = score;
+                        pick = living;
+                    }
+                }
+            }
+        }
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        final String current = state == null ? null : tamedKind(state);
+        if (pick == null) {
+            return "<gray>附近沒有稀有的野獸可以馴服（現在的夥伴：" + tw.exilecore.item.ItemRenderer.escape(
+                    current == null ? "狼" : spectreName(plugin.monsters().config(), current)) + "）";
+        }
+        final tw.exilecore.monster.MonsterData data = plugin.monsters().data(pick).orElse(null);
+        final List<String> mods = data == null ? List.of() : data.mods().subList(0, Math.min(TAME_MOD_LIMIT, data.mods().size()));
+        final long now = now();
+        engulfed.put(pick.getUniqueId(), new Engulf(pick, player.getUniqueId(), now + TAME_TICKS, pick.getType().name(), List.copyOf(mods)));
+        if (plugin.combat() != null) {
+            plugin.combat().debuffs().apply(pick.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff("hinder", player.getUniqueId(), now + TAME_TICKS,
+                    0, false, null, List.of(), TAME_HINDER));
+        }
+        Fx.spawn(pick.getWorld(), org.bukkit.Particle.SOUL_FIRE_FLAME, pick.getLocation().add(0, 1, 0), 30, 0.5, 0.6, 0.5, 0.03);
+        return "<#9fe0ff>鬼火纏住了" + tw.exilecore.item.ItemRenderer.escape(spectreName(plugin.monsters().config(), pick.getType().name()))
+                + "：8 秒內打倒牠就能收服";
+    }
+
+    private boolean tameTarget(final Player player, final LivingEntity entity) {
+        if (entity == null || entity instanceof Player || !entity.isValid() || entity.isDead() || isMinion(entity) || !tameable(entity.getType())) {
+            return false;
+        }
+        final tw.exilecore.monster.MonsterData data = plugin.monsters() == null ? null : plugin.monsters().data(entity).orElse(null);
+        return data != null && data.rarity() == tw.exilecore.monster.MonsterRarity.RARE && !data.boss()
+                && entity.getWorld() == player.getWorld();
+    }
+
+    private void tickTaming(final long now) {
+        if (engulfed.isEmpty()) {
+            return;
+        }
+        final java.util.Iterator<Engulf> it = engulfed.values().iterator();
+        while (it.hasNext()) {
+            final Engulf engulf = it.next();
+            final LivingEntity target = engulf.target();
+            if (target.isDead()) {
+                it.remove();
+                final Player owner = plugin.getServer().getPlayer(engulf.owner());
+                if (owner != null && owner.isOnline()) {
+                    capture(owner, engulf, target.getLocation());
+                }
+                continue;
+            }
+            if (!target.isValid() || now > engulf.until()) {
+                it.remove();
+                continue;
+            }
+            if (now % 10 == 0) {
+                Fx.spawn(target.getWorld(), org.bukkit.Particle.SOUL_FIRE_FLAME, target.getLocation().add(0, 1, 0), 6, 0.4, 0.5, 0.4, 0.01);
+            }
+        }
+    }
+
+    private void capture(final Player owner, final Engulf engulf, final Location at) {
+        if (plugin.characters() == null) {
+            return;
+        }
+        plugin.characters().setProgress(owner, TAME_KIND_KEY, engulf.kind());
+        plugin.characters().setProgress(owner, TAME_MODS_KEY, String.join(",", engulf.mods()));
+        trim(owner.getUniqueId(), MinionAbilities.BEAST, 0);
+        if (auras != null) {
+            auras.resummonNow(owner.getUniqueId(), MinionAbilities.BEAST);
+        }
+        plugin.players().markDirty(owner);
+        Fx.spawn(at.getWorld(), org.bukkit.Particle.SOUL, at.clone().add(0, 0.8, 0), 30, 0.5, 0.6, 0.5, 0.03);
+        final MonsterConfig monsters = plugin.monsters().config();
+        final List<String> names = tamedModNames(owner);
+        final double power = Math.max(0.05, monsters.type(engulf.kind()).lifeMultiplier());
+        plugin.players().get(owner).notice("<#9fe0ff>收服了" + tw.exilecore.item.ItemRenderer.escape(spectreName(monsters, engulf.kind()))
+                + (names.isEmpty() ? "" : "（" + tw.exilecore.item.ItemRenderer.escape(String.join("、", names)) + "）")
+                + "<gray>：每隻保留最大精魂的 " + ModifierText.number(MinionAbilities.companionSpiritPercent(power)) + "%", now() + 80);
+        plugin.players().display(owner, plugin.players().get(owner));
+    }
+
+    /** 收服的野獸的招式：那種怪的（monsters.yml types.＊.skills）＋保留的詞綴給的（mods.＊.skills）。 */
+    private List<BossSkillUse> tamedSkillUses(final Player player, final String kind) {
+        final List<BossSkillUse> out = new ArrayList<>();
+        final MonsterConfig monsters = plugin.monsters().config();
+        final MonsterConfig.TypeSettings type = monsters.type(kind);
+        if (type != null) {
+            out.addAll(type.skills());
+        }
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        if (state != null) {
+            for (final String id : tamedMods(state)) {
+                final MonsterConfig.MonsterMod mod = monsters.mod(id);
+                if (mod != null) {
+                    out.addAll(mod.skills());
+                }
+            }
+        }
+        return List.copyOf(out);
+    }
+
+    /** 招式的名字（說明用）。 */
+    List<String> tamedSkillNames(final Player player) {
+        final String kind = tamedKind(player);
+        final List<String> out = new ArrayList<>();
+        if (kind != null) {
+            for (final BossSkillUse use : tamedSkillUses(player, kind)) {
+                final BossSkill skill = config.bossSkills().skill(use.id());
+                if (skill != null && !out.contains(skill.name())) {
+                    out.add(skill.name());
+                }
+            }
+        }
+        return out;
+    }
+
+    /**
+     * 收服的野獸放一個冷卻好了、碰得到目標的招式；回傳幾 tick 後再出手（沒有能放的回傳 0 = 普攻）。
+     * 照怪物那邊的招式表（boss_skills.yml）：傷害是牠「普通一下」的幾倍、轉成招式的傷害類型；打的是你的敵人。
+     * 前搖照招式的一半（陪你打的不畫紅圈）；召喚、場地機制（光束、擴散環、安全區…）這類只有 Boss 才有意義的照一圈範圍打。
+     */
+    private long beastSkill(final Minion minion, final LivingEntity target, final Player owner, final long now) {
+        for (final BossSkillUse use : minion.tamedSkills) {
+            final BossSkill skill = config.bossSkills().skill(use.id());
+            if (skill == null || skill.kind() == BossSkill.Kind.SUMMON) {
+                continue;
+            }
+            final String key = "tame:" + use.id();
+            if (minion.onCooldown(key, now)) {
+                continue;
+            }
+            final double distance = minion.mob.getLocation().distance(target.getLocation());
+            if (skill.range() > 0 && distance > skill.range()) {
+                continue;
+            }
+            minion.startCooldown(key, now, use.cooldown() > 0 ? use.cooldown() : Math.max(2, skill.cooldown()));
+            final long windup = Math.max(2, Math.round(skill.telegraph() * 10));
+            minion.mob.swingMainHand();
+            Fx.spawn(minion.mob.getWorld(), particle(skill.type()), minion.mob.getLocation().add(0, 1, 0), 10, 0.4, 0.5, 0.4, 0.02);
+            final Location aim = target.getLocation().clone();
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (minion.mob.isValid() && !minion.mob.isDead() && owner.isOnline()) {
+                    beastCast(minion, skill, use, target.isValid() && !target.isDead() ? target.getLocation() : aim, owner);
+                }
+            }, windup);
+            return windup + minion.attackTicks;
+        }
+        return 0;
+    }
+
+    private static org.bukkit.Particle particle(final tw.exilecore.stats.DamageType type) {
+        if (type == null) {
+            return org.bukkit.Particle.CRIT;
+        }
+        return switch (type) {
+            case FIRE -> org.bukkit.Particle.FLAME;
+            case COLD -> org.bukkit.Particle.SNOWFLAKE;
+            case LIGHTNING -> org.bukkit.Particle.ELECTRIC_SPARK;
+            case CHAOS -> org.bukkit.Particle.WITCH;
+            default -> org.bukkit.Particle.CRIT;
+        };
+    }
+
+    private void beastCast(final Minion minion, final BossSkill skill, final BossSkillUse use, final Location at, final Player owner) {
+        if (minion.profile == null) {
+            return;
+        }
+        final double times = skill.damage() * (use.damage() > 0 ? use.damage() : 1.0);
+        SkillProfile profile = musterProfile(minion).scaled(Math.max(0, times), skill.name())
+                .derive(minion.profile.id() + ".tame." + skill.id(), Set.of(tw.exilecore.stats.Tags.AREA), Set.of(tw.exilecore.stats.Tags.MELEE));
+        if (skill.type() != null && skill.type() != tw.exilecore.stats.DamageType.PHYSICAL) {
+            profile = profile.withLocal(List.of(Modifier.flat(tw.exilecore.stats.StatKeys.damageConvert(skill.type()), 100, skill.name())));
+        }
+        final Attack hit = with(minion, profile);
+        final org.bukkit.Particle fx = particle(skill.type());
+        final Location from = minion.mob.getLocation();
+        final java.util.function.BiConsumer<Location, Double> burst = (center, radius) -> {
+            Fx.spawn(center.getWorld(), fx, center.clone().add(0, 0.3, 0), (int) Math.min(60, 12 * radius), radius / 2, 0.3, radius / 2, 0.02);
+            if (times > 0) {
+                for (final LivingEntity enemy : targets.around(center, radius, owner)) {
+                    strike(minion, enemy, hit);
+                }
+            }
+        };
+        final double radius = skill.radius() > 0 ? skill.radius() : 3;
+        switch (skill.kind()) {
+            case SLAM -> {
+                final int count = Math.max(1, skill.count());
+                for (int i = 0; i < count; i++) {
+                    final Location spot = i == 0 ? at.clone() : at.clone().add((plugin.random().nextDouble() - 0.5) * 2 * Math.max(2, skill.scatter()), 0,
+                            (plugin.random().nextDouble() - 0.5) * 2 * Math.max(2, skill.scatter()));
+                    final long delay = Math.round(i * Math.max(0.1, skill.stagger()) * 20) + Math.round(skill.delay() * 10);
+                    plugin.getServer().getScheduler().runTaskLater(plugin, () -> burst.accept(spot, radius), Math.max(1, delay));
+                }
+            }
+            case NOVA, RING, PULL, SANCTUARY, BEAM, ORBS, MARK, ECHOES -> burst.accept(from, radius);
+            case CONE -> {
+                final double length = skill.length() > 0 ? skill.length() : 6;
+                final double half = Math.toRadians((skill.angle() > 0 ? skill.angle() : 60) / 2);
+                final Vector facing = at.toVector().subtract(from.toVector()).setY(0);
+                if (facing.lengthSquared() < 1e-6) {
+                    return;
+                }
+                facing.normalize();
+                Fx.spawn(from.getWorld(), fx, from.clone().add(facing.clone().multiply(length / 2)).add(0, 1, 0), 30, length / 4, 0.3, length / 4, 0.02);
+                for (final LivingEntity enemy : targets.around(from, length, owner)) {
+                    final Vector to = enemy.getLocation().toVector().subtract(from.toVector()).setY(0);
+                    if (to.lengthSquared() < 1e-6 || to.normalize().angle(facing) <= half) {
+                        strike(minion, enemy, hit);
+                    }
+                }
+            }
+            case VOLLEY -> {
+                // 每一發打一個敵人：準心那隻先，其他照遠近
+                final int count = Math.max(1, skill.count());
+                final double reach = skill.reach() > 0 ? skill.reach() : 15;
+                final List<LivingEntity> enemies = new ArrayList<>(targets.around(from, reach, owner));
+                enemies.sort(java.util.Comparator.comparingDouble(enemy -> enemy.getLocation().distanceSquared(at)));
+                for (int i = 0; i < Math.min(count, Math.max(1, enemies.size())) && !enemies.isEmpty(); i++) {
+                    final LivingEntity enemy = enemies.get(i % enemies.size());
+                    line(minion.mob, enemy);
+                    strike(minion, enemy, hit);
+                }
+            }
+            case BLINK -> {
+                final Vector back = from.toVector().subtract(at.toVector()).setY(0);
+                final Location land = at.clone().add(back.lengthSquared() < 1e-6 ? new Vector() : back.normalize().multiply(1.2));
+                land.setDirection(at.toVector().subtract(land.toVector()));
+                minion.mob.teleport(land);
+                Fx.spawn(land.getWorld(), org.bukkit.Particle.PORTAL, land.clone().add(0, 1, 0), 20, 0.3, 0.6, 0.3, 0.2);
+                if (times > 0) {
+                    burst.accept(land, skill.radius() > 0 ? skill.radius() : 2.5);
+                }
+            }
+            case CHARGE -> {
+                final Vector path = at.toVector().subtract(from.toVector()).setY(0);
+                final double reach = Math.min(path.length(), skill.reach() > 0 ? skill.reach() : 10);
+                if (reach < 0.5) {
+                    burst.accept(from, 2.0);
+                    return;
+                }
+                path.normalize();
+                final double width = skill.width() > 0 ? skill.width() : 1.5;
+                final java.util.Set<LivingEntity> hitOnce = new java.util.HashSet<>();
+                for (double d = 0; d <= reach; d += 1) {
+                    final Location step = from.clone().add(path.clone().multiply(d));
+                    for (final LivingEntity enemy : targets.around(step, width, owner)) {
+                        if (hitOnce.add(enemy)) {
+                            strike(minion, enemy, hit);
+                        }
+                    }
+                }
+                final Location end = from.clone().add(path.clone().multiply(Math.max(0, reach - 1)));
+                end.setDirection(path);
+                minion.mob.teleport(end);
+                Fx.spawn(from.getWorld(), org.bukkit.Particle.CLOUD, end.clone().add(0, 0.5, 0), 12, 0.4, 0.2, 0.4, 0.02);
+            }
+            case CURSE -> {
+                Fx.spawn(at.getWorld(), fx, at.clone().add(0, 1, 0), 30, radius / 2, 0.5, radius / 2, 0.02);
+                if (plugin.combat() != null && skill.taken() > 0) {
+                    final long until = now() + Math.round(Math.max(1, skill.duration()) * 20);
+                    for (final LivingEntity enemy : targets.around(at, radius, owner)) {
+                        plugin.combat().debuffs().apply(enemy.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff("tame." + skill.id(),
+                                owner.getUniqueId(), until, skill.taken() / 100.0, false));
+                    }
+                }
+            }
+            case ZONE -> {
+                final int count = Math.max(1, skill.count());
+                final long life = Math.round(Math.max(1, skill.duration()) * 20);
+                final long every = Math.max(5, Math.round((skill.interval() > 0 ? skill.interval() : 1) * 20));
+                for (int i = 0; i < count; i++) {
+                    final Location spot = i == 0 ? at.clone() : at.clone().add((plugin.random().nextDouble() - 0.5) * 2 * Math.max(2, skill.scatter()), 0,
+                            (plugin.random().nextDouble() - 0.5) * 2 * Math.max(2, skill.scatter()));
+                    for (long t = 0; t < life; t += every) {
+                        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                            if (minion.mob.isValid() && owner.isOnline()) {
+                                burst.accept(spot, radius);
+                            }
+                        }, Math.max(1, t));
+                    }
+                }
+            }
+            default -> burst.accept(at, radius);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onSlimeSplit(final org.bukkit.event.entity.SlimeSplitEvent event) {
+        if (isMinion(event.getEntity())) {
+            event.setCancelled(true); // 2026-10-30 馴獸：收服的史萊姆死了不分裂
+        }
+    }
+
     // ---- 收掉 ----
 
     private enum Gone { EXPIRED, REPLACED, DIED, QUIET }
@@ -3241,6 +3838,67 @@ public final class MinionService implements Listener, MinionHooks {
         }
     }
 
+    /**
+     * 2026-10-30 照 PoE2 Bone Offering（bone_offering_hit_threshold_%_of_maximum_life 25）：有骸骨祭護盾的召喚物（含骨柱自己）
+     * 受到超過最大生命 25% 的擊中時，護盾把這一下整個吸掉然後爆掉（這一輪祭品不再有護盾，也不再有減傷）；回傳有沒有吸掉。
+     * 這次之前沒有吸收，只用物理傷害減免代替。
+     */
+    @Override
+    public boolean shieldAbsorbs(final LivingEntity entity, final double total) {
+        final Minion minion = byEntity.get(entity.getUniqueId());
+        final long now = now();
+        if (minion == null || minion.shieldLostAt >= 0 || minion.effective == null) {
+            return false;
+        }
+        final boolean shielded = minion.offeringUntil > now && hasBoneShield(minion.offering) || minion.spike && hasBoneShield(minion.empowered);
+        if (!shielded || total <= MinionSheets.life(minion.effective) * SHIELD_HIT_FRACTION) {
+            return false;
+        }
+        minion.shieldLostAt = now;
+        final List<Modifier> source = minion.spike ? minion.empowered : minion.offering;
+        if (shieldLostLess(source) > 0) {
+            minion.shieldLessUntil = now + SHIELD_LOST_TICKS; // 品質：護盾消失後 1 秒更少 x% 傷害
+        }
+        // 護盾爆掉：拿掉護盾的減傷與記號（品質「護盾消失後更少傷害」那條留著，rebuild 照 shieldLessUntil 算）
+        if (minion.spike) {
+            minion.empowered = withoutShield(minion.empowered);
+        } else {
+            minion.offering = withoutShield(minion.offering);
+        }
+        final Location at = entity.getLocation().add(0, 1, 0);
+        entity.getWorld().spawnParticle(org.bukkit.Particle.BLOCK, at, 30, 0.4, 0.5, 0.4, 0.1, org.bukkit.Material.BONE_BLOCK.createBlockData());
+        entity.getWorld().playSound(at, org.bukkit.Sound.ENTITY_SKELETON_HURT, 0.8f, 0.6f);
+        final Player owner = plugin.getServer().getPlayer(minion.owner);
+        if (owner != null) {
+            rebuild(minion, plugin.players().sheet(owner), false);
+        }
+        return true;
+    }
+
+    /** 骸骨祭的護盾（受到的擊中傷害減少、護盾記號）拿掉之後的修飾器。 */
+    private static List<Modifier> withoutShield(final List<Modifier> modifiers) {
+        if (!hasBoneShield(modifiers)) {
+            return List.copyOf(modifiers);
+        }
+        final List<Modifier> kept = new ArrayList<>();
+        for (final Modifier modifier : modifiers) {
+            if (!modifier.stat().startsWith(tw.exilecore.stats.StatKeys.DEBUFF_TAKEN)
+                    && !modifier.stat().equals(tw.exilecore.stats.TreeMechanicKeys.OFFERING_BONE_SHIELD)) {
+                kept.add(modifier);
+            }
+        }
+        return List.copyOf(kept);
+    }
+
+    private static boolean hasBoneShield(final List<Modifier> modifiers) {
+        for (final Modifier modifier : modifiers) {
+            if (modifier.stat().equals(tw.exilecore.stats.TreeMechanicKeys.OFFERING_BONE_SHIELD) && modifier.value() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** 骸骨祭的護盾吸收超過最大生命幾成的擊中（PoE2 25%）、消失之後「更少傷害」撐幾 tick（1 秒）。 */
     static final double SHIELD_HIT_FRACTION = 0.25;
     static final long SHIELD_LOST_TICKS = 20;
@@ -3281,6 +3939,16 @@ public final class MinionService implements Listener, MinionHooks {
     }
 
     /** owner 的召喚物（殘影不算）每隻回復 amount（2026-10：藥劑的「召喚物也回復」詞綴）。 */
+    /** 2026-10-30：這隻召喚物的技能有沒有掛忠僕。 */
+    private static boolean loyal(final Minion minion) {
+        for (final SupportDefinition support : minion.build.supports()) {
+            if (support.flags(tw.exilecore.stats.SupportExtraKeys.LOYALTY)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static boolean isCompanion(final Minion minion) {
         return !minion.decoy && minion.build.definition().tags().contains(tw.exilecore.stats.TreeMechanicKeys.COMPANION);
     }
@@ -3323,7 +3991,10 @@ public final class MinionService implements Listener, MinionHooks {
         if (amount <= 0) {
             return 0;
         }
-        for (final Minion minion : minions) {
+        // 2026-10-30 照 PoE2 Loyalty「Supported Companion's Life」：掛了忠僕的夥伴先承受；這次之前照召喚順序，可能是沒掛忠僕的那隻
+        final List<Minion> order = new ArrayList<>(minions);
+        order.sort(java.util.Comparator.comparingInt(minion -> loyal(minion) ? 0 : 1));
+        for (final Minion minion : order) {
             if (!minion.owner.equals(owner) || !isCompanion(minion) || !minion.mob.isValid() || minion.mob.isDead()
                     || minion.undamageable()) { // 2026-10-29：不會受傷的召喚物不替你承受
                 continue;

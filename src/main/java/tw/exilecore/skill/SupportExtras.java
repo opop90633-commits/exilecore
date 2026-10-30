@@ -2213,7 +2213,7 @@ public final class SupportExtras implements Listener {
             }
             final List<Modifier> mods = new ArrayList<>();
             if (entry.getValue()[0] > 0) {
-                mods.add(Modifier.flat(tw.exilecore.stats.TreeNewMechanicKeys.COMPANION_TAKES, entry.getValue()[0], "忠誠"));
+                mods.add(Modifier.flat(tw.exilecore.stats.TreeNewMechanicKeys.COMPANION_TAKES, entry.getValue()[0], "忠僕")); // 2026-10-30：來源名稱跟寶石一樣（這次之前寫「忠誠」）
             }
             if (!mods.isEmpty()) {
                 service.buff(owner, "support.minion", "召喚物輔助", 30, mods);

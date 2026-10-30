@@ -39,6 +39,13 @@ public final class TreeMechanicKeys {
     /** 祭品技能（PoE2 Offering）。 */
     public static final String OFFERING = "offering";
     /**
+     * 2026-10-30 照 PoE2（offering_life_+%）：INCREASED 祭品骨柱的最大生命（MinionService.spike 讀；骨柱是召喚物，召喚物生命的加成也吃）。
+     * 這次之前骨柱沒有生命，天賦樹與珠寶的「祭品的最大生命」換成一半的祭品持續時間。
+     */
+    public static final String OFFERING_LIFE = "offering.life";
+    /** 2026-10-30 照 PoE2 Bone Offering：FLAT 骸骨祭的護盾記號（有的召喚物吸收第一下超過最大生命 25% 的擊中，然後護盾爆掉）。 */
+    public static final String OFFERING_BONE_SHIELD = "offering.bone_shield";
+    /**
      * 在你存在範圍（臨在，{@code tw.exilecore.combat.Presence}）內的友軍：「存在範圍內的友軍…」的修飾器寫 [minion, in_presence]，
      * 召喚物在範圍內時才給牠（MinionService 每 2 秒重算時看距離）。隊友（玩家）還沒有做。
      */

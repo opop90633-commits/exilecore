@@ -17,6 +17,10 @@ public final class GemQualityKeys {
 
     /** FLAT（每秒 %）：燼使的點燃另外照過量擊殺傷害的 x%（PoE2 herald_of_ash_burning_%_overkill_damage_per_minute ÷ 60）。 */
     public static final String HERALD_ASH_OVERKILL = "herald.ash_overkill";
+    /** 2026-10-30 照 PoE2 Arc 的額外品質效果：FLAT 每剩一次連鎖，這一下更多 x% 擊中傷害（SkillExecutor.chainBeam）。 */
+    public static final String CHAIN_MORE_PER_REMAINING = "chain.more_per_remaining";
+    /** 2026-10-30 照 PoE2 Cast on Minion Death 的額外品質效果：FLAT 插槽法術被這顆主要寶石觸發時傷害增加 x%（SkillService.metaCast）。 */
+    public static final String META_TRIGGERED_DAMAGE = "meta.triggered_damage";
     /** FLAT（%）：血宣的爆炸另外多打失血的 x%（加在 15% 上）。 */
     public static final String HERALD_BLOOD_SHARE = "herald.blood_share";
     /** FLAT（公尺）：霜使的碎裂爆炸半徑 +x（加在基礎半徑上，再乘範圍）。 */

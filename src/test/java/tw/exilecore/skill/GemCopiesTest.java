@@ -99,7 +99,9 @@ class GemCopiesTest {
     void twoCopiesOnPanel() {
         final SkillLoadout loadout = new SkillLoadout();
         final int first = loadout.add(comet(10, "added_cold"));
-        assertNull(GemCopies.placeProblem(config, loadout, comet(11, "elemental_focus"), -1));
+        // 2026-10-30 照 PoE2 0.3：面板上同一個技能寶石只能一顆（放同一格是換掉）；SkillLoadout.add 本身不擋（呼叫端先問 GemCopies）
+        assertNotNull(GemCopies.placeProblem(config, loadout, comet(11, "elemental_focus"), -1), "面板上不能放第二顆冰隕");
+        assertNull(GemCopies.placeProblem(config, loadout, comet(11, "elemental_focus"), first), "放在同一格是換掉");
         final int second = loadout.add(comet(11, "elemental_focus"));
         assertTrue(second >= 0 && second != first);
         assertEquals(2, loadout.count("comet"));

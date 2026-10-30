@@ -225,6 +225,44 @@ public final class DeathRecap implements Listener {
         lastRecap.remove(event.getPlayer().getUniqueId());
     }
 
+    /** 2026-10-30：最近受到的幾下（不用死也能看）：時間、誰（身上的詛咒、印記）、什麼招、扣多少、擋掉多少前的傷害。 */
+    public List<String> recent(final Player player, final long now) {
+        final Deque<Hit> deque = hits.get(player.getUniqueId());
+        if (deque == null || deque.isEmpty()) {
+            return List.of();
+        }
+        final List<String> lines = new ArrayList<>();
+        lines.add("<dark_gray>━━━ <#9fe8c8><bold>最近受到的傷害</bold></#9fe8c8> <dark_gray>" + RULE);
+        for (final Hit hit : deque) {
+            lines.add(String.format(Locale.ROOT, " <dark_gray>-%.1fs <gray>%s<dark_gray>・%s <red>-%,d</red> <dark_gray>%s%s",
+                    (now - hit.tick()) / 20.0, hit.source(), hit.skill(), Math.round(hit.total()), typeText(hit.dealt()),
+                    hit.es() > 0 ? String.format(Locale.ROOT, "<dark_gray>（護盾吸收 %,d）", Math.round(hit.es())) : ""));
+        }
+        return lines;
+    }
+
+    /** 2026-10-30：/hits：最近受到的幾下是誰打的（打你的怪身上有詛咒會寫「咒·xx」）。 */
+    public static LiteralCommandNode<CommandSourceStack> hitsCommand(final ExileCore plugin) {
+        return Commands.literal("hits")
+                .executes(context -> {
+                    if (!(context.getSource().getExecutor() instanceof Player player)) {
+                        context.getSource().getSender().sendMessage(plugin.text().prefixed("<red>這個指令要在遊戲內使用"));
+                        return Command.SINGLE_SUCCESS;
+                    }
+                    final List<String> lines = plugin.combat() == null ? List.of()
+                            : plugin.combat().recap().recent(player, plugin.getServer().getCurrentTick());
+                    if (lines.isEmpty()) {
+                        player.sendMessage(plugin.text().prefixed("<gray>最近沒有受到傷害"));
+                        return Command.SINGLE_SUCCESS;
+                    }
+                    for (final String line : lines) {
+                        player.sendMessage(plugin.text().parse(line));
+                    }
+                    return Command.SINGLE_SUCCESS;
+                })
+                .build();
+    }
+
     /** /deaths：再看一次上一次的死亡回顧。 */
     public static LiteralCommandNode<CommandSourceStack> command(final ExileCore plugin) {
         return Commands.literal("deaths")

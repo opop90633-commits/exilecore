@@ -40,7 +40,8 @@ public record BarrageSpec(int repeats, String charge, int perCharge, double less
             return empowers(definition, weaponTags, ownRepeats);
         }
         return !definition.isAttack() && definition.tags().contains(Tags.SPELL) && definition.cooldown() <= 0 && ownRepeats <= 0
-                && definition.dealsDamage() && definition.mechanic() != Mechanic.META && definition.mechanic() != Mechanic.AURA;
+                && definition.dealsDamage() && definition.mechanic() != Mechanic.META && definition.mechanic() != Mechanic.AURA
+                && !SupportDefinition.channels(definition); // 2026-10-30 照 PoE2（引導的法術不是 Repeatable）：說明寫了不能、這次之前程式沒擋
     }
 
     /** 重複最多幾次（戰星再多也不超過）。 */

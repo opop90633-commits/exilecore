@@ -91,7 +91,7 @@ public record SkillDefinition(String id, String name, String description, String
             case "delirium_mirror" -> "妄念霧原的幻霧之鏡・妄念";
             case "abyss_lich" -> "骨潮深坑的淵底之王・骨潮";
             // 2026-10-26：法杖、長杖、權杖賦予的技能（PoE2 的 Grants Skill；沒有寶石）
-            case "weapon" -> "法杖、長杖、權杖賦予";
+            case "weapon" -> "武器、盾牌賦予"; // 2026-10-30：矛（擲矛）、盾（架盾、招架）也是；這次之前寫「法杖、長杖、權杖賦予」
             case "ascendancy" -> "昇華天賦賦予"; // 2026-10-26
             default -> "專屬的掉落來源";
         };
@@ -307,7 +307,8 @@ public record SkillDefinition(String id, String name, String description, String
         }
         final SummonSpec summon = SummonSpec.parse(node, node.string("name", id));
         // 2026-10：夥伴＝mechanic: aura 再寫 summon 區塊（開著就一直有一隻，保留精魂；死了過一下再出來）
-        if (mechanic == Mechanic.SUMMON ? summon == null : summon != null && mechanic != Mechanic.AURA) {
+        // 2026-10-30 照 PoE2 Rhoa Mount：坐騎技能（mount）也可以寫 summon（沒騎的時候陪你打的夥伴）
+        if (mechanic == Mechanic.SUMMON ? summon == null : summon != null && mechanic != Mechanic.AURA && !node.has("mount")) {
             throw new IllegalArgumentException(where + "：mechanic: summon 要寫 summon 區塊（其他運作方式不能寫；夥伴是 aura 加 summon）");
         }
         if (summon != null) {
@@ -380,8 +381,9 @@ public record SkillDefinition(String id, String name, String description, String
         }
         if (warcry != null) {
             // 2026-10-26 照 PoE2：熔魂嘯沒有冷卻，要榮耀才能用（warcry.glory）
-            if (cooldown <= 0 && warcry.extras().glory() <= 0) {
-                throw new IllegalArgumentException(where + "：戰吼要有 cooldown（冷卻時間）或 glory（要幾點榮耀）");
+            // 2026-10-30 照 PoE2：祭品（立骨柱的）也沒有冷卻（要串一隻骷髏、同時只有一根）
+            if (cooldown <= 0 && warcry.extras().glory() <= 0 && !warcry.spike()) {
+                throw new IllegalArgumentException(where + "：戰吼要有 cooldown（冷卻時間）或 glory（要幾點榮耀），祭品除外");
             }
             // 2026-10-26 照 PoE2：戰旗、祭品、召歸令不是戰吼（cry: false）：不帶戰吼標籤，戰吼的輔助掛不上、戰吼的加成不吃
             if (warcry.cry()) {

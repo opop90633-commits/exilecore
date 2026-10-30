@@ -41,9 +41,10 @@ import java.util.UUID;
  *   <li>騎著移動照你的移動速度（PoE2 0.4 拿掉了坐騎的移動速度加成）；放技能不會被減速（坐騎的速度只看你的移動速度加成）。</li>
  *   <li>騎著被打會累積重暈（AilmentService），被重暈就摔下坐騎。</li>
  *   <li>拿掉了原作沒有的「騎著攻擊更多 15% 傷害」（這次之前有）。</li>
- *   <li>按潛行鍵、死掉、下線、換世界、被傳送都會下馬；下馬坐騎就消失（原作下馬後陸行鳥會陪你打、會被打、死了 12 秒後再叫出來：沒做，
- *       所以也不收原作的 100 精魂保留，平衡等效）。</li>
- *   <li>坐騎打不死、不會被打、不能開背包、別人不能騎；不存檔（當機也不會留在世界裡）。</li>
+ *   <li>按潛行鍵、死掉、下線、換世界、被傳送都會下馬。</li>
+ *   <li>2026-10-30 照 PoE2：沒騎的時候坐騎是陪你打的夥伴（skills.yml 的 summon，AuraService 照精魂召喚叫出來；會被打、被打死 12 秒後再出來，
+ *       死掉的時候騎不上去）；騎上去時夥伴收起來變成坐騎，下馬再出來。這次之前下馬坐騎就消失、沒有夥伴。</li>
+ *   <li>騎著的那匹打不死、不會被打、不能開背包、別人不能騎；不存檔（當機也不會留在世界裡）。</li>
  * </ul>
  */
 final class Mounts implements Listener {
@@ -120,6 +121,11 @@ final class Mounts implements Listener {
         }
         if (blockedHere(player.getLocation())) {
             return "<red>這裡不能騎坐騎";
+        }
+        // 2026-10-30 照 PoE2 Rhoa Mount：沒騎的時候坐騎陪你打、會被打；被打死要等牠回來才能騎
+        final long wait = definition.summon() == null || service.auras() == null ? 0 : service.auras().companionWait(player, definition.id());
+        if (wait > 0) {
+            return String.format(java.util.Locale.ROOT, "<red>%s 被打倒了，%.1f 秒後才回來", tw.exilecore.item.ItemRenderer.escape(definition.summon().kindName()), wait / 20.0);
         }
         final Location at = player.getLocation();
         final Class<? extends AbstractHorse> type = switch (spec.kind()) {
@@ -259,7 +265,9 @@ final class Mounts implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onInteract(final PlayerInteractEntityEvent event) {
-        if (isMount(event.getRightClicked())) {
+        // 2026-10-30：陪你打的戰馬（召喚物）也不能被騎、不能開馬鞍欄
+        if (isMount(event.getRightClicked()) || event.getRightClicked() instanceof AbstractHorse
+                && service.minions() != null && service.minions().isMinion(event.getRightClicked())) {
             event.setCancelled(true); // 別人不能騎、自己也不會打開馬鞍欄
         }
     }

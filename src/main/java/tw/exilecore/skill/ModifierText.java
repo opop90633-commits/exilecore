@@ -488,7 +488,10 @@ public final class ModifierText {
             case StatKeys.FLAG_RELOAD_ALL -> "放了就把所有弩技能立刻裝滿";
             case StatKeys.TRIGGER_DODGE -> "翻滾時自動施放這個法術（不花魔力，間隔至少 0.75 秒）";
             case StatKeys.TRIGGER_MINION_DEATH -> "你的召喚物死掉時，在牠倒下的地方自動施放這個法術（不花魔力，間隔至少 0.75 秒）";
-            case StatKeys.DAMAGE_VS_LOW_LIFE -> "對生命 35% 以下的敵人增加 " + number(value) + "% 擊中傷害";
+            case StatKeys.DAMAGE_VS_LOW_LIFE -> modifier.type() == tw.exilecore.stats.ModType.MORE // 2026-10-30：處刑是更多
+                    ? "對生命 35% 以下的敵人擊中傷害更多 " + number(value * 100) + "%"
+                    : "對生命 35% 以下的敵人增加 " + number(value) + "% 擊中傷害";
+            case StatKeys.DAMAGE_WHILE_LOW_LIFE -> "你自己生命 35% 以下時擊中傷害更多 " + number(value * 100) + "%"; // 2026-10-30 照 PoE2 Execute III
             case StatKeys.DAMAGE_VS_CURSED -> scaled(modifier, "對被詛咒的敵人的傷害", percent);
             case StatKeys.DAMAGE_CLOSE -> scaled(modifier, "對近身（3.5 格內）敵人的傷害", percent);
             case StatKeys.DAMAGE_VS_FULL_LIFE -> scaled(modifier, "對滿血敵人的傷害", percent);
@@ -571,7 +574,7 @@ public final class ModifierText {
             case tw.exilecore.stats.SupportKeys.DAMAGE_MAX -> scaled(modifier, tagPrefix(modifier) + "最大擊中傷害（最小傷害不變）", percent);
             case tw.exilecore.stats.SupportKeys.FLAG_GAIN_AS_COLD -> "會獲得任何非冰冷類型的額外傷害時，改成獲得額外冰冷傷害";
             case tw.exilecore.stats.SupportKeys.EXTRA_FIRE_VS_IGNITED -> "攻擊點燃中的敵人時，獲得 " + number(value) + "% 傷害為額外火焰傷害";
-            case tw.exilecore.stats.SupportKeys.DAMAGE_FAR -> "對 10.5 格以外的敵人更多 " + number(value) + "% 攻擊傷害，越近越少，5.25 格以內沒有加成"; // 2026-10-29 照站長：1 公尺 = 1.5 格（SupportMechanics 遠穿 7／3.5 公尺）
+            case tw.exilecore.stats.SupportKeys.DAMAGE_FAR -> "對 7 格以外的敵人更多 " + number(value) + "% 攻擊傷害，越近越少，3.5 格以內沒有加成"; // 2026-10-29 照站長：1 公尺 = 1.5 格（SupportMechanics 遠穿 7／3.5 公尺）
             case tw.exilecore.stats.SupportKeys.ELEMENTAL_PER_RECENT_TYPE -> "最近 4 秒用過的技能裡，每有一種跟這個技能不同的元素（火、冰、電），更多 "
                     + number(value) + "% 元素傷害";
             case tw.exilecore.stats.SupportKeys.VOLT -> "每移動 1 格累積 2 點電荷（最多 " + number(value) + " 點），放的時候全部用掉，每點獲得 1% 傷害為額外閃電傷害";

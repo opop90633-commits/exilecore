@@ -65,7 +65,7 @@ public record SummonSpec(String kind, int count, Scaled max, boolean fixedMax, d
                          double es, Set<String> minionTags, boolean immortal, String label) {
 
     /** 能當召喚物的原版生物（都有近戰 AI、能走路或飛；惱鬼會飛、穿牆）。 */
-    public static final Set<String> KINDS = Set.of("ZOMBIE", "HUSK", "SKELETON", "STRAY", "WITHER_SKELETON", "VEX", "IRON_GOLEM", "WOLF");
+    public static final Set<String> KINDS = Set.of("ZOMBIE", "HUSK", "SKELETON", "STRAY", "WITHER_SKELETON", "VEX", "IRON_GOLEM", "WOLF", "HORSE"); // 2026-10-30：HORSE（喚駒沒騎時的夥伴）
 
     public SummonSpec {
         buff = buff == null ? List.of() : List.copyOf(buff);
@@ -101,6 +101,7 @@ public record SummonSpec(String kind, int count, Scaled max, boolean fixedMax, d
             case "VEX" -> "焚魂";
             case "IRON_GOLEM" -> "魔像";
             case "WOLF" -> "狼";
+            case "HORSE" -> "戰馬";
             default -> kind;
         };
     }

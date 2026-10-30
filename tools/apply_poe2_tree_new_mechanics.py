@@ -160,8 +160,9 @@ MAP = {
 OVERRIDES = {
     # 「被你詛咒的敵人被阻礙，移動速度減少 15%」（stat 的值是 1）
     'enemies_you_curse_have_15%_hinder': [{'stat': 'curse.hinder', 'type': 'FLAT', 'value': 15}],
-    # 祭品的最大生命：我們的祭品（祭柱）沒有生命、不會被打掉，當作祭品持續時間（一半；平衡相當）
-    'offering_life_+%': [{'stat': 'skill.duration', 'type': 'INCREASED', 'scale': 0.5, 'tags': ['offering']}],
+    # 祭品的最大生命：2026-10-30 照 PoE2 骨柱是有生命的召喚物（MinionService.spike），直接加骨柱的最大生命；
+    # 這次之前骨柱沒有生命、不會被打掉，當作祭品持續時間（一半）
+    'offering_life_+%': [{'stat': 'offering.life', 'type': 'INCREASED', 'scale': 1}],
     # 「+1 戰旗上限」：我們的戰旗是立即的增益（不是插在地上的區域），多一支 ≈ 覆蓋更久：戰旗持續時間增加 25%
     'number_of_additional_banners_allowed': [{'stat': 'skill.duration', 'type': 'INCREASED', 'scale': 25, 'tags': ['banner']}],
     # 「離開戰旗範圍後增益多留 x 秒」：我們的戰旗增益跟著人走：多 x 秒 ÷ 基礎 8 秒 = 持續時間增加

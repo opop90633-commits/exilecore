@@ -38,7 +38,10 @@ import java.util.regex.Pattern;
 public final class AffixSpec {
 
     /** 一條。 */
-    public record Entry(String id, Integer tier, Map<String, Integer> vars) {
+    public record Entry(String id, Integer tier, Map<String, Integer> vars, boolean fractured) {
+        public Entry(final String id, final Integer tier, final Map<String, Integer> vars) {
+            this(id, tier, vars, false);
+        }
     }
 
     public static final int MAX_ENTRIES = 15;
@@ -110,6 +113,11 @@ public final class AffixSpec {
             final int colon = part.indexOf(':');
             String head = colon < 0 ? part : part.substring(0, colon).trim();
             final String body = colon < 0 ? "" : part.substring(colon + 1).trim();
+            // 2026-10-30 照站長：代號（或階級）後面加「!」＝這一條是破裂詞綴（不會被改掉）
+            final boolean fractured = head.endsWith("!");
+            if (fractured) {
+                head = head.substring(0, head.length() - 1).trim();
+            }
             Integer tier = null;
             final int at = head.indexOf('@');
             if (at >= 0) {
@@ -150,10 +158,13 @@ public final class AffixSpec {
                     vars.put(name, value);
                 }
             }
-            list.add(new Entry(head, tier, vars));
+            list.add(new Entry(head, tier, vars, fractured));
         }
         if (list.size() > MAX_ENTRIES) {
             throw new IllegalArgumentException("一件最多指定 " + MAX_ENTRIES + " 條詞綴");
+        }
+        if (list.stream().filter(Entry::fractured).count() > 1) {
+            throw new IllegalArgumentException("一件只能有一條破裂詞綴");
         }
         return list;
     }
@@ -171,6 +182,9 @@ public final class AffixSpec {
             out.append(entry.id());
             if (entry.tier() != null) {
                 out.append('@').append(entry.tier());
+            }
+            if (entry.fractured()) {
+                out.append('!'); // 2026-10-30：破裂
             }
             if (!entry.vars().isEmpty()) {
                 out.append(':');
@@ -211,6 +225,9 @@ public final class AffixSpec {
                 return "「" + plain(affix.text()) + "」跟前面的詞綴是同一類（同一類只能有一條）";
             }
             if (corruption(affix)) {
+                if (entry.fractured()) {
+                    return "腐化詞綴不能是破裂詞綴：" + plain(affix.text());
+                }
                 corrupted.add(entry); // 腐化詞綴最後加（不佔前綴、後綴的位子）
                 continue;
             }
@@ -226,6 +243,9 @@ public final class AffixSpec {
             final Map<String, Integer> vars = new LinkedHashMap<>(rolled.vars());
             vars.putAll(entry.vars());
             rolled.setVars(vars);
+            if (entry.fractured()) {
+                data.setFractured(affix.id()); // 2026-10-30 照站長：指定這一條破裂
+            }
         }
         // 2026-10-21：蝕變石的腐化詞綴（一件最多一條，有的話物品也是已腐化）
         for (final Entry entry : corrupted) {
@@ -281,6 +301,9 @@ public final class AffixSpec {
             if (!unique.affixIds().contains(entry.id())) {
                 return unique.name() + " 沒有這條詞綴：" + entry.id();
             }
+            if (entry.fractured()) {
+                return "傳奇不能指定破裂詞綴"; // 2026-10-30
+            }
             if (!seen.add(entry.id())) {
                 return entry.id() + " 寫了兩次";
             }
@@ -327,7 +350,7 @@ public final class AffixSpec {
             final int tierId = unique || entry.tier() == null ? affix.tiers().getFirst().tier() : entry.tier();
             String text = plain(Affix.substitute(affix.text(), entry.vars())).replaceAll("\\{[^}]*}", "?");
             if (!unique) {
-                text = (corruption(affix) ? "腐化：" : "") + "T" + affix.rank(tierId) + " " + text;
+                text = (corruption(affix) ? "腐化：" : "") + (entry.fractured() ? "破裂：" : "") + "T" + affix.rank(tierId) + " " + text;
             }
             if (outOfRange(affix.ranges(tierId), entry.vars())) {
                 text += "（超出範圍）";

@@ -539,8 +539,22 @@ public final class CombatListener implements Listener {
             final double vsLow = skillSheet.flat(StatKeys.DAMAGE_VS_LOW_LIFE, java.util.Set.of()) // 2026-10：輔助寶石（處刑）也算
                     + skillSheet.increased(StatKeys.DAMAGE_VS_LOW_LIFE, hitTagSet) * 100;
             final org.bukkit.attribute.AttributeInstance maxHealth = defender.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
-            if (vsLow > 0 && maxHealth != null && defender.getHealth() <= maxHealth.getValue() * 0.35) {
+            // 2026-10-30 照 PoE2 Execute I／II／III（support_executioner_damage_vs_enemies_on_low_life_+%_final）：處刑是更多（MORE），另外乘
+            final double vsLowMore = skillSheet.more(StatKeys.DAMAGE_VS_LOW_LIFE, hitTagSet);
+            final boolean lowEnemy = maxHealth != null && defender.getHealth() <= maxHealth.getValue() * 0.35;
+            if (vsLow > 0 && lowEnemy) {
                 conditional.add(Modifier.increased(StatKeys.DAMAGE, vsLow / 100.0, "低血的敵人"));
+            }
+            if (vsLowMore > 1 + 1e-9 && lowEnemy) {
+                conditional.add(Modifier.more(StatKeys.DAMAGE, vsLowMore - 1, "處刑（低血的敵人）"));
+            }
+            // 2026-10-30 照 PoE2 Execute III：你自己低血（35% 以下）時擊中傷害更多
+            final double whileLow = skillSheet.more(StatKeys.DAMAGE_WHILE_LOW_LIFE, hitTagSet);
+            if (whileLow > 1 + 1e-9 && attacker instanceof Player attackingPlayer) {
+                final tw.exilecore.character.PlayerState attackerLife = plugin.players().get(attackingPlayer);
+                if (attackerLife != null && attackerLife.maxLife() > 0 && attackerLife.life() <= attackerLife.maxLife() * 0.35) {
+                    conditional.add(Modifier.more(StatKeys.DAMAGE, whileLow - 1, "處刑 III（你低血）"));
+                }
             }
             // 2026-10：輔助寶石的條件：對滿血的敵人、魔力 90% 以上、比敵人低血（背水）
             final StatSheet supportSheet = skillSheet;
@@ -939,11 +953,17 @@ public final class CombatListener implements Listener {
         } else if (defenderIsMinion) {
             // 召喚物跟怪物一樣：原版血量只是比例
             // 2026-10-26：護盾吸收的部分不扣血（這次之前整下都扣生命）
-            if (result.total() > 0) {
+            // 2026-10-30 照 PoE2 Bone Offering：護盾吸收超過最大生命 25% 的那一下（整下吸掉、不中異常），然後護盾爆掉
+            final boolean absorbed = result.total() > 0 && minions.shieldAbsorbs(defender, result.total());
+            if (absorbed) {
+                pendingAilments.remove(defender.getUniqueId());
+            } else if (result.total() > 0) {
                 minions.damaged(defender, result.esDamage(), attacker);
                 minions.hitTaken(defender, result.total()); // 2026-10-28 照 PoE2 Bone Offering 的品質
             }
-            if (result.lifeDamage() > 0 || result.esDamage() <= 0) {
+            if (absorbed) {
+                event.setDamage(0);
+            } else if (result.lifeDamage() > 0 || result.esDamage() <= 0) {
                 final double rawMinionDamage = Math.max(0.01, result.lifeDamage() * minions.healthScale(defender));
                 // 2026-10-27 照 PoE2：憨魄（召喚物不會受傷）、殘戰（致命的那一下留一口氣）
                 final double minionDamage = plugin.skills() == null ? rawMinionDamage
@@ -1595,8 +1615,24 @@ public final class CombatListener implements Listener {
         if (data.isEmpty()) {
             return attacker.getType().name();
         }
+        // 2026-10-30：打你的那隻身上有詛咒、印記的話也寫出來（/hits、死亡回顧看得出來是不是被詛咒的怪打的）
+        final String hex = plugin.ailments() == null ? "" : plugin.ailments().hexText(attacker.getUniqueId(), plugin.getServer().getCurrentTick(), false);
         return DeathRecap.describe(data.get().name(), data.get().level(),
-                data.get().rarity() == tw.exilecore.monster.MonsterRarity.NORMAL ? null : data.get().rarity().displayName());
+                data.get().rarity() == tw.exilecore.monster.MonsterRarity.NORMAL ? null : data.get().rarity().displayName())
+                + (hex.isEmpty() ? "" : hex + damageFactorText(attacker) + "<gray>");
+    }
+
+    /** 2026-10-30（查萎力詛咒）：打你的怪身上的減益讓牠的傷害乘多少（「更多／更少傷害」相乘）；沒有就是空的。 */
+    private String damageFactorText(final LivingEntity attacker) {
+        double factor = 1;
+        boolean any = false;
+        for (final Modifier modifier : debuffs.modifiers(attacker.getUniqueId(), null, plugin.getServer().getCurrentTick())) {
+            if (StatKeys.DAMAGE.equals(modifier.stat()) && modifier.type() == tw.exilecore.stats.ModType.MORE && modifier.tags().isEmpty()) {
+                factor *= 1 + modifier.value();
+                any = true;
+            }
+        }
+        return any ? String.format(java.util.Locale.ROOT, "<dark_gray>[傷害 ×%.2f]", Math.max(0, factor)) : "";
     }
 
     /** 死亡回顧裡「哪一招」：Boss／小怪的招式名稱、玩家的技能名稱，其他照原版的原因（普攻、射擊、爆炸）。 */

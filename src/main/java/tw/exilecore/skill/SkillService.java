@@ -481,6 +481,15 @@ public final class SkillService {
         return build(state, plugin.players().sheet(player), definition, state.skills().skill(position));
     }
 
+    /**
+     * 2026-10-30 照 PoE2：昇華技能（面板上的那顆）品質給的某個 FLAT 屬性（gem_quality.yml；含嵌晶、天賦樹加的品質）；
+     * 沒放在面板上、沒有品質回傳 0。昇華那邊（AscGranted、AscPaths）照等級讀的數值加上這個。
+     */
+    public double ascQualityFlat(final Player player, final String skillId, final String stat) {
+        final SkillBuild build = equippedBuild(player, skillId);
+        return build == null ? 0 : build.qualityFlat(stat);
+    }
+
     /** 觸發（2026-10）。 */
     public SkillTriggers triggers() {
         if (triggers == null) {
@@ -585,6 +594,15 @@ public final class SkillService {
         final SkillBuild equipped = equippedBuild(player, skillId);
         final SkillBuild build = equipped != null ? equipped : SkillBuild.of(config, definition, config.maxLevelFor(state.level()), state.level(), false, List.of(),
                 state.weaponTags(), plugin.players().sheet(player));
+        if (definition.mechanic() == Mechanic.SUMMON && definition.summon() != null) {
+            // 2026-10-30 修正：召喚技能（先祖之魂）被觸發時在圖騰旁叫出來；這次之前交給 procCast，召喚不在那裡處理，什麼都沒發生
+            if (at.getWorld() != null && player.isOnline()) {
+                final org.bukkit.util.Vector side = SkillTargets.facing(player).clone().setY(0);
+                final Location spot = at.clone().add(side.lengthSquared() < 1e-6 ? new org.bukkit.util.Vector(1, 0, 0) : side.normalize());
+                minions.summonAt(player, build, List.of(spot));
+            }
+            return;
+        }
         procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), build, null);
     }
 
@@ -618,6 +636,13 @@ public final class SkillService {
     }
 
     /** 同一個技能（同一個 build）在 at 再放一次（回響、重複）：不花魔力、不看冷卻。 */
+    /** 2026-10-30：別的地方放的技能落在 at（幻影銳眼的霆落矛插地）。 */
+    public void proxyLanded(final Player player, final SkillBuild build, final Location at) {
+        if (player != null && build != null && at != null && player.isOnline()) {
+            signatures.proxyLanded(player, build, at, now());
+        }
+    }
+
     public void recast(final Player player, final SkillBuild build, final Location at, final org.bukkit.util.Vector facing, final LivingEntity target) {
         if (build == null || at.getWorld() == null || !player.isOnline()) {
             return;
@@ -947,6 +972,12 @@ public final class SkillService {
         SkillBuild build = supportMechanics().lineage().triggered(base.rollElement(sheet, plugin.items().random())); // 2026-10-27 照 PoE2：骰禍的隨機範圍
         build = build.withProfile(build.profile().scaled(scale, source)
                 .derive(build.profile().id() + MetaGems.TRIGGERED_SUFFIX, triggeredTags(metaTags), java.util.Set.of()));
+        // 2026-10-30 照 PoE2 Cast on Minion Death 的額外品質效果（進階奇術）：插槽法術被觸發時傷害增加 x%（看主要寶石的品質）
+        final double triggeredDamage = host == null ? 0 : qualityFlat(player, host.skillId(), tw.exilecore.stats.GemQualityKeys.META_TRIGGERED_DAMAGE);
+        if (triggeredDamage > 0) {
+            build = build.withProfile(build.profile().withLocal(List.of(new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.DAMAGE,
+                    tw.exilecore.stats.ModType.INCREASED, triggeredDamage / 100.0, java.util.Set.of(), "主要寶石品質（觸發時）"))));
+        }
         final SkillRuntime runtime = runtime(player);
         final long now = now();
         // 2026-10-17：有冷卻的法術被觸發也照冷卻（以前能量一滿就放，冷卻等於沒有）
@@ -2146,7 +2177,7 @@ public final class SkillService {
                 : definition.mechanic() == Mechanic.RALLY ? (minions.count(player.getUniqueId()) == 0 ? "你現在沒有召喚物" : null)
                 : definition.mechanic() == Mechanic.GUARD ? (definition.weapons().isEmpty() && !ManaTempest.is(definition) ? guardProblem(state, definition) : null) // 2026-10：限定武器的增益技能（霜鏃、急裝）不用盾；2026-10-26：魔湧不用盾
                 : Warcries.needsShield(definition) ? armouredShieldProblem(state, definition) // 2026-10-27 照 PoE2：堅壁戰吼要護甲盾
-                : definition.warcry() != null && definition.warcry().spike() ? warcries.spikeProblem(player) // 2026-10：祭柱要屍體或召喚物
+                : definition.warcry() != null && definition.warcry().spike() ? warcries.spikeProblem(player) // 2026-10：祭柱要屍體或召喚物；2026-10-30 照 PoE2：要骷髏
                 : config.mount(definition.id()) != null ? null // 2026-10：坐騎技能（叫坐騎／下馬）
                 : config.command(definition.id()) != null ? (minions.commandable(player, config.command(definition.id()), 1, false).isEmpty()
                         ? "附近沒有聽這個指令的召喚物" : null) // 2026-10：指令型召喚物技能
@@ -4281,7 +4312,9 @@ public final class SkillService {
             return build.withMinionReserve(build.minionReserve() * MinionAbilities.spectreSpirit(power) / 50.0);
         }
         if (MinionAbilities.BEAST.equals(id) && sheet != null && build.definition().summon() != null) {
-            final double percent = MinionAbilities.companionSpiritPercent(build.definition().summon().life());
+            // 2026-10-30 照 PoE2 Tame Beast：收服了野獸就照那種怪的強度（monsters.yml 的生命倍率）；沒收服照狼
+            final double percent = MinionAbilities.companionSpiritPercent(MinionService.tamedPower(state,
+                    plugin.monsters() == null ? null : plugin.monsters().config(), build.definition().summon().life()));
             final double spirit = Math.max(0, sheet.get(StatKeys.SPIRIT_MAX));
             return build.withMinionReserve(build.minionReserve() / 30.0 * percent / 100.0 * spirit);
         }
@@ -4299,6 +4332,9 @@ public final class SkillService {
         }
         if (MinionAbilities.RAVENS.equals(id)) {
             return granted().madFlight(player, build, preferred);
+        }
+        if (MinionAbilities.BEAST.equals(id)) {
+            return minions.startTame(player, preferred); // 2026-10-30 照 PoE2 Tame Beast：按鍵用鬼火纏住稀有野獸，打倒就收服
         }
         return minions.command(player, build, preferred);
     }
@@ -4629,6 +4665,25 @@ public final class SkillService {
     /** 品質修飾器的來源名稱開頭（SkillBuild.grantModifiers 用來認品質給的 grant.*）。 */
     static final String QUALITY_SOURCE = "品質 ";
 
+    /** 2026-10-30 照站長：圖鑑顯示 20% 品質的效果（不含「品質 +20%：」開頭）；寫不出來回傳 null。 */
+    public static String codexQualityText(final SkillDefinition definition) {
+        try {
+            final String text = qualityText(definition, 20);
+            return text == null ? null : text.replaceFirst("^品質 \\+20%：", "");
+        } catch (final RuntimeException e) {
+            return null;
+        }
+    }
+
+    /** 2026-10-30 照站長：圖鑑顯示 20% 品質的額外品質效果（嵌晶戰團・進階奇術）；寫不出來回傳 null。 */
+    public static String codexAdvancedQualityText(final SkillDefinition definition) {
+        try {
+            return advancedQualityText(definition, 20);
+        } catch (final RuntimeException e) {
+            return null;
+        }
+    }
+
     /** 2026-10-23：品質的說明（寶石、技能面板用）。 */
     /** 2026-10-28：額外的品質效果（gem_quality.yml 的 advanced；昇華「進階奇術」才有）的說明；沒有寫的技能是品質效果加倍（平衡等效）。 */
     static String advancedQualityText(final SkillDefinition definition, final int quality) {
@@ -4637,6 +4692,10 @@ public final class SkillService {
         }
         final List<tw.exilecore.stats.Modifier> mods = tw.exilecore.currency.GemQuality.advancedModifiers(definition.id(), quality, QUALITY_SOURCE);
         if (mods == null) {
+            final List<tw.exilecore.stats.Modifier> normal = tw.exilecore.currency.GemQuality.modifiers(definition.id(), quality, QUALITY_SOURCE);
+            if (normal != null && normal.isEmpty()) {
+                return "沒有效果（這個技能的品質沒有效果）"; // 2026-10-30：品質寫 [] 的技能，加倍還是沒有
+            }
             return "一般的品質效果再算一次（效果加倍）";
         }
         final List<String> lines = new ArrayList<>();
@@ -4684,7 +4743,7 @@ public final class SkillService {
                         trimNumber(qualityFlat(definition, quality, Twisters.EXTRA_CHANCE)));
             }
             case "falling_thunder" -> { // 2026-10-28 照 PoE2 Falling Thunder：每用掉一顆銳星再更多 (0—20)%（gem_quality.yml）；這次之前顯示成增加傷害
-                return String.format(Locale.ROOT, "品質 +%d%%：每用掉一顆銳星，投射物再更多 %s%% 傷害（加在 50%% 上）", quality,
+                return String.format(Locale.ROOT, "品質 +%d%%：每用掉一顆銳星，猛擊與投射物各更多 %s%% 傷害（投射物的加在 50%% 上）", quality,
                         trimNumber(qualityFlat(definition, quality, SkillExecutor.THUNDER_QUALITY)));
             }
             case "snipe" -> { // 2026-10-28 照 PoE2 Snipe：爆炸半徑 +(0—0.4) 格（gem_quality.yml）；這次之前顯示成增加傷害
@@ -4721,7 +4780,8 @@ public final class SkillService {
             return String.format(Locale.ROOT, "品質 +%d%%：%s", quality, lines.isEmpty() ? "強化這個技能自己的效果" : String.join("、", lines));
         }
         final String what = definition.summon() != null ? "召喚物傷害" // 2026-10-23：精魂召喚的機制是 aura，先看有沒有召喚
-                : definition.mechanic() == Mechanic.AURA ? "光環效果" : definition.mechanic() == Mechanic.WARCRY ? "戰吼效果"
+                : definition.mechanic() == Mechanic.AURA ? "光環效果" : definition.mechanic() == Mechanic.WARCRY
+                ? (definition.tags().contains("warcry") ? "戰吼效果" : "技能效果") // 2026-10-30：借戰吼做的增益技能（冥想、時間凍結…）不是戰吼，這次之前寫「戰吼效果」"
                 : definition.id().endsWith("_curse") ? "詛咒效果" : "傷害";
         final double amount = what.endsWith("效果") ? quality * 0.5 : quality;
         return String.format(Locale.ROOT, "品質 +%d%%：增加 %s%% %s", quality,
@@ -4743,6 +4803,8 @@ public final class SkillService {
             case tw.exilecore.stats.WarcryKeys.RADIUS_FLAT -> "增益半徑 +" + trimNumber(tw.exilecore.core.Units.metres(value)) + " 格"; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算
             case StatKeys.DEBUFF_DURATION -> "減益持續時間 +" + trimNumber(value) + " 秒";
             case StatKeys.META_ENERGY_GAIN -> "獲得的能量增加 " + trimNumber(value * 100) + "%";
+            case tw.exilecore.stats.GemQualityKeys.CHAIN_MORE_PER_REMAINING -> "每剩一次連鎖，擊中傷害更多 " + trimNumber(value) + "%"; // 2026-10-30 照 PoE2 Arc
+            case tw.exilecore.stats.GemQualityKeys.META_TRIGGERED_DAMAGE -> "插槽法術被觸發時傷害增加 " + trimNumber(value) + "%"; // 2026-10-30 照 PoE2 Cast on Minion Death
             case ChayulaHand.CURSE_DURATION -> "插槽詛咒的持續時間增加 " + trimNumber(value) + "%"; // 2026-10-29 照 PoE2 Hand of Chayula
             case ChayulaHand.MARK_EFFECT -> "插槽印記的效果增加 " + trimNumber(value) + "%";
             case Blasphemy.CURSE_MAGNITUDE -> "插槽詛咒的效果增加 " + trimNumber(value) + "%"; // 2026-10-29 照 PoE2 Blasphemy（額外的品質效果）
@@ -5408,7 +5470,7 @@ public final class SkillService {
         } else {
             final SkillBuild hostBuild = build(state, sheet, host, entry);
             final StatSheet effective = hostBuild.profile().effective(sheet);
-            final double duration = Math.max(4, levelValue(host.id(), "asc.mirage_seconds", level))
+            final double duration = Math.max(4, levelValue(host.id(), "asc.mirage_seconds", level) + hostBuild.qualityFlat("asc.mirage_seconds")) // 2026-10-30 照 PoE2：品質 +(0—1) 秒
                     * DeadeyeMetas.durationFactor(effective, hostBuild.profile().tags());
             final double cooldown = DeadeyeMetas.MIRAGE_COOLDOWN * DeadeyeMetas.cooldownFactor(effective, hostBuild.profile().tags());
             lines.add(String.format(Locale.ROOT, "<#c9a7ff>幻影<gray>：持續 <white>%s</white> 秒、冷卻 <white>%s</white> 秒，用孔裡的%s",
@@ -6115,20 +6177,23 @@ public final class SkillService {
             return;
         }
         final SkillParams.Mark guard = build.definition().params().mark();
-        lines.add(String.format(Locale.ROOT, "<gray>放了之後 <white>%.1f</white> 秒內，你下一次<white>弓或矛的投射物攻擊</white>自動重複 <white>%d</white> 次",
-                guard.duration() * build.durationScale(), barrage.repeats()));
-        lines.add(String.format(Locale.ROOT, "<gray>　每次重複少 <white>%s%%</white> 傷害、隔 %s 秒、不花魔力；每次都是重新射，可以再打到同一個敵人",
-                ModifierText.number(barrage.less()), ModifierText.number(barrage.gap())));
+        // 2026-10-30：封釋（PoE2 Unleash，spells: true）強化的是法術，說明照法術寫；這次之前跟連珠一樣寫「弓或矛的投射物攻擊」「攻擊時間」
+        final boolean spells = barrage.spells();
+        lines.add(String.format(Locale.ROOT, "<gray>放了之後 <white>%.1f</white> 秒內，你下一次<white>%s</white>自動重複 <white>%d</white> 次",
+                guard.duration() * build.durationScale(), spells ? "可以重複的法術" : "弓或矛的投射物攻擊", barrage.repeats()));
+        lines.add(String.format(Locale.ROOT, "<gray>　每次重複少 <white>%s%%</white> 傷害、隔 %s 秒、不花魔力；%s",
+                ModifierText.number(barrage.less()), ModifierText.number(barrage.gap()),
+                spells ? "每次都是重新放，可以再打到同一個敵人" : "每次都是重新射，可以再打到同一個敵人"));
         if (barrage.charge() != null && barrage.perCharge() > 0) {
             final String color = chargeColor(barrage.charge());
             final int held = player == null ? 0 : chargesHeld(player, barrage.charge());
             lines.add("<gray>　施放時用掉身上全部的<" + color + ">" + ItemRenderer.escape(chargeName(barrage.charge())) + "</" + color
                     + ">，每顆多重複 <white>" + barrage.perCharge() + "</white> 次" + (held > 0 ? "（現在 <white>" + held + "</white> 顆）" : ""));
         }
-        lines.add(String.format(Locale.ROOT, "<gray>　用掉之後的冷卻：%s 秒＋那一招攻擊時間的 <white>%s%%</white>（最多 %s 秒）",
-                ModifierText.number(build.definition().cooldown()), ModifierText.number(barrage.cooldownAttackTime().at(build.level())),
+        lines.add(String.format(Locale.ROOT, "<gray>　用掉之後的冷卻：%s 秒＋那一招%s時間的 <white>%s%%</white>（最多 %s 秒）",
+                ModifierText.number(build.definition().cooldown()), spells ? "施法" : "攻擊", ModifierText.number(barrage.cooldownAttackTime().at(build.level())),
                 ModifierText.number(barrage.maxCooldown())));
-        lines.add("<dark_gray>　有冷卻的攻擊、引導技能不能被強化");
+        lines.add(spells ? "<dark_gray>　有冷卻的法術、引導的法術、不會造成傷害的法術不能被強化" : "<dark_gray>　有冷卻的攻擊、引導技能不能被強化");
     }
 
     /**
@@ -6559,6 +6624,19 @@ public final class SkillService {
             final String bound = MinionService.boundSpectre(plugin.players().get(player));
             lines.add("<#8fd3ff>附身<gray>：開著的時候按這個鍵 = 附身附近一具屍體，之後一直叫那種怪（現在："
                     + ItemRenderer.escape(MinionService.spectreName(plugin.monsters() == null ? null : plugin.monsters().config(), bound)) + "）");
+        } else if (MinionAbilities.BEAST.equals(build.definition().id())) {
+            // 2026-10-30 照 PoE2 Tame Beast
+            final String tamed = MinionService.tamedKind(plugin.players().get(player));
+            final List<String> mods = minions.tamedModNames(player);
+            lines.add("<#8fd3ff>馴獸<gray>：開著的時候按這個鍵 = 用鬼火纏住準心的稀有野獸 8 秒（阻礙 30%），這段時間內打倒牠就收服，之後叫的是那隻野獸"
+                    + "（用牠自己的招式、保留牠最多 4 個怪物詞綴、精魂照牠的強度）");
+            lines.add("<gray>　現在的夥伴：<white>" + ItemRenderer.escape(tamed == null ? "狼（還沒收服野獸）"
+                    : MinionService.spectreName(plugin.monsters() == null ? null : plugin.monsters().config(), tamed))
+                    + "</white>" + (mods.isEmpty() ? "" : "（" + ItemRenderer.escape(String.join("、", mods)) + "）"));
+            final List<String> moves = minions.tamedSkillNames(player);
+            if (!moves.isEmpty()) {
+                lines.add("<gray>　招式：<white>" + ItemRenderer.escape(String.join("、", moves)) + "</white>（冷卻好了就放，傷害照牠普通一下的倍數）");
+            }
         }
         if (spec.radius() > 0) {
             lines.add(String.format(Locale.ROOT, "<gray>打中時連目標周圍 <white>%.1f</white> 格內的敵人一起打", spec.radius()));
@@ -6585,7 +6663,7 @@ public final class SkillService {
         final double others = auras.totalReserve(player.getUniqueId()) - (on ? auras.reserveOf(player.getUniqueId(), build.definition().id()) : 0);
         { // 2026-10-26：焚心業火拿掉了；這次之前這裡先分出「常駐技能：不保留精魂」（只有它）
             if (build.minionReserve() > 0) {
-                // 2026-10（照 PoE2）：精魂召喚每一隻保留精魂，付得起幾隻就叫幾隻
+                // 2026-10（照 PoE2）：精魂召喚每一隻保留精魂
                 final int cap = auras.minionCap(player.getUniqueId(), build.definition().id());
                 final int free = Math.min(build.minions(), spec.freeMinions());
                 lines.add(String.format(Locale.ROOT, "<#8fd3ff>精魂召喚<gray>：每隻保留 <white>%s</white> 精魂%s%s（你有 %.0f%s）",
@@ -6594,14 +6672,19 @@ public final class SkillService {
                         build.reserve() > 0 ? String.format(Locale.ROOT, "，另外固定 %.0f", build.reserve()) : "",
                         Math.max(0, plugin.players().sheet(player).get(StatKeys.SPIRIT_MAX)),
                         others > 0 ? String.format(Locale.ROOT, "，其他光環已保留 %.0f", others) : ""));
+                // 2026-10-30 照 PoE2：照技能面板設定的隻數帶（沒設定照原作預設：骸骨戰士 2 隻、其他 1 隻）；這次之前付得起幾隻叫幾隻
+                final int wanted = AuraService.wantedCount(plugin.players().get(player), build.definition().id());
+                final int target = wanted == AuraService.AUTO_COUNT ? build.minions() : Math.min(build.minions(), AuraService.resolveWanted(build, wanted));
+                final String setting = wanted == AuraService.AUTO_COUNT ? "自動（付得起就帶滿）" : wanted == AuraService.DEFAULT_COUNT ? "預設 " + target + " 隻" : target + " 隻";
                 if (on && cap > 0) {
-                    lines.add(String.format(Locale.ROOT, "<gray>現在養 <white>%d</white>／%d 隻，共保留 <white>%.0f</white> 精魂%s", Math.min(cap, build.minions()),
-                            build.minions(), auras.reserveOf(player.getUniqueId(), build.definition().id()),
-                            cap < build.minions() ? "<dark_gray>（精魂多一點就能多養）" : ""));
+                    lines.add(String.format(Locale.ROOT, "<gray>現在帶 <white>%d</white> 隻（設定：%s，上限 %d），共保留 <white>%.0f</white> 精魂%s", Math.min(cap, build.minions()),
+                            setting, build.minions(), auras.reserveOf(player.getUniqueId(), build.definition().id()),
+                            cap < target ? "<red>（精魂不夠，少帶了 " + (target - cap) + " 隻）" : ""));
                 } else {
-                    lines.add(String.format(Locale.ROOT, "<gray>養滿 %d 隻要 <white>%.0f</white> 精魂；精魂不夠時付得起幾隻就叫幾隻",
-                            build.minions(), build.reserve() + Math.max(0, build.minions() - free) * build.minionReserve()));
+                    lines.add(String.format(Locale.ROOT, "<gray>設定帶 %s，要 <white>%.0f</white> 精魂；精魂不夠時付得起幾隻就叫幾隻",
+                            setting, build.reserve() + Math.max(0, target - free) * build.minionReserve()));
                 }
+                lines.add("<dark_gray>數量在技能面板的「設定召喚物數量」調整");
             } else {
             lines.add(String.format(Locale.ROOT, "<#8fd3ff>%s<gray>：保留 <white>%.0f</white> 精魂（你有 %.0f%s）",
                     build.definition().reservesSpiritOnly() ? "常駐" // 2026-10-28 照 PoE2：戰旗、掠閃、喚駒綁在按鍵格上就保留，精魂不夠時不能用
@@ -6741,9 +6824,14 @@ public final class SkillService {
         final WarcrySpec spec = build.definition().warcry();
         final List<String> lines = new ArrayList<>();
         final double duration = spec.duration() * build.durationScale();
-        lines.add(String.format(Locale.ROOT, spec.spike() ? "<#c9a0ff>祭柱<gray>：用掉 " + Math.round(Warcries.SPIKE_SEARCH) + " 格內一具屍體（沒有就獻祭一隻你的召喚物）立柱，柱子半徑 <white>%.0f</white> 格"
+        // 2026-10-30 照 PoE2：串骷髏、骨柱是有生命的召喚物（這次之前用屍體，沒有就獻祭任何召喚物；骨柱打不掉）
+        lines.add(String.format(Locale.ROOT, spec.spike() ? "<#c9a0ff>祭柱<gray>：串一隻 " + Math.round(Warcries.SPIKE_SEARCH) + " 格內你的骷髏立骨柱，柱子半徑 <white>%.0f</white> 格"
                 : spec.cry() ? "<#f5b942>戰吼<gray>：半徑 <white>%.1f</white> 格" // 2026-10-26 照 PoE2：使用時間 0.8 秒（只吃戰吼速度），不是瞬間
                 : spec.minionBuff().isEmpty() ? "<#f5b942>戰吼<gray>：半徑 <white>%.0f</white> 格，瞬間發動" : "<#c9a0ff>祭品<gray>：半徑 <white>%.0f</white> 格，瞬間發動", spec.radius() * build.areaScale()));
+        if (spec.spike()) {
+            lines.add(String.format(Locale.ROOT, "<gray>骨柱是召喚物：生命是同等級召喚物的 <white>%s</white> 倍（吃召喚物生命與「祭品的最大生命」的加成），會被敵人打；被打死效果就結束",
+                    Warcries.ROLE_BONE.equals(build.definition().id()) ? "0.35" : "0.18"));
+        }
         final double heal = spec.heal().at(build.level());
         if (heal > 0) {
             lines.add(String.format(Locale.ROOT, "<gray>立刻回復 <white>%d%%</white> 最大生命", Math.round(heal)));
@@ -6757,8 +6845,23 @@ public final class SkillService {
         }
         if (!spec.minionBuff().isEmpty()) {
             lines.add(String.format(Locale.ROOT, spec.spike() ? "<gray>祭柱立著的 %.1f 秒內，柱子附近你的召喚物：" : "<gray>%.1f 秒內範圍內你的召喚物（祭品）：", duration));
+            boolean shield = false;
+            double shieldLess = 0;
             for (final ScaledMod mod : spec.minionBuff()) {
+                // 2026-10-30 照 PoE2 Bone Offering：護盾（五種傷害的減傷＋記號）合成一句
+                if (mod.stat().equals(tw.exilecore.stats.TreeMechanicKeys.OFFERING_BONE_SHIELD)) {
+                    shield = true;
+                    continue;
+                }
+                if (mod.stat().startsWith(StatKeys.DEBUFF_TAKEN)) {
+                    shieldLess = -mod.value().at(build.level());
+                    continue;
+                }
                 lines.add("<#c9a0ff>　" + ItemRenderer.escape(mod.describe(build.level(), 1.0)));
+            }
+            if (shield) {
+                lines.add(String.format(Locale.ROOT, "<#c9a0ff>　有護盾：受到的擊中傷害減少 <white>%s%%</white>（骨柱自己也有）", trimNumber(shieldLess)));
+                lines.add("<#c9a0ff>　受到超過最大生命 25% 的擊中時，護盾把那一下整個吸掉，然後爆掉（這根骨柱立著的期間不會再有）");
             }
         }
         if (spec.empower() == null && build.exerts() > 0) {

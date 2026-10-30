@@ -25,6 +25,11 @@ public final class Hints {
     public static final String DEATH = "death";
     public static final String LEVEL10 = "level10";
     public static final String LEVEL20 = "level20";
+    // 2026-10-30：新的第一次提示
+    public static final String RUNE = "rune";
+    public static final String CHARM = "charm";
+    public static final String CORRUPT = "corrupt";
+    public static final String LEVEL40 = "level40";
 
     /** 代號 → 提示（MiniMessage，一行）。 */
     public static final Map<String, String> MESSAGES = Map.ofEntries(
@@ -41,7 +46,11 @@ public final class Hints {
             Map.entry(JEWEL, "撿到<white>珠寶</white>：鑲在天賦樹的珠寶孔裡（選單 →「天賦」），要先點到那一格"),
             Map.entry(DEATH, "死了會從最後碰到的檢查點復活；在地圖裡死亡會掉經驗，快撐不住就先退回營地"),
             Map.entry(LEVEL10, "10 級了：升級拿到的天賦點記得點（/tree）；營地的委託板每天有委託可以換功勳"),
-            Map.entry(LEVEL20, "20 級了：裝備開始掉稀有的，用通貨改造一下；不要的裝備拿去營地拆解，別直接丟"));
+            Map.entry(LEVEL20, "20 級了：裝備開始掉稀有的，用通貨改造一下；不要的裝備拿去營地拆解，別直接丟"),
+            Map.entry(RUNE, "撿到<white>符文</white>：拿在游標上點有符文孔的武器或防具；孔滿了可以選一顆換掉（沒腐化的換下來會還你），洗裝台 /craft 也能取出"),
+            Map.entry(CHARM, "撿到<white>護符</white>：護符欄是腰帶給的，裝了腰帶後把護符拿在手上右鍵裝上；條件成立（被凍結、點燃…）時自動觸發"),
+            Map.entry(CORRUPT, "撿到<white>腐化通貨</white>：用了結果不能復原，腐化後的裝備不能再改造（符文還能換）；技能寶石也能腐化，有機會 +1 等"),
+            Map.entry(LEVEL40, "40 級了：技能寶石的屬性不夠時會自動降到屬性夠的等級，記得在天賦、裝備補力量／敏捷／智慧；/filter 可以藏掉不要的掉落"));
 
     private Hints() {
     }
@@ -54,7 +63,11 @@ public final class Hints {
         if (tw.exilecore.currency.CurrencyGroups.card(type)) {
             return CARD;
         }
+        if (type.operation() == tw.exilecore.currency.CurrencyOperation.RUNE) {
+            return RUNE; // 2026-10-30
+        }
         return switch (type.operation()) {
+            case CORRUPT -> CORRUPT; // 2026-10-30
             case ESSENCE -> ESSENCE;
             case OMEN -> OMEN;
             case CATALYST -> CATALYST;

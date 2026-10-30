@@ -251,6 +251,14 @@ public final class CodexValues {
             }
             s.add("mods", described(skill.modifiers()));
             s.add("info", skillInfo(skill));
+            final String quality = SkillService.codexQualityText(skill); // 2026-10-30 照站長：品質效果、進階奇術的額外品質效果
+            if (quality != null && !quality.isBlank()) {
+                s.addProperty("quality", CodexData.plain(quality));
+            }
+            final String advanced = SkillService.codexAdvancedQualityText(skill);
+            if (advanced != null && !advanced.isBlank()) {
+                s.addProperty("advancedQuality", CodexData.plain(advanced));
+            }
             final JsonArray fits = new JsonArray();
             for (final SupportDefinition support : gems) {
                 if (support.supports(skill)) {

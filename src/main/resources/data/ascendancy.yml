@@ -1912,7 +1912,7 @@ ascendancies:
         option_of: projectile_proximity
         icon: ARROW
         lines:
-          - 投射物對移動前 5.25 格內的目標擊中傷害更多 20%，隨飛行距離遞減，10.5 格後為 0%
+          - 投射物對移動前 3.5 格內的目標擊中傷害更多 20%，隨飛行距離遞減，7 格後為 0%
         stats:
           - { stat: asc.point_blank, type: FLAT, value: 20 }
       far_shot:
@@ -1920,7 +1920,7 @@ ascendancies:
         option_of: projectile_proximity
         icon: ARROW
         lines:
-          - 投射物對移動前 5.25 格內的目標擊中傷害更多 0%，隨飛行距離遞增，10.5 格後為更多 20%
+          - 投射物對移動前 3.5 格內的目標擊中傷害更多 0%，隨飛行距離遞增，7 格後為更多 20%
         stats:
           - { stat: asc.far_shot, type: FLAT, value: 20 }
       projectile_speed_2:

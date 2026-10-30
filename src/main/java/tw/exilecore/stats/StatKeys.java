@@ -370,7 +370,9 @@ public final class StatKeys {
     public static final String DAMAGE_VS_STUNNED = "damage.vs_stunned";         // MORE：對重暈中的敵人
     /** 2026-10-21：受到的那一種傷害增加 x%（減益：凋息、枯蝕、縛根）；後面接傷害類型的標籤（physical、chaos…）。只在算擊中時疊上去。 */
     public static final String DEBUFF_TAKEN = "debuff.taken.";
-    public static final String DAMAGE_VS_LOW_LIFE = "damage.vs_low_life";       // INCREASED：對低血（35% 以下）的敵人
+    public static final String DAMAGE_VS_LOW_LIFE = "damage.vs_low_life";       // INCREASED：對低血（35% 以下）的敵人；MORE：處刑（2026-10-30）
+    /** 2026-10-30 照 PoE2 Execute III（support_executioner_damage_+%_final_while_on_low_life）：MORE 你自己低血（35% 以下）時擊中傷害更多。 */
+    public static final String DAMAGE_WHILE_LOW_LIFE = "damage.while_low_life";
     public static final String FLAG_IMPLODING = "flag.imploding_impacts";       // 戰爭使者：完全破甲讓所有擊中傷害都增加
     public static final String BLOCK_MAX = "block.max";                         // FLAT：格擋上限（加在 50 上）
     public static final String BLOCK_TAKEN = "block.taken";                     // FLAT：被格擋的擊中仍受到 x% 傷害

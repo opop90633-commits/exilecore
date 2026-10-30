@@ -271,20 +271,22 @@ public final class SkillMenu extends Menu {
         final int max = Math.max(1, build.minions());
         final int wanted = AuraService.wantedCount(state, definition.id());
         final int free = Math.min(max, definition.aura().freeMinions());
-        final boolean auto = wanted == Integer.MAX_VALUE;
-        final int shown = auto ? max : Math.min(max, wanted);
+        final boolean auto = wanted == AuraService.AUTO_COUNT;
+        final boolean preset = wanted == AuraService.DEFAULT_COUNT;
+        final int shown = auto ? max : Math.min(max, AuraService.resolveWanted(build, wanted));
         final int now = service.auras() == null ? -1 : service.auras().minionCap(player.getUniqueId(), definition.id());
         final List<String> lore = new ArrayList<>();
         lore.add("<gray>每一隻保留 <white>" + ModifierText.number(Math.round(build.minionReserve() * 10) / 10.0) + "</white> 精魂"
                 + (free > 0 ? "（前 " + free + " 隻不用）" : "") + "，上限 <white>" + max + "</white> 隻");
-        lore.add(auto ? "<gray>目前：<white>自動</white>（精魂付得起幾隻就帶幾隻）" : "<gray>目前設定：<white>" + shown + "</white> 隻");
+        lore.add(auto ? "<gray>目前：<white>自動</white>（精魂付得起幾隻就帶幾隻）"
+                : preset ? "<gray>目前：<white>預設 " + shown + " 隻</white>" : "<gray>目前設定：<white>" + shown + "</white> 隻");
         if (now > 0 && now < Integer.MAX_VALUE) {
             lore.add("<gray>現在帶著：<white>" + now + "</white> 隻" + (now < shown ? "<red>（精魂不夠，少帶了 " + (shown - now) + " 隻）" : ""));
         }
         lore.add("<dark_gray>少帶幾隻就少保留精魂，省下來給別種召喚物或光環（各種召喚物可以自由混搭）");
         lore.add("");
         lore.add("<yellow>左鍵：+1　右鍵：−1");
-        lore.add("<yellow>Shift＋左鍵：自動（帶滿）　Shift＋右鍵：1 隻");
+        lore.add("<yellow>Shift＋左鍵：自動（付得起就帶滿）　Shift＋右鍵：回到預設");
         set(SLOT_MINION_COUNT, icon(Material.SKELETON_SKULL, "<#c9a7ff>設定召喚物數量：<white>" + (auto ? "自動（" + max + "）" : shown + " 隻"), lore));
     }
 
@@ -299,14 +301,14 @@ public final class SkillMenu extends Menu {
         }
         final int max = Math.max(1, build.minions());
         final int wanted = AuraService.wantedCount(state, definition.id());
-        final int current = wanted == Integer.MAX_VALUE ? max : Math.min(max, wanted);
+        final int current = wanted == AuraService.AUTO_COUNT ? max : Math.min(max, AuraService.resolveWanted(build, wanted));
         final int next = switch (click) {
-            case SHIFT_LEFT -> 0; // 自動
-            case SHIFT_RIGHT -> 1;
+            case SHIFT_LEFT -> AuraService.AUTO_COUNT; // 自動
+            case SHIFT_RIGHT -> AuraService.DEFAULT_COUNT; // 2026-10-30：回到照 PoE2 的預設隻數（這次之前是 1 隻）
             case RIGHT -> Math.max(1, current - 1);
             default -> Math.min(max, current + 1);
         };
-        service.auras().setWantedCount(player, definition.id(), next >= max ? 0 : next); // 設成上限＝自動
+        service.auras().setWantedCount(player, definition.id(), next); // 2026-10-30：設成上限就存上限（這次之前＝自動）
         click(1.2f);
         redraw();
     }

@@ -296,6 +296,7 @@ public final class StatLines {
         return STATS.containsKey(stat) || tw.exilecore.stats.SignatureText.TEXT.containsKey(stat) || ChargeText.isChargeStat(stat)
                 || AscKeys.handles(stat) // 2026-10-26
                 || stat.equals(StatKeys.DAMAGE_VS_LOW_LIFE)
+                || stat.startsWith(StatKeys.DEBUFF_TAKEN) // 2026-10-30
                 || stat.startsWith(StatKeys.DAMAGE_GAIN) && GAINS.containsKey(stat.substring(StatKeys.DAMAGE_GAIN.length()));
     }
 
@@ -437,6 +438,14 @@ public final class StatLines {
             final String type = elementWord(stat.substring(StatKeys.RESIST_MAX.length() + 1));
             if (type != null) {
                 return signed(value) + "% 最大" + type + "抗性";
+            }
+        }
+        if (stat.startsWith(StatKeys.DEBUFF_TAKEN) && modifier.type() == ModType.FLAT) {
+            // 2026-10-30：受到某一種傷害更多／更少（骸骨祭、減益）；這次之前寫成「特殊效果（-25）」
+            final String key = stat.substring(StatKeys.DEBUFF_TAKEN.length());
+            final String type = Tags.PHYSICAL.equals(key) ? "物理" : elementWord(key);
+            if (type != null) {
+                return "受到的" + type + "傷害" + (value < 0 ? "更少 " : "更多 ") + number(Math.abs(value)) + "%";
             }
         }
         final String signature = tw.exilecore.stats.SignatureText.TEXT.get(stat);

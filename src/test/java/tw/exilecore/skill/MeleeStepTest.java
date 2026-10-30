@@ -96,7 +96,7 @@ class MeleeStepTest {
     void tooltipLine() {
         assertNull(SkillService.stepLine(null));
         final String line = SkillService.stepLine(new MeleeStep.Spec(tw.exilecore.core.Units.metres(2.6), true));
-        assertTrue(line.contains("最多 <white>3.9</white> 格") && line.contains("打得到就不動"), line);
+        assertTrue(line.contains("最多 <white>2.6</white> 格") && line.contains("打得到就不動"), line);
     }
 
     /** 平地：地板在 y = 63，x ≥ wallAtX 是牆。 */

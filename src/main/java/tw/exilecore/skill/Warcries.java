@@ -43,17 +43,26 @@ final class Warcries {
     /** 銀月庇一次最多用掉幾點怒氣（比任何怒氣上限都大：等於全部）。 */
     static final int RAGE_FEED_CAP = 1000;
 
-    /** 祭柱找屍體、獻祭召喚物的範圍（格）。 */
+    /** 祭柱找骷髏的範圍（格）。 */
     static final double SPIKE_SEARCH = 12;
+    /** 2026-10-30：骸骨祭（骨柱生命 0.35 倍；其他祭品 0.18 倍）。 */
+    static final String ROLE_BONE = "bone_offering";
 
-    /** 一根祭柱。 */
-    private record Spike(org.bukkit.entity.BlockDisplay display, org.bukkit.scheduler.BukkitTask task, long start) {
-        void remove() {
+    /** 一根祭柱（2026-10-30 照 PoE2：mob 是骨柱本身的召喚物，被打死祭品就結束）。 */
+    private record Spike(org.bukkit.entity.BlockDisplay display, org.bukkit.scheduler.BukkitTask task, long start, java.util.UUID mob) {
+        void remove(final MinionService minions) {
             task.cancel();
             if (display.isValid()) {
                 display.remove();
             }
+            if (minions != null) {
+                minions.removeSpike(mob);
+            }
         }
+    }
+
+    private MinionService minionService() {
+        return plugin.skills() == null ? null : plugin.skills().minions();
     }
 
     /**
@@ -68,38 +77,30 @@ final class Warcries {
         return hash < 0 ? keyAfterPrefix : keyAfterPrefix.substring(0, hash);
     }
 
-    /** 花魔力之前：祭柱放不放得出來（附近要有屍體或自己的召喚物）。 */
+    /**
+     * 花魔力之前：祭柱放不放得出來。2026-10-30 照 PoE2（Skewer a Skeleton on a bone spike）：要 {@link #SPIKE_SEARCH} 格內有你的骷髏；
+     * 這次之前用屍體，沒有屍體就獻祭任何一隻召喚物。
+     */
     String spikeProblem(final Player player) {
-        final org.bukkit.Location at = player.getLocation();
         if (tw.exilecore.ascendancy.AscendancyEffects.offeringVictim(player, SPIKE_SEARCH) != null) {
             return null; // 2026-10-27 照 PoE2（昇華・不情願的獻祭）：撲殺範圍內的敵人也能當祭品的目標
         }
-        if (plugin.combat() != null && plugin.combat().corpses().nearest(at.getWorld().getUID(), at.getX(), at.getZ(), SPIKE_SEARCH,
-                plugin.getServer().getCurrentTick()) != null) {
-            return null;
-        }
-        return plugin.skills() != null && plugin.skills().minions() != null && plugin.skills().minions().canSacrifice(player, at, SPIKE_SEARCH)
-                ? null : "附近沒有屍體，也沒有召喚物可以獻祭";
+        final MinionService minions = minionService();
+        return minions != null && minions.offeringSkeleton(player, player.getLocation(), SPIKE_SEARCH, false) != null
+                ? null : "附近沒有你的骷髏（祭品要串一隻骷髏立骨柱）";
     }
 
-    /** 祭柱的位置：最近的屍體（用掉），沒有就獻祭一隻最舊的召喚物。 */
+    /** 祭柱的位置：串最近的一隻自己的骷髏（獻祭掉）；沒有回傳 null。 */
     private org.bukkit.Location spikeSpot(final Player player) {
-        final org.bukkit.Location at = player.getLocation();
-        if (plugin.combat() != null) {
-            final tw.exilecore.combat.Corpses.Corpse corpse = plugin.combat().corpses().nearest(at.getWorld().getUID(), at.getX(), at.getZ(),
-                    SPIKE_SEARCH, plugin.getServer().getCurrentTick());
-            if (corpse != null) {
-                if (!tw.exilecore.stats.TreeEffectKeys.corpseSaved(plugin.players().sheet(player), plugin.random())) { // 2026-10-26 照 PoE2 天賦樹：x% 機率不毀掉屍體
-                    plugin.combat().corpses().remove(corpse);
-                }
-                return new org.bukkit.Location(at.getWorld(), corpse.x(), corpse.y(), corpse.z());
-            }
-        }
-        return plugin.skills().minions().sacrifice(player, at, SPIKE_SEARCH);
+        final MinionService minions = minionService();
+        return minions == null ? null : minions.offeringSkeleton(player, player.getLocation(), SPIKE_SEARCH, true);
     }
 
-    private void raiseSpike(final Player player, final String skillId, final org.bukkit.Location at, final double radius, final int ticks,
+    private void raiseSpike(final Player player, final SkillBuild build, final org.bukkit.Location at, final double radius, final int ticks,
                             final List<Modifier> mods, final double powerEvery, final double regenPercent, final int limit) {
+        final String skillId = build.definition().id();
+        // 2026-10-30：魂火祭這種增益給你自己的（沒有給召喚物的增益）：骨柱倒了增益跟著結束
+        final boolean selfBuff = build.definition().warcry() != null && build.definition().warcry().minionBuff().isEmpty();
         final String baseKey = player.getUniqueId() + "/" + skillId;
         // 2026-10-28 照 PoE2：同一種祭品最多 limit 根（1 + 過剩的 +x 上限），滿了最舊的倒下；這次之前一律換掉唯一那根
         final List<String> standing = new java.util.ArrayList<>();
@@ -119,7 +120,7 @@ final class Warcries {
             standing.remove(oldestKey);
             final Spike old = spikes.remove(oldestKey);
             if (old != null) {
-                old.remove();
+                old.remove(minionService());
             }
         }
         String free = baseKey;
@@ -138,6 +139,10 @@ final class Warcries {
         });
         at.getWorld().playSound(at, org.bukkit.Sound.BLOCK_BONE_BLOCK_PLACE, 1f, 0.6f);
         at.getWorld().spawnParticle(org.bukkit.Particle.SOUL, at.clone().add(0, 1, 0), 20, 0.3, 0.8, 0.3, 0.03);
+        // 2026-10-30 照 PoE2 Offering Spike：骨柱本身是召喚物（骸骨祭生命 0.35 倍、其他 0.18 倍），骸骨祭的護盾也給它自己
+        final MinionService minionsNow = minionService();
+        final java.util.UUID spikeMob = minionsNow == null ? null : minionsNow.spike(player, build, at, ROLE_BONE.equals(skillId)
+                ? MinionService.SPIKE_LIFE_BONE : MinionService.SPIKE_LIFE, ticks, mods);
         final long start = plugin.getServer().getCurrentTick();
         final long end = start + ticks;
         final long[] nextPower = {start + Math.round(powerEvery * 20)};
@@ -145,12 +150,20 @@ final class Warcries {
         // 2026-10-27：計時給 /ec perf 看（fx.warcry）
         holder[0] = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> plugin.perf().time("fx.warcry", () -> {
             final long now = plugin.getServer().getCurrentTick();
-            if (now >= end || !player.isOnline() || !display.isValid() || !player.getWorld().equals(at.getWorld())) {
+            final MinionService minions = minionService();
+            final boolean broken = spikeMob != null && minions != null && !minions.spikeStanding(spikeMob);
+            if (now >= end || broken || !player.isOnline() || !display.isValid() || !player.getWorld().equals(at.getWorld())) {
                 final Spike mine = spikes.get(key);
                 if (mine != null && mine.task() == holder[0]) {
                     spikes.remove(key);
                 }
                 holder[0].cancel();
+                if (minions != null) {
+                    minions.removeSpike(spikeMob);
+                }
+                if (broken && selfBuff && player.isOnline() && spikes.keySet().stream().noneMatch(k -> k.equals(baseKey) || k.startsWith(baseKey + "#"))) {
+                    buffs.remove(player, skillId); // 2026-10-30 照 PoE2 Soul Offering：骨柱被打死，增益馬上結束
+                }
                 if (display.isValid()) {
                     at.getWorld().spawnParticle(org.bukkit.Particle.SMOKE, at.clone().add(0, 1, 0), 10, 0.2, 0.6, 0.2, 0.02);
                     display.remove();
@@ -175,7 +188,7 @@ final class Warcries {
                         at.clone().add(Math.cos(a) * radius, 0.15, Math.sin(a) * radius), 1, 0, 0, 0, 0);
             }
         }), 1, 10);
-        spikes.put(key, new Spike(display, holder[0], start));
+        spikes.put(key, new Spike(display, holder[0], start, spikeMob));
         if (plugin.skills() != null && plugin.skills().treeLeftovers() != null) {
             plugin.skills().treeLeftovers().offeringCreated(player); // 2026-10-27 照 PoE2 天賦樹：立祭品時回復生命
         }
@@ -208,7 +221,7 @@ final class Warcries {
     /** 關掉、重讀：祭柱全部收掉。 */
     void clearSpikes() {
         for (final Spike spike : spikes.values()) {
-            spike.remove();
+            spike.remove(minionService());
         }
         spikes.clear();
     }
@@ -301,7 +314,7 @@ final class Warcries {
         }
         if (extras.steps() != null) {
             // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（SupportMechanics.STEP_METRES 1.2 公尺 = 1.8 格）
-            lines.add("<gray>持續期間每走 1.8 格觸發火山步（身邊一圈火焰猛擊）；近戰打擊打中時觸發火山噴發（三顆熔岩彈，0.4 秒一次）");
+            lines.add("<gray>持續期間每走 1.2 格觸發火山步（身邊一圈火焰猛擊）；近戰打擊打中時觸發火山噴發（三顆熔岩彈，0.4 秒一次）");
         }
         if (extras.knockback()) {
             lines.add("<gray>震退範圍內的敵人");
@@ -468,13 +481,20 @@ final class Warcries {
             }
         }
 
-        // 祭柱（2026-10 PoE2 的祭品）：用掉一具屍體（沒有就獻祭一隻自己的召喚物）立一根祭柱，柱子附近的召喚物一直有增益
-        if (spec.spike() && !spec.minionBuff().isEmpty() && plugin.skills() != null && plugin.skills().minions() != null) {
+        // 祭柱（2026-10 PoE2 的祭品）：2026-10-30 照 PoE2 串一隻自己的骷髏立一根骨柱（骨柱是召喚物）；這次之前用掉一具屍體（沒有就獻祭一隻自己的召喚物）立一根祭柱，柱子附近的召喚物一直有增益
+        // 2026-10-30 照 PoE2：魂火祭（增益給你、沒有給召喚物的）也立骨柱；這次之前只有給召喚物增益的祭品才立
+        if (spec.spike() && plugin.skills() != null && plugin.skills().minions() != null) {
             final List<Modifier> minionMods = new java.util.ArrayList<>();
-            // 2026-10-26（骸舞，PoE2 Danse Macabre）：多用掉一隻骷髏，有用到才有 30% 增益效果
-            final double extraEffect = plugin.skills().supportMechanics().offeringExtraSkeleton(player, build);
             // 2026-10-27 照 PoE2（昇華・不情願的獻祭）：撲殺範圍內的敵人當目標（撲殺牠，每點強度效果增加 1%），祭品改成影響你
             final boolean unwilling = tw.exilecore.ascendancy.AscendancyEffects.unwillingOffering(player);
+            // 2026-10-30：先串骨柱用的那隻骷髏，再算骸舞多獻的（這次之前骸舞先拿，只有一隻骷髏時祭品就沒得串）
+            final org.bukkit.Location spikeAt = unwilling ? null : spikeSpot(player);
+            if (!unwilling && spikeAt == null) {
+                buffs.remove(player, id);
+                return "<red>附近沒有你的骷髏（祭品要串一隻骷髏立骨柱）";
+            }
+            // 2026-10-26（骸舞，PoE2 Danse Macabre）：多用掉一隻骷髏，有用到才有 30% 增益效果
+            final double extraEffect = plugin.skills().supportMechanics().offeringExtraSkeleton(player, build);
             final org.bukkit.entity.LivingEntity victim = unwilling ? tw.exilecore.ascendancy.AscendancyEffects.offeringVictim(player, SPIKE_SEARCH) : null;
             final org.bukkit.Location victimAt = victim == null ? null : victim.getLocation();
             final double power = victim == null ? 0 : tw.exilecore.ascendancy.AscendancyEffects.cullForOffering(player, victim);
@@ -498,11 +518,8 @@ final class Warcries {
                     notice.append(String.format(Locale.ROOT, "<gray>，撲殺的敵人強度 %.0f：效果增加 %.0f%%", power, power));
                 }
             } else {
-                final org.bukkit.Location at = spikeSpot(player);
-                if (at == null) {
-                    return "<red>附近沒有屍體，也沒有召喚物可以獻祭";
-                }
-                raiseSpike(player, id, at, radius, ticks, minionMods,
+                final org.bukkit.Location at = spikeAt;
+                raiseSpike(player, build, at, radius, ticks, minionMods,
                         effective.flat(tw.exilecore.charge.ChargeService.SUP_OFFERING_POWER, tags),
                         effective.flat(tw.exilecore.charge.ChargeService.SUP_OFFERING_REGEN, tags),
                         1 + (build.definition().tags().contains(SkillLimits.TAG) ? SkillLimits.bonus(effective, tags) : 0)); // 2026-10-28：過剩

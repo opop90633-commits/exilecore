@@ -102,7 +102,18 @@ final class SupportCutMenu extends Menu {
             return false;
         }
         final SkillDefinition skill = chosen();
-        return skill == null || support.supports(skill);
+        return skill == null || fits(loadout().skill(position), skill, support);
+    }
+
+    /**
+     * 2026-10-30：這顆輔助掛不掛得上這個技能，跟技能面板掛上去時一樣驗（GemService.socket）：宿主寶石（引星、星咒圖騰、幻影銳眼…）
+     * 照孔裡的技能驗（hostRefusal）。這次之前一律照技能自己的標籤，宿主寶石列出來的跟真的掛得上的不一樣。
+     */
+    private boolean fits(final SkillLoadout.Entry entry, final SkillDefinition skill, final SupportDefinition support) {
+        if (SupportDefinition.hostsSkill(skill)) {
+            return entry != null && support.hostRefusal(skill, service.innerSkill(entry)) == null;
+        }
+        return support.supports(skill);
     }
 
     private int pageCount() {
@@ -187,7 +198,7 @@ final class SupportCutMenu extends Menu {
             }
             int fits = 0;
             for (final SupportDefinition support : service.config().supports()) {
-                if (support.cuttable() && support.tier() <= tier && support.supports(definition)) {
+                if (support.cuttable() && support.tier() <= tier && fits(entry, definition, support)) {
                     fits++;
                 }
             }

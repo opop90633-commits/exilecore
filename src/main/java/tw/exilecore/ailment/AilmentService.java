@@ -2779,7 +2779,7 @@ public final class AilmentService {
      * 這隻身上的詛咒與印記：「咒·萎力 印·狩獵」；seconds＝後面加剩幾秒（Boss 血條）。
      * 同一個技能（分好幾種標籤的）只寫一次；隱藏的（輔助觸發的殘肢、目眩這種）不寫。
      */
-    String hexText(final UUID id, final long now, final boolean seconds) {
+    public String hexText(final UUID id, final long now, final boolean seconds) {
         if (plugin.combat() == null || plugin.skills() == null) {
             return "";
         }

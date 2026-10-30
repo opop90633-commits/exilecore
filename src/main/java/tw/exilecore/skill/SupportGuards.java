@@ -25,6 +25,8 @@ public final class SupportGuards {
      * 拿掉魔泉湧（我們的魔泉湧不會留殘骸；這次之前殘骸輔助是「放技能後撿的殘骸都算」，掛在它上面也有作用）。
      */
     private static volatile Set<String> remnants = Set.of();
+    /** 2026-10-30：有耐久（用幾次就消失）的物件的技能：鐘、雷樁矢／電鍊箭矢插的箭、龍捲風。 */
+    private static volatile Set<String> durables = Set.of();
     /** 2026-10-28：resource.combo_gain 的技能（打中就累積連擊；頂點不能掛）。 */
     private static volatile Set<String> comboGainers = Set.of();
 
@@ -46,6 +48,15 @@ public final class SupportGuards {
                 withRemnant.add(skill.id());
             }
         }
+        final Set<String> withDurability = new HashSet<>();
+        for (final SkillDefinition skill : config.all()) {
+            // 2026-10-30 照 PoE2 Durability：有「用幾次就消失」的物件（鐘、雷樁矢的箭、龍捲風）
+            if (config.rod(skill.id()) != null || config.tornado(skill.id()) != null
+                    || skill.deploy() != null && skill.deploy().rings() > 0) {
+                withDurability.add(skill.id());
+            }
+        }
+        durables = Set.copyOf(withDurability);
         conditional = Set.copyOf(withCondition);
         remnants = Set.copyOf(withRemnant);
         comboGainers = Set.copyOf(gainers);
@@ -235,6 +246,10 @@ public final class SupportGuards {
         if (support.flags(SupportExtraKeys.LOYALTY) && !tags.contains(tw.exilecore.stats.TreeMechanicKeys.COMPANION)) {
             return "要叫出夥伴的技能";
         }
+        // 2026-10-30 照 PoE2 Loyalty（excluded_types MinionsAreUndamagable）：不會受傷的夥伴（幻化武器）不行；這次之前掛得上去但沒有作用
+        if (support.flags(SupportExtraKeys.LOYALTY) && skill.summon() != null && skill.summon().immortal()) {
+            return "夥伴不會受傷的技能不行";
+        }
         // 2026-10-28：常駐召喚（骷髏、殭屍…）沒有 persistent 標籤，改看召喚本身是不是常駐（LineageRules.persistentMinion）；這次之前常駐召喚都插不進去
         if ((support.flags(SupportExtraKeys.LAST_GASP) || support.flags(SupportExtraKeys.CRAZED)) && !tags.contains("persistent")
                 && !LineageRules.persistentMinion(skill)) {
@@ -258,8 +273,8 @@ public final class SupportGuards {
         if (support.flags(SupportExtraKeys.CONSUME_FREEZE) && skill.id().equals("sunder")) {
             return "本來就會用掉凍結的技能不行";
         }
-        if (support.flags(SupportExtraKeys.DURABILITY) && !has(skill, StatKeys.CRYSTAL_COUNT)) {
-            return "要會留下冰晶的技能";
+        if (support.flags(SupportExtraKeys.DURABILITY) && !durables.contains(skill.id())) {
+            return "要留下有耐久物件的技能（鐘、雷樁矢、龍捲風）"; // 2026-10-30 照 PoE2；這次之前是留冰晶的技能（冰晶多打兩下）
         }
         if (support.flags(SupportExtraKeys.SLOW_POTENCY) && !slows(skill)) {
             return "要會緩速的技能（冰冷、詛咒、癱瘓、阻礙）";

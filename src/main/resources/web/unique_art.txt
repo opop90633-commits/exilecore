@@ -10834,3 +10834,27 @@ item lavianga_spirits
   ....owwbbwwo....
   .....oooooo.....
   ................
+
+item bones_of_ullr
+  o=1a1418
+  b=e8e0c8
+  w=fffaf0
+  s=a89f86
+  d=4a3a2e
+  g=5be0b0
+  ................
+  ................
+  ..o.o.....o.o...
+  .obobo...obobo..
+  .obwbo...obwbo..
+  .osbso...osbso..
+  .obdbo...obdbo..
+  .osbso...osbso..
+  .obdbo...obdbo..
+  .obwbo...obwbo..
+  .obbbbo..obbbbo.
+  .obgbbbo.obbgbbo
+  .osbbbbo.osbbbbo
+  .ossssso.ossssso
+  ..ooooo...ooooo.
+  ................

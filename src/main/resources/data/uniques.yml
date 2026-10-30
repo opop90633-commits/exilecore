@@ -952,6 +952,38 @@ falconer_bow:
       stats:
         - { stat: damage, type: INCREASED, value: 30, tags: [projectile] }
 
+
+bones_of_ullr:        # 2026-10-30 照 PoE2 0.1 的「Bones of Ullr」（poe2db.tw/tw/Bones_of_Ullr；原作有、我們以前沒有的）
+  name: 烏勒爾之骨
+  base: boots_int_16        # 原作基底 Lattice Sandals（格子便鞋：16 級、23 智慧）
+  stat_base: boots_int_03          # 原作基底那一階的數值
+  drop_level: 16
+  sources: [chance, gamble]
+  rarity: uncommon
+  flavour:
+    - "「亡者徘徊之處，生人退避卻步。」"
+  mods:
+    - text: "增加 {value}% 移動速度"
+      value: [5, 15]
+      stats:
+        - { stat: movement.speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 能量護盾"
+      value: [40, 60]
+      stats:
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [20, 40]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "+{value} 最大魔力"
+      value: [20, 40]
+      stats:
+        - { stat: mana.max, type: FLAT, value: "{value}" }
+    - text: "產生不死召喚物的技能保留效率增加 {value}%"
+      value: [20, 30]
+      stats:
+        - { stat: aura.reservation, type: INCREASED, value: "-{value}", tags: [undead] }   # SkillBuild：殭屍、骷髏、附魂這類技能的保留另外看 undead
+
 roamers_boots:
   name: 遊子之靴
   base: boots_int_16        # 2026-10-26 照 PoE2 的基底（Wrapped Sandals：舊木絲履）；這次之前 boots_dex_16（stat_base boots_dex_01）
@@ -9480,7 +9512,7 @@ lavianga_spirits:        # 2026-10-30 照 PoE2 0.3 的「Lavianga's Spirits」�
   name: 拉維安加之泉
   base: starlit_mana_flask        # 原作基底 Gargantuan Mana Flask（2 秒內恢復 185 魔力，跟星輝魔力藥劑一樣）
   drop_level: 49
-  sources: [map_boss, gamble]
+  sources: [map_boss]   # 2026-10-30 照站長：藥劑不進商人賭博；這次之前 [map_boss, gamble]
   rarity: uncommon
   flavour:
     - "「我該如何面對我在瓦爾克拉斯所目睹的一切？」"

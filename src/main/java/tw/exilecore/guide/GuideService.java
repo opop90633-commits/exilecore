@@ -33,6 +33,10 @@ public final class GuideService {
     public static final String PROGRESS_MILESTONE = "guide.m.";
     /** 角色進度前綴：第一次遇到的提示已經說過（{@link Hints}）。 */
     public static final String PROGRESS_HINT = "hint.";
+    /** 2026-10-30：做過的事（{@link #milestone}）：翻滾、嵌符文、打開掉落過濾。 */
+    public static final String DODGE = "dodge";
+    public static final String RUNE = "rune";
+    public static final String FILTER = "filter";
     private static final int HOTBAR_SLOTS = 9;
 
     private final ExileCore plugin;
@@ -122,13 +126,28 @@ public final class GuideService {
                 mapsDone++; // 跟任務的 maps 目標同一個算法（QuestLog.mapsCompleted）
             }
         }
-        final String atlas = progress.get(tw.exilecore.map.AtlasTree.PROGRESS_KEY);
+        // 2026-10-30 照站長（已經點過星圖的人沒觸發）：星圖天賦改成帳號共用之後存在帳號上，不在角色進度裡；這次之前只看角色進度
+        String atlas = progress.get(tw.exilecore.map.AtlasTree.PROGRESS_KEY);
+        if ((atlas == null || atlas.isBlank()) && plugin.maps() != null) {
+            final java.util.Map<String, String> account = plugin.maps().atlasData(player);
+            atlas = account == null ? null : account.get(tw.exilecore.map.AtlasTree.PROGRESS_KEY);
+        }
+        final java.util.Set<String> milestones = new java.util.HashSet<>();
+        for (final String key : progress.keySet()) {
+            if (key.startsWith(PROGRESS_MILESTONE)) {
+                milestones.add(key.substring(PROGRESS_MILESTONE.length()));
+            }
+        }
+        boolean charm = false;
+        for (int i = 0; i < 3 && !charm; i++) {
+            charm = tw.exilecore.flask.CharmService.charmAt(state, i) != null;
+        }
         return new Guide.Snapshot(state.hasCharacter(), progress.containsKey(PROGRESS_MENU), questStarted, skillBound, flasks,
                 progress.containsKey(ZoneService.PROGRESS_LAST), !state.passives().isEmpty(), state.level(),
                 storyStarted, storyDone, state.skills().size(), supportSocketed, progress.containsKey(PROGRESS_MILESTONE + "currency"),
                 stashUsed, progress.containsKey(PROGRESS_MILESTONE + "salvage"), flaskLevel,
                 plugin.bounties() != null && plugin.bounties().boardSeen(player), trialDone,
-                progress.containsKey(tw.exilecore.ascendancy.Ascension.CHOSEN), atlas != null && !atlas.isBlank(), mapsDone);
+                progress.containsKey(tw.exilecore.ascendancy.Ascension.CHOSEN), atlas != null && !atlas.isBlank(), mapsDone, milestones, charm);
     }
 
     /** 做過某件事（用通貨、拆解）：別的模組叫，記在角色進度；沒角色不記。 */
@@ -172,6 +191,9 @@ public final class GuideService {
         if (state.level() >= 20) {
             hint(player, Hints.LEVEL20);
         }
+        if (state.level() >= 40) {
+            hint(player, Hints.LEVEL40); // 2026-10-30
+        }
         final java.util.Set<String> found = new java.util.HashSet<>();
         for (final org.bukkit.inventory.ItemStack stack : player.getInventory().getStorageContents()) {
             if (stack == null || stack.isEmpty()) {
@@ -180,6 +202,10 @@ public final class GuideService {
             final tw.exilecore.currency.CurrencyType currency = plugin.currencies() == null ? null : plugin.currencies().read(stack).orElse(null);
             if (currency != null) {
                 found.add(Hints.forCurrency(currency));
+                continue;
+            }
+            if (plugin.flasks() != null && plugin.flasks().charms() != null && plugin.flasks().charms().isCharm(stack)) {
+                found.add(Hints.CHARM); // 2026-10-30
                 continue;
             }
             if (plugin.flasks() != null && plugin.flasks().isFlask(stack)) {

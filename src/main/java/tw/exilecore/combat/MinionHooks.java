@@ -53,6 +53,11 @@ public interface MinionHooks {
     }
 
     /** 2026-10-28：召喚物被擊中，這一下總共多少傷害（骸骨祭的護盾：第一次被打超過最大生命 25% 時護盾消失）。 */
+    /** 2026-10-30 照 PoE2 Bone Offering：這一下被骸骨祭的護盾整下吸掉（回傳 true 就不扣血）。 */
+    default boolean shieldAbsorbs(final LivingEntity minion, final double total) {
+        return false;
+    }
+
     default void hitTaken(final LivingEntity minion, final double total) {
     }
 }

@@ -68,13 +68,25 @@ public final class CodexData {
         final JsonArray effects = new JsonArray(); // 2026-10：效果文字（光環、戰吼、印記…；搜尋也找得到）
         try {
             for (final String text : tw.exilecore.gui.CodexMenu.skillEffectTexts(skill)) {
+                if (unknownEffect(text)) {
+                    continue; // 2026-10-30：寫不出說明的（「特殊效果（100）」）不列，效果看技能說明；這次之前網頁顯示成一串數字
+                }
                 effects.add(plain(text));
             }
         } catch (final RuntimeException ignored) {
             // 寫不出來的略過
         }
         s.add("effects", effects);
-        s.addProperty("kind", skill.summon() != null ? "summon" : skill.aura() != null && !skill.reservesSpiritOnly() ? "aura" : skill.warcry() != null ? "warcry" : "");
+        // 2026-10-30 照站長：品質 20% 的效果、嵌晶戰團「進階奇術」的額外品質效果
+        final String quality = tw.exilecore.skill.SkillService.codexQualityText(skill);
+        if (quality != null && !quality.isBlank()) {
+            s.addProperty("quality", plain(quality));
+        }
+        final String advanced = tw.exilecore.skill.SkillService.codexAdvancedQualityText(skill);
+        if (advanced != null && !advanced.isBlank()) {
+            s.addProperty("advancedQuality", plain(advanced));
+        }
+        s.addProperty("kind", skill.summon() != null ? "summon" : skill.aura() != null && !skill.reservesSpiritOnly() ? "aura" : skill.warcry() != null && skill.tags().contains("warcry") ? "warcry" : ""); // 2026-10-30：借戰吼做的增益技能（冥想、儀式獻祭…）不標戰吼
         if (skill.cooldown() > 0) {
             s.addProperty("cooldown", skill.cooldown());
         }
@@ -146,6 +158,11 @@ public final class CodexData {
         return colour == 0 ? 'w' : colour;
     }
 
+    /** 2026-10-30：ModifierText 寫不出來的屬性（「特殊效果」「特殊效果（100）」）。 */
+    static boolean unknownEffect(final String line) {
+        return line == null || line.isBlank() || line.contains("特殊效果（") || line.endsWith("特殊效果");
+    }
+
     public static byte[] json(final ExileCore plugin) {
         final JsonObject root = new JsonObject();
         final JsonArray skills = new JsonArray();
@@ -176,6 +193,9 @@ public final class CodexData {
                 final JsonArray mods = new JsonArray(); // 2026-10-22：效果的數值（跟角色頁一樣的寫法）
                 try {
                     for (final String line : ModifierText.describeAll(support.allModifiers())) {
+                        if (unknownEffect(line)) {
+                            continue; // 2026-10-30：同上（效果寫在輔助的說明）
+                        }
                         mods.add(plain(line));
                     }
                 } catch (final RuntimeException ignored) {
@@ -251,6 +271,12 @@ public final class CodexData {
             slots.forEach(slotArray::add);
             a.add("slots", slotArray);
             a.add("bases", baseNames);
+            // 2026-10-30 照站長：詞綴的標籤（跟遊戲裡詞綴後面的小方塊一樣：傷害、火焰、攻擊…）
+            final JsonArray chipArray = new JsonArray();
+            for (final tw.exilecore.item.AffixChips.Chip chip : repository.chipsOf(affix)) {
+                chipArray.add(chip.label());
+            }
+            a.add("tags", chipArray);
             final JsonArray tierArray = new JsonArray();
             for (int i = 0; i < tiers.size(); i++) {
                 final tw.exilecore.item.AffixTier tier = tiers.get(i);
@@ -265,6 +291,11 @@ public final class CodexData {
             list.add(a);
         }
         root.add("affixes", list);
+        final JsonArray chipOrder = new JsonArray(); // 2026-10-30：標籤篩選照遊戲裡小方塊的順序排
+        for (final tw.exilecore.item.AffixChips.Chip chip : tw.exilecore.item.AffixChips.Chip.values()) {
+            chipOrder.add(chip.label());
+        }
+        root.add("affixTagOrder", chipOrder);
         final JsonArray extra = new JsonArray();
         for (final tw.exilecore.item.UniqueItem unique : repository.uniques()) {
             final tw.exilecore.item.ItemBase base = repository.base(unique.base());

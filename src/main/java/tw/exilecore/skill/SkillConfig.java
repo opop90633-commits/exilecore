@@ -561,10 +561,16 @@ public final class SkillConfig {
             }
         }
         // 2026-10-27 照 PoE2：血脈輔助（supports_lineage.yml）：新的血脈輔助加進來，supports.yml 裡已有的標成血脈掉落
+        // 2026-10-30 照 PoE2 的技能類型：我們的規則讓掛、原作不讓掛的組合（support_poe2.yml）
+        final Path poe2RulesFile = dataFolder.resolve(Poe2SupportRules.FILE);
+        final Map<String, Map<String, String>> parsedPoe2Rules = new java.util.HashMap<>();
         LineageRules.Drops parsedLineageDrops = LineageRules.Drops.DEFAULT;
         final Path lineageFile = dataFolder.resolve(LINEAGE_FILE);
         if (Files.exists(lineageFile)) {
             parsedLineageDrops = LineageRules.load(YamlNode.load(lineageFile), parsedSupports, parsed.keySet());
+        }
+        if (Files.exists(poe2RulesFile)) {
+            parsedPoe2Rules.putAll(Poe2SupportRules.parse(YamlNode.load(poe2RulesFile), parsed.keySet(), parsedSupports.keySet()));
         }
         // 2026-10-18：驗證移到任何欄位指定之前（以前先換掉一半才驗證，失敗時新舊混用）；Boss 招式也在換之前載入（它自己解析好才換）
         for (final Map.Entry<String, java.util.List<String>> entry : parsedCommands.entrySet()) {
@@ -595,7 +601,6 @@ public final class SkillConfig {
         this.cooldownUses = parsedUses;
         this.resources = parsedResources;
         // 2026-10-27：輔助的防呆要看的（有使用條件、會留殘骸的技能）；要在 resources 換好之後（這次之前在前一行，第一次讀設定時看不到 resource.combo、resource.remnant）
-        SupportGuards.index(this);
         this.commands = Map.copyOf(parsedCommands);
         this.parentDamage = Map.copyOf(parsedParent);
         this.lifeDamage = Map.copyOf(parsedLife);
@@ -608,6 +613,9 @@ public final class SkillConfig {
         this.tornados = Map.copyOf(parsedTornados);
         this.variants = Map.copyOf(variantMap);
         this.missingDefaults = List.copyOf(missing);
+        // 2026-10-30：移到所有技能設定都換好之後（防呆也看龍捲風、雷樁矢；這次之前在 tornados 換好之前，第一次讀設定看不到龍捲風）
+        SupportGuards.index(this);
+        Poe2SupportRules.install(parsedPoe2Rules);
         // 2026-10：輔助照階級排（第 1 階全部在前、再第 2 階…；同一階照 supports.yml 的順序），後來加的不會都擠在最後面
         final java.util.List<SupportDefinition> byTier = new java.util.ArrayList<>(parsedSupports.values());
         byTier.sort(java.util.Comparator.comparingInt(SupportDefinition::tier));

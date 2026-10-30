@@ -455,15 +455,18 @@ final class SkillExecutor {
         final boolean pushes = build.knockback() > 0 && hasModifier(build.definition(), StatKeys.SKILL_KNOCKBACK);
         // 2026-10-28 照 PoE2 Wind Blast 的品質：1.5 公尺內更多 x% 傷害，到 4 公尺遞減到沒有
         final double close = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.CLOSE_MORE);
+        // 2026-10-30 照 PoE2 Falling Thunder 的品質（猛擊那一段也有 lightning_strike_damage_+%_final_per_power_charge）：
+        // 這一下要用掉的銳星，每顆讓猛擊本身也更多 x%；這次之前品質只加在投射物上
+        final SkillProfile slam = thunderSlamProfile(origin, build);
         for (final LivingEntity target : coneHits) {
             final double near = close > 0 ? closeMore(close, Math.max(0, target.getLocation().distance(origin.feet()) - target.getWidth() / 2)) : 0;
-            damage.hit(origin.owner(), target, near > 0 ? build.profile().scaled(1 + near, "近身") : build.profile(),
+            damage.hit(origin.owner(), target, near > 0 ? slam.scaled(1 + near, "近身") : slam,
                     pushes ? knockback(origin.feet(), target, build.knockback()) : null);
         }
         if (shockedInside) {
             for (final LivingEntity target : ZonePulses.distribute(coneHits, extraBolts, plugin.random())) {
                 if (target.isValid() && !target.isDead()) {
-                    damage.hit(origin.owner(), target, build.profile(), null);
+                    damage.hit(origin.owner(), target, slam, null);
                     visuals.impact(build.definition().visual(), target.getLocation());
                 }
             }
@@ -551,6 +554,17 @@ final class SkillExecutor {
                 && plugin.combat().charges() != null) {
             thunderBolts(origin, build, facing, length);
         }
+    }
+
+    /** 2026-10-30 照 PoE2 Falling Thunder 的品質：猛擊那一下照這次要用掉的銳星（身上的，最多 20 顆）每顆更多 x%；不是驚雷劈或沒有品質照原樣。 */
+    private SkillProfile thunderSlamProfile(final Origin origin, final SkillBuild build) {
+        if (SkillStages.get(build.definition().id(), THUNDER) == null || !origin.self() || origin.owner() == null
+                || plugin.combat() == null || plugin.combat().charges() == null) {
+            return build.profile();
+        }
+        final double quality = build.profile().effective(plugin.players().sheet(origin.owner())).flat(THUNDER_QUALITY, build.profile().tags());
+        final int charges = Math.min(20, plugin.combat().charges().count(origin.owner(), "power"));
+        return quality > 0 && charges > 0 ? build.profile().scaled(1 + quality / 100.0 * charges, "用掉銳星（品質）") : build.profile();
     }
 
     /** 2026-10-28 照 PoE2 Falling Thunder：投射物那一段（skills.yml 的 stages.thunder）、射出去的隱藏技能。 */
@@ -726,12 +740,18 @@ final class SkillExecutor {
                 build.profile().effective(plugin.players().sheet(origin.owner())).flat(tw.exilecore.stats.TreeEffectKeys.CHAIN_CHANCE, build.profile().tags()),
                 plugin.random()));
         final Set<LightningRods.Rod> rodsHit = new HashSet<>();
+        // 2026-10-30 照 PoE2 Arc 的額外品質效果（進階奇術）：每剩一次連鎖，這一下更多 x% 擊中傷害
+        final double perRemaining = SkillZones.localFlat(build.profile(), tw.exilecore.stats.GemQualityKeys.CHAIN_MORE_PER_REMAINING);
         for (int i = 0; i <= chains && (current != null || rod != null); i++) {
             final Location from;
             if (current != null) {
                 from = SkillTargets.center(current);
                 hit.add(current.getUniqueId());
-                damage.hit(origin.owner(), current, build.profile(), null);
+                final int remaining = chains - i;
+                damage.hit(origin.owner(), current, perRemaining > 0 && remaining > 0
+                        ? build.profile().withLocal(List.of(tw.exilecore.stats.Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE,
+                        perRemaining * remaining / 100.0, "剩餘連鎖")))
+                        : build.profile(), null);
             } else {
                 from = SkillZones.rodTop(rod.at.toLocation(origin.world()));
                 rodsHit.add(rod);

@@ -3,6 +3,7 @@ package tw.exilecore.skill;
 import tw.exilecore.character.SkillLoadout;
 
 /**
+ * 2026-10-30 照 PoE2 0.3：面板上同一個技能寶石只能一顆（下面「面板上兩顆」不再允許）；主要寶石孔裡的不算，照舊可以重複。
  * 2026-10-28 照 PoE2：同一個技能寶石可以放好幾顆：面板上兩顆、面板上一顆＋主要寶石孔裡一顆（例如觸發用的冰隕
  * ＋自己按的冰隕）、同一個主要寶石的孔裡放兩顆都可以。每一顆都是自己的技能：自己的等級、品質、輔助
  * （放進主要寶石孔裡的照主要寶石其他孔的輔助）。原作限制的是輔助：同一個技能不能掛兩顆一樣的輔助、
@@ -14,8 +15,8 @@ import tw.exilecore.character.SkillLoadout;
  * <p>
  * 例外（一個角色一顆，跟這次之前一樣）：常駐技能（保留精魂：光環、捷光環、增益、主要寶石、精魂召喚、戰旗這類）與
  * 能放技能寶石的宿主（英靈圖騰、星咒圖騰、引星、預告射擊、裂甲熊咆）。原作同一個常駐增益不疊加；
- * 我們的光環、主要寶石能量、宿主的插槽都照技能代號記，放兩顆只會多保留精魂、兩邊搶同一份能量，所以照舊擋（偏離：
- * 原作的暴擊時施放這類主要寶石可以開兩顆）。
+ * 我們的光環、主要寶石能量、宿主的插槽都照技能代號記，放兩顆只會多保留精魂、兩邊搶同一份能量，所以照舊擋
+ * （2026-10-30：原作 0.3 起面板上任何技能寶石都只能一顆，主要寶石也是，跟原作一樣；這次之前註記成偏離）。
  * <p>
  * 這次之前（2026-10-23 起）同一個技能只能有一顆：面板上有就不能再放進宿主孔裡，反過來也不行。
  */
@@ -36,12 +37,12 @@ public final class GemCopies {
      * 一般的技能不擋；一個角色只能一顆的（{@link #singleCopy}）面板上別格、或宿主孔裡已經有就不行。
      */
     public static String placeProblem(final SkillConfig config, final SkillLoadout loadout, final SkillLoadout.Entry entry, final int target) {
-        final String own = copyProblem(config, loadout, entry.skillId(), target, -1, -1);
+        final String own = copyProblem(config, loadout, entry.skillId(), target, -1, -1, true);
         if (own != null) {
             return own;
         }
         for (final SkillLoadout.Entry spell : entry.spells()) { // 寶石孔裡放著的技能也看（一般的法術不擋）
-            final String inner = copyProblem(config, loadout, spell.skillId(), target, target, -1);
+            final String inner = copyProblem(config, loadout, spell.skillId(), target, target, -1, false);
             if (inner != null) {
                 return inner;
             }
@@ -55,13 +56,26 @@ public final class GemCopies {
      */
     public static String socketProblem(final SkillConfig config, final SkillLoadout loadout, final SkillLoadout.Entry entry, final int host,
                                        final int index) {
-        return copyProblem(config, loadout, entry.skillId(), -1, host, index);
+        return copyProblem(config, loadout, entry.skillId(), -1, host, index, false);
     }
 
     /** ignorePanel：不算面板這一格（換掉的那一格）；ignoreHost／ignoreIndex：不算這個宿主的這一孔（-1 = 整個宿主）。 */
     private static String copyProblem(final SkillConfig config, final SkillLoadout loadout, final String skillId, final int ignorePanel,
-                                      final int ignoreHost, final int ignoreIndex) {
+                                      final int ignoreHost, final int ignoreIndex, final boolean panel) {
         if (!singleCopy(config, skillId)) {
+            // 2026-10-30 照 PoE2 0.3（「You can no longer socket multiple copies of the same Skill Gem into your main skill sockets」）：
+            // 面板（主要技能欄）上同一個技能寶石只能一顆；放進主要寶石孔裡的不算（原作的例外），孔裡、面板＋孔裡都可以重複。
+            // 這次之前（2026-10-28 起）面板上可以放好幾顆
+            if (!panel) {
+                return null;
+            }
+            for (int i = 0; i < SkillLoadout.MAX_SKILLS; i++) {
+                final SkillLoadout.Entry other = loadout.skill(i);
+                if (i != ignorePanel && other != null && other.skillId().equals(skillId)) {
+                    final SkillDefinition definition = config.skill(skillId);
+                    return "面板上已經有" + (definition == null ? skillId : definition.name()) + "了（同一個技能寶石只能放一顆；放進主要寶石孔裡的不算）";
+                }
+            }
             return null;
         }
         final SkillDefinition definition = config.skill(skillId);

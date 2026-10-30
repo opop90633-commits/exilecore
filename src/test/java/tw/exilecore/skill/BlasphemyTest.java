@@ -121,7 +121,7 @@ class BlasphemyTest {
         for (final int level : new int[] {1, 10, 20}) {
             final SkillParams.Mark widened = Blasphemy.widened(spec, level);
             assertEquals(spec.radius(level) + Units.metres(1), widened.radius(level), 1e-9);
-            assertEquals(spec.radius(level) + 1.5, Blasphemy.baseRadius(spec, level), 1e-9, "1 公尺 = 1.5 格");
+            assertEquals(spec.radius(level) + 1.0, Blasphemy.baseRadius(spec, level), 1e-9, "1 公尺 = 1 格（2026-10-30；之前 1.5 格）");
             assertTrue(widened.curse());
             assertEquals(spec.duration(level), widened.duration(level), 1e-9);
             assertEquals(spec.effects(), widened.effects());

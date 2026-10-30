@@ -560,9 +560,19 @@ final class RitualEvents implements Listener {
             // 2026-10-27 照 PoE2：傳奇大多是共通傳奇，exclusive_chance 的機率才是祭壇專屬（這次之前傳奇全是專屬，權重 1/99）
             final boolean exclusive = kind == MapEventConfig.Reward.UNIQUE && random.nextDouble() < config.ritualExclusiveChance();
             final String pool = kind == MapEventConfig.Reward.UNIQUE && !exclusive ? COMMON_UNIQUES : MapEventConfig.RITUAL_SOURCE;
-            final MapRewards.Bundle bundle = MapRewards.roll(plugin, service, kind, ritual.instance, player, config.delirium(), pool, random);
+            MapRewards.Bundle bundle = MapRewards.roll(plugin, service, kind, ritual.instance, player, config.delirium(), pool, random);
+            // 2026-10-30 照站長：祭壇的傳奇獎勵也可能是追逐級傳奇，機率跟小怪掉落、僥倖石一樣（maps.yml 的 drops.chase_mob_chance），價格照專屬傳奇
+            final boolean chase = kind == MapEventConfig.Reward.UNIQUE && random.nextDouble() < tw.exilecore.item.ItemGenerator.chaseChance();
+            if (chase) {
+                final tw.exilecore.item.UniqueItem pick = tw.exilecore.item.ItemGenerator.pickUnique(
+                        plugin.items().generator().chaseUniques(ritual.instance.level()), random);
+                if (pick != null) {
+                    bundle = new MapRewards.Bundle(MapEventConfig.Reward.UNIQUE, List.of(plugin.items().toStack(
+                            plugin.items().generator().generateUnique(pick, ritual.instance.level(), random))));
+                }
+            }
             if (bundle != null) {
-                final int price = exclusive && bundle.kind() == MapEventConfig.Reward.UNIQUE
+                final int price = (exclusive || chase) && bundle.kind() == MapEventConfig.Reward.UNIQUE
                         ? priceIn(config.ritualExclusivePrice(), random) : MapRewards.price(settings, bundle.kind(), random);
                 list.add(new Offer(bundle, price));
             }
@@ -691,6 +701,15 @@ final class RitualEvents implements Listener {
             return "貢品不夠：要 " + offer.price + "，你有 " + tribute;
         }
         spend(ritual, player, offer.price);
+        for (final org.bukkit.inventory.ItemStack item : offer.bundle.items()) {
+            // 2026-10-30：祭壇換到追逐級傳奇：跟掉落一樣全服廣播
+            plugin.items().read(item).ifPresent(data -> {
+                final tw.exilecore.item.UniqueItem unique = data.unique() == null ? null : plugin.items().repository().unique(data.unique());
+                if (unique != null && unique.chase() && plugin.loot() != null) {
+                    plugin.loot().broadcastChase(player, data);
+                }
+            });
+        }
         final boolean dropped = MapRewards.give(plugin, player, offer.bundle.items());
         plugin.getSLF4JLogger().info("[ritual] {} 在地圖 #{} 用 {} 貢品換了 {}", player.getName(), ritual.instance.id(), offer.price, offer.bundle.kind());
         offer.bundle = null;

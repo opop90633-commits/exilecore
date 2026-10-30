@@ -1555,7 +1555,8 @@ final class ProjectileEngine implements Listener {
             zones.physicalDot(owner, id, dps, Math.round(tornado.interval() * 20) + 5);
             final List<Tornado> mine = tornados.computeIfAbsent(owner.getUniqueId(), uuid -> new ArrayList<>());
             mine.add(new Tornado(id, at.getWorld(), at.toVector(), radius, plugin.getServer().getCurrentTick() + ticks, tornado, shot.visual(),
-                    shot.build.level(), SkillZones.localFlat(shot.profile, TornadoSpec.COPY_MORE), tornado.hits(shot.build.level())));
+                    shot.build.level(), SkillZones.localFlat(shot.profile, TornadoSpec.COPY_MORE), tornado.hits(shot.build.level())
+                    + (int) Math.round(SkillZones.localFlat(shot.profile, tw.exilecore.stats.SupportExtraKeys.DURABILITY)))); // 2026-10-30 照 PoE2 Durability：多吸幾支投射物
             while (mine.size() > limit) {
                 mine.removeFirst();
             }

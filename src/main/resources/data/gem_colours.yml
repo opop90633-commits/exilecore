@@ -410,6 +410,8 @@ supports:
   swift_cooldown: g
   warcry_reach: r
   execute: r
+  execute_ii: r
+  execute_iii: r
   vs_chilled: b
   vs_ignited: r
   vs_shocked: g
