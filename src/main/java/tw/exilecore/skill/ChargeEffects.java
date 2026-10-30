@@ -471,7 +471,11 @@ public final class ChargeEffects implements Listener {
                 attacker.getWorld().spawnParticle(Particle.CRIT, attacker.getLocation().add(0, 1, 0), 12, 0.3, 0.4, 0.3, 0.1);
             }
             player.getWorld().playSound(player.getLocation(), Sound.ITEM_SHIELD_BLOCK, SoundCategory.PLAYERS, 1f, 1.3f);
-            service.procs().castAt(player, PARRY_SWEEP, "parry", player.getLocation());
+            // 2026-10-30 照 PoE2 Parry（replace_off_hand_unarmed_attack_stats_with_shield_type、每 5 點圓盾閃避 3～4 點物理）：
+            // 橫掃用圓盾當武器（主手武器的傷害、暴擊不算，基礎暴擊 5%）；這次之前用主手武器的傷害
+            final double evasion = offHandEvasion(player);
+            service.procs().castAt(player, PARRY_SWEEP, "parry", player.getLocation(), build -> evasion <= 0 ? build
+                    : build.withProfile(build.profile().withLocal(Channelling.shieldWeapon(build.profile().effective(sheet), build.profile(), evasion, false))));
             plugin.players().markDirty(player);
         }
         if (tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.stats.StatKeys.FLAG_MAGMA_BARRIER)) {
@@ -487,6 +491,18 @@ public final class ChargeEffects implements Listener {
                 }
             }
         }
+    }
+
+    /** 2026-10-30：副手盾牌（圓盾）的閃避；不是盾回傳 0。 */
+    private double offHandEvasion(final Player player) {
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        final org.bukkit.inventory.ItemStack off = state == null ? null : state.jewellery(tw.exilecore.character.Gear.OFF);
+        if (off == null || off.isEmpty() || plugin.items() == null) {
+            return 0;
+        }
+        final tw.exilecore.item.ItemData data = plugin.items().read(off).orElse(null);
+        final tw.exilecore.item.ItemBase base = data == null ? null : plugin.items().repository().base(data.base());
+        return base == null || !base.isShield() ? 0 : tw.exilecore.item.ItemStats.snapshot(plugin.items().repository(), base, data).evasion();
     }
 
     /** 2026-10-26：「被招架」受到的攻擊傷害增加多少（50% × (1 + 被招架效果)）。 */

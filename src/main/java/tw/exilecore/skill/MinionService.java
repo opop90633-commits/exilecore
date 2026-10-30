@@ -126,6 +126,11 @@ public final class MinionService implements Listener, MinionHooks {
         /** 2026-10-26（天賦樹：夥伴擊殺時疾速）：額外的增益與到期的 tick。 */
         List<Modifier> treeBuff = List.of();
         long treeBuffUntil;
+        /** 2026-10-30 照 PoE2 Ancestral Spirits：先祖之靈的型態（其他召喚物是 null）。 */
+        AncestralForms form;
+        /** 2026-10-30：先祖玉獸的戰吼、先祖戰角的號角、先祖靈龜的光環給召喚物的增益（各自一份）與到期的 tick。 */
+        final Map<String, List<Modifier>> allyBuffs = new HashMap<>();
+        final Map<String, Long> allyBuffUntil = new HashMap<>();
         /** 強化（2026-10 PoE2 喚屍：吃銳星叫出來的那隻）：一直有效的修飾器。 */
         List<Modifier> empowered = List.of();
         /** 2026-10-30 照 PoE2 Tame Beast：收服的野獸帶著的怪物詞綴（最多 4 個）。 */
@@ -932,7 +937,10 @@ public final class MinionService implements Listener, MinionHooks {
             while (build.definition().aura() == null && all.size() >= MAX_PER_PLAYER) {
                 remove(all.removeFirst(), Gone.REPLACED);
             }
-            final Mob mob = spawn(player, build, spec, at, name, spectreKind);
+            // 2026-10-30 照 PoE2 Ancestral Spirits：每隻先祖之靈抽一種型態（玉法師、玉獸、戰角、靈龜），身體、倍率、招式照那一種
+            final AncestralForms form = ANCESTRAL.equals(build.definition().id()) ? AncestralForms.pick(plugin.random()) : null;
+            final String shown = form == null ? name : "<#8fd3ff>" + form.label() + " <gray>（" + tw.exilecore.item.ItemRenderer.escape(ownerName) + "）";
+            final Mob mob = spawn(player, build, form != null ? form.spec(spec) : spec, at, shown, form != null ? form.entity() : spectreKind);
             if (mob == null) {
                 continue;
             }
@@ -940,10 +948,11 @@ public final class MinionService implements Listener, MinionHooks {
                 plugin.ailments().carryContagion(mob, carried);
             }
             // 2026-10-26 照 PoE2 附魂術：附身的召喚物用那種怪物原本的倍率（monsters.yml 的 types；生命、傷害）
-            final SummonSpec own = spec.spectre() && spectreKind != null ? spectreSpec(spec, spectreKind)
+            final SummonSpec own = form != null ? form.spec(spec) : spec.spectre() && spectreKind != null ? spectreSpec(spec, spectreKind)
                     : tamedKind != null ? tamedSpec(spec, tamedKind) : spec;
-            final Minion minion = new Minion(owner, build, own, mob, name, now, spec.permanent() ? 0 : now + build.durationTicks(spec.duration() + durationFlat(build)));
+            final Minion minion = new Minion(owner, build, own, mob, shown, now, spec.permanent() ? 0 : now + build.durationTicks(spec.duration() + durationFlat(build)));
             minion.spectreType = spec.spectre() ? spectreKind : null;
+            minion.form = form;
             if (tamedKind != null) {
                 minion.tamed = tamedModifiers(player);
                 minion.tamedSkills = tamedSkillUses(player, tamedKind);
@@ -1390,6 +1399,17 @@ public final class MinionService implements Listener, MinionHooks {
         if (treeBuffed) {
             ownerModifiers.addAll(minion.treeBuff); // 2026-10-26 天賦樹：夥伴擊殺時的疾速
         }
+        long allyExpiry = Long.MAX_VALUE;
+        for (final java.util.Iterator<Map.Entry<String, Long>> it = minion.allyBuffUntil.entrySet().iterator(); it.hasNext(); ) {
+            final Map.Entry<String, Long> entry = it.next();
+            if (entry.getValue() <= now()) {
+                it.remove();
+                minion.allyBuffs.remove(entry.getKey());
+                continue;
+            }
+            ownerModifiers.addAll(minion.allyBuffs.getOrDefault(entry.getKey(), List.of())); // 2026-10-30 先祖之靈給友軍的增益
+            allyExpiry = Math.min(allyExpiry, entry.getValue() + 1);
+        }
         // 2026-10-27 照 PoE2 Crazed Minions：最近復活過的召喚物更多傷害（到期那一刻重算）
         final java.util.Map.Entry<List<Modifier>, Long> crazed = plugin.skills() == null ? null
                 : plugin.skills().supportMechanics().extras().crazed(minion);
@@ -1403,7 +1423,7 @@ public final class MinionService implements Listener, MinionHooks {
         ownerModifiers.addAll(MinionEstimates.ownerDerived(minion.build, ownerSheet, factors[1], !minion.decoy));
         final long expiry = Math.min(Math.min(Math.min(Math.min(offered ? minion.offeringUntil + 1 : Long.MAX_VALUE, armoured ? minion.iceArmourUntil + 1 : Long.MAX_VALUE),
                 treeBuffed ? minion.treeBuffUntil + 1 : Long.MAX_VALUE), crazed != null ? crazed.getValue() + 1 : Long.MAX_VALUE),
-                shieldLost ? minion.shieldLessUntil + 1 : Long.MAX_VALUE);
+                Math.min(shieldLost ? minion.shieldLessUntil + 1 : Long.MAX_VALUE, allyExpiry));
         // 2026-10：每 2 秒看一次，主人的屬性、光環、技能都沒變就不用重算（以前每隻每 2 秒整個重算、重送血量與移動速度給附近的人）
         if (!fresh && minion.sheet != null && minion.builtFor == minion.build && base.equals(minion.builtBase)
                 && ownerModifiers.equals(minion.builtModifiers)) {
@@ -1559,6 +1579,9 @@ public final class MinionService implements Listener, MinionHooks {
             remove(minion, Gone.EXPIRED);
             return;
         }
+        if (minion.form == AncestralForms.TURTLE && now % 20 == minion.bornTick % 20) {
+            turtleAura(minion, owner); // 2026-10-30 照 PoE2 Ancestral Spirit Turtle：光環
+        }
         if (now % 20 == minion.bornTick % 20 && MinionAbilities.MANIFEST.equals(minion.skillId())) {
             syncManifestWeapon(minion, owner); // 2026-10-29 照 PoE2：換了武器，幻化武器跟著換外觀
         }
@@ -1694,6 +1717,11 @@ public final class MinionService implements Listener, MinionHooks {
         } else if (wolf(minion) && now >= minion.nextAttack && !minion.onCooldown(LEAP, now) && distance >= MinionAbilities.LEAP_MIN
                 && distance <= MinionAbilities.LEAP_MAX && mob.isOnGround() && mob.hasLineOfSight(target)) {
             minion.nextAttack = now + leap(minion, target, distance, now); // 2026-10-26 照 PoE2：狼的躍擊（冷卻 7 秒）
+        } else if (minion.form == AncestralForms.JADE_HULK && now >= minion.nextAttack && !minion.onCooldown(LEAP, now)
+                && distance >= AncestralForms.DASH_MIN && distance <= AncestralForms.DASH_MAX && mob.isOnGround() && mob.hasLineOfSight(target)) {
+            // 2026-10-30 照 PoE2 Ancestral Jade Hulk 的幻步（DTTAncestralJadeHulkLeapSlam：冷卻 5 秒、最少 2.5 公尺、最遠 7 公尺），落地衝擊 150%、更多 50%
+            minion.nextAttack = now + leap(minion, target, distance, now);
+            minion.startCooldown(LEAP, now, AncestralForms.DASH_COOLDOWN);
         } else if (inReach && now >= minion.nextAttack && seesTarget) {
             minion.nextAttack = now + act(minion, target, owner, now); // 2026-10-26：照 PoE2 各自的技能（碎骨、火彈、電弧、冰箭…）
         }
@@ -2110,6 +2138,12 @@ public final class MinionService implements Listener, MinionHooks {
     private static final String HEAL = "heal";
     private static final String REVIVE = "revive";
     private static final String COMMAND = "command";
+    /** 2026-10-30 照 PoE2 Ancestral Spirits：先祖之靈各型態的招式冷卻。 */
+    static final String ANCESTRAL = "ancestral_spirits";
+    private static final String ENCASE = "ancestral_encase";
+    private static final String HULK_CHARGE = "ancestral_charge";
+    private static final String HULK_CRY = "ancestral_cry";
+    private static final String HORN = "ancestral_horn";
     /**
      * 2026-10-27：指令的冷卻另外記在這裡（主人＋技能 → 好了的 tick）：重新召喚（拔掉再裝技能、重新登入）不會重設冷卻。
      * 這次之前只記在每一隻召喚物身上，叫一批新的就能馬上再下指令。
@@ -2347,6 +2381,13 @@ public final class MinionService implements Listener, MinionHooks {
                     return used;
                 }
             }
+            case ANCESTRAL -> {
+                // 2026-10-30 照 PoE2：先祖之靈照型態用自己的招式（冷卻好了就放，沒有就普攻）
+                final long used = ancestralAct(minion, target, owner, now);
+                if (used > 0) {
+                    return used;
+                }
+            }
             case MinionAbilities.REAVER -> {
                 attack(minion, target, 0);
                 if (minion.enragedAt >= 0) {
@@ -2360,6 +2401,139 @@ public final class MinionService implements Listener, MinionHooks {
         }
         attack(minion, target, 0);
         return minion.attackTicks;
+    }
+
+    // ---- 先祖之靈（2026-10-30 照 PoE2 Ancestral Spirits 的四種型態）----
+
+    /** 型態的招式：好了就放，回傳幾 tick 後再出手；0 = 這次普攻。 */
+    private long ancestralAct(final Minion minion, final LivingEntity target, final Player owner, final long now) {
+        if (minion.form == null) {
+            return 0;
+        }
+        switch (minion.form) {
+            case JADECASTER -> {
+                if (!minion.onCooldown(ENCASE, now)) {
+                    minion.startCooldown(ENCASE, now, AncestralForms.ENCASE_COOLDOWN);
+                    encase(minion, target, owner, now);
+                    return castTicks(minion, 1.0);
+                }
+                jadeBolt(minion, target);
+                return castTicks(minion, AncestralForms.CASTER_BOLT_CAST);
+            }
+            case JADE_HULK -> {
+                if (!minion.onCooldown(HULK_CRY, now)) {
+                    minion.startCooldown(HULK_CRY, now, AncestralForms.HULK_CRY_COOLDOWN);
+                    ancestralBuff(minion, owner, "ancestral_hulk_cry", "先祖玉獸的戰吼", List.of(Modifier.increased(tw.exilecore.stats.StatKeys.DAMAGE,
+                            AncestralForms.HULK_CRY_DAMAGE / 100.0, "先祖玉獸的戰吼")), Math.round(AncestralForms.ALLY_BUFF_SECONDS * 20), true);
+                    return castTicks(minion, 1.0);
+                }
+                if (!minion.onCooldown(HULK_CHARGE, now)) {
+                    minion.startCooldown(HULK_CHARGE, now, AncestralForms.CHARGE_COOLDOWN);
+                    tableCharge(minion, target);
+                    return minion.attackTicks;
+                }
+            }
+            case WARHORN -> {
+                if (!minion.onCooldown(HORN, now)) {
+                    minion.startCooldown(HORN, now, AncestralForms.HORN_COOLDOWN);
+                    final String source = "先祖戰角的號角";
+                    ancestralBuff(minion, owner, "ancestral_horn", source, List.of(
+                            Modifier.flat(tw.exilecore.stats.StatKeys.RAGE_ON_HIT, AncestralForms.HORN_RAGE, source),
+                            Modifier.increased(tw.exilecore.stats.StatKeys.ATTACK_SPEED, AncestralForms.HORN_SPEED / 100.0, source),
+                            Modifier.increased(tw.exilecore.stats.StatKeys.CAST_SPEED, AncestralForms.HORN_SPEED / 100.0, source)),
+                            Math.round(AncestralForms.ALLY_BUFF_SECONDS * 20), true);
+                    return castTicks(minion, 1.0);
+                }
+            }
+            case TURTLE -> {
+            }
+        }
+        return 0;
+    }
+
+    /** 玉法師的冰冷投射物（照 PoE2 召喚物表的每一下傷害 × 型態的傷害倍率，±20%）。 */
+    private void jadeBolt(final Minion minion, final LivingEntity target) {
+        final double hit = MinionSheets.poe2AllyDamage(MinionSheets.allyLevel(minion.build.level())) * minion.spec.damage();
+        final Attack bolt = with(minion, spellProfile(minion, "jade_bolt", tw.exilecore.stats.DamageType.COLD, new double[] {hit * 0.8, hit * 1.2},
+                AncestralForms.CASTER_BOLT_CRIT, Set.of(tw.exilecore.stats.Tags.PROJECTILE), List.of()));
+        minion.mob.swingMainHand();
+        shoot(minion, target, "cold", 0, (shot, struck, where) -> {
+            final boolean forked = Math.abs(shot.damage() - 1) > 1e-9;
+            strike(minion, struck, forked ? scaled(bolt, shot.damage()) : bolt);
+        });
+    }
+
+    /** 玉法師的封玉：定身目標周圍的敵人。 */
+    private void encase(final Minion minion, final LivingEntity target, final Player owner, final long now) {
+        if (plugin.combat() == null) {
+            return;
+        }
+        final Location center = target.getLocation();
+        for (final LivingEntity near : targets.around(center, AncestralForms.ENCASE_RADIUS * areaScale(minion) + target.getWidth() / 2, owner)) {
+            plugin.combat().debuffs().apply(near.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff("pin", owner.getUniqueId(),
+                    now + AncestralForms.ENCASE_TICKS, 0, false, null, List.of(), 1.0));
+            if (plugin.combat().numbers() != null) {
+                plugin.combat().numbers().word(owner, near, "定身");
+            }
+        }
+        Fx.spawn(center.getWorld(), org.bukkit.Particle.HAPPY_VILLAGER, center.clone().add(0, 1, 0), 20, 0.8, 0.6, 0.8, 0.02);
+    }
+
+    /** 玉獸的圓盾衝鋒：撞向目標，擊退並大量暈眩累積。 */
+    private void tableCharge(final Minion minion, final LivingEntity target) {
+        final Vector direction = target.getLocation().toVector().subtract(minion.mob.getLocation().toVector()).setY(0);
+        if (direction.lengthSquared() > 1e-4) {
+            direction.normalize();
+            minion.mob.setVelocity(direction.clone().multiply(0.6).setY(0.1));
+        }
+        minion.mob.swingMainHand();
+        final Attack bash = with(minion, musterProfile(minion).withLocal(List.of(Modifier.more(tw.exilecore.stats.StatKeys.STUN_BUILDUP,
+                AncestralForms.CHARGE_STUN_MORE, "圓盾衝鋒"))));
+        strike(minion, target, bash);
+        final boolean boss = plugin.monsters().data(target).map(tw.exilecore.monster.MonsterData::boss).orElse(false);
+        if (target.isValid() && !target.isDead() && !boss && direction.lengthSquared() > 1e-4) {
+            target.setVelocity(direction.multiply(0.8).setY(0.3));
+        }
+    }
+
+    /**
+     * 先祖之靈給友軍的增益（範圍內的主人與主人的召喚物）：主人用技能增益（{@link SkillBuffs}），召喚物各自記一份。
+     * show：放出來時的特效（光環每秒刷新時不放）。
+     */
+    private void ancestralBuff(final Minion source, final Player owner, final String id, final String name, final List<Modifier> mods,
+                               final long ticks, final boolean show) {
+        final Location at = source.mob.getLocation();
+        final double radius = (show ? AncestralForms.ALLY_RADIUS : AncestralForms.TURTLE_RADIUS) * areaScale(source);
+        final double radiusSq = radius * radius;
+        if (owner.getWorld().equals(at.getWorld()) && owner.getLocation().distanceSquared(at) <= radiusSq && plugin.skills() != null) {
+            plugin.skills().buffs().apply(owner, id, name, (int) ticks, mods);
+        }
+        final StatSheet ownerSheet = plugin.players().sheet(owner);
+        for (final Minion other : minions) {
+            if (!other.owner.equals(source.owner) || other.decoy || !other.mob.isValid() || !other.mob.getWorld().equals(at.getWorld())
+                    || other.mob.getLocation().distanceSquared(at) > radiusSq) {
+                continue;
+            }
+            final boolean fresh = !other.allyBuffs.containsKey(id);
+            other.allyBuffs.put(id, mods);
+            other.allyBuffUntil.put(id, now() + ticks);
+            if (fresh) {
+                rebuild(other, ownerSheet, false);
+            }
+        }
+        if (show) {
+            Fx.spawn(at.getWorld(), org.bukkit.Particle.NOTE, at.clone().add(0, source.mob.getHeight() + 0.3, 0), 6, 0.4, 0.2, 0.4, 0.5);
+        }
+    }
+
+    /** 靈龜的光環：每秒刷新範圍內友軍的防禦增加 80%、格擋率增加 40%（持續 1.5 秒，離開範圍很快就沒了）。 */
+    private void turtleAura(final Minion minion, final Player owner) {
+        final String source = "先祖靈龜的光環";
+        ancestralBuff(minion, owner, "ancestral_turtle", source, List.of(
+                Modifier.increased(tw.exilecore.stats.StatKeys.ARMOUR, AncestralForms.TURTLE_DEFENCES / 100.0, source),
+                Modifier.increased(tw.exilecore.stats.StatKeys.EVASION, AncestralForms.TURTLE_DEFENCES / 100.0, source),
+                Modifier.increased(tw.exilecore.stats.StatKeys.ES_MAX, AncestralForms.TURTLE_DEFENCES / 100.0, source),
+                Modifier.increased(tw.exilecore.stats.StatKeys.BLOCK_CHANCE, AncestralForms.TURTLE_BLOCK / 100.0, source)), 30, false);
     }
 
     // ---- 幻化武器（2026-10-29 照 PoE2 Manifest Weapon）----
@@ -2614,7 +2788,10 @@ public final class MinionService implements Listener, MinionHooks {
         }
         final Location at = minion.mob.getLocation();
         final double radius = MinionAbilities.LEAP_RADIUS * areaScale(minion) + minion.mob.getWidth() / 2;
-        final Attack slam = with(minion, attackProfile(minion, "leap", 1.0, Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.SLAM), null, List.of()));
+        final Attack slam = minion.form == AncestralForms.JADE_HULK
+                ? with(minion, attackProfile(minion, "jade_leap", AncestralForms.DASH_IMPACT, Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.SLAM), null,
+                        List.of(Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, AncestralForms.DASH_IMPACT_MORE, "幻步落地"))))
+                : with(minion, attackProfile(minion, "leap", 1.0, Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.SLAM), null, List.of()));
         final List<LivingEntity> hits = new ArrayList<>(targets.around(at, radius, owner));
         final LivingEntity aimed = minion.target == null ? null : living(minion.target);
         if (aimed != null && !hits.contains(aimed) && Math.sqrt(SkillTargets.boxDistanceSquared(at, aimed.getBoundingBox())) <= radius) {
@@ -3284,6 +3461,21 @@ public final class MinionService implements Listener, MinionHooks {
     static final String TAME_MODS_KEY = "tame.mods";
     /** 原作：鬼火持續 8 秒、阻礙 30%，收服的野獸最多保留 4 個怪物詞綴。 */
     static final long TAME_TICKS = 160;
+    /** 2026-10-30 照 PoE2 Tame Beast（RePoE base_skill_effect_duration）：鬼火持續時間（毫秒，1～40 級：8 秒 → 20 級 11.8 秒 → 40 級 14.8 秒）。 */
+    static final int[] WISP_MS = {8000, 8200, 8400, 8600, 8800, 9000, 9200, 9400, 9600, 9800, 10000, 10200, 10400, 10600, 10800, 11000, 11200,
+        11400, 11600, 11800, 12000, 12200, 12400, 12600, 12800, 13000, 13200, 13400, 13600, 13800, 13900, 14000, 14100, 14200, 14300, 14400,
+        14500, 14600, 14700, 14800};
+    /** FLAT（秒，品質）：鬼火持續時間多幾秒（照 PoE2：每 1% 品質 +0.08 秒）。 */
+    static final String WISP_SECONDS = "tame.wisp_seconds";
+
+    /** 鬼火纏住幾 tick：照寶石等級、品質，吃持續時間。這次之前固定 8 秒。 */
+    static long wispTicks(final SkillBuild build) {
+        if (build == null) {
+            return TAME_TICKS;
+        }
+        final double seconds = WISP_MS[Math.max(1, Math.min(WISP_MS.length, build.level())) - 1] / 1000.0 + build.qualityFlat(WISP_SECONDS);
+        return Math.max(20, Math.round(seconds * 20 * build.durationScale()));
+    }
     static final double TAME_HINDER = 0.3;
     static final int TAME_MOD_LIMIT = 4;
     static final double TAME_RANGE = 20;
@@ -3390,7 +3582,7 @@ public final class MinionService implements Listener, MinionHooks {
     /**
      * 按狼伴的鍵：用鬼火纏住準心（或面前最近）的稀有野獸 8 秒（阻礙 30%）；這段時間內牠被打倒就收服（之後狼伴叫的是那隻野獸）。
      */
-    String startTame(final Player player, final LivingEntity preferred) {
+    String startTame(final Player player, final SkillBuild build, final LivingEntity preferred) {
         if (ownerInTown(player)) {
             return "<red>營地裡不能馴獸";
         }
@@ -3423,14 +3615,15 @@ public final class MinionService implements Listener, MinionHooks {
         final tw.exilecore.monster.MonsterData data = plugin.monsters().data(pick).orElse(null);
         final List<String> mods = data == null ? List.of() : data.mods().subList(0, Math.min(TAME_MOD_LIMIT, data.mods().size()));
         final long now = now();
-        engulfed.put(pick.getUniqueId(), new Engulf(pick, player.getUniqueId(), now + TAME_TICKS, pick.getType().name(), List.copyOf(mods)));
+        final long wisp = wispTicks(build);
+        engulfed.put(pick.getUniqueId(), new Engulf(pick, player.getUniqueId(), now + wisp, pick.getType().name(), List.copyOf(mods)));
         if (plugin.combat() != null) {
-            plugin.combat().debuffs().apply(pick.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff("hinder", player.getUniqueId(), now + TAME_TICKS,
+            plugin.combat().debuffs().apply(pick.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff("hinder", player.getUniqueId(), now + wisp,
                     0, false, null, List.of(), TAME_HINDER));
         }
         Fx.spawn(pick.getWorld(), org.bukkit.Particle.SOUL_FIRE_FLAME, pick.getLocation().add(0, 1, 0), 30, 0.5, 0.6, 0.5, 0.03);
         return "<#9fe0ff>鬼火纏住了" + tw.exilecore.item.ItemRenderer.escape(spectreName(plugin.monsters().config(), pick.getType().name()))
-                + "：8 秒內打倒牠就能收服";
+                + String.format(java.util.Locale.ROOT, "：%.1f 秒內打倒牠就能收服", wisp / 20.0);
     }
 
     private boolean tameTarget(final Player player, final LivingEntity entity) {
@@ -3710,6 +3903,20 @@ public final class MinionService implements Listener, MinionHooks {
     private final Map<String, Integer> deaths = new HashMap<>();
 
     private void remove(final Minion minion, final Gone why) {
+        if (ANCESTRAL.equals(minion.skillId()) && now() - minion.bornTick < 100 && minions.contains(minion)) {
+            // 2026-10-30 除錯：先祖之靈出來 5 秒內就沒了，記下原因（燃僕讓先祖之靈馬上死掉的問題）
+            final org.bukkit.event.entity.EntityDamageEvent last = minion.mob.getLastDamageCause();
+            plugin.getSLF4JLogger().info("[先祖之靈] {} 出來 {} tick 就沒了：{}；最後傷害 {}（{}）；血量 {}/{}、換算 {}、生命 {}、輔助 {}",
+                    minion.form, now() - minion.bornTick, why, last == null ? "無" : last.getCause(),
+                    last instanceof org.bukkit.event.entity.EntityDamageByEntityEvent byEntity ? byEntity.getDamager().getType() : "-",
+                    String.format(java.util.Locale.ROOT, "%.1f", minion.mob.getHealth()),
+                    minion.mob.getAttribute(Attribute.MAX_HEALTH) == null ? "?" : String.format(java.util.Locale.ROOT, "%.1f",
+                            minion.mob.getAttribute(Attribute.MAX_HEALTH).getValue()),
+                    String.format(java.util.Locale.ROOT, "%.4f", minion.healthScale),
+                    minion.effective == null ? "?" : String.format(java.util.Locale.ROOT, "%.0f", MinionSheets.life(minion.effective)),
+                    minion.build.supports().stream().map(SupportDefinition::id).toList(),
+                    new Throwable("呼叫位置"));
+        }
         if (why == Gone.DIED && !minion.decoy && minions.contains(minion)) {
             deaths.merge(minion.owner + ":" + minion.skillId(), 1, Integer::sum);
         }

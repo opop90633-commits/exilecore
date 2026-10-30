@@ -41,9 +41,13 @@ class SpellTotemSupportTest {
         final SkillDefinition totem = config.skill("totem_casting");
         final SkillDefinition fireball = config.skill("fireball");
         for (final String id : new String[] {"prolonged_duration", "faster_casting", "urgent_totems_iii", "overabundance_ii", "totem_fury",
-                "sturdy_totem", "critical_strikes", "added_fire", "considered_casting"}) {
+                "sturdy_totem", "critical_strikes", "added_fire"}) {
             assertNull(config.support(id).hostRefusal(totem, fireball), id);
         }
+        // 2026-10-30 照 PoE2：法術圖騰加 UsedByProxy、暴擊引星加 Triggered，蓄詠（Considered Casting）兩個都擋；這次之前掛得上
+        assertNotNull(config.support("considered_casting").hostRefusal(totem, fireball));
+        assertNotNull(config.support("considered_casting").hostRefusal(config.skill("meta_crit"), fireball));
+        assertNull(config.support("supercritical").hostRefusal(config.skill("meta_crit"), fireball));
         // 還沒放技能：只知道不能放哪些
         assertNotNull(config.support("critical_strikes").hostRefusal(totem, null));
         // 攻擊的輔助掛不到放了法術的宿主上

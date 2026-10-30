@@ -157,6 +157,9 @@ final class Channelling {
         if (charging.letGo && held >= channel.minTicks()) {
             if (spec.mode() == ChargeSpec.Mode.HOLD) {
                 shieldBash(player, charging, build, now); // 2026-10-26 照 PoE2：剛擋下一擊就放開 = 盾擊
+                if (PARRY.equals(build.definition().id())) {
+                    service.buffs().remove(player, "guard"); // 2026-10-30：放開就不再準備招架
+                }
             }
             return true; // 放開了（過了最短引導時間）
         }
@@ -367,9 +370,30 @@ final class Channelling {
 
     /** 2026-10-26 照 PoE2 的架盾：按住期間盾舉著，擋下所有可格擋的擊中。2026-10-27 照站長「放技能減速全部移除」：不再變慢；這次之前移動更少 50%。 */
     private boolean hold(final Player player, final SkillRuntime.Charging charging, final long now) {
+        if (charging.build != null && PARRY.equals(charging.build.definition().id())) {
+            return parryHold(player, charging, now);
+        }
         if ((now - charging.start) % BUFF_REFRESH == 0) {
             service.buff(player, "channel_block", "架盾", BUFF_TICKS, List.of(
                     Modifier.flat(StatKeys.BLOCK_CHANCE, 100, "架盾"), Modifier.flat(StatKeys.BLOCK_MAX, 50, "架盾")));
+        }
+        return false;
+    }
+
+    static final String PARRY = "parry";
+
+    /**
+     * 2026-10-30 照 PoE2 Parry（Channel：Ready your Buckler to parry the next Hit）：按住準備招架，擋下一擊（ChargeEffects.onBlock）就結束；
+     * 準備中暈眩門檻更少 40%（stun_threshold_+%_final_while_performing_action -40）。這次之前按一下開 0.5 秒的判定時間。
+     */
+    private boolean parryHold(final Player player, final SkillRuntime.Charging charging, final long now) {
+        final PlayerState state = plugin.players().get(player);
+        if (state.recentTick(tw.exilecore.stats.TreeConditions.PARRIED_EVENT) >= charging.start) {
+            return true; // 擋下了：招架只擋一下
+        }
+        if ((now - charging.start) % BUFF_REFRESH == 0) {
+            service.buff(player, "guard", charging.build.definition().name(), BUFF_TICKS, List.of(
+                    Modifier.flat(StatKeys.FLAG_PARRY, 1, "招架"), Modifier.more(StatKeys.STUN_THRESHOLD, -0.4, "招架")));
         }
         return false;
     }

@@ -37,7 +37,7 @@ class TrainingLogicTest {
                 if (other != dummy) {
                     final double dx = other.offsetX() - dummy.offsetX();
                     final double dz = other.offsetZ() - dummy.offsetZ();
-                    assertTrue(dx * dx + dz * dz >= 25, dummy.id() + " 跟 " + other.id() + " 太近（範圍技能會一起打到）");
+                    assertTrue(dx * dx + dz * dz >= 144, dummy.id() + " 跟 " + other.id() + " 太近（2026-10-30 照站長：至少隔 12 格；這次之前 5 格）");
                 }
             }
         }

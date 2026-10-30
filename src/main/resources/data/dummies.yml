@@ -32,6 +32,7 @@ settings:
 #                沒寫：首領 1、其他 0.6）
 # 2026-10-29 照站長：只保留首領（這次之前還有無防禦、一般、重甲、閃避、抗性五隻；程式讀檔時也只留 boss: true 的）
 # 2026-10-29 照站長：首領多放 5 隻（共 6 隻，數值都一樣，好幾個人同時打或分開測不同配置）；位置不對可以用指令搬
+# 2026-10-30 照站長：6 隻彼此拉開 13 格（兩排 x 28／15／2、z 20／33；第一隻不動）；這次之前隔 8 格（x 28／20／12、z 20／12）
 dummies:
   boss:
     name: 訓練假人・首領
@@ -55,7 +56,7 @@ dummies:
     armour: 1
     evasion: 1
     resist: {fire: 40, cold: 40, lightning: 40, chaos: 25}
-    offset: [20, 20]
+    offset: [15, 20]
     scale: 1.3
     look: diamond
     boss_factor: 1
@@ -68,7 +69,7 @@ dummies:
     armour: 1
     evasion: 1
     resist: {fire: 40, cold: 40, lightning: 40, chaos: 25}
-    offset: [12, 20]
+    offset: [2, 20]
     scale: 1.3
     look: diamond
     boss_factor: 1
@@ -81,7 +82,7 @@ dummies:
     armour: 1
     evasion: 1
     resist: {fire: 40, cold: 40, lightning: 40, chaos: 25}
-    offset: [28, 12]
+    offset: [28, 33]
     scale: 1.3
     look: diamond
     boss_factor: 1
@@ -94,7 +95,7 @@ dummies:
     armour: 1
     evasion: 1
     resist: {fire: 40, cold: 40, lightning: 40, chaos: 25}
-    offset: [20, 12]
+    offset: [15, 33]
     scale: 1.3
     look: diamond
     boss_factor: 1
@@ -107,7 +108,7 @@ dummies:
     armour: 1
     evasion: 1
     resist: {fire: 40, cold: 40, lightning: 40, chaos: 25}
-    offset: [12, 12]
+    offset: [2, 33]
     scale: 1.3
     look: diamond
     boss_factor: 1

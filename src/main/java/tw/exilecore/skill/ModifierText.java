@@ -513,6 +513,10 @@ public final class ModifierText {
             case "flag.immune.bleed" -> "免疫流血";
             case "flag.immune.poison" -> "免疫中毒";
             case "flag.immune.stun" -> "不會被暈眩";
+            // 2026-10-30 照 PoE2 的植物繁茂（Overgrowth）
+            case Overgrowth.CHANCE -> "植物有 " + number(value) + "% 機率立即繁茂";
+            case Overgrowth.ARMOUR_BREAK -> scaled(modifier, "繁茂植物技能的破甲", percent);
+            case Overgrowth.TRIGGER -> "被輔助的技能造出來的植物繁茂時，在那裡觸發綻花爆（1.2 秒後炸開 1.8 格，物理傷害，致盲被炸到的敵人）";
             case "flag.immune.electrocute" -> "免疫電擊";
             case "flag.curse_immune" -> "免疫詛咒";
             case "flask.instant" -> "藥劑回復有 " + number(value) + "% 立即生效";

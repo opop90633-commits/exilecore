@@ -130,6 +130,17 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
      * 掛著的輔助裡真的生效的那幾顆（照順序）：不能輔助這個技能的略過；血脈、專屬掉落、圖騰施法／陷阱施法、多重投射各只有第一顆生效。
      * 2026-10-27：從 of() 拆出來（孤星／雙兆／三兆要照這份數其他輔助）。
      */
+    /** 2026-10-30：掛著的輔助的代號。 */
+    static List<String> supportIds(final List<SupportDefinition> supports) {
+        final List<String> ids = new ArrayList<>();
+        for (final SupportDefinition support : supports) {
+            if (support != null) {
+                ids.add(support.id());
+            }
+        }
+        return ids;
+    }
+
     static List<SupportDefinition> effectiveSupports(final List<SupportDefinition> supports, final SkillDefinition definition,
                                                      final Set<String> resonant) {
         final List<SupportDefinition> active = new ArrayList<>();
@@ -139,8 +150,9 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             boolean lineage = false;
             boolean multiProjectile = false;
             final Set<String> families = new java.util.HashSet<>();
+            final List<String> ids = supportIds(supports); // 2026-10-30 照 PoE2：別的輔助解開的組合（終式 → 鐘星、鐘星 → 滿星）
             for (final SupportDefinition support : supports) {
-                if (support == null || !support.supports(definition)) {
+                if (support == null || !support.supports(definition, ids)) {
                     continue;
                 }
                 if (!families.add(family(support.id()))) {
@@ -224,8 +236,9 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         // 2026-10：輔助寶石的「+1 被輔助技能等級」（元素專精這類）
         int supportLevels = 0;
         if (!isDefault) {
+            final List<String> ids = supportIds(supports);
             for (final SupportDefinition support : supports) {
-                if (support != null && support.supports(definition)) {
+                if (support != null && support.supports(definition, ids)) {
                     for (final Modifier modifier : support.modifiers()) {
                         if (modifier.stat().equals(StatKeys.SKILL_LEVEL) && modifier.appliesTo(levelTags)) {
                             supportLevels += (int) Math.round(modifier.value());

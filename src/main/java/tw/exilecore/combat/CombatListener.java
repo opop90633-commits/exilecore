@@ -769,6 +769,15 @@ public final class CombatListener implements Listener {
             if (plugin.skills() != null && !attackerIsPlayer && !attackerIsMinion) {
                 hitDefender = plugin.skills().supportMechanics().lineage().seraph((Player) defender, hitDefender); // 2026-10-27 照 PoE2 熾心
             }
+            // 2026-10-30 照 PoE2 Parry（base_maximum_active_block_distance_for_non_projectiles 10、for_projectiles 15）：
+            // 招架只擋 1 公尺內（投射物 1.5 公尺內）的敵人打來的擊中，遠的照一般格擋；這次之前沒有距離限制
+            if (StatKeys.flag(hitDefender, StatKeys.FLAG_PARRY)) {
+                final boolean projectile = skill.tags().contains(Tags.PROJECTILE) || event.getDamager() instanceof org.bukkit.entity.Projectile;
+                final double reach = tw.exilecore.core.Units.metres(projectile ? PARRY_PROJECTILE_METRES : PARRY_MELEE_METRES);
+                if (edgeDistance(attacker, defender) > reach) {
+                    hitDefender = hitDefender.overlay(java.util.List.of(Modifier.flat(StatKeys.FLAG_PARRY, -1000, "招架：距離外")));
+                }
+            }
         }
         final HitResult rawResult = DamageCalculator.calculate(hitSheet, calcSkill, hitDefender, defenderEs, taken * pvpScale * signature,
                 plugin.items().random(), chance -> entropy.hits(entropyKey, chance, hitTick, plugin.items().random()), evadable);
@@ -1865,4 +1874,19 @@ public final class CombatListener implements Listener {
         }
         return plugin.monsters().data(entity).map(MonsterData::name).orElse(entity.getType().name());
     }
+
+    /** 2026-10-30 照 PoE2 Parry：招架擋得到的距離（公尺；近戰 1、投射物 1.5）。 */
+    static final double PARRY_MELEE_METRES = 1.0;
+    static final double PARRY_PROJECTILE_METRES = 1.5;
+
+    /** 兩隻生物碰撞箱之間的距離（貼在一起是 0）。 */
+    static double edgeDistance(final org.bukkit.entity.Entity a, final org.bukkit.entity.Entity b) {
+        final org.bukkit.util.BoundingBox x = a.getBoundingBox();
+        final org.bukkit.util.BoundingBox y = b.getBoundingBox();
+        final double dx = Math.max(0, Math.max(x.getMinX() - y.getMaxX(), y.getMinX() - x.getMaxX()));
+        final double dy = Math.max(0, Math.max(x.getMinY() - y.getMaxY(), y.getMinY() - x.getMaxY()));
+        final double dz = Math.max(0, Math.max(x.getMinZ() - y.getMaxZ(), y.getMinZ() - x.getMaxZ()));
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
 }

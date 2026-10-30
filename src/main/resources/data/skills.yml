@@ -4335,18 +4335,27 @@ skills:
       eruption: { name: 開場爆發, effectiveness: [1.25, 1.182, 1.2, 1.2, 1.2, 1.233, 1.216, 1.256, 1.231, 1.25, 1.257, 1.259, 1.269, 1.262, 1.279, 1.281, 1.291, 1.294, 1.305, 1.313, 1.319, 1.327, 1.334, 1.341, 1.352, 1.363, 1.372, 1.381, 1.392, 1.402, 1.412, 1.424, 1.437, 1.448, 1.459, 1.473, 1.485, 1.499, 1.512, 1.526], radius: 1.2 }
   entangle:
     name: 縛根
-    description: 詛咒準心指的地方一圈的敵人：藤蔓纏住他們六秒，移動大幅變慢，受到的物理傷害增加。一隻敵人身上同時只能有你的一個詛咒：放新的詛咒會拿掉舊的。
+    description: 從腳前往面向爬出一道 8 格長的纏根裂隙，打中路上的敵人。裂隙存在 8 秒，期間每 0.1 秒用藤蔓纏住 1.5 格內的一個敵人（藤蔓造成較小的物理傷害），每條藤蔓減速 15%，一個敵人最多纏 3 條、每條最多 1 秒，被拉開超過 2 格就斷。同時最多 4～13 道裂隙（照等級）。
     icon: STICK   # 2026-10：原本 TWISTING_VINES（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 1   # 2026-10-27 照 PoE2（Entangle 第 1 階）；這次之前 3
-    tags: [spell, plant, physical]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 physical（Entangle 有物理標籤）；這次之前 [spell, plant]；（更早）2026-10-26 照 PoE2 加 plant 標籤（天賦樹的系統）；這次之前 [spell]
+    # 2026-10-30 照 PoE2 Entangle（poe2db／RePoE EntanglePlayer）整個重做：往前爬的裂隙＋藤蔓（EntangleRoots）。這次之前是詛咒（mechanic: mark：
+    #   準心一圈的敵人 6 秒內受到的物理傷害增加 15%、減速 25～40%，會跟其他詛咒互相頂掉）；原作沒有詛咒標籤也不是詛咒
+    # 標籤照原作寶石（法術、範圍、持續時間、物理、植物）與技能類型（CreatesFissure → fissure、Limit → limit）
+    tags: [spell, area, duration, physical, plant, fissure, limit]
     tags_remove: [curse]   # 2026-10-29 照 PoE2 寶石標籤（Entangle）：自動規則加的拿掉／原作有的補上
     tags_add: [physical]
-    mechanic: mark
-    mark: { range: 22, radius: 3.0, duration: 6, taken: 15, tags: [physical], slow: [25, 40] }
+    mechanic: zone
+    # 裂隙長 8 公尺、藤蔓纏 1.5 公尺內的敵人、持續 8 秒（length／radius／duration；吃範圍、持續時間）；interval 沒用到（藤蔓每 0.1 秒，EntangleRoots）
+    zone: { shape: line, length: 8, radius: 1.5, duration: 8, interval: 5, damage: 100 }
+    damage: [[4, 6], [5, 8], [7, 10], [9, 13], [11, 17], [14, 21], [17, 25], [20, 30], [24, 36], [28, 42], [32, 49], [38, 57], [44, 65], [50, 75], [58, 86], [66, 99], [75, 113], [86, 129], [98, 147], [111, 167], [127, 190], [144, 216], [164, 246], [186, 279], [211, 317], [240, 360], [272, 408], [309, 464], [351, 527], [400, 599], [454, 682], [517, 776], [589, 883], [671, 1006], [765, 1148], [873, 1310], [997, 1496], [1140, 1710], [1305, 1957], [1494, 2241]]   # 照 RePoE：裂隙的物理傷害（1～40 級）；藤蔓照同一級的比例（EntangleRoots.VINE）
+    damage_types: { physical: 1.0 }
+    effectiveness: 1.0   # poe2db 基礎傷害 100%
     cast_time: 0.9   # 2026-10-26 照 PoE2；這次之前 0.7
-    mana: [9, 11, 12, 15, 17, 19, 22, 25, 29, 32, 36, 41, 46, 51, 57, 63, 70, 78, 86, 95, 105, 116, 127, 140, 154, 169, 185, 203, 222, 243, 266, 290, 317, 346, 377, 411, 448, 487, 530, 577]   # 2026-10-26 照 PoE2（poe2db Entangle）；這次之前 [6, 16]
+    mana: [9, 11, 12, 15, 17, 19, 22, 25, 29, 32, 36, 41, 46, 51, 57, 63, 70, 78, 86, 95, 105, 116, 127, 140, 154, 169, 185, 203, 222, 243, 266, 290, 317, 346, 377, 411, 448, 487, 530, 577]   # 2026-10-26 照 PoE2（poe2db Entangle）
     visual: hunters_mark
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 10 }   # 照 PoE2：暴擊率 10%
 
   # -- 精魂技能 --
   barkskin:
@@ -4568,7 +4577,7 @@ skills:
 
   parry:                   # Parry
     name: 招架
-    description: 把盾舉起來準備擋下一擊（0.5 秒內，要抓時機）。擋下的那一擊一定格擋，攻擊你的敵人「被招架」2 秒（受到的攻擊傷害增加 50%），你揮盾橫掃身邊的敵人。回槍躍打中被招架的敵人會用掉它。Boss 的全場大招擋不了。圓盾賦予這個技能。
+    description: 按住把圓盾舉起來，準備招架下一擊（只擋得到 1 格內的近戰、1.5 格內打來的投射物；擋下一擊就結束，準備中暈眩門檻更少 40%）。擋下的那一擊一定格擋，攻擊你的敵人「被招架」2 秒（受到的攻擊傷害增加 50%），你揮盾橫掃身邊的敵人（用圓盾當武器：每 5 點閃避 3～4 點物理、65% 傷害效益、基礎暴擊率 5%、暈眩累積更多 400%、必定命中）。回槍躍打中被招架的敵人會用掉它。Boss 的全場大招擋不了。圓盾賦予這個技能。
     icon: IRON_NUGGET
     type: spell
     tier: 1
@@ -4577,12 +4586,13 @@ skills:
     tags_remove: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Parry）：自動規則加的拿掉／原作有的補上
     tags_add: [attack, melee, physical]
     mechanic: guard
-    guard:
-      duration: 0.5              # 2026-10-24：縮短成抓時機（原 1 秒）
-      slow: 0                  # PoE2：動作中移動速度 -50%；2026-10-27 照站長「放技能減速全部移除」：不再變慢（說明拿掉「移動變慢」）；這次之前 50
-      effects:
-        - { stat: flag.parry, type: FLAT, value: 1 }
-        - { stat: stun.threshold, type: INCREASED, value: -40 }   # PoE2：動作中暈眩門檻 -40%
+    guard:   # 2026-10-30：只用來檢查有沒有盾；招架的效果在 charge（Channelling.parryHold：按住期間準備招架，擋下一擊就結束）
+      duration: 0.5
+      slow: 0                  # PoE2：動作中移動速度 -50%；2026-10-27 照站長「放技能減速全部移除」：不再變慢
+      effects: []
+    # 2026-10-30 照 PoE2 Parry（Channel）：按住準備招架，擋下一擊為止（準備中暈眩門檻更少 40%）；只擋 1 公尺內（投射物 1.5 公尺內）的敵人
+    #   （CombatListener）。這次之前按一下開 0.5 秒的判定時間（flag.parry、暈眩門檻增加 -40%）、沒有距離限制
+    charge: { mode: hold }
     cast_time: 0.2
     # 2026-10-26 照 PoE2 Parry：沒有冷卻（原作是按住的引導攻擊）；這次之前冷卻 2 秒
     mana: 0
@@ -6450,7 +6460,11 @@ skills:
     attack_speed: 1.0
     effectiveness: 0.65   # 2026-10-26 照 PoE2 Parry：65%（不隨等級）；這次之前 [1.0, 2.0]
     visual: slash
-    # 2026-10-26：原作基礎暴擊率 5%（不用武器的攻擊）；這裡照武器的暴擊率（沒有攻擊用的基礎暴擊率屬性）
+    # 2026-10-30 照 PoE2 Parry：用圓盾當武器（每 5 點閃避 3～4 點物理、基礎暴擊 5%，ChargeEffects.onBlock）、暈眩累積更多 400%、不會被閃避；
+    #   這次之前用主手武器的傷害與暴擊、沒有暈眩加成
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 400 }
+      - { stat: flag.always_hit, type: FLAT, value: 1 }
 
   # 2026-10-24：幻身（照 PoE2 的 Lingering Illusion：自己 1% 的生命，被打掉留下殘影）
   proc_lingering_illusion:
@@ -8764,14 +8778,17 @@ skills:
 
   ancestral_spirits:
     name: 先祖之魂
-    description: 放下圖騰時自動觸發（不用按）：在圖騰旁召喚一隻先祖之靈幫你作戰，圖騰沒了牠也跟著消失。每 1 點力量讓先祖之靈多 1% 傷害、每 3 點敏捷多 1% 攻擊速度；加圖騰生命的也加在牠的生命上。可以插輔助寶石。
+    description: 放下圖騰時自動觸發（不用按）：在圖騰旁召喚一隻先祖之靈幫你作戰，圖騰沒了牠也跟著消失。先祖之靈隨機是四種之一——先祖玉法師（冰冷投射物，每 10 秒定身一群敵人）、先祖玉獸（圓盾衝鋒重暈；戰吼讓附近友軍傷害增加 50%，20 秒）、先祖戰角（遠程；號角讓附近友軍 20 秒內攻擊擊中獲得 10 怒氣、技能速度增加 20%）、先祖靈龜（比較少見；光環讓附近友軍防禦增加 80%、格擋率增加 40%）。每 1 點力量讓先祖之靈多 1% 傷害、每 3 點敏捷多 1% 攻擊速度；加圖騰生命的也加在牠的生命上。可以插輔助寶石。
     icon: PHANTOM_MEMBRANE   # 2026-10-27 圖示：照元素、作用補上；這次之前沒寫，顯示成書
     type: spell
     tier: 1
     source: ascendancy   # 2026-10-29 照 PoE2：先祖之引賦予（面板上看得到、可以插輔助）；這次之前是隱藏技能
     tags: [minion, duration]
     mechanic: summon
-    summon: { minion_tags: [attack, melee, area, duration], kind: WITHER_SKELETON, count: 1, max: 12, fixed_max: true, duration: 0, life: 1.0, damage: 1.0, attack_speed: 1.0, speed: 1.2, reach: 2.5, weapon: STONE_AXE }   # 2026-10-29 照 PoE2：跟著召喚它的圖騰（圖騰死了它也死，SkillService.tetherSpirits；圖騰最多 12 根）；這次之前固定 8 秒、最多 10 隻   # 2026-10-26 照 PoE2 Ancestral Spirits：召喚圖騰時觸發（跟圖騰一起消失：圖騰撐 8 秒）
+    # 2026-10-30 照 PoE2：四種型態（AncestralForms：身體、倍率、招式各自不同；這裡的 kind／life／damage 只是說明與估計用的底）；
+    #   ally: true = 召喚物等級為寶石等級 × 2、用 PoE2 召喚物表（這次之前用同等級普通怪的表，20 級生命約 4 萬，是其他召喚物的 20 倍）；
+    #   minion_tags 照 poe2db 的 Minion Types（Attack、Melee、Spell、Area、Projectile、Chains、Duration）；這次之前 [attack, melee, area, duration]
+    summon: { minion_tags: [attack, melee, spell, area, projectile, chain, duration], kind: WITHER_SKELETON, ally: true, count: 1, max: 12, fixed_max: true, duration: 0, life: 1.0, damage: 1.2, attack_speed: 1.0, speed: 1.2, reach: 2.5, spread: 0.2, weapon: STONE_AXE }   # 2026-10-29 照 PoE2：跟著召喚它的圖騰（圖騰死了它也死，SkillService.tetherSpirits；圖騰最多 12 根）；這次之前固定 8 秒、最多 10 隻   # 2026-10-26 照 PoE2 Ancestral Spirits：召喚圖騰時觸發（跟圖騰一起消失：圖騰撐 8 秒）
     cast_time: 0.1
     mana: 0
     visual: ancestral_totem

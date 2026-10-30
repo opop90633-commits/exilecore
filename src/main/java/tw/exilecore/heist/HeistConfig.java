@@ -54,7 +54,7 @@ public final class HeistConfig {
      * @param finaleWeight 金庫之主的收藏裡每一種特殊項鍊的權重（一件劫盜專屬傳奇算 1）
      */
     public record SpecialAmulets(double chestChance, double vaultChance, double rare, double finaleWeight) {
-        public static final SpecialAmulets DEFAULTS = new SpecialAmulets(0.005, 0.005, 0.30, 0.1);
+        public static final SpecialAmulets DEFAULTS = new SpecialAmulets(0, 0, 0.30, 0.045); // 2026-10-30 照站長：只在金庫之主的收藏（這次之前 0.005、0.005、0.30、0.1）
     }
 
     /** 一處據點（寫法跟試煉一樣）。 */

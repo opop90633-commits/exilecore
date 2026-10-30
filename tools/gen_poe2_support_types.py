@@ -28,6 +28,7 @@ for k,g in gems.items():
         if 'Unique' not in k or nm not in act_by_name: act_by_name[nm]=g
         for s in g['grants_skills']: act_by_skill.setdefault(s,g)
 ours_sup={}
+ours_sup_ids=set()
 cands={}
 import unicodedata
 def norm(x): return unicodedata.normalize('NFKD',x).encode('ascii','ignore').decode().replace('’',"'").strip().lower()
@@ -40,6 +41,7 @@ for f in ['supports.yml','supports_lineage.yml']:
         if m:
             cur=m.group(1); rest=m.group(2)
             cands.setdefault(cur,[])
+            ours_sup_ids.add(cur)
             for e in re.findall(r"[A-Z][A-Za-z\u00C0-\u017F'\u2019 \-]+[A-Za-z]",rest): cands[cur].append(e)
             continue
         if cur and ln.startswith('    #'):
@@ -70,13 +72,17 @@ def match(expr,types):
         elif t=='NOT': st.append(not st.pop())
         else: st.append(t in types)
     return any(st)
+# 2026-10-30 照 PoE2：附魂術（Bind Spectre）、馴獸（Tame Beast）寶石上的輔助套在它賦予的「Spectre: X」「Companion: X」技能上
+# （常駐、召喚、有召喚物的技能類型）；這次之前照寶石自己的技能（只有 Minion）驗，僕濺、巨魄、忠僕…都被擋掉
+GRANTED = {'BindSpectrePlayer': 'SummonSpectrePlayer', 'TameBeastPlayer': 'SummonBeastPlayer'}
+def granted(skills): return [GRANTED.get(x, x) for x in skills]
 def poe2_ok(sg, gem):
     sup=None
     for s in sg['grants_skills']:
         if (sk.get(s) or {}).get('support_gem'): sup=sk[s]['support_gem']; break
     if sup is None: return None
     res=[]
-    for s in gem['grants_skills']:
+    for s in granted(gem['grants_skills']):
         a=sk.get(s,{}).get('active_skill') or {}
         types=set(a.get('types') or []); mt=set(a.get('minion_types') or [])
         if sup.get('excluded_types') and match(sup['excluded_types'],types): res.append(False); continue
@@ -158,7 +164,7 @@ def render(expr):
 def reason(sg, gem):
     sup = [sk[x]['support_gem'] for x in sg['grants_skills'] if (sk.get(x) or {}).get('support_gem')][0]
     types = set()
-    for s in gem['grants_skills']:
+    for s in granted(gem['grants_skills']):
         types |= set((sk.get(s, {}).get('active_skill') or {}).get('types') or [])
     if sup.get('excluded_types') and match(sup['excluded_types'], types):
         for t in sup['excluded_types']:
@@ -185,5 +191,58 @@ for sup in sorted(out):
     lines.append('  %s:' % sup)
     for why, skills in sorted(out[sup].items()):
         lines.append('    "%s": [%s]' % (why.replace('"', ''), ', '.join(sorted(set(skills)))))
+# 2026-10-30 照 PoE2：輔助的 excluded_types 有 UsedByProxy 的（迅鋒、衝勢、法術回響…）不能用在代放的技能上
+# ——幻影銳眼的幻影（SupportMirageDeadeye 加上 UsedByProxy）。SupportDefinition.hostRefusal 讀。
+proxy = []
+for sup in sorted(ours_sup_ids):
+    sg = sup_gem(sup)
+    if sg and any('UsedByProxy' in (((sk.get(s) or {}).get('support_gem') or {}).get('excluded_types') or []) for s in sg['grants_skills']):
+        proxy.append(sup)
+lines.append('# 代放（幻影銳眼的幻影）不能用的輔助：原作 excluded_types 有 UsedByProxy。')
+lines.append('proxy: [%s]' % ', '.join(proxy))
+# 2026-10-30 照 PoE2：觸發型主要寶石（暴擊引星、異變引星、翻滾引星…，SupportMeta*／*Invocation 加上 Triggered）孔裡的法術是觸發的，
+# excluded_types 擋 Triggered 的輔助（蓄詠…）掛不上。SupportDefinition.hostRefusal 讀。
+triggered = []
+for sup in sorted(ours_sup_ids):
+    sg = sup_gem(sup)
+    if sg and any(match(((sk.get(s) or {}).get('support_gem') or {}).get('excluded_types') or [], {'Triggered'}) for s in sg['grants_skills']):
+        triggered.append(sup)
+lines.append('# 觸發（觸發型主要寶石孔裡的法術）不能用的輔助：原作 excluded_types 擋 Triggered。')
+lines.append('triggered: [%s]' % ', '.join(triggered))
+# 2026-10-30 照 PoE2（輔助的 added_types）：同一個技能掛著別的輔助時，那顆輔助加上的技能類型讓原本被擋的輔助掛得上
+# （終式／匯極讓技能「累積連擊」→ 鐘星、流轉；鐘星讓技能「產生戰星」→ 滿星…）。輔助 → { 解開它的輔助: [技能代號] }。SupportDefinition.refusal 讀。
+added = {}
+for t in sorted(ours_sup_ids):
+    tg = sup_gem(t)
+    if not tg: continue
+    for x in tg['grants_skills']:
+        sgx = (sk.get(x) or {}).get('support_gem')
+        if sgx and sgx.get('added_types'):
+            added[t] = set(sgx['added_types'])
+unlocks = collections.defaultdict(lambda: collections.defaultdict(set))
+for sup in sorted(out):
+    sg = sup_gem(sup)
+    S = next((sk[x]['support_gem'] for x in sg['grants_skills'] if (sk.get(x) or {}).get('support_gem')), None) if sg else None
+    if not S: continue
+    for why, skills in out[sup].items():
+        for k in skills:
+            g = skill_gem(k)
+            if not g: continue
+            for gs in granted(g['grants_skills']):
+                a = sk.get(gs, {}).get('active_skill') or {}
+                types = set(a.get('types') or []); mt = set(a.get('minion_types') or [])
+                for t, ad in added.items():
+                    if t == sup: continue
+                    tt = types | ad
+                    if S.get('excluded_types') and match(S['excluded_types'], tt): continue
+                    if (not S.get('allowed_types') or match(S['allowed_types'], tt | mt)) and not (S.get('excluded_types') is None and S.get('allowed_types') and match(S['allowed_types'], types | mt) and False):
+                        if poe2_ok(sg, g) is False:
+                            unlocks[sup][t].add(k)
+lines.append('# 別的輔助加上的技能類型解開的組合（原作 added_types）：輔助 → { 解開它的輔助: [技能代號] }。')
+lines.append('unlocks:')
+for sup in sorted(unlocks):
+    lines.append('  %s:' % sup)
+    for t in sorted(unlocks[sup]):
+        lines.append('    %s: [%s]' % (t, ', '.join(sorted(unlocks[sup][t]))))
 (ROOT / 'src/main/resources/data/support_poe2.yml').write_text('\n'.join(lines) + '\n', encoding='utf-8')
 print('supports', len(out), 'pairs', sum(len(x) for d in out.values() for x in d.values()))

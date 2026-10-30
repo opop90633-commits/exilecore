@@ -4334,7 +4334,7 @@ public final class SkillService {
             return granted().madFlight(player, build, preferred);
         }
         if (MinionAbilities.BEAST.equals(id)) {
-            return minions.startTame(player, preferred); // 2026-10-30 照 PoE2 Tame Beast：按鍵用鬼火纏住稀有野獸，打倒就收服
+            return minions.startTame(player, build, preferred); // 2026-10-30 照 PoE2 Tame Beast：按鍵用鬼火纏住稀有野獸，打倒就收服
         }
         return minions.command(player, build, preferred);
     }
@@ -4875,6 +4875,12 @@ public final class SkillService {
         final List<SupportDefinition> list = new ArrayList<>();
         final List<tw.exilecore.stats.Modifier> carried = new ArrayList<>();
         for (final SupportDefinition support : supportsOf(host)) {
+            if (hostDefinition != null && DeadeyeMetas.MIRAGE.equals(hostDefinition.id()) && Poe2SupportRules.proxyExcluded(support.id())) {
+                continue; // 2026-10-30 照 PoE2：幻影代放的技能不吃迅鋒、衝勢這類（已經掛上去的也不生效）
+            }
+            if (hostDefinition != null && Poe2SupportRules.metaHostRefusal(support.id(), hostDefinition.id()) != null && !support.worksOnHost()) {
+                continue; // 2026-10-30 照 PoE2：觸發的技能不吃蓄詠這類、圖騰代放的不吃迅鋒這類（已經掛上去的也不生效）
+            }
             if (support.requires().contains(Tags.TOTEM) && inner != null && !support.supports(inner)) {
                 carried.addAll(support.modifiers());
             } else if (support.requires().contains(SkillLimits.TAG) && hostDefinition != null && hostDefinition.tags().contains(SkillLimits.TAG)
@@ -5543,12 +5549,28 @@ public final class SkillService {
                         + ModifierText.number(Blasphemy.lessMagnitude(hostEntry == null ? 1 : hostEntry.level())) + "%、半徑 +"
                         + ModifierText.number(tw.exilecore.core.Units.metres(Blasphemy.EXTRA_RADIUS_METRES)) + " 格"
                         : ChayulaHand.hosts(host) ? "每一掌打中的敵人觸發" // 2026-10-29 照 PoE2 Hand of Chayula
-                        : "施放")
+                        : metaDamageNote(host))
                 + "、吃其他孔的輔助）：");
         for (final String line : describe(player, spell, inner)) {
             lines.add("<gray>　" + line);
         }
         return lines;
+    }
+
+    /** 2026-10-30：主要寶石觸發的插槽法術：說明上寫「施放」再加上主要寶石的更少／更多傷害（暴擊引星更少 20%；觸發時才乘，下面的數字沒算進去）。 */
+    private String metaDamageNote(final SkillDefinition host) {
+        final MetaSpec meta = config.meta(host.id());
+        if (meta == null) {
+            return "施放";
+        }
+        final StringBuilder out = new StringBuilder(meta.kind() == MetaSpec.Kind.TOTEM ? "施放" : "觸發");
+        if (meta.lessDamage() > 0) {
+            out.append("、傷害更少 ").append(ModifierText.number(meta.lessDamage())).append("%");
+        }
+        if (meta.moreDamage() > 0) {
+            out.append("、傷害更多 ").append(ModifierText.number(meta.moreDamage())).append("%");
+        }
+        return out.toString();
     }
 
     /** 2026-10-27 照 PoE2 Ferocious Roar：裂甲熊咆孔裡那個戰吼被觸發時的說明（吃熊咆的插槽加成與其他孔的輔助）。 */
@@ -6361,6 +6383,17 @@ public final class SkillService {
             }
             case ZONE -> {
                 final SkillParams.Zone zone = params.zone();
+                if (EntangleRoots.ID.equals(build.definition().id())) {
+                    // 2026-10-30 照 PoE2 Entangle：裂隙＋藤蔓
+                    final int limit = EntangleRoots.limit(build.level()) + SkillLimits.bonus(null, build); // 輔助給的上限（身上其他的沒算）
+                    lines.add(String.format(Locale.ROOT, "<gray>裂隙：往前爬 <white>%.1f</white> 格，打中路上的敵人一次（100%% 傷害），留 <white>%.1f</white> 秒；同時最多 <white>%d</white> 道",
+                            build.length(), zone.duration() * build.durationScale(), limit));
+                    lines.add(String.format(Locale.ROOT, "<gray>藤蔓：每 0.1 秒纏住 <white>%.1f</white> 格內的一個敵人，每條 <white>%d%%</white> 傷害（擊中）、減速 15%%；"
+                            + "一個敵人最多 3 條、每條最多 1 秒，拉開超過 <white>%.1f</white> 格就斷",
+                            build.radius(), Math.round(EntangleRoots.vineRatio(build.level()) * 100),
+                            tw.exilecore.core.Units.metres(EntangleRoots.VINE_LENGTH_METRES) * build.areaScale()));
+                    break;
+                }
                 final String where = zone.line() ? String.format(Locale.ROOT, "面前一道 <white>%.0f</white> 格長的", build.length())
                         : build.range() <= 0 ? "腳下" : String.format(Locale.ROOT, "準心指的地方（最遠 %.0f 格）半徑 <white>%.1f</white> 格的", build.range(), build.radius());
                 lines.add(String.format(Locale.ROOT, "<gray>在%s區域留 <white>%.1f</white> 秒，每 %.1f 秒對裡面的敵人造成 <white>%d%%</white> 傷害%s",

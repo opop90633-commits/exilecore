@@ -1337,8 +1337,8 @@ public final class GemService {
             if (why != null) {
                 return Change.fail(why);
             }
-        } else if (!support.supports(definition)) {
-            return Change.fail(support.name() + "不能輔助" + definition.name() + "（" + support.refusal(definition) + "）");
+        } else if (!support.supports(definition, entry.supports())) { // 2026-10-30：別的輔助解開的組合（終式 → 鐘星）
+            return Change.fail(support.name() + "不能輔助" + definition.name() + "（" + support.refusal(definition, entry.supports()) + "）");
         }
         if (host && index == SkillLoadout.Entry.INNER_SOCKET) {
             return Change.fail(definition.name() + "的第 1 孔只放技能寶石，輔助請放其他孔");

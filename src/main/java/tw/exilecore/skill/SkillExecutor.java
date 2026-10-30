@@ -1083,13 +1083,25 @@ final class SkillExecutor {
                     player.setFallDistance(0);
                     final double dx = step.getX() - now.getX();
                     final double dz = step.getZ() - now.getZ();
-                    if (dx * dx + dz * dz > WHIRL_RESYNC * WHIRL_RESYNC || step.getY() - now.getY() > 0.6) {
+                    if (dx * dx + dz * dz > WHIRL_RESYNC * WHIRL_RESYNC || step.getY() - now.getY() > 1.2) { // 2026-10-30：高一格以內用跳的（這次之前高 0.6 就傳送）
                         if (!tw.exilecore.core.Teleports.glide(player, step)) {
                             moving[0] = false;
                         }
                     } else {
-                        final double vy = step.getY() > now.getY() + 0.05 && player.isOnGround() ? 0.42 : player.getVelocity().getY(); // 上台階
-                        player.setVelocity(new Vector(dx, vy, dz));
+                        // 2026-10-30 照站長「移動還是有點奇怪」：改成固定速度往前推（每 tick 走 distance ÷ total 格），落後／超前只補一小部分。
+                        //   這次之前每 tick 直接把「到下一點還差多少」當速度：伺服器知道的位置比客戶端慢一點（延遲），差的距離一直被高估，
+                        //   推過頭又拉回來，走起來一快一慢、忽前忽後
+                        final double perTick = distance / total;
+                        double vx = facing.getX() * perTick + dx * WHIRL_CORRECTION;
+                        double vz = facing.getZ() * perTick + dz * WHIRL_CORRECTION;
+                        final double cap = perTick * 2 + 0.05;
+                        final double speed = Math.sqrt(vx * vx + vz * vz);
+                        if (speed > cap) {
+                            vx *= cap / speed;
+                            vz *= cap / speed;
+                        }
+                        final double vy = step.getY() > now.getY() + 0.6 && player.isOnGround() ? 0.42 : player.getVelocity().getY(); // 上一整格（半格以下會自己走上去）
+                        player.setVelocity(new Vector(vx, vy, vz));
                     }
                     last[0] = step;
                     if (tick[0] + 1 >= total) {
@@ -1115,6 +1127,8 @@ final class SkillExecutor {
 
     /** 2026-10-29：迴旋棍步落後路線超過幾格才用傳送拉回（平常用速度推）。 */
     static final double WHIRL_RESYNC = 1.5;
+    /** 2026-10-30：迴旋棍步每 tick 補回落後（超前）距離的幾成（其餘交給固定速度）。 */
+    static final double WHIRL_CORRECTION = 0.2;
 
     /** 2026-10-29：走完了把水平速度歸零（不然會多滑一段）。 */
     private static void stopSliding(final Player player) {
@@ -2176,6 +2190,21 @@ final class SkillExecutor {
 
     private void zone(final Origin origin, final SkillBuild build) {
         final SkillParams.Zone params = build.params().zone();
+        if (EntangleRoots.ID.equals(build.definition().id())) {
+            // 2026-10-30 照 PoE2 Entangle：從腳前往面向爬出一道纏根裂隙（打路上的敵人），8 秒內藤蔓纏住附近的敵人（傷害、減速）；
+            // 這次之前縛根是詛咒（mechanic: mark）
+            if (origin.owner() == null) {
+                return;
+            }
+            final Vector facing = origin.facing().clone().setY(0);
+            final Location start = origin.feet().clone().add(facing.lengthSquared() < 1e-6 ? new Vector() : facing.clone().normalize());
+            zones.entangle(origin.owner(), start, facing, build.length(), build.radius(),
+                    tw.exilecore.core.Units.metres(EntangleRoots.VINE_LENGTH_METRES) * build.areaScale(), build.durationTicks(params.duration()),
+                    build.profile().scaled(params.damage() / 100.0, "裂隙"),
+                    build.profile().scaled(params.damage() / 100.0 * EntangleRoots.vineRatio(build.level()), "藤蔓"),
+                    EntangleRoots.limit(build.level()) + SkillLimits.bonus(plugin.players().sheet(origin.owner()), build));
+            return;
+        }
         final String visual = build.definition().visual();
         final SkillProfile profile = build.profile().scaled(params.damage() / 100.0, "地面效果");
         final double radius = build.radius();

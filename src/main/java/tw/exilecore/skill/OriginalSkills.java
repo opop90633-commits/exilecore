@@ -113,6 +113,8 @@ public final class OriginalSkills implements Listener {
     static final String ARCTIC_STAGES = "arctic.stages";
     static final String STAFF_MIN = "charged_staff.min";
     static final String STAFF_MAX = "charged_staff.max";
+    /** FLAT（%，品質）：雷縛長棍使用時不移除銳星的機率。 */
+    static final String STAFF_KEEP = "charged_staff.keep_chance";
     static final String MANTRA_CHAOS = "mantra.chaos";
     static final String ATTRITION_CAP = "attrition.cap";
     static final String ATTRITION_CULL = "attrition.cull";
@@ -744,9 +746,14 @@ public final class OriginalSkills implements Listener {
         int consumed = 0;
         final int held = charges.count(player, "power");
         final StatSheet effective = build.profile().effective(plugin.players().sheet(player));
-        for (int i = 0; i < held; i++) {
-            if (charges.spend(player, "power", effective, build.profile().tags()) > 0) {
-                consumed++;
+        // 2026-10-30 照 poe2db Charged Staff 的品質：使用時 (0—20)% 機率不移除銳星（照樣算用掉了幾顆）
+        if (plugin.random().nextDouble() * 100 < build.qualityFlat(STAFF_KEEP)) {
+            consumed = held;
+        } else {
+            for (int i = 0; i < held; i++) {
+                if (charges.spend(player, "power", effective, build.profile().tags()) > 0) {
+                    consumed++;
+                }
             }
         }
         if (consumed <= 0) {

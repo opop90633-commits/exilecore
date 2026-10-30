@@ -73,7 +73,7 @@ public final class DummyConfig {
     public static List<Dummy> defaults() {
         final List<Dummy> list = new java.util.ArrayList<>();
         list.add(boss("boss", "訓練假人・首領", 28, 20));
-        final int[][] offsets = {{20, 20}, {12, 20}, {28, 12}, {20, 12}, {12, 12}};
+        final int[][] offsets = {{15, 20}, {2, 20}, {28, 33}, {15, 33}, {2, 33}}; // 2026-10-30 照站長：彼此隔 13 格（這次之前隔 8 格：{20,20}…{12,12}）
         for (int i = 0; i < offsets.length; i++) {
             list.add(boss("boss_" + (i + 2), "訓練假人・首領 " + (i + 2), offsets[i][0], offsets[i][1]));
         }

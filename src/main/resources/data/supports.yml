@@ -4031,15 +4031,15 @@ supports:
   # ---- 2026-10-26：照 PoE2 0.5 補上的德魯伊輔助（植物、風暴、變身；數值照 poe2db，名稱是自己的。I／II 只留最強的那一級）----
   accelerated_growth:      # Accelerated Growth II（PoE2 第 5 階）
     name: 催綻
-    description: 被輔助的植物技能放出去時，在那裡催生一朵花，1.2 秒後炸開（1.8 格，物理傷害，暴擊率 10%），致盲被炸到的敵人。
+    description: 被輔助的植物技能造出來的植物繁茂時，在那裡觸發綻花爆：1.2 秒後炸開（1.8 格，物理傷害，暴擊率 10%），致盲被炸到的敵人。
     notes:
-      - 放技能時催生（同一個玩家最快每秒一朵）。常駐的刺棘身不會「放出去」，不能掛。   # 2026-10-28 照站長拿掉說明裡的原作：原作是植物「過度生長」時才炸，我們沒有過度生長
+      - 繁茂：植物在積雷雲範圍內、或天賦「無限生長」的機率。會繁茂的植物：縛根的裂隙、荊棘矢的荊棘、荊棘叢生、抽荊的藤蔓。   # 2026-10-30 照 PoE2（Accelerated Growth：Triggers on Overgrowing Plants）；這次之前放技能時就催生一朵花（我們那時沒有繁茂）   # 2026-10-28 照站長拿掉說明裡的原作：原作是植物「過度生長」時才炸，我們沒有過度生長
     icon: STICK
     tier: 3   # PoE2 第 5 階
     requires: [plant]
     excludes: [minion, persistent]
     modifiers:
-      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_accelerated_growth] }
+      - { stat: plant.overgrow_trigger, type: FLAT, value: 1 }   # 2026-10-30 照 PoE2；這次之前 proc.use 100（放技能就觸發，每秒最多一朵）
 
   advancing_storm:         # Advancing Storm（PoE2 第 4 階）
     name: 行嵐

@@ -564,13 +564,20 @@ public final class SkillConfig {
         // 2026-10-30 照 PoE2 的技能類型：我們的規則讓掛、原作不讓掛的組合（support_poe2.yml）
         final Path poe2RulesFile = dataFolder.resolve(Poe2SupportRules.FILE);
         final Map<String, Map<String, String>> parsedPoe2Rules = new java.util.HashMap<>();
+        final java.util.Set<String> parsedProxy = new java.util.HashSet<>(); // 2026-10-30：代放不能用的輔助
+        final java.util.Set<String> parsedTriggered = new java.util.HashSet<>(); // 2026-10-30：觸發不能用的輔助
+        final java.util.Map<String, java.util.Map<String, java.util.Set<String>>> parsedUnlocks = new java.util.HashMap<>(); // 2026-10-30：別的輔助解開的組合
         LineageRules.Drops parsedLineageDrops = LineageRules.Drops.DEFAULT;
         final Path lineageFile = dataFolder.resolve(LINEAGE_FILE);
         if (Files.exists(lineageFile)) {
             parsedLineageDrops = LineageRules.load(YamlNode.load(lineageFile), parsedSupports, parsed.keySet());
         }
         if (Files.exists(poe2RulesFile)) {
-            parsedPoe2Rules.putAll(Poe2SupportRules.parse(YamlNode.load(poe2RulesFile), parsed.keySet(), parsedSupports.keySet()));
+            final YamlNode poe2Root = YamlNode.load(poe2RulesFile);
+            parsedPoe2Rules.putAll(Poe2SupportRules.parse(poe2Root, parsed.keySet(), parsedSupports.keySet()));
+            parsedProxy.addAll(Poe2SupportRules.parseProxy(poe2Root, parsedSupports.keySet()));
+            parsedTriggered.addAll(Poe2SupportRules.parseTriggered(poe2Root, parsedSupports.keySet()));
+            parsedUnlocks.putAll(Poe2SupportRules.parseUnlocks(poe2Root, parsed.keySet(), parsedSupports.keySet()));
         }
         // 2026-10-18：驗證移到任何欄位指定之前（以前先換掉一半才驗證，失敗時新舊混用）；Boss 招式也在換之前載入（它自己解析好才換）
         for (final Map.Entry<String, java.util.List<String>> entry : parsedCommands.entrySet()) {
@@ -616,6 +623,9 @@ public final class SkillConfig {
         // 2026-10-30：移到所有技能設定都換好之後（防呆也看龍捲風、雷樁矢；這次之前在 tornados 換好之前，第一次讀設定看不到龍捲風）
         SupportGuards.index(this);
         Poe2SupportRules.install(parsedPoe2Rules);
+        Poe2SupportRules.installProxy(parsedProxy);
+        Poe2SupportRules.installTriggered(parsedTriggered, parsedMetas);
+        Poe2SupportRules.installUnlocks(parsedUnlocks);
         // 2026-10：輔助照階級排（第 1 階全部在前、再第 2 階…；同一階照 supports.yml 的順序），後來加的不會都擠在最後面
         final java.util.List<SupportDefinition> byTier = new java.util.ArrayList<>(parsedSupports.values());
         byTier.sort(java.util.Comparator.comparingInt(SupportDefinition::tier));

@@ -45,7 +45,9 @@ bear_maul:   # Maul（2026-10-28 照 PoE2：擊中時獲得 +(0—2) 怒氣；�
   - { stat: rage.on_hit, type: FLAT, per: 0.1 }   # 擊中時獲得怒氣（SkillResources）
 bear_slam:   # Furious Slam（2026-10-28 照 PoE2：使用技能的動作期間暈眩門檻增加 (0—40)%；這次之前照通用規則）
   - { stat: action.stun_threshold, type: FLAT, per: 2.0 }   # 動作期間的暈眩門檻（SkillService）
-beast_companion: []   # Tame Beast（2026-10-28 照 PoE2：鬼火持續時間 +(0—1.6) 秒——我們沒有捕捉野獸的鬼火，原作這條只影響捕捉、不影響戰鬥，所以沒有效果；這次之前照通用規則）
+beast_companion:   # Tame Beast（2026-10-30 照 PoE2：鬼火持續時間 +(0—1.6) 秒（馴獸有鬼火了）、賦予的夥伴技能 (0—10)% 增加保留效率；2026-10-28 到這次之前寫 []（那時沒有鬼火））
+  - { stat: tame.wisp_seconds, type: FLAT, per: 0.08 }   # 鬼火持續時間 +秒（MinionService.wispTicks）
+  - { stat: aura.reservation, type: INCREASED, per: -0.5 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
 berserk:   # Berserk（2026-10-28 照 PoE2：增益讓怒氣效果另外增加 (0—10)%；這次之前照通用規則）
   - { stat: effect.rage.effect, type: INCREASED, per: 0.5 }   # 增益：怒氣效果
 blasphemy:   # Blasphemy（2026-10-29 照 PoE2：(0—10)% 增加保留效率；另一條插槽詛咒 (0—20)% 增加效果是額外的品質效果，寫在下面 advanced）
@@ -150,7 +152,8 @@ enervating_nova:   # Enervating Nova（2026-10-28 照 PoE2：(0—40)% 更多電
 enfeeble_curse:   # Enfeeble（2026-10-28 照 PoE2：(0—10)% 增加詛咒幅度；這次之前照通用規則，數值一樣）
   - { stat: curse.effect, type: INCREASED, per: 0.5 }   # 詛咒效果
 entangle:   # Entangle（2026-10-28 照 PoE2：(0—20)% 機率多一道裂隙（再往前一圈）；這次之前照通用規則）
-  - { stat: skill.additional_fissure_chance, type: FLAT, per: 1.0 }   # SkillExecutor.curse
+  - { stat: skill.additional_fissure_chance, type: FLAT, per: 1.0 }   # SkillExecutor.extraFissure
+  - { stat: skill.limit, type: FLAT, per: 0.2 }   # 2026-10-30 照 poe2db：限制 (0—4) 道根鬚（每 5% 品質 +1，捨去）
 escape_shot:   # Escape Shot
   - { stat: freeze.buildup, type: MORE, per: 6.0 }   # 凍結累積（更多）
 essence_drain:   # Essence Drain（2026-10-28 照 PoE2：減益持續時間 +(0—1) 秒；這次之前照通用規則每 1% 增加 1% 傷害）
@@ -482,6 +485,7 @@ storm_orb:   # Orb of Storms
   - { stat: skill.chains, type: FLAT, per: 0.15 }   # 連鎖次數
 storm_staff:   # Charged Staff（2026-10-28 照 PoE2：(0—20)% 增加技能效果持續時間；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: skill.duration, type: INCREASED, per: 1.0 }   # 持續時間
+  - { stat: charged_staff.keep_chance, type: FLAT, per: 1.0 }   # 2026-10-30 照 poe2db：使用時 (0—20)% 機率不移除銳星（OriginalSkills.chargedStaff）
 storm_wave:   # Storm Wave（2026-10-28 照 PoE2：波寬 +(0—1) 格；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: skill.area, type: INCREASED, per: 5.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
 stormblast_bolts:   # Stormblast Bolts（2026-10-28 照 PoE2：穿透 (0—20)% 閃電抗性；這次之前照通用規則每 1% 增加 1% 傷害）

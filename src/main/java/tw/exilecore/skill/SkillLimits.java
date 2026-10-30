@@ -34,7 +34,7 @@ public final class SkillLimits {
             "shockwave_totem", "dark_idol", "siege_ballista", "artillery_ballista", "totem_casting", "tempest_bell", "hollow_focus",
             // 地面效果
             "volcanic_fissure", "firestorm", "storm_orb", "sun_orb", "thunderstorm", "primal_tornado", "volcano", "profane_ritual",
-            "shield_wall", "ruzhan_trap",
+            "shield_wall", "ruzhan_trap", "entangle",
             // 召喚物
             "raise_zombie", "raging_spirits", "bone_spikes", "unearth_construct", "ravenous_swarm",
             // 各自的上限

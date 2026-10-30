@@ -193,6 +193,26 @@ public record SummonSpec(String kind, int count, Scaled max, boolean fixedMax, d
                 minionTags, immortal, label);
     }
 
+    /**
+     * 2026-10-30 照 PoE2 Ancestral Spirits：先祖之靈的四種型態（{@link AncestralForms}）各自的身體、倍率、遠近程、手上拿的東西。
+     */
+    public SummonSpec withForm(final String newKind, final double newLife, final double newDamage, final double newArmour, final double newEvasion,
+                               final double newEs, final double newRanged, final String newBolt, final String newWeapon, final double newSpeed,
+                               final double newReach, final String newLabel) {
+        return new SummonSpec(newKind, count, max, fixedMax, duration, newLife, newDamage, attackSpeed, newSpeed, newReach, radius, corpse, search,
+                helmet, newWeapon, resists, taunt, tauntRadius, buff, newRanged, newBolt, spectre, heal, true, newArmour, newEvasion, spread, interval,
+                stats, newEs, minionTags, immortal, newLabel);
+    }
+
+    /** 2026-10-30：多加幾個召喚物自己身上的修飾器（先祖靈龜不會被暈眩）。 */
+    public SummonSpec withExtraStats(final List<Modifier> extra) {
+        final List<Modifier> merged = new ArrayList<>(stats);
+        merged.addAll(extra);
+        return new SummonSpec(kind, count, max, fixedMax, duration, life, damage, attackSpeed, speed, reach, radius, corpse, search,
+                helmet, weapon, resists, taunt, tauntRadius, buff, ranged, bolt, spectre, heal, ally, armour, evasion, spread, interval, merged, es,
+                minionTags, immortal, label);
+    }
+
     /** 附身召喚能用的怪物種類（都走得動、打得了近戰，不會自己爆炸或瞬移）。 */
     public static final Set<String> SPECTRES = Set.of("ZOMBIE", "HUSK", "DROWNED", "ZOMBIE_VILLAGER", "SKELETON", "STRAY", "BOGGED",
             "WITHER_SKELETON", "SPIDER", "CAVE_SPIDER", "PIGLIN", "PIGLIN_BRUTE", "ZOMBIFIED_PIGLIN", "VINDICATOR", "PILLAGER", "WOLF",

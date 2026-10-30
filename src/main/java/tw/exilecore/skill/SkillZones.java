@@ -43,7 +43,9 @@ final class SkillZones implements SkillTargets.Strikeable {
         double growPerSecond;
         double growMax;
         long born;
-        final SkillProfile profile;
+        SkillProfile profile;
+        /** 2026-10-30 照 PoE2：這一灘植物繁茂了（{@link Overgrowth}）。 */
+        boolean overgrown;
         final String visual;
         final long untilTick;
         final int intervalTicks;
@@ -238,6 +240,8 @@ final class SkillZones implements SkillTargets.Strikeable {
     private final SkillDamage damage;
     private final List<Zone> zones = new ArrayList<>();
     private final List<Impact> impacts = new ArrayList<>();
+    /** 2026-10-30 照 PoE2 Entangle：縛根的裂隙與藤蔓。 */
+    private final EntangleRoots entangle = new EntangleRoots();
     /** 不疊加的地面效果：「施放者｜群組｜敵人」→ 上一次被打的 tick。 */
     private final java.util.Map<String, Long> exclusiveHits = new java.util.HashMap<>();
 
@@ -349,6 +353,13 @@ final class SkillZones implements SkillTargets.Strikeable {
         zone.growPerSecond = localFlat(profile, tw.exilecore.stats.SupportExtraKeys.ENCROACH) / 100.0;
         zone.growMax = localFlat(profile, tw.exilecore.stats.SupportExtraKeys.ENCROACH_MAX_KEY) / 100.0;
         zones.add(zone);
+        // 2026-10-30 照 PoE2：植物（荊棘矢的荊棘、荊棘叢生）造出來時擲「立即繁茂」，或一出來就在積雷雲裡
+        if (Overgrowth.effect(zoneProfile.id()) != null) {
+            final double chance = Overgrowth.chance(plugin.players().sheet(owner), zoneProfile);
+            if (chance > 0 && plugin.random().nextDouble() < chance || inThunderstorm(owner.getUniqueId(), points.getFirst())) {
+                overgrow(owner, zone);
+            }
+        }
         // 2026-10-28 照 PoE2：冰緩地面、感電地面是元素地面（旋矛擊、旋風矛的旋風碰到變成那種元素）；這次之前沒登記
         final tw.exilecore.stats.DamageType element = GroundEffects.sum(profile, GroundEffects.CHILL) > 0 ? tw.exilecore.stats.DamageType.COLD
                 : GroundEffects.sum(profile, GroundEffects.SHOCK) > 0 ? tw.exilecore.stats.DamageType.LIGHTNING : null;
@@ -1047,6 +1058,100 @@ final class SkillZones implements SkillTargets.Strikeable {
         tickRods(now); // 2026-10-28 照 PoE2 Lightning Rod
         tickWarps(now);
         tickZones(now);
+        if (!entangle.isEmpty()) {
+            entangle.tick(now, plugin.getServer(), targets, damage, plugin.combat() == null ? null : plugin.combat().debuffs(),
+                    this::inThunderstorm, this::overgrewRoot);
+        }
+    }
+
+    // ---- 2026-10-30 照 PoE2：植物繁茂（Overgrowth）----
+
+    /** at 在 owner 的積雷雲範圍內（積雷雲讓範圍內的植物繁茂）。 */
+    boolean inThunderstorm(final UUID owner, final Location at) {
+        for (final Zone zone : zones) {
+            if (zone.gone || !zone.owner.equals(owner) || !Overgrowth.THUNDERSTORM.equals(zone.skill) || !zone.world.equals(at.getWorld())) {
+                continue;
+            }
+            for (final Location point : zone.points) {
+                if (point.distanceSquared(at) <= zone.radius * zone.radius) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** 這一灘植物繁茂：更多傷害、更大、回歸自然的破甲；催綻觸發。 */
+    private void overgrow(final Player owner, final Zone zone) {
+        final Overgrowth.Effect effect = Overgrowth.effect(zone.profile.id());
+        zone.overgrown = true;
+        zone.profile = Overgrowth.apply(zone.profile, effect, plugin.players().sheet(owner));
+        final double scale = Overgrowth.radiusScale(effect);
+        zone.radius *= scale;
+        zone.baseRadius *= scale;
+        overgrew(owner, zone.profile, zone.points.getFirst());
+    }
+
+    /** 縛根的裂隙繁茂了：催綻在裂隙中間觸發。 */
+    private void overgrewRoot(final EntangleRoots.Root root) {
+        final Player owner = plugin.getServer().getPlayer(root.owner);
+        if (owner != null && !root.points.isEmpty()) {
+            root.fissure = Overgrowth.apply(root.fissure, null, plugin.players().sheet(owner)); // 回歸自然：繁茂的植物技能增加破甲
+            root.vine = Overgrowth.apply(root.vine, null, plugin.players().sheet(owner));
+            overgrew(owner, root.fissure, root.points.get(root.points.size() / 2));
+        }
+    }
+
+    /** 植物剛繁茂：特效；被催綻輔助的技能觸發綻花爆（等級照角色等級能用的最高那一級）。 */
+    private void overgrew(final Player owner, final SkillProfile profile, final Location at) {
+        Fx.spawn(at.getWorld(), org.bukkit.Particle.HAPPY_VILLAGER, at.clone().add(0, 0.5, 0), 16, 0.8, 0.4, 0.8, 0);
+        if (localFlat(profile, Overgrowth.TRIGGER) > 0 && plugin.skills() != null) {
+            final int level = plugin.skills().config().maxLevelFor(plugin.players().get(owner).level());
+            plugin.skills().supportMechanics().castHidden(owner, Overgrowth.TRIGGER_SKILL, level, at, 0, null);
+        }
+    }
+
+    /** 2026-10-30 照 PoE2 Entangle：從 start 往 direction 爬一道 length 長的裂隙（同時最多 limit 道）。 */
+    void entangle(final Player owner, final Location start, final Vector direction, final double length, final double attachRadius,
+                  final double vineLength, final int durationTicks, final SkillProfile fissure, final SkillProfile vine, final int limit) {
+        final Vector along = direction.clone().setY(0);
+        if (along.lengthSquared() < 1e-6) {
+            return;
+        }
+        along.normalize();
+        final List<Location> points = new ArrayList<>();
+        final int steps = Math.max(2, (int) Math.round(length / 0.5));
+        for (int i = 0; i <= steps; i++) {
+            final Location point = SkillZones.groundOf(start.clone().add(along.clone().multiply(length * i / steps)));
+            if (point == null) {
+                break; // 撞牆、懸崖：裂隙停在這裡
+            }
+            points.add(point);
+        }
+        if (points.isEmpty()) {
+            return;
+        }
+        final long now = now();
+        final EntangleRoots.Root root = new EntangleRoots.Root(owner.getUniqueId(), points, now, now + durationTicks, attachRadius, vineLength, fissure, vine);
+        entangle.add(root, limit);
+        // 2026-10-30 照 PoE2：裂隙造出來時擲「立即繁茂」（無限生長），或一出來就在積雷雲裡
+        final double chance = Overgrowth.chance(plugin.players().sheet(owner), fissure);
+        if (chance > 0 && plugin.random().nextDouble() < chance || inThunderstorm(owner.getUniqueId(), points.get(points.size() / 2))) {
+            EntangleRoots.overgrow(root, now, this::overgrewRoot);
+        }
+    }
+
+    /** 這個點上下 2 格內的地面（站得住的位置）；找不到回傳 null。 */
+    static Location groundOf(final Location point) {
+        final World world = point.getWorld();
+        final int x = point.getBlockX();
+        final int z = point.getBlockZ();
+        for (int y = point.getBlockY() + 2; y >= point.getBlockY() - 2; y--) {
+            if (y - 1 >= world.getMinHeight() && world.getBlockAt(x, y, z).isPassable() && !world.getBlockAt(x, y - 1, z).isPassable()) {
+                return new Location(world, point.getX(), y, point.getZ());
+            }
+        }
+        return null;
     }
 
     private void tickImpacts(final long now) {
@@ -1070,11 +1175,24 @@ final class SkillZones implements SkillTargets.Strikeable {
                         (now - impact.startTick()) / (double) Math.max(1, impact.atTick() - impact.startTick())));
             }
         }
-        for (final Impact impact : due) {
-            final Player owner = plugin.getServer().getPlayer(impact.owner());
+        for (final Impact due0 : due) {
+            final Player owner = plugin.getServer().getPlayer(due0.owner());
             if (owner == null) {
                 continue;
             }
+            // 2026-10-30 照 PoE2 Thrashing Vines：竄出來的藤蔓擲「立即繁茂」或在積雷雲裡：50% 更多傷害、50% 更大
+            Impact grown = due0;
+            final Overgrowth.Effect effect = Overgrowth.effect(due0.profile().id());
+            if (effect != null) {
+                final double chance = Overgrowth.chance(plugin.players().sheet(owner), due0.profile());
+                if (chance > 0 && plugin.random().nextDouble() < chance || inThunderstorm(owner.getUniqueId(), due0.center())) {
+                    grown = new Impact(due0.owner(), due0.center(), due0.radius() * Overgrowth.radiusScale(effect),
+                            Overgrowth.apply(due0.profile(), effect, plugin.players().sheet(owner)), due0.visual(), due0.atTick(), due0.startTick(),
+                            due0.lodge(), due0.level(), due0.rod());
+                    overgrew(owner, grown.profile(), grown.center());
+                }
+            }
+            final Impact impact = grown;
             for (final LivingEntity target : targets.around(impact.center(), impact.radius(), owner)) {
                 damage.hit(owner, target, impact.profile(), null);
             }
@@ -1118,6 +1236,10 @@ final class SkillZones implements SkillTargets.Strikeable {
             }
             if (zone.driftTo != null) {
                 step(zone); // 2026-10-26（行嵐、掠嵐）：移動中的風暴
+            }
+            if (!zone.overgrown && (now - zone.born) % 10 == 0 && Overgrowth.effect(zone.profile.id()) != null
+                    && inThunderstorm(zone.owner, zone.points.getFirst())) {
+                overgrow(owner, zone); // 2026-10-30 照 PoE2：積雷雲範圍內的植物繁茂
             }
             if (zone.growPerSecond > 0) {
                 // 2026-10-27 照 PoE2 Encroaching Ground：範圍隨時間變大（半徑 = √範圍倍率）
@@ -1350,6 +1472,7 @@ final class SkillZones implements SkillTargets.Strikeable {
         lodged.removeIf(bolt -> bolt.owner().equals(owner));
         pustules.keySet().removeIf(bolt -> bolt.owner().equals(owner));
         rods.forget(owner, this::rodRemoved); // 2026-10-28：雷樁矢的箭
+        entangle.forget(owner); // 2026-10-30 縛根
         warpMarks.values().removeIf(mark -> mark.owner().equals(owner));
     }
 
@@ -1360,6 +1483,7 @@ final class SkillZones implements SkillTargets.Strikeable {
         }
         zones.clear();
         impacts.clear();
+        entangle.clear(); // 2026-10-30 縛根
         lodged.clear();
         rods.clear(this::rodRemoved); // 2026-10-28：雷樁矢的箭
     }

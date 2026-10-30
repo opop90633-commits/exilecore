@@ -105,8 +105,9 @@ class HeistSpecialAmuletTest {
     @Test
     void heistConfigDropsAtHalfAPercent() {
         final HeistConfig.SpecialAmulets amulets = heist.specialAmulets();
-        assertEquals(0.005, amulets.chestChance(), 1e-9);
-        assertEquals(0.005, amulets.vaultChance(), 1e-9);
+        // 2026-10-30 照站長：只出現在金庫之主的收藏（金庫箱、大金庫不掉）；這次之前各 0.005
+        assertEquals(0, amulets.chestChance(), 1e-9);
+        assertEquals(0, amulets.vaultChance(), 1e-9);
         assertTrue(amulets.rare() > 0 && amulets.rare() < 1);
         assertEquals(0.045, amulets.finaleWeight(), 1e-9); // 2026-10-28：加了 9 種特殊戒指，0.1 → 0.045（總量不變）
         // 沒寫 special_amulet 的 heist.yml 用預設值

@@ -327,6 +327,26 @@ public final class SupportProcs implements Listener {
         return true;
     }
 
+    /** 2026-10-30：同 castAt，放之前再調整這一下（招架橫掃用圓盾當武器）。 */
+    boolean castAt(final Player player, final String subId, final String levelFrom, final Location at,
+                   final java.util.function.UnaryOperator<SkillBuild> adjust) {
+        final SkillDefinition sub = service.config().skill(subId);
+        if (sub == null) {
+            return false;
+        }
+        final Map<String, Long> mine = ready.computeIfAbsent(player.getUniqueId(), uuid -> new HashMap<>());
+        final long now = now();
+        if (mine.getOrDefault(subId, 0L) > now) {
+            return false;
+        }
+        mine.put(subId, now + (sub.cooldown() > 0 ? Math.max(1, Math.round(sub.cooldown() * 20)) : COOLDOWN));
+        final PlayerState state = plugin.players().get(player);
+        final SkillBuild build = adjust.apply(SkillBuild.of(service.config(), sub, gemLevelOf(player, state, levelFrom), state.level(), false, List.of(),
+                state.weaponTags(), plugin.players().sheet(player)));
+        service.procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), build, null);
+        return true;
+    }
+
     /** 2026-10-28：不看觸發冷卻直接放一次（回槍躍品質多的那一道震波：同一次觸發的第二道）。 */
     void castAtNow(final Player player, final String subId, final String levelFrom, final Location at) {
         final SkillDefinition sub = service.config().skill(subId);

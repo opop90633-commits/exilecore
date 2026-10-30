@@ -28,6 +28,8 @@ final class GemQualityText {
             Map.entry("berserk", "增益另外增加 {effect.rage.effect}% 怒氣效果"),
             Map.entry("blast_arrow", "最大階段 +{i:charge.stages_flat}"),
             Map.entry("bloodhounds_mark", "被標記的目標另外照失血的 {bloodhound.stun_percent}% 累積重暈"),
+            Map.entry("beast_companion", "鬼火持續時間 +{tame.wisp_seconds} 秒、夥伴的保留效率增加 {-aura.reservation}%"), // 2026-10-30 照 PoE2 Tame Beast
+            Map.entry("storm_staff", "增加 {skill.duration}% 技能效果持續時間、{charged_staff.keep_chance}% 機率不用掉銳星"), // 2026-10-30 照 poe2db Charged Staff
             Map.entry("bone_cage", "定身敵人時當作傷害再更多 {pin.as_though_damage}%"),
             Map.entry("bone_offering", "被護住的召喚物護盾消失後 1 秒內受到的傷害更少 {offering.shield_lost_less}%"),
             Map.entry("bone_spikes", "骨構體持續時間 +{skill.base_duration_flat} 秒、移動速度增加 {movement.speed}%"),
@@ -44,7 +46,7 @@ final class GemQualityText {
             Map.entry("elemental_conflux", "增益讓受影響的元素另外更多 {effect.damage}% 傷害"),
             Map.entry("elemental_trinity", "親和總和超過 250 時技能速度增加 {effect.attack.speed@trinityhigh}%"),
             Map.entry("ember_volley", "每一顆之前射過的火星再更多 {ember.more_per_previous}% 傷害"),
-            Map.entry("entangle", "{skill.additional_fissure_chance}% 機率多一道裂隙"),
+            Map.entry("entangle", "{skill.additional_fissure_chance}% 機率多一道裂隙、同時上限 +{i:skill.limit} 道"),
             Map.entry("eternal_rage", "每秒另外回復 {effect.rage.regen} 點怒氣"),
             Map.entry("exsanguinate", "多 {i:skill.chains} 道血脈（多一個目標）"),
             Map.entry("fangs_of_frost", "{parried.keep_chance}% 機率不用掉被招架的減益"),
@@ -155,7 +157,6 @@ final class GemQualityText {
 
     /** 原作的品質效果我們沒有對應機制（品質寫 []）的：技能代號 → {原因樣板, 每 1% 品質的原作數值}；{v} 換成這個品質的數值。 */
     static final Map<String, Object[]> NO_EFFECT = Map.ofEntries(
-            Map.entry("beast_companion", new Object[] {"這個技能的品質沒有效果", 0.08}),
             Map.entry("bramble_arrow", new Object[] {"這個技能的品質沒有效果", 0.5}),
             Map.entry("sigil_of_power", new Object[] {"這個技能的品質沒有效果", 0.04}),
             Map.entry("vault_strike", new Object[] {"這個技能的品質沒有效果", 0.1}),
