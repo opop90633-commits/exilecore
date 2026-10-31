@@ -249,7 +249,7 @@ class MapLayoutStyleTest {
                         } else if (layout.isLiquid(x, z)) {
                             liquids++;
                             final String name = Palette.blockName(blocks.getOrDefault(cell(1024 + x, MapLayout.FLOOR_Y, 2048 + z), Palette.AIR));
-                            assertEquals("volcano".equals(theme) ? "lava" : "water", name, where + "：液體");
+                            assertEquals("volcano".equals(theme) || "inferno".equals(theme) ? "lava" : "water", name, where + "：液體");
                             for (int y = MapLayout.FLOOR_Y + 1; y <= ceiling; y++) {
                                 assertEquals(barrier, blocks.getOrDefault(cell(1024 + x, y, 2048 + z), Palette.AIR), where + "：液體上面要是屏障 y=" + y);
                             }
@@ -285,7 +285,8 @@ class MapLayoutStyleTest {
     @Test
     void spawnAndEventSpotsAreNotBuriedUnderPillars() {
         final Set<String> passable = Set.of("air", "fern", "bush", "moss_carpet", "short_dry_grass", "dead_bush", "snow", "glow_lichen",
-                "brown_mushroom", "red_mushroom", "amethyst_cluster", "gray_carpet");
+                "brown_mushroom", "red_mushroom", "amethyst_cluster", "gray_carpet",
+                "crimson_roots", "sea_pickle", "pink_petals", "sculk_vein"); // 2026-10-31：新主題的小東西
         for (final MapLayout.Style style : MapLayout.Style.values()) {
             for (long seed = 1; seed <= 25; seed++) {
                 final MapLayout layout = MapLayout.generate(seed * 613, 9, style);

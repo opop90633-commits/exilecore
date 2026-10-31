@@ -392,6 +392,7 @@ public final class CombatListener implements Listener {
             credit = null;
         }
         if (credit != null) {
+            plugin.monsters().ledger().touch(defender.getUniqueId(), credit.getUniqueId()); // 2026-10-31：擊殺歸屬的最後保底
             plugin.players().grace().end(credit, true); // 打到東西了（召喚物打到也算）：入場保護結束
         }
 
@@ -403,8 +404,9 @@ public final class CombatListener implements Listener {
         // 2026-10-27 照 PoE2：翻滾開頭只躲得開近戰攻擊與投射物（沒有無敵時間；這次之前全部的擊中都躲得開）
         if (defenderIsPlayer && dodge != null && dodge.invulnerable((Player) defender)
                 && (skill == null || !skill.tags().contains(DodgeRoll.UNDODGEABLE_TAG))
-                && DodgeRoll.avoids(skill == null || skill.isAttack() && skill.tags().contains(tw.exilecore.stats.Tags.MELEE),
-                        event.getDamager() instanceof org.bukkit.entity.Projectile || skill != null && skill.tags().contains(tw.exilecore.stats.Tags.PROJECTILE))) {
+                && (dodge.iframe((Player) defender) // 2026-10-31 照站長：一開始 0.1 秒什麼都躲得開
+                || DodgeRoll.avoids(skill == null || skill.isAttack() && skill.tags().contains(tw.exilecore.stats.Tags.MELEE),
+                        event.getDamager() instanceof org.bukkit.entity.Projectile || skill != null && skill.tags().contains(tw.exilecore.stats.Tags.PROJECTILE)))) {
             event.setCancelled(true); // 翻滾中（2026-10）：打不到
             if (attackerIsPlayer || credit != null) {
                 numbers.word(credit != null ? credit : (Player) attacker, defender, "閃過");

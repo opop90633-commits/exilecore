@@ -470,32 +470,35 @@ public final class MapDeviceMenu extends Menu {
             return;
         }
         final boolean sameKey = sameKey(config, openable);
-        final List<Dialogs.Option> bosses = new ArrayList<>();
+        // 2026-10-31 照站長：一隻 Boss 一個按鈕（這次之前是下拉選單＋「打開傳送門」）
+        final List<Dialogs.Button> buttons = new ArrayList<>();
         for (final MapConfig.MapDef map : openable) {
             final MapConfig.Uber uber = config.uber(map.id());
             final int level = config.uberStats(map.id(), uber).monsterLevel();
-            bosses.add(new Dialogs.Option(map.id(), "<#ff5f5f>" + ItemRenderer.escape(uber.name() != null ? uber.name() : map.boss().name() + "・極境")
-                    + " <gray>" + level + " 級・生命 ×" + number(uber.life()) + "（比 T" + config.tiers().max() + " 終局）・傷害 ×" + number(uber.damage())
-                    + (sameKey ? "" : "・" + keyText(uber))));
+            final String name = uber.name() != null ? uber.name() : map.boss().name() + "・極境";
+            final String tooltip = "<gray>" + level + " 級・生命 ×" + number(uber.life()) + "（比 T" + config.tiers().max() + " 終局）・傷害 ×"
+                    + number(uber.damage()) + "<newline><gray>用掉 " + keyText(uber) + "<newline><yellow>點一下打開傳送門";
+            buttons.add(new Dialogs.Button("<#ff5f5f>" + ItemRenderer.escape(name) + " <gray>" + level + " 級"
+                    + (sameKey ? "" : " <dark_gray>（" + keyText(uber) + "）"), tooltip, () -> {
+                        final MapConfig.MapDef chosen = config.find(map.id());
+                        if (chosen == null || !chosen.isFinal()) {
+                            return;
+                        }
+                        final String failed = service.activateUber(player, chosen);
+                        if (failed != null) {
+                            player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(failed)));
+                        }
+                    }, null));
         }
         final MapConfig.Uber first = config.uber(openable.getFirst().id());
         player.closeInventory();
-        plugin.dialogs().form(player, "<#ff5f5f>極境",
-                List.of("<gray>要用掉 " + (sameKey ? keyText(first) : "清單上寫的鑰匙") + "，開在 T" + config.tiers().max() + " 再高幾級",
-                        "<gray>Boss 的生命、傷害比一般版本高（清單上的倍率），所有怪物的招式冷卻更短",
+        plugin.dialogs().notice(player, "<#ff5f5f>極境",
+                List.of("<gray>要用掉 " + (sameKey ? keyText(first) : "按鈕上寫的鑰匙") + "，開在 T" + config.tiers().max() + " 再高幾級",
+                        "<gray>Boss 的生命、傷害比一般版本高（滑到按鈕上看倍率），所有怪物的招式冷卻更短",
                         "<red>每一門每個人只能走進去一次：死了或離開（包括回營地）要等這一門結束、走下一門",
-                        "<dark_gray>準備好藥劑與抗性再進去；隊友也是各進一次"),
-                List.of(new Dialogs.Choice("boss", "挑戰", bosses, openable.getFirst().id())), "打開傳送門",
-                answers -> {
-                    final MapConfig.MapDef chosen = answers.get("boss").isEmpty() ? openable.getFirst() : config.find(answers.get("boss"));
-                    if (chosen == null || !chosen.isFinal()) {
-                        return;
-                    }
-                    final String failed = service.activateUber(player, chosen);
-                    if (failed != null) {
-                        player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(failed)));
-                    }
-                }, null);
+                        "<dark_gray>準備好藥劑與抗性再進去；隊友也是各進一次",
+                        "<yellow>點要挑戰的 Boss 打開傳送門"),
+                buttons, buttons.size() >= 4 ? 2 : 1);
     }
 
     /** 這些極境開門的鑰匙都一樣（通貨與個數）。 */

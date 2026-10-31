@@ -48,6 +48,7 @@ public final class SkillModule implements Module {
         manager.registerEvents(created.deployables(), plugin);
         manager.registerEvents(created.minions(), plugin);
         manager.registerEvents(created.auras(), plugin);
+        manager.registerEvents(created.costumes(), plugin); // 2026-10-31：德魯伊變身的外觀
         manager.registerEvents(created.resources(), plugin); // 怒氣（2026-10 PoE2）
         manager.registerEvents(created.triggers(), plugin); // 觸發（2026-10）
         manager.registerEvents(created.procs(), plugin); // 輔助觸發的專屬技能（2026-10）

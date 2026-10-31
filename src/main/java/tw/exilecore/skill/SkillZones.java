@@ -33,6 +33,9 @@ final class SkillZones implements SkillTargets.Strikeable {
 
     /** 一塊地面效果：points 是它蓋到的圓心（圓一個、線好幾個），每個半徑 radius。 */
     private static final class Zone {
+        /** 2026-10-31：地面圖（{@link GroundDecals}）的代號用的流水號。 */
+        private static long nextSerial;
+        final long serial = ++nextSerial;
         final UUID owner;
         final String skill;
         final World world;
@@ -239,6 +242,53 @@ final class SkillZones implements SkillTargets.Strikeable {
     private final SkillVisuals visuals;
     private final SkillDamage damage;
     private final List<Zone> zones = new ArrayList<>();
+    /** 2026-10-31：平面的地面圖（套了資源包的玩家看這個，粒子只送給沒套的人）。 */
+    private GroundDecals decals;
+    /** 2026-10-31：畫了地面圖的地面效果 → 畫了幾個點（地面效果不在了就收掉）。 */
+    private final java.util.Map<Zone, Integer> decalled = new java.util.IdentityHashMap<>();
+    /** 2026-10-31：剩幾 tick 時地面圖換成只剩外框（提示快結束了）。 */
+    static final long DECAL_ENDING_TICKS = 20;
+    /** 2026-10-31：一灘地面效果最多畫幾個平面圖。 */
+    static final int MAX_DECALS_PER_ZONE = 16;
+
+    void decals(final GroundDecals decals) {
+        this.decals = decals;
+    }
+
+    private static String decalId(final Zone zone, final int point) {
+        return "zone:" + zone.serial + ":" + point;
+    }
+
+    /** 2026-10-31：畫或更新這一灘的平面圖（每個點一個）。 */
+    private void drawDecals(final Zone zone, final long now) {
+        if (decals == null) {
+            return;
+        }
+        final int rgb = SkillVisuals.groundColor(zone.visual);
+        final boolean ending = zone.untilTick - now <= DECAL_ENDING_TICKS;
+        // 一長條的（火牆、沿路的地面）點很多：最多畫 MAX_DECALS_PER_ZONE 個，平均挑（圈會互相重疊成一條帶子）
+        final int stride = Math.max(1, (int) Math.ceil(zone.points.size() / (double) MAX_DECALS_PER_ZONE));
+        for (int i = 0; i < zone.points.size(); i += stride) {
+            decals.area(decalId(zone, i), zone.owner, zone.points.get(i), zone.radius, rgb, ending);
+        }
+        decalled.put(zone, zone.points.size());
+    }
+
+    /** 2026-10-31：不在了的地面效果，平面圖收掉。 */
+    private void sweepDecals() {
+        if (decals == null || decalled.isEmpty()) {
+            return;
+        }
+        for (final java.util.Iterator<java.util.Map.Entry<Zone, Integer>> it = decalled.entrySet().iterator(); it.hasNext(); ) {
+            final java.util.Map.Entry<Zone, Integer> entry = it.next();
+            if (entry.getKey().gone || !zones.contains(entry.getKey())) {
+                for (int i = 0; i < entry.getValue(); i++) {
+                    decals.remove(decalId(entry.getKey(), i));
+                }
+                it.remove();
+            }
+        }
+    }
     private final List<Impact> impacts = new ArrayList<>();
     /** 2026-10-30 照 PoE2 Entangle：縛根的裂隙與藤蔓。 */
     private final EntangleRoots entangle = new EntangleRoots();
@@ -1127,7 +1177,8 @@ final class SkillZones implements SkillTargets.Strikeable {
 
     /** 2026-10-30 照 PoE2 Entangle：從 start 往 direction 爬一道 length 長的裂隙（同時最多 limit 道）。 */
     void entangle(final Player owner, final Location start, final Vector direction, final double length, final double attachRadius,
-                  final double vineLength, final int durationTicks, final SkillProfile fissure, final SkillProfile vine, final int limit) {
+                  final double vineLength, final int durationTicks, final SkillProfile fissure, final SkillProfile vine, final int limit,
+                  final double areaScale) {
         final Vector along = direction.clone().setY(0);
         if (along.lengthSquared() < 1e-6) {
             return;
@@ -1147,6 +1198,7 @@ final class SkillZones implements SkillTargets.Strikeable {
         }
         final long now = now();
         final EntangleRoots.Root root = new EntangleRoots.Root(owner.getUniqueId(), points, now, now + durationTicks, attachRadius, vineLength, fissure, vine);
+        root.pathRadius = EntangleRoots.PATH_RADIUS * Math.max(0.1, areaScale); // 2026-10-31：裂隙路徑寬度吃範圍效果
         entangle.add(root, limit);
         // 2026-10-30 照 PoE2：裂隙造出來時擲「立即繁茂」（無限生長），或一出來就在積雷雲裡
         final double chance = Overgrowth.chance(plugin.players().sheet(owner), fissure);
@@ -1222,6 +1274,7 @@ final class SkillZones implements SkillTargets.Strikeable {
     }
 
     private void tickZones(final long now) {
+        sweepDecals(); // 2026-10-31：不在了的地面效果，平面圖收掉
         if (zones.isEmpty()) {
             exclusiveHits.clear();
             return;
@@ -1263,7 +1316,9 @@ final class SkillZones implements SkillTargets.Strikeable {
                 zone.radius = zone.baseRadius * Math.sqrt(1 + Math.min(zone.growMax, zone.growPerSecond * (now - zone.born) / 20.0));
             }
             if (now % 2 == 0 && watched(zone)) {
-                Fx.as(zone.owner, () -> visuals.zoneAmbient(zone.visual, zone.points, zone.radius, now));
+                // 2026-10-31 照站長：套了資源包的人看平貼在地上的圖（技能的顏色、清楚的外框）；粒子只送給沒套的人
+                drawDecals(zone, now);
+                Fx.as(zone.owner, () -> Fx.withoutPack(() -> visuals.zoneAmbient(zone.visual, zone.points, zone.radius, now)));
             }
             if (now < zone.nextPulse) {
                 continue;
@@ -1343,7 +1398,8 @@ final class SkillZones implements SkillTargets.Strikeable {
                 final double fullLife = SupportMechanics.fullLife(target) ? localMore(zone.profile, tw.exilecore.stats.SupportKeys.DOT_VS_FULL_LIFE) : 1.0;
                 damage.hit(owner, target, fullLife == 1.0 ? zone.profile : zone.profile.scaled(fullLife, "對滿血的敵人"), null);
             }
-            Fx.as(zone.owner, () -> visuals.zonePulse(zone.visual, zone.points, zone.radius));
+            // 2026-10-31：打一波的粒子也只送給沒套資源包的人（套了的看地上的圖）
+            Fx.as(zone.owner, () -> Fx.withoutPack(() -> visuals.zonePulse(zone.visual, zone.points, zone.radius)));
         }
         if (expired) {
             zones.removeIf(zone -> zone.gone);

@@ -879,7 +879,7 @@ public final class LineageMechanics implements Listener {
         if (voltaic > 0 && plugin.ailments() != null && plugin.ailments().electrocuted(dead)) {
             final int level = levelOf(killer, skillId);
             final double life = plugin.monsters().sheet(dead, monster).get(StatKeys.LIFE_MAX);
-            explode(killer, dead.getLocation().add(0, 0.5, 0), voltaicRadius(level), life * voltaicPercent(voltaic, level) / 100.0,
+            explode(killer, dead.getLocation().add(0, 0.5, 0), voltaicRadius(level) * areaScale(killer), life * voltaicPercent(voltaic, level) / 100.0, // 2026-10-31：吃範圍效果
                     DamageType.LIGHTNING, "voltaic_fulmination", Particle.ELECTRIC_SPARK);
         }
     }
@@ -962,7 +962,7 @@ public final class LineageMechanics implements Listener {
                 break;
             }
             corpses.remove(corpse);
-            explode(player, new Location(at.getWorld(), corpse.x(), corpse.y() + 0.3, corpse.z()), tw.exilecore.core.Units.metres(1.5), corpse.maxLife() * percent / 100.0, // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+            explode(player, new Location(at.getWorld(), corpse.x(), corpse.y() + 0.3, corpse.z()), tw.exilecore.core.Units.metres(1.5) * areaScale(player), corpse.maxLife() * percent / 100.0, // 2026-10-31：吃範圍效果 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
                     DamageType.FIRE, "fiery_reclamation", Particle.FLAME);
             blown++;
         }
@@ -1004,11 +1004,17 @@ public final class LineageMechanics implements Listener {
         return Math.min(5, count);
     }
 
+    /** 2026-10-31：血脈輔助的爆炸照玩家的範圍效果放大（半徑 = √範圍倍率，含伺服器基礎 ×1.5）；這次之前固定半徑。 */
+    private double areaScale(final Player player) {
+        final tw.exilecore.stats.StatSheet sheet = player == null ? null : plugin.players().sheet(player);
+        return sheet == null ? 1.0 : Math.sqrt(Math.max(0.05, sheet.apply(StatKeys.SKILL_AREA, 1.0, Set.of(Tags.AREA))));
+    }
+
     /** 圖騰被打倒（SkillDeployables）：樁爆。 */
     void totemDied(final Player owner, final SkillBuild build, final Location feet, final double maxLife) {
         final double percent = LineageRules.total(build.supports(), LineageKeys.TOTEM_EXPLODE);
         if (owner != null && percent > 0) {
-            explode(owner, feet.clone().add(0, 0.6, 0), tw.exilecore.core.Units.metres(3), maxLife * percent / 100.0, // 樁爆 3 公尺 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+            explode(owner, feet.clone().add(0, 0.6, 0), tw.exilecore.core.Units.metres(3) * build.areaScale(), maxLife * percent / 100.0, // 2026-10-31：吃範圍效果 // 樁爆 3 公尺 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
                     DamageType.PHYSICAL, "tawhoas_vengeance", Particle.CRIT);
         }
     }
@@ -1591,7 +1597,7 @@ public final class LineageMechanics implements Listener {
             final SkillProfile profile = new SkillProfile("dark_consequences", Set.of(Tags.SPELL, Tags.AREA, Tags.CHAOS), 1.0, min, max, Map.of(),
                     List.of(Modifier.flat(StatKeys.SPELL_BASE_CRIT, 5, "巫蟾")));
             final Location blast = nearest.getLocation().add(0, 0.5, 0);
-            for (final LivingEntity enemy : service.targets().around(blast, TOAD_RADIUS, owner)) {
+            for (final LivingEntity enemy : service.targets().around(blast, TOAD_RADIUS * areaScale(owner), owner)) { // 2026-10-31：吃範圍效果
                 plugin.combat().skillDamage().hit(owner, enemy, profile, null);
             }
             Fx.spawn(blast.getWorld(), Particle.ITEM_SLIME, blast, 25, 0.6, 0.4, 0.6, 0.1);
@@ -1635,7 +1641,7 @@ public final class LineageMechanics implements Listener {
                 if (!owner.isOnline() || !owner.getWorld().equals(at.getWorld())) {
                     return;
                 }
-                for (final LivingEntity enemy : service.targets().around(at, ANNIHILATION_RADIUS, owner)) {
+                for (final LivingEntity enemy : service.targets().around(at, ANNIHILATION_RADIUS * areaScale(owner), owner)) { // 2026-10-31：吃範圍效果
                     plugin.combat().skillDamage().hit(owner, enemy, profile, null);
                 }
                 Fx.spawn(at.getWorld(), Particle.END_ROD, at.clone().add(0, 2, 0), 30, 0.3, 2, 0.3, 0.02);

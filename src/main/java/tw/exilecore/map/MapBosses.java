@@ -293,6 +293,7 @@ final class MapBosses {
         final String bossName = variant == MapTwists.BossVariant.EMPOWERED ? "強化的" + definition.name() : definition.name();
         plugin.monsters().decorateBoss(entity, instance.level(), bossName, definition.mods(), life, damage, definition.scale());
         MapSpawner.prepare(entity);
+        service.hats().dress(entity, instance.map() == null ? null : instance.map().theme(), true); // 2026-10-31：Boss 戴加大的頭飾
         final AttributeInstance follow = entity.getAttribute(Attribute.FOLLOW_RANGE);
         if (follow != null && follow.getBaseValue() < FOLLOW_RANGE) {
             follow.setBaseValue(FOLLOW_RANGE);
@@ -343,6 +344,19 @@ final class MapBosses {
         return plugin.text().parse(text);
     }
 
+    /** 2026-10-31：Boss 無敵時血條的顏色。 */
+    static final BossBar.Color LOCKED_COLOR = BossBar.Color.WHITE;
+    /** 2026-10-31：無敵前血條原本的顏色（打得動了換回來）。 */
+    private final java.util.Map<MapInstance, BossBar.Color> normalColors = new java.util.WeakHashMap<>();
+
+    /** 2026-10-31：無敵時血條名稱前面的字（為什麼打不動）。 */
+    private static String lockedPrefix(final MapInstance instance) {
+        if (instance.shielded()) {
+            return "<white>🔒 無敵：打掉 " + instance.shieldCrystals().size() + " 顆結晶 <dark_gray>｜ ";
+        }
+        return instance.phaseHold() ? "<white>🔒 換階段中，暫時打不動 <dark_gray>｜ " : "<white>🔒 無敵中 <dark_gray>｜ ";
+    }
+
     private void updateBar(final MapInstance instance, final LivingEntity boss, final List<Player> near) {
         final BossBar bar = instance.bossBar();
         if (bar == null) {
@@ -353,8 +367,17 @@ final class MapBosses {
         bar.progress((float) Math.max(0, Math.min(1, fraction)));
         // 狂暴倒數；2026-10-28 照站長：也寫 Boss 身上的異常（這次之前只有有狂暴倒數的才每次更新）
         final String ailments = plugin.ailments() == null ? "" : plugin.ailments().bossBarSuffix(boss);
-        bar.name(ailments.isEmpty() ? title(instance, instance.bossPhase())
-                : title(instance, instance.bossPhase()).append(plugin.text().parse(ailments)));
+        // 2026-10-31 照站長：Boss 無敵時血條變白、名稱前面寫「🔒 無敵」與原因（換階段、護盾結晶）；打得動了換回原本的顏色
+        final boolean locked = boss.isInvulnerable();
+        if (locked && bar.color() != LOCKED_COLOR) {
+            normalColors.put(instance, bar.color());
+            bar.color(LOCKED_COLOR);
+        } else if (!locked && normalColors.containsKey(instance)) {
+            bar.color(normalColors.remove(instance));
+        }
+        final net.kyori.adventure.text.Component name = locked
+                ? plugin.text().parse(lockedPrefix(instance)).append(title(instance, instance.bossPhase())) : title(instance, instance.bossPhase());
+        bar.name(ailments.isEmpty() ? name : name.append(plugin.text().parse(ailments)));
         // 2026-10：血條常駐——在 Boss 附近（64 格）或 Boss 房裡就一直顯示，不管剛復活的保護時間、死掉觀戰、離開戰鬥範圍
         final Location center = center(instance);
         for (final UUID uuid : instance.inside()) {

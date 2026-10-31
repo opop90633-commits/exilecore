@@ -55,7 +55,7 @@ class MapTest {
 
     @Test
     void mapsLoadWithRingsAndBosses() {
-        assertEquals(14, config.maps().size(), "12 張＋菌光洞窟、赤沙古道");
+        assertEquals(20, config.maps().size(), "12 張＋菌光洞窟、赤沙古道；2026-10-31 ＋6 張新場景風格");
         final Map<Integer, Integer> perRing = new HashMap<>();
         int named = 0;
         for (final MapConfig.MapDef map : config.maps()) {
@@ -67,7 +67,7 @@ class MapTest {
                 named++;
             }
         }
-        assertEquals(Map.of(1, 3, 2, 3, 3, 3, 4, 3, 5, 2), perRing, "新地圖在第 3、4 圈（最外圈還是兩張：解鎖終局的條件不變）");
+        assertEquals(Map.of(1, 3, 2, 3, 3, 5, 4, 7, 5, 2), perRing, "新地圖在第 3、4 圈（最外圈還是兩張：解鎖終局的條件不變）；2026-10-31 ＋6 張新場景風格（第 3 圈 2、第 4 圈 4）");
         // 版面樣式：每一種都有地圖在用（終局照舊是廳堂）
         final Set<MapLayout.Style> styles = new HashSet<>();
         for (final MapConfig.MapDef map : config.maps()) {
@@ -444,7 +444,7 @@ class MapTest {
         assertEquals(List.of("awakener"), config.fragmentPinnacles().stream().map(MapConfig.MapDef::id).toList(), "巔峰：萬界之巔");
         assertEquals("awakener", config.pinnacles().getFirst().id());
         assertEquals(config.finalMap(), config.finals().getFirst());
-        assertEquals(14 + 5 + eventPinnacles, config.all().size());
+        assertEquals(20 + 5 + eventPinnacles, config.all().size()); // 2026-10-31：地圖 14 → 20
         final Set<String> ids = new HashSet<>();
         for (final MapConfig.MapDef map : config.finals()) {
             assertTrue(map.isFinal());

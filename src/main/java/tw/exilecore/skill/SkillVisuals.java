@@ -1011,15 +1011,16 @@ final class SkillVisuals {
     void auraOn(final String visual, final Player player) {
         final Style style = style(visual);
         final Location at = player.getLocation();
-        ring(at.getWorld(), at, 1.5, Particle.DUST, style == null ? GOLD : style.dust());
-        tw.exilecore.skill.Fx.spawn(at.getWorld(), style == null ? Particle.ENCHANT : style.particle(), at.clone().add(0, 1.0, 0), 20, 0.4, 0.6, 0.4, 0.03);
+        // 2026-10-31 照站長（光環已經有地上的法陣）：腳邊那一圈只給沒套資源包的人、往上飄的 20 → 8 顆
+        tw.exilecore.skill.Fx.withoutPack(() -> ring(at.getWorld(), at, 1.5, Particle.DUST, style == null ? GOLD : style.dust()));
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), style == null ? Particle.ENCHANT : style.particle(), at.clone().add(0, 1.0, 0), 8, 0.4, 0.6, 0.4, 0.03);
         sound(at, style == null ? Sound.BLOCK_BEACON_ACTIVATE : style.cast(), 0.8f, style == null ? 1.2f : style.castPitch());
     }
 
     /** 光環關閉。 */
     void auraOff(final String visual, final Player player) {
         final Location at = player.getLocation();
-        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SMOKE, at.clone().add(0, 1.0, 0), 10, 0.3, 0.5, 0.3, 0.02);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SMOKE, at.clone().add(0, 1.0, 0), 5, 0.3, 0.5, 0.3, 0.02); // 2026-10-31：10 → 5
         sound(at, Sound.BLOCK_BEACON_DEACTIVATE, 0.6f, 1.2f);
     }
 
@@ -1075,6 +1076,14 @@ final class SkillVisuals {
         return rr << 16 | gg << 8 | bb;
     }
 
+    /**
+     * 2026-10-31：玩家地面效果的顏色——照技能的顏色，但紅色系（跟 Boss 警示圈太像）往橘色偏，
+     * 紅圈只留給要躲的東西。
+     */
+    static int groundColor(final String visual) {
+        return GroundDecals.soft(auraColor(visual));
+    }
+
     static int auraColor(final String visual) {
         final Style style = style(visual);
         return (style == null ? GOLD : style.dust()).getColor().asRGB();
@@ -1090,7 +1099,7 @@ final class SkillVisuals {
         for (final String visual : visuals) {
             final Style style = style(visual);
             final double radius = auraRingRadius(index++);
-            final int points = 10;
+            final int points = 8; // 2026-10-31：10 → 8（只給沒套資源包的人）
             final double offset = (at.getWorld().getFullTime() % 20) / 20.0 * Math.PI * 2 / points;
             for (int i = 0; i < points; i++) {
                 final double angle = offset + Math.PI * 2 * i / points;
@@ -1103,7 +1112,7 @@ final class SkillVisuals {
     /** 捷的擊殺效果在屍體的位置觸發。 */
     void herald(final String visual, final Location at) {
         final Style style = style(visual);
-        tw.exilecore.skill.Fx.spawn(at.getWorld(), style == null ? Particle.FLAME : style.particle(), at.clone().add(0, 0.8, 0), 12, 0.3, 0.4, 0.3, 0.05);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), style == null ? Particle.FLAME : style.particle(), at.clone().add(0, 0.8, 0), 6, 0.3, 0.4, 0.3, 0.05); // 2026-10-31：12 → 6
         if (style != null) {
             sound(at, style.cast(), 0.6f, style.castPitch());
         }

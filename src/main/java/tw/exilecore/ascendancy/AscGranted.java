@@ -296,7 +296,7 @@ final class AscGranted implements Listener {
             case "time_halt" -> timeFreeze(player);
             case "fated_pain" -> {
                 final Location at = aim(player, target, 20);
-                final double radius = Math.max(1.5, level(player, id, "asc.agony_radius"));
+                final double radius = Math.max(1.5, level(player, id, "asc.agony_radius")) * areaScale(player); // 2026-10-31：吃範圍效果
                 for (final LivingEntity enemy : effects.enemiesNear(player, at, radius)) {
                     agony.put(enemy.getUniqueId(), new double[] {0, now + 240});
                     agonyOwner.put(enemy.getUniqueId(), player.getUniqueId());
@@ -311,7 +311,8 @@ final class AscGranted implements Listener {
                 // 2026-10-27 照 PoE2：納維拉在牠所在的地方變出綠洲（這次之前巨靈沒有實體，綠洲在你腳下）
                 final Location djinn = djinnAt(player, "final_mirage_spirit");
                 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（綠洲半徑 8 公尺；這次之前 8 格）
-                oases.add(new Oasis(player.getUniqueId(), (djinn == null ? player.getLocation() : djinn).clone(), tw.exilecore.core.Units.metres(8), now + 300));
+                oases.add(new Oasis(player.getUniqueId(), (djinn == null ? player.getLocation() : djinn).clone(),
+                        tw.exilecore.core.Units.metres(8) * areaScale(player), now + 300)); // 2026-10-31：吃範圍效果
             }
             case "mirage_spirit_spring" -> {
                 if (!navira(player)) {
@@ -451,10 +452,19 @@ final class AscGranted implements Listener {
         plugin.players().markDirty(player);
     }
 
+    /**
+     * 2026-10-31：昇華賦予的範圍效果（註定之痛、時停、綠洲、女王進軍）照玩家的範圍效果放大（半徑 = √範圍倍率，含伺服器基礎 ×1.5）；
+     * 這次之前是固定的半徑。
+     */
+    private double areaScale(final Player player) {
+        final StatSheet sheet = plugin.players().sheet(player);
+        return sheet == null ? 1.0 : Math.sqrt(Math.max(0.05, sheet.apply(StatKeys.SKILL_AREA, 1.0, java.util.Set.of(Tags.AREA))));
+    }
+
     private void timeFreeze(final Player player) {
         final long now = now();
         // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（時間凍結 10 公尺；這次之前 10 格）
-        for (final LivingEntity enemy : effects.enemiesNear(player, player.getLocation(), tw.exilecore.core.Units.metres(10))) {
+        for (final LivingEntity enemy : effects.enemiesNear(player, player.getLocation(), tw.exilecore.core.Units.metres(10) * areaScale(player))) { // 2026-10-31：吃範圍效果
             final ArrayDeque<Long> times = frozenAt.computeIfAbsent(enemy.getUniqueId(), id -> new ArrayDeque<>());
             while (!times.isEmpty() && now - times.peekFirst() > 600) {
                 times.pollFirst();
@@ -697,7 +707,7 @@ final class AscGranted implements Listener {
             }
             if (owner != null) {
                 final Player source = owner;
-                final double radius = boilRadius(boil);
+                final double radius = boilRadius(boil) * areaScale(source); // 2026-10-31：吃範圍效果
                 final List<LivingEntity> victims = effects.enemiesNear(source, dead.getLocation(), radius);
                 tw.exilecore.skill.Fx.disk(dead.getWorld(), Particle.DUST, dead.getLocation().add(0, 1, 0), 30, radius, 0.5, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(0x8a0303), 1.4f));
                 final double perSecond = maxLife * 0.02 * Math.min(BOIL_MAX, boil);
@@ -1202,7 +1212,7 @@ final class AscGranted implements Listener {
             return;
         }
         // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（蝗蟲群 3 公尺；這次之前 3 格）
-        final List<LivingEntity> near = effects.enemiesNear(player, player.getLocation(), tw.exilecore.core.Units.metres(3));
+        final List<LivingEntity> near = effects.enemiesNear(player, player.getLocation(), tw.exilecore.core.Units.metres(3) * areaScale(player)); // 2026-10-31：吃範圍效果
         player.getWorld().spawnParticle(Particle.ASH, player.getLocation().add(0, 1, 0), 30, 1.5, 0.8, 1.5, 0);
         if (near.isEmpty()) {
             return;

@@ -1241,7 +1241,11 @@ public final class OriginalSkills implements Listener {
 
     /** 鐵蒺炸開（0.8 格）然後消失；2026-10-27 照 PoE2 Rearm：x% 機率過 1 秒在原地重新布置。 */
     private void caltropBlast(final Player player, final State s, final Caltrop caltrop) {
-        blast(player, caltrop.at(), CALTROP_BLAST + 0.3, caltrop.profile());
+        // 2026-10-31：鐵蒺炸開的範圍吃範圍效果（觸發的距離不變）；這次之前固定
+        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+        final double area = sheet == null ? 1.0 : Math.sqrt(Math.max(0.05, caltrop.profile().effective(sheet)
+                .apply(tw.exilecore.stats.StatKeys.SKILL_AREA, 1.0, caltrop.profile().tags())));
+        blast(player, caltrop.at(), CALTROP_BLAST * area + 0.3, caltrop.profile());
         Fx.spawn(caltrop.at().getWorld(), Particle.CRIT, caltrop.at().clone().add(0, 0.3, 0), 8, 0.3, 0.2, 0.3, 0.1);
         removeDisplay(caltrop.display());
         if (caltrop.rearm() > 0 && plugin.random().nextDouble() * 100 < caltrop.rearm() && s.caltrops.size() < caltropMax(player)) {

@@ -41,6 +41,8 @@ import java.util.UUID;
  *       只標實心的整塊地板（半磚、樓梯、水不標，那裡還是只有粒子）。</li>
  * </ul>
  * 顏色照招式的傷害類型：物理紅、火焰橘、冰冷淡藍、閃電黃、混沌紫；快落下時換成亮紅；安全的地方綠色。
+ * 2026-10-31 照站長：範圍一律畫紅色（玩家的地面效果是淡色虛線，紅色只留給要躲的）；傷害類型改成範圍中間一個小字
+ * （火、冰、雷、混，物理不寫）；快落下時泛白；安全的地方照舊綠色。
  */
 final class DangerZones {
 
@@ -107,6 +109,8 @@ final class DangerZones {
         /** 平面標示：外框那一片、慢慢填滿那一片（沒人套資源包時是 null）。 */
         ItemDisplay outline;
         ItemDisplay fill;
+        /** 2026-10-31：傷害類型的小字（範圍中間；物理、安全區、沒有的是 null）。 */
+        org.bukkit.entity.TextDisplay hint;
         /** 看到平面標示的人。 */
         final Set<UUID> markViewers = new HashSet<>();
         /** 平面離地多高（疊在一起的標示錯開一點點，不會互相閃爍）。 */
@@ -147,6 +151,22 @@ final class DangerZones {
 
     /** 快落下時閃的顏色。 */
     static final Material FLASH = Material.REDSTONE_BLOCK;
+
+    /** 2026-10-31：畫出來的顏色——傷害類型的顏色一律換成紅色（快落下、安全區照舊）。 */
+    static Material shown(final Material color) {
+        return color == FLASH || color == SAFE ? color : Material.RED_CONCRETE;
+    }
+
+    /** 2026-10-31：傷害類型的小字（MiniMessage）；物理、安全區、快落下的回傳 null。 */
+    static String hintText(final Material color) {
+        return switch (color) {
+            case ORANGE_CONCRETE -> "<#FF9A3C><bold>火";
+            case LIGHT_BLUE_CONCRETE -> "<#8FE3FF><bold>冰";
+            case YELLOW_CONCRETE -> "<#FFE14D><bold>雷";
+            case PURPLE_CONCRETE -> "<#C88CFF><bold>混";
+            default -> null;
+        };
+    }
     /** 安全的地方（全場大招的安全區、擴散環的缺口）：綠色。 */
     static final Material SAFE = Material.LIME_CONCRETE;
 
@@ -157,7 +177,7 @@ final class DangerZones {
             case LIGHT_BLUE_CONCRETE -> 0x5FD3FF;
             case YELLOW_CONCRETE -> 0xFFE14D;
             case PURPLE_CONCRETE -> 0xB45CFF;
-            case REDSTONE_BLOCK -> 0xFF1F1F;
+            case REDSTONE_BLOCK -> 0xFFD6D6; // 2026-10-31：快落下時泛白（這次之前亮紅 0xFF1F1F，範圍全紅之後看不出差別）
             case LIME_CONCRETE -> 0x4DFF6A;
             default -> 0xFF4A3A;
         };
@@ -287,7 +307,8 @@ final class DangerZones {
      * 標出一塊範圍。同一個 id 已經標著（光束轉動、跟著目標走）：地板方塊只送變了的格子（離開的換回真的方塊、新進的換顏色），
      * 平面標示轉過去、移過去；以前是整塊收掉再整塊重送，客戶端每次都要重畫一大片地板。
      */
-    void show(final String id, final Location center, final Shape shape, final Material color) {
+    void show(final String id, final Location center, final Shape shape, final Material element) {
+        final Material color = shown(element); // 2026-10-31：一律紅色（傷害類型改成中間的小字）
         final Zone old = zones.get(id);
         if (old != null && old.world.equals(center.getWorld())) {
             move(id, old, center, shape, color);
@@ -297,6 +318,32 @@ final class DangerZones {
         final Zone zone = new Zone(center.getWorld(), shape, center.clone(), color, 0.02 + (serial++ % 5) * 0.004);
         zones.put(id, zone);
         send(zone);
+        final String hint = hintText(element);
+        if (hint != null) {
+            zone.hint = spawnHint(zone, hint);
+        }
+    }
+
+    /** 2026-10-31：範圍中間的傷害類型小字（一直面向玩家、貼近地面）。 */
+    private org.bukkit.entity.TextDisplay spawnHint(final Zone zone, final String text) {
+        return zone.world.spawn(hintAt(zone), org.bukkit.entity.TextDisplay.class, entity -> {
+            entity.setPersistent(false);
+            entity.addScoreboardTag(TAG);
+            entity.text(plugin.text().parse(text));
+            entity.setBillboard(Display.Billboard.CENTER);
+            entity.setBackgroundColor(Color.fromARGB(0, 0, 0, 0));
+            entity.setShadowed(true);
+            entity.setSeeThrough(false);
+            entity.setBrightness(new Display.Brightness(15, 15));
+            entity.setViewRange(0.8f);
+            entity.setTeleportDuration(MOVE_STEP);
+            entity.setTransformation(new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(1.6f, 1.6f, 1.6f), new Quaternionf()));
+        });
+    }
+
+    private static Location hintAt(final Zone zone) {
+        final Location ground = anchor(zone, 0);
+        return new Location(zone.world, zone.center.getX(), ground.getY() + 0.35, zone.center.getZ());
     }
 
     private static BlockPosition position(final Block block) {
@@ -353,6 +400,10 @@ final class DangerZones {
         // 平面標示：接著用同一片，轉到新的方向、移到新的位置（客戶端補成連續的）
         zone.outline = old.outline;
         zone.fill = old.fill;
+        zone.hint = old.hint;
+        if (zone.hint != null && zone.hint.isValid()) {
+            zone.hint.teleport(hintAt(zone)); // 2026-10-31：小字跟著範圍走
+        }
         zone.markViewers.addAll(old.markViewers);
         zone.progress = old.progress;
         zone.progressTick = old.progressTick;
@@ -667,6 +718,10 @@ final class DangerZones {
         zone.outline = null;
         zone.fill = null;
         zone.markViewers.clear();
+        if (zone.hint != null && zone.hint.isValid()) {
+            zone.hint.remove(); // 2026-10-31
+        }
+        zone.hint = null;
     }
 
     /** 全部收掉（模組停用、Boss 消失）。 */

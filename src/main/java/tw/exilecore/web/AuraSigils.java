@@ -43,6 +43,8 @@ final class AuraSigils {
         final java.util.List<String> names = new java.util.ArrayList<>();
         names.add("aura_sigil");
         names.add("ring_thin");
+        names.add(GROUND_AREA); // 2026-10-31：玩家的地面效果
+        names.add(GROUND_OUTLINE); // 2026-10-31：別人看的玩家地面效果
         for (final String rune : RUNES) {
             names.add("rune_" + rune);
         }
@@ -53,7 +55,70 @@ final class AuraSigils {
         if (name.equals("ring_thin")) {
             return thinRing();
         }
+        if (name.equals(GROUND_AREA)) {
+            return groundArea();
+        }
+        if (name.equals(GROUND_OUTLINE)) {
+            return groundOutline();
+        }
         return name.equals("aura_sigil") ? sigil() : rune(name.substring("rune_".length()));
+    }
+
+    /** 2026-10-31：別人的玩家地面效果——只有虛線外框（比自己的淡）。 */
+    public static final String GROUND_OUTLINE = "ground_outline";
+
+    static BufferedImage groundOutline() {
+        final int n = 256;
+        final BufferedImage image = new BufferedImage(n, n, BufferedImage.TYPE_INT_ARGB);
+        final double c = n / 2.0;
+        final double r = c - 3;
+        final Graphics2D g = smooth(image);
+        g.setPaint(white(150));
+        g.setStroke(new BasicStroke(4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10f,
+                new float[] {(float) (Math.PI * 2 * r / 24 * 0.5), (float) (Math.PI * 2 * r / 24 * 0.5)}, 0f));
+        g.draw(new Ellipse2D.Double(c - r, c - r, r * 2, r * 2));
+        g.dispose();
+        return image;
+    }
+
+    /** 2026-10-31：玩家的地面效果（燃燒地面、毒霧、火油、冰緩地面…）的圖名。 */
+    public static final String GROUND_AREA = "ground_area";
+
+    /**
+     * 2026-10-31 照站長：玩家的地面效果——很淡的底（中間幾乎透明、往外慢慢變濃）＋虛線外框＋內側一圈淡淡的點，
+     * 著色後是那個技能的顏色。跟 Boss 招式的警示圈（整片均勻的底＋實線外框、紅色）刻意畫得不一樣：
+     * 看到實線的紅圈＝要躲，虛線的彩色圈＝自己人的地面。
+     */
+    static BufferedImage groundArea() {
+        final int n = 256;
+        final BufferedImage image = new BufferedImage(n, n, BufferedImage.TYPE_INT_ARGB);
+        final double c = n / 2.0;
+        final double r = c - 3;
+        for (int y = 0; y < n; y++) {
+            for (int x = 0; x < n; x++) {
+                final double d = Math.hypot(x + 0.5 - c, y + 0.5 - c) / r;
+                if (d >= 0.97) {
+                    continue;
+                }
+                final int alpha = (int) Math.round(10 + 45 * d * d * d); // 中間 10、邊上 55（警示圈是整片 72）
+                image.setRGB(x, y, alpha << 24 | 0xFFFFFF);
+            }
+        }
+        final Graphics2D g = smooth(image);
+        // 外框：24 段虛線（警示圈是實線）
+        g.setPaint(white(235));
+        g.setStroke(new BasicStroke(5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10f,
+                new float[] {(float) (Math.PI * 2 * r / 24 * 0.6), (float) (Math.PI * 2 * r / 24 * 0.4)}, 0f));
+        g.draw(new Ellipse2D.Double(c - r, c - r, r * 2, r * 2));
+        // 內側一圈小點
+        g.setPaint(white(120));
+        final double dots = r * 0.82;
+        for (int i = 0; i < 36; i++) {
+            final double angle = Math.PI * 2 * (i + 0.5) / 36;
+            g.fill(new Ellipse2D.Double(c + Math.cos(angle) * dots - 1.8, c + Math.sin(angle) * dots - 1.8, 3.6, 3.6));
+        }
+        g.dispose();
+        return image;
     }
 
     /** 常駐地面圈（裂隙、祭壇、怪物光環、焚燒範圍）用的細圈：256 像素、線寬 3 像素，圈再大也只是一條細線。 */

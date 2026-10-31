@@ -187,7 +187,8 @@ public final class MonsterListener implements Listener {
         }
         final Location location = entity.getLocation();
         List<Player> sharers = credit.sharers(entity, killer);
-        if (sharers.isEmpty() && plugin.maps() != null && plugin.maps().riftMonster(entity)) {
+        // 2026-10-31 照站長：地圖裡的怪也一樣（沒有任何傷害紀錄、也沒有最後一擊的人時）；這次之前只有裂隙的怪
+        if (sharers.isEmpty() && plugin.maps() != null && (plugin.maps().riftMonster(entity) || plugin.maps().instanceOf(entity) != null)) {
             // 2026-10-30 照站長：裂隙、深淵裂縫的怪沒人有份（被持續傷害、召喚物打死，或打的人走遠了）時，交給 40 格內最近的玩家，
             //   照一般的撿取直接收進包包；這次之前掉在地上誰都能撿（看起來像噴出來）
             Player nearest = null;

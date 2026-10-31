@@ -39,11 +39,30 @@ public final class DamageLedger {
 
     /** 記一筆：monster 被 player 打掉 amount 生命。 */
     public void record(final UUID monster, final UUID player, final double amount) {
-        if (monster == null || player == null || !(amount > 0) || Double.isInfinite(amount)) {
+        if (monster == null || player == null) {
+            return;
+        }
+        touched.put(monster, player);
+        if (!(amount > 0) || Double.isInfinite(amount)) {
             return;
         }
         damage.computeIfAbsent(monster, key -> new LinkedHashMap<>()).merge(player, amount, Double::sum);
         firstHit.computeIfAbsent(monster, key -> new HashMap<>()).putIfAbsent(player, clock.getAsLong());
+    }
+
+    /** 2026-10-31：每隻怪物最後一個碰到牠的玩家（技能、召喚物、持續傷害打中就算，就算沒扣到血）。 */
+    private final Map<UUID, UUID> touched = new HashMap<>();
+
+    /** 記一下：player 的東西打中了 monster（不論有沒有扣血）。 */
+    public void touch(final UUID monster, final UUID player) {
+        if (monster != null && player != null) {
+            touched.put(monster, player);
+        }
+    }
+
+    /** 最後一個碰到這隻怪物的玩家（沒有回傳 null）。 */
+    public UUID lastTouched(final UUID monster) {
+        return touched.get(monster);
     }
 
     /** 這隻怪物受到的玩家傷害（玩家 → 傷害；沒有回傳空的）。 */
@@ -54,6 +73,7 @@ public final class DamageLedger {
 
     public void forget(final UUID monster) {
         damage.remove(monster);
+        touched.remove(monster);
         firstHit.remove(monster);
     }
 
@@ -64,6 +84,7 @@ public final class DamageLedger {
 
     public void clear() {
         damage.clear();
+        touched.clear();
         firstHit.clear();
     }
 

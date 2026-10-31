@@ -304,7 +304,7 @@ public final class SpearMechanics implements Listener {
                 at.getWorld().spawnParticle(Particle.FLAME, at.clone().add(unit.clone().multiply(d)).add(0, 0.3, 0), 2, 0.1, 0.1, 0.1, 0.02);
                 at.getWorld().spawnParticle(Particle.FLAME, at.clone().add(side.clone().multiply(d)).add(0, 0.3, 0), 2, 0.1, 0.1, 0.1, 0.02);
             }
-            at.getWorld().spawnParticle(Particle.EXPLOSION, at.clone().add(0, 0.5, 0), 1);
+            Fx.spawn(at.getWorld(), Particle.EXPLOSION, at.clone().add(0, 0.5, 0), 1); // 2026-10-31：走 Fx（貼地的爆炸）
         });
         at.getWorld().playSound(at, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.8f, 1.1f);
         // 燃燒地面：點燃視同受到這次爆炸的火焰傷害（平均、減免前）

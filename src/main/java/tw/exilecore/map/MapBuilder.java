@@ -41,6 +41,35 @@ public final class MapBuilder {
     static final int BROWN_MUSHROOM_BLOCK = Palette.id("brown_mushroom_block");
     static final int RED_MUSHROOM_BLOCK = Palette.id("red_mushroom_block");
     static final int WARPED_WART = Palette.id("warped_wart_block");
+    // 2026-10-31 新主題：叢林、冰晶窟、熔獄、珊瑚沉城、櫻落谷、回聲古城
+    static final int JUNGLE_LOG = Palette.id("jungle_log[axis=y]");
+    static final int JUNGLE_LEAVES = Palette.id("jungle_leaves[persistent=true]");
+    static final int MOSSY_COBBLE = Palette.id("mossy_cobblestone");
+    static final int MOSSY_STONE_BRICKS = Palette.id("mossy_stone_bricks");
+    static final int ICE = Palette.id("ice");
+    static final int SMOOTH_QUARTZ = Palette.id("smooth_quartz");
+    static final int POLISHED_DIORITE = Palette.id("polished_diorite");
+    static final int NETHERRACK = Palette.id("netherrack");
+    static final int CRIMSON_NYLIUM = Palette.id("crimson_nylium");
+    static final int SOUL_SOIL = Palette.id("soul_soil");
+    static final int NETHER_BRICKS = Palette.id("nether_bricks");
+    static final int RED_NETHER_BRICKS = Palette.id("red_nether_bricks");
+    static final int CHISELED_NETHER_BRICKS = Palette.id("chiseled_nether_bricks");
+    static final int NETHER_WART_BLOCK = Palette.id("nether_wart_block");
+    static final int CRIMSON_STEM = Palette.id("crimson_stem[axis=y]");
+    static final int CRIMSON_ROOTS = Palette.id("crimson_roots");
+    static final int PRISMARINE = Palette.id("prismarine");
+    static final int CYAN_TERRACOTTA = Palette.id("cyan_terracotta");
+    static final int SEA_PICKLE = Palette.id("sea_pickle[pickles=3,waterlogged=false]");
+    static final int CHERRY_LOG = Palette.id("cherry_log[axis=y]");
+    static final int STRIPPED_CHERRY_LOG = Palette.id("stripped_cherry_log[axis=y]");
+    static final int CHERRY_LEAVES = Palette.id("cherry_leaves[persistent=true]");
+    static final int PINK_PETALS = Palette.id("pink_petals[flower_amount=4,facing=north]");
+    static final int PINK_TERRACOTTA = Palette.id("pink_terracotta");
+    static final int SCULK = Palette.id("sculk");
+    static final int SCULK_VEIN = Palette.id("sculk_vein[down=true,east=false,north=false,south=false,up=false,waterlogged=false,west=false]");
+    static final int REINFORCED_DEEPSLATE = Palette.id("reinforced_deepslate");
+    static final int CRACKED_DEEPSLATE_TILES = Palette.id("cracked_deepslate_tiles");
 
     /** 屏障天花板在地板上方幾格（最高的牆、樹葉、柱子頂到地板上 10 格；清理範圍到地板上 18 格）。 */
     public static final int CEILING = 12;
@@ -87,6 +116,25 @@ public final class MapBuilder {
             case "void" -> new Theme(new int[] {B.DEEPSLATE_TILES, B.POLISHED_DEEPSLATE, B.DEEPSLATE_TILES, B.PURPUR, B.POLISHED_BLACKSTONE},
                     new int[] {B.OBSIDIAN, B.DEEPSLATE_BRICKS, B.CRYING_OBSIDIAN, B.POLISHED_BLACKSTONE, B.OBSIDIAN},
                     B.CHISELED_DEEPSLATE, B.PURPUR_PILLAR, B.END_ROD, B.AMETHYST, B.SOUL_LANTERN, B.AMETHYST_CLUSTER, B.DEEPSLATE, 6, 9);
+            // 2026-10-31 照站長：新的場景風格
+            // 叢林：草、灰化土、苔蘚的地，叢林原木的牆、上面一層叢林樹葉，長滿青苔的石磚
+            case "jungle" -> new Theme(new int[] {B.GRASS, B.PODZOL, B.MOSS, B.GRASS, B.ROOTED_DIRT}, new int[] {JUNGLE_LOG, MOSSY_COBBLE, JUNGLE_LOG, MOSSY_STONE_BRICKS},
+                    JUNGLE_LEAVES, JUNGLE_LOG, B.SHROOMLIGHT, MOSSY_STONE_BRICKS, B.LANTERN, B.FERN, B.DIRT, 5, 8);
+            // 冰晶窟：方解石、雪、拋光閃長岩的地（不放冰：會滑），浮冰、藍冰、冰的牆，海燈
+            case "glacier" -> new Theme(new int[] {B.CALCITE, B.SNOW_BLOCK, POLISHED_DIORITE, SMOOTH_QUARTZ, B.CALCITE}, new int[] {B.PACKED_ICE, B.BLUE_ICE, ICE, B.PACKED_ICE},
+                    B.BLUE_ICE, B.PACKED_ICE, B.SEA_LANTERN, B.BLUE_ICE, B.SEA_LANTERN, B.SNOW_LAYER, B.CALCITE, 6, 9);
+            // 熔獄：地獄岩、緋紅菌絲、靈魂土的地，地獄磚的牆，水池是岩漿
+            case "inferno" -> new Theme(new int[] {NETHERRACK, CRIMSON_NYLIUM, NETHERRACK, SOUL_SOIL, NETHER_BRICKS}, new int[] {NETHER_BRICKS, RED_NETHER_BRICKS, NETHERRACK, NETHER_WART_BLOCK},
+                    NETHER_WART_BLOCK, CRIMSON_STEM, B.SHROOMLIGHT, CHISELED_NETHER_BRICKS, B.GLOWSTONE, CRIMSON_ROOTS, NETHERRACK, 5, 8, LAVA);
+            // 珊瑚沉城：沙與海磷石的地，海磷石磚、暗海磷石的牆，海燈，青色陶土的紋路
+            case "coral" -> new Theme(new int[] {B.SAND, PRISMARINE, B.SAND, PRISMARINE_BRICKS, B.GRAVEL}, new int[] {PRISMARINE_BRICKS, B.DARK_PRISMARINE, PRISMARINE, PRISMARINE_BRICKS},
+                    B.DARK_PRISMARINE, B.DARK_PRISMARINE, B.SEA_LANTERN, CYAN_TERRACOTTA, B.SEA_LANTERN, SEA_PICKLE, B.SAND, 4, 7);
+            // 櫻落谷：草地上滿地的花瓣，櫻花原木的牆、上面一層櫻花樹葉
+            case "cherry" -> new Theme(new int[] {B.GRASS, B.GRASS, B.MOSS, B.GRASS, B.COARSE_DIRT}, new int[] {CHERRY_LOG, STRIPPED_CHERRY_LOG, CHERRY_LOG},
+                    CHERRY_LEAVES, CHERRY_LOG, B.LANTERN, PINK_TERRACOTTA, B.LANTERN, PINK_PETALS, B.DIRT, 5, 8);
+            // 回聲古城：幽匿與深板岩磚的地，深板岩磚、強化深板岩的牆，靈魂燈（不放幽匿感測器、尖嘯體：不會叫出伏守者）
+            case "sculk" -> new Theme(new int[] {SCULK, B.DEEPSLATE_TILES, SCULK, CRACKED_DEEPSLATE_TILES, B.POLISHED_DEEPSLATE}, new int[] {B.DEEPSLATE_BRICKS, REINFORCED_DEEPSLATE, B.DEEPSLATE_TILES, B.DEEPSLATE_BRICKS},
+                    B.CHISELED_DEEPSLATE, REINFORCED_DEEPSLATE, B.SOUL_LANTERN, SCULK, B.SOUL_LANTERN, SCULK_VEIN, B.DEEPSLATE, 6, 9);
             default -> new Theme(new int[] {B.STONE_BRICKS, B.CRACKED_BRICKS, B.ANDESITE, B.GRAVEL, B.MOSSY_BRICKS}, new int[] {B.STONE_BRICKS, B.CRACKED_BRICKS, B.MOSSY_BRICKS},
                     B.STONE_BRICK_SLAB, B.STONE_BRICKS, B.SOUL_LANTERN, B.CHISELED_BRICKS, B.SOUL_LANTERN, B.SKULL, B.STONE, 4, 7);
         };
@@ -134,7 +182,7 @@ public final class MapBuilder {
                     }
                     int top = y + height + 1;
                     sink.set(wx, top, wz, theme.wallTop());
-                    if ("forest".equals(themeId) || "swamp".equals(themeId)) {
+                    if ("forest".equals(themeId) || "swamp".equals(themeId) || "jungle".equals(themeId) || "cherry".equals(themeId)) {
                         // 樹牆：上面再疊一層樹葉
                         top++;
                         sink.set(wx, top, wz, theme.wallTop());
@@ -195,6 +243,12 @@ public final class MapBuilder {
                     case "cave" -> B.GLOW_LICHEN;
                     case "star", "void" -> B.AMETHYST_CLUSTER;
                     case "volcano" -> r < 0.02 ? B.DEAD_BUSH : Palette.AIR;
+                    case "jungle" -> r < 0.03 ? B.FERN : B.MOSS_CARPET;
+                    case "glacier" -> B.SNOW_LAYER;
+                    case "inferno" -> r < 0.03 ? CRIMSON_ROOTS : Palette.AIR;
+                    case "coral" -> r < 0.02 ? SEA_PICKLE : Palette.AIR;
+                    case "cherry" -> PINK_PETALS;
+                    case "sculk" -> SCULK_VEIN;
                     // 廢墟、墓穴：一點灰燼（以前是蜘蛛網：踩進去速度剩四分之一，跑起來像被拉住）
                     default -> r < 0.02 ? B.GRAY_CARPET : Palette.AIR;
                 };
@@ -334,6 +388,12 @@ public final class MapBuilder {
                 case "desert" -> sink.set(wx, y + 1, wz, random.nextDouble() < 0.5 ? B.DEAD_BUSH : random.nextDouble() < 0.5 ? B.DECORATED_POT : B.SHORT_DRY_GRASS);
                 case "volcano" -> sink.set(wx, y + 1, wz, random.nextDouble() < 0.5 ? B.BASALT : B.GILDED_BLACKSTONE);
                 case "fungal" -> sink.set(wx, y + 1, wz, random.nextDouble() < 0.5 ? B.BROWN_MUSHROOM : B.RED_MUSHROOM);
+                case "jungle" -> sink.set(wx, y + 1, wz, random.nextDouble() < 0.5 ? B.FERN : B.MOSS_CARPET);
+                case "glacier" -> sink.set(wx, y + 1, wz, random.nextDouble() < 0.5 ? B.SNOW_LAYER : B.BLUE_ICE);
+                case "inferno" -> sink.set(wx, y + 1, wz, random.nextDouble() < 0.5 ? CRIMSON_ROOTS : B.SKULL);
+                case "coral" -> sink.set(wx, y + 1, wz, random.nextDouble() < 0.5 ? SEA_PICKLE : B.BARREL);
+                case "cherry" -> sink.set(wx, y + 1, wz, PINK_PETALS);
+                case "sculk" -> sink.set(wx, y + 1, wz, random.nextDouble() < 0.6 ? SCULK_VEIN : B.CANDLE);
                 default -> {
                     // 廢墟：骨頭、灰燼、碎石（以前六成是蜘蛛網：踩進去速度剩四分之一，跑起來像被拉住）
                     final double roll = random.nextDouble();

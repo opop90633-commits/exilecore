@@ -196,6 +196,8 @@
   .calcrow input[type=number] { width: 64px; }
   .calcstatus { font-size: 12px; color: var(--quiet); margin-top: 6px; min-height: 1.4em; }
   .calcstatus.err { color: var(--red); }
+  .calcstatus.stale { color: var(--gold, #f5c542); }
+  #calcApply.stale { border-color: var(--gold, #f5c542); color: var(--gold, #f5c542); box-shadow: 0 0 0 1px var(--gold, #f5c542) inset; }
   .dps { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
   .dps th { text-align: left; font-weight: 600; color: var(--quiet); font-size: 11px; padding: 2px 4px; border-bottom: 1px solid var(--line); }
   .dps td { padding: 4px; border-bottom: 1px dashed #1f2440; vertical-align: top; }
@@ -290,6 +292,7 @@
         <select id="calcAsc" aria-label="昇華職業"></select>
         <button type="button" id="calcAscNodes">昇華天賦</button>
         <button type="button" id="calcBaseline" title="記下現在的數字，之後的改動都跟它比">設為比較基準</button>
+        <button type="button" id="calcApply" title="照現在的天賦、裝備、技能重新算一次">套用數值</button>
       </div>
       <div class="calcstatus" id="calcStatus">配天賦、裝備、技能，右邊會算出每秒傷害與防禦</div>
       <table class="dps" id="calcDps"></table>
@@ -2484,18 +2487,30 @@
         return r.json();
       });
   }
+  // 2026-10-31 照站長：改成按「套用數值」才重新算（這次之前每改一下 0.35 秒後自動算）；還沒有任何結果時（剛打開、剛載入角色）照舊自動算一次
+  const calcApply = document.getElementById("calcApply");
+  let calcStale = false;
+  function markStale(stale) {
+    calcStale = stale;
+    calcApply.classList.toggle("stale", stale);
+    if (stale) { calcStatus.textContent = "有改動：按「套用數值」重新計算"; calcStatus.classList.remove("err"); calcStatus.classList.add("stale"); }
+    else calcStatus.classList.remove("stale");
+  }
   function scheduleCalc(now) {
     if (!data) return;
     renderAscControls();
     clearTimeout(calcTimer);
-    calcTimer = setTimeout(runCalc, now ? 0 : 350);
+    if (!calc.last) { calcTimer = setTimeout(runCalc, now ? 0 : 350); return; }
+    markStale(true);
   }
+  calcApply.addEventListener("click", () => { clearTimeout(calcTimer); markStale(false); runCalc(); });
   function runCalc() {
     if (!data) return;
     if (calcAbort) calcAbort.abort();
     const ctl = new AbortController();
     calcAbort = ctl;
     const body = calcBody(null);
+    markStale(false);
     setStatus("計算中…");
     postCalc(body.json, ctl.signal).then(res => {
       if (ctl !== calcAbort) return;
@@ -2662,7 +2677,9 @@
           centerOn(start, view.scale);
           flash("已載入「" + calc.loaded.name + "」：改天賦、裝備、輔助，綠／紅數字是跟原本比");
         }
-        scheduleCalc(true);
+        renderAscControls();
+        clearTimeout(calcTimer);
+        runCalc(); // 2026-10-31：載入角色時直接算一次（當作比較基準），之後的改動才要按「套用數值」
       }).catch(err => {
         setStatus(err.message || String(err), true);
         if (!full) { calc.loaded = null; scheduleCalc(); }

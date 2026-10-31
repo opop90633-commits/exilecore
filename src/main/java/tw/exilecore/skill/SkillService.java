@@ -64,6 +64,12 @@ public final class SkillService {
     private final AuraService auras;
     /** 常駐的地面圈（套了資源包的人看平面圈，取代一直畫的粒子）。 */
     private final GroundDecals decals;
+    /** 2026-10-31：德魯伊變身的外觀（原版生物重現）。 */
+    private final ShapeshiftCostumes costumes;
+
+    public ShapeshiftCostumes costumes() {
+        return costumes;
+    }
 
     public GroundDecals decals() {
         return decals;
@@ -113,7 +119,10 @@ public final class SkillService {
         this.buffs = new SkillBuffs(plugin);
         this.auras = new AuraService(plugin, config, this, targets, visuals, executor); // 2026-10-26：焚心業火拿掉，不用再傳 damage
         this.decals = new GroundDecals(plugin);
+        this.costumes = new ShapeshiftCostumes(plugin);
         this.auras.decals(decals);
+        this.zones.decals(decals); // 2026-10-31：玩家的地面效果畫成平面圖
+        Fx.hasPack(decals::marked); // 2026-10-31：地面效果的粒子只送給沒套資源包的人
         this.warcries = new Warcries(plugin, targets, visuals, buffs);
         this.resources = new SkillResources(plugin, config);
         this.bossSkills = new BossSkills(plugin, config, visuals, damage, plugin.random());
@@ -613,10 +622,10 @@ public final class SkillService {
             return;
         }
         final PlayerState state = plugin.players().get(player);
-        SkillBuild build = SkillBuild.of(config, definition, level, state.level(), false, List.of(), state.weaponTags(), plugin.players().sheet(player));
-        if (!extra.isEmpty()) {
-            build = build.withProfile(build.profile().withLocal(extra));
-        }
+        // 2026-10-31 修正：extra 先疊進屬性表再算（範圍效果在這裡才算得到——靈影奔騰品質的震波半徑；這次之前算完才加，範圍不變）
+        final StatSheet sheet = plugin.players().sheet(player);
+        final SkillBuild build = SkillBuild.of(config, definition, level, state.level(), false, List.of(), state.weaponTags(),
+                extra.isEmpty() || sheet == null ? sheet : sheet.overlay(extra));
         procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), build, null);
     }
 
@@ -1376,6 +1385,7 @@ public final class SkillService {
         }
         projectiles.removeAll();
         decals.clear();
+        costumes.clear(); // 2026-10-31
         zones.clear();
         deployables.clear();
         minions.clear();
@@ -1639,6 +1649,7 @@ public final class SkillService {
         }
         if (now % 20 == 0) {
             decals.tick(); // 常駐地面圈：主人不在的收掉、附近新來的人看得到
+            costumes.prune(); // 2026-10-31：下線的人的變身外觀收掉
         }
         final boolean syncHold = now % 10 == 0;
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
@@ -1648,6 +1659,11 @@ public final class SkillService {
                 } catch (final RuntimeException e) {
                     tw.exilecore.core.LogThrottle.error(plugin.getSLF4JLogger(), "按住左鍵設定出錯（" + player.getName() + " 等人）", e); // 2026-10-27：同一個錯一分鐘寫一次
                 }
+            }
+            try {
+                costumes.tick(player, formName(player), now); // 2026-10-31：德魯伊變身的外觀
+            } catch (final RuntimeException e) {
+                tw.exilecore.core.LogThrottle.error(plugin.getSLF4JLogger(), "變身外觀出錯（" + player.getName() + " 等人）", e);
             }
             movePenalty.tick(player, now); // 2026-10-26：放技能的移動懲罰時間到了就拿掉（2026-10-27 不再套用，只清舊的慢速）
             final SkillRuntime runtime = runtimes.get(player.getUniqueId());

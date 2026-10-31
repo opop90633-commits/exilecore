@@ -494,6 +494,9 @@ public final class UiPack {
         pack3d(files); // 2026-10：3D 時裝（web/pack3d.zip，tools/gen_models3d.py 產生）
         currencies(files, currencySkins, cases);
         marks(files);
+        for (final Map.Entry<String, Object> hat : MobHats.files().entrySet()) { // 2026-10-31：地圖怪的頭飾
+            files.put(hat.getKey(), hat.getValue() instanceof BufferedImage image ? png(image) : json((JsonObject) hat.getValue()));
+        }
         HudFont.build(files, HudFont.texts()); // 2026-10：快捷欄兩側的光環、召喚物
         LootHud.build(files); // 2026-10：撿到東西的角落提示（沿用 lootFont 的框與圖示）
         PartyFont.build(files); // 2026-10-18：畫面左邊的隊伍框（文字著色器，pack.mcmeta 的 overlays 分版本）

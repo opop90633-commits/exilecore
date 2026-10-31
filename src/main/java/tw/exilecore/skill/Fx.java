@@ -139,12 +139,36 @@ public final class Fx {
 
     /** 這個玩家看不看得到現在的粒子。 */
     private static boolean sees(final Player viewer) {
+        if (noPackOnly && hasPack.test(viewer)) {
+            return false; // 2026-10-31：套了資源包的人看平面的地面圈
+        }
         return source == null || viewer.getUniqueId().equals(source) || !hidesOthers.test(viewer);
     }
 
-    /** 要不要一個一個送（有人關掉、而且是玩家的技能）。 */
+    /** 要不要一個一個送（有人關掉、而且是玩家的技能；或只送給沒套資源包的人）。 */
     private static boolean filtered() {
-        return source != null;
+        return source != null || noPackOnly;
+    }
+
+    /** 2026-10-31：這個玩家套了介面資源包（看得到平面的地面圈）。 */
+    private static Predicate<Player> hasPack = player -> false;
+    /** 2026-10-31：現在畫的粒子只送給沒套資源包的人（套了的看 {@link GroundDecals} 的平面圖）。 */
+    private static boolean noPackOnly;
+
+    /** 接上「有沒有套資源包」。 */
+    public static void hasPack(final Predicate<Player> test) {
+        hasPack = test == null ? player -> false : test;
+    }
+
+    /** 2026-10-31：裡面畫的粒子只送給沒套資源包的人。 */
+    public static void withoutPack(final Runnable draw) {
+        final boolean previous = noPackOnly;
+        noPackOnly = true;
+        try {
+            draw.run();
+        } finally {
+            noPackOnly = previous;
+        }
     }
 
     private interface Send {
@@ -233,6 +257,39 @@ public final class Fx {
         return STATS.lastSeconds();
     }
 
+    /**
+     * 2026-10-31 照站長（爆炸擋視線）：原版的大爆炸（EXPLOSION、EXPLOSION_EMITTER）、大團煙（LARGE_SMOKE）、閃光（FLASH）
+     * 會整片蓋住畫面——換成貼地往外散的一圈小火花＋一點點煙（範圍看得出來、不擋怪物）。所有走 Fx 的特效都適用。
+     *
+     * @return 換掉了（呼叫的人就不用再送原本的）
+     */
+    static boolean lowProfile(final World world, final Particle particle, final Location at) {
+        if (world == null || at == null) {
+            return false;
+        }
+        if (particle == Particle.FLASH) {
+            return true; // 閃光直接不送
+        }
+        if (particle == Particle.LARGE_SMOKE) {
+            spawn(world, Particle.SMOKE, at, 2, 0.25, 0.05, 0.25, 0.01);
+            return true;
+        }
+        if (particle != Particle.EXPLOSION && particle != Particle.EXPLOSION_EMITTER) {
+            return false;
+        }
+        final boolean big = particle == Particle.EXPLOSION_EMITTER;
+        final double radius = big ? 2.2 : 1.2;
+        final int points = big ? 16 : 10;
+        final Location ground = at.clone().add(0, -Math.min(0.6, Math.max(0, at.getY() - Math.floor(at.getY()))) + 0.15, 0);
+        final double start = java.util.concurrent.ThreadLocalRandom.current().nextDouble() * Math.PI * 2;
+        for (int i = 0; i < points; i++) {
+            final double angle = start + Math.PI * 2 * i / points;
+            spawn(world, Particle.CRIT, ground.clone().add(Math.cos(angle) * radius, 0, Math.sin(angle) * radius), 1, 0, 0.05, 0, 0.05);
+        }
+        spawn(world, Particle.SMOKE, ground, big ? 6 : 3, radius * 0.3, 0.05, radius * 0.3, 0.01);
+        return true;
+    }
+
     /** 2026-10-27 照站長「燃燒地板要畫個外框」：燃燒地面的外圈（橘紅色的點排成一圈，貼地）。 */
     public static final Particle.DustOptions BURNING_EDGE = new Particle.DustOptions(org.bukkit.Color.fromRGB(255, 110, 20), 1.1f);
 
@@ -250,6 +307,9 @@ public final class Fx {
     }
 
     public static void spawn(final World world, final Particle particle, final Location at, final int count) {
+        if (lowProfile(world, particle, at)) {
+            return; // 2026-10-31：擋視線的爆炸換成貼地的
+        }
         if (!filtered()) {
             world.spawnParticle(particle, at, count);
             return;
@@ -258,6 +318,9 @@ public final class Fx {
     }
 
     public static <T> void spawn(final World world, final Particle particle, final Location at, final int count, final T data) {
+        if (lowProfile(world, particle, at)) {
+            return; // 2026-10-31：擋視線的爆炸換成貼地的
+        }
         if (!filtered()) {
             world.spawnParticle(particle, at, count, data);
             return;
@@ -267,6 +330,9 @@ public final class Fx {
 
     public static void spawn(final World world, final Particle particle, final Location at, final int count, final double dx, final double dy,
                              final double dz) {
+        if (lowProfile(world, particle, at)) {
+            return; // 2026-10-31：擋視線的爆炸換成貼地的
+        }
         if (!filtered()) {
             world.spawnParticle(particle, at, count, dx, dy, dz);
             return;
@@ -276,6 +342,9 @@ public final class Fx {
 
     public static void spawn(final World world, final Particle particle, final Location at, final int count, final double dx, final double dy,
                              final double dz, final double extra) {
+        if (lowProfile(world, particle, at)) {
+            return; // 2026-10-31：擋視線的爆炸換成貼地的
+        }
         if (!filtered()) {
             world.spawnParticle(particle, at, count, dx, dy, dz, extra);
             return;
@@ -285,6 +354,9 @@ public final class Fx {
 
     public static <T> void spawn(final World world, final Particle particle, final Location at, final int count, final double dx,
                                  final double dy, final double dz, final double extra, final T data) {
+        if (lowProfile(world, particle, at)) {
+            return; // 2026-10-31：擋視線的爆炸換成貼地的
+        }
         if (!filtered()) {
             world.spawnParticle(particle, at, count, dx, dy, dz, extra, data);
             return;
@@ -294,6 +366,9 @@ public final class Fx {
 
     public static <T> void spawn(final World world, final Particle particle, final Location at, final int count, final double dx,
                                  final double dy, final double dz, final double extra, final T data, final boolean force) {
+        if (lowProfile(world, particle, at)) {
+            return; // 2026-10-31：擋視線的爆炸換成貼地的
+        }
         if (!filtered()) {
             world.spawnParticle(particle, at, count, dx, dy, dz, extra, data, force);
             return;
@@ -303,6 +378,9 @@ public final class Fx {
 
     public static void spawn(final World world, final Particle particle, final double x, final double y, final double z, final int count,
                              final double dx, final double dy, final double dz, final double extra) {
+        if (lowProfile(world, particle, new Location(world, x, y, z))) {
+            return; // 2026-10-31：擋視線的爆炸換成貼地的
+        }
         if (!filtered()) {
             world.spawnParticle(particle, x, y, z, count, dx, dy, dz, extra);
             return;
@@ -312,6 +390,9 @@ public final class Fx {
 
     public static <T> void spawn(final World world, final Particle particle, final double x, final double y, final double z, final int count,
                                  final double dx, final double dy, final double dz, final double extra, final T data) {
+        if (lowProfile(world, particle, new Location(world, x, y, z))) {
+            return; // 2026-10-31：擋視線的爆炸換成貼地的
+        }
         if (!filtered()) {
             world.spawnParticle(particle, x, y, z, count, dx, dy, dz, extra, data);
             return;
@@ -321,6 +402,9 @@ public final class Fx {
 
     public static <T> void spawn(final World world, final Particle particle, final double x, final double y, final double z, final int count,
                                  final double dx, final double dy, final double dz, final double extra, final T data, final boolean force) {
+        if (lowProfile(world, particle, new Location(world, x, y, z))) {
+            return; // 2026-10-31：擋視線的爆炸換成貼地的
+        }
         if (!filtered()) {
             world.spawnParticle(particle, x, y, z, count, dx, dy, dz, extra, data, force);
             return;
@@ -342,20 +426,45 @@ public final class Fx {
         if (count <= 0) {
             return;
         }
+        // 2026-10-31 照站長（簡化）：外框一圈＋裡面稀疏幾顆，總數約原本的一半。外框把範圍的邊畫清楚，比整片撒滿更看得出多大；
+        //   這次之前（同一天稍早）是 count 顆分成幾小團隨機撒在圓內
         final double r = Math.max(0, radius);
-        final int clumps = Math.max(1, Math.min(count, Math.min(10, (int) Math.ceil(r * 2.5))));
-        final int each = Math.max(1, (int) Math.round((double) count / clumps));
-        final double spread = Math.min(0.6, r * 0.15);
+        final int budget = Math.max(MIN_DISK_PARTICLES, (int) Math.round(count * DISK_BUDGET));
+        if (r < 0.6) {
+            spawnOne(world, particle, at, budget, r, dy, extra, data); // 很小的範圍：一團就好
+            return;
+        }
+        // 外框：照周長每 RING_SPACING 格一顆，最多用掉預算的 2/3（至少 8、最多 32 顆）；起點隨機轉，每次不會畫在同一個位置
+        final int ring = Math.max(8, Math.min(32, Math.min((int) Math.ceil(2 * Math.PI * r / RING_SPACING), budget * 2 / 3)));
         final java.util.concurrent.ThreadLocalRandom random = java.util.concurrent.ThreadLocalRandom.current();
-        for (int i = 0; i < clumps; i++) {
+        final double start = random.nextDouble() * Math.PI * 2;
+        for (int i = 0; i < ring; i++) {
+            final double angle = start + Math.PI * 2 * i / ring;
+            spawnOne(world, particle, at.clone().add(Math.cos(angle) * r, 0, Math.sin(angle) * r), 1, 0, Math.min(dy, 0.1), extra * 0.3, data);
+        }
+        // 裡面：剩下的預算一顆一顆平均撒在圓內（不集中在中間）
+        final int fill = Math.max(2, budget - ring);
+        for (int i = 0; i < fill; i++) {
             final double dist = r * Math.sqrt(random.nextDouble());
             final double angle = random.nextDouble() * Math.PI * 2;
-            final Location point = at.clone().add(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
-            if (data == null) {
-                spawn(world, particle, point, each, spread, dy, spread, extra);
-            } else {
-                spawn(world, particle, point, each, spread, dy, spread, extra, data);
-            }
+            spawnOne(world, particle, at.clone().add(Math.cos(angle) * dist, 0, Math.sin(angle) * dist), 1, 0, dy, extra, data);
         }
     }
+
+    /** 範圍特效的粒子數是原本 count 的幾成（2026-10-31 簡化）。 */
+    static final double DISK_BUDGET = 0.5;
+    /** 範圍特效至少幾顆。 */
+    static final int MIN_DISK_PARTICLES = 4;
+    /** 外框每隔幾格一顆。 */
+    static final double RING_SPACING = 0.7;
+
+    private static <T> void spawnOne(final World world, final Particle particle, final Location point, final int count, final double spread,
+                                     final double dy, final double extra, final T data) {
+        if (data == null) {
+            spawn(world, particle, point, count, spread, dy, spread, extra);
+        } else {
+            spawn(world, particle, point, count, spread, dy, spread, extra, data);
+        }
+    }
+
 }

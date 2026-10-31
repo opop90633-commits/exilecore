@@ -33,7 +33,10 @@ public final class AtlasMenu extends Menu {
     public static final Map<String, String> THEME_NAMES = Map.ofEntries(Map.entry("beach", "海岸"), Map.entry("forest", "森林"),
             Map.entry("ruins", "廢墟"), Map.entry("swamp", "沼澤"), Map.entry("snow", "雪原"), Map.entry("cave", "礦洞"),
             Map.entry("crypt", "墓穴"), Map.entry("star", "星殿"), Map.entry("desert", "沙漠"), Map.entry("volcano", "火山"),
-            Map.entry("fungal", "菌窟"), Map.entry("void", "虛空"));
+            Map.entry("fungal", "菌窟"), Map.entry("void", "虛空"),
+            // 2026-10-31：新的場景風格
+            Map.entry("jungle", "叢林"), Map.entry("glacier", "冰晶窟"), Map.entry("inferno", "熔獄"), Map.entry("coral", "珊瑚沉城"),
+            Map.entry("cherry", "櫻落谷"), Map.entry("sculk", "回聲古城"));
     private static final int VIEW_WIDTH = 9;
     private static final int VIEW_HEIGHT = 5;
     private static final int SLOT_DEVICE = 45;

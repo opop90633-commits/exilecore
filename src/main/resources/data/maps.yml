@@ -475,6 +475,104 @@ maps:
 
 # 終局：最外圈兩張都完成後，在地圖裝置用兩片天穹碎片打開。沒有詞綴；開的時候選階級（最高到你完成過的最高階），
 # 怪物等級 = 那一階 + level_bonus（T5 = 68 … T16 = 87），掉的地圖是那一階。
+
+  # ---- 2026-10-31 照站長：新的場景風格（叢林、冰晶窟、熔獄、珊瑚沉城、櫻落谷、回聲古城），一種一張 ----
+  verdant_ruins:
+    base: map_verdant_ruins
+    theme: jungle
+    layout: open
+    atlas: [10, 0]   # 舊版格子星圖的位置（只用來檢查不重複；現在的星圖照 atlas.yml 的六角格抽）
+    lore: "藤蔓比城牆活得久，也記得比較多。"
+    monsters: { SPIDER: 3, CAVE_SPIDER: 2, ZOMBIE: 2, BOGGED: 1 }
+    boss:
+      name: 纏藤巨蛛
+      type: SPIDER
+      life: 2.0
+      damage: 2.2
+      scale: 2.2
+      mods: [swift]
+      intro: "「網早就織好了，就等你走進來。」"
+
+  rime_cavern:
+    base: map_rime_cavern
+    theme: glacier
+    layout: cavern
+    atlas: [10, 2]   # 舊版格子星圖的位置（只用來檢查不重複；現在的星圖照 atlas.yml 的六角格抽）
+    lore: "冰把最後一聲呼救凍在洞壁裡，到現在還聽得見。"
+    monsters: { STRAY: 4, SKELETON: 1, SPIDER: 1 }
+    boss:
+      name: 霜晶守墓人
+      type: STRAY
+      life: 2.0
+      damage: 2.2
+      scale: 1.6
+      mods: [chilling]
+      intro: "「再往裡面走，連影子都會結冰。」"
+
+  cinder_abyss:
+    base: map_cinder_abyss
+    theme: inferno
+    layout: cavern
+    atlas: [10, 4]   # 舊版格子星圖的位置（只用來檢查不重複；現在的星圖照 atlas.yml 的六角格抽）
+    lore: "星骸落下時燒穿了地殼，火到現在還沒熄。"
+    monsters: { BLAZE: 2, MAGMA_CUBE: 2, ZOMBIFIED_PIGLIN: 2, WITHER_SKELETON: 1 }
+    boss:
+      name: 熔獄看守
+      type: WITHER_SKELETON
+      life: 2.4
+      damage: 2.5
+      scale: 1.8
+      mods: [armoured]
+      intro: "「這裡的火，是用來關東西的。」"
+
+  sunken_reef:
+    base: map_sunken_reef
+    theme: coral
+    layout: islands
+    atlas: [12, 0]   # 舊版格子星圖的位置（只用來檢查不重複；現在的星圖照 atlas.yml 的六角格抽）
+    lore: "整座城沉下去的時候，鐘聲響了三天。"
+    monsters: { DROWNED: 4, BOGGED: 1, WITCH: 1 }
+    boss:
+      name: 沉城鐘守
+      type: DROWNED
+      life: 2.4
+      damage: 2.5
+      scale: 1.7
+      mods: [sturdy]
+      intro: "「鐘還在響，城就還沒死。」"
+
+  blossom_vale:
+    base: map_blossom_vale
+    theme: cherry
+    layout: open
+    atlas: [12, 2]   # 舊版格子星圖的位置（只用來檢查不重複；現在的星圖照 atlas.yml 的六角格抽）
+    lore: "花一直開，因為這段記憶停在最好的那一天。"
+    monsters: { VINDICATOR: 2, PILLAGER: 2, ZOMBIE: 1, SKELETON: 1 }
+    boss:
+      name: 落英劍客
+      type: VINDICATOR
+      life: 2.8
+      damage: 2.8
+      scale: 1.5
+      mods: [swift]
+      intro: "「花落完之前，分出勝負。」"
+
+  echo_city:
+    base: map_echo_city
+    theme: sculk
+    layout: halls
+    atlas: [12, 4]   # 舊版格子星圖的位置（只用來檢查不重複；現在的星圖照 atlas.yml 的六角格抽）
+    lore: "古城裡每一個腳步聲，都會被記下來。"
+    monsters: { SKELETON: 2, WITHER_SKELETON: 2, ENDERMAN: 1, SILVERFISH: 1 }
+    boss:
+      name: 回聲典獄長
+      type: WITHER_SKELETON
+      life: 2.8
+      damage: 2.8
+      scale: 1.9
+      mods: [armoured]
+      intro: "「安靜。這裡的規矩只有一條。」"
+
 final:
   id: sky_crucible
   name: 天穹熔爐

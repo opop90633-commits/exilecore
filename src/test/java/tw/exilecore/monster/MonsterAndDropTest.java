@@ -209,9 +209,9 @@ class MonsterAndDropTest {
         final double per = monsters;
         assertEquals(1.5 * 30 / 103, equipment / per, 0.015, "裝備的掉率不變");
         final double currencyBefore = 1.5 * 60 / 103 / 10956;
-        assertEquals(currencyBefore * 1000 * 0.08, zenith / per, 0.004, "至臻石是以前的 0.08 倍（1000 → 80）");
+        assertEquals(currencyBefore * 1000 * 0.08 * 2, zenith / per, 0.004, "至臻石是以前的 0.08 倍（1000 → 80），2026-10-31 再 ×2（至臻石以上 ×2）");
         assertEquals(currencyBefore * 300 * 0.35, bounty / per, 0.004, "豐饒石 570 → 300，2026-10-24 再 ×0.35");
-        assertEquals(currencyBefore * 24 * 0.35, lesserSocket / per, 0.002, "小鑿星石 160 → 24，2026-10-24 再 ×0.35");
+        assertEquals(currencyBefore * 24 * 0.35 * 2, lesserSocket / per, 0.002, "小鑿星石 160 → 24，2026-10-24 再 ×0.35，2026-10-31 再 ×2");
         assertEquals(currencyBefore * 260 * 0.35, spark / per, 0.003, "星火石 2026-10-24 ×0.35");
         // 2026-10 第五次（照市場報告）：未切割技能寶石的分類權重 40 → 20、輔助寶石 30 → 12
         // 2026-10-22 第六次：未切割技能寶石 20 → 12

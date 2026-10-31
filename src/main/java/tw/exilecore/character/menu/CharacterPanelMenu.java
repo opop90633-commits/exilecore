@@ -217,7 +217,7 @@ public final class CharacterPanelMenu extends Menu {
         if (mainBase != null && tw.exilecore.stats.KeystoneKeys.giantWeapon(mainBase.tags())
                 && tw.exilecore.stats.StatKeys.flag(plugin.players().sheet(player), tw.exilecore.stats.KeystoneKeys.FLAG_GIANTS_BLOOD)) {
             return uiIcon(slotShape(ItemSlot.OFF_HAND), emptyIcon(ItemSlot.OFF_HAND), "<gray>副手欄（巨人之血：單手持用）",
-                    "<dark_gray>主手的雙手武器只用一隻手", "<dark_gray>可以放盾、法器，或再一把雙手斧、錘、劍（雙持）",
+                    "<dark_gray>主手的雙手武器只用一隻手", "<dark_gray>可以放盾、法器、權杖，或再一把雙手斧、錘、劍（雙持）",
                     "<dark_gray>點下方自己背包裡的裝備裝上");
         }
         final ItemStack ghost = main.clone();

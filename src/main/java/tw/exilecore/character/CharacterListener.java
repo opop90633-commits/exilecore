@@ -109,6 +109,16 @@ public final class CharacterListener implements Listener {
             characters.save(player);
             return;
         }
+        if (plugin.zones() != null && plugin.zones().inTown(player.getLocation())) {
+            // 2026-10-31 照站長：死在營地不扣經驗（死亡次數照算）
+            final tw.exilecore.character.CharacterRecord character = states.get(player).character();
+            if (character != null) {
+                character.setDeaths(character.deaths() + 1);
+            }
+            player.sendMessage(plugin.text().prefixed("<gray>死在營地：不扣經驗"));
+            characters.save(player);
+            return;
+        }
         final boolean inMap = plugin.maps() != null && plugin.maps().inMap(player);
         final long loss = states.applyDeathPenalty(player, inMap);
         if (loss > 0) {

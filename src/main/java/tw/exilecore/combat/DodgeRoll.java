@@ -67,6 +67,15 @@ public final class DodgeRoll implements Listener {
         return at != null && now() - at < INVULNERABLE_TICKS;
     }
 
+    /** 2026-10-31 照站長：翻滾一開始 0.1 秒完全無敵（法術、範圍、地面的擊中也躲得開；Boss 的全場大招照樣躲不開）。 */
+    public static final long IFRAME_TICKS = 2;
+
+    /** 2026-10-31：翻滾一開始的無敵時間（{@link #IFRAME_TICKS}）。 */
+    public boolean iframe(final Player player) {
+        final Long at = rolledAt.get(player.getUniqueId());
+        return at != null && now() - at < IFRAME_TICKS && invulnerable(player);
+    }
+
     /** 正在翻滾（整個動作時間內）。 */
     public boolean rolling(final Player player) {
         final Long at = rolledAt.get(player.getUniqueId());

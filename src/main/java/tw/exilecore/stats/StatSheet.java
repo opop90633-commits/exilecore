@@ -140,7 +140,7 @@ public final class StatSheet {
         double product = parent == null ? 1 : parent.more(stat, contextTags);
         for (final Modifier modifier : modifiers.getOrDefault(stat, List.of())) {
             if (modifier.type() == ModType.MORE && modifier.appliesTo(contextTags)) {
-                product *= 1 + modifier.value();
+                product *= Math.max(0, 1 + modifier.value()); // 2026-10-31：超過 100% 更少當作 0（這次之前會變成負的倍率）
             }
         }
         return product;

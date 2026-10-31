@@ -926,6 +926,9 @@ public final class StageLeftovers implements Listener {
     // ---------------------------------------------------------------- 熾陽之矛
 
     private static final class Ignited {
+        /** 2026-10-31：地面圖的代號用的流水號。 */
+        private static long nextSerial;
+        final String decal = "ignite:" + (++nextSerial);
         final UUID owner;
         final Location center;
         final double base;
@@ -947,6 +950,8 @@ public final class StageLeftovers implements Listener {
     }
 
     private final List<Ignited> ignited = new ArrayList<>();
+    /** 2026-10-31：燃燒地面的地面圖顏色。 */
+    private static final int IGNITED_RGB = 0xFF8A1E; // 橘色（紅圈留給 Boss 警示）
 
     /** SkillExecutor.pulses（光矛落地後）：留下會擴大的點燃地面。 */
     void solarisGround(final Player owner, final SkillBuild build, final Location at, final int delay) {
@@ -971,18 +976,22 @@ public final class StageLeftovers implements Listener {
             final Player owner = plugin.getServer().getPlayer(ground.owner);
             if (owner == null || now >= ground.end || !owner.getWorld().equals(ground.center.getWorld())) {
                 it.remove();
+                service.decals().remove(ground.decal); // 2026-10-31
                 continue;
             }
             if (now < ground.start || (now - ground.start) % 10 != 0) {
                 continue;
             }
             final double radius = solarisRadius(ground.base, (now - ground.start) / (double) Math.max(1, ground.end - ground.start));
+            // 2026-10-31 照站長：套了資源包的人看平貼在地上的圖（橘紅色）；粒子只送給沒套的人
+            service.decals().area(ground.decal, ground.owner, ground.center, radius, GroundDecals.soft(IGNITED_RGB), ground.end - now <= SkillZones.DECAL_ENDING_TICKS);
             if (plugin.ailments() != null && ground.fire > 0) {
                 for (final LivingEntity target : service.targets().around(ground.center, radius, owner)) {
                     plugin.ailments().groundIgnite(owner, target, ground.fire, ground.effective);
                 }
             }
-            tw.exilecore.skill.Fx.disk(ground.center.getWorld(), Particle.FLAME, ground.center.clone().add(0, 0.1, 0), (int) Math.round(6 * radius), radius, 0.05, 0.01);
+            tw.exilecore.skill.Fx.withoutPack(() -> tw.exilecore.skill.Fx.disk(ground.center.getWorld(), Particle.FLAME,
+                    ground.center.clone().add(0, 0.1, 0), (int) Math.round(6 * radius), radius, 0.05, 0.01));
         }
     }
 
@@ -1071,6 +1080,7 @@ public final class StageLeftovers implements Listener {
         final SkillStages.Stage stage = SkillStages.get(FORGE, "fissure");
         final int count = Math.max(1, stage.count().intAt(build.level()));
         final double width = SkillStages.radius(build, "fissure", 1.0 * build.areaScale());
+        final double length = FISSURE_LENGTH * build.areaScale(); // 2026-10-31：裂隙長度也吃範圍效果（這次之前只有寬度）
         final SkillProfile profile = SkillStages.profile(build, build.profile(), "fissure")
                 .derive(FORGE + ".fissure", Set.of(Tags.AREA), Set.of(Tags.PROJECTILE));
         final Vector facing = SkillTargets.facing(player).setY(0);
@@ -1078,8 +1088,8 @@ public final class StageLeftovers implements Listener {
         final Location origin = mark.at().clone();
         for (final double[] ray : spiral(count, start)) {
             // 螺旋：前半段照一個方向，後半段往旁邊彎
-            final Location mid = origin.clone().add(ray[0] * FISSURE_LENGTH / 2, 0, ray[1] * FISSURE_LENGTH / 2);
-            final Location end = mid.clone().add(ray[2] * FISSURE_LENGTH / 2, 0, ray[3] * FISSURE_LENGTH / 2);
+            final Location mid = origin.clone().add(ray[0] * length / 2, 0, ray[1] * length / 2);
+            final Location end = mid.clone().add(ray[2] * length / 2, 0, ray[3] * length / 2);
             final Set<UUID> hit = new HashSet<>();
             for (final LivingEntity target : service.targets().alongLine(origin, mid, width, player)) {
                 if (hit.add(target.getUniqueId())) {
@@ -1091,9 +1101,9 @@ public final class StageLeftovers implements Listener {
                     service.executor().hitOne(player, profile, target, mid, 0);
                 }
             }
-            for (double d = 0; d <= FISSURE_LENGTH; d += 0.5) {
-                final Location at = d <= FISSURE_LENGTH / 2 ? origin.clone().add(ray[0] * d, 0.1, ray[1] * d)
-                        : mid.clone().add(ray[2] * (d - FISSURE_LENGTH / 2), 0.1, ray[3] * (d - FISSURE_LENGTH / 2));
+            for (double d = 0; d <= length; d += 0.5) {
+                final Location at = d <= length / 2 ? origin.clone().add(ray[0] * d, 0.1, ray[1] * d)
+                        : mid.clone().add(ray[2] * (d - length / 2), 0.1, ray[3] * (d - length / 2));
                 at.getWorld().spawnParticle(Particle.FLAME, at, 2, 0.15, 0.05, 0.15, 0.01);
             }
         }

@@ -599,7 +599,14 @@ public final class WorldEventService {
                 final AttributeInstance max = event.boss.getAttribute(Attribute.MAX_HEALTH);
                 event.bar.progress((float) Math.max(0, Math.min(1, event.boss.getHealth() / Math.max(1, max == null ? 1 : max.getValue()))));
             }
-            event.bar.name(plugin.text().parse("<#ffb347>" + ItemRenderer.escape(config.boss().name()) + " <gray>Lv." + config.boss().level()
+            // 2026-10-31 照站長：出場的無敵時間血條變白、寫「🔒 無敵」與剩幾秒；打得動了換回黃色
+            final boolean locked = event.boss != null && event.boss.isValid() && (event.boss.isInvulnerable()
+                    || event.boss.getTicksLived() < tw.exilecore.map.MapService.OPENING_INVULNERABLE_TICKS);
+            event.bar.color(locked ? BossBar.Color.WHITE : BossBar.Color.YELLOW);
+            final long lockedSeconds = !locked ? 0 : Math.max((event.bossShieldUntil - now + 999) / 1000,
+                    (tw.exilecore.map.MapService.OPENING_INVULNERABLE_TICKS - event.boss.getTicksLived() + 19) / 20);
+            event.bar.name(plugin.text().parse((locked ? "<white>🔒 無敵（" + Math.max(1, lockedSeconds) + " 秒後可以打） <dark_gray>｜ " : "")
+                    + "<#ffb347>" + ItemRenderer.escape(config.boss().name()) + " <gray>Lv." + config.boss().level()
                     + " <dark_gray>｜ <white>" + time
                     + (plugin.ailments() == null || event.boss == null || !event.boss.isValid() ? "" : plugin.ailments().bossBarSuffix(event.boss)))); // 2026-10-28 照站長：Boss 身上的異常
         } else {

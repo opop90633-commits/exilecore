@@ -55,6 +55,13 @@ public final class KillCredit {
         if (ids.isEmpty() && killer != null) {
             ids.add(killer.getUniqueId());
         }
+        if (ids.isEmpty()) {
+            // 2026-10-31 照站長：沒有扣血紀錄也沒有最後一擊時，最後一個用技能、召喚物、持續傷害碰到牠的玩家
+            final UUID touched = monsters.ledger().lastTouched(entity.getUniqueId());
+            if (touched != null) {
+                ids.add(touched);
+            }
+        }
         // 2026-10：小怪要自己打到傷害門檻；Boss（區域、地圖、終局…）同隊在附近的人不用打到傷害也有份
         final PartyService party = plugin.party();
         final boolean boss = monsters.data(entity).map(MonsterData::boss).orElse(false);
@@ -68,8 +75,10 @@ public final class KillCredit {
             final Player player = plugin.getServer().getPlayer(id);
             // Boss：一律看 Boss 旁邊 32 格（地圖裡也是；死掉、觀戰的不算）；
             // 小怪：2026-10-26 起照 nearby_radius（一間 Boss 房，地圖裡也一樣）；這次之前 share_radius 128 格、地圖裡整張地圖都算
+            // 2026-10-31 照站長：小怪是自己打到的人（或最後一擊）：遠程技能、圖騰、召喚物、持續傷害在 40 格外打死的也有份
+            //   （不限距離、不限世界，在線就好；人死了也照給，直接進他的包包）；這次之前要在 40 格內活著，不然整份掉在地上誰都能撿
             final boolean counts = boss ? atBoss(player, entity) && lateEntryOk(entity, player) && near(player, entity)
-                    : near(player, entity);
+                    : reached(player, entity);
             if (counts) {
                 result.add(player);
                 if (result.size() >= config.maxCountedPlayers()) {
@@ -112,13 +121,15 @@ public final class KillCredit {
         for (final UUID id : members) {
             final Player player = plugin.getServer().getPlayer(id);
             // 2026-10-26：不在附近的隊員拿不到（PoE 的做法）；這次之前 64 格、地圖裡整張地圖都算
-            final boolean counts = data.boss() ? atBoss(player, entity) && near(player, entity) : near(player, entity);
+            // 2026-10-31：自己打到這隻小怪的人不限距離也算（遠程技能打死的不會沒經驗）；沒打到的隊友照舊要在附近
+            final boolean counts = data.boss() ? atBoss(player, entity) && near(player, entity)
+                    : near(player, entity) || damage.getOrDefault(id, 0.0) > 0 && reached(player, entity);
             if (counts && plugin.players().get(player).hasCharacter()) {
                 recipients.add(player);
             }
         }
         if (recipients.isEmpty() && killer != null
-                && (data.boss() ? atBoss(killer, entity) && near(killer, entity) : near(killer, entity))
+                && (data.boss() ? atBoss(killer, entity) && near(killer, entity) : reached(killer, entity))
                 && plugin.players().get(killer).hasCharacter()) {
             recipients.add(killer); // 傷害最多的隊伍都跑遠了：給最後一擊的人
         }
@@ -186,6 +197,11 @@ public final class KillCredit {
         final double r = tw.exilecore.map.MapService.BOSS_REWARD_RADIUS;
         return player.isOnline() && !player.isDead() && player.getGameMode() != GameMode.SPECTATOR
                 && player.getWorld().equals(entity.getWorld()) && player.getLocation().distanceSquared(entity.getLocation()) <= r * r;
+    }
+
+    /** 2026-10-31 照站長：自己打到（或打死）這隻小怪的人：在線就算，不看距離、世界、死活。 */
+    private static boolean reached(final Player player, final LivingEntity entity) {
+        return player != null && player.isOnline();
     }
 
     /** 2026-10-26：在附近（{@link PartyService#nearby}：活著、不在城鎮、同世界、水平 nearby_radius 內，地圖裡也一樣）。 */

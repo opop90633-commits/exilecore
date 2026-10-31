@@ -83,6 +83,8 @@ final class EntangleRoots {
         final Set<UUID> struck = new HashSet<>();
         int revealed;
         long nextVine;
+        /** 2026-10-31：裂隙路徑打到的寬度（吃範圍效果；這次之前固定 PATH_RADIUS）。 */
+        double pathRadius = PATH_RADIUS;
 
         Root(final UUID owner, final List<Location> points, final long born, final long until, final double attachRadius, final double vineLength,
              final SkillProfile fissure, final SkillProfile vine) {
@@ -160,7 +162,7 @@ final class EntangleRoots {
             for (int i = root.revealed; i < shown; i++) {
                 final Location point = root.points.get(i);
                 Fx.spawn(point.getWorld(), Particle.HAPPY_VILLAGER, point.clone().add(0, 0.15, 0), 5, 0.3, 0.05, 0.3, 0);
-                for (final LivingEntity target : targets.around(point, PATH_RADIUS, owner)) {
+                for (final LivingEntity target : targets.around(point, root.pathRadius, owner)) {
                     if (root.struck.add(target.getUniqueId())) {
                         damage.hit(owner, target, root.fissure, null);
                     }

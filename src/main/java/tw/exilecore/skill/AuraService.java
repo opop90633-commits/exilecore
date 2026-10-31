@@ -1874,7 +1874,7 @@ final class AuraService implements Listener {
                 // 2026-10-28 照 PoE2 Herald of Blood 的品質：另外多打失血的 (0—4)%
                 final double extra = info.bloodLoss() * (BLOOD_LOSS_SHARE + aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.HERALD_BLOOD_SHARE) / 100.0);
                 if (extra > 0 && plugin.ailments() != null) {
-                    for (final LivingEntity victim : targets.around(at, BLOOD_RADIUS)) {
+                    for (final LivingEntity victim : targets.around(at, BLOOD_RADIUS * aura.build.areaScale())) { // 2026-10-31：吃範圍效果
                         if (victim != entity) {
                             plugin.ailments().dealFlatPhysical(victim, extra, credit.getUniqueId());
                         }

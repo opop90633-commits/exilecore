@@ -225,6 +225,8 @@ final class MapSpawner {
                     data.lifeMultiplier() * factor * tierLife, data.damageMultiplier() * factor * tierDamage, data.boss()));
         }
         prepare(entity);
+        // 2026-10-31：照場景戴頭飾（稀有、傳奇戴加大的）
+        service.hats().dress(entity, instance.map() == null ? null : instance.map().theme(), data != null && (data.rarity() == MonsterRarity.RARE || data.rarity() == MonsterRarity.UNIQUE));
         return entity;
     }
 

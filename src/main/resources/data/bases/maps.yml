@@ -102,3 +102,45 @@ map_observatory:
   slot: MAP
   tags: [map, map_t5]
   drop_level: 65
+
+map_verdant_ruins:   # 2026-10-31 新場景風格
+  name: 翠蔓遺跡
+  material: FLOW_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t3]
+  drop_level: 63
+
+map_rime_cavern:   # 2026-10-31 新場景風格
+  name: 霜晶窟
+  material: FLOW_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t3]
+  drop_level: 63
+
+map_cinder_abyss:   # 2026-10-31 新場景風格
+  name: 熔獄深淵
+  material: PIGLIN_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t4]
+  drop_level: 64
+
+map_sunken_reef:   # 2026-10-31 新場景風格
+  name: 珊瑚沉城
+  material: PIGLIN_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t4]
+  drop_level: 64
+
+map_blossom_vale:   # 2026-10-31 新場景風格
+  name: 櫻落谷
+  material: PIGLIN_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t4]
+  drop_level: 64
+
+map_echo_city:   # 2026-10-31 新場景風格
+  name: 回聲古城
+  material: SKULL_BANNER_PATTERN
+  slot: MAP
+  tags: [map, map_t4]
+  drop_level: 64

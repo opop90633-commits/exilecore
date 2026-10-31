@@ -63,3 +63,10 @@ maps:
   red_sands:       { min_distance: 7, weight: 100 }
   starfall_tundra: { min_distance: 9, weight: 100 }
   observatory:     { min_distance: 9, weight: 100 }
+  # 2026-10-31：新的場景風格
+  verdant_ruins:   { min_distance: 5, weight: 100 }
+  rime_cavern:     { min_distance: 5, weight: 100 }
+  cinder_abyss:    { min_distance: 7, weight: 100 }
+  sunken_reef:     { min_distance: 7, weight: 100 }
+  blossom_vale:    { min_distance: 7, weight: 100 }
+  echo_city:       { min_distance: 9, weight: 100 }

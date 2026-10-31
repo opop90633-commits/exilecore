@@ -1186,7 +1186,7 @@ final class SkillExecutor {
         final long now = plugin.getServer().getCurrentTick();
         final double radius = build.radius();
         int blasts = 0;
-        for (final LivingEntity cursed : targets.around(center, HEXBLAST_SEARCH * Math.sqrt(Math.max(0.1, build.areaScale())), player)) {
+        for (final LivingEntity cursed : targets.around(center, HEXBLAST_SEARCH * build.areaScale() /* 2026-10-31：這次之前多開了一次根號 */, player)) {
             if (blasts >= HEXBLAST_MAX) {
                 break;
             }
@@ -1258,8 +1258,8 @@ final class SkillExecutor {
         final double radius = build.radius();
         int blasts = 0;
         int consumed = 0;
-        visuals.nova(build.definition().visual(), center, SUNDER_PULSE * Math.sqrt(Math.max(0.1, build.areaScale())));
-        for (final LivingEntity enemy : targets.around(center, SUNDER_PULSE * Math.sqrt(Math.max(0.1, build.areaScale())), player)) {
+        visuals.nova(build.definition().visual(), center, SUNDER_PULSE * build.areaScale() /* 2026-10-31：這次之前多開了一次根號 */);
+        for (final LivingEntity enemy : targets.around(center, SUNDER_PULSE * build.areaScale() /* 2026-10-31：這次之前多開了一次根號 */, player)) {
             if (consumed >= SUNDER_MAX) {
                 break;
             }
@@ -1311,7 +1311,7 @@ final class SkillExecutor {
                     .withLocal(List.of(tw.exilecore.stats.Modifier.more(StatKeys.IGNITE_CHANCE, -1.0, "稜光裂"),
                             tw.exilecore.stats.Modifier.more(StatKeys.FREEZE_BUILDUP, -1.0, "稜光裂"),
                             tw.exilecore.stats.Modifier.more(StatKeys.SHOCK_CHANCE, -1.0, "稜光裂")));
-            for (final LivingEntity enemy : targets.around(center, SUNDER_PULSE * Math.sqrt(Math.max(0.1, build.areaScale())), player)) {
+            for (final LivingEntity enemy : targets.around(center, SUNDER_PULSE * build.areaScale() /* 2026-10-31：這次之前多開了一次根號 */, player)) {
                 if (blasts >= SUNDER_MAX) {
                     break;
                 }
@@ -2236,7 +2236,7 @@ final class SkillExecutor {
                     tw.exilecore.core.Units.metres(EntangleRoots.VINE_LENGTH_METRES) * build.areaScale(), build.durationTicks(params.duration()),
                     build.profile().scaled(params.damage() / 100.0, "裂隙"),
                     build.profile().scaled(params.damage() / 100.0 * EntangleRoots.vineRatio(build.level()), "藤蔓"),
-                    EntangleRoots.limit(build.level()) + SkillLimits.bonus(plugin.players().sheet(origin.owner()), build));
+                    EntangleRoots.limit(build.level()) + SkillLimits.bonus(plugin.players().sheet(origin.owner()), build), build.areaScale());
             return;
         }
         final String visual = build.definition().visual();

@@ -104,6 +104,12 @@ public final class UniqueRecipeMenu extends Menu {
         return data.get().uuid();
     }
 
+    /** 2026-10-31：藥劑欄裡正在用的東西（跟拆解台 protectedFlask 一樣）。 */
+    private boolean flaskSlot(final int inventorySlot, final ItemStack stack) {
+        return plugin.flasks() != null && inventorySlot >= 0 && inventorySlot < 9 && plugin.flasks().kindAt(player, inventorySlot) != null
+                && stack != null && !stack.isEmpty() && !tw.exilecore.flask.FlaskService.isPlaceholder(stack);
+    }
+
     /** 這一格為什麼不能放；可以放回傳 null。一格疊了好幾件的（不該有）也不收。 */
     private String problem(final ItemStack stack, final ItemData data) {
         final String problem = UniqueRecipe.problem(data, plugin.items().repository().unique(data.unique()));
@@ -390,7 +396,8 @@ public final class UniqueRecipeMenu extends Menu {
         if (data.isEmpty() || data.get().rarity() != Rarity.UNIQUE) {
             return;
         }
-        String problem = problem(stack, data.get());
+        String problem = flaskSlot(inventorySlot, stack) ? "藥劑欄（快捷欄 " + (inventorySlot + 1) + "）的藥劑、護符不能換：要換先移到別格"
+                : problem(stack, data.get());
         if (problem == null && selected.containsValue(data.get().uuid())) {
             problem = "同一件已經放進來了";
         }
@@ -411,6 +418,9 @@ public final class UniqueRecipeMenu extends Menu {
             final int inventorySlot = SalvageMenu.inventorySlot(slot);
             if (selected.containsKey(inventorySlot)) {
                 continue;
+            }
+            if (flaskSlot(inventorySlot, inventory.getItem(inventorySlot))) {
+                continue; // 2026-10-31：藥劑欄裡正在用的藥劑、護符不放（跟拆解台一樣）
             }
             final String uuid = eligibleUuid(inventory.getItem(inventorySlot));
             if (uuid != null && !selected.containsValue(uuid)) {

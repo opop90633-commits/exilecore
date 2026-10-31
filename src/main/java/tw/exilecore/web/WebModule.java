@@ -122,6 +122,15 @@ public final class WebModule implements Module, Listener {
 
     @Override
     public void enable() throws Exception {
+        // 2026-10：撿到東西的角落提示要用到的字：資料檔裡出現過的所有字（物品、通貨、傳奇、詞綴的名稱）
+        final java.util.List<String> lootTexts = new java.util.ArrayList<>();
+        try (java.util.stream.Stream<java.nio.file.Path> walk = java.nio.file.Files.walk(plugin.dataFolder().resolve("data"))) {
+            for (final java.nio.file.Path file : (Iterable<java.nio.file.Path>) walk.filter(p -> p.toString().endsWith(".yml"))::iterator) {
+                lootTexts.add(java.nio.file.Files.readString(file, java.nio.charset.StandardCharsets.UTF_8));
+            }
+        } catch (final java.io.IOException | java.io.UncheckedIOException e) {
+            plugin.getSLF4JLogger().warn("撿到東西的角落提示：讀不到資料檔的字（{}）", e.getMessage());
+        }
         if (plugin.skills() != null) {
             // 快捷欄兩側的小字要用到的字：所有技能的名稱（光環、召喚物都在裡面）
             final java.util.List<String> names = new java.util.ArrayList<>();
@@ -140,6 +149,9 @@ public final class WebModule implements Module, Listener {
                     names.add(shrine.name());
                 }
             }
+            // 2026-10-31：增益的名稱有些是組出來的（儀典獻祭的「幻雷的（儀典獻祭）」、傳奇、詞綴…），沒收進字型就只顯示「增益」：
+            //   資料檔裡出現過的字全部收進來（跟撿到東西的提示同一份）
+            names.addAll(lootTexts);
             HudFont.useTexts(names);
             final java.util.List<String> summons = new java.util.ArrayList<>();
             for (final tw.exilecore.skill.SkillDefinition definition : plugin.skills().config().all()) {
@@ -148,15 +160,6 @@ public final class WebModule implements Module, Listener {
                 }
             }
             HudFont.useRowTexts(summons); // 召喚物直排（2026-10）
-        }
-        // 2026-10：撿到東西的角落提示要用到的字：資料檔裡出現過的所有字（物品、通貨、傳奇、詞綴的名稱）
-        final java.util.List<String> lootTexts = new java.util.ArrayList<>();
-        try (java.util.stream.Stream<java.nio.file.Path> walk = java.nio.file.Files.walk(plugin.dataFolder().resolve("data"))) {
-            for (final java.nio.file.Path file : (Iterable<java.nio.file.Path>) walk.filter(p -> p.toString().endsWith(".yml"))::iterator) {
-                lootTexts.add(java.nio.file.Files.readString(file, java.nio.charset.StandardCharsets.UTF_8));
-            }
-        } catch (final java.io.IOException | java.io.UncheckedIOException e) {
-            plugin.getSLF4JLogger().warn("撿到東西的角落提示：讀不到資料檔的字（{}）", e.getMessage());
         }
         LootHud.useTexts(lootTexts);
         ownFull = UiPack.build(plugin.items() == null ? List.of() : UiPack.skins(plugin.items().repository()),

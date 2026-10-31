@@ -31,7 +31,7 @@ public final class MapConfig {
 
     /** 版面主題。 */
     public static final Set<String> THEMES = Set.of("beach", "forest", "ruins", "swamp", "snow", "cave", "crypt", "star",
-            "desert", "volcano", "fungal", "void");
+            "desert", "volcano", "fungal", "void", "jungle", "glacier", "inferno", "coral", "cherry", "sculk"); // 2026-10-31：＋6 種
     /** 終局的圈數（只用來排序與顯示；一般地圖照基底的 map_tN）。 */
     public static final int FINAL_RING = 6;
 
@@ -858,8 +858,9 @@ public final class MapConfig {
             atlas.clear();
             atlas.add(-1);
             atlas.add(-1);
-        } else if (atlas.size() != 2 || atlas.get(0) < 0 || atlas.get(0) > 8 || atlas.get(1) < 0 || atlas.get(1) > 4) {
-            throw new IllegalArgumentException(node.path() + ".atlas：星圖位置要寫成 [欄 0–8, 列 0–4]");
+        } else if (atlas.size() != 2 || atlas.get(0) < 0 || atlas.get(0) > 12 || atlas.get(1) < 0 || atlas.get(1) > 4) {
+            // 2026-10-31：欄 0–8 → 0–12（舊版格子星圖的位置，只用來檢查不重複；現在的星圖是 atlas.yml 的六角格）
+            throw new IllegalArgumentException(node.path() + ".atlas：星圖位置要寫成 [欄 0–12, 列 0–4]");
         }
         final List<ZoneConfig.SpawnEntry> monsters = parseMonsters(node.node("monsters"));
         final Boss boss = parseBoss(node.node("boss"));

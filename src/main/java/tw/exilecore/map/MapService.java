@@ -102,6 +102,7 @@ public final class MapService {
     private final MapConfig config;
     private final MapWorks works;
     private final MapSpawner spawner;
+    private final MobHatService hats; // 2026-10-31：地圖怪的頭飾
     private final MapHazards hazards; // 2026-10-26（PoE2 換界石）：週期詛咒、地面效果
     private final MapBosses bosses;
     /** 地圖事件（神龕、寶箱、裂隙、流寇）。 */
@@ -155,6 +156,7 @@ public final class MapService {
         this.cellsFile = plugin.dataFolder().resolve("map-cells.txt");
         this.tokenKey = new NamespacedKey(plugin, "map_token");
         this.spawner = new MapSpawner(plugin, this);
+        this.hats = new MobHatService(plugin);
         this.hazards = new MapHazards(plugin, this);
         this.bosses = new MapBosses(plugin, this);
         this.events = new MapEvents(plugin, this, eventConfig);
@@ -2685,6 +2687,9 @@ public final class MapService {
         // 2026-10-27：每個子系統各自計時（/ec perf 的 map.xxx），整個 map 那一行太粗，看不出是哪一塊卡
         guarded("施工", "works", works::tick);
         guarded("Boss 紀錄", "bosslog", bossLog::tick);
+        if (ticks % MobHatService.SWEEP_TICKS == 0) {
+            guarded("頭飾", "hats", () -> hats.sweep(world()));
+        }
         if (ticks % 20 == 0) {
             guarded("實例", "lifecycle", this::lifecycle);
             guarded("觀戰", "spectators", spectators::tick);
@@ -4208,6 +4213,10 @@ public final class MapService {
         if (boss) {
             entity.getPersistentDataContainer().set(bossKey, PersistentDataType.BYTE, (byte) 1);
         }
+    }
+
+    public MobHatService hats() {
+        return hats;
     }
 
     MapSpawner spawner() {

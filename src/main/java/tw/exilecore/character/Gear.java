@@ -456,7 +456,9 @@ public final class Gear {
             return false;
         }
         if (main.hasTag(tw.exilecore.stats.Tags.TWO_HAND)) {
-            return lordOfWildsSceptre(main, sheet);
+            // 2026-10-31 修正：巨人之血單手持用的雙手斧、錘、劍也能配副手的權杖（跟配盾、法器一樣）；這次之前只有荒野領主
+            return lordOfWildsSceptre(main, sheet) || sheet != null && tw.exilecore.stats.KeystoneKeys.giantWeapon(main.tags())
+                    && tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_GIANTS_BLOOD);
         }
         return main.isWeapon();
     }
@@ -473,7 +475,7 @@ public final class Gear {
             return "不能同時拿兩把權杖";
         }
         if (main != null && main.hasTag(tw.exilecore.stats.Tags.TWO_HAND)) {
-            return "雙手武器不能配權杖（荒野領主：持用獸魂符時可以再裝一把非傳奇權杖）";
+            return "雙手武器不能配權杖（巨人之血：雙手斧、錘、劍可以；荒野領主：持用獸魂符時可以再裝一把非傳奇權杖）";
         }
         return "副手的權杖要配單手武器";
     }
@@ -484,7 +486,7 @@ public final class Gear {
         if (!sceptreOffHand(main, off, sheet)) {
             return sceptreOffHandProblem(main);
         }
-        if (main != null && main.hasTag(tw.exilecore.stats.Tags.TWO_HAND) && uniqueSceptre(data)) {
+        if (main != null && main.hasTag(tw.exilecore.stats.Tags.TWO_HAND) && uniqueSceptre(data) && lordOfWildsSceptre(main, sheet)) { // 2026-10-31：只擋荒野領主（巨人之血配傳奇權杖可以）
             return "荒野領主只能在副手裝非傳奇的權杖";
         }
         return null;

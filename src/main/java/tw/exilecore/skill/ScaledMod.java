@@ -41,12 +41,19 @@ public record ScaledMod(String stat, ModType type, Scaled value, boolean percent
 
     /** 這個等級、乘上效果倍率（光環效果）之後的修飾器。 */
     public Modifier toModifier(final int level, final double scale, final String source) {
-        double amount = value.at(level) * scale;
-        if (percent) {
-            amount /= 100.0;
+        final double base = percent ? value.at(level) / 100.0 : value.at(level);
+        double amount = base * scale;
+        // 2026-10-31 修正：「更少」被效果放大（詛咒效果、光環效果、印記效果、戰吼效果）最多到 MAX_SCALED_LESS；
+        //   這次之前萎力詛咒配一堆詛咒效果變成「124% 更少傷害」，傷害倍率變成負的，結果反而沒有減傷。
+        //   本來就寫 -100% 以上的（「沒有…」這種）照寫的不動
+        if (type == tw.exilecore.stats.ModType.MORE && amount < 0 && scale > 1) {
+            amount = Math.max(amount, Math.min(base, -MAX_SCALED_LESS));
         }
         return new Modifier(stat, type, amount, tags, source);
     }
+
+    /** 2026-10-31：被效果放大的「更少」最多幾成（0.75 = 75% 更少）。 */
+    public static final double MAX_SCALED_LESS = 0.75;
 
     /** 說明文字。 */
     public String describe(final int level, final double scale) {

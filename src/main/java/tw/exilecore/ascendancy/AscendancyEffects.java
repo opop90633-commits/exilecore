@@ -469,7 +469,10 @@ public final class AscendancyEffects implements Listener {
                     new DamagePacket().set(DamageType.PHYSICAL, corpse.maxLife() * percent / 100.0));
             player.getWorld().spawnParticle(Particle.BLOCK, at.clone().add(0, 0.5, 0), 20, 0.4, 0.4, 0.4, 0,
                     org.bukkit.Material.BONE_BLOCK.createBlockData());
-            for (final LivingEntity enemy : enemiesNear(player, at, 2.5)) {
+            // 2026-10-31：吃範圍效果（這次之前固定 2.5 格）
+            final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+            final double area = sheet == null ? 1.0 : Math.sqrt(Math.max(0.05, sheet.apply(StatKeys.SKILL_AREA, 1.0, Set.of(Tags.AREA))));
+            for (final LivingEntity enemy : enemiesNear(player, at, 2.5 * area)) {
                 plugin.combat().skillDamage().hit(player, enemy, profile, null);
             }
         }

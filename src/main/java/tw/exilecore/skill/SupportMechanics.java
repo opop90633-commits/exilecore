@@ -729,6 +729,12 @@ public final class SupportMechanics implements Listener {
         return bonus;
     }
 
+    /** 2026-10-31：輔助觸發的爆炸照玩家的範圍效果放大（半徑 = √範圍倍率，含伺服器基礎 ×1.5）；這次之前固定半徑。 */
+    private double playerArea(final Player player) {
+        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+        return sheet == null ? 1.0 : Math.sqrt(Math.max(0.05, sheet.apply(StatKeys.SKILL_AREA, 1.0, Set.of(Tags.AREA))));
+    }
+
     private void battershout(final Player player, final LivingEntity center, final double damage) {
         final DamagePacket packet = new DamagePacket();
         packet.add(DamageType.PHYSICAL, damage);
@@ -736,12 +742,12 @@ public final class SupportMechanics implements Listener {
                 Map.of(), List.of(Modifier.flat(StatKeys.SPELL_BASE_CRIT, 5, "碎甲吼"), Modifier.increased(StatKeys.ARMOUR_BREAK, -1.0, "碎甲吼")));
         final MonsterData data = plugin.monsters().data(center).orElse(null);
         final Location at = center.getLocation();
-        for (final LivingEntity target : service.targets().around(at, tw.exilecore.core.Units.metres(2.0), player)) { // 碎甲吼爆炸 2 公尺 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+        for (final LivingEntity target : service.targets().around(at, tw.exilecore.core.Units.metres(2.0) * playerArea(player), player)) { // 2026-10-31：吃範圍效果；碎甲吼爆炸 2 公尺 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
             final MonsterData each = plugin.monsters().data(target).orElse(null);
             final boolean unique = each != null && (each.boss() || each.rarity() == MonsterRarity.UNIQUE);
             plugin.combat().skillDamage().hit(player, target, unique ? profile.scaled(1.5, "對傳奇") : profile, null);
         }
-        at.getWorld().spawnParticle(Particle.EXPLOSION, at.clone().add(0, 1, 0), 2, 0.3, 0.3, 0.3, 0);
+        Fx.spawn(at.getWorld(), Particle.EXPLOSION, at.clone().add(0, 1, 0), 2, 0.3, 0.3, 0.3, 0); // 2026-10-31：走 Fx（貼地的爆炸）
         at.getWorld().spawnParticle(Particle.BLOCK, at.clone().add(0, 1, 0), 20, 0.6, 0.6, 0.6, 0, org.bukkit.Material.IRON_BLOCK.createBlockData());
         at.getWorld().playSound(at, org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 0.7f, 1.3f);
         if (data == null) {
@@ -1262,10 +1268,10 @@ public final class SupportMechanics implements Listener {
         final SkillProfile profile = new SkillProfile("element_collapse", tags, 1.0, min, max, Map.of(),
                 List.of(Modifier.flat(StatKeys.SPELL_BASE_CRIT, 10, "元素崩解"), Modifier.flat(StatKeys.FLAG_NO_AILMENTS, 1, "元素崩解")));
         final Location at = center.getLocation();
-        for (final LivingEntity target : service.targets().around(at, tw.exilecore.core.Units.metres(2.0), player)) { // 元素崩解 2 公尺 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+        for (final LivingEntity target : service.targets().around(at, tw.exilecore.core.Units.metres(2.0) * playerArea(player), player)) { // 2026-10-31：吃範圍效果；元素崩解 2 公尺 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
             plugin.combat().skillDamage().hit(player, target, profile, null);
         }
-        at.getWorld().spawnParticle(Particle.FLASH, at.clone().add(0, 1, 0), 1, 0, 0, 0, 0, org.bukkit.Color.WHITE);
+        Fx.spawn(at.getWorld(), Particle.FLASH, at.clone().add(0, 1, 0), 1, 0, 0, 0, 0, org.bukkit.Color.WHITE); // 2026-10-31：走 Fx（不送閃光）
         at.getWorld().spawnParticle(Particle.FLAME, at.clone().add(0, 1, 0), fire ? 12 : 0, 0.8, 0.5, 0.8, 0.02);
         at.getWorld().spawnParticle(Particle.SNOWFLAKE, at.clone().add(0, 1, 0), cold ? 12 : 0, 0.8, 0.5, 0.8, 0.02);
         at.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, at.clone().add(0, 1, 0), lightning ? 12 : 0, 0.8, 0.5, 0.8, 0.05);

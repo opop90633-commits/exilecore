@@ -385,6 +385,9 @@ public final class BossSkills implements Listener {
     }
 
     /** 點名標記（2026-10）：跟著被點名的人走的紅圈，fireTick 時在他腳下爆炸。 */
+    /** 2026-10-31 照站長：點名標記爆炸前停住幾 tick（0.8 秒），讓被點名的人走出圈。 */
+    static final long MARK_LOCK_TICKS = 16;
+
     private static final class Marked {
         final BossSkill skill;
         final UUID target;
@@ -395,6 +398,8 @@ public final class BossSkills implements Listener {
         final String mark;
         /** 地上的圈現在標在哪（人走超過 REMARK_DISTANCE 才重標）。 */
         Location shownAt;
+        /** 2026-10-31：最後 {@link #MARK_LOCK_TICKS} 圈停住了。 */
+        boolean locked;
 
         Marked(final BossSkill skill, final UUID target, final Location last, final long startTick, final long fireTick, final String mark) {
             this.skill = skill;
@@ -2890,7 +2895,7 @@ public final class BossSkills implements Listener {
         if (players.isEmpty() && mainTarget instanceof Player player && validPlayer(player, brain.boss.getWorld())) {
             players.add(player);
         }
-        final long fuse = Math.max(20, Math.round(skill.duration() * 20));
+        final long fuse = Math.max(20 + MARK_LOCK_TICKS, Math.round(skill.duration() * 20)); // 2026-10-31：至少多停住的時間
         final Title title = Title.title(plugin.text().parse("<#ff5555><bold>⚠ " + ItemRenderer.escape(skill.name())),
                 plugin.text().parse("<white>標記在你身上：離開隊友"),
                 Title.Times.times(Duration.ZERO, Duration.ofMillis(1500), Duration.ofMillis(250)));
@@ -2916,8 +2921,21 @@ public final class BossSkills implements Listener {
             final BossSkill skill = marked.skill;
             final Player player = plugin.getServer().getPlayer(marked.target);
             final boolean present = player != null && validPlayer(player, brain.boss.getWorld());
-            if (present) {
+            // 2026-10-31 照站長：快爆炸的最後 MARK_LOCK_TICKS 圈停在原地不再跟著人走（閃一下、提示），被點名的人來得及走出去；
+            //   這次之前一直跟到爆炸那一刻，被點名的人只能硬吃
+            final boolean locked = now >= marked.fireTick - MARK_LOCK_TICKS;
+            if (present && !locked) {
                 marked.last = player.getLocation();
+            }
+            if (locked && !marked.locked) {
+                marked.locked = true;
+                marked.shownAt = null; // 重標一次：換成快落下的顏色
+                if (player != null) {
+                    player.showTitle(Title.title(plugin.text().parse("<#ff5555><bold>⚠ 快走出圈！"),
+                            plugin.text().parse("<white>標記停住了，馬上就要爆炸"),
+                            Title.Times.times(Duration.ZERO, Duration.ofMillis(700), Duration.ofMillis(150))));
+                    player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
+                }
             }
             final Location under = ground(marked.last);
             if (now >= marked.fireTick || !under.getWorld().equals(brain.boss.getWorld())) {
@@ -2941,7 +2959,7 @@ public final class BossSkills implements Listener {
             if (drawTick(brain, now, index++)) {
                 visuals.bossWarningRing(under, skill.explode(), progress);
             }
-            if (now % 5 == 0) {
+            if (now % 5 == 0 && !marked.locked) {
                 final long seconds = Math.max(1, (marked.fireTick - now + 19) / 20);
                 for (final Player near : playersNear(under, skill.explode() + 2)) {
                     if (near.getUniqueId().equals(marked.target)) {
