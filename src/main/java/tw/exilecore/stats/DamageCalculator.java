@@ -428,7 +428,8 @@ public final class DamageCalculator {
                 taken *= 1 - Formulas.resistReduction(resist, typeMax);
             }
             // 2026-10-21：減益的「受到的這種傷害增加」（凋息只加混沌、縛根只加物理）
-            final double typed = defender.flat(StatKeys.DEBUFF_TAKEN + type.tag(), Set.of());
+            final double typed = defender.flat(StatKeys.DEBUFF_TAKEN + type.tag(), Set.of())
+                    + defender.flat(StatKeys.DAMAGE_TAKEN, Set.of()); // 2026-11-01：所有傷害（召喚物輔助）
             if (typed != 0) {
                 taken *= Math.max(0, 1 + typed / 100.0);
             }

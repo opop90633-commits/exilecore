@@ -40,8 +40,8 @@ class SpellTotemSupportTest {
     void supportsOnAHostFollowTheInnerSkill() {
         final SkillDefinition totem = config.skill("star_spell_totem");
         final SkillDefinition fireball = config.skill("blazing_star_shell");
-        for (final String id : new String[] {"long_stay", "quick_chant", "swift_post_iii", "brim_over_ii", "post_wrath",
-                "firm_post", "savage_flare", "added_fire"}) {
+        for (final String id : new String[] {"long_stay", "quick_chant", "swift_post_iii", "brim_over_ii",
+                "firm_post", "keen_point", "added_fire"}) {
             assertNull(config.support(id).hostRefusal(totem, fireball), id);
         }
         // 2026-10-30 照 PoE2：法術圖騰加 UsedByProxy、暴擊引星加 Triggered，蓄詠（Considered Casting）兩個都擋；這次之前掛得上
@@ -49,7 +49,7 @@ class SpellTotemSupportTest {
         assertNotNull(config.support("charged_chant").hostRefusal(config.skill("critical_guide_star"), fireball));
         assertNull(config.support("blast_peak").hostRefusal(config.skill("critical_guide_star"), fireball));
         // 還沒放技能：只知道不能放哪些
-        assertNotNull(config.support("savage_flare").hostRefusal(totem, null));
+        assertNotNull(config.support("added_fire").hostRefusal(totem, null)); // 2026-11-01：暴烈併入銳點，改看引火
         // 攻擊的輔助掛不到放了法術的宿主上
         assertNotNull(config.support("quick_strike").hostRefusal(totem, fireball));
         // 2026-10-24：寫了「圖騰除外」的輔助不能掛在圖騰宿主上（裂虛回響、連擊：英靈每次只打一下）
@@ -60,7 +60,7 @@ class SpellTotemSupportTest {
         assertTrue(config.support("swift_post_iii").worksOnHost()); // 2026-10-26：疾樁 I 併入疾樁 III
         assertTrue(config.support("quick_chant").worksOnHost());
         assertTrue(config.support("enduring_terrain").worksOnHost());
-        assertFalse(config.support("savage_flare").worksOnHost());
+        assertFalse(config.support("added_fire").worksOnHost()); // 2026-11-01：暴烈併入銳點，改看引火
     }
 
     @Test
@@ -70,20 +70,20 @@ class SpellTotemSupportTest {
         assertNotNull(SkillService.linkedProblem(config.skill("thousand_weight_smash")));
         assertNotNull(SkillService.linkedProblem(config.skill("blazing_star_shell")));
         final SkillLoadout.Entry inner = new SkillLoadout.Entry("blazing_star_shell", 18, 4, List.of());
-        final SkillLoadout.Entry host = new SkillLoadout.Entry("star_spell_totem", 20, 5, List.of("", "added_fire", "", "savage_flare~", ""))
+        final SkillLoadout.Entry host = new SkillLoadout.Entry("star_spell_totem", 20, 5, List.of("", "added_fire", "", "keen_point~", ""))
                 .withInner(inner);
-        assertEquals("5:@blazing_star_shell/18/4,added_fire,,savage_flare~,", host.encodeSupports());
+        assertEquals("5:@blazing_star_shell/18/4,added_fire,,keen_point~,", host.encodeSupports());
         final SkillLoadout.Entry back = SkillLoadout.Entry.decode("star_spell_totem", 20, host.encodeSupports());
         assertEquals("blazing_star_shell", back.inner().skillId());
         assertEquals(18, back.inner().level());
         assertEquals(4, back.inner().sockets());
-        assertEquals(List.of("added_fire", "savage_flare"), back.supportIds());
+        assertEquals(List.of("added_fire", "keen_point"), back.supportIds());
         assertTrue(back.resonant(3));
         assertEquals(1, back.firstSupportSocket());
         assertEquals(2, back.freeSocket(), "第 1 孔放著技能不算空孔");
         final SkillLoadout.Entry spell = SkillService.innerEntry(back);
         assertEquals("blazing_star_shell", spell.skillId());
-        assertEquals(List.of("added_fire", "savage_flare"), spell.supportIds(), "宿主孔裡的輔助就是裡面技能的輔助");
+        assertEquals(List.of("added_fire", "keen_point"), spell.supportIds(), "宿主孔裡的輔助就是裡面技能的輔助");
         assertNull(SkillLoadout.Entry.decode("blazing_star_shell", 18, "3:added_fire,,").inner(), "一般技能沒有");
         assertEquals("3:added_fire,,", SkillLoadout.Entry.decode("blazing_star_shell", 18, "3:added_fire,,").encodeSupports());
     }

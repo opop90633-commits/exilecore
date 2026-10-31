@@ -131,10 +131,11 @@ class MinionSupportTypesTest {
         assertTrue(quick.any());
         // 疾矢 III：速度的增加也套用在投射物傷害（只有增加的部分；更多 40% 不算）
         assertEquals(0, MinionTypes.speedAsDamage(minionEffective(fast), MinionSheets.profile(fast).tags()), 1e-9);
-        final SkillBuild heavyFast = build("summon_bone_bowmen", support("swift_bolt_iii"), support("weighty_arrow"));
-        assertNull(support("weighty_arrow").refusal(skill("summon_bone_bowmen")));
-        assertEquals(0.3, MinionTypes.speedAsDamage(minionEffective(heavyFast), MinionSheets.profile(heavyFast).tags()), 1e-9,
-                "重矢的投射物速度增加 30% 也變成投射物傷害增加 30%");
+        // 2026-11-01：重矢（原作沒有）拿掉，改用裂隙通道（投射物速度增加 40%）
+        final SkillBuild heavyFast = build("summon_bone_bowmen", support("swift_bolt_iii"), support("crack_corridor"));
+        assertNull(support("crack_corridor").refusal(skill("summon_bone_bowmen")));
+        assertEquals(0.4, MinionTypes.speedAsDamage(minionEffective(heavyFast), MinionSheets.profile(heavyFast).tags()), 1e-9,
+                "投射物速度增加 40% 也變成投射物傷害增加 40%");
         final SkillBuild slow = build("summon_bone_flamecaster", support("slow_shell"));
         assertEquals(0.75, MinionTypes.projectiles(minionEffective(slow), MinionSheets.profile(slow).tags()).speed(), 1e-9, "緩彈：更少 25%");
         // 說明寫每秒幾格
@@ -202,7 +203,7 @@ class MinionSupportTypesTest {
 
     @Test
     void meleeSupportsFitMeleeMinionsOnly() {
-        for (final String id : new String[] {"sinking_hammer", "sinking_blow", "gore_hunt", "knockback"}) {
+        for (final String id : new String[] {"sinking_hammer", "gore_hunt", "knockback"}) {
             assertNull(support(id).refusal(skill("summon_skeletons")), id + " 照 PoE2 可以輔助骸骨戰士");
             assertNull(support(id).refusal(skill("summon_bone_berserker")), id);
             assertEquals("要近戰技能", support(id).refusal(skill("summon_bone_bowmen")), id + "：射手不是近戰");

@@ -223,6 +223,11 @@ public final class SkillService {
         return zones;
     }
 
+    /** 2026-11-01 照 PoE2（納維拉的綠洲）：owner 在 at 附近 radius 格內的植物到 until 之前都會繁茂。 */
+    public void overgrowArea(final java.util.UUID owner, final Location at, final double radius, final long until) {
+        zones.overgrowArea(owner, at, radius, until);
+    }
+
     /** 放在地上的東西（圖騰、陷阱、鐘）。 */
     /** 「別人的技能特效」設定改了：圖騰、陷阱馬上藏起來或顯示。 */
     public void refreshDeployableVisibility(final Player viewer) {

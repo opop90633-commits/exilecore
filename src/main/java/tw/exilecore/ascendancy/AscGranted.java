@@ -132,11 +132,30 @@ final class AscGranted implements Listener {
     private final List<Remnant> remnants = new ArrayList<>();
     /** 納維拉的綠洲。 */
     private final List<Oasis> oases = new ArrayList<>();
+    /** 2026-11-01：站在綠洲裡累積的藥劑充能（每秒 0.5～0.7，滿 1 點給一次）。 */
+    private final Map<UUID, Double> oasisFlask = new HashMap<>();
+
+    /**
+     * 2026-11-01 照 PoE2 Ruzhan's Trap：魯兹安擲出的巨劍落地，在 5 公尺內撒下 8 個火焰符文（每個人最多 21 個，6 秒；品質 +0～2 秒）；
+     * 敵人走到 0.8 公尺內就觸發，噴出一道火焰龍捲（asc_ruzhan_tornado：1.2 公尺、4 秒、每 0.7 秒一下、易燃更多 400%）。
+     * 這次之前整塊 5 格的地面每 0.7 秒打一下，沒有符文也沒有投射物。
+     */
+    record Rune(UUID owner, Location at, long until, int level, double tornadoSeconds) {
+    }
+
+    private final List<Rune> runes = new ArrayList<>();
+    /** 原作的符文數量（Creates 8 Runes、Limit 21 Runes）。 */
+    static final int RUNES_PER_CAST = 8;
+    static final int RUNE_LIMIT = 21;
 
     private record RareCorpse(Location at, List<String> mods, long until) {
     }
 
-    private record Oasis(UUID owner, Location at, double radius, long until) {
+    /**
+     * 2026-11-01 照 PoE2 Navira's Oasis：綠洲是由冰緩地面變成的（一塊冰緩地面一片綠洲）；生命、魔力補償照技能等級
+     * （30%→80%、20%→50%），藥劑充能每秒 0.5（品質再 +0～0.2）。這次之前在納維拉腳下 8 公尺、補償固定 30%／20%。
+     */
+    private record Oasis(UUID owner, Location at, double radius, long until, double life, double mana, double flask) {
     }
 
     private static final class Remnant {
@@ -195,6 +214,8 @@ final class AscGranted implements Listener {
             return false;
         });
         oases.removeIf(oasis -> oasis.owner().equals(player));
+        runes.removeIf(rune -> rune.owner().equals(player)); // 2026-11-01
+        oasisFlask.remove(player);
         if (own != null) {
             own.rift.clear();
         }
@@ -308,17 +329,30 @@ final class AscGranted implements Listener {
                 if (!navira(player)) {
                     break;
                 }
-                // 2026-10-27 照 PoE2：納維拉在牠所在的地方變出綠洲（這次之前巨靈沒有實體，綠洲在你腳下）
+                // 2026-11-01 照 PoE2 Navira's Oasis（Converts Chilled Ground within 8 metres）：把納維拉身邊 8 公尺內的冰緩地面變成綠洲，
+                //   一塊冰緩地面一片綠洲（大小照那塊地面）；綠洲裡的植物繁茂。這次之前在納維拉腳下直接變出 8 公尺的綠洲
                 final Location djinn = djinnAt(player, "final_mirage_spirit");
-                // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（綠洲半徑 8 公尺；這次之前 8 格）
-                oases.add(new Oasis(player.getUniqueId(), (djinn == null ? player.getLocation() : djinn).clone(),
-                        tw.exilecore.core.Units.metres(8) * areaScale(player), now + 300)); // 2026-10-31：吃範圍效果
+                final double reach = tw.exilecore.core.Units.metres(8) * areaScale(player);
+                final double life = level(player, id, "asc.oasis_life_recoup");
+                final double mana = level(player, id, "asc.oasis_mana_recoup");
+                final double flask = 0.5 + level(player, id, "asc.oasis_flask_rate");
+                for (final tw.exilecore.skill.ElementalGround.Patch patch
+                        : tw.exilecore.skill.ElementalGround.chilledNear(plugin, djinn == null ? player.getLocation() : djinn, reach)) {
+                    oases.add(new Oasis(player.getUniqueId(), patch.at(), patch.radius(), now + 300, life, mana, flask));
+                    plugin.skills().overgrowArea(player.getUniqueId(), patch.at(), patch.radius(), now + 300);
+                }
             }
             case "mirage_spirit_spring" -> {
                 if (!navira(player)) {
                     break;
                 }
                 state.setLastDamageTick(now - 400); // 能量護盾立刻開始回充
+                // 2026-11-01 照 PoE2 Navira's Well 的品質：增益再 +(0—20)% 能量護盾回充速度（增益本身照等級 10%→109%，skills.yml）
+                final double quality = level(player, id, "asc.well_es_recharge");
+                if (quality > 0) {
+                    plugin.skills().buff(player, "mirage_spirit_spring.quality", definition.name(), 120,
+                            List.of(Modifier.increased(StatKeys.ES_RECHARGE, quality / 100.0, definition.name())));
+                }
             }
             case "mirage_spirit_freeze" -> navira(player);
             case "sand_spirit_trick" -> {
@@ -363,7 +397,19 @@ final class AscGranted implements Listener {
                 moveDjinn(player, "flame_blade_spirit", at); // 2026-10-27 照 PoE2：魯兹安瞬移到目標的地方
                 effects.later(18, () -> plugin.skills().triggerSkill(player, "asc_ruzhan_wave", at));
             }
-            case "blade_spirit_device" -> moveDjinn(player, "flame_blade_spirit", aim(player, target, 20)); // 2026-10-27：魯兹安把巨劍擲過去
+            case "blade_spirit_device" -> {
+                // 2026-10-27：魯兹安把巨劍擲過去；2026-11-01 照 PoE2 Ruzhan's Trap：落地撒下 8 個火焰符文（投射物本身是技能的那一下）
+                final Location at = aim(player, target, 20);
+                moveDjinn(player, "flame_blade_spirit", at);
+                final double speed = tw.exilecore.core.Units.metres(35) / 20.0; // 每秒 35 公尺
+                final long flight = Math.max(1, Math.round(player.getLocation().distance(at) / Math.max(0.1, speed)));
+                final int level = build.level();
+                final double runeSeconds = 6 + level(player, id, "asc.rune_duration");
+                final double tornadoSeconds = 4 + level(player, id, "asc.tornado_duration");
+                final double spread = tw.exilecore.core.Units.metres(5) * build.areaScale();
+                final int limit = RUNE_LIMIT + tw.exilecore.skill.SkillLimits.bonus(state.sheet(), build); // 「+1 上限」（過剩）也吃
+                effects.later(flight, () -> placeRunes(player, at, spread, level, runeSeconds, tornadoSeconds, limit));
+            }
             case "explosive_concoction" -> {
                 // 另外對附近最多 4 個點燃中的敵人各丟一瓶小的
                 // 2026-10-28 照 PoE2 Mini Flasks：自己的表（stage.second 50% → 145% → 330%）、1.2 公尺（主瓶 1.8）；這次之前固定 145／185、同樣大
@@ -386,6 +432,65 @@ final class AscGranted implements Listener {
             }
         }
         return local;
+    }
+
+    /** 2026-11-01 照 PoE2 Ruzhan's Trap：在 at 附近 spread 格內撒下 8 個符文（超過 limit 個（21＋上限加成）的時候最舊的先消失）。 */
+    private void placeRunes(final Player player, final Location at, final double spread, final int level, final double runeSeconds,
+                            final double tornadoSeconds, final int limit) {
+        if (!player.isOnline() || at.getWorld() == null || at.getWorld() != player.getWorld()) {
+            return;
+        }
+        final long until = now() + Math.round(runeSeconds * 20);
+        final java.util.Random random = new java.util.Random();
+        for (int i = 0; i < RUNES_PER_CAST; i++) {
+            final double angle = random.nextDouble() * Math.PI * 2;
+            final double distance = Math.sqrt(random.nextDouble()) * spread;
+            runes.add(new Rune(player.getUniqueId(), at.clone().add(Math.cos(angle) * distance, 0, Math.sin(angle) * distance), until, level, tornadoSeconds));
+        }
+        trimRunes(runes, player.getUniqueId(), limit);
+        tw.exilecore.skill.Fx.disk(at.getWorld(), Particle.FLAME, at.clone().add(0, 0.2, 0), 24, spread, 0.1, 0.01);
+    }
+
+    /** 純邏輯：owner 的符文超過 limit 個時，最舊的先拿掉。 */
+    static void trimRunes(final List<Rune> list, final UUID owner, final int limit) {
+        int count = 0;
+        for (final Rune rune : list) {
+            if (rune.owner().equals(owner)) {
+                count++;
+            }
+        }
+        for (final Iterator<Rune> it = list.iterator(); it.hasNext() && count > limit; ) {
+            if (it.next().owner().equals(owner)) {
+                it.remove();
+                count--;
+            }
+        }
+    }
+
+    /** 每 0.5 秒：符文時間到消失；敵人走到 0.8 公尺內就觸發火焰龍捲。 */
+    private void tickRunes(final long now) {
+        if (runes.isEmpty()) {
+            return;
+        }
+        final double trigger = tw.exilecore.core.Units.metres(0.8);
+        for (final Iterator<Rune> it = runes.iterator(); it.hasNext(); ) {
+            final Rune rune = it.next();
+            final Player owner = plugin.getServer().getPlayer(rune.owner());
+            if (now >= rune.until() || owner == null || !owner.isOnline() || rune.at().getWorld() != owner.getWorld()) {
+                it.remove();
+                continue;
+            }
+            if (!effects.enemiesNear(owner, rune.at(), trigger).isEmpty()) {
+                it.remove();
+                final List<Modifier> extra = rune.tornadoSeconds() > 4
+                        ? List.of(Modifier.more(StatKeys.SKILL_DURATION, rune.tornadoSeconds() / 4 - 1, "羅贊的機關")) : List.of();
+                plugin.skills().triggerSkill(owner, "asc_ruzhan_tornado", rune.at(), rune.level(), extra);
+                continue;
+            }
+            if (AscendancyEffects.every(now, 20)) {
+                rune.at().getWorld().spawnParticle(Particle.SMALL_FLAME, rune.at().clone().add(0, 0.1, 0), 3, 0.15, 0.02, 0.15, 0.005);
+            }
+        }
     }
 
     /** 準心指的地方（有目標就是目標腳下）。 */
@@ -570,7 +675,8 @@ final class AscGranted implements Listener {
         final String id = skill.id();
         if (own != null) {
             // 赤炎利劍：魯兹安最近每用過一個造成傷害的技能更多 10%
-            if (id.startsWith("ruzhan_") || id.startsWith("blade_spirit_") || id.equals("asc_ruzhan_zealotry") || id.equals("asc_ruzhan_wave")) {
+            if (id.startsWith("ruzhan_") || id.startsWith("blade_spirit_") || id.equals("asc_ruzhan_zealotry") || id.equals("asc_ruzhan_wave")
+                    || id.equals("asc_ruzhan_tornado")) {
                 if (!own.damaging.isEmpty()) {
                     out.add(Modifier.more(StatKeys.DAMAGE, 0.10 * own.damaging.size(), "赤炎利劍"));
                 }
@@ -588,8 +694,10 @@ final class AscGranted implements Listener {
                 && (plugin.ailments().isIncapacitated(defender) || plugin.ailments().pinned(defender))) {
             out.add(Modifier.more(StatKeys.DAMAGE, 0.60, "羅贊的怒焰"));
         }
-        if (id.startsWith("mirage_spirit_freeze") && plugin.ailments() != null && !plugin.ailments().has(defender, AilmentType.CHILL)) {
-            out.add(Modifier.more(StatKeys.DAMAGE, -1.0, "只碎裂冰緩中的敵人"));
+        // 2026-11-01 照 PoE2 Navira's Fracturing（fracture all nearby areas of Chilled Ground that have enemies standing on them）：
+        //   只打站在冰緩地面上的敵人；這次之前打冰緩中的敵人
+        if (id.startsWith("mirage_spirit_freeze") && !tw.exilecore.skill.ElementalGround.onChilled(plugin, defender.getLocation())) {
+            out.add(Modifier.more(StatKeys.DAMAGE, -1.0, "只碎裂敵人腳下的冰緩地面"));
         }
         return out;
     }
@@ -977,6 +1085,7 @@ final class AscGranted implements Listener {
             }
         }
         tickRemnants(now);
+        tickRunes(now); // 2026-11-01 照 PoE2 Ruzhan's Trap
         // 命定苦痛：時間到（或足以處決）時一次失去記下的生命
         final Iterator<Map.Entry<UUID, double[]>> iterator = agony.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -1224,16 +1333,21 @@ final class AscGranted implements Listener {
         // 納維拉的綠洲：站在裡面的你與隊友藥劑充能、受到的傷害回復
         for (final Oasis oasis : oases) {
             if (oasis.at().getWorld() == player.getWorld() && oasis.at().distanceSquared(player.getLocation()) <= oasis.radius() * oasis.radius()) {
-                plugin.skills().buff(player, "mirage_spirit_haven.in", "娜瑟菈的綠洲", 15, List.of(Modifier.flat(StatKeys.LIFE_RECOUP, 30, "娜瑟菈的綠洲"),
-                        Modifier.flat(StatKeys.MANA_RECOUP, 20, "娜瑟菈的綠洲")));
-                if (AscendancyEffects.every(now, 40) && plugin.flasks() != null) {
-                    plugin.flasks().addCharges(player, 1, tw.exilecore.flask.FlaskKind.LIFE);
-                    plugin.flasks().addCharges(player, 1, tw.exilecore.flask.FlaskKind.MANA);
+                plugin.skills().buff(player, "mirage_spirit_haven.in", "娜瑟菈的綠洲", 15, List.of(Modifier.flat(StatKeys.LIFE_RECOUP, oasis.life(), "娜瑟菈的綠洲"),
+                        Modifier.flat(StatKeys.MANA_RECOUP, oasis.mana(), "娜瑟菈的綠洲")));
+                // 藥劑充能每秒 oasis.flask() 點（這裡每 0.5 秒一次，攢到 1 點給一次）
+                final double charge = oasisFlask.merge(player.getUniqueId(), oasis.flask() * AscendancyEffects.PERIOD / 20.0, Double::sum);
+                if (charge >= 1 && plugin.flasks() != null) {
+                    final int whole = (int) Math.floor(charge);
+                    oasisFlask.put(player.getUniqueId(), charge - whole);
+                    plugin.flasks().addCharges(player, whole, tw.exilecore.flask.FlaskKind.LIFE);
+                    plugin.flasks().addCharges(player, whole, tw.exilecore.flask.FlaskKind.MANA);
                 }
                 if (AscendancyEffects.every(now, 20)) {
                     oasis.at().getWorld().spawnParticle(Particle.DRIPPING_WATER, oasis.at().clone().add(0, 1, 0), 20, oasis.radius() / 2, 0.4,
                             oasis.radius() / 2, 0);
                 }
+                break; // 2026-11-01：好幾片綠洲重疊時只算一片（藥劑充能不重複給）
             }
         }
         if (dirty) {

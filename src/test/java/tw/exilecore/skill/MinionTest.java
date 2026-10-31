@@ -151,7 +151,7 @@ class MinionTest {
     @Test
     void supportsStackOnTheMinionNotTheOwner() {
         final StatSheet owner = new StatSheet();
-        final SupportDefinition damage = config.support("minion_damage");
+        final SupportDefinition damage = config.support("bloodthirst_summon"); // 2026-11-01：兇猛召喚刪掉（併進嗜殺召喚）
         final SupportDefinition life = config.support("minion_life");
         final SupportDefinition speed = config.support("minion_speed");
         final SupportDefinition rage = config.support("rage");
@@ -161,7 +161,7 @@ class MinionTest {
                 List.of(Modifier.flat(StatKeys.FLAG_SPELL_TOTEM, 1, "圖騰施法")), List.of()); // 2026-10：圖騰施法改成主要寶石，開關還在
         final SupportDefinition duration = config.support("long_stay"); // 2026-10-27 持久併入長留（只留最高階）
         assertTrue(damage.supports(config.skill("corpse_summon")));
-        assertFalse(damage.supports(config.skill("blazing_star_shell")), "兇猛召喚只能掛召喚技能");
+        assertFalse(damage.supports(config.skill("blazing_star_shell")), "嗜殺召喚只能掛召喚技能");
         assertFalse(rage.supports(config.skill("corpse_summon")), "近戰的輔助排除召喚物的不行（蠻力 2026-10 拿掉了）");
         assertFalse(echo.supports(config.skill("corpse_summon")), "雙詠不能掛召喚");
         assertFalse(totem.supports(config.skill("corpse_summon")), "圖騰施法不能掛召喚");
@@ -181,13 +181,16 @@ class MinionTest {
         final StatSheet boostedSheet = MinionSheets.build(spec, base, List.of());
         final double plainDamage = DamageCalculator.expectedOutgoing(plainSheet, plainProfile).total();
         final double boostedDamage = DamageCalculator.expectedOutgoing(boostedSheet, boostedProfile).total();
-        assertEquals(plainDamage * 1.3 * 0.8, boostedDamage, 1e-6, "2026-10-26 照 PoE2 基準：兇猛召喚更多 30%、堅韌召喚更少 20%");
+        // 2026-11-01 照 PoE2：嗜殺召喚（Feeding Frenzy II）更多 30%、堅韌召喚（Meat Shield I）更少 35%
+        assertEquals(plainDamage * 1.3 * 0.65, boostedDamage, 1e-6, "嗜殺召喚更多 30%、堅韌召喚更少 35%");
         final StatSheet effective = boostedProfile.effective(boostedSheet);
-        assertEquals(MinionSheets.life(plainProfile.effective(plainSheet)) * 1.4 * 0.85, MinionSheets.life(effective), 1e-6, "2026-10-26：堅韌召喚生命更多 40%、兇猛召喚更少 15%");
-        assertEquals(1.0, MinionSheets.regenPercent(effective), 1e-9, "2026-10-26：回復 1.5% → 1%");
-        assertEquals(spec.attackSpeed() * SkillConfig.minionSpeedScale() * 1.2, MinionSheets.attacksPerSecond(effective, boostedProfile), 1e-9,
-                "2026-10-26：迅捷召喚改成增加 20%（2026-10-29：基礎 ×2）");
-        assertEquals(1.25, MinionSheets.movementScale(effective), 1e-9, "2026-10-26：移動速度增加 25%");
+        assertEquals(MinionSheets.life(plainProfile.effective(plainSheet)), MinionSheets.life(effective), 1e-6, "2026-11-01：生命不變（改成受到的傷害增減）");
+        assertEquals(15 - 35, boostedSheet.overlay(MinionSheets.stripMinion(boostedProfile.local())).flat(StatKeys.DAMAGE_TAKEN, Set.of()), 1e-9,
+                "受到的傷害：嗜殺召喚更多 15%、堅韌召喚更少 35%");
+        assertEquals(0, MinionSheets.regenPercent(effective), 1e-9, "2026-11-01：堅韌召喚照原作沒有回復");
+        assertEquals(spec.attackSpeed() * SkillConfig.minionSpeedScale() * 1.25, MinionSheets.attacksPerSecond(effective, boostedProfile), 1e-9,
+                "2026-11-01：迅捷召喚改成 Rapid Attacks II（攻擊速度增加 25%，照殭屍的攻擊標籤給召喚物；基礎 ×2）");
+        assertEquals(1.0, MinionSheets.movementScale(effective), 1e-9, "2026-11-01：照原作沒有移動速度");
         assertTrue(boosted.manaCost() >= plain.manaCost(), "魔力倍率照掛（2026-10-26 照 PoE2 這三顆都是 100%）");
         // 主人自己的屬性表不受影響（輔助只在技能描述的 local）
         assertEquals(0, owner.allModifiers().size());

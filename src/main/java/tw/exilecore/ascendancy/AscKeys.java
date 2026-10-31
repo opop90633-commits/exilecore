@@ -451,4 +451,6 @@ public final class AscKeys {
     static Set<String> otherStats() {
         return OTHER.keySet();
     }
+    /** 2026-11-01 照 PoE2 Ruzhan's Reckoning 的品質：羅贊的清算傷害半徑 +x 格（站長：原作 +0.4 公尺直接當 +0.4 格；AscendancyEffects.cast）。 */
+    public static final String RECKONING_RADIUS = "asc.reckoning_radius";
 }

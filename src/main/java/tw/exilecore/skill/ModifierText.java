@@ -619,6 +619,9 @@ public final class ModifierText {
             case tw.exilecore.stats.SupportKeys.INFERNAL_LEGION -> "召喚物每秒受到最大生命 " + number(value) + "% 的火焰傷害，並點燃身邊的敵人"
                     + "（像造成牠最大生命 " + number(value) + "% 的基礎火焰傷害）";
             case tw.exilecore.stats.SupportKeys.INFERNAL_LEGION_RADIUS -> "召喚物點燃半徑 " + number(value) + " 格內的敵人";
+            case StatKeys.DAMAGE_TAKEN -> (modifier.tags().contains(Tags.MINION) ? "召喚物" : "") + "受到的傷害"
+                    + (value < 0 ? "減少 " : "增加 ") + number(Math.abs(value)) + "%"; // 2026-11-01
+            case tw.exilecore.stats.SupportKeys.MINION_INSTABILITY -> "召喚物被打到低血時炸開，對周圍的敵人造成牠最大生命 " + number(value) + "% 的火焰傷害"; // 2026-11-01
             case tw.exilecore.stats.SupportKeys.TOTEM_PLACEMENT_SPEED -> scaled(modifier, "放圖騰的速度", percent);
             case tw.exilecore.stats.SupportKeys.FLUKE_REFUND -> "觸發出來的技能回復 0～" + number(value) + "% 的消耗";
             case tw.exilecore.stats.SupportKeys.FLAG_EXTRA_SKELETON -> "祭品多獻祭一隻骷髏；有獻祭到才有：增益效果增加 30%";

@@ -51,12 +51,13 @@ class SupportAndGemTest {
         // 2026-10 PoE2 改版：輔助寶石 290 顆（第 1 階 81、第 2 階 166、第 3 階 43，其中 13 顆專屬掉落：終局 4、極境 2、巔峰 7）；
         // 2026-10：圖騰施法與 6 顆觸發改成主要寶石（拿掉 7 顆），加了 2 顆戰星來源（滿星、撲殺聚怒）
         final List<String> ids = config.supports().stream().map(SupportDefinition::id).toList();
-        assertEquals(293 + 21 + 2 + 10 + 3 + 24 - 19 + 1 + 120 + 68 - 17 - 3 - 4 - 2 + 1 + 1 - 1 + 1 + 2 - 1 + 1 - 1, ids.size()); // 2026-10-31：－磁骸（殘骸直接生效） // 2026-10-31：＋貼身 II // 2026-10-30：近矢併進貼身 // 2026-10-30 照 PoE2：＋處刑 II、III // 2026-10-30 照 PoE2：＋骸令 II（Bidding II） // 2026-10-29 照站長：導電併進雷殛（－1） // 2026-10-29 照站長加回衝勢（＋1） // 2026-10-28：＋混沌同調 // 2026-10-28 照站長刪掉震符印、符刃（－2） // 2026-10-27 照站長刪掉箭幕、跛行、活雷 II、衝勢（－4） // 2026-10-27：照站長只留最高階，再併掉持久、速冷、分矢（−3） // 2026-10-27：照站長刪掉原作沒有的 17 顆（supports.yml 的 retired） // 2026-10-27：＋68 顆血脈輔助（supports_lineage.yml） // 2026-10-27：＋120 顆照 PoE2 0.5 補上的一般輔助（tools/poe2_supports/missing_0.5.tsv） // 2026-10-27：照 PoE2 0.5 恢復節流（Efficiency） // 2026-10-26：照站長 I／II／III 只留最高階（刪 19 顆，併入最高階）； 2026-10-26：照 PoE2 把 I／II／III 拆成不同寶石（＋18 顆）、新增 6 顆戰吼輔助（不竭嘯、霜仇嘯、契血嘯、血譽、碎晶嘯、怒嘯 II） // 2026-10-25：＋3 顆能量輔助（湧能、返能、擴能） // 2026-10：＋怒嘯；2026-10-15：＋碎界擴散（虛星專屬）；＋潮汐共鳴（淵鯨專屬）；2026-10-18：＋七隻事件巔峰 Boss 各 3 顆專屬、淵鯨再 2 顆；2026-10-24：＋10 顆戰星輔助（恆星、倍星、抑星…；磐震、磐破、雷星只留最強的那一級）
+        assertEquals(293 + 21 + 2 + 10 + 3 + 24 - 19 + 1 + 120 + 68 - 17 - 3 - 4 - 2 + 1 + 1 - 1 + 1 + 2 - 1 + 1 - 1 - 19 - 1, ids.size()); // 2026-11-01 照站長：以原作為基準自己改的 28 顆，併掉 6 顆、拿掉 13 顆（原作沒有）；再刪兇猛召喚（併進嗜殺召喚） // 2026-10-31：－磁骸（殘骸直接生效） // 2026-10-31：＋貼身 II // 2026-10-30：近矢併進貼身 // 2026-10-30 照 PoE2：＋處刑 II、III // 2026-10-30 照 PoE2：＋骸令 II（Bidding II） // 2026-10-29 照站長：導電併進雷殛（－1） // 2026-10-29 照站長加回衝勢（＋1） // 2026-10-28：＋混沌同調 // 2026-10-28 照站長刪掉震符印、符刃（－2） // 2026-10-27 照站長刪掉箭幕、跛行、活雷 II、衝勢（－4） // 2026-10-27：照站長只留最高階，再併掉持久、速冷、分矢（−3） // 2026-10-27：照站長刪掉原作沒有的 17 顆（supports.yml 的 retired） // 2026-10-27：＋68 顆血脈輔助（supports_lineage.yml） // 2026-10-27：＋120 顆照 PoE2 0.5 補上的一般輔助（tools/poe2_supports/missing_0.5.tsv） // 2026-10-27：照 PoE2 0.5 恢復節流（Efficiency） // 2026-10-26：照站長 I／II／III 只留最高階（刪 19 顆，併入最高階）； 2026-10-26：照 PoE2 把 I／II／III 拆成不同寶石（＋18 顆）、新增 6 顆戰吼輔助（不竭嘯、霜仇嘯、契血嘯、血譽、碎晶嘯、怒嘯 II） // 2026-10-25：＋3 顆能量輔助（湧能、返能、擴能） // 2026-10：＋怒嘯；2026-10-15：＋碎界擴散（虛星專屬）；＋潮汐共鳴（淵鯨專屬）；2026-10-18：＋七隻事件巔峰 Boss 各 3 顆專屬、淵鯨再 2 顆；2026-10-24：＋10 顆戰星輔助（恆星、倍星、抑星…；磐震、磐破、雷星只留最強的那一級）
         assertEquals(List.of("zone_expand", "pierce", "quick_strike", "quick_chant", "added_fire",
-                "savage_flare", "echo_remnant", "minion_damage", "condense_power"), ids.subList(0, 9), "照檔案裡的順序（2026-10-27：持久併入長留，拿掉；2026-10-28：疾矢升成疾矢 III（第 3 階），排到後面）");
+                "condense_power", "chain", "thunder_smite", "minion_life"), ids.subList(0, 9), "照檔案裡的順序（2026-10-27：持久併入長留，拿掉；2026-10-28：疾矢升成疾矢 III（第 3 階），排到後面；"
+                + "2026-11-01：暴烈併入銳點、餘韻拿掉、兇猛召喚照原作改成第 2 階、堅韌召喚照原作改成第 1 階）");
         assertEquals(3, config.support("swift_bolt_iii").tier(), "2026-10-28 照 PoE2 Projectile Acceleration III（最高階）");
         assertTrue(ids.containsAll(List.of("condense_power", "chain", "life_leech", "prairie_blaze_ii", "rend_cut_iii", "poison_temper_iii", "awe_shock",
-                "electrocute", "ice_seal", "thunder_smite", "quick_return", "burst", "split_shot", "critical_damage", "added_chaos",
+                "electrocute", "ice_seal", "thunder_smite", "quick_return", "split_shot",
                 "full_stars", "slay_gather_fury", "minion_life", "minion_speed", "gather_bedrock",
                 "twin_chant", "light_split", "purify_essence",
                 "star_remains_resonance", "eternal_frost_heart", "nether_river_crossing", "sky_scorch_wrath", "chasm_touch", "star_panorama",
@@ -424,18 +425,55 @@ class SupportAndGemTest {
     @Test
     void unearthTakesMinionSupportsLikeRef() {
         final SkillDefinition unearth = config.skill("dig_remains");
-        for (final String ok : List.of("minion_damage", "flesh_bulwark", "host_blades", "fine_control")) {
+        for (final String ok : List.of("bloodthirst_summon", "flesh_bulwark", "host_blades", "fine_control")) {
             assertNull(config.support(ok).refusal(unearth), ok);
         }
         for (final String no : List.of("hinder", "eternal_star", "fast_decay", "enduring_terrain", "still_charge",
                 "full_stars", "double_star", "thunder_star", "soul_reap", "bone_mercy", "huge_soul")) {
             assertNotNull(config.support(no).refusal(unearth), no);
         }
-        final SkillBuild build = SkillBuild.of(config, unearth, 20, 90, false, List.of(config.support("minion_damage")), Set.of(),
+        final SkillBuild build = SkillBuild.of(config, unearth, 20, 90, false, List.of(config.support("bloodthirst_summon")), Set.of(),
                 new tw.exilecore.stats.StatSheet());
         assertTrue(build.profile().local().stream().filter(m -> m.stat().equals(tw.exilecore.stats.StatKeys.DAMAGE))
                 .allMatch(m -> m.tags().contains(tw.exilecore.stats.Tags.MINION)), "骨刺吃不到召喚物輔助的傷害");
-        assertEquals(List.of("minion_damage"), SkillBuild.of(config, config.skill("unearth_construct"), 20, 90, false, build.supports(), Set.of(),
+        assertEquals(List.of("bloodthirst_summon"), SkillBuild.of(config, config.skill("unearth_construct"), 20, 90, false, build.supports(), Set.of(),
                 new tw.exilecore.stats.StatSheet()).supports().stream().map(SupportDefinition::id).toList(), "骨構體吃得到");
+    }
+
+    /** 2026-11-01 照站長：以原作某顆為基準自己改的 28 顆一般輔助改成跟原作一樣（tools/apply_poe2_custom_supports.py）。 */
+    @Test
+    void customSupportsFollowRef() {
+        // 原作有同一顆、我們已經有的：併過去
+        assertEquals("keen_point", config.supportMergedInto("savage_flare"));
+        assertEquals("blast_peak", config.supportMergedInto("critical_damage"));
+        assertEquals("decay_infuse", config.supportMergedInto("added_chaos"));
+        assertEquals("broad_hex", config.supportMergedInto("curse_extend"));
+        assertEquals("quick_strike", config.supportMergedInto("drive_servants"));
+        assertEquals("quick_strike", config.supportMergedInto("quick_load_gear"));
+        // 原作沒有的：拿掉，換成同階的未切割輔助寶石
+        for (final String id : List.of("echo_remnant", "burst", "sweep_strike", "weighty_arrow", "post_wrath", "sinking_blow", "far_howl",
+                "curse_seize", "vs_chilled", "vs_ignited", "vs_shocked", "vs_poisoned", "vs_bleeding")) {
+            assertNull(config.support(id), id);
+            assertNull(config.supportMergedInto(id), id);
+        }
+        assertEquals(1, config.retiredSupportTier("echo_remnant"));
+        assertEquals(2, config.retiredSupportTier("vs_bleeding"));
+        // 改成原作的（階級：原作 1 → 1、2–3 → 2、4–5 → 3）
+        assertEquals("bloodthirst_summon", config.supportMergedInto("minion_damage"), "站長：兇猛召喚（Feeding Frenzy I）刪掉，併進嗜殺召喚（II）");
+        assertEquals(3, config.support("bloodthirst_summon").tier(), "Feeding Frenzy II 第 4 階");
+        assertEquals(1, config.support("minion_life").tier(), "Meat Shield I 第 1 階");
+        assertEquals(3, config.support("minion_speed").tier(), "Rapid Attacks II 第 4 階");
+        assertEquals(2, config.support("grudge_cinder").tier(), "Minion Instability 第 2 階");
+        assertEquals(2, config.support("quake_zone").tier(), "Magnified Area II 第 3 階");
+        assertEquals(3, config.support("blood_collapse").tier(), "Deep Cuts II 第 5 階");
+        assertEquals(3, config.support("extra_shells").tier(), "Payload 第 4 階");
+        assertTrue(config.support("added_fire").modifiers().stream().anyMatch(m -> m.stat().equals(StatKeys.damageExtra(tw.exilecore.stats.DamageType.FIRE))),
+                "Fire Attunement：獲得等同於全部傷害 25% 的額外火焰（不是只算物理）");
+        assertTrue(config.support("bloodthirst_summon").modifiers().stream().anyMatch(m -> m.stat().equals(StatKeys.DAMAGE_TAKEN) && m.value() > 0));
+        assertTrue(config.support("minion_life").modifiers().stream().anyMatch(m -> m.stat().equals(StatKeys.DAMAGE_TAKEN) && m.value() < 0));
+        assertTrue(config.support("grudge_cinder").modifiers().stream().anyMatch(m -> m.stat().equals(tw.exilecore.stats.SupportKeys.MINION_INSTABILITY)));
+        assertNull(config.support("grudge_cinder").refusal(config.skill("corpse_summon")), "怨燼照原作改成召喚物輔助");
+        assertNotNull(config.support("grudge_cinder").refusal(config.skill("collapse_quake_totem")), "圖騰不是召喚物");
+        assertTrue(config.support("extra_shells").modifiers().stream().anyMatch(m -> m.stat().equals(tw.exilecore.stats.TreeNewMechanicKeys.GRENADE_TWICE)));
     }
 }

@@ -1130,8 +1130,31 @@ final class SkillZones implements SkillTargets.Strikeable {
 
     // ---- 2026-10-30 照 PoE2：植物繁茂（Overgrowth）----
 
-    /** at 在 owner 的積雷雲範圍內（積雷雲讓範圍內的植物繁茂）。 */
+    /** 2026-11-01 照 PoE2（納維拉的綠洲「Plants in the area become Overgrown」）：讓植物繁茂的範圍（積雷雲以外的）。 */
+    private record GrowArea(UUID owner, Location at, double radius, long until) {
+    }
+
+    private final List<GrowArea> growAreas = new ArrayList<>();
+
+    /** 2026-11-01：owner 的植物在 at 附近 radius 格內，到 until 之前都會繁茂（納維拉的綠洲）。 */
+    void overgrowArea(final UUID owner, final Location at, final double radius, final long until) {
+        if (owner != null && at != null && at.getWorld() != null && radius > 0) {
+            growAreas.add(new GrowArea(owner, at.clone(), radius, until));
+        }
+    }
+
+    /** at 在 owner 的積雷雲範圍內（積雷雲讓範圍內的植物繁茂）；2026-11-01 起也包含納維拉的綠洲（{@link #overgrowArea}）。 */
     boolean inThunderstorm(final UUID owner, final Location at) {
+        if (!growAreas.isEmpty()) {
+            final long now = plugin.getServer().getCurrentTick();
+            growAreas.removeIf(area -> area.until() <= now);
+            for (final GrowArea area : growAreas) {
+                if (area.owner().equals(owner) && area.at().getWorld() == at.getWorld()
+                        && area.at().distanceSquared(at) <= area.radius() * area.radius()) {
+                    return true;
+                }
+            }
+        }
         for (final Zone zone : zones) {
             if (zone.gone || !zone.owner.equals(owner) || !Overgrowth.THUNDERSTORM.equals(zone.skill) || !zone.world.equals(at.getWorld())) {
                 continue;

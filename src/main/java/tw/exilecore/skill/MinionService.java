@@ -146,6 +146,8 @@ public final class MinionService implements Listener, MinionHooks {
         boolean spike;
         /** 2026-10-30（群鋒）：現在的更多傷害（0.21 = 更多 21%；每秒照主人有幾種復活型召喚物重算）。 */
         double musterMore;
+        /** 2026-11-01 照 PoE2 Minion Instability（怨燼）：這隻已經在低血時炸過了（一隻只炸一次）。 */
+        boolean unstableBurst;
         // ---- 2026-10-26 照 PoE2 ----
         /** 能量護盾（我們的單位）與上限；最後一次受傷的 tick（4 秒後開始回充）。 */
         double es;
@@ -4017,6 +4019,36 @@ public final class MinionService implements Listener, MinionHooks {
             // 冰甲：打牠的敵人受到冰冷傷害（下一 tick 才打，不在這一下的傷害結算裡面再開一次結算）
             plugin.getServer().getScheduler().runTask(plugin, () -> retaliate(minion, attacker));
         }
+        // 2026-11-01 照 PoE2 Minion Instability（怨燼）：被打到低血（35% 以下）時炸開（下一 tick 看扣完血之後的生命）
+        if (!minion.unstableBurst && minion.effective != null
+                && minion.effective.flat(tw.exilecore.stats.SupportKeys.MINION_INSTABILITY, Set.of()) > 0) {
+            plugin.getServer().getScheduler().runTask(plugin, () -> instability(minion));
+        }
+    }
+
+    /** 2026-11-01 照 PoE2 Minion Instability：低血的召喚物炸開，對周圍的敵人造成牠最大生命 x% 的火焰傷害（一隻只炸一次）。 */
+    private void instability(final Minion minion) {
+        if (minion.unstableBurst || !byEntity.containsKey(minion.mob.getUniqueId()) || !minion.mob.isValid() || minion.mob.isDead()
+                || minion.effective == null || minion.profile == null || minion.factors == null) {
+            return;
+        }
+        final double percent = minion.effective.flat(tw.exilecore.stats.SupportKeys.MINION_INSTABILITY, Set.of());
+        final double max = MinionSheets.life(minion.effective);
+        final double life = minion.mob.getHealth() / Math.max(1e-6, minion.healthScale);
+        if (percent <= 0 || max <= 0 || life > max * tw.exilecore.stats.SupportKeys.MINION_INSTABILITY_LOW_LIFE) {
+            return;
+        }
+        minion.unstableBurst = true;
+        // spellProfile 會乘 factors[0]（PoE2 的表 → 我們的單位）；最大生命已經是我們的單位，先除回去
+        final double base = max * percent / 100.0 / Math.max(1e-9, minion.factors[0]);
+        final Attack with = with(minion, spellProfile(minion, "minion_instability", tw.exilecore.stats.DamageType.FIRE,
+                new double[] {base, base}, 0, Set.of(tw.exilecore.stats.Tags.AREA), List.of()));
+        final Location at = minion.mob.getLocation();
+        final double radius = tw.exilecore.stats.SupportKeys.MINION_INSTABILITY_RADIUS;
+        for (final LivingEntity near : targets.around(at, radius, plugin.getServer().getPlayer(minion.owner))) {
+            strike(minion, near, with);
+        }
+        visuals.explosion("blast_grenade", at, radius);
     }
 
     /**

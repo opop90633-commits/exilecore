@@ -671,12 +671,21 @@ flame_blade_spirit: []
 sand_spirit_trick: []
 sand_spirit_cruelty: []
 sand_spirit_verdict: []
-mirage_spirit_haven: []
-mirage_spirit_spring: []
-mirage_spirit_freeze: []
-blade_spirit_settle: []
-blade_spirit_wrath_fire: []
-blade_spirit_device: []
+# 2026-11-01 照 PoE2（poe2db 寶石頁 Additional Effects From Quality）：納維拉、魯兹安的指令有品質效果；這次之前寫 []（以為原作沒有）
+mirage_spirit_haven:   # Navira's Oasis：綠洲每秒另外給 (0—0.2) 點藥劑充能
+  - { stat: asc.oasis_flask_rate, type: FLAT, per: 0.01 }   # AscGranted（加在每秒 0.5 上）
+mirage_spirit_spring:   # Navira's Well：增益再 (0—20)% 增加能量護盾回充速度
+  - { stat: asc.well_es_recharge, type: FLAT, per: 1.0 }   # AscGranted
+mirage_spirit_freeze:   # Navira's Fracturing：冰緩照 (0—40)% 更多傷害算、(0—40)% 更多凍結累積
+  - { stat: chill.effect, type: MORE, per: 2.0 }
+  - { stat: freeze.buildup, type: MORE, per: 2.0 }
+blade_spirit_settle:   # Ruzhan's Reckoning：傷害半徑 +(0—0.4) 公尺；站長：直接當 +0～0.4 格（不換算成範圍增加）
+  - { stat: asc.reckoning_radius, type: FLAT, per: 0.02 }   # 半徑 +格（AscendancyEffects.cast → SkillBuild.withBaseRadius）
+blade_spirit_wrath_fire:   # Ruzhan's Fury：+(0—4) 個投射物
+  - { stat: skill.projectiles, type: FLAT, per: 0.2 }
+blade_spirit_device:   # Ruzhan's Trap：符文、龍捲持續時間各 +(0—2) 秒
+  - { stat: asc.rune_duration, type: FLAT, per: 0.1 }   # AscGranted
+  - { stat: asc.tornado_duration, type: FLAT, per: 0.1 }   # AscGranted
 
 advanced:
   fallen_servant_star:   # Cast on Minion Death：插槽法術被觸發時傷害增加 (0—20)%（2026-10-30 照 PoE2 poe2db 寶石頁第二條；這次之前沒寫，一般的品質效果再算一次）

@@ -18,7 +18,7 @@ import java.util.UUID;
  * （{@link #mark}），怪物的照 MonsterMechanics 自己的清單查（{@link #at}）。
  * 這次之前沒有這個登記，旋風不會變成元素的。
  */
-final class ElementalGround {
+public final class ElementalGround {
 
     /** 一塊元素地面（world 是世界的 UUID；until 是消失的 tick）。 */
     record Surface(UUID world, double x, double y, double z, double radius, DamageType element, long until) {
@@ -125,6 +125,52 @@ final class ElementalGround {
             return null;
         }
         return of(plugin.monsterModule().mechanics().groundAt(at, reach, now));
+    }
+
+    /** 2026-11-01：一塊冰緩地面（中心、半徑）。 */
+    public record Patch(Location at, double radius) {
+    }
+
+    /**
+     * 2026-11-01 照 PoE2（納維拉的綠洲「Converts Chilled Ground within 8 metres」）：center 附近 reach 格內的冰緩地面。
+     * 玩家技能登記的照登記的中心與半徑；怪物的足跡、地圖詞綴只能問一個點，center 那一點是冰緩地面的話當作一塊以 center 為中心、半徑 reach 的。
+     */
+    public static List<Patch> chilledNear(final ExileCore plugin, final Location center, final double reach) {
+        final List<Patch> out = new ArrayList<>();
+        if (center == null || center.getWorld() == null) {
+            return out;
+        }
+        final long now = plugin.getServer().getCurrentTick();
+        final UUID world = center.getWorld().getUID();
+        SURFACES.removeIf(surface -> now >= surface.until());
+        for (final Surface surface : SURFACES) {
+            if (surface.element() == DamageType.COLD && surface.touches(world, center.getX(), center.getY(), center.getZ(), reach, now)) {
+                out.add(new Patch(new Location(center.getWorld(), surface.x(), surface.y(), surface.z()), surface.radius()));
+            }
+        }
+        if (out.isEmpty() && plugin.monsterModule() != null && plugin.monsterModule().mechanics() != null) {
+            final AilmentType ground = plugin.monsterModule().mechanics().groundAt(center, reach, now);
+            if (ground == AilmentType.CHILL || ground == AilmentType.FREEZE) {
+                out.add(new Patch(center.clone(), reach));
+            }
+        }
+        return out;
+    }
+
+    /** 2026-11-01 照 PoE2（納維拉的封凍「fracture all nearby areas of Chilled Ground that have enemies standing on them」）：at 是不是踩在冰緩地面上。 */
+    public static boolean onChilled(final ExileCore plugin, final Location at) {
+        if (at == null || at.getWorld() == null) {
+            return false;
+        }
+        final long now = plugin.getServer().getCurrentTick();
+        if (touchesAny(SURFACES, at.getWorld().getUID(), at.getX(), at.getY(), at.getZ(), 0, DamageType.COLD, now)) {
+            return true;
+        }
+        if (plugin.monsterModule() == null || plugin.monsterModule().mechanics() == null) {
+            return false;
+        }
+        final AilmentType ground = plugin.monsterModule().mechanics().groundAt(at, 0, now);
+        return ground == AilmentType.CHILL || ground == AilmentType.FREEZE;
     }
 
     /** 測試用：清掉登記的。 */

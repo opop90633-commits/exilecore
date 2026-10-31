@@ -575,7 +575,15 @@ public final class Gear {
         if (off == null) {
             return false;
         }
-        final String problem = pairProblem(baseOf(state.jewellery(MAIN)), baseOf(off), plugin, state);
+        String problem = pairProblem(baseOf(state.jewellery(MAIN)), baseOf(off), plugin, state);
+        if (problem == null) {
+            return false;
+        }
+        // 2026-11-01 修正（站長：有巨人之血（天賦或樹指鐵手）時法器配不上去）：角色載入時 sync 排在重算屬性表前面，
+        //   state.sheet() 還是空的或上一個角色的，看不到巨人之血、荒野領主，副手的盾、法器、權杖、雙持的雙手錘被當成不搭卸下來。
+        //   要卸之前先照現在的裝備與天賦重算一次再看（天賦、裝備給的基石一樣算）
+        plugin.players().rebuild(player, state);
+        problem = pairProblem(baseOf(state.jewellery(MAIN)), baseOf(off), plugin, state);
         if (problem == null) {
             return false;
         }
@@ -865,6 +873,7 @@ public final class Gear {
         if (base == null || !base.isWearable()) {
             return "這不是能裝備的東西";
         }
+        plugin.players().sheet(player); // 2026-11-01 修正：先把過期的屬性表重算（巨人之血、荒野領主要看最新的天賦與裝備）
         int target = target(state, base, stack); // 2026-10-27 荒野領主：權杖放副手
         if (target < 0) {
             return "這不是能裝備的東西";
@@ -911,6 +920,7 @@ public final class Gear {
         if (base == null || !base.isWearable()) {
             return "這不是能裝備的東西";
         }
+        plugin.players().sheet(player); // 2026-11-01 修正：先把過期的屬性表重算（巨人之血、荒野領主要看最新的天賦與裝備）
         final int natural = index(base.slot());
         if (natural != index && !(base.slot() == ItemSlot.RING && (index == 0 || index == 1 || index == PlayerState.RING3_SLOT))
                 && !(index == OFF && (target(state, base, stack, OFF) == OFF // 2026-10-27 荒野領主、2026-10-28 照 PoE2：副手的權杖

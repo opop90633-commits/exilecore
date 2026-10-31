@@ -276,6 +276,17 @@ public final class AscendancyEffects implements Listener {
             if (plugin(effects).skills().minions() != null && plugin(effects).skills().minions().locate(player, djinn) == null) {
                 return new Cost((int) Math.round(mana), 0, 0, 0, (summon == null ? "巨靈" : summon.name()) + "不在你身邊");
             }
+            // 2026-11-01 照 PoE2 Navira's Well（command skill unusable without missing es）：能量護盾是滿的時候不能用
+            if ("mirage_spirit_spring".equals(definition.id()) && state.energyShield() >= state.maxEnergyShield() - 1e-6) {
+                return new Cost((int) Math.round(mana), 0, 0, 0, "能量護盾是滿的");
+            }
+            // 2026-11-01 照 PoE2 Navira's Oasis（Converts Chilled Ground within 8 metres）：納維拉身邊要有冰緩地面才變得出綠洲
+            if ("mirage_spirit_haven".equals(definition.id()) && plugin(effects).skills().minions() != null) {
+                final org.bukkit.Location at = plugin(effects).skills().minions().locate(player, djinn);
+                if (at != null && tw.exilecore.skill.ElementalGround.chilledNear(plugin(effects), at, tw.exilecore.core.Units.metres(8)).isEmpty()) {
+                    return new Cost((int) Math.round(mana), 0, 0, 0, (summon == null ? "巨靈" : summon.name()) + "身邊 8 公尺內沒有冰緩地面");
+                }
+            }
         }
         // 御風的混合物：用掉魔力藥劑 5 點充能
         int flask = 0;
@@ -366,6 +377,10 @@ public final class AscendancyEffects implements Listener {
         final Set<String> tags = build.profile().tags();
         final AscState s = state(player);
         final List<Modifier> local = new ArrayList<>();
+        // 2026-11-01 照 PoE2 Ruzhan's Reckoning 的品質（+(0—0.4) metres to damage radius）：站長定 1 公尺算 1 格，直接加 +0～0.4 格在半徑上
+        if ("blade_spirit_settle".equals(definition.id())) {
+            build = build.withBaseRadius(build.qualityFlat(AscKeys.RECKONING_RADIUS));
+        }
         // 集風：使用技能時獲得順風（最多 10 層）
         if (has(sheet, AscKeys.TAILWIND) && s.tailwind < TAILWIND_MAX && definition.mechanic() != tw.exilecore.skill.Mechanic.AURA) {
             s.tailwind++;

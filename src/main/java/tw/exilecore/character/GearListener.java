@@ -114,6 +114,7 @@ final class GearListener implements Listener {
             tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + ItemRenderer.escape(blocked)));
             return;
         }
+        plugin.players().sheet(player); // 2026-11-01 修正：先把過期的屬性表重算（巨人之血、荒野領主要看最新的天賦與裝備）
         int index = gear.target(state, base, stack, clicked); // 2026-10-27 荒野領主、2026-10-28 照 PoE2：權杖放副手（點副手那格也放副手）
         if (base.slot() == tw.exilecore.item.ItemSlot.RING) {
             index = Gear.ringTarget(state, gear.ringSlotOpen(player)); // 2026-10-26：展露之指的第三個戒指欄

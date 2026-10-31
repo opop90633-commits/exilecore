@@ -43,17 +43,17 @@ class SupportHitRulesTest {
         // 2026-10-26 照 PoE2：架盾是攻擊（放開時的盾擊會打人），拿掉；這次之前也列架盾
         for (final String id : new String[] {"wound_scar_curse", "blink"}) {
             assertEquals(reason, support("added_fire").refusal(skill(id)), id);
-            assertEquals(reason, support("savage_flare").refusal(skill(id)), id);
+            assertEquals(reason, support("blast_peak").refusal(skill(id)), id);
             assertEquals(reason, support("frost_seal").refusal(skill(id)), id);
             assertEquals(reason, support("held_breath").refusal(skill(id)), id);
         }
         // 2026-10-26：印記不算法術了（照 PoE2）：在標籤那一關或「不會造成傷害」擋掉都可以
-        for (final String supportId : new String[] {"added_fire", "savage_flare", "frost_seal", "held_breath"}) {
+        for (final String supportId : new String[] {"added_fire", "blast_peak", "frost_seal", "held_breath"}) {
             final String refusal = support(supportId).refusal(skill("prey_kill_mark"));
             assertTrue(reason.equals(refusal) || "要攻擊技能或法術技能".equals(refusal), supportId + "：" + refusal);
         }
         // 2026-10：光環不算法術了（照 PoE2）——要攻擊或法術的輔助在標籤那一關就擋掉，不看標籤的照舊擋在「不會造成傷害」
-        for (final String supportId : new String[] {"added_fire", "savage_flare", "frost_seal", "held_breath"}) {
+        for (final String supportId : new String[] {"added_fire", "blast_peak", "frost_seal", "held_breath"}) {
             final String refusal = support(supportId).refusal(skill("winter_shell"));
             assertTrue(reason.equals(refusal) || "要攻擊技能或法術技能".equals(refusal), supportId + "：" + refusal);
         }
@@ -83,13 +83,13 @@ class SupportHitRulesTest {
         assertNull(support("zone_expand").refusal(skill("campaign_flag")), "範圍：戰旗有 area"); // 2026-10-26：凜冬之殼、魔湧照 PoE2 都沒有範圍了，改用征戰之旗
         assertNull(support("long_stay").refusal(skill("wound_scar_curse"))); // 2026-10-27：持久併入長留、速冷併入迅返（只留最高階）
         assertNull(support("quick_return").refusal(skill("stalwart_war_shout")));
-        assertNull(support("minion_damage").refusal(skill("corpse_summon")), "minion 標籤的給召喚物");
+        assertNull(support("bloodthirst_summon").refusal(skill("corpse_summon")), "minion 標籤的給召喚物");
         assertNull(support("spring_mana").refusal(skill("winter_shell")), "精魂輔助");
         assertNull(support("stern_hex").refusal(skill("wound_scar_curse")));
         assertNull(support("endless_howl").refusal(skill("ground_shake_shout")), "震地戰吼會強化攻擊");
         // 2026-10：好處是傷害、代價是範圍／冷卻／持續／施法速度的輔助，掛在不會造成傷害的技能上只剩代價：不行
         final String reason = "不會造成傷害的技能不行";
-        assertEquals(reason, support("burst").refusal(skill("prey_kill_mark")), "爆發：傷害吃不到，只剩冷卻變久");
+        // 2026-11-01：迸發（原作沒有）拿掉；蓄力（Hourglass）、速蝕照舊測
         // 2026-10-26 照 PoE2：魔湧（Mana Tempest）沒有 AoE 標籤（風暴不吃範圍加成），凝聚在標籤那一關就擋掉；這次之前是光環，擋在「不會造成傷害」
         assertEquals("要範圍技能", support("condense_power").refusal(skill("magic_surge")), "凝聚掛在魔湧上：風暴不吃範圍");
         assertNotNull(support("condense_power").refusal(skill("winter_shell")), "2026-10-26：凜冬之殼照 PoE2 沒有範圍，先被「要範圍技能」擋下");
@@ -99,11 +99,11 @@ class SupportHitRulesTest {
         assertEquals(reason, support("charged_chant").refusal(skill("wound_scar_curse")));
         // 會造成傷害的技能照舊能掛；範圍變大的、只改冷卻／持續的也照舊
         assertNull(support("condense_power").refusal(skill("blazing_star_shell")));
-        assertNull(support("burst").refusal(skill("sky_column_thunder")), "2026-10-26：雷遁照原作沒有冷卻了；霜綻照站長拿掉了，改用天柱雷");
+        assertNull(support("quick_return").refusal(skill("sky_column_thunder")), "2026-11-01：迸發拿掉，改測迅返（只改冷卻）");
         assertNull(support("quake_zone").refusal(skill("campaign_flag")), "範圍變大那半邊有用"); // 2026-10-26：凜冬之殼、魔湧照 PoE2 都沒有範圍了，改用征戰之旗
         assertNull(support("quick_return").refusal(skill("prey_kill_mark")), "冷卻變短有用");
         assertNull(support("twin_chant").refusal(skill("wound_scar_curse")), "代價是傷害的不擋");
-        assertEquals("要冷卻技能", support("burst").refusal(skill("corpse_summon")), "喚屍沒有冷卻");
+        assertEquals("要冷卻技能", support("quick_return").refusal(skill("corpse_summon")), "喚屍沒有冷卻（2026-11-01：迸發拿掉，改測迅返）");
         // 2026-10-29 照 PoE2 的 Minion Types：凝息照殭屍的攻擊（Attack, Melee）可以掛、效果給殭屍；這次之前「不會造成傷害的技能不行」。
         // 不打人的骸骨祭司照舊不行
         assertNull(support("held_breath").refusal(skill("corpse_summon")));
@@ -162,9 +162,8 @@ class SupportHitRulesTest {
         assertNull(support("angry_roar_ii").refusal(skill("hellfire_war_shout")));
         assertEquals("要戰吼技能", support("quake_howl").refusal(skill("bloodthirst_rite")), "祭品不是戰吼");
         assertEquals("本來就要榮耀才能用的技能不行", support("quake_howl").refusal(skill("molten_soul_shriek")));
-        assertEquals("要原本只打一個目標的打擊技能", support("sweep_strike").refusal(skill("blood_tear_sweep")));
-        assertNull(support("sweep_strike").refusal(skill("gale_combo")), "2026-10-26 照 PoE2：風暴連擊改成打單一目標");
-        assertNull(support("sweep_strike").refusal(skill(firstSingleStrike())));
+        // 2026-11-01：掃擊（原作沒有）拿掉
+        assertNull(config.support("sweep_strike"));
         assertEquals("要打擊技能（衝過去、扇形的不行）", support("realm_break_spread").refusal(skill("spear_recoil_leap")));
         assertEquals("本身會蓄力的技能不行", support("sealed_chant").refusal(skill("burning_current")));
         assertEquals("本身會蓄力的技能不行", support("swift_edge").refusal(skill("burning_current")), "2026-10-26：蓄力射擊照 PoE2 改成爆破矢（放開型引導，不是 channel.stages），改用焚流");

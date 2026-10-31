@@ -281,8 +281,9 @@ class MechanicsTest {
         // 2026-10-27 照站長只留最高階：速冷（Cooldown Recovery I）併入迅返（II），冷卻 -23%；這次之前速冷 -20% → 80
         final SkillBuild quick = build("blast_grenade", sheet, config.support("quick_return"));
         assertEquals(77, quick.cooldownTicks(), "迅返：冷卻回復（照 PoE2 Cooldown Recovery II，-23%）");
-        final SkillBuild bursty = build("blast_grenade", sheet, config.support("burst"));
-        assertEquals(130, bursty.cooldownTicks(), "爆發：+30%");
+        // 2026-11-01 照 PoE2：迸發（原作沒有）拿掉；增彈改成 Payload（冷卻回復速度減少 70%：100 ÷ 0.3）
+        final SkillBuild payload = build("blast_grenade", sheet, config.support("extra_shells"));
+        assertEquals(333, payload.cooldownTicks(), "增彈（Payload）：冷卻回復速度減少 70%");
         assertEquals(0, build("blazing_star_shell", sheet).cooldownTicks(), "沒冷卻的技能是 0");
 
         // 2026-10-27 照站長只留最高階：持久（Prolonged Duration I，更多 30%）併入長留（II，更多 35%）；這次之前 1.3／130

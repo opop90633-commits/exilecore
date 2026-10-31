@@ -24,13 +24,13 @@ public final class SupportColours {
 
     private static final Map<Character, String> LISTS = Map.of(
             RED, // PoE2 RePoE 紅色
-            "sinking_blow savage_cruelty awe_shock grave_wound angry_roar_ii execute final_sentence_ii final_sentence_iii melt_break sinking_hammer ponderous_weight burning_will "
+            "savage_cruelty awe_shock grave_wound angry_roar_ii execute final_sentence_ii final_sentence_iii melt_break sinking_hammer ponderous_weight burning_will "
                     + "burning_servant_ii rend_cut_iii life_leech deep_brand_ii flesh_bulwark blood_oath_howl "
                     + "long_stay rage merciless_heart firm_post blood_renown "
                     // 自己歸類（火焰、物理近戰、護甲、戰吼、圖騰、流血、磐星）
-                    + "added_fire prairie_blaze_ii far_howl sacred_niche_echo grudge_cinder post_wrath "
-                    + "sweep_strike break_plate_iii blood_collapse colossus_butcher quake_zone "
-                    + "vs_ignited vs_bleeding sky_scorch_wrath star_remains_resonance meteor_core realm_break_spread "
+                    + "added_fire prairie_blaze_ii sacred_niche_echo "
+                    + "break_plate_iii blood_collapse colossus_butcher "
+                    + "sky_scorch_wrath star_remains_resonance meteor_core realm_break_spread "
                     + "holy_light_focus covet_chest_lock shackle_entangle blood_levy marrow_surge gather_bedrock "
                     // 2026-10-26 補齊（照 RePoE；疾樁 III、不倦是紅、冰噬 II 是藍——這次之前寫錯成藍／綠／綠）：沒列的原本都當白色
                     + "swift_post_iii endless_howl gore_hunt initial_crack_ii scorch_hunt crumbling_force blood_linger cinder_through quake_howl "
@@ -50,14 +50,14 @@ public final class SupportColours {
                     + "split_totem_ii steady_guard_ii iron_grit_ii tread_quake merged_orbit split_wound unflinching_will never_broken dig_weakness "
                     + "stand_fast land_uplift_ii front_line_ii",
             GREEN, // PoE2 RePoE 綠色
-            "chain full_stars hug_range hug_range_ii conduction slay_cut_ii electrocute "
+            "minion_speed chain full_stars hug_range hug_range_ii conduction slay_cut_ii electrocute "
                     + "poison_temper_iii quick_strike swift_bolt_iii split_shot thunder_pass far_pierce_ii "
                     + "light_split blazing_volt pierce thunder_smite rapid_corrode_iii "
                     + "quick_return potent_toxin "
                     // 自己歸類（投射物、閃電、中毒、怒星、速度、暴擊傷害）
-                    + "critical_damage burst weighty_arrow quick_load_gear point_blank star_panorama crack_corridor extra_shells "
-                    + "ground_nail_iii shock_dizzy focus_mind vs_shocked thunder_prison_heart realm_pierce_rip "
-                    + "vs_poisoned void_crack_echo coin_flip duel_concentration pilfered_move unnamed_blade delirium_smash "
+                    + "point_blank star_panorama crack_corridor extra_shells "
+                    + "ground_nail_iii shock_dizzy focus_mind thunder_prison_heart realm_pierce_rip "
+                    + "void_crack_echo coin_flip duel_concentration pilfered_move unnamed_blade delirium_smash "
                     + "slay_gather_fury "
                     // 2026-10-26 補齊（照 RePoE；疾樁 III、不倦是紅、冰噬 II 是藍——這次之前寫錯成藍／綠／綠）：沒列的原本都當白色
                     + "held_breath wide_stance enduring_thunder layered_miasma draw_lightning rust_plate strip_element leaping_thunder beat_combo "
@@ -74,13 +74,13 @@ public final class SupportColours {
                     + "volt_load clever_break flawless_form breach_hit chase_strike_iii withdraw_strike_iii redeploy_ii bounce_shot_iii "
                     + "rise_again_iii slow_vigor light_shadow unrest_stir shadowless_step good_chance_ii",
             BLUE, // PoE2 RePoE 藍色
-            "decay_infuse frost_grudge_howl chill_through condense_power charged_chant fine_control abyss_floor_chill element_corps "
+            "grudge_cinder quake_zone decay_infuse frost_grudge_howl chill_through condense_power charged_chant fine_control abyss_floor_chill element_corps "
                     + "purify_essence quick_chant ice_seal zone_expand mana_draw twin_chant "
                     // 自己歸類（法術、冰冷、混沌、召喚、詛咒、光環、銳星、暴擊率）
-                    + "savage_flare echo_remnant minion_damage minion_life minion_speed drive_servants bloodthirst_summon huge_soul nether_river_crossing "
-                    + "void_star_army crack_outpour ritual_dais_army added_chaos chasm_touch "
-                    + "eternal_frost_heart ebb_flow_resonance dark_current_pull whale_exhale fog_gauze vs_chilled chasm_grasp extinction_focus curse_seize "
-                    + "curse_extend blood_oath_seal build_poise realm_return_void void_star_clone "
+                    + "minion_life bloodthirst_summon huge_soul nether_river_crossing "
+                    + "void_star_army crack_outpour ritual_dais_army chasm_touch "
+                    + "eternal_frost_heart ebb_flow_resonance dark_current_pull whale_exhale fog_gauze chasm_grasp extinction_focus "
+                    + "blood_oath_seal build_poise realm_return_void void_star_clone "
                     + "looking_glass_copy daybreak_boon "
                     // 2026-10-26 補齊（照 RePoE；疾樁 III、不倦是紅、冰噬 II 是藍——這次之前寫錯成藍／綠／綠）：沒列的原本都當白色
                     + "frost_gnaw_ii ember_marrow frost_marrow thunder_marrow abyss_marrow iron_marrow frost_seal "

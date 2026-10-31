@@ -370,6 +370,11 @@ public final class StatKeys {
     public static final String DAMAGE_VS_STUNNED = "damage.vs_stunned";         // MORE：對重暈中的敵人
     /** 2026-10-21：受到的那一種傷害增加 x%（減益：凋息、枯蝕、縛根）；後面接傷害類型的標籤（physical、chaos…）。只在算擊中時疊上去。 */
     public static final String DEBUFF_TAKEN = "debuff.taken.";
+    /**
+     * 2026-11-01：受到的所有傷害增加 x%（FLAT，負的是減少；跟 {@link #DEBUFF_TAKEN} 同一處疊，只在算擊中時）。
+     * 照 PoE2 的召喚物輔助：Feeding Frenzy（兇猛召喚、嗜殺召喚：受到更多傷害）、Meat Shield（堅韌召喚：受到更少傷害），寫 tags: [minion] 給召喚物。
+     */
+    public static final String DAMAGE_TAKEN = "damage.taken";
     public static final String DAMAGE_VS_LOW_LIFE = "damage.vs_low_life";       // INCREASED：對低血（35% 以下）的敵人；MORE：處刑（2026-10-30）
     /** 2026-10-30 照 PoE2 Execute III（support_executioner_damage_+%_final_while_on_low_life）：MORE 你自己低血（35% 以下）時擊中傷害更多。 */
     public static final String DAMAGE_WHILE_LOW_LIFE = "damage.while_low_life";

@@ -159,4 +159,13 @@ public final class SupportKeys {
     public static final String FLAG_EMPOWERED_CULL = "flag.empowered_cull";
     /** FLAG：被強化的攻擊消耗更少 30%、命中更多 30%（嘯準）。 */
     public static final String FLAG_UNERRING = "flag.howl_aim";
+    /**
+     * 2026-11-01 照 PoE2 Minion Instability（怨燼；poe2db 第 2 階）：FLAT x — 被輔助的召喚物被打到低血時炸開，
+     * 對周圍的敵人造成牠最大生命 x% 的火焰傷害（MinionService.instability；一隻只炸一次）。
+     */
+    public static final String MINION_INSTABILITY = "minion.instability";
+    /** 低血：生命 35% 以下（PoE2）。 */
+    public static final double MINION_INSTABILITY_LOW_LIFE = 0.35;
+    /** 爆炸半徑（格）。原作頁面沒寫半徑，暫定 3 格。 */
+    public static final double MINION_INSTABILITY_RADIUS = 3.0;
 }

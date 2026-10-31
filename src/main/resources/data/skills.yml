@@ -9740,7 +9740,7 @@ skills:
 
   mirage_spirit_haven:
     name: 娜瑟菈的綠洲
-    description: 指令（要先召喚娜瑟菈）：在你腳下 8 格變成綠洲 15 秒：站在裡面的你與隊友每秒獲得 0.5 點藥劑充能，受到的傷害 30% 回復為生命、20% 回復為魔力。冷卻 8 秒。
+    description: 指令（要先召喚娜瑟菈）：把娜瑟菈身邊 8 公尺內的冰緩地面變成綠洲 15 秒：站在裡面的你與隊友每秒獲得 0.5 點藥劑充能，受到的傷害 30～80% 補償為生命、20～50% 補償為魔力；綠洲裡的植物繁茂。身邊沒有冰緩地面就不能用。冷卻 8 秒。
     icon: NAUTILUS_SHELL   # 2026-10-27 圖示：這次之前 HEART_OF_THE_SEA（跟納維拉本身一樣）
     type: spell
     tier: 1
@@ -9759,10 +9759,13 @@ skills:
     cooldown: 8
     mana: [7, 8, 10, 11, 13, 15, 17, 20, 23, 25, 29, 32, 36, 40, 45, 50, 55, 61, 68, 75]   # 2026-10-29 照 PoE2（poe2db Navira's Oasis 7→75）；這次之前 0（指令其實要花魔力）
     visual: aura_mana
+    level_modifiers:   # 2026-11-01 照 PoE2 Navira's Oasis（(30—80)% Recouped as Life、(20—50)% Recouped as Mana，1→20 級；AscGranted）；這次之前固定 30%、20%
+      - { stat: asc.oasis_life_recoup, type: FLAT, value: [30, 80] }
+      - { stat: asc.oasis_mana_recoup, type: FLAT, value: [20, 50] }
 
   mirage_spirit_spring:
     name: 娜瑟菈的泉
-    description: 指令（要先召喚娜瑟菈）：能量護盾立刻開始回充，6 秒內能量護盾回充速度增加 10%。冷卻 12 秒。
+    description: 指令（要先召喚娜瑟菈）：能量護盾立刻開始回充，6 秒內能量護盾回充速度增加 10～109%（照等級）。能量護盾是滿的時候不能用。冷卻 12 秒。
     icon: LAPIS_LAZULI   # 2026-10-27 圖示：回魔力的井；這次之前 HEART_OF_THE_SEA（跟納維拉本身一樣）
     type: spell
     tier: 1
@@ -9777,7 +9780,7 @@ skills:
       taunt: false
       allies: false
       buff:
-        - { stat: es.recharge, type: INCREASED, value: 10 }
+        - { stat: es.recharge, type: INCREASED, value: [10, 109] }   # 2026-11-01 照 PoE2 Navira's Well（(10—109)%，1→20 級）；這次之前固定 10
     cast_time: 2.1
     cooldown: 12
     mana: [6, 7, 8, 9, 11, 13, 15, 17, 19, 21, 24, 27, 30, 34, 38, 42, 46, 51, 57, 63]   # 2026-10-29 照 PoE2（poe2db Navira's Well 6→63）；這次之前 0（指令其實要花魔力）
@@ -9785,7 +9788,7 @@ skills:
 
   mirage_spirit_freeze:
     name: 娜瑟菈的冰封
-    description: 指令（要先召喚娜瑟菈）：讓準心附近 6 格內冰緩中的敵人腳下碎裂，造成冰冷法術傷害，凍結累積更多 200%、照更多 200% 的傷害算冰緩。冷卻 5 秒。
+    description: 指令（要先召喚娜瑟菈）：讓準心附近 6 公尺內有敵人站著的冰緩地面碎裂，造成冰冷法術傷害，凍結累積更多 200%、照更多 200% 的傷害算冰緩（只打站在冰緩地面上的敵人）。冷卻 5 秒。
     icon: PRISMARINE_SHARD
     type: spell
     tier: 1
@@ -9834,8 +9837,8 @@ skills:
     hidden: true
     type: spell
     tags: [spell, area, fire]
-    mechanic: nova
-    nova: { radius: 4 }
+    mechanic: cone   # 2026-11-01 照 PoE2 Ruzhan's Reckoning（Wave length is 4 metres）：劍砸地面往前掀起的一道浪；這次之前 nova（以落點為中心 4 公尺一圈）
+    cone: { length: 4, angle: 40 }
     damage: [29, 44]   # 2026-10-26 照 PoE2（熔岩浪 1 級 29～44）
     damage_types: { fire: 1.0 }
     cast_time: 0.5
@@ -9856,7 +9859,7 @@ skills:
     tags_remove: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Ruzhan's Fury）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: projectile
-    projectile: { count: 20, spread: 50, speed: 1.4, range: 22, size: 0.3, explode: 0.9, burst: { count: 2, interval: 6 } }
+    projectile: { count: 20, spread: 50, speed: 1.5, range: 22, size: 0.3, explode: 0.9, burst: { count: 2, interval: 6 } }   # 2026-11-01 照 PoE2 Ruzhan's Fury：每秒 30 公尺（這次之前 1.4 = 28 公尺）
     damage: [3, 4]   # 2026-10-26 照 PoE2 Ruzhan's Fury（每顆 1 級 3～4）
     damage_types: { fire: 1.0 }
     cast_time: 2.3
@@ -9869,25 +9872,45 @@ skills:
 
   blade_spirit_device:
     name: 羅贊的機關
-    description: 指令（要先召喚羅贊）：羅贊把巨劍擲到準心的地方，在 5 格內撒下 8 個符文（6 秒）；敵人踩到就噴出火焰龍捲（1.2 格、4 秒、每 0.7 秒一下，易燃更多 400%）。冷卻 8 秒。
+    description: 指令（要先召喚羅贊）：羅贊把巨劍擲到準心的地方（每秒 35 公尺、穿透所有目標），落地在 5 公尺內撒下 8 個火焰符文（6 秒，最多 21 個）；敵人走到符文 0.8 公尺內就噴出火焰龍捲（1.2 公尺、4 秒、每 0.7 秒一下，易燃幅度更多 400%）。冷卻 8 秒。
     icon: COAL   # 2026-10-27 圖示：悶燒的陷阱；這次之前 BLAZE_ROD（跟魯兹安本身一樣）
     type: spell
     tier: 1
     tags: [spell, area, fire, duration, command, hazard, projectile]   # 2026-10-29 照 PoE2 寶石標籤補 hazard、projectile
     tags_remove: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Ruzhan's Trap）：自動規則加的拿掉／原作有的補上
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
-    mechanic: zone
-    zone: { range: 20, radius: 5, duration: 6, interval: 0.7, damage: 100, max: 3 }   # 原作 8 個符文、踩到才噴；引擎照一塊 5 格的地面每 0.7 秒打一下
-    damage: [5, 7]   # 2026-10-26 照 PoE2 Ruzhan's Trap（龍捲 1 級 5～7）
+    # 2026-11-01 照 PoE2 Ruzhan's Trap：擲出的巨劍是投射物（4～6 火焰、穿透所有目標、每秒 35 公尺），落地撒符文、符文觸發龍捲（AscGranted.placeRunes、asc_ruzhan_tornado）；
+    #   這次之前 mechanic: zone（一塊 5 格的地面 6 秒、每 0.7 秒打一下、最多 3 塊，傷害 5～7），沒有投射物、符文、龍捲
+    mechanic: projectile
+    projectile: { speed: 1.75, range: 20, size: 0.4, pierce: 20 }   # 原作穿透所有目標（引擎上限 20）
+    damage: [4, 6]   # 2026-11-01 照 PoE2 Ruzhan's Trap（投射物 1 級 4～6）
     damage_types: { fire: 1.0 }
     cast_time: 1.0
     effectiveness: 1.0
     cooldown: 8
     mana: [4, 5, 6, 7, 8, 9, 11, 12, 14, 16, 18, 20, 22, 25, 28, 31, 34, 38, 42, 47]   # 2026-10-29 照 PoE2（poe2db Ruzhan's Trap 4→47）；這次之前 0（指令其實要花魔力）
+    visual: blazing_star_shell
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 7 }
+
+  # 2026-11-01 照 PoE2 Ruzhan's Trap 的 Tornado：符文被觸發噴出的火焰龍捲（AscGranted.tickRunes 在符文的地方觸發，等級照機關）
+  asc_ruzhan_tornado:
+    name: 火焰龍捲
+    icon: BLAZE_POWDER
+    hidden: true
+    type: spell
+    tags: [spell, area, fire, duration]
+    mechanic: zone
+    zone: { range: 0, radius: 1.2, duration: 4, interval: 0.7, damage: 100 }
+    damage: [5, 7]   # 照 PoE2（龍捲 1 級 5～7）
+    damage_types: { fire: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    mana: 0
     visual: flame_curtain
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 7 }
-      - { stat: ignite.chance, type: MORE, value: 400 }
+      - { stat: ignite.chance, type: MORE, value: 400 }   # 原作「Inflicts 400% more Flammability Magnitude」（易燃幅度＝點燃機率）
 
   asc_ruzhan_zealotry:
     name: 羅贊的狂熱

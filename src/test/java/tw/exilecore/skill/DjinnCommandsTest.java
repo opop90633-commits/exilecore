@@ -16,6 +16,7 @@ class DjinnCommandsTest {
         assertEquals("final_mirage_spirit", DjinnCommands.djinnFor("mirage_spirit_freeze"));
         assertEquals("flame_blade_spirit", DjinnCommands.djinnFor("blade_spirit_device.tornado"));
         assertEquals("flame_blade_spirit", DjinnCommands.djinnFor("asc_ruzhan_wave"));
+        assertEquals("flame_blade_spirit", DjinnCommands.djinnFor("asc_ruzhan_tornado"), "2026-11-01：羅贊的機關的火焰龍捲");
     }
 
     @Test

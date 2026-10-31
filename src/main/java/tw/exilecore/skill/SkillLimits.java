@@ -14,7 +14,8 @@ import java.util.Set;
  * 各個上限在哪裡加（2026-10-28 一起接上；這次之前只有地面效果 zone.max 吃 skill.limit）：
  * <ul>
  *   <li>圖騰（SkillBuild.totems，含星咒圖騰）、鐘（SkillDeployables：驚雷之鐘）、空無之鐘（AscPaths）</li>
- *   <li>地面效果（SkillExecutor.zoneMax：炎脈裂地、流焰天幕、雷雲、烈陽珠、積雷雲、野旋風、地火柱、穢陣、土壁擊、魯兹安的陷阱）</li>
+ *   <li>地面效果（SkillExecutor.zoneMax：炎脈裂地、流焰天幕、雷雲、烈陽珠、積雷雲、野旋風、地火柱、穢陣、土壁擊）</li>
+ *   <li>2026-11-01：羅贊的機關的火焰符文（AscGranted.placeRunes，原作上限 21 個）</li>
  *   <li>召喚物上限（SkillBuild.minions，只有帶 limit 標籤的：喚屍、召喚焚魂、掘骸的骨構體、蟲噬群）</li>
  *   <li>龍捲風（裂空箭）、荊棘（荊棘矢）、毒苞（瘴苞雨）、鋸齒地面（地動）、插著的矛（炎爆矛、霆落矛）、旋風（颶風槍）、
  *       雷流場的電球、燼種、折光之鏡、腐屍爆的毒雲、祭品的骨柱、印記標記的目標</li>

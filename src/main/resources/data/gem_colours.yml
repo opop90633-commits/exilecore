@@ -349,9 +349,6 @@ supports:
   quick_strike: g
   quick_chant: b
   added_fire: r
-  savage_flare: b
-  echo_remnant: b
-  minion_damage: b
   condense_power: b
   chain: g
   life_leech: r
@@ -363,21 +360,15 @@ supports:
   ice_seal: b
   thunder_smite: g
   slay_cut_ii: g
-  burst: g
   split_shot: g
-  critical_damage: g
-  added_chaos: b
   minion_life: b
   angry_roar_ii: r
-  minion_speed: b
+  minion_speed: g
   twin_chant: b
   light_split: g
   purify_essence: b
-  grudge_cinder: r
-  sweep_strike: r
+  grudge_cinder: b
   savage_cruelty: r
-  weighty_arrow: g
-  quick_load_gear: g
   break_plate_iii: r
   blood_collapse: r
   ground_nail_iii: g
@@ -389,34 +380,23 @@ supports:
   blazing_volt: g
   burning_will: r
   sinking_hammer: r
-  drive_servants: b
   long_stay: r
-  quake_zone: r
+  quake_zone: b
   hug_range: g
   hug_range_ii: g
-  curse_seize: b
   focus_mind: g
   grave_wound: r
   potent_toxin: g
   conduction: g
-  post_wrath: r
   element_corps: b
   flesh_bulwark: r
   bloodthirst_summon: b
-  curse_extend: b
   mana_draw: b
   extra_shells: g
-  sinking_blow: r
   quick_return: g
-  far_howl: r
   execute: r
   final_sentence_ii: r
   final_sentence_iii: r
-  vs_chilled: b
-  vs_ignited: r
-  vs_shocked: g
-  vs_poisoned: g
-  vs_bleeding: r
   build_poise: b
   ponderous_weight: r
   merciless_heart: r
