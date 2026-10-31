@@ -86,7 +86,7 @@ public final class StatKeys {
     /** 2026-10：沒有冷卻的技能多出 x 秒冷卻（FLAT；蓄域、蓄鋒這類輔助）。 */
     public static final String SKILL_ADDED_COOLDOWN = "skill.added_cooldown";
     /** FLAT：投射物第一次打中時分裂成幾發（歧射輔助）。 */
-    public static final String SKILL_FORK = "skill.fork";
+    public static final String SKILL_FORK = "skill.split_shot";
     /** 開關：投射物停下來之後飛回施放者身邊，路上再打一次（回歸輔助）。 */
     public static final String FLAG_RETURNING = "flag.returning";
     /** 開關：法術施放後再自動重複一次（雙詠）。 */
@@ -149,7 +149,7 @@ public final class StatKeys {
     public static final String SIG_BLOOD_RAGE = "sig.blood_rage";
     public static final String SIG_FAR_SHOT = "sig.far_shot";
     public static final String SIG_WINDWALK = "sig.windwalk";
-    public static final String SIG_WILDFIRE = "sig.wildfire";
+    public static final String SIG_WILDFIRE = "sig.field_fire";
     public static final String SIG_WINTER_TOMB = "sig.winter_tomb";
     public static final String SIG_PLAGUE_LORD = "sig.plague_lord";
     public static final String SIG_BLOOD_FEAST = "sig.blood_feast";
@@ -158,7 +158,7 @@ public final class StatKeys {
     public static final String SIG_THUNDER_SOUL = "sig.thunder_soul";
     public static final String SIG_VOID_STEP = "sig.void_step";
     public static final String SIG_GODSLAYER = "sig.godslayer";
-    public static final String SIG_SACRIFICE = "sig.sacrifice";
+    public static final String SIG_SACRIFICE = "sig.servant_corpse_swap";
     /** 造成的物理傷害有 x% 偷取為生命（百分比點數，FLAT）。 */
     public static final String LEECH_LIFE = "leech.life";
     /** 造成的物理傷害有 x% 偷取為魔力（百分比點數，FLAT；跟生命偷取一樣先存起來再慢慢回）。 */
@@ -558,9 +558,9 @@ public final class StatKeys {
      *  霜蝕（冰晶周圍一直冰）、碎晶噴出冰片、冰鍍（打碎冰晶時得到附加冰冷的增益）。 */
     public static final String CRYSTAL_COUNT = "crystal.count";
     public static final String CRYSTAL_HITS = "crystal.hits";
-    public static final String FLAG_HOARFROST = "flag.hoarfrost";
+    public static final String FLAG_HOARFROST = "flag.frost_etch_crystal";
     public static final String FLAG_CRYSTAL_SHARDS = "flag.crystal_shards";
-    public static final String FLAG_VERGLAS = "flag.verglas";
+    public static final String FLAG_VERGLAS = "flag.frost_shell";
     /** 2026-10：連擊（近戰打擊打中累積，4 秒沒累積就歸零）：多累積一層的機率 %（FLAT）、連擊持續（INCREASED）、
      *  每層更多 x% 傷害（FLAT；最多 10 層）、終式：放的時候有 3 層以上就全部用掉、這一下更多 x% 傷害（FLAT）。 */
     public static final String COMBO_EXTRA_CHANCE = "combo.extra_chance";
@@ -601,7 +601,7 @@ public final class StatKeys {
     /** 2026-10-26（PoE2 的 Lightning Warp）：瞄準敵人；生命低到可以撲殺就瞬移進去炸開，不然掛 4 秒標記、期間掉到門檻就自動瞬移。 */
     public static final String FLAG_LIGHTNING_WARP = "flag.lightning_warp";
     /** 2026-10-26：雷霆共鳴多打的那幾下更少幾 %（逐級，寫在 level_modifiers）。 */
-    public static final String FULMINATION_LESS = "fulmination.less";
+    public static final String FULMINATION_LESS = "thunder_resonance.less";
     /** 2026-10-26：折光之鏡每幾秒出現一面（逐級）。 */
     public static final String MIRROR_INTERVAL = "mirror.interval";
     /** 2026-10-26：鴉群密謀身邊有稀有、傳奇敵人時每幾秒加入一隻烏鴉（逐級）。 */
@@ -620,7 +620,7 @@ public final class StatKeys {
     /** 2026-10：魔力在 90% 以上時的傷害（MORE）。 */
     public static final String DAMAGE_HIGH_MANA = "damage.high_mana";
     /** 2026-10：自己生命百分比比敵人低時更多 x% 傷害、比較高時更少 x/2%（FLAT）。 */
-    public static final String DAMAGE_CLASH = "damage.clash";
+    public static final String DAMAGE_CLASH = "damage.back_to_wall";
     /** 近身的距離（格）。 */
     /** FLAT（旗標）：2026-10-31 照 PoE2 Chober Chaber：召喚物傷害的增加、減少也套用在你身上（CombatListener）。 */
     public static final String MINION_DAMAGE_AFFECTS_YOU = "flag.minion_damage_affects_you";

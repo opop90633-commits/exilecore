@@ -39,13 +39,13 @@ import java.util.UUID;
  */
 final class StoredReleases implements Listener {
 
-    static final String IRON_WARD = "iron_ward";
-    static final String PLAGUE_BEARER = "plague_bearer";
+    static final String IRON_WARD = "iron_rampart_guard";
+    static final String PLAGUE_BEARER = "pestilence_sac_burst";
     static final String IRON_WARD_RELEASE = "iron_ward_release";
     static final String PLAGUE_BEARER_RELEASE = "plague_bearer_release";
     /** 光環的效果（說明用；開著才存，看 AuraService 開著沒）。 */
-    static final String FLAG_IRON_WARD = "flag.iron_ward";
-    static final String FLAG_PLAGUE_BEARER = "flag.plague_bearer";
+    static final String FLAG_IRON_WARD = "flag.iron_rampart_guard";
+    static final String FLAG_PLAGUE_BEARER = "flag.pestilence_sac_burst";
 
     /** 鐵壁守：擋下的物理傷害存幾 %（1～40 級，poe2db）。 */
     static final double[] IRON_WARD_PERCENT = {100, 120, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340, 360, 380, 400, 420, 440, 460, 480,

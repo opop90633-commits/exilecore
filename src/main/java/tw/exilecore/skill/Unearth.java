@@ -19,17 +19,17 @@ import java.util.function.Predicate;
  */
 final class Unearth {
 
-    static final String ID = "bone_spikes";
+    static final String ID = "dig_remains";
 
     /**
      * 2026-10-30 照 PoE2（RePoE UnearthPlayer：Spell、Damage、Area、Physical、Minion、CreatesMinion，沒有 Persistent／Multicastable…）：
      * 原作不能輔助掘骸的（要持續傷害法術、要產生／消耗戰星、只給弩的…）：拖滯、恆星、速蝕、久地、靜電、滿星、倍星、雷星。
      */
-    static final java.util.Set<String> BLOCKED = java.util.Set.of("hinder", "perpetual_charge", "intense_agony", "persistent_ground",
-            "static_shocks", "charge_profusion", "heightened_charges", "empowered_sparks");
+    static final java.util.Set<String> BLOCKED = java.util.Set.of("hinder", "eternal_star", "fast_decay", "enduring_terrain",
+            "still_charge", "full_stars", "double_star", "thunder_star");
 
     /** 2026-10-30 照 PoE2：只能輔助「常駐」召喚物的（Minion AND Persistent）：骨構體 15 秒就消失，掛不上：魂收、骸恤、巨魄。 */
-    static final java.util.Set<String> PERSISTENT_ONLY = java.util.Set.of("essence_harvest", "deathmarch", "giant_minions");
+    static final java.util.Set<String> PERSISTENT_ONLY = java.util.Set.of("soul_reap", "bone_mercy", "huge_soul");
     static final String CONSTRUCT = "unearth_construct";
 
     private final ExileCore plugin;

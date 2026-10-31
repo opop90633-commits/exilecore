@@ -65,12 +65,12 @@ class AttributeScalingKeysTest {
     }
 
     @Test
-    void supportColoursFollowPoe2() {
-        assertEquals(SupportColours.RED, SupportColours.colour("heft"));
+    void supportColoursFollowRef() {
+        assertEquals(SupportColours.RED, SupportColours.colour("ponderous_weight"));
         assertEquals(SupportColours.GREEN, SupportColours.colour("pierce"));
-        assertEquals(SupportColours.BLUE, SupportColours.colour("faster_casting"));
-        assertEquals(0, SupportColours.colour("vruuns_aftermath"), "白色的不算任何顏色");
-        final SupportColours.Counts counts = SupportColours.count(List.of("heft", "brutality", "pierce", "vruuns_aftermath"));
+        assertEquals(SupportColours.BLUE, SupportColours.colour("quick_chant"));
+        assertEquals(0, SupportColours.colour("crystal_shatter_howl"), "白色的不算任何顏色");
+        final SupportColours.Counts counts = SupportColours.count(List.of("ponderous_weight", "savage_cruelty", "pierce", "crystal_shatter_howl"));
         assertEquals(new SupportColours.Counts(2, 1, 0, 4), counts);
     }
 

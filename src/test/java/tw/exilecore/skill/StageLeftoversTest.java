@@ -42,37 +42,37 @@ class StageLeftoversTest {
     }
 
     @Test
-    void levelTablesMatchPoe2() {
+    void levelTablesMatchRef() {
         // 鐘的異常門檻／暈眩門檻 18 → 6357 → 148290
-        assertEquals(18, StageAttacks.limit(profile("tempest_bell", 1), "bell_ailment", 0));
-        assertEquals(6357, StageAttacks.limit(profile("tempest_bell", 20), "bell_poise", 0));
-        assertEquals(148290, StageAttacks.limit(profile("tempest_bell", 40), "bell_ailment", 0));
+        assertEquals(18, StageAttacks.limit(profile("startling_thunder_bell", 1), "bell_ailment", 0));
+        assertEquals(6357, StageAttacks.limit(profile("startling_thunder_bell", 20), "bell_poise", 0));
+        assertEquals(148290, StageAttacks.limit(profile("startling_thunder_bell", 40), "bell_ailment", 0));
         // 冰晶生命 36 → 12714 → 33734（霜壁、凍壁矢）；土牆 36 → 12714 → 45597
-        assertEquals(36, StageAttacks.limit(profile("ice_wall", 1), "crystal_life", 0));
-        assertEquals(12714, StageAttacks.limit(profile("glacial_bolt", 20), "crystal_life", 0));
-        assertEquals(33734, StageAttacks.limit(profile("ice_wall", 40), "crystal_life", 0));
-        assertEquals(45597, StageAttacks.limit(profile("shield_wall", 40), "wall_life", 0));
+        assertEquals(36, StageAttacks.limit(profile("frost_rampart", 1), "crystal_life", 0));
+        assertEquals(12714, StageAttacks.limit(profile("frozen_wall_shaft", 20), "crystal_life", 0));
+        assertEquals(33734, StageAttacks.limit(profile("frost_rampart", 40), "crystal_life", 0));
+        assertEquals(45597, StageAttacks.limit(profile("earth_wall_strike", 40), "wall_life", 0));
         // 寒魄掌門檻 32 → 12788 → 13640；血獵 1 → 381 → 2190；寒晶雷曝露等級上限 20 → 100
-        assertEquals(32, StageAttacks.limit(profile("frost_palm", 1), "palm_threshold", 0));
-        assertEquals(12788, StageAttacks.limit(profile("frost_palm", 20), "palm_threshold", 0));
-        assertEquals(13640, StageAttacks.limit(profile("frost_palm", 40), "palm_threshold", 0));
-        assertEquals(381, StageAttacks.limit(profile("blood_harvest", 20), "blood_per", 0));
-        assertEquals(20, StageAttacks.limit(profile("frost_mine", 1), "exposure_level", 0));
-        assertEquals(100, StageAttacks.limit(profile("frost_mine", 20), "exposure_level", 0));
+        assertEquals(32, StageAttacks.limit(profile("cold_spirit_palm", 1), "palm_threshold", 0));
+        assertEquals(12788, StageAttacks.limit(profile("cold_spirit_palm", 20), "palm_threshold", 0));
+        assertEquals(13640, StageAttacks.limit(profile("cold_spirit_palm", 40), "palm_threshold", 0));
+        assertEquals(381, StageAttacks.limit(profile("blood_hunt", 20), "blood_per", 0));
+        assertEquals(20, StageAttacks.limit(profile("chill_crystal_mine", 1), "exposure_level", 0));
+        assertEquals(100, StageAttacks.limit(profile("chill_crystal_mine", 20), "exposure_level", 0));
         // 雷暴震波 240% → 869% → 3157%（引霆突一般突進 120% 的兩倍起）
         assertEquals(2.4, config.skill(StageLeftovers.TEMPEST_SHOCKWAVE).effectiveness().at(1), 1e-9);
         assertEquals(8.69, config.skill(StageLeftovers.TEMPEST_SHOCKWAVE).effectiveness().at(20), 1e-9);
         assertEquals(31.57, config.skill(StageLeftovers.TEMPEST_SHOCKWAVE).effectiveness().at(40), 1e-9);
         // 分段：熾陽之矛點燃地面 350% → 1429%、奔雷踏鋸齒地面爆開每級 40%、回旋鍛錘裂地 75% → 198% → 380%、地火柱開場爆發
-        assertEquals(14.29, SkillStages.get("sunfire_spear", "ground").effectiveness().at(20), 1e-9);
-        assertEquals(0.4, SkillStages.get("stampede", "explosion").effectiveness().at(33), 1e-9);
-        assertEquals(1.98, SkillStages.get("forge_hammer", "fissure").effectiveness().at(20), 1e-9);
-        assertEquals(5, SkillStages.get("forge_hammer", "fissure").count().intAt(20));
+        assertEquals(14.29, SkillStages.get("blazing_sun_spear", "ground").effectiveness().at(20), 1e-9);
+        assertEquals(0.4, SkillStages.get("rushing_thunder_stomp", "explosion").effectiveness().at(33), 1e-9);
+        assertEquals(1.98, SkillStages.get("returning_smith_hammer", "fissure").effectiveness().at(20), 1e-9);
+        assertEquals(5, SkillStages.get("returning_smith_hammer", "fissure").count().intAt(20));
         assertEquals(1.313, SkillStages.get("volcano", "eruption").effectiveness().at(20), 1e-9);
         // 毒苞倒數快 1% 的門檻（瘴域、瘴苞雨同一張表）
-        assertEquals(466, levelValue("toxic_domain", StageLeftovers.PUSTULE_FASTER_PER, 20), 1e-9);
-        assertEquals(2178, levelValue("toxic_growth", StageLeftovers.PUSTULE_FASTER_PER, 40), 1e-9);
-        assertEquals(969, levelValue("toxic_growth", StageLeftovers.PUSTULE_MORE_PER, 20), 1e-9);
+        assertEquals(466, levelValue("miasma_zone", StageLeftovers.PUSTULE_FASTER_PER, 20), 1e-9);
+        assertEquals(2178, levelValue("miasma_bud_rain", StageLeftovers.PUSTULE_FASTER_PER, 40), 1e-9);
+        assertEquals(969, levelValue("miasma_bud_rain", StageLeftovers.PUSTULE_MORE_PER, 20), 1e-9);
     }
 
     private static double levelValue(final String skill, final String stat, final int level) {
@@ -85,16 +85,16 @@ class StageLeftoversTest {
     }
 
     @Test
-    void yamlTimingsMatchPoe2() {
+    void yamlTimingsMatchRef() {
         // 崩城落彈 0.5 秒落地、0.6 秒後爆炸；冰脊裂主波 4.8 公尺；雷雲每 4 秒；寒魄掌不再打中就炸
-        assertEquals(0.5, config.skill("siege_salvo").params().delay(), 1e-9);
-        assertEquals(0.6, SkillStages.get("siege_salvo", "explosion").after(), 1e-9);
-        assertEquals(tw.exilecore.core.Units.metres(4.8), config.skill("glacial_cascade").params().length().at(20), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
-        assertEquals(4.0, config.skill("storm_orb").params().zone().interval(), 1e-9);
-        for (final Modifier modifier : config.skill("frost_palm").modifiers()) {
+        assertEquals(0.5, config.skill("fortress_crumble_shell").params().delay(), 1e-9);
+        assertEquals(0.6, SkillStages.get("fortress_crumble_shell", "explosion").after(), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(4.8), config.skill("ice_ridge_rift").params().length().at(20), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
+        assertEquals(4.0, config.skill("thunder_cloud").params().zone().interval(), 1e-9);
+        for (final Modifier modifier : config.skill("cold_spirit_palm").modifiers()) {
             assertFalse(modifier.stat().startsWith("proc."), "寒魄掌改成照門檻碎，不再 proc.hit");
         }
-        for (final Modifier modifier : config.skill("blood_harvest").modifiers()) {
+        for (final Modifier modifier : config.skill("blood_hunt").modifiers()) {
             assertFalse(modifier.stat().startsWith("proc."), "血獵的血爆改成 StageLeftovers 照失血放");
         }
     }

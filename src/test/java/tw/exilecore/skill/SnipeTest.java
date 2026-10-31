@@ -35,14 +35,14 @@ class SnipeTest {
     }
 
     @Test
-    void tagsAndCostFollowPoe2() {
-        final SkillDefinition snipe = config.skill("snipe");
+    void tagsAndCostFollowRef() {
+        final SkillDefinition snipe = config.skill("cloud_pierce_arrow");
         assertTrue(snipe.tags().containsAll(Set.of(Tags.ATTACK, Tags.AREA, Tags.PROJECTILE, Tags.COLD, "channelling")));
         assertEquals(0.45, snipe.attackSpeed(), 1e-9);
         assertEquals(18, snipe.mana().at(1), 1e-9, "每秒 17.55");
         assertEquals(119, snipe.mana().at(20), 1e-9, "每秒 118.57");
         assertEquals(462, snipe.mana().at(40), 1e-9);
-        assertTrue(config.charge("snipe").channel().attackSpeedCost());
+        assertTrue(config.charge("cloud_pierce_arrow").channel().attackSpeedCost());
     }
 
     @Test
@@ -50,21 +50,21 @@ class SnipeTest {
         assertEquals(179, ChargeSpec.scaledCost(119, 1.5));
         assertEquals(119, ChargeSpec.scaledCost(119, 1.0));
         assertEquals(1, ChargeSpec.scaledCost(1, 0.2), "至少 1");
-        final ChargeSpec spec = config.charge("snipe");
-        final SkillBuild plain = build("snipe", 20, new StatSheet(), List.of());
+        final ChargeSpec spec = config.charge("cloud_pierce_arrow");
+        final SkillBuild plain = build("cloud_pierce_arrow", 20, new StatSheet(), List.of());
         final StatSheet fast = new StatSheet().add(Modifier.increased(StatKeys.ATTACK_SPEED, 0.5, "測試"));
-        final SkillBuild quick = build("snipe", 20, fast, List.of());
+        final SkillBuild quick = build("cloud_pierce_arrow", 20, fast, List.of());
         assertEquals(plain.manaCost(), spec.drainCost(plain, new StatSheet()));
         assertEquals(ChargeSpec.scaledCost(quick.manaCost(), 1.5), spec.drainCost(quick, fast), "增加 50% 攻擊速度：每秒消耗 ×1.5");
         // 其他引導技能不受影響
-        final ChargeSpec strike = config.charge("true_strike");
-        final SkillBuild trueStrike = SkillBuild.of(config, config.skill("true_strike"), 20, 100, false, List.of(), Set.of(Tags.MACE), fast);
+        final ChargeSpec strike = config.charge("charged_blow");
+        final SkillBuild trueStrike = SkillBuild.of(config, config.skill("charged_blow"), 20, 100, false, List.of(), Set.of(Tags.MACE), fast);
         assertEquals(trueStrike.manaCost(), strike.drainCost(trueStrike, fast));
     }
 
     @Test
     void explosionAndIcyBlastUseTheirOwnTables() {
-        final SkillDefinition snipe = config.skill("snipe");
+        final SkillDefinition snipe = config.skill("cloud_pierce_arrow");
         assertEquals(4.0, config.parentShare("proc_snipe_blast", snipe, 1), 1e-9, "400% ÷ 100%");
         assertEquals(14.49 / 3.12, config.parentShare("proc_snipe_blast", snipe, 20), 1e-9);
         assertEquals(6.3, config.parentShare("proc_snipe_ice_blast", snipe, 1), 1e-9, "630% ÷ 100%");
@@ -79,9 +79,9 @@ class SnipeTest {
 
     @Test
     void icyBlastConvertsToColdAndHitsUniquesHarder() {
-        final SkillBuild parent = build("snipe", 20, new StatSheet(), List.of());
+        final SkillBuild parent = build("cloud_pierce_arrow", 20, new StatSheet(), List.of());
         final SkillBuild sub = build("proc_snipe_ice_blast", 20, new StatSheet(), List.of());
-        final SkillBuild ice = SupportProcs.ownSubBuild(sub, parent, config.parentShare("proc_snipe_ice_blast", config.skill("snipe"), 20), new StatSheet());
+        final SkillBuild ice = SupportProcs.ownSubBuild(sub, parent, config.parentShare("proc_snipe_ice_blast", config.skill("cloud_pierce_arrow"), 20), new StatSheet());
         final StatSheet effective = ice.profile().effective(new StatSheet());
         assertEquals(100, effective.flat(StatKeys.DAMAGE_CONVERT + "cold", ice.profile().tags()), 1e-9, "物理 100% 轉冰冷");
         assertEquals(1.5, effective.more(StatKeys.DAMAGE_VS_UNIQUE, ice.profile().tags()), 1e-9, "20 級對傳奇更多 50%");
@@ -99,22 +99,22 @@ class SnipeTest {
 
     @Test
     void qualityWidensExplosionsAndAreaComesFromSnipe() {
-        final SkillDefinition snipe = config.skill("snipe");
+        final SkillDefinition snipe = config.skill("cloud_pierce_arrow");
         final List<Modifier> quality = SkillService.qualityModifiers(snipe, 20);
         assertTrue(quality.stream().anyMatch(m -> m.stat().equals(SupportProcs.EXPLOSION_RADIUS_FLAT) && m.type() == ModType.FLAT
                 && Math.abs(m.value() - 0.4) < 1e-9), "20% 品質：爆炸半徑 +0.4 格");
-        final SkillBuild parent = build("snipe", 20, new StatSheet(), quality);
+        final SkillBuild parent = build("cloud_pierce_arrow", 20, new StatSheet(), quality);
         final SkillBuild blast = SupportProcs.ownSubBuild(build("proc_snipe_blast", 20, new StatSheet(), List.of()), parent, 4, new StatSheet());
         assertEquals(tw.exilecore.core.Units.metres(2.5 + 0.4), blast.radius(), 1e-9); // 2026-10-29 照站長：基礎 2.5 公尺、品質 +0.4 公尺都換算成格
         final SkillBuild ice = SupportProcs.ownSubBuild(build("proc_snipe_ice_blast", 20, new StatSheet(), List.of()), parent, 6, new StatSheet());
         assertEquals(tw.exilecore.core.Units.metres(3.0 + 0.4), ice.radius(), 1e-9);
         // 穿雲箭上的增加範圍（輔助、角色）也加在爆炸上，不會重複算角色的
         final StatSheet wide = new StatSheet().add(Modifier.increased(StatKeys.SKILL_AREA, 0.44, "測試"));
-        final SkillBuild wideBlast = SupportProcs.ownSubBuild(build("proc_snipe_blast", 20, wide, List.of()), build("snipe", 20, wide, List.of()), 4, wide);
+        final SkillBuild wideBlast = SupportProcs.ownSubBuild(build("proc_snipe_blast", 20, wide, List.of()), build("cloud_pierce_arrow", 20, wide, List.of()), 4, wide);
         assertEquals(tw.exilecore.core.Units.metres(2.5) * 1.2, wideBlast.radius(), 1e-9, "增加 44% 範圍 = 半徑 ×1.2");
         assertEquals("品質 +20%：爆炸與寒冰爆破的半徑 +0.4 格", SkillService.qualityText(snipe, 20)); // 2026-10-30：1 公尺 = 1 格
         // 額外的品質效果（進階奇術）：更多攻擊速度、更長的完美時機區間
-        final List<Modifier> advanced = tw.exilecore.currency.GemQuality.advancedModifiers("snipe", 20, "測試");
+        final List<Modifier> advanced = tw.exilecore.currency.GemQuality.advancedModifiers("cloud_pierce_arrow", 20, "測試");
         assertTrue(advanced.stream().anyMatch(m -> m.stat().equals(StatKeys.ATTACK_SPEED) && m.type() == ModType.MORE));
         assertTrue(advanced.stream().anyMatch(m -> m.stat().equals(tw.exilecore.item.unique.UniqueStats.PERFECT_WINDOW)
                 && m.type() == ModType.INCREASED && Math.abs(m.value() - 0.2) < 1e-9));

@@ -1199,7 +1199,7 @@ public final class SupportMechanics implements Listener {
         // 熔魂嘯：近戰打擊打中時觸發火山噴發（0.4 秒一次）
         final Kaom active = kaom.get(player.getUniqueId());
         if (active != null && active.eruption != null && now <= active.untilTick && tags.contains(Tags.MELEE) && tags.contains(Tags.STRIKE)
-                && skill.isAttack() && !skill.id().startsWith("ancestral_")) {
+                && skill.isAttack() && !skill.id().startsWith("ancestral_") && !skill.id().startsWith("forebear_") && !skill.id().equals("hero_spirit_totem") && !skill.id().equals("molten_soul_shriek")) {
             castHidden(player, active.eruption, active.level, target.getLocation(), ERUPTION_COOLDOWN, target);
         }
     }
@@ -1259,7 +1259,7 @@ public final class SupportMechanics implements Listener {
         if (max.total() <= 0) {
             return;
         }
-        final SkillProfile profile = new SkillProfile("elemental_discharge", tags, 1.0, min, max, Map.of(),
+        final SkillProfile profile = new SkillProfile("element_collapse", tags, 1.0, min, max, Map.of(),
                 List.of(Modifier.flat(StatKeys.SPELL_BASE_CRIT, 10, "元素崩解"), Modifier.flat(StatKeys.FLAG_NO_AILMENTS, 1, "元素崩解")));
         final Location at = center.getLocation();
         for (final LivingEntity target : service.targets().around(at, tw.exilecore.core.Units.metres(2.0), player)) { // 元素崩解 2 公尺 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算

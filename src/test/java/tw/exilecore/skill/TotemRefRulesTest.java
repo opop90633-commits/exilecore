@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 2026-10-26 照 PoE2 0.5 的圖騰規則：放置時間、英靈圖騰固定上限、先祖魂約、弩台抗性。 */
-class TotemPoe2RulesTest {
+class TotemRefRulesTest {
 
     static SkillConfig config;
 
@@ -33,23 +33,23 @@ class TotemPoe2RulesTest {
     @Test
     void placementTimeIsTheGemCastTimeAndOnlyPlacementSpeedCounts() {
         final StatSheet plain = new StatSheet();
-        assertEquals(12, build("shockwave_totem", plain).intervalTicks(plain), 1e-9, "崩震圖騰 0.6 秒");
-        assertEquals(20, build("siege_ballista", plain).intervalTicks(plain), 1e-9, "弩台 1 秒");
-        assertEquals(10, build("ancestral_totem", plain).intervalTicks(plain), 1e-9, "英靈圖騰 0.5 秒");
+        assertEquals(12, build("collapse_quake_totem", plain).intervalTicks(plain), 1e-9, "崩震圖騰 0.6 秒");
+        assertEquals(20, build("skyward_crossbow_turret", plain).intervalTicks(plain), 1e-9, "弩台 1 秒");
+        assertEquals(10, build("hero_spirit_totem", plain).intervalTicks(plain), 1e-9, "英靈圖騰 0.5 秒");
         final StatSheet fast = new StatSheet().add(Modifier.increased(StatKeys.ATTACK_SPEED, 1.0, "測試"))
                 .add(Modifier.increased(StatKeys.CAST_SPEED, 1.0, "測試"));
-        assertEquals(12, build("shockwave_totem", fast).intervalTicks(fast), 1e-9, "攻擊速度不影響放圖騰");
-        assertEquals(20, build("dark_idol", fast).intervalTicks(fast), 1e-9, "施法速度不影響放圖騰");
+        assertEquals(12, build("collapse_quake_totem", fast).intervalTicks(fast), 1e-9, "攻擊速度不影響放圖騰");
+        assertEquals(20, build("nether_puppet", fast).intervalTicks(fast), 1e-9, "施法速度不影響放圖騰");
         final StatSheet urgent = new StatSheet().add(Modifier.increased(tw.exilecore.stats.SupportKeys.TOTEM_PLACEMENT_SPEED, 1.0, "測試"));
-        assertEquals(6, build("shockwave_totem", urgent).intervalTicks(urgent), 1e-9, "放圖騰的速度 +100%：一半");
+        assertEquals(6, build("collapse_quake_totem", urgent).intervalTicks(urgent), 1e-9, "放圖騰的速度 +100%：一半");
     }
 
     @Test
     void ancestralWarriorTotemLimitCannotBeModified() {
         final StatSheet sheet = new StatSheet().add(Modifier.flat(StatKeys.SKILL_TOTEMS, 2, "測試"))
                 .add(Modifier.flat(StatKeys.FLAG_ANCESTRAL_BOND, 1, "先祖魂約"));
-        assertEquals(10, build("ancestral_totem", sheet).totems(), "英靈圖騰固定 10 根");
-        assertEquals(6, build("shockwave_totem", sheet).totems(), "其他圖騰：(1 + 2) × 2");
+        assertEquals(10, build("hero_spirit_totem", sheet).totems(), "英靈圖騰固定 10 根");
+        assertEquals(6, build("collapse_quake_totem", sheet).totems(), "其他圖騰：(1 + 2) × 2");
     }
 
     @Test
@@ -65,7 +65,7 @@ class TotemPoe2RulesTest {
     }
 
     @Test
-    void totemLifeFollowsThePoe2AllyTable() throws IOException {
+    void totemLifeFollowsTheRefAllyTable() throws IOException {
         final java.util.function.IntToDoubleFunction life = level -> 100.0;
         final java.util.function.IntFunction<double[]> damage = level -> new double[] {4.0 * level, 4.0 * level};
         final double low = SkillDeployables.totemBase(config, 1, 1, life, damage, 1.0)[0];
@@ -84,14 +84,14 @@ class TotemPoe2RulesTest {
 
     @Test
     void ballistasGainResistancesByLevel() {
-        final StatSheet shockwave = build("shockwave_totem", new StatSheet()).profile().effective(new StatSheet());
+        final StatSheet shockwave = build("collapse_quake_totem", new StatSheet()).profile().effective(new StatSheet());
         assertTrue(shockwave.flat(StatKeys.TOTEM_RESIST_ELEMENTAL, Set.of()) > 0);
-        for (final String id : List.of("siege_ballista", "artillery_ballista")) {
+        for (final String id : List.of("skyward_crossbow_turret", "nailfall_crossbow_turret")) {
             final StatSheet effective = build(id, new StatSheet()).profile().effective(new StatSheet());
             assertEquals(shockwave.flat(StatKeys.TOTEM_RESIST_ELEMENTAL, Set.of()), effective.flat(StatKeys.TOTEM_RESIST_ELEMENTAL, Set.of()), 1e-9, id);
             assertEquals(shockwave.flat(StatKeys.TOTEM_RESIST_CHAOS, Set.of()), effective.flat(StatKeys.TOTEM_RESIST_CHAOS, Set.of()), 1e-9, id);
         }
-        assertTrue(config.skill("ancestral_totem").deploy().fixedMax());
+        assertTrue(config.skill("hero_spirit_totem").deploy().fixedMax());
     }
 
     // ---- 2026-10-26 照 PoE2（poe2db Spell Totem／Ancestral Warrior Totem／Shockwave Totem）----
@@ -114,40 +114,40 @@ class TotemPoe2RulesTest {
         assertEquals(27, SkillDeployables.weaponTotemTicks(1.5, 0.5, 1.0), "武器 1.5 次／秒 × 50% = 0.75 次／秒");
         final StatSheet sheet = new StatSheet();
         sheet.setBase(StatKeys.WEAPON_APS, 1.6);
-        assertEquals(25, SkillDeployables.totemTicks(build("shockwave_totem", sheet), sheet, 0), "1.6 × 50% = 0.8 次／秒");
+        assertEquals(25, SkillDeployables.totemTicks(build("collapse_quake_totem", sheet), sheet, 0), "1.6 × 50% = 0.8 次／秒");
         final StatSheet fast = new StatSheet().add(Modifier.increased(StatKeys.ATTACK_SPEED, 0.6, "測試"));
         fast.setBase(StatKeys.WEAPON_APS, 1.6);
-        assertEquals(16, SkillDeployables.totemTicks(build("shockwave_totem", fast), fast, 0), "攻速 +60%");
-        assertTrue(config.skill("shockwave_totem").usableWith(Set.of(Tags.MELEE)), "任何近戰武器");
-        assertEquals(3, config.skill("shockwave_totem").tier());
+        assertEquals(16, SkillDeployables.totemTicks(build("collapse_quake_totem", fast), fast, 0), "攻速 +60%");
+        assertTrue(config.skill("collapse_quake_totem").usableWith(Set.of(Tags.MELEE)), "任何近戰武器");
+        assertEquals(3, config.skill("collapse_quake_totem").tier());
     }
 
     @Test
-    void totemGemQualityFollowsPoe2() throws IOException {
-        final SkillBuild shockwave = withQuality("shockwave_totem", 20);
+    void totemGemQualityFollowsRef() throws IOException {
+        final SkillBuild shockwave = withQuality("collapse_quake_totem", 20);
         assertEquals(16 * 20, shockwave.durationTicks(shockwave.deploy().duration()), "崩震圖騰 12 秒 + 4 秒");
         // 2026-10-27 照 PoE2：這條是額外的品質效果（進階奇術才有，gem_quality.yml 的 advanced），一般品質沒有了
         assertEquals(1, shockwave.totems(), "一般品質不加圖騰上限");
-        assertEquals(2, withQuality("shockwave_totem", 20, true).totems(), "高階奇術：20% 品質 +1 圖騰上限");
-        assertEquals(1, withQuality("shockwave_totem", 10, true).totems(), "10% 品質還不到 +1");
-        final SkillBuild ancestral = withQuality("ancestral_totem", 20);
+        assertEquals(2, withQuality("collapse_quake_totem", 20, true).totems(), "高階奇術：20% 品質 +1 圖騰上限");
+        assertEquals(1, withQuality("collapse_quake_totem", 10, true).totems(), "10% 品質還不到 +1");
+        final SkillBuild ancestral = withQuality("hero_spirit_totem", 20);
         assertEquals(10 * 20, ancestral.durationTicks(ancestral.deploy().duration()), "英靈圖騰 8 秒 + 2 秒");
-        final SkillBuild ancestralAdvanced = withQuality("ancestral_totem", 20, true);
+        final SkillBuild ancestralAdvanced = withQuality("hero_spirit_totem", 20, true);
         assertEquals(1.0, ancestral.profile().effective(new StatSheet()).apply(StatKeys.TOTEM_LIFE, 1.0, ancestral.profile().tags()), 1e-9);
         assertEquals(1.5, ancestralAdvanced.profile().effective(new StatSheet()).apply(StatKeys.TOTEM_LIFE, 1.0, ancestralAdvanced.profile().tags()), 1e-9,
                 "高階奇術：增加 50% 圖騰生命");
-        final List<Modifier> spellTotem = SkillService.qualityModifiers(config.skill("totem_casting"), 20);
+        final List<Modifier> spellTotem = SkillService.qualityModifiers(config.skill("star_spell_totem"), 20);
         assertTrue(spellTotem.stream().anyMatch(m -> m.stat().equals(tw.exilecore.stats.TotemKeys.DURATION_FLAT) && Math.abs(m.value() - 4) < 1e-9));
         assertTrue(spellTotem.stream().noneMatch(m -> m.stat().equals(tw.exilecore.stats.TotemKeys.CAST_SPEED_PER_TOTEM)));
-        assertTrue(tw.exilecore.ascendancy.AscBuild.advanced("totem_casting", 20, spellTotem).stream()
+        assertTrue(tw.exilecore.ascendancy.AscBuild.advanced("star_spell_totem", 20, spellTotem).stream()
                 .anyMatch(m -> m.stat().equals(tw.exilecore.stats.TotemKeys.CAST_SPEED_PER_TOTEM) && Math.abs(m.value() - 10) < 1e-9), "高階奇術");
     }
 
     @Test
-    void spellTotemAndAncestralTotemFollowPoe2() {
+    void spellTotemAndAncestralTotemFollowRef() {
         double elemental = 0;
         double chaos = 0;
-        for (final ScaledMod mod : config.levelModifiers("totem_casting")) {
+        for (final ScaledMod mod : config.levelModifiers("star_spell_totem")) {
             final Modifier at20 = mod.toModifier(20, 1.0, "測試");
             if (at20.stat().equals(StatKeys.TOTEM_RESIST_ELEMENTAL)) {
                 elemental = at20.value();
@@ -157,13 +157,13 @@ class TotemPoe2RulesTest {
         }
         assertEquals(75, elemental, 1e-9);
         assertEquals(35, chaos, 1e-9);
-        final SkillDefinition ancestral = config.skill("ancestral_totem");
+        final SkillDefinition ancestral = config.skill("hero_spirit_totem");
         assertEquals(13, ancestral.tier());
         assertTrue(ancestral.tags().containsAll(Set.of(Tags.META, Tags.TOTEM, Tags.DURATION)));
         // meta 標籤不能讓能量輔助、骰運掛上英靈圖騰；能量輔助也不能掛上星咒圖騰
-        assertTrue(!config.support("boundless_energy").supports(ancestral));
-        assertTrue(!config.support("fluke").supports(ancestral));
-        assertTrue(!config.support("boundless_energy").supports(config.skill("totem_casting")));
+        assertTrue(!config.support("surge_power_ii").supports(ancestral));
+        assertTrue(!config.support("dice_luck").supports(ancestral));
+        assertTrue(!config.support("surge_power_ii").supports(config.skill("star_spell_totem")));
     }
 
     @Test

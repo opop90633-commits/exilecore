@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 2026-10-28 照 PoE2 Decompose（腐屍爆）：毒雲的半徑、上限、中毒、品質（{@link DecomposeClouds}）。 */
-class DecomposePoe2Test {
+class DecomposeRefTest {
 
     static SkillConfig config;
 
@@ -61,14 +61,14 @@ class DecomposePoe2Test {
         mine.addLast(7);
         assertEquals(List.of(2, 3, 4, 5, 6, 7), new ArrayList<>(mine));
         assertEquals(List.of(), DecomposeClouds.makeRoom(new ArrayDeque<>(List.of(1, 2)), 6));
-        assertTrue(SkillLimits.SKILLS.contains("decompose"));
-        assertTrue(config.skill("decompose").tags().contains(SkillLimits.TAG));
+        assertTrue(SkillLimits.SKILLS.contains("rotting_corpse_blast"));
+        assertTrue(config.skill("rotting_corpse_blast").tags().contains(SkillLimits.TAG));
     }
 
     @Test
     void qualityAddsDuration() {
         assertEquals(4, DecomposeClouds.seconds(0), 1e-9);
-        final SkillDefinition decompose = config.skill("decompose");
+        final SkillDefinition decompose = config.skill("rotting_corpse_blast");
         final SkillBuild q20 = SkillBuild.of(config, decompose, 20, 90, false, List.of(), Set.of(Tags.SPELL), new StatSheet(), Set.of(),
                 SkillService.qualityModifiers(decompose, 20));
         final double extra = SkillZones.localFlat(q20.profile(), GemQualityKeys.DURATION_FLAT);

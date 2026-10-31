@@ -317,7 +317,7 @@ class BuildCalcTest {
             assertEquals(entry.getValue().name(), nodes.getAsJsonObject(entry.getKey()).get("name").getAsString());
         }
         assertEquals("循環教義", json.get("keystone").getAsString());
-        assertEquals("梅德偉", json.get("conquerorName").getAsString());
+        assertEquals("巴魯克", json.get("conquerorName").getAsString());
         // 換種子：核心跟著變（同一個種子永遠一樣）
         final JsonObject other = BuildCalc.conquestJson(tree, new tw.exilecore.passive.TimelessJewels.Conquest(socket.id(), conquest.legion(), 1234, 2), Set.of());
         assertEquals(other.toString(), BuildCalc.conquestJson(tree, new tw.exilecore.passive.TimelessJewels.Conquest(socket.id(), conquest.legion(), 1234, 2), Set.of()).toString());

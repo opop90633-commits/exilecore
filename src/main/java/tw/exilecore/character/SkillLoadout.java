@@ -139,6 +139,7 @@ public final class SkillLoadout {
             if (skillId == null || skillId.isBlank()) {
                 throw new IllegalArgumentException("技能代號不能是空的");
             }
+            skillId = tw.exilecore.skill.SkillIds.current(skillId); // 2026-10-31：改過代號的技能換成新代號
             level = Math.max(1, Math.min(CORRUPT_CAP, level)); // 2026-10-30：腐化的可以到 Lv.22
             legacySockets = granted && legacySockets;
             if (granted && !legacySockets) {
@@ -172,7 +173,7 @@ public final class SkillLoadout {
                         id = id.substring(0, id.length() - RESONANT_SUFFIX.length()).trim();
                         marks[i] = Boolean.TRUE;
                     }
-                    filled[i] = id;
+                    filled[i] = tw.exilecore.skill.SkillIds.current(id); // 2026-10-31：改過代號的輔助換成新代號
                     if (resonant != null && i < resonant.size() && Boolean.TRUE.equals(resonant.get(i))) {
                         marks[i] = Boolean.TRUE;
                     }

@@ -28,27 +28,27 @@ class ResonanceTest {
 
     @Test
     void entryEncodesResonantSupportsWithTilde() {
-        final SkillLoadout.Entry plain = new SkillLoadout.Entry("fireball", 7, 4, List.of("pierce", "", "rift_echo"));
-        assertEquals("4:pierce,,rift_echo,", plain.encodeSupports(), "沒有共鳴的照舊");
+        final SkillLoadout.Entry plain = new SkillLoadout.Entry("blazing_star_shell", 7, 4, List.of("pierce", "", "void_crack_echo"));
+        assertEquals("4:pierce,,void_crack_echo,", plain.encodeSupports(), "沒有共鳴的照舊");
         assertFalse(plain.resonant(2));
 
-        final SkillLoadout.Entry marked = plain.withSupport(2, "rift_echo", true);
-        assertEquals("rift_echo", marked.support(2), "support(i) 回傳乾淨的代號");
+        final SkillLoadout.Entry marked = plain.withSupport(2, "void_crack_echo", true);
+        assertEquals("void_crack_echo", marked.support(2), "support(i) 回傳乾淨的代號");
         assertTrue(marked.resonant(2));
         assertFalse(marked.resonant(0));
-        assertEquals("4:pierce,,rift_echo~,", marked.encodeSupports());
-        assertEquals(List.of("pierce", "rift_echo"), marked.supportIds(), "supportIds 也是乾淨的");
-        assertTrue(marked.hasSupport("rift_echo"));
+        assertEquals("4:pierce,,void_crack_echo~,", marked.encodeSupports());
+        assertEquals(List.of("pierce", "void_crack_echo"), marked.supportIds(), "supportIds 也是乾淨的");
+        assertTrue(marked.hasSupport("void_crack_echo"));
 
         // 讀回來：~ 剝掉、旗標留著；再寫出去一樣
-        final SkillLoadout.Entry decoded = SkillLoadout.Entry.decode("fireball", 7, marked.encodeSupports());
+        final SkillLoadout.Entry decoded = SkillLoadout.Entry.decode("blazing_star_shell", 7, marked.encodeSupports());
         assertEquals(marked, decoded);
         assertTrue(decoded.resonant(2));
-        assertEquals("rift_echo", decoded.support(2));
+        assertEquals("void_crack_echo", decoded.support(2));
         assertEquals(marked.encodeSupports(), decoded.encodeSupports());
 
         // 舊資料（沒有 ~）全是 false；換等級、開孔不會掉旗標；拿掉輔助旗標也跟著清掉
-        final SkillLoadout.Entry old = SkillLoadout.Entry.decode("fireball", 7, "3:pierce,,rift_echo");
+        final SkillLoadout.Entry old = SkillLoadout.Entry.decode("blazing_star_shell", 7, "3:pierce,,void_crack_echo");
         for (int i = 0; i < SkillLoadout.MAX_SOCKETS; i++) {
             assertFalse(old.resonant(i));
         }
@@ -56,8 +56,8 @@ class ResonanceTest {
         assertTrue(marked.withSockets(5).resonant(2));
         assertFalse(marked.withSupport(2, "").resonant(2));
         assertEquals("4:pierce,,,", marked.withSupport(2, null).encodeSupports());
-        assertFalse(new SkillLoadout.Entry("fireball", 1, 3, List.of("", "~", "")).resonant(1), "空孔不會共鳴");
-        assertTrue(marked.withResonant(2, false).encodeSupports().equals("4:pierce,,rift_echo,"));
+        assertFalse(new SkillLoadout.Entry("blazing_star_shell", 1, 3, List.of("", "~", "")).resonant(1), "空孔不會共鳴");
+        assertTrue(marked.withResonant(2, false).encodeSupports().equals("4:pierce,,void_crack_echo,"));
 
         // 技能寶石（整個 Entry 存進物品）也走同一條路
         final GemData gem = GemData.skill(marked);
@@ -68,16 +68,16 @@ class ResonanceTest {
 
     @Test
     void supportGemCarriesTheMark() {
-        final GemData plain = GemData.support("rift_echo");
-        final GemData marked = GemData.support("rift_echo", true);
+        final GemData plain = GemData.support("void_crack_echo");
+        final GemData marked = GemData.support("void_crack_echo", true);
         assertFalse(plain.resonant());
         assertTrue(marked.resonant());
-        assertEquals("support;rift_echo;0;", plain.encode(), "沒共鳴的寫法跟以前一樣（舊物品讀得回來）");
-        assertEquals("support;rift_echo;0;resonant", marked.encode());
+        assertEquals("support;void_crack_echo;0;", plain.encode(), "沒共鳴的寫法跟以前一樣（舊物品讀得回來）");
+        assertEquals("support;void_crack_echo;0;resonant", marked.encode());
         assertNotEquals(plain.encode(), marked.encode(), "PDC 不同：共鳴的跟沒共鳴的不會疊在一起");
         assertEquals(marked, GemData.decode(marked.encode()).orElseThrow());
         assertEquals(plain, GemData.decode(plain.encode()).orElseThrow());
-        assertEquals(plain, GemData.decode("support;rift_echo;0").orElseThrow(), "舊的三欄格式");
+        assertEquals(plain, GemData.decode("support;void_crack_echo;0").orElseThrow(), "舊的三欄格式");
         assertEquals(marked, plain.withResonant(true));
         assertFalse(GemData.uncutSupport(2).resonant());
     }
@@ -96,7 +96,7 @@ class ResonanceTest {
         final SupportDefinition first = exclusive.get(0);
         final SupportDefinition second = exclusive.get(1);
         final SupportDefinition third = exclusive.get(2);
-        final SkillLoadout.Entry empty = new SkillLoadout.Entry("fireball", 5).withSockets(5);
+        final SkillLoadout.Entry empty = new SkillLoadout.Entry("blazing_star_shell", 5).withSockets(5);
 
         // 已掛一顆沒共鳴的專屬：再掛一顆沒共鳴的不行，掛一顆共鳴的可以
         final SkillLoadout.Entry one = empty.withSupport(0, first.id());
@@ -123,9 +123,9 @@ class ResonanceTest {
     void skillBuildCountsOnlyUnresonantExclusives() throws IOException {
         final SkillConfig config = new SkillConfig();
         config.load(Path.of("src/main/resources/data"));
-        final SkillDefinition fireball = config.skill("fireball");
-        final SupportDefinition heart = config.support("permafrost_heart");
-        final SupportDefinition fury = config.support("skyburn_fury");
+        final SkillDefinition fireball = config.skill("blazing_star_shell");
+        final SupportDefinition heart = config.support("eternal_frost_heart");
+        final SupportDefinition fury = config.support("sky_scorch_wrath");
         assertNotNull(heart);
         assertNotNull(fury);
         assertFalse(heart.cuttable());
@@ -145,7 +145,7 @@ class ResonanceTest {
         final SkillBuild other = SkillBuild.of(config, fireball, 5, 60, false, List.of(heart, fury), Set.of(), sheet, Set.of("pierce"));
         assertEquals(onlyHeart.supports().size(), other.supports().size());
         // SkillService.resonantOf：從 Entry 的旗標取出代號
-        final SkillLoadout.Entry entry = new SkillLoadout.Entry("fireball", 5, 3, List.of(heart.id() + "~", fury.id(), ""));
+        final SkillLoadout.Entry entry = new SkillLoadout.Entry("blazing_star_shell", 5, 3, List.of(heart.id() + "~", fury.id(), ""));
         assertEquals(Set.of(heart.id()), SkillService.resonantOf(entry));
     }
 

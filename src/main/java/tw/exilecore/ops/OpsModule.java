@@ -343,7 +343,7 @@ public final class OpsModule implements Module, Listener {
                     world.getName(), total, living, items, displays, world.getLoadedChunks().length, world.getPlayers().size(),
                     world.getViewDistance(), world.getSimulationDistance())));
         }
-        sender.sendMessage(plugin.text().parse("<dark_gray>更細的剖析可以裝 spark（/spark profiler）"));
+        sender.sendMessage(plugin.text().parse("<dark_gray>更細的剖析可以裝 roaming_thunder（/roaming_thunder profiler）"));
         return Command.SINGLE_SUCCESS;
     }
 

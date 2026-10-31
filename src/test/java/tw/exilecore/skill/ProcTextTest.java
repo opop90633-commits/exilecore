@@ -42,7 +42,7 @@ class ProcTextTest {
 
     @Test
     void gemTooltipListsDetailsUnderTheProcLine() {
-        final List<String> lines = GemService.effectLines(config.support("electromagnetism"));
+        final List<String> lines = GemService.effectLines(config.support("magnetic_storm"));
         int proc = -1;
         for (int i = 0; i < lines.size(); i++) {
             if (lines.get(i).contains("觸發「")) {

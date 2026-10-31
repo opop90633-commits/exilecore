@@ -244,16 +244,16 @@ starter:
       armour: [helm_str_01, body_str_01, legs_str_01, boots_str_01]
       shield: tshield_01
   skills:
-    - { weapon: bow, skill: lightning_arrow }
-    - { weapon: crossbow, skill: explosive_bolt }
-    - { weapon: quarterstaff, skill: tempest_flurry }
-    - { weapon: spear, skill: lightning_spear }
-    - { weapon: wand, skill: essence_drain, class: witch }
-    - { weapon: staff, skill: essence_drain, class: witch }
-    - { weapon: wand, skill: fireball }
-    - { weapon: staff, skill: fireball }
-    - { weapon: sceptre, skill: essence_drain, class: witch }   # 2026-10-26：權杖照 PoE2 沒有傷害（賦予骸骨戰士等），送法術
-    - { weapon: sceptre, skill: fireball }
-    - { weapon: talisman, skill: bear_maul }   # 2026-10：德魯伊
-    - { weapon: mace, skill: boneshatter }
-    - { weapon: melee, skill: earthquake }
+    - { weapon: bow, skill: thunderclap_arrow }
+    - { weapon: crossbow, skill: blasting_quarrel }
+    - { weapon: quarterstaff, skill: gale_combo }
+    - { weapon: spear, skill: thunder_lance_throw }
+    - { weapon: wand, skill: soul_draw_shot, class: witch }
+    - { weapon: staff, skill: soul_draw_shot, class: witch }
+    - { weapon: wand, skill: blazing_star_shell }
+    - { weapon: staff, skill: blazing_star_shell }
+    - { weapon: sceptre, skill: soul_draw_shot, class: witch }   # 2026-10-26：權杖照 PoE2 沒有傷害（賦予骸骨戰士等），送法術
+    - { weapon: sceptre, skill: blazing_star_shell }
+    - { weapon: talisman, skill: mountain_shake_claw }   # 2026-10：德魯伊
+    - { weapon: mace, skill: spine_crush }
+    - { weapon: melee, skill: ground_tremor }

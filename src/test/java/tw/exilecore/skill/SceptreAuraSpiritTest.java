@@ -36,20 +36,20 @@ class SceptreAuraSpiritTest {
 
     @Test
     void sceptreAurasAreRecognised() {
-        for (final String id : List.of("discipline", "malice", "purity_of_fire", "purity_of_ice", "purity_of_lightning", "impurity",
-                "heart_of_ice", "fulmination")) {
+        for (final String id : List.of("law_shield", "evil_thought", "flame_guard", "frost_guard", "thunder_guard", "corrode_guard",
+                "cold_heart", "thunder_resonance")) {
             assertTrue(SkillService.sceptreGrants(repository, id), id);
         }
         assertTrue(SkillService.sceptreGrants(repository, "summon_skeletons"), "權杖也給骸骨兵，但它不是光環（SkillService.sceptreAura 另外擋）");
-        assertFalse(SkillService.sceptreGrants(repository, "chaos_bolt"), "法杖給的不算");
+        assertFalse(SkillService.sceptreGrants(repository, "erosion_star_shot"), "法杖給的不算");
     }
 
     @Test
     void supportSpiritIsDropped() {
-        final SkillBuild withVitality = build("discipline", "vitality");
+        final SkillBuild withVitality = build("law_shield", "life_spring");
         assertTrue(withVitality.reserve() > 0, "一般情況：泉命要精魂");
         assertEquals(0, withVitality.withoutSupportSpirit().reserve(), 1e-9, "權杖的律盾：輔助免精魂");
-        final SkillBuild plain = build("discipline");
+        final SkillBuild plain = build("law_shield");
         assertEquals(plain.reserve(), plain.withoutSupportSpirit().reserve(), 1e-9);
     }
 }

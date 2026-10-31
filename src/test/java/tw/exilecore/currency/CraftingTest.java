@@ -375,7 +375,7 @@ class CraftingTest {
         // 2026-10-27 照 PoE2：每個核心固定三種情緒的配方（data/instil.yml）；這次之前看離天賦樹中心多遠、3 顆同一種（instilTier）
         assertEquals(3, Crafting.INSTIL_COST);
         assertEquals(java.util.List.of("distilled_suffering", "distilled_greed", "distilled_despair"),
-                InstilRecipes.recipe("p42103"), "Enduring Deflection（poe2db 的 Anoint 表）");
+                InstilRecipes.recipe("p42103"), "Enduring Deflection（原作資料 的 Anoint 表）");
         assertEquals(java.util.List.of("distilled_envy", "distilled_suffering", "distilled_suffering"), InstilRecipes.recipe("p336"));
         assertEquals(java.util.Map.of("distilled_envy", 1, "distilled_suffering", 2), InstilRecipes.cost("p336"));
         assertTrue(InstilRecipes.size() > 800, "幾乎每個核心都有配方：" + InstilRecipes.size());

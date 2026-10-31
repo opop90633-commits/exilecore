@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class TierParityTest {
 
     @Test
-    void tiersScaleToPoe2AreaLevelsButFinalBossesDoNot() throws Exception {
+    void tiersScaleToRefAreaLevelsButFinalBossesDoNot() throws Exception {
         final MapConfig maps = new MapConfig();
         maps.load(Path.of("src/main/resources/data"));
         assertEquals(1.274, maps.parityLife(1), 1e-9, "T1：我們 61 級，原作 65 級");

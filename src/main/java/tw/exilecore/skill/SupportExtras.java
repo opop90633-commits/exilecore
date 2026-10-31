@@ -839,14 +839,14 @@ public final class SupportExtras implements Listener {
     private void refreshPerfection(final Player player, final List<Long> stacks, final long now) {
         stacks.removeIf(until -> until <= now);
         if (stacks.isEmpty()) {
-            service.buffs().remove(player, "support.perfection");
+            service.buffs().remove(player, "support.flawless_form");
             return;
         }
         long first = Long.MAX_VALUE;
         for (final long until : stacks) {
             first = Math.min(first, until);
         }
-        service.buff(player, "support.perfection", "完美 ×" + stacks.size(), (int) Math.max(1, first - now),
+        service.buff(player, "support.flawless_form", "完美 ×" + stacks.size(), (int) Math.max(1, first - now),
                 List.of(Modifier.more(StatKeys.DAMAGE, SupportExtraKeys.PERFECTION_MORE * stacks.size() / 100.0, "完美")));
     }
 
@@ -1378,11 +1378,11 @@ public final class SupportExtras implements Listener {
         }
         // Incision：記下這一下之前身上的切割，下一 tick 被流血用掉就算「最近用掉」
         if (effective.flat(SupportExtraKeys.INCISION_BLEED, tags) > 0 && debuffs != null && ailments && !plugin.ailments().has(defender, AilmentType.BLEED)) {
-            final int stacks = tw.exilecore.combat.HitEffects.stacks(debuffs, target, "incision.", now);
+            final int stacks = tw.exilecore.combat.HitEffects.stacks(debuffs, target, "cut_wound.", now);
             if (stacks > 0) {
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
                     if (plugin.ailments() != null && plugin.ailments().has(defender, AilmentType.BLEED)
-                            && tw.exilecore.combat.HitEffects.stacks(debuffs, target, "incision.", now()) < stacks) {
+                            && tw.exilecore.combat.HitEffects.stacks(debuffs, target, "cut_wound.", now()) < stacks) {
                         incisions.computeIfAbsent(player.getUniqueId(), uuid -> new ArrayDeque<>()).addLast(new long[] {now(), stacks});
                     }
                 });
@@ -1464,7 +1464,7 @@ public final class SupportExtras implements Listener {
         // Acrimony：受到持續傷害（地面效果、混沌減益）的敵人生命再生減少
         final double acrimony = effective.flat(SupportExtraKeys.ACRIMONY, tags);
         if (acrimony > 0 && debuffs != null) {
-            debuffs.apply(target, new Debuffs.Debuff("support.acrimony", player.getUniqueId(), now + SupportExtraKeys.ACRIMONY_TICKS, 0, false, null,
+            debuffs.apply(target, new Debuffs.Debuff("support.grudge_corrode", player.getUniqueId(), now + SupportExtraKeys.ACRIMONY_TICKS, 0, false, null,
                     List.of(Modifier.increased(tw.exilecore.stats.TreeEffectKeys.REGEN_RATE, -acrimony / 100.0, "怨蝕")), 0));
         }
         // Barbs、Quill Burst：荊棘反彈之後的擊中
@@ -1728,7 +1728,7 @@ public final class SupportExtras implements Listener {
                         debuffs().applyCurse(near.getUniqueId(), curse, curse.id());
                     }
                 }
-                at.getWorld().spawnParticle(Particle.WITCH, at.clone().add(0, 1, 0), 16, radius / 2, 0.4, radius / 2, 0.05);
+                tw.exilecore.skill.Fx.disk(at.getWorld(), Particle.WITCH, at.clone().add(0, 1, 0), 16, radius, 0.4, 0.05);
             }
         }
         // Shock Siphon：打死感電中的敵人回復能量護盾
@@ -1800,7 +1800,7 @@ public final class SupportExtras implements Listener {
     /** Rip：每撿一個血之殘骸，生命再生速度增加 x%（5 秒，最多 100%）。 */
     private void stackRip(final Player player, final double each) {
         final double current = ripStacks.merge(player.getUniqueId(), each, (a, b) -> Math.min(100, a + b));
-        service.buff(player, "support.rip", "血之殘骸", (int) SupportExtraKeys.RIP_TICKS,
+        service.buff(player, "support.shred_blood", "血之殘骸", (int) SupportExtraKeys.RIP_TICKS,
                 List.of(Modifier.increased(tw.exilecore.stats.TreeEffectKeys.REGEN_RATE, current / 100.0, "血之殘骸")));
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> ripStacks.computeIfPresent(player.getUniqueId(),
                 (uuid, value) -> value - each <= 1e-6 ? null : value - each), SupportExtraKeys.RIP_TICKS);

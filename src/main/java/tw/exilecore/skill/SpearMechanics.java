@@ -56,7 +56,7 @@ public final class SpearMechanics implements Listener {
     static final String SPEAR_THROW_BLAST = "spear_throw_blast";
     static final String EXPLOSIVE_BLAST = "explosive_spear_blast";
     static final String EXPLOSIVE_INFUSED = "explosive_spear_infused";
-    static final String BLOODHOUND = "bloodhounds_mark";
+    static final String BLOODHOUND = "blood_scent_seal";
     static final String BLOODHOUND_BLAST = "bloodhound_blast";
 
     /** 這一發有沒有消耗怒星（值 = 效果倍率，倍星 2）：放在技能的本地修飾器上，投射物停下時看。 */

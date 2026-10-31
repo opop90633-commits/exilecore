@@ -32,24 +32,24 @@ final class MetaSocketRules {
 
     /** 原作 Spell 而且 Triggerable、照形狀卻不算的（我們的代號）。 */
     static final Set<String> TRIGGERABLE = Set.of(
-            "storm_blink",      // 雷遁（Lightning Warp）：位移，被觸發時瞬移到觸發的目標（SkillExecutor.warp）
+            "thunder_escape",      // 雷遁（Lightning Warp）：位移，被觸發時瞬移到觸發的目標（SkillExecutor.warp）
             // 下面三個是武器賦予的（沒有寶石，插不進主要寶石）；我們做成跟著你的增益（guard），被觸發的路徑放不出來，見 MetaGems.engineProblem
-            "sigil_of_power",   // 力印（Sigil of Power）
-            "consecrate",       // 聖地（Consecrate）
-            "feast_of_flesh");  // 噬屍宴（Feast of Flesh）
+            "might_seal",   // 力印（Sigil of Power）
+            "holy_ground",       // 聖地（Consecrate）
+            "corpse_devour_feast");  // 噬屍宴（Feast of Flesh）
 
     /** 原作不是（Spell 而且 Triggerable）、照形狀卻會被當成可以觸發的（我們的代號）。 */
     static final Set<String> NOT_TRIGGERABLE = Set.of(
             // 武器賦予、原作沒有 Triggerable 的（印記原作不是 Spell：SkillDefinition 早就拿掉印記的 spell 標籤，不用寫在這裡）
-            "bone_blast", "mana_drain", "power_siphon", "reap");
+            "bone_bloom", "magic_absorb_art", "keen_star_drain", "blood_sickle");
 
     /** 原作 CreatesMinion 的法術（殞從引星不收）。 */
     static final Set<String> CREATES_MINION = Set.of(
-            "bone_spikes");     // 掘骸（Unearth）：骨刺之後把屍體變骨構體
+            "dig_remains");     // 掘骸（Unearth）：骨刺之後把屍體變骨構體
 
     /** 原作有 Fire 類型、我們的標籤沒有 fire 的法術（擊中時火焰法術照樣收）。 */
     static final Set<String> FIRE = Set.of(
-            "elemental_weakness_curse"); // 元素要害（Elemental Weakness）：原作類型有 Fire、Cold、Lightning
+            "triple_element_curse"); // 元素要害（Elemental Weakness）：原作類型有 Fire、Cold、Lightning
 
     /** 擊中時火焰法術（原作 allowed_types 再 AND Fire）收不收：有 fire 標籤，或原作有 Fire 類型。 */
     static boolean fire(final SkillDefinition skill) {

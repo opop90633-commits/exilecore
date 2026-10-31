@@ -2080,7 +2080,7 @@ jr_incision_chance:
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [3, 5] }
   mods:
-    - { stat: radius:incision.chance, type: FLAT, value: "{value}", tags: [attack] }
+    - { stat: radius:cut_wound.chance, type: FLAT, value: "{value}", tags: [attack] }
 
 jr_banner_glory:
   # 2026-10-30 照 PoE2 0.5（RePoE JewelRadiusBannerValourGained：glory_generation_+%_for_banners 8～12）補上；屬性換算照天賦樹同一條

@@ -55,7 +55,7 @@ class AncestralBondSpiritPoolTest {
     void perMinionSummonOnlyTakesWhatTotemsLeave() {
         final StatSheet sheet = spirit(335);
         final double totems = 4 * TotemKeys.ANCESTRAL_BOND_SPIRIT;
-        final SkillBuild archers = build("skeletal_archers", 20); // 每隻 30
+        final SkillBuild archers = build("summon_bone_bowmen", 20); // 每隻 30
         assertTrue(archers.minionReserve() > 0 && archers.minions() > 1, "照隻數算精魂");
         // 這次之前：照整個 335 叫，加上圖騰超過上限
         final AuraService.Fit before = AuraService.fit(archers, AuraService.capacity(sheet));
@@ -73,9 +73,9 @@ class AncestralBondSpiritPoolTest {
     void fixedReservationsDoNotFitIntoTotemSpirit() {
         final StatSheet sheet = spirit(335);
         final double left = AuraService.capacity(sheet, 4 * TotemKeys.ANCESTRAL_BOND_SPIRIT);
-        assertNull(AuraService.fit(build("meta_crit", 20), left), "暴擊引星 100 放不下（這次之前照 335 開，變成 400／335）");
-        assertNotNull(AuraService.fit(build("herald_of_ash", 20), left), "燼使 30 放得下");
-        assertNull(AuraService.fit(build("herald_of_ash", 20), AuraService.capacity(spirit(300), 300)), "剛好 300 用完就開不了");
+        assertNull(AuraService.fit(build("critical_guide_star", 20), left), "暴擊引星 100 放不下（這次之前照 335 開，變成 400／335）");
+        assertNotNull(AuraService.fit(build("ember_envoy", 20), left), "燼使 30 放得下");
+        assertNull(AuraService.fit(build("ember_envoy", 20), AuraService.capacity(spirit(300), 300)), "剛好 300 用完就開不了");
     }
 
     @Test
@@ -91,7 +91,7 @@ class AncestralBondSpiritPoolTest {
     /** 2026-10-28 照站長：圖騰保留的精魂吃精魂保留效率（例：稜壁「每 100 最大生命，精魂的保留效率增加 1%」）。 */
     @Test
     void bondSpiritFollowsReservationEfficiency() {
-        final SkillBuild totem = build("ancestral_totem", 20);
+        final SkillBuild totem = build("hero_spirit_totem", 20);
         assertEquals(75, SkillDeployables.bondSpirit(new StatSheet(), totem), 1e-9, "沒有效率：每根 75");
         // 效率增加 50%：75 ÷ 1.5 = 50
         final StatSheet efficient = new StatSheet().add(Modifier.increased(StatKeys.AURA_RESERVATION, -0.5, "測試"));

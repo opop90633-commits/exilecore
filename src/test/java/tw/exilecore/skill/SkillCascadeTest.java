@@ -43,17 +43,17 @@ class SkillCascadeTest {
     }
 
     /** 原作的詛咒（我們有的五個）。 */
-    static final List<String> CURSES = List.of("vulnerability_curse", "despair_curse", "elemental_weakness_curse", "enfeeble_curse", "temporal_curse");
+    static final List<String> CURSES = List.of("wound_scar_curse", "soul_wither_curse", "triple_element_curse", "strength_sap_curse", "sluggish_curse");
 
     @Test
     void cursesTakeSpellCascadeAndTheLineageEchoes() {
         for (final String curse : CURSES) {
             assertTrue(skill(curse).tags().contains("curse"), curse);
             assertTrue(SkillCascade.cascadable(skill(curse)), curse);
-            assertNull(refusal("spell_cascade", curse), curse + " 掛得上連瀑");
-            assertTrue(config.support("spell_cascade").supports(skill(curse)), curse);
-            assertNull(refusal("zarokhs_refrain", curse), curse + " 掛得上三迴");
-            assertNull(refusal("tuls_avalanche", curse), curse + " 掛得上雪封");
+            assertNull(refusal("linked_falls", curse), curse + " 掛得上連瀑");
+            assertTrue(config.support("linked_falls").supports(skill(curse)), curse);
+            assertNull(refusal("triple_loop", curse), curse + " 掛得上三迴");
+            assertNull(refusal("snow_seal", curse), curse + " 掛得上雪封");
         }
     }
 
@@ -69,68 +69,68 @@ class SkillCascadeTest {
             } else {
                 // 印記（獵殺、引雷、霜縛、血嗅、處決）、縛根、凋蝕術：原作不是 Cascadable
                 assertFalse(SkillCascade.cascadable(skill), skill.id());
-                assertNotNull(config.support("spell_cascade").refusal(skill), skill.id());
+                assertNotNull(config.support("linked_falls").refusal(skill), skill.id());
             }
         }
-        assertFalse(SkillCascade.cascadable(skill("hunters_mark")));
-        assertFalse(SkillCascade.cascadable(skill("entangle")), "PoE2 Entangle 不是 Cascadable");
+        assertFalse(SkillCascade.cascadable(skill("prey_kill_mark")));
+        assertFalse(SkillCascade.cascadable(skill("root_bind")), "PoE2 Entangle 不是 Cascadable");
     }
 
     @Test
-    void followsPoe2WhereThereIsAnEquivalent() {
+    void followsRefWhereThereIsAnEquivalent() {
         // 原作 Cascadable、這次之前形狀不對掛不上的
-        for (final String id : List.of("flame_wall", "ice_wall", "detonate_dead", "volatile_dead")) {
+        for (final String id : List.of("flame_curtain", "frost_rampart", "corpse_burst", "corpse_flame_burst")) {
             assertTrue(SkillCascade.cascadable(skill(id)), id);
-            assertNull(refusal("spell_cascade", id), id);
+            assertNull(refusal("linked_falls", id), id);
         }
         // 原作不是 Cascadable、這次之前照形狀掛得上的
-        for (final String id : List.of("storm_orb", "sun_orb", "ember_seed", "contagion", "primal_tornado", "volcano", "galvanic_field", "reap",
-                "dark_pact", "inferno_blast")) {
+        for (final String id : List.of("thunder_cloud", "scorching_sun_pearl", "cinder_sprout", "plague_taint", "wild_whirlwind", "volcano", "thunder_current_zone", "blood_sickle",
+                "nether_contract", "flame_core_detonation")) {
             assertFalse(SkillCascade.cascadable(skill(id)), id);
-            assertNotNull(refusal("spell_cascade", id), id);
+            assertNotNull(refusal("linked_falls", id), id);
         }
-        assertNotNull(refusal("zarokhs_refrain", "storm_orb"));
+        assertNotNull(refusal("triple_loop", "thunder_cloud"));
         // 照舊：落在目標區域、身邊一圈的
-        for (final String id : List.of("comet", "firestorm", "frost_nova", "enervating_nova", "lightning_bolt", "bone_cage", "thunderstorm")) {
+        for (final String id : List.of("falling_star", "flowing_flame_canopy", "frost_star_blast", "fading_thunder_ring", "thunder_drop", "bone_thorn_ring", "gathered_thundercloud")) {
             assertTrue(SkillCascade.cascadable(skill(id)), id);
         }
-        assertNotNull(refusal("spell_cascade", "fireball"));
+        assertNotNull(refusal("linked_falls", "blazing_star_shell"));
     }
 
     @Test
     void listsOnlyNameRealSkills() {
-        for (final String id : SkillCascade.POE2) {
+        for (final String id : SkillCascade.REF) {
             assertTrue(skill(id).tags().contains("spell"), id + " 要是法術");
         }
-        for (final String id : SkillCascade.NOT_POE2) {
+        for (final String id : SkillCascade.NOT_REF) {
             assertTrue(skill(id).tags().contains("spell"), id); // 引導的（炎爆、地火柱）照形狀本來就不算，寫出來是對照原作
         }
-        assertTrue(java.util.Collections.disjoint(SkillCascade.POE2, SkillCascade.NOT_POE2));
+        assertTrue(java.util.Collections.disjoint(SkillCascade.REF, SkillCascade.NOT_REF));
     }
 
     @Test
-    void shapeFallbackOnlyForSkillsWithoutAPoe2Equivalent() {
+    void shapeFallbackOnlyForSkillsWithoutARefEquivalent() {
         // 照形狀算可以連瀑的看得到的技能：都是原作沒有對應的（我們自己的、Boss 專屬）。多出新的要對 RePoE（tools/audit_poe2_cascadable.py），
         // 原作不是 Cascadable 就寫進 SkillCascade.NOT_POE2
         final Set<String> shaped = new TreeSet<>();
         for (final SkillDefinition skill : config.all()) {
-            if (!skill.hidden() && SkillCascade.cascadable(skill) && !SkillCascade.POE2.contains(skill.id())) {
+            if (!skill.hidden() && SkillCascade.cascadable(skill) && !SkillCascade.REF.contains(skill.id())) {
                 shaped.add(skill.id());
             }
         }
-        assertEquals(new TreeSet<>(List.of("abyssal_pull", "blood_altar", "breach_ring", "dawn_pillar", "void_meteor")), shaped);
+        assertEquals(new TreeSet<>(List.of("whale_gulp_vortex", "blood_sacrifice_dais", "fissure_spread", "morning_light_column", "hollow_star_fall")), shaped);
     }
 
     @Test
     void cascadeSpacingUsesTheCurseRadius() {
-        final SkillDefinition weakness = skill("elemental_weakness_curse");
+        final SkillDefinition weakness = skill("triple_element_curse");
         final SkillBuild build = SkillBuild.of(config, weakness, 20, 90, false, List.of(), Set.of(), new StatSheet());
         assertEquals(weakness.params().mark().radius(20) * build.areaScale(), SkillCascade.radius(build), 1e-9);
         assertEquals(tw.exilecore.core.Units.metres(3.1), weakness.params().mark().radius(20), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         // 連瀑範圍更少：詛咒圈跟著變小
         final SkillBuild smaller = build.withAreaAndProjectiles(build.areaScale() * Math.sqrt(0.8), build.projectiles());
         assertEquals(SkillCascade.radius(build) * Math.sqrt(0.8), SkillCascade.radius(smaller), 1e-9);
-        final SkillDefinition comet = skill("comet");
+        final SkillDefinition comet = skill("falling_star");
         final SkillBuild cometBuild = SkillBuild.of(config, comet, 20, 90, false, List.of(), Set.of(), new StatSheet());
         assertEquals(cometBuild.radius(), SkillCascade.radius(cometBuild), 1e-9);
     }

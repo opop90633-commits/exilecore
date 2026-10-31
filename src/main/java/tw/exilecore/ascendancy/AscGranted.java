@@ -220,10 +220,10 @@ final class AscGranted implements Listener {
             }
             // 赤炎利劍：你使用造成傷害的技能時，魯兹安用狂熱斬擊（冷卻 4 秒）
             // 2026-10-27 照 PoE2：魯兹安是有實體的巨靈，瞬移到目標旁邊斬（這次之前沒有實體，直接在你前方 3 格斬）
-            if (on(player, "ruzhan_djinn") && now >= own.zealotryReady && plugin.skills() != null && djinnAt(player, "ruzhan_djinn") != null) {
-                own.zealotryReady = now + Math.round(Math.max(1, level(player, "ruzhan_djinn", "asc.zealotry_cooldown")) * 20);
+            if (on(player, "flame_blade_spirit") && now >= own.zealotryReady && plugin.skills() != null && djinnAt(player, "flame_blade_spirit") != null) {
+                own.zealotryReady = now + Math.round(Math.max(1, level(player, "flame_blade_spirit", "asc.zealotry_cooldown")) * 20);
                 final Location at = aim(player, target, 3);
-                moveDjinn(player, "ruzhan_djinn", at.clone().subtract(player.getLocation().getDirection().setY(0).normalize().multiply(1.5)));
+                moveDjinn(player, "flame_blade_spirit", at.clone().subtract(player.getLocation().getDirection().setY(0).normalize().multiply(1.5)));
                 effects.later(4, () -> plugin.skills().triggerSkill(player, "asc_ruzhan_zealotry", at));
             }
             // 惡魔變身：使用法術以外的技能就變回人形
@@ -257,7 +257,7 @@ final class AscGranted implements Listener {
             }
         }
         switch (id) {
-            case "encase_in_jade" -> {
+            case "jade_entomb" -> {
                 final AscendancyEffects.AscState s = effects.state(player);
                 if (s.jade > 0) {
                     final double seconds = Math.max(4, level(player, id, "asc.jade_guard_seconds"));
@@ -269,17 +269,17 @@ final class AscGranted implements Listener {
                     plugin.players().markDirty(player);
                 }
             }
-            case "temper_weapon" -> {
+            case "forge_arms" -> {
                 own.temper = 12;
                 player.getWorld().playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 0.8f, 1.2f);
             }
-            case "ritual_sacrifice" -> ritualSacrifice(player, state, own);
-            case "unbound_avatar" -> rebuff(player, build, Math.max(8, level(player, id, "asc.buff_seconds")));
-            case "archon_of_chayula" -> {
+            case "rite_offering" -> ritualSacrifice(player, state, own);
+            case "free_incarnation" -> rebuff(player, build, Math.max(8, level(player, id, "asc.buff_seconds")));
+            case "rose_jade_lord" -> {
                 own.archonUntil = now + 200;
                 own.archonTornado = now;
             }
-            case "demon_form" -> {
+            case "become_fiend" -> {
                 if (own.demonUntil > now) {
                     effects.later(1, () -> endDemon(player, own));
                 } else {
@@ -288,39 +288,39 @@ final class AscGranted implements Listener {
                     own.demonTick = now + 20;
                 }
             }
-            case "apocalypse" -> {
+            case "calamity_descent" -> {
                 own.apocalypseUntil = now + 240;
                 own.apocalypseNext = now + 5;
             }
-            case "time_snap" -> effects.later(1, () -> plugin.skills().resetCooldowns(player, "time_snap"));
-            case "time_freeze" -> timeFreeze(player);
-            case "inevitable_agony" -> {
+            case "time_gap_rewind" -> effects.later(1, () -> plugin.skills().resetCooldowns(player, "time_gap_rewind"));
+            case "time_halt" -> timeFreeze(player);
+            case "fated_pain" -> {
                 final Location at = aim(player, target, 20);
                 final double radius = Math.max(1.5, level(player, id, "asc.agony_radius"));
                 for (final LivingEntity enemy : effects.enemiesNear(player, at, radius)) {
                     agony.put(enemy.getUniqueId(), new double[] {0, now + 240});
                     agonyOwner.put(enemy.getUniqueId(), player.getUniqueId());
                 }
-                tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SCULK_SOUL, at.clone().add(0, 0.5, 0), 30, radius / 2, 0.3, radius / 2, 0.02);
+                tw.exilecore.skill.Fx.disk(at.getWorld(), Particle.SCULK_SOUL, at.clone().add(0, 0.5, 0), 30, radius, 0.3, 0.02);
             }
-            case "temporal_rift" -> temporalRift(player, state, own);
-            case "navira_oasis" -> {
+            case "time_gap_breach" -> temporalRift(player, state, own);
+            case "mirage_spirit_haven" -> {
                 if (!navira(player)) {
                     break;
                 }
                 // 2026-10-27 照 PoE2：納維拉在牠所在的地方變出綠洲（這次之前巨靈沒有實體，綠洲在你腳下）
-                final Location djinn = djinnAt(player, "navira_djinn");
+                final Location djinn = djinnAt(player, "final_mirage_spirit");
                 // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（綠洲半徑 8 公尺；這次之前 8 格）
                 oases.add(new Oasis(player.getUniqueId(), (djinn == null ? player.getLocation() : djinn).clone(), tw.exilecore.core.Units.metres(8), now + 300));
             }
-            case "navira_well" -> {
+            case "mirage_spirit_spring" -> {
                 if (!navira(player)) {
                     break;
                 }
                 state.setLastDamageTick(now - 400); // 能量護盾立刻開始回充
             }
-            case "navira_fracturing" -> navira(player);
-            case "kelari_deception" -> {
+            case "mirage_spirit_freeze" -> navira(player);
+            case "sand_spirit_trick" -> {
                 // 連續使用每次更多 50%（最多 300%）；分身還在時再用，分身也爆炸
                 own.deceptions = now - own.deceptionLast <= 120 ? Math.min(6, own.deceptions + 1) : 0;
                 own.deceptionLast = now;
@@ -336,9 +336,9 @@ final class AscGranted implements Listener {
                 }
                 own.clone = aim(player, target, 20);
                 own.cloneUntil = now + 80;
-                moveDjinn(player, "kelari_djinn", own.clone); // 2026-10-27 照 PoE2：克拉里瞬移到目標的地方炸開
+                moveDjinn(player, "foul_sand_spirit", own.clone); // 2026-10-27 照 PoE2：克拉里瞬移到目標的地方炸開
             }
-            case "kelari_brutality" -> {
+            case "sand_spirit_cruelty" -> {
                 // 2026-10-29 照 PoE2 Kelari's Brutality：飛刀鑽進地面，3 公尺內 12 處短暫延遲後爆出刀刃（中間那一處是技能本身，另外 11 處撒在周圍）
                 final Location center = aim(player, target, 20);
                 final double spread = tw.exilecore.core.Units.metres(3) * build.areaScale();
@@ -356,13 +356,13 @@ final class AscGranted implements Listener {
                     });
                 }
             }
-            case "kelari_judgment" -> moveDjinn(player, "kelari_djinn", aim(player, target, 20)); // 2026-10-27：克拉里飛過去懸起刀刃
-            case "ruzhan_reckoning" -> {
+            case "sand_spirit_verdict" -> moveDjinn(player, "foul_sand_spirit", aim(player, target, 20)); // 2026-10-27：克拉里飛過去懸起刀刃
+            case "blade_spirit_settle" -> {
                 final Location at = aim(player, target, 20);
-                moveDjinn(player, "ruzhan_djinn", at); // 2026-10-27 照 PoE2：魯兹安瞬移到目標的地方
+                moveDjinn(player, "flame_blade_spirit", at); // 2026-10-27 照 PoE2：魯兹安瞬移到目標的地方
                 effects.later(18, () -> plugin.skills().triggerSkill(player, "asc_ruzhan_wave", at));
             }
-            case "ruzhan_trap" -> moveDjinn(player, "ruzhan_djinn", aim(player, target, 20)); // 2026-10-27：魯兹安把巨劍擲過去
+            case "blade_spirit_device" -> moveDjinn(player, "flame_blade_spirit", aim(player, target, 20)); // 2026-10-27：魯兹安把巨劍擲過去
             case "explosive_concoction" -> {
                 // 另外對附近最多 4 個點燃中的敵人各丟一瓶小的
                 // 2026-10-28 照 PoE2 Mini Flasks：自己的表（stage.second 50% → 145% → 330%）、1.2 公尺（主瓶 1.8）；這次之前固定 145／185、同樣大
@@ -422,7 +422,7 @@ final class AscGranted implements Listener {
 
     /** 納維拉的指令：要先召喚納維拉；觸發納維拉的寧靜（附近友軍魔力再生增加，4 秒）。 */
     private boolean navira(final Player player) {
-        if (djinnAt(player, "navira_djinn") == null) {
+        if (djinnAt(player, "final_mirage_spirit") == null) {
             return false; // 2026-10-27：納維拉不在（放之前 AscendancyEffects.cost 已經擋了，這是保險）
         }
         final double regen = navira_calming(player);
@@ -439,14 +439,14 @@ final class AscGranted implements Listener {
 
     private double navira_calming(final Player player) {
         // 原作 1 級 10% → 20 級 67%（skills.yml 的 level_modifiers）
-        return Math.max(10, level(player, "navira_djinn", "asc.calming_regen"));
+        return Math.max(10, level(player, "final_mirage_spirit", "asc.calming_regen"));
     }
 
     private void endDemon(final Player player, final Own own) {
         own.demonUntil = 0;
         own.demonflame = 0;
         if (plugin.skills() != null) {
-            plugin.skills().removeBuff(player, "demon_form");
+            plugin.skills().removeBuff(player, "become_fiend");
         }
         plugin.players().markDirty(player);
     }
@@ -494,7 +494,7 @@ final class AscGranted implements Listener {
             return;
         }
         final long now = now();
-        final int ticks = (int) Math.round(Math.max(82, level(player, "ritual_sacrifice", "asc.sacrifice_seconds")) * 20);
+        final int ticks = (int) Math.round(Math.max(82, level(player, "rite_offering", "asc.sacrifice_seconds")) * 20);
         rares.removeIf(rare -> rare.until() < now);
         RareCorpse best = null;
         for (final RareCorpse rare : rares) {
@@ -560,7 +560,7 @@ final class AscGranted implements Listener {
         final String id = skill.id();
         if (own != null) {
             // 赤炎利劍：魯兹安最近每用過一個造成傷害的技能更多 10%
-            if (id.startsWith("ruzhan_") || id.equals("asc_ruzhan_zealotry") || id.equals("asc_ruzhan_wave")) {
+            if (id.startsWith("ruzhan_") || id.startsWith("blade_spirit_") || id.equals("asc_ruzhan_zealotry") || id.equals("asc_ruzhan_wave")) {
                 if (!own.damaging.isEmpty()) {
                     out.add(Modifier.more(StatKeys.DAMAGE, 0.10 * own.damaging.size(), "赤炎利劍"));
                 }
@@ -574,11 +574,11 @@ final class AscGranted implements Listener {
                 out.add(Modifier.more(StatKeys.DAMAGE, 0.02 * own.swarm, "蟲群前進"));
             }
         }
-        if (id.startsWith("ruzhan_fury") && plugin.ailments() != null
+        if (id.startsWith("blade_spirit_wrath_fire") && plugin.ailments() != null
                 && (plugin.ailments().isIncapacitated(defender) || plugin.ailments().pinned(defender))) {
             out.add(Modifier.more(StatKeys.DAMAGE, 0.60, "羅贊的怒焰"));
         }
-        if (id.startsWith("navira_fracturing") && plugin.ailments() != null && !plugin.ailments().has(defender, AilmentType.CHILL)) {
+        if (id.startsWith("mirage_spirit_freeze") && plugin.ailments() != null && !plugin.ailments().has(defender, AilmentType.CHILL)) {
             out.add(Modifier.more(StatKeys.DAMAGE, -1.0, "只碎裂冰緩中的敵人"));
         }
         return out;
@@ -628,9 +628,9 @@ final class AscGranted implements Listener {
                     tw.exilecore.combat.HitEffects.WITHERED_TICKS);
         }
         // 生命痕跡：擊中時（最多每 3 秒一次）產生痕跡
-        if (on(player, "life_remnants") && now >= own.lifeRemnantReady) {
+        if (on(player, "vital_residue") && now >= own.lifeRemnantReady) {
             own.lifeRemnantReady = now + 60;
-            spawnRemnant(player, target.getLocation(), "life", level(player, "life_remnants", "asc.remnant_life"), 160);
+            spawnRemnant(player, target.getLocation(), "life", level(player, "vital_residue", "asc.remnant_life"), 160);
         }
         // 流血混合物：加劇流血；酸性靈藥：消耗中毒爆裂
         if (plugin.ailments() != null) {
@@ -690,7 +690,7 @@ final class AscGranted implements Listener {
         if (boil > 0 && maxLife > 0 && plugin.ailments() != null) {
             Player owner = null;
             for (final Player player : dead.getWorld().getPlayers()) {
-                if (on(player, "blood_boil") && player.getLocation().distanceSquared(dead.getLocation()) <= 400) {
+                if (on(player, "seething_blood") && player.getLocation().distanceSquared(dead.getLocation()) <= 400) {
                     owner = player;
                     break;
                 }
@@ -699,11 +699,10 @@ final class AscGranted implements Listener {
                 final Player source = owner;
                 final double radius = boilRadius(boil);
                 final List<LivingEntity> victims = effects.enemiesNear(source, dead.getLocation(), radius);
-                dead.getWorld().spawnParticle(Particle.DUST, dead.getLocation().add(0, 1, 0), 30, radius / 2, 0.5, radius / 2, 0,
-                        new Particle.DustOptions(org.bukkit.Color.fromRGB(0x8a0303), 1.4f));
+                tw.exilecore.skill.Fx.disk(dead.getWorld(), Particle.DUST, dead.getLocation().add(0, 1, 0), 30, radius, 0.5, 0, new Particle.DustOptions(org.bukkit.Color.fromRGB(0x8a0303), 1.4f));
                 final double perSecond = maxLife * 0.02 * Math.min(BOIL_MAX, boil);
                 // 2026-10-30 照 PoE2 Blood Boil 的品質：腐化之血持續時間 +(0—1.5) 秒（最後不滿一秒的照比例）；這次之前固定 5 秒
-                final double seconds = 5 + Math.max(0, level(source, "blood_boil", "asc.boil_seconds"));
+                final double seconds = 5 + Math.max(0, level(source, "seething_blood", "asc.boil_seconds"));
                 for (int i = 1; i <= (int) Math.ceil(seconds - 1e-9); i++) {
                     final double share = Math.min(1, seconds - (i - 1));
                     effects.later(20L * i, () -> {
@@ -728,15 +727,15 @@ final class AscGranted implements Listener {
             }
         }
         // 生命痕跡：擊殺 25% 機率
-        if (killer != null && on(killer, "life_remnants")
-                && plugin.random().nextDouble() < 0.25 + level(killer, "life_remnants", "asc.remnant_kill_chance") / 100.0) { // 2026-10-30 照 PoE2：品質 +(0—10)%
-            spawnRemnant(killer, dead.getLocation(), "life", level(killer, "life_remnants", "asc.remnant_life"), 160);
+        if (killer != null && on(killer, "vital_residue")
+                && plugin.random().nextDouble() < 0.25 + level(killer, "vital_residue", "asc.remnant_kill_chance") / 100.0) { // 2026-10-30 照 PoE2：品質 +(0—10)%
+            spawnRemnant(killer, dead.getLocation(), "life", level(killer, "vital_residue", "asc.remnant_life"), 160);
         }
     }
 
     /** 翻滾時（虛空幻影）：留下 1 點生命的幻影 2 秒，被敵人打掉（2 秒後身邊有敵人）就爆炸。最多存 3 次、每 4 秒回一次。 */
     void dodge(final Player player) {
-        if (!on(player, "void_illusion")) {
+        if (!on(player, "null_phantom")) {
             return;
         }
         final Own own = own(player);
@@ -754,10 +753,10 @@ final class AscGranted implements Listener {
         }
         final Location at = player.getLocation().clone();
         tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.REVERSE_PORTAL, at.clone().add(0, 1, 0), 30, 0.3, 0.8, 0.3, 0.02);
-        effects.later(Math.round(Math.max(1, level(player, "void_illusion", "asc.illusion_seconds")) * 20), () -> {
+        effects.later(Math.round(Math.max(1, level(player, "null_phantom", "asc.illusion_seconds")) * 20), () -> {
             // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（虛空幻影爆炸 3 公尺，跟 asc_void_explosion 的範圍一樣；這次之前 3 格）
             // 2026-10-30 照 PoE2 Void Illusion 的品質：爆炸半徑 +(0—0.4) 公尺（範圍照半徑平方換算）
-            final double extra = Math.max(0, level(player, "void_illusion", "asc.void_radius"));
+            final double extra = Math.max(0, level(player, "null_phantom", "asc.void_radius"));
             if (!player.isOnline() || effects.enemiesNear(player, at, tw.exilecore.core.Units.metres(3 + extra)).isEmpty() || plugin.skills() == null) {
                 return;
             }
@@ -784,13 +783,13 @@ final class AscGranted implements Listener {
             own.motes[have.get(plugin.random().nextInt(have.size()))]--;
             plugin.players().markDirty(player);
         }
-        if (!on(player, "sorcery_ward") || dealt == null || dealt.total() <= 0 || total <= 0) {
+        if (!on(player, "witch_barrier") || dealt == null || dealt.total() <= 0 || total <= 0) {
             return 0;
         }
         final Own o = own(player);
         final long now = now();
         final double max = Math.min(32000, (sheet.get(StatKeys.ARMOUR) + sheet.get(StatKeys.EVASION))
-                * (0.30 + Math.max(0, level(player, "sorcery_ward", "asc.ward_percent")) / 100.0)); // 2026-10-30 照 PoE2：品質 +(0—5)%
+                * (0.30 + Math.max(0, level(player, "witch_barrier", "asc.ward_percent")) / 100.0)); // 2026-10-30 照 PoE2：品質 +(0—5)%
         if (o.ward < 0 || now >= o.wardReady && o.ward < max) {
             o.ward = max;
         }
@@ -800,7 +799,7 @@ final class AscGranted implements Listener {
         final double taken = Math.min(o.ward, want);
         if (taken > 0) {
             o.ward -= taken;
-            o.wardReady = now + Math.round(Math.max(6, level(player, "sorcery_ward", "asc.ward_delay")) * 20);
+            o.wardReady = now + Math.round(Math.max(6, level(player, "witch_barrier", "asc.ward_delay")) * 20);
         }
         return taken;
     }
@@ -913,8 +912,8 @@ final class AscGranted implements Listener {
         if (kind.equals("life")) {
             return 0;
         }
-        return level(owner, "into_the_breach", "asc.flame_effect") / 100.0
-                * (1 + Math.max(0, level(owner, "into_the_breach", "asc.flame_effect_inc")) / 100.0); // 2026-10-30 照 PoE2：品質增加 (0—15)% 夏烏拉之炎效果
+        return level(owner, "rift_dive", "asc.flame_effect") / 100.0
+                * (1 + Math.max(0, level(owner, "rift_dive", "asc.flame_effect_inc")) / 100.0); // 2026-10-30 照 PoE2：品質增加 (0—15)% 夏烏拉之炎效果
     }
 
     // =====================================================================
@@ -996,16 +995,16 @@ final class AscGranted implements Listener {
     private void tickPlayer(final Player player, final PlayerState state, final long now) {
         final StatSheet sheet = state.sheet();
         final Own own = owns.get(player.getUniqueId());
-        final boolean any = own != null || on(player, "virtuous_barrier") || on(player, "blood_boil") || on(player, "into_the_breach")
-                || on(player, "called_shots") || on(player, "align_fate") || on(player, "kelari_malediction") || on(player, "queens_procession")
-                || on(player, "infernal_hound") || state.skills().find("temporal_rift") >= 0 || !oases.isEmpty();
+        final boolean any = own != null || on(player, "righteous_shield") || on(player, "seething_blood") || on(player, "rift_dive")
+                || on(player, "called_shots") || on(player, "destiny_attune") || on(player, "sand_spirit_venom_word") || on(player, "empress_march")
+                || on(player, "hellfire_dog_call") || state.skills().find("time_gap_breach") >= 0 || !oases.isEmpty();
         if (!any) {
             return;
         }
         final Own o = own(player);
         boolean dirty = false;
         // 時空裂隙：每 0.25 秒記一個殘影（最多 16 個）
-        if (state.skills().find("temporal_rift") >= 0 && now >= o.riftNext) {
+        if (state.skills().find("time_gap_breach") >= 0 && now >= o.riftNext) {
             o.riftNext = now + 5;
             o.rift.addLast(new double[] {state.life(), state.mana(), state.energyShield()});
             o.riftLocations.addLast(player.getLocation().clone());
@@ -1015,9 +1014,9 @@ final class AscGranted implements Listener {
             }
         }
         // 高尚禦盾：每隔一陣子一顆隨機寶珠
-        if (on(player, "virtuous_barrier")) {
+        if (on(player, "righteous_shield")) {
             if (now >= o.moteNext) {
-                o.moteNext = now + Math.round(Math.max(1.5, level(player, "virtuous_barrier", "asc.mote_interval")) * 20);
+                o.moteNext = now + Math.round(Math.max(1.5, level(player, "righteous_shield", "asc.mote_interval")) * 20);
                 final int[] cap = moteCaps(state);
                 final List<Integer> open = new ArrayList<>();
                 for (int i = 0; i < 3; i++) {
@@ -1035,8 +1034,8 @@ final class AscGranted implements Listener {
             dirty = true;
         }
         // 鮮血沸騰：存在範圍內的非傳奇敵人累積血泡
-        if (on(player, "blood_boil") && now >= o.boilNext) {
-            o.boilNext = now + Math.round(Math.max(1.5, level(player, "blood_boil", "asc.boil_interval")) * 20);
+        if (on(player, "seething_blood") && now >= o.boilNext) {
+            o.boilNext = now + Math.round(Math.max(1.5, level(player, "seething_blood", "asc.boil_interval")) * 20);
             for (final LivingEntity enemy : effects.enemiesNear(player, player.getLocation(), AscendancyEffects.presence(sheet))) {
                 final MonsterData data = plugin.monsters().data(enemy).orElse(null);
                 if (data != null && !data.boss() && data.rarity() != MonsterRarity.UNIQUE) {
@@ -1047,8 +1046,8 @@ final class AscGranted implements Listener {
             }
         }
         // 遁入裂痕：夏烏拉之炎
-        if (on(player, "into_the_breach") && now >= o.flameNext) {
-            o.flameNext = now + Math.round(Math.max(1.2, level(player, "into_the_breach", "asc.flame_interval")) * 20);
+        if (on(player, "rift_dive") && now >= o.flameNext) {
+            o.flameNext = now + Math.round(Math.max(1.2, level(player, "rift_dive", "asc.flame_interval")) * 20);
             final int colour = (int) AscendancyEffects.flat(sheet, AscKeys.FLAME_COLOUR);
             final String kind = switch (colour) {
                 case 1 -> "purple";
@@ -1077,11 +1076,11 @@ final class AscGranted implements Listener {
             calledApply(player, o, now);
         }
         // 命運同調：殘影施放面板上一個法術
-        if (on(player, "align_fate") && now >= o.alignNext) {
+        if (on(player, "destiny_attune") && now >= o.alignNext) {
             final List<String> spells = alignSpells(state);
-            final double base = Math.max(9, level(player, "align_fate", "asc.visage_interval"));
+            final double base = Math.max(9, level(player, "destiny_attune", "asc.visage_interval"));
             final double speed = Math.max(0.1, 1 + sheet.increased(StatKeys.COOLDOWN_RECOVERY, Set.of())) * (1 + 0.25 * spells.size())
-                    * (1 + Math.max(0, level(player, "align_fate", "asc.visage_frequency")) / 100.0); // 2026-10-30 照 PoE2：品質更多 (0—20)% 殘影頻率
+                    * (1 + Math.max(0, level(player, "destiny_attune", "asc.visage_frequency")) / 100.0); // 2026-10-30 照 PoE2：品質更多 (0—20)% 殘影頻率
             o.alignNext = now + Math.round(base * 20 / speed);
             if (!spells.isEmpty()) {
                 final String spell = spells.get(plugin.random().nextInt(spells.size()));
@@ -1095,9 +1094,9 @@ final class AscGranted implements Listener {
             }
         }
         // 克拉里的惡言：消耗存在範圍內的屍體，生出屍甲蟲衝向敵人爆炸
-        if (on(player, "kelari_malediction") && on(player, "kelari_djinn") && now >= o.beetleNext && plugin.combat() != null) {
-            o.beetleNext = now + Math.round(Math.max(0.9, level(player, "kelari_malediction", "asc.beetle_interval")) * 20);
-            final int max = (int) Math.max(4, level(player, "kelari_malediction", "asc.beetle_max"));
+        if (on(player, "sand_spirit_venom_word") && on(player, "foul_sand_spirit") && now >= o.beetleNext && plugin.combat() != null) {
+            o.beetleNext = now + Math.round(Math.max(0.9, level(player, "sand_spirit_venom_word", "asc.beetle_interval")) * 20);
+            final int max = (int) Math.max(4, level(player, "sand_spirit_venom_word", "asc.beetle_max"));
             final tw.exilecore.combat.Corpses.Corpse corpse = plugin.combat().corpses().nearest(player.getWorld().getUID(),
                     player.getLocation().getX(), player.getLocation().getZ(), AscendancyEffects.presence(sheet), now);
             if (corpse != null) {
@@ -1116,7 +1115,7 @@ final class AscGranted implements Listener {
             }
         }
         // 女王進軍：衝刺時化成蝗蟲，每 0.5 秒打 3 公尺（4.5 格）內的敵人
-        if (on(player, "queens_procession")) {
+        if (on(player, "empress_march")) {
             if (player.isSprinting()) {
                 o.sprintEnd = now;
                 if (now >= o.swarmHit) {
@@ -1128,7 +1127,7 @@ final class AscGranted implements Listener {
             }
         }
         // 召喚獄炎獵犬：獵犬身邊 2.5 公尺（3.75 格）的敵人點燃（照獵犬最大生命的 20%）
-        if (on(player, "infernal_hound") && AscendancyEffects.every(now, 20) && plugin.skills().minions() != null && plugin.ailments() != null) {
+        if (on(player, "hellfire_dog_call") && AscendancyEffects.every(now, 20) && plugin.skills().minions() != null && plugin.ailments() != null) {
             for (final org.bukkit.entity.Entity entity : player.getNearbyEntities(30, 10, 30)) {
                 if (entity instanceof org.bukkit.entity.Wolf wolf && plugin.skills().minions().isMinion(wolf)
                         && player.equals(plugin.skills().minions().owner(wolf))) {
@@ -1153,7 +1152,7 @@ final class AscGranted implements Listener {
         }
         // 壞滅災變：每 0.75 秒一種天災
         if (o.apocalypseUntil > now && now >= o.apocalypseNext) {
-            o.apocalypseNext = now + Math.max(1, Math.round(15 / (1 + Math.max(0, level(player, "apocalypse", "asc.apocalypse_frequency")) / 100.0))); // 2026-10-30 照 PoE2：品質增加 (0—15)% 頻率
+            o.apocalypseNext = now + Math.max(1, Math.round(15 / (1 + Math.max(0, level(player, "calamity_descent", "asc.apocalypse_frequency")) / 100.0))); // 2026-10-30 照 PoE2：品質增加 (0—15)% 頻率
             final List<LivingEntity> near = effects.enemiesNear(player, player.getLocation(), 7);
             final Location at = near.isEmpty() ? player.getLocation().add(plugin.random().nextGaussian() * 3, 0, plugin.random().nextGaussian() * 3)
                     : near.get(plugin.random().nextInt(near.size())).getLocation();
@@ -1167,7 +1166,7 @@ final class AscGranted implements Listener {
                 o.demonflame = uncapped ? o.demonflame + 1 : Math.min(10, o.demonflame + 1);
                 dirty = true;
             }
-            final double loss = level(player, "demon_form", "asc.demon_life_loss") * o.demonflame * AscendancyEffects.PERIOD / 20.0;
+            final double loss = level(player, "become_fiend", "asc.demon_life_loss") * o.demonflame * AscendancyEffects.PERIOD / 20.0;
             if (state.life() - loss <= 1) {
                 state.setLife(1);
                 endDemon(player, o);
@@ -1180,7 +1179,7 @@ final class AscGranted implements Listener {
         // 納維拉的綠洲：站在裡面的你與隊友藥劑充能、受到的傷害回復
         for (final Oasis oasis : oases) {
             if (oasis.at().getWorld() == player.getWorld() && oasis.at().distanceSquared(player.getLocation()) <= oasis.radius() * oasis.radius()) {
-                plugin.skills().buff(player, "navira_oasis.in", "娜瑟菈的綠洲", 15, List.of(Modifier.flat(StatKeys.LIFE_RECOUP, 30, "娜瑟菈的綠洲"),
+                plugin.skills().buff(player, "mirage_spirit_haven.in", "娜瑟菈的綠洲", 15, List.of(Modifier.flat(StatKeys.LIFE_RECOUP, 30, "娜瑟菈的綠洲"),
                         Modifier.flat(StatKeys.MANA_RECOUP, 20, "娜瑟菈的綠洲")));
                 if (AscendancyEffects.every(now, 40) && plugin.flasks() != null) {
                     plugin.flasks().addCharges(player, 1, tw.exilecore.flask.FlaskKind.LIFE);
@@ -1208,8 +1207,8 @@ final class AscGranted implements Listener {
         if (near.isEmpty()) {
             return;
         }
-        final double min = level(player, "queens_procession", "asc.swarm_min");
-        final double max = level(player, "queens_procession", "asc.swarm_max");
+        final double min = level(player, "empress_march", "asc.swarm_min");
+        final double max = level(player, "empress_march", "asc.swarm_max");
         final double amount = (min + plugin.random().nextDouble() * Math.max(0, max - min)) * (1 + 0.02 * own.swarm);
         final SkillProfile profile = new SkillProfile("asc_swarm", Set.of(Tags.ATTACK, Tags.AREA, Tags.PHYSICAL), 1.0,
                 new DamagePacket().set(DamageType.PHYSICAL, amount));
@@ -1218,7 +1217,7 @@ final class AscGranted implements Listener {
         }
         // 打中時：你受到一點物理傷害、獲得一層蟲群前進
         own.swarm = Math.min(50, own.swarm + 1);
-        effects.selfHit(player, state, new DamagePacket().set(DamageType.PHYSICAL, level(player, "queens_procession", "asc.swarm_self")), "女皇巡行");
+        effects.selfHit(player, state, new DamagePacket().set(DamageType.PHYSICAL, level(player, "empress_march", "asc.swarm_self")), "女皇巡行");
     }
 
     /** 高尚禦盾：每種寶珠的上限 = 3 ＋ 面板上需要那種屬性的技能數（我們的寶石只有一種顏色：算單一屬性，兩倍）。 */
@@ -1434,7 +1433,7 @@ final class AscGranted implements Listener {
             out.add(Modifier.increased(StatKeys.ES_MAX, 0.05 * own.motes[1], "正氣護盾"));
         }
         if (own.motes[2] > 0) {
-            final double regen = 0.05 + Math.max(0, level(player, "virtuous_barrier", "asc.mote_regen")) / 100.0; // 2026-10-30 照 PoE2：品質每顆 +(0—2.5)%
+            final double regen = 0.05 + Math.max(0, level(player, "righteous_shield", "asc.mote_regen")) / 100.0; // 2026-10-30 照 PoE2：品質每顆 +(0—2.5)%
             out.add(Modifier.increased(StatKeys.LIFE_REGEN, regen * own.motes[2], "正氣護盾"));
             out.add(Modifier.increased(StatKeys.MANA_REGEN, regen * own.motes[2], "正氣護盾"));
         }
@@ -1462,7 +1461,7 @@ final class AscGranted implements Listener {
     /** 衝刺突擊：衝刺時無法被重度暈眩（衝刺開始、結束時重算屬性表）。 */
     @EventHandler
     public void onSprint(final PlayerToggleSprintEvent event) {
-        if (AscendancyEffects.has(effects.sheet(event.getPlayer()), AscKeys.SPRINT_STUN) || on(event.getPlayer(), "queens_procession")) {
+        if (AscendancyEffects.has(effects.sheet(event.getPlayer()), AscKeys.SPRINT_STUN) || on(event.getPlayer(), "empress_march")) {
             plugin.players().markDirty(event.getPlayer());
         }
     }

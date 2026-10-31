@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 2026-10-27 照站長「PoE2 0.5 還沒有的一般輔助寶石（不含血脈）全部補上」：tools/apply_poe2_missing_supports.py 寫進 supports.yml 的 120 顆
  * （清單與狀態在 tools/poe2_supports/missing_0.5.tsv），與防呆（SupportGuards：掛了完全沒作用的技能不讓掛）。
  */
-class Poe2MissingSupportsTest {
+class RefMissingSupportsTest {
 
     static SkillConfig config;
     static List<String> added;
@@ -38,7 +38,7 @@ class Poe2MissingSupportsTest {
         for (final String line : Files.readAllLines(Path.of("tools/poe2_supports/missing_0.5.tsv"), StandardCharsets.UTF_8)) {
             final String[] cells = line.split("\t", -1);
             if (!line.startsWith("#") && cells.length > 7 && (cells[7].equals("exact") || cells[7].equals("approx"))) {
-                added.add(cells[4]);
+                added.add(SkillIds.current(cells[4])); // 2026-10-31：tsv 寫的是舊代號
             }
         }
     }
@@ -84,46 +84,46 @@ class Poe2MissingSupportsTest {
     @Test
     void guardsRefuseSkillsWhereTheSupportDoesNothing() {
         // 新星改在準心放：要新星
-        assertNull(support("astral_projection").refusal(skill("frost_nova")));
-        assertEquals("要繞身邊一圈的技能（新星）", support("astral_projection").refusal(skill("fireball")));
+        assertNull(support("star_cast").refusal(skill("frost_star_blast")));
+        assertEquals("要繞身邊一圈的技能（新星）", support("star_cast").refusal(skill("blazing_star_shell")));
         // 連瀑：落在目標區域或身邊一圈的範圍法術
-        assertNull(support("spell_cascade").refusal(skill("comet")));
-        assertNotNull(support("spell_cascade").refusal(skill("fireball")));
+        assertNull(support("linked_falls").refusal(skill("falling_star")));
+        assertNotNull(support("linked_falls").refusal(skill("blazing_star_shell")));
         // 引導的增益：要引導或蓄力的技能
-        assertEquals("要引導或蓄力的技能", support("steadfast_ii").refusal(skill("fireball")));
+        assertEquals("要引導或蓄力的技能", support("steady_guard_ii").refusal(skill("blazing_star_shell")));
         // 弓的投射物攻擊
-        assertNull(support("charged_shots_ii").refusal(skill("lightning_arrow")));
-        assertNotNull(support("charged_shots_ii").refusal(skill("fireball")));
+        assertNull(support("filled_shot_ii").refusal(skill("thunderclap_arrow")));
+        assertNotNull(support("filled_shot_ii").refusal(skill("blazing_star_shell")));
         // 牆圍成一圈：要一道牆
-        assertNull(support("fortress_ii").refusal(skill("flame_wall")));
-        assertEquals("要一道牆的技能", support("fortress_ii").refusal(skill("comet")));
+        assertNull(support("ring_wall_ii").refusal(skill("flame_curtain")));
+        assertEquals("要一道牆的技能", support("ring_wall_ii").refusal(skill("falling_star")));
         // 跳躍落地的聖化地面：要跳躍技能
-        assertNull(support("holy_descent").refusal(skill("leap_slam")));
-        assertEquals("要跳躍技能", support("holy_descent").refusal(skill("fireball")));
+        assertNull(support("sacred_fall").refusal(skill("soaring_smash")));
+        assertEquals("要跳躍技能", support("sacred_fall").refusal(skill("blazing_star_shell")));
         // 冰晶多打兩下：要會留下冰晶的技能
         // 2026-10-30 照 PoE2：鐘、雷樁矢、龍捲風多用 2 次（這次之前是冰晶多打兩下）
-        assertNull(support("durability").refusal(skill("tempest_bell")));
-        assertNull(support("durability").refusal(skill("lightning_rod")));
-        assertNull(support("durability").refusal(skill("tornado_shot")));
-        assertNotNull(support("durability").refusal(skill("ice_wall")));
-        assertNotNull(support("durability").refusal(skill("fireball")));
+        assertNull(support("sturdy_gear").refusal(skill("startling_thunder_bell")));
+        assertNull(support("sturdy_gear").refusal(skill("thunder_stake_shaft")));
+        assertNull(support("sturdy_gear").refusal(skill("sky_rend_arrow")));
+        assertNotNull(support("sturdy_gear").refusal(skill("frost_rampart")));
+        assertNotNull(support("sturdy_gear").refusal(skill("blazing_star_shell")));
         // 冷卻次數加倍：要有冷卻
-        assertNotNull(support("second_wind_iii").refusal(skill("fireball")));
+        assertNotNull(support("rise_again_iii").refusal(skill("blazing_star_shell")));
         // 點燃時曝露：冰冷法術不會點燃
-        assertEquals("要會點燃的技能（火焰技能或攻擊）", support("fire_exposure").refusal(skill("frost_nova")));
-        assertNull(support("fire_exposure").refusal(skill("fireball")));
+        assertEquals("要會點燃的技能（火焰技能或攻擊）", support("flame_reveal").refusal(skill("frost_star_blast")));
+        assertNull(support("flame_reveal").refusal(skill("blazing_star_shell")));
         // 印記吸取：詛咒不行
-        assertNull(support("mark_of_siphoning_ii").refusal(skill("hunters_mark")));
+        assertNull(support("drain_sigil_ii").refusal(skill("prey_kill_mark")));
         // 盾牌技能
-        assertNull(support("vanguard_ii").refusal(skill("shield_rush")));
-        assertEquals("要盾牌技能", support("vanguard_ii").refusal(skill("boneshatter")));
+        assertNull(support("front_line_ii").refusal(skill("iron_wall_ram")));
+        assertEquals("要盾牌技能", support("front_line_ii").refusal(skill("spine_crush")));
         // 有使用條件的技能（Delayed Gratification）
-        assertEquals("要有使用條件的技能（要榮耀、連擊才能用的）", support("delayed_gratification").refusal(skill("fireball")));
+        assertEquals("要有使用條件的技能（要榮耀、連擊才能用的）", support("deferred_joy").refusal(skill("blazing_star_shell")));
         // 投射物的機制：要真的射出投射物
-        assertNotNull(support("gambleshot").refusal(skill("frost_nova")));
-        assertNull(support("gambleshot").refusal(skill("fireball")));
+        assertNotNull(support("wager_shot").refusal(skill("frost_star_blast")));
+        assertNull(support("wager_shot").refusal(skill("blazing_star_shell")));
         // 先祖強化：要打擊
-        assertNotNull(support("ancestral_aid").refusal(skill("fireball")));
+        assertNotNull(support("forebear_help").refusal(skill("blazing_star_shell")));
     }
 
     @Test
@@ -132,7 +132,7 @@ class Poe2MissingSupportsTest {
                 ModifierText.describe(new Modifier(SupportExtraKeys.CRIT_VS_BLINDED, ModType.FLAT, 15, Set.of(), "")));
         assertEquals("放這個技能的那段時間，每 0.25 秒攻擊／施法時間：增加 25% 護甲",
                 ModifierText.describe(new Modifier(SupportExtraKeys.USING_QUARTER_PREFIX + "armour", ModType.INCREASED, 0.25, Set.of(), "")));
-        final StatSheet sheet = new StatSheet().overlay(support("delayed_gratification").modifiers());
+        final StatSheet sheet = new StatSheet().overlay(support("deferred_joy").modifiers());
         assertEquals(2.5, SupportExtras.conditionScale(sheet, Set.of()), 1e-9, "條件更難 150%");
     }
 }

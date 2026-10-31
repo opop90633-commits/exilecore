@@ -34,10 +34,10 @@ class MetaGemTest {
 
     @Test
     void metaGemsLoad() {
-        final MetaSpec totem = config.meta("totem_casting");
+        final MetaSpec totem = config.meta("star_spell_totem");
         assertNotNull(totem);
         assertTrue(totem.totem());
-        assertEquals(Mechanic.META, config.skill("totem_casting").mechanic());
+        assertEquals(Mechanic.META, config.skill("star_spell_totem").mechanic());
         assertEquals(3, totem.charges());
         assertEquals(1, totem.totems().intAt(1));
         // 2026-10-26 照 PoE2 逐級：13 級一根、14 級兩根、23 級三根（這次之前 15 級起兩根）
@@ -46,37 +46,37 @@ class MetaGemTest {
         assertEquals(3, totem.totems().intAt(23));
         // 2026-10-26 照 PoE2 0.5 的 Meta 寶石：Cast on Critical／Elemental Ailment／Dodge／Minion Death（滿了自動觸發）、
         //   Elemental／Reaper's／Barrier Invocation（祈喚：存能量、按下去觸發）；這次之前還有受創引星、斬殺引星（原作已經沒有）
-        for (final String id : List.of("meta_crit", "meta_ailment", "meta_dodge", "meta_minion_death",
-                "meta_elemental_invocation", "meta_reaper_invocation", "meta_barrier_invocation")) {
+        for (final String id : List.of("critical_guide_star", "mutation_guide_star", "roll_guide_star", "fallen_servant_star",
+                "element_prayer_star", "scythe_prayer_star", "ward_prayer_star")) {
             final MetaSpec spec = config.meta(id);
             assertNotNull(spec, id);
             assertEquals(Mechanic.AURA, config.skill(id).mechanic(), id + " 是常駐的（保留精魂）");
             assertTrue(config.skill(id).aura().reserve() > 0, id);
             assertTrue(spec.energy() > 0, id);
-            assertEquals(id.endsWith("_invocation"), spec.invocation(), id);
+            assertEquals(id.endsWith("_prayer_star"), spec.invocation(), id); // 2026-10-31：祈喚改名成 *_prayer_star
             assertEquals(spec.invocation(), config.skill(id).tags().contains(tw.exilecore.stats.TreeMechanicKeys.INVOCATION), id + "：invocation 標籤跟祈喚一致");
         }
-        assertEquals(MetaSpec.Kind.CRIT, config.meta("meta_crit").kind());
-        assertEquals(1, config.meta("meta_crit").energy(), 1e-9, "照 PoE2：每點強度 1 × 打掉異常門檻的 %");
-        assertEquals(20, config.meta("meta_crit").lessDamage(), 1e-9);
-        assertEquals(100, config.skill("meta_crit").aura().reserve(), 1e-9, "照 PoE2：暴擊時施放保留 100 精魂");
-        assertEquals(30, config.skill("meta_minion_death").aura().reserve(), 1e-9);
-        assertEquals(2, config.meta("meta_dodge").energy(), 1e-9, "照 PoE2：每格 2");
-        assertEquals(60, config.skill("meta_elemental_invocation").aura().reserve(), 1e-9);
-        assertEquals(30, config.skill("meta_reaper_invocation").aura().reserve(), 1e-9);
-        assertEquals(30, config.skill("meta_barrier_invocation").aura().reserve(), 1e-9);
-        assertEquals(500, config.meta("meta_elemental_invocation").maxEnergy(), 1e-9);
-        assertEquals(68, config.meta("meta_elemental_invocation").energyMore().at(20), 1e-9);
-        assertEquals(30, config.meta("meta_reaper_invocation").energy(), 1e-9);
-        assertEquals(MetaSpec.Kind.BARRIER, config.meta("meta_barrier_invocation").kind());
-        assertEquals(0.1, config.meta("meta_barrier_invocation").energy(), 1e-9, "每 10 點護盾傷害 1 能量");
-        assertTrue(config.meta("spellslinger").invocation(), "咒擲（Spellslinger）也是祈喚");
+        assertEquals(MetaSpec.Kind.CRIT, config.meta("critical_guide_star").kind());
+        assertEquals(1, config.meta("critical_guide_star").energy(), 1e-9, "照 PoE2：每點強度 1 × 打掉異常門檻的 %");
+        assertEquals(20, config.meta("critical_guide_star").lessDamage(), 1e-9);
+        assertEquals(100, config.skill("critical_guide_star").aura().reserve(), 1e-9, "照 PoE2：暴擊時施放保留 100 精魂");
+        assertEquals(30, config.skill("fallen_servant_star").aura().reserve(), 1e-9);
+        assertEquals(2, config.meta("roll_guide_star").energy(), 1e-9, "照 PoE2：每格 2");
+        assertEquals(60, config.skill("element_prayer_star").aura().reserve(), 1e-9);
+        assertEquals(30, config.skill("scythe_prayer_star").aura().reserve(), 1e-9);
+        assertEquals(30, config.skill("ward_prayer_star").aura().reserve(), 1e-9);
+        assertEquals(500, config.meta("element_prayer_star").maxEnergy(), 1e-9);
+        assertEquals(68, config.meta("element_prayer_star").energyMore().at(20), 1e-9);
+        assertEquals(30, config.meta("scythe_prayer_star").energy(), 1e-9);
+        assertEquals(MetaSpec.Kind.BARRIER, config.meta("ward_prayer_star").kind());
+        assertEquals(0.1, config.meta("ward_prayer_star").energy(), 1e-9, "每 10 點護盾傷害 1 能量");
+        assertTrue(config.meta("incant_hurl").invocation(), "咒擲（Spellslinger）也是祈喚");
         for (final String retired : List.of("meta_damage_taken", "meta_melee_kill")) {
             assertNull(config.skill(retired), retired);
             assertTrue(config.retiredSkill(retired), retired + " 身上的換成未切割技能寶石");
         }
         assertNull(config.support("boundless_energy_i"), "照站長 I／II／III 只留最高階：只有湧能 II");
-        assertNull(config.meta("fireball"));
+        assertNull(config.meta("blazing_star_shell"));
         // 以前的觸發輔助、圖騰施法拿掉了，身上的換成未切割寶石
         for (final String retired : List.of("spell_totem", "trigger_crit", "trigger_hit_taken", "trigger_kill", "trigger_ailment",
                 "cast_on_dodge", "cast_on_minion_death")) {
@@ -88,10 +88,10 @@ class MetaGemTest {
 
     @Test
     void maxEnergyFollowsCastTime() {
-        assertEquals(120, MetaSpec.maxEnergy(config.skill("fireball")), 1e-9, "熾星彈 1.2 秒 = 120");
-        assertTrue(MetaSpec.maxEnergy(config.skill("arc")) >= 10);
+        assertEquals(120, MetaSpec.maxEnergy(config.skill("blazing_star_shell")), 1e-9, "熾星彈 1.2 秒 = 120");
+        assertTrue(MetaSpec.maxEnergy(config.skill("chain_thunder")) >= 10);
         assertEquals(1, MetaGems.power(MonsterRarity.NORMAL), 1e-9);
-        assertEquals(20, MetaGems.power(MonsterRarity.UNIQUE), 1e-9, "2026-10-26 照 poe2db Monster Power：傳奇 20（這次之前 10）");
+        assertEquals(20, MetaGems.power(MonsterRarity.UNIQUE), 1e-9, "2026-10-26 照 原作資料 Monster Power：傳奇 20（這次之前 10）");
     }
 
     /** 2026-10-26 照 PoE2：暴擊引星照打掉異常門檻的 %（最多 100）；祈喚一次觸發幾次。 */
@@ -104,7 +104,7 @@ class MetaGemTest {
         assertEquals(1, MetaGems.invokeTimes(500, 120, true), "有冷卻的一次只放一發");
         assertEquals(0, MetaGems.invokeTimes(119, 120, false));
         assertEquals(MetaGems.MAX_INVOKES, MetaGems.invokeTimes(900, 10, false));
-        final MetaSpec spec = config.meta("meta_reaper_invocation");
+        final MetaSpec spec = config.meta("scythe_prayer_star");
         assertEquals(900, MetaGems.invocationMax(spec, new double[] {0, 80, 0}, new double[] {1, 1, 0}), 1e-9, "擴能 +80%");
     }
 
@@ -117,14 +117,14 @@ class MetaGemTest {
         assertEquals(0, MetaGems.afterGain(250, 120, false), 1e-9, "滿了就歸零（不留溢出）");
         assertEquals(60, MetaGems.afterGain(250, 120, true), 1e-9, "返能：退還上限的一半");
         assertEquals(80, MetaGems.afterGain(80, 120, false), 1e-9, "沒滿照存");
-        final List<SkillDefinition> two = List.of(config.skill("fireball"), config.skill("fireball"));
+        final List<SkillDefinition> two = List.of(config.skill("blazing_star_shell"), config.skill("blazing_star_shell"));
         assertEquals(240, MetaGems.totalMaxEnergy(two), 1e-9, "兩個插槽法術的上限加起來");
-        final SkillDefinition fireball = config.skill("fireball");
-        final MetaGems.Socket socket = new MetaGems.Socket(0, new tw.exilecore.character.SkillLoadout.Entry("meta_crit", 1), config.meta("meta_crit"),
-                List.of(new tw.exilecore.character.SkillLoadout.Entry("fireball", 1), new tw.exilecore.character.SkillLoadout.Entry("arc", 1)),
-                List.of(fireball, config.skill("arc")));
-        assertEquals("meta_crit:fireball+arc", socket.key());
-        assertEquals(MetaSpec.maxEnergy(fireball) + MetaSpec.maxEnergy(config.skill("arc")), socket.maxEnergy(), 1e-9);
+        final SkillDefinition fireball = config.skill("blazing_star_shell");
+        final MetaGems.Socket socket = new MetaGems.Socket(0, new tw.exilecore.character.SkillLoadout.Entry("critical_guide_star", 1), config.meta("critical_guide_star"),
+                List.of(new tw.exilecore.character.SkillLoadout.Entry("blazing_star_shell", 1), new tw.exilecore.character.SkillLoadout.Entry("chain_thunder", 1)),
+                List.of(fireball, config.skill("chain_thunder")));
+        assertEquals("critical_guide_star:blazing_star_shell+chain_thunder", socket.key());
+        assertEquals(MetaSpec.maxEnergy(fireball) + MetaSpec.maxEnergy(config.skill("chain_thunder")), socket.maxEnergy(), 1e-9);
         assertEquals(fireball, socket.spell(), "第一個插槽法術");
     }
 
@@ -141,7 +141,7 @@ class MetaGemTest {
     /** 2026-10-26 照 PoE2 Fluke：觸發出來的技能回復 0～20% 消耗；骰運掛在引星上照宿主算才吃得到。 */
     @Test
     void flukeRecoversPartOfCost() {
-        final SupportDefinition fluke = config.support("fluke");
+        final SupportDefinition fluke = config.support("dice_luck");
         assertTrue(fluke.modifiers().stream().anyMatch(m -> m.stat().equals(tw.exilecore.stats.SupportKeys.FLUKE_REFUND) && m.value() == 20));
         assertEquals(0, SkillService.flukeRecovery(50, 20, 0), 1e-9);
         assertEquals(10, SkillService.flukeRecovery(50, 20, 1), 1e-9, "最多回 20%");
@@ -162,15 +162,15 @@ class MetaGemTest {
 
     @Test
     void onlyCastableSpellsFitSockets() {
-        final MetaSpec crit = config.meta("meta_crit");
-        final MetaSpec totem = config.meta("totem_casting");
-        assertNull(MetaGems.problem(crit, config.skill("fireball")));
-        assertNull(MetaGems.problem(totem, config.skill("fireball")));
-        assertNotNull(MetaGems.problem(crit, config.skill("boneshatter")), "攻擊不行");
-        assertNotNull(MetaGems.problem(crit, config.skill("raise_zombie")), "召喚不行");
-        assertNotNull(MetaGems.problem(crit, config.skill("frost_aegis")), "光環不行");
-        assertNotNull(MetaGems.problem(crit, config.skill("meta_ailment")), "主要寶石不能插主要寶石");
-        assertNotNull(MetaGems.problem(totem, config.skill("dark_idol")), "本來就是圖騰的不行");
+        final MetaSpec crit = config.meta("critical_guide_star");
+        final MetaSpec totem = config.meta("star_spell_totem");
+        assertNull(MetaGems.problem(crit, config.skill("blazing_star_shell")));
+        assertNull(MetaGems.problem(totem, config.skill("blazing_star_shell")));
+        assertNotNull(MetaGems.problem(crit, config.skill("spine_crush")), "攻擊不行");
+        assertNotNull(MetaGems.problem(crit, config.skill("corpse_summon")), "召喚不行");
+        assertNotNull(MetaGems.problem(crit, config.skill("winter_shell")), "光環不行");
+        assertNotNull(MetaGems.problem(crit, config.skill("mutation_guide_star")), "主要寶石不能插主要寶石");
+        assertNotNull(MetaGems.problem(totem, config.skill("nether_puppet")), "本來就是圖騰的不行");
         for (final SkillDefinition skill : config.all()) {
             if (skill.cooldown() > 0 && skill.type() == SkillType.SPELL) {
                 assertNotNull(MetaGems.problem(totem, skill), skill.id() + " 有冷卻：法術圖騰不行");
@@ -193,8 +193,8 @@ class MetaGemTest {
             assertNull(StatLines.problem(new Modifier(stat, ModType.FLAT, 10, Set.of(), "test")), stat);
         }
         assertNotNull(StatLines.problem(new Modifier("charge.extra", ModType.INCREASED, 0.1, Set.of(), "test")), "要 FLAT");
-        assertNotNull(config.support("charge_profusion"));
-        assertTrue(config.skill("combat_frenzy").aura().effects().stream().anyMatch(e -> e.stat().equals("charge.event.freeze.frenzy")),
+        assertNotNull(config.support("full_stars"));
+        assertTrue(config.skill("battle_spirit_rise").aura().effects().stream().anyMatch(e -> e.stat().equals("charge.event.freeze.frenzy")),
                 "戰意昂揚照 PoE2 改成冰凍、感電、重暈時給怒星");
         assertNull(config.skill("star_cadence"), "2026-10-26：照站長拿掉星律（charge.periodic 屬性還在）；這次之前是常駐光環");
     }

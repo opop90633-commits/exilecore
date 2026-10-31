@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 2026-10-26：照 PoE2 0.5 校對的技能（第二批）：逐級冷卻、對敵人的常駐光環、只給自己的常駐增益、觸發技能自己的冷卻與傷害表。 */
-class Poe2SkillSyncTest {
+class RefSkillSyncTest {
 
     static SkillConfig config;
 
@@ -45,7 +45,7 @@ class Poe2SkillSyncTest {
         assertEquals(102, pounce20.cooldownTicks());
         final SkillBuild blink20 = SkillBuild.of(config, config.skill("blink"), 20, 100, false, List.of(), Set.of(), new StatSheet());
         assertEquals(70, blink20.cooldownTicks());
-        for (final String mark : List.of("voltaic_mark", "freezing_mark", "bloodhounds_mark")) {
+        for (final String mark : List.of("thunder_lure_seal", "frostbind_seal", "blood_scent_seal")) {
             assertEquals(0.5, config.skill(mark).cooldown(), 1e-9, mark);
             assertEquals(79, config.skill(mark).mana().at(20), 1e-9, mark);
         }
@@ -53,14 +53,14 @@ class Poe2SkillSyncTest {
 
     @Test
     void enemyPresenceAuras() {
-        final AuraSpec overwhelming = config.skill("overwhelming_presence").aura();
+        final AuraSpec overwhelming = config.skill("awe_suppress").aura();
         assertFalse(overwhelming.allies(), "作用在敵人身上，不給隊友");
         assertNotNull(overwhelming.enemy());
         assertEquals(2, overwhelming.enemy().effects().size());
         assertEquals(StatKeys.STUN_THRESHOLD, overwhelming.enemy().effects().get(0).stat());
         assertEquals(-25, overwhelming.enemy().effects().get(0).value().at(20), 1e-9);
         assertEquals(-24, overwhelming.enemy().effects().get(1).value().at(20), 1e-9);
-        final AuraSpec withering = config.skill("withering_presence").aura();
+        final AuraSpec withering = config.skill("wilting_breath").aura();
         assertNotNull(withering.enemy().witheredEvery());
         assertEquals(1.8, withering.enemy().witheredEvery().at(1), 1e-9);
         assertEquals(1.42, withering.enemy().witheredEvery().at(20), 1e-9);
@@ -69,21 +69,21 @@ class Poe2SkillSyncTest {
 
     @Test
     void selfOnlyPersistentBuffs() {
-        for (final String id : List.of("time_of_need", "ghost_dance", "barkskin", "mana_remnants", "alchemists_boon")) {
+        for (final String id : List.of("guard_moment", "spectral_step", "wood_armor", "magic_spring_well", "potion_craft_insight")) {
             assertFalse(config.skill(id).aura().allies(), id + " 只給自己");
         }
-        assertEquals(8.1, levelValue("time_of_need", PersistentBuffs.BLESSING_INTERVAL, 20), 1e-9);
-        assertEquals(628, config.skill("time_of_need").aura().effects().getFirst().value().at(20), 1e-9);
-        assertEquals(10.1, levelValue("ghost_dance", PersistentBuffs.SHROUD_INTERVAL, 20), 1e-9);
-        assertEquals(62, config.skill("barkskin").aura().effects().getFirst().value().at(20), 1e-9);
-        final ScaledMod rage = config.skill("eternal_rage").aura().effects().getFirst();
+        assertEquals(8.1, levelValue("guard_moment", PersistentBuffs.BLESSING_INTERVAL, 20), 1e-9);
+        assertEquals(628, config.skill("guard_moment").aura().effects().getFirst().value().at(20), 1e-9);
+        assertEquals(10.1, levelValue("spectral_step", PersistentBuffs.SHROUD_INTERVAL, 20), 1e-9);
+        assertEquals(62, config.skill("wood_armor").aura().effects().getFirst().value().at(20), 1e-9);
+        final ScaledMod rage = config.skill("unquenched_fury").aura().effects().getFirst();
         assertEquals(SkillResources.RAGE_REGEN, rage.stat());
         assertEquals(5, rage.value().at(20), 1e-9);
-        assertEquals(StatKeys.FLASK_CHARGES_PER_MINUTE_LIFE, config.skill("alchemists_boon").aura().effects().getFirst().stat());
+        assertEquals(StatKeys.FLASK_CHARGES_PER_MINUTE_LIFE, config.skill("potion_craft_insight").aura().effects().getFirst().stat());
     }
 
     @Test
-    void triggeredSkillsUsePoe2Values() {
+    void triggeredSkillsUseRefValues() {
         assertEquals(0.2, config.skill("proc_coursing_current").cooldown(), 1e-9);
         assertEquals(6, config.skill("proc_coursing_current").params().chains().at(1), 1e-9);
         assertTrue(config.skill("proc_coursing_current").damageByLevel());
@@ -95,10 +95,10 @@ class Poe2SkillSyncTest {
 
     @Test
     void strikesAreSingleTargetAndExtraAilmentsAreGone() {
-        for (final String id : List.of("fangs_of_frost", "bear_maul", "wolf_shred", "primal_strikes")) {
+        for (final String id : List.of("frost_tooth_stab", "mountain_shake_claw", "swift_claw", "thunderclap_stab")) {
             assertEquals(1, config.skill(id).params().targets(), id);
         }
-        for (final String id : List.of("falling_thunder", "explosive_spear", "mountain_fury", "walking_calamity", "thunderstorm", "volcano")) {
+        for (final String id : List.of("startle_thunder_chop", "explosive_spear", "molten_crack_stomp", "fallen_star_bear_roar", "gathered_thundercloud", "volcano")) {
             assertTrue(config.skill(id).modifiers().stream().noneMatch(m -> m.stat().endsWith(".chance") && m.value() > 0),
                     id + "：原作沒有的異常機率要拿掉");
         }

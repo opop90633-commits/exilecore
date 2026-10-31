@@ -135,7 +135,7 @@ public final class TreeLeftovers implements Listener {
     /** 自己的狀態條件接上（SkillModule 啟用時）。 */
     void registerConditions(final ConditionTracker conditions) {
         // 「一直有秘術增強」的也是這個增益（TreeMechanics 一直補上）；重算屬性表時不能讀正在重建的表
-        conditions.register(TreeConditions.ARCANE_SURGE, (player, state) -> service.buffActive(player, "tree.arcane_surge"));
+        conditions.register(TreeConditions.ARCANE_SURGE, (player, state) -> service.buffActive(player, "tree.surging_chant"));
         conditions.register(TreeConditions.ALL_COMPANIONS, (player, state) -> service.minions() != null
                 && service.minions().allCompanions(player.getUniqueId()));
         conditions.register(TreeConditions.EMPOWERED_ATTACK, (player, state) -> within(state, TreeLastKeys.EVENT_EMPOWERED, TreeLastKeys.EMPOWERED_WINDOW));

@@ -549,7 +549,7 @@ public final class MinionService implements Listener, MinionHooks {
     boolean sacrificeSkeleton(final Player owner, final Location near, final double search) {
         Minion pick = null;
         for (final Minion minion : minions) {
-            if (minion.owner.equals(owner.getUniqueId()) && !minion.decoy && minion.mob.isValid() && minion.skillId().contains("skelet")
+            if (minion.owner.equals(owner.getUniqueId()) && !minion.decoy && minion.mob.isValid() && (minion.skillId().contains("skelet") || minion.skillId().startsWith("summon_bone_"))
                     && minion.mob.getWorld().equals(near.getWorld()) && minion.mob.getLocation().distanceSquared(near) <= search * search
                     && (pick == null || minion.bornTick < pick.bornTick)) {
                 pick = minion;
@@ -1418,7 +1418,7 @@ public final class MinionService implements Listener, MinionHooks {
         }
         // 2026-10-26 照 PoE2 天賦「夥伴獲得你的力量」：力量給的生命（每點 2，換成召喚物的單位）；2026-10-27 巨伴的閃避、偏斜也在這裡
         // （跟召喚物說明、召喚物每秒傷害共用 MinionEstimates；生命換算照這次的係數，這次之前用上一次重算的，第一次是 1）
-        final double[] factors = MinionSheets.poe2Factors(config, minion.build.level(),
+        final double[] factors = MinionSheets.refFactors(config, minion.build.level(),
                 ownerPlayer == null ? 0 : plugin.players().get(ownerPlayer).level(), monsters::lifeAt, monsters::damageAt);
         ownerModifiers.addAll(MinionEstimates.ownerDerived(minion.build, ownerSheet, factors[1], !minion.decoy));
         final long expiry = Math.min(Math.min(Math.min(Math.min(offered ? minion.offeringUntil + 1 : Long.MAX_VALUE, armoured ? minion.iceArmourUntil + 1 : Long.MAX_VALUE),
@@ -1631,7 +1631,7 @@ public final class MinionService implements Listener, MinionHooks {
         if (minion.spec.heal() > 0 && now % 20 == minion.bornTick % 20) {
             healAllies(minion, owner); // 治療的召喚物（2026-10）
         }
-        poe2Tick(minion, now); // 2026-10-26：能量護盾回充、祭司的回復、怒氣、激怒失血、躍擊落地
+        refTick(minion, now); // 2026-10-26：能量護盾回充、祭司的回復、怒氣、激怒失血、躍擊落地
         if (!mob.isValid() || mob.isDead() || !byEntity.containsKey(mob.getUniqueId())) {
             return;
         }
@@ -2139,10 +2139,10 @@ public final class MinionService implements Listener, MinionHooks {
     private static final String REVIVE = "revive";
     private static final String COMMAND = "command";
     /** 2026-10-30 照 PoE2 Ancestral Spirits：先祖之靈各型態的招式冷卻。 */
-    static final String ANCESTRAL = "ancestral_spirits";
+    static final String ANCESTRAL = "forebear_manifest";
     private static final String ENCASE = "ancestral_encase";
     private static final String HULK_CHARGE = "ancestral_charge";
-    private static final String HULK_CRY = "ancestral_cry";
+    private static final String HULK_CRY = "molten_soul_shriek";
     private static final String HORN = "ancestral_horn";
     /**
      * 2026-10-27：指令的冷卻另外記在這裡（主人＋技能 → 好了的 tick）：重新召喚（拔掉再裝技能、重新登入）不會重設冷卻。
@@ -2249,7 +2249,7 @@ public final class MinionService implements Listener, MinionHooks {
     }
 
     /** 每 tick：能量護盾回充、祭司的回復、怒氣消退、激怒失血、躍擊落地、冰甲的樣子。 */
-    private void poe2Tick(final Minion minion, final long now) {
+    private void refTick(final Minion minion, final long now) {
         final boolean second = now % 20 == minion.bornTick % 20;
         if (minion.esMax > 0 && minion.es < minion.esMax && now - minion.lastHurt >= MinionAbilities.ES_DELAY_TICKS && now % 5 == 0) {
             final double rate = MinionAbilities.ES_RECHARGE_PER_SECOND
@@ -2323,7 +2323,7 @@ public final class MinionService implements Listener, MinionHooks {
      * 不吃召喚物的武器傷害與傷害倍率（PoB 也是），基礎暴擊率照技能。
      */
     private static SkillProfile spellProfile(final Minion minion, final String id, final tw.exilecore.stats.DamageType type,
-                                             final double[] poe2, final double crit, final Set<String> extraTags, final List<Modifier> extra) {
+                                             final double[] ref, final double crit, final Set<String> extraTags, final List<Modifier> extra) {
         final SkillProfile base = minion.profile;
         final Set<String> tags = new HashSet<>(base.tags());
         tags.remove(tw.exilecore.stats.Tags.ATTACK);
@@ -2333,8 +2333,8 @@ public final class MinionService implements Listener, MinionHooks {
         tags.add(type.tag());
         tags.addAll(extraTags);
         final double factor = minion.factors[0];
-        final tw.exilecore.stats.DamagePacket min = new tw.exilecore.stats.DamagePacket().set(type, poe2[0] * factor);
-        final tw.exilecore.stats.DamagePacket max = new tw.exilecore.stats.DamagePacket().set(type, Math.max(poe2[0], poe2[1]) * factor);
+        final tw.exilecore.stats.DamagePacket min = new tw.exilecore.stats.DamagePacket().set(type, ref[0] * factor);
+        final tw.exilecore.stats.DamagePacket max = new tw.exilecore.stats.DamagePacket().set(type, Math.max(ref[0], ref[1]) * factor);
         final List<Modifier> local = new ArrayList<>(base.local());
         local.addAll(musterModifiers(minion)); // 2026-10-30：群鋒
         local.add(Modifier.flat(tw.exilecore.stats.StatKeys.SPELL_BASE_CRIT, crit, id));
@@ -2453,7 +2453,7 @@ public final class MinionService implements Listener, MinionHooks {
 
     /** 玉法師的冰冷投射物（照 PoE2 召喚物表的每一下傷害 × 型態的傷害倍率，±20%）。 */
     private void jadeBolt(final Minion minion, final LivingEntity target) {
-        final double hit = MinionSheets.poe2AllyDamage(MinionSheets.allyLevel(minion.build.level())) * minion.spec.damage();
+        final double hit = MinionSheets.refAllyDamage(MinionSheets.allyLevel(minion.build.level())) * minion.spec.damage();
         final Attack bolt = with(minion, spellProfile(minion, "jade_bolt", tw.exilecore.stats.DamageType.COLD, new double[] {hit * 0.8, hit * 1.2},
                 AncestralForms.CASTER_BOLT_CRIT, Set.of(tw.exilecore.stats.Tags.PROJECTILE), List.of()));
         minion.mob.swingMainHand();
@@ -2688,7 +2688,7 @@ public final class MinionService implements Listener, MinionHooks {
     /** 電弧：打目標再連鎖 2 次（3.5 格）。 */
     private void arc(final Minion minion, final LivingEntity target, final Player owner) {
         final int level = minion.build.level();
-        final Attack hit = with(minion, spellProfile(minion, "arc", tw.exilecore.stats.DamageType.LIGHTNING,
+        final Attack hit = with(minion, spellProfile(minion, "chain_thunder", tw.exilecore.stats.DamageType.LIGHTNING,
                 MinionAbilities.range(MinionAbilities.ARC_LIGHTNING, level), MinionAbilities.ARC_CRIT, Set.of(),
                 List.of(Modifier.more(tw.exilecore.stats.StatKeys.SHOCK_CHANCE, 1.0, "電弧"))));
         final List<LivingEntity> chain = new ArrayList<>();
@@ -2879,9 +2879,7 @@ public final class MinionService implements Listener, MinionHooks {
             final double radius = cloud.radius(now);
             if (now % 4 == 0) {
                 final double angle = (now * 0.4) % (Math.PI * 2);
-                Fx.as(cloud.owner, () -> Fx.spawn(cloud.at.getWorld(), org.bukkit.Particle.DUST_COLOR_TRANSITION,
-                        cloud.at.clone().add(Math.cos(angle) * radius * 0.6, 0.4, Math.sin(angle) * radius * 0.6), 3, radius * 0.4, 0.2, radius * 0.4, 0,
-                        new org.bukkit.Particle.DustTransition(org.bukkit.Color.fromRGB(0x6a, 0xb0, 0x3c), org.bukkit.Color.fromRGB(0x3c, 0x5a, 0x20), 1.4f)));
+                Fx.as(cloud.owner, () -> tw.exilecore.skill.Fx.disk(cloud.at.getWorld(), org.bukkit.Particle.DUST_COLOR_TRANSITION, cloud.at.clone().add(Math.cos(angle) * radius * 0.6, 0.4, Math.sin(angle) * radius * 0.6), 3, radius, 0.2, 0, new org.bukkit.Particle.DustTransition(org.bukkit.Color.fromRGB(0x6a, 0xb0, 0x3c), org.bukkit.Color.fromRGB(0x3c, 0x5a, 0x20), 1.4f)));
             }
             if ((now - cloud.born) % 20 != 0) {
                 continue;
@@ -3062,7 +3060,7 @@ public final class MinionService implements Listener, MinionHooks {
         final Location at = brute.mob.getLocation();
         final double radius = MinionAbilities.ROAR_RADIUS * areaScale(brute);
         brute.mob.getWorld().playSound(at, org.bukkit.Sound.ENTITY_RAVAGER_ROAR, 0.8f, 1.2f);
-        Fx.spawn(at.getWorld(), org.bukkit.Particle.SWEEP_ATTACK, at.clone().add(0, 1, 0), 8, radius * 0.4, 0.2, radius * 0.4, 0);
+        tw.exilecore.skill.Fx.disk(at.getWorld(), org.bukkit.Particle.SWEEP_ATTACK, at.clone().add(0, 1, 0), 8, radius, 0.2, 0);
         final Attack blast = with(brute, spellProfile(brute, "shattering_roar", tw.exilecore.stats.DamageType.COLD,
                 MinionAbilities.range(MinionAbilities.ROAR_COLD, brute.build.level()), MinionAbilities.ROAR_CRIT,
                 Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.WARCRY), List.of()));
@@ -3227,7 +3225,7 @@ public final class MinionService implements Listener, MinionHooks {
                     at.setY(flare.getLocation().getY());
                     at.setZ(flare.getLocation().getZ());
                 }
-                Fx.spawn(at.getWorld(), org.bukkit.Particle.CRIT, at.clone().add(0, 4, 0), 40, radius * 0.5, 0.5, radius * 0.5, 0.0);
+                tw.exilecore.skill.Fx.disk(at.getWorld(), org.bukkit.Particle.CRIT, at.clone().add(0, 4, 0), 40, radius, 0.5, 0.0);
                 at.getWorld().playSound(at, org.bukkit.Sound.ENTITY_ARROW_HIT, 0.6f, 0.8f);
                 for (final LivingEntity near : targets.around(at, radius, owner)) {
                     strike(artillery, near, hit);
@@ -3292,7 +3290,7 @@ public final class MinionService implements Listener, MinionHooks {
             final double radius = MinionAbilities.DEMISE_RADIUS * areaScale(arsonist);
             victim.mob.setHealth(0); // 被引爆的召喚物死掉（會復活的照常復活）
             Fx.spawn(at.getWorld(), org.bukkit.Particle.EXPLOSION_EMITTER, at.clone().add(0, 0.5, 0), 1, 0, 0, 0, 0);
-            Fx.spawn(at.getWorld(), org.bukkit.Particle.FLAME, at.clone().add(0, 0.5, 0), 30, radius * 0.4, 0.4, radius * 0.4, 0.08);
+            tw.exilecore.skill.Fx.disk(at.getWorld(), org.bukkit.Particle.FLAME, at.clone().add(0, 0.5, 0), 30, radius, 0.4, 0.08);
             for (final LivingEntity near : targets.around(at, radius, owner)) {
                 strike(arsonist, near, blast);
             }
@@ -3778,7 +3776,7 @@ public final class MinionService implements Listener, MinionHooks {
         final org.bukkit.Particle fx = particle(skill.type());
         final Location from = minion.mob.getLocation();
         final java.util.function.BiConsumer<Location, Double> burst = (center, radius) -> {
-            Fx.spawn(center.getWorld(), fx, center.clone().add(0, 0.3, 0), (int) Math.min(60, 12 * radius), radius / 2, 0.3, radius / 2, 0.02);
+            tw.exilecore.skill.Fx.disk(center.getWorld(), fx, center.clone().add(0, 0.3, 0), (int) Math.min(60, 12 * radius), radius, 0.3, 0.02);
             if (times > 0) {
                 for (final LivingEntity enemy : targets.around(center, radius, owner)) {
                     strike(minion, enemy, hit);
@@ -3859,7 +3857,7 @@ public final class MinionService implements Listener, MinionHooks {
                 Fx.spawn(from.getWorld(), org.bukkit.Particle.CLOUD, end.clone().add(0, 0.5, 0), 12, 0.4, 0.2, 0.4, 0.02);
             }
             case CURSE -> {
-                Fx.spawn(at.getWorld(), fx, at.clone().add(0, 1, 0), 30, radius / 2, 0.5, radius / 2, 0.02);
+                tw.exilecore.skill.Fx.disk(at.getWorld(), fx, at.clone().add(0, 1, 0), 30, radius, 0.5, 0.02);
                 if (plugin.combat() != null && skill.taken() > 0) {
                     final long until = now() + Math.round(Math.max(1, skill.duration()) * 20);
                     for (final LivingEntity enemy : targets.around(at, radius, owner)) {

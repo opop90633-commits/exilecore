@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 2026-10-26：護符、符文、腰帶／戒指／項鍊基底照 PoE2 0.5。 */
-class Poe2CharmRuneBaseTest {
+class RefCharmRuneBaseTest {
 
     static final Path DATA = Path.of("src/main/resources/data");
     static ItemRepository repository;
@@ -42,7 +42,7 @@ class Poe2CharmRuneBaseTest {
     }
 
     @Test
-    void charmsMatchThePoe2Table() {
+    void charmsMatchTheRefTable() {
         assertEquals(0, charms.integer("base_slots", -1), "角色本身 0 格，護符欄只有腰帶給");
         // 代號 → 等級、持續時間、充能、每次消耗、觸發
         final Map<String, Object[]> table = Map.ofEntries(

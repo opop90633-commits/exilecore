@@ -24,7 +24,7 @@ public final class ChayulaHand {
     }
 
     /** 夏烏拉之手。 */
-    public static final String ID = "hand_of_chayula";
+    public static final String ID = "glow_jade_hand";
 
     /** 衝刺距離（PoE2 base_melee_dash_range 65 = 6.5 公尺）。 */
     static final double DASH_RANGE = tw.exilecore.core.Units.metres(6.5);

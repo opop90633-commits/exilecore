@@ -148,7 +148,7 @@ final class SupportExtraText {
             case "corpse.save_chance" -> "用掉屍體時有 " + n(value) + "% 機率不毀掉屍體";
             case SupportExtraKeys.FONT_BLOOD -> "圖騰四周 4 格是血之泉：站在裡面偷取圖騰物理傷害的 " + n(value) + "% 為生命";
             case SupportExtraKeys.FONT_MANA -> "圖騰四周 4 格是魔之泉：站在裡面偷取圖騰物理傷害的 " + n(value) + "% 為魔力";
-            case "incision.chance" -> "擊中時有 " + n(value) + "% 機率給一層切割（每層 10% 流血機率）";
+            case "cut_wound.chance" -> "擊中時有 " + n(value) + "% 機率給一層切割（每層 10% 流血機率）";
             case "totem.resist_max" -> "圖騰最大元素抗性 +" + n(value) + "%";
             case "flag.aggravate_bleed_pinned" -> "定身敵人或擊中被定身的敵人時加劇牠身上的流血";
             case "cooldown.recovery" -> "冷卻回復速度" + (modifier.type() == tw.exilecore.stats.ModType.MORE

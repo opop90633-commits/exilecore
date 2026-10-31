@@ -127,8 +127,8 @@ class TreeNewMechanicsTest {
 
     @Test
     void ancestralBoostedSlamHasMoreDamageAndArea() {
-        final SkillBuild slam = SkillBuild.of(config, config.skill("boneshatter") != null && config.skill("boneshatter").tags().contains(Tags.SLAM)
-                ? config.skill("boneshatter") : firstWith(Tags.SLAM), 10, 50, false, List.of(), Set.of(Tags.MACE), new StatSheet());
+        final SkillBuild slam = SkillBuild.of(config, config.skill("spine_crush") != null && config.skill("spine_crush").tags().contains(Tags.SLAM)
+                ? config.skill("spine_crush") : firstWith(Tags.SLAM), 10, 50, false, List.of(), Set.of(Tags.MACE), new StatSheet());
         final StatSheet sheet = new StatSheet();
         sheet.add(Modifier.increased(TreeNewMechanicKeys.ANCESTRAL_AREA, 0.30, "先祖強化範圍"));
         final SkillBuild boosted = TreeMechanics.ancestralBoost(slam, sheet);
@@ -143,7 +143,7 @@ class TreeNewMechanicsTest {
 
     @Test
     void arcaneSurgeSupportGrantsTheBuff() {
-        final SupportDefinition surge = config.support("arcane_surge");
+        final SupportDefinition surge = config.support("surging_chant");
         assertTrue(surge.modifiers().stream().anyMatch(m -> m.stat().equals(TreeNewMechanicKeys.ARCANE_SURGE_ON_SPEND) && m.value() == 100),
                 "PoE2：湧詠 = 累計消耗 100% 最大魔力後獲得秘術增強");
         assertFalse(surge.modifiers().stream().anyMatch(m -> m.stat().equals(StatKeys.CAST_SPEED)));

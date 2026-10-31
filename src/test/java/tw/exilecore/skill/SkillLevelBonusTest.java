@@ -40,22 +40,22 @@ class SkillLevelBonusTest {
 
     @Test
     void bonusLevelsFollowTheSkillTagsAndGoPastTwenty() {
-        final SkillBuild plain = build("fireball", 20, 100, new StatSheet());
+        final SkillBuild plain = build("blazing_star_shell", 20, 100, new StatSheet());
         assertEquals(20, plain.level());
         assertEquals(0, plain.bonusLevel());
 
-        final SkillBuild spell = build("fireball", 20, 100, levels(1, Tags.SPELL));
+        final SkillBuild spell = build("blazing_star_shell", 20, 100, levels(1, Tags.SPELL));
         assertEquals(21, spell.level(), "+1 法術技能等級：20 級的寶石以 21 級施放");
         assertEquals(1, spell.bonusLevel());
         assertEquals(20, spell.gemLevel());
         assertFalse(spell.levelCapped());
 
-        assertEquals(22, build("fireball", 20, 100, levels(2, Tags.SPELL, Tags.FIRE)).level(), "+2 火焰法術技能等級");
-        assertEquals(20, build("spark", 20, 100, levels(2, Tags.SPELL, Tags.FIRE)).level(), "火花是閃電，不吃火焰法術的等級");
-        assertEquals(21, build("boneshatter", 20, 100, levels(1)).level(), "沒寫標籤 = 全部技能");
-        assertEquals(20, build("boneshatter", 20, 100, levels(1, Tags.SPELL)).level(), "攻擊不吃法術技能等級");
-        assertEquals(30, build("fireball", 20, 100, levels(10)).level());
-        assertEquals(SkillBuild.MAX_EFFECTIVE_LEVEL, build("fireball", 20, 100, levels(30)).level(), "最高 40 級（2026-10）");
+        assertEquals(22, build("blazing_star_shell", 20, 100, levels(2, Tags.SPELL, Tags.FIRE)).level(), "+2 火焰法術技能等級");
+        assertEquals(20, build("roaming_thunder", 20, 100, levels(2, Tags.SPELL, Tags.FIRE)).level(), "火花是閃電，不吃火焰法術的等級");
+        assertEquals(21, build("spine_crush", 20, 100, levels(1)).level(), "沒寫標籤 = 全部技能");
+        assertEquals(20, build("spine_crush", 20, 100, levels(1, Tags.SPELL)).level(), "攻擊不吃法術技能等級");
+        assertEquals(30, build("blazing_star_shell", 20, 100, levels(10)).level());
+        assertEquals(SkillBuild.MAX_EFFECTIVE_LEVEL, build("blazing_star_shell", 20, 100, levels(30)).level(), "最高 40 級（2026-10）");
 
         // 普攻不吃
         final SkillBuild basic = SkillBuild.of(config, config.skill(SkillConfig.DEFAULT_WAND), 1, 100, true, List.of(), Set.of(Tags.WAND),
@@ -68,7 +68,7 @@ class SkillLevelBonusTest {
     void bonusLevelsStackOnTopOfTheCharacterLevelCap() {
         final int cap = config.maxLevelFor(70);
         assertTrue(cap < SkillLoadout.MAX_LEVEL, "70 級還用不了 20 級的寶石");
-        final SkillBuild build = build("fireball", 20, 70, levels(1, Tags.SPELL));
+        final SkillBuild build = build("blazing_star_shell", 20, 70, levels(1, Tags.SPELL));
         assertEquals(cap + 1, build.level(), "先照角色能用的最高等級，再加裝備的等級");
         assertTrue(build.levelCapped(), "寶石本身還是被角色等級限制住");
     }
@@ -76,16 +76,16 @@ class SkillLevelBonusTest {
     @Test
     void spellDamageAndScaledValuesKeepGrowingPastTwenty() {
         // 2026-10-26：照 PoE2 逐級表的法術（熾星彈）超過 20 級直接查表：22 級 286–429
-        final double twentyTwo = build("fireball", 20, 100, levels(2, Tags.SPELL)).profile().spellMax().total();
+        final double twentyTwo = build("blazing_star_shell", 20, 100, levels(2, Tags.SPELL)).profile().spellMax().total();
         assertEquals(429, twentyTwo, 1e-6, "22 級照 PoE2 的表");
         assertEquals(1.0 + SkillConfig.DEFAULT_EXTRA_LEVEL_DAMAGE / 100.0, config.extraLevelGrowth(), 1e-9);
 
         // 攻擊的傷害效益：碎脊擊照 PoE2 逐級表（20 級 312%、21 級 327%）
-        final double effectiveness20 = build("boneshatter", 20, 100, new StatSheet()).profile().effectiveness();
-        final double effectiveness21 = build("boneshatter", 20, 100, levels(1)).profile().effectiveness();
+        final double effectiveness20 = build("spine_crush", 20, 100, new StatSheet()).profile().effectiveness();
+        final double effectiveness21 = build("spine_crush", 20, 100, levels(1)).profile().effectiveness();
         assertEquals(3.12, effectiveness20, 1e-9);
         assertEquals(3.27, effectiveness21, 1e-9);
-        assertTrue(config.skill("boneshatter").effectiveness().isTable());
+        assertTrue(config.skill("spine_crush").effectiveness().isTable());
 
         // 兩端內插的寫法照 1 → 20 級的趨勢往上加
         assertEquals(2 + 1 / 19.0, new Scaled(1, 2).at(21), 1e-9);

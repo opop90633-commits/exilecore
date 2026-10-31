@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 2026-10-26：通貨製作照 PoE2 0.5（高階／完美通貨、星魄分階、催化劑 13 種、星籤分開、蝕刻器、工匠石、預見鎖、寶石品質）。 */
-class Poe2CurrencyRulesTest {
+class RefCurrencyRulesTest {
 
     static final Path DATA = Path.of("src/main/resources/data");
     static ItemRepository items;
@@ -131,7 +131,7 @@ class Poe2CurrencyRulesTest {
     }
 
     @Test
-    void catalystsAreThePoe2ThirteenAndSkipBelts() {
+    void catalystsAreTheRefThirteenAndSkipBelts() {
         int fresh = 0;
         for (final CurrencyType type : currencies.all()) {
             if (type.operation() == CurrencyOperation.CATALYST && type.pickWeight() > 0) {
@@ -233,8 +233,8 @@ class Poe2CurrencyRulesTest {
 
     @Test
     void gemQualityTableIsLoaded() {
-        assertTrue(GemQuality.has("arc"), "Arc 的品質是連鎖");
-        final List<tw.exilecore.stats.Modifier> mods = GemQuality.modifiers("arc", 20, "品質 20%");
+        assertTrue(GemQuality.has("chain_thunder"), "Arc 的品質是連鎖");
+        final List<tw.exilecore.stats.Modifier> mods = GemQuality.modifiers("chain_thunder", 20, "品質 20%");
         assertEquals("skill.chains", mods.getFirst().stat());
         assertEquals(2.0, mods.getFirst().value(), 1e-9);
         assertNull(GemQuality.modifiers("no_such_skill", 20, "x"));

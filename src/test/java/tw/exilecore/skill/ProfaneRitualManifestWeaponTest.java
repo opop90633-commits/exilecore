@@ -58,13 +58,13 @@ class ProfaneRitualManifestWeaponTest {
 
     @Test
     void profaneRitualNeedsACorpse() {
-        final SkillBuild ritual = build("profane_ritual", 20, 0);
+        final SkillBuild ritual = build("filth_array", 20, 0);
         assertTrue(ritual.params().zone().corpse(), "skills.yml 的 zone.corpse");
         assertTrue(SkillExecutor.needsCorpse(ritual), "花魔力之前就要檢查屍體（附近沒有屍體）");
         assertEquals(5, ritual.params().zone().max(), "照 PoE2 最多 5 個");
-        assertTrue(config.skill("profane_ritual").description().contains("屍體"));
+        assertTrue(config.skill("filth_array").description().contains("屍體"));
         // 其他地面效果照舊不用屍體
-        for (final String id : List.of("flame_wall", "firestorm", "storm_orb")) {
+        for (final String id : List.of("flame_curtain", "flowing_flame_canopy", "thunder_cloud")) {
             assertFalse(SkillExecutor.needsCorpse(build(id, 20, 0)), id);
         }
     }
@@ -72,14 +72,14 @@ class ProfaneRitualManifestWeaponTest {
     @Test
     void profaneRitualQualityKeepsTheCorpse() {
         // (0—10)% 機率不毀掉用掉的屍體：跟天賦樹、惜屍同一個鍵（corpse.save_chance）
-        final List<Modifier> quality = SkillService.qualityModifiers(config.skill("profane_ritual"), 20);
+        final List<Modifier> quality = SkillService.qualityModifiers(config.skill("filth_array"), 20);
         assertEquals(10, sum(quality, TreeEffectKeys.CORPSE_SAVE, ModType.FLAT), 1e-9);
-        assertEquals("品質 +20%：儀式完成時 10% 機率不毀掉用掉的屍體", SkillService.qualityText(config.skill("profane_ritual"), 20));
-        assertNotNull(GemQualityText.body("profane_ritual", GemQuality.modifiers("profane_ritual", 20, "q"), 20));
+        assertEquals("品質 +20%：儀式完成時 10% 機率不毀掉用掉的屍體", SkillService.qualityText(config.skill("filth_array"), 20));
+        assertNotNull(GemQualityText.body("filth_array", GemQuality.modifiers("filth_array", 20, "q"), 20));
         // 額外的品質效果照舊：(0—100)% 更多技能持續時間
-        assertEquals(1.0, sum(GemQuality.advancedModifiers("profane_ritual", 20, "q"), StatKeys.SKILL_DURATION, ModType.MORE), 1e-9);
+        assertEquals(1.0, sum(GemQuality.advancedModifiers("filth_array", 20, "q"), StatKeys.SKILL_DURATION, ModType.MORE), 1e-9);
         // 技能自己的屬性表讀得到（SkillZones.completed 用 TreeEffectKeys.corpseSaved 擲）
-        final StatSheet effective = build("profane_ritual", 20, 20).profile().effective(new StatSheet());
+        final StatSheet effective = build("filth_array", 20, 20).profile().effective(new StatSheet());
         assertEquals(10, effective.flat(TreeEffectKeys.CORPSE_SAVE, Set.of()), 1e-9);
     }
 
@@ -112,15 +112,15 @@ class ProfaneRitualManifestWeaponTest {
     // ---- 幻化武器 ----
 
     @Test
-    void manifestWeaponIsAnUndamageablePoe2Ally() {
-        final SummonSpec spec = config.skill("manifest_weapon").summon();
+    void manifestWeaponIsAnUndamageableRefAlly() {
+        final SummonSpec spec = config.skill("phantom_blade").summon();
         assertNotNull(spec);
         assertTrue(spec.ally(), "用 PoE2 的召喚物表");
         assertTrue(spec.immortal(), "MinionsAreUndamagable");
         assertTrue(spec.permanent());
         assertEquals("VEX", spec.kind(), "外觀照舊是惱鬼");
         assertEquals("幻形兵刃", spec.kindName(), "說明不再寫成焚魂");
-        assertEquals("焚魂", config.skill("raging_spirits").summon().kindName(), "其他惱鬼照舊");
+        assertEquals("焚魂", config.skill("summon_burning_souls").summon().kindName(), "其他惱鬼照舊");
         assertEquals(1.0, spec.damage(), 1e-9, "Base Damage 100%");
         assertEquals(1.0, spec.life(), 1e-9, "不會受傷，不用再把生命放大 10 倍");
         assertTrue(spec.resists().isEmpty(), "不會受傷，不用再堆抗性");
@@ -131,12 +131,12 @@ class ProfaneRitualManifestWeaponTest {
         assertEquals(2, MinionSheets.displayLevel(spec, 1, 30));
         // 其他召喚物沒有 immortal
         assertFalse(config.skill("summon_skeletons").summon().immortal());
-        assertFalse(config.skill("supporting_fire").summon().immortal(), "砲手照 MinionAbilities.COMMAND_ONLY");
+        assertFalse(config.skill("covering_fire").summon().immortal(), "砲手照 MinionAbilities.COMMAND_ONLY");
     }
 
     @Test
     void manifestWeaponScalesWithStrengthAndDexterity() {
-        final SkillBuild weapon = build("manifest_weapon", 20, 0);
+        final SkillBuild weapon = build("phantom_blade", 20, 0);
         final StatSheet owner = new StatSheet();
         owner.setBase(StatKeys.STR, 150);
         owner.setBase(StatKeys.DEX, 90);
@@ -150,12 +150,12 @@ class ProfaneRitualManifestWeaponTest {
 
     @Test
     void manifestWeaponQualityIsMinionAttackSpeed() {
-        assertTrue(GemQuality.has("manifest_weapon"));
-        final List<Modifier> quality = SkillService.qualityModifiers(config.skill("manifest_weapon"), 20);
+        assertTrue(GemQuality.has("phantom_blade"));
+        final List<Modifier> quality = SkillService.qualityModifiers(config.skill("phantom_blade"), 20);
         assertEquals(0.20, sum(quality, StatKeys.ATTACK_SPEED, ModType.INCREASED), 1e-9);
         assertEquals(0, sum(quality, StatKeys.DAMAGE, ModType.INCREASED), 1e-9, "不再照通用規則增加召喚物傷害");
         // 召喚技能自己的修飾器給召喚物（MinionSheets.profile 帶著 local）
-        final SkillBuild weapon = build("manifest_weapon", 20, 20);
+        final SkillBuild weapon = build("phantom_blade", 20, 20);
         assertEquals(0.20, sum(MinionSheets.profile(weapon).local(), StatKeys.ATTACK_SPEED, ModType.INCREASED), 1e-9);
     }
 }

@@ -58,7 +58,7 @@ class AscNewPathsTest {
             assertTrue(config.ascendancy("martialartist").node(id).notable(), id);
         }
         assertEquals(List.of("wild_protector"), config.ascendancy("spiritwalker").node("wild_protector").grantedSkills());
-        assertEquals(List.of("abyssal_apparition"), config.ascendancy("abysslich").node("steward").grantedSkills());
+        assertEquals(List.of("chasm_phantom"), config.ascendancy("abysslich").node("steward").grantedSkills());
     }
 
     @Test
@@ -106,7 +106,7 @@ class AscNewPathsTest {
         final Modifier warrior = AscPaths.UMBRAL.get("summon_skeletons").getFirst();
         assertEquals(0.15, warrior.value(), 1e-9);
         assertEquals(Set.of("attack"), warrior.tags());
-        assertEquals(0.35, AscPaths.UMBRAL.get("skeletal_frostcaller").getFirst().value(), 1e-9);
+        assertEquals(0.35, AscPaths.UMBRAL.get("summon_bone_frostmage").getFirst().value(), 1e-9);
     }
 
     @Test

@@ -98,7 +98,7 @@ class AscendancyConfigTest {
      * 銳眼／追獵者／嵌晶／夏烏拉有「選一個」。這次之前是四條分支、每條四個、一共 16 個。
      */
     @Test
-    void everyAscendancyIsThePoe2Tree() {
+    void everyAscendancyIsTheRefTree() {
         // 2026-10-27 照 PoE2 0.5：補上靈狩者（Spirit Walker）、鳴鐘武師（Martial Artist）、淵井骸主（Abyssal Lich）；這次之前 20 個
         assertEquals(23, config.ascendancies().size(), "八個職業一共二十三個");
         assertEquals(3, config.version(), "2026-10-26 換成原作的天賦：第 2 版；同一天做出（尚未生效）的機制：第 3 版（已配的全部退回）");

@@ -1167,7 +1167,7 @@ public final class SkillService {
      * 每秒（AscendancyEffects）照現在放著的圖騰數只留最新的那幾隻；沒有這個天賦就全部收掉。
      */
     public void tetherSpirits(final Player player, final boolean active) {
-        minions.trimOldest(player.getUniqueId(), "ancestral_spirits", active ? totemCount(player) : 0);
+        minions.trimOldest(player.getUniqueId(), "forebear_manifest", active ? totemCount(player) : 0);
     }
 
     /** 2026-10-26（天賦樹「有圖騰時」「每個圖騰」）：放著幾個圖騰。 */
@@ -2139,7 +2139,7 @@ public final class SkillService {
         }
         // 2026-10-26 照 PoE2：要連擊才能用的技能（驚雷之鐘 4 點：用其他長棍技能打擊敵人累積）；這次之前用冷卻代替
         // 2026-10-27 照 PoE2 Delayed Gratification：連擊也是使用條件（更難 150%；達成後 10 秒內多一次不用連擊）
-        if ("ancestral_spirits".equals(definition.id())) {
+        if ("forebear_manifest".equals(definition.id())) {
             // 2026-10-29 照 PoE2 Ancestral Spirits：召喚圖騰時自動觸發（面板上可以插輔助），不能自己按
             state.notice("<gray>祖靈現身：放下圖騰時自動觸發，不用按", now + 30);
             plugin.players().display(player, state);
@@ -3166,9 +3166,9 @@ public final class SkillService {
 
     /** 舉盾（2026-10）：guard.effects 變成增益。2026-10-27 照站長「放技能減速全部移除」：資料裡的 guard.slow（招架 50%）不再讓移動變慢；這次之前算進去。 */
     /** 2026-10-28：急裝的增益代號（只顯示倒數；傷害在放弩技能時照被強化的發數給）。 */
-    static final String EMERGENCY_BUFF = "guard.emergency_reload";
+    static final String EMERGENCY_BUFF = "guard.hasty_load";
     /** 2026-10-28 照 PoE2 Emergency Reload 的品質：被強化的弩矢再更多 x%（FLAT，百分點；gem_quality.yml）。 */
-    static final String EMERGENCY_MORE = "emergency_reload.more";
+    static final String EMERGENCY_MORE = "hasty_load.more";
 
     /** 急裝的「更多 x%」（0.33 = 33%）：這個等級的＋品質給的。 */
     static double emergencyMore(final SkillBuild build, final StatSheet sheet) {
@@ -4209,7 +4209,7 @@ public final class SkillService {
         ownerModifiers.addAll(auraEffects);
         // 2026-10-27：看看我怎麼辦事的、巨伴、夥伴獲得你的力量（照主人屬性表，當作在存在範圍內；跟戰鬥同一套）；這次之前 /stats、網頁沒算
         ownerModifiers.addAll(MinionEstimates.estimate(build, ownerSheet,
-                MinionSheets.poe2Factors(config, build.level(), ownerLevel, monsters::lifeAt, monsters::damageAt)[1]));
+                MinionSheets.refFactors(config, build.level(), ownerLevel, monsters::lifeAt, monsters::damageAt)[1]));
         final StatSheet minionSheet = MinionSheets.build(spec, base, ownerModifiers);
         final tw.exilecore.stats.SkillProfile profile = MinionSheets.profile(build);
         final StatSheet effective = profile.effective(minionSheet);
@@ -4666,7 +4666,7 @@ public final class SkillService {
 
     /** 2026-10-28 照 PoE2 Mirage Archer 的品質：每個玩家第幾次弓攻擊（幻影延續看的是不是最新那一次）。 */
     private final Map<java.util.UUID, Long> mirageSequence = new HashMap<>();
-    static final String MIRAGE_ARCHER = "mirage_archer";
+    static final String MIRAGE_ARCHER = "phantom_bow_shade";
 
     /** 2026-10-28：使用技能的動作期間的增益（震野踏、震野雙錘品質的暈眩門檻）。 */
     static final String ACTION_STUN_BUFF = "action.stun_threshold";
@@ -4723,49 +4723,49 @@ public final class SkillService {
             return null;
         }
         switch (definition.id()) { // 2026-10-24：照 PoE2 這個技能自己的品質效果
-            case "cull_the_weak" -> { // 2026-10-28 照 PoE2：隨機種類那條是額外的品質效果（進階奇術）；這次之前兩條都寫在這裡
+            case "cripple_purge" -> { // 2026-10-28 照 PoE2：隨機種類那條是額外的品質效果（進階奇術）；這次之前兩條都寫在這裡
                 return String.format(Locale.ROOT, "品質 +%d%%：獲得戰星時 %s%% 機率多一顆同種的", quality,
                         trimNumber(qualityFlat(definition, quality, tw.exilecore.charge.ChargeService.EXTRA)));
             }
-            case "charge_regulation" -> { // 2026-10-28 照 PoE2：每顆戰星增加傷害那條是額外的品質效果（進階奇術）；這次之前兩條都寫在這裡
+            case "star_reign_art" -> { // 2026-10-28 照 PoE2：每顆戰星增加傷害那條是額外的品質效果（進階奇術）；這次之前兩條都寫在這裡
                 return String.format(Locale.ROOT, "品質 +%d%%：消耗戰星的間隔多 %s 秒", quality,
                         trimNumber(qualityFlat(definition, quality, StatKeys.GRANT_PREFIX + tw.exilecore.charge.ChargeService.REGULATION_CONSUME)));
             }
-            case "coiling_bolts" -> { // 2026-10-28 照 PoE2 Coiling Bolts：+(0—2) 分裂目標（每 10% 品質 +1）；這次之前顯示成增加傷害
+            case "entwine_rot_arrow" -> { // 2026-10-28 照 PoE2 Coiling Bolts：+(0—2) 分裂目標（每 10% 品質 +1）；這次之前顯示成增加傷害
                 return String.format(Locale.ROOT, "品質 +%d%%：分裂目標 +%d", quality,
                         tw.exilecore.stats.GrantedSkillKeys.splitTargets(qualityFlat(definition, quality, ManaTempest.SPLIT), 0, false));
             }
-            case "reap" -> { // 2026-10-28 照 PoE2 Reap：暴擊弱點持續時間 +(0—2) 秒；這次之前顯示成增加傷害
+            case "blood_sickle" -> { // 2026-10-28 照 PoE2 Reap：暴擊弱點持續時間 +(0—2) 秒；這次之前顯示成增加傷害
                 return String.format(Locale.ROOT, "品質 +%d%%：暴擊弱點持續時間 +%s 秒", quality,
                         trimNumber(qualityFlat(definition, quality, tw.exilecore.stats.GrantedSkillKeys.CRIT_WEAKNESS_SECONDS)));
             }
-            case "tornado_shot" -> { // 2026-10-28 照 PoE2 Tornado Shot：複製的投射物 (0—15)% 更多傷害（gem_quality.yml）；這次之前顯示成增加傷害
+            case "sky_rend_arrow" -> { // 2026-10-28 照 PoE2 Tornado Shot：複製的投射物 (0—15)% 更多傷害（gem_quality.yml）；這次之前顯示成增加傷害
                 return String.format(Locale.ROOT, "品質 +%d%%：複製的投射物更多 %s%% 傷害（跟等級的「更少」相加）", quality,
                         trimNumber(qualityFlat(definition, quality, TornadoSpec.COPY_MORE)));
             }
-            case "whirling_slash" -> { // 2026-10-28 照 PoE2 Whirling Slash：崩散每多一階再更多 +(0—40)%（gem_quality.yml）；這次之前顯示成增加傷害
+            case "spinning_spear_strike" -> { // 2026-10-28 照 PoE2 Whirling Slash：崩散每多一階再更多 +(0—40)%（gem_quality.yml）；這次之前顯示成增加傷害
                 return String.format(Locale.ROOT, "品質 +%d%%：旋風崩散每多一階再更多 %s%% 傷害（加在 150%% 上）", quality,
                         trimNumber(qualityFlat(definition, quality, Signatures.WHIRL_QUALITY_MORE)));
             }
-            case "gale_spear" -> { // 2026-10-28 照 PoE2 Twister：(0—20)% 機率多一道旋風（gem_quality.yml）；這次之前顯示成增加傷害
+            case "cyclone_spear" -> { // 2026-10-28 照 PoE2 Twister：(0—20)% 機率多一道旋風（gem_quality.yml）；這次之前顯示成增加傷害
                 return String.format(Locale.ROOT, "品質 +%d%%：%s%% 機率多一道旋風", quality,
                         trimNumber(qualityFlat(definition, quality, Twisters.EXTRA_CHANCE)));
             }
-            case "falling_thunder" -> { // 2026-10-28 照 PoE2 Falling Thunder：每用掉一顆銳星再更多 (0—20)%（gem_quality.yml）；這次之前顯示成增加傷害
+            case "startle_thunder_chop" -> { // 2026-10-28 照 PoE2 Falling Thunder：每用掉一顆銳星再更多 (0—20)%（gem_quality.yml）；這次之前顯示成增加傷害
                 return String.format(Locale.ROOT, "品質 +%d%%：每用掉一顆銳星，猛擊與投射物各更多 %s%% 傷害（投射物的加在 50%% 上）", quality,
                         trimNumber(qualityFlat(definition, quality, SkillExecutor.THUNDER_QUALITY)));
             }
-            case "snipe" -> { // 2026-10-28 照 PoE2 Snipe：爆炸半徑 +(0—0.4) 格（gem_quality.yml）；這次之前顯示成增加傷害
+            case "cloud_pierce_arrow" -> { // 2026-10-28 照 PoE2 Snipe：爆炸半徑 +(0—0.4) 格（gem_quality.yml）；這次之前顯示成增加傷害
                 return String.format(Locale.ROOT, "品質 +%d%%：爆炸與寒冰爆破的半徑 +%s 格", quality, trimNumber(tw.exilecore.core.Units.metres(quality * 0.02))); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算
             }
             default -> {
             }
         }
         // 2026-10-28 照 PoE2：這次照原作接上的 111 顆（GemQualityText；這次之前照通用規則顯示「增加 x% 傷害」）
-        final String poe2 = GemQualityText.body(definition.id(),
+        final String ref = GemQualityText.body(definition.id(),
                 tw.exilecore.currency.GemQuality.modifiers(definition.id(), quality, QUALITY_SOURCE), quality);
-        if (poe2 != null) {
-            return String.format(Locale.ROOT, "品質 +%d%%：%s", quality, poe2);
+        if (ref != null) {
+            return String.format(Locale.ROOT, "品質 +%d%%：%s", quality, ref);
         }
         final String warcry = warcryQualityText(definition, quality); // 2026-10-27 照 PoE2：戰吼各自的品質效果
         if (warcry != null) {
@@ -4857,14 +4857,14 @@ public final class SkillService {
         };
         final String body = switch (definition.id()) {
             // 2026-10-28：只寫一般品質效果（額外的品質效果在 advanced，進階奇術才有）；這次之前連額外的那幾條也寫，沒有進階奇術時顯示 0
-            case "infernal_cry" -> "強化攻擊獲得 " + v.apply(tw.exilecore.stats.WarcryKeys.EMPOWER_GAIN_FIRE) + "% 傷害為額外火焰傷害";
-            case "seismic_cry" -> "強化猛擊的餘震更多 " + v.apply(tw.exilecore.stats.WarcryKeys.AFTERSHOCK_MORE) + "% 傷害";
-            case "fortifying_cry" -> "盾波半徑 +" + trimNumber(tw.exilecore.core.Units.metres(Double.parseDouble(v.apply(tw.exilecore.stats.WarcryKeys.TRIGGER_RADIUS_FLAT)))) + " 格"; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算
-            case "ancestral_cry" -> "每用掉一顆磐星，戰吼持續時間增加 " + v.apply(tw.exilecore.stats.WarcryKeys.DURATION_PER_ENDURANCE) + "%";
-            case "arctic_howl" -> "給隊友的增益增加 " + v.apply(tw.exilecore.stats.WarcryKeys.ALLY_FREEZE_BUILDUP) + "% 凍結累積";
-            case "ferocious_roar" -> "每 1 點強度多 " + v.apply(tw.exilecore.stats.WarcryKeys.RAGE_PER_POWER) + " 點怒氣；插槽戰吼：被它強化的攻擊增加 "
+            case "hellfire_war_shout" -> "強化攻擊獲得 " + v.apply(tw.exilecore.stats.WarcryKeys.EMPOWER_GAIN_FIRE) + "% 傷害為額外火焰傷害";
+            case "ground_shake_shout" -> "強化猛擊的餘震更多 " + v.apply(tw.exilecore.stats.WarcryKeys.AFTERSHOCK_MORE) + "% 傷害";
+            case "stalwart_war_shout" -> "盾波半徑 +" + trimNumber(tw.exilecore.core.Units.metres(Double.parseDouble(v.apply(tw.exilecore.stats.WarcryKeys.TRIGGER_RADIUS_FLAT)))) + " 格"; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算
+            case "molten_soul_shriek" -> "每用掉一顆磐星，戰吼持續時間增加 " + v.apply(tw.exilecore.stats.WarcryKeys.DURATION_PER_ENDURANCE) + "%";
+            case "cold_night_howl" -> "給隊友的增益增加 " + v.apply(tw.exilecore.stats.WarcryKeys.ALLY_FREEZE_BUILDUP) + "% 凍結累積";
+            case "armor_rend_bear_roar" -> "每 1 點強度多 " + v.apply(tw.exilecore.stats.WarcryKeys.RAGE_PER_POWER) + " 點怒氣；插槽戰吼：被它強化的攻擊增加 "
                     + v.apply(tw.exilecore.stats.WarcryKeys.SOCKETED_EMPOWERED_DAMAGE) + "% 傷害";
-            case "lunar_blessing" -> "增益另外獲得 " + v.apply(StatKeys.GRANT_PREFIX + StatKeys.damageExtra(tw.exilecore.stats.DamageType.COLD))
+            case "silver_moon_shelter" -> "增益另外獲得 " + v.apply(StatKeys.GRANT_PREFIX + StatKeys.damageExtra(tw.exilecore.stats.DamageType.COLD))
                     + "% 傷害為冰冷傷害";
             default -> null;
         };
@@ -4884,10 +4884,10 @@ public final class SkillService {
         final List<SupportDefinition> list = new ArrayList<>();
         final List<tw.exilecore.stats.Modifier> carried = new ArrayList<>();
         for (final SupportDefinition support : supportsOf(host)) {
-            if (hostDefinition != null && DeadeyeMetas.MIRAGE.equals(hostDefinition.id()) && Poe2SupportRules.proxyExcluded(support.id())) {
+            if (hostDefinition != null && DeadeyeMetas.MIRAGE.equals(hostDefinition.id()) && RefSupportRules.proxyExcluded(support.id())) {
                 continue; // 2026-10-30 照 PoE2：幻影代放的技能不吃迅鋒、衝勢這類（已經掛上去的也不生效）
             }
-            if (hostDefinition != null && Poe2SupportRules.metaHostRefusal(support.id(), hostDefinition.id()) != null && !support.worksOnHost()) {
+            if (hostDefinition != null && RefSupportRules.metaHostRefusal(support.id(), hostDefinition.id()) != null && !support.worksOnHost()) {
                 continue; // 2026-10-30 照 PoE2：觸發的技能不吃蓄詠這類、圖騰代放的不吃迅鋒這類（已經掛上去的也不生效）
             }
             if (support.requires().contains(Tags.TOTEM) && inner != null && !support.supports(inner)) {
@@ -5880,7 +5880,7 @@ public final class SkillService {
         if (stat.startsWith("crossbow.")) {
             return definition.weapons().contains(tw.exilecore.stats.Tags.CROSSBOW) || context.contains(tw.exilecore.stats.Tags.CROSSBOW);
         }
-        if (stat.startsWith("skill.projectile") || stat.equals("skill.pierce") || stat.equals("skill.fork")) {
+        if (stat.startsWith("skill.projectile") || stat.equals("skill.pierce") || stat.equals("skill.split_shot")) {
             return context.contains(tw.exilecore.stats.Tags.PROJECTILE);
         }
         if (stat.equals("skill.chains")) {
@@ -6616,7 +6616,7 @@ public final class SkillService {
             ownerModifiers.addAll(auras.effectsFor(player.getUniqueId()));
             // 2026-10-27 照 PoE2：看看我怎麼辦事的（估計時當作在存在範圍內）、巨伴的閃避與偏斜、夥伴獲得你的力量的生命（跟戰鬥、召喚物每秒傷害同一套）
             final List<Modifier> derived = MinionEstimates.estimate(build, ownerSheet,
-                    MinionSheets.poe2Factors(config, build.level(), ownerLevelNow, monsters::lifeAt, monsters::damageAt)[1]);
+                    MinionSheets.refFactors(config, build.level(), ownerLevelNow, monsters::lifeAt, monsters::damageAt)[1]);
             ownerModifiers.addAll(derived);
             final StatSheet minionSheet = MinionSheets.build(spec, base, ownerModifiers);
             final tw.exilecore.stats.SkillProfile profile = MinionSheets.profile(build);

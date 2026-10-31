@@ -249,9 +249,9 @@ public final class ModifierText {
         if (lineage != null) {
             return lineage; // 2026-10-27 照 PoE2 0.5 補的血脈輔助
         }
-        final String poe2 = supportText(modifier, value, percent);
-        if (poe2 != null) {
-            return poe2; // 2026-10-26：照 PoE2 重做的輔助寶石與戰吼
+        final String ref = supportText(modifier, value, percent);
+        if (ref != null) {
+            return ref; // 2026-10-26：照 PoE2 重做的輔助寶石與戰吼
         }
         return switch (stat) {
             case StatKeys.DAMAGE -> scaled(modifier, tagPrefix(modifier) + "傷害", percent);
@@ -385,7 +385,7 @@ public final class ModifierText {
             case StatKeys.FLAG_NO_AILMENTS -> "不能造成元素異常（點燃、冰緩、凍結、感電）";
             case StatKeys.FLAG_PARRY -> "下一次被攻擊一定格擋：攻擊者被招架 2 秒（受到的攻擊傷害增加 50%），你揮盾橫掃身邊的敵人";
             case StatKeys.FLAG_MAGMA_BARRIER -> "盾牌 8 秒灌滿熔岩；灌滿後下一次格擋噴出熔岩（火焰攻擊，2.8 格）並給你一顆磐星";
-            case "flag.lingering_illusion" -> "翻滾時花 10 魔力留下一個引怪的幻身；幻身被打掉留下殘影，撿起來給你一顆銳星";
+            case "flag.phantom_body" -> "翻滾時花 10 魔力留下一個引怪的幻身；幻身被打掉留下殘影，撿起來給你一顆銳星";
             case StatKeys.FLAG_LOSE_RAGE_AT_MAX -> "怒氣滿時失去全部怒氣";
             case StatKeys.DAMAGE_PER_CHARGE -> "身上每顆戰星增加 " + number(value) + "% 傷害";
             case "charge.remnant_extra" -> "幻身被打掉時 " + number(value) + "% 機率多留一個殘影";
@@ -550,7 +550,7 @@ public final class ModifierText {
             case tw.exilecore.stats.GrantedSkillKeys.FLAG_PRESENCE_CHILL -> "冰緩你存在範圍內的所有敵人";
             case tw.exilecore.stats.GrantedSkillKeys.FLAG_VOLATILE_CORE -> "消耗屍體做出一顆追擊敵人的不穩定核心：點燃身邊的敵人，時間到時爆炸";
             case tw.exilecore.stats.GrantedSkillKeys.FLAG_NO_RARITY_CHARGES -> "撲殺給的戰星不因敵人稀有度增加";
-            case "barkskin.armour" ->"被敵人擊中時，獲得失去的能量護盾 " + number(value) + "% 的護甲 6 秒（總共不超過身上原本的護甲）";
+            case "wood_armor.armour" ->"被敵人擊中時，獲得失去的能量護盾 " + number(value) + "% 的護甲 6 秒（總共不超過身上原本的護甲）";
             // 2026-10-28 照 PoE2（天柱雷、引雷印、霜縛印）
             case tw.exilecore.stats.SpellParityKeys.SHOCKED_BOLTS -> "範圍內有感電中的敵人時，多劈 " + number(value) + " 道雷，隨機分給打到的敵人";
             case tw.exilecore.stats.SpellParityKeys.ELECTROCUTE_BUILDUP_TAKEN -> "受到的電擊累積" + (value < 0 ? "減少 " : "增加 ") + percent + "%";

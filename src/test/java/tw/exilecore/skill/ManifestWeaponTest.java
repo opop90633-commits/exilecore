@@ -28,7 +28,7 @@ class ManifestWeaponTest {
     }
 
     @Test
-    void extraAttacksMatchPoe2Data() {
+    void extraAttacksMatchRefData() {
         assertEquals(1.8, MinionAbilities.MANIFEST_SLAM_DAMAGE, 1e-9);
         assertEquals(6, MinionAbilities.MANIFEST_SLAM_COOLDOWN, 1e-9);
         assertEquals(0.9, MinionAbilities.MANIFEST_SWEEP_DAMAGE, 1e-9);

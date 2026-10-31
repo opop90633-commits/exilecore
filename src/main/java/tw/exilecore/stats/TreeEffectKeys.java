@@ -101,7 +101,7 @@ public final class TreeEffectKeys {
     /** FLAT %：消耗屍體時不毀掉屍體的機率。{@link #corpseSaved}。 */
     public static final String CORPSE_SAVE = "corpse.save_chance";
     /** FLAT %：暴擊時獲得秘術增強的機率。CombatListener 用。 */
-    public static final String ARCANE_SURGE_ON_CRIT = "arcane_surge.on_crit";
+    public static final String ARCANE_SURGE_ON_CRIT = "surging_chant.on_crit";
     /** INCREASED：召喚物死掉之後回來的速度。AuraService 用。 */
     public static final String MINION_REVIVE_SPEED = "minion.revive_speed";
     /** INCREASED：你身上護符的效果。CharmService 用。 */

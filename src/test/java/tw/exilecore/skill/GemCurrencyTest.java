@@ -34,7 +34,7 @@ class GemCurrencyTest {
             assertEquals("uncut_support_" + tier, gem.currencyId());
             assertEquals(Optional.of(gem), GemData.fromCurrencyId(gem.currencyId()));
         }
-        assertNull(GemData.support("fork").currencyId(), "切好的輔助寶石不是通貨");
+        assertNull(GemData.support("split_shot").currencyId(), "切好的輔助寶石不是通貨");
         for (final String bad : new String[] {"uncut_skill_0", "uncut_skill_22", "uncut_skill_05", "uncut_skill_x", "uncut_support_4",
                 "uncut_skill_", "glimmer_orb"}) {
             assertTrue(GemData.fromCurrencyId(bad).isEmpty(), bad);

@@ -867,7 +867,7 @@ public final class MapDeviceMenu extends Menu {
             return;
         }
         if (selected.corrupted()) {
-            set(SLOT_CORRUPT, icon(Material.GRAY_DYE, "<#d20000>已經是瓦爾地圖了", "<dark_gray>腐化過的地圖不能再改造"));
+            set(SLOT_CORRUPT, icon(Material.GRAY_DYE, "<#d20000>已經是蝕變地圖了", "<dark_gray>腐化過的地圖不能再改造"));
             return;
         }
         final int have = service.countCurrency(player, orb);
@@ -881,7 +881,7 @@ public final class MapDeviceMenu extends Menu {
         final Material material = orb.material() == null ? null : Material.matchMaterial(orb.material());
         final ItemStack button = tw.exilecore.currency.CurrencyService.decorate(
                 icon(material == null || !material.isItem() ? Material.FERMENTED_SPIDER_EYE : material,
-                        have > 0 ? "<#d20000>瓦爾地圖" : "<gray>瓦爾地圖", lore), orb);
+                        have > 0 ? "<#d20000>蝕變地圖" : "<gray>蝕變地圖", lore), orb);
         set(SLOT_CORRUPT, have > 0 ? glowing(button) : button);
     }
 

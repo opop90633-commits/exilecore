@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 2026-10-28 照 PoE2 Contagion（瘟疫）：單體、傳染半徑 1.7 格 × 範圍、品質多感染幾隻、名稱。 */
-class ContagionPoe2Test {
+class ContagionRefTest {
 
     static SkillConfig config;
 
@@ -30,7 +30,7 @@ class ContagionPoe2Test {
 
     @Test
     void nameAndSingleTarget() {
-        final SkillDefinition contagion = config.skill("contagion");
+        final SkillDefinition contagion = config.skill("plague_taint");
         assertEquals("疫染", contagion.name());
         assertEquals(1, contagion.params().targets(), "使一名敵人");
         assertEquals(tw.exilecore.core.Units.metres(1.7), contagion.params().radius().at(1), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
@@ -52,11 +52,11 @@ class ContagionPoe2Test {
     @Test
     void spreadRadiusScalesWithArea() {
         final StatSheet sheet = new StatSheet();
-        final SkillBuild plain = SkillBuild.of(config, config.skill("contagion"), 20, 20, false, List.of(), Set.of(), sheet);
+        final SkillBuild plain = SkillBuild.of(config, config.skill("plague_taint"), 20, 20, false, List.of(), Set.of(), sheet);
         assertEquals(tw.exilecore.core.Units.metres(1.7), AilmentService.spreadRadius(plain.profile().effective(sheet), plain.profile()), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         final StatSheet bigger = new StatSheet();
         bigger.add(Modifier.increased(StatKeys.SKILL_AREA, 0.5, "測試"));
-        final SkillBuild wide = SkillBuild.of(config, config.skill("contagion"), 20, 20, false, List.of(), Set.of(), bigger);
+        final SkillBuild wide = SkillBuild.of(config, config.skill("plague_taint"), 20, 20, false, List.of(), Set.of(), bigger);
         assertEquals(tw.exilecore.core.Units.metres(1.7) * Math.sqrt(1.5), AilmentService.spreadRadius(wide.profile().effective(bigger), wide.profile()), 1e-9);
     }
 }

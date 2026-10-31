@@ -44,7 +44,7 @@ class AilmentTest {
 
     /** 2026-10-26 照 PoE2：Boss 的暈眩門檻（地圖 ×3.13、巔峰 ×9.38）、輕暈 0.5 秒。 */
     @Test
-    void bossPoiseAndLightStunFollowPoe2() {
+    void bossPoiseAndLightStunFollowRef() {
         assertEquals(3.13, config.bossPoise(false), 1e-9);
         assertEquals(9.38, config.bossPoise(true), 1e-9);
         assertEquals(0.5, config.lightStunDuration(false), 1e-9);
@@ -181,25 +181,25 @@ class AilmentTest {
     @Test
     void skillsAndSupportsCarryAilmentModifiers() {
         final StatSheet sheet = new StatSheet();
-        final SkillBuild fireball = SkillBuild.of(skills, skills.skill("fireball"), 1, 1, false, List.of(), Set.of(), sheet);
+        final SkillBuild fireball = SkillBuild.of(skills, skills.skill("blazing_star_shell"), 1, 1, false, List.of(), Set.of(), sheet);
         final StatSheet effective = fireball.profile().effective(sheet);
         final Set<String> fire = fireball.profile().contextFor(DamageType.FIRE);
         // 2026-10-26 照 PoE2：熾星彈拿掉原作沒有的點燃機率 +20%
         assertEquals(0, effective.flat(StatKeys.IGNITE_CHANCE, fire), 1e-9, "熾星彈自己不帶點燃機率");
 
-        final SkillBuild searing = SkillBuild.of(skills, skills.skill("fireball"), 1, 1, false, List.of(skills.support("searing_ii")), Set.of(), sheet); // 2026-10-26：燎原 I 併入燎原 II
+        final SkillBuild searing = SkillBuild.of(skills, skills.skill("blazing_star_shell"), 1, 1, false, List.of(skills.support("prairie_blaze_ii")), Set.of(), sheet); // 2026-10-26：燎原 I 併入燎原 II
         final StatSheet boosted = searing.profile().effective(sheet);
         // 2026-10-26 照 PoE2（Deadly Ignites I）：燎原不加點燃機率，點燃更多 75%、擊中傷害更少 25%；這次之前點燃機率 +25%、點燃更多 40%
         assertEquals(0, boosted.flat(StatKeys.IGNITE_CHANCE, fire), 1e-9, "燎原不加點燃機率（熾星彈本身也不再 +20%）");
         assertEquals(2.0, boosted.more(StatKeys.IGNITE_MAGNITUDE, fire), 1e-9); // 2026-10-26：燎原 II 點燃更多 100%（這次之前測燎原 I 的 75%）
 
-        final SkillBuild focused = SkillBuild.of(skills, skills.skill("fireball"), 1, 1, false,
-                List.of(skills.support("elemental_focus")), Set.of(), sheet);
+        final SkillBuild focused = SkillBuild.of(skills, skills.skill("blazing_star_shell"), 1, 1, false,
+                List.of(skills.support("purify_essence")), Set.of(), sheet);
         assertTrue(StatKeys.flag(focused.profile().effective(sheet), StatKeys.FLAG_NO_AILMENTS), "純化：不能造成元素異常");
         assertEquals(List.of("<gray>不能造成元素異常"), AilmentText.lines(focused.profile().effective(sheet), focused.profile(),
                 DamageCalculator.expectedOutgoing(sheet, focused.profile())));
 
-        final SkillBuild nova = SkillBuild.of(skills, skills.skill("frost_nova"), 1, 1, false, List.of(skills.support("glacial")), Set.of(), sheet);
+        final SkillBuild nova = SkillBuild.of(skills, skills.skill("frost_star_blast"), 1, 1, false, List.of(skills.support("ice_seal")), Set.of(), sheet);
         assertEquals(2.0 * 1.5, nova.profile().effective(sheet).apply(StatKeys.FREEZE_BUILDUP, 1.0,
                 nova.profile().contextFor(DamageType.COLD)), 1e-9, "霜星爆增加 100% × 冰封 50% 更多（2026-10-26 照 PoE2 Freeze）");
 
@@ -270,7 +270,7 @@ class AilmentTest {
         final StatSheet sheet = new StatSheet();
         sheet.add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, 10, Set.of(tw.exilecore.stats.Tags.PHYSICAL), "武器"));
         sheet.add(new Modifier(StatKeys.WEAPON_MAX, ModType.FLAT, 20, Set.of(tw.exilecore.stats.Tags.PHYSICAL), "武器"));
-        final SkillBuild strike = SkillBuild.of(skills, skills.skill("earthquake"), 1, 1, false, List.of(skills.support("lacerate_iii")), Set.of(), sheet); // 2026-10-26：割裂 I、II 併入割裂 III
+        final SkillBuild strike = SkillBuild.of(skills, skills.skill("ground_tremor"), 1, 1, false, List.of(skills.support("rend_cut_iii")), Set.of(), sheet); // 2026-10-26：割裂 I、II 併入割裂 III
         final StatSheet effective = strike.profile().effective(sheet);
         final Set<String> physical = strike.profile().contextFor(DamageType.PHYSICAL);
         // 2026-10-26 照 PoE2（Bleed I）：流血機率 50%、沒有流血傷害加成；這次之前機率 +30%、流血更多 40%
@@ -279,11 +279,11 @@ class AilmentTest {
         final List<String> lines = AilmentText.lines(effective, strike.profile(), DamageCalculator.expectedOutgoing(sheet, strike.profile()));
         assertTrue(lines.contains("<#ff4a4a>流血<gray> 機率 +100%"), String.join(" | ", lines));
 
-        final SkillBuild plain = SkillBuild.of(skills, skills.skill("earthquake"), 1, 1, false, List.of(), Set.of(), sheet);
+        final SkillBuild plain = SkillBuild.of(skills, skills.skill("ground_tremor"), 1, 1, false, List.of(), Set.of(), sheet);
         final List<String> none = AilmentText.lines(plain.profile().effective(sheet), plain.profile(), DamageCalculator.expectedOutgoing(sheet, plain.profile()));
         assertFalse(none.stream().anyMatch(line -> line.contains("流血") || line.contains("中毒")), "沒有機率來源就不列");
 
-        final SkillBuild fireball = SkillBuild.of(skills, skills.skill("fireball"), 1, 1, false, List.of(skills.support("envenom_iii")), Set.of(), sheet); // 2026-10-26：淬毒 I、II 併入淬毒 III
+        final SkillBuild fireball = SkillBuild.of(skills, skills.skill("blazing_star_shell"), 1, 1, false, List.of(skills.support("poison_temper_iii")), Set.of(), sheet); // 2026-10-26：淬毒 I、II 併入淬毒 III
         final StatSheet venom = fireball.profile().effective(sheet);
         assertEquals(60, venom.flat(StatKeys.POISON_CHANCE, fireball.profile().contextFor(DamageType.CHAOS)), 1e-9, "淬毒 III：中毒機率 +60%（2026-10-26 I、II 併入 III；這次之前測淬毒 I 的 +40%）");
         final List<String> fire = AilmentText.lines(venom, fireball.profile(), DamageCalculator.expectedOutgoing(sheet, fireball.profile()));
@@ -450,22 +450,22 @@ class AilmentTest {
         final StatSheet sheet = new StatSheet();
         sheet.add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, 10, Set.of(tw.exilecore.stats.Tags.PHYSICAL), "武器"));
         sheet.add(new Modifier(StatKeys.WEAPON_MAX, ModType.FLAT, 20, Set.of(tw.exilecore.stats.Tags.PHYSICAL), "武器"));
-        final SkillBuild strike = SkillBuild.of(skills, skills.skill("earthquake"), 1, 1, false, List.of(skills.support("concussive")), Set.of(), sheet);
+        final SkillBuild strike = SkillBuild.of(skills, skills.skill("ground_tremor"), 1, 1, false, List.of(skills.support("awe_shock")), Set.of(), sheet);
         final StatSheet effective = strike.profile().effective(sheet);
         assertEquals(1.5, effective.apply(StatKeys.STUN_BUILDUP, 1.0, strike.profile().contextFor(DamageType.PHYSICAL)), 1e-9, "震懾：50% 更多暈眩累積");
         final List<String> lines = AilmentText.lines(effective, strike.profile(), DamageCalculator.expectedOutgoing(sheet, strike.profile()));
         assertTrue(lines.contains("<#ffd27f>暈眩<gray> 累積 ×1.50"), String.join(" | ", lines));
-        final SkillBuild plain = SkillBuild.of(skills, skills.skill("earthquake"), 1, 1, false, List.of(), Set.of(), sheet);
+        final SkillBuild plain = SkillBuild.of(skills, skills.skill("ground_tremor"), 1, 1, false, List.of(), Set.of(), sheet);
         final List<String> none = AilmentText.lines(plain.profile().effective(sheet), plain.profile(), DamageCalculator.expectedOutgoing(sheet, plain.profile()));
         assertFalse(none.stream().anyMatch(line -> line.contains("暈眩") || line.contains("電擊")), "沒有加成就不列（暈眩本來就會累積）");
 
-        final SkillBuild arc = SkillBuild.of(skills, skills.skill("arc"), 1, 1, false, List.of(skills.support("electrocute")), Set.of(), sheet);
+        final SkillBuild arc = SkillBuild.of(skills, skills.skill("chain_thunder"), 1, 1, false, List.of(skills.support("electrocute")), Set.of(), sheet);
         final StatSheet shocking = arc.profile().effective(sheet);
         // 2026-10-26 照 PoE2（Electrocute I）：閃電傷害全部算進電擊累積（機率 100%）、不能感電；這次之前機率 +50%、累積更多 30%
         assertEquals(100, shocking.flat(StatKeys.ELECTROCUTE_CHANCE, arc.profile().contextFor(DamageType.LIGHTNING)), 1e-9, "電擊：機率 +100%");
         final List<String> arcLines = AilmentText.lines(shocking, arc.profile(), DamageCalculator.expectedOutgoing(sheet, arc.profile()));
         assertTrue(arcLines.contains("<#9fe8ff>電擊<gray> 機率 +100%"), String.join(" | ", arcLines));
-        final SkillBuild fireball = SkillBuild.of(skills, skills.skill("fireball"), 1, 1, false, List.of(skills.support("electrocute")), Set.of(), sheet);
+        final SkillBuild fireball = SkillBuild.of(skills, skills.skill("blazing_star_shell"), 1, 1, false, List.of(skills.support("electrocute")), Set.of(), sheet);
         final List<String> fireLines = AilmentText.lines(fireball.profile().effective(sheet), fireball.profile(), DamageCalculator.expectedOutgoing(sheet, fireball.profile()));
         assertFalse(fireLines.stream().anyMatch(line -> line.contains("電擊")), "熾星彈沒有閃電傷害：電擊掛了沒用，不列");
 
@@ -480,7 +480,7 @@ class AilmentTest {
      * 點燃每秒 x 的 20%、吃火焰抗性與身上的點燃效果。這次之前 x 直接當每秒傷害、每 0.25 秒直接點燃。
      */
     @Test
-    void groundIgniteFollowsPoe2IgnitedGround() {
+    void groundIgniteFollowsRefIgnitedGround() {
         // 83 級 T16 地圖的點燃地面：視同 937 點；2500 生命（門檻 1250）每次疊 15%，第 4 次（1 秒）才點燃
         final double threshold = 2500 * config.playerThresholdLife();
         assertEquals(1250, threshold, 1e-9);

@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 2026-10-28 照 PoE2 0.5 Spark（游雷；原作繁中「電球」）：貼地游走、2 秒持續時間、同一次施放 0.66 秒打同一目標一次、冰灌注版整組數值。 */
-class SparkPoe2Test {
+class SparkRefTest {
 
     static SkillConfig config;
 
@@ -32,12 +32,12 @@ class SparkPoe2Test {
     }
 
     private static SkillBuild spark(final int level) {
-        return SkillBuild.of(config, config.skill("spark"), level, 100, false, List.of(), Set.of(), new StatSheet());
+        return SkillBuild.of(config, config.skill("roaming_thunder"), level, 100, false, List.of(), Set.of(), new StatSheet());
     }
 
     @Test
-    void baseStatsMatchPoe2() {
-        final SkillDefinition spark = config.skill("spark");
+    void baseStatsMatchRef() {
+        final SkillDefinition spark = config.skill("roaming_thunder");
         assertEquals(0.7, spark.castTime(), 1e-9);
         assertEquals(0.5, spark.params().speed(), 1e-9, "每秒 10 公尺");
         assertEquals(4, spark.params().projectiles().intAt(1));
@@ -54,7 +54,7 @@ class SparkPoe2Test {
 
     @Test
     void coldInfusedSetReplacesDamageAndFiresRing() {
-        final ResourceSpec resource = config.resource("spark");
+        final ResourceSpec resource = config.resource("roaming_thunder");
         assertEquals(List.of("cold"), resource.infusion());
         final ResourceSpec.InfusedSet set = resource.infusedSet();
         assertNotNull(set);
@@ -78,7 +78,7 @@ class SparkPoe2Test {
         assertEquals(12, fast.intervalTicks(faster), 1e-9, "施法速度加倍：1.2 秒 → 0.6 秒");
         // 暴擊率 9% + 2% = 11%
         assertEquals(2, crit(infused.profile().local()) - crit(plain.profile().local()), 1e-9);
-        assertEquals(9, crit(config.skill("spark").modifiers()), 1e-9);
+        assertEquals(9, crit(config.skill("roaming_thunder").modifiers()), 1e-9);
         // 等級 1、40
         assertEquals(12, SkillService.applyInfusedSet(spark(1), set).projectiles());
         assertEquals(20, set.projectiles().intAt(40));
@@ -100,7 +100,7 @@ class SparkPoe2Test {
 
     @Test
     void extraProjectilesStillAddToTheRing() {
-        final ResourceSpec.InfusedSet set = config.resource("spark").infusedSet();
+        final ResourceSpec.InfusedSet set = config.resource("roaming_thunder").infusedSet();
         final SkillBuild plain = spark(20);
         final SkillBuild more = plain.withAreaAndProjectiles(plain.areaScale(), plain.projectiles() + 2); // 例如 +2 投射物
         assertEquals(18, SkillService.applyInfusedSet(more, set).projectiles(), "16 + 2");
@@ -139,7 +139,7 @@ class SparkPoe2Test {
 
     @Test
     void otherSkillsDoNotWander() {
-        assertEquals(null, config.skill("fireball").params().wander());
-        assertEquals(null, config.resource("arc").infusedSet());
+        assertEquals(null, config.skill("blazing_star_shell").params().wander());
+        assertEquals(null, config.resource("chain_thunder").infusedSet());
     }
 }

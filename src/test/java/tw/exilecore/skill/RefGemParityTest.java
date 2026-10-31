@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 2026-10-27 站長「技能與輔助也比照 poe2db」：寶石階級、未切割寶石升級、鐵壁守／瘟囊爆、掘骸、拿掉的自創寶石、節流、引導的每秒魔力。 */
-class Poe2GemParityTest {
+class RefGemParityTest {
 
     static SkillConfig config;
 
@@ -28,28 +28,28 @@ class Poe2GemParityTest {
     }
 
     @Test
-    void gemTiersFollowPoe2db() {
+    void gemTiersFollowRefdb() {
         // poe2db Uncut_Skill_Gem（技能 1–13 階）、Spirit_Gems（精魂 4／8／14 階）
-        assertEquals(11, config.skill("comet").tier());
-        assertEquals(11, config.skill("tornado_shot").tier());
-        assertEquals(11, config.skill("whirling_rush").tier(), "Whirling Assault");
-        assertEquals(9, config.skill("flame_stream").tier(), "Incinerate");
-        assertEquals(13, config.skill("skeletal_cleric").tier());
+        assertEquals(11, config.skill("falling_star").tier());
+        assertEquals(11, config.skill("sky_rend_arrow").tier());
+        assertEquals(11, config.skill("spinning_staff_step").tier(), "Whirling Assault");
+        assertEquals(9, config.skill("burning_current").tier(), "Incinerate");
+        assertEquals(13, config.skill("summon_bone_priest").tier());
         assertEquals(1, config.skill("volcano").tier());
-        assertEquals(7, config.skill("explosive_bolt").tier(), "Explosive Shot");
-        assertEquals(5, config.skill("true_strike").tier(), "Perfect Strike");
-        assertEquals(14, config.skill("archmage").tier());
-        assertEquals(8, config.skill("mirage_archer").tier());
-        assertEquals(4, config.skill("herald_of_ash").tier());
-        assertEquals(4, config.skill("attrition").tier());
-        assertEquals(4, config.skill("iron_ward").tier());
-        assertEquals(4, config.skill("plague_bearer").tier());
+        assertEquals(7, config.skill("blasting_quarrel").tier(), "Explosive Shot");
+        assertEquals(5, config.skill("charged_blow").tier(), "Perfect Strike");
+        assertEquals(14, config.skill("arcane_heart").tier());
+        assertEquals(8, config.skill("phantom_bow_shade").tier());
+        assertEquals(4, config.skill("ember_envoy").tier());
+        assertEquals(4, config.skill("grinding_will").tier());
+        assertEquals(4, config.skill("iron_rampart_guard").tier());
+        assertEquals(4, config.skill("pestilence_sac_burst").tier());
     }
 
     @Test
     void uncutGemSetsTheGemLevel() {
         // PoE2：未切割技能寶石直接把技能升到它的等級（這次之前一顆升一級）
-        final SkillLoadout.Entry gem = new SkillLoadout.Entry("fireball", 5);
+        final SkillLoadout.Entry gem = new SkillLoadout.Entry("blazing_star_shell", 5);
         assertEquals(12, GemService.levelUpTarget(gem, 12));
         assertEquals(SkillLoadout.GEM_CAP, GemService.levelUpTarget(gem, 99));
     }
@@ -67,21 +67,21 @@ class Poe2GemParityTest {
         assertNull(config.skill("bone_raise"));
         final SkillLoadout.Entry merged = config.merge(new SkillLoadout.Entry("bone_raise", 9, 3, List.of("minion_damage")));
         assertNotNull(merged);
-        assertEquals("bone_spikes", merged.skillId());
+        assertEquals("dig_remains", merged.skillId());
         assertEquals(9, merged.level());
-        assertTrue(Unearth.is(SkillBuild.of(config, config.skill("bone_spikes"), 9, 100, false, List.of(), java.util.Set.of(), new tw.exilecore.stats.StatSheet())));
+        assertTrue(Unearth.is(SkillBuild.of(config, config.skill("dig_remains"), 9, 100, false, List.of(), java.util.Set.of(), new tw.exilecore.stats.StatSheet())));
         final SkillDefinition construct = config.skill(Unearth.CONSTRUCT);
         assertNotNull(construct.summon());
         assertTrue(construct.hidden());
         // 召喚物寶石自己帶指令（按鍵下指令），不靠另外的指令寶石
-        for (final String id : List.of("skeletal_archers", "skeletal_pyromancer", "skeletal_stormcaller", "skeletal_reaver", "skeletal_frostcaller")) {
+        for (final String id : List.of("summon_bone_bowmen", "summon_bone_flamecaster", "summon_bone_thundermage", "summon_bone_berserker", "summon_bone_frostmage")) {
             assertTrue(config.skill(id).description().contains("指令"), id);
         }
     }
 
     @Test
     void ironWardAndPlagueBearerAreSpiritGems() {
-        for (final String id : List.of("iron_ward", "plague_bearer")) {
+        for (final String id : List.of("iron_rampart_guard", "pestilence_sac_burst")) {
             final SkillDefinition definition = config.skill(id);
             assertEquals(Mechanic.AURA, definition.mechanic(), id);
             assertEquals(30, definition.aura().reserve(), 1e-9, id + " 保留 30 精魂");
@@ -106,7 +106,7 @@ class Poe2GemParityTest {
 
     @Test
     void efficiencyIsBack() {
-        final SupportDefinition efficiency = config.support("efficiency");
+        final SupportDefinition efficiency = config.support("cost_saving");
         assertNotNull(efficiency, "PoE2 0.5 還有 Efficiency：恢復");
         assertEquals(3, efficiency.tier(), "Efficiency II 第 4 階");
         boolean less = false;
@@ -114,39 +114,39 @@ class Poe2GemParityTest {
             less |= modifier.stat().equals(StatKeys.SKILL_COST) && Math.abs(modifier.value() + 0.4) < 1e-9;
         }
         assertTrue(less, "消耗更少 40%");
-        assertFalse(efficiency.supports(config.skill("herald_of_ash")), "不能掛保留精魂的");
+        assertFalse(efficiency.supports(config.skill("ember_envoy")), "不能掛保留精魂的");
         // 2026-10-29 照 PoE2 寶石標籤：骸骨射手補上 persistent，先被「常駐技能不行」擋下（一樣掛不上）
-        assertFalse(efficiency.supports(config.skill("skeletal_archers")), "保留精魂的召喚也不行");
-        assertTrue(efficiency.supports(config.skill("fireball")));
+        assertFalse(efficiency.supports(config.skill("summon_bone_bowmen")), "保留精魂的召喚也不行");
+        assertTrue(efficiency.supports(config.skill("blazing_star_shell")));
     }
 
     @Test
     void channelledCostsArePerSecond() {
         // poe2db：擂盾每秒 7 → 47 → 183、熔裂踏每秒 10 → 68 → 263 魔力（引導，按住逐秒扣）
-        for (final String id : List.of("resonating_shield", "mountain_fury")) {
+        for (final String id : List.of("shield_drum", "molten_crack_stomp")) {
             final SkillDefinition definition = config.skill(id);
             assertNotNull(config.charge(id), id + " 是引導");
             assertTrue(config.charge(id).drain(), id + " 魔力按住逐秒扣");
         }
-        assertEquals(47, config.skill("resonating_shield").mana().intAt(20));
-        assertEquals(68, config.skill("mountain_fury").mana().intAt(20));
-        assertTrue(config.skill("flame_stream").damageByLevel(), "焚流（Incinerate）照 poe2db 逐級");
+        assertEquals(47, config.skill("shield_drum").mana().intAt(20));
+        assertEquals(68, config.skill("molten_crack_stomp").mana().intAt(20));
+        assertTrue(config.skill("burning_current").damageByLevel(), "焚流（Incinerate）照 原作資料 逐級");
     }
 
     @Test
     void burgeonScalesWithChannelTime() {
         // poe2db Burgeon II：每引導 1 秒更多 20%，最多 40%
-        final SupportDefinition burgeon = config.support("burgeon");
+        final SupportDefinition burgeon = config.support("rising_blaze");
         assertEquals(0, Burgeon.more(20, 40, 0), 1e-9);
         assertEquals(10, Burgeon.more(20, 40, 0.5), 1e-9);
         assertEquals(40, Burgeon.more(20, 40, 5), 1e-9);
         // 只掛得上引導／蓄力的技能（channelling 標籤），包括 ChargeSpec 的引導與按住一直放的
-        for (final String id : List.of("inferno_blast", "flame_breath", "bone_storm", "flame_stream", "resonating_shield")) {
+        for (final String id : List.of("flame_core_detonation", "flame_breath", "shattered_bone_darts", "burning_current", "shield_drum")) {
             assertNull(burgeon.refusal(config.skill(id)), id);
         }
-        assertEquals("要引導或蓄力的技能", burgeon.refusal(config.skill("fireball")));
+        assertEquals("要引導或蓄力的技能", burgeon.refusal(config.skill("blazing_star_shell")));
         // 屬性表上讀得到（掛在技能上的修飾器）
-        final SkillBuild build = SkillBuild.of(config, config.skill("inferno_blast"), 10, 100, false, List.of(burgeon), java.util.Set.of(),
+        final SkillBuild build = SkillBuild.of(config, config.skill("flame_core_detonation"), 10, 100, false, List.of(burgeon), java.util.Set.of(),
                 new tw.exilecore.stats.StatSheet());
         assertEquals(40, Burgeon.more(build.profile().effective(new tw.exilecore.stats.StatSheet()), 3), 1e-9);
         assertEquals(20, Burgeon.more(build.profile().effective(new tw.exilecore.stats.StatSheet()), 1), 1e-9);

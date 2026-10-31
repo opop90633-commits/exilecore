@@ -43,7 +43,7 @@ class UniqueBaseMigrationTest {
         assertTrue(BaseUpgrade.apply(repository, data), "舊長杖換成恆凍長杖");
         assertEquals("cstaff_14", data.base());
         assertFalse(UniqueUpgrade.outdated(repository, data));
-        assertEquals("heart_of_ice", repository.grantedSkill(data.base()));
+        assertEquals("cold_heart", repository.grantedSkill(data.base()));
     }
 
     @Test

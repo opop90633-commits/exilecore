@@ -249,8 +249,8 @@ class ChargeTest {
         // 2026-10-27：聚銳、聚怒（原作沒有）刪掉，只剩聚磐
         assertNull(skills.support("charge_power"));
         assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆磐星。",
-                skills.support("charge_endurance").descriptionText(), "戰星本身沒有屬性，說明不寫每顆效果");
-        assertTrue(skills.support("charge_endurance").descriptionText().contains(ChargeText.name("endurance")));
+                skills.support("gather_bedrock").descriptionText(), "戰星本身沒有屬性，說明不寫每顆效果");
+        assertTrue(skills.support("gather_bedrock").descriptionText().contains(ChargeText.name("endurance")));
         assertEquals("先 x 再 怒星", ChargeText.expand("先 {charge:x} 再 {charge:frenzy}"),
                 "不認得的代號換成代號本身");
         assertEquals("沒有預留位置", ChargeText.expand("沒有預留位置"));
@@ -266,10 +266,10 @@ class ChargeTest {
         final tw.exilecore.skill.SkillConfig placeholders = new tw.exilecore.skill.SkillConfig();
         placeholders.load(dir);
         assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆磐星。",
-                placeholders.support("charge_endurance").descriptionText(), "沒有每顆效果就只換名字");
+                placeholders.support("gather_bedrock").descriptionText(), "沒有每顆效果就只換名字");
         assertEquals(List.of(), placeholders.chargeProblems(types::containsKey));
         assertEquals(1, placeholders.chargeProblems(id -> !id.equals("endurance")).stream()
-                        .filter(line -> line.contains("charge_endurance") && line.contains("說明寫了 {charge:endurance}")).count(),
+                        .filter(line -> line.contains("gather_bedrock") && line.contains("說明寫了 {charge:endurance}")).count(),
                 "說明裡打錯字也會被抓出來（2026-10-24：戰星輔助的說明本來就用 {charge:power}，只看改的那一顆）");
     }
 
@@ -294,8 +294,8 @@ class ChargeTest {
         assertEquals(List.of(), skills.chargeProblems(types::containsKey), "伺服器紀錄不會有警告");
         assertEquals(1, skills.chargeProblems(id -> !id.equals("frenzy")).stream().filter(line -> line.contains("cooldown_bypass")).count(),
                 "打錯字會被抓出來（2026-10-26：照站長拿掉霜綻，用怒星的只剩霜鏃；這次之前 2）");
-        assertNull(skills.skill("flicker_strike").cooldownBypass(), "2026-10-24：瞬影擊照 PoE2 沒有冷卻，改成用銳星連打");
-        assertEquals(0, skills.skill("flicker_strike").cooldown(), 1e-9);
+        assertNull(skills.skill("instant_shadow_strike").cooldownBypass(), "2026-10-24：瞬影擊照 PoE2 沒有冷卻，改成用銳星連打");
+        assertEquals(0, skills.skill("instant_shadow_strike").cooldown(), 1e-9);
         assertNull(skills.skill("frost_snap"), "2026-10-26：照站長拿掉霜綻（這次之前冷卻中消耗怒星）");
         assertEquals(1 + 5, bypass, "2026-10-26：照站長拿掉霜綻（這次之前 2 + 5）；霜鏃照 PoE2 可以花怒星跳過冷卻；焚獄、震地、堅壁、寒夜嗥、裂甲熊咆照 PoE2 可以花磐星跳過冷卻");
         assertEquals(3, warcry, "聚星戰吼拿掉了（2026-10），只剩隱藏的磐星、怒星、銳星（2026-10-24：引雷棍）各給一種");

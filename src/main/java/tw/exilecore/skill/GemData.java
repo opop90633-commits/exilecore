@@ -22,6 +22,10 @@ import java.util.Optional;
  */
 public record GemData(Kind kind, String id, int level, SkillLoadout.Entry entry, boolean resonant) {
 
+    public GemData {
+        id = SkillIds.current(id); // 2026-10-31：改過代號的技能、輔助換成新代號
+    }
+
     /** 2026-10-18：舊的四個欄位的建構式（沒有共鳴）。 */
     public GemData(final Kind kind, final String id, final int level, final SkillLoadout.Entry entry) {
         this(kind, id, level, entry, false);

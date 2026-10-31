@@ -14,9 +14,9 @@ class ChannelFocusGuardTest {
     void channelFocusRefusesChargeSkills() throws IOException {
         final SkillConfig config = new SkillConfig();
         config.load(Path.of("src/main/resources/data"));
-        final SupportDefinition focus = config.support("channel_focus");
-        assertNotNull(focus.refusal(config.skill("inferno_blast")), "炎核爆");
-        assertNotNull(focus.refusal(config.skill("bone_storm")), "碎骨飛矢");
-        assertNull(focus.refusal(config.skill("fireball")), "一般法術可以掛");
+        final SupportDefinition focus = config.support("build_poise");
+        assertNotNull(focus.refusal(config.skill("flame_core_detonation")), "炎核爆");
+        assertNotNull(focus.refusal(config.skill("shattered_bone_darts")), "碎骨飛矢");
+        assertNull(focus.refusal(config.skill("blazing_star_shell")), "一般法術可以掛");
     }
 }

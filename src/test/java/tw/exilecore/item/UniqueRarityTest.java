@@ -87,20 +87,20 @@ class UniqueRarityTest {
     }
 
     @Test
-    void classificationFollowsPoe2() {
+    void classificationFollowsRef() {
         // 原作 Boss 限定 → 限定
-        for (final String id : List.of("hateforge_greaves", "pragmatist_armour", "wisdom_action_wraps", "collapsing_horizon", "tailwind_quiver",
-                "sacred_flame", "atziris_contempt")) {
+        for (final String id : List.of("spiteforge_greaves", "pragmatist_armour", "wisdom_action_wraps", "fallen_horizon", "tailwind_quiver",
+                "hallowed_fire", "empress_sneer")) {
             assertFalse(UniqueRarity.global(repository.unique(id)), id);
         }
         assertEquals(Set.of("breach_lord"), repository.unique("wisdom_action_wraps").sources());
         assertEquals(Set.of("ritual_priest"), repository.unique("pragmatist_armour").sources());
-        assertEquals(Set.of("delirium_mirror"), repository.unique("collapsing_horizon").sources());
+        assertEquals(Set.of("delirium_mirror"), repository.unique("fallen_horizon").sources());
         // 原作沒有限定、以前內容專屬 → 全域（內容照樣掉）
         final UniqueItem windscream = repository.unique("somnambulist");
         assertTrue(UniqueRarity.global(windscream) && windscream.droppedBy("delirium") && windscream.droppedBy("map_boss"));
         // 禁止掉落
-        for (final String id : List.of("flameclasp_belt", "thunderdash_boots", "forbidden_tiara")) {
+        for (final String id : List.of("flameclasp_belt", "thunderdash_boots", "veiled_tiara")) {
             assertTrue(UniqueRarity.disabled(repository.unique(id)), id);
         }
         // 稀有度個別調整與分層
@@ -130,19 +130,19 @@ class UniqueRarityTest {
     }
 
     @Test
-    void newPoe2UniquesLoad() {
-        for (final String id : List.of("reverie", "atziris_contempt", "the_vertex", "sacred_flame", "the_taming", "bereks_pass",
-                "bereks_respite", "shavronnes_satchel", "geofris_sanctuary")) {
+    void newRefUniquesLoad() {
+        for (final String id : List.of("hollow_dream", "empress_sneer", "faceless_mask", "hallowed_fire", "tamer_ring", "frostfire_ring",
+                "firestorm_ring", "wanderer_satchel", "faith_sanctuary")) {
             final UniqueItem unique = repository.unique(id);
             assertNotNull(unique, id);
             final ItemData data = generator.generateUnique(unique, 84, new Random(3));
             assertEquals(id, data.unique());
             assertEquals(unique.affixIds().size(), data.affixes().size(), id);
         }
-        assertEquals("迷夢", repository.unique("reverie").name());
-        assertEquals("吉菲雅的聖所", repository.unique("geofris_sanctuary").name());
-        assertEquals("元素馴服", repository.unique("the_taming").name());
-        assertEquals(4, repository.unique("undertow_band").version(), "貝雷克的冰與雷之握換回原作的疾風技能那一條");
+        assertEquals("迷夢", repository.unique("hollow_dream").name());
+        assertEquals("吉菲雅的聖所", repository.unique("faith_sanctuary").name());
+        assertEquals("元素馴服", repository.unique("tamer_ring").name());
+        assertEquals(4, repository.unique("undertow_band").version(), "伯嵐的冰與雷之握換回原作的疾風技能那一條");
     }
 
     @Test

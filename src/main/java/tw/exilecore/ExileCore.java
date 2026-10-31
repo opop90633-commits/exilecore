@@ -165,7 +165,7 @@ public final class ExileCore extends JavaPlugin {
         this.database = new Database(getSLF4JLogger(), getDataFolder().toPath());
         // 2026-10-27 效能：計時的區段單次超過 20 毫秒（一個 tick 只有 50）就寫一行警告（同區段 30 秒最多一次），站長看 log 就知道是哪裡卡
         perf.onSpike(Perf.SPIKE_MS, spike -> getSLF4JLogger().warn("【卡頓】{} 這一次花了 {} 毫秒（一個 tick 只有 50 毫秒）{}；/ec perf 看最近 10 秒，"
-                + "要精準定位請用 spark：/spark profiler start --timeout 60", spike.name(), String.format(java.util.Locale.ROOT, "%.1f", spike.ms()),
+                + "要精準定位請用 roaming_thunder：/roaming_thunder profiler start --timeout 60", spike.name(), String.format(java.util.Locale.ROOT, "%.1f", spike.ms()),
                 spike.suppressed() > 0 ? "，上次警告後另外又有 " + spike.suppressed() + " 次超過" : ""));
         this.modules = new ModuleRegistry(getSLF4JLogger());
         registerModules();

@@ -44,10 +44,10 @@ class GrantedOnlySocketTest {
             assertFalse(definition.engravable(), id);
         }
         assertTrue(config.skill("spear_throw").grantedOnly(), "擲矛：每把矛都賦予");
-        assertTrue(config.skill("time_freeze").grantedOnly(), "昇華賦予");
-        assertTrue(config.skill("fire_spell_on_hit").grantedOnly(), "昇華賦予");
+        assertTrue(config.skill("time_halt").grantedOnly(), "昇華賦予");
+        assertTrue(config.skill("hit_ignite_art").grantedOnly(), "昇華賦予");
         // 有寶石、傳奇也賦予的（游雷、掠閃、凋息）照樣是寶石
-        for (final String id : List.of("spark", "blink", "withering_presence", "fireball")) {
+        for (final String id : List.of("roaming_thunder", "blink", "wilting_breath", "blazing_star_shell")) {
             assertFalse(config.skill(id).grantedOnly(), id);
         }
         for (final SkillDefinition definition : config.engravable(SkillLoadout.GEM_CAP)) {
@@ -72,50 +72,50 @@ class GrantedOnlySocketTest {
         }
         assertTrue(metas >= 10, "星咒圖騰、引星、祈喚、咒擲、命中引火術都算");
         // 使用者回報的：星咒圖騰、祈喚（元祈、咒擲）
-        for (final String host : List.of("totem_casting", "meta_elemental_invocation", "meta_reaper_invocation", "meta_barrier_invocation",
-                "spellslinger", "meta_crit")) {
-            for (final String spell : List.of("firebolt", "chaos_bolt", "freezing_shards", "lightning_bolt", "sun_orb", "volatile_dead")) {
+        for (final String host : List.of("star_spell_totem", "element_prayer_star", "scythe_prayer_star", "ward_prayer_star",
+                "incant_hurl", "critical_guide_star")) {
+            for (final String spell : List.of("flame_star_shot", "erosion_star_shot", "frost_crystal_fan", "thunder_drop", "scorching_sun_pearl", "corpse_flame_burst")) {
                 assertNotNull(MetaGems.problem(config.meta(host), config.skill(spell)), spell + " → " + host);
             }
-            assertNull(MetaGems.problem(config.meta(host), config.skill("fireball")), "一般的法術寶石照樣能插 " + host);
+            assertNull(MetaGems.problem(config.meta(host), config.skill("blazing_star_shell")), "一般的法術寶石照樣能插 " + host);
         }
-        assertEquals(MetaGems.GRANTED_ONLY, MetaGems.problem(config.meta("meta_elemental_invocation"), config.skill("firebolt")));
-        assertEquals(MetaGems.GRANTED_ONLY, MetaGems.problem(config.meta("totem_casting"), config.skill("firebolt")));
+        assertEquals(MetaGems.GRANTED_ONLY, MetaGems.problem(config.meta("element_prayer_star"), config.skill("flame_star_shot")));
+        assertEquals(MetaGems.GRANTED_ONLY, MetaGems.problem(config.meta("star_spell_totem"), config.skill("flame_star_shot")));
     }
 
     @Test
     void freeCastsOfGrantedSpellsStillWork() {
         // 命運同調、預告射擊用 metaCast 免費放面板上的法術：武器賦予的也可以（只擋插槽，不擋觸發）
         final MetaSpec any = new MetaSpec(MetaSpec.Kind.CRIT, 1, Scaled.of(0), 0, 0, 0, 0, 0, Scaled.of(1), 0);
-        assertNull(MetaGems.castProblem(any, config.skill("firebolt")));
-        assertNull(MetaGems.castProblem(any, config.skill("chaos_bolt")));
+        assertNull(MetaGems.castProblem(any, config.skill("flame_star_shot")));
+        assertNull(MetaGems.castProblem(any, config.skill("erosion_star_shot")));
     }
 
     @Test
     void oldGemsOfGrantedOnlySkillsAreRecognised() {
         // 以前管理指令給的、雕出來的烈陽珠寶石（不是賦予的那一格）要換成未切割技能寶石；面板上賦予的那一格不動
-        assertTrue(GemService.grantedOnlyGem(config, new SkillLoadout.Entry("sun_orb", 12)));
-        assertTrue(GemService.grantedOnlyGem(config, new SkillLoadout.Entry("firebolt", 5)));
-        assertFalse(GemService.grantedOnlyGem(config, new SkillLoadout.Entry("firebolt", 5).withGranted(true)));
-        assertFalse(GemService.grantedOnlyGem(config, new SkillLoadout.Entry("fireball", 5)));
+        assertTrue(GemService.grantedOnlyGem(config, new SkillLoadout.Entry("scorching_sun_pearl", 12)));
+        assertTrue(GemService.grantedOnlyGem(config, new SkillLoadout.Entry("flame_star_shot", 5)));
+        assertFalse(GemService.grantedOnlyGem(config, new SkillLoadout.Entry("flame_star_shot", 5).withGranted(true)));
+        assertFalse(GemService.grantedOnlyGem(config, new SkillLoadout.Entry("blazing_star_shell", 5)));
         assertFalse(GemService.grantedOnlyGem(config, null));
         // 放在引星孔裡的（存檔的 @代號/等級/孔數）讀出來不是賦予的，也認得
-        final SkillLoadout.Entry host = new SkillLoadout.Entry("meta_elemental_invocation", 10)
-                .withSpell(SkillLoadout.Entry.INNER_SOCKET, new SkillLoadout.Entry("firebolt", 8));
+        final SkillLoadout.Entry host = new SkillLoadout.Entry("element_prayer_star", 10)
+                .withSpell(SkillLoadout.Entry.INNER_SOCKET, new SkillLoadout.Entry("flame_star_shot", 8));
         assertTrue(GemService.grantedOnlyGem(config, host.spellAt(SkillLoadout.Entry.INNER_SOCKET)));
     }
 
     @Test
-    void metaGemSpiritReservationFollowsPoe2() {
+    void metaGemSpiritReservationFollowsRef() {
         // RePoE skills.json static.reservations（PoE2 0.5）：Spell Totem 沒有（每次放下花魔力、消耗銳星／磐星）、
         // Cast on Critical／Elemental Ailment／Dodge 100、Cast on Minion Death 30、Elemental Invocation 60、
         // Reaper's／Barrier Invocation 30、Spellslinger 與 Fire Spell on Hit 沒有
-        assertNull(config.skill("totem_casting").aura(), "星咒圖騰不保留精魂");
-        assertTrue(config.skill("totem_casting").mana().first() > 0, "星咒圖騰放下時花魔力");
+        assertNull(config.skill("star_spell_totem").aura(), "星咒圖騰不保留精魂");
+        assertTrue(config.skill("star_spell_totem").mana().first() > 0, "星咒圖騰放下時花魔力");
         final Map<String, Double> expected = Map.of(
-                "meta_crit", 100.0, "meta_ailment", 100.0, "meta_dodge", 100.0, "meta_minion_death", 30.0,
-                "meta_elemental_invocation", 60.0, "meta_reaper_invocation", 30.0, "meta_barrier_invocation", 30.0,
-                "spellslinger", 0.0, "fire_spell_on_hit", 0.0);
+                "critical_guide_star", 100.0, "mutation_guide_star", 100.0, "roll_guide_star", 100.0, "fallen_servant_star", 30.0,
+                "element_prayer_star", 60.0, "scythe_prayer_star", 30.0, "ward_prayer_star", 30.0,
+                "incant_hurl", 0.0, "hit_ignite_art", 0.0);
         for (final Map.Entry<String, Double> entry : expected.entrySet()) {
             final SkillDefinition definition = config.skill(entry.getKey());
             assertNotNull(definition.aura(), entry.getKey() + " 是常駐（綁在按鍵格上才開、保留精魂）");

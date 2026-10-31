@@ -17,13 +17,13 @@ class SkillLoadoutTest {
     void putFindAndLevels() {
         final SkillLoadout loadout = new SkillLoadout();
         assertTrue(loadout.isEmpty());
-        final int fireball = loadout.put("fireball", 3);
+        final int fireball = loadout.put("blazing_star_shell", 3);
         assertEquals(0, fireball);
-        assertEquals(1, loadout.put("arc", 1));
-        assertEquals(fireball, loadout.put("fireball", 7), "已經有的技能只改等級");
+        assertEquals(1, loadout.put("chain_thunder", 1));
+        assertEquals(fireball, loadout.put("blazing_star_shell", 7), "已經有的技能只改等級");
         assertEquals(7, loadout.skill(fireball).level());
         assertEquals(2, loadout.size());
-        assertEquals(-1, loadout.find("spark"));
+        assertEquals(-1, loadout.find("roaming_thunder"));
         assertEquals(SkillLoadout.CORRUPT_CAP, new SkillLoadout.Entry("x", 99).level(), "等級夾在 1–22（Lv.21 的未切割寶石，腐化可以再 +1）");
         assertEquals(1, new SkillLoadout.Entry("x", 0).level());
         assertThrows(IllegalArgumentException.class, () -> new SkillLoadout.Entry(" ", 1));
@@ -37,8 +37,8 @@ class SkillLoadoutTest {
     @Test
     void bindsFollowRemovals() {
         final SkillLoadout loadout = new SkillLoadout();
-        final int fireball = loadout.put("fireball", 1);
-        final int arc = loadout.put("arc", 1);
+        final int fireball = loadout.put("blazing_star_shell", 1);
+        final int arc = loadout.put("chain_thunder", 1);
         final int rightA = (0 * SkillLoadout.KEYS + SkillLoadout.KEY_RIGHT);
         final int sneakLeftB = (1 * SkillLoadout.KEYS + SkillLoadout.KEY_SNEAK_LEFT);
         assertEquals(1, rightA);
@@ -49,7 +49,7 @@ class SkillLoadoutTest {
         assertTrue(loadout.bind((0 * SkillLoadout.KEYS + SkillLoadout.KEY_LEFT), arc));
         assertFalse(loadout.bind(rightA, 5), "空的位置不能綁");
         assertFalse(loadout.bind(99, fireball));
-        assertEquals("fireball", loadout.boundSkill(sneakLeftB).skillId());
+        assertEquals("blazing_star_shell", loadout.boundSkill(sneakLeftB).skillId());
 
         assertTrue(loadout.remove(fireball));
         assertEquals(-1, loadout.bound(rightA), "移除技能後按鍵回到普攻");
@@ -63,10 +63,10 @@ class SkillLoadoutTest {
     @Test
     void copyIsIndependent() {
         final SkillLoadout loadout = new SkillLoadout();
-        final int arc = loadout.put("arc", 2);
+        final int arc = loadout.put("chain_thunder", 2);
         loadout.bind((0 * SkillLoadout.KEYS + SkillLoadout.KEY_RIGHT), arc);
         final SkillLoadout copy = loadout.copy();
-        loadout.put("arc", 9);
+        loadout.put("chain_thunder", 9);
         loadout.bind((0 * SkillLoadout.KEYS + SkillLoadout.KEY_RIGHT), -1);
         assertEquals(2, copy.skill(arc).level());
         assertEquals(arc, copy.bound((0 * SkillLoadout.KEYS + SkillLoadout.KEY_RIGHT)));
@@ -77,7 +77,7 @@ class SkillLoadoutTest {
 
     @Test
     void entriesCarrySocketsAndSupports() {
-        final SkillLoadout.Entry fresh = new SkillLoadout.Entry("fireball", 5);
+        final SkillLoadout.Entry fresh = new SkillLoadout.Entry("blazing_star_shell", 5);
         assertEquals(SkillLoadout.BASE_SOCKETS, fresh.sockets(), "新技能 2 個輔助孔");
         assertEquals(SkillLoadout.MAX_SOCKETS, fresh.supports().size());
         assertEquals(0, fresh.freeSocket());
@@ -93,9 +93,9 @@ class SkillLoadoutTest {
 
         // 存檔文字：孔數:輔助,輔助,…（空孔留空）
         assertEquals("3:,pierce,chain", socketed.encodeSupports());
-        assertEquals(socketed, SkillLoadout.Entry.decode("fireball", 5, "3:,pierce,chain"));
-        assertEquals(fresh, SkillLoadout.Entry.decode("fireball", 5, null), "舊存檔（沒有這一欄）");
-        assertEquals(fresh, SkillLoadout.Entry.decode("fireball", 5, "壞掉的:"), "壞掉的文字當成 2 個空孔");
+        assertEquals(socketed, SkillLoadout.Entry.decode("blazing_star_shell", 5, "3:,pierce,chain"));
+        assertEquals(fresh, SkillLoadout.Entry.decode("blazing_star_shell", 5, null), "舊存檔（沒有這一欄）");
+        assertEquals(fresh, SkillLoadout.Entry.decode("blazing_star_shell", 5, "壞掉的:"), "壞掉的文字當成 2 個空孔");
         assertEquals(SkillLoadout.MAX_SOCKETS, SkillLoadout.Entry.decode("x", 1, "9:a,b,c,d,e,f").sockets(), "孔數夾在 2–5");
         assertEquals(List.of("a", "b"), SkillLoadout.Entry.decode("x", 1, "2:a,b,c").supportIds(), "超過孔數的輔助不算");
     }
@@ -103,20 +103,20 @@ class SkillLoadoutTest {
     @Test
     void addAllowsDuplicatesAndFindsSupportOwners() {
         final SkillLoadout loadout = new SkillLoadout();
-        final int arc = loadout.add(new SkillLoadout.Entry("arc", 3).withSupport(0, "chain"));
+        final int arc = loadout.add(new SkillLoadout.Entry("chain_thunder", 3).withSupport(0, "chain"));
         assertEquals(0, arc);
         // 2026-10-28 照 PoE2：同一個技能可以放好幾顆（各自的等級、輔助）；這次之前回傳 -2
-        final int second = loadout.add(new SkillLoadout.Entry("arc", 9).withSupport(0, "pierce"));
+        final int second = loadout.add(new SkillLoadout.Entry("chain_thunder", 9).withSupport(0, "pierce"));
         assertEquals(1, second, "同一個技能可以再放一顆");
-        assertEquals(2, loadout.count("arc"));
+        assertEquals(2, loadout.count("chain_thunder"));
         assertEquals(List.of("chain"), loadout.skill(arc).supportIds());
         assertEquals(List.of("pierce"), loadout.skill(second).supportIds(), "每一顆自己的輔助");
         assertEquals(arc, loadout.supportUsedBy("chain"));
         assertEquals(second, loadout.supportUsedBy("pierce"));
-        assertEquals(-1, loadout.supportUsedBy("fork"));
+        assertEquals(-1, loadout.supportUsedBy("split_shot"));
         loadout.remove(second);
         // put 只改等級，不動輔助孔
-        loadout.put("arc", 7);
+        loadout.put("chain_thunder", 7);
         assertEquals(7, loadout.skill(arc).level());
         assertEquals(List.of("chain"), loadout.skill(arc).supportIds());
         for (int i = 1; i < SkillLoadout.MAX_SKILLS; i++) {
@@ -128,76 +128,76 @@ class SkillLoadoutTest {
     /** 2026-10-23：腐化過的技能寶石存檔前面寫 !，讀回來還是腐化的；放在宿主第 1 孔的也一樣。 */
     @Test
     void corruptedSurvivesEncoding() {
-        final SkillLoadout.Entry plain = new SkillLoadout.Entry("fireball", 18, 3, List.of("added_fire", "", "pierce"));
+        final SkillLoadout.Entry plain = new SkillLoadout.Entry("blazing_star_shell", 18, 3, List.of("added_fire", "", "pierce"));
         assertFalse(plain.corrupted());
         assertFalse(plain.encodeSupports().startsWith(SkillLoadout.Entry.CORRUPTED_PREFIX));
         final SkillLoadout.Entry corrupted = plain.withCorrupted(true);
         assertTrue(corrupted.encodeSupports().startsWith(SkillLoadout.Entry.CORRUPTED_PREFIX));
-        final SkillLoadout.Entry back = SkillLoadout.Entry.decode("fireball", 18, corrupted.encodeSupports());
+        final SkillLoadout.Entry back = SkillLoadout.Entry.decode("blazing_star_shell", 18, corrupted.encodeSupports());
         assertTrue(back.corrupted());
         assertEquals(corrupted, back);
         assertTrue(back.withLevel(19).corrupted(), "升級、開孔、換輔助都留著腐化");
         assertTrue(back.withSockets(4).corrupted());
-        assertTrue(back.withSupport(1, "faster_casting").corrupted());
+        assertTrue(back.withSupport(1, "quick_chant").corrupted());
         // 宿主第 1 孔的腐化寶石
-        final SkillLoadout.Entry host = new SkillLoadout.Entry("totem_casting", 20, 5, List.of()).withInner(new SkillLoadout.Entry("snap", 21, 2, List.of()).withCorrupted(true));
-        final SkillLoadout.Entry hostBack = SkillLoadout.Entry.decode("totem_casting", 20, host.encodeSupports());
+        final SkillLoadout.Entry host = new SkillLoadout.Entry("star_spell_totem", 20, 5, List.of()).withInner(new SkillLoadout.Entry("anomaly_devour_blast", 21, 2, List.of()).withCorrupted(true));
+        final SkillLoadout.Entry hostBack = SkillLoadout.Entry.decode("star_spell_totem", 20, host.encodeSupports());
         assertTrue(hostBack.inner().corrupted());
         assertFalse(hostBack.corrupted());
     }
 
     @Test
     void qualitySurvivesEncoding() {
-        final SkillLoadout.Entry plain = new SkillLoadout.Entry("fireball", 18, 3, List.of("added_fire", "", "pierce"));
+        final SkillLoadout.Entry plain = new SkillLoadout.Entry("blazing_star_shell", 18, 3, List.of("added_fire", "", "pierce"));
         assertEquals(0, plain.quality());
         final SkillLoadout.Entry q = plain.withQuality(15);
-        assertEquals(q, SkillLoadout.Entry.decode("fireball", 18, q.encodeSupports()));
+        assertEquals(q, SkillLoadout.Entry.decode("blazing_star_shell", 18, q.encodeSupports()));
         final SkillLoadout.Entry both = q.withCorrupted(true).withQuality(23);
-        final SkillLoadout.Entry back = SkillLoadout.Entry.decode("fireball", 18, both.encodeSupports());
+        final SkillLoadout.Entry back = SkillLoadout.Entry.decode("blazing_star_shell", 18, both.encodeSupports());
         assertEquals(23, back.quality());
         assertTrue(back.corrupted());
         assertEquals(both, back);
         assertEquals(23, plain.withQuality(99).quality(), "最多 23%");
         assertEquals(0, plain.withQuality(-5).quality());
-        assertEquals(15, q.withLevel(19).withSockets(4).withSupport(1, "faster_casting").withCorrupted(true).quality(), "其他改動留著品質");
-        final SkillLoadout.Entry host = new SkillLoadout.Entry("totem_casting", 20, 5, List.of())
-                .withInner(new SkillLoadout.Entry("snap", 21, 2, List.of()).withQuality(10).withCorrupted(true));
-        final SkillLoadout.Entry hostBack = SkillLoadout.Entry.decode("totem_casting", 20, host.encodeSupports());
+        assertEquals(15, q.withLevel(19).withSockets(4).withSupport(1, "quick_chant").withCorrupted(true).quality(), "其他改動留著品質");
+        final SkillLoadout.Entry host = new SkillLoadout.Entry("star_spell_totem", 20, 5, List.of())
+                .withInner(new SkillLoadout.Entry("anomaly_devour_blast", 21, 2, List.of()).withQuality(10).withCorrupted(true));
+        final SkillLoadout.Entry hostBack = SkillLoadout.Entry.decode("star_spell_totem", 20, host.encodeSupports());
         assertEquals(10, hostBack.inner().quality());
         assertTrue(hostBack.inner().corrupted());
         assertEquals(0, hostBack.quality());
         // 舊資料（沒有品質）照樣讀得出來
-        assertEquals(0, SkillLoadout.Entry.decode("fireball", 18, plain.encodeSupports()).quality());
+        assertEquals(0, SkillLoadout.Entry.decode("blazing_star_shell", 18, plain.encodeSupports()).quality());
     }
 
     /** 2026-10-26 照 PoE2 Meta Gem：主要寶石第 2～5 孔也能放技能寶石（存成 @代號/等級/孔數），不算輔助。 */
     @Test
     void metaGemHoldsSeveralSpells() {
-        SkillLoadout.Entry host = new SkillLoadout.Entry("meta_crit", 10, 4, List.of())
-                .withInner(new SkillLoadout.Entry("fireball", 12))
-                .withSpell(2, new SkillLoadout.Entry("arc", 8, 3, List.of("pierce")).withQuality(5))
+        SkillLoadout.Entry host = new SkillLoadout.Entry("critical_guide_star", 10, 4, List.of())
+                .withInner(new SkillLoadout.Entry("blazing_star_shell", 12))
+                .withSpell(2, new SkillLoadout.Entry("chain_thunder", 8, 3, List.of("pierce")).withQuality(5))
                 .withSupport(1, "added_fire");
         assertTrue(host.spellSocket(0));
         assertFalse(host.spellSocket(1));
         assertTrue(host.spellSocket(2));
         assertEquals(List.of("added_fire"), host.supportIds(), "放技能的孔不是輔助");
         assertEquals(2, host.spells().size());
-        assertEquals("arc", host.spellAt(2).skillId());
+        assertEquals("chain_thunder", host.spellAt(2).skillId());
         assertEquals(5, host.spellAt(2).quality());
         assertTrue(host.spellAt(2).supportIds().isEmpty(), "放進去的寶石自己沒有輔助");
         assertEquals(1, host.freeSocket() == 3 ? 1 : 0, "第 4 孔是空的");
         final String text = host.encodeSupports();
-        final SkillLoadout.Entry back = SkillLoadout.Entry.decode("meta_crit", 10, text);
+        final SkillLoadout.Entry back = SkillLoadout.Entry.decode("critical_guide_star", 10, text);
         assertEquals(text, back.encodeSupports(), "存檔來回一樣");
-        assertEquals(List.of("fireball", "arc"), back.spells().stream().map(SkillLoadout.Entry::skillId).toList());
+        assertEquals(List.of("blazing_star_shell", "chain_thunder"), back.spells().stream().map(SkillLoadout.Entry::skillId).toList());
         final SkillLoadout loadout = new SkillLoadout();
         loadout.add(back);
-        assertEquals(0, loadout.findInner("arc"), "第 3 孔的技能也找得到宿主");
-        assertEquals(-1, loadout.supportUsedBy("arc"));
+        assertEquals(0, loadout.findInner("chain_thunder"), "第 3 孔的技能也找得到宿主");
+        assertEquals(-1, loadout.supportUsedBy("chain_thunder"));
         host = back.withSpell(2, null);
         assertEquals(1, host.spells().size());
         assertFalse(host.spellSocket(2));
         // 壞掉的 @ 當成空孔
-        assertTrue(SkillLoadout.Entry.decode("meta_crit", 10, "3:,,@").support(2).isEmpty());
+        assertTrue(SkillLoadout.Entry.decode("critical_guide_star", 10, "3:,,@").support(2).isEmpty());
     }
 }

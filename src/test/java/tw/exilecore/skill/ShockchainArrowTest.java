@@ -46,8 +46,8 @@ class ShockchainArrowTest {
     }
 
     @Test
-    void skillDataMatchesPoe2() {
-        final SkillDefinition arrow = config.skill("chain_arrow");
+    void skillDataMatchesRef() {
+        final SkillDefinition arrow = config.skill("linked_lightning_arrow");
         assertNotNull(arrow);
         assertEquals("連電箭", arrow.name());
         assertEquals(11, arrow.tier());
@@ -70,14 +70,14 @@ class ShockchainArrowTest {
 
     @Test
     void shockwaveStageAndRod() {
-        final SkillStages.Stage wave = SkillStages.get("chain_arrow", ShockchainArrows.SHOCKWAVE);
+        final SkillStages.Stage wave = SkillStages.get("linked_lightning_arrow", ShockchainArrows.SHOCKWAVE);
         assertNotNull(wave);
         assertEquals(1.4, wave.effectiveness().at(1), 1e-9);
         assertEquals(5.07, wave.effectiveness().at(20), 1e-9);
         assertEquals(18.42, wave.effectiveness().at(40), 1e-9);
         assertEquals(tw.exilecore.core.Units.metres(2.5), wave.radius(1), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals(1.0, wave.conversion().get(DamageType.LIGHTNING), 1e-9);
-        final SkillConfig.RodSpec rod = config.rod("chain_arrow");
+        final SkillConfig.RodSpec rod = config.rod("linked_lightning_arrow");
         assertNotNull(rod);
         assertEquals(20, rod.duration(), 1e-9);
         assertEquals(10, rod.max());
@@ -90,7 +90,7 @@ class ShockchainArrowTest {
     void orbBoltChainsThroughRods() {
         // 2026-10-28 照 PoE2：雷雲的連鎖可以連到雷霆之杖，再從杖往下連（SkillZones.bolt 把杖跟敵人放在同一串候選）
         final LightningRods.Rod rod = new LightningRods.Rod(UUID.randomUUID(), UUID.randomUUID(), new Vector(3, 0, 0), 0, 400, 8, 20, null, 2.5,
-                "lightning_arrow", "chain_arrow");
+                "thunderclap_arrow", "linked_lightning_arrow");
         final Object first = new Vector(0, 0, 0);
         final Object far = new Vector(6, 0, 0);
         final List<Object> chain = ZonePulses.boltChain(List.of(first), List.of(first, rod, far), 5, 3.5,
@@ -174,27 +174,27 @@ class ShockchainArrowTest {
         final UUID world = UUID.randomUUID();
         final List<LightningRods.Rod> removed = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            rods.place(new LightningRods.Rod(owner, world, new Vector(i, 64, 0), 0, 400, 8, 20, null, 2.0, "lightning_arrow", "lightning_rod"), 10, removed::add);
+            rods.place(new LightningRods.Rod(owner, world, new Vector(i, 64, 0), 0, 400, 8, 20, null, 2.0, "thunderclap_arrow", "thunder_stake_shaft"), 10, removed::add);
         }
         for (int i = 0; i < 10; i++) {
-            rods.place(new LightningRods.Rod(owner, world, new Vector(i, 64, 5), 0, 400, 8, 20, null, 2.5, "lightning_arrow", "chain_arrow"), 10, removed::add);
+            rods.place(new LightningRods.Rod(owner, world, new Vector(i, 64, 5), 0, 400, 8, 20, null, 2.5, "thunderclap_arrow", "linked_lightning_arrow"), 10, removed::add);
         }
         assertTrue(removed.isEmpty(), "雷樁矢、連電箭各自最多 10 支");
         assertEquals(20, rods.count(owner));
-        rods.place(new LightningRods.Rod(owner, world, new Vector(0, 64, 9), 0, 400, 8, 20, null, 2.5, "lightning_arrow", "chain_arrow"), 10, removed::add);
+        rods.place(new LightningRods.Rod(owner, world, new Vector(0, 64, 9), 0, 400, 8, 20, null, 2.5, "thunderclap_arrow", "linked_lightning_arrow"), 10, removed::add);
         assertEquals(1, removed.size());
-        assertEquals("chain_arrow", removed.get(0).skill);
-        assertEquals(10, rods.count(owner, "lightning_rod"));
+        assertEquals("linked_lightning_arrow", removed.get(0).skill);
+        assertEquals(10, rods.count(owner, "thunder_stake_shaft"));
     }
 
     @Test
     void qualityIsIncreasedLightningAndMoreAttackSpeed() {
         // 2026-10-29 照 poe2db 寶石頁「增加 (0—20)% 閃電傷害」（2026-10-28 寫成更多）
-        final List<Modifier> normal = GemQuality.modifiers("chain_arrow", 20, "q");
+        final List<Modifier> normal = GemQuality.modifiers("linked_lightning_arrow", 20, "q");
         assertNotNull(normal);
         // 2026-10-30 照 RePoE quality_stats 與 poe2db 英文頁：更多（more）
         assertTrue(normal.stream().anyMatch(m -> m.stat().equals(StatKeys.DAMAGE) && m.type() == ModType.MORE && m.tags().contains("lightning")));
-        final List<Modifier> advanced = GemQuality.advancedModifiers("chain_arrow", 20, "q");
+        final List<Modifier> advanced = GemQuality.advancedModifiers("linked_lightning_arrow", 20, "q");
         assertNotNull(advanced);
         assertTrue(advanced.stream().anyMatch(m -> m.stat().equals(StatKeys.ATTACK_SPEED) && m.type() == ModType.MORE));
     }

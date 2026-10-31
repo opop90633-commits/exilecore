@@ -184,12 +184,12 @@ public record SupportDefinition(String id, String name, String description, Stri
         }
         // 2026-10-30 照 PoE2（SupportMirageDeadeye 讓孔裡的技能變成 UsedByProxy；迅鋒、衝勢、法術回響…的 excluded_types 有 UsedByProxy）：
         // 幻影代放的技能掛不上；這次之前掛得上，迅鋒的移動條件對幻影沒作用，只剩更多 40% 技能速度
-        if (host != null && DeadeyeMetas.MIRAGE.equals(host.id()) && Poe2SupportRules.proxyExcluded(id)) {
+        if (host != null && DeadeyeMetas.MIRAGE.equals(host.id()) && RefSupportRules.proxyExcluded(id)) {
             return name + "不能掛在" + host.name() + "上（幻影代放的技能不能用）";
         }
         // 2026-10-30 照 PoE2：觸發型主要寶石（暴擊引星…加 Triggered）擋 Triggered 的輔助（蓄詠…）、法術圖騰（加 UsedByProxy）擋 UsedByProxy 的；
         // 這次之前都掛得上，蓄詠插在暴擊引星裡照樣更多 35% 傷害
-        final String metaWhy = host == null ? null : Poe2SupportRules.metaHostRefusal(id, host.id());
+        final String metaWhy = host == null ? null : RefSupportRules.metaHostRefusal(id, host.id());
         if (metaWhy != null && !worksOnHost()) {
             return name + "不能掛在" + host.name() + "上（" + metaWhy + "）";
         }
@@ -244,7 +244,7 @@ public record SupportDefinition(String id, String name, String description, Stri
             return false;
         }
         final SkillConfig config = SkillConfig.current();
-        for (final String other : Poe2SupportRules.unlockers(id, skill.id())) {
+        for (final String other : RefSupportRules.unlockers(id, skill.id())) {
             if (others.contains(other)) {
                 final SupportDefinition unlocker = config == null ? null : config.support(other);
                 // 那一顆自己要掛得上（它也可以被再別顆解開：終式 → 鐘星 → 滿星；拿掉自己避免繞圈）
@@ -280,9 +280,9 @@ public record SupportDefinition(String id, String name, String description, Stri
      * （終式讓技能累積連擊 → 鐘星；鐘星讓技能產生戰星 → 滿星），原作的擋就不算（那一顆自己要掛得上）。
      */
     public String refusal(final SkillDefinition skill, final java.util.Collection<String> others) {
-        final String poe2 = Poe2SupportRules.refusal(id, skill.id()); // 2026-10-30：照 PoE2 的技能類型（support_poe2.yml）
-        if (poe2 != null && !unlockedBy(skill, others)) {
-            return poe2;
+        final String ref = RefSupportRules.refusal(id, skill.id()); // 2026-10-30：照 PoE2 的技能類型（support_ref.yml）
+        if (ref != null && !unlockedBy(skill, others)) {
+            return ref;
         }
         if (Unearth.ID.equals(skill.id()) && Unearth.BLOCKED.contains(id)) {
             return "掘骸不能掛"; // 2026-10-30 照 PoE2
@@ -424,7 +424,7 @@ public record SupportDefinition(String id, String name, String description, Stri
             tw.exilecore.stats.SupportKeys.FLAG_EMPOWERED_CULL, tw.exilecore.stats.SupportKeys.FLAG_UNERRING, "cost.",
             tw.exilecore.stats.SupportKeys.FLAG_EXTRA_SKELETON, tw.exilecore.stats.SupportKeys.FLAG_MARK_ETERNAL, "mark.", "curse.", "totem.",
             "minion.", "trigger_cost.", "plant.", // 2026-10-30：催綻（植物繁茂時觸發）不用擊中
-            "arcane_surge.", // 2026-10-26 照 PoE2 湧詠：花魔力就給秘術增強（不用擊中）
+            "surging_chant.", // 2026-10-26 照 PoE2 湧詠：花魔力就給秘術增強（不用擊中）
             "helbrym.", "storm.", // 2026-10-26 照 PoE2：蟄甲（變身時）、行嵐與掠嵐（風暴移動）不用擊中
             // 2026-10-27 照 PoE2 0.5 補上的一般輔助：放技能時的增益、殘骸、先祖強化、用掉的資源、地面、詛咒、印記…不用擊中（能不能掛另外看 SupportGuards）
             tw.exilecore.stats.SupportExtraKeys.USING_PREFIX, tw.exilecore.stats.SupportExtraKeys.USING_QUARTER_PREFIX,
@@ -834,14 +834,14 @@ public record SupportDefinition(String id, String name, String description, Stri
      * 冷卻中用戰星跳過的另外看 {@link SkillDefinition#cooldownBypass()}。
      */
     static final Map<String, Set<String>> CHARGE_CONSUMERS = Map.of(
-            "power", Set.of("flicker_strike", "raise_zombie", "totem_casting", "falling_thunder", // 2026-10-28 照 PoE2：＋驚雷劈（用掉所有的銳星）
+            "power", Set.of("instant_shadow_strike", "corpse_summon", "star_spell_totem", "startle_thunder_chop", // 2026-10-28 照 PoE2：＋驚雷劈（用掉所有的銳星）
                     HollowForm.ID), // 2026-10-28 照 PoE2 Hollow Form：用掉銳星多 2 個幻影
-            "frenzy", Set.of("lightning_spear", "storm_javelin", "linked_volley"),
-            "endurance", Set.of("totem_casting"));
+            "frenzy", Set.of("thunder_lance_throw", "thunderfall_spear", "strung_pearls"),
+            "endurance", Set.of("star_spell_totem"));
     /** 2026-10-24：一定要消耗戰星才放得出來的技能（抑星不能掛）。 */
-    static final Set<String> REQUIRES_CHARGES = Set.of("totem_casting");
+    static final Set<String> REQUIRES_CHARGES = Set.of("star_spell_totem");
     /** 2026-10-24：有完美時機的技能（完磐只能掛這些）。 */
-    static final Set<String> PERFECT_TIMING = Set.of("true_strike", "snipe");
+    static final Set<String> PERFECT_TIMING = Set.of("charged_blow", "cloud_pierce_arrow");
 
     static boolean consumes(final SkillDefinition skill, final String chargeId) {
         return chargeId.equals(skill.cooldownBypass()) || CHARGE_CONSUMERS.getOrDefault(chargeId, Set.of()).contains(skill.id());

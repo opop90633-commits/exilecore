@@ -49,7 +49,7 @@ class SnapTest {
     }
 
     @Test
-    void damageTablesMatchPoe2db() {
+    void damageTablesMatchRefdb() {
         assertEquals(14, cold(1)[0], 1e-9);
         assertEquals(21, cold(1)[1], 1e-9);
         assertEquals(473, cold(20)[0], 1e-9);

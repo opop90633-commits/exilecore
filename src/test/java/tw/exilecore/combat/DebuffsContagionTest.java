@@ -34,7 +34,7 @@ class DebuffsContagionTest {
         final UUID player = UUID.randomUUID();
         final UUID dead = UUID.randomUUID();
         final UUID near = UUID.randomUUID();
-        debuffs.applyCurse(dead, new Debuffs.Debuff("enfeeble_curse", player, 300, 0, false), "enfeeble_curse");
+        debuffs.applyCurse(dead, new Debuffs.Debuff("strength_sap_curse", player, 300, 0, false), "strength_sap_curse");
         debuffs.spreadCurses(dead, near, 100);
         assertEquals(300, debuffs.active(near, 100).getFirst().untilTick());
     }

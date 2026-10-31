@@ -21,22 +21,22 @@ public final class DjinnCommands {
         final int dot = profileId.indexOf('.');
         String id = dot < 0 ? profileId : profileId.substring(0, dot);
         if ("asc_corpse_beetle".equals(id)) {
-            return "kelari_djinn"; // 克拉里的惡言生出來的屍甲蟲
+            return "foul_sand_spirit"; // 克拉里的惡言生出來的屍甲蟲
         }
         if (id.startsWith("asc_")) {
             id = id.substring(4);
         }
-        if (id.endsWith("_djinn")) {
+        if (id.endsWith("_djinn") || id.equals("foul_sand_spirit") || id.equals("final_mirage_spirit") || id.equals("flame_blade_spirit")) {
             return null; // 巨靈本身
         }
-        if (id.startsWith("kelari_")) {
-            return "kelari_djinn";
+        if (id.startsWith("kelari_") || id.startsWith("sand_spirit_")) { // 2026-10-31：玩家技能改了代號（sand_spirit_*），昇華的 asc_kelari_* 照舊
+            return "foul_sand_spirit";
         }
-        if (id.startsWith("navira_")) {
-            return "navira_djinn";
+        if (id.startsWith("navira_") || id.startsWith("mirage_spirit_")) {
+            return "final_mirage_spirit";
         }
-        if (id.startsWith("ruzhan_")) {
-            return "ruzhan_djinn";
+        if (id.startsWith("ruzhan_") || id.startsWith("blade_spirit_")) {
+            return "flame_blade_spirit";
         }
         return null;
     }

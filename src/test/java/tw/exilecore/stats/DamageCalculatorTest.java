@@ -128,7 +128,7 @@ class DamageCalculatorTest {
                 .setBase(StatKeys.CRIT_MULTI, 200)
                 .add(Modifier.increased(StatKeys.CRIT_CHANCE, 19.0, "必暴")); // 5% × 20 = 100%
         final StatSheet defender = new StatSheet().setBase(StatKeys.EVASION, 1_000_000).setBase(StatKeys.RESIST_MAX, 75);
-        final SkillProfile fireball = new SkillProfile("fireball", Set.of(Tags.SPELL, Tags.FIRE), 1.0,
+        final SkillProfile fireball = new SkillProfile("blazing_star_shell", Set.of(Tags.SPELL, Tags.FIRE), 1.0,
                 new DamagePacket().set(DamageType.FIRE, 50));
 
         final HitResult result = DamageCalculator.calculate(attacker, fireball, defender, 0, new Random(4));
@@ -142,7 +142,7 @@ class DamageCalculatorTest {
         // 2026-10-23：純混沌法術也吃「x% 傷害為額外的混沌傷害」（以前同類型被跳過）
         final StatSheet attacker = new StatSheet().add(Modifier.flat(StatKeys.damageExtra(DamageType.CHAOS), 50, "詞綴"));
         final StatSheet defender = new StatSheet().setBase(StatKeys.RESIST_MAX, 75);
-        final SkillProfile ritual = new SkillProfile("profane_ritual", Set.of(Tags.SPELL, Tags.CHAOS), 1.0,
+        final SkillProfile ritual = new SkillProfile("filth_array", Set.of(Tags.SPELL, Tags.CHAOS), 1.0,
                 new DamagePacket().set(DamageType.CHAOS, 100));
         final HitResult result = DamageCalculator.calculate(attacker, ritual, defender, 0, new Random(1));
         assertEquals(150, result.dealt().get(DamageType.CHAOS), 1e-6, "100 混沌 + 50% 額外混沌");
@@ -184,7 +184,7 @@ class DamageCalculatorTest {
     @Test
     void blackflameFireSpellsUseOnlyChaosModifiers() {
         // 2026-10-27 照 PoE2：墨焰誓的火焰法術轉成混沌，只吃混沌的「增加」（這次之前火焰與混沌都吃：250）
-        final SkillProfile blast = new SkillProfile("inferno_blast", Set.of(Tags.SPELL, Tags.FIRE), 1.0,
+        final SkillProfile blast = new SkillProfile("flame_core_detonation", Set.of(Tags.SPELL, Tags.FIRE), 1.0,
                 new DamagePacket().set(DamageType.FIRE, 100));
         final StatSheet caster = new StatSheet()
                 .add(Modifier.flat(StatKeys.FLAG_BLACKFLAME, 1, "墨焰誓"))
@@ -204,7 +204,7 @@ class DamageCalculatorTest {
     void spellDamageHasARange() {
         final DamagePacket min = new DamagePacket().set(DamageType.LIGHTNING, 10);
         final DamagePacket max = new DamagePacket().set(DamageType.LIGHTNING, 30);
-        final SkillProfile arc = new SkillProfile("arc", Set.of(Tags.SPELL, Tags.LIGHTNING), 1.0, min, max, null);
+        final SkillProfile arc = new SkillProfile("chain_thunder", Set.of(Tags.SPELL, Tags.LIGHTNING), 1.0, min, max, null);
         assertEquals(20, DamageCalculator.expectedOutgoing(new StatSheet(), arc).get(DamageType.LIGHTNING), 1e-9);
         final java.util.Random random = new java.util.Random(7);
         final StatSheet caster = new StatSheet().setBase(StatKeys.CRIT_MULTI, 150);
@@ -248,7 +248,7 @@ class DamageCalculatorTest {
         attacker.add(new Modifier(StatKeys.DAMAGE_ADDED_MAX, ModType.FLAT, 20, Set.of(Tags.SPELL, Tags.COLD), "法術附加冰冷"));
 
         // 熾星彈（效益 100%）：自己的 50 火焰 + 法術附加 20 冰冷；攻擊附加不算
-        final SkillProfile fireball = new SkillProfile("fireball", Set.of(Tags.SPELL, Tags.PROJECTILE, Tags.FIRE), 1.0,
+        final SkillProfile fireball = new SkillProfile("blazing_star_shell", Set.of(Tags.SPELL, Tags.PROJECTILE, Tags.FIRE), 1.0,
                 new DamagePacket().set(DamageType.FIRE, 50));
         final DamagePacket spell = DamageCalculator.expectedOutgoing(attacker, fireball);
         assertEquals(50, spell.get(DamageType.FIRE), 1e-9, "攻擊附加的火焰不算進法術");
@@ -256,7 +256,7 @@ class DamageCalculatorTest {
         assertEquals(0, spell.get(DamageType.PHYSICAL), 1e-9, "法術不用武器傷害");
 
         // 游雷（效益 50%）：法術附加打對折
-        final SkillProfile spark = new SkillProfile("spark", Set.of(Tags.SPELL, Tags.PROJECTILE, Tags.LIGHTNING), 0.5,
+        final SkillProfile spark = new SkillProfile("roaming_thunder", Set.of(Tags.SPELL, Tags.PROJECTILE, Tags.LIGHTNING), 0.5,
                 new DamagePacket().set(DamageType.LIGHTNING, 5));
         assertEquals(10, DamageCalculator.expectedOutgoing(attacker, spark).get(DamageType.COLD), 1e-9);
 

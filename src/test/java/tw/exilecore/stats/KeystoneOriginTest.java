@@ -114,7 +114,7 @@ class KeystoneOriginTest {
     }
 
     @Test
-    void armourMovementPenaltiesFollowPoe2() {
+    void armourMovementPenaltiesFollowRef() {
         assertEquals(0.05, KeystoneOriginKeys.armourMovePenalty("CHEST", Set.of("armour", "body", "str_armour", "str_only")), 1e-9);
         assertEquals(0.04, KeystoneOriginKeys.armourMovePenalty("CHEST", Set.of("armour", "body", "str_armour", "dex_armour")), 1e-9);
         assertEquals(0.03, KeystoneOriginKeys.armourMovePenalty("CHEST", Set.of("armour", "body", "int_armour", "int_only")), 1e-9);

@@ -122,10 +122,10 @@ final class AuraService implements Listener {
     /** 2026-10-24（雷使照 PoE2）：殺死感電的敵人之後，接下來幾次攻擊擊中會落雷：玩家 → 剩幾次。 */
     private final Map<UUID, Integer> thunderHits = new HashMap<>();
 
-    static final String HERALD_THUNDER = "herald_of_thunder";
-    static final String HERALD_BLOOD = "herald_of_blood";
+    static final String HERALD_THUNDER = "thunder_envoy";
+    static final String HERALD_BLOOD = "blood_proclaim";
     /** 2026-10-26 照 PoE2 的 Herald of Ash：不打人，照過量擊殺的傷害點燃附近 1.2 格的敵人 3 秒。 */
-    static final String HERALD_ASH = "herald_of_ash";
+    static final String HERALD_ASH = "ember_envoy";
     static final double ASH_RADIUS = tw.exilecore.core.Units.metres(1.2); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double ASH_SECONDS = 3;
 
@@ -133,7 +133,7 @@ final class AuraService implements Listener {
     static double ashPercent(final int level) {
         return 50.0 / 3 + (Math.max(1, level) - 1) / 3.0;
     }
-    static final String HERALD_PLAGUE = "herald_of_plague";
+    static final String HERALD_PLAGUE = "plague_envoy";
     /** 血宣：爆炸半徑（格；PoE2 1.5 米）、多打失血的幾成（PoE2 15%）。 */
     static final double BLOOD_RADIUS = tw.exilecore.core.Units.metres(1.5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double BLOOD_LOSS_SHARE = 0.15;
@@ -557,7 +557,7 @@ final class AuraService implements Listener {
      * 灰狼隨沒有覆寫，照全域 7.5 秒；這次之前附身不是精魂召喚、狼伴與灰狼隨都是 8 秒。
      */
     /** 2026-10-30 照 PoE2 Rhoa Mount：喚駒（沒騎的時候是陪你打的夥伴）。 */
-    static final String MOUNT = "summon_mount";
+    static final String MOUNT = "steed_call";
 
     /**
      * 2026-10-30 照 PoE2 Rhoa Mount：這個夥伴被打死、還要等幾 tick 才回來（活著或沒開回傳 0）；死掉的時候騎不上去。
@@ -579,7 +579,7 @@ final class AuraService implements Listener {
         if (MinionAbilities.WOLVES.equals(skillId)) {
             return MinionAbilities.GLOBAL_RESUMMON_TICKS;
         }
-        return skillId.startsWith("skeletal_") || skillId.equals("summon_skeletons") || MinionAbilities.SPECTRE.equals(skillId)
+        return skillId.startsWith("skeletal_") || skillId.startsWith("summon_bone_") || skillId.equals("summon_skeletons") || MinionAbilities.SPECTRE.equals(skillId)
                 || MinionAbilities.BEAST.equals(skillId) ? SKELETON_RESPAWN : COMPANION_RESPAWN;
     }
 

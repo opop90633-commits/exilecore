@@ -152,7 +152,7 @@ public final class TargetConditions {
                 elemental, monster == null ? null : family(defender.getType())),
                 tags.contains(TreeConditions.VS_POISONED)));
         // 2026-10-27 照 PoE2 天賦樹：身上有切割的敵人、最近進入／離開你的存在範圍的敵人
-        if (HitEffects.stacks(debuffs, id, "incision.", now) > 0) {
+        if (HitEffects.stacks(debuffs, id, "cut_wound.", now) > 0) {
             tags.add(TreeConditions.VS_INCISION);
         }
         if (plugin.skills() != null && plugin.skills().treeLeftovers() != null) {

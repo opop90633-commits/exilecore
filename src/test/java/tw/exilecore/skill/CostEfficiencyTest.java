@@ -70,7 +70,7 @@ class CostEfficiencyTest {
 
     @Test
     void skillBuildUsesTheDivisor() {
-        final SkillDefinition fireball = config.skill("fireball");
+        final SkillDefinition fireball = config.skill("blazing_star_shell");
         final StatSheet plainSheet = new StatSheet().setBase(StatKeys.MANA_MAX, 1000);
         final int plain = SkillBuild.of(config, fireball, 20, 90, false, List.of(), Set.of(), plainSheet).manaCost();
         assertTrue(plain > 0);
@@ -122,7 +122,7 @@ class CostEfficiencyTest {
                     assertFalse(stat.equals(StatKeys.SKILL_COST) && modifier.value() < 0, node.id() + " 還是 skill.cost 的減少");
                 }
                 if (usesKey) {
-                    assertTrue(modifier.value() > 0 || !stat.contains("efficiency"), node.id() + "：效率是正的");
+                    assertTrue(modifier.value() > 0 || !stat.contains("cost_saving"), node.id() + "：效率是正的");
                 }
             }
             if (says && usesKey) {

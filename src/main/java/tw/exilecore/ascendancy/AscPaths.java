@@ -268,7 +268,7 @@ final class AscPaths implements Listener {
         }
         // 深淵幻影：造成傷害的法術用掉 1 顆銳星，幻影也施放同一個法術（傷害更少）
         if (damaging && tags.contains(Tags.SPELL) && build.cooldownTicks() <= 0 && !definition.tags().contains("channelling")
-                && !tags.contains("triggered") && definition.source() == null && on(player, "abyssal_apparition")
+                && !tags.contains("triggered") && definition.source() == null && on(player, "chasm_phantom")
                 && plugin.combat() != null && plugin.combat().charges() != null
                 && plugin.combat().charges().spend(player, "power", null, tags) > 0) {
             apparition(player, build, target);
@@ -445,7 +445,7 @@ final class AscPaths implements Listener {
     // ---- 深淵幻影 ----
 
     private void apparition(final Player player, final SkillBuild build, final LivingEntity target) {
-        final double less = Math.min(100, Math.max(0, level(player, "abyssal_apparition", "asc.apparition_less")));
+        final double less = Math.min(100, Math.max(0, level(player, "chasm_phantom", "asc.apparition_less")));
         final SkillBuild weaker = build.withProfile(build.profile().withLocal(List.of(Modifier.more(StatKeys.DAMAGE, -less / 100.0, "深淵幻影"))));
         final Vector facing = player.getLocation().getDirection();
         final Vector side = new Vector(-facing.getZ(), 0, facing.getX());
@@ -674,13 +674,13 @@ final class AscPaths implements Listener {
     /** 骷髏的種類 → 每一個幽影之魂給的增益。 */
     static final Map<String, List<Modifier>> UMBRAL = Map.of(
             "summon_skeletons", List.of(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 0.15, Set.of(Tags.ATTACK), "幽影之魂")),
-            "skeletal_archers", List.of(Modifier.increased(StatKeys.SKILL_PROJECTILE_SPEED, 0.15, "幽影之魂")),
-            "skeletal_cleric", List.of(Modifier.increased(StatKeys.ES_RECHARGE, 0.30, "幽影之魂")),
-            "skeletal_pyromancer", List.of(Modifier.increased(StatKeys.SKILL_AREA, 0.15, "幽影之魂")),
-            "skeletal_stormcaller", List.of(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 0.25, Set.of(Tags.SPELL), "幽影之魂")),
-            "skeletal_frostcaller", List.of(Modifier.increased(StatKeys.ES_MAX, 0.35, "幽影之魂")),
-            "skeletal_brute", List.of(Modifier.increased(StatKeys.STUN_BUILDUP, 0.60, "幽影之魂")),
-            "skeletal_reaver", List.of(Modifier.increased(StatKeys.ATTACK_SPEED, 0.06, "幽影之魂"), Modifier.increased(StatKeys.CAST_SPEED, 0.06, "幽影之魂")));
+            "summon_bone_bowmen", List.of(Modifier.increased(StatKeys.SKILL_PROJECTILE_SPEED, 0.15, "幽影之魂")),
+            "summon_bone_priest", List.of(Modifier.increased(StatKeys.ES_RECHARGE, 0.30, "幽影之魂")),
+            "summon_bone_flamecaster", List.of(Modifier.increased(StatKeys.SKILL_AREA, 0.15, "幽影之魂")),
+            "summon_bone_thundermage", List.of(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 0.25, Set.of(Tags.SPELL), "幽影之魂")),
+            "summon_bone_frostmage", List.of(Modifier.increased(StatKeys.ES_MAX, 0.35, "幽影之魂")),
+            "summon_bone_heavy", List.of(Modifier.increased(StatKeys.STUN_BUILDUP, 0.60, "幽影之魂")),
+            "summon_bone_berserker", List.of(Modifier.increased(StatKeys.ATTACK_SPEED, 0.06, "幽影之魂"), Modifier.increased(StatKeys.CAST_SPEED, 0.06, "幽影之魂")));
 
     /** 本來要召喚一隻骷髏：有幽影之井就改成幽影之魂（回傳 true = 不要叫出來）。 */
     boolean umbral(final Player player, final String skillId) {
@@ -1007,8 +1007,7 @@ final class AscPaths implements Listener {
         }
         final Location at = bear.getLocation();
         bear.getWorld().playSound(at, Sound.ENTITY_RAVAGER_STEP, 1.0f, 0.8f);
-        tw.exilecore.skill.Fx.spawn(bear.getWorld(), Particle.BLOCK, at.clone().add(0, 0.2, 0), 24, radius * 0.4, 0.1, radius * 0.4, 0,
-                Material.DIRT.createBlockData());
+        tw.exilecore.skill.Fx.disk(bear.getWorld(), Particle.BLOCK, at.clone().add(0, 0.2, 0), 24, radius, 0.1, 0, Material.DIRT.createBlockData());
         final long now = now();
         for (final LivingEntity enemy : effects.enemiesNear(owner, at, radius)) {
             enemy.setNoDamageTicks(0);

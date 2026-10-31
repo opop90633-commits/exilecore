@@ -44,18 +44,18 @@ drops:
 # supports.yml 裡已經有的 8 顆血脈輔助：定義留在 supports.yml（別的人正在改那個檔），這裡只把它們標成血脈掉落（切不出來）。
 # 2026-10-27 照 PoE2；這次之前這 8 顆是第 3 階的一般輔助，未切割輔助寶石切得出來
 existing:
-  vruuns_aftermath: lineage_rare      # 碎晶嘯（Vruun's Aftermath：poe2db 沒寫來源）
-  zerphis_infamy: lineage_pinnacle    # 血譽（Zerphi's Infamy：阿茲里）
-  paquates_pact: lineage_rare         # 契血嘯（Paquate's Pact：異常 Boss）
-  bhatairs_vengeance: lineage         # 霜仇嘯（Bhatair's Vengeance：Global）
-  guatelitzi_ablation: lineage_rare   # 祭星（Guatelitzi's Ablation：阿茲里神殿）
-  ailith_chimes: lineage_rare         # 鐘星（Ailith's Chimes：異常 Boss）
-  morganas_tempest: lineage           # 掠嵐（Morgana's Tempest：Global）
-  helbryms_hide: lineage              # 蟄甲（Helbrym's Hide：Global）
+  crystal_shatter_howl: lineage_rare      # 碎晶嘯（Vruun's Aftermath：poe2db 沒寫來源）
+  blood_renown: lineage_pinnacle    # 血譽（Zerphi's Infamy：阿茲里）
+  blood_oath_howl: lineage_rare         # 契血嘯（Paquate's Pact：異常 Boss）
+  frost_grudge_howl: lineage         # 霜仇嘯（Bhatair's Vengeance：Global）
+  rite_star: lineage_rare   # 祭星（Guatelitzi's Ablation：阿茲里神殿）
+  bell_star: lineage_rare         # 鐘星（Ailith's Chimes：異常 Boss）
+  sweeping_gale: lineage           # 掠嵐（Morgana's Tempest：Global）
+  dormant_shell: lineage              # 蟄甲（Helbrym's Hide：Global）
 
 supports:
   # ============================== 一般（lineage） ==============================
-  oisins_oath:             # Oisín's Oath
+  element_drain:             # Oisín's Oath
     name: 元汲
     description: 被輔助的技能偷取魔力時，照造成的元素傷害算，不照物理傷害。
     icon: LAPIS_LAZULI
@@ -67,7 +67,7 @@ supports:
     modifiers:
       - { stat: lineage.h.mana_leech_elemental, type: FLAT, value: 1 }
 
-  vilentas_propulsion:     # Vilenta's Propulsion
+  thrust_chant:     # Vilenta's Propulsion
     name: 推詠
     description: 被輔助的投射物法術：你施法速度的增加與減少有 75% 也套用在投射物速度上。
     icon: FEATHER
@@ -79,7 +79,7 @@ supports:
     modifiers:
       - { stat: lineage.u.cast_to_projectile_speed, type: FLAT, value: 75 }
 
-  brutus_brain:            # Brutus' Brain
+  dull_spirit:            # Brutus' Brain
     name: 憨魄
     description: 被輔助的技能叫出來的召喚物不會受到傷害，但也完全不造成傷害（拿來擋路、吃光環、觸發召喚物相關的效果）。
     icon: CLAY_BALL
@@ -91,7 +91,7 @@ supports:
       - { stat: lineage.u.minion_undamageable, type: FLAT, value: 1, tags: [minion] }
       - { stat: damage, type: MORE, value: -100, tags: [minion] }
 
-  ahns_citadel:            # Ahn's Citadel
+  split_rampart:            # Ahn's Citadel
     name: 裂垣
     description: 被輔助的牆（焰幕、霜壁）改成沿著一道往前的裂縫立起來（從你腳下往準心延伸），牆的長度增加 65%。
     icon: BRICK
@@ -104,7 +104,7 @@ supports:
       - { stat: lineage.u.wall_fissure, type: FLAT, value: 1 }
       - { stat: lineage.u.wall_length, type: INCREASED, value: 65 }
 
-  eonyrs_thunder:          # Eonyr's Thunder
+  thunder_blast:          # Eonyr's Thunder
     name: 霆爆
     description: 被輔助的技能的閃電傷害也累積電擊，但不能感電；打死電擊中的敵人時屍體炸開，造成牠最大生命 5%～19% 的閃電傷害（2.25～2.5 格，照技能等級）。
     icon: GLOWSTONE_DUST
@@ -117,7 +117,7 @@ supports:
       - { stat: lineage.h.lightning_electrocutes, type: FLAT, value: 1 }
       - { stat: lineage.h.voltaic, type: FLAT, value: 5 }
 
-  uruks_smelting:          # Uruk's Smelting
+  molten_armor:          # Uruk's Smelting
     name: 熔甲
     description: 被輔助的技能破甲更多 70%；讓敵人完全破甲時，牠永久受到的物理傷害增加 5%（最多 20%）。
     icon: IRON_INGOT
@@ -129,7 +129,7 @@ supports:
       - { stat: armour.break, type: MORE, value: 70 }
       - { stat: lineage.h.phys_taken_on_break, type: FLAT, value: 5 }
 
-  doedres_undoing:         # Doedre's Undoing
+  toad_curse:         # Doedre's Undoing
     name: 蟾咒
     description: 被輔助的詛咒改成留下一塊詛咒地面（同時最多 2 塊），站在裡面的敵人被詛咒；每塊地面每 0.25 秒生出一隻巫蟾（最多 4 隻），撲向附近的敵人炸開（混沌傷害，1.6 格，照技能等級）。
     icon: SLIME_BALL
@@ -140,7 +140,7 @@ supports:
     modifiers:
       - { stat: lineage.u.toad_ground, type: FLAT, value: 4 }
 
-  rathas_assault:          # Ratha's Assault
+  linked_chamber:          # Ratha's Assault
     name: 連膛
     description: 被輔助的弩彈藥技能彈匣多 3 發、增加 10% 攻擊速度，但不會自己裝填：每次翻滾裝 4 發。
     icon: GUNPOWDER
@@ -156,7 +156,7 @@ supports:
       - { stat: lineage.u.no_reload, type: FLAT, value: 1 }
       - { stat: lineage.u.dodge_load, type: FLAT, value: 4 }
 
-  arjuns_medal:            # Arjun's Medal
+  bullet_honor:            # Arjun's Medal
     name: 彈勳
     description: 被輔助的弩技能打死敵人時，有 25% 機率替你所有的弩技能各裝一發。
     icon: GOLD_NUGGET
@@ -168,7 +168,7 @@ supports:
     modifiers:
       - { stat: lineage.h.load_on_kill, type: FLAT, value: 25 }
 
-  siones_temper:           # Sione's Temper
+  shattered_star:           # Sione's Temper
     name: 碎星
     description: 被輔助的投射物法術每放一次獲得一層碎星；放的時候每層有 20% 機率多往四周一圈射 8 發，射了就失去全部碎星。
     icon: AMETHYST_SHARD
@@ -180,7 +180,7 @@ supports:
     modifiers:
       - { stat: lineage.u.wildshard, type: FLAT, value: 20 }
 
-  cirels_cultivation:      # Cirel's Cultivation
+  grove_totem:      # Cirel's Cultivation
     name: 林樁
     description: 被輔助的圖騰只能有 1 根；它 4 格內每有一根你的其他圖騰（最多 5 根），它更多 10% 傷害、增加 5% 範圍、每秒回復 1% 生命。
     icon: STICK
@@ -194,7 +194,7 @@ supports:
       - { stat: skill.totems, type: FLAT, value: -20 }
       - { stat: lineage.u.totem_grove, type: FLAT, value: 10 }
 
-  romiras_requital:        # Romira's Requital
+  ally_repay:        # Romira's Requital
     name: 伴償
     description: 被輔助的夥伴生命更少 30%；你受到的擊中有 10% 先由牠承受，你補償牠承受的 200% 為生命。
     icon: LEATHER
@@ -206,7 +206,7 @@ supports:
       - { stat: life.max, type: MORE, value: -30, tags: [minion] }
       - { stat: lineage.u.companion_shield, type: FLAT, value: 10 }
 
-  dominus_grasp:           # Dominus' Grasp
+  double_chain:           # Dominus' Grasp
     name: 倍鏈
     description: 被輔助的技能連鎖次數更多 100%（本來連鎖幾次就再多幾次）。
     icon: COPPER_INGOT
@@ -217,7 +217,7 @@ supports:
     modifiers:
       - { stat: lineage.u.chains_more, type: MORE, value: 100 }
 
-  diallas_desire:          # Dialla's Desire
+  wish_crystal:          # Dialla's Desire
     name: 願晶
     description: 被輔助的技能 +1 等級、品質 +5%，消耗與保留都比較少（90%）。
     icon: EMERALD
@@ -230,7 +230,7 @@ supports:
       - { stat: lineage.u.quality, type: FLAT, value: 5 }
       - { stat: aura.reservation, type: MORE, value: -10 }
 
-  kalisas_crescendo:       # Kalisa's Crescendo
+  silent_curse:       # Kalisa's Crescendo
     name: 寂咒
     description: 被輔助的詛咒最後 30% 的時間讓敵人完全不能造成傷害（之後 8 秒內不會再被這樣安撫）。
     icon: PHANTOM_MEMBRANE
@@ -241,7 +241,7 @@ supports:
     modifiers:
       - { stat: lineage.u.pacify, type: FLAT, value: 30 }
 
-  daressos_passion:        # Daresso's Passion
+  banner_blaze:        # Daresso's Passion
     name: 旗熾
     description: 被輔助的戰旗要的榮耀更少 50%。
     icon: BLAZE_ROD
@@ -252,7 +252,7 @@ supports:
     modifiers:
       - { stat: lineage.u.glory_required, type: MORE, value: -50 }
 
-  arakaalis_lust:          # Arakaali's Lust
+  venom_desire:          # Arakaali's Lust
     name: 毒慾
     description: 被輔助的技能擊中時，敵人身上每有一層中毒，這一下更多 8% 傷害（最多 40%）。
     icon: FERMENTED_SPIDER_EYE
@@ -264,7 +264,7 @@ supports:
     modifiers:
       - { stat: lineage.h.per_poison, type: FLAT, value: 8 }
 
-  tacatis_ire:             # Tacati's Ire
+  fury_venom:             # Tacati's Ire
     name: 怒毒
     description: 被輔助的技能造成的中毒，你身上每點怒氣讓它的傷害快 2%（總傷害不變，時間變短）。
     icon: INK_SAC
@@ -277,7 +277,7 @@ supports:
       - { stat: lineage.h.poison_faster_per_rage, type: FLAT, value: 2 }
 
   # ============================== 稀有（lineage_rare） ==============================
-  ataluis_bloodletting:    # Atalui's Bloodletting
+  blood_seep:    # Atalui's Bloodletting
     name: 血滲
     description: 被輔助的技能的魔力消耗全部改扣生命；每 20 點生命消耗，獲得 2% 傷害為額外物理傷害（最多 40%）。保留精魂的技能不能掛。
     icon: RED_DYE
@@ -289,7 +289,7 @@ supports:
       - { stat: flag.blood_magic, type: FLAT, value: 1 }
       - { stat: lineage.u.phys_per_life_cost, type: FLAT, value: 2 }
 
-  einhars_beastrite:       # Einhar's Beastrite
+  beast_raid:       # Einhar's Beastrite
     name: 掠獸
     description: 被輔助的打擊只能傷害低血（35% 以下）的敵人；打死稀有怪物時，獲得牠兩個詞綴 300 秒。
     icon: RABBIT_FOOT
@@ -302,7 +302,7 @@ supports:
       - { stat: lineage.h.low_life_only, type: FLAT, value: 1 }
       - { stat: lineage.h.steal_two, type: FLAT, value: 300 }
 
-  tecrods_revenge:         # Tecrod's Revenge
+  wounded_fight:         # Tecrod's Revenge
     name: 殘戰
     description: 被輔助的常駐召喚物生命降到 0 時不會馬上倒下：再戰 20 秒（不會再受傷），期間攻擊與施法速度增加 40%，附近每死一隻敵人再快 1%（最多 50 層），時間到才死。
     icon: GRAY_DYE
@@ -313,7 +313,7 @@ supports:
     modifiers:
       - { stat: lineage.u.undying, type: FLAT, value: 20 }
 
-  kaoms_madness:           # Kaom's Madness
+  frenzied_rift:           # Kaom's Madness
     name: 狂裂
     description: 被輔助的裂地技能多裂出 3 道裂縫（往兩側散開），但傷害更少 20%、攻擊速度更少 20%、範圍更少 30%。
     icon: MAGMA_CREAM
@@ -327,7 +327,7 @@ supports:
       - { stat: attack.speed, type: MORE, value: -20 }
       - { stat: skill.area, type: MORE, value: -30 }
 
-  ixchels_torment:         # Ixchel's Torment
+  dice_bane:         # Ixchel's Torment
     name: 骰禍
     description: 掛在主要寶石上：它觸發出來的技能每一下的傷害在更少 40% 到更多 60% 之間隨機、範圍在更少 40% 到更多 50% 之間隨機，每次觸發回復那個技能實際付的消耗的 0～20%。
     icon: RABBIT_FOOT
@@ -341,7 +341,7 @@ supports:
       - { stat: trigger_cost.refund, type: FLAT, value: 20 }
       - { stat: lineage.u.random_area, type: FLAT, value: 1 }
 
-  tawhoas_tending:         # Tawhoa's Tending
+  totem_blast:         # Tawhoa's Tending
     name: 樁爆
     description: 被輔助的圖騰最大生命更多 25%；圖騰被打倒時炸開，對 3 格內的敵人造成它最大生命 20% 的物理傷害。
     icon: SUGAR
@@ -354,7 +354,7 @@ supports:
       - { stat: totem.life, type: MORE, value: 25 }
       - { stat: lineage.u.totem_explode, type: FLAT, value: 20 }
 
-  atziris_allure:          # Atziri's Allure
+  charm_curse:          # Atziri's Allure
     name: 魅咒
     description: 被輔助的詛咒不受詛咒上限限制（可以疊在你其他的詛咒上），但詛咒效果更少 20%，而且同時也詛咒你自己。
     icon: GHAST_TEAR
@@ -366,7 +366,7 @@ supports:
       - { stat: lineage.u.curse_reflect, type: FLAT, value: 1 }
       - { stat: curse.effect, type: MORE, value: -20 }
 
-  zarokhs_refrain:         # Zarokh's Refrain
+  triple_loop:         # Zarokh's Refrain
     name: 三迴
     description: 被輔助的範圍法術（可以連瀑的：以自己為中心、落在準心的，或詛咒）回響 3 次（每次隔 0.3 秒，回響的範圍增加 40%），但多了 5 秒的冷卻。本來就有冷卻的技能不能掛。
     icon: CLOCK
@@ -382,7 +382,7 @@ supports:
       - { stat: lineage.u.echo_area, type: INCREASED, value: 40 }
       - { stat: skill.added_cooldown, type: FLAT, value: 5 }
 
-  garukhans_resolve:       # Garukhan's Resolve
+  twin_edge:       # Garukhan's Resolve
     name: 雙鋒
     description: 被輔助的攻擊暴擊率最多 50%，但暴擊擲兩次：任一次成功就暴擊，兩次都成功時暴擊加成算兩次。
     icon: FLINT
@@ -395,7 +395,7 @@ supports:
       - { stat: lineage.h.bifurcate, type: FLAT, value: 1 }
       - { stat: lineage.h.crit_cap, type: FLAT, value: 50 }
 
-  kurgals_leash:           # Kurgal's Leash
+  bind_demon:           # Kurgal's Leash
     name: 縛魔
     description: 用被輔助的指令技能指揮召喚物時，你和聽命的召喚物獲得不潔之力 15 秒（獲得 30% 傷害為額外混沌傷害）。
     icon: RABBIT_HIDE
@@ -407,7 +407,7 @@ supports:
     modifiers:
       - { stat: lineage.u.unholy_on_command, type: FLAT, value: 15 }
 
-  kulemaks_dominion:       # Kulemak's Dominion
+  rite_vein:       # Kulemak's Dominion
     name: 祭脈
     description: 被輔助的祭柱還立著時，你放以自己為中心或落在準心的範圍法術，也會在祭柱那裡再放一次（那一次傷害更少 50%）。
     icon: BONE
@@ -419,7 +419,7 @@ supports:
     modifiers:
       - { stat: lineage.u.offering_cascade, type: MORE, value: -50 }
 
-  amanamus_tithe:          # Amanamu's Tithe
+  abyss_gift:          # Amanamu's Tithe
     name: 淵賜
     description: 被輔助的常駐召喚物死掉時，有 50% 機率讓你獲得一個隨機的怪物詞綴 20 秒（同時最多 3 個）。
     icon: ECHO_SHARD
@@ -430,7 +430,7 @@ supports:
     modifiers:
       - { stat: lineage.u.abyssal_on_minion_death, type: FLAT, value: 50 }
 
-  varashtas_blessing:      # Varashta's Blessing
+  decree_fortune:      # Varashta's Blessing
     name: 令福
     description: 被輔助的技能，你最近 15 秒每用過一種不同的指令技能，更多 10% 傷害。
     icon: GLOW_INK_SAC
@@ -443,7 +443,7 @@ supports:
     modifiers:
       - { stat: lineage.h.per_command, type: FLAT, value: 10 }
 
-  tasalios_rhythm:         # Tasalio's Rhythm
+  cadence_force:         # Tasalio's Rhythm
     name: 律勁
     description: 被輔助的技能完美時機的區間長 100%；抓到完美時機時獲得一層律勁（最多 5 層），每層讓它更多 10% 傷害、區間更短 30%。任何技能沒抓到完美時機就失去全部律勁。
     icon: DISC_FRAGMENT_5
@@ -454,7 +454,7 @@ supports:
     modifiers:
       - { stat: lineage.u.rhythm, type: FLAT, value: 10 }
 
-  xibaquas_rending:        # Xibaqua's Rending
+  ember_leap:        # Xibaqua's Rending
     name: 燼躍
     description: 被輔助的跳躍技能落地時，引爆落點 3.5 格內的屍體：每具炸開造成牠最大生命 6% 的火焰傷害（1.5 格）。
     icon: MAGMA_CREAM
@@ -466,7 +466,7 @@ supports:
     modifiers:
       - { stat: lineage.u.landing_detonate, type: FLAT, value: 6 }
 
-  khatals_rejuvenation:    # Khatal's Rejuvenation
+  gather_breath:    # Khatal's Rejuvenation
     name: 拾息
     description: 掛在會留下殘骸的技能上：你撿到殘骸時獲得一層拾息（冷卻回復速度增加 5%，最多 8 層，每層 10 秒）。
     icon: PRISMARINE_CRYSTALS
@@ -477,7 +477,7 @@ supports:
     modifiers:
       - { stat: lineage.u.remnant_cdr, type: FLAT, value: 5 }
 
-  hayoxis_fulmination:     # Hayoxi's Fulmination
+  curse_light:     # Hayoxi's Fulmination
     name: 咒光
     description: 被輔助的詛咒多了 2 秒冷卻，改成留下一塊詛咒地面（同時最多 2 塊），站在裡面的敵人被詛咒；地面撐 7 秒後落下湮滅光柱，2 秒內打 6 下（1.7 格，照技能等級的物理傷害，換成詛咒的元素）。
     icon: QUARTZ
@@ -489,7 +489,7 @@ supports:
       - { stat: lineage.u.annihilation_ground, type: FLAT, value: 7 }
       - { stat: skill.added_cooldown, type: FLAT, value: 2 }
 
-  her_declaration:         # Her Declaration
+  awe_proclaim:         # Her Declaration
     name: 威宣
     description: 被輔助的常駐增益開著時，走進你身邊（4 格）的敵人被恫嚇 4 秒（受到的傷害增加 10%）。
     icon: PAPER
@@ -500,7 +500,7 @@ supports:
     modifiers:
       - { stat: lineage.u.intimidate_presence, type: FLAT, value: 4 }
 
-  prototype_seventeen:     # Prototype Seventeen
+  fury_aim:     # Prototype Seventeen
     name: 怒準
     description: 被輔助的技能每 5 點怒氣增加 20% 暴擊率，但暴擊時失去全部怒氣。
     icon: RAW_COPPER
@@ -512,7 +512,7 @@ supports:
     modifiers:
       - { stat: lineage.h.crit_per_5_rage, type: FLAT, value: 20 }
 
-  seraphs_heart:           # Seraph's Heart
+  blazing_core:           # Seraph's Heart
     name: 熾心
     description: 被輔助的常駐增益開著時，敵人擊中你有 20% 機率把你的全部抗性當成 90% 來算。
     icon: HEART_OF_THE_SEA
@@ -523,7 +523,7 @@ supports:
     modifiers:
       - { stat: lineage.u.seraph, type: FLAT, value: 20 }
 
-  uhtreds_rite:            # Uhtred's Rite
+  sacred_chalice:            # Uhtred's Rite
     name: 聖杯
     description: 被輔助的冷卻技能用的時候給你滿溢聖杯（冷卻每 1 秒給 1 秒：藥劑每秒多 2 次充能、回復增加 30%）；生命藥劑生效時更多 20% 傷害，魔力藥劑生效時增加 20% 魔力消耗效率。
     icon: GOLD_INGOT
@@ -536,7 +536,7 @@ supports:
       - { stat: lineage.h.life_flask_more, type: FLAT, value: 20 }
       - { stat: lineage.u.mana_flask_efficiency, type: FLAT, value: 20 }
 
-  tricksters_shard:        # Trickster's Shard
+  illusion_split:        # Trickster's Shard
     name: 幻分
     description: 被輔助的法術（不是瞬間的）每放一次，在你身邊留下一個幻身（5 秒、最多 4 個）；幻身到 4 個時全部一起放一次這個法術（傷害更少 50%）然後消失。
     icon: PURPLE_DYE
@@ -548,7 +548,7 @@ supports:
     modifiers:
       - { stat: lineage.u.mimic, type: FLAT, value: 4 }
 
-  tangmazus_thurible:      # Tangmazu's Thurible
+  giant_ally:      # Tangmazu's Thurible
     name: 巨伴
     description: 被輔助的夥伴變巨大（生命、傷害更多 20%，體型大 20%），你每有 10 點閃避、偏斜，牠多 4 點。
     icon: NAUTILUS_SHELL
@@ -561,7 +561,7 @@ supports:
       - { stat: damage, type: MORE, value: 20, tags: [minion] }
       - { stat: lineage.u.gigantic, type: FLAT, value: 40 }
 
-  uhtreds_constellation:   # Uhtred's Constellation
+  star_law:   # Uhtred's Constellation
     name: 星律
     description: 被輔助的冷卻技能（不是瞬間的）冷卻可以多存 2 次，但冷卻回復速度更少 50%；你最近 8 秒每用過一種不同的冷卻技能，它更多 8% 傷害。
     icon: NETHER_STAR
@@ -575,7 +575,7 @@ supports:
       - { stat: lineage.u.cooldown_uses, type: FLAT, value: 2 }
       - { stat: lineage.h.per_cooldown_skill, type: FLAT, value: 8 }
 
-  voranas_siege:           # Vorana's Siege
+  lone_encircle:           # Vorana's Siege
     name: 孤圍
     description: 被輔助的範圍技能增加 35% 範圍；擊中孤立的敵人（6 格內沒有其他敵人）時更多 20% 傷害。
     icon: COMPASS
@@ -588,7 +588,7 @@ supports:
       - { stat: skill.area, type: INCREASED, value: 35 }
       - { stat: lineage.h.vs_isolated, type: FLAT, value: 20 }
 
-  styrns_mountain:         # Styrn's Mountain
+  peak_shield:         # Styrn's Mountain
     name: 岳盾
     description: 掛在舉盾技能上：舉盾時暈眩門檻更多 50%；舉盾時格擋過的話，接下來 4 秒你其他的近戰技能更多 20% 傷害。
     icon: TURTLE_SCUTE
@@ -599,7 +599,7 @@ supports:
       - { stat: lineage.u.shield_block_more, type: FLAT, value: 20 }
       - { stat: lineage.u.shield_stun_threshold, type: FLAT, value: 50 }
 
-  styrns_ferocity:         # Styrn's Ferocity
+  crush_shield:         # Styrn's Ferocity
     name: 碾盾
     description: 被輔助的盾牌技能擊中時壓碎敵人 8 秒（物理傷害減免少 15%）；打壓碎中的敵人時破甲，等於物理傷害的 10%。
     icon: IRON_NUGGET
@@ -611,7 +611,7 @@ supports:
       - { stat: lineage.h.crush_on_hit, type: FLAT, value: 8 }
       - { stat: lineage.h.crushed_break, type: FLAT, value: 10 }
 
-  cathas_brilliance:       # Catha's Brilliance
+  flame_ally:       # Catha's Brilliance
     name: 焰伴
     description: 被輔助的夥伴致盲身邊 2 格的敵人，並點燃牠們（像造成夥伴最大生命 10% 的基礎火焰傷害）。
     icon: BLAZE_POWDER
@@ -622,7 +622,7 @@ supports:
     modifiers:
       - { stat: lineage.u.companion_blaze, type: FLAT, value: 10 }
 
-  morrigans_insight:       # Mórrigan's Insight
+  frost_swap:       # Mórrigan's Insight
     name: 霜換
     description: 被輔助的技能不能累積凍結；擊中凍結中的敵人時用掉牠的凍結，這一下更多 50% 傷害，並觸發自然交換（冷卻 8 秒：8 秒內獲得守護與冰冷荊棘，照技能等級）。
     icon: WHITE_DYE
@@ -635,7 +635,7 @@ supports:
       - { stat: freeze.buildup, type: MORE, value: -100 }
       - { stat: lineage.h.consume_freeze, type: FLAT, value: 50 }
 
-  tuls_avalanche:          # Tul's Avalanche
+  snow_seal:          # Tul's Avalanche
     name: 雪封
     description: 被輔助的範圍法術（可以連瀑的：以自己為中心、落在準心的，或詛咒）每格擋 2 次蓄一個封印（最多 4 個）；放的時候解開全部封印，每個封印回響一次。本來就有冷卻或封印的技能不能掛。
     icon: PRISMARINE_SHARD
@@ -648,7 +648,7 @@ supports:
     modifiers:
       - { stat: lineage.u.block_seals, type: FLAT, value: 4 }
 
-  olroths_conviction:      # Olroth's Conviction
+  oath_drive:      # Olroth's Conviction
     name: 誓驅
     description: 被輔助的戰吼多強化 2 次攻擊，消耗多一倍。
     icon: RAW_GOLD
@@ -662,7 +662,7 @@ supports:
     modifiers:
       - { stat: warcry.exerts, type: FLAT, value: 2 }
 
-  breachlords_rift:        # Breachlord's Rift
+  condense_break:        # Breachlord's Rift
     name: 凝破
     description: 被輔助的技能凍結或電擊敵人時，破掉牠 50% 的護甲；牠被你完全破甲時，受到的冰冷、閃電擊中傷害也一樣增加。
     icon: PRISMARINE_SHARD
@@ -674,7 +674,7 @@ supports:
     modifiers:
       - { stat: lineage.h.break_on_freeze, type: FLAT, value: 50 }
 
-  breachlords_amalgam:     # Breachlord's Amalgam
+  rift_tide:     # Breachlord's Amalgam
     name: 裂潮
     description: 被輔助的冰冷或閃電投射物技能的投射物停下後飛回你身邊，路上穿透全部敵人；多了 6 秒冷卻（可以存 3 次）。本來就有冷卻的技能不能掛。
     icon: HEART_OF_THE_SEA
@@ -688,7 +688,7 @@ supports:
       - { stat: skill.added_cooldown, type: FLAT, value: 6 }
       - { stat: lineage.u.cooldown_uses, type: FLAT, value: 2 }
 
-  vruuns_inevitability:    # Vruun's Inevitability
+  stack_momentum:    # Vruun's Inevitability
     name: 積勢
     description: 你用其他近戰攻擊打中敵人時，被輔助的近戰攻擊累積連擊（最多 10 點，6 秒沒累積就歸零）；放的時候用掉全部連擊，每點增加 6% 範圍。
     icon: BREEZE_ROD
@@ -700,7 +700,7 @@ supports:
     modifiers:
       - { stat: lineage.u.combo_area, type: FLAT, value: 6 }
 
-  medveds_felling:         # Medved's Felling
+  frenzy_chop:         # Medved's Felling
     name: 狂伐
     description: 被輔助的近戰攻擊打中時獲得最大怒氣 10% 的怒氣；你每 5 點怒氣讓它增加 5% 攻擊速度，但每次用都失去每 5 點怒氣 1% 的最大生命。
     icon: RAW_IRON
@@ -714,7 +714,7 @@ supports:
       - { stat: lineage.u.speed_per_5_rage, type: FLAT, value: 5 }
       - { stat: lineage.u.life_per_5_rage, type: FLAT, value: 1 }
 
-  arbiters_reach:          # Arbiter's Reach
+  guard_hymn:          # Arbiter's Reach
     name: 守頌
     description: 被輔助的常駐增益開著時，每 6 秒讓你身邊（4 格）的隊友獲得你最大生命 10% 的守護（4 秒）。
     icon: SHULKER_SHELL
@@ -726,7 +726,7 @@ supports:
       - { stat: lineage.u.ally_guard, type: FLAT, value: 10 }
 
   # ============================== 巔峰（lineage_pinnacle） ==============================
-  uhtreds_exodus:          # Uhtred's Exodus
+  lone_star:          # Uhtred's Exodus
     name: 孤星
     description: 被輔助的技能沒有掛其他輔助時 +3 等級。
     icon: NETHER_STAR
@@ -736,7 +736,7 @@ supports:
     modifiers:
       - { stat: lineage.u.levels_if_alone, type: FLAT, value: 3 }
 
-  uhtreds_omen:            # Uhtred's Omen
+  twin_portent:            # Uhtred's Omen
     name: 雙兆
     description: 被輔助的技能剛好還掛著 1 顆其他輔助時 +2 等級。
     icon: NETHER_STAR
@@ -746,7 +746,7 @@ supports:
     modifiers:
       - { stat: lineage.u.levels_if_one, type: FLAT, value: 2 }
 
-  uhtreds_augury:          # Uhtred's Augury
+  triple_portent:          # Uhtred's Augury
     name: 三兆
     description: 被輔助的技能剛好還掛著 2 顆其他輔助時 +2 等級。
     icon: NETHER_STAR
@@ -756,7 +756,7 @@ supports:
     modifiers:
       - { stat: lineage.u.levels_if_two, type: FLAT, value: 2 }
 
-  olroths_hubris:          # Olroth's Hubris
+  proud_frost:          # Olroth's Hubris
     name: 傲寒
     description: 被輔助的攻擊每次另外消耗你最大魔力的 20%，附加等於這筆消耗 15% 的物理與 15% 的冰冷傷害；物理傷害也累積凍結。引導的技能不能掛。
     icon: DIAMOND
@@ -771,7 +771,7 @@ supports:
       - { stat: lineage.u.hubris, type: FLAT, value: 20 }
       - { stat: lineage.h.physical_freezes, type: FLAT, value: 1 }
 
-  atziris_communion:       # Atziri's Communion
+  blood_pact:       # Atziri's Communion
     name: 血契
     description: 被輔助的常駐技能不保留精魂，改成保留最大生命：每 1 點基礎精魂保留 0.66% 最大生命。叫召喚物的不能掛。
     icon: NETHER_BRICK
@@ -782,7 +782,7 @@ supports:
     modifiers:
       - { stat: lineage.u.life_reserve, type: FLAT, value: 66 }
 
-  atziris_impatience:      # Atziri's Impatience
+  scorched_blood:      # Atziri's Impatience
     name: 焦血
     description: 被輔助的冷卻技能冷卻回復速度增加 100%，但每次用都失去 25% 最大生命、魔力與能量護盾（不會因此死掉）。主要寶石、常駐技能不能掛。
     icon: FIREWORK_STAR
@@ -795,7 +795,7 @@ supports:
       - { stat: cooldown.recovery, type: INCREASED, value: 100 }
       - { stat: lineage.u.lose_on_use, type: FLAT, value: 25 }
 
-  arbiters_ignition:       # Arbiter's Ignition
+  ember_judgment:       # Arbiter's Ignition
     name: 燼裁
     description: 被輔助的火焰法術點燃敵人時，你獲得元素執政。
     icon: ORANGE_DYE
@@ -807,7 +807,7 @@ supports:
     modifiers:
       - { stat: lineage.h.archon_on_ignite, type: FLAT, value: 1 }
 
-  xophs_pyre:              # Xoph's Pyre
+  ember_corrode:              # Xoph's Pyre
     name: 燼蝕
     description: 被輔助的技能獲得火焰傷害的 40% 為額外混沌傷害；混沌傷害也算進點燃（易燃與點燃的強度）。
     icon: CHARCOAL
@@ -821,7 +821,7 @@ supports:
       - { stat: damage.extra.chaos, type: FLAT, value: 40, tags: [fire] }
       - { stat: lineage.h.chaos_ignites, type: FLAT, value: 1 }
 
-  eshs_radiance:           # Esh's Radiance
+  thunder_corrode:           # Esh's Radiance
     name: 霆蝕
     description: 被輔助的技能獲得閃電傷害的 40% 為額外混沌傷害；混沌傷害也算進感電機率。
     icon: GLOWSTONE_DUST
@@ -835,7 +835,7 @@ supports:
       - { stat: damage.extra.chaos, type: FLAT, value: 40, tags: [lightning] }
       - { stat: lineage.h.chaos_shocks, type: FLAT, value: 1 }
 
-  tuls_stillness:          # Tul's Stillness
+  silent_cold:          # Tul's Stillness
     name: 寂寒
     description: 被輔助的技能獲得冰冷傷害的 40% 為額外混沌傷害；混沌傷害也累積凍結。
     icon: CYAN_DYE
@@ -849,7 +849,7 @@ supports:
       - { stat: damage.extra.chaos, type: FLAT, value: 40, tags: [cold] }
       - { stat: lineage.h.chaos_freezes, type: FLAT, value: 1 }
 
-  uul_netols_embrace:      # Uul-Netol's Embrace
+  corrode_armor:      # Uul-Netol's Embrace
     name: 蝕甲
     description: 被輔助的技能獲得物理傷害的 40% 為額外混沌傷害；造成的混沌傷害也破甲，等於混沌傷害的 20%。
     icon: NETHERITE_SCRAP
@@ -863,7 +863,7 @@ supports:
       - { stat: damage.extra.chaos, type: FLAT, value: 40, tags: [physical] }
       - { stat: lineage.h.chaos_breaks, type: FLAT, value: 20 }
 
-  zarokhs_revolt:          # Zarokh's Revolt
+  myriad_seal:          # Zarokh's Revolt
     name: 萬封
     description: 被輔助的法術平常每過施法時間的一半蓄一個封印（最多 5 個），放的時候全部解開，每個封印自動多放一次（那幾次傷害更少 20%）；多了 10 秒冷卻。本來就有冷卻或封印的技能不能掛。
     icon: CLOCK
@@ -880,7 +880,7 @@ supports:
       - { stat: lineage.u.repeat_less, type: FLAT, value: 20 }
       - { stat: skill.added_cooldown, type: FLAT, value: 10 }
 
-  rakiatas_flow:           # Rakiata's Flow
+  counter_current:           # Rakiata's Flow
     name: 逆流
     description: 被輔助的技能擊中時，把敵人的元素抗性正負顛倒來算（30% 抗性當成 -30%）。
     icon: HEART_OF_THE_SEA
@@ -893,7 +893,7 @@ supports:
     modifiers:
       - { stat: resist.invert_chance, type: FLAT, value: 100 }
 
-  eshs_prowess:            # Esh's Prowess
+  peak_thunder:            # Esh's Prowess
     name: 極雷
     description: 被輔助的閃電技能 +1 等級，閃電傷害每次只擲出最小值或最大值。
     icon: YELLOW_DYE

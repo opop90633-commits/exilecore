@@ -85,7 +85,7 @@ class PassiveTreeTest {
     }
 
     @Test
-    void treeIsThePoe2Tree() {
+    void treeIsTheRefTree() {
         assertEquals(6, tree.version(), "第 5 版：拿掉連枷節點；第 6 版：加回觀星專屬等有解鎖條件的節點（舊角色的配點全部退回）");
         assertTrue(tree.size() > 3800, "PoE2 0.5 的主樹（扣掉裝飾、連不到的、Oracle 專屬的）：" + tree.size());
         assertTrue(tree.isConnected());
@@ -176,15 +176,15 @@ class PassiveTreeTest {
                   {"id": "s", "type": "start", "x": 0, "y": 0, "links": ["b"]},
                   {"id": "a", "type": "small", "x": 1, "y": 0, "stats": [], "description": ["a"]},
                   {"id": "b", "type": "small", "x": 3, "y": 2, "stats": [], "description": ["b"], "links": ["a"]}]}""";
-        final PassiveTree poe2 = PassiveTree.load(new StringReader(linked));
-        final PassiveNode s = poe2.node("s");
-        assertEquals(List.of(poe2.node("b")), poe2.neighbours(s), "格子相鄰的 a 沒有連線就不算");
-        assertTrue(poe2.canAllocate(Set.of(), s, poe2.node("b")));
-        assertFalse(poe2.canAllocate(Set.of(), s, poe2.node("a")));
-        assertTrue(poe2.canAllocate(Set.of("b"), s, poe2.node("a")));
+        final PassiveTree ref = PassiveTree.load(new StringReader(linked));
+        final PassiveNode s = ref.node("s");
+        assertEquals(List.of(ref.node("b")), ref.neighbours(s), "格子相鄰的 a 沒有連線就不算");
+        assertTrue(ref.canAllocate(Set.of(), s, ref.node("b")));
+        assertFalse(ref.canAllocate(Set.of(), s, ref.node("a")));
+        assertTrue(ref.canAllocate(Set.of("b"), s, ref.node("a")));
         // 沒寫路線的連線走 L 形：(0,0)→(3,0)→(3,2)，中間的空格有線
-        assertTrue(TreeView.hasWire(new TreeView(poe2, s, Set.of(), Set.of(), Set.of()).tile(2, 0)));
-        assertTrue(TreeView.hasWire(new TreeView(poe2, s, Set.of(), Set.of(), Set.of()).tile(3, 1)));
+        assertTrue(TreeView.hasWire(new TreeView(ref, s, Set.of(), Set.of(), Set.of()).tile(2, 0)));
+        assertTrue(TreeView.hasWire(new TreeView(ref, s, Set.of(), Set.of(), Set.of()).tile(3, 1)));
         // 連到不存在的節點、路線斷掉都擋下來
         assertThrows(IllegalArgumentException.class, () -> PassiveTree.load(new StringReader(linked.replace("\"links\": [\"a\"]", "\"links\": [\"zz\"]"))));
         assertThrows(IllegalArgumentException.class, () -> PassiveTree.load(new StringReader(linked.replace("]}]}",

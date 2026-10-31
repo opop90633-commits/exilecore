@@ -75,7 +75,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     }
 
     /** 互斥的多重投射輔助（2026-10）：掛了兩顆只有第一顆生效。 */
-    public static final Set<String> MULTI_PROJECTILE = Set.of("multiple_projectiles", "greater_multiple_projectiles");
+    public static final Set<String> MULTI_PROJECTILE = Set.of("light_split", "greater_multiple_projectiles");
 
     /** 複擊最多再打幾下（2026-10-28 照 PoE2 Rapid Assault 一次刺六下：4 → 5）。 */
     public static final int MAX_REPEATS = 5;
@@ -576,8 +576,8 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         final tw.exilecore.stats.DamageType element = elements[random.nextInt(elements.length)];
         final String visual = switch (element) {
             case FIRE -> "burning_arrow";
-            case COLD -> "ice_shot";
-            default -> "lightning_arrow";
+            case COLD -> "rime_arrow";
+            default -> "thunderclap_arrow";
         };
         final SkillProfile rolled = profile.withLocal(List.of(
                 Modifier.flat(StatKeys.damageConvert(element), 100, "隨機元素"),

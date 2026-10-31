@@ -194,25 +194,25 @@ class MechanicsTest {
         final UUID monster = UUID.randomUUID();
         final UUID hunter = UUID.randomUUID();
         final UUID friend = UUID.randomUUID();
-        debuffs.apply(monster, new Debuffs.Debuff("hunters_mark", hunter, 100, 0.25, true));
+        debuffs.apply(monster, new Debuffs.Debuff("prey_kill_mark", hunter, 100, 0.25, true));
         assertEquals(1.25, debuffs.takenMultiplier(monster, hunter, 50), 1e-9);
         assertEquals(1.0, debuffs.takenMultiplier(monster, friend, 50), 1e-9, "只對施放者");
         // 隊友也點同一隻：各自一條，不會把你的洗掉
-        debuffs.apply(monster, new Debuffs.Debuff("hunters_mark", friend, 100, 0.25, true));
+        debuffs.apply(monster, new Debuffs.Debuff("prey_kill_mark", friend, 100, 0.25, true));
         assertEquals(1.25, debuffs.takenMultiplier(monster, hunter, 50), 1e-9);
         assertEquals(1.25, debuffs.takenMultiplier(monster, friend, 50), 1e-9);
         assertEquals(2, debuffs.active(monster, 50).size());
         assertEquals(1.0, debuffs.takenMultiplier(monster, hunter, 100), 1e-9, "過期");
         // 戰吼的恫嚇：大家打都加；同一個代號再施加是覆蓋
         debuffs.apply(monster, new Debuffs.Debuff("intimidate", friend, 200, 0.10, false));
-        debuffs.apply(monster, new Debuffs.Debuff("hunters_mark", hunter, 300, 0.30, true));
+        debuffs.apply(monster, new Debuffs.Debuff("prey_kill_mark", hunter, 300, 0.30, true));
         assertEquals(1.40, debuffs.takenMultiplier(monster, hunter, 150), 1e-9, "0.30 + 0.10");
         assertEquals(1.10, debuffs.takenMultiplier(monster, friend, 150), 1e-9);
         assertEquals(2, debuffs.active(monster, 150).size());
         assertTrue(debuffs.has(monster, "intimidate", 150));
         debuffs.expire(250);
         assertFalse(debuffs.has(monster, "intimidate", 250));
-        assertTrue(debuffs.has(monster, "hunters_mark", 250));
+        assertTrue(debuffs.has(monster, "prey_kill_mark", 250));
         debuffs.expire(400);
         assertEquals(0, debuffs.size(), "全部過期就不佔記憶體");
         debuffs.apply(monster, new Debuffs.Debuff("x", hunter, 500, 0.1, false));
@@ -229,32 +229,32 @@ class MechanicsTest {
         assertFalse(config.skill("blink").dealsDamage(), "掠閃不造成傷害，法術也不用寫 damage");
         assertNull(config.skill("blink").damage());
         assertTrue(config.skill("blink").tags().containsAll(Set.of(Tags.MOVEMENT, Tags.COOLDOWN)), "位移、冷卻的標籤自動補上");
-        assertTrue(config.skill("storm_blink").dealsDamage(), "起點、終點炸一圈");
-        assertEquals(Mechanic.IMPACT, config.skill("comet").mechanic());
-        assertEquals(0.55, config.skill("comet").params().delay(), 1e-9);
-        assertEquals(Mechanic.ZONE, config.skill("flame_wall").mechanic());
-        assertTrue(config.skill("flame_wall").params().zone().line());
-        assertEquals(Mechanic.MARK, config.skill("hunters_mark").mechanic());
-        assertFalse(config.skill("hunters_mark").dealsDamage());
-        assertTrue(config.skill("hunters_mark").tags().contains(Tags.MARK));
-        assertNotNull(config.skill("earthquake").params().aftershock());
-        assertNull(config.skill("killing_palm").params().execute(), "2026-10-26 照 PoE2：斷魂掌拿掉處決（原作只有撲殺）");
-        assertNotNull(config.skill("lightning_arrow").params().splash());
+        assertTrue(config.skill("thunder_escape").dealsDamage(), "起點、終點炸一圈");
+        assertEquals(Mechanic.IMPACT, config.skill("falling_star").mechanic());
+        assertEquals(0.55, config.skill("falling_star").params().delay(), 1e-9);
+        assertEquals(Mechanic.ZONE, config.skill("flame_curtain").mechanic());
+        assertTrue(config.skill("flame_curtain").params().zone().line());
+        assertEquals(Mechanic.MARK, config.skill("prey_kill_mark").mechanic());
+        assertFalse(config.skill("prey_kill_mark").dealsDamage());
+        assertTrue(config.skill("prey_kill_mark").tags().contains(Tags.MARK));
+        assertNotNull(config.skill("ground_tremor").params().aftershock());
+        assertNull(config.skill("soul_sever_palm").params().execute(), "2026-10-26 照 PoE2：斷魂掌拿掉處決（原作只有撲殺）");
+        assertNotNull(config.skill("thunderclap_arrow").params().splash());
         // 2026-10：裂空箭照 PoE2 改成落地捲起龍捲風（不再散射）
-        assertNull(config.skill("tornado_shot").params().scatter());
-        assertNotNull(config.tornado("tornado_shot"));
-        assertEquals(1, config.tornado("tornado_shot").max());
-        assertEquals(3, config.tornado("tornado_shot").copies());
+        assertNull(config.skill("sky_rend_arrow").params().scatter());
+        assertNotNull(config.tornado("sky_rend_arrow"));
+        assertEquals(1, config.tornado("sky_rend_arrow").max());
+        assertEquals(3, config.tornado("sky_rend_arrow").copies());
         // 2026-10-26：連射照 PoE2 Rapid Shot 改成熱度（彈匣 26～65 發），不再是三連發
-        assertNull(config.skill("rapid_fire").params().burst());
-        assertEquals(26, config.clip("rapid_fire", 1));
+        assertNull(config.skill("successive_shots").params().burst());
+        assertEquals(26, config.clip("successive_shots", 1));
         // 2026-10-28 照 PoE2：颶風槍的旋風改成留在地上、走進去才崩散（stages.whirlwind），不再是會吸人的漩渦；這次之前 vortex 不是 null
-        assertNull(config.skill("whirlwind_lance").params().vortex());
-        assertNotNull(SkillStages.get("whirlwind_lance", "whirlwind"));
-        assertTrue(config.skill("whirlwind_lance").tags().contains(Tags.DURATION));
-        assertTrue(config.skill("explosive_grenade").params().fuse() > 0);
-        assertTrue(config.skill("explosive_grenade").params().gravity() > 0);
-        assertNotNull(config.skill("gas_grenade").params().ground());
+        assertNull(config.skill("hurricane_spear").params().vortex());
+        assertNotNull(SkillStages.get("hurricane_spear", "whirlwind"));
+        assertTrue(config.skill("hurricane_spear").tags().contains(Tags.DURATION));
+        assertTrue(config.skill("blast_grenade").params().fuse() > 0);
+        assertTrue(config.skill("blast_grenade").params().gravity() > 0);
+        assertNotNull(config.skill("miasma_grenade").params().ground());
         // 瞬影箭拿掉了（2026-10），blink 參數還在
         final SkillDefinition blinkArrow = parse("""
                 name: 測試
@@ -267,7 +267,7 @@ class MechanicsTest {
         assertTrue(blinkArrow.params().blink());
         assertEquals(3.0, blinkArrow.cooldown(), 1e-9);
         // 擲出去的颶風槍是投射物不是近戰（跟擲雷槍一樣）
-        final SkillBuild lance = SkillBuild.of(config, config.skill("whirlwind_lance"), 1, 60, false, List.of(), Set.of(Tags.SPEAR, Tags.MELEE), new StatSheet());
+        final SkillBuild lance = SkillBuild.of(config, config.skill("hurricane_spear"), 1, 60, false, List.of(), Set.of(Tags.SPEAR, Tags.MELEE), new StatSheet());
         assertFalse(lance.profile().tags().contains(Tags.MELEE));
         assertTrue(lance.profile().tags().contains(Tags.PROJECTILE));
     }
@@ -275,59 +275,59 @@ class MechanicsTest {
     @Test
     void cooldownDurationForkReturnAndEchoComeFromSupports() {
         final StatSheet sheet = new StatSheet();
-        final SkillBuild grenade = build("explosive_grenade", sheet);
+        final SkillBuild grenade = build("blast_grenade", sheet);
         assertEquals(100, grenade.cooldownTicks(), "2026-10-26 照 PoE2：5 秒（可以存 3 次）");
         assertEquals(1.0, grenade.durationScale(), 1e-9);
         // 2026-10-27 照站長只留最高階：速冷（Cooldown Recovery I）併入迅返（II），冷卻 -23%；這次之前速冷 -20% → 80
-        final SkillBuild quick = build("explosive_grenade", sheet, config.support("swift_cooldown"));
+        final SkillBuild quick = build("blast_grenade", sheet, config.support("quick_return"));
         assertEquals(77, quick.cooldownTicks(), "迅返：冷卻回復（照 PoE2 Cooldown Recovery II，-23%）");
-        final SkillBuild bursty = build("explosive_grenade", sheet, config.support("burst"));
+        final SkillBuild bursty = build("blast_grenade", sheet, config.support("burst"));
         assertEquals(130, bursty.cooldownTicks(), "爆發：+30%");
-        assertEquals(0, build("fireball", sheet).cooldownTicks(), "沒冷卻的技能是 0");
+        assertEquals(0, build("blazing_star_shell", sheet).cooldownTicks(), "沒冷卻的技能是 0");
 
         // 2026-10-27 照站長只留最高階：持久（Prolonged Duration I，更多 30%）併入長留（II，更多 35%）；這次之前 1.3／130
-        final SkillBuild gas = build("gas_grenade", sheet, config.support("prolonged_duration"));
+        final SkillBuild gas = build("miasma_grenade", sheet, config.support("long_stay"));
         assertEquals(1.35, gas.durationScale(), 1e-9, "照 PoE2 Prolonged Duration II：持續時間更多 35%");
         assertEquals(135, gas.durationTicks(5), "5 秒 × 1.35");
-        assertFalse(config.support("prolonged_duration").supports(config.skill("fireball")), "熾星彈沒有持續時間");
-        assertTrue(config.support("prolonged_duration").supports(config.skill("whirlwind_lance")), "漩渦有");
-        assertFalse(config.support("swift_cooldown").supports(config.skill("fireball")));
-        assertTrue(config.support("swift_cooldown").supports(config.skill("blink")));
+        assertFalse(config.support("long_stay").supports(config.skill("blazing_star_shell")), "熾星彈沒有持續時間");
+        assertTrue(config.support("long_stay").supports(config.skill("hurricane_spear")), "漩渦有");
+        assertFalse(config.support("quick_return").supports(config.skill("blazing_star_shell")));
+        assertTrue(config.support("quick_return").supports(config.skill("blink")));
 
-        final SkillBuild forked = build("lightning_arrow", sheet, config.support("fork"));
+        final SkillBuild forked = build("thunderclap_arrow", sheet, config.support("split_shot"));
         assertEquals(1, forked.forks());
-        assertEquals(0, build("lightning_arrow", sheet).forks());
+        assertEquals(0, build("thunderclap_arrow", sheet).forks());
         // 回歸這顆輔助 2026-10 改版拿掉了（supports.yml 的 retired），flag.returning 還在
         assertNull(config.support("returning_projectiles"));
         final StatSheet returningSheet = new StatSheet().add(Modifier.flat(StatKeys.FLAG_RETURNING, 1, "測試"));
-        assertTrue(build("lightning_arrow", returningSheet).returning());
-        assertFalse(build("lightning_arrow", sheet).returning());
-        assertFalse(build("explosive_grenade", returningSheet).returning(), "榴彈不回歸");
-        assertTrue(config.skill("explosive_grenade").tags().contains(Tags.GRENADE), "有引信的自動加 grenade 標籤");
-        assertFalse(config.support("fork").supports(config.skill("gas_grenade")), "歧射掛不上榴彈");
-        assertTrue(config.support("fork").supports(config.skill("lightning_arrow")));
+        assertTrue(build("thunderclap_arrow", returningSheet).returning());
+        assertFalse(build("thunderclap_arrow", sheet).returning());
+        assertFalse(build("blast_grenade", returningSheet).returning(), "榴彈不回歸");
+        assertTrue(config.skill("blast_grenade").tags().contains(Tags.GRENADE), "有引信的自動加 grenade 標籤");
+        assertFalse(config.support("split_shot").supports(config.skill("miasma_grenade")), "歧射掛不上榴彈");
+        assertTrue(config.support("split_shot").supports(config.skill("thunderclap_arrow")));
 
-        final SkillBuild echoed = build("comet", sheet, config.support("spell_echo"));
+        final SkillBuild echoed = build("falling_star", sheet, config.support("twin_chant"));
         assertTrue(echoed.echo());
-        assertFalse(config.support("spell_echo").supports(config.skill("fireball")), "2026-10-28 照 PoE2：雙詠只能插可以連瀑的範圍法術，熾星彈不行");
-        assertFalse(build("lightning_arrow", sheet, config.support("spell_echo")).echo(), "攻擊不迴響（也掛不上）");
-        assertFalse(config.support("spell_echo").supports(config.skill("blink")), "位移掛不上迴響");
-        assertFalse(config.support("spell_echo").supports(config.skill("hunters_mark")), "印記掛不上迴響");
-        assertTrue(config.support("spell_echo").supports(config.skill("comet")));
+        assertFalse(config.support("twin_chant").supports(config.skill("blazing_star_shell")), "2026-10-28 照 PoE2：雙詠只能插可以連瀑的範圍法術，熾星彈不行");
+        assertFalse(build("thunderclap_arrow", sheet, config.support("twin_chant")).echo(), "攻擊不迴響（也掛不上）");
+        assertFalse(config.support("twin_chant").supports(config.skill("blink")), "位移掛不上迴響");
+        assertFalse(config.support("twin_chant").supports(config.skill("prey_kill_mark")), "印記掛不上迴響");
+        assertTrue(config.support("twin_chant").supports(config.skill("falling_star")));
     }
 
     @Test
     void profileScalingAndDerivation() {
         final StatSheet sheet = new StatSheet().setBase(StatKeys.CRIT_MULTI, 150);
-        final SkillBuild fireball = build("fireball", sheet);
+        final SkillBuild fireball = build("blazing_star_shell", sheet);
         final tw.exilecore.stats.SkillProfile half = fireball.profile().scaled(0.5, "測試");
         final double full = tw.exilecore.stats.DamageCalculator.expectedOutgoing(sheet, fireball.profile()).total();
         assertEquals(full * 0.5, tw.exilecore.stats.DamageCalculator.expectedOutgoing(sheet, half).total(), 1e-9);
         assertTrue(fireball.profile().scaled(1.0, "測試") == fireball.profile(), "倍率 1 不另外做一份");
-        final tw.exilecore.stats.SkillProfile zone = fireball.profile().derive("fireball.zone", Set.of(Tags.AREA), Set.of(Tags.PROJECTILE));
+        final tw.exilecore.stats.SkillProfile zone = fireball.profile().derive("blazing_star_shell.zone", Set.of(Tags.AREA), Set.of(Tags.PROJECTILE));
         assertFalse(zone.tags().contains(Tags.PROJECTILE));
         assertTrue(zone.tags().contains(Tags.AREA));
-        assertEquals("fireball.zone", zone.id());
+        assertEquals("blazing_star_shell.zone", zone.id());
         // 「增加 x% 投射物傷害」對地面效果沒用，「增加範圍傷害」有用
         final StatSheet projectileSheet = new StatSheet().setBase(StatKeys.CRIT_MULTI, 150)
                 .add(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 1.0, Set.of(Tags.PROJECTILE), "弓"));
@@ -338,7 +338,7 @@ class MechanicsTest {
 
     @Test
     void deploySpecsParseAndTagTheSkill() {
-        final SkillDefinition ancestral = config.skill("ancestral_totem");
+        final SkillDefinition ancestral = config.skill("hero_spirit_totem");
         assertNotNull(ancestral.deploy());
         assertEquals(DeploySpec.Kind.TOTEM, ancestral.deploy().kind());
         assertTrue(ancestral.tags().containsAll(Set.of(Tags.TOTEM, Tags.DURATION)));
@@ -350,7 +350,7 @@ class MechanicsTest {
                 type: attack
                 mechanic: strike
                 totem: { duration: 8, buff: [ { stat: attack.speed, type: INCREASED, value: 15 } ] }
-                visual: ancestral_totem
+                visual: hero_spirit_totem
                 """);
         assertEquals(1, buffing.deploy().buff().size(), "圖騰在的時候加攻擊速度");
         assertEquals(StatKeys.ATTACK_SPEED, buffing.deploy().buff().getFirst().stat());
@@ -369,20 +369,20 @@ class MechanicsTest {
         assertTrue(bear.tags().contains(Tags.TRAP));
         assertFalse(bear.tags().contains(Tags.TOTEM));
 
-        final SkillDefinition bell = config.skill("tempest_bell");
+        final SkillDefinition bell = config.skill("startling_thunder_bell");
         assertEquals(DeploySpec.Kind.BELL, bell.deploy().kind());
         assertEquals(10, bell.deploy().rings(), "2026-10-26 照 PoE2：鐘打 10 下才碎");
         assertTrue(bell.tags().contains(Tags.TOTEM), "鐘歸在圖騰那一類");
         assertTrue(bell.tags().contains(Tags.BELL));
         // 2026-10-28 照 PoE2：鐘也是「上限」（Limit 1 Bell），過剩 II 掛得上；這次之前繁置（Overabundance I）只能掛圖騰、鐘掛不上
-        assertTrue(config.support("overabundance_ii").supports(bell), "鐘的上限吃過剩");
-        assertFalse(config.support("spell_echo").supports(config.skill("dark_idol")), "交給圖騰放的法術不迴響，掛不上");
-        assertFalse(config.support("spell_echo").supports(bell));
+        assertTrue(config.support("brim_over_ii").supports(bell), "鐘的上限吃過剩");
+        assertFalse(config.support("twin_chant").supports(config.skill("nether_puppet")), "交給圖騰放的法術不迴響，掛不上");
+        assertFalse(config.support("twin_chant").supports(bell));
         assertEquals(0.5, bell.cooldown(), 1e-9, "2026-10-26 照 PoE2：冷卻 0.5 秒、要 4 點連擊（連擊接上了；這次之前用 3 秒當平衡等效）");
 
-        assertNull(config.skill("fireball").deploy());
-        assertEquals(Mechanic.CORPSE, config.skill("detonate_dead").mechanic());
-        assertTrue(config.skill("detonate_dead").tags().contains(Tags.CORPSE));
+        assertNull(config.skill("blazing_star_shell").deploy());
+        assertEquals(Mechanic.CORPSE, config.skill("corpse_burst").mechanic());
+        assertTrue(config.skill("corpse_burst").tags().contains(Tags.CORPSE));
     }
 
     @Test
@@ -393,7 +393,7 @@ class MechanicsTest {
         final SupportDefinition spellTotem = new SupportDefinition("spell_totem", "圖騰施法", "", "NAUTILUS_SHELL", 2, Set.of(Tags.SPELL),
                 Set.of(Tags.MOVEMENT, Tags.MARK, Tags.CORPSE, Tags.TOTEM, Tags.BELL, Tags.TRAP, Tags.MINION, Tags.AURA, Tags.WARCRY, Tags.PERSISTENT), 1.5,
                 List.of(Modifier.flat(StatKeys.FLAG_SPELL_TOTEM, 1, "圖騰施法")), List.of());
-        final SkillBuild totem = build("fireball", sheet, spellTotem);
+        final SkillBuild totem = build("blazing_star_shell", sheet, spellTotem);
         assertNotNull(totem.deploy());
         assertEquals(DeploySpec.Kind.TOTEM, totem.deploy().kind());
         assertEquals(1, totem.totems());
@@ -404,30 +404,30 @@ class MechanicsTest {
         final SupportDefinition trapSupport = new SupportDefinition("trap", "陷阱", "", "TRIPWIRE_HOOK", 2, Set.of(Tags.SPELL),
                 Set.of(Tags.MOVEMENT, Tags.MARK, Tags.CORPSE, Tags.TOTEM, Tags.BELL, Tags.TRAP, Tags.MINION), 1.3,
                 List.of(Modifier.flat(StatKeys.FLAG_TRAP, 1, "陷阱")), List.of());
-        final SkillBuild trap = build("comet", sheet, trapSupport);
+        final SkillBuild trap = build("falling_star", sheet, trapSupport);
         assertEquals(DeploySpec.Kind.TRAP, trap.deploy().kind());
         assertEquals(3, trap.deploy().max());
         // 圖騰施法與陷阱施法一起掛：只有第一個生效，第二個連魔力倍率都不算
-        final SkillBuild both = build("comet", sheet, spellTotem, trapSupport);
+        final SkillBuild both = build("falling_star", sheet, spellTotem, trapSupport);
         assertEquals(DeploySpec.Kind.TOTEM, both.deploy().kind());
         assertEquals(1, both.supports().size());
         assertEquals("spell_totem", both.supports().getFirst().id());
-        assertEquals(build("comet", sheet, spellTotem).manaCost(), both.manaCost());
-        assertNull(build("fireball", sheet).deploy());
+        assertEquals(build("falling_star", sheet, spellTotem).manaCost(), both.manaCost());
+        assertNull(build("blazing_star_shell", sheet).deploy());
         // 掛不上的：位移、印記、骸爆、本來就是圖騰的、攻擊
         assertFalse(spellTotem.supports(config.skill("blink")));
-        assertFalse(spellTotem.supports(config.skill("hunters_mark")));
-        assertFalse(spellTotem.supports(config.skill("detonate_dead")));
-        assertFalse(spellTotem.supports(config.skill("dark_idol")));
-        assertFalse(trapSupport.supports(config.skill("lightning_arrow")));
-        assertTrue(trapSupport.supports(config.skill("frostbolt")));
+        assertFalse(spellTotem.supports(config.skill("prey_kill_mark")));
+        assertFalse(spellTotem.supports(config.skill("corpse_burst")));
+        assertFalse(spellTotem.supports(config.skill("nether_puppet")));
+        assertFalse(trapSupport.supports(config.skill("thunderclap_arrow")));
+        assertTrue(trapSupport.supports(config.skill("frost_drill")));
         // 過剩 II（2026-10-28 照 PoE2，繁置併進來）：原作寫「上限」的技能能掛，圖騰 +1 根
-        assertTrue(config.support("overabundance_ii").supports(config.skill("shockwave_totem")));
-        assertFalse(config.support("overabundance_ii").supports(config.skill("fireball")), "熾星彈沒有上限（掛了圖騰施法也一樣）");
-        assertEquals(2, build("shockwave_totem", sheet, config.support("overabundance_ii")).totems());
+        assertTrue(config.support("brim_over_ii").supports(config.skill("collapse_quake_totem")));
+        assertFalse(config.support("brim_over_ii").supports(config.skill("blazing_star_shell")), "熾星彈沒有上限（掛了圖騰施法也一樣）");
+        assertEquals(2, build("collapse_quake_totem", sheet, config.support("brim_over_ii")).totems());
         // 長留也讓圖騰撐久一點（2026-10-27 持久併入長留：這次之前 8 秒 × 1.3 = 208）
-        assertTrue(config.support("prolonged_duration").supports(config.skill("shockwave_totem")));
-        assertEquals(216, build("shockwave_totem", sheet, config.support("prolonged_duration")).durationTicks(8), "8 秒 × 1.35 × 20 tick（照 PoE2 Prolonged Duration II：更多 35%）");
+        assertTrue(config.support("long_stay").supports(config.skill("collapse_quake_totem")));
+        assertEquals(216, build("collapse_quake_totem", sheet, config.support("long_stay")).durationTicks(8), "8 秒 × 1.35 × 20 tick（照 PoE2 Prolonged Duration II：更多 35%）");
     }
 
     @Test
@@ -460,7 +460,7 @@ class MechanicsTest {
 
     @Test
     void flickerStrikeIsAMeleeMovementAttackWithAFrenzyBypass() {
-        final SkillDefinition flicker = config.skill("flicker_strike");
+        final SkillDefinition flicker = config.skill("instant_shadow_strike");
         assertEquals("瞬影擊", flicker.name());
         assertEquals(Mechanic.FLICKER, flicker.mechanic());
         assertTrue(flicker.isAttack());
@@ -480,10 +480,10 @@ class MechanicsTest {
         assertEquals(0, quick.cooldownTicks(), "沒有冷卻");
         assertNull(quick.deploy(), "攻擊不會變成圖騰或陷阱");
         assertFalse(quick.echo());
-        assertTrue(config.support("charge_endurance").supports(flicker), "戰星輔助掛得上");
+        assertTrue(config.support("gather_bedrock").supports(flicker), "戰星輔助掛得上");
         assertTrue(config.support("rage").supports(flicker), "怒火掛得上（近戰）");
-        assertFalse(config.support("spell_echo").supports(flicker));
-        assertNull(config.skill("leap_slam").cooldownBypass(), "其他技能沒有");
+        assertFalse(config.support("twin_chant").supports(flicker));
+        assertNull(config.skill("soaring_smash").cooldownBypass(), "其他技能沒有");
     }
 
     @Test
@@ -538,7 +538,7 @@ class MechanicsTest {
                 """);
         assertEquals(java.util.Map.of("frenzy", 1, "power", 1, "endurance", 1), cry.warcry().charges());
         assertEquals(List.of("frenzy", "power", "endurance"), List.copyOf(cry.warcry().charges().keySet()), "照寫的順序");
-        assertTrue(config.skill("fortifying_cry").warcry().charges().isEmpty(), "其他戰吼不給戰星");
+        assertTrue(config.skill("stalwart_war_shout").warcry().charges().isEmpty(), "其他戰吼不給戰星");
     }
 
     private static SkillDefinition parse(final String text) {

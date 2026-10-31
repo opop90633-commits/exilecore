@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 2026-10-26 照 PoE2 把技能的平衡等效換回原作機制（汲魂彈、毒霧、毒爆、瘴苞、火油、捷光環的標籤）。 */
-class SkillPoe2MechanicTest {
+class SkillRefMechanicTest {
 
     static SkillConfig config;
 
@@ -31,22 +31,22 @@ class SkillPoe2MechanicTest {
 
     @Test
     void essenceDrainHasItsOwnDotTable() {
-        assertTrue(has("essence_drain", SkillMechanicKeys.DEBUFF_CHAOS_BASE));
-        assertFalse(has("essence_drain", tw.exilecore.stats.StatKeys.DEBUFF_CHAOS), "不再換算成這一下的幾 %");
+        assertTrue(has("soul_draw_shot", SkillMechanicKeys.DEBUFF_CHAOS_BASE));
+        assertFalse(has("soul_draw_shot", tw.exilecore.stats.StatKeys.DEBUFF_CHAOS), "不再換算成這一下的幾 %");
     }
 
     /** 2026-10-26 照 PoE2：汲魂彈、疫潮有 Duration 標籤，減益的持續時間吃技能持續時間的加成。 */
     @Test
     void chaosDebuffsScaleWithSkillDuration() {
-        for (final String id : new String[] {"essence_drain", "contagion"}) {
+        for (final String id : new String[] {"soul_draw_shot", "plague_taint"}) {
             assertTrue(config.skill(id).tags().contains(Tags.DURATION), id);
         }
         final tw.exilecore.stats.StatSheet sheet = new tw.exilecore.stats.StatSheet();
-        final SkillBuild drain = SkillBuild.of(config, config.skill("essence_drain"), 1, 1, false, java.util.List.of(), java.util.Set.of(), sheet);
+        final SkillBuild drain = SkillBuild.of(config, config.skill("soul_draw_shot"), 1, 1, false, java.util.List.of(), java.util.Set.of(), sheet);
         assertEquals(4, tw.exilecore.ailment.AilmentService.debuffSeconds(drain.profile().effective(sheet), drain.profile()), 1e-9);
         final tw.exilecore.stats.StatSheet longer = new tw.exilecore.stats.StatSheet();
         longer.add(tw.exilecore.stats.Modifier.increased(tw.exilecore.stats.StatKeys.SKILL_DURATION, 0.5, "測試"));
-        final SkillBuild contagion = SkillBuild.of(config, config.skill("contagion"), 1, 1, false, java.util.List.of(), java.util.Set.of(), longer);
+        final SkillBuild contagion = SkillBuild.of(config, config.skill("plague_taint"), 1, 1, false, java.util.List.of(), java.util.Set.of(), longer);
         assertEquals(7.5, tw.exilecore.ailment.AilmentService.debuffSeconds(contagion.profile().effective(longer), contagion.profile()), 1e-9,
                 "疫潮 5 秒 × 增加 50% 持續時間");
     }
@@ -54,7 +54,7 @@ class SkillPoe2MechanicTest {
     /** 2026-10-26 照 PoE2：凝霜箭沒有範圍，打中時往前噴出扇形冰片（8→11 片、100% 傷害效益、全部轉冰）。 */
     @Test
     void iceShotSpraysShardsInsteadOfExploding() {
-        final SkillDefinition ice = config.skill("ice_shot");
+        final SkillDefinition ice = config.skill("rime_arrow");
         assertFalse(ice.tags().contains(Tags.AREA));
         assertEquals(0, ice.params().explode().last(), 1e-9);
         final SkillParams.Scatter shards = ice.params().scatter();
@@ -70,7 +70,7 @@ class SkillPoe2MechanicTest {
     /** 2026-10-26 照 PoE2：架盾是攻擊，盾擊用盾牌護甲換算傷害（每 5 點 3～4 點物理、5% 暴擊），主手武器不算。 */
     @Test
     void raiseShieldIsAnAttackThatBashesWithTheShield() {
-        final SkillDefinition guard = config.skill("raise_guard");
+        final SkillDefinition guard = config.skill("shield_brace");
         assertTrue(guard.isAttack());
         assertTrue(guard.dealsDamage());
         assertTrue(guard.tags().containsAll(java.util.Set.of(Tags.ATTACK, Tags.MELEE, Tags.AREA, Tags.PHYSICAL, "channelling")));
@@ -92,7 +92,7 @@ class SkillPoe2MechanicTest {
     /** 2026-10-26 照 PoE2：魔湧（Mana Tempest）是召出風暴的法術，不再是光環。 */
     @Test
     void manaTempestIsAStormNotAnAura() {
-        final SkillDefinition tempest = config.skill("mana_storm");
+        final SkillDefinition tempest = config.skill("magic_surge");
         assertTrue(ManaTempest.is(tempest));
         assertEquals(Mechanic.GUARD, tempest.mechanic());
         assertTrue(tempest.tags().containsAll(java.util.Set.of(Tags.SPELL, "storm", "cooldown")), tempest.tags().toString());
@@ -122,16 +122,16 @@ class SkillPoe2MechanicTest {
 
     @Test
     void poisonCloudsAndBurstsDoNotHit() {
-        assertTrue(has("caustic_arrow", SkillMechanicKeys.FLAG_GROUND_POISON_ONLY));
-        assertTrue(has("gas_grenade", SkillMechanicKeys.FLAG_GROUND_POISON_ONLY));
-        assertTrue(has("venom_burst_arrow", SkillMechanicKeys.FLAG_BURST_POISON_ONLY));
-        assertTrue(has("oil_grenade", SkillMechanicKeys.FLAG_GROUND_NEEDS_IGNITE));
-        assertFalse(has("toxic_growth", tw.exilecore.stats.StatKeys.POISON_CHANCE), "毒苞落地不一定中毒");
+        assertTrue(has("venom_etch_arrow", SkillMechanicKeys.FLAG_GROUND_POISON_ONLY));
+        assertTrue(has("miasma_grenade", SkillMechanicKeys.FLAG_GROUND_POISON_ONLY));
+        assertTrue(has("toxic_blast_shaft", SkillMechanicKeys.FLAG_BURST_POISON_ONLY));
+        assertTrue(has("kerosene_grenade", SkillMechanicKeys.FLAG_GROUND_NEEDS_IGNITE));
+        assertFalse(has("miasma_bud_rain", tw.exilecore.stats.StatKeys.POISON_CHANCE), "毒苞落地不一定中毒");
     }
 
     @Test
     void toxicPustulesStayAndDetonate() {
-        final SkillConfig.LodgeSpec lodge = config.lodge("toxic_growth");
+        final SkillConfig.LodgeSpec lodge = config.lodge("miasma_bud_rain");
         assertNotNull(lodge);
         assertTrue(lodge.expire());
         assertEquals(15, lodge.duration(), 1e-9);
@@ -141,18 +141,18 @@ class SkillPoe2MechanicTest {
 
     @Test
     void detonatorsAndHeldGuard() {
-        assertEquals("hexblast", config.signature("hex_burst"));
-        assertEquals("sunder", config.signature("prism_rend"));
-        assertFalse(has("prism_rend", tw.exilecore.stats.StatKeys.FLAG_RANDOM_ELEMENT), "不再隨機元素");
-        assertEquals(ChargeSpec.Mode.HOLD, config.charge("raise_guard").mode());
-        assertEquals(0, config.skill("raise_guard").cooldown(), 1e-9);
-        assertTrue(has("coiling_bolts", SkillMechanicKeys.FLAG_SPLIT_TYPES));
-        assertEquals(2, config.skill("coiling_bolts").params().projectiles().intAt(1));
+        assertEquals("hexblast", config.signature("erosion_curse_rift"));
+        assertEquals("sunder", config.signature("facet_light_rift"));
+        assertFalse(has("facet_light_rift", tw.exilecore.stats.StatKeys.FLAG_RANDOM_ELEMENT), "不再隨機元素");
+        assertEquals(ChargeSpec.Mode.HOLD, config.charge("shield_brace").mode());
+        assertEquals(0, config.skill("shield_brace").cooldown(), 1e-9);
+        assertTrue(has("entwine_rot_arrow", SkillMechanicKeys.FLAG_SPLIT_TYPES));
+        assertEquals(2, config.skill("entwine_rot_arrow").params().projectiles().intAt(1));
     }
 
     @Test
     void attackHeraldsTakeAttackSupports() {
-        assertTrue(config.skill("herald_of_thunder").tags().contains(Tags.ATTACK));
-        assertTrue(config.skill("herald_of_ice").tags().contains(Tags.ATTACK));
+        assertTrue(config.skill("thunder_envoy").tags().contains(Tags.ATTACK));
+        assertTrue(config.skill("frost_envoy").tags().contains(Tags.ATTACK));
     }
 }

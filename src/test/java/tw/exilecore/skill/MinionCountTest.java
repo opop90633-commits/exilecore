@@ -26,7 +26,7 @@ class MinionCountTest {
 
     @Test
     void wantedCountCapsMinionsAndReservation() {
-        final SkillBuild archers = SkillBuild.of(config, config.skill("skeletal_archers"), 20, 100, false, List.of(), Set.of(), new StatSheet());
+        final SkillBuild archers = SkillBuild.of(config, config.skill("summon_bone_bowmen"), 20, 100, false, List.of(), Set.of(), new StatSheet());
         assertTrue(archers.minions() > 2 && archers.minionReserve() > 0);
         final AuraService.Fit all = AuraService.fit(archers, 10000);
         assertNotNull(all);
@@ -42,9 +42,9 @@ class MinionCountTest {
     }
 
     @Test
-    void unsetCountFollowsPoe2Defaults() {
+    void unsetCountFollowsRefDefaults() {
         // 2026-10-30 照 PoE2：沒設定照原作預設（skill_desired_initial_amount：骸骨戰士 2，其他 1），不再把精魂吃光
-        final SkillBuild spectre = SkillBuild.of(config, config.skill("bound_spectre"), 20, 100, false, List.of(), Set.of(), new StatSheet());
+        final SkillBuild spectre = SkillBuild.of(config, config.skill("soul_attach_art"), 20, 100, false, List.of(), Set.of(), new StatSheet());
         final SkillBuild warriors = SkillBuild.of(config, config.skill("summon_skeletons"), 20, 100, false, List.of(), Set.of(), new StatSheet());
         assertEquals(1, AuraService.fit(spectre, 10000, AuraService.DEFAULT_COUNT).minions());
         assertEquals(spectre.minionReserve(), AuraService.fit(spectre, 10000, AuraService.DEFAULT_COUNT).reserve(), 1e-9, "只保留一隻的份");

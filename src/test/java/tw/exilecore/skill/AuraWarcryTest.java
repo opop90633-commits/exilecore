@@ -43,7 +43,7 @@ class AuraWarcryTest {
     @Test
     void aurasParseWithReservationAndScaledEffects() {
         // 2026-10 PoE2 改版：舊的光環（憎恨…）拿掉了，用凜冬之殼（給隊友的精魂光環）
-        final SkillDefinition aegis = config.skill("frost_aegis");
+        final SkillDefinition aegis = config.skill("winter_shell");
         assertEquals(Mechanic.AURA, aegis.mechanic());
         assertNotNull(aegis.aura());
         assertEquals(30, aegis.aura().reserve(), 1e-9);
@@ -59,7 +59,7 @@ class AuraWarcryTest {
         // 2026-10-26 照 PoE2：凜冬之殼改成原作的冰甲疊層（OriginalSkills），沒有光環效果了；數值的部分改用魔湧驗（這次之前驗凜冬之殼的護甲、火抗）
         assertTrue(aegis.aura().effects().isEmpty());
         // 2026-10-26：魔湧照 PoE2 Mana Tempest 改成風暴（不是光環了），數值改用拾鱗驗
-        final SkillDefinition plating = config.skill("scavenged_plating");
+        final SkillDefinition plating = config.skill("gathered_scales");
         assertEquals(2, plating.aura().effects().size());
         final ScaledMod armour = plating.aura().effects().getFirst();
         assertEquals(StatKeys.ARMOUR, armour.stat());
@@ -68,8 +68,8 @@ class AuraWarcryTest {
         assertTrue(armour20 > 20 && armour20 <= 40, "隨等級成長");
 
         final StatSheet owner = new StatSheet();
-        final SkillBuild low = build("scavenged_plating", 1, owner);
-        final SkillBuild high = build("scavenged_plating", 20, owner);
+        final SkillBuild low = build("gathered_scales", 1, owner);
+        final SkillBuild high = build("gathered_scales", 20, owner);
         assertEquals(30, low.reserve(), 1e-9);
         assertEquals(1.0, low.auraEffect(), 1e-9);
         assertEquals(0.20, low.auraModifiers().getFirst().value(), 1e-9, "增加 20% 護甲（百分比換成小數）");
@@ -87,21 +87,21 @@ class AuraWarcryTest {
         final StatSheet owner = new StatSheet();
         // 攻擊型的四個（戰意昂揚、崩滅心咒、元素潮汐、磨蝕之志）2026-10 也改回只給自己（銀月庇 2026-10-15 改成戰吼）
         // 2026-10-26 照 PoE2：雷縛長棍、崩滅心咒改成要放的法術、磨蝕之志沒有固定的效果（OriginalSkills），從這一組拿掉
-        for (final String id : List.of("berserk", // 2026-10-27：狂戰之怒照 PoE2 拿掉（跟赤怒重複），改用赤怒
-                "combat_frenzy", "elemental_conflux", "magma_barrier", "wind_dancer")) { // 2026-10-24：熔殼照 PoE2 只給自己；2026-10-26 風之舞步也是
+        for (final String id : List.of("crimson_wrath", // 2026-10-27：狂戰之怒照 PoE2 拿掉（跟赤怒重複），改用赤怒
+                "battle_spirit_rise", "element_tide", "magma_barrier", "breeze_dance_step")) { // 2026-10-24：熔殼照 PoE2 只給自己；2026-10-26 風之舞步也是
             final SkillBuild self = build(id, 20, owner);
             assertFalse(self.definition().aura().allies(), id);
             assertFalse(self.auraModifiers().isEmpty(), id + "：自己還是有效果");
             assertTrue(self.minionAuraModifiers().isEmpty(), id + "：只給自己的不給召喚物");
         }
         // 2026-10-26 照 PoE2：魔泉湧、護時只給自己（以前也給隊友）
-        for (final String id : List.of("mana_remnants", "time_of_need")) {
+        for (final String id : List.of("magic_spring_well", "guard_moment")) {
             final SkillBuild self = build(id, 20, owner);
             assertFalse(self.definition().aura().allies(), id);
             assertTrue(self.minionAuraModifiers().isEmpty(), id + "：只給自己的不給召喚物");
         }
         // 2026-10-26：風之舞步照 PoE2 改成只給自己（上面那一組），給隊友的光環改用權杖賦予的律盾驗；這次之前驗 wind_dancer
-        for (final String id : List.of("discipline")) {
+        for (final String id : List.of("law_shield")) {
             final SkillBuild shared = build(id, 20, owner);
             assertTrue(shared.definition().aura().allies(), id);
             assertEquals(shared.auraModifiers(), shared.minionAuraModifiers(), id + "：給隊友的光環，召喚物吃到一樣的效果");
@@ -117,31 +117,31 @@ class AuraWarcryTest {
     }
 
     @Test
-    void heraldsTriggerOnTheirPoe2Conditions() {
+    void heraldsTriggerOnTheirRefConditions() {
         // 2026-10（照 PoE2）：捷不再是「殺死就觸發」
         final Set<AilmentType> none = Set.of();
         // 燼使：自己的攻擊擊中，過量擊殺 20% 以上
-        final AuraSpec.KillCondition ash = config.skill("herald_of_ash").aura().condition();
+        final AuraSpec.KillCondition ash = config.skill("ember_envoy").aura().condition();
         assertEquals(new AuraSpec.KillCondition(true, null, 20), ash);
         assertTrue(ash.met(true, none, 20));
         assertTrue(ash.met(true, none, 350));
         assertFalse(ash.met(true, none, 19.9), "過量不到 20%");
         assertFalse(ash.met(false, none, 80), "法術、召喚物、捷自己的效果打死的不算");
         // 雷使：攻擊殺死感電中的；霜使：攻擊殺死凍結中的
-        final AuraSpec.KillCondition thunder = config.skill("herald_of_thunder").aura().condition();
+        final AuraSpec.KillCondition thunder = config.skill("thunder_envoy").aura().condition();
         assertEquals(new AuraSpec.KillCondition(true, AilmentType.SHOCK, 0), thunder);
         assertTrue(thunder.met(true, Set.of(AilmentType.SHOCK, AilmentType.IGNITE), 0));
         assertFalse(thunder.met(true, Set.of(AilmentType.IGNITE), 0), "沒感電");
         assertFalse(thunder.met(false, Set.of(AilmentType.SHOCK), 0), "不是攻擊");
-        final AuraSpec.KillCondition ice = config.skill("herald_of_ice").aura().condition();
+        final AuraSpec.KillCondition ice = config.skill("frost_envoy").aura().condition();
         assertEquals(new AuraSpec.KillCondition(true, AilmentType.FREEZE, 0), ice);
         assertFalse(ice.met(true, Set.of(AilmentType.CHILL), 0), "只有冰緩不算凍結");
         assertTrue(ice.met(true, Set.of(AilmentType.CHILL, AilmentType.FREEZE), 0));
         // 血宣、疫使：身上有流血／中毒就好，不用是攻擊（毒死、召喚物打死的也算）
-        final AuraSpec.KillCondition blood = config.skill("herald_of_blood").aura().condition();
+        final AuraSpec.KillCondition blood = config.skill("blood_proclaim").aura().condition();
         // 2026-10-26 照 PoE2：血宣看「受過失血」（AuraService 看累積的失血），yml 不再要求死的時候還在流血
         assertEquals(AuraSpec.KillCondition.ALWAYS, blood);
-        final AuraSpec.KillCondition plague = config.skill("herald_of_plague").aura().condition();
+        final AuraSpec.KillCondition plague = config.skill("plague_envoy").aura().condition();
         assertEquals(new AuraSpec.KillCondition(false, AilmentType.POISON, 0), plague);
         assertTrue(plague.met(false, Set.of(AilmentType.POISON), 0));
         // 沒寫條件的照舊：殺死就觸發；說明文字
@@ -158,9 +158,9 @@ class AuraWarcryTest {
     }
 
     @Test
-    void berserkAndSavageFuryCarryTheirPoe2Costs() {
+    void berserkAndSavageFuryCarryTheirRefCosts() {
         // 赤怒（Berserk）：怒氣效果 40～59%；怒氣沒有在消退時每點怒氣每秒失去 0.1% 最大生命
-        final SkillDefinition berserk = config.skill("berserk");
+        final SkillDefinition berserk = config.skill("crimson_wrath");
         final AuraSpec.LifeCost cost = berserk.aura().lifeCost();
         assertNotNull(cost);
         assertEquals(0.1, cost.perRage(), 1e-9);
@@ -168,8 +168,8 @@ class AuraWarcryTest {
         assertEquals(5.0, cost.percentPerSecond(50, false), 1e-9);
         assertEquals(0, cost.percentPerSecond(50, true), 1e-9, "怒氣在消退：不扣");
         assertEquals(0, cost.percentPerSecond(0, false), 1e-9);
-        assertEquals(0.40, build("berserk", 1, new StatSheet()).auraModifiers().getFirst().value(), 1e-9);
-        assertEquals(0.59, build("berserk", 20, new StatSheet()).auraModifiers().getFirst().value(), 1e-9);
+        assertEquals(0.40, build("crimson_wrath", 1, new StatSheet()).auraModifiers().getFirst().value(), 1e-9);
+        assertEquals(0.59, build("crimson_wrath", 20, new StatSheet()).auraModifiers().getFirst().value(), 1e-9);
         // 怒氣消退：40 tick 沒拿到才開始
         assertFalse(SkillResources.rageDecaying(20, 100, 100 + SkillResources.RAGE_DECAY_DELAY - 1));
         assertTrue(SkillResources.rageDecaying(20, 100, 100 + SkillResources.RAGE_DECAY_DELAY));
@@ -181,7 +181,7 @@ class AuraWarcryTest {
         assertEquals(0.5, AuraService.lifeAfterLoss(0.5, 1000, 3), 1e-9, "本來就不到 1 點的不動");
 
         // 獸血沸（Savage Fury）：沒有一直有的效果了；攻擊累積 20 點 → 狂暴 10 秒，更多傷害 20～29%＋疾速，每秒失去 3% 生命，要獸形
-        final SkillDefinition savage = config.skill("savage_fury");
+        final SkillDefinition savage = config.skill("beast_blood_boil");
         final AuraSpec.Fury fury = savage.aura().fury();
         assertNotNull(fury);
         assertTrue(savage.aura().effects().isEmpty());
@@ -199,21 +199,21 @@ class AuraWarcryTest {
         assertEquals(0.20, low.value(), 1e-9);
         assertEquals(0.29, high.value(), 1e-9);
         assertFalse(savage.aura().allies());
-        assertTrue(build("savage_fury", 20, new StatSheet()).minionAuraModifiers().isEmpty(), "狂暴只給自己");
+        assertTrue(build("beast_blood_boil", 20, new StatSheet()).minionAuraModifiers().isEmpty(), "狂暴只給自己");
         // 其他光環沒有代價、沒有獸性
-        assertNull(config.skill("wind_dancer").aura().lifeCost());
-        assertNull(config.skill("wind_dancer").aura().fury());
-        assertTrue(config.skill("wind_dancer").aura().condition().always());
+        assertNull(config.skill("breeze_dance_step").aura().lifeCost());
+        assertNull(config.skill("breeze_dance_step").aura().fury());
+        assertTrue(config.skill("breeze_dance_step").aura().condition().always());
     }
 
     @Test
     void archmageScalesWithMaximumManaAndCostsAShareOfIt() {
         // 2026-10：祕法之心照 PoE2 的 Archmage 重做，係數砍半：每 100 最大魔力 2% 額外閃電；每次施法多花最大魔力的 8% → 6.1%
-        final SkillDefinition archmage = config.skill("archmage");
+        final SkillDefinition archmage = config.skill("arcane_heart");
         assertEquals(100, archmage.aura().reserve(), 1e-9);
         assertFalse(archmage.aura().allies());
-        final List<Modifier> low = build("archmage", 1, new StatSheet()).auraModifiers();
-        final List<Modifier> high = build("archmage", 20, new StatSheet()).auraModifiers();
+        final List<Modifier> low = build("arcane_heart", 1, new StatSheet()).auraModifiers();
+        final List<Modifier> high = build("arcane_heart", 20, new StatSheet()).auraModifiers();
         assertEquals(2, low.size());
         assertEquals(StatKeys.damageExtraPerMana(DamageType.LIGHTNING), low.get(0).stat());
         // 2026-10-26 照 PoE2：每 100 魔力 4%（拿掉砍半；這次之前 2）
@@ -246,25 +246,25 @@ class AuraWarcryTest {
         assertEquals(0, SkillBuild.extraManaCost(20, thousand, Set.of(Tags.ATTACK)), 1e-9);
         assertEquals(0, SkillBuild.extraManaCost(20, channelling, spell), 1e-9);
         // 真的技能：火球的消耗 = （基礎 + 61）× 倍率；沒開祕法之心的照舊
-        final int plain = build("fireball", 20, new StatSheet().setBase(StatKeys.MANA_MAX, 1000)).manaCost();
-        final int taxed = build("fireball", 20, thousand).manaCost();
-        assertEquals(Math.round((config.skill("fireball").mana().at(20) + 61) * SkillConfig.manaCostScale()), taxed); // 2026-10-27：消耗再乘 mana_cost_scale
+        final int plain = build("blazing_star_shell", 20, new StatSheet().setBase(StatKeys.MANA_MAX, 1000)).manaCost();
+        final int taxed = build("blazing_star_shell", 20, thousand).manaCost();
+        assertEquals(Math.round((config.skill("blazing_star_shell").mana().at(20) + 61) * SkillConfig.manaCostScale()), taxed); // 2026-10-27：消耗再乘 mana_cost_scale
         // 光環自己不用魔力，不會被自己加價
-        assertEquals(0, build("archmage", 20, thousand).manaCost());
+        assertEquals(0, build("arcane_heart", 20, thousand).manaCost());
     }
 
     @Test
     void linkedVolleyRepeatsTheNextBowOrSpearProjectileAttack() {
         // 2026-10：連珠（照 PoE2 的 Barrage）：下一次弓／矛的投射物攻擊重複 +2 次、每次少 50%，每顆怒星再 +1 次
-        final SkillDefinition volley = config.skill("linked_volley");
+        final SkillDefinition volley = config.skill("strung_pearls");
         assertEquals(Mechanic.GUARD, volley.mechanic());
         assertEquals(Set.of("bow", "spear"), volley.weapons());
         assertTrue(volley.usableWith(Set.of(Tags.BOW, Tags.TWO_HAND)));
         assertFalse(volley.usableWith(Set.of(Tags.MACE)));
         assertEquals(2, volley.cooldown(), 1e-9);
-        final BarrageSpec spec = config.barrage("linked_volley");
+        final BarrageSpec spec = config.barrage("strung_pearls");
         assertNotNull(spec);
-        assertNull(config.barrage("ice_tipped_arrows"), "別的增益技能沒有");
+        assertNull(config.barrage("frost_arrowhead"), "別的增益技能沒有");
         assertEquals(2, spec.repeats());
         assertEquals("frenzy", spec.charge());
         assertEquals(2, spec.repeatsWith(0));
@@ -281,12 +281,12 @@ class AuraWarcryTest {
         assertEquals(80, spec.usedCooldownTicks(2, 10, 600, 0.8));
         // 能被強化的：弓、矛的投射物攻擊；近戰、法術、拿別的武器、有冷卻的、自己會重複的不行
         final Set<String> bow = Set.of(Tags.BOW, Tags.TWO_HAND);
-        assertTrue(BarrageSpec.empowers(config.skill("ice_shot"), bow, 0));
-        assertTrue(BarrageSpec.empowers(config.skill("lightning_arrow"), bow, 0), "2026-10-26：星屑連矢照 PoE2 改成矢幕（增益），改用閃電箭");
-        assertFalse(BarrageSpec.empowers(config.skill("ice_shot"), Set.of(Tags.CROSSBOW), 0), "手上不是弓或矛");
-        assertFalse(BarrageSpec.empowers(config.skill("ice_shot"), bow, 2), "自己就會重複的");
-        assertFalse(BarrageSpec.empowers(config.skill("fireball"), bow, 0), "法術");
-        assertFalse(BarrageSpec.empowers(config.skill("linked_volley"), bow, 0));
+        assertTrue(BarrageSpec.empowers(config.skill("rime_arrow"), bow, 0));
+        assertTrue(BarrageSpec.empowers(config.skill("thunderclap_arrow"), bow, 0), "2026-10-26：星屑連矢照 PoE2 改成矢幕（增益），改用閃電箭");
+        assertFalse(BarrageSpec.empowers(config.skill("rime_arrow"), Set.of(Tags.CROSSBOW), 0), "手上不是弓或矛");
+        assertFalse(BarrageSpec.empowers(config.skill("rime_arrow"), bow, 2), "自己就會重複的");
+        assertFalse(BarrageSpec.empowers(config.skill("blazing_star_shell"), bow, 0), "法術");
+        assertFalse(BarrageSpec.empowers(config.skill("strung_pearls"), bow, 0));
         for (final SkillDefinition each : config.all()) {
             if (BarrageSpec.empowers(each, bow, 0)) {
                 assertTrue(each.isAttack() && each.mechanic() == Mechanic.PROJECTILE && each.cooldown() <= 0, each.id());
@@ -297,7 +297,7 @@ class AuraWarcryTest {
     @Test
     void lunarBlessingIsAWerewolfWarcryFedByRage() {
         // 2026-10-15 照 PoE2 的月光賜福：會變身狼人的戰吼，冷卻 22 秒、增益 5 秒，用掉全部怒氣每點多 0.2 秒；月光是隱藏技能
-        final SkillDefinition lunar = config.skill("lunar_blessing");
+        final SkillDefinition lunar = config.skill("silver_moon_shelter");
         assertEquals(Mechanic.WARCRY, lunar.mechanic());
         assertTrue(lunar.tags().contains(Tags.WEREWOLF) && lunar.tags().contains(Tags.SHAPESHIFT), "放了就變狼人");
         assertFalse(lunar.tags().contains(Tags.SPELL), "戰吼不算法術");
@@ -312,29 +312,29 @@ class AuraWarcryTest {
         assertTrue(beam.tags().contains(Tags.COLD));
         assertFalse(beam.tags().contains(Tags.WEREWOLF), "月光打中不會再落月光");
         assertEquals(SupportProcs.LUNAR_BLESSING, lunar.id());
-        assertEquals(0, config.skill("arctic_howl").warcry().rageExtend(), 1e-9, "其他戰吼不吃怒氣");
+        assertEquals(0, config.skill("cold_night_howl").warcry().rageExtend(), 1e-9, "其他戰吼不吃怒氣");
     }
 
     @Test
     void weaponBoundAurasNeedTheirWeapon() {
         // 2026-10：寫了 weapons 的光環要拿著那種武器才開得起來（AuraService 照 usableWith 開關）
-        final SkillDefinition staff = config.skill("storm_staff");
+        final SkillDefinition staff = config.skill("thunderbind_staff");
         assertEquals(List.of("quarterstaff"), List.copyOf(staff.weapons()));
         assertTrue(staff.usableWith(Set.of(Tags.QUARTERSTAFF, Tags.TWO_HAND)));
         assertFalse(staff.usableWith(Set.of(Tags.MACE)), "權杖、錘開不起來");
         assertFalse(staff.usableWith(Set.of(Tags.BOW)));
         // 2026-10-26 照 PoE2：拾晶裝不限武器（效果本來就只對弩有用）
-        assertTrue(config.skill("shard_scavenger").usableWith(Set.of(Tags.CROSSBOW)));
-        assertTrue(config.skill("shard_scavenger").usableWith(Set.of(Tags.BOW)));
-        assertTrue(config.skill("combat_frenzy").usableWith(Set.of(Tags.BOW)), "沒寫 weapons 的什麼武器都行");
+        assertTrue(config.skill("crystal_pickup_load").usableWith(Set.of(Tags.CROSSBOW)));
+        assertTrue(config.skill("crystal_pickup_load").usableWith(Set.of(Tags.BOW)));
+        assertTrue(config.skill("battle_spirit_rise").usableWith(Set.of(Tags.BOW)), "沒寫 weapons 的什麼武器都行");
         // 崩滅心咒要長棍、銀月庇要獸魂符（PoE2 的原型都是那種武器的技能）
-        assertTrue(config.skill("ruin_mantra").usableWith(Set.of(Tags.QUARTERSTAFF)));
-        assertFalse(config.skill("ruin_mantra").usableWith(Set.of(Tags.MACE)));
-        assertTrue(config.skill("lunar_blessing").usableWith(Set.of(Tags.TALISMAN)));
-        assertFalse(config.skill("lunar_blessing").usableWith(Set.of(Tags.BOW)));
+        assertTrue(config.skill("collapse_heart_chant").usableWith(Set.of(Tags.QUARTERSTAFF)));
+        assertFalse(config.skill("collapse_heart_chant").usableWith(Set.of(Tags.MACE)));
+        assertTrue(config.skill("silver_moon_shelter").usableWith(Set.of(Tags.TALISMAN)));
+        assertFalse(config.skill("silver_moon_shelter").usableWith(Set.of(Tags.BOW)));
         // 疫使跟其他捷光環一樣只有擊殺效果，沒有常駐的額外傷害
-        assertTrue(config.skill("herald_of_plague").aura().effects().isEmpty());
-        assertTrue(config.skill("herald_of_plague").aura().herald());
+        assertTrue(config.skill("plague_envoy").aura().effects().isEmpty());
+        assertTrue(config.skill("plague_envoy").aura().herald());
     }
 
     @Test
@@ -343,10 +343,10 @@ class AuraWarcryTest {
         owner.add(new Modifier(StatKeys.AURA_EFFECT, ModType.INCREASED, 0.20, Set.of(), "領袖"));
         owner.add(new Modifier(StatKeys.AURA_RESERVATION, ModType.INCREASED, -0.10, Set.of(), "領袖"));
         // 2026-10-30 照 PoE2：只有真的光環（aura 標籤）吃光環效果；拾鱗這類常駐增益不吃。改用調藥心得（光環，保留 30）
-        assertEquals(1.0, build("scavenged_plating", 20, owner).auraEffect(), 1e-9, "常駐增益不吃光環效果");
-        final SkillBuild aegis = build("alchemists_boon", 20, owner);
+        assertEquals(1.0, build("gathered_scales", 20, owner).auraEffect(), 1e-9, "常駐增益不吃光環效果");
+        final SkillBuild aegis = build("potion_craft_insight", 20, owner);
         assertEquals(1.2, aegis.auraEffect(), 1e-9);
-        assertEquals(config.skill("alchemists_boon").aura().effects().getFirst().value().at(20) * 1.2, // 每分鐘幾點充能（不是百分比）
+        assertEquals(config.skill("potion_craft_insight").aura().effects().getFirst().value().at(20) * 1.2, // 每分鐘幾點充能（不是百分比）
                 aegis.auraModifiers().getFirst().value(), 1e-9, "每一條效果都乘光環效果");
         assertEquals(30 / 1.1, aegis.reserve(), 1e-9, "2026-10 保留效率：減少 10% → 保留 ÷ 1.1");
 
@@ -356,7 +356,7 @@ class AuraWarcryTest {
         final SupportDefinition auraEffect = new SupportDefinition("aura_effect", "強效光環", "", "BEACON", 2, Set.of(SupportDefinition.PERSISTENT_BUFF), Set.of(), 1.0,
                 List.of(new Modifier(StatKeys.AURA_EFFECT, ModType.INCREASED, 0.25, Set.of(), "強效光環"),
                         new Modifier(StatKeys.AURA_RESERVATION, ModType.INCREASED, 0.20, Set.of(), "強效光環")), List.of());
-        final SkillBuild boosted = build("alchemists_boon", 20, owner, auraEffect); // 2026-10-30：凜冬之殼不是光環，改用調藥心得
+        final SkillBuild boosted = build("potion_craft_insight", 20, owner, auraEffect); // 2026-10-30：凜冬之殼不是光環，改用調藥心得
         assertEquals(1, boosted.supports().size());
         assertEquals(1.45, boosted.auraEffect(), 1e-9, "增加 20% + 25%（增加相加）");
         assertEquals(30 * (1 - 0.10 + 0.20), boosted.reserve(), 1e-9, "保留 -10% + 20% = 增加 10%，照乘");
@@ -364,17 +364,17 @@ class AuraWarcryTest {
         final SupportDefinition generosity = new SupportDefinition("generosity", "慷慨", "", "BEACON", 2, Set.of(SupportDefinition.PERSISTENT_BUFF), Set.of(), 1.0,
                 List.of(Modifier.flat(StatKeys.FLAG_GENEROSITY, 1, "慷慨"),
                         new Modifier(StatKeys.AURA_EFFECT, ModType.INCREASED, 0.4, Set.of(), "慷慨")), List.of());
-        final SkillBuild generous = build("frost_aegis", 20, owner, generosity);
+        final SkillBuild generous = build("winter_shell", 20, owner, generosity);
         assertTrue(generous.generosity());
-        assertFalse(auraEffect.supports(config.skill("fireball")), "強效光環只能掛光環");
-        assertFalse(config.support("spell_echo").supports(config.skill("frost_aegis")), "雙詠不能掛光環");
-        assertNotNull(MetaGems.problem(config.meta("totem_casting"), config.skill("frost_aegis")), "光環不能插進星咒圖騰");
-        assertTrue(config.support("increased_area").supports(config.skill("war_banner")), "擴散讓戰旗的範圍更大"); // 2026-10-26：凜冬之殼、魔湧都不算範圍了，改用征戰之旗
+        assertFalse(auraEffect.supports(config.skill("blazing_star_shell")), "強效光環只能掛光環");
+        assertFalse(config.support("twin_chant").supports(config.skill("winter_shell")), "雙詠不能掛光環");
+        assertNotNull(MetaGems.problem(config.meta("star_spell_totem"), config.skill("winter_shell")), "光環不能插進星咒圖騰");
+        assertTrue(config.support("zone_expand").supports(config.skill("campaign_flag")), "擴散讓戰旗的範圍更大"); // 2026-10-26：凜冬之殼、魔湧都不算範圍了，改用征戰之旗
     }
 
     @Test
     void heraldsPointAtHiddenSubSkillsThatTakeTheHeraldsSupports() {
-        final SkillDefinition herald = config.skill("herald_of_ash");
+        final SkillDefinition herald = config.skill("ember_envoy");
         assertTrue(herald.aura().herald());
         assertEquals("herald_ash_burst", herald.aura().onKill());
         assertEquals(100, herald.aura().onKillChance(), 1e-9);
@@ -387,12 +387,12 @@ class AuraWarcryTest {
         assertNotNull(burst.damage());
         assertFalse(config.visible().contains(burst), "隱藏的不會出現在雕琢選單");
         // 捷的輔助用在它的效果上：擴散（範圍）、純化（元素）都掛得上隱藏的爆發；強效光環掛不上
-        assertTrue(config.support("increased_area").supports(burst));
-        assertTrue(config.support("elemental_focus").supports(burst));
-        assertFalse(config.support("faster_casting").supports(burst), "疾詠不能掛捷（捷的效果是擊殺時觸發）");
-        assertFalse(config.support("increased_area").supports(config.skill("default_melee")), "普攻還是不能掛輔助");
+        assertTrue(config.support("zone_expand").supports(burst));
+        assertTrue(config.support("purify_essence").supports(burst));
+        assertFalse(config.support("quick_chant").supports(burst), "疾詠不能掛捷（捷的效果是擊殺時觸發）");
+        assertFalse(config.support("zone_expand").supports(config.skill("default_melee")), "普攻還是不能掛輔助");
         final StatSheet owner = new StatSheet();
-        final SkillBuild sub = SkillBuild.of(config, burst, 20, 100, false, List.of(config.support("increased_area")), Set.of(), owner);
+        final SkillBuild sub = SkillBuild.of(config, burst, 20, 100, false, List.of(config.support("zone_expand")), Set.of(), owner);
         assertEquals(1, sub.supports().size());
         assertTrue(sub.radius() > burst.params().radius().at(20), "範圍變大");
         assertEquals(Mechanic.NOVA, config.skill("herald_thunder_bolt").mechanic(), "2026-10-24：雷使照 PoE2 落在那一下的目標上");
@@ -403,7 +403,7 @@ class AuraWarcryTest {
     void warcriesParseWithBuffDebuffAndExerts() {
         // 2026-10 PoE2 改版：戰吼換成堅壁、焚獄、震地
         // 2026-10-26 照 PoE2 0.5 重做：強化次數照附近敵人的強度（普通 1、魔法 2、稀有 10、傳奇 20），沒有治療、嘲諷、隊伍增益
-        final SkillDefinition rally = config.skill("infernal_cry");
+        final SkillDefinition rally = config.skill("hellfire_war_shout");
         assertEquals(Mechanic.WARCRY, rally.mechanic());
         assertNotNull(rally.warcry());
         assertTrue(rally.warcry().cry());
@@ -431,32 +431,32 @@ class AuraWarcryTest {
         assertEquals(0, rally.warcry().heal().last(), 1e-9);
         assertEquals(0, rally.warcry().taken().last(), 1e-9);
         assertEquals("infernal_combust", rally.warcry().extras().combust());
-        assertTrue(empower.accepts(config.skill("boneshatter")), "近戰攻擊");
-        assertFalse(empower.accepts(config.skill("fireball")), "法術不會被強化");
+        assertTrue(empower.accepts(config.skill("spine_crush")), "近戰攻擊");
+        assertFalse(empower.accepts(config.skill("blazing_star_shell")), "法術不會被強化");
 
         final StatSheet owner = new StatSheet();
-        final SkillBuild build = build("infernal_cry", 20, owner);
+        final SkillBuild build = build("hellfire_war_shout", 20, owner);
         assertEquals(0, build.exerts(), "照強度強化的戰吼：exerts 只記「多強化幾次」");
         assertTrue(build.warcryModifiers().isEmpty(), "原作的焚獄戰吼沒有增益");
         assertEquals(8 * 20, build.durationTicks(rally.warcry().duration()));
         // 使用時間只吃戰吼速度、不吃施法速度
         assertEquals(16, build.intervalTicks(owner), 1e-9);
         final StatSheet fast = new StatSheet().add(Modifier.increased(StatKeys.CAST_SPEED, 1.0, "施法"));
-        assertEquals(16, build("infernal_cry", 20, fast).intervalTicks(fast), 1e-9, "施法速度不影響戰吼");
+        assertEquals(16, build("hellfire_war_shout", 20, fast).intervalTicks(fast), 1e-9, "施法速度不影響戰吼");
         final StatSheet shout = new StatSheet().add(Modifier.increased(tw.exilecore.stats.SupportKeys.WARCRY_SPEED, 1.0, "戰吼速度"));
-        assertEquals(8, build("infernal_cry", 20, shout).intervalTicks(shout), 1e-9, "戰吼速度 +100%");
+        assertEquals(8, build("hellfire_war_shout", 20, shout).intervalTicks(shout), 1e-9, "戰吼速度 +100%");
 
         // 2026-10-27：強勢戰吼（原作沒有）刪掉
-        final SkillBuild strong = build("infernal_cry", 20, owner, config.support("prolonged_duration")); // 2026-10-27：持久併入長留
+        final SkillBuild strong = build("hellfire_war_shout", 20, owner, config.support("long_stay")); // 2026-10-27：持久併入長留
         assertTrue(strong.durationTicks(rally.warcry().duration()) > build.durationTicks(rally.warcry().duration()), "長留撐更久");
         owner.add(new Modifier(StatKeys.WARCRY_EXERTS, ModType.FLAT, 1, Set.of(Tags.WARCRY), "戰場號令"));
         owner.add(new Modifier(StatKeys.SKILL_COOLDOWN, ModType.INCREASED, -0.15, Set.of(Tags.WARCRY), "戰場號令"));
-        final SkillBuild tree = build("infernal_cry", 20, owner);
+        final SkillBuild tree = build("hellfire_war_shout", 20, owner);
         assertEquals(1, tree.exerts());
         assertEquals(Math.round(8 * 20 * 0.85), tree.cooldownTicks());
-        assertEquals(0, build("boneshatter", 20, owner).cooldownTicks(), "戰吼的冷卻減少不影響別的技能");
+        assertEquals(0, build("spine_crush", 20, owner).cooldownTicks(), "戰吼的冷卻減少不影響別的技能");
 
-        final SkillDefinition enduring = config.skill("fortifying_cry");
+        final SkillDefinition enduring = config.skill("stalwart_war_shout");
         assertEquals(0, enduring.warcry().heal().last(), 1e-9, "照 PoE2 拿掉治療");
         assertFalse(enduring.warcry().taunt(), "照 PoE2 拿掉嘲諷");
         assertEquals(2, enduring.warcry().extras().guardPer5().at(1), 1e-9);
@@ -466,12 +466,12 @@ class AuraWarcryTest {
         assertEquals(10, enduring.warcry().empowersFor(100), "每 5 點強度一次，最多 10 次");
         assertEquals(4, Warcries.per5(100, 20), "守護最多算到 20 點強度");
         assertEquals(1, Warcries.per5(1, 20), "有任何強度至少算一次");
-        final SkillDefinition intimidating = config.skill("seismic_cry");
+        final SkillDefinition intimidating = config.skill("ground_shake_shout");
         assertEquals(0, intimidating.warcry().taken().last(), 1e-9, "照 PoE2 拿掉受到的傷害增加");
         assertEquals("heavy_stun", intimidating.warcry().empower().condition());
         assertEquals(1, intimidating.warcry().empower().aftershocks());
         assertTrue(intimidating.damageByLevel(), "震地的傷害照 PoE2 逐級");
-        final SkillDefinition ancestral = config.skill("ancestral_cry");
+        final SkillDefinition ancestral = config.skill("molten_soul_shriek");
         assertEquals(0, ancestral.cooldown(), 1e-9, "熔魂嘯沒有冷卻");
         assertEquals(100, ancestral.warcry().extras().glory());
         // 2026-10-27 照 PoE2：Ancestral Cry 要任何近戰武器或徒手（不限錘）；這次之前不限武器（weapons 空的）
@@ -479,45 +479,45 @@ class AuraWarcryTest {
         assertTrue(ancestral.usableWith(Set.of()), "徒手可以");
         assertTrue(ancestral.usableWith(Set.of(Tags.MACE, Tags.MELEE)), "不限錘");
         assertFalse(ancestral.usableWith(Set.of(Tags.BOW, Tags.RANGED)), "弓不行");
-        final SkillDefinition roar = config.skill("ferocious_roar");
+        final SkillDefinition roar = config.skill("armor_rend_bear_roar");
         assertEquals(8, roar.warcry().empowersFor(64), "每 8 點強度一次，最多 8 次");
         assertEquals(2, roar.warcry().extras().ragePerPower(), 1e-9);
         assertTrue(roar.tags().contains(Tags.BEAR));
         // 戰旗、祭品不是戰吼：戰吼的輔助掛不上
-        for (final String id : List.of("war_banner", "defiance_banner", "dread_banner", "blood_offering", "bone_offering", "soul_offering")) { // 2026-10-27：召歸令照 PoE2 拿掉
+        for (final String id : List.of("campaign_flag", "bedrock_flag", "foe_daunt_flag", "bloodthirst_rite", "bone_rite", "soulfire_rite")) { // 2026-10-27：召歸令照 PoE2 拿掉
             assertFalse(config.skill(id).tags().contains(Tags.WARCRY), id);
-            assertFalse(config.support("echoing_cry").supports(config.skill(id)), id);
+            assertFalse(config.support("quake_howl").supports(config.skill(id)), id);
         }
-        assertFalse(config.support("tireless").supports(config.skill("fireball")));
-        assertTrue(config.support("swift_cooldown").supports(rally)); // 2026-10-27：速冷併入迅返
+        assertFalse(config.support("endless_howl").supports(config.skill("blazing_star_shell")));
+        assertTrue(config.support("quick_return").supports(rally)); // 2026-10-27：速冷併入迅返
         // 戰吼不算法術（2026-10）：法術的輔助寶石掛不上去，原因講清楚
-        assertFalse(config.support("faster_casting").supports(rally), "疾詠要法術");
-        assertEquals("要法術技能", config.support("faster_casting").refusal(rally));
+        assertFalse(config.support("quick_chant").supports(rally), "疾詠要法術");
+        assertEquals("要法術技能", config.support("quick_chant").refusal(rally));
         assertFalse(config.support("added_fire").supports(rally), "引火（攻擊或法術）也不行");
-        assertNotNull(MetaGems.problem(config.meta("totem_casting"), rally), "戰吼不能插進星咒圖騰");
-        assertNull(config.support("tireless").refusal(rally));
+        assertNotNull(MetaGems.problem(config.meta("star_spell_totem"), rally), "戰吼不能插進星咒圖騰");
+        assertNull(config.support("endless_howl").refusal(rally));
     }
 
     @Test
-    void warcriesMatchPoe2GemTiersAndRestrictions() {
+    void warcriesMatchRefGemTiersAndRestrictions() {
         // 2026-10-27 照 PoE2（poe2db Warcry 標籤、RePoE skill_gems crafting_level）：8 顆戰吼寶石裡我們有的 7 顆（骷髏蠻兵是召喚物）
-        final java.util.Map<String, Integer> tiers = java.util.Map.of("infernal_cry", 3, "arctic_howl", 5, "ferocious_roar", 7,
-                "fortifying_cry", 9, "seismic_cry", 11, "ancestral_cry", 13, "lunar_blessing", 13);
+        final java.util.Map<String, Integer> tiers = java.util.Map.of("hellfire_war_shout", 3, "cold_night_howl", 5, "armor_rend_bear_roar", 7,
+                "stalwart_war_shout", 9, "ground_shake_shout", 11, "molten_soul_shriek", 13, "silver_moon_shelter", 13);
         for (final java.util.Map.Entry<String, Integer> each : tiers.entrySet()) {
             final SkillDefinition cry = config.skill(each.getKey());
             assertEquals(each.getValue(), cry.tier(), each.getKey());
             assertTrue(cry.tags().contains(Tags.WARCRY) && cry.warcry().cry(), each.getKey() + " 是戰吼");
             assertFalse(cry.tags().contains(Tags.SPELL) || cry.tags().contains(Tags.ATTACK), each.getKey() + " 不算法術也不算攻擊");
-            assertNotNull(MetaGems.problem(config.meta("totem_casting"), cry), each.getKey() + " 不能插進星咒圖騰");
+            assertNotNull(MetaGems.problem(config.meta("star_spell_totem"), cry), each.getKey() + " 不能插進星咒圖騰");
         }
         // 堅壁戰吼要護甲盾（Armoured Shield）；其他戰吼不用
-        assertTrue(Warcries.needsShield(config.skill("fortifying_cry")));
-        for (final String id : List.of("infernal_cry", "seismic_cry", "arctic_howl", "ferocious_roar", "ancestral_cry", "lunar_blessing")) {
+        assertTrue(Warcries.needsShield(config.skill("stalwart_war_shout")));
+        for (final String id : List.of("hellfire_war_shout", "ground_shake_shout", "cold_night_howl", "armor_rend_bear_roar", "molten_soul_shriek", "silver_moon_shelter")) {
             assertFalse(Warcries.needsShield(config.skill(id)), id);
         }
         // 寒夜嗥：蓄勢待凍的敵人直接凍結（只有寒夜嗥）
-        assertTrue(Warcries.freezesPrimed(config.skill("arctic_howl").warcry()));
-        assertFalse(Warcries.freezesPrimed(config.skill("seismic_cry").warcry()));
+        assertTrue(Warcries.freezesPrimed(config.skill("cold_night_howl").warcry()));
+        assertFalse(Warcries.freezesPrimed(config.skill("ground_shake_shout").warcry()));
         // 盾波：盾每 15 點護甲附加 5–7 物理，乘盾波的傷害效益（1 級 50%、20 級 204%、40 級 905%）
         final List<Modifier> added = SupportMechanics.shieldWaveAdded(150);
         assertEquals(50, added.get(0).value(), 1e-9);
@@ -539,7 +539,7 @@ class AuraWarcryTest {
     @Test
     void exertedAttacksMultiplyTheProfileAndCountDown() {
         final StatSheet owner = new StatSheet();
-        final SkillBuild strike = build("boneshatter", 20, owner);
+        final SkillBuild strike = build("spine_crush", 20, owner);
         SkillRuntime.Exert exert = new SkillRuntime.Exert(2, 50, 100);
         assertTrue(exert.active(10));
         assertFalse(exert.active(100), "時間到了就沒了");
@@ -573,7 +573,7 @@ class AuraWarcryTest {
         Files.copy(DATA.resolve("supports.yml"), dir.resolve("supports.yml"));
         final String original = Files.readString(DATA.resolve("skills.yml"));
         assertRejected(dir, original.replace("on_kill: { skill: herald_ash_burst,", "on_kill: { skill: nothing_here,"), "on_kill");
-        assertRejected(dir, original.replace("on_kill: { skill: herald_ash_burst,", "on_kill: { skill: fireball,"), "hidden");
+        assertRejected(dir, original.replace("on_kill: { skill: herald_ash_burst,", "on_kill: { skill: blazing_star_shell,"), "hidden");
         // 2026-10：捷的觸發條件、代價、獸性寫錯也擋下來
         assertRejected(dir, original.replace("attack: true, ailment: shock }", "attack: true, ailment: soggy }"), "ailment");
         assertRejected(dir, original.replace("life_cost: { per_rage: 0.1 }", "life_cost: { per_rage: 0 }"), "per_rage");

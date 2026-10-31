@@ -34,7 +34,7 @@ class KillingPalmTest {
     }
 
     @Test
-    void dashRangeIsPoe2BaseMeleeDashRange() {
+    void dashRangeIsRefBaseMeleeDashRange() {
         assertEquals(tw.exilecore.core.Units.metres(6.5), KillingPalm.DASH_RANGE, 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算; // base_melee_dash_range 65（0.1 公尺一單位）
     }
 
@@ -75,7 +75,7 @@ class KillingPalmTest {
     }
 
     @Test
-    void skillDataMatchesPoe2() {
+    void skillDataMatchesRef() {
         final SkillDefinition palm = config.skill(KillingPalm.ID);
         assertNotNull(palm);
         assertEquals(Mechanic.STRIKE, palm.mechanic());

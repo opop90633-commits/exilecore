@@ -243,10 +243,10 @@ public final class AscendancyEffects implements Listener {
     /** 御風的混合物：每次用掉魔力藥劑幾點充能（照 PoE2 5 點）。 */
     static final int CONCOCTION_CHARGES = 5;
     /** 巨靈的指令要先召喚哪一位。 */
-    private static final Map<String, String> DJINN = Map.ofEntries(Map.entry("kelari_brutality", "kelari_djinn"), Map.entry("kelari_deception", "kelari_djinn"), Map.entry("kelari_judgment", "kelari_djinn"),
-            Map.entry("kelari_malediction", "kelari_djinn"), Map.entry("navira_oasis", "navira_djinn"), Map.entry("navira_well", "navira_djinn"),
-            Map.entry("navira_fracturing", "navira_djinn"), Map.entry("ruzhan_reckoning", "ruzhan_djinn"), Map.entry("ruzhan_fury", "ruzhan_djinn"),
-            Map.entry("ruzhan_trap", "ruzhan_djinn"));
+    private static final Map<String, String> DJINN = Map.ofEntries(Map.entry("sand_spirit_cruelty", "foul_sand_spirit"), Map.entry("sand_spirit_trick", "foul_sand_spirit"), Map.entry("sand_spirit_verdict", "foul_sand_spirit"),
+            Map.entry("sand_spirit_venom_word", "foul_sand_spirit"), Map.entry("mirage_spirit_haven", "final_mirage_spirit"), Map.entry("mirage_spirit_spring", "final_mirage_spirit"),
+            Map.entry("mirage_spirit_freeze", "final_mirage_spirit"), Map.entry("blade_spirit_settle", "flame_blade_spirit"), Map.entry("blade_spirit_wrath_fire", "flame_blade_spirit"),
+            Map.entry("blade_spirit_device", "flame_blade_spirit"));
 
     public static Cost cost(final Player player, final PlayerState state, final SkillDefinition definition, final int cost) {
         final AscendancyEffects effects = instance;
@@ -638,7 +638,7 @@ public final class AscendancyEffects implements Listener {
         if (effects == null || !has(effects.sheet(owner), AscKeys.ANCESTRAL_SPIRITS) || effects.plugin.skills() == null) {
             return;
         }
-        effects.plugin.skills().triggerSkill(owner, "ancestral_spirits", at);
+        effects.plugin.skills().triggerSkill(owner, "forebear_manifest", at);
     }
 
     // =====================================================================
@@ -1641,8 +1641,8 @@ public final class AscendancyEffects implements Listener {
     // 增益（屬性表的來源）
     // =====================================================================
 
-    static final String[] EMBANKMENT_SKILLS = {"siege_ballista", "artillery_ballista", "mortar_cannon", "shockwave_totem", "ancestral_totem",
-            "dark_idol", "spell_totem"};
+    static final String[] EMBANKMENT_SKILLS = {"skyward_crossbow_turret", "nailfall_crossbow_turret", "mortar_cannon", "collapse_quake_totem", "hero_spirit_totem",
+            "nether_puppet", "spell_totem"};
 
     /** 站在哪幾種圖騰的堤防光環（4.5 格）裡（位元）。 */
     private int embankmentMask(final Player player) {
@@ -1724,7 +1724,7 @@ public final class AscendancyEffects implements Listener {
         // 看看我怎麼辦事的：存在範圍內的友軍獲得附加攻擊傷害 = 你主手武器傷害的 25%
         out.addAll(allyWeapon(player));
         // 衝刺突擊：衝刺時無法被重度暈眩；女王進軍：衝刺時其他來源的傷害不會造成重度暈眩
-        if (player.isSprinting() && (has(base, AscKeys.SPRINT_STUN) || plugin.skills() != null && plugin.skills().auraOn(player, "queens_procession"))) {
+        if (player.isSprinting() && (has(base, AscKeys.SPRINT_STUN) || plugin.skills() != null && plugin.skills().auraOn(player, "empress_march"))) {
             out.add(Modifier.flat("flag.immune.stun", 1, "疾衝突襲"));
         }
         out.addAll(granted.buffModifiers(player, state));

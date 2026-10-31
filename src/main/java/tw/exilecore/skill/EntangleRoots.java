@@ -29,7 +29,7 @@ import java.util.UUID;
  */
 final class EntangleRoots {
 
-    static final String ID = "entangle";
+    static final String ID = "root_bind";
     /** 每 0.1 秒纏一條。 */
     static final long VINE_EVERY_TICKS = 2;
     /** 藤蔓最多纏 1 秒。 */
@@ -225,7 +225,7 @@ final class EntangleRoots {
             }
             final int count = Math.min(MAX_VINES + Overgrowth.ENTANGLE_EXTRA_VINES, entry.getValue().size());
             if (debuffs != null) {
-                debuffs.apply(entry.getKey(), new tw.exilecore.combat.Debuffs.Debuff("entangle.vines", entry.getValue().getFirst().root.owner,
+                debuffs.apply(entry.getKey(), new tw.exilecore.combat.Debuffs.Debuff("root_bind.vines", entry.getValue().getFirst().root.owner,
                         now + 3, 0, false, null, List.of(), SLOW_PER_VINE * count));
             }
             if (now % 5 == 0) {

@@ -71,20 +71,20 @@ class HollowFormTest {
 
     @Test
     void socketTakesMeleeAttacksButNotChannelledOrConditional() {
-        for (final String id : List.of("boneshatter", "ice_strike", "tempest_flurry", "falling_thunder", "killing_palm", "earthquake",
-                "rolling_slam", "forge_hammer", "cross_slash")) {
+        for (final String id : List.of("spine_crush", "frost_shockwave", "gale_combo", "startle_thunder_chop", "soul_sever_palm", "ground_tremor",
+                "field_quake_hammers", "returning_smith_hammer", "crisscross_claw")) {
             assertNull(HollowForm.problem(skill(id)), id);
         }
-        assertNotNull(HollowForm.problem(skill("tempest_bell")), "要連擊（有使用條件）");
-        assertNotNull(HollowForm.problem(skill("hammer_of_gods")), "要榮耀（有使用條件）");
-        for (final String id : List.of("resonating_shield", "mountain_fury", "true_strike", "supercharged_slam", "shield_rush", "rampage")) {
+        assertNotNull(HollowForm.problem(skill("startling_thunder_bell")), "要連擊（有使用條件）");
+        assertNotNull(HollowForm.problem(skill("heaven_punish_maul")), "要榮耀（有使用條件）");
+        for (final String id : List.of("shield_drum", "molten_crack_stomp", "charged_blow", "thousand_weight_smash", "iron_wall_ram", "brute_charge")) {
             assertNotNull(HollowForm.problem(skill(id)), id + "：引導");
         }
-        assertNotNull(HollowForm.problem(skill("fireball")), "法術不行");
-        assertNotNull(HollowForm.problem(skill("lightning_arrow")), "遠程不行");
-        assertNotNull(HollowForm.problem(skill("leap_slam")), "跳躍不行");
-        assertNotNull(HollowForm.problem(skill("flicker_strike")), "瞬影不行");
-        assertNotNull(HollowForm.problem(skill("ancestral_totem")), "圖騰不行");
+        assertNotNull(HollowForm.problem(skill("blazing_star_shell")), "法術不行");
+        assertNotNull(HollowForm.problem(skill("thunderclap_arrow")), "遠程不行");
+        assertNotNull(HollowForm.problem(skill("soaring_smash")), "跳躍不行");
+        assertNotNull(HollowForm.problem(skill("instant_shadow_strike")), "瞬影不行");
+        assertNotNull(HollowForm.problem(skill("hero_spirit_totem")), "圖騰不行");
         assertNotNull(HollowForm.problem(skill(HollowForm.ID)), "主要寶石不行");
         assertNotNull(HollowForm.problem(skill(DeadeyeMetas.MIRAGE)), "主要寶石不行");
         assertNotNull(HollowForm.problem(skill("asc_hollow_bell")), "隱藏技能不行");
@@ -93,7 +93,7 @@ class HollowFormTest {
     }
 
     @Test
-    void poe2Numbers() {
+    void refNumbers() {
         assertEquals(15, HollowForm.LESS_DAMAGE, 1e-9);
         assertEquals(30, HollowForm.LESS_ATTACK_SPEED, 1e-9);
         assertEquals(tw.exilecore.core.Units.metres(6), HollowForm.RADIUS, 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
@@ -113,7 +113,7 @@ class HollowFormTest {
 
     @Test
     void imageHitsDealLessAndCannotConsumeCharges() {
-        final SkillBuild attack = SkillBuild.of(config, skill("boneshatter"), 20, 90, false, List.of(), Set.of(Tags.MACE, Tags.MELEE), new StatSheet());
+        final SkillBuild attack = SkillBuild.of(config, skill("spine_crush"), 20, 90, false, List.of(), Set.of(Tags.MACE, Tags.MELEE), new StatSheet());
         final SkillBuild image = HollowForm.imageBuild(attack);
         final StatSheet effective = image.profile().effective(new StatSheet());
         assertTrue(effective.flat(ChargeService.CANNOT_CONSUME, image.profile().tags()) > 0, "不能消耗戰星");
@@ -132,11 +132,11 @@ class HollowFormTest {
     @Test
     void chargeSupportsWorkOnTheHostButEnergySupportsDoNot() {
         final SkillDefinition form = skill(HollowForm.ID);
-        assertTrue(HollowForm.appliesToHost(support("perpetual_charge")));
-        assertTrue(HollowForm.appliesToHost(support("heightened_charges")));
-        assertFalse(HollowForm.appliesToHost(support("faster_attacks")));
-        assertNull(support("perpetual_charge").hostRefusal(form, skill("boneshatter")));
-        assertNull(support("perpetual_charge").hostRefusal(form, null), "孔裡沒放也能掛（套在虛空形態自己身上）");
+        assertTrue(HollowForm.appliesToHost(support("eternal_star")));
+        assertTrue(HollowForm.appliesToHost(support("double_star")));
+        assertFalse(HollowForm.appliesToHost(support("quick_strike")));
+        assertNull(support("eternal_star").hostRefusal(form, skill("spine_crush")));
+        assertNull(support("eternal_star").hostRefusal(form, null), "孔裡沒放也能掛（套在虛空形態自己身上）");
         assertTrue(SupportDefinition.consumes(form, "power"), "虛空形態會消耗銳星");
         for (final SupportDefinition support : config.supports()) {
             boolean energy = false;
@@ -144,7 +144,7 @@ class HollowFormTest {
                 energy |= modifier.stat().startsWith("meta.energy");
             }
             if (energy) {
-                assertNotNull(support.hostRefusal(form, skill("boneshatter")), support.id() + "：虛空形態沒有能量");
+                assertNotNull(support.hostRefusal(form, skill("spine_crush")), support.id() + "：虛空形態沒有能量");
             }
         }
     }

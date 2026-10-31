@@ -47,13 +47,13 @@ public final class SkillTriggers implements Listener {
         }
         // 2026-10-26（久印，PoE2 Eternal Mark）：第一次觸發不用掉印記（怒星照給）
         final boolean keep = !totem && event.attacker() instanceof Player marker && event.result().crit() && plugin.combat() != null
-                && plugin.combat().debuffs().has(event.defender().getUniqueId(), "hunters_mark", plugin.getServer().getCurrentTick())
-                && service.supportMechanics().keepMark(event.defender(), marker, "hunters_mark");
+                && plugin.combat().debuffs().has(event.defender().getUniqueId(), "prey_kill_mark", plugin.getServer().getCurrentTick())
+                && service.supportMechanics().keepMark(event.defender(), marker, "prey_kill_mark");
         if (keep && plugin.combat().charges() != null) {
             plugin.combat().charges().grant((Player) event.attacker(), "frenzy", 1);
         }
         if (!keep && !totem && event.attacker() instanceof Player player && event.result().crit() && plugin.combat() != null
-                && plugin.combat().debuffs().remove(event.defender().getUniqueId(), "hunters_mark", player.getUniqueId(),
+                && plugin.combat().debuffs().remove(event.defender().getUniqueId(), "prey_kill_mark", player.getUniqueId(),
                 plugin.getServer().getCurrentTick())) {
             // 狙擊印記（2026-10 PoE2）：暴擊用掉印記，給一顆怒星
             if (plugin.combat().charges() != null) {
@@ -175,7 +175,7 @@ public final class SkillTriggers implements Listener {
     /** 2026-10-26 照 PoE2 Siphon Elements（素痕湧）：冰凍（每點強度）、點燃、感電敵人時 x% 機率在牠身上留下同元素的灌注殘骸。 */
     public static final String SIPHON_REMNANT = "infusion.remnant_on_ailment";
     /** 素痕湧的技能代號（殘骸輔助掛在它上面）。 */
-    static final String SIPHON_ELEMENTS = "siphon_elements";
+    static final String SIPHON_ELEMENTS = "element_trace_surge";
 
     private void siphonRemnant(final Player player, final LivingEntity target, final tw.exilecore.ailment.AilmentType type) {
         final int element = switch (type) {

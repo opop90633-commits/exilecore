@@ -43,9 +43,9 @@ import java.util.UUID;
  */
 final class GrantedAuras implements Listener {
 
-    static final String FULMINATION = "fulmination";
-    static final String MIRROR = "mirror_of_refraction";
-    static final String RAVENS = "spiraling_conspiracy";
+    static final String FULMINATION = "thunder_resonance";
+    static final String MIRROR = "light_bend_mirror";
+    static final String RAVENS = "raven_plot";
     /** 烏鴉群打人用的隱藏技能（每隻烏鴉一份）。 */
     static final String RAVEN_STRIKE = "proc_raven_flock";
     /** 身邊（PoE2 的 Presence）多遠。 */
@@ -157,7 +157,7 @@ final class GrantedAuras implements Listener {
         }
     }
 
-    static final String FULMINATION_SUFFIX = ".fulmination";
+    static final String FULMINATION_SUFFIX = ".thunder_resonance";
 
     private static void line(final Location a, final Location b) {
         final World world = a.getWorld();
@@ -282,7 +282,7 @@ final class GrantedAuras implements Listener {
         if (victims.isEmpty()) {
             return;
         }
-        final double factor = poe2Damage(player, level) * more * 0.5; // 每半秒一次
+        final double factor = refDamage(player, level) * more * 0.5; // 每半秒一次
         final int row = MinionAbilities.row(level);
         final tw.exilecore.stats.DamagePacket packet = new tw.exilecore.stats.DamagePacket()
                 .set(tw.exilecore.stats.DamageType.CHAOS, MinionAbilities.ENTROPY_CHAOS[row] * factor)
@@ -304,12 +304,12 @@ final class GrantedAuras implements Listener {
     }
 
     /** PoE2 的傷害換成我們的要乘多少（召喚物等級 = 寶石等級 × 2，跟召喚物同一套換算）。 */
-    private double poe2Damage(final Player player, final int level) {
+    private double refDamage(final Player player, final int level) {
         if (plugin.monsters() == null) {
             return 1.0;
         }
         final tw.exilecore.monster.MonsterConfig monsters = plugin.monsters().config();
-        return MinionSheets.poe2Factors(service.config(), level, plugin.players().get(player).level(), monsters::lifeAt, monsters::damageAt)[0];
+        return MinionSheets.refFactors(service.config(), level, plugin.players().get(player).level(), monsters::lifeAt, monsters::damageAt)[0];
     }
 
     /** 亂鴉狂舞的冷卻（好了的 tick）。 */
@@ -348,7 +348,7 @@ final class GrantedAuras implements Listener {
         final Location from = center.clone().subtract(facing);
         final Location to = center.clone().add(facing);
         // 烏鴉的武器傷害：PoE2 召喚物表（召喚物等級 = 寶石等級 × 2）× 0.67、上下 20%，× 550%；30% 物理、70% 混沌
-        final double hit = MinionSheets.poe2AllyDamage(MinionSheets.allyLevel(level)) * MinionAbilities.RAVEN_DAMAGE * poe2Damage(player, level)
+        final double hit = MinionSheets.refAllyDamage(MinionSheets.allyLevel(level)) * MinionAbilities.RAVEN_DAMAGE * refDamage(player, level)
                 * MinionAbilities.FLIGHT_DAMAGE;
         final tw.exilecore.stats.DamagePacket min = new tw.exilecore.stats.DamagePacket()
                 .set(tw.exilecore.stats.DamageType.PHYSICAL, hit * (1 - MinionAbilities.RAVEN_SPREAD) * (1 - MinionAbilities.FLIGHT_CHAOS))

@@ -28,8 +28,8 @@ class MomentumSupportTest {
     }
 
     @Test
-    void definedLikePoe2() {
-        final SupportDefinition momentum = config.support("momentum");
+    void definedLikeRef() {
+        final SupportDefinition momentum = config.support("charge_impetus");
         assertNotNull(momentum, "衝勢要能切出來");
         assertEquals("衝勢", momentum.name());
         assertEquals(2, momentum.tier());
@@ -46,8 +46,8 @@ class MomentumSupportTest {
     }
 
     @Test
-    void hitAndRunLikePoe2() {
-        final SupportDefinition hitRun = config.support("hit_and_run");
+    void hitAndRunLikeRef() {
+        final SupportDefinition hitRun = config.support("swift_edge");
         assertNotNull(hitRun);
         assertEquals(1.0, hitRun.manaMultiplier(), 1e-9, "原作沒有消耗加成");
         assertTrue(hitRun.modifiers().stream().anyMatch(m -> m.stat().equals(SupportKeys.HIT_AND_RUN) && m.value() == 10), "移動 10 公尺");

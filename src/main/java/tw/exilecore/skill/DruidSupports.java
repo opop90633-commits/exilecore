@@ -70,7 +70,7 @@ public final class DruidSupports {
                     ? number(Math.abs(value * 100)) + "% " + (value < 0 ? "更少" : "更多") + "風暴移動速度"
                     : (value < 0 ? "減少 " : "增加 ") + number(Math.abs(value * 100)) + "% 風暴移動速度";
             case tw.exilecore.stats.KeystoneKeys.SKILL_LIMIT -> "同時存在的上限 " + (value < 0 ? "" : "+") + number(value);
-            case HELBRYM_SECONDS -> "讓你變身時獲得赫布林的沉著 " + number(value) + " 秒：期間受到的傷害記下來（結束前變成別的形態就沒了）";
+            case HELBRYM_SECONDS -> "讓你變身時獲得霍嵐的沉著 " + number(value) + " 秒：期間受到的傷害記下來（結束前變成別的形態就沒了）";
             case HELBRYM_GUARD -> "沉著結束時，獲得記下的傷害 " + number(value) + "% 的守護（" + number(GUARD_TICKS / 20.0) + " 秒）";
             case HELBRYM_RAGE -> "沉著結束時，獲得記下的傷害 " + number(value) + "% 的怒氣";
             default -> null;

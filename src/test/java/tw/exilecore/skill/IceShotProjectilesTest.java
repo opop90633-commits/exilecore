@@ -28,7 +28,7 @@ class IceShotProjectilesTest {
     void bowProjectilesApplyToIceShot() {
         final StatSheet sheet = new StatSheet();
         sheet.add(new Modifier(StatKeys.SKILL_PROJECTILES, ModType.FLAT, 2, Set.of("bow"), "弓"));
-        final SkillBuild build = SkillBuild.of(config, config.skill("ice_shot"), 20, 90, false, List.of(), Set.of("bow", "two_hand", "weapon"), sheet);
+        final SkillBuild build = SkillBuild.of(config, config.skill("rime_arrow"), 20, 90, false, List.of(), Set.of("bow", "two_hand", "weapon"), sheet);
         assertEquals(3, build.projectiles());
     }
 }

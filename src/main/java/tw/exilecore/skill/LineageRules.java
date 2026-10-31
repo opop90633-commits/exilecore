@@ -28,23 +28,23 @@ public final class LineageRules {
     public static final List<String> SOURCES = List.of(COMMON, RARE, PINNACLE);
 
     /** 會留下殘骸的技能（拾息能掛的）：技能寫了 resource.remnant 的、幻身、骸餘饗、燼種、虹吸元素、魔力殘影。 */
-    static final Set<String> REMNANT_SKILLS = Set.of("storm_orb", "frost_mine", "bone_cage", "snap", "ember_seed", "lingering_illusion",
-            "grim_feast", "mana_remnants");
+    static final Set<String> REMNANT_SKILLS = Set.of("thunder_cloud", "chill_crystal_mine", "bone_thorn_ring", "anomaly_devour_blast", "cinder_sprout", "phantom_body",
+            "remains_banquet", "magic_spring_well");
     /** 舉盾的技能（岳盾能掛的；照 PoE2 的 Active Block）。 */
-    static final Set<String> RAISE_SHIELD = Set.of("raise_guard", "parry");
+    static final Set<String> RAISE_SHIELD = Set.of("shield_brace", "parry");
 
     /**
      * 血脈輔助的顏色（照 RePoE skill_gems.json 的 color；沒列的是白色）：r 力量、g 敏捷、b 智慧。
      * {@link SupportColours} 查不到時看這裡（分開寫，跟一般輔助的顏色表不打架）。
      */
     private static final Map<String, Character> COLOURS = colours(
-            "r", "brutus_brain uruks_smelting cirels_cultivation daressos_passion ataluis_bloodletting einhars_beastrite kaoms_madness "
-                    + "tawhoas_tending amanamus_tithe vruuns_inevitability uhtreds_exodus uhtreds_omen uhtreds_augury xophs_pyre uul_netols_embrace",
-            "g", "eonyrs_thunder rathas_assault arjuns_medal dominus_grasp arakaalis_lust tacatis_ire garukhans_resolve tasalios_rhythm "
-                    + "atziris_impatience tuls_stillness rakiatas_flow",
-            "b", "oisins_oath vilentas_propulsion ahns_citadel doedres_undoing siones_temper romiras_requital diallas_desire kalisas_crescendo "
-                    + "tecrods_revenge ixchels_torment atziris_allure zarokhs_refrain kurgals_leash kulemaks_dominion varashtas_blessing "
-                    + "xibaquas_rending khatals_rejuvenation hayoxis_fulmination atziris_communion arbiters_ignition eshs_radiance zarokhs_revolt");
+            "r", "dull_spirit molten_armor grove_totem banner_blaze blood_seep beast_raid frenzied_rift "
+                    + "totem_blast abyss_gift stack_momentum lone_star twin_portent triple_portent ember_corrode corrode_armor",
+            "g", "thunder_blast linked_chamber bullet_honor double_chain venom_desire fury_venom twin_edge cadence_force "
+                    + "scorched_blood silent_cold counter_current",
+            "b", "element_drain thrust_chant split_rampart toad_curse shattered_star ally_repay wish_crystal silent_curse "
+                    + "wounded_fight dice_bane charm_curse triple_loop bind_demon rite_vein decree_fortune "
+                    + "ember_leap gather_breath curse_light blood_pact ember_judgment thunder_corrode myriad_seal");
 
     private static Map<String, Character> colours(final String... pairs) {
         final Map<String, Character> map = new java.util.HashMap<>();
@@ -154,38 +154,38 @@ public final class LineageRules {
         }
         final Set<String> tags = skill.tags();
         return switch (support.id()) {
-            case "ahns_citadel" -> skill.params() != null && skill.params().zone() != null && skill.params().zone().line()
+            case "split_rampart" -> skill.params() != null && skill.params().zone() != null && skill.params().zone().line()
                     ? null : "要立牆的技能（焰幕、霜壁）";
-            case "amanamus_tithe", "tecrods_revenge" -> persistentMinion(skill) ? null : "要常駐的召喚物技能";
-            case "brutus_brain" -> skill.summon() != null ? null : "要叫召喚物的技能";
-            case "arbiters_ignition" -> tags.contains(Tags.FIRE) ? null : "要火焰法術";
-            case "arbiters_reach", "her_declaration", "seraphs_heart" -> persistentBuff(skill) ? null : "要常駐的增益技能（光環、捷光環這類）";
-            case "atziris_communion" -> persistentBuff(skill) && skill.aura().reserve() > 0 ? null : "要保留精魂的常駐技能（叫召喚物的不行）";
-            case "rathas_assault", "arjuns_medal" -> SkillService.ammoSkill(skill) ? null : "要用彈匣的弩技能";
-            case "ataluis_bloodletting" -> skill.mechanic() == Mechanic.AURA ? "保留精魂的技能不行" : skill.mana().last() <= 0 ? "不花魔力的技能不行" : null;
-            case "atziris_allure", "kalisas_crescendo", "doedres_undoing", "hayoxis_fulmination" ->
+            case "abyss_gift", "wounded_fight" -> persistentMinion(skill) ? null : "要常駐的召喚物技能";
+            case "dull_spirit" -> skill.summon() != null ? null : "要叫召喚物的技能";
+            case "ember_judgment" -> tags.contains(Tags.FIRE) ? null : "要火焰法術";
+            case "guard_hymn", "awe_proclaim", "blazing_core" -> persistentBuff(skill) ? null : "要常駐的增益技能（光環、捷光環這類）";
+            case "blood_pact" -> persistentBuff(skill) && skill.aura().reserve() > 0 ? null : "要保留精魂的常駐技能（叫召喚物的不行）";
+            case "linked_chamber", "bullet_honor" -> SkillService.ammoSkill(skill) ? null : "要用彈匣的弩技能";
+            case "blood_seep" -> skill.mechanic() == Mechanic.AURA ? "保留精魂的技能不行" : skill.mana().last() <= 0 ? "不花魔力的技能不行" : null;
+            case "charm_curse", "silent_curse", "toad_curse", "curse_light" ->
                     skill.mechanic() == Mechanic.MARK && tags.contains("curse") ? null : "要詛咒技能";
-            case "breachlords_amalgam" -> skill.mechanic() != Mechanic.PROJECTILE ? "要真的射出投射物的技能"
+            case "rift_tide" -> skill.mechanic() != Mechanic.PROJECTILE ? "要真的射出投射物的技能"
                     : !tags.contains(Tags.COLD) && !tags.contains(Tags.LIGHTNING) ? "要冰冷或閃電技能"
                     : skill.cooldown() > 0 ? "本來就有冷卻的技能不行" : null;
-            case "zarokhs_refrain", "tuls_avalanche" -> !cascadable(skill) ? "要可以連瀑的範圍法術（以自己為中心、落在準心的，或詛咒）"
+            case "triple_loop", "snow_seal" -> !cascadable(skill) ? "要可以連瀑的範圍法術（以自己為中心、落在準心的，或詛咒）"
                     : skill.cooldown() > 0 ? "本來就有冷卻的技能不行" : sealed(skill) ? "本來就會蓄封印的技能不行" : null;
-            case "zarokhs_revolt" -> skill.cooldown() > 0 ? "本來就有冷卻的技能不行" : sealed(skill) ? "本來就會蓄封印的技能不行"
+            case "myriad_seal" -> skill.cooldown() > 0 ? "本來就有冷卻的技能不行" : sealed(skill) ? "本來就會蓄封印的技能不行"
                     : skill.castTime() <= 0 || skill.mechanic() == Mechanic.AURA || skill.summon() != null ? "要會施放的法術" : null;
-            case "eshs_prowess", "prototype_seventeen", "voranas_siege", "morrigans_insight" ->
+            case "peak_thunder", "fury_aim", "lone_encircle", "frost_swap" ->
                     skill.dealsDamage() ? null : "不會造成傷害的技能不行";
-            case "medveds_felling", "vruuns_inevitability" -> skill.isAttack() ? null : "要近戰攻擊";
-            case "olroths_hubris" -> skill.mana().last() <= 0 ? "不花魔力的技能不行" : null;
-            case "siones_temper", "vilentas_propulsion" -> !tags.contains(Tags.SPELL) ? "要投射物法術"
+            case "frenzy_chop", "stack_momentum" -> skill.isAttack() ? null : "要近戰攻擊";
+            case "proud_frost" -> skill.mana().last() <= 0 ? "不花魔力的技能不行" : null;
+            case "shattered_star", "thrust_chant" -> !tags.contains(Tags.SPELL) ? "要投射物法術"
                     : skill.mechanic() != Mechanic.PROJECTILE ? "要真的射出投射物的技能" : null;
-            case "styrns_ferocity" -> Warcries.SHIELD_ATTACKS.contains(skill.id()) ? null : "要盾牌技能（盾衝、共鳴之盾、盾牆）";
-            case "styrns_mountain" -> RAISE_SHIELD.contains(skill.id()) ? null : "要舉盾的技能（架盾、招架）";
-            case "tasalios_rhythm" -> perfectTiming(skill) ? null : "要有完美時機的技能";
-            case "tricksters_shard" -> skill.castTime() <= 0 || skill.mechanic() == Mechanic.AURA || skill.summon() != null
+            case "crush_shield" -> Warcries.SHIELD_ATTACKS.contains(skill.id()) ? null : "要盾牌技能（盾衝、共鳴之盾、盾牆）";
+            case "peak_shield" -> RAISE_SHIELD.contains(skill.id()) ? null : "要舉盾的技能（架盾、招架）";
+            case "cadence_force" -> perfectTiming(skill) ? null : "要有完美時機的技能";
+            case "illusion_split" -> skill.castTime() <= 0 || skill.mechanic() == Mechanic.AURA || skill.summon() != null
                     || skill.mechanic() == Mechanic.META ? "要不是瞬間施放的法術" : null;
-            case "uhtreds_constellation" -> skill.castTime() <= 0 && !skill.isAttack() ? "瞬間施放的技能不行" : null;
-            case "xibaquas_rending" -> skill.mechanic() == Mechanic.LEAP ? null : "要跳躍的技能（躍擊這類）";
-            case "khatals_rejuvenation" -> generatesRemnants(skill) ? null : "要會留下殘骸的技能";
+            case "star_law" -> skill.castTime() <= 0 && !skill.isAttack() ? "瞬間施放的技能不行" : null;
+            case "ember_leap" -> skill.mechanic() == Mechanic.LEAP ? null : "要跳躍的技能（躍擊這類）";
+            case "gather_breath" -> generatesRemnants(skill) ? null : "要會留下殘骸的技能";
             default -> null;
         };
     }

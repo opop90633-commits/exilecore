@@ -23,13 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 2026-10-28 照 PoE2 Spell Totem（Totemable）：雷遁、骸爆、五個詛咒、縛根交給星咒圖騰（{@link TotemRules#spellTotemCastable}）。
  * 這次之前這 8 個原作 Totemable 的法術插不進星咒圖騰（tools/audit_poe2_meta_sockets.py 列成偏差）。
  */
-class TotemCastingPoe2Test {
+class TotemCastingRefTest {
 
     static SkillConfig config;
 
     /** 原作 Totemable、這次之前我們的圖騰放不出來的。 */
-    static final List<String> NOW_TOTEMABLE = List.of("storm_blink", "detonate_dead", "elemental_weakness_curse", "enfeeble_curse",
-            "temporal_curse", "vulnerability_curse", "despair_curse", "entangle");
+    static final List<String> NOW_TOTEMABLE = List.of("thunder_escape", "corpse_burst", "triple_element_curse", "strength_sap_curse",
+            "sluggish_curse", "wound_scar_curse", "soul_wither_curse", "root_bind");
 
     @BeforeAll
     static void load() throws IOException {
@@ -38,8 +38,8 @@ class TotemCastingPoe2Test {
     }
 
     @Test
-    void poe2TotemableSpellsFitSpellTotem() {
-        final MetaSpec totem = config.meta("totem_casting");
+    void refTotemableSpellsFitSpellTotem() {
+        final MetaSpec totem = config.meta("star_spell_totem");
         for (final String id : NOW_TOTEMABLE) {
             final SkillDefinition spell = config.skill(id);
             assertNotNull(spell, id);
@@ -50,23 +50,23 @@ class TotemCastingPoe2Test {
 
     @Test
     void nonTotemableStayRefused() {
-        final MetaSpec totem = config.meta("totem_casting");
+        final MetaSpec totem = config.meta("star_spell_totem");
         // 閃現：原作 Spell + Cooldown + Travel（沒有 Totemable／Triggerable）；鏡影穿霧：原作沒有、有冷卻、幻霧之鏡專屬
-        for (final String id : List.of("blink", "mirror_step", "hunters_mark", "voltaic_mark", "freezing_mark", "bloodhounds_mark")) {
+        for (final String id : List.of("blink", "reflection_mist_pass", "prey_kill_mark", "thunder_lure_seal", "frostbind_seal", "blood_scent_seal")) {
             assertNotNull(MetaGems.problem(totem, config.skill(id)), id);
         }
         assertFalse(TotemRules.spellTotemCastable(config.skill("blink")), "一般衝刺圖騰放不出來");
-        assertFalse(TotemRules.spellTotemCastable(config.skill("summon_mount")), "一般衝刺圖騰放不出來");
-        assertFalse(TotemRules.spellTotemCastable(config.skill("hunters_mark")), "沒有範圍的印記不是詛咒");
+        assertFalse(TotemRules.spellTotemCastable(config.skill("steed_call")), "一般衝刺圖騰放不出來");
+        assertFalse(TotemRules.spellTotemCastable(config.skill("prey_kill_mark")), "沒有範圍的印記不是詛咒");
         // 被觸發的路徑照舊：閃現、鏡影穿霧不能插暴擊引星（原作不是 Triggerable）
-        assertNotNull(MetaGems.problem(config.meta("meta_crit"), config.skill("blink")));
-        assertNotNull(MetaGems.problem(config.meta("meta_crit"), config.skill("mirror_step")));
+        assertNotNull(MetaGems.problem(config.meta("critical_guide_star"), config.skill("blink")));
+        assertNotNull(MetaGems.problem(config.meta("critical_guide_star"), config.skill("reflection_mist_pass")));
     }
 
     @Test
     void totemBuildsBecomeTotems() {
         final StatSheet sheet = new StatSheet();
-        final SupportDefinition carrier = new SupportDefinition("meta.totem_casting", "星咒圖騰", "", "PAPER", 1, Set.of(), Set.of(), 1.0,
+        final SupportDefinition carrier = new SupportDefinition("meta.star_spell_totem", "星咒圖騰", "", "PAPER", 1, Set.of(), Set.of(), 1.0,
                 List.of(Modifier.flat(StatKeys.FLAG_SPELL_TOTEM, 1, "星咒圖騰")), List.of());
         for (final String id : NOW_TOTEMABLE) {
             final SkillBuild build = SkillBuild.of(config, config.skill(id), 10, 60, false, List.of(carrier), Set.of(Tags.BOW), sheet);

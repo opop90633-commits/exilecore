@@ -81,10 +81,10 @@ class TreeSystemsTest {
         final List<Modifier> copied = MinionSheets.ownerModifiers(owner);
         assertEquals(4, copied.size());
 
-        final SkillDefinition wolf = config.skill("beast_companion");
-        final SkillDefinition zombie = config.skill("raise_zombie");
+        final SkillDefinition wolf = config.skill("wild_beast_taming");
+        final SkillDefinition zombie = config.skill("corpse_summon");
         assertTrue(wolf.tags().contains(TreeMechanicKeys.COMPANION), "荒原狼伴是夥伴");
-        assertTrue(config.skill("wolf_pack").tags().contains(TreeMechanicKeys.COMPANION), "PoE2 的狼群也是夥伴");
+        assertTrue(config.skill("grey_wolf_escort").tags().contains(TreeMechanicKeys.COMPANION), "PoE2 的狼群也是夥伴");
         assertFalse(zombie.tags().contains(TreeMechanicKeys.COMPANION));
 
         final MinionSheets.Base base = base(40);
@@ -112,7 +112,7 @@ class TreeSystemsTest {
     void alliesInPresenceOnlyWhileInRange() {
         final Set<String> presence = Set.of(Tags.MINION, TreeMechanicKeys.IN_PRESENCE);
         final List<Modifier> mods = List.of(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, 0.08, presence, "存在範圍"));
-        final SkillDefinition zombie = config.skill("raise_zombie");
+        final SkillDefinition zombie = config.skill("corpse_summon");
         final List<Modifier> near = MinionSheets.forMinion(mods, MinionSheets.conditions(zombie, true));
         assertEquals(1, near.size());
         assertEquals(Set.of(Tags.MINION), near.getFirst().tags(), "範圍內：拿掉 in_presence");
@@ -126,22 +126,22 @@ class TreeSystemsTest {
 
     @Test
     void skillsCarryTheSystemTags() {
-        for (final String banner : List.of("defiance_banner", "war_banner", "dread_banner")) {
+        for (final String banner : List.of("bedrock_flag", "campaign_flag", "foe_daunt_flag")) {
             assertTrue(config.skill(banner).tags().containsAll(Set.of(TreeMechanicKeys.BANNER, Tags.AREA, Tags.DURATION)), banner);
         }
-        for (final String offering : List.of("blood_offering", "bone_offering", "soul_offering")) {
+        for (final String offering : List.of("bloodthirst_rite", "bone_rite", "soulfire_rite")) {
             assertTrue(config.skill(offering).tags().containsAll(Set.of(TreeMechanicKeys.OFFERING, Tags.AREA, Tags.DURATION)), offering);
         }
-        assertTrue(config.skill("siege_ballista").tags().containsAll(Set.of(TreeMechanicKeys.BALLISTA, Tags.TOTEM)));
-        assertTrue(config.skill("artillery_ballista").tags().containsAll(Set.of(TreeMechanicKeys.BALLISTA, Tags.TOTEM)));
+        assertTrue(config.skill("skyward_crossbow_turret").tags().containsAll(Set.of(TreeMechanicKeys.BALLISTA, Tags.TOTEM)));
+        assertTrue(config.skill("nailfall_crossbow_turret").tags().containsAll(Set.of(TreeMechanicKeys.BALLISTA, Tags.TOTEM)));
         assertTrue(config.skill("proc_parry_sweep").tags().contains(TreeMechanicKeys.PARRY));
-        assertTrue(config.skill("trail_of_caltrops").tags().contains(TreeMechanicKeys.HAZARD));
+        assertTrue(config.skill("thornburr_steps").tags().contains(TreeMechanicKeys.HAZARD));
         assertTrue(config.skill("proc_caltrops").tags().contains(TreeMechanicKeys.HAZARD));
-        assertTrue(config.skill("spear_thicket").tags().contains(TreeMechanicKeys.HAZARD));
-        assertTrue(config.skill("bramble_arrow").tags().contains(TreeMechanicKeys.PLANT));
-        assertTrue(config.skill("detonate_dead").tags().contains(TreeMechanicKeys.DETONATOR));
-        assertTrue(config.skill("flame_stream").tags().contains(TreeMechanicKeys.CHANNELLING));
-        assertTrue(config.skill("snipe").tags().contains(TreeMechanicKeys.CHANNELLING));
+        assertTrue(config.skill("spear_formation").tags().contains(TreeMechanicKeys.HAZARD));
+        assertTrue(config.skill("thorn_shaft").tags().contains(TreeMechanicKeys.PLANT));
+        assertTrue(config.skill("corpse_burst").tags().contains(TreeMechanicKeys.DETONATOR));
+        assertTrue(config.skill("burning_current").tags().contains(TreeMechanicKeys.CHANNELLING));
+        assertTrue(config.skill("cloud_pierce_arrow").tags().contains(TreeMechanicKeys.CHANNELLING));
         assertEquals("夥伴", ModifierText.tagName(TreeMechanicKeys.COMPANION));
     }
 
@@ -151,16 +151,16 @@ class TreeSystemsTest {
         sheet.add(new Modifier(StatKeys.SKILL_AREA, ModType.INCREASED, 0.44, Set.of(TreeMechanicKeys.BANNER), "戰旗範圍"));
         sheet.add(new Modifier(StatKeys.SKILL_DURATION, ModType.INCREASED, 0.20, Set.of(TreeMechanicKeys.BANNER), "戰旗持續"));
         sheet.add(new Modifier(StatKeys.WARCRY_EFFECT, ModType.INCREASED, 0.12, Set.of(TreeMechanicKeys.BANNER), "戰旗效果"));
-        final int plainCooldown = build("war_banner", new StatSheet(), Set.of(Tags.MACE)).cooldownTicks();
+        final int plainCooldown = build("campaign_flag", new StatSheet(), Set.of(Tags.MACE)).cooldownTicks();
         sheet.add(new Modifier(StatKeys.COOLDOWN_RECOVERY, ModType.INCREASED, 0.25, Set.of(TreeMechanicKeys.BANNER), "榮耀獲得（當作冷卻回復）"));
-        final SkillBuild banner = build("war_banner", sheet, Set.of(Tags.MACE));
+        final SkillBuild banner = build("campaign_flag", sheet, Set.of(Tags.MACE));
         assertEquals(Math.round(plainCooldown / 1.25), banner.cooldownTicks(), 1);
         assertTrue(treeTags(StatKeys.COOLDOWN_RECOVERY).contains(Set.of(TreeMechanicKeys.BANNER)));
         assertEquals(1.2, banner.areaScale(), 1e-9);
         // 2026-10-28 照 PoE2：戰旗持續 6 → 9.8 秒寫成逐級的「增加持續時間」（10 級 +30%），跟樹上的 +20% 加在一起；這次之前 1.2
         assertEquals(1.5, banner.durationScale(), 1e-9);
         assertEquals(1.12, banner.auraEffect(), 1e-9);
-        final SkillBuild cry = build("infernal_cry", sheet, Set.of(Tags.MACE));
+        final SkillBuild cry = build("hellfire_war_shout", sheet, Set.of(Tags.MACE));
         assertEquals(1.0, cry.durationScale(), 1e-9, "一般的戰吼不吃戰旗的");
         assertTrue(treeTags(StatKeys.SKILL_AREA).contains(Set.of(TreeMechanicKeys.BANNER)));
         assertTrue(treeTags(StatKeys.WARCRY_EFFECT).contains(Set.of(TreeMechanicKeys.BANNER)));
@@ -170,8 +170,8 @@ class TreeSystemsTest {
     void ballistaTotemLimitAndTotemSkillSpeed() {
         final StatSheet sheet = new StatSheet();
         sheet.add(new Modifier(StatKeys.SKILL_TOTEMS, ModType.FLAT, 1, Set.of(Tags.ATTACK, TreeMechanicKeys.BALLISTA), "弩台上限"));
-        final SkillBuild ballista = build("siege_ballista", sheet, Set.of(Tags.CROSSBOW, Tags.RANGED, Tags.TWO_HAND));
-        final SkillBuild plain = build("siege_ballista", new StatSheet(), Set.of(Tags.CROSSBOW, Tags.RANGED, Tags.TWO_HAND));
+        final SkillBuild ballista = build("skyward_crossbow_turret", sheet, Set.of(Tags.CROSSBOW, Tags.RANGED, Tags.TWO_HAND));
+        final SkillBuild plain = build("skyward_crossbow_turret", new StatSheet(), Set.of(Tags.CROSSBOW, Tags.RANGED, Tags.TWO_HAND));
         assertEquals(plain.totems() + 1, ballista.totems(), "+1 弩台");
         assertTrue(treeTags(StatKeys.DAMAGE).contains(Set.of(Tags.TOTEM, TreeMechanicKeys.BALLISTA)));
         assertTrue(treeHas(StatKeys.SKILL_TOTEMS));
@@ -181,7 +181,7 @@ class TreeSystemsTest {
     void empoweredTriggeredAndInvocationTags() {
         assertEquals(Set.of(TreeMechanicKeys.TRIGGERED), SkillService.triggeredTags(Set.of(Tags.META, Tags.PERSISTENT)));
         assertEquals(Set.of(TreeMechanicKeys.TRIGGERED, TreeMechanicKeys.INVOCATION),
-                SkillService.triggeredTags(config.skill("meta_elemental_invocation").tags())); // 2026-10-26：照 PoE2 異變引星不是 Invocation，改用元祈引星
+                SkillService.triggeredTags(config.skill("element_prayer_star").tags())); // 2026-10-26：照 PoE2 異變引星不是 Invocation，改用元祈引星
         assertTrue(treeTags(StatKeys.DAMAGE).contains(Set.of(Tags.ATTACK, TreeMechanicKeys.EMPOWERED)));
         assertTrue(treeTags(StatKeys.DAMAGE).contains(Set.of(Tags.SPELL, TreeMechanicKeys.TRIGGERED)));
         assertTrue(treeTags(StatKeys.DAMAGE).contains(Set.of(TreeMechanicKeys.INVOCATION)));
@@ -215,11 +215,11 @@ class TreeSystemsTest {
         sheet.add(Modifier.increased(StatKeys.META_ENERGY_GAIN, 0.15, "主要寶石能量"));
         sheet.add(Modifier.more(StatKeys.META_ENERGY_GAIN, 0.35, "更多能量"));
         sheet.add(Modifier.flat(StatKeys.META_ENERGY_REFUND, 25, "退還"));
-        final double[] invocation = MetaGems.sheetEnergy(sheet, config.skill("meta_elemental_invocation").tags()); // 2026-10-26：照 PoE2 改用元祈引星（異變引星不是 Invocation）
+        final double[] invocation = MetaGems.sheetEnergy(sheet, config.skill("element_prayer_star").tags()); // 2026-10-26：照 PoE2 改用元祈引星（異變引星不是 Invocation）
         assertEquals(1.15 * 1.35, invocation[0], 1e-9);
         assertEquals(1.30, invocation[1], 1e-9);
         assertEquals(25, invocation[2], 1e-9);
-        assertEquals(1.0, MetaGems.sheetEnergy(sheet, config.skill("meta_crit").tags())[1], 1e-9, "暴擊引星不是 Invocation");
+        assertEquals(1.0, MetaGems.sheetEnergy(sheet, config.skill("critical_guide_star").tags())[1], 1e-9, "暴擊引星不是 Invocation");
     }
 
     @Test

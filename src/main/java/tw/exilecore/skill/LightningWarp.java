@@ -14,7 +14,7 @@ package tw.exilecore.skill;
 public final class LightningWarp {
 
     /** 滾雷珠的技能代號。 */
-    static final String BALL = "ball_lightning";
+    static final String BALL = "rolling_thunder_orb";
     /** 找滾雷珠時離準心射線幾格內算指著（跟敵人的 1.5 格一樣）。 */
     static final double BALL_TOLERANCE = 1.5;
 

@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 2026-10-27 照站長「遲爆、再布 II 先做成原作」：矛陣改成照 PoE2 0.5 Spearfield（插在地上、敵人碰到才炸的矛），
  * 遲爆（Delayed Reaction）、再布 II（Rearm II）跟冰晶、鐵蒺一樣照原作作用在矛上。
  */
-class Poe2SpearfieldTest {
+class RefSpearfieldTest {
 
     static SkillConfig config;
 
@@ -32,11 +32,11 @@ class Poe2SpearfieldTest {
     }
 
     @Test
-    void spearfieldIsAConeOfSpearsLikePoe2() {
-        final SkillDefinition skill = config.skill("spear_thicket");
+    void spearfieldIsAConeOfSpearsLikeRef() {
+        final SkillDefinition skill = config.skill("spear_formation");
         assertNotNull(skill);
         assertEquals(Mechanic.CONE, skill.mechanic(), "照 PoE2：面前扇形冒出矛（這次之前準心處持續打的範圍）");
-        assertEquals(Spearfield.SIGNATURE, config.signature("spear_thicket"));
+        assertEquals(Spearfield.SIGNATURE, config.signature("spear_formation"));
         assertTrue(OriginalSkills.SIGNATURES.contains(Spearfield.SIGNATURE), "整個交給 OriginalSkills（Spearfield）");
         assertTrue(skill.tags().contains(TreeMechanicKeys.HAZARD), "矛是危險物件");
         final StatSheet sheet = new StatSheet();
@@ -71,9 +71,9 @@ class Poe2SpearfieldTest {
 
     @Test
     void delayedReactionAndRearmWorkOnSpears() {
-        final SkillDefinition skill = config.skill("spear_thicket");
-        final SupportDefinition delayed = config.support("delayed_reaction");
-        final SupportDefinition rearm = config.support("rearm_ii");
+        final SkillDefinition skill = config.skill("spear_formation");
+        final SupportDefinition delayed = config.support("late_blast");
+        final SupportDefinition rearm = config.support("redeploy_ii");
         assertNull(delayed.refusal(skill), "遲爆可以輔助矛陣");
         assertNull(rearm.refusal(skill), "再布 II 可以輔助矛陣");
         final StatSheet sheet = new StatSheet();

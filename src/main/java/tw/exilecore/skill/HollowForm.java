@@ -50,8 +50,8 @@ public final class HollowForm {
 
     /** 有使用條件的近戰攻擊（原作 Conditional／HasUsageCondition；我們的代號）。 */
     static final Set<String> CONDITIONAL = Set.of(
-            "tempest_bell",     // 驚雷之鐘：要連擊
-            "hammer_of_gods");  // 天罰巨鎚：要榮耀
+            "startling_thunder_bell",     // 驚雷之鐘：要連擊
+            "heaven_punish_maul");  // 天罰巨鎚：要榮耀
 
     /** 這個技能是不是空無型態。 */
     public static boolean hosts(final SkillDefinition skill) {

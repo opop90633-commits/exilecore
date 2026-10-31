@@ -98,55 +98,55 @@ public final class GemAttributes {
             "SD", new Weights(50, 50, 0), "DI", new Weights(0, 50, 50), "SI", new Weights(50, 0, 50),
             "S75I25", new Weights(75, 0, 25));
 
-    /** 技能代號 → 分配。有 PoE2 對應的照 RePoE（poe2_skills.csv／gem_quality.yml 寫的原作名）；自創的照效果歸類（見類別說明）。 */
+    /** 技能代號 → 分配。有 PoE2 對應的照 RePoE（ref_skills.csv／gem_quality.yml 寫的原作名）；自創的照效果歸類（見類別說明）。 */
     private static final Map<String, Weights> SKILLS = new HashMap<>();
 
     static {
         table(
-            entry("S", "leap_slam earthquake boneshatter ancestral_totem raise_guard shockwave_totem herald_of_ash fortifying_cry "
-                    + "infernal_cry seismic_cry rolling_slam volcanic_fissure armour_breaker shield_rush shatter_spikes magma_spray "
-                    + "true_strike stampede forge_hammer hammer_of_gods sunder supercharged_slam resonating_shield "
-                    + "berserk overwhelming_presence scavenged_plating eternal_rage iron_ward shield_wall magma_barrier "
+            entry("S", "soaring_smash ground_tremor spine_crush hero_spirit_totem shield_brace collapse_quake_totem ember_envoy stalwart_war_shout "
+                    + "hellfire_war_shout ground_shake_shout field_quake_hammers flame_vein_rift plate_crush_hammer iron_wall_ram earth_spike_eruption lava_splash "
+                    + "charged_blow rushing_thunder_stomp returning_smith_hammer heaven_punish_maul sunder thousand_weight_smash shield_drum "
+                    + "crimson_wrath awe_suppress gathered_scales unquenched_fury iron_rampart_guard earth_wall_strike magma_barrier "
                     // 自創／專屬：近戰猛擊、戰吼（架盾是盾牌賦予的，原作沒有需求，照效果算力量）
-                    + "ancestral_cry shrine_prayer chain_lash bone_fissure "),
-            entry("D", "caustic_arrow rain_of_arrows lightning_arrow escape_shot ice_shot tornado_shot lightning_spear whirling_slash "
-                    + "whirlwind_lance hunters_mark beast_companion herald_of_thunder thunder_arrow frost_volley storm_javelin "
-                    + "spear_thicket rapid_thrust shock_arrow bramble_arrow venom_burst_arrow spiral_volley blast_arrow chain_arrow "
-                    + "gale_spear serpent_fury prism_rend thunder_leap blood_harvest sunfire_spear explosive_spear fangs_of_frost "
-                    + "snipe disengage parry glacial_lance primal_strikes cull_the_weak toxic_growth magnetic_salvo voltaic_mark "
-                    + "bloodhounds_mark ice_tipped_arrows linked_volley toxic_domain alchemists_boon trail_of_caltrops summon_mount "
-                    + "mirage_archer plague_bearer wind_dancer combat_frenzy herald_of_plague rake "
+                    + "molten_soul_shriek altar_niche_blessing shackle_chain_sweep bone_crack_leyline "),
+            entry("D", "venom_etch_arrow myriad_arrow_fall thunderclap_arrow leapback_shoot rime_arrow sky_rend_arrow thunder_lance_throw spinning_spear_strike "
+                    + "hurricane_spear prey_kill_mark wild_beast_taming thunder_envoy thunder_call_shaft chill_fan_shafts thunderfall_spear "
+                    + "spear_formation triple_stab electrocute_shaft thorn_shaft toxic_blast_shaft helix_arrow_rain flame_blast_shaft linked_lightning_arrow "
+                    + "cyclone_spear snake_squall_thrust facet_light_rift thunder_bound blood_hunt blazing_sun_spear explosive_spear frost_tooth_stab "
+                    + "cloud_pierce_arrow spear_recoil_leap parry ice_cone_toss thunderclap_stab cripple_purge miasma_bud_rain magnet_thunder_barrage thunder_lure_seal "
+                    + "blood_scent_seal frost_arrowhead strung_pearls miasma_zone potion_craft_insight thornburr_steps steed_call "
+                    + "phantom_bow_shade pestilence_sac_burst breeze_dance_step battle_spirit_rise plague_envoy blood_tear_sweep "
                     // 自創／專屬：投射物攻擊、閃擊、印記（招架是小盾賦予的，原作沒有需求，照效果算敏捷）
-                    + "lightning_rod rift_slash starfall_volley nameless_backstab execution_mark "),
-            entry("SD", "explosive_bolt permafrost_bolts rapid_fire explosive_grenade gas_grenade armour_piercing_bolt "
-                    + "concussion_grenade galvanic_bolts siege_salvo hail_rounds defiance_banner piercing_rounds incendiary_shot "
-                    + "frost_bolt_round storm_bolts oil_grenade voltaic_grenade cluster_grenade attrition war_banner dread_banner "
-                    + "glacial_bolt plasma_blast herald_of_blood emergency_reload shard_scavenger fragmentation_rounds "
-                    + "stormblast_bolts siege_ballista artillery_ballista "),
-            entry("DI", "tempest_flurry ice_strike storm_wave killing_palm tempest_bell herald_of_ice gale_sweep vault_strike "
-                    + "whirling_rush siphon_strike reeling_palm frost_palm frost_wave storm_staff ruin_mantra falling_thunder "
-                    + "glacial_cascade flicker_strike gathering_storm freezing_mark ghost_dance lingering_illusion charge_regulation "
-                    + "elemental_trinity frozen_locus meta_dodge meta_elemental_invocation meta_reaper_invocation "
-                    + "meta_barrier_invocation hand_of_chayula "),
-            entry("I", "fireball frost_nova spark arc comet flame_wall detonate_dead raise_zombie raging_spirits vulnerability_curse "
-                    + "despair_curse elemental_weakness_curse enfeeble_curse temporal_curse blood_offering bone_offering "
-                    + "soul_offering firestorm ember_volley storm_orb lightning_pillar hex_burst bone_storm "
-                    + "skeletal_brute skeletal_archers skeletal_pyromancer skeletal_stormcaller frost_aegis frost_mine ice_wall "
-                    + "storm_blink inferno_blast sun_orb ember_seed winter_eye bone_spikes dark_idol skeletal_reaver "
-                    + "skeletal_frostcaller mana_storm flame_stream bound_spectre skeletal_cleric frostbolt ball_lightning "
-                    + "essence_drain contagion frost_darts profane_ritual withering_presence blink mana_remnants ravenous_swarm "
+                    + "thunder_stake_shaft void_split_flash star_drop_arrow unnamed_rear_stab execute_brand "),
+            entry("SD", "blasting_quarrel frozen_earth_repeater successive_shots blast_grenade miasma_grenade armor_break_quarrel "
+                    + "tremor_grenade thunder_shard_scatter fortress_crumble_shell freezing_rain_shell bedrock_flag armor_punch_slug flame_scatter_fire "
+                    + "cold_congeal_shell thunder_squall_quarrels kerosene_grenade thunderlight_grenade mother_child_grenade grinding_will campaign_flag foe_daunt_flag "
+                    + "frozen_wall_shaft searing_slurry_cannon blood_proclaim hasty_load crystal_pickup_load shrapnel_shell "
+                    + "lurking_thunder_shell skyward_crossbow_turret nailfall_crossbow_turret "),
+            entry("DI", "gale_combo frost_shockwave thunder_surge soul_sever_palm startling_thunder_bell frost_envoy mist_staff_sweep leaping_staff_crash "
+                    + "spinning_staff_step thunder_draw_staff pulse_quake_palm cold_spirit_palm frost_billow thunderbind_staff collapse_heart_chant startle_thunder_chop "
+                    + "ice_ridge_rift instant_shadow_strike thunder_lure_thrust frostbind_seal spectral_step phantom_body star_reign_art "
+                    + "tripod_element_art retreat_crystal_freeze roll_guide_star element_prayer_star scythe_prayer_star "
+                    + "ward_prayer_star glow_jade_hand "),
+            entry("I", "blazing_star_shell frost_star_blast roaming_thunder chain_thunder falling_star flame_curtain corpse_burst corpse_summon summon_burning_souls wound_scar_curse "
+                    + "soul_wither_curse triple_element_curse strength_sap_curse sluggish_curse bloodthirst_rite bone_rite "
+                    + "soulfire_rite flowing_flame_canopy starfire_bead_chain thunder_cloud sky_column_thunder erosion_curse_rift shattered_bone_darts "
+                    + "summon_bone_heavy summon_bone_bowmen summon_bone_flamecaster summon_bone_thundermage winter_shell chill_crystal_mine frost_rampart "
+                    + "thunder_escape flame_core_detonation scorching_sun_pearl cinder_sprout cold_winter_gaze dig_remains nether_puppet summon_bone_berserker "
+                    + "summon_bone_frostmage magic_surge burning_current soul_attach_art summon_bone_priest frost_drill rolling_thunder_orb "
+                    + "soul_draw_shot plague_taint ice_shuttle filth_array wilting_breath blink magic_spring_well insect_devour_horde "
                     // 自創／專屬：法術、召喚物的指令、引星
-                    + "elemental_pulse infusion_bolt archmage "
-                    + "elemental_conflux bone_cage snap convalescence grim_feast sacrifice siphon_elements void_meteor oblivion_ray "
-                    + "storm_labyrinth fourfold_ray tide_call abyssal_pull dawn_pillar coin_barrage rift_hand breach_ring "
-                    + "blood_altar tribute_spears mirror_shards mirror_step abyss_grasp meta_crit meta_ailment meta_minion_death "
-                    + "blasphemy "), // 2026-10-29 照 PoE2 Blasphemy（咒環）：智慧
+                    + "elemental_pulse infusion_bolt arcane_heart "
+                    + "element_tide bone_thorn_ring anomaly_devour_blast shield_restore_art remains_banquet servant_corpse_swap element_trace_surge hollow_star_fall annihilation_death_beam "
+                    + "thunder_prison_maze four_way_death_beam summon_tide whale_gulp_vortex morning_light_column gold_coin_hail fissure_hand fissure_spread "
+                    + "blood_sacrifice_dais offering_blood_spear broken_looking_glass reflection_mist_pass deep_chasm_hand critical_guide_star mutation_guide_star fallen_servant_star "
+                    + "curse_ring "), // 2026-10-29 照 PoE2 Blasphemy（咒環）：智慧
             // 德魯伊：原作的變身寶石是力量＋智慧（撼山爪、疾爪、血牙在原作是形態賦予的，照同一型的變身技能算）
-            entry("SI", "bear_maul bear_slam mountain_fury rampage walking_calamity wolf_shred lunar_assault wolf_rend pounce "
-                    + "cross_slash arctic_howl ferocious_roar lunar_blessing wyvern_rend wing_blast rolling_magma devour oil_barrage "
-                    + "flame_breath thunderstorm primal_tornado thrashing_vines volcano entangle barkskin briarpatch savage_fury "
-                    + "wolf_pack totem_casting "),
-            entry("S75I25", "time_of_need "));
+            entry("SI", "mountain_shake_claw field_quake_stomp molten_crack_stomp brute_charge fallen_star_bear_roar swift_claw crescent_claw wolf_rend pounce "
+                    + "crisscross_claw cold_night_howl armor_rend_bear_roar silver_moon_shelter wing_blade_slash wingbeat_gust molten_ball gnawing_bite black_oil_rain "
+                    + "flame_breath gathered_thundercloud wild_whirlwind lashing_thorns volcano root_bind wood_armor thorn_body beast_blood_boil "
+                    + "grey_wolf_escort star_spell_totem "),
+            entry("S75I25", "guard_moment "));
     }
 
     private GemAttributes() {

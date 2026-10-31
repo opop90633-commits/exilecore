@@ -26,13 +26,13 @@ class SkillResourceHookTest {
 
     @Test
     void tempestBellNeedsFourCombo() {
-        assertEquals(4, config.resource("tempest_bell").combo());
-        assertEquals(0.5, config.skill("tempest_bell").cooldown(), 1e-9, "照 PoE2 冷卻 0.5 秒（這次之前用 3 秒代替連擊）");
+        assertEquals(4, config.resource("startling_thunder_bell").combo());
+        assertEquals(0.5, config.skill("startling_thunder_bell").cooldown(), 1e-9, "照 PoE2 冷卻 0.5 秒（這次之前用 3 秒代替連擊）");
     }
 
     @Test
     void bannersNeedGloryFromAttackHits() {
-        for (final String id : List.of("defiance_banner", "war_banner", "dread_banner")) {
+        for (final String id : List.of("bedrock_flag", "campaign_flag", "foe_daunt_flag")) {
             assertEquals(0, config.skill(id).cooldown(), 1e-9, id);
             assertEquals(200, config.skill(id).warcry().extras().glory(), id);
             assertEquals("attack_hit", config.resource(id).gloryFrom(), id);
@@ -41,21 +41,21 @@ class SkillResourceHookTest {
 
     @Test
     void glorySpellsHaveNoCooldown() {
-        assertEquals(20, config.resource("sunfire_spear").glory());
-        assertEquals("ailment", config.resource("sunfire_spear").gloryFrom());
-        assertEquals(0, config.skill("sunfire_spear").cooldown(), 1e-9);
-        assertEquals(20, config.resource("hammer_of_gods").glory());
-        assertEquals("heavy_stun", config.resource("hammer_of_gods").gloryFrom());
-        assertEquals(0, config.skill("hammer_of_gods").cooldown(), 1e-9);
+        assertEquals(20, config.resource("blazing_sun_spear").glory());
+        assertEquals("ailment", config.resource("blazing_sun_spear").gloryFrom());
+        assertEquals(0, config.skill("blazing_sun_spear").cooldown(), 1e-9);
+        assertEquals(20, config.resource("heaven_punish_maul").glory());
+        assertEquals("heavy_stun", config.resource("heaven_punish_maul").gloryFrom());
+        assertEquals(0, config.skill("heaven_punish_maul").cooldown(), 1e-9);
     }
 
     @Test
-    void triggeredLifeDamageFollowsPoe2() {
+    void triggeredLifeDamageFollowsRef() {
         // 2026-10-26 照 PoE2：觸發技能的傷害照敵人最大生命
         assertEquals(10, config.lifeDamage("proc_fiery_death"), 1e-9);
         assertEquals(10, config.lifeDamage("proc_frozen_spite"), 1e-9);
         assertEquals(25, config.lifeDamage("proc_bone_burst"), 1e-9);
-        assertEquals(0, config.lifeDamage("fireball"), 1e-9);
+        assertEquals(0, config.lifeDamage("blazing_star_shell"), 1e-9);
         // 燼使：每秒燒過量傷害的 16.67%（1 級）→ 23%（20 級）→ 29.67%（40 級）
         assertEquals(16.667, AuraService.ashPercent(1), 1e-3);
         assertEquals(23.0, AuraService.ashPercent(20), 1e-9);
@@ -64,40 +64,40 @@ class SkillResourceHookTest {
 
     @Test
     void infusionsChangeTheCast() {
-        assertEquals(List.of("lightning"), config.resource("arc").infusion());
-        assertEquals(List.of("fire"), config.resource("comet").infusion());
-        final List<Modifier> infused = config.resource("arc").infused();
+        assertEquals(List.of("lightning"), config.resource("chain_thunder").infusion());
+        assertEquals(List.of("fire"), config.resource("falling_star").infusion());
+        final List<Modifier> infused = config.resource("chain_thunder").infused();
         assertTrue(infused.stream().anyMatch(m -> m.stat().equals(StatKeys.SKILL_CHAINS) && m.value() == 6));
-        assertTrue(config.resource("comet").infused().stream().anyMatch(m -> m.stat().equals(StatKeys.SKILL_AREA) && Math.abs(m.value() - 0.47) < 1e-9),
+        assertTrue(config.resource("falling_star").infused().stream().anyMatch(m -> m.stat().equals(StatKeys.SKILL_AREA) && Math.abs(m.value() - 0.47) < 1e-9),
                 "INCREASED 47% 讀成 0.47");
         // 2026-10-26：damage.gain 只算物理（隕星沒有物理）→ 改成 damage.extra
-        assertTrue(config.resource("comet").infused().stream().anyMatch(m -> m.stat().equals("damage.extra.fire") && m.value() == 100));
+        assertTrue(config.resource("falling_star").infused().stream().anyMatch(m -> m.stat().equals("damage.extra.fire") && m.value() == 100));
     }
 
     @Test
-    void infusionRulesFollowPoe2() {
+    void infusionRulesFollowRef() {
         // 2026-10-26 照 PoE2（關鍵字 Elemental Infusions）：每種最多 3 層、撐 20 秒
         assertEquals(3, SkillResources.INFUSION_BASE_MAX);
         assertEquals(400, SkillResources.INFUSION_DURATION);
         // 會用灌注的原作技能都接上了
-        for (final String id : List.of("fireball", "ball_lightning", "ember_volley", "frost_darts", "ice_wall", "frost_nova", "spark", "flame_stream")) {
+        for (final String id : List.of("blazing_star_shell", "rolling_thunder_orb", "starfire_bead_chain", "ice_shuttle", "frost_rampart", "frost_star_blast", "roaming_thunder", "burning_current")) {
             assertEquals(1, config.resource(id).infusion().size(), id);
             assertTrue(!config.resource(id).infused().isEmpty(), id);
         }
         // 流焰天幕：三種各用一層、各有自己的加成
-        final ResourceSpec firestorm = config.resource("firestorm");
+        final ResourceSpec firestorm = config.resource("flowing_flame_canopy");
         assertTrue(firestorm.infusionEach());
         assertEquals(List.of("fire", "cold", "lightning"), firestorm.infusion());
         assertTrue(firestorm.infusedFor("cold").stream().anyMatch(m -> m.stat().equals("damage.extra.cold")));
         assertTrue(firestorm.infusedFor("fire").stream().anyMatch(m -> m.stat().equals(StatKeys.SKILL_AREA)));
         // 留下灌注殘骸的技能
-        assertEquals("cold", config.resource("frost_mine").remnant());
-        assertEquals(4, config.resource("frost_mine").remnantDelay(), 1e-9);
+        assertEquals("cold", config.resource("chill_crystal_mine").remnant());
+        assertEquals(4, config.resource("chill_crystal_mine").remnantDelay(), 1e-9);
         // 2026-10-26：燼種的火焰殘骸改在火種爆開的地方由 OriginalSkills 掉（爆開時間不固定），不寫 resource.remnant
-        assertEquals(null, config.resource("ember_seed").remnant());
-        assertEquals("lightning", config.resource("storm_orb").remnant());
+        assertEquals(null, config.resource("cinder_sprout").remnant());
+        assertEquals("lightning", config.resource("thunder_cloud").remnant());
         // 2026-10-27 照 PoE2 Snap：殘骸改由 Snap.java 照用掉的異常留下那種元素的（這次之前 resource.remnant: random）
-        assertEquals(null, config.resource("snap").remnant());
+        assertEquals(null, config.resource("anomaly_devour_blast").remnant());
         assertEquals(1, SkillResources.infusionIndex("cold"));
     }
 
@@ -124,10 +124,10 @@ class SkillResourceHookTest {
     @Test
     void mountFollowsRhoaMount() {
         // 2026-10-26 照 PoE2 Rhoa Mount：拿弓或長矛才能騎；騎著只能放弓、投擲長矛與印記
-        assertEquals(java.util.Set.of("bow", "spear"), config.skill("summon_mount").weapons());
+        assertEquals(java.util.Set.of("bow", "spear"), config.skill("steed_call").weapons());
         assertTrue(Mounts.mountWeapon(java.util.Set.of("bow")));
         assertTrue(!Mounts.mountWeapon(java.util.Set.of("mace")));
-        assertTrue(!Mounts.usableWhileMounted(config.skill("fireball")));
+        assertTrue(!Mounts.usableWhileMounted(config.skill("blazing_star_shell")));
         for (final SkillDefinition definition : config.all()) {
             if (definition.mechanic() == Mechanic.MARK) {
                 assertTrue(Mounts.usableWhileMounted(definition), definition.id());

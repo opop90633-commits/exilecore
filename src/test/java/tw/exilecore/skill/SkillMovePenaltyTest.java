@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SkillMovePenaltyTest {
 
     @Test
-    void baseFollowsPoe2() {
+    void baseFollowsRef() {
         assertEquals(0.70, SkillMovePenalty.base(Mechanic.PROJECTILE, false, false, false), 1e-9, "大部分技能：更少 70%");
         assertEquals(0.70, SkillMovePenalty.base(Mechanic.STRIKE, false, false, false), 1e-9, "近戰也照 70%（原作會停下來）");
         assertEquals(0.50, SkillMovePenalty.base(Mechanic.ZONE, true, false, false), 1e-9, "召喚物指令：更少 50%");

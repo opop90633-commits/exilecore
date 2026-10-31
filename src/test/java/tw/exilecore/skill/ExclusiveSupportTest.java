@@ -33,7 +33,7 @@ class ExclusiveSupportTest {
         assertNotNull(normal);
         final SupportDefinition first = exclusive.get(0);
         final SupportDefinition second = exclusive.get(1);
-        final SkillLoadout.Entry empty = new SkillLoadout.Entry("fireball", 5).withSockets(4);
+        final SkillLoadout.Entry empty = new SkillLoadout.Entry("blazing_star_shell", 5).withSockets(4);
         assertNull(SupportDefinition.exclusiveConflict(empty, -1, first, config::support), "第一顆專屬的可以");
         final SkillLoadout.Entry one = empty.withSupport(0, first.id());
         final String problem = SupportDefinition.exclusiveConflict(one, -1, second, config::support);
@@ -44,9 +44,9 @@ class ExclusiveSupportTest {
         assertNull(SupportDefinition.exclusiveConflict(one, -1, normal, config::support), "一般的輔助照常可以掛");
 
         // 以前已經掛了兩顆專屬的：只有第一顆生效
-        final SkillDefinition fireball = config.skill("fireball");
-        final SupportDefinition heart = config.support("permafrost_heart");
-        final SupportDefinition fury = config.support("skyburn_fury");
+        final SkillDefinition fireball = config.skill("blazing_star_shell");
+        final SupportDefinition heart = config.support("eternal_frost_heart");
+        final SupportDefinition fury = config.support("sky_scorch_wrath");
         final tw.exilecore.stats.StatSheet sheet = new tw.exilecore.stats.StatSheet();
         final SkillBuild both = SkillBuild.of(config, fireball, 5, 60, false, List.of(heart, fury), java.util.Set.of(), sheet);
         final SkillBuild onlyHeart = SkillBuild.of(config, fireball, 5, 60, false, List.of(heart), java.util.Set.of(), sheet);

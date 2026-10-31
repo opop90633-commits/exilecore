@@ -993,7 +993,7 @@ public final class AilmentService {
     /** 每傳一手更多幾倍、最多幾手（PoE2：每手更多 100%，最多更多 300%）。 */
     static final int SPREAD_MAX = 3;
     /** 2026-10-28：屍體、召喚物帶著的瘟疫掛上去用的減益代號（跟施放時的同一個，不疊加）。 */
-    static final String CONTAGION_KEY = "contagion";
+    static final String CONTAGION_KEY = "plague_taint";
 
     /** 2026-10-28 照 PoE2 Contagion：召喚物（復活帶著瘟疫的屍體叫出來的）→ 牠擊中時傳出去的瘟疫。 */
     private final Map<UUID, tw.exilecore.combat.Corpses.Contagion> carriers = new HashMap<>();
@@ -1133,7 +1133,7 @@ public final class AilmentService {
             plugin.combat().corpses().markContagion(at.getWorld().getUID(), at.getX(), at.getZ(), new tw.exilecore.combat.Corpses.Contagion(
                     contagion.source(), contagion.base(), contagion.spreads(), contagion.length(), radius), now);
         }
-        dead.getWorld().spawnParticle(org.bukkit.Particle.SQUID_INK, at.clone().add(0, 1, 0), 30, radius / 2, 0.6, radius / 2, 0.02);
+        tw.exilecore.skill.Fx.disk(dead.getWorld(), org.bukkit.Particle.SQUID_INK, at.clone().add(0, 1, 0), 30, radius, 0.6, 0.02);
     }
 
     /** 碰撞箱離 center 在 radius 格內（水平；上下 2 格內），跟技能的範圍判定一樣。 */

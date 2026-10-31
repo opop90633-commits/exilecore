@@ -39,13 +39,13 @@ class CoilingReapQualityTest {
 
     @Test
     void coilingBoltsSplitsAndChainsFromCursed() {
-        assertEquals(2, mod("coiling_bolts", ManaTempest.SPLIT).value(), 1e-9, "Splits towards 2 targets");
-        assertEquals(1, mod("coiling_bolts", GrantedSkillKeys.FLAG_PROJECTILES_TO_SPLIT).value(), 1e-9);
-        assertEquals(1, mod("coiling_bolts", GrantedSkillKeys.FLAG_CHAIN_CURSED).value(), 1e-9);
-        final Modifier range = mod("coiling_bolts", GrantedSkillKeys.CHAIN_RANGE);
+        assertEquals(2, mod("entwine_rot_arrow", ManaTempest.SPLIT).value(), 1e-9, "Splits towards 2 targets");
+        assertEquals(1, mod("entwine_rot_arrow", GrantedSkillKeys.FLAG_PROJECTILES_TO_SPLIT).value(), 1e-9);
+        assertEquals(1, mod("entwine_rot_arrow", GrantedSkillKeys.FLAG_CHAIN_CURSED).value(), 1e-9);
+        final Modifier range = mod("entwine_rot_arrow", GrantedSkillKeys.CHAIN_RANGE);
         assertEquals(ModType.INCREASED, range.type());
         assertEquals(0.5, range.value(), 1e-9, "50% increased chaining range");
-        assertEquals(2, config.skill("coiling_bolts").params().projectiles().intAt(1), "物理、混沌各一發");
+        assertEquals(2, config.skill("entwine_rot_arrow").params().projectiles().intAt(1), "物理、混沌各一發");
     }
 
     @Test
@@ -86,28 +86,28 @@ class CoilingReapQualityTest {
 
     @Test
     void coilingBoltsQuality() {
-        assertEquals(2, qualityFlat("coiling_bolts", 20, ManaTempest.SPLIT), 1e-9, "+(0—2) 分裂目標");
-        assertEquals("品質 +20%：分裂目標 +2", SkillService.qualityText(config.skill("coiling_bolts"), 20));
-        assertEquals("品質 +15%：分裂目標 +1", SkillService.qualityText(config.skill("coiling_bolts"), 15));
-        assertEquals("品質 +5%：分裂目標 +0", SkillService.qualityText(config.skill("coiling_bolts"), 5));
+        assertEquals(2, qualityFlat("entwine_rot_arrow", 20, ManaTempest.SPLIT), 1e-9, "+(0—2) 分裂目標");
+        assertEquals("品質 +20%：分裂目標 +2", SkillService.qualityText(config.skill("entwine_rot_arrow"), 20));
+        assertEquals("品質 +15%：分裂目標 +1", SkillService.qualityText(config.skill("entwine_rot_arrow"), 15));
+        assertEquals("品質 +5%：分裂目標 +0", SkillService.qualityText(config.skill("entwine_rot_arrow"), 5));
         // 20% 品質：基礎 2 + 品質 2 = 4
-        assertEquals(4, GrantedSkillKeys.splitTargets(2 + qualityFlat("coiling_bolts", 20, ManaTempest.SPLIT), 0, true));
-        assertEquals(2, GrantedSkillKeys.splitTargets(2 + qualityFlat("coiling_bolts", 9, ManaTempest.SPLIT), 0, true));
+        assertEquals(4, GrantedSkillKeys.splitTargets(2 + qualityFlat("entwine_rot_arrow", 20, ManaTempest.SPLIT), 0, true));
+        assertEquals(2, GrantedSkillKeys.splitTargets(2 + qualityFlat("entwine_rot_arrow", 9, ManaTempest.SPLIT), 0, true));
     }
 
     @Test
     void reapCriticalWeaknessDurationAndQuality() {
-        assertEquals(6, mod("reap", GrantedSkillKeys.CRIT_WEAKNESS_SECONDS).value(), 1e-9, "Critical Weakness duration is 6 seconds");
+        assertEquals(6, mod("blood_sickle", GrantedSkillKeys.CRIT_WEAKNESS_SECONDS).value(), 1e-9, "Critical Weakness duration is 6 seconds");
         assertEquals(120, GrantedSkillKeys.critWeaknessTicks(6, 80));
-        assertEquals(160, GrantedSkillKeys.critWeaknessTicks(6 + qualityFlat("reap", 20, GrantedSkillKeys.CRIT_WEAKNESS_SECONDS), 80), "20% 品質 8 秒");
+        assertEquals(160, GrantedSkillKeys.critWeaknessTicks(6 + qualityFlat("blood_sickle", 20, GrantedSkillKeys.CRIT_WEAKNESS_SECONDS), 80), "20% 品質 8 秒");
         assertEquals(80, GrantedSkillKeys.critWeaknessTicks(0, 80), "沒寫照預設 4 秒");
-        assertEquals("品質 +20%：暴擊弱點持續時間 +2 秒", SkillService.qualityText(config.skill("reap"), 20));
-        assertEquals("品質 +5%：暴擊弱點持續時間 +0.5 秒", SkillService.qualityText(config.skill("reap"), 5));
+        assertEquals("品質 +20%：暴擊弱點持續時間 +2 秒", SkillService.qualityText(config.skill("blood_sickle"), 20));
+        assertEquals("品質 +5%：暴擊弱點持續時間 +0.5 秒", SkillService.qualityText(config.skill("blood_sickle"), 5));
     }
 
     @Test
     void tableQualityTextDescribesTheTableNotDamage() {
-        final String arc = SkillService.qualityText(config.skill("arc"), 20);
+        final String arc = SkillService.qualityText(config.skill("chain_thunder"), 20);
         assertTrue(arc.contains("連鎖"), arc);
         assertFalse(arc.contains("傷害"), arc);
         // 沒寫在表上的照舊

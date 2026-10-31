@@ -939,7 +939,7 @@ public final class LineageMechanics implements Listener {
         for (final LivingEntity target : service.targets().around(at, radius, player)) {
             plugin.combat().skillDamage().hit(player, target, profile, null);
         }
-        Fx.spawn(at.getWorld(), particle, at, 30, radius * 0.4, 0.4, radius * 0.4, 0.05);
+        tw.exilecore.skill.Fx.disk(at.getWorld(), particle, at, 30, radius, 0.4, 0.05);
         Fx.spawn(at.getWorld(), Particle.EXPLOSION, at, 1, 0, 0, 0, 0);
         at.getWorld().playSound(at, Sound.ENTITY_GENERIC_EXPLODE, 0.6f, 1.4f);
     }

@@ -70,12 +70,12 @@ class MinionSupportTypesTest {
     }
 
     @Test
-    void minionTagsLoadedFromPoe2() {
-        assertEquals(Set.of(Tags.ATTACK, Tags.PROJECTILE, Tags.AREA, Tags.DURATION), skill("skeletal_archers").summon().minionTags(), "Skeletal Sniper");
+    void minionTagsLoadedFromRef() {
+        assertEquals(Set.of(Tags.ATTACK, Tags.PROJECTILE, Tags.AREA, Tags.DURATION), skill("summon_bone_bowmen").summon().minionTags(), "Skeletal Sniper");
         assertEquals(Set.of(Tags.ATTACK, Tags.MELEE), skill("summon_skeletons").summon().minionTags(), "Skeletal Warrior（範圍沒接上，不列）");
-        assertEquals(Set.of(Tags.SPELL, Tags.COOLDOWN), skill("skeletal_cleric").summon().minionTags(), "Skeletal Cleric");
-        assertTrue(skill("skeletal_stormcaller").summon().minionTags().contains("chain"), "Skeletal Storm Mage 有 Chains");
-        assertTrue(skill("skeletal_frostcaller").summon().minionTags().containsAll(Set.of(Tags.SPELL, Tags.PROJECTILE)));
+        assertEquals(Set.of(Tags.SPELL, Tags.COOLDOWN), skill("summon_bone_priest").summon().minionTags(), "Skeletal Cleric");
+        assertTrue(skill("summon_bone_thundermage").summon().minionTags().contains("chain"), "Skeletal Storm Mage 有 Chains");
+        assertTrue(skill("summon_bone_frostmage").summon().minionTags().containsAll(Set.of(Tags.SPELL, Tags.PROJECTILE)));
         // 掘骸本身不是召喚技能：照骨構體的
         assertEquals(skill("unearth_construct").summon().minionTags(), MinionTypes.of(skill(Unearth.ID)));
         // 每一個玩家拿得到、會一直打人的召喚技能都有寫（巨靈只聽指令，原作的指令是另外的寶石，不寫）
@@ -84,64 +84,64 @@ class MinionSupportTypesTest {
                 assertFalse(each.summon().minionTags().isEmpty(), each.id() + " 沒寫 minion_tags");
             }
         }
-        assertTrue(MinionTypes.line(skill("skeletal_archers")).contains("攻擊、投射物、範圍、持續"));
-        assertNull(MinionTypes.line(skill("fireball")));
+        assertTrue(MinionTypes.line(skill("summon_bone_bowmen")).contains("攻擊、投射物、範圍、持續"));
+        assertNull(MinionTypes.line(skill("blazing_star_shell")));
     }
 
     @Test
     void projectileSupportsFitRangedMinionsOnly() {
-        for (final String id : new String[] {"pierce", "chain", "fork", "multiple_projectiles"}) {
-            assertNull(support(id).refusal(skill("skeletal_archers")), id + " 照 PoE2 可以輔助骸骨射手");
-            assertNull(support(id).refusal(skill("skeletal_frostcaller")), id + " 照 PoE2 可以輔助骸骨霜術士");
+        for (final String id : new String[] {"pierce", "chain", "split_shot", "light_split"}) {
+            assertNull(support(id).refusal(skill("summon_bone_bowmen")), id + " 照 PoE2 可以輔助骸骨射手");
+            assertNull(support(id).refusal(skill("summon_bone_frostmage")), id + " 照 PoE2 可以輔助骸骨霜術士");
             assertEquals("要投射物技能" + ("chain".equals(id) ? "或連鎖技能" : ""), support(id).refusal(skill("summon_skeletons")),
                     id + "：骸骨戰士是近戰");
-            assertTrue(MinionTypes.throughMinions(support(id), skill("skeletal_archers")));
+            assertTrue(MinionTypes.throughMinions(support(id), skill("summon_bone_bowmen")));
         }
-        assertNull(support("chain").refusal(skill("skeletal_stormcaller")), "電弧多連鎖");
-        assertEquals("要投射物技能", support("pierce").refusal(skill("skeletal_stormcaller")));
+        assertNull(support("chain").refusal(skill("summon_bone_thundermage")), "電弧多連鎖");
+        assertEquals("要投射物技能", support("pierce").refusal(skill("summon_bone_thundermage")));
         // 砲手的箭雨（原作 ProjectileNoCollision、CannotChain）：投射物的機制吃不到
-        assertEquals("召喚物沒有真的射出投射物（穿透、連鎖、分裂、多射吃不到）", support("pierce").refusal(skill("supporting_fire")));
-        assertNull(support("close_quarters").refusal(skill("skeletal_archers")), "投射物傷害的照樣可以");
+        assertEquals("召喚物沒有真的射出投射物（穿透、連鎖、分裂、多射吃不到）", support("pierce").refusal(skill("covering_fire")));
+        assertNull(support("hug_range").refusal(skill("summon_bone_bowmen")), "投射物傷害的照樣可以");
         // 2026-10-29 照 PoE2：召喚物的投射物真的會飛（MinionProjectiles），只動投射物速度的也可以掛；這次之前「召喚物的技能吃不到這顆輔助的效果」
-        assertNull(support("faster_projectiles").refusal(skill("skeletal_archers")), "疾矢：射手的箭飛得更快");
+        assertNull(support("swift_bolt_iii").refusal(skill("summon_bone_bowmen")), "疾矢：射手的箭飛得更快");
     }
 
     /** 2026-10-29 照 PoE2：投射物速度的輔助（疾矢、緩彈、重矢）從召喚物這邊掛，改變召喚物的投射物速度。 */
     @Test
     void projectileSpeedSupportsReachRangedMinions() {
-        for (final String skill : new String[] {"skeletal_archers", "skeletal_pyromancer", "skeletal_frostcaller"}) {
-            assertNull(support("faster_projectiles").refusal(skill(skill)), "疾矢可以輔助 " + skill);
-            assertNull(support("projectile_deceleration").refusal(skill(skill)), "緩彈可以輔助 " + skill + "（poe2db 推薦 Projectile Deceleration）");
-            assertTrue(MinionTypes.throughMinions(support("faster_projectiles"), skill(skill)));
+        for (final String skill : new String[] {"summon_bone_bowmen", "summon_bone_flamecaster", "summon_bone_frostmage"}) {
+            assertNull(support("swift_bolt_iii").refusal(skill(skill)), "疾矢可以輔助 " + skill);
+            assertNull(support("slow_shell").refusal(skill(skill)), "緩彈可以輔助 " + skill + "（原作資料 推薦 Projectile Deceleration）");
+            assertTrue(MinionTypes.throughMinions(support("swift_bolt_iii"), skill(skill)));
         }
         // 不射投射物的：照舊不行
-        assertEquals("要投射物技能", support("faster_projectiles").refusal(skill("summon_skeletons")));
-        assertEquals("要投射物技能", support("faster_projectiles").refusal(skill("skeletal_stormcaller")), "雷術士的電弧是連鎖，不是投射物");
-        assertEquals("召喚物的技能吃不到這顆輔助的效果", support("faster_projectiles").refusal(skill("supporting_fire")), "砲手沒有真的射投射物");
+        assertEquals("要投射物技能", support("swift_bolt_iii").refusal(skill("summon_skeletons")));
+        assertEquals("要投射物技能", support("swift_bolt_iii").refusal(skill("summon_bone_thundermage")), "雷術士的電弧是連鎖，不是投射物");
+        assertEquals("召喚物的技能吃不到這顆輔助的效果", support("swift_bolt_iii").refusal(skill("covering_fire")), "砲手沒有真的射投射物");
 
-        final SkillBuild plain = build("skeletal_archers");
+        final SkillBuild plain = build("summon_bone_bowmen");
         final Set<String> tags = MinionSheets.profile(plain).tags();
         final MinionTypes.Projectiles base = MinionTypes.projectiles(minionEffective(plain), tags);
         assertEquals(1.0, base.speed(), 1e-9);
-        assertEquals(MinionAbilities.SNIPER_ARROW_SPEED, base.speedOf(MinionAbilities.projectileSpeed("skeletal_archers")), 1e-9);
-        final SkillBuild fast = build("skeletal_archers", support("faster_projectiles"));
+        assertEquals(MinionAbilities.SNIPER_ARROW_SPEED, base.speedOf(MinionAbilities.projectileSpeed("summon_bone_bowmen")), 1e-9);
+        final SkillBuild fast = build("summon_bone_bowmen", support("swift_bolt_iii"));
         final MinionTypes.Projectiles quick = MinionTypes.projectiles(minionEffective(fast), MinionSheets.profile(fast).tags());
         assertEquals(1.4, quick.speed(), 1e-9, "疾矢 III：投射物速度更多 40%");
         assertEquals(MinionAbilities.SNIPER_ARROW_SPEED * 1.4, quick.speedOf(MinionAbilities.SNIPER_ARROW_SPEED), 1e-9);
         assertTrue(quick.any());
         // 疾矢 III：速度的增加也套用在投射物傷害（只有增加的部分；更多 40% 不算）
         assertEquals(0, MinionTypes.speedAsDamage(minionEffective(fast), MinionSheets.profile(fast).tags()), 1e-9);
-        final SkillBuild heavyFast = build("skeletal_archers", support("faster_projectiles"), support("heavy_bolt"));
-        assertNull(support("heavy_bolt").refusal(skill("skeletal_archers")));
+        final SkillBuild heavyFast = build("summon_bone_bowmen", support("swift_bolt_iii"), support("weighty_arrow"));
+        assertNull(support("weighty_arrow").refusal(skill("summon_bone_bowmen")));
         assertEquals(0.3, MinionTypes.speedAsDamage(minionEffective(heavyFast), MinionSheets.profile(heavyFast).tags()), 1e-9,
                 "重矢的投射物速度增加 30% 也變成投射物傷害增加 30%");
-        final SkillBuild slow = build("skeletal_pyromancer", support("projectile_deceleration"));
+        final SkillBuild slow = build("summon_bone_flamecaster", support("slow_shell"));
         assertEquals(0.75, MinionTypes.projectiles(minionEffective(slow), MinionSheets.profile(slow).tags()).speed(), 1e-9, "緩彈：更少 25%");
         // 說明寫每秒幾格
         assertTrue(MinionTypes.projectileLine(base, MinionAbilities.SNIPER_ARROW_SPEED).contains("每秒 <white>60</white> 格"));
         assertTrue(MinionTypes.projectileLine(quick, MinionAbilities.SNIPER_ARROW_SPEED).contains("每秒 <white>84</white> 格（速度 ×1.4）"));
         assertNull(MinionTypes.projectileLine(base), "沒有基礎速度、沒有輔助：照舊不寫");
-        assertEquals(0, MinionAbilities.projectileSpeed("skeletal_stormcaller"), 1e-9);
+        assertEquals(0, MinionAbilities.projectileSpeed("summon_bone_thundermage"), 1e-9);
         assertEquals(0, MinionAbilities.projectileSpeed("summon_skeletons"), 1e-9);
     }
 
@@ -202,37 +202,37 @@ class MinionSupportTypesTest {
 
     @Test
     void meleeSupportsFitMeleeMinionsOnly() {
-        for (final String id : new String[] {"heavy_swing", "bludgeon", "bloodlust", "knockback"}) {
+        for (final String id : new String[] {"sinking_hammer", "sinking_blow", "gore_hunt", "knockback"}) {
             assertNull(support(id).refusal(skill("summon_skeletons")), id + " 照 PoE2 可以輔助骸骨戰士");
-            assertNull(support(id).refusal(skill("skeletal_reaver")), id);
-            assertEquals("要近戰技能", support(id).refusal(skill("skeletal_archers")), id + "：射手不是近戰");
+            assertNull(support(id).refusal(skill("summon_bone_berserker")), id);
+            assertEquals("要近戰技能", support(id).refusal(skill("summon_bone_bowmen")), id + "：射手不是近戰");
         }
         // 攻擊的（Close Combat、Brutality、Rapid Attacks、Life Leech）近戰、遠程都行
-        for (final String id : new String[] {"close_quarters", "brutality", "faster_attacks", "life_leech", "execute", "ruthless"}) {
+        for (final String id : new String[] {"hug_range", "savage_cruelty", "quick_strike", "life_leech", "execute", "merciless_heart"}) {
             assertNull(support(id).refusal(skill("summon_skeletons")), id);
-            assertNull(support(id).refusal(skill("skeletal_archers")), id);
+            assertNull(support(id).refusal(skill("summon_bone_bowmen")), id);
         }
         // 主人自己的機制照舊不行
         assertEquals("召喚物技能不行", support("rage").refusal(skill("summon_skeletons")), "怒火給的是你的怒氣");
-        assertEquals("召喚物技能不行", support("spell_echo").refusal(skill("skeletal_stormcaller")));
-        assertEquals("召喚物技能不行", support("cadence").refusal(skill("summon_skeletons")), "連拍是主人用技能的節奏");
+        assertEquals("召喚物技能不行", support("twin_chant").refusal(skill("summon_bone_thundermage")));
+        assertEquals("召喚物技能不行", support("beat_combo").refusal(skill("summon_skeletons")), "連拍是主人用技能的節奏");
         // 祭司不打人：只有施法速度、冷卻的吃得到
-        assertNull(support("faster_casting").refusal(skill("skeletal_cleric")));
-        assertNull(support("swift_cooldown").refusal(skill("skeletal_cleric")));
-        assertEquals("召喚物不會造成傷害", support("considered_casting").refusal(skill("skeletal_cleric")));
+        assertNull(support("quick_chant").refusal(skill("summon_bone_priest")));
+        assertNull(support("quick_return").refusal(skill("summon_bone_priest")));
+        assertEquals("召喚物不會造成傷害", support("charged_chant").refusal(skill("summon_bone_priest")));
         // 範圍：只有範圍真的有接上的召喚物（重卒的碎骨、狼的躍擊、射手的毒雲）
-        assertNull(support("increased_area").refusal(skill("skeletal_brute")));
-        assertNull(support("increased_area").refusal(skill("wolf_pack")));
-        assertEquals("要範圍技能", support("increased_area").refusal(skill("summon_skeletons")));
+        assertNull(support("zone_expand").refusal(skill("summon_bone_heavy")));
+        assertNull(support("zone_expand").refusal(skill("grey_wolf_escort")));
+        assertEquals("要範圍技能", support("zone_expand").refusal(skill("summon_skeletons")));
         // 只聽指令的砲手：攻擊速度沒有作用
-        assertEquals("召喚物的技能吃不到這顆輔助的效果", support("faster_attacks").refusal(skill("supporting_fire")));
+        assertEquals("召喚物的技能吃不到這顆輔助的效果", support("quick_strike").refusal(skill("covering_fire")));
     }
 
     @Test
     void supportsReachTheMinions() {
         // 投射物：射手掛貫穿、分光之後彈道多穿透 1 個、多射 2 發
-        final SkillBuild plain = build("skeletal_archers");
-        final SkillBuild boosted = build("skeletal_archers", support("pierce"), support("multiple_projectiles"), support("fork"));
+        final SkillBuild plain = build("summon_bone_bowmen");
+        final SkillBuild boosted = build("summon_bone_bowmen", support("pierce"), support("light_split"), support("split_shot"));
         assertEquals(3, boosted.supports().size(), "三顆都生效");
         final Set<String> tags = MinionSheets.profile(boosted).tags();
         assertTrue(tags.contains(Tags.PROJECTILE));
@@ -243,22 +243,22 @@ class MinionSupportTypesTest {
         assertTrue(shot.fork());
         assertTrue(MinionTypes.projectileLine(shot).contains("穿透"));
         // 電弧：連環多連鎖 1 次
-        final SkillBuild storm = build("skeletal_stormcaller", support("chain"));
+        final SkillBuild storm = build("summon_bone_thundermage", support("chain"));
         assertEquals(1, MinionTypes.projectiles(minionEffective(storm), MinionSheets.profile(storm).tags()).chains());
 
         // 攻擊速度：迅擊掛骸骨戰士，召喚物每秒攻擊增加 15%
         final SkillBuild warriors = build("summon_skeletons");
-        final SkillBuild fast = build("summon_skeletons", support("faster_attacks"));
+        final SkillBuild fast = build("summon_skeletons", support("quick_strike"));
         final double before = MinionSheets.attacksPerSecond(minionEffective(warriors), MinionSheets.profile(warriors));
         final double after = MinionSheets.attacksPerSecond(minionEffective(fast), MinionSheets.profile(fast));
         assertEquals(before * 1.15, after, 1e-9);
         // 沉錘：骸骨戰士的物理傷害更多 35%（攻擊更慢 10%）
-        final SkillBuild heavy = build("summon_skeletons", support("heavy_swing"));
+        final SkillBuild heavy = build("summon_skeletons", support("sinking_hammer"));
         final double plainHit = tw.exilecore.stats.DamageCalculator.expectedOutgoing(minionSheet(warriors), MinionSheets.profile(warriors)).total();
         final double heavyHit = tw.exilecore.stats.DamageCalculator.expectedOutgoing(minionSheet(heavy), MinionSheets.profile(heavy)).total();
         assertEquals(plainHit * 1.35, heavyHit, plainHit * 1e-6);
         // 長留：毒雲的持續時間（射手有 Duration）
-        final SkillBuild lasting = build("skeletal_archers", support("prolonged_duration"));
+        final SkillBuild lasting = build("summon_bone_bowmen", support("long_stay"));
         assertEquals(1.35, minionEffective(lasting).apply(StatKeys.SKILL_DURATION, 1.0, MinionSheets.profile(lasting).tags()), 1e-9);
     }
 

@@ -55,14 +55,14 @@ class BlasphemyTest {
 
     @Test
     void onlyCursesAccepted() {
-        for (final String id : List.of("despair_curse", "elemental_weakness_curse", "enfeeble_curse", "temporal_curse", "vulnerability_curse")) {
+        for (final String id : List.of("soul_wither_curse", "triple_element_curse", "strength_sap_curse", "sluggish_curse", "wound_scar_curse")) {
             assertNull(Blasphemy.problem(config.skill(id)), id + "：詛咒可以放");
         }
-        assertNotNull(Blasphemy.problem(config.skill("fireball")), "法術不行");
-        assertNotNull(Blasphemy.problem(config.skill("hunters_mark")), "印記不行");
-        assertNotNull(Blasphemy.problem(config.skill("meta_crit")), "主要寶石不行");
+        assertNotNull(Blasphemy.problem(config.skill("blazing_star_shell")), "法術不行");
+        assertNotNull(Blasphemy.problem(config.skill("prey_kill_mark")), "印記不行");
+        assertNotNull(Blasphemy.problem(config.skill("critical_guide_star")), "主要寶石不行");
         assertNotNull(Blasphemy.problem(config.skill(Blasphemy.ID)), "自己不行");
-        assertTrue(Blasphemy.problem(config.skill("fireball")).contains("詛咒"), "原因要說只能放詛咒");
+        assertTrue(Blasphemy.problem(config.skill("blazing_star_shell")).contains("詛咒"), "原因要說只能放詛咒");
     }
 
     @Test
@@ -79,11 +79,11 @@ class BlasphemyTest {
         assertEquals(120 / 1.1, quality.withReserveCount(2).reserve(), 1e-6);
         // 孔裡放錯的不算
         final SkillLoadout.Entry host = new SkillLoadout.Entry(Blasphemy.ID, 10, 4, List.of())
-                .withSpell(0, curse("despair_curse", 10)).withSpell(1, curse("enfeeble_curse", 10));
+                .withSpell(0, curse("soul_wither_curse", 10)).withSpell(1, curse("strength_sap_curse", 10));
         assertEquals(2, Blasphemy.curses(config, host));
         assertEquals(0, Blasphemy.curses(config, new SkillLoadout.Entry(Blasphemy.ID, 10, 4, List.of())));
         assertEquals(1, Blasphemy.curses(config, new SkillLoadout.Entry(Blasphemy.ID, 10, 4, List.of())
-                .withSpell(0, curse("despair_curse", 10)).withSpell(1, curse("fireball", 10))));
+                .withSpell(0, curse("soul_wither_curse", 10)).withSpell(1, curse("blazing_star_shell", 10))));
         assertEquals(Blasphemy.reserve(2), 120, 1e-9);
     }
 
@@ -101,7 +101,7 @@ class BlasphemyTest {
             assertTrue(Blasphemy.LESS_MAGNITUDE[i] <= Blasphemy.LESS_MAGNITUDE[i - 1], "等級越高更少的越少：" + (i + 1));
         }
         // 套到詛咒上：詛咒效果倍率 × (1 − x%)；額外的品質效果再增加
-        final SkillDefinition despair = config.skill("despair_curse");
+        final SkillDefinition despair = config.skill("soul_wither_curse");
         final double plain = SkillBuild.of(config, despair, 10, 90, false, List.of(), Set.of(), new StatSheet()).auraEffect();
         final double one = SkillBuild.of(config, despair, 10, 90, false, List.of(), Set.of(), new StatSheet(), Set.of(),
                 Blasphemy.curseModifiers(1, 0)).auraEffect();
@@ -116,7 +116,7 @@ class BlasphemyTest {
 
     @Test
     void radiusPlusOneMetre() {
-        final SkillParams.Mark spec = config.skill("despair_curse").params().mark();
+        final SkillParams.Mark spec = config.skill("soul_wither_curse").params().mark();
         assertTrue(spec.curse());
         for (final int level : new int[] {1, 10, 20}) {
             final SkillParams.Mark widened = Blasphemy.widened(spec, level);

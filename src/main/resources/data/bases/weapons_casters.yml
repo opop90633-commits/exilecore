@@ -18,7 +18,7 @@ cwand_01:   # PoE2 Withered Wand
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: chaos_bolt
+  grants: erosion_star_shot
 
 cwand_02:   # PoE2 Bone Wand
   name: 骨製法杖
@@ -33,7 +33,7 @@ cwand_02:   # PoE2 Bone Wand
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: bone_blast
+  grants: bone_bloom
 
 cwand_03:   # PoE2 Attuned Wand
   name: 調律法杖
@@ -48,7 +48,7 @@ cwand_03:   # PoE2 Attuned Wand
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: mana_drain
+  grants: magic_absorb_art
 
 cwand_04:   # PoE2 Siphoning Wand
   name: 汲取法杖
@@ -63,7 +63,7 @@ cwand_04:   # PoE2 Siphoning Wand
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: power_siphon
+  grants: keen_star_drain
 
 cwand_05:   # PoE2 Volatile Wand
   name: 炎屍法杖
@@ -78,7 +78,7 @@ cwand_05:   # PoE2 Volatile Wand
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: volatile_dead
+  grants: corpse_flame_burst
 
 cwand_06:   # PoE2 Galvanic Wand
   name: 電流法杖
@@ -93,7 +93,7 @@ cwand_06:   # PoE2 Galvanic Wand
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: galvanic_field
+  grants: thunder_current_zone
 
 cwand_07:   # PoE2 Acrid Wand
   name: 腐蝕法杖
@@ -108,7 +108,7 @@ cwand_07:   # PoE2 Acrid Wand
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: decompose
+  grants: rotting_corpse_blast
 
 cwand_08:   # PoE2 Offering Wand
   name: 血祭法杖
@@ -123,7 +123,7 @@ cwand_08:   # PoE2 Offering Wand
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: exsanguinate
+  grants: blood_vein_tether
 
 cwand_09:   # PoE2 Frigid Wand
   name: 霜蝕法杖
@@ -138,7 +138,7 @@ cwand_09:   # PoE2 Frigid Wand
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: chaos_bolt
+  grants: erosion_star_shot
 
 cwand_10:   # PoE2 Torture Wand
   name: 刑苦法杖
@@ -153,7 +153,7 @@ cwand_10:   # PoE2 Torture Wand
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: chaos_bolt
+  grants: erosion_star_shot
 
 cwand_11:   # PoE2 Critical Wand
   name: 銳芒法杖
@@ -168,7 +168,7 @@ cwand_11:   # PoE2 Critical Wand
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: chaos_bolt
+  grants: erosion_star_shot
 
 cwand_12:   # PoE2 Primordial Wand
   name: 太古法杖
@@ -183,7 +183,7 @@ cwand_12:   # PoE2 Primordial Wand
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: wither
+  grants: decay_erosion_art
 
 cwand_13:   # PoE2 Twisted Wand
   name: 纏蝕法杖
@@ -198,7 +198,7 @@ cwand_13:   # PoE2 Twisted Wand
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: coiling_bolts
+  grants: entwine_rot_arrow
 
 cwand_14:   # PoE2 Dueling Wand
   name: 決鬥法杖
@@ -213,7 +213,7 @@ cwand_14:   # PoE2 Dueling Wand
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: spellslinger
+  grants: incant_hurl
 
 # ---- 長杖 ----
 
@@ -230,7 +230,7 @@ cstaff_01:   # PoE2 Ashen Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: firebolt
+  grants: flame_star_shot
 
 cstaff_02:   # PoE2 Gelid Staff
   name: 凝冰長杖
@@ -245,7 +245,7 @@ cstaff_02:   # PoE2 Gelid Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: freezing_shards
+  grants: frost_crystal_fan
 
 cstaff_03:   # PoE2 Voltaic Staff
   name: 雷鳴長杖
@@ -260,7 +260,7 @@ cstaff_03:   # PoE2 Voltaic Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: lightning_bolt
+  grants: thunder_drop
 
 cstaff_04:   # PoE2 Spriggan Staff
   name: 精靈長杖
@@ -275,7 +275,7 @@ cstaff_04:   # PoE2 Spriggan Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: firebolt
+  grants: flame_star_shot
 
 cstaff_05:   # PoE2 Pyrophyte Staff
   name: 炎木長杖
@@ -290,7 +290,7 @@ cstaff_05:   # PoE2 Pyrophyte Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: sun_orb
+  grants: scorching_sun_pearl
 
 cstaff_06:   # PoE2 Chiming Staff
   name: 鳴鐘長杖
@@ -305,7 +305,7 @@ cstaff_06:   # PoE2 Chiming Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: sigil_of_power
+  grants: might_seal
 
 cstaff_07:   # PoE2 Rending Staff
   name: 裂魂長杖
@@ -320,7 +320,7 @@ cstaff_07:   # PoE2 Rending Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: soulrend
+  grants: soul_split_shot
 
 cstaff_08:   # PoE2 Reaping Staff
   name: 血鐮長杖
@@ -335,7 +335,7 @@ cstaff_08:   # PoE2 Reaping Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: reap
+  grants: blood_sickle
 
 cstaff_09:   # PoE2 Icicle Staff
   name: 冰稜長杖
@@ -350,7 +350,7 @@ cstaff_09:   # PoE2 Icicle Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: firebolt
+  grants: flame_star_shot
 
 cstaff_10:   # PoE2 Paralysing Staff
   name: 麻痺長杖
@@ -365,7 +365,7 @@ cstaff_10:   # PoE2 Paralysing Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: enervating_nova
+  grants: fading_thunder_ring
 
 cstaff_11:   # PoE2 Sanctified Staff
   name: 聖紋長杖
@@ -380,7 +380,7 @@ cstaff_11:   # PoE2 Sanctified Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: consecrate
+  grants: holy_ground
 
 cstaff_12:   # PoE2 Dark Staff
   name: 冥暗長杖
@@ -395,7 +395,7 @@ cstaff_12:   # PoE2 Dark Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: dark_pact
+  grants: nether_contract
 
 cstaff_13:   # PoE2 Ravenous Staff
   name: 饑渴長杖
@@ -410,7 +410,7 @@ cstaff_13:   # PoE2 Ravenous Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: feast_of_flesh
+  grants: corpse_devour_feast
 
 cstaff_14:   # PoE2 Permafrost Staff
   name: 恆凍長杖
@@ -425,7 +425,7 @@ cstaff_14:   # PoE2 Permafrost Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: heart_of_ice
+  grants: cold_heart
 
 cstaff_15:   # PoE2 Roaring Staff
   name: 怒吼長杖
@@ -440,7 +440,7 @@ cstaff_15:   # PoE2 Roaring Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: unleash_spell
+  grants: seal_release
 
 cstaff_16:   # PoE2 Perching Staff
   name: 棲鴉長杖
@@ -455,7 +455,7 @@ cstaff_16:   # PoE2 Perching Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: spiraling_conspiracy
+  grants: raven_plot
 
 cstaff_17:   # PoE2 Reflecting Staff
   name: 映鏡長杖
@@ -470,7 +470,7 @@ cstaff_17:   # PoE2 Reflecting Staff
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 6
-  grants: mirror_of_refraction
+  grants: light_bend_mirror
 
 # ---- 權杖 ----
 
@@ -503,7 +503,7 @@ csceptre_02:   # PoE2 Stoic Sceptre
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: discipline
+  grants: law_shield
   # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_03:   # PoE2 Lupine Sceptre
@@ -535,7 +535,7 @@ csceptre_04:   # PoE2 Omen Sceptre
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: malice
+  grants: evil_thought
   # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_05:   # PoE2 Ochre Sceptre
@@ -567,7 +567,7 @@ csceptre_06:   # PoE2 Shrine Sceptre（Purity of Fire）
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: purity_of_fire
+  grants: flame_guard
   # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_07:   # PoE2 Shrine Sceptre（Purity of Ice）
@@ -583,7 +583,7 @@ csceptre_07:   # PoE2 Shrine Sceptre（Purity of Ice）
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: purity_of_ice
+  grants: frost_guard
   # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_08:   # PoE2 Shrine Sceptre（Purity of Lightning）
@@ -599,7 +599,7 @@ csceptre_08:   # PoE2 Shrine Sceptre（Purity of Lightning）
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: purity_of_lightning
+  grants: thunder_guard
   # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_09:   # PoE2 Shrine Sceptre（Impurity）
@@ -615,7 +615,7 @@ csceptre_09:   # PoE2 Shrine Sceptre（Impurity）
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: impurity
+  grants: corrode_guard
   # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_10:   # PoE2 Devouring Sceptre
@@ -647,7 +647,7 @@ csceptre_11:   # PoE2 Clasped Sceptre
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: heart_of_ice
+  grants: cold_heart
   # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_12:   # PoE2 Devotional Sceptre
@@ -727,5 +727,5 @@ csceptre_16:   # PoE2 Wrath Sceptre
   aps: 1.2          # 沒有傷害，只是名義上的攻速
   crit: 5.0
   sockets: 3
-  grants: fulmination
+  grants: thunder_resonance
   # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200

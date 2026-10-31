@@ -28,7 +28,7 @@ class AscMinionSystemsTest {
 
     @Test
     void djinnsAndArtilleryAreCommandOnlyMinions() {
-        for (final String id : List.of("kelari_djinn", "navira_djinn", "ruzhan_djinn", "supporting_fire")) {
+        for (final String id : List.of("foul_sand_spirit", "final_mirage_spirit", "flame_blade_spirit", "covering_fire")) {
             final SkillDefinition definition = config.skill(id);
             assertNotNull(definition, id);
             assertEquals(Mechanic.AURA, definition.mechanic(), id + "：常駐");
@@ -38,8 +38,8 @@ class AscMinionSystemsTest {
             assertTrue(definition.summon().permanent(), id);
             assertTrue(MinionAbilities.commandOnly(id), id + "：不會受傷、只聽指令");
         }
-        assertTrue(config.skill("kelari_djinn").summon().flying(), "巨靈飄在空中");
-        assertEquals("SKELETON", config.skill("supporting_fire").summon().kind());
+        assertTrue(config.skill("foul_sand_spirit").summon().flying(), "巨靈飄在空中");
+        assertEquals("SKELETON", config.skill("covering_fire").summon().kind());
         assertFalse(MinionAbilities.commandOnly("summon_skeletons"));
         assertFalse(MinionAbilities.commandOnly(null));
     }
@@ -47,7 +47,7 @@ class AscMinionSystemsTest {
     @Test
     void supportingFireCommandsDeathFromAbove() {
         // 照 PoE2 0.5（RePoE DeathFromAboveDaemonMinion／CommandDeathFromAbovePlayer）
-        final MinionAbilities.Command command = MinionAbilities.command("supporting_fire");
+        final MinionAbilities.Command command = MinionAbilities.command("covering_fire");
         assertNotNull(command);
         assertEquals("從天而降", command.name());
         assertEquals(10, command.cooldown(), 1e-9);
@@ -57,12 +57,12 @@ class AscMinionSystemsTest {
         assertEquals(6, MinionAbilities.VOLLEYS);
         assertEquals(15, MinionAbilities.VOLLEY_TICKS, "每 0.75 秒一輪");
         assertEquals(tw.exilecore.core.Units.metres(14) * tw.exilecore.core.Units.metres(14), Math.PI * MinionAbilities.VOLLEY_RADIUS * MinionAbilities.VOLLEY_RADIUS, 1.0, "14 × 14 公尺的面積"); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
-        assertTrue(MinionAbilities.command("kelari_djinn") == null, "巨靈的指令是另外的技能（珂芮絲的詭計…），按巨靈的鍵不是下指令");
+        assertTrue(MinionAbilities.command("foul_sand_spirit") == null, "巨靈的指令是另外的技能（珂芮絲的詭計…），按巨靈的鍵不是下指令");
     }
 
     @Test
     void meditateIsAChannelInterruptedByDamage() {
-        final ChargeSpec spec = config.charge("meditate");
+        final ChargeSpec spec = config.charge("calm_mind_trance");
         assertNotNull(spec, "冥想是引導");
         assertEquals(ChargeSpec.Mode.RECHARGE, spec.mode());
         assertTrue(spec.channel().interruptOnHit(), "受到傷害就中斷");

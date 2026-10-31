@@ -11,7 +11,7 @@ import java.util.Set;
 public final class SubSkills {
 
     /** 主技能 → 子技能（skills.yml 的隱藏技能代號）。 */
-    static final Map<String, String> SUBS = Map.of("storm_staff", "proc_charged_shockwave");
+    static final Map<String, String> SUBS = Map.of("thunderbind_staff", "proc_charged_shockwave");
     private static final Set<String> SUB_IDS = Set.copyOf(SUBS.values());
 
     private static volatile Map<String, SkillDefinition> skills = Map.of();

@@ -32,19 +32,19 @@ public final class SkillConfig {
 
     /** 外觀代號（粒子與音效寫在 SkillVisuals）。 */
     public static final Set<String> VISUALS = Set.of("slash", "heavy_strike", "cleave", "slam", "leap",
-            "arrow", "burning_arrow", "wand_bolt", "staff_bolt", "fireball", "frost_nova", "spark", "arc",
-            "crossbow_bolt", "explosive_bolt", "permafrost_bolt", "staff_sweep", "tempest", "ice_cone",
-            "spear_thrust", "lightning_spear", "whirl", "chaos_bolt", "blight_nova",
+            "arrow", "burning_arrow", "wand_bolt", "staff_bolt", "blazing_star_shell", "frost_star_blast", "roaming_thunder", "chain_thunder",
+            "crossbow_bolt", "blasting_quarrel", "permafrost_bolt", "staff_sweep", "tempest", "ice_cone",
+            "spear_thrust", "thunder_lance_throw", "whirl", "erosion_star_shot", "blight_nova",
             // 第三部分：位移、延遲落下、地面效果、榴彈、印記…
-            "dash", "whirling_blades", "flame_dash", "frostblink", "blink_arrow", "rain_of_arrows", "lightning_arrow",
-            "tornado_shot", "ice_shot", "earthquake", "comet", "blizzard", "flame_wall", "explosive_grenade", "gas_grenade",
-            "rally", "desecrate", "rapid_fire", "storm_wave", "killing_palm", "whirlwind_lance", "lunge", "hunters_mark", "void_rift",
+            "dash", "whirling_blades", "flame_dash", "frostblink", "blink_arrow", "myriad_arrow_fall", "thunderclap_arrow",
+            "sky_rend_arrow", "rime_arrow", "ground_tremor", "falling_star", "blizzard", "flame_curtain", "blast_grenade", "miasma_grenade",
+            "reform_ranks", "desecrate", "successive_shots", "thunder_surge", "soul_sever_palm", "hurricane_spear", "lunge", "prey_kill_mark", "void_rift",
             // 異常狀態的技能（2026-10）：血刺、蛇牙擊、碎脊擊、蝕毒箭
-            "puncture", "viper_strike", "boneshatter", "caustic_arrow",
+            "puncture", "viper_strike", "spine_crush", "venom_etch_arrow",
             // 第三部分（二）：圖騰、陷阱、鐘、骸爆
-            "ancestral_totem", "flame_totem", "shockwave_totem", "fire_trap", "lightning_trap", "bear_trap", "tempest_bell", "detonate_dead",
+            "hero_spirit_totem", "flame_totem", "collapse_quake_totem", "fire_trap", "lightning_trap", "bear_trap", "startling_thunder_bell", "corpse_burst",
             // 第三部分（三）：召喚物
-            "raise_zombie", "summon_skeletons", "raging_spirits", "flame_golem",
+            "corpse_summon", "summon_skeletons", "summon_burning_souls", "flame_golem",
             // 第三部分（四）：光環、捷、戰吼
             "aura_cold", "aura_fire", "aura_lightning", "aura_armour", "aura_evasion", "aura_es", "aura_haste", "aura_purity",
             "aura_life", "aura_mana", "aura_precision", "herald_ash", "herald_thunder", "herald_ice",
@@ -256,6 +256,13 @@ public final class SkillConfig {
         return playerSpeedScale;
     }
 
+    /** 2026-10-31：玩家範圍效果的基礎倍率（skills.yml 的 player_area_scale；範圍效果，半徑 = √倍率）。 */
+    private static volatile double playerAreaScale = 1.5;
+
+    public static double playerAreaScale() {
+        return playerAreaScale;
+    }
+
     public static double minionMoveScale() {
         return minionMoveScale;
     }
@@ -279,6 +286,7 @@ public final class SkillConfig {
         // 2026-10-27 照站長「所有技能的魔力消耗砍半」：每個技能的魔力消耗再乘這個（mana_cost_scale，0.1–10）
         manaCostScale = Math.max(0.1, Math.min(10, root.decimal("mana_cost_scale", 1.0)));
         playerSpeedScale = Math.max(0.1, Math.min(10, root.decimal("player_speed_scale", 2.0))); // 2026-10-29 照站長
+        playerAreaScale = Math.max(0.1, Math.min(10, root.decimal("player_area_scale", 1.5))); // 2026-10-31 照站長
         minionMoveScale = Math.max(0.1, Math.min(10, root.decimal("minion_move_scale", 2.0))); // 2026-10-29 照站長
         minionSpeedScale = Math.max(0.1, Math.min(10, root.decimal("minion_speed_scale", 2.0))); // 2026-10-29 照站長
         if (extraLevelDamage < 0 || extraLevelDamage > 100) {
@@ -561,9 +569,9 @@ public final class SkillConfig {
             }
         }
         // 2026-10-27 照 PoE2：血脈輔助（supports_lineage.yml）：新的血脈輔助加進來，supports.yml 裡已有的標成血脈掉落
-        // 2026-10-30 照 PoE2 的技能類型：我們的規則讓掛、原作不讓掛的組合（support_poe2.yml）
-        final Path poe2RulesFile = dataFolder.resolve(Poe2SupportRules.FILE);
-        final Map<String, Map<String, String>> parsedPoe2Rules = new java.util.HashMap<>();
+        // 2026-10-30 照 PoE2 的技能類型：我們的規則讓掛、原作不讓掛的組合（support_ref.yml）
+        final Path refRulesFile = dataFolder.resolve(RefSupportRules.FILE);
+        final Map<String, Map<String, String>> parsedRefRules = new java.util.HashMap<>();
         final java.util.Set<String> parsedProxy = new java.util.HashSet<>(); // 2026-10-30：代放不能用的輔助
         final java.util.Set<String> parsedTriggered = new java.util.HashSet<>(); // 2026-10-30：觸發不能用的輔助
         final java.util.Map<String, java.util.Map<String, java.util.Set<String>>> parsedUnlocks = new java.util.HashMap<>(); // 2026-10-30：別的輔助解開的組合
@@ -572,12 +580,12 @@ public final class SkillConfig {
         if (Files.exists(lineageFile)) {
             parsedLineageDrops = LineageRules.load(YamlNode.load(lineageFile), parsedSupports, parsed.keySet());
         }
-        if (Files.exists(poe2RulesFile)) {
-            final YamlNode poe2Root = YamlNode.load(poe2RulesFile);
-            parsedPoe2Rules.putAll(Poe2SupportRules.parse(poe2Root, parsed.keySet(), parsedSupports.keySet()));
-            parsedProxy.addAll(Poe2SupportRules.parseProxy(poe2Root, parsedSupports.keySet()));
-            parsedTriggered.addAll(Poe2SupportRules.parseTriggered(poe2Root, parsedSupports.keySet()));
-            parsedUnlocks.putAll(Poe2SupportRules.parseUnlocks(poe2Root, parsed.keySet(), parsedSupports.keySet()));
+        if (Files.exists(refRulesFile)) {
+            final YamlNode refRoot = YamlNode.load(refRulesFile);
+            parsedRefRules.putAll(RefSupportRules.parse(refRoot, parsed.keySet(), parsedSupports.keySet()));
+            parsedProxy.addAll(RefSupportRules.parseProxy(refRoot, parsedSupports.keySet()));
+            parsedTriggered.addAll(RefSupportRules.parseTriggered(refRoot, parsedSupports.keySet()));
+            parsedUnlocks.putAll(RefSupportRules.parseUnlocks(refRoot, parsed.keySet(), parsedSupports.keySet()));
         }
         // 2026-10-18：驗證移到任何欄位指定之前（以前先換掉一半才驗證，失敗時新舊混用）；Boss 招式也在換之前載入（它自己解析好才換）
         for (final Map.Entry<String, java.util.List<String>> entry : parsedCommands.entrySet()) {
@@ -622,10 +630,10 @@ public final class SkillConfig {
         this.missingDefaults = List.copyOf(missing);
         // 2026-10-30：移到所有技能設定都換好之後（防呆也看龍捲風、雷樁矢；這次之前在 tornados 換好之前，第一次讀設定看不到龍捲風）
         SupportGuards.index(this);
-        Poe2SupportRules.install(parsedPoe2Rules);
-        Poe2SupportRules.installProxy(parsedProxy);
-        Poe2SupportRules.installTriggered(parsedTriggered, parsedMetas);
-        Poe2SupportRules.installUnlocks(parsedUnlocks);
+        RefSupportRules.install(parsedRefRules);
+        RefSupportRules.installProxy(parsedProxy);
+        RefSupportRules.installTriggered(parsedTriggered, parsedMetas);
+        RefSupportRules.installUnlocks(parsedUnlocks);
         // 2026-10：輔助照階級排（第 1 階全部在前、再第 2 階…；同一階照 supports.yml 的順序），後來加的不會都擠在最後面
         final java.util.List<SupportDefinition> byTier = new java.util.ArrayList<>(parsedSupports.values());
         byTier.sort(java.util.Comparator.comparingInt(SupportDefinition::tier));
@@ -939,7 +947,7 @@ public final class SkillConfig {
     }
 
     public SkillDefinition skill(final String id) {
-        return id == null ? null : skills.get(id);
+        return id == null ? null : skills.get(SkillIds.current(id));
     }
 
     public Collection<SkillDefinition> all() {
@@ -1160,7 +1168,7 @@ public final class SkillConfig {
     }
 
     public SupportDefinition support(final String id) {
-        return id == null ? null : supports.get(id);
+        return id == null ? null : supports.get(SkillIds.current(id));
     }
 
     /** 2026-10-27：血脈輔助的掉落設定（supports_lineage.yml 的 drops）。 */

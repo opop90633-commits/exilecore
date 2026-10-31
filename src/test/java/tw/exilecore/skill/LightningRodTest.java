@@ -38,25 +38,25 @@ class LightningRodTest {
     private static final UUID WORLD = UUID.randomUUID();
 
     private static LightningRods.Rod rod(final double x, final long now) {
-        final SkillConfig.RodSpec spec = config.rod("lightning_rod");
+        final SkillConfig.RodSpec spec = config.rod("thunder_stake_shaft");
         return new LightningRods.Rod(OWNER, WORLD, new Vector(x, 64, 0), now, now + Math.round(spec.duration() * 20), spec.chains(),
-                Math.round(spec.charge() * 20), null, 2.0, "lightning_arrow");
+                Math.round(spec.charge() * 20), null, 2.0, "thunderclap_arrow");
     }
 
     @Test
-    void skillDataMatchesPoe2() {
-        final SkillDefinition rod = config.skill("lightning_rod");
+    void skillDataMatchesRef() {
+        final SkillDefinition rod = config.skill("thunder_stake_shaft");
         assertTrue(rod.tags().contains(Tags.DURATION));
         assertTrue(rod.tags().contains(Tags.LIGHTNING));
         assertTrue(rod.tags().contains(Tags.PROJECTILE));
-        final SkillConfig.RodSpec spec = config.rod("lightning_rod");
+        final SkillConfig.RodSpec spec = config.rod("thunder_stake_shaft");
         assertNotNull(spec);
         assertEquals(20, spec.duration(), 1e-9);
         assertEquals(10, spec.max());
         assertEquals(8, spec.chains());
         assertEquals(1.0, spec.charge(), 1e-9);
         assertEquals(tw.exilecore.core.Units.metres(2.0), rod.params().radius().at(1), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
-        assertNull(config.rod("lightning_arrow"));
+        assertNull(config.rod("thunderclap_arrow"));
         assertFalse(rod.description().contains("需要程式"));
     }
 
@@ -124,13 +124,13 @@ class LightningRodTest {
     @Test
     void lightningArrowBeamsBurstAfterPointOneSecondAtMostEveryPointOneSecond() {
         final StatSheet sheet = new StatSheet();
-        final SkillBuild arrow = SkillBuild.of(config, config.skill("lightning_arrow"), 1, 1, false, List.of(), Set.of(Tags.BOW), sheet);
+        final SkillBuild arrow = SkillBuild.of(config, config.skill("thunderclap_arrow"), 1, 1, false, List.of(), Set.of(Tags.BOW), sheet);
         assertEquals(0.1, arrow.profile().effective(sheet).flat(LightningRods.BURST_DELAY, arrow.profile().tags()), 1e-9);
         assertTrue(SkillZones.chainsToRods(arrow.profile()), "雷鳴箭的雷束是閃電");
-        final SkillBuild arc = SkillBuild.of(config, config.skill("arc"), 1, 1, false, List.of(), Set.of(), sheet);
+        final SkillBuild arc = SkillBuild.of(config, config.skill("chain_thunder"), 1, 1, false, List.of(), Set.of(), sheet);
         assertTrue(SkillZones.chainsToRods(arc.profile()), "鏈雷的連鎖可以連到箭");
         assertEquals(0, arc.profile().effective(sheet).flat(LightningRods.BURST_DELAY, arc.profile().tags()), 1e-9, "鏈雷照箭自己的 1 秒");
-        final SkillBuild blood = SkillBuild.of(config, config.skill("exsanguinate"), 1, 1, false, List.of(), Set.of(), sheet);
+        final SkillBuild blood = SkillBuild.of(config, config.skill("blood_vein_tether"), 1, 1, false, List.of(), Set.of(), sheet);
         assertFalse(SkillZones.chainsToRods(blood.profile()), "不是閃電的連鎖不算");
 
         final LightningRods rods = new LightningRods();
@@ -151,10 +151,10 @@ class LightningRodTest {
 
     @Test
     void qualityGivesExtraBurstChanceAndAdvancedAttackSpeed() {
-        final List<Modifier> mods = tw.exilecore.currency.GemQuality.modifiers("lightning_rod", 20, "品質");
+        final List<Modifier> mods = tw.exilecore.currency.GemQuality.modifiers("thunder_stake_shaft", 20, "品質");
         assertEquals(20, mods.stream().filter(m -> m.stat().equals(LightningRods.EXTRA_BURST)).mapToDouble(Modifier::value).sum(), 1e-9);
         assertEquals(0, mods.stream().filter(m -> m.stat().equals(StatKeys.DAMAGE)).count(), "不再是通用的增加傷害");
-        final List<Modifier> advanced = tw.exilecore.currency.GemQuality.advancedModifiers("lightning_rod", 20, "高階奇術");
+        final List<Modifier> advanced = tw.exilecore.currency.GemQuality.advancedModifiers("thunder_stake_shaft", 20, "高階奇術");
         assertEquals(0.2, advanced.stream().filter(m -> m.stat().equals(StatKeys.ATTACK_SPEED)).mapToDouble(Modifier::value).sum(), 1e-9);
         assertFalse(ModifierText.describe(mods.getFirst()).startsWith("特殊效果"));
         assertTrue(ModifierText.describe(Modifier.flat(LightningRods.BURST_DELAY, 0.1, "雷鳴箭")).contains("0.1 秒"));

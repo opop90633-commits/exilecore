@@ -1,0 +1,148 @@
+# 2026-10-25：PoE2 對照（tools 手動整理；平衡報表的「我們÷PoE2」用）。id,poe2_name,poe2_lv20,note
+# 2026-10-26：照 poe2db 逐筆重抓。poe2_lv20：攻擊是 20 級傷害效益 %（主要那一段）；法術是 20 級平均基礎傷害（以前報表誤拿法術附加效益去除）。
+#   note 開頭寫「已套用」的，skills.yml 已經改成 poe2db 的逐級表（1–40 級）；寫「未套用」的是對應不確定或做法不同，數值沒動。
+bone_thorn_ring,Bone Cage,434,已套用；physical
+anomaly_devour_blast,Snap,591,已套用；cold (vs frozen); lightning 1-15 / 27-512; fire 6-8 / 192-288
+retreat_crystal_freeze,Frozen Locus,100,已套用；ice crystal explosion 612% L20
+frost_rampart,Frost Wall,233.5,已套用；wall/crystal cold dmg; lightning-infused explosion 23-444 @20
+flame_curtain,Flame Wall,226,未套用；mainly DoT: burning L1 1.8/s; L20 59.6/s; range is ignite-as-though dmg; proj added fire L20 27-41
+startling_thunder_bell,Tempest Bell,119,已套用；bell impact; ring shockwave L1 45% / L20 119%
+scorching_sun_pearl,Solar Orb,226,已套用；per pulse
+cinder_sprout,Living Bomb,601,已套用；explosion
+erosion_curse_rift,Hexblast,1036,已套用
+searing_slurry_cannon,Plasma Blast,3389,已套用；projectile; explosion 300% L1 / 1225% L20
+thunder_escape,Lightning Warp,543,未套用；approximate match: PoE2 teleports into enemy; explodes on cull
+chill_fan_shafts,Ice Shot,344,未套用；approx match; shards 344% at L20
+black_oil_rain,Oil Barrage,281,已套用；other components unlabeled (312% @20)
+void_bolt,Chaos Bolt,286,未套用；approx match; PoE2 version does not split
+dig_remains,Bone Cage,434,未套用；physical; PoE2 ring around caster; pins
+blazing_star_shell,Fireball,280,已套用；projectile and explosion same range
+frost_drill,Frostbolt,180,已套用
+soul_draw_shot,Essence Drain,197.5,已套用；chaos DoT 9.2/s L1; 443.5/s L20; 4s
+sunder,Sunder,653,已套用；wave; shockwave 265% @20
+frost_orb,Frostbolt,180,未套用；projectile; explosion 230-344 at L20
+volcano,Volcano,151,已套用；eruption; projectiles 92-138 @20
+thunder_cloud,Orb of Storms,137,已套用；per chain bolt
+flowing_flame_canopy,Firestorm,139,已套用；per fire bolt; infused cold 95-143; lightning 16-302 at L20
+returning_smith_hammer,Forge Hammer,577,已套用；fissures 198% at L20
+miasma_zone,Toxic Domain,312,已套用；pustule explosion 38% L1 / 119% L20; poison DoT 0.4/s L1; 194.2/s L20
+static_field,Orb of Storms,137,未套用；low confidence match; per chaining bolt
+soaring_smash,Leap Slam,449,已套用
+spine_crush,Boneshatter,312,已套用；shockwave L20 724%
+ground_tremor,Earthquake,125,已套用；aftershock L20 666%
+titan_slam,Hammer of the Gods,1529,未套用；low-confidence match
+flame_breath,Flame Breath,109,已套用；channelled; per hit
+roaming_thunder,Spark,129,已套用；per projectile
+charged_blow,Perfect Strike,343,已套用；perfect-timing hit 1132% at L20
+shattered_bone_darts,Bonestorm,145.5,已套用；per spike; explosion 89-134 at L20
+frost_star_blast,Ice Nova,163.5,已套用
+miasma_arrow,Poisonburst Arrow,274,未套用；low confidence; burst L20 100%
+corpse_burst,Detonate Dead,181.5,已套用；+5% (L1) / 10.7% (L20) of corpse max life
+flame_core_detonation,Flameblast,305.5,已套用；75% more dmg per stage; 10 stages
+startle_thunder_chop,Falling Thunder,437,已套用；slam; power-charge projectiles (L1 100%; L20 unlabeled)
+leapback_shoot,Escape Shot,265,已套用
+chain_thunder,Arc,203,已套用
+thorn_shaft,Vine Arrow,218,已套用；vines 271.3 chaos DoT/s at L20
+helix_arrow_rain,Spiral Volley,206,已套用
+rime_arrow,Ice Shot,344,已套用；shards same % as hit
+sky_rend_arrow,Tornado Shot,156,已套用；tornado L20 ~208.7 phys DPS
+thunderclap_arrow,Lightning Arrow,250,已套用；chain bolts L20 100%
+toxic_blast_shaft,Poisonburst Arrow,274,已套用；burst column 100%
+myriad_arrow_fall,Rain of Arrows,181,已套用
+gathered_thundercloud,Thunderstorm,92,已套用；per strike
+lashing_thorns,Thrashing Vines,188.5,已套用；physical
+thunder_lure_thrust,Gathering Storm,435,已套用；shockwave 435% L20; perfect dash 1014%; tempest shockwave 869% L20
+pulse_quake_palm,Staggering Palm,250,未套用；approx match (PoE2 heavy stuns; no daze); projectiles 204%
+blast_grenade,Explosive Grenade,878,已套用
+linked_lightning_arrow,Shockchain Arrow,218,已套用；2026-10-28 照 PoE2 對應改成 Shockchain Arrow（箭 218%、震波 507%）；這次之前誤對 Lightning Arrow 250
+mountain_shake_claw,Maul,290,已套用
+heaven_punish_maul,Hammer of the Gods,1529,已套用；Glory-based in PoE2; no cooldown
+lava_splash,Molten Blast,265,已套用；shrapnel 265% at L20
+pounce,Pounce,312,已套用；cooldown 6s L1 / 5.1s L20
+mist_staff_sweep,Wind Blast,265,已套用
+falling_star,Comet,984,已套用
+wingbeat_gust,Wing Blast,265,已套用；stun shockwave 634% @20
+field_quake_stomp,Furious Slam,254,已套用；enraged shockwave 398% @20
+spear_recoil_leap,Disengage,308,已套用；shockwave (vs parried) 490% L20
+chill_crystal_mine,Frost Bomb,298,已套用；cold explosion on expiry; also applies exposure
+instant_shadow_strike,Flicker Strike,327,已套用
+leaping_staff_crash,Vaulting Impact,422,已套用
+hero_spirit_totem,Ancestral Warrior Totem,100,未套用；uses socketed mace skill; no own multiplier
+electrocute_shaft,Electrocuting Arrow,250,已套用
+earth_wall_strike,Shield Wall,235,已套用；plus off-hand base phys 103-155 L20 + 5-7 phys per 15 shield armour
+sky_column_thunder,Lightning Conduit,378.5,已套用；extra bolts vs shocked
+thunder_surge,Storm Wave,343,已套用
+soul_sever_palm,Killing Palm,281,已套用
+frost_shockwave,Ice Strike,187,已套用；final strike L1 130% / L20 405%
+spinning_staff_step,Whirling Assault,163,已套用
+crisscross_claw,Cross Slash,235,已套用；shockwave on Marked 471% @20
+kerosene_grenade,Oil Grenade,408,已套用
+field_quake_hammers,Rolling Slam,272,已套用；second slam L1 150% / L20 543%
+brute_charge,Rampage,306,已套用；channelled; Rage-based; no cooldown in PoE2
+nether_puppet,Dark Effigy,98.5,已套用；per Vile Effusion projectile
+cloud_pierce_arrow,Snipe,312,已套用；arrow; perfect-timing explosion 1449% @20
+miasma_bud_rain,Toxic Growth,62,已套用；pustule hit; explosion 32% L1 / 100% L20
+thunder_call_shaft,Stormcaller Arrow,281,已套用；lightning bolt; arrow itself L1 20% / L20 62%
+swift_claw,Shred,125,已套用；normal strikes; final strike 187% @20
+thunder_draw_staff,Siphoning Strike,234,已套用；shock-consume shockwave L20 624%
+molten_ball,Rolling Magma,218,已套用
+gale_combo,Tempest Flurry,140,已套用；final strike L1 135% / L20 421%
+tremor_grenade,Flash Grenade,408,未套用；low confidence; Flash Grenade blinds+stuns
+fallen_star_bear_roar,Walking Calamity,612,已套用；large meteor; small meteor 245% @20; Glory-based
+mother_child_grenade,Cluster Grenade,490,已套用；mini grenades 286% at L20
+plate_crush_hammer,Armour Breaker,181,已套用
+ice_shuttle,Frost Darts,66.5,已套用；per projectile; explosion 2-4 L1 / 66-98 L20
+flame_vein_rift,Volcanic Fissure,166,已套用；slam/fissure not separated on page
+blood_tear_sweep,Rake,181,已套用
+facet_light_rift,Elemental Sundering,510,已套用；fire; cold 1429%; lightning 572% at L20
+blasting_quarrel,Explosive Shot,405,已套用；no separate explosion value
+magnet_thunder_barrage,Magnetic Salvo,156,已套用；impact; explosion 70% L1 / 286% L20
+rolling_thunder_orb,Ball Lightning,55.5,已套用；per zap; fire-infused explosion 570-856 @20
+freezing_rain_shell,Hailstorm Rounds,228,已套用；other unlabeled columns 100%
+ice_cone_toss,Glacial Lance,405,已套用；explosion 670% L20
+thunderlight_grenade,Voltaic Grenade,327,已套用
+lunge,Rake,181,未套用；low confidence; no 'Lunge' page; Rake is closest spear dash
+shield_drum,Resonating Shield,94,已套用；plus off-hand base phys 4-6 (L1) / 103-155 (L20) + 5-7 phys per 15 shield armour
+cripple_purge,Cull The Weak,281,已套用
+gnawing_bite,Devour,235,已套用；no cooldown listed
+frost_tooth_stab,Fangs of Frost,296,已套用；stab; parry explosion 449% @20
+sweeping_repel,Disengage,308,未套用；approx match; shockwave 490% at L20 (alt: Whirling Slash 70/218)
+snake_squall_thrust,Wind Serpent's Fury,598,已套用；serpent 199% at L20
+thunder_stake_shaft,Lightning Rod,94,已套用
+thousand_weight_smash,Supercharged Slam,254,已套用；slam/aftershock split unlabeled
+earth_spike_eruption,Earthshatter,140,已套用；spike shatter 507% at L20
+thunder_lance_throw,Lightning Spear,343,已套用；secondary bolts L20 234%
+hurricane_spear,Whirlwind Lance,343,已套用；whirlwind L20 217%
+thunder_bound,Thunderous Leap,449,已套用
+thunderclap_stab,Primal Strikes,250,已套用；spirits 435% L20
+ice_ridge_rift,Glacial Cascade,125,已套用；bursts; final spike 374% @20
+molten_crack_stomp,Fury of the Mountain,145,已套用；components unlabeled
+venom_etch_arrow,Gas Arrow,94,已套用；gas cloud L20 218%; explosion L20 281%
+successive_shots,Rapid Shot,94,未套用；per bolt; PoE2 is heat-based stream; approximate match
+miasma_grenade,Gas Grenade,163,已套用；poison cloud L20 612%; explosion L20 612%
+cold_spirit_palm,Shattering Palm,109,未套用；approx match; shard explosion 374% at L20
+cold_winter_gaze,Eye of Winter,49.5,已套用；per shard; no final burst in current version
+iron_wall_ram,Shield Charge,94,已套用；collision/end hit L1 70% / L20 254%; PoE2 needs shield
+frost_billow,Glacial Cascade,125,未套用；bursts; final spike 374% at L20
+rushing_thunder_stomp,Stampede,125,已套用；footsteps; final slam 374% at L20
+blood_hunt,Blood Hunt,243,已套用；blood explosion 487% at L20
+frozen_wall_shaft,Glacial Bolt,145,已套用；projectile; ice wall 60% L1 / 245% L20
+cyclone_spear,Twister,232,已套用
+spear_formation,Spearfield,204,已套用；explosion component; other columns 100% (unclear)
+spinning_spear_strike,Whirling Slash,218,已套用；whirlwind collapse L20 217%
+thunder_shard_scatter,Galvanic Shards,54,已套用；per shard; beam 272% at L20
+thunderfall_spear,Storm Lance,187,已套用；lodged spear bolts 91%; detonation 405% at L20
+blazing_sun_spear,Spear of Solaris,612,已套用；impact; pulse 110%; ignited ground 1429% @20; PoE2 is Glory-based; no cooldown
+shrapnel_shell,Fragmentation Rounds,72,已套用；per fragment; vs frozen 1429% L20
+skyward_crossbow_turret,Siege Ballista,132,已套用；projectile; explosion 50% L1 / 132% L20
+flame_scatter_fire,Incendiary Shot,36,已套用；per fragment
+explosive_spear,Explosive Spear,156,已套用；hit; explosion 489% @20
+fortress_crumble_shell,Siege Cascade,145,已套用；impact; explosion 543% at L20
+triple_stab,Rapid Assault,78,已套用；per strike; final strike 312%; explosion 546% at L20
+armor_punch_slug,Armour Piercing Rounds,91,未套用；per bolt; rapid fire
+armor_break_quarrel,Armour Piercing Rounds,91,已套用
+nailfall_crossbow_turret,Artillery Ballista,40,已套用；per bolt
+lurking_thunder_shell,Stormblast Bolts,72,已套用；bolt hit; explosion 470% L20
+frozen_earth_repeater,Permafrost Bolts,49,已套用；per bolt
+thunder_squall_quarrels,Shockburst Rounds,36,未套用；approx match; pulse 109% at L20
+cold_congeal_shell,Ice Shards,29,未套用；approx match; shard 82% at L20

@@ -497,8 +497,8 @@ final class Channelling {
             }
         }
         final Location center = charging.focus.clone().add(0, 0.2, 0);
-        player.getWorld().spawnParticle(Particle.SQUID_INK, center, 14, radius * 0.5, 0.15, radius * 0.5, 0.01);
-        player.getWorld().spawnParticle(Particle.WITCH, center, 8, radius * 0.5, 0.3, radius * 0.5, 0.01);
+        tw.exilecore.skill.Fx.disk(player.getWorld(), Particle.SQUID_INK, center, 14, radius, 0.15, 0.01);
+        tw.exilecore.skill.Fx.disk(player.getWorld(), Particle.WITCH, center, 8, radius, 0.3, 0.01);
         return false;
     }
 }

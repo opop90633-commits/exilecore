@@ -54,8 +54,8 @@ class BalanceTest {
     void referenceBuildsResolve() {
         assertEquals(List.of(), model.problems());
         assertEquals(CharacterClass.MARAUDER, config.attack().characterClass());
-        assertEquals("boneshatter", config.attack().skill());
-        assertEquals("fireball", config.spell().skill());
+        assertEquals("spine_crush", config.attack().skill());
+        assertEquals("blazing_star_shell", config.spell().skill());
         assertEquals(0.4, config.killSeconds(1), 1e-9);
         assertEquals(1.0, config.killSeconds(60), 1e-9);
         assertEquals(0.4 * Math.pow(2.5, 29 / 59.0), config.killSeconds(30), 1e-9, "目標也是等比內插");
@@ -230,14 +230,14 @@ class BalanceTest {
     void problemsCatchSkillsThatDoNotFitTheBuild(@TempDir final Path dir) throws IOException {
         Files.writeString(dir.resolve("balance.yml"), """
                 reference:
-                  attack: { class: ranger, weapon: bow_23, skill: boneshatter }
-                  spell: { class: witch, weapon: wand_14, skill: lightning_arrow }
+                  attack: { class: ranger, weapon: bow_23, skill: spine_crush }
+                  spell: { class: witch, weapon: wand_14, skill: thunderclap_arrow }
                 """);
         final BalanceConfig wrong = new BalanceConfig();
         wrong.load(dir);
         final List<String> problems = new BalanceModel(items, skills, monsters, wrong).problems();
-        assertTrue(problems.stream().anyMatch(p -> p.contains("boneshatter") && p.contains("bow")), problems.toString());
-        assertTrue(problems.stream().anyMatch(p -> p.contains("lightning_arrow") && p.contains("不是法術")), problems.toString());
+        assertTrue(problems.stream().anyMatch(p -> p.contains("spine_crush") && p.contains("bow")), problems.toString());
+        assertTrue(problems.stream().anyMatch(p -> p.contains("thunderclap_arrow") && p.contains("不是法術")), problems.toString());
     }
 
     @Test
@@ -250,7 +250,7 @@ class BalanceTest {
         assertEquals(config.spell(), partial.spell());
         assertEquals(config.killSeconds(33), partial.killSeconds(33), 1e-9);
         assertEquals(config.bossSeconds(36), partial.bossSeconds(36), 1e-9);
-        Files.writeString(dir.resolve("balance.yml"), "reference:\n  attack: { class: paladin, weapon: war_hammer, skill: boneshatter }\n");
+        Files.writeString(dir.resolve("balance.yml"), "reference:\n  attack: { class: paladin, weapon: war_hammer, skill: spine_crush }\n");
         final IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> partial.load(dir));
         assertTrue(error.getMessage().contains("paladin"));
         assertEquals(0.5, partial.spellVsAttack(), 1e-9, "寫錯時保留原本的設定");

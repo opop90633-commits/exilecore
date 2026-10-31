@@ -29,7 +29,7 @@ final class Overgrowth {
     static final String TRIGGER = "plant.overgrow_trigger";
     static final String TRIGGER_SKILL = "proc_accelerated_growth";
     /** 讓範圍內植物繁茂的技能。 */
-    static final String THUNDERSTORM = "thunderstorm";
+    static final String THUNDERSTORM = "gathered_thundercloud";
     /** 縛根：繁茂時剩下的時間 ÷ 0.75（消失慢 25%）、每個敵人多纏 3 條。 */
     static final double ENTANGLE_SLOWER = 0.25;
     static final int ENTANGLE_EXTRA_VINES = 3;
@@ -48,7 +48,7 @@ final class Overgrowth {
         }
         final String id = profileId.contains(".") ? profileId.substring(0, profileId.indexOf('.')) : profileId;
         return switch (id) {
-            case "bramble_arrow", "thrashing_vines" -> new Effect(0.5, 0.5); // Vine Arrow、Thrashing Vines
+            case "thorn_shaft", "lashing_thorns" -> new Effect(0.5, 0.5); // Vine Arrow、Thrashing Vines
             case "proc_bramble" -> new Effect(0.5, 0); // Brambles
             case EntangleRoots.ID -> new Effect(0, 0); // 效果在 EntangleRoots
             default -> null;

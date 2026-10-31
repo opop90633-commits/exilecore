@@ -29,7 +29,7 @@ public final class RolledAffix {
     }
 
     public String id() {
-        return id;
+        return UniqueIds.currentAffix(id);
     }
 
     public int tier() {

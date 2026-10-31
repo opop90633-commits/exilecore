@@ -28,7 +28,7 @@ data/skills.yml
 data/boss_skills.yml
 data/supports.yml
 data/supports_lineage.yml
-data/support_poe2.yml
+data/support_ref.yml
 data/gem_colours.yml
 data/flasks.yml
 data/runes.yml

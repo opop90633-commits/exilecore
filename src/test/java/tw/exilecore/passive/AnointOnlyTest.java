@@ -46,7 +46,7 @@ class AnointOnlyTest {
                 assertFalse(line.contains("Flail") || line.contains("連枷"), node.name() + "：" + line);
             }
         }
-        assertTrue(names.containsAll(List.of("增幅血肉", "模範", "巨著", "統御", "神幻雪崩", "光明壁壘", "沙漠之蔑", "岡姆之祝")), names.toString());
+        assertTrue(names.containsAll(List.of("增幅血肉", "模範", "巨著", "統御", "神幻雪崩", "光明壁壘", "沙漠之蔑", "岩酋之祝")), names.toString());
     }
 
     @Test

@@ -62,7 +62,7 @@ public final class SupportExtraKeys {
     public static final String STOICISM = "damage.stoicism";
     public static final double STOICISM_CAP = 20;
     /** FLAT：靜止 1.5 秒才能用；每靜止 0.25 秒擊中更多 x%，最多 {@link #DAUNTLESS_CAP}%（Dauntless）。 */
-    public static final String DAUNTLESS = "damage.dauntless";
+    public static final String DAUNTLESS = "damage.fearless_heart";
     public static final double DAUNTLESS_CAP = 45;
     public static final long DAUNTLESS_TICKS = 30;
     /** 旗標：被包圍時攻擊的擊中傷害幸運（Defy）。 */
@@ -78,7 +78,7 @@ public final class SupportExtraKeys {
     /** FLAT：完美時機時獲得閃避值 x% 的偏斜值 8 秒（Window of Opportunity）。 */
     public static final String PERFECT_DEFLECT = "deflection.on_perfect_timing";
     /** FLAT：完美時機時獲得幾層完美（Perfection：每層更多 5%，最多 4 層，10 秒；沒抓到完美時機全部失去）。 */
-    public static final String PERFECTION = "perfection.on_perfect_timing";
+    public static final String PERFECTION = "flawless_form.on_perfect_timing";
     public static final double PERFECTION_MORE = 5;
     public static final int PERFECTION_MAX = 4;
     public static final long PERFECTION_TICKS = 200;
@@ -150,8 +150,8 @@ public final class SupportExtraKeys {
      * 2026-10-27 照 PoE2（PerformsFinalStrike）：有最後一擊的打擊，快速連用時第幾下是最後一擊（寒冰震波 3、原獸連擊 3、風暴連擊 4、撕咬 4；
      * RePoE 的 stat set：IceStrikeThirdAttack、PrimalStrikesFinal、TempestFlurryFinalStrike、WolfShredFinal）。
      */
-    public static final java.util.Map<String, Integer> FINAL_STRIKE_SKILLS = java.util.Map.of("ice_strike", 3, "primal_strikes", 3,
-            "tempest_flurry", 4, "wolf_shred", 4);
+    public static final java.util.Map<String, Integer> FINAL_STRIKE_SKILLS = java.util.Map.of("frost_shockwave", 3, "thunderclap_stab", 3,
+            "gale_combo", 4, "swift_claw", 4);
     /** 「快速連用」：跟上一下隔多久以內算連段（沒寫明，用 2 秒）。 */
     public static final long FINAL_STRIKE_WINDOW = 40;
 
@@ -167,28 +167,28 @@ public final class SupportExtraKeys {
     /** FLAT 秒：感電時曝露（Lightning Exposure）。 */
     public static final String EXPOSURE_ON_SHOCK = "exposure.on_shock";
     /** FLAT %：擊中時穿刺的機率（Impale）。 */
-    public static final String IMPALE_ON_HIT = "impale.on_hit";
+    public static final String IMPALE_ON_HIT = "stab_nail.on_hit";
     /** 旗標：不會抽出穿刺（Impale）。 */
     public static final String FLAG_NO_EXTRACT = "flag.cannot_extract_impale";
     /** FLAT：最近每用掉一層切割流血更多 x%，最多 30%（Incision）。 */
-    public static final String INCISION_BLEED = "incision.bleed_more";
+    public static final String INCISION_BLEED = "cut_wound.bleed_more";
     public static final double INCISION_BLEED_CAP = 30;
     /** 旗標：擊中蓄勢待電的敵人直接電擊（Neural Overload）。 */
     public static final String FLAG_OVERLOAD = "flag.electrocute_primed";
     /** 旗標：對點燃中而且完全破甲的敵人有重壓擊（Crushing Blow），重暈牠們時永久恫嚇（Syzygy）。 */
-    public static final String FLAG_SYZYGY = "flag.syzygy";
+    public static final String FLAG_SYZYGY = "flag.merged_orbit";
     /** 旗標：暈眩累積到不了 100%（Brink）。 */
     public static final String FLAG_STUN_CANNOT_REACH = "flag.stun_cannot_reach";
     /** 旗標：流血、中毒的基礎機率互換（Malady）。 */
-    public static final String FLAG_MALADY = "flag.malady";
+    public static final String FLAG_MALADY = "flag.disease_shift";
     /** FLAT %：被這個技能感電的敵人，受到點燃時另外受到點燃傷害 x% 的閃電傷害（Stormfire；AilmentService 的點燃每一跳讀 SupportExtras#stormfire）。 */
-    public static final String STORMFIRE = "ignite.stormfire";
+    public static final String STORMFIRE = "ignite.thunder_burn";
     /** FLAT：施加持續傷害時用掉敵人一種異常，持續傷害更多 x%（Drain Ailments）。 */
     public static final String DRAIN_AILMENTS = "damage.dot_drain_ailment";
     /** FLAT：你身上有同一種異常時，施加的異常更多 x%，並移除你身上的（Commiserate）。 */
-    public static final String COMMISERATE = "ailment.commiserate";
+    public static final String COMMISERATE = "ailment.shared_ailment";
     /** 旗標：混沌傷害也累積凍結（對受到被輔助技能持續傷害的敵人；Chaotic Freeze）。 */
-    public static final String FLAG_CHAOTIC_FREEZE = "flag.chaotic_freeze";
+    public static final String FLAG_CHAOTIC_FREEZE = "flag.muddled_freeze";
     /** FLAT %：感電時 x% 機率讓 {@link #SHOCK_NEARBY_RADIUS} 格內另一個敵人也感電（Shock Conduction）。 */
     public static final String SHOCK_NEARBY = "shock.conduct_nearby";
     public static final double SHOCK_NEARBY_RADIUS = 2.5;
@@ -203,7 +203,7 @@ public final class SupportExtraKeys {
     public static final double DRENCHED_SHOCK = 50;
     public static final double DRENCHED_FREEZE = 25;
     /** 會讓敵人濕透的技能（PoE2 Thunderstorm）。 */
-    public static final java.util.Set<String> DRENCHING_SKILLS = java.util.Set.of("thunderstorm");
+    public static final java.util.Set<String> DRENCHING_SKILLS = java.util.Set.of("gathered_thundercloud");
     /** FLAT：打死感電中的敵人回復最大能量護盾 x%（Shock Siphon）。 */
     public static final String SHOCK_SIPHON = "es.on_kill_shocked";
     /** FLAT %：打死流血中的敵人時擊殺效果發生兩次的機率（Tear）。 */
@@ -261,7 +261,7 @@ public final class SupportExtraKeys {
     public static final String FONT_MANA = "totem.font_mana";
     public static final double FONT_RADIUS = 4;
     /** FLAT：引導時每秒一層必殺決心，被擊中時用掉一層朝對方斬一刀（Deadly Resolve：最多層數）。 */
-    public static final String DEADLY_RESOLVE = "channel.deadly_resolve";
+    public static final String DEADLY_RESOLVE = "channel.decisive_kill";
     public static final long DEADLY_RESOLVE_TICKS = 200;
     public static final long DEADLY_RESOLVE_GAP = 6;
     /** 2026-10-27 照 PoE2 TriggeredDeadlyResolvePlayer：每 x 點護甲斬擊更多 1%（1–40 級），最多更多 200%。 */
@@ -282,7 +282,7 @@ public final class SupportExtraKeys {
     /** MORE：重暈門檻（只有重暈；Unbreakable）。 */
     public static final String HEAVY_STUN_THRESHOLD = "stun.heavy_threshold";
     /** 旗標：用突進技能時每走一步震出一陣震波（Stomping Ground）。 */
-    public static final String STOMPING = "travel.stomping_ground";
+    public static final String STOMPING = "travel.tread_quake";
     /** 一步多長（PoE2 是角色的腳步；我們沒有走路動畫，照跑步的步幅 1.5 格算一步）。 */
     public static final double STOMPING_STEP = 1.5;
     /** FLAT 秒：落地時留下聖化地面 x 秒（Holy Descent）。 */
@@ -293,14 +293,14 @@ public final class SupportExtraKeys {
 
     // ---- 投射物、範圍、地面 ----
     /** 旗標：投射物隨機分裂、連鎖或穿透一次（Gambleshot）。 */
-    public static final String FLAG_GAMBLESHOT = "projectile.gambleshot";
+    public static final String FLAG_GAMBLESHOT = "projectile.wager_shot";
     /** 旗標：穿透所有目標；投射物數量的加成改成從地形連鎖的次數（Ricochet）。 */
     public static final String FLAG_RICOCHET = "projectile.ricochet";
     /** FLAT %：法術投射物 x% 機率多射 8 發繞一圈（Wildshards）。 */
     public static final String WILDSHARDS = "projectile.wildshards";
     public static final int WILDSHARDS_COUNT = 8;
     /** 旗標：每 3 秒沒有產生光影投射物時發射存起來的光影投射物（Spectral Volley）。 */
-    public static final String FLAG_SPECTRAL = "projectile.spectral_volley";
+    public static final String FLAG_SPECTRAL = "projectile.light_shadow";
     public static final int SPECTRAL_MAX = 5;
     public static final long SPECTRAL_TICKS = 60;
     /** FLAT：光影投射物更多 x%。 */
@@ -368,10 +368,10 @@ public final class SupportExtraKeys {
     public static final String CRAZED = "minion.crazed_more";
     public static final long CRAZED_TICKS = 80;
     /** 旗標：召喚物用指令以外的技能不造成傷害；牠們的指令冷卻回復速度增加 100%（Commandment；MinionService）。 */
-    public static final String FLAG_COMMANDMENT = "minion.commandment";
+    public static final String FLAG_COMMANDMENT = "minion.army_order";
     public static final double COMMANDMENT_RECOVERY = 1.0;
     /** FLAT：你受到擊中的傷害有 x% 先由夥伴承受（Loyalty）。 */
-    public static final String LOYALTY = "minion.loyalty";
+    public static final String LOYALTY = "minion.faithful_servant";
     /** FLAT：每用掉一具屍體給 x 點生命／魔力藥劑充能（Gorge）。 */
     public static final String GORGE = "corpse.flask_charges";
 
@@ -383,9 +383,9 @@ public final class SupportExtraKeys {
     /** FLAT：攻擊傷害最多更多 x%，照你重暈條的比例（Retaliate）。 */
     public static final String POISE_DAMAGE = "damage.from_poise";
     /** 旗標：只是給防呆認的（Durability：要會留下冰晶的技能）。 */
-    public static final String DURABILITY = "objects.durability";
+    public static final String DURABILITY = "objects.sturdy_gear";
     /** 旗標：只是給防呆認的（Slow Potency：要會緩速的技能）。 */
-    public static final String SLOW_POTENCY = "debuff.slow_potency";
+    public static final String SLOW_POTENCY = "debuff.slow_vigor";
 
     // ---- 冷卻 ----
     /** 旗標：冷卻次數加倍；用了進入冷卻時，每秒冷卻回復最大生命 x%（Second Wind）。 */
@@ -396,7 +396,7 @@ public final class SupportExtraKeys {
      * FLAT %：被輔助的技能有自己的一份連擊（不是身上那份）：你用其他近戰攻擊擊中敵人時加 1 層；用的時候用掉全部，每用掉 1 層這一下更多 x% 傷害
      * （support_culmination_damage_+%_final_per_combo_stack）。
      */
-    public static final String CULMINATION = "combo.culmination";
+    public static final String CULMINATION = "combo.peak_point_ii";
     /** FLAT 秒：被輔助的技能超過這麼久沒有獲得連擊就失去全部（base_combo_stacks_decay_delay_ms）。 */
     public static final String CULMINATION_DECAY = "combo.culmination_decay";
     /** FLAT：被輔助的技能最多幾層連擊（skill_maximum_number_of_combo_stacks）。 */

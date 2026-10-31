@@ -38,15 +38,15 @@ import java.util.Set;
  */
 final class Snap {
 
-    static final String ID = "snap";
+    static final String ID = "anomaly_devour_blast";
     /** 可以被噬異爆引爆的投射物（PoE2 Frostbolt）。 */
-    static final String FROSTBOLT = "frostbolt";
-    static final String LIGHTNING_MIN = "snap.lightning_min";
-    static final String LIGHTNING_MAX = "snap.lightning_max";
-    static final String FIRE_MIN = "snap.fire_min";
-    static final String FIRE_MAX = "snap.fire_max";
+    static final String FROSTBOLT = "frost_drill";
+    static final String LIGHTNING_MIN = "anomaly_devour_blast.lightning_min";
+    static final String LIGHTNING_MAX = "anomaly_devour_blast.lightning_max";
+    static final String FIRE_MIN = "anomaly_devour_blast.fire_min";
+    static final String FIRE_MAX = "anomaly_devour_blast.fire_max";
     /** FLAT 百分比：多留下一個灌注殘骸的機率（品質 0～10%）。 */
-    static final String EXTRA_REMNANT = "snap.extra_remnant";
+    static final String EXTRA_REMNANT = "anomaly_devour_blast.extra_remnant";
     /** 各元素的基礎暴擊率（PoE2）；skills.yml 的 spell.base_crit 寫的是冰冷的 13。 */
     static final double CRIT_COLD = 13;
     static final double CRIT_LIGHTNING = 11;

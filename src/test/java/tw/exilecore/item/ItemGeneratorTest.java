@@ -49,7 +49,7 @@ class ItemGeneratorTest {
      * 2026-10 第五次（照市場報告）：神諭石 2 → 1（跟大鑿星石一樣少；神聖比崇高少 80 倍）、恩澤石 25 → 8、星盤刻刀 160 → 60、符文 25 → 10。
      */
     @Test
-    void currencyDropRatesFollowPoe2() {
+    void currencyDropRatesFollowRef() {
         assertEquals(1500, currencies.get("glimmer_orb").dropWeight());
         assertEquals(1250, currencies.get("lustre_orb").dropWeight());
         assertEquals(1000, currencies.get("whetstone").dropWeight()); // 2026-10-27 照站長併入星紋蝕刻器（750＋250）

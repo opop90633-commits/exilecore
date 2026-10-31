@@ -45,7 +45,7 @@ class SpellReservationParityTest {
 
     @Test
     void bannersBlinkAndMountReserveSpirit() {
-        for (final String banner : List.of("defiance_banner", "war_banner", "dread_banner")) {
+        for (final String banner : List.of("bedrock_flag", "campaign_flag", "foe_daunt_flag")) {
             final SkillDefinition definition = config.skill(banner);
             assertTrue(definition.reservesSpiritOnly(), banner);
             assertTrue(definition.aura().reservationOnly(), banner);
@@ -59,9 +59,9 @@ class SpellReservationParityTest {
         assertEquals(60, build("blink", 1, Set.of()).reserve(), 1e-9);
         assertEquals(0, blink.mana().at(1), 1e-9, "PoE2 的掠閃不花魔力");
         assertEquals(0, blink.mana().at(20), 1e-9);
-        assertEquals(100, build("summon_mount", 1, Set.of(Tags.BOW)).reserve(), 1e-9);
+        assertEquals(100, build("steed_call", 1, Set.of(Tags.BOW)).reserve(), 1e-9);
         // 光環照舊是光環
-        assertFalse(config.skill("overwhelming_presence").reservesSpiritOnly());
+        assertFalse(config.skill("awe_suppress").reservesSpiritOnly());
     }
 
     @Test
@@ -89,7 +89,7 @@ class SpellReservationParityTest {
 
     @Test
     void stormOrbChainsVolcanoShardsConduitBolts() {
-        final SkillParams.Zone orb = config.skill("storm_orb").params().zone();
+        final SkillParams.Zone orb = config.skill("thunder_cloud").params().zone();
         assertNotNull(orb.bolts());
         assertEquals(3, orb.bolts().chains().intAt(1));
         assertEquals(5, orb.bolts().chains().intAt(20));
@@ -106,7 +106,7 @@ class SpellReservationParityTest {
         assertEquals(0.5, volcano.interval(), 1e-9);
         double bolts1 = 0;
         double bolts20 = 0;
-        for (final ScaledMod mod : config.levelModifiers("lightning_pillar")) {
+        for (final ScaledMod mod : config.levelModifiers("sky_column_thunder")) {
             if (mod.stat().equals(SpellParityKeys.SHOCKED_BOLTS)) {
                 bolts1 = mod.value().at(1);
                 bolts20 = mod.value().at(20);
@@ -149,7 +149,7 @@ class SpellReservationParityTest {
 
     @Test
     void marksRaiseBuildupInsteadOfLoweringResistance() {
-        final SkillParams.Mark voltaic = config.skill("voltaic_mark").params().mark();
+        final SkillParams.Mark voltaic = config.skill("thunder_lure_seal").params().mark();
         assertEquals(0, voltaic.taken(), 1e-9, "PoE2 的引雷印不增加受到的傷害");
         assertFalse(voltaic.selfOnly(), "誰打都算");
         assertEquals(1, voltaic.effects().size());
@@ -158,7 +158,7 @@ class SpellReservationParityTest {
         assertEquals(0.35, electrocute.value(), 1e-9);
         assertEquals(0.25, voltaic.effects().getFirst().toModifier(1, 1.0, "x").value(), 1e-9);
         assertEquals(0.45, voltaic.effects().getFirst().toModifier(40, 1.0, "x").value(), 1e-9);
-        final SkillParams.Mark freezing = config.skill("freezing_mark").params().mark();
+        final SkillParams.Mark freezing = config.skill("frostbind_seal").params().mark();
         final Modifier freeze = freezing.effects().getFirst().toModifier(20, 1.0, "x");
         assertEquals(SupportExtraKeys.FREEZE_BUILDUP_TAKEN, freeze.stat());
         assertEquals(tw.exilecore.stats.ModType.MORE, freeze.type());
@@ -170,11 +170,11 @@ class SpellReservationParityTest {
 
     @Test
     void markActivationBuff() {
-        final SkillDefinition voltaic = config.skill("voltaic_mark");
-        final SkillDefinition freezing = config.skill("freezing_mark");
+        final SkillDefinition voltaic = config.skill("thunder_lure_seal");
+        final SkillDefinition freezing = config.skill("frostbind_seal");
         assertEquals(AilmentType.ELECTROCUTE, MarkActivation.trigger(voltaic));
         assertEquals(AilmentType.FREEZE, MarkActivation.trigger(freezing));
-        assertNull(MarkActivation.trigger(config.skill("bloodhounds_mark")));
+        assertNull(MarkActivation.trigger(config.skill("blood_scent_seal")));
         assertEquals(DamageType.LIGHTNING, MarkActivation.gainType(AilmentType.ELECTROCUTE));
         assertEquals(DamageType.COLD, MarkActivation.gainType(AilmentType.FREEZE));
         for (final SkillDefinition mark : List.of(voltaic, freezing)) {

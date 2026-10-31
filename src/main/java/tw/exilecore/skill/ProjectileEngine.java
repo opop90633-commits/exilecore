@@ -585,8 +585,8 @@ final class ProjectileEngine implements Listener {
                 created.setPersistent(false);
                 created.setDamage(0);
                 created.setSilent(true);
-                final boolean burning = "burning_arrow".equals(visual) || "explosive_bolt".equals(visual);
-                created.setCritical(!burning && !"permafrost_bolt".equals(visual) && !"ice_shot".equals(visual));
+                final boolean burning = "burning_arrow".equals(visual) || "blasting_quarrel".equals(visual);
+                created.setCritical(!burning && !"permafrost_bolt".equals(visual) && !"rime_arrow".equals(visual));
                 if (burning) {
                     created.setFireTicks(20 * 30);
                 }

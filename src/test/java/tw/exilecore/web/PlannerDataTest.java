@@ -43,9 +43,9 @@ class PlannerDataTest {
         assertEquals(1500, timeless.get("radius").getAsDouble());
         final JsonObject kalguur = timeless.getAsJsonArray("legions").get(0).getAsJsonObject();
         assertEquals(1, kalguur.get("code").getAsInt());
-        assertEquals("heroic_tragedy", kalguur.get("unique").getAsString());
+        assertEquals("frost_elegy_jewel", kalguur.get("unique").getAsString());
         assertEquals("循環教義", kalguur.getAsJsonArray("conquerors").get(1).getAsJsonObject().get("keystone").getAsString());
-        assertEquals("undying_hate", timeless.getAsJsonArray("legions").get(1).getAsJsonObject().get("unique").getAsString());
+        assertEquals("abyss_grudge_jewel", timeless.getAsJsonArray("legions").get(1).getAsJsonObject().get("unique").getAsString());
         int i = 0;
         for (final PassiveNode node : tree.ordered()) {
             final JsonObject object = nodes.get(i++).getAsJsonObject();

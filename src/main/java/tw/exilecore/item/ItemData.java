@@ -252,7 +252,7 @@ public final class ItemData {
 
     /** 傳奇物品的代號（uniques.yml）；不是傳奇回傳 null。 */
     public String unique() {
-        return unique;
+        return UniqueIds.current(unique);
     }
 
     public void setUnique(final String unique) {

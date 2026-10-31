@@ -34,18 +34,18 @@ reference:
   attack:
     class: marauder
     weapon: war_hammer
-    skill: boneshatter
+    skill: spine_crush
     gear:                       # 身上的傷害詞綴：from = 從幾級開始有
       - { from: 1, affix: phys_inc }      # 武器（2026-10 PoE2 詞綴：本地的物理增加）
       - { from: 1, affix: added_phys_local }    # 武器（本地的附加物理）
       - { from: 5, affix: added_phys }    # 戒指
       - { from: 10, affix: added_phys }   # 另一個戒指
-    supports: [added_fire, faster_attacks, heft, elemental_focus]
+    supports: [added_fire, quick_strike, ponderous_weight, purify_essence]
 
   spell:
     class: sorceress
     weapon: wand
-    skill: fireball
+    skill: blazing_star_shell
     gear:
       - { from: 1, affix: spell_inc_weapon_wand }   # 魔杖（2026-10 PoE2：沒有「法術附加傷害」，改成增加與額外獲得）
       - { from: 1, affix: fire_inc_weapon_wand }    # 魔杖
@@ -54,7 +54,7 @@ reference:
       - { from: 10, affix: extra_fire }   # 魔杖的後綴位（獲得傷害為額外火焰）
       - { from: 5, affix: skill_level_spell }          # 魔杖：+法術技能等級（PoE2 法術主要靠這個）
       - { from: 10, affix: skill_level_spell_amulet }  # 項鍊
-    supports: [faster_casting, faster_projectiles, concentrated_effect, elemental_focus, pierce]
+    supports: [quick_chant, swift_bolt_iii, condense_power, purify_essence, pierce]
 
 # 2026-10-18：Boss 招式「一下打不死」的參考角色（終局、極境、巔峰、事件巔峰；BossBurstTest 照這個檢查前搖短的招）。
 #   護甲擋下 armour_reduction % 的物理傷害，火、冰、電、混沌四抗都是 resist %，最大生命 life。

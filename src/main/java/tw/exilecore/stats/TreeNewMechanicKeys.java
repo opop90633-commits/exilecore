@@ -51,13 +51,13 @@ public final class TreeNewMechanicKeys {
 
     // ---- 切割（PoE2 Incision）與加劇流血 ----
     /** FLAT %：擊中時給目標 1 層切割的機率（[attack]）。 */
-    public static final String INCISION_CHANCE = "incision.chance";
+    public static final String INCISION_CHANCE = "cut_wound.chance";
     /** FLAT %：擊中時給目標 10 層切割的機率（[attack]）。 */
-    public static final String INCISION_CHANCE_TEN = "incision.chance_ten";
+    public static final String INCISION_CHANCE_TEN = "cut_wound.chance_ten";
     /** INCREASED：你造成的切割效果（每層 10% 被流血的機率）。 */
-    public static final String INCISION_EFFECT = "incision.effect";
+    public static final String INCISION_EFFECT = "cut_wound.effect";
     /** FLAT：被你切割的敵人每層受到的物理傷害增加 x%。 */
-    public static final String INCISION_PHYSICAL_TAKEN = "incision.physical_taken";
+    public static final String INCISION_PHYSICAL_TAKEN = "cut_wound.physical_taken";
     /** FLAT %：暴擊時加劇目標身上你的流血的機率（[attack]）。 */
     public static final String AGGRAVATE_ON_CRIT = "bleed.aggravate_crit";
     /** FLAT（毫秒）：擊中時加劇目標身上存在超過這麼久的你的流血（[attack]）。 */
@@ -72,13 +72,13 @@ public final class TreeNewMechanicKeys {
 
     // ---- 秘術增強（PoE2 Arcane Surge）：增加 15% 施法速度、魔力回復更多 20% ----
     /** INCREASED：你身上的秘術增強效果。 */
-    public static final String ARCANE_SURGE_EFFECT = "arcane_surge.effect";
+    public static final String ARCANE_SURGE_EFFECT = "surging_chant.effect";
     /** 旗標：秘術增強的「魔力回復更多」改成生命回復。 */
     public static final String FLAG_ARCANE_SURGE_LIFE = "flag.arcane_surge_life";
     /** 旗標：一直有秘術增強。 */
     public static final String FLAG_ARCANE_SURGE_ALWAYS = "flag.arcane_surge_always";
     /** FLAT %：被輔助的技能累計消耗最大魔力的 x% 後獲得 10 秒秘術增強（湧詠輔助）。 */
-    public static final String ARCANE_SURGE_ON_SPEND = "arcane_surge.on_spend";
+    public static final String ARCANE_SURGE_ON_SPEND = "surging_chant.on_spend";
 
     // ---- 先祖強化（PoE2 Ancestral Boost）：猛擊更多 30% 傷害、範圍增加 25%；打擊多打 2 個目標；算強化攻擊 ----
     /** INCREASED：先祖強化攻擊的範圍。 */

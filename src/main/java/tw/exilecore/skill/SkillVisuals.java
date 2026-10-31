@@ -56,43 +56,43 @@ final class SkillVisuals {
             Map.entry("flame_dash", new Style(FIRE, Particle.FLAME, Sound.ITEM_FIRECHARGE_USE, 1.2f, Sound.BLOCK_FIRE_AMBIENT, 1.0f)),
             Map.entry("frostblink", new Style(FROST, Particle.SNOWFLAKE, Sound.ENTITY_PLAYER_HURT_FREEZE, 1.4f, Sound.BLOCK_GLASS_BREAK, 1.5f)),
             Map.entry("blink_arrow", new Style(WIND, Particle.END_ROD, Sound.ENTITY_ARROW_SHOOT, 1.3f, Sound.ENTITY_ENDERMAN_TELEPORT, 1.4f)),
-            Map.entry("rain_of_arrows", new Style(STEEL, Particle.CRIT, Sound.ENTITY_ARROW_SHOOT, 0.8f, Sound.ENTITY_ARROW_HIT, 1.0f)),
-            Map.entry("lightning_arrow", new Style(ARC, Particle.ELECTRIC_SPARK, Sound.ENTITY_ARROW_SHOOT, 1.1f, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 1.9f)),
-            Map.entry("tornado_shot", new Style(WIND, Particle.CLOUD, Sound.ENTITY_ARROW_SHOOT, 0.9f, Sound.ENTITY_BREEZE_SHOOT, 1.3f)),
-            Map.entry("ice_shot", new Style(FROST, Particle.SNOWFLAKE, Sound.ENTITY_ARROW_SHOOT, 1.0f, Sound.BLOCK_GLASS_BREAK, 1.7f)),
-            Map.entry("earthquake", new Style(GOLD, Particle.CLOUD, Sound.ITEM_MACE_SMASH_GROUND_HEAVY, 0.8f, Sound.ENTITY_GENERIC_EXPLODE, 0.7f)),
-            Map.entry("comet", new Style(FROST, Particle.END_ROD, Sound.ENTITY_EVOKER_PREPARE_SUMMON, 1.5f, Sound.ENTITY_GENERIC_EXPLODE, 1.1f)),
+            Map.entry("myriad_arrow_fall", new Style(STEEL, Particle.CRIT, Sound.ENTITY_ARROW_SHOOT, 0.8f, Sound.ENTITY_ARROW_HIT, 1.0f)),
+            Map.entry("thunderclap_arrow", new Style(ARC, Particle.ELECTRIC_SPARK, Sound.ENTITY_ARROW_SHOOT, 1.1f, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 1.9f)),
+            Map.entry("sky_rend_arrow", new Style(WIND, Particle.CLOUD, Sound.ENTITY_ARROW_SHOOT, 0.9f, Sound.ENTITY_BREEZE_SHOOT, 1.3f)),
+            Map.entry("rime_arrow", new Style(FROST, Particle.SNOWFLAKE, Sound.ENTITY_ARROW_SHOOT, 1.0f, Sound.BLOCK_GLASS_BREAK, 1.7f)),
+            Map.entry("ground_tremor", new Style(GOLD, Particle.CLOUD, Sound.ITEM_MACE_SMASH_GROUND_HEAVY, 0.8f, Sound.ENTITY_GENERIC_EXPLODE, 0.7f)),
+            Map.entry("falling_star", new Style(FROST, Particle.END_ROD, Sound.ENTITY_EVOKER_PREPARE_SUMMON, 1.5f, Sound.ENTITY_GENERIC_EXPLODE, 1.1f)),
             Map.entry("blizzard", new Style(FROST, Particle.SNOWFLAKE, Sound.ENTITY_PLAYER_HURT_FREEZE, 1.1f, Sound.ENTITY_PLAYER_HURT_FREEZE, 1.3f)),
-            Map.entry("flame_wall", new Style(FIRE, Particle.FLAME, Sound.ENTITY_BLAZE_SHOOT, 0.8f, Sound.BLOCK_FIRE_AMBIENT, 1.0f)),
-            Map.entry("explosive_grenade", new Style(FIRE, Particle.SMOKE, Sound.ITEM_CROSSBOW_SHOOT, 0.8f, Sound.ENTITY_GENERIC_EXPLODE, 1.0f)),
-            Map.entry("gas_grenade", new Style(GAS, Particle.SNEEZE, Sound.ITEM_CROSSBOW_SHOOT, 0.9f, Sound.BLOCK_BREWING_STAND_BREW, 0.7f)),
-            Map.entry("rapid_fire", new Style(STEEL, Particle.CRIT, Sound.ITEM_CROSSBOW_SHOOT, 1.4f, Sound.ENTITY_ARROW_HIT, 1.1f)),
-            Map.entry("storm_wave", new Style(ARC, Particle.ELECTRIC_SPARK, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.4f, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 1.8f)),
-            Map.entry("killing_palm", new Style(BLOOD, Particle.CRIT, Sound.ENTITY_PLAYER_ATTACK_STRONG, 0.7f, Sound.ENTITY_PLAYER_ATTACK_CRIT, 0.8f)),
-            Map.entry("whirlwind_lance", new Style(WIND, Particle.CLOUD, Sound.ITEM_TRIDENT_THROW, 1.0f, Sound.ENTITY_BREEZE_WIND_BURST, 1.1f)),
+            Map.entry("flame_curtain", new Style(FIRE, Particle.FLAME, Sound.ENTITY_BLAZE_SHOOT, 0.8f, Sound.BLOCK_FIRE_AMBIENT, 1.0f)),
+            Map.entry("blast_grenade", new Style(FIRE, Particle.SMOKE, Sound.ITEM_CROSSBOW_SHOOT, 0.8f, Sound.ENTITY_GENERIC_EXPLODE, 1.0f)),
+            Map.entry("miasma_grenade", new Style(GAS, Particle.SNEEZE, Sound.ITEM_CROSSBOW_SHOOT, 0.9f, Sound.BLOCK_BREWING_STAND_BREW, 0.7f)),
+            Map.entry("successive_shots", new Style(STEEL, Particle.CRIT, Sound.ITEM_CROSSBOW_SHOOT, 1.4f, Sound.ENTITY_ARROW_HIT, 1.1f)),
+            Map.entry("thunder_surge", new Style(ARC, Particle.ELECTRIC_SPARK, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.4f, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 1.8f)),
+            Map.entry("soul_sever_palm", new Style(BLOOD, Particle.CRIT, Sound.ENTITY_PLAYER_ATTACK_STRONG, 0.7f, Sound.ENTITY_PLAYER_ATTACK_CRIT, 0.8f)),
+            Map.entry("hurricane_spear", new Style(WIND, Particle.CLOUD, Sound.ITEM_TRIDENT_THROW, 1.0f, Sound.ENTITY_BREEZE_WIND_BURST, 1.1f)),
             Map.entry("lunge", new Style(STEEL, Particle.CRIT, Sound.ENTITY_PLAYER_ATTACK_STRONG, 1.3f, Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.2f)),
-            Map.entry("hunters_mark", new Style(GOLD, Particle.END_ROD, Sound.ENTITY_EVOKER_CAST_SPELL, 1.6f, Sound.ENTITY_ARROW_HIT_PLAYER, 1.3f)),
+            Map.entry("prey_kill_mark", new Style(GOLD, Particle.END_ROD, Sound.ENTITY_EVOKER_CAST_SPELL, 1.6f, Sound.ENTITY_ARROW_HIT_PLAYER, 1.3f)),
             Map.entry("void_rift", new Style(VOID, Particle.PORTAL, Sound.ENTITY_EVOKER_PREPARE_ATTACK, 0.7f, Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 0.9f)),
             // 異常狀態的技能（2026-10）：血刺（血）、蛇牙擊與蝕毒箭（毒）、碎脊擊（錘）
             Map.entry("puncture", new Style(BLOOD, Particle.CRIT, Sound.ENTITY_PLAYER_ATTACK_STRONG, 1.4f, Sound.ENTITY_PLAYER_HURT, 0.6f)),
             Map.entry("viper_strike", new Style(GAS, Particle.ITEM_SLIME, Sound.ENTITY_SPIDER_AMBIENT, 1.5f, Sound.ENTITY_SPIDER_HURT, 1.3f)),
-            Map.entry("boneshatter", new Style(STEEL, Particle.CRIT, Sound.ITEM_MACE_SMASH_AIR, 0.9f, Sound.ITEM_MACE_SMASH_GROUND, 1.1f)),
-            Map.entry("caustic_arrow", new Style(GAS, Particle.SNEEZE, Sound.ENTITY_ARROW_SHOOT, 0.9f, Sound.BLOCK_BREWING_STAND_BREW, 0.8f)),
+            Map.entry("spine_crush", new Style(STEEL, Particle.CRIT, Sound.ITEM_MACE_SMASH_AIR, 0.9f, Sound.ITEM_MACE_SMASH_GROUND, 1.1f)),
+            Map.entry("venom_etch_arrow", new Style(GAS, Particle.SNEEZE, Sound.ENTITY_ARROW_SHOOT, 0.9f, Sound.BLOCK_BREWING_STAND_BREW, 0.8f)),
             // 圖騰（2026-10：靜音）：圖騰自己一直打，每一下都有聲音太吵——只留放下去那一聲，攻擊、打中都不出聲
-            Map.entry("ancestral_totem", new Style(GOLD, Particle.CRIT, null, 0.8f, null, 0.9f)),
+            Map.entry("hero_spirit_totem", new Style(GOLD, Particle.CRIT, null, 0.8f, null, 0.9f)),
             Map.entry("flame_totem", new Style(FIRE, Particle.FLAME, null, 1.0f, null, 1.4f)),
-            Map.entry("shockwave_totem", new Style(GOLD, Particle.CLOUD, null, 0.9f, null, 0.9f)),
+            Map.entry("collapse_quake_totem", new Style(GOLD, Particle.CLOUD, null, 0.9f, null, 0.9f)),
             Map.entry("fire_trap", new Style(FIRE, Particle.FLAME, Sound.BLOCK_TRIPWIRE_ATTACH, 1.0f, Sound.ENTITY_GENERIC_EXPLODE, 1.3f)),
             Map.entry("lightning_trap", new Style(ARC, Particle.ELECTRIC_SPARK, Sound.BLOCK_TRIPWIRE_ATTACH, 1.3f, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 1.9f)),
             Map.entry("bear_trap", new Style(STEEL, Particle.CRIT, Sound.BLOCK_TRIPWIRE_ATTACH, 0.8f, Sound.BLOCK_CHAIN_HIT, 0.7f)),
-            Map.entry("tempest_bell", new Style(GOLD, Particle.ELECTRIC_SPARK, Sound.BLOCK_ANVIL_PLACE, 1.4f, Sound.BLOCK_BELL_USE, 1.0f)),
-            Map.entry("detonate_dead", new Style(BLOOD, Particle.FLAME, Sound.ENTITY_EVOKER_CAST_SPELL, 0.8f, Sound.ENTITY_GENERIC_EXPLODE, 0.8f)),
+            Map.entry("startling_thunder_bell", new Style(GOLD, Particle.ELECTRIC_SPARK, Sound.BLOCK_ANVIL_PLACE, 1.4f, Sound.BLOCK_BELL_USE, 1.0f)),
+            Map.entry("corpse_burst", new Style(BLOOD, Particle.FLAME, Sound.ENTITY_EVOKER_CAST_SPELL, 0.8f, Sound.ENTITY_GENERIC_EXPLODE, 0.8f)),
             // 第三部分（三）：召喚物
             Map.entry("desecrate", new Style(ROT, Particle.SOUL, Sound.BLOCK_SOUL_SOIL_BREAK, 0.6f, Sound.ENTITY_ZOMBIE_VILLAGER_CONVERTED, 1.4f)),
-            Map.entry("rally", new Style(ROT, Particle.SOUL_FIRE_FLAME, Sound.ENTITY_EVOKER_PREPARE_SUMMON, 1.3f, Sound.ENTITY_ENDERMAN_TELEPORT, 1.2f)),
-            Map.entry("raise_zombie", new Style(ROT, Particle.SOUL, Sound.ENTITY_ZOMBIE_AMBIENT, 0.7f, Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR, 1.3f)),
+            Map.entry("reform_ranks", new Style(ROT, Particle.SOUL_FIRE_FLAME, Sound.ENTITY_EVOKER_PREPARE_SUMMON, 1.3f, Sound.ENTITY_ENDERMAN_TELEPORT, 1.2f)),
+            Map.entry("corpse_summon", new Style(ROT, Particle.SOUL, Sound.ENTITY_ZOMBIE_AMBIENT, 0.7f, Sound.ENTITY_ZOMBIE_ATTACK_IRON_DOOR, 1.3f)),
             Map.entry("summon_skeletons", new Style(STEEL, Particle.WHITE_ASH, Sound.ENTITY_SKELETON_AMBIENT, 0.9f, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.2f)),
-            Map.entry("raging_spirits", new Style(FIRE, Particle.FLAME, Sound.ENTITY_VEX_CHARGE, 1.2f, Sound.ENTITY_BLAZE_HURT, 1.4f)),
+            Map.entry("summon_burning_souls", new Style(FIRE, Particle.FLAME, Sound.ENTITY_VEX_CHARGE, 1.2f, Sound.ENTITY_BLAZE_HURT, 1.4f)),
             Map.entry("flame_golem", new Style(FIRE, Particle.LAVA, Sound.BLOCK_ANVIL_LAND, 0.6f, Sound.ENTITY_IRON_GOLEM_ATTACK, 0.9f)),
             // 第三部分（四）：光環、捷、戰吼
             Map.entry("aura_cold", new Style(FROST, Particle.SNOWFLAKE, Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8f, Sound.BLOCK_GLASS_BREAK, 1.4f)),
@@ -215,10 +215,10 @@ final class SkillVisuals {
             }
             case "wand_bolt" -> sound(at, Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9f, 1.6f);
             case "staff_bolt" -> sound(at, Sound.ENTITY_BREEZE_SHOOT, 0.6f, 1.3f);
-            case "fireball" -> sound(at, Sound.ENTITY_BLAZE_SHOOT, 0.7f, 1.1f);
-            case "spark" -> sound(at, Sound.ENTITY_FIREWORK_ROCKET_TWINKLE, 0.6f, 1.6f);
+            case "blazing_star_shell" -> sound(at, Sound.ENTITY_BLAZE_SHOOT, 0.7f, 1.1f);
+            case "roaming_thunder" -> sound(at, Sound.ENTITY_FIREWORK_ROCKET_TWINKLE, 0.6f, 1.6f);
             case "crossbow_bolt" -> sound(at, Sound.ITEM_CROSSBOW_SHOOT, 0.8f, 1.1f);
-            case "explosive_bolt" -> {
+            case "blasting_quarrel" -> {
                 sound(at, Sound.ITEM_CROSSBOW_SHOOT, 0.8f, 0.9f);
                 sound(at, Sound.ITEM_FIRECHARGE_USE, 0.4f, 1.3f);
             }
@@ -226,11 +226,11 @@ final class SkillVisuals {
                 sound(at, Sound.ITEM_CROSSBOW_SHOOT, 0.8f, 1.2f);
                 sound(at, Sound.ENTITY_PLAYER_HURT_FREEZE, 0.3f, 1.6f);
             }
-            case "lightning_spear" -> {
+            case "thunder_lance_throw" -> {
                 sound(at, Sound.ITEM_TRIDENT_THROW, 0.9f, 1.1f);
                 sound(at, Sound.ITEM_TRIDENT_THUNDER, 0.12f, 1.8f);
             }
-            case "chaos_bolt" -> sound(at, Sound.ENTITY_EVOKER_CAST_SPELL, 0.6f, 1.4f);
+            case "erosion_star_shot" -> sound(at, Sound.ENTITY_EVOKER_CAST_SPELL, 0.6f, 1.4f);
             default -> {
             }
         }
@@ -240,11 +240,11 @@ final class SkillVisuals {
     void arrowTrail(final String visual, final Location at) {
         final World world = at.getWorld();
         switch (visual) {
-            case "lightning_arrow" -> tw.exilecore.skill.Fx.spawn(world, Particle.ELECTRIC_SPARK, at, 1, 0.03, 0.03, 0.03, 0.01);
-            case "ice_shot" -> tw.exilecore.skill.Fx.spawn(world, Particle.SNOWFLAKE, at, 1, 0.03, 0.03, 0.03, 0.005);
-            case "tornado_shot" -> tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 1, 0.03, 0.03, 0.03, 0, WIND);
+            case "thunderclap_arrow" -> tw.exilecore.skill.Fx.spawn(world, Particle.ELECTRIC_SPARK, at, 1, 0.03, 0.03, 0.03, 0.01);
+            case "rime_arrow" -> tw.exilecore.skill.Fx.spawn(world, Particle.SNOWFLAKE, at, 1, 0.03, 0.03, 0.03, 0.005);
+            case "sky_rend_arrow" -> tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 1, 0.03, 0.03, 0.03, 0, WIND);
             case "blink_arrow" -> tw.exilecore.skill.Fx.spawn(world, Particle.END_ROD, at, 1, 0.01, 0.01, 0.01, 0);
-            case "explosive_bolt" -> tw.exilecore.skill.Fx.spawn(world, Particle.SMOKE, at, 1, 0.02, 0.02, 0.02, 0.01);
+            case "blasting_quarrel" -> tw.exilecore.skill.Fx.spawn(world, Particle.SMOKE, at, 1, 0.02, 0.02, 0.02, 0.01);
             case "permafrost_bolt" -> {
                 tw.exilecore.skill.Fx.spawn(world, Particle.SNOWFLAKE, at, 1, 0.03, 0.03, 0.03, 0.005);
                 tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 1, 0.02, 0.02, 0.02, 0, FROST);
@@ -292,17 +292,17 @@ final class SkillVisuals {
                         tw.exilecore.skill.Fx.spawn(world, Particle.END_ROD, at, 1, 0.02, 0.02, 0.02, 0);
                     }
                 }
-                case "fireball" -> {
+                case "blazing_star_shell" -> {
                     tw.exilecore.skill.Fx.spawn(world, Particle.FLAME, at, 2, 0.08, 0.08, 0.08, 0.01);
                     if (i % 2 == 0) {
                         tw.exilecore.skill.Fx.spawn(world, Particle.SMOKE, at, 1, 0.05, 0.05, 0.05, 0.01);
                     }
                 }
-                case "spark" -> {
+                case "roaming_thunder" -> {
                     tw.exilecore.skill.Fx.spawn(world, Particle.ELECTRIC_SPARK, at, 1, 0.05, 0.05, 0.05, 0.02);
                     tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 1, 0.04, 0.04, 0.04, 0, SPARK);
                 }
-                case "lightning_spear" -> {
+                case "thunder_lance_throw" -> {
                     tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 1, 0.02, 0.02, 0.02, 0, ARC);
                     if (i % 2 == 0) {
                         tw.exilecore.skill.Fx.spawn(world, Particle.ELECTRIC_SPARK, at, 1, 0.06, 0.06, 0.06, 0.02);
@@ -310,30 +310,30 @@ final class SkillVisuals {
                         tw.exilecore.skill.Fx.spawn(world, Particle.END_ROD, at, 1, 0.01, 0.01, 0.01, 0);
                     }
                 }
-                case "chaos_bolt" -> {
+                case "erosion_star_shot" -> {
                     tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 2, 0.05, 0.05, 0.05, 0, VOID);
                     if (i % 3 == 0) {
                         tw.exilecore.skill.Fx.spawn(world, Particle.SQUID_INK, at, 1, 0.02, 0.02, 0.02, 0.005);
                     }
                 }
-                case "storm_wave" -> {
+                case "thunder_surge" -> {
                     // 一道貼地的電牆：左右各一格也畫
                     tw.exilecore.skill.Fx.spawn(world, Particle.ELECTRIC_SPARK, at, 2, 0.6, 0.3, 0.6, 0.02);
                     tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 2, 0.5, 0.2, 0.5, 0, ARC);
                 }
-                case "whirlwind_lance" -> {
+                case "hurricane_spear" -> {
                     tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 1, 0.03, 0.03, 0.03, 0, WIND);
                     if (i % 2 == 0) {
                         tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, at, 1, 0.05, 0.05, 0.05, 0.01);
                     }
                 }
-                case "explosive_grenade" -> {
+                case "blast_grenade" -> {
                     tw.exilecore.skill.Fx.spawn(world, Particle.SMOKE, at, 1, 0.02, 0.02, 0.02, 0.01);
                     if (i % 2 == 0) {
                         tw.exilecore.skill.Fx.spawn(world, Particle.FLAME, at, 1, 0.02, 0.02, 0.02, 0.005);
                     }
                 }
-                case "gas_grenade" -> tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 1, 0.03, 0.03, 0.03, 0, GAS);
+                case "miasma_grenade" -> tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 1, 0.03, 0.03, 0.03, 0, GAS);
                 default -> {
                     final Style style = style(visual);
                     if (style != null) {
@@ -366,7 +366,7 @@ final class SkillVisuals {
                 tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 10, 0.25, 0.25, 0.25, 0, STAFF);
                 tw.exilecore.skill.Fx.spawn(world, Particle.END_ROD, at, 3, 0.1, 0.1, 0.1, 0.02);
             }
-            case "spark" -> {
+            case "roaming_thunder" -> {
                 tw.exilecore.skill.Fx.spawn(world, Particle.ELECTRIC_SPARK, at, 8, 0.2, 0.2, 0.2, 0.1);
                 sound(at, Sound.ENTITY_FIREWORK_ROCKET_TWINKLE, 0.4f, 2.0f);
             }
@@ -374,18 +374,18 @@ final class SkillVisuals {
                 tw.exilecore.skill.Fx.spawn(world, Particle.CRIT, at, 6, 0.15, 0.15, 0.15, 0.2);
                 sound(at, Sound.ENTITY_ARROW_HIT, 0.6f, 1.0f);
             }
-            case "explosive_bolt" -> tw.exilecore.skill.Fx.spawn(world, Particle.FLAME, at, 6, 0.15, 0.15, 0.15, 0.03);
+            case "blasting_quarrel" -> tw.exilecore.skill.Fx.spawn(world, Particle.FLAME, at, 6, 0.15, 0.15, 0.15, 0.03);
             case "permafrost_bolt" -> {
                 tw.exilecore.skill.Fx.spawn(world, Particle.SNOWFLAKE, at, 8, 0.2, 0.2, 0.2, 0.03);
                 tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 6, 0.2, 0.2, 0.2, 0, FROST);
                 sound(at, Sound.BLOCK_GLASS_BREAK, 0.4f, 1.8f);
             }
-            case "lightning_spear" -> {
+            case "thunder_lance_throw" -> {
                 tw.exilecore.skill.Fx.spawn(world, Particle.ELECTRIC_SPARK, at, 10, 0.25, 0.3, 0.25, 0.12);
                 tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 6, 0.2, 0.2, 0.2, 0, ARC);
                 sound(at, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 0.25f, 1.9f);
             }
-            case "chaos_bolt" -> {
+            case "erosion_star_shot" -> {
                 tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 10, 0.25, 0.25, 0.25, 0, VOID);
                 tw.exilecore.skill.Fx.spawn(world, Particle.PORTAL, at, 14, 0.2, 0.2, 0.2, 0.4);
                 sound(at, Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 0.35f, 1.6f);
@@ -406,34 +406,34 @@ final class SkillVisuals {
     /** 爆炸（熾星彈、爆裂弩箭）。 */
     void explosion(final String visual, final Location at, final double radius) {
         final World world = at.getWorld();
-        if ("ice_shot".equals(visual)) {
-            tw.exilecore.skill.Fx.spawn(world, Particle.SNOWFLAKE, at, (int) Math.min(50, 14 * radius), radius / 2, radius / 3, radius / 2, 0.04);
-            tw.exilecore.skill.Fx.spawn(world, Particle.BLOCK, at, (int) Math.min(30, 8 * radius), radius / 2, 0.3, radius / 2, 0.1, ICE);
+        if ("rime_arrow".equals(visual)) {
+            tw.exilecore.skill.Fx.disk(world, Particle.SNOWFLAKE, at, (int) Math.min(50, 14 * radius), radius, radius / 3, 0.04);
+            tw.exilecore.skill.Fx.disk(world, Particle.BLOCK, at, (int) Math.min(30, 8 * radius), radius, 0.3, 0.1, ICE);
             ring(world, at, radius, Particle.DUST, FROST);
             sound(at, Sound.BLOCK_GLASS_BREAK, 0.8f, 1.3f);
             sound(at, Sound.ENTITY_PLAYER_HURT_FREEZE, 0.6f, 1.2f);
             return;
         }
         tw.exilecore.skill.Fx.spawn(world, Particle.EXPLOSION, at, 1, 0, 0, 0, 0);
-        tw.exilecore.skill.Fx.spawn(world, Particle.FLAME, at, (int) Math.min(40, 10 * radius), radius / 2, radius / 3, radius / 2, 0.05);
-        tw.exilecore.skill.Fx.spawn(world, Particle.LARGE_SMOKE, at, 4, radius / 3, radius / 4, radius / 3, 0.01);
+        tw.exilecore.skill.Fx.disk(world, Particle.FLAME, at, (int) Math.min(40, 10 * radius), radius, radius / 3, 0.05);
+        tw.exilecore.skill.Fx.disk(world, Particle.LARGE_SMOKE, at, 4, radius, radius / 4, 0.01);
         final float pitch = switch (visual) {
-            case "explosive_bolt" -> 1.2f;
-            case "explosive_grenade" -> 0.9f;
+            case "blasting_quarrel" -> 1.2f;
+            case "blast_grenade" -> 0.9f;
             default -> 1.5f;
         };
-        sound(at, Sound.ENTITY_GENERIC_EXPLODE, "explosive_grenade".equals(visual) ? 0.8f : 0.5f, pitch);
+        sound(at, Sound.ENTITY_GENERIC_EXPLODE, "blast_grenade".equals(visual) ? 0.8f : 0.5f, pitch);
     }
 
     /** 榴彈彈了一下。 */
     void bounce(final String visual, final Location at) {
         tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.CLOUD, at, 2, 0.05, 0.05, 0.05, 0.01);
-        sound(at, Sound.BLOCK_METAL_HIT, 0.4f, "gas_grenade".equals(visual) ? 1.6f : 1.2f);
+        sound(at, Sound.BLOCK_METAL_HIT, 0.4f, "miasma_grenade".equals(visual) ? 1.6f : 1.2f);
     }
 
     /** 飛到盡頭消失。 */
     void fizzle(final String visual, final Location at) {
-        if ("fireball".equals(visual)) {
+        if ("blazing_star_shell".equals(visual)) {
             tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SMOKE, at, 4, 0.1, 0.1, 0.1, 0.01);
         }
     }
@@ -450,7 +450,7 @@ final class SkillVisuals {
             if (!hits.isEmpty()) {
                 sound(at, style.hit(), 0.5f, style.hitPitch());
             }
-            if ("killing_palm".equals(visual)) {
+            if ("soul_sever_palm".equals(visual)) {
                 final Vector facing = origin.facing();
                 final Location palm = at.clone().add(facing.clone().multiply(1.4)).add(0, 1.2, 0);
                 tw.exilecore.skill.Fx.spawn(world, Particle.DUST, palm, 12, 0.25, 0.25, 0.25, 0, BLOOD);
@@ -536,7 +536,7 @@ final class SkillVisuals {
         final Style style = style(visual);
         if (style != null) {
             switch (visual) {
-                case "earthquake" -> {
+                case "ground_tremor" -> {
                     tw.exilecore.skill.Fx.spawn(world, Particle.EXPLOSION, center.clone().add(0, 0.3, 0), 1, 0, 0, 0, 0);
                     for (double ring = 1.0; ring <= radius + 1e-6; ring += 1.0) {
                         for (int i = 0; i < 12; i++) {
@@ -555,7 +555,7 @@ final class SkillVisuals {
                 }
                 default -> {
                     ring(world, center, radius, Particle.DUST, style.dust());
-                    tw.exilecore.skill.Fx.spawn(world, style.particle(), center.clone().add(0, 0.5, 0), (int) Math.min(30, 6 * radius), radius / 3, 0.2, radius / 3, 0.03);
+                    tw.exilecore.skill.Fx.disk(world, style.particle(), center.clone().add(0, 0.5, 0), (int) Math.min(30, 6 * radius), radius, 0.2, 0.03);
                     sound(center, style.hit(), 0.7f, style.hitPitch());
                 }
             }
@@ -569,7 +569,7 @@ final class SkillVisuals {
                     final Location at = center.clone().add(Math.cos(angle) * radius * 0.7, 1.0, Math.sin(angle) * radius * 0.7);
                     tw.exilecore.skill.Fx.spawn(world, Particle.SWEEP_ATTACK, at, 1, 0, 0, 0, 0);
                 }
-                tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, center.clone().add(0, 0.3, 0), 8, radius / 3, 0.05, radius / 3, 0.02);
+                tw.exilecore.skill.Fx.disk(world, Particle.CLOUD, center.clone().add(0, 0.3, 0), 8, radius, 0.05, 0.02);
                 sound(center, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.0f, 0.8f);
                 sound(center, Sound.ENTITY_BREEZE_WIND_BURST, 0.4f, 1.3f);
             }
@@ -578,7 +578,7 @@ final class SkillVisuals {
                 for (double ring = 1.0; ring <= radius + 1e-6; ring += 1.5) {
                     ring(world, center, ring, Particle.DUST, ring % 3 < 1.5 ? VOID : BLIGHT);
                 }
-                tw.exilecore.skill.Fx.spawn(world, Particle.SOUL, center.clone().add(0, 0.4, 0), 8, radius / 3, 0.1, radius / 3, 0.02);
+                tw.exilecore.skill.Fx.disk(world, Particle.SOUL, center.clone().add(0, 0.4, 0), 8, radius, 0.1, 0.02);
                 sound(center, Sound.ENTITY_EVOKER_PREPARE_ATTACK, 0.6f, 1.2f);
                 sound(center, Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 0.4f, 0.8f);
             }
@@ -587,7 +587,7 @@ final class SkillVisuals {
                 for (double ring = 1.0; ring < radius - 0.5; ring += 1.5) {
                     ring(world, center, ring, Particle.SNOWFLAKE, null);
                 }
-                tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, center.clone().add(0, 0.3, 0), 12, radius / 3, 0.1, radius / 3, 0.02);
+                tw.exilecore.skill.Fx.disk(world, Particle.CLOUD, center.clone().add(0, 0.3, 0), 12, radius, 0.1, 0.02);
                 sound(center, Sound.BLOCK_GLASS_BREAK, 0.8f, 1.6f);
                 sound(center, Sound.ENTITY_PLAYER_HURT_FREEZE, 0.8f, 1.0f);
             }
@@ -723,7 +723,7 @@ final class SkillVisuals {
             final double angle = Math.PI * 2 * i / points + progress * 2;
             tw.exilecore.skill.Fx.spawn(world, Particle.DUST, center.clone().add(Math.cos(angle) * radius, 0.2, Math.sin(angle) * radius), 1, 0, 0, 0, 0, dust);
         }
-        if ("comet".equals(visual) || "rain_of_arrows".equals(visual)) {
+        if ("falling_star".equals(visual) || "myriad_arrow_fall".equals(visual)) {
             // 從天上掉下來：上方一條亮線
             final double height = 10 * (1 - progress);
             tw.exilecore.skill.Fx.spawn(world, style == null ? Particle.END_ROD : style.particle(), center.clone().add(0, height, 0), 3, 0.3, 0.3, 0.3, 0.01);
@@ -734,18 +734,18 @@ final class SkillVisuals {
     void blast(final String visual, final Location center, final double radius) {
         final World world = center.getWorld();
         switch (visual) {
-            case "rain_of_arrows" -> {
-                tw.exilecore.skill.Fx.spawn(world, Particle.CRIT, center.clone().add(0, 1, 0), (int) Math.min(80, 16 * radius), radius / 2, 0.8, radius / 2, 0.3);
+            case "myriad_arrow_fall" -> {
+                tw.exilecore.skill.Fx.disk(world, Particle.CRIT, center.clone().add(0, 1, 0), (int) Math.min(80, 16 * radius), radius, 0.8, 0.3);
                 for (int i = 0; i < 6; i++) {
                     debris(world, center.clone().add((random.nextDouble() * 2 - 1) * radius, 0.1, (random.nextDouble() * 2 - 1) * radius), 2);
                 }
                 sound(center, Sound.ENTITY_ARROW_HIT, 1.0f, 0.9f);
                 sound(center, Sound.ENTITY_ARROW_HIT, 1.0f, 1.3f);
             }
-            case "comet" -> {
+            case "falling_star" -> {
                 tw.exilecore.skill.Fx.spawn(world, Particle.EXPLOSION_EMITTER, center.clone().add(0, 0.5, 0), 1, 0, 0, 0, 0);
-                tw.exilecore.skill.Fx.spawn(world, Particle.SNOWFLAKE, center, (int) Math.min(80, 16 * radius), radius / 2, 0.5, radius / 2, 0.08);
-                tw.exilecore.skill.Fx.spawn(world, Particle.BLOCK, center, (int) Math.min(40, 8 * radius), radius / 2, 0.3, radius / 2, 0.15, ICE);
+                tw.exilecore.skill.Fx.disk(world, Particle.SNOWFLAKE, center, (int) Math.min(80, 16 * radius), radius, 0.5, 0.08);
+                tw.exilecore.skill.Fx.disk(world, Particle.BLOCK, center, (int) Math.min(40, 8 * radius), radius, 0.3, 0.15, ICE);
                 ring(world, center, radius, Particle.DUST, FROST);
                 sound(center, Sound.ENTITY_GENERIC_EXPLODE, 1.0f, 0.9f);
                 sound(center, Sound.BLOCK_GLASS_BREAK, 1.0f, 0.8f);
@@ -759,7 +759,7 @@ final class SkillVisuals {
     /** 地面效果平常的樣子（每 2 tick 一次，稀疏一點）。 */
     void zoneAmbient(final String visual, final List<Location> points, final double radius, final long now) {
         final World world = points.getFirst().getWorld();
-        if ("tornado_shot".equals(visual) && points.size() == 1) {
+        if ("sky_rend_arrow".equals(visual) && points.size() == 1) {
             // 2026-10：龍捲風（裂空箭）：一根往上轉、越上面越寬的螺旋
             final Location base = points.getFirst();
             final int count = allow(base, 10, 2);
@@ -798,8 +798,7 @@ final class SkillVisuals {
         final World world = points.getFirst().getWorld();
         final Style style = style(visual);
         for (final Location point : points) {
-            tw.exilecore.skill.Fx.spawn(world, style == null ? Particle.CRIT : style.particle(), point.clone().add(0, 0.4, 0),
-                    (int) Math.max(3, radius * 3), radius / 2, 0.2, radius / 2, 0.03);
+            tw.exilecore.skill.Fx.disk(world, style == null ? Particle.CRIT : style.particle(), point.clone().add(0, 0.4, 0), (int) Math.max(3, radius * 3), radius, 0.2, 0.03);
         }
         if (style != null) {
             sound(points.getFirst(), style.hit(), 0.35f, style.hitPitch());
@@ -944,7 +943,7 @@ final class SkillVisuals {
     void detonate(final String visual, final Location center, final double radius) {
         final World world = center.getWorld();
         tw.exilecore.skill.Fx.spawn(world, Particle.EXPLOSION_EMITTER, center, 1, 0, 0, 0, 0);
-        tw.exilecore.skill.Fx.spawn(world, Particle.FLAME, center, (int) Math.min(50, 12 * radius), radius / 2, 0.4, radius / 2, 0.06);
+        tw.exilecore.skill.Fx.disk(world, Particle.FLAME, center, (int) Math.min(50, 12 * radius), radius, 0.4, 0.06);
         tw.exilecore.skill.Fx.spawn(world, Particle.ITEM, center, 16, 0.4, 0.4, 0.4, 0.15, new org.bukkit.inventory.ItemStack(Material.BONE));
         tw.exilecore.skill.Fx.spawn(world, Particle.DUST, center, 12, 0.5, 0.5, 0.5, 0, BLOOD);
         ring(world, center, radius, Particle.DUST, FIRE);
@@ -1330,7 +1329,7 @@ final class SkillVisuals {
         ring(world, center, radius, Particle.DUST, dust);
         ring(world, center, radius * 2 / 3, Particle.DUST, dust);
         ring(world, center, radius / 3, Particle.DUST, dust);
-        tw.exilecore.skill.Fx.spawn(world, Particle.SOUL, center.clone().add(0, 0.5, 0), 20, radius / 3, 0.3, radius / 3, 0.02);
+        tw.exilecore.skill.Fx.disk(world, Particle.SOUL, center.clone().add(0, 0.5, 0), 20, radius, 0.3, 0.02);
         sound(center, Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.6f, 1.3f);
         for (final LivingEntity target : targets) {
             mark(visual, target);

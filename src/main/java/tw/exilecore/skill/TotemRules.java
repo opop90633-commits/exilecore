@@ -21,15 +21,15 @@ final class TotemRules {
 
     /** 星咒圖騰不能放的法術（技能代號）：原作沒有 Totemable。 */
     static final Set<String> NOT_SPELL_TOTEM = Set.of(
-            "profane_ritual",   // 穢陣（Profane Ritual）
-            "bone_blast",       // 骨綻（Bone Blast）
-            "galvanic_field");  // 雷流場（Galvanic Field）
+            "filth_array",   // 穢陣（Profane Ritual）
+            "bone_bloom",       // 骨綻（Bone Blast）
+            "thunder_current_zone");  // 雷流場（Galvanic Field）
 
     /** 英靈圖騰不能放的錘子技能（技能代號）。 */
     static final Set<String> NOT_ANCESTRAL = Set.of(
-            "hammer_of_gods",     // 天罰巨鎚（Hammer of the Gods）：有使用條件（要榮耀）
-            "resonating_shield",  // 擂盾（Resonating Shield）：引導
-            "shield_wall");       // 土壁擊（Shield Wall）：原作沒有 Totemable
+            "heaven_punish_maul",     // 天罰巨鎚（Hammer of the Gods）：有使用條件（要榮耀）
+            "shield_drum",  // 擂盾（Resonating Shield）：引導
+            "earth_wall_strike");       // 土壁擊（Shield Wall）：原作沒有 Totemable
 
     /**
      * 2026-10-28 照 PoE2 Spell Totem（Totemable）：我們的圖騰（SkillDeployables 的圖騰施法 → SkillExecutor.executeFrom）放得出來的機制。
@@ -69,8 +69,8 @@ final class TotemRules {
             return "不能是引導技能";
         }
         return NOT_ANCESTRAL.contains(skill.id()) ? switch (skill.id()) {
-            case "hammer_of_gods" -> "有使用條件的技能不行（要榮耀）";
-            case "resonating_shield" -> "不能是引導技能";
+            case "heaven_punish_maul" -> "有使用條件的技能不行（要榮耀）";
+            case "shield_drum" -> "不能是引導技能";
             default -> "這個技能不能交給圖騰";
         } : null;
     }

@@ -260,11 +260,11 @@ final class SkillDeployables implements Listener {
     static double[] totemBase(final SkillConfig config, final int skillLevel, final int ownerLevel,
                               final java.util.function.IntToDoubleFunction ourLife, final java.util.function.IntFunction<double[]> ourDamage,
                               final double lifeMultiplier) {
-        final double[] factors = MinionSheets.poe2Factors(config, skillLevel, ownerLevel, ourLife, ourDamage);
+        final double[] factors = MinionSheets.refFactors(config, skillLevel, ownerLevel, ourLife, ourDamage);
         final int level = MinionSheets.allyLevel(skillLevel);
         final double scale = MinionSheets.extraScale(config, skillLevel);
-        return new double[] {MinionSheets.poe2AllyLife(level) * factors[1] * lifeMultiplier,
-                2 * MinionSheets.poe2AllyArmour(level) * factors[1] / Math.max(1e-9, scale)};
+        return new double[] {MinionSheets.refAllyLife(level) * factors[1] * lifeMultiplier,
+                2 * MinionSheets.refAllyArmour(level) * factors[1] / Math.max(1e-9, scale)};
     }
 
     /**
@@ -620,7 +620,7 @@ final class SkillDeployables implements Listener {
                 }
                 final World world = totem.feet.getWorld();
                 Fx.spawn(world, org.bukkit.Particle.EXPLOSION, totem.feet.clone().add(0, 1, 0), 1);
-                Fx.spawn(world, org.bukkit.Particle.FLAME, totem.feet.clone().add(0, 1, 0), 40, radius * 0.4, 0.6, radius * 0.4, 0.05);
+                tw.exilecore.skill.Fx.disk(world, org.bukkit.Particle.FLAME, totem.feet.clone().add(0, 1, 0), 40, radius, 0.6, 0.05);
                 world.playSound(totem.feet, org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 0.7f, 1.2f);
                 remove(totem, false);
             }
@@ -1067,7 +1067,7 @@ final class SkillDeployables implements Listener {
     }
 
     /** 冥偶（PoE2 Dark Effigy）。 */
-    static final String DARK_EFFIGY = "dark_idol";
+    static final String DARK_EFFIGY = "nether_puppet";
 
     /**
      * 2026-10-29 照 PoE2 Dark Effigy：對範圍內每一個身上有混沌持續傷害減益的敵人射一發，身上有好幾個就射好幾發（發數不吃多射）；
@@ -1295,8 +1295,8 @@ final class SkillDeployables implements Listener {
         final java.util.UUID previousFx = Fx.source(owner.getUniqueId());
         try {
             for (final Location at : grounds) {
-                Fx.spawn(at.getWorld(), org.bukkit.Particle.EXPLOSION, at.clone().add(0, 0.3, 0), 3, radius * 0.4, 0.2, radius * 0.4, 0);
-                Fx.spawn(at.getWorld(), org.bukkit.Particle.CRIT, at.clone().add(0, 0.3, 0), 30, radius * 0.5, 0.3, radius * 0.5, 0.2);
+                tw.exilecore.skill.Fx.disk(at.getWorld(), org.bukkit.Particle.EXPLOSION, at.clone().add(0, 0.3, 0), 3, radius, 0.2, 0);
+                tw.exilecore.skill.Fx.disk(at.getWorld(), org.bukkit.Particle.CRIT, at.clone().add(0, 0.3, 0), 30, radius, 0.3, 0.2);
                 for (final LivingEntity target : targets.around(at, radius, owner)) {
                     damage.hit(owner, target, profile, null);
                 }
@@ -1629,8 +1629,8 @@ final class SkillDeployables implements Listener {
             final Location at = attacker.isValid() ? attacker.getLocation() : item.feet;
             final java.util.UUID previous = Fx.source(caster.getUniqueId());
             try {
-                Fx.spawn(at.getWorld(), org.bukkit.Particle.LAVA, at.clone().add(0, 0.5, 0), 8, radius * 0.3, 0.2, radius * 0.3, 0.0);
-                Fx.spawn(at.getWorld(), org.bukkit.Particle.FLAME, at.clone().add(0, 0.5, 0), 30, radius * 0.4, 0.3, radius * 0.4, 0.04);
+                tw.exilecore.skill.Fx.disk(at.getWorld(), org.bukkit.Particle.LAVA, at.clone().add(0, 0.5, 0), 8, radius, 0.2, 0.0);
+                tw.exilecore.skill.Fx.disk(at.getWorld(), org.bukkit.Particle.FLAME, at.clone().add(0, 0.5, 0), 30, radius, 0.3, 0.04);
             } finally {
                 Fx.restore(previous);
             }

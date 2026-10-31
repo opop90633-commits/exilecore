@@ -2910,7 +2910,7 @@ j2_incision_chance:
   tiers:
     - { tier: 3, ilvl: 1, weight: 1000, value: [15, 25] }
   mods:
-    - { stat: incision.chance, type: FLAT, value: "{value}", tags: [attack] }
+    - { stat: cut_wound.chance, type: FLAT, value: "{value}", tags: [attack] }
 
 j2_banner_glory:
   # 2026-10-30 照 PoE2 0.5（RePoE JewelBannerValourGained：glory_generation_+%_for_banners 15～20）補上；屬性換算照天賦樹同一條

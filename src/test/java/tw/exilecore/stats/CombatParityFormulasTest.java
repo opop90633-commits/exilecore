@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class CombatParityFormulasTest {
 
     @Test
-    void monsterHitChanceUsesThePoe2MonsterFormula() {
+    void monsterHitChanceUsesTheRefMonsterFormula() {
         // 1 − 0.95 × 1000 ÷ (1000 + 4 × 490) = 67.9% 被打中 → 閃 32%（舊的玩家打怪公式只閃 23%）
         assertEquals(0.32, 1 - Formulas.monsterHitChance(490, 1000), 0.005);
         assertEquals(0.3209, 1 - Formulas.monsterHitChance(490, 1000), 1e-4);
@@ -22,7 +22,7 @@ class CombatParityFormulasTest {
     }
 
     @Test
-    void deflectChanceUsesThePoe2Formula() {
+    void deflectChanceUsesTheRefFormula() {
         // 不被偏斜 = 490 ÷ (490 + 120) × 150 − 50 = 70.49% → 偏斜約 29.5%
         assertEquals(0.295, Formulas.deflectChance(490, 1000), 0.001);
         assertEquals(0.295, DamageCalculator.deflectChance(490, 1000), 0.001);

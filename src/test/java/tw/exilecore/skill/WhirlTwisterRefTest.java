@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 2026-10-28 照 PoE2 0.5（poe2db Whirling Slash、Twister）：旋矛擊的旋風、旋風矛的旋風、元素地面。 */
-class WhirlTwisterPoe2Test {
+class WhirlTwisterRefTest {
 
     static SkillConfig config;
 
@@ -50,7 +50,7 @@ class WhirlTwisterPoe2Test {
 
     @Test
     void whirlingSlashData() {
-        final SkillDefinition slash = config.skill("whirling_slash");
+        final SkillDefinition slash = config.skill("spinning_spear_strike");
         assertTrue(slash.tags().contains("wind"), "Wind");
         assertEquals(tw.exilecore.core.Units.metres(1.8), slash.params().radius().at(1), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals(tw.exilecore.core.Units.metres(1.8), slash.params().radius().at(40), 1e-9, "不再隨等級變大");
@@ -64,8 +64,8 @@ class WhirlTwisterPoe2Test {
 
     @Test
     void twisterData() {
-        final SkillDefinition twister = config.skill("gale_spear");
-        assertEquals(Twisters.SIGNATURE, config.signature("gale_spear"));
+        final SkillDefinition twister = config.skill("cyclone_spear");
+        assertEquals(Twisters.SIGNATURE, config.signature("cyclone_spear"));
         assertTrue(twister.tags().contains("wind"), "Wind");
         assertEquals(7.5, twister.params().speed() * 20, 1e-9, "Projectile Speed: 7.5 metres per Second");
         assertEquals(0.5, twister.params().size(), 1e-9, "Twister radius is 0.5 metres");
@@ -130,14 +130,14 @@ class WhirlTwisterPoe2Test {
 
     @Test
     void quality() {
-        final List<Modifier> slash = GemQuality.modifiers("whirling_slash", 20, "q");
+        final List<Modifier> slash = GemQuality.modifiers("spinning_spear_strike", 20, "q");
         assertEquals(40, slash.stream().filter(m -> m.stat().equals(Signatures.WHIRL_QUALITY_MORE)).mapToDouble(Modifier::value).sum(), 1e-9,
                 "Collapse deals +(0—40)% more damage per additional stage");
-        final List<Modifier> twister = GemQuality.modifiers("gale_spear", 20, "q");
+        final List<Modifier> twister = GemQuality.modifiers("cyclone_spear", 20, "q");
         assertEquals(20, twister.stream().filter(m -> m.stat().equals(Twisters.EXTRA_CHANCE)).mapToDouble(Modifier::value).sum(), 1e-9,
                 "(0—20)% chance for an additional twister");
-        assertTrue(GemQuality.hasAdvanced("whirling_slash") && GemQuality.hasAdvanced("gale_spear"));
-        assertEquals("品質 +20%：旋風崩散每多一階再更多 40% 傷害（加在 150% 上）", SkillService.qualityText(config.skill("whirling_slash"), 20));
-        assertEquals("品質 +20%：20% 機率多一道旋風", SkillService.qualityText(config.skill("gale_spear"), 20));
+        assertTrue(GemQuality.hasAdvanced("spinning_spear_strike") && GemQuality.hasAdvanced("cyclone_spear"));
+        assertEquals("品質 +20%：旋風崩散每多一階再更多 40% 傷害（加在 150% 上）", SkillService.qualityText(config.skill("spinning_spear_strike"), 20));
+        assertEquals("品質 +20%：20% 機率多一道旋風", SkillService.qualityText(config.skill("cyclone_spear"), 20));
     }
 }

@@ -15,31 +15,31 @@ import java.util.Map;
 final class MinionAbilities {
 
     static final String WARRIOR = "summon_skeletons";
-    static final String BRUTE = "skeletal_brute";
-    static final String SNIPER = "skeletal_archers";
-    static final String ARSONIST = "skeletal_pyromancer";
-    static final String STORM = "skeletal_stormcaller";
-    static final String FROST = "skeletal_frostcaller";
-    static final String CLERIC = "skeletal_cleric";
-    static final String REAVER = "skeletal_reaver";
-    static final String WOLVES = "wolf_pack";
-    static final String BEAST = "beast_companion";
-    static final String SWARM = "ravenous_swarm";
-    static final String SPIRITS = "raging_spirits";
-    static final String SPECTRE = "bound_spectre";
-    static final String RAVENS = "spiraling_conspiracy";
+    static final String BRUTE = "summon_bone_heavy";
+    static final String SNIPER = "summon_bone_bowmen";
+    static final String ARSONIST = "summon_bone_flamecaster";
+    static final String STORM = "summon_bone_thundermage";
+    static final String FROST = "summon_bone_frostmage";
+    static final String CLERIC = "summon_bone_priest";
+    static final String REAVER = "summon_bone_berserker";
+    static final String WOLVES = "grey_wolf_escort";
+    static final String BEAST = "wild_beast_taming";
+    static final String SWARM = "insect_devour_horde";
+    static final String SPIRITS = "summon_burning_souls";
+    static final String SPECTRE = "soul_attach_art";
+    static final String RAVENS = "raven_plot";
     /** 2026-10-27 照 PoE2 昇華：弩衛的支援火力（Supporting Fire）的砲手。 */
-    static final String ARTILLERY = "supporting_fire";
+    static final String ARTILLERY = "covering_fire";
     /** 2026-10-27 照 PoE2 昇華：沙靈使的三位巨靈（Kelari／Navira／Ruzhan）。 */
-    static final String KELARI = "kelari_djinn";
-    static final String NAVIRA = "navira_djinn";
-    static final String RUZHAN = "ruzhan_djinn";
+    static final String KELARI = "foul_sand_spirit";
+    static final String NAVIRA = "final_mirage_spirit";
+    static final String RUZHAN = "flame_blade_spirit";
     /**
      * 2026-10-29 照 PoE2 昇華（Living Weapon）：幻化武器（Manifest Weapon）。不會受傷（summon.immortal）；
      * 每 1 點主人的力量增加 1% 傷害、每 3 點敏捷增加 1% 攻擊速度（minion_1%_damage_+%_per_X_player_strength 1、
      * minion_1%_attack_speed_+%_per_X_player_dexterity 3）。這次之前說明有寫、實際沒有效果。
      */
-    static final String MANIFEST = "manifest_weapon";
+    static final String MANIFEST = "phantom_blade";
     static final double MANIFEST_STR_PER_DAMAGE = 1;
     static final double MANIFEST_DEX_PER_SPEED = 3;
 

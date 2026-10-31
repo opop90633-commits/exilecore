@@ -327,4 +327,35 @@ public final class Fx {
         }
         each(world, x, y, z, viewer -> viewer.spawnParticle(particle, x, y, z, count, dx, dy, dz, extra, data));
     }
+
+    /**
+     * 2026-10-31 照站長：範圍特效平均散在整個圓裡（半徑 radius），不是集中在中間。原版的 offset 是常態分布，
+     * 寫成「半徑的一半」時大部分粒子只落在半徑一半以內，看起來範圍只有一半大。分成幾小團、每團隨機落在圓內。
+     */
+    public static void disk(final World world, final Particle particle, final Location at, final int count, final double radius,
+                            final double dy, final double extra) {
+        disk(world, particle, at, count, radius, dy, extra, null);
+    }
+
+    public static <T> void disk(final World world, final Particle particle, final Location at, final int count, final double radius,
+                                final double dy, final double extra, final T data) {
+        if (count <= 0) {
+            return;
+        }
+        final double r = Math.max(0, radius);
+        final int clumps = Math.max(1, Math.min(count, Math.min(10, (int) Math.ceil(r * 2.5))));
+        final int each = Math.max(1, (int) Math.round((double) count / clumps));
+        final double spread = Math.min(0.6, r * 0.15);
+        final java.util.concurrent.ThreadLocalRandom random = java.util.concurrent.ThreadLocalRandom.current();
+        for (int i = 0; i < clumps; i++) {
+            final double dist = r * Math.sqrt(random.nextDouble());
+            final double angle = random.nextDouble() * Math.PI * 2;
+            final Location point = at.clone().add(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
+            if (data == null) {
+                spawn(world, particle, point, each, spread, dy, spread, extra);
+            } else {
+                spawn(world, particle, point, each, spread, dy, spread, extra, data);
+            }
+        }
+    }
 }

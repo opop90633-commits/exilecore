@@ -237,7 +237,7 @@ public final class StageEffects implements Listener {
         for (final LivingEntity victim : service.targets().around(at, radius, player)) {
             plugin.combat().skillDamage().hit(player, victim, profile, null);
         }
-        at.getWorld().spawnParticle(particle, at.clone().add(0, 0.8, 0), 14, radius * 0.4, 0.4, radius * 0.4, 0.05);
+        tw.exilecore.skill.Fx.disk(at.getWorld(), particle, at.clone().add(0, 0.8, 0), 14, radius, 0.4, 0.05);
     }
 
     /** 下線、換角色：清掉這個玩家的矛頭、增益。 */

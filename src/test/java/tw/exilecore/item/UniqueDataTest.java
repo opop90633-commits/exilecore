@@ -54,10 +54,10 @@ class UniqueDataTest {
     /** 原作就不到三條詞綴的傳奇（2026-10-26 天樞墜、巨像之心；2026-10-27 映鏡指環、孀雨粗弓、濁源指環）：最少幾條。 */
     static final Map<String, Integer> FEW_LINES = Map.of("celestial_pivot", 2, "colossus_heart", 2, "mirror_touch_ring", 1,
             "widowsong_bow", 1, "tainted_origin_ring", 2,
-            "lavianga_spirits", 2); // 2026-10-30：拉維安加之泉原作兩條
+            "lavian_spring", 2); // 2026-10-30：拉維安加之泉原作兩條
 
     /** 2026-10-28 照 PoE2：禁止掉落（poe2db「禁止掉落」：Infernoclasp、Thunderstep、Forbidden Gaze）。 */
-    static final Set<String> DISABLED = Set.of("flameclasp_belt", "thunderdash_boots", "forbidden_tiara");
+    static final Set<String> DISABLED = Set.of("flameclasp_belt", "thunderdash_boots", "veiled_tiara");
 
     @BeforeAll
     static void load() throws IOException, IllegalAccessException {
@@ -106,8 +106,8 @@ class UniqueDataTest {
         // 2026-10-27 照 PoE2：藥劑生命／魔力回復速率（Flask Life/Mana Recovery rate；FlaskService.flaskRate 讀）
         stats.add(tw.exilecore.stats.KeystoneKeys.FLASK_LIFE_RATE);
         stats.add(tw.exilecore.stats.TreeEffectKeys.FLASK_MANA_RATE);
-        for (final String skill : List.of("decompose", "withering_presence", "lightning_bolt", "spark", "blink",
-                "rite_of_restoration")) { // 2026-10-27：＋雷頌墜、縛地長杖、絲沙背心；2026-10-28：＋綺夢
+        for (final String skill : List.of("rotting_corpse_blast", "wilting_breath", "thunder_drop", "roaming_thunder", "blink",
+                "rebirth_ceremony")) { // 2026-10-27：＋雷頌墜、縛地長杖、絲沙背心；2026-10-28：＋綺夢
             stats.add(tw.exilecore.item.unique.UniqueStats.GRANT_SKILL + skill);
         }
         tags = constants(Tags.class);
@@ -115,7 +115,7 @@ class UniqueDataTest {
         tags.addAll(tw.exilecore.stats.TreeConditions.ENEMY);
         // 2026-10-27（王衛全鎧）：只對某一種球（charge.duration 寫 endurance 標籤，ChargeType.durationTicksFor）
         tags.addAll(tw.exilecore.charge.ChargeConfig.parse(YamlNode.load(DATA.resolve(tw.exilecore.charge.ChargeConfig.FILE))).keySet());
-        tags.add(tw.exilecore.item.unique.UniqueStats.SKILL_TAG_PREFIX + "temporal_curse"); // 2026-10-26：只對某個技能（SkillBuild 的 skill:技能 標籤）
+        tags.add(tw.exilecore.item.unique.UniqueStats.SKILL_TAG_PREFIX + "sluggish_curse"); // 2026-10-26：只對某個技能（SkillBuild 的 skill:技能 標籤）
         tags.add(tw.exilecore.passive.ConquestEffects.UNDEAD); // 2026-10-30（烏勒爾之骨）：叫不死召喚物的技能（SkillBuild 的保留另外看 undead）
         tags.add("curse"); // 2026-10：詛咒技能的標籤（SkillDefinition 給範圍印記加的，Tags 沒有常數）
         tags.addAll(tw.exilecore.stats.TreeConditions.ENEMY); // 2026-10-28（元素之章）：對敵人狀態的條件標籤（擊中時 TargetConditions 加進情境）
@@ -204,13 +204,13 @@ class UniqueDataTest {
         // 2026-10-26：英雄悲劇改成固定 1%（drop_chance），不在 final 的權重池裡，改由 fixedChanceUniques 擲
         // 2026-10-28 照 PoE2：＋原作限定 Boss 掉、我們沒有那個內容的（試煉大師的憎鑄腿鎧、阿茲里寶庫的穿雲箭袋與阿茲里的輕視、
         //   灰燼仲裁者的神聖烈焰）；天樞墜、隕砧、蛛巢壁壘原作沒有限定，另外也是全域掉落
-        assertEquals(Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark", "hateforge_greaves", "tailwind_quiver",
-                "sacred_flame", "atziris_contempt"), finals);
-        assertEquals(Set.of("heroic_tragedy"), ids(repository.fixedChanceUniques("final", 84)));
-        assertEquals(Set.of("undying_hate", "masters_reach"), ids(repository.fixedChanceUniques("abyss_lich", 84))); // 2026-10-28：＋主宰之觸（同一隻 Boss）
-        assertFalse(ids(repository.uniquesFor("abyss_lich", 84)).contains("undying_hate"));
-        assertEquals(0.01, repository.dropChance("heroic_tragedy"), 1e-12);
-        assertEquals(0.01, repository.dropChance("undying_hate"), 1e-12);
+        assertEquals(Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark", "spiteforge_greaves", "tailwind_quiver",
+                "hallowed_fire", "empress_sneer"), finals);
+        assertEquals(Set.of("frost_elegy_jewel"), ids(repository.fixedChanceUniques("final", 84)));
+        assertEquals(Set.of("abyss_grudge_jewel", "binder_grasp"), ids(repository.fixedChanceUniques("abyss_lich", 84))); // 2026-10-28：＋主宰之觸（同一隻 Boss）
+        assertFalse(ids(repository.uniquesFor("abyss_lich", 84)).contains("abyss_grudge_jewel"));
+        assertEquals(0.01, repository.dropChance("frost_elegy_jewel"), 1e-12);
+        assertEquals(0.01, repository.dropChance("abyss_grudge_jewel"), 1e-12);
         assertEquals(0, repository.dropChance("celestial_pivot"), 1e-12);
         assertEquals(Set.of("gravewarden_maul"), ids(repository.uniquesFor("royal_tomb", 84)));
         assertEquals(Set.of("astrolabe_wand"), ids(repository.uniquesFor("observatory", 84)));
@@ -233,8 +233,8 @@ class UniqueDataTest {
                 assertFalse(unique.droppedBy("chance") || unique.droppedBy("gamble") || unique.droppedBy("map_boss"), unique.id());
             }
         }
-        for (final String id : List.of("hateforge_greaves", "tailwind_quiver", "pragmatist_armour", "wisdom_action_wraps", "collapsing_horizon",
-                "sacred_flame", "atziris_contempt", "votive_flame", "voidgaze_helm", "heroic_tragedy", "undying_hate")) {
+        for (final String id : List.of("spiteforge_greaves", "tailwind_quiver", "pragmatist_armour", "wisdom_action_wraps", "fallen_horizon",
+                "hallowed_fire", "empress_sneer", "votive_flame", "voidgaze_helm", "frost_elegy_jewel", "abyss_grudge_jewel")) {
             assertFalse(UniqueRarity.global(repository.unique(id)), id + "：原作限定 Boss 掉");
         }
         for (final String id : List.of("sanctum_helm", "keymasters_ring", "phaseboots", "outlaws_vest", "dirge_staff", "somnambulist",

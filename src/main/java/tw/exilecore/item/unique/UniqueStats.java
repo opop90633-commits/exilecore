@@ -273,9 +273,9 @@ public final class UniqueStats {
     /** 獲得某種傷害的 x% 為額外的另一種傷害（damage.gain_from.來源.目標；畫家的侍從、藍焰護腕、雷鉗鐵手的磐石之拳版本）。 */
     public static final String GAIN_FROM = "damage.gain_from.";
     /** 施放法術時犧牲 x% 最大生命，獲得等量的能量護盾（縫魔）。 */
-    public static final String SACRIFICE_ES_ON_SPELL = "sacrifice.es_on_spell";
+    public static final String SACRIFICE_ES_ON_SPELL = "servant_corpse_swap.es_on_spell";
     /** 攻擊時犧牲 x% 最大生命，獲得一半的能量護盾（磐石之拳的縫魔；原作是符文保護）。 */
-    public static final String SACRIFICE_ES_ON_ATTACK = "sacrifice.es_on_attack";
+    public static final String SACRIFICE_ES_ON_ATTACK = "servant_corpse_swap.es_on_attack";
     /** 怒氣滿時回復 x% 最大能量護盾（磐石之拳的憎鑄；原作是符文保護）。 */
     public static final String ES_ON_MAX_RAGE = "es.on_max_rage";
     /** 你擊中的元素傷害照敵人最低的元素抗性算（磐石之拳的里歐波德的掌聲）。 */
@@ -309,7 +309,7 @@ public final class UniqueStats {
     /** 你施加的詛咒也會落在你自己身上（悲運之縛；跟魅咒一樣，但不會無視詛咒上限）。 */
     public static final String CURSE_REFLECT_SELF = "flag.curse_reflect_self";
     /** 暴擊時 x% 機率穿刺（驚懼之拳：100）。 */
-    public static final String IMPALE_ON_CRIT = "impale.on_crit";
+    public static final String IMPALE_ON_CRIT = "stab_nail.on_crit";
     /** 用近戰攻擊暴擊敵人時，對牠造成你的荊棘傷害（磐石之拳的驚懼之拳）。 */
     public static final String THORNS_ON_MELEE_CRIT = "flag.thorns_on_melee_crit";
     /** 擊中的所有傷害都算進中毒幅度（瘟疫之指）。 */

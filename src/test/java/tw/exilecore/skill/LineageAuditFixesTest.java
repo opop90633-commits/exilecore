@@ -42,7 +42,7 @@ class LineageAuditFixesTest {
 
     @Test
     void communionReservesLifeAndRefusesWhenItCannotPay() {
-        final SkillBuild aegis = SkillBuild.of(config, config.skill("frost_aegis"), 10, 90, false, List.of(support("atziris_communion")),
+        final SkillBuild aegis = SkillBuild.of(config, config.skill("winter_shell"), 10, 90, false, List.of(support("blood_pact")),
                 Set.of(), new StatSheet());
         final double percent = LineageRules.communionLife(aegis);
         assertEquals(aegis.definition().aura().reserve() * 0.66, percent, 1e-9, "每 1 點基礎精魂 0.66% 最大生命");
@@ -59,7 +59,7 @@ class LineageAuditFixesTest {
         assertEquals((int) Math.ceil(100 / percent) - 1, opened);
         assertFalse(AuraService.lifeFits(aegis, 1000, true, 0), "無垢之軀（最大生命鎖成 1）不能保留生命");
         assertFalse(AuraService.lifeFits(aegis, 1, false, 0), "最大生命只有 1 也不行");
-        final SkillBuild plain = SkillBuild.of(config, config.skill("frost_aegis"), 10, 90, false, List.of(), Set.of(), new StatSheet());
+        final SkillBuild plain = SkillBuild.of(config, config.skill("winter_shell"), 10, 90, false, List.of(), Set.of(), new StatSheet());
         assertTrue(AuraService.lifeFits(plain, 1, true, 99), "沒掛血契的光環不看生命");
         final StatSheet locked = new StatSheet().overlay(List.of(Modifier.flat(StatKeys.FLAG_CHAOS_IMMUNE, 1, "無垢之軀")));
         assertTrue(AuraService.lifeLocked(locked));
@@ -79,11 +79,11 @@ class LineageAuditFixesTest {
 
     @Test
     void omenCountsOnlyEffectiveRealSupports() {
-        final SkillDefinition fireball = config.skill("fireball");
+        final SkillDefinition fireball = config.skill("blazing_star_shell");
         final StatSheet sheet = new StatSheet();
         final int plain = SkillBuild.of(config, fireball, 10, 90, false, List.of(), Set.of(), sheet).level();
-        final SupportDefinition omen = support("uhtreds_omen");
-        final SupportDefinition other = support("faster_casting");
+        final SupportDefinition omen = support("twin_portent");
+        final SupportDefinition other = support("quick_chant");
         // 合成的輔助（引星的 meta.、宿主的 host.）不算其他輔助
         final SupportDefinition carrier = new SupportDefinition("meta.test", "引星", "", "PAPER", 1, Set.of(), Set.of(), 1.0, List.of(), List.of());
         assertTrue(carrier.supports(fireball));
@@ -103,9 +103,9 @@ class LineageAuditFixesTest {
 
     @Test
     void extraLineageSupportsComeOffOnLogin() {
-        final SkillLoadout.Entry entry = new SkillLoadout.Entry("fireball", 5).withSockets(5)
-                .withSupport(0, "faster_casting").withSupport(1, "rakiatas_flow").withSupport(2, "pierce")
-                .withSupport(3, "xophs_pyre").withSupport(4, "uhtreds_omen");
+        final SkillLoadout.Entry entry = new SkillLoadout.Entry("blazing_star_shell", 5).withSockets(5)
+                .withSupport(0, "quick_chant").withSupport(1, "counter_current").withSupport(2, "pierce")
+                .withSupport(3, "ember_corrode").withSupport(4, "twin_portent");
         assertEquals(List.of(3, 4), LineageRules.extraLineageSockets(entry, id -> config.support(id) != null && config.support(id).lineage()));
         assertEquals(List.of(), LineageRules.extraLineageSockets(entry.withSupport(3, null).withSupport(4, null),
                 id -> config.support(id) != null && config.support(id).lineage()), "只有一顆的不動");
@@ -125,8 +125,8 @@ class LineageAuditFixesTest {
 
     @Test
     void resonanceOrbDoesNotHighlightLineageSupports() {
-        assertNotNull(support("rakiatas_flow").resonanceRefusal(false), "血脈輔助不能共鳴，也不亮");
-        assertNotNull(support("faster_casting").resonanceRefusal(false), "一般輔助不行");
+        assertNotNull(support("counter_current").resonanceRefusal(false), "血脈輔助不能共鳴，也不亮");
+        assertNotNull(support("quick_chant").resonanceRefusal(false), "一般輔助不行");
         final SupportDefinition exclusive = config.supports().stream().filter(s -> !s.cuttable() && !s.lineage()).findFirst().orElseThrow();
         assertNull(exclusive.resonanceRefusal(false), "專屬掉落的輔助可以");
         assertNotNull(exclusive.resonanceRefusal(true), "已經共鳴的不行");

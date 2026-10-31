@@ -36,7 +36,7 @@ import java.util.function.Predicate;
 final class DecomposeClouds implements SkillTargets.Strikeable {
 
     /** 技能代號。 */
-    static final String SKILL = "decompose";
+    static final String SKILL = "rotting_corpse_blast";
     /** 基礎持續 4 秒（另外加品質的 +秒，再乘持續時間倍率）。 */
     static final double BASE_SECONDS = 4;
     /** 每秒半徑更多 20%。 */
@@ -263,7 +263,7 @@ final class DecomposeClouds implements SkillTargets.Strikeable {
         }
         targets.strike(owner, profile, SkillTargets.sphere(cloud.at, radius), new Object());
         cloud.at.getWorld().playSound(cloud.at, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.7f, 1.2f);
-        Fx.spawn(cloud.at.getWorld(), Particle.FLAME, cloud.at.clone().add(0, 0.5, 0), 30, radius * 0.5, 0.3, radius * 0.5, 0.05);
+        tw.exilecore.skill.Fx.disk(cloud.at.getWorld(), Particle.FLAME, cloud.at.clone().add(0, 0.5, 0), 30, radius, 0.3, 0.05);
         visuals.detonate(cloud.build.definition().visual(), cloud.at, radius);
     }
 

@@ -28,7 +28,7 @@ public final class Blasphemy {
     }
 
     /** 咒環。 */
-    public static final String ID = "blasphemy";
+    public static final String ID = "curse_ring";
 
     /** 每個插槽詛咒保留多少精魂（skills.yml 的 aura.reserve 也寫 60：算保留效率用）。 */
     public static final double RESERVE_PER_CURSE = 60;
@@ -40,7 +40,7 @@ public final class Blasphemy {
     public static final long LINGER_TICKS = 20;
 
     /** 額外的品質效果（進階奇術）：插槽詛咒增加 x% 效果（gem_quality.yml advanced 的 blasphemy）。 */
-    public static final String CURSE_MAGNITUDE = "blasphemy.curse_magnitude";
+    public static final String CURSE_MAGNITUDE = "curse_ring.curse_magnitude";
 
     /**
      * 插槽詛咒效果更少（%，咒環 1～40 級）。poe2db：1 級 50、5 級 48、10 級 46、15 級 43、20 級 41、30 級 36、40 級 33，

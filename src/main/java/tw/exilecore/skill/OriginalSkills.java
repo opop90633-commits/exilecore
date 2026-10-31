@@ -64,27 +64,27 @@ import java.util.function.Consumer;
 public final class OriginalSkills implements Listener {
 
     // ---- 技能代號 ----
-    static final String ARCTIC = "frost_aegis";
-    static final String STAFF = "storm_staff";
-    static final String MANTRA = "ruin_mantra";
-    static final String ATTRITION = "attrition";
-    static final String GALVANIC = "galvanic_field";
-    static final String SEED = "ember_seed";
-    static final String CONVALESCENCE = "convalescence";
-    static final String GRIM = "grim_feast";
-    static final String SACRIFICE = "sacrifice";
-    static final String SHARD = "shard_scavenger";
-    static final String CALTROPS = "trail_of_caltrops";
-    static final String CALAMITY = "walking_calamity";
-    static final String WING = "wing_blast";
-    static final String DEVOUR = "devour";
-    static final String OIL = "oil_barrage";
+    static final String ARCTIC = "winter_shell";
+    static final String STAFF = "thunderbind_staff";
+    static final String MANTRA = "collapse_heart_chant";
+    static final String ATTRITION = "grinding_will";
+    static final String GALVANIC = "thunder_current_zone";
+    static final String SEED = "cinder_sprout";
+    static final String CONVALESCENCE = "shield_restore_art";
+    static final String GRIM = "remains_banquet";
+    static final String SACRIFICE = "servant_corpse_swap";
+    static final String SHARD = "crystal_pickup_load";
+    static final String CALTROPS = "thornburr_steps";
+    static final String CALAMITY = "fallen_star_bear_roar";
+    static final String WING = "wingbeat_gust";
+    static final String DEVOUR = "gnawing_bite";
+    static final String OIL = "black_oil_rain";
     static final String POUNCE = "pounce";
-    static final String SHRED = "wolf_shred";
-    static final String CROSS = "cross_slash";
-    static final String ICE_TIPPED = "ice_tipped_arrows";
-    static final String ESCAPE = "escape_shot";
-    static final String RAPID = "rapid_fire";
+    static final String SHRED = "swift_claw";
+    static final String CROSS = "crisscross_claw";
+    static final String ICE_TIPPED = "frost_arrowhead";
+    static final String ESCAPE = "leapback_shoot";
+    static final String RAPID = "successive_shots";
 
     // ---- 隱藏技能 ----
     static final String ARCTIC_BURST = "proc_arctic_burst";
@@ -103,9 +103,9 @@ public final class OriginalSkills implements Listener {
             Spearfield.SIGNATURE); // 2026-10-27 照 PoE2 Spearfield（矛陣：插在地上、敵人碰到才炸的矛）
     /** 熱度：用掉 15 點換加成的技能（PoE2 的爆裂榴彈、子母榴彈：獲得 50% 傷害為額外火焰；燃焰散射：點燃幅度更多 100%）。 */
     static final Map<String, List<Modifier>> HEAT_CONSUMERS = Map.of(
-            "explosive_grenade", List.of(Modifier.flat(StatKeys.damageExtra(DamageType.FIRE), 50, "熱度")),
-            "cluster_grenade", List.of(Modifier.flat(StatKeys.damageExtra(DamageType.FIRE), 50, "熱度")),
-            "incendiary_shot", List.of(Modifier.more(StatKeys.IGNITE_MAGNITUDE, 1.0, "熱度")));
+            "blast_grenade", List.of(Modifier.flat(StatKeys.damageExtra(DamageType.FIRE), 50, "熱度")),
+            "mother_child_grenade", List.of(Modifier.flat(StatKeys.damageExtra(DamageType.FIRE), 50, "熱度")),
+            "flame_scatter_fire", List.of(Modifier.more(StatKeys.IGNITE_MAGNITUDE, 1.0, "熱度")));
     static final int HEAT_COST = 15;
 
     // ---- 逐級數值（level_modifiers 的屬性代號）----
@@ -116,13 +116,13 @@ public final class OriginalSkills implements Listener {
     /** FLAT（%，品質）：雷縛長棍使用時不移除銳星的機率。 */
     static final String STAFF_KEEP = "charged_staff.keep_chance";
     static final String MANTRA_CHAOS = "mantra.chaos";
-    static final String ATTRITION_CAP = "attrition.cap";
-    static final String ATTRITION_CULL = "attrition.cull";
-    static final String CONVALESCENCE_TIME = "convalescence.duration";
+    static final String ATTRITION_CAP = "grinding_will.cap";
+    static final String ATTRITION_CULL = "grinding_will.cull";
+    static final String CONVALESCENCE_TIME = "shield_restore_art.duration";
     static final String GRIM_CAP = "grim.cap";
-    static final String SACRIFICE_SLOWER = "sacrifice.slower";
+    static final String SACRIFICE_SLOWER = "servant_corpse_swap.slower";
     static final String SHARD_INTERVAL = "shard.interval";
-    static final String DEVOUR_REGEN = "devour.regen";
+    static final String DEVOUR_REGEN = "gnawing_bite.regen";
     static final String WOLF_LIMIT = "predator.wolves";
     static final String ESCAPE_FRAGMENTS = "escape.fragments";
 
@@ -812,7 +812,7 @@ public final class OriginalSkills implements Listener {
             final double seconds = s.attrition.merge(near.getUniqueId(), 0.5, Double::sum); // 照 PoE2：在你身邊的總時間（離開不歸零）
             final double more = Math.min(cap, Math.floor(seconds / 2));
             if (debuffs != null && more > 0) {
-                debuffs.apply(near.getUniqueId(), new Debuffs.Debuff("attrition." + player.getUniqueId(), player.getUniqueId(), now + 40,
+                debuffs.apply(near.getUniqueId(), new Debuffs.Debuff("grinding_will." + player.getUniqueId(), player.getUniqueId(), now + 40,
                         more / 100.0, true, null));
             }
             if (seconds >= cull) {
@@ -1140,8 +1140,8 @@ public final class OriginalSkills implements Listener {
         }
         final double radius = (large ? LARGE_METEOR : SMALL_METEOR) * build.areaScale();
         blast(player, at, radius, build.profile());
-        Fx.spawn(at.getWorld(), Particle.FLAME, at.clone().add(0, 0.3, 0), large ? 40 : 8, radius / 2, 0.2, radius / 2, 0.03);
-        Fx.spawn(at.getWorld(), Particle.LAVA, at.clone().add(0, 0.3, 0), large ? 8 : 2, radius / 3, 0.1, radius / 3, 0);
+        tw.exilecore.skill.Fx.disk(at.getWorld(), Particle.FLAME, at.clone().add(0, 0.3, 0), large ? 40 : 8, radius, 0.2, 0.03);
+        tw.exilecore.skill.Fx.disk(at.getWorld(), Particle.LAVA, at.clone().add(0, 0.3, 0), large ? 8 : 2, radius, 0.1, 0);
         if (large) {
             at.getWorld().playSound(at, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.8f, 0.8f);
         }

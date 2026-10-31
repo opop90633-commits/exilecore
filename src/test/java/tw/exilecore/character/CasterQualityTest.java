@@ -24,20 +24,20 @@ class CasterQualityTest {
     @Test
     void grantedSkillTakesWeaponQuality() {
         final SkillLoadout loadout = new SkillLoadout();
-        loadout.syncGranted(Map.of("firebolt", 10), Map.of("firebolt", 15));
-        final SkillLoadout.Entry entry = loadout.skill(loadout.find("firebolt"));
+        loadout.syncGranted(Map.of("flame_star_shot", 10), Map.of("flame_star_shot", 15));
+        final SkillLoadout.Entry entry = loadout.skill(loadout.find("flame_star_shot"));
         assertTrue(entry.granted());
         assertEquals(15, entry.quality(), "賦予的技能的品質 = 武器的品質");
         assertFalse(entry.encodeSupports().contains(SkillLoadout.Entry.QUALITY_PREFIX + "15"), "武器給的品質不存檔");
 
-        loadout.syncGranted(Map.of("firebolt", 10), Map.of("firebolt", 26));
-        assertEquals(26, loadout.skill(loadout.find("firebolt")).quality(), "特殊詞綴超過寶石上限也照算");
+        loadout.syncGranted(Map.of("flame_star_shot", 10), Map.of("flame_star_shot", 26));
+        assertEquals(26, loadout.skill(loadout.find("flame_star_shot")).quality(), "特殊詞綴超過寶石上限也照算");
 
-        loadout.syncGranted(Map.of("firebolt", 10), Map.of());
-        assertEquals(0, loadout.skill(loadout.find("firebolt")).quality(), "換成沒品質的武器就回到 0");
+        loadout.syncGranted(Map.of("flame_star_shot", 10), Map.of());
+        assertEquals(0, loadout.skill(loadout.find("flame_star_shot")).quality(), "換成沒品質的武器就回到 0");
 
-        loadout.syncGranted(Map.of("firebolt", 10));
-        assertEquals(0, loadout.skill(loadout.find("firebolt")).quality());
+        loadout.syncGranted(Map.of("flame_star_shot", 10));
+        assertEquals(0, loadout.skill(loadout.find("flame_star_shot")).quality());
     }
 
     @Test

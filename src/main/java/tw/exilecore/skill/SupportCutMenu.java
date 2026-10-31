@@ -53,7 +53,7 @@ final class SupportCutMenu extends Menu {
             {"傷害", "IRON_SWORD", "damage,penetration,armour.break,exposure,channel.more,onkill.damage,accuracy"},
             {"暴擊", "SPYGLASS", "crit."},
             {"速度・時間", "SUGAR", "attack.speed,cast.speed,skill.cooldown,skill.duration,movement.speed,onkill.speed"},
-            {"範圍・投射物", "ARROW", "skill.area,skill.projectile,skill.chains,skill.pierce,skill.fork,skill.strike_targets"},
+            {"範圍・投射物", "ARROW", "skill.area,skill.projectile,skill.chains,skill.pierce,skill.split_shot,skill.strike_targets"},
             {"異常・暈眩", "FERMENTED_SPIDER_EYE", "ignite.,bleed.,poison.,shock.,chill.,freeze.,electrocute.,ailment.,flag.no_elemental_ailments,pin.,daze.,stun."},
             {"生存・回復", "GOLDEN_APPLE", "leech.,life.,resist.,totem.life,mana."},
             {"觸發・特殊", "REDSTONE", "trigger.,flag.,warcry.,totem.,rage.,channel.stages"},

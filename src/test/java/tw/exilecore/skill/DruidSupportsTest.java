@@ -55,14 +55,14 @@ class DruidSupportsTest {
 
     @Test
     void acceleratedGrowthSupportsPlantsThatAreUsed() {
-        final SupportDefinition growth = config.support("accelerated_growth");
+        final SupportDefinition growth = config.support("hasten_bloom");
         assertNotNull(growth);
         assertEquals(3, growth.tier());
-        for (final String plant : List.of("thrashing_vines", "entangle", "toxic_growth", "toxic_domain", "bramble_arrow")) {
+        for (final String plant : List.of("lashing_thorns", "root_bind", "miasma_bud_rain", "miasma_zone", "thorn_shaft")) {
             assertTrue(growth.supports(config.skill(plant)), plant);
         }
-        assertFalse(growth.supports(config.skill("briarpatch")), "常駐的刺棘身不會放出去");
-        assertFalse(growth.supports(config.skill("fireball")));
+        assertFalse(growth.supports(config.skill("thorn_body")), "常駐的刺棘身不會放出去");
+        assertFalse(growth.supports(config.skill("blazing_star_shell")));
         final SkillDefinition flower = config.skill("proc_accelerated_growth");
         assertNotNull(flower);
         assertEquals(Mechanic.IMPACT, flower.mechanic());
@@ -71,29 +71,29 @@ class DruidSupportsTest {
 
     @Test
     void stormSupportsOnlyFitStorms() {
-        for (final String id : List.of("advancing_storm", "morganas_tempest")) {
+        for (final String id : List.of("marching_gale", "sweeping_gale")) {
             final SupportDefinition support = config.support(id);
             assertNotNull(support, id);
-            for (final String storm : List.of("firestorm", "thunderstorm", "primal_tornado")) {
+            for (final String storm : List.of("flowing_flame_canopy", "gathered_thundercloud", "wild_whirlwind")) {
                 assertNull(support.refusal(config.skill(storm)), id + " → " + storm);
             }
-            assertFalse(support.supports(config.skill("fireball")), id);
+            assertFalse(support.supports(config.skill("blazing_star_shell")), id);
         }
     }
 
     @Test
-    void stormsTravelAtPoe2Speed() {
-        final SkillDefinition firestorm = config.skill("firestorm");
+    void stormsTravelAtRefSpeed() {
+        final SkillDefinition firestorm = config.skill("flowing_flame_canopy");
         final Set<String> tags = firestorm.tags();
         final StatSheet plain = new StatSheet();
         assertEquals(0, DruidSupports.stormPerTick(firestorm, plain, tags), 1e-9, "沒掛不動");
         final StatSheet advancing = new StatSheet();
-        advancing.addAll(config.support("advancing_storm").modifiers());
+        advancing.addAll(config.support("marching_gale").modifiers());
         assertEquals(tw.exilecore.core.Units.metres(2.5) / 20, DruidSupports.stormPerTick(firestorm, advancing, tags), 1e-9, "行嵐：每秒 2.5 公尺"); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         final StatSheet morgana = new StatSheet();
-        morgana.addAll(config.support("morganas_tempest").modifiers());
+        morgana.addAll(config.support("sweeping_gale").modifiers());
         assertEquals(tw.exilecore.core.Units.metres(2.5) * 1.6 / 20, DruidSupports.stormPerTick(firestorm, morgana, tags), 1e-9, "掠嵐：更多 60%");
-        assertEquals(0, DruidSupports.stormPerTick(config.skill("fireball"), advancing, config.skill("fireball").tags()), 1e-9, "不是風暴不動");
+        assertEquals(0, DruidSupports.stormPerTick(config.skill("blazing_star_shell"), advancing, config.skill("blazing_star_shell").tags()), 1e-9, "不是風暴不動");
         assertEquals("風暴從你腳下出發，往準心指的地方移動（每秒 2.5 格），到了就停在那裡", // 2026-10-30：1 公尺 = 1 格
                 ModifierText.describe(new Modifier(DruidSupports.STORM_ADVANCE, ModType.FLAT, 25, Set.of(), "")));
         assertEquals("60% 更多風暴移動速度", ModifierText.describe(new Modifier(DruidSupports.STORM_TRAVEL_SPEED, ModType.MORE, 0.6, Set.of(), "")));
@@ -101,12 +101,12 @@ class DruidSupportsTest {
 
     @Test
     void helbrymsHideSupportsShapeshiftSkills() {
-        final SupportDefinition hide = config.support("helbryms_hide");
+        final SupportDefinition hide = config.support("dormant_shell");
         assertNotNull(hide);
-        for (final String form : List.of("bear_maul", "wolf_shred", "wyvern_rend", "arctic_howl")) {
+        for (final String form : List.of("mountain_shake_claw", "swift_claw", "wing_blade_slash", "cold_night_howl")) {
             assertNull(hide.refusal(config.skill(form)), form);
         }
-        assertFalse(hide.supports(config.skill("fireball")));
+        assertFalse(hide.supports(config.skill("blazing_star_shell")));
         assertEquals(1.3, hide.manaMultiplier(), 1e-9);
     }
 }

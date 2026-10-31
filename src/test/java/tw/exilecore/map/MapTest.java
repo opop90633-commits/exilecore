@@ -265,7 +265,7 @@ class MapTest {
 
     /** 2026-10-26（PoE2 換界石）：每一段只出那一段的數值；週期詛咒、地面效果的鍵存在 MapStats 的 extra。 */
     @Test
-    void waystoneAffixesFollowPoe2Bands() {
+    void waystoneAffixesFollowRefBands() {
         final tw.exilecore.item.Affix fire = repository.affix("map_monster_fire");
         assertEquals(List.of(0), fire.tiersFor(84).stream().map(tw.exilecore.item.AffixTier::tier).toList(), "T16 一定是最高階");
         assertEquals(List.of(1), fire.tiersFor(80).stream().map(tw.exilecore.item.AffixTier::tier).toList(), "T11–15");
@@ -405,12 +405,12 @@ class MapTest {
 
     @Test
     void uniquesLoadAndRoll() {
-        assertEquals(127 + 21 + 5 + 2 + 6 + 30 + 2 + 91 + 1 + 9 + 21 - 3 + 1 + 1 + 1 + 1 + 1, repository.uniques().size(), "2026-10-31：＋信徒之錘；2026-10-30：＋烏爾德之骨；2026-10-30：＋拉薇安之泉；2026-10-29：＋血之屏障（Bloodbarrier）；2026-10-29：＋百目冠（Crown of Eyes）；2026-10-28 照站長刪掉焰扣束帶、奔雷皮靴、禁視鏈冠（－3）；2026-10-28：＋9 件照 PoE2（綺夢、艾瑟琳的蔑笑、謎容、聖火、元素馴服、貝雷克的兩枚、雪蘭的行囊、吉菲雅的聖所）；2026-10-28：＋黯炎；2026-10-27：＋91 件照 PoE2 的第二批傳奇（7 件追逐級）；2026-10-26：＋30 件照 PoE2 的新傳奇、恆時珠寶 2 件（英雄末路、永恆憎恨）；2026-10-24：＋6 件戰星傳奇；2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件；2026-10 照 PoE2 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件、德魯伊的獸魂符 4 件；2026-10-15 追逐級多 8 件、共通多 6 件；星骸之海的淵鯨 3 件；2026-10-17 只能賭的踏骸之履；共通的荊棘盾棘壘）");
+        assertEquals(127 + 21 + 5 + 2 + 6 + 30 + 2 + 91 + 1 + 9 + 21 - 3 + 1 + 1 + 1 + 1 + 1, repository.uniques().size(), "2026-10-31：＋信徒之錘；2026-10-30：＋烏爾德之骨；2026-10-30：＋拉薇安之泉；2026-10-29：＋血之屏障（Bloodbarrier）；2026-10-29：＋百目冠（Crown of Eyes）；2026-10-28 照站長刪掉焰扣束帶、奔雷皮靴、禁視鏈冠（－3）；2026-10-28：＋9 件照 原作（綺夢、艾瑟琳的蔑笑、謎容、聖火、元素馴服、伯嵐的兩枚、雪蘭的行囊、吉菲雅的聖所）；2026-10-28：＋黯炎；2026-10-27：＋91 件照 原作 的第二批傳奇（7 件追逐級）；2026-10-26：＋30 件照 原作 的新傳奇、恆時珠寶 2 件（英雄末路、永恆憎恨）；2026-10-24：＋6 件戰星傳奇；2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件；2026-10 照 原作 重做、加了很多傳奇（退役的不算；含巔峰 Boss 的 10 件、德魯伊的獸魂符 4 件；2026-10-15 追逐級多 8 件、共通多 6 件；星骸之海的淵鯨 3 件；2026-10-17 只能賭的踏骸之履；共通的荊棘盾棘壘）");
         final ItemData dropped = MapDrops.unique(generator, "final", 68, new Random(5));
         assertNotNull(dropped);
         assertEquals(Rarity.UNIQUE, dropped.rarity());
-        assertTrue(java.util.Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark", "hateforge_greaves", "tailwind_quiver", "sacred_flame",
-                "atziris_contempt").contains(dropped.unique()), "終局掉的是終局的傳奇（2026-10：天穹之心、星鑄退役，換成新的兩件；2026-10-28 照 PoE2：＋原作 Boss 限定的四件）");
+        assertTrue(java.util.Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark", "spiteforge_greaves", "tailwind_quiver", "hallowed_fire",
+                "empress_sneer").contains(dropped.unique()), "終局掉的是終局的傳奇（2026-10：天穹之心、星鑄退役，換成新的兩件；2026-10-28 照 PoE2：＋原作 Boss 限定的四件）");
         assertNull(repository.unique("sky_heart"), "退役的傳奇定義刪掉了（2026-10-15）");
         final ItemData pivot = generator.generateUnique(repository.unique("celestial_pivot"), 68, new Random(5));
         assertEquals("celestial_pivot", pivot.unique());

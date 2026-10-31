@@ -160,8 +160,8 @@ class DatabaseTest {
 
         // 技能面板：跟著角色存檔一起存，整個覆蓋
         final SkillLoadout skills = new SkillLoadout();
-        final int fireball = skills.put("fireball", 5);
-        final int arc = skills.put("arc", 3);
+        final int fireball = skills.put("blazing_star_shell", 5);
+        final int arc = skills.put("chain_thunder", 3);
         // 輔助孔（鑿星石開到 4 孔）與掛的輔助寶石也要存
         skills.set(fireball, skills.skill(fireball).withSockets(4).withSupport(0, "pierce").withSupport(2, "chain"));
         skills.bind((0 * SkillLoadout.KEYS + SkillLoadout.KEY_RIGHT), fireball);
@@ -172,10 +172,10 @@ class DatabaseTest {
         });
         final SkillLoadout loadedSkills = database.sync(c -> repository.loadCharacter(c, record.id())).orElseThrow().skills();
         assertEquals(2, loadedSkills.size());
-        assertEquals(new SkillLoadout.Entry("fireball", 5, 4, List.of("pierce", "", "chain")), loadedSkills.skill(fireball));
+        assertEquals(new SkillLoadout.Entry("blazing_star_shell", 5, 4, List.of("pierce", "", "chain")), loadedSkills.skill(fireball));
         assertEquals(SkillLoadout.BASE_SOCKETS, loadedSkills.skill(arc).sockets());
         assertEquals(List.of("pierce", "chain"), loadedSkills.skill(fireball).supportIds());
-        assertEquals("arc", loadedSkills.boundSkill((1 * SkillLoadout.KEYS + SkillLoadout.KEY_SNEAK_LEFT)).skillId());
+        assertEquals("chain_thunder", loadedSkills.boundSkill((1 * SkillLoadout.KEYS + SkillLoadout.KEY_SNEAK_LEFT)).skillId());
         assertEquals(-1, loadedSkills.bound((0 * SkillLoadout.KEYS + SkillLoadout.KEY_LEFT)));
         skills.remove(arc);
         database.sync(c -> {

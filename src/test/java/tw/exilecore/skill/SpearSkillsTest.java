@@ -105,7 +105,7 @@ class SpearSkillsTest {
 
     @Test
     void bloodhoundsMarkOnlyTriggersTheBloodExplosion() {
-        final SkillDefinition mark = config.skill("bloodhounds_mark");
+        final SkillDefinition mark = config.skill("blood_scent_seal");
         assertEquals(0, mark.params().mark().taken(), 1e-9, "原作沒有受到傷害增加");
         assertTrue(mark.params().mark().effects().isEmpty(), "原作沒有降護甲");
         final SkillDefinition blast = config.skill("bloodhound_blast");
@@ -159,9 +159,9 @@ class SpearSkillsTest {
     void heraldOfBloodExplosionHasItsOwnDamage() {
         final SkillDefinition burst = config.skill("herald_blood_burst");
         assertTrue(burst.isAttack() && burst.weaponless(), "2026-10-27 照 PoE2：不用武器的攻擊；這次之前是法術");
-        assertTrue(config.skill("herald_of_blood").tags().contains(Tags.ATTACK));
+        assertTrue(config.skill("blood_proclaim").tags().contains(Tags.ATTACK));
         assertTrue(burst.modifiers().stream().anyMatch(m -> m.stat().equals(tw.exilecore.stats.StatKeys.FLAG_ALWAYS_HIT)), "Can't be Evaded");
         final SkillBuild twenty = SkillBuild.of(config, burst, 20, 100, false, List.of(), Set.of(), new StatSheet());
-        assertEquals(107, twenty.profile().spellDamage().get(tw.exilecore.stats.DamageType.PHYSICAL), 1, "poe2db：20 級 107～160");
+        assertEquals(107, twenty.profile().spellDamage().get(tw.exilecore.stats.DamageType.PHYSICAL), 1, "原作資料：20 級 107～160");
     }
 }

@@ -186,7 +186,7 @@ class RadiusJewelTest {
 
     /** 2026-10-26：PoE2 的樹上，珠寶孔周圍 1000 內有一二十個小天賦、幾個核心（照原作距離算）。 */
     @Test
-    void realTreeSocketsHavePoe2SizedRadius() throws Exception {
+    void realTreeSocketsHaveRefSizedRadius() throws Exception {
         final PassiveTree tree = PassiveTree.load(Path.of("src/main/resources/data/passives/tree.json"));
         int sockets = 0;
         int smalls = 0;

@@ -101,7 +101,7 @@ class CorruptFractureTest {
     }
 
     @Test
-    void corruptionHasTheFourPoe2Outcomes() {
+    void corruptionHasTheFourRefOutcomes() {
         final SplittableRandom random = new SplittableRandom(11);
         int enchanted = 0;
         int socketed = 0;

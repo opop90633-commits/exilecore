@@ -52,6 +52,6 @@ class LightningWarpTest {
         config.load(Path.of("src/main/resources/data"));
         assertNotNull(config.skill(LightningWarp.BALL), "滾雷珠的技能代號");
         assertEquals("projectile", config.skill(LightningWarp.BALL).mechanic().name().toLowerCase());
-        assertTrue(config.skill("storm_blink").description().contains("滾雷珠"));
+        assertTrue(config.skill("thunder_escape").description().contains("滾雷珠"));
     }
 }

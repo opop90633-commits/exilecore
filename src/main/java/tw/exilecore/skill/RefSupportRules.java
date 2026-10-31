@@ -8,18 +8,18 @@ import java.util.Set;
 
 /**
  * 2026-10-30 照站長（未切割輔助寶石選技能後，那個技能是不是真的能裝上那顆輔助）：照 PoE2 0.5 的技能類型，
- * 我們的標籤規則讓掛、原作不讓掛的組合擋掉（data/support_poe2.yml，tools/gen_poe2_support_types.py 產生）。
+ * 我們的標籤規則讓掛、原作不讓掛的組合擋掉（data/support_ref.yml，tools/gen_poe2_support_types.py 產生）。
  * {@link SupportDefinition#refusal} 最先問這裡；宿主寶石照孔裡的技能驗，不在表上。
  */
-public final class Poe2SupportRules {
+public final class RefSupportRules {
 
     /** 資料檔名。 */
-    public static final String FILE = "support_poe2.yml";
+    public static final String FILE = "support_ref.yml";
 
     /** 輔助 → 技能 → 擋掉的原因。 */
     private static volatile Map<String, Map<String, String>> blocked = Map.of();
 
-    private Poe2SupportRules() {
+    private RefSupportRules() {
     }
 
     /** 這顆輔助掛在這個技能上原作不讓掛的原因；可以掛（或不在表上）回傳 null。 */
@@ -28,7 +28,7 @@ public final class Poe2SupportRules {
         return skills == null ? null : skills.get(skillId);
     }
 
-    /** 讀 support_poe2.yml（SkillConfig.load 呼叫）；技能或輔助代號不認得就報錯（資料跟設定對不上了，要重產）。 */
+    /** 讀 support_ref.yml（SkillConfig.load 呼叫）；技能或輔助代號不認得就報錯（資料跟設定對不上了，要重產）。 */
     static Map<String, Map<String, String>> parse(final YamlNode root, final Set<String> skills, final Set<String> supports) {
         final Map<String, Map<String, String>> out = new HashMap<>();
         final YamlNode section = root.node("blocked");

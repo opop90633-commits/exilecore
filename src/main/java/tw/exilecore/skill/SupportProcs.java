@@ -43,7 +43,7 @@ public final class SupportProcs implements Listener {
 
     static final String PREFIX = "proc.";
     /** 銀月庇的增益代號（技能代號）與它落下的月光（隱藏技能）。 */
-    static final String LUNAR_BLESSING = "lunar_blessing";
+    static final String LUNAR_BLESSING = "silver_moon_shelter";
     static final String LUNAR_MOONBEAM = "lunar_moonbeam";
     /** 完美時機放開的那一下（技能描述的代號後面接這個；baseId 會把它去掉）。 */
     static final String PERFECT_SUFFIX = ".perfect";

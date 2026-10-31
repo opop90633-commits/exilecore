@@ -481,7 +481,7 @@ ascendancies:
           - 提供技能：封入翠玉
         stats:
           - { stat: asc.jade, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-          - { stat: grant_skill.encase_in_jade, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.jade_entomb, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       totem_life:
         name: 圖騰生命          # Totem Life
         icon: TOTEM_OF_UNDYING
@@ -500,8 +500,8 @@ ascendancies:
           - 提供技能：祖靈現身
         stats:
           - { stat: skill.totems, type: FLAT, value: 1 }
-          - { stat: asc.ancestral_spirits, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-          - { stat: grant_skill.ancestral_spirits, type: FLAT, value: 1 }   # 2026-10-29 照 PoE2：先祖之魂放進技能面板（可以插輔助）
+          - { stat: asc.forebear_manifest, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.forebear_manifest, type: FLAT, value: 1 }   # 2026-10-29 照 PoE2：先祖之魂放進技能面板（可以插輔助）
       totem_life_2:
         name: 圖騰生命          # Totem Life
         requires: answered_call
@@ -628,7 +628,7 @@ ascendancies:
         lines:
           - 提供技能：淬鍊兵器
         stats:
-          - { stat: grant_skill.temper_weapon, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.forge_arms, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       strength:
         name: 力量          # Strength
         icon: IRON_INGOT
@@ -644,7 +644,7 @@ ascendancies:
         lines:
           - 提供技能：幻形兵刃
         stats:
-          - { stat: grant_skill.manifest_weapon, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.phantom_blade, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       smiths_masterwork:
         name: 鍛師名作          # Smith's Masterwork
         notable: true
@@ -804,7 +804,7 @@ ascendancies:
         lines:
           - 提供技能：命中引火術
         stats:
-          - { stat: grant_skill.fire_spell_on_hit, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.hit_ignite_art, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
   witchhunter:                # 原作：Witchhunter
     class: mercenary
@@ -867,7 +867,7 @@ ascendancies:
         stats:
           - { stat: armour, type: MORE, value: -50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
           - { stat: evasion, type: MORE, value: -50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-          - { stat: grant_skill.sorcery_ward, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.witch_barrier, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       armour_evasion_2:
         name: 護甲和閃避          # Armour and Evasion
         requires: obsessive_rituals
@@ -1018,7 +1018,7 @@ ascendancies:
         lines:
           - 提供技能：掩護火力
         stats:
-          - { stat: grant_skill.supporting_fire, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.covering_fire, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
         # 2026-10-27 照 PoE2：砲手是有實體、不會受傷、只聽指令的召喚物（MinionService 的從天而降）；拿掉 note（這次之前「砲手不是召喚物，支援火力是一個 4 秒冷卻的箭雨」）
       totem_damage:
         name: 圖騰傷害          # Totem Damage
@@ -1266,7 +1266,7 @@ ascendancies:
         lines:
           - 提供技能：正氣護盾
         stats:
-          - { stat: grant_skill.virtuous_barrier, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.righteous_shield, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       skill_gem_quality_2:
         name: 技能寶石品質          # Skill Gem Quality
         requires: essence_virtue
@@ -1520,7 +1520,7 @@ ascendancies:
           - 提供技能：沸血
         stats:
           - { stat: asc.blood_boil_more, type: FLAT, value: 15 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-          - { stat: grant_skill.blood_boil, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.seething_blood, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       reduced_mana:
         name: 減少魔力          # Reduced Mana
         icon: LAPIS_LAZULI
@@ -1641,7 +1641,7 @@ ascendancies:
         lines:
           - 提供技能：儀典獻祭
         stats:
-          - { stat: grant_skill.ritual_sacrifice, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.rite_offering, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       movement_speed_2:
         name: 移動速度          # Movement Speed
         requires: as_whispers_demand
@@ -1658,7 +1658,7 @@ ascendancies:
         lines:
           - 提供技能：女皇巡行
         stats:
-          - { stat: grant_skill.queens_procession, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.empress_march, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
   # 2026-10-27 照 PoE2 0.5 補上第三個女獵手昇華（Spirit Walker，poe2db／PoB 0_5 tree.json）：天賦、相連、數值照原作。
   spiritwalker:                # 原作：Spirit Walker
@@ -2096,7 +2096,7 @@ ascendancies:
         lines:
           - 提供技能：碎裂藥劑
         stats:
-          - { stat: grant_skill.shattering_concoction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.fracture_tonic, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       explosive_concoction:
         name: 爆炸藥劑          # Explosive Concoction
         option_of: brew_concoction
@@ -2112,7 +2112,7 @@ ascendancies:
         lines:
           - 提供技能：雷爆藥劑
         stats:
-          - { stat: grant_skill.fulminating_concoction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.thunder_blast_tonic, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       acidic_concoction:
         name: 蝕酸藥劑          # Acidic Concoction
         option_of: brew_concoction
@@ -2286,7 +2286,7 @@ ascendancies:
         lines:
           - 提供技能：無拘化身
         stats:
-          - { stat: grant_skill.unbound_avatar, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.free_incarnation, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       chill_effect:
         name: 冰緩效果          # Chill Effect
         icon: SNOWBALL
@@ -2328,7 +2328,7 @@ ascendancies:
         lines:
           - 提供技能：冥想
         stats:
-          - { stat: grant_skill.meditate, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.calm_mind_trance, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
         # 2026-10-27 照 PoE2：冥想是真的引導，受到傷害就中斷（Channelling 的 recharge 模式）；拿掉 note（這次之前「沒有這種引導：施放一次回充約 2 秒份，超過上限的變成守護」）
       evasion_energy:
         name: 閃避和能量護盾          # Evasion and Energy Shield
@@ -2432,7 +2432,7 @@ ascendancies:
         lines:
           - 提供技能：虛無幻影
         stats:
-          - { stat: grant_skill.void_illusion, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.null_phantom, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       skill_speed:
         name: 技能速度          # Skill Speed
         icon: SUGAR
@@ -2449,7 +2449,7 @@ ascendancies:
         lines:
           - 提供技能：潛入裂隙
         stats:
-          - { stat: grant_skill.into_the_breach, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.rift_dive, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       skill_speed_2:
         name: 技能速度          # Skill Speed
         requires: waking_dream
@@ -2551,7 +2551,7 @@ ascendancies:
         lines:
           - 提供技能：霞瑤之主
         stats:
-          - { stat: grant_skill.archon_of_chayula, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.rose_jade_lord, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       volatility:
         name: 易爆          # Volatility
         icon: TNT
@@ -2957,7 +2957,7 @@ ascendancies:
         lines:
           - 提供技能：時隙回溯
         stats:
-          - { stat: grant_skill.time_snap, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.time_gap_rewind, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       cooldown_recovery_2:
         name: 冷卻時間恢復率          # Cooldown Recovery Rate
         requires: unbound_encore
@@ -2974,7 +2974,7 @@ ascendancies:
         lines:
           - 提供技能：時間凍結
         stats:
-          - { stat: grant_skill.time_freeze, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.time_halt, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       slow_effect:
         name: 緩速效果          # Slow Effect
         icon: SOUL_SAND
@@ -3024,7 +3024,7 @@ ascendancies:
         lines:
           - 提供技能：註定之痛
         stats:
-          - { stat: grant_skill.inevitable_agony, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.fated_pain, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       skill_speed_area:
         name: 技能速度和範圍效果          # Skill Speed and Area of Effect
         icon: SUGAR
@@ -3078,7 +3078,7 @@ ascendancies:
         lines:
           - 提供技能：時隙裂口
         stats:
-          - { stat: grant_skill.temporal_rift, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.time_gap_breach, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
   sandsage:                # 原作：Disciple of Varashta
     class: sorceress
@@ -3095,8 +3095,8 @@ ascendancies:
           - 提供技能：污沙．珂芮絲
           - 提供技能：珂芮絲的殘酷
         stats:
-          - { stat: grant_skill.kelari_djinn, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-          - { stat: grant_skill.kelari_brutality, type: FLAT, value: 1 }   # 2026-10-29 照 PoE2：克拉里本身的指令（Kelari's Brutality）；這次之前沒有
+          - { stat: grant_skill.foul_sand_spirit, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.sand_spirit_cruelty, type: FLAT, value: 1 }   # 2026-10-29 照 PoE2：克拉里本身的指令（Kelari's Brutality）；這次之前沒有
         # 2026-10-27 照 PoE2：巨靈是有實體、不會受傷、只聽指令的召喚物；拿掉 note（這次之前「巨靈沒有實體：指令直接在準心的地方生效」）
       kelaris_deception:
         name: 珂芮絲的詭計          # Kelari's Deception
@@ -3106,7 +3106,7 @@ ascendancies:
         lines:
           - 提供技能：珂芮絲的詭計
         stats:
-          - { stat: grant_skill.kelari_deception, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.sand_spirit_trick, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       kelaris_judgment:
         name: 珂芮絲的裁決          # Kelari's Judgment
         requires: barya_kelari
@@ -3115,7 +3115,7 @@ ascendancies:
         lines:
           - 提供技能：珂芮絲的裁決
         stats:
-          - { stat: grant_skill.kelari_judgment, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.sand_spirit_verdict, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       kelaris_malediction:
         name: 珂芮絲的詛言          # Kelari's Malediction
         requires: barya_kelari
@@ -3124,7 +3124,7 @@ ascendancies:
         lines:
           - 提供技能：珂芮絲的毒言
         stats:
-          - { stat: grant_skill.kelari_malediction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.sand_spirit_venom_word, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       area_effect:
         name: 範圍效果          # Area of Effect
         icon: FIREWORK_STAR
@@ -3159,23 +3159,23 @@ ascendancies:
         stats:
           - { stat: asc.staff_focus, type: FLAT, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       barya_navira:
-        name: 納維拉的巨靈之幣          # Barya of Navira
+        name: 娜瑟菈的巨靈之幣          # Barya of Navira
         notable: true
         icon: ENCHANTED_BOOK
         lines:
           - 提供技能：終幻．娜瑟菈
         stats:
-          - { stat: grant_skill.navira_djinn, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.final_mirage_spirit, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
         # 2026-10-27 照 PoE2：巨靈是有實體、不會受傷、只聽指令的召喚物；拿掉 note（這次之前「巨靈沒有實體：指令直接生效」）
       naviras_oasis:
-        name: 納維拉綠洲          # Navira's Oasis
+        name: 娜瑟菈綠洲          # Navira's Oasis
         requires: barya_navira
         notable: true
         icon: ENCHANTED_BOOK
         lines:
           - 提供技能：娜瑟菈的綠洲
         stats:
-          - { stat: grant_skill.navira_oasis, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.mirage_spirit_haven, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       naviras_well:
         name: 娜瑟菈之泉          # Navira's Well
         requires: barya_navira
@@ -3184,16 +3184,16 @@ ascendancies:
         lines:
           - 提供技能：娜瑟菈的泉
         stats:
-          - { stat: grant_skill.navira_well, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.mirage_spirit_spring, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       naviras_fracturing:
-        name: 納維拉的分裂          # Navira's Fracturing
+        name: 娜瑟菈的分裂          # Navira's Fracturing
         requires: barya_navira
         notable: true
         icon: ENCHANTED_BOOK
         lines:
           - 提供技能：娜瑟菈的冰封
         stats:
-          - { stat: grant_skill.navira_fracturing, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.mirage_spirit_freeze, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       mana:
         name: 魔力          # Mana
         icon: LAPIS_LAZULI
@@ -3246,13 +3246,13 @@ ascendancies:
         stats:
           - { stat: asc.es_armour, type: FLAT, value: 60 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       barya_ruzhan:
-        name: 魯兹安的巨靈之幣          # Barya of Ruzhan
+        name: 羅贊的巨靈之幣          # Barya of Ruzhan
         notable: true
         icon: ENCHANTED_BOOK
         lines:
           - 提供技能：炎刃．羅贊
         stats:
-          - { stat: grant_skill.ruzhan_djinn, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.flame_blade_spirit, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
         # 2026-10-27 照 PoE2：巨靈是有實體、不會受傷、只聽指令的召喚物；拿掉 note（這次之前「巨靈沒有實體：斬擊與指令直接在你前方、準心的地方生效」）
       ruzhans_reckoning:
         name: 羅贊的清算          # Ruzhan's Reckoning
@@ -3262,16 +3262,16 @@ ascendancies:
         lines:
           - 提供技能：羅贊的清算
         stats:
-          - { stat: grant_skill.ruzhan_reckoning, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.blade_spirit_settle, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       ruzhans_fury:
-        name: 魯兹安的狂怒          # Ruzhan's Fury
+        name: 羅贊的狂怒          # Ruzhan's Fury
         requires: barya_ruzhan
         notable: true
         icon: ENCHANTED_BOOK
         lines:
           - 提供技能：羅贊的怒焰
         stats:
-          - { stat: grant_skill.ruzhan_fury, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.blade_spirit_wrath_fire, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       ruzhans_trap:
         name: 羅贊的機關          # Ruzhan's Trap
         requires: barya_ruzhan
@@ -3280,7 +3280,7 @@ ascendancies:
         lines:
           - 提供技能：羅贊的機關
         stats:
-          - { stat: grant_skill.ruzhan_trap, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.blade_spirit_device, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
   blightcaller:                # 原作：Infernalist
     class: witch
@@ -3322,7 +3322,7 @@ ascendancies:
         lines:
           - 提供技能：喚出獄火犬
         stats:
-          - { stat: grant_skill.infernal_hound, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.hellfire_dog_call, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       mana:
         name: 魔力          # Mana
         icon: LAPIS_LAZULI
@@ -3393,7 +3393,7 @@ ascendancies:
         lines:
           - 提供技能：化魔
         stats:
-          - { stat: grant_skill.demon_form, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.become_fiend, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       spell_damage_2:
         name: 法術傷害          # Spell Damage
         requires: demonic_possession
@@ -3503,7 +3503,7 @@ ascendancies:
           - 提供技能：生命痕跡
         stats:
           - { stat: flag.sanguimancy, type: FLAT, value: 1 }
-          - { stat: grant_skill.life_remnants, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.vital_residue, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       life:
         name: 生命          # Life
         requires: sanguimancy
@@ -3762,7 +3762,7 @@ ascendancies:
         lines:
           - 被你或你存在範圍內友軍擊殺的被詛咒敵人有 33% 機率爆炸，造成等同其最大生命四分之一的混沌傷害
         stats:
-          - { stat: asc.rupture, type: FLAT, value: 33 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: asc.vein_break, type: FLAT, value: 33 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       curse_area_2:
         name: 詛咒範圍          # Curse Area
         requires: rupture_soul
@@ -3871,7 +3871,7 @@ ascendancies:
         stats:
           - { stat: asc.es_power, type: FLAT, value: 30 }
       steward:
-        name: 骷髏馬克的管家          # Steward of Kulemak
+        name: 骸王的管家          # Steward of Kulemak
         requires: es_power
         notable: true
         icon: SCULK_SHRIEKER
@@ -3879,7 +3879,7 @@ ascendancies:
           - 若可行，造成傷害的法術會消耗 1 顆銳星觸發深淵幻影
           - 提供技能：深淵幻影
         stats:
-          - { stat: grant_skill.abyssal_apparition, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2（ascendancy_lich_consume_power_for_apparition）
+          - { stat: grant_skill.chasm_phantom, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2（ascendancy_lich_consume_power_for_apparition）
       energy_shield:
         name: 能量護盾          # Energy Shield
         icon: LIGHT_BLUE_DYE
@@ -4067,7 +4067,7 @@ ascendancies:
         lines:
           - 提供技能：乘隙之機
         stats:
-          - { stat: grant_skill.moment_of_vulnerability, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.gap_opportunity, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       life_mana:
         name: 生命及魔力再生速度          # Life and Mana Regeneration Rate（2026-10-27 統一用語；這次之前「生命及魔力回復率」）
         icon: RED_DYE
@@ -4105,7 +4105,7 @@ ascendancies:
         lines:
           - 提供技能：命途同調
         stats:
-          - { stat: grant_skill.align_fate, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.destiny_attune, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       passive_point:
         name: 天賦點          # Passive Point
         icon: EXPERIENCE_BOTTLE
@@ -4182,7 +4182,7 @@ ascendancies:
         lines:
           - 提供技能：天災降臨
         stats:
-          - { stat: grant_skill.apocalypse, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
+          - { stat: grant_skill.calamity_descent, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       elemental:
         name: 元素抗性          # Elemental Resistances
         icon: PRISMARINE_CRYSTALS

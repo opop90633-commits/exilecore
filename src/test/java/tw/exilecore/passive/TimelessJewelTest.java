@@ -34,11 +34,11 @@ class TimelessJewelTest {
     }
 
     @Test
-    void dataMatchesPoe2LegionPassives() {
-        assertEquals("卡爾葛", kalguur().name());
+    void dataMatchesRefLegionPassives() {
+        assertEquals("霜嶺", kalguur().name());
         assertEquals(37, kalguur().notables().size());
         assertEquals(3, kalguur().keystones().size());
-        assertNull(kalguur().small(), "卡爾葛不動小天賦（PoE2 資料沒有卡爾葛的小點附加）");
+        assertNull(kalguur().small(), "霜嶺不動小天賦（原作 資料沒有霜嶺的小點附加）");
         assertEquals("深淵族", abyss().name());
         assertEquals(30, abyss().notables().size());
         assertEquals(5, abyss().keystones().size());
@@ -48,7 +48,7 @@ class TimelessJewelTest {
         assertEquals("黑暗血鐮訓練", kalguur().keystone(1).name());
         assertEquals("循環教義", kalguur().keystone(2).name());
         assertEquals("騎士信條", kalguur().keystone(3).name());
-        assertEquals("奧爾羅斯", kalguur().conqueror(3).name());
+        assertEquals("薩岡", kalguur().conqueror(3).name());
         assertEquals("血肉獻祭", abyss().keystone(1).name());
         assertEquals("遠目獻祭", abyss().keystone(5).name());
         // 每一行都有中文、標了「尚未生效」的沒有修飾器
@@ -74,10 +74,10 @@ class TimelessJewelTest {
         final Map<String, PassiveNode> conquered = TimelessJewels.conquered(tree, conquest, Set.of("n", "n2", "k", "a"));
         // 範圍 1500：n（849）、n2（1400）是核心，k（1450）是基石；a、b、c、far 是小天賦（卡爾葛不換）；s2 在 5000 外
         assertEquals(Set.of("n", "n2", "k"), conquered.keySet());
-        assertEquals("循環教義", conquered.get("k").name(), "梅德偉（第 2 個征服者）的基石");
+        assertEquals("循環教義", conquered.get("k").name(), "巴魯克（第 2 個征服者）的基石");
         assertEquals(PassiveNode.Type.KEYSTONE, conquered.get("k").type());
         assertTrue(conquered.get("k").modifiers().stream().anyMatch(m -> m.stat().equals(TimelessJewels.FLAG_ALT_DEX)));
-        assertTrue(kalguur().notables().stream().anyMatch(t -> t.name().equals(conquered.get("n").name())), "核心換成卡爾葛的核心");
+        assertTrue(kalguur().notables().stream().anyMatch(t -> t.name().equals(conquered.get("n").name())), "核心換成霜嶺的核心");
         assertEquals(PassiveNode.Type.NOTABLE, conquered.get("n").type());
         // 屬性表：被征服的換掉，其他照原本
         final List<Modifier> mods = TimelessJewels.treeModifiers(tree, Set.of("n", "k", "a"), null, conquered);
@@ -137,19 +137,19 @@ class TimelessJewelTest {
     }
 
     @Test
-    void uniquesRollSeedAndConquerorAndDropFromPoe2Sources() throws Exception {
+    void uniquesRollSeedAndConquerorAndDropFromRefSources() throws Exception {
         final ItemRepository repository = new ItemRepository();
         repository.load(Path.of("src/main/resources/data"));
         final ItemGenerator generator = new ItemGenerator(repository);
-        final UniqueItem heroic = repository.unique("heroic_tragedy");
-        final UniqueItem undying = repository.unique("undying_hate");
+        final UniqueItem heroic = repository.unique("frost_elegy_jewel");
+        final UniqueItem undying = repository.unique("abyss_grudge_jewel");
         assertEquals("英雄末路", heroic.name());
         assertEquals("永恆憎恨", undying.name());
         assertTrue(heroic.droppedBy("final"), "照 PoE2：終局 Boss 掉");
         assertTrue(undying.droppedBy("abyss_lich"), "照 PoE2：深淵的巔峰 Boss 掉");
         // 2026-10-26：固定 1%（drop_chance），不在來源的權重池裡
-        assertEquals(0.01, repository.dropChance("heroic_tragedy"), 1e-12);
-        assertEquals(0.01, repository.dropChance("undying_hate"), 1e-12);
+        assertEquals(0.01, repository.dropChance("frost_elegy_jewel"), 1e-12);
+        assertEquals(0.01, repository.dropChance("abyss_grudge_jewel"), 1e-12);
         assertFalse(repository.uniquesFor("final", 84).contains(heroic));
         assertFalse(repository.uniquesFor("abyss_lich", 84).contains(undying));
         assertTrue(repository.fixedChanceUniques("final", 84).contains(heroic));
@@ -175,14 +175,14 @@ class TimelessJewelTest {
         }
         // 圖鑑的範圍文字列出全部征服者
         final Affix affix = repository.affix(heroic.affixIds().getFirst());
-        assertTrue(affix.rangeText(1).contains("沃拉娜／梅德偉／奧爾羅斯"), affix.rangeText(1));
+        assertTrue(affix.rangeText(1).contains("蕾希雅／巴魯克／薩岡"), affix.rangeText(1));
     }
 
     @Test
     void activeConquestNeedsAllocatedSocket() throws Exception {
         final ItemRepository repository = new ItemRepository();
         repository.load(Path.of("src/main/resources/data"));
-        final ItemData data = new ItemGenerator(repository).generateUnique(repository.unique("heroic_tragedy"), 80, new java.util.Random(3));
+        final ItemData data = new ItemGenerator(repository).generateUnique(repository.unique("frost_elegy_jewel"), 80, new java.util.Random(3));
         final PassiveTree tree = RadiusJewelTest.tree();
         assertNull(TimelessJewels.active(repository, Map.of("sock", data), Set.of(), tree), "孔沒配不算");
         final TimelessJewels.Conquest conquest = TimelessJewels.active(repository, Map.of("sock", data), Set.of("sock", "k"), tree);

@@ -20,19 +20,19 @@ import java.util.Set;
 public final class SkillCascade {
 
     /** 原作 Cascadable 的技能（RePoE；我們的代號）。 */
-    public static final Set<String> POE2 = Set.of(
-            "frost_nova", "comet", "flame_wall", "detonate_dead", "firestorm", "hex_burst", "frost_mine", "ice_wall", "thunderstorm",
-            "thrashing_vines", "profane_ritual", "bone_cage", "snap", "bone_blast", "volatile_dead", "lightning_bolt", "enervating_nova",
-            "ruzhan_reckoning",
+    public static final Set<String> REF = Set.of(
+            "frost_star_blast", "falling_star", "flame_curtain", "corpse_burst", "flowing_flame_canopy", "erosion_curse_rift", "chill_crystal_mine", "frost_rampart", "gathered_thundercloud",
+            "lashing_thorns", "filth_array", "bone_thorn_ring", "anomaly_devour_blast", "bone_bloom", "corpse_flame_burst", "thunder_drop", "fading_thunder_ring",
+            "blade_spirit_settle",
             // 詛咒（原作每個詛咒都是 Cascadable：連瀑讓詛咒往兩側各多落一圈）
-            "vulnerability_curse", "despair_curse", "elemental_weakness_curse", "enfeeble_curse", "temporal_curse");
+            "wound_scar_curse", "soul_wither_curse", "triple_element_curse", "strength_sap_curse", "sluggish_curse");
 
     /** 原作有對應、但不是 Cascadable 的（照形狀會被當成可以連瀑的）。 */
-    public static final Set<String> NOT_POE2 = Set.of(
-            "storm_orb", "sun_orb", "ember_seed", "contagion", "primal_tornado", "volcano", "galvanic_field", "reap", "dark_pact",
-            "inferno_blast",
+    public static final Set<String> NOT_REF = Set.of(
+            "thunder_cloud", "scorching_sun_pearl", "cinder_sprout", "plague_taint", "wild_whirlwind", "volcano", "thunder_current_zone", "blood_sickle", "nether_contract",
+            "flame_core_detonation",
             // 精靈的指令、昇華（原作只有魯兹安的清算是 Cascadable）
-            "kelari_deception", "kelari_judgment", "kelari_brutality", "navira_fracturing", "ruzhan_trap", "moment_of_vulnerability");
+            "sand_spirit_trick", "sand_spirit_verdict", "sand_spirit_cruelty", "mirage_spirit_freeze", "blade_spirit_device", "gap_opportunity");
 
     private SkillCascade() {
     }
@@ -42,10 +42,10 @@ public final class SkillCascade {
         if (skill == null || !skill.tags().contains(Tags.SPELL)) {
             return false;
         }
-        if (POE2.contains(skill.id())) {
+        if (REF.contains(skill.id())) {
             return true;
         }
-        return !NOT_POE2.contains(skill.id()) && shaped(skill);
+        return !NOT_REF.contains(skill.id()) && shaped(skill);
     }
 
     /**

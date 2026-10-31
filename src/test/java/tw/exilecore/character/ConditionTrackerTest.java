@@ -55,8 +55,8 @@ class ConditionTrackerTest {
     @Test
     void countedEventsUseTheirWindowAndDistinctIds() {
         final java.util.List<ConditionTracker.Noted> log = java.util.List.of(
-                new ConditionTracker.Noted("spelltypes", "fireball", 0), new ConditionTracker.Noted("spelltypes", "fireball", 50),
-                new ConditionTracker.Noted("spelltypes", "frostbolt", 100), new ConditionTracker.Noted("warcries", "a", 100));
+                new ConditionTracker.Noted("spelltypes", "blazing_star_shell", 0), new ConditionTracker.Noted("spelltypes", "blazing_star_shell", 50),
+                new ConditionTracker.Noted("spelltypes", "frost_drill", 100), new ConditionTracker.Noted("warcries", "a", 100));
         assertEquals(2, ConditionTracker.counted(log, "spelltypes", 160, true, 150), "火球兩次只算一種");
         assertEquals(3, ConditionTracker.counted(log, "spelltypes", 160, false, 150));
         assertEquals(1, ConditionTracker.counted(log, "spelltypes", 160, true, 250), "8 秒前的不算");
@@ -68,11 +68,11 @@ class ConditionTrackerTest {
     void fullNoteLogEvictsTheSameKindFirst() {
         // 2026-10-27：記滿了丟記最多筆的那種裡最舊的；這次之前新的直接不記，被打一直洗會把放法術的計數擠掉
         final java.util.ArrayDeque<ConditionTracker.Noted> log = new java.util.ArrayDeque<>();
-        ConditionTracker.append(log, new ConditionTracker.Noted("spelltypes", "fireball", 0));
+        ConditionTracker.append(log, new ConditionTracker.Noted("spelltypes", "blazing_star_shell", 0));
         for (int i = 0; i < ConditionTracker.NOTE_CAP + 50; i++) {
             ConditionTracker.append(log, new ConditionTracker.Noted("hitstaken", "x", 1));
         }
-        ConditionTracker.append(log, new ConditionTracker.Noted("spelltypes", "frostbolt", 2));
+        ConditionTracker.append(log, new ConditionTracker.Noted("spelltypes", "frost_drill", 2));
         assertEquals(ConditionTracker.NOTE_CAP, log.size());
         assertEquals(2, ConditionTracker.counted(log, "spelltypes", 160, true, 2), "放過的法術沒被擠掉，新的也記得進去");
         ConditionTracker.append(log, new ConditionTracker.Noted("hitstaken", "x", 400));

@@ -38,8 +38,8 @@ class ChargeSpecTest {
     void debuffKeepsTheStrongerOne() {
         final AilmentState state = new AilmentState();
         final UUID a = UUID.randomUUID();
-        state.addDebuff("contagion", new AilmentState.Debuff(100, 100, a, true, 0, 100));
-        state.addDebuff("contagion", new AilmentState.Debuff(50, 200, a, true, 0, 50));
+        state.addDebuff("plague_taint", new AilmentState.Debuff(100, 100, a, true, 0, 100));
+        state.addDebuff("plague_taint", new AilmentState.Debuff(50, 200, a, true, 0, 50));
         assertEquals(100, state.debuffDps(0), 1e-9);
         assertEquals(100, state.debuffDps(150), 1e-9, "弱的那個比較長：留強的、延長到比較晚的");
         assertEquals(0, state.debuffDps(200), 1e-9);

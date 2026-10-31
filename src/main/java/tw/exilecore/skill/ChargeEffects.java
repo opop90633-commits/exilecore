@@ -532,7 +532,7 @@ public final class ChargeEffects implements Listener {
     /** 翻滾時留下的幻身（隱藏的召喚技能）。 */
     static final String ILLUSION = "proc_lingering_illusion";
     /** 翻滾時留下幻身：光環給的旗標、每次花多少魔力（PoE2：10）。 */
-    static final String FLAG_ILLUSION = "flag.lingering_illusion";
+    static final String FLAG_ILLUSION = "flag.phantom_body";
     static final double ILLUSION_MANA = 10;
     /** 2026-10-27：幻身下次能留的 tick（玩家 → tick）。 */
     private final Map<UUID, Long> illusionReady = new HashMap<>();
@@ -563,7 +563,7 @@ public final class ChargeEffects implements Listener {
         illusionReady.put(player.getUniqueId(), now + Math.max(SupportProcs.COOLDOWN, sub == null ? 0 : Math.round(sub.cooldown() * 20)));
         state.setMana(state.mana() - ILLUSION_MANA);
         plugin.players().display(player, state);
-        service.procs().decoy(player, ILLUSION, "lingering_illusion", player.getLocation());
+        service.procs().decoy(player, ILLUSION, "phantom_body", player.getLocation());
     }
 
     /** 幻身被敵人打掉（MinionService 呼叫）：留下殘影（機率多一個），主人撿到給一顆銳星。 */

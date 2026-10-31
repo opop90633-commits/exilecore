@@ -64,13 +64,13 @@ public final class ChargeService implements Listener {
      */
     public static final String CANNOT_CONSUME = "charge.cannot_consume";
     /** 狂速（Ferocity）：放的時候消耗一顆怒星，這一次更多 x% 技能速度；被輔助的技能不會產生怒星。 */
-    public static final String SUP_FEROCITY = "charge.sup.ferocity";
+    public static final String SUP_FEROCITY = "charge.sup.mad_speed";
     /** 久咒（Abiding Hex）：放的時候消耗一顆銳星，這一次更多 x% 持續時間。 */
-    public static final String SUP_ABIDING_HEX = "charge.sup.abiding_hex";
+    public static final String SUP_ABIDING_HEX = "charge.sup.enduring_curse";
     /** 碎地（Jagged Ground）：放的時候消耗一顆磐星，留下 x 秒的碎石地（裡面的敵人減速 20%）。 */
-    public static final String SUP_JAGGED = "charge.sup.jagged_ground";
+    public static final String SUP_JAGGED = "charge.sup.shattered_earth";
     /** 蔓寒（Creeping Chill）：造出冰晶時消耗一顆銳星，那顆冰晶周圍結出會變大的冰緩地。 */
-    public static final String SUP_CREEPING = "charge.sup.creeping_chill";
+    public static final String SUP_CREEPING = "charge.sup.spread_cold";
     /** 雷星（Empowered Sparks）：被輔助的技能產生銳星時，強化接下來 x 次攻擊；強化的攻擊用出去時射出游雷。 */
     public static final String SUP_SPARKS = "charge.sup.empower_sparks";
     /** 雷星：每次射出幾顆游雷。 */

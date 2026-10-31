@@ -23,7 +23,7 @@ class CodexSearchTest {
                 assertTrue(CodexMenu.skillEffectTexts(definition).size() >= definition.aura().effects().size(), definition.id());
                 withEffects++;
             }
-            if (definition.id().equals("berserk")) { // 2026-10-27：狂戰之怒照 PoE2 拿掉，改看赤怒
+            if (definition.id().equals("crimson_wrath")) { // 2026-10-27：狂戰之怒照 PoE2 拿掉，改看赤怒
                 assertTrue(text.contains("怒氣"), "赤怒的效果寫的是怒氣：" + text);
             }
         }

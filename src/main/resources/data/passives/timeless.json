@@ -3,22 +3,22 @@
  "radius": 1500,
  "legions": {
   "kalguur": {
-   "name": "卡爾葛",
-   "unique": "heroic_tragedy",
+   "name": "霜嶺",
+   "unique": "frost_elegy_jewel",
    "conquerors": [
     {
      "id": "vorana",
-     "name": "沃拉娜",
+     "name": "蕾希雅",
      "keystone": "kalguur_keystone_1"
     },
     {
      "id": "medved",
-     "name": "梅德偉",
+     "name": "巴魯克",
      "keystone": "kalguur_keystone_2"
     },
     {
      "id": "olroth",
-     "name": "奧爾羅斯",
+     "name": "薩岡",
      "keystone": "kalguur_keystone_3"
     }
    ],
@@ -175,7 +175,7 @@
     },
     {
      "id": "kalguur_notable3",
-     "name": "卡爾葛鍛造",
+     "name": "霜嶺鍛造",
      "en": "Kalguuran Forged",
      "lines": [
       {
@@ -472,7 +472,7 @@
        "text": "增加 10% 你身上的秘術增強效果",
        "stats": [
         {
-         "stat": "arcane_surge.effect",
+         "stat": "surging_chant.effect",
          "type": "INCREASED",
          "value": 0.1,
          "tags": []
@@ -694,7 +694,7 @@
     },
     {
      "id": "kalguur_notable17",
-     "name": "沃拉娜之怒",
+     "name": "蕾希雅之怒",
      "en": "Vorana's Fury",
      "lines": [
       {
@@ -1419,31 +1419,31 @@
   },
   "abyss": {
    "name": "深淵族",
-   "unique": "undying_hate",
+   "unique": "abyss_grudge_jewel",
    "conquerors": [
     {
      "id": "amanamu",
-     "name": "阿姆納姆",
+     "name": "墨蘭",
      "keystone": "abyss_keystone_1"
     },
     {
      "id": "kulemak",
-     "name": "骷髏馬克",
+     "name": "骸王",
      "keystone": "abyss_keystone_2"
     },
     {
      "id": "kurgal",
-     "name": "柯戈",
+     "name": "戈頓",
      "keystone": "abyss_keystone_3"
     },
     {
      "id": "tecrod",
-     "name": "特克羅德",
+     "name": "泰羅",
      "keystone": "abyss_keystone_4"
     },
     {
      "id": "ulaman",
-     "name": "烏拉曼",
+     "name": "薩辛",
      "keystone": "abyss_keystone_5"
     }
    ],

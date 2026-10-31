@@ -34,8 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class SkillConfigTest {
 
     /** 2026-10-26：照 PoE2 不花魔力的技能。 */
-    private static final Set<String> POE2_FREE = Set.of("bear_maul", "wolf_shred", "wyvern_rend", "sun_orb",
-            "raise_guard", "ruin_mantra", "mana_storm"); // 2026-10-26 魔湧（Mana Tempest）沒有施放消耗，風暴每秒扣最大魔力 1%； // 2026-10-26 照 PoE2：架盾（Raise Shield）是不花魔力的引導、崩滅心咒（Mantra of Destruction）不花魔力；2026-10-26 站長把焚燼併入焚流（這次之前也列焚燼）
+    private static final Set<String> REF_FREE = Set.of("mountain_shake_claw", "swift_claw", "wing_blade_slash", "scorching_sun_pearl",
+            "shield_brace", "collapse_heart_chant", "magic_surge"); // 2026-10-26 魔湧（Mana Tempest）沒有施放消耗，風暴每秒扣最大魔力 1%； // 2026-10-26 照 PoE2：架盾（Raise Shield）是不花魔力的引導、崩滅心咒（Mantra of Destruction）不花魔力；2026-10-26 站長把焚燼併入焚流（這次之前也列焚燼）
 
     static final Path DATA = Path.of("src/main/resources/data");
     static SkillConfig config;
@@ -52,16 +52,16 @@ class SkillConfigTest {
         final List<String> visible = config.visible().stream().map(SkillDefinition::id).toList();
         // 2026-10-29：＋咒環（Blasphemy）、夏烏拉之手（Hand of Chayula）
         assertEquals(272 + 14 + 1 + 1 + 2 + 27 - 7 + 5 + 1 - 8 - 6 - 3 + 2 - 2 + 3 - 3 + 44 - 7 + 7 + 1 + 1 + 1 + 1 + 1 + 1, visible.size(), "2026-10-29：＋祖靈現身（改成面板上看得到）；＋珂芮絲的殘酷（Kelari's Brutality）；＋霞瑤之手（Hand of Chayula）；＋咒環（Blasphemy）；2026-10-28 照 PoE2：＋重生之儀（綺夢賦予的 Rite of Restoration）；2026-10-27 照 PoE2：＋每把矛賦予的擲矛（Spear Throw）；2026-10-27 照 PoE2 0.5：＋靈狩者、鳴鐘武師、淵井骸主賦予的 7 個技能；2026-10-27 照 PoE2：拿掉狂戰之怒、召歸令、4 個指令技能，掘骸併進骨棘陣（－7）；2026-10-26 照 PoE2：＋昇華天賦賦予的 44 個技能（沒有寶石）；2026-10-26：照站長刪掉原作沒有的血牙、元素脈衝、匯元衝擊（－3）；引星照 PoE2 0.5：－受創引星、斬殺引星，＋元祈、刈祈、障祈引星；＋弦月爪、翼刃斬（照 PoE2 0.5 補上德魯伊的 Lunar Assault、Rend）；照站長把矢幕、爆破矢、焚燼併入連珠、爆焰矢、焚流（跟原本的同一顆原作寶石，－3）；照站長拿掉霜綻、斬風旋、幻元擊、幻元箭、4 根法術圖騰（－8），骨駒、鐵蹄踐踏、霜流、雷鞭、星律、幻身步（－6）；＋裂甲熊咆（照 PoE2 的 Ferocious Roar）；＋咒擲、封釋、雷霆共鳴、折光之鏡、鴉群密謀；－7 個跟原作重複的自訂技能（凝霜星核、雷域、撼天重砸、腐霧矢、掃退、突刺衝鋒、裂虛星）；＋法杖、長杖、權杖賦予的 27 個技能；2026-10-24：＋幻身、招架；2026-10-18：＋召歸令；＋七隻事件巔峰 Boss 各 2 顆專屬技能寶石；250 個 + 巔峰 Boss 的 6 個專屬技能寶石 + 2026-10 主要寶石 7 個（星咒圖騰、6 個引星）、星律、斬風旋、幻元擊、4 根法術圖騰、幻元箭 + 淵鯨的喚潮");
-        assertTrue(visible.containsAll(List.of("leap_slam", "earthquake", "boneshatter", "ancestral_totem", "flicker_strike",
-                "caustic_arrow", "rain_of_arrows", "lightning_arrow", "ice_shot", "tornado_shot",
-                "explosive_bolt", "permafrost_bolts", "rapid_fire", "explosive_grenade", "gas_grenade",
-                "tempest_flurry", "ice_strike", "storm_wave", "killing_palm", "tempest_bell",
-                "lightning_spear", "whirling_slash", "whirlwind_lance", "rake", "hunters_mark",
-                "fireball", "frost_nova", "spark", "arc", "comet", "flame_wall", "shockwave_totem",
-                "essence_drain", "contagion", "detonate_dead", "raise_zombie", "summon_skeletons", "raging_spirits",
-                "herald_of_ash", "herald_of_thunder", "herald_of_ice", "fortifying_cry", "infernal_cry", "seismic_cry", "bear_maul")),
+        assertTrue(visible.containsAll(List.of("soaring_smash", "ground_tremor", "spine_crush", "hero_spirit_totem", "instant_shadow_strike",
+                "venom_etch_arrow", "myriad_arrow_fall", "thunderclap_arrow", "rime_arrow", "sky_rend_arrow",
+                "blasting_quarrel", "frozen_earth_repeater", "successive_shots", "blast_grenade", "miasma_grenade",
+                "gale_combo", "frost_shockwave", "thunder_surge", "soul_sever_palm", "startling_thunder_bell",
+                "thunder_lance_throw", "spinning_spear_strike", "hurricane_spear", "blood_tear_sweep", "prey_kill_mark",
+                "blazing_star_shell", "frost_star_blast", "roaming_thunder", "chain_thunder", "falling_star", "flame_curtain", "collapse_quake_totem",
+                "soul_draw_shot", "plague_taint", "corpse_burst", "corpse_summon", "summon_skeletons", "summon_burning_souls",
+                "ember_envoy", "thunder_envoy", "frost_envoy", "stalwart_war_shout", "hellfire_war_shout", "ground_shake_shout", "mountain_shake_claw")),
                 visible.toString());
-        assertEquals("leap_slam", visible.getFirst(), "照檔案裡的順序");
+        assertEquals("soaring_smash", visible.getFirst(), "照檔案裡的順序");
         // 2026-10-29：＋咒環（Blasphemy）
         assertEquals(344 + 14 + 1 + 1 + 2 + 8 + 27 + 2 + 6 - 7 + 7 + 1 + 6 + 1 + 1 - 9 - 7 - 3 + 2 - 2 + 3 + 10 - 3 + 1 + 64 + 3 - 7 + 3 + 11 + 4 - 1 + 5 + 1 + 1 + 6 + 3 - 2 + 1 - 1 + 1 + 1 + 1 + 2 + 1, config.all().size(), "2026-10-31 照 PoE2 Charged Mark：＋電印帶電地（隱藏）；2026-10-29：＋霞瑤之手（Hand of Chayula）；＋咒環（Blasphemy）；2026-10-28 照 PoE2 Shockchain Arrow：跳電震波（隱藏）改成連電箭自己的震波段（－1）；2026-10-28 照 PoE2 Falling Thunder：＋驚雷劈用掉銳星射出的投射物（隱藏）；2026-10-28 照站長刪掉震符印、符刃：拿掉觸發的震符、符刃環（－2）；2026-10-28 照 PoE2：＋雷暴震波、它的感電地面、霜牙刺的冰緩地面（3 個隱藏技能，StageLeftovers）；2026-10-28 照 PoE2 攻擊的第二段：＋6 個隱藏技能（交錯震波、寒錐爆、雷鹿靈、瘴苞爆、凍壁迸裂、迸片碎凍）；2026-10-28 照 PoE2 Staggering Palm：＋震脈掌增益期間長棍攻擊多射的投射物（隱藏）；2026-10-28 照 PoE2 Snipe：＋穿雲箭用掉凍結時的寒冰爆破（隱藏）；2026-10-27 照站長刪掉活雷 II：拿掉它觸發的活雷電（−1）；2026-10-27 照 PoE2 的矛技能：＋擲矛與 4 個隱藏的爆炸（擲矛炸裂、炎爆矛炸裂、炎爆矛（怒星）、嗅血爆）；2026-10-27 照 PoE2 0.5 補上的一般輔助：＋4 個隱藏的觸發技能（活雷電、刺爆針、踏地震波、決殺斬）；2026-10-27 照 PoE2 0.5：＋靈狩者、鳴鐘武師、淵井骸主賦予的 7 個技能與 4 個隱藏的；2026-10-27 照 PoE2：拿掉狂戰之怒、召歸令、4 個指令技能、掘骸（－7），＋骨構體、鐵壁守與瘟囊爆放出的隱藏技能（＋3）；2026-10-27 照 PoE2：＋元素湧動的 3 個湧動爆炸（隱藏，這次之前沒有另外一發爆炸）；2026-10-26 照 PoE2：＋昇華天賦賦予的 44 個技能與 20 個隱藏的觸發；2026-10-26：照站長刪掉血牙、元素脈衝、匯元衝擊（－3）；＋催綻的綻花爆（隱藏，照 PoE2 Accelerated Growth）；＋10 個照 PoE2 原作機制的隱藏技能（OriginalSkills）；引星照 PoE2 0.5：－受創引星、斬殺引星，＋元祈、刈祈、障祈引星；＋弦月爪、翼刃斬（照 PoE2 0.5 補上德魯伊的 Lunar Assault、Rend）；照站長把矢幕、爆破矢、焚燼併入連珠、爆焰矢、焚流（－3）；照站長拿掉霜綻（含隱藏的霜綻冰地）、斬風旋、幻元擊、幻元箭、4 根法術圖騰（－9），骨駒、鐵蹄踐踏、霜流、雷鞭、星律、幻身步（含隱藏的殘影）（－7）；＋瘴苞雨的毒苞爆（隱藏，照 PoE2 Toxic Growth）；＋引霆突完美突進的震波（隱藏，照 PoE2 Gathering Storm）；＋裂甲熊咆與戰吼的 5 個隱藏技能（燃爆、盾波、火山步、火山噴發、扭曲契約）；＋死亡風暴的感電地面（隱藏）；＋5 個賦予技能、鴉群、感電地面（隱藏）；－7 個重複的自訂技能；＋武器賦予的 27 個、跳電震波與碎冰爆、6 個弩的隱藏技能（伏霆爆、冰晶迸、雷暴脈衝、雷屑光束、兩個碎裂錐形）；2026-10-24：＋幻身、招架與六個隱藏的（銳星、引雷震波、幻身、熔岩噴射、回槍震波、招架橫掃）；＋雷星的兩個游雷（隱藏）；2026-10-18：＋召歸令；＋14 顆事件巔峰的專屬；272 個技能 + 7 種普攻 + 65 個隱藏的效果（使者、觸發…、銀月庇的月光）");
         for (final SkillDefinition definition : config.all()) {
@@ -115,7 +115,7 @@ class SkillConfigTest {
                 // 2026-10-26 照 PoE2：昇華天賦賦予的技能，有的不花魔力（指令、砲手、要榮耀的），有的照原作花魔力
                 assertTrue(definition.mana().first() >= 0, definition.id() + " 魔力不能是負的");
                 assertFalse(definition.description().isBlank(), definition.id() + " 要有說明");
-            } else if (POE2_FREE.contains(definition.id())) {
+            } else if (REF_FREE.contains(definition.id())) {
                 // 2026-10-26：照 PoE2 不花魔力（熊爪、狼爪、飛龍的翼刃斬、烈陽珠）
                 assertEquals(0, definition.mana().last(), definition.id() + " 照 PoE2 不耗魔力");
             } else {
@@ -136,46 +136,46 @@ class SkillConfigTest {
             }
         }
         // 弓的技能都用原版箭矢、需要弓；法術什麼武器都能放
-        for (final String id : List.of("lightning_arrow", "ice_shot")) {
+        for (final String id : List.of("thunderclap_arrow", "rime_arrow")) {
             assertTrue(config.skill(id).params().arrow(), id);
             assertEquals(Set.of(Tags.BOW), config.skill(id).weapons(), id);
         }
-        for (final String id : List.of("fireball", "frost_nova", "spark", "arc", "essence_drain", "contagion")) {
+        for (final String id : List.of("blazing_star_shell", "frost_star_blast", "roaming_thunder", "chain_thunder", "soul_draw_shot", "plague_taint")) {
             assertTrue(config.skill(id).weapons().isEmpty(), id);
         }
         // 新武器的技能：弩用原版箭矢；長棍、矛的只有那種武器能用
-        for (final String id : List.of("explosive_bolt", "permafrost_bolts")) {
+        for (final String id : List.of("blasting_quarrel", "frozen_earth_repeater")) {
             assertTrue(config.skill(id).params().arrow(), id);
             assertEquals(Set.of(Tags.CROSSBOW), config.skill(id).weapons(), id);
         }
-        assertEquals(Set.of(Tags.QUARTERSTAFF), config.skill("tempest_flurry").weapons());
-        assertEquals(Set.of(Tags.QUARTERSTAFF), config.skill("ice_strike").weapons());
-        assertEquals(Set.of(Tags.SPEAR), config.skill("lightning_spear").weapons());
-        assertEquals(Set.of(Tags.SPEAR), config.skill("whirling_slash").weapons());
-        assertTrue(config.skill("explosive_bolt").params().explode().first() > 0, "爆裂弩箭會爆炸");
-        assertEquals(java.util.Map.of(tw.exilecore.stats.DamageType.CHAOS, 1.0), config.skill("essence_drain").damageTypes());
+        assertEquals(Set.of(Tags.QUARTERSTAFF), config.skill("gale_combo").weapons());
+        assertEquals(Set.of(Tags.QUARTERSTAFF), config.skill("frost_shockwave").weapons());
+        assertEquals(Set.of(Tags.SPEAR), config.skill("thunder_lance_throw").weapons());
+        assertEquals(Set.of(Tags.SPEAR), config.skill("spinning_spear_strike").weapons());
+        assertTrue(config.skill("blasting_quarrel").params().explode().first() > 0, "爆裂弩箭會爆炸");
+        assertEquals(java.util.Map.of(tw.exilecore.stats.DamageType.CHAOS, 1.0), config.skill("soul_draw_shot").damageTypes());
     }
 
     @Test
     void thrownSpearIsAProjectileNotMelee() {
         final Set<String> spear = Set.of("weapon", "one_hand", "spear", "melee");
-        final tw.exilecore.stats.SkillProfile thrown = SkillProfiles.build(config, config.skill("lightning_spear"), 1, spear);
+        final tw.exilecore.stats.SkillProfile thrown = SkillProfiles.build(config, config.skill("thunder_lance_throw"), 1, spear);
         assertTrue(thrown.tags().contains(Tags.PROJECTILE));
         assertFalse(thrown.tags().contains(Tags.MELEE), "擲出去的矛不吃近戰的加成");
         assertTrue(thrown.tags().contains(Tags.SPEAR), "武器的標籤照樣有：增加矛傷害吃得到");
-        final tw.exilecore.stats.SkillProfile whirl = SkillProfiles.build(config, config.skill("whirling_slash"), 1, spear);
+        final tw.exilecore.stats.SkillProfile whirl = SkillProfiles.build(config, config.skill("spinning_spear_strike"), 1, spear);
         assertTrue(whirl.tags().contains(Tags.MELEE), "旋矛擊是近戰");
     }
 
     @Test
     void everyClassHasAStarterSkill() {
-        assertEquals("boneshatter", config.starter(CharacterClass.MARAUDER.id()).id());
-        assertEquals("explosive_bolt", config.starter(CharacterClass.MERCENARY.id()).id());
-        assertEquals("lightning_spear", config.starter(CharacterClass.HUNTRESS.id()).id());
-        assertEquals("lightning_arrow", config.starter(CharacterClass.RANGER.id()).id());
-        assertEquals("tempest_flurry", config.starter(CharacterClass.MONK.id()).id());
-        assertEquals("fireball", config.starter(CharacterClass.SORCERESS.id()).id());
-        assertEquals("essence_drain", config.starter(CharacterClass.WITCH.id()).id());
+        assertEquals("spine_crush", config.starter(CharacterClass.MARAUDER.id()).id());
+        assertEquals("blasting_quarrel", config.starter(CharacterClass.MERCENARY.id()).id());
+        assertEquals("thunder_lance_throw", config.starter(CharacterClass.HUNTRESS.id()).id());
+        assertEquals("thunderclap_arrow", config.starter(CharacterClass.RANGER.id()).id());
+        assertEquals("gale_combo", config.starter(CharacterClass.MONK.id()).id());
+        assertEquals("blazing_star_shell", config.starter(CharacterClass.SORCERESS.id()).id());
+        assertEquals("soul_draw_shot", config.starter(CharacterClass.WITCH.id()).id());
         for (final CharacterClass characterClass : CharacterClass.values()) {
             assertNotNull(config.starter(characterClass.id()), characterClass + " 沒有起始技能");
         }
@@ -251,7 +251,7 @@ class SkillConfigTest {
 
     @Test
     void profilesScaleWithLevel() {
-        final SkillDefinition fireball = config.skill("fireball");
+        final SkillDefinition fireball = config.skill("blazing_star_shell");
         final SkillProfile level1 = SkillProfiles.build(config, fireball, 1, Set.of(Tags.SWORD));
         // 2026-10-26：熾星彈改成照 PoE2 的逐級表（每一級的實際傷害，不乘成長倍率）：1 級 8–12、20 級 224–336
         assertEquals(8, level1.spellDamage().get(DamageType.FIRE), 1e-9);
@@ -264,7 +264,7 @@ class SkillConfigTest {
         assertEquals(Math.round(10 * SkillConfig.manaCostScale()), SkillProfiles.manaCost(fireball, 1));
         assertEquals(Math.round(104 * SkillConfig.manaCostScale()), SkillProfiles.manaCost(fireball, 20));
 
-        final SkillDefinition split = config.skill("permafrost_bolts");
+        final SkillDefinition split = config.skill("frozen_earth_repeater");
         // 2026-10-26：照 PoE2（Permafrost Bolts 一次 10 發碎片，疊在同一隻上）
         assertEquals(10, split.params().projectiles().intAt(1));
         assertEquals(10, split.params().projectiles().intAt(20));
@@ -273,7 +273,7 @@ class SkillConfigTest {
         assertTrue(arrows.tags().containsAll(Set.of(Tags.ATTACK, Tags.PROJECTILE, Tags.CROSSBOW)), "攻擊帶武器標籤");
         assertEquals(0.17, arrows.effectiveness(), 1e-9); // 2026-10-26：照 PoE2（Permafrost Bolts 1 級 17%）
 
-        final SkillProfile burning = SkillProfiles.build(config, config.skill("explosive_bolt"), 1, Set.of(Tags.CROSSBOW));
+        final SkillProfile burning = SkillProfiles.build(config, config.skill("blasting_quarrel"), 1, Set.of(Tags.CROSSBOW));
         assertEquals(0.8, burning.conversion().get(DamageType.FIRE), 1e-9); // 2026-10-26：照 PoE2 Explosive Shot 80% 轉火焰
     }
 
@@ -281,13 +281,13 @@ class SkillConfigTest {
     void intervalsUseAttackAndCastSpeed() {
         final StatSheet sheet = new StatSheet();
         sheet.add(Modifier.flat(StatKeys.WEAPON_APS, 1.5, "武器"));
-        final SkillDefinition heavy = config.skill("boneshatter");
+        final SkillDefinition heavy = config.skill("spine_crush");
         final SkillProfile heavyProfile = SkillProfiles.build(config, heavy, 1, Set.of(Tags.MACE));
         assertEquals(20 / (1.5 * 0.6), SkillProfiles.intervalTicks(sheet, heavy, heavyProfile), 1e-9);
-        final SkillDefinition leap = config.skill("leap_slam");
+        final SkillDefinition leap = config.skill("soaring_smash");
         assertEquals(20 / (1.5 * 1.0), SkillProfiles.intervalTicks(sheet, leap, SkillProfiles.build(config, leap, 1, Set.of())), 1e-9);
 
-        final SkillDefinition fireball = config.skill("fireball");
+        final SkillDefinition fireball = config.skill("blazing_star_shell");
         final SkillProfile fire = SkillProfiles.build(config, fireball, 1, Set.of());
         assertEquals(24, SkillProfiles.intervalTicks(sheet, fireball, fire), 1e-9, "施法時間 1.2 秒");
         sheet.add(new Modifier(StatKeys.CAST_SPEED, ModType.INCREASED, 0.5, Set.of(Tags.SPELL), "施法速度"));
@@ -302,7 +302,7 @@ class SkillConfigTest {
     @Test
     void badFilesAreRejectedWithTheFieldName(@TempDir final Path dir) throws IOException {
         final String shipped = Files.readString(DATA.resolve(SkillConfig.FILE), StandardCharsets.UTF_8);
-        assertRejected(dir, shipped.replace("visual: fireball", "visual: lasers"), "visual");
+        assertRejected(dir, shipped.replace("visual: blazing_star_shell", "visual: lasers"), "visual");
         // 2026-10-26：星屑連矢照 PoE2 改成矢幕（增益），拿撼山爪的攻擊速度那一行來加 damage
         assertRejected(dir, shipped.replace("    attack_speed: 1   # 2026-10-26 照 PoE2（poe2db Maul Attack Speed", "    damage: [1, 2]\n    attack_speed: 1   # 2026-10-26 照 PoE2（poe2db Maul Attack Speed"), "damage");
         assertRejected(dir, shipped.replace("  default_staff:", "  default_staff_renamed:"), "default_staff");
@@ -321,9 +321,9 @@ class SkillConfigTest {
         assertTrue(supports.contains("once_per_character: false"));
         Files.writeString(dir.resolve(SkillConfig.SUPPORTS_FILE), supports.replace("once_per_character: false", "once_per_character: true"),
                 StandardCharsets.UTF_8);
-        final SkillConfig poe2 = new SkillConfig();
-        poe2.load(dir);
-        assertTrue(poe2.supportOncePerCharacter(), "改成 true：PoE2 的規則");
+        final SkillConfig ref = new SkillConfig();
+        ref.load(dir);
+        assertTrue(ref.supportOncePerCharacter(), "改成 true：PoE2 的規則");
     }
 
     private static void assertRejected(final Path dir, final String content, final String mention) throws IOException {
@@ -338,13 +338,13 @@ class SkillConfigTest {
         // 2026-10：遠程召喚物（骸骨射手、術士）標「遠程」：「+x 投射物技能等級」吃不到
         // 2026-10-29 照 PoE2 的 Minion Types：射手、焰術士、霜術士的召喚物技能有 Projectile，穿透、分光照那個掛得上、效果給召喚物的彈道
         //（MinionSupportTypesTest）；雷術士的電弧沒有 Projectile 照舊掛不上。這次之前四個都掛不上
-        for (final String id : List.of("skeletal_archers", "skeletal_pyromancer", "skeletal_stormcaller", "skeletal_frostcaller")) {
+        for (final String id : List.of("summon_bone_bowmen", "summon_bone_flamecaster", "summon_bone_thundermage", "summon_bone_frostmage")) {
             final SkillDefinition summon = config.skill(id);
             assertTrue(summon.tags().contains(Tags.RANGED), id);
             assertFalse(summon.tags().contains(Tags.PROJECTILE), id);
-            final boolean shoots = !"skeletal_stormcaller".equals(id);
+            final boolean shoots = !"summon_bone_thundermage".equals(id);
             assertEquals(shoots, config.support("pierce").supports(summon), id + "：穿透");
-            assertEquals(shoots, config.support("multiple_projectiles").supports(summon), id + "：分光");
+            assertEquals(shoots, config.support("light_split").supports(summon), id + "：分光");
         }
         assertTrue(config.skill("summon_skeletons").tags().contains(Tags.MELEE), "近戰的召喚物照舊");
     }

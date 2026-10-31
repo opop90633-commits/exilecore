@@ -39,7 +39,7 @@ final class MinionEstimates {
             out.add(Modifier.increased(StatKeys.DAMAGE, Math.max(0, ownerSheet.get(StatKeys.STR)) / MinionAbilities.MANIFEST_STR_PER_DAMAGE / 100.0, "幻形兵刃：力量"));
             out.add(Modifier.increased(StatKeys.ATTACK_SPEED, Math.max(0, ownerSheet.get(StatKeys.DEX)) / MinionAbilities.MANIFEST_DEX_PER_SPEED / 100.0, "幻形兵刃：敏捷"));
         }
-        if ("ancestral_spirits".equals(build.definition().id())) {
+        if ("forebear_manifest".equals(build.definition().id())) {
             // 2026-10-29 照 PoE2 Ancestral Spirits（先祖之引）：每 1 點力量增加 1% 傷害、每 3 點敏捷增加 1% 攻擊速度；
             //   加圖騰生命的也加在先祖之靈的生命上。這次之前都沒有
             out.add(Modifier.increased(StatKeys.DAMAGE, Math.max(0, ownerSheet.get(StatKeys.STR)) / 100.0, "祖靈現身：力量"));

@@ -34,14 +34,14 @@ class MeleeStepTest {
     void noSkillStepsBeforeAttacking() {
         // 2026-10-29 照站長：出手前往前踏一步先全部拿掉（2026-10-28 曾照 PoE2 melee_conditional_step_distance 加在 24 個近戰技能上），
         //   MeleeStep 的程式留著，skills.yml 寫回 step 就會再生效
-        for (final String id : List.of("whirling_slash", "boneshatter", "armour_breaker", "earthquake", "falling_thunder",
-                "fangs_of_frost", "ice_strike", "lunar_assault", "primal_strikes", "rapid_thrust", "rolling_slam", "sunder",
-                "tempest_bell", "volcanic_fissure", "cull_the_weak", "siphon_strike", "reeling_palm", "frost_palm",
-                "wolf_shred", "wyvern_rend", "bear_maul", "default_melee", "default_quarterstaff", "default_spear",
-                "leap_slam", "rake", "killing_palm", "rift_slash", "blood_harvest", "mountain_fury", "fireball")) {
+        for (final String id : List.of("spinning_spear_strike", "spine_crush", "plate_crush_hammer", "ground_tremor", "startle_thunder_chop",
+                "frost_tooth_stab", "frost_shockwave", "crescent_claw", "thunderclap_stab", "triple_stab", "field_quake_hammers", "sunder",
+                "startling_thunder_bell", "flame_vein_rift", "cripple_purge", "thunder_draw_staff", "pulse_quake_palm", "cold_spirit_palm",
+                "swift_claw", "wing_blade_slash", "mountain_shake_claw", "default_melee", "default_quarterstaff", "default_spear",
+                "soaring_smash", "blood_tear_sweep", "soul_sever_palm", "void_split_flash", "blood_hunt", "molten_crack_stomp", "blazing_star_shell")) {
             assertNull(config.step(id), id);
         }
-        assertTrue(config.skill("whirling_slash").description().startsWith("揮矛轉一圈"));
+        assertTrue(config.skill("spinning_spear_strike").description().startsWith("揮矛轉一圈"));
     }
 
     @Test

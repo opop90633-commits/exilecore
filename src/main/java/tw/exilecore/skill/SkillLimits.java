@@ -31,18 +31,18 @@ public final class SkillLimits {
     /** 原作有 Limit、我們也有上限的技能代號。 */
     public static final Set<String> SKILLS = Set.of(
             // 圖騰、鐘
-            "shockwave_totem", "dark_idol", "siege_ballista", "artillery_ballista", "totem_casting", "tempest_bell", "hollow_focus",
+            "collapse_quake_totem", "nether_puppet", "skyward_crossbow_turret", "nailfall_crossbow_turret", "star_spell_totem", "startling_thunder_bell", "hollow_focus",
             // 地面效果
-            "volcanic_fissure", "firestorm", "storm_orb", "sun_orb", "thunderstorm", "primal_tornado", "volcano", "profane_ritual",
-            "shield_wall", "ruzhan_trap", "entangle",
+            "flame_vein_rift", "flowing_flame_canopy", "thunder_cloud", "scorching_sun_pearl", "gathered_thundercloud", "wild_whirlwind", "volcano", "filth_array",
+            "earth_wall_strike", "blade_spirit_device", "root_bind",
             // 召喚物
-            "raise_zombie", "raging_spirits", "bone_spikes", "unearth_construct", "ravenous_swarm",
+            "corpse_summon", "summon_burning_souls", "dig_remains", "unearth_construct", "insect_devour_horde",
             // 各自的上限
-            "tornado_shot", "bramble_arrow", "toxic_growth", "earthquake", "explosive_spear", "storm_javelin", "whirlwind_lance",
-            "galvanic_field", "ember_seed", "mirror_of_refraction", "decompose",
+            "sky_rend_arrow", "thorn_shaft", "miasma_bud_rain", "ground_tremor", "explosive_spear", "thunderfall_spear", "hurricane_spear",
+            "thunder_current_zone", "cinder_sprout", "light_bend_mirror", "rotting_corpse_blast",
             // 祭品（各一根骨柱）、印記（各標記一個目標）
-            "blood_offering", "bone_offering", "soul_offering",
-            "hunters_mark", "voltaic_mark", "freezing_mark", "bloodhounds_mark");
+            "bloodthirst_rite", "bone_rite", "soulfire_rite",
+            "prey_kill_mark", "thunder_lure_seal", "frostbind_seal", "blood_scent_seal");
 
     private SkillLimits() {
     }

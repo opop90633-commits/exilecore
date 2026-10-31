@@ -14,11 +14,11 @@ public final class KeystoneOriginKeys {
 
     // ---- 穿刺（PoE2 Impale）：Impales ----
     /** FLAT %：法術擊中時穿刺的機率（帶 spell 標籤）。 */
-    public static final String IMPALE_SPELL_CHANCE = "impale.spell_chance";
+    public static final String IMPALE_SPELL_CHANCE = "stab_nail.spell_chance";
     /** INCREASED：你造成的穿刺效果（帶 spell 標籤 = 法術造成的穿刺）。 */
-    public static final String IMPALE_MAGNITUDE = "impale.magnitude";
+    public static final String IMPALE_MAGNITUDE = "stab_nail.magnitude";
     /** FLAT（只在一下擊中的屬性表上）：這一下攻擊抽出的穿刺，加在減免前的物理傷害（不再吃增加、更多、暴擊）。DamageCalculator。 */
-    public static final String IMPALE_EXTRACT = "impale.extract";
+    public static final String IMPALE_EXTRACT = "stab_nail.extract";
     /** PoE2：穿刺存下擊中減免前物理傷害的 30%。 */
     public static final double IMPALE_BASE = 0.30;
     /** PoE2：一隻敵人身上最多 60 個穿刺（超過時丟掉最弱的）。 */

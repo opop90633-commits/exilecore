@@ -48,26 +48,26 @@ class StageAttacksTest {
     }
 
     @Test
-    void stageTablesMatchPoe2() {
+    void stageTablesMatchRef() {
         // 1／20／40 級（RePoE damage_multiplier ÷ 100）
-        assertEquals(1.10, stageEff("bear_slam", "enraged", 1), 1e-9);
-        assertEquals(3.98, stageEff("bear_slam", "enraged", 20), 1e-9);
-        assertEquals(14.47, stageEff("bear_slam", "enraged", 40), 1e-9);
-        assertEquals(0.35, stageEff("wolf_shred", "third", 1), 1e-9);
-        assertEquals(2.90, stageEff("wolf_shred", "third", 40), 1e-9);
-        assertEquals(1.87, stageEff("wolf_shred", "final", 20), 1e-9);
-        assertEquals(4.05, stageEff("wyvern_rend", "empowered", 20), 1e-9);
-        assertEquals(3.12, stageEff("oil_barrage", "empowered", 20), 1e-9);
-        assertEquals(10.14, stageEff("gathering_storm", "perfect", 20), 1e-9);
-        assertEquals(36.84, stageEff("gathering_storm", "perfect", 40), 1e-9);
-        assertEquals(3.12, stageEff("primal_strikes", "final", 20), 1e-9);
-        assertEquals(2.54, stageEff("shield_rush", "collision", 20), 1e-9);
+        assertEquals(1.10, stageEff("field_quake_stomp", "enraged", 1), 1e-9);
+        assertEquals(3.98, stageEff("field_quake_stomp", "enraged", 20), 1e-9);
+        assertEquals(14.47, stageEff("field_quake_stomp", "enraged", 40), 1e-9);
+        assertEquals(0.35, stageEff("swift_claw", "third", 1), 1e-9);
+        assertEquals(2.90, stageEff("swift_claw", "third", 40), 1e-9);
+        assertEquals(1.87, stageEff("swift_claw", "final", 20), 1e-9);
+        assertEquals(4.05, stageEff("wing_blade_slash", "empowered", 20), 1e-9);
+        assertEquals(3.12, stageEff("black_oil_rain", "empowered", 20), 1e-9);
+        assertEquals(10.14, stageEff("thunder_lure_thrust", "perfect", 20), 1e-9);
+        assertEquals(36.84, stageEff("thunder_lure_thrust", "perfect", 40), 1e-9);
+        assertEquals(3.12, stageEff("thunderclap_stab", "final", 20), 1e-9);
+        assertEquals(2.54, stageEff("iron_wall_ram", "collision", 20), 1e-9);
         assertEquals(1.45, stageEff("explosive_concoction", "second", 20), 1e-9);
-        assertEquals(0.70, stageEff("magnetic_salvo", "explosion", 1), 1e-9);
-        assertEquals(12.67, stageEff("magnetic_salvo", "explosion", 40), 1e-9);
-        assertEquals(27.15, stageEff("gas_grenade", "explosion", 40), 1e-9);
+        assertEquals(0.70, stageEff("magnet_thunder_barrage", "explosion", 1), 1e-9);
+        assertEquals(12.67, stageEff("magnet_thunder_barrage", "explosion", 40), 1e-9);
+        assertEquals(27.15, stageEff("miasma_grenade", "explosion", 40), 1e-9);
         // 沒有這一段：原封不動
-        final SkillProfile plain = profile("bear_slam", 20);
+        final SkillProfile plain = profile("field_quake_stomp", 20);
         assertSame(plain, StageAttacks.stage(plain, "final"));
         // 隱藏技能自己的表
         assertEquals(4.71, config.skill("proc_cross_shockwave").effectiveness().at(20), 1e-9);
@@ -81,34 +81,34 @@ class StageAttacksTest {
 
     @Test
     void limitsPerLevel() {
-        assertEquals(2, StageAttacks.limit(profile("earthquake", 1), "jagged", 0));
-        assertEquals(4, StageAttacks.limit(profile("earthquake", 20), "jagged", 0));
-        assertEquals(8, StageAttacks.limit(profile("earthquake", 40), "jagged", 0));
+        assertEquals(2, StageAttacks.limit(profile("ground_tremor", 1), "jagged", 0));
+        assertEquals(4, StageAttacks.limit(profile("ground_tremor", 20), "jagged", 0));
+        assertEquals(8, StageAttacks.limit(profile("ground_tremor", 40), "jagged", 0));
         // 2026-10-28：驚雷之鐘的口數改由 skills.yml 的 stages.impact.count 給（SkillDeployables 讀；見 SkillStagesTest），不再用 limit.deploy
-        assertEquals(1, StageAttacks.limit(profile("bramble_arrow", 1), "ground", 9));
-        assertEquals(3, StageAttacks.limit(profile("bramble_arrow", 20), "ground", 9));
-        assertEquals(30, StageAttacks.limit(profile("rain_of_arrows", 1), "arrows", 0));
-        assertEquals(39, StageAttacks.limit(profile("rain_of_arrows", 20), "arrows", 0));
-        assertEquals(49, StageAttacks.limit(profile("rain_of_arrows", 40), "arrows", 0));
-        assertEquals(7, StageAttacks.limit(profile("bear_slam", 20), "nothing", 7)); // 沒寫照 fallback
-        assertEquals(20, StageAttacks.limit(profile("primal_strikes", 20), "final_reach", 0));
+        assertEquals(1, StageAttacks.limit(profile("thorn_shaft", 1), "ground", 9));
+        assertEquals(3, StageAttacks.limit(profile("thorn_shaft", 20), "ground", 9));
+        assertEquals(30, StageAttacks.limit(profile("myriad_arrow_fall", 1), "arrows", 0));
+        assertEquals(39, StageAttacks.limit(profile("myriad_arrow_fall", 20), "arrows", 0));
+        assertEquals(49, StageAttacks.limit(profile("myriad_arrow_fall", 40), "arrows", 0));
+        assertEquals(7, StageAttacks.limit(profile("field_quake_stomp", 20), "nothing", 7)); // 沒寫照 fallback
+        assertEquals(20, StageAttacks.limit(profile("thunderclap_stab", 20), "final_reach", 0));
     }
 
     @Test
     void comboStages() {
         // 疾爪：第 3 擊 Fast Strikes、第 4 擊終結；驚雷刺：第 3 擊終結
-        assertNull(StageAttacks.comboStage("wolf_shred", 1, 4));
-        assertNull(StageAttacks.comboStage("wolf_shred", 2, 4));
-        assertEquals("third", StageAttacks.comboStage("wolf_shred", 3, 4));
-        assertEquals("final", StageAttacks.comboStage("wolf_shred", 4, 4));
-        assertNull(StageAttacks.comboStage("primal_strikes", 2, 3));
-        assertEquals("final", StageAttacks.comboStage("primal_strikes", 3, 3));
-        assertNull(StageAttacks.comboStage("bear_slam", 3, 0));
+        assertNull(StageAttacks.comboStage("swift_claw", 1, 4));
+        assertNull(StageAttacks.comboStage("swift_claw", 2, 4));
+        assertEquals("third", StageAttacks.comboStage("swift_claw", 3, 4));
+        assertEquals("final", StageAttacks.comboStage("swift_claw", 4, 4));
+        assertNull(StageAttacks.comboStage("thunderclap_stab", 2, 3));
+        assertEquals("final", StageAttacks.comboStage("thunderclap_stab", 3, 3));
+        assertNull(StageAttacks.comboStage("field_quake_stomp", 3, 0));
     }
 
     @Test
     void stageMarkerAndExtraModifiers() {
-        final SkillProfile base = profile("wolf_shred", 20);
+        final SkillProfile base = profile("swift_claw", 20);
         final SkillProfile third = StageAttacks.stage(base, "third", List.of(Modifier.more(StatKeys.ATTACK_SPEED, 0.35, "第三擊")));
         assertEquals(1.09, third.effectiveness(), 1e-9);
         assertTrue(StageAttacks.is(third, "third"));
@@ -152,31 +152,31 @@ class StageAttacksTest {
     @Test
     void shieldDamage() {
         // 盾技能不看主手武器：副手盾的逐級基礎傷害（鐵壁衝撞 20 級 85–128）
-        final SkillDefinition rush = config.skill("shield_rush");
+        final SkillDefinition rush = config.skill("iron_wall_ram");
         assertTrue(rush.weaponless());
         final double[] base = SkillProfiles.spellDamage(config, rush, 20);
         assertEquals(85, base[0], 1e-9);
         assertEquals(128, base[1], 1e-9);
-        assertTrue(config.skill("resonating_shield").weaponless());
-        assertTrue(config.skill("shield_wall").weaponless());
+        assertTrue(config.skill("shield_drum").weaponless());
+        assertTrue(config.skill("earth_wall_strike").weaponless());
         assertTrue(config.skill("proc_magma_spray").weaponless());
         // 每 15 點護甲 3～5；熔岩噴射護甲、閃避各 5～7 火焰
-        final List<Modifier> added = StageAttacks.shieldAdded(StageAttacks.SHIELD_SKILLS.get("shield_rush"), 300, 999);
+        final List<Modifier> added = StageAttacks.shieldAdded(StageAttacks.SHIELD_SKILLS.get("iron_wall_ram"), 300, 999);
         assertEquals(60, added.get(0).value(), 1e-9);
         assertEquals(100, added.get(1).value(), 1e-9);
         final List<Modifier> magma = StageAttacks.shieldAdded(StageAttacks.SHIELD_SKILLS.get("proc_magma_spray"), 150, 150);
         assertEquals(100, magma.get(0).value(), 1e-9);
         assertEquals(140, magma.get(1).value(), 1e-9);
         assertTrue(magma.get(0).tags().containsAll(DamageType.FIRE.tags()));
-        assertTrue(StageAttacks.shieldAdded(StageAttacks.SHIELD_SKILLS.get("shield_rush"), 0, 0).isEmpty());
+        assertTrue(StageAttacks.shieldAdded(StageAttacks.SHIELD_SKILLS.get("iron_wall_ram"), 0, 0).isEmpty());
     }
 
     @Test
     void shieldCollisionPerLevel() {
         // 撞上的那一下：自己的表（1 級 70%／30% = 2.33 倍、20 級 254／94 = 2.70、40 級 921／248 = 3.71），護甲附加 3～5 → 6～8
         for (final int level : new int[] {1, 20}) {
-            final SkillProfile area = profile("shield_rush", level).withLocal(
-                    StageAttacks.shieldAdded(StageAttacks.SHIELD_SKILLS.get("shield_rush"), 150, 0));
+            final SkillProfile area = profile("iron_wall_ram", level).withLocal(
+                    StageAttacks.shieldAdded(StageAttacks.SHIELD_SKILLS.get("iron_wall_ram"), 150, 0));
             final SkillProfile hit = StageAttacks.collision(area, 2.7);
             assertEquals(level == 1 ? 0.70 : 2.54, hit.effectiveness(), 1e-9);
             double min = 0;
@@ -198,7 +198,7 @@ class StageAttacksTest {
 
     @Test
     void gasBlastUsesOwnTable() {
-        final SkillProfile arrow = profile("caustic_arrow", 20);
+        final SkillProfile arrow = profile("venom_etch_arrow", 20);
         final SkillProfile zone = arrow.scaled(2.33, "地面效果").withLocal(List.of(Modifier.flat("flag.ground_poison_only", 1, "x")));
         final SkillProfile blast = StageAttacks.gasBlast(zone, 6, "毒霧引爆");
         assertEquals(2.81, blast.effectiveness(), 1e-9);
@@ -213,8 +213,8 @@ class StageAttacksTest {
 
     @Test
     void perfectUsesTableWhenPresent() {
-        assertEquals(10.14, StageAttacks.perfect(profile("gathering_storm", 20), 2.33, "完美時機").effectiveness(), 1e-9);
-        final SkillProfile plain = profile("bear_slam", 20);
+        assertEquals(10.14, StageAttacks.perfect(profile("thunder_lure_thrust", 20), 2.33, "完美時機").effectiveness(), 1e-9);
+        final SkillProfile plain = profile("field_quake_stomp", 20);
         assertEquals(plain.effectiveness(), StageAttacks.perfect(plain, 2.0, "完美時機").effectiveness(), 1e-9);
     }
 
@@ -228,17 +228,17 @@ class StageAttacksTest {
         assertEquals(SkillConfig.PARENT_OWN_TABLE, config.parentDamage(StageAttacks.CROSS_SHOCKWAVE), 1e-9);
         assertEquals(SkillConfig.PARENT_OWN_TABLE, config.parentDamage("proc_frag_shatter"), 1e-9);
         // 交錯爪：用掉印記觸發震波；迸片彈：用掉凍結觸發碎凍
-        assertTrue(config.skill("cross_slash").modifiers().stream().anyMatch(m -> m.stat().equals("proc.mark_consumed")
+        assertTrue(config.skill("crisscross_claw").modifiers().stream().anyMatch(m -> m.stat().equals("proc.mark_consumed")
                 && m.tags().contains(StageAttacks.CROSS_SHOCKWAVE)));
-        assertTrue(config.skill("fragmentation_rounds").modifiers().stream().anyMatch(m -> m.stat().equals("proc.hit_frozen")));
+        assertTrue(config.skill("shrapnel_shell").modifiers().stream().anyMatch(m -> m.stat().equals("proc.hit_frozen")));
         // 迸片彈的穿透逐級 2 → 4 → 5（加在 projectile.pierce 0 上）
-        assertEquals(0, config.skill("fragmentation_rounds").params().pierce());
+        assertEquals(0, config.skill("shrapnel_shell").params().pierce());
         // 瘴域：毒花不打傷害；毒苞與回血逐級
-        assertTrue(GroundEffects.is(profile("toxic_domain", 20)));
-        assertEquals(2500, StageAttacks.local(profile("toxic_domain", 20), StageAttacks.DOMAIN_REGEN), 1e-9);
-        assertEquals(969, StageAttacks.local(profile("toxic_domain", 20), StageAttacks.PUSTULE_MORE_PER), 1e-9);
+        assertTrue(GroundEffects.is(profile("miasma_zone", 20)));
+        assertEquals(2500, StageAttacks.local(profile("miasma_zone", 20), StageAttacks.DOMAIN_REGEN), 1e-9);
+        assertEquals(969, StageAttacks.local(profile("miasma_zone", 20), StageAttacks.PUSTULE_MORE_PER), 1e-9);
         // 萬箭齊落：每一支 0.7 公尺
-        assertEquals(tw.exilecore.core.Units.metres(0.7), config.skill("rain_of_arrows").params().radius().at(20), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
-        assertEquals("proc_glacial_bolt_wall", StageAttacks.CRYSTAL_BURST.get("glacial_bolt"));
+        assertEquals(tw.exilecore.core.Units.metres(0.7), config.skill("myriad_arrow_fall").params().radius().at(20), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
+        assertEquals("proc_glacial_bolt_wall", StageAttacks.CRYSTAL_BURST.get("frozen_wall_shaft"));
     }
 }

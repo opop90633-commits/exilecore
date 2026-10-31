@@ -713,7 +713,7 @@ uniques:
       stats:
         - { stat: flag.knockback_reversed, type: FLAT, value: 1 }
 
-  hateforge_greaves:   # 怨恨鍛造（Hateforge）
+  spiteforge_greaves:   # 怨恨鍛造（Hateforge）
     - from: 1   # 原作「+(70—100) 最大符文保護」
       text: "+{value} 最大能量護盾"
       value: [70, 100]
@@ -801,7 +801,7 @@ uniques:
       stats:
         - { stat: life.on_kill, type: FLAT, value: -2 }
 
-  blueflame_cuffs:   # 藍焰護腕（Blueflame Bracers）
+  azureflame_cuffs:   # 藍焰護腕（Blueflame Bracers）
     - from: 1
       text: "每一玩家等級 +{evasion} 閃避值、+{es} 最大能量護盾"
       evasion: [1, 1]
@@ -893,7 +893,7 @@ uniques:
       stats:
         - { stat: flag.hollow_palm, type: FLAT, value: 1 }
 
-  northpaw_bracers:   # 北方之爪（Northpaw）
+  northclaw_bracers:   # 北方之爪（Northpaw）
     - from: 1
       text: "每一玩家等級 +{evasion} 閃避值、+{es} 最大能量護盾"
       evasion: [2, 2]
@@ -917,7 +917,7 @@ uniques:
       stats:
         - { stat: crit.base_extra@unarmed, type: FLAT, value: "{value}", tags: [attack, melee] }
 
-  applause_gloves:   # 里歐波德的掌聲（Leopold's Applause）
+  ovation_gloves:   # 里歐波德的掌聲（Leopold's Applause）
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [15, 20]
@@ -946,7 +946,7 @@ uniques:
       stats:
         - { stat: flag.lowest_elemental_resist, type: FLAT, value: 1 }
 
-  snakebite_bracers:   # 蝮吻（Snakebite）
+  viperfang_bracers:   # 蝮吻（Snakebite）
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [10, 15]
@@ -995,7 +995,7 @@ uniques:
         - { stat: per_dex.attack_cold_min, type: FLAT, value: 6 }
         - { stat: per_dex.attack_cold_max, type: FLAT, value: 8 }
 
-  death_articulated:   # 死亡之聲（Death Articulated）
+  bonejoint_gauntlets:   # 死亡之聲（Death Articulated）
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [15, 20]
@@ -1026,7 +1026,7 @@ uniques:
       stats:
         - { stat: rage.decay, type: INCREASED, value: -100 }
 
-  nightscale_gloves:   # 夜鱗（Nightscale）
+  duskscale_gloves:   # 夜鱗（Nightscale）
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [15, 25]
@@ -1079,7 +1079,7 @@ uniques:
       stats:
         - { stat: damage.vs_full_life, type: MORE, value: 100 }
 
-  atziri_acuity:   # 阿茲里的捷思
+  empress_insight:   # 阿茲里的捷思
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [20, 25]
@@ -1111,7 +1111,7 @@ uniques:
       stats:
         - { stat: flag.eternal_youth, type: FLAT, value: 1 }
 
-  candlemaker:   # 製燭者
+  wickmaker:   # 製燭者
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [10, 15]
@@ -1148,7 +1148,7 @@ uniques:
         - { stat: penetration, type: FLAT, value: "{value}", tags: [cold, vs_elementalailment] }
         - { stat: penetration, type: FLAT, value: "{value}", tags: [lightning, vs_elementalailment] }
 
-  demon_stitcher:   # 縫魔
+  seamwright:   # 縫魔
     - from: 1   # 原作「+(60—80) 最大符文保護」
       text: "+{value} 最大能量護盾"
       value: [60, 80]
@@ -1168,9 +1168,9 @@ uniques:
       text: "攻擊時犧牲 {value}% 最大生命，獲得一半的能量護盾"
       value: [10, 30]
       stats:
-        - { stat: sacrifice.es_on_attack, type: FLAT, value: "{value}" }
+        - { stat: servant_corpse_swap.es_on_attack, type: FLAT, value: "{value}" }
 
-  dreadfist:   # 驚懼之拳
+  fearfist:   # 驚懼之拳
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [15, 20]
@@ -1199,7 +1199,7 @@ uniques:
         - { stat: thorns.cold.min, type: FLAT, value: "{min}" }
         - { stat: thorns.cold.max, type: FLAT, value: "{max}" }
 
-  essentia_sanguis:   # 精華收割器
+  blood_drinker:   # 精華收割器
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [15, 20]
@@ -1227,7 +1227,7 @@ uniques:
       stats:
         - { stat: flag.mana_leech_also_es, type: FLAT, value: 1 }
 
-  facebreaker:   # 毀面者（原作另外「賦予技能：等級 1 轟碎重擊」沒做，我們沒有這個技能）
+  toothcollector:   # 毀面者（原作另外「賦予技能：等級 1 轟碎重擊」沒做，我們沒有這個技能）
     - from: 1
       text: "空手攻擊的基礎傷害是 9 到 14 火焰傷害"
       stats:
@@ -1251,7 +1251,7 @@ uniques:
       stats:
         - { stat: flag.unarmed_mace, type: FLAT, value: 1 }
 
-  gravebind:   # 幽墓束縛
+  tombgrip:   # 幽墓束縛
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [15, 20]
@@ -1284,7 +1284,7 @@ uniques:
       stats:
         - { stat: flag.presence_kills, type: FLAT, value: 1 }
 
-  horrors_flight:   # 驚懼飛掠（原作的「當你撲殺目標時獲得 1 層壓倒性恐懼」與賦予的技能沒做，見 uniques.yml）
+  terror_glide:   # 驚懼飛掠（原作的「當你撲殺目標時獲得 1 層壓倒性恐懼」與賦予的技能沒做，見 uniques.yml）
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [20, 25]
@@ -1307,7 +1307,7 @@ uniques:
       stats:
         - { stat: damage.extra.chaos, type: FLAT, value: "{value}", tags: [attack] }
 
-  idle_hands:   # 遊手好閒
+  restless_hands:   # 遊手好閒
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [10, 15]
@@ -1333,7 +1333,7 @@ uniques:
       stats:
         - { stat: mana.low_threshold, type: FLAT, value: 50 }
 
-  jarngreipr:   # 雅恩格利佩爾
+  irongrip_gauntlets:   # 雅恩格利佩爾
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [15, 20]
@@ -1364,7 +1364,7 @@ uniques:
       stats:
         - { stat: flag.dex_melee_requirements, type: FLAT, value: 1 }
 
-  killjoy:   # 掃興之人
+  spoilsport:   # 掃興之人
     - from: 1   # 原作「+(30—50) 最大符文保護」
       text: "+{value} 最大能量護盾"
       value: [30, 50]
@@ -1393,7 +1393,7 @@ uniques:
       stats:
         - { stat: flag.on_kill_twice, type: FLAT, value: 1 }
 
-  kitoko_current:   # 奇多可之流
+  kido_current:   # 奇多可之流
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [10, 15]
@@ -1416,7 +1416,7 @@ uniques:
       stats:
         - { stat: flag.attack_all_electrocute, type: FLAT, value: 1 }
 
-  lochtonial_caress:   # 意識之緣
+  mindtouch:   # 意識之緣
     - from: 1
       text: "增加 {value}% 攻擊速度"
       value: [13, 20]
@@ -1450,7 +1450,7 @@ uniques:
         - { stat: charge.ally_on_hit.endurance, type: FLAT, value: "{value}" }
         - { stat: charge.ally_on_hit.power, type: FLAT, value: "{value}" }
 
-  maligaro_virtuosity:   # 馬雷葛蘿的血染手套
+  marg_bloodgloves:   # 馬雷葛蘿的血染手套
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [10, 15]
@@ -1477,7 +1477,7 @@ uniques:
       stats:
         - { stat: crit.attack_override, type: FLAT, value: "{value}" }
 
-  painters_servant:   # 畫家的侍從
+  crimson_brush:   # 畫家的侍從
     - from: 1
       text: "獲得等同於冰冷傷害 {value}% 的額外物理傷害"
       value: [6, 15]
@@ -1498,7 +1498,7 @@ uniques:
       stats:
         - { stat: flag.physical_elemental_ailments, type: FLAT, value: 1 }
 
-  plaguefinger:   # 瘟疫之指
+  festerfinger:   # 瘟疫之指
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [15, 20]
@@ -1520,7 +1520,7 @@ uniques:
       stats:
         - { stat: poison.magnitude_crit, type: INCREASED, value: "{value}" }
 
-  shackles_wretched:   # 悲運之縛
+  misery_shackles:   # 悲運之縛
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [10, 15]
@@ -1551,7 +1551,7 @@ uniques:
       stats:
         - { stat: flag.curse_reflect_self, type: FLAT, value: 1 }
 
-  sine_aequo:   # 無與倫比
+  peerless:   # 無與倫比
     - from: 1
       text: "最近暴擊過，則增加 {value}% 攻擊速度"
       value: [15, 25]
@@ -1574,7 +1574,7 @@ uniques:
       stats:
         - { stat: asc.mountain_extra_chance, type: FLAT, value: "{value}" }
 
-  prisoners_manacles:   # 囚犯的鐐銬
+  captive_manacles:   # 囚犯的鐐銬
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [20, 25]
@@ -1617,7 +1617,7 @@ uniques:
       stats:
         - { stat: stun.buildup, type: MORE, value: -100 }
 
-  thunderfist:   # 轟天雷（原作賦予的技能換成「等級 1 冰冽掌」，我們沒有這兩個技能，見 uniques.yml）
+  stormfist:   # 轟天雷（原作賦予的技能換成「等級 1 冰冽掌」，我們沒有這兩個技能，見 uniques.yml）
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [15, 20]
@@ -1647,7 +1647,7 @@ uniques:
       stats:
         - { stat: crit.base_extra@unarmed, type: FLAT, value: "{value/10}", tags: [attack, melee] }
 
-  masters_reach:   # 主宰之觸（原作賦予的技能換成等級 1、吞噬靈魂照舊，我們都沒做，見 uniques.yml）
+  binder_grasp:   # 主宰之觸（原作賦予的技能換成等級 1、吞噬靈魂照舊，我們都沒做，見 uniques.yml）
     - from: 1
       text: "全域閃避值和能量護盾更多 {value}%"
       value: [20, 25]

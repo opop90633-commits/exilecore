@@ -618,9 +618,9 @@ final:
         - { currency: zenith_orb, amount: 5, chance: 1 }
         - { currency: oracle_orb, amount: 1, chance: 0.3 }
         - { currency: greater_socket_orb, amount: 1, chance: 0.1 }   # 2026-10-24：0.2 → 0.1（大鑿星石只用掉 27%）
-        - { support: starfall_resonance, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
-        - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
-        - { support: myriad_stars, chance: 0.01 }
+        - { support: star_remains_resonance, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
+        - { support: chasm_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
+        - { support: star_panorama, chance: 0.01 }
 
 # 其他終局 Boss（PoE2 有好幾個巔峰 Boss）：寫法跟 final 一樣，多了
 #   requires  要先打贏哪些終局（代號）才能開；沒寫 = 跟天穹熔爐一樣完成最外圈就能開
@@ -735,9 +735,9 @@ finals:
           - { currency: zenith_orb, amount: 5, chance: 1 }
           - { currency: oracle_orb, amount: 1, chance: 0.3 }
           - { currency: greater_socket_orb, amount: 1, chance: 0.1 }   # 2026-10-24：0.2 → 0.1（大鑿星石只用掉 27%）
-          - { support: permafrost_heart, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
-          - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
-          - { support: myriad_stars, chance: 0.01 }
+          - { support: eternal_frost_heart, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
+          - { support: chasm_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
+          - { support: star_panorama, chance: 0.01 }
 
   bone_throne:
     name: 冥河渡口
@@ -847,9 +847,9 @@ finals:
           - { currency: zenith_orb, amount: 5, chance: 1 }
           - { currency: oracle_orb, amount: 1, chance: 0.3 }
           - { currency: greater_socket_orb, amount: 1, chance: 0.1 }   # 2026-10-24：0.2 → 0.1（大鑿星石只用掉 27%）
-          - { support: styx_ferry, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
-          - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
-          - { support: myriad_stars, chance: 0.01 }
+          - { support: nether_river_crossing, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
+          - { support: chasm_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
+          - { support: star_panorama, chance: 0.01 }
 
   ember_citadel:
     name: 餘燼堡壘
@@ -959,9 +959,9 @@ finals:
           - { currency: zenith_orb, amount: 5, chance: 1 }
           - { currency: oracle_orb, amount: 1, chance: 0.3 }
           - { currency: greater_socket_orb, amount: 1, chance: 0.1 }   # 2026-10-24：0.2 → 0.1（大鑿星石只用掉 27%）
-          - { support: skyburn_fury, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
-          - { support: abyssal_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
-          - { support: myriad_stars, chance: 0.01 }
+          - { support: sky_scorch_wrath, chance: 0.01 }       # 這個終局的專屬輔助（2026-10-16：每顆各自 1%）
+          - { support: chasm_touch, chance: 0.01 }        # 只有極境會掉的輔助（每顆各自 1%）
+          - { support: star_panorama, chance: 0.01 }
 
   # ---- 巔峰（2026-10）：萬界之巔——終局之上的最終 Boss，招式照 PoE 的「萬界覺醒者」：死亡光束、風暴迷宮、殞星、分身、
   #   追人的風暴、末日（全場大招，躲進綠色安全區）、四道旋轉光束；場地是懸在星骸之上的黑石平台，風暴會慢慢把場地吃掉。
@@ -1069,24 +1069,24 @@ finals:
           - { currency: zenith_orb, amount: 4, chance: 1 }
           - { currency: oracle_orb, amount: 1, chance: 0.2 }
           - { currency: greater_socket_orb, amount: 1, chance: 0.1 }   # 2026-10-24：0.2 → 0.1（大鑿星石只用掉 27%）
-          - { support: abyssal_touch, chance: 0.01 }       # 2026-10-16：輔助、技能寶石每顆各自 1%
-          - { support: myriad_stars, chance: 0.01 }
+          - { support: chasm_touch, chance: 0.01 }       # 2026-10-16：輔助、技能寶石每顆各自 1%
+          - { support: star_panorama, chance: 0.01 }
           # 虛星專屬的輔助寶石（supports.yml 的 source: awakener；8 顆各 1%，一次大約 8% 至少掉一顆）
-          - { support: oblivion_focus, chance: 0.01 }
-          - { support: storm_maze_heart, chance: 0.01 }
-          - { support: rift_echo, chance: 0.01 }
-          - { support: starfall_core, chance: 0.01 }
-          - { support: phantom_double, chance: 0.01 }
-          - { support: world_collapse, chance: 0.01 }
-          - { support: void_legion, chance: 0.01 }
-          - { support: shattering_strike, chance: 0.01 }   # 2026-10-15：碎界擴散（打擊的近戰擴散）
+          - { support: extinction_focus, chance: 0.01 }
+          - { support: thunder_prison_heart, chance: 0.01 }
+          - { support: void_crack_echo, chance: 0.01 }
+          - { support: meteor_core, chance: 0.01 }
+          - { support: void_star_clone, chance: 0.01 }
+          - { support: realm_return_void, chance: 0.01 }
+          - { support: void_star_army, chance: 0.01 }
+          - { support: realm_break_spread, chance: 0.01 }   # 2026-10-15：碎界擴散（打擊的近戰擴散）
           # 虛星專屬的技能寶石（skills.yml 的 source: awakener；直接 20 級；6 顆各 1%，一次大約 6% 至少掉一顆）
-          - { skill: void_meteor, chance: 0.01 }
-          - { skill: oblivion_ray, chance: 0.01 }
-          - { skill: storm_labyrinth, chance: 0.01 }
-          - { skill: fourfold_ray, chance: 0.01 }
-          - { skill: rift_slash, chance: 0.01 }
-          - { skill: starfall_volley, chance: 0.01 }
+          - { skill: hollow_star_fall, chance: 0.01 }
+          - { skill: annihilation_death_beam, chance: 0.01 }
+          - { skill: thunder_prison_maze, chance: 0.01 }
+          - { skill: four_way_death_beam, chance: 0.01 }
+          - { skill: void_split_flash, chance: 0.01 }
+          - { skill: star_drop_arrow, chance: 0.01 }
 
   # =====================================================================================================
   # 2026-10-18：地圖事件的巔峰 Boss（七隻）——用事件的入場券（ticket_*，完成事件時有份的人各擲一次，機率見 map_events.yml）在地圖裝置的「事件巔峰」打開，
@@ -1171,11 +1171,11 @@ finals:
           - { currency: sky_fragment, amount: 1, chance: 0.5 }   # 2026-10-24：必掉 → 50%（天穹碎片每週掉 2.4 萬、只用掉 25%）
           - { currency: zenith_orb, amount: 3, chance: 1 }
           - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
-          - { support: dawn_blessing, chance: 0.01 }
-          - { support: shrine_echo, chance: 0.01 }
-          - { support: sacred_focus, chance: 0.01 }
-          - { skill: dawn_pillar, chance: 0.01 }
-          - { skill: shrine_prayer, chance: 0.01 }
+          - { support: daybreak_boon, chance: 0.01 }
+          - { support: sacred_niche_echo, chance: 0.01 }
+          - { support: holy_light_focus, chance: 0.01 }
+          - { skill: morning_light_column, chance: 0.01 }
+          - { skill: altar_niche_blessing, chance: 0.01 }
 
   strongbox_mimic:
     name: 千鎖寶庫
@@ -1253,11 +1253,11 @@ finals:
           - { currency: sky_fragment, amount: 1, chance: 0.5 }   # 2026-10-24：必掉 → 50%（天穹碎片每週掉 2.4 萬、只用掉 25%）
           - { currency: zenith_orb, amount: 3, chance: 1 }
           - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
-          - { support: greed_lock, chance: 0.01 }
-          - { support: chain_bind, chance: 0.01 }
-          - { support: coin_toss, chance: 0.01 }
-          - { skill: chain_lash, chance: 0.01 }
-          - { skill: coin_barrage, chance: 0.01 }
+          - { support: covet_chest_lock, chance: 0.01 }
+          - { support: shackle_entangle, chance: 0.01 }
+          - { support: coin_flip, chance: 0.01 }
+          - { skill: shackle_chain_sweep, chance: 0.01 }
+          - { skill: gold_coin_hail, chance: 0.01 }
 
   breach_lord:
     name: 穿界裂隙
@@ -1335,11 +1335,11 @@ finals:
           - { currency: sky_fragment, amount: 1, chance: 0.5 }   # 2026-10-24：必掉 → 50%（天穹碎片每週掉 2.4 萬、只用掉 25%）
           - { currency: zenith_orb, amount: 3, chance: 1 }
           - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
-          - { support: rift_passage, chance: 0.01 }
-          - { support: rift_surge, chance: 0.01 }
-          - { support: worldtear, chance: 0.01 }
-          - { skill: rift_hand, chance: 0.01 }
-          - { skill: breach_ring, chance: 0.01 }
+          - { support: crack_corridor, chance: 0.01 }
+          - { support: crack_outpour, chance: 0.01 }
+          - { support: realm_pierce_rip, chance: 0.01 }
+          - { skill: fissure_hand, chance: 0.01 }
+          - { skill: fissure_spread, chance: 0.01 }
 
   exile_king:
     name: 無名者競技場
@@ -1417,11 +1417,11 @@ finals:
           - { currency: sky_fragment, amount: 1, chance: 0.5 }   # 2026-10-24：必掉 → 50%（天穹碎片每週掉 2.4 萬、只用掉 25%）
           - { currency: zenith_orb, amount: 3, chance: 1 }
           - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
-          - { support: duelist_focus, chance: 0.01 }
-          - { support: stolen_technique, chance: 0.01 }
-          - { support: nameless_edge, chance: 0.01 }
-          - { skill: nameless_backstab, chance: 0.01 }
-          - { skill: execution_mark, chance: 0.01 }
+          - { support: duel_concentration, chance: 0.01 }
+          - { support: pilfered_move, chance: 0.01 }
+          - { support: unnamed_blade, chance: 0.01 }
+          - { skill: unnamed_rear_stab, chance: 0.01 }
+          - { skill: execute_brand, chance: 0.01 }
 
   ritual_priest:
     name: 血契祭場
@@ -1499,11 +1499,11 @@ finals:
           - { currency: sky_fragment, amount: 1, chance: 0.5 }   # 2026-10-24：必掉 → 50%（天穹碎片每週掉 2.4 萬、只用掉 25%）
           - { currency: zenith_orb, amount: 3, chance: 1 }
           - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
-          - { support: blood_tribute, chance: 0.01 }
-          - { support: altar_legion, chance: 0.01 }
-          - { support: pact_seal, chance: 0.01 }
-          - { skill: blood_altar, chance: 0.01 }
-          - { skill: tribute_spears, chance: 0.01 }
+          - { support: blood_levy, chance: 0.01 }
+          - { support: ritual_dais_army, chance: 0.01 }
+          - { support: blood_oath_seal, chance: 0.01 }
+          - { skill: blood_sacrifice_dais, chance: 0.01 }
+          - { skill: offering_blood_spear, chance: 0.01 }
 
   delirium_mirror:
     name: 妄念霧原
@@ -1581,11 +1581,11 @@ finals:
           - { currency: sky_fragment, amount: 1, chance: 0.5 }   # 2026-10-24：必掉 → 50%（天穹碎片每週掉 2.4 萬、只用掉 25%）
           - { currency: zenith_orb, amount: 3, chance: 1 }
           - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
-          - { support: mirror_image, chance: 0.01 }
-          - { support: mist_veil, chance: 0.01 }
-          - { support: delusion_crit, chance: 0.01 }
-          - { skill: mirror_shards, chance: 0.01 }
-          - { skill: mirror_step, chance: 0.01 }
+          - { support: looking_glass_copy, chance: 0.01 }
+          - { support: fog_gauze, chance: 0.01 }
+          - { support: delirium_smash, chance: 0.01 }
+          - { skill: broken_looking_glass, chance: 0.01 }
+          - { skill: reflection_mist_pass, chance: 0.01 }
 
   abyss_lich:
     name: 骨潮深坑
@@ -1663,8 +1663,8 @@ finals:
           - { currency: sky_fragment, amount: 1, chance: 0.5 }   # 2026-10-24：必掉 → 50%（天穹碎片每週掉 2.4 萬、只用掉 25%）
           - { currency: zenith_orb, amount: 3, chance: 1 }
           - { currency: abyss_core, amount: 1, chance: 0.1 }   # 2026-10-18：25% → 10%（擁有者）
-          - { support: bone_tide, chance: 0.01 }
-          - { support: abyssal_grip, chance: 0.01 }
-          - { support: deep_cold, chance: 0.01 }
-          - { skill: bone_fissure, chance: 0.01 }
-          - { skill: abyss_grasp, chance: 0.01 }
+          - { support: marrow_surge, chance: 0.01 }
+          - { support: chasm_grasp, chance: 0.01 }
+          - { support: abyss_floor_chill, chance: 0.01 }
+          - { skill: bone_crack_leyline, chance: 0.01 }
+          - { skill: deep_chasm_hand, chance: 0.01 }

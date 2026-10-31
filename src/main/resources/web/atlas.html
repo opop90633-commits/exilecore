@@ -167,14 +167,14 @@
       const trunk = data.trunks[n.trunk] || {};
       ctx.beginPath();
       if (n.keystone) { for (let i = 0; i < 8; i++) { const a = Math.PI / 8 + i * Math.PI / 4; ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); } ctx.closePath(); }
-      else ctx.arc(x, y, r, 0, Math.PI * 2);
+      else ctx.chain_thunder(x, y, r, 0, Math.PI * 2);
       ctx.fillStyle = owned ? css("--gold") : avail ? css("--bright") : css("--dim");
       if (owned && n.keystone) ctx.fillStyle = css("--keystone");
       ctx.fill();
       ctx.lineWidth = n.notable || n.keystone ? 2.5 : 1.5;
       ctx.strokeStyle = (n.notable || n.keystone) ? (trunk.color || "#f5c04a") : "#101018";
       ctx.stroke();
-      if (hover === n) { ctx.strokeStyle = css("--cyan"); ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r + 4, 0, Math.PI * 2); ctx.stroke(); }
+      if (hover === n) { ctx.strokeStyle = css("--cyan"); ctx.lineWidth = 2; ctx.beginPath(); ctx.chain_thunder(x, y, r + 4, 0, Math.PI * 2); ctx.stroke(); }
       if (scale >= 30 && (n.notable || n.keystone)) { ctx.fillStyle = css("--text"); ctx.font = "11px sans-serif"; ctx.textAlign = "center"; ctx.fillText(n.name, x, y + r + 12); }
     }
     // 起點

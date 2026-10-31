@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 2026-10-28 照 PoE2 0.5 重做的武器賦予技能：寒心、屍焰爆、血鐮、銳星虹吸、纏蝕箭（資料與純計算）。 */
-class GrantedSkillPoe2Test {
+class GrantedSkillRefTest {
 
     static SkillConfig config;
 
@@ -66,24 +66,24 @@ class GrantedSkillPoe2Test {
 
     @Test
     void powerSiphonGrantsOnCullNotKill() {
-        assertTrue(has("power_siphon", "charge.event.cull.power"));
-        assertFalse(has("power_siphon", "charge.event.kill.power"), "照 PoE2 是撲殺時給，不是打死時");
-        assertTrue(has("power_siphon", GrantedSkillKeys.FLAG_NO_RARITY_CHARGES));
-        assertTrue(has("power_siphon", "flag.culling"));
-        assertEquals(0, level("power_siphon", "charge.extra", 1), 1e-9);
-        assertEquals(76, level("power_siphon", "charge.extra", 20), 1e-9);
-        assertEquals(100, level("power_siphon", "charge.extra", 26), 1e-9);
-        assertEquals(156, level("power_siphon", "charge.extra", 40), 1e-9);
+        assertTrue(has("keen_star_drain", "charge.event.cull.power"));
+        assertFalse(has("keen_star_drain", "charge.event.kill.power"), "照 PoE2 是撲殺時給，不是打死時");
+        assertTrue(has("keen_star_drain", GrantedSkillKeys.FLAG_NO_RARITY_CHARGES));
+        assertTrue(has("keen_star_drain", "flag.culling"));
+        assertEquals(0, level("keen_star_drain", "charge.extra", 1), 1e-9);
+        assertEquals(76, level("keen_star_drain", "charge.extra", 20), 1e-9);
+        assertEquals(100, level("keen_star_drain", "charge.extra", 26), 1e-9);
+        assertEquals(156, level("keen_star_drain", "charge.extra", 40), 1e-9);
     }
 
     // ---- 血鐮 ----
 
     @Test
     void reapGainsFlatLifeOnCull() {
-        assertEquals(5, level("reap", GrantedSkillKeys.LIFE_ON_CULL_FLAT, 1), 1e-9);
-        assertEquals(188, level("reap", GrantedSkillKeys.LIFE_ON_CULL_FLAT, 20), 1e-9);
-        assertEquals(829, level("reap", GrantedSkillKeys.LIFE_ON_CULL_FLAT, 40), 1e-9);
-        assertFalse(has("reap", tw.exilecore.stats.StatKeys.LIFE_ON_CULL), "不再用最大生命的 % 頂著");
+        assertEquals(5, level("blood_sickle", GrantedSkillKeys.LIFE_ON_CULL_FLAT, 1), 1e-9);
+        assertEquals(188, level("blood_sickle", GrantedSkillKeys.LIFE_ON_CULL_FLAT, 20), 1e-9);
+        assertEquals(829, level("blood_sickle", GrantedSkillKeys.LIFE_ON_CULL_FLAT, 40), 1e-9);
+        assertFalse(has("blood_sickle", tw.exilecore.stats.StatKeys.LIFE_ON_CULL), "不再用最大生命的 % 頂著");
         assertEquals(188, GrantedSkillKeys.cullLife(5000, 0, 188), 1e-9, "固定值，跟最大生命無關");
         assertEquals(188, GrantedSkillKeys.cullLife(100, 0, 188), 1e-9);
         assertEquals(50 + 188, GrantedSkillKeys.cullLife(1000, 5, 188), 1e-9, "跟最大生命 % 的可以疊");
@@ -94,7 +94,7 @@ class GrantedSkillPoe2Test {
 
     @Test
     void coilingBoltsHasOneTablePerDamageType() {
-        final SkillDefinition bolts = config.skill("coiling_bolts");
+        final SkillDefinition bolts = config.skill("entwine_rot_arrow");
         assertEquals(Set.of(DamageType.PHYSICAL, DamageType.CHAOS), bolts.typedDamage().keySet());
         final int[][] expected = {{1, 9, 14, 8, 15}, {20, 279, 418, 244, 453}, {40, 3735, 5603, 3269, 6070}};
         for (final int[] row : expected) {
@@ -125,7 +125,7 @@ class GrantedSkillPoe2Test {
 
     @Test
     void otherSpellsStillSplitOneTable() {
-        final SkillDefinition firebolt = config.skill("firebolt");
+        final SkillDefinition firebolt = config.skill("flame_star_shot");
         assertTrue(firebolt.typedDamage().isEmpty());
         final SkillProfile profile = SkillProfiles.build(config, firebolt, 1, Set.of());
         assertEquals(7, profile.spellDamage().get(DamageType.FIRE), 1e-9);
@@ -136,26 +136,26 @@ class GrantedSkillPoe2Test {
 
     @Test
     void heartOfIceIsAPersistentPresenceChill() {
-        final SkillDefinition heart = config.skill("heart_of_ice");
+        final SkillDefinition heart = config.skill("cold_heart");
         assertEquals(Mechanic.AURA, heart.mechanic());
         assertEquals(0, heart.aura().reserve(), 1e-9, "原作沒有精魂保留");
         assertFalse(heart.aura().allies());
         assertEquals(0, heart.cooldown(), 1e-9, "不再是冷卻 4 秒的寒氣爆發");
         assertNull(heart.damage(), "不打人");
         assertFalse(heart.dealsDamage());
-        assertTrue(has("heart_of_ice", GrantedSkillKeys.FLAG_PRESENCE_CHILL));
-        assertEquals(26, level("heart_of_ice", GrantedSkillKeys.AS_THOUGH_MIN, 1), 1e-9);
-        assertEquals(39, level("heart_of_ice", GrantedSkillKeys.AS_THOUGH_MAX, 1), 1e-9);
-        assertEquals(888, level("heart_of_ice", GrantedSkillKeys.AS_THOUGH_MIN, 20), 1e-9);
-        assertEquals(1332, level("heart_of_ice", GrantedSkillKeys.AS_THOUGH_MAX, 20), 1e-9);
-        assertEquals(15509, level("heart_of_ice", GrantedSkillKeys.AS_THOUGH_MIN, 40), 1e-9);
-        assertEquals(23263, level("heart_of_ice", GrantedSkillKeys.AS_THOUGH_MAX, 40), 1e-9);
+        assertTrue(has("cold_heart", GrantedSkillKeys.FLAG_PRESENCE_CHILL));
+        assertEquals(26, level("cold_heart", GrantedSkillKeys.AS_THOUGH_MIN, 1), 1e-9);
+        assertEquals(39, level("cold_heart", GrantedSkillKeys.AS_THOUGH_MAX, 1), 1e-9);
+        assertEquals(888, level("cold_heart", GrantedSkillKeys.AS_THOUGH_MIN, 20), 1e-9);
+        assertEquals(1332, level("cold_heart", GrantedSkillKeys.AS_THOUGH_MAX, 20), 1e-9);
+        assertEquals(15509, level("cold_heart", GrantedSkillKeys.AS_THOUGH_MIN, 40), 1e-9);
+        assertEquals(23263, level("cold_heart", GrantedSkillKeys.AS_THOUGH_MAX, 40), 1e-9);
         assertTrue(heart.tags().contains(Tags.PERSISTENT));
     }
 
     @Test
     void asThoughProfileCarriesOnlyThatDamageType() {
-        final SkillProfile base = new SkillProfile("heart_of_ice", Set.of("aura", Tags.PERSISTENT), 1.0, null);
+        final SkillProfile base = new SkillProfile("cold_heart", Set.of("aura", Tags.PERSISTENT), 1.0, null);
         final SkillProfile cold = AsThough.profile(base, DamageType.COLD, 26, 39);
         assertTrue(cold.tags().contains(Tags.COLD));
         assertTrue(cold.tags().contains(Tags.SPELL));
@@ -170,20 +170,20 @@ class GrantedSkillPoe2Test {
 
     @Test
     void volatileDeadMakesCoresWithTheirOwnIgniteTable() {
-        final SkillDefinition dead = config.skill("volatile_dead");
-        assertTrue(has("volatile_dead", GrantedSkillKeys.FLAG_VOLATILE_CORE));
-        assertFalse(has("volatile_dead", tw.exilecore.stats.StatKeys.IGNITE_CHANCE), "核心直接點燃，不擲機率");
+        final SkillDefinition dead = config.skill("corpse_flame_burst");
+        assertTrue(has("corpse_flame_burst", GrantedSkillKeys.FLAG_VOLATILE_CORE));
+        assertFalse(has("corpse_flame_burst", tw.exilecore.stats.StatKeys.IGNITE_CHANCE), "核心直接點燃，不擲機率");
         // 爆炸（小的那張表）
         assertArrayEquals(new double[] {3, 4}, SkillProfiles.spellDamage(config, dead, 1), 1e-9);
         assertArrayEquals(new double[] {20, 29}, SkillProfiles.spellDamage(config, dead, 20), 1e-9);
         assertArrayEquals(new double[] {52, 78}, SkillProfiles.spellDamage(config, dead, 40), 1e-9);
         // 點燃（像造成）
-        assertEquals(4, level("volatile_dead", GrantedSkillKeys.AS_THOUGH_MIN, 1), 1e-9);
-        assertEquals(6, level("volatile_dead", GrantedSkillKeys.AS_THOUGH_MAX, 1), 1e-9);
-        assertEquals(146, level("volatile_dead", GrantedSkillKeys.AS_THOUGH_MIN, 20), 1e-9);
-        assertEquals(218, level("volatile_dead", GrantedSkillKeys.AS_THOUGH_MAX, 20), 1e-9);
-        assertEquals(2541, level("volatile_dead", GrantedSkillKeys.AS_THOUGH_MIN, 40), 1e-9);
-        assertEquals(3812, level("volatile_dead", GrantedSkillKeys.AS_THOUGH_MAX, 40), 1e-9);
+        assertEquals(4, level("corpse_flame_burst", GrantedSkillKeys.AS_THOUGH_MIN, 1), 1e-9);
+        assertEquals(6, level("corpse_flame_burst", GrantedSkillKeys.AS_THOUGH_MAX, 1), 1e-9);
+        assertEquals(146, level("corpse_flame_burst", GrantedSkillKeys.AS_THOUGH_MIN, 20), 1e-9);
+        assertEquals(218, level("corpse_flame_burst", GrantedSkillKeys.AS_THOUGH_MAX, 20), 1e-9);
+        assertEquals(2541, level("corpse_flame_burst", GrantedSkillKeys.AS_THOUGH_MIN, 40), 1e-9);
+        assertEquals(3812, level("corpse_flame_burst", GrantedSkillKeys.AS_THOUGH_MAX, 40), 1e-9);
         assertEquals(tw.exilecore.core.Units.metres(2.2), dead.params().radius().at(1), 1e-9, "爆炸 2.2 公尺"); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
     }
 

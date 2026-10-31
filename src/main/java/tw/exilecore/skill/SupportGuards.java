@@ -63,7 +63,7 @@ public final class SupportGuards {
     }
 
     /** 2026-10-27：不寫 resource.remnant、在程式裡留殘骸的技能（Snap、SkillTriggers 的素痕湧、OriginalSkills 的燼種）。 */
-    static final Set<String> CODE_REMNANTS = Set.of("snap", "siphon_elements", "ember_seed");
+    static final Set<String> CODE_REMNANTS = Set.of("anomaly_devour_blast", "element_trace_surge", "cinder_sprout");
 
     /** 這個技能有沒有使用條件（Delayed Gratification）。 */
     static boolean conditional(final SkillDefinition skill) {
@@ -72,7 +72,7 @@ public final class SupportGuards {
 
     /** 盾牌技能（Vanguard：要盾的攻擊）。 */
     static boolean shieldSkill(final SkillDefinition skill) {
-        return skill.isAttack() && skill.id().contains("shield") || Warcries.needsShield(skill);
+        return skill.isAttack() && (skill.id().contains("shield") || Warcries.SHIELD_ATTACKS.contains(skill.id())) || Warcries.needsShield(skill); // 2026-10-31：盾的技能改了代號，不一定含 shield
     }
 
     /** 會造成非異常持續傷害（混沌減益、地面效果）的技能。 */

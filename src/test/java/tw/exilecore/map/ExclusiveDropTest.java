@@ -158,27 +158,27 @@ class ExclusiveDropTest {
             }
         }
         assertEquals(15 + 21 + 2, exclusive, "四個終局各一顆＋兩顆極境專屬＋八顆巔峰（覺醒之主・虛星）專屬（2026-10-15：＋碎界擴散）＋星骸之海的淵鯨一顆＋七隻事件巔峰 Boss 各三顆、淵鯨再兩顆（2026-10-18）");
-        assertEquals(List.of("tidal_resonance", "undertow_drag", "whale_breath"), skills.supportsFrom("abyss_whale").stream().map(SupportDefinition::id).toList()); // 2026-10-18：＋暗流拖曳、鯨息
+        assertEquals(List.of("ebb_flow_resonance", "dark_current_pull", "whale_exhale"), skills.supportsFrom("abyss_whale").stream().map(SupportDefinition::id).toList()); // 2026-10-18：＋暗流拖曳、鯨息
         for (final String finalId : FINALS) {
             final List<SupportDefinition> own = skills.supportsFrom(finalId);
             assertEquals(1, own.size(), finalId + " 的專屬輔助");
             assertTrue(own.getFirst().droppedBy(finalId));
         }
-        assertEquals(List.of("abyssal_touch", "myriad_stars"), skills.supportsFrom("uber").stream().map(SupportDefinition::id).toList());
+        assertEquals(List.of("chasm_touch", "star_panorama"), skills.supportsFrom("uber").stream().map(SupportDefinition::id).toList());
         assertTrue(skills.supportsFrom("nobody").isEmpty());
         assertEquals(0.01, maps.drops().finalSupportChance(), 1e-9, "2026-10：2% → 1%");
         // 寫法：source 讀得進來；舊的建構子（沒有 source）是一般的
         final SupportDefinition plain = new SupportDefinition("x", "x", "", "BOOK", 1, Set.of(), Set.of(), 1.0, List.of(), List.of());
         assertTrue(plain.cuttable());
         assertNull(plain.source());
-        assertEquals("sky_crucible", skills.support("starfall_resonance").source());
+        assertEquals("sky_crucible", skills.support("star_remains_resonance").source());
     }
 
     @Test
     void specificSupportDropsAreNeverFilteredOut() {
-        final DropTable.Drop drop = DropTable.Drop.support("styx_ferry", 87);
+        final DropTable.Drop drop = DropTable.Drop.support("nether_river_crossing", 87);
         assertEquals(DropTable.Kind.SUPPORT_GEM, drop.kind());
-        assertEquals("styx_ferry", drop.gem());
+        assertEquals("nether_river_crossing", drop.gem());
         assertEquals(87, drop.level());
         assertTrue(drop.isSpecificGem());
         assertFalse(DropTable.Drop.special(DropTable.Kind.SUPPORT_GEM, 70).isSpecificGem(), "未切割輔助寶石");
@@ -253,7 +253,7 @@ class ExclusiveDropTest {
         assertEquals(0.01, drops.exclusiveChance(), 1e-9, "極境專屬每一件各自 1%（2026-10-16）");
         assertEquals(0.03, drops.commonChance(maps.drops().finalCommonChance()), 1e-9, "共通傳奇 3%（2026-10-16）");
         for (final MapConfig.ExtraDrop extra : drops.extra()) {
-            if (List.of("abyssal_touch", "myriad_stars").contains(extra.id())) {
+            if (List.of("chasm_touch", "star_panorama").contains(extra.id())) {
                 assertEquals(0.01, extra.chance(), 1e-9, extra.id() + "：輔助每顆各自 1%（2026-10-16）");
             }
         }
@@ -261,7 +261,7 @@ class ExclusiveDropTest {
         assertEquals(0.1, MapConfig.parseUber(YamlNode.load("test.yml", new java.io.StringReader("name: x\n"))).drops().commonChance(0.1), 1e-9);
         // 寫 skill: 的會讀成技能寶石
         final MapConfig.Uber parsed = MapConfig.parseUber(YamlNode.load("test.yml", new java.io.StringReader(
-                "name: x\ndrops:\n  extra:\n    - { skill: void_meteor, chance: 0.5 }\n")));
-        assertEquals(List.of(new MapConfig.ExtraDrop("skill", "void_meteor", 1, 0.5)), parsed.drops().extra());
+                "name: x\ndrops:\n  extra:\n    - { skill: hollow_star_fall, chance: 0.5 }\n")));
+        assertEquals(List.of(new MapConfig.ExtraDrop("skill", "hollow_star_fall", 1, 0.5)), parsed.drops().extra());
     }
 }

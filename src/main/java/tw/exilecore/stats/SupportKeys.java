@@ -24,11 +24,11 @@ public final class SupportKeys {
     /** FLAT：最近用過的技能每有一種不同的元素（火、冰、電），元素傷害更多 x%（元湧）。 */
     public static final String ELEMENTAL_PER_RECENT_TYPE = "damage.elemental_per_recent_type";
     /** FLAT：每移動 1 格累積 2 點電荷（最多 30），放的時候用掉，每點獲得 1% 傷害為額外閃電傷害（引雷）。 */
-    public static final String VOLT = "volt.max";
+    public static final String VOLT = "draw_lightning.max";
     /** FLAT：單次使用期間至少移動 2 公尺（3 格）後，這次使用後續更多 x% 傷害（衝勢，2026-10-29 照 PoE2 Momentum）。 */
-    public static final String MOMENTUM = "momentum.damage";
+    public static final String MOMENTUM = "charge_impetus.damage";
     /** FLAT：公尺。移動這麼遠之後才能用，用了之後要再移動（迅鋒，2026-10-29 照 PoE2 Hit and Run）。 */
-    public static final String HIT_AND_RUN = "hit_and_run.travel";
+    public static final String HIT_AND_RUN = "swift_edge.travel";
     /** 2026-10-29 照站長：迅鋒的移動距離 1 公尺算 0.5 格（10 公尺 = 5 格）；同日稍早照全服的 1.5 格（15 格），太遠。 */
     public static final double HIT_AND_RUN_BLOCKS_PER_METRE = 0.5;
     /** INCREASED：對被定住（凍結、重暈、定身、電擊）的敵人的暴擊率（釘地 II）。 */
@@ -107,7 +107,7 @@ public final class SupportKeys {
     // ---- 召喚物、圖騰 ----
 
     /** FLAT：你每有一種不同的復活型召喚物，被輔助的召喚物更多 x% 傷害（群鋒）。 */
-    public static final String MUSTER = "minion.muster";
+    public static final String MUSTER = "minion.host_blades";
     /** FLAT：召喚物每秒受到最大生命 x% 的火焰傷害，並點燃身邊的敵人，像造成最大生命 x% 的基礎火焰傷害（燃僕）。 */
     public static final String INFERNAL_LEGION = "minion.infernal_legion";
     /** FLAT：燃僕點燃的半徑（格）。 */
@@ -125,7 +125,7 @@ public final class SupportKeys {
     public static final String SACRIFICE_LIFE = "cost.sacrifice_life";
 
     /** FLAG：擊中時用掉敵人身上的點燃、凍結、感電，觸發元素崩解（元崩）。 */
-    public static final String FLAG_ELEMENTAL_DISCHARGE = "flag.elemental_discharge";
+    public static final String FLAG_ELEMENTAL_DISCHARGE = "flag.element_collapse";
 
     // ---- 戰吼 ----
 
@@ -136,13 +136,13 @@ public final class SupportKeys {
     /** FLAT：冷卻中可以花 x 點怒氣跳過冷卻，而不是一顆磐星（怒嘯）。 */
     public static final String WARCRY_RAGE_BYPASS = "warcry.rage_bypass";
     /** FLAT：被強化的攻擊有 x% 機率不算進強化次數（不竭嘯）。 */
-    public static final String WARCRY_TIRELESS = "warcry.tireless";
+    public static final String WARCRY_TIRELESS = "warcry.endless_howl";
     /** FLAT：戰吼回聲幾次（震嘯：2 次，每次 1.3 秒，範圍每次更多 100%；要先移動 10 格才能用）。 */
     public static final String WARCRY_ECHOES = "warcry.echoes";
     /** FLAT：每 5 點怪物強度給 x 點怒氣（聚怒嘯）。 */
     public static final String WARCRY_RAGE_PER_5_POWER = "warcry.rage_per_5_power";
     /** FLAG：用掉範圍內敵人的完全破甲，觸發物理爆炸（等於破掉的護甲 40%）；這個戰吼不能破甲（碎甲吼）。 */
-    public static final String FLAG_BATTERSHOUT = "flag.battershout";
+    public static final String FLAG_BATTERSHOUT = "flag.plate_break_roar";
     /** FLAG：範圍內每隻敵人觸發扭曲契約（腐化之血）；每最近用過一次，消耗多 10% 最大生命（最多 30%）（契血嘯）。 */
     public static final String FLAG_PAQUATE = "flag.paquate";
     /** FLAT：戰吼炸掉範圍內的冰晶；炸掉至少 5 個時多強化 x 次攻擊（碎晶嘯）。 */
@@ -158,5 +158,5 @@ public final class SupportKeys {
     /** FLAG：被強化的技能有撲殺（決嘯）。 */
     public static final String FLAG_EMPOWERED_CULL = "flag.empowered_cull";
     /** FLAG：被強化的攻擊消耗更少 30%、命中更多 30%（嘯準）。 */
-    public static final String FLAG_UNERRING = "flag.unerring_power";
+    public static final String FLAG_UNERRING = "flag.howl_aim";
 }

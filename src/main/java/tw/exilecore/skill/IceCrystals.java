@@ -257,7 +257,7 @@ public final class IceCrystals implements Listener {
     static final double VERGLAS_LIFE_PER_PERCENT = 2000;
     static final int VERGLAS_TICKS = 120;
     /** 被冰淞輔助的技能身上的標籤（SkillBuild 加上；增益只給有這個標籤的技能）。 */
-    public static final String VERGLAS_TAG = "verglas";
+    public static final String VERGLAS_TAG = "frost_shell";
     /** 玩家 → {這一次冰淞的 %, 到期的 tick}。 */
     private final Map<UUID, double[]> verglas = new HashMap<>();
 
@@ -271,7 +271,7 @@ public final class IceCrystals implements Listener {
         final double[] current = verglas.get(owner.getUniqueId());
         final double value = current != null && current[1] > now ? Math.max(current[0], percent) : percent;
         verglas.put(owner.getUniqueId(), new double[] {value, now + VERGLAS_TICKS});
-        service.buff(owner, "verglas", "冰淞", VERGLAS_TICKS, List.of(new tw.exilecore.stats.Modifier(StatKeys.DAMAGE_GAIN + "cold",
+        service.buff(owner, "frost_shell", "冰淞", VERGLAS_TICKS, List.of(new tw.exilecore.stats.Modifier(StatKeys.DAMAGE_GAIN + "cold",
                 tw.exilecore.stats.ModType.FLAT, value, java.util.Set.of(VERGLAS_TAG), "冰淞")));
     }
 

@@ -472,7 +472,7 @@ public final class ItemRepository {
     }
 
     public Affix affix(final String id) {
-        return affixes.get(id);
+        return affixes.get(UniqueIds.currentAffix(id));
     }
 
     /** 2026-10-22：資料的版本（每次重讀加一）。 */
@@ -792,7 +792,7 @@ public final class ItemRepository {
     }
 
     public UniqueItem unique(final String id) {
-        return id == null ? null : uniques.get(id);
+        return id == null ? null : uniques.get(UniqueIds.current(id));
     }
 
     /** 現役的傳奇（退役的不算：掉落、圖鑑、兌換券、僥倖石都只看這些）。 */

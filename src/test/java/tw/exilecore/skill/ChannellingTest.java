@@ -33,7 +33,7 @@ class ChannellingTest {
 
     @Test
     void shieldChargeRushesAndScalesWithDistance() {
-        final ChargeSpec spec = config.charge("shield_rush");
+        final ChargeSpec spec = config.charge("iron_wall_ram");
         assertNotNull(spec);
         assertEquals(ChargeSpec.Mode.RUSH, spec.mode());
         assertTrue(spec.drain());
@@ -41,15 +41,15 @@ class ChannellingTest {
         assertEquals(1.5, spec.channel().distanceFactor(tw.exilecore.core.Units.metres(4)), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertEquals(2.0, spec.channel().distanceFactor(30), 1e-9, "最多更多 100%");
         assertEquals(26, spec.channel().minTicks(), "最短引導 1.3 秒");
-        assertEquals(0, config.skill("shield_rush").cooldown(), 1e-9);
+        assertEquals(0, config.skill("iron_wall_ram").cooldown(), 1e-9);
     }
 
     @Test
     void rampageSpendsRageAfterTheFreeWindow() {
-        final ChargeSpec spec = config.charge("rampage");
+        final ChargeSpec spec = config.charge("brute_charge");
         assertNotNull(spec);
         assertEquals(ChargeSpec.Mode.RUSH, spec.mode());
-        assertEquals(0, config.skill("rampage").cooldown(), 1e-9, "做完引導後拿掉暫時保留的冷卻");
+        assertEquals(0, config.skill("brute_charge").cooldown(), 1e-9, "做完引導後拿掉暫時保留的冷卻");
         assertEquals(0, spec.channel().rageDue(20));
         assertEquals(0, spec.channel().rageDue(49));
         assertEquals(5, spec.channel().rageDue(50), "2.5 秒後每秒 5 點（300／分鐘）");
@@ -59,18 +59,18 @@ class ChannellingTest {
 
     @Test
     void gatheringStormIsAPerfectTimedChannel() {
-        final ChargeSpec spec = config.charge("gathering_storm");
+        final ChargeSpec spec = config.charge("thunder_lure_thrust");
         assertNotNull(spec);
         assertTrue(spec.perfect());
         assertTrue(spec.drain());
         assertEquals(tw.exilecore.core.Units.metres(10), spec.channel().perfectRange(), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
-        assertEquals(0, config.skill("gathering_storm").cooldown(), 1e-9, "做完引導後拿掉暫時保留的冷卻");
+        assertEquals(0, config.skill("thunder_lure_thrust").cooldown(), 1e-9, "做完引導後拿掉暫時保留的冷卻");
         assertNotNull(config.skill("proc_storm_shockwave"));
     }
 
     @Test
     void detonatingArrowGainsFirePerStageAndOnlyExplodesWhenFull() {
-        final ChargeSpec spec = config.charge("blast_arrow");
+        final ChargeSpec spec = config.charge("flame_blast_shaft");
         assertNotNull(spec);
         assertEquals(4, spec.stages());
         assertTrue(spec.channel().perAttack());
@@ -81,11 +81,11 @@ class ChannellingTest {
 
     @Test
     void witherPulsesWhileHeld() {
-        final ChargeSpec spec = config.charge("wither");
+        final ChargeSpec spec = config.charge("decay_erosion_art");
         assertNotNull(spec);
         assertEquals(ChargeSpec.Mode.PULSE, spec.mode());
-        assertEquals(2.0, config.skill("wither").params().mark().duration(1), 1e-9);
-        assertEquals(3.95, config.skill("wither").params().mark().duration(40), 1e-9);
+        assertEquals(2.0, config.skill("decay_erosion_art").params().mark().duration(1), 1e-9);
+        assertEquals(3.95, config.skill("decay_erosion_art").params().mark().duration(40), 1e-9);
     }
 
     /** 2026-10-26 照 PoE2 Flame Breath：連續出手的引導、10 秒冷卻、4 秒後每秒 6 點怒氣、用掉銳星強化（怒氣少一半）。 */
@@ -109,7 +109,7 @@ class ChannellingTest {
 
     @Test
     void channelledReleaseSkillsDrainMana() {
-        for (final String id : new String[] {"true_strike", "snipe", "bone_storm", "inferno_blast", "supercharged_slam"}) {
+        for (final String id : new String[] {"charged_blow", "cloud_pierce_arrow", "shattered_bone_darts", "flame_core_detonation", "thousand_weight_smash"}) {
             final ChargeSpec spec = config.charge(id);
             assertNotNull(spec, id);
             assertTrue(spec.drain(), id + " 的魔力按住逐秒扣");

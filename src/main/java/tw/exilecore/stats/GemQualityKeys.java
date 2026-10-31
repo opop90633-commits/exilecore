@@ -35,13 +35,13 @@ public final class GemQualityKeys {
     /** FLAT（%）：骸餘饗的殘骸存召喚物最大生命的比例 +x（加在 35% 上）。 */
     public static final String GRIM_SHARE = "grim.share";
     /** FLAT：蒺藜步的鐵蒺上限 +x（無條件捨去）。 */
-    public static final String CALTROPS_MAX = "caltrops.max";
+    public static final String CALTROPS_MAX = "scatter_spikes.max";
     /** FLAT：折光之鏡每面鏡子複製的投射物 +x（無條件捨去）。 */
     public static final String MIRROR_COPIES = "mirror.copies";
     /** FLAT（%）：瘟囊爆存的中毒傷害比例 +x（加在 4% 上）。 */
-    public static final String PLAGUE_BEARER_PERCENT = "plague_bearer.percent";
+    public static final String PLAGUE_BEARER_PERCENT = "pestilence_sac_burst.percent";
     /** FLAT（秒）：惡念給的暴擊弱點持續時間 +x。 */
-    public static final String MALICE_WEAKNESS_SECONDS = "malice.weakness_seconds";
+    public static final String MALICE_WEAKNESS_SECONDS = "evil_thought.weakness_seconds";
     /** FLAT（秒）：凋息給的凋零持續時間 +x。 */
     public static final String WITHERED_SECONDS = "withering.seconds";
     /** FLAT（公尺）：蟲噬群的蟲群攻擊半徑 +x。 */
@@ -136,7 +136,7 @@ public final class GemQualityKeys {
     /** FLAT（%）：護盾消失後 1 秒內受到的傷害更少 x%（骸骨祭給的召喚物）。 */
     public static final String SHIELD_LOST_LESS = "offering.shield_lost_less";
     /** 喚駒（Rhoa Mount）的技能代號。 */
-    public static final String MOUNT_SKILL = "summon_mount";
+    public static final String MOUNT_SKILL = "steed_call";
     /** FLAT（%）：坐騎更多 x% 最大生命——坐騎打不死，換成騎著時的重暈門檻更多 x%（AilmentService）。 */
     public static final String MOUNT_LIFE_MORE = "mount.life_more";
 }

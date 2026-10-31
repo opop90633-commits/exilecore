@@ -47,17 +47,17 @@ class EstimateParityTest {
 
     @Test
     void lineageEstimateMatchesPrepare() {
-        final SkillBuild plain = build("earthquake");
+        final SkillBuild plain = build("ground_tremor");
         assertTrue(LineageMechanics.estimateModifiers(plain, 1000).isEmpty(), "沒掛血脈輔助");
         // 傲寒：照滿魔力付 20%，附加這筆的 15% 物理與冰冷（跟 prepare 一樣）
-        final SkillBuild hubris = build("earthquake", "olroths_hubris");
+        final SkillBuild hubris = build("ground_tremor", "proud_frost");
         final List<Modifier> mods = LineageMechanics.estimateModifiers(hubris, 1000);
         assertEquals(LineageMechanics.hubrisAdded(200), mods);
         final StatSheet sheet = new StatSheet();
         final StatSheet effective = LineageMechanics.estimated(hubris, 1000).profile().effective(sheet);
         assertEquals(30, effective.flat(StatKeys.DAMAGE_ADDED_MIN, Set.copyOf(DamageType.COLD.tags())), 1e-9);
         // 血滲：每 20 點生命消耗 2%（最多 40%）
-        final SkillBuild blood = build("earthquake", "ataluis_bloodletting");
+        final SkillBuild blood = build("ground_tremor", "blood_seep");
         final double expected = LineageMechanics.bloodlettingPercent(blood.manaCost(), 2);
         assertEquals(expected, LineageMechanics.estimated(blood, 0).profile().effective(sheet)
                 .flat(StatKeys.damageExtra(DamageType.PHYSICAL), Set.of(Tags.PHYSICAL)), 1e-9);
@@ -66,8 +66,8 @@ class EstimateParityTest {
     @Test
     void hitOnlyFactorUsesSupports() {
         final StatSheet sheet = new StatSheet();
-        assertEquals(1.0, SupportMechanics.hitOnlyFactor(sheet, build("fireball").profile()), 1e-9);
-        final SkillBuild searing = build("fireball", "searing_ii");
+        assertEquals(1.0, SupportMechanics.hitOnlyFactor(sheet, build("blazing_star_shell").profile()), 1e-9);
+        final SkillBuild searing = build("blazing_star_shell", "prairie_blaze_ii");
         final double factor = SupportMechanics.hitOnlyFactor(sheet, searing.profile());
         assertTrue(factor < 1.0, "燎原 II：擊中傷害更少");
         assertEquals(searing.profile().effective(sheet).more(tw.exilecore.stats.SupportKeys.DAMAGE_HIT, searing.profile().tags()), factor, 1e-9);
@@ -115,7 +115,7 @@ class EstimateParityTest {
         owner.add(Modifier.flat(StatKeys.EVASION, 1000, "裝備"));
         owner.add(Modifier.flat(StatKeys.STR, 100, "天賦"));
         owner.add(Modifier.flat(tw.exilecore.stats.TreeNewMechanicKeys.FLAG_COMPANION_STRENGTH, 1, "天賦"));
-        final SkillBuild wolves = build("wolf_pack", "tangmazus_thurible");
+        final SkillBuild wolves = build("grey_wolf_escort", "giant_ally");
         final StatSheet derived = new StatSheet().overlay(MinionEstimates.estimate(wolves, owner, 2.0));
         assertEquals(400, derived.flat(StatKeys.EVASION, Set.of()), 1e-9, "巨伴：你閃避的 40%");
         assertEquals(400, derived.flat(StatKeys.LIFE_MAX, Set.of()), 1e-9, "力量 100 × 2 生命 × 換算 2");
@@ -125,7 +125,7 @@ class EstimateParityTest {
 
     @Test
     void dazingTextMatchesEffect() {
-        final SupportDefinition dazing = config.support("dazing");
+        final SupportDefinition dazing = config.support("shock_dizzy");
         assertTrue(dazing.description().contains("8 秒") && dazing.description().contains("暈眩累積更多 50%"));
         assertFalse(dazing.description().contains("傷害更少"));
         assertTrue(dazing.modifiers().stream().noneMatch(m -> m.stat().equals(StatKeys.STUN_BUILDUP)), "照 PoE2：沒有增加暈眩累積");
@@ -135,7 +135,7 @@ class EstimateParityTest {
     @Test
     void conditionalNamesReadSkillSheets() {
         final StatSheet sheet = new StatSheet();
-        final SkillBuild execute = build("earthquake", "execute");
+        final SkillBuild execute = build("ground_tremor", "execute");
         assertTrue(BuffImpact.conditionalNames(sheet).isEmpty(), "角色的表上沒有");
         assertEquals(List.of("對低血的敵人"), BuffImpact.conditionalNames(List.of(sheet, execute.profile().effective(sheet))));
         final StatSheet beast = new StatSheet();

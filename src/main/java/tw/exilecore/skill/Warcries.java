@@ -46,7 +46,7 @@ final class Warcries {
     /** 祭柱找骷髏的範圍（格）。 */
     static final double SPIKE_SEARCH = 12;
     /** 2026-10-30：骸骨祭（骨柱生命 0.35 倍；其他祭品 0.18 倍）。 */
-    static final String ROLE_BONE = "bone_offering";
+    static final String ROLE_BONE = "bone_rite";
 
     /** 一根祭柱（2026-10-30 照 PoE2：mob 是骨柱本身的召喚物，被打死祭品就結束）。 */
     private record Spike(org.bukkit.entity.BlockDisplay display, org.bukkit.scheduler.BukkitTask task, long start, java.util.UUID mob) {
@@ -229,7 +229,7 @@ final class Warcries {
     // ---- 2026-10-26 照 PoE2 0.5：強度、強化、守護、燃爆、回聲 ----
 
     /** 盾的攻擊（堅壁戰吼的強化只給這些；照 PoE2 的 Shield 攻擊）。 */
-    static final java.util.Set<String> SHIELD_ATTACKS = java.util.Set.of("shield_rush", "resonating_shield", "shield_wall");
+    static final java.util.Set<String> SHIELD_ATTACKS = java.util.Set.of("iron_wall_ram", "shield_drum", "earth_wall_strike");
 
     /** 2026-10-27 照 PoE2（Fortifying Cry 要 Armoured Shield）：強化盾的攻擊的戰吼要在副手裝有護甲的盾。 */
     static boolean needsShield(final SkillDefinition definition) {

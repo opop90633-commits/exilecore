@@ -289,7 +289,7 @@ final class SkillExecutor {
                         damage.hit(origin.owner(), other, splashProfile, null);
                     }
                 }
-                tw.exilecore.skill.Fx.spawn(target.getWorld(), org.bukkit.Particle.SWEEP_ATTACK, SkillTargets.center(target), 2, radius * 0.3, 0.2, radius * 0.3, 0);
+                tw.exilecore.skill.Fx.disk(target.getWorld(), org.bukkit.Particle.SWEEP_ATTACK, SkillTargets.center(target), 2, radius, 0.2, 0);
             }
         }
         // 2026-10-25：揮到的範圍裡的鐘、冰晶直接被打到（不用旁邊有敵人）
@@ -322,7 +322,7 @@ final class SkillExecutor {
         Location center = origin.feet();
         // 冰新星（2026-10 PoE2）：自己的霜鑽還在飛就從那裡爆開
         if (origin.self() && hasFlag(build.definition(), tw.exilecore.stats.StatKeys.FLAG_NOVA_FROM_FROSTBOLT)) {
-            final Location bolt = projectiles.latest(origin.owner().getUniqueId(), "frostbolt", center, 30);
+            final Location bolt = projectiles.latest(origin.owner().getUniqueId(), "frost_drill", center, 30);
             if (bolt != null) {
                 center = bolt;
             }
@@ -574,7 +574,7 @@ final class SkillExecutor {
     static final double THUNDER_MORE_PER_CHARGE = 50;
     static final double THUNDER_MORE_CHARGED = 100;
     /** 品質：每用掉一顆銳星再更多 x%（FLAT，加在 50% 上）。 */
-    public static final String THUNDER_QUALITY = "falling_thunder.per_charge_more";
+    public static final String THUNDER_QUALITY = "startle_thunder_chop.per_charge_more";
     /** 每顆銳星幾發（stages.thunder 沒寫 count 時）。 */
     static final int THUNDER_PER_CHARGE = 3;
     /** PoE2 active_skill_projectile_speed_+%_variation_final 50：每一發的速度各自 ±50%（往前散開）。 */
@@ -2472,7 +2472,7 @@ final class SkillExecutor {
         max.add(tw.exilecore.stats.DamageType.PHYSICAL, extra);
         final SkillProfile profile = new SkillProfile(base.id(), base.tags(), base.effectiveness(), min, max, base.conversion(), base.local());
         // 2026-10-28 照 PoE2 Detonate Dead（poe2db：爆炸延遲 400 毫秒）：先冒煙預警，8 tick 後才炸；這次之前當下就炸
-        Fx.spawn(center.getWorld(), org.bukkit.Particle.LARGE_SMOKE, center, 10, radius * 0.3, 0.2, radius * 0.3, 0.01);
+        tw.exilecore.skill.Fx.disk(center.getWorld(), org.bukkit.Particle.LARGE_SMOKE, center, 10, radius, 0.2, 0.01);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (owner != null && !owner.isOnline()) {
                 return;

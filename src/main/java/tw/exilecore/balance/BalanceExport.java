@@ -42,7 +42,7 @@ import java.util.concurrent.CompletableFuture;
  *   <li>角色：資料庫 character_profiles 的快照（網頁角色頁那份：等級、昇華、技能與輔助、裝備的傳奇、天賦代碼、估計每秒傷害、假人實測）。
  *       只算 {@value #ACTIVE_DAYS} 天內更新過的（有上線）。</li>
  *   <li>戰鬥：輸出紀錄（{@link DpsRecords}）最近 {@value #RECORD_DAYS} 天的 Boss 場次：每個主技能、昇華、Boss 的中位數與 90 百分位。</li>
- *   <li>靜態：所有技能的係數（20 級）與 PoE2 的比值（{@code balance/poe2_skills.csv}）、輔助、傳奇的清單，讓報表自己就能對照。</li>
+ *   <li>靜態：所有技能的係數（20 級）與 PoE2 的比值（{@code balance/ref_skills.csv}）、輔助、傳奇的清單，讓報表自己就能對照。</li>
  *   <li>異常：實測每秒傷害超過同等級區間中位數 3 倍的技能、沒人用的技能與輔助。</li>
  * </ul>
  * 玩家名字會列出來（看異常值要追人）；這份檔只有管理員拿得到。
@@ -138,7 +138,7 @@ public final class BalanceExport {
             bosses(records, root, md);
             outliers(characters, records, root, md);
             root.add("static", statics);
-            poe2Table(statics, md);
+            refTable(statics, md);
             mapRuns(BalanceRecords.get(plugin).recentMaps(RECORD_DAYS), root, md); // 2026-10-25：第二步
             deaths(BalanceRecords.get(plugin).recentDeaths(RECORD_DAYS), root, md);
             return write(root, md);
@@ -896,7 +896,7 @@ public final class BalanceExport {
     /** 所有技能（20 級係數、PoE2 對照）、輔助、傳奇。 */
     private JsonObject statics() {
         final JsonObject json = new JsonObject();
-        final Map<String, String[]> poe2 = poe2();
+        final Map<String, String[]> ref = ref();
         final JsonObject skills = new JsonObject();
         if (plugin.skills() != null) {
             for (final SkillDefinition d : plugin.skills().config().all()) {
@@ -910,16 +910,16 @@ public final class BalanceExport {
                 s.addProperty("effectiveness20", d.effectiveness().at(20));
                 s.addProperty("effectiveness1", d.effectiveness().at(1));
                 s.add("tags", GSON.toJsonTree(d.tags()));
-                final String[] p = poe2.get(d.id());
+                final String[] p = ref.get(d.id());
                 if (p != null) {
                     // 2026-10-26：攻擊比傷害效益 %；法術比 20 級的平均基礎傷害（CSV 的法術一直填的是平均傷害，以前誤拿效益去除）
                     final double ours = d.isAttack() ? d.effectiveness().at(20) * 100 : spellAverage(d, 20);
                     s.addProperty("ours20", ours);
-                    s.addProperty("poe2Name", p[0]);
-                    s.addProperty("poe2Lv20", Double.parseDouble(p[1]));
-                    s.addProperty("ratioToPoe2", ours / Double.parseDouble(p[1]));
+                    s.addProperty("refName", p[0]);
+                    s.addProperty("refLv20", Double.parseDouble(p[1]));
+                    s.addProperty("ratioToRef", ours / Double.parseDouble(p[1]));
                     if (!p[2].isBlank()) {
-                        s.addProperty("poe2Note", p[2]);
+                        s.addProperty("refNote", p[2]);
                     }
                 }
                 skills.add(d.id(), s);
@@ -960,10 +960,10 @@ public final class BalanceExport {
         return (range[0] + range[1]) / 2;
     }
 
-    /** balance/poe2_skills.csv：技能代號 → {PoE2 名字, 20 級數值, 備註}。 */
-    private Map<String, String[]> poe2() {
+    /** balance/ref_skills.csv：技能代號 → {PoE2 名字, 20 級數值, 備註}。 */
+    private Map<String, String[]> ref() {
         final Map<String, String[]> map = new HashMap<>();
-        try (InputStream in = BalanceExport.class.getResourceAsStream("/balance/poe2_skills.csv")) {
+        try (InputStream in = BalanceExport.class.getResourceAsStream("/balance/ref_skills.csv")) {
             if (in == null) {
                 return map;
             }
@@ -982,7 +982,7 @@ public final class BalanceExport {
         return map;
     }
 
-    private void poe2Table(final JsonObject statics, final List<String> md) {
+    private void refTable(final JsonObject statics, final List<String> md) {
         if (!statics.has("skills")) {
             return;
         }
@@ -994,16 +994,16 @@ public final class BalanceExport {
         md.add("| 技能 | 類型 | 我們 | 對照 | 比值 |");
         md.add("|---|---|---|---|---|");
         final List<Map.Entry<String, JsonElement>> rows = new ArrayList<>(statics.getAsJsonObject("skills").entrySet());
-        rows.removeIf(e -> !e.getValue().getAsJsonObject().has("ratioToPoe2"));
-        rows.sort((a, b) -> Double.compare(a.getValue().getAsJsonObject().get("ratioToPoe2").getAsDouble(),
-                b.getValue().getAsJsonObject().get("ratioToPoe2").getAsDouble()));
+        rows.removeIf(e -> !e.getValue().getAsJsonObject().has("ratioToRef"));
+        rows.sort((a, b) -> Double.compare(a.getValue().getAsJsonObject().get("ratioToRef").getAsDouble(),
+                b.getValue().getAsJsonObject().get("ratioToRef").getAsDouble()));
         for (final Map.Entry<String, JsonElement> e : rows) {
             final JsonObject s = e.getValue().getAsJsonObject();
-            final double ratio = s.get("ratioToPoe2").getAsDouble();
+            final double ratio = s.get("ratioToRef").getAsDouble();
             final boolean attack = "attack".equals(s.get("type").getAsString());
             final String unit = attack ? "%" : "";
             md.add("| " + s.get("name").getAsString() + " | " + (attack ? "攻擊" : "法術") + " | "
-                    + Math.round(s.get("ours20").getAsDouble()) + unit + " | " + Math.round(s.get("poe2Lv20").getAsDouble()) + unit + " | "
+                    + Math.round(s.get("ours20").getAsDouble()) + unit + " | " + Math.round(s.get("refLv20").getAsDouble()) + unit + " | "
                     + String.format(Locale.ROOT, "%.2f", ratio) + " |");
         }
     }

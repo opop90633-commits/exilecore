@@ -53,16 +53,16 @@ public final class StageAttacks implements Listener {
     static final String MARK = "stage.this";
 
     // ---- 技能代號 ----
-    static final String BEAR_SLAM = "bear_slam";
-    static final String SHRED = "wolf_shred";
-    static final String CROSS = "cross_slash";
-    static final String REND = "wyvern_rend";
-    static final String LANCE = "glacial_lance";
-    static final String PRIMAL = "primal_strikes";
-    static final String RAIN = "rain_of_arrows";
-    static final String DOMAIN = "toxic_domain";
-    static final String SHIELD_RUSH = "shield_rush";
-    static final String MAGNETIC = "magnetic_salvo";
+    static final String BEAR_SLAM = "field_quake_stomp";
+    static final String SHRED = "swift_claw";
+    static final String CROSS = "crisscross_claw";
+    static final String REND = "wing_blade_slash";
+    static final String LANCE = "ice_cone_toss";
+    static final String PRIMAL = "thunderclap_stab";
+    static final String RAIN = "myriad_arrow_fall";
+    static final String DOMAIN = "miasma_zone";
+    static final String SHIELD_RUSH = "iron_wall_ram";
+    static final String MAGNETIC = "magnet_thunder_barrage";
 
     // ---- 隱藏技能 ----
     static final String CROSS_SHOCKWAVE = "proc_cross_shockwave";
@@ -70,7 +70,7 @@ public final class StageAttacks implements Listener {
     static final String PRIMAL_SPIRIT = "proc_primal_spirit";
     static final String PUSTULE = "proc_domain_pustule";
     /** 2026-10-28 照 PoE2 Glacial Bolt 的 Wall：凍壁矢留下的冰晶碎掉時用冰牆自己的表炸（其他冰晶照舊 proc_crystal_burst）。 */
-    static final Map<String, String> CRYSTAL_BURST = Map.of("glacial_bolt", "proc_glacial_bolt_wall");
+    static final Map<String, String> CRYSTAL_BURST = Map.of("frozen_wall_shaft", "proc_glacial_bolt_wall");
 
     // ---- PoE2 的固定數值 ----
     /** 震野踏：狂怒猛擊要 10 點怒氣（bear_slam_spend_X_rage_for_stronger_slam）、震波 2 → 3 公尺。 */
@@ -97,7 +97,7 @@ public final class StageAttacks implements Listener {
     static final double REND_GAIN = 50;
     static final double REND_AREA = 2.5;
     static final double REND_SPEED = -0.2;
-    static final String REND_BUFF = "wyvern_rend.charged";
+    static final String REND_BUFF = "wing_blade_slash.charged";
     /** 交錯爪：用掉印記之後 150 毫秒震波。 */
     static final long CROSS_DELAY = 3;
     /** 寒錐投：冰碎片 6 秒（用掉怒星時 1 秒後炸開）、碎片爆炸 2.6 公尺。 */
@@ -117,7 +117,7 @@ public final class StageAttacks implements Listener {
     static final double PUSTULE_RADIUS_CAP = 1.5;
     static final double DOMAIN_COST = 25;
     static final long BLOOM_LINGER = 15;
-    static final String BLOOM_BUFF = "toxic_domain.bloom";
+    static final String BLOOM_BUFF = "miasma_zone.bloom";
     /** 瘴域逐級數值（level_modifiers）：每分鐘回復生命、毒苞每存幾點毒更多 1% 傷害、每存幾點毒半徑 +0.1 公尺。 */
     static final String DOMAIN_REGEN = "domain.regen_per_minute";
     static final String PUSTULE_MORE_PER = "pustule.more_per";
@@ -129,8 +129,8 @@ public final class StageAttacks implements Listener {
 
     static final Map<String, ShieldAdd> SHIELD_SKILLS = Map.of(
             SHIELD_RUSH, new ShieldAdd(DamageType.PHYSICAL, 3, 5, 0, 0),
-            "resonating_shield", new ShieldAdd(DamageType.PHYSICAL, 5, 7, 0, 0),
-            "shield_wall", new ShieldAdd(DamageType.PHYSICAL, 5, 7, 0, 0),
+            "shield_drum", new ShieldAdd(DamageType.PHYSICAL, 5, 7, 0, 0),
+            "earth_wall_strike", new ShieldAdd(DamageType.PHYSICAL, 5, 7, 0, 0),
             "proc_magma_spray", new ShieldAdd(DamageType.FIRE, 5, 7, 5, 7));
     /** 鐵壁衝撞撞上的那一下（Collision）：每 15 點護甲 6～8（範圍那一下 3～5）。 */
     static final double COLLISION_MIN = 6;
@@ -492,7 +492,7 @@ public final class StageAttacks implements Listener {
                         service.executor().hitOne(player, burst.profile(), target, at, 0);
                     }
                 }
-                at.getWorld().spawnParticle(Particle.ITEM_SNOWBALL, at.clone().add(0, 0.4, 0), 10, radius * 0.4, 0.2, radius * 0.4, 0.05);
+                tw.exilecore.skill.Fx.disk(at.getWorld(), Particle.ITEM_SNOWBALL, at.clone().add(0, 0.4, 0), 10, radius, 0.2, 0.05);
             }
             from.getWorld().playSound(to, Sound.BLOCK_GLASS_BREAK, SoundCategory.PLAYERS, 1f, 0.8f);
         }, delay);

@@ -454,14 +454,14 @@ public final class ConditionTracker {
             case TreeConditions.RAISING_SHIELD -> skills != null && skills.buffActivePrefix(player, GUARD_BUFF);
             case TreeConditions.PARRYING -> skills != null && skills.buffHasStat(player, GUARD_BUFF, StatKeys.FLAG_PARRY);
             case TreeConditions.CHARM_ACTIVE -> skills != null && skills.buffActivePrefix(player, CHARM_BUFF);
-            case TreeConditions.HERALD -> skills != null && (skills.auraActive(player, "herald_of_ash") || skills.auraActive(player, "herald_of_ice")
-                    || skills.auraActive(player, "herald_of_thunder") || skills.auraActive(player, "herald_of_plague")
-                    || skills.auraActive(player, "herald_of_blood"));
-            case TreeConditions.HERALD_ASH -> skills != null && skills.auraActive(player, "herald_of_ash");
-            case TreeConditions.HERALD_ICE -> skills != null && skills.auraActive(player, "herald_of_ice");
-            case TreeConditions.HERALD_THUNDER -> skills != null && skills.auraActive(player, "herald_of_thunder");
-            case TreeConditions.HERALD_PLAGUE -> skills != null && skills.auraActive(player, "herald_of_plague");
-            case TreeConditions.HERALD_BLOOD -> skills != null && skills.auraActive(player, "herald_of_blood");
+            case TreeConditions.HERALD -> skills != null && (skills.auraActive(player, "ember_envoy") || skills.auraActive(player, "frost_envoy")
+                    || skills.auraActive(player, "thunder_envoy") || skills.auraActive(player, "plague_envoy")
+                    || skills.auraActive(player, "blood_proclaim"));
+            case TreeConditions.HERALD_ASH -> skills != null && skills.auraActive(player, "ember_envoy");
+            case TreeConditions.HERALD_ICE -> skills != null && skills.auraActive(player, "frost_envoy");
+            case TreeConditions.HERALD_THUNDER -> skills != null && skills.auraActive(player, "thunder_envoy");
+            case TreeConditions.HERALD_PLAGUE -> skills != null && skills.auraActive(player, "plague_envoy");
+            case TreeConditions.HERALD_BLOOD -> skills != null && skills.auraActive(player, "blood_proclaim");
             case TreeConditions.TOTEM -> skills != null && skills.totemCount(player) > 0;
             case TreeConditions.IGNITED -> plugin.ailments() != null && plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.IGNITE);
             case TreeConditions.CHILLED -> plugin.ailments() != null && plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.CHILL);

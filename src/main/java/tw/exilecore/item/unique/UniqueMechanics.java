@@ -224,7 +224,7 @@ public final class UniqueMechanics implements Listener {
         }
         // 2026-10-27（雷頌墜）：暴擊時觸發落雷
         if (result.crit() && StatKeys.flag(sheet, UniqueStats.TRIGGER_CRIT_LIGHTNING_BOLT)) {
-            trigger(player, "lightning_bolt", event.defender().getLocation(), now);
+            trigger(player, "thunder_drop", event.defender().getLocation(), now);
         }
     }
 
@@ -325,7 +325,7 @@ public final class UniqueMechanics implements Listener {
         // 2026-10-27（縛地長杖）：殺死感電的敵人時觸發游雷（在異常清掉之前看）
         if (StatKeys.flag(sheet, UniqueStats.TRIGGER_KILL_SHOCKED_SPARK) && plugin.ailments() != null
                 && plugin.ailments().has(victim, AilmentType.SHOCK)) {
-            trigger(killer, "spark", victim.getLocation(), now());
+            trigger(killer, "roaming_thunder", victim.getLocation(), now());
         }
         // 2026-10-27（喪鈴法器）：擊殺時 x% 機率讓能量護盾立刻開始回充
         final double recharge = sheet.flat(UniqueStats.ES_RECHARGE_ON_KILL, Set.of());
@@ -534,7 +534,7 @@ public final class UniqueMechanics implements Listener {
         while (total >= step && triggers < 2) {
             total -= step;
             triggers++;
-            plugin.skills().triggerSkill(player, "decompose", at);
+            plugin.skills().triggerSkill(player, "rotting_corpse_blast", at);
         }
         travelled.put(uuid, Math.min(total, step));
     }

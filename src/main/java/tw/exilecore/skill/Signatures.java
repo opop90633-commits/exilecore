@@ -30,7 +30,7 @@ import java.util.UUID;
  * <ul>
  *   <li>蓄力放開（{@link ChargeSpec}）：穿雲箭、蓄勁一擊的完美時機，炎核爆的疊層</li>
  *   <li>whirl：旋矛擊每揮一次讓旋風升一階（最多 3 階），離開旋風範圍就崩散，階數越高越痛</li>
- *   <li>lance：霆落矛（2026-10-31 照 PoE2：貫穿的投射物，飛到準心插著）插 6 秒，每 0.8 秒朝附近的敵人放一道連鎖閃電，時間到消失；同時最多 3 支（第 4 支讓最舊的消失）。
+ *   <li>lance：霆落矛（2026-10-31 照 PoE2：貫穿的投射物，飛到準心插著）插 6 秒，每 0.8 秒朝附近的敵人放一道連鎖閃電，時間到消失；同時最多 3 支（第 4 支插下時最舊的那支引爆）。
  *       2026-10-15 照 PoE2 的風暴之槍：有怒星就消耗一顆，這支只插 1.5 秒但每 0.2 秒放電、物理全部轉閃電，時間到自動引爆並留下感電地面；
  *       你的其他技能打在矛附近（2.5 格）會把它提早引爆</li>
  *   <li>bolt_spear：擲雷槍（PoE2 的閃電長矛）有怒星就消耗一顆，矛分裂成 3 支</li>
@@ -556,8 +556,7 @@ final class Signatures {
                         .multiply(WHIRL_KNOCKBACK * (1 + WHIRL_KNOCKBACK_PER_STAGE * (whirl.stage - 1))).setY(0.25)));
             }
         }
-        whirl.center.getWorld().spawnParticle(Particle.SWEEP_ATTACK, whirl.center.clone().add(0, 1, 0), 6 * whirl.stage, radius / 2, 0.4,
-                radius / 2, 0);
+        tw.exilecore.skill.Fx.disk(whirl.center.getWorld(), Particle.SWEEP_ATTACK, whirl.center.clone().add(0, 1, 0), 6 * whirl.stage, radius, 0.4, 0);
         whirl.center.getWorld().playSound(whirl.center, Sound.ENTITY_BREEZE_WIND_BURST, SoundCategory.PLAYERS, 0.8f, 1.0f);
     }
 
@@ -581,7 +580,11 @@ final class Signatures {
         // 2026-10-28 照 PoE2：「上限 3 支插著的矛」吃 +x 上限（過剩）
         while (mine.size() >= LANCE_MAX + OriginalSkills.qualityInt(build.qualityFlat(tw.exilecore.stats.GemQualityKeys.OVERCHARGED_LIMIT))
                 + SkillLimits.bonus(plugin.players().sheet(player), build)) {
-            mine.pollFirst(); // 2026-10-31 照 PoE2 的上限（Limit：the oldest effect will disappear）：第 4 支讓最舊的消失；這次之前最舊的提早炸開
+            // 2026-10-31 照站長：超過上限時最舊的那支引爆（原作是直接消失：Limit：the oldest effect will disappear）
+            final Lance oldest = mine.pollFirst();
+            if (oldest != null && oldest.at().getWorld() == player.getWorld()) {
+                detonate(player, oldest);
+            }
         }
         final Integer chargedBenefit = own ? chargedLance.remove(player.getUniqueId()) : null;
         final boolean charged = chargedBenefit != null;
@@ -599,8 +602,18 @@ final class Signatures {
         }
         final SkillBuild sub = subBuild(player, "storm_lance_burst", lance.build(), share("storm_lance_burst", lance.build(), LANCE_BURST_SHARE));
         if (sub != null) {
+            // 2026-10-31 照站長：引爆的 3 格吃範圍加成（半徑 × 範圍倍率）
             // 2026-10-26 照 PoE2：不是一圈爆炸，是往 3 格內的敵人射 16 道閃電（每道隨機挑一個敵人；這次之前是一圈 nova）
-            final List<LivingEntity> near = new java.util.ArrayList<>(service.targets().around(lance.at(), LANCE_BURST_RANGE, player));
+            final double burstRange = LANCE_BURST_RANGE * Math.max(sub.areaScale(), lance.build().areaScale());
+            final List<LivingEntity> near = new java.util.ArrayList<>(service.targets().around(lance.at(), burstRange, player));
+            // 2026-10-31：引爆時畫出實際範圍（吃範圍加成），看得出範圍變大
+            final int ringPoints = (int) Math.max(12, Math.min(60, Math.round(burstRange * 8)));
+            for (int i = 0; i < ringPoints; i++) {
+                final double angle = Math.PI * 2 * i / ringPoints;
+                Fx.spawn(lance.at().getWorld(), Particle.ELECTRIC_SPARK,
+                        lance.at().clone().add(Math.cos(angle) * burstRange, 0.3, Math.sin(angle) * burstRange), 1, 0.05, 0.05, 0.05, 0.01);
+            }
+            Fx.disk(lance.at().getWorld(), Particle.ELECTRIC_SPARK, lance.at().clone().add(0, 0.6, 0), (int) Math.min(40, 8 * burstRange), burstRange, 0.4, 0.05);
             final Location from = lance.at().clone().add(0, 1.0, 0);
             for (int i = 0; i < LANCE_BURST_BOLTS && !near.isEmpty(); i++) {
                 final LivingEntity target = near.get(plugin.random().nextInt(near.size()));
@@ -735,7 +748,7 @@ final class Signatures {
             if (now >= lance.nextZap()[0]) {
                 lance.nextZap()[0] = now + lance.zapEvery();
                 final List<LivingEntity> near = service.targets().around(lance.at(),
-                        lance.zapEvery() < LANCE_ZAP ? LANCE_CHARGED_ZAP_RANGE : LANCE_ZAP_RANGE, player);
+                        (lance.zapEvery() < LANCE_ZAP ? LANCE_CHARGED_ZAP_RANGE : LANCE_ZAP_RANGE) * lance.build().areaScale(), player);
                 if (!near.isEmpty()) {
                     final SkillBuild sub = subBuild(player, "storm_lance_bolt", lance.build(), share("storm_lance_bolt", lance.build(), LANCE_ZAP_SHARE));
                     if (sub != null) {

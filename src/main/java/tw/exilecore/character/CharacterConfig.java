@@ -138,14 +138,14 @@ public final class CharacterConfig {
     }
 
     private static List<StarterSkillRule> defaultStarterSkills() {
-        return List.of(new StarterSkillRule("bow", "lightning_arrow"), new StarterSkillRule("crossbow", "explosive_bolt"),
-                new StarterSkillRule("quarterstaff", "tempest_flurry"), new StarterSkillRule("spear", "lightning_spear"),
-                new StarterSkillRule("wand", "essence_drain", "witch"), new StarterSkillRule("staff", "essence_drain", "witch"),
-                new StarterSkillRule("wand", "fireball"), new StarterSkillRule("staff", "fireball"),
+        return List.of(new StarterSkillRule("bow", "thunderclap_arrow"), new StarterSkillRule("crossbow", "blasting_quarrel"),
+                new StarterSkillRule("quarterstaff", "gale_combo"), new StarterSkillRule("spear", "thunder_lance_throw"),
+                new StarterSkillRule("wand", "soul_draw_shot", "witch"), new StarterSkillRule("staff", "soul_draw_shot", "witch"),
+                new StarterSkillRule("wand", "blazing_star_shell"), new StarterSkillRule("staff", "blazing_star_shell"),
                 // 2026-10-26：權杖照 PoE2 沒有傷害（不是錘），送法術
-                new StarterSkillRule("sceptre", "essence_drain", "witch"), new StarterSkillRule("sceptre", "fireball"),
-                new StarterSkillRule("talisman", "bear_maul"),
-                new StarterSkillRule("mace", "boneshatter"), new StarterSkillRule("melee", "earthquake"));
+                new StarterSkillRule("sceptre", "soul_draw_shot", "witch"), new StarterSkillRule("sceptre", "blazing_star_shell"),
+                new StarterSkillRule("talisman", "mountain_shake_claw"),
+                new StarterSkillRule("mace", "spine_crush"), new StarterSkillRule("melee", "ground_tremor"));
     }
 
     public void load(final Path dataFolder) throws IOException {

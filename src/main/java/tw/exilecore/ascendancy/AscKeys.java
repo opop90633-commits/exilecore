@@ -29,7 +29,7 @@ public final class AscKeys {
     /** 每秒獲得一層玉石（最多 10 層，每層 1% 額外物理減免；玉石之護）。 */
     public static final String JADE = "asc.jade";
     /** 召喚圖騰時觸發先祖之魂（先祖之引）。 */
-    public static final String ANCESTRAL_SPIRITS = "asc.ancestral_spirits";
+    public static final String ANCESTRAL_SPIRITS = "asc.forebear_manifest";
     /** 擊中傷害有 x% 先從最近的圖騰生命扣（堅木之壘 20）。 */
     public static final String WOODEN_WALL = "asc.wooden_wall";
     /** 戰吼引爆屍體，造成屍體最大生命 x% 的物理傷害（戰爭之哮 25）。 */
@@ -243,7 +243,7 @@ public final class AscKeys {
     /** 施放法術時犧牲 x% 最大能量護盾（異能賦予 5）；完全支付的法術更多 30% 傷害。 */
     public static final String ELDRITCH = "asc.eldritch";
     /** 詛咒的敵人被擊殺時 x% 機率爆炸（割裂靈魂 33）。 */
-    public static final String RUPTURE = "asc.rupture";
+    public static final String RUPTURE = "asc.vein_break";
     /** 你施加的詛咒持續時間無限、可以額外施加 1 個詛咒（不斷爭吵）。 */
     public static final String CURSE_INFINITE = "asc.curse_infinite";
     public static final String CURSE_EXTRA = "asc.curse_extra";

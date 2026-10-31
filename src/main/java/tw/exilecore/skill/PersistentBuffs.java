@@ -38,15 +38,15 @@ import java.util.UUID;
  */
 final class PersistentBuffs implements Listener {
 
-    static final String TIME_OF_NEED = "time_of_need";
-    static final String GHOST_DANCE = "ghost_dance";
-    static final String BARKSKIN = "barkskin";
+    static final String TIME_OF_NEED = "guard_moment";
+    static final String GHOST_DANCE = "spectral_step";
+    static final String BARKSKIN = "wood_armor";
 
     static final String BLESSING_INTERVAL = "blessing.interval";
     static final String BLESSING_LIFE = "blessing.life";
     static final String SHROUD_INTERVAL = "shroud.interval";
     static final String SHROUD_ES_REGEN = "shroud.es_regen";
-    static final String BARKSKIN_ARMOUR = "barkskin.armour";
+    static final String BARKSKIN_ARMOUR = "wood_armor.armour";
 
     /** 幽魂護罩最多幾層。 */
     static final int SHROUD_MAX = 3;

@@ -20,7 +20,7 @@ class CharacterConfigTest {
     }
 
     @Test
-    void experienceTableIsThePoe2Table() {
+    void experienceTableIsTheRefTable() {
         assertEquals(120, config.levelCap()); // 2026-10：上限 120（100 級以後的經驗表另外檢查）
         assertEquals(525, config.experienceToNext(1));
         long previous = 0;
@@ -71,7 +71,7 @@ class CharacterConfigTest {
     }
 
     @Test
-    void highLevelsAreAsHardAsPoe2() {
+    void highLevelsAreAsHardAsRef() {
         assertEquals(80, config.monsterLevelCap(), "算等級差時怪物最高算 80 級（PoE2 的地圖上限）");
         // 90 級打 T16（84 級，算 80 級）：差 10 級，安全範圍 8，超出 2 級
         assertEquals(config.levelDifferenceFactor(90, 80), config.levelDifferenceFactor(90, 84), 1e-12);

@@ -100,24 +100,24 @@ class StarterKitTest {
     void starterSkillFollowsTheWeapon() {
         final CharacterClass marauder = CharacterClass.MARAUDER;
         // 錘送碎骨擊；其他近戰武器（例如拿掉的斧）送地震
-        assertEquals("boneshatter", StarterKits.skill(config, marauder, items.base("mace1_23")));
-        assertEquals("boneshatter", StarterKits.skill(config, marauder, items.base("mace2_26")));
-        assertEquals("fireball", StarterKits.skill(config, marauder, items.base("csceptre_01")), "2026-10-26：權杖照 PoE2 沒有傷害（不是錘），送法術");
-        assertEquals("essence_drain", StarterKits.skill(config, CharacterClass.WITCH, items.base("csceptre_01")));
-        assertEquals("earthquake", StarterKits.skill(config, marauder, items.base("hand_axe")));
-        assertEquals("lightning_arrow", StarterKits.skill(config, CharacterClass.RANGER, items.base("bow_23")));
-        assertEquals("explosive_bolt", StarterKits.skill(config, CharacterClass.MERCENARY, items.base("xbow_23")));
-        assertEquals("tempest_flurry", StarterKits.skill(config, CharacterClass.MONK, items.base("qstaff_25")));
-        assertEquals("lightning_spear", StarterKits.skill(config, CharacterClass.HUNTRESS, items.base("spear_26")));
-        assertEquals("bear_maul", StarterKits.skill(config, CharacterClass.DRUID, items.base("talis_18")));
+        assertEquals("spine_crush", StarterKits.skill(config, marauder, items.base("mace1_23")));
+        assertEquals("spine_crush", StarterKits.skill(config, marauder, items.base("mace2_26")));
+        assertEquals("blazing_star_shell", StarterKits.skill(config, marauder, items.base("csceptre_01")), "2026-10-26：權杖照 PoE2 沒有傷害（不是錘），送法術");
+        assertEquals("soul_draw_shot", StarterKits.skill(config, CharacterClass.WITCH, items.base("csceptre_01")));
+        assertEquals("ground_tremor", StarterKits.skill(config, marauder, items.base("hand_axe")));
+        assertEquals("thunderclap_arrow", StarterKits.skill(config, CharacterClass.RANGER, items.base("bow_23")));
+        assertEquals("blasting_quarrel", StarterKits.skill(config, CharacterClass.MERCENARY, items.base("xbow_23")));
+        assertEquals("gale_combo", StarterKits.skill(config, CharacterClass.MONK, items.base("qstaff_25")));
+        assertEquals("thunder_lance_throw", StarterKits.skill(config, CharacterClass.HUNTRESS, items.base("spear_26")));
+        assertEquals("mountain_shake_claw", StarterKits.skill(config, CharacterClass.DRUID, items.base("talis_18")));
         // 法杖、長杖：混沌術士送汲魂彈，其他職業送熾星彈
-        assertEquals("fireball", StarterKits.skill(config, CharacterClass.SORCERESS, items.base("wand_14")));
-        assertEquals("fireball", StarterKits.skill(config, CharacterClass.SORCERESS, items.base("staff_17")));
-        assertEquals("fireball", StarterKits.skill(config, marauder, items.base("wand_14")));
-        assertEquals("essence_drain", StarterKits.skill(config, CharacterClass.WITCH, items.base("wand_14")));
-        assertEquals("essence_drain", StarterKits.skill(config, CharacterClass.WITCH, items.base("staff_17")));
+        assertEquals("blazing_star_shell", StarterKits.skill(config, CharacterClass.SORCERESS, items.base("wand_14")));
+        assertEquals("blazing_star_shell", StarterKits.skill(config, CharacterClass.SORCERESS, items.base("staff_17")));
+        assertEquals("blazing_star_shell", StarterKits.skill(config, marauder, items.base("wand_14")));
+        assertEquals("soul_draw_shot", StarterKits.skill(config, CharacterClass.WITCH, items.base("wand_14")));
+        assertEquals("soul_draw_shot", StarterKits.skill(config, CharacterClass.WITCH, items.base("staff_17")));
         // 不看職業的武器：誰拿都一樣
-        assertEquals("explosive_bolt", StarterKits.skill(config, CharacterClass.WITCH, items.base("xbow_23")));
+        assertEquals("blasting_quarrel", StarterKits.skill(config, CharacterClass.WITCH, items.base("xbow_23")));
         assertNull(StarterKits.skill(config, marauder, null));
     }
 
@@ -207,7 +207,7 @@ class StarterKitTest {
     void defaultDataHasNoStarterProblems() {
         assertEquals(List.of(), StarterKits.problems(items, config));
         assertEquals(List.of(), StarterKits.skillProblems(config, id -> skills.skill(id) != null && !skills.skill(id).hidden()));
-        assertEquals(3, StarterKits.skillProblems(config, id -> !id.equals("fireball")).size(), "法杖、長杖、權杖三條規則都指到熾星彈");
+        assertEquals(3, StarterKits.skillProblems(config, id -> !id.equals("blazing_star_shell")).size(), "法杖、長杖、權杖三條規則都指到熾星彈");
     }
 
     @Test
@@ -237,17 +237,17 @@ class StarterKitTest {
         Files.writeString(dir.resolve("character.yml"), """
                 starter:
                   skills:
-                    - { weapon: wand, skill: spark, class: sorceress }
-                    - { weapon: wand, skill: fireball }
+                    - { weapon: wand, skill: roaming_thunder, class: sorceress }
+                    - { weapon: wand, skill: blazing_star_shell }
                 """);
         final CharacterConfig custom = new CharacterConfig();
         custom.load(dir);
-        assertEquals("spark", custom.starterSkill(CharacterClass.SORCERESS, Set.of("wand")));
-        assertEquals("fireball", custom.starterSkill(CharacterClass.WITCH, Set.of("wand")), "別的職業跳過這條");
+        assertEquals("roaming_thunder", custom.starterSkill(CharacterClass.SORCERESS, Set.of("wand")));
+        assertEquals("blazing_star_shell", custom.starterSkill(CharacterClass.WITCH, Set.of("wand")), "別的職業跳過這條");
         assertEquals("sorceress", custom.starterSkills().get(0).classId());
         assertNull(custom.starterSkills().get(1).classId());
 
-        Files.writeString(dir.resolve("character.yml"), "starter:\n  skills:\n    - { weapon: wand, skill: spark, class: paladin }\n");
+        Files.writeString(dir.resolve("character.yml"), "starter:\n  skills:\n    - { weapon: wand, skill: roaming_thunder, class: paladin }\n");
         final IllegalArgumentException error = assertThrows(IllegalArgumentException.class, () -> new CharacterConfig().load(dir));
         assertTrue(error.getMessage().contains("paladin"));
     }

@@ -114,21 +114,21 @@ class AscOriginalSystemsTest {
     @Test
     void advancedThaumaturgyGivesTheAdditionalQualityEffect() {
         // 冰霜箭：額外的品質效果 (0—40)% 更多投射物速度
-        final List<Modifier> frostbolt = AscBuild.advanced("frostbolt", 20, List.of());
+        final List<Modifier> frostbolt = AscBuild.advanced("frost_drill", 20, List.of());
         assertEquals(1, frostbolt.size());
         assertEquals(StatKeys.SKILL_PROJECTILE_SPEED, frostbolt.getFirst().stat());
         assertEquals(ModType.MORE, frostbolt.getFirst().type());
         assertEquals(0.40, frostbolt.getFirst().value(), 1e-9);
         // 一般品質效果照樣保留，再加上額外的
         final List<Modifier> normal = List.of(Modifier.increased(StatKeys.DAMAGE, 0.2, "品質 20%"));
-        final List<Modifier> spark = AscBuild.advanced("spark", 20, normal);
+        final List<Modifier> spark = AscBuild.advanced("roaming_thunder", 20, normal);
         assertEquals(2, spark.size());
         assertEquals(4, spark.get(1).value(), 1e-9, "電球：+4 投射物");
         // 額外效果的機制還沒有的寶石：照舊把一般品質再算一次（平衡等效）
-        assertEquals(AscBuild.twice(normal), AscBuild.advanced("fireball", 20, normal));
+        assertEquals(AscBuild.twice(normal), AscBuild.advanced("blazing_star_shell", 20, normal));
         // 從一般品質移到額外品質效果的（原作的一般品質沒有這條）
-        assertTrue(GemQuality.modifiers("snap", 20, "q").stream().noneMatch(m -> m.stat().equals(StatKeys.COOLDOWN_RECOVERY)));
-        assertTrue(GemQuality.hasAdvanced("snap"));
+        assertTrue(GemQuality.modifiers("anomaly_devour_blast", 20, "q").stream().noneMatch(m -> m.stat().equals(StatKeys.COOLDOWN_RECOVERY)));
+        assertTrue(GemQuality.hasAdvanced("anomaly_devour_blast"));
         assertNull(GemQuality.advancedModifiers("no_such_skill", 20, "q"));
     }
 

@@ -201,8 +201,8 @@ class LifeConfigTest {
             drops.add(drop.kind() + ":" + drop.id());
         }
         assertTrue(drops.containsAll(java.util.Set.of("unique:abyss_echo", "unique:tidewhisper_bow", "unique:tide_devourer",
-                "skill:tide_call", "support:tidal_resonance", "unique:undertow_coil", "unique:whalesong_pearl", "skill:abyssal_pull",
-                "support:undertow_drag", "support:whale_breath")), drops.toString()); // 2026-10-18：淵鯨再多 2 件傳奇、1 顆技能、2 顆輔助
+                "skill:summon_tide", "support:ebb_flow_resonance", "unique:undertow_coil", "unique:whalesong_pearl", "skill:whale_gulp_vortex",
+                "support:dark_current_pull", "support:whale_exhale")), drops.toString()); // 2026-10-18：淵鯨再多 2 件傳奇、1 顆技能、2 顆輔助
         assertTrue(config.titles().containsKey("abyss_hunter"));
     }
 }

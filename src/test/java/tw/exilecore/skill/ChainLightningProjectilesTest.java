@@ -26,15 +26,15 @@ class ChainLightningProjectilesTest {
 
     private static SkillBuild arc(final String... supports) {
         final List<SupportDefinition> list = java.util.Arrays.stream(supports).map(config::support).toList();
-        return SkillBuild.of(config, config.skill("arc"), 20, 90, false, list, Set.of(), new StatSheet());
+        return SkillBuild.of(config, config.skill("chain_thunder"), 20, 90, false, list, Set.of(), new StatSheet());
     }
 
     @Test
     void myriadStarsGivesArcThreeBeams() {
         final SkillBuild plain = arc();
         assertEquals(1, SkillExecutor.chainBeams(plain.definition(), plain.projectiles()));
-        assertNull(config.support("myriad_stars").refusal(config.skill("arc")), "星辰萬象掛得上鏈雷");
-        final SkillBuild myriad = arc("myriad_stars");
+        assertNull(config.support("star_panorama").refusal(config.skill("chain_thunder")), "星辰萬象掛得上鏈雷");
+        final SkillBuild myriad = arc("star_panorama");
         assertEquals(3, myriad.projectiles());
         assertEquals(3, SkillExecutor.chainBeams(myriad.definition(), myriad.projectiles()), "額外 2 個投射物 → 3 道");
         assertEquals(plain.chains() + 1, myriad.chains(), "多連鎖 1 次（每道都是）");
@@ -44,14 +44,14 @@ class ChainLightningProjectilesTest {
     @Test
     void nonProjectileChainSkillsStayOneBeam() {
         // 原作血脈牽、裂隙之手不是投射物：投射物數量不影響
-        assertEquals(1, SkillExecutor.chainBeams(config.skill("exsanguinate"), 3));
-        assertEquals(1, SkillExecutor.chainBeams(config.skill("rift_hand"), 3));
-        assertEquals(3, SkillExecutor.chainBeams(config.skill("arc"), 3));
+        assertEquals(1, SkillExecutor.chainBeams(config.skill("blood_vein_tether"), 3));
+        assertEquals(1, SkillExecutor.chainBeams(config.skill("fissure_hand"), 3));
+        assertEquals(3, SkillExecutor.chainBeams(config.skill("chain_thunder"), 3));
     }
 
     @Test
     void novaProjectilesSpreadArcInACircle() {
-        final SkillBuild nova = arc("myriad_stars", "nova_projectiles");
+        final SkillBuild nova = arc("star_panorama", "ring_shot");
         assertEquals(360, nova.spread(), 1e-9, "環射：鏈雷的幾道往四周一圈");
     }
 

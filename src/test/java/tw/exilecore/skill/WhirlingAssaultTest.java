@@ -31,8 +31,8 @@ class WhirlingAssaultTest {
     private static final Set<String> STAFF = Set.of(Tags.QUARTERSTAFF, Tags.MELEE, Tags.TWO_HAND);
 
     @Test
-    void definitionMatchesPoe2() {
-        final SkillDefinition whirl = config.skill("whirling_rush");
+    void definitionMatchesRef() {
+        final SkillDefinition whirl = config.skill("spinning_staff_step");
         assertEquals(Mechanic.DASH, whirl.mechanic());
         assertEquals(11, whirl.tier());
         assertTrue(whirl.tags().containsAll(List.of(Tags.ATTACK, Tags.MELEE, Tags.AREA, Tags.STRIKE)));
@@ -54,7 +54,7 @@ class WhirlingAssaultTest {
 
     @Test
     void addedSecondIsNotScaledByAttackSpeed() {
-        final SkillDefinition whirl = config.skill("whirling_rush");
+        final SkillDefinition whirl = config.skill("spinning_staff_step");
         final SkillBuild slow = SkillBuild.of(config, whirl, 20, 90, false, List.of(), STAFF, new StatSheet());
         final StatSheet fast = new StatSheet();
         fast.add(Modifier.increased(StatKeys.ATTACK_SPEED, 1.0, "test"));
@@ -95,7 +95,7 @@ class WhirlingAssaultTest {
 
     @Test
     void spinRadiusGrowsWithLevelArea() {
-        final SkillDefinition whirl = config.skill("whirling_rush");
+        final SkillDefinition whirl = config.skill("spinning_staff_step");
         final SkillBuild one = SkillBuild.of(config, whirl, 1, 90, false, List.of(), STAFF, new StatSheet());
         final SkillBuild twenty = SkillBuild.of(config, whirl, 20, 90, false, List.of(), STAFF, new StatSheet());
         assertEquals(Math.sqrt(1.01), one.areaScale(), 1e-9);
@@ -104,13 +104,13 @@ class WhirlingAssaultTest {
 
     @Test
     void qualityIsAttackSpeedAndAdvancedIsMorePhysical() {
-        final SkillDefinition whirl = config.skill("whirling_rush");
+        final SkillDefinition whirl = config.skill("spinning_staff_step");
         final List<Modifier> normal = SkillService.qualityModifiers(whirl, 20);
         assertEquals(1, normal.size());
         assertEquals(StatKeys.ATTACK_SPEED, normal.get(0).stat());
         assertEquals(ModType.INCREASED, normal.get(0).type());
         assertEquals(0.20, normal.get(0).value(), 1e-9, "20% 品質：增加 20% 攻擊速度");
-        final List<Modifier> advanced = tw.exilecore.ascendancy.AscBuild.advanced("whirling_rush", 20, normal);
+        final List<Modifier> advanced = tw.exilecore.ascendancy.AscBuild.advanced("spinning_staff_step", 20, normal);
         assertTrue(advanced.stream().anyMatch(m -> m.stat().equals(StatKeys.DAMAGE) && m.type() == ModType.MORE
                 && Math.abs(m.value() - 0.20) < 1e-9 && m.tags().contains("physical")), "高階奇術：更多 20% 物理傷害 " + advanced);
     }

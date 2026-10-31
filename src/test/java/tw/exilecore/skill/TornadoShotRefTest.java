@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 2026-10-28 照 PoE2 0.5 的龍捲射擊（poe2db／RePoE Tornado Shot）：裂空箭。 */
-class TornadoShotPoe2Test {
+class TornadoShotRefTest {
 
     static SkillConfig config;
 
@@ -30,7 +30,7 @@ class TornadoShotPoe2Test {
 
     @Test
     void tornadoDealsPhysicalDotPerLevel() {
-        final TornadoSpec spec = config.tornado("tornado_shot");
+        final TornadoSpec spec = config.tornado("sky_rend_arrow");
         assertNotNull(spec);
         assertEquals(4.3, spec.dps(1), 1e-9);
         assertEquals(43.9, spec.dps(10), 1e-9);
@@ -38,13 +38,13 @@ class TornadoShotPoe2Test {
         assertEquals(241.8, spec.dps(21), 1e-9);
         assertEquals(4450.3, spec.dps(40), 1e-9);
         assertEquals(tw.exilecore.core.Units.metres(3.0), spec.radius().at(20), 1e-9, "龍捲風 3 公尺（secondary radius 30）"); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
-        assertEquals(tw.exilecore.core.Units.metres(1.0), config.skill("tornado_shot").params().explode().at(20), 1e-9, "落地衝擊 1 公尺（radius 10）");
+        assertEquals(tw.exilecore.core.Units.metres(1.0), config.skill("sky_rend_arrow").params().explode().at(20), 1e-9, "落地衝擊 1 公尺（radius 10）");
         assertEquals(15, spec.duration(), 1e-9);
     }
 
     @Test
     void tornadoDisappearsAfterHitsPerLevel() {
-        final TornadoSpec spec = config.tornado("tornado_shot");
+        final TornadoSpec spec = config.tornado("sky_rend_arrow");
         assertEquals(5, spec.hits(1));
         assertEquals(5, spec.hits(5));
         assertEquals(6, spec.hits(6));
@@ -55,24 +55,24 @@ class TornadoShotPoe2Test {
 
     @Test
     void copiedProjectilesLessAddsWithQualityMore() {
-        final TornadoSpec spec = config.tornado("tornado_shot");
+        final TornadoSpec spec = config.tornado("sky_rend_arrow");
         assertEquals(60, spec.copyLess(1), 1e-9);
         assertEquals(41, spec.copyLess(20), 1e-9);
         assertEquals(21, spec.copyLess(40), 1e-9);
         assertEquals(0.59, spec.copyFactor(20, 0), 1e-9);
         // 品質 20%：+15（同一條 tornado_shot_projectile_damage_+%_final：−41 + 15 = −26）
-        final double more = SkillService.qualityFlat(config.skill("tornado_shot"), 20, TornadoSpec.COPY_MORE);
+        final double more = SkillService.qualityFlat(config.skill("sky_rend_arrow"), 20, TornadoSpec.COPY_MORE);
         assertEquals(15, more, 1e-9);
         assertEquals(0.74, spec.copyFactor(20, more), 1e-9);
-        final String text = SkillService.qualityText(config.skill("tornado_shot"), 20);
+        final String text = SkillService.qualityText(config.skill("sky_rend_arrow"), 20);
         assertTrue(text.contains("複製的投射物更多 15%"), text);
     }
 
     @Test
     void advancedQualityRaisesTornadoLimit() {
-        final TornadoSpec spec = config.tornado("tornado_shot");
+        final TornadoSpec spec = config.tornado("sky_rend_arrow");
         assertEquals(1, spec.limit(0));
-        final List<Modifier> advanced = tw.exilecore.ascendancy.AscBuild.advanced("tornado_shot", 20, List.of());
+        final List<Modifier> advanced = tw.exilecore.ascendancy.AscBuild.advanced("sky_rend_arrow", 20, List.of());
         final double bonus = advanced.stream().filter(m -> m.stat().equals(TornadoSpec.LIMIT)).mapToDouble(Modifier::value).sum();
         assertEquals(3, spec.limit(bonus), "20% 品質 +2");
         assertEquals(2, spec.limit(1.5), "小數捨去");
@@ -93,8 +93,8 @@ class TornadoShotPoe2Test {
 
     @Test
     void windTagIsShown() {
-        assertTrue(config.skill("tornado_shot").tags().contains("wind"));
+        assertTrue(config.skill("sky_rend_arrow").tags().contains("wind"));
         assertEquals("疾風", ModifierText.tagName("wind"));
-        assertTrue(SkillService.tagNames(config.skill("tornado_shot")).contains("疾風"));
+        assertTrue(SkillService.tagNames(config.skill("sky_rend_arrow")).contains("疾風"));
     }
 }

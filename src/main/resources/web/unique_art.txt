@@ -5823,7 +5823,7 @@ item star_warden_vestments
   ...accccccccc...
   ................
   ................
-item redflare_wrap
+item crimsonarc_wrap
   c=8c7575
   d=b79c9c
   a=dcbcbc
@@ -5851,7 +5851,7 @@ item redflare_wrap
   ...iffiffiffi...
   ................
   ................
-item hateforge_greaves
+item spiteforge_greaves
   a=806c68
   b=ae9c98
   c=dfd4d1
@@ -6887,7 +6887,7 @@ item bloodthorn_staff
   ae..............
   b...............
 
-item heroic_tragedy
+item frost_elegy_jewel
   a=0d1409
   b=233219
   c=395828
@@ -6919,7 +6919,7 @@ item heroic_tragedy
   ......aaaa......
   ................
 
-item undying_hate
+item abyss_grudge_jewel
   a=100914
   b=281932
   c=442858
@@ -7079,7 +7079,7 @@ item ingenious_cord
   ................
   ................
 
-item storm_choir_amulet
+item thunder_chorus_amulet
   h=8e8984
   c=b8b005
   i=b8b005
@@ -7202,7 +7202,7 @@ item void_eye_amulet
   .....bbbbbe.....
   ................
 
-item carnage_heart_amulet
+item slaughter_heart_amulet
   a=6e2133
   b=470e1c
   c=814c59
@@ -7400,7 +7400,7 @@ item wraithwrap_robe
   ....iiiiiiii....
   ................
 
-item foxshade_vest
+item foxshadow_vest
   a=0e0c14
   b=2b2238
   c=3f3452
@@ -7523,7 +7523,7 @@ item pragmatist_armour
   ................
   ................
 
-item titanrot_plate
+item rotgiant_plate
   a=42444d
   b=545866
   c=181a1f
@@ -7553,7 +7553,7 @@ item titanrot_plate
   ................
   ................
 
-item wandering_reliquary
+item roaming_reliquary
   a=42444d
   b=545866
   c=181a1f
@@ -7645,7 +7645,7 @@ item deathforce_raiment
   ................
   ................
 
-item barrow_coat
+item tomb_dweller_coat
   a=49525e
   b=5f7186
   c=8e201e
@@ -7677,7 +7677,7 @@ item barrow_coat
   ................
   ................
 
-item icetomb_vestments
+item frostcrypt_vestments
   a=48424d
   b=5d5466
   c=1b181f
@@ -7768,7 +7768,7 @@ item butcher_apron
   ................
   ................
 
-item kingsguard_plate
+item royalward_plate
   a=42444d
   b=545866
   c=181a1f
@@ -7798,7 +7798,7 @@ item kingsguard_plate
   ................
   ................
 
-item dancing_mirage_jacket
+item shadowdance_jacket
   c=8b7575
   d=b79c9c
   a=dccfbb
@@ -7829,7 +7829,7 @@ item dancing_mirage_jacket
   ................
   ................
 
-item darkray_sabatons
+item duskgleam_sabatons
   a=757a7d
   b=d2c147
   c=908327
@@ -7856,7 +7856,7 @@ item darkray_sabatons
   ................
   ................
 
-item powertread_shoes
+item keenstep_shoes
   a=378a98
   d=1799ac
   c=47c5d8
@@ -7883,7 +7883,7 @@ item powertread_shoes
   ................
   ................
 
-item briarpatch_boots
+item thornbush_boots
   a=4f1e28
   b=6d2835
   c=210c10
@@ -7912,7 +7912,7 @@ item briarpatch_boots
   ................
   ................
 
-item wondertrap_slippers
+item fortune_slippers
   c=0c1e21
   g=0a1517
   f=399bac
@@ -7941,7 +7941,7 @@ item wondertrap_slippers
   ................
   ................
 
-item errant_sabatons
+item wayfarer_sabatons
   a=757c75
   b=4cd247
   c=2a9027
@@ -8236,7 +8236,7 @@ item widowsong_bow_pulling_2
   .a.eee..........
   ................
 
-item doomfletch_bow
+item dreadfeather_bow
   e=140c08
   g=b94f23
   b=8e3416
@@ -8267,7 +8267,7 @@ item doomfletch_bow
   .f.g............
   ................
 
-item blueflame_cuffs
+item azureflame_cuffs
   a=1a1a22
   b=38384a
   c=f05520
@@ -8350,7 +8350,7 @@ item treefinger_mitts
   ..faaaaffaaaaf..
   ...ffff..ffff...
 
-item northpaw_bracers
+item northclaw_bracers
   a=806c68
   b=ae9b97
   c=dfd4d1
@@ -8378,7 +8378,7 @@ item northpaw_bracers
   ..faaaaffaaaaf..
   ...ffff..ffff...
 
-item applause_gloves
+item ovation_gloves
   a=2f407c
   b=4e63ac
   c=8698d8
@@ -8406,7 +8406,7 @@ item applause_gloves
   ..faaaaffaaaaf..
   ...ffff..ffff...
 
-item snakebite_bracers
+item viperfang_bracers
   a=1a1a22
   b=39394a
   c=8125ec
@@ -8456,7 +8456,7 @@ item wisdom_action_wraps
   ................
   ................
 
-item death_articulated
+item bonejoint_gauntlets
   a=5f1e66
   b=862e90
   c=ae49b9
@@ -8484,7 +8484,7 @@ item death_articulated
   ..faaaaffaaaaf..
   ...ffff..ffff...
 
-item nightscale_gloves
+item duskscale_gloves
   a=2f577c
   b=4e7fac
   c=86b1d8
@@ -8602,7 +8602,7 @@ item blacksun_greathelm
   ................
   ................
 
-item bronzebeard_crown
+item copperbeard_crown
   a=2a0c0c
   b=8e2424
   c=cc5454
@@ -8660,7 +8660,7 @@ item scholar_crown
   ...iiiiiiiiii...
   ................
 
-item forbidden_tiara
+item veiled_tiara
   a=193d5e
   b=3573ac
   c=8ec8fe
@@ -8690,7 +8690,7 @@ item forbidden_tiara
   ................
   ................
 
-item myris_hood
+item shadowwife_hood
   g=243d8e
   h=243d8e
   b=546fc8
@@ -8721,7 +8721,7 @@ item myris_hood
   ...iiiiiiiiii...
   ................
 
-item ironride_helm
+item ironrider_visor
   d=303012
   g=d5d364
   e=aca927
@@ -8751,7 +8751,7 @@ item ironride_helm
   ................
   ................
 
-item elevore_hood
+item soaring_hood
   a=241d18
   b=5a4131
   c=312720
@@ -8807,7 +8807,7 @@ item rage_horns
   ................
   ................
 
-item caelyn_wings
+item wrathwing_helm
   c=188c5a
   d=43e39e
   e=165038
@@ -8900,7 +8900,7 @@ item beastlord_hood
   ...iiiiiiiiii...
   ................
 
-item devouring_diadem
+item corpse_eater_circlet
   a=4c195e
   b=8d35ac
   c=e18efe
@@ -8930,7 +8930,7 @@ item devouring_diadem
   ................
   ................
 
-item smiling_knight_helm
+item grinning_knight_helm
   d=301220
   g=d56498
   e=ac2764
@@ -8991,7 +8991,7 @@ item nightveil_crown
   ...iiiiiiiiii...
   ................
 
-item brotherhood_call_ring
+item brother_thunder_ring
   a=dff0ff
   b=6f7b7f
   c=3b6181
@@ -9023,7 +9023,7 @@ item brotherhood_call_ring
   .....jjjjjj.....
   .......jj.......
 
-item brotherhood_whisper_ring
+item brother_frost_ring
   a=dff0ff
   b=6f7b7f
   c=3b6181
@@ -9055,7 +9055,7 @@ item brotherhood_whisper_ring
   .....jjjjjj.....
   .......jj.......
 
-item damning_ring
+item hexbind_ring
   g=121920
   b=0c126f
   a=727afd
@@ -9121,7 +9121,7 @@ item merchant_seal_ring
   .....jjjjjj.....
   .......jj.......
 
-item vigilant_ring
+item watchful_ring
   g=1f2013
   b=6d490f
   a=fac975
@@ -9181,7 +9181,7 @@ item feather_fortress
   ..t..........t..
   ................
 
-item surrender_tower
+item yielding_tower
   e=120a0c
   d=9b99ac
   g=ab1a2f
@@ -9210,7 +9210,7 @@ item surrender_tower
   .......ae.......
   ................
 
-item doomgate_tower
+item fategate_tower
   a=191914
   b=41285b
   c=c7b7d8
@@ -9264,7 +9264,7 @@ item darkhold_buckler
   ....fffaafff....
   .......ff.......
 
-item phoenix_crest
+item ashrise_crest
   a=261818
   b=7b8397
   c=c6cbd6
@@ -9297,7 +9297,7 @@ item phoenix_crest
   ......abba......
   .......aa.......
 
-item dionadair_tower
+item unmoving_tower
   o=1e1315
   i=5a5a62
   m=8a8a94
@@ -9357,7 +9357,7 @@ item blackgod_pillar
   ......abba......
   .......aa.......
 
-item nightfall_tower
+item duskfall_tower
   e=120b0a
   d=9b99ac
   g=ab281a
@@ -9386,7 +9386,7 @@ item nightfall_tower
   .......ae.......
   ................
 
-item brynhand_club
+item twinstrike_club
   a=0c1a0d
   b=2a6a34
   c=498a54
@@ -9411,7 +9411,7 @@ item brynhand_club
   .a..............
   ................
 
-item seeing_stars_mace
+item starstruck_mace
   a=0a101a
   b=263f6c
   c=465f8c
@@ -9438,7 +9438,7 @@ item seeing_stars_mace
   .a..............
   ................
 
-item shyaba_maul
+item unwavering_maul
   a=36413d
   b=222827
   c=b661ff
@@ -9474,7 +9474,7 @@ item shyaba_maul
   nl..............
   nn..............
 
-item daevata_spear
+item thrustwind_spear
   a=ffffff
   b=4b4179
   c=7f7f7f
@@ -9514,7 +9514,7 @@ item daevata_spear
   il.m............
   m.m.............
 
-item taryn_shiver
+item frostshiver_spear
   a=131d28
   b=38506b
   c=6ab7ff
@@ -9540,7 +9540,7 @@ item taryn_shiver
   .b.a............
   ..a.............
 
-item earthbound_staff
+item groundbolt_staff
   a=282713
   b=6b6838
   c=fff06a
@@ -9602,7 +9602,7 @@ item shardsire_staff
   il..............
   dn..............
 
-item enezun_wand
+item thrift_wand
   a=19213a
   b=8999aa
   c=7a9cff
@@ -9659,7 +9659,7 @@ item blood_diviner_wand
   .ged............
   ..g.............
 
-item collapsing_horizon
+item fallen_horizon
   a=1d0d15
   c=892555
   g=ae165f
@@ -9688,7 +9688,7 @@ item collapsing_horizon
   ae..............
   b...............
 
-item caged_god_pillar
+item prisoned_god_staff
   a=0e1d0e
   c=288728
   g=19ab1d
@@ -9717,7 +9717,7 @@ item caged_god_pillar
   ae..............
   b...............
 
-item sentry_staff
+item nightwatch_staff
   a=1d100c
   b=5c787f
   c=ffece5
@@ -9746,7 +9746,7 @@ item sentry_staff
   ae..............
   b...............
 
-item dark_defiler_sceptre
+item gravedark_sceptre
   a=764181
   b=0a000c
   c=140218
@@ -9782,7 +9782,7 @@ item dark_defiler_sceptre
   .ll.............
   .h..............
 
-item eternal_spark_focus
+item undying_ember_focus
   a=2d2e1b
   b=393a26
   c=232414
@@ -9811,7 +9811,7 @@ item eternal_spark_focus
   .......ae.......
   ................
 
-item threaded_light_focus
+item woven_light_focus
   a=1b1c2e
   b=26273a
   c=141524
@@ -9840,7 +9840,7 @@ item threaded_light_focus
   .......ae.......
   ................
 
-item deathrattle_focus
+item funeral_bell_focus
   a=1b2b2e
   b=26373a
   c=142124
@@ -9871,7 +9871,7 @@ item deathrattle_focus
 
 # ---- 2026-10 自動產生（tools/gen_unique_art.py）----（2026-10-28）
 
-item blackflame
+item shadowfire
   e=4b1365
   b=4b1365
   j=4b1365
@@ -9908,7 +9908,7 @@ item blackflame
 # ---- 2026-10-28 補上：今天新增的 9 件傳奇與石拳之道的 21 件手套傳奇（照基底的圖換色、加一顆寶石；之後可以手改）----
 
 # 2026-10-28 補圖：照基底 body_str_int_23 換色、加一顆寶石（綺夢）
-item reverie
+item hollow_dream
   a=0f1214
   b=212243
   c=313362
@@ -9937,7 +9937,7 @@ item reverie
   ...a.....g...a..
 
 # 2026-10-28 補圖：照基底 spear_24 換色、加一顆寶石（阿茲里的輕視）
-item atziris_contempt
+item empress_sneer
   a=064ca5
   b=6a19e3
   c=7bb4fb
@@ -9967,7 +9967,7 @@ item atziris_contempt
   ..ff............
 
 # 2026-10-28 補圖：照基底 helm_dex_int_17 換色、加一顆寶石（謎容）
-item the_vertex
+item faceless_mask
   d=121316
   e=3f6599
   a=3f6599
@@ -9996,7 +9996,7 @@ item the_vertex
   ................
 
 # 2026-10-28 補圖：照基底 csceptre_06 換色、加一顆寶石（神聖烈焰）
-item sacred_flame
+item hallowed_fire
   a=507b7c
   b=000000
   c=000000
@@ -10031,7 +10031,7 @@ item sacred_flame
   .h..............
 
 # 2026-10-28 補圖：照基底 jring_09 換色、加一顆寶石（元素之章）
-item the_taming
+item tamer_ring
   a=2d473e
   b=77ab99
   c=c1e1d6
@@ -10056,7 +10056,7 @@ item the_taming
   ................
 
 # 2026-10-28 補圖：照基底 jring_10 換色、加一顆寶石（貝雷克的冰與火之歌）
-item bereks_pass
+item frostfire_ring
   a=492c2b
   b=ad7975
   c=a3ffe6
@@ -10081,7 +10081,7 @@ item bereks_pass
   ................
 
 # 2026-10-28 補圖：照基底 jring_11 換色、加一顆寶石（貝雷克的火與雷之樂）
-item bereks_respite
+item firestorm_ring
   a=a3ffd4
   b=965860
   c=76474b
@@ -10113,7 +10113,7 @@ item bereks_respite
   .......jj.......
 
 # 2026-10-28 補圖：照基底 jbelt_fine 換色、加一顆寶石（薛朗的背包）
-item shavronnes_satchel
+item wanderer_satchel
   a=1c1d1f
   b=413028
   c=5d4639
@@ -10144,7 +10144,7 @@ item shavronnes_satchel
   ................
 
 # 2026-10-28 補圖：照基底 body_str_int_23 換色、加一顆寶石（吉爾菲的聖殿）
-item geofris_sanctuary
+item faith_sanctuary
   a=0f1214
   b=2a4321
   c=3e6231
@@ -10173,7 +10173,7 @@ item geofris_sanctuary
   ...a.....g...a..
 
 # 2026-10-28 補圖：照基底 legs_str_16 換色、加一顆寶石（阿茲里的捷思）
-item atziri_acuity
+item empress_insight
   a=408f8a
   b=6fbeb7
   c=81e5d1
@@ -10201,7 +10201,7 @@ item atziri_acuity
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_int_16 換色、加一顆寶石（製燭者）
-item candlemaker
+item wickmaker
   a=26858a
   b=38c3c8
   c=81e5e5
@@ -10229,7 +10229,7 @@ item candlemaker
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_int_16 換色、加一顆寶石（縫魔）
-item demon_stitcher
+item seamwright
   a=8a262b
   b=c8383e
   c=e58189
@@ -10257,7 +10257,7 @@ item demon_stitcher
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_str_16 換色、加一顆寶石（驚懼之拳）
-item dreadfist
+item fearfist
   a=8f8e40
   b=bebb6f
   c=e5d681
@@ -10285,7 +10285,7 @@ item dreadfist
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_dex_int_13 換色、加一顆寶石（精華收割器）
-item essentia_sanguis
+item blood_drinker
   a=7a2f0e
   b=af4314
   c=b67940
@@ -10313,7 +10313,7 @@ item essentia_sanguis
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_str_16 換色、加一顆寶石（毀面者）
-item facebreaker
+item toothcollector
   a=8f406c
   b=be6f9d
   c=e581c5
@@ -10341,7 +10341,7 @@ item facebreaker
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_str_int_14 換色、加一顆寶石（幽墓束縛）
-item gravebind
+item tombgrip
   a=218800
   b=30c300
   c=7a4c9d
@@ -10369,7 +10369,7 @@ item gravebind
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_dex_16 換色、加一顆寶石（驚懼飛掠）
-item horrors_flight
+item terror_glide
   a=291b12
   b=5b1769
   c=a0d93e
@@ -10396,7 +10396,7 @@ item horrors_flight
   ................
 
 # 2026-10-28 補圖：照基底 legs_dex_16 換色、加一顆寶石（遊手好閒）
-item idle_hands
+item restless_hands
   a=291b12
   b=691765
   c=7ed93e
@@ -10423,7 +10423,7 @@ item idle_hands
   ................
 
 # 2026-10-28 補圖：照基底 legs_str_dex_14 換色、加一顆寶石（雅恩格利佩爾）
-item jarngreipr
+item irongrip_gauntlets
   a=458c77
   b=6db8a1
   c=add7ca
@@ -10451,7 +10451,7 @@ item jarngreipr
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_dex_int_13 換色、加一顆寶石（掃興之人）
-item killjoy
+item spoilsport
   a=1e0e7a
   b=2c14af
   c=6740b6
@@ -10479,7 +10479,7 @@ item killjoy
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_int_16 換色、加一顆寶石（奇多可之流）
-item kitoko_current
+item kido_current
   a=43268a
   b=6138c8
   c=9a81e5
@@ -10507,7 +10507,7 @@ item kitoko_current
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_str_16 換色、加一顆寶石（意識之緣）
-item lochtonial_caress
+item mindtouch
   a=5c8f40
   b=8dbe6f
   c=b1e581
@@ -10535,7 +10535,7 @@ item lochtonial_caress
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_dex_16 換色、加一顆寶石（馬雷葛蘿的血染手套）
-item maligaro_virtuosity
+item marg_bloodgloves
   a=291b12
   b=176946
   c=d93ec7
@@ -10562,7 +10562,7 @@ item maligaro_virtuosity
   ................
 
 # 2026-10-28 補圖：照基底 legs_int_16 換色、加一顆寶石（畫家的侍從）
-item painters_servant
+item crimson_brush
   a=8a2652
   b=c83878
   c=e581b1
@@ -10590,7 +10590,7 @@ item painters_servant
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_dex_int_13 換色、加一顆寶石（瘟疫之指）
-item plaguefinger
+item festerfinger
   a=460e7a
   b=6514af
   c=9240b6
@@ -10618,7 +10618,7 @@ item plaguefinger
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_str_int_14 換色、加一顆寶石（悲運之縛）
-item shackles_wretched
+item misery_shackles
   a=88000f
   b=c30016
   c=4c9d85
@@ -10646,7 +10646,7 @@ item shackles_wretched
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_str_dex_14 換色、加一顆寶石（無與倫比）
-item sine_aequo
+item peerless
   a=8c5145
   b=b8796d
   c=d7b4ad
@@ -10674,7 +10674,7 @@ item sine_aequo
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_str_int_14 換色、加一顆寶石（囚犯的鐐銬）
-item prisoners_manacles
+item captive_manacles
   a=008835
   b=00c34c
   c=9d4c8d
@@ -10702,7 +10702,7 @@ item prisoners_manacles
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_dex_int_13 換色、加一顆寶石（轟天雷）
-item thunderfist
+item stormfist
   a=7a120e
   b=af1a14
   c=b65a40
@@ -10730,7 +10730,7 @@ item thunderfist
   ...ffff..ffff...
 
 # 2026-10-28 補圖：照基底 legs_str_int_14 換色、加一顆寶石（主宰之觸）
-item masters_reach
+item binder_grasp
   a=530088
   b=7600c3
   c=7b9d4c
@@ -10757,7 +10757,7 @@ item masters_reach
   ..faaaaffaaaaf..
   ...ffff..ffff...
 
-item crown_of_eyes
+item hundred_eye_crown
   o=1e140a
   g=8a6a1e
   y=d8b048
@@ -10783,7 +10783,7 @@ item crown_of_eyes
   ................
   ................
 
-item bloodbarrier
+item crimson_door_shield
   o=1a0505
   i=5a5a62
   s=9a9aa6
@@ -10809,7 +10809,7 @@ item bloodbarrier
   ....oooiiooo....
   .......oo.......
 
-item lavianga_spirits
+item lavian_spring
   o=0a1430
   g=7a8aa0
   w=d8e4f0
@@ -10835,7 +10835,7 @@ item lavianga_spirits
   .....oooooo.....
   ................
 
-item bones_of_ullr
+item whitebone_treads
   o=1a1418
   b=e8e0c8
   w=fffaf0
@@ -10859,7 +10859,7 @@ item bones_of_ullr
   ..ooooo...ooooo.
   ................
 
-item chober_chaber
+item devotee_maul
   a=2f2f33
   b=49494f
   c=9a9aa6

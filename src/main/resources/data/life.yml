@@ -651,13 +651,13 @@ whale:
     - { unique: abyss_echo, chance: 0.01 }
     - { unique: tidewhisper_bow, chance: 0.01 }
     - { unique: tide_devourer, chance: 0.01 }
-    - { skill: tide_call, chance: 0.01 }
-    - { support: tidal_resonance, chance: 0.01 }
+    - { skill: summon_tide, chance: 0.01 }
+    - { support: ebb_flow_resonance, chance: 0.01 }
     - { unique: undertow_coil, chance: 0.01 }       # 2026-10-18：淵鯨再多 2 件傳奇（其中一顆珠寶）、1 顆技能、2 顆輔助
     - { unique: whalesong_pearl, chance: 0.01 }
-    - { skill: abyssal_pull, chance: 0.01 }
-    - { support: undertow_drag, chance: 0.01 }
-    - { support: whale_breath, chance: 0.01 }
+    - { skill: whale_gulp_vortex, chance: 0.01 }
+    - { support: dark_current_pull, chance: 0.01 }
+    - { support: whale_exhale, chance: 0.01 }
     - { pool: map_boss, chance: 0.03 }
     - { currency: sky_fragment, amount: 2, chance: 1 }
     - { currency: zenith_orb, amount: 4, chance: 1 }

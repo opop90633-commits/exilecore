@@ -27,7 +27,7 @@ import java.util.random.RandomGenerator;
  */
 public final class KillingPalm {
 
-    static final String ID = "killing_palm";
+    static final String ID = "soul_sever_palm";
     /** 衝刺的距離（格）：原作 base_melee_dash_range 65（0.1 公尺一單位）。找目標、連擊找下一隻、標記都用這個距離。 */
     static final double DASH_RANGE = tw.exilecore.core.Units.metres(6.5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     /** 品質的回復分幾秒回完（原作「在 4 秒內恢復」）。 */

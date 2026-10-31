@@ -62,7 +62,7 @@ class LineageSupportTest {
         final List<SupportDefinition> all = lineage();
         // 68 顆新的（supports_lineage.yml）＋ supports.yml 原本的 8 顆（existing 標成血脈）；Rigwald's Ferocity 沒做（我們沒有武器組）
         assertEquals(68 + 8, all.size());
-        assertEquals(21, config.supportsFrom(LineageRules.COMMON).size(), "一般：poe2db 寫 Global 的");
+        assertEquals(21, config.supportsFrom(LineageRules.COMMON).size(), "一般：原作資料 寫 Global 的");
         assertEquals(41, config.supportsFrom(LineageRules.RARE).size(), "稀有：特定 Boss 或沒寫來源的");
         assertEquals(14, config.supportsFrom(LineageRules.PINNACLE).size(), "巔峰：巔峰 Boss 的、改變玩法的");
         final Set<String> names = new HashSet<>();
@@ -74,12 +74,12 @@ class LineageSupportTest {
             assertTrue(names.add(support.name()), "名字重複：" + support.name());
             assertFalse(support.modifiers().isEmpty(), support.id());
         }
-        for (final String id : List.of("vruuns_aftermath", "zerphis_infamy", "paquates_pact", "bhatairs_vengeance", "guatelitzi_ablation",
-                "ailith_chimes", "morganas_tempest", "helbryms_hide")) {
+        for (final String id : List.of("crystal_shatter_howl", "blood_renown", "blood_oath_howl", "frost_grudge_howl", "rite_star",
+                "bell_star", "sweeping_gale", "dormant_shell")) {
             assertTrue(support(id).lineage(), id + "：supports.yml 原本的血脈輔助也標成血脈掉落");
         }
-        assertEquals(LineageRules.PINNACLE, support("zerphis_infamy").source());
-        assertEquals(LineageRules.COMMON, support("helbryms_hide").source());
+        assertEquals(LineageRules.PINNACLE, support("blood_renown").source());
+        assertEquals(LineageRules.COMMON, support("dormant_shell").source());
         assertNull(config.support("rigwalds_ferocity"));
     }
 
@@ -96,47 +96,47 @@ class LineageSupportTest {
 
     @Test
     void lineageDoesNotTakeTheExclusiveSlot() {
-        final SupportDefinition heart = support("permafrost_heart");
-        final SupportDefinition flow = support("rakiatas_flow");
-        final SupportDefinition pyre = support("xophs_pyre");
-        final SkillLoadout.Entry entry = new SkillLoadout.Entry("fireball", 5).withSockets(4).withSupport(0, heart.id());
+        final SupportDefinition heart = support("eternal_frost_heart");
+        final SupportDefinition flow = support("counter_current");
+        final SupportDefinition pyre = support("ember_corrode");
+        final SkillLoadout.Entry entry = new SkillLoadout.Entry("blazing_star_shell", 5).withSockets(4).withSupport(0, heart.id());
         assertNull(SupportDefinition.exclusiveConflict(entry, -1, flow, config::support), "專屬輔助旁邊可以掛血脈輔助");
         // 2026-10-28 照 PoE2：不同的血脈輔助可以掛在同一個技能上（這次之前一個技能只能一顆）
         assertNull(SupportDefinition.exclusiveConflict(entry.withSupport(1, flow.id()), -1, pyre, true, config::support));
         assertNull(SupportDefinition.exclusiveConflict(entry.withSupport(1, flow.id()), 1, pyre, config::support), "換掉同一孔可以");
-        final SkillBuild build = SkillBuild.of(config, config.skill("fireball"), 5, 60, false, List.of(heart, flow, pyre), Set.of(), new StatSheet());
+        final SkillBuild build = SkillBuild.of(config, config.skill("blazing_star_shell"), 5, 60, false, List.of(heart, flow, pyre), Set.of(), new StatSheet());
         assertEquals(3, build.supports().size(), "2026-10-28：不同的血脈輔助都生效");
     }
 
     @Test
     void lineageRefusals() {
-        assertNull(support("rakiatas_flow").refusal(config.skill("fireball")));
-        assertNull(support("ahns_citadel").refusal(config.skill("flame_wall")));
-        assertEquals("要立牆的技能（焰幕、霜壁）", support("ahns_citadel").refusal(config.skill("fireball")));
-        assertNull(support("kaoms_madness").refusal(config.skill("volcanic_fissure")));
-        assertNotNull(support("kaoms_madness").refusal(config.skill("fireball")));
-        assertNull(support("xibaquas_rending").refusal(config.skill("leap_slam")));
-        assertNotNull(support("xibaquas_rending").refusal(config.skill("boneshatter")));
-        assertNull(support("atziris_communion").refusal(config.skill("frost_aegis")));
-        assertNotNull(support("atziris_communion").refusal(config.skill("raise_zombie")), "叫召喚物的不行");
-        assertNull(support("breachlords_amalgam").refusal(config.skill("lightning_arrow")));
-        assertNotNull(support("breachlords_amalgam").refusal(config.skill("fireball")), "要冰冷或閃電");
-        assertNull(support("rathas_assault").refusal(config.skill("explosive_bolt")));
-        assertNotNull(support("rathas_assault").refusal(config.skill("lightning_arrow")));
+        assertNull(support("counter_current").refusal(config.skill("blazing_star_shell")));
+        assertNull(support("split_rampart").refusal(config.skill("flame_curtain")));
+        assertEquals("要立牆的技能（焰幕、霜壁）", support("split_rampart").refusal(config.skill("blazing_star_shell")));
+        assertNull(support("frenzied_rift").refusal(config.skill("flame_vein_rift")));
+        assertNotNull(support("frenzied_rift").refusal(config.skill("blazing_star_shell")));
+        assertNull(support("ember_leap").refusal(config.skill("soaring_smash")));
+        assertNotNull(support("ember_leap").refusal(config.skill("spine_crush")));
+        assertNull(support("blood_pact").refusal(config.skill("winter_shell")));
+        assertNotNull(support("blood_pact").refusal(config.skill("corpse_summon")), "叫召喚物的不行");
+        assertNull(support("rift_tide").refusal(config.skill("thunderclap_arrow")));
+        assertNotNull(support("rift_tide").refusal(config.skill("blazing_star_shell")), "要冰冷或閃電");
+        assertNull(support("linked_chamber").refusal(config.skill("blasting_quarrel")));
+        assertNotNull(support("linked_chamber").refusal(config.skill("thunderclap_arrow")));
         final SkillDefinition permanent = config.visible().stream().filter(s -> s.summon() != null && s.summon().permanent()).findFirst().orElseThrow();
-        assertNull(support("tecrods_revenge").refusal(permanent), "常駐的召喚物");
-        assertEquals("要常駐的召喚物技能", support("tecrods_revenge").refusal(config.skill("raise_zombie")), "我們的殭屍有持續時間");
-        assertNull(support("styrns_ferocity").refusal(config.skill("shield_rush")));
-        assertNotNull(support("styrns_ferocity").refusal(config.skill("boneshatter")));
-        assertNull(support("styrns_mountain").refusal(config.skill("raise_guard")));
-        assertNull(support("zarokhs_refrain").refusal(config.skill("frost_nova")), "以自己為中心的範圍法術");
-        assertNotNull(support("zarokhs_refrain").refusal(config.skill("fireball")), "投射物不是 cascadable");
-        assertNull(support("tricksters_shard").refusal(config.skill("fireball")));
-        assertNull(support("ataluis_bloodletting").refusal(config.skill("fireball")));
-        assertEquals("保留精魂的技能不行", support("ataluis_bloodletting").refusal(config.skill("frost_aegis")));
-        assertNull(support("tasalios_rhythm").refusal(config.skill("true_strike")));
-        assertNull(support("arbiters_ignition").refusal(config.skill("fireball")));
-        assertNotNull(support("arbiters_ignition").refusal(config.skill("spark")), "要火焰法術");
+        assertNull(support("wounded_fight").refusal(permanent), "常駐的召喚物");
+        assertEquals("要常駐的召喚物技能", support("wounded_fight").refusal(config.skill("corpse_summon")), "我們的殭屍有持續時間");
+        assertNull(support("crush_shield").refusal(config.skill("iron_wall_ram")));
+        assertNotNull(support("crush_shield").refusal(config.skill("spine_crush")));
+        assertNull(support("peak_shield").refusal(config.skill("shield_brace")));
+        assertNull(support("triple_loop").refusal(config.skill("frost_star_blast")), "以自己為中心的範圍法術");
+        assertNotNull(support("triple_loop").refusal(config.skill("blazing_star_shell")), "投射物不是 cascadable");
+        assertNull(support("illusion_split").refusal(config.skill("blazing_star_shell")));
+        assertNull(support("blood_seep").refusal(config.skill("blazing_star_shell")));
+        assertEquals("保留精魂的技能不行", support("blood_seep").refusal(config.skill("winter_shell")));
+        assertNull(support("cadence_force").refusal(config.skill("charged_blow")));
+        assertNull(support("ember_judgment").refusal(config.skill("blazing_star_shell")));
+        assertNotNull(support("ember_judgment").refusal(config.skill("roaming_thunder")), "要火焰法術");
         for (final SupportDefinition support : lineage()) {
             assertFalse(support.supports(config.skill(SkillConfig.DEFAULT_MELEE)), "普攻不能掛輔助：" + support.id());
             // 每顆至少有一個玩家學得到的技能掛得上去
@@ -146,31 +146,31 @@ class LineageSupportTest {
 
     @Test
     void uhtredLevelsDependOnOtherSupports() {
-        final SkillDefinition fireball = config.skill("fireball");
+        final SkillDefinition fireball = config.skill("blazing_star_shell");
         final StatSheet sheet = new StatSheet();
         final SkillBuild plain = SkillBuild.of(config, fireball, 10, 90, false, List.of(), Set.of(), sheet);
-        final SkillBuild alone = SkillBuild.of(config, fireball, 10, 90, false, List.of(support("uhtreds_exodus")), Set.of(), sheet);
+        final SkillBuild alone = SkillBuild.of(config, fireball, 10, 90, false, List.of(support("lone_star")), Set.of(), sheet);
         assertEquals(plain.level() + 3, alone.level(), "孤星：沒有其他輔助 +3");
-        final SupportDefinition other = support("faster_casting");
-        final SkillBuild withOne = SkillBuild.of(config, fireball, 10, 90, false, List.of(support("uhtreds_exodus"), other), Set.of(), sheet);
+        final SupportDefinition other = support("quick_chant");
+        final SkillBuild withOne = SkillBuild.of(config, fireball, 10, 90, false, List.of(support("lone_star"), other), Set.of(), sheet);
         assertEquals(plain.level(), withOne.level(), "孤星：有其他輔助就沒有");
-        final SkillBuild omen = SkillBuild.of(config, fireball, 10, 90, false, List.of(support("uhtreds_omen"), other), Set.of(), sheet);
+        final SkillBuild omen = SkillBuild.of(config, fireball, 10, 90, false, List.of(support("twin_portent"), other), Set.of(), sheet);
         assertEquals(plain.level() + 2, omen.level(), "雙兆：剛好一顆其他輔助 +2");
-        final SkillBuild augury = SkillBuild.of(config, fireball, 10, 90, false, List.of(support("uhtreds_augury"), other, support("pierce")),
+        final SkillBuild augury = SkillBuild.of(config, fireball, 10, 90, false, List.of(support("triple_portent"), other, support("pierce")),
                 Set.of(), sheet);
         assertEquals(plain.level() + 2, augury.level(), "三兆：剛好兩顆其他輔助 +2");
-        final SkillBuild dialla = SkillBuild.of(config, fireball, 10, 90, false, List.of(support("diallas_desire")), Set.of(), sheet);
+        final SkillBuild dialla = SkillBuild.of(config, fireball, 10, 90, false, List.of(support("wish_crystal")), Set.of(), sheet);
         assertEquals(plain.level() + 1, dialla.level(), "願晶 +1");
         assertTrue(dialla.manaCost() < SkillBuild.of(config, fireball, 11, 90, false, List.of(), Set.of(), sheet).manaCost(), "願晶：消耗 90%");
-        assertFalse(LineageRules.buildModifiers(support("diallas_desire"), fireball).isEmpty(), "願晶的品質");
+        assertFalse(LineageRules.buildModifiers(support("wish_crystal"), fireball).isEmpty(), "願晶的品質");
     }
 
     @Test
     void chainsAndProjectileSpeed() {
-        final SkillDefinition arc = config.skill("arc");
+        final SkillDefinition arc = config.skill("chain_thunder");
         final StatSheet sheet = new StatSheet();
         final SkillBuild plain = SkillBuild.of(config, arc, 10, 90, false, List.of(), Set.of(), sheet);
-        final SkillBuild doubled = SkillBuild.of(config, arc, 10, 90, false, List.of(support("dominus_grasp")), Set.of(), sheet);
+        final SkillBuild doubled = SkillBuild.of(config, arc, 10, 90, false, List.of(support("double_chain")), Set.of(), sheet);
         assertEquals(plain.chains() * 2, doubled.chains(), "倍鏈：連鎖更多 100%");
         final StatSheet fast = new StatSheet().overlay(List.of(Modifier.increased(StatKeys.CAST_SPEED, 0.4, "測試"),
                 Modifier.flat(LineageKeys.CAST_TO_PROJECTILE_SPEED, 75, "推詠")));
@@ -185,7 +185,7 @@ class LineageSupportTest {
         assertEquals(5, LineageMechanics.voltaicPercent(5, 1), 1e-9);
         assertEquals(19, LineageMechanics.voltaicPercent(5, 20), 1e-9);
         assertEquals(tw.exilecore.core.Units.metres(2.5), LineageMechanics.voltaicRadius(20), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
-        assertEquals(531, LineageMechanics.natureGuard(20), 1e-9, "自然交換 20 級 531 守護（poe2db）");
+        assertEquals(531, LineageMechanics.natureGuard(20), 1e-9, "自然交換 20 級 531 守護（原作資料）");
         assertEquals(4, LineageMechanics.hubrisAdded(200).size());
         assertEquals(30, LineageMechanics.hubrisAdded(200).get(0).value(), 1e-9, "傲寒：消耗的 15%");
         assertEquals(2, LineageMechanics.recentKinds(Map.of("a", 100L, "b", 150L, "c", 0L), 200, 160));
@@ -229,9 +229,9 @@ class LineageSupportTest {
 
     @Test
     void coloursFollowRepoe() {
-        assertEquals(SupportColours.RED, SupportColours.colour("uhtreds_exodus"));
-        assertEquals(SupportColours.GREEN, SupportColours.colour("rakiatas_flow"));
-        assertEquals(SupportColours.BLUE, SupportColours.colour("zarokhs_revolt"));
-        assertEquals(0, SupportColours.colour("seraphs_heart"), "原作是白色");
+        assertEquals(SupportColours.RED, SupportColours.colour("lone_star"));
+        assertEquals(SupportColours.GREEN, SupportColours.colour("counter_current"));
+        assertEquals(SupportColours.BLUE, SupportColours.colour("myriad_seal"));
+        assertEquals(0, SupportColours.colour("blazing_core"), "原作是白色");
     }
 }

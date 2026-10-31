@@ -59,7 +59,7 @@ class OriginalSkillsTest {
     }
 
     @Test
-    void levelTablesFollowPoe2() {
+    void levelTablesFollowRef() {
         assertEquals(1.25, level(OriginalSkills.ARCTIC, OriginalSkills.ARCTIC_INTERVAL, 1), 1e-9);
         assertEquals(5, level(OriginalSkills.ARCTIC, OriginalSkills.ARCTIC_STAGES, 20), 1e-9);
         assertEquals(22, level(OriginalSkills.STAFF, OriginalSkills.STAFF_MAX, 20), 1e-9);
@@ -87,11 +87,11 @@ class OriginalSkillsTest {
 
     @Test
     void oilValuesComeFromTheSkill() {
-        final SkillProfile profile = new SkillProfile("oil_barrage", Set.of(Tags.ATTACK), 1.0, null, null, java.util.Map.of(),
+        final SkillProfile profile = new SkillProfile("black_oil_rain", Set.of(Tags.ATTACK), 1.0, null, null, java.util.Map.of(),
                 List.of(Modifier.flat(OriginalSkills.OIL_SLOW, 20, "黑油雨"), Modifier.flat(OriginalSkills.OIL_EXPOSURE, 20, "黑油雨")));
         assertEquals(20, OriginalSkills.oilValue(profile, OriginalSkills.OIL_SLOW), 1e-9);
         assertEquals(0, OriginalSkills.oilValue(profile, "other"), 1e-9);
-        assertNull(config.skill("trail_of_caltrops").cooldown() > 0 ? "冷卻" : null);
+        assertNull(config.skill("thornburr_steps").cooldown() > 0 ? "冷卻" : null);
         assertTrue(new StatSheet().allModifiers().isEmpty());
     }
 }

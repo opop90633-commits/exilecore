@@ -16,7 +16,7 @@ class DebuffsTypedTest {
         final Debuffs debuffs = new Debuffs();
         final UUID target = UUID.randomUUID();
         final UUID player = UUID.randomUUID();
-        debuffs.apply(target, new Debuffs.Debuff("aura.withering_presence." + player, player, 100, 0.22, false, "chaos"));
+        debuffs.apply(target, new Debuffs.Debuff("aura.wilting_breath." + player, player, 100, 0.22, false, "chaos"));
         // 整下的倍率不算它（物理攻擊、混沌法術都一樣）
         assertEquals(1.0, debuffs.takenMultiplier(target, player, 10, Set.of("attack", "physical")), 1e-9);
         assertEquals(1.0, debuffs.takenMultiplier(target, player, 10, Set.of("spell", "chaos")), 1e-9);

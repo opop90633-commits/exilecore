@@ -584,7 +584,7 @@ public final class TreeMechanics implements Listener {
                 }
             }
         }
-        service.buffs().apply(player, "tree.volatile_power", "易爆之力", (int) VOLATILE_POWER_TICKS, volatilePower(stacks, sheet));
+        service.buffs().apply(player, "tree.blast_energy", "易爆之力", (int) VOLATILE_POWER_TICKS, volatilePower(stacks, sheet));
         ps.notice("<#b06cff>✸ 易爆爆炸：" + stacks + " 層 <gray>（易爆之力 10 秒）", now + 40);
         plugin.players().display(player, ps);
         final Location at = player.getLocation().add(0, 1, 0);
@@ -630,7 +630,7 @@ public final class TreeMechanics implements Listener {
 
     /** 給秘術增強 ticks 個 tick（湧詠輔助、天賦、傳奇）。 */
     public void grantArcaneSurge(final Player player, final int ticks) {
-        service.buffs().apply(player, "tree.arcane_surge", "秘術增強", ticks, arcaneSurge(plugin.players().sheet(player)));
+        service.buffs().apply(player, "tree.surging_chant", "秘術增強", ticks, arcaneSurge(plugin.players().sheet(player)));
     }
 
     // =====================================================================
@@ -805,7 +805,7 @@ public final class TreeMechanics implements Listener {
         if (debuffs == null) {
             return 0;
         }
-        final int stacks = HitEffects.stacks(debuffs, defender.getUniqueId(), "incision.", now());
+        final int stacks = HitEffects.stacks(debuffs, defender.getUniqueId(), "cut_wound.", now());
         return stacks <= 0 ? 0 : stacks * INCISION_BLEED_CHANCE * incisionEffect.getOrDefault(defender.getUniqueId(), 1.0);
     }
 
@@ -817,7 +817,7 @@ public final class TreeMechanics implements Listener {
         }
         final long now = now();
         for (final Debuffs.Debuff debuff : debuffs.active(defender.getUniqueId(), now)) {
-            if (debuff.id().startsWith("incision.")) {
+            if (debuff.id().startsWith("cut_wound.")) {
                 debuffs.remove(defender.getUniqueId(), debuff.id(), debuff.source(), now);
             }
         }
@@ -831,15 +831,15 @@ public final class TreeMechanics implements Listener {
         }
         final double physicalTaken = sheet.flat(TreeNewMechanicKeys.INCISION_PHYSICAL_TAKEN, Set.of()) / 100.0;
         incisionEffect.put(target.getUniqueId(), Math.max(0, 1 + sheet.increased(TreeNewMechanicKeys.INCISION_EFFECT, Set.of())));
-        int have = HitEffects.stacks(debuffs, target.getUniqueId(), "incision.", now);
+        int have = HitEffects.stacks(debuffs, target.getUniqueId(), "cut_wound.", now);
         for (int i = 0; i < stacks; i++) {
             final int slot = have < INCISION_MAX ? have++ : (i % INCISION_MAX);
-            debuffs.apply(target.getUniqueId(), new Debuffs.Debuff("incision." + slot, player.getUniqueId(), now + INCISION_TICKS,
+            debuffs.apply(target.getUniqueId(), new Debuffs.Debuff("cut_wound." + slot, player.getUniqueId(), now + INCISION_TICKS,
                     physicalTaken, false, DamageType.PHYSICAL.tag()));
         }
         // 時間一起刷新
         for (final Debuffs.Debuff debuff : debuffs.active(target.getUniqueId(), now)) {
-            if (debuff.id().startsWith("incision.") && debuff.untilTick() < now + INCISION_TICKS) {
+            if (debuff.id().startsWith("cut_wound.") && debuff.untilTick() < now + INCISION_TICKS) {
                 debuffs.apply(target.getUniqueId(), new Debuffs.Debuff(debuff.id(), debuff.source(), now + INCISION_TICKS, debuff.taken(),
                         false, debuff.tag()));
             }

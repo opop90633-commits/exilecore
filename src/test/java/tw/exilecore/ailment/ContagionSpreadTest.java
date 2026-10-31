@@ -23,7 +23,7 @@ class ContagionSpreadTest {
 
     @Test
     void nothingSpreadsWithoutContagion() {
-        final Map<String, AilmentState.Debuff> on = Map.of("essence_drain", new AilmentState.Debuff(50, 1100, PLAYER, false, 0, 50, 80));
+        final Map<String, AilmentState.Debuff> on = Map.of("soul_draw_shot", new AilmentState.Debuff(50, 1100, PLAYER, false, 0, 50, 80));
         assertTrue(AilmentService.spreadSet(on, 1000).isEmpty(), "沒有瘟疫：汲魂彈自己不傳");
         assertNull(AilmentService.spreader(AilmentService.spreadSet(on, 1000)));
     }
@@ -31,18 +31,18 @@ class ContagionSpreadTest {
     @Test
     void contagionCarriesOtherChaosDebuffsAndRefreshesDurations() {
         final Map<String, AilmentState.Debuff> on = new LinkedHashMap<>();
-        on.put("contagion", new AilmentState.Debuff(10, 1010, PLAYER, true, 0, 10, 100, 2.0));
-        on.put("essence_drain", new AilmentState.Debuff(50, 1005, PLAYER, false, 0, 50, 80));
-        on.put("soulrend", new AilmentState.Debuff(30, 999, PLAYER, false, 0, 30, 12)); // 已經結束的不傳
+        on.put("plague_taint", new AilmentState.Debuff(10, 1010, PLAYER, true, 0, 10, 100, 2.0));
+        on.put("soul_draw_shot", new AilmentState.Debuff(50, 1005, PLAYER, false, 0, 50, 80));
+        on.put("soul_split_shot", new AilmentState.Debuff(30, 999, PLAYER, false, 0, 30, 12)); // 已經結束的不傳
         final Map<String, AilmentState.Debuff> passed = AilmentService.spreadSet(on, 1000);
         assertEquals(2, passed.size());
-        final AilmentState.Debuff contagion = passed.get("contagion");
+        final AilmentState.Debuff contagion = passed.get("plague_taint");
         assertEquals(20, contagion.dps(), 1e-9, "傳一手更多 100%");
         assertEquals(1, contagion.spreads());
         assertEquals(1100, contagion.endTick(), "持續時間照完整的 5 秒刷新");
         assertEquals(2.0, contagion.radius(), 1e-9);
         assertTrue(contagion.spread());
-        final AilmentState.Debuff drain = passed.get("essence_drain");
+        final AilmentState.Debuff drain = passed.get("soul_draw_shot");
         assertEquals(50, drain.dps(), 1e-9, "其他的減益不吃瘟疫的更多");
         assertEquals(1080, drain.endTick(), "汲魂彈也刷新");
         assertFalse(drain.spread(), "傳過去的汲魂彈自己不會再傳（要有瘟疫才傳）");
@@ -51,8 +51,8 @@ class ContagionSpreadTest {
 
     @Test
     void spreadMoreIsCappedAtThreeHundredPercent() {
-        final Map<String, AilmentState.Debuff> on = Map.of("contagion", new AilmentState.Debuff(40, 1010, PLAYER, true, 3, 10, 100));
-        final AilmentState.Debuff passed = AilmentService.spreadSet(on, 1000).get("contagion");
+        final Map<String, AilmentState.Debuff> on = Map.of("plague_taint", new AilmentState.Debuff(40, 1010, PLAYER, true, 3, 10, 100));
+        final AilmentState.Debuff passed = AilmentService.spreadSet(on, 1000).get("plague_taint");
         assertEquals(3, passed.spreads());
         assertEquals(40, passed.dps(), 1e-9, "最多更多 300%");
     }

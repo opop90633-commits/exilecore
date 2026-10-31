@@ -307,7 +307,7 @@ class CurrencySkinTest {
         assertEquals(spark, CurrencyArt.artOf(type(spark, null)), "沒寫 model、有跟自己同代號的圖：照代號");
         assertEquals(spark, CurrencyArt.artOf(type(spark, " ")));
         assertEquals("annul_orb", CurrencyArt.artOf(type(spark, "exilecore:currency/annul_orb")), "model 指到哪張就是哪張");
-        assertNull(CurrencyArt.artOf(type(spark, "myserver:custom/spark")), "伺服器自己的模型：不管（有它自己的資源包）");
+        assertNull(CurrencyArt.artOf(type(spark, "myserver:custom/roaming_thunder")), "伺服器自己的模型：不管（有它自己的資源包）");
         assertNull(CurrencyArt.artOf(type(spark, "exilecore:currency/no_such_art")), "指到沒有的圖：不掛（不要變成紫黑方塊）");
         // 2026-10：currencies.yml 的通貨現在都有圖（精髓也有了），用一個伺服器自己加的代號
         assertNull(CurrencyArt.artOf(type("server_token", null)), "沒有圖的通貨：不掛");

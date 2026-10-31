@@ -19,7 +19,7 @@ emotions:
   distilled_contempt: { name: "強效蒸餾輕蔑" }
 notables:
   p3663:
-    name: "岡姆之祝"
+    name: "岩酋之祝"
     recipe: [distilled_ferocity, distilled_fear, distilled_isolation]
   p10169:
     name: "無束"

@@ -1407,7 +1407,7 @@ final class SkillZones implements SkillTargets.Strikeable {
                     zone.lit = true;
                     zone.nextPulse = now();
                     count++;
-                    Fx.as(zone.owner, () -> visuals.blast("fireball", point, zone.radius));
+                    Fx.as(zone.owner, () -> visuals.blast("blazing_star_shell", point, zone.radius));
                     break;
                 }
             }
@@ -1416,7 +1416,7 @@ final class SkillZones implements SkillTargets.Strikeable {
     }
 
     /** 會被火焰引爆的毒霧（2026-10 PoE2：毒氣箭、毒氣榴彈）。 */
-    static final Set<String> GAS = Set.of("caustic_arrow", "gas_grenade");
+    static final Set<String> GAS = Set.of("venom_etch_arrow", "miasma_grenade");
     /** 毒霧引爆：一跳傷害的幾倍。 */
     static final double GAS_BURST = 6.0;
 
@@ -1452,7 +1452,7 @@ final class SkillZones implements SkillTargets.Strikeable {
             for (final LivingEntity target : targets.around(center, radius, owner)) {
                 damage.hit(owner, target, blast, null);
             }
-            Fx.as(zone.owner, () -> visuals.blast("fireball", center, radius));
+            Fx.as(zone.owner, () -> visuals.blast("blazing_star_shell", center, radius));
             count++;
         }
         return count;

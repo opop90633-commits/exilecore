@@ -160,7 +160,7 @@ item skill_ground_slam
   aHIIIIIIIIIIIIHa
   .aaaaaaaaaaaaaa.
 
-item skill_leap_slam
+item skill_soaring_smash
   a=100e0c
   b=67625d
   c=242220
@@ -214,7 +214,7 @@ item skill_leap_slam
   aIJJJJJJJJJJJJIa
   .aaaaaaaaaaaaaa.
 
-item skill_earthquake
+item skill_ground_tremor
   a=100e0c
   b=67625d
   c=433d37
@@ -317,7 +317,7 @@ item skill_whirling_blades
   aIIIIIzzzzzIJJJa
   .aaaaaaaaaaaaaa.
 
-item skill_flicker_strike
+item skill_instant_shadow_strike
   a=0e0418
   b=603f7c
   c=3b145c
@@ -482,7 +482,7 @@ item skill_viper_strike
   aIgIJJJIJJJJJJJa
   .aaaaaaaaaaaaaa.
 
-item skill_boneshatter
+item skill_spine_crush
   a=140404
   b=6a3e3e
   c=251515
@@ -534,7 +534,7 @@ item skill_boneshatter
   aGGHHGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_ancestral_totem
+item skill_hero_spirit_totem
   a=140a04
   b=6d503b
   c=261c14
@@ -845,7 +845,7 @@ item skill_frenzy
   aHICIHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_caustic_arrow
+item skill_venom_etch_arrow
   a=0e0418
   b=603f7c
   c=3b145c
@@ -897,7 +897,7 @@ item skill_caustic_arrow
   aGHAHGGGGGHHHHGa
   .aaaaaaaaaaaaaa.
 
-item skill_rain_of_arrows
+item skill_myriad_arrow_fall
   a=100e0c
   b=67625d
   c=242220
@@ -947,7 +947,7 @@ item skill_rain_of_arrows
   aEFFFFFFFFFFFFEa
   .aaaaaaaaaaaaaa.
 
-item skill_lightning_arrow
+item skill_thunderclap_arrow
   a=141004
   b=6a6039
   c=473b0d
@@ -998,7 +998,7 @@ item skill_lightning_arrow
   aFGAGFFFFFFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_ice_shot
+item skill_rime_arrow
   a=04101c
   b=3f6a8b
   c=162530
@@ -1049,7 +1049,7 @@ item skill_ice_shot
   aFGAGFFFFFFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_tornado_shot
+item skill_sky_rend_arrow
   a=061210
   b=466a65
   c=182523
@@ -1154,7 +1154,7 @@ item skill_blink_arrow
   aGHBHGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_explosive_bolt
+item skill_blasting_quarrel
   a=1a0703
   b=774436
   c=291712
@@ -1205,7 +1205,7 @@ item skill_explosive_bolt
   aGGGGGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_permafrost_bolts
+item skill_frozen_earth_repeater
   a=04101c
   b=3f6a8b
   c=162530
@@ -1254,7 +1254,7 @@ item skill_permafrost_bolts
   aDEEEDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_rapid_fire
+item skill_successive_shots
   a=100e0c
   b=67625d
   c=242220
@@ -1302,7 +1302,7 @@ item skill_rapid_fire
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_explosive_grenade
+item skill_blast_grenade
   a=1a0703
   b=774436
   c=291712
@@ -1355,7 +1355,7 @@ item skill_explosive_grenade
   aHHHHHHIHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_gas_grenade
+item skill_miasma_grenade
   a=0e0418
   b=603f7c
   c=21162b
@@ -1408,7 +1408,7 @@ item skill_gas_grenade
   aHHHHHHIHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_tempest_flurry
+item skill_gale_combo
   a=141004
   b=6a6039
   c=473b0d
@@ -1458,7 +1458,7 @@ item skill_tempest_flurry
   aEFFEEEEEEEEEFFa
   .aaaaaaaaaaaaaa.
 
-item skill_ice_strike
+item skill_frost_shockwave
   a=04101c
   b=3f6a8b
   c=162530
@@ -1509,7 +1509,7 @@ item skill_ice_strike
   aFGGFFFFFFFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_storm_wave
+item skill_thunder_surge
   a=141004
   b=6a6039
   c=252113
@@ -1559,7 +1559,7 @@ item skill_storm_wave
   aEFEEEEEEEEEEFFa
   .aaaaaaaaaaaaaa.
 
-item skill_killing_palm
+item skill_soul_sever_palm
   a=100e0c
   b=67625d
   c=242220
@@ -1606,7 +1606,7 @@ item skill_killing_palm
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_tempest_bell
+item skill_startling_thunder_bell
   a=141004
   b=6a6039
   c=252113
@@ -1655,7 +1655,7 @@ item skill_tempest_bell
   aDDDDDDEEDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_lightning_spear
+item skill_thunder_lance_throw
   a=141004
   b=6a6039
   c=252113
@@ -1707,7 +1707,7 @@ item skill_lightning_spear
   aGHHGGGGGGGGHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_whirling_slash
+item skill_spinning_spear_strike
   a=061210
   b=466a65
   c=182523
@@ -1757,7 +1757,7 @@ item skill_whirling_slash
   aEEEEFFFFFFEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_whirlwind_lance
+item skill_hurricane_spear
   a=061210
   b=466a65
   c=182523
@@ -1860,7 +1860,7 @@ item skill_lunge
   aEEEEEEEEEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_hunters_mark
+item skill_prey_kill_mark
   a=140404
   b=6a3e3e
   c=251515
@@ -1908,7 +1908,7 @@ item skill_hunters_mark
   aCCCCCDddDCCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_fireball
+item skill_blazing_star_shell
   a=1a0703
   b=774436
   c=561a09
@@ -1957,7 +1957,7 @@ item skill_fireball
   aEEEEEEEEEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_frost_nova
+item skill_frost_star_blast
   a=04101c
   b=3f6a8b
   c=162530
@@ -1998,7 +1998,7 @@ item skill_frost_nova
   avvvwwwddwwwvvva
   .aaaaaaaaaaaaaa.
 
-item skill_spark
+item skill_roaming_thunder
   a=141004
   b=6a6039
   c=252113
@@ -2048,7 +2048,7 @@ item skill_spark
   aEEEFfFEEEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_arc
+item skill_chain_thunder
   a=141004
   b=6a6039
   c=473b0d
@@ -2097,7 +2097,7 @@ item skill_arc
   aDDDDDDDDDDDEfEa
   .aaaaaaaaaaaaaa.
 
-item skill_comet
+item skill_falling_star
   a=04101c
   b=3f6a8b
   c=162530
@@ -2196,7 +2196,7 @@ item skill_blizzard
   aCCCCCCCCDDCDCCa
   .aaaaaaaaaaaaaa.
 
-item skill_flame_wall
+item skill_flame_curtain
   a=1a0703
   b=774436
   c=561a09
@@ -2518,7 +2518,7 @@ item skill_decoy_totem
   aDfDDjDDDDjDEDEa
   .aaaaaaaaaaaaaa.
 
-item skill_shockwave_totem
+item skill_collapse_quake_totem
   a=100e0c
   b=67625d
   c=433d37
@@ -2707,7 +2707,7 @@ item skill_bear_trap
   ayyyyyyyyyyyyyya
   .aaaaaaaaaaaaaa.
 
-item skill_chaos_bolt
+item skill_erosion_star_shot
   a=0e0418
   b=603f7c
   c=3b145c
@@ -2851,7 +2851,7 @@ item skill_void_rift
   aFFFFFFGdGFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_detonate_dead
+item skill_corpse_burst
   a=1a0703
   b=774436
   c=291712
@@ -2903,7 +2903,7 @@ item skill_detonate_dead
   aGGGGHpHpHpHGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_raise_zombie
+item skill_corpse_summon
   a=0a100c
   b=536458
   c=1d231e
@@ -3003,7 +3003,7 @@ item skill_summon_skeletons
   aFFFGGGfGGGGFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_raging_spirits
+item skill_summon_burning_souls
   a=1a0703
   b=774436
   c=561a09
@@ -3049,7 +3049,7 @@ item skill_raging_spirits
   aBBBBBBBBBBBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_rally
+item skill_reform_ranks
   a=140a04
   b=6d503b
   c=261c14
@@ -3524,7 +3524,7 @@ item skill_grace
   aEEEFFFddFFFEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_discipline
+item skill_law_shield
   a=04081a
   b=415584
   c=161d2e
@@ -3657,7 +3657,7 @@ item skill_purity_of_elements
   azzzAAAddAAAzzza
   .aaaaaaaaaaaaaa.
 
-item skill_vitality
+item skill_life_spring
   a=061206
   b=466a46
   c=182518
@@ -3703,7 +3703,7 @@ item skill_vitality
   aAAABBBddBBBAAAa
   .aaaaaaaaaaaaaa.
 
-item skill_clarity
+item skill_spring_mana
   a=04081a
   b=415584
   c=161d2e
@@ -3789,7 +3789,7 @@ item skill_precision
   awwwxxxddxxxwwwa
   .aaaaaaaaaaaaaa.
 
-item skill_herald_of_ash
+item skill_ember_envoy
   a=1a0703
   b=774436
   c=561a09
@@ -3839,7 +3839,7 @@ item skill_herald_of_ash
   aFFFFFFFFFFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_herald_of_thunder
+item skill_thunder_envoy
   a=141004
   b=6a6039
   c=473b0d
@@ -3888,7 +3888,7 @@ item skill_herald_of_thunder
   aEEEEEEEEEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_herald_of_ice
+item skill_frost_envoy
   a=04101c
   b=3f6a8b
   c=15466d
@@ -4128,7 +4128,7 @@ item skill_star_cry
   aCCCCCCCCCCCDgDa
   .aaaaaaaaaaaaaa.
 
-item skill_armour_piercing_bolt
+item skill_armor_break_quarrel
   a=100e0c
   b=67625d
   c=433d37
@@ -4272,7 +4272,7 @@ item skill_bolt_barrage
   aBCCCCCCCCCCCCBa
   .aaaaaaaaaaaaaa.
 
-item skill_concussion_grenade
+item skill_tremor_grenade
   a=100e0c
   b=67625d
   c=242220
@@ -4525,7 +4525,7 @@ item skill_skull_crack
   aFGqGqGqGFFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_fortifying_cry
+item skill_stalwart_war_shout
   a=140a04
   b=6d503b
   c=261c14
@@ -4573,7 +4573,7 @@ item skill_fortifying_cry
   aCCCCCCCCCCCDnDa
   .aaaaaaaaaaaaaa.
 
-item skill_infernal_cry
+item skill_hellfire_war_shout
   a=1a0703
   b=774436
   c=291712
@@ -4621,7 +4621,7 @@ item skill_infernal_cry
   aCCCCCCCCCCCDdDa
   .aaaaaaaaaaaaaa.
 
-item skill_seismic_cry
+item skill_ground_shake_shout
   a=100e0c
   b=67625d
   c=433d37
@@ -4666,7 +4666,7 @@ item skill_seismic_cry
   azAAAAAAAAAAAAza
   .aaaaaaaaaaaaaa.
 
-item skill_ancestral_cry
+item skill_molten_soul_shriek
   a=1a0703
   b=774436
   c=291712
@@ -4714,7 +4714,7 @@ item skill_ancestral_cry
   aCDfDCDffDfDCDCa
   .aaaaaaaaaaaaaa.
 
-item skill_vulnerability_curse
+item skill_wound_scar_curse
   a=140404
   b=6a3e3e
   c=251515
@@ -4896,7 +4896,7 @@ item skill_conductivity_curse
   azzzzAAAAAAArmAa
   .aaaaaaaaaaaaaa.
 
-item skill_despair_curse
+item skill_soul_wither_curse
   a=0e0418
   b=603f7c
   c=21162b
@@ -4943,7 +4943,7 @@ item skill_despair_curse
   aBBBBCCCrrrrrrra
   .aaaaaaaaaaaaaa.
 
-item skill_elemental_weakness_curse
+item skill_triple_element_curse
   a=141004
   b=776a43
   c=292517
@@ -4987,7 +4987,7 @@ item skill_elemental_weakness_curse
   ayzzzzzwwzzzzzya
   .aaaaaaaaaaaaaa.
 
-item skill_enfeeble_curse
+item skill_strength_sap_curse
   a=0e0418
   b=603f7c
   c=21162b
@@ -5033,7 +5033,7 @@ item skill_enfeeble_curse
   aAAAABBBBBBABuva
   .aaaaaaaaaaaaaa.
 
-item skill_temporal_curse
+item skill_sluggish_curse
   a=04081a
   b=415584
   c=161d2e
@@ -5078,7 +5078,7 @@ item skill_temporal_curse
   azzzzAAAAAAzAzza
   .aaaaaaaaaaaaaa.
 
-item skill_blood_offering
+item skill_bloodthirst_rite
   a=140404
   b=6a3e3e
   c=461313
@@ -5129,7 +5129,7 @@ item skill_blood_offering
   aEEFGGGGGGGGFEEa
   .aaaaaaaaaaaaaa.
 
-item skill_bone_offering
+item skill_bone_rite
   a=0a100c
   b=536458
   c=2c3f31
@@ -5179,7 +5179,7 @@ item skill_bone_offering
   aDDEFFFFFFFFEDDa
   .aaaaaaaaaaaaaa.
 
-item skill_soul_offering
+item skill_soulfire_rite
   a=0e0418
   b=603f7c
   c=3b145c
@@ -5231,7 +5231,7 @@ item skill_soul_offering
   aFFGHHHHHHHHGFFa
   .aaaaaaaaaaaaaa.
 
-item skill_war_banner
+item skill_campaign_flag
   a=140a04
   b=6d503b
   c=261c14
@@ -5288,7 +5288,7 @@ item skill_war_banner
   aLMheMLLLLLLLLLa
   .aaaaaaaaaaaaaa.
 
-item skill_dread_banner
+item skill_foe_daunt_flag
   a=140404
   b=6a3e3e
   c=251515
@@ -5343,7 +5343,7 @@ item skill_dread_banner
   aJKheKJJJJJJJJJa
   .aaaaaaaaaaaaaa.
 
-item skill_defiance_banner
+item skill_bedrock_flag
   a=04081a
   b=415584
   c=161d2e
@@ -5396,7 +5396,7 @@ item skill_defiance_banner
   aHIheIHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_rolling_slam
+item skill_field_quake_hammers
   a=100e0c
   b=67625d
   c=242220
@@ -5449,7 +5449,7 @@ item skill_rolling_slam
   aHIIIIIIIIIIIIHa
   .aaaaaaaaaaaaaa.
 
-item skill_volcanic_fissure
+item skill_flame_vein_rift
   a=1a0703
   b=774436
   c=291712
@@ -5502,7 +5502,7 @@ item skill_volcanic_fissure
   aHIIIIIIIIIIIIHa
   .aaaaaaaaaaaaaa.
 
-item skill_armour_breaker
+item skill_plate_crush_hammer
   a=100e0c
   b=67625d
   c=242220
@@ -5555,7 +5555,7 @@ item skill_armour_breaker
   aHHHHHIIIIIIIIIa
   .aaaaaaaaaaaaaa.
 
-item skill_shield_rush
+item skill_iron_wall_ram
   a=140a04
   b=6d503b
   c=4a280f
@@ -5602,7 +5602,7 @@ item skill_shield_rush
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_hammer_of_gods
+item skill_heaven_punish_maul
   a=141004
   b=776a43
   c=292517
@@ -5655,7 +5655,7 @@ item skill_hammer_of_gods
   aHHIIHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_shatter_spikes
+item skill_earth_spike_eruption
   a=100e0c
   b=67625d
   c=433d37
@@ -5702,7 +5702,7 @@ item skill_shatter_spikes
   aBCCCCCCCCCCCCBa
   .aaaaaaaaaaaaaa.
 
-item skill_magma_spray
+item skill_lava_splash
   a=1a0703
   b=774436
   c=291712
@@ -5755,7 +5755,7 @@ item skill_magma_spray
   aHHIIHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_true_strike
+item skill_charged_blow
   a=141004
   b=776a43
   c=292517
@@ -5862,7 +5862,7 @@ item skill_titan_slam
   aIJJJsJJJJJJJJIa
   .aaaaaaaaaaaaaa.
 
-item skill_stampede
+item skill_rushing_thunder_stomp
   a=100e0c
   b=67625d
   c=433d37
@@ -5909,7 +5909,7 @@ item skill_stampede
   aBCCCCCCCCCCCCBa
   .aaaaaaaaaaaaaa.
 
-item skill_forge_hammer
+item skill_returning_smith_hammer
   a=1a0703
   b=774436
   c=291712
@@ -5962,7 +5962,7 @@ item skill_forge_hammer
   aHHIIIIIIIIIHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_gale_sweep
+item skill_mist_staff_sweep
   a=061210
   b=466a65
   c=182523
@@ -6014,7 +6014,7 @@ item skill_gale_sweep
   aGHHGGGHHHGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_vault_strike
+item skill_leaping_staff_crash
   a=100e0c
   b=67625d
   c=433d37
@@ -6064,7 +6064,7 @@ item skill_vault_strike
   aEFFFFFFFFvFFvEa
   .aaaaaaaaaaaaaa.
 
-item skill_whirling_rush
+item skill_spinning_staff_step
   a=061210
   b=466a65
   c=182523
@@ -6116,7 +6116,7 @@ item skill_whirling_rush
   aGHHGGGHHGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_siphon_strike
+item skill_thunder_draw_staff
   a=141004
   b=6a6039
   c=473b0d
@@ -6169,7 +6169,7 @@ item skill_siphon_strike
   aHIIHHHHHHHIIwxa
   .aaaaaaaaaaaaaa.
 
-item skill_reeling_palm
+item skill_pulse_quake_palm
   a=100e0c
   b=67625d
   c=242220
@@ -6215,7 +6215,7 @@ item skill_reeling_palm
   aBBBBBBBBBBBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_frost_palm
+item skill_cold_spirit_palm
   a=04101c
   b=3f6a8b
   c=162530
@@ -6261,7 +6261,7 @@ item skill_frost_palm
   aBBBBBBBBBBBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_frost_wave
+item skill_frost_billow
   a=04101c
   b=3f6a8b
   c=162530
@@ -6313,7 +6313,7 @@ item skill_frost_wave
   aGHHGGHHHdHGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_falling_thunder
+item skill_startle_thunder_chop
   a=141004
   b=6a6039
   c=252113
@@ -6366,7 +6366,7 @@ item skill_falling_thunder
   aHIIHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_glacial_cascade
+item skill_ice_ridge_rift
   a=04101c
   b=3f6a8b
   c=15466d
@@ -6509,7 +6509,7 @@ item skill_miasma_arrow
   aGHBHGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_thunder_arrow
+item skill_thunder_call_shaft
   a=141004
   b=6a6039
   c=252113
@@ -6561,7 +6561,7 @@ item skill_thunder_arrow
   aGHBHGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_frost_volley
+item skill_chill_fan_shafts
   a=04101c
   b=3f6a8b
   c=162530
@@ -6611,7 +6611,7 @@ item skill_frost_volley
   aEzzEFFFFFFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_shock_arrow
+item skill_electrocute_shaft
   a=141004
   b=6a6039
   c=252113
@@ -6663,7 +6663,7 @@ item skill_shock_arrow
   aGHBHGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_bramble_arrow
+item skill_thorn_shaft
   a=061206
   b=466a46
   c=1c471c
@@ -6713,7 +6713,7 @@ item skill_bramble_arrow
   aEFzFEEFwFFwFwFa
   .aaaaaaaaaaaaaa.
 
-item skill_venom_burst_arrow
+item skill_toxic_blast_shaft
   a=0e0418
   b=603f7c
   c=21162b
@@ -6765,7 +6765,7 @@ item skill_venom_burst_arrow
   aGHBHGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_spiral_volley
+item skill_helix_arrow_rain
   a=061210
   b=466a65
   c=182523
@@ -6816,7 +6816,7 @@ item skill_spiral_volley
   aFFFFGFGFGFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_blast_arrow
+item skill_flame_blast_shaft
   a=1a0703
   b=774436
   c=291712
@@ -6868,7 +6868,7 @@ item skill_blast_arrow
   aGHBHGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_chain_arrow
+item skill_linked_lightning_arrow
   a=141004
   b=6a6039
   c=252113
@@ -6920,7 +6920,7 @@ item skill_chain_arrow
   aGHBHGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_snipe
+item skill_cloud_pierce_arrow
   a=100e0c
   b=67625d
   c=242220
@@ -6971,7 +6971,7 @@ item skill_snipe
   anCFGGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_galvanic_bolts
+item skill_thunder_shard_scatter
   a=141004
   b=6a6039
   c=252113
@@ -7021,7 +7021,7 @@ item skill_galvanic_bolts
   aEEEEEEEEFfflFEa
   .aaaaaaaaaaaaaa.
 
-item skill_siege_salvo
+item skill_fortress_crumble_shell
   a=1a0703
   b=774436
   c=561a09
@@ -7069,7 +7069,7 @@ item skill_siege_salvo
   aCDDDDDrDDrDDDCa
   .aaaaaaaaaaaaaa.
 
-item skill_hail_rounds
+item skill_freezing_rain_shell
   a=04101c
   b=3f6a8b
   c=162530
@@ -7117,7 +7117,7 @@ item skill_hail_rounds
   aCDDDDDDDDDDDDCa
   .aaaaaaaaaaaaaa.
 
-item skill_piercing_rounds
+item skill_armor_punch_slug
   a=100e0c
   b=67625d
   c=433d37
@@ -7161,7 +7161,7 @@ item skill_piercing_rounds
   azzzzzzzzzzzzzza
   .aaaaaaaaaaaaaa.
 
-item skill_incendiary_shot
+item skill_flame_scatter_fire
   a=1a0703
   b=774436
   c=561a09
@@ -7210,7 +7210,7 @@ item skill_incendiary_shot
   aEEEEEEEEEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_frost_bolt_round
+item skill_cold_congeal_shell
   a=04101c
   b=3f6a8b
   c=15466d
@@ -7256,7 +7256,7 @@ item skill_frost_bolt_round
   aBmmmmmmmmmmmmBa
   .aaaaaaaaaaaaaa.
 
-item skill_storm_bolts
+item skill_thunder_squall_quarrels
   a=141004
   b=6a6039
   c=252113
@@ -7306,7 +7306,7 @@ item skill_storm_bolts
   aEnnnEEEEFFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_oil_grenade
+item skill_kerosene_grenade
   a=1a0703
   b=774436
   c=561a09
@@ -7358,7 +7358,7 @@ item skill_oil_grenade
   aGGGGGGHGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_voltaic_grenade
+item skill_thunderlight_grenade
   a=141004
   b=6a6039
   c=252113
@@ -7410,7 +7410,7 @@ item skill_voltaic_grenade
   aGGGGGGHGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_cluster_grenade
+item skill_mother_child_grenade
   a=1a0703
   b=774436
   c=291712
@@ -7461,7 +7461,7 @@ item skill_cluster_grenade
   aFFFFFFGFFFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_storm_javelin
+item skill_thunderfall_spear
   a=141004
   b=6a6039
   c=252113
@@ -7514,7 +7514,7 @@ item skill_storm_javelin
   aHIIHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_spear_thicket
+item skill_spear_formation
   a=100e0c
   b=67625d
   c=433d37
@@ -7562,7 +7562,7 @@ item skill_spear_thicket
   aCDDDDDDDDDDDDCa
   .aaaaaaaaaaaaaa.
 
-item skill_rapid_thrust
+item skill_triple_stab
   a=140404
   b=6a3e3e
   c=461313
@@ -7662,7 +7662,7 @@ item skill_explosive_spear
   aHIIHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_fangs_of_frost
+item skill_frost_tooth_stab
   a=04101c
   b=3f6a8b
   c=162530
@@ -7714,7 +7714,7 @@ item skill_fangs_of_frost
   aGHHGGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_gale_spear
+item skill_cyclone_spear
   a=061210
   b=466a65
   c=182523
@@ -7820,7 +7820,7 @@ item skill_sweeping_repel
   aHHHHIIIIIIHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_serpent_fury
+item skill_snake_squall_thrust
   a=061210
   b=466a65
   c=182523
@@ -7873,7 +7873,7 @@ item skill_serpent_fury
   aHHIIIIIHIIIIIIa
   .aaaaaaaaaaaaaa.
 
-item skill_prism_rend
+item skill_facet_light_rift
   a=141004
   b=776a43
   c=292517
@@ -7928,7 +7928,7 @@ item skill_prism_rend
   aJKKJJJJJJJJJJJa
   .aaaaaaaaaaaaaa.
 
-item skill_thunder_leap
+item skill_thunder_bound
   a=141004
   b=6a6039
   c=252113
@@ -7981,7 +7981,7 @@ item skill_thunder_leap
   aHIIIIIIIIIIIIHa
   .aaaaaaaaaaaaaa.
 
-item skill_blood_harvest
+item skill_blood_hunt
   a=140404
   b=6a3e3e
   c=461313
@@ -8032,7 +8032,7 @@ item skill_blood_harvest
   aFGGFFFFFFGFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_sunfire_spear
+item skill_blazing_sun_spear
   a=141004
   b=776a43
   c=292517
@@ -8083,7 +8083,7 @@ item skill_sunfire_spear
   aFGGFFFFFFFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_firestorm
+item skill_flowing_flame_canopy
   a=1a0703
   b=774436
   c=291712
@@ -8177,7 +8177,7 @@ item skill_scorch_breath
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_ember_volley
+item skill_starfire_bead_chain
   a=1a0703
   b=774436
   c=291712
@@ -8321,7 +8321,7 @@ item skill_frost_orb
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_frostbolt
+item skill_frost_drill
   a=04101c
   b=3f6a8b
   c=162530
@@ -8370,7 +8370,7 @@ item skill_frostbolt
   aDEDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_ball_lightning
+item skill_rolling_thunder_orb
   a=141004
   b=6a6039
   c=473b0d
@@ -8417,7 +8417,7 @@ item skill_ball_lightning
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_essence_drain
+item skill_soul_draw_shot
   a=0e0418
   b=603f7c
   c=3b145c
@@ -8466,7 +8466,7 @@ item skill_essence_drain
   aEEEEEEEEEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_contagion
+item skill_plague_taint
   a=0e0418
   b=603f7c
   c=3b145c
@@ -8512,7 +8512,7 @@ item skill_contagion
   aBBBBBBBBBBBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_storm_orb
+item skill_thunder_cloud
   a=141004
   b=6a6039
   c=473b0d
@@ -8561,7 +8561,7 @@ item skill_storm_orb
   aDEliEDDDDDEliEa
   .aaaaaaaaaaaaaa.
 
-item skill_lightning_pillar
+item skill_sky_column_thunder
   a=141004
   b=6a6039
   c=252113
@@ -8610,7 +8610,7 @@ item skill_lightning_pillar
   aDEEEEEEEEEEEEDa
   .aaaaaaaaaaaaaa.
 
-item skill_hex_burst
+item skill_erosion_curse_rift
   a=0e0418
   b=603f7c
   c=21162b
@@ -8654,7 +8654,7 @@ item skill_hex_burst
   ayyyyzzzzzzyyyya
   .aaaaaaaaaaaaaa.
 
-item skill_bone_storm
+item skill_shattered_bone_darts
   a=0a100c
   b=536458
   c=2c3f31
@@ -8752,7 +8752,7 @@ item skill_void_bolt
   aFcFGGGGGGGGGFGa
   .aaaaaaaaaaaaaa.
 
-item skill_frost_mine
+item skill_chill_crystal_mine
   a=04101c
   b=3f6a8b
   c=15466d
@@ -8800,7 +8800,7 @@ item skill_frost_mine
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_ice_wall
+item skill_frost_rampart
   a=04101c
   b=3f6a8b
   c=15466d
@@ -8848,7 +8848,7 @@ item skill_ice_wall
   aCDDDDDDDDDDDDCa
   .aaaaaaaaaaaaaa.
 
-item skill_storm_blink
+item skill_thunder_escape
   a=141004
   b=6a6039
   c=252113
@@ -8987,7 +8987,7 @@ item skill_flame_blink
   aBBBBBBBBCCCCCBa
   .aaaaaaaaaaaaaa.
 
-item skill_inferno_blast
+item skill_flame_core_detonation
   a=1a0703
   b=774436
   c=291712
@@ -9029,7 +9029,7 @@ item skill_inferno_blast
   awwwxxxdgxxxwwwa
   .aaaaaaaaaaaaaa.
 
-item skill_sun_orb
+item skill_scorching_sun_pearl
   a=141004
   b=776a43
   c=292517
@@ -9076,7 +9076,7 @@ item skill_sun_orb
   aBBBBBBCdCBBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_ember_seed
+item skill_cinder_sprout
   a=1a0703
   b=774436
   c=291712
@@ -9125,7 +9125,7 @@ item skill_ember_seed
   aEEEEEEEEEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_winter_eye
+item skill_cold_winter_gaze
   a=04101c
   b=3f6a8b
   c=15466d
@@ -9216,7 +9216,7 @@ item skill_static_field
   aCCCDDjjjjDDCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_bone_spikes
+item skill_dig_remains
   a=0a100c
   b=536458
   c=2c3f31
@@ -9262,7 +9262,7 @@ item skill_bone_spikes
   aABBBBBBBBBBBBAa
   .aaaaaaaaaaaaaa.
 
-item skill_dark_idol
+item skill_nether_puppet
   a=0e0418
   b=603f7c
   c=21162b
@@ -9314,7 +9314,7 @@ item skill_dark_idol
   aGGGHlHHHHlHGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_beast_companion
+item skill_wild_beast_taming
   a=061210
   b=466a65
   c=1c4741
@@ -9360,7 +9360,7 @@ item skill_beast_companion
   aBBBBBBBBBBBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_skeletal_brute
+item skill_summon_bone_heavy
   a=0a100c
   b=536458
   c=1d231e
@@ -9468,7 +9468,7 @@ item skill_frost_wraith
   aHHHHHHHHHIzzzIa
   .aaaaaaaaaaaaaa.
 
-item skill_skeletal_archers
+item skill_summon_bone_bowmen
   a=0a100c
   b=536458
   c=1d231e
@@ -9521,7 +9521,7 @@ item skill_skeletal_archers
   aHHIIHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_skeletal_pyromancer
+item skill_summon_bone_flamecaster
   a=1a0703
   b=774436
   c=291712
@@ -9575,7 +9575,7 @@ item skill_skeletal_pyromancer
   aIIIIIJIJIJIIIIa
   .aaaaaaaaaaaaaa.
 
-item skill_skeletal_stormcaller
+item skill_summon_bone_thundermage
   a=141004
   b=6a6039
   c=252113
@@ -9627,7 +9627,7 @@ item skill_skeletal_stormcaller
   aGGGGGHGHGHGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_skeletal_frostcaller
+item skill_summon_bone_frostmage
   a=04101c
   b=3f6a8b
   c=162530
@@ -9679,7 +9679,7 @@ item skill_skeletal_frostcaller
   aGGGGGHGHGHGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_skeletal_reaver
+item skill_summon_bone_berserker
   a=0a100c
   b=1d231e
   c=536458
@@ -9784,7 +9784,7 @@ item skill_bone_raise
   aDEEEEEgEEEEEEDa
   .aaaaaaaaaaaaaa.
 
-item skill_frost_aegis
+item skill_winter_shell
   a=04101c
   b=3f6a8b
   c=162530
@@ -9868,7 +9868,7 @@ item skill_battle_rage
   awwwxxxddxxxwwwa
   .aaaaaaaaaaaaaa.
 
-item skill_storm_staff
+item skill_thunderbind_staff
   a=141004
   b=6a6039
   c=252113
@@ -9921,7 +9921,7 @@ item skill_storm_staff
   aHHHIIIddIIIHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_ruin_mantra
+item skill_collapse_heart_chant
   a=140a04
   b=6d503b
   c=261c14
@@ -9963,7 +9963,7 @@ item skill_ruin_mantra
   awwwxxxddxxxwwwa
   .aaaaaaaaaaaaaa.
 
-item skill_attrition
+item skill_grinding_will
   a=140404
   b=6a3e3e
   c=251515
@@ -10009,7 +10009,7 @@ item skill_attrition
   aAAABBBddBBBAAAa
   .aaaaaaaaaaaaaa.
 
-item skill_mana_storm
+item skill_magic_surge
   a=04081a
   b=415584
   c=161d2e
@@ -10051,7 +10051,7 @@ item skill_mana_storm
   awwwxxxddxxxwwwa
   .aaaaaaaaaaaaaa.
 
-item skill_wind_dancer
+item skill_breeze_dance_step
   a=061210
   b=466a65
   c=182523
@@ -10146,7 +10146,7 @@ item skill_magma_barrier
   azzzAAAddAAAzzza
   .aaaaaaaaaaaaaa.
 
-item skill_combat_frenzy
+item skill_battle_spirit_rise
   a=140a04
   b=6d503b
   c=261c14
@@ -10201,7 +10201,7 @@ item skill_combat_frenzy
   aJJJKKKddKKKJJJa
   .aaaaaaaaaaaaaa.
 
-item skill_archmage
+item skill_arcane_heart
   a=04081a
   b=415584
   c=161d2e
@@ -10245,7 +10245,7 @@ item skill_archmage
   ayyyzzzddzzzyyya
   .aaaaaaaaaaaaaa.
 
-item skill_elemental_conflux
+item skill_element_tide
   a=141004
   b=776a43
   c=292517
@@ -10290,7 +10290,7 @@ item skill_elemental_conflux
   azzzAAAddAAAzzza
   .aaaaaaaaaaaaaa.
 
-item skill_herald_of_plague
+item skill_plague_envoy
   a=0e0418
   b=603f7c
   c=3b145c
@@ -10339,7 +10339,7 @@ item skill_herald_of_plague
   aEEEEEEEEEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_flame_stream
+item skill_burning_current
   a=1a0703
   b=774436
   c=561a09
@@ -10535,7 +10535,7 @@ item skill_charged_shot
   aHHIIHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_bound_spectre
+item skill_soul_attach_art
   a=0e0418
   b=603f7c
   c=3b145c
@@ -10582,7 +10582,7 @@ item skill_bound_spectre
   aBCCCCCCCCCCCCBa
   .aaaaaaaaaaaaaa.
 
-item skill_skeletal_cleric
+item skill_summon_bone_priest
   a=061206
   b=466a46
   c=182518
@@ -10634,7 +10634,7 @@ item skill_skeletal_cleric
   aGGGGGHGHGHGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_escape_shot
+item skill_leapback_shoot
   a=04101c
   b=3f6a8b
   c=162530
@@ -10687,7 +10687,7 @@ item skill_escape_shot
   aHHIIHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_raise_guard
+item skill_shield_brace
   a=100e0c
   b=67625d
   c=433d37
@@ -10735,7 +10735,7 @@ item skill_raise_guard
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_bear_maul
+item skill_mountain_shake_claw
   a=100e0c
   b=67625d
   c=433d37
@@ -10782,7 +10782,7 @@ item skill_bear_maul
   aBBBChCBBChCBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_bear_slam
+item skill_field_quake_stomp
   a=140a04
   b=6d503b
   c=261c14
@@ -10832,7 +10832,7 @@ item skill_bear_slam
   aEFFFFFFFFFFFFEa
   .aaaaaaaaaaaaaa.
 
-item skill_mountain_fury
+item skill_molten_crack_stomp
   a=100e0c
   b=67625d
   c=433d37
@@ -10881,7 +10881,7 @@ item skill_mountain_fury
   aDDDDDEEEEDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_rampage
+item skill_brute_charge
   a=140a04
   b=6d503b
   c=4a280f
@@ -10925,7 +10925,7 @@ item skill_rampage
   azzzzzzzzzzzzzza
   .aaaaaaaaaaaaaa.
 
-item skill_walking_calamity
+item skill_fallen_star_bear_roar
   a=1a0703
   b=774436
   c=291712
@@ -10976,7 +10976,7 @@ item skill_walking_calamity
   aFGGGGGGGGGGGGFa
   .aaaaaaaaaaaaaa.
 
-item skill_wolf_shred
+item skill_swift_claw
   a=100e0c
   b=67625d
   c=433d37
@@ -11121,7 +11121,7 @@ item skill_pounce
   aEEEFFFFFFFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_cross_slash
+item skill_crisscross_claw
   a=04101c
   b=3f6a8b
   c=162530
@@ -11170,7 +11170,7 @@ item skill_cross_slash
   aDEDDDDDDDDDDEDa
   .aaaaaaaaaaaaaa.
 
-item skill_arctic_howl
+item skill_cold_night_howl
   a=04101c
   b=3f6a8b
   c=15466d
@@ -11220,7 +11220,7 @@ item skill_arctic_howl
   aEEEEEEEEEEEFFEa
   .aaaaaaaaaaaaaa.
 
-item skill_lunar_blessing
+item skill_silver_moon_shelter
   a=04081a
   b=415584
   c=161d2e
@@ -11269,7 +11269,7 @@ item skill_lunar_blessing
   afffffffEffffffa
   .aaaaaaaaaaaaaa.
 
-item skill_wing_blast
+item skill_wingbeat_gust
   a=061210
   b=466a65
   c=182523
@@ -11318,7 +11318,7 @@ item skill_wing_blast
   aDDDDDDDDDDEfEDa
   .aaaaaaaaaaaaaa.
 
-item skill_rolling_magma
+item skill_molten_ball
   a=1a0703
   b=774436
   c=561a09
@@ -11367,7 +11367,7 @@ item skill_rolling_magma
   aDEEEEEEEEEEEEDa
   .aaaaaaaaaaaaaa.
 
-item skill_devour
+item skill_gnawing_bite
   a=140404
   b=6a3e3e
   c=461313
@@ -11409,7 +11409,7 @@ item skill_devour
   axxxxxxxxxxxxxxa
   .aaaaaaaaaaaaaa.
 
-item skill_oil_barrage
+item skill_black_oil_rain
   a=0e0418
   b=603f7c
   c=3b145c
@@ -11505,7 +11505,7 @@ item skill_flame_breath
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_thunderstorm
+item skill_gathered_thundercloud
   a=141004
   b=6a6039
   c=252113
@@ -11555,7 +11555,7 @@ item skill_thunderstorm
   aEEEEEFopFEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_primal_tornado
+item skill_wild_whirlwind
   a=061210
   b=466a65
   c=1c4741
@@ -11603,7 +11603,7 @@ item skill_primal_tornado
   aCDDDDDDDDDDDDCa
   .aaaaaaaaaaaaaa.
 
-item skill_thrashing_vines
+item skill_lashing_thorns
   a=061206
   b=466a46
   c=1c471c
@@ -11703,7 +11703,7 @@ item skill_volcano
   aFFGGGGGGGGGGGFa
   .aaaaaaaaaaaaaa.
 
-item skill_entangle
+item skill_root_bind
   a=061206
   b=466a46
   c=1c471c
@@ -11751,7 +11751,7 @@ item skill_entangle
   aCDDCCCCCCCCCDCa
   .aaaaaaaaaaaaaa.
 
-item skill_barkskin
+item skill_wood_armor
   a=061206
   b=466a46
   c=1c471c
@@ -11800,7 +11800,7 @@ item skill_barkskin
   aEEEEEEEEEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_briarpatch
+item skill_thorn_body
   a=061206
   b=466a46
   c=1c471c
@@ -11849,7 +11849,7 @@ item skill_briarpatch
   aDEDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_savage_fury
+item skill_beast_blood_boil
   a=140404
   b=6a3e3e
   c=251515
@@ -11896,7 +11896,7 @@ item skill_savage_fury
   aBBCBBBCdCBBBCBa
   .aaaaaaaaaaaaaa.
 
-item skill_wolf_pack
+item skill_grey_wolf_escort
   a=0a100c
   b=536458
   c=2c3f31
@@ -11944,7 +11944,7 @@ item skill_wolf_pack
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_supercharged_slam
+item skill_thousand_weight_smash
   a=100e0c
   b=67625d
   c=242220
@@ -11998,7 +11998,7 @@ item skill_supercharged_slam
   aIJJJJJJJJJJJJIa
   .aaaaaaaaaaaaaa.
 
-item skill_resonating_shield
+item skill_shield_drum
   a=100e0c
   b=67625d
   c=242220
@@ -12045,7 +12045,7 @@ item skill_resonating_shield
   aBBCCdCddCdCdCBa
   .aaaaaaaaaaaaaa.
 
-item skill_gathering_storm
+item skill_thunder_lure_thrust
   a=141004
   b=6a6039
   c=252113
@@ -12096,7 +12096,7 @@ item skill_gathering_storm
   aFGFFFFFFFFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_disengage
+item skill_spear_recoil_leap
   a=100e0c
   b=67625d
   c=433d37
@@ -12148,7 +12148,7 @@ item skill_disengage
   aGHHGGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_glacial_lance
+item skill_ice_cone_toss
   a=04101c
   b=3f6a8b
   c=162530
@@ -12200,7 +12200,7 @@ item skill_glacial_lance
   aGHHGGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_primal_strikes
+item skill_thunderclap_stab
   a=141004
   b=6a6039
   c=252113
@@ -12253,7 +12253,7 @@ item skill_primal_strikes
   aHIIHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_cull_the_weak
+item skill_cripple_purge
   a=140404
   b=6a3e3e
   c=251515
@@ -12306,7 +12306,7 @@ item skill_cull_the_weak
   aHIIHHHHHHHIHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_toxic_growth
+item skill_miasma_bud_rain
   a=0e0418
   b=603f7c
   c=3b145c
@@ -12352,7 +12352,7 @@ item skill_toxic_growth
   aABBBBBBBBBBBBAa
   .aaaaaaaaaaaaaa.
 
-item skill_magnetic_salvo
+item skill_magnet_thunder_barrage
   a=141004
   b=6a6039
   c=473b0d
@@ -12399,7 +12399,7 @@ item skill_magnetic_salvo
   aBBCBCBCBCBCBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_glacial_bolt
+item skill_frozen_wall_shaft
   a=04101c
   b=3f6a8b
   c=162530
@@ -12450,7 +12450,7 @@ item skill_glacial_bolt
   aFGFFFFFFGFGFGFa
   .aaaaaaaaaaaaaa.
 
-item skill_plasma_blast
+item skill_searing_slurry_cannon
   a=141004
   b=6a6039
   c=252113
@@ -12504,7 +12504,7 @@ item skill_plasma_blast
   aIJIIIIIIIIIIIIa
   .aaaaaaaaaaaaaa.
 
-item skill_frost_darts
+item skill_ice_shuttle
   a=04101c
   b=3f6a8b
   c=162530
@@ -12552,7 +12552,7 @@ item skill_frost_darts
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_profane_ritual
+item skill_filth_array
   a=0e0418
   b=603f7c
   c=3b145c
@@ -12600,7 +12600,7 @@ item skill_profane_ritual
   aCCCCCDDDDDCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_herald_of_blood
+item skill_blood_proclaim
   a=140404
   b=6a3e3e
   c=251515
@@ -12646,7 +12646,7 @@ item skill_herald_of_blood
   aAAABBBddBBBAAAa
   .aaaaaaaaaaaaaa.
 
-item skill_berserk
+item skill_crimson_wrath
   a=140404
   b=6a3e3e
   c=461313
@@ -12694,7 +12694,7 @@ item skill_berserk
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_overwhelming_presence
+item skill_awe_suppress
   a=140a04
   b=6d503b
   c=261c14
@@ -12743,7 +12743,7 @@ item skill_overwhelming_presence
   aDDDEEEhhEhEDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_withering_presence
+item skill_wilting_breath
   a=0e0418
   b=603f7c
   c=21162b
@@ -12793,7 +12793,7 @@ item skill_withering_presence
   aEEFFdFEEEEFdFEa
   .aaaaaaaaaaaaaa.
 
-item skill_voltaic_mark
+item skill_thunder_lure_seal
   a=141004
   b=6a6039
   c=252113
@@ -12840,7 +12840,7 @@ item skill_voltaic_mark
   aBBBBBCCdCCBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_freezing_mark
+item skill_frostbind_seal
   a=04101c
   b=3f6a8b
   c=162530
@@ -12887,7 +12887,7 @@ item skill_freezing_mark
   aBBBBBCCdCCBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_bloodhounds_mark
+item skill_blood_scent_seal
   a=140404
   b=6a3e3e
   c=251515
@@ -12934,7 +12934,7 @@ item skill_bloodhounds_mark
   aBBBBBCCdCCBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_ice_tipped_arrows
+item skill_frost_arrowhead
   a=04101c
   b=3f6a8b
   c=162530
@@ -12987,7 +12987,7 @@ item skill_ice_tipped_arrows
   aHHIIIHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_emergency_reload
+item skill_hasty_load
   a=140a04
   b=6d503b
   c=261c14
@@ -13038,7 +13038,7 @@ item skill_emergency_reload
   aFqlFGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_toxic_domain
+item skill_miasma_zone
   a=0e0418
   b=603f7c
   c=3b145c
@@ -13129,7 +13129,7 @@ item skill_blink
   ayyyyyyyyyyyyyya
   .aaaaaaaaaaaaaa.
 
-item skill_time_of_need
+item skill_guard_moment
   a=141004
   b=776a43
   c=292517
@@ -13175,7 +13175,7 @@ item skill_time_of_need
   aAAABBBddBBBAAAa
   .aaaaaaaaaaaaaa.
 
-item skill_ghost_dance
+item skill_spectral_step
   a=04081a
   b=415584
   c=162e66
@@ -13217,7 +13217,7 @@ item skill_ghost_dance
   ammmmmmmmmmmmmma
   .aaaaaaaaaaaaaa.
 
-item skill_scavenged_plating
+item skill_gathered_scales
   a=100e0c
   b=67625d
   c=433d37
@@ -13264,7 +13264,7 @@ item skill_scavenged_plating
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_eternal_rage
+item skill_unquenched_fury
   a=140404
   b=6a3e3e
   c=461313
@@ -13314,7 +13314,7 @@ item skill_eternal_rage
   aEEFFFFFFFFFFFEa
   .aaaaaaaaaaaaaa.
 
-item skill_mana_remnants
+item skill_magic_spring_well
   a=04081a
   b=415584
   c=162e66
@@ -13361,7 +13361,7 @@ item skill_mana_remnants
   aBBCCCBBBBBBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_alchemists_boon
+item skill_potion_craft_insight
   a=061206
   b=466a46
   c=1c471c
@@ -13408,7 +13408,7 @@ item skill_alchemists_boon
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_ravenous_swarm
+item skill_insect_devour_horde
   a=0e0418
   b=603f7c
   c=3b145c
@@ -13455,7 +13455,7 @@ item skill_ravenous_swarm
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_trail_of_caltrops
+item skill_thornburr_steps
   a=100e0c
   b=67625d
   c=433d37
@@ -13500,7 +13500,7 @@ item skill_trail_of_caltrops
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item skill_mirage_archer
+item skill_phantom_bow_shade
   a=04081a
   b=415584
   c=161d2e
@@ -13553,7 +13553,7 @@ item skill_mirage_archer
   aHHIIHHHHHHHIHHa
   .aaaaaaaaaaaaaa.
 
-item skill_plague_bearer
+item skill_pestilence_sac_burst
   a=0e0418
   b=603f7c
   c=21162b
@@ -13600,7 +13600,7 @@ item skill_plague_bearer
   aBCfCBCCfCCBCfCa
   .aaaaaaaaaaaaaa.
 
-item skill_iron_ward
+item skill_iron_rampart_guard
   a=100e0c
   b=67625d
   c=433d37
@@ -13647,7 +13647,7 @@ item skill_iron_ward
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_shield_wall
+item skill_earth_wall_strike
   a=100e0c
   b=67625d
   c=433d37
@@ -14029,7 +14029,7 @@ item skill_command_beast_pounce
   aBBBBBCsCsCBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_summon_mount
+item skill_steed_call
   a=140a04
   b=6d503b
   c=4a280f
@@ -14172,7 +14172,7 @@ item skill_hoof_trample
   aDEEEEEEEEEEEEDa
   .aaaaaaaaaaaaaa.
 
-item skill_bone_cage
+item skill_bone_thorn_ring
   a=100e0c
   b=67625d
   c=433d37
@@ -14217,7 +14217,7 @@ item skill_bone_cage
   azAAAAAAAAAAAAza
   .aaaaaaaaaaaaaa.
 
-item skill_snap
+item skill_anomaly_devour_blast
   a=141004
   b=776a43
   c=292517
@@ -14267,7 +14267,7 @@ item skill_snap
   aEEEEEEFgFEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_charge_regulation
+item skill_star_reign_art
   a=140a04
   b=6d503b
   c=261c14
@@ -14316,7 +14316,7 @@ item skill_charge_regulation
   aDDDEEEddEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_convalescence
+item skill_shield_restore_art
   a=04081a
   b=415584
   c=162e66
@@ -14363,7 +14363,7 @@ item skill_convalescence
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_grim_feast
+item skill_remains_banquet
   a=0a100c
   b=536458
   c=2c3f31
@@ -14413,7 +14413,7 @@ item skill_grim_feast
   aEEFBFEFBFEFBFEa
   .aaaaaaaaaaaaaa.
 
-item skill_sacrifice
+item skill_servant_corpse_swap
   a=140404
   b=6a3e3e
   c=251515
@@ -14466,7 +14466,7 @@ item skill_sacrifice
   aHHIIIIIIIIIIIHa
   .aaaaaaaaaaaaaa.
 
-item skill_shard_scavenger
+item skill_crystal_pickup_load
   a=140a04
   b=6d503b
   c=261c14
@@ -14517,7 +14517,7 @@ item skill_shard_scavenger
   aFGFFFFGiGFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_siphon_elements
+item skill_element_trace_surge
   a=141004
   b=776a43
   c=292517
@@ -14565,7 +14565,7 @@ item skill_siphon_elements
   aCCCDDDdmdDDCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_elemental_trinity
+item skill_tripod_element_art
   a=141004
   b=776a43
   c=292517
@@ -14616,7 +14616,7 @@ item skill_elemental_trinity
   aFFFGGfffffGGFFa
   .aaaaaaaaaaaaaa.
 
-item skill_frozen_locus
+item skill_retreat_crystal_freeze
   a=04101c
   b=3f6a8b
   c=162530
@@ -14666,7 +14666,7 @@ item skill_frozen_locus
   aEFEEEEEEEEFFFEa
   .aaaaaaaaaaaaaa.
 
-item skill_rake
+item skill_blood_tear_sweep
   a=140404
   b=6a3e3e
   c=251515
@@ -14719,7 +14719,7 @@ item skill_rake
   aHIIHHIHIHIHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_lightning_rod
+item skill_thunder_stake_shaft
   a=141004
   b=6a6039
   c=252113
@@ -14771,7 +14771,7 @@ item skill_lightning_rod
   aGGHtuHGHGGHtuHa
   .aaaaaaaaaaaaaa.
 
-item skill_fragmentation_rounds
+item skill_shrapnel_shell
   a=100e0c
   b=67625d
   c=242220
@@ -14822,7 +14822,7 @@ item skill_fragmentation_rounds
   aFGGGFFFFFFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_stormblast_bolts
+item skill_lurking_thunder_shell
   a=141004
   b=6a6039
   c=473b0d
@@ -14872,7 +14872,7 @@ item skill_stormblast_bolts
   aEEEEEEEEFrsrFEa
   .aaaaaaaaaaaaaa.
 
-item skill_siege_ballista
+item skill_skyward_crossbow_turret
   a=1a0703
   b=774436
   c=291712
@@ -14925,7 +14925,7 @@ item skill_siege_ballista
   aIIIIIIIIIIIIIIa
   .aaaaaaaaaaaaaa.
 
-item skill_artillery_ballista
+item skill_nailfall_crossbow_turret
   a=100e0c
   b=67625d
   c=242220
@@ -14973,7 +14973,7 @@ item skill_artillery_ballista
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_linked_volley
+item skill_strung_pearls
   a=140a04
   b=6d503b
   c=261c14
@@ -15025,7 +15025,7 @@ item skill_linked_volley
   aGHBHGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_void_meteor
+item skill_hollow_star_fall
   a=0e0418
   b=603f7c
   c=21162b
@@ -15077,7 +15077,7 @@ item skill_void_meteor
   aGGGGGGGGHHGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_oblivion_ray
+item skill_annihilation_death_beam
   a=0e0418
   b=603f7c
   c=3b145c
@@ -15116,7 +15116,7 @@ item skill_oblivion_ray
   auuuuuuuuuuuuuua
   .aaaaaaaaaaaaaa.
 
-item skill_storm_labyrinth
+item skill_thunder_prison_maze
   a=141004
   b=6a6039
   c=473b0d
@@ -15166,7 +15166,7 @@ item skill_storm_labyrinth
   aEEFFEEEFFEEEFFa
   .aaaaaaaaaaaaaa.
 
-item skill_fourfold_ray
+item skill_four_way_death_beam
   a=0e0418
   b=603f7c
   c=21162b
@@ -15212,7 +15212,7 @@ item skill_fourfold_ray
   aAAAAABdeBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item skill_rift_slash
+item skill_void_split_flash
   a=0e0418
   b=603f7c
   c=21162b
@@ -15269,7 +15269,7 @@ item skill_rift_slash
   aKLKMMMKMMMMMMMa
   .aaaaaaaaaaaaaa.
 
-item skill_starfall_volley
+item skill_star_drop_arrow
   a=141004
   b=6a6039
   c=252113
@@ -15322,7 +15322,7 @@ item skill_starfall_volley
   aHHIIHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_totem_casting
+item skill_star_spell_totem
   a=04081a
   b=415584
   c=161d2e
@@ -15373,7 +15373,7 @@ item skill_totem_casting
   aFFFFGrGGrGFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_meta_crit
+item skill_critical_guide_star
   a=1a0703
   b=774436
   c=291712
@@ -15425,7 +15425,7 @@ item skill_meta_crit
   aGGGGGGHGGHBBBHa
   .aaaaaaaaaaaaaa.
 
-item skill_meta_ailment
+item skill_mutation_guide_star
   a=0e0418
   b=603f7c
   c=21162b
@@ -15483,7 +15483,7 @@ item skill_meta_ailment
   aMMMMMMMMMNHHHNa
   .aaaaaaaaaaaaaa.
 
-item skill_meta_dodge
+item skill_roll_guide_star
   a=061210
   b=466a65
   c=1c4741
@@ -15590,7 +15590,7 @@ item skill_meta_damage_taken
   aIIIIIIIIIJDDDJa
   .aaaaaaaaaaaaaa.
 
-item skill_meta_minion_death
+item skill_fallen_servant_star
   a=0a100c
   b=1d231e
   c=ece4c8
@@ -16122,7 +16122,7 @@ item skill_bulwark_totem
   aHIIIIIIIIIIIIHa
   .aaaaaaaaaaaaaa.
 
-item skill_tide_call
+item skill_summon_tide
   a=04101c
   b=3f6a8b
   c=15466d
@@ -16161,7 +16161,7 @@ item skill_tide_call
   auuuuuuuuuuuuuua
   .aaaaaaaaaaaaaa.
 
-item skill_abyssal_pull
+item skill_whale_gulp_vortex
   a=04101c
   b=162530
   c=b8eeff
@@ -16202,7 +16202,7 @@ item skill_abyssal_pull
   avwwvggggggvwwwa
   .aaaaaaaaaaaaaa.
 
-item skill_dawn_pillar
+item skill_morning_light_column
   a=141004
   b=776a43
   c=292517
@@ -16253,7 +16253,7 @@ item skill_dawn_pillar
   aFGssGGsGGsGGGFa
   .aaaaaaaaaaaaaa.
 
-item skill_shrine_prayer
+item skill_altar_niche_blessing
   a=141004
   b=776a43
   c=292517
@@ -16305,7 +16305,7 @@ item skill_shrine_prayer
   aGGGGGHGHGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_chain_lash
+item skill_shackle_chain_sweep
   a=140a04
   b=6d503b
   c=261c14
@@ -16359,7 +16359,7 @@ item skill_chain_lash
   aInIJJJJJJJJJJJa
   .aaaaaaaaaaaaaa.
 
-item skill_coin_barrage
+item skill_gold_coin_hail
   a=1a0703
   b=774436
   c=291712
@@ -16411,7 +16411,7 @@ item skill_coin_barrage
   aGGGGGHHHGHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_rift_hand
+item skill_fissure_hand
   a=0e0418
   b=603f7c
   c=21162b
@@ -16463,7 +16463,7 @@ item skill_rift_hand
   aHHHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_breach_ring
+item skill_fissure_spread
   a=0e0418
   b=603f7c
   c=21162b
@@ -16506,7 +16506,7 @@ item skill_breach_ring
   axxxyyddddyyxxxa
   .aaaaaaaaaaaaaa.
 
-item skill_nameless_backstab
+item skill_unnamed_rear_stab
   a=140404
   b=6a3e3e
   c=251515
@@ -16560,7 +16560,7 @@ item skill_nameless_backstab
   aIJJJJJJJIIIIIIa
   .aaaaaaaaaaaaaa.
 
-item skill_execution_mark
+item skill_execute_brand
   a=140404
   b=6a3e3e
   c=251515
@@ -16610,7 +16610,7 @@ item skill_execution_mark
   aEEEEEFiiFEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_blood_altar
+item skill_blood_sacrifice_dais
   a=140404
   b=6a3e3e
   c=461313
@@ -16659,7 +16659,7 @@ item skill_blood_altar
   aDEElEllElElEEDa
   .aaaaaaaaaaaaaa.
 
-item skill_tribute_spears
+item skill_offering_blood_spear
   a=140404
   b=6a3e3e
   c=251515
@@ -16710,7 +16710,7 @@ item skill_tribute_spears
   aFopFFopFFopFGGa
   .aaaaaaaaaaaaaa.
 
-item skill_mirror_shards
+item skill_broken_looking_glass
   a=04101c
   b=3f6a8b
   c=162530
@@ -16759,7 +16759,7 @@ item skill_mirror_shards
   aDDDDDDDDDDEDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_mirror_step
+item skill_reflection_mist_pass
   a=04101c
   b=162530
   c=2a78c0
@@ -16808,7 +16808,7 @@ item skill_mirror_step
   aDDcDcDcDDEEDcDa
   .aaaaaaaaaaaaaa.
 
-item skill_bone_fissure
+item skill_bone_crack_leyline
   a=04101c
   b=3f6a8b
   c=162530
@@ -16857,7 +16857,7 @@ item skill_bone_fissure
   aDEEEEEEEEEEEEDa
   .aaaaaaaaaaaaaa.
 
-item skill_abyss_grasp
+item skill_deep_chasm_hand
   a=04101c
   b=3f6a8b
   c=162530
@@ -16957,7 +16957,7 @@ item skill_parry
   aFFFFFFFFFFFFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_lingering_illusion
+item skill_phantom_body
   a=061210
   b=466a65
   c=1c4741
@@ -17056,7 +17056,7 @@ item skill_minion_recall
   abcEEFFFFFFEEcba
   .aaaaaaaaaaaaaa.
 
-item skill_lunar_assault
+item skill_crescent_claw
   a=04101c
   b=3f6a8b
   c=162530
@@ -17104,7 +17104,7 @@ item skill_lunar_assault
   adddddddddddddda
   .aaaaaaaaaaaaaa.
 
-item skill_ferocious_roar
+item skill_armor_rend_bear_roar
   a=140a04
   b=6d503b
   c=4a280f
@@ -17152,7 +17152,7 @@ item skill_ferocious_roar
   aCCCCCCCCCCDCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_wyvern_rend
+item skill_wing_blade_slash
   a=100e0c
   b=67625d
   c=433d37
@@ -17199,7 +17199,7 @@ item skill_wyvern_rend
   aBBCCBBBBBBBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_meta_elemental_invocation
+item skill_element_prayer_star
   a=141004
   b=776a43
   c=292517
@@ -17254,7 +17254,7 @@ item skill_meta_elemental_invocation
   aJJJJJJJJJKEEEKa
   .aaaaaaaaaaaaaa.
 
-item skill_meta_reaper_invocation
+item skill_scythe_prayer_star
   a=140404
   b=251515
   c=ffd0c8
@@ -17312,7 +17312,7 @@ item skill_meta_reaper_invocation
   aMNNNNNNNNMGGGMa
   .aaaaaaaaaaaaaa.
 
-item skill_meta_barrier_invocation
+item skill_ward_prayer_star
   a=04081a
   b=415584
   c=162e66
@@ -17363,7 +17363,7 @@ item skill_meta_barrier_invocation
   aFFFFFFFFFGAAAGa
   .aaaaaaaaaaaaaa.
 
-item skill_bone_blast
+item skill_bone_bloom
   a=0a100c
   b=536458
   c=2c3f31
@@ -17410,7 +17410,7 @@ item skill_bone_blast
   aBCkCCCCCCCCCCBa
   .aaaaaaaaaaaaaa.
 
-item skill_mana_drain
+item skill_magic_absorb_art
   a=04081a
   b=415584
   c=162e66
@@ -17455,7 +17455,7 @@ item skill_mana_drain
   azAAzzzzzzzzzzza
   .aaaaaaaaaaaaaa.
 
-item skill_power_siphon
+item skill_keen_star_drain
   a=100e0c
   b=67625d
   c=433d37
@@ -17508,7 +17508,7 @@ item skill_power_siphon
   aHIHHHHHHHHIEIHa
   .aaaaaaaaaaaaaa.
 
-item skill_volatile_dead
+item skill_corpse_flame_burst
   a=1a0703
   b=774436
   c=291712
@@ -17561,7 +17561,7 @@ item skill_volatile_dead
   aHHHHIqIqIqIHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_galvanic_field
+item skill_thunder_current_zone
   a=141004
   b=6a6039
   c=252113
@@ -17612,7 +17612,7 @@ item skill_galvanic_field
   aFfiFGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_decompose
+item skill_rotting_corpse_blast
   a=0e0418
   b=603f7c
   c=21162b
@@ -17665,7 +17665,7 @@ item skill_decompose
   aHHHHIqIqIqIHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_exsanguinate
+item skill_blood_vein_tether
   a=140404
   b=6a3e3e
   c=251515
@@ -17714,7 +17714,7 @@ item skill_exsanguinate
   aEEEEEEEEEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_wither
+item skill_decay_erosion_art
   a=0e0418
   b=603f7c
   c=21162b
@@ -17762,7 +17762,7 @@ item skill_wither
   aCCCDDDffDDDCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_coiling_bolts
+item skill_entwine_rot_arrow
   a=0e0418
   b=603f7c
   c=3b145c
@@ -17805,7 +17805,7 @@ item skill_coiling_bolts
   ayyyyyyyyyyyyyya
   .aaaaaaaaaaaaaa.
 
-item skill_firebolt
+item skill_flame_star_shot
   a=1a0703
   b=774436
   c=561a09
@@ -17855,7 +17855,7 @@ item skill_firebolt
   aEFEEEEEEEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_freezing_shards
+item skill_frost_crystal_fan
   a=04101c
   b=3f6a8b
   c=162530
@@ -17903,7 +17903,7 @@ item skill_freezing_shards
   aCCCCCCDdDCCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_lightning_bolt
+item skill_thunder_drop
   a=141004
   b=6a6039
   c=252113
@@ -17953,7 +17953,7 @@ item skill_lightning_bolt
   aEFFvFFvFFFFFFEa
   .aaaaaaaaaaaaaa.
 
-item skill_sigil_of_power
+item skill_might_seal
   a=04081a
   b=415584
   c=161d2e
@@ -17994,7 +17994,7 @@ item skill_sigil_of_power
   avvvwwwddwwwvvva
   .aaaaaaaaaaaaaa.
 
-item skill_soulrend
+item skill_soul_split_shot
   a=0e0418
   b=603f7c
   c=3b145c
@@ -18041,7 +18041,7 @@ item skill_soulrend
   alllllllllllllla
   .aaaaaaaaaaaaaa.
 
-item skill_reap
+item skill_blood_sickle
   a=140404
   b=6a3e3e
   c=461313
@@ -18090,7 +18090,7 @@ item skill_reap
   aDDEkEDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_enervating_nova
+item skill_fading_thunder_ring
   a=141004
   b=6a6039
   c=252113
@@ -18134,7 +18134,7 @@ item skill_enervating_nova
   ayyyyzzzzzzyyyya
   .aaaaaaaaaaaaaa.
 
-item skill_consecrate
+item skill_holy_ground
   a=141004
   b=776a43
   c=292517
@@ -18184,7 +18184,7 @@ item skill_consecrate
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item skill_dark_pact
+item skill_nether_contract
   a=0e0418
   b=603f7c
   c=21162b
@@ -18230,7 +18230,7 @@ item skill_dark_pact
   aAAAAAABdBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item skill_feast_of_flesh
+item skill_corpse_devour_feast
   a=140404
   b=6a3e3e
   c=251515
@@ -18282,7 +18282,7 @@ item skill_feast_of_flesh
   aGGGGHpHpHpHGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_heart_of_ice
+item skill_cold_heart
   a=04101c
   b=3f6a8b
   c=162530
@@ -18329,7 +18329,7 @@ item skill_heart_of_ice
   aBBCBBBCfCBBCBBa
   .aaaaaaaaaaaaaa.
 
-item skill_malice
+item skill_evil_thought
   a=0e0418
   b=603f7c
   c=21162b
@@ -18371,7 +18371,7 @@ item skill_malice
   awwwxxxddxxxwwwa
   .aaaaaaaaaaaaaa.
 
-item skill_purity_of_fire
+item skill_flame_guard
   a=1a0703
   b=774436
   c=291712
@@ -18415,7 +18415,7 @@ item skill_purity_of_fire
   ayyyzzzddzzzyyya
   .aaaaaaaaaaaaaa.
 
-item skill_purity_of_ice
+item skill_frost_guard
   a=04101c
   b=3f6a8b
   c=162530
@@ -18458,7 +18458,7 @@ item skill_purity_of_ice
   axxxyyyddyyyxxxa
   .aaaaaaaaaaaaaa.
 
-item skill_purity_of_lightning
+item skill_thunder_guard
   a=141004
   b=6a6039
   c=252113
@@ -18501,7 +18501,7 @@ item skill_purity_of_lightning
   axxxyyyddyyyxxxa
   .aaaaaaaaaaaaaa.
 
-item skill_impurity
+item skill_corrode_guard
   a=0e0418
   b=603f7c
   c=21162b
@@ -18544,7 +18544,7 @@ item skill_impurity
   axxxyyyddyyyxxxa
   .aaaaaaaaaaaaaa.
 
-item skill_spellslinger
+item skill_incant_hurl
   a=04081a
   b=415584
   c=162e66
@@ -18596,7 +18596,7 @@ item skill_spellslinger
   aGHHGGGGGGHlllHa
   .aaaaaaaaaaaaaa.
 
-item skill_unleash_spell
+item skill_seal_release
   a=04081a
   b=415584
   c=161d2e
@@ -18644,7 +18644,7 @@ item skill_unleash_spell
   aCCCCDDDDDDCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_fulmination
+item skill_thunder_resonance
   a=141004
   b=6a6039
   c=252113
@@ -18687,7 +18687,7 @@ item skill_fulmination
   axxxyyyddyyyxxxa
   .aaaaaaaaaaaaaa.
 
-item skill_mirror_of_refraction
+item skill_light_bend_mirror
   a=04081a
   b=415584
   c=161d2e
@@ -18736,7 +18736,7 @@ item skill_mirror_of_refraction
   aDDDEDExyEDEDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_spiraling_conspiracy
+item skill_raven_plot
   a=0e0418
   b=603f7c
   c=3b145c
@@ -18785,7 +18785,7 @@ item skill_spiraling_conspiracy
   aDDDDDDEEDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_encase_in_jade
+item skill_jade_entomb
   a=061206
   b=466a46
   c=182518
@@ -18834,7 +18834,7 @@ item skill_encase_in_jade
   aDDDDDDEEDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_temper_weapon
+item skill_forge_arms
   a=1a0703
   b=774436
   c=291712
@@ -18889,7 +18889,7 @@ item skill_temper_weapon
   aKKKKKKKKKKKKKKa
   .aaaaaaaaaaaaaa.
 
-item skill_manifest_weapon
+item skill_phantom_blade
   a=061210
   b=466a65
   c=182523
@@ -18945,7 +18945,7 @@ item skill_manifest_weapon
   aDKLLLKLLLLLLLLa
   .aaaaaaaaaaaaaa.
 
-item skill_fire_spell_on_hit
+item skill_hit_ignite_art
   a=1a0703
   b=774436
   c=561a09
@@ -19004,7 +19004,7 @@ item skill_fire_spell_on_hit
   aNOOOOOOOONHHHNa
   .aaaaaaaaaaaaaa.
 
-item skill_sorcery_ward
+item skill_witch_barrier
   a=141004
   b=776a43
   c=564618
@@ -19055,7 +19055,7 @@ item skill_sorcery_ward
   aGGGGGGGGGGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_supporting_fire
+item skill_covering_fire
   a=140a04
   b=6d503b
   c=261c14
@@ -19106,7 +19106,7 @@ item skill_supporting_fire
   aFGGGGGGGGGGGGFa
   .aaaaaaaaaaaaaa.
 
-item skill_virtuous_barrier
+item skill_righteous_shield
   a=141004
   b=776a43
   c=292517
@@ -19161,7 +19161,7 @@ item skill_virtuous_barrier
   aJJJJJJKKJJJJJJa
   .aaaaaaaaaaaaaa.
 
-item skill_blood_boil
+item skill_seething_blood
   a=140404
   b=6a3e3e
   c=251515
@@ -19210,7 +19210,7 @@ item skill_blood_boil
   aDDDDDDDDEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_ritual_sacrifice
+item skill_rite_offering
   a=140404
   b=6a3e3e
   c=251515
@@ -19265,7 +19265,7 @@ item skill_ritual_sacrifice
   aJJKKKKKKKKKKJJa
   .aaaaaaaaaaaaaa.
 
-item skill_queens_procession
+item skill_empress_march
   a=0e0418
   b=603f7c
   c=3b145c
@@ -19474,7 +19474,7 @@ item skill_bleeding_concoction
   aIIJIIIJJIIIJIIa
   .aaaaaaaaaaaaaa.
 
-item skill_shattering_concoction
+item skill_fracture_tonic
   a=04101c
   b=3f6a8b
   c=162530
@@ -19580,7 +19580,7 @@ item skill_explosive_concoction
   aIIIIIIJJIIJJJJa
   .aaaaaaaaaaaaaa.
 
-item skill_fulminating_concoction
+item skill_thunder_blast_tonic
   a=141004
   b=6a6039
   c=252113
@@ -19685,7 +19685,7 @@ item skill_acidic_concoction
   aHHIHHHIIHHIdIHa
   .aaaaaaaaaaaaaa.
 
-item skill_unbound_avatar
+item skill_free_incarnation
   a=141004
   b=776a43
   c=292517
@@ -19737,7 +19737,7 @@ item skill_unbound_avatar
   aGGGGGHGGHGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_meditate
+item skill_calm_mind_trance
   a=04081a
   b=415584
   c=161d2e
@@ -19786,7 +19786,7 @@ item skill_meditate
   aEEEEEEEEEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_void_illusion
+item skill_null_phantom
   a=0e0418
   b=603f7c
   c=21162b
@@ -19834,7 +19834,7 @@ item skill_void_illusion
   aCCCDCCDDCCDCDCa
   .aaaaaaaaaaaaaa.
 
-item skill_into_the_breach
+item skill_rift_dive
   a=0e0418
   b=603f7c
   c=3b145c
@@ -19886,7 +19886,7 @@ item skill_into_the_breach
   aGGGGGHHHHGGGGGa
   .aaaaaaaaaaaaaa.
 
-item skill_archon_of_chayula
+item skill_rose_jade_lord
   a=0e0418
   b=603f7c
   c=21162b
@@ -19933,7 +19933,7 @@ item skill_archon_of_chayula
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_time_snap
+item skill_time_gap_rewind
   a=04081a
   b=415584
   c=161d2e
@@ -19982,7 +19982,7 @@ item skill_time_snap
   aDDDDEEEEEEDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_time_freeze
+item skill_time_halt
   a=04101c
   b=3f6a8b
   c=162530
@@ -20032,7 +20032,7 @@ item skill_time_freeze
   aEEEFFFFFFFfffFa
   .aaaaaaaaaaaaaa.
 
-item skill_inevitable_agony
+item skill_fated_pain
   a=140404
   b=6a3e3e
   c=251515
@@ -20082,7 +20082,7 @@ item skill_inevitable_agony
   aEEEFFFFFFFFEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_temporal_rift
+item skill_time_gap_breach
   a=04081a
   b=415584
   c=161d2e
@@ -20129,7 +20129,7 @@ item skill_temporal_rift
   aBBCBBCBBCBBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_kelari_djinn
+item skill_foul_sand_spirit
   a=100e0c
   b=67625d
   c=242220
@@ -20180,7 +20180,7 @@ item skill_kelari_djinn
   aFFFFFFGFFFFGFFa
   .aaaaaaaaaaaaaa.
 
-item skill_navira_djinn
+item skill_final_mirage_spirit
   a=04101c
   b=3f6a8b
   c=162530
@@ -20231,7 +20231,7 @@ item skill_navira_djinn
   aFFFFFFGFFFFGFFa
   .aaaaaaaaaaaaaa.
 
-item skill_ruzhan_djinn
+item skill_flame_blade_spirit
   a=1a0703
   b=774436
   c=291712
@@ -20287,7 +20287,7 @@ item skill_ruzhan_djinn
   aJJJJKKLKJJJKJJa
   .aaaaaaaaaaaaaa.
 
-item skill_kelari_deception
+item skill_sand_spirit_trick
   a=100e0c
   b=67625d
   c=242220
@@ -20335,7 +20335,7 @@ item skill_kelari_deception
   aCCCDCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item skill_kelari_judgment
+item skill_sand_spirit_verdict
   a=100e0c
   b=67625d
   c=242220
@@ -20385,7 +20385,7 @@ item skill_kelari_judgment
   aEFFFFFFFFFFFFEa
   .aaaaaaaaaaaaaa.
 
-item skill_kelari_malediction
+item skill_sand_spirit_venom_word
   a=100e0c
   b=67625d
   c=242220
@@ -20434,7 +20434,7 @@ item skill_kelari_malediction
   aDEDEDDEDEDEDEDa
   .aaaaaaaaaaaaaa.
 
-item skill_navira_oasis
+item skill_mirage_spirit_haven
   a=061206
   b=466a46
   c=182518
@@ -20487,7 +20487,7 @@ item skill_navira_oasis
   aHHIssvvvvssIHHa
   .aaaaaaaaaaaaaa.
 
-item skill_navira_well
+item skill_mirage_spirit_spring
   a=04081a
   b=415584
   c=161d2e
@@ -20539,7 +20539,7 @@ item skill_navira_well
   aHHHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_navira_fracturing
+item skill_mirage_spirit_freeze
   a=04101c
   b=3f6a8b
   c=15466d
@@ -20584,7 +20584,7 @@ item skill_navira_fracturing
   azzzzzzAAzzzzzza
   .aaaaaaaaaaaaaa.
 
-item skill_ruzhan_reckoning
+item skill_blade_spirit_settle
   a=1a0703
   b=774436
   c=291712
@@ -20630,7 +20630,7 @@ item skill_ruzhan_reckoning
   aBBBBBBBBBBBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_ruzhan_fury
+item skill_blade_spirit_wrath_fire
   a=1a0703
   b=774436
   c=291712
@@ -20679,7 +20679,7 @@ item skill_ruzhan_fury
   aDDEkEfEEkEfEDDa
   .aaaaaaaaaaaaaa.
 
-item skill_ruzhan_trap
+item skill_blade_spirit_device
   a=1a0703
   b=774436
   c=291712
@@ -20730,7 +20730,7 @@ item skill_ruzhan_trap
   aFFFGGooooGGFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_infernal_hound
+item skill_hellfire_dog_call
   a=1a0703
   b=774436
   c=291712
@@ -20779,7 +20779,7 @@ item skill_infernal_hound
   aEEEEEEEEEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item skill_demon_form
+item skill_become_fiend
   a=140404
   b=6a3e3e
   c=251515
@@ -20827,7 +20827,7 @@ item skill_demon_form
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item skill_life_remnants
+item skill_vital_residue
   a=061206
   b=466a46
   c=1c471c
@@ -20875,7 +20875,7 @@ item skill_life_remnants
   aCDDDDDDDDDDDDCa
   .aaaaaaaaaaaaaa.
 
-item skill_moment_of_vulnerability
+item skill_gap_opportunity
   a=100e0c
   b=67625d
   c=242220
@@ -20926,7 +20926,7 @@ item skill_moment_of_vulnerability
   aFFFGGGGGGGGFFFa
   .aaaaaaaaaaaaaa.
 
-item skill_align_fate
+item skill_destiny_attune
   a=04081a
   b=415584
   c=162e66
@@ -20972,7 +20972,7 @@ item skill_align_fate
   aBBBBBBBBBBBBBBa
   .aaaaaaaaaaaaaa.
 
-item skill_apocalypse
+item skill_calamity_descent
   a=1a0703
   b=774436
   c=291712
@@ -21375,7 +21375,7 @@ item skill_spear_throw
   aHHHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item skill_abyssal_apparition
+item skill_chasm_phantom
   a=0e0418
   b=603f7c
   c=21162b
@@ -26440,7 +26440,7 @@ item skill_proc_raven_flock
   ayyyyzzzzzzyyyya
   .aaaaaaaaaaaaaa.
 
-item skill_ancestral_spirits
+item skill_forebear_manifest
   a=0a100c
   b=536458
   c=2c3f31
@@ -28170,7 +28170,7 @@ item skill_asc_hollow_ring
   ayyyyzzzzzzyyyya
   .aaaaaaaaaaaaaa.
 
-item support_increased_area
+item support_zone_expand
   a=140a04
   b=6d503b
   c=261c14
@@ -28216,7 +28216,7 @@ item support_increased_area
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_efficiency
+item support_cost_saving
   a=061206
   b=466a46
   c=1c471c
@@ -28261,7 +28261,7 @@ item support_efficiency
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_faster_projectiles
+item support_swift_bolt_iii
   a=061210
   b=466a65
   c=182523
@@ -28361,7 +28361,7 @@ item support_pierce
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_faster_attacks
+item support_quick_strike
   a=04101c
   b=3f6a8b
   c=162530
@@ -28411,7 +28411,7 @@ item support_faster_attacks
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_faster_casting
+item support_quick_chant
   a=04101c
   b=3f6a8b
   c=162530
@@ -28509,7 +28509,7 @@ item support_added_fire
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_critical_strikes
+item support_savage_flare
   a=1a0703
   b=774436
   c=291712
@@ -28554,7 +28554,7 @@ item support_critical_strikes
   azzzzzzAdAzzzzza
   .aaaaaaaaaaaaaa.
 
-item support_lingering
+item support_echo_remnant
   a=0e0418
   b=603f7c
   c=3b145c
@@ -28649,7 +28649,7 @@ item support_minion_damage
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_concentrated_effect
+item support_condense_power
   a=140a04
   b=6d503b
   c=261c14
@@ -28790,7 +28790,7 @@ item support_life_leech
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_searing_ii
+item support_prairie_blaze_ii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -28838,7 +28838,7 @@ item support_searing_ii
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_lacerate_iii
+item support_rend_cut_iii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -28886,7 +28886,7 @@ item support_lacerate_iii
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_envenom_iii
+item support_poison_temper_iii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -28934,7 +28934,7 @@ item support_envenom_iii
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_concussive
+item support_awe_shock
   a=0e0418
   b=603f7c
   c=3b145c
@@ -29030,7 +29030,7 @@ item support_electrocute
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_glacial
+item support_ice_seal
   a=0e0418
   b=603f7c
   c=3b145c
@@ -29078,7 +29078,7 @@ item support_glacial
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_static_charge
+item support_thunder_smite
   a=0e0418
   b=603f7c
   c=3b145c
@@ -29126,7 +29126,7 @@ item support_static_charge
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_culling_strike_ii
+item support_slay_cut_ii
   a=140404
   b=6a3e3e
   c=461313
@@ -29229,7 +29229,7 @@ item support_burst
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_fork
+item support_split_shot
   a=061210
   b=466a65
   c=182523
@@ -29419,7 +29419,7 @@ item support_minion_life
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_enraged_warcry_ii
+item support_angry_roar_ii
   a=141004
   b=776a43
   c=292517
@@ -29515,7 +29515,7 @@ item support_minion_speed
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_spell_echo
+item support_twin_chant
   a=04101c
   b=3f6a8b
   c=162530
@@ -29565,7 +29565,7 @@ item support_spell_echo
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_multiple_projectiles
+item support_light_split
   a=061210
   b=466a65
   c=182523
@@ -29615,7 +29615,7 @@ item support_multiple_projectiles
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_elemental_focus
+item support_purify_essence
   a=0e0418
   b=603f7c
   c=3b145c
@@ -29663,7 +29663,7 @@ item support_elemental_focus
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_vengeful_embers
+item support_grudge_cinder
   a=0a100c
   b=536458
   c=2c3f31
@@ -29710,7 +29710,7 @@ item support_vengeful_embers
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_additional_strike
+item support_sweep_strike
   a=04101c
   b=3f6a8b
   c=162530
@@ -29760,7 +29760,7 @@ item support_additional_strike
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_brutality
+item support_savage_cruelty
   a=04081a
   b=415584
   c=161d2e
@@ -29808,7 +29808,7 @@ item support_brutality
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_heavy_bolt
+item support_weighty_arrow
   a=061210
   b=466a65
   c=182523
@@ -29858,7 +29858,7 @@ item support_heavy_bolt
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_rapid_reload
+item support_quick_load_gear
   a=061210
   b=466a65
   c=182523
@@ -29908,7 +29908,7 @@ item support_rapid_reload
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_shatter_armour_iii
+item support_break_plate_iii
   a=141004
   b=776a43
   c=292517
@@ -29955,7 +29955,7 @@ item support_shatter_armour_iii
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_hemorrhage
+item support_blood_collapse
   a=0e0418
   b=603f7c
   c=3b145c
@@ -30003,7 +30003,7 @@ item support_hemorrhage
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_pinning_iii
+item support_ground_nail_iii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -30051,7 +30051,7 @@ item support_pinning_iii
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_dazing
+item support_shock_dizzy
   a=0e0418
   b=603f7c
   c=3b145c
@@ -30152,7 +30152,7 @@ item support_rage
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_giant_slayer
+item support_colossus_butcher
   a=04081a
   b=415584
   c=161d2e
@@ -30200,7 +30200,7 @@ item support_giant_slayer
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_considered_casting
+item support_charged_chant
   a=04101c
   b=3f6a8b
   c=162530
@@ -30250,7 +30250,7 @@ item support_considered_casting
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_swift_affliction_iii
+item support_rapid_corrode_iii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -30298,7 +30298,7 @@ item support_swift_affliction_iii
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_overcharge
+item support_blazing_volt
   a=0e0418
   b=603f7c
   c=3b145c
@@ -30346,7 +30346,7 @@ item support_overcharge
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_ignition
+item support_burning_will
   a=0e0418
   b=603f7c
   c=3b145c
@@ -30394,7 +30394,7 @@ item support_ignition
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_heavy_swing
+item support_sinking_hammer
   a=04101c
   b=3f6a8b
   c=162530
@@ -30444,7 +30444,7 @@ item support_heavy_swing
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_minion_haste
+item support_drive_servants
   a=0a100c
   b=536458
   c=2c3f31
@@ -30491,7 +30491,7 @@ item support_minion_haste
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_prolonged_duration
+item support_long_stay
   a=04101c
   b=3f6a8b
   c=162530
@@ -30541,7 +30541,7 @@ item support_prolonged_duration
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_impact_area
+item support_quake_zone
   a=140a04
   b=6d503b
   c=261c14
@@ -30587,7 +30587,7 @@ item support_impact_area
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_close_quarters
+item support_hug_range
   a=140404
   b=6a3e3e
   c=461313
@@ -30640,7 +30640,7 @@ item support_close_quarters
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_hex_exploit
+item support_curse_seize
   a=04081a
   b=415584
   c=161d2e
@@ -30688,7 +30688,7 @@ item support_hex_exploit
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_precision_aim
+item support_focus_mind
   a=140404
   b=6a3e3e
   c=461313
@@ -30741,7 +30741,7 @@ item support_precision_aim
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_deep_cuts
+item support_grave_wound
   a=0e0418
   b=603f7c
   c=3b145c
@@ -30789,7 +30789,7 @@ item support_deep_cuts
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_virulence
+item support_potent_toxin
   a=0e0418
   b=603f7c
   c=3b145c
@@ -30935,7 +30935,7 @@ item support_point_blank
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_totem_fury
+item support_post_wrath
   a=0a100c
   b=536458
   c=2c3f31
@@ -30982,7 +30982,7 @@ item support_totem_fury
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_elemental_army
+item support_element_corps
   a=0a100c
   b=536458
   c=2c3f31
@@ -31029,7 +31029,7 @@ item support_elemental_army
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_meat_shield
+item support_flesh_bulwark
   a=0a100c
   b=536458
   c=2c3f31
@@ -31076,7 +31076,7 @@ item support_meat_shield
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_minion_frenzy
+item support_bloodthirst_summon
   a=0a100c
   b=536458
   c=2c3f31
@@ -31123,7 +31123,7 @@ item support_minion_frenzy
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_lingering_hex
+item support_curse_extend
   a=140a04
   b=6d503b
   c=261c14
@@ -31169,7 +31169,7 @@ item support_lingering_hex
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_mana_leech
+item support_mana_draw
   a=061206
   b=466a46
   c=1c471c
@@ -31214,7 +31214,7 @@ item support_mana_leech
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_cluster_bombs
+item support_extra_shells
   a=061210
   b=466a65
   c=182523
@@ -31264,7 +31264,7 @@ item support_cluster_bombs
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_bludgeon
+item support_sinking_blow
   a=0e0418
   b=603f7c
   c=3b145c
@@ -31312,7 +31312,7 @@ item support_bludgeon
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_swift_cooldown
+item support_quick_return
   a=04101c
   b=3f6a8b
   c=162530
@@ -31362,7 +31362,7 @@ item support_swift_cooldown
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_warcry_reach
+item support_far_howl
   a=141004
   b=776a43
   c=292517
@@ -31459,7 +31459,7 @@ item support_execute
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_vs_chilled
+item support_exploit_chill
   a=0e0418
   b=603f7c
   c=3b145c
@@ -31507,7 +31507,7 @@ item support_vs_chilled
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_vs_ignited
+item support_exploit_flame
   a=0e0418
   b=603f7c
   c=3b145c
@@ -31555,7 +31555,7 @@ item support_vs_ignited
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_vs_shocked
+item support_exploit_thunder
   a=0e0418
   b=603f7c
   c=3b145c
@@ -31603,7 +31603,7 @@ item support_vs_shocked
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_vs_poisoned
+item support_exploit_poison
   a=0e0418
   b=603f7c
   c=3b145c
@@ -31651,7 +31651,7 @@ item support_vs_poisoned
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_vs_bleeding
+item support_exploit_blood
   a=0e0418
   b=603f7c
   c=3b145c
@@ -31699,7 +31699,7 @@ item support_vs_bleeding
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_channel_focus
+item support_build_poise
   a=04081a
   b=415584
   c=161d2e
@@ -31747,7 +31747,7 @@ item support_channel_focus
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_heft
+item support_ponderous_weight
   a=04081a
   b=415584
   c=161d2e
@@ -31795,7 +31795,7 @@ item support_heft
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_ruthless
+item support_merciless_heart
   a=0e0418
   b=603f7c
   c=3b145c
@@ -31843,7 +31843,7 @@ item support_ruthless
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_fire_penetration
+item support_melt_break
   a=0e0418
   b=603f7c
   c=3b145c
@@ -31891,7 +31891,7 @@ item support_fire_penetration
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_cold_penetration
+item support_chill_through
   a=0e0418
   b=603f7c
   c=3b145c
@@ -31939,7 +31939,7 @@ item support_cold_penetration
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_lightning_penetration
+item support_thunder_pass
   a=0e0418
   b=603f7c
   c=3b145c
@@ -31987,7 +31987,7 @@ item support_lightning_penetration
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_controlled_destruction
+item support_fine_control
   a=1a0703
   b=774436
   c=291712
@@ -32032,7 +32032,7 @@ item support_controlled_destruction
   azzzzzzAdAzzzzza
   .aaaaaaaaaaaaaa.
 
-item support_sturdy_totem
+item support_firm_post
   a=0a100c
   b=536458
   c=2c3f31
@@ -32079,7 +32079,7 @@ item support_sturdy_totem
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_giant_minions
+item support_huge_soul
   a=0a100c
   b=536458
   c=2c3f31
@@ -32126,7 +32126,7 @@ item support_giant_minions
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_starfall_resonance
+item support_star_remains_resonance
   a=140a04
   b=6d503b
   c=261c14
@@ -32172,7 +32172,7 @@ item support_starfall_resonance
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_permafrost_heart
+item support_eternal_frost_heart
   a=0e0418
   b=603f7c
   c=3b145c
@@ -32220,7 +32220,7 @@ item support_permafrost_heart
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_styx_ferry
+item support_nether_river_crossing
   a=0a100c
   b=536458
   c=2c3f31
@@ -32267,7 +32267,7 @@ item support_styx_ferry
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_skyburn_fury
+item support_sky_scorch_wrath
   a=0e0418
   b=603f7c
   c=3b145c
@@ -32315,7 +32315,7 @@ item support_skyburn_fury
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_abyssal_touch
+item support_chasm_touch
   a=0e0418
   b=603f7c
   c=3b145c
@@ -32363,7 +32363,7 @@ item support_abyssal_touch
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_myriad_stars
+item support_star_panorama
   a=061210
   b=466a65
   c=182523
@@ -32413,7 +32413,7 @@ item support_myriad_stars
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_oblivion_focus
+item support_extinction_focus
   a=0e0418
   b=603f7c
   c=3b145c
@@ -32461,7 +32461,7 @@ item support_oblivion_focus
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_storm_maze_heart
+item support_thunder_prison_heart
   a=0e0418
   b=603f7c
   c=3b145c
@@ -32509,7 +32509,7 @@ item support_storm_maze_heart
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_rift_echo
+item support_void_crack_echo
   a=04101c
   b=3f6a8b
   c=162530
@@ -32559,7 +32559,7 @@ item support_rift_echo
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_starfall_core
+item support_meteor_core
   a=0e0418
   b=603f7c
   c=3b145c
@@ -32607,7 +32607,7 @@ item support_starfall_core
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_phantom_double
+item support_void_star_clone
   a=04101c
   b=3f6a8b
   c=162530
@@ -32657,7 +32657,7 @@ item support_phantom_double
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_world_collapse
+item support_realm_return_void
   a=1a0703
   b=774436
   c=291712
@@ -32702,7 +32702,7 @@ item support_world_collapse
   azzzzzzAdAzzzzza
   .aaaaaaaaaaaaaa.
 
-item support_void_legion
+item support_void_star_army
   a=0a100c
   b=536458
   c=2c3f31
@@ -32749,7 +32749,7 @@ item support_void_legion
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_shattering_strike
+item support_realm_break_spread
   a=140a04
   b=6d503b
   c=261c14
@@ -32795,7 +32795,7 @@ item support_shattering_strike
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_tidal_resonance
+item support_ebb_flow_resonance
   a=0e0418
   b=603f7c
   c=3b145c
@@ -32843,7 +32843,7 @@ item support_tidal_resonance
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_undertow_drag
+item support_dark_current_pull
   a=0e0418
   b=603f7c
   c=3b145c
@@ -32891,7 +32891,7 @@ item support_undertow_drag
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_whale_breath
+item support_whale_exhale
   a=0e0418
   b=603f7c
   c=3b145c
@@ -32939,7 +32939,7 @@ item support_whale_breath
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_dawn_blessing
+item support_daybreak_boon
   a=141004
   b=776a43
   c=292517
@@ -32988,7 +32988,7 @@ item support_dawn_blessing
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_shrine_echo
+item support_sacred_niche_echo
   a=141004
   b=776a43
   c=292517
@@ -33037,7 +33037,7 @@ item support_shrine_echo
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_sacred_focus
+item support_holy_light_focus
   a=0e0418
   b=603f7c
   c=3b145c
@@ -33085,7 +33085,7 @@ item support_sacred_focus
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_greed_lock
+item support_covet_chest_lock
   a=04101c
   b=3f6a8b
   c=162530
@@ -33135,7 +33135,7 @@ item support_greed_lock
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_chain_bind
+item support_shackle_entangle
   a=0e0418
   b=603f7c
   c=3b145c
@@ -33183,7 +33183,7 @@ item support_chain_bind
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_coin_toss
+item support_coin_flip
   a=04081a
   b=415584
   c=161d2e
@@ -33231,7 +33231,7 @@ item support_coin_toss
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_rift_passage
+item support_crack_corridor
   a=061210
   b=466a65
   c=182523
@@ -33281,7 +33281,7 @@ item support_rift_passage
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_rift_surge
+item support_crack_outpour
   a=0a100c
   b=536458
   c=2c3f31
@@ -33328,7 +33328,7 @@ item support_rift_surge
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_worldtear
+item support_realm_pierce_rip
   a=0e0418
   b=603f7c
   c=3b145c
@@ -33376,7 +33376,7 @@ item support_worldtear
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_duelist_focus
+item support_duel_concentration
   a=1a0703
   b=774436
   c=291712
@@ -33421,7 +33421,7 @@ item support_duelist_focus
   azzzzzzAdAzzzzza
   .aaaaaaaaaaaaaa.
 
-item support_stolen_technique
+item support_pilfered_move
   a=04101c
   b=3f6a8b
   c=162530
@@ -33471,7 +33471,7 @@ item support_stolen_technique
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_nameless_edge
+item support_unnamed_blade
   a=0e0418
   b=603f7c
   c=3b145c
@@ -33519,7 +33519,7 @@ item support_nameless_edge
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_blood_tribute
+item support_blood_levy
   a=061206
   b=466a46
   c=1c471c
@@ -33564,7 +33564,7 @@ item support_blood_tribute
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_altar_legion
+item support_ritual_dais_army
   a=0a100c
   b=536458
   c=2c3f31
@@ -33611,7 +33611,7 @@ item support_altar_legion
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_pact_seal
+item support_blood_oath_seal
   a=0e0418
   b=603f7c
   c=3b145c
@@ -33659,7 +33659,7 @@ item support_pact_seal
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_mirror_image
+item support_looking_glass_copy
   a=1a0703
   b=774436
   c=291712
@@ -33704,7 +33704,7 @@ item support_mirror_image
   azzzzzzAdAzzzzza
   .aaaaaaaaaaaaaa.
 
-item support_mist_veil
+item support_fog_gauze
   a=0e0418
   b=603f7c
   c=3b145c
@@ -33752,7 +33752,7 @@ item support_mist_veil
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_delusion_crit
+item support_delirium_smash
   a=1a0703
   b=774436
   c=291712
@@ -33797,7 +33797,7 @@ item support_delusion_crit
   azzzzzzAdAzzzzza
   .aaaaaaaaaaaaaa.
 
-item support_bone_tide
+item support_skeletal_surge
   a=0e0418
   b=603f7c
   c=3b145c
@@ -33845,7 +33845,7 @@ item support_bone_tide
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_abyssal_grip
+item support_chasm_grasp
   a=0e0418
   b=603f7c
   c=3b145c
@@ -33893,7 +33893,7 @@ item support_abyssal_grip
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_deep_cold
+item support_abyss_floor_chill
   a=0e0418
   b=603f7c
   c=3b145c
@@ -33941,7 +33941,7 @@ item support_deep_cold
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_fire_mastery
+item support_ember_marrow
   a=100e0c
   b=67625d
   c=433d37
@@ -33988,7 +33988,7 @@ item support_fire_mastery
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_cold_mastery
+item support_frost_marrow
   a=100e0c
   b=67625d
   c=433d37
@@ -34035,7 +34035,7 @@ item support_cold_mastery
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_lightning_mastery
+item support_thunder_marrow
   a=100e0c
   b=67625d
   c=433d37
@@ -34082,7 +34082,7 @@ item support_lightning_mastery
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_chaos_mastery
+item support_abyss_marrow
   a=100e0c
   b=67625d
   c=433d37
@@ -34129,7 +34129,7 @@ item support_chaos_mastery
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_physical_mastery
+item support_iron_marrow
   a=100e0c
   b=67625d
   c=433d37
@@ -34176,7 +34176,7 @@ item support_physical_mastery
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_deliberation
+item support_held_breath
   a=100e0c
   b=67625d
   c=433d37
@@ -34223,7 +34223,7 @@ item support_deliberation
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_overreach
+item support_wide_stance
   a=140a04
   b=6d503b
   c=261c14
@@ -34269,7 +34269,7 @@ item support_overreach
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_bloodlust
+item support_gore_hunt
   a=0e0418
   b=603f7c
   c=3b145c
@@ -34317,7 +34317,7 @@ item support_bloodlust
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_first_blood
+item support_initial_crack_ii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -34365,7 +34365,7 @@ item support_first_blood
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_deep_freeze
+item support_frost_seal
   a=0e0418
   b=603f7c
   c=3b145c
@@ -34413,7 +34413,7 @@ item support_deep_freeze
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_lasting_shock
+item support_enduring_thunder
   a=0e0418
   b=603f7c
   c=3b145c
@@ -34461,7 +34461,7 @@ item support_lasting_shock
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_escalating_poison
+item support_layered_miasma
   a=0e0418
   b=603f7c
   c=3b145c
@@ -34509,7 +34509,7 @@ item support_escalating_poison
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_intense_agony
+item support_fast_decay
   a=04101c
   b=3f6a8b
   c=162530
@@ -34559,7 +34559,7 @@ item support_intense_agony
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_immolate
+item support_scorch_hunt
   a=0e0418
   b=603f7c
   c=3b145c
@@ -34607,7 +34607,7 @@ item support_immolate
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_frostfire
+item support_cold_burn
   a=0e0418
   b=603f7c
   c=3b145c
@@ -34655,7 +34655,7 @@ item support_frostfire
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_scouring_flame
+item support_blazing_brand
   a=0e0418
   b=603f7c
   c=3b145c
@@ -34703,7 +34703,7 @@ item support_scouring_flame
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_embitter
+item support_congealed_frost_blade
   a=04081a
   b=415584
   c=161d2e
@@ -34751,7 +34751,7 @@ item support_embitter
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_volt
+item support_draw_lightning
   a=061210
   b=466a65
   c=182523
@@ -34801,7 +34801,7 @@ item support_volt
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_corrosion
+item support_rust_plate
   a=0e0418
   b=603f7c
   c=3b145c
@@ -34849,7 +34849,7 @@ item support_corrosion
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_brittle_armour
+item support_frost_crack_plate
   a=0e0418
   b=603f7c
   c=3b145c
@@ -34897,7 +34897,7 @@ item support_brittle_armour
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_devastate
+item support_crumbling_force
   a=0e0418
   b=603f7c
   c=3b145c
@@ -34945,7 +34945,7 @@ item support_devastate
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_excoriate
+item support_strip_element
   a=0e0418
   b=603f7c
   c=3b145c
@@ -34993,7 +34993,7 @@ item support_excoriate
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_see_red
+item support_blood_linger
   a=0e0418
   b=603f7c
   c=3b145c
@@ -35041,7 +35041,7 @@ item support_see_red
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_flamepierce
+item support_cinder_through
   a=0e0418
   b=603f7c
   c=3b145c
@@ -35089,7 +35089,7 @@ item support_flamepierce
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_freezefork
+item support_frost_branch
   a=0e0418
   b=603f7c
   c=3b145c
@@ -35137,7 +35137,7 @@ item support_freezefork
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_stormchain
+item support_leaping_thunder
   a=0e0418
   b=603f7c
   c=3b145c
@@ -35185,7 +35185,7 @@ item support_stormchain
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_expanse
+item support_stored_zone
   a=140a04
   b=6d503b
   c=261c14
@@ -35231,7 +35231,7 @@ item support_expanse
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_excise
+item support_stored_edge
   a=1a0703
   b=774436
   c=291712
@@ -35276,7 +35276,7 @@ item support_excise
   azzzzzzAdAzzzzza
   .aaaaaaaaaaaaaa.
 
-item support_execrate
+item support_stored_haste
   a=0e0418
   b=603f7c
   c=3b145c
@@ -35324,7 +35324,7 @@ item support_execrate
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_hourglass
+item support_stored_might
   a=04101c
   b=3f6a8b
   c=162530
@@ -35374,7 +35374,7 @@ item support_hourglass
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_heightened_curse
+item support_stern_hex
   a=0e0418
   b=603f7c
   c=3b145c
@@ -35422,7 +35422,7 @@ item support_heightened_curse
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_focused_curse
+item support_quick_hex
   a=0e0418
   b=603f7c
   c=3b145c
@@ -35470,7 +35470,7 @@ item support_focused_curse
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_ritualistic_curse
+item support_broad_hex
   a=140a04
   b=6d503b
   c=261c14
@@ -35516,7 +35516,7 @@ item support_ritualistic_curse
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_abiding_hex
+item support_enduring_curse
   a=141004
   b=776a43
   c=292517
@@ -35563,7 +35563,7 @@ item support_abiding_hex
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_eternal_mark
+item support_long_brand
   a=04081a
   b=415584
   c=161d2e
@@ -35611,7 +35611,7 @@ item support_eternal_mark
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_mark_for_death_ii
+item support_deep_brand_ii
   a=04081a
   b=415584
   c=161d2e
@@ -35659,7 +35659,7 @@ item support_mark_for_death_ii
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_echoing_cry
+item support_quake_howl
   a=141004
   b=776a43
   c=292517
@@ -35708,7 +35708,7 @@ item support_echoing_cry
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_muster
+item support_host_blades
   a=0a100c
   b=536458
   c=2c3f31
@@ -35755,7 +35755,7 @@ item support_muster
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_infernal_legion_ii
+item support_burning_servant_ii
   a=0a100c
   b=536458
   c=2c3f31
@@ -35802,7 +35802,7 @@ item support_infernal_legion_ii
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_urgent_totems_iii
+item support_swift_post_iii
   a=0a100c
   b=536458
   c=2c3f31
@@ -35849,7 +35849,7 @@ item support_urgent_totems_iii
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_greatwood
+item support_thick_post
   a=0a100c
   b=536458
   c=2c3f31
@@ -35941,7 +35941,7 @@ item support_ambush
   azzzzzzAdAzzzzza
   .aaaaaaaaaaaaaa.
 
-item support_zenith
+item support_brim_mana
   a=04081a
   b=415584
   c=161d2e
@@ -35989,7 +35989,7 @@ item support_zenith
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_clash
+item support_back_to_wall
   a=140404
   b=6a3e3e
   c=461313
@@ -36042,7 +36042,7 @@ item support_clash
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_elemental_armament
+item support_element_blade
   a=140404
   b=6a3e3e
   c=461313
@@ -36095,7 +36095,7 @@ item support_elemental_armament
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_rising_tempest
+item support_element_surge
   a=04081a
   b=415584
   c=161d2e
@@ -36196,7 +36196,7 @@ item support_knockback
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_arms_length
+item support_heavy_shove
   a=140404
   b=6a3e3e
   c=461313
@@ -36249,7 +36249,7 @@ item support_arms_length
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_persistent_ground
+item support_enduring_terrain
   a=04101c
   b=3f6a8b
   c=162530
@@ -36299,7 +36299,7 @@ item support_persistent_ground
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_cadence
+item support_beat_combo
   a=04101c
   b=3f6a8b
   c=162530
@@ -36349,7 +36349,7 @@ item support_cadence
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_hit_and_run
+item support_swift_edge
   a=04101c
   b=3f6a8b
   c=162530
@@ -36399,7 +36399,7 @@ item support_hit_and_run
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_overextend
+item support_all_in_gamble
   a=1a0703
   b=774436
   c=291712
@@ -36444,7 +36444,7 @@ item support_overextend
   azzzzzzAdAzzzzza
   .aaaaaaaaaaaaaa.
 
-item support_clarity
+item support_spring_mana
   a=141004
   b=776a43
   c=292517
@@ -36493,7 +36493,7 @@ item support_clarity
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_vitality
+item support_life_spring
   a=141004
   b=776a43
   c=292517
@@ -36542,7 +36542,7 @@ item support_vitality
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_cannibalism
+item support_devour_kill
   a=141004
   b=776a43
   c=292517
@@ -36591,7 +36591,7 @@ item support_cannibalism
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_thornskin
+item support_spike_plate
   a=141004
   b=776a43
   c=292517
@@ -36640,7 +36640,7 @@ item support_thornskin
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_cool_headed
+item support_evade_burn
   a=141004
   b=776a43
   c=292517
@@ -36689,7 +36689,7 @@ item support_cool_headed
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_strong_hearted
+item support_evade_shock
   a=141004
   b=776a43
   c=292517
@@ -36738,7 +36738,7 @@ item support_strong_hearted
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_warm_blooded
+item support_evade_freeze
   a=141004
   b=776a43
   c=292517
@@ -36787,7 +36787,7 @@ item support_warm_blooded
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_herbalism
+item support_mellow_potion
   a=141004
   b=776a43
   c=292517
@@ -36836,7 +36836,7 @@ item support_herbalism
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_armour_demolisher
+item support_dismantle_plate
   a=0e0418
   b=603f7c
   c=3b145c
@@ -36884,7 +36884,7 @@ item support_armour_demolisher
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_eternal_flame
+item support_long_blaze
   a=0e0418
   b=603f7c
   c=3b145c
@@ -36932,7 +36932,7 @@ item support_eternal_flame
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_extraction
+item support_blood_erosion
   a=04081a
   b=415584
   c=161d2e
@@ -36980,7 +36980,7 @@ item support_extraction
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_longshot_ii
+item support_far_pierce_ii
   a=140404
   b=6a3e3e
   c=461313
@@ -37033,7 +37033,7 @@ item support_longshot_ii
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_projectile_deceleration
+item support_slow_shell
   a=061210
   b=466a65
   c=182523
@@ -37083,7 +37083,7 @@ item support_projectile_deceleration
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_compressed_duration
+item support_shrink_time
   a=04101c
   b=3f6a8b
   c=162530
@@ -37133,7 +37133,7 @@ item support_compressed_duration
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_arcane_surge
+item support_surging_chant
   a=04081a
   b=415584
   c=161d2e
@@ -37181,7 +37181,7 @@ item support_arcane_surge
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_deadly_herald
+item support_stern_proclaim
   a=141004
   b=776a43
   c=292517
@@ -37230,7 +37230,7 @@ item support_deadly_herald
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_ice_bite_ii
+item support_frost_gnaw_ii
   a=141004
   b=776a43
   c=292517
@@ -37279,7 +37279,7 @@ item support_ice_bite_ii
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_nova_projectiles
+item support_ring_shot
   a=061210
   b=466a65
   c=182523
@@ -37329,7 +37329,7 @@ item support_nova_projectiles
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_life_drain
+item support_reap_life
   a=061206
   b=466a46
   c=1c471c
@@ -37374,7 +37374,7 @@ item support_life_drain
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_soul_drain
+item support_siphon_soul
   a=061206
   b=466a46
   c=1c471c
@@ -37419,7 +37419,7 @@ item support_soul_drain
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_fiery_death
+item support_corpse_burn
   a=141004
   b=6a6039
   c=252113
@@ -37468,7 +37468,7 @@ item support_fiery_death
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_frozen_spite
+item support_shatter_chill
   a=141004
   b=6a6039
   c=252113
@@ -37517,7 +37517,7 @@ item support_frozen_spite
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_bursting_plague
+item support_pest_rupture
   a=141004
   b=6a6039
   c=252113
@@ -37566,7 +37566,7 @@ item support_bursting_plague
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_bone_shrapnel
+item support_skeletal_crack
   a=141004
   b=6a6039
   c=252113
@@ -37615,7 +37615,7 @@ item support_bone_shrapnel
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_flame_pillar
+item support_blaze_column
   a=141004
   b=6a6039
   c=252113
@@ -37664,7 +37664,7 @@ item support_flame_pillar
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_haemocrystals
+item support_blood_crystallize
   a=141004
   b=6a6039
   c=252113
@@ -37713,7 +37713,7 @@ item support_haemocrystals
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_electromagnetism
+item support_magnetic_storm
   a=141004
   b=6a6039
   c=252113
@@ -37762,7 +37762,7 @@ item support_electromagnetism
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_elemental_discharge
+item support_element_collapse
   a=0e0418
   b=603f7c
   c=3b145c
@@ -37859,7 +37859,7 @@ item support_concussive_runes
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_brambleslam
+item support_thorn_quake
   a=141004
   b=6a6039
   c=252113
@@ -37908,7 +37908,7 @@ item support_brambleslam
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_crater
+item support_molten_pit_strike
   a=141004
   b=6a6039
   c=252113
@@ -37957,7 +37957,7 @@ item support_crater
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_corrupting_cry
+item support_rot_howl
   a=141004
   b=776a43
   c=292517
@@ -38006,7 +38006,7 @@ item support_corrupting_cry
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_battershout
+item support_plate_break_roar
   a=141004
   b=776a43
   c=292517
@@ -38055,7 +38055,7 @@ item support_battershout
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_vruuns_aftermath
+item support_crystal_shatter_howl
   a=141004
   b=776a43
   c=292517
@@ -38104,7 +38104,7 @@ item support_vruuns_aftermath
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_zerphis_infamy
+item support_blood_renown
   a=141004
   b=776a43
   c=292517
@@ -38153,7 +38153,7 @@ item support_zerphis_infamy
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_paquates_pact
+item support_blood_oath_howl
   a=141004
   b=776a43
   c=292517
@@ -38202,7 +38202,7 @@ item support_paquates_pact
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_bhatairs_vengeance
+item support_frost_grudge_howl
   a=141004
   b=776a43
   c=292517
@@ -38251,7 +38251,7 @@ item support_bhatairs_vengeance
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_tireless
+item support_endless_howl
   a=141004
   b=776a43
   c=292517
@@ -38300,7 +38300,7 @@ item support_tireless
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_caltrops
+item support_scatter_spikes
   a=141004
   b=6a6039
   c=252113
@@ -38349,7 +38349,7 @@ item support_caltrops
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_decaying_hex
+item support_rotting_curse
   a=141004
   b=6a6039
   c=252113
@@ -38398,7 +38398,7 @@ item support_decaying_hex
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_coursing_current
+item support_darting_volt
   a=141004
   b=6a6039
   c=252113
@@ -38447,7 +38447,7 @@ item support_coursing_current
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_mana_flare
+item support_magic_flame
   a=141004
   b=6a6039
   c=252113
@@ -38496,7 +38496,7 @@ item support_mana_flare
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_volcanic_eruption
+item support_magma_spurt
   a=141004
   b=6a6039
   c=252113
@@ -38545,7 +38545,7 @@ item support_volcanic_eruption
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_wind_wave
+item support_quake_gale
   a=141004
   b=6a6039
   c=252113
@@ -38594,7 +38594,7 @@ item support_wind_wave
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_static_shocks
+item support_still_charge
   a=141004
   b=6a6039
   c=252113
@@ -38643,7 +38643,7 @@ item support_static_shocks
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_frozen_vortex
+item support_frost_whirl
   a=141004
   b=6a6039
   c=252113
@@ -38692,7 +38692,7 @@ item support_frozen_vortex
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_charged_mark
+item support_volt_sigil_field
   a=141004
   b=6a6039
   c=252113
@@ -38741,7 +38741,7 @@ item support_charged_mark
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_poison_spores
+item support_fungal_blast
   a=141004
   b=6a6039
   c=252113
@@ -38839,7 +38839,7 @@ item support_aftershock
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_tremors
+item support_chain_quake
   a=141004
   b=6a6039
   c=252113
@@ -39035,7 +39035,7 @@ item support_hinder
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_exposing_cry
+item support_reveal_howl
   a=141004
   b=776a43
   c=292517
@@ -39084,7 +39084,7 @@ item support_exposing_cry
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_ammo_conservation
+item support_arrow_saver
   a=140404
   b=6a3e3e
   c=461313
@@ -39137,7 +39137,7 @@ item support_ammo_conservation
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_double_barrel
+item support_twin_chamber
   a=04101c
   b=3f6a8b
   c=162530
@@ -39187,7 +39187,7 @@ item support_double_barrel
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_streamlined_rounds
+item support_rapid_chamber
   a=04101c
   b=3f6a8b
   c=162530
@@ -39237,7 +39237,7 @@ item support_streamlined_rounds
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_auto_reload
+item support_jolt_load
   a=0e0418
   b=603f7c
   c=3b145c
@@ -39285,7 +39285,7 @@ item support_auto_reload
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_nimble_reload
+item support_quick_chamber
   a=04101c
   b=3f6a8b
   c=162530
@@ -39335,7 +39335,7 @@ item support_nimble_reload
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_combo_finisher
+item support_final_form
   a=140404
   b=6a3e3e
   c=461313
@@ -39388,7 +39388,7 @@ item support_combo_finisher
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_culmination
+item support_peak_point_ii
   a=140404
   b=6a3e3e
   c=461313
@@ -39441,7 +39441,7 @@ item support_culmination
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_practiced_combo
+item support_skilled_move
   a=140404
   b=6a3e3e
   c=461313
@@ -39544,7 +39544,7 @@ item support_flow
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_rageforged
+item support_fury_cast
   a=140404
   b=6a3e3e
   c=461313
@@ -39597,7 +39597,7 @@ item support_rageforged
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_glacier
+item support_thick_crystal
   a=100e0c
   b=67625d
   c=433d37
@@ -39644,7 +39644,7 @@ item support_glacier
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_icicle
+item support_brittle_crystal
   a=100e0c
   b=67625d
   c=433d37
@@ -39691,7 +39691,7 @@ item support_icicle
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_hoarfrost
+item support_frost_etch_crystal
   a=100e0c
   b=67625d
   c=433d37
@@ -39738,7 +39738,7 @@ item support_hoarfrost
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_crystalline_shards
+item support_crystal_spike
   a=100e0c
   b=67625d
   c=433d37
@@ -39785,7 +39785,7 @@ item support_crystalline_shards
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_verglas
+item support_frost_shell
   a=100e0c
   b=67625d
   c=433d37
@@ -39832,7 +39832,7 @@ item support_verglas
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_unleash
+item support_sealed_chant
   a=04081a
   b=415584
   c=161d2e
@@ -39880,7 +39880,7 @@ item support_unleash
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_expand
+item support_seal_widen
   a=140a04
   b=6d503b
   c=261c14
@@ -39926,7 +39926,7 @@ item support_expand
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_salvo
+item support_sealed_arrows
   a=061210
   b=466a65
   c=182523
@@ -39976,7 +39976,7 @@ item support_salvo
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_admixture
+item support_twin_corrode
   a=0e0418
   b=603f7c
   c=3b145c
@@ -40024,7 +40024,7 @@ item support_admixture
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_burgeon
+item support_rising_blaze
   a=04081a
   b=415584
   c=161d2e
@@ -40072,7 +40072,7 @@ item support_burgeon
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_cold_attunement
+item support_frost_infuse
   a=04081a
   b=415584
   c=161d2e
@@ -40120,7 +40120,7 @@ item support_cold_attunement
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_lightning_attunement
+item support_thunder_infuse
   a=04081a
   b=415584
   c=161d2e
@@ -40168,7 +40168,7 @@ item support_lightning_attunement
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_danse_macabre
+item support_bone_dance
   a=100e0c
   b=67625d
   c=433d37
@@ -40215,7 +40215,7 @@ item support_danse_macabre
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_dazing_cry
+item support_dizzy_howl
   a=141004
   b=776a43
   c=292517
@@ -40264,7 +40264,7 @@ item support_dazing_cry
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_dazzle
+item support_steady_strike
   a=140404
   b=6a3e3e
   c=461313
@@ -40317,7 +40317,7 @@ item support_dazzle
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_fan_the_flames
+item support_sow_fire
   a=141004
   b=6a6039
   c=252113
@@ -40366,7 +40366,7 @@ item support_fan_the_flames
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_frost_nexus
+item support_frozen_ground
   a=141004
   b=6a6039
   c=252113
@@ -40415,7 +40415,7 @@ item support_frost_nexus
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_impact_shockwave
+item support_quake_ring
   a=141004
   b=6a6039
   c=252113
@@ -40464,7 +40464,7 @@ item support_impact_shockwave
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_impending_doom
+item support_curse_blast
   a=141004
   b=6a6039
   c=252113
@@ -40561,7 +40561,7 @@ item support_lockdown
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_minion_mastery
+item support_servant_marrow
   a=0a100c
   b=536458
   c=2c3f31
@@ -40655,7 +40655,7 @@ item support_overabundance
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_pinpoint_critical
+item support_keen_point
   a=1a0703
   b=774436
   c=291712
@@ -40700,7 +40700,7 @@ item support_pinpoint_critical
   azzzzzzAdAzzzzza
   .aaaaaaaaaaaaaa.
 
-item support_potent_exposure
+item support_deep_reveal
   a=0e0418
   b=603f7c
   c=3b145c
@@ -40748,7 +40748,7 @@ item support_potent_exposure
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_reverberate
+item support_low_resound
   a=141004
   b=6a6039
   c=252113
@@ -40797,7 +40797,7 @@ item support_reverberate
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_tectonic_slams
+item support_twin_quake
   a=141004
   b=6a6039
   c=252113
@@ -40846,7 +40846,7 @@ item support_tectonic_slams
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_shocking_leap
+item support_vault_spark
   a=141004
   b=6a6039
   c=252113
@@ -40895,7 +40895,7 @@ item support_shocking_leap
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_spreading_frost
+item support_frost_creep
   a=141004
   b=6a6039
   c=252113
@@ -40944,7 +40944,7 @@ item support_spreading_frost
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_withering_touch
+item support_blight_touch
   a=04081a
   b=415584
   c=161d2e
@@ -41041,7 +41041,7 @@ item support_runeforged_blades
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_murderous_intent
+item support_resolve_howl
   a=141004
   b=776a43
   c=292517
@@ -41090,7 +41090,7 @@ item support_murderous_intent
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_premeditation
+item support_stored_howl
   a=141004
   b=776a43
   c=292517
@@ -41139,7 +41139,7 @@ item support_premeditation
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_unerring_power
+item support_howl_aim
   a=140404
   b=6a3e3e
   c=461313
@@ -41192,7 +41192,7 @@ item support_unerring_power
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_raging_cry
+item support_gather_fury_howl
   a=141004
   b=776a43
   c=292517
@@ -41241,7 +41241,7 @@ item support_raging_cry
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_sacrificial_offering
+item support_life_donation
   a=141004
   b=776a43
   c=292517
@@ -41339,7 +41339,7 @@ item support_precision
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_mysticism
+item support_shield_chant
   a=141004
   b=776a43
   c=292517
@@ -41388,7 +41388,7 @@ item support_mysticism
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_upwelling
+item support_surge_servant
   a=0a100c
   b=536458
   c=2c3f31
@@ -41435,7 +41435,7 @@ item support_upwelling
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_adhesive_grenades
+item support_sticky_bomb
   a=140404
   b=6a3e3e
   c=461313
@@ -41488,7 +41488,7 @@ item support_adhesive_grenades
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_long_fuse
+item support_slow_detonate
   a=04101c
   b=3f6a8b
   c=162530
@@ -41538,7 +41538,7 @@ item support_long_fuse
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_short_fuse
+item support_rapid_detonate
   a=04101c
   b=3f6a8b
   c=162530
@@ -41588,7 +41588,7 @@ item support_short_fuse
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_armour_explosion
+item support_plate_burst
   a=141004
   b=776a43
   c=292517
@@ -41637,7 +41637,7 @@ item support_armour_explosion
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_break_endurance
+item support_bedrock_shatter
   a=141004
   b=776a43
   c=292517
@@ -41684,7 +41684,7 @@ item support_break_endurance
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_break_posture
+item support_daze_breaker
   a=141004
   b=6a6039
   c=252113
@@ -41733,7 +41733,7 @@ item support_break_posture
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_enduring_impact
+item support_bedrock_quake
   a=141004
   b=776a43
   c=292517
@@ -41780,7 +41780,7 @@ item support_enduring_impact
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_blazing_critical
+item support_ember_surge
   a=141004
   b=6a6039
   c=252113
@@ -41829,7 +41829,7 @@ item support_blazing_critical
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_enervation
+item support_volt_drain
   a=141004
   b=6a6039
   c=252113
@@ -41878,7 +41878,7 @@ item support_enervation
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_innervate
+item support_thunder_momentum
   a=141004
   b=6a6039
   c=252113
@@ -41927,7 +41927,7 @@ item support_innervate
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_bidding
+item support_bone_command
   a=04101c
   b=3f6a8b
   c=162530
@@ -41977,7 +41977,7 @@ item support_bidding
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_essence_harvest
+item support_soul_reap
   a=0a100c
   b=536458
   c=2c3f31
@@ -42024,7 +42024,7 @@ item support_essence_harvest
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_deathmarch
+item support_bone_mercy
   a=0a100c
   b=536458
   c=2c3f31
@@ -42071,7 +42071,7 @@ item support_deathmarch
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_last_rites
+item support_perish_blast
   a=0a100c
   b=536458
   c=2c3f31
@@ -42163,7 +42163,7 @@ item support_bounty
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_life_bounty
+item support_life_reward
   a=061206
   b=466a46
   c=1c471c
@@ -42208,7 +42208,7 @@ item support_life_bounty
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_mana_bounty
+item support_mana_reward
   a=061206
   b=466a46
   c=1c471c
@@ -42253,7 +42253,7 @@ item support_mana_bounty
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_charm_bounty
+item support_ward_reward
   a=061206
   b=466a46
   c=1c471c
@@ -42298,7 +42298,7 @@ item support_charm_bounty
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_lifetap
+item support_blood_pay
   a=061206
   b=466a46
   c=1c471c
@@ -42343,7 +42343,7 @@ item support_lifetap
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_fluke
+item support_dice_luck
   a=100e0c
   b=67625d
   c=433d37
@@ -42390,7 +42390,7 @@ item support_fluke
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_supercritical
+item support_blast_peak
   a=1a0703
   b=774436
   c=291712
@@ -42435,7 +42435,7 @@ item support_supercritical
   azzzzzzAdAzzzzza
   .aaaaaaaaaaaaaa.
 
-item support_charge_endurance
+item support_gather_bedrock
   a=141004
   b=776a43
   c=292517
@@ -42482,7 +42482,7 @@ item support_charge_endurance
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_charge_profusion
+item support_full_stars
   a=141004
   b=776a43
   c=292517
@@ -42529,7 +42529,7 @@ item support_charge_profusion
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_cull_frenzy
+item support_slay_gather_fury
   a=141004
   b=776a43
   c=292517
@@ -42576,7 +42576,7 @@ item support_cull_frenzy
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_perpetual_charge
+item support_eternal_star
   a=141004
   b=776a43
   c=292517
@@ -42623,7 +42623,7 @@ item support_perpetual_charge
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_heightened_charges
+item support_double_star
   a=141004
   b=776a43
   c=292517
@@ -42670,7 +42670,7 @@ item support_heightened_charges
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_inhibitor
+item support_star_suppress
   a=141004
   b=776a43
   c=292517
@@ -42717,7 +42717,7 @@ item support_inhibitor
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_ferocity
+item support_mad_speed
   a=141004
   b=776a43
   c=292517
@@ -42764,7 +42764,7 @@ item support_ferocity
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_jagged_ground
+item support_shattered_earth
   a=141004
   b=776a43
   c=292517
@@ -42811,7 +42811,7 @@ item support_jagged_ground
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_creeping_chill
+item support_spread_cold
   a=141004
   b=776a43
   c=292517
@@ -42858,7 +42858,7 @@ item support_creeping_chill
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_perfected_endurance
+item support_whole_bedrock
   a=141004
   b=776a43
   c=292517
@@ -42905,7 +42905,7 @@ item support_perfected_endurance
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_empowered_sparks
+item support_thunder_star
   a=141004
   b=776a43
   c=292517
@@ -42952,7 +42952,7 @@ item support_empowered_sparks
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_guatelitzi_ablation
+item support_rite_star
   a=141004
   b=776a43
   c=292517
@@ -42999,7 +42999,7 @@ item support_guatelitzi_ablation
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_ailith_chimes
+item support_bell_star
   a=141004
   b=776a43
   c=292517
@@ -43046,7 +43046,7 @@ item support_ailith_chimes
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_accelerated_growth
+item support_hasten_bloom
   a=141004
   b=6a6039
   c=252113
@@ -43095,7 +43095,7 @@ item support_accelerated_growth
   aDDDDEEDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_advancing_storm
+item support_marching_gale
   a=100e0c
   b=67625d
   c=433d37
@@ -43142,7 +43142,7 @@ item support_advancing_storm
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_morganas_tempest
+item support_sweeping_gale
   a=140a04
   b=6d503b
   c=261c14
@@ -43188,7 +43188,7 @@ item support_morganas_tempest
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_helbryms_hide
+item support_dormant_shell
   a=100e0c
   b=67625d
   c=433d37
@@ -43235,7 +43235,7 @@ item support_helbryms_hide
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_boundless_energy
+item support_surge_power_ii
   a=100e0c
   b=67625d
   c=433d37
@@ -43282,7 +43282,7 @@ item support_boundless_energy
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_energy_retention
+item support_power_return
   a=100e0c
   b=67625d
   c=433d37
@@ -43329,7 +43329,7 @@ item support_energy_retention
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_energy_capacitor
+item support_power_expand
   a=100e0c
   b=67625d
   c=433d37
@@ -43376,7 +43376,7 @@ item support_energy_capacitor
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_acrimony
+item support_grudge_corrode
   a=100e0c
   b=67625d
   c=433d37
@@ -43423,7 +43423,7 @@ item support_acrimony
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_alignment_iii
+item support_forward_bias_iii
   a=061210
   b=466a65
   c=182523
@@ -43473,7 +43473,7 @@ item support_alignment_iii
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_ambrosia_ii
+item support_jade_nectar_ii
   a=061206
   b=466a46
   c=1c471c
@@ -43518,7 +43518,7 @@ item support_ambrosia_ii
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_ancestral_aid
+item support_forebear_help
   a=140404
   b=6a3e3e
   c=461313
@@ -43571,7 +43571,7 @@ item support_ancestral_aid
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_ancestral_call_iii
+item support_forebear_summon_iii
   a=140404
   b=6a3e3e
   c=461313
@@ -43624,7 +43624,7 @@ item support_ancestral_call_iii
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_astral_projection
+item support_star_cast
   a=140a04
   b=6d503b
   c=261c14
@@ -43670,7 +43670,7 @@ item support_astral_projection
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_barbs_iii
+item support_reverse_hook_iii
   a=140404
   b=6a3e3e
   c=461313
@@ -43723,7 +43723,7 @@ item support_barbs_iii
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_behead_ii
+item support_head_sever_ii
   a=140404
   b=6a3e3e
   c=461313
@@ -43776,7 +43776,7 @@ item support_behead_ii
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_biting_frost_ii
+item support_gnaw_cold_ii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -43824,7 +43824,7 @@ item support_biting_frost_ii
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_blindside
+item support_shadow_ambush
   a=1a0703
   b=774436
   c=291712
@@ -43869,7 +43869,7 @@ item support_blindside
   azzzzzzAdAzzzzza
   .aaaaaaaaaaaaaa.
 
-item support_branching_fissures_ii
+item support_split_crack_ii
   a=100e0c
   b=67625d
   c=433d37
@@ -43916,7 +43916,7 @@ item support_branching_fissures_ii
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_brink_ii
+item support_threshold_ii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -43964,7 +43964,7 @@ item support_brink_ii
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_catharsis
+item support_cleanse_rite
   a=100e0c
   b=67625d
   c=433d37
@@ -44011,7 +44011,7 @@ item support_catharsis
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_chaotic_freeze
+item support_muddled_freeze
   a=0e0418
   b=603f7c
   c=3b145c
@@ -44059,7 +44059,7 @@ item support_chaotic_freeze
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_charged_shots_ii
+item support_filled_shot_ii
   a=140404
   b=6a3e3e
   c=461313
@@ -44112,7 +44112,7 @@ item support_charged_shots_ii
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_cold_exposure
+item support_frost_reveal
   a=0e0418
   b=603f7c
   c=3b145c
@@ -44160,7 +44160,7 @@ item support_cold_exposure
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_fire_exposure
+item support_flame_reveal
   a=0e0418
   b=603f7c
   c=3b145c
@@ -44208,7 +44208,7 @@ item support_fire_exposure
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_lightning_exposure
+item support_thunder_reveal
   a=0e0418
   b=603f7c
   c=3b145c
@@ -44256,7 +44256,7 @@ item support_lightning_exposure
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_commandment
+item support_army_order
   a=0a100c
   b=536458
   c=2c3f31
@@ -44303,7 +44303,7 @@ item support_commandment
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_commiserate
+item support_shared_ailment
   a=0e0418
   b=603f7c
   c=3b145c
@@ -44351,7 +44351,7 @@ item support_commiserate
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_concoct_ii
+item support_mix_dose_ii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -44399,7 +44399,7 @@ item support_concoct_ii
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_concussive_spells
+item support_quake_magic
   a=0e0418
   b=603f7c
   c=3b145c
@@ -44447,7 +44447,7 @@ item support_concussive_spells
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_corpse_conservation
+item support_spare_corpse
   a=100e0c
   b=67625d
   c=433d37
@@ -44494,7 +44494,7 @@ item support_corpse_conservation
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_crackling_barrier
+item support_volt_screen
   a=100e0c
   b=67625d
   c=433d37
@@ -44541,7 +44541,7 @@ item support_crackling_barrier
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_crazed_minions
+item support_mad_servant
   a=0a100c
   b=536458
   c=2c3f31
@@ -44588,7 +44588,7 @@ item support_crazed_minions
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_crescendo_iii
+item support_rising_swell_iii
   a=140404
   b=6a3e3e
   c=461313
@@ -44641,7 +44641,7 @@ item support_crescendo_iii
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_cursed_ground
+item support_hex_field
   a=0e0418
   b=603f7c
   c=3b145c
@@ -44689,7 +44689,7 @@ item support_cursed_ground
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_dauntless
+item support_fearless_heart
   a=04081a
   b=415584
   c=161d2e
@@ -44737,7 +44737,7 @@ item support_dauntless
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_deadly_resolve
+item support_decisive_kill
   a=100e0c
   b=67625d
   c=433d37
@@ -44784,7 +44784,7 @@ item support_deadly_resolve
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_defy_ii
+item support_resist_order_ii
   a=140404
   b=6a3e3e
   c=461313
@@ -44837,7 +44837,7 @@ item support_defy_ii
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_delayed_gratification
+item support_deferred_joy
   a=100e0c
   b=67625d
   c=433d37
@@ -44884,7 +44884,7 @@ item support_delayed_gratification
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_delayed_reaction
+item support_late_blast
   a=100e0c
   b=67625d
   c=433d37
@@ -44931,7 +44931,7 @@ item support_delayed_reaction
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_derange
+item support_mad_chaos
   a=100e0c
   b=67625d
   c=433d37
@@ -44978,7 +44978,7 @@ item support_derange
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_desperation
+item support_dire_straits
   a=140404
   b=6a3e3e
   c=461313
@@ -45031,7 +45031,7 @@ item support_desperation
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_direstrike_ii
+item support_final_blow_ii
   a=141004
   b=776a43
   c=292517
@@ -45080,7 +45080,7 @@ item support_direstrike_ii
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_drain_ailments
+item support_draw_blight
   a=0e0418
   b=603f7c
   c=3b145c
@@ -45128,7 +45128,7 @@ item support_drain_ailments
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_durability
+item support_sturdy_gear
   a=100e0c
   b=67625d
   c=433d37
@@ -45175,7 +45175,7 @@ item support_durability
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_encroaching_ground
+item support_spread_field
   a=100e0c
   b=67625d
   c=433d37
@@ -45222,7 +45222,7 @@ item support_encroaching_ground
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_energy_barrier
+item support_power_ward
   a=0e0418
   b=603f7c
   c=3b145c
@@ -45270,7 +45270,7 @@ item support_energy_barrier
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_exploit_weakness
+item support_seize_gap
   a=0e0418
   b=603f7c
   c=3b145c
@@ -45318,7 +45318,7 @@ item support_exploit_weakness
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_fist_of_war_iii
+item support_battle_fist_iii
   a=100e0c
   b=67625d
   c=433d37
@@ -45365,7 +45365,7 @@ item support_fist_of_war_iii
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_font_of_blood
+item support_blood_spring
   a=0a100c
   b=536458
   c=2c3f31
@@ -45412,7 +45412,7 @@ item support_font_of_blood
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_font_of_mana
+item support_mana_spring
   a=0a100c
   b=536458
   c=2c3f31
@@ -45459,7 +45459,7 @@ item support_font_of_mana
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_fortress_ii
+item support_ring_wall_ii
   a=140a04
   b=6d503b
   c=261c14
@@ -45505,7 +45505,7 @@ item support_fortress_ii
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_frenzied_riposte
+item support_counter_stab
   a=141004
   b=776a43
   c=292517
@@ -45552,7 +45552,7 @@ item support_frenzied_riposte
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_fresh_clip_ii
+item support_new_magazine_ii
   a=04101c
   b=3f6a8b
   c=162530
@@ -45602,7 +45602,7 @@ item support_fresh_clip_ii
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_gambleshot
+item support_wager_shot
   a=061210
   b=466a65
   c=182523
@@ -45652,7 +45652,7 @@ item support_gambleshot
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_gorge
+item support_corpse_glutton
   a=100e0c
   b=67625d
   c=433d37
@@ -45699,7 +45699,7 @@ item support_gorge
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_harmonic_remnants_ii
+item support_harmony_bones_ii
   a=100e0c
   b=67625d
   c=433d37
@@ -45746,7 +45746,7 @@ item support_harmonic_remnants_ii
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_magnetic_remnants
+item support_magnet_bones
   a=100e0c
   b=67625d
   c=433d37
@@ -45793,7 +45793,7 @@ item support_magnetic_remnants
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_remnant_potency_iii
+item support_bone_effect_iii
   a=100e0c
   b=67625d
   c=433d37
@@ -45840,7 +45840,7 @@ item support_remnant_potency_iii
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_hex_bloom
+item support_curse_blossom
   a=0e0418
   b=603f7c
   c=3b145c
@@ -45888,7 +45888,7 @@ item support_hex_bloom
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_holy_descent
+item support_sacred_fall
   a=100e0c
   b=67625d
   c=433d37
@@ -45935,7 +45935,7 @@ item support_holy_descent
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_impale
+item support_stab_nail
   a=140404
   b=6a3e3e
   c=461313
@@ -45988,7 +45988,7 @@ item support_impale
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_incision
+item support_cut_wound
   a=0e0418
   b=603f7c
   c=3b145c
@@ -46036,7 +46036,7 @@ item support_incision
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_inexorable_critical_ii
+item support_certain_fate_ii
   a=1a0703
   b=774436
   c=291712
@@ -46081,7 +46081,7 @@ item support_inexorable_critical_ii
   azzzzzzAdAzzzzza
   .aaaaaaaaaaaaaa.
 
-item support_last_gasp
+item support_final_breath
   a=0a100c
   b=536458
   c=2c3f31
@@ -46128,7 +46128,7 @@ item support_last_gasp
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_leverage
+item support_pry_force
   a=1a0703
   b=774436
   c=291712
@@ -46173,7 +46173,7 @@ item support_leverage
   azzzzzzAdAzzzzza
   .aaaaaaaaaaaaaa.
 
-item support_loyalty
+item support_faithful_servant
   a=0a100c
   b=536458
   c=2c3f31
@@ -46220,7 +46220,7 @@ item support_loyalty
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_malady
+item support_disease_shift
   a=04081a
   b=415584
   c=161d2e
@@ -46268,7 +46268,7 @@ item support_malady
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_mark_of_siphoning_ii
+item support_drain_sigil_ii
   a=04081a
   b=415584
   c=161d2e
@@ -46316,7 +46316,7 @@ item support_mark_of_siphoning_ii
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_minion_splash_ii
+item support_servant_spatter_ii
   a=0a100c
   b=536458
   c=2c3f31
@@ -46363,7 +46363,7 @@ item support_minion_splash_ii
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_minion_pact_ii
+item support_servant_bond_ii
   a=04081a
   b=415584
   c=161d2e
@@ -46411,7 +46411,7 @@ item support_minion_pact_ii
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_mobility
+item support_light_body
   a=100e0c
   b=67625d
   c=433d37
@@ -46458,7 +46458,7 @@ item support_mobility
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_neural_overload
+item support_volt_load
   a=0e0418
   b=603f7c
   c=3b145c
@@ -46506,7 +46506,7 @@ item support_neural_overload
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_opening_move
+item support_first_strike
   a=0e0418
   b=603f7c
   c=3b145c
@@ -46554,7 +46554,7 @@ item support_opening_move
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_outmaneuver
+item support_clever_break
   a=0e0418
   b=603f7c
   c=3b145c
@@ -46602,7 +46602,7 @@ item support_outmaneuver
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_perfection
+item support_flawless_form
   a=100e0c
   b=67625d
   c=433d37
@@ -46649,7 +46649,7 @@ item support_perfection
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_potential
+item support_hidden_power
   a=141004
   b=776a43
   c=292517
@@ -46696,7 +46696,7 @@ item support_potential
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_practical_magic_ii
+item support_real_spell_ii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -46744,7 +46744,7 @@ item support_practical_magic_ii
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_profanity_ii
+item support_corpse_defile_ii
   a=04081a
   b=415584
   c=161d2e
@@ -46792,7 +46792,7 @@ item support_profanity_ii
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_punch_through
+item support_breach_hit
   a=140404
   b=6a3e3e
   c=461313
@@ -46845,7 +46845,7 @@ item support_punch_through
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_pursuit_iii
+item support_chase_strike_iii
   a=061210
   b=466a65
   c=182523
@@ -46895,7 +46895,7 @@ item support_pursuit_iii
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_retreat_iii
+item support_withdraw_strike_iii
   a=061210
   b=466a65
   c=182523
@@ -46945,7 +46945,7 @@ item support_retreat_iii
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_quill_burst
+item support_thorn_blast
   a=140404
   b=6a3e3e
   c=461313
@@ -46998,7 +46998,7 @@ item support_quill_burst
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_rally
+item support_reform_ranks
   a=141004
   b=776a43
   c=292517
@@ -47045,7 +47045,7 @@ item support_rally
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_rearm_ii
+item support_redeploy_ii
   a=100e0c
   b=67625d
   c=433d37
@@ -47092,7 +47092,7 @@ item support_rearm_ii
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_refraction_iii
+item support_bent_light_iii
   a=100e0c
   b=67625d
   c=433d37
@@ -47139,7 +47139,7 @@ item support_refraction_iii
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_reinforced_totems_ii
+item support_firm_totem_ii
   a=0a100c
   b=536458
   c=2c3f31
@@ -47186,7 +47186,7 @@ item support_reinforced_totems_ii
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_relentless_rage
+item support_ceaseless_fury
   a=04081a
   b=415584
   c=161d2e
@@ -47234,7 +47234,7 @@ item support_relentless_rage
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_rending_apex
+item support_split_summit
   a=140404
   b=6a3e3e
   c=461313
@@ -47287,7 +47287,7 @@ item support_rending_apex
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_ricochet_iii
+item support_bounce_shot_iii
   a=061210
   b=466a65
   c=182523
@@ -47337,7 +47337,7 @@ item support_ricochet_iii
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_rime
+item support_mist_frost
   a=0e0418
   b=603f7c
   c=3b145c
@@ -47385,7 +47385,7 @@ item support_rime
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_rip
+item support_shred_blood
   a=140404
   b=6a3e3e
   c=461313
@@ -47438,7 +47438,7 @@ item support_rip
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_rupture
+item support_vein_break
   a=0e0418
   b=603f7c
   c=3b145c
@@ -47486,7 +47486,7 @@ item support_rupture
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_rusted_spikes
+item support_corroded_thorn
   a=0e0418
   b=603f7c
   c=3b145c
@@ -47534,7 +47534,7 @@ item support_rusted_spikes
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_second_wind_iii
+item support_rise_again_iii
   a=100e0c
   b=67625d
   c=433d37
@@ -47581,7 +47581,7 @@ item support_second_wind_iii
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_shock_conduction_ii
+item support_relay_thunder_ii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -47629,7 +47629,7 @@ item support_shock_conduction_ii
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_shock_siphon
+item support_draw_thunder
   a=0e0418
   b=603f7c
   c=3b145c
@@ -47677,7 +47677,7 @@ item support_shock_siphon
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_slow_potency
+item support_slow_vigor
   a=100e0c
   b=67625d
   c=433d37
@@ -47724,7 +47724,7 @@ item support_slow_potency
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_spar
+item support_friendly_duel
   a=0e0418
   b=603f7c
   c=3b145c
@@ -47772,7 +47772,7 @@ item support_spar
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_retaliate_ii
+item support_strike_back_ii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -47820,7 +47820,7 @@ item support_retaliate_ii
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_spectral_volley
+item support_light_shadow
   a=061210
   b=466a65
   c=182523
@@ -47870,7 +47870,7 @@ item support_spectral_volley
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_spell_cascade
+item support_linked_falls
   a=140a04
   b=6d503b
   c=261c14
@@ -47916,7 +47916,7 @@ item support_spell_cascade
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_splinter_totem_ii
+item support_split_totem_ii
   a=0a100c
   b=536458
   c=2c3f31
@@ -47963,7 +47963,7 @@ item support_splinter_totem_ii
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_steadfast_ii
+item support_steady_guard_ii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -48011,7 +48011,7 @@ item support_steadfast_ii
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_stoicism_ii
+item support_iron_grit_ii
   a=140404
   b=6a3e3e
   c=461313
@@ -48064,7 +48064,7 @@ item support_stoicism_ii
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_stomping_ground
+item support_tread_quake
   a=100e0c
   b=67625d
   c=433d37
@@ -48111,7 +48111,7 @@ item support_stomping_ground
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_stormfire
+item support_thunder_burn
   a=0e0418
   b=603f7c
   c=3b145c
@@ -48159,7 +48159,7 @@ item support_stormfire
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_syzygy
+item support_merged_orbit
   a=100e0c
   b=67625d
   c=433d37
@@ -48206,7 +48206,7 @@ item support_syzygy
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_tear
+item support_split_wound
   a=0e0418
   b=603f7c
   c=3b145c
@@ -48254,7 +48254,7 @@ item support_tear
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_thrill_of_the_kill_ii
+item support_slay_intent_ii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -48302,7 +48302,7 @@ item support_thrill_of_the_kill_ii
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_tumult
+item support_unrest_stir
   a=141004
   b=776a43
   c=292517
@@ -48349,7 +48349,7 @@ item support_tumult
   aBBBCBBBBBBCBBBa
   .aaaaaaaaaaaaaa.
 
-item support_unabating
+item support_unflinching_will
   a=140404
   b=6a3e3e
   c=461313
@@ -48402,7 +48402,7 @@ item support_unabating
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_unbending
+item support_never_submit
   a=061206
   b=466a46
   c=1c471c
@@ -48447,7 +48447,7 @@ item support_unbending
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_unbreakable
+item support_never_broken
   a=0e0418
   b=603f7c
   c=3b145c
@@ -48495,7 +48495,7 @@ item support_unbreakable
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_undermine
+item support_dig_weakness
   a=0e0418
   b=603f7c
   c=3b145c
@@ -48543,7 +48543,7 @@ item support_undermine
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_untouchable
+item support_shadowless_step
   a=140404
   b=6a3e3e
   c=461313
@@ -48596,7 +48596,7 @@ item support_untouchable
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_unyielding
+item support_stand_fast
   a=061206
   b=466a46
   c=1c471c
@@ -48641,7 +48641,7 @@ item support_unyielding
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_upheaval_ii
+item support_land_uplift_ii
   a=04101c
   b=3f6a8b
   c=162530
@@ -48691,7 +48691,7 @@ item support_upheaval_ii
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_vanguard_ii
+item support_front_line_ii
   a=0e0418
   b=603f7c
   c=3b145c
@@ -48739,7 +48739,7 @@ item support_vanguard_ii
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_volatile_power
+item support_blast_energy
   a=140404
   b=6a3e3e
   c=461313
@@ -48840,7 +48840,7 @@ item support_volatility
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_wildfire
+item support_field_fire
   a=0e0418
   b=603f7c
   c=3b145c
@@ -48888,7 +48888,7 @@ item support_wildfire
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_wildshards_ii
+item support_mad_fragments_ii
   a=061210
   b=466a65
   c=182523
@@ -48938,7 +48938,7 @@ item support_wildshards_ii
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_window_of_opportunity_ii
+item support_good_chance_ii
   a=100e0c
   b=67625d
   c=433d37
@@ -48985,7 +48985,7 @@ item support_window_of_opportunity_ii
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_oisins_oath
+item support_element_drain
   a=04081a
   b=415584
   c=161d2e
@@ -49033,7 +49033,7 @@ item support_oisins_oath
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_vilentas_propulsion
+item support_thrust_chant
   a=061210
   b=466a65
   c=182523
@@ -49083,7 +49083,7 @@ item support_vilentas_propulsion
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_brutus_brain
+item support_dull_spirit
   a=0a100c
   b=536458
   c=2c3f31
@@ -49130,7 +49130,7 @@ item support_brutus_brain
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_ahns_citadel
+item support_split_rampart
   a=100e0c
   b=67625d
   c=433d37
@@ -49177,7 +49177,7 @@ item support_ahns_citadel
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_eonyrs_thunder
+item support_thunder_blast
   a=0e0418
   b=603f7c
   c=3b145c
@@ -49225,7 +49225,7 @@ item support_eonyrs_thunder
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_uruks_smelting
+item support_molten_armor
   a=0e0418
   b=603f7c
   c=3b145c
@@ -49273,7 +49273,7 @@ item support_uruks_smelting
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_doedres_undoing
+item support_toad_curse
   a=04081a
   b=415584
   c=161d2e
@@ -49321,7 +49321,7 @@ item support_doedres_undoing
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_rathas_assault
+item support_linked_chamber
   a=04101c
   b=3f6a8b
   c=162530
@@ -49371,7 +49371,7 @@ item support_rathas_assault
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_arjuns_medal
+item support_bullet_honor
   a=140404
   b=6a3e3e
   c=461313
@@ -49424,7 +49424,7 @@ item support_arjuns_medal
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_siones_temper
+item support_shattered_star
   a=061210
   b=466a65
   c=182523
@@ -49474,7 +49474,7 @@ item support_siones_temper
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_cirels_cultivation
+item support_grove_totem
   a=0a100c
   b=536458
   c=2c3f31
@@ -49521,7 +49521,7 @@ item support_cirels_cultivation
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_romiras_requital
+item support_ally_repay
   a=0a100c
   b=536458
   c=2c3f31
@@ -49568,7 +49568,7 @@ item support_romiras_requital
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_dominus_grasp
+item support_double_chain
   a=061210
   b=466a65
   c=182523
@@ -49618,7 +49618,7 @@ item support_dominus_grasp
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_diallas_desire
+item support_wish_crystal
   a=141004
   b=776a43
   c=292517
@@ -49667,7 +49667,7 @@ item support_diallas_desire
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_kalisas_crescendo
+item support_silent_curse
   a=04081a
   b=415584
   c=161d2e
@@ -49715,7 +49715,7 @@ item support_kalisas_crescendo
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_daressos_passion
+item support_banner_blaze
   a=100e0c
   b=67625d
   c=433d37
@@ -49762,7 +49762,7 @@ item support_daressos_passion
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_arakaalis_lust
+item support_venom_desire
   a=0e0418
   b=603f7c
   c=3b145c
@@ -49810,7 +49810,7 @@ item support_arakaalis_lust
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_tacatis_ire
+item support_fury_venom
   a=0e0418
   b=603f7c
   c=3b145c
@@ -49858,7 +49858,7 @@ item support_tacatis_ire
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_ataluis_bloodletting
+item support_blood_seep
   a=061206
   b=466a46
   c=1c471c
@@ -49903,7 +49903,7 @@ item support_ataluis_bloodletting
   aAAAAAAAAAAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_einhars_beastrite
+item support_beast_raid
   a=140404
   b=6a3e3e
   c=461313
@@ -49956,7 +49956,7 @@ item support_einhars_beastrite
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_tecrods_revenge
+item support_wounded_fight
   a=0a100c
   b=536458
   c=2c3f31
@@ -50003,7 +50003,7 @@ item support_tecrods_revenge
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_kaoms_madness
+item support_frenzied_rift
   a=140a04
   b=6d503b
   c=261c14
@@ -50049,7 +50049,7 @@ item support_kaoms_madness
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_ixchels_torment
+item support_dice_bane
   a=100e0c
   b=67625d
   c=433d37
@@ -50096,7 +50096,7 @@ item support_ixchels_torment
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_tawhoas_tending
+item support_totem_blast
   a=0a100c
   b=536458
   c=2c3f31
@@ -50143,7 +50143,7 @@ item support_tawhoas_tending
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_atziris_allure
+item support_charm_curse
   a=0e0418
   b=603f7c
   c=3b145c
@@ -50191,7 +50191,7 @@ item support_atziris_allure
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_zarokhs_refrain
+item support_triple_loop
   a=04101c
   b=3f6a8b
   c=162530
@@ -50241,7 +50241,7 @@ item support_zarokhs_refrain
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_garukhans_resolve
+item support_twin_edge
   a=140404
   b=6a3e3e
   c=461313
@@ -50294,7 +50294,7 @@ item support_garukhans_resolve
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_kurgals_leash
+item support_bind_demon
   a=100e0c
   b=67625d
   c=433d37
@@ -50341,7 +50341,7 @@ item support_kurgals_leash
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_kulemaks_dominion
+item support_rite_vein
   a=100e0c
   b=67625d
   c=433d37
@@ -50388,7 +50388,7 @@ item support_kulemaks_dominion
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_amanamus_tithe
+item support_abyss_gift
   a=0a100c
   b=536458
   c=2c3f31
@@ -50435,7 +50435,7 @@ item support_amanamus_tithe
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_varashtas_blessing
+item support_decree_fortune
   a=04081a
   b=415584
   c=161d2e
@@ -50483,7 +50483,7 @@ item support_varashtas_blessing
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_tasalios_rhythm
+item support_cadence_force
   a=100e0c
   b=67625d
   c=433d37
@@ -50530,7 +50530,7 @@ item support_tasalios_rhythm
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_xibaquas_rending
+item support_ember_leap
   a=100e0c
   b=67625d
   c=433d37
@@ -50577,7 +50577,7 @@ item support_xibaquas_rending
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_khatals_rejuvenation
+item support_gather_breath
   a=100e0c
   b=67625d
   c=433d37
@@ -50624,7 +50624,7 @@ item support_khatals_rejuvenation
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_hayoxis_fulmination
+item support_curse_light
   a=04101c
   b=3f6a8b
   c=162530
@@ -50674,7 +50674,7 @@ item support_hayoxis_fulmination
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_her_declaration
+item support_awe_proclaim
   a=100e0c
   b=67625d
   c=433d37
@@ -50721,7 +50721,7 @@ item support_her_declaration
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_prototype_seventeen
+item support_fury_aim
   a=04081a
   b=415584
   c=161d2e
@@ -50769,7 +50769,7 @@ item support_prototype_seventeen
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_seraphs_heart
+item support_blazing_core
   a=100e0c
   b=67625d
   c=433d37
@@ -50816,7 +50816,7 @@ item support_seraphs_heart
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_uhtreds_rite
+item support_sacred_chalice
   a=100e0c
   b=67625d
   c=433d37
@@ -50863,7 +50863,7 @@ item support_uhtreds_rite
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_tricksters_shard
+item support_illusion_split
   a=04081a
   b=415584
   c=161d2e
@@ -50911,7 +50911,7 @@ item support_tricksters_shard
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_tangmazus_thurible
+item support_giant_ally
   a=0a100c
   b=536458
   c=2c3f31
@@ -50958,7 +50958,7 @@ item support_tangmazus_thurible
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_uhtreds_constellation
+item support_star_law
   a=100e0c
   b=67625d
   c=433d37
@@ -51005,7 +51005,7 @@ item support_uhtreds_constellation
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_voranas_siege
+item support_lone_encircle
   a=140a04
   b=6d503b
   c=261c14
@@ -51051,7 +51051,7 @@ item support_voranas_siege
   aAAAAABBBBAAAAAa
   .aaaaaaaaaaaaaa.
 
-item support_styrns_mountain
+item support_peak_shield
   a=0e0418
   b=603f7c
   c=3b145c
@@ -51099,7 +51099,7 @@ item support_styrns_mountain
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_styrns_ferocity
+item support_crush_shield
   a=100e0c
   b=67625d
   c=433d37
@@ -51146,7 +51146,7 @@ item support_styrns_ferocity
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_cathas_brilliance
+item support_flame_ally
   a=100e0c
   b=67625d
   c=433d37
@@ -51193,7 +51193,7 @@ item support_cathas_brilliance
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_morrigans_insight
+item support_frost_swap
   a=0e0418
   b=603f7c
   c=3b145c
@@ -51241,7 +51241,7 @@ item support_morrigans_insight
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_tuls_avalanche
+item support_snow_seal
   a=04081a
   b=415584
   c=161d2e
@@ -51289,7 +51289,7 @@ item support_tuls_avalanche
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_olroths_conviction
+item support_oath_drive
   a=141004
   b=776a43
   c=292517
@@ -51338,7 +51338,7 @@ item support_olroths_conviction
   aDDDEEEEEEEEDDDa
   .aaaaaaaaaaaaaa.
 
-item support_breachlords_rift
+item support_condense_break
   a=0e0418
   b=603f7c
   c=3b145c
@@ -51386,7 +51386,7 @@ item support_breachlords_rift
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_breachlords_amalgam
+item support_rift_tide
   a=061210
   b=466a65
   c=182523
@@ -51436,7 +51436,7 @@ item support_breachlords_amalgam
   aEEEEEFtFEEEEEEa
   .aaaaaaaaaaaaaa.
 
-item support_vruuns_inevitability
+item support_stack_momentum
   a=140404
   b=6a3e3e
   c=461313
@@ -51489,7 +51489,7 @@ item support_vruuns_inevitability
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_medveds_felling
+item support_frenzy_chop
   a=140404
   b=6a3e3e
   c=461313
@@ -51542,7 +51542,7 @@ item support_medveds_felling
   aHIHHHHHHHHHHHHa
   .aaaaaaaaaaaaaa.
 
-item support_arbiters_reach
+item support_guard_hymn
   a=100e0c
   b=67625d
   c=433d37
@@ -51589,7 +51589,7 @@ item support_arbiters_reach
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_uhtreds_exodus
+item support_lone_star
   a=100e0c
   b=67625d
   c=433d37
@@ -51636,7 +51636,7 @@ item support_uhtreds_exodus
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_uhtreds_omen
+item support_twin_portent
   a=100e0c
   b=67625d
   c=433d37
@@ -51683,7 +51683,7 @@ item support_uhtreds_omen
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_uhtreds_augury
+item support_triple_portent
   a=100e0c
   b=67625d
   c=433d37
@@ -51730,7 +51730,7 @@ item support_uhtreds_augury
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_olroths_hubris
+item support_proud_frost
   a=0e0418
   b=603f7c
   c=3b145c
@@ -51778,7 +51778,7 @@ item support_olroths_hubris
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_atziris_communion
+item support_blood_pact
   a=100e0c
   b=67625d
   c=433d37
@@ -51825,7 +51825,7 @@ item support_atziris_communion
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_atziris_impatience
+item support_scorched_blood
   a=100e0c
   b=67625d
   c=433d37
@@ -51872,7 +51872,7 @@ item support_atziris_impatience
   aCCCCCCCCCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_arbiters_ignition
+item support_ember_judgment
   a=0e0418
   b=603f7c
   c=3b145c
@@ -51920,7 +51920,7 @@ item support_arbiters_ignition
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_xophs_pyre
+item support_ember_corrode
   a=0e0418
   b=603f7c
   c=3b145c
@@ -51968,7 +51968,7 @@ item support_xophs_pyre
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_eshs_radiance
+item support_thunder_corrode
   a=0e0418
   b=603f7c
   c=3b145c
@@ -52016,7 +52016,7 @@ item support_eshs_radiance
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_tuls_stillness
+item support_silent_cold
   a=0e0418
   b=603f7c
   c=3b145c
@@ -52064,7 +52064,7 @@ item support_tuls_stillness
   aCCCCCCDDCCCCCCa
   .aaaaaaaaaaaaaa.
 
-item support_uul_netols_embrace
+item support_corrode_armor
   a=04081a
   b=415584
   c=161d2e
@@ -52112,7 +52112,7 @@ item support_uul_netols_embrace
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_zarokhs_revolt
+item support_myriad_seal
   a=04101c
   b=3f6a8b
   c=162530
@@ -52162,7 +52162,7 @@ item support_zarokhs_revolt
   aEEFFFFFFFFFFEEa
   .aaaaaaaaaaaaaa.
 
-item support_rakiatas_flow
+item support_counter_current
   a=04081a
   b=415584
   c=161d2e
@@ -52210,7 +52210,7 @@ item support_rakiatas_flow
   aDDDDDDDDDDDDDDa
   .aaaaaaaaaaaaaa.
 
-item support_eshs_prowess
+item support_peak_thunder
   a=100e0c
   b=67625d
   c=433d37

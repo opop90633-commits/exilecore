@@ -90,7 +90,7 @@ class UniqueRecipeTest {
         // 2026-10-28 照 PoE2：天樞墜、隕砧、霜環、熔鑄壁鎧、始源冠冕、劈世巨鎚原作沒有掉落限制，改成全域掉落（換得到），從這裡拿掉
         for (final String never : List.of("trophy_girdle", "hollow_diadem", "colossus_heart", "horizon_cleaver", "solar_sceptre",
                 "winterbound_ring", "styxguard", "ashwalker_boots", "bone_cinch", "roamers_boots", "goldleaf_hood", "abyss_maul",
-                "hateforge_greaves", "tailwind_quiver", "sacred_flame", "atziris_contempt", "flameclasp_belt", "forbidden_tiara")) {
+                "spiteforge_greaves", "tailwind_quiver", "hallowed_fire", "empress_sneer", "flameclasp_belt", "veiled_tiara")) {
             assertFalse(got.contains(never), never + " 不會換到（追逐級、極境專屬、終局自己的、只能賭的、劫盜、Boss 限定、禁止掉落）");
         }
         for (final String worldOnly : List.of("genesis_crown", "worldsplitter")) {
@@ -109,8 +109,8 @@ class UniqueRecipeTest {
         final UniqueRecipe.Settings greedy = new UniqueRecipe.Settings(true, 3,
                 List.of("chase", "uber_sky_crucible", "uber_bone_throne", "final"), true);
         final Set<String> got = ids(UniqueRecipe.outcomes(items.uniques(), greedy, List.of(), 100));
-        assertEquals(Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark", "hateforge_greaves", "tailwind_quiver", "sacred_flame",
-                "atziris_contempt"), got, "寫了 chase、uber_… 也不會換到；final 寫了就會（2026-10-15：＋蛛巢壁壘；2026-10-26：恆時珠寶英雄末路是 Boss 固定 1% 掉，換不到；2026-10-28 照 PoE2：＋原作 Boss 限定、我們放終局 Boss 的四件）");
+        assertEquals(Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark", "spiteforge_greaves", "tailwind_quiver", "hallowed_fire",
+                "empress_sneer"), got, "寫了 chase、uber_… 也不會換到；final 寫了就會（2026-10-15：＋蛛巢壁壘；2026-10-26：恆時珠寶英雄末路是 Boss 固定 1% 掉，換不到；2026-10-28 照 PoE2：＋原作 Boss 限定、我們放終局 Boss 的四件）");
     }
 
     @Test

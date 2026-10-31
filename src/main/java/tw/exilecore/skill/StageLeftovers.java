@@ -55,27 +55,27 @@ import java.util.UUID;
 public final class StageLeftovers implements Listener {
 
     // ---- 技能代號 ----
-    static final String GATHERING = "gathering_storm";
+    static final String GATHERING = "thunder_lure_thrust";
     static final String TEMPEST_SHOCKWAVE = "proc_storm_tempest_shockwave";
     static final String TEMPEST_GROUND = "proc_storm_shocked_ground";
-    static final String PALM = "frost_palm";
+    static final String PALM = "cold_spirit_palm";
     static final String PALM_BURST = "proc_shattering_burst";
-    static final String BLOOD = "blood_harvest";
+    static final String BLOOD = "blood_hunt";
     static final String BLOOD_BURST = "proc_blood_hunt_burst";
-    static final String RAIN = "rain_of_arrows";
-    static final String SHIELD_WALL = "shield_wall";
-    static final String SHIELD_RUSH = "shield_rush";
-    static final String SOLARIS = "sunfire_spear";
-    static final String STAMPEDE = "stampede";
-    static final String FORGE = "forge_hammer";
-    static final String WHIRLWIND_LANCE = "whirlwind_lance";
-    static final String FANGS = "fangs_of_frost";
+    static final String RAIN = "myriad_arrow_fall";
+    static final String SHIELD_WALL = "earth_wall_strike";
+    static final String SHIELD_RUSH = "iron_wall_ram";
+    static final String SOLARIS = "blazing_sun_spear";
+    static final String STAMPEDE = "rushing_thunder_stomp";
+    static final String FORGE = "returning_smith_hammer";
+    static final String WHIRLWIND_LANCE = "hurricane_spear";
+    static final String FANGS = "frost_tooth_stab";
     static final String FANGS_GROUND = "proc_fangs_chilled_ground";
-    static final String HVR = "piercing_rounds";
-    static final String ORB = "storm_orb";
+    static final String HVR = "armor_punch_slug";
+    static final String ORB = "thunder_cloud";
     static final String VOLCANO = "volcano";
-    static final String FROST_BOMB = "frost_mine";
-    static final String TOXIC_GROWTH = "toxic_growth";
+    static final String FROST_BOMB = "chill_crystal_mine";
+    static final String TOXIC_GROWTH = "miasma_bud_rain";
 
     // ---- 屬性鍵（skills.yml 的 modifiers／level_modifiers；ModifierText 用 describe 顯示）----
     /** FLAT：照目標身上的感電效果，每 5% 更多 x% 傷害（天柱雷 10）。 */
@@ -909,7 +909,7 @@ public final class StageLeftovers implements Listener {
             }
             at.getWorld().spawnParticle(Particle.LAVA, at.clone().add(0, 0.3, 0), 3, 0.2, 0.1, 0.2, 0);
         }
-        center.getWorld().spawnParticle(Particle.FLAME, center.clone().add(0, 0.6, 0), 30 + 10 * stages, radius * 0.5, 0.6, radius * 0.5, 0.05);
+        tw.exilecore.skill.Fx.disk(center.getWorld(), Particle.FLAME, center.clone().add(0, 0.6, 0), 30 + 10 * stages, radius, 0.6, 0.05);
         center.getWorld().playSound(center, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.8f + 0.1f * stages, 0.8f);
     }
 
@@ -982,8 +982,7 @@ public final class StageLeftovers implements Listener {
                     plugin.ailments().groundIgnite(owner, target, ground.fire, ground.effective);
                 }
             }
-            ground.center.getWorld().spawnParticle(Particle.FLAME, ground.center.clone().add(0, 0.1, 0), (int) Math.round(6 * radius),
-                    radius * 0.5, 0.05, radius * 0.5, 0.01);
+            tw.exilecore.skill.Fx.disk(ground.center.getWorld(), Particle.FLAME, ground.center.clone().add(0, 0.1, 0), (int) Math.round(6 * radius), radius, 0.05, 0.01);
         }
     }
 
@@ -1044,7 +1043,7 @@ public final class StageLeftovers implements Listener {
             }
             for (final LivingEntity target : service.targets().around(patch.at(), patch.radius(), owner)) {
                 if (!(target instanceof Player)) {
-                    plugin.combat().debuffs().apply(target.getUniqueId(), new Debuffs.Debuff("jagged_ground", owner.getUniqueId(), now + 15, 0, false, null,
+                    plugin.combat().debuffs().apply(target.getUniqueId(), new Debuffs.Debuff("shattered_earth", owner.getUniqueId(), now + 15, 0, false, null,
                             List.of(), JAGGED_SLOW));
                 }
             }
@@ -1231,7 +1230,7 @@ public final class StageLeftovers implements Listener {
                     }
                 }
             }
-            whirl.center.getWorld().spawnParticle(Particle.CLOUD, whirl.center.clone().add(0, 0.6, 0), 3 + whirl.stage, radius * 0.4, 0.4, radius * 0.4, 0.02);
+            tw.exilecore.skill.Fx.disk(whirl.center.getWorld(), Particle.CLOUD, whirl.center.clone().add(0, 0.6, 0), 3 + whirl.stage, radius, 0.4, 0.02);
         }
     }
 
@@ -1244,7 +1243,7 @@ public final class StageLeftovers implements Listener {
         for (final LivingEntity victim : service.targets().around(whirl.center, radius, owner)) {
             service.executor().hitOne(owner, profile, victim, whirl.center, push);
         }
-        whirl.center.getWorld().spawnParticle(Particle.SWEEP_ATTACK, whirl.center.clone().add(0, 0.8, 0), 6 + 2 * whirl.stage, radius * 0.5, 0.4, radius * 0.5, 0);
+        tw.exilecore.skill.Fx.disk(whirl.center.getWorld(), Particle.SWEEP_ATTACK, whirl.center.clone().add(0, 0.8, 0), 6 + 2 * whirl.stage, radius, 0.4, 0);
         whirl.center.getWorld().playSound(whirl.center, Sound.ENTITY_BREEZE_WIND_BURST, SoundCategory.PLAYERS, 1.0f, 1.0f);
     }
 

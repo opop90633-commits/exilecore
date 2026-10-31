@@ -27,29 +27,29 @@ class StonefistTest {
 
     /** poe2db 的「磐石之拳 Uniques」37 件 → 我們的傳奇代號（16 件以前就有，21 件 2026-10-28 補上）。 */
     static final Map<String, String> STONEFIST_UNIQUES = Map.ofEntries(
-            Map.entry("Aerisvane's Wings", "windvane_gauntlets"), Map.entry("Atziri's Acuity", "atziri_acuity"),
-            Map.entry("Aurseize", "goldsnatch_greaves"), Map.entry("Blueflame Bracers", "blueflame_cuffs"),
-            Map.entry("Candlemaker", "candlemaker"), Map.entry("Death Articulated", "death_articulated"),
-            Map.entry("Deathblow", "fugitive_greaves"), Map.entry("Demon Stitcher", "demon_stitcher"),
-            Map.entry("Doedre's Tenure", "hexwife_wraps"), Map.entry("Dreadfist", "dreadfist"),
-            Map.entry("Empire's Grasp", "rampart_greaves"), Map.entry("Essentia Sanguis", "essentia_sanguis"),
-            Map.entry("Facebreaker", "facebreaker"), Map.entry("Gravebind", "gravebind"),
+            Map.entry("Aerisvane's Wings", "windvane_gauntlets"), Map.entry("Atziri's Acuity", "empress_insight"),
+            Map.entry("Aurseize", "goldsnatch_greaves"), Map.entry("Blueflame Bracers", "azureflame_cuffs"),
+            Map.entry("Candlemaker", "wickmaker"), Map.entry("Death Articulated", "bonejoint_gauntlets"),
+            Map.entry("Deathblow", "fugitive_greaves"), Map.entry("Demon Stitcher", "seamwright"),
+            Map.entry("Doedre's Tenure", "hexwife_wraps"), Map.entry("Dreadfist", "fearfist"),
+            Map.entry("Empire's Grasp", "rampart_greaves"), Map.entry("Essentia Sanguis", "blood_drinker"),
+            Map.entry("Facebreaker", "toothcollector"), Map.entry("Gravebind", "tombgrip"),
             Map.entry("Grip of Winter", "wintergrasp_wraps"), Map.entry("Hand of Wisdom and Action", "wisdom_action_wraps"),
-            Map.entry("Hateforge", "hateforge_greaves"), Map.entry("Horror's Flight", "horrors_flight"),
-            Map.entry("Idle Hands", "idle_hands"), Map.entry("Jarngreipr", "jarngreipr"), Map.entry("Killjoy", "killjoy"),
-            Map.entry("Kitoko's Current", "kitoko_current"), Map.entry("Leopold's Applause", "applause_gloves"),
-            Map.entry("Lochtonial Caress", "lochtonial_caress"), Map.entry("Maligaro's Virtuosity", "maligaro_virtuosity"),
-            Map.entry("Nightscale", "nightscale_gloves"), Map.entry("Northpaw", "northpaw_bracers"),
-            Map.entry("Painter's Servant", "painters_servant"), Map.entry("Plaguefinger", "plaguefinger"),
-            Map.entry("Shackles of the Wretched", "shackles_wretched"), Map.entry("Sine Aequo", "sine_aequo"),
-            Map.entry("Snakebite", "snakebite_bracers"), Map.entry("The Master's Reach", "masters_reach"),
-            Map.entry("The Prisoner's Manacles", "prisoners_manacles"), Map.entry("Thunderfist", "thunderfist"),
+            Map.entry("Hateforge", "spiteforge_greaves"), Map.entry("Horror's Flight", "terror_glide"),
+            Map.entry("Idle Hands", "restless_hands"), Map.entry("Jarngreipr", "irongrip_gauntlets"), Map.entry("Killjoy", "spoilsport"),
+            Map.entry("Kitoko's Current", "kido_current"), Map.entry("Leopold's Applause", "ovation_gloves"),
+            Map.entry("Lochtonial Caress", "mindtouch"), Map.entry("Maligaro's Virtuosity", "marg_bloodgloves"),
+            Map.entry("Nightscale", "duskscale_gloves"), Map.entry("Northpaw", "northclaw_bracers"),
+            Map.entry("Painter's Servant", "crimson_brush"), Map.entry("Plaguefinger", "festerfinger"),
+            Map.entry("Shackles of the Wretched", "misery_shackles"), Map.entry("Sine Aequo", "peerless"),
+            Map.entry("Snakebite", "viperfang_bracers"), Map.entry("The Master's Reach", "binder_grasp"),
+            Map.entry("The Prisoner's Manacles", "captive_manacles"), Map.entry("Thunderfist", "stormfist"),
             Map.entry("Treefingers", "treefinger_mitts"), Map.entry("Valako's Vice", "stormvice_gauntlets"));
 
     /** 2026-10-28 補上的 21 件。 */
-    static final Set<String> ADDED = Set.of("atziri_acuity", "candlemaker", "demon_stitcher", "dreadfist", "essentia_sanguis", "facebreaker",
-            "gravebind", "horrors_flight", "idle_hands", "jarngreipr", "killjoy", "kitoko_current", "lochtonial_caress", "maligaro_virtuosity",
-            "painters_servant", "plaguefinger", "shackles_wretched", "sine_aequo", "prisoners_manacles", "thunderfist", "masters_reach");
+    static final Set<String> ADDED = Set.of("empress_insight", "wickmaker", "seamwright", "fearfist", "blood_drinker", "toothcollector",
+            "tombgrip", "terror_glide", "restless_hands", "irongrip_gauntlets", "spoilsport", "kido_current", "mindtouch", "marg_bloodgloves",
+            "crimson_brush", "festerfinger", "misery_shackles", "peerless", "captive_manacles", "stormfist", "binder_grasp");
 
     /** 腿甲擲得到、但原作沒有磐石之拳對應的詞綴（照原本的生效）：我們自己的揭露詞綴。 */
     static final Set<String> KEPT = Set.of("unveiled_d_armour_attack", "unveiled_d_armour_spell", "unveiled_d_armour_minion",
@@ -79,17 +79,17 @@ class StonefistTest {
         for (final String id : ADDED) {
             assertTrue(STONEFIST_UNIQUES.containsValue(id), id);
         }
-        assertEquals("雷霆之拳", repository.unique("thunderfist").name());
-        assertEquals("支配之觸", repository.unique("masters_reach").name());
+        assertEquals("雷霆之拳", repository.unique("stormfist").name());
+        assertEquals("支配之觸", repository.unique("binder_grasp").name());
     }
 
     @Test
-    void newUniquesDropWhereTheyDropInPoe2() {
-        assertEquals(Set.of("abyss_lich"), repository.unique("masters_reach").sources(), "骷髏馬克的容器");
-        assertEquals(Set.of("awakener"), repository.unique("sine_aequo").sources(), "灰燼仲裁者（巔峰）");
-        assertEquals(Set.of("map_boss"), repository.unique("horrors_flight").sources(), "渡鴉欺詐者（Boss 限定，做不出來）");
+    void newUniquesDropWhereTheyDropInRef() {
+        assertEquals(Set.of("abyss_lich"), repository.unique("binder_grasp").sources(), "骸王的容器");
+        assertEquals(Set.of("awakener"), repository.unique("peerless").sources(), "灰燼仲裁者（巔峰）");
+        assertEquals(Set.of("map_boss"), repository.unique("terror_glide").sources(), "渡鴉欺詐者（Boss 限定，做不出來）");
         for (final String id : ADDED) {
-            if (!Set.of("masters_reach", "sine_aequo", "horrors_flight").contains(id)) {
+            if (!Set.of("binder_grasp", "peerless", "terror_glide").contains(id)) {
                 assertEquals(Set.of("map_boss", "chance", "gamble"), repository.unique(id).sources(), id + "：原作是全域掉落");
             }
         }
@@ -209,9 +209,9 @@ class StonefistTest {
     @Test
     void uniquesBecomeTheirStonefistVersion() {
         final ItemGenerator generator = new ItemGenerator(repository);
-        final ItemData northpaw = generator.generateUnique(repository.unique("northpaw_bracers"), 70, new Random(3));
+        final ItemData northpaw = generator.generateUnique(repository.unique("northclaw_bracers"), 70, new Random(3));
         // 第 3 行「增加 (10–15)% 暴擊傷害加成」擲到 15（最高）→ 磐石之拳「增加 (15–20)% 暴擊傷害加成」的最高
-        northpaw.affixes().set(2, new RolledAffix("unique.northpaw_bracers.3", 1, Map.of("value", 15)));
+        northpaw.affixes().set(2, new RolledAffix("unique.northclaw_bracers.3", 1, Map.of("value", 15)));
         final ItemBase base = repository.base(northpaw.base());
         final List<Modifier> mods = Stonefist.modifiers(repository, base, northpaw, 40);
         assertEquals(0.20, sum(mods, StatKeys.CRIT_BONUS, ModType.INCREASED), 1e-9);
@@ -221,13 +221,13 @@ class StonefistTest {
         assertEquals((1 + 1) * 40, sum(mods, StatKeys.ES_MAX, ModType.FLAT), 1e-9);
 
         // 原作多一行的（里歐波德的掌聲：照敵人最低的元素抗性算）
-        final ItemData applause = generator.generateUnique(repository.unique("applause_gloves"), 70, new Random(5));
+        final ItemData applause = generator.generateUnique(repository.unique("ovation_gloves"), 70, new Random(5));
         final List<Modifier> applauseMods = Stonefist.modifiers(repository, repository.base(applause.base()), applause, 60);
         assertEquals(1, sum(applauseMods, tw.exilecore.item.unique.UniqueStats.LOWEST_RESIST, ModType.FLAT), 1e-9);
         assertEquals(0, sum(applauseMods, StatKeys.PENETRATION, ModType.FLAT), 1e-9, "穿透換成 +全部元素抗性");
 
         // 原作拿掉的行（馬雷葛蘿：暴擊率無法被重骰）
-        final ItemData maligaro = generator.generateUnique(repository.unique("maligaro_virtuosity"), 70, new Random(7));
+        final ItemData maligaro = generator.generateUnique(repository.unique("marg_bloodgloves"), 70, new Random(7));
         final List<Modifier> maligaroMods = Stonefist.modifiers(repository, repository.base(maligaro.base()), maligaro, 60);
         assertEquals(0, sum(maligaroMods, tw.exilecore.item.unique.UniqueStats.CRIT_NO_REROLL, ModType.FLAT), 1e-9);
         assertEquals(0, sum(maligaroMods, tw.exilecore.item.unique.UniqueStats.CRIT_BONUS_OVERRIDE, ModType.FLAT), 1e-9);

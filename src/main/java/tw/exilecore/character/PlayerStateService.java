@@ -518,6 +518,11 @@ public final class PlayerStateService {
             sheet.add(Modifier.more(StatKeys.ATTACK_SPEED, speedScale - 1, "伺服器基礎速度"));
             sheet.add(Modifier.more(StatKeys.CAST_SPEED, speedScale - 1, "伺服器基礎速度"));
         }
+        // 2026-10-31 照站長：玩家的範圍效果基礎 ×1.5（skills.yml 的 player_area_scale；「更多」，半徑 ×√倍率）
+        final double areaScale = tw.exilecore.skill.SkillConfig.playerAreaScale();
+        if (Math.abs(areaScale - 1) > 1e-9) {
+            sheet.add(Modifier.more(StatKeys.SKILL_AREA, areaScale - 1, "伺服器基礎範圍"));
+        }
         // 2026-10-26 照 PoE2 基石：空掌之術——兩手都空著時當作拿長棍攻擊（長棍的技能能用、吃長棍的修飾器）
         final boolean hollowPalm = !hasWeapon && StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_HOLLOW_PALM)
                 && active.stream().noneMatch(item -> item.offHandWeapon() // 2026-10-27：副手拿的雙手武器、權杖也不是空手
@@ -787,7 +792,7 @@ public final class PlayerStateService {
     /** 2026-10-27 照 PoE2：每把矛都賦予的擲矛（skills.yml 的代號）。 */
     static final String SPEAR_THROW = "spear_throw";
     /** 2026-10-30 照 PoE2：盾牌賦予的架盾、圓盾賦予的招架（skills.yml 的代號）。 */
-    static final String RAISE_SHIELD = "raise_guard";
+    static final String RAISE_SHIELD = "shield_brace";
     static final String PARRY = "parry";
 
     /** 2026-10-30 照 PoE2：這面副手賦予的技能：法器沒有、圓盾（只有敏捷的盾）招架、其他盾牌架盾；不是盾回傳 null。 */

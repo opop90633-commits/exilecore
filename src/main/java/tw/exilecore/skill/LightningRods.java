@@ -30,9 +30,9 @@ import java.util.function.Predicate;
 final class LightningRods {
 
     /** FLAT：雷樁矢落地時多炸一次的機率 %（品質，gem_quality.yml）。 */
-    static final String EXTRA_BURST = "lightning_rod.extra_burst";
+    static final String EXTRA_BURST = "thunder_stake_shaft.extra_burst";
     /** FLAT：這個技能的雷束連鎖到雷樁矢的箭時，箭充能幾秒就炸（PoE2 雷鳴箭 skill_lightning_rod_burst_delay_ms_override 100）；0 = 照箭自己的。 */
-    static final String BURST_DELAY = "lightning_rod.burst_delay";
+    static final String BURST_DELAY = "thunder_stake_shaft.burst_delay";
     /** 雷鳴箭造成的爆發同一支箭最快每 0.1 秒一次（PoE2 0.4.0）。 */
     static final long FAST_GAP_TICKS = 2;
     /** 品質多的那一次爆發：落地後 0.2 秒。 */
