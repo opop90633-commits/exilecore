@@ -100,7 +100,7 @@ class RecoveryRateTest {
         assertTrue(blossom, "天賦樹的 Mana Recovery rate 是 mana.recovery_rate");
         assertTrue(mindOverMatter, "心靈堡壘：更少 50% 魔力回復速度");
         final String timeless = Files.readString(Path.of("src/main/resources/data/passives/timeless.json"), StandardCharsets.UTF_8);
-        assertTrue(timeless.contains("\"mana.recovery_rate\""), "永恆珠寶的 2% increased Mana Recovery rate");
+        assertTrue(timeless.contains("\"mana.recovery_rate\""), "恆時珠寶的 2% increased Mana Recovery rate");
         // 物品上的全部是 Mana Regeneration Rate（RePoE：ManaRegeneration*、AmuletImplicitManaRegeneration1…），文字寫「魔力再生速度」
         for (final String file : new String[] {"uniques.yml", "runes.yml", "affixes/suffixes.yml", "bases/jewellery.yml", "bases/armour.yml"}) {
             final String text = Files.readString(Path.of("src/main/resources/data/" + file), StandardCharsets.UTF_8);

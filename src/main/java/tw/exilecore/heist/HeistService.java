@@ -671,18 +671,20 @@ public final class HeistService implements Listener {
             final List<DropTable.Drop> rolled = rollDrops(player, run.level, vault.rolls(), randomIn(vault.currency()), grand * lockdown);
             final tw.exilecore.loot.LootBonus.Bonus bonus = bonus(player); // 2026-10：特殊掉落也吃物品數量、稀有度
             addCurrency(rolled, UNVEIL_STONE, bonus.amount(scaled(randomIn(vault.unveilStones()), grand * lockdown), random()));
-            boolean unique = false;
+            // 2026-10-30 照站長（「大金庫裡有一顆…」有提示但沒拿到）：提示的那幾件（專屬傳奇、Lv.21 未切割寶石、遺時星晶、特殊項鍊）
+            //   另外直接收進包包，不經過掉落過濾；這次之前跟其他掉落一起走過濾，被過濾掉就換成金幣，提示照樣跳
+            final java.util.Map<DropTable.Drop, String> special = new java.util.LinkedHashMap<>();
             // 2026-10-16：劫盜專屬傳奇每一件各自擲 unique_chance（大劫盜 ×grand_multiplier）
             for (final tw.exilecore.item.UniqueItem each : plugin.items().repository().uniquesFor(UNIQUE_SOURCE, run.level)) {
                 if (random().nextDouble() < bonus.rare(vault.uniqueChance() * grand * lockdown)) {
-                    rolled.add(DropTable.Drop.equipment(plugin.items().generator().generateUnique(each, run.level, random())));
-                    unique = true;
+                    special.put(DropTable.Drop.equipment(plugin.items().generator().generateUnique(each, run.level, random())),
+                            "<#af6025>大金庫裡有一件劫盜專屬的傳奇！");
                 }
             }
-            boolean gem = false;
             if (random().nextDouble() < bonus.rare(vault.gemChance() * grand * lockdown) && currency(UNCUT_21) != null) {
-                addCurrency(rolled, UNCUT_21, 1); // 2026-10：Lv.21 未切割技能寶石（以前是異質技能寶石）
-                gem = true;
+                final List<DropTable.Drop> gemDrop = new ArrayList<>();
+                addCurrency(gemDrop, UNCUT_21, 1); // 2026-10：Lv.21 未切割技能寶石（以前是異質技能寶石）
+                gemDrop.forEach(drop -> special.put(drop, "<#d4a017>大金庫裡有一顆 Lv.21 未切割技能寶石！"));
             }
             boolean finaleKey = false;
             if (run.grand && random().nextDouble() < bonus.more(vault.finaleKeyChance() * lockdown)) {
@@ -693,30 +695,35 @@ public final class HeistService implements Listener {
                 addCurrency(rolled, BLUEPRINT, 1);
             }
             // 2026-10-28 照站長：特殊項鍊，大金庫每個人 0.5%（special_amulet.vault_chance；大劫盜 ×grand_multiplier，封鎖了減半）；這次之前大金庫沒有特別擲
-            final boolean amulet = random().nextDouble() < bonus.rare(config.specialAmulets().vaultChance() * grand * lockdown)
-                    && addSpecialAmulet(rolled, run.level);
+            final List<DropTable.Drop> amulets = new ArrayList<>();
+            if (random().nextDouble() < bonus.rare(config.specialAmulets().vaultChance() * grand * lockdown) && addSpecialAmulet(amulets, run.level)) {
+                amulets.forEach(drop -> special.put(drop, "<#d4a017>大金庫裡有一條劫盜專屬的特殊項鍊！"));
+            }
             veil(rolled);
+            veil(amulets);
             // 2026-10：遺時珠寶（只在劫盜掉）：合約的大金庫 time_lost_jewel_chance，藍圖（大劫盜）×grand_multiplier；封鎖了減半
-            final boolean timeLost = random().nextDouble() < bonus.rare(vault.timeLostChance() * grand * lockdown)
-                    && addTimeLostJewel(rolled, run.level);
+            final List<DropTable.Drop> jewels = new ArrayList<>();
+            if (random().nextDouble() < bonus.rare(vault.timeLostChance() * grand * lockdown) && addTimeLostJewel(jewels, run.level)) {
+                jewels.forEach(drop -> special.put(drop, "<#7fd4ff>大金庫裡有一顆遺時星晶！"));
+            }
             final long gold = plugin.monsterModule().drops().rollGold(run.level, MonsterRarity.UNIQUE, quantity(player), random())
                     * Math.max(1, Math.round(vault.rolls() * grand * lockdown));
             MapRewards.deliver(plugin, player, player.getLocation(), data, rolled, gold);
+            final List<DropTable.Drop> kept = tw.exilecore.loot.LootPenalty.thin(player, new ArrayList<>(special.keySet()), random());
+            final List<org.bukkit.inventory.ItemStack> stacks = new ArrayList<>();
+            for (final DropTable.Drop drop : kept) {
+                final org.bukkit.inventory.ItemStack stack = tw.exilecore.monster.MonsterListener.toStack(plugin, drop);
+                if (stack != null) {
+                    stacks.add(stack);
+                }
+            }
+            MapRewards.give(plugin, player, stacks);
             player.showTitle(Title.title(plugin.text().parse("<#d4a017>大金庫打開了！"),
                     plugin.text().parse(run.lockdown ? "<gray>封鎖了，獎勵減半" : "<gray>乾淨俐落"),
                     Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2500), Duration.ofMillis(500))));
             player.playSound(player.getLocation(), Sound.BLOCK_VAULT_OPEN_SHUTTER, 1.0f, 0.8f);
-            if (unique) {
-                player.sendMessage(plugin.text().prefixed("<#af6025>大金庫裡有一件劫盜專屬的傳奇！"));
-            }
-            if (gem) {
-                player.sendMessage(plugin.text().prefixed("<#d4a017>大金庫裡有一顆 Lv.21 未切割技能寶石！"));
-            }
-            if (timeLost) {
-                player.sendMessage(plugin.text().prefixed("<#7fd4ff>大金庫裡有一顆遺時星晶！"));
-            }
-            if (amulet) {
-                player.sendMessage(plugin.text().prefixed("<#d4a017>大金庫裡有一條劫盜專屬的特殊項鍊！"));
+            for (final DropTable.Drop drop : kept) {
+                player.sendMessage(plugin.text().prefixed(special.get(drop) + "<gray>（已收進包包）"));
             }
             if (finaleKey) {
                 player.sendMessage(plugin.text().prefixed("<#8b0000>大金庫深處有一個鑰印……金庫之主在等你。<gray>（找盜賊首領）"));

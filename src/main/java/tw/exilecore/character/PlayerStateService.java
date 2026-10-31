@@ -623,9 +623,9 @@ public final class PlayerStateService {
             // 2026-10-28 照 PoE2（磐石之拳的毀面者）：基礎傷害是火焰
             final Set<String> unarmedType = override && StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.UNARMED_FIRE)
                     ? Set.of(tw.exilecore.stats.DamageType.FIRE.tag()) : Set.of(Tags.PHYSICAL);
-            sheet.add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, override ? overrideMin : 2, unarmedType, override ? "毀面者" : "徒手"));
+            sheet.add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, override ? overrideMin : 2, unarmedType, override ? "碎顏者" : "徒手"));
             sheet.add(new Modifier(StatKeys.WEAPON_MAX, ModType.FLAT, override ? overrideMax : unarmedMax(characterClass), unarmedType,
-                    override ? "毀面者" : "徒手"));
+                    override ? "碎顏者" : "徒手"));
             sheet.add(Modifier.flat(StatKeys.WEAPON_APS, 1.65, "徒手"));
             sheet.add(Modifier.flat(StatKeys.WEAPON_CRIT, 5, "徒手"));
         }

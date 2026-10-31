@@ -21,7 +21,7 @@ cwand_01:   # PoE2 Withered Wand
   grants: chaos_bolt
 
 cwand_02:   # PoE2 Bone Wand
-  name: 骸骨法杖
+  name: 骨製法杖
   fixed: true
   family: wand
   material: BLAZE_ROD
@@ -51,7 +51,7 @@ cwand_03:   # PoE2 Attuned Wand
   grants: mana_drain
 
 cwand_04:   # PoE2 Siphoning Wand
-  name: 虹吸法杖
+  name: 汲取法杖
   fixed: true
   family: wand
   material: BLAZE_ROD
@@ -218,7 +218,7 @@ cwand_14:   # PoE2 Dueling Wand
 # ---- 長杖 ----
 
 cstaff_01:   # PoE2 Ashen Staff
-  name: 灰燼長杖
+  name: 燼灰長杖
   fixed: true
   family: staff
   material: BREEZE_ROD
@@ -338,7 +338,7 @@ cstaff_08:   # PoE2 Reaping Staff
   grants: reap
 
 cstaff_09:   # PoE2 Icicle Staff
-  name: 冰錐長杖
+  name: 冰稜長杖
   fixed: true
   family: staff
   material: BREEZE_ROD
@@ -413,7 +413,7 @@ cstaff_13:   # PoE2 Ravenous Staff
   grants: feast_of_flesh
 
 cstaff_14:   # PoE2 Permafrost Staff
-  name: 永凍長杖
+  name: 恆凍長杖
   fixed: true
   family: staff
   material: BREEZE_ROD
@@ -428,7 +428,7 @@ cstaff_14:   # PoE2 Permafrost Staff
   grants: heart_of_ice
 
 cstaff_15:   # PoE2 Roaring Staff
-  name: 咆哮長杖
+  name: 怒吼長杖
   fixed: true
   family: staff
   material: BREEZE_ROD
@@ -619,7 +619,7 @@ csceptre_09:   # PoE2 Shrine Sceptre（Impurity）
   # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_10:   # PoE2 Devouring Sceptre
-  name: 吞噬權杖
+  name: 噬魂權杖
   fixed: true
   family: sceptre
   material: GOLDEN_HOE
@@ -667,7 +667,7 @@ csceptre_12:   # PoE2 Devotional Sceptre
   # 2026-10-28：拿掉固有「+100 精魂」——權杖的 100 精魂是基底本身的（PlayerStateService.SCEPTRE_SPIRIT），這次之前兩邊都給，變成 200
 
 csceptre_13:   # PoE2 Aromatic Sceptre
-  name: 芳香權杖
+  name: 馨香權杖
   fixed: true
   family: sceptre
   material: GOLDEN_HOE

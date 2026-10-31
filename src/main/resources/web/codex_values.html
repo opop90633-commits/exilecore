@@ -240,7 +240,7 @@ function skillBody(s) {
     ["冷卻", s.cooldown ? num(s.cooldown) + " 秒" : ""],
     ["傷害類型", s.damageTypes ? Object.entries(s.damageTypes).map(([k, v]) => `<span class="${DMG_CLASS[k] || ""}">${esc(k)} ${v}%</span>`).join("、") : "", true],
     ["寶石階級", s.granted ? "" : "第 " + s.tier + " 階"], ["來源", s.source || ""], ["賦予的基底", s.grantedBy ? s.grantedBy.join("、") : ""]]);
-  return `<p>${esc(s.text)}</p>${top}${ul(s.mods)}${ul(s.info, "dim")}${ul(s.conversion, "dim")}${s.quality || s.advancedQuality ? ul([s.quality ? "品質 20%：" + s.quality : "", s.advancedQuality ? "進階奇術（嵌晶戰團）額外效果：" + s.advancedQuality : ""].filter(x => x), "uni") : ""}
+  return `<p>${esc(s.text)}</p>${top}${ul(s.mods)}${ul(s.info, "dim")}${ul(s.conversion, "dim")}${s.quality || s.advancedQuality ? ul([s.quality ? "品質 20%：" + s.quality : "", s.advancedQuality ? "高階奇術（嵌晶戰團）額外效果：" + s.advancedQuality : ""].filter(x => x), "uni") : ""}
     <div class="seg" data-skill="${esc(s.id)}"><button data-range="1" aria-pressed="true">Lv.1–20</button><button data-range="21" aria-pressed="false">Lv.21–40</button></div>
     <div class="lvtable">${levelTable(s, 1)}</div>
     <p class="muted">Lv.21–40 是 20 級寶石再加裝備的「+x 技能等級」。數值是沒有輔助、沒有裝備加成的基礎值。</p>

@@ -59,6 +59,8 @@ public final class IceCrystals implements Listener {
         int hitsLeft;
         /** 2026-10-28 照 PoE2：冰晶剩下的生命（0 以下 = 照舊算打幾下）。 */
         double life;
+        /** 2026-10-30：冰晶的最大生命（PoE2 的數值；冰淞照這個算）。 */
+        double maxLife;
         /** 2026-10-28 照 PoE2：碎掉時炸的隱藏技能（凍壁矢的冰牆有自己的表）；這次之前一律 proc_crystal_burst。 */
         String burst = "proc_crystal_burst";
         long lastHit;
@@ -168,6 +170,7 @@ public final class IceCrystals implements Listener {
             final Crystal crystal = new Crystal(at.clone().add(0, 0.5, 0), display, until, build.usableGemLevel(), hits, shards, verglas);
             crystal.burst = StageAttacks.CRYSTAL_BURST.getOrDefault(build.definition().id(), crystal.burst);
             crystal.life = life;
+            crystal.maxLife = life;
             mine.add(crystal);
             spots.add(at.clone());
             alive.add(display::isValid);
@@ -247,10 +250,29 @@ public final class IceCrystals implements Listener {
         if (crystal.shards) {
             cast(owner, "proc_crystal_shards", crystal.level, crystal.at);
         }
-        if (crystal.verglas) {
-            service.buff(owner, "verglas", "冰鍍", 120, List.of(new tw.exilecore.stats.Modifier(StatKeys.DAMAGE_GAIN + "cold",
-                    tw.exilecore.stats.ModType.FLAT, 15, java.util.Set.of(), "冰鍍")));
+        verglas(owner, crystal.maxLife);
+    }
+
+    /** 2026-10-30 照 PoE2 Verglas：冰晶最大生命每 2000 點，被冰淞輔助的技能 6 秒內獲得 1% 傷害為額外冰冷傷害。 */
+    static final double VERGLAS_LIFE_PER_PERCENT = 2000;
+    static final int VERGLAS_TICKS = 120;
+    /** 被冰淞輔助的技能身上的標籤（SkillBuild 加上；增益只給有這個標籤的技能）。 */
+    public static final String VERGLAS_TAG = "verglas";
+    /** 玩家 → {這一次冰淞的 %, 到期的 tick}。 */
+    private final Map<UUID, double[]> verglas = new HashMap<>();
+
+    /** 打碎一顆冰晶：照它的最大生命給冰淞的增益（同時只有一份：比現在的強才換，不然只刷新時間）。 */
+    private void verglas(final Player owner, final double crystalLife) {
+        final double percent = Math.floor(Math.max(0, crystalLife) / VERGLAS_LIFE_PER_PERCENT);
+        if (percent <= 0) {
+            return;
         }
+        final long now = now();
+        final double[] current = verglas.get(owner.getUniqueId());
+        final double value = current != null && current[1] > now ? Math.max(current[0], percent) : percent;
+        verglas.put(owner.getUniqueId(), new double[] {value, now + VERGLAS_TICKS});
+        service.buff(owner, "verglas", "冰淞", VERGLAS_TICKS, List.of(new tw.exilecore.stats.Modifier(StatKeys.DAMAGE_GAIN + "cold",
+                tw.exilecore.stats.ModType.FLAT, value, java.util.Set.of(VERGLAS_TAG), "冰淞")));
     }
 
     private void cast(final Player owner, final String skillId, final int level, final Location at) {

@@ -1569,7 +1569,7 @@ uniques:
         - { stat: stun.buildup, type: MORE, value: 100 }
         - { stat: freeze.buildup, type: MORE, value: 100 }
     - from: 4
-      text: "點了山巒之道時，禁錮敵人獲得山巒之教的機率每點敵人強度再多 {value}% 超越機率"
+      text: "點了群山之道時，禁錮敵人獲得山巒之教的機率每點敵人強度再多 {value}% 超越機率"
       value: [25, 35]
       stats:
         - { stat: asc.mountain_extra_chance, type: FLAT, value: "{value}" }

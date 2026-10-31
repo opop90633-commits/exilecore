@@ -622,7 +622,19 @@ public final class StatKeys {
     /** 2026-10：自己生命百分比比敵人低時更多 x% 傷害、比較高時更少 x/2%（FLAT）。 */
     public static final String DAMAGE_CLASH = "damage.clash";
     /** 近身的距離（格）。 */
+    /** FLAT（旗標）：2026-10-31 照 PoE2 Chober Chaber：召喚物傷害的增加、減少也套用在你身上（CombatListener）。 */
+    public static final String MINION_DAMAGE_AFFECTS_YOU = "flag.minion_damage_affects_you";
     public static final double CLOSE_RANGE = 3.5;
+    /** 2026-10-30 照 PoE2 Close Combat：近身的「更多」1 格內全額。 */
+    public static final double CLOSE_FULL = 1.0;
+
+    /** 近身「更多」的比例：1 格內 1，到 {@link #CLOSE_RANGE} 線性遞減到 0。 */
+    public static double closeFalloff(final double distance) {
+        if (distance <= CLOSE_FULL) {
+            return 1;
+        }
+        return Math.max(0, Math.min(1, (CLOSE_RANGE - distance) / (CLOSE_RANGE - CLOSE_FULL)));
+    }
     /** FLAT：擊中時 x% 機率讓敵人眩暈（造成的傷害更少、更容易被暈）。 */
     public static final String DAZE_CHANCE = "daze.chance";
 

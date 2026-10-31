@@ -56,7 +56,7 @@ public final class JewelSockets {
             return PassiveState.Result.fail("先建立角色（/char）");
         }
         if (tw.exilecore.ascendancy.AscBuild.ascFlat(plugin, state, tw.exilecore.ascendancy.AscKeys.PHYLACTERY) <= 0) {
-            return PassiveState.Result.fail("要先配昇華天賦「晶化護符」");
+            return PassiveState.Result.fail("要先配昇華天賦「晶化命匣」");
         }
         if (state.jewel(PHYLACTERY) != null) {
             return PassiveState.Result.fail("命匣裡已經有珠寶了，先拿出來");
@@ -156,7 +156,7 @@ public final class JewelSockets {
         if (isTimeless(plugin, stack)) {
             for (final ItemStack placed : state.jewels().values()) {
                 if (isTimeless(plugin, placed)) {
-                    return PassiveState.Result.fail("永恆珠寶同時只能配一顆（天賦樹上已經有一顆了）");
+                    return PassiveState.Result.fail("恆時珠寶同時只能配一顆（天賦樹上已經有一顆了）");
                 }
             }
         }
@@ -366,7 +366,7 @@ public final class JewelSockets {
             if (base != null && base.isRadiusJewel()) {
                 if (nonUniqueRadiusScale != 1.0 && data.rarity() != tw.exilecore.item.Rarity.UNIQUE) {
                     mods = new ArrayList<>(mods);
-                    mods.add(Modifier.flat(tw.exilecore.stats.StatKeys.JEWEL_LOCAL_RADIUS, radiusOf(mods) * (nonUniqueRadiusScale - 1), "巴雅地脈"));
+                    mods.add(Modifier.flat(tw.exilecore.stats.StatKeys.JEWEL_LOCAL_RADIUS, radiusOf(mods) * (nonUniqueRadiusScale - 1), "巴揚地脈"));
                 }
                 list.addAll(radiusModifiers(tree, node, passives, mods, conquered));
             } else {

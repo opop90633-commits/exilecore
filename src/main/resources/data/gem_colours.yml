@@ -393,12 +393,12 @@ supports:
   prolonged_duration: r
   impact_area: r
   close_quarters: g
+  close_quarters_ii: g
   hex_exploit: b
   precision_aim: g
   deep_cuts: r
   virulence: g
   conduction: g
-  point_blank: g
   totem_fury: r
   elemental_army: b
   meat_shield: r

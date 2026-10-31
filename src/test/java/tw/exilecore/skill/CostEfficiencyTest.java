@@ -131,7 +131,7 @@ class CostEfficiencyTest {
         }
         assertTrue(efficiencyNodes >= 18, "天賦樹有 18 個消耗效率的節點：" + efficiencyNodes);
         final String timeless = Files.readString(DATA.resolve("passives/timeless.json"), StandardCharsets.UTF_8);
-        assertTrue(timeless.contains("\"skill.mana_cost_efficiency\""), "永恆珠寶：每 10 點貢禮增加 2% 魔力消耗效率");
+        assertTrue(timeless.contains("\"skill.mana_cost_efficiency\""), "恆時珠寶：每 10 點貢禮增加 2% 魔力消耗效率");
         // 符文（泉思符文的羈絆詞綴）
         final Runes.Rune inspiration = repository.rune("inspiration");
         boolean rune = false;

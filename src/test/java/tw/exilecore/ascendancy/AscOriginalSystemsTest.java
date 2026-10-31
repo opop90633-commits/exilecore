@@ -151,7 +151,7 @@ class AscOriginalSystemsTest {
             assertEquals(base.get(i).stat(), doubled.get(i).stat());
             assertEquals(base.get(i).value() * 2, doubled.get(i).value(), 1e-9, "效果增加 100%");
         }
-        assertTrue(JewelSockets.modifiers(repository, jewels, Set.of(), tree, 1.0, false).isEmpty(), "沒有晶化護符：命匣裡的珠寶沒有效果");
+        assertTrue(JewelSockets.modifiers(repository, jewels, Set.of(), tree, 1.0, false).isEmpty(), "沒有晶化命匣：命匣裡的珠寶沒有效果");
         final ItemData unique = new ItemData(jewelBase.id(), Rarity.UNIQUE, 50);
         assertTrue(JewelSockets.modifiers(repository, Map.of(JewelSockets.PHYLACTERY, unique), Set.of(), tree, 1.0, true).isEmpty(),
                 "傳奇珠寶不能放命匣");

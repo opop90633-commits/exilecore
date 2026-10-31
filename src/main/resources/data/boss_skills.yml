@@ -351,7 +351,7 @@ skills:
     taken: 25
     shout: "「腐朽吧。」"
   blink:
-    name: 閃現
+    name: 瞬身
     kind: blink          # 一般怪物用是單純的閃現；Boss 用的話落地後停一下再震一圈（BossSkills.BOSS_BLINK_DAMAGE，2026-10-17）
     cooldown: 9
     range: 20
@@ -794,7 +794,7 @@ skills:
     solid: true
     slow: 1
   awakener_meteor:
-    name: 殞星
+    name: 隕落星辰
     kind: slam
     damage: 2.2
     type: physical
@@ -937,7 +937,7 @@ skills:
     interval: 0.3
     shout: "「死。死。死。死。」"
   hazard_awakener_storm:
-    name: 風暴
+    name: 狂嵐
     kind: zone
     damage: 0.65   # 2026-10-15：0.4 → 0.65（場上的風暴要痛，逼人走位）
     type: physical
@@ -2122,7 +2122,7 @@ skills:
     size: 0.7
     explode: 2.5
   hazard_frost_spike:
-    name: 冰柱
+    name: 冰稜刺
     kind: slam
     damage: 1.5
     type: cold
@@ -4174,7 +4174,7 @@ skills:
     explode: 4
     shout: "「你確定旁邊那個是隊友？」"
   mist_awakening:
-    name: 夢醒
+    name: 夢覺
     kind: sanctuary
     damage: 4.5
     type: cold
@@ -4341,7 +4341,7 @@ skills:
     shout: "「你的墳，挖好了。」"
   # 2026-10-18 第二批（更多專屬招式）：骨牢（兩圈骨牆）、骨槍（殘影）、滅頂（全場大招）
   abyssal_bone_cage:
-    name: 骨牢
+    name: 骸籠
     hint: "兩圈骨牆、穿不過：一圈一圈找缺口繞出去"
     kind: zone
     damage: 0.7

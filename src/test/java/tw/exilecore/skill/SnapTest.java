@@ -110,7 +110,7 @@ class SnapTest {
         assertEquals(10, mods.stream().filter(m -> m.stat().equals(Snap.EXTRA_REMNANT)).mapToDouble(Modifier::value).sum(), 1e-9);
         // 2026-10-27 照 PoE2：這條是額外的品質效果（進階奇術才有，gem_quality.yml 的 advanced），一般品質沒有了
         assertEquals(0, mods.stream().filter(m -> m.stat().equals(StatKeys.COOLDOWN_RECOVERY)).mapToDouble(Modifier::value).sum(), 1e-9);
-        final List<Modifier> advanced = tw.exilecore.currency.GemQuality.advancedModifiers(Snap.ID, 20, "進階奇術");
+        final List<Modifier> advanced = tw.exilecore.currency.GemQuality.advancedModifiers(Snap.ID, 20, "高階奇術");
         assertEquals(1.0, advanced.stream().filter(m -> m.stat().equals(StatKeys.COOLDOWN_RECOVERY)).mapToDouble(Modifier::value).sum(), 1e-9);
     }
 }

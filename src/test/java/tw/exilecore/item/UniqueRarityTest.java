@@ -139,9 +139,9 @@ class UniqueRarityTest {
             assertEquals(id, data.unique());
             assertEquals(unique.affixIds().size(), data.affixes().size(), id);
         }
-        assertEquals("綺夢", repository.unique("reverie").name());
-        assertEquals("吉爾菲的聖殿", repository.unique("geofris_sanctuary").name());
-        assertEquals("元素之章", repository.unique("the_taming").name());
+        assertEquals("迷夢", repository.unique("reverie").name());
+        assertEquals("吉菲雅的聖所", repository.unique("geofris_sanctuary").name());
+        assertEquals("元素馴服", repository.unique("the_taming").name());
         assertEquals(4, repository.unique("undertow_band").version(), "貝雷克的冰與雷之握換回原作的疾風技能那一條");
     }
 
@@ -165,7 +165,7 @@ class UniqueRarityTest {
         final StatSheet sheet = new StatSheet();
         sheet.add(Modifier.flat(StatKeys.STR, 150, "測試"));
         sheet.add(Modifier.flat(StatKeys.ES_MAX, 999, "測試"));
-        sheet.add(Modifier.flat(tw.exilecore.item.unique.UniqueStats.ES_EQUAL_TO_STR, 250, "吉爾菲的聖殿"));
+        sheet.add(Modifier.flat(tw.exilecore.item.unique.UniqueStats.ES_EQUAL_TO_STR, 250, "吉菲雅的聖所"));
         assertEquals(375, tw.exilecore.character.PlayerState.maxEnergyShield(sheet), 1e-9);
         sheet.add(Modifier.flat(StatKeys.FLAG_ELDRITCH_BATTERY, 1, "測試"));
         assertEquals(375, tw.exilecore.character.PlayerState.maxEnergyShield(sheet), 1e-9, "無法被轉換");

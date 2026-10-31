@@ -411,7 +411,7 @@ public final class TimelessJewels {
             lines.add("・小天賦換成「" + legion.small().lines().getFirst().text() + "」，屬性點多給「"
                     + (legion.attribute() == null ? "" : legion.attribute().lines().getFirst().text()) + "」");
         }
-        lines.add("同時只能配一顆永恆珠寶");
+        lines.add("同時只能配一顆恆時珠寶");
         return lines;
     }
 }

@@ -151,7 +151,8 @@ public final class SpearMechanics implements Listener {
      * 其他技能回傳 null（照一般投射物飛）。這次之前炎爆矛是拋物線，落在哪裡看角度。
      */
     Location landingPoint(final Origin origin, final SkillBuild build) {
-        if (origin == null || build == null || !"explosive_spear".equals(service.config().signature(build.definition().id()))) {
+        final String signature = build == null ? null : service.config().signature(build.definition().id());
+        if (origin == null || !"explosive_spear".equals(signature) && !"lance".equals(signature)) { // 2026-10-31 照 PoE2：霆落矛也飛到準心插著
             return null;
         }
         final LivingEntity aimed = service.targets().aimed(origin, build.range(), 1.2);

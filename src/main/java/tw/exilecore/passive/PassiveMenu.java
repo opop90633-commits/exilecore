@@ -350,7 +350,7 @@ public final class PassiveMenu extends Menu {
         }
         if (conquered.containsKey(node.id())) {
             final PassiveNode original = tile.node().forClass(classId());
-            lore.add("<#c48bff>被永恆珠寶征服" + (original.name().equals(node.name()) ? "" : "（原本是「" + ItemRenderer.escape(original.name()) + "」）"));
+            lore.add("<#c48bff>被恆時珠寶征服" + (original.name().equals(node.name()) ? "" : "（原本是「" + ItemRenderer.escape(original.name()) + "」）"));
         }
         lore.add("");
         final boolean own = start != null && node.id().equals(start.id());
@@ -839,7 +839,7 @@ public final class PassiveMenu extends Menu {
                     // 2026-10-26 照 PoE2：有解鎖條件的節點（觀星「未見之道」、要先配某個核心）
                     final PassiveTree.Unlock unlock = tree.unlock(node);
                     result = PassiveState.Result.fail(unlock == null || !tree.locked(state.passives(), node, PassiveState.rules(plugin, state))
-                            ? "走不到那裡" : unlock.stat() != null ? "只有觀星配了昇華天賦「未見之道」才能配" : "要先配旁邊說明寫的核心才能配");
+                            ? "走不到那裡" : unlock.stat() != null ? "只有觀星配了昇華天賦「不見之途」才能配" : "要先配旁邊說明寫的核心才能配");
                 } else {
                     previewTarget = node;
                     previewPath = path;

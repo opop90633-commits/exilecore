@@ -953,8 +953,42 @@ falconer_bow:
         - { stat: damage, type: INCREASED, value: 30, tags: [projectile] }
 
 
+chober_chaber:        # 2026-10-31 照 PoE2 0.5 的「Chober Chaber」（poe2db.tw/tw/Chober_Chaber；原作有、我們以前沒有的）
+  name: 信徒之錘
+  base: mace2_25        # 原作基底 Leaden Greathammer（麻木巨錘：33 級、60 力量）；那一階合併掉了，借同一類的基底
+  stat_base: mace2_07          # 原作基底那一階的數值（傷害 58–78、每秒 1.1 次、暴擊 5%）
+  drop_level: 33
+  sources: [map_boss, chance, gamble]        # poe2db 沒有掉落限制＝全域掉落
+  rarity: common        # poe2db 沒寫稀有度，照一般練功用的傳奇
+  flavour:
+    - "「信眾虔誠甚篤，即便死後依舊為神服事。」"
+  mods:
+    - text: "+100 智慧需求"
+      stats:
+        - { stat: local.requirement.int, type: FLAT, value: 100 }
+    - text: "附加 {min} 到 {max} 物理傷害"
+      min: [58, 65]
+      max: [102, 110]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
+    - text: "+{value} 最大魔力"
+      value: [80, 100]
+      stats:
+        - { stat: mana.max, type: FLAT, value: "{value}" }
+    - text: "+50 最大精魂"
+      stats:
+        - { stat: spirit.max, type: FLAT, value: 50 }
+    - text: "+{value} 全部召喚技能等級"        # 0.5.0：+2–3（0.1 是 +1）
+      value: [2, 3]
+      stats:
+        - { stat: skill.level, type: FLAT, value: "{value}", tags: [minion] }
+    - text: "召喚物傷害的增加、減少也套用在你身上"
+      stats:
+        - { stat: flag.minion_damage_affects_you, type: FLAT, value: 1 }
+
 bones_of_ullr:        # 2026-10-30 照 PoE2 0.1 的「Bones of Ullr」（poe2db.tw/tw/Bones_of_Ullr；原作有、我們以前沒有的）
-  name: 烏勒爾之骨
+  name: 烏爾德之骨
   base: boots_int_16        # 原作基底 Lattice Sandals（格子便鞋：16 級、23 智慧）
   stat_base: boots_int_03          # 原作基底那一階的數值
   drop_level: 16
@@ -5812,7 +5846,7 @@ bloodthorn_staff:        # 2026-10-26 照 PoE2 0.5 的「The Blood Thorn」（�
 #   2026-10-26：drop_chance 1（每次擊殺、每個有份的人各自 1%，不在權重池裡）；這次之前是那個來源權重池裡的一件（weight 100）。
 
 heroic_tragedy:          # Heroic Tragedy
-  name: 英雄悲劇
+  name: 英雄末路
   base: timeless_jewel
   drop_level: 60
   sources: [final]
@@ -5830,12 +5864,12 @@ heroic_tragedy:          # Heroic Tragedy
     - text: "範圍內的天賦受卡爾葛征服"
       stats:
         - { stat: timeless.legion, type: FLAT, value: 1 }
-    - text: "僅限：同時只能配一顆永恆珠寶"   # PoE2 的 Historic（Limited to: 1 Historic）；JewelSockets.socket 擋第二顆
+    - text: "僅限：同時只能配一顆恆時珠寶"   # PoE2 的 Historic（Limited to: 1 Historic）；JewelSockets.socket 擋第二顆
       stats:
         - { stat: timeless.historic, type: FLAT, value: 1 }
 
 undying_hate:            # Undying Hate
-  name: 不朽恨意
+  name: 永恆憎恨
   base: timeless_jewel
   drop_level: 60
   sources: [abyss_lich]
@@ -5853,7 +5887,7 @@ undying_hate:            # Undying Hate
     - text: "半徑範圍內的天賦受深淵族征服"
       stats:
         - { stat: timeless.legion, type: FLAT, value: 2 }
-    - text: "僅限：同時只能配一顆永恆珠寶"   # PoE2 的 Historic（Limited to: 1 Historic）；JewelSockets.socket 擋第二顆
+    - text: "僅限：同時只能配一顆恆時珠寶"   # PoE2 的 Historic（Limited to: 1 Historic）；JewelSockets.socket 擋第二顆
       stats:
         - { stat: timeless.historic, type: FLAT, value: 1 }
 
@@ -5864,7 +5898,7 @@ undying_hate:            # Undying Hate
 # =====================================================================================================
 
 reverie:                 # 2026-10-28 照 PoE2 0.5 的「Reverie」（poe2db：綺夢；原作有、我們以前沒有的）
-  name: 綺夢
+  name: 迷夢
   base: body_str_int_23        # 原作基底 Shaman Mantle（薩滿披肩）
   stat_base: body_str_int_04   # 原作基底那一階的數值（淬鐵聖鎧＝Shaman Mantle）
   drop_level: 28
@@ -5873,7 +5907,7 @@ reverie:                 # 2026-10-28 照 PoE2 0.5 的「Reverie」（poe2db：�
   flavour:
     - "「抽乾你自己，為遐想騰出空間。」"
   mods:
-    - text: "賦予技能：新生之儀（等級照物品等級）"   # 原作 Level 8 Rite of Restoration；法印改成自己身上的架勢，階數固定 2 階（skills.yml）
+    - text: "賦予技能：重生之儀（等級照物品等級）"   # 原作 Level 8 Rite of Restoration；法印改成自己身上的架勢，階數固定 2 階（skills.yml）
       stats:
         - { stat: grant_skill.rite_of_restoration, type: FLAT, value: 1 }
     - text: "增加 {value}% 護甲與能量護盾"
@@ -5897,7 +5931,7 @@ reverie:                 # 2026-10-28 照 PoE2 0.5 的「Reverie」（poe2db：�
         - { stat: flask.life_recovery, type: MORE, value: "-{value}" }
 
 atziris_contempt:        # 2026-10-28 照 PoE2 0.5 的「Atziri's Contempt」（poe2db：阿茲里的輕視；原作有、我們以前沒有的）
-  name: 阿茲里的輕視
+  name: 艾瑟琳的蔑笑
   base: spear_24        # 原作基底 Pronged Spear（尖叉長矛）
   stat_base: spear_22          # 原作基底那一階的數值（炎晶長矛＝Pronged Spear）
   drop_level: 72
@@ -5939,7 +5973,7 @@ atziris_contempt:        # 2026-10-28 照 PoE2 0.5 的「Atziri's Contempt」（
         - { stat: kill.explode, type: FLAT, value: 10 }
 
 the_vertex:              # 2026-10-28 照 PoE2 0.5 的「The Vertex」（poe2db：謎容；原作有、我們以前沒有的）
-  name: 謎容
+  name: 無相面
   base: helm_dex_int_17        # 原作基底 Tribal Mask（部落之面）
   stat_base: helm_dex_int_05   # 原作基底那一階的數值（鍛紋兜帽＝Tribal Mask）
   drop_level: 33
@@ -5970,7 +6004,7 @@ the_vertex:              # 2026-10-28 照 PoE2 0.5 的「The Vertex」（poe2db�
         - { stat: attr_req.none, type: FLAT, value: "{kind}" }
 
 sacred_flame:            # 2026-10-28 照 PoE2 0.5 的「Sacred Flame」（poe2db：神聖烈焰；原作有、我們以前沒有的）
-  name: 神聖烈焰
+  name: 聖火
   base: csceptre_06        # 原作基底 Shrine Sceptre（神殿權杖，賦予火焰淨化）
   drop_level: 55
   sources: [final]        # 2026-10-28 照 PoE2：poe2db 限定「灰燼仲裁者」掉落 → 終局 Boss（天穹熔爐）
@@ -5996,7 +6030,7 @@ sacred_flame:            # 2026-10-28 照 PoE2 0.5 的「Sacred Flame」（poe2d
         - { stat: flag.presence_lowest_resist, type: FLAT, value: 1 }
 
 the_taming:              # 2026-10-28 照 PoE2 0.5 的「The Taming」（poe2db：元素之章；原作有、我們以前沒有的）
-  name: 元素之章
+  name: 元素馴服
   base: jring_09        # 原作基底 Prismatic Ring（三相戒指：+7–10% 全部元素抗性）
   drop_level: 42
   sources: [map_boss, chance, gamble]
@@ -6089,13 +6123,13 @@ bereks_respite:          # 2026-10-28 照 PoE2 0.5 的「Berek's Respite」（po
         - { stat: wind.ground.fire, type: FLAT, value: 1 }
 
 shavronnes_satchel:      # 2026-10-28 照 PoE2 0.5 的「Shavronne's Satchel」（poe2db：薛朗的背包；原作有、我們以前沒有的）
-  name: 薛朗的背包
+  name: 雪蘭的行囊
   base: jbelt_fine        # 原作基底 Fine Belt（精工束帶：1–3 個護符欄位、藥劑每秒獲得 0.17 充能）
   drop_level: 62
   sources: [map_boss, chance, gamble]
   rarity: rare        # 2026-10-28 照 PoE2 稀有度（Shavronne's Satchel／Fine Belt：multispecial）
   flavour:
-    - "「讓神祕躍然於世。循環往復。」"
+    - "「讓神祕躍然於世。周而復始。」"
   mods:
     - text: "減少 {value}% 藥劑生命回復速率"
       value: [20, 30]
@@ -6114,7 +6148,7 @@ shavronnes_satchel:      # 2026-10-28 照 PoE2 0.5 的「Shavronne's Satchel」�
         - { stat: flag.flask_life_to_es, type: FLAT, value: 1 }
 
 geofris_sanctuary:       # 2026-10-28 照 PoE2 0.5 的「Geofri's Sanctuary」（poe2db：吉爾菲的聖殿；原作有、我們以前沒有的）
-  name: 吉爾菲的聖殿
+  name: 吉菲雅的聖所
   base: body_str_int_23        # 原作基底 Revered Vestments（尊敬法衣）
   stat_base: body_str_int_17   # 原作基底那一階的數值（暗鋼聖鎧＝Revered Vestments）
   drop_level: 65
@@ -7170,7 +7204,7 @@ doomfletch_bow:        # 2026-10-27 照 PoE2 0.5 的「Doomfletch」（原作有
         - { stat: damage.gain.lightning, type: FLAT, value: 100, tags: [attack] }
 
 blueflame_cuffs:        # 2026-10-27 照 PoE2 0.5 的「Blueflame Bracers」（原作有、我們以前沒有的）
-  name: 藍焰護腕
+  name: 碧焰護腕
   base: legs_str_int_14        # 原作基底 Goldcast Cuffs（鐵箍聖護腿）
   stat_base: legs_str_int_03          # 原作基底那一階的數值
   drop_level: 33
@@ -8155,7 +8189,7 @@ darkhold_buckler:        # 2026-10-27 照 PoE2 0.5 的「Dunkelhalt」（原作�
         - { stat: parry.parried_effect, type: INCREASED, value: 50 }
 
 bloodbarrier:        # 2026-10-29 照 PoE2 0.5 的「Bloodbarrier」（poe2db.tw/tw/Bloodbarrier；原作有、我們以前沒有的；瓦爾栽培的變體沒做）
-  name: 鮮血屏障
+  name: 血之屏障
   base: buckler_23        # 原作基底 Iron Buckler（淬鐵圓盾）
   stat_base: buckler_04          # 原作基底那一階的數值
   drop_level: 16
@@ -8751,7 +8785,7 @@ deathrattle_focus:        # 2026-10-27 照 PoE2 0.5 的「Deathrattle」（原�
         - { stat: es.recharge_on_kill, type: FLAT, value: 20 }
 
 blackflame:        # 2026-10-28 照 PoE2 0.5 的「Blackflame」（原作有、我們以前沒有的；名稱照站長給的「黯炎」）
-  name: 黯炎
+  name: 幽炎
   base: jring_06        # 原作基底 Amethyst Ring（紫蝕指環），需求等級 20
   drop_level: 20
   sources: [map_boss, chance, gamble]
@@ -8792,7 +8826,7 @@ blackflame:        # 2026-10-28 照 PoE2 0.5 的「Blackflame」（原作有、�
 # =====================================================================================================
 
 atziri_acuity:        # 2026-10-28 照 PoE2 0.5 的「Atziri's Acuity」（原作有、我們以前沒有的）
-  name: 阿茲里的捷思
+  name: 艾瑟琳的慧眼
   base: legs_str_16        # 原作基底 Moulded Mitts（鑄模長手套：鍛紋腿鎧）
   stat_base: legs_str_05          # 原作基底那一階的數值
   drop_level: 33
@@ -8800,7 +8834,7 @@ atziri_acuity:        # 2026-10-28 照 PoE2 0.5 的「Atziri's Acuity」（原�
   rarity: very_rare        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
   flavour:
     - "「心臟是最佳傳令官，讓我知道何時該出擊迎戰。」"
-    - "——瓦爾女王阿茲里"
+    - "——瓦爾女王艾瑟琳"
   # 原作的「賦予技能：等級 1–20 皇后傳令」沒做（我們沒有這個技能；不碰技能程式）
   mods:
     - text: "增加 {value}% 護甲"
@@ -8826,7 +8860,7 @@ atziri_acuity:        # 2026-10-28 照 PoE2 0.5 的「Atziri's Acuity」（原�
         - { stat: flask.life_recovery, type: MORE, value: -100 }
 
 candlemaker:        # 2026-10-28 照 PoE2 0.5 的「Candlemaker」（原作有、我們以前沒有的）
-  name: 製燭者
+  name: 蠟燭匠
   base: legs_int_16        # 原作基底 Sombre Gloves（暗淡手套：舊木絲褲）
   stat_base: legs_int_02          # 原作基底那一階的數值
   drop_level: 12
@@ -8860,7 +8894,7 @@ candlemaker:        # 2026-10-28 照 PoE2 0.5 的「Candlemaker」（原作有�
         - { stat: ignite.chance, type: MORE, value: 100 }
 
 demon_stitcher:        # 2026-10-28 照 PoE2 0.5 的「Demon Stitcher」（原作有、我們以前沒有的）
-  name: 縫魔
+  name: 魔縫師
   base: legs_int_16        # 原作基底 Intricate Gloves（精妙手套：鍛紋絲褲）
   stat_base: legs_int_05          # 原作基底那一階的數值
   drop_level: 33
@@ -8889,7 +8923,7 @@ demon_stitcher:        # 2026-10-28 照 PoE2 0.5 的「Demon Stitcher」（原�
         - { stat: sacrifice.es_on_spell, type: FLAT, value: "{value}" }
 
 dreadfist:        # 2026-10-28 照 PoE2 0.5 的「Dreadfist」（原作有、我們以前沒有的）
-  name: 驚懼之拳
+  name: 恐懼之拳
   base: legs_str_16        # 原作基底 Bolstered Mitts（加固長手套：淬鐵腿鎧）
   stat_base: legs_str_04          # 原作基底那一階的數值
   drop_level: 27
@@ -8920,7 +8954,7 @@ dreadfist:        # 2026-10-28 照 PoE2 0.5 的「Dreadfist」（原作有、我
         - { stat: thorns.max, type: FLAT, value: "{max}" }
 
 essentia_sanguis:        # 2026-10-28 照 PoE2 0.5 的「Essentia Sanguis」（原作有、我們以前沒有的）
-  name: 精華收割器
+  name: 精華汲取器
   base: legs_dex_int_13        # 原作基底 Furtive Wraps（隱秘裹手：鋼脊纏腿）
   stat_base: legs_dex_int_07          # 原作基底那一階的數值
   drop_level: 52
@@ -8952,7 +8986,7 @@ essentia_sanguis:        # 2026-10-28 照 PoE2 0.5 的「Essentia Sanguis」（�
         - { stat: flag.life_leech_to_es, type: FLAT, value: 1 }
 
 facebreaker:        # 2026-10-28 照 PoE2 0.5 的「Facebreaker」（原作有、我們以前沒有的；阿德爾的符文聯盟 0.5.0 新增）
-  name: 毀面者
+  name: 碎顏者
   base: legs_str_16        # 原作基底 Stocky Mitts（結實長手套：樸素腿鎧）
   stat_base: legs_str_01          # 原作基底那一階的數值
   drop_level: 1
@@ -8987,7 +9021,7 @@ facebreaker:        # 2026-10-28 照 PoE2 0.5 的「Facebreaker」（原作有�
         - { stat: flag.unarmed_mace, type: FLAT, value: 1 }
 
 gravebind:        # 2026-10-28 照 PoE2 0.5 的「Gravebind」（原作有、我們以前沒有的）
-  name: 幽墓束縛
+  name: 墓縛
   base: legs_str_int_14        # 原作基底 Rope Cuffs（繩索腕帶：樸素聖護腿）
   stat_base: legs_str_int_01          # 原作基底那一階的數值
   drop_level: 5
@@ -9024,7 +9058,7 @@ gravebind:        # 2026-10-28 照 PoE2 0.5 的「Gravebind」（原作有、我
         - { stat: flag.presence_kills, type: FLAT, value: 1 }
 
 horrors_flight:        # 2026-10-28 照 PoE2 0.5 的「Horror's Flight」（原作有、我們以前沒有的；阿德爾的符文聯盟 0.5.0 新增）
-  name: 驚懼飛掠
+  name: 驚怖掠影
   base: legs_dex_16        # 原作基底 Engraved Bracers（紋刻護腕：熔鋼皮褲）
   stat_base: legs_dex_12          # 原作基底那一階的數值
   drop_level: 65
@@ -9055,7 +9089,7 @@ horrors_flight:        # 2026-10-28 照 PoE2 0.5 的「Horror's Flight」（原�
         - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, chaos] }
 
 idle_hands:        # 2026-10-28 照 PoE2 0.5 的「Idle Hands」（原作有、我們以前沒有的）
-  name: 遊手好閒
+  name: 閒散之手
   base: legs_dex_16        # 原作基底 Sectioned Bracers（分段護腕：淬鐵皮褲）
   stat_base: legs_dex_04          # 原作基底那一階的數值
   drop_level: 28
@@ -9084,7 +9118,7 @@ idle_hands:        # 2026-10-28 照 PoE2 0.5 的「Idle Hands」（原作有、�
         - { stat: mana.full_threshold, type: FLAT, value: 90 }
 
 jarngreipr:        # 2026-10-28 照 PoE2 0.5 的「Jarngreipr」（原作有、我們以前沒有的）
-  name: 雅恩格利佩爾
+  name: 鐵握
   base: legs_str_dex_14        # 原作基底 Ringmail Gauntlets（環鎖護手：樸素鱗護腿）
   stat_base: legs_str_dex_01          # 原作基底那一階的數值
   drop_level: 6
@@ -9117,7 +9151,7 @@ jarngreipr:        # 2026-10-28 照 PoE2 0.5 的「Jarngreipr」（原作有、�
         - { stat: flag.str_melee_requirements, type: FLAT, value: 1 }
 
 killjoy:        # 2026-10-28 照 PoE2 0.5 的「Killjoy」（原作有、我們以前沒有的）
-  name: 掃興之人
+  name: 敗興者
   base: legs_dex_int_13        # 原作基底 Linen Wraps（麻布裹手：舊木纏腿）
   stat_base: legs_dex_int_02          # 原作基底那一階的數值
   drop_level: 16
@@ -9148,7 +9182,7 @@ killjoy:        # 2026-10-28 照 PoE2 0.5 的「Killjoy」（原作有、我們�
         - { stat: flag.on_kill_twice, type: FLAT, value: 1 }
 
 kitoko_current:        # 2026-10-28 照 PoE2 0.5 的「Kitoko's Current」（原作有、我們以前沒有的）
-  name: 奇多可之流
+  name: 琦朵之流
   base: legs_int_16        # 原作基底 Jewelled Gloves（寶石手套：淬鐵絲褲）
   stat_base: legs_int_04          # 原作基底那一階的數值
   drop_level: 26
@@ -9175,7 +9209,7 @@ kitoko_current:        # 2026-10-28 照 PoE2 0.5 的「Kitoko's Current」（原
         - { stat: electrocute.chance, type: FLAT, value: 100 }
 
 lochtonial_caress:        # 2026-10-28 照 PoE2 0.5 的「Lochtonial Caress」（原作有、我們以前沒有的）
-  name: 意識之緣
+  name: 心識之觸
   base: legs_str_16        # 原作基底 Tempered Mitts（淬鍊長手套：鐵箍腿鎧）
   stat_base: legs_str_03          # 原作基底那一階的數值
   drop_level: 16
@@ -9207,14 +9241,14 @@ lochtonial_caress:        # 2026-10-28 照 PoE2 0.5 的「Lochtonial Caress」�
         - { stat: flag.share_charges, type: FLAT, value: 1 }
 
 maligaro_virtuosity:        # 2026-10-28 照 PoE2 0.5 的「Maligaro's Virtuosity」（原作有、我們以前沒有的）
-  name: 馬雷葛蘿的血染手套
+  name: 瑪勒格的血手套
   base: legs_dex_16        # 原作基底 Fine Bracers（精良護腕：精鐵皮褲）
   stat_base: legs_dex_06          # 原作基底那一階的數值
   drop_level: 45
   sources: [map_boss, chance, gamble]
   rarity: rare        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
   flavour:
-    - "馬雷葛蘿奇術出眾卓越，無比迅捷，帶來無盡浩劫。"
+    - "瑪勒格奇術出眾卓越，無比迅捷，帶來無盡浩劫。"
   mods:
     - text: "增加 {value}% 閃避"
       value: [60, 80]
@@ -9239,7 +9273,7 @@ maligaro_virtuosity:        # 2026-10-28 照 PoE2 0.5 的「Maligaro's Virtuosit
         - { stat: crit.bonus_override, type: FLAT, value: 250 }
 
 painters_servant:        # 2026-10-28 照 PoE2 0.5 的「Painter's Servant」（原作有、我們以前沒有的）
-  name: 畫家的侍從
+  name: 畫師之僕
   base: legs_int_16        # 原作基底 Torn Gloves（撕裂手套：樸素絲褲）
   stat_base: legs_int_01          # 原作基底那一階的數值
   drop_level: 1
@@ -9281,7 +9315,7 @@ painters_servant:        # 2026-10-28 照 PoE2 0.5 的「Painter's Servant」（
         - { stat: damage.convert_from.cold.lightning, type: FLAT, value: 33 }
 
 plaguefinger:        # 2026-10-28 照 PoE2 0.5 的「Plaguefinger」（原作有、我們以前沒有的）
-  name: 瘟疫之指
+  name: 疫指
   base: legs_dex_int_13        # 原作基底 Gauze Wraps（紗布裹手：樸素纏腿）
   stat_base: legs_dex_int_01          # 原作基底那一階的數值
   drop_level: 4
@@ -9311,7 +9345,7 @@ plaguefinger:        # 2026-10-28 照 PoE2 0.5 的「Plaguefinger」（原作有
         - { stat: flag.all_damage_poisons, type: FLAT, value: 1 }
 
 shackles_wretched:        # 2026-10-28 照 PoE2 0.5 的「Shackles of the Wretched」（原作有、我們以前沒有的）
-  name: 悲運之縛
+  name: 苦難枷鎖
   base: legs_str_int_14        # 原作基底 Aged Cuffs（陳舊腕帶：舊木聖護腿）
   stat_base: legs_str_int_02          # 原作基底那一階的數值
   drop_level: 16
@@ -9342,7 +9376,7 @@ shackles_wretched:        # 2026-10-28 照 PoE2 0.5 的「Shackles of the Wretch
         - { stat: flag.curse_reflect_self, type: FLAT, value: 1 }
 
 sine_aequo:        # 2026-10-28 照 PoE2 0.5 的「Sine Aequo」（原作有、我們以前沒有的）
-  name: 無與倫比
+  name: 舉世無雙
   base: legs_str_dex_14        # 原作基底 Grand Manchettes（宏偉手鐲，力敏智三防）；我們的腿甲沒有三防的，用力敏那一類
   stat_base: legs_str_dex_09          # 同樣 65 級那一階的數值
   drop_level: 85        # 巔峰 Boss 的專屬一律物品等級 85 起（需求等級照基底，65）
@@ -9373,14 +9407,14 @@ sine_aequo:        # 2026-10-28 照 PoE2 0.5 的「Sine Aequo」（原作有、�
         - { stat: damage, type: INCREASED, value: "{value}", tags: [vs_immobilised] }
 
 prisoners_manacles:        # 2026-10-28 照 PoE2 0.5 的「The Prisoner's Manacles」（原作有、我們以前沒有的）
-  name: 囚犯的鐐銬
+  name: 囚徒枷鎖
   base: legs_str_int_14        # 原作基底 Kalguuran Cuffs（卡爾葛腕帶：淬鐵聖護腿）
   stat_base: legs_str_int_04          # 原作基底那一階的數值
   drop_level: 45
   sources: [map_boss, chance, gamble]
   rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
   flavour:
-    - "馬雷葛蘿認為他唯一的失算，"
+    - "瑪勒格認為他唯一的失算，"
     - "是他最偉大的造物動用三個軍團才得以制服。"
   mods:
     - text: "增加 {value}% 護甲與能量護盾"
@@ -9413,7 +9447,7 @@ prisoners_manacles:        # 2026-10-28 照 PoE2 0.5 的「The Prisoner's Manacl
         - { stat: electrocute.buildup, type: MORE, value: -100 }
 
 thunderfist:        # 2026-10-28 照 PoE2 0.5 的「Thunderfist」（原作有、我們以前沒有的；深淵的崛起新增）
-  name: 轟天雷
+  name: 雷霆之拳
   base: legs_dex_int_13        # 原作基底 Utility Wraps（實用裹手：戰痕纏腿）
   stat_base: legs_dex_int_09          # 原作基底那一階的數值
   drop_level: 65
@@ -9447,7 +9481,7 @@ thunderfist:        # 2026-10-28 照 PoE2 0.5 的「Thunderfist」（原作有�
         - { stat: crit.base_extra@unarmed, type: FLAT, value: "{value/10}", tags: [attack, melee] }
 
 masters_reach:        # 2026-10-28 照 PoE2 0.5 的「The Master's Reach」（原作有、我們以前沒有的；0.5.4 新增）
-  name: 主宰之觸
+  name: 支配之觸
   base: legs_str_int_14        # 原作基底 Tethering Bands（解脫纏帶：戰痕聖護腿）
   stat_base: legs_str_int_09          # 原作基底那一階的數值
   drop_level: 65
@@ -9455,7 +9489,7 @@ masters_reach:        # 2026-10-28 照 PoE2 0.5 的「The Master's Reach」（�
   weight: 100
   drop_chance: 1          # 原作是那場巔峰戰的機率掉落（跟同一隻 Boss 的不朽恨意一樣固定 1%，不佔專屬傳奇的權重池）
   flavour:
-    - "主人的束縛緊緊纏繞著靈魂。若他遭到拒絕，他將會毫不留情地將其釋放。"
+    - "主人的束縛緊緊纏繞著靈魂。若他遭到拒絕，他將會絕不手軟地將其釋放。"
   # 原作的「賦予技能：等級 15 解脫」「當你擊中一名擁有暴露破綻的敵人時吞噬一個靈魂」沒做（我們沒有這個技能與靈魂）；
   # 「使稀有和傳奇敵人暴露弱點」＋「承受來自擁有暴露破綻敵人的 (80—100)% 傷害會補償為生命」合成一行：受到稀有、傳奇敵人的傷害補償為生命
   mods:
@@ -9509,14 +9543,14 @@ crown_of_eyes:        # 2026-10-29 照 PoE2 0.5 的「Crown of Eyes」（原作�
         - { stat: flag.spell_damage_to_attacks, type: FLAT, value: 1 }
 
 lavianga_spirits:        # 2026-10-30 照 PoE2 0.3 的「Lavianga's Spirits」（poe2db.tw/tw/Laviangas_Spirits；原作有、我們以前沒有的）
-  name: 拉維安加之泉
+  name: 拉薇安之泉
   base: starlit_mana_flask        # 原作基底 Gargantuan Mana Flask（2 秒內恢復 185 魔力，跟星輝魔力藥劑一樣）
   drop_level: 49
   sources: [map_boss]   # 2026-10-30 照站長：藥劑不進商人賭博；這次之前 [map_boss, gamble]
   rarity: uncommon
   flavour:
     - "「我該如何面對我在瓦爾克拉斯所目睹的一切？」"
-    - "— 拉維安加，岡姆的前任顧問"
+    - "— 拉薇安，岡姆的前任顧問"
   mods:
     - text: "減少 {value}% 恢復量"
       value: [70, 80]

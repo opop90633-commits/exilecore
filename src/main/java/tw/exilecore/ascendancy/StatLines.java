@@ -189,7 +189,7 @@ public final class StatLines {
         put(StatKeys.LEECH_MANA_EFFECT, "魔力偷取的量", INCREASED, false);
         put(AscendancyMechanics.POINT_BLANK, "零點射擊", FLAT, false);
         put(AscendancyMechanics.FAR_SHOT, "遠射", FLAT, false);
-        put(AscendancyMechanics.DRUIDIC_CHAMPION, "德魯伊之冠", FLAT, false);
+        put(AscendancyMechanics.DRUIDIC_CHAMPION, "德魯伊之魁", FLAT, false);
         // 2026-10-26 照 PoE2：嵌晶戰團的減少屬性需求（裝備與技能寶石）、應變能力（tw.exilecore.skill.GemAttributes）
         put(tw.exilecore.stats.TreeEffectKeys.ITEM_ATTR_REQUIREMENT, "裝備與技能寶石的屬性需求", INCREASED, false);
         put(tw.exilecore.skill.GemAttributes.HIGHEST, "寶石的屬性需求可由你最高的屬性滿足", FLAT, false);

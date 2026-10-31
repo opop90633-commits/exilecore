@@ -31,7 +31,7 @@ class ContagionPoe2Test {
     @Test
     void nameAndSingleTarget() {
         final SkillDefinition contagion = config.skill("contagion");
-        assertEquals("瘟疫", contagion.name());
+        assertEquals("疫染", contagion.name());
         assertEquals(1, contagion.params().targets(), "使一名敵人");
         assertEquals(tw.exilecore.core.Units.metres(1.7), contagion.params().radius().at(1), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
         assertTrue(contagion.modifiers().stream().anyMatch(m -> m.stat().equals(SkillMechanicKeys.DEBUFF_SPREAD_RADIUS) && m.value() == 1.7));

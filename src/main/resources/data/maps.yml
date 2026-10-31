@@ -1217,7 +1217,7 @@ finals:
           speed: 0.1
           shield: { count: 3, type: SILVERFISH, name: 鎖匣, life: 5, duration: 25, heal: 35 }
         - at: 0.5
-          name: 貪慾
+          name: 貪婪之心
           message: "「再給我一點。再一點。」"
           speed: 0.1
           stats:

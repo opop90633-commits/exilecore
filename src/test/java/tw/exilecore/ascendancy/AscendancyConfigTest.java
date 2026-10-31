@@ -127,7 +127,7 @@ class AscendancyConfigTest {
                 final AscendancyConfig.Node node = cell.node();
                 assertTrue(cell.depth() < AscendancyConfig.MAX_DEPTH, node.id());
                 assertEquals(node.option() || !node.unlock().isEmpty() || "sanguimancy".equals(node.id()) ? 0 : 1, node.cost(),
-                        node.id() + "：一個 1 點（選項、2026-10-27 聖潔一統這種 unlock 的不花點數；占血術照站長自帶免費）");
+                        node.id() + "：一個 1 點（選項、2026-10-27 神聖合一這種 unlock 的不花點數；血卜術照站長自帶免費）");
                 cost += node.cost();
                 assertTrue(node.choice() || !node.lines().isEmpty(), node.id() + "：說明行照原作寫");
                 for (final String line : node.lines()) {
@@ -147,7 +147,7 @@ class AscendancyConfigTest {
         }
         // 分岔、環、選一個
         final AscendancyConfig.Ascendancy ritualist = config.ascendancy("ritualist");
-        assertEquals(3, ritualist.node("unfurled_finger").requires().size(), "展露之指接在三個減少的天賦上");
+        assertEquals(3, ritualist.node("unfurled_finger").requires().size(), "舒展之指接在三個減少的天賦上");
         assertEquals(2, config.ascendancy("invoker").node("shall_rage").requires().size(), "怒號接在兩個元素傷害上（環）");
         final AscendancyConfig.Ascendancy stararrow = config.ascendancy("stararrow");
         assertTrue(stararrow.node("projectile_proximity").choice());
@@ -157,10 +157,10 @@ class AscendancyConfigTest {
         assertEquals(3, config.ascendancy("voidwalker").options("lucid_dreaming").size());
         assertEquals(5, config.ascendancy("windwalker").options("brew_concoction").size());
         final AscendancyConfig.Ascendancy smith = config.ascendancy("forgesmith");
-        assertEquals(12, smith.children("smiths_masterwork").size(), "鐵匠傑作後面接 12 個胸甲天賦");
+        assertEquals(12, smith.children("smiths_masterwork").size(), "鍛師名作後面接 12 個胸甲天賦");
         assertTrue(smith.rows() > AscendancyLayout.VISIBLE_ROWS, "比 4 排高：選單要捲動");
         // 照原作的數值
-        assertEquals(List.of(new Modifier("life.max", ModType.MORE, 0.15, java.util.Set.of(), "昇華「神秘血脈」")),
+        assertEquals(List.of(new Modifier("life.max", ModType.MORE, 0.15, java.util.Set.of(), "昇華「幽祕血統」")),
                 config.ascendancy("ironwarden").node("mysterious_lineage").stats());
         assertEquals(List.of("更多 15% 最大生命"), config.ascendancy("ironwarden").node("mysterious_lineage").lines());
     }

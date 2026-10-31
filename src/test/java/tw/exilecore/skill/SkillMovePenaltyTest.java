@@ -41,7 +41,7 @@ class SkillMovePenaltyTest {
         sheet.add(Modifier.increased(TreeEffectKeys.ACTION_PENALTY, -0.03, "樹"));
         assertEquals(0.70 * 0.92, SkillMovePenalty.penalty(sheet, 0.70, Set.of()), 1e-9);
         // 衝刺突擊：更少 30%；鑲嵌的寶石（綠）：更少 40%
-        sheet.add(Modifier.more(TreeEffectKeys.ACTION_PENALTY, -0.30, "衝刺突擊"));
+        sheet.add(Modifier.more(TreeEffectKeys.ACTION_PENALTY, -0.30, "疾衝突襲"));
         sheet.add(Modifier.more(TreeEffectKeys.ACTION_PENALTY, -0.40, "鑲嵌的寶石"));
         assertEquals(0.70 * 0.92 * 0.7 * 0.6, SkillMovePenalty.penalty(sheet, 0.70, Set.of()), 1e-9);
         // 舉盾、引導用的也一起算（同一個屬性）

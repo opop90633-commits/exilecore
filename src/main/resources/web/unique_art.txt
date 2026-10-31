@@ -10858,3 +10858,35 @@ item bones_of_ullr
   .ossssso.ossssso
   ..ooooo...ooooo.
   ................
+
+item chober_chaber
+  a=2f2f33
+  b=49494f
+  c=9a9aa6
+  d=2a1f4a
+  e=1a080c
+  f=6a6a74
+  g=3a131b
+  h=8fe3ff
+  i=290e13
+  j=3c3c44
+  k=241a3c
+  l=150f26
+  Z=7a5cff
+  Y=d9ccff
+  ................
+  .........abba...
+  ........acccca..
+  .........accccda
+  .........Yfffffd
+  ........eZZffffh
+  .......egi.afffd
+  ......egi..affjd
+  .....egi....ajjd
+  ....egkk....ajda
+  ...egi......al..
+  ..egkk......l...
+  .egi........d...
+  egkk........l...
+  ei..............
+  ................

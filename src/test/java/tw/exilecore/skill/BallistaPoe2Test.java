@@ -143,7 +143,7 @@ class BallistaPoe2Test {
         final SkillBuild siege = withQuality("siege_ballista", 20, false);
         assertEquals(Math.sqrt(1.2), siege.areaScale() / plain.areaScale(), 1e-9, "20% 品質：更多 20% 範圍");
         assertEquals(1, siege.totems());
-        assertEquals(2, withQuality("siege_ballista", 20, true).totems(), "進階奇術：+1 圖騰上限");
-        assertEquals(2, withQuality("artillery_ballista", 20, true).totems(), "進階奇術：+1 圖騰上限");
+        assertEquals(2, withQuality("siege_ballista", 20, true).totems(), "高階奇術：+1 圖騰上限");
+        assertEquals(2, withQuality("artillery_ballista", 20, true).totems(), "高階奇術：+1 圖騰上限");
     }
 }

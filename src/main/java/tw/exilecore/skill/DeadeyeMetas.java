@@ -152,8 +152,8 @@ public final class DeadeyeMetas {
      * 幻影用的那一下：傷害更少 50%、不能消耗戰星（銳星、怒星、磐星）。
      */
     public static SkillBuild mirageBuild(final SkillBuild attack) {
-        return attack.withProfile(attack.profile().scaled(1 - MIRAGE_LESS / 100.0, "幻影銳眼")
-                .withLocal(java.util.List.of(Modifier.flat(tw.exilecore.charge.ChargeService.SUP_INHIBIT, 1, "幻影銳眼"))));
+        return attack.withProfile(attack.profile().scaled(1 - MIRAGE_LESS / 100.0, "幻影神射")
+                .withLocal(java.util.List.of(Modifier.flat(tw.exilecore.charge.ChargeService.SUP_INHIBIT, 1, "幻影神射"))));
     }
 
     /** 冷卻倍率（冷卻時間 ÷ 冷卻回復速度；跟 SkillBuild 一樣夾在一成）。 */

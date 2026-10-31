@@ -129,7 +129,7 @@ class AscensionTest {
         assertEquals(3, modifiers.size());
         assertEquals(new Modifier(StatKeys.ARMOUR, ModType.INCREASED, 0.2, java.util.Set.of(), "昇華「護甲」"), modifiers.getFirst());
         // 退點：退掉之後剩下的要都還接得到起點
-        assertEquals("先退後面的「頑石鋼膚」", ascension.refundProblem(armour));
+        assertEquals("先退後面的「岩膚鐵骨」", ascension.refundProblem(armour));
         assertNull(ascension.refundProblem(stoneSkin));
         assertNull(ascension.refundProblem(strength));
         assertEquals("這個昇華天賦沒有配", ascension.refundProblem(capacity));
@@ -169,10 +169,10 @@ class AscensionTest {
         final AscendancyConfig.Ascendancy ritualist = config.ascendancy("ritualist");
         Ascension huntress = new Ascension(config, ritual, "huntress", 50);
         assertEquals(2, huntress.allocated().size());
-        assertEquals("先退後面的「展露之指」", huntress.refundProblem(ritualist.node("reduced_mana")));
+        assertEquals("先退後面的「舒展之指」", huntress.refundProblem(ritualist.node("reduced_mana")));
         ritual.put(Ascension.NODES, "reduced_mana,unfurled_finger,reduced_spirit");
         huntress = new Ascension(config, ritual, "huntress", 50);
-        assertNull(huntress.refundProblem(ritualist.node("reduced_mana")), "展露之指還接在減少精魂上");
+        assertNull(huntress.refundProblem(ritualist.node("reduced_mana")), "舒展之指還接在減少精魂上");
         // 2026-10-27：退掉之後記錄變成「展露之指,減少精魂」（後面的先出現），兩個都要還在
         ritual.put(Ascension.NODES, huntress.withoutNode(ritualist.node("reduced_mana")));
         huntress = new Ascension(config, ritual, "huntress", 50);

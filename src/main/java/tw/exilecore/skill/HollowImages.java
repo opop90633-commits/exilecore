@@ -129,7 +129,7 @@ final class HollowImages {
 
     private void stop(final Player player, final SkillRuntime runtime, final PlayerState state, final String why, final long now) {
         runtime.charging = null;
-        state.notice("<gray>空無型態：" + ItemRenderer.escape(why) + "，引導結束", now + 30);
+        state.notice("<gray>虛空形態：" + ItemRenderer.escape(why) + "，引導結束", now + 30);
         plugin.players().display(player, state);
     }
 

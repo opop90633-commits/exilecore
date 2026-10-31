@@ -30,8 +30,8 @@ import java.util.UUID;
  * <ul>
  *   <li>蓄力放開（{@link ChargeSpec}）：穿雲箭、蓄勁一擊的完美時機，炎核爆的疊層</li>
  *   <li>whirl：旋矛擊每揮一次讓旋風升一階（最多 3 階），離開旋風範圍就崩散，階數越高越痛</li>
- *   <li>lance：霆落矛插在落點 6 秒，每 0.8 秒朝附近的敵人放一道連鎖閃電，時間到炸開並留下帶電地；同時最多 3 支（第 4 支讓最舊的提早炸開）。
- *       2026-10-15 照 PoE2 的風暴之槍：有怒星就消耗一顆，這支只插 1.5 秒但每 0.2 秒放電、物理全部轉閃電；
+ *   <li>lance：霆落矛（2026-10-31 照 PoE2：貫穿的投射物，飛到準心插著）插 6 秒，每 0.8 秒朝附近的敵人放一道連鎖閃電，時間到消失；同時最多 3 支（第 4 支讓最舊的消失）。
+ *       2026-10-15 照 PoE2 的風暴之槍：有怒星就消耗一顆，這支只插 1.5 秒但每 0.2 秒放電、物理全部轉閃電，時間到自動引爆並留下感電地面；
  *       你的其他技能打在矛附近（2.5 格）會把它提早引爆</li>
  *   <li>bolt_spear：擲雷槍（PoE2 的閃電長矛）有怒星就消耗一顆，矛分裂成 3 支</li>
  *   <li>ember：星火連珠每放一次在頭上叫出一顆火星（最多 6～16 顆），最後一次施放 1.3 秒後一顆接一顆射向敵人，每一顆更多 5% 傷害</li>
@@ -64,6 +64,8 @@ final class Signatures {
     static final long LANCE_LIFE = 120;
     static final long LANCE_ZAP = 16;
     static final int LANCE_MAX = 3;
+    /** 2026-10-31：消耗怒星擲出的那一支（技能描述的區域修飾器，值是怒星算幾顆）。 */
+    static final String LANCE_CHARGED_MARK = "lance.charged_throw";
     static final double LANCE_ZAP_RANGE = tw.exilecore.core.Units.metres(2);   // 2026-10-26 照 PoE2：放電打 2 格內的敵人（這次之前 6）；2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double LANCE_ZAP_SHARE = 0.25;
     static final double LANCE_BURST_SHARE = 0.8;
@@ -407,7 +409,9 @@ final class Signatures {
             // 物理全部轉閃電（SkillStages 的 infused）；這次之前照一般那支的表、多轉 30% 閃電。
             // 插在地上的那支（放電、引爆）照一般的表換算，所以記下沒換過的那個
             unstagedLance.put(player.getUniqueId(), build);
-            return build.withProfile(SkillStages.profile(build, build.profile(), "infused"));
+            // 2026-10-31：矛改成投射物、落地才插，標記這一支是消耗怒星的（落地時才拿 chargedLance）
+            return build.withProfile(SkillStages.profile(build, build.profile(), "infused")
+                    .withLocal(List.of(tw.exilecore.stats.Modifier.flat(LANCE_CHARGED_MARK, benefit, definition.name()))));
         }
         final int copies = BOLT_SPEAR_COPIES * benefit; // 倍星：分裂的支數加倍
         state.notice("<#ffe14a>" + tw.exilecore.item.ItemRenderer.escape(definition.name()) + " 消耗怒星：分裂成 " + copies + " 支", now + 30);
@@ -444,12 +448,23 @@ final class Signatures {
         final String signature = service.config().signature(definition.id());
         if ("whirl".equals(signature)) {
             whirl(player, build, now);
-        } else if ("lance".equals(signature) && at != null) {
-            lodge(player, build, at, now);
-        } else if ("lance".equals(signature)) {
-            chargedLance.remove(player.getUniqueId()); // 沒插下去：這次的怒星不留到下一支
-            unstagedLance.remove(player.getUniqueId());
         }
+        // 2026-10-31 照 PoE2：霆落矛是投射物，落地（lanceLanded）才插；這次之前放完馬上插在準心處
+    }
+
+    /**
+     * 2026-10-31 照 PoE2 Storm Lance：擲出的矛停下來（飛到準心或撞牆）：插在那裡（不另外炸）。
+     * 消耗怒星的那一支（帶 {@link #LANCE_CHARGED_MARK}）拿這次的怒星；幻影擲的、沒消耗的照一般的插。
+     */
+    void lanceLanded(final Player player, final SkillBuild build, final tw.exilecore.stats.SkillProfile profile, final Location at, final long now) {
+        if (!"lance".equals(service.config().signature(build.definition().id()))) {
+            return;
+        }
+        final Location ground = at.clone();
+        // 2026-10-31 照 PoE2（RePoE StormLancePlayer：擲出的矛只有投射物的那一下，沒有落地範圍傷害）：只插地；
+        // 同一天稍早落地還炸 2 公尺（沿用以前 impact 的落地傷害）
+        final boolean own = profile != null && SkillZones.localFlat(profile, LANCE_CHARGED_MARK) > 0;
+        lodge(player, build, ground, now, own);
     }
 
     /** 玩家現在站在自己的旋風裡的話是幾階（沒有、不在裡面是 0）。 */
@@ -566,7 +581,7 @@ final class Signatures {
         // 2026-10-28 照 PoE2：「上限 3 支插著的矛」吃 +x 上限（過剩）
         while (mine.size() >= LANCE_MAX + OriginalSkills.qualityInt(build.qualityFlat(tw.exilecore.stats.GemQualityKeys.OVERCHARGED_LIMIT))
                 + SkillLimits.bonus(plugin.players().sheet(player), build)) {
-            detonate(player, mine.pollFirst()); // 第 4 支：最舊的提早炸開
+            mine.pollFirst(); // 2026-10-31 照 PoE2 的上限（Limit：the oldest effect will disappear）：第 4 支讓最舊的消失；這次之前最舊的提早炸開
         }
         final Integer chargedBenefit = own ? chargedLance.remove(player.getUniqueId()) : null;
         final boolean charged = chargedBenefit != null;
@@ -708,7 +723,10 @@ final class Signatures {
             }
             if (now >= lance.until()) {
                 it.remove();
-                detonate(player, lance);
+                // 2026-10-31 照 PoE2 Storm Lance：只有消耗怒星的那一支時間到自動引爆；一般的時間到就消失。這次之前每一支時間到都炸開
+                if (lance.zapEvery() < LANCE_ZAP) {
+                    detonate(player, lance);
+                }
                 continue;
             }
             if (now % 4 == 0) {

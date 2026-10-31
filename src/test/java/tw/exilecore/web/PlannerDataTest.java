@@ -109,7 +109,7 @@ class PlannerDataTest {
         final PlannerData.AscendancyInfo info = new PlannerData.AscendancyInfo("gemling", "mercenary", "嵌晶", "#7fb3ff", "寶石",
                 List.of(List.of(new PlannerData.AscendancyNode("技能寶石品質", 1, List.of("所有技能品質 +2%"), null, "quality", List.of(), 0, 0,
                                         null, false, false),
-                                new PlannerData.AscendancyNode("植入寶石", 1, List.of(), null, "implanted", List.of("quality"), 1, 0, null, true, false),
+                                new PlannerData.AscendancyNode("嵌體寶石", 1, List.of(), null, "implanted", List.of("quality"), 1, 0, null, true, false),
                                 new PlannerData.AscendancyNode("強化鑲嵌物", 0, List.of("所有需求力量的技能等級 +2"), null, "bolster",
                                         List.of("implanted"), 2, 0, "implanted", false, false)),
                         List.of(new PlannerData.AscendancyNode("機動鑲嵌物", 0, List.of("所有需求敏捷的技能等級 +2"), null, "motoric",

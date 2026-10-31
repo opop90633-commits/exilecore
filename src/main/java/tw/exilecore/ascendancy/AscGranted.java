@@ -232,7 +232,7 @@ final class AscGranted implements Listener {
             }
             // 命運同調：在下一個殘影出現前自己施放同一個法術 → 強化（更多 30%）
             if (own.alignSkill != null && own.alignSkill.equals(id) && now <= own.alignUntil) {
-                local.add(Modifier.more(StatKeys.DAMAGE, 0.30, "命運同調"));
+                local.add(Modifier.more(StatKeys.DAMAGE, 0.30, "命途同調"));
                 own.alignSkill = null;
                 tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.ENCHANT, player.getLocation().add(0, 1.4, 0), 30, 0.5, 0.6, 0.5, 0.5);
             }
@@ -263,7 +263,7 @@ final class AscGranted implements Listener {
                     final double seconds = Math.max(4, level(player, id, "asc.jade_guard_seconds"));
                     final double perJade = 0.06 + level(player, id, "asc.jade_guard_percent") / 100.0; // 2026-10-30 照 PoE2：品質每層 +(0—1)% 最大生命
                     state.addGuard(state.maxLife() * perJade * s.jade, now + Math.round(seconds * 20));
-                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#5fd38a>包覆於翠玉中：用掉 " + s.jade + " 層玉石，獲得 "
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#5fd38a>封入翠玉：用掉 " + s.jade + " 層玉石，獲得 "
                             + Math.round(state.maxLife() * perJade * s.jade) + " 守護"));
                     s.jade = 0;
                     plugin.players().markDirty(player);
@@ -325,7 +325,7 @@ final class AscGranted implements Listener {
                 own.deceptions = now - own.deceptionLast <= 120 ? Math.min(6, own.deceptions + 1) : 0;
                 own.deceptionLast = now;
                 if (own.deceptions > 0) {
-                    local.add(Modifier.more(StatKeys.DAMAGE, 0.5 * own.deceptions, "克拉里的欺瞞"));
+                    local.add(Modifier.more(StatKeys.DAMAGE, 0.5 * own.deceptions, "珂芮絲的詭計"));
                 }
                 if (own.clone != null && own.cloneUntil > now && plugin.skills() != null) {
                     // 2026-10-29 照 PoE2：分身爆炸跟欺瞞同一級、也吃連續使用的更多傷害（這次之前用角色能用的最高級、沒吃到）
@@ -430,7 +430,7 @@ final class AscGranted implements Listener {
             for (final Player ally : player.getWorld().getPlayers()) {
                 if (ally.equals(player) || ally.getLocation().distanceSquared(player.getLocation()) <= 100 && plugin.party() != null
                         && plugin.party().groupMembers(player.getUniqueId()).contains(ally.getUniqueId())) {
-                    plugin.skills().buff(ally, "navira_calming", "納維拉的寧靜", 80, List.of(Modifier.increased(StatKeys.MANA_REGEN, regen / 100.0, "納維拉的寧靜")));
+                    plugin.skills().buff(ally, "navira_calming", "娜瑟菈的寧靜", 80, List.of(Modifier.increased(StatKeys.MANA_REGEN, regen / 100.0, "娜瑟菈的寧靜")));
                 }
             }
         }
@@ -505,7 +505,7 @@ final class AscGranted implements Listener {
         if (best != null) {
             rares.remove(best);
             for (final String modId : best.mods()) {
-                grantMod(player, modId, "儀式獻祭", "ritual." + modId, ticks);
+                grantMod(player, modId, "儀典獻祭", "ritual." + modId, ticks);
             }
             return;
         }
@@ -519,7 +519,7 @@ final class AscGranted implements Listener {
         }
         final tw.exilecore.monster.MonsterConfig.MonsterMod mod = all.get(plugin.random().nextInt(all.size()));
         own.sacrificeMod = mod.id();
-        grantMod(player, mod.id(), "儀式獻祭", "ritual.self", ticks);
+        grantMod(player, mod.id(), "儀典獻祭", "ritual.self", ticks);
         plugin.players().display(player, state);
     }
 
@@ -576,7 +576,7 @@ final class AscGranted implements Listener {
         }
         if (id.startsWith("ruzhan_fury") && plugin.ailments() != null
                 && (plugin.ailments().isIncapacitated(defender) || plugin.ailments().pinned(defender))) {
-            out.add(Modifier.more(StatKeys.DAMAGE, 0.60, "魯兹安的怒火"));
+            out.add(Modifier.more(StatKeys.DAMAGE, 0.60, "羅贊的怒焰"));
         }
         if (id.startsWith("navira_fracturing") && plugin.ailments() != null && !plugin.ailments().has(defender, AilmentType.CHILL)) {
             out.add(Modifier.more(StatKeys.DAMAGE, -1.0, "只碎裂冰緩中的敵人"));
@@ -764,7 +764,7 @@ final class AscGranted implements Listener {
             if (extra > 0) {
                 final double area = Math.pow((3 + extra) / 3, 2) - 1;
                 plugin.skills().triggerSkill(player, "asc_void_explosion", at, plugin.skills().grantedLevel(player),
-                        List.of(Modifier.increased(StatKeys.SKILL_AREA, area, "虛空幻影品質")));
+                        List.of(Modifier.increased(StatKeys.SKILL_AREA, area, "虛無幻影品質")));
             } else {
                 plugin.skills().triggerSkill(player, "asc_void_explosion", at);
             }
@@ -1087,7 +1087,7 @@ final class AscGranted implements Listener {
                 final String spell = spells.get(plugin.random().nextInt(spells.size()));
                 final List<LivingEntity> near = effects.enemiesNear(player, player.getLocation(), 15);
                 if (!near.isEmpty()) {
-                    plugin.skills().castForFree(player, spell, near.get(plugin.random().nextInt(near.size())), 1.0, "命運同調");
+                    plugin.skills().castForFree(player, spell, near.get(plugin.random().nextInt(near.size())), 1.0, "命途同調");
                     o.alignSkill = spell;
                     o.alignUntil = o.alignNext;
                     player.getWorld().spawnParticle(Particle.ENCHANT, player.getLocation().add(0, 1.5, 0), 25, 0.6, 0.6, 0.6, 0.6);
@@ -1180,8 +1180,8 @@ final class AscGranted implements Listener {
         // 納維拉的綠洲：站在裡面的你與隊友藥劑充能、受到的傷害回復
         for (final Oasis oasis : oases) {
             if (oasis.at().getWorld() == player.getWorld() && oasis.at().distanceSquared(player.getLocation()) <= oasis.radius() * oasis.radius()) {
-                plugin.skills().buff(player, "navira_oasis.in", "納維拉的綠洲", 15, List.of(Modifier.flat(StatKeys.LIFE_RECOUP, 30, "納維拉的綠洲"),
-                        Modifier.flat(StatKeys.MANA_RECOUP, 20, "納維拉的綠洲")));
+                plugin.skills().buff(player, "navira_oasis.in", "娜瑟菈的綠洲", 15, List.of(Modifier.flat(StatKeys.LIFE_RECOUP, 30, "娜瑟菈的綠洲"),
+                        Modifier.flat(StatKeys.MANA_RECOUP, 20, "娜瑟菈的綠洲")));
                 if (AscendancyEffects.every(now, 40) && plugin.flasks() != null) {
                     plugin.flasks().addCharges(player, 1, tw.exilecore.flask.FlaskKind.LIFE);
                     plugin.flasks().addCharges(player, 1, tw.exilecore.flask.FlaskKind.MANA);
@@ -1218,7 +1218,7 @@ final class AscGranted implements Listener {
         }
         // 打中時：你受到一點物理傷害、獲得一層蟲群前進
         own.swarm = Math.min(50, own.swarm + 1);
-        effects.selfHit(player, state, new DamagePacket().set(DamageType.PHYSICAL, level(player, "queens_procession", "asc.swarm_self")), "女王進軍");
+        effects.selfHit(player, state, new DamagePacket().set(DamageType.PHYSICAL, level(player, "queens_procession", "asc.swarm_self")), "女皇巡行");
     }
 
     /** 高尚禦盾：每種寶珠的上限 = 3 ＋ 面板上需要那種屬性的技能數（我們的寶石只有一種顏色：算單一屬性，兩倍）。 */
@@ -1397,7 +1397,8 @@ final class AscGranted implements Listener {
         }
         final Location from = o.mirageAt.clone();
         plugin.skills().recast(player, fired, from, target.getLocation().toVector().subtract(from.toVector()).normalize(), target);
-        plugin.skills().proxyLanded(player, fired, target.getLocation()); // 2026-10-30：幻影擲的霆落矛也插在落點（這次之前只有落地那一下）
+        // 2026-10-31：霆落矛改成投射物，幻影擲的矛停下來時自己插地（SkillService.lanceLanded）；
+        // 這次之前（2026-10-30）這裡呼叫 proxyLanded 插在目標腳下
         from.getWorld().spawnParticle(Particle.END_ROD, from.clone().add(0, 1, 0), 8, 0.2, 0.5, 0.2, 0.01);
     }
 
@@ -1425,21 +1426,21 @@ final class AscGranted implements Listener {
         }
         final List<Modifier> out = new ArrayList<>();
         if (own.motes[0] > 0) {
-            out.add(Modifier.increased(StatKeys.LIFE_MAX, 0.02 * own.motes[0], "高尚禦盾"));
+            out.add(Modifier.increased(StatKeys.LIFE_MAX, 0.02 * own.motes[0], "正氣護盾"));
         }
         if (own.motes[1] > 0) {
-            out.add(Modifier.increased(StatKeys.ARMOUR, 0.05 * own.motes[1], "高尚禦盾"));
-            out.add(Modifier.increased(StatKeys.EVASION, 0.05 * own.motes[1], "高尚禦盾"));
-            out.add(Modifier.increased(StatKeys.ES_MAX, 0.05 * own.motes[1], "高尚禦盾"));
+            out.add(Modifier.increased(StatKeys.ARMOUR, 0.05 * own.motes[1], "正氣護盾"));
+            out.add(Modifier.increased(StatKeys.EVASION, 0.05 * own.motes[1], "正氣護盾"));
+            out.add(Modifier.increased(StatKeys.ES_MAX, 0.05 * own.motes[1], "正氣護盾"));
         }
         if (own.motes[2] > 0) {
             final double regen = 0.05 + Math.max(0, level(player, "virtuous_barrier", "asc.mote_regen")) / 100.0; // 2026-10-30 照 PoE2：品質每顆 +(0—2.5)%
-            out.add(Modifier.increased(StatKeys.LIFE_REGEN, regen * own.motes[2], "高尚禦盾"));
-            out.add(Modifier.increased(StatKeys.MANA_REGEN, regen * own.motes[2], "高尚禦盾"));
+            out.add(Modifier.increased(StatKeys.LIFE_REGEN, regen * own.motes[2], "正氣護盾"));
+            out.add(Modifier.increased(StatKeys.MANA_REGEN, regen * own.motes[2], "正氣護盾"));
         }
         if (own.purple > 0) {
             final double effect = 1 + state.sheet().increased(AscKeys.REMNANT_EFFECT, Set.of()) + flameEffect(player, "purple");
-            out.add(Modifier.flat(StatKeys.DAMAGE_EXTRA + Tags.CHAOS, 7 * own.purple * effect, "夏烏拉之炎"));
+            out.add(Modifier.flat(StatKeys.DAMAGE_EXTRA + Tags.CHAOS, 7 * own.purple * effect, "霞瑤之炎"));
         }
         return out;
     }

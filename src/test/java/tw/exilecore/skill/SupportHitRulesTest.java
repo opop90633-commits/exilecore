@@ -121,7 +121,7 @@ class SupportHitRulesTest {
         assertNull(support("projectile_deceleration").refusal(skill("artillery_ballista")));
         assertNull(support("faster_projectiles").refusal(skill("artillery_ballista")));
         assertNull(support("faster_projectiles").refusal(skill("siege_ballista")));
-        assertNull(support("point_blank").refusal(skill("artillery_ballista")), "只吃投射物傷害的照舊");
+        assertNull(support("close_quarters").refusal(skill("artillery_ballista")), "只吃投射物傷害的照舊");
         assertNull(support("pierce").refusal(skill("fireball")));
         assertNull(support("chain").refusal(skill("arc")), "鏈雷多跳幾次");
         // 2026-10-27：指令技能（骸弓齊射）照 PoE2 拿掉，這一條跟著拿掉

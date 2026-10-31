@@ -500,7 +500,7 @@ public final class GemService {
                 // 2026-10-28：額外的品質效果（昇華「進階奇術」才有）也寫出來
                 final String advanced = SkillService.advancedQualityText(config().skill(data.entry().skillId()), data.entry().quality());
                 if (advanced != null) {
-                    lines.add("<dark_gray>額外的品質效果（進階奇術）：" + ItemRenderer.escape(advanced));
+                    lines.add("<dark_gray>額外的品質效果（高階奇術）：" + ItemRenderer.escape(advanced));
                 }
             }
         }

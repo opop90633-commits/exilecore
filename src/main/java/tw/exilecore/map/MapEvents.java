@@ -199,6 +199,12 @@ final class MapEvents implements Listener {
         return delirium;
     }
 
+    /** 2026-10-30：裂隙、深淵裂縫湧出來的怪。 */
+    boolean riftMonster(final LivingEntity entity) {
+        return entity.getPersistentDataContainer().has(quantityKey, PersistentDataType.DOUBLE)
+                || entity.getPersistentDataContainer().has(abyssQuantityKey, PersistentDataType.DOUBLE);
+    }
+
     /** 事件怪的額外物品數量加成（小數；沒有是 0）。 */
     double quantityBonus(final LivingEntity entity) {
         final Double bonus = entity.getPersistentDataContainer().get(quantityKey, PersistentDataType.DOUBLE);

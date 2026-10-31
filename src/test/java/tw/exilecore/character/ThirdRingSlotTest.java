@@ -81,7 +81,7 @@ class ThirdRingSlotTest {
         final StatSheet sheet = new StatSheet();
         assertFalse(Gear.ringSlotOpen(sheet));
         assertFalse(Gear.ringSlotOpen((StatSheet) null));
-        sheet.add(Modifier.flat(PlayerState.RING_EXTRA_STAT, 1, "展露之指"));
+        sheet.add(Modifier.flat(PlayerState.RING_EXTRA_STAT, 1, "舒展之指"));
         assertTrue(Gear.ringSlotOpen(sheet));
     }
 

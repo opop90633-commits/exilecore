@@ -115,7 +115,7 @@ final class AscendancyTreeMenu extends Menu {
         final boolean active = AscBuild.ascFlat(plugin, state, AscKeys.PHYLACTERY) > 0;
         final List<String> lore = new ArrayList<>();
         lore.add("<gray>可以鑲嵌一顆非傳奇的基礎珠寶，效果增加 100%");
-        lore.add(active ? "<green>晶化護符已配置" : "<red>要先配「晶化護符」才有效果");
+        lore.add(active ? "<green>晶化命匣已配置" : "<red>要先配「晶化命匣」才有效果");
         lore.add("");
         if (held == null) {
             lore.add("<dark_gray>（空的）");
@@ -164,7 +164,7 @@ final class AscendancyTreeMenu extends Menu {
             return;
         }
         if (AscBuild.ascFlat(plugin, state, AscKeys.PHYLACTERY) <= 0) {
-            result("要先配昇華天賦「晶化護符」", null);
+            result("要先配昇華天賦「晶化命匣」", null);
             return;
         }
         new PhylacteryMenu(plugin, player, service).open();

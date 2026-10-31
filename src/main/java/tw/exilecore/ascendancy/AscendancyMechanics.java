@@ -66,7 +66,7 @@ public final class AscendancyMechanics {
             return java.util.List.of();
         }
         return java.util.List.of(new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.DAMAGE, tw.exilecore.stats.ModType.MORE, more,
-                java.util.Set.of(Tags.SPELL), "德魯伊之冠"));
+                java.util.Set.of(Tags.SPELL), "德魯伊之魁"));
     }
 
     /** 玩家自己打出去的這一下，昇華新機制乘多少（combat.Signatures.outgoing 呼叫）。 */

@@ -57,7 +57,7 @@ class AscMinionSystemsTest {
         assertEquals(6, MinionAbilities.VOLLEYS);
         assertEquals(15, MinionAbilities.VOLLEY_TICKS, "每 0.75 秒一輪");
         assertEquals(tw.exilecore.core.Units.metres(14) * tw.exilecore.core.Units.metres(14), Math.PI * MinionAbilities.VOLLEY_RADIUS * MinionAbilities.VOLLEY_RADIUS, 1.0, "14 × 14 公尺的面積"); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
-        assertTrue(MinionAbilities.command("kelari_djinn") == null, "巨靈的指令是另外的技能（克拉里的欺瞞…），按巨靈的鍵不是下指令");
+        assertTrue(MinionAbilities.command("kelari_djinn") == null, "巨靈的指令是另外的技能（珂芮絲的詭計…），按巨靈的鍵不是下指令");
     }
 
     @Test

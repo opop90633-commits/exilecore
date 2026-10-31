@@ -122,7 +122,7 @@ public final class HollowForm {
     /** 幻影用的那一下：傷害更少 15%、不能消耗戰星。 */
     public static SkillBuild imageBuild(final SkillBuild attack) {
         return attack.withProfile(attack.profile().withLocal(List.of(
-                Modifier.more(StatKeys.DAMAGE, -LESS_DAMAGE / 100.0, "空無型態"),
-                Modifier.flat(ChargeService.CANNOT_CONSUME, 1, "空無型態"))));
+                Modifier.more(StatKeys.DAMAGE, -LESS_DAMAGE / 100.0, "虛空形態"),
+                Modifier.flat(ChargeService.CANNOT_CONSUME, 1, "虛空形態"))));
     }
 }

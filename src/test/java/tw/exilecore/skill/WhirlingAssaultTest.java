@@ -112,6 +112,6 @@ class WhirlingAssaultTest {
         assertEquals(0.20, normal.get(0).value(), 1e-9, "20% 品質：增加 20% 攻擊速度");
         final List<Modifier> advanced = tw.exilecore.ascendancy.AscBuild.advanced("whirling_rush", 20, normal);
         assertTrue(advanced.stream().anyMatch(m -> m.stat().equals(StatKeys.DAMAGE) && m.type() == ModType.MORE
-                && Math.abs(m.value() - 0.20) < 1e-9 && m.tags().contains("physical")), "進階奇術：更多 20% 物理傷害 " + advanced);
+                && Math.abs(m.value() - 0.20) < 1e-9 && m.tags().contains("physical")), "高階奇術：更多 20% 物理傷害 " + advanced);
     }
 }

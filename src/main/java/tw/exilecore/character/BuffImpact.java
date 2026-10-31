@@ -206,7 +206,7 @@ public final class BuffImpact {
         final double esArmour = tw.exilecore.ascendancy.AscendancyEffects.defenderSheet(player, plugin.players().get(player), withDebuffs)
                 .get(StatKeys.ARMOUR) - rawArmour;
         if (esArmour >= 1) {
-            lines.add(String.format(Locale.ROOT, "<dark_gray>　護甲含神聖儀式 +%,d（照目前的能量護盾，被打時才算）", Math.round(esArmour)));
+            lines.add(String.format(Locale.ROOT, "<dark_gray>　護甲含聖禮儀典 +%,d（照目前的能量護盾，被打時才算）", Math.round(esArmour)));
         }
         return lines;
     }
@@ -251,7 +251,7 @@ public final class BuffImpact {
                 {StatKeys.DAMAGE_HIGH_MANA, "魔力充沛"}, {StatKeys.DAMAGE_CLASH, "背水"},
                 {StatKeys.DAMAGE_PER_COMBO, "連擊"}, {StatKeys.COMBO_FINISHER, "終式"}, {StatKeys.RAGEFORGED, "怒鑄"},
                 {tw.exilecore.charge.ChargeService.SUP_INHIBIT, "抑星"},
-                {tw.exilecore.ascendancy.AscKeys.WEAKNESS, "開放弱點"}, {tw.exilecore.ascendancy.AscKeys.NO_MERCY, "毫不留情"},
+                {tw.exilecore.ascendancy.AscKeys.WEAKNESS, "開放弱點"}, {tw.exilecore.ascendancy.AscKeys.NO_MERCY, "絕不手軟"},
                 {tw.exilecore.ascendancy.AscKeys.BLOOD_BOIL_MORE, "血液沸騰"},
                 // 2026-10-27：擊中前看目標或最近狀態的（SupportMechanics.preHit、LineageMechanics.preHit、SupportExtras.preHit）
                 {tw.exilecore.stats.LineageKeys.PER_POISON, "毒慾（敵人身上的中毒）"},

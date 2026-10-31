@@ -87,9 +87,9 @@ public final class ChayulaHand {
         final List<Modifier> list = new ArrayList<>();
         final SkillParams.Mark mark = inner.params().mark();
         if (mark != null && mark.curse()) {
-            list.add(Modifier.increased(StatKeys.SKILL_DURATION, (CURSE_DURATION_INCREASED + curseQuality) / 100.0, "夏烏拉之手"));
+            list.add(Modifier.increased(StatKeys.SKILL_DURATION, (CURSE_DURATION_INCREASED + curseQuality) / 100.0, "霞瑤之手"));
         } else {
-            list.add(Modifier.increased(StatKeys.MARK_EFFECT, (markEffect(hostLevel) + markQuality) / 100.0, "夏烏拉之手"));
+            list.add(Modifier.increased(StatKeys.MARK_EFFECT, (markEffect(hostLevel) + markQuality) / 100.0, "霞瑤之手"));
         }
         return list;
     }

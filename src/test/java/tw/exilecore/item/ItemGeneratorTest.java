@@ -89,10 +89,10 @@ class ItemGeneratorTest {
         // 2026-10 PoE2 改版：裝備換成照 PoE2 分階的基底，舊的（retired）留著讓舊物品照常能用；藥劑、護符的基底也算在裡面
         // 2026-10-26：＋照 PoE2 的法杖 14、長杖 17、權杖 16（bases/casters.yml），舊的 wand_14、staff_17、sceptre_16 退役
         // 2026-10-26：＋照 PoE2 補上的腰帶 8、戒指 10、項鍊 10 與淨化護符 1（熔星、星骸藥劑與續命護符停用但定義留著，照樣算）；這次之前 987
-        assertEquals(1018, repository.baseCount(), "現役 238 + 退役 744 + 藥劑與護符 36（2026-10-27：＋傳奇專用的素面指環 jring_plain，這次之前 1017；2026-10-26：＋永恆珠寶基底 timeless_jewel）");
-        assertEquals(238, repository.bases().size(), "現役的裝備基底（含 14 張地圖、9 種珠寶；2026-10-26 ＋25 種飾品、＋永恆珠寶，這次之前 212）");
+        assertEquals(1018, repository.baseCount(), "現役 238 + 退役 744 + 藥劑與護符 36（2026-10-27：＋傳奇專用的素面指環 jring_plain，這次之前 1017；2026-10-26：＋恆時珠寶基底 timeless_jewel）");
+        assertEquals(238, repository.bases().size(), "現役的裝備基底（含 14 張地圖、9 種珠寶；2026-10-26 ＋25 種飾品、＋恆時珠寶，這次之前 212）");
         assertEquals(14, repository.bases().stream().filter(ItemBase::isMap).count());
-        assertEquals(9, repository.bases().stream().filter(ItemBase::isJewel).count(), "4 種珠寶 + 4 種半徑珠寶 + 永恆珠寶（2026-10-26）");
+        assertEquals(9, repository.bases().stream().filter(ItemBase::isJewel).count(), "4 種珠寶 + 4 種半徑珠寶 + 恆時珠寶（2026-10-26）");
         // 2026-10-26：停用的藥劑（4）與護符（1）不在 flaskLikeBases，算在「退役」裡（這次之前 987 - 212 - 35）
         assertEquals(1018 - 238 - 31, repository.baseCount() - repository.bases().size() - repository.flaskLikeBases().size());
         assertTrue(repository.affixCount() >= 30, "詞綴數 " + repository.affixCount());

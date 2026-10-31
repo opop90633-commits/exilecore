@@ -136,15 +136,15 @@ class HollowFormTest {
         assertTrue(HollowForm.appliesToHost(support("heightened_charges")));
         assertFalse(HollowForm.appliesToHost(support("faster_attacks")));
         assertNull(support("perpetual_charge").hostRefusal(form, skill("boneshatter")));
-        assertNull(support("perpetual_charge").hostRefusal(form, null), "孔裡沒放也能掛（套在空無型態自己身上）");
-        assertTrue(SupportDefinition.consumes(form, "power"), "空無型態會消耗銳星");
+        assertNull(support("perpetual_charge").hostRefusal(form, null), "孔裡沒放也能掛（套在虛空形態自己身上）");
+        assertTrue(SupportDefinition.consumes(form, "power"), "虛空形態會消耗銳星");
         for (final SupportDefinition support : config.supports()) {
             boolean energy = false;
             for (final Modifier modifier : support.modifiers()) {
                 energy |= modifier.stat().startsWith("meta.energy");
             }
             if (energy) {
-                assertNotNull(support.hostRefusal(form, skill("boneshatter")), support.id() + "：空無型態沒有能量");
+                assertNotNull(support.hostRefusal(form, skill("boneshatter")), support.id() + "：虛空形態沒有能量");
             }
         }
     }

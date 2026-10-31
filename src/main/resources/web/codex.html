@@ -403,10 +403,10 @@
         e.effects.forEach(function (t) { fx.appendChild(el('li', null, t)); });
         box.appendChild(fx);
       }
-      if (e.quality || e.advancedQuality) { // 2026-10-30：品質效果、嵌晶戰團「進階奇術」的額外品質效果（都是 20% 品質）
+      if (e.quality || e.advancedQuality) { // 2026-10-30：品質效果、嵌晶戰團「高階奇術」的額外品質效果（都是 20% 品質）
         var q = el('ul', 'qual');
         if (e.quality) { var li = el('li'); li.appendChild(el('b', null, '品質 20%：')); li.appendChild(document.createTextNode(e.quality)); q.appendChild(li); }
-        if (e.advancedQuality) { var li2 = el('li', 'adv'); li2.appendChild(el('b', null, '進階奇術（嵌晶戰團）額外效果：')); li2.appendChild(document.createTextNode(e.advancedQuality)); q.appendChild(li2); }
+        if (e.advancedQuality) { var li2 = el('li', 'adv'); li2.appendChild(el('b', null, '高階奇術（嵌晶戰團）額外效果：')); li2.appendChild(document.createTextNode(e.advancedQuality)); q.appendChild(li2); }
         box.appendChild(q);
       }
       if (e.tags && e.tags.length) { box.appendChild(tagRow(e.tags, pickTag)); }

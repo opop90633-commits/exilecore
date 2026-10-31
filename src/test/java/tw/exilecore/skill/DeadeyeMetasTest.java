@@ -89,7 +89,7 @@ class DeadeyeMetasTest {
         // 沒有因此開放給不相干的技能
         assertNotNull(cooldown.refusal(skill("lightning_arrow")));
         assertNotNull(cooldown.refusal(skill("fireball")));
-        assertNotNull(cooldown.hostRefusal(called, null), "預告射擊自己沒有冷卻：要看孔裡的印記");
+        assertNotNull(cooldown.hostRefusal(called, null), "宣告射擊自己沒有冷卻：要看孔裡的印記");
         assertNotNull(cooldown.hostRefusal(skill("ancestral_totem"), skill("leap_slam")));
         assertTrue(DeadeyeMetas.onHost(cooldown));
         assertTrue(DeadeyeMetas.onHost(duration));

@@ -161,6 +161,8 @@ retired:
 #   定義刪掉；玩家身上、倉庫裡的舊輔助寶石整疊直接換成最高階那顆（共鳴保留），技能面板與技能寶石上掛著的原孔換過去；
 #   同一個技能已經掛著最高階那顆（不能掛兩顆一樣的）就取下來放進背包。網頁規劃器存的舊代號也照這張表換。
 merged:
+  # 2026-10-30 照站長（兩顆重複）：近矢（投射物打 3.5 格內更多 20%）跟貼身一模一樣，原作也沒有 Point Blank，併進貼身（原作 Close Combat：所有攻擊）
+  point_blank: { into: close_quarters, name: 近矢 }
   searing: { into: searing_ii, name: 燎原 }
   lacerate: { into: lacerate_iii, name: 割裂 }
   lacerate_ii: { into: lacerate_iii, name: 割裂 II }
@@ -194,7 +196,7 @@ supports:
   # ---- 第 1 階 ----
 
   increased_area:
-    name: 擴散
+    name: 擴域
     description: 被輔助的技能範圍變大。
     icon: SLIME_BALL
     tier: 1
@@ -276,7 +278,7 @@ supports:
       - { stat: damage, type: MORE, value: -50, tags: [lightning] }
 
   critical_strikes:
-    name: 致命
+    name: 暴烈
     description: 被輔助的技能更容易暴擊。
     icon: FERMENTED_SPIDER_EYE   # 2026-10：原本 SPIDER_EYE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
@@ -395,7 +397,7 @@ supports:
       - { stat: stun.buildup, type: MORE, value: 50 }
 
   electrocute:
-    name: 電擊
+    name: 電殛
     description: 被輔助的技能的閃電傷害會累積電擊，累積滿了敵人會麻痺一段時間；但不能讓敵人感電。
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
@@ -430,7 +432,7 @@ supports:
       - { stat: shock.chance, type: MORE, value: 100 }
 
   culling_strike_ii:
-    name: 撲殺 II
+    name: 斬殺 II
     description: 被輔助的攻擊對稀有、傳奇怪物與 Boss 有撲殺（稀有 10%、傳奇與 Boss 5%）；撲殺打死敵人後 20 秒內撲殺門檻增加 20%。
     icon: NETHERITE_SCRAP   # 2026-10：原本 NETHERITE_AXE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
@@ -441,7 +443,7 @@ supports:
       - { stat: culling.threshold_on_cull, type: FLAT, value: 20 }
 
   burst:
-    name: 爆發
+    name: 迸發
     description: 有冷卻時間的技能傷害更高，但冷卻更久。
     icon: GUNPOWDER   # 2026-10：原本 TNT（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
@@ -822,17 +824,29 @@ supports:
       - { stat: skill.area, type: INCREASED, value: 30 }
       - { stat: damage, type: MORE, value: 10, tags: [area] }
 
-  close_quarters:
+  close_quarters:          # Close Combat I
     name: 貼身
-    description: 被輔助的攻擊打近身（3.5 格內）的敵人時更痛。
+    description: 被輔助的攻擊打近身的敵人時更痛：1 格內更多 20%，越遠越少，3.5 格以外沒有。
     icon: IRON_NUGGET   # 2026-10：原本 IRON_BARS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
-    # 2026-10-26 照 PoE2 Close Combat I（poe2db）；這次之前 tier 2、魔耗 1.15、stat: damage.close, type: MORE, value: 30
+    # 2026-10-31 照 PoE2 Close Combat I（RePoE SupportCloseCombatPlayer：1 公尺內 20% 更多攻擊傷害，到 3.5 公尺遞減到 0；CombatListener）；
+    #   2026-10-26 到這次之前：3.5 格內一律更多 20%；更早 tier 2、魔耗 1.15、更多 30%
     modifiers:
       - { stat: damage.close, type: MORE, value: 20 }
+
+  close_quarters_ii:       # Close Combat II
+    name: 貼身 II
+    description: 被輔助的攻擊打近身的敵人時更痛：1 格內更多 30%，越遠越少，3.5 格以外沒有。
+    icon: IRON_NUGGET
+    tier: 3   # PoE2 第 5 階
+    requires: [attack]
+    mana_multiplier: 1.2
+    # 2026-10-31 照 PoE2 Close Combat II（RePoE SupportCloseCombatPlayerTwo：1 公尺內 30% 更多攻擊傷害，到 3.5 公尺遞減到 0、消耗 120%）
+    modifiers:
+      - { stat: damage.close, type: MORE, value: 30 }
 
   hex_exploit:
     name: 趁咒
@@ -882,18 +896,6 @@ supports:
       - { stat: damage, type: MORE, value: -25 }
       - { stat: poison.magnitude, type: MORE, value: 75 }
 
-  point_blank:
-    name: 近矢
-    description: 被輔助的投射物打近身（3.5 格內）的敵人時更痛。
-    icon: IRON_NUGGET   # 2026-10：原本 ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
-    tier: 2
-    requires: [projectile]
-    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
-    mana_multiplier: 1.2
-    # 2026-10-26 照 PoE2 基準 Close Combat I：原作 1 格內擊中更多 20%（到 3.5 格遞減到 0）、消耗 120%；我們 3.5 格內一律算，更多 35% → 20%（跟貼身一樣）；這次之前 tier 2、魔耗 1.15、stat: damage.close, type: MORE, value: 35
-    modifiers:
-      - { stat: damage.close, type: MORE, value: 20 }
-
   totem_fury:
     name: 樁怒
     description: 被輔助的圖騰技能傷害更高。
@@ -919,7 +921,7 @@ supports:
       - { stat: resist.lightning, type: FLAT, value: 30, tags: [minion] }
 
   meat_shield:
-    name: 肉盾
+    name: 血肉之盾
     description: 被輔助的召喚物受到的傷害更少 40%（做成生命更多 67%，一樣耐打），但造成的傷害更少 40%。
     icon: LEATHER   # 2026-10：原本 SHIELD（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
@@ -981,7 +983,7 @@ supports:
       - { stat: skill.cooldown, type: INCREASED, value: 50 }
 
   bludgeon:
-    name: 重擊
+    name: 沉擊
     description: 被輔助的攻擊更容易破甲、暈眩。
     icon: IRON_INGOT   # 2026-10：原本 IRON_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
@@ -1017,7 +1019,7 @@ supports:
       - { stat: skill.duration, type: INCREASED, value: 20 }
 
   execute:
-    name: 處刑
+    name: 終刑
     description: 被輔助的技能打生命低（35% 以下）的敵人時更痛。
     icon: FLINT   # 2026-10：原本 IRON_AXE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
@@ -1029,7 +1031,7 @@ supports:
       - { stat: damage.vs_low_life, type: MORE, value: 40 }
 
   execute_ii:              # Execute II
-    name: 處刑 II
+    name: 終刑 II
     description: 被輔助的技能打生命低（35% 以下）的敵人時，擊中傷害更多 50%。
     icon: FLINT
     tier: 3   # PoE2 第 4 階
@@ -1040,7 +1042,7 @@ supports:
       - { stat: damage.vs_low_life, type: MORE, value: 50 }
 
   execute_iii:             # Execute III
-    name: 處刑 III
+    name: 終刑 III
     description: 被輔助的技能打生命低（35% 以下）的敵人時擊中傷害更多 30%；你自己生命低（35% 以下）時，擊中傷害也更多 30%。
     icon: FLINT
     tier: 3   # PoE2 第 5 階
@@ -2734,7 +2736,7 @@ supports:
       - { stat: proc.hit_ignited, type: FLAT, value: 100, tags: [proc_flame_pillar] }
 
   haemocrystals:           # Haemocrystals
-    name: 血晶
+    name: 血結晶
     description: 被輔助的技能擊中流血中的敵人時，用掉流血，在牠身上長出血晶炸開。
     icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
@@ -2959,14 +2961,14 @@ supports:
 
   charged_mark:            # Charged Mark
     name: 電印地
-    description: 被輔助的印記標下去時，目標腳下留下一片帶電的地面。
+    description: 被輔助的印記被觸發時，在目標腳下留下一片感電地面 6 秒，站在上面的敵人會感電。
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     requires: [mark]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Charged Mark（第 5 階；poe2db／RePoE）；這次之前 tier 2、魔耗 1.15
     modifiers:
-      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_charged_ground] }
+      - { stat: proc.mark_activated, type: FLAT, value: 100, tags: [proc_charged_mark_ground] }   # 2026-10-31 照 PoE2：印記被觸發時（這次之前標下去時、會造成傷害的帶電地）
 
   poison_spores:           # Poison Spores
     name: 孢爆
@@ -3016,7 +3018,7 @@ supports:
       - { stat: proc.hit, type: FLAT, value: 100, tags: [proc_maim] }
 
   blind:                   # Blind
-    name: 目眩
+    name: 炫目
     description: 被輔助的技能擊中時致盲敵人（牠的命中與閃避更少 20%，比較打不到你、也比較閃不掉），致盲的效果增加 20%。
     icon: COAL   # 2026-10：原本 INK_SAC（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
@@ -3125,7 +3127,7 @@ supports:
       - { stat: combo.finisher, type: FLAT, value: 30 }
 
   culmination:             # Culmination II（代號照舊，舊存檔不用換）
-    name: 頂點 II
+    name: 極點 II
     description: 輔助近戰攻擊。被輔助的技能有自己的一份連擊：你用其他近戰攻擊擊中敵人時它獲得 1 層（最多 10 層，6 秒沒有獲得連擊就失去全部）；用的時候用掉全部連擊，每用掉 1 層這一下更多 4% 傷害。本來就會獲得連擊的技能（打擊）、有使用條件的技能不行，也不能改變召喚物的技能。
     icon: GOLD_INGOT
     tier: 3   # PoE2 第 5 階
@@ -3224,12 +3226,16 @@ supports:
       - { stat: flag.crystal_shards, type: FLAT, value: 1 }
 
   verglas:                 # Verglas
-    name: 冰鍍
-    description: 打碎被輔助的技能留下的冰晶時，你 6 秒內多附加冰冷傷害。
+    name: 霜殼
+    description: 你打碎冰晶時，被輔助的技能 6 秒內獲得傷害的一部分為額外冰冷傷害（冰晶最大生命每 2000 點 1%）。
     icon: PRISMARINE_SHARD   # 2026-10：原本 PACKED_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 2
-    requires: [crystal]
-    mana_multiplier: 1.1
+    # 2026-10-30 照 PoE2 Verglas（poe2db：第 3 階、消耗 120%、輔助自己用的會擊中的技能，觸發、代放、常駐除外；
+    #   打碎冰晶時被輔助的技能 6 秒內每 2000 冰晶最大生命獲得 1% 傷害為額外冰冷）；
+    #   這次之前叫冰鍍、第 2 階、魔耗 ×1.1、只能掛留冰晶的技能、打碎時你 6 秒內物理傷害的 15% 附加為冰冷
+    tier: 3
+    requires: [attack, spell]
+    excludes: [minion, persistent]
+    mana_multiplier: 1.2
     modifiers:
       - { stat: flag.verglas, type: FLAT, value: 1 }
 
@@ -3328,7 +3334,7 @@ supports:
       - { stat: damage, type: MORE, value: -50, tags: [cold] }
 
   chaos_attunement:        # Chaos Attunement（2026-10-28 照 PoE2 0.5 新增：poe2db SupportGemChaosInfusion，第 3 階、消耗 120%、+5 智慧）
-    name: 混沌同調
+    name: 附蝕
     description: 被輔助的技能獲得等同於傷害 25% 的額外混沌傷害，但造成更少 50% 非混沌傷害。
     icon: AMETHYST_SHARD
     tier: 3
@@ -3447,7 +3453,7 @@ supports:
       - { stat: skill.level, type: FLAT, value: 1, tags: [minion] }
 
   overabundance_ii:        # Overabundance II
-    name: 過剩 II
+    name: 盈溢 II
     description: 輔助那些同時只能擁有有限數量效果的技能，增加該上限，但會縮短效果持續時間（被輔助的技能上限 +1、技能持續時間更少 40%）。僅適用於有「上限」的限制：圖騰、鐘、地面效果、喚屍與焚魂這類有上限的召喚物、插著的矛、印記標記的目標、祭品的骨柱…
     icon: NAUTILUS_SHELL   # 2026-10：原本 TOTEM_OF_UNDYING（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3   # PoE2 第 4 階
@@ -3511,14 +3517,14 @@ supports:
 
   shocking_leap:           # Shocking Leap（照 PoE2：落地的地方；2026-10 以前跳躍在出發點、衝刺在終點，統一成落地點）
     name: 躍電
-    description: 被輔助的突進技能（衝刺、跳躍）落地時，在落地的地方留下一片帶電的地面，容易讓踩在上面的敵人感電。
+    description: 被輔助的突進技能暴擊時，在敵人腳下留下一片感電地面 4 秒，站在上面的敵人會感電；每次使用最多一次。
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [travel]
     excludes: [minion]
     mana_multiplier: 1.15
     modifiers:
-      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_charged_ground] }
+      - { stat: proc.crit, type: FLAT, value: 100, tags: [proc_charged_ground] }   # 2026-10-31 照 PoE2：暴擊時（這次之前落地時、會造成傷害的帶電地）
 
   spreading_frost:         # Spreading Frost
     name: 霜漫
@@ -3680,15 +3686,18 @@ supports:
     modifiers:
       - { stat: proc.armour_broken, type: FLAT, value: 100, tags: [proc_armour_explosion] }
 
-  break_endurance:         # Armour Break III（2026-10-24：II、III 只留最強的）
+  break_endurance:         # Break Endurance
     name: 磐破
-    description: 被輔助的技能打中時破甲（物理傷害的 20%）；把敵人的護甲完全打破時有 20% 機率給你一顆{charge:endurance}。
+    description: 被輔助的技能把敵人的護甲完全打破時，有 40% 機率給你一顆{charge:endurance}（本身不破甲，要搭配會破甲的技能或輔助）。
     icon: IRON_INGOT   # 2026-10：原本 IRON_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
-    tier: 3   # PoE2 第 4 階
+    tier: 3
+    requires: [attack, spell]
     excludes: [minion]
-    modifiers:   # 2026-10-24：照 PoE2 的 Armour Break III（以前 40% 觸發隱藏技能、本身不破甲）
-      - { stat: armour.break, type: FLAT, value: 20 }
-      - { stat: charge.event.armour_broken.endurance, type: FLAT, value: 20 }
+    mana_multiplier: 1.0
+    # 2026-10-30 照 PoE2 Break Endurance（poe2db：完全破甲時 40% 機率獲得一顆磐星，本身不破甲，消耗 100%）；
+    #   2026-10-24 到這次之前照 Armour Break III 做（破甲 20% ＋ 20% 磐星），跟碎甲 III 一模一樣
+    modifiers:
+      - { stat: charge.event.armour_broken.endurance, type: FLAT, value: 40 }
 
   break_posture:           # Break Posture
     name: 破眩
@@ -4199,7 +4208,7 @@ supports:
       - { stat: thorns.barbs_hits, type: FLAT, value: 1 }
 
   behead_ii:               # Behead II
-    name: 斬首 II
+    name: 梟首 II
     description: 被輔助的打擊打死稀有怪時，偷走牠兩個詞綴 20 秒。
     icon: IRON_INGOT
     tier: 2
@@ -4325,7 +4334,7 @@ supports:
       - { stat: exposure.on_shock, type: FLAT, value: 8 }
 
   commandment:             # Commandment
-    name: 號令
+    name: 軍令
     description: 被輔助的召喚物用指令以外的技能（普攻、自己的招式）不造成傷害；牠們的指令冷卻回復速度增加 100%。只能掛在有指令的召喚物上。
     icon: GOLD_INGOT
     tier: 2   # PoE2 第 0 階（不從未切割寶石切；我們放第 2 階）
@@ -4425,7 +4434,7 @@ supports:
       - { stat: curse.ground_zones, type: FLAT, value: 2 }
 
   dauntless:               # Dauntless
-    name: 無畏
+    name: 無懼
     description: 要先靜止 1.5 秒才能用被輔助的技能；每靜止 0.25 秒擊中更多 3%（最多 45%），一移動就重來。
     icon: IRON_INGOT
     tier: 2   # PoE2 第 0 階（不從未切割寶石切；我們放第 2 階）
@@ -4752,7 +4761,7 @@ supports:
       - { stat: crit.inexorable_bonus, type: FLAT, value: 10 }
 
   last_gasp:               # Last Gasp
-    name: 臨終恐息   # 2026-10-28 照 PoE2 繁中名（Last Gasp＝臨終恐息）；這次之前叫「迴光」
+    name: 最後一息   # 2026-10-28 照 PoE2 繁中名（Last Gasp＝臨終恐息）；這次之前叫「迴光」
     description: 輔助創造出持續召喚物的技能，這些召喚物生命歸零後還能繼續戰鬥 4 秒才死亡（這段時間不會再掉血）。
     icon: GHAST_TEAR
     tier: 1
@@ -4763,7 +4772,7 @@ supports:
       - { stat: minion.last_gasp_seconds, type: FLAT, value: 4 }
 
   leverage:                # Leverage
-    name: 槓桿
+    name: 撬動
     description: 被輔助的技能對被定住的敵人（凍結、重暈、定身、電擊）暴擊率增加 50%。
     icon: STICK
     tier: 2   # PoE2 第 0 階（不從未切割寶石切；我們放第 2 階）
@@ -4880,7 +4889,7 @@ supports:
       - { stat: armour.break_vs_parried, type: FLAT, value: 25 }
 
   perfection:              # Perfection
-    name: 完美
+    name: 無瑕
     description: 被輔助的技能抓到完美時機時獲得一層完美（每層更多 5% 傷害，最多 4 層，10 秒）；沒抓到完美時機時全部失去。
     icon: NETHER_STAR
     tier: 3
@@ -4890,7 +4899,7 @@ supports:
       - { stat: perfection.on_perfect_timing, type: FLAT, value: 1 }
 
   potential:               # Potential
-    name: 潛力
+    name: 潛能
     description: 被輔助的技能放的時候消耗一顆{charge:power}，暴擊率更多 40%；這個技能不會產生銳星。
     icon: LAPIS_LAZULI
     tier: 2   # PoE2 第 0 階（不從未切割寶石切；我們放第 2 階）
@@ -5224,7 +5233,7 @@ supports:
       - { stat: channelling.stun.threshold, type: MORE, value: 50 }
 
   stoicism_ii:             # Stoicism II
-    name: 堅忍 II
+    name: 堅毅 II
     description: 被輔助的攻擊每秒更多 2% 傷害（最多 20%）；翻滾或用突進技能時歸零。
     icon: IRON_INGOT
     tier: 3

@@ -70,14 +70,14 @@ class AscNewPathsTest {
         final Map<String, String> progress = allTrials("spiritwalker");
         progress.put(Ascension.NODES, "move_speed,vivid_stampede,companion_damage,wild_protector");
         Ascension ascension = new Ascension(config, progress, "huntress", 80);
-        assertEquals("先配「原始賞金」", ascension.allocateProblem(sacred));
+        assertEquals("先配「蠻荒厚賜」", ascension.allocateProblem(sacred));
         progress.put(Ascension.NODES, "move_speed,vivid_stampede,companion_damage,wild_protector,crit_chance,primal_bounty");
         ascension = new Ascension(config, progress, "huntress", 80);
         assertNull(ascension.allocateProblem(sacred));
         progress.put(Ascension.NODES, ascension.withNode(sacred));
         ascension = new Ascension(config, progress, "huntress", 80);
         assertTrue(ascension.isAllocated(sacred));
-        assertEquals(6, ascension.spent(), "聖潔一統不花點數");
+        assertEquals(6, ascension.spent(), "神聖合一不花點數");
         assertEquals(2, ascension.available());
         // 不能當作連線的路：退掉荒野守護之前要先退聖潔一統
         assertNotNull(ascension.refundProblem(walker.node("wild_protector")));
@@ -121,7 +121,7 @@ class AscNewPathsTest {
 
     @Test
     void stonefistIgnoresLegRequirementsOnly() {
-        final List<Modifier> asc = List.of(Modifier.flat(AscKeys.STONEFIST, 50, "石拳之道"));
+        final List<Modifier> asc = List.of(Modifier.flat(AscKeys.STONEFIST, 50, "岩拳之道"));
         assertTrue(AscBuild.ignoresRequirements(asc, tw.exilecore.item.ItemSlot.LEGS));
         assertFalse(AscBuild.ignoresRequirements(asc, tw.exilecore.item.ItemSlot.CHEST));
         assertFalse(AscBuild.ignoresRequirements(List.of(), tw.exilecore.item.ItemSlot.LEGS));

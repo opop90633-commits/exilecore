@@ -4,7 +4,7 @@
 
 serrated_quiver:
   retired: true        # 2026-10：換成照 PoE2 分階的基底（下面 PoE2 那一段）；舊物品照常能用
-  name: 鋸齒箭袋
+  name: 鋸刃箭袋
   material: LEATHER
   slot: OFF_HAND
   tags: [quiver]

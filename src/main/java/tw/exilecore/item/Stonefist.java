@@ -281,7 +281,7 @@ public final class Stonefist {
     public static List<String> lines(final ItemRepository repository, final ItemData data, final int level) {
         final List<String> lines = new ArrayList<>();
         final int lv = Math.max(1, level);
-        lines.add("<#c8a165>石拳之道：穿上時變成磐石之拳（需求等級 1、不需要能力值）");
+        lines.add("<#c8a165>岩拳之道：穿上時變成磐石之拳（需求等級 1、不需要能力值）");
         lines.add("<#8888ff>每一玩家等級 +3 閃避值（+" + IMPLICIT_EVASION * lv + "）");
         lines.add("<#8888ff>每一玩家等級 +1 最大能量護盾（+" + IMPLICIT_ES * lv + "）");
         for (final Converted converted : convert(repository, data)) {

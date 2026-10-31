@@ -76,7 +76,7 @@ class EstimateParityTest {
     @Test
     void eldritchAndDruidicEstimates() {
         final StatSheet sheet = new StatSheet();
-        sheet.add(Modifier.flat(AscKeys.ELDRITCH, 5, "異能賦予"));
+        sheet.add(Modifier.flat(AscKeys.ELDRITCH, 5, "異能加持"));
         sheet.add(Modifier.flat(StatKeys.ES_MAX, 200, "裝備"));
         final StatSheet estimated = sheet.overlay(BuffImpact.estimateModifiers(sheet, 1.0));
         assertEquals(1.3, estimated.more(StatKeys.DAMAGE, Set.of(Tags.SPELL)), 1e-9, "法術更多 30%");
@@ -84,7 +84,7 @@ class EstimateParityTest {
 
         final StatSheet druid = new StatSheet();
         assertTrue(AscendancyMechanics.druidicModifiers(druid, 20).isEmpty());
-        druid.add(Modifier.flat(AscendancyMechanics.DRUIDIC_CHAMPION, 1, "德魯伊之冠"));
+        druid.add(Modifier.flat(AscendancyMechanics.DRUIDIC_CHAMPION, 1, "德魯伊之魁"));
         assertEquals(0.10, AscendancyMechanics.druidicModifiers(druid, 20).get(0).value(), 1e-9, "20 點怒氣：法術更多 10%");
         assertTrue(AscendancyMechanics.druidicModifiers(druid, 1).isEmpty());
     }
@@ -93,10 +93,10 @@ class EstimateParityTest {
     void virtualCharacterGetsSheetOnlyAscendancyBuffs() {
         final StatSheet sheet = new StatSheet();
         assertTrue(AscendancyEffects.virtualBuffs(sheet).isEmpty());
-        sheet.add(Modifier.flat(AscKeys.COMPANION_WEAPON, 60, "凱莎的平衡"));
+        sheet.add(Modifier.flat(AscKeys.COMPANION_WEAPON, 60, "凱絲塔的平衡"));
         sheet.add(new Modifier(StatKeys.WEAPON_MIN, ModType.FLAT, 100, Set.copyOf(DamageType.PHYSICAL.tags()), "武器"));
         sheet.add(new Modifier(StatKeys.WEAPON_MAX, ModType.FLAT, 200, Set.copyOf(DamageType.PHYSICAL.tags()), "武器"));
-        sheet.add(Modifier.flat(AscKeys.CONDUIT, 1, "靈能導體"));
+        sheet.add(Modifier.flat(AscKeys.CONDUIT, 1, "死靈導體"));
         final StatSheet result = sheet.overlay(AscendancyEffects.virtualBuffs(sheet));
         final Set<String> companion = Set.of(Tags.PHYSICAL, Tags.ATTACK, Tags.MINION, tw.exilecore.stats.TreeMechanicKeys.COMPANION);
         assertEquals(120, result.flat(StatKeys.DAMAGE_ADDED_MAX, companion), 1e-9, "夥伴拿主手武器 60%");

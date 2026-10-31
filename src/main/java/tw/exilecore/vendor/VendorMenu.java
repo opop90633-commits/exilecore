@@ -499,6 +499,10 @@ public final class VendorMenu extends Menu {
             default -> 0;
         };
         final double value = weight * 100.0 / total;
+        // 2026-10-31：不到 0.1% 的（地圖 Boss 也會掉的傳奇）照 tinyPercent 寫到看得出來的位數；這次之前四捨五入成「0%」
+        if (value > 0 && value < 0.1) {
+            return tinyPercent(value / 100.0);
+        }
         // 傳奇常常不到 1%：小數才看得出來（0.66%）；整數（2%）與 10% 以上直接寫整數
         if (value <= 0 || value >= 9.95 || Math.abs(value - Math.rint(value)) < 0.05) {
             return Math.round(value) + "%";

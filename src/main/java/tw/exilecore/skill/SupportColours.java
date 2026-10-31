@@ -50,7 +50,7 @@ public final class SupportColours {
                     + "splinter_totem_ii steadfast_ii stoicism_ii stomping_ground syzygy tear unabating unbreakable undermine "
                     + "unyielding upheaval_ii vanguard_ii",
             GREEN, // PoE2 RePoE 綠色
-            "chain charge_profusion close_quarters conduction culling_strike_ii electrocute "
+            "chain charge_profusion close_quarters close_quarters_ii conduction culling_strike_ii electrocute "
                     + "envenom_iii faster_attacks faster_projectiles fork lightning_penetration longshot_ii "
                     + "multiple_projectiles overcharge pierce static_charge swift_affliction_iii "
                     + "swift_cooldown virulence "

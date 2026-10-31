@@ -244,7 +244,7 @@ final class AscPaths implements Listener {
             own.empowerUntil = 0;
             final double speed = level(player, "primal_bounty", "asc.bounty_speed") / 100.0 * effect;
             build = faster(build.withAreaAndProjectiles(build.areaScale(), build.projectiles() + (int) Math.round(2 * effect)), 1 + speed);
-            local.add(Modifier.increased(StatKeys.SKILL_PROJECTILE_SPEED, speed, "原始賞金"));
+            local.add(Modifier.increased(StatKeys.SKILL_PROJECTILE_SPEED, speed, "蠻荒厚賜"));
             final double trail = AscendancyEffects.flat(sheet, AscKeys.SACRED_UNITY);
             if (trail > 0) {
                 final Vector direction = player.getLocation().getDirection().setY(0);
@@ -349,7 +349,7 @@ final class AscPaths implements Listener {
                 final double extra = tw.exilecore.core.Units.metres(Math.max(0, level(player, "vivid_stampede", "asc.stag_radius")));
                 if (extra > 0) {
                     plugin.skills().triggerSkill(player, "asc_vivid_stag", land, plugin.skills().grantedLevel(player),
-                            List.of(Modifier.increased(StatKeys.SKILL_AREA, Math.pow((2 + extra) / 2, 2) - 1, "靈現奔竄品質")));
+                            List.of(Modifier.increased(StatKeys.SKILL_AREA, Math.pow((2 + extra) / 2, 2) - 1, "靈影奔騰品質")));
                 } else {
                     plugin.skills().triggerSkill(player, "asc_vivid_stag", land);
                 }
@@ -422,7 +422,7 @@ final class AscPaths implements Listener {
         effects.later(1, () -> {
             if (stun > 0) {
                 plugin.skills().triggerSkill(player, "asc_hollow_ring", player.getLocation(), plugin.skills().grantedLevel(player),
-                        List.of(Modifier.more(StatKeys.STUN_BUILDUP, stun / 100.0, "空無共鳴品質")));
+                        List.of(Modifier.more(StatKeys.STUN_BUILDUP, stun / 100.0, "虛空共振品質")));
             } else {
                 plugin.skills().triggerSkill(player, "asc_hollow_ring", player.getLocation());
             }
@@ -548,7 +548,7 @@ final class AscPaths implements Listener {
             return List.of();
         }
         final double more = guidance / 100.0 * (own.leap - 1);
-        return List.of(Modifier.more(StatKeys.DAMAGE, more, "莫里根的指引"), Modifier.more(StatKeys.SHOCK_EFFECT, more, "莫里根的指引"));
+        return List.of(Modifier.more(StatKeys.DAMAGE, more, "摩瑞安的指引"), Modifier.more(StatKeys.SHOCK_EFFECT, more, "摩瑞安的指引"));
     }
 
     // =====================================================================
@@ -588,7 +588,7 @@ final class AscPaths implements Listener {
         own.empowerUntil = now() + EMPOWER_TICKS;
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PARROT_FLY, 0.9f, 0.8f);
         tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.WHITE_ASH, player.getLocation().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.01);
-        plugin.players().get(player).notice("<#e8e1c8>原始賞金：下一個投射物技能被強化（用掉 " + spend + " 根梟羽）", now() + 40);
+        plugin.players().get(player).notice("<#e8e1c8>蠻荒厚賜：下一個投射物技能被強化（用掉 " + spend + " 根梟羽）", now() + 40);
     }
 
     // =====================================================================
@@ -1107,14 +1107,14 @@ final class AscPaths implements Listener {
                 final double max = sheet.flat(StatKeys.WEAPON_MAX, type.tags()) * weapon / 100.0;
                 if (max > 0) {
                     final Set<String> tags = Set.of(type.tag(), Tags.ATTACK, Tags.MINION, tw.exilecore.stats.TreeMechanicKeys.COMPANION);
-                    out.add(new Modifier(StatKeys.DAMAGE_ADDED_MIN, ModType.FLAT, min, tags, "凱莎的平衡"));
-                    out.add(new Modifier(StatKeys.DAMAGE_ADDED_MAX, ModType.FLAT, max, tags, "凱莎的平衡"));
+                    out.add(new Modifier(StatKeys.DAMAGE_ADDED_MIN, ModType.FLAT, min, tags, "凱絲塔的平衡"));
+                    out.add(new Modifier(StatKeys.DAMAGE_ADDED_MAX, ModType.FLAT, max, tags, "凱絲塔的平衡"));
                 }
             }
         }
         if (AscendancyEffects.has(sheet, AscKeys.NATURAL_ORDER)) {
             out.add(new Modifier(StatKeys.MOVEMENT_SPEED, ModType.INCREASED, ORDER_SPEED,
-                    Set.of(Tags.MINION, tw.exilecore.stats.TreeMechanicKeys.COMPANION), "自然秩序"));
+                    Set.of(Tags.MINION, tw.exilecore.stats.TreeMechanicKeys.COMPANION), "萬物秩序"));
         }
         return out;
     }

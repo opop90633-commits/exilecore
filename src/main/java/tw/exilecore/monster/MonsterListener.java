@@ -186,7 +186,26 @@ public final class MonsterListener implements Listener {
             rarityBonus += plugin.events().rarityBonus();
         }
         final Location location = entity.getLocation();
-        final List<Player> sharers = credit.sharers(entity, killer);
+        List<Player> sharers = credit.sharers(entity, killer);
+        if (sharers.isEmpty() && plugin.maps() != null && plugin.maps().riftMonster(entity)) {
+            // 2026-10-30 照站長：裂隙、深淵裂縫的怪沒人有份（被持續傷害、召喚物打死，或打的人走遠了）時，交給 40 格內最近的玩家，
+            //   照一般的撿取直接收進包包；這次之前掉在地上誰都能撿（看起來像噴出來）
+            Player nearest = null;
+            double best = 40 * 40;
+            for (final Player player : entity.getWorld().getPlayers()) {
+                if (player.isDead() || player.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
+                    continue;
+                }
+                final double distance = player.getLocation().distanceSquared(location);
+                if (distance <= best) {
+                    best = distance;
+                    nearest = player;
+                }
+            }
+            if (nearest != null) {
+                sharers = List.of(nearest);
+            }
+        }
         if (sharers.isEmpty()) {
             // 沒有玩家有份（摔死、被別的怪打死）：擲一份掉在地上，誰都能撿
             rollAndDeliver(entity, data, null, quantityBonus, rarityBonus, location, flat);

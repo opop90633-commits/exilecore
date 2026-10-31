@@ -178,6 +178,7 @@ public final class ModifierText {
                 case "perfect_hit_frozen" -> "完美時機放開的那一下直接打中凍結中的敵人時（用掉凍結，取代一般的爆炸）"; // 2026-10-28 照 PoE2 Snipe
                 case "kill" -> "打死敵人時";
                 case "mark_consumed" -> "打中被你標記的敵人、用掉印記時"; // 2026-10-28 照 PoE2 Cross Slash
+                case "mark_activated" -> "印記被觸發時（在被標記的敵人腳下）"; // 2026-10-31 照 PoE2 Charged Mark
                 default -> "條件成立時";
             };
             final String sub = modifier.tags().isEmpty() ? "" : modifier.tags().iterator().next();
@@ -452,7 +453,7 @@ public final class ModifierText {
                     : scaled(modifier, "冰晶要打的下數", percent);
             case StatKeys.FLAG_HOARFROST -> "冰晶周圍一直結霜，冰傷周圍的敵人";
             case StatKeys.FLAG_CRYSTAL_SHARDS -> "冰晶碎掉時往四周噴出冰片";
-            case StatKeys.FLAG_VERGLAS -> "打碎冰晶時你 6 秒內物理傷害的 15% 額外附加為冰冷傷害";
+            case StatKeys.FLAG_VERGLAS -> "打碎冰晶時，被輔助的技能 6 秒內獲得傷害的 1% 為額外冰冷傷害（冰晶最大生命每 2000 點算 1%）";
             case StatKeys.MANA_ON_MINION_DEATH -> "被輔助的技能叫出來的召喚物死掉時，回復 " + number(value) + "% 最大魔力";
             case StatKeys.MINION_DEATH_HEAL -> "被輔助的技能叫出來的召喚物死掉時，3 格內你的其他召喚物回復 " + number(value) + "% 最大生命並清掉異常";
             case StatKeys.FLASK_KILL_LIFE -> "被輔助的技能打死敵人時，生命藥劑拿到的充能更多 " + number(value) + "%";
@@ -493,7 +494,9 @@ public final class ModifierText {
                     : "對生命 35% 以下的敵人增加 " + number(value) + "% 擊中傷害";
             case StatKeys.DAMAGE_WHILE_LOW_LIFE -> "你自己生命 35% 以下時擊中傷害更多 " + number(value * 100) + "%"; // 2026-10-30 照 PoE2 Execute III
             case StatKeys.DAMAGE_VS_CURSED -> scaled(modifier, "對被詛咒的敵人的傷害", percent);
-            case StatKeys.DAMAGE_CLOSE -> scaled(modifier, "對近身（3.5 格內）敵人的傷害", percent);
+            case StatKeys.DAMAGE_CLOSE -> modifier.type() == tw.exilecore.stats.ModType.MORE
+                    ? scaled(modifier, "對近身敵人的傷害", percent) + "（1 格內全額，到 3.5 格遞減到沒有）" // 2026-10-30 照 PoE2 Close Combat
+                    : scaled(modifier, "對近身（3.5 格內）敵人的傷害", percent);
             case StatKeys.DAMAGE_VS_FULL_LIFE -> scaled(modifier, "對滿血敵人的傷害", percent);
             case StatKeys.CRIT_VS_FULL_LIFE -> scaled(modifier, "對滿血敵人的暴擊率", percent);
             case StatKeys.DAMAGE_HIGH_MANA -> modifier.type() == tw.exilecore.stats.ModType.FLAT ? scaled(modifier, "魔力 90% 以上時的傷害", percent)

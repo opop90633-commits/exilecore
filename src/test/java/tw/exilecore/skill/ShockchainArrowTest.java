@@ -49,7 +49,7 @@ class ShockchainArrowTest {
     void skillDataMatchesPoe2() {
         final SkillDefinition arrow = config.skill("chain_arrow");
         assertNotNull(arrow);
-        assertEquals("電鍊箭矢", arrow.name());
+        assertEquals("連電箭", arrow.name());
         assertEquals(11, arrow.tier());
         assertEquals(0.7, arrow.effectiveness().at(1), 1e-9);
         assertEquals(2.18, arrow.effectiveness().at(20), 1e-9);
@@ -179,7 +179,7 @@ class ShockchainArrowTest {
         for (int i = 0; i < 10; i++) {
             rods.place(new LightningRods.Rod(owner, world, new Vector(i, 64, 5), 0, 400, 8, 20, null, 2.5, "lightning_arrow", "chain_arrow"), 10, removed::add);
         }
-        assertTrue(removed.isEmpty(), "雷樁矢、電鍊箭矢各自最多 10 支");
+        assertTrue(removed.isEmpty(), "雷樁矢、連電箭各自最多 10 支");
         assertEquals(20, rods.count(owner));
         rods.place(new LightningRods.Rod(owner, world, new Vector(0, 64, 9), 0, 400, 8, 20, null, 2.5, "lightning_arrow", "chain_arrow"), 10, removed::add);
         assertEquals(1, removed.size());

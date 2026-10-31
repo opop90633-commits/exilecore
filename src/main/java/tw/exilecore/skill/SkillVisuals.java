@@ -1514,9 +1514,22 @@ final class SkillVisuals {
         }
     }
 
+    /** 2026-10-30 照站長：這段期間不出聲（咒環每次重新詛咒身邊的敵人都「叮」一聲）。只在主執行緒用。 */
+    private static int muted;
+
+    /** 跑 action 的時候技能特效不出聲（粒子照放）。 */
+    static void silently(final Runnable action) {
+        muted++;
+        try {
+            action.run();
+        } finally {
+            muted--;
+        }
+    }
+
     private static void sound(final Location at, final Sound sound, final float volume, final float pitch) {
-        if (sound == null) {
-            return; // 靜音的外觀（圖騰）
+        if (sound == null || muted > 0) {
+            return; // 靜音的外觀（圖騰）；2026-10-30：咒環的脈衝
         }
         Fx.sound(at, sound, SoundCategory.PLAYERS, volume, pitch); // 2026-10：別人的技能小聲、可以靜音
     }

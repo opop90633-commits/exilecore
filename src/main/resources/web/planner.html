@@ -27,7 +27,7 @@
     --str: #f0544f;
     --dex: #5bd65b;
     --int: #5a8cff;
-    /* 2026-10-29：旅者的智慧（開路者）多的三種：傷害橘、防禦銀、消耗效率青 */
+    /* 2026-10-29：行者之智（開路者）多的三種：傷害橘、防禦銀、消耗效率青 */
     --dmg: #ff9f43;
     --def: #c9cbd8;
     --cost: #3fd6c6;
@@ -316,7 +316,7 @@
         <button type="button" data-attr="str" style="--c:var(--str)">全改力量</button>
         <button type="button" data-attr="dex" style="--c:var(--dex)">全改敏捷</button>
         <button type="button" data-attr="int" style="--c:var(--int)">全改智慧</button>
-        <div class="wisdomTtl wisdomOnly">旅者的智慧（開路者）</div>
+        <div class="wisdomTtl wisdomOnly">行者之智（開路者）</div>
         <button type="button" class="wisdomOnly" data-attr="dmg" style="--c:var(--dmg)">全改傷害</button>
         <button type="button" class="wisdomOnly" data-attr="def" style="--c:var(--def)">全改防禦</button>
         <button type="button" class="wisdomOnly" data-attr="cost" style="--c:var(--cost)">全改消耗效率</button>
@@ -325,7 +325,7 @@
         <b>屬性點</b>（+5 任一屬性）配了之後有顏色：<span style="color:var(--str)">紅＝力量</span>、<span style="color:var(--dex)">綠＝敏捷</span>、<span style="color:var(--int)">藍＝智慧</span>；
         點已配的屬性點可以改屬性或退掉。沒選的照職業的主屬性，選好的會跟著代碼帶進遊戲。<br>
         <span style="color:#c77dff">六角形</span>是珠寶孔：配了之後<b>點它放珠寶</b>（挑基底、詞綴，或載入角色時帶進來遊戲裡的珠寶），珠寶的效果會算進天賦加總與計算器。
-        滑到珠寶孔會畫出<b>珠寶的範圍</b>（小 1000、中 1150、大 1300、非常大 1500＝永恆珠寶；放了範圍珠寶就畫它實際的範圍），並列出範圍裡有幾個小點、核心。<br>
+        滑到珠寶孔會畫出<b>珠寶的範圍</b>（小 1000、中 1150、大 1300、非常大 1500＝恆時珠寶；放了範圍珠寶就畫它實際的範圍），並列出範圍裡有幾個小點、核心。<br>
         複製代碼後，遊戲裡打 <b>/tree import</b> 貼上，或在天賦總覽按「匯入規劃代碼」。</div>
     </section>
     <section>
@@ -335,7 +335,7 @@
         <option value="1000">已配的珠寶孔一直顯示：小（1000）</option>
         <option value="1150">已配的珠寶孔一直顯示：中（1150）</option>
         <option value="1300">已配的珠寶孔一直顯示：大（1300）</option>
-        <option value="1500">已配的珠寶孔一直顯示：非常大（1500，永恆珠寶）</option>
+        <option value="1500">已配的珠寶孔一直顯示：非常大（1500，恆時珠寶）</option>
       </select>
       <div class="hint">遺時星晶放在珠寶孔裡，範圍內<b>已配置</b>的每個小點都多給一次它的詞綴；放了之後範圍一直畫著，滑到範圍內的節點會寫它多給什麼。</div>
     </section>
@@ -371,7 +371,7 @@
     <button type="button" data-attr="int" style="--c:var(--int)">智慧</button>
   </div>
   <div class="row3 wisdom wisdomOnly" id="attrWisdomRow">
-    <div class="wisdomTtl">旅者的智慧：改成增加 x%</div>
+    <div class="wisdomTtl">行者之智：改成增加 x%</div>
     <button type="button" data-attr="dmg" style="--c:var(--dmg)">傷害</button>
     <button type="button" data-attr="def" style="--c:var(--def)">防禦</button>
     <button type="button" data-attr="cost" style="--c:var(--cost)">消耗效率</button>
@@ -405,7 +405,7 @@
   /** 屬性點選的屬性（2026-10）：節點代號 → "str"／"dex"／"int"；沒在裡面的照職業的主屬性。只留已配的。 */
   let attrs = new Map();
   const ATTR_KEYS = ["str", "dex", "int"];
-  /** 2026-10-29 照遊戲（PassiveMenu、PlayerStateService.WISDOM_CHOICES）：配了開路者的旅者的智慧，屬性點還能改給傷害／防禦／消耗效率（增加 x%）。 */
+  /** 2026-10-29 照遊戲（PassiveMenu、PlayerStateService.WISDOM_CHOICES）：配了開路者的行者之智，屬性點還能改給傷害／防禦／消耗效率（增加 x%）。 */
   const WISDOM_KEYS = ["dmg", "def", "cost"];
   const WISDOM_NODE = "travellers_wisdom";
   const ATTR_NAME = { str: "力量", dex: "敏捷", int: "智慧", dmg: "傷害", def: "護甲、閃避值與能量護盾", cost: "消耗效率" };
@@ -413,9 +413,9 @@
   const ATTR_MARK = { str: "力", dex: "敏", int: "智", dmg: "傷", def: "防", cost: "效" };
   const ATTR_COLOR = { str: "#f0544f", dex: "#5bd65b", int: "#5a8cff", dmg: "#ff9f43", def: "#c9cbd8", cost: "#3fd6c6" };
   const ATTR_GLOW = { str: "url(#glowStr)", dex: "url(#glowDex)", int: "url(#glowInt)", dmg: "url(#glowDmg)", def: "url(#glowDef)", cost: "url(#glowCost)" };
-  /** 有沒有配旅者的智慧（計算器那邊選的昇華天賦）。 */
+  /** 有沒有配行者之智（計算器那邊選的昇華天賦）。 */
   function wisdomOn() { try { return !!calc.asc && calc.ascNodes.includes(WISDOM_NODE); } catch (e) { return false; } }
-  /** 這個屬性點選的效果說明：力量／敏捷／智慧是「+5 力量」，旅者的智慧的是「增加 5% 傷害」（跟遊戲一樣）。 */
+  /** 這個屬性點選的效果說明：力量／敏捷／智慧是「+5 力量」，行者之智的是「增加 5% 傷害」（跟遊戲一樣）。 */
   function attrText(amount, key) {
     return WISDOM_KEYS.includes(key) ? "增加 " + amount + "% " + ATTR_NAME[key] : "+" + amount + " " + ATTR_NAME[key];
   }
@@ -479,7 +479,7 @@
   // ---- 裝備（2026-10）----
   const GEAR_SLOTS = [["ring", "戒指"], ["ring", "戒指"], ["amulet", "項鍊"], ["belt", "腰帶"], ["main_hand", "主手"],
     ["off_hand", "副手"], ["head", "頭盔"], ["chest", "胸甲"], ["legs", "褲子"], ["feet", "鞋子"], ["ring", "第三個戒指"]];
-  // 2026-10-26 照 PoE2：昇華・展露之指「+1 戒指欄位」開第三個戒指欄（GEAR_SLOTS 第 11 格，跟遊戲的 PlayerState.GEAR_SLOTS 同順序）
+  // 2026-10-26 照 PoE2：昇華・舒展之指「+1 戒指欄位」開第三個戒指欄（GEAR_SLOTS 第 11 格，跟遊戲的 PlayerState.GEAR_SLOTS 同順序）
   const RING3 = 10;
   const RING3_NODE = "unfurled_finger";
   function ring3Open() { try { return !!calc.asc && calc.ascNodes.includes(RING3_NODE); } catch (e) { return false; } }
@@ -496,7 +496,7 @@
   let hashHasJewels = false;
   /** 伺服器算出來的珠寶效果（節點代號 → { radius, inRange: Set, lines }）。 */
   let jewelFx = {};
-  // 2026-10-26：永恆珠寶征服的節點（伺服器算：POST tree/timeless，跟遊戲同一套種子雜湊，網頁不自己重寫）
+  // 2026-10-26：恆時珠寶征服的節點（伺服器算：POST tree/timeless，跟遊戲同一套種子雜湊，網頁不自己重寫）
   //   conquest = { key, socket, legion, legionName, conquerorName, keystone, radius, nodes: { 節點: { name, type, lines, add } } }
   let conquest = null;
   let conquestKey = "";
@@ -836,7 +836,7 @@
           const j = varNames(m.vars).indexOf(n);
           const div = (m.div && m.div[n]) || 1;
           const opts = (m.text.match(new RegExp("\\{" + n + ":([^{}]*)\\}")) || [])[1];
-          if (opts) { // 2026-10-26：{who:甲|乙}（永恆珠寶的征服者）用下拉選單
+          if (opts) { // 2026-10-26：{who:甲|乙}（恆時珠寶的征服者）用下拉選單
             const pick = node("select", { "aria-label": n }, ...opts.split("|").map((o, i) => node("option", { value: String(i + 1), text: o })));
             pick.value = String((g.uvals[k] && g.uvals[k][j] != null) ? g.uvals[k][j] : r[1]);
             pick.addEventListener("change", () => { g.uvals[k] = g.uvals[k] || []; g.uvals[k][j] = clamp(Number(pick.value), r[0], r[1]); refreshPreview(); });
@@ -932,7 +932,7 @@
       const jb = items.baseById.get(g.base);
       const tl = timelessLegion(g);
       body.append(node("div", { cls: "hint", style: "margin:0", text: (g.raw ? "遊戲裡的珠寶。" : "")
-        + (tl ? "永恆珠寶：孔周圍 " + timelessRadius() + " 內的核心換成" + tl.name + "的核心（種子決定哪一個）、基石換成征服者的基石"
+        + (tl ? "恆時珠寶：孔周圍 " + timelessRadius() + " 內的核心換成" + tl.name + "的核心（種子決定哪一個）、基石換成征服者的基石"
           + (tl.code === 2 ? "、小天賦換成「+5 貢禮」、屬性點多給「+3 貢禮」" : "") + "；改種子、征服者，後面的天賦樹立刻跟著換（伺服器算，跟遊戲一樣），同時只能配一顆。"
           : jb && jb.radius ? "遺時星晶：「範圍內的小天賦也各給」的詞綴，照孔位範圍內已配的小點數量算，最多算 15 個（完成後天賦樹上會畫出範圍）。" : "珠寶的詞綴直接加在角色身上。") }));
     }
@@ -1033,7 +1033,7 @@
   function refreshPreview() {
     const box = document.getElementById("itemPreview");
     if (box && editing) box.replaceChildren(itemCard(editing.g));
-    refreshConquest(); // 2026-10-26：編輯中的永恆珠寶（孔位已配）：天賦樹即時換
+    refreshConquest(); // 2026-10-26：編輯中的恆時珠寶（孔位已配）：天賦樹即時換
   }
   function trimAffixes(g) {
     const keep = [];
@@ -1163,7 +1163,7 @@
   }
   /**
    * 屬性點選的屬性：照節點順序，每個已配的屬性點 2 個位元（0 沒選、1 力量、2 敏捷、3 智慧）；都沒選就不接這一段。
-   * 2026-10-29：旅者的智慧的三種另外接第六段（一樣 2 個位元：1 傷害、2 防禦、3 消耗效率；第五段那一點是 0），舊代碼照樣讀得懂。
+   * 2026-10-29：行者之智的三種另外接第六段（一樣 2 個位元：1 傷害、2 防禦、3 消耗效率；第五段那一點是 0），舊代碼照樣讀得懂。
    */
   function attrSuffix() {
     const plain = [], wisdom = [];
@@ -1192,7 +1192,7 @@
     let body = text.includes("#") ? text.slice(text.lastIndexOf("#") + 1) : text.trim();
     if (body.includes("~")) body = body.slice(0, body.indexOf("~")); // ~ 後面是裝備（只有網頁用）
     const parts = body.split(".");
-    if (parts.length < 4 || parts.length > 6 || parts[0] !== data.code) return null; // 2026-10-29：第六段是旅者的智慧的選擇
+    if (parts.length < 4 || parts.length > 6 || parts[0] !== data.code) return null; // 2026-10-29：第六段是行者之智的選擇
     if (Number(parts[1]) !== data.version) { flash("這是舊版天賦樹的代碼"); return null; }
     if (!data.classes.some(c => c.id === parts[2])) return null;
     const nodes = new Set();
@@ -1246,7 +1246,7 @@
   /** 這個屬性點算哪個屬性：選過的照選的，沒選的照職業的主屬性（跟遊戲一樣）。 */
   function attrOf(node) {
     const chosen = attrs.get(node.id);
-    // 2026-10-29：旅者的智慧的選擇要有配那個昇華天賦才算（跟遊戲的 chosenAttribute 一樣，沒配就照職業主屬性）
+    // 2026-10-29：行者之智的選擇要有配那個昇華天賦才算（跟遊戲的 chosenAttribute 一樣，沒配就照職業主屬性）
     if (chosen && (ATTR_KEYS.includes(chosen) || (WISDOM_KEYS.includes(chosen) && wisdomOn()))) return chosen;
     return (classInfo() && classInfo().attr) || "str";
   }
@@ -1255,7 +1255,7 @@
     const base = !node.attr ? node.lines : node.lines.map(l => l.includes("任一屬性") ? attrText(node.attr, attrOf(node)) : l);
     return withConquest(node, base);
   }
-  /** 2026-10-26：被永恆珠寶征服的節點：換成征服後的說明（屬性點保留原本的、多給的接在後面）。 */
+  /** 2026-10-26：被恆時珠寶征服的節點：換成征服後的說明（屬性點保留原本的、多給的接在後面）。 */
   function withConquest(node, base) {
     const c = conqueredOf(node);
     return c ? (c.add ? base.concat(c.lines) : c.lines) : base;
@@ -1271,7 +1271,7 @@
       return jewels[node.id] && items ? [] : ["配了這一點就能把珠寶放進這個孔（遊戲裡、這裡都可以），珠寶的詞綴直接加在角色身上。"];
     }
     if (node.attr && !allocated.has(node.id)) {
-      return withConquest(node, node.lines.map(l => l.includes("任一屬性") ? "+" + node.attr + " 任一屬性（配了之後點它選力量／敏捷／智慧" + (wisdomOn() ? "，或旅者的智慧的傷害／防禦／消耗效率" : "") + "）" : l));
+      return withConquest(node, node.lines.map(l => l.includes("任一屬性") ? "+" + node.attr + " 任一屬性（配了之後點它選力量／敏捷／智慧" + (wisdomOn() ? "，或行者之智的傷害／防禦／消耗效率" : "") + "）" : l));
     }
     return linesOf(node);
   }
@@ -1529,13 +1529,13 @@
     drawRings();
     renderTotals();
   }
-  // ---- 永恆珠寶（2026-10-26）----
+  // ---- 恆時珠寶（2026-10-26）----
   function timelessLegion(g) {
     if (!g || g.rarity !== "unique" || !data || !data.timeless) return null;
     return data.timeless.legions.find(l => l.unique === g.unique) || null;
   }
   function timelessRadius() { return data && data.timeless ? data.timeless.radius : 1500; }
-  /** 永恆珠寶的族、種子、征服者（照編輯器填的值；沒填照最大值，跟說明行、送去計算器的一樣）。 */
+  /** 恆時珠寶的族、種子、征服者（照編輯器填的值；沒填照最大值，跟說明行、送去計算器的一樣）。 */
   function timelessOf(g) {
     const legion = timelessLegion(g);
     const u = legion && items ? items.uniqueById.get(g.unique) : null;
@@ -1554,7 +1554,7 @@
     });
     return { legion: legion.code, legionInfo: legion, seed, conqueror: who };
   }
-  /** 生效的永恆珠寶：編輯器裡正在改的（孔位已配）優先，其次已配孔位裡的第一顆（遊戲裡同時只算一顆）。 */
+  /** 生效的恆時珠寶：編輯器裡正在改的（孔位已配）優先，其次已配孔位裡的第一顆（遊戲裡同時只算一顆）。 */
   function activeTimeless() {
     if (editing && editing.jewelNode && allocated.has(editing.jewelNode)) {
       const t = timelessOf(editing.g);
@@ -1705,7 +1705,7 @@
         const mark = el("text", { x: node.x * SPACING, y: node.y * SPACING + 3.6, "text-anchor": "middle", class: "attrmark" }, g);
         mark.textContent = ATTR_MARK[attr];
       }
-      if (conqueredOf(node)) { // 2026-10-26：被永恆珠寶征服（橘色虛線圈）
+      if (conqueredOf(node)) { // 2026-10-26：被恆時珠寶征服（橘色虛線圈）
         el("circle", { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 13 : node.type === "keystone" ? 26 : 21, fill: "none",
           stroke: "#ff9f43", "stroke-width": 2, "stroke-dasharray": "4 3", "pointer-events": "none" }, g);
       }
@@ -1751,7 +1751,7 @@
     const attrNodes = { str: 0, dex: 0, int: 0, dmg: 0, def: 0, cost: 0 };
     for (const n of nodes) if (n.attr) { attrTotal[attrOf(n)] += n.attr; attrNodes[attrOf(n)]++; }
     const anyAttr = Object.values(attrNodes).some(v => v > 0);
-    const shown = ATTR_KEYS.concat(WISDOM_KEYS.filter(k => attrNodes[k] > 0)); // 2026-10-29：有選旅者的智慧那幾種才列
+    const shown = ATTR_KEYS.concat(WISDOM_KEYS.filter(k => attrNodes[k] > 0)); // 2026-10-29：有選行者之智那幾種才列
     document.getElementById("attrCount").innerHTML = anyAttr
       ? "屬性點：" + shown.map(k => "<b class='" + k + "'>" + (WISDOM_KEYS.includes(k) ? ATTR_SHORT[k] + " 增加 " + attrTotal[k] + "%" : ATTR_NAME[k] + " +" + attrTotal[k])
         + "</b>（" + attrNodes[k] + " 個）").join("　")
@@ -1953,7 +1953,7 @@
     const cascade = removal(node).size;
     document.getElementById("attrMenuTitle").textContent = "屬性點 +" + node.attr + "：現在是" + ATTR_SHORT[current]
       + (attrs.get(node.id) === current ? "" : "（職業主屬性）");
-    document.getElementById("attrWisdomRow").style.display = wisdomOn() ? "" : "none"; // 2026-10-29：配了旅者的智慧才有
+    document.getElementById("attrWisdomRow").style.display = wisdomOn() ? "" : "none"; // 2026-10-29：配了行者之智才有
     for (const b of attrMenu.querySelectorAll("button[data-attr]")) {
       const on = b.dataset.attr === current;
       b.classList.toggle("on", on);
@@ -1976,7 +1976,7 @@
     b.addEventListener("click", () => {
       const node = attrMenuNode;
       if (!node || !allocated.has(node.id)) { closeAttrMenu(); return; }
-      if (WISDOM_KEYS.includes(b.dataset.attr) && !wisdomOn()) { closeAttrMenu(); flash("要先在計算器配開路者的「旅者的智慧」"); return; }
+      if (WISDOM_KEYS.includes(b.dataset.attr) && !wisdomOn()) { closeAttrMenu(); flash("要先在計算器配開路者的「行者之智」"); return; }
       attrs.set(node.id, b.dataset.attr);
       closeAttrMenu();
       hover = null;
@@ -2002,7 +2002,7 @@
   for (const b of document.querySelectorAll("#attrBulk button[data-attr]")) {
     b.addEventListener("click", () => {
       let count = 0;
-      if (WISDOM_KEYS.includes(b.dataset.attr) && !wisdomOn()) { flash("要先在計算器配開路者的「旅者的智慧」"); return; }
+      if (WISDOM_KEYS.includes(b.dataset.attr) && !wisdomOn()) { flash("要先在計算器配開路者的「行者之智」"); return; }
       for (const node of order) if (node.attr && allocated.has(node.id)) { attrs.set(node.id, b.dataset.attr); count++; }
       if (!count) { flash("還沒有配屬性點"); return; }
       closeAttrMenu();
@@ -2066,7 +2066,7 @@
         const count = Object.keys(conquest.nodes || {}).length;
         html += "<div style='margin-top:4px;color:#ffb36b'>範圍 " + format(conquest.radius) + "：征服者" + escapeHtml(conquest.conquerorName)
           + "（基石換成「" + escapeHtml(conquest.keystone) + "」），種子 " + conquest.seed + "，換掉 " + count + " 個節點（橘色虛線圈）</div>";
-      } else html += "<div style='margin-top:4px;color:var(--quiet)'>征服的節點計算中…（同時只算一顆永恆珠寶）</div>";
+      } else html += "<div style='margin-top:4px;color:var(--quiet)'>征服的節點計算中…（同時只算一顆恆時珠寶）</div>";
     } else if (isRadiusJewel(g)) {
       let smalls = 0;
       for (const id of fx.inRange) if (byId.get(id) && byId.get(id).type === "small") smalls++;
@@ -2730,7 +2730,7 @@
     }
     pruneTree(); // 2026-10-28：退掉女術者之道／戰士之道時，只靠那個起點連著的天賦一起退
     renderAscPicker();
-    renderGear(); // 2026-10-26：展露之指配上、退掉時第三個戒指欄跟著顯示／隱藏
+    renderGear(); // 2026-10-26：舒展之指配上、退掉時第三個戒指欄跟著顯示／隱藏
     updatePanel();
   }
   /** 2026-10-28：出發點變了（昇華換了、女術者之道／戰士之道退掉）：連不到任何出發點的天賦退掉，重畫。 */

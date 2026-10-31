@@ -69,12 +69,12 @@ class PassiveTreeTest {
             allocated.add(step.id());
         }
         assertTrue(allocated.contains(gate.id()));
-        assertFalse(tree.canAllocate(allocated, start, locked), "沒有未見之道不能配");
+        assertFalse(tree.canAllocate(allocated, start, locked), "沒有不見之途不能配");
         assertTrue(tree.canAllocate(allocated, start, locked, Set.of(PassiveTree.RULE_UNSEEN_PATH)));
         final Set<String> with = new HashSet<>(allocated);
         with.add(locked.id());
         assertEquals(with.size(), tree.reachable(with, start, Set.of(PassiveTree.RULE_UNSEEN_PATH)).size());
-        assertEquals(Set.of(locked.id()), tree.prune(with, start), "退了未見之道：觀星節點退回");
+        assertEquals(Set.of(locked.id()), tree.prune(with, start), "退了不見之途：觀星節點退回");
 
         // 開路者（遊俠起點）：女術者之道可以直接配女術士起點旁邊的節點
         final PassiveNode ranger = tree.start("ranger");

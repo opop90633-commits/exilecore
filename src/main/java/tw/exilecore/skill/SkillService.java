@@ -636,6 +636,13 @@ public final class SkillService {
     }
 
     /** 同一個技能（同一個 build）在 at 再放一次（回響、重複）：不花魔力、不看冷卻。 */
+    /** 2026-10-31 照 PoE2 Storm Lance：擲出的矛（投射物）停下來的地方（ProjectileEngine）。 */
+    void lanceLanded(final Player player, final SkillBuild build, final tw.exilecore.stats.SkillProfile profile, final Location at) {
+        if (player != null && build != null && at != null && player.isOnline()) {
+            signatures.lanceLanded(player, build, profile, at, now());
+        }
+    }
+
     /** 2026-10-30：別的地方放的技能落在 at（幻影銳眼的霆落矛插地）。 */
     public void proxyLanded(final Player player, final SkillBuild build, final Location at) {
         if (player != null && build != null && at != null && player.isOnline()) {
@@ -2134,7 +2141,7 @@ public final class SkillService {
         // 2026-10-27 照 PoE2 Delayed Gratification：連擊也是使用條件（更難 150%；達成後 10 秒內多一次不用連擊）
         if ("ancestral_spirits".equals(definition.id())) {
             // 2026-10-29 照 PoE2 Ancestral Spirits：召喚圖騰時自動觸發（面板上可以插輔助），不能自己按
-            state.notice("<gray>先祖之魂：放下圖騰時自動觸發，不用按", now + 30);
+            state.notice("<gray>祖靈現身：放下圖騰時自動觸發，不用按", now + 30);
             plugin.players().display(player, state);
             return;
         }
@@ -2183,7 +2190,7 @@ public final class SkillService {
                         ? "附近沒有聽這個指令的召喚物" : null) // 2026-10：指令型召喚物技能
                 : MinionAbilities.MANIFEST.equals(definition.id()) && !auras.isActive(player.getUniqueId(), definition.id())
                         && minions.manifestForm(player) == null
-                        ? "幻化武器要主手拿近戰武鬥武器（劍、斧、錘、矛、長棍、爪、匕首、鏈錘、獸魂符）" // 2026-10-29 照 PoE2
+                        ? "幻形兵刃要主手拿近戰武鬥武器（劍、斧、錘、矛、長棍、爪、匕首、鏈錘、獸魂符）" // 2026-10-29 照 PoE2
                 : executor.precheck(player, build, preferred);
         // 2026-10-26（血偶巨鎚）：不能使用戰吼
         final String noWarcry = definition.mechanic() == Mechanic.WARCRY ? tw.exilecore.item.unique.UniqueCosts.warcryProblem(state.sheet()) : null;
@@ -4475,7 +4482,9 @@ public final class SkillService {
         for (final SkillBuild curse : blasphemyCurses(player)) {
             final SkillParams.Mark spec = curse.params().mark();
             if (spec != null) {
-                executor.applyCurseAt(player, curse, player.getLocation(), Blasphemy.widened(spec, curse.level()), now + Blasphemy.LINGER_TICKS);
+                // 2026-10-30 照站長：咒環一直重新詛咒，不出「叮」的聲音（粒子照放）
+                SkillVisuals.silently(() -> executor.applyCurseAt(player, curse, player.getLocation(), Blasphemy.widened(spec, curse.level()),
+                        now + Blasphemy.LINGER_TICKS));
             }
         }
     }
@@ -5346,8 +5355,8 @@ public final class SkillService {
             if (advanced != null) {
                 final boolean on = tw.exilecore.ascendancy.AscBuild.gem(plugin.players().sheet(player), definition,
                         SupportDefinition.hostsSkill(definition) ? hostSupportsOf(entry) : supportsOf(entry)).twice();
-                top.add(on ? "<#c9a7ff>◆ 額外的品質效果（進階奇術）：" + ItemRenderer.escape(advanced)
-                        : "<dark_gray>◆ 額外的品質效果（要配昇華「進階奇術」）：" + ItemRenderer.escape(advanced));
+                top.add(on ? "<#c9a7ff>◆ 額外的品質效果（高階奇術）：" + ItemRenderer.escape(advanced)
+                        : "<dark_gray>◆ 額外的品質效果（要配昇華「高階奇術」）：" + ItemRenderer.escape(advanced));
             }
         }
         if (entry.corrupted()) {
@@ -5387,7 +5396,7 @@ public final class SkillService {
         final List<String> lines = new ArrayList<>();
         final PlayerState state = plugin.players().get(player);
         final SkillBuild host = build(state, plugin.players().sheet(player), definition, entry);
-        lines.add(String.format(Locale.ROOT, "<#c9a7ff>夏烏拉之手<gray>：插槽印記效果增加 <white>%s%%</white>、插槽詛咒持續時間增加 <white>%s%%</white>",
+        lines.add(String.format(Locale.ROOT, "<#c9a7ff>霞瑤之手<gray>：插槽印記效果增加 <white>%s%%</white>、插槽詛咒持續時間增加 <white>%s%%</white>",
                 ModifierText.number(ChayulaHand.markEffect(host.level()) + host.qualityFlat(ChayulaHand.MARK_EFFECT)),
                 ModifierText.number(ChayulaHand.CURSE_DURATION_INCREASED + host.qualityFlat(ChayulaHand.CURSE_DURATION))));
         final List<SkillBuild> socketed = state.skills().find(ChayulaHand.ID) < 0 ? List.of() : chayulaSocketed(player);
@@ -5468,7 +5477,7 @@ public final class SkillService {
             for (final SkillBuild mark : socketed) {
                 cooldowns.add(mark.definition().name() + (mark.cooldownTicks() > 0 ? " 冷卻 " + ModifierText.number(Math.round(mark.cooldownTicks() / 20.0 * 100) / 100.0) + " 秒" : " 沒有冷卻"));
             }
-            lines.add(String.format(Locale.ROOT, "<#c9a7ff>預告射擊<gray>：每 <white>%s</white> 秒（印記自己的冷卻也要好）把孔裡的印記放在 <white>%s</white> 格內的敵人身上；"
+            lines.add(String.format(Locale.ROOT, "<#c9a7ff>宣告射擊<gray>：每 <white>%s</white> 秒（印記自己的冷卻也要好）把孔裡的印記放在 <white>%s</white> 格內的敵人身上；"
                             + "用掉時馬上補放（同一個冷卻），並標記被用掉那隻 %s 格內的另一個敵人",
                     ModifierText.number(seconds), ModifierText.number(Math.round(DeadeyeMetas.CALLED_RADIUS * hostBuild.areaScale() * 10) / 10.0),
                     ModifierText.number(DeadeyeMetas.SPREAD_RADIUS)));
@@ -6704,7 +6713,7 @@ public final class SkillService {
                         free > 0 ? "，前 " + free + " 隻不用" : "",
                         build.reserve() > 0 ? String.format(Locale.ROOT, "，另外固定 %.0f", build.reserve()) : "",
                         Math.max(0, plugin.players().sheet(player).get(StatKeys.SPIRIT_MAX)),
-                        others > 0 ? String.format(Locale.ROOT, "，其他光環已保留 %.0f", others) : ""));
+                        others > 0 ? String.format(Locale.ROOT, "，其他精魂技能已保留 %.0f", others) : ""));
                 // 2026-10-30 照 PoE2：照技能面板設定的隻數帶（沒設定照原作預設：骸骨戰士 2 隻、其他 1 隻）；這次之前付得起幾隻叫幾隻
                 final int wanted = AuraService.wantedCount(plugin.players().get(player), build.definition().id());
                 final int target = wanted == AuraService.AUTO_COUNT ? build.minions() : Math.min(build.minions(), AuraService.resolveWanted(build, wanted));
@@ -6721,9 +6730,9 @@ public final class SkillService {
             } else {
             lines.add(String.format(Locale.ROOT, "<#8fd3ff>%s<gray>：保留 <white>%.0f</white> 精魂（你有 %.0f%s）",
                     build.definition().reservesSpiritOnly() ? "常駐" // 2026-10-28 照 PoE2：戰旗、掠閃、喚駒綁在按鍵格上就保留，精魂不夠時不能用
-                    : spec.herald() ? "捷光環" : "光環", build.reserve(),
+                    : spec.herald() ? "捷光環" : build.definition().tags().contains("aura") ? "光環" : "常駐增益", build.reserve(), // 2026-10-30：不是光環的寫常駐增益
                     Math.max(0, plugin.players().sheet(player).get(StatKeys.SPIRIT_MAX)),
-                    others > 0 ? String.format(Locale.ROOT, "，其他光環已保留 %.0f", others) : ""));
+                    others > 0 ? String.format(Locale.ROOT, "，其他精魂技能已保留 %.0f", others) : ""));
             }
         }
         final List<Modifier> effects = build.auraModifiers();
@@ -6735,7 +6744,7 @@ public final class SkillService {
                 lines.add("<#8fd3ff>　" + ItemRenderer.escape(line));
             }
             if (build.auraEffect() != 1.0) {
-                lines.add(String.format(Locale.ROOT, "<dark_gray>　（已含光環效果 ×%.2f）", build.auraEffect()));
+                lines.add(String.format(Locale.ROOT, "<dark_gray>　（已含%s效果 ×%.2f）", spec.herald() ? "捷光環" : "光環", build.auraEffect()));
             }
             // 2026-10（祕法之心）：照最大魔力算的效果，把現在的數字寫出來
             final double maxMana = tw.exilecore.character.PlayerState.maxMana(plugin.players().sheet(player)); // 2026-10：跟血條一樣（含靈能電池）

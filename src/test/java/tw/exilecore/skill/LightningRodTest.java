@@ -154,7 +154,7 @@ class LightningRodTest {
         final List<Modifier> mods = tw.exilecore.currency.GemQuality.modifiers("lightning_rod", 20, "品質");
         assertEquals(20, mods.stream().filter(m -> m.stat().equals(LightningRods.EXTRA_BURST)).mapToDouble(Modifier::value).sum(), 1e-9);
         assertEquals(0, mods.stream().filter(m -> m.stat().equals(StatKeys.DAMAGE)).count(), "不再是通用的增加傷害");
-        final List<Modifier> advanced = tw.exilecore.currency.GemQuality.advancedModifiers("lightning_rod", 20, "進階奇術");
+        final List<Modifier> advanced = tw.exilecore.currency.GemQuality.advancedModifiers("lightning_rod", 20, "高階奇術");
         assertEquals(0.2, advanced.stream().filter(m -> m.stat().equals(StatKeys.ATTACK_SPEED)).mapToDouble(Modifier::value).sum(), 1e-9);
         assertFalse(ModifierText.describe(mods.getFirst()).startsWith("特殊效果"));
         assertTrue(ModifierText.describe(Modifier.flat(LightningRods.BURST_DELAY, 0.1, "雷鳴箭")).contains("0.1 秒"));

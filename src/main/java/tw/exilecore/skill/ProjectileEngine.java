@@ -1527,6 +1527,7 @@ final class ProjectileEngine implements Listener {
         }
         if (!shot.secondary && !shot.returning && owner != null && plugin.skills() != null) {
             plugin.skills().spears().landed(owner, shot.build, shot.profile, at, shot.direction); // 2026-10-27 照 PoE2：擲矛（怒星炸開）、炎爆矛（插地；怒星十字照飛的方向）
+            plugin.skills().lanceLanded(owner, shot.build, shot.profile, at); // 2026-10-31 照 PoE2 Storm Lance：飛到停下的地方插著、落地炸 2 公尺
         }
         if (zones != null && owner != null && !shot.returning && ShockchainArrows.lodgesRod(shot.shockchain, shot.shockcharged)) {
             // 2026-10-28 照 PoE2 Shockchain Arrow：充能過的箭最後一次連鎖之後在最後一個目標附近掉到地上變成雷霆之杖（PoE2 0.4.0；這次之前看連鎖過幾次）。

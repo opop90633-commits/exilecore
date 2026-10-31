@@ -3202,7 +3202,7 @@ public final class MinionService implements Listener, MinionHooks {
         final double radius = MinionAbilities.VOLLEY_RADIUS * areaScale(artillery) * Math.sqrt(1 + dex / MinionAbilities.DEX_PER_AREA / 100.0);
         final SkillProfile volley = attackProfile(artillery, "death_from_above", MinionAbilities.VOLLEY_DAMAGE,
                 Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.PROJECTILE), null,
-                List.of(Modifier.increased(tw.exilecore.stats.StatKeys.DAMAGE, str / MinionAbilities.STR_PER_DAMAGE / 100.0, "支援火力：力量")));
+                List.of(Modifier.increased(tw.exilecore.stats.StatKeys.DAMAGE, str / MinionAbilities.STR_PER_DAMAGE / 100.0, "掩護火力：力量")));
         final Attack hit = with(artillery, volley);
         // 2026-10-30 照 PoE2 Death From Above（attaching to an enemy if it lands on one）：信號彈落在敵人身上就黏著牠，之後每一輪箭雨照牠現在的位置；
         // 這次之前箭雨一律落在原地

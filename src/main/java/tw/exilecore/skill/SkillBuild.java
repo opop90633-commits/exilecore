@@ -303,6 +303,9 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 profile = profile.derive(profile.id(), Set.of(Tags.TRAP, Tags.DURATION), Set.of());
             }
         }
+        if (StatKeys.flag(effective, StatKeys.FLAG_VERGLAS)) {
+            profile = profile.derive(profile.id(), Set.of(IceCrystals.VERGLAS_TAG), Set.of()); // 2026-10-30 照 PoE2 Verglas：冰淞的增益只給被輔助的技能
+        }
         final Set<String> context = profile.tags();
         if (deploy != null && deploy.kind() == DeploySpec.Kind.TOTEM) {
             // 2026-10-26 照 PoE2：「+x 秒圖騰持續時間」（星咒圖騰、英靈圖騰、崩震圖騰的品質）加在基礎持續時間上，再乘持續時間倍率
@@ -397,7 +400,9 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                         ? StatKeys.CURSE_EFFECT : StatKeys.MARK_EFFECT, 1.0, context))
                 : definition.mechanic() == Mechanic.WARCRY ? Math.max(0, effective.apply(StatKeys.WARCRY_EFFECT, 1.0, context)) : 1) // 戰吼效果
                 : aura.herald() ? Math.max(0, effective.apply(StatKeys.HERALD_EFFECT, 1.0, context)) // 捷光環不吃光環效果，只吃捷光環效果（2026-10）
-                : Math.max(0, effective.apply(StatKeys.AURA_EFFECT, 1.0, context));
+                // 2026-10-30 照 PoE2：只有真的光環（Aura 類型：寶石有 aura 標籤）吃光環效果；元素潮汐、木甲、幻步這類常駐增益不吃
+                //   （這次之前 mechanic: aura 的全部都吃）
+                : definition.tags().contains("aura") ? Math.max(0, effective.apply(StatKeys.AURA_EFFECT, 1.0, context)) : 1;
         final boolean generosity = aura != null && !definition.reservesSpiritOnly() && StatKeys.flag(effective, StatKeys.FLAG_GENEROSITY);
         final WarcrySpec warcry = definition.warcry();
         // 2026-10-26 照 PoE2：照強度強化的戰吼，這裡只記「多強化幾次」（強勢戰吼、天賦），次數吼的時候照強度算
@@ -657,7 +662,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
 
     /** 2026-10-28：這條是不是品質給的（一般品質「品質 x%」、進階奇術加倍的「進階奇術」）。 */
     static boolean isQuality(final Modifier modifier) {
-        return modifier.source() != null && (modifier.source().startsWith(SkillService.QUALITY_SOURCE) || "進階奇術".equals(modifier.source()));
+        return modifier.source() != null && (modifier.source().startsWith(SkillService.QUALITY_SOURCE) || "高階奇術".equals(modifier.source()));
     }
 
     /**

@@ -168,6 +168,11 @@ public final class MapService {
     }
 
     /** 地圖事件（給模組註冊監聽）。 */
+    /** 2026-10-30：這隻是裂隙、深淵裂縫湧出來的怪嗎（沒人有份時掉落交給最近的玩家，直接收進包包）。 */
+    public boolean riftMonster(final org.bukkit.entity.LivingEntity entity) {
+        return events != null && events.riftMonster(entity);
+    }
+
     MapEvents events() {
         return events;
     }

@@ -597,6 +597,15 @@ public final class CombatListener implements Listener {
                 final double current = plugin.players().get((Player) attacker).life();
                 conditional.add(Modifier.increased(StatKeys.CRIT_BONUS, Math.floor(current / 50) * perLife / 100.0, "血鋒"));
             }
+            // 2026-10-31 照 PoE2 Chober Chaber（忠誠之錘）：召喚物傷害的增加、減少也套用在你身上（只算寫明召喚物的那幾條）
+            if (attackerSheet.flat(StatKeys.MINION_DAMAGE_AFFECTS_YOU, java.util.Set.of()) > 0) {
+                final java.util.Set<String> asMinion = new java.util.HashSet<>(hitTagSet);
+                asMinion.add(tw.exilecore.stats.Tags.MINION);
+                final double minionOnly = skillSheet.increased(StatKeys.DAMAGE, asMinion) - skillSheet.increased(StatKeys.DAMAGE, hitTagSet);
+                if (minionOnly != 0) {
+                    conditional.add(Modifier.increased(StatKeys.DAMAGE, minionOnly, "召喚物傷害"));
+                }
+            }
             // 2026-10：對稀有、傳奇怪物（含 Boss、訓練假人・首領）增加傷害
             if (defenderMonster != null) {
                 final boolean unique = defenderMonster.boss() || defenderMonster.rarity() == tw.exilecore.monster.MonsterRarity.UNIQUE;
@@ -627,7 +636,11 @@ public final class CombatListener implements Listener {
                     continue;
                 }
                 final double inc = conditionSheet.increased(stat, hitTagSet);
-                final double more = conditionSheet.more(stat, hitTagSet);
+                double more = conditionSheet.more(stat, hitTagSet);
+                if (stat.equals(StatKeys.DAMAGE_CLOSE) && more != 1) {
+                    // 2026-10-30 照 PoE2 Close Combat II：1 公尺內全額，到 3.5 公尺遞減到沒有；這次之前 3.5 格內一律全額
+                    more = 1 + (more - 1) * StatKeys.closeFalloff(attacker.getLocation().distance(defender.getLocation()));
+                }
                 if (inc != 0) {
                     conditional.add(Modifier.increased(StatKeys.DAMAGE, inc, stat.equals(StatKeys.DAMAGE_CLOSE) ? "近身" : "對詛咒的敵人"));
                 }

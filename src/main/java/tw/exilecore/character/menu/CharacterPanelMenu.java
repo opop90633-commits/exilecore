@@ -161,7 +161,7 @@ public final class CharacterPanelMenu extends Menu {
                 // 2026-10：套了資源包的人看到那一欄的剪影（戒指、項鍊、頭盔…），比較好認
                 set(JEWELLERY_POSITIONS[i], i == PlayerState.RING3
                         ? uiIcon(slotShape(slot), emptyIcon(slot), "<gray>第三個戒指欄", "<dark_gray>點下方自己背包裡的戒指裝上",
-                                "<dark_gray>（前兩格都裝了才會裝到這裡）", "<gray>展露之指：+1 戒指欄位")
+                                "<dark_gray>（前兩格都裝了才會裝到這裡）", "<gray>舒展之指：+1 戒指欄位")
                         : uiIcon(slotShape(slot), emptyIcon(slot), "<gray>" + slot.displayName() + "欄",
                         "<dark_gray>點下方自己背包裡的" + slot.displayName() + "裝上"));
             } else {
@@ -184,7 +184,7 @@ public final class CharacterPanelMenu extends Menu {
         drawCharms(state);
         set(SLOT_HELP, uiIcon("help", Material.PAPER, "<white>裝備欄",
                 "<gray>武器、副手、防具、戒指 ×2、項鍊、腰帶都裝在這裡",
-                "<gray>（昇華・展露之指「+1 戒指欄位」：頭盔左邊多一格戒指欄）",
+                "<gray>（昇華・舒展之指「+1 戒指欄位」：頭盔左邊多一格戒指欄）",
                 "<gray>裝上就生效：手上不用拿、身上不用穿",
                 "<gray>快捷列第 9 格、防具欄顯示的是裝在這裡的東西（只是外觀）",
                 "<gray>點下方自己背包裡的裝備就會裝上（原本的換回背包）",

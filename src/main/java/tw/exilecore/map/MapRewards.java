@@ -226,7 +226,7 @@ public final class MapRewards {
     }
 
     /** 把做好的物品直接給玩家（通貨先進通貨袋；其他先背包、再隨身背包，都滿了掉在腳下）；不經過掉落過濾（是他自己選的）。回傳有沒有掉在地上。 */
-    static boolean give(final ExileCore plugin, final Player player, final List<ItemStack> items) {
+    public static boolean give(final ExileCore plugin, final Player player, final List<ItemStack> items) { // 2026-10-30：劫盜的大金庫也用
         boolean dropped = false;
         for (final ItemStack item : items) {
             final java.util.Optional<tw.exilecore.currency.CurrencyType> currency = plugin.currencies() == null

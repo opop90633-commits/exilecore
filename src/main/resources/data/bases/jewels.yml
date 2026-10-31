@@ -92,7 +92,7 @@ time_lost_diamond:
 # 2026-10-26 照 PoE2 0.5：永恆珠寶（Timeless Jewel）。只有傳奇（英雄悲劇、不朽恨意，uniques.yml），一般掉落抽不到（drop_weight 0）。
 # 放進珠寶孔後，孔周圍 1500（原作單位，「非常大」）範圍內的天賦被征服（passive/TimelessJewels.java、passives/timeless.json）；同時只能配一顆。
 timeless_jewel:
-  name: 永恆珠寶
+  name: 恆時珠寶
   material: DIAMOND
   model: exilecore:jewel/diamond
   slot: JEWEL

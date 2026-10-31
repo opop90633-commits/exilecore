@@ -101,7 +101,7 @@ class MinionSupportTypesTest {
         assertEquals("要投射物技能", support("pierce").refusal(skill("skeletal_stormcaller")));
         // 砲手的箭雨（原作 ProjectileNoCollision、CannotChain）：投射物的機制吃不到
         assertEquals("召喚物沒有真的射出投射物（穿透、連鎖、分裂、多射吃不到）", support("pierce").refusal(skill("supporting_fire")));
-        assertNull(support("point_blank").refusal(skill("skeletal_archers")), "投射物傷害的照樣可以");
+        assertNull(support("close_quarters").refusal(skill("skeletal_archers")), "投射物傷害的照樣可以");
         // 2026-10-29 照 PoE2：召喚物的投射物真的會飛（MinionProjectiles），只動投射物速度的也可以掛；這次之前「召喚物的技能吃不到這顆輔助的效果」
         assertNull(support("faster_projectiles").refusal(skill("skeletal_archers")), "疾矢：射手的箭飛得更快");
     }

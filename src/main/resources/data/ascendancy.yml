@@ -293,7 +293,7 @@ ascendancies:
         stats:
           - { stat: armour, type: INCREASED, value: 20 }
       stone_skin:
-        name: 頑石鋼膚          # Stone Skin
+        name: 岩膚鐵骨          # Stone Skin
         requires: armour
         notable: true
         icon: IRON_CHESTPLATE
@@ -309,7 +309,7 @@ ascendancies:
         stats:
           - { stat: skill.area, type: INCREASED, value: 8, tags: [slam] }
       earthbreaker:
-        name: 天崩地裂          # Earthbreaker
+        name: 碎嶽崩天          # Earthbreaker
         requires: slam_area_effect
         notable: true
         icon: MACE
@@ -326,7 +326,7 @@ ascendancies:
         stats:
           - { stat: skill.area, type: INCREASED, value: 8, tags: [slam] }
       ancestral:
-        name: 先祖威能          # Ancestral Empowerment
+        name: 祖靈之威          # Ancestral Empowerment
         requires: slam_area_effect_2
         notable: true
         icon: MACE
@@ -342,7 +342,7 @@ ascendancies:
         stats:
           - { stat: attr.str, type: INCREASED, value: 4 }
       colossal_capacity:
-        name: 巨量承載          # Colossal Capacity
+        name: 千鈞負重          # Colossal Capacity
         requires: strength
         notable: true
         icon: NETHER_STAR
@@ -362,7 +362,7 @@ ascendancies:
         stats:
           - { stat: attr.str, type: INCREASED, value: 4 }
       hulking_form:
-        name: 壓倒性的身姿          # Hulking Form
+        name: 巍然巨軀          # Hulking Form
         requires: strength_2
         notable: true
         icon: NETHER_STAR
@@ -378,7 +378,7 @@ ascendancies:
         stats:
           - { stat: stun.buildup, type: INCREASED, value: 18 }
       crushing_impacts:
-        name: 輾壓痛擊          # Crushing Impacts
+        name: 碾骨重擊          # Crushing Impacts
         requires: stun_buildup
         notable: true
         icon: ANVIL
@@ -397,7 +397,7 @@ ascendancies:
         stats:
           - { stat: stun.buildup, type: INCREASED, value: 18 }
       mountain_splitter:
-        name: 劈山碎石          # Mountain Splitter
+        name: 開山裂石          # Mountain Splitter
         requires: stun_buildup_2
         notable: true
         icon: MACE
@@ -413,7 +413,7 @@ ascendancies:
         stats:
           - { stat: life.regen_percent, type: FLAT, value: 0.5 }
       mysterious_lineage:
-        name: 神秘血脈          # Mysterious Lineage
+        name: 幽祕血統          # Mysterious Lineage
         requires: life_regeneration
         notable: true
         icon: RED_DYE
@@ -454,7 +454,7 @@ ascendancies:
         stats:
           - { stat: armour.break, type: INCREASED, value: 25 }
       imploding_impacts:
-        name: 碎猛之擊          # Imploding Impacts
+        name: 爆碎重擊          # Imploding Impacts
         requires: armour_break_2
         notable: true
         icon: IRON_CHESTPLATE
@@ -472,13 +472,13 @@ ascendancies:
         stats:
           - { stat: armour, type: INCREASED, value: 20 }
       jade_heritage:
-        name: 玉石之護          # Jade Heritage
+        name: 翠甲庇佑          # Jade Heritage
         requires: armour
         notable: true
         icon: ENCHANTED_BOOK
         lines:
           - 每秒獲得 1 層玉石
-          - 提供技能：包覆於翠玉中
+          - 提供技能：封入翠玉
         stats:
           - { stat: asc.jade, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
           - { stat: grant_skill.encase_in_jade, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
@@ -490,14 +490,14 @@ ascendancies:
         stats:
           - { stat: totem.life, type: INCREASED, value: 20 }
       answered_call:
-        name: 先祖之引          # Answered Call
+        name: 祖魂應召          # Answered Call
         requires: totem_life
         notable: true
         icon: ENCHANTED_BOOK
         lines:
           - +1 已召喚圖騰數量上限
           - 召喚圖騰時觸發先祖之靈
-          - 提供技能：先祖之魂
+          - 提供技能：祖靈現身
         stats:
           - { stat: skill.totems, type: FLAT, value: 1 }
           - { stat: asc.ancestral_spirits, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
@@ -511,7 +511,7 @@ ascendancies:
         stats:
           - { stat: totem.life, type: INCREASED, value: 20 }
       wooden_wall:
-        name: 堅木之壘          # Wooden Wall
+        name: 鐵木壁壘          # Wooden Wall
         requires: totem_life_2
         notable: true
         icon: TOTEM_OF_UNDYING
@@ -527,7 +527,7 @@ ascendancies:
         stats:
           - { stat: block.chance, type: INCREASED, value: 6 }
       renlys_training:
-        name: 倫利之訓          # Renly's Training
+        name: 藍禮的教誨          # Renly's Training
         requires: block_chance
         notable: true
         icon: SHIELD
@@ -544,7 +544,7 @@ ascendancies:
         stats:
           - { stat: block.chance, type: INCREASED, value: 6 }
       turtle_charm:
-        name: 靈龜之符          # Turtle Charm
+        name: 玄龜護符          # Turtle Charm
         requires: block_chance_2
         notable: true
         icon: SHIELD
@@ -562,7 +562,7 @@ ascendancies:
         stats:
           - { stat: warcry.speed, type: INCREASED, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       warcallers_bellow:
-        name: 戰爭之哮          # Warcaller's Bellow
+        name: 戰號長嘯          # Warcaller's Bellow
         requires: warcry_speed
         notable: true
         icon: RED_DYE
@@ -578,7 +578,7 @@ ascendancies:
     name: 鑄星匠
     color: "#ff7a3a"
     icon: ANVIL
-    summary: 熔爐旁長大的鐵匠：火焰抗性、鐵匠傑作（每個胸甲天賦 +200 護甲）、火焰與近戰傷害。
+    summary: 熔爐旁長大的鐵匠：火焰抗性、鍛師名作（每個胸甲天賦 +200 護甲）、火焰與近戰傷害。
     nodes:
       fire_resistance:
         name: 火焰抗性          # Fire Resistance
@@ -588,7 +588,7 @@ ascendancies:
         stats:
           - { stat: resist.fire, type: FLAT, value: 8 }
       coal_stoker:
-        name: 添煤工          # Coal Stoker
+        name: 燒爐人          # Coal Stoker
         requires: fire_resistance
         notable: true
         icon: BLAZE_POWDER
@@ -605,7 +605,7 @@ ascendancies:
         stats:
           - { stat: resist.fire, type: FLAT, value: 8 }
       forged_flame:
-        name: 烈焰鑄造          # Forged in Flame
+        name: 炎鍛成形          # Forged in Flame
         requires: fire_resistance_2
         notable: true
         icon: BLAZE_POWDER
@@ -621,12 +621,12 @@ ascendancies:
         stats:
           - { stat: damage, type: INCREASED, value: 20, tags: [melee] }
       against_anvil:
-        name: 千錘百鍊          # Against the Anvil
+        name: 砧上百鍛          # Against the Anvil
         requires: melee_damage
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：鍛鍊武器
+          - 提供技能：淬鍊兵器
         stats:
           - { stat: grant_skill.temper_weapon, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       strength:
@@ -637,16 +637,16 @@ ascendancies:
         stats:
           - { stat: attr.str, type: INCREASED, value: 5 }
       living_weapon:
-        name: 活體武器          # Living Weapon
+        name: 血肉兵刃          # Living Weapon
         requires: strength
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：幻化武器
+          - 提供技能：幻形兵刃
         stats:
           - { stat: grant_skill.manifest_weapon, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       smiths_masterwork:
-        name: 鐵匠傑作          # Smith's Masterwork
+        name: 鍛師名作          # Smith's Masterwork
         notable: true
         icon: IRON_CHESTPLATE
         lines:
@@ -656,7 +656,7 @@ ascendancies:
           - { stat: asc.normal_chest, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
         note: 每個相連的核心天賦都 +200 護甲；胸甲類的效果不看穿什麼胸甲   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：每個相連的核心天賦都 +200 護甲；胸甲類的效果不看穿什麼胸甲」
       kitavan_imprint:
-        name: 奇塔弗銘刻          # Kitavan Imprint
+        name: 奇泰芙烙印          # Kitavan Imprint
         requires: smiths_masterwork
         notable: true
         icon: IRON_CHESTPLATE
@@ -665,9 +665,9 @@ ascendancies:
         stats:
           - { stat: armour, type: FLAT, value: 200 }
           - { stat: glory.gain, type: INCREASED, value: 60 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鍛師名作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
       spiked_plates:
-        name: 尖刺鎧甲          # Spiked Plates
+        name: 棘刺甲片          # Spiked Plates
         requires: smiths_masterwork
         notable: true
         icon: IRON_CHESTPLATE
@@ -676,9 +676,9 @@ ascendancies:
         stats:
           - { stat: armour, type: FLAT, value: 200 }
           - { stat: thorns.damage, type: INCREASED, value: 100 }
-        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鍛師名作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
       dedication_kitava:
-        name: 奇塔弗奉獻          # Dedication to Kitava
+        name: 獻予奇泰芙          # Dedication to Kitava
         requires: smiths_masterwork
         notable: true
         icon: IRON_CHESTPLATE
@@ -687,9 +687,9 @@ ascendancies:
         stats:
           - { stat: armour, type: FLAT, value: 200 }
           - { stat: asc.chaos_armour, type: FLAT, value: 100 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鍛師名作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
       tantalum_alloy:
-        name: 鉭合金          # Tantalum Alloy
+        name: 鉭鋼          # Tantalum Alloy
         requires: smiths_masterwork
         notable: true
         icon: IRON_CHESTPLATE
@@ -698,9 +698,9 @@ ascendancies:
         stats:
           - { stat: armour, type: FLAT, value: 200 }
           - { stat: resist.fire, type: FLAT, value: 75 }
-        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鍛師名作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
       kitavan_engraving:
-        name: 奇塔弗雕紋          # Kitavan Engraving
+        name: 奇泰芙刻紋          # Kitavan Engraving
         requires: smiths_masterwork
         notable: true
         icon: IRON_CHESTPLATE
@@ -709,9 +709,9 @@ ascendancies:
         stats:
           - { stat: armour, type: FLAT, value: 200 }
           - { stat: life.max, type: INCREASED, value: 15 }
-        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鍛師名作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
       support_straps:
-        name: 支撐綁帶          # Support Straps
+        name: 加固束帶          # Support Straps
         requires: smiths_masterwork
         notable: true
         icon: IRON_CHESTPLATE
@@ -720,7 +720,7 @@ ascendancies:
         stats:
           - { stat: armour, type: FLAT, value: 200 }
           - { stat: attr.str, type: INCREASED, value: 20 }
-        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鍛師名作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
       internal_layer:
         name: 內裡          # Internal Layer
         requires: smiths_masterwork
@@ -731,9 +731,9 @@ ascendancies:
         stats:
           - { stat: armour, type: FLAT, value: 200 }
           - { stat: crit.bonus_taken, type: INCREASED, value: -100 }
-        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鍛師名作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
       heatproofing:
-        name: 火焰隔絕          # Heatproofing
+        name: 耐焰處理          # Heatproofing
         requires: smiths_masterwork
         notable: true
         icon: IRON_CHESTPLATE
@@ -744,9 +744,9 @@ ascendancies:
           - { stat: flag.immune.ignite, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
           - { stat: flag.immune.bleed, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
           - { stat: flag.immune.poison, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鍛師名作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
       flowing_metal:
-        name: 流體金屬          # Flowing Metal
+        name: 流動熔金          # Flowing Metal
         requires: smiths_masterwork
         notable: true
         icon: IRON_CHESTPLATE
@@ -755,9 +755,9 @@ ascendancies:
         stats:
           - { stat: armour, type: FLAT, value: 200 }
           - { stat: armour.elemental, type: FLAT, value: 50 }
-        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鍛師名作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
       tribute_utula:
-        name: 烏圖拉的貢禮          # Tribute to Utula
+        name: 吾圖瑪之祭          # Tribute to Utula
         requires: smiths_masterwork
         notable: true
         icon: IRON_CHESTPLATE
@@ -766,9 +766,9 @@ ascendancies:
         stats:
           - { stat: armour, type: FLAT, value: 200 }
           - { stat: spirit.max, type: INCREASED, value: 30 }
-        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鍛師名作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
       molten_symbol:
-        name: 熔化標誌          # Molten Symbol
+        name: 熔紋印記          # Molten Symbol
         requires: smiths_masterwork
         notable: true
         icon: IRON_CHESTPLATE
@@ -777,7 +777,7 @@ ascendancies:
         stats:
           - { stat: armour, type: FLAT, value: 200 }
           - { stat: taken.physical_as_fire, type: FLAT, value: 25 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鍛師名作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
       leather_bindings:
         name: 皮帶          # Leather Bindings
         requires: smiths_masterwork
@@ -788,7 +788,7 @@ ascendancies:
         stats:
           - { stat: armour, type: FLAT, value: 200 }
           - { stat: life.regen_percent, type: FLAT, value: 3 }
-        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
+        note: 配了就有（不看穿什麼胸甲）；另外 +200 護甲（鍛師名作）   # 2026-10-27 照站長：玩家看的補充不寫「本伺服器」；這次之前「本伺服器：配了就有（不看穿什麼胸甲）；另外 +200 護甲（鐵匠傑作）」
       fire_damage:
         name: 火焰傷害          # Fire Damage
         icon: BLAZE_POWDER
@@ -802,7 +802,7 @@ ascendancies:
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：擊中時火焰法術
+          - 提供技能：命中引火術
         stats:
           - { stat: grant_skill.fire_spell_on_hit, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
@@ -821,7 +821,7 @@ ascendancies:
         stats:
           - { stat: skill.cooldown, type: INCREASED, value: -6 }
       witchbane:
-        name: 女巫殺手          # Witchbane
+        name: 獵巫之刃          # Witchbane
         requires: cooldown_recovery
         notable: true
         icon: RED_DYE
@@ -840,7 +840,7 @@ ascendancies:
         stats:
           - { stat: skill.cooldown, type: INCREASED, value: -6 }
       no_mercy:
-        name: 毫不留情          # No Mercy
+        name: 絕不手軟          # No Mercy
         requires: cooldown_recovery_2
         notable: true
         icon: NETHER_STAR
@@ -857,13 +857,13 @@ ascendancies:
           - { stat: armour, type: INCREASED, value: 15 }
           - { stat: evasion, type: INCREASED, value: 15 }
       obsessive_rituals:
-        name: 執著祭儀          # Obsessive Rituals
+        name: 偏執儀典          # Obsessive Rituals
         requires: armour_evasion
         notable: true
         icon: ENCHANTED_BOOK
         lines:
           - 更少 50% 護甲與閃避值
-          - 提供技能：巫術護盾
+          - 提供技能：巫法結界
         stats:
           - { stat: armour, type: MORE, value: -50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
           - { stat: evasion, type: MORE, value: -50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
@@ -878,12 +878,12 @@ ascendancies:
           - { stat: armour, type: INCREASED, value: 15 }
           - { stat: evasion, type: INCREASED, value: 15 }
       ceremonial_ablution:
-        name: 儀式淨身          # Ceremonial Ablution
+        name: 淨身之禮          # Ceremonial Ablution
         requires: armour_evasion_2
         notable: true
         icon: WITHER_ROSE
         lines:
-          - 巫術護盾的屏障也可承受擊中的物理與混沌傷害
+          - 巫法結界的屏障也可承受擊中的物理與混沌傷害
         stats:
           - { stat: asc.ward_all, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       area_effect:
@@ -894,7 +894,7 @@ ascendancies:
         stats:
           - { stat: skill.area, type: INCREASED, value: 8 }
       zealous_inquisition:
-        name: 狂熱裁決          # Zealous Inquisition
+        name: 狂信審判          # Zealous Inquisition
         requires: area_effect
         notable: true
         icon: RED_DYE
@@ -911,7 +911,7 @@ ascendancies:
         stats:
           - { stat: skill.cooldown, type: INCREASED, value: -6 }
       weapon_master:
-        name: 武器大師          # Weapon Master
+        name: 百兵宗匠          # Weapon Master
         requires: cooldown_recovery_3
         notable: true
         icon: NETHER_STAR
@@ -927,7 +927,7 @@ ascendancies:
         stats:
           - { stat: damage.vs_low_life, type: FLAT, value: 35 }
       pitiless_killer:
-        name: 冷酷殺手          # Pitiless Killer
+        name: 無情處刑者          # Pitiless Killer
         requires: damage_low_life
         notable: true
         icon: NETHER_STAR
@@ -990,7 +990,7 @@ ascendancies:
           - { stat: armour, type: INCREASED, value: 15 }
           - { stat: evasion, type: INCREASED, value: 15 }
       stay_light_use_cover:
-        name: 保持警覺，善用掩護          # Stay Light, Use Cover
+        name: 輕裝上陣，善用掩體          # Stay Light, Use Cover
         requires: armour_evasion_2
         notable: true
         icon: IRON_CHESTPLATE
@@ -1016,7 +1016,7 @@ ascendancies:
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：支援火力
+          - 提供技能：掩護火力
         stats:
           - { stat: grant_skill.supporting_fire, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
         # 2026-10-27 照 PoE2：砲手是有實體、不會受傷、只聽指令的召喚物（MinionService 的從天而降）；拿掉 note（這次之前「砲手不是召喚物，支援火力是一個 4 秒冷卻的箭雨」）
@@ -1051,7 +1051,7 @@ ascendancies:
         stats:
           - { stat: damage, type: INCREASED, value: 20, tags: [totem] }
       strategic:
-        name: 戰術陣地          # Strategic Embankments
+        name: 陣地工事          # Strategic Embankments
         requires: totem_damage_2
         notable: true
         icon: TOTEM_OF_UNDYING
@@ -1067,7 +1067,7 @@ ascendancies:
         stats:
           - { stat: spirit.max, type: INCREASED, value: 8 }
       solid_plan:
-        name: 可靠的計畫          # A Solid Plan
+        name: 萬全之策          # A Solid Plan
         requires: spirit
         notable: true
         icon: BREWING_STAND
@@ -1101,7 +1101,7 @@ ascendancies:
         stats:
           - { stat: skill.area, type: INCREASED, value: 16, tags: [banner] }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       whoever_pays_best:
-        name: 待價而沽          # Whoever Pays Best
+        name: 價高者得          # Whoever Pays Best
         requires: banner_area
         notable: true
         icon: WHITE_BANNER
@@ -1119,7 +1119,7 @@ ascendancies:
         stats:
           - { stat: pin.buildup, type: INCREASED, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       suppressing_fire:
-        name: 火力抑制          # Suppressing Fire
+        name: 壓制火網          # Suppressing Fire
         requires: pin_buildup
         notable: true
         icon: BLAZE_POWDER
@@ -1137,7 +1137,7 @@ ascendancies:
         stats:
           - { stat: pin.buildup, type: INCREASED, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       right_where_we_want:
-        name: 位置正好          # Right Where We Want Them
+        name: 正中下懷          # Right Where We Want Them
         requires: pin_buildup_2
         notable: true
         icon: ARROW
@@ -1202,7 +1202,7 @@ ascendancies:
         stats:   # 2026-10-26 照 PoE2：裝備與技能寶石的屬性需求都乘（GemAttributes）；這次之前尚未生效
           - { stat: item.attr_requirement, type: INCREASED, value: -4 }
       thaumaturgical:
-        name: 奇術注入          # Thaumaturgical Infusion
+        name: 奇術灌注          # Thaumaturgical Infusion
         requires: reduced_attribute_3
         notable: true
         icon: BLAZE_POWDER
@@ -1222,7 +1222,7 @@ ascendancies:
           - { stat: attr.dex, type: INCREASED, value: 3 }
           - { stat: attr.int, type: INCREASED, value: 3 }
       adaptive_capability:
-        name: 應變能力          # Adaptive Capability
+        name: 臨機應變          # Adaptive Capability
         requires: attributes
         notable: true
         icon: GOLD_INGOT
@@ -1259,12 +1259,12 @@ ascendancies:
         stats:
           - { stat: asc.skill_quality, type: FLAT, value: 2 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       essence_virtue:
-        name: 結晶美德          # Essence of Virtue
+        name: 晶化德行          # Essence of Virtue
         requires: skill_gem_quality
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：高尚禦盾
+          - 提供技能：正氣護盾
         stats:
           - { stat: grant_skill.virtuous_barrier, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       skill_gem_quality_2:
@@ -1276,7 +1276,7 @@ ascendancies:
         stats:
           - { stat: asc.skill_quality, type: FLAT, value: 2 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       implanted_gems:
-        name: 植入寶石          # Implanted Gems
+        name: 嵌體寶石          # Implanted Gems
         requires: skill_gem_quality_2
         choice: true
         icon: EMERALD
@@ -1313,7 +1313,7 @@ ascendancies:
         stats:
           - { stat: asc.skill_quality, type: FLAT, value: 2 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       advanced_thaumaturgy:
-        name: 進階奇術          # Advanced Thaumaturgy
+        name: 高階奇術          # Advanced Thaumaturgy
         requires: skill_gem_quality_3
         notable: true
         icon: EMERALD
@@ -1340,7 +1340,7 @@ ascendancies:
           - { stat: flask.life_recovery, type: INCREASED, value: 15 }
           - { stat: flask.mana_recovery, type: INCREASED, value: 15 }
       azmeri_brew:
-        name: 阿茲莫里之酒          # Azmeri Brew
+        name: 林嵐佳釀          # Azmeri Brew
         requires: flask_recovery
         notable: true
         icon: POTION
@@ -1392,7 +1392,7 @@ ascendancies:
           - { stat: attack.speed, type: INCREASED, value: 4 }
           - { stat: cast.speed, type: INCREASED, value: 4 }
       predatory_instinct:
-        name: 獵食直覺          # Predatory Instinct
+        name: 掠食本能          # Predatory Instinct
         requires: skill_speed
         notable: true
         icon: NETHER_STAR
@@ -1411,7 +1411,7 @@ ascendancies:
           - { stat: attack.speed, type: INCREASED, value: 4 }
           - { stat: cast.speed, type: INCREASED, value: 4 }
       for_kill:
-        name: 專注擊殺          # In for the Kill
+        name: 一擊斃命          # In for the Kill
         requires: skill_speed_2
         notable: true
         icon: SUGAR
@@ -1450,7 +1450,7 @@ ascendancies:
         stats:
           - { stat: damage, type: INCREASED, value: 12, tags: [elemental] }
       surging_avatar:
-        name: 澎湃灌注          # Surging Avatar
+        name: 洶湧化身          # Surging Avatar
         requires: elemental_damage_2
         notable: true
         icon: BLAZE_POWDER
@@ -1470,7 +1470,7 @@ ascendancies:
         stats:
           - { stat: leech.effect, type: INCREASED, value: 12 }
       mystic_harvest:
-        name: 神秘豐收          # Mystic Harvest
+        name: 祕境豐收          # Mystic Harvest
         requires: life_leech
         notable: true
         icon: GHAST_TEAR
@@ -1486,7 +1486,7 @@ ascendancies:
         stats:
           - { stat: evasion, type: INCREASED, value: 20 }
       stalking_panther:
-        name: 潛伏獵豹          # Stalking Panther
+        name: 伏影獵豹          # Stalking Panther
         requires: evasion
         notable: true
         icon: FEATHER
@@ -1517,7 +1517,7 @@ ascendancies:
         icon: ENCHANTED_BOOK
         lines:
           - 對受血液沸騰影響的敵人，更多 15% 傷害
-          - 提供技能：鮮血沸騰
+          - 提供技能：沸血
         stats:
           - { stat: asc.blood_boil_more, type: FLAT, value: 15 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
           - { stat: grant_skill.blood_boil, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
@@ -1536,7 +1536,7 @@ ascendancies:
         stats:
           - { stat: spirit.max, type: INCREASED, value: -25 }
       unfurled_finger:
-        name: 展露之指          # Unfurled Finger
+        name: 舒展之指          # Unfurled Finger
         requires: [reduced_spirit, reduced_resistances, reduced_mana]
         notable: true
         icon: NETHER_STAR
@@ -1557,7 +1557,7 @@ ascendancies:
           - { stat: attr.dex, type: INCREASED, value: 3 }
           - { stat: attr.int, type: INCREASED, value: 3 }
       mystic_attunement:
-        name: 神秘同調          # Mystic Attunement
+        name: 祕法同調          # Mystic Attunement
         requires: attributes
         notable: true
         icon: NETHER_STAR
@@ -1582,7 +1582,7 @@ ascendancies:
         stats:
           - { stat: life.recovery_rate, type: INCREASED, value: 10 }   # 2026-10-26 照 PoE2：生命回復速度（再生、偷取、回復都算）；這次之前只加生命再生速度
       wildwood_persistence:
-        name: 荒林堅毅          # Wildwood Persistence
+        name: 林野韌性          # Wildwood Persistence
         requires: life_recovery_rate
         notable: true
         icon: RED_DYE
@@ -1598,7 +1598,7 @@ ascendancies:
         stats:
           - { stat: charm.charges_gained, type: INCREASED, value: 15 }
       intricate_sigils:
-        name: 精妙符印          # Intricate Sigils
+        name: 繁複符印          # Intricate Sigils
         requires: charm_charges
         notable: true
         icon: EMERALD
@@ -1618,7 +1618,7 @@ ascendancies:
         stats:
           - { stat: charm.charges_gained, type: INCREASED, value: 15 }
       mind_phylacteries:
-        name: 心靈護符          # Mind Phylacteries
+        name: 心之護匣          # Mind Phylacteries
         requires: charm_charges_2
         notable: true
         icon: EMERALD
@@ -1634,12 +1634,12 @@ ascendancies:
         stats:
           - { stat: movement.speed, type: INCREASED, value: 3 }
       as_whispers_demand:
-        name: 正如低語所求          # As the Whispers Demand
+        name: 如低語所願          # As the Whispers Demand
         requires: movement_speed
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：儀式獻祭
+          - 提供技能：儀典獻祭
         stats:
           - { stat: grant_skill.ritual_sacrifice, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       movement_speed_2:
@@ -1656,7 +1656,7 @@ ascendancies:
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：女王進軍
+          - 提供技能：女皇巡行
         stats:
           - { stat: grant_skill.queens_procession, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
@@ -1676,7 +1676,7 @@ ascendancies:
         stats:
           - { stat: spirit.max, type: FLAT, value: 10 }
       idolatry:
-        name: 偶像崇敬          # Idolatry
+        name: 偶像信仰          # Idolatry
         requires: spirit
         notable: true
         icon: TOTEM_OF_UNDYING
@@ -1697,14 +1697,14 @@ ascendancies:
         stats:
           - { stat: movement.speed, type: INCREASED, value: 2 }
       vivid_stampede:
-        name: 靈現奔竄          # Vivid Stampede
+        name: 靈影奔騰          # Vivid Stampede
         requires: move_speed
         notable: true
         icon: LIGHTNING_ROD
         lines:
           - 每移動 10 格獲得 1 個靈現之靈，最多 3 個
-          - 攻擊時用掉全部的靈現之靈觸發靈現奔竄
-          - 提供技能：靈現奔竄
+          - 攻擊時用掉全部的靈現之靈觸發靈影奔騰
+          - 提供技能：靈影奔騰
         stats:
           - { stat: asc.vivid_wisps, type: FLAT, value: 3 }   # 2026-10-27 照 PoE2（vivid_stag_maximum_stag_wisps_allowed 3、每 10 格 1 個）
           - { stat: grant_skill.vivid_stampede, type: FLAT, value: 1 }
@@ -1717,12 +1717,12 @@ ascendancies:
         stats:
           - { stat: movement.speed, type: INCREASED, value: 2 }
       morrigan:
-        name: 莫里根的指引          # The Mórrigan's Guidance
+        name: 摩瑞安的指引          # The Mórrigan's Guidance
         requires: move_speed_2
         notable: true
         icon: LIGHTNING_ROD
         lines:
-          - 靈現奔竄結束時獲得 1 個靈現之靈
+          - 靈影奔騰結束時獲得 1 個靈現之靈
           - 靈鹿每躍起一次，傷害更多 20%
           - 靈鹿每躍起一次，感電幅度更多 20%
         stats:
@@ -1737,12 +1737,12 @@ ascendancies:
           - { stat: damage, type: INCREASED, value: 10, tags: [minion, companion] }
           - { stat: asc.companion_near_damage, type: FLAT, value: 10 }
       wild_protector:
-        name: 荒野守護          # Wild Protector
+        name: 荒原守衛          # Wild Protector
         requires: companion_damage
         notable: true
         icon: RABBIT_HIDE
         lines:
-          - 提供技能：荒野守護
+          - 提供技能：荒原守衛
         stats:
           - { stat: grant_skill.wild_protector, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2
       companion_damage_2:
@@ -1756,7 +1756,7 @@ ascendancies:
           - { stat: damage, type: INCREASED, value: 10, tags: [minion, companion] }
           - { stat: asc.companion_near_damage, type: FLAT, value: 10 }
       catha:
-        name: 凱莎的平衡          # The Catha's Balance
+        name: 凱絲塔的平衡          # The Catha's Balance
         requires: companion_damage_2
         notable: true
         icon: RABBIT_HIDE
@@ -1774,7 +1774,7 @@ ascendancies:
           - { stat: skill.area, type: INCREASED, value: 10, tags: [minion, companion] }
           - { stat: life.max, type: INCREASED, value: 15, tags: [minion, companion] }
       natural_order:
-        name: 自然秩序          # The Natural Order
+        name: 萬物秩序          # The Natural Order
         requires: companion_life_area
         notable: true
         icon: WOLF_SPAWN_EGG
@@ -1792,14 +1792,14 @@ ascendancies:
         stats:
           - { stat: crit.chance, type: INCREASED, value: 12 }
       primal_bounty:
-        name: 原始賞金          # Primal Bounty
+        name: 蠻荒厚賜          # Primal Bounty
         requires: crit_chance
         notable: true
         icon: FEATHER
         lines:
           - 每 4 秒獲得 1 根原始梟羽，最多 3 根
-          - 翻滾時用掉 1 根梟羽觸發原始賞金
-          - 提供技能：原始賞金
+          - 翻滾時用掉 1 根梟羽觸發蠻荒厚賜
+          - 提供技能：蠻荒厚賜
         stats:
           - { stat: asc.owl_feathers, type: FLAT, value: 3 }   # 2026-10-27 照 PoE2（每 4 秒 1 根、最多 3 根）
           - { stat: grant_skill.primal_bounty, type: FLAT, value: 1 }
@@ -1812,18 +1812,18 @@ ascendancies:
         stats:
           - { stat: crit.chance, type: INCREASED, value: 12 }
       mhacha:
-        name: 姆哈查之贈          # The Mhacha's Gift
+        name: 穆哈卡之禮          # The Mhacha's Gift
         requires: crit_chance_2
         notable: true
         icon: FEATHER
         lines:
-          - 翻滾時最多可以用掉 2 根梟羽，每多用 1 根，原始賞金的強化效果更多 100%
+          - 翻滾時最多可以用掉 2 根梟羽，每多用 1 根，蠻荒厚賜的強化效果更多 100%
           - 梟羽的獲得速度加快 50%
         stats:
           - { stat: asc.owl_spend, type: FLAT, value: 2 }   # 2026-10-27 照 PoE2（owl_feather_max_bonus_to_stack 2）
           - { stat: asc.owl_rate, type: FLAT, value: 50 }   # owl_feather_gain_frequency_+% 50
       sacred_unity:
-        name: 聖潔一統          # Sacred Unity
+        name: 神聖合一          # Sacred Unity
         notable: true
         cost: 0
         unlock: [vivid_stampede, wild_protector, primal_bounty]
@@ -1834,7 +1834,7 @@ ascendancies:
           - 梟羽強化的技能，中央的投射物會留下一道翱翔之地
         stats:
           - { stat: asc.sacred_unity, type: FLAT, value: 6 }   # 2026-10-27 照 PoE2（翱翔之地 6 秒；熊靈每秒再生 2%、先替你承受 8% 傷害；靈鹿追向前方 120° 內的敵人）
-        note: 配了靈現奔竄、荒野守護、原始賞金三個之後免費配置。荒野擁抱：熊靈存在範圍內的友軍每秒再生 2% 最大生命，熊靈先替他們承受 8% 的傷害。翱翔之地（6 秒）：站在上面增加 30% 閃避值，生命全滿時增加 40% 傷害
+        note: 配了靈影奔騰、荒原守衛、蠻荒厚賜三個之後免費配置。荒野擁抱：熊靈存在範圍內的友軍每秒再生 2% 最大生命，熊靈先替他們承受 8% 的傷害。翱翔之地（6 秒）：站在上面增加 30% 閃避值，生命全滿時增加 40% 傷害
 
   stararrow:                # 原作：Deadeye
     class: ranger
@@ -1851,12 +1851,12 @@ ascendancies:
         stats:
           - { stat: mark.effect, type: INCREASED, value: 12 }
       called_shots:
-        name: 預告射擊          # Called Shots
+        name: 宣告射擊          # Called Shots
         requires: mark_effect
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：預告射擊
+          - 提供技能：宣告射擊
         stats:
           - { stat: grant_skill.called_shots, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
         note: 主要寶石：孔裡放印記技能，其他孔的輔助套在印記上   # 2026-10-28 照 PoE2 Called Shots；這次之前「放面板上的第一個印記技能（不用插在孔裡）」
@@ -1869,7 +1869,7 @@ ascendancies:
         stats:
           - { stat: mark.effect, type: INCREASED, value: 12 }
       bullseye:
-        name: 靶心          # Bullseye
+        name: 正中紅心          # Bullseye
         requires: mark_effect_2
         notable: true
         icon: AMETHYST_SHARD
@@ -1886,7 +1886,7 @@ ascendancies:
           - { stat: attack.speed, type: INCREASED, value: 4 }
           - { stat: cast.speed, type: INCREASED, value: 4 }
       gathering_winds:
-        name: 集風          # Gathering Winds
+        name: 聚風          # Gathering Winds
         requires: skill_speed
         notable: true
         icon: NETHER_STAR
@@ -1932,7 +1932,7 @@ ascendancies:
         stats:
           - { stat: skill.projectile_speed, type: INCREASED, value: 10 }
       endless_munitions:
-        name: 無限彈藥          # Endless Munitions
+        name: 彈藥無盡          # Endless Munitions
         requires: projectile_speed_2
         notable: true
         icon: ARROW
@@ -1948,12 +1948,12 @@ ascendancies:
         stats:
           - { stat: damage, type: INCREASED, value: 12, tags: [projectile] }
       mirage_deadeye:
-        name: 幻影銳眼          # Mirage Deadeye
+        name: 幻影神射          # Mirage Deadeye
         requires: projectile_damage
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：幻影銳眼
+          - 提供技能：幻影神射
         stats:
           - { stat: grant_skill.mirage_deadeye, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
         note: 主要寶石：孔裡放遠程投射物攻擊，幻影用它；冷卻恢復、延長持續時間套在幻影上   # 2026-10-28 照 PoE2 Mirage Deadeye；這次之前「幻影重複你接下來的投射物攻擊（不用插在孔裡）」
@@ -1965,7 +1965,7 @@ ascendancies:
         stats:
           - { stat: charge.duration, type: INCREASED, value: 25 }
       avidity:
-        name: 貪慾          # Avidity
+        name: 貪婪之心          # Avidity
         requires: frenzy_charge
         notable: true
         icon: GLOWSTONE_DUST
@@ -1982,7 +1982,7 @@ ascendancies:
         stats:
           - { stat: charge.duration, type: INCREASED, value: 25 }
       thrilling_chase:
-        name: 驚險追逐          # Thrilling Chase
+        name: 險中追獵          # Thrilling Chase
         requires: frenzy_charge_2
         notable: true
         icon: GLOWSTONE_DUST
@@ -2006,7 +2006,7 @@ ascendancies:
         stats:
           - { stat: evasion, type: INCREASED, value: 20 }
       sustainable:
-        name: 永續實踐          # Sustainable Practices
+        name: 永續之道          # Sustainable Practices
         requires: evasion
         notable: true
         icon: FEATHER
@@ -2023,7 +2023,7 @@ ascendancies:
           - { stat: attack.speed, type: INCREASED, value: 4 }
           - { stat: cast.speed, type: INCREASED, value: 4 }
       relentless_pursuit:
-        name: 無情追獵          # Relentless Pursuit
+        name: 窮追不捨          # Relentless Pursuit
         requires: skill_speed
         notable: true
         icon: SOUL_SAND
@@ -2041,7 +2041,7 @@ ascendancies:
           - { stat: attack.speed, type: INCREASED, value: 4 }
           - { stat: cast.speed, type: INCREASED, value: 4 }
       running_assault:
-        name: 衝刺突擊          # Running Assault
+        name: 疾衝突襲          # Running Assault
         requires: skill_speed_2
         notable: true
         icon: LEATHER_BOOTS
@@ -2059,7 +2059,7 @@ ascendancies:
         stats:
           - { stat: poison.magnitude, type: INCREASED, value: 12 }
       overwhelming:
-        name: 懾人劇毒          # Overwhelming Toxicity
+        name: 駭人劇毒          # Overwhelming Toxicity
         requires: poison_effect
         notable: true
         icon: SPIDER_EYE
@@ -2077,28 +2077,28 @@ ascendancies:
         stats:
           - { stat: flask.charges_gained.mana, type: INCREASED, value: 20 }
       brew_concoction:
-        name: 釀造靈藥          # Brew Concoction
+        name: 調製藥劑          # Brew Concoction
         requires: mana_flask_charges
         choice: true
         icon: SPLASH_POTION
       bleeding_concoction:
-        name: 流血混合物          # Bleeding Concoction
+        name: 放血藥劑          # Bleeding Concoction
         option_of: brew_concoction
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：流血混合物
+          - 提供技能：放血藥劑
         stats:
           - { stat: grant_skill.bleeding_concoction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       shattering:
-        name: 粉碎混合物          # Shattering Concoction
+        name: 碎裂藥劑          # Shattering Concoction
         option_of: brew_concoction
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：粉碎混合物
+          - 提供技能：碎裂藥劑
         stats:
           - { stat: grant_skill.shattering_concoction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       explosive_concoction:
-        name: 爆裂物          # Explosive Concoction
+        name: 爆炸藥劑          # Explosive Concoction
         option_of: brew_concoction
         icon: ENCHANTED_BOOK
         lines:
@@ -2106,19 +2106,19 @@ ascendancies:
         stats:
           - { stat: grant_skill.explosive_concoction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       fulminating:
-        name: 烈性混合物          # Fulminating Concoction
+        name: 雷爆藥劑          # Fulminating Concoction
         option_of: brew_concoction
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：烈性混合物
+          - 提供技能：雷爆藥劑
         stats:
           - { stat: grant_skill.fulminating_concoction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       acidic_concoction:
-        name: 酸性混合物          # Acidic Concoction
+        name: 蝕酸藥劑          # Acidic Concoction
         option_of: brew_concoction
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：酸性靈藥
+          - 提供技能：蝕酸藥劑
         stats:
           - { stat: grant_skill.acidic_concoction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       life_flask_charges:
@@ -2129,7 +2129,7 @@ ascendancies:
         stats:
           - { stat: flask.charges_gained.life, type: INCREASED, value: 20 }
       enduring_elixirs:
-        name: 耐久靈藥          # Enduring Elixirs
+        name: 長效藥劑          # Enduring Elixirs
         requires: life_flask_charges
         notable: true
         icon: POTION
@@ -2147,7 +2147,7 @@ ascendancies:
         stats:
           - { stat: passive.points_extra, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       path_seeker:
-        name: 道路探求者          # Path Seeker
+        name: 尋道者          # Path Seeker
         requires: passive_points
         choice: true
         icon: MAP
@@ -2180,7 +2180,7 @@ ascendancies:
         stats:
           - { stat: passive.points_extra, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       travellers_wisdom:
-        name: 旅者的智慧          # Traveller's Wisdom
+        name: 行者之智          # Traveller's Wisdom
         requires: passive_points_2
         notable: true
         icon: LIGHT_BLUE_DYE
@@ -2224,7 +2224,7 @@ ascendancies:
         stats:
           - { stat: crit.chance, type: INCREASED, value: 12 }
       scatter_them_winds:
-        name: ……並驅散於長風之中          # ...and Scatter Them to the Winds
+        name: ……並隨風消散          # ...and Scatter Them to the Winds
         requires: critical_chance_2
         notable: true
         icon: ENCHANTED_BOOK
@@ -2279,12 +2279,12 @@ ascendancies:
         stats:
           - { stat: damage, type: INCREASED, value: 12, tags: [elemental] }
       shall_rage:
-        name: ……而我將怒號          # ...and I Shall Rage
+        name: ……而我將咆哮          # ...and I Shall Rage
         requires: [elemental_damage, elemental_damage_2]
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：無縛化身
+          - 提供技能：無拘化身
         stats:
           - { stat: grant_skill.unbound_avatar, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       chill_effect:
@@ -2321,7 +2321,7 @@ ascendancies:
         stats:
           - { stat: es.recharge, type: INCREASED, value: 20 }
       faith_choice:
-        name: 信仰即為抉擇          # Faith is a Choice
+        name: 信仰乃是選擇          # Faith is a Choice
         requires: energy_shield
         notable: true
         icon: ENCHANTED_BOOK
@@ -2359,7 +2359,7 @@ ascendancies:
         stats:
           - { stat: evasion, type: INCREASED, value: 20 }
       protect_harm:
-        name: ……並免我於傷痛          # ...and Protect me from Harm
+        name: ……並護我免於傷害          # ...and Protect me from Harm
         requires: evasion
         notable: true
         icon: FEATHER
@@ -2385,7 +2385,7 @@ ascendancies:
         stats:
           - { stat: asc.darkness, type: INCREASED, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       embrace_darkness:
-        name: 靈魂昇華          # Embrace the Darkness
+        name: 擁抱黑暗          # Embrace the Darkness
         requires: darkness
         notable: true
         icon: LIGHT_BLUE_DYE
@@ -2409,7 +2409,7 @@ ascendancies:
         stats:
           - { stat: asc.darkness, type: INCREASED, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       deepening_shadows:
-        name: 加深陰影          # Deepening Shadows
+        name: 陰影漸濃          # Deepening Shadows
         requires: darkness_2
         notable: true
         icon: WITHER_ROSE
@@ -2425,12 +2425,12 @@ ascendancies:
         stats:
           - { stat: damage.extra.chaos, type: FLAT, value: 4 }
       grasp_void:
-        name: 虛空之握          # Grasp of the Void
+        name: 虛無之握          # Grasp of the Void
         requires: damage_as_chaos
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：虛空幻影
+          - 提供技能：虛無幻影
         stats:
           - { stat: grant_skill.void_illusion, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       skill_speed:
@@ -2442,12 +2442,12 @@ ascendancies:
           - { stat: attack.speed, type: INCREASED, value: 4 }
           - { stat: cast.speed, type: INCREASED, value: 4 }
       waking_dream:
-        name: 夢醒          # Waking Dream
+        name: 夢覺          # Waking Dream
         requires: skill_speed
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：遁入裂痕
+          - 提供技能：潛入裂隙
         stats:
           - { stat: grant_skill.into_the_breach, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       skill_speed_2:
@@ -2460,7 +2460,7 @@ ascendancies:
           - { stat: attack.speed, type: INCREASED, value: 4 }
           - { stat: cast.speed, type: INCREASED, value: 4 }
       lucid_dreaming:
-        name: 清晰夢境          # Lucid Dreaming
+        name: 清明之夢          # Lucid Dreaming
         requires: skill_speed_2
         choice: true
         icon: AMETHYST_SHARD
@@ -2469,7 +2469,7 @@ ascendancies:
         option_of: lucid_dreaming
         icon: GLOWSTONE_DUST
         lines:
-          - 你顯現的所有夏烏拉之炎皆為紫色
+          - 你顯現的所有霞瑤之炎皆為紫色
           - 增加 50% 你產生的殘骸效果
           - 可從遠 50% 的距離拾取殘骸
         stats:
@@ -2481,7 +2481,7 @@ ascendancies:
         option_of: lucid_dreaming
         icon: LAPIS_LAZULI
         lines:
-          - 你顯現的所有夏烏拉之炎皆為藍色
+          - 你顯現的所有霞瑤之炎皆為藍色
           - 增加 50% 你產生的殘骸效果
           - 可從遠 50% 的距離拾取殘骸
         stats:
@@ -2493,7 +2493,7 @@ ascendancies:
         option_of: lucid_dreaming
         icon: RED_DYE
         lines:
-          - 你顯現的所有夏烏拉之炎皆為紅色
+          - 你顯現的所有霞瑤之炎皆為紅色
           - 增加 50% 你產生的殘骸效果
           - 可從遠 50% 的距離拾取殘骸
         stats:
@@ -2509,7 +2509,7 @@ ascendancies:
         stats:
           - { stat: leech.effect, type: INCREASED, value: 11 }
       sap_nightmares:
-        name: 惡夢樹液          # Sap of Nightmares
+        name: 夢魘汁液          # Sap of Nightmares
         requires: leech
         notable: true
         icon: GHAST_TEAR
@@ -2525,7 +2525,7 @@ ascendancies:
         stats:
           - { stat: resist.chaos, type: FLAT, value: 7 }
       chayulas_gift:
-        name: 夏烏拉之禮          # Chayula's Gift
+        name: 霞瑤之贈          # Chayula's Gift
         requires: chaos_resistance
         notable: true
         icon: WITHER_ROSE
@@ -2544,12 +2544,12 @@ ascendancies:
         stats:
           - { stat: damage, type: INCREASED, value: 11, tags: [chaos] }
       archon_chayula:
-        name: 夏烏拉統治者          # Archon of Chayula
+        name: 霞瑤之主          # Archon of Chayula
         requires: chaos_damage
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：夏烏拉統治者
+          - 提供技能：霞瑤之主
         stats:
           - { stat: grant_skill.archon_of_chayula, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       volatility:
@@ -2560,7 +2560,7 @@ ascendancies:
         stats:
           - { stat: volatility.on_kill, type: FLAT, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果；易爆跟天賦樹同一套，TreeMechanics）
       inner_turmoil:
-        name: 內心動盪          # Inner Turmoil
+        name: 心海翻騰          # Inner Turmoil
         requires: volatility
         notable: true
         icon: PRISMARINE_CRYSTALS
@@ -2579,7 +2579,7 @@ ascendancies:
         stats:
           - { stat: damage, type: INCREASED, value: 11, tags: [chaos] }
       unravelling:
-        name: 收心          # Unravelling
+        name: 解離          # Unravelling
         requires: chaos_damage_2
         notable: true
         icon: NETHER_STAR
@@ -2595,7 +2595,7 @@ ascendancies:
     name: 鳴鐘武師
     color: "#d9b44a"
     icon: BELL
-    summary: 以身為器的武者：空無之鐘、幻影出招、山巒之道的護體、符文紋身、連擊與石拳。
+    summary: 以身為器的武者：空無之鐘、幻影出招、群山之道的護體、符文紋身、連擊與石拳。
     nodes:
       attributes:
         name: 能力值          # Attributes
@@ -2631,7 +2631,7 @@ ascendancies:
         notable: true
         icon: BELL
         lines:
-          - 提供技能：空無專注
+          - 提供技能：虛空凝神
         stats:
           - { stat: grant_skill.hollow_focus, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2
       area_2:
@@ -2648,7 +2648,7 @@ ascendancies:
         notable: true
         icon: BELL
         lines:
-          - 提供技能：空無共鳴
+          - 提供技能：虛空共振
         stats:
           - { stat: grant_skill.hollow_resonance, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2
       power_chance:
@@ -2664,7 +2664,7 @@ ascendancies:
         notable: true
         icon: PHANTOM_MEMBRANE
         lines:
-          - 提供技能：空無型態
+          - 提供技能：虛空形態
         stats:
           - { stat: grant_skill.hollow_form, type: FLAT, value: 1 }   # 2026-10-27 照 PoE2
       immobilise:
@@ -2677,7 +2677,7 @@ ascendancies:
           - { stat: freeze.buildup, type: INCREASED, value: 20 }
           - { stat: electrocute.buildup, type: INCREASED, value: 20 }
       mountain:
-        name: 山巒之道          # Way of the Mountain
+        name: 群山之道          # Way of the Mountain
         requires: immobilise
         notable: true
         icon: COBBLESTONE
@@ -2697,7 +2697,7 @@ ascendancies:
           - { stat: evasion, type: INCREASED, value: 15 }
           - { stat: es.max, type: INCREASED, value: 15 }
       stonefist:
-        name: 石拳之道          # Way of the Stonefist
+        name: 岩拳之道          # Way of the Stonefist
         requires: evasion_es
         notable: true
         icon: STONE
@@ -2722,7 +2722,7 @@ ascendancies:
         stats:
           - { stat: attack.speed, type: INCREASED, value: 4 }
       martial_adept:
-        name: 武術精通          # Martial Adept
+        name: 武藝精熟          # Martial Adept
         requires: attack_speed
         notable: true
         icon: BLAZE_ROD
@@ -2741,7 +2741,7 @@ ascendancies:
         stats:
           - { stat: attack.speed, type: INCREASED, value: 4 }
       martial_master:
-        name: 武術宗師          # Martial Master
+        name: 武藝宗師          # Martial Master
         requires: attack_speed_2
         notable: true
         icon: BLAZE_ROD
@@ -2784,7 +2784,7 @@ ascendancies:
         stats:
           - { stat: crit.chance, type: INCREASED, value: 12, tags: [spell] }
       tempest_caller:
-        name: 暴風召喚者          # Tempest Caller
+        name: 喚嵐者          # Tempest Caller
         requires: spell_critical
         notable: true
         icon: ENCHANTED_BOOK
@@ -2819,7 +2819,7 @@ ascendancies:
         stats:
           - { stat: chill.duration, type: INCREASED, value: 25 }
       heavy_snows:
-        name: 狂風暴雪          # Heavy Snows
+        name: 暴雪漫天          # Heavy Snows
         requires: chill_duration
         notable: true
         icon: SNOWBALL
@@ -2840,7 +2840,7 @@ ascendancies:
         stats:
           - { stat: chill.duration, type: INCREASED, value: 25 }
       shaper_winter:
-        name: 寒冬雕塑者          # Shaper of Winter
+        name: 寒冬塑形者          # Shaper of Winter
         requires: chill_duration_2
         notable: true
         icon: SNOWBALL
@@ -2856,7 +2856,7 @@ ascendancies:
         stats:
           - { stat: shock.chance, type: INCREASED, value: 20 }
       strike_twice:
-        name: 二重打擊          # Strike Twice
+        name: 再擊          # Strike Twice
         requires: shock_chance
         notable: true
         icon: LIGHTNING_ROD
@@ -2891,7 +2891,7 @@ ascendancies:
         stats:
           - { stat: mana.regen, type: INCREASED, value: 12 }
       constant_gale:
-        name: 不變勁風          # Constant Gale
+        name: 恆常之風          # Constant Gale
         requires: mana_regeneration
         notable: true
         icon: NETHER_STAR
@@ -2908,7 +2908,7 @@ ascendancies:
         stats:
           - { stat: mana.regen, type: INCREASED, value: 12 }
       force_will:
-        name: 意志之力          # Force of Will
+        name: 意志之能          # Force of Will
         requires: mana_regeneration_2
         notable: true
         icon: RED_DYE
@@ -2926,7 +2926,7 @@ ascendancies:
         stats:   # 2026-10-26 照 PoE2
           - { stat: remnant.pickup_range, type: INCREASED, value: 25 }
       refracted_infusion:
-        name: 拆射灌注          # Refracted Infusion
+        name: 稜射灌注          # Refracted Infusion
         requires: remnant_range_2
         notable: true
         icon: PRISMARINE_CRYSTALS
@@ -2940,7 +2940,7 @@ ascendancies:
     name: 虛空法袍
     color: "#6c5ce7"
     icon: CLOCK
-    summary: 操縱時間的術士：傷害延後（迷蹤形態）、施法速度、範圍、冷卻。
+    summary: 操縱時間的術士：傷害延後（虛相形態）、施法速度、範圍、冷卻。
     nodes:
       cooldown_recovery:
         name: 冷卻時間恢復率          # Cooldown Recovery Rate
@@ -2950,12 +2950,12 @@ ascendancies:
         stats:
           - { stat: skill.cooldown, type: INCREASED, value: -6 }
       unbound_encore:
-        name: 無縛安可          # Unbound Encore
+        name: 無縛再演          # Unbound Encore
         requires: cooldown_recovery
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：時間短縮
+          - 提供技能：時隙回溯
         stats:
           - { stat: grant_skill.time_snap, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       cooldown_recovery_2:
@@ -2967,7 +2967,7 @@ ascendancies:
         stats:
           - { stat: skill.cooldown, type: INCREASED, value: -6 }
       ultimate_command:
-        name: 終極指令          # Ultimate Command
+        name: 最終號令          # Ultimate Command
         requires: cooldown_recovery_2
         notable: true
         icon: ENCHANTED_BOOK
@@ -2983,7 +2983,7 @@ ascendancies:
         stats:
           - { stat: slow.magnitude, type: INCREASED, value: 6 }
       apex_moment:
-        name: 巔峰時刻          # Apex of the Moment
+        name: 極盛一刻          # Apex of the Moment
         requires: slow_effect
         notable: true
         icon: BEACON
@@ -2999,7 +2999,7 @@ ascendancies:
         stats:
           - { stat: cast.speed, type: INCREASED, value: 6 }
       now_again:
-        name: 循環往復          # Now and Again
+        name: 周而復始          # Now and Again
         requires: cast_speed
         notable: true
         icon: BOOK
@@ -3017,12 +3017,12 @@ ascendancies:
         stats:
           - { stat: skill.area, type: INCREASED, value: 8 }
       inevitability:
-        name: 不可避免          # Inevitability
+        name: 在劫難逃          # Inevitability
         requires: area_effect
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：命定苦痛
+          - 提供技能：註定之痛
         stats:
           - { stat: grant_skill.inevitable_agony, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       skill_speed_area:
@@ -3036,7 +3036,7 @@ ascendancies:
           - { stat: attack.speed, type: INCREASED, value: 4 }
           - { stat: cast.speed, type: INCREASED, value: 4 }
       quicksand_hourglass:
-        name: 流沙沙漏          # Quicksand Hourglass
+        name: 沙漏流轉          # Quicksand Hourglass
         requires: skill_speed_area
         notable: true
         icon: NETHER_STAR
@@ -3053,7 +3053,7 @@ ascendancies:
         stats:
           - { stat: asc.buff_expiry, type: FLAT, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       phased_form:
-        name: 迷蹤形態          # Phased Form
+        name: 虛相形態          # Phased Form
         requires: buff_expiry_rate
         notable: true
         icon: NETHER_STAR
@@ -3071,12 +3071,12 @@ ascendancies:
         stats:
           - { stat: asc.buff_expiry, type: FLAT, value: 10 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       footprints_sand:
-        name: 沙中足跡          # Footprints in the Sand
+        name: 沙上足印          # Footprints in the Sand
         requires: buff_expiry_rate_2
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：時空裂隙
+          - 提供技能：時隙裂口
         stats:
           - { stat: grant_skill.temporal_rift, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
@@ -3088,41 +3088,41 @@ ascendancies:
     summary: 與沙海精靈立約的術士：召喚三位巨靈聽你指令、能量護盾回充、施法速度、範圍。   # 2026-10-27 巨靈做出來了；這次之前「…範圍（巨靈技能還沒做出來）。」
     nodes:
       barya_kelari:
-        name: 克拉里的巨靈之幣          # Barya of Kelari
+        name: 珂芮絲的靈幣          # Barya of Kelari
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：黯染飛砂．克拉里
-          - 提供技能：克拉里的殘酷
+          - 提供技能：污沙．珂芮絲
+          - 提供技能：珂芮絲的殘酷
         stats:
           - { stat: grant_skill.kelari_djinn, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
           - { stat: grant_skill.kelari_brutality, type: FLAT, value: 1 }   # 2026-10-29 照 PoE2：克拉里本身的指令（Kelari's Brutality）；這次之前沒有
         # 2026-10-27 照 PoE2：巨靈是有實體、不會受傷、只聽指令的召喚物；拿掉 note（這次之前「巨靈沒有實體：指令直接在準心的地方生效」）
       kelaris_deception:
-        name: 克拉里的欺瞞          # Kelari's Deception
+        name: 珂芮絲的詭計          # Kelari's Deception
         requires: barya_kelari
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：克拉里的欺瞞
+          - 提供技能：珂芮絲的詭計
         stats:
           - { stat: grant_skill.kelari_deception, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       kelaris_judgment:
-        name: 克拉里的審判          # Kelari's Judgment
+        name: 珂芮絲的裁決          # Kelari's Judgment
         requires: barya_kelari
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：克拉里的審判
+          - 提供技能：珂芮絲的裁決
         stats:
           - { stat: grant_skill.kelari_judgment, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       kelaris_malediction:
-        name: 克拉里的惡咒          # Kelari's Malediction
+        name: 珂芮絲的詛言          # Kelari's Malediction
         requires: barya_kelari
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：克拉里的惡言
+          - 提供技能：珂芮絲的毒言
         stats:
           - { stat: grant_skill.kelari_malediction, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       area_effect:
@@ -3133,7 +3133,7 @@ ascendancies:
         stats:
           - { stat: skill.area, type: INCREASED, value: 8 }
       baryanic_leylines:
-        name: 巴雅地脈          # Baryanic Leylines
+        name: 巴揚地脈          # Baryanic Leylines
         requires: area_effect
         notable: true
         icon: NETHER_STAR
@@ -3149,7 +3149,7 @@ ascendancies:
         stats:
           - { stat: cast.speed, type: INCREASED, value: 4 }
       instruments_power:
-        name: 力量之器          # Instruments of Power
+        name: 權能之器          # Instruments of Power
         requires: cast_speed
         notable: true
         icon: NETHER_STAR
@@ -3163,7 +3163,7 @@ ascendancies:
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：最終幻象．納維拉
+          - 提供技能：終幻．娜瑟菈
         stats:
           - { stat: grant_skill.navira_djinn, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
         # 2026-10-27 照 PoE2：巨靈是有實體、不會受傷、只聽指令的召喚物；拿掉 note（這次之前「巨靈沒有實體：指令直接生效」）
@@ -3173,16 +3173,16 @@ ascendancies:
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：納維拉的綠洲
+          - 提供技能：娜瑟菈的綠洲
         stats:
           - { stat: grant_skill.navira_oasis, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       naviras_well:
-        name: 納維拉之井          # Navira's Well
+        name: 娜瑟菈之泉          # Navira's Well
         requires: barya_navira
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：納維拉的水井
+          - 提供技能：娜瑟菈的泉
         stats:
           - { stat: grant_skill.navira_well, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       naviras_fracturing:
@@ -3191,7 +3191,7 @@ ascendancies:
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：納維拉的封凍
+          - 提供技能：娜瑟菈的冰封
         stats:
           - { stat: grant_skill.navira_fracturing, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       mana:
@@ -3202,7 +3202,7 @@ ascendancies:
         stats:
           - { stat: mana.max, type: INCREASED, value: 3 }
       varashtas_intuition:
-        name: 瓦拉什塔的直覺          # Varashta's Intuition
+        name: 瓦朗什的直覺          # Varashta's Intuition
         requires: mana
         notable: true
         icon: RED_DYE
@@ -3237,7 +3237,7 @@ ascendancies:
         stats:
           - { stat: es.max, type: INCREASED, value: 20 }
       sacred_rituals:
-        name: 神聖儀式          # Sacred Rituals
+        name: 聖禮儀典          # Sacred Rituals
         requires: energy_shield_2
         notable: true
         icon: LIGHT_BLUE_DYE
@@ -3250,17 +3250,17 @@ ascendancies:
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：赤炎利劍．魯兹安
+          - 提供技能：炎刃．羅贊
         stats:
           - { stat: grant_skill.ruzhan_djinn, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
         # 2026-10-27 照 PoE2：巨靈是有實體、不會受傷、只聽指令的召喚物；拿掉 note（這次之前「巨靈沒有實體：斬擊與指令直接在你前方、準心的地方生效」）
       ruzhans_reckoning:
-        name: 魯兹安的清算          # Ruzhan's Reckoning
+        name: 羅贊的清算          # Ruzhan's Reckoning
         requires: barya_ruzhan
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：魯兹安的清算
+          - 提供技能：羅贊的清算
         stats:
           - { stat: grant_skill.ruzhan_reckoning, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       ruzhans_fury:
@@ -3269,16 +3269,16 @@ ascendancies:
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：魯兹安的怒火
+          - 提供技能：羅贊的怒焰
         stats:
           - { stat: grant_skill.ruzhan_fury, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       ruzhans_trap:
-        name: 魯兹安的陷阱          # Ruzhan's Trap
+        name: 羅贊的機關          # Ruzhan's Trap
         requires: barya_ruzhan
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：魯兹安的陷阱
+          - 提供技能：羅贊的機關
         stats:
           - { stat: grant_skill.ruzhan_trap, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
 
@@ -3297,7 +3297,7 @@ ascendancies:
         stats:
           - { stat: crit.chance, type: INCREASED, value: 12 }
       grinning_immolation:
-        name: 邪惡焚化          # Grinning Immolation
+        name: 獰笑焚身          # Grinning Immolation
         requires: critical_chance
         notable: true
         icon: LIGHT_BLUE_DYE
@@ -3315,12 +3315,12 @@ ascendancies:
         stats:
           - { stat: life.max, type: INCREASED, value: 12, tags: [minion] }
       loyal_hellhound:
-        name: 忠誠獄犬          # Loyal Hellhound
+        name: 忠心獄犬          # Loyal Hellhound
         requires: minion_life
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：召喚獄炎獵犬
+          - 提供技能：喚出獄火犬
         stats:
           - { stat: grant_skill.infernal_hound, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       mana:
@@ -3331,7 +3331,7 @@ ascendancies:
         stats:
           - { stat: mana.max, type: INCREASED, value: 3 }
       pyromantic_pact:
-        name: 火祭協議          # Pyromantic Pact
+        name: 焰契          # Pyromantic Pact
         requires: mana
         notable: true
         icon: LIGHT_BLUE_DYE
@@ -3352,7 +3352,7 @@ ascendancies:
         stats:
           - { stat: mana.max, type: INCREASED, value: 3 }
       seething_body:
-        name: 沸騰軀體          # Seething Body
+        name: 沸血之軀          # Seething Body
         requires: mana_2
         notable: true
         icon: PRISMARINE_CRYSTALS
@@ -3370,7 +3370,7 @@ ascendancies:
         stats:
           - { stat: ignite.chance, type: INCREASED, value: 40 }
       bringer_flame:
-        name: 火焰呼喚者          # Bringer of Flame
+        name: 引火者          # Bringer of Flame
         requires: flammability
         notable: true
         icon: BEACON
@@ -3386,12 +3386,12 @@ ascendancies:
         stats:
           - { stat: damage, type: INCREASED, value: 12, tags: [spell] }
       demonic_possession:
-        name: 惡魔附身          # Demonic Possession
+        name: 魔物附體          # Demonic Possession
         requires: spell_damage
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：惡魔變身
+          - 提供技能：化魔
         stats:
           - { stat: grant_skill.demon_form, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       spell_damage_2:
@@ -3419,7 +3419,7 @@ ascendancies:
         stats:
           - { stat: life.max, type: INCREASED, value: 3 }
       altered_flesh:
-        name: 變形肉體          # Altered Flesh
+        name: 異變血肉          # Altered Flesh
         requires: life
         notable: true
         icon: BLAZE_POWDER
@@ -3494,7 +3494,7 @@ ascendancies:
     summary: 以血為媒的術士：技能也扣生命、法術偷取、法術基礎暴擊 15%、胸甲護盾變生命。
     nodes:
       sanguimancy:
-        name: 占血術          # Sanguimancy
+        name: 血卜術          # Sanguimancy
         notable: true
         cost: 0   # 2026-10-27 照站長：免費、選了血術士就自動配好（原作要 1 點）
         icon: ENCHANTED_BOOK
@@ -3513,7 +3513,7 @@ ascendancies:
         stats:
           - { stat: life.max, type: INCREASED, value: 3 }
       grasping_wounds:
-        name: 緊扼傷口          # Grasping Wounds
+        name: 攫握傷口          # Grasping Wounds
         requires: life
         notable: true
         icon: RED_DYE
@@ -3530,7 +3530,7 @@ ascendancies:
         stats:
           - { stat: life.max, type: INCREASED, value: 3 }
       crimson_power:
-        name: 緋紅之力          # Crimson Power
+        name: 赤紅之力          # Crimson Power
         requires: life_2
         notable: true
         icon: LIGHT_BLUE_DYE
@@ -3586,7 +3586,7 @@ ascendancies:
         stats:
           - { stat: bleed.chance, type: FLAT, value: 15, tags: [crit_hit] }   # 2026-10-26 照 PoE2：只有暴擊才算；這次之前每次擊中都有機率
       blood_barbs:
-        name: 鮮血荊棘          # Blood Barbs
+        name: 血棘刺          # Blood Barbs
         requires: bleed_critical
         notable: true
         icon: FERMENTED_SPIDER_EYE
@@ -3605,7 +3605,7 @@ ascendancies:
         stats:
           - { stat: leech.effect, type: INCREASED, value: 12 }
       vitality_siphon:
-        name: 活力虹吸          # Vitality Siphon
+        name: 生機汲取          # Vitality Siphon
         requires: life_leech
         notable: true
         icon: GHAST_TEAR
@@ -3622,7 +3622,7 @@ ascendancies:
         stats:
           - { stat: crit.chance, type: INCREASED, value: 12, tags: [spell] }
       sunder_flesh:
-        name: 碎裂血肉          # Sunder the Flesh
+        name: 裂解血肉          # Sunder the Flesh
         requires: spell_critical
         notable: true
         icon: AMETHYST_SHARD
@@ -3639,7 +3639,7 @@ ascendancies:
         stats:
           - { stat: crit.chance, type: INCREASED, value: 12, tags: [spell] }
       gore_spike:
-        name: 血棘          # Gore Spike
+        name: 血矛刺          # Gore Spike
         requires: spell_critical_2
         notable: true
         icon: RED_DYE
@@ -3663,7 +3663,7 @@ ascendancies:
         stats:
           - { stat: life.max, type: INCREASED, value: 3 }
       soulless_form:
-        name: 無魂型態          # Soulless Form
+        name: 失魂之形          # Soulless Form
         requires: life
         notable: true
         icon: LIGHT_BLUE_DYE
@@ -3684,7 +3684,7 @@ ascendancies:
         stats:
           - { stat: life.max, type: INCREASED, value: 3 }
       eternal_life:
-        name: 永生          # Eternal Life
+        name: 不朽之身          # Eternal Life
         requires: life_2
         notable: true
         icon: LIGHT_BLUE_DYE
@@ -3700,7 +3700,7 @@ ascendancies:
         stats:
           - { stat: asc.es_power, type: FLAT, value: 30 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       price_power:
-        name: 力量的代價          # Price of Power
+        name: 權能之價          # Price of Power
         requires: energy_shield_if
         notable: true
         icon: BOOK
@@ -3716,7 +3716,7 @@ ascendancies:
         stats:
           - { stat: es.max, type: INCREASED, value: 20 }
       crystalline:
-        name: 晶化護符          # Crystalline Phylactery
+        name: 晶化命匣          # Crystalline Phylactery
         requires: energy_shield
         notable: true
         icon: LIGHT_BLUE_DYE
@@ -3737,7 +3737,7 @@ ascendancies:
         stats:
           - { stat: es.max, type: INCREASED, value: 20 }
       eldritch_empowerment:
-        name: 異能賦予          # Eldritch Empowerment
+        name: 異能加持          # Eldritch Empowerment
         requires: energy_shield_2
         notable: true
         icon: LIGHT_BLUE_DYE
@@ -3755,7 +3755,7 @@ ascendancies:
         stats:
           - { stat: skill.area, type: INCREASED, value: 15, tags: [curse] }
       rupture_soul:
-        name: 割裂靈魂          # Rupture the Soul
+        name: 裂魂          # Rupture the Soul
         requires: curse_area
         notable: true
         icon: FERMENTED_SPIDER_EYE
@@ -3772,7 +3772,7 @@ ascendancies:
         stats:
           - { stat: skill.area, type: INCREASED, value: 15, tags: [curse] }
       incessant_cacophony:
-        name: 不斷爭吵          # Incessant Cacophony
+        name: 無盡喧囂          # Incessant Cacophony
         requires: curse_area_2
         notable: true
         icon: FERMENTED_SPIDER_EYE
@@ -3790,7 +3790,7 @@ ascendancies:
         stats:
           - { stat: mana.max, type: INCREASED, value: 3 }
       necromantic_conduit:
-        name: 靈能導體          # Necromantic Conduit
+        name: 死靈導體          # Necromantic Conduit
         requires: mana
         notable: true
         icon: LAPIS_LAZULI
@@ -3834,7 +3834,7 @@ ascendancies:
         stats:
           - { stat: life.max, type: INCREASED, value: 3 }
       soulless_form:
-        name: 無魂型態          # Soulless Form
+        name: 失魂之形          # Soulless Form
         requires: life
         notable: true
         icon: LIGHT_BLUE_DYE
@@ -3855,7 +3855,7 @@ ascendancies:
         stats:
           - { stat: life.max, type: INCREASED, value: 3 }
       eternal_life:
-        name: 永生          # Eternal Life
+        name: 不朽之身          # Eternal Life
         requires: life_2
         notable: true
         icon: LIGHT_BLUE_DYE
@@ -3888,7 +3888,7 @@ ascendancies:
         stats:
           - { stat: es.max, type: INCREASED, value: 20 }
       crystalline:
-        name: 晶化護符          # Crystalline Phylactery
+        name: 晶化命匣          # Crystalline Phylactery
         requires: energy_shield
         notable: true
         icon: LIGHT_BLUE_DYE
@@ -3907,7 +3907,7 @@ ascendancies:
         stats:
           - { stat: es.max, type: INCREASED, value: 20 }
       eldritch_empowerment:
-        name: 異能賦予          # Eldritch Empowerment
+        name: 異能加持          # Eldritch Empowerment
         requires: energy_shield_2
         notable: true
         icon: LIGHT_BLUE_DYE
@@ -3942,7 +3942,7 @@ ascendancies:
         stats:
           - { stat: skill.area, type: INCREASED, value: 15, tags: [curse] }
       incessant_cacophony:
-        name: 不斷爭吵          # Incessant Cacophony
+        name: 無盡喧囂          # Incessant Cacophony
         requires: curse_area_2
         notable: true
         icon: FERMENTED_SPIDER_EYE
@@ -4006,7 +4006,7 @@ ascendancies:
           - { stat: attack.speed, type: INCREASED, value: 5, tags: [totem] }
           - { stat: cast.speed, type: INCREASED, value: 5, tags: [totem] }
       unnamed_heartwood:
-        name: 無名心木          # Unnamed Heartwood
+        name: 無名之心木          # Unnamed Heartwood
         requires: totem_cast_attack
         notable: true
         icon: TOTEM_OF_UNDYING
@@ -4024,7 +4024,7 @@ ascendancies:
         stats:
           - { stat: crit.bonus_taken, type: INCREASED, value: -12 }
       lesser_harm:
-        name: 微小損害          # The Lesser Harm
+        name: 兩害取輕          # The Lesser Harm
         requires: critical_damage
         notable: true
         icon: AMETHYST_SHARD
@@ -4042,7 +4042,7 @@ ascendancies:
         stats:
           - { stat: crit.chance, type: INCREASED, value: 12 }
       forced_outcome:
-        name: 強制結果          # Forced Outcome
+        name: 強行定局          # Forced Outcome
         requires: critical_hit_chance
         notable: true
         icon: AMETHYST_SHARD
@@ -4060,12 +4060,12 @@ ascendancies:
           - { stat: freeze.buildup, type: INCREASED, value: 20 }
           - { stat: pin.buildup, type: INCREASED, value: 20 }
       converging_paths:
-        name: 交錯道途          # Converging Paths
+        name: 殊途交會          # Converging Paths
         requires: immobilisation
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：可趁之刻
+          - 提供技能：乘隙之機
         stats:
           - { stat: grant_skill.moment_of_vulnerability, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       life_mana:
@@ -4078,7 +4078,7 @@ ascendancies:
           - { stat: life.regen, type: INCREASED, value: 8 }
           - { stat: mana.regen, type: INCREASED, value: 8 }
       harmony_within:
-        name: 心宇和諧          # Harmony Within
+        name: 內在和諧          # Harmony Within
         requires: life_mana
         notable: true
         icon: RED_DYE
@@ -4098,12 +4098,12 @@ ascendancies:
         stats:
           - { stat: damage, type: INCREASED, value: 12, tags: [spell] }
       fateful_vision:
-        name: 命見視野          # Fateful Vision
+        name: 宿命之眼          # Fateful Vision
         requires: spell_damage
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：命運同調
+          - 提供技能：命途同調
         stats:
           - { stat: grant_skill.align_fate, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       passive_point:
@@ -4114,7 +4114,7 @@ ascendancies:
         stats:
           - { stat: passive.points_extra, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       unseen_path:
-        name: 未見之道          # The Unseen Path
+        name: 不見之途          # The Unseen Path
         requires: passive_point
         notable: true
         icon: MAP
@@ -4122,7 +4122,7 @@ ascendancies:
           - 踏上未曾走過的道路
         stats:
           - { stat: asc.unseen_path, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-        note: 可以配置天賦樹上觀星專屬的天賦（天賦樹上標著「未見之道」的）
+        note: 可以配置天賦樹上觀星專屬的天賦（天賦樹上標著「不見之途」的）
       passive_point_2:
         name: 天賦點          # Passive Point
         requires: unseen_path
@@ -4156,7 +4156,7 @@ ascendancies:
         stats:
           - { stat: damage, type: INCREASED, value: 12, tags: [elemental] }
       turning_seasons:
-        name: 季節循環          # Turning of the Seasons
+        name: 四時更迭          # Turning of the Seasons
         requires: elemental_damage
         notable: true
         icon: BEACON
@@ -4175,12 +4175,12 @@ ascendancies:
         stats:
           - { stat: damage, type: INCREASED, value: 12, tags: [elemental] }
       bringer_apocalypse:
-        name: 災厄信使          # Bringer of the Apocalypse
+        name: 末日使者          # Bringer of the Apocalypse
         requires: elemental_damage_2
         notable: true
         icon: ENCHANTED_BOOK
         lines:
-          - 提供技能：壞滅災變
+          - 提供技能：天災降臨
         stats:
           - { stat: grant_skill.apocalypse, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       elemental:
@@ -4193,7 +4193,7 @@ ascendancies:
           - { stat: resist.cold, type: FLAT, value: 3 }
           - { stat: resist.lightning, type: FLAT, value: 3 }
       reactive_growth:
-        name: 反應性生長          # Reactive Growth
+        name: 應激生長          # Reactive Growth
         requires: elemental
         notable: true
         icon: PRISMARINE_CRYSTALS
@@ -4215,7 +4215,7 @@ ascendancies:
           - { stat: resist.cold, type: FLAT, value: 3 }
           - { stat: resist.lightning, type: FLAT, value: 3 }
       avatar_evolution:
-        name: 演化化身          # Avatar of Evolution
+        name: 進化之身          # Avatar of Evolution
         requires: elemental_2
         notable: true
         icon: BLAZE_POWDER
@@ -4239,7 +4239,7 @@ ascendancies:
         stats:
           - { stat: rage.max, type: FLAT, value: 3 }
       druidic_champion:
-        name: 德魯伊之冠          # Druidic Champion
+        name: 德魯伊之魁          # Druidic Champion
         requires: maximum_rage
         notable: true
         icon: NETHER_WART
@@ -4256,7 +4256,7 @@ ascendancies:
         stats:
           - { stat: rage.max, type: FLAT, value: 3 }
       furious_wellspring:
-        name: 狂怒源泉          # Furious Wellspring
+        name: 怒之泉湧          # Furious Wellspring
         requires: maximum_rage_2
         notable: true
         icon: LAPIS_LAZULI
@@ -4279,7 +4279,7 @@ ascendancies:
           - { stat: flask.life_recovery, type: INCREASED, value: 12 }
           - { stat: flask.mana_recovery, type: INCREASED, value: 12 }
       sacred_flow:
-        name: 神聖流向          # Sacred Flow
+        name: 聖流          # Sacred Flow
         requires: flask_recovery
         notable: true
         icon: EMERALD

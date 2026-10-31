@@ -79,8 +79,8 @@ class StonefistTest {
         for (final String id : ADDED) {
             assertTrue(STONEFIST_UNIQUES.containsValue(id), id);
         }
-        assertEquals("轟天雷", repository.unique("thunderfist").name());
-        assertEquals("主宰之觸", repository.unique("masters_reach").name());
+        assertEquals("雷霆之拳", repository.unique("thunderfist").name());
+        assertEquals("支配之觸", repository.unique("masters_reach").name());
     }
 
     @Test

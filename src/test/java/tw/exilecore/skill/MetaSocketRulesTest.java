@@ -41,7 +41,7 @@ class MetaSocketRulesTest {
         assertNull(MetaGems.engineProblem(warp), "被觸發的路徑放得出雷遁");
         // 2026-10-28 照 PoE2 Totemable：圖騰自己瞬移進撲殺得到的敵人（這次之前圖騰放不出位移，插不進星咒圖騰）
         assertNull(MetaGems.problem(config.meta("totem_casting"), warp), "雷遁原作 Totemable：可以插星咒圖騰");
-        assertNotNull(MetaGems.problem(config.meta("fire_spell_on_hit"), warp), "擊中時火焰法術只收火焰法術");
+        assertNotNull(MetaGems.problem(config.meta("fire_spell_on_hit"), warp), "命中引火術只收火焰法術");
     }
 
     @Test

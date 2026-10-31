@@ -53,7 +53,7 @@ class DisplayParityTest {
     @Test
     void alwaysOnAscendancyEstimates() {
         final StatSheet sheet = new StatSheet();
-        sheet.add(Modifier.flat(tw.exilecore.ascendancy.AscKeys.RANDOM_ELEMENT, 10, "季節循環"));
+        sheet.add(Modifier.flat(tw.exilecore.ascendancy.AscKeys.RANDOM_ELEMENT, 10, "四時更迭"));
         sheet.add(Modifier.flat(tw.exilecore.ascendancy.AscKeys.ACCURACY_DAMAGE, 25, "穿透"));
         sheet.setBase("asc.base.weapon_accuracy", 400);
         final StatSheet estimated = sheet.overlay(BuffImpact.estimateModifiers(sheet, 1.0));

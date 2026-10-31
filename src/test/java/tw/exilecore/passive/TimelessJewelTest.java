@@ -143,8 +143,8 @@ class TimelessJewelTest {
         final ItemGenerator generator = new ItemGenerator(repository);
         final UniqueItem heroic = repository.unique("heroic_tragedy");
         final UniqueItem undying = repository.unique("undying_hate");
-        assertEquals("英雄悲劇", heroic.name());
-        assertEquals("不朽恨意", undying.name());
+        assertEquals("英雄末路", heroic.name());
+        assertEquals("永恆憎恨", undying.name());
         assertTrue(heroic.droppedBy("final"), "照 PoE2：終局 Boss 掉");
         assertTrue(undying.droppedBy("abyss_lich"), "照 PoE2：深淵的巔峰 Boss 掉");
         // 2026-10-26：固定 1%（drop_chance），不在來源的權重池裡
@@ -156,7 +156,7 @@ class TimelessJewelTest {
         assertTrue(repository.fixedChanceUniques("abyss_lich", 84).contains(undying));
         assertTrue(TimelessJewels.isTimeless(repository.base(heroic.base())));
         assertFalse(repository.base(heroic.base()).isRadiusJewel());
-        assertEquals(0, repository.base(heroic.base()).dropWeight(), "一般掉落抽不到永恆珠寶基底");
+        assertEquals(0, repository.base(heroic.base()).dropWeight(), "一般掉落抽不到恆時珠寶基底");
         final java.util.Random random = new java.util.Random(7);
         for (int i = 0; i < 30; i++) {
             final ItemData data = generator.generateUnique(i % 2 == 0 ? heroic : undying, 80, random);

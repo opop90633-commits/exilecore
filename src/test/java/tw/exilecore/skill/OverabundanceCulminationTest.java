@@ -60,7 +60,7 @@ class OverabundanceCulminationTest {
     @Test
     void overabundanceTwoIsThePoe2Gem() {
         final SupportDefinition over = support("overabundance_ii");
-        assertEquals("過剩 II", over.name());
+        assertEquals("盈溢 II", over.name());
         assertEquals(3, over.tier(), "PoE2 第 4 階 → 我們的 3 階");
         assertEquals(Set.of(SkillLimits.TAG), over.requires());
         assertEquals(1, value(over, KeystoneKeys.SKILL_LIMIT, ModType.FLAT), 1e-9, "上限 +1");
@@ -137,7 +137,7 @@ class OverabundanceCulminationTest {
     @Test
     void culminationTwoIsThePoe2Gem() {
         final SupportDefinition top = support("culmination");
-        assertEquals("頂點 II", top.name());
+        assertEquals("極點 II", top.name());
         assertEquals(3, top.tier(), "PoE2 第 5 階 → 我們的 3 階");
         assertEquals(4, value(top, SupportExtraKeys.CULMINATION, ModType.FLAT), 1e-9, "每用掉 1 層更多 4%");
         assertEquals(6, value(top, SupportExtraKeys.CULMINATION_DECAY, ModType.FLAT), 1e-9, "6 秒沒獲得就失去");

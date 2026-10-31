@@ -96,7 +96,7 @@ class GemQualityPoe2Test {
             final String id = (String) row[0];
             final String stat = (String) row[1];
             assertEquals(0, sum(SkillService.qualityModifiers(config.skill(id), 20), stat), 1e-9, id + "：一般品質沒有這條");
-            assertEquals((double) row[2], sum(GemQuality.advancedModifiers(id, 20, "q"), stat), 1e-9, id + "：進階奇術才有");
+            assertEquals((double) row[2], sum(GemQuality.advancedModifiers(id, 20, "q"), stat), 1e-9, id + "：高階奇術才有");
         }
         assertEquals(10, sum(SkillService.qualityModifiers(config.skill("emergency_reload"), 20), StatKeys.COOLDOWN_RECOVERY) * 100, 1e-9);
         assertEquals(20, sum(SkillService.qualityModifiers(config.skill("cull_the_weak"), 20), tw.exilecore.charge.ChargeService.EXTRA), 1e-9);

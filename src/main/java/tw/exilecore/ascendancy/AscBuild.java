@@ -197,7 +197,7 @@ public final class AscBuild {
      */
     public static List<Modifier> advanced(final String skillId, final int quality, final List<Modifier> normal) {
         // 來源要用「品質 」開頭（SkillBuild 照這個認出品質給的增益 grant.*）
-        final List<Modifier> extra = tw.exilecore.currency.GemQuality.advancedModifiers(skillId, quality, "品質 " + quality + "%（進階奇術）");
+        final List<Modifier> extra = tw.exilecore.currency.GemQuality.advancedModifiers(skillId, quality, "品質 " + quality + "%（高階奇術）");
         if (extra == null) {
             return twice(normal);
         }
@@ -210,7 +210,7 @@ public final class AscBuild {
     public static List<Modifier> twice(final List<Modifier> quality) {
         final List<Modifier> out = new ArrayList<>(quality);
         for (final Modifier mod : quality) {
-            out.add(new Modifier(mod.stat(), mod.type(), mod.value(), mod.tags(), "進階奇術"));
+            out.add(new Modifier(mod.stat(), mod.type(), mod.value(), mod.tags(), "高階奇術"));
         }
         return out;
     }
@@ -272,7 +272,7 @@ public final class AscBuild {
     /** 鐵匠傑作：只能使用普通（白色）胸甲（其他的不生效）。回傳不能用的原因，可以用回傳 null。 */
     public static String itemProblem(final List<Modifier> ascendancy, final ItemSlot slot, final ItemData data) {
         if (slot == ItemSlot.CHEST && flatOf(ascendancy, AscKeys.NORMAL_CHEST) > 0 && data != null && data.rarity() != Rarity.NORMAL) {
-            return "鐵匠傑作只能使用普通胸甲";
+            return "鍛師名作只能使用普通胸甲";
         }
         return null;
     }
@@ -308,7 +308,7 @@ public final class AscBuild {
         }
         final double fromLife = sheet.flat(AscKeys.MANA_REGEN_LIFE, Set.of());
         if (fromLife > 0) {
-            sheet.add(Modifier.flat(StatKeys.MANA_REGEN, sheet.get(StatKeys.LIFE_MAX) * fromLife / 100.0, "無魂型態"));
+            sheet.add(Modifier.flat(StatKeys.MANA_REGEN, sheet.get(StatKeys.LIFE_MAX) * fromLife / 100.0, "失魂之形"));
         }
     }
 
@@ -329,21 +329,21 @@ public final class AscBuild {
             // 火焰抗性的修飾器也給一半的冰冷、閃電抗性（不含抗性懲罰）
             double fire = 0;
             for (final Modifier mod : sheet.modifiersOf(StatKeys.RESIST_FIRE)) {
-                if (mod.type() == ModType.FLAT && !"抗性懲罰".equals(mod.source()) && !"添煤工".equals(mod.source())) {
+                if (mod.type() == ModType.FLAT && !"抗性懲罰".equals(mod.source()) && !"燒爐人".equals(mod.source())) {
                     fire += mod.value();
                 }
             }
             final double share = fire * sheet.flat(AscKeys.COAL_STOKER, Set.of()) / 100.0;
             if (share != 0) {
-                sheet.add(Modifier.flat(StatKeys.RESIST_COLD, share, "添煤工"));
-                sheet.add(Modifier.flat(StatKeys.RESIST_LIGHTNING, share, "添煤工"));
+                sheet.add(Modifier.flat(StatKeys.RESIST_COLD, share, "燒爐人"));
+                sheet.add(Modifier.flat(StatKeys.RESIST_LIGHTNING, share, "燒爐人"));
             }
         }
         if (sheet.flat(AscKeys.FORGED_FLAME, Set.of()) > 0) {
             final double max = sheet.flat(StatKeys.resistMax(tw.exilecore.stats.DamageType.FIRE), Set.of());
             if (max != 0) {
-                sheet.add(Modifier.flat(StatKeys.resistMax(tw.exilecore.stats.DamageType.COLD), max, "烈焰鑄造"));
-                sheet.add(Modifier.flat(StatKeys.resistMax(tw.exilecore.stats.DamageType.LIGHTNING), max, "烈焰鑄造"));
+                sheet.add(Modifier.flat(StatKeys.resistMax(tw.exilecore.stats.DamageType.COLD), max, "炎鍛成形"));
+                sheet.add(Modifier.flat(StatKeys.resistMax(tw.exilecore.stats.DamageType.LIGHTNING), max, "炎鍛成形"));
             }
         }
         double weaponAccuracy = 0;
@@ -401,7 +401,7 @@ public final class AscBuild {
                 final double less = sheet.flat(AscKeys.STAFF_FOCUS, Set.of()) / 100.0;
                 for (final Modifier mod : item.modifiers()) {
                     if (mod.type() != ModType.MORE && !mod.stat().startsWith("flag.")) {
-                        sheet.add(new Modifier(mod.stat(), mod.type(), -mod.value() * less, mod.tags(), "力量之器"));
+                        sheet.add(new Modifier(mod.stat(), mod.type(), -mod.value() * less, mod.tags(), "權能之器"));
                     }
                 }
             }
@@ -422,7 +422,7 @@ public final class AscBuild {
                 }
             }
             if (empty > 0) {
-                sheet.add(Modifier.flat(StatKeys.SPIRIT_MAX, perCharm * empty, "神聖流向"));
+                sheet.add(Modifier.flat(StatKeys.SPIRIT_MAX, perCharm * empty, "聖流"));
             }
         }
         // 嵌晶：鑲嵌的寶石（紅：對你的擊中沒有暴擊傷害加成；綠：增加 10% 移動速度）、奇術注入（每 3 個某色輔助 +1% 最大抗性）
@@ -449,7 +449,7 @@ public final class AscBuild {
         // 每 1% 懲罰 ≈ 增加 0.27% 移動速度（30 → 增加 8% 移動速度）；這次之前（2026-10-26）照原作減 SkillMovePenalty
         final double penalty = sheet.flat(AscKeys.MOVE_PENALTY, Set.of());
         if (penalty > 0) {
-            sheet.add(Modifier.increased(StatKeys.MOVEMENT_SPEED, penalty / 100.0 * 0.27, "衝刺突擊"));
+            sheet.add(Modifier.increased(StatKeys.MOVEMENT_SPEED, penalty / 100.0 * 0.27, "疾衝突襲"));
         }
         // 為齒輪拋光：等同 20% 護甲的偏斜值、100% 閃避值當作額外異常門檻
         final double deflect = sheet.flat(AscKeys.DEFLECT_FROM_ARMOUR, Set.of());
@@ -498,14 +498,14 @@ public final class AscBuild {
                                   final double resist) {
         if (idols > 0 && damage != 0) {
             sheet.add(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, damage / 100.0 * idols,
-                    Set.of(Tags.MINION, tw.exilecore.stats.TreeMechanicKeys.COMPANION), "偶像崇敬"));
+                    Set.of(Tags.MINION, tw.exilecore.stats.TreeMechanicKeys.COMPANION), "偶像信仰"));
         }
         if (idols > 0 && reservation != 0) {
-            sheet.add(Modifier.increased(StatKeys.AURA_RESERVATION, -reservation / 100.0 * idols, "偶像崇敬")); // 保留效率增加 = 保留減少
+            sheet.add(Modifier.increased(StatKeys.AURA_RESERVATION, -reservation / 100.0 * idols, "偶像信仰")); // 保留效率增加 = 保留減少
         }
         if (runes > 0 && resist != 0) {
             for (final String stat : new String[] {StatKeys.RESIST_FIRE, StatKeys.RESIST_COLD, StatKeys.RESIST_LIGHTNING}) {
-                sheet.add(Modifier.flat(stat, resist * runes, "偶像崇敬"));
+                sheet.add(Modifier.flat(stat, resist * runes, "偶像信仰"));
             }
         }
     }
@@ -592,7 +592,7 @@ public final class AscBuild {
 
     private static void addMaxResist(final StatSheet sheet, final tw.exilecore.stats.DamageType type, final int amount) {
         if (amount > 0) {
-            sheet.add(Modifier.flat(StatKeys.resistMax(type), amount, "奇術注入"));
+            sheet.add(Modifier.flat(StatKeys.resistMax(type), amount, "奇術灌注"));
         }
     }
 

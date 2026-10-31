@@ -140,7 +140,7 @@ class UniqueDataTest {
         assertTrue(repository.warnings().isEmpty(), String.join("\n", repository.warnings()));
         // 2026-10 PoE2 改版：舊的傳奇退役（retired，不算在 uniques() 裡），換成照 PoE2 的一批，加上劫盜、世界 Boss 的專屬
         // 2026-10-26 照 PoE2 0.5：＋30 件原作有、我們以前沒有的傳奇（淵握墜退役換成淵握戒，件數不變）
-        assertEquals(127 + 21 + 5 + 2 + 6 + 2 + 30 + 91 + 1 + 9 + 21 - 3 + 1 + 1 + 1 + 1, repository.uniques().size(), // 2026-10-30：＋烏勒爾之骨（Bones of Ullr）；2026-10-30：＋拉維安加之泉（Lavianga's Spirits）；2026-10-29：＋鮮血屏障（Bloodbarrier）；＋百目冠（Crown of Eyes） // 2026-10-28 照站長刪掉焰扣束帶、奔雷皮靴、禁視鏈冠（－3）；2026-10-27：＋91 件照 PoE2 0.5 的第二批（84 件一般、7 件追逐級）；2026-10-28：＋黯炎；2026-10-28：＋9 件照 PoE2（綺夢、阿茲里的輕視、謎容、神聖烈焰、元素之章、貝雷克的兩枚、薛朗的背包、吉爾菲的聖殿）
+        assertEquals(127 + 21 + 5 + 2 + 6 + 2 + 30 + 91 + 1 + 9 + 21 - 3 + 1 + 1 + 1 + 1 + 1, repository.uniques().size(), // 2026-10-31：＋忠誠之錘（Chober Chaber）；2026-10-30：＋烏勒爾之骨（Bones of Ullr）；2026-10-30：＋拉維安加之泉（Lavianga's Spirits）；2026-10-29：＋鮮血屏障（Bloodbarrier）；＋百目冠（Crown of Eyes） // 2026-10-28 照站長刪掉焰扣束帶、奔雷皮靴、禁視鏈冠（－3）；2026-10-27：＋91 件照 PoE2 0.5 的第二批（84 件一般、7 件追逐級）；2026-10-28：＋黯炎；2026-10-28：＋9 件照 PoE2（綺夢、阿茲里的輕視、謎容、神聖烈焰、元素之章、貝雷克的兩枚、薛朗的背包、吉爾菲的聖殿）
                 // 2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件、淵鯨再 2 件；2026-10-24：＋6 件戰星傳奇；2026-10-26：＋永恆珠寶 2 件（英雄悲劇、不朽恨意）
                 "（2026-10-27 第二批 ＋91）終局 2 + 追逐級 13 + 其他終局 3 + 具名 Boss 2 + 共通 41（2026-10：＋德魯伊的獸魂符 4 件；2026-10-15 ＋6 件、＋3 件圖騰；2026-10-17 ＋棘壘） + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 11（2026-10-15 ＋1） + 四個終局共通 1（蛛巢壁壘） + 星骸之海的淵鯨 3 + 只能賭的 1（2026-10-17 踏骸之履）");
         final Set<String> names = new HashSet<>();
@@ -259,7 +259,7 @@ class UniqueDataTest {
         }
         // 2026-10：巔峰 Boss（覺醒之主・虛星）自己的十件，物品等級 85 起；做不出來、賭不到、一般地圖 Boss 不掉
         final List<UniqueItem> awakener = repository.uniquesFor("awakener", 92);
-        assertEquals(12, awakener.size(), "虛星的專屬傳奇（2026-10-15：＋神諭之矛；2026-10-28：＋無與倫比，原作灰燼仲裁者掉）");
+        assertEquals(12, awakener.size(), "虛星的專屬傳奇（2026-10-15：＋神諭之矛；2026-10-28：＋舉世無雙，原作灰燼仲裁者掉）");
         assertTrue(repository.uniquesFor("awakener", 84).isEmpty(), "虛星的傳奇物品等級 85 起");
         for (final UniqueItem unique : awakener) {
             // 2026-10-28 照 PoE2：瞬閃之影（Hyrri's Ire）、神諭之矛（The Ordained）原作沒有掉落限制，另外也是全域掉落

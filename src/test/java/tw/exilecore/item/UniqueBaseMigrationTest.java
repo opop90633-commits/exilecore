@@ -40,7 +40,7 @@ class UniqueBaseMigrationTest {
         generator.makeUnique(data, unique, new java.util.Random(1));
         assertFalse(UniqueUpgrade.outdated(repository, data));
         data.setBase("staff_17"); // 2026-10-29 之前的舊基底
-        assertTrue(BaseUpgrade.apply(repository, data), "舊長杖換成永凍長杖");
+        assertTrue(BaseUpgrade.apply(repository, data), "舊長杖換成恆凍長杖");
         assertEquals("cstaff_14", data.base());
         assertFalse(UniqueUpgrade.outdated(repository, data));
         assertEquals("heart_of_ice", repository.grantedSkill(data.base()));

@@ -119,7 +119,7 @@ class ProfaneRitualManifestWeaponTest {
         assertTrue(spec.immortal(), "MinionsAreUndamagable");
         assertTrue(spec.permanent());
         assertEquals("VEX", spec.kind(), "外觀照舊是惱鬼");
-        assertEquals("幻化武器", spec.kindName(), "說明不再寫成焚魂");
+        assertEquals("幻形兵刃", spec.kindName(), "說明不再寫成焚魂");
         assertEquals("焚魂", config.skill("raging_spirits").summon().kindName(), "其他惱鬼照舊");
         assertEquals(1.0, spec.damage(), 1e-9, "Base Damage 100%");
         assertEquals(1.0, spec.life(), 1e-9, "不會受傷，不用再把生命放大 10 倍");

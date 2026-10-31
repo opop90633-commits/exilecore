@@ -330,7 +330,10 @@ public final class SalvageMenu extends Menu {
 
     /** 這一格是藥劑欄（照玩家選的排法）而且放的是藥劑：保護起來不能拆。 */
     private boolean protectedFlask(final int inventorySlot, final ItemStack stack) {
-        return plugin.flasks() != null && plugin.flasks().kindAt(player, inventorySlot) != null && plugin.flasks().read(stack).isPresent();
+        // 2026-10-30 照站長（「全部可以拆的」把藥劑欄的傳奇藥劑拆掉了）：藥劑欄裡的東西一律不拆，不再要求讀得到藥劑資料
+        //   （這次之前只保護讀得到藥劑資料的，讀不到的傳奇藥劑會被當成一般物品選進去）
+        return plugin.flasks() != null && inventorySlot >= 0 && inventorySlot < 9 && plugin.flasks().kindAt(player, inventorySlot) != null
+                && stack != null && !stack.isEmpty() && !tw.exilecore.flask.FlaskService.isPlaceholder(stack);
     }
 
     private static boolean otherWeapon(final Set<String> tags, final Set<String> mine) {

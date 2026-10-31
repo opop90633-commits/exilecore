@@ -34,6 +34,7 @@ import java.util.UUID;
  *   <li>kill_ignited／kill_frozen／kill_shocked／kill_bleeding／kill_poisoned／kill_stunned：打死身上有那種異常的敵人</li>
  *   <li>use：放這個技能時（猛擊在面前、戰吼在腳下、詛咒在準心指的地方）</li>
  *   <li>hit：擊中時</li>
+ *   <li>mark_activated：被輔助的印記被觸發、用掉時，在目標腳下（2026-10-31 照 PoE2 Charged Mark）</li>
  *   <li>armour_broken：讓敵人完全破甲的那一下；stun_applied：讓敵人重暈的那一下；minion_death：被輔助的召喚技能叫出來的召喚物死掉（2026-10）</li>
  * </ul>
  * 同一個玩家的同一個隱藏技能至少間隔 {@value #COOLDOWN} tick；觸發出來的隱藏技能打中不會再觸發。
@@ -120,6 +121,29 @@ public final class SupportProcs implements Listener {
             }
         }
         return false;
+    }
+
+    private boolean markListening;
+
+    /** 2026-10-31 照 PoE2 Charged Mark：印記被用掉時觸發（Debuffs 準備好之後登記一次）。 */
+    private void listenMarks() {
+        if (markListening || plugin.combat() == null || plugin.combat().debuffs() == null) {
+            return;
+        }
+        plugin.combat().debuffs().onMarkConsumed(this::markConsumed);
+        markListening = true;
+    }
+
+    private void markConsumed(final UUID target, final String markId, final UUID source, final long now) {
+        if (source == null || markId == null) {
+            return;
+        }
+        final Player player = plugin.getServer().getPlayer(source);
+        final org.bukkit.entity.Entity entity = plugin.getServer().getEntity(target);
+        if (player == null || !player.isOnline() || !(entity instanceof LivingEntity living) || !living.getWorld().equals(player.getWorld())) {
+            return;
+        }
+        fireAll(player, baseId(markId), "mark_activated", living.getLocation(), living, null);
     }
 
     /** 其他模組回報的事件（SkillService.procEvent）。 */
@@ -271,6 +295,7 @@ public final class SupportProcs implements Listener {
 
     /** 2026-10-27：triggered＝主要寶石觸發的法術放的（「放下時」觸發出來的技能也帶 .meta，不再幫主要寶石充能；這次之前沒標）。 */
     void onUse(final Player player, final SkillDefinition definition, final Location at, final boolean triggered) {
+        listenMarks();
         final boolean previous = metaHit;
         metaHit = previous || triggered;
         try {

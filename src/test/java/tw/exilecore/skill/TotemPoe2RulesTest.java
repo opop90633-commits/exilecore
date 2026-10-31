@@ -128,19 +128,19 @@ class TotemPoe2RulesTest {
         assertEquals(16 * 20, shockwave.durationTicks(shockwave.deploy().duration()), "崩震圖騰 12 秒 + 4 秒");
         // 2026-10-27 照 PoE2：這條是額外的品質效果（進階奇術才有，gem_quality.yml 的 advanced），一般品質沒有了
         assertEquals(1, shockwave.totems(), "一般品質不加圖騰上限");
-        assertEquals(2, withQuality("shockwave_totem", 20, true).totems(), "進階奇術：20% 品質 +1 圖騰上限");
+        assertEquals(2, withQuality("shockwave_totem", 20, true).totems(), "高階奇術：20% 品質 +1 圖騰上限");
         assertEquals(1, withQuality("shockwave_totem", 10, true).totems(), "10% 品質還不到 +1");
         final SkillBuild ancestral = withQuality("ancestral_totem", 20);
         assertEquals(10 * 20, ancestral.durationTicks(ancestral.deploy().duration()), "英靈圖騰 8 秒 + 2 秒");
         final SkillBuild ancestralAdvanced = withQuality("ancestral_totem", 20, true);
         assertEquals(1.0, ancestral.profile().effective(new StatSheet()).apply(StatKeys.TOTEM_LIFE, 1.0, ancestral.profile().tags()), 1e-9);
         assertEquals(1.5, ancestralAdvanced.profile().effective(new StatSheet()).apply(StatKeys.TOTEM_LIFE, 1.0, ancestralAdvanced.profile().tags()), 1e-9,
-                "進階奇術：增加 50% 圖騰生命");
+                "高階奇術：增加 50% 圖騰生命");
         final List<Modifier> spellTotem = SkillService.qualityModifiers(config.skill("totem_casting"), 20);
         assertTrue(spellTotem.stream().anyMatch(m -> m.stat().equals(tw.exilecore.stats.TotemKeys.DURATION_FLAT) && Math.abs(m.value() - 4) < 1e-9));
         assertTrue(spellTotem.stream().noneMatch(m -> m.stat().equals(tw.exilecore.stats.TotemKeys.CAST_SPEED_PER_TOTEM)));
         assertTrue(tw.exilecore.ascendancy.AscBuild.advanced("totem_casting", 20, spellTotem).stream()
-                .anyMatch(m -> m.stat().equals(tw.exilecore.stats.TotemKeys.CAST_SPEED_PER_TOTEM) && Math.abs(m.value() - 10) < 1e-9), "進階奇術");
+                .anyMatch(m -> m.stat().equals(tw.exilecore.stats.TotemKeys.CAST_SPEED_PER_TOTEM) && Math.abs(m.value() - 10) < 1e-9), "高階奇術");
     }
 
     @Test

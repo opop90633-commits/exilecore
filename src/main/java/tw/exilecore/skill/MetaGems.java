@@ -802,7 +802,7 @@ public final class MetaGems {
                 if (build.deploy() != null) {
                     lines.add(String.format(Locale.ROOT, "<gray>圖騰持續 <white>%s</white> 秒", number(build.durationTicks(build.deploy().duration()) / 20.0)));
                 }
-                lines.add("<dark_gray>其他孔的輔助都套在插槽法術上；要圖騰的（疾樁、過剩 II、樁怒…）、加施法速度與持續時間的也套到圖騰本身");
+                lines.add("<dark_gray>其他孔的輔助都套在插槽法術上；要圖騰的（疾樁、盈溢 II、樁怒…）、加施法速度與持續時間的也套到圖騰本身");
             } else if (spec.invocation()) {
                 final double cost = socket.maxEnergy();
                 final double stored = energyOf(player.getUniqueId(), socket);

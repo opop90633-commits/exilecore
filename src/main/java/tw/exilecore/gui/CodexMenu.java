@@ -968,11 +968,16 @@ public final class CodexMenu extends Menu {
             if (slot >= CONTENT_START && slot < CONTENT_END) {
                 targets.put(slot, each.id());
             }
-            stacks.add(codexBaseIcon(each, "<white>" + ItemRenderer.escape(each.name()),
-                    "<gray>" + slotName(each.slot()) + "・" + tagText(each),
-                    "<#8888ff>前綴 " + prefixes + " 種<gray>・<#ffd27f>後綴 " + suffixes + " 種"
-                            + (unveiled > 0 ? "<gray>・<#c48bff>揭露 " + unveiled + " 種" : ""),
-                    "", "<yellow>左鍵：看會出哪些詞綴"));
+            final List<String> baseLore = new ArrayList<>();
+            baseLore.add("<gray>" + slotName(each.slot()) + "・" + tagText(each));
+            if (each.implicit() != null && each.implicit().text() != null) { // 2026-10-31：白裝就有的固定詞綴
+                baseLore.add("<#a0a0ff>" + each.implicit().rangeText() + " <dark_gray>(固定)");
+            }
+            baseLore.add("<#8888ff>前綴 " + prefixes + " 種<gray>・<#ffd27f>後綴 " + suffixes + " 種"
+                    + (unveiled > 0 ? "<gray>・<#c48bff>揭露 " + unveiled + " 種" : ""));
+            baseLore.add("");
+            baseLore.add("<yellow>左鍵：看會出哪些詞綴");
+            stacks.add(codexBaseIcon(each, "<white>" + ItemRenderer.escape(each.name()), baseLore.toArray(String[]::new)));
         }
         return stacks;
     }
@@ -1030,6 +1035,16 @@ public final class CodexMenu extends Menu {
             return baseEntries();
         }
         final List<ItemStack> stacks = new ArrayList<>();
+        // 2026-10-31：第一格是這個基底白裝就有的固定詞綴（不佔前綴、後綴）
+        if (chosen.implicit() != null && chosen.implicit().text() != null) {
+            final List<String> lore = new ArrayList<>();
+            lore.add("<#a0a0ff>固定詞綴");
+            lore.add("<gray>這個基底的白裝就有，不佔前綴、後綴的位子");
+            if (chosen.implicitLevel() > 1) {
+                lore.add("<gray>物品等級 <white>" + chosen.implicitLevel() + "</white> 以下照物品等級等比例變小");
+            }
+            stacks.add(icon(Material.NAME_TAG, "<#a0a0ff>" + chosen.implicit().rangeText(), lore));
+        }
         final List<Affix> all = new ArrayList<>(pool(chosen));
         all.addAll(unveiledPool(chosen, null));
         all.addAll(corruptionPool(chosen)); // 2026-10-21：蝕變石的腐化詞綴

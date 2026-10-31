@@ -342,9 +342,11 @@ class AuraWarcryTest {
         final StatSheet owner = new StatSheet();
         owner.add(new Modifier(StatKeys.AURA_EFFECT, ModType.INCREASED, 0.20, Set.of(), "領袖"));
         owner.add(new Modifier(StatKeys.AURA_RESERVATION, ModType.INCREASED, -0.10, Set.of(), "領袖"));
-        final SkillBuild aegis = build("scavenged_plating", 20, owner); // 2026-10-26：凜冬之殼、魔湧都不是光環了，改用拾鱗
+        // 2026-10-30 照 PoE2：只有真的光環（aura 標籤）吃光環效果；拾鱗這類常駐增益不吃。改用調藥心得（光環，保留 30）
+        assertEquals(1.0, build("scavenged_plating", 20, owner).auraEffect(), 1e-9, "常駐增益不吃光環效果");
+        final SkillBuild aegis = build("alchemists_boon", 20, owner);
         assertEquals(1.2, aegis.auraEffect(), 1e-9);
-        assertEquals(config.skill("scavenged_plating").aura().effects().getFirst().value().at(20) / 100.0 * 1.2,
+        assertEquals(config.skill("alchemists_boon").aura().effects().getFirst().value().at(20) * 1.2, // 每分鐘幾點充能（不是百分比）
                 aegis.auraModifiers().getFirst().value(), 1e-9, "每一條效果都乘光環效果");
         assertEquals(30 / 1.1, aegis.reserve(), 1e-9, "2026-10 保留效率：減少 10% → 保留 ÷ 1.1");
 
@@ -354,7 +356,7 @@ class AuraWarcryTest {
         final SupportDefinition auraEffect = new SupportDefinition("aura_effect", "強效光環", "", "BEACON", 2, Set.of(SupportDefinition.PERSISTENT_BUFF), Set.of(), 1.0,
                 List.of(new Modifier(StatKeys.AURA_EFFECT, ModType.INCREASED, 0.25, Set.of(), "強效光環"),
                         new Modifier(StatKeys.AURA_RESERVATION, ModType.INCREASED, 0.20, Set.of(), "強效光環")), List.of());
-        final SkillBuild boosted = build("frost_aegis", 20, owner, auraEffect);
+        final SkillBuild boosted = build("alchemists_boon", 20, owner, auraEffect); // 2026-10-30：凜冬之殼不是光環，改用調藥心得
         assertEquals(1, boosted.supports().size());
         assertEquals(1.45, boosted.auraEffect(), 1e-9, "增加 20% + 25%（增加相加）");
         assertEquals(30 * (1 - 0.10 + 0.20), boosted.reserve(), 1e-9, "保留 -10% + 20% = 增加 10%，照乘");

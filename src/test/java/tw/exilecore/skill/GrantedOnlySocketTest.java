@@ -70,7 +70,7 @@ class GrantedOnlySocketTest {
                 }
             }
         }
-        assertTrue(metas >= 10, "星咒圖騰、引星、祈喚、咒擲、擊中時火焰法術都算");
+        assertTrue(metas >= 10, "星咒圖騰、引星、祈喚、咒擲、命中引火術都算");
         // 使用者回報的：星咒圖騰、祈喚（元祈、咒擲）
         for (final String host : List.of("totem_casting", "meta_elemental_invocation", "meta_reaper_invocation", "meta_barrier_invocation",
                 "spellslinger", "meta_crit")) {

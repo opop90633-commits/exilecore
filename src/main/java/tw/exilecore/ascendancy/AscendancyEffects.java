@@ -290,7 +290,7 @@ public final class AscendancyEffects implements Listener {
         if (rageCost > 0 && definition.mechanic() != tw.exilecore.skill.Mechanic.AURA && !definition.hidden()) {
             rage = (int) Math.round(rageCost / tw.exilecore.stats.CostKeys.divisor(tw.exilecore.stats.CostKeys.otherEfficiency(sheet, definition.tags()))); // 2026-10-27 照 PoE2：怒氣消耗也吃消耗效率
             if (plugin(effects).skills() != null && plugin(effects).skills().resources().rage(player) < rage) {
-                return new Cost((int) Math.round(mana), flame, rage, flask, "怒氣不足（狂怒源泉：" + definition.name() + "要 " + rage + " 怒氣）");
+                return new Cost((int) Math.round(mana), flame, rage, flask, "怒氣不足（怒之泉湧：" + definition.name() + "要 " + rage + " 怒氣）");
             }
         }
         return new Cost((int) Math.round(mana), flame, rage, flask, null);
@@ -387,7 +387,7 @@ public final class AscendancyEffects implements Listener {
         final double price = flat(sheet, AscKeys.PRICE_OF_POWER);
         if (price > 0 && tags.contains(Tags.SPELL) && plugin.combat() != null && plugin.combat().charges() != null
                 && plugin.combat().charges().spend(player, "power", null, tags) > 0) {
-            local.add(Modifier.more(StatKeys.DAMAGE, price / 100.0, "力量的代價"));
+            local.add(Modifier.more(StatKeys.DAMAGE, price / 100.0, "權能之價"));
         }
         // 異能賦予：施放法術時犧牲 5% 最大能量護盾；完全支付的法術更多 30% 傷害
         final double eldritch = flat(sheet, AscKeys.ELDRITCH);
@@ -397,7 +397,7 @@ public final class AscendancyEffects implements Listener {
                 final boolean full = state.energyShield() >= need - 1e-6;
                 state.setEnergyShield(Math.max(0, state.energyShield() - need)); // 犧牲不會中斷回充（不改最後受傷時間）
                 if (full) {
-                    local.add(Modifier.more(StatKeys.DAMAGE, ELDRITCH_MORE, "異能賦予"));
+                    local.add(Modifier.more(StatKeys.DAMAGE, ELDRITCH_MORE, "異能加持"));
                 }
                 plugin.players().display(player, state);
             }
@@ -654,7 +654,7 @@ public final class AscendancyEffects implements Listener {
         final List<Modifier> extra = new ArrayList<>();
         final double esArmour = flat(sheet, AscKeys.ES_ARMOUR);
         if (esArmour > 0 && state.energyShield() > 0) {
-            extra.add(Modifier.flat(StatKeys.ARMOUR, state.energyShield() * esArmour / 100.0, "神聖儀式"));
+            extra.add(Modifier.flat(StatKeys.ARMOUR, state.energyShield() * esArmour / 100.0, "聖禮儀典"));
         }
         final double less = flat(sheet, AscKeys.ELEMENTAL_TAKEN_LESS);
         final double adapt = flat(sheet, AscKeys.ADAPT);
@@ -876,7 +876,7 @@ public final class AscendancyEffects implements Listener {
         final double random = flat(sheet, AscKeys.RANDOM_ELEMENT);
         if (random > 0) {
             for (final String element : new String[] {Tags.FIRE, Tags.COLD, Tags.LIGHTNING}) {
-                out.add(Modifier.flat(StatKeys.DAMAGE_EXTRA + element, random / 3.0, "季節循環（期望值）"));
+                out.add(Modifier.flat(StatKeys.DAMAGE_EXTRA + element, random / 3.0, "四時更迭（期望值）"));
             }
         }
         final double accuracy = flat(sheet, AscKeys.ACCURACY_DAMAGE);
@@ -888,7 +888,7 @@ public final class AscendancyEffects implements Listener {
         }
         // 2026-10-27：異能賦予（放法術時犧牲 x% 最大能量護盾，付得起的法術更多 30%，{@link #cast}）照付得起估；這次之前面板、網頁沒算
         if (flat(sheet, AscKeys.ELDRITCH) > 0 && tw.exilecore.character.PlayerState.maxEnergyShield(sheet) > 0) {
-            out.add(new Modifier(StatKeys.DAMAGE, ModType.MORE, ELDRITCH_MORE, Set.of(Tags.SPELL), "異能賦予"));
+            out.add(new Modifier(StatKeys.DAMAGE, ModType.MORE, ELDRITCH_MORE, Set.of(Tags.SPELL), "異能加持"));
         }
         return out;
     }
@@ -928,7 +928,7 @@ public final class AscendancyEffects implements Listener {
             if (e != null && e.concentrationMax > 0 && e.concentration >= 0) {
                 final double lost = 1 - Math.max(0, e.concentration) / e.concentrationMax;
                 if (lost > 0) {
-                    out.add(Modifier.more(StatKeys.DAMAGE, noMercy / 100.0 * lost, "毫不留情"));
+                    out.add(Modifier.more(StatKeys.DAMAGE, noMercy / 100.0 * lost, "絕不手軟"));
                 }
             }
         }
@@ -936,7 +936,7 @@ public final class AscendancyEffects implements Listener {
         final double random = flat(sheet, AscKeys.RANDOM_ELEMENT);
         if (random > 0) {
             final String element = new String[] {Tags.FIRE, Tags.COLD, Tags.LIGHTNING}[plugin.random().nextInt(3)];
-            out.add(Modifier.flat(StatKeys.DAMAGE_EXTRA + element, random, "季節循環"));
+            out.add(Modifier.flat(StatKeys.DAMAGE_EXTRA + element, random, "四時更迭"));
         }
         // 腐化生命力：對受血液沸騰影響的敵人更多 15%
         final double boil = flat(sheet, AscKeys.BLOOD_BOIL_MORE);
@@ -1687,9 +1687,9 @@ public final class AscendancyEffects implements Listener {
                 out.add(Modifier.increased(StatKeys.EVASION, 0.10 * s.tailwind, "順風"));
             }
             if (s.forTheKill) {
-                out.add(Modifier.increased(StatKeys.MOVEMENT_SPEED, 0.20, "專注擊殺"));
-                out.add(Modifier.increased(StatKeys.ATTACK_SPEED, 0.40, "專注擊殺"));
-                out.add(Modifier.increased(StatKeys.CAST_SPEED, 0.40, "專注擊殺"));
+                out.add(Modifier.increased(StatKeys.MOVEMENT_SPEED, 0.20, "一擊斃命"));
+                out.add(Modifier.increased(StatKeys.ATTACK_SPEED, 0.40, "一擊斃命"));
+                out.add(Modifier.increased(StatKeys.CAST_SPEED, 0.40, "一擊斃命"));
             }
             if (s.esPowerRecent) {
                 final double es = flat(state.sheet(), AscKeys.ES_POWER);
@@ -1717,7 +1717,7 @@ public final class AscendancyEffects implements Listener {
         final double perMana = flat(base, AscKeys.ARCANE_PER_MANA);
         if (perMana > 0 && state.maxMana() > 0) {
             out.add(Modifier.increased(tw.exilecore.stats.TreeNewMechanicKeys.ARCANE_SURGE_EFFECT,
-                    Math.floor((1 - state.mana() / state.maxMana()) * 10) * perMana / 100.0, "意志之力"));
+                    Math.floor((1 - state.mana() / state.maxMana()) * 10) * perMana / 100.0, "意志之能"));
         }
         // 靈能導體：非低魔力時你與存在範圍內的友軍擁有不潔之力；黑化之心：每 100 最大魔力增加 4% 幅度
         out.addAll(unholyMight(player, state));
@@ -1725,7 +1725,7 @@ public final class AscendancyEffects implements Listener {
         out.addAll(allyWeapon(player));
         // 衝刺突擊：衝刺時無法被重度暈眩；女王進軍：衝刺時其他來源的傷害不會造成重度暈眩
         if (player.isSprinting() && (has(base, AscKeys.SPRINT_STUN) || plugin.skills() != null && plugin.skills().auraOn(player, "queens_procession"))) {
-            out.add(Modifier.flat("flag.immune.stun", 1, "衝刺突擊"));
+            out.add(Modifier.flat("flag.immune.stun", 1, "疾衝突襲"));
         }
         out.addAll(granted.buffModifiers(player, state));
         out.addAll(paths.buffModifiers(player, state)); // 2026-10-27：凱莎的平衡、自然秩序、翱翔之地、荒野擁抱、山巒之教、幽影之魂
