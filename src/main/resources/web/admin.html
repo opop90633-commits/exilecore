@@ -493,7 +493,7 @@
       <h3 id="news-editor-title" style="margin:0">新增公告</h3>
       <label class="field">日期<input type="date" id="news-date"></label>
       <label class="field">標題<input type="text" id="news-title" maxlength="80"></label>
-      <label class="field">內容<textarea id="news-body" style="min-height:320px;font-family:ui-monospace,Consolas,monospace;font-size:13px"></textarea></label>
+      <label class="field">內容<textarea id="news-body" rows="28" style="height:auto;min-height:420px;max-height:none;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.6"></textarea></label>
       <div class="filters" style="margin-top:12px">
         <button type="button" class="primary" id="news-save">儲存</button>
         <button type="button" id="news-cancel">取消</button>
@@ -1757,7 +1757,14 @@
     $('news-body').value = post ? post.body : '## 新內容\n- ';
     $('news-delete').hidden = !post;
     $('news-editor').hidden = false;
+    growNews();
     $('news-title').focus();
+  }
+  /** 2026-11-01 照站長：內容框照文字長度撐開（至少 420px），不用在小框裡捲。 */
+  function growNews() {
+    var box = $('news-body');
+    box.style.height = 'auto';
+    box.style.height = Math.max(420, box.scrollHeight + 4) + 'px';
   }
   function saveNews() {
     $('news-save').disabled = true;
@@ -2086,6 +2093,7 @@
   $('news-refresh').addEventListener('click', loadNews);
   $('news-new').addEventListener('click', function () { openNews(null); });
   $('news-save').addEventListener('click', saveNews);
+  $('news-body').addEventListener('input', growNews);
   $('news-cancel').addEventListener('click', function () { $('news-editor').hidden = true; });
   $('news-delete').addEventListener('click', deleteNews);
   $('guild-refresh').addEventListener('click', function () { loadGuilds().then(function () { if (guildOpenId !== null) { openGuild(guildOpenId); } }); });

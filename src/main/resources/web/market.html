@@ -102,6 +102,8 @@
   .book .depth { position: relative; }
   .book .bar { position: absolute; top: 2px; bottom: 2px; right: 0; background: var(--track); border-radius: 3px; opacity: .55; z-index: 0; }
   .book td > span { position: relative; z-index: 1; }
+  .unit { display: inline-flex; align-items: center; gap: 4px; color: var(--text-secondary); font-size: 12px; margin-left: 4px; }
+  .unit .icon { width: 16px; height: 16px; }
   .empty { color: var(--text-muted); padding: 16px; text-align: center; }
   .note { color: var(--text-muted); font-size: 12px; margin-top: 12px; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
@@ -117,7 +119,6 @@
   </header>
   <div class="controls">
     <input id="search" type="search" placeholder="搜尋通貨" aria-label="搜尋通貨">
-    <label>價格單位 <select id="base" aria-label="價格單位"></select></label>
   </div>
   <div class="seg" id="groups" role="group" aria-label="分類"></div>
   <div class="layout" style="margin-top:12px">
@@ -138,40 +139,26 @@
     </section>
     <section class="card detail" id="detail" aria-live="polite"><div class="empty">點左邊的通貨看走勢與掛單</div></section>
   </div>
-  <p class="note">價格是「1 個這種通貨 = 幾個單位通貨」。最近 24 小時有成交的照成交量加權平均，沒有的寫參考價（灰字）。
-    走勢用交易所的全部成交紀錄算（換成別種單位時照現在的參考價換算）；掛單只列價格與數量，不列玩家。每分鐘更新。</p>
+  <p class="note">價格全照交易所的實際成交：用什麼通貨換的，就用那種通貨計價（「1 個這種通貨 = 幾個對面通貨」）。
+    列表顯示最近一筆成交、用最常換的那種通貨計價；右邊可以切換跟每種通貨的成交走勢與掛單。掛單只列價格與數量，不列玩家。每分鐘更新。</p>
 </div>
 </div>
 <script>
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
-  var data = null, byId = {}, base = null, group = '全部', query = '', sortKey = 'vol', sortDir = -1, selected = null, range = '30';
+  // 2026-11-01：圖示一次抓（icons.json：通貨 → data URI）；這次之前每張各打一次，一兩百張同時打會變破圖
+  var icons = {};
+  fetch('market/icons.json').then(function (r) { return r.json(); }).then(function (m) { icons = m || {}; if (data) { renderRows(); if (selected) renderDetail(); } }).catch(function () { /* 沒圖示照樣能看 */ });
+  var data = null, byId = {}, group = '全部', query = '', sortKey = 'vol', sortDir = -1, selected = null, counter = null, range = '30';
   try { var saved = JSON.parse(localStorage.getItem('market.prefs') || '{}'); if (saved.range) range = saved.range; } catch (e) { /* 沒有也沒關係 */ }
 
-  function save() { try { localStorage.setItem('market.prefs', JSON.stringify({ base: base, range: range })); } catch (e) { /* 私密視窗 */ } }
+  function save() { try { localStorage.setItem('market.prefs', JSON.stringify({ range: range })); } catch (e) { /* 私密視窗 */ } }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
-  /** 這種通貨現在值幾個基準（最近 24 小時有成交用成交價，沒有用參考價）。 */
-  function anchorPrice(c) {
-    if (!c) return null;
-    if (c.id === data.anchor) return 1;
-    var d = data.daily[c.id];
-    if (c.vol24 > 0 && data.hourly[c.id]) {
-      var h = data.hourly[c.id], cut = Date.now() - 86400000, sum = 0, units = 0;
-      for (var i = 0; i < h.length; i++) if (h[i][0] >= cut) { sum += h[i][1] * h[i][2]; units += h[i][2]; }
-      if (units > 0) return sum / units;
-    }
-    if (c.ref) return c.ref;
-    if (d && d.length) return d[d.length - 1][1];
-    return null;
-  }
-  function live(c) { return c && (c.id === data.anchor || c.vol24 > 0); }
-  /** 基準換成畫面上選的單位。 */
-  function inBase(anchorValue) {
-    var b = byId[base], unit = anchorPrice(b);
-    return anchorValue == null || !unit ? null : anchorValue / unit;
-  }
+  /** 交易對（x 用 y 計價）；沒成交過回傳 null。 */
+  function pair(x, y) { return data.pairs[x] && data.pairs[x][y] || null; }
+  function nameOf(id) { return byId[id] ? byId[id].name : id; }
   function fmt(v) {
     if (v == null || !isFinite(v)) return '—';
     var a = Math.abs(v);
@@ -183,35 +170,34 @@
   }
   function fmtInt(v) { return (v || 0).toLocaleString('zh-TW'); }
   function iconHtml(c, cls) {
-    return c && c.icon ? '<img class="icon ' + (cls || '') + '" alt="" src="market/icon.png?id=' + encodeURIComponent(c.id) + '" loading="lazy">'
+    var src = c && icons[c.id];
+    return src ? '<img class="icon ' + (cls || '') + '" alt="" src="' + src + '">'
       : '<span class="icon blank ' + (cls || '') + '" aria-hidden="true"></span>';
   }
-  function baseName() { return byId[base] ? byId[base].name : ''; }
+  /** 計價通貨的小標（圖示＋名字）。 */
+  function unitHtml(id) { return '<span class="unit">' + iconHtml(byId[id] || { id: id }) + esc(nameOf(id)) + '</span>'; }
+  function ago(ms) {
+    var m = Math.max(0, Math.round((Date.now() - ms) / 60000));
+    if (m < 1) return '剛剛';
+    if (m < 60) return m + ' 分鐘前';
+    if (m < 1440) return Math.round(m / 60) + ' 小時前';
+    return Math.round(m / 1440) + ' 天前';
+  }
 
   function load() {
     fetch('market/data.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
       data = d; byId = {};
+      d.pairs = d.pairs || {};
       d.currencies.forEach(function (c) { byId[c.id] = c; });
-      var savedBase = null;
-      try { savedBase = JSON.parse(localStorage.getItem('market.prefs') || '{}').base; } catch (e) { /* 沒有 */ }
-      if (!base) base = savedBase && byId[savedBase] ? savedBase : d.anchor;
-      if (!byId[base]) base = d.anchor;
       $('sub').textContent = '資料時間 ' + (d.stamp || '—') + '　交易所累計 ' + fmtInt(d.trades) + ' 筆成交　' + d.currencies.length + ' 種通貨';
-      buildBase(); buildGroups(); renderRows();
+      buildGroups(); renderRows();
       if (selected && byId[selected]) renderDetail(); else if (!selected) {
-        var first = d.currencies.filter(function (c) { return c.id !== base; }).sort(function (a, b) { return b.vol24 - a.vol24; })[0];
-        if (first && first.vol24 > 0) { selected = first.id; renderRows(); renderDetail(); }
+        var first = d.currencies.slice().sort(function (a, b) { return (b.vol24 || 0) - (a.vol24 || 0); })[0];
+        if (first && first.main) { selected = first.id; renderRows(); renderDetail(); }
       }
     }).catch(function () { $('sub').textContent = '現在讀不到資料（伺服器沒開或市集模組沒啟用）'; });
   }
 
-  function buildBase() {
-    var sel = $('base');
-    if (sel.options.length) { sel.value = base; return; }
-    data.currencies.forEach(function (c) { if (c.ref || c.id === data.anchor) { var o = document.createElement('option'); o.value = c.id; o.textContent = c.name; sel.appendChild(o); } });
-    sel.value = base;
-    sel.addEventListener('change', function () { base = sel.value; save(); renderRows(); if (selected) renderDetail(); });
-  }
   function buildGroups() {
     var box = $('groups');
     if (box.childNodes.length) return;
@@ -227,7 +213,7 @@
 
   function rowValue(c, key) {
     if (key === 'name') return c.name;
-    if (key === 'price') return inBase(anchorPrice(c)) || 0;
+    if (key === 'price') return c.main ? c.last : -1;
     if (key === 'change') return c.change24 == null ? -1e9 : c.change24;
     return c.vol24 || 0;
   }
@@ -245,11 +231,10 @@
     });
     var html = '';
     list.forEach(function (c) {
-      var p = inBase(anchorPrice(c));
       var ch = c.change24;
       html += '<tr data-id="' + esc(c.id) + '"' + (c.id === selected ? ' aria-selected="true"' : '') + '>' +
         '<td><div class="name">' + iconHtml(c) + '<span>' + esc(c.name) + '</span></div></td>' +
-        '<td class="num' + (live(c) ? '' : ' muted') + '">' + (c.id === base ? '1' : fmt(p)) + '</td>' +
+        '<td class="num">' + (c.main ? fmt(c.last) + unitHtml(c.main) : '<span class="muted">尚無成交</span>') + '</td>' +
         '<td class="num ' + (ch == null ? 'muted' : ch > 0 ? 'up' : ch < 0 ? 'down' : '') + '">' + (ch == null ? '—' : (ch > 0 ? '▲ ' : ch < 0 ? '▼ ' : '') + fmt(Math.abs(ch)) + '%') + '</td>' +
         '<td class="num hide-sm">' + (c.vol24 ? fmtInt(c.vol24) : '<span class="muted">0</span>') + '</td>' +
         '<td class="hide-sm">' + spark(c) + '</td></tr>';
@@ -257,9 +242,9 @@
     $('rows').innerHTML = html;
     $('noRows').hidden = list.length > 0;
   }
-  /** 7 天的小走勢（每天的成交價；不到 2 天不畫）。 */
+  /** 7 天的小走勢（主要計價通貨那一對、每天的成交價；不到 2 天不畫）。 */
   function spark(c) {
-    var d = data.daily[c.id];
+    var pr = c.main && pair(c.id, c.main), d = pr && pr.daily;
     if (!d || d.length < 2) return '<span class="muted">—</span>';
     var cut = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
     var pts = d.filter(function (r) { return r[0] >= cut; });
@@ -273,50 +258,64 @@
       '" fill="none" stroke="' + (up ? 'var(--good-text)' : 'var(--bad-text)') + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   }
 
-  // ---- 右邊：走勢與掛單 ----
-  function series(c) {
+  // ---- 右邊：跟某一種通貨的成交走勢與掛單 ----
+  function series(pr) {
     var out = [];
     if (range === '7') {
-      (data.hourly[c.id] || []).forEach(function (r) { out.push({ t: r[0], p: inBase(r[1]), v: r[2], label: new Date(r[0]).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit' }) }); });
+      (pr.hourly || []).forEach(function (r) { out.push({ t: r[0], p: r[1], v: r[2], label: new Date(r[0]).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit' }) }); });
       return out;
     }
-    var rows = data.daily[c.id] || [];
     var cut = range === 'all' ? '' : new Date(Date.now() - Number(range) * 86400000).toISOString().slice(0, 10);
-    rows.forEach(function (r) { if (r[0] >= cut) out.push({ t: Date.parse(r[0]), p: inBase(r[1]), v: r[2], n: r[3], label: r[0] }); });
+    (pr.daily || []).forEach(function (r) { if (r[0] >= cut) out.push({ t: Date.parse(r[0]), p: r[1], v: r[2], n: r[3], label: r[0] }); });
     return out;
+  }
+  /** 這種通貨換過的對面通貨（成交筆數多的在前）。 */
+  function counters(c) {
+    var m = data.pairs[c.id] || {};
+    return Object.keys(m).sort(function (a, b) { return (m[b].count || 0) - (m[a].count || 0) || (a === c.main ? -1 : b === c.main ? 1 : 0); });
   }
   function renderDetail() {
     var c = byId[selected];
     if (!c) return;
-    var p = inBase(anchorPrice(c));
-    var inverse = p ? 1 / p : null;
     var box = $('detail');
+    var list = counters(c);
+    if (!list.length) {
+      box.innerHTML = '<h2>' + iconHtml(c) + esc(c.name) + '</h2><div class="empty">交易所還沒有這種通貨的成交紀錄</div>';
+      return;
+    }
+    if (list.indexOf(counter) < 0) counter = c.main && list.indexOf(c.main) >= 0 ? c.main : list[0];
+    var pr = pair(c.id, counter), unit = esc(nameOf(counter));
     box.innerHTML =
       '<h2>' + iconHtml(c) + esc(c.name) + '</h2>' +
+      (list.length > 1 ? '<div class="seg" id="counters" style="margin-top:10px" role="group" aria-label="跟哪種通貨的成交">' + list.map(function (id) {
+        return '<button type="button" data-counter="' + esc(id) + '" aria-pressed="' + (id === counter) + '">用' + esc(nameOf(id)) + '換</button>';
+      }).join('') + '</div>' : '') +
       '<div class="stats">' +
-        stat(c.id === base ? '1' : fmt(p), '1 個 = 幾個' + esc(baseName()) + (live(c) ? '' : '（參考價）')) +
-        stat(c.id === base ? '1' : fmt(inverse), '1 個' + esc(baseName()) + ' = 幾個') +
-        stat(c.change24 == null ? '—' : (c.change24 > 0 ? '+' : '') + fmt(c.change24) + '%', '24 小時漲跌') +
-        stat(fmtInt(c.vol24) + '<small> 個 / ' + fmtInt(c.count24) + ' 筆</small>', '24 小時成交') +
+        stat(fmt(pr.last), '1 個 = 幾個' + unit + '（' + ago(pr.lastAt) + '成交）') +
+        stat(fmt(pr.last ? 1 / pr.last : null), '1 個' + unit + ' = 幾個') +
+        stat(pr.change24 == null ? '—' : (pr.change24 > 0 ? '+' : '') + fmt(pr.change24) + '%', '24 小時漲跌') +
+        stat(fmtInt(pr.vol24) + '<small> 個 / ' + fmtInt(pr.count24) + ' 筆</small>', '24 小時成交') +
       '</div>' +
-      '<div class="chart-head"><h3>價格走勢（' + esc(baseName()) + '）</h3><div class="seg" id="ranges">' +
+      '<div class="chart-head"><h3>成交價走勢（' + unit + '）</h3><div class="seg" id="ranges">' +
         [['7', '7 天（每小時）'], ['30', '30 天'], ['90', '90 天'], ['all', '全部']].map(function (r) {
           return '<button type="button" data-range="' + r[0] + '" aria-pressed="' + (range === r[0]) + '">' + r[1] + '</button>';
         }).join('') + '</div></div>' +
       '<div class="chart" id="priceChart"></div>' +
       '<div class="chart-head" style="margin-top:12px"><h3>成交量（個）</h3></div>' +
       '<div class="chart" id="volChart"></div>' +
-      '<div class="chart-head" style="margin-top:16px"><h3>掛單（對' + esc(baseName()) + '）</h3></div>' +
-      bookHtml(c);
+      '<div class="chart-head" style="margin-top:16px"><h3>掛單（對' + unit + '）</h3></div>' +
+      bookHtml(c, counter);
     box.querySelectorAll('#ranges button').forEach(function (b) {
       b.addEventListener('click', function () { range = b.dataset.range; save(); renderDetail(); });
     });
-    drawCharts(c);
+    box.querySelectorAll('#counters button').forEach(function (b) {
+      b.addEventListener('click', function () { counter = b.dataset.counter; renderDetail(); });
+    });
+    drawCharts(c, pr, nameOf(counter));
   }
   function stat(value, label) { return '<div class="stat"><b>' + value + '</b><small>' + label + '</small></div>'; }
 
-  function bookHtml(c) {
-    if (c.id === base) return '<div class="empty">換一個價格單位看這種通貨的掛單</div>';
+  function bookHtml(c, base) {
     var sells = [], buys = [];
     (data.orders || []).forEach(function (o) {
       // o = [付出, 想要, 一批付出, 一批想要, 還有幾批, 幾張單]
@@ -347,8 +346,8 @@
     for (var v = Math.floor(lo / step) * step; v <= hi + step * 0.5; v += step) ticks.push(v);
     return ticks;
   }
-  function drawCharts(c) {
-    var pts = series(c).filter(function (p) { return p.p != null; });
+  function drawCharts(c, pr, unitName) {
+    var pts = series(pr).filter(function (p) { return p.p != null; });
     var priceBox = $('priceChart'), volBox = $('volChart');
     if (pts.length === 0) {
       priceBox.innerHTML = '<div class="empty">這段時間沒有成交</div>';
@@ -412,7 +411,7 @@
       cross.setAttribute('x1', px); cross.setAttribute('x2', px); cross.setAttribute('visibility', 'visible');
       dot.setAttribute('cx', px); dot.setAttribute('cy', y(p.p)); dot.setAttribute('visibility', 'visible');
       bars.forEach(function (b, j) { b.setAttribute('opacity', j === i ? 1 : 0.4); });
-      tip.innerHTML = '<div class="muted">' + esc(p.label) + '</div><div><b>' + fmt(p.p) + '</b> ' + esc(baseName()) + '</div><div>成交 <b>' + fmtInt(p.v) + '</b> 個' + (p.n ? '・' + p.n + ' 筆' : '') + '</div>';
+      tip.innerHTML = '<div class="muted">' + esc(p.label) + '</div><div><b>' + fmt(p.p) + '</b> ' + esc(unitName) + '</div><div>成交 <b>' + fmtInt(p.v) + '</b> 個' + (p.n ? '・' + p.n + ' 筆' : '') + '</div>';
       tip.style.display = 'block';
       var rect = priceBox.getBoundingClientRect(), left = px / W * rect.width;
       tip.style.left = Math.max(0, Math.min(rect.width - tip.offsetWidth, left + 12)) + 'px';
@@ -428,7 +427,7 @@
   $('rows').addEventListener('click', function (e) {
     var tr = e.target.closest('tr[data-id]');
     if (!tr) return;
-    selected = tr.dataset.id;
+    selected = tr.dataset.id; counter = null;
     renderRows(); renderDetail();
     if (window.innerWidth <= 900) $('detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });

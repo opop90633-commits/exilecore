@@ -8,14 +8,11 @@ import tw.exilecore.economy.EconomyRepository;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -50,15 +47,11 @@ public final class MarketWeb {
             return;
         }
         final var config = plugin.economy().config();
-        final String anchor = config.reference().anchor();
         final List<ExchangeMarketJson.Meta> metas = new ArrayList<>();
-        final Map<String, Long> current = new LinkedHashMap<>();
         for (final String id : config.values().keySet()) {
-            final long value = config.value(id);
             if (MarketService.starCoin(id)) {
                 if (plugin.sponsors() != null) {
                     metas.add(new ExchangeMarketJson.Meta(id, "星幣", CurrencyGroups.Group.BASIC.displayName(), false));
-                    current.put(id, value);
                 }
                 continue;
             }
@@ -67,7 +60,6 @@ public final class MarketWeb {
                 continue;
             }
             metas.add(new ExchangeMarketJson.Meta(id, type.name(), CurrencyGroups.of(type).displayName(), CurrencyArt.artOf(type) != null));
-            current.put(id, value);
         }
         final List<ExchangeMarketJson.OrderView> orders = new ArrayList<>();
         for (final ExchangeBook.Order order : service.book().all()) {
@@ -77,7 +69,6 @@ public final class MarketWeb {
         }
         final ZoneId zone = plugin.economy().ledger().zone();
         final Instant now = Instant.now();
-        final String fromDay = LocalDate.now(zone).minusDays(HISTORY_DAYS).toString();
         final EconomyRepository repository = plugin.economy().repository();
         running = true;
         plugin.database().async(connection -> {
@@ -85,11 +76,7 @@ public final class MarketWeb {
             for (final EconomyRepository.Trade trade : repository.tradesSince(connection, now.minus(HISTORY_DAYS, ChronoUnit.DAYS))) {
                 trades.add(new ExchangeMarketJson.TradeRow(trade.at(), trade.give(), trade.giveAmount(), trade.want(), trade.wantAmount()));
             }
-            final Map<String, Map<String, Long>> dayValues = new HashMap<>();
-            for (final EconomyRepository.DayValue row : repository.valuesSince(connection, fromDay)) {
-                dayValues.computeIfAbsent(row.day(), k -> new HashMap<>()).put(row.kind(), row.amount());
-            }
-            return ExchangeMarketJson.build(metas, anchor, current, dayValues, trades, orders, zone, now,
+            return ExchangeMarketJson.build(metas, trades, orders, zone, now,
                     STAMP.format(ZonedDateTime.ofInstant(now, zone)));
         }).whenComplete((built, error) -> {
             running = false;
@@ -101,18 +88,54 @@ public final class MarketWeb {
         });
     }
 
+    /** 2026-11-01：圖示做過的存起來（同一張圖不用每次重畫）。 */
+    private final java.util.Map<String, byte[]> icons = new java.util.concurrent.ConcurrentHashMap<>();
+    private volatile byte[] iconsJson;
+
     /** 通貨的圖示（PNG）；沒有圖回傳 null。 */
     public byte[] icon(final String id) {
-        final CurrencyType type = id == null ? null : plugin.currencies().repository().get(id);
+        if (id == null) {
+            return null;
+        }
+        final byte[] cached = icons.get(id);
+        if (cached != null) {
+            return cached.length == 0 ? null : cached;
+        }
+        final CurrencyType type = plugin.currencies().repository().get(id);
         final String art = CurrencyArt.artOf(type);
         final var sprite = art == null ? null : CurrencyArt.sprites().get(art);
-        if (sprite == null) {
-            return null;
+        byte[] png = null;
+        if (sprite != null) {
+            try {
+                png = tw.exilecore.web.UiPack.spritePng(sprite);
+            } catch (final java.io.IOException | RuntimeException e) {
+                png = null;
+            }
         }
-        try {
-            return tw.exilecore.web.UiPack.spritePng(sprite);
-        } catch (final java.io.IOException e) {
-            return null;
+        icons.put(id, png == null ? new byte[0] : png);
+        return png;
+    }
+
+    /**
+     * 2026-11-01 照站長「有些圖案沒顯示」：所有交易所通貨的圖示一次給（通貨 → data:image/png;base64,…）。
+     * 這次之前每個圖示各打一次 /market/icon.png，一兩百張同時打，網頁伺服器的執行緒滿了就把連線關掉，圖示變成破圖。
+     */
+    public byte[] iconsJson() {
+        byte[] json = iconsJson;
+        if (json != null) {
+            return json;
         }
+        final com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+        if (plugin.economy() != null) {
+            for (final String id : plugin.economy().config().values().keySet()) {
+                final byte[] png = icon(id);
+                if (png != null) {
+                    root.addProperty(id, "data:image/png;base64," + java.util.Base64.getEncoder().encodeToString(png));
+                }
+            }
+        }
+        json = root.toString().getBytes(StandardCharsets.UTF_8);
+        iconsJson = json;
+        return json;
     }
 }

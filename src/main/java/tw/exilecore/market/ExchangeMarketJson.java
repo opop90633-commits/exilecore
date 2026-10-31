@@ -7,7 +7,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,8 +15,9 @@ import java.util.TreeMap;
 /**
  * 2026-10-31 照站長：通貨交易所的行情網頁（/market）的資料。純邏輯，不依賴 Bukkit。
  * <ul>
- *   <li>價格都換成「基準通貨」（economy.yml 的 reference.anchor，預設至臻石）幾個：
- *       跟基準直接換的成交照實際比例；跟別的通貨換的，照那一天的參考價值換算對面那種通貨值多少基準。</li>
+ *   <li>2026-11-01 照站長：不用參考價值換算，價格全照實際成交——X 用 Y 換的，就記成「1 個 X ＝ 幾個 Y」；
+ *       一筆成交兩邊都算（X 用 Y 計價、Y 用 X 計價）。</li>
+ *   <li>每種通貨的「主要計價通貨」＝最近 7 天換手最多的那種對面通貨（7 天沒成交看全部）；列表照它顯示。</li>
  *   <li>每天、每小時（最近 7 天）照成交量加權平均（VWAP）；量是那種通貨換手的個數。</li>
  *   <li>掛單只給價格與數量（沒有名字、帳號）。</li>
  * </ul>
@@ -38,160 +38,177 @@ public final class ExchangeMarketJson {
 
     /** 每小時的走勢看最近幾天。 */
     static final int HOURLY_DAYS = 7;
+    /** 主要計價通貨看最近幾天的量。 */
+    static final int MAIN_DAYS = 7;
 
     private ExchangeMarketJson() {
     }
 
-    /** 加總用：基準等值、個數、筆數。 */
+    /** 加總用：對面通貨的個數、這種通貨的個數、筆數。 */
     static final class Sum {
-        double anchor;
+        double counter;
         long units;
         int count;
 
-        void add(final double equivalent, final int amount) {
-            anchor += equivalent;
+        void add(final int counterAmount, final int amount) {
+            counter += counterAmount;
             units += amount;
             count++;
         }
 
         Double vwap() {
-            return units <= 0 ? null : anchor / units;
+            return units <= 0 ? null : counter / units;
         }
     }
 
-    /**
-     * 一筆成交裡 side 那種通貨每個值多少基準（另一邊換算成基準）。換算不出來回傳 null。
-     *
-     * @param values 那一天的參考價值（通貨 → 金幣）
-     */
-    static Double priceOf(final String side, final TradeRow trade, final String anchor, final Map<String, Long> values) {
-        final boolean give = side.equals(trade.give());
-        final int amount = give ? trade.giveAmount() : trade.wantAmount();
-        final String other = give ? trade.want() : trade.give();
-        final int otherAmount = give ? trade.wantAmount() : trade.giveAmount();
-        if (amount <= 0 || otherAmount <= 0) {
+    /** 一個交易對（X 用 Y 計價）的統計。 */
+    static final class Pair {
+        final TreeMap<String, Sum> daily = new TreeMap<>();
+        final TreeMap<Long, Sum> hourly = new TreeMap<>();
+        final Sum last24 = new Sum();
+        final Sum prev24 = new Sum();
+        final Sum recent = new Sum(); // 最近 MAIN_DAYS 天
+        final Sum all = new Sum();
+        double lastPrice;
+        long lastAt = Long.MIN_VALUE;
+    }
+
+    /** 統計全部成交：通貨 → 對面通貨 → 交易對。 */
+    static Map<String, Map<String, Pair>> pairs(final List<TradeRow> trades, final ZoneId zone, final Instant now) {
+        final Map<String, Map<String, Pair>> out = new LinkedHashMap<>();
+        final Instant dayAgo = now.minus(24, ChronoUnit.HOURS);
+        final Instant twoDaysAgo = now.minus(48, ChronoUnit.HOURS);
+        final Instant hourlyFrom = now.minus(HOURLY_DAYS, ChronoUnit.DAYS);
+        final Instant mainFrom = now.minus(MAIN_DAYS, ChronoUnit.DAYS);
+        for (final TradeRow trade : trades) {
+            if (trade.giveAmount() <= 0 || trade.wantAmount() <= 0 || trade.give().equals(trade.want())) {
+                continue;
+            }
+            final String day = trade.at().atZone(zone).toLocalDate().toString();
+            final long hour = trade.at().truncatedTo(ChronoUnit.HOURS).toEpochMilli();
+            final long at = trade.at().toEpochMilli();
+            for (int side = 0; side < 2; side++) {
+                final String x = side == 0 ? trade.give() : trade.want();
+                final String y = side == 0 ? trade.want() : trade.give();
+                final int amount = side == 0 ? trade.giveAmount() : trade.wantAmount();
+                final int counter = side == 0 ? trade.wantAmount() : trade.giveAmount();
+                final Pair pair = out.computeIfAbsent(x, k -> new LinkedHashMap<>()).computeIfAbsent(y, k -> new Pair());
+                pair.daily.computeIfAbsent(day, k -> new Sum()).add(counter, amount);
+                if (!trade.at().isBefore(hourlyFrom)) {
+                    pair.hourly.computeIfAbsent(hour, k -> new Sum()).add(counter, amount);
+                }
+                if (!trade.at().isBefore(dayAgo)) {
+                    pair.last24.add(counter, amount);
+                } else if (!trade.at().isBefore(twoDaysAgo)) {
+                    pair.prev24.add(counter, amount);
+                }
+                if (!trade.at().isBefore(mainFrom)) {
+                    pair.recent.add(counter, amount);
+                }
+                pair.all.add(counter, amount);
+                if (at >= pair.lastAt) {
+                    pair.lastAt = at;
+                    pair.lastPrice = counter / (double) amount;
+                }
+            }
+        }
+        return out;
+    }
+
+    /** 主要計價通貨：最近 7 天換手最多的對面通貨；7 天沒成交看全部。沒成交過回傳 null。 */
+    static String mainCounter(final Map<String, Pair> counters) {
+        if (counters == null || counters.isEmpty()) {
             return null;
         }
-        if (other.equals(anchor)) {
-            return otherAmount / (double) amount;
+        String best = null;
+        long bestUnits = 0;
+        for (final Map.Entry<String, Pair> e : counters.entrySet()) {
+            if (e.getValue().recent.units > bestUnits) {
+                best = e.getKey();
+                bestUnits = e.getValue().recent.units;
+            }
         }
-        final Long otherValue = values.get(other);
-        final Long anchorValue = values.get(anchor);
-        if (otherValue == null || anchorValue == null || otherValue <= 0 || anchorValue <= 0) {
-            return null;
+        if (best != null) {
+            return best;
         }
-        return otherAmount * (otherValue / (double) anchorValue) / amount;
+        for (final Map.Entry<String, Pair> e : counters.entrySet()) {
+            if (e.getValue().all.units > bestUnits) {
+                best = e.getKey();
+                bestUnits = e.getValue().all.units;
+            }
+        }
+        return best;
+    }
+
+    private static void stats(final JsonObject o, final Pair pair) {
+        o.addProperty("last", round(pair.lastPrice));
+        o.addProperty("lastAt", pair.lastAt);
+        o.addProperty("vol24", pair.last24.units);
+        o.addProperty("count24", pair.last24.count);
+        o.addProperty("count", pair.all.count);
+        if (pair.last24.vwap() != null && pair.prev24.vwap() != null && pair.prev24.vwap() > 0) {
+            o.addProperty("change24", round((pair.last24.vwap() / pair.prev24.vwap() - 1) * 100));
+        }
     }
 
     /**
      * 做出網頁的資料。
      *
-     * @param current   現在的參考價值（通貨 → 金幣）
-     * @param dayValues 每天的參考價值（yyyy-MM-dd → 通貨 → 金幣）；那天沒有的照 current
-     * @param stamp     資料時間（給人看）
+     * @param stamp 資料時間（給人看）
      */
-    public static byte[] build(final List<Meta> currencies, final String anchor, final Map<String, Long> current,
-                               final Map<String, Map<String, Long>> dayValues, final List<TradeRow> trades,
-                               final List<OrderView> orders, final ZoneId zone, final Instant now, final String stamp) {
-        final Map<String, TreeMap<String, Sum>> daily = new HashMap<>();
-        final Map<String, TreeMap<Long, Sum>> hourly = new HashMap<>();
-        final Map<String, Sum> last24 = new HashMap<>();
-        final Map<String, Sum> prev24 = new HashMap<>();
-        final Map<String, double[]> lastTrade = new HashMap<>(); // 通貨 → {價格, 時間毫秒}
-        final Instant dayAgo = now.minus(24, ChronoUnit.HOURS);
-        final Instant twoDaysAgo = now.minus(48, ChronoUnit.HOURS);
-        final Instant hourlyFrom = now.minus(HOURLY_DAYS, ChronoUnit.DAYS);
-        for (final TradeRow trade : trades) {
-            final String day = trade.at().atZone(zone).toLocalDate().toString();
-            final Map<String, Long> values = new HashMap<>(current);
-            final Map<String, Long> thatDay = dayValues.get(day);
-            if (thatDay != null) {
-                values.putAll(thatDay);
-            }
-            for (final String side : new String[] {trade.give(), trade.want()}) {
-                if (side.equals(anchor)) {
-                    continue; // 基準自己永遠是 1
-                }
-                final Double price = priceOf(side, trade, anchor, values);
-                if (price == null) {
-                    continue;
-                }
-                final int amount = side.equals(trade.give()) ? trade.giveAmount() : trade.wantAmount();
-                final double equivalent = price * amount;
-                daily.computeIfAbsent(side, k -> new TreeMap<>()).computeIfAbsent(day, k -> new Sum()).add(equivalent, amount);
-                if (!trade.at().isBefore(hourlyFrom)) {
-                    final long hour = trade.at().truncatedTo(ChronoUnit.HOURS).toEpochMilli();
-                    hourly.computeIfAbsent(side, k -> new TreeMap<>()).computeIfAbsent(hour, k -> new Sum()).add(equivalent, amount);
-                }
-                if (!trade.at().isBefore(dayAgo)) {
-                    last24.computeIfAbsent(side, k -> new Sum()).add(equivalent, amount);
-                } else if (!trade.at().isBefore(twoDaysAgo)) {
-                    prev24.computeIfAbsent(side, k -> new Sum()).add(equivalent, amount);
-                }
-                final double[] seen = lastTrade.get(side);
-                if (seen == null || trade.at().toEpochMilli() >= seen[1]) {
-                    lastTrade.put(side, new double[] {price, trade.at().toEpochMilli()});
-                }
-            }
-        }
+    public static byte[] build(final List<Meta> currencies, final List<TradeRow> trades, final List<OrderView> orders,
+                               final ZoneId zone, final Instant now, final String stamp) {
+        final Map<String, Map<String, Pair>> all = pairs(trades, zone, now);
         final JsonObject root = new JsonObject();
         root.addProperty("stamp", stamp);
-        root.addProperty("anchor", anchor);
         root.addProperty("trades", trades.size());
         final JsonArray list = new JsonArray();
-        final Long anchorValue = current.get(anchor);
         for (final Meta meta : currencies) {
             final JsonObject c = new JsonObject();
             c.addProperty("id", meta.id());
             c.addProperty("name", meta.name());
             c.addProperty("group", meta.group());
             c.addProperty("icon", meta.icon());
-            final Long value = current.get(meta.id());
-            if (value != null && value > 0 && anchorValue != null && anchorValue > 0) {
-                c.addProperty("ref", round(value / (double) anchorValue));
-            }
-            final double[] seen = lastTrade.get(meta.id());
-            if (seen != null) {
-                c.addProperty("last", round(seen[0]));
-                c.addProperty("lastAt", (long) seen[1]);
-            }
-            final Sum day = last24.get(meta.id());
-            final Sum before = prev24.get(meta.id());
-            c.addProperty("vol24", day == null ? 0 : day.units);
-            c.addProperty("count24", day == null ? 0 : day.count);
-            if (day != null && before != null && day.vwap() != null && before.vwap() != null && before.vwap() > 0) {
-                c.addProperty("change24", round((day.vwap() / before.vwap() - 1) * 100));
+            final Map<String, Pair> counters = all.get(meta.id());
+            final String main = mainCounter(counters);
+            if (main != null) {
+                c.addProperty("main", main);
+                stats(c, counters.get(main));
             }
             list.add(c);
         }
         root.add("currencies", list);
-        final JsonObject days = new JsonObject();
-        for (final Map.Entry<String, TreeMap<String, Sum>> entry : daily.entrySet()) {
-            final JsonArray rows = new JsonArray();
-            for (final Map.Entry<String, Sum> row : entry.getValue().entrySet()) {
-                final JsonArray r = new JsonArray();
-                r.add(row.getKey());
-                r.add(round(row.getValue().vwap()));
-                r.add(row.getValue().units);
-                r.add(row.getValue().count);
-                rows.add(r);
+        final JsonObject pairs = new JsonObject();
+        for (final Map.Entry<String, Map<String, Pair>> entry : all.entrySet()) {
+            final JsonObject byCounter = new JsonObject();
+            for (final Map.Entry<String, Pair> e : entry.getValue().entrySet()) {
+                final Pair pair = e.getValue();
+                final JsonObject p = new JsonObject();
+                stats(p, pair);
+                final JsonArray days = new JsonArray();
+                for (final Map.Entry<String, Sum> row : pair.daily.entrySet()) {
+                    final JsonArray r = new JsonArray();
+                    r.add(row.getKey());
+                    r.add(round(row.getValue().vwap()));
+                    r.add(row.getValue().units);
+                    r.add(row.getValue().count);
+                    days.add(r);
+                }
+                p.add("daily", days);
+                final JsonArray hours = new JsonArray();
+                for (final Map.Entry<Long, Sum> row : pair.hourly.entrySet()) {
+                    final JsonArray r = new JsonArray();
+                    r.add(row.getKey());
+                    r.add(round(row.getValue().vwap()));
+                    r.add(row.getValue().units);
+                    hours.add(r);
+                }
+                p.add("hourly", hours);
+                byCounter.add(e.getKey(), p);
             }
-            days.add(entry.getKey(), rows);
+            pairs.add(entry.getKey(), byCounter);
         }
-        root.add("daily", days);
-        final JsonObject hours = new JsonObject();
-        for (final Map.Entry<String, TreeMap<Long, Sum>> entry : hourly.entrySet()) {
-            final JsonArray rows = new JsonArray();
-            for (final Map.Entry<Long, Sum> row : entry.getValue().entrySet()) {
-                final JsonArray r = new JsonArray();
-                r.add(row.getKey());
-                r.add(round(row.getValue().vwap()));
-                r.add(row.getValue().units);
-                rows.add(r);
-            }
-            hours.add(entry.getKey(), rows);
-        }
-        root.add("hourly", hours);
+        root.add("pairs", pairs);
         // 掛單：同一個方向、同一個價格合併
         final Map<String, int[]> merged = new LinkedHashMap<>();
         for (final OrderView order : orders) {
@@ -227,29 +244,14 @@ public final class ExchangeMarketJson {
         return Math.round(value * scale) / scale;
     }
 
-    /** 測試、除錯用：每天的 VWAP（通貨 → 日期 → 價格）。 */
-    static Map<String, Map<String, Double>> dailyPrices(final List<TradeRow> trades, final String anchor, final Map<String, Long> current,
-                                                        final ZoneId zone) {
-        final Map<String, Map<String, Sum>> sums = new TreeMap<>();
-        for (final TradeRow trade : trades) {
-            final String day = trade.at().atZone(zone).toLocalDate().toString();
-            for (final String side : new String[] {trade.give(), trade.want()}) {
-                if (side.equals(anchor)) {
-                    continue;
-                }
-                final Double price = priceOf(side, trade, anchor, current);
-                if (price != null) {
-                    final int amount = side.equals(trade.give()) ? trade.giveAmount() : trade.wantAmount();
-                    sums.computeIfAbsent(side, k -> new TreeMap<>()).computeIfAbsent(day, k -> new Sum()).add(price * amount, amount);
-                }
-            }
-        }
-        final Map<String, Map<String, Double>> out = new TreeMap<>();
-        for (final Map.Entry<String, Map<String, Sum>> entry : sums.entrySet()) {
+    /** 測試、除錯用：每天的 VWAP（通貨 → 對面通貨 → 日期 → 價格）。 */
+    static Map<String, Map<String, Map<String, Double>>> dailyPrices(final List<TradeRow> trades, final ZoneId zone, final Instant now) {
+        final Map<String, Map<String, Map<String, Double>>> out = new TreeMap<>();
+        pairs(trades, zone, now).forEach((x, counters) -> counters.forEach((y, pair) -> {
             final Map<String, Double> days = new TreeMap<>();
-            entry.getValue().forEach((day, sum) -> days.put(day, sum.vwap()));
-            out.put(entry.getKey(), days);
-        }
+            pair.daily.forEach((day, sum) -> days.put(day, sum.vwap()));
+            out.computeIfAbsent(x, k -> new TreeMap<>()).put(y, days);
+        }));
         return out;
     }
 }

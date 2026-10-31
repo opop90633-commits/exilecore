@@ -331,6 +331,8 @@ public final class WebModule implements Module, Listener {
         server.route("/market/", path -> plugin.marketWeb() == null ? null : WebServer.Response.redirect("../market"));
         server.route("/market/data.json", path -> plugin.marketWeb() == null ? null : new WebServer.Response(200, "application/json; charset=utf-8",
                 plugin.marketWeb().json(), java.util.Map.of("Cache-Control", "no-cache")));
+        server.route("/market/icons.json", path -> plugin.marketWeb() == null ? null : new WebServer.Response(200, "application/json; charset=utf-8",
+                plugin.marketWeb().iconsJson(), java.util.Map.of("Cache-Control", "public, max-age=3600"))); // 2026-11-01：圖示一次給
         server.endpoint("/market/icon.png", request -> {
             final byte[] png = plugin.marketWeb() == null ? null : plugin.marketWeb().icon(request.param("id"));
             return png == null ? WebServer.Response.text(404, "沒有這個圖示")
