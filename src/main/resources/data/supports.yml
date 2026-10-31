@@ -91,6 +91,7 @@ once_per_character: false
 
 # 2026-10 PoE2 改版拿掉的輔助寶石：代號: 階級。玩家身上、面板上的這些輔助會換成同階的未切割輔助寶石（登入時自動換）。
 retired:
+  magnet_bones: 2   # 2026-10-31 照站長：殘骸直接生效，只有撿取距離的磁骸拿掉（玩家身上的換成第 2 階未切割輔助寶石）
   multistrike: 3
   multiple_totems: 3
   melee_physical: 2
@@ -4673,28 +4674,17 @@ supports:
 
   harmony_bones_ii:    # Harmonic Remnants II
     name: 和骸 II
-    description: 被輔助的技能產生殘骸時 20% 機率多產生一個；它產生的殘骸能從遠 35% 的地方撿。
+    description: 被輔助的技能產生殘骸時 20% 機率多產生一個。
     icon: AMETHYST_SHARD
     tier: 2
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Harmonic Remnants II（第 3 階；poe2db／RePoE；照原作；2026-10-27 改成原作：跟著這個技能產生的每一個殘骸走、真的多產生一個（這次之前「放技能後 12 秒內撿的殘骸」20% 機率給兩次））；這次之前沒有這顆
     modifiers:
-      - { stat: remnant_support.range, type: FLAT, value: 35 }
-      - { stat: remnant_support.extra, type: FLAT, value: 20 }
-
-  magnet_bones:       # Magnetic Remnants
-    name: 磁骸
-    description: 被輔助的技能產生的殘骸能從遠 35% 的地方撿。
-    icon: AMETHYST_SHARD
-    tier: 2   # PoE2 第 0 階（不從未切割寶石切；我們放第 2 階）
-    mana_multiplier: 1.1
-    # 2026-10-27 照 PoE2 Magnetic Remnants（第 0 階；poe2db／RePoE；照原作；2026-10-27 改成原作：跟著這個技能產生的每一個殘骸走（這次之前「放技能後 12 秒內撿的殘骸」都算））；這次之前沒有這顆
-    modifiers:
-      - { stat: remnant_support.range, type: FLAT, value: 35 }
+      - { stat: remnant_support.extra, type: FLAT, value: 20 }   # 2026-10-31 照站長：殘骸直接生效，拿掉撿取距離 +35%
 
   bone_effect_iii:     # Remnant Potency III
     name: 骸效 III
-    description: 被輔助的技能產生的殘骸效果增加 40%，但撿到 3 秒後才生效。
+    description: 被輔助的技能產生的殘骸效果增加 40%，但產生 3 秒後才生效。
     icon: AMETHYST_SHARD
     tier: 3
     mana_multiplier: 1.0

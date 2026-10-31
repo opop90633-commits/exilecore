@@ -99,7 +99,7 @@ public final class SupportColours {
                     + "grudge_corrode jade_nectar_ii star_cast gnaw_cold_ii cleanse_rite muddled_freeze frost_reveal army_order "
                     + "quake_magic spare_corpse volt_screen mad_servant rising_swell_iii hex_field mad_chaos "
                     + "draw_blight spread_field power_ward mana_spring ring_wall_ii wager_shot corpse_glutton "
-                    + "harmony_bones_ii magnet_bones curse_blossom certain_fate_ii final_breath faithful_servant "
+                    + "harmony_bones_ii curse_blossom certain_fate_ii final_breath faithful_servant "
                     + "drain_sigil_ii servant_bond_ii hidden_power real_spell_ii corpse_defile_ii mist_frost relay_thunder_ii "
                     + "draw_thunder linked_falls thunder_burn slay_intent_ii never_submit blast_energy volatility field_fire "
                     + "mad_fragments_ii");

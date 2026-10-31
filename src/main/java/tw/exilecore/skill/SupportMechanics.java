@@ -268,6 +268,15 @@ public final class SupportMechanics implements Listener {
         }
     }
 
+    /** 2026-10-31：快捷欄上方顯示用：{現在的榮耀, 要幾點}；不用榮耀的技能回傳 null。 */
+    int[] gloryHud(final Player player, final SkillBuild build, final StatSheet sheet) {
+        if (gloryCap(build.definition()) <= 0) {
+            return null;
+        }
+        final int required = Math.max(1, gloryRequired(build, sheet));
+        return new int[] {(int) Math.floor(glory(player, build.definition().id()) + 1e-9), required};
+    }
+
     double glory(final Player player, final String skillId) {
         return glory.getOrDefault(key(player, skillId), 0.0);
     }

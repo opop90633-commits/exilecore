@@ -354,6 +354,9 @@ final class MapBosses {
         if (instance.shielded()) {
             return "<white>🔒 無敵：打掉 " + instance.shieldCrystals().size() + " 顆結晶 <dark_gray>｜ ";
         }
+        if (instance.phaseHold() && instance.bossPhase() == 0) {
+            return "<white>🔒 開場中，暫時打不動 <dark_gray>｜ "; // 2026-10-31 照站長：開場的 2.5 秒也寫出來（這次之前寫成「換階段中」）
+        }
         return instance.phaseHold() ? "<white>🔒 換階段中，暫時打不動 <dark_gray>｜ " : "<white>🔒 無敵中 <dark_gray>｜ ";
     }
 

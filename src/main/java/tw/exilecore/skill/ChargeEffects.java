@@ -669,6 +669,13 @@ public final class ChargeEffects implements Listener {
         if (at.getWorld() == null) {
             return;
         }
+        if (AUTO_COLLECT) {
+            // 2026-10-31 照站長：殘影、殘骸、痕跡產生時就直接吃到身上（不放在地上等你走過去撿）；效果、撿到後的延遲、再出現照舊
+            if (owner.isOnline() && owner.getWorld().equals(at.getWorld())) {
+                collectRemnant(new Remnant(owner, null, at, icon, null, null, 0, ticks, canReappear, mods, onPickup));
+            }
+            return;
+        }
         final org.bukkit.inventory.ItemStack shown = new org.bukkit.inventory.ItemStack(icon);
         final org.bukkit.entity.ItemDisplay display = at.getWorld().spawn(at, org.bukkit.entity.ItemDisplay.class, d -> {
             d.setItemStack(shown);
@@ -823,10 +830,29 @@ public final class ChargeEffects implements Listener {
         if (owner.getLocation().distanceSquared(at) > pickup * pickup) {
             return;
         }
+        collectRemnant(remnant);
+    }
+
+    /** 2026-10-31：殘影產生時直接吃到身上（照站長；改回 false 就是放在地上走過去撿）。 */
+    static final boolean AUTO_COLLECT = true;
+
+    /** 給昇華的殘骸（夏烏拉之炎、生命痕跡）用：是不是直接吃到身上。 */
+    public static boolean autoCollect() {
+        return AUTO_COLLECT;
+    }
+
+    /** 撿到一個殘影：效果（照撿到時的屬性表）、回復、再出現。 */
+    private void collectRemnant(final Remnant remnant) {
+        final Player owner = remnant.owner;
+        final Location at = remnant.at;
         remnants.remove(remnant);
-        remnant.display.remove();
+        if (remnant.display != null) {
+            remnant.display.remove();
+        }
         final StatSheet sheet = plugin.players().sheet(owner);
-        owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, SoundCategory.PLAYERS, 1f, 1.8f);
+        if (!AUTO_COLLECT) { // 2026-10-31 照站長：直接吃到身上時不出聲
+            owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, SoundCategory.PLAYERS, 1f, 1.8f);
+        }
         // 2026-10-26 照 PoE2：殘影的效果有機率給兩次；撿到時回復生命、魔力
         int times = plugin.random().nextDouble() * 100 < sheet.flat(tw.exilecore.stats.TreeMechanicKeys.REMNANT_DOUBLE, Set.of()) ? 2 : 1;
         // 2026-10-26 照 PoE2 天賦「你造的殘影效果增加 x%」：x% 機率多給一顆（期望值同樣多 x%）；2026-10-27：＋骸效（Remnant Potency）

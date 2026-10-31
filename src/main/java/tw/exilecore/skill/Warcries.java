@@ -413,6 +413,9 @@ final class Warcries {
         final int echoes = (int) Math.round(Math.max(0, effective.flat(tw.exilecore.stats.SupportKeys.WARCRY_ECHOES, tags)));
         final double echoArea = 1.0 + echo;
         final double radius = baseRadius(spec, effective, tags) * build.areaScale() * Math.sqrt(echoArea); // 2026-10-27：＋焚獄戰吼品質的半徑
+        if (plugin.skills() != null) {
+            plugin.skills().executor().earthSpikes().warcry(player, player.getLocation(), radius); // 2026-10-31：戰吼震碎範圍內自己的地刺（地刺崩裂）
+        }
         // 2026-10-28 照 PoE2 Soul Offering 的品質：骨刺持續時間 +(0—1) 秒（加在基礎上，再乘持續時間倍率）
         int ticks = build.durationTicks(spec.duration() + Math.max(0, SkillZones.localFlat(build.profile(), tw.exilecore.stats.GemQualityKeys.DURATION_FLAT)));
         // 銀月庇（2026-10，PoE2 的月光賜福）：吼的時候用掉全部怒氣，每點怒氣增益多撐 rage_extend 秒
@@ -588,7 +591,7 @@ final class Warcries {
             final org.bukkit.util.Vector push = knockback ? knockback(player, target) : null;
             if (shockwave && target.isValid() && !target.isDead()) {
                 plugin.combat().skillDamage().hit(player, target, build.profile(), push);
-            } else if (push != null && target.isValid()) {
+            } else if (push != null && target.isValid() && !tw.exilecore.combat.Knockbacks.immune(target)) {
                 target.setVelocity(target.getVelocity().add(push));
             }
             // 2026-10-27 照 PoE2（寒夜嗥 Arctic Howl）：蓄勢待凍的敵人直接凍結（吼的擊中本身不累積凍結）；這次之前沒有

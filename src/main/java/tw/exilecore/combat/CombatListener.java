@@ -85,6 +85,11 @@ public final class CombatListener implements Listener {
     /** 玩家打怪物：等事件確定沒被取消（MONITOR）才記進傷害紀錄（掉落分份、經驗歸屬）。 */
     private final Map<UUID, Credit> pendingCredits = new HashMap<>();
 
+    /** 2026-10-31 照 PoE2 Sunder：碎甲（敵人 → 到哪個 tick）；物理受到的傷害再增加 {@link #SUNDERED_TAKEN}。 */
+    private final java.util.Map<UUID, Long> sundered = new java.util.HashMap<>();
+    static final double SUNDERED_TAKEN = 0.20;
+    static final long SUNDERED_TICKS = 120;
+
     private record Credit(UUID player, double amount) {
     }
 
@@ -477,6 +482,19 @@ public final class CombatListener implements Listener {
                         || attackerIsPlayer && StatKeys.flag(attackerSheet, StatKeys.FLAG_IMPLODING))) { // 內爆衝擊：所有擊中都增加
                     // 2026-10-26 照 PoE2 天賦樹：「增加完全破甲的效果」
                     brokenTaken = ailments.fullyBrokenTaken() * Math.max(0, 1 + attackerSheet.increased(tw.exilecore.stats.TreeKeys.ARMOUR_BREAK_EFFECT, java.util.Set.of()));
+                    // 2026-10-31 照 PoE2 Sunder：碎甲（被裂地斬打到時已經完全破甲）：物理受到的傷害再增加 20%，6 秒或完全破甲沒了為止
+                    final long tickNow = plugin.getServer().getCurrentTick();
+                    final Long sunderedUntil = sundered.get(defender.getUniqueId());
+                    if (sunderedUntil != null && sunderedUntil > tickNow) {
+                        brokenTaken += SUNDERED_TAKEN;
+                    }
+                }
+                if (Double.isInfinite(broken) && "sunder".equals(skill.id())) {
+                    sundered.put(defender.getUniqueId(), plugin.getServer().getCurrentTick() + SUNDERED_TICKS);
+                    if (sundered.size() > 512) {
+                        final long tickNow = plugin.getServer().getCurrentTick();
+                        sundered.values().removeIf(until -> until <= tickNow);
+                    }
                 }
             }
         } else if (defenderIsPlayer && pvpAttacker == null && rawArmour > 0) {

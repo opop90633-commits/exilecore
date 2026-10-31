@@ -148,4 +148,14 @@ class HollowFormTest {
             }
         }
     }
+
+    @Test
+    void whirlingStaffStepIsAllowedButOtherMovementIsNot() {
+        assertNull(HollowForm.problem(skill("spinning_staff_step")), "迴旋棍步可以放（幻影自己轉過去）");
+        for (final SkillDefinition other : config.all()) {
+            if (other.mechanic() == Mechanic.LEAP && other.isAttack() && other.tags().contains(Tags.MELEE) && !other.hidden()) {
+                assertNotNull(HollowForm.problem(other), other.id() + " 跳躍照舊不行");
+            }
+        }
+    }
 }

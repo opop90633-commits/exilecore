@@ -73,8 +73,9 @@ dig_remains:   # Unearth（2026-10-28 照 PoE2：骨構體持續時間 +(0—5) 
   - { stat: movement.speed, type: INCREASED, per: 2.5, tags: [minion] }   # 骨構體的移動速度
 shattered_bone_darts:   # Bonestorm
   - { stat: cast.speed, type: MORE, per: 0.5 }   # 施法速度（更多）
-spine_crush:   # Boneshatter
+spine_crush:   # Boneshatter（2026-10-31 照 PoE2：再加震波半徑 +(0—2) 公尺）
   - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
+  - { stat: skill.explosion_radius, type: FLAT, per: 0.1 }   # 震波半徑 +公尺（SupportProcs.ownSubBuild）
 soul_attach_art:   # Bind Spectre（2026-10-28 照 PoE2：召喚物 (0—20)% 更多傷害；這次之前照通用規則每 1% 增加 1% 召喚物傷害）
   - { stat: damage, type: MORE, per: 1.0 }   # 召喚物傷害（更多）
 thorn_shaft: []   # Vine Arrow（2026-10-28 照 PoE2：藤蔓另外照中毒每秒傷害的 (0—10)% 造成混沌傷害——我們的荊棘矢沒有「植物中毒」，所以沒有效果；這次之前照通用規則）

@@ -71,7 +71,7 @@ final class TabList {
         final tw.exilecore.skill.SkillService.HudBuffs hud = plugin.skills().hudBuffs(player, false);
         final java.util.List<tw.exilecore.skill.SkillService.BuffTimer> all = new java.util.ArrayList<>(hud.others());
         for (final tw.exilecore.skill.SkillService.SlotTimer slot : hud.slots()) {
-            if (!slot.missing()) {
+            if (!slot.missing() && slot.label() == null) { // 2026-10-31：榮耀不是增益，不列
                 all.add(new tw.exilecore.skill.SkillService.BuffTimer(slot.name(), slot.ticks()));
             }
         }

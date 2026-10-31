@@ -324,7 +324,7 @@ public final class CraftBenchMenu extends Menu {
             }
         }
         lore.add("");
-        lore.add(problem == null ? "<yellow>左鍵：使用（可以一直按）" : "<red>" + ItemRenderer.escape(problem));
+        lore.add(problem == null ? (fillsQuality() ? "<yellow>左鍵：一次用到品質滿" : "<yellow>左鍵：使用（可以一直按）") : "<red>" + ItemRenderer.escape(problem));
         final ItemStack use = icon(problem == null ? Material.SMITHING_TABLE : Material.BARRIER, problem == null ? "<#f5b942>使用" : "<gray>使用", lore);
         set(SLOT_USE, problem == null ? glowing(use) : use);
 
@@ -507,7 +507,22 @@ public final class CraftBenchMenu extends Menu {
             }
             case SLOT_USE -> {
                 if (acceptAction(click)) {
-                    use();
+                    if (fillsQuality()) {
+                        // 2026-10-31 照站長：品質通貨點一下就用到品質滿（不用點 20 下）；途中沒通貨或不能再用就停
+                        int used = 0;
+                        while (used < MAX_REPEAT && problem(item()) == null && use()) {
+                            used++;
+                        }
+                        if (used > 1) {
+                            final CurrencyType currency = type(currencyId);
+                            final ItemStack now = item();
+                            final int quality = now == null ? 0 : plugin.items().read(now).map(ItemData::quality).orElse(0);
+                            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>用了 " + used + " 個"
+                                    + (currency == null ? "通貨" : ItemRenderer.escape(currency.name())) + "，品質 " + quality + "%"));
+                        }
+                    } else {
+                        use();
+                    }
                 }
             }
             case SLOT_RUNES -> {
@@ -589,18 +604,28 @@ public final class CraftBenchMenu extends Menu {
 
     // ---- 使用 ----
 
-    private void use() {
+    /** 品質通貨一次最多連用幾顆（保險）。 */
+    private static final int MAX_REPEAT = 40;
+
+    /** 2026-10-31：選的是加品質的通貨、沒選星籤：按一下用到品質滿。 */
+    private boolean fillsQuality() {
+        final CurrencyType currency = type(currencyId);
+        return currency != null && type(omenId) == null && currency.operation().name().startsWith("QUALITY_");
+    }
+
+    /** 用一次；成功（通貨用上去了）回傳 true。 */
+    private boolean use() {
         final ItemStack stack = item();
         final String problem = problem(stack);
         if (problem != null) {
             fail(problem);
             redraw();
-            return;
+            return false;
         }
         final PlayerState state = plugin.players().get(player);
         if (!state.hasCharacter()) {
             fail("先選一個角色");
-            return;
+            return false;
         }
         final Long characterId = state.character().id();
         final ItemData data = plugin.items().read(stack).orElseThrow();
@@ -612,21 +637,21 @@ public final class CraftBenchMenu extends Menu {
             if (!wallet.take(player, omen.id(), 1)) {
                 fail("沒有" + omen.name() + "了");
                 redraw();
-                return;
+                return false;
             }
             final CurrencyService.Result attached = currencies().apply(currencies().create(omen, 1), stack, player.getName(), characterId);
             if (attached != CurrencyService.Result.APPLIED) {
                 wallet.deposit(player, omen.id(), 1); // 上面檢查過，不會走到這裡；保險：還回去
                 fail(omen.name() + "掛不上去");
                 redraw();
-                return;
+                return false;
             }
         }
         // 2. 通貨
         if (!wallet.take(player, currency.id(), 1)) {
             fail("沒有" + currency.name() + "了");
             redraw();
-            return;
+            return false;
         }
         final CurrencyService.Result result = currencies().apply(currencies().create(currency, 1), stack, player.getName(), characterId);
         final CurrencyType fired = currencies().takeFiredOmen();
@@ -662,6 +687,7 @@ public final class CraftBenchMenu extends Menu {
         }
         plugin.players().markDirty(player);
         redraw();
+        return result == CurrencyService.Result.APPLIED;
     }
 
     private void fail(final String message) {

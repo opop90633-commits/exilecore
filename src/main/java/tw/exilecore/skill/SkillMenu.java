@@ -534,7 +534,9 @@ public final class SkillMenu extends Menu {
                     // 2026-10-23：琢星稜鏡
                     final String problem = gems.qualityProblem(entry);
                     return problem != null ? Hint.no(problem)
-                            : Hint.best("放這裡：品質 " + entry.quality() + "% → " + Math.min(SkillLoadout.Entry.QUALITY_MAX, entry.quality() + 5) + "%");
+                            : Hint.best("放這裡：品質 " + entry.quality() + "% → " + Math.min(SkillLoadout.Entry.QUALITY_MAX,
+                            entry.quality() + GemService.QUALITY_STEP * GemService.qualityUses(entry, cursor.getAmount())) + "%"
+                            + "（用 " + GemService.qualityUses(entry, cursor.getAmount()) + " 顆）");
                 }
                 if (entry.granted()) {
                     return Hint.no(GemService.GRANTED_SOCKETS); // 2026-10-28 照 PoE2
@@ -1111,8 +1113,10 @@ public final class SkillMenu extends Menu {
             return;
         }
         if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.SKILL_QUALITY) {
-            // 2026-10-23：琢星稜鏡：技能寶石品質 +5%
-            apply(event, cursor, position < 0 ? GemService.Change.fail("先點一個技能") : gems.addQuality(player, position, currency));
+            // 2026-10-23：琢星稜鏡：技能寶石品質 +5%；2026-10-31 照站長：點一下用到品質滿（手上有幾顆用幾顆）
+            final SkillLoadout.Entry target = position < 0 ? null : plugin.players().get(player).skills().skill(position);
+            final int uses = target == null ? 1 : Math.max(1, GemService.qualityUses(target, cursor.getAmount()));
+            apply(event, cursor, position < 0 ? GemService.Change.fail("先點一個技能") : gems.addQuality(player, position, currency, uses), uses);
             return;
         }
         if (currency != null && currency.isSkillCurrency()) {
@@ -1160,11 +1164,16 @@ public final class SkillMenu extends Menu {
 
     /** 成功：游標上的東西用掉一個，換下來的東西放回游標（游標上還有剩就放進背包）。 */
     private void apply(final InventoryClickEvent event, final ItemStack cursor, final GemService.Change change) {
+        apply(event, cursor, change, 1);
+    }
+
+    /** 同上，游標上用掉 used 顆（2026-10-31：琢星稜鏡一次用到品質滿）。 */
+    private void apply(final InventoryClickEvent event, final ItemStack cursor, final GemService.Change change, final int used) {
         if (change.failed()) {
             fail(change.error());
             return;
         }
-        final int left = cursor.getAmount() - 1;
+        final int left = cursor.getAmount() - Math.max(1, used);
         ItemStack newCursor = left > 0 ? cursor.asQuantity(left) : null;
         if (change.returned() != null) {
             if (newCursor == null) {

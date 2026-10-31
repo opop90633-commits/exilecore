@@ -551,7 +551,7 @@ final class Signatures {
         service.procCast(Origin.at(player, whirl.center.clone().add(0, 0.2, 0), SkillTargets.facing(player)), sized, null);
         for (final LivingEntity target : service.targets().around(whirl.center, radius, player)) {
             final Vector push = target.getLocation().toVector().subtract(whirl.center.toVector()).setY(0);
-            if (push.lengthSquared() > 1e-4) {
+            if (push.lengthSquared() > 1e-4 && !tw.exilecore.combat.Knockbacks.immune(target)) {
                 target.setVelocity(target.getVelocity().add(push.normalize()
                         .multiply(WHIRL_KNOCKBACK * (1 + WHIRL_KNOCKBACK_PER_STAGE * (whirl.stage - 1))).setY(0.25)));
             }

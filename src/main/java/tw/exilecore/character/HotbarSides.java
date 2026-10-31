@@ -89,6 +89,9 @@ final class HotbarSides {
     private static final String BUFF_COLOR = "#f5b942";
     private static final String BUFF_ENDING = "#ff9a3c";
     private static final String BUFF_MISSING = "#ff4a4a";
+    /** 2026-10-31：技能格上方的榮耀：還不夠、夠了。 */
+    private static final String GLORY_COLOR = "#c9a7ff";
+    private static final String GLORY_READY = "#7dff8a";
     /** 快捷欄左邊那一排最多寫幾個增益（其他的寫 +N）。 */
     private static final int SIDE_BUFFS = 2;
     /** 沒套資源包時動作列最多寫幾個增益。 */
@@ -127,6 +130,9 @@ final class HotbarSides {
             text.append(text.isEmpty() ? "" : " ");
             if (slot.missing()) {
                 text.append("<").append(BUFF_MISSING).append(">⌛").append(ItemRenderer.escape(slot.name())).append(" 沒了");
+            } else if (slot.label() != null) {
+                text.append("<").append(slot.ready() ? GLORY_READY : GLORY_COLOR).append(">✧").append(ItemRenderer.escape(slot.name()))
+                        .append(" 榮耀 ").append(slot.label()); // 2026-10-31
             } else {
                 text.append("<").append(BUFF_COLOR).append(">⌛").append(ItemRenderer.escape(slot.name()))
                         .append(" <").append(timeColor(slot.ticks())).append(">").append(timeText(slot.ticks()));
@@ -205,7 +211,7 @@ final class HotbarSides {
         }
         // 2026-10-20 增益倒數：技能格上方畫秒數（增益沒了、在戰鬥中畫紅點）
         for (final tw.exilecore.skill.SkillService.SlotTimer slot : buffs.slots()) {
-            final String text = slot.missing() ? String.valueOf(HudFont.SLOT_MISSING) : timeText(slot.ticks());
+            final String text = slot.missing() ? String.valueOf(HudFont.SLOT_MISSING) : slot.label() != null ? slot.label() : timeText(slot.ticks());
             final int w = HudFont.width(text);
             if (w < 0) {
                 return null;
@@ -213,7 +219,8 @@ final class HotbarSides {
             final int start = slotCenter(slot.hotbarSlot()) - w / 2;
             out.append("</font><font:").append(HudFont.SLOT_FONT).append(">")
                     .append(HudFont.shift(start - half))
-                    .append("<").append(slot.missing() ? BUFF_MISSING : slot.ticks() <= 100 ? BUFF_ENDING : BUFF_COLOR).append(">")
+                    .append("<").append(slot.missing() ? BUFF_MISSING : slot.label() != null ? (slot.ready() ? GLORY_READY : GLORY_COLOR)
+                            : slot.ticks() <= 100 ? BUFF_ENDING : BUFF_COLOR).append(">")
                     .append(HudFont.encode(text))
                     .append(HudFont.shift(half - start - w));
         }

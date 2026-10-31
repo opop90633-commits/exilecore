@@ -96,7 +96,7 @@ final class GemQualityText {
             Map.entry("molten_ball", "每彈（連鎖）過一次更多 {damage.more_per_chain}% 傷害"),
             Map.entry("field_quake_hammers", "使用這個技能的動作期間暈眩門檻增加 {action.stun_threshold}%"),
             Map.entry("collapse_heart_chant", "需要的連擊少 {-i:mantra.combo}"),
-            Map.entry("servant_corpse_swap", "召喚物復活另外快 {servant_corpse_swap.slower}%、召喚物最大生命增加 {effect.life.max}%"), // 2026-10-29 照 PoE2：補上最大生命
+            Map.entry("servant_corpse_swap", "召喚物復活另外快 {servant_corpse_swap.slower}%"), // 2026-10-31：最大生命那條 10-30 移到額外的品質效果（高階奇術那行會寫），這裡拿掉，不然一直顯示 0%
             Map.entry("beast_blood_boil", "狂暴另外更多 {effect.damage}% 傷害"),
             Map.entry("gathered_scales", "增益另外增加 {effect.armour}% 護甲、{effect.armour.break}% 破甲"),
             Map.entry("snake_squall_thrust", "擊退距離更多 {skill.knockback}%"),
@@ -112,7 +112,8 @@ final class GemQualityText {
             Map.entry("spear_formation", "危害 {hazard.rearm_chance}% 機率重新布置"),
             Map.entry("raven_plot", "烏鴉群增加 {skill.area}% 範圍"),
             Map.entry("rushing_thunder_stomp", "{slam.aftershock_chance}% 機率多一次餘震"),
-            Map.entry("thunder_cloud", "連鎖 +{i:skill.chains} 次、雷雲多放 {i:orb.extra_bolts} 道雷才消失"), // 2026-10-29 照 PoE2
+            Map.entry("spine_crush", "增加 {attack.speed}% 攻擊速度、震波半徑 +{m:skill.explosion_radius} 格"), // 2026-10-31 照 PoE2
+            Map.entry("thunder_cloud", "連鎖 +{i:skill.chains} 次"), // 2026-10-31：多放幾道雷 10-30 移到額外的品質效果，這裡拿掉（不然一直顯示 0）
             Map.entry("thunderfall_spear", "超載的矛上限 +{i:lance.overcharged_extra}"),
             Map.entry("steed_call", "戰馬更多 {life.max}% 最大生命"), // 2026-10-30 照 PoE2：沒騎時陪你打的戰馬會被打了（這次之前坐騎打不死，換成騎著時的重暈門檻）
             Map.entry("sunder", "照距離的命中懲罰減少 {-accuracy.range_penalty}%"),

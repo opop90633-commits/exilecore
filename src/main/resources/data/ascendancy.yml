@@ -2479,11 +2479,9 @@ ascendancies:
         lines:
           - 你顯現的所有霞瑤之炎皆為紫色
           - 增加 50% 你產生的殘骸效果
-          - 可從遠 50% 的距離拾取殘骸
         stats:
           - { stat: asc.flame_colour, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
           - { stat: asc.remnant_effect, type: INCREASED, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-          - { stat: remnant.pickup_range, type: INCREASED, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       choice_mana:
         name: 魔力之選          # Choice of Mana
         option_of: lucid_dreaming
@@ -2491,11 +2489,9 @@ ascendancies:
         lines:
           - 你顯現的所有霞瑤之炎皆為藍色
           - 增加 50% 你產生的殘骸效果
-          - 可從遠 50% 的距離拾取殘骸
         stats:
           - { stat: asc.flame_colour, type: FLAT, value: 2 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
           - { stat: asc.remnant_effect, type: INCREASED, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-          - { stat: remnant.pickup_range, type: INCREASED, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       choice_life:
         name: 生命之選          # Choice of Life
         option_of: lucid_dreaming
@@ -2503,11 +2499,9 @@ ascendancies:
         lines:
           - 你顯現的所有霞瑤之炎皆為紅色
           - 增加 50% 你產生的殘骸效果
-          - 可從遠 50% 的距離拾取殘骸
         stats:
           - { stat: asc.flame_colour, type: FLAT, value: 3 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
           - { stat: asc.remnant_effect, type: INCREASED, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
-          - { stat: remnant.pickup_range, type: INCREASED, value: 50 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       leech:
         name: 偷取          # Leech
         icon: GHAST_TEAR
@@ -2767,22 +2761,20 @@ ascendancies:
     summary: 操縱風暴的術士：所有傷害都能冰緩、感電，傷害先扣魔力、法術暴擊。
     nodes:
       remnant_range:
-        name: 痕跡距離          # Remnant Range
+        name: 殘骸效果          # Remnant Range（2026-10-31 照站長：殘骸直接生效，撿取距離 +25% 改成效果 +10%）
         icon: GLOWSTONE_DUST
         lines:
-          - 可從遠 25% 的距離拾取殘骸
-        stats:   # 2026-10-26 照 PoE2（灌注殘骸、殘影都算）
-          - { stat: remnant.pickup_range, type: INCREASED, value: 25 }
+          - 增加 10% 你產生的殘骸效果
+        stats:
+          - { stat: remnant.effect, type: INCREASED, value: 10 }
       storms_recollection:
         name: 風暴回憶          # Storm's Recollection
         requires: remnant_range
         notable: true
         icon: GLOWSTONE_DUST
         lines:
-          - 可從遠 50% 的距離拾取殘骸
           - 你產生的殘骸被拾取 3 秒後會再出現一次
         stats:   # 2026-10-26 照 PoE2
-          - { stat: remnant.pickup_range, type: INCREASED, value: 50 }
           - { stat: remnant.reappear_ms, type: FLAT, value: 3000 }
       spell_critical:
         name: 法術暴擊率          # Spell Critical Chance
@@ -2927,12 +2919,12 @@ ascendancies:
           - { stat: damage.from_mana, type: FLAT, value: 20 }
           - { stat: asc.arcane_per_mana, type: FLAT, value: 20 }   # 2026-10-26 照 PoE2（這次之前沒有效果）
       remnant_range_2:
-        name: 痕跡距離          # Remnant Range
+        name: 殘骸效果          # Remnant Range（2026-10-31 照站長：殘骸直接生效，撿取距離 +25% 改成效果 +10%）
         icon: GLOWSTONE_DUST
         lines:
-          - 可從遠 25% 的距離拾取殘骸
-        stats:   # 2026-10-26 照 PoE2
-          - { stat: remnant.pickup_range, type: INCREASED, value: 25 }
+          - 增加 10% 你產生的殘骸效果
+        stats:
+          - { stat: remnant.effect, type: INCREASED, value: 10 }
       refracted_infusion:
         name: 稜射灌注          # Refracted Infusion
         requires: remnant_range_2

@@ -67,6 +67,7 @@
     <a href="builds" id="link-builds"><b>角色</b><span>看大家的裝備、天賦與技能</span></a>
     <a href="ladder" id="link-ladder"><b>排行榜</b><span>等級、地圖、不死、金錢、公會</span></a>
     <a href="codex"><b>圖鑑</b><span>技能、輔助寶石、通貨、傳奇裝備</span></a>
+    <a href="market" id="link-market"><b>通貨行情</b><span>交易所的即時比例、掛單與歷史走勢</span></a>
     <a href="economy" id="link-economy"><b>市場報告</b><span>通貨與金幣每天的產出、消耗</span></a>
     <a href="https://arpg.tebex.store/" id="link-shop" target="_blank" rel="noopener"><b>贊助商店</b><span>星幣儲值方案、贊助禮包（Tebex）</span></a>
   </nav>
@@ -92,7 +93,7 @@
     fetch('home/status.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (s) {
       $('dot').className = 'dot on';
       $('online').textContent = '伺服器開著　在線 ' + s.online + ' / ' + s.max + ' 人';
-      ['builds', 'ladder', 'economy'].forEach(function (page) { $('link-' + page).hidden = !(s.pages && s.pages[page]); });
+      ['builds', 'ladder', 'economy', 'market'].forEach(function (page) { $('link-' + page).hidden = !(s.pages && s.pages[page]); });
       if (s.pages && s.pages.ladder) { loadTops(); }
     }).catch(function () {
       $('dot').className = 'dot';

@@ -1680,42 +1680,73 @@
     }
   }
 
+  // 2026-10-31 照站長「滑鼠滑上去會卡頓」：滑過節點時只重畫路線上變了顏色的節點與線（refreshNodes），不整棵樹重畫
+  const nodeEls = new Map(), glowEls = new Map(), edgeEls = new Map();
+  function stateOf(node) {
+    return node.type === "start" && !isSeed(node) ? "locked" : node.type === "start" && node.id !== start.id ? "owned" : nodeState(node);
+  }
+  function drawGlow(node, state, attr) {
+    const old = glowEls.get(node.id);
+    if (old) { old.remove(); glowEls.delete(node.id); }
+    if (state === "owned" || state === "path" || state === "remove") {
+      glowEls.set(node.id, el("circle", { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 20 : 30,
+        fill: attr ? ATTR_GLOW[attr] : state === "owned" ? "url(#glowGold)" : state === "path" ? "url(#glowBlue)" : "url(#glowRed)" }, layers.glows));
+    }
+  }
+  function drawNodeBody(node, g, state, attr) {
+    shape(node, g, attr ? ATTR_COLOR[attr] : NODE_FILL[state]);
+    if (attr) {
+      const mark = el("text", { x: node.x * SPACING, y: node.y * SPACING + 3.6, "text-anchor": "middle", class: "attrmark" }, g);
+      mark.textContent = ATTR_MARK[attr];
+    }
+    if (conqueredOf(node)) { // 2026-10-26：被恆時珠寶征服（橘色虛線圈）
+      el("circle", { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 13 : node.type === "keystone" ? 26 : 21, fill: "none",
+        stroke: "#ff9f43", "stroke-width": 2, "stroke-dasharray": "4 3", "pointer-events": "none" }, g);
+    }
+    if (search.has(node.id)) {
+      el("circle", { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 15 : 26, fill: "none",
+        stroke: "#55ffff", "stroke-width": 2.5 }, g);
+    }
+  }
+  function refreshNodes(ids) {
+    const lines = new Set();
+    for (const id of ids) {
+      const node = byId.get(id), g = nodeEls.get(id);
+      if (!node || !g) continue;
+      const state = stateOf(node);
+      const attr = node.attr && state === "owned" ? attrOf(node) : null;
+      drawGlow(node, state, attr);
+      g.replaceChildren();
+      drawNodeBody(node, g, state, attr);
+      for (const e of edgeEls.get(id) || []) lines.add(e);
+    }
+    for (const e of lines) e.line.setAttribute("stroke", edgeColor(e.a, e.b));
+  }
   function render() {
     if (!data) return;
     for (const k of ["edges", "glows", "nodes", "labels"]) layers[k].replaceChildren();
+    nodeEls.clear(); glowEls.clear(); edgeEls.clear();
     for (const node of order) {
       if (hiddenNode(node)) continue; // 2026-10-26：藏起來的節點與連到它的線不畫
       for (const n of neighbours(node)) {
         if (hiddenNode(n)) continue;
         if (n.x < node.x || (n.x === node.x && n.y < node.y)) continue; // 每條線只畫一次（PoE2 的樹：兩個節點不會在同一格）
-        el("line", { x1: node.x * SPACING, y1: node.y * SPACING, x2: n.x * SPACING, y2: n.y * SPACING,
+        const line = el("line", { x1: node.x * SPACING, y1: node.y * SPACING, x2: n.x * SPACING, y2: n.y * SPACING,
           stroke: edgeColor(node, n), "stroke-width": 5, "stroke-linecap": "round" }, layers.edges);
+        const entry = { line, a: node, b: n };
+        for (const id of [node.id, n.id]) { if (!edgeEls.has(id)) edgeEls.set(id, []); edgeEls.get(id).push(entry); }
       }
     }
     for (const node of order) {
       if (hiddenNode(node)) continue;
-      const state = node.type === "start" && !isSeed(node) ? "locked" : node.type === "start" && node.id !== start.id ? "owned" : nodeState(node);
+      const state = stateOf(node);
       // 屬性點：配了的照選的屬性上色（力量紅、敏捷綠、智慧藍），中間寫一個字（放大才看得到）
       const attr = node.attr && state === "owned" ? attrOf(node) : null;
-      if (state === "owned" || state === "path" || state === "remove") {
-        el("circle", { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 20 : 30,
-          fill: attr ? ATTR_GLOW[attr] : state === "owned" ? "url(#glowGold)" : state === "path" ? "url(#glowBlue)" : "url(#glowRed)" }, layers.glows);
-      }
+      drawGlow(node, state, attr);
       const g = el("g", { class: "node" }, layers.nodes);
       g.dataset.id = node.id;
-      shape(node, g, attr ? ATTR_COLOR[attr] : NODE_FILL[state]);
-      if (attr) {
-        const mark = el("text", { x: node.x * SPACING, y: node.y * SPACING + 3.6, "text-anchor": "middle", class: "attrmark" }, g);
-        mark.textContent = ATTR_MARK[attr];
-      }
-      if (conqueredOf(node)) { // 2026-10-26：被恆時珠寶征服（橘色虛線圈）
-        el("circle", { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 13 : node.type === "keystone" ? 26 : 21, fill: "none",
-          stroke: "#ff9f43", "stroke-width": 2, "stroke-dasharray": "4 3", "pointer-events": "none" }, g);
-      }
-      if (search.has(node.id)) {
-        el("circle", { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 15 : 26, fill: "none",
-          stroke: "#55ffff", "stroke-width": 2.5 }, g);
-      }
+      nodeEls.set(node.id, g);
+      drawNodeBody(node, g, state, attr);
       if (node.type === "notable" || node.type === "keystone" || node.type === "start" || node.type === "socket") {
         const t = el("text", { x: node.x * SPACING, y: node.y * SPACING + (node.type === "small" ? 22 : 34), "text-anchor": "middle", class: "label" }, layers.labels);
         t.textContent = nodeName(node);
@@ -1839,8 +1870,11 @@
       if (!drag.moved && Math.hypot(dx, dy) > 5) { drag.moved = true; document.getElementById("canvas").classList.add("dragging"); hideTip(); closeAttrMenu(); }
       if (drag.moved) { view.x = drag.vx + dx; view.y = drag.vy + dy; applyView(); return; }
     }
-    hoverAt(e);
+    // 2026-10-31：滑鼠移動一個畫面只處理一次（這次之前每個移動事件都找節點、重畫提示框）
+    hoverEvent = { clientX: e.clientX, clientY: e.clientY, pointerType: e.pointerType };
+    if (!hoverFrame) hoverFrame = requestAnimationFrame(() => { hoverFrame = 0; const h = hoverEvent; hoverEvent = null; if (h && !drag?.moved) hoverAt(h); });
   });
+  let hoverFrame = 0, hoverEvent = null;
   function endPointer(e) {
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinch = null;
@@ -1889,19 +1923,36 @@
     tipSwitchTimer = 0;
     clearTimeout(tipHideTimer);
     tipHideTimer = 0;
+    if (node && node === hover && tipFor === "node" && tip.style.display === "block") {
+      moveTip(e.clientX, e.clientY); // 2026-10-31：同一個節點上移動只挪提示框（這次之前每動一下就重做一次提示框的內容）
+      return;
+    }
     setHover(node);
     if (node) showTip(node, e.clientX, e.clientY); else hideTip();
   }
+  function moveTip(x, y) {
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = Math.min(window.innerWidth - w - 8, x + 12) + "px";
+    tip.style.top = Math.min(window.innerHeight - h - 8, y + 12) + "px";
+  }
   function setHover(node) {
     if (node === hover) return;
+    const was = hover;
     hover = node;
+    const before = [...preview.add, ...preview.remove];
     preview = { add: new Set(), remove: new Set() };
     if (node && node.type !== "start") {
       // 已配的屬性點點下去是開選單（改屬性或退掉），滑過去不預覽「退掉」，顏色才看得到
       if (allocated.has(node.id)) { if (!node.attr) preview.remove = removal(node); }
       else preview.add = new Set(pathTo(node).map(n => n.id));
     }
-    render();
+    // 2026-10-31：只重畫前後兩次預覽碰到的節點（這次之前每換一個節點整棵樹重畫、重算總表，滑過去會卡）
+    if (nodeEls.size) {
+      refreshNodes(new Set([...before, ...preview.add, ...preview.remove]));
+      if ((was && was.type === "socket") || (node && node.type === "socket") || placedJewels().length) drawRings();
+    } else {
+      render();
+    }
   }
   let armed = null;
   function clickAt(e) {

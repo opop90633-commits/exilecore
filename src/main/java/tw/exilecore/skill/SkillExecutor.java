@@ -44,6 +44,14 @@ final class SkillExecutor {
         this.projectiles = projectiles;
         this.zones = zones;
         this.damage = damage;
+        this.earthSpikes = new EarthSpikes(plugin, targets, visuals, damage);
+    }
+
+    /** 2026-10-31 照站長：地刺崩裂留在地上的地刺（PoE2 Earthshatter）。 */
+    private final EarthSpikes earthSpikes;
+
+    EarthSpikes earthSpikes() {
+        return earthSpikes;
     }
 
     /** 花魔力之前的檢查；可以放回傳 null，不行回傳原因。 */
@@ -154,6 +162,11 @@ final class SkillExecutor {
             case ZONE -> {
                 zone(origin, build);
                 extraFissure(origin, build); // 2026-10-27 照 PoE2 分裂地面
+            }
+            case DASH -> { // 2026-10-31 照站長：迴旋棍步放進虛空形態：幻影自己沿面向轉過去（玩家不動）；其他位移技能照舊不從別的地方放
+                if (build.params().dash().whirls() && origin.owner() != null) {
+                    whirlFrom(origin, build);
+                }
             }
             // 2026-10-28 照 PoE2 Spell Totem：骸爆從圖騰放，引爆圖騰目標附近的屍體（沒有就圖騰身邊的）；這次之前骸爆不能交給圖騰
             case CORPSE -> detonate(origin, build, build.profile().tags().contains(tw.exilecore.stats.Tags.TOTEM) ? preferred : null);
@@ -318,6 +331,10 @@ final class SkillExecutor {
     // ---- 範圍 ----
 
     private void nova(final Origin origin, final SkillBuild build) {
+        if (EarthSpikes.ID.equals(build.definition().id())) {
+            earthSpikes.cast(origin, build); // 2026-10-31 照站長：地刺崩裂照原作（裂縫、留地刺、戰吼震碎）
+            return;
+        }
         final double radius = build.radius();
         Location center = origin.feet();
         // 冰新星（2026-10 PoE2）：自己的霜鑽還在飛就從那裡爆開
@@ -444,6 +461,10 @@ final class SkillExecutor {
     }
 
     private void cone(final Origin origin, final SkillBuild build) {
+        if (SUNDER_ID.equals(build.definition().id())) {
+            sunderSlam(origin, build); // 2026-10-31 照站長：裂地斬照原作的 5 段區域與震波（同時打，不一段一段往前推）
+            return;
+        }
         final double length = build.length();
         final List<LivingEntity> coneHits = targets.cone(origin, length, build.angle());
         // 2026-10-28 照 PoE2 Lightning Conduit：範圍內有感電中的敵人時多劈 1 → 2 道雷，隨機分給打到的敵人（這次之前沒做）
@@ -484,6 +505,75 @@ final class SkillExecutor {
             zones.addImpact(origin.owner(), center, length * aftershock.radius(build.level()),
                     build.profile().scaled(1 + aftershock.more(build.level()) / 100.0, "第二擊"),
                     build.definition().visual(), (int) Math.round(aftershock.delay() * 20));
+        }
+    }
+
+    /** 2026-10-31：裂地斬（PoE2 Sunder）。 */
+    static final String SUNDER_ID = "sunder";
+    /** 一次砸出幾段區域、每段第一段的長度與每段多的長度（公尺）、每段最多幾隻敵人放震波、震波半徑（公尺）。 */
+    static final int SUNDER_AREAS = 5;
+    static final double SUNDER_FIRST_M = 0.9;
+    static final double SUNDER_STEP_M = 0.2;
+    static final int SUNDER_SHOCKWAVES = 7;
+    static final double SUNDER_SHOCK_M = 1.2;
+
+    /** 第 i 段（0 起算）的直徑（格，未乘範圍）。 */
+    static double sunderDiameter(final int index) {
+        return tw.exilecore.core.Units.metres(SUNDER_FIRST_M + SUNDER_STEP_M * index);
+    }
+
+    /**
+     * 2026-10-31 照站長：裂地斬照原作打 5 段區域（每段比前一段大 0.2 公尺，一段接一段往前排），但同時打下去（不一段一段往前推）；
+     * 每段打到的敵人裡最多 7 隻放出震波（1.2 公尺，傷害照 skills.yml 的 aftershock.more：主波 160% 的 65%→265%），
+     * 震波打其他的敵人（放出震波的那隻自己不吃）。每隻敵人主波只吃一次（落在兩段重疊的地方也一樣）。
+     */
+    private void sunderSlam(final Origin origin, final SkillBuild build) {
+        final Player owner = origin.owner();
+        final org.bukkit.util.Vector facing = origin.facing().clone().setY(0);
+        if (facing.lengthSquared() < 1.0E-6) {
+            facing.setX(1);
+        }
+        facing.normalize();
+        final double scale = build.areaScale();
+        final SkillParams.Aftershock aftershock = build.params().aftershock();
+        final SkillProfile shock = build.profile().scaled(1 + (aftershock == null ? -59 : aftershock.more(build.level())) / 100.0, "震波");
+        final double shockRadius = tw.exilecore.core.Units.metres(SUNDER_SHOCK_M) * scale;
+        final java.util.Set<UUID> struck = new java.util.HashSet<>();
+        final List<LivingEntity> sources = new ArrayList<>();
+        final Object strikeSource = new Object();
+        double travelled = 0;
+        for (int i = 0; i < SUNDER_AREAS; i++) {
+            final double diameter = sunderDiameter(i) * scale;
+            final Location center = origin.feet().clone().add(facing.clone().multiply(travelled + diameter / 2));
+            travelled += diameter;
+            visuals.nova(build.definition().visual(), center, diameter / 2);
+            if (owner == null) {
+                continue;
+            }
+            targets.strike(owner, build.profile(), SkillTargets.sphere(center, diameter / 2), strikeSource);
+            int released = 0;
+            for (final LivingEntity target : targets.around(center, diameter / 2, owner)) {
+                if (!struck.add(target.getUniqueId())) {
+                    continue;
+                }
+                damage.hit(owner, target, build.profile(), null);
+                if (released < SUNDER_SHOCKWAVES) {
+                    released++;
+                    sources.add(target);
+                }
+            }
+        }
+        if (owner == null) {
+            return;
+        }
+        for (final LivingEntity source : sources) {
+            final Location at = source.getLocation();
+            visuals.nova(build.definition().visual(), at, shockRadius);
+            for (final LivingEntity target : targets.around(at, shockRadius, owner)) {
+                if (target != source && target.isValid() && !target.isDead()) {
+                    damage.hit(owner, target, shock, null);
+                }
+            }
         }
     }
 
@@ -1042,9 +1132,9 @@ final class SkillExecutor {
     private void whirl(final Player player, final SkillBuild build) {
         final SkillParams.Dash params = build.params().dash();
         final Location from = player.getLocation();
-        final boolean pinned = plugin.skills() != null && plugin.skills().supportMechanics().immobilised(player);
         final Vector facing = SkillTargets.facing(player);
-        final Location found = pinned ? null : pathDestination(player, facing, build.range(), DashPath.evenStep(build.range()), 0);
+        // 2026-10-31 照站長：拿掉往前推進，原地轉（這次之前一路往前走 range 格；被釘住才原地轉）
+        final Location found = null;
         final double distance = found == null ? 0 : horizontal(from, found);
         final int total = Math.max(WhirlingAssault.MIN_TICKS, (int) Math.round(build.intervalTicks(plugin.players().sheet(player))));
         final double radius = params.spinRadius() * build.areaScale();
@@ -1120,6 +1210,48 @@ final class SkillExecutor {
             }
             if (tick[0] >= total) {
                 whirling.remove(player.getUniqueId(), token);
+                task[0].cancel();
+            }
+        }, 1L, 1L);
+    }
+
+    /**
+     * 2026-10-31：從別的地方放的迴旋棍步（虛空形態的幻影）：在原點原地，
+     * 整個動作時間裡轉 spins 圈，每一圈在當下的位置打一圈。幻影沒有實體，玩家本人不動。
+     */
+    private void whirlFrom(final Origin origin, final SkillBuild build) {
+        final Player owner = origin.owner();
+        final SkillParams.Dash params = build.params().dash();
+        final Location from = origin.feet().clone();
+        final Vector facing = origin.facing().clone().setY(0);
+        if (facing.lengthSquared() < 1e-6) {
+            facing.setX(1);
+        }
+        facing.normalize();
+        final double travel = 0; // 2026-10-31 照站長：迴旋棍步不往前推進，原地轉
+        final int total = Math.max(WhirlingAssault.MIN_TICKS, (int) Math.round(build.intervalTicks(plugin.players().sheet(owner))));
+        final double radius = params.spinRadius() * build.areaScale();
+        final String visual = build.definition().visual();
+        final int spins = params.spins();
+        final int[] nextSpin = {0};
+        final int[] tick = {0};
+        final org.bukkit.scheduler.BukkitTask[] task = new org.bukkit.scheduler.BukkitTask[1];
+        task[0] = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            tick[0]++;
+            if (!owner.isOnline() || owner.getWorld() != from.getWorld()) {
+                task[0].cancel();
+                return;
+            }
+            final Location at = from.clone().add(facing.clone().multiply(travel * WhirlingAssault.progress(Math.min(total, tick[0]), total)));
+            while (nextSpin[0] < spins && tick[0] >= WhirlingAssault.spinTick(nextSpin[0], spins, total)) {
+                nextSpin[0]++;
+                targets.strike(owner, build.profile(), SkillTargets.sphere(at, radius), new Object());
+                for (final LivingEntity target : targets.around(at, radius, owner)) {
+                    damage.hit(owner, target, build.profile(), null);
+                }
+                visuals.nova(visual, at, radius);
+            }
+            if (tick[0] >= total) {
                 task[0].cancel();
             }
         }, 1L, 1L);

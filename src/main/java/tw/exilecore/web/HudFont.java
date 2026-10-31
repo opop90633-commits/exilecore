@@ -416,7 +416,7 @@ public final class HudFont {
         }
         // 2026-10-20 增益倒數：技能格上方的秒數（只收數字），快捷欄左邊往上疊的增益（收全部的字）
         final java.util.List<Character> slotChars = new java.util.ArrayList<>();
-        for (final char c : ("0123456789.:s" + SLOT_MISSING).toCharArray()) {
+        for (final char c : ("0123456789.:s/" + SLOT_MISSING).toCharArray()) {
             if (map.containsKey(c)) {
                 slotChars.add(c);
             }

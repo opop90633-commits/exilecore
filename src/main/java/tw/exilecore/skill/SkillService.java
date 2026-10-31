@@ -1240,7 +1240,10 @@ public final class SkillService {
     }
 
     /** 技能格上方的倒數：hotbarSlot 是快捷列第幾格（0 起算）；missing = 增益沒了（戰鬥中提醒補放）。 */
-    public record SlotTimer(int hotbarSlot, String name, long ticks, boolean missing) {
+    public record SlotTimer(int hotbarSlot, String name, long ticks, boolean missing, String label, boolean ready) {
+        public SlotTimer(final int hotbarSlot, final String name, final long ticks, final boolean missing) {
+            this(hotbarSlot, name, ticks, missing, null, false);
+        }
     }
 
     public record HudBuffs(List<SlotTimer> slots, List<BuffTimer> others) {
@@ -1298,6 +1301,13 @@ public final class SkillService {
                 } else if (fighting && definition.mechanic() == Mechanic.WARCRY && definition.warcry() != null
                         && !definition.warcry().buff().isEmpty()) {
                     slots.add(new SlotTimer(hotbar, definition.name(), 0, true)); // 戰吼的增益沒了：提醒補放
+                } else {
+                    // 2026-10-31 照站長「榮耀沒地方顯示」：要榮耀的技能在那一格上方寫「現在／要幾點」（夠了變綠）
+                    final int[] glory = gloryOnSlot(player, state, definition, entry);
+                    if (glory != null) {
+                        slots.add(new SlotTimer(hotbar, definition.name(), 0, false, Math.min(glory[0], glory[1]) + "/" + glory[1],
+                                glory[0] >= glory[1]));
+                    }
                 }
             }
         }
@@ -1321,6 +1331,17 @@ public final class SkillService {
         }
         others.sort(java.util.Comparator.comparingLong(BuffTimer::ticks));
         return new HudBuffs(slots, others);
+    }
+
+    /** 2026-10-31：這一格的技能要榮耀的話 {現在, 要幾點}；不用榮耀回傳 null。 */
+    private int[] gloryOnSlot(final Player player, final PlayerState state, final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        final ResourceSpec resource = config.resource(definition.id());
+        final boolean needs = definition.warcry() != null && definition.warcry().extras().glory() > 0 || resource != null && resource.glory() > 0;
+        if (!needs) {
+            return null;
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        return supportMechanics().gloryHud(player, build(state, sheet, definition, entry), sheet);
     }
 
     /** 增益名稱用到的字（資源包的快捷欄字型要收進去）：護符、神龕以外固定的幾個。 */
@@ -1386,6 +1407,7 @@ public final class SkillService {
         projectiles.removeAll();
         decals.clear();
         costumes.clear(); // 2026-10-31
+        executor.earthSpikes().clear(); // 2026-10-31：地刺崩裂的地刺
         zones.clear();
         deployables.clear();
         minions.clear();
@@ -4848,6 +4870,13 @@ public final class SkillService {
         final double value = modifier.value();
         return switch (modifier.stat()) {
             case StageAttacks.LIMIT + "jagged" -> "鋸齒地面上限 +" + (int) Math.floor(value + 1e-9);
+            // 2026-10-31：犧牲、雷雲的額外品質效果（之前沒有說明，整行不顯示）
+            case "effect.life.max" -> "召喚物最大生命增加 " + trimNumber(value * 100) + "%";
+            case tw.exilecore.stats.GemQualityKeys.ORB_EXTRA_BOLTS -> "雷雲多放 " + (int) Math.floor(value + 1e-9) + " 道雷才消失";
+            case TornadoSpec.LIMIT -> "龍捲風上限 +" + (int) Math.floor(value + 1e-9);
+            case tw.exilecore.stats.WarcryKeys.GUARD_MORE -> "守護更多 " + trimNumber(value) + "%";
+            case tw.exilecore.stats.WarcryKeys.SOCKETED_COOLDOWN_RECOVERY -> "插槽戰吼的冷卻回復速度增加 " + trimNumber(value * 100) + "%";
+            case EMERGENCY_MORE -> "增益強化的弩矢更多 " + trimNumber(value) + "% 傷害";
             case tw.exilecore.stats.TreeEffectKeys.PROJECTILE_CHANCE_TWO -> trimNumber(value) + "% 機率多射 2 發投射物";
             case tw.exilecore.item.unique.UniqueStats.PERFECT_WINDOW -> "完美時機的區間長 " + trimNumber(value * 100) + "%";
             case OriginalSkills.OIL_EXPOSURE -> "黑油的曝露多降低 " + trimNumber(value) + "% 元素抗性";
@@ -6235,7 +6264,7 @@ public final class SkillService {
             }
         }
         if (spec.remnant() != null) { // 2026-10-26 照 PoE2：留下灌注殘骸
-            lines.add("<gray>留下" + ("random".equals(spec.remnant()) ? "隨機一種" : infusionWord(spec.remnant())) + "灌注殘骸：走過去撿到獲得那種灌注");
+            lines.add("<gray>留下" + ("random".equals(spec.remnant()) ? "隨機一種" : infusionWord(spec.remnant())) + "灌注殘骸：直接獲得那種灌注");
         }
         final List<tw.exilecore.stats.Modifier> bonus = resourceBonus(spec);
         if (!bonus.isEmpty()) {

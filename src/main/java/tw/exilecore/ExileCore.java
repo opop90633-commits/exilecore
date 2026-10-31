@@ -515,6 +515,11 @@ public final class ExileCore extends JavaPlugin {
         return marketModule == null ? null : marketModule.service();
     }
 
+    /** 2026-10-31：通貨行情網頁（/market）的資料；市集模組沒啟用時為 null。 */
+    public tw.exilecore.market.MarketWeb marketWeb() {
+        return marketModule == null ? null : marketModule.web();
+    }
+
     /** 商人與賭博；模組沒啟用時為 null。 */
     public VendorService vendor() {
         return vendorModule == null ? null : vendorModule.service();

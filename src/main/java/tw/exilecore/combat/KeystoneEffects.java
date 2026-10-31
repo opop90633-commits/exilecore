@@ -424,7 +424,7 @@ public final class KeystoneEffects implements Listener {
 
     private void knockback(final Player owner, final LivingEntity target) {
         final Vector push = target.getLocation().toVector().subtract(owner.getLocation().toVector()).setY(0);
-        if (push.lengthSquared() < 1e-6) {
+        if (push.lengthSquared() < 1e-6 || Knockbacks.immune(target)) {
             return;
         }
         target.setVelocity(target.getVelocity().add(push.normalize().multiply(0.6).setY(0.25)));

@@ -513,7 +513,7 @@ public final class TreeLeftovers implements Listener {
         // 擊退機率（對近距離、流血的敵人：條件在標籤）
         if (roll(effective.flat(TreeLastKeys.KNOCKBACK_CHANCE, skill.tags()))) {
             final Vector push = defender.getLocation().toVector().subtract(player.getLocation().toVector()).setY(0);
-            if (push.lengthSquared() > 1e-6) {
+            if (push.lengthSquared() > 1e-6 && !tw.exilecore.combat.Knockbacks.immune(defender)) {
                 defender.setVelocity(defender.getVelocity().add(push.normalize().multiply(0.6).setY(0.25)));
             }
         }

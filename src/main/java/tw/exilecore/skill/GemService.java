@@ -1552,6 +1552,17 @@ public final class GemService {
 
     /** 2026-10-23：琢星稜鏡：技能寶石品質 +5%（最多 20%；腐化的不能用）。 */
     Change addQuality(final Player player, final int position, final CurrencyType prism) {
+        return addQuality(player, position, prism, 1);
+    }
+
+    /** 2026-10-31 照站長：一次用到品質滿（最多用 available 顆）。 */
+    static int qualityUses(final SkillLoadout.Entry entry, final int available) {
+        final int missing = Math.max(0, SkillLoadout.Entry.QUALITY_MAX - entry.quality());
+        return Math.max(0, Math.min(available, (missing + QUALITY_STEP - 1) / QUALITY_STEP));
+    }
+
+    /** 同上，一次用 uses 顆（{@link #qualityUses} 算好的）。 */
+    Change addQuality(final Player player, final int position, final CurrencyType prism, final int uses) {
         final SkillLoadout loadout = plugin.players().get(player).skills();
         final SkillLoadout.Entry entry = loadout.skill(position);
         if (entry == null) {
@@ -1561,9 +1572,10 @@ public final class GemService {
         if (problem != null) {
             return Change.fail(problem);
         }
-        final int next = Math.min(SkillLoadout.Entry.QUALITY_MAX, entry.quality() + QUALITY_STEP);
+        final int count = Math.max(1, uses);
+        final int next = Math.min(SkillLoadout.Entry.QUALITY_MAX, entry.quality() + QUALITY_STEP * count);
         loadout.set(position, entry.withQuality(next));
-        plugin.economy().ledger().consumed(prism.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1);
+        plugin.economy().ledger().consumed(prism.id(), tw.exilecore.economy.EconomyLedger.SKILL, count);
         final String text = SkillService.qualityText(config().skill(entry.skillId()), next);
         player.sendMessage(plugin.text().prefixed("<#8888ff>" + ItemRenderer.escape(skillName(entry)) + " 品質 " + next + "%"
                 + (text == null ? "" : "<gray>（" + ItemRenderer.escape(text) + "）")));

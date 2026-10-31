@@ -82,6 +82,7 @@ public final class StatLines {
         put(StatKeys.SPIRIT_MAX, "最大精魂", FLAT_OR_INCREASED, false); // 2026-10：昇華改成 +x 最大精魂（固定值）
         // 2026-10-26 照 PoE2：殘骸撿取距離（星焰術士）、元素湧動（林嵐獵姬）
         put(tw.exilecore.stats.TreeMechanicKeys.REMNANT_RANGE, "拾取殘骸的距離", INCREASED, false);
+        put(tw.exilecore.stats.TreeNewMechanicKeys.REMNANT_EFFECT, "你產生的殘骸效果", INCREASED, false); // 2026-10-31：星焰術士的殘骸效果（取代撿取距離）
         put("surge.fire", "層火焰湧動（消耗戰星時觸發元素湧動）", FLAT, false);
         put("surge.cold", "層冰冷湧動（消耗戰星時觸發元素湧動）", FLAT, false);
         put("surge.lightning", "層閃電湧動（消耗戰星時觸發元素湧動）", FLAT, false);

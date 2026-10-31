@@ -253,7 +253,7 @@ class TreeSystemsTest {
         assertFalse(ChargeService.fills(sheet, "power", 0.021));
         assertFalse(ChargeService.fills(sheet, "frenzy", 0.0));
 
-        for (final String stat : List.of(TreeMechanicKeys.PARRIED_EFFECT, TreeMechanicKeys.REMNANT_RANGE, TreeMechanicKeys.INFUSION_DURATION,
+        for (final String stat : List.of(TreeMechanicKeys.PARRIED_EFFECT, tw.exilecore.stats.TreeNewMechanicKeys.REMNANT_EFFECT, TreeMechanicKeys.INFUSION_DURATION, // 2026-10-31：撿取距離拿掉了
                 "charge.extra.power", "ailment.self_duration.poison")) {
             assertTrue(treeHas(stat), "樹上要有 " + stat);
         }

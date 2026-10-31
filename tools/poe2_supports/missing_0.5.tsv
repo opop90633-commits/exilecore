@@ -49,7 +49,7 @@ Fresh Clip	Fresh Clip II	T4	r	fresh_clip_ii	新匣 II	3	exact	2026-10-27 改成�
 Gambleshot	Gambleshot	T3	b	gambleshot	賭射	2	exact	
 Gorge	Gorge	T2	b	gorge	饕屍	2	exact	
 Harmonic Remnants	Harmonic Remnants II	T3	b	harmonic_remnants_ii	和骸 II	2	exact	2026-10-27 改成原作：跟著這個技能產生的每一個殘骸走、真的多產生一個（這次之前「放技能後 12 秒內撿的殘骸」20% 機率給兩次）
-Magnetic Remnants	Magnetic Remnants	T0	b	magnetic_remnants	磁骸	2	exact	2026-10-27 改成原作：跟著這個技能產生的每一個殘骸走（這次之前「放技能後 12 秒內撿的殘骸」都算）
+Magnetic Remnants	Magnetic Remnants	T0	b	magnetic_remnants	磁骸	2	removed	2026-10-31 照站長拿掉（殘骸直接生效，撿取距離沒用了）；2026-10-27 改成原作：跟著這個技能產生的每一個殘骸走（這次之前「放技能後 12 秒內撿的殘骸」都算）
 Remnant Potency	Remnant Potency III	T4	r	remnant_potency_iii	骸效 III	3	exact	2026-10-27 改成原作：撿到 3 秒後才生效、跟著這個技能產生的每一個殘骸走；殘骸效果照全遊戲的算法（灌注殘骸：多給一層的機率）
 Hex Bloom	Hex Bloom	T3	b	hex_bloom	咒綻	2	exact	
 Holy Descent	Holy Descent	T5	r	holy_descent	聖降	3	exact	

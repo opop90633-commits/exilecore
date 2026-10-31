@@ -68,7 +68,7 @@ class RefApproxSupportsTest {
         // 2026-10-27 照站長「放技能減速全部移除」：輕身（原作只有減少移動懲罰）沒有原作效果可以做，平衡等效成攻擊／施法速度
         // 2026-10-29 照站長加回衝勢（Momentum），照原作（exact），不再是 removed
         assertEquals(List.of("light_body"), approx);
-        assertEquals(List.of("fusillade", "hobble", "living_lightning_ii"), removed);
+        assertEquals(List.of("magnetic_remnants", "fusillade", "hobble", "living_lightning_ii"), removed); // 2026-10-31：＋磁骸
     }
 
     @Test
@@ -139,15 +139,15 @@ class RefApproxSupportsTest {
     void remnantSupportsTravelWithTheirRemnants() {
         final StatSheet sheet = new StatSheet().overlay(support("harmony_bones_ii").modifiers()).overlay(support("bone_effect_iii").modifiers());
         final ChargeEffects.RemnantMods mods = ChargeEffects.RemnantMods.of(sheet, Set.of());
-        assertEquals(35, mods.range(), 1e-9);
+        assertEquals(0, mods.range(), 1e-9, "2026-10-31：殘骸直接生效，拿掉撿取距離");
         assertEquals(20, mods.extra(), 1e-9);
         assertEquals(40, mods.effect(), 1e-9);
         assertEquals(3, mods.delaySeconds(), 1e-9, "撿到 3 秒後才生效");
         assertEquals(ChargeEffects.REMNANT_PICKUP * 1.35, ChargeEffects.remnantPickup(0.35), 1e-9);
         // 會留殘骸的技能才掛得上：響指、素痕湧、燼種另外算；魔泉湧不會留殘骸
-        assertNull(support("magnet_bones").refusal(skill("anomaly_devour_blast")));
-        assertNull(support("magnet_bones").refusal(skill("thunder_cloud")));
-        assertEquals("要會留下殘骸的技能", support("magnet_bones").refusal(skill("magic_spring_well")));
+        assertNull(support("harmony_bones_ii").refusal(skill("anomaly_devour_blast")));
+        assertNull(support("harmony_bones_ii").refusal(skill("thunder_cloud")));
+        assertEquals("要會留下殘骸的技能", support("harmony_bones_ii").refusal(skill("magic_spring_well")));
     }
 
     @Test

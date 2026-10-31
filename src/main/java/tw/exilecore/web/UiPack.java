@@ -1220,6 +1220,11 @@ public final class UiPack {
         files.put("assets/exilecore/models/item/unique/" + name + ".json", json(model));
     }
 
+    /** 2026-10-31：網頁用的圖示（通貨行情頁）：一張圖做成 PNG。 */
+    public static byte[] spritePng(final UniqueArt.Sprite sprite) throws IOException {
+        return png(spriteImage(sprite));
+    }
+
     static BufferedImage spriteImage(final UniqueArt.Sprite sprite) {
         final BufferedImage image = new BufferedImage(sprite.width(), sprite.height(), BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < sprite.height(); y++) {

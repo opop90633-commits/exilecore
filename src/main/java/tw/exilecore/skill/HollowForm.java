@@ -84,7 +84,9 @@ public final class HollowForm {
             return "有使用條件的技能不行";
         }
         final Mechanic mechanic = inner.mechanic();
-        if (mechanic == Mechanic.DASH || mechanic == Mechanic.LEAP || mechanic == Mechanic.FLICKER) {
+        // 2026-10-31 照站長：迴旋棍步可以放（原地轉，不會移動）
+        final boolean whirl = mechanic == Mechanic.DASH && inner.params() != null && inner.params().dash() != null && inner.params().dash().whirls();
+        if (!whirl && (mechanic == Mechanic.DASH || mechanic == Mechanic.LEAP || mechanic == Mechanic.FLICKER)) {
             return "位移、跳躍的攻擊不行";
         }
         if (mechanic == Mechanic.AURA || mechanic == Mechanic.WARCRY || mechanic == Mechanic.SUMMON || mechanic == Mechanic.GUARD

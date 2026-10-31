@@ -818,11 +818,43 @@ final class AscGranted implements Listener {
     // 殘骸（夏烏拉之炎、生命痕跡）
     // =====================================================================
 
+    /**
+     * 2026-10-31 照站長：夏烏拉之炎改成直接生效（不用走過去撿）後效果調低：紫炎每層 7% → 4% 額外混沌、紅藍炎偷取 20% → 10%。
+     */
+    static final double FLAME_PURPLE = 4;
+    static final double FLAME_LEECH = 0.10;
+    /** 2026-10-31 照站長：夏烏拉之炎產生的間隔乘幾倍。 */
+    static final double FLAME_INTERVAL_SCALE = 2.0;
+
+    /** 2026-10-31：自動吃掉時「再出現」只給一次（再出現的那個不會再出現）。 */
+    private boolean reappearAllowed = true;
+
     private void spawnRemnant(final Player owner, final Location base, final String kind, final double value, final long ticks) {
         if (base.getWorld() == null) {
             return;
         }
         final Location at = base.clone().add(0, 0.5, 0);
+        if (tw.exilecore.skill.ChargeEffects.autoCollect()) {
+            // 2026-10-31 照站長：生命痕跡、夏烏拉之炎產生時直接吃到身上（不放在地上）；再出現（風暴回憶）照舊 3 秒後再給一次
+            if (!owner.isOnline() || owner.getWorld() != at.getWorld()) {
+                return;
+            }
+            final boolean again = AscendancyEffects.has(effects.sheet(owner), "remnant.reappear_ms") && reappearAllowed;
+            collect(owner, new Remnant(owner.getUniqueId(), at, kind, value, now() + ticks, null, false), effects.sheet(owner));
+            if (again) {
+                effects.later(60, () -> {
+                    if (owner.isOnline()) {
+                        reappearAllowed = false;
+                        try {
+                            spawnRemnant(owner, base, kind, value, ticks);
+                        } finally {
+                            reappearAllowed = true;
+                        }
+                    }
+                });
+            }
+            return;
+        }
         final org.bukkit.Material material = switch (kind) {
             case "purple" -> org.bukkit.Material.AMETHYST_SHARD;
             case "blue" -> org.bukkit.Material.LAPIS_LAZULI;
@@ -891,7 +923,9 @@ final class AscGranted implements Listener {
     private void collect(final Player owner, final Remnant remnant, final StatSheet sheet) {
         final PlayerState state = plugin.players().get(owner);
         final double effect = Math.max(0, 1 + sheet.increased(AscKeys.REMNANT_EFFECT, Set.of()) + flameEffect(owner, remnant.kind));
-        owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1f, 1.6f);
+        if (!tw.exilecore.skill.ChargeEffects.autoCollect()) { // 2026-10-31 照站長：直接吃到身上時不出聲
+            owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1f, 1.6f);
+        }
         switch (remnant.kind) {
             case "life" -> {
                 // 生命痕跡：回復生命，可以溢出到 1.5 倍（溢出的部分變成守護）
@@ -905,8 +939,8 @@ final class AscGranted implements Listener {
                     state.addGuard(total, now() + 160);
                 }
             }
-            case "red" -> state.addLeech(state.maxLife() * 0.20 * effect);
-            case "blue" -> state.addManaLeech(state.maxMana() * 0.20 * effect);
+            case "red" -> state.addLeech(state.maxLife() * FLAME_LEECH * effect);
+            case "blue" -> state.addManaLeech(state.maxMana() * FLAME_LEECH * effect);
             default -> {
                 final Own own = own(owner);
                 own.purple = (int) Math.min(10, own.purple + 1);
@@ -1057,7 +1091,8 @@ final class AscGranted implements Listener {
         }
         // 遁入裂痕：夏烏拉之炎
         if (on(player, "rift_dive") && now >= o.flameNext) {
-            o.flameNext = now + Math.round(Math.max(1.2, level(player, "rift_dive", "asc.flame_interval")) * 20);
+            // 2026-10-31 照站長：直接生效之後間隔拉長兩倍（1.4～1.21 秒 → 2.8～2.42 秒）
+            o.flameNext = now + Math.round(Math.max(1.2, level(player, "rift_dive", "asc.flame_interval")) * FLAME_INTERVAL_SCALE * 20);
             final int colour = (int) AscendancyEffects.flat(sheet, AscKeys.FLAME_COLOUR);
             final String kind = switch (colour) {
                 case 1 -> "purple";
@@ -1449,7 +1484,7 @@ final class AscGranted implements Listener {
         }
         if (own.purple > 0) {
             final double effect = 1 + state.sheet().increased(AscKeys.REMNANT_EFFECT, Set.of()) + flameEffect(player, "purple");
-            out.add(Modifier.flat(StatKeys.DAMAGE_EXTRA + Tags.CHAOS, 7 * own.purple * effect, "霞瑤之炎"));
+            out.add(Modifier.flat(StatKeys.DAMAGE_EXTRA + Tags.CHAOS, FLAME_PURPLE * own.purple * effect, "霞瑤之炎"));
         }
         return out;
     }

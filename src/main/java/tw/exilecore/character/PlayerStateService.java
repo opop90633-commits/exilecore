@@ -441,6 +441,15 @@ public final class PlayerStateService {
         final boolean strMelee = StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.STR_MELEE_REQUIREMENTS);
         final boolean dexMelee = StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.DEX_MELEE_REQUIREMENTS);
 
+        // 2026-10-31 修正：裝備給的基石（例如樹指鐵手的巨人之血）也要算進「主手、副手搭不搭」與武器需求三倍：
+        //   第二輪一開始表上只剩天賦樹，這次之前要排在武器前面的裝備先處理到才看得到，腿甲、手套給的巨人之血配不了權杖、盾
+        final StatSheet pairSheet = new StatSheet();
+        for (final String key : new String[] {tw.exilecore.stats.KeystoneKeys.FLAG_GIANTS_BLOOD, tw.exilecore.stats.KeystoneKeys.FLAG_LORD_OF_WILDS}) {
+            if (StatKeys.flag(sheet, key)) {
+                pairSheet.add(new Modifier(key, tw.exilecore.stats.ModType.FLAT, 1, Set.of(), "裝備搭配"));
+            }
+        }
+
         // 第二輪：剔除需求不符的裝備
         sheet.clearModifiers();
         sheet.addAll(passiveResolved);
@@ -454,7 +463,7 @@ public final class PlayerStateService {
         // 2026-10-26（昇華・嵌晶）：減少能力值需求、應變能力（最高的屬性滿足需求）
         final double[] reqAttr = tw.exilecore.ascendancy.AscBuild.requirementAttributes(extra, str, dex, intelligence);
         // 2026-10-26 照 PoE2 基石：巨人之血（武鬥武器屬性需求三倍）、靈能魔符（項鍊的加成改給召喚物）
-        final boolean giantsBlood = StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_GIANTS_BLOOD);
+        final boolean giantsBlood = StatKeys.flag(pairSheet, tw.exilecore.stats.KeystoneKeys.FLAG_GIANTS_BLOOD);
         final boolean necroTalisman = StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_NECRO_TALISMAN);
         // 2026-10-27 照 PoE2 基石：巨人之血（雙手斧錘劍單手持用，副手可以配盾、法器或再一把雙手斧錘劍雙持）、荒野領主（副手的權杖）——天賦換了也要重看副手
         final java.util.function.Function<EquippedItem, String> ownProblem = item -> {
@@ -477,7 +486,7 @@ public final class PlayerStateService {
         for (final EquippedItem item : equipped) {
             String reason = ownProblem.apply(item);
             if (reason == null && (item.offHandWeapon() || item.base().slot() == ItemSlot.OFF_HAND)) {
-                reason = offHandProblem(state, mainBase, item, sheet); // 2026-10-27
+                reason = offHandProblem(state, mainBase, item, pairSheet); // 2026-10-27；2026-10-31 改看第一輪的基石
             }
             if (reason != null) {
                 inactive.add(item.base().name() + "：" + reason);
@@ -772,7 +781,7 @@ public final class PlayerStateService {
     private String offHandProblem(final PlayerState state, final ItemBase main, final EquippedItem off, final StatSheet sheet) {
         if (off.offHandWeapon() && !off.base().tags().contains("sceptre")) {
             // 2026-10-27 照 PoE2 巨人之血：兩手各拿一把雙手斧、錘、劍（雙持）
-            return Gear.giantOffHand(main, off.base(), sheet) ? null : "副手的雙手武器要點了巨人之血、主手也是雙手斧、錘、劍";
+            return Gear.giantOffHand(main, off.base(), sheet) ? null : "副手的雙手武器要有巨人之血、主手也是雙手錘";
         }
         if (off.offHandWeapon()) {
             // 2026-10-28 照 PoE2：副手的權杖配單手武器（或主手空著）就生效，不能兩把權杖；雙手武器只有荒野領主（獸魂符、非傳奇）。

@@ -21,6 +21,9 @@ public final class MarketModule implements Module {
     private final ExileCore plugin;
     private MarketService service;
     private org.bukkit.scheduler.BukkitTask autoCollect;
+    /** 2026-10-31：通貨行情網頁（/market）的資料，每分鐘重做。 */
+    private MarketWeb web;
+    private org.bukkit.scheduler.BukkitTask webTask;
 
     public MarketModule(final ExileCore plugin) {
         this.plugin = plugin;
@@ -52,6 +55,19 @@ public final class MarketModule implements Module {
             }
             current.forgetOffline(); // 2026-10-18：下線的人的提示紀錄、常用通貨清掉
         }, 200L, 200L);
+        web = new MarketWeb(plugin, created);
+        webTask = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            try {
+                web.refresh();
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().warn("通貨行情網頁的資料做不出來：{}", e.toString());
+            }
+        }, 100L, 1200L);
+    }
+
+    /** 通貨行情網頁的資料（模組沒啟用是 null）。 */
+    public MarketWeb web() {
+        return web;
     }
 
     @Override
@@ -68,6 +84,10 @@ public final class MarketModule implements Module {
         if (autoCollect != null) {
             autoCollect.cancel();
             autoCollect = null;
+        }
+        if (webTask != null) {
+            webTask.cancel();
+            webTask = null;
         }
     }
 

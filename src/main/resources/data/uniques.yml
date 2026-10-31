@@ -1461,8 +1461,8 @@ phaseboots:
   rarity: common        # 2026-10-28 照 PoE2 稀有度（Ghostmarch／Threaded Shoes：hideable）；這次之前 weight: 100
   flavour:
     - "「左腳在這裡落地，右腳不知道踩在哪裡。」"
-  version: 3        # 2026-10-26 照 PoE2 0.5 的「Ghostmarch」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
-  legacy: { 1: [0, 2, 3, 4, 0], 2: [0, 2, 3, 4, 0] }
+  version: 4        # 2026-10-26 照 PoE2 0.5 的「Ghostmarch」重做詞綴、數值範圍與基底（舊的對得上的保留數值）；2026-10-31 照站長拿掉「翻滾時穿過敵人」
+  legacy: { 1: [0, 2, 3, 4], 2: [0, 2, 3, 4] }
   mods:
     - text: "增加 15% 移動速度"
       stats:
@@ -1480,9 +1480,6 @@ phaseboots:
       value: [17, 23]
       stats:
         - { stat: resist.chaos, type: FLAT, value: "{value}" }
-    - text: "翻滾時穿過敵人"
-      stats:
-        - { stat: flag.dodge_phase, type: FLAT, value: 1 }
 
 voidgaze_helm:
   name: 虛望之盔

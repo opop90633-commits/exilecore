@@ -49,7 +49,7 @@ final class SupportExtraText {
             case SupportExtraKeys.REMNANT_RANGE -> "這個技能產生的殘骸能從遠 " + n(value) + "% 的地方撿";
             case SupportExtraKeys.REMNANT_EXTRA -> "產生殘骸時 " + n(value) + "% 機率多產生一個";
             case SupportExtraKeys.REMNANT_EFFECT -> "這個技能產生的殘骸效果增加 " + n(value) + "%";
-            case SupportExtraKeys.REMNANT_DELAY -> "這個技能產生的殘骸撿到 " + n(value) + " 秒後才生效";
+            case SupportExtraKeys.REMNANT_DELAY -> "這個技能產生的殘骸產生 " + n(value) + " 秒後才生效";
             case SupportExtraKeys.CHARGED_SHOTS -> "每 3 發一發充能射擊：獲得 " + n(value) + "% 傷害為額外閃電傷害";
             case SupportExtraKeys.ALIGNMENT -> "指示四個方向之一（東南西北）：朝那個方向攻擊時多射 " + n(value) + " 發；對準之後 1 秒指示新的方向";
             case SupportExtraKeys.MINION_PACT_LIFE -> "放的時候附近一隻召喚物失去等同你最大生命 " + n(value) + "% 的生命";

@@ -518,16 +518,11 @@ public final class OriginalSkills implements Listener {
         if (DEVOUR.equals(definition.id())) {
             devourLeap(player, out, preferred);
         }
-        // 2026-10-28 照 PoE2 Earthshatter 的品質：每根還在的地刺更多 x% 擊中傷害（原作每用一次在裂縫盡頭留一根，6 秒、最多 6 根；
-        //   我們的地刺崩裂沒有實體的地刺，照最近 6 秒內用了幾次算）
+        // 2026-10-28 照 PoE2 Earthshatter 的品質：每根還在的地刺更多 x% 擊中傷害；
+        //   2026-10-31：照地上真的還在的地刺算（EarthSpikes）；這次之前沒有實體的地刺，照最近 6 秒內用了幾次算
         final double perSpike = out.qualityFlat(tw.exilecore.stats.GemQualityKeys.MORE_PER_SPIKE);
-        if (perSpike > 0) {
-            s.spikes.removeIf(tick -> now - tick >= SPIKE_TICKS);
-            final int alive = Math.min(SPIKE_LIMIT, s.spikes.size());
-            s.spikes.addLast(now);
-            while (s.spikes.size() > SPIKE_LIMIT) {
-                s.spikes.pollFirst();
-            }
+        if (perSpike > 0 && EarthSpikes.ID.equals(definition.id())) {
+            final int alive = service.executor().earthSpikes().count(player.getUniqueId());
             if (alive > 0) {
                 out = out.withProfile(out.profile().scaled(1 + perSpike / 100.0 * alive, "地刺"));
             }

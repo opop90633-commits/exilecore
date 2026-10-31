@@ -104,6 +104,7 @@ public final class WebModule implements Module, Listener {
     private volatile byte[] atlasPage = new byte[0];
     private volatile byte[] atlasData = "{}".getBytes(StandardCharsets.UTF_8);
     private volatile byte[] economyPage = new byte[0];
+    private volatile byte[] marketPage = new byte[0]; // 2026-10-31：通貨行情
     private volatile byte[] ladderPage = new byte[0];
     private boolean economyEnabled = false;
     /** 已經套用介面資源包的玩家（主執行緒）。 */
@@ -185,6 +186,7 @@ public final class WebModule implements Module, Listener {
         plannerPage = new String(loadResource("web/planner.html"), java.nio.charset.StandardCharsets.UTF_8)
                 .replace("__BUILD__", BUILD).getBytes(java.nio.charset.StandardCharsets.UTF_8);
         economyPage = loadResource("web/economy.html");
+        marketPage = loadResource("web/market.html"); // 2026-10-31
         ladderPage = loadResource("web/ladder.html");
         buildsPage = loadResource("web/builds.html");
         homePage = loadResource("web/home.html");
@@ -307,6 +309,16 @@ public final class WebModule implements Module, Listener {
         server.route("/economy/", path -> economyEnabled ? WebServer.Response.redirect("../economy") : null);
         server.route("/economy/data.json", path -> economyEnabled && plugin.economy() != null ? new WebServer.Response(200, "application/json; charset=utf-8",
                 plugin.economy().reports().webJson(), java.util.Map.of("Cache-Control", "no-cache")) : null);
+        // 2026-10-31 照站長：通貨行情（交易所的比例、掛單、歷史走勢；沒有名字、帳號）
+        server.route("/market", path -> plugin.marketWeb() == null ? null : WebServer.Response.of("text/html; charset=utf-8", marketPage));
+        server.route("/market/", path -> plugin.marketWeb() == null ? null : WebServer.Response.redirect("../market"));
+        server.route("/market/data.json", path -> plugin.marketWeb() == null ? null : new WebServer.Response(200, "application/json; charset=utf-8",
+                plugin.marketWeb().json(), java.util.Map.of("Cache-Control", "no-cache")));
+        server.endpoint("/market/icon.png", request -> {
+            final byte[] png = plugin.marketWeb() == null ? null : plugin.marketWeb().icon(request.param("id"));
+            return png == null ? WebServer.Response.text(404, "沒有這個圖示")
+                    : new WebServer.Response(200, "image/png", png, java.util.Map.of("Cache-Control", "public, max-age=3600"));
+        }, "GET");
         // 排行榜：角色名稱、職業、等級、地圖、死亡（沒有帳號以外的個人資料）
         server.route("/ladder", path -> plugin.ladder() == null ? null : WebServer.Response.of("text/html; charset=utf-8", ladderPage));
         server.route("/ladder/", path -> plugin.ladder() == null ? null : WebServer.Response.redirect("../ladder"));
@@ -550,6 +562,7 @@ public final class WebModule implements Module, Listener {
         root.addProperty("max", plugin.getServer().getMaxPlayers());
         final com.google.gson.JsonObject pages = new com.google.gson.JsonObject();
         pages.addProperty("ladder", plugin.ladder() != null);
+        pages.addProperty("market", plugin.marketWeb() != null); // 2026-10-31
         pages.addProperty("builds", profiles != null);
         pages.addProperty("economy", economyEnabled && plugin.economy() != null);
         root.add("pages", pages);

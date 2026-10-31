@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星骸 通貨行情</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a0d1a'/%3E%3Cpolygon points='32,6 38,25 58,25 42,37 48,57 32,45 16,57 22,37 6,25 26,25' fill='%23f5b942'/%3E%3C/svg%3E">
+<style>
+  /* 2026-10-31 照站長：通貨交易所的行情（像 POE2DB 的交易所頁）：目前比例、24 小時漲跌與成交量、走勢、掛單 */
+  .viz-root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface-1: #fcfcfb; --surface-2: #f2f2ee;
+    --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+    --grid: #e1e0d9; --baseline: #c3c2b7; --border: rgba(11, 11, 11, 0.10);
+    --series-1: #2a78d6; --volume: #9fc3ee; --track: #cde2fb;
+    --good-text: #006300; --bad-text: #d03b3b; --wash: rgba(11, 11, 11, 0.04); --accent: #b07a10;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface-1: #1a1a19; --surface-2: #232321;
+      --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+      --grid: #2c2c2a; --baseline: #383835; --border: rgba(255, 255, 255, 0.10);
+      --series-1: #3987e5; --volume: #23518a; --track: #184f95;
+      --good-text: #0ca30c; --bad-text: #e66767; --wash: rgba(255, 255, 255, 0.06); --accent: #f5b942;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19; --surface-2: #232321;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --grid: #2c2c2a; --baseline: #383835; --border: rgba(255, 255, 255, 0.10);
+    --series-1: #3987e5; --volume: #23518a; --track: #184f95;
+    --good-text: #0ca30c; --bad-text: #e66767; --wash: rgba(255, 255, 255, 0.06); --accent: #f5b942;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: #f9f9f7; }
+  @media (prefers-color-scheme: dark) { body { background: #0d0d0d; } }
+  .viz-root {
+    min-height: 100vh; background: var(--page); color: var(--text-primary);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 14px; line-height: 1.5; padding: 24px 16px 48px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  a { color: inherit; }
+  header h1 { margin: 4px 0 0; font-size: 22px; font-weight: 600; }
+  header .sub { margin: 4px 0 0; color: var(--text-secondary); }
+  .back { color: var(--text-secondary); text-decoration: none; font-size: 13px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0 12px; }
+  .controls input, .controls select, .seg button {
+    font: inherit; color: var(--text-primary); background: var(--surface-1); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 10px;
+  }
+  .controls input { min-width: 180px; flex: 1 1 180px; max-width: 280px; }
+  .controls label { color: var(--text-secondary); font-size: 13px; display: flex; gap: 6px; align-items: center; }
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+  .seg button { cursor: pointer; padding: 4px 10px; font-size: 13px; }
+  .seg button[aria-pressed="true"] { background: var(--text-primary); color: var(--page); border-color: var(--text-primary); }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; }
+  .list { overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 8px 10px; text-align: right; white-space: nowrap; }
+  th { font-weight: 500; color: var(--text-muted); font-size: 12px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+  th:first-child, td:first-child { text-align: left; }
+  th[aria-sort] { color: var(--text-primary); }
+  tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; }
+  tbody tr:hover { background: var(--wash); }
+  tbody tr[aria-selected="true"] { background: var(--wash); box-shadow: inset 3px 0 0 var(--accent); }
+  .name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .name span { overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+  .icon { width: 24px; height: 24px; image-rendering: pixelated; flex: none; }
+  .icon.blank { border-radius: 6px; background: var(--surface-2); display: inline-block; }
+  .num { font-variant-numeric: tabular-nums; }
+  .up { color: var(--good-text); } .down { color: var(--bad-text); } .muted { color: var(--text-muted); }
+  .scroll { max-height: 72vh; overflow: auto; }
+  @media (max-width: 900px) { .scroll { max-height: none; } .hide-sm { display: none; } }
+  .detail { padding: 16px; position: sticky; top: 12px; }
+  @media (max-width: 900px) { .detail { position: static; } }
+  .detail h2 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+  .detail h2 .icon { width: 32px; height: 32px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin: 12px 0; }
+  .stat { background: var(--surface-2); border-radius: 8px; padding: 8px 10px; }
+  .stat b { display: block; font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .stat small { color: var(--text-muted); }
+  .chart-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .chart-head h3 { margin: 0; font-size: 14px; font-weight: 600; }
+  .chart { position: relative; margin-top: 6px; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart .axis text { fill: var(--text-muted); font-size: 11px; }
+  .tip {
+    position: absolute; pointer-events: none; background: var(--surface-1); border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 8px; font-size: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.12); white-space: nowrap; display: none; z-index: 3;
+  }
+  .tip b { font-variant-numeric: tabular-nums; }
+  .book { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+  @media (max-width: 520px) { .book { grid-template-columns: 1fr; } }
+  .book h4 { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
+  .book table td, .book table th { padding: 4px 6px; font-size: 13px; cursor: default; }
+  .book .depth { position: relative; }
+  .book .bar { position: absolute; top: 2px; bottom: 2px; right: 0; background: var(--track); border-radius: 3px; opacity: .55; z-index: 0; }
+  .book td > span { position: relative; z-index: 1; }
+  .empty { color: var(--text-muted); padding: 16px; text-align: center; }
+  .note { color: var(--text-muted); font-size: 12px; margin-top: 12px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+  <header>
+    <a class="back" href="./">← 首頁</a>
+    <h1>通貨行情</h1>
+    <p class="sub" id="sub">讀取中…</p>
+  </header>
+  <div class="controls">
+    <input id="search" type="search" placeholder="搜尋通貨" aria-label="搜尋通貨">
+    <label>價格單位 <select id="base" aria-label="價格單位"></select></label>
+  </div>
+  <div class="seg" id="groups" role="group" aria-label="分類"></div>
+  <div class="layout" style="margin-top:12px">
+    <section class="card list" aria-label="通貨清單">
+      <div class="scroll">
+        <table>
+          <thead><tr>
+            <th data-sort="name">通貨</th>
+            <th data-sort="price">價格</th>
+            <th data-sort="change">24 小時</th>
+            <th data-sort="vol" class="hide-sm">成交量</th>
+            <th class="hide-sm" style="cursor:default">7 天</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <div class="empty" id="noRows" hidden>沒有符合的通貨</div>
+      </div>
+    </section>
+    <section class="card detail" id="detail" aria-live="polite"><div class="empty">點左邊的通貨看走勢與掛單</div></section>
+  </div>
+  <p class="note">價格是「1 個這種通貨 = 幾個單位通貨」。最近 24 小時有成交的照成交量加權平均，沒有的寫參考價（灰字）。
+    走勢用交易所的全部成交紀錄算（換成別種單位時照現在的參考價換算）；掛單只列價格與數量，不列玩家。每分鐘更新。</p>
+</div>
+</div>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var data = null, byId = {}, base = null, group = '全部', query = '', sortKey = 'vol', sortDir = -1, selected = null, range = '30';
+  try { var saved = JSON.parse(localStorage.getItem('market.prefs') || '{}'); if (saved.range) range = saved.range; } catch (e) { /* 沒有也沒關係 */ }
+
+  function save() { try { localStorage.setItem('market.prefs', JSON.stringify({ base: base, range: range })); } catch (e) { /* 私密視窗 */ } }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  /** 這種通貨現在值幾個基準（最近 24 小時有成交用成交價，沒有用參考價）。 */
+  function anchorPrice(c) {
+    if (!c) return null;
+    if (c.id === data.anchor) return 1;
+    var d = data.daily[c.id];
+    if (c.vol24 > 0 && data.hourly[c.id]) {
+      var h = data.hourly[c.id], cut = Date.now() - 86400000, sum = 0, units = 0;
+      for (var i = 0; i < h.length; i++) if (h[i][0] >= cut) { sum += h[i][1] * h[i][2]; units += h[i][2]; }
+      if (units > 0) return sum / units;
+    }
+    if (c.ref) return c.ref;
+    if (d && d.length) return d[d.length - 1][1];
+    return null;
+  }
+  function live(c) { return c && (c.id === data.anchor || c.vol24 > 0); }
+  /** 基準換成畫面上選的單位。 */
+  function inBase(anchorValue) {
+    var b = byId[base], unit = anchorPrice(b);
+    return anchorValue == null || !unit ? null : anchorValue / unit;
+  }
+  function fmt(v) {
+    if (v == null || !isFinite(v)) return '—';
+    var a = Math.abs(v);
+    if (a >= 1000) return v.toLocaleString('zh-TW', { maximumFractionDigits: 0 });
+    if (a >= 100) return v.toLocaleString('zh-TW', { maximumFractionDigits: 1 });
+    if (a >= 1) return v.toLocaleString('zh-TW', { maximumFractionDigits: 2 });
+    if (a >= 0.01) return v.toLocaleString('zh-TW', { maximumFractionDigits: 4 });
+    return v.toPrecision(2);
+  }
+  function fmtInt(v) { return (v || 0).toLocaleString('zh-TW'); }
+  function iconHtml(c, cls) {
+    return c && c.icon ? '<img class="icon ' + (cls || '') + '" alt="" src="market/icon.png?id=' + encodeURIComponent(c.id) + '" loading="lazy">'
+      : '<span class="icon blank ' + (cls || '') + '" aria-hidden="true"></span>';
+  }
+  function baseName() { return byId[base] ? byId[base].name : ''; }
+
+  function load() {
+    fetch('market/data.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (d) {
+      data = d; byId = {};
+      d.currencies.forEach(function (c) { byId[c.id] = c; });
+      var savedBase = null;
+      try { savedBase = JSON.parse(localStorage.getItem('market.prefs') || '{}').base; } catch (e) { /* 沒有 */ }
+      if (!base) base = savedBase && byId[savedBase] ? savedBase : d.anchor;
+      if (!byId[base]) base = d.anchor;
+      $('sub').textContent = '資料時間 ' + (d.stamp || '—') + '　交易所累計 ' + fmtInt(d.trades) + ' 筆成交　' + d.currencies.length + ' 種通貨';
+      buildBase(); buildGroups(); renderRows();
+      if (selected && byId[selected]) renderDetail(); else if (!selected) {
+        var first = d.currencies.filter(function (c) { return c.id !== base; }).sort(function (a, b) { return b.vol24 - a.vol24; })[0];
+        if (first && first.vol24 > 0) { selected = first.id; renderRows(); renderDetail(); }
+      }
+    }).catch(function () { $('sub').textContent = '現在讀不到資料（伺服器沒開或市集模組沒啟用）'; });
+  }
+
+  function buildBase() {
+    var sel = $('base');
+    if (sel.options.length) { sel.value = base; return; }
+    data.currencies.forEach(function (c) { if (c.ref || c.id === data.anchor) { var o = document.createElement('option'); o.value = c.id; o.textContent = c.name; sel.appendChild(o); } });
+    sel.value = base;
+    sel.addEventListener('change', function () { base = sel.value; save(); renderRows(); if (selected) renderDetail(); });
+  }
+  function buildGroups() {
+    var box = $('groups');
+    if (box.childNodes.length) return;
+    var names = ['全部'];
+    data.currencies.forEach(function (c) { if (names.indexOf(c.group) < 0) names.push(c.group); });
+    names.forEach(function (n) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.textContent = n; b.setAttribute('aria-pressed', n === group ? 'true' : 'false');
+      b.addEventListener('click', function () { group = n; box.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); renderRows(); });
+      box.appendChild(b);
+    });
+  }
+
+  function rowValue(c, key) {
+    if (key === 'name') return c.name;
+    if (key === 'price') return inBase(anchorPrice(c)) || 0;
+    if (key === 'change') return c.change24 == null ? -1e9 : c.change24;
+    return c.vol24 || 0;
+  }
+  function renderRows() {
+    var list = data.currencies.filter(function (c) {
+      return (group === '全部' || c.group === group) && (!query || c.name.indexOf(query) >= 0 || c.id.indexOf(query) >= 0);
+    });
+    list.sort(function (a, b) {
+      var x = rowValue(a, sortKey), y = rowValue(b, sortKey);
+      if (sortKey === 'name') return sortDir * String(x).localeCompare(String(y), 'zh-Hant');
+      return sortDir * (x - y) || String(a.name).localeCompare(String(b.name), 'zh-Hant');
+    });
+    document.querySelectorAll('th[data-sort]').forEach(function (th) {
+      if (th.dataset.sort === sortKey) th.setAttribute('aria-sort', sortDir > 0 ? 'ascending' : 'descending'); else th.removeAttribute('aria-sort');
+    });
+    var html = '';
+    list.forEach(function (c) {
+      var p = inBase(anchorPrice(c));
+      var ch = c.change24;
+      html += '<tr data-id="' + esc(c.id) + '"' + (c.id === selected ? ' aria-selected="true"' : '') + '>' +
+        '<td><div class="name">' + iconHtml(c) + '<span>' + esc(c.name) + '</span></div></td>' +
+        '<td class="num' + (live(c) ? '' : ' muted') + '">' + (c.id === base ? '1' : fmt(p)) + '</td>' +
+        '<td class="num ' + (ch == null ? 'muted' : ch > 0 ? 'up' : ch < 0 ? 'down' : '') + '">' + (ch == null ? '—' : (ch > 0 ? '▲ ' : ch < 0 ? '▼ ' : '') + fmt(Math.abs(ch)) + '%') + '</td>' +
+        '<td class="num hide-sm">' + (c.vol24 ? fmtInt(c.vol24) : '<span class="muted">0</span>') + '</td>' +
+        '<td class="hide-sm">' + spark(c) + '</td></tr>';
+    });
+    $('rows').innerHTML = html;
+    $('noRows').hidden = list.length > 0;
+  }
+  /** 7 天的小走勢（每天的成交價；不到 2 天不畫）。 */
+  function spark(c) {
+    var d = data.daily[c.id];
+    if (!d || d.length < 2) return '<span class="muted">—</span>';
+    var cut = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+    var pts = d.filter(function (r) { return r[0] >= cut; });
+    if (pts.length < 2) return '<span class="muted">—</span>';
+    var w = 72, h = 22, lo = Infinity, hi = -Infinity;
+    pts.forEach(function (r) { lo = Math.min(lo, r[1]); hi = Math.max(hi, r[1]); });
+    var span = hi - lo || hi || 1;
+    var path = pts.map(function (r, i) { return (i ? 'L' : 'M') + (i * (w - 4) / (pts.length - 1) + 2).toFixed(1) + ',' + (h - 3 - (r[1] - lo) / span * (h - 6)).toFixed(1); }).join('');
+    var up = pts[pts.length - 1][1] >= pts[0][1];
+    return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true"><path d="' + path +
+      '" fill="none" stroke="' + (up ? 'var(--good-text)' : 'var(--bad-text)') + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  }
+
+  // ---- 右邊：走勢與掛單 ----
+  function series(c) {
+    var out = [];
+    if (range === '7') {
+      (data.hourly[c.id] || []).forEach(function (r) { out.push({ t: r[0], p: inBase(r[1]), v: r[2], label: new Date(r[0]).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit' }) }); });
+      return out;
+    }
+    var rows = data.daily[c.id] || [];
+    var cut = range === 'all' ? '' : new Date(Date.now() - Number(range) * 86400000).toISOString().slice(0, 10);
+    rows.forEach(function (r) { if (r[0] >= cut) out.push({ t: Date.parse(r[0]), p: inBase(r[1]), v: r[2], n: r[3], label: r[0] }); });
+    return out;
+  }
+  function renderDetail() {
+    var c = byId[selected];
+    if (!c) return;
+    var p = inBase(anchorPrice(c));
+    var inverse = p ? 1 / p : null;
+    var box = $('detail');
+    box.innerHTML =
+      '<h2>' + iconHtml(c) + esc(c.name) + '</h2>' +
+      '<div class="stats">' +
+        stat(c.id === base ? '1' : fmt(p), '1 個 = 幾個' + esc(baseName()) + (live(c) ? '' : '（參考價）')) +
+        stat(c.id === base ? '1' : fmt(inverse), '1 個' + esc(baseName()) + ' = 幾個') +
+        stat(c.change24 == null ? '—' : (c.change24 > 0 ? '+' : '') + fmt(c.change24) + '%', '24 小時漲跌') +
+        stat(fmtInt(c.vol24) + '<small> 個 / ' + fmtInt(c.count24) + ' 筆</small>', '24 小時成交') +
+      '</div>' +
+      '<div class="chart-head"><h3>價格走勢（' + esc(baseName()) + '）</h3><div class="seg" id="ranges">' +
+        [['7', '7 天（每小時）'], ['30', '30 天'], ['90', '90 天'], ['all', '全部']].map(function (r) {
+          return '<button type="button" data-range="' + r[0] + '" aria-pressed="' + (range === r[0]) + '">' + r[1] + '</button>';
+        }).join('') + '</div></div>' +
+      '<div class="chart" id="priceChart"></div>' +
+      '<div class="chart-head" style="margin-top:12px"><h3>成交量（個）</h3></div>' +
+      '<div class="chart" id="volChart"></div>' +
+      '<div class="chart-head" style="margin-top:16px"><h3>掛單（對' + esc(baseName()) + '）</h3></div>' +
+      bookHtml(c);
+    box.querySelectorAll('#ranges button').forEach(function (b) {
+      b.addEventListener('click', function () { range = b.dataset.range; save(); renderDetail(); });
+    });
+    drawCharts(c);
+  }
+  function stat(value, label) { return '<div class="stat"><b>' + value + '</b><small>' + label + '</small></div>'; }
+
+  function bookHtml(c) {
+    if (c.id === base) return '<div class="empty">換一個價格單位看這種通貨的掛單</div>';
+    var sells = [], buys = [];
+    (data.orders || []).forEach(function (o) {
+      // o = [付出, 想要, 一批付出, 一批想要, 還有幾批, 幾張單]
+      if (o[0] === c.id && o[1] === base) sells.push({ price: o[3] / o[2], amount: o[2] * o[4], orders: o[5] });
+      else if (o[0] === base && o[1] === c.id) buys.push({ price: o[2] / o[3], amount: o[3] * o[4], orders: o[5] });
+    });
+    sells.sort(function (a, b) { return a.price - b.price; });
+    buys.sort(function (a, b) { return b.price - a.price; });
+    return '<div class="book">' + side('有人在賣（便宜的在上）', sells) + side('有人在收（高價的在上）', buys) + '</div>';
+  }
+  function side(title, rows) {
+    var max = 0;
+    rows.forEach(function (r) { max = Math.max(max, r.amount); });
+    var body = rows.length ? rows.slice(0, 15).map(function (r) {
+      return '<tr><td class="num"><span>' + fmt(r.price) + '</span></td><td class="num depth"><div class="bar" style="width:' + (r.amount / max * 100).toFixed(1) +
+        '%"></div><span>' + fmtInt(r.amount) + '</span></td><td class="num muted"><span>' + r.orders + '</span></td></tr>';
+    }).join('') : '<tr><td colspan="3" class="muted" style="text-align:center;padding:12px">沒有掛單</td></tr>';
+    return '<div><h4>' + title + '</h4><table><thead><tr><th>單價</th><th>數量</th><th>單數</th></tr></thead><tbody>' + body + '</tbody></table></div>';
+  }
+
+  var NS = 'http://www.w3.org/2000/svg';
+  function svgEl(name, attrs, parent) { var e = document.createElementNS(NS, name); for (var k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+  function niceTicks(lo, hi, count) {
+    if (!(hi > lo)) { hi = lo + (Math.abs(lo) || 1); }
+    var step = Math.pow(10, Math.floor(Math.log10((hi - lo) / count))), err = (hi - lo) / count / step;
+    step *= err >= 5 ? 10 : err >= 2 ? 5 : err >= 1.5 ? 2 : 1;
+    var ticks = [];
+    for (var v = Math.floor(lo / step) * step; v <= hi + step * 0.5; v += step) ticks.push(v);
+    return ticks;
+  }
+  function drawCharts(c) {
+    var pts = series(c).filter(function (p) { return p.p != null; });
+    var priceBox = $('priceChart'), volBox = $('volChart');
+    if (pts.length === 0) {
+      priceBox.innerHTML = '<div class="empty">這段時間沒有成交</div>';
+      volBox.innerHTML = '';
+      return;
+    }
+    var W = 640, H = 220, VH = 90, L = 52, R = 12, T = 10, B = 24;
+    var lo = Infinity, hi = -Infinity, vmax = 0;
+    pts.forEach(function (p) { lo = Math.min(lo, p.p); hi = Math.max(hi, p.p); vmax = Math.max(vmax, p.v); });
+    var pad = (hi - lo) * 0.1 || hi * 0.1 || 1;
+    var ticks = niceTicks(Math.max(0, lo - pad), hi + pad, 4);
+    var y0 = ticks[0], y1 = ticks[ticks.length - 1];
+    var t0 = pts[0].t, t1 = pts[pts.length - 1].t;
+    var x = function (t) { return t1 === t0 ? L + (W - L - R) / 2 : L + (t - t0) / (t1 - t0) * (W - L - R); };
+    var y = function (v) { return T + (1 - (v - y0) / (y1 - y0)) * (H - T - B); };
+
+    var svg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': c.name + '的價格走勢' });
+    var axis = svgEl('g', { class: 'axis' }, svg);
+    ticks.forEach(function (v) {
+      svgEl('line', { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: 'var(--grid)', 'stroke-width': 1 }, axis);
+      var t = svgEl('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end' }, axis); t.textContent = fmt(v);
+    });
+    var labelEvery = Math.max(1, Math.ceil(pts.length / 6));
+    pts.forEach(function (p, i) {
+      if (i % labelEvery !== 0 && i !== pts.length - 1) return;
+      var t = svgEl('text', { x: x(p.t), y: H - 6, 'text-anchor': i === 0 ? 'start' : i === pts.length - 1 ? 'end' : 'middle' }, axis);
+      t.textContent = range === '7' ? p.label : p.label.slice(5);
+    });
+    svgEl('line', { x1: L, x2: W - R, y1: H - B, y2: H - B, stroke: 'var(--baseline)', 'stroke-width': 1 }, svg);
+    var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + x(p.t).toFixed(1) + ',' + y(p.p).toFixed(1); }).join('');
+    svgEl('path', { d: d, fill: 'none', stroke: 'var(--series-1)', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
+    if (pts.length <= 40) pts.forEach(function (p) { svgEl('circle', { cx: x(p.t), cy: y(p.p), r: 3, fill: 'var(--series-1)', stroke: 'var(--surface-1)', 'stroke-width': 2 }, svg); });
+    var cross = svgEl('line', { y1: T, y2: H - B, stroke: 'var(--baseline)', 'stroke-width': 1, visibility: 'hidden' }, svg);
+    var dot = svgEl('circle', { r: 5, fill: 'var(--series-1)', stroke: 'var(--surface-1)', 'stroke-width': 2, visibility: 'hidden' }, svg);
+    priceBox.innerHTML = '';
+    priceBox.appendChild(svg);
+
+    // 成交量（另一張圖，不共用 y 軸）
+    var vsvg = svgEl('svg', { viewBox: '0 0 ' + W + ' ' + VH, role: 'img', 'aria-label': c.name + '的成交量' });
+    var vy = function (v) { return 6 + (1 - v / (vmax || 1)) * (VH - 6 - 18); };
+    var bw = Math.max(2, Math.min(18, (W - L - R) / pts.length - 2));
+    var vaxis = svgEl('g', { class: 'axis' }, vsvg);
+    var vt = svgEl('text', { x: L - 6, y: vy(vmax) + 4, 'text-anchor': 'end' }, vaxis); vt.textContent = fmtInt(vmax);
+    svgEl('line', { x1: L, x2: W - R, y1: VH - 18, y2: VH - 18, stroke: 'var(--baseline)', 'stroke-width': 1 }, vsvg);
+    var bars = pts.map(function (p) {
+      var top = vy(p.v), height = Math.max(1, VH - 18 - top);
+      return svgEl('rect', { x: (x(p.t) - bw / 2).toFixed(1), y: top.toFixed(1), width: bw.toFixed(1), height: height.toFixed(1), rx: Math.min(4, bw / 2), fill: 'var(--series-1)', opacity: 0.55 }, vsvg);
+    });
+    volBox.innerHTML = '';
+    volBox.appendChild(vsvg);
+
+    // 滑過去：十字線＋提示（兩張圖一起）
+    var tip = document.createElement('div'); tip.className = 'tip'; priceBox.appendChild(tip);
+    function nearest(clientX, box) {
+      var rect = box.getBoundingClientRect(), sx = (clientX - rect.left) / rect.width * W, best = 0;
+      for (var i = 1; i < pts.length; i++) if (Math.abs(x(pts[i].t) - sx) < Math.abs(x(pts[best].t) - sx)) best = i;
+      return best;
+    }
+    function show(i) {
+      var p = pts[i], px = x(p.t);
+      cross.setAttribute('x1', px); cross.setAttribute('x2', px); cross.setAttribute('visibility', 'visible');
+      dot.setAttribute('cx', px); dot.setAttribute('cy', y(p.p)); dot.setAttribute('visibility', 'visible');
+      bars.forEach(function (b, j) { b.setAttribute('opacity', j === i ? 1 : 0.4); });
+      tip.innerHTML = '<div class="muted">' + esc(p.label) + '</div><div><b>' + fmt(p.p) + '</b> ' + esc(baseName()) + '</div><div>成交 <b>' + fmtInt(p.v) + '</b> 個' + (p.n ? '・' + p.n + ' 筆' : '') + '</div>';
+      tip.style.display = 'block';
+      var rect = priceBox.getBoundingClientRect(), left = px / W * rect.width;
+      tip.style.left = Math.max(0, Math.min(rect.width - tip.offsetWidth, left + 12)) + 'px';
+      tip.style.top = Math.max(0, y(p.p) / H * rect.height - tip.offsetHeight - 10) + 'px';
+    }
+    function hide() { cross.setAttribute('visibility', 'hidden'); dot.setAttribute('visibility', 'hidden'); tip.style.display = 'none'; bars.forEach(function (b) { b.setAttribute('opacity', 0.55); }); }
+    [svg, vsvg].forEach(function (s) {
+      s.addEventListener('pointermove', function (e) { show(nearest(e.clientX, s)); });
+      s.addEventListener('pointerleave', hide);
+    });
+  }
+
+  $('rows').addEventListener('click', function (e) {
+    var tr = e.target.closest('tr[data-id]');
+    if (!tr) return;
+    selected = tr.dataset.id;
+    renderRows(); renderDetail();
+    if (window.innerWidth <= 900) $('detail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  document.querySelectorAll('th[data-sort]').forEach(function (th) {
+    th.addEventListener('click', function () {
+      if (sortKey === th.dataset.sort) sortDir = -sortDir; else { sortKey = th.dataset.sort; sortDir = sortKey === 'name' ? 1 : -1; }
+      renderRows();
+    });
+  });
+  $('search').addEventListener('input', function (e) { query = e.target.value.trim(); renderRows(); });
+  load();
+  setInterval(load, 60000);
+})();
+</script>
+</body>
+</html>

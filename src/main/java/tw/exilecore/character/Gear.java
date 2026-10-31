@@ -435,7 +435,7 @@ public final class Gear {
             if (off.tags().contains("sceptre")) {
                 return sceptreOffHand(main, off, sheet) ? null : sceptreOffHandProblem(main);
             }
-            return "副手不能放武器（權杖除外；巨人之血：兩手各拿一把雙手斧、錘、劍）";
+            return "副手不能放武器（權杖除外；巨人之血：兩手各拿一把雙手錘）";
         }
         return pairProblem(main, off);
     }
@@ -475,7 +475,7 @@ public final class Gear {
             return "不能同時拿兩把權杖";
         }
         if (main != null && main.hasTag(tw.exilecore.stats.Tags.TWO_HAND)) {
-            return "雙手武器不能配權杖（巨人之血：雙手斧、錘、劍可以；荒野領主：持用獸魂符時可以再裝一把非傳奇權杖）";
+            return "雙手武器不能配權杖（巨人之血：雙手錘可以；荒野領主：持用獸魂符時可以再裝一把非傳奇權杖）";
         }
         return "副手的權杖要配單手武器";
     }

@@ -117,6 +117,9 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
      */
     public static Set<String> levelTags(final SkillDefinition definition) {
         final Set<String> tags = new java.util.HashSet<>(definition.tags());
+        // 2026-10-31 照站長：寶石上看得到的標籤（skills.yml 的 tags_add，照 PoE2 寶石標籤）也算：三元詛咒吃火焰、冰冷、閃電的技能等級；
+        //   這次之前只看機制用的標籤，tags_add 只改顯示，「+火焰法術技能等級」吃不到
+        tags.addAll(definition.displayTags());
         if (definition.summon() != null) {
             tags.remove(Tags.MELEE);
             tags.remove(Tags.PROJECTILE);

@@ -382,6 +382,13 @@ public final class MonsterService {
         container.set(rarityKey, PersistentDataType.STRING, data.rarity().name());
         container.set(modsKey, PersistentDataType.STRING, String.join(",", data.mods()));
         container.set(nameKey, PersistentDataType.STRING, data.name());
+        if (data.boss()) {
+            // 2026-10-31 照站長：Boss 不會被擊退（技能、鐘、天賦、原版擊退都推不動；各處的擊退看擊退抗性，Knockbacks.immune）
+            final AttributeInstance knockback = entity.getAttribute(Attribute.KNOCKBACK_RESISTANCE);
+            if (knockback != null) {
+                knockback.setBaseValue(1.0);
+            }
+        }
         if (!container.has(playersKey)) {
             // 刷出來那一刻附近的玩家數（之後不會再變，存檔後也還在）
             int players = 1;
