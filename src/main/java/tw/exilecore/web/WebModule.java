@@ -105,6 +105,8 @@ public final class WebModule implements Module, Listener {
     private volatile byte[] atlasData = "{}".getBytes(StandardCharsets.UTF_8);
     private volatile byte[] economyPage = new byte[0];
     private volatile byte[] marketPage = new byte[0]; // 2026-10-31：通貨行情
+    private volatile byte[] newsPage = new byte[0]; // 2026-11-01：更新公告
+    private NewsStore news;
     private volatile byte[] ladderPage = new byte[0];
     private boolean economyEnabled = false;
     /** 已經套用介面資源包的玩家（主執行緒）。 */
@@ -187,6 +189,16 @@ public final class WebModule implements Module, Listener {
                 .replace("__BUILD__", BUILD).getBytes(java.nio.charset.StandardCharsets.UTF_8);
         economyPage = loadResource("web/economy.html");
         marketPage = loadResource("web/market.html"); // 2026-10-31
+        newsPage = loadResource("web/news.html"); // 2026-11-01
+        try {
+            // 2026-11-01 照站長：更新公告：插件附的（web/news.json）併進伺服器上那份（管理網頁可以改）
+            if (news == null) {
+                news = new NewsStore(plugin.dataFolder().resolve("news.json"));
+            }
+            news.load(new String(loadResource("web/news.json"), java.nio.charset.StandardCharsets.UTF_8));
+        } catch (final Exception e) {
+            plugin.getSLF4JLogger().warn("更新公告讀不到（plugins/ExileCore/news.json）：{}", e.toString());
+        }
         ladderPage = loadResource("web/ladder.html");
         buildsPage = loadResource("web/builds.html");
         homePage = loadResource("web/home.html");
@@ -309,6 +321,11 @@ public final class WebModule implements Module, Listener {
         server.route("/economy/", path -> economyEnabled ? WebServer.Response.redirect("../economy") : null);
         server.route("/economy/data.json", path -> economyEnabled && plugin.economy() != null ? new WebServer.Response(200, "application/json; charset=utf-8",
                 plugin.economy().reports().webJson(), java.util.Map.of("Cache-Control", "no-cache")) : null);
+        // 2026-11-01 照站長：更新公告（管理網頁可以編輯）
+        server.route("/news", path -> news == null ? null : WebServer.Response.of("text/html; charset=utf-8", newsPage));
+        server.route("/news/", path -> news == null ? null : WebServer.Response.redirect("../news"));
+        server.route("/news/data.json", path -> news == null ? null : new WebServer.Response(200, "application/json; charset=utf-8",
+                news.publicJson(), java.util.Map.of("Cache-Control", "no-cache")));
         // 2026-10-31 照站長：通貨行情（交易所的比例、掛單、歷史走勢；沒有名字、帳號）
         server.route("/market", path -> plugin.marketWeb() == null ? null : WebServer.Response.of("text/html; charset=utf-8", marketPage));
         server.route("/market/", path -> plugin.marketWeb() == null ? null : WebServer.Response.redirect("../market"));
@@ -563,6 +580,7 @@ public final class WebModule implements Module, Listener {
         final com.google.gson.JsonObject pages = new com.google.gson.JsonObject();
         pages.addProperty("ladder", plugin.ladder() != null);
         pages.addProperty("market", plugin.marketWeb() != null); // 2026-10-31
+        pages.addProperty("news", news != null); // 2026-11-01
         pages.addProperty("builds", profiles != null);
         pages.addProperty("economy", economyEnabled && plugin.economy() != null);
         root.add("pages", pages);
@@ -733,6 +751,11 @@ public final class WebModule implements Module, Listener {
     }
 
     /** 這個玩家有沒有套用介面資源包（有的話天賦樹畫成星盤）。 */
+    /** 2026-11-01：更新公告（管理網頁編輯用；網頁伺服器沒開過是 null）。 */
+    public NewsStore news() {
+        return news;
+    }
+
     public boolean hasPack(final Player player) {
         return packLoaded.contains(player.getUniqueId());
     }

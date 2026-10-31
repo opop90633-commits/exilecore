@@ -213,6 +213,7 @@
     <button type="button" role="tab" data-tab="transfer" aria-selected="false">帳號轉移</button>
     <button type="button" role="tab" data-tab="dps" aria-selected="false">輸出紀錄</button>
     <button type="button" role="tab" data-tab="retention" aria-selected="false">玩家留存</button>
+    <button type="button" role="tab" data-tab="news" aria-selected="false">更新公告</button>
     <button type="button" role="tab" data-tab="log" aria-selected="false">操作紀錄</button>
   </nav>
 
@@ -473,6 +474,31 @@
         <thead><tr><th>日期</th><th class="num">上線帳號</th><th class="num">新帳號</th><th></th></tr></thead>
         <tbody></tbody>
       </table></div>
+    </div>
+  </section>
+
+  <section id="tab-news" role="tabpanel" hidden>
+    <!-- 2026-11-01 照站長：網頁的更新公告（/news）：新增、修改、刪除。插件附的公告改版時自動併進來；改過的不會被蓋掉、刪掉的不會再加回來 -->
+    <p class="note">公告在 <a href="news" target="_blank" rel="noopener">/news</a>。每次插件更新會自動加進新的改版內容；你改過的那篇之後不會被蓋掉，刪掉的也不會再加回來。
+      內容用 Discord 的寫法：<code>## 小標</code>、<code>- 項目</code>、<code>**粗體**</code>、<code>-# 小字</code>。</p>
+    <div class="card">
+      <div class="filters"><button type="button" id="news-new" class="primary">新增公告</button><button type="button" id="news-refresh">重新整理</button></div>
+      <div class="scroll"><table id="news-table">
+        <thead><tr><th>日期</th><th>標題</th><th>來源</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="empty" id="news-empty" hidden>還沒有公告。</p>
+    </div>
+    <div class="card" id="news-editor" hidden style="margin-top:12px">
+      <h3 id="news-editor-title" style="margin:0">新增公告</h3>
+      <label class="field">日期<input type="date" id="news-date"></label>
+      <label class="field">標題<input type="text" id="news-title" maxlength="80"></label>
+      <label class="field">內容<textarea id="news-body" style="min-height:320px;font-family:ui-monospace,Consolas,monospace;font-size:13px"></textarea></label>
+      <div class="filters" style="margin-top:12px">
+        <button type="button" class="primary" id="news-save">儲存</button>
+        <button type="button" id="news-cancel">取消</button>
+        <button type="button" class="danger" id="news-delete">刪除這篇</button>
+      </div>
     </div>
   </section>
 
@@ -1708,6 +1734,43 @@
     }).catch(fail);
   }
 
+  // ---- 更新公告（2026-11-01） ----
+  var newsPosts = [], newsEditing = null;
+  function loadNews() {
+    return api('GET', 'admin/api/news').then(function (json) {
+      newsPosts = json.posts || [];
+      var body = clear($('news-table').querySelector('tbody'));
+      newsPosts.forEach(function (post) {
+        var edit = h('button', { type: 'button', cls: 'small', text: '編輯' });
+        edit.addEventListener('click', function () { openNews(post); });
+        body.appendChild(h('tr', null, h('td', { cls: 'time', text: post.date }), h('td', { text: post.title }),
+          h('td', { text: post.bundled ? (post.edited ? '改版附的（改過）' : '改版附的') : '管理員寫的' }), h('td', null, edit)));
+      });
+      $('news-empty').hidden = newsPosts.length > 0;
+    }).catch(fail);
+  }
+  function openNews(post) {
+    newsEditing = post ? post.id : null;
+    $('news-editor-title').textContent = post ? '編輯公告' : '新增公告';
+    $('news-date').value = post ? post.date : new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    $('news-title').value = post ? post.title : '';
+    $('news-body').value = post ? post.body : '## 新內容\n- ';
+    $('news-delete').hidden = !post;
+    $('news-editor').hidden = false;
+    $('news-title').focus();
+  }
+  function saveNews() {
+    $('news-save').disabled = true;
+    api('POST', 'admin/api/news/save', { id: newsEditing, date: $('news-date').value, title: $('news-title').value, body: $('news-body').value })
+      .then(function (json) { toast(json.change); $('news-editor').hidden = true; return loadNews(); })
+      .catch(fail).then(function () { $('news-save').disabled = false; });
+  }
+  function deleteNews() {
+    if (!newsEditing || !window.confirm('確定刪掉這篇公告？（改版附的刪掉後不會再自動加回來）')) { return; }
+    api('POST', 'admin/api/news/delete', { id: newsEditing })
+      .then(function (json) { toast(json.change); $('news-editor').hidden = true; return loadNews(); }).catch(fail);
+  }
+
   // ---- 輸出紀錄（2026-10） ----
   var dpsData = null;
   function wan(v) {
@@ -1977,7 +2040,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
       b.setAttribute('aria-selected', b.getAttribute('data-tab') === tab ? 'true' : 'false');
     });
-    ['give', 'records', 'orders', 'settings', 'players', 'guilds', 'trace', 'transfer', 'dps', 'retention', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
+    ['give', 'records', 'orders', 'settings', 'players', 'guilds', 'trace', 'transfer', 'dps', 'retention', 'news', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
     if (tab === 'transfer') { loadTransfers(); }
     if (tab === 'dps' && !dpsData) { loadDps(); } // 2026-10-17：切回來不重抓（要新的按「重新整理」）
     if (tab === 'retention' && !retentionData) { loadRetention(); } // 2026-10-19
@@ -1985,6 +2048,7 @@
     if (tab === 'orders') { loadOrders(); }
     if (tab === 'guilds') { loadGuilds(); }
     if (tab === 'log') { loadLog(); }
+    if (tab === 'news') { loadNews(); }
     if (tab === 'players' || tab === 'settings') { load(true, 'safe'); }
   }
 
@@ -2019,6 +2083,11 @@
     });
   });
   $('log-refresh').addEventListener('click', loadLog);
+  $('news-refresh').addEventListener('click', loadNews);
+  $('news-new').addEventListener('click', function () { openNews(null); });
+  $('news-save').addEventListener('click', saveNews);
+  $('news-cancel').addEventListener('click', function () { $('news-editor').hidden = true; });
+  $('news-delete').addEventListener('click', deleteNews);
   $('guild-refresh').addEventListener('click', function () { loadGuilds().then(function () { if (guildOpenId !== null) { openGuild(guildOpenId); } }); });
   $('trace-item-go').addEventListener('click', function () {
     var id = $('trace-item').value.trim();

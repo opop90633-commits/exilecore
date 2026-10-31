@@ -146,6 +146,10 @@ final class AdminWeb {
         server.endpoint("/admin/api/setting", request -> api(request, true, session -> setting(session, body(request))), "POST");
         server.endpoint("/admin/api/maintenance", request -> api(request, true, session -> maintenance(session, body(request))), "POST");
         server.endpoint("/admin/api/banner", request -> api(request, true, session -> banner(session, body(request))), "POST");
+        // 2026-11-01 照站長：網頁的更新公告（/news）：新增、修改、刪除
+        server.endpoint("/admin/api/news", request -> api(request, false, session -> newsList()), "GET");
+        server.endpoint("/admin/api/news/save", request -> api(request, true, session -> newsSave(session, body(request))), "POST");
+        server.endpoint("/admin/api/news/delete", request -> api(request, true, session -> newsDelete(session, body(request))), "POST");
         server.endpoint("/admin/api/broadcast", request -> api(request, true, session -> broadcast(session, body(request))), "POST");
         server.endpoint("/admin/api/restart", request -> api(request, true, session -> restart(session, body(request))), "POST");
         // 2026-10：公會管理、玩家處置（禁言、踢出）、物品追查
@@ -1153,6 +1157,50 @@ final class AdminWeb {
         final String change = text.isEmpty() ? "收起常駐公告" : "常駐公告：" + text;
         plugin.getSLF4JLogger().info("[管理網頁] {} {}", session.admin(), change);
         record(session.admin(), "常駐公告", change);
+        return Map.of("ok", true, "change", change);
+    }
+
+    private tw.exilecore.web.NewsStore news() {
+        final tw.exilecore.web.NewsStore news = plugin.web() == null ? null : plugin.web().news();
+        if (news == null) {
+            throw new IllegalArgumentException("網頁伺服器沒有開，沒有更新公告");
+        }
+        return news;
+    }
+
+    private Object newsList() {
+        final List<Map<String, Object>> list = new ArrayList<>();
+        for (final tw.exilecore.web.NewsStore.Post post : news().posts()) {
+            final Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", post.id());
+            row.put("date", post.date());
+            row.put("title", post.title());
+            row.put("body", post.body());
+            row.put("bundled", post.bundled());
+            row.put("edited", post.edited());
+            list.add(row);
+        }
+        return Map.of("posts", list);
+    }
+
+    private Object newsSave(final AdminAuth.Session session, final JsonObject body) throws Exception {
+        final String id = optionalString(body, "id");
+        final tw.exilecore.web.NewsStore.Post post = news().save(id, optionalString(body, "date"), optionalString(body, "title"),
+                optionalString(body, "body"));
+        final String change = (id == null || id.isBlank() ? "新增更新公告：" : "修改更新公告：") + post.title();
+        plugin.getSLF4JLogger().info("[管理網頁] {} {}", session.admin(), change);
+        record(session.admin(), "更新公告", change);
+        return Map.of("ok", true, "id", post.id(), "change", change);
+    }
+
+    private Object newsDelete(final AdminAuth.Session session, final JsonObject body) throws Exception {
+        final String id = optionalString(body, "id");
+        if (!news().delete(id)) {
+            throw new IllegalArgumentException("找不到這篇公告（可能已經刪掉了）");
+        }
+        final String change = "刪除更新公告：" + id;
+        plugin.getSLF4JLogger().info("[管理網頁] {} {}", session.admin(), change);
+        record(session.admin(), "更新公告", change);
         return Map.of("ok", true, "change", change);
     }
 

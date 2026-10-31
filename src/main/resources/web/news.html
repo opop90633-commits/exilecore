@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>星骸 更新公告</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230a0d1a'/%3E%3Cpolygon points='32,6 38,25 58,25 42,37 48,57 32,45 16,57 22,37 6,25 26,25' fill='%23f5b942'/%3E%3C/svg%3E">
+<style>
+  /* 2026-11-01 照站長：網頁的更新公告（管理網頁可以編輯；插件附的改版內容自動併進來） */
+  .viz-root {
+    color-scheme: light;
+    --page: #f9f9f7; --surface-1: #fcfcfb; --surface-2: #f2f2ee;
+    --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #898781;
+    --border: rgba(11, 11, 11, 0.10); --accent: #b07a10; --wash: rgba(11, 11, 11, 0.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface-1: #1a1a19; --surface-2: #232321;
+      --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+      --border: rgba(255, 255, 255, 0.10); --accent: #f5b942; --wash: rgba(255, 255, 255, 0.06);
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface-1: #1a1a19; --surface-2: #232321;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #898781;
+    --border: rgba(255, 255, 255, 0.10); --accent: #f5b942; --wash: rgba(255, 255, 255, 0.06);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: #f9f9f7; }
+  @media (prefers-color-scheme: dark) { body { background: #0d0d0d; } }
+  .viz-root {
+    min-height: 100vh; background: var(--page); color: var(--text-primary);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px; line-height: 1.65; padding: 24px 16px 48px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  .back { color: var(--text-secondary); text-decoration: none; font-size: 13px; }
+  header h1 { margin: 4px 0 0; font-size: 22px; font-weight: 600; }
+  header .sub { margin: 4px 0 20px; color: var(--text-secondary); }
+  .post { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px; overflow: hidden; }
+  .post summary { list-style: none; cursor: pointer; padding: 14px 18px; display: flex; align-items: baseline; gap: 12px; }
+  .post summary::-webkit-details-marker { display: none; }
+  .post summary::after { content: '展開'; margin-left: auto; font-size: 12px; color: var(--text-muted); }
+  .post[open] summary::after { content: '收起'; }
+  .post summary:hover { background: var(--wash); }
+  .post h2 { margin: 0; font-size: 18px; font-weight: 600; }
+  .date { color: var(--text-muted); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .body { padding: 0 18px 16px; border-top: 1px solid var(--border); }
+  .body h3 { font-size: 16px; margin: 18px 0 6px; }
+  .body h4 { font-size: 15px; margin: 14px 0 4px; }
+  .body ul { margin: 4px 0 8px; padding-left: 22px; }
+  .body li { margin: 3px 0; }
+  .body p { margin: 8px 0; }
+  .body .small { color: var(--text-muted); font-size: 13px; }
+  .body b { font-weight: 600; }
+  .body code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  .empty { color: var(--text-muted); text-align: center; padding: 32px; }
+  .newest { display: inline-block; font-size: 11px; color: var(--page); background: var(--accent); border-radius: 999px; padding: 1px 8px; }
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+  <header>
+    <a class="back" href="./">← 首頁</a>
+    <h1>更新公告</h1>
+    <p class="sub" id="sub">讀取中…</p>
+  </header>
+  <main id="posts" aria-live="polite"></main>
+</div>
+</div>
+<script>
+(function () {
+  'use strict';
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  /** 行內：**粗體**、`程式碼`（先跳脫再換）。 */
+  function inline(text) {
+    return esc(text).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>');
+  }
+  /** Discord 風格的文字：# 大標、## 小標、### 再小、- 項目、-# 小字，其他是段落。 */
+  function render(body) {
+    var out = [], list = false;
+    function close() { if (list) { out.push('</ul>'); list = false; } }
+    String(body || '').split('\n').forEach(function (raw) {
+      var line = raw.replace(/\s+$/, '');
+      if (/^-#\s/.test(line)) { close(); out.push('<p class="small">' + inline(line.replace(/^-#\s+/, '')) + '</p>'); return; }
+      if (/^\s*[-*]\s/.test(line)) { if (!list) { out.push('<ul>'); list = true; } out.push('<li>' + inline(line.replace(/^\s*[-*]\s+/, '')) + '</li>'); return; }
+      close();
+      if (/^###\s/.test(line)) out.push('<h4>' + inline(line.replace(/^###\s+/, '')) + '</h4>');
+      else if (/^##?\s/.test(line)) out.push('<h3>' + inline(line.replace(/^##?\s+/, '')) + '</h3>');
+      else if (line.trim()) out.push('<p>' + inline(line) + '</p>');
+    });
+    close();
+    return out.join('');
+  }
+  fetch('news/data.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (data) {
+    var posts = data.posts || [];
+    document.getElementById('sub').textContent = posts.length ? '共 ' + posts.length + ' 篇，最新的在最上面' : '還沒有公告';
+    var box = document.getElementById('posts');
+    if (!posts.length) { box.innerHTML = '<div class="empty">還沒有更新公告</div>'; return; }
+    var wanted = location.hash ? decodeURIComponent(location.hash.slice(1)) : null;
+    box.innerHTML = posts.map(function (p, i) {
+      var open = wanted ? wanted === p.id : i === 0;
+      return '<details class="post" id="' + esc(p.id) + '"' + (open ? ' open' : '') + '><summary><span class="date">' + esc(p.date) + '</span><h2>' +
+        esc(p.title) + '</h2>' + (i === 0 ? '<span class="newest">最新</span>' : '') + '</summary><div class="body">' + render(p.body) + '</div></details>';
+    }).join('');
+    if (wanted && document.getElementById(wanted)) document.getElementById(wanted).scrollIntoView();
+  }).catch(function () { document.getElementById('sub').textContent = '現在讀不到公告'; });
+})();
+</script>
+</body>
+</html>
