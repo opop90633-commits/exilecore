@@ -135,7 +135,7 @@ public final class TrashMenu extends Menu {
             tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>這是空的藥劑欄（提示），不是東西"));
             return;
         }
-        if (plugin.items().read(stack).map(ItemData::locked).orElse(false)) {
+        if (tw.exilecore.item.Locks.locked(plugin, stack)) { // 2026-10-31：寶石也能鎖
             tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffd27f>🔒 這件鎖定了，不會丟進垃圾桶（/lock 解除）"));
             return;
         }

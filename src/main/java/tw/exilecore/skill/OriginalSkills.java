@@ -219,6 +219,8 @@ public final class OriginalSkills implements Listener {
         int staffCharges;
         long mantraUntil;
         int mantraLevel;
+        /** 2026-10-31：這次崩滅心咒的效果比例（1 ～ Primed.MORE，照用掉的連擊）。 */
+        double mantraScale = 1.0;
         /** 雷流場的電球、燼種（2026-10-28 照 PoE2「上限 1 顆」吃 +x 上限（過剩），改成清單、最舊的在前面；這次之前各一顆的欄位）。 */
         final List<Orb> orbs = new java.util.ArrayList<>();
         final List<Seed> seeds = new java.util.ArrayList<>();
@@ -393,6 +395,9 @@ public final class OriginalSkills implements Listener {
         return signature != null && SIGNATURES.contains(signature);
     }
 
+    /** 2026-10-31：崩滅心咒沒有連擊時的效果（基礎數值；連擊滿了更多 {@link Primed#MORE}，中間照比例）。 */
+    static final double MANTRA_MIN_SCALE = 1.0;
+
     /** 放之前的檢查（花魔力之前）：不能放回傳原因。 */
     String problem(final Player player, final SkillBuild build, final LivingEntity preferred) {
         final String signature = service.config().signature(build.definition().id());
@@ -400,11 +405,7 @@ public final class OriginalSkills implements Listener {
             return plugin.combat() == null || plugin.combat().charges() == null || plugin.combat().charges().count(player, "power") <= 0
                     ? "雷縛長棍要用掉銳星（身上沒有銳星）" : null;
         }
-        if ("mantra".equals(signature)) {
-            final int combo = service.resources().combo(player);
-            final int need = mantraCombo(build);
-            return combo < need ? "崩滅心咒要 " + need + " 點連擊（現在 " + combo + "）" : null;
-        }
+        // 2026-10-31 照站長（A＋B 統整成只要 A）：崩滅心咒不夠連擊也能放（效果照連擊的比例，最少一半）；原作要 8 點連擊才能放
         if ("living_bomb".equals(signature)) {
             return seedTarget(player, build, preferred) == null ? "準心沒有指著敵人" : null;
         }
@@ -425,9 +426,14 @@ public final class OriginalSkills implements Listener {
         switch (signature) {
             case "charged_staff" -> chargedStaff(player, s, build, now);
             case "mantra" -> {
-                service.resources().spendCombo(player, mantraCombo(build));
+                final int need = Math.max(1, mantraCombo(build));
+                final int have = Math.min(need, service.resources().combo(player));
+                if (have > 0) {
+                    service.resources().spendCombo(player, have);
+                }
                 s.mantraUntil = now + Math.round(MANTRA_TICKS * build.durationScale());
                 s.mantraLevel = build.level();
+                s.mantraScale = MANTRA_MIN_SCALE + (Primed.MORE - MANTRA_MIN_SCALE) * have / need; // 2026-10-31：沒有連擊是基礎、滿 8 點更多 50%，中間照比例
                 service.buffs().apply(player, MANTRA, build.definition().name(), (int) (s.mantraUntil - now),
                         List.of(Modifier.flat(MANTRA_MARK, 1, build.definition().name())));
                 Fx.spawn(player.getWorld(), Particle.WITCH, player.getLocation().add(0, 1, 0), 30, 0.5, 0.8, 0.5, 0.05);
@@ -483,7 +489,7 @@ public final class OriginalSkills implements Listener {
         }
         final PlayerState state = plugin.players().get(player);
         if (definition.isAttack() && s.mantraUntil > now && !MANTRA.equals(definition.id()) && state.weaponTags().contains("quarterstaff")) {
-            final double chaos = levelValue(MANTRA, MANTRA_CHAOS, s.mantraLevel, 50);
+            final double chaos = levelValue(MANTRA, MANTRA_CHAOS, s.mantraLevel, 50) * s.mantraScale;
             out = out.withProfile(out.profile().withLocal(List.of(Modifier.flat(StatKeys.damageExtra(DamageType.CHAOS), chaos, "崩滅心咒"),
                     Modifier.flat(MANTRA_MARK, 1, "崩滅心咒"))));
             s.mantraUntil = 0;

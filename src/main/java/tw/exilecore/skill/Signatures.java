@@ -434,7 +434,7 @@ final class Signatures {
             final Lance lance = it.next();
             if (lance.at().getWorld() == at.getWorld() && lance.at().distance(at) <= LANCE_DETONATE_RANGE) {
                 it.remove();
-                detonate(player, lance);
+                detonate(player, lance, true); // 2026-10-31：被其他技能引爆更多 50%
                 count++;
             }
         }
@@ -576,6 +576,16 @@ final class Signatures {
 
     private void lodge(final Player player, final SkillBuild build, final Location at, final long now, final boolean own) {
         final Deque<Lance> mine = lances.computeIfAbsent(player.getUniqueId(), uuid -> new ArrayDeque<>());
+        // 2026-10-31 照站長（A＋B 統整成只要 A）：新的矛落地時，引爆附近已經插著的矛（原作只有其他技能能引爆）
+        if (own) {
+            for (final Iterator<Lance> it = mine.iterator(); it.hasNext(); ) {
+                final Lance old = it.next();
+                if (old.at().getWorld() == at.getWorld() && old.at().distance(at) <= LANCE_DETONATE_RANGE) {
+                    it.remove();
+                    detonate(player, old, false);
+                }
+            }
+        }
         // 2026-10-28 照 PoE2 Storm Lance 的品質：超載的矛上限 +(0—1)（無條件捨去）
         // 2026-10-28 照 PoE2：「上限 3 支插著的矛」吃 +x 上限（過剩）
         while (mine.size() >= LANCE_MAX + OriginalSkills.qualityInt(build.qualityFlat(tw.exilecore.stats.GemQualityKeys.OVERCHARGED_LIMIT))
@@ -583,7 +593,7 @@ final class Signatures {
             // 2026-10-31 照站長：超過上限時最舊的那支引爆（原作是直接消失：Limit：the oldest effect will disappear）
             final Lance oldest = mine.pollFirst();
             if (oldest != null && oldest.at().getWorld() == player.getWorld()) {
-                detonate(player, oldest);
+                detonate(player, oldest, false);
             }
         }
         final Integer chargedBenefit = own ? chargedLance.remove(player.getUniqueId()) : null;
@@ -596,11 +606,13 @@ final class Signatures {
                 new long[] {now + (charged ? 4 : 10) + zap}, zap));
     }
 
-    private void detonate(final Player player, final Lance lance) {
+    /** enhanced：被其他技能引爆（原作的條件）——更多 {@link Primed#MORE}；自己引爆、時間到、擠掉的是基礎數值。 */
+    private void detonate(final Player player, final Lance lance, final boolean enhanced) {
         if (lance == null) {
             return;
         }
-        final SkillBuild sub = subBuild(player, "storm_lance_burst", lance.build(), share("storm_lance_burst", lance.build(), LANCE_BURST_SHARE));
+        final SkillBuild raw = subBuild(player, "storm_lance_burst", lance.build(), share("storm_lance_burst", lance.build(), LANCE_BURST_SHARE));
+        final SkillBuild sub = raw != null && enhanced ? raw.withProfile(raw.profile().scaled(Primed.MORE, "被其他技能引爆")) : raw;
         if (sub != null) {
             // 2026-10-31 照站長：引爆的 3 格吃範圍加成（半徑 × 範圍倍率）
             // 2026-10-26 照 PoE2：不是一圈爆炸，是往 3 格內的敵人射 16 道閃電（每道隨機挑一個敵人；這次之前是一圈 nova）
@@ -738,7 +750,7 @@ final class Signatures {
                 it.remove();
                 // 2026-10-31 照 PoE2 Storm Lance：只有消耗怒星的那一支時間到自動引爆；一般的時間到就消失。這次之前每一支時間到都炸開
                 if (lance.zapEvery() < LANCE_ZAP) {
-                    detonate(player, lance);
+                    detonate(player, lance, false);
                 }
                 continue;
             }

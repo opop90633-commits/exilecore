@@ -169,6 +169,7 @@ public final class CommandHelp {
                     e("/ec backup list", "列出備份"),
                     e("/ec backup verify [檔名]", "檢查備份是不是好的（不動現在的資料）"),
                     e("/ec backup restore <檔名>", "【主控台】還原資料庫（踢所有人，還原完要重開）"),
+                    e("/ec backup character <檔名> <角色名或#編號>", "還原單一隻角色（先預覽、再用確認碼；只踢那個帳號，不用重開）"),
                     e("/ec wipe", "【主控台】清檔預覽：清角色與進度，留帳號與贊助；給確認碼"),
                     e("/ec wipe all", "【主控台】全部清空預覽（連帳號、贊助都清；開服前清測試資料）"),
                     e("/ec wipe confirm <確認碼>", "【主控台】真的清檔：先自動備份，清完要重開"),

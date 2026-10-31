@@ -55,12 +55,15 @@ public final class GemService {
     private final ExileCore plugin;
     private final SkillService skills;
     private final NamespacedKey key;
+    /** 2026-10-31：玩家鎖定的技能、輔助寶石（記在物品上；拆解台、市集、交易、垃圾桶、公會倉庫都不收）。 */
+    private final NamespacedKey lockKey;
     private final boolean resourcePack;
 
     GemService(final ExileCore plugin, final SkillService skills) {
         this.plugin = plugin;
         this.skills = skills;
         this.key = new NamespacedKey(plugin, "gem");
+        this.lockKey = new NamespacedKey(plugin, "gem_locked");
         this.resourcePack = plugin.getConfig().getBoolean("resource-pack.enabled", false);
     }
 
@@ -79,6 +82,31 @@ public final class GemService {
 
     public boolean isGem(final ItemStack stack) {
         return read(stack).isPresent();
+    }
+
+    /** 2026-10-31：能不能上鎖（技能寶石、輔助寶石；未切割寶石算通貨，不鎖）。 */
+    public boolean lockable(final ItemStack stack) {
+        return read(stack).map(data -> data.kind() == GemData.Kind.SKILL || data.kind() == GemData.Kind.SUPPORT).orElse(false);
+    }
+
+    /** 2026-10-31：這顆寶石鎖定了沒。 */
+    public boolean locked(final ItemStack stack) {
+        return stack != null && !stack.isEmpty() && stack.getPersistentDataContainer().has(lockKey);
+    }
+
+    /** 2026-10-31：鎖定或解除鎖定（原地重畫說明與小鎖頭）。不是能鎖的寶石回傳 false。 */
+    public boolean setLocked(final ItemStack stack, final boolean locked) {
+        final Optional<GemData> data = read(stack);
+        if (data.isEmpty() || !lockable(stack)) {
+            return false;
+        }
+        final ItemStack fresh = create(data.get(), stack.getAmount(), locked);
+        stack.setItemMeta(fresh.getItemMeta());
+        final io.papermc.paper.datacomponent.item.CustomModelData model = fresh.getData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA);
+        if (model != null) {
+            stack.setData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA, model);
+        }
+        return true;
     }
 
     /**
@@ -103,7 +131,7 @@ public final class GemService {
         if (data.isEmpty() || !stack.hasItemMeta()) {
             return false;
         }
-        final ItemStack fresh = create(data.get(), stack.getAmount());
+        final ItemStack fresh = create(data.get(), stack.getAmount(), locked(stack)); // 2026-10-31：鎖定的重畫後還是鎖著
         // 名稱或描述的文字改過才重畫（技能寶石的描述裡有掛著的輔助名稱，輔助改名時技能寶石的名字沒變）
         // 2026-10：未切割寶石有了專屬貼圖（每一級一張）：舊的沒有貼圖標記的也要重畫
         final boolean sameModel = java.util.Objects.equals(fresh.getData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA),
@@ -393,10 +421,21 @@ public final class GemService {
 
     /** 做出寶石物品（技能寶石一次一顆）。 */
     public ItemStack create(final GemData data, final int amount) {
+        return create(data, amount, false);
+    }
+
+    /** 做出寶石物品；locked = 2026-10-31 鎖定的（只有技能、輔助寶石）。 */
+    public ItemStack create(final GemData data, final int amount, final boolean lockedGem) {
+        final boolean locked = lockedGem && (data.kind() == GemData.Kind.SKILL || data.kind() == GemData.Kind.SUPPORT);
         final ItemStack stack = ItemStack.of(material(data.kind()), Math.max(1, Math.min(data.maxStack(), amount)));
         stack.editMeta(meta -> {
             meta.displayName(ItemRenderer.line(name(data)));
-            meta.lore(tw.exilecore.core.text.TextWrap.lines(lore(data))); // 2026-10-26：長的說明自動換行（這次之前一行到底）
+            final List<String> lines = new ArrayList<>(lore(data));
+            if (locked) {
+                lines.add("");
+                lines.add("<#ffd27f>🔒 已鎖定：拆解台、市集、交易、垃圾桶都不收（/lock 解除）");
+            }
+            meta.lore(tw.exilecore.core.text.TextWrap.lines(lines)); // 2026-10-26：長的說明自動換行（這次之前一行到底）
             meta.setMaxStackSize(data.maxStack());
             meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_ENCHANTS);
             meta.setEnchantmentGlintOverride(data.kind() == GemData.Kind.SKILL || data.kind() == GemData.Kind.SUPPORT);
@@ -413,6 +452,9 @@ public final class GemService {
                 }
             }
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, data.encode());
+            if (locked) {
+                meta.getPersistentDataContainer().set(lockKey, PersistentDataType.BYTE, (byte) 1);
+            }
             final CurrencyType currency = currencyOf(data);
             if (currency != null) {
                 // 未切割寶石算通貨（2026-10）：掛上通貨的標記，通貨袋、倉庫的通貨頁、通貨交易所都認得
@@ -430,7 +472,7 @@ public final class GemService {
             final String art = skillArt != null ? skillArt : data.kind() == GemData.Kind.SKILL ? "gem_skill" : "gem_support";
             stack.setData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA,
                     io.papermc.paper.datacomponent.item.CustomModelData.customModelData()
-                            .addString(tw.exilecore.currency.CurrencyArt.modelKey(art)).build());
+                            .addString(tw.exilecore.currency.CurrencyArt.modelKey(art)).addFlag(locked).build()); // flag 0：格子裡的小鎖頭（2026-10-31）
         }
         ItemRenderer.nativeText(stack); // 2026-10 效能：說明存成原版的文字元件
         return stack;

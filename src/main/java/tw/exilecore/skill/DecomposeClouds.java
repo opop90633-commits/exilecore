@@ -167,10 +167,14 @@ final class DecomposeClouds implements SkillTargets.Strikeable {
             return;
         }
         final List<Cloud> boom = new ArrayList<>();
+        final List<Cloud> faded = new ArrayList<>();
         for (final Iterator<Cloud> it = mine.iterator(); it.hasNext(); ) {
             final Cloud cloud = it.next();
             if (now >= cloud.until || !cloud.at.getWorld().equals(player.getWorld())) {
                 it.remove();
+                if (now >= cloud.until && cloud.at.getWorld().equals(player.getWorld())) {
+                    faded.add(cloud); // 2026-10-31 照站長（A＋B 統整成只要 A）：時間到自己炸開（原作要被點燃或引爆）
+                }
                 continue;
             }
             final long age = now - cloud.born;
@@ -204,7 +208,10 @@ final class DecomposeClouds implements SkillTargets.Strikeable {
             }
         }
         for (final Cloud cloud : boom) {
-            explode(player, cloud, now);
+            explode(player, cloud, now, true); // 被點燃：更多 50%
+        }
+        for (final Cloud cloud : faded) {
+            explode(player, cloud, now, false); // 時間到：基礎數值
         }
         if (mine.isEmpty()) {
             clouds.remove(player.getUniqueId());
@@ -231,7 +238,7 @@ final class DecomposeClouds implements SkillTargets.Strikeable {
             }
         }
         for (final Cloud cloud : boom) {
-            explode(owner, cloud, now);
+            explode(owner, cloud, now, true); // 被引爆類技能引爆：更多 50%
         }
     }
 
@@ -250,9 +257,10 @@ final class DecomposeClouds implements SkillTargets.Strikeable {
     }
 
     /** 炸開：照目前的半徑造成這個技能的火焰傷害，毒雲消失。 */
-    private void explode(final Player owner, final Cloud cloud, final long now) {
+    /** enhanced：滿足原作的條件（被點燃、被引爆類技能打到）——更多 {@link Primed#MORE}；時間到自己炸是基礎數值。 */
+    private void explode(final Player owner, final Cloud cloud, final long now, final boolean enhanced) {
         final double radius = cloud.radius(now);
-        final SkillProfile profile = cloud.build.profile();
+        final SkillProfile profile = enhanced ? cloud.build.profile().scaled(Primed.MORE, "被點燃或引爆") : cloud.build.profile();
         if (damage != null && owner.isOnline()) {
             for (final LivingEntity target : targets.around(cloud.at, radius, owner)) {
                 if (cloud.carried != null && plugin.ailments() != null) {

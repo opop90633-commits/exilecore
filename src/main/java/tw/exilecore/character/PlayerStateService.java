@@ -429,6 +429,10 @@ public final class PlayerStateService {
         }
         sheet.addAll(buffModifiers);
         extra.addAll(buffModifiers);
+        // 2026-10-31 修正：巨人之形放大的天賦小點屬性也算進裝備需求（最後一輪 ascendancyEquipment 才加，這裡只拿來比需求）
+        if (tree != null && StatKeys.flag(sheet, StatKeys.FLAG_HULKING_FORM)) {
+            sheet.addAll(hulkingForm(state, tree, true));
+        }
         final double str = sheet.get(StatKeys.STR);
         final double dex = sheet.get(StatKeys.DEX);
         final double intelligence = sheet.get(StatKeys.INT);
@@ -1902,22 +1906,37 @@ public final class PlayerStateService {
         }
         // 巨人之形：天賦樹小點的效果增加 50%
         if (tree != null && StatKeys.flag(sheet, StatKeys.FLAG_HULKING_FORM)) {
-            for (final String id : state.passives()) {
-                final tw.exilecore.passive.PassiveNode node = tree.node(id);
-                if (node == null || node.type() != tw.exilecore.passive.PassiveNode.Type.SMALL) {
-                    continue;
-                }
-                for (final Modifier raw : node.modifiers()) {
-                    for (final Modifier mod : StatKeys.ATTR_CHOICE.equals(raw.stat())
-                            ? choiceModifiers(chosenAttribute(state, state.characterClass(), id), raw.value(), raw.tags(), raw.source())
-                            : List.of(raw)) {
-                        if (mod.type() != ModType.MORE && !mod.stat().startsWith("flag.")) {
-                            sheet.add(new Modifier(mod.stat(), mod.type(), mod.value() * 0.5, mod.tags(), "巨像化"));
-                        }
+            sheet.addAll(hulkingForm(state, tree, false));
+        }
+    }
+
+    /**
+     * 巨人之形：天賦樹小點的效果增加 50%（多出來的那一半）。
+     * 2026-10-31：attributesOnly = 只要屬性（力量、敏捷、智慧）——裝備需求那一輪要先算進去，
+     * 這次之前放大的屬性點在比完裝備需求後才加，畫面上力量 717、比需求時卻只算 584，需求剛好的武器穿不上。
+     */
+    static List<Modifier> hulkingForm(final PlayerState state, final PassiveTree tree, final boolean attributesOnly) {
+        final List<Modifier> out = new ArrayList<>();
+        for (final String id : state.passives()) {
+            final tw.exilecore.passive.PassiveNode node = tree.node(id);
+            if (node == null || node.type() != tw.exilecore.passive.PassiveNode.Type.SMALL) {
+                continue;
+            }
+            for (final Modifier raw : node.modifiers()) {
+                for (final Modifier mod : StatKeys.ATTR_CHOICE.equals(raw.stat())
+                        ? choiceModifiers(chosenAttribute(state, state.characterClass(), id), raw.value(), raw.tags(), raw.source())
+                        : List.of(raw)) {
+                    if (mod.type() == ModType.MORE || mod.stat().startsWith("flag.")) {
+                        continue;
                     }
+                    if (attributesOnly && !StatKeys.STR.equals(mod.stat()) && !StatKeys.DEX.equals(mod.stat()) && !StatKeys.INT.equals(mod.stat())) {
+                        continue;
+                    }
+                    out.add(new Modifier(mod.stat(), mod.type(), mod.value() * 0.5, mod.tags(), "巨像化"));
                 }
             }
         }
+        return out;
     }
 
     /**

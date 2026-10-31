@@ -163,6 +163,17 @@ final class Snap {
         return ailment(aimed) != null ? aimed : null;
     }
 
+    /** 2026-10-31：沒有異常時照幾成的傷害炸（基礎數值；有異常、霜鑽時更多 {@link Primed#MORE}）。 */
+    static final double UNPRIMED_SCALE = 1.0;
+
+    /** 準心指著（或已經選好的）任何敵人（不看異常）。 */
+    private LivingEntity plain(final Origin origin, final SkillBuild build, final LivingEntity preferred) {
+        if (preferred != null && preferred.isValid() && targets.valid(preferred, origin.owner())) {
+            return preferred;
+        }
+        return targets.aimed(origin, Math.max(4, build.range()), 1.2);
+    }
+
     private Location frostbolt(final Origin origin, final SkillBuild build, final boolean consume) {
         if (origin.owner() == null || !origin.self()) {
             return null;
@@ -173,10 +184,10 @@ final class Snap {
     /** 花魔力之前的檢查：準心要指著有凍結／感電／點燃的敵人，或自己的霜鑽。 */
     String problem(final Player player, final SkillBuild build, final LivingEntity preferred) {
         final Origin origin = Origin.of(player);
-        if (target(origin, build, preferred) != null || frostbolt(origin, build, false) != null) {
+        if (target(origin, build, preferred) != null || frostbolt(origin, build, false) != null || plain(origin, build, preferred) != null) {
             return null;
         }
-        return "噬異爆要對準被凍結、感電或點燃的敵人（或自己的霜鑽）";
+        return "噬異爆要對準一個敵人（或自己的霜鑽）";
     }
 
     // ---- 放出 ----
@@ -191,12 +202,20 @@ final class Snap {
         if (bolt != null && (target == null || bolt.distanceSquared(origin.eye()) < target.getLocation().distanceSquared(origin.eye()))) {
             frostbolt(origin, build, true); // 用掉那顆霜鑽
             final double[] cold = range(build, DamageType.COLD);
-            blast(owner, bolt, build.radius() * FROSTBOLT_RADIUS, elementProfile(build.profile(), DamageType.COLD, cold[0], cold[1], false), DamageType.COLD);
+            blast(owner, bolt, build.radius() * FROSTBOLT_RADIUS, elementProfile(build.profile(), DamageType.COLD, cold[0] * Primed.MORE, cold[1] * Primed.MORE, false), DamageType.COLD); // 2026-10-31：滿足條件更多 50%
             remnants(owner, build, bolt, DamageType.COLD);
             return;
         }
         if (target == null) {
-            return; // 圖騰、陷阱放的：沒有異常中的敵人就落空
+            // 2026-10-31 照站長（A＋B 統整成只要 A）：準心的敵人身上沒有異常時，照冰冷炸一下（基礎傷害，不擴散、不留殘骸；有異常時更多 50%）；
+            // 原作要有凍結、感電或點燃才能放
+            final LivingEntity plain = plain(origin, build, preferred);
+            if (plain != null) {
+                final double[] cold = range(build, DamageType.COLD);
+                blast(owner, plain.getLocation(), build.radius(),
+                        elementProfile(build.profile(), DamageType.COLD, cold[0] * UNPRIMED_SCALE, cold[1] * UNPRIMED_SCALE, false), DamageType.COLD);
+            }
+            return; // 圖騰、陷阱放的：沒有敵人就落空
         }
         final AilmentType type = ailment(target);
         final Location at = target.getLocation();
@@ -227,7 +246,7 @@ final class Snap {
         }
         plugin.ailments().cure(source, type); // 用掉異常
         final double[] range = range(build, element);
-        blast(owner, at, radius, elementProfile(build.profile(), element, range[0], range[1], unique), element);
+        blast(owner, at, radius, elementProfile(build.profile(), element, range[0] * Primed.MORE, range[1] * Primed.MORE, unique), element); // 2026-10-31：用掉異常更多 50%
         return same;
     }
 

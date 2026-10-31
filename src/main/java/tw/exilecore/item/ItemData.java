@@ -387,4 +387,37 @@ public final class ItemData {
         copy.implicitRanges = RolledAffix.copyRanges(implicitRanges);
         return copy;
     }
+
+    /** 2026-10-31：把另一份的內容整個抄過來（必變籤：沒變化就重擲，用這個把擲出來的結果放回原物品）。 */
+    public void assign(final ItemData other) {
+        final ItemData from = other.copy();
+        version = from.version;
+        uuid = from.uuid;
+        base = from.base;
+        rarity = from.rarity;
+        ilvl = from.ilvl;
+        quality = from.quality;
+        identified = from.identified;
+        name = from.name;
+        implicitVars = from.implicitVars;
+        affixes = from.affixes;
+        sockets = from.sockets;
+        starter = from.starter;
+        unique = from.unique;
+        uniqueVersion = from.uniqueVersion;
+        tier = from.tier;
+        locked = from.locked;
+        corrupted = from.corrupted;
+        catalyst = from.catalyst;
+        omen = from.omen;
+        instilled = from.instilled;
+        runes = from.runes;
+        mirrored = from.mirrored;
+        fractured = from.fractured;
+        corruptSockets = from.corruptSockets;
+        runeSockets = from.runeSockets;
+        foresight = from.foresight;
+        sanctified = from.sanctified;
+        implicitRanges = from.implicitRanges;
+    }
 }

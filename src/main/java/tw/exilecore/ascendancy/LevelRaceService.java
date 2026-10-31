@@ -87,7 +87,7 @@ public final class LevelRaceService {
             }
             loaded = true;
             plugin.getSLF4JLogger().info("衝等活動：{}（{} 級）；已經被拿走 {} / {} 個稱號", race().enabled() ? "開著" : "關著",
-                    race().level(), claims.size() - (claims.containsKey(AscendancyConfig.LevelRace.FIRST_KEY) ? 1 : 0), config.ascendancies().size());
+                    race().level(), claims.keySet().stream().filter(key -> !key.startsWith(AscendancyConfig.LevelRace.FIRST_KEY)).count(), config.ascendancies().size());
             for (final Player online : plugin.getServer().getOnlinePlayers()) {
                 check(online);
             }
@@ -132,6 +132,18 @@ public final class LevelRaceService {
             titles.put(AscendancyConfig.LevelRace.REACH_TITLE_ID,
                     new BountyConfig.Title(AscendancyConfig.LevelRace.REACH_TITLE_ID, race().reachTitle(), REACH_COLOR, 0, List.of()));
         }
+        // 2026-10-31 照站長：110、120 級的稱號
+        final Map<String, AscendancyConfig.LevelRace.Milestone> milestoneTitles = new LinkedHashMap<>();
+        for (final AscendancyConfig.LevelRace.Milestone milestone : race().milestones()) {
+            if (!milestone.first().isEmpty()) {
+                titles.put(milestone.firstId(), new BountyConfig.Title(milestone.firstId(), milestone.first(), FIRST_COLOR, 0, List.of()));
+                milestoneTitles.put(milestone.firstId(), milestone);
+            }
+            if (!milestone.reach().isEmpty()) {
+                titles.put(milestone.reachId(), new BountyConfig.Title(milestone.reachId(), milestone.reach(), REACH_COLOR, 0, List.of()));
+                milestoneTitles.put(milestone.reachId(), milestone);
+            }
+        }
         bounties.registerTitles(titles);
         bounties.setTitleSource("level_race", new BountyService.TitleSource() {
             @Override
@@ -141,6 +153,20 @@ public final class LevelRaceService {
 
             @Override
             public List<String> howTo(final Player player, final String id) {
+                final AscendancyConfig.LevelRace.Milestone milestone = milestoneTitles.get(id);
+                if (milestone != null) {
+                    if (id.equals(milestone.reachId())) {
+                        return List.of("<gray>任何角色升到 <white>" + milestone.level() + "</white> 級就拿到（不限量，帳號共用）", "<dark_gray>沒有加成");
+                    }
+                    final Claim claim = claims.get(milestone.firstKey());
+                    if (claim != null) {
+                        return List.of("<gray>全服第一個升到 <white>" + milestone.level() + "</white> 級：已經被 <white>"
+                                + ItemRenderer.escape(claim.characterName()) + "</white>（" + ItemRenderer.escape(claim.playerName()) + "）拿走了",
+                                "<dark_gray>全服只有一個");
+                    }
+                    return List.of("<gray>全服第一個升到 <white>" + milestone.level() + "</white> 級的角色拿到",
+                            "<dark_gray>全服只有一個，拿了就沒了（沒有加成）");
+                }
                 if (AscendancyConfig.LevelRace.FIRST_TITLE_ID.equals(id)) {
                     final Claim claim = claims.get(AscendancyConfig.LevelRace.FIRST_KEY);
                     if (claim != null) {
@@ -170,6 +196,10 @@ public final class LevelRaceService {
 
             @Override
             public boolean listed(final Player player, final String id) {
+                final AscendancyConfig.LevelRace.Milestone milestone = milestoneTitles.get(id);
+                if (milestone != null) {
+                    return id.equals(milestone.reachId()) || race().enabled() || claims.containsKey(milestone.firstKey());
+                }
                 if (AscendancyConfig.LevelRace.FIRST_TITLE_ID.equals(id)) {
                     return race().enabled() || claims.containsKey(AscendancyConfig.LevelRace.FIRST_KEY);
                 }
@@ -188,6 +218,10 @@ public final class LevelRaceService {
 
             @Override
             public String sourceName(final String id) {
+                final AscendancyConfig.LevelRace.Milestone milestone = milestoneTitles.get(id);
+                if (milestone != null) {
+                    return id.equals(milestone.reachId()) ? "升到 " + milestone.level() + " 級" : "全服第一個 " + milestone.level() + " 級";
+                }
                 if (AscendancyConfig.LevelRace.FIRST_TITLE_ID.equals(id)) {
                     return "全服第一個 " + race().level() + " 級";
                 }
@@ -231,6 +265,12 @@ public final class LevelRaceService {
         }
         announceEvolution(player); // 2026-10-22：第 2 隻以後的 100 級角色：燃星者進化
         claimFirst(player, character);
+        for (final AscendancyConfig.LevelRace.Milestone milestone : race().milestones()) {
+            if (character.level() >= milestone.level()) {
+                grantMilestoneReach(player, milestone); // 2026-10-31：110、120 級：到了就有
+            }
+            claimMilestoneFirst(player, character, milestone); // 2026-10-31：110、120 級：全服第一個
+        }
         if (ascendancy == null) {
             return;
         }
@@ -434,6 +474,98 @@ public final class LevelRaceService {
                 grantFirst(online, true);
             }
         }));
+    }
+
+    /** 2026-10-31：到了這個等級就有的稱號（不限量，沒有加成）。 */
+    private void grantMilestoneReach(final Player player, final AscendancyConfig.LevelRace.Milestone milestone) {
+        final BountyService bounties = plugin.bounties();
+        if (bounties == null || milestone.reach().isEmpty() || bounties.ownedTitles(player).contains(milestone.reachId())) {
+            return;
+        }
+        final String problem = bounties.grantTitle(player, milestone.reachId());
+        if (problem != null) {
+            plugin.getSLF4JLogger().warn("{} 的稱號 {} 發不出去：{}（下次登入再補）", player.getName(), milestone.reach(), problem);
+            return;
+        }
+        player.sendMessage(plugin.text().prefixed("<" + REACH_COLOR + ">升到 " + milestone.level() + " 級：<gray>你拿到了稱號 <" + REACH_COLOR + ">「"
+                + ItemRenderer.escape(milestone.reach()) + "」</" + REACH_COLOR + "><gray>（已經戴上，/title 可以換）"));
+        player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.2f);
+        plugin.players().markDirty(player);
+    }
+
+    /** 2026-10-31：全服第一個到這個等級的角色（紀錄在 level_race 表，代號 *server@等級）。 */
+    private void claimMilestoneFirst(final Player player, final CharacterRecord character, final AscendancyConfig.LevelRace.Milestone milestone) {
+        if (milestone.first().isEmpty()) {
+            return;
+        }
+        final String key = milestone.firstKey();
+        final Claim existing = claims.get(key);
+        if (existing != null) {
+            if (existing.account().equals(player.getUniqueId())) {
+                grantMilestoneFirst(player, milestone, false);
+            }
+            return;
+        }
+        if (!race().enabled() || character.level() < milestone.level() || !pending.add(key)) {
+            return;
+        }
+        final Claim claim = new Claim(key, player.getUniqueId(), character.id(), character.name(), player.getName(), Instant.now());
+        plugin.database().async(connection -> {
+            try (PreparedStatement statement = connection.prepareStatement(
+                    "INSERT INTO level_race (ascendancy, account_uuid, character_id, character_name, player_name, level, claimed_at) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+                statement.setString(1, key);
+                statement.setString(2, claim.account().toString());
+                statement.setLong(3, claim.characterId());
+                statement.setString(4, claim.characterName());
+                statement.setString(5, claim.playerName());
+                statement.setInt(6, milestone.level());
+                statement.setTimestamp(7, Timestamp.from(claim.at()));
+                statement.executeUpdate();
+            }
+            return claim;
+        }).whenComplete((written, error) -> plugin.getServer().getScheduler().runTask(plugin, () -> {
+            pending.remove(key);
+            if (error != null) {
+                plugin.getSLF4JLogger().warn("{} 級稱號：{} 寫不進紀錄：{}", milestone.level(), claim.characterName(), error.toString());
+                reloadOne(key);
+                return;
+            }
+            claims.put(key, claim);
+            final String message = "<" + FIRST_COLOR + ">★ <white>" + ItemRenderer.escape(claim.characterName()) + "</white><gray>（"
+                    + ItemRenderer.escape(claim.playerName()) + "）是全服第一個升到 " + milestone.level() + " 級的冒險者，拿走了唯一的稱號 <"
+                    + FIRST_COLOR + ">「" + ItemRenderer.escape(milestone.first()) + "」</" + FIRST_COLOR + ">";
+            for (final Player online : plugin.getServer().getOnlinePlayers()) {
+                online.sendMessage(plugin.text().prefixed(message));
+                online.playSound(online.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.6f, 0.9f);
+            }
+            plugin.getSLF4JLogger().info("{}：{}（{}）", milestone.first(), claim.characterName(), claim.playerName());
+            if (plugin.discord() != null) {
+                plugin.discord().achievement("★ " + ItemRenderer.escape(claim.characterName()) + "（" + ItemRenderer.escape(claim.playerName())
+                        + "）是全服第一個升到 " + milestone.level() + " 級的冒險者，拿走了唯一的稱號「" + ItemRenderer.escape(milestone.first()) + "」");
+            }
+            final Player online = plugin.getServer().getPlayer(claim.account());
+            if (online != null) {
+                grantMilestoneFirst(online, milestone, true);
+            }
+        }));
+    }
+
+    private void grantMilestoneFirst(final Player player, final AscendancyConfig.LevelRace.Milestone milestone, final boolean fresh) {
+        final BountyService bounties = plugin.bounties();
+        if (bounties == null || bounties.ownedTitles(player).contains(milestone.firstId())) {
+            return;
+        }
+        final String problem = bounties.grantTitle(player, milestone.firstId());
+        if (problem != null) {
+            plugin.getSLF4JLogger().warn("{}：{} 的稱號發不出去：{}（下次登入再補）", milestone.first(), player.getName(), problem);
+            return;
+        }
+        player.sendMessage(plugin.text().prefixed("<" + FIRST_COLOR + ">你拿到了全服唯一的稱號 「" + ItemRenderer.escape(milestone.first())
+                + "」<gray>（已經戴上，/title 可以換）"));
+        if (fresh) {
+            player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);
+        }
     }
 
     private void grantFirst(final Player player, final boolean fresh) {

@@ -631,10 +631,32 @@ public enum CurrencyOperation {
     static void corruptAlways(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
         ALWAYS_CHANGE.set(Boolean.TRUE);
         try {
-            CORRUPT.apply(data, generator, random);
+            // 2026-10-31 修正：抽到「重擲數值」時可能擲回原本的數字（例如只有一條 10～15% 的傳奇），看起來沒變化；
+            //   沒有看得出來的變化就重擲（最多 50 次）。這次之前必變籤用了也可能「沒有變化」
+            final ItemData before = data.copy();
+            final String original = fingerprint(before);
+            for (int attempt = 0; attempt < 50; attempt++) {
+                final ItemData work = before.copy();
+                CORRUPT.apply(work, generator, random);
+                if (!fingerprint(work).equals(original) || attempt == 49) {
+                    data.assign(work);
+                    return;
+                }
+            }
         } finally {
             ALWAYS_CHANGE.set(Boolean.FALSE);
         }
+    }
+
+    /** 腐化前後比較用：看得出來的部分（品質、腐化孔、階級、固定詞綴、詞綴與數值）。 */
+    private static String fingerprint(final ItemData data) {
+        final StringBuilder out = new StringBuilder();
+        out.append(data.rarity()).append('|').append(data.quality()).append('|').append(data.corruptSockets()).append('|')
+                .append(data.mapTier()).append('|').append(data.implicitVars()).append('|');
+        for (final tw.exilecore.item.RolledAffix affix : data.affixes()) {
+            out.append(affix.id()).append(':').append(affix.tier()).append(':').append(affix.vars()).append(';');
+        }
+        return out.toString();
     }
 
     /** 2026-10-26：法杖、長杖、權杖（PoE2 用工匠蝕刻器加品質，不是礪鋒石）。 */

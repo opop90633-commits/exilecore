@@ -90,6 +90,21 @@ public final class StageEffects implements Listener {
             final int limit = Math.max(1, last.count().intAt(stab.level()));
             final Deque<Long> heads = spearheads.computeIfAbsent(player.getUniqueId(), uuid -> new HashMap<>())
                     .computeIfAbsent(target.getUniqueId(), uuid -> new ArrayDeque<>());
+            // 2026-10-31 照站長（A＋B 統整成只要 A）：矛頭插滿了再插，就把牠身上的矛頭全部引爆（原作要引爆類技能；這次之前最舊的消失）
+            heads.removeIf(expires -> expires < now);
+            if (heads.size() >= limit && target.isValid()) {
+                final int count = heads.size();
+                heads.clear();
+                final double radius = SkillStages.radius(stab, "explosion", 2.4 * stab.areaScale());
+                final SkillProfile blast = SkillStages.profile(stab, stab.profile(), "explosion")
+                        .derive(stab.definition().id() + ".explosion", Set.of(Tags.AREA), Set.of(Tags.STRIKE));
+                final Location where = target.getLocation();
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    for (int i = 0; i < count; i++) {
+                        hitAround(player, where, radius, blast, Particle.CRIT);
+                    }
+                });
+            }
             while (heads.size() >= limit) {
                 heads.pollFirst();
             }
@@ -157,7 +172,8 @@ public final class StageEffects implements Listener {
         }
         final double radius = SkillStages.radius(build, "explosion", 2.4 * build.areaScale());
         final SkillProfile blast = SkillStages.profile(build, build.profile(), "explosion")
-                .derive(build.definition().id() + ".explosion", Set.of(Tags.AREA), Set.of(Tags.STRIKE));
+                .derive(build.definition().id() + ".explosion", Set.of(Tags.AREA), Set.of(Tags.STRIKE))
+                .scaled(Primed.MORE, "被引爆類技能引爆"); // 2026-10-31：被引爆類技能引爆更多 50%（插滿自己炸開是基礎數值）
         final List<Runnable> booms = new ArrayList<>();
         for (final Iterator<Map.Entry<UUID, Deque<Long>>> it = mine.entrySet().iterator(); it.hasNext(); ) {
             final Map.Entry<UUID, Deque<Long>> entry = it.next();

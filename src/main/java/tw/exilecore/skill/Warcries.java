@@ -647,18 +647,22 @@ final class Warcries {
                 if (condition == null) {
                     empower(player, runtime, build, power, ticks, bonus, echo, notice);
                 } else if (conditionMet(condition, enemies)) {
-                    empower(player, runtime, build, power, ticks, bonus, echo, notice);
+                    empower(player, runtime, build, power * Primed.MORE, ticks, bonus, echo, notice); // 2026-10-31：有重暈／凍結的敵人強度更多 50%
                 } else if (!enemies.isEmpty()) {
                     // 重暈、凍結是同一下打出來的：下一 tick 再看一次
+                    // 2026-10-31 照站長（A＋B 統整成只要 A）：沒有重暈／凍結的敵人時照基礎強度強化、有的話更多 50%（這次之前照原作不強化）
                     plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                        if (player.isOnline() && conditionMet(condition, enemies)) {
+                        if (player.isOnline()) {
+                            final boolean met = conditionMet(condition, enemies);
                             final StringBuilder later = new StringBuilder("<#f5b942>" + tw.exilecore.item.ItemRenderer.escape(name));
-                            empower(player, runtime, build, finalPower, finalTicks, finalBonus, echo, later);
+                            if (!met) {
+                                later.append(condition.equals("freeze") ? "<gray>（沒有凍結的敵人：基礎強化）" : "<gray>（沒有重暈的敵人：基礎強化）");
+                            }
+                            empower(player, runtime, build, met ? finalPower * Primed.MORE : finalPower * UNMET_EMPOWER, finalTicks, finalBonus, echo, later);
                             plugin.players().get(player).notice(later.toString(), plugin.getServer().getCurrentTick() + 60);
                             plugin.players().display(player, plugin.players().get(player));
                         }
                     }, 1);
-                    notice.append(condition.equals("freeze") ? "<gray>：沒有凍結的敵人，不強化" : "<gray>：沒有重暈的敵人，不強化");
                 } else {
                     notice.append("<gray>：附近沒有敵人，不強化");
                 }
@@ -683,6 +687,9 @@ final class Warcries {
         }
         return notice.toString();
     }
+
+    /** 2026-10-31：條件（重暈、凍結）沒達成時強化照幾成的強度算（基礎；達成時更多 {@link Primed#MORE}）。 */
+    static final double UNMET_EMPOWER = 1.0;
 
     /** 每 5 點強度算一次（最多算到 cap 點；有任何強度至少一次）。 */
     static int per5(final double power, final int cap) {

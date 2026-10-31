@@ -1675,7 +1675,7 @@ public final class GuildService {
                 }
             }
         }
-        if (plugin.items().read(stack).map(ItemData::locked).orElse(false)) {
+        if (tw.exilecore.item.Locks.locked(plugin, stack)) { // 2026-10-31：寶石也能鎖
             return "<#ffd27f>🔒 這件鎖定了（/lock 解除後才能放）";
         }
         if (tw.exilecore.item.AccountBound.isBound(stack)) {

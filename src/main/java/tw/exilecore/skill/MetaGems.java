@@ -731,9 +731,10 @@ public final class MetaGems {
         // 2026-10-22：要圖騰的輔助（疾樁、樁怒…）插槽法術本身沒有圖騰標籤，innerSupportsOf 把它們併成一顆不挑技能的
         supports.addAll(service.innerSupportsOf(socket.metaEntry(), metaDefinition, spell));
         // 2026-10-23：放進去的寶石的品質一起算（詛咒效果的品質要在算倍率前放進去）
+        // 2026-10-31 修正：插槽法術也吃昇華・嵌晶（技能品質、進階奇術、整合效率、鑲嵌物）；這次之前只有寶石品質＋天賦樹
+        final SkillService.Socketed gem = SkillService.socketedGem(sheet, spell, spellEntry.quality(), supports);
         return SkillBuild.of(service.config(), spell, spellEntry.level(), state.level(), false, supports,
-                state.weaponTags(), sheet, SkillService.resonantOf(spellEntry), SkillService.qualityModifiers(spell,
-                spellEntry.quality() + SkillService.bonusQuality(sheet))); // 2026-10-26：天賦樹的技能品質
+                state.weaponTags(), gem.sheet(), SkillService.resonantOf(spellEntry), gem.extra());
     }
 
     // ---- 說明 ----

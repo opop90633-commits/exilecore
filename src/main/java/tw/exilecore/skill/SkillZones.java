@@ -888,12 +888,19 @@ final class SkillZones implements SkillTargets.Strikeable {
             }
         }
         final int max = spec.max() + Math.max(0, extraLimit);
+        final List<Lodged> pushedOut = new ArrayList<>();
         for (final Iterator<Lodged> it = lodged.iterator(); it.hasNext() && mine >= max; ) {
             final Lodged bolt = it.next();
             if (bolt.owner().equals(owner.getUniqueId()) && bolt.parent().equals(parent)) {
                 it.remove();
                 mine--;
+                if (!spec.proximity() && !StageLeftovers.TOXIC_GROWTH.equals(parent) && bolt.at().getWorld() == owner.getWorld()) {
+                    pushedOut.add(bolt); // 2026-10-31 照站長：伏霆彈超過上限時最舊的引爆（原作直接消失）
+                }
             }
+        }
+        for (final Lodged bolt : pushedOut) {
+            detonate(owner, bolt, now);
         }
         // 2026-10-27 照 PoE2 Delayed Reaction／Rearm（危險區域：寒凝彈的冰晶這種踩到才觸發的）：放下的那一刻有敵人就觸發，
         // 不然只在時間到時觸發（持續時間更少 70%、更多 x% 傷害）；觸發後 x% 機率過一下子重新布置
@@ -948,17 +955,24 @@ final class SkillZones implements SkillTargets.Strikeable {
                 }
                 continue;
             }
-            if (!bolt.spec().proximity() && bolt.owner().equals(owner.getUniqueId()) && !bolt.parent().equals(by) && inside.test(bolt.at())) { // 伏霆彈（不是危險區域）
+            // 2026-10-31 照站長（A＋B 統整成只要 A）：伏霆彈自己的下一發打到也會引爆（插下超過 0.25 秒的；原作只有別的技能能引爆）
+            if (!bolt.spec().proximity() && bolt.owner().equals(owner.getUniqueId()) && (!bolt.parent().equals(by) || now() - bolt.placed() > 5)
+                    && inside.test(bolt.at())) { // 伏霆彈（不是危險區域）
                 it.remove();
                 hit.add(bolt);
             }
         }
         for (final Lodged bolt : hit) {
-            detonate(owner, bolt, now());
+            detonate(owner, bolt, now(), !bolt.parent().equals(by)); // 2026-10-31：被別的技能引爆更多 50%，自己的下一發是基礎數值
         }
     }
 
     private void detonate(final Player owner, final Lodged bolt, final long now) {
+        detonate(owner, bolt, now, false);
+    }
+
+    /** enhanced：滿足原作的條件（被別的技能引爆）——更多 {@link Primed#MORE}。 */
+    private void detonate(final Player owner, final Lodged bolt, final long now, final boolean enhanced) {
         final SkillConfig config = plugin.skills().config();
         final SkillDefinition sub = config.skill(bolt.spec().skill());
         if (sub == null) {
@@ -991,7 +1005,7 @@ final class SkillZones implements SkillTargets.Strikeable {
             build = build.withProfile(build.profile().withLocal(List.of(tw.exilecore.stats.Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE,
                     bolt.delayed() / 100.0, "遲爆"))));
         }
-        final SkillProfile profile = build.profile();
+        final SkillProfile profile = enhanced ? build.profile().scaled(Primed.MORE, "被別的技能引爆") : build.profile();
         final double radius = build.radius();
         for (final LivingEntity target : targets.around(bolt.at(), radius, owner)) {
             damage.hit(owner, target, profile, null);
@@ -1227,6 +1241,9 @@ final class SkillZones implements SkillTargets.Strikeable {
                 zone.gone = true;
                 expired = true;
                 if (now >= zone.untilTick && owner != null && owner.getWorld().equals(zone.world)) {
+                    if (GAS.contains(zone.visual)) {
+                        burstGas(owner, zone, false); // 2026-10-31 照站長（A＋B 統整成只要 A）：毒霧時間到自己炸開（原作要被你的火焰打到）
+                    }
                     completed(owner, zone); // 2026-10-24（穢陣）：撐到結束給戰星（2026-10-29：用掉屍體）
                     expired(zone); // 2026-10-29：雷雲時間到留下殘骸
                 } else {
@@ -1255,6 +1272,12 @@ final class SkillZones implements SkillTargets.Strikeable {
             // 2026-10-26 照 PoE2：毒霧不打人、只上毒（蝕毒箭、瘴氣榴彈）；火油要被點燃才燒（火油榴彈），點燃之前只緩速
             final tw.exilecore.stats.StatSheet ownerSheet = zone.profile == null ? null : plugin.players().sheet(owner);
             final boolean poisonOnly = ownerSheet != null && PoisonOnly.ground(ownerSheet, zone.profile);
+            if (ownerSheet != null && !zone.lit && now - zone.born >= OIL_SELF_IGNITE_TICKS && PoisonOnly.dormant(ownerSheet, zone.profile)) {
+                // 2026-10-31 照站長（A＋B 統整成只要 A）：火油放著 1.5 秒自己燒起來（原作要被你的火焰打到才點燃）
+                zone.lit = true;
+                final Location litAt = zone.points.getFirst();
+                Fx.as(zone.owner, () -> visuals.blast("blazing_star_shell", litAt, zone.radius));
+            }
             final boolean unlit = ownerSheet != null && !zone.lit && PoisonOnly.dormant(ownerSheet, zone.profile);
             // 2026-10-27 照 PoE2 天賦樹（「站在感電／冰緩／點燃地面上時」）：這一波站在裡面的玩家記一下
             final String groundEvent = TreeLeftovers.groundEvent(zone.profile, poisonOnly || unlit);
@@ -1405,6 +1428,7 @@ final class SkillZones implements SkillTargets.Strikeable {
             for (final Location point : zone.points) {
                 if (point.distanceSquared(at) <= (zone.radius + 0.5) * (zone.radius + 0.5)) {
                     zone.lit = true;
+                    zone.profile = zone.profile.scaled(Primed.MORE, "被火焰點燃"); // 2026-10-31：被你的火焰點燃的火油燒得更痛（自己燒起來是基礎數值）
                     zone.nextPulse = now();
                     count++;
                     Fx.as(zone.owner, () -> visuals.blast("blazing_star_shell", point, zone.radius));
@@ -1444,19 +1468,28 @@ final class SkillZones implements SkillTargets.Strikeable {
             }
         }
         for (final Zone zone : burst) {
-            final Location center = zone.points.getFirst();
-            final double radius = zone.radius * 1.3;
-            // 2026-10-28 照 PoE2：有爆炸自己的表（stage.explosion：蝕毒箭 90% → 281% → 745%、瘴氣榴彈 150% → 612% → 2715%）就照它、全部轉火焰；
-            // 這次之前毒霧一跳 × 6
-            final SkillProfile blast = StageAttacks.gasBlast(zone.profile, GAS_BURST, "毒霧引爆");
-            for (final LivingEntity target : targets.around(center, radius, owner)) {
-                damage.hit(owner, target, blast, null);
-            }
-            Fx.as(zone.owner, () -> visuals.blast("blazing_star_shell", center, radius));
+            burstGas(owner, zone, true); // 2026-10-31：被火焰引爆更多 50%
             count++;
         }
         return count;
     }
+
+    /** 一團毒霧炸開（半徑 ×1.3）。 */
+    private void burstGas(final Player owner, final Zone zone, final boolean enhanced) {
+        final Location center = zone.points.getFirst();
+        final double radius = zone.radius * 1.3;
+        // 2026-10-28 照 PoE2：有爆炸自己的表（stage.explosion：蝕毒箭 90% → 281% → 745%、瘴氣榴彈 150% → 612% → 2715%）就照它、全部轉火焰；
+        // 這次之前毒霧一跳 × 6
+        final SkillProfile gas = StageAttacks.gasBlast(zone.profile, GAS_BURST, "毒霧引爆");
+        final SkillProfile blast = enhanced ? gas.scaled(Primed.MORE, "被火焰引爆") : gas; // 2026-10-31：時間到自己炸是基礎數值
+        for (final LivingEntity target : targets.around(center, radius, owner)) {
+            damage.hit(owner, target, blast, null);
+        }
+        Fx.as(zone.owner, () -> visuals.blast("blazing_star_shell", center, radius));
+    }
+
+    /** 2026-10-31：火油放著幾 tick 自己點燃。 */
+    static final long OIL_SELF_IGNITE_TICKS = 30;
 
     /** 某個玩家的全部移除（登出、換角色）。 */
     void forget(final UUID owner) {

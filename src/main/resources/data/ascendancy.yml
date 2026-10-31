@@ -38,6 +38,14 @@ level_race:
   reach_max_characters: 7
   # 升到這些等級時全服廣播（Discord 也發）
   announce_levels: [100, 110, 120]
+  # 2026-10-31 更高等級的稱號（都沒有加成）：first = 全服第一個到這級的角色（全服只有一個）；reach = 任何角色到這級，帳號就拿到。寫空字串 = 不發
+  milestones:
+    - level: 110
+      first: 逾百星魁
+      reach: 逐星者
+    - level: 120
+      first: 星極之主
+      reach: 極星者
   titles:
     ironwarden: 巔峰鐵衛
     berserker: 巔峰狂嘯

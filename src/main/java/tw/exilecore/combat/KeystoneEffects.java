@@ -454,7 +454,7 @@ public final class KeystoneEffects implements Listener {
 
     /**
      * 每秒：寶石匠的戰星產生器（PoE2 Thaumaturgical Dynamism：每 5 秒隨機一顆戰星，鑲嵌的寶石屬性需求越高越容易拿到那一種）。
-     * 我們照角色的力量／敏捷／智慧當權重（力量→磐星、敏捷→怒星、智慧→銳星）。
+     * 2026-10-31 起給最高的那個能力值的（力量→磐星、敏捷→怒星、智慧→銳星）；這次之前照三個的比例隨機。
      */
     void tick() {
         final long now = now();
@@ -478,10 +478,26 @@ public final class KeystoneEffects implements Listener {
             final double str = Math.max(1, sheet.get(StatKeys.STR));
             final double dex = Math.max(1, sheet.get(StatKeys.DEX));
             final double intelligence = Math.max(1, sheet.get(StatKeys.INT));
-            final double roll = random().nextDouble() * (str + dex + intelligence);
-            final String charge = roll < str ? "endurance" : roll < str + dex ? "frenzy" : "power";
+            // 2026-10-31 照站長：給最高的那個能力值的戰星（一樣高的隨機挑一個）；這次之前照三個能力值的比例隨機（智慧最高也常拿到怒星）
+            final String charge = highestCharge(str, dex, intelligence, random().nextDouble());
             plugin.combat().charges().grant(player, charge, 1);
         }
+    }
+
+    /** 2026-10-31：最高的能力值對應的戰星（力量→磐星、敏捷→怒星、智慧→銳星）；一樣高的用 roll（0～1）挑。 */
+    static String highestCharge(final double str, final double dex, final double intelligence, final double roll) {
+        final double best = Math.max(str, Math.max(dex, intelligence));
+        final java.util.List<String> tied = new java.util.ArrayList<>();
+        if (str >= best) {
+            tied.add("endurance");
+        }
+        if (dex >= best) {
+            tied.add("frenzy");
+        }
+        if (intelligence >= best) {
+            tied.add("power");
+        }
+        return tied.get(Math.min(tied.size() - 1, (int) (Math.max(0, roll) * tied.size())));
     }
 
     // ---- 擊殺 ----

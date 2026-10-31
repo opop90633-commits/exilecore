@@ -489,7 +489,7 @@ public final class MarketService {
         if (plugin.gold().amountOf(current).isPresent()) {
             return "金幣不能上架";
         }
-        if (plugin.items().read(current).map(ItemData::locked).orElse(false)) {
+        if (tw.exilecore.item.Locks.locked(plugin, current)) { // 2026-10-31：寶石也能鎖
             return "這件鎖定了（/lock 解除後才能上架）";
         }
         if (tw.exilecore.item.AccountBound.isBound(current)) {

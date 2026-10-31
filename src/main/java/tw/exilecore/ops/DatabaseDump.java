@@ -235,7 +235,7 @@ public final class DatabaseDump {
         return new Restored(tables, rows, skipped);
     }
 
-    private static void bind(final PreparedStatement statement, final int index, final JsonElement value, final int type) throws SQLException {
+    static void bind(final PreparedStatement statement, final int index, final JsonElement value, final int type) throws SQLException {
         if (value == null || value.isJsonNull()) {
             statement.setNull(index, type);
             return;
@@ -272,7 +272,7 @@ public final class DatabaseDump {
         }
     }
 
-    private static Map<String, Integer> columnTypes(final Connection connection, final String table) throws SQLException {
+    static Map<String, Integer> columnTypes(final Connection connection, final String table) throws SQLException {
         final Map<String, Integer> types = new HashMap<>();
         try (Statement statement = connection.createStatement();
              ResultSet result = statement.executeQuery("SELECT * FROM " + table + " WHERE 1 = 0")) {

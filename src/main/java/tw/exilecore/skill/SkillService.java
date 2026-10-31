@@ -1048,8 +1048,10 @@ public final class SkillService {
      */
     SkillBuild metaBuild(final PlayerState state, final StatSheet sheet, final SkillLoadout.Entry host, final SkillDefinition hostDefinition,
                          final SkillDefinition spell, final SkillLoadout.Entry spellEntry) {
-        return SkillBuild.of(config, spell, spellEntry.level(), state.level(), false, innerSupportsOf(host, hostDefinition, spell),
-                state.weaponTags(), sheet, resonantOf(spellEntry), qualityModifiers(spell, spellEntry.quality() + extraQuality(sheet)));
+        final List<SupportDefinition> supports = innerSupportsOf(host, hostDefinition, spell);
+        final Socketed gem = socketedGem(sheet, spell, spellEntry.quality(), supports); // 2026-10-31：進階奇術等嵌晶效果
+        return SkillBuild.of(config, spell, spellEntry.level(), state.level(), false, supports,
+                state.weaponTags(), gem.sheet(), resonantOf(spellEntry), gem.extra());
     }
 
     /** 2026-10-26 照 PoE2：主要寶石觸發的法術帶 triggered（天賦「被觸發的法術…」）；Invocation 類觸發的再帶 invocation。 */
@@ -3074,8 +3076,10 @@ public final class SkillService {
         // 2026-10-21：輔助寶石加的冷卻也算（蓄鋒、蓄疾…）：英靈不等冷卻，以前白拿那顆輔助的加成（暴擊率更多 40%、異常機率加倍）
         // 2026-10-22：要圖騰的輔助（樁怒、疾樁…）也套到英靈的攻擊上（innerSupportsOf 併成一顆不挑技能的）
         // 2026-10-23 修正：放進去的錘子寶石的品質也要算（以前英靈這一下直接用 SkillBuild.of，品質沒套上）
-        final SkillBuild built = SkillBuild.of(config, definition, next.level(), state.level(), false, innerSupportsOf(host, totem, definition),
-                state.weaponTags(), sheet, resonantOf(next), qualityModifiers(definition, next.quality() + extraQuality(sheet)));
+        final List<SupportDefinition> heroSupports = innerSupportsOf(host, totem, definition);
+        final Socketed gem = socketedGem(sheet, definition, next.quality(), heroSupports); // 2026-10-31：進階奇術等嵌晶效果
+        final SkillBuild built = SkillBuild.of(config, definition, next.level(), state.level(), false, heroSupports,
+                state.weaponTags(), gem.sheet(), resonantOf(next), gem.extra());
         if (built.cooldownTicks() > 0) {
             final List<String> names = new ArrayList<>();
             for (final SupportDefinition support : supportsOf(next)) {
@@ -4625,6 +4629,32 @@ public final class SkillService {
     /** 2026-10-29：昇華「技能寶石品質」（嵌晶：所有技能品質 +2%，配兩個 +4%）。 */
     static int ascendancyQuality(final StatSheet sheet) {
         return sheet == null ? 0 : (int) Math.max(0, Math.round(sheet.flat(tw.exilecore.ascendancy.AscKeys.SKILL_QUALITY, java.util.Set.of())));
+    }
+
+    /** 2026-10-31：插槽裡的技能用的屬性表與品質修飾器（{@link #socketedGem}）。 */
+    record Socketed(StatSheet sheet, List<tw.exilecore.stats.Modifier> extra) {
+    }
+
+    /**
+     * 2026-10-31 修正：插槽裡的技能（法術圖騰、主要寶石觸發的法術、英靈圖騰的錘子）也吃昇華・嵌晶——
+     * 技能品質、進階奇術（額外品質效果）、整合效率、鑲嵌物等級，跟直接放的技能一樣（{@link #buildFresh}）。
+     * 這次之前這些技能只算寶石品質＋天賦樹（法術圖騰）或寶石品質＋昇華＋天賦樹，進階奇術、整合效率、鑲嵌物都沒有。
+     */
+    static Socketed socketedGem(final StatSheet sheet, final SkillDefinition definition, final int gemQuality,
+                                final List<SupportDefinition> supports) {
+        final tw.exilecore.ascendancy.AscBuild.Gem gem = tw.exilecore.ascendancy.AscBuild.gem(sheet, definition, supports);
+        final int quality = gemQuality + gem.quality() + bonusQuality(sheet);
+        List<tw.exilecore.stats.Modifier> extra = qualityModifiers(definition, quality);
+        if (gem.twice()) {
+            extra = tw.exilecore.ascendancy.AscBuild.advanced(definition.id(), quality, extra);
+        }
+        if (!gem.extra().isEmpty()) {
+            extra = new ArrayList<>(extra);
+            extra.addAll(gem.extra());
+        }
+        final StatSheet gemSheet = gem.levels() > 0 && sheet != null
+                ? sheet.overlay(List.of(tw.exilecore.stats.Modifier.flat(StatKeys.SKILL_LEVEL, gem.levels(), "鑲嵌物"))) : sheet;
+        return new Socketed(gemSheet, extra);
     }
 
     /** 2026-10-29：寶石以外的技能品質（昇華＋天賦樹）——技能面板顯示、插槽裡的技能都照這個加。 */

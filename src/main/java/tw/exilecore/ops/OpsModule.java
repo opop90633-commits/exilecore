@@ -49,6 +49,7 @@ public final class OpsModule implements Module, Listener {
 
     private final ExileCore plugin;
     private BackupService backups;
+    private CharacterRestore characterRestore;
     private WipeService wipe;
     private AccountTransfer transfer;
     private BukkitTask rollTask;
@@ -68,6 +69,7 @@ public final class OpsModule implements Module, Listener {
         backups = new BackupService(plugin);
         wipe = new WipeService(plugin);
         transfer = new AccountTransfer(plugin);
+        characterRestore = new CharacterRestore(plugin); // 2026-10-31：還原單一隻角色
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         plugin.getServer().getPluginManager().registerEvents(new StartupGate(plugin), plugin); // 2026-10-23：剛開機先擋一下登入
         plugin.getServer().getPluginManager().registerEvents(new EventSpans(plugin.perf()), plugin); // 2026-10-27：死亡、互打事件總共花多久（/ec perf）
@@ -100,6 +102,20 @@ public final class OpsModule implements Module, Listener {
 
     public WipeService wipe() {
         return wipe;
+    }
+
+    /** 還原單一隻角色（2026-10-31）。 */
+    public CharacterRestore characterRestore() {
+        return characterRestore;
+    }
+
+    /** 2026-10-31：正在還原角色的帳號不能登入（登入前就擋，免得讀到一半的資料又被存回去）。 */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPreLogin(final org.bukkit.event.player.AsyncPlayerPreLoginEvent event) {
+        if (characterRestore != null && characterRestore.locked(event.getUniqueId())) {
+            event.disallow(org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result.KICK_OTHER,
+                    plugin.text().parse("<yellow>管理員正在還原你的角色備份，請稍後再登入"));
+        }
     }
 
     /** 轉移帳號（2026-10-17）。 */
@@ -171,6 +187,18 @@ public final class OpsModule implements Module, Listener {
                                 .suggests((context, builder) -> suggestBackups(plugin, builder, false))
                                 .executes(context -> withBackups(plugin, context.getSource().getSender(),
                                         service -> service.verify(context.getSource().getSender(), StringArgumentType.getString(context, "file"))))))
+                // 2026-10-31：還原單一隻角色（先預覽拿確認碼）
+                .then(Commands.literal("character")
+                        .then(Commands.literal("confirm")
+                                .then(Commands.argument("code", StringArgumentType.word())
+                                        .executes(context -> withCharacterRestore(plugin, context.getSource().getSender(),
+                                                restore -> restore.confirm(context.getSource().getSender(), StringArgumentType.getString(context, "code"))))))
+                        .then(Commands.argument("file", StringArgumentType.word())
+                                .suggests((context, builder) -> suggestBackups(plugin, builder, true))
+                                .then(Commands.argument("character", StringArgumentType.greedyString())
+                                        .executes(context -> withCharacterRestore(plugin, context.getSource().getSender(),
+                                                restore -> restore.preview(context.getSource().getSender(), StringArgumentType.getString(context, "file"),
+                                                        StringArgumentType.getString(context, "character")))))))
                 .then(Commands.literal("restore")
                         .then(Commands.argument("file", StringArgumentType.greedyString())
                                 .suggests((context, builder) -> suggestBackups(plugin, builder, true))
@@ -224,6 +252,16 @@ public final class OpsModule implements Module, Listener {
         return Command.SINGLE_SUCCESS;
     }
 
+    private static int withCharacterRestore(final ExileCore plugin, final CommandSender sender,
+                                            final java.util.function.Consumer<CharacterRestore> action) {
+        if (plugin.ops() == null || plugin.ops().characterRestore() == null || plugin.ops().backups() == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>維運模組沒有啟用（看主控台的錯誤訊息）"));
+        } else {
+            action.accept(plugin.ops().characterRestore());
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
     private static int withBackups(final ExileCore plugin, final CommandSender sender, final java.util.function.Consumer<BackupService> action) {
         if (plugin.ops() == null || plugin.ops().backups() == null) {
             sender.sendMessage(plugin.text().prefixed("<red>維運模組沒有啟用（看主控台的錯誤訊息）"));
@@ -260,6 +298,7 @@ public final class OpsModule implements Module, Listener {
         }
         sender.sendMessage(plugin.text().parse("<gray>檢查備份（不動現在的資料）：<white>/ec backup verify</white> [檔名]（不寫檔名 = 最新的）"));
         sender.sendMessage(plugin.text().parse("<dark_gray>還原資料庫：在主控台輸入 ec backup restore db-時間.json.gz（會踢所有人，還原完要重開）"));
+        sender.sendMessage(plugin.text().parse("<dark_gray>還原單一隻角色：<white>/ec backup character db-時間.json.gz 角色名稱</white>（預覽後用確認碼，只踢那個帳號、不用重開）"));
     }
 
     /**

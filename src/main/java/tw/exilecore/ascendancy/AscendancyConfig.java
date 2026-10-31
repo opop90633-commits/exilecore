@@ -193,8 +193,9 @@ public final class AscendancyConfig {
      * @param reachMaxCharacters 燃星者進化最多算幾隻角色（2026-10-22：7 隻 × 5% = 35%）
      */
     public record LevelRace(boolean enabled, int level, java.util.Map<String, String> titles, String firstTitle, String reachTitle,
-                            double reachExperience, List<Integer> announceLevels, int reachMaxCharacters) {
+                            double reachExperience, List<Integer> announceLevels, int reachMaxCharacters, List<Milestone> milestones) {
         public LevelRace {
+            milestones = milestones == null ? List.of() : List.copyOf(milestones);
             titles = java.util.Map.copyOf(titles);
             firstTitle = firstTitle == null ? "" : firstTitle.trim();
             reachTitle = reachTitle == null ? "" : reachTitle.trim();
@@ -204,7 +205,40 @@ public final class AscendancyConfig {
         }
 
         public LevelRace(final boolean enabled, final int level, final java.util.Map<String, String> titles) {
-            this(enabled, level, titles, "百星之首", "燃星者", 5, List.of(100, 110, 120), 7);
+            this(enabled, level, titles, "百星之首", "燃星者", 5, List.of(100, 110, 120), 7, Milestone.DEFAULTS);
+        }
+
+        public LevelRace(final boolean enabled, final int level, final java.util.Map<String, String> titles, final String firstTitle,
+                         final String reachTitle, final double reachExperience, final List<Integer> announceLevels, final int reachMaxCharacters) {
+            this(enabled, level, titles, firstTitle, reachTitle, reachExperience, announceLevels, reachMaxCharacters, Milestone.DEFAULTS);
+        }
+
+        /**
+         * 2026-10-31 照站長：更高等級的稱號（110、120 級）：全服第一個到的拿 first（只有一個），任何角色到了帳號就拿 reach（不限量）；都沒有加成。
+         * 空白 = 不發。
+         */
+        public record Milestone(int level, String first, String reach) {
+            public static final List<Milestone> DEFAULTS = List.of(new Milestone(110, "逾百星魁", "逐星者"), new Milestone(120, "星極之主", "極星者"));
+
+            public Milestone {
+                first = first == null ? "" : first.trim();
+                reach = reach == null ? "" : reach.trim();
+            }
+
+            /** 全服第一個的稱號代號。 */
+            public String firstId() {
+                return "race_first_" + level;
+            }
+
+            /** 到了就有的稱號代號。 */
+            public String reachId() {
+                return "race_reach_" + level;
+            }
+
+            /** 全服第一個的紀錄在 level_race 表裡的代號。 */
+            public String firstKey() {
+                return FIRST_KEY + "@" + level;
+            }
         }
 
         public static final String FIRST_TITLE_ID = "race_first";
@@ -429,7 +463,7 @@ public final class AscendancyConfig {
         }
         levelRace = new LevelRace(race.bool("enabled", false), race.integer("level", 100), raceTitles,
                 race.string("first_title", "百星之首"), race.string("reach_title", "燃星者"), race.decimal("reach_experience", 5), announce,
-                race.integer("reach_max_characters", 7));
+                race.integer("reach_max_characters", 7), milestones(race));
 
         final YamlNode trialsNode = root.node("trials");
         for (final String id : trialsNode.keys()) {
@@ -513,6 +547,22 @@ public final class AscendancyConfig {
         if (!ID.matcher(id).matches() || id.length() > MAX_ID) {
             throw new IllegalArgumentException(where + "：代號只能用小寫英文、數字、底線，最多 " + MAX_ID + " 個字");
         }
+    }
+
+    /** 2026-10-31：level_race.milestones（[{ level, first, reach }]；沒寫 = 110、120 級的預設稱號，寫 [] = 不要）。 */
+    private static List<LevelRace.Milestone> milestones(final YamlNode race) {
+        if (!race.has("milestones")) {
+            return LevelRace.Milestone.DEFAULTS;
+        }
+        final List<LevelRace.Milestone> list = new ArrayList<>();
+        for (final YamlNode node : race.list("milestones")) {
+            final int level = node.integer("level", 0);
+            if (level <= 1) {
+                throw new IllegalArgumentException(node.path() + ".level：要寫幾級（大於 1）");
+            }
+            list.add(new LevelRace.Milestone(level, node.string("first", ""), node.string("reach", "")));
+        }
+        return list;
     }
 
     private static String blankToNull(final String text) {

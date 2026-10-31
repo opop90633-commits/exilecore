@@ -1209,15 +1209,28 @@ final class SkillExecutor {
             blasts++;
             final Location at = cursed.getLocation();
             // 2026-10-28 照 PoE2 Hexblast 的品質：被移除的詛咒每剩 1 秒更多 (0—10)% 傷害
-            final SkillProfile blast = hexblastProfile(build, remaining);
+            final SkillProfile blast = hexblastProfile(build, remaining).scaled(Primed.MORE, "引爆詛咒"); // 2026-10-31：用掉詛咒更多 50%
             targets.strike(player, blast, SkillTargets.sphere(at, radius), new Object());
             for (final LivingEntity victim : targets.around(at, radius, player)) {
                 damage.hit(player, victim, blast, null);
             }
             visuals.nova(build.definition().visual(), at, radius);
         }
+        if (blasts == 0) {
+            // 2026-10-31 照站長（A＋B 統整成只要 A）：範圍內沒有被你詛咒的敵人時，在準心處炸一圈（傷害 × UNPRIMED_SCALE）；原作沒有詛咒就沒有傷害
+            final SkillProfile blast = build.profile().scaled(UNPRIMED_SCALE, "沒有詛咒");
+            targets.strike(player, blast, SkillTargets.sphere(center, radius), new Object());
+            for (final LivingEntity victim : targets.around(center, radius, player)) {
+                damage.hit(player, victim, blast, null);
+            }
+            visuals.nova(build.definition().visual(), center, radius);
+            blasts = 1;
+        }
         return blasts;
     }
+
+    /** 2026-10-31：蝕咒裂、稜光裂沒有詛咒／異常可以用掉時，照幾成的傷害炸（基礎數值；用掉詛咒／異常時更多 {@link Primed#MORE}）。 */
+    static final double UNPRIMED_SCALE = 1.0;
 
     /** 2026-10-28：蝕咒裂這一下的傷害：詛咒還剩 remainingTicks（每剩整 1 秒更多品質的 x%）。 */
     static SkillProfile hexblastProfile(final SkillBuild build, final long remainingTicks) {
@@ -1274,7 +1287,7 @@ final class SkillExecutor {
                 final SkillProfile base = build.profile();
                 final SkillProfile blast = new SkillProfile(base.id() + "." + element.name().toLowerCase(java.util.Locale.ROOT), base.tags(),
                         base.effectiveness(), base.spellDamage(), base.spellDamageMax(), java.util.Map.of(element, 1.0), base.local())
-                        .scaled(scale, build.definition().name())
+                        .scaled(scale * Primed.MORE, build.definition().name()) // 2026-10-31：用掉異常更多 50%
                         .withLocal(List.of(tw.exilecore.stats.Modifier.more(StatKeys.IGNITE_CHANCE, -1.0, "稜光裂"),
                                 tw.exilecore.stats.Modifier.more(StatKeys.FREEZE_BUILDUP, -1.0, "稜光裂"),
                                 tw.exilecore.stats.Modifier.more(StatKeys.SHOCK_CHANCE, -1.0, "稜光裂")));
@@ -1286,6 +1299,28 @@ final class SkillExecutor {
             }
             if (any) {
                 consumed++;
+            }
+        }
+        if (blasts == 0) {
+            // 2026-10-31 照站長（A＋B 統整成只要 A）：沒有異常可以用掉時，身邊每隻敵人各炸一圈火焰（傷害 × UNPRIMED_SCALE、不造成異常，最多 SUNDER_MAX 隻）；
+            // 原作沒有異常就沒有傷害
+            final SkillProfile base = build.profile();
+            final SkillProfile blast = new SkillProfile(base.id() + ".fire", base.tags(), base.effectiveness(), base.spellDamage(), base.spellDamageMax(),
+                    java.util.Map.of(tw.exilecore.stats.DamageType.FIRE, 1.0), base.local())
+                    .scaled(UNPRIMED_SCALE, "沒有異常")
+                    .withLocal(List.of(tw.exilecore.stats.Modifier.more(StatKeys.IGNITE_CHANCE, -1.0, "稜光裂"),
+                            tw.exilecore.stats.Modifier.more(StatKeys.FREEZE_BUILDUP, -1.0, "稜光裂"),
+                            tw.exilecore.stats.Modifier.more(StatKeys.SHOCK_CHANCE, -1.0, "稜光裂")));
+            for (final LivingEntity enemy : targets.around(center, SUNDER_PULSE * Math.sqrt(Math.max(0.1, build.areaScale())), player)) {
+                if (blasts >= SUNDER_MAX) {
+                    break;
+                }
+                final Location at = enemy.getLocation();
+                for (final LivingEntity victim : targets.around(at, radius, player)) {
+                    damage.hit(player, victim, blast, null);
+                }
+                visuals.nova(build.definition().visual(), at, radius);
+                blasts++;
             }
         }
         return blasts;
@@ -1505,7 +1540,7 @@ final class SkillExecutor {
             visuals.dash(build.definition().visual(), from, to);
         }
         strike(Origin.of(player), build, chosen.target());
-        // 2026-10-24（照 PoE2）：每顆銳星多瞬移打 2 下（優先打還沒打過的），出手速度更多 285%；連打期間不能拿銳星。
+        // 2026-10-24（照 PoE2）：每顆銳星多瞬移打 2 下（優先打還沒打過的），出手速度更多 285%。
         // 銳星是要打下一下時才用（附近沒有敵人就不用掉，照 PoE2「沒有額外攻擊就不消耗」）
         final var charges = plugin.combat() == null ? null : plugin.combat().charges();
         if (charges == null || charges.count(player, "power") <= 0) {
@@ -1514,7 +1549,7 @@ final class SkillExecutor {
         final long step = Math.max(2, Math.round(build.intervalTicks(plugin.players().sheet(player)) / (1 + FLICKER_MORE_SPEED)));
         final java.util.Set<UUID> hit = new java.util.HashSet<>();
         hit.add(chosen.target().getUniqueId());
-        charges.blockPower(player, now + step * FLICKER_PER_CHARGE + 5);
+        // 2026-10-31 照站長：拿掉「連打期間不能獲得銳星」（原作有）——連打中拿到的銳星可以接著用，自己就能一直連下去（一次最多 FLICKER_MAX_CHAIN 下）
         flickerChain(player, build, hit, 0, step, 0);
     }
 
@@ -1534,7 +1569,7 @@ final class SkillExecutor {
 
     /**
      * 瞬影擊的連打：{@code paid} 是用掉的銳星還能打幾下；用完了、身上還有銳星就再用一顆（先確認有敵人可以打）。
-     * 每一下之間隔 step tick；連打期間一直延長「不能拿銳星」。
+     * 每一下之間隔 step tick。2026-10-31 起連打期間也能拿銳星（拿到的接著用）；這次之前連打期間不能拿。
      */
     private void flickerChain(final Player player, final SkillBuild build, final java.util.Set<UUID> hit, final int paid, final long step, final int done) {
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
@@ -1570,7 +1605,6 @@ final class SkillExecutor {
             }
             hit.add(next.target().getUniqueId());
             strike(Origin.of(player), build, next.target());
-            charges.blockPower(player, plugin.getServer().getCurrentTick() + step + 5);
             flickerChain(player, build, hit, left - 1, step, done + 1);
         }, step);
     }

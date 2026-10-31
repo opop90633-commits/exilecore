@@ -135,7 +135,7 @@ public final class SalvageMenu extends Menu {
                 continue;
             }
             final Optional<ItemData> data = plugin.items().read(stack);
-            if (data.isPresent() && data.get().locked()) {
+            if (tw.exilecore.item.Locks.locked(plugin, stack)) { // 2026-10-31：寶石也能鎖
                 final ItemStack copy = stack.clone();
                 copy.editMeta(meta -> {
                     final List<Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
@@ -170,7 +170,7 @@ public final class SalvageMenu extends Menu {
                 "<dark_gray>傳奇、藥劑欄的藥劑不會被反選選到", "", "<yellow>左鍵：反選"));
         set(SLOT_CONFIRM, confirmIcon());
         set(SLOT_CLEAR, icon(Material.MILK_BUCKET, "<gray>清除選擇", "<yellow>左鍵：全部取消"));
-        set(SLOT_LOCK_HELP, icon(Material.TRIPWIRE_HOOK, "<#ffd27f>🔒 鎖定", "<gray>右鍵任何一件裝備＝鎖定：不會被拆解、上架、交易",
+        set(SLOT_LOCK_HELP, icon(Material.TRIPWIRE_HOOK, "<#ffd27f>🔒 鎖定", "<gray>右鍵任何一件裝備或技能、輔助寶石＝鎖定：不會被拆解、上架、交易",
                 "<gray>再右鍵一次解除；也可以用 /lock", "<dark_gray>想留的裝備先鎖起來，之後用快速選擇就不怕拆錯"));
         set(SLOT_CLOSE, closeButton());
     }
@@ -435,6 +435,9 @@ public final class SalvageMenu extends Menu {
         if (plugin.skills() != null) {
             final Optional<tw.exilecore.skill.GemData> gem = plugin.skills().gems().read(stack);
             if (gem.isPresent()) {
+                if (plugin.skills().gems().locked(stack)) {
+                    return null; // 2026-10-31：鎖定的寶石不拆
+                }
                 return "gem:" + gem.get().encode() + ":" + stack.getAmount();
             }
         }
@@ -799,13 +802,11 @@ public final class SalvageMenu extends Menu {
     /** 右鍵：鎖定或解除鎖定一件裝備（鎖著的不會被拆）。 */
     private void toggleLock(final int inventorySlot) {
         final ItemStack stack = player.getInventory().getItem(inventorySlot);
-        final Optional<ItemData> data = plugin.items().read(stack);
-        if (data.isEmpty()) {
+        if (!tw.exilecore.item.Locks.lockable(plugin, stack)) { // 2026-10-31：技能、輔助寶石也能鎖
             return;
         }
-        final boolean locked = !data.get().locked();
-        data.get().setLocked(locked);
-        plugin.items().update(stack, data.get());
+        final boolean locked = !tw.exilecore.item.Locks.locked(plugin, stack);
+        tw.exilecore.item.Locks.set(plugin, stack, locked);
         if (locked) {
             selected.remove(inventorySlot);
         }
@@ -818,9 +819,8 @@ public final class SalvageMenu extends Menu {
             return;
         }
         final ItemStack stack = player.getInventory().getItem(inventorySlot);
-        final Optional<ItemData> data = plugin.items().read(stack);
-        if (data.isPresent() && data.get().locked()) {
-            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffd27f>🔒 已鎖定的裝備不能拆解（右鍵解除鎖定）"));
+        if (tw.exilecore.item.Locks.locked(plugin, stack)) { // 2026-10-31：寶石也能鎖
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffd27f>🔒 已鎖定的不能拆解（右鍵解除鎖定）"));
             return;
         }
         if (protectedFlask(inventorySlot, stack)) {
