@@ -2643,7 +2643,7 @@ supports:
     name: 碎晶嘯
     description: 被輔助的戰吼讓範圍內你的冰晶全部炸開、你的冰裂全部引爆；炸掉的冰晶與冰裂加起來至少 5 個時，多強化 3 次攻擊。只有會強化攻擊的戰吼能掛。
     icon: QUARTZ
-    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
+    tier: 3   # 2026-11-01：血脈輔助一律第 3 階（跟 supports_lineage.yml 的 66 顆一樣；PoE2 血脈沒有階級，對照表的 0→2 不套用在血脈上）
     requires: [warcry]
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次新增
     # 2026-11-01 照 PoE2 Vruun's Aftermath（support_warcries_detonate_your_ice_fragments：也引爆你的冰裂，冰晶＋冰裂合計至少 5 個才多強化）；
@@ -2655,7 +2655,7 @@ supports:
     name: 血譽
     description: 被輔助的攻擊或戰吼要 50 點榮耀才能用（你花在其他技能上的生命有 5% 變成它的榮耀），傷害更多 50%、範圍增加 50%。本來就要榮耀才能用的技能不能掛。
     icon: NETHER_BRICK   # 2026-10-27 圖示：血的榮耀；這次之前 REDSTONE（右鍵會放紅石線）
-    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
+    tier: 3   # 2026-11-01：血脈輔助一律第 3 階（跟 supports_lineage.yml 的 66 顆一樣；PoE2 血脈沒有階級，對照表的 0→2 不套用在血脈上）
     requires: [attack, warcry]
     excludes: [minion]
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次新增
@@ -2668,7 +2668,7 @@ supports:
     name: 契血嘯
     description: 被輔助的戰吼吼出時，範圍內每隻敵人被扭曲契約纏上，每次 5 層腐化之血（每層每秒物理傷害，最多疊 10 層，5 秒）；代價是最近 4 秒每用一次，多付出 10% 最大生命（最多 30%）。
     icon: NETHER_BRICK
-    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
+    tier: 3   # 2026-11-01：血脈輔助一律第 3 階（跟 supports_lineage.yml 的 66 顆一樣；PoE2 血脈沒有階級，對照表的 0→2 不套用在血脈上）
     requires: [warcry]
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次新增
     # 2026-11-01 照 PoE2 Paquate's Pact（扭曲契約每次施加 5 層腐化之血）；這次之前每次 1 層（程式 SupportMechanics.PACT_STACKS）、說明沒寫層數
@@ -2679,7 +2679,7 @@ supports:
     name: 霜仇嘯
     description: 被輔助的攻擊或戰吼讓敵人凍結時，你身上每 2 點怒氣，讓你和身邊（4 格內）的隊友 15 秒內獲得 1% 傷害為額外冰冷傷害。觸發的技能、圖騰放的不算。
     icon: PRISMARINE_CRYSTALS
-    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
+    tier: 3   # 2026-11-01：血脈輔助一律第 3 階（跟 supports_lineage.yml 的 66 顆一樣；PoE2 血脈沒有階級，對照表的 0→2 不套用在血脈上）
     requires: [attack, warcry]
     excludes: [minion]
     mana_multiplier: 1.1
@@ -3870,7 +3870,7 @@ supports:
     name: 祭星
     description: 被輔助的祭品放的時候犧牲 25% 生命；祭柱還在的時候每 4 秒給你一顆{charge:power}；祭柱倒下後，祭柱撐了多久，你就每秒回復 5% 生命與魔力多久。
     icon: BONE
-    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
+    tier: 3   # 2026-11-01：血脈輔助一律第 3 階（跟 supports_lineage.yml 的 66 顆一樣；PoE2 血脈沒有階級，對照表的 0→2 不套用在血脈上）
     requires: [offering]   # 2026-10-26 照 PoE2：Guatelitzi's Ablation 只輔助祭品（Offering）；這次之前 [minion]
     modifiers:
       - { stat: charge.sup.offering_sacrifice, type: FLAT, value: 25 }
@@ -3881,7 +3881,7 @@ supports:
     name: 鐘星
     description: 被輔助的技能用掉連擊時，每用掉一層有 25% 機率給你一顆{charge:power}（超過 100% 的部分必定給）。要配會用掉連擊的技能（例如掛終式）。
     icon: GOLD_NUGGET
-    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
+    tier: 3   # 2026-11-01：血脈輔助一律第 3 階（跟 supports_lineage.yml 的 66 顆一樣；PoE2 血脈沒有階級，對照表的 0→2 不套用在血脈上）
     requires: [attack]
     excludes: [minion]
     modifiers:
@@ -3914,7 +3914,7 @@ supports:
     name: 掠嵐
     description: 被輔助的風暴技能同時存在的上限 +1，從你腳下出發、很快地移動到準心指的地方（每秒 4 格），但範圍更小 25%、傷害更少 35%。
     icon: PHANTOM_MEMBRANE
-    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
+    tier: 3   # 2026-11-01：血脈輔助一律第 3 階（跟 supports_lineage.yml 的 66 顆一樣；PoE2 血脈沒有階級，對照表的 0→2 不套用在血脈上）
     requires: [storm]
     excludes: [minion, triggered]   # 2026-11-01 照 PoE2 Morgana's Tempest（Cannot Support Triggered Skills；主要寶石觸發的見 support_ref.yml 的 triggered）；這次之前 [minion]
     modifiers:
@@ -3928,7 +3928,7 @@ supports:
     name: 蟄甲
     description: 被輔助的技能讓你變身時，獲得霍嵐的沉著 2 秒：期間受到的傷害記下來，結束時獲得記下的傷害 50% 的守護（4 秒）與 3% 的怒氣。結束前變成別的形態就直接沒了。
     icon: RABBIT_HIDE
-    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
+    tier: 3   # 2026-11-01：血脈輔助一律第 3 階（跟 supports_lineage.yml 的 66 顆一樣；PoE2 血脈沒有階級，對照表的 0→2 不套用在血脈上）
     requires: [shapeshift]
     excludes: [minion]
     mana_multiplier: 1.3

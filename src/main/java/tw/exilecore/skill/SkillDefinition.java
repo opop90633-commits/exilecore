@@ -386,7 +386,8 @@ public record SkillDefinition(String id, String name, String description, String
         if (warcry != null) {
             // 2026-10-26 照 PoE2：熔魂嘯沒有冷卻，要榮耀才能用（warcry.glory）
             // 2026-10-30 照 PoE2：祭品（立骨柱的）也沒有冷卻（要串一隻骷髏、同時只有一根）
-            if (cooldown <= 0 && warcry.extras().glory() <= 0 && !warcry.spike()) {
+            // 2026-11-01：觸發的隱藏戰吼（燼勢、振奮的增益；照 PoE2 沒有觸發冷卻，寫 cooldown: 0）也不用
+            if (cooldown <= 0 && warcry.extras().glory() <= 0 && !warcry.spike() && !node.bool("hidden", false)) {
                 throw new IllegalArgumentException(where + "：戰吼要有 cooldown（冷卻時間）或 glory（要幾點榮耀），祭品除外");
             }
             // 2026-10-26 照 PoE2：戰旗、祭品、召歸令不是戰吼（cry: false）：不帶戰吼標籤，戰吼的輔助掛不上、戰吼的加成不吃

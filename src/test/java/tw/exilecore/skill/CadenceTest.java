@@ -16,7 +16,7 @@ class CadenceTest {
         assertEquals(0, SupportExtras.cadenceRecord(uses, 0), "第一次沒有加成");
         assertEquals(1, SupportExtras.cadenceRecord(uses, 20));
         assertEquals(2, SupportExtras.cadenceRecord(uses, 40));
-        assertEquals(2, SupportExtras.cadenceRecord(uses, 20 + SupportExtraKeys.CADENCE_RECENT_TICKS + 1), "4 秒前的那次不算");
+        assertEquals(1, SupportExtras.cadenceRecord(uses, 20 + SupportExtraKeys.CADENCE_RECENT_TICKS + 1), "4 秒前的那兩次（0、20）不算，只剩 40 那次");
     }
 
     @Test

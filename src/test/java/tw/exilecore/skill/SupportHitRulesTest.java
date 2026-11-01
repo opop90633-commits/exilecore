@@ -103,7 +103,7 @@ class SupportHitRulesTest {
         assertNull(support("quake_zone").refusal(skill("campaign_flag")), "範圍變大那半邊有用"); // 2026-10-26：凜冬之殼、魔湧照 PoE2 都沒有範圍了，改用征戰之旗
         assertNull(support("quick_return").refusal(skill("prey_kill_mark")), "冷卻變短有用");
         assertNull(support("twin_chant").refusal(skill("wound_scar_curse")), "代價是傷害的不擋");
-        assertEquals("要冷卻技能", support("quick_return").refusal(skill("corpse_summon")), "喚屍沒有冷卻（2026-11-01：迸發拿掉，改測迅返）");
+        assertEquals("要冷卻技能", support("quick_return").refusal(skill("blazing_star_shell")), "熾星彈沒有冷卻（2026-11-01：迸發拿掉，改測迅返；迅返照 PoE2 不能掛召喚物，喚屍改測熾星彈）");
         // 2026-10-29 照 PoE2 的 Minion Types：凝息照殭屍的攻擊（Attack, Melee）可以掛、效果給殭屍；這次之前「不會造成傷害的技能不行」。
         // 不打人的骸骨祭司照舊不行
         assertNull(support("held_breath").refusal(skill("corpse_summon")));

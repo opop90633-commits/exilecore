@@ -246,31 +246,19 @@ class ChargeTest {
         skills.load(DATA);
         // 2026-10 PoE2 改版：聚銳、聚怒、聚磐換成 charge_power、charge_frenzy、charge_endurance（說明直接寫，不用 {charge:…}）
         assertNull(skills.support("power_on_hit"));
-        // 2026-10-27：聚銳、聚怒（原作沒有）刪掉，只剩聚磐
+        // 2026-10-27：聚銳、聚怒（原作沒有）刪掉；2026-11-01：聚磐也刪掉（照站長），改看磐破（Break Endurance）
         assertNull(skills.support("charge_power"));
-        assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆磐星。",
-                skills.support("gather_bedrock").descriptionText(), "戰星本身沒有屬性，說明不寫每顆效果");
-        assertTrue(skills.support("gather_bedrock").descriptionText().contains(ChargeText.name("endurance")));
+        assertNull(skills.support("gather_bedrock"));
+        assertTrue(skills.support("bedrock_shatter").descriptionText().contains("40% 機率給你一顆" + ChargeText.name("endurance") + "（"),
+                "戰星本身沒有屬性，說明不寫每顆效果");
         assertEquals("先 x 再 怒星", ChargeText.expand("先 {charge:x} 再 {charge:frenzy}"),
                 "不認得的代號換成代號本身");
         assertEquals("沒有預留位置", ChargeText.expand("沒有預留位置"));
         assertEquals(List.of("x", "frenzy"), ChargeText.placeholders("先 {charge:x} 再 {charge:frenzy}"));
         assertEquals(List.of(), skills.chargeProblems(types::containsKey));
-        // 現在的輔助都沒有用 {charge:…}：自己改一份說明來測打錯字會被抓出來
-        final Path dir = java.nio.file.Files.createTempDirectory("exilecore-charge");
-        java.nio.file.Files.copy(DATA.resolve("skills.yml"), dir.resolve("skills.yml"));
-        final String supports = java.nio.file.Files.readString(DATA.resolve("supports.yml"));
-        final String original = "有機率獲得一顆磐星。";
-        assertTrue(supports.contains(original));
-        java.nio.file.Files.writeString(dir.resolve("supports.yml"), supports.replace(original, "有機率獲得一顆{charge:endurance}。"));
-        final tw.exilecore.skill.SkillConfig placeholders = new tw.exilecore.skill.SkillConfig();
-        placeholders.load(dir);
-        assertEquals("被輔助的技能擊中敵人時，有機率獲得一顆磐星。",
-                placeholders.support("gather_bedrock").descriptionText(), "沒有每顆效果就只換名字");
-        assertEquals(List.of(), placeholders.chargeProblems(types::containsKey));
-        assertEquals(1, placeholders.chargeProblems(id -> !id.equals("endurance")).stream()
-                        .filter(line -> line.contains("gather_bedrock") && line.contains("說明寫了 {charge:endurance}")).count(),
-                "說明裡打錯字也會被抓出來（2026-10-24：戰星輔助的說明本來就用 {charge:power}，只看改的那一顆）");
+        assertTrue(skills.chargeProblems(id -> !id.equals("endurance")).stream()
+                        .anyMatch(line -> line.contains("bedrock_shatter") && line.contains("說明寫了 {charge:endurance}")),
+                "說明裡打錯字也會被抓出來");
     }
 
     @Test

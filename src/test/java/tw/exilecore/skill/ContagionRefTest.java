@@ -37,7 +37,7 @@ class ContagionRefTest {
         assertTrue(contagion.modifiers().stream().anyMatch(m -> m.stat().equals(SkillMechanicKeys.DEBUFF_SPREAD_RADIUS) && m.value() == 1.7));
         // 其他 impact 技能沒寫 targets 照舊打一整圈
         final long single = config.all().stream().filter(s -> s.mechanic() == Mechanic.IMPACT && s.params().targets() > 0).count();
-        assertEquals(1, single, "目前只有瘟疫是單體 impact");
+        assertEquals(2, single, "目前只有瘟疫、朽蝕（2026-11-01 照 PoE2 Profane Decay，隱藏，直接掛在被詛咒的那一隻）是單體 impact");
     }
 
     @Test

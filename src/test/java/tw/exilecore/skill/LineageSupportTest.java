@@ -61,10 +61,11 @@ class LineageSupportTest {
     void lineageSupportsLoadAndCannotBeCut() {
         final List<SupportDefinition> all = lineage();
         // 68 顆新的（supports_lineage.yml）＋ supports.yml 原本的 8 顆（existing 標成血脈）；Rigwald's Ferocity 沒做（我們沒有武器組）
-        assertEquals(68 + 8, all.size());
+        // 2026-11-01：拿掉 Olroth's Conviction、Olroth's Hubris（要符文護盾，我們沒有）→ 66 顆
+        assertEquals(66 + 8, all.size());
         assertEquals(21, config.supportsFrom(LineageRules.COMMON).size(), "一般：原作資料 寫 Global 的");
-        assertEquals(41, config.supportsFrom(LineageRules.RARE).size(), "稀有：特定 Boss 或沒寫來源的");
-        assertEquals(14, config.supportsFrom(LineageRules.PINNACLE).size(), "巔峰：巔峰 Boss 的、改變玩法的");
+        assertEquals(41 - 1, config.supportsFrom(LineageRules.RARE).size(), "稀有：特定 Boss 或沒寫來源的（2026-11-01：－Olroth's Conviction）");
+        assertEquals(14 - 1, config.supportsFrom(LineageRules.PINNACLE).size(), "巔峰：巔峰 Boss 的、改變玩法的（2026-11-01：－Olroth's Hubris）");
         final Set<String> names = new HashSet<>();
         for (final SupportDefinition support : all) {
             assertFalse(support.cuttable(), support.id() + "：未切割輔助寶石切不出來");
