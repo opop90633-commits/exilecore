@@ -205,7 +205,7 @@ final class HollowImages {
         }
         final long now = plugin.getServer().getCurrentTick();
         final java.util.List<Image> mine = images.computeIfAbsent(player.getUniqueId(), k -> new java.util.ArrayList<>());
-        mine.removeIf(image -> now >= image.until());
+        mine.removeIf(old -> now >= old.until());
         mine.add(new Image(spot.clone(), now + IMAGE_TICKS));
         final java.util.UUID previousFx = Fx.source(player.getUniqueId());
         try {
