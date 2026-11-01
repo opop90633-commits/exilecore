@@ -107,7 +107,7 @@ public final class MinionSheets {
     /** PoE2 召喚物的基礎暴擊率 5%（所有召喚物都一樣）。 */
     public static final double ALLY_CRIT = 5;
 
-    /** 照 PoE2 寶石逐級表才有的最高技能等級（40 級；召喚物等級 80）。 */
+    /** 照 PoE2 寶石逐級表才有的最高技能等級（40 級；召喚物等級 80）。2026-11-01 起超過這一級也照 ×2（{@link #allyLevel}）。 */
     public static final int REF_MAX_GEM_LEVEL = 40;
 
     /**
@@ -115,7 +115,32 @@ public final class MinionSheets {
      * 2026-10-28 照 PoE2：超過 20 級也照 × 2 往上（這次之前停在 40 級，超過 20 級改乘 {@link #extraScale}）；40 級以上才照 extraScale。
      */
     public static int allyLevel(final int skillLevel) {
-        return 2 * Math.max(1, Math.min(REF_MAX_GEM_LEVEL, skillLevel));
+        // 2026-11-01 照站長「全部改成 +1 技能等級 = +2 召喚物等級」：不再停在 80 級（40 級寶石），每一級都 × 2；
+        //   這次之前超過 40 級停在 80 級、改乘 extraScale（每級 +5%）
+        return 2 * Math.max(1, skillLevel);
+    }
+
+    /**
+     * 2026-11-01：PoE2 召喚物表（1–100 級）在這個召喚物等級的值；超過 100 級照最後兩級的比例往外推
+     * （+1 技能等級 = +2 召喚物等級，寶石 51 級以上的召喚物超過 100 級）。
+     */
+    static double refAlly(final double[] table, final double level) {
+        if (level <= table.length) {
+            return ref(table, level);
+        }
+        final double last = table[table.length - 1];
+        return last * Math.pow(last / table[table.length - 2], level - table.length);
+    }
+
+    /**
+     * 2026-11-01：召喚物自己的技能表（PoE2 單位，只寫到 tableMax 級寶石）超過那一級時再乘多少——照召喚物傷害表
+     * （+1 技能等級 = +2 召喚物等級）往上：召喚物傷害(技能等級 × 2) ÷ 召喚物傷害(tableMax × 2)。沒超過是 1。
+     */
+    public static double growth(final int skillLevel, final int tableMax) {
+        if (skillLevel <= tableMax) {
+            return 1.0;
+        }
+        return refAlly(REF_ALLY_DAMAGE, allyLevel(skillLevel)) / refAlly(REF_ALLY_DAMAGE, allyLevel(tableMax));
     }
 
     /** PoE2 的表（1–100 級逐級；超出兩端夾住，非整數等級照相鄰兩級等比內插）。 */
@@ -144,11 +169,11 @@ public final class MinionSheets {
         final double[] factors = refFactors(areaLevel, ourLife, ourDamage, scale);
         final int minion = allyLevel(skillLevel);
         final double area = Math.min(REF_MONSTER_LIFE.length, Math.max(1, areaLevel));
-        final double life = ref(REF_ALLY_LIFE, minion) * factors[1];
-        final double hit = ref(REF_ALLY_DAMAGE, minion) * factors[0];
+        final double life = refAlly(REF_ALLY_LIFE, minion) * factors[1];
+        final double hit = refAlly(REF_ALLY_DAMAGE, minion) * factors[0];
         final double spread = spec.spread();
-        return new Base(life, ourAccuracy * 4, ref(REF_EVASION, minion) * ourAccuracy / ref(REF_ACCURACY, area),
-                ref(REF_ARMOUR, minion) * factors[1] / Math.max(1e-9, scale), hit * (1 - spread), hit * (1 + spread), ALLY_CRIT);
+        return new Base(life, ourAccuracy * 4, refAlly(REF_EVASION, minion) * ourAccuracy / ref(REF_ACCURACY, area),
+                refAlly(REF_ARMOUR, minion) * factors[1] / Math.max(1e-9, scale), hit * (1 - spread), hit * (1 + spread), ALLY_CRIT);
     }
 
     /**
@@ -173,16 +198,16 @@ public final class MinionSheets {
 
     /** PoE2 召喚物表在這個召喚物等級的每一下傷害（還沒換算）：鴉群這類沒有召喚物實體的用。 */
     public static double refAllyDamage(final int minionLevel) {
-        return ref(REF_ALLY_DAMAGE, minionLevel);
+        return refAlly(REF_ALLY_DAMAGE, minionLevel);
     }
 
     /** 2026-10-26：PoE2 召喚物表的生命、護甲（還沒換算；圖騰用）。 */
     public static double refAllyLife(final int minionLevel) {
-        return ref(REF_ALLY_LIFE, minionLevel);
+        return refAlly(REF_ALLY_LIFE, minionLevel);
     }
 
     public static double refAllyArmour(final int minionLevel) {
-        return ref(REF_ARMOUR, minionLevel);
+        return refAlly(REF_ARMOUR, minionLevel);
     }
 
     /** 給顯示用：召喚物的等級（照 PoE2 的是寶石等級 × 2，舊的是當幾級的怪物）。 */
@@ -241,7 +266,10 @@ public final class MinionSheets {
      */
     public static double extraScale(final SkillConfig config, final int skillLevel) {
         // 2026-10-28：21～40 級改成召喚物等級照 PoE2 表往上（allyLevel），這個倍率只給超過 40 級的；這次之前超過 20 級就乘
-        return skillLevel > REF_MAX_GEM_LEVEL ? Math.pow(config.minionExtraLevelGrowth(), skillLevel - REF_MAX_GEM_LEVEL) : 1.0;
+        // 2026-11-01 照站長「全部改成 +1 技能等級 = +2 召喚物等級」：超過 40 級也照召喚物表往上（allyLevel 不再封頂、
+        //   召喚物自己的技能表照 growth），這個倍率不再用（一律 1；skills.yml 的 minion_extra_level_damage 沒有作用了）。
+        //   這次之前超過 40 級每級 ×(1 + minion_extra_level_damage)（5%）
+        return 1.0;
     }
 
     /** 主人屬性表裡會給召喚物的修飾器：帶 minion 標籤的。 */

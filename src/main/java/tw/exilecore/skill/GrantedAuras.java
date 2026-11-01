@@ -283,10 +283,11 @@ final class GrantedAuras implements Listener {
             return;
         }
         final double factor = refDamage(player, level) * more * 0.5; // 每半秒一次
-        final int row = MinionAbilities.row(level);
+        // 2026-11-01 照 PoE2 的效用公式（任何等級）；這次之前 20 級表 × 召喚物傷害表的成長推算
+        final double[] perSecond = MinionAbilities.entropyPerSecond(level);
         final tw.exilecore.stats.DamagePacket packet = new tw.exilecore.stats.DamagePacket()
-                .set(tw.exilecore.stats.DamageType.CHAOS, MinionAbilities.ENTROPY_CHAOS[row] * factor)
-                .set(tw.exilecore.stats.DamageType.PHYSICAL, MinionAbilities.ENTROPY_PHYSICAL[row] * factor);
+                .set(tw.exilecore.stats.DamageType.CHAOS, perSecond[0] * factor)
+                .set(tw.exilecore.stats.DamageType.PHYSICAL, perSecond[1] * factor);
         final List<Modifier> local = new ArrayList<>(build.profile().local());
         local.add(Modifier.flat(StatKeys.FLAG_NO_CRIT, 1, "振翅熵流")); // 持續傷害：不會暴擊
         final SkillProfile profile = new SkillProfile(build.profile().id(), build.profile().tags(), 1.0, packet, packet, Map.of(), local);

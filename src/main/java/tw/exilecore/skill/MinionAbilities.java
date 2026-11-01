@@ -5,8 +5,10 @@ import java.util.Map;
 /**
  * 2026-10-26 照 PoE2 0.5：召喚物自己的技能與指令（Command）的數值（RePoE 0.5.5 匯出、Path of Building PoE2 的資料）。純資料，不依賴 Bukkit。
  * <p>
- * 表裡的傷害、生命是 PoE2 的單位（寶石 1～20 級），用的時候乘 {@link MinionSheets#poe2Factors} 換成我們的
- * （超過 20 級照 20 級的值，再乘 {@link MinionSheets#extraScale}）。距離 1 格 = 1 格。
+ * 表裡的傷害、生命是 PoE2 的單位，用的時候乘 {@link MinionSheets#poe2Factors} 換成我們的。
+ * 2026-11-01 照站長「召喚物自己的技能完全照原作」：法術傷害改用原作的效用公式（{@link SpellDamage}，召喚物等級 = 寶石等級 × 2，
+ * 任何等級都照公式），逐級列表的（震地咆哮、冰甲、治療、爆裂殉身）照原作寫到 40 級（Path of Building PoE2 從遊戲檔匯出的資料）；
+ * 這次之前法術只寫到 20 級、超過 20 級照召喚物傷害表的成長比例推算。
  * <p>
  * 指令的操作方式（2026-10-26）：精魂召喚綁在上方按鍵格就一直開著，以前按那個鍵只會提示「一直開著，不用按」；
  * 現在按下去就是對那種召喚物下指令（PoE2 的 Command: 技能），花指令的魔力、用指令的施放時間（技能的 cast_time），
@@ -193,9 +195,47 @@ final class MinionAbilities {
         return Math.max(1, Math.min(40, level)) - 1;
     }
 
-    /** {最小, 最大} 表在這一級的值。 */
+    /**
+     * 照 PoE2 逐級列到 40 級的表在這一級的值；超過 40 級（原作寶石最高 40 級）照最後兩級的比例往上。
+     */
+    static double at40(final int[] table, final int level) {
+        if (level <= table.length) {
+            return table[row40(level)];
+        }
+        final double last = table[table.length - 1];
+        final double ratio = last / table[table.length - 2];
+        return Math.round(last * Math.pow(ratio, level - table.length));
+    }
+
+    /** {最小, 最大} 40 級表在這一級的值（2026-11-01 照原作寫到 40 級；這次之前 20 級表 × 召喚物傷害表的成長推算）。 */
     static double[] range(final int[][] table, final int level) {
-        return new double[] {table[0][row(level)], table[1][row(level)]};
+        return new double[] {at40(table[0], level), at40(table[1], level)};
+    }
+
+    /** {最小, 最大} 法術傷害在這一級的值。 */
+    static double[] range(final SpellDamage damage, final int level) {
+        return damage.at(level);
+    }
+
+    /** PoE2 的 SkillDamageBaseEffectiveness（Path of Building PoE2 Data/Misc.lua）。 */
+    static final double SKILL_DAMAGE_BASE_EFFECTIVENESS = 3.885209;
+
+    /**
+     * 2026-11-01 照 PoE2：召喚物法術的基礎傷害（statInterpolation 3「效用」）。
+     * 效用 = 3.885209 × base × (1 + incremental × (L − 1)) × (1 + damageIncremental)^(L − 1)，L = 召喚物等級（寶石等級 × 2）；
+     * 最小／最大傷害 = round(效用 × min／max)。數字照 Path of Building PoE2 的 Data/Skills/minion.lua（遊戲檔匯出），
+     * 1～20 級跟 poe2db 的等級表一模一樣，21 級以上原作也是照這個公式。
+     */
+    record SpellDamage(double base, double incremental, double damageIncremental, double min, double max) {
+        double effectiveness(final double actorLevel) {
+            final double level = Math.max(1, actorLevel);
+            return SKILL_DAMAGE_BASE_EFFECTIVENESS * base * (1 + incremental * (level - 1)) * Math.pow(1 + damageIncremental, level - 1);
+        }
+
+        double[] at(final int gemLevel) {
+            final double effectiveness = effectiveness(MinionSheets.allyLevel(gemLevel));
+            return new double[] {Math.round(effectiveness * min), Math.round(effectiveness * max)};
+        }
     }
 
     // ---- 骸骨重卒（Skeletal Brute）----
@@ -211,9 +251,14 @@ final class MinionAbilities {
     static final double ROAR_SECONDS = 4.0;
     static final double ROAR_EXPLOSION = tw.exilecore.core.Units.metres(2.4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double ROAR_CRIT = 12;
+    // 2026-11-01 照 PoE2（ShatteringRoarSkeletalBruteMinion 1–40 級）；這次之前只寫到 20 級
     static final int[][] ROAR_COLD = {
-            {5, 8, 14, 21, 31, 44, 61, 83, 112, 152, 204, 274, 368, 495, 667, 902, 1223, 1664, 2273, 3119},
-            {7, 12, 21, 32, 47, 66, 91, 124, 169, 228, 306, 411, 552, 743, 1001, 1353, 1834, 2495, 3409, 4678}};
+            {5, 8, 14, 21, 31, 44, 61, 83, 112, 152, 204, 274, 368, 495, 667, 902, 1223, 1664, 2273, 3119,
+                    4300, 5958, 8298, 11619, 16360, 23165, 32993, 47269, 68133, 98810, 144195, 211757, 312967, 465542, 697026,
+                    1050492, 1593726, 2434072, 3742586, 5793584},
+            {7, 12, 21, 32, 47, 66, 91, 124, 169, 228, 306, 411, 552, 743, 1001, 1353, 1834, 2495, 3409, 4678,
+                    6450, 8937, 12447, 17429, 24540, 34748, 49490, 70904, 102200, 148216, 216293, 317636, 469450, 698314, 1045539,
+                    1575738, 2390589, 3651108, 5613879, 8690377}};
 
     // ---- 遠程召喚物的投射物速度（2026-10-29 照 PoE2：投射物真的會飛，MinionProjectiles）----
     // 單位跟 skills.yml 的 projectile.speed 一樣（每 tick 幾格；每秒 = ×20）。poe2db 的 Skeletal Sniper／Arsonist／Frost Mage 頁面
@@ -278,39 +323,37 @@ final class MinionAbilities {
     static final double ARC_CRIT = 9;
     static final int ARC_CHAINS = 2;
     static final double ARC_CHAIN_RANGE = tw.exilecore.core.Units.metres(3.5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
-    static final int[][] ARC_LIGHTNING = {
-            {1, 1, 1, 2, 2, 3, 3, 4, 5, 5, 6, 7, 9, 10, 11, 13, 15, 17, 19, 21},
-            {11, 17, 24, 32, 40, 50, 61, 74, 88, 103, 121, 141, 163, 188, 216, 246, 281, 319, 361, 408}};
+    static final SpellDamage ARC_LIGHTNING = new SpellDamage(1.2000000476837, 0.25, 0.037999998778105, 0.10000000149012, 1.8999999761581);
     /** 死亡風暴（Death Storm，指令）：施放 2 秒、冷卻 5 秒、暴擊率 10%；目標區域裡每一具倒下的骷髏、屍體落雷（2 格）並留下 6 秒的感電地面。 */
     static final double STORM_CAST = 2.0;
     static final double STORM_CRIT = 10;
     static final double STORM_RADIUS = tw.exilecore.core.Units.metres(2.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
-    /** 目標區域多大（原作沒寫區域大小，這裡取 4 格）。 */
-    static final double STORM_AREA = 4.0;
-    static final int[][] STORM_LIGHTNING = {
-            {14, 21, 29, 38, 49, 62, 76, 92, 110, 131, 154, 180, 210, 244, 281, 324, 371, 424, 484, 551},
-            {77, 118, 164, 217, 279, 349, 429, 520, 623, 740, 873, 1022, 1191, 1381, 1595, 1835, 2104, 2405, 2743, 3121}};
+    /** 目標區域多大：2026-11-01 照 PoE2（active_skill_base_area_of_effect_radius 20 = 2 公尺）；這次之前原作資料沒找到、取 4 格。 */
+    static final double STORM_AREA = tw.exilecore.core.Units.metres(2.0);
+    static final SpellDamage STORM_LIGHTNING = new SpellDamage(9, 0.25, 0.041499998420477, 0.30000001192093, 1.7000000476837);
 
     // ---- 骸骨霜術士（Skeletal Frost Mage）----
 
-    /** 冰箭（Ice Shard，自動法術）：施放 1.25 秒；投射物暴擊率 11%，到了炸開 0.8 格（暴擊率 12%）；必定凍結累積、凍結累積更多 100%。 */
+    /** 冰箭（Ice Shard，自動法術）：施放 1.25 秒；投射物暴擊率 11%，到了炸開 0.8 公尺（暴擊率 23%）；必定凍結累積、凍結累積更多 100%。
+     *  2026-11-01 照 PoE2（FrostBoltSkeletonMageMinion 的 Explosion：critChance 23）；這次之前爆炸暴擊率 12% */
     static final double SHARD_CAST = 1.25;
     static final double SHARD_CRIT = 11;
-    static final double SHARD_EXPLOSION_CRIT = 12;
+    static final double SHARD_EXPLOSION_CRIT = 23;
     static final double SHARD_RADIUS = tw.exilecore.core.Units.metres(0.8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
-    static final int[][] SHARD_COLD = {
-            {4, 6, 9, 11, 14, 18, 22, 26, 30, 36, 42, 48, 55, 63, 72, 82, 92, 104, 117, 132},
-            {6, 9, 13, 17, 22, 27, 32, 39, 46, 54, 62, 72, 83, 95, 108, 123, 139, 156, 176, 198}};
-    static final int[][] SHARD_EXPLOSION_COLD = {
-            {3, 5, 7, 9, 12, 14, 17, 21, 25, 29, 34, 39, 45, 51, 58, 66, 75, 84, 95, 107},
-            {5, 8, 11, 14, 17, 22, 26, 31, 37, 43, 50, 58, 67, 77, 87, 99, 112, 127, 142, 160}};
+    static final SpellDamage SHARD_COLD = new SpellDamage(1.0499999523163, 0.25, 0.034499999135733, 0.80000001192093, 1.2000000476837);
+    static final SpellDamage SHARD_EXPLOSION_COLD = new SpellDamage(0.85000002384186, 0.25, 0.034499999135733, 0.80000001192093, 1.2000000476837);
     /** 冰甲（Ice Armour，指令）：冷卻 12 秒；目標 4 格內自己的召喚物 6 秒內受到的擊中傷害更少 40%，打牠們的敵人受到冰冷傷害，算凍結中。 */
     static final double ARMOUR_RADIUS = tw.exilecore.core.Units.metres(4.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double ARMOUR_SECONDS = 6.0;
     static final double ARMOUR_LESS = 40;
+    // 2026-11-01 照 PoE2（IceArmourSkeletonMageMinion 1–40 級）；這次之前只寫到 20 級
     static final int[][] ARMOUR_COLD = {
-            {3, 5, 8, 12, 18, 25, 34, 47, 64, 86, 116, 155, 209, 281, 378, 511, 693, 943, 1288, 1767},
-            {4, 7, 12, 18, 26, 37, 52, 71, 96, 129, 173, 233, 313, 421, 567, 767, 1039, 1414, 1932, 2651}};
+            {3, 5, 8, 12, 18, 25, 34, 47, 64, 86, 116, 155, 209, 281, 378, 511, 693, 943, 1288, 1767,
+                    2437, 3376, 4702, 6584, 9271, 13127, 18696, 26786, 38609, 55993, 81711, 119996, 177348, 263807, 394981,
+                    595279, 903112, 1379307, 2120799, 3283031},
+            {4, 7, 12, 18, 26, 37, 52, 71, 96, 129, 173, 233, 313, 421, 567, 767, 1039, 1414, 1932, 2651,
+                    3655, 5064, 7054, 9877, 13906, 19691, 28044, 40179, 57913, 83989, 122566, 179994, 266022, 395711, 592472,
+                    892918, 1354667, 2068961, 3181198, 4924547}};
 
     // ---- 骸骨祭司（Skeletal Cleric）----
 
@@ -365,11 +408,15 @@ final class MinionAbilities {
     /** 振翅熵流（Winged Entropy）：你身邊 2 格的持續傷害，每一隻烏鴉持續傷害更多 5%、範圍更多 5%。 */
     static final double ENTROPY_RADIUS = tw.exilecore.core.Units.metres(2.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double ENTROPY_PER_RAVEN = 0.05;
-    /** 每秒的混沌、物理傷害（0 隻烏鴉，PoE2 單位；寶石 1～20 級）。 */
-    static final double[] ENTROPY_CHAOS = {16.2, 24.6, 34.3, 45.4, 58.3, 72.9, 89.6, 108.7, 130.3, 154.8, 182.5, 213.8, 249.1, 288.8, 333.5,
-            383.7, 440.0, 503.1, 573.7, 652.7};
-    static final double[] ENTROPY_PHYSICAL = {4.0, 6.1, 8.6, 11.4, 14.6, 18.2, 22.4, 27.2, 32.6, 38.7, 45.6, 53.5, 62.3, 72.2, 83.4, 95.9,
-            110.0, 125.8, 143.4, 163.2};
+    /** 每分鐘的混沌（min）、物理（max 欄位）傷害（0 隻烏鴉，PoE2 單位；ApplyTangmazuSwarmAuraPlayer，效用公式、L = 寶石等級 × 2）。
+     *  2026-11-01 照 PoE2 公式（任何等級）；這次之前是 1～20 級每秒的表、超過 20 級照召喚物傷害表推算 */
+    static final SpellDamage ENTROPY = new SpellDamage(7.1999998092651, 0.25, 0.041499998420477, 26.666667660077, 6.6666669150194);
+
+    /** {混沌, 物理} 每秒的傷害。 */
+    static double[] entropyPerSecond(final int level) {
+        final double[] perMinute = ENTROPY.at(level);
+        return new double[] {perMinute[0] / 60.0, perMinute[1] / 60.0};
+    }
     /** 亂鴉狂舞（Mad Flight，指令）：用掉 10 隻烏鴉，兩面鏡子之間（寬 2.2、長 7 格）5 秒，每 0.12 秒打一下 550%（70% 轉混沌）。 */
     static final int FLIGHT_RAVENS = 10;
     static final double FLIGHT_DAMAGE = 5.5;

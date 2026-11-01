@@ -161,6 +161,7 @@ spell_damage_growth: { 1: 1.05, 10: 1.13, 20: 2.29, 30: 3.13, 40: 3.42, 50: 4.6,
 # balance 的參考法術角色 50 級會到攻擊的 2.07 倍（測試上限 2.1），再高要先重算 spell_damage_growth
 extra_level_damage: 13
 # 召喚物超過 20 級每多一級，生命與傷害多幾 %（2026-10：召喚流的「+召喚物技能等級」很好疊，比法術低；+8 級 ×1.48）。
+# 2026-11-01 照站長「全部改成 +1 技能等級 = +2 召喚物等級」：這個不再有作用（召喚物每一級都照 PoE2 召喚物表 × 2 往上，MinionSheets.allyLevel／growth）
 minion_extra_level_damage: 5
 
 # 2026-10-26：照站長拿掉的技能（代號 → 名稱）。玩家身上、倉庫裡、技能面板上的這些技能寶石換成同等級的未切割技能寶石，
@@ -9941,7 +9942,7 @@ skills:
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false }
     # 2026-10-29 召喚物的技能標籤（minion_tags，輔助寶石照這些也能掛、效果給召喚物）：照 poe2db Summon Infernal Hound 的 Minion Types（Attack, Melee, MeleeSingleTarget, Area）；點燃光環在 AscGranted（不吃輔助），範圍不列
-    summon: { minion_tags: [attack, melee], kind: WOLF, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.5, damage: 1.0, attack_speed: 1.2, speed: 1.4, reach: 2.0 }   # 2026-10-26 照 PoE2 Summon Infernal Hound（點燃光環在 AscGranted）
+    summon: { minion_tags: [attack, melee], kind: WOLF, ally: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 0.88, damage: 1.25, attack_speed: 1.333, armour: 0.5, evasion: 0.5, spread: 0.3, resists: { fire: 50 }, speed: 1.4, reach: 2.0 }   # 2026-10-26 照 PoE2 Summon Infernal Hound（點燃光環在 AscGranted）；2026-11-01 改成 PoE2 召喚物表（ally：+1 技能等級 = +2 召喚物等級；這次之前照同等級怪物）；2026-11-01 照 poe2db HellhoundPlayerSummoned：生命 88%、傷害 125%、攻擊時間 0.75 秒、護甲／閃避 +50%、火焰抗性 50%、傷害浮動 ±30%（這次之前生命 150%、傷害 100%、攻速 1.2、沒有護甲閃避抗性）
     cast_time: 0.5
     cooldown: 1.5
     mana: 0

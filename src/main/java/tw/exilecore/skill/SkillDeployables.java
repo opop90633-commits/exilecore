@@ -461,6 +461,19 @@ final class SkillDeployables implements Listener {
                 mine.add(item);
             }
         }
+        if (spec.kind() == DeploySpec.Kind.TOTEM) {
+            final tw.exilecore.stats.StatSheet bondSheet = build.profile().effective(plugin.players().sheet(player));
+            if (tw.exilecore.stats.StatKeys.flag(bondSheet, tw.exilecore.stats.StatKeys.FLAG_ANCESTRAL_BOND)) {
+                // 2026-11-01 照站長：精魂不夠就取代上一根（precheck 已經確認收得夠）
+                final List<Deployed> replaced = bondReplacements(player, build, bondSheet, limit);
+                if (replaced != null) {
+                    for (final Deployed old : replaced) {
+                        mine.remove(old);
+                        remove(old, false);
+                    }
+                }
+            }
+        }
         while (mine.size() >= limit) {
             final Deployed oldest = mine.removeFirst();
             remove(oldest, false);
@@ -876,30 +889,60 @@ final class SkillDeployables implements Listener {
                 // 這次之前只看最舊那一根、上限只看 build.totems()，到上限要蓋掉舊的時還是顯示精魂不足
                 final boolean onlyOne = tw.exilecore.stats.StatKeys.flag(effective, tw.exilecore.stats.SupportExtraKeys.TOTEM_ONLY_ONE);
                 final int limit = onlyOne ? 1 : Math.max(1, build.totems());
-                final List<Deployed> mine = new ArrayList<>();
-                for (final Deployed item : deployed) {
-                    if (item.owner.equals(player.getUniqueId()) && item.skillId().equals(build.definition().id())) {
-                        mine.add(item);
-                    }
-                }
-                double freed = 0;
-                for (int i = 0; i <= mine.size() - limit; i++) {
-                    if (mine.get(i).spiritBond) {
-                        freed += mine.get(i).bondSpirit;
-                    }
-                }
-                final tw.exilecore.character.PlayerState state = plugin.players().get(player);
-                final double free = state.maxSpirit() - state.reservedSpirit() + freed;
-                final double need = bondSpirit(effective, build); // 2026-10-28：吃精魂保留效率
-                if (free + 1e-9 < need) {
-                    // 2026-10-30：寫出這個技能放了幾根／上限幾根（還沒到上限不會收掉舊的，精魂不會先還回來）
-                    return String.format(java.util.Locale.ROOT, "精魂不足：先祖魂約每個圖騰要保留 %.0f 精魂（剩 %.0f；%s %d/%d 根%s）",
-                            need, Math.max(0, free), build.definition().name(), mine.size(), limit,
-                            mine.size() < limit ? "，還沒到上限不會蓋掉舊的" : "");
+                // 2026-11-01 照站長：精魂不夠就取代上一根（收掉最舊的、精魂還回來）；收光了自己的先祖魂約圖騰還不夠才放不下。
+                // 這次之前還沒到上限就不會蓋掉舊的，直接顯示精魂不足
+                if (bondReplacements(player, build, effective, limit) == null) {
+                    final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+                    return String.format(java.util.Locale.ROOT, "精魂不足：先祖魂約每個圖騰要保留 %.0f 精魂（最大精魂 %.0f，其他保留 %.0f）",
+                            bondSpirit(effective, build), state.maxSpirit(),
+                            Math.max(0, state.reservedSpirit() - spiritReserved(player.getUniqueId())));
                 }
             }
         }
         return null;
+    }
+
+    /**
+     * 2026-11-01 照站長：放先祖魂約的圖騰時要收掉哪幾根。先收這個技能超過上限的；精魂還不夠就照放的順序繼續收
+     * （先收這個技能最舊的，再收其他技能的先祖魂約圖騰），每收一根那根保留的精魂就還回來。收光了還不夠回傳 null（放不下）。
+     */
+    private List<Deployed> bondReplacements(final Player player, final SkillBuild build, final tw.exilecore.stats.StatSheet effective,
+                                            final int limit) {
+        final List<Deployed> same = new ArrayList<>();
+        final List<Deployed> others = new ArrayList<>();
+        for (final Deployed item : deployed) {
+            if (!item.owner.equals(player.getUniqueId())) {
+                continue;
+            }
+            if (item.skillId().equals(build.definition().id())) {
+                same.add(item);
+            } else if (item.spiritBond && item.spec.kind() == DeploySpec.Kind.TOTEM) {
+                others.add(item);
+            }
+        }
+        final List<Deployed> remove = new ArrayList<>();
+        double freed = 0;
+        while (same.size() >= limit) {
+            final Deployed oldest = same.removeFirst();
+            remove.add(oldest);
+            freed += oldest.spiritBond ? oldest.bondSpirit : 0;
+        }
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        final double need = bondSpirit(effective, build); // 2026-10-28：吃精魂保留效率
+        final double free = state.maxSpirit() - state.reservedSpirit();
+        final java.util.ArrayDeque<Deployed> queue = new java.util.ArrayDeque<>(same);
+        queue.addAll(others);
+        while (free + freed + 1e-9 < need) {
+            final Deployed next = queue.pollFirst();
+            if (next == null) {
+                return null;
+            }
+            if (next.spiritBond) {
+                remove.add(next);
+                freed += next.bondSpirit;
+            }
+        }
+        return remove;
     }
 
     /** 2026-10-26 照 PoE2「砲彈準備好了！」：每個玩家最後一次發射攻擊投射物的 tick。 */

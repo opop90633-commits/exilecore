@@ -272,7 +272,13 @@ class MinionTest {
         assertEquals(40, MinionSheets.allyLevel(20));
         assertEquals(46, MinionSheets.allyLevel(23), "2026-10-28 照 PoE2：超過 20 級也照 ×2");
         assertEquals(80, MinionSheets.allyLevel(40));
-        assertEquals(80, MinionSheets.allyLevel(45), "超過 40 級照 extraScale");
+        // 2026-11-01 照站長「全部改成 +1 技能等級 = +2 召喚物等級」：超過 40 級也照 ×2（這次之前停在 80 級、改乘 extraScale 每級 +5%）
+        assertEquals(90, MinionSheets.allyLevel(45));
+        assertEquals(1.0, MinionSheets.extraScale(config, 45), 1e-9, "不再另外乘每級 +5%");
+        assertEquals(1.0, MinionSheets.growth(20, 20), 1e-9);
+        assertEquals(MinionSheets.refAllyDamage(46) / MinionSheets.refAllyDamage(40), MinionSheets.growth(23, 20), 1e-9,
+                "召喚物自己的技能表只寫到 20 級：23 級照召喚物傷害表 46 級 ÷ 40 級");
+        assertTrue(MinionSheets.refAllyDamage(110) > MinionSheets.refAllyDamage(100), "超過 100 級照最後兩級的比例往外推");
         final SummonSpec warrior = config.skill("summon_skeletons").summon();
         assertTrue(warrior.ally());
         // 20 級寶石：區域 90 級；PoE2 骸骨戰士 2490 × 0.88 生命、204.04 × 0.70 傷害，90 級怪 41748 生命、每下 443.79
@@ -389,8 +395,25 @@ class MinionTest {
         // 法術的傷害表、祭司的回復（固定值）
         assertEquals(551, MinionAbilities.range(MinionAbilities.STORM_LIGHTNING, 20)[0], 1e-9);
         assertEquals(3121, MinionAbilities.range(MinionAbilities.STORM_LIGHTNING, 20)[1], 1e-9);
-        assertEquals(408, MinionAbilities.range(MinionAbilities.ARC_LIGHTNING, 40)[1], 1e-9);
-        assertEquals(27243, MinionAbilities.HEAL_PER_MINUTE[MinionAbilities.row(20)]);
+        // 2026-11-01 照 PoE2 的效用公式：1～20 級跟原作的表一樣，21 級以上也照公式（這次之前 20 級表 × 成長推算）
+        assertEquals(1, MinionAbilities.range(MinionAbilities.ARC_LIGHTNING, 1)[0], 1e-9);
+        assertEquals(11, MinionAbilities.range(MinionAbilities.ARC_LIGHTNING, 1)[1], 1e-9);
+        assertEquals(408, MinionAbilities.range(MinionAbilities.ARC_LIGHTNING, 20)[1], 1e-9);
+        assertEquals(3499, MinionAbilities.range(MinionAbilities.ARC_LIGHTNING, 40)[1], 1e-9);
+        assertEquals(1820, MinionAbilities.range(MinionAbilities.STORM_LIGHTNING, 30)[0], 1e-9);
+        assertEquals(10311, MinionAbilities.range(MinionAbilities.STORM_LIGHTNING, 30)[1], 1e-9);
+        assertEquals(132, MinionAbilities.range(MinionAbilities.SHARD_COLD, 20)[0], 1e-9);
+        assertEquals(160, MinionAbilities.range(MinionAbilities.SHARD_EXPLOSION_COLD, 20)[1], 1e-9);
+        assertEquals(16.2, MinionAbilities.entropyPerSecond(1)[0], 0.05);
+        assertEquals(163.2, MinionAbilities.entropyPerSecond(20)[1], 0.05);
+        // 逐級的表照原作寫到 40 級
+        assertEquals(4678, MinionAbilities.range(MinionAbilities.ROAR_COLD, 20)[1], 1e-9);
+        assertEquals(8690377, MinionAbilities.range(MinionAbilities.ROAR_COLD, 40)[1], 1e-9);
+        assertEquals(3655, MinionAbilities.range(MinionAbilities.ARMOUR_COLD, 21)[1], 1e-9);
+        assertEquals(27243, MinionAbilities.at40(MinionAbilities.HEAL_PER_MINUTE, 20), 1e-9);
+        assertEquals(136534, MinionAbilities.at40(MinionAbilities.HEAL_PER_MINUTE, 40), 1e-9);
+        assertTrue(MinionAbilities.at40(MinionAbilities.HEAL_PER_MINUTE, 41) > 136534, "超過 40 級照最後兩級的比例往上");
+        assertEquals(23, MinionAbilities.SHARD_EXPLOSION_CRIT, 1e-9, "照 PoE2 冰箭爆炸暴擊率 23%");
         assertEquals(0, config.skill("summon_bone_priest").summon().heal(), 1e-9, "不再是每秒回最大生命的百分比");
         final double[] factors = MinionSheets.refFactors(config, 20, 0, monsters::lifeAt, monsters::damageAt);
         assertEquals((base.damageMin() + base.damageMax()) / 2, MinionSheets.refAllyDamage(40) * factors[0], 1e-6,
