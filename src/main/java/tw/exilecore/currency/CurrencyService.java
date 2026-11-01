@@ -104,6 +104,39 @@ public final class CurrencyService {
         return repository;
     }
 
+    /**
+     * 2026-11-02：符文通貨說明裡的羈絆詞綴（runes.yml 的 bonded；只有昇華・聖賢智慧才有效果，灰字）。
+     * 照武器、法杖類、防具各列一行；沒寫的那一類不列（法杖類目前都沒有）。不是符文、或 runes.yml 沒有這顆回傳空的。
+     */
+    private List<Component> bondedLore(final CurrencyType type) {
+        if (type.operation() != CurrencyOperation.RUNE || type.affix() == null || items == null) {
+            return List.of();
+        }
+        final tw.exilecore.item.Runes.Rune rune = items.repository().rune(type.affix());
+        if (rune == null) {
+            return List.of();
+        }
+        final List<Component> lines = new ArrayList<>();
+        bondedGroup(lines, "武器", rune.bondedWeapon());
+        bondedGroup(lines, "法杖類", rune.bondedCaster());
+        bondedGroup(lines, "防具、副手", rune.bondedArmour());
+        if (!lines.isEmpty()) {
+            lines.addFirst(ItemRenderer.line("<dark_gray>羈絆（要昇華・聖賢智慧才有效果）："));
+        }
+        return lines;
+    }
+
+    private static void bondedGroup(final List<Component> lines, final String where, final List<tw.exilecore.item.Runes.Line> group) {
+        if (group.isEmpty()) {
+            return;
+        }
+        final List<String> texts = new ArrayList<>();
+        for (final tw.exilecore.item.Runes.Line line : group) {
+            texts.add(line.text());
+        }
+        lines.add(ItemRenderer.line("<dark_gray>  " + where + "：" + ItemRenderer.escape(String.join("、", texts))));
+    }
+
     /** 做出 amount 顆通貨（未切割寶石交給 skill 模組做成寶石）。 */
     public ItemStack create(final CurrencyType type, final int amount) {
         final ItemStack made = maker.make(type, amount);
@@ -124,6 +157,7 @@ public final class CurrencyService {
                 lore.add(ItemRenderer.line("<gray>星籤・稀有度 " + omenRarity.tag() + omenRarity.label()));
             }
             lore.add(ItemRenderer.line("<gray>" + ItemRenderer.escape(type.description())));
+            lore.addAll(bondedLore(type)); // 2026-11-02：符文的羈絆詞綴（照 runes.yml 的 bonded）
             if (!type.flavor().isBlank()) {
                 lore.add(ItemRenderer.line("<dark_gray><i>" + ItemRenderer.escape(type.flavor())));
             }

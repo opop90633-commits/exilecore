@@ -3193,7 +3193,40 @@ public final class AilmentService {
             }
             parts.add(part);
         }
+        parts.addAll(exposureParts(debuffs.active(id, now), now, seconds)); // 2026-11-02 照站長：曝露也寫出來
         return String.join(" ", parts);
+    }
+
+    /** 2026-11-02 照站長：算曝露的減益來源（擊中、輔助、炸彈的曝露，火油曝露，折光戰旗）。 */
+    static final java.util.Set<String> EXPOSURE_SOURCES = java.util.Set.of("曝露", "火油曝露", "折光");
+
+    /**
+     * 2026-11-02 照站長：怪物身上的曝露「曝·火 曝·冰 曝·電」（seconds＝後面加剩最久的那個幾秒）；照減益裡降低元素抗性、來源是曝露的修飾器判斷。純函式（測試用）。
+     */
+    static List<String> exposureParts(final List<tw.exilecore.combat.Debuffs.Debuff> active, final long now, final boolean seconds) {
+        final List<String> parts = new ArrayList<>();
+        final DamageType[] types = {DamageType.FIRE, DamageType.COLD, DamageType.LIGHTNING};
+        final String[] names = {"火", "冰", "電"};
+        final String[] colors = {"#ff7b3d", "#7fd4ff", "#ffe14d"};
+        for (int i = 0; i < types.length; i++) {
+            long until = -1;
+            for (final tw.exilecore.combat.Debuffs.Debuff debuff : active) {
+                for (final tw.exilecore.stats.Modifier mod : debuff.mods()) {
+                    if (mod.value() < 0 && EXPOSURE_SOURCES.contains(mod.source()) && mod.stat().equals(types[i].mitigationStat())) {
+                        until = Math.max(until, debuff.untilTick());
+                    }
+                }
+            }
+            if (until < 0) {
+                continue;
+            }
+            String part = "<" + colors[i] + ">曝·" + names[i];
+            if (seconds && until > now && until < Long.MAX_VALUE / 8) {
+                part += String.format(Locale.ROOT, " %.1fs", (until - now) / 20.0);
+            }
+            parts.add(part);
+        }
+        return parts;
     }
 
     /** 「萎力詛咒」→「萎力」、「獵殺印記」→「獵殺」（拿掉了就沒字的照原名）。 */
