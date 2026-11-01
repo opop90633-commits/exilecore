@@ -47,7 +47,7 @@ public final class HitEffects implements Listener {
     public static final double EXPOSURE = 20;
     static final long EXPOSURE_TICKS = 80;
     /** 2026-10-26 照 PoE2：眩暈 8 秒（這次之前 4 秒）。 */
-    static final long DAZE_TICKS = 160;
+    public static final long DAZE_TICKS = 160; // 2026-11-01：public（SupportExtras 的開門招、震法也照這個基礎時間走 applyDaze）
     /** 2026-10-26 照 PoE2：眩暈的敵人受到的暈眩累積更多 50%。 */
     public static final double DAZE_STUN_BUILDUP = 0.5;
     /** 2026-10-26 照 PoE2：癱瘓減少 15% 閃避。 */
@@ -73,6 +73,50 @@ public final class HitEffects implements Listener {
 
     private long now() {
         return plugin.getServer().getCurrentTick();
+    }
+
+    /** 套上眩暈（8 秒內受到的暈眩累積更多 50%，眩暈效果照天賦乘）；已經眩暈的只刷新、不再冒字（2026-10-28）。 */
+    private void daze(final UUID target, final UUID source, final long now, final long ticks, final StatSheet effective, final Set<String> tags,
+                      final Player viewer, final LivingEntity defender) {
+        final boolean wasDazed = debuffs.has(target, "daze", now);
+        putDaze(debuffs, target, source, now, ticks, effective, tags);
+        if (!wasDazed) {
+            feedback(viewer, defender, "眩暈", Particle.WAX_OFF);
+        }
+    }
+
+    /** 眩暈的減益本體（受到的暈眩累積更多 50% × (1 + 天賦的眩暈效果)），ticks 已經算好持續時間。 */
+    private static void putDaze(final Debuffs debuffs, final UUID target, final UUID source, final long now, final long ticks,
+                                final StatSheet effective, final Set<String> tags) {
+        debuffs.apply(target, new Debuffs.Debuff("daze", source, now + Math.max(1, ticks), 0, false, null,
+                List.of(Modifier.more(tw.exilecore.ailment.AilmentKeys.STUN_BUILDUP_TAKEN, dazeStunBuildup( // 2026-10-26 照 PoE2 天賦樹：眩暈效果
+                        effective.increased(tw.exilecore.stats.TreeEffectKeys.DAZE_EFFECT, tags)), "眩暈")), 0));
+    }
+
+    /** 2026-11-01：眩暈給的「受到的暈眩累積更多」（50% × (1 + 增加的眩暈效果)，至少 0）。純函式（測試用）。 */
+    public static double dazeStunBuildup(final double increasedEffect) {
+        return DAZE_STUN_BUILDUP * Math.max(0, 1 + increasedEffect);
+    }
+
+    /** 2026-11-01：眩暈的持續時間（基礎 tick × (1 + 天賦的增加眩暈持續時間)），跟擊中時的眩暈同一條算法。 */
+    public static long dazeTicks(final long baseTicks, final StatSheet effective, final Set<String> tags) {
+        return scaledTicks(baseTicks, effective.increased(tw.exilecore.stats.TreeMechanicKeys.DAZE_DURATION, tags));
+    }
+
+    /**
+     * 2026-11-01：別的地方（輔助的事件：破眩的完全破甲…）套眩暈也走這裡——跟擊中時的眩暈同一條：
+     * 持續時間吃天賦的眩暈持續時間、效果吃天賦的眩暈效果、「不會造成眩暈」的不套。
+     * @param baseTicks 基礎持續時間（tick，還沒乘天賦）
+     * @return 有沒有套上
+     */
+    public static boolean applyDaze(final Debuffs debuffs, final UUID target, final UUID source, final long now, final long baseTicks,
+                                    final StatSheet effective, final Set<String> tags) {
+        if (debuffs == null || target == null || effective == null
+                || StatKeys.flag(effective, tw.exilecore.stats.SupportParityKeys.FLAG_CANNOT_DAZE)) {
+            return false;
+        }
+        putDaze(debuffs, target, source, now, dazeTicks(baseTicks, effective, tags), effective, tags);
+        return true;
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -126,10 +170,18 @@ public final class HitEffects implements Listener {
         // 2026-10-28 照 PoE2 落釘弩台：擊中必定定身（所有傷害都累積）、定身當作傷害更多 x%（PinKeys）
         final boolean hitsPin = tw.exilecore.stats.StatKeys.flag(effective, tw.exilecore.stats.PinKeys.FLAG_HITS_PIN);
         // 2026-10-28 照 PoE2 Bone Cage（base_all_damage_can_pin）：擊中必定定身的法術也會定身（這次之前只有投射物攻擊）
-        if ((pin > 0 && skill.isAttack() && tags.contains(Tags.PROJECTILE) || hitsPin) && plugin.ailments() != null
-                && plugin.ailments().pinBuildup(defender, monster, defenderSheet, tw.exilecore.stats.PinKeys.pinDamage(hitsPin, result.outgoing()),
+        // 2026-11-01 照 PoE2 Bone Chains（骸骨連鎖：物理法術的暴擊累積定身）：併到這同一個入口（PinKeys.source）——帶物理標籤的法術
+        //   每一條擊中（縛根的裂隙、藤蔓，新星、地面效果、投射物法術、觸發的法術都走 SkillDamage → 這裡）暴擊時累積，所有傷害類型都算
+        //   （PoB2 的 CanPin 沒限定傷害類型：物理轉成的元素也算）；只算你自己打的（天賦不給召喚物）。這次之前在 TreeMechanics 另外算：
+        //   只算剩下的物理、不吃更多／當作傷害／遠釘、不吃定身持續時間、沒有「定身」字樣，沒帶物理標籤的法術也算
+        final tw.exilecore.stats.PinKeys.Source pinSource = tw.exilecore.stats.PinKeys.source(hitsPin,
+                event.attacker() instanceof Player && StatKeys.flag(effective, tw.exilecore.stats.TreeNewMechanicKeys.FLAG_SPELL_CRIT_PIN),
+                pin, tags, StatKeys.flag(effective, tw.exilecore.stats.SupportExtraKeys.FLAG_CANNOT_PIN)); // 2026-11-01 照 PoE2 Bone Shrapnel：不能定身
+        if (pinSource.builds(result.crit()) && plugin.ailments() != null
+                && plugin.ailments().pinBuildup(defender, monster, defenderSheet, tw.exilecore.stats.PinKeys.pinDamage(pinSource.allDamage(), result.outgoing()),
                         Math.max(0, effective.apply(tw.exilecore.stats.TreeKeys.PIN_BUILDUP, 1.0, tags)) // 2026-10-26：也算更多（火力抑制更多 40% 禁錮累積）
-                                * tw.exilecore.stats.PinKeys.asThoughMultiplier(effective.flat(tw.exilecore.stats.PinKeys.PIN_AS_THOUGH, tags)))) {
+                                * tw.exilecore.stats.PinKeys.asThoughMultiplier(effective.flat(tw.exilecore.stats.PinKeys.PIN_AS_THOUGH, tags))
+                                * lockdown(event, effective, tags))) { // 2026-11-01 照 PoE2 Lockdown（遠釘）：越近累積越多
             final long ticks = scaledTicks(Math.max(1, Math.round(plugin.ailments().config().pin().duration(false) * 20)),
                     effective.increased(tw.exilecore.stats.SupportKeys.PIN_DURATION, tags)); // 2026-10-26 照 PoE2 天賦樹：增加定身持續時間
             debuffs.apply(target, new Debuffs.Debuff("pin", source, now + ticks, 0, false, null, List.of(), 1.0));
@@ -143,15 +195,17 @@ public final class HitEffects implements Listener {
             }
         }
         final double daze = effective.flat(StatKeys.DAZE_CHANCE, tags);
-        if (daze > 0 && roll(daze)) {
-            final boolean wasDazed = debuffs.has(target, "daze", now); // 2026-10-28：已經眩暈的不再冒字
-            debuffs.apply(target, new Debuffs.Debuff("daze", source, now + scaledTicks(DAZE_TICKS, // 2026-10-26：天賦的眩暈持續時間
-                    effective.increased(tw.exilecore.stats.TreeMechanicKeys.DAZE_DURATION, tags)), 0, false, null,
-                    List.of(Modifier.more(tw.exilecore.ailment.AilmentKeys.STUN_BUILDUP_TAKEN, DAZE_STUN_BUILDUP // 2026-10-26 照 PoE2 天賦樹：眩暈效果
-                            * Math.max(0, 1 + effective.increased(tw.exilecore.stats.TreeEffectKeys.DAZE_EFFECT, tags)), "眩暈")), 0));
-            if (!wasDazed) {
-                feedback(viewer, defender, "眩暈", Particle.WAX_OFF);
-            }
+        final long dazeTicks = dazeTicks(DAZE_TICKS, effective, tags); // 2026-10-26：天賦的眩暈持續時間
+        final boolean cannotDaze = StatKeys.flag(effective, tw.exilecore.stats.SupportParityKeys.FLAG_CANNOT_DAZE); // 2026-11-01 照 PoE2 Dazzle（穩擊）：不會造成眩暈
+        if (daze > 0 && !cannotDaze && roll(daze)) {
+            daze(target, source, now, dazeTicks, effective, tags, viewer, defender);
+        }
+        // 2026-11-01 照 PoE2 Daze 輔助：造成的物理傷害的一部分累積眩暈條（AilmentService.dazeBuildup），滿了才眩暈；這次之前震眩是 30% 機率直接眩暈
+        final double dazeBuildup = effective.flat(tw.exilecore.stats.SupportRuleKeys.DAZE_BUILDUP, tags);
+        final double dazePhysical = result.dealt().get(DamageType.PHYSICAL) * dazeBuildup / 100.0;
+        if (!cannotDaze && dazePhysical > 0 && plugin.ailments() != null && !debuffs.has(target, "daze", now)
+                && plugin.ailments().dazeBuildup(defender, monster, defenderSheet, dazePhysical, dazeTicks)) {
+            daze(target, source, now, dazeTicks, effective, tags, viewer, defender);
         }
         if (event.attacker() instanceof Player owner && !tags.contains(Tags.TOTEM_HIT)) {
             uniqueOnHit(owner, defender, skill, result, effective, tags);
@@ -369,6 +423,16 @@ public final class HitEffects implements Listener {
         lastSkill.remove(event.getPlayer().getUniqueId());
     }
 
+    /** 2026-11-01 照 PoE2 Lockdown（遠釘）：照攻擊方（你、或召喚物自己）到目標的距離算的定身累積倍率。 */
+    public static double lockdown(final HitEvent event, final StatSheet effective, final Set<String> tags) {
+        final double percent = effective.flat(tw.exilecore.stats.SupportParityKeys.PIN_LOCKDOWN, tags);
+        if (percent <= 0 || event.attacker() == null || !event.attacker().getWorld().equals(event.defender().getWorld())) {
+            return 1.0;
+        }
+        return tw.exilecore.stats.SupportParityKeys.lockdownMultiplier(percent,
+                event.attacker().getLocation().distance(event.defender().getLocation()));
+    }
+
     private boolean roll(final double percent) {
         return percent >= 100 || plugin.items().random().nextDouble() * 100 < percent;
     }
@@ -411,13 +475,19 @@ public final class HitEffects implements Listener {
                     slow = Math.max(0, Math.min(slow, 1 - tw.exilecore.ailment.AilmentService.MONSTER_MIN_SPEED / (1 - ailment)));
                 }
             }
-            apply(living, slow);
+            // 2026-11-01 照 PoE2 See Red：流血的敵人移動速度增加（haste. 減益）；定身（1）照樣不能動
+            apply(living, netSlow(slow, debuffs.haste(id, now)));
         }
+    }
+
+    /** 2026-11-01：變慢與加快合起來（負的 = 變快）；定身（≥ 1）不受加快影響。純函式（測試用）。 */
+    static double netSlow(final double slow, final double haste) {
+        return slow >= 1 ? slow : slow - Math.max(0, haste);
     }
 
     private void apply(final LivingEntity living, final double slow) {
         final Double previous = applied.get(living.getUniqueId());
-        if (previous == null ? slow <= 0 : Math.abs(previous - slow) < 1e-3) {
+        if (previous == null ? Math.abs(slow) < 1e-9 : Math.abs(previous - slow) < 1e-3) { // 2026-11-01：負的（變快）也要套
             return;
         }
         for (final Attribute attribute : new Attribute[] {Attribute.MOVEMENT_SPEED, Attribute.FLYING_SPEED}) {
@@ -426,11 +496,11 @@ public final class HitEffects implements Listener {
                 continue;
             }
             instance.removeModifier(slowKey);
-            if (slow > 0) {
+            if (Math.abs(slow) >= 1e-9) {
                 instance.addTransientModifier(new AttributeModifier(slowKey, -Math.min(1.0, slow), AttributeModifier.Operation.MULTIPLY_SCALAR_1));
             }
         }
-        if (slow > 0) {
+        if (Math.abs(slow) >= 1e-9) {
             applied.put(living.getUniqueId(), slow);
         } else {
             applied.remove(living.getUniqueId());

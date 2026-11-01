@@ -343,7 +343,9 @@ public final class JewelSockets {
                 list.add(new Modifier(mod.stat(), mod.type(), mod.value() * PHYLACTERY_EFFECT, mod.tags(), "命匣"));
             }
         }
-        boolean uniqueSeen = false;
+        // 2026-11-01 照站長：每一種傳奇珠寶各算一顆（不同的傳奇珠寶都生效；同一種的第二顆不算）；
+        //   這次之前 uniqueSeen 一個布林：天賦樹上只有第一顆傳奇珠寶生效，其他種類的傳奇珠寶也被當成第二顆
+        final java.util.Set<String> uniquesSeen = new java.util.HashSet<>();
         // 2026-10-26：永恆珠寶征服的節點（半徑珠寶的「範圍內天賦效果增加」放大的是征服後的效果）
         final Map<String, PassiveNode> conquered = TimelessJewels.conquered(tree, TimelessJewels.active(repository, jewels, passives, tree), passives);
         for (final Map.Entry<String, tw.exilecore.item.ItemData> entry : jewels.entrySet()) {
@@ -355,11 +357,8 @@ public final class JewelSockets {
             if (TimelessJewels.isTimeless(repository.base(data.base()))) {
                 continue; // 2026-10-26：永恆珠寶沒有自己的屬性，效果是征服節點（TimelessJewels.treeModifiers），也不佔傳奇珠寶的名額
             }
-            if (data.rarity() == tw.exilecore.item.Rarity.UNIQUE) {
-                if (uniqueSeen) {
-                    continue; // 以前放進去的第二顆傳奇珠寶不算
-                }
-                uniqueSeen = true;
+            if (data.rarity() == tw.exilecore.item.Rarity.UNIQUE && !countsUnique(uniquesSeen, data.unique())) {
+                continue; // 以前放進去的同一種第二顆傳奇珠寶不算
             }
             List<Modifier> mods = tw.exilecore.item.ItemStats.modifiers(repository, data);
             final ItemBase base = repository.base(data.base());
@@ -374,6 +373,14 @@ public final class JewelSockets {
             }
         }
         return list;
+    }
+
+    /**
+     * 2026-11-01：這顆傳奇珠寶算不算（每一種各一顆）：還沒算過這一種回傳 true 並記下。沒有傳奇代號的當成同一種（"?"，跟放進去時的檢查一樣）。
+     * 純函式（測試用）。
+     */
+    static boolean countsUnique(final java.util.Set<String> seen, final String unique) {
+        return seen.add(unique == null || unique.isBlank() ? "?" : unique);
     }
 
     /** 2026-10-27：命匣裡的珠寶效果倍率（增加 100%）。 */

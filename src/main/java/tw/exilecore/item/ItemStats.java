@@ -200,7 +200,7 @@ public final class ItemStats {
                 }
                 for (final AffixMod mod : affix.mods()) {
                     if (stat.equals(mod.stat()) && mod.type() == type && (mod.isLocal() || isArmourLocal(base, mod))) {
-                        total += mod.toModifier(rolled.vars(), "").value();
+                        total += mod.toModifier(rolled.vars(), "", rolled.fixedScale()).value(); // 2026-11-01：腐化的固定值倍率
                     }
                 }
             }
@@ -311,7 +311,7 @@ public final class ItemStats {
                     if (mod.isLocal() || base.isWeapon() && LocalMods.isWeaponLocal(mod) || isArmourLocal(base, mod)) {
                         continue; // 本地詞綴已經算進武器、防具的數值（snapshot）
                     }
-                    Modifier modifier = mod.toModifier(rolled.vars(), source + " " + affix.id() + " T" + affix.rank(rolled.tier()));
+                    Modifier modifier = mod.toModifier(rolled.vars(), source + " " + affix.id() + " T" + affix.rank(rolled.tier()), rolled.fixedScale()); // 2026-11-01：腐化的固定值倍率
                     if (unveiledScale != 1 && Veiled.isUnveiled(rolled.id())) {
                         modifier = new Modifier(modifier.stat(), modifier.type(), modifier.value() * unveiledScale, modifier.tags(), modifier.source());
                     }
@@ -360,7 +360,7 @@ public final class ItemStats {
             }
             for (final AffixMod mod : affix.mods()) {
                 if (UNVEILED_MAGNITUDE.equals(mod.stat())) {
-                    total += mod.toModifier(rolled.vars(), "").value();
+                    total += mod.toModifier(rolled.vars(), "", rolled.fixedScale()).value(); // 2026-11-01：腐化的固定值倍率
                 }
             }
         }
@@ -509,8 +509,8 @@ public final class ItemStats {
             final double scale = (boosted ? factor : 1) * (veiledBoost ? 1 + unveiled : 1);
             final Map<String, Integer> vars = scale != 1 ? scaled(rolled.vars(), scale) : rolled.vars();
             final Map<String, int[]> ranges = scale != 1 ? scaledRanges(affix.ranges(rolled.tier()), scale) : affix.ranges(rolled.tier());
-            final AffixLine line = new AffixLine(affix.render(vars), affix.rank(rolled.tier()), affix.type(),
-                    Affix.substituteWithRanges(affix.text(), vars, ranges), boosted, veiledBoost ? (int) Math.round(unveiled * 100) : 0,
+            final AffixLine line = new AffixLine(affix.render(vars, rolled.fixedScale()), affix.rank(rolled.tier()), affix.type(), // 2026-11-01：腐化的固定值也照倍率顯示
+                    Affix.substituteWithRanges(affix.scaledText(rolled.fixedScale()), vars, ranges), boosted, veiledBoost ? (int) Math.round(unveiled * 100) : 0,
                     repository.chipsOf(affix), // 2026-10：詞綴標籤（資料檔寫了 chips 的照寫的）
                     affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG) ? AffixLine.ENCHANT
                             : data.isFractured(rolled) ? AffixLine.FRACTURED : null); // 2026-10-21

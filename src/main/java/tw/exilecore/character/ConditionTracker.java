@@ -92,6 +92,8 @@ public final class ConditionTracker {
         long tick = Long.MIN_VALUE;
         boolean moving;
         double lifeFraction = 1;
+        /** 2026-11-01 照 PoE2 保留生命：滿血看的是沒被保留的生命（血契保留了生命，回滿到沒保留的部分就算滿血）。 */
+        double fullLifeFraction = 1;
         double manaFraction = 1;
         double es;
         double maxEs;
@@ -154,6 +156,7 @@ public final class ConditionTracker {
         sample.z = at.getZ();
         sample.tick = now;
         sample.lifeFraction = fraction(state.life(), state.maxLife());
+        sample.fullLifeFraction = state.lifeFractionOfUnreserved(); // 2026-11-01：保留生命（低血照最大生命算，滿血照沒保留的）
         sample.manaFraction = fraction(state.mana(), state.maxMana());
         // 2026-10-28 照 PoE2：貧魔、滿魔的門檻（傳奇改的）
         final double lowMana = state.sheet().flat(tw.exilecore.item.unique.UniqueStats.LOW_MANA_THRESHOLD, Set.of());
@@ -481,7 +484,7 @@ public final class ConditionTracker {
             case TreeConditions.MOVING -> sample != null && sample.moving;
             case TreeConditions.STATIONARY -> sample == null || !sample.moving;
             case TreeConditions.LOW_LIFE -> lowLife(sample == null ? 1 : sample.lifeFraction);
-            case TreeConditions.FULL_LIFE -> fullLife(sample == null ? 1 : sample.lifeFraction);
+            case TreeConditions.FULL_LIFE -> fullLife(sample == null ? 1 : sample.fullLifeFraction);
             // 2026-10-28 照 PoE2（磐石之拳的遊手好閒）：「最大魔力的 50% 以下視為貧魔」
             case TreeConditions.LOW_MANA -> sample == null ? false : sample.manaFraction <= sample.lowManaFraction + 1e-9;
             case TreeConditions.FULL_ES -> sample != null && sample.maxEs > 0 && sample.es >= sample.maxEs - 1e-6;
@@ -557,8 +560,12 @@ public final class ConditionTracker {
         return count;
     }
 
-    /** 臨在範圍裡有沒有盟友：自己的召喚物、同隊的玩家。 */
+    /** 臨在範圍裡有沒有盟友：自己的召喚物、同隊的玩家、虛空形態的幻影（2026-11-01）。 */
     private boolean allyNear(final Player player, final double radius) {
+        // 2026-11-01 照站長（原作的幻影算你的友軍）：虛空形態的幻影也算
+        if (plugin.skills() != null && plugin.skills().astralImageNear(player, radius)) {
+            return true;
+        }
         final Location at = player.getLocation();
         for (final LivingEntity entity : player.getWorld().getNearbyLivingEntities(at, radius)) {
             if (entity == player || entity.isDead() || !entity.isValid() || entity.getLocation().distanceSquared(at) > radius * radius) {

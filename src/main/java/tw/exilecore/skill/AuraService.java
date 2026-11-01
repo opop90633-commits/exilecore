@@ -395,10 +395,12 @@ final class AuraService implements Listener {
         return StatKeys.flag(sheet, StatKeys.FLAG_CHAOS_IMMUNE);
     }
 
-    /** 這張表的最大生命換回血契保留之前的（表裡已經算進 reservedNow % 的保留）。 */
+    /**
+     * 這張表的最大生命（血契保留之前的）。2026-11-01 照 PoE2 的保留生命：保留不再縮小最大生命（{@link tw.exilecore.stats.LineageKeys#LIFE_RESERVED}），
+     * 所以就是最大生命本身，reservedNow 不用再換算；這次之前表裡的最大生命已經更少 reservedNow %，要除回去。
+     */
     static double baseLife(final tw.exilecore.stats.StatSheet sheet, final double reservedNow) {
-        final double life = PlayerState.maxLife(sheet);
-        return reservedNow > 0 && reservedNow < 100 ? life / (1 - reservedNow / 100.0) : life;
+        return PlayerState.maxLife(sheet);
     }
 
     /** 這些光環的血契加起來保留幾 % 生命。 */
@@ -483,7 +485,8 @@ final class AuraService implements Listener {
                     totalReserve(player.getUniqueId()) + otherReserve(player.getUniqueId()), capacity(toggleSheet), tw.exilecore.item.ItemRenderer.escape(build.definition().name()),
                     build.reserve() + build.minionReserve());
         }
-        final double lifeSoFar = communionReserved(mine.values());
+        // 2026-11-01：貝達特（關不掉的保留生命）也算進已經保留的
+        final double lifeSoFar = communionReserved(mine.values()) + PlayerState.innateReservedLifePercent(toggleSheet);
         if (!lifeFits(build, baseLife(toggleSheet, lifeSoFar), lifeLocked(toggleSheet), lifeSoFar)) {
             // 2026-10-27 照 PoE2 血契：保留生命付不起（或最大生命被鎖成 1）就開不了
             return String.format(Locale.ROOT, "<red>生命不夠保留：已經保留 %.0f%%，%s 要 %.0f%%",
@@ -843,7 +846,7 @@ final class AuraService implements Listener {
             final SkillBuild build = service.build(state, sheet, definition, state.skills().skill(position));
             final Fit fit = fit(build, capacity(sheet, otherReserve(player.getUniqueId())) - total,
                     wantedCount(state, id.trim())); // 2026-10-28：扣掉圖騰的保留；2026-10-30：照玩家設定的數量（這次之前上線時先帶滿）
-            final double lifeSoFar = communionReserved(mine.values());
+            final double lifeSoFar = communionReserved(mine.values()) + PlayerState.innateReservedLifePercent(sheet); // 2026-11-01：加上貝達特
             if (fit == null || !lifeFits(build, PlayerState.maxLife(sheet), lifeLocked(sheet), lifeSoFar)) {
                 continue;
             }
@@ -884,9 +887,11 @@ final class AuraService implements Listener {
         }
         // 2026-10-27 照 PoE2 血契（Atziri's Communion）：保留最大生命（每 1 點基礎精魂 0.66%，加總起來算一次；做成最大生命更少）。
         // 付不起的開不了（lifeFits），所以不再夾值；這次之前夾在 95%，多掛幾顆血契後面的等於免費
+        // 2026-11-01 照 PoE2 的保留生命：改成真的保留（最大生命不變，目前生命最多到沒被保留的部分，PlayerState#unreservedLife）；
+        //   這次之前 Modifier.more(LIFE_MAX, -x%)（最大生命直接變少，照最大生命算的回復、守護、% 最大生命都跟著變少）
         final double lifeReserved = mine == null ? 0 : communionReserved(mine.values());
         if (lifeReserved > 0) {
-            list.add(Modifier.more(StatKeys.LIFE_MAX, -Math.min(100, lifeReserved) / 100.0, "血契保留"));
+            list.add(Modifier.flat(tw.exilecore.stats.LineageKeys.LIFE_RESERVED, Math.min(100, lifeReserved), "血契保留"));
         }
         if (fromAllies != null) {
             list.addAll(fromAllies);
@@ -1024,6 +1029,7 @@ final class AuraService implements Listener {
         if (!desired.isEmpty()) {
             final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
             final double lifeBase = baseLife(sheet, communionReserved(mine.values()));
+            final double lifeInnate = PlayerState.innateReservedLifePercent(sheet); // 2026-11-01：貝達特（關不掉的保留生命）
             double lifeTotal = 0;
             // 2026-10：照按鍵順序開（數字鍵 3→8，再來左、右、蹲左、蹲右）：精魂不夠時前面的先召喚
             for (final tw.exilecore.character.SkillLoadout.Entry entry : state.skills().entriesInKeyOrder()) {
@@ -1035,7 +1041,7 @@ final class AuraService implements Listener {
                 final SkillBuild build = service.build(state, sheet, definition, entry);
                 final Fit fit = fit(build, capacity(sheet, otherReserve(player.getUniqueId())) - total,
                     wantedCount(state, definition.id())); // 2026-10-28：扣掉圖騰的保留；2026-10-30：照玩家設定的數量（這次之前上線時先帶滿）
-                if (fit == null || !lifeFits(build, lifeBase, lifeLocked(sheet), lifeTotal)) {
+                if (fit == null || !lifeFits(build, lifeBase, lifeLocked(sheet), lifeInnate + lifeTotal)) {
                     skipped.add(definition.name());
                     continue;
                 }
@@ -1318,7 +1324,7 @@ final class AuraService implements Listener {
         final tw.exilecore.stats.StatSheet lifeSheet = plugin.players().sheet(player);
         final double lifeBase = baseLife(lifeSheet, communionReserved(mine.values()));
         final boolean locked = lifeLocked(lifeSheet);
-        double lifeRunning = 0;
+        double lifeRunning = PlayerState.innateReservedLifePercent(lifeSheet); // 2026-11-01：從貝達特（關不掉的保留生命）開始算；這次之前 0
         for (final Active aura : new ArrayList<>(mine.values())) {
             if (aura.build != null && LineageRules.communionLife(aura.build) > 0) {
                 if (!lifeFits(aura.build, lifeBase, locked, lifeRunning)) {

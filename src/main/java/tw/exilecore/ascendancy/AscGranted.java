@@ -75,6 +75,7 @@ final class AscGranted implements Listener {
         int purple;
         long purpleUntil;
         long lifeRemnantReady;
+        long manaRemnantReady;
         long voidCharges = 3;
         long voidRecharge;
         double ward = -1;
@@ -94,6 +95,8 @@ final class AscGranted implements Listener {
         long cloneUntil;
         long zealotryReady;
         long brandReady;
+        long embraceReady;
+        long embraceCast;
         final ArrayDeque<Long> damaging = new ArrayDeque<>();
         final ArrayDeque<double[]> rift = new ArrayDeque<>();
         Location[] riftAt = new Location[0];
@@ -132,6 +135,50 @@ final class AscGranted implements Listener {
     private final List<RareCorpse> rares = new ArrayList<>();
     /** 地上的殘骸（夏烏拉之炎、生命痕跡）。 */
     private final List<Remnant> remnants = new ArrayList<>();
+
+    /**
+     * 2026-11-01 照 PoE2 Mana Remnants（魔泉湧）：擊殺有元素異常的敵人 25% 機率、對有元素異常的目標暴擊（最多每 2 秒一次）產生魔力痕跡，
+     * 痕跡 8 秒，撿到回魔力（可以溢出最大魔力），每個 28～281（寶石 1～20 級）＋品質 (0—40)。
+     * 這次之前魔泉湧是「魔力回復增加 20～40%、擊殺回 1～2 魔力」，沒有痕跡。
+     */
+    static final String MANA_REMNANTS = "magic_spring_well";
+    static final String MANA_REMNANT_STAT = "remnant.mana";
+    static final double MANA_REMNANT_KILL_CHANCE = 0.25;
+    static final long MANA_REMNANT_CRIT_TICKS = 40;
+    /** 最近被你打到時身上有元素異常的敵人（死的那一刻異常可能已經先被清掉）。 */
+    private final Map<UUID, Long> elementalAiled = new HashMap<>();
+
+    /** PoE2 的元素異常：點燃、冰緩、凍結、感電、電擊。 */
+    static final Set<AilmentType> ELEMENTAL_AILMENTS = Set.of(AilmentType.IGNITE, AilmentType.CHILL, AilmentType.FREEZE, AilmentType.SHOCK,
+            AilmentType.ELECTROCUTE);
+
+    private boolean elementallyAiled(final LivingEntity target) {
+        if (plugin.ailments() == null) {
+            return false;
+        }
+        for (final AilmentType type : ELEMENTAL_AILMENTS) {
+            if (plugin.ailments().has(target, type)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 魔泉湧產生一個魔力痕跡（回多少照你插著的寶石等級加品質；殘骸輔助照那顆寶石上的）。回傳有沒有產生。 */
+    private boolean dropManaRemnant(final Player player, final Location at) {
+        final SkillBuild build = plugin.skills() == null ? null : plugin.skills().equippedBuild(player, MANA_REMNANTS);
+        if (build == null) {
+            return false;
+        }
+        final double mana = plugin.skills().levelValue(MANA_REMNANTS, MANA_REMNANT_STAT, build.level()) + build.qualityFlat(MANA_REMNANT_STAT);
+        if (mana <= 0) {
+            return false;
+        }
+        final tw.exilecore.skill.ChargeEffects.RemnantMods mods = tw.exilecore.skill.ChargeEffects.RemnantMods.of(
+                build.profile().effective(plugin.players().sheet(player)), build.profile().tags());
+        plugin.skills().chargeEffects().dropManaRemnant(player, at, mana, mods);
+        return true;
+    }
     /** 納維拉的綠洲。 */
     private final List<Oasis> oases = new ArrayList<>();
     /** 2026-11-01：站在綠洲裡累積的藥劑充能（每秒 0.5～0.7，滿 1 點給一次）。 */
@@ -157,6 +204,150 @@ final class AscGranted implements Listener {
 
     private final List<Brand> brands = new ArrayList<>();
     static final int BRAND_LIMIT = 3;
+
+    /**
+     * 2026-11-01 照 PoE2 Navira's Embrace（終幻．娜瑟菈自帶的指令：按娜瑟菈的鍵）：在你身邊放一個 2.5 公尺的泡泡護盾，
+     * 站在裡面的你與隊友被泡泡外面的敵人打時，泡泡吃掉 70% 的傷害；泡泡的生命 = 你最大魔力的 60%（每 100 魔力 60），
+     * 被打破時塌成一塊冰緩地面（asc_chilled_ground：2 公尺、6 秒）。持續 5 秒 + 0～10 秒（照娜瑟菈的等級 1→100，娜瑟菈等級 = 技能等級 × 2），
+     * 冷卻 15 秒、施法 2 秒。這次之前沒有這個指令（按娜瑟菈的鍵只說「一直開著」）。
+     */
+    static final class Bubble {
+        final UUID owner;
+        final Location center;
+        final long until;
+        double life;
+
+        Bubble(final UUID owner, final Location center, final long until, final double life) {
+            this.owner = owner;
+            this.center = center;
+            this.until = until;
+            this.life = life;
+        }
+    }
+
+    private final List<Bubble> bubbles = new ArrayList<>();
+    static final double EMBRACE_ABSORB = 0.70;
+    static final double EMBRACE_LIFE_PER_MANA = 0.60;
+    static final long EMBRACE_COOLDOWN_TICKS = 300;
+    static final long EMBRACE_CAST_TICKS = 40;
+    /** 娜瑟菈的擁抱的魔力：原作「Cost 7—75」，跟娜瑟菈的綠洲同一張表。 */
+    static final int[] EMBRACE_MANA = {7, 8, 10, 11, 13, 15, 17, 20, 23, 25, 29, 32, 36, 40, 45, 50, 55, 61, 68, 75};
+
+    /** 泡泡持續幾秒（原作 base 5 秒、外加 0→10 秒照召喚物等級 1→100 線性）。 */
+    static double embraceSeconds(final int level) {
+        final double minionLevel = 2.0 * Math.max(1, level);
+        return 5 + 10 * Math.min(1.0, (minionLevel - 1) / 99.0);
+    }
+
+    static int embraceMana(final int level) {
+        if (level <= EMBRACE_MANA.length) {
+            return EMBRACE_MANA[Math.max(1, level) - 1];
+        }
+        final double ratio = (double) EMBRACE_MANA[EMBRACE_MANA.length - 1] / EMBRACE_MANA[EMBRACE_MANA.length - 2];
+        return (int) Math.round(EMBRACE_MANA[EMBRACE_MANA.length - 1] * Math.pow(ratio, level - EMBRACE_MANA.length));
+    }
+
+    /** 按終幻．娜瑟菈的鍵：下「娜瑟菈的擁抱」指令。 */
+    String embrace(final Player player, final SkillBuild build) {
+        final PlayerState state = plugin.players().get(player);
+        final Own own = own(player);
+        final long now = now();
+        if (djinnAt(player, "final_mirage_spirit") == null) {
+            return "<red>娜瑟菈的擁抱：娜瑟菈要在你身邊 20 格內";
+        }
+        if (now < own.embraceCast) {
+            return "<gray>娜瑟菈的擁抱：施放中";
+        }
+        if (now < own.embraceReady) {
+            return String.format(java.util.Locale.ROOT, "<gray>娜瑟菈的擁抱冷卻中（%.1f 秒）", (own.embraceReady - now) / 20.0);
+        }
+        final int mana = embraceMana(build.level());
+        if (state.mana() + 1e-9 < mana) {
+            return "<red>魔力不足（娜瑟菈的擁抱要 " + mana + "）";
+        }
+        state.setMana(state.mana() - mana);
+        // 2026-11-01 照 PoE2（CommandWaterDjinnBubblePlayer castTime 0.4：你下指令很快；WaterBubbleWaterDjinn castTime 2：娜瑟菈放 2 秒 ÷ 她的施法速度）：
+        //   你的動作照下指令的時間（SkillService），泡泡在娜瑟菈放完時才出現（在你那時候的位置）；這次之前固定 2 秒（EMBRACE_CAST_TICKS）、馬上出現
+        final long cast = Math.max(1, plugin.skills() == null ? EMBRACE_CAST_TICKS : plugin.skills().djinnCastTicks(player, build));
+        own.embraceCast = now + cast;
+        // 2026-11-01 照 PoE2（WaterBubbleWaterDjinn 是娜瑟菈的技能，冷卻吃召喚物的 CooldownRecovery）：照娜瑟菈的屬性表、指令的情境
+        //   （主人給召喚物的冷卻回復、天賦「召喚物的指令技能冷卻回復速度」、軍令增加 100%）；這次之前照你自己的冷卻回復速度
+        final StatSheet navira = plugin.skills() == null || plugin.skills().minions() == null ? null
+                : plugin.skills().minions().djinnSheet(player.getUniqueId(), "final_mirage_spirit");
+        final double recovery = navira == null ? 1.0 : tw.exilecore.skill.Commandables.rate(navira);
+        own.embraceReady = now + Math.round(EMBRACE_COOLDOWN_TICKS / recovery);
+        navira(player); // 下指令觸發娜瑟菈的寧靜
+        if (plugin.skills() != null) {
+            plugin.skills().djinnCasting(player, build.definition(), cast, player.getLocation());
+        }
+        final int level = build.level();
+        final double durationScale = build.durationScale();
+        effects.later(cast, () -> {
+            if (!player.isOnline() || djinnAt(player, "final_mirage_spirit") == null) {
+                return; // 娜瑟菈不在了：泡泡沒有放出來
+            }
+            final Location center = player.getLocation();
+            final long until = now() + Math.round(embraceSeconds(level) * 20 * durationScale);
+            final double life = state.maxMana() * EMBRACE_LIFE_PER_MANA;
+            bubbles.removeIf(b -> b.owner.equals(player.getUniqueId())); // 同一個人同時一個泡泡
+            bubbles.add(new Bubble(player.getUniqueId(), center, until, life));
+            moveDjinn(player, "final_mirage_spirit", center);
+            tw.exilecore.skill.Fx.spawn(center.getWorld(), Particle.BUBBLE_POP, center.clone().add(0, 1, 0), 40, 1.2, 1.0, 1.2, 0.02);
+        });
+        return "<#8fd3ff>娜瑟菈的擁抱";
+    }
+
+    /** 純邏輯：泡泡吃掉多少（in 在裡面、out 打的人在外面；吃 70%，最多到泡泡剩下的生命）。 */
+    static double bubbleTake(final double damage, final double bubbleLife) {
+        return Math.max(0, Math.min(bubbleLife, damage * EMBRACE_ABSORB));
+    }
+
+    /** 被打的時候：defender 在某個泡泡裡、attacker 在那個泡泡外面，泡泡吃掉一部分；泡泡破了塌成冰緩地面。回傳吃掉多少。 */
+    double embraceAbsorb(final Player defender, final LivingEntity attacker, final double damage) {
+        if (bubbles.isEmpty() || attacker == null || damage <= 0) {
+            return 0;
+        }
+        final double radius = tw.exilecore.core.Units.metres(2.5);
+        final long now = now();
+        for (final Iterator<Bubble> it = bubbles.iterator(); it.hasNext(); ) {
+            final Bubble bubble = it.next();
+            if (now >= bubble.until) {
+                it.remove();
+                continue;
+            }
+            if (bubble.center.getWorld() != defender.getWorld() || attacker.getWorld() != defender.getWorld()) {
+                continue;
+            }
+            final boolean ownerOrAlly = bubble.owner.equals(defender.getUniqueId()) || plugin.party() != null
+                    && plugin.party().groupMembers(bubble.owner).contains(defender.getUniqueId());
+            if (!ownerOrAlly || defender.getLocation().distance(bubble.center) > radius || attacker.getLocation().distance(bubble.center) <= radius) {
+                continue;
+            }
+            final double taken = bubbleTake(damage, bubble.life);
+            bubble.life -= taken;
+            if (bubble.life <= 1e-6) {
+                it.remove();
+                final Player owner = plugin.getServer().getPlayer(bubble.owner);
+                if (owner != null && plugin.skills() != null) {
+                    plugin.skills().triggerSkill(owner, "asc_chilled_ground", bubble.center);
+                }
+                tw.exilecore.skill.Fx.spawn(bubble.center.getWorld(), Particle.SNOWFLAKE, bubble.center.clone().add(0, 1, 0), 40, 1.2, 0.8, 1.2, 0.02);
+            }
+            return taken;
+        }
+        return 0;
+    }
+
+    private void tickBubbles(final long now) {
+        if (bubbles.isEmpty()) {
+            return;
+        }
+        final double radius = tw.exilecore.core.Units.metres(2.5);
+        bubbles.removeIf(bubble -> now >= bubble.until || plugin.getServer().getPlayer(bubble.owner) == null);
+        for (final Bubble bubble : bubbles) {
+            tw.exilecore.skill.Fx.disk(bubble.center.getWorld(), Particle.BUBBLE_POP, bubble.center.clone().add(0, 0.2, 0), 18, radius, 0.1, 0.0);
+        }
+    }
     static final long BRAND_TICKS = 60;
     static final long BRAND_CAST_TICKS = 12;
 
@@ -196,13 +387,27 @@ final class AscGranted implements Listener {
             return "<red>魔力不足（羅贊的烙印要 " + mana + "）";
         }
         state.setMana(state.mana() - mana);
-        own.brandReady = now + BRAND_CAST_TICKS;
+        // 2026-11-01 照 PoE2（CommandFireDjinnLivingBombPlayer castTime 0.4：你下指令很快；LivingBombFireDjinn castTime 0.6：羅贊放 0.6 秒 ÷ 他的施法速度）：
+        //   你的動作照下指令的時間（SkillService），烙印在羅贊放完時才烙上（目標那時候還活著才有）；這次之前固定 0.6 秒（BRAND_CAST_TICKS）、馬上烙上
+        final long cast = Math.max(1, plugin.skills() == null ? BRAND_CAST_TICKS : plugin.skills().djinnCastTicks(player, build));
+        own.brandReady = now + cast;
         moveDjinn(player, "flame_blade_spirit", target.getLocation());
-        brands.add(new Brand(player.getUniqueId(), target, now + BRAND_TICKS, build.level(), target.getLocation()));
-        for (final Brand old : trimBrands(brands, player.getUniqueId(), BRAND_LIMIT)) {
-            explodeBrand(player, old); // 2026-11-01 照站長：超過上限的最舊那個提早炸掉（這次之前直接消失）
+        if (plugin.skills() != null) {
+            plugin.skills().djinnCasting(player, build.definition(), cast, target.getLocation());
         }
-        tw.exilecore.skill.Fx.spawn(target.getWorld(), Particle.FLAME, target.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, 0.02);
+        final LivingEntity branded = target;
+        final int level = build.level();
+        effects.later(cast, () -> {
+            if (!player.isOnline() || !branded.isValid() || branded.isDead() || branded.getWorld() != player.getWorld()
+                    || djinnAt(player, "flame_blade_spirit") == null) {
+                return;
+            }
+            brands.add(new Brand(player.getUniqueId(), branded, now() + BRAND_TICKS, level, branded.getLocation()));
+            for (final Brand old : trimBrands(brands, player.getUniqueId(), BRAND_LIMIT)) {
+                explodeBrand(player, old); // 2026-11-01 照站長：超過上限的最舊那個提早炸掉（這次之前直接消失）
+            }
+            tw.exilecore.skill.Fx.spawn(branded.getWorld(), Particle.FLAME, branded.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, 0.02);
+        });
         return "<#ff9a3c>羅贊的烙印";
     }
 
@@ -366,7 +571,11 @@ final class AscGranted implements Listener {
             // 赤炎利劍：你使用造成傷害的技能時，魯兹安用狂熱斬擊（冷卻 4 秒）
             // 2026-10-27 照 PoE2：魯兹安是有實體的巨靈，瞬移到目標旁邊斬（這次之前沒有實體，直接在你前方 3 格斬）
             if (on(player, "flame_blade_spirit") && now >= own.zealotryReady && plugin.skills() != null && djinnAt(player, "flame_blade_spirit") != null) {
-                own.zealotryReady = now + Math.round(Math.max(1, level(player, "flame_blade_spirit", "asc.zealotry_cooldown")) * 20);
+                // 2026-11-01 照 PoE2（FlameSliceFireDjinn 有 Cooldown）：冷卻照羅贊的冷卻回復速度（羅贊的屬性表，含召喚技能上的輔助）；這次之前固定 4 秒
+                final StatSheet ruzhan = plugin.skills().minions() == null ? null
+                        : plugin.skills().minions().djinnSheet(player.getUniqueId(), "flame_blade_spirit");
+                final double recovery = ruzhan == null ? 1.0 : Math.max(0.1, ruzhan.apply(StatKeys.COOLDOWN_RECOVERY, 1.0, java.util.Set.of(Tags.COOLDOWN)));
+                own.zealotryReady = now + Math.round(Math.max(1, level(player, "flame_blade_spirit", "asc.zealotry_cooldown")) * 20 / recovery);
                 final Location at = aim(player, target, 3);
                 moveDjinn(player, "flame_blade_spirit", at.clone().subtract(player.getLocation().getDirection().setY(0).normalize().multiply(1.5)));
                 effects.later(4, () -> plugin.skills().triggerSkill(player, "asc_ruzhan_zealotry", at));
@@ -453,30 +662,44 @@ final class AscGranted implements Listener {
                 if (!navira(player)) {
                     break;
                 }
-                // 2026-11-01 照 PoE2 Navira's Oasis（Converts Chilled Ground within 8 metres）：把納維拉身邊 8 公尺內的冰緩地面變成綠洲，
-                //   一塊冰緩地面一片綠洲（大小照那塊地面）；綠洲裡的植物繁茂。這次之前在納維拉腳下直接變出 8 公尺的綠洲
-                final Location djinn = djinnAt(player, "final_mirage_spirit");
-                final double reach = tw.exilecore.core.Units.metres(8) * areaScale(player);
-                final double life = level(player, id, "asc.oasis_life_recoup");
-                final double mana = level(player, id, "asc.oasis_mana_recoup");
-                final double flask = 0.5 + level(player, id, "asc.oasis_flask_rate");
-                for (final tw.exilecore.skill.ElementalGround.Patch patch
-                        : tw.exilecore.skill.ElementalGround.chilledNear(plugin, djinn == null ? player.getLocation() : djinn, reach)) {
-                    oases.add(new Oasis(player.getUniqueId(), patch.at(), patch.radius(), now + 300, life, mana, flask));
-                    plugin.skills().overgrowArea(player.getUniqueId(), patch.at(), patch.radius(), now + 300);
-                }
+                // 2026-11-01 照 PoE2（Command：娜瑟菈放完 Navira's Oasis 的施法時間 1.8 秒 ÷ 她的施法速度才變出綠洲）；這次之前按下去馬上變
+                final double area = areaScale(player);
+                whenCast(djinnCast(player, build), () -> {
+                    if (!player.isOnline()) {
+                        return;
+                    }
+                    // 2026-11-01 照 PoE2 Navira's Oasis（Converts Chilled Ground within 8 metres）：把納維拉身邊 8 公尺內的冰緩地面變成綠洲，
+                    //   一塊冰緩地面一片綠洲（大小照那塊地面）；綠洲裡的植物繁茂。這次之前在納維拉腳下直接變出 8 公尺的綠洲
+                    final long at = now();
+                    final Location djinn = djinnAt(player, "final_mirage_spirit");
+                    final double reach = tw.exilecore.core.Units.metres(8) * area;
+                    final double life = level(player, id, "asc.oasis_life_recoup");
+                    final double mana = level(player, id, "asc.oasis_mana_recoup");
+                    final double flask = 0.5 + level(player, id, "asc.oasis_flask_rate");
+                    for (final tw.exilecore.skill.ElementalGround.Patch patch
+                            : tw.exilecore.skill.ElementalGround.chilledNear(plugin, djinn == null ? player.getLocation() : djinn, reach)) {
+                        oases.add(new Oasis(player.getUniqueId(), patch.at(), patch.radius(), at + 300, life, mana, flask));
+                        plugin.skills().overgrowArea(player.getUniqueId(), patch.at(), patch.radius(), at + 300);
+                    }
+                });
             }
             case "mirage_spirit_spring" -> {
                 if (!navira(player)) {
                     break;
                 }
-                state.setLastDamageTick(now - 400); // 能量護盾立刻開始回充
-                // 2026-11-01 照 PoE2 Navira's Well 的品質：增益再 +(0—20)% 能量護盾回充速度（增益本身照等級 10%→109%，skills.yml）
-                final double quality = level(player, id, "asc.well_es_recharge");
-                if (quality > 0) {
-                    plugin.skills().buff(player, "mirage_spirit_spring.quality", definition.name(), 120,
-                            List.of(Modifier.increased(StatKeys.ES_RECHARGE, quality / 100.0, definition.name())));
-                }
+                // 2026-11-01 照 PoE2（Command：娜瑟菈放完 Navira's Well 的施法時間 2.1 秒 ÷ 她的施法速度才生效）；這次之前按下去馬上生效
+                whenCast(djinnCast(player, build), () -> {
+                    if (!player.isOnline()) {
+                        return;
+                    }
+                    state.setLastDamageTick(now() - 400); // 能量護盾立刻開始回充
+                    // 2026-11-01 照 PoE2 Navira's Well 的品質：增益再 +(0—20)% 能量護盾回充速度（增益本身照等級 10%→109%，skills.yml）
+                    final double quality = level(player, id, "asc.well_es_recharge");
+                    if (quality > 0) {
+                        plugin.skills().buff(player, "mirage_spirit_spring.quality", definition.name(), 120,
+                                List.of(Modifier.increased(StatKeys.ES_RECHARGE, quality / 100.0, definition.name())));
+                    }
+                });
             }
             case "mirage_spirit_freeze" -> navira(player);
             case "sand_spirit_trick" -> {
@@ -486,49 +709,54 @@ final class AscGranted implements Listener {
                 if (own.deceptions > 0) {
                     local.add(Modifier.more(StatKeys.DAMAGE, 0.5 * own.deceptions, "珂芮絲的詭計"));
                 }
-                if (own.clone != null && own.cloneUntil > now && plugin.skills() != null) {
-                    // 2026-10-29 照 PoE2：分身爆炸跟欺瞞同一級、也吃連續使用的更多傷害（這次之前用角色能用的最高級、沒吃到）
-                    final Location clone = own.clone;
-                    final int level = build.level();
-                    final List<Modifier> sequence = List.copyOf(local);
-                    effects.later(2, () -> plugin.skills().triggerSkill(player, "asc_kelari_clone", clone, level, sequence));
-                }
-                own.clone = aim(player, target, 20);
-                own.cloneUntil = now + 80;
-                moveDjinn(player, "foul_sand_spirit", own.clone); // 2026-10-27 照 PoE2：克拉里瞬移到目標的地方炸開
-            }
-            case "sand_spirit_cruelty" -> {
-                // 2026-10-29 照 PoE2 Kelari's Brutality：飛刀鑽進地面，3 公尺內 12 處短暫延遲後爆出刀刃（中間那一處是技能本身，另外 11 處撒在周圍）
-                final Location center = aim(player, target, 20);
-                final double spread = tw.exilecore.core.Units.metres(3) * build.areaScale();
+                // 2026-11-01 照 PoE2（Command：克拉里放完 Kelari's Deception 的施法時間 0.8 秒 ÷ 他的施法速度才瞬移、炸開、留下分身，
+                //   上一個還在的分身也在那時候爆炸）；這次之前按下去馬上
+                final long cast = djinnCast(player, build);
+                final Location oldClone = own.clone;
+                final long oldUntil = own.cloneUntil;
+                final Location spot = aim(player, target, 20);
+                own.clone = spot;
+                own.cloneUntil = now + cast + 80;
                 final int level = build.level();
-                final List<Modifier> extra = List.copyOf(local);
-                final java.util.Random random = new java.util.Random();
-                for (int i = 0; i < 11; i++) {
-                    final double angle = random.nextDouble() * Math.PI * 2;
-                    final double distance = Math.sqrt(random.nextDouble()) * spread;
-                    final Location at = center.clone().add(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
-                    effects.later(12 + random.nextInt(6), () -> {
-                        if (plugin.skills() != null) {
-                            plugin.skills().triggerSkill(player, "asc_kelari_blade", at, level, extra);
-                        }
-                    });
-                }
+                final List<Modifier> sequence = List.copyOf(local);
+                whenCast(cast, () -> {
+                    if (!player.isOnline()) {
+                        return;
+                    }
+                    if (oldClone != null && oldUntil > now() && plugin.skills() != null) {
+                        // 2026-10-29 照 PoE2：分身爆炸跟欺瞞同一級、也吃連續使用的更多傷害（這次之前用角色能用的最高級、沒吃到）
+                        effects.later(2, () -> plugin.skills().triggerSkill(player, "asc_kelari_clone", oldClone, level, sequence));
+                    }
+                    moveDjinn(player, "foul_sand_spirit", spot); // 2026-10-27 照 PoE2：克拉里瞬移到目標的地方炸開
+                });
             }
-            case "sand_spirit_verdict" -> moveDjinn(player, "foul_sand_spirit", aim(player, target, 20)); // 2026-10-27：克拉里飛過去懸起刀刃
+            // 2026-11-01 照 PoE2 Kelari's Brutality：飛刀是克拉里射出的投射物（SkillService.kelariKnives：飛刀落地、延遲後爆出刀刃）；
+            //   這次之前在這裡撒 11 處落點的刀刃（中間那一處是技能本身的落點）
+            // 2026-11-01 照 PoE2 Kelari's Judgment（「Command Kelari to Channel alongside you」、minions_do_not_move_to_skill_target）：
+            //   珂芮絲留在你身邊陪你引導（SkillService／Signatures：按住引導、放開時刀刃在準心落下），不會飛過去；
+            //   這次之前（2026-10-27）克拉里飛到目標的地方懸起刀刃
+            case "sand_spirit_verdict" -> {
+            }
             case "blade_spirit_settle" -> {
                 final Location at = aim(player, target, 20);
                 moveDjinn(player, "flame_blade_spirit", at); // 2026-10-27 照 PoE2：魯兹安瞬移到目標的地方
-                effects.later(18, () -> plugin.skills().triggerSkill(player, "asc_ruzhan_wave", at));
+                // 2026-11-01 照 PoE2（Command：羅贊放完 Ruzhan's Reckoning 的施法時間 2.3 秒 ÷ 他的施法速度才落地出手）：熔岩浪、引爆烙印跟著往後；
+                //   這次之前按下去 0.4 秒就落地
+                final long cast = djinnCast(player, build);
+                effects.later(cast + 18, () -> plugin.skills().triggerSkill(player, "asc_ruzhan_wave", at));
                 // 2026-11-01 照 PoE2（Ruzhan's Reckoning 是 Detonator）：落地時引爆你全部的羅贊的烙印
-                effects.later(8, () -> tickBrands(now(), player.getUniqueId()));
+                effects.later(cast + 8, () -> tickBrands(now(), player.getUniqueId()));
             }
             case "blade_spirit_device" -> {
                 // 2026-10-27：魯兹安把巨劍擲過去；2026-11-01 照 PoE2 Ruzhan's Trap：落地撒下 8 個火焰符文（投射物本身是技能的那一下）
+                // 2026-11-01 照 PoE2（Command）：羅贊放完施法時間（1 秒 ÷ 他的施法速度）才從他身上擲出巨劍（SkillService.djinnOrder），
+                //   符文照巨劍從羅贊飛到落點的時間撒下；這次之前羅贊先瞬移到落點、巨劍從你身上飛過去
                 final Location at = aim(player, target, 20);
-                moveDjinn(player, "flame_blade_spirit", at);
+                final Location ruzhan = djinnAt(player, "flame_blade_spirit");
+                final long cast = djinnCast(player, build);
                 final double speed = tw.exilecore.core.Units.metres(35) / 20.0; // 每秒 35 公尺
-                final long flight = Math.max(1, Math.round(player.getLocation().distance(at) / Math.max(0.1, speed)));
+                final long flight = cast + Math.max(1, Math.round((ruzhan != null && ruzhan.getWorld() == at.getWorld() ? ruzhan : player.getLocation())
+                        .distance(at) / Math.max(0.1, speed)));
                 final int level = build.level();
                 final double runeSeconds = 6 + level(player, id, "asc.rune_duration");
                 final double tornadoSeconds = 4 + level(player, id, "asc.tornado_duration");
@@ -640,6 +868,20 @@ final class AscGranted implements Listener {
         });
     }
 
+    /** 2026-11-01 照 PoE2：巨靈放這個指令的招式要幾 tick（SkillService.djinnCastTicks：施法時間 ÷ 巨靈的施法速度）；不是指令回傳 0。 */
+    private long djinnCast(final Player player, final SkillBuild build) {
+        return plugin.skills() == null ? 0 : plugin.skills().djinnCastTicks(player, build);
+    }
+
+    /** 2026-11-01 照 PoE2：巨靈放完招式（ticks）才做的事；0 就馬上做。 */
+    private void whenCast(final long ticks, final Runnable task) {
+        if (ticks <= 0) {
+            task.run();
+        } else {
+            effects.later(ticks, task);
+        }
+    }
+
     /** 2026-10-27：那位巨靈（有實體的召喚物）在哪裡；沒召喚或不在 20 格內回傳 null。 */
     private Location djinnAt(final Player player, final String djinn) {
         return plugin.skills() == null || plugin.skills().minions() == null ? null : plugin.skills().minions().locate(player, djinn);
@@ -659,9 +901,12 @@ final class AscGranted implements Listener {
         }
         final double regen = navira_calming(player);
         if (regen > 0) {
+            // 2026-11-01 照 PoE2 Navira's Calming：你，加上娜瑟菈身邊 2.5 公尺內的隊友；這次之前你身邊 10 格內的隊友
+            final Location navira = djinnAt(player, "final_mirage_spirit");
+            final double reach = tw.exilecore.core.Units.metres(2.5);
             for (final Player ally : player.getWorld().getPlayers()) {
-                if (ally.equals(player) || ally.getLocation().distanceSquared(player.getLocation()) <= 100 && plugin.party() != null
-                        && plugin.party().groupMembers(player.getUniqueId()).contains(ally.getUniqueId())) {
+                if (ally.equals(player) || navira != null && ally.getWorld() == navira.getWorld() && ally.getLocation().distance(navira) <= reach
+                        && plugin.party() != null && plugin.party().groupMembers(player.getUniqueId()).contains(ally.getUniqueId())) {
                     plugin.skills().buff(ally, "navira_calming", "娜瑟菈的寧靜", 80, List.of(Modifier.increased(StatKeys.MANA_REGEN, regen / 100.0, "娜瑟菈的寧靜")));
                 }
             }
@@ -875,6 +1120,18 @@ final class AscGranted implements Listener {
             tw.exilecore.combat.HitEffects.addWithered(plugin.combat().debuffs(), target.getUniqueId(), player.getUniqueId(), now, 1,
                     tw.exilecore.combat.HitEffects.WITHERED_TICKS);
         }
+        // 2026-11-01 照 PoE2 Mana Remnants：對有元素異常的目標暴擊時產生魔力痕跡（最多每 2 秒一次）
+        final boolean ailing = elementallyAiled(target);
+        if (ailing) {
+            if (elementalAiled.size() > 4096) {
+                elementalAiled.clear();
+            }
+            elementalAiled.put(target.getUniqueId(), now);
+        }
+        if (ailing && event.result().crit() && now >= own.manaRemnantReady && on(player, MANA_REMNANTS)
+                && dropManaRemnant(player, target.getLocation())) {
+            own.manaRemnantReady = now + MANA_REMNANT_CRIT_TICKS;
+        }
         // 生命痕跡：擊中時（最多每 3 秒一次）產生痕跡
         if (on(player, "vital_residue") && now >= own.lifeRemnantReady) {
             own.lifeRemnantReady = now + 60;
@@ -973,6 +1230,12 @@ final class AscGranted implements Listener {
             if (rares.size() > 50) {
                 rares.removeFirst();
             }
+        }
+        // 2026-11-01 照 PoE2 Mana Remnants：擊殺有元素異常的敵人 25% 機率產生魔力痕跡
+        final Long ailedAt = elementalAiled.remove(dead.getUniqueId());
+        if (killer != null && on(killer, MANA_REMNANTS) && (elementallyAiled(dead) || ailedAt != null && now() - ailedAt <= 20)
+                && plugin.random().nextDouble() < MANA_REMNANT_KILL_CHANCE) {
+            dropManaRemnant(killer, dead.getLocation());
         }
         // 生命痕跡：擊殺 25% 機率
         if (killer != null && on(killer, "vital_residue")
@@ -1168,7 +1431,7 @@ final class AscGranted implements Listener {
             case "life" -> {
                 // 生命痕跡：回復生命，可以溢出到 1.5 倍（溢出的部分變成守護）
                 final double amount = remnant.value * effect;
-                final double room = Math.max(0, state.maxLife() - state.life());
+                final double room = state.missingLife(); // 2026-11-01：保留的生命回不來，那部分算溢出（PlayerState#missingLife）
                 state.setLife(state.life() + Math.min(room, amount));
                 // 2026-10-28：溢出的部分疊加到現有的守護上（合計最多 0.5 倍最大生命）；這次之前取較大的（連撿好幾個不會疊，看起來像沒作用）
                 final double overflow = Math.max(0, amount - room);
@@ -1217,6 +1480,7 @@ final class AscGranted implements Listener {
         tickRemnants(now);
         tickRunes(now); // 2026-11-01 照 PoE2 Ruzhan's Trap
         tickBrands(now, null); // 2026-11-01 照 PoE2 Ruzhan's Brand
+        tickBubbles(now); // 2026-11-01 照 PoE2 Navira's Embrace
         // 命定苦痛：時間到（或足以處決）時一次失去記下的生命
         final Iterator<Map.Entry<UUID, double[]>> iterator = agony.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -1392,7 +1656,9 @@ final class AscGranted implements Listener {
                     final LivingEntity target = near.isEmpty() ? null : near.get(i % near.size());
                     if (target != null) {
                         final long delay = 10 + i * 4L;
-                        effects.later(delay, () -> plugin.skills().triggerSkill(player, "asc_corpse_beetle", target.getLocation()));
+                        // 2026-11-01 照 PoE2：屍甲蟲是惡言叫出來的召喚物，爆炸吃惡言上掛的輔助（SkillService.triggerHosted）；這次之前沒有輔助
+                        effects.later(delay, () -> plugin.skills().triggerHosted(player, "sand_spirit_venom_word", "asc_corpse_beetle",
+                                target.getLocation()));
                     }
                 }
                 at.getWorld().spawnParticle(Particle.FALLING_DUST, at.clone().add(0, 0.5, 0), 20, 0.4, 0.3, 0.4, 0,

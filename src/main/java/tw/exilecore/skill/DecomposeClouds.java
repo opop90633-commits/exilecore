@@ -153,7 +153,8 @@ final class DecomposeClouds implements SkillTargets.Strikeable {
             Fx.as(owner.getUniqueId(), () -> Fx.spawn(gone.at.getWorld(), Particle.SMOKE, gone.at.clone().add(0, 0.4, 0), 8, 0.3, 0.2, 0.3, 0.01));
         }
         final Location center = at.clone().add(0, 0.1, 0);
-        mine.addLast(new Cloud(center, now, now + build.durationTicks(seconds(qualitySeconds)), build.radius(), poisonBase(corpseLife), build,
+        // 2026-11-01 照 PoE2 Persistent Ground（Decompose 是 CreatesGroundEffect）：毒雲照地面效果的持續時間（groundDurationTicks）
+        mine.addLast(new Cloud(center, now, now + build.groundDurationTicks(seconds(qualitySeconds)), build.radius(), poisonBase(corpseLife), build,
                 sheet, carried));
         center.getWorld().playSound(center, Sound.BLOCK_BREWING_STAND_BREW, SoundCategory.PLAYERS, 0.6f, 0.6f);
         Fx.spawn(center.getWorld(), Particle.SNEEZE, center.clone().add(0, 0.4, 0), 12, build.radius() * 0.4, 0.2, build.radius() * 0.4, 0.02);

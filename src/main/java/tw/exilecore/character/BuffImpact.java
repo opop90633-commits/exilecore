@@ -63,7 +63,7 @@ public final class BuffImpact {
     private static List<Modifier> situational(final ExileCore plugin, final Player player, final StatSheet sheet) {
         final PlayerState state = plugin.players().get(player);
         final List<Modifier> out = new ArrayList<>(selfDebuffs(plugin, player));
-        out.addAll(estimateModifiers(sheet, lifeFraction(state)));
+        out.addAll(estimateModifiers(sheet, lifeFraction(state), state.isFullLife())); // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
         final double perLife = sheet.flat(StatKeys.CRIT_BONUS_PER_LIFE, Set.of());
         if (perLife > 0) {
             out.add(Modifier.increased(StatKeys.CRIT_BONUS, Math.floor(state.life() / 50) * perLife / 100.0, "血鋒"));
@@ -92,17 +92,27 @@ public final class BuffImpact {
      * @param lifeFraction 目前生命比例（網頁、技能每秒傷害照滿血估：1）
      */
     public static List<Modifier> estimateModifiers(final StatSheet sheet, final double lifeFraction) {
+        return estimateModifiers(sheet, lifeFraction, lifeFraction >= 0.999);
+    }
+
+    /** 2026-11-01：滿血另外給（保留生命時滿血＝沒被保留的生命滿了，PlayerState#isFullLife；低血照最大生命的比例）。 */
+    public static List<Modifier> estimateModifiers(final StatSheet sheet, final double lifeFraction, final boolean fullLife) {
         final List<Modifier> out = new ArrayList<>(tw.exilecore.ascendancy.AscendancyEffects.alwaysOnEstimate(sheet));
-        out.addAll(painAttunement(sheet, lifeFraction));
+        out.addAll(painAttunement(sheet, lifeFraction, fullLife));
         return out;
     }
 
     /** 痛極生力（PoE2 痛苦調和）：滿血時暴擊傷害加成更少 30%，低血（35% 以下）更多 30%。純函式（測試用）。 */
     public static List<Modifier> painAttunement(final StatSheet sheet, final double lifeFraction) {
+        return painAttunement(sheet, lifeFraction, lifeFraction >= 0.999);
+    }
+
+    /** 2026-11-01：fullLife＝PlayerState#isFullLife（保留生命時照沒被保留的）；lifeFraction 照最大生命（低血用）。 */
+    public static List<Modifier> painAttunement(final StatSheet sheet, final double lifeFraction, final boolean fullLife) {
         if (!StatKeys.flag(sheet, StatKeys.FLAG_PAIN_ATTUNEMENT)) {
             return List.of();
         }
-        if (lifeFraction >= 0.999) {
+        if (fullLife) {
             return List.of(Modifier.more(StatKeys.CRIT_BONUS, -0.3, "痛極生力"));
         }
         if (lifeFraction <= 0.35) {

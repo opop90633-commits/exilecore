@@ -147,6 +147,10 @@ final class SkillRuntime {
         java.util.List<tw.exilecore.stats.Modifier> empowered;
         /** 2026-10-27（RECHARGE，冥想）：溢出最大能量護盾的回充累積了多少（變成守護）。 */
         double overflow;
+        /** 2026-11-01：逐 0.2 秒扣魔力時還沒扣的小數（ChargeSpec.drainSlice）。 */
+        double drainOwed;
+        /** 2026-11-01：引導是因為魔力不夠才結束的（放出時的提示補上原因）。 */
+        boolean outOfMana;
 
         Charging(final String skillId, final int key, final long start, final long perfectAt, final java.util.UUID target) {
             this.skillId = skillId;

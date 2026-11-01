@@ -33,11 +33,12 @@ class DjinnParityTest {
 
     @Test
     void naviraCommandsScaleWithLevel() {
-        // Navira's Oasis：(30—80)% 補償為生命、(20—50)% 補償為魔力
-        assertEquals(30, level("mirage_spirit_haven", "asc.oasis_life_recoup", 1), 1e-9);
-        assertEquals(80, level("mirage_spirit_haven", "asc.oasis_life_recoup", 20), 1e-9);
-        assertEquals(20, level("mirage_spirit_haven", "asc.oasis_mana_recoup", 1), 1e-9);
-        assertEquals(50, level("mirage_spirit_haven", "asc.oasis_mana_recoup", 20), 1e-9);
+        // 2026-11-01 照 PoE2 遊戲檔 Navira's Oasis：30→80%、20→50% 照娜瑟菈等級 1→100 線性（娜瑟菈等級 = 技能等級 × 2）
+        assertEquals(30 + 50 * 39 / 99.0, level("mirage_spirit_haven", "asc.oasis_life_recoup", 20), 0.01);
+        assertEquals(30 + 50 * 79 / 99.0, level("mirage_spirit_haven", "asc.oasis_life_recoup", 40), 0.01);
+        assertEquals(20 + 30 * 39 / 99.0, level("mirage_spirit_haven", "asc.oasis_mana_recoup", 20), 0.01);
+        // poe2db 的 68 級怪物頁面：63.84%、40.3%（娜瑟菈等級 68 = 技能 34 級）
+        assertEquals(63.84, level("mirage_spirit_haven", "asc.oasis_life_recoup", 34), 0.01);
         // Navira's Calming：1 級 10%、20 級 67%
         assertEquals(10, level("final_mirage_spirit", "asc.calming_regen", 1), 1e-9);
         assertEquals(67, level("final_mirage_spirit", "asc.calming_regen", 20), 1e-9);

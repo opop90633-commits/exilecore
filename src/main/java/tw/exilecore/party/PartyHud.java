@@ -90,9 +90,12 @@ public final class PartyHud {
             out.bar(slot, PartyFont.LIFE_BG, BAR_X, BAR_W);
             out.bar(slot, PartyFont.MANA_BG, BAR_X, BAR_W);
         } else {
-            final double life = fill(state.life(), state.maxLife());
-            out.bar(slot, PartyFont.LIFE, BAR_X, life);
-            out.bar(slot, PartyFont.LIFE_BG, BAR_X + life, BAR_W - life);
+            // 2026-11-01 照 PoE2 保留生命（貝達特、血契）：血條照最大生命畫，右邊被保留的那段另外畫成灰紅色（LIFE_RESERVED），
+            //   不會看起來像少掉的血；這次之前保留的部分跟空血一樣
+            final double[] life = lifeSegments(state.life(), state.unreservedLife(), state.maxLife());
+            out.bar(slot, PartyFont.LIFE, BAR_X, life[0]);
+            out.bar(slot, PartyFont.LIFE_BG, BAR_X + life[0], life[1]);
+            out.bar(slot, PartyFont.LIFE_RESERVED, BAR_X + life[0] + life[1], life[2]);
             if (state.maxEnergyShield() > 0) {
                 out.bar(slot, PartyFont.ES, BAR_X, fill(state.energyShield(), state.maxEnergyShield()));
             }
@@ -128,6 +131,20 @@ public final class PartyHud {
         final double room = RIGHT - tagWidth - 4 - x;
         final String name = fit(service.name(id), room);
         out.text(slot, offline || far ? PartyFont.TEXT_DIM : dead ? PartyFont.TEXT_RED : PartyFont.TEXT, x, name);
+    }
+
+    /**
+     * 2026-11-01：血條三段的寬（格，半格為單位）：{目前生命, 空的（還回得來的）, 被保留的}，加起來是 {@link #BAR_W}。
+     * 純函式（測試用）。
+     */
+    static double[] lifeSegments(final double life, final double unreservedLife, final double maxLife) {
+        if (maxLife <= 0) {
+            return new double[] {0, BAR_W, 0};
+        }
+        final double unreserved = Math.max(0, Math.min(maxLife, unreservedLife));
+        final double reserved = unreserved >= maxLife ? 0 : BAR_W - fill(unreserved, maxLife);
+        final double current = Math.min(BAR_W - reserved, fill(Math.min(life, unreserved), maxLife));
+        return new double[] {current, Math.max(0, BAR_W - reserved - current), reserved};
     }
 
     /** 0..BAR_W，以半格為單位。 */

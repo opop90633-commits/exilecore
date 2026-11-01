@@ -49,13 +49,8 @@ class EstimateParityTest {
     void lineageEstimateMatchesPrepare() {
         final SkillBuild plain = build("ground_tremor");
         assertTrue(LineageMechanics.estimateModifiers(plain, 1000).isEmpty(), "沒掛血脈輔助");
-        // 傲寒：照滿魔力付 20%，附加這筆的 15% 物理與冰冷（跟 prepare 一樣）
-        final SkillBuild hubris = build("ground_tremor", "proud_frost");
-        final List<Modifier> mods = LineageMechanics.estimateModifiers(hubris, 1000);
-        assertEquals(LineageMechanics.hubrisAdded(200), mods);
+        // 2026-11-01 照站長刪掉傲寒（原作花符文守護）：這裡不再驗傲寒
         final StatSheet sheet = new StatSheet();
-        final StatSheet effective = LineageMechanics.estimated(hubris, 1000).profile().effective(sheet);
-        assertEquals(30, effective.flat(StatKeys.DAMAGE_ADDED_MIN, Set.copyOf(DamageType.COLD.tags())), 1e-9);
         // 血滲：每 20 點生命消耗 2%（最多 40%）
         final SkillBuild blood = build("ground_tremor", "blood_seep");
         final double expected = LineageMechanics.bloodlettingPercent(blood.manaCost(), 2);

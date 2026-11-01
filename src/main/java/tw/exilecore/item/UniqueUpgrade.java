@@ -82,6 +82,9 @@ public final class UniqueUpgrade {
                 fresh = new RolledAffix(affixId, tier.tier(), roll(tier, new SplittableRandom(seed(data, index))));
             }
             fresh.record(tier.tier(), tier.vars(), affix.group(), affix.type().name().toLowerCase(java.util.Locale.ROOT));
+            if (old != null) {
+                fresh.setCorrupt(old.corrupt()); // 2026-11-01：腐化抽到的固定值倍率跟著舊的那條
+            }
             upgraded.add(fresh);
         }
         data.affixes().clear();

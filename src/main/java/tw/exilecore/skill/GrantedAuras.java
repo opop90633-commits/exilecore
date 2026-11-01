@@ -291,7 +291,9 @@ final class GrantedAuras implements Listener {
         final List<Modifier> local = new ArrayList<>(build.profile().local());
         local.add(Modifier.flat(StatKeys.FLAG_NO_CRIT, 1, "振翅熵流")); // 持續傷害：不會暴擊
         final SkillProfile profile = new SkillProfile(build.profile().id(), build.profile().tags(), 1.0, packet, packet, Map.of(), local);
-        for (final LivingEntity target : victims) {
+        // 2026-11-01 照 PoE2 Commandment（軍令）：振翅熵流是鴉群指令以外的招式，掛了軍令更少 100% 傷害（不打；亂鴉狂舞照打）
+        final boolean muted = equipped != null && Commandables.commandment(equipped.supports());
+        for (final LivingEntity target : muted ? List.<LivingEntity>of() : victims) {
             damage.hit(player, target, profile, null);
         }
         final int shown = Math.min(12, flock.size());
@@ -337,7 +339,12 @@ final class GrantedAuras implements Listener {
         }
         flock.sort(null);
         flock.subList(0, MinionAbilities.FLIGHT_RAVENS).clear(); // 用掉最快要離開的 10 隻
-        flightReady.put(id, now + Math.round(MinionAbilities.command(RAVENS).cooldown() * 20));
+        // 2026-11-01 照 PoE2（烏鴉的 CooldownRecovery）：亂鴉狂舞的冷卻吃主人給召喚物的冷卻回復速度（含只給指令的天賦）、
+        //   鴉群密謀掛的輔助、軍令（增加 100%），跟骷髏的指令同一套（Commandables）；這次之前固定 10 秒
+        final tw.exilecore.stats.StatSheet flightSheet = Commandables.ownerSide(plugin.players().sheet(player), build.profile().local(), RAVENS,
+                Commandables.commandment(build.supports()));
+        flightReady.put(id, now + Commandables.readyTicks(MinionAbilities.command(RAVENS).cooldown(),
+                flightSheet.apply(StatKeys.SKILL_COOLDOWN, 1.0, Commandables.CONTEXT), Commandables.rate(flightSheet)));
         final int level = Math.max(1, build.level());
         final Location center = preferred != null && preferred.getWorld().equals(player.getWorld()) ? preferred.getLocation()
                 : service.targets().aimPoint(Origin.of(player), 24);
@@ -357,9 +364,17 @@ final class GrantedAuras implements Listener {
         final tw.exilecore.stats.DamagePacket max = new tw.exilecore.stats.DamagePacket()
                 .set(tw.exilecore.stats.DamageType.PHYSICAL, hit * (1 + MinionAbilities.RAVEN_SPREAD) * (1 - MinionAbilities.FLIGHT_CHAOS))
                 .set(tw.exilecore.stats.DamageType.CHAOS, hit * (1 + MinionAbilities.RAVEN_SPREAD) * MinionAbilities.FLIGHT_CHAOS);
+        // 2026-11-01 照 PoE2（Bidding：support_command_skill_damage_+%_final 只算 Command Skills）：亂鴉狂舞是烏鴉的指令（command 情境），
+        //   鴉群密謀上掛的只給指令的修飾器（骸令的更多傷害，tags 有 command）照算；這次之前亂鴉狂舞沒有 command 標籤，鴉群密謀上的骸令沒有作用
+        final List<Modifier> local = new java.util.ArrayList<>();
+        local.add(Modifier.flat(StatKeys.SPELL_BASE_CRIT, 5, "亂鴉狂舞")); // 烏鴉的基礎暴擊率 5%
+        for (final Modifier modifier : MinionSheets.stripMinion(build.profile().local())) {
+            if (modifier.tags().contains(Commandables.TAG) && StatKeys.DAMAGE.equals(modifier.stat())) {
+                local.add(modifier);
+            }
+        }
         final SkillProfile profile = new SkillProfile("mad_flight", java.util.Set.of(tw.exilecore.stats.Tags.MINION, tw.exilecore.stats.Tags.AREA,
-                tw.exilecore.stats.Tags.PHYSICAL, tw.exilecore.stats.Tags.CHAOS), 1.0, min, max, Map.of(),
-                List.of(Modifier.flat(StatKeys.SPELL_BASE_CRIT, 5, "亂鴉狂舞"))); // 烏鴉的基礎暴擊率 5%
+                tw.exilecore.stats.Tags.PHYSICAL, tw.exilecore.stats.Tags.CHAOS, Commandables.TAG), 1.0, min, max, Map.of(), local);
         final long ticks = Math.round(MinionAbilities.FLIGHT_SECONDS * 20);
         final double tick = MinionAbilities.FLIGHT_TICK * 20; // 每 2.4 tick 打一下
         new org.bukkit.scheduler.BukkitRunnable() {

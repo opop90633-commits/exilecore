@@ -72,6 +72,12 @@ public final class SkillDamage implements Listener {
         return context == null ? null : context.profile().id();
     }
 
+    /** 2026-11-01：正在結算、打這個目標的技能命中有沒有自己的擊退（推擊輔助：技能自己不推的才另外推）。 */
+    public boolean pushes(final LivingEntity defender) {
+        final Context context = contextFor(defender);
+        return context != null && context.knockback() != null;
+    }
+
     /** 這個傷害事件是不是某個技能命中（給 CombatListener）。 */
     Context contextFor(final LivingEntity defender) {
         final Context context = current;

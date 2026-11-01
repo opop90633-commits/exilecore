@@ -110,6 +110,26 @@ public final class SkillMath {
     }
 
     /**
+     * 2026-11-01 照 PoE2 Salvo（random_projectile_direction）：count 發投射物各自往「瞄準方向左右 halfDegrees 度內」的隨機水平角度射出（180 = 360 度全方位）
+     * （繞垂直軸轉，高低角照原本的方向）。random 回傳 [0, 1)。純函式（測試用）。
+     */
+    public static List<double[]> randomFan(final double dx, final double dy, final double dz, final int count, final double halfDegrees,
+                                           final java.util.function.DoubleSupplier random) {
+        final double length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        final double ux = length == 0 ? 0 : dx / length;
+        final double uy = length == 0 ? 0 : dy / length;
+        final double uz = length == 0 ? 1 : dz / length;
+        final List<double[]> list = new ArrayList<>();
+        for (int i = 0; i < Math.max(1, count); i++) {
+            final double angle = Math.toRadians((random.getAsDouble() * 2 - 1) * Math.max(0, halfDegrees));
+            final double cos = Math.cos(angle);
+            final double sin = Math.sin(angle);
+            list.add(new double[] {ux * cos - uz * sin, uy, ux * sin + uz * cos});
+        }
+        return list;
+    }
+
+    /**
      * 2026-10-29：多發投射物的扇形角度（度）：本來只有一發（spread &lt; 1）的多了投射物，每多一發多 12°、最多 60°；
      * 有寫 spread 的照寫的。玩家的 ProjectileEngine、召喚物的 MinionProjectiles 共用（這次之前寫在 ProjectileEngine 裡）。
      */

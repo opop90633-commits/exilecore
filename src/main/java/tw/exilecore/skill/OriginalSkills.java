@@ -159,6 +159,15 @@ public final class OriginalSkills implements Listener {
     static final long CALTROP_TICKS = 160;
     static final double CALTROP_TRIGGER = 0.5;
     static final double CALTROP_BLAST = tw.exilecore.core.Units.metres(0.8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    /**
+     * 2026-11-01 照 PoE2 TriggeredCaltropsPlayer（撒蒺）：鐵蒺半徑 0.5 公尺（active_skill_base_area_of_effect_radius 5，碰到才炸、炸的範圍也是它）、
+     * 落在投射物終點 3 公尺內（active_skill_base_secondary_area_of_effect_radius 30：「Caltrops land within a 3 metre radius of Projectile impact」）、
+     * 8 秒（base_skill_effect_duration 8000）、同時最多 20 顆（技能說明「a maximum of 20 Caltrops can be active at once」，滿了換掉最舊的）。
+     */
+    static final int SPEAR_CALTROP_MAX = 20;
+    static final long SPEAR_CALTROP_TICKS = 160;
+    static final double SPEAR_CALTROP_RADIUS = tw.exilecore.core.Units.metres(0.5);
+    static final double SPEAR_CALTROP_SCATTER = tw.exilecore.core.Units.metres(3);
     static final long CALAMITY_TICKS = 200;
     static final double CALAMITY_RANGE = tw.exilecore.core.Units.metres(8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double CALAMITY_INTERVAL = 3;
@@ -241,6 +250,8 @@ public final class OriginalSkills implements Listener {
         long escapeUse = -1;
         long oilUntil;
         final List<Caltrop> caltrops = new ArrayList<>();
+        /** 2026-11-01 照 PoE2 Caltrops（撒蒺）：被輔助的長矛投射物撒的鐵蒺（跟蒺藜步的分開算上限）。 */
+        final List<Caltrop> spearCaltrops = new ArrayList<>();
         final Map<UUID, Double> attrition = new HashMap<>();
         UUID marked;
         long markUntil;
@@ -652,6 +663,7 @@ public final class OriginalSkills implements Listener {
         convalescence(player, s, now);
         calamity(player, s, now);
         caltrops(player, s, now);
+        spearCaltrops(player, s, now); // 2026-11-01 照 PoE2 Caltrops（撒蒺）
         if (s.pounceTick >= 0 && now > s.pounceTick) {
             applyMark(player, s, now);
         }
@@ -1176,9 +1188,9 @@ public final class OriginalSkills implements Listener {
                 final Vector facing = SkillTargets.facing(player);
                 final Vector side = new Vector(-facing.getZ(), 0, facing.getX()).multiply((index % 2 == 0 ? 1 : -1) * (0.8 + plugin.random().nextDouble() * 0.7));
                 final Location at = player.getLocation().add(side).add(0, 0.1, 0);
-                while (s.caltrops.size() >= caltropMax(player)) {
-                    removeDisplay(s.caltrops.removeFirst().display());
-                }
+                // 2026-11-01 照 PoE2（maximum_caltrops_allowed 20 是同一個角色屬性）：蒺藜步與撒蒺的鐵蒺共用上限，滿了先拿掉最舊的（不管哪一種）；
+                //   這次之前兩種各自 20 顆
+                evictCaltropsFor(player, s);
                 final Caltrop caltrop = new Caltrop(player.getUniqueId(), at, now() + ticks, profile, marker(at, Material.IRON_NUGGET, 0.35f),
                         now(), delayed > 0, rearm);
                 if (delayed > 0 && !service.targets().around(at, CALTROP_TRIGGER + 0.3, player).isEmpty()) {
@@ -1221,7 +1233,49 @@ public final class OriginalSkills implements Listener {
         }
     }
 
-    /** 2026-10-28 照 PoE2 Trail of Caltrops 的品質：鐵蒺上限 +(0—5)（無條件捨去）。 */
+    /** 2026-11-01：你現在地上有幾顆鐵蒺（蒺藜步與撒蒺加起來，共用上限）。 */
+    private static int caltropTotal(final State s) {
+        return s.caltrops.size() + s.spearCaltrops.size();
+    }
+
+    /** 2026-11-01：要再放一顆鐵蒺：共用上限滿了就先拿掉最舊的（兩種一起比）。 */
+    private void evictCaltropsFor(final Player player, final State s) {
+        final int cap = caltropMax(player);
+        while (caltropTotal(s) >= cap) {
+            final Caltrop evicted = removeOldest(s.caltrops, s.spearCaltrops, Caltrop::armedAt);
+            if (evicted == null) {
+                return;
+            }
+            removeDisplay(evicted.display());
+        }
+    }
+
+    /**
+     * 純函式（測試用）：兩個照放下順序排的清單，拿掉兩個開頭裡比較舊（placed 比較小；一樣舊拿第一個清單的）的那個並回傳；都空的回傳 null。
+     */
+    static <T> T removeOldest(final List<T> first, final List<T> second, final java.util.function.ToLongFunction<T> placed) {
+        if (first.isEmpty() && second.isEmpty()) {
+            return null;
+        }
+        if (second.isEmpty() || !first.isEmpty() && placed.applyAsLong(first.getFirst()) <= placed.applyAsLong(second.getFirst())) {
+            return first.removeFirst();
+        }
+        return second.removeFirst();
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 TriggeredCaltropsPlayer（base_number_of_projectiles 1、技能型別 Projectile）：撒蒺每次觸發撒幾顆——
+     * 1 顆加上這一下吃到的「+x 投射物」（你身上的、原技能掛的輔助），至少 1 顆、最多 {@link #SPEAR_CALTROP_MAX} 顆。純函式。
+     */
+    static int spearCaltropCount(final double extraProjectiles) {
+        return tw.exilecore.stats.GrantedSkillKeys.projectileCount(1, extraProjectiles, false, SPEAR_CALTROP_MAX);
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Trail of Caltrops 的品質：鐵蒺上限 +(0—5)（無條件捨去）。
+     * 2026-11-01 照 PoE2（Misc.lua maximum_caltrops_allowed 20、兩個鐵蒺技能都寫「a maximum of 20 Caltrops」、讀同一個屬性）：撒蒺也照這個上限、
+     * 跟蒺藜步共用。
+     */
     private int caltropMax(final Player player) {
         return CALTROP_MAX + qualityInt(service.qualityFlat(player, CALTROPS, tw.exilecore.stats.GemQualityKeys.CALTROPS_MAX));
     }
@@ -1243,10 +1297,131 @@ public final class OriginalSkills implements Listener {
         blast(player, caltrop.at(), CALTROP_BLAST * area + 0.3, caltrop.profile());
         Fx.spawn(caltrop.at().getWorld(), Particle.CRIT, caltrop.at().clone().add(0, 0.3, 0), 8, 0.3, 0.2, 0.3, 0.1);
         removeDisplay(caltrop.display());
-        if (caltrop.rearm() > 0 && plugin.random().nextDouble() * 100 < caltrop.rearm() && s.caltrops.size() < caltropMax(player)) {
+        if (caltrop.rearm() > 0 && plugin.random().nextDouble() * 100 < caltrop.rearm() && caltropTotal(s) < caltropMax(player)) { // 2026-11-01：共用上限
             final long now = now();
             s.caltrops.add(new Caltrop(caltrop.owner(), caltrop.at(), now + Math.max(caltrop.until() - caltrop.armedAt(), 40), caltrop.profile(),
                     marker(caltrop.at(), Material.IRON_NUGGET, 0.35f), now + tw.exilecore.stats.SupportExtraKeys.REARM_TICKS, caltrop.delayed(), caltrop.rearm()));
+        }
+    }
+
+    // ---- 撒蒺（Caltrops 輔助）----
+
+    /**
+     * 2026-11-01 照 PoE2 Caltrops（SupportCaltropsPlayer／TriggeredCaltropsPlayer）：被輔助的長矛投射物飛到終點時（SupportProcs.fireAll），
+     * 在終點 3 格內隨機一點撒 1 顆鐵蒺（base_number_of_projectiles 1；2026-11-01 起 +x 投射物多撒 x 顆，{@link #spearCaltropCount}）。
+     * 敵人碰到（0.5 格）就炸開 0.5 格的攻擊範圍傷害、致殘，然後消失；8 秒（吃技能效果持續時間）；
+     * 同時最多 20 顆（2026-11-01 起跟蒺藜步共用，{@link #caltropMax}），滿了先拿掉最舊的。傷害是原技能那一下（含輔助）的 75%
+     * （active_skill_has_%_standard_scaling_attack_damage 75；skills.yml proc_caltrops 的 parent_damage 0.75），buildOwn＝鐵蒺自己的修飾器（致殘）。
+     * 原技能上掛的 Delayed Reaction／Rearm 對鐵蒺（危險區域）照蒺藜步的規則作用。
+     */
+    void spearCaltrop(final Player player, final SkillBuild build, final List<Modifier> buildOwn, final Location end, final String parentId) {
+        if (end == null || end.getWorld() == null || !end.getWorld().equals(player.getWorld())) {
+            return;
+        }
+        final State s = state(player);
+        final StatSheet sheet = plugin.players().sheet(player);
+        final double delayed = service.supportFlat(player, parentId, tw.exilecore.stats.SupportExtraKeys.DELAYED_REACTION);
+        final double rearm = service.supportFlat(player, parentId, tw.exilecore.stats.SupportExtraKeys.REARM);
+        SkillProfile profile = build.profile().withLocal(buildOwn);
+        if (delayed > 0) {
+            profile = profile.scaled(1 + delayed / 100.0, "遲爆");
+        }
+        double duration = 1.0;
+        if (sheet != null) {
+            final StatSheet effective = profile.effective(sheet);
+            duration = Math.max(0.1, (1 + effective.increased(StatKeys.SKILL_DURATION, profile.tags())) * effective.more(StatKeys.SKILL_DURATION, profile.tags()));
+        }
+        final long ticks = Math.max(1, Math.round(SPEAR_CALTROP_TICKS * duration * (delayed > 0 ? tw.exilecore.stats.SupportExtraKeys.DELAYED_REACTION_DURATION : 1)));
+        // 2026-11-01 照 PoE2（base_number_of_projectiles 1）：+x 投射物多撒 x 顆，每顆各自落在終點 3 格內；這次之前固定 1 顆
+        final int count = spearCaltropCount(sheet == null ? 0 : profile.effective(sheet).flat(StatKeys.SKILL_PROJECTILES, profile.tags()));
+        for (int i = 0; i < count; i++) {
+            placeSpearCaltrop(player, s, profile, end, ticks, delayed > 0, rearm);
+        }
+    }
+
+    /** 撒蒺的一顆鐵蒺：落在終點 3 格內隨機一點；共用上限滿了先拿掉最舊的。 */
+    private void placeSpearCaltrop(final Player player, final State s, final SkillProfile profile, final Location end, final long ticks,
+                                   final boolean delayedReaction, final double rearm) {
+        final double[] offset = scatterOffset(plugin.random().nextDouble(), plugin.random().nextDouble(), SPEAR_CALTROP_SCATTER);
+        final Location aimed = end.clone().add(offset[0], 0, offset[1]);
+        Location at = SkillZones.groundOf(aimed);
+        if (at == null) {
+            at = SkillZones.groundOf(aimed.clone().add(0, -3, 0));
+        }
+        if (at == null) {
+            at = SkillZones.groundOf(end);
+        }
+        if (at == null) {
+            at = end.clone();
+        }
+        at.add(0, 0.1, 0);
+        final long now = now();
+        final Caltrop caltrop = new Caltrop(player.getUniqueId(), at, now + ticks, profile, marker(at, Material.IRON_NUGGET, 0.3f), now, delayedReaction, rearm);
+        if (delayedReaction && !service.targets().around(at, SPEAR_CALTROP_RADIUS + 0.3, player).isEmpty()) {
+            spearCaltropBlast(player, s, caltrop); // 照蒺藜步：遲爆的放下那一刻就有敵人，立刻炸
+            return;
+        }
+        evictCaltropsFor(player, s); // 2026-11-01 照 PoE2：跟蒺藜步共用上限（這次之前撒蒺自己 20 顆，pushCapped）
+        s.spearCaltrops.add(caltrop);
+    }
+
+    /** 純函式（測試用）：圓盤內均勻的一點（u、v 是 0～1 的亂數），回傳 {x, z}。 */
+    static double[] scatterOffset(final double u, final double v, final double radius) {
+        final double r = radius * Math.sqrt(Math.max(0, Math.min(1, u)));
+        final double angle = 2 * Math.PI * v;
+        return new double[]{r * Math.cos(angle), r * Math.sin(angle)};
+    }
+
+    /** 純函式（測試用）：放進清單；超過上限先拿掉最舊的（清單前面的），回傳被拿掉的。 */
+    static <T> List<T> pushCapped(final List<T> list, final T item, final int cap) {
+        final List<T> evicted = new ArrayList<>();
+        while (!list.isEmpty() && list.size() >= Math.max(1, cap)) {
+            evicted.add(list.removeFirst());
+        }
+        list.add(item);
+        return evicted;
+    }
+
+    private void spearCaltrops(final Player player, final State s, final long now) {
+        if (s.spearCaltrops.isEmpty()) {
+            return;
+        }
+        final List<Caltrop> boom = new ArrayList<>();
+        final Iterator<Caltrop> iterator = s.spearCaltrops.iterator();
+        while (iterator.hasNext()) {
+            final Caltrop caltrop = iterator.next();
+            final boolean here = caltrop.at().getWorld() != null && caltrop.at().getWorld().equals(player.getWorld());
+            if (now >= caltrop.until() || !here) {
+                removeDisplay(caltrop.display());
+                iterator.remove();
+                if (caltrop.delayed() && here) {
+                    boom.add(caltrop); // Delayed Reaction：時間到才炸
+                }
+                continue;
+            }
+            if (caltrop.delayed() || now < caltrop.armedAt() || service.targets().around(caltrop.at(), SPEAR_CALTROP_RADIUS + 0.3, player).isEmpty()) {
+                continue;
+            }
+            iterator.remove(); // 照 PoE2：敵人碰到就炸，然後消失
+            boom.add(caltrop);
+        }
+        for (final Caltrop caltrop : boom) {
+            spearCaltropBlast(player, s, caltrop);
+        }
+    }
+
+    /** 撒蒺的鐵蒺炸開（0.5 格，吃範圍效果）然後消失；Rearm：x% 機率過 1 秒在原地重新布置。 */
+    private void spearCaltropBlast(final Player player, final State s, final Caltrop caltrop) {
+        final StatSheet sheet = plugin.players().sheet(player);
+        final double area = sheet == null ? 1.0 : Math.sqrt(Math.max(0.05, caltrop.profile().effective(sheet)
+                .apply(StatKeys.SKILL_AREA, 1.0, caltrop.profile().tags())));
+        blast(player, caltrop.at(), SPEAR_CALTROP_RADIUS * area + 0.3, caltrop.profile());
+        Fx.spawn(caltrop.at().getWorld(), Particle.CRIT, caltrop.at().clone().add(0, 0.3, 0), 6, 0.2, 0.2, 0.2, 0.1);
+        removeDisplay(caltrop.display());
+        if (caltrop.rearm() > 0 && plugin.random().nextDouble() * 100 < caltrop.rearm() && caltropTotal(s) < caltropMax(player)) { // 2026-11-01：共用上限
+            final long now = now();
+            s.spearCaltrops.add(new Caltrop(caltrop.owner(), caltrop.at(), now + Math.max(caltrop.until() - caltrop.armedAt(), 40), caltrop.profile(),
+                    marker(caltrop.at(), Material.IRON_NUGGET, 0.3f), now + tw.exilecore.stats.SupportExtraKeys.REARM_TICKS, caltrop.delayed(), caltrop.rearm()));
         }
     }
 
@@ -1414,6 +1589,30 @@ public final class OriginalSkills implements Listener {
         blast(owner, at, fragment.radius(), fragment.profile());
         Fx.spawn(at.getWorld(), Particle.SNOWFLAKE, at, 15, fragment.radius() / 2, 0.3, fragment.radius() / 2, 0.02);
         Fx.spawn(at.getWorld(), Particle.ITEM_SNOWBALL, at, 6, 0.3, 0.2, 0.3, 0.05);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Vruun's Aftermath（碎晶嘯：support_warcries_detonate_your_ice_fragments）：center 周圍 radius 格內
+     * 你自己的冰裂立刻在原地引爆；回傳引爆了幾個。
+     */
+    int detonateFragmentsAround(final Player player, final Location center, final double radius) {
+        if (fragments.isEmpty() || center.getWorld() == null) {
+            return 0;
+        }
+        final Iterator<Fragment> iterator = fragments.iterator();
+        final List<Fragment> detonated = new ArrayList<>();
+        while (iterator.hasNext()) {
+            final Fragment fragment = iterator.next();
+            if (fragment.owner().equals(player.getUniqueId()) && fragment.at().getWorld() != null && fragment.at().getWorld().equals(center.getWorld())
+                    && fragment.at().distanceSquared(center) <= radius * radius) {
+                iterator.remove();
+                detonated.add(fragment);
+            }
+        }
+        for (final Fragment fragment : detonated) {
+            explodeFragment(fragment, fragment.at());
+        }
+        return detonated.size();
     }
 
     /** 交錯爪：把 7 格內自己的冰裂拉到交叉點立刻炸開。 */
@@ -1681,6 +1880,9 @@ public final class OriginalSkills implements Listener {
         final State s = states.remove(event.getPlayer().getUniqueId());
         if (s != null) {
             for (final Caltrop caltrop : s.caltrops) {
+                removeDisplay(caltrop.display());
+            }
+            for (final Caltrop caltrop : s.spearCaltrops) {
                 removeDisplay(caltrop.display());
             }
             if (plugin.combat() != null) {

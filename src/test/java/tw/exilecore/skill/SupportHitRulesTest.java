@@ -129,7 +129,7 @@ class SupportHitRulesTest {
 
     @Test
     void heraldsAreNotCastSpells() {
-        for (final String id : new String[] {"twin_chant", "sealed_chant", "build_poise", "quick_chant", "charged_chant"}) {
+        for (final String id : new String[] {"twin_chant", "sealed_chant", "quick_chant", "charged_chant"}) {
             assertFalse(support(id).supports(skill("ember_envoy")), id);
             assertFalse(support(id).supports(skill("herald_ash_burst")), id + "：擊殺效果也帶 herald 標籤");
         }
@@ -165,8 +165,8 @@ class SupportHitRulesTest {
         // 2026-11-01：掃擊（原作沒有）拿掉
         assertNull(config.support("sweep_strike"));
         assertEquals("要打擊技能（衝過去、扇形的不行）", support("realm_break_spread").refusal(skill("spear_recoil_leap")));
-        assertEquals("本身會蓄力的技能不行", support("sealed_chant").refusal(skill("burning_current")));
-        assertEquals("本身會蓄力的技能不行", support("swift_edge").refusal(skill("burning_current")), "2026-10-26：蓄力射擊照 PoE2 改成爆破矢（放開型引導，不是 channel.stages），改用焚流");
+        assertEquals("本身會引導的技能不行", support("sealed_chant").refusal(skill("burning_current")));
+        assertEquals("本身會引導的技能不行", support("swift_edge").refusal(skill("burning_current")), "2026-10-26：蓄力射擊照 PoE2 改成爆破矢（放開型引導，不是 channel.stages），改用焚流");
         assertEquals("要祭品技能", support("bone_dance").refusal(skill("summon_bone_bowmen")), "2026-10-26 照 PoE2：骸舞只能掛祭品");
         assertNull(support("bone_dance").refusal(skill("bone_rite")));
         // 2026-10-29 照 PoE2：引星是常駐增益、不是光環；精魂輔助改看 persistent_buff，照樣掛得上

@@ -77,6 +77,18 @@ public final class SupportExtras implements Listener {
         return build.profile().effective(plugin.players().sheet(player));
     }
 
+    /**
+     * 2026-11-01 照 PoE2（Minion Types）：巨靈的指令照巨靈的屬性表（疊上巨靈召喚技能上的輔助）＋指令自己的輔助；不是巨靈的指令、
+     * 巨靈沒叫出來回傳 fallback。
+     */
+    private StatSheet djinnEffective(final Player player, final SkillBuild build, final StatSheet fallback) {
+        if (!DjinnCommands.gemSupported(build.definition().id())) {
+            return fallback;
+        }
+        final StatSheet djinn = service.djinnSheet(plugin.players().get(player), build.definition());
+        return djinn == null ? fallback : build.profile().effective(djinn);
+    }
+
     private static double flat(final StatSheet sheet, final String stat, final Set<String> tags) {
         return sheet.flat(stat, tags);
     }
@@ -95,6 +107,9 @@ public final class SupportExtras implements Listener {
 
     /** Ancestral Aid：最近格擋了幾次（玩家 → 次數）。 */
     private final Map<UUID, Integer> blocks = new HashMap<>();
+    /** 2026-11-01 Cadence：玩家/技能 → 最近用的 tick；玩家/技能 → 到哪個 tick 前不能用。 */
+    private final Map<String, java.util.ArrayDeque<Long>> cadenceUses = new HashMap<>();
+    private final Map<String, Long> cadenceLocked = new HashMap<>();
     /** Dauntless：最後一次移動在哪個 tick。 */
     private final Map<UUID, Long> lastMoved = new HashMap<>();
     /** Stoicism：從哪個 tick 開始算（翻滾、突進之後重來）。 */
@@ -152,6 +167,11 @@ public final class SupportExtras implements Listener {
     /** Energy Barrier：玩家 → {放被輔助的技能到哪個 tick, 被暈眩時多久不被打斷（tick）}；被暈眩之後：玩家 → 到哪個 tick 回充不被打斷。 */
     private final Map<UUID, long[]> barrierUsing = new HashMap<>();
     private final Map<UUID, Long> barrierUntil = new HashMap<>();
+    /** 2026-11-01 Wind Wave：玩家 → 正在放的掛了震風的技能、放到哪個 tick。 */
+    private final Map<UUID, WindUsing> windUsing = new HashMap<>();
+
+    private record WindUsing(String skillId, long untilTick) {
+    }
     /** Stormfire：被掛了雷焚的技能感電的敵人 → {誰, 幾 %}（牠還在感電時，點燃每一跳另外受到 x% 的閃電傷害）。 */
     private final Map<UUID, Stormfire> stormfires = new HashMap<>();
     /** Refraction：插下的戰旗（主人、地方、半徑、到哪個 tick、每 1000 護甲幾 %）。 */
@@ -235,6 +255,12 @@ public final class SupportExtras implements Listener {
         final Set<String> tags = build.profile().tags();
         final String name = build.definition().name();
         final long now = now();
+        if (flat(effective, SupportExtraKeys.CADENCE, tags) > 0) {
+            final long locked = cadenceLocked.getOrDefault(key(player, build.definition().id()), 0L);
+            if (locked > now) {
+                return String.format(Locale.ROOT, "%s 用太頻繁，%.1f 秒後才能再用（連拍）", name, (locked - now) / 20.0);
+            }
+        }
         final int needBlocks = (int) Math.round(flat(effective, SupportExtraKeys.ANCESTRAL_AID, tags));
         if (needBlocks > 0 && blocks.getOrDefault(player.getUniqueId(), 0) < needBlocks) {
             return String.format(Locale.ROOT, "%s 要先格擋 %d 次（現在 %d）", name, needBlocks, blocks.getOrDefault(player.getUniqueId(), 0));
@@ -250,6 +276,36 @@ public final class SupportExtras implements Listener {
             return String.format(Locale.ROOT, "%s 要有 %d 層易爆（現在 %d）", name, volatility, service.treeMechanics().volatility(player));
         }
         return null;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Cadence：你按下去放了被輔助的技能（SkillService 算出手時間前呼叫）。回傳攻擊速度的倍率
+     * （1 + x% × 最近 4 秒內用過幾次，不算這一次）；記下這一次，4 秒內滿 6 次就鎖 10 秒。沒掛連拍回傳 1。
+     */
+    public double cadence(final Player player, final SkillBuild build) {
+        final double per = flat(effective(player, build), SupportExtraKeys.CADENCE, build.profile().tags());
+        if (per <= 0) {
+            return 1.0;
+        }
+        final String key = key(player, build.definition().id());
+        final java.util.ArrayDeque<Long> uses = cadenceUses.computeIfAbsent(key, k -> new java.util.ArrayDeque<>());
+        final long now = now();
+        final int recent = cadenceRecord(uses, now);
+        if (uses.size() >= SupportExtraKeys.CADENCE_LIMIT) {
+            cadenceLocked.put(key, now + SupportExtraKeys.CADENCE_LOCK_TICKS);
+            uses.clear();
+        }
+        return 1 + per / 100.0 * recent;
+    }
+
+    /** 純邏輯：丟掉 4 秒前的，回傳這一次之前還有幾次，再記下這一次。 */
+    static int cadenceRecord(final java.util.ArrayDeque<Long> uses, final long now) {
+        while (!uses.isEmpty() && now - uses.peekFirst() > SupportExtraKeys.CADENCE_RECENT_TICKS) {
+            uses.pollFirst();
+        }
+        final int before = uses.size();
+        uses.addLast(now);
+        return before;
     }
 
     /** Delayed Gratification：達成條件後 10 秒內多一次，這次不用條件。 */
@@ -318,6 +374,10 @@ public final class SupportExtras implements Listener {
         final double barrier = flat(effective, SupportExtraKeys.ENERGY_BARRIER, tags);
         if (barrier > 0) {
             barrierUsing.put(player.getUniqueId(), new long[] {now + Math.round(interval) + 4, Math.round(barrier * 20)});
+        }
+        // 2026-11-01 照 PoE2 Wind Wave（震風）：放的那段時間被暈眩 → 觸發震風浪（playerStunned）；這次之前是擊中暈眩中的敵人時
+        if (service.supportFlat(player, build.definition().id(), SupportProcs.PREFIX + SupportProcs.SELF_STUNNED) > 0) {
+            windUsing.put(player.getUniqueId(), new WindUsing(build.definition().id(), now + Math.round(interval) + 4));
         }
         // 殘骸類（Harmonic、Magnetic Remnants、Remnant Potency）：2026-10-27 改成跟著每一個殘骸走（ChargeEffects.dropInfusionRemnant 讀技能的屬性表）
         // Stoicism：突進技能重來
@@ -564,6 +624,16 @@ public final class SupportExtras implements Listener {
                 player.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, player.getEyeLocation(), 10, 0.3, 0.3, 0.3, 0.05);
             }
         }
+        // 2026-11-01 照 PoE2 Ruthless（無情）：每第 5 次使用是重擊，那一次暈眩傷害更多 x%；這次之前每一下傷害更多 15%、暈眩累積更多 50%
+        final double ruthless = flat(effective, tw.exilecore.stats.SupportRemakeKeys.RUTHLESS, tags);
+        if (ruthless > 0) {
+            final int count = uses.merge(key + "#ruthless", 1, Integer::sum);
+            if (SupportRemakes.ruthlessBigHit(count, tw.exilecore.stats.SupportRemakeKeys.RUTHLESS_EVERY)) {
+                uses.remove(key + "#ruthless");
+                local.add(Modifier.more(StatKeys.STUN_BUILDUP, ruthless / 100.0, "無情重擊"));
+                player.getWorld().spawnParticle(Particle.CRIT, player.getEyeLocation(), 12, 0.3, 0.3, 0.3, 0.1);
+            }
+        }
         // Fresh Clip：這個技能過去 8 秒每裝填一顆弩矢更多 x%（2026-10-27 照 PoE2；這次之前照所有弩技能「射出幾發」算）
         final double fresh = flat(effective, SupportExtraKeys.FRESH_CLIP, tags);
         if (fresh > 0) {
@@ -701,7 +771,7 @@ public final class SupportExtras implements Listener {
                     Math.min(20, pierce), chains, build.explode(), build.wobble(), build.arrow(), build.radius(), build.length(), build.chainRange(),
                     build.manaCost(), build.areaScale(), build.bonusLevel(), build.cooldownTicks(), build.durationScale(), Math.min(3, forks),
                     build.returning(), build.echo(), build.deploy(), build.totems(), build.minions(), build.reserve(), build.minionReserve(),
-                    build.auraEffect(), build.generosity(), build.exerts(), build.repeats());
+                    build.auraEffect(), build.generosity(), build.exerts(), build.repeats(), build.groundDurationScale());
         }
         if (!local.isEmpty()) {
             build = build.withProfile(build.profile().withLocal(local));
@@ -746,9 +816,11 @@ public final class SupportExtras implements Listener {
         final Set<String> tags = build.profile().tags();
         final long now = now();
         // Spell Cascade：往目標區域兩側各落一次（範圍更少）
-        final double cascades = flat(effective, SupportExtraKeys.CASCADE, tags);
+        // 2026-11-01 照 PoE2（MeteorFireDjinn 是 Cascadable）：連瀑掛在羅贊的召喚技能上時，羅贊的清算也連瀑（照羅贊的屬性表讀）
+        final StatSheet cascadeSheet = djinnEffective(player, build, effective);
+        final double cascades = flat(cascadeSheet, SupportExtraKeys.CASCADE, tags);
         if (cascades > 0 && SupportGuards.cascadable(build.definition())) {
-            final double areaLess = flat(effective, SupportExtraKeys.CASCADE_AREA, tags) / 100.0;
+            final double areaLess = flat(cascadeSheet, SupportExtraKeys.CASCADE_AREA, tags) / 100.0;
             final SkillBuild smaller = build.withAreaAndProjectiles(build.areaScale() * Math.sqrt(Math.max(0.1, 1 - areaLess)), build.projectiles());
             final double angle = plugin.random().nextDouble() * Math.PI;
             final double offset = Math.max(1.5, Math.max(SkillCascade.radius(build), 1.5) * 2);
@@ -871,7 +943,7 @@ public final class SupportExtras implements Listener {
             grounds.remove(mine.removeFirst());
         }
         final double radius = spec.radius(build.level()) * build.areaScale();
-        final long ticks = Math.max(20, build.durationTicks(spec.duration(build.level())));
+        final long ticks = Math.max(20, build.groundDurationTicks(spec.duration(build.level()))); // 2026-11-01：詛咒地面是地面效果（Persistent Ground）
         grounds.add(new Ground(player.getUniqueId(), 1, center.clone(), radius, now + ticks, build, spec));
         service.executor().applyCurseAt(player, build, center, spec, now + 15);
         return true;
@@ -1224,6 +1296,21 @@ public final class SupportExtras implements Listener {
                 plugin.players().get(player).addGuard(vanguard * Math.floor(strength / 10), now() + SupportExtraKeys.VANGUARD_TICKS);
             }
         }
+        // Break Posture（2026-11-01 照 PoE2）：完全破甲時只讓被破甲的那一隻眩暈 8 秒；這次之前觸發 proc_break_daze（0.6 格的地面，身旁的敵人一起眩暈）
+        if ("armour_broken".equals(event) && target != null && target.isValid() && debuffs() != null) {
+            final double seconds = service.supportFlat(player, id, SupportExtraKeys.DAZE_ON_ARMOUR_BROKEN);
+            // 2026-11-01：跟擊中時的眩暈走同一條（HitEffects.applyDaze：吃天賦的眩暈持續時間／效果、「不會造成眩暈」不套）；
+            //   這次之前直接套 8 秒、效果固定 50%，天賦的眩暈持續時間、眩暈效果都沒算
+            if (seconds > 0 && service.supportFlat(player, id, tw.exilecore.stats.SupportParityKeys.FLAG_CANNOT_DAZE) <= 0) {
+                final SkillBuild build = service.equippedBuild(player, id);
+                final Set<String> dazeTags = build == null || build.profile() == null ? Set.of() : build.profile().tags();
+                final long now = now();
+                if (tw.exilecore.combat.HitEffects.applyDaze(debuffs(), target.getUniqueId(), player.getUniqueId(), now, Math.round(seconds * 20),
+                        plugin.players().sheet(player), dazeTags)) {
+                    target.getWorld().spawnParticle(Particle.WAX_OFF, target.getLocation().add(0, target.getHeight(), 0), 6, 0.3, 0.2, 0.3, 0);
+                }
+            }
+        }
         if (!"stun_applied".equals(event)) {
             return;
         }
@@ -1256,6 +1343,25 @@ public final class SupportExtras implements Listener {
     // =====================================================================
     // 擊中之後
     // =====================================================================
+
+    /**
+     * 2026-11-01 照 PoE2 Knockback（global_knockback：被輔助的技能每一下擊中都擊退）：技能自己有擊退的照技能自己的方向推（SkillDamage 的那一下），
+     * 自己不會擊退的（法術、投射物、新星…）在這裡從你這邊往外推，距離照 skill.knockback（擊退距離的更多照乘，沒有就 1 格）；Boss 推不動。
+     * 這次之前推擊只能掛近戰攻擊。
+     */
+    private void pushOnHit(final Player player, final LivingEntity defender, final StatSheet effective, final Set<String> tags) {
+        if (effective.flat(tw.exilecore.stats.SupportRuleKeys.KNOCKBACK_ON_HIT, tags) <= 0 || !defender.isValid() || defender.isDead()
+                || plugin.combat() == null || plugin.combat().skillDamage() == null || plugin.combat().skillDamage().pushes(defender)
+                || tw.exilecore.combat.Knockbacks.immune(defender)) {
+            return;
+        }
+        final double strength = Math.max(0, effective.apply(StatKeys.SKILL_KNOCKBACK, Math.max(1, effective.flat(StatKeys.SKILL_KNOCKBACK, tags)), tags));
+        final Vector push = defender.getLocation().toVector().subtract(player.getLocation().toVector()).setY(0);
+        if (strength <= 0 || push.lengthSquared() < 1e-6) {
+            return;
+        }
+        defender.setVelocity(defender.getVelocity().add(push.normalize().multiply(strength).setY(0.3)));
+    }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onHit(final HitEvent event) {
@@ -1300,6 +1406,11 @@ public final class SupportExtras implements Listener {
         final HitResult result = event.result();
         final boolean ailments = plugin.ailments() != null;
         final Debuffs debuffs = debuffs();
+        final double dazeSelf = effective.flat(SupportExtraKeys.DAZE_SELF_ON_CRIT, tags);
+        if (dazeSelf > 0 && result.crit() && debuffs != null && !tags.contains(tw.exilecore.stats.Tags.TOTEM_HIT)) {
+            dazeSelf(player, dazeSelf, now); // 2026-11-01 照 PoE2 Overextend：用被輔助的技能暴擊時你自己被眩暈 5 秒
+        }
+        pushOnHit(player, defender, effective, tags); // 2026-11-01 照 PoE2 Knockback
         lastHits.put(target, new LastHit(player.getUniqueId(), skill, effective, ailments && plugin.ailments().has(defender, AilmentType.BLEED),
                 ailments && plugin.ailments().has(defender, AilmentType.SHOCK), now));
         if (lastHits.size() > 2048) {
@@ -1316,11 +1427,11 @@ public final class SupportExtras implements Listener {
             plugin.ailments().consumeFullBreak(defender);
         }
         if ((flags & FULL_LIFE_FLAG) != 0 && debuffs != null) {
-            daze(player, defender, now);
+            daze(player, defender, now, effective, tags); // Opening Move
         }
         // Concussive Spells：物理傷害暴擊時眩暈
         if (result.crit() && effective.flat(SupportExtraKeys.DAZE_PHYSICAL_CRIT, tags) > 0 && result.dealt().get(DamageType.PHYSICAL) > 0 && debuffs != null) {
-            daze(player, defender, now);
+            daze(player, defender, now, effective, tags);
         }
         // 曝露：冰冷暴擊時（Cold Exposure）；點燃、感電的下一 tick 看（Fire、Lightning Exposure）
         final double coldExposure = effective.flat(SupportExtraKeys.EXPOSURE_ON_COLD_CRIT, tags);
@@ -1373,7 +1484,8 @@ public final class SupportExtras implements Listener {
                 + (result.crit() ? effective.flat(tw.exilecore.item.unique.UniqueStats.IMPALE_ON_CRIT, tags) : 0); // 2026-10-28（驚懼之拳：暴擊會造成穿刺）
         if (impale > 0 && result.outgoing().get(DamageType.PHYSICAL) > 0 && roll(impale)) {
             tw.exilecore.combat.Impales.shared().add(target, player.getUniqueId(), tw.exilecore.stats.KeystoneOriginKeys.impaleAmount(
-                    result.outgoing().get(DamageType.PHYSICAL), effective.increased(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_MAGNITUDE, tags)));
+                    result.outgoing().get(DamageType.PHYSICAL), effective.increased(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_MAGNITUDE, tags),
+                    effective.more(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_MAGNITUDE, tags))); // 2026-11-01 照 PoE2：穿刺效果的更多也算
             defender.getWorld().spawnParticle(Particle.CRIT, defender.getLocation().add(0, defender.getHeight() * 0.6, 0), 6, 0.2, 0.3, 0.2, 0.05);
         }
         // Incision：記下這一下之前身上的切割，下一 tick 被流血用掉就算「最近用掉」
@@ -1527,11 +1639,34 @@ public final class SupportExtras implements Listener {
         }
     }
 
-    /** 眩暈（PoE2 Daze：8 秒內受到的暈眩累積更多 50%；跟 HitEffects 一樣）。 */
-    private void daze(final Player player, final LivingEntity defender, final long now) {
-        debuffs().apply(defender.getUniqueId(), new Debuffs.Debuff("daze", player.getUniqueId(), now + 160, 0, false, null,
+    /**
+     * 眩暈（PoE2 Daze：8 秒內受到的暈眩累積更多 50%）——開門招（Opening Move）、震法（Concussive Spells）用。
+     * 2026-11-01：跟擊中時的眩暈走同一條（{@link tw.exilecore.combat.HitEffects#applyDaze}：持續時間吃天賦的眩暈持續時間、效果吃天賦的眩暈效果、
+     * 「不會造成眩暈」的不套）；已經眩暈的只刷新、不再冒粒子。這次之前直接套 8 秒、效果固定 50%。
+     */
+    private void daze(final Player player, final LivingEntity defender, final long now, final StatSheet effective, final Set<String> tags) {
+        final boolean was = debuffs().has(defender.getUniqueId(), "daze", now);
+        if (tw.exilecore.combat.HitEffects.applyDaze(debuffs(), defender.getUniqueId(), player.getUniqueId(), now,
+                tw.exilecore.combat.HitEffects.DAZE_TICKS, effective, tags) && !was) {
+            defender.getWorld().spawnParticle(Particle.WAX_OFF, defender.getLocation().add(0, defender.getHeight(), 0), 6, 0.3, 0.2, 0.3, 0);
+        }
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Overextend（daze_self_on_critical_hit_for_X_ms）：你自己被眩暈 seconds 秒——跟怪物身上的眩暈一樣（{@link #daze}）：
+     * 受到的暈眩累積更多 50%（玩家挨打時 CombatListener 把身上的減益疊進屬性表，AilmentService 的暈眩累積讀得到）。已經眩暈的只刷新時間、不再冒粒子。
+     */
+    private void dazeSelf(final Player player, final double seconds, final long now) {
+        final Debuffs debuffs = debuffs();
+        final boolean was = debuffs.has(player.getUniqueId(), "daze", now);
+        debuffs.apply(player.getUniqueId(), new Debuffs.Debuff("daze", player.getUniqueId(), now + Math.max(1, Math.round(seconds * 20)), 0, false, null,
                 List.of(Modifier.more(tw.exilecore.ailment.AilmentKeys.STUN_BUILDUP_TAKEN, tw.exilecore.combat.HitEffects.DAZE_STUN_BUILDUP, "眩暈")), 0));
-        defender.getWorld().spawnParticle(Particle.WAX_OFF, defender.getLocation().add(0, defender.getHeight(), 0), 6, 0.3, 0.2, 0.3, 0);
+        if (!was) {
+            player.getWorld().spawnParticle(Particle.WAX_OFF, player.getLocation().add(0, player.getHeight(), 0), 6, 0.3, 0.2, 0.3, 0);
+            if (plugin.combat() != null && plugin.combat().numbers() != null) {
+                plugin.combat().numbers().word(player, player, "眩暈");
+            }
+        }
     }
 
     /** 曝露（那種元素抗性 −20%，吃曝露效果，魔法、稀有、傳奇身上更少）x 秒。 */
@@ -1897,6 +2032,7 @@ public final class SupportExtras implements Listener {
             thorns.values().removeIf(each -> now - each[0] > SupportExtraKeys.THORNS_WINDOW);
             minionDied.values().removeIf(tick -> now - tick > 20L * 60);
             barrierUsing.values().removeIf(each -> each[0] < now);
+            windUsing.values().removeIf(each -> each.untilTick() < now);
             if (plugin.ailments() != null) {
                 stormfires.keySet().removeIf(target -> !(plugin.getServer().getEntity(target) instanceof LivingEntity living)
                         || !living.isValid() || !plugin.ailments().has(living, AilmentType.SHOCK));
@@ -2144,6 +2280,10 @@ public final class SupportExtras implements Listener {
      */
     public void playerStunned(final Player player) {
         final long now = now();
+        final WindUsing wind = windUsing.get(player.getUniqueId());
+        if (wind != null && wind.untilTick() >= now) {
+            service.procEvent(player, wind.skillId(), SupportProcs.SELF_STUNNED, player.getLocation(), null); // 2026-11-01 照 PoE2 Wind Wave
+        }
         final long[] using = barrierUsing.get(player.getUniqueId());
         if (using == null || using[0] < now) {
             return;
@@ -2239,6 +2379,7 @@ public final class SupportExtras implements Listener {
         combos.remove(id);
         barrierUsing.remove(id);
         barrierUntil.remove(id);
+        windUsing.remove(id);
         stomps.remove(id);
         banners.removeIf(each -> each.owner().equals(id));
         incisions.remove(id);

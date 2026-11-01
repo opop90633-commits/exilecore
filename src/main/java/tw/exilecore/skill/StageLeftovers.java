@@ -268,7 +268,7 @@ public final class StageLeftovers implements Listener {
             case PUSTULE_MORE_PER -> "毒苞每存 " + number + " 點毒，爆炸更多 1% 傷害（最多 300%）";
             case PUSTULE_RADIUS_PER -> "毒苞每存 " + number + " 點毒，爆炸半徑 +0.1 格（最多 +1.5 格）"; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前「+0.1 公尺（最多 +1.5）」）
             case PUSTULE_FASTER_PER -> "毒苞存的毒 × 60 每 " + number + " 點，倒數快 1%";
-            default -> null;
+            default -> GroundSkills.describe(stat, value); // 2026-11-01 照 PoE2：技能自己留下的地面效果（滾雷珠、焚流、霜星爆、刺棘身）
         };
     }
 
@@ -917,7 +917,11 @@ public final class StageLeftovers implements Listener {
 
     /** 你施放一個法術（SkillService）：附近的雷雲多放一道雷。 */
     void spellCast(final Player player, final SkillDefinition definition) {
-        if (definition == null || ORB.equals(definition.id()) || !definition.tags().contains(Tags.SPELL)) {
+        if (definition == null || !definition.tags().contains(Tags.SPELL)) {
+            return;
+        }
+        briarpatchCast(player, definition); // 2026-11-01 照 PoE2 Briarpatch：施放法術時用掉存的傷害長出荊棘地面
+        if (ORB.equals(definition.id())) {
             return;
         }
         service.zones().stormOrbCast(player, player.getLocation(), ORB_NEAR);
@@ -933,12 +937,22 @@ public final class StageLeftovers implements Listener {
         final Location center;
         final double base;
         final long start;
-        final long end;
-        final double fire;
-        final StatSheet effective;
+        /** 2026-11-01：不會擴大的點燃地面（滾雷珠、焚流）再噴到同一個地方時刷新，所以不是 final。 */
+        long end;
+        double fire;
+        StatSheet effective;
+        /** 2026-11-01：熾陽之矛的會擴大；滾雷珠、焚流的不會（{@link #ignitedGround}）。 */
+        final boolean grows;
+        /** 2026-11-01：哪個隱藏技能的數值（合併、上限用；熾陽之矛是 null）。 */
+        final String source;
 
         Ignited(final UUID owner, final Location center, final double base, final long start, final long end, final double fire,
                 final StatSheet effective) {
+            this(owner, center, base, start, end, fire, effective, true, null);
+        }
+
+        Ignited(final UUID owner, final Location center, final double base, final long start, final long end, final double fire,
+                final StatSheet effective, final boolean grows, final String source) {
             this.owner = owner;
             this.center = center;
             this.base = base;
@@ -946,7 +960,94 @@ public final class StageLeftovers implements Listener {
             this.end = end;
             this.fire = fire;
             this.effective = effective;
+            this.grows = grows;
+            this.source = source;
         }
+    }
+
+    /** 2026-11-01：不會擴大的點燃地面，同一個玩家的「這隻敵人上次被施加易燃的 tick」（owner:target → tick；重疊的好幾灘不重複給）。 */
+    private final Map<String, Long> igniteTouched = new HashMap<>();
+
+    /**
+     * 2026-11-01 照 PoE2 的點燃地面（Ignited Ground，不會擴大）：滾雷珠用掉火灌注時飛的路上、焚流用掉火灌注時火焰噴到的地方。
+     * hiddenId 是存數值的隱藏技能（zone 的半徑、秒數，damage 是「像造成 X–Y 火焰傷害一樣點燃」的逐級表，吃你的火焰、法術傷害加成）；
+     * 等級、範圍倍率、地面效果持續時間（久地 Persistent Ground）照原技能 parent。at 往下貼到地面。
+     * 跟同一個技能還在的一灘中心很近（{@link GroundSkills#merges}）就只刷新那一灘；同一個技能最多 {@link GroundSkills#MAX_PATCHES} 灘。
+     */
+    void ignitedGround(final Player owner, final SkillBuild parent, final String hiddenId, final Location at) {
+        final SkillDefinition hidden = service.config().skill(hiddenId);
+        if (owner == null || parent == null || at == null || hidden == null || hidden.params().zone() == null) {
+            return;
+        }
+        final PlayerState state = plugin.players().get(owner);
+        final SkillBuild data = SkillBuild.of(service.config(), hidden, Math.max(1, parent.level()), state.level(), false, List.of(),
+                state.weaponTags(), sheet(owner));
+        final SkillParams.Zone zone = hidden.params().zone();
+        final double radius = zone.radius().at(data.level()) * parent.areaScale();
+        final double fire = outgoing(owner, data.profile()).get(DamageType.FIRE);
+        if (fire <= 0 || radius <= 0) {
+            return;
+        }
+        final long now = now();
+        final long end = now + parent.groundDurationTicks(zone.duration());
+        final Location center = groundBelow(at);
+        final StatSheet effective = data.profile().effective(sheet(owner));
+        int same = 0;
+        Ignited oldest = null;
+        for (final Ignited ground : ignited) {
+            if (ground.grows || !hiddenId.equals(ground.source) || !ground.owner.equals(owner.getUniqueId())
+                    || !ground.center.getWorld().equals(center.getWorld())) {
+                continue;
+            }
+            if (GroundSkills.merges(ground.center.distance(center), Math.min(ground.base, radius))) {
+                ground.end = Math.max(ground.end, end);
+                ground.fire = Math.max(ground.fire, fire);
+                ground.effective = effective;
+                ElementalGround.mark(ground.center, ground.base, DamageType.FIRE, ground.end);
+                return;
+            }
+            same++;
+            if (oldest == null || ground.end < oldest.end) {
+                oldest = ground;
+            }
+        }
+        if (same >= GroundSkills.MAX_PATCHES && oldest != null) {
+            ignited.remove(oldest);
+            service.decals().remove(oldest.decal);
+        }
+        ignited.add(new Ignited(owner.getUniqueId(), center, radius, now + 1, end, fire, effective, false, hiddenId));
+        ElementalGround.mark(center, radius, DamageType.FIRE, end);
+        startTimer();
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Incinerate（Ignited Ground）：焚流用掉火灌注的這一下，沿著火焰的中線（{@link GroundSkills#conePoints}）留下點燃地面。
+     * 沒用掉火灌注（profile 沒有 {@link GroundSkills#CONE_IGNITED}）就沒有。
+     */
+    void coneIgnited(final Player owner, final SkillBuild build, final Location feet, final Vector facing, final double length) {
+        if (owner == null || SkillZones.localFlat(build.profile(), GroundSkills.CONE_IGNITED) <= 0) {
+            return;
+        }
+        final SkillDefinition hidden = service.config().skill(GroundSkills.INCINERATE_GROUND);
+        if (hidden == null || hidden.params().zone() == null) {
+            return;
+        }
+        final Vector flat = facing.clone().setY(0);
+        if (flat.lengthSquared() < 1e-6) {
+            return;
+        }
+        flat.normalize();
+        final double radius = hidden.params().zone().radius().at(Math.max(1, build.level())) * build.areaScale();
+        for (final double distance : GroundSkills.conePoints(length, radius)) {
+            ignitedGround(owner, build, GroundSkills.INCINERATE_GROUND, feet.clone().add(flat.clone().multiply(distance)));
+        }
+    }
+
+    /** 2026-11-01：往下找 4 格內的地面（飄在空中的雷珠、斜坡上的火焰），找不到照原位置。 */
+    private static Location groundBelow(final Location at) {
+        final org.bukkit.util.RayTraceResult hit = at.getWorld() == null ? null
+                : at.getWorld().rayTraceBlocks(at, new Vector(0, -1, 0), 4, org.bukkit.FluidCollisionMode.NEVER, true);
+        return hit == null ? at.clone() : hit.getHitPosition().toLocation(at.getWorld()).add(0, 0.05, 0);
     }
 
     private final List<Ignited> ignited = new ArrayList<>();
@@ -963,7 +1064,7 @@ public final class StageLeftovers implements Listener {
         final double fire = outgoing(owner, profile).get(DamageType.FIRE);
         final double radius = SkillStages.radius(build, "ground", 2.0 * build.areaScale());
         final long start = now() + Math.max(1, delay);
-        final long end = start + build.durationTicks(stage.duration() > 0 ? stage.duration() : 4);
+        final long end = start + build.groundDurationTicks(stage.duration() > 0 ? stage.duration() : 4); // 2026-11-01 照 PoE2 Persistent Ground：點燃地面是地面效果
         ignited.add(new Ignited(owner.getUniqueId(), at.clone(), radius, start, end, fire, profile.effective(sheet(owner))));
         // 2026-10-28 照 PoE2：點燃地面是元素地面（旋風矛、旋矛擊的旋風碰到變成火焰的）；地面會擴大，照擴大後的半徑登記（這次之前沒登記）
         ElementalGround.mark(at, solarisRadius(radius, 1), DamageType.FIRE, end);
@@ -982,16 +1083,152 @@ public final class StageLeftovers implements Listener {
             if (now < ground.start || (now - ground.start) % 10 != 0) {
                 continue;
             }
-            final double radius = solarisRadius(ground.base, (now - ground.start) / (double) Math.max(1, ground.end - ground.start));
+            // 2026-11-01：滾雷珠、焚流的點燃地面不會擴大（只有熾陽之矛的會）
+            final double radius = ground.grows ? solarisRadius(ground.base, (now - ground.start) / (double) Math.max(1, ground.end - ground.start)) : ground.base;
             // 2026-10-31 照站長：套了資源包的人看平貼在地上的圖（橘紅色）；粒子只送給沒套的人
             service.decals().area(ground.decal, ground.owner, ground.center, radius, GroundDecals.soft(IGNITED_RGB), ground.end - now <= SkillZones.DECAL_ENDING_TICKS);
             if (plugin.ailments() != null && ground.fire > 0) {
                 for (final LivingEntity target : service.targets().around(ground.center, radius, owner)) {
+                    if (!ground.grows) {
+                        // 2026-11-01：站在同一個玩家好幾灘重疊的點燃地面上，每 0.5 秒還是只施加一次易燃
+                        final String key = ground.owner + ":" + target.getUniqueId();
+                        final Long last = igniteTouched.get(key);
+                        if (last != null && now - last < GroundSkills.IGNITE_GAP_TICKS) {
+                            continue;
+                        }
+                        igniteTouched.put(key, now);
+                    }
                     plugin.ailments().groundIgnite(owner, target, ground.fire, ground.effective);
                 }
             }
             tw.exilecore.skill.Fx.withoutPack(() -> tw.exilecore.skill.Fx.disk(ground.center.getWorld(), Particle.FLAME,
                     ground.center.clone().add(0, 0.1, 0), (int) Math.round(6 * radius), radius, 0.05, 0.01));
+        }
+    }
+
+    // ---------------------------------------------------------------- 刺棘身（PoE2 Briarpatch）
+
+    /** 2026-11-01：一片荊棘地面。profile 是長出來時用掉的傷害（法術物理）；next = 每隻敵人下一次能被打的 tick，last = 上一次看到牠的位置。 */
+    private record Thorny(UUID owner, Location center, double radius, long until, SkillProfile profile, Map<UUID, Long> next,
+                          Map<UUID, Vector> last, String decal) {
+    }
+
+    private final List<Thorny> thorny = new ArrayList<>();
+    /** 2026-11-01：刺棘身存了多少傷害、上一片荊棘地面在哪個 tick 長出來。 */
+    private final Map<UUID, Double> briarStored = new HashMap<>();
+    private final Map<UUID, Long> briarGrown = new HashMap<>();
+    private static long thornySerial;
+    /** 2026-11-01：荊棘地面的地面圖顏色（深綠）。 */
+    private static final int THORNY_RGB = 0x4F7A28;
+
+    /**
+     * 2026-11-01 照 PoE2 Briarpatch（CombatListener）：刺棘身生效時，你親自造成的物理攻擊傷害存一部分（照精魂效果的 {@link GroundSkills#BRIAR_STORE}%，
+     * 最多 {@link GroundSkills#BRIAR_CAP}）。刺棘身沒開（屬性表沒有上限）就不存。
+     */
+    public void briarpatchStore(final Player player, final StatSheet sheet, final SkillProfile skill, final double physical) {
+        if (player == null || sheet == null || skill == null || physical <= 0 || !skill.tags().contains(Tags.ATTACK)) {
+            return;
+        }
+        final double cap = sheet.flat(GroundSkills.BRIAR_CAP, Set.of());
+        if (cap <= 0) {
+            return;
+        }
+        briarStored.put(player.getUniqueId(), GroundSkills.store(briarStored.getOrDefault(player.getUniqueId(), 0.0), physical,
+                sheet.flat(GroundSkills.BRIAR_STORE, Set.of()), cap));
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Briarpatch：施放法術（刺棘身自己不算）時用掉存的傷害，在你腳下長出荊棘地面（3 格、6 秒，最多 1 片、每 8 秒最多一片；
+     * 範圍、地面效果持續時間照面板上的刺棘身，久地拉長的是這個）。長出來時打一下範圍內的敵人，之後在上面移動的敵人每 0.5 秒最多被打一下。
+     * 傷害是法術物理傷害，基礎就是存的量（荊棘傷害的增加、更多也算，Briarpatch：thorns damage modifiers apply to spell damage）、基礎暴擊率 10%。
+     */
+    private void briarpatchCast(final Player player, final SkillDefinition definition) {
+        if (GroundSkills.BRIARPATCH.equals(definition.id())) {
+            return;
+        }
+        final double stored = briarStored.getOrDefault(player.getUniqueId(), 0.0);
+        final long now = now();
+        if (stored <= 0 || sheet(player).flat(GroundSkills.BRIAR_CAP, Set.of()) <= 0
+                || !GroundSkills.canGrow(briarGrown.getOrDefault(player.getUniqueId(), -1L), now)) {
+            return;
+        }
+        final SkillBuild build = current(player, GroundSkills.BRIARPATCH);
+        if (build == null) {
+            return;
+        }
+        briarStored.remove(player.getUniqueId());
+        briarGrown.put(player.getUniqueId(), now);
+        final SkillProfile base = build.profile();
+        final Set<String> tags = new HashSet<>(base.tags());
+        tags.add(Tags.SPELL);
+        tags.add(Tags.AREA);
+        tags.add(Tags.PHYSICAL);
+        final StatSheet owner = sheet(player);
+        final List<Modifier> local = new ArrayList<>(base.local());
+        local.add(Modifier.flat(StatKeys.SPELL_BASE_CRIT, GroundSkills.BRIAR_CRIT, "荊棘地面"));
+        final double thornsIncreased = owner.increased(StatKeys.THORNS_DAMAGE, Set.of());
+        if (thornsIncreased != 0) {
+            local.add(Modifier.increased(StatKeys.DAMAGE, thornsIncreased, "荊棘傷害加成"));
+        }
+        final double thornsMore = owner.more(StatKeys.THORNS_DAMAGE, Set.of());
+        if (Math.abs(thornsMore - 1) > 1e-9) {
+            local.add(Modifier.more(StatKeys.DAMAGE, thornsMore - 1, "荊棘傷害加成"));
+        }
+        final SkillProfile profile = new SkillProfile(base.id() + ".thorny", Set.copyOf(tags), base.effectiveness(),
+                new DamagePacket().set(DamageType.PHYSICAL, stored), new DamagePacket().set(DamageType.PHYSICAL, stored), Map.of(), local);
+        final Location center = player.getLocation().clone();
+        final double radius = tw.exilecore.core.Units.metres(GroundSkills.BRIAR_RADIUS_M) * build.areaScale();
+        // 上限 1 片：新的長出來舊的就沒了
+        int mine = 0;
+        for (final Iterator<Thorny> it = thorny.iterator(); it.hasNext(); ) {
+            final Thorny patch = it.next();
+            if (patch.owner().equals(player.getUniqueId()) && ++mine >= GroundSkills.BRIAR_LIMIT) {
+                it.remove();
+                service.decals().remove(patch.decal());
+            }
+        }
+        final Thorny patch = new Thorny(player.getUniqueId(), center, radius, now + build.groundDurationTicks(GroundSkills.BRIAR_SECONDS), profile,
+                new HashMap<>(), new HashMap<>(), "thorny:" + (++thornySerial));
+        thorny.add(patch);
+        for (final LivingEntity target : service.targets().around(center, radius, player)) {
+            service.executor().hitOne(player, profile, target, center, 0);
+            patch.next().put(target.getUniqueId(), now + GroundSkills.BRIAR_HIT_GAP_TICKS);
+            patch.last().put(target.getUniqueId(), target.getLocation().toVector());
+        }
+        tw.exilecore.skill.Fx.disk(center.getWorld(), Particle.CRIT, center.clone().add(0, 0.2, 0),
+                (int) Math.round(10 * radius), radius, 0.1, 0.02);
+        center.getWorld().playSound(center, Sound.BLOCK_SWEET_BERRY_BUSH_PLACE, SoundCategory.PLAYERS, 0.9f, 0.8f);
+        plugin.players().get(player).notice(String.format(java.util.Locale.ROOT, "<#7fb24a>荊棘地面 <white>%.0f</white> 傷害", stored), now + 40);
+        startTimer();
+    }
+
+    private void thornyTick(final long now) {
+        if (thorny.isEmpty() || now % 2 != 0) {
+            return;
+        }
+        for (final Thorny patch : new ArrayList<>(thorny)) {
+            final Player owner = plugin.getServer().getPlayer(patch.owner());
+            if (owner == null || now >= patch.until() || !owner.getWorld().equals(patch.center().getWorld())) {
+                thorny.remove(patch);
+                service.decals().remove(patch.decal());
+                continue;
+            }
+            service.decals().area(patch.decal(), patch.owner(), patch.center(), patch.radius(), GroundDecals.soft(THORNY_RGB),
+                    patch.until() - now <= SkillZones.DECAL_ENDING_TICKS);
+            if (now % 10 == 0) {
+                tw.exilecore.skill.Fx.withoutPack(() -> tw.exilecore.skill.Fx.disk(patch.center().getWorld(), Particle.CRIT,
+                        patch.center().clone().add(0, 0.1, 0), (int) Math.round(3 * patch.radius()), patch.radius(), 0.05, 0.01));
+            }
+            for (final LivingEntity target : service.targets().around(patch.center(), patch.radius(), owner)) {
+                final Vector here = target.getLocation().toVector();
+                final Vector before = patch.last().put(target.getUniqueId(), here);
+                if (before == null || !GroundSkills.moved(here.getX() - before.getX(), here.getZ() - before.getZ())
+                        || patch.next().getOrDefault(target.getUniqueId(), 0L) > now) {
+                    continue;
+                }
+                patch.next().put(target.getUniqueId(), now + GroundSkills.BRIAR_HIT_GAP_TICKS);
+                service.executor().hitOne(owner, patch.profile(), target, patch.center(), 0);
+            }
         }
     }
 
@@ -1013,7 +1250,7 @@ public final class StageLeftovers implements Listener {
         }
         final long now = now();
         final double radius = SkillStages.radius(build, "explosion", 1.2 * build.areaScale());
-        final long until = now + build.durationTicks(explosion.duration() > 0 ? explosion.duration() : 6);
+        final long until = now + build.groundDurationTicks(explosion.duration() > 0 ? explosion.duration() : 6); // 2026-11-01 照 PoE2 Persistent Ground：鋸齒地面
         final double distance = from.distance(to);
         final int steps = Math.max(1, (int) Math.floor(distance / STAMPEDE_STEP));
         for (int i = 0; i <= steps; i++) {
@@ -1308,17 +1545,19 @@ public final class StageLeftovers implements Listener {
         rainsTick(now);
         bombsTick(now);
         ignitedTick(now);
+        thornyTick(now); // 2026-11-01 照 PoE2 Briarpatch
         jaggedTick(now);
         whirlsTick(now);
         wallsTick(now);
         if (now % 100 == 0) {
+            igniteTouched.values().removeIf(tick -> now - tick > 4L * GroundSkills.IGNITE_GAP_TICKS); // 2026-11-01
             shards.entrySet().removeIf(entry -> entry.getValue().until() <= now);
             shardDamage.keySet().removeIf(id -> !shards.containsKey(id));
             riven.values().removeIf(entry -> entry.until() <= now);
             forges.values().removeIf(mark -> mark.until() <= now);
         }
         if (rains.isEmpty() && bombs.isEmpty() && ignited.isEmpty() && jagged.isEmpty() && whirls.isEmpty() && walls.isEmpty() && shards.isEmpty()
-                && riven.isEmpty() && forges.isEmpty() && timer >= 0) {
+                && riven.isEmpty() && forges.isEmpty() && thorny.isEmpty() && timer >= 0) {
             plugin.getServer().getScheduler().cancelTask(timer);
             timer = -1;
         }
@@ -1333,6 +1572,9 @@ public final class StageLeftovers implements Listener {
         rains.values().removeIf(rain -> rain.owner.equals(id));
         bombs.removeIf(bomb -> bomb.owner.equals(id));
         ignited.removeIf(ground -> ground.owner.equals(id));
+        thorny.removeIf(patch -> patch.owner().equals(id)); // 2026-11-01 照 PoE2 Briarpatch
+        briarStored.remove(id);
+        briarGrown.remove(id);
         jagged.removeIf(patch -> patch.owner().equals(id));
         whirls.removeIf(whirl -> whirl.owner.equals(id));
         walls.removeIf(wall -> wall.owner.equals(id));

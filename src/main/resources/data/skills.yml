@@ -351,7 +351,7 @@ skills:
     name: 英靈圖騰
     # 2026-10-26 照 PoE2 Ancestral Warrior Totem（poe2db）：消耗 3 顆磐星、沒有冷卻、最多 10 根、8 秒；圖騰抗性與魔耗逐級
     # 2026-10-26 照站長「有些敘述有點長」精簡說明（數值不變）；這次之前 231 字
-    description: 消耗 3 顆磐星放下英靈圖騰（8 秒，最多 10 根），定時在附近敵人身邊叫出英靈，用插在裡面的錘子攻擊技能打一次（可放好幾個，照孔的順序輪流；其他孔的輔助套在它們上面；間隔＝該技能攻擊時間 1.5 倍）。不能放有冷卻、蓄力或引導的技能（千鈞砸、蓄勁一擊、擂盾、天罰巨鎚、土壁擊），放進去的技能自己的輔助會拆下來。圖騰元素／混沌抗性隨等級提高（20 級 75%／35%）。要拿錘子。
+    description: 消耗 3 顆磐星放下英靈圖騰（8 秒，最多 10 根），定時在附近敵人身邊叫出英靈，用插在裡面的錘子攻擊技能打一次（可放好幾個，照孔的順序輪流；其他孔的輔助套在它們上面；間隔＝該技能攻擊時間 1.5 倍）。不能放有冷卻或引導的技能（千鈞砸、蓄勁一擊、擂盾、天罰巨鎚、土壁擊），放進去的技能自己的輔助會拆下來。圖騰元素／混沌抗性隨等級提高（20 級 75%／35%）。要拿錘子。
     icon: NAUTILUS_SHELL   # 2026-10：原本 TOTEM_OF_UNDYING（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 13   # 2026-10-26 照 PoE2（Ancestral Warrior Totem 13 階：未切割技能寶石 13 級以上才雕得出來）；這次之前 3
@@ -922,7 +922,8 @@ skills:
 
   frost_star_blast:
     name: 霜星爆
-    description: 以自己為中心爆出一圈寒氣，冰緩、凍結累積都大幅提高；你的霜鑽還在飛的時候，改從霜鑽的位置爆開。身上有冰灌注時用掉一層：範圍大很多、冰緩更強。
+    # 2026-11-01 照 PoE2 Ice Nova 的 Chilled Ground；這次之前說明的冰灌注是「範圍大很多、冰緩更強。」
+    description: 以自己為中心爆出一圈寒氣，冰緩、凍結累積都大幅提高；你的霜鑽還在飛的時候，改從霜鑽的位置爆開。身上有冰灌注時用掉一層：範圍大很多，爆炸的地方留下一樣大的冰緩地面 8 秒。
     icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 1   # 2026-10-27 照 PoE2（Ice Nova 第 1 階）；這次之前 3
@@ -937,11 +938,14 @@ skills:
     # （更早）法術附加乘這個
     mana: [7, 8, 10, 11, 13, 15, 17, 20, 22, 25, 28, 32, 36, 40, 44, 49, 55, 61, 67, 74, 82, 90, 99, 109, 120, 131, 144, 158, 173, 189, 207, 226, 247, 269, 294, 320, 348, 379, 413, 449]   # 2026-10-26 照 PoE2（poe2db）；這次之前 [6, 16]
     visual: frost_star_blast
-    resource:   # 2026-10-26 照 PoE2 Ice Nova：用掉一層冰灌注，爆炸與冰緩地面 4.8 格（基礎 3.2，範圍增加 125%）、留下 8 秒冰緩地面；冰緩地面做成冰緩效果更多 50%
+    resource:   # 2026-10-26 照 PoE2 Ice Nova：用掉一層冰灌注，爆炸與冰緩地面 4.8 格（基礎 3.2，範圍增加 125%）、留下 8 秒冰緩地面；冰緩地面做成冰緩效果更多 50%（2026-11-01 冰緩地面改成真的做出來，見下面）
       infusion: [cold]
       infused:
         - { stat: skill.area, type: INCREASED, value: 125 }
-        - { stat: chill.effect, type: MORE, value: 50 }
+        # 2026-11-01 照 PoE2 Ice Nova（Cold-Infused：Explosion and Chilled Ground radius 4.8 公尺、Chilled Ground duration 8 秒）：
+        #   冰緩地面照原作做出來（SkillExecutor.chilledNova，跟爆炸一樣大、吃久地；冰緩幅度原作沒寫，照我們其他冰緩地面 20%）；
+        #   這次之前平衡等效成冰緩效果更多 50%（chill.effect MORE 50）
+        - { stat: ground.chilled_nova, type: FLAT, value: 8 }
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 12 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: flag.nova_from_frostbolt, type: FLAT, value: 1 }
@@ -1686,7 +1690,7 @@ skills:
 
   plate_crush_hammer:
     name: 碎甲錘
-    description: 一記專打護甲的重擊：打單一敵人，大幅破甲。
+    description: 一記專打護甲的重擊：打單一敵人，擊中時破掉固定量的護甲（隨技能等級大幅提高）並擊退；雙持時攻擊速度更多 40%。
     icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 3
@@ -1704,6 +1708,8 @@ skills:
     visual: spine_crush
     level_modifiers:   # 2026-10-26 照 PoE2 逐級
       - { stat: armour.break_flat, type: FLAT, value: [3, 6, 11, 24, 40, 60, 88, 123, 183, 266, 380, 534, 791, 1156, 1672, 2263, 2717, 3254, 4120, 4918, 5244, 5591, 5961, 6351, 6768, 7210, 7678, 8177, 8708, 9269, 9864, 10498, 11169, 11880, 12637, 13440, 14290, 15192, 16103, 17055] }   # 破甲固定量逐級；這次之前 armour.break 100
+    modifiers:
+      - { stat: attack.speed_more_dual_wield, type: FLAT, value: 40 }   # 2026-11-01 照 PoE2（active_skill_attack_speed_+%_final_while_dual_wielding 40；SkillService.dualWieldSpeed）；這次之前沒有
 
   iron_wall_ram:
     name: 鐵壁衝撞
@@ -2145,14 +2151,20 @@ skills:
 
   shattered_bone_darts:
     name: 碎骨飛矢
-    description: 按住引導，每 0.12 秒在身邊多凝聚一支骨刺（最多 20 支，吃施法速度），放開時全部朝準心射出，每一支都打得到同一個敵人。
+    # 2026-11-01 照 PoE2 Bonestorm（Path of Building BonestormPlayer 兩組數值）補上爆炸、穿刺、用掉銳星；這次之前說明「每 0.12 秒在身邊多凝聚一支骨刺（最多 20 支，吃施法速度），放開時全部朝準心射出，每一支都打得到同一個敵人。」
+    description: 按住引導，每 0.125 秒（吃施法速度）在身邊凝聚骨刺（一次凝聚的支數＝投射物數量，最多 20 支；最短引導 0.3 秒），放開時全部朝準心射出，每一支都打得到同一個敵人，打中時炸開 0.5 格（爆炸另外造成傷害）。骨刺與爆炸一定穿刺、穿刺效果更多 200%（你之後的攻擊擊中牠時加上去）。放出時用掉身上全部的銳星：爆炸半徑 +0.7 格，每用掉一顆再更多 40% 範圍。按住期間逐秒扣魔力，施法速度越快扣得越多。
     icon: BONE
     type: spell
     tier: 5
-    tags: [spell, projectile, physical, spike_volley, area, channelling]   # 2026-10-26 照 PoE2（加範圍；拿掉原作沒有的流血 +20%，穿刺、銳星爆炸沒做）；另加天賦樹系統標籤 channelling
+    tags: [spell, projectile, physical, spike_volley, area, channelling]   # 2026-10-26 照 PoE2（加範圍；拿掉原作沒有的流血 +20%）；另加天賦樹系統標籤 channelling。2026-11-01 穿刺、爆炸、銳星補上（這次之前沒做）
     mechanic: projectile
-    projectile: { count: 2, speed: 1.8, range: 24, size: 0.3 }   # 2026-10-26 照 PoE2（Bonestorm：Fires +1 Projectiles，引導每段多一支）；這次之前 burst 3 波、一次 1 支
-    charge: { stages: 19, stage_time: 0.12, stage_projectiles: 1, drain: true }   # 2026-10-26 照 PoE2（引導 0.12 秒一段，最多 20 支；魔力按住逐秒扣，這次之前放開扣一次）
+    # 2026-11-01 照 PoE2（Path of Building：base_number_of_projectiles 1、bone_spear 爆炸 active_skill_base_area_of_effect_radius 5 = 0.5 公尺；poe2db 投射物速度 27 公尺／秒）：
+    #   一段凝聚 1 支（多射的投射物加在每一段）、打中炸開 0.5 格；這次之前 count 2（第一段 2 支、之後每段 1 支，加起來 20）、speed 1.8、沒有爆炸
+    projectile: { count: 1, speed: 1.35, range: 24, size: 0.3, explode: 0.5 }
+    # 2026-11-01 照 PoE2（castTime 0.125 = 一段、base_number_of_allowed_bone_storm_projectiles 20、base_minimum_channel_time_ms 300、
+    #   cast_speed_modifiers_apply_to_over_time_cost）：累積型——每段凝聚「投射物數量」支、最多 20 支（ChargeSpec.accumulate），最短引導 0.3 秒，
+    #   逐秒魔耗乘施法速度；這次之前 { stages: 19, stage_time: 0.12, stage_projectiles: 1, drain: true }（顯示 x／19 層）
+    charge: { stages: 20, stage_time: 0.125, accumulate: true, min_time: 0.3, drain: true, cast_speed_cost: true }
     damage: [[4, 7], [6, 9], [8, 12], [10, 16], [13, 20], [16, 24], [19, 29], [23, 34], [27, 40], [31, 47], [36, 55], [42, 63], [48, 72], [55, 83], [63, 94], [71, 107], [81, 121], [91, 137], [103, 155], [116, 175], [131, 197], [148, 221], [166, 249], [187, 280], [210, 315], [236, 353], [264, 397], [297, 445], [333, 500], [374, 562], [421, 631], [473, 709], [531, 797], [597, 896], [672, 1008], [756, 1134], [851, 1277], [959, 1439], [1082, 1623], [1220, 1831]]   # 2026-10-26 照 PoE2（poe2db Bonestorm 1–40 級，每一級的實際傷害，不乘 spell_damage_growth）；這次之前 [7, 13]
     # （更早）2026-10-23 直傷法術第二輪 ×1.4（90 級以上實測中位數只有錘的三成；法術不吃武器，前幾輪武器補強都沒補到）；這次之前 [5, 9]
     damage_types: { physical: 1.0 }
@@ -2160,8 +2172,16 @@ skills:
     effectiveness: 1.0   # 2026-10-26 照 PoE2（poe2db Base Damage 100%）；這次之前 0.6
     mana: [6, 7, 8, 10, 11, 13, 14, 16, 18, 21, 23, 26, 29, 33, 36, 40, 45, 50, 55, 61, 67, 74, 81, 89, 98, 107, 118, 129, 141, 154, 169, 184, 201, 219, 239, 260, 284, 309, 336, 365]   # 2026-10-26 照 PoE2（poe2db 每秒魔耗，照 1 秒算）；這次之前 [6, 16]
     visual: puncture
+    # 2026-11-01 照 PoE2 Bonestorm 的第二組數值 Explosion（Path of Building：20 級 89–134，1 級 3–5…40 級 937–1405；
+    #   效益是同一級骨刺傷害的幾倍＝(爆炸最小＋最大) ÷ (骨刺最小＋最大)，基礎 1.09 ÷ 1.42 ≈ 0.768）。用掉銳星的半徑在 Bonestorm.radiusScale
+    stages:
+      explosion: { name: 骨刺爆炸, effectiveness: [0.727, 0.8, 0.75, 0.769, 0.758, 0.75, 0.771, 0.772, 0.776, 0.769, 0.769, 0.762, 0.775, 0.761, 0.764, 0.77, 0.767, 0.768, 0.767, 0.766, 0.768, 0.767, 0.766, 0.767, 0.766, 0.767, 0.769, 0.768, 0.768, 0.767, 0.767, 0.767, 0.768, 0.768, 0.768, 0.768, 0.768, 0.768, 0.767, 0.768] }
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 15 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
+      # 2026-11-01 照 PoE2（兩組數值都有 spells_impale_on_hit_%_chance 100、active_skill_impale_magnitude_+%_final 200）：骨刺與爆炸一定穿刺、穿刺效果更多 200%
+      - { stat: stab_nail.spell_chance, type: FLAT, value: 100 }
+      - { stat: stab_nail.magnitude, type: MORE, value: 200 }
+      - { stat: flag.projectile_explosion_hits_struck, type: FLAT, value: 1 }   # 2026-11-01 照 PoE2：骨刺打中的那隻也挨爆炸、每一支各炸各的（ProjectileEngine.FLAG_BLAST_STRUCK）
 
 
   # -- 召喚 --
@@ -2347,7 +2367,7 @@ skills:
 
   charged_blow:
     name: 蓄勁一擊
-    description: 按住蓄力，放開打出一記重擊（部分物理轉火焰）。蓄到「叮」一聲的那一刻放開是完美時機：再往前方轟出一道大火浪。數字鍵：按一下開始蓄、再按一下放。
+    description: 按住引導，放開打出一記重擊（部分物理轉火焰）。引導到「叮」一聲的那一刻放開是完美時機：再往前方轟出一道大火浪。數字鍵：按一下開始引導、再按一下放。
     icon: NETHERITE_INGOT
     type: attack
     tier: 5   # 2026-10-27 照 PoE2（Perfect Strike 第 5 階）；這次之前 9
@@ -3027,7 +3047,7 @@ skills:
 
   flame_core_detonation:
     name: 炎核爆
-    description: 按住蓄力（最多 10 層，每 0.25 秒一層，吃施法速度），放開時在準心指的地方炸開：每多一層更多 75% 傷害、範圍更大，蓄滿最划算。數字鍵：按一下開始蓄、再按一下放。
+    description: 按住引導（最多 10 層，每 0.25 秒一層，吃施法速度），放開時在準心指的地方炸開：每多一層更多 75% 傷害、範圍更大，疊滿最划算。數字鍵：按一下開始引導、再按一下放。
     icon: MAGMA_CREAM   # 2026-10：原本 MAGMA_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 13   # 2026-10-27 照 PoE2（Flameblast 第 13 階）；這次之前 9
@@ -3302,7 +3322,8 @@ skills:
   # ==== 2026-10：持續引導、附身、治療召喚 ====
   burning_current:
     name: 焚流
-    description: 持續施放：按住一直往前噴出一道細長的火焰，一定點燃。
+    # 2026-11-01 照 PoE2 Incinerate 的 Ignited Ground 補上火灌注；這次之前說明「持續施放：按住一直往前噴出一道細長的火焰，一定點燃。」
+    description: 持續施放：按住一直往前噴出一道細長的火焰，一定點燃。身上有火灌注時用掉一層：火焰噴到的地方留下點燃地面（1.4 格、8 秒）。
     icon: BLAZE_POWDER
     type: spell
     tier: 9   # 2026-10-27 照 PoE2（Incinerate 第 9 階）；這次之前 3
@@ -3316,10 +3337,12 @@ skills:
     effectiveness: 1.0   # 2026-10-28 照 PoE2（poe2db Incinerate 1–40 級：傷害表已經是每一級的實際傷害，Base Damage 100%）；這次之前 0.35（換成逐級表之前留下來的，實際只打出 35%）
     mana: [2, 5]   # 2026-10-27：PoE2 0.5 的 Incinerate 沒有魔力消耗（燒別的技能花掉的魔力存下來的燃料；燃料 2026-10-26 照站長拿掉），沒有逐級表可以照，維持原值
     visual: blazing_star_shell
-    resource:   # 2026-10-26 照 PoE2 Incinerate：用掉一層火灌注，另外留下 8 秒的燃燒地面（點燃當作 912–1367 火焰傷害）；做成平衡等效：點燃強度更多 60%
+    resource:   # 2026-10-26 照 PoE2 Incinerate：用掉一層火灌注，另外留下 8 秒的燃燒地面（點燃當作 912–1367 火焰傷害）；做成平衡等效：點燃強度更多 60%（2026-11-01 改成真的點燃地面，見下面）
       infusion: [fire]
       infused:
-        - { stat: ignite.magnitude, type: MORE, value: 60 }
+        # 2026-11-01 照 PoE2 Incinerate（Ignited Ground 1.4 公尺、8 秒）：點燃地面照原作做出來（StageLeftovers.coneIgnited →
+        #   proc_incinerate_ground，沿著火焰的中線，吃久地）；這次之前平衡等效成點燃強度更多 60%（ignite.magnitude MORE 60）
+        - { stat: ground.ignited_cone, type: FLAT, value: 1 }
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 6 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: channel.stages, type: FLAT, value: 1 }   # 2026-10-26 照 PoE2：引導但沒有層數（最多 1 層、每層 0%）；這次之前 8 層、每層更多 10%
@@ -3592,7 +3615,7 @@ skills:
 
   cloud_pierce_arrow:
     name: 穿雲箭
-    description: 按住拉弓蓄力，放開射出一支很重的箭（不會凍結；按住期間逐秒扣魔力，攻擊速度越快扣得越多）。蓄到「叮」一聲的那一刻放開是完美時機：箭打中時在周圍 2.5 格炸開；直接打中凍結中的敵人時用掉凍結，改成更強的寒冰爆破（周圍 3 格、物理全部轉成冰冷，從傳奇敵人身上炸開的更痛）。數字鍵：按一下開始拉、再按一下放。
+    description: 按住拉弓引導，放開射出一支很重的箭（不會凍結；按住期間逐秒扣魔力，攻擊速度越快扣得越多）。引導到「叮」一聲的那一刻放開是完美時機：箭打中時在周圍 2.5 格炸開；直接打中凍結中的敵人時用掉凍結，改成更強的寒冰爆破（周圍 3 格、物理全部轉成冰冷，從傳奇敵人身上炸開的更痛）。數字鍵：按一下開始拉、再按一下放。
     icon: QUARTZ   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: attack
     tier: 3   # 2026-10-27 照 PoE2（Snipe 第 3 階）；這次之前 9
@@ -3636,7 +3659,8 @@ skills:
 
   rolling_thunder_orb:
     name: 滾雷珠
-    description: 放出一顆很慢的雷珠，一路貫穿敵人，打中時再電到附近三個敵人。身上有火灌注時用掉一層：多一半的火焰傷害、範圍變大、更容易點燃。
+    # 2026-11-01 照 PoE2 Ball Lightning 的 Ignited Ground；這次之前說明的火灌注是「多一半的火焰傷害、範圍變大、更容易點燃。」
+    description: 放出一顆很慢的雷珠，一路貫穿敵人，打中時再電到附近三個敵人。身上有火灌注時用掉一層：多一半的火焰傷害、範圍變大，飛的路上每 0.35 秒留下一灘點燃地面（0.9 格、4 秒）。
     icon: GLOWSTONE_DUST
     type: spell
     tier: 11   # 2026-10-27 照 PoE2（Ball Lightning 第 11 階）；這次之前 5
@@ -3652,12 +3676,15 @@ skills:
     # （更早）法術附加乘這個
     mana: [9, 11, 13, 15, 17, 19, 22, 25, 29, 33, 37, 41, 46, 51, 57, 64, 71, 78, 87, 96, 106, 116, 128, 141, 155, 170, 186, 204, 223, 244, 267, 292, 319, 348, 379, 413, 450, 490, 533, 580]   # 2026-10-26 照 PoE2（poe2db）；這次之前 [7, 18]
     visual: roaming_thunder
-    resource:   # 2026-10-26 照 PoE2 Ball Lightning：用掉一層火灌注，雷珠一路留下燃燒地面、消失時爆開 2.6 格的火焰（20 級 570–856）；做成平衡等效：獲得 50% 傷害為額外火焰、範圍增加 50%、點燃機率更多 100%
+    resource:   # 2026-10-26 照 PoE2 Ball Lightning：用掉一層火灌注，雷珠一路留下燃燒地面、消失時爆開 2.6 格的火焰（20 級 570–856）；做成平衡等效：獲得 50% 傷害為額外火焰、範圍增加 50%、點燃機率更多 100%（2026-11-01 燃燒地面改成真的點燃地面，見下面）
       infusion: [fire]
       infused:
         - { stat: damage.extra.fire, type: FLAT, value: 50 }
         - { stat: skill.area, type: INCREASED, value: 50 }
-        - { stat: ignite.chance, type: MORE, value: 100 }
+        # 2026-11-01 照 PoE2 Ball Lightning（ball_lightning_infused_burning_ground_interval_ms 350、Ignited Ground 0.9 公尺、4 秒）：
+        #   沿路的點燃地面照原作做出來（ProjectileEngine.trailGround → proc_ball_lightning_ground，吃久地）；
+        #   這次之前平衡等效成點燃機率更多 100%（ignite.chance MORE 100）。消失時的 2.6 公尺火焰爆炸、越飛越慢還是上面兩行的平衡等效
+        - { stat: ground.ignited_trail, type: FLAT, value: 350 }
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 9 }   # 2026-10-15：照 PoE2 這個法術的基礎暴擊率
       - { stat: shock.chance, type: MORE, value: 375 }   # 2026-10-26 照 PoE2（感電機率更多 375%）；這次之前 +15% 與增加 375%
@@ -3796,6 +3823,8 @@ skills:
     # （更早）2026-10 德魯伊變身技能：20 級端 ×1.6（目標：中等裝 5 萬、高裝 15 萬、頂裝 20～30 萬；1 級端不動，前期不會變太強）；這次之前 [1.6, 2.24]
     mana: [14, 16, 19, 21, 24, 27, 30, 34, 37, 41, 45, 50, 54, 59, 65, 70, 76, 83, 90, 97, 104, 113, 121, 131, 140, 151, 162, 173, 186, 199, 212, 227, 242, 259, 276, 294, 314, 334, 356, 379]   # 2026-10-26 照 PoE2（poe2db）；這次之前 [8, 16]
     visual: dash   # 2026-10-26 照 PoE2：拿掉原作沒有的暈眩累積更多 50%
+    # 2026-11-01 查過 PoE2 0.5（PoB2 BearRampagePlayer、poe2db）：技能類型有 CreatesGroundEffect，但沒有任何地面的數值、也沒有持續時間類型，
+    #   不做地面；久地不再能掛（SupportGuards.GROUND_EFFECT_SKILLS）
   fallen_star_bear_roar:
     name: 墜星熊吼
     description: 熊身怒吼（要 50 點榮耀：怒氣滿了還拿到的怒氣算榮耀）：10 秒內你身邊 8 格每 0.15 秒落下一顆小隕石（附近每多一個敵人頻率增加 50%，最多 200%），每 15 顆一顆大隕石；期間你獲得 30% 傷害為額外火焰傷害、每秒回復 5 點怒氣。（熊形態）
@@ -4251,6 +4280,8 @@ skills:
     #   用掉銳星強化：額外獲得 50% 閃電、怒氣花少 50%）；這次之前是沒有冷卻、沒有怒氣的「按住一直放」（channel.stages 1）
     cooldown: 10   # 2026-10-26 照 PoE2（10 秒，開始用就開始算）；這次之前沒有冷卻
     # 2026-10-26 做不到：一次引導裡的點燃疊加（Compound）、2 格的焚燒範圍
+    # 2026-11-01 查過 PoE2 0.5（PoB2 WyvernFlameBreathPlayer、poe2db）：技能類型有 CreatesGroundEffect，但沒有任何地面的持續時間或效果
+    #   （只有 2 公尺的焚燒範圍；poe2db 的點燃地面、燃燒地面清單也沒有它），不做地面；久地不再能掛（SupportGuards.GROUND_EFFECT_SKILLS）
     visual: blazing_star_shell
     modifiers:
       - { stat: ignite.chance, type: MORE, value: 200 }   # 2026-10-26 照 PoE2（易燃更多 200%）；這次之前點燃機率 +15%
@@ -4384,7 +4415,8 @@ skills:
     visual: aura_armour
   thorn_body:
     name: 刺棘身
-    description: 精魂技能：身上長滿荊棘，近戰打你的敵人會被反彈物理傷害。保留 30 精魂。
+    # 2026-11-01 照 PoE2 Briarpatch 補上荊棘地面（Thorny Ground）；這次之前說明「精魂技能：身上長滿荊棘，近戰打你的敵人會被反彈物理傷害。保留 30 精魂。」
+    description: 精魂技能：身上長滿荊棘，近戰打你的敵人會被反彈物理傷害。另外儲存你造成的物理攻擊傷害的 1%（最多 9 → 256，照等級）；施放法術時用掉，在腳下長出 3 格的荊棘地面 6 秒（最多 1 片、每 8 秒最多長一次）：長出來時打一下範圍內的敵人，之後在上面移動的敵人每 0.5 秒最多被打一下（法術物理傷害，基礎就是存的量，荊棘傷害的加成也算）。保留 30 精魂。
     icon: FLINT   # 2026-10：原本 SWEET_BERRIES（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: spell
     tier: 4   # 2026-10-27 照 PoE2（Briarpatch 第 4 階）；這次之前 3
@@ -4398,6 +4430,11 @@ skills:
       effects:
         - { stat: thorns.min, type: FLAT, value: [10, 60], percent: false }
         - { stat: thorns.max, type: FLAT, value: [20, 110], percent: false }
+        # 2026-11-01 照 PoE2 Briarpatch（PoB2 BriarpatchPlayer）：存物理攻擊傷害的 1%（briarpatch_stores_permyriad_of_physical_damage_dealt 100），
+        #   最多 briarpatch_maximum_stored_physical_damage（1–40 級）；施放法術時長出荊棘地面（3 公尺、6 秒、上限 1、每 8 秒一片，StageLeftovers／GroundSkills）。
+        #   這次之前沒有荊棘地面（久地掛了沒東西可以拉長）
+        - { stat: briarpatch.store, type: FLAT, value: 1 }
+        - { stat: briarpatch.cap, type: FLAT, value: [9, 12, 16, 20, 26, 32, 38, 46, 54, 64, 74, 86, 100, 115, 132, 151, 173, 197, 224, 256, 291, 330, 375, 426, 484, 549, 624, 709, 805, 916, 1041, 1185, 1349, 1538, 1753, 2001, 2285, 2613, 2990, 3424] }
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
@@ -4534,7 +4571,7 @@ skills:
 
   thunder_lure_thrust:
     name: 引霆突
-    description: 往後一翻開始引導，讓長棍充滿雷電；放開時往前突進，打中沿路的敵人。蓄到「叮」一聲的那一刻放開是完美時機：突進更遠、更痛、更多轉為閃電，沿路被打中的敵人身上再震出一圈雷擊；完美突進打到你的驚雷之鐘會把鐘炸掉，放出更痛、更大的雷暴震波（3.2 格），並留下 5 秒的感電地面。數字鍵：按一下開始、再按一下放。   # 2026-10-28 照 PoE2 補上炸鐘
+    description: 往後一翻開始引導，讓長棍充滿雷電；放開時往前突進，打中沿路的敵人。引導到「叮」一聲的那一刻放開是完美時機：突進更遠、更痛、更多轉為閃電，沿路被打中的敵人身上再震出一圈雷擊；完美突進打到你的驚雷之鐘會把鐘炸掉，放出更痛、更大的雷暴震波（3.2 格），並留下 5 秒的感電地面。數字鍵：按一下開始、再按一下放。   # 2026-10-28 照 PoE2 補上炸鐘
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 13
@@ -5244,7 +5281,7 @@ skills:
 
   magic_spring_well:
     name: 魔泉湧
-    description: 精魂技能：魔力回復更快，擊殺時回復一點魔力。保留 30 精魂。
+    description: 精魂技能：開著的時候，擊殺有元素異常（點燃、冰緩、凍結、感電、電擊）的敵人 25% 機率產生魔力痕跡；對有元素異常的目標暴擊時產生魔力痕跡（最多每 2 秒一次）。痕跡留 8 秒，撿到回 28～281 魔力（照等級），可以超過最大魔力。保留 30 精魂。
     icon: LAPIS_LAZULI
     type: spell
     tier: 4
@@ -5255,13 +5292,15 @@ skills:
       reserve: 30
       radius: 8
       allies: false   # 2026-10-26 照 PoE2：只給自己；這次之前範圍內的隊友也有
-      effects:
-        - { stat: mana.regen, type: INCREASED, value: [20, 40] }
-        - { stat: mana.on_kill, type: FLAT, value: [1, 2] }
+      # 2026-11-01 照 PoE2 Mana Remnants：增益本身只有品質給的魔力再生（gem_quality.yml），痕跡在 AscGranted；
+      #   這次之前 魔力回復增加 20～40%、擊殺回 1～2 魔力
+      effects: []
     cast_time: 0.5
     cooldown: 1.5
     mana: 0
     visual: aura_mana
+    level_modifiers:
+      - { stat: remnant.mana, type: FLAT, value: [28, 32, 39, 47, 55, 68, 80, 92, 105, 120, 135, 151, 169, 186, 205, 224, 231, 251, 271, 281, 302, 325, 348, 371, 394, 417, 440, 463, 486, 509, 532, 555, 578, 601, 624, 647, 670, 693, 716, 738] }   # 照 PoE2（poe2db 每個痕跡的魔力，1～40 級）
 
   potion_craft_insight:
     name: 調藥心得
@@ -5339,6 +5378,7 @@ skills:
     type: spell
     tags: [spell, area, fire]
     mechanic: nova
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 TriggeredFieryDeathPlayer 沒有 cooldown）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
     nova: { radius: 2 }   # 2026-10-26 照 PoE2（2 格）；這次之前 [2.5, 3.2]
     damage: [10, 16]   # 只用來分傷害種類；實際照死掉那隻的最大生命
     life_damage: 10   # 2026-10-26 照 PoE2 Fiery Death：基礎火焰傷害 = 屍體最大生命的 10%（不隨等級）；這次之前照自己的傷害表
@@ -5356,6 +5396,7 @@ skills:
     type: spell
     tags: [spell, projectile, cold]
     mechanic: projectile
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 TriggeredSupportFrozenSpiteIceFragmentPlayer 沒有 cooldown）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
     projectile: { count: 6, spread: 360, speed: 1.6, range: 10, size: 0.4 }
     damage: [6, 10]   # 只用來分傷害種類；實際照凍死那隻的最大生命
     life_damage: 10   # 2026-10-26 照 PoE2：每一片 = 凍結的那隻最大生命的 10%（冰冷）；這次之前照自己的傷害表
@@ -5371,15 +5412,18 @@ skills:
     icon: FERMENTED_SPIDER_EYE   # 2026-10-27 補圖示（照技能的元素、作用）；這次之前沒寫，顯示成書
     hidden: true
     type: spell
-    tags: [spell, area, chaos]
+    tags: [spell, area, physical]   # 2026-11-01 照 PoE2 Plague Burst：物理傷害；這次之前 chaos
     mechanic: nova
-    nova: { radius: 1.8 }   # 2026-10-26 照 PoE2（1.8 格）；這次之前 [2.5, 3.2]
-    damage: [10, 16]
-    damage_types: { chaos: 1.0 }
+    nova: { radius: 1.8 }   # 2026-10-26 照 PoE2（1.8 格）；這次之前 [2.5, 3.2]。2026-11-01：瘟疫滿的時候範圍更多 100%（SupportProcs.plagueDeath）
+    damage: [10, 16]   # 2026-11-01 照 PoE2：只用來分傷害種類；實際傷害等於死掉那隻身上存的瘟疫（PlagueBursts）；這次之前照這張表
+    damage_types: { physical: 1.0 }   # 2026-11-01 照 PoE2；這次之前 { chaos: 1.0 }
     cast_time: 0.5
     effectiveness: 1.0
+    cooldown: 0.1   # 2026-11-01 照 PoE2 Plague Burst：冷卻 0.1 秒
     visual: blight_nova
     # 2026-10-26 照 PoE2：拿掉原作沒有的中毒機率 +40%
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 5 }   # 2026-11-01 照 PoE2 Plague Burst：基礎暴擊率 5%
 
   proc_bone_burst:
     name: 碎骨爆
@@ -5388,6 +5432,7 @@ skills:
     type: spell
     tags: [spell, area, physical]
     mechanic: nova
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 TriggeredBoneShrapnelPlayer 沒有 cooldown）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
     nova: { radius: 2 }   # 2026-10-26 照 PoE2（2 格、基礎暴擊率 13%）；這次之前 [2.5, 3.2]
     damage: [10, 16]   # 只用來分傷害種類；實際照死掉那隻的最大生命
     life_damage: 25   # 2026-10-26 照 PoE2：被定身死掉那隻最大生命的 25%（物理）；這次之前照自己的傷害表
@@ -5405,6 +5450,7 @@ skills:
     type: spell
     tags: [spell, area, fire]
     mechanic: nova
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 TriggeredFlamePillarPlayer 沒有 cooldown）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
     nova: { radius: 1.5 }   # 2026-10-26 照 PoE2（1.5 格、不會點燃）；這次之前 [1.6, 2.0]
     damage: [7, 11]
     damage_types: { fire: 1.0 }
@@ -5421,6 +5467,7 @@ skills:
     type: spell
     tags: [spell, area, physical]
     mechanic: nova
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 TriggeredHaemocrystalsPlayer 沒有 cooldown）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
     nova: { radius: 1 }   # 2026-10-26 照 PoE2（1 格）；這次之前 [2.0, 2.5]
     damage: [7, 11]
     damage_types: { physical: 1.0 }
@@ -5432,19 +5479,39 @@ skills:
 
   proc_shock_rift:
     name: 磁裂
+    description: 撕開一道半徑 2 格的雷隙，把 2.5 格內的敵人往中心吸；每 0.85 秒脈衝一次（每用掉一個感電，脈衝速度增加 25%），共 5 次，每一波打半徑內的敵人並阻礙 0.9 秒，傷害每一波更多 20%，最後一波用另一張比較高的傷害表；同時最多 3 道。
     icon: COPPER_INGOT   # 2026-10-27 補圖示（照技能的元素、作用）；這次之前沒寫，顯示成書
     hidden: true
     type: spell
     tags: [spell, area, lightning]
-    mechanic: nova
-    nova: { radius: [2.5, 3.2] }
+    mechanic: nova   # 2026-11-01：實際由 ShockingRifts 開雷隙（SupportProcs.fireAll），nova 的半徑當雷隙半徑
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 TriggeredShockingRiftPlayer 沒有 cooldown）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
+    nova: { radius: 2 }   # 2026-11-01 照 PoE2（PoB2 active_skill_base_area_of_effect_radius 20 = 2 公尺）；這次之前 [2.5, 3.2]（一次炸開的新星）
     damage: [[1, 6], [1, 7], [1, 10], [1, 13], [1, 16], [1, 20], [1, 24], [2, 29], [2, 34], [2, 40], [2, 47], [3, 54], [3, 62], [4, 71], [4, 81], [5, 93], [6, 105], [6, 120], [7, 135], [8, 153], [9, 173], [10, 196], [12, 221], [13, 249], [15, 281], [17, 317], [19, 358], [21, 404], [24, 455], [27, 514], [31, 580], [34, 655], [39, 740], [44, 836], [50, 945], [56, 1070], [64, 1211], [72, 1372], [82, 1556], [93, 1766]]   # 2026-10-26 照 PoE2（poe2db Shocking Rift 脈衝 1–40 級）；這次之前 [6, 10]
     damage_types: { lightning: 1.0 }
     cast_time: 0.5
-    effectiveness: 1.0
+    effectiveness: 0.75   # 2026-11-01 照 PoE2（PoB2 Pulse baseEffectiveness 0.75）；這次之前 1.0
     visual: roaming_thunder
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 9 }   # 2026-10-26 照 PoE2：基礎暴擊率 9%、不會感電
+      - { stat: shock.chance, type: MORE, value: -100 }
+
+  proc_shock_rift_final:   # 2026-11-01 照 PoE2 Electromagnetism 的「Final Pulse」（PoB2 第 2 組 statSet；poe2db：1 級 1–11、20 級 16–307）
+    name: 磁裂終波
+    description: 雷隙的最後一波（第 5 波）。
+    icon: COPPER_INGOT
+    hidden: true
+    type: spell
+    tags: [spell, area, lightning]
+    mechanic: nova
+    nova: { radius: 2 }
+    damage: [[1, 11], [1, 15], [1, 20], [1, 26], [2, 33], [2, 40], [3, 49], [3, 58], [4, 69], [4, 80], [5, 93], [6, 108], [7, 124], [7, 142], [9, 163], [10, 185], [11, 211], [13, 239], [14, 271], [16, 307], [18, 347], [21, 392], [23, 442], [26, 499], [30, 563], [33, 635], [38, 716], [42, 807], [48, 911], [54, 1028], [61, 1160], [69, 1310], [78, 1479], [88, 1672], [99, 1890], [113, 2139], [127, 2422], [144, 2744], [164, 3112], [186, 3531]]
+    damage_types: { lightning: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.5   # PoB2 Final Pulse baseEffectiveness 1.5
+    visual: roaming_thunder
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }
       - { stat: shock.chance, type: MORE, value: -100 }
 
   proc_elemental_burst:
@@ -5471,6 +5538,8 @@ skills:
     type: spell
     tags: [spell, area, physical, duration, hazard, plant]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 hazard、plant（Brambles 是危險區域、植物（天賦樹的系統））；這次之前 [spell, area, physical, duration]
     mechanic: zone
+    cooldown: 0.15   # 2026-11-01 照 PoE2（PoB2 TriggeredBrambleslamPlayer cooldown 0.15、storedUses 6）；這次之前沒寫，吃觸發的預設 1 秒
+    cooldown_uses: 6   # 2026-11-01 照 PoE2（PoB2 storedUses 6）；這次之前沒寫（1 次）
     zone: { range: 0, radius: [2.2, 2.8], duration: 3, interval: 0.5, damage: 25, max: 3 }
     damage: [5, 8]
     damage_types: { physical: 1.0 }
@@ -5480,19 +5549,23 @@ skills:
     modifiers:
       - { stat: maim.chance, type: FLAT, value: 100 }   # 2026-10-26 照 PoE2：擊中癱瘓；這次之前流血機率 +20%
 
+  # 2026-11-01 照 PoE2 Crater（PoB2 TriggeredCraterPlayer：攻擊、active_skill_has_%_standard_scaling_attack_damage 35、80% 物理轉火焰、
+  #   裂隙長 1.5 公尺（active_skill_base_area_of_effect_radius 15）、6 秒、最多 9 道）；落點往外裂出幾道由 SupportProcs.craterFissures 放。
+  #   裂隙的寬度原作沒有數字，伺服器自己定半徑 0.5 格；出現時打一次（同炎脈裂地）。
+  #   這次之前 metres: false 的法術熔坑：半徑 [2.4, 3.0]、4 秒、每 0.5 秒 25%、[5, 8] 火焰、最多 3 個
   proc_crater:
-    metres: false   # 2026-10-29 照站長：伺服器自己設計的近似值（不是 PoE2DB 的公尺），距離照舊 1 格，不換算（SkillParams.blocksPerMetre）
-    name: 熔坑
+    name: 熔坑裂隙
+    description: 從落點往外裂出的裂隙，出現時打裂隙上的敵人一下。
     icon: MAGMA_CREAM   # 2026-10-27 補圖示（照技能的元素、作用）；這次之前沒寫，顯示成書
     hidden: true
-    type: spell
-    tags: [spell, area, fire, duration]
+    type: attack
+    tags: [attack, area, melee, fire, duration, fissure]
     mechanic: zone
-    zone: { range: 0, radius: [2.4, 3.0], duration: 4, interval: 0.5, damage: 25, max: 3 }
-    damage: [5, 8]
-    damage_types: { fire: 1.0 }
-    cast_time: 0.5
-    effectiveness: 0.5
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 TriggeredCraterPlayer 沒有 cooldown）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
+    zone: { shape: line, length: 1.5, radius: 0.5, duration: 6, interval: 5, damage: 100, max: 9 }   # interval 只能寫到 5；實際只在出現時打一次（craterFissures 用持續時間當間隔）
+    convert: { fire: 0.8 }
+    attack_speed: 1.0
+    effectiveness: 0.35
     visual: flame_curtain
 
   proc_corrupting_cry:
@@ -5502,6 +5575,7 @@ skills:
     type: spell
     tags: [spell, area, physical]
     mechanic: nova
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 TriggeredCorruptingCryPlayer 沒有 cooldown）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
     nova: { radius: 3.35 }   # 2026-10-26 照 PoE2（Corrupting Cry I：範圍更少 30%；戰吼半徑 4 → √0.7 × 4）；這次之前 [3.6, 4.4]
     damage: [6, 10]
     damage_types: { physical: 1.0 }
@@ -5529,33 +5603,49 @@ skills:
       - { stat: armour.break, type: MORE, value: -100 }   # 2026-10-26 照 PoE2：不會破甲；這次之前破甲增加 100%
 
   proc_caltrops:
-    name: 鐵蒺地
+    # 2026-11-01 照 PoE2 TriggeredCaltropsPlayer（PoB2 sup_dex.lua）：撒蒺在投射物終點 3 格內撒 1 顆鐵蒺（危險區域），敵人碰到（0.5 格）就炸開
+    #   0.5 格的攻擊範圍傷害、致殘，然後消失；8 秒、最多 20 顆（OriginalSkills.spearCaltrop）。傷害＝原技能那一下（含輔助）的 75%
+    #   （active_skill_has_%_standard_scaling_attack_damage 75）。這次之前是法術：終點一片 4 秒的鐵蒺地（zone 半徑 1.8～2.2、每 0.5 秒、最多 4 片、
+    #   自己的物理傷害 4～6、效用 0.4，tags [spell, area, physical, duration, hazard]）
+    name: 鐵蒺（撒蒺）
+    description: 敵人碰到就炸開（0.5 格），造成原技能 75% 的攻擊範圍傷害並致殘，然後消失。每多 1 個投射物多撒 1 顆；持續 8 秒，跟蒺藜步的鐵蒺加起來最多同時 20 顆。   # 2026-11-01 照 PoE2：+投射物多撒、共用上限；這次之前固定 1 顆、各自 20 顆
     icon: IRON_NUGGET   # 2026-10-27 補圖示（照技能的元素、作用）；這次之前沒寫，顯示成書
     hidden: true
-    type: spell
-    tags: [spell, area, physical, duration, hazard]   # 2026-10-26 照 PoE2 加 hazard 標籤（天賦樹的系統）；這次之前 [spell, area, physical, duration]
-    mechanic: zone
-    zone: { range: 0, radius: [1.8, 2.2], duration: 4, interval: 0.5, damage: 35, max: 4 }
-    damage: [4, 6]
-    damage_types: { physical: 1.0 }
-    cast_time: 0.5
-    effectiveness: 0.4
+    type: attack
+    tags: [attack, area, projectile, duration, hazard]
+    mechanic: nova
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 TriggeredCaltropsPlayer 沒有 cooldown）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
+    nova: { radius: 0.5 }
+    parent_damage: 0.75
+    attack_speed: 1.0
+    effectiveness: 1.0
     visual: bear_trap
+    modifiers:
+      - { stat: maim.chance, type: FLAT, value: 100 }   # global_maim_on_hit
 
   proc_decaying_hex:
-    metres: false   # 2026-10-29 照站長：伺服器自己設計的近似值（不是 PoE2DB 的公尺），距離照舊 1 格，不換算（SkillParams.blocksPerMetre）
+    # 2026-11-01 照 PoE2 Profane Decay（poe2db triggered_decaying_hex）：朽咒對每個被詛咒的敵人觸發，直接在牠身上掛凋朽（混沌持續傷害的減益 8 秒，
+    #   每秒基礎照等級 5.9 → 287（20 級）→ 6119.2（40 級），吃法術、混沌傷害的加成）；SupportProcs 直接打那個敵人一下（1 點，才掛得上減益，同瘟疫）。
+    #   這次之前是在詛咒落點留一片朽蝕地面（zone 半徑 2.8～3.4 格、4 秒、每 0.5 秒）
     name: 朽蝕
+    description: 在被詛咒的敵人身上掛上凋朽，8 秒內持續受到混沌傷害（本身不造成擊中傷害）。
     icon: FERMENTED_SPIDER_EYE   # 2026-10-27 補圖示（照技能的元素、作用）；這次之前沒寫，顯示成書
     hidden: true
     type: spell
-    tags: [spell, area, chaos, duration]
-    mechanic: zone
-    zone: { range: 0, radius: [2.8, 3.4], duration: 4, interval: 0.5, damage: 30, max: 2 }
-    damage: [5, 8]
+    tags: [spell, chaos, duration]
+    mechanic: impact
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 TriggeredDecayingHexPlayer 沒有 cooldown）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
+    impact: { range: 2, delay: 0.1, radius: 0.5, targets: 1 }   # 不會照這個放（SupportProcs 直接打被詛咒的那一隻），寫好讓說明有東西
+    damage: [1, 1]
     damage_types: { chaos: 1.0 }
-    cast_time: 0.5
-    effectiveness: 0.5
+    cast_time: 1.0
+    effectiveness: 1.0
     visual: blight_nova
+    modifiers:
+      - { stat: flag.no_crit, type: FLAT, value: 1 }
+      - { stat: debuff.duration, type: FLAT, value: 8 }
+    level_modifiers:
+      - { stat: debuff.chaos_base, type: FLAT, value: [5.9, 8.6, 12.5, 16.9, 22, 27.7, 34.3, 41.9, 50.5, 60.3, 71.6, 84.5, 99.2, 116.2, 135.7, 158, 183.8, 213.4, 247.5, 287, 332.5, 385.2, 446.3, 517.1, 599.4, 695, 806.4, 936.3, 1088.1, 1265.5, 1473.4, 1717.2, 2003.6, 2340.6, 2737.8, 3206.5, 3760.6, 4416.7, 5194.8, 6119.2], percent: false }
 
   proc_coursing_current:
     name: 竄流電
@@ -5569,7 +5659,8 @@ skills:
     damage_types: { lightning: 1.0 }
     cast_time: 0.5
     effectiveness: 0.7
-    cooldown: 0.2
+    cooldown: 0.2   # 2026-11-01 照 PoE2（PoB2 TriggeredDeadlyCurrentPlayer cooldown 0.2、storedUses 6）
+    cooldown_uses: 6   # 2026-11-01 照 PoE2（PoB2 storedUses 6）；這次之前沒寫（1 次）
     visual: chain_thunder
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 10 }
@@ -5621,7 +5712,7 @@ skills:
     damage_types: { physical: 1.0 }
     cast_time: 0.5
     effectiveness: 0.6
-    cooldown: 0.2
+    cooldown: 0.15   # 2026-11-01 照 PoE2（PoB2 TriggeredQuillburstPlayer cooldown 0.15）；這次之前 0.2
     visual: slam
 
   proc_stomping_ground:
@@ -5664,6 +5755,7 @@ skills:
     type: spell
     tags: [spell, area, physical]
     mechanic: nova
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 KnockbackWavePlayer 沒有 cooldown）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
     nova: { radius: 2 }   # 2026-10-26 照 PoE2（2 格）；這次之前 [3.0, 3.6]
     damage: [6, 10]
     damage_types: { physical: 1.0 }
@@ -5680,12 +5772,13 @@ skills:
     type: spell
     tags: [spell, area, lightning, duration]
     mechanic: zone
-    zone: { range: 0, radius: [1.8, 2.2], duration: 3, interval: 0.5, damage: 40, max: 3 }
+    zone: { range: 0, radius: 3, duration: 4, interval: 0.65, damage: 100, max: 5 }   # 2026-11-01 照 PoE2：每一波就是下面那張傷害表（PoB2 沒有打折）；這次之前 damage: 40   # 2026-11-01 照 PoE2 Static Shocks（附在敵人身上跟著走、目標 3 公尺內、4 秒、每 0.65 秒、最多 5 個）；這次之前 radius [1.8, 2.2]、3 秒、0.5 秒、最多 3 個
     damage: [[1, 4], [1, 6], [1, 8], [1, 11], [1, 13], [1, 17], [1, 20], [1, 24], [2, 29], [2, 34], [2, 40], [2, 46], [3, 54], [3, 62], [4, 71], [4, 82], [5, 94], [6, 108], [7, 124], [7, 142], [9, 162], [10, 185], [11, 211], [13, 241], [15, 276], [17, 315], [19, 360], [22, 411], [25, 470], [28, 538], [32, 616], [37, 706], [43, 809], [49, 929], [56, 1067], [65, 1226], [74, 1411], [86, 1626], [99, 1876], [114, 2166]]   # 2026-10-26 照 PoE2（poe2db Static Shocks 1–40 級；冷卻 0.4 秒、基礎暴擊率 9%、不會感電）；這次之前 [5, 8]
     damage_types: { lightning: 1.0 }
     cast_time: 0.5
-    effectiveness: 0.5
+    effectiveness: 0.6   # 2026-11-01 照 PoE2（PoB2 baseEffectiveness 0.6）；這次之前 0.5
     cooldown: 0.4
+    cooldown_uses: 3   # 2026-11-01 照 PoE2（PoB2 storedUses 3）；這次之前只能存 1 次
     visual: roaming_thunder
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 9 }
@@ -5698,6 +5791,7 @@ skills:
     type: spell
     tags: [spell, area, cold, duration]
     mechanic: zone
+    # 2026-11-01：PoB2／poe2db 沒有 Frozen Vortex 觸發技能的資料（沒有冷卻數字可照），刻意不寫 cooldown，照舊吃觸發的預設 1 秒（SupportProcs.COOLDOWN）
     zone: { range: 0, radius: 1.6, duration: 3, interval: 0.5, damage: 35, pull: 0.25, max: 2 }
     damage: [5, 8]
     damage_types: { cold: 1.0 }
@@ -5730,6 +5824,7 @@ skills:
     type: spell
     tags: [spell, area, lightning, duration]
     mechanic: zone
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 TriggeredChargedMarkPlayer 沒有 cooldown）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
     zone: { range: 0, radius: [1.4, 3.0], duration: 6, interval: 0.5, damage: 20, max: 3 }
     damage: [1, 2]
     damage_types: { lightning: 1.0 }
@@ -5747,6 +5842,7 @@ skills:
     type: spell
     tags: [spell, area, chaos, plant]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 plant（Poison Spores 是植物（天賦樹的系統））；這次之前 [spell, area, chaos]
     mechanic: nova
+    cooldown: 0.1   # 2026-11-01 照 PoE2（PoB2 TriggeredPoisonSporesPustule cooldown 0.1）；這次之前沒寫，吃觸發的預設 1 秒
     nova: { radius: [1.8, 2.3] }
     damage: [6, 10]
     damage_types: { chaos: 1.0 }
@@ -5780,6 +5876,7 @@ skills:
     type: attack
     tags: [attack, melee, area, slam, physical]
     mechanic: nova
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 SupportAftershockChancePlayerTwo 沒有觸發技能資料、沒有 cooldown：餘震是原技能的重複）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
     parent_damage: 0.6   # 2026-10：照觸發它的猛擊出傷害（含輔助；照 PoE2 的餘震），餘震＝原本那一下的 60%
     nova: { radius: [2.6, 3.2] }
     attack_speed: 1.0
@@ -5793,7 +5890,8 @@ skills:
     type: attack
     tags: [attack, melee, area, slam, physical]
     mechanic: nova
-    parent_damage: 0.45   # 2026-10：照觸發它的猛擊出傷害（含輔助；照 PoE2 的餘震），連震波＝原本那一下的 45%
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 沒有 Tremors 的觸發技能資料、沒有 cooldown：餘震是原技能的重複）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
+    parent_damage: 1.0   # 2026-11-01 照 PoE2 Tremors：餘震＝再來一次原本那一下（含輔助，連震的「傷害更少 35%」已經算在裡面）；這次之前 0.45（一次較大、較輕的）。2026-10：照觸發它的猛擊出傷害（含輔助；照 PoE2 的餘震）
     nova: { radius: [3.2, 3.8] }
     attack_speed: 1.0
     effectiveness: [0.55, 0.75]
@@ -5807,6 +5905,7 @@ skills:
     type: spell
     tags: [spell]
     mechanic: mark
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 SupportMaimPlayer 沒有 cooldown：擊中時殘廢，不是觸發技能）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
     mark: { range: 30, radius: 0.6, duration: 4, taken: 0, slow: [20, 30], effects: [ { stat: evasion, type: MORE, value: -10 } ] }
     cast_time: 0.1
     visual: prey_kill_mark
@@ -5843,6 +5942,7 @@ skills:
     type: spell
     tags: [spell]
     mechanic: mark
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 SupportExposingCryPlayer 沒有 cooldown：擊中時曝露，不是觸發技能）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
     mark: { range: 30, radius: 7, duration: 5, taken: 0, effects: [ { stat: resist.fire, type: FLAT, value: -15 }, { stat: resist.cold, type: FLAT, value: -15 }, { stat: resist.lightning, type: FLAT, value: -15 } ] }
     cast_time: 0.1
     visual: prey_kill_mark
@@ -5863,20 +5963,7 @@ skills:
     modifiers:
       - { stat: freeze.buildup, type: MORE, value: 50 }   # 2026-10-26 照 PoE2（更多 50%）；這次之前增加 50%
 
-  proc_crystal_shards:
-    name: 晶刺片
-    icon: PRISMARINE_SHARD   # 2026-10-27 補圖示（照技能的元素、作用）；這次之前沒寫，顯示成書
-    hidden: true
-    type: spell
-    tags: [spell, projectile, cold, crystal]
-    mechanic: projectile
-    projectile: { count: 8, spread: 360, speed: 1.6, range: 9, size: 0.4 }
-    damage: [5, 8]
-    damage_types: { cold: 1.0 }
-    cast_time: 0.5
-    effectiveness: 0.5
-    visual: staff_bolt
-    # 2026-10-26 照 PoE2：拿掉原作沒有的流血機率 +20%
+  # 2026-11-01 照 PoE2 Crystalline Shards：拿掉 proc_crystal_shards（晶刺片：冰晶碎掉時往四周噴 8 道冰片）——晶刺改成冰晶爆炸穿刺（IceCrystals）
 
   proc_hoarfrost:
     name: 結霜
@@ -5903,6 +5990,7 @@ skills:
     type: spell
     tags: [spell]
     mechanic: mark
+    # 2026-11-01：PoB2／poe2db 沒有 Dazing Cry 觸發技能的資料（沒有冷卻數字可照），刻意不寫 cooldown，照舊吃觸發的預設 1 秒（SupportProcs.COOLDOWN）
     mark: { range: 30, radius: 4, duration: 4, taken: 0, effects: [ { stat: damage, type: MORE, value: -15 }, { stat: stun.threshold, type: INCREASED, value: -30 } ] }
     cast_time: 0.1
     visual: thunder_surge
@@ -5919,7 +6007,8 @@ skills:
     damage_types: { fire: 1.0 }
     cast_time: 0.5
     effectiveness: 0.7
-    cooldown: 0.5
+    cooldown: 0.5   # 2026-11-01 照 PoE2（PoB2 TriggeredFanTheFlamesPlayer cooldown 0.5、storedUses 5）
+    cooldown_uses: 5   # 2026-11-01 照 PoE2（PoB2 storedUses 5）；這次之前沒寫（1 次）
     visual: herald_ash
     modifiers:
       - { stat: ignite.chance, type: MORE, value: -100 }   # 2026-10-26 照 PoE2：不會點燃（這次之前點燃機率 +50%）、基礎暴擊率 7%、冷卻 0.5 秒
@@ -5932,6 +6021,7 @@ skills:
     type: spell
     tags: [spell, area, cold, duration]
     mechanic: zone
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 SupportChillingIcePlayer 沒有 cooldown：凍結時留冰緩地面，不是觸發技能）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
     zone: { range: 0, radius: 3.0, duration: 8, interval: 0.5, damage: 25, max: 2 }   # 2026-10-26 照 PoE2 Frost Nexus：凍結時留下 3 格、8 秒的冰緩地面（不造成傷害）；這次之前半徑 [2.4, 3.0]、4 秒、每波 25% 冰冷傷害
     damage: [4, 7]
     damage_types: { cold: 1.0 }
@@ -5949,6 +6039,7 @@ skills:
     type: attack
     tags: [attack, melee, area, physical]
     mechanic: nova
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 ImpactShockwaveSupportPlayer 沒有 cooldown）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
     nova: { radius: 1.5 }   # 2026-10-26 照 PoE2 Impact Shockwave：1.5 格；這次之前 [2.0, 2.6]
     parent_damage: 1.0   # 2026-10-26 照 PoE2：餘震是那一下的重複（含輔助）；這次之前 effectiveness [0.45, 0.65]
     attack_speed: 1.0
@@ -5966,10 +6057,13 @@ skills:
     mechanic: nova
     nova: { radius: 2.0 }   # 2026-10-26 照 PoE2 Doom Blast：2 格；這次之前 [2.8, 3.4]
     damage: [[10, 18], [13, 24], [18, 33], [23, 42], [29, 54], [36, 66], [43, 80], [52, 96], [62, 115], [73, 135], [85, 158], [99, 184], [115, 214], [133, 247], [153, 285], [177, 328], [203, 376], [232, 431], [266, 494], [304, 565], [348, 646], [397, 738], [454, 843], [518, 963], [592, 1100], [676, 1256], [773, 1435], [883, 1641], [1010, 1876], [1156, 2147], [1324, 2458], [1516, 2816], [1739, 3229], [1996, 3706], [2292, 4257], [2636, 4895], [3033, 5634], [3495, 6491], [4031, 7486], [4655, 8645]]   # 2026-10-26 照 PoE2（poe2db Impending Doom 1–40 級，每一級的實際傷害）；這次之前 [9, 14]
-    cooldown: 0.15   # 2026-10-26 照 PoE2：0.15 秒冷卻（原作另有可存次數 3／4／7，沒做）
+    cooldown: 0.15   # 2026-10-26 照 PoE2：0.15 秒冷卻
+    # 2026-11-01 照 PoE2 DoomBlastPlayer storedUses（PoB2 sup_int.lua）：可以存 3 次（1–9 級）、4 次（10–20）、5 次（21–32）、6 次（33–39）、7 次（40）
+    #   （SupportProcs → StoredUses；沒有存著的次數就不觸發）。這次之前沒做，同時結束的照冷卻一隻一隻排開炸
+    cooldown_uses: [3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 7]
     damage_types: { chaos: 1.0 }
     cast_time: 0.5
-    effectiveness: 0.9
+    effectiveness: 1.0   # 2026-11-01 照 PoB2 DoomBlastPlayer：沒有 damageEffectiveness（預設 1）；這次之前 0.9
     visual: blight_nova
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 7 }   # 2026-10-26 照 PoE2：基礎暴擊率 7%
@@ -5982,8 +6076,11 @@ skills:
     type: attack
     tags: [attack, melee, area, slam, physical]
     mechanic: nova
-    parent_damage: 0.55   # 2026-10-26 照 PoE2 Tectonic Slams：側震更少 45%＝那一下的 55%；這次之前 0.35。 2026-10：照觸發它的猛擊出傷害（含輔助；照 PoE2 的餘震），側震＝原本那一下的 35%
-    nova: { radius: [2.0, 2.5] }
+    # 2026-11-01 照 PoE2 Tectonic Slams：餘震＝那一下的重複（1.0），「更少 45%」改寫在雙震的 aftershock.damage_less、範圍照原本那一下（TectonicSlams）；
+    #   這次之前 0.55、範圍照自己的 [2.0, 2.5]。 2026-10-26 照 PoE2 Tectonic Slams：側震更少 45%＝那一下的 55%；這次之前 0.35。 2026-10：照觸發它的猛擊出傷害（含輔助；照 PoE2 的餘震），側震＝原本那一下的 35%
+    parent_damage: 1.0
+    nova: { radius: [2.0, 2.5] }   # 被輔助的猛擊沒有半徑可以照（例如投射物猛擊）時才用
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 SupportSlamAftershocksPlayer 沒有 cooldown）：沒有觸發冷卻，每一次猛擊都有；這次之前 0.05（同日稍早沒寫，吃預設 1 秒）
     attack_speed: 1.0
     effectiveness: [0.4, 0.55]
     visual: slam
@@ -5995,6 +6092,7 @@ skills:
     type: spell
     tags: [spell, area, cold]
     mechanic: zone
+    # 2026-11-01：PoB2／poe2db 沒有 Spreading Frost 觸發技能的資料（沒有冷卻數字可照），刻意不寫 cooldown，照舊吃觸發的預設 1 秒（SupportProcs.COOLDOWN）
     zone: { range: 0, radius: 2.0, duration: 0.2, interval: 0.1, damage: 1, max: 0 }   # 2026-10-26 照 PoE2 Spreading Frost：凍結時冰緩 2 格內的敵人，不造成傷害（只打一波）；這次之前冰冷 nova [3.0, 3.6]、30% 傷害
     damage: [3, 5]
     damage_types: { cold: 1.0 }
@@ -6030,13 +6128,14 @@ skills:
     type: attack
     tags: [attack, area, fire]
     mechanic: nova
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 ArmourExplosionPlayer 沒有 cooldown）：沒有觸發冷卻；這次之前沒寫，吃觸發的預設 1 秒
     nova: { radius: 1.4 }   # 2026-10-26 照 PoE2 Armour Explosion：1.4 格；這次之前 [2.6, 3.2]
     convert: { fire: 1.0 }
     attack_speed: 1.0
     effectiveness: 0.3   # 2026-10-26 照 PoE2：攻擊，普攻傷害的 30%、物理全轉火焰；這次之前是火焰法術 [10, 16]
     visual: herald_ash
 
-  proc_break_daze:
+  proc_break_daze:   # 2026-11-01：破眩照 PoE2 改成直接眩暈被破甲的那一隻（daze.on_armour_broken），這個隱藏技能沒有輔助在用了
     name: 破眩震
     icon: GOLD_NUGGET   # 2026-10-27 補圖示（照技能的元素、作用）；這次之前沒寫，顯示成書
     hidden: true
@@ -6052,21 +6151,6 @@ skills:
     modifiers:
       - { stat: ground.effect, type: FLAT, value: 1 }
       - { stat: ground.daze, type: FLAT, value: 8 }   # 2026-10-26 照 PoE2：眩暈 8 秒；這次之前擊中 100% 眩暈（4 秒）
-
-  proc_last_rites:
-    metres: false   # 2026-10-29 照站長：伺服器自己設計的近似值（不是 PoE2DB 的公尺），距離照舊 1 格，不換算（SkillParams.blocksPerMetre）
-    name: 殞骸爆
-    icon: BONE   # 2026-10-27 補圖示（照技能的元素、作用）；這次之前沒寫，顯示成書
-    hidden: true
-    type: spell
-    tags: [spell, area, chaos]
-    mechanic: nova
-    nova: { radius: [2.6, 3.2] }
-    damage: [9, 14]
-    damage_types: { chaos: 1.0 }
-    cast_time: 0.5
-    effectiveness: 0.8
-    visual: blight_nova
 
   proc_gain_endurance:
     name: 磐星
@@ -6264,6 +6348,40 @@ skills:
     modifiers:
       - { stat: ground.effect, type: FLAT, value: 1 }
       - { stat: ground.chill, type: FLAT, value: 20 }
+
+  proc_ball_lightning_ground:   # 2026-11-01 照 PoE2 Ball Lightning 的 Ignited Ground：用掉火灌注的雷珠沿路每 0.35 秒留一灘 0.9 公尺、4 秒的點燃地面（StageLeftovers.ignitedGround 讀這裡的數值，不直接放）
+    name: 點燃地面
+    icon: BLAZE_POWDER
+    hidden: true
+    type: spell
+    tags: [spell, area, fire, duration]
+    mechanic: zone
+    zone: { range: 0, radius: 0.9, duration: 4, interval: 0.5, damage: 1 }
+    damage: [[22, 33], [29, 44], [40, 60], [53, 79], [67, 100], [82, 124], [100, 151], [121, 181], [144, 216], [170, 256], [200, 300], [234, 351], [273, 409], [317, 475], [367, 550], [423, 635], [488, 732], [562, 844], [647, 971], [744, 1116], [855, 1282], [982, 1472], [1127, 1691], [1295, 1942], [1487, 2231], [1709, 2563], [1965, 2947], [2260, 3389], [2600, 3901], [2995, 4492], [3452, 5178], [3983, 5974], [4599, 6898], [5316, 7973], [6151, 9226], [7125, 10688], [8263, 12395], [9595, 14392], [11155, 16733], [12986, 19478]]   # 像造成這麼多火焰傷害一樣點燃（PoB2 BallLightningPlayer 的 Ignited Ground 1–40 級）
+    damage_types: { fire: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    mana: 0
+    visual: blazing_star_shell
+    modifiers:
+      - { stat: ground.effect, type: FLAT, value: 1 }   # 本身不打傷害：站在上面每 0.5 秒施加易燃，疊到 50% 點燃（AilmentService.groundIgnite）
+
+  proc_incinerate_ground:   # 2026-11-01 照 PoE2 Incinerate 的 Ignited Ground：用掉火灌注的焚流沿著火焰留下 1.4 公尺、8 秒的點燃地面（StageLeftovers.coneIgnited 讀這裡的數值，不直接放）
+    name: 點燃地面
+    icon: BLAZE_POWDER
+    hidden: true
+    type: spell
+    tags: [spell, area, fire, duration]
+    mechanic: zone
+    zone: { range: 0, radius: 1.4, duration: 8, interval: 0.5, damage: 1 }
+    damage: [[24, 36], [33, 49], [45, 67], [59, 88], [74, 111], [92, 138], [112, 168], [135, 202], [161, 241], [190, 285], [223, 335], [261, 391], [304, 456], [353, 529], [408, 613], [472, 708], [544, 816], [627, 940], [721, 1081], [829, 1243], [952, 1428], [1094, 1641], [1256, 1884], [1443, 2164], [1657, 2486], [1904, 2856], [2189, 3284], [2518, 3777], [2898, 4346], [3337, 5006], [3847, 5770], [4438, 6656], [5124, 7686], [5923, 8885], [6854, 10281], [7939, 11909], [9208, 13811], [10691, 16037], [12430, 18645], [14470, 21705]]   # 像造成這麼多火焰傷害一樣點燃（PoB2 IncineratePlayer 的 Ignited Ground 1–40 級）
+    damage_types: { fire: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    mana: 0
+    visual: blazing_star_shell
+    modifiers:
+      - { stat: ground.effect, type: FLAT, value: 1 }   # 本身不打傷害：站在上面每 0.5 秒施加易燃，疊到 50% 點燃（AilmentService.groundIgnite）
 
   proc_storm_shocked_ground:   # 2026-10-28 照 PoE2 Tempest Shockwave 的感電地面：3.2 公尺、5 秒（原作不造成傷害，這裡只給感電）
     name: 感電地面
@@ -6517,30 +6635,11 @@ skills:
       buff:
         - { stat: damage.extra.fire, type: FLAT, value: 15, tags: [attack] }   # 2026-10-26 照 PoE2 Blazing Critical：攻擊獲得 15% 傷害為額外火焰（不隨等級）；這次之前 [10, 20]
     cast_time: 0.1
-    cooldown: 1
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 SupportBlazingCriticalPlayer 只有增益持續 5 秒、沒有冷卻）：每次暴擊都刷新；這次之前 1
     mana: 0
     visual: enduring_cry
 
-  proc_enervation:
-    metres: false   # 2026-10-29 照站長：伺服器自己設計的近似值（不是 PoE2DB 的公尺），距離照舊 1 格，不換算（SkillParams.blocksPerMetre）
-    name: 吸電流
-    icon: GLOWSTONE_DUST   # 2026-10-27 補圖示（照技能的元素、作用）；這次之前沒寫，顯示成書
-    hidden: true
-    type: spell
-    tags: [warcry, lightning]
-    mechanic: warcry
-    warcry:
-      radius: 2
-      duration: 4
-      taunt: false
-      allies: false
-      buff:
-        - { stat: mana.regen, type: INCREASED, value: [30, 50] }
-    cast_time: 0.1
-    cooldown: 1
-    mana: 0
-    visual: enduring_cry
-
+  # 2026-11-01：拿掉 proc_enervation（吸電流，觸發冷卻 1 秒的隱藏戰吼）——吸電改成感電時直接給增益（SupportProcs.enervation，照 PoE2 沒有冷卻）
   proc_innervate:
     name: 霆勢雷
     icon: COPPER_INGOT   # 2026-10-27 補圖示（照技能的元素、作用）；這次之前沒寫，顯示成書
@@ -6556,13 +6655,13 @@ skills:
       buff:
         - { stat: damage.extra.lightning, type: FLAT, value: 25 }   # 2026-10-26 照 PoE2 Innervate：獲得 25% 傷害為額外閃電（不隨等級、不限攻擊）；這次之前攻擊 [10, 20]
     cast_time: 0.1
-    cooldown: 1
+    cooldown: 0   # 2026-11-01 照 PoE2（PoB2 SupportInnervatePlayer 只有增益持續 5 秒、沒有冷卻）：每次打死都刷新；這次之前 1
     mana: 0
     visual: enduring_cry
 
   thornburr_steps:
     name: 蒺藜步
-    description: 精魂技能：你翻滾時往兩旁撒 3 顆鐵蒺（8 秒、同時最多 20 顆）；敵人碰到就炸開刺傷周圍 0.8 格（自己的物理傷害表、5% 暴擊、擊中癱瘓），然後消失。保留 30 精魂。
+    description: 精魂技能：你翻滾時往兩旁撒 3 顆鐵蒺（8 秒、跟撒蒺的鐵蒺加起來同時最多 20 顆）；敵人碰到就炸開刺傷周圍 0.8 格（自己的物理傷害表、5% 暴擊、擊中癱瘓），然後消失。保留 30 精魂。
     icon: IRON_NUGGET
     type: spell
     tier: 8
@@ -7133,6 +7232,8 @@ skills:
       - { stat: skill.recoil, type: FLAT, value: 120 }
       - { stat: crystal.count, type: FLAT, value: 1 }
       - { stat: freeze.buildup, type: MORE, value: 50 }   # 2026-10-26 照 PoE2：更多 50%；這次之前增加 50%
+    # 2026-11-01 查過 PoE2 0.5（poe2db Frozen Locus 0.4.0：「No longer creates chilled ground」）：類型還留著 CreatesGroundEffect，
+    #   但已經不留冰緩地面，不做地面；久地不再能掛（SupportGuards.GROUND_EFFECT_SKILLS）
 
   # -- 矛 --
   blood_tear_sweep:
@@ -9069,7 +9170,7 @@ skills:
     # 這次之前孔裡不能放技能、tags: [persistent]：「常駐：發射遠程投射物攻擊時，在你站的地方留下一個幻影（4～5 秒，冷卻 10 秒），幻影跟著你重複使用投射物攻擊，傷害更少 50%。不保留精魂。」
     # 2026-10-28（第二次）照 PoE2 0.5：引導／蓄力、有冷卻的攻擊也能放（幻影自己引導、自己算冷卻），孔裡的攻擊不能消耗戰星，常駐增益輔助套在它身上；
     # 同一天稍早：「主要寶石：孔裡放遠程投射物攻擊（可以放好幾個，輪流用；你自己不能用孔裡的攻擊）。你發射遠程投射物攻擊時，在你站的地方留下一個幻影（4～5 秒，冷卻 10 秒），幻影在持續時間內一直對附近的敵人用孔裡的攻擊，傷害更少 50%。其他孔的輔助套在孔裡的攻擊上，冷卻恢復、延長持續時間套在幻影上。不保留精魂。」
-    description: 主要寶石：孔裡放遠程投射物攻擊（可以放好幾個，輪流用；你自己不能用孔裡的攻擊）。你發射遠程投射物攻擊時，在你站的地方留下一個幻影（4～5 秒，冷卻 10 秒），幻影在持續時間內一直對附近的敵人用孔裡的攻擊，傷害更少 50%：引導、蓄力的照引導時間放（疊滿層數、在完美時機放開），有冷卻的照冷卻（每個幻影自己算）；孔裡的攻擊不能消耗戰星。其他孔的輔助套在孔裡的攻擊上，冷卻恢復、延長持續時間套在幻影上，常駐增益的輔助套在它自己身上。不保留精魂。
+    description: 主要寶石：孔裡放遠程投射物攻擊（可以放好幾個，輪流用；你自己不能用孔裡的攻擊）。你發射遠程投射物攻擊時，在你站的地方留下一個幻影（4～5 秒，冷卻 10 秒），幻影在持續時間內一直對附近的敵人用孔裡的攻擊，傷害更少 50%：引導技能照引導時間放（疊滿層數、在完美時機放開），有冷卻的照冷卻（每個幻影自己算）；孔裡的攻擊不能消耗戰星。其他孔的輔助套在孔裡的攻擊上，冷卻恢復、延長持續時間套在幻影上，常駐增益的輔助套在它自己身上。不保留精魂。
     icon: PHANTOM_MEMBRANE
     type: spell
     tier: 1
@@ -9533,7 +9634,7 @@ skills:
 
   foul_sand_spirit:
     name: 污沙．珂芮絲
-    description: 常駐：召喚沙之巨靈珂芮絲（不會受傷），牠跟在你身邊，只在你下指令（珂芮絲的詭計、審判、惡言）時行動，指令要珂芮絲在你身邊 20 格內；牠的擊中施加暴擊弱點、暴擊傷害加成增加 50%。不保留精魂。
+    description: 常駐：召喚沙之巨靈珂芮絲（不會受傷），牠跟在你身邊，只在你下指令（珂芮絲的詭計、審判、惡言）時行動，指令要珂芮絲在你身邊 20 格內；牠的擊中施加暴擊弱點、暴擊傷害加成增加 50%。掛在這個技能上的輔助（照珂芮絲招式的類型：法術、範圍、物理、投射物、冷卻）給珂芮絲的指令（施法速度讓珂芮絲出手更快；多射、歧射、投射物速度給殘酷的飛刀，飛刀本來就穿透所有目標、不會連鎖，多穿透、連鎖的輔助掛不上）。不保留精魂。
     icon: GOLD_NUGGET
     type: spell
     tier: 1
@@ -9543,7 +9644,10 @@ skills:
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
-    summon: { kind: VEX, ally: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.0, damage: 1.0, attack_speed: 1.0, speed: 1.4, reach: 2.0, weapon: GOLD_NUGGET }
+    # 2026-11-01 照 PoE2（PoB2 SummonSandDjinnPlayer 的 minionSkillTypes：Spell、Damage、Area、Physical、Projectile、Channel、Cooldown、GainsStages）：
+    #   掛在這裡的輔助照克拉里招式的類型掛、效果給克拉里的指令（MinionService.djinnSheet／commandSheet）；這次之前沒寫，召喚技能上的輔助對指令沒作用、
+    #   指令技能自己反而什麼法術輔助都掛得上（DjinnCommands.COMMAND_SUPPORTS）。Channel、GainsStages 我們沒有對應的標籤，不寫
+    summon: { kind: VEX, ally: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.0, damage: 1.0, attack_speed: 1.0, speed: 1.4, reach: 2.0, weapon: GOLD_NUGGET, minion_tags: [spell, area, physical, projectile, cooldown] }
     mana: 0
     visual: aura_precision
     level_modifiers:
@@ -9551,7 +9655,7 @@ skills:
 
   final_mirage_spirit:
     name: 終幻．娜瑟菈
-    description: 常駐：召喚水之巨靈娜瑟菈（不會受傷），牠跟在你身邊，只在你下指令（娜瑟菈的綠洲、水井、封凍）時行動，指令要娜瑟菈在你身邊 20 格內；每次下指令觸發娜瑟菈的寧靜：附近友軍魔力再生增加 10～67%，4 秒。不保留精魂。
+    description: 常駐：召喚水之巨靈娜瑟菈（不會受傷），牠跟在你身邊，只在你下指令（娜瑟菈的綠洲、泉、冰封）時行動，指令要娜瑟菈在你身邊 20 格內；每次下指令觸發娜瑟菈的寧靜：你與娜瑟菈身邊 2.5 格內的隊友魔力再生增加 10～67%，4 秒。按這個技能的鍵下指令「娜瑟菈的擁抱」：在你身邊放一個 2.5 格的泡泡 5～9 秒（照等級），站在裡面的你與隊友被泡泡外面的敵人打時，泡泡吃掉 70% 的傷害（泡泡的生命是你最大魔力的 60%），被打破時塌成冰緩地面；你下指令 0.4 秒（照你的施法速度），娜瑟菈施法 2 秒（照娜瑟菈的施法速度）後泡泡才出現，冷卻 15 秒。掛在這個技能上的輔助（照娜瑟菈招式的類型：法術、範圍、冰冷、冷卻、持續）給娜瑟菈的指令與擁抱（施法速度讓娜瑟菈出手更快）。不保留精魂。
     icon: HEART_OF_THE_SEA
     type: spell
     tier: 1
@@ -9561,7 +9665,8 @@ skills:
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
-    summon: { kind: VEX, ally: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.0, damage: 1.0, attack_speed: 1.0, speed: 1.4, reach: 2.0, weapon: HEART_OF_THE_SEA }
+    # 2026-11-01 照 PoE2（PoB2 SummonWaterDjinnPlayer 的 minionSkillTypes：Spell、Damage、Cold、Area、Cooldown、Duration、Buff、CreatesGroundEffect）；這次之前沒寫
+    summon: { kind: VEX, ally: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.0, damage: 1.0, attack_speed: 1.0, speed: 1.4, reach: 2.0, weapon: HEART_OF_THE_SEA, minion_tags: [spell, area, cold, cooldown, duration] }
     mana: 0
     visual: aura_mana
     level_modifiers:
@@ -9569,7 +9674,7 @@ skills:
 
   flame_blade_spirit:
     name: 炎刃．羅贊
-    description: 常駐：召喚火之巨靈羅贊（不會受傷），牠跟在你身邊：你使用造成傷害的技能時，牠瞬移到目標旁用狂熱斬擊打前方的敵人並讓牠們曝露（冷卻 4 秒），最近每用過一個造成傷害的技能更多 10% 傷害。按這個技能的鍵下指令「羅贊的烙印」：羅贊在準心的敵人身上放火焰烙印，3 秒後（或被羅贊的清算引爆時）炸開，3 格內造成火焰法術傷害，對燃燒中的敵人更多 50%（同時最多 3 個，再放時最舊的提早炸開；施法 0.6 秒）。不保留精魂。
+    description: 常駐：召喚火之巨靈羅贊（不會受傷），牠跟在你身邊：你使用造成傷害的技能時，牠瞬移到目標旁用狂熱斬擊打前方的敵人並讓牠們曝露（冷卻 4 秒），最近每用過一個造成傷害的技能更多 10% 傷害。按這個技能的鍵下指令「羅贊的烙印」：羅贊在準心的敵人身上放火焰烙印，3 秒後（或被羅贊的清算引爆時）炸開，2 格內造成火焰法術傷害，對燃燒中的敵人更多 50%（同時最多 3 個，再放時最舊的提早炸開；你下指令 0.4 秒（照你的施法速度），羅贊施法 0.6 秒（照羅贊的施法速度）後烙上）。掛在這個技能上的輔助（照羅贊招式的類型：法術、攻擊、近戰、範圍、火焰、投射物、持續、冷卻）給羅贊的指令、烙印與狂熱斬擊（施法速度讓羅贊出手更快）。不保留精魂。
     icon: BLAZE_ROD
     type: spell
     tier: 1
@@ -9579,7 +9684,9 @@ skills:
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: aura
     aura: { reserve: 0, radius: 8, allies: false, effects: [] }
-    summon: { kind: VEX, ally: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.0, damage: 1.4, spread: 0.2, attack_speed: 1.0, speed: 1.4, reach: 2.0, weapon: BLAZE_ROD }   # 2026-11-01 照 PoE2 FireDjinn：傷害 140%、浮動 ±20%（這次之前 100%、±30%）
+    # 2026-11-01 照 PoE2（PoB2 SummonFireDjinnPlayer 的 minionSkillTypes：Spell、Damage、Fire、Area、Projectile、Duration、Hazard、Cooldown、
+    #   MeleeSingleTarget、Melee、Cascadable、DetonatesAfterTime、Limit、Attack）；這次之前沒寫。Hazard、Limit 這些我們的 minion_tags 沒有，不寫
+    summon: { kind: VEX, ally: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.0, damage: 1.4, spread: 0.2, attack_speed: 1.0, speed: 1.4, reach: 2.0, weapon: BLAZE_ROD, minion_tags: [spell, attack, melee, area, fire, projectile, duration, cooldown] }   # 2026-11-01 照 PoE2 FireDjinn：傷害 140%、浮動 ±20%（這次之前 100%、±30%）
     mana: 0
     visual: aura_fire
     level_modifiers:
@@ -9587,7 +9694,7 @@ skills:
 
   sand_spirit_trick:
     name: 珂芮絲的詭計
-    description: 指令（要先召喚珂芮絲）：珂芮絲瞬移到準心的地方炸開 2.5 格，造成物理法術傷害，並留下一個 4 秒的分身；分身還在時再用，分身也會爆炸（擊中時多 2 層暴擊弱點）。連續使用每次更多 50% 傷害（最多 300%）。最多存 3 次，冷卻 5 秒。
+    description: 指令（要先召喚珂芮絲）：你下指令只要 0.4 秒（照你的施法速度），珂芮絲接著施法 0.8 秒（照珂芮絲的施法速度）後瞬移到你下指令時準心的地方炸開 2.5 格，造成物理法術傷害，並留下一個 4 秒的分身；分身還在時再用，分身也會爆炸（擊中時多 2 層暴擊弱點）。連續使用每次更多 50% 傷害（最多 300%）。最多存 3 次，冷卻 5 秒。
     icon: GUNPOWDER   # 2026-10-27 圖示：會炸開的沙分身；這次之前 GOLD_NUGGET（跟克拉里本身一樣）
     type: spell
     tier: 1
@@ -9613,17 +9720,24 @@ skills:
   # 2026-10-29 照 PoE2 Kelari's Brutality（RePoE KnifeThrowSandDjinn／CommandSandDjinnKnifeThrowPlayer）：克拉里本身的指令（召喚克拉里就有）。
   #   朝準心擲出一把飛刀，鑽進地面 3 公尺內 12 處、短暫延遲後爆出刀刃（每處 1 公尺），1 級 6～8 物理法術傷害、擊中癱瘓；冷卻 5 秒（2 次）、施放 0.8 秒、暴擊 15%。
   #   品質（加刀刃數）沒做（昇華賦予的技能沒有品質）。原作有、我們以前沒有。
+  # 2026-11-01 照 PoE2（PoB2 minion.lua KnifeThrowSandDjinn：Projectile、GroundTargetedProjectile、projectiles_fire_at_ground、always_pierce、CannotChain、
+  #   projectiles_cannot_split；djinn_knife_throw_number_of_knives_created 12、active_skill_base_area_of_effect_radius 30、secondary 10；poe2db 投射物速度每秒 25 公尺）：
+  #   克拉里射出 12 把真的會飛的飛刀（SkillService.kelariKnives → ProjectileEngine.launchAtGround），路上穿透打中的敵人（Projectile 那一段的傷害，
+  #   PoB2 兩段都是效用 1.79），落地延遲後爆出 1 公尺的刀刃（asc_kelari_blade，Eruption 那一段才有 maim_on_hit_% 100）。
+  #   這次之前 mechanic: impact（impact: { range: 20, delay: 0.6, radius: 1 } ＋ AscGranted 撒 11 處刀刃）、癱瘓寫在這裡（飛刀本身也癱瘓）
+  # 2026-11-01 照 PoE2（KnifeThrowSandDjinn qualityStats：djinn_knife_throw_number_of_knives_created 每 1% 品質 0.1）：品質多 0～2 把飛刀
+  #   （gem_quality.yml；昇華賦予的技能品質固定 20% → 14 把）。這次之前品質沒有效果（gem_quality.yml 寫 []）
   sand_spirit_cruelty:
     name: 珂芮絲的殘酷
-    description: 指令（要先召喚珂芮絲）：珂芮絲朝準心的地方擲出一把飛刀，飛刀鑽進地面，在 3 格內 12 處短暫延遲後爆出刀刃（每處 1 格），造成物理法術傷害，擊中癱瘓。最多存 2 次，冷卻 5 秒。
+    description: 指令（要先召喚珂芮絲）：你下指令只要 0.4 秒（照你的施法速度），珂芮絲接著施法 0.8 秒（照珂芮絲的施法速度）後朝準心周圍 3 格內的地面擲出 12 把飛刀（投射物，每秒 25 格，穿透所有目標、不會連鎖），飛刀打中路上的敵人造成物理法術傷害，鑽進地面、短暫延遲後各爆出 1 格的刀刃，造成物理法術傷害、擊中癱瘓。品質每 1% 多 0.1 把飛刀（最多多 2 把）。珂芮絲召喚技能上的多射、歧射、投射物速度給飛刀。最多存 2 次，冷卻 5 秒。
     icon: IRON_NUGGET
     type: spell
     tier: 1
     tags: [spell, area, physical, projectile, command, cooldown]
     tags_remove: [spell]   # 照 PoE2 寶石標籤：指令技能不顯示法術
     source: ascendancy
-    mechanic: impact
-    impact: { range: 20, delay: 0.6, radius: 1 }   # 中間那一處（另外 11 處 AscGranted 撒在 3 公尺內）
+    mechanic: projectile
+    projectile: { count: 12, speed: 1.25, range: 20, size: 0.3, pierce: 20 }   # 2026-11-01 照 PoE2：12 把飛刀、每秒 25 公尺、穿透所有目標（引擎上限 20）
     damage: [6, 8]   # 照 PoE2（1 級 6～8，照法術的等級成長）
     damage_types: { physical: 1.0 }
     cast_time: 0.8
@@ -9634,7 +9748,6 @@ skills:
     visual: ground_tremor
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 15 }
-      - { stat: maim.chance, type: FLAT, value: 100 }   # 擊中癱瘓
       - { stat: crit_weakness.on_hit, type: FLAT, value: 1 }   # 克拉里本身
       - { stat: crit.bonus, type: INCREASED, value: 50 }   # 克拉里本身
 
@@ -9643,7 +9756,7 @@ skills:
     icon: IRON_NUGGET
     hidden: true
     type: spell
-    tags: [spell, area, physical]
+    tags: [spell, area, physical, command]   # 2026-11-01 照 PoE2：殘酷（指令）爆出來的刀刃也是指令的一部分（骸令吃得到）；這次之前沒有 command
     mechanic: nova
     nova: { radius: 1 }
     damage: [6, 8]
@@ -9663,7 +9776,7 @@ skills:
     icon: SUGAR   # 2026-10-27 圖示：照元素、作用補上；這次之前沒寫，顯示成書
     hidden: true
     type: spell
-    tags: [spell, area, physical]
+    tags: [spell, area, physical, command]   # 2026-11-01 照 PoE2：欺瞞（指令）的分身爆炸（骸令吃得到）；這次之前沒有 command
     mechanic: nova
     nova: { radius: 2.5 }
     damage: [19, 28]   # 2026-10-26 照 PoE2（分身爆炸 1 級 19～28）
@@ -9677,24 +9790,34 @@ skills:
       - { stat: crit_weakness.on_hit, type: FLAT, value: 3 }   # 照 PoE2：分身爆炸多 2 層＋克拉里本身 1 層（2026-10-29 稍早誤改成 2，已改回）
       - { stat: crit.bonus, type: INCREASED, value: 50 }   # 克拉里本身：暴擊傷害加成增加 50%
 
+  # 2026-11-01 照 PoE2 Kelari's Judgment（PoB2 minion.lua HandSlamSandDjinn：Channel、GainsStages、castTime 0.5、sand_djinn_hand_slam_maximum_number_of_stages 4、
+  #   channel_start_lock_cancelling_of_cast_time_% 100、djinn_hand_slam_damage_+%_final_per_additional_stage 125、
+  #   djinn_hand_slam_area_of_effect_+%_final_per_additional_stage 25、djinn_hand_slam_minimum／maximum_area_of_effect_+%_final −20／+20、
+  #   active_skill_base_area_of_effect_radius 35、apply_X_stacks_of_critical_weakness_on_hit 4、active_skill_hit_damage_stun_multiplier_+%_final 100、
+  #   冷卻 12 秒（1 次）；poe2db：1 級 15～23、Cost 3.87—39.52 Mana per second、minions_do_not_move_to_skill_target）：
+  #   按住引導（charge：locked_start 第一段不能取消＝最短引導一段、每引導完一段 1 層，最多 4 層；段數照珂芮絲的施法速度：Signatures.press），
+  #   珂芮絲留在你身邊陪你引導，放開時刀刃在準心落下（impact；落下的 0.6 秒 PoB2、poe2db 都沒有數字，照這次之前），
+  #   每多一段更多 125% 傷害、範圍更多 25%，每次震波範圍 −20%～+20%（DjinnCommands.judgmentAreaRoll）；引導中逐秒扣魔力（每秒 4→40）。
+  #   這次之前：你下指令 0.4 秒、珂芮絲飛過去固定施法 1.5 秒（cast_time 1.5）、當作引導 3 段（damage [53, 81]＝15～23 × 3.5）、
+  #   每次扣 mana [6, 7, 8, 9, 11, 12, 14, 16, 18, 20, 23, 26, 29, 32, 36, 40, 44, 49, 54, 59]（每秒消耗 × 1.5 秒）
   sand_spirit_verdict:
     name: 珂芮絲的裁決
-    description: 指令（要先召喚珂芮絲）：珂芮絲在準心的地方懸起一排刀刃，落下時造成震波（3.5 格）的物理法術傷害，暈眩累積更多 100%、多 4 層暴擊弱點。冷卻 12 秒。
+    description: 指令（要先召喚珂芮絲）：按住引導，珂芮絲在你身邊陪你引導、在準心的上方懸起刀刃：每 0.5 秒（照珂芮絲的施法速度）一段、最多 4 段，第一段不能取消（最短引導一段）。放開時刀刃落下，在準心的地方造成震波（3.5 格，每次 −20%～+20%）的物理法術傷害，每多一段更多 125% 傷害、範圍更多 25%；暈眩累積更多 100%、多 4 層暴擊弱點。引導中逐秒扣魔力。冷卻 12 秒。
     icon: GOLD_INGOT   # 2026-10-27 圖示：這次之前 GOLD_NUGGET（跟克拉里本身一樣）
     type: spell
     tier: 1
-    tags: [spell, area, physical, command]
+    tags: [spell, area, physical, command, channelling]   # 2026-11-01 引導（channelling：提示寫「引導」，Signatures.chargeWord）；這次之前只在 tags_add 顯示
     tags_remove: [spell]   # 2026-10-29 照 PoE2 寶石標籤（Kelari's Judgment）：自動規則加的拿掉／原作有的補上
-    tags_add: [channelling]
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: impact
     impact: { range: 20, delay: 0.6, radius: 3.5 }
-    damage: [53, 81]   # 2026-10-26 照 PoE2 Kelari's Judgment（1 級 15～23，引導 3 段：更多 250% → ×3.5）
+    charge: { stages: 4, stage_time: 0.5, stage_more: 125, stage_area: 25, locked_start: true, drain: true }   # 2026-11-01 照 PoE2（見上）
+    damage: [15, 23]   # 2026-11-01 照 PoE2 Kelari's Judgment（1 級 15～23，照法術的等級成長；段數的更多傷害在 charge.stage_more）；這次之前 [53, 81]
     damage_types: { physical: 1.0 }
-    cast_time: 1.5
+    cast_time: 0.5   # 2026-11-01 照 PoE2（HandSlamSandDjinn castTime 0.5：珂芮絲引導一段的時間）；這次之前 1.5
     effectiveness: 1.0
     cooldown: 12
-    mana: [6, 7, 8, 9, 11, 12, 14, 16, 18, 20, 23, 26, 29, 32, 36, 40, 44, 49, 54, 59]   # 2026-10-29 照 PoE2（poe2db Kelari's Judgment 每分鐘 232→2371，引導 1.5 秒照 1.5 秒算）；這次之前 0（指令其實要花魔力）
+    mana: [4, 5, 5, 6, 7, 8, 9, 11, 12, 14, 15, 17, 19, 21, 24, 26, 29, 32, 36, 40]   # 2026-11-01 照 PoE2（poe2db Kelari's Judgment 每秒 3.87→39.52，引導中逐秒扣）
     visual: ground_tremor
     modifiers:
       - { stat: spell.base_crit, type: FLAT, value: 15 }
@@ -9704,7 +9827,7 @@ skills:
 
   sand_spirit_venom_word:
     name: 珂芮絲的毒言
-    description: 常駐（要先召喚珂芮絲）：自動消耗存在範圍內的屍體，每具生出 2 隻屍甲蟲（最多 4～8 隻，每 1.5～0.9 秒一具）；甲蟲衝向附近的敵人爆炸（1.5 格物理傷害，對傳奇更多 40%、20% 機率致盲）。不保留精魂。
+    description: 常駐（要先召喚珂芮絲）：自動消耗存在範圍內的屍體，每具生出 2 隻屍甲蟲（最多 4～8 隻，每 1.5～0.9 秒一具）；甲蟲衝向附近的敵人爆炸（1.5 格物理傷害，對傳奇更多 40%、20% 機率致盲）。掛在這個技能上的輔助（照甲蟲爆炸的類型：法術、範圍、物理）給甲蟲的爆炸。不保留精魂。
     icon: RABBIT_FOOT
     type: spell
     tier: 1
@@ -9741,7 +9864,7 @@ skills:
 
   mirage_spirit_haven:
     name: 娜瑟菈的綠洲
-    description: 指令（要先召喚娜瑟菈）：把娜瑟菈身邊 8 公尺內的冰緩地面變成綠洲 15 秒：站在裡面的你與隊友每秒獲得 0.5 點藥劑充能，受到的傷害 30～80% 補償為生命、20～50% 補償為魔力；綠洲裡的植物繁茂。身邊沒有冰緩地面就不能用。冷卻 8 秒。
+    description: 指令（要先召喚娜瑟菈）：你下指令只要 0.4 秒（照你的施法速度），娜瑟菈接著施法 1.8 秒（照娜瑟菈的施法速度）後把她身邊 8 格內的冰緩地面變成綠洲 15 秒：站在裡面的你與隊友每秒獲得 0.5 點藥劑充能，受到的傷害 31～50% 補償為生命、20～32% 補償為魔力（1～20 級）；綠洲裡的植物繁茂。身邊沒有冰緩地面就不能用。冷卻 8 秒。
     icon: NAUTILUS_SHELL   # 2026-10-27 圖示：這次之前 HEART_OF_THE_SEA（跟納維拉本身一樣）
     type: spell
     tier: 1
@@ -9760,13 +9883,15 @@ skills:
     cooldown: 8
     mana: [7, 8, 10, 11, 13, 15, 17, 20, 23, 25, 29, 32, 36, 40, 45, 50, 55, 61, 68, 75]   # 2026-10-29 照 PoE2（poe2db Navira's Oasis 7→75）；這次之前 0（指令其實要花魔力）
     visual: aura_mana
-    level_modifiers:   # 2026-11-01 照 PoE2 Navira's Oasis（(30—80)% Recouped as Life、(20—50)% Recouped as Mana，1→20 級；AscGranted）；這次之前固定 30%、20%
-      - { stat: asc.oasis_life_recoup, type: FLAT, value: [30, 80] }
-      - { stat: asc.oasis_mana_recoup, type: FLAT, value: [20, 50] }
+    # 2026-11-01 照 PoE2 Navira's Oasis（遊戲檔：30→80%、20→50% 照娜瑟菈等級 1→100 線性，娜瑟菈等級 = 技能等級 × 2；AscGranted）；
+    #   這次之前誤當成技能 1→20 級（20 級就 80%、50%）
+    level_modifiers:
+      - { stat: asc.oasis_life_recoup, type: FLAT, value: [30.51, 31.52, 32.53, 33.54, 34.55, 35.56, 36.57, 37.58, 38.59, 39.6, 40.61, 41.62, 42.63, 43.64, 44.65, 45.66, 46.67, 47.68, 48.69, 49.7, 50.71, 51.72, 52.73, 53.74, 54.75, 55.76, 56.77, 57.78, 58.79, 59.8, 60.81, 61.82, 62.83, 63.84, 64.85, 65.86, 66.87, 67.88, 68.89, 69.9] }
+      - { stat: asc.oasis_mana_recoup, type: FLAT, value: [20.3, 20.91, 21.52, 22.12, 22.73, 23.33, 23.94, 24.55, 25.15, 25.76, 26.36, 26.97, 27.58, 28.18, 28.79, 29.39, 30, 30.61, 31.21, 31.82, 32.42, 33.03, 33.64, 34.24, 34.85, 35.45, 36.06, 36.67, 37.27, 37.88, 38.48, 39.09, 39.7, 40.3, 40.91, 41.52, 42.12, 42.73, 43.33, 43.94] }
 
   mirage_spirit_spring:
     name: 娜瑟菈的泉
-    description: 指令（要先召喚娜瑟菈）：能量護盾立刻開始回充，6 秒內能量護盾回充速度增加 10～109%（照等級）。能量護盾是滿的時候不能用。冷卻 12 秒。
+    description: 指令（要先召喚娜瑟菈）：你下指令只要 0.4 秒（照你的施法速度），娜瑟菈接著施法 2.1 秒（照娜瑟菈的施法速度）後你的能量護盾立刻開始回充，6 秒內能量護盾回充速度增加 11～49%（1～20 級）。能量護盾是滿的時候不能用。冷卻 12 秒。
     icon: LAPIS_LAZULI   # 2026-10-27 圖示：回魔力的井；這次之前 HEART_OF_THE_SEA（跟納維拉本身一樣）
     type: spell
     tier: 1
@@ -9781,7 +9906,7 @@ skills:
       taunt: false
       allies: false
       buff:
-        - { stat: es.recharge, type: INCREASED, value: [10, 109] }   # 2026-11-01 照 PoE2 Navira's Well（(10—109)%，1→20 級）；這次之前固定 10
+        - { stat: es.recharge, type: INCREASED, value: [11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63, 65, 67, 69, 71, 73, 75, 77, 79, 81, 83, 85, 87, 89] }   # 2026-11-01 照 PoE2 Navira's Well（遊戲檔：10→109% 照娜瑟菈等級 1→100 線性 = 9 + 2 × 技能等級）；這次之前誤當成技能 1→20 級
     cast_time: 2.1
     cooldown: 12
     mana: [6, 7, 8, 9, 11, 13, 15, 17, 19, 21, 24, 27, 30, 34, 38, 42, 46, 51, 57, 63]   # 2026-10-29 照 PoE2（poe2db Navira's Well 6→63）；這次之前 0（指令其實要花魔力）
@@ -9789,7 +9914,7 @@ skills:
 
   mirage_spirit_freeze:
     name: 娜瑟菈的冰封
-    description: 指令（要先召喚娜瑟菈）：讓準心附近 6 公尺內有敵人站著的冰緩地面碎裂，造成冰冷法術傷害，凍結累積更多 200%、照更多 200% 的傷害算冰緩（只打站在冰緩地面上的敵人）。冷卻 5 秒。
+    description: 指令（要先召喚娜瑟菈）：你下指令只要 0.4 秒（照你的施法速度），娜瑟菈接著施法 1.2 秒（照娜瑟菈的施法速度）後讓你下指令時準心附近 6 格內有敵人站著的冰緩地面碎裂，造成冰冷法術傷害，凍結累積更多 200%、照更多 200% 的傷害算冰緩（只打站在冰緩地面上的敵人）。冷卻 5 秒。
     icon: PRISMARINE_SHARD
     type: spell
     tier: 1
@@ -9798,7 +9923,7 @@ skills:
     source: ascendancy   # 2026-10-26：昇華天賦賦予（PoE2 的 Grants Skill），沒有寶石
     mechanic: impact
     impact: { range: 20, delay: 0.3, radius: 6 }
-    damage: [44, 66]   # 2026-10-26 照 PoE2 Navira's Fracturing（1 級 44～66）
+    damage: [[58, 86], [88, 131], [122, 183], [162, 243], [208, 311], [260, 390], [319, 479], [387, 581], [464, 696], [551, 827], [650, 975], [762, 1143], [887, 1331], [1029, 1544], [1188, 1782], [1367, 2050], [1568, 2351], [1792, 2688], [2044, 3066], [2325, 3488], [2639, 3959], [2990, 4485], [3382, 5072], [3818, 5727], [4304, 6456], [4844, 7267], [5446, 8169], [6115, 9172], [6858, 10286], [7682, 11524], [8598, 12897], [9613, 14420], [10739, 16108], [11986, 17980], [13368, 20052], [14898, 22347], [16591, 24887], [18464, 27696], [20536, 30803], [22825, 34238]]   # 2026-11-01 照 PoE2 原作公式（娜瑟菈等級 = 技能等級 × 2；效用 3.885209 × 14.25 × (1 + 0.25 × (L−1)) × 1.0415^(L−1)）1～40 級；這次之前 [44, 66]（1 級的值再乘玩家法術成長）
     damage_types: { cold: 1.0 }
     cast_time: 1.2
     effectiveness: 1.0
@@ -9813,7 +9938,7 @@ skills:
 
   blade_spirit_settle:
     name: 羅贊的清算
-    description: 指令（要先召喚羅贊）：羅贊瞬移到準心的地方，對身邊 2.25 格造成火焰法術傷害，接著劍砸地面掀起一道 6 格的熔岩浪（點燃效果更多 100%），並引爆你全部的羅贊的烙印。冷卻 12 秒。
+    description: 指令（要先召喚羅贊）：你下指令只要 0.4 秒（照你的施法速度），羅贊瞬移到準心的地方施法 2.3 秒（照羅贊的施法速度），落地對身邊 1.5 格造成火焰法術傷害，接著劍砸地面掀起一道 4 格的熔岩浪（點燃效果更多 100%），並引爆你全部的羅贊的烙印。冷卻 12 秒。
     icon: MAGMA_CREAM
     type: spell
     tier: 1
@@ -9837,7 +9962,7 @@ skills:
     icon: MAGMA_CREAM   # 2026-10-27 圖示：照元素、作用補上；這次之前沒寫，顯示成書
     hidden: true
     type: spell
-    tags: [spell, area, fire]
+    tags: [spell, area, fire, command]   # 2026-11-01 照 PoE2：清算（指令）的熔岩浪（骸令吃得到）；這次之前沒有 command
     mechanic: cone   # 2026-11-01 照 PoE2 Ruzhan's Reckoning（Wave length is 4 metres）：劍砸地面往前掀起的一道浪；這次之前 nova（以落點為中心 4 公尺一圈）
     cone: { length: 4, angle: 40 }
     damage: [[38, 57], [58, 86], [80, 120], [106, 160], [136, 204], [171, 256], [210, 315], [254, 381], [305, 457], [362, 543], [427, 641], [500, 750], [583, 874], [676, 1014], [780, 1171], [898, 1347], [1030, 1544], [1177, 1766], [1342, 2014], [1527, 2291], [1734, 2600], [1964, 2946], [2221, 3332], [2508, 3762], [2827, 4240], [3182, 4773], [3577, 5366], [4016, 6025], [4504, 6756], [5046, 7569], [5647, 8471], [6314, 9472], [7054, 10581], [7873, 11810], [8781, 13171], [9786, 14678], [10898, 16347], [12128, 18192], [13489, 20233], [14993, 22489]]   # 2026-11-01 照 PoE2 原作公式（羅贊等級 = 技能等級 × 2；效用 3.885209 × 9.36 × (1 + 0.25 × (L−1)) × 1.0415^(L−1)、最小 ×0.8 最大 ×1.2）1～40 級；這次之前 [29, 44]（1 級的值再乘玩家法術成長）
@@ -9852,7 +9977,7 @@ skills:
 
   blade_spirit_wrath_fire:
     name: 羅贊的怒焰
-    description: 指令（要先召喚羅贊）：羅贊朝前方連射兩輪各 20 顆火燼，打中時爆炸（1.35 格），對被禁錮的敵人更多 60% 傷害。冷卻 7 秒。
+    description: 指令（要先召喚羅贊）：你下指令只要 0.4 秒（照你的施法速度），羅贊接著施法 2.3 秒（照羅贊的施法速度）後從他身上朝準心連射兩輪各 20 顆火燼，打中時爆炸（0.9 格），對被禁錮的敵人更多 60% 傷害。冷卻 7 秒。
     icon: BLAZE_POWDER   # 2026-10-27 圖示：這次之前 BLAZE_ROD（跟魯兹安本身一樣）
     type: spell
     tier: 1
@@ -9873,7 +9998,7 @@ skills:
 
   blade_spirit_device:
     name: 羅贊的機關
-    description: 指令（要先召喚羅贊）：羅贊把巨劍擲到準心的地方（每秒 52.5 格、穿透所有目標），落地在 7.5 格內撒下 8 個火焰符文（6 秒，最多 21 個）；敵人走到符文 1.2 格內就噴出火焰龍捲（1.8 格、4 秒、每 0.7 秒一下，易燃幅度更多 400%）。冷卻 8 秒。
+    description: 指令（要先召喚羅贊）：你下指令只要 0.4 秒（照你的施法速度），羅贊接著施法 1 秒（照羅贊的施法速度）後從他身上把巨劍擲到準心的地方（每秒 35 格、穿透所有目標），落地在 5 格內撒下 8 個火焰符文（6 秒，最多 21 個）；敵人走到符文 0.8 格內就噴出火焰龍捲（1.2 格、4 秒、每 0.7 秒一下，易燃幅度更多 400%）。冷卻 8 秒。
     icon: COAL   # 2026-10-27 圖示：悶燒的陷阱；這次之前 BLAZE_ROD（跟魯兹安本身一樣）
     type: spell
     tier: 1
@@ -9900,7 +10025,7 @@ skills:
     icon: BLAZE_POWDER
     hidden: true
     type: spell
-    tags: [spell, area, fire, duration]
+    tags: [spell, area, fire, duration, command]   # 2026-11-01 照 PoE2：機關（指令）的龍捲（骸令吃得到）；這次之前沒有 command
     mechanic: zone
     zone: { range: 0, radius: 1.2, duration: 4, interval: 0.7, damage: 100 }
     damage: [[6, 9], [9, 14], [13, 19], [17, 25], [21, 32], [27, 40], [33, 49], [39, 59], [47, 70], [55, 83], [65, 97], [75, 113], [87, 131], [100, 150], [115, 172], [131, 197], [150, 224], [170, 255], [192, 289], [217, 326], [245, 368], [276, 414], [310, 465], [348, 521], [389, 584], [435, 653], [486, 729], [542, 813], [604, 906], [672, 1008], [747, 1120], [829, 1244], [920, 1381], [1020, 1531], [1130, 1696], [1251, 1877], [1384, 2076], [1530, 2295], [1690, 2535], [1866, 2799]]   # 2026-11-01 照 PoE2 原作公式（羅贊等級 = 技能等級 × 2；效用 3.885209 × 1.52 × (1 + 0.25 × (L−1)) × 1.038^(L−1)、最小 ×0.8 最大 ×1.2）1～40 級；這次之前 [5, 7]（1 級的值再乘玩家法術成長）
@@ -9917,9 +10042,11 @@ skills:
     name: 羅贊的狂熱
     icon: BLAZE_ROD   # 2026-10-27 圖示：照元素、作用補上；這次之前沒寫，顯示成書
     hidden: true
-    type: spell
-    tags: [attack, melee, area, fire]   # 2026-11-01 照 PoE2：羅贊的攻擊（吃羅贊的召喚物攻擊加成）；這次之前 [spell, area, fire]
-    tags_remove: [spell]
+    # 2026-11-01 照 PoE2（PoB2 FlameSliceFireDjinn：Melee、Attack、Area、Fire、Cooldown、MeleeSingleTarget）：改成不用武器的攻擊（type: attack＋damage），
+    #   真的算攻擊（軍令的「指令以外更少 100%」、羅贊召喚技能上的攻擊輔助吃得到），基礎暴擊率照不用武器的攻擊 5%（原作 5%）；補 cooldown。
+    #   這次之前 type: spell（tags 寫 attack 也會被法術拿掉，其實是法術）、spell.base_crit 5
+    type: attack
+    tags: [attack, melee, area, fire, cooldown]
     mechanic: cone
     cone: { length: 4, angle: 90 }
     # 2026-11-01 照 PoE2 Ruzhan's Zealotry：羅贊的攻擊，攻擊傷害 450%（羅贊的武器傷害＝召喚物傷害表 × 140%、浮動 ±20%，羅贊等級 = 技能等級 × 2）、
@@ -9931,7 +10058,6 @@ skills:
     mana: 0
     visual: cleave
     modifiers:
-      - { stat: spell.base_crit, type: FLAT, value: 5 }
       - { stat: exposure.chance, type: FLAT, value: 100 }
 
   # 2026-11-01 照 PoE2 Ruzhan's Brand（炎刃．羅贊自帶的指令，按羅贊的鍵；AscGranted.brand）：烙印炸開的那一下，爆炸 2 公尺、暴擊率 7%、
@@ -9941,7 +10067,7 @@ skills:
     icon: MAGMA_CREAM
     hidden: true
     type: spell
-    tags: [spell, area, fire]
+    tags: [spell, area, fire, command]   # 2026-11-01 照 PoE2：羅贊的烙印是指令（CommandFireDjinnLivingBombPlayer；骸令吃得到）；這次之前沒有 command
     mechanic: nova
     nova: { radius: 2.0 }
     damage: [[11, 16], [16, 24], [22, 33], [29, 44], [37, 56], [46, 69], [56, 85], [68, 102], [81, 121], [95, 143], [112, 168], [130, 195], [151, 226], [173, 260], [199, 298], [227, 341], [259, 388], [294, 441], [333, 500], [376, 564], [424, 636], [478, 716], [536, 805], [602, 902], [674, 1010], [753, 1130], [841, 1261], [938, 1407], [1045, 1567], [1162, 1744], [1292, 1938], [1435, 2153], [1592, 2389], [1766, 2648], [1956, 2934], [2165, 3248], [2395, 3592], [2647, 3971], [2925, 4387], [3229, 4844]]

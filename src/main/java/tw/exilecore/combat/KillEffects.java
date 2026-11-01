@@ -112,13 +112,13 @@ public final class KillEffects implements Listener {
         }
         boolean changed = false;
         final double life = sheet.flat(StatKeys.LIFE_ON_KILL, Set.of());
-        if (life > 0 && state.life() < state.maxLife()) {
+        if (life > 0 && !state.isFullLife()) { // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
             state.setLife(state.life() + state.maxLife() * life / 100.0);
             changed = true;
         }
         // PoE2：擊殺時回復固定生命／魔力
         final double lifeFlat = sheet.flat(StatKeys.LIFE_PER_KILL, Set.of());
-        if (lifeFlat > 0 && state.life() < state.maxLife()) {
+        if (lifeFlat > 0 && !state.isFullLife()) { // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
             state.setLife(Math.min(state.maxLife(), state.life() + lifeFlat));
             changed = true;
         }

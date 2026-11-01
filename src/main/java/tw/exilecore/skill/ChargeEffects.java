@@ -639,6 +639,26 @@ public final class ChargeEffects implements Listener {
         }
     }
 
+    /**
+     * 2026-11-01 照 PoE2 Mana Remnants（魔泉湧）：魔力痕跡，8 秒，撿到回 mana 魔力（可以溢出最大魔力）。
+     * 走殘骸的同一套（殘骸輔助：多一個、效果、延遲；天賦的殘影效果、再出現；直接吃到身上的設定）。
+     */
+    public void dropManaRemnant(final Player owner, final Location at, final double mana, final RemnantMods mods) {
+        if (owner == null || !owner.isOnline() || at == null || mana <= 0) {
+            return;
+        }
+        final int count = 1 + (mods.extra() > 0 && plugin.random().nextDouble() * 100 < mods.extra() ? 1 : 0);
+        for (int i = 0; i < count; i++) {
+            final double angle = plugin.random().nextDouble() * Math.PI * 2;
+            final Location spot = at.clone().add(i > 0 ? Math.cos(angle) * 0.8 : 0, 0.4, i > 0 ? Math.sin(angle) * 0.8 : 0);
+            dropRemnant(owner, spot, org.bukkit.Material.LAPIS_LAZULI, INFUSION_REMNANT_TICKS, true, mods, times -> {
+                final tw.exilecore.character.PlayerState state = plugin.players().get(owner);
+                state.recoverManaOverflowing(mana * times);
+                plugin.players().display(owner, state);
+            });
+        }
+    }
+
     /** 2026-10-26（骸餘饗的殘骸，OriginalSkills）：別的系統的殘骸也走同一套（撿取距離、殘影效果、再出現）。 */
     void dropCustomRemnant(final Player owner, final Location at, final org.bukkit.Material icon, final java.util.function.IntConsumer onPickup) {
         dropRemnant(owner, at, icon, INFUSION_REMNANT_TICKS, true, RemnantMods.NONE, onPickup);

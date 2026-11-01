@@ -374,7 +374,6 @@ supports:
   ground_nail_iii: g
   shock_dizzy: g
   rage: r
-  colossus_butcher: r
   charged_chant: b
   rapid_corrode_iii: g
   blazing_volt: g
@@ -397,7 +396,6 @@ supports:
   execute: r
   final_sentence_ii: r
   final_sentence_iii: r
-  build_poise: b
   ponderous_weight: r
   merciless_heart: r
   melt_break: r
@@ -459,7 +457,6 @@ supports:
   fast_decay: b
   scorch_hunt: r
   cold_burn: b
-  blazing_brand: r
   congealed_frost_blade: b
   draw_lightning: g
   rust_plate: g
@@ -611,7 +608,6 @@ supports:
   bone_command_ii: b   # 2026-10-30 照 PoE2 Bidding II（智慧）
   soul_reap: b
   bone_mercy: b
-  perish_blast: b
   bounty: g
   life_reward: g
   mana_reward: g
@@ -619,9 +615,7 @@ supports:
   blood_pay: r
   dice_luck: b
   blast_peak: b
-  gather_bedrock: r
   full_stars: g
-  slay_gather_fury: g
   eternal_star: b
   double_star: g
   star_suppress: g

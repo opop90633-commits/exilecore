@@ -19,9 +19,27 @@ import tw.exilecore.core.config.YamlNode;
  * @param stageArea   每多一層增加幾 % 範圍
  * @param stageProjectiles 每多一層多射幾支投射物（2026-10-26：照 PoE2 的 Bonestorm，引導越久骨刺越多，放開一起射出）
  * @param channel   2026-10-26 照 PoE2 的引導（Channel）：按住期間的魔力消耗、衝鋒、持續作用（{@link Channel}）
+ * @param accumulate 2026-11-01 照 PoE2 Bonestorm（碎骨飛矢）：累積型引導（accumulate: true）——每一段（stage_time，吃施法速度）凝聚
+ *                   「這一招的投射物數量」支投射物，最多 stages 支（base_number_of_allowed_bone_storm_projectiles 20；多射的投射物加在每一段、
+ *                   不加上限：Path of Building 的 channelTimeMultiplier = ceil(段數 ÷ 投射物數量)），放開時把手上的全部射出；
+ *                   stages 是「最多幾支」而不是層數（{@link #heldCount}）
+ * @param lockedStart 2026-11-01 照 PoE2 Kelari's Judgment（PoB2 minion.lua HandSlamSandDjinn：channel_start_lock_cancelling_of_cast_time_% 100、
+ *                   GainsStages）：開始引導的第一段（一次 stage_time，吃速度）不能取消——最短引導就是一段（{@link #minTicks(double)}），
+ *                   每引導完一段才多一層（第一段完成時 1 層，最多 stages 層；{@link #stagesAt}）。寫 locked_start: true。
+ *                   沒寫的照舊：一開始就是 1 層、每過一段加一層，最短引導照 min_time
  */
 public record ChargeSpec(double perfectAt, double perfectMore, int stages, double stageTime, double stageMore, double stageArea,
-                         int stageProjectiles, Channel channel) {
+                         int stageProjectiles, Channel channel, boolean accumulate, boolean lockedStart) {
+
+    public ChargeSpec(final double perfectAt, final double perfectMore, final int stages, final double stageTime, final double stageMore,
+                      final double stageArea, final int stageProjectiles, final Channel channel, final boolean accumulate) {
+        this(perfectAt, perfectMore, stages, stageTime, stageMore, stageArea, stageProjectiles, channel, accumulate, false);
+    }
+
+    public ChargeSpec(final double perfectAt, final double perfectMore, final int stages, final double stageTime, final double stageMore,
+                      final double stageArea, final int stageProjectiles, final Channel channel) {
+        this(perfectAt, perfectMore, stages, stageTime, stageMore, stageArea, stageProjectiles, channel, false, false);
+    }
 
     public ChargeSpec(final double perfectAt, final double perfectMore, final int stages, final double stageTime, final double stageMore,
                       final double stageArea) {
@@ -131,7 +149,7 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
                 c.perfectValue(), c.slow(), c.empowerCharge(), c.empowerStat(), c.empowerValue(), c.empowerRageLess(), c.interruptOnHit(),
                 c.attackSpeedCost());
         return new ChargeSpec(spec.perfectAt(), spec.perfectMore(), spec.stages() > 0 ? Math.max(1, spec.stages() + stages) : 0,
-                spec.stageTime(), spec.stageMore(), spec.stageArea(), spec.stageProjectiles(), channel);
+                spec.stageTime(), spec.stageMore(), spec.stageArea(), spec.stageProjectiles(), channel, spec.accumulate(), spec.lockedStart());
     }
 
     /** 魔力是每秒扣的（引導中）。 */
@@ -145,6 +163,7 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
 
     /**
      * 引導了 heldTicks tick：這一 tick 要不要扣魔力（開始的那一 tick 扣，之後每 20 tick 扣一次）。純函式（測試用）。
+     * 2026-11-01：引導中改成 {@link #drainSlice}（開始時照舊先扣一秒）；這個留著給舊的測試、說明用。
      */
     public static boolean drainDue(final long heldTicks) {
         return heldTicks >= 0 && heldTicks % 20 == 0;
@@ -156,8 +175,13 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
      */
     public int drainCost(final SkillBuild build, final tw.exilecore.stats.StatSheet sheet) {
         final int base = build.manaCost();
-        if (!channel.attackSpeedCost() || !build.definition().isAttack() || base <= 0 || sheet == null) {
+        if (!channel.attackSpeedCost() || base <= 0 || sheet == null) {
             return base;
+        }
+        if (!build.definition().isAttack()) {
+            // 2026-11-01 照 PoE2 Bonestorm（cast_speed_modifiers_apply_to_over_time_cost）：法術寫 cast_speed_cost: true，
+            // 逐秒消耗再乘施法速度的倍率（增加 × 更多，跟施法間隔用的同一個倍率）
+            return scaledCost(base, tw.exilecore.stats.DamageCalculator.castSpeedMultiplier(build.profile().effective(sheet), build.profile().tags()));
         }
         final double multiplier = build.profile().effective(sheet).apply(tw.exilecore.stats.StatKeys.ATTACK_SPEED, 1.0, build.profile().tags());
         return scaledCost(base, multiplier);
@@ -169,6 +193,25 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
             return base;
         }
         return (int) Math.max(1, Math.round(base * Math.max(0.1, attackSpeedMultiplier)));
+    }
+
+    /** 2026-11-01：引導中每隔幾 tick 結算一次逐秒的魔力（0.2 秒；PoE2 是連續扣的）。 */
+    public static final int DRAIN_SLICE = 4;
+
+    /**
+     * 2026-11-01 照 PoE2（引導的消耗是連續扣的：ManaPerMinute）：開始時先扣了一秒，之後從第 20 tick 起每 {@link #DRAIN_SLICE} tick
+     * 扣這一段的份（每秒消耗 × 段長 ÷ 20，小數累積在 owed）。回傳這一 tick 要扣的整數（0 = 不用扣），新的 owed 寫回 owedOut[0]。純函式（測試用）。
+     * 這次之前每滿一秒扣一整秒：碎骨飛矢滿 20 支要 2.5 秒，第 2 秒那一下就要再付一整秒，魔力差一點就在 16、17 支提早放出。
+     */
+    public static int drainSlice(final long heldTicks, final int perSecond, final double owed, final double[] owedOut) {
+        if (heldTicks < 20 || perSecond <= 0 || (heldTicks - 20) % DRAIN_SLICE != 0) {
+            owedOut[0] = owed;
+            return 0;
+        }
+        final double total = owed + perSecond * DRAIN_SLICE / 20.0;
+        final int due = (int) Math.floor(total + 1e-9);
+        owedOut[0] = total - due;
+        return due;
     }
 
     /** 完美時機那一刻之前幾 tick 放開也算（網路延遲、按鍵的反應）。 */
@@ -207,12 +250,50 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
         return Math.max(2, stageTime * 20 / Math.max(0.1, speedFactor));
     }
 
-    /** 蓄了 held tick 有幾層（至少 1 層）。 */
+    /**
+     * 2026-11-01 照 PoE2 Bonestorm（累積型，{@link #accumulate}）：按住 held tick 時手上有幾支（每過一段凝聚 perStage 支，最多 {@link #stages} 支；
+     * 至少 perStage 支——原作最短引導 0.3 秒，基礎施法速度下已經有 2 段）。純函式（測試用）。
+     */
+    public int heldCount(final long held, final double speedFactor, final int perStage) {
+        final int per = Math.max(1, perStage);
+        final long elapsed = (long) Math.floor(Math.max(0, held) / stageTicks(speedFactor) + 1e-9);
+        return (int) Math.min(stages, Math.max(per, per * elapsed));
+    }
+
+    /** 2026-11-01：累積型要按住幾 tick 才滿（ceil(最多幾支 ÷ 每段幾支) 段；Path of Building 的 channelTimeMultiplier）。純函式。 */
+    public double fullTicks(final double speedFactor, final int perStage) {
+        final int per = Math.max(1, perStage);
+        return stageTicks(speedFactor) * Math.ceil(stages / (double) per);
+    }
+
+    /**
+     * 蓄了 held tick 有幾層（至少 1 層）。2026-11-01：{@link #lockedStart}（Kelari's Judgment）的是引導完幾段就幾層
+     * （第一段完成時 1 層），其他照舊一開始就是 1 層、每過一段加一層。
+     */
     public int stagesAt(final long held, final double speedFactor) {
         if (stages <= 0) {
             return 1;
         }
+        if (lockedStart) {
+            return (int) Math.max(1, Math.min(stages, Math.floor(Math.max(0, held) / stageTicks(speedFactor) + 1e-9)));
+        }
         return (int) Math.max(1, Math.min(stages, 1 + Math.floor(held / stageTicks(speedFactor))));
+    }
+
+    /**
+     * 2026-11-01：最短引導幾 tick。{@link #lockedStart}（PoE2 channel_start_lock_cancelling_of_cast_time_% 100）是一段的時間（吃速度），
+     * 其他照 min_time（{@link Channel#minTicks()}）。純函式（測試用）。
+     */
+    public long minTicks(final double speedFactor) {
+        return lockedStart && stages > 0 ? Math.max(channel.minTicks(), Math.round(stageTicks(speedFactor))) : channel.minTicks();
+    }
+
+    /** 2026-11-01：疊滿要按住幾 tick（{@link #lockedStart} 的是 stages 段，其他是 stages − 1 段；不疊層 0）。純函式（測試用）。 */
+    public double fullStageTicks(final double speedFactor) {
+        if (stages <= 0) {
+            return 0;
+        }
+        return stageTicks(speedFactor) * (lockedStart ? stages : stages - 1);
     }
 
     /** skills.yml 的 charge 區塊；沒寫回傳 null。 */
@@ -232,6 +313,14 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
             throw new IllegalArgumentException(node.path() + ".stage_projectiles：要在 0 到 5 之間");
         }
         final Channel channel = parseChannel(node);
+        final boolean accumulate = node.bool("accumulate", false); // 2026-11-01 照 PoE2 Bonestorm
+        final boolean lockedStart = node.bool("locked_start", false); // 2026-11-01 照 PoE2 Kelari's Judgment
+        if (accumulate && (channel.mode() != Mode.RELEASE || stages <= 0 || perfectAt > 0 || stageProjectiles > 0 || stageMore != 0 || stageArea != 0)) {
+            throw new IllegalArgumentException(node.path() + ".accumulate：只能寫在放開型、有 stages（最多幾支）、沒有 perfect_at／stage_projectiles／stage_more／stage_area 的引導");
+        }
+        if (lockedStart && (channel.mode() != Mode.RELEASE || stages <= 0 || accumulate || perfectAt > 0)) {
+            throw new IllegalArgumentException(node.path() + ".locked_start：只能寫在放開型、有 stages、不是 accumulate、沒有 perfect_at 的引導");
+        }
         if (channel.mode() != Mode.RELEASE) {
             if (perfectAt > 0 || stages > 0) {
                 throw new IllegalArgumentException(node.path() + "：mode 是 rush／pulse／hold／stream 時不能寫 perfect_at、stages");
@@ -248,7 +337,7 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
         if (perfectAt <= 0 && stages <= 0) {
             throw new IllegalArgumentException(node.path() + "：要寫 perfect_at（完美時機）或 stages（疊層）");
         }
-        return new ChargeSpec(perfectAt, perfectMore, stages, stageTime, stageMore, stageArea, stageProjectiles, channel);
+        return new ChargeSpec(perfectAt, perfectMore, stages, stageTime, stageMore, stageArea, stageProjectiles, channel, accumulate, lockedStart);
     }
 
     private static double metres(final double metres) {
@@ -294,6 +383,6 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
                 empowerCharge == null || empowerCharge.isEmpty() ? null : empowerCharge,
                 empowerStat == null || empowerStat.isEmpty() ? null : empowerStat, node.decimal("empower_value", 0),
                 node.decimal("empower_rage_less", 0), node.bool("interrupt_on_hit", false),
-                node.bool("attack_speed_cost", false)); // 2026-10-28 照 PoE2 Snipe
+                node.bool("attack_speed_cost", false) || node.bool("cast_speed_cost", false)); // 2026-10-28 照 PoE2 Snipe；2026-11-01 法術的 cast_speed_cost（Bonestorm）同一個欄位
     }
 }

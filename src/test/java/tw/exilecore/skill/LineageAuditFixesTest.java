@@ -63,9 +63,15 @@ class LineageAuditFixesTest {
         assertTrue(AuraService.lifeFits(plain, 1, true, 99), "沒掛血契的光環不看生命");
         final StatSheet locked = new StatSheet().overlay(List.of(Modifier.flat(StatKeys.FLAG_CHAOS_IMMUNE, 1, "無垢之軀")));
         assertTrue(AuraService.lifeLocked(locked));
+        // 2026-11-01 照 PoE2 的保留生命：最大生命不變，只是目前生命最多回到沒被保留的部分（這次之前做成最大生命更少 20%）
         final StatSheet life = new StatSheet().overlay(List.of(Modifier.flat(StatKeys.LIFE_MAX, 1000, "測試"),
-                Modifier.more(StatKeys.LIFE_MAX, -0.2, "血契保留")));
-        assertEquals(1000, AuraService.baseLife(life, 20), 1e-6, "換回保留之前的最大生命");
+                Modifier.flat(tw.exilecore.stats.LineageKeys.LIFE_RESERVED, 20, "血契保留")));
+        assertEquals(1000, AuraService.baseLife(life, 20), 1e-6, "保留之前的最大生命");
+        assertEquals(1000, tw.exilecore.character.PlayerState.maxLife(life), 1e-6, "最大生命不因保留變少");
+        assertEquals(0.2, tw.exilecore.character.PlayerState.reservedLifeFraction(life), 1e-9);
+        assertEquals(800, tw.exilecore.character.PlayerState.unreservedLife(life), 1e-6, "目前生命最多 800");
+        final StatSheet unreserved = new StatSheet().overlay(List.of(Modifier.flat(StatKeys.LIFE_MAX, 1000, "測試")));
+        assertEquals(1000, tw.exilecore.character.PlayerState.unreservedLife(unreserved), 1e-6, "沒有保留就是最大生命");
     }
 
     @Test

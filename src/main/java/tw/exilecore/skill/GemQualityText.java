@@ -74,7 +74,7 @@ final class GemQualityText {
             Map.entry("magma_barrier", "增益另外增加 {effect.block.chance}% 格擋機率"),
             Map.entry("evil_thought", "暴擊弱點持續時間 +{evil_thought.weakness_seconds} 秒"),
             Map.entry("magic_absorb_art", "吸取的魔力 +{mana.on_hit}"),
-            Map.entry("magic_spring_well", "增益另外增加 {effect.mana.regen}% 魔力回復、擊殺回魔另外 +{effect.mana.on_kill}"),
+            Map.entry("magic_spring_well", "每個痕跡多 {remnant.mana} 魔力、增益增加 {effect.mana.regen}% 魔力再生"),
             Map.entry("magic_surge", "離開之後效果再延續 {mana_tempest.linger} 秒"),
             Map.entry("element_prayer_star", "最大能量 +{meta.max_energy_flat}"),
             Map.entry("phantom_bow_shade", "幻影持續時間 +{skill.base_duration_flat} 秒（你停手之後幻影再多射這麼久）"),
@@ -145,6 +145,9 @@ final class GemQualityText {
             Map.entry("fated_pain", "一開始的半徑 +{asc.agony_radius} 格"),
             Map.entry("rift_dive", "霞瑤之炎的效果增加 {asc.flame_effect_inc}%"),
             Map.entry("sand_spirit_venom_word", "甲蟲上限 +{i:asc.beetle_max}"),
+            // 2026-11-01 照 PoE2（PoB2 KnifeThrowSandDjinn／HandSlamSandDjinn 的 qualityStats）
+            Map.entry("sand_spirit_cruelty", "多擲 {i:skill.projectiles} 把飛刀"),
+            Map.entry("sand_spirit_verdict", "擊中時多施加 {i:crit_weakness.on_hit} 層暴擊弱點"),
             Map.entry("vital_residue", "擊殺時產生痕跡的機率 +{asc.remnant_kill_chance}%"),
             Map.entry("calm_mind_trance", "能量護盾回充速度另外更多 {effect.es.recharge}%"),
             Map.entry("mirage_deadeye", "幻影持續時間 +{asc.mirage_seconds} 秒"),

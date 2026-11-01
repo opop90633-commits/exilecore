@@ -36,6 +36,7 @@ import java.util.Set;
  * @param generosity    光環不影響自己、只給隊友與召喚物（慷慨輔助）
  * @param exerts        戰吼之後強化幾次攻擊（含「+x 次強化」；不是戰吼為 0）
  * @param repeats       近戰攻擊按一次之後自動再打幾下（複擊；每一下照攻擊間隔，打完才能做別的；瞬影擊是再閃幾次；0 = 不重複）
+ * @param groundDurationScale 2026-11-01：地面效果持續時間的倍率（{@link #groundDurationTicks}；已經算進「技能效果持續時間」與「地面效果持續時間」的增加）
  */
 public record SkillBuild(SkillDefinition definition, int level, int gemLevel, boolean isDefault,
                          List<SupportDefinition> supports, SkillProfile profile,
@@ -45,7 +46,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                          double radius, double length, double chainRange, int manaCost, double areaScale, int bonusLevel,
                          int cooldownTicks, double durationScale, int forks, boolean returning, boolean echo,
                          DeploySpec deploy, int totems, int minions, double reserve, double minionReserve, double auraEffect, boolean generosity, int exerts,
-                         int repeats) {
+                         int repeats, double groundDurationScale) {
 
     /** 能不能交給圖騰施法、陷阱施法放（位移、印記、骸爆、召喚、光環、戰吼、瞬影擊、號召、掘墳不行）。 */
     public static boolean deployable(final SkillDefinition definition) {
@@ -100,6 +101,24 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
 
     public SkillBuild {
         supports = List.copyOf(supports);
+    }
+
+    /**
+     * 2026-11-01：沒有分開算地面效果持續時間的舊寫法（地面效果的持續時間倍率跟技能的一樣）。
+     * 新的欄位 groundDurationScale 見 {@link #groundDurationTicks}。
+     */
+    public SkillBuild(final SkillDefinition definition, final int level, final int gemLevel, final boolean isDefault,
+                      final List<SupportDefinition> supports, final SkillProfile profile,
+                      final double reach, final double angle, final int targets, final double knockback,
+                      final int projectiles, final double spread, final double speed, final double range, final double size,
+                      final int pierce, final int chains, final double explode, final double wobble, final boolean arrow,
+                      final double radius, final double length, final double chainRange, final int manaCost, final double areaScale, final int bonusLevel,
+                      final int cooldownTicks, final double durationScale, final int forks, final boolean returning, final boolean echo,
+                      final DeploySpec deploy, final int totems, final int minions, final double reserve, final double minionReserve,
+                      final double auraEffect, final boolean generosity, final int exerts, final int repeats) {
+        this(definition, level, gemLevel, isDefault, supports, profile, reach, angle, targets, knockback, projectiles, spread, speed, range, size,
+                pierce, chains, explode, wobble, arrow, radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale,
+                forks, returning, echo, deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, durationScale);
     }
 
     /**
@@ -366,7 +385,13 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         final int cooldownTicks = baseCooldown <= 0 || effective.more(StatKeys.SKILL_COOLDOWN, context) <= 1e-9 ? 0
                 : (int) Math.max(1, Math.round(baseCooldown * 20 * Math.max(0.1, effective.apply(StatKeys.SKILL_COOLDOWN, 1.0, context))
                         / Math.max(0.1, effective.apply(StatKeys.COOLDOWN_RECOVERY, 1.0, context)))); // 2026-10-26：冷卻回復速度
-        final double durationScale = Math.max(0.1, effective.apply(StatKeys.SKILL_DURATION, 1.0, context));
+        final double durationScale = Math.max(0.1, (1 + effective.increased(StatKeys.SKILL_DURATION, context))
+                * effective.more(StatKeys.SKILL_DURATION, context));
+        // 2026-11-01 照 PoE2 Persistent Ground（久地，ground_effect_duration_+%）：地面效果持續時間增加只加在地面效果上（groundDurationTicks），
+        //   跟技能效果持續時間同一池；技能的其他持續時間（印記、增益、圖騰、召喚物…）照 durationScale。
+        //   這次之前（同日稍早）加在整個技能的持續時間倍率上
+        final double groundDurationScale = groundScale(effective.increased(StatKeys.SKILL_DURATION, context),
+                effective.increased(tw.exilecore.stats.SupportRuleKeys.GROUND_DURATION, context), effective.more(StatKeys.SKILL_DURATION, context));
         final int forks = definition.mechanic() == Mechanic.PROJECTILE && !params.blink()
                 ? clamp((int) Math.round(effective.flat(StatKeys.SKILL_FORK, context)), 0, 3) : 0;
         final boolean returning = definition.mechanic() == Mechanic.PROJECTILE && !params.blink() && params.fuse() <= 0
@@ -429,7 +454,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 pierce, chains, params.explode().at(level) * areaScale, params.wobble(), params.arrow(),
                 params.radius().at(level) * areaScale, params.length().at(level) * areaScale, params.chainRange(),
                 manaCost, areaScale, level - baseLevel, cooldownTicks, durationScale, forks, returning, echo, deploy, totems, minions,
-                reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+                reserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     /** 2026-10：封印解開的這一次：範圍倍率、投射物數量換掉。 */
@@ -438,7 +463,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 reach, angle, targets, knockback, newProjectiles, spread < 1 && newProjectiles > 1 ? Math.min(60, 12.0 * (newProjectiles - 1)) : spread,
                 speed, range, size, pierce, chains, explode * (newAreaScale / Math.max(1e-6, areaScale)), wobble, arrow,
                 radius * (newAreaScale / Math.max(1e-6, areaScale)), length, chainRange, manaCost, newAreaScale, bonusLevel, cooldownTicks,
-                durationScale, forks, returning, echo, deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+                durationScale, forks, returning, echo, deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     /**
@@ -451,7 +476,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 reach, angle, targets, knockback, count, newSpread,
                 speed, range, size, pierce, chains, explode, wobble, arrow,
                 radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks,
-                durationScale, forks, returning, echo, deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+                durationScale, forks, returning, echo, deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     /**
@@ -471,7 +496,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
                 reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
                 radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
-                newDeploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+                newDeploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     /** 2026-10-24：這一次的持續時間倍率換掉（久咒：消耗銳星更多 80% 持續時間）。 */
@@ -479,7 +504,8 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
                 reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
                 radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, Math.max(0.1, newDurationScale), forks, returning, echo,
-                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats,
+                groundDurationScale * Math.max(0.1, newDurationScale) / Math.max(1e-9, durationScale));
     }
 
     /** 2026-10-26：每一隻保留的精魂換掉（附魂術照附身的怪物強度、荒原狼伴照最大精魂的百分比，照 PoE2）。 */
@@ -498,7 +524,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
                 reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
                 radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
-                deploy, totems, minions, newReserve, minionReserve, auraEffect, generosity, exerts, repeats);
+                deploy, totems, minions, newReserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     /**
@@ -516,14 +542,14 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
                 reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
                 radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
-                deploy, totems, minions, newReserve, minionReserve, auraEffect, generosity, exerts, repeats);
+                deploy, totems, minions, newReserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     public SkillBuild withMinionReserve(final double newMinionReserve) {
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
                 reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
                 radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
-                deploy, totems, minions, reserve, Math.max(0.01, newMinionReserve), auraEffect, generosity, exerts, repeats);
+                deploy, totems, minions, reserve, Math.max(0.01, newMinionReserve), auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     /** 2026-10-29：魔力消耗換掉（巨靈的指令：其他照巨靈的屬性表，魔力消耗照你的）。 */
@@ -531,7 +557,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
                 reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
                 radius, length, chainRange, newManaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
-                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     /** 2026-10-26：這一次打擊多打幾個目標（熔魂嘯強化的打擊：多打 2 個）。 */
@@ -539,7 +565,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
                 reach, angle, Math.max(1, newTargets), knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
                 radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
-                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     /** 2026-10-26 照 PoE2 的引導：這一次的爆炸半徑、射程（位移距離）換掉（爆焰矢沒疊滿不爆炸；引霆突完美時機衝 10 格）。 */
@@ -547,7 +573,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
                 reach, angle, targets, knockback, projectiles, spread, speed, newRange, size, pierce, chains, Math.max(0, newExplode), wobble, arrow,
                 radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
-                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     /** 2026-10-26：這一次多連鎖幾次（鏈雷用掉電灌注：多連鎖 6 次）。 */
@@ -555,7 +581,15 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
                 reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, Math.max(0, newChains), explode, wobble, arrow,
                 radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
-                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
+    }
+
+    /** 2026-11-01：這一次的投射物速度換掉（骰禍：觸發出來的技能投射物速度隨機；夾在 0.2～6，跟建出來時一樣）。 */
+    public SkillBuild withSpeed(final double newSpeed) {
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
+                reach, angle, targets, knockback, projectiles, spread, Math.max(0.2, Math.min(6, newSpeed)), range, size, pierce, chains, explode, wobble, arrow,
+                radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     /** 同一次施放換一個技能描述（戰吼強化的攻擊：傷害更多）。 */
@@ -563,7 +597,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, newProfile,
                 reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
                 radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
-                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     /**
@@ -589,7 +623,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         return new SkillBuild(definition.withVisual(visual), level, gemLevel, isDefault, supports, rolled,
                 reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
                 radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
-                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats);
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     /**
@@ -790,6 +824,90 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     /** 持續時間（秒）換成 tick，已經乘上持續時間的倍率。 */
     public int durationTicks(final double seconds) {
         return (int) Math.max(1, Math.round(seconds * 20 * durationScale));
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Persistent Ground（ground_effect_duration_+%）：這個技能產生的地面效果（Ground Surface：油地、毒霧、冰緩／感電／點燃地面、
+     * 鋸齒地面…）持續幾 tick：照 {@link #groundDurationScale}（技能效果持續時間與地面效果持續時間的增加同一池，再乘更多）。
+     * 地面效果以外的持續時間照 {@link #durationTicks}。
+     */
+    public int groundDurationTicks(final double seconds) {
+        return (int) Math.max(1, Math.round(seconds * 20 * groundDurationScale));
+    }
+
+    /**
+     * 2026-11-01：地面效果的持續時間倍率＝(1 + 技能效果持續時間增加 + 地面效果持續時間增加) × 技能效果持續時間更多（最少 0.1）。
+     * 增加用小數（0.5 = 增加 50%）。
+     */
+    static double groundScale(final double durationIncreased, final double groundIncreased, final double durationMore) {
+        return Math.max(0.1, (1 + durationIncreased + groundIncreased) * durationMore);
+    }
+
+    /** 2026-11-01：地面效果持續時間倍率對技能持續時間倍率的比（沒有「地面效果持續時間增加」時是 1）。 */
+    public double groundDurationRatio() {
+        return durationScale <= 1e-9 ? 1.0 : groundDurationScale / durationScale;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Persistent Ground：觸發／附屬的隱藏技能（感電地面、冰緩地面、燃燒地面…）留下的地面效果照原技能的
+     * 「地面效果持續時間增加」再乘 ratio（{@link #groundDurationRatio}；隱藏技能自己沒有輔助，只有原技能有）。ratio 1 原樣回傳。
+     */
+    public SkillBuild withGroundRatio(final double ratio) {
+        if (Math.abs(ratio - 1) < 1e-9 || ratio <= 0) {
+            return this;
+        }
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
+                reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
+                radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, Math.max(0.1, groundDurationScale * ratio));
+    }
+
+    /**
+     * 2026-11-01 照 PoE2（技能自己的輔助也作用在它自己觸發的部分）：觸發／附屬的隱藏技能再加上原技能輔助的持續時間修飾器
+     * （技能效果持續時間的增加、更多／更少，地面效果持續時間的增加），跟它自己吃到的同一池重算持續時間倍率與地面效果持續時間倍率。
+     * parentModifiers 沒有、或沒有屬性表就原樣回傳。這次之前只換地面效果持續時間的比例（{@link #withGroundRatio}），其他持續時間輔助吃不到。
+     */
+    public SkillBuild withParentDuration(final List<Modifier> parentModifiers, final StatSheet sheet) {
+        if (parentModifiers == null || parentModifiers.isEmpty() || sheet == null) {
+            return this;
+        }
+        final StatSheet effective = profile.effective(sheet).overlay(parentModifiers);
+        final Set<String> context = profile.tags();
+        final double increased = effective.increased(StatKeys.SKILL_DURATION, context);
+        final double more = effective.more(StatKeys.SKILL_DURATION, context);
+        final double newDuration = parentDurationScale(increased, more);
+        final double newGround = groundScale(increased, effective.increased(tw.exilecore.stats.SupportRuleKeys.GROUND_DURATION, context), more);
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
+                reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
+                radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, newDuration, forks, returning, echo,
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, newGround);
+    }
+
+    /** 2026-11-01：持續時間倍率（1 + 增加）×更多，至少 0.1——跟 {@link #of} 同一條算法。純函式（測試用）。 */
+    static double parentDurationScale(final double increased, final double more) {
+        return Math.max(0.1, (1 + increased) * more);
+    }
+
+    /** 2026-11-01：原技能的輔助裡會傳給它觸發的隱藏技能的持續時間修飾器（{@link #withParentDuration}）。 */
+    static final Set<String> PARENT_DURATION_STATS = Set.of(StatKeys.SKILL_DURATION, tw.exilecore.stats.SupportRuleKeys.GROUND_DURATION);
+
+    /** 2026-11-01：從原技能生效的輔助挑出持續時間修飾器（只給召喚物的不算，{@link MinionTypes#forHost}）。純函式。 */
+    static List<Modifier> parentDurationModifiers(final List<SupportDefinition> supports, final SkillDefinition parent) {
+        final List<Modifier> list = new ArrayList<>();
+        if (supports == null || parent == null) {
+            return list;
+        }
+        for (final SupportDefinition support : supports) {
+            if (support == null) {
+                continue;
+            }
+            for (final Modifier modifier : MinionTypes.forHost(support, parent, support.modifiers())) {
+                if (PARENT_DURATION_STATS.contains(modifier.stat())) {
+                    list.add(modifier);
+                }
+            }
+        }
+        return list;
     }
 
     /** 一個隨等級變的半徑，乘上範圍倍率。 */

@@ -192,6 +192,48 @@ public record Affix(String id, AffixType type, String group, Set<String> spawnTa
         return substitute(text, vars);
     }
 
+    /** 同上，固定值照腐化倍率換過（{@link #scaledText}）。 */
+    public String render(final Map<String, Integer> vars, final double fixedScale) {
+        return substitute(scaledText(fixedScale), vars);
+    }
+
+    /** 數字（不在大括號裡的）。 */
+    private static final java.util.regex.Pattern LITERAL = java.util.regex.Pattern.compile("\\{[^}]*}|(\\d+(?:\\.\\d+)?)");
+
+    /**
+     * 2026-11-01 照 PoE2 腐化（傳奇的數值 0.78～1.22 倍，固定值也會變）：顯示文字裡寫死的數字換成乘過倍率的
+     * （只換跟這條詞綴的固定值修飾器對得上的數字，大括號裡的變數不動）。fixedScale = 1 原樣回傳。
+     */
+    public String scaledText(final double fixedScale) {
+        if (fixedScale == 1.0) {
+            return text;
+        }
+        final java.util.Map<String, String> replace = new java.util.HashMap<>();
+        for (final AffixMod mod : mods) {
+            if (mod.scalesFixed()) {
+                final double value = Math.abs(mod.constant());
+                replace.putIfAbsent(plain(value), plain(Math.abs(AffixMod.scaleFixed(value, fixedScale))));
+            }
+        }
+        if (replace.isEmpty()) {
+            return text;
+        }
+        final java.util.regex.Matcher matcher = LITERAL.matcher(text);
+        final StringBuilder out = new StringBuilder();
+        while (matcher.find()) {
+            final String number = matcher.group(1);
+            final String swapped = number == null ? matcher.group() : replace.getOrDefault(number, number);
+            matcher.appendReplacement(out, java.util.regex.Matcher.quoteReplacement(swapped));
+        }
+        matcher.appendTail(out);
+        return out.toString();
+    }
+
+    /** 1.0 → "1"、0.5 → "0.5"。 */
+    static String plain(final double value) {
+        return java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
+    }
+
     /** 這個階級每個變數的範圍（詞綴的階級被刪掉了是空的）。 */
     public Map<String, int[]> ranges(final int tierId) {
         for (final AffixTier tier : tiers) {

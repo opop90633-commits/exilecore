@@ -238,6 +238,8 @@ public final class LineageMechanics implements Listener {
     /** 最近用過的冷卻技能、指令技能（玩家 → 技能 → tick）：星律、令福。 */
     private final Map<UUID, Map<String, Long>> cooldownUsed = new HashMap<>();
     private final Map<UUID, Map<String, Long>> commandUsed = new HashMap<>();
+    /** 令福：算最近幾 tick 內用過的指令技能（PoE2 Varashta's Blessing：8 秒；2026-11-01，這次之前 300 = 15 秒）。 */
+    static final long COMMAND_WINDOW_TICKS = 160;
     /** 滿溢聖杯到哪個 tick。 */
     private final Map<UUID, Long> chalice = new HashMap<>();
     /** 縛魔：召喚物的不潔之力到哪個 tick（召喚物的實體）。 */
@@ -446,14 +448,38 @@ public final class LineageMechanics implements Listener {
         }
     }
 
-    /** 主要寶石觸發出來的技能（SkillService.metaCast）：骰禍的隨機範圍。 */
-    SkillBuild triggered(final SkillBuild build) {
+    /** 主要寶石觸發出來的技能（SkillService.metaCast）：骰禍的隨機傷害、隨機範圍、隨機投射物速度（都是每次觸發擲一次）。 */
+    SkillBuild triggered(final SkillBuild source) {
+        // 2026-11-01 照 PoE2 Ixchel's Torment（support_randomise_lower/higher_damage_+%_final -40／+60，「randomly raised or lowered when Triggered」）：
+        //   傷害每次觸發擲一次、整次的每一下同一個倍率；這次之前用 damage.random，DamageCalculator 每一下各自擲
+        final double swing = LineageRules.total(source.supports(), LineageKeys.RANDOM_DAMAGE);
+        final SkillBuild build = swing > 0
+                ? source.withProfile(source.profile().scaled(randomDamage(swing, plugin.random().nextDouble()), "骰禍"))
+                : source;
         if (LineageRules.total(build.supports(), LineageKeys.RANDOM_AREA) <= 0) {
             return build;
         }
         final double more = -0.4 + plugin.random().nextDouble() * 0.9; // 更少 40% 到更多 50%
-        return build.withAreaAndProjectiles(build.areaScale() * Math.sqrt(1 + more), build.projectiles());
+        // 2026-11-01 照 PoE2 Ixchel's Torment（support_randomise_lower/higher_projectile_speed_+%_final -40／50）：投射物速度也另外擲一次；這次之前沒做
+        final double speed = randomProjectileSpeed(plugin.random().nextDouble());
+        final SkillBuild sized = build.withAreaAndProjectiles(build.areaScale() * Math.sqrt(1 + more), build.projectiles());
+        return build.speed() > 0 ? sized.withSpeed(build.speed() * speed) : sized;
     }
+
+    /** 骰禍：這次觸發的傷害倍率（swing＝x：roll 0～1 → 更少 x% 到更多 1.5x%；40 → 0.6～1.6）。純函式（測試用）。 */
+    static double randomDamage(final double swing, final double roll) {
+        final double x = Math.max(0, Math.min(80, swing));
+        return 1 + (-x + Math.max(0, Math.min(1, roll)) * x * 2.5) / 100.0;
+    }
+
+    /** 骰禍：投射物速度的倍率（roll 是 0～1 的亂數 → 更少 40% 到更多 50%）。純函式（測試用）。 */
+    static double randomProjectileSpeed(final double roll) {
+        return 1 + RANDOM_SPEED_LOWER + Math.max(0, Math.min(1, roll)) * (RANDOM_SPEED_HIGHER - RANDOM_SPEED_LOWER);
+    }
+
+    /** 骰禍：投射物速度最少、最多（更少 40%、更多 50%）。 */
+    static final double RANDOM_SPEED_LOWER = -0.4;
+    static final double RANDOM_SPEED_HIGHER = 0.5;
 
     /** 冷卻可以多存幾次（裂潮、星律；SkillRuntime 的 cooldownUses）。 */
     int cooldownUses(final Player player, final String skillId) {
@@ -508,10 +534,11 @@ public final class LineageMechanics implements Listener {
                 list.add(Modifier.more(StatKeys.DAMAGE, perCooldown * kinds / 100.0, "星律"));
             }
         }
-        // 令福（Varashta's Blessing）：最近 15 秒每用過一種指令技能更多 10%
+        // 令福（Varashta's Blessing）：最近 8 秒每用過一種指令技能更多 10%
+        // （2026-11-01 照 PoE2 ..._per_different_command_in_last_8_seconds；這次之前 15 秒＝300 tick）
         final double perCommand = skillSheet.flat(LineageKeys.PER_COMMAND, tags);
         if (perCommand > 0) {
-            final int kinds = recentKinds(commandUsed.get(attacker.getUniqueId()), now, 300);
+            final int kinds = recentKinds(commandUsed.get(attacker.getUniqueId()), now, COMMAND_WINDOW_TICKS);
             if (kinds > 0) {
                 list.add(Modifier.more(StatKeys.DAMAGE, perCommand * kinds / 100.0, "令福"));
             }
@@ -884,13 +911,22 @@ public final class LineageMechanics implements Listener {
         }
     }
 
-    /** 霆爆：照技能等級 5% → 19%（每級約 0.74%）、1.5 → 2.5 格。 */
+    /**
+     * 霆爆（Voltaic Fulmination）每級的屍體最大生命 %、半徑（公尺），照 poe2db Eonyr's Thunder 1–40 級：20 級 14% / 2.1 公尺，40 級 19% / 2.5 公尺。
+     * 2026-11-01 照 PoE2；這次之前線性 5% → 19%、1.5 → 2.5 公尺，20 級就到頂。
+     */
+    static final int[] VOLTAIC_PERCENT = {5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14,
+            15, 15, 15, 15, 16, 16, 16, 16, 17, 17, 17, 17, 18, 18, 18, 18, 19, 19, 19, 19};
+    static final double[] VOLTAIC_METRES = {1.5, 1.5, 1.5, 1.6, 1.6, 1.6, 1.7, 1.7, 1.7, 1.8, 1.8, 1.8, 1.9, 1.9, 1.9, 2.0, 2.0, 2.0, 2.1, 2.1,
+            2.1, 2.2, 2.2, 2.2, 2.2, 2.2, 2.2, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.4, 2.4, 2.4, 2.4, 2.4, 2.4, 2.5};
+
+    /** 霆爆：照技能等級的屍體最大生命 %（base 是 1 級的值，輔助寫 5；表外的等級夾在 1～40）。 */
     static double voltaicPercent(final double base, final int level) {
-        return Math.min(base + 14, base + (Math.max(1, level) - 1) * 14 / 19.0);
+        return base - VOLTAIC_PERCENT[0] + VOLTAIC_PERCENT[Math.max(1, Math.min(VOLTAIC_PERCENT.length, level)) - 1];
     }
 
     static double voltaicRadius(final int level) {
-        return tw.exilecore.core.Units.metres(Math.min(2.5, 1.5 + (Math.max(1, level) - 1) / 19.0)); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+        return tw.exilecore.core.Units.metres(VOLTAIC_METRES[Math.max(1, Math.min(VOLTAIC_METRES.length, level)) - 1]);
     }
 
     /** 這個技能在面板上的等級（找不到用角色能用的最高等級）。 */
@@ -972,22 +1008,76 @@ public final class LineageMechanics implements Listener {
 
     /** 圖騰放技能之前（SkillDeployables）：林樁（附近每根圖騰更多傷害、增加範圍）。 */
     SkillBuild totemCast(final Player owner, final Location feet, final SkillBuild cast) {
-        final double per = LineageRules.total(cast.supports(), LineageKeys.TOTEM_GROVE);
+        final SkillBuild grown = greatwoodCast(owner, feet, cast); // 2026-11-01 照 PoE2 Greatwood II（厚樁）
+        final double per = LineageRules.total(grown.supports(), LineageKeys.TOTEM_GROVE);
         if (per <= 0) {
-            return cast;
+            return grown;
         }
         final int near = groveCount(owner, feet);
         if (near <= 0) {
-            return cast;
+            return grown;
         }
-        return cast.withProfile(cast.profile().scaled(1 + per * near / 100.0, "林樁"))
-                .withAreaAndProjectiles(cast.areaScale() * Math.sqrt(1 + per / 2.0 * near / 100.0), cast.projectiles());
+        return grown.withProfile(grown.profile().scaled(1 + per * near / 100.0, "林樁"))
+                .withAreaAndProjectiles(grown.areaScale() * Math.sqrt(1 + per / 2.0 * near / 100.0), grown.projectiles());
     }
 
-    /** 林樁：圖騰每秒回復最大生命的幾 %（附近每根 1%）。 */
+    /** 林樁：圖騰每秒回復最大生命的幾 %（附近每根 1%）；2026-11-01 加上厚樁（每根 0.83%）。 */
     double totemRegen(final Player owner, final SkillBuild build, final Location feet) {
         final double per = LineageRules.total(build.supports(), LineageKeys.TOTEM_GROVE);
-        return per <= 0 ? 0 : groveCount(owner, feet) * per / 10.0;
+        return (per <= 0 ? 0 : groveCount(owner, feet) * per / 10.0) + greatwoodRegen(owner, build, feet);
+    }
+
+    // ---- 2026-11-01 照 PoE2 Greatwood II（厚樁）----
+
+    /**
+     * 厚樁：圖騰 4 公尺內你每一根其他圖騰（最多 6 根），這根圖騰放的技能更多 x% 傷害、增加 y% 範圍效果
+     * （範圍照「增加」跟這個技能其他的增加範圍相加，再換成半徑）。沒掛、附近沒有圖騰原樣回傳。
+     */
+    private SkillBuild greatwoodCast(final Player owner, final Location feet, final SkillBuild cast) {
+        final double damage = LineageRules.total(cast.supports(), tw.exilecore.stats.SupportExtraKeys.GREATWOOD_DAMAGE);
+        final double area = LineageRules.total(cast.supports(), tw.exilecore.stats.SupportExtraKeys.GREATWOOD_AREA);
+        if (damage <= 0 && area <= 0) {
+            return cast;
+        }
+        final int near = greatwoodCount(owner, feet);
+        if (near <= 0) {
+            return cast;
+        }
+        SkillBuild out = damage > 0 ? cast.withProfile(cast.profile().scaled(1 + damage * near / 100.0, "厚樁")) : cast;
+        if (area > 0) {
+            final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(owner);
+            final double increased = sheet == null ? 0 : cast.profile().effective(sheet).increased(StatKeys.SKILL_AREA, cast.profile().tags());
+            out = out.withAreaAndProjectiles(out.areaScale() * greatwoodRadiusScale(increased, area * near), out.projectiles());
+        }
+        return out;
+    }
+
+    /** 厚樁：範圍效果多增加 addedPercent %（跟原本的增加 increased 相加）之後，半徑要乘幾倍。純函式（測試用）。 */
+    static double greatwoodRadiusScale(final double increased, final double addedPercent) {
+        final double before = Math.max(0.05, 1 + increased);
+        final double after = Math.max(0.05, 1 + increased + addedPercent / 100.0);
+        return Math.sqrt(after / before);
+    }
+
+    /** 厚樁：圖騰每秒回復最大生命的幾 %（4 公尺內每根其他圖騰 0.83%，最多 6 根）。 */
+    private double greatwoodRegen(final Player owner, final SkillBuild build, final Location feet) {
+        final double per = LineageRules.total(build.supports(), tw.exilecore.stats.SupportExtraKeys.GREATWOOD_REGEN);
+        return per <= 0 ? 0 : greatwoodCount(owner, feet) * per / 100.0;
+    }
+
+    /** 厚樁：這根圖騰 4 公尺內你的其他圖騰（最多 6 根）。 */
+    private int greatwoodCount(final Player owner, final Location feet) {
+        if (owner == null || feet == null || feet.getWorld() == null) {
+            return 0;
+        }
+        final double range = tw.exilecore.core.Units.metres(tw.exilecore.stats.SupportExtraKeys.GREATWOOD_RADIUS_METRES);
+        int count = 0;
+        for (final SkillService.TotemView totem : service.totems(owner.getUniqueId())) {
+            if (totem.feet().getWorld().equals(feet.getWorld()) && totem.feet().distanceSquared(feet) <= range * range && totem.feet().distanceSquared(feet) > 0.01) {
+                count++;
+            }
+        }
+        return Math.min(tw.exilecore.stats.SupportExtraKeys.GREATWOOD_CAP, count);
     }
 
     /** 林樁：圖騰 4 公尺內（Tawhoa's Grove）。 */
@@ -1172,7 +1262,8 @@ public final class LineageMechanics implements Listener {
         final List<Modifier> list = new ArrayList<>();
         final long now = now();
         final double gigantic = LineageRules.total(minion.build.supports(), LineageKeys.GIGANTIC);
-        if (gigantic > 0) {
+        // 2026-11-01 照 PoE2 Hulking Minions（巨魄）：被輔助的召喚物是巨型（跟巨伴一樣體型大 20%）
+        if (gigantic > 0 || hulking(minion.build.supports())) {
             // 2026-10-27：閃避、偏斜改在 MinionEstimates.ownerDerived（跟召喚物說明、每秒傷害共用），這裡只管體型
             final org.bukkit.attribute.AttributeInstance scale = minion.mob.getAttribute(org.bukkit.attribute.Attribute.SCALE);
             if (scale != null && Math.abs(scale.getBaseValue() - GIGANTIC_SCALE) > 1e-6) {
@@ -1193,6 +1284,16 @@ public final class LineageMechanics implements Listener {
     }
 
     static final double GIGANTIC_SCALE = 1.2;
+
+    /** 2026-11-01 照 PoE2 Hulking Minions：有沒有掛巨魄（{@link tw.exilecore.stats.SupportRemakeKeys#MINIONS_GIGANTIC}）。 */
+    static boolean hulking(final List<SupportDefinition> supports) {
+        for (final SupportDefinition support : supports) {
+            if (support.flags(tw.exilecore.stats.SupportRemakeKeys.MINIONS_GIGANTIC)) {
+                return true;
+            }
+        }
+        return false;
+    }
     /** 殘戰：攻擊與施法速度增加 40%。 */
     static final double UNDYING_SPEED = 40;
 
@@ -1299,7 +1400,7 @@ public final class LineageMechanics implements Listener {
         }
         final long now = now();
         final double radius = spec.radius(build.level()) * build.areaScale();
-        final long ticks = Math.max(20, build.durationTicks(spec.duration(build.level())));
+        final long ticks = Math.max(20, build.groundDurationTicks(spec.duration(build.level()))); // 2026-11-01：詛咒地面是地面效果（Persistent Ground）
         final long until = now + Math.max(ticks, annihilate > 0 ? Math.round((annihilate + 2.5) * 20) : 0);
         final List<CurseGround> mine = new ArrayList<>();
         for (final CurseGround ground : grounds) {

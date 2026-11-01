@@ -329,7 +329,11 @@ public record SkillDefinition(String id, String name, String description, String
             // 召喚物用近戰打：近戰的輔助寶石（蠻力）可以掛；主人自己的近戰加成不會給召喚物（只給帶 minion 標籤的）。
             // 2026-10：遠程的（骸骨射手、術士）標「遠程」不標投射物——牠們是直接打中的彈道，不是真的投射物：
             // 「+x 投射物技能等級」吃不到、穿透／分光這些投射物的輔助也掛不上（掛了也沒有作用）；召喚物打人時照樣算投射物攻擊（MinionSheets）
-            tags.add(summon.isRanged() ? Tags.RANGED : Tags.MELEE);
+            // 2026-11-01 照 PoE2：三位巨靈（只聽指令、不會自己近戰打人）不算近戰：召喚技能本身只有 Minion、Persistent、CommandableMinion，
+            //   輔助照巨靈招式的 summon.minion_tags 掛（羅贊有近戰的狂熱斬擊，寫在 minion_tags）；這次之前自動算近戰，近戰輔助直接掛得上
+            if (!Commandables.DJINNS.contains(id)) {
+                tags.add(summon.isRanged() ? Tags.RANGED : Tags.MELEE);
+            }
             if (!summon.permanent()) {
                 tags.add(Tags.DURATION);
             }

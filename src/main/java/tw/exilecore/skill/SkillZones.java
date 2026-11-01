@@ -23,11 +23,30 @@ import java.util.UUID;
  *   <li>漩渦（vortex）：地面效果再加上把敵人往中心拉。</li>
  *   <li>延遲落下（impact）：幾秒後在一個點炸開一圈（萬箭齊落、隕星、餘震）。</li>
  * </ul>
- * 傷害都算施放者的（走 {@link SkillDamage}）。施放者下線、換世界就清掉；每個玩家最多 {@link #MAX_PER_PLAYER} 個。
+ * 傷害都算施放者的（走 {@link SkillDamage}）。施放者下線、換世界就清掉。
+ * 2026-11-01 照 PoE2（上限是每個技能各自的）：每個技能照自己資料的上限（zone 的 max）；沒寫上限的同一個技能最多 {@link #DEFAULT_PER_SKILL} 個；
+ * 另外每個玩家全部加起來最多 {@link #MAX_PER_PLAYER} 個（效能的保險，正常玩不會碰到）。這次之前全部技能共用 10 個，
+ * 熔坑一次 9 道裂隙就把你其他的地面效果擠掉。
  */
 final class SkillZones implements SkillTargets.Strikeable {
 
-    static final int MAX_PER_PLAYER = 10;
+    /**
+     * 2026-11-01：每個玩家所有地面效果加起來的上限——只是效能的保險（每 tick 每一灘都要找範圍內的敵人），不是遊戲規則：
+     * PoE2 的上限是每個技能各自的。64 夠放好幾個技能各自滿上限（熔坑 9、靜電 5…）。這次之前 10，而且是唯一的上限。
+     */
+    static final int MAX_PER_PLAYER = 64;
+    /** 2026-11-01：沒寫上限（zone 的 max）的技能，同一個技能同時最多幾個（照這次之前的全部共用 10 個，改成每個技能各自 10 個）。 */
+    static final int DEFAULT_PER_SKILL = 10;
+
+    /** 2026-11-01：算上限用的技能代號（有給技能代號用它；沒給的用傷害的代號，同一招算同一個）。純函式。 */
+    static String capKey(final String skill, final String profileId) {
+        return skill != null ? skill : profileId;
+    }
+
+    /** 2026-11-01：這個技能同時最多幾個（資料寫了上限照它、加上昇華的 +x；沒寫照 {@link #DEFAULT_PER_SKILL}）。純函式。 */
+    static int skillCap(final String skill, final int limit, final int bonus) {
+        return skill != null && limit > 0 ? limit + Math.max(0, bonus) : DEFAULT_PER_SKILL;
+    }
     /** 常駐的粒子：這麼遠內沒有玩家就不畫（2026-10；傷害照算）。 */
     static final double AMBIENT_VIEW = 48;
 
@@ -83,6 +102,14 @@ final class SkillZones implements SkillTargets.Strikeable {
          */
         tw.exilecore.combat.Corpses.Corpse corpse;
         tw.exilecore.combat.Corpses.Contagion contagion;
+        /** 2026-11-01 照 PoE2 Static Shocks：這一灘附在這隻敵人身上，跟著牠走（null = 不動；牠死了就停在最後的位置）。 */
+        UUID follow;
+        /** 2026-11-01 照 PoE2 Static Shocks（grounding_shocks_maximum_targets_per_aoe）：每一波最多打幾個（附著的那隻先，再照距離；0 = 不限）。 */
+        int maxTargets;
+        /** 2026-11-01 照 PoE2 Static Shocks：每一團各打各的（不吃同一招疊在一起只打一次的規則）。 */
+        boolean independent;
+        /** 2026-11-01 照 PoE2：算上限用的技能代號（{@link SkillZones#capKey}）。 */
+        String capKey;
 
         Zone(final UUID owner, final String skill, final World world, final List<Location> points, final double radius, final SkillProfile profile,
              final String visual, final long untilTick, final int intervalTicks, final double pull, final long now, final String exclusive) {
@@ -307,6 +334,89 @@ final class SkillZones implements SkillTargets.Strikeable {
         return plugin.getServer().getCurrentTick();
     }
 
+    /**
+     * 2026-11-01 照 PoE2 Static Shocks（靜電）：這個玩家這一 tick 剛放下的那一灘 skill 附到 entity 身上，之後跟著牠走。
+     * 有附上回傳 true（這一 tick 沒有剛放下的就不動）。
+     */
+    boolean attachFresh(final UUID owner, final String skill, final LivingEntity entity) {
+        final long now = now();
+        for (int i = zones.size() - 1; i >= 0; i--) {
+            final Zone zone = zones.get(i);
+            if (!zone.gone && zone.follow == null && zone.born == now && zone.owner.equals(owner) && skill.equals(zone.skill)) {
+                zone.follow = entity.getUniqueId();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Static Shocks：同 {@link #attachFresh}，另外每一波最多打 maxTargets 個（附著的那隻先），而且每一團各打各的。
+     */
+    boolean attachStaticShock(final UUID owner, final String skill, final LivingEntity entity, final int maxTargets) {
+        final long now = now();
+        for (int i = zones.size() - 1; i >= 0; i--) {
+            final Zone zone = zones.get(i);
+            if (!zone.gone && zone.follow == null && zone.born == now && zone.owner.equals(owner) && skill.equals(zone.skill)) {
+                zone.follow = entity.getUniqueId();
+                zone.maxTargets = Math.max(0, maxTargets);
+                zone.independent = true;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 2026-11-01 照 PoE2 Static Shocks（一隻敵人身上最多附著一團）：這隻敵人身上已經附著 skill 這種地面效果了嗎（不管是誰的）。 */
+    boolean attached(final String skill, final UUID entity) {
+        for (final Zone zone : zones) {
+            if (!zone.gone && entity.equals(zone.follow) && skill.equals(zone.skill)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 2026-11-01 照 PoE2 Crater 的裂隙：沿著幾個點的地面效果，每一道各打各的（同一次落地的幾道在落點重疊，各打一次）。 */
+    private static long fissureSerial;
+
+    void addFissure(final Player owner, final List<Location> points, final double radius, final SkillProfile profile, final String visual,
+                    final int durationTicks, final double intervalSeconds, final String skill, final int limit) {
+        add(owner, points, radius, profile, visual, durationTicks, intervalSeconds, 0, skill, limit, skill + "#" + (++fissureSerial));
+    }
+
+    /** 2026-11-01：這一波要打的敵人（有每波上限的：附著的那隻先，其他照離中心的距離）。 */
+    private List<LivingEntity> pulseTargets(final Zone zone, final Player owner) {
+        final List<LivingEntity> inRange = targets.aroundPoints(zone.points, zone.radius, owner);
+        if (zone.maxTargets <= 0) {
+            return inRange;
+        }
+        LivingEntity first = null;
+        if (zone.follow != null) {
+            for (final LivingEntity each : inRange) {
+                if (each.getUniqueId().equals(zone.follow)) {
+                    first = each;
+                }
+            }
+        }
+        final Location center = zone.points.getFirst();
+        return tw.exilecore.stats.SupportSystemKeys.pulseTargets(inRange, first, each -> each.getLocation().distanceSquared(center), zone.maxTargets);
+    }
+
+    /** 附著的那一灘移到那隻敵人腳下（牠不在了就停在原地）。 */
+    private void follow(final Zone zone) {
+        final org.bukkit.entity.Entity entity = plugin.getServer().getEntity(zone.follow);
+        if (!(entity instanceof LivingEntity living) || !living.isValid() || living.isDead() || !living.getWorld().equals(zone.world)) {
+            zone.follow = null;
+            return;
+        }
+        final Location at = zone.points.getFirst();
+        final Location to = living.getLocation();
+        at.setX(to.getX());
+        at.setY(to.getY());
+        at.setZ(to.getZ());
+    }
+
     /** 圓形的地面效果。 */
     void addCircle(final Player owner, final Location center, final double radius, final SkillProfile profile, final String visual,
                    final int durationTicks, final double intervalSeconds, final double pull) {
@@ -348,25 +458,26 @@ final class SkillZones implements SkillTargets.Strikeable {
             return;
         }
         final long now = now();
-        if (skill != null && limit > 0) {
-            // 2026-10：同一個技能的地面效果同時最多 limit 個（焰幕、霜嵐以前可以疊到 10 個），超過的話最舊的先消失
-            int same = 0;
-            Zone oldestSame = null;
-            for (final Zone zone : zones) {
-                if (zone.owner.equals(owner.getUniqueId()) && skill.equals(zone.skill)) {
-                    same++;
-                    if (oldestSame == null || zone.untilTick < oldestSame.untilTick) {
-                        oldestSame = zone;
-                    }
+        // 2026-10：同一個技能的地面效果同時最多 limit 個（焰幕、霜嵐以前可以疊到 10 個），超過的話最舊的先消失
+        // 2026-11-01 照 PoE2：沒寫上限的技能也各算各的（DEFAULT_PER_SKILL）；這次之前沒寫上限的只受全部共用的 10 個限制
+        final String capKey = capKey(skill, profile.id());
+        // 2026-10-26（昇華・頻繁暴雨）：元素技能上限 +2
+        final int cap = skillCap(skill, limit, skill != null && limit > 0 ? tw.exilecore.ascendancy.AscendancyEffects.limitBonus(owner, profile.tags()) : 0);
+        int same = 0;
+        Zone oldestSame = null;
+        for (final Zone zone : zones) {
+            if (zone.owner.equals(owner.getUniqueId()) && java.util.Objects.equals(capKey, zone.capKey)) {
+                same++;
+                if (oldestSame == null || zone.untilTick < oldestSame.untilTick) {
+                    oldestSame = zone;
                 }
             }
-            // 2026-10-26（昇華・頻繁暴雨）：元素技能上限 +2
-            if (same >= limit + tw.exilecore.ascendancy.AscendancyEffects.limitBonus(owner, profile.tags()) && oldestSame != null) {
-                oldestSame.gone = true;
-                zones.remove(oldestSame);
-                release(oldestSame); // 2026-10-29 照 PoE2 Profane Ritual：被擠掉的穢陣沒完成，屍體放回去
-                oldestSame.onExpire = null; // 2026-10-29 照站長：雷雲被新的擠掉不留殘骸（放完雷、時間到才給）；同日稍早擠掉也給，連放就一直給
-            }
+        }
+        if (same >= cap && oldestSame != null) {
+            oldestSame.gone = true;
+            zones.remove(oldestSame);
+            release(oldestSame); // 2026-10-29 照 PoE2 Profane Ritual：被擠掉的穢陣沒完成，屍體放回去
+            oldestSame.onExpire = null; // 2026-10-29 照站長：雷雲被新的擠掉不留殘骸（放完雷、時間到才給）；同日稍早擠掉也給，連放就一直給
         }
         int mine = 0;
         Zone oldest = null;
@@ -378,7 +489,7 @@ final class SkillZones implements SkillTargets.Strikeable {
                 }
             }
         }
-        if (mine >= MAX_PER_PLAYER && oldest != null) {
+        if (mine >= MAX_PER_PLAYER && oldest != null) { // 2026-11-01：只剩效能的保險（見 MAX_PER_PLAYER）
             oldest.gone = true;
             zones.remove(oldest);
             release(oldest); // 2026-10-29：同上
@@ -398,6 +509,7 @@ final class SkillZones implements SkillTargets.Strikeable {
         final Zone zone = new Zone(owner.getUniqueId(), skill, points.getFirst().getWorld(), points, radius, zoneProfile, visual,
                 now + Math.max(1, durationTicks), interval, pull, now, group);
         // 2026-10-27 照 PoE2 Encroaching Ground：地面效果每秒範圍增加 x%（最多 y%）
+        zone.capKey = capKey; // 2026-11-01：每個技能各自的上限
         zone.baseRadius = radius;
         zone.born = now;
         zone.growPerSecond = localFlat(profile, tw.exilecore.stats.SupportExtraKeys.ENCROACH) / 100.0;
@@ -683,8 +795,8 @@ final class SkillZones implements SkillTargets.Strikeable {
 
     /** 不疊加的地面效果：這個敵人在這個間隔內已經被同一群組的另一灘打過了嗎；沒有就記下這次。 */
     private boolean exclusiveBlocked(final Zone zone, final UUID victim, final long now) {
-        if (zone.exclusive == null) {
-            return false;
+        if (zone.exclusive == null || zone.independent) {
+            return false; // 2026-11-01 照 PoE2 Static Shocks：每一團各打各的
         }
         final String key = zone.owner + "|" + zone.exclusive + "|" + victim;
         final Long last = exclusiveHits.get(key);
@@ -1330,6 +1442,9 @@ final class SkillZones implements SkillTargets.Strikeable {
             if (zone.driftTo != null) {
                 step(zone); // 2026-10-26（行嵐、掠嵐）：移動中的風暴
             }
+            if (zone.follow != null) {
+                follow(zone); // 2026-11-01 照 PoE2 Static Shocks：附在敵人身上
+            }
             if (!zone.overgrown && (now - zone.born) % 10 == 0 && Overgrowth.effect(zone.profile.id()) != null
                     && inThunderstorm(zone.owner, zone.points.getFirst())) {
                 overgrow(owner, zone); // 2026-10-30 照 PoE2：積雷雲範圍內的植物繁茂
@@ -1373,7 +1488,7 @@ final class SkillZones implements SkillTargets.Strikeable {
                 continue;
             }
             // 一波裡每隻只打一次：線的幾個圓一次掃完（2026-10，以前每個圓各掃一次）
-            for (final LivingEntity target : targets.aroundPoints(zone.points, zone.radius, owner)) {
+            for (final LivingEntity target : pulseTargets(zone, owner)) { // 2026-11-01 照 PoE2 Static Shocks：有每波上限的照上限
                 if (zone.gone) {
                     break; // 打到一半這一灘被引爆、擠掉了
                 }
@@ -1416,6 +1531,10 @@ final class SkillZones implements SkillTargets.Strikeable {
                         OriginalSkills.oilExposure(plugin, owner, target, zone.profile, zone.intervalTicks + 5);
                     }
                     continue;
+                }
+                // 2026-11-01 照 PoE2 Hinder（拖滯）：被輔助的技能的混沌持續傷害也阻礙敵人（每一波刷新 4 秒）
+                if (plugin.ailments() != null && localFlat(zone.profile, tw.exilecore.stats.SupportSystemKeys.HINDER_DOT) > 0) {
+                    plugin.ailments().skillPhysicalDot(target, 0, 0, zone.owner, tw.exilecore.stats.SupportSystemKeys.HINDER_DOT_TICKS);
                 }
                 // 2026-10-26（速蝕，PoE2 Intense Agony）：滿血的敵人受到的非異常持續傷害更多
                 final double fullLife = SupportMechanics.fullLife(target) ? localMore(zone.profile, tw.exilecore.stats.SupportKeys.DOT_VS_FULL_LIFE) : 1.0;

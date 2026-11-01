@@ -37,7 +37,10 @@ public final class MinionTypes {
      * 自己不是召喚技能、但會叫出召喚物的技能（召喚物的設定在別的隱藏技能上）：掘骸（Unearth）的骨構體。
      * 照 poe2db Unearth 的 Minion Types（Attack, Melee, MeleeSingleTarget, Area；骨構體沒有範圍攻擊，範圍不列），跟 unearth_construct 的 minion_tags 一樣。
      */
-    static final Map<String, Set<String>> HOSTED = Map.of(Unearth.ID, Set.of(Tags.ATTACK, Tags.MELEE));
+    static final Map<String, Set<String>> HOSTED = Map.of(Unearth.ID, Set.of(Tags.ATTACK, Tags.MELEE),
+            // 2026-11-01 照 PoE2（PoB2 CorpseBeetlesPlayer 的 minionSkillTypes：Spell、Physical、Area、Damage）：克拉里的惡言叫出來的屍甲蟲
+            //   （爆炸照 SkillService.triggerHosted 帶上惡言的輔助）；這次之前沒有，惡言上的輔助什麼都沒影響
+            DjinnCommands.VENOM, Set.of(Tags.SPELL, Tags.AREA, Tags.PHYSICAL));
 
     /** 不是元素類型的「打法」標籤：修飾器帶這些標籤時，召喚物的技能要有才吃得到（傷害類型的標籤可以靠轉換、附加得到，不擋）。 */
     private static final Set<String> DAMAGE_TYPES = Set.of(Tags.PHYSICAL, Tags.FIRE, Tags.COLD, Tags.LIGHTNING, Tags.CHAOS, Tags.ELEMENTAL,
@@ -54,8 +57,10 @@ public final class MinionTypes {
             StatKeys.BLEED_CHANCE, StatKeys.BLEED_MAGNITUDE, StatKeys.BLEED_DURATION, StatKeys.POISON_CHANCE, StatKeys.POISON_MAGNITUDE,
             StatKeys.POISON_DURATION, SupportKeys.POISON_STACKS, StatKeys.AILMENT_DURATION, StatKeys.FLAG_NO_AILMENTS,
             SupportKeys.IGNITE_VS_FROZEN, SupportKeys.IGNITE_VS_FROZEN_UNIQUE, SupportKeys.POISON_VS_BLEEDING,
+            SupportKeys.BLEED_VS_POISONED, tw.exilecore.stats.SupportExtraKeys.PHYSICAL_VS_BLEEDING, // 2026-11-01（雙蝕、腥獵）
             StatKeys.STUN_BUILDUP, StatKeys.STUN_DURATION, StatKeys.ELECTROCUTE_CHANCE, StatKeys.ELECTROCUTE_BUILDUP, StatKeys.ELECTROCUTE_DURATION,
-            StatKeys.DAZE_CHANCE, StatKeys.FLAG_CULLING, SupportKeys.FLAG_CULLING_RARE, SupportKeys.FLAG_GAIN_AS_COLD,
+            StatKeys.DAZE_CHANCE, tw.exilecore.stats.SupportRuleKeys.DAZE_BUILDUP, StatKeys.FLAG_CULLING, // 2026-11-01：震眩的眩暈累積（HitEffects 召喚物打的也算）
+            SupportKeys.FLAG_CULLING_RARE, SupportKeys.FLAG_GAIN_AS_COLD,
             // 條件傷害（2026-10-29：CombatListener 對召喚物的那一下也算；這次之前只有玩家打的才算）
             StatKeys.DAMAGE_VS_LOW_LIFE, StatKeys.DAMAGE_VS_FULL_LIFE, StatKeys.CRIT_VS_FULL_LIFE, StatKeys.DAMAGE_VS_RARE, StatKeys.DAMAGE_VS_UNIQUE,
             StatKeys.DAMAGE_VS_CURSED, StatKeys.DAMAGE_CLOSE, SupportKeys.EXTRA_FIRE_VS_IGNITED, SupportKeys.DAMAGE_FAR, SupportKeys.CRIT_VS_IMMOBILISED,
@@ -90,6 +95,9 @@ public final class MinionTypes {
 
     /** 召喚物真的會射出投射物（站遠處射擊的骸骨射手、焰術士、霜術士、雷術士的電弧）：穿透、連鎖、分裂、多射才有作用。 */
     static boolean shoots(final SkillDefinition skill) {
+        if (DjinnCommands.SHOOTERS.contains(skill.id())) {
+            return true; // 2026-11-01 照 PoE2：羅贊的怒焰、機關，克拉里的殘酷（飛刀）：指令照巨靈的屬性表算投射物
+        }
         if (skill.summon() != null) {
             return skill.summon().isRanged();
         }
@@ -165,6 +173,21 @@ public final class MinionTypes {
             case StatKeys.SKILL_COST -> {
                 return Use.IGNORED; // 消耗是主人放技能的
             }
+            case tw.exilecore.stats.SupportExtraKeys.PIERCED_LESS, tw.exilecore.stats.SupportExtraKeys.FLAG_SHOCK_REFLECT,
+                 tw.exilecore.stats.SupportExtraKeys.BLEEDER_HASTE -> {
+                // 2026-11-01 照 PoE2：這幾個代價召喚物的也有接（不擋、也不算好處）：貫穿的穿透之後更少 20%（MinionProjectiles）、
+                //   熾電的感電反射給那隻召喚物（AilmentService.onHitBy）、血綿的被流血的敵人加速（召喚物造成的流血算主人造成的，AilmentService）。
+                //   這次之前跟下面一樣列在「召喚物身上沒有接」
+                return Use.IGNORED;
+            }
+            case tw.exilecore.stats.SupportExtraKeys.DAZE_SELF_ON_CRIT,
+                 tw.exilecore.stats.SupportExtraKeys.FLAG_CANNOT_IGNITE, tw.exilecore.stats.SupportExtraKeys.FLAG_CANNOT_BLEED,
+                 tw.exilecore.stats.SupportExtraKeys.FLAG_CANNOT_PIN, tw.exilecore.stats.SupportExtraKeys.FLAG_RANDOM_DIRECTION,
+                 SupportKeys.SACRIFICE_LIFE -> {
+                // 2026-11-01：輔助的代價（照 PoE2 補上的）不擋、也不算好處；召喚物身上目前沒有接
+                //   （孤注的暴擊時眩暈不用接：原作 Overextend 不看召喚物的技能類型，孤注 excludes 寫 minion 掛不上召喚物）
+                return Use.IGNORED;
+            }
             case StatKeys.SKILL_PROJECTILE_SPEED -> {
                 // 2026-10-29 照 PoE2：遠程召喚物的投射物真的會飛（MinionProjectiles），速度有作用；不射投射物的照舊沒差。
                 // 這次之前一律沒差（彈道直接命中）
@@ -178,7 +201,17 @@ public final class MinionTypes {
                 return tags.contains(Tags.ATTACK) && !commandOnly(skill) ? Use.UTILITY : penalty ? Use.IGNORED : Use.NO;
             }
             case StatKeys.CAST_SPEED -> {
+                // 2026-11-01 照 PoE2（PoB2 Command*Player castTime 0.4）：你下指令是很快的一下，巨靈接著用自己的施法時間 ÷ 巨靈的施法速度出手
+                //   （SkillService.djinnCastTicks）：巨靈召喚技能上的施法速度輔助讓巨靈出手更快。這次之前（同日稍早）指令整個照你的施法速度，
+                //   巨靈的施法速度沒有作用、掛不上。屍甲蟲（惡言）跑到敵人身邊就炸，沒有施法動作，照舊吃不到
+                if (DjinnCommands.VENOM.equals(skill.id())) {
+                    return penalty ? Use.IGNORED : Use.NO;
+                }
                 return tags.contains(Tags.SPELL) ? Use.UTILITY : penalty ? Use.IGNORED : Use.NO;
+            }
+            case tw.exilecore.stats.SupportExtraKeys.CASCADE, tw.exilecore.stats.SupportExtraKeys.CASCADE_AREA -> {
+                // 2026-11-01 照 PoE2：召喚物的招式有 Cascadable 的（羅贊的清算 MeteorFireDjinn；SupportExtras.afterCast 照羅贊的屬性表讀）
+                return DjinnCommands.CASCADERS.contains(skill.id()) ? Use.UTILITY : Use.NO;
             }
             case StatKeys.SKILL_AREA -> {
                 return tags.contains(Tags.AREA) ? Use.UTILITY : penalty ? Use.IGNORED : Use.NO;
@@ -191,16 +224,40 @@ public final class MinionTypes {
                 return tags.contains(Tags.COOLDOWN) ? Use.UTILITY : worse ? Use.IGNORED : Use.NO;
             }
             case StatKeys.SKILL_PIERCE, StatKeys.SKILL_FORK, StatKeys.SKILL_PROJECTILES -> {
+                if (StatKeys.SKILL_PIERCE.equals(stat) && DjinnCommands.ALWAYS_PIERCE.contains(skill.id())) {
+                    // 2026-11-01 照 PoE2 Kelari's Brutality（always_pierce）：克拉里的飛刀本來就穿透所有目標，多穿透沒有作用
+                    return penalty ? Use.IGNORED : Use.NO;
+                }
                 return tags.contains(Tags.PROJECTILE) ? Use.UTILITY : Use.NO;
             }
             case StatKeys.SKILL_CHAINS -> {
+                if (DjinnCommands.CANNOT_CHAIN.contains(skill.id())) {
+                    return penalty ? Use.IGNORED : Use.NO; // 2026-11-01 照 PoE2 Kelari's Brutality（CannotChain）：克拉里的飛刀不會連鎖
+                }
                 return tags.contains(Tags.PROJECTILE) || tags.contains("chain") ? Use.UTILITY : Use.NO;
             }
+            case tw.exilecore.stats.SupportRemakeKeys.FORKED_DAMAGE -> {
+                return Use.IGNORED; // 2026-11-01 照 PoE2 Fork：分叉出來的更少 30%（召喚物的照 MinionProjectiles.FORK_DAMAGE）
+            }
+            case tw.exilecore.stats.SupportRemakeKeys.RUTHLESS -> {
+                return tags.contains(Tags.ATTACK) && !commandOnly(skill) ? Use.HIT : Use.NO; // 2026-11-01：召喚物每第 5 次普攻重擊（MinionService.ruthless）
+            }
+            case tw.exilecore.stats.SupportRemakeKeys.FULL_BREAK_ON_HEAVY_STUN -> {
+                return Use.NO; // 2026-11-01 照 PoE2 Devastate：重暈時完全破甲只接在你自己打出的重暈上（召喚物的重暈沒有輔助事件）
+            }
+            case tw.exilecore.stats.SupportRuleKeys.KNOCKBACK_ON_HIT -> {
+                return Use.IGNORED; // 2026-11-01：推擊「技能自己不擊退的也推」是你的技能擊中時（SupportExtras）；召喚物的擊退照 skill.knockback
+            }
             case StatKeys.SKILL_KNOCKBACK -> {
-                return tags.contains(Tags.ATTACK) && !commandOnly(skill) ? Use.HIT : Use.NO; // 2026-10-29：召喚物普攻打中時擊退（MinionService.attack）
+                // 2026-10-29：召喚物普攻打中時擊退（MinionService.attack）；2026-11-01 照 PoE2 Knockback（Damage／Attack）：
+                //   召喚物的法術（電弧、冰箭、死亡風暴…）擊中也擊退（MinionService.spellKnockback）。這次之前只有攻擊
+                return tags.contains(Tags.ATTACK) && !commandOnly(skill) || tags.contains(Tags.SPELL) ? Use.HIT : Use.NO;
             }
             case StatKeys.PIN_CHANCE -> {
                 return tags.contains(Tags.PROJECTILE) && tags.contains(Tags.ATTACK) ? Use.HIT : Use.NO; // 定身：投射物攻擊才累積（HitEffects）
+            }
+            case tw.exilecore.stats.SupportParityKeys.PIN_LOCKDOWN -> {
+                return Use.HIT; // 2026-11-01 照 PoE2 Lockdown（遠釘）：任何擊中的定身累積都吃（照召喚物到目標的距離）
             }
             default -> {
             }
@@ -320,6 +377,18 @@ public final class MinionTypes {
     }
 
     /**
+     * 2026-11-01 照 PoE2 Pierce I（support_pierce_projectile_damage_+%_final_if_pierced_enemy −20，從召喚物這邊掛）：
+     * 召喚物的投射物穿透過敵人之後的傷害倍率（1 = 沒有代價；貫穿的 20 → 0.8，最少 0）。跟玩家的 ProjectileEngine 一樣讀 projectile.pierced_less。
+     */
+    public static double piercedFactor(final StatSheet effective, final Set<String> tags) {
+        if (effective == null) {
+            return 1.0;
+        }
+        final double less = effective.flat(tw.exilecore.stats.SupportExtraKeys.PIERCED_LESS, tags);
+        return less <= 0 ? 1.0 : Math.max(0, 1 - less / 100.0);
+    }
+
+    /**
      * 2026-10-29 照 PoE2 Projectile Acceleration III（疾矢 III）：召喚物的投射物「投射物速度的增加與減少也套用在投射物傷害」時，
      * 要加在投射物傷害上的增加（小數；沒有這個旗標或不是投射物回傳 0）。跟玩家的 {@link SkillBuild#projectileSpeedAsDamage} 一樣。
      */
@@ -411,6 +480,11 @@ public final class MinionTypes {
         }
         for (final String word : target.ailments()) {
             scaled(list, skillSheet, StatKeys.DAMAGE_VS_AILMENT + word, StatKeys.DAMAGE, tags, "對異常的敵人");
+        }
+        // 2026-11-01 照 PoE2 Bloodlust（腥獵）：對流血中的敵人只有物理傷害更多
+        final double bloodlust = skillSheet.more(tw.exilecore.stats.SupportExtraKeys.PHYSICAL_VS_BLEEDING, tags);
+        if (bloodlust != 1 && target.ailments().contains("bleeding")) {
+            list.add(new Modifier(StatKeys.DAMAGE, tw.exilecore.stats.ModType.MORE, bloodlust - 1, Set.of(Tags.PHYSICAL), "腥獵"));
         }
         final double extraFire = skillSheet.flat(SupportKeys.EXTRA_FIRE_VS_IGNITED, tags);
         if (extraFire > 0 && target.ailments().contains("ignited")) {

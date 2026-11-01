@@ -165,6 +165,10 @@ public final class SkillConfig {
     }
     /** 2026-10-26：冷卻可以存幾次（skills.yml 的 cooldown_uses）。 */
     private Map<String, Integer> cooldownUses = Map.of();
+    /** 2026-11-01 照 PoE2 storedUses：cooldown_uses 寫逐級表的（咒殞爆 3→7 次）。 */
+    private Map<String, Scaled> cooldownUsesTable = Map.of();
+    /** 2026-11-01 照 PoE2：skills.yml 明寫 cooldown: 0 的技能（觸發時沒有冷卻；沒寫的照觸發的預設冷卻）。 */
+    private Set<String> noTriggerCooldown = Set.of();
     /** 2026-10-26：技能等級 → 怪物等級多少起會掉（也是沒寫逐級表的法術用的成長曲線）；跟需求等級分開。 */
     private int[] dropLevels = new int[SkillLoadout.MAX_LEVEL];
     private NavigableMap<Integer, Double> growth = new TreeMap<>(Map.of(1, 1.0));
@@ -306,6 +310,8 @@ public final class SkillConfig {
         final Map<String, Map<String, SkillStages.Stage>> parsedStages = new HashMap<>(); // 2026-10-28 照 PoE2：分段傷害（stages）
         final Map<String, ChargeCost> parsedChargeCosts = new HashMap<>();
         final Map<String, Integer> parsedUses = new HashMap<>();
+        final Map<String, Scaled> parsedUsesTable = new HashMap<>(); // 2026-11-01 照 PoE2 storedUses 逐級表
+        final Set<String> parsedNoTriggerCooldown = new java.util.HashSet<>(); // 2026-11-01 照 PoE2：明寫 cooldown: 0 的觸發技能沒有冷卻
         final Map<String, ResourceSpec> parsedResources = new HashMap<>();
         final Map<String, java.util.List<String>> parsedCommands = new HashMap<>(); // 2026-10：指令型召喚物技能
         final Map<String, Double> parsedParent = new HashMap<>();
@@ -339,7 +345,23 @@ public final class SkillConfig {
                 }
             }
             parsed.put(id, definition);
-            if (node.has("cooldown_uses")) {
+            if (node.has("cooldown") && definition.cooldown() <= 0) {
+                // 2026-11-01 照 PoE2：觸發的技能明寫 cooldown: 0＝沒有冷卻（磁暴的雷隙、熔坑的裂隙…，PoB2 沒有 cooldown）；
+                //   沒寫 cooldown 的照舊吃觸發的預設冷卻（SupportProcs.COOLDOWN）。這次之前 0 跟沒寫一樣
+                parsedNoTriggerCooldown.add(id);
+            }
+            if (node.has("cooldown_uses") && node.raw("cooldown_uses") instanceof java.util.List<?> rawUses) {
+                // 2026-11-01 照 PoE2 storedUses：逐級表（咒殞爆 3／4／5／6／7 次）；觸發技能用 StoredUses
+                final Scaled uses = Scaled.parse(node.path() + ".cooldown_uses", rawUses, 1);
+                for (int level = 1; level <= SkillBuild.MAX_EFFECTIVE_LEVEL; level++) {
+                    final int at = uses.intAt(level);
+                    if (at < 1 || at > 10) {
+                        throw new IllegalArgumentException(node.path() + ".cooldown_uses：每一級都要在 1 到 10 之間（" + level + " 級是 " + at + "）");
+                    }
+                }
+                parsedUsesTable.put(id, uses);
+                parsedUses.put(id, uses.intAt(1));
+            } else if (node.has("cooldown_uses")) {
                 // 2026-10-26（PoE2）：冷卻可以存幾次（榴彈「5 秒（3 次）」）
                 final int uses = node.integer("cooldown_uses", 1);
                 if (uses < 1 || uses > 10) {
@@ -535,7 +557,8 @@ public final class SkillConfig {
             oncePerCharacter = supportRoot.bool("once_per_character", false);
             final YamlNode retiredNode = supportRoot.node("retired");
             for (final String id : retiredNode.keys()) {
-                parsedRetired.put(id, Math.max(1, Math.min(SupportDefinition.MAX_TIER, retiredNode.integer(id, 1))));
+                // 2026-11-01：寫 0 = 直接刪掉（原作沒有的自創輔助；玩家身上的不換未切割輔助寶石）
+                parsedRetired.put(id, Math.max(0, Math.min(SupportDefinition.MAX_TIER, retiredNode.integer(id, 1))));
             }
             final YamlNode supportSection = supportRoot.node("supports");
             for (final String id : supportSection.keys()) {
@@ -614,6 +637,8 @@ public final class SkillConfig {
         SkillStages.install(parsedStages);
         this.chargeCosts = Map.copyOf(parsedChargeCosts);
         this.cooldownUses = parsedUses;
+        this.cooldownUsesTable = Map.copyOf(parsedUsesTable);
+        this.noTriggerCooldown = Set.copyOf(parsedNoTriggerCooldown);
         this.resources = parsedResources;
         // 2026-10-27：輔助的防呆要看的（有使用條件、會留殘骸的技能）；要在 resources 換好之後（這次之前在前一行，第一次讀設定時看不到 resource.combo、resource.remnant）
         this.commands = Map.copyOf(parsedCommands);
@@ -1004,6 +1029,20 @@ public final class SkillConfig {
         return cooldownUses.getOrDefault(skillId, 1);
     }
 
+    /**
+     * 2026-11-01 照 PoE2：這個技能被觸發時明確沒有冷卻（skills.yml 寫了 cooldown: 0；PoB2 的觸發技能沒有 cooldown 的那些）。
+     * false 的、又沒寫冷卻的照觸發的預設冷卻（{@link SupportProcs#COOLDOWN}）。
+     */
+    public boolean noTriggerCooldown(final String skillId) {
+        return noTriggerCooldown.contains(skillId);
+    }
+
+    /** 2026-11-01 照 PoE2 storedUses：這個等級的冷卻可以存幾次（cooldown_uses 寫逐級表的照等級；寫一個數字的每一級都一樣；沒寫是 1）。 */
+    public int cooldownUses(final String skillId, final int level) {
+        final Scaled table = cooldownUsesTable.get(skillId);
+        return table == null ? cooldownUses(skillId) : Math.max(1, table.intAt(level));
+    }
+
     /** 弩技能這個等級的彈匣大小（沒寫是 1 發，照 PoE2）。 */
     public int clip(final String skillId, final int level) {
         final Scaled clip = clips.get(skillId);
@@ -1085,7 +1124,12 @@ public final class SkillConfig {
 
     /** 2026-10 PoE2 改版拿掉的輔助寶石是第幾階（supports.yml 的 retired；換成同階的未切割輔助寶石）；沒寫是 1。 */
     public int retiredSupportTier(final String id) {
-        return id == null ? 1 : retiredSupports.getOrDefault(id, 1);
+        return id == null ? 1 : Math.max(1, retiredSupports.getOrDefault(id, 1));
+    }
+
+    /** 2026-11-01：supports.yml 的 retired 寫 0 的輔助：直接刪掉，玩家身上、面板上的不換未切割輔助寶石。 */
+    public boolean deletedSupport(final String id) {
+        return id != null && retiredSupports.getOrDefault(id, 1) == 0;
     }
 
     /** 2026-10-26：輔助併入哪一顆（supports.yml 的 merged，同系列較低階的 I／II 併入最高階）；沒有併入回傳 null。 */

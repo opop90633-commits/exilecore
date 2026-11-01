@@ -324,7 +324,7 @@ public final class StageAttacks implements Listener {
                 b.reach() + reachExtra, b.angle(), b.targets(), b.knockback(), b.projectiles(), b.spread(), b.speed(), b.range(), b.size(),
                 b.pierce(), b.chains(), b.explode(), b.wobble(), b.arrow(), b.radius() * lengthScale, b.length() * lengthScale, b.chainRange(),
                 b.manaCost(), b.areaScale() * lengthScale, b.bonusLevel(), b.cooldownTicks(), b.durationScale(), b.forks(), b.returning(), b.echo(),
-                b.deploy(), b.totems(), b.minions(), b.reserve(), b.minionReserve(), b.auraEffect(), b.generosity(), b.exerts(), b.repeats());
+                b.deploy(), b.totems(), b.minions(), b.reserve(), b.minionReserve(), b.auraEffect(), b.generosity(), b.exerts(), b.repeats(), b.groundDurationScale());
     }
 
     // ================================================================ 執行期
@@ -704,7 +704,7 @@ public final class StageAttacks implements Listener {
     private void bloom(final Player player, final SkillBuild build, final long now) {
         final SkillParams.Zone zone = build.params().zone();
         final double radius = zone == null ? 3 : build.radius();
-        final long ticks = build.durationTicks(zone == null ? 8 : zone.duration());
+        final long ticks = build.groundDurationTicks(zone == null ? 8 : zone.duration()); // 2026-11-01：毒花是地面效果（Persistent Ground）
         blooms.removeIf(each -> each.owner.equals(player.getUniqueId()));
         blooms.add(new Bloom(player.getUniqueId(), player.getLocation(), radius, now + ticks, build.level()));
         startTimer();

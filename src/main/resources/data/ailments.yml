@@ -127,3 +127,18 @@ pin:
   decay_per_second: 5
   player_decay: { delay: 2, per_second: 50 }
   after: { bonus: 500, seconds: 13 }
+
+# 眩暈累積（2026-11-01 照 PoE2 Daze 輔助：「依造成的物理傷害的一部分累積眩暈」；這次之前震眩是擊中 30% 機率直接眩暈）：
+# 帶 daze.buildup 的技能（震眩）擊中時，造成的物理傷害 × daze.buildup% × buildup% ÷ 暈眩門檻累積，滿了眩暈（8 秒內受到的暈眩累積更多 50%，
+# 時間照 HitEffects 的眩暈、吃天賦的眩暈持續時間）；眩暈中不累積。原作沒有公開比例，buildup 先照「造成暈眩門檻那麼多的物理傷害就滿」。
+# 其他來源（塔盾、天賦的眩暈機率）照舊擲機率、破眩是完全破甲時直接眩暈，不經過這條（時間、效果都跟擊中的眩暈同一條算，HitEffects.applyDaze）。
+# 2026-11-01 查過 Path of Building（PoE2）的 Modules／Data（Misc、Global、StatDescriptions）：Daze 輔助的 stats 是空的
+#   （support_physical_damage_%_to_gain_as_daze_build_up 只有說明沒有數值），也沒有眩暈門檻、消退的常數；poe2db 也沒有——buildup 100、門檻＝暈眩門檻仍是估的。
+#   有的只有「眩暈＝受到的暈眩累積更多 50%、8 秒」（CalcSetup.lua、ConfigOptions.lua）。
+daze:
+  buildup: 100
+  duration: { monster: 8, player: 8 }
+  decay_delay: 8
+  decay_per_second: 5
+  player_decay: { delay: 2, per_second: 50 }
+  after: { bonus: 0, seconds: 1 }

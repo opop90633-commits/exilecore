@@ -323,7 +323,7 @@ public final class SupportMechanics implements Listener {
     // 放技能之前、之後
     // =====================================================================
 
-    /** 不能用的原因（要榮耀、震嘯要先移動 10 格）；可以用回傳 null。 */
+    /** 不能用的原因（要榮耀、震嘯要先移動 5 格）；可以用回傳 null。 */
     String usageProblem(final Player player, final SkillBuild build) {
         final String lineageProblem = lineage.usageProblem(player, build); // 2026-10-27 照 PoE2：連膛（彈匣空了要翻滾裝填）
         if (lineageProblem != null) {
@@ -358,7 +358,7 @@ public final class SupportMechanics implements Listener {
     }
 
     /** 震嘯：用過之後要再移動幾格才能用。 */
-    static final double ECHO_TRAVEL = tw.exilecore.core.Units.metres(10); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double ECHO_TRAVEL = 5; // 2026-11-01 照站長：改成 5 格（原作 10 公尺）；這次之前 Units.metres(10)
 
     /** 2026-10-28 照 PoE2 Spear of Solaris 的品質：保留幾成榮耀（chance_to_retain_40%_of_glory_on_use）。 */
     static final double GLORY_RETAIN_SHARE = 0.4;
@@ -724,18 +724,28 @@ public final class SupportMechanics implements Listener {
                 notice.append(String.format(Locale.ROOT, "<gray>：%d 隻敵人被扭曲契約纏上", pacts));
             }
         }
-        // 碎晶嘯（PoE2 Vruun's Aftermath）：範圍內你的冰晶全部炸掉；炸掉至少 5 個多強化 3 次攻擊
+        // 碎晶嘯（PoE2 Vruun's Aftermath）：範圍內你的冰晶全部炸掉、你的冰裂全部引爆；冰晶＋冰裂合計至少 5 個多強化 3 次攻擊
+        // （2026-11-01 照 PoE2 support_warcries_detonate_your_ice_fragments 補上冰裂；這次之前只算冰晶）
         final double crystalBonus = effective.flat(SupportKeys.WARCRY_CRYSTAL_EMPOWERS, tags);
         if (crystalBonus > 0) {
-            final int broken = service.crystals().explodeAround(player, player.getLocation(), radius);
-            if (broken > 0) {
-                notice.append(String.format(Locale.ROOT, "<gray>：炸掉 %d 顆冰晶", broken));
+            final int crystals = service.crystals().explodeAround(player, player.getLocation(), radius);
+            final int shards = service.originals() == null ? 0 : service.originals().detonateFragmentsAround(player, player.getLocation(), radius);
+            if (crystals > 0) {
+                notice.append(String.format(Locale.ROOT, "<gray>：炸掉 %d 顆冰晶", crystals));
             }
-            if (broken >= 5) {
+            if (shards > 0) {
+                notice.append(String.format(Locale.ROOT, "<gray>：引爆 %d 個冰裂", shards));
+            }
+            if (crystalShatterEmpowers(crystals, shards)) {
                 bonus += (int) Math.round(crystalBonus);
             }
         }
         return bonus;
+    }
+
+    /** 碎晶嘯：炸掉的冰晶與冰裂加起來至少 5 個才多強化（PoE2 Vruun's Aftermath）。純函式（測試用）。 */
+    static boolean crystalShatterEmpowers(final int crystals, final int fragments) {
+        return Math.max(0, crystals) + Math.max(0, fragments) >= 5;
     }
 
     /** 2026-10-31：輔助觸發的爆炸照玩家的範圍效果放大（半徑 = √範圍倍率，含伺服器基礎 ×1.5）；這次之前固定半徑。 */
@@ -780,6 +790,8 @@ public final class SupportMechanics implements Listener {
     /** 腐化之血最多疊幾層、每層持續幾 tick（PoE2：10 層、5 秒）。 */
     static final int CORRUPTED_MAX = 10;
     static final long CORRUPTED_TICKS = 100;
+    /** 2026-11-01 照 PoE2 Paquate's Pact：扭曲契約每次施加 5 層腐化之血；這次之前每次 1 層。 */
+    static final int PACT_STACKS = 5;
 
     private void twistedPact(final Player player, final int level, final LivingEntity target) {
         final SkillDefinition pact = service.config().skill("proc_twisted_pact");
@@ -795,7 +807,7 @@ public final class SupportMechanics implements Listener {
         }
         final Corrupted entry = corrupted.computeIfAbsent(target.getUniqueId(), uuid -> new Corrupted(player.getUniqueId()));
         entry.dps = Math.max(entry.dps, perStack);
-        entry.stacks = Math.min(CORRUPTED_MAX, entry.stacks + 1);
+        entry.stacks = Math.min(CORRUPTED_MAX, entry.stacks + PACT_STACKS); // 2026-11-01 照 PoE2：每次 5 層（這次之前 + 1）
         entry.untilTick = now() + CORRUPTED_TICKS;
         target.getWorld().spawnParticle(Particle.DUST, target.getLocation().add(0, target.getHeight() * 0.6, 0), 10, 0.3, 0.4, 0.3, 0,
                 new Particle.DustOptions(org.bukkit.Color.fromRGB(0x7A0F1F), 1.4f));
@@ -1041,6 +1053,11 @@ public final class SupportMechanics implements Listener {
             if (vsBleeding != 1 && plugin.ailments().has(defender, AilmentType.BLEED)) {
                 extra.add(Modifier.more(StatKeys.POISON_MAGNITUDE, vsBleeding - 1, "淬毒"));
             }
+            // 2026-11-01 照 PoE2 Admixture（雙蝕）：對中毒的敵人造成的流血更多
+            final double vsPoisoned = skillSheet.more(SupportKeys.BLEED_VS_POISONED, tags);
+            if (vsPoisoned != 1 && plugin.ailments().has(defender, AilmentType.POISON)) {
+                extra.add(Modifier.more(StatKeys.BLEED_MAGNITUDE, vsPoisoned - 1, "雙蝕"));
+            }
         }
         // 急蝕：傷害型異常（點燃、流血、中毒）的持續時間更少 x%（異常模組只讀「增加」，換算成等量的增加）
         final double shorter = skillSheet.more(SupportKeys.SKILL_AND_AILMENT_DURATION, tags);
@@ -1072,10 +1089,12 @@ public final class SupportMechanics implements Listener {
         return extra.isEmpty() ? attackerSheet : attackerSheet.overlay(extra);
     }
 
-    /** 目標現在是滿血（原版血量 ≥ 上限的 99.5%）。 */
+    /**
+     * 目標現在是滿血。2026-11-01：統一走 {@link tw.exilecore.character.LifeChecks#isFullLife}（玩家照沒被保留的生命；
+     * 怪物原版血量 ≥ 上限的 99.9%）；這次之前是原版血量 ≥ 99.5%，保留生命的玩家永遠不算滿血。
+     */
     static boolean fullLife(final LivingEntity entity) {
-        final org.bukkit.attribute.AttributeInstance max = entity.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
-        return max != null && max.getValue() > 0 && entity.getHealth() >= max.getValue() * 0.995;
+        return tw.exilecore.character.LifeChecks.isFullLife(entity);
     }
 
     // =====================================================================
@@ -1146,8 +1165,10 @@ public final class SupportMechanics implements Listener {
         final long now = now();
         final double life = Math.max(1, plugin.monsters().sheet(target, monster).get(StatKeys.LIFE_MAX));
         // 釘地（PoE2 Pin）：物理傷害累積定身；暈眩累積的加成改成加在定身累積上
-        if (StatKeys.flag(effective, SupportKeys.FLAG_PIN_BUILDUP)) {
-            pin(player, target, monster, effective, tags, event.result().dealt().get(DamageType.PHYSICAL) * 1.5 / life, now);
+        if (StatKeys.flag(effective, SupportKeys.FLAG_PIN_BUILDUP)
+                && !StatKeys.flag(effective, tw.exilecore.stats.SupportExtraKeys.FLAG_CANNOT_PIN)) { // 2026-11-01 照 PoE2 Bone Shrapnel：不能定身
+            pin(player, target, monster, effective, tags, event.result().dealt().get(DamageType.PHYSICAL) * 1.5 / life
+                    * tw.exilecore.combat.HitEffects.lockdown(event, effective, tags), now); // 2026-11-01 照 PoE2 Lockdown（遠釘）：越近累積越多
         }
         // 枯觸（PoE2 Withering Touch）：每 100% 異常門檻的混沌傷害 175% 機率凋零（可以超過 100%）
         final double wither = effective.flat(SupportKeys.WITHER_PER_THRESHOLD, tags);

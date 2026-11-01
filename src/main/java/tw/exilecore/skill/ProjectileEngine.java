@@ -49,6 +49,11 @@ final class ProjectileEngine implements Listener {
     /** 2026-10-26：引導累積、放開一起射出的骨刺（Bonestorm）：每一支都可以打中同一個敵人。 */
     static final String SPIKE_VOLLEY = "spike_volley";
     /**
+     * 2026-11-01 照 PoE2 Bonestorm：技能帶這個旗標（FLAT 1）時，投射物打中炸開的爆炸也打直接打中的那隻，一次射出的每一支各炸各的
+     * （Path of Building 把骨刺與爆炸當兩組各自乘支數）；這次之前爆炸一律跳過直接打中的那隻、同一次施放對同一個敵人只算一下。
+     */
+    static final String FLAG_BLAST_STRUCK = "flag.projectile_explosion_hits_struck";
+    /**
      * 2026-10-28 照 PoE2（active_skill_projectile_speed_+%_variation_final，驚雷劈 50）：這一下的 profile 帶這個 FLAT 記號時，
      * 每一發的速度各自 ±x%（飛的時間一樣，所以快的飛得遠），一次射出去的會前後散開。
      */
@@ -132,6 +137,8 @@ final class ProjectileEngine implements Listener {
          */
         int shockchain;
         int shockchained;
+        /** 2026-11-01（{@link #FLAG_BLAST_STRUCK}）：爆炸也打直接打中的那隻、不跟同一次施放的其他發去重。 */
+        boolean blastStruck;
         boolean homes;
         boolean consumesShock;
         UUID homing;
@@ -146,6 +153,13 @@ final class ProjectileEngine implements Listener {
         Vector wanderBase;
         double wanderAngle;
         Map<UUID, Long> hitClear;
+        /** 2026-11-01 照 PoE2 Ball Lightning（Fire-Infused）：飛了幾 tick（沿路留點燃地面用，{@link GroundSkills#TRAIL_IGNITED}）。 */
+        int trailAge;
+        /**
+         * 2026-11-01 照 PoE2 Kelari's Brutality（GroundTargetedProjectile，{@link #launchAtGround}）：射向地面的投射物飛到終點（落地、
+         * 撞到方塊、飛完）時要做的事（飛刀鑽進地面、之後爆出刀刃）；分裂出來的也照做。null = 一般投射物。
+         */
+        java.util.function.BiConsumer<Player, Location> landed;
 
         Shot(final long id, final UUID owner, final SkillBuild build, final SkillProfile profile, final World world, final Vector position,
              final Vector direction, final double speed, final double range, final Arrow arrow, final Set<UUID> hit, final boolean secondary) {
@@ -290,6 +304,42 @@ final class ProjectileEngine implements Listener {
         }
     }
 
+    /**
+     * 2026-11-01 照 PoE2 Kelari's Brutality（PoB2 minion.lua KnifeThrowSandDjinn：Projectile、GroundTargetedProjectile、
+     * projectiles_fire_at_ground、always_pierce、CannotChain）：從 origin（巨靈的位置）朝每一個落點各射一發，飛到那個點就停
+     * （落點往下貼地面），路上穿透打中的敵人（至少穿透 alwaysPierce 個）、不連鎖（也不從地形連鎖），可以分裂；
+     * 同一次的投射物共用「打過了」。每一發（含分裂出來的）飛到終點時呼叫 landed。速度、分裂、投射物的傷害照 build
+     * （build 是照巨靈的屬性表算的：召喚技能上的疾矢、歧射有作用）。
+     */
+    void launchAtGround(final Origin origin, final SkillBuild build, final List<Location> points, final int alwaysPierce,
+                        final java.util.function.BiConsumer<Player, Location> landed) {
+        final Player owner = origin.owner();
+        if (owner == null || points.isEmpty()) {
+            return;
+        }
+        final Vector start = origin.eye().toVector().add(new Vector(0, -0.15, 0));
+        final Set<UUID> volley = new HashSet<>();
+        final String visual = build.definition().visual();
+        for (final Location point : points) {
+            if (point.getWorld() == null || !point.getWorld().equals(origin.world())) {
+                continue;
+            }
+            final Location floor = ground(point.clone().add(0, 2, 0));
+            final Vector path = floor.toVector().add(new Vector(0, 0.1, 0)).subtract(start);
+            final double distance = Math.max(0.5, path.length());
+            final int ticks = (int) Math.max(1, Math.ceil(distance / Math.max(0.1, build.speed())));
+            final Shot shot = spawn(owner, build, build.profile(), origin.world(), start.clone(), path.multiply(1 / distance), distance / ticks,
+                    distance - 1e-6, volley, false, visual);
+            if (shot != null) {
+                shot.chainsLeft = 0; // CannotChain
+                shot.terrainChains = 0;
+                shot.pierceLeft = Math.max(shot.pierceLeft, alwaysPierce); // always_pierce
+                shot.landed = landed;
+            }
+        }
+        visuals.cast(visual, origin.eye());
+    }
+
     private void launchVolley(final Origin origin, final SkillBuild build) {
         final Player owner = origin.owner();
         final Location eye = origin.eye();
@@ -340,7 +390,13 @@ final class ProjectileEngine implements Listener {
             return;
         }
         final double spread = SkillMath.projectileSpread(count, build.spread()); // 2026-10-29：搬到 SkillMath（召喚物的投射物共用）
-        final List<double[]> directions = SkillMath.fan(look.getX(), look.getY(), look.getZ(), count, spread);
+        List<double[]> directions = SkillMath.fan(look.getX(), look.getY(), look.getZ(), count, spread);
+        if (owner != null && tw.exilecore.stats.StatKeys.flag(build.profile().effective(plugin.players().sheet(owner)),
+                tw.exilecore.stats.SupportExtraKeys.FLAG_RANDOM_DIRECTION)) {
+            // 2026-11-01 照 PoE2 Salvo：被輔助的技能的投射物往隨機方向射出（2026-11-01 照站長：以角色為中心 360 度）；這次之前照一般的扇形
+            directions = SkillMath.randomFan(look.getX(), look.getY(), look.getZ(), count,
+                    tw.exilecore.stats.SupportExtraKeys.RANDOM_DIRECTION_HALF_ANGLE, random::nextDouble);
+        }
         final Set<UUID> volley = new HashSet<>();
         final String visual = build.definition().visual();
         // 2026-10-26（PoE2 的 Merging）：弩的碎片彈每一片都可以打中同一個敵人（貼臉一發的碎片全部打在同一隻身上）
@@ -604,6 +660,7 @@ final class ProjectileEngine implements Listener {
             // 2026-10-28 照 PoE2 Shockchain Arrow（電鍊箭矢）
             shot.shockchain = (int) Math.round(effective.flat(ShockchainArrows.CHAINS_ON_AILMENT, profile.tags()));
             shot.homes = tw.exilecore.stats.StatKeys.flag(effective, ShockchainArrows.FLAG_HOMING);
+            shot.blastStruck = tw.exilecore.stats.StatKeys.flag(effective, FLAG_BLAST_STRUCK); // 2026-11-01 照 PoE2 Bonestorm
             shot.consumesShock = tw.exilecore.stats.StatKeys.flag(effective, ShockchainArrows.FLAG_CONSUME_SHOCK);
             if (!secondary && shot.chainsLeft > 0) {
                 // 2026-10-26 照 PoE2 天賦樹：「閃電技能 x% 機率多連鎖一次」（會連鎖的投射物才有）
@@ -694,6 +751,9 @@ final class ProjectileEngine implements Listener {
                 if (shots.containsKey(shot.id)) {
                     refract(shot); // 2026-10-26：法術投射物碰到折光之鏡，往四周複製 7 發
                 }
+                if (shots.containsKey(shot.id) && shot.arrow == null) {
+                    trailGround(shot); // 2026-11-01 照 PoE2 Ball Lightning（Fire-Infused）：沿路留下點燃地面
+                }
             } finally {
                 Fx.restore(previous);
             }
@@ -701,6 +761,26 @@ final class ProjectileEngine implements Listener {
         if (!tornados.isEmpty()) {
             tornados.values().forEach(list -> list.removeIf(tornado -> tornado.untilTick() <= now));
             tornados.values().removeIf(List::isEmpty);
+        }
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Ball Lightning（Fire-Infused：ball_lightning_infused_burning_ground_interval_ms 350）：用掉火灌注的雷珠
+     * （profile 有 {@link GroundSkills#TRAIL_IGNITED}）飛的路上每 0.35 秒在底下的地面留一灘點燃地面（{@link StageLeftovers#ignitedGround}；
+     * 半徑、秒數、點燃的傷害照隱藏技能 {@value GroundSkills#BALL_LIGHTNING_GROUND}，持續時間吃久地）。這次之前做成點燃機率更多 100%。
+     */
+    private void trailGround(final Shot shot) {
+        final double millis = SkillZones.localFlat(shot.profile, GroundSkills.TRAIL_IGNITED);
+        if (millis <= 0 || plugin.skills() == null || shot.returning) {
+            return;
+        }
+        shot.trailAge++;
+        if (!GroundSkills.trailDue(shot.trailAge, millis)) {
+            return;
+        }
+        final Player owner = plugin.getServer().getPlayer(shot.owner);
+        if (owner != null && owner.getWorld().equals(shot.world)) {
+            plugin.skills().leftovers().ignitedGround(owner, shot.build, GroundSkills.BALL_LIGHTNING_GROUND, shot.position.toLocation(shot.world));
         }
     }
 
@@ -1154,6 +1234,11 @@ final class ProjectileEngine implements Listener {
         if (pierced > 0) {
             hitProfile = hitProfile.scaled(1 + pierced / 100.0, "穿透之後");
         }
+        // 2026-11-01 照 PoE2 Pierce I：穿透過敵人之後投射物傷害更少 20%（跟上面技能自己的「穿透之後更多」分開乘）
+        final double piercedLess = shot.passedEnemy ? SkillZones.localFlat(shot.profile, tw.exilecore.stats.SupportExtraKeys.PIERCED_LESS) : 0;
+        if (piercedLess > 0) {
+            hitProfile = hitProfile.scaled(Math.max(0, 1 - piercedLess / 100.0), "穿透之後");
+        }
         damage.hit(owner, target, tw.exilecore.item.unique.UniqueMechanics.pierceProfile(hitProfile, shot.pierced, ownerSheet), null);
         // 2026-10-28 照 PoE2 0.4.0：只有初始的箭（還沒充能）用掉感電（電擊不用掉），連鎖的次級投射物不用掉；這次之前每一下都用掉。
         // 順序照原作「用掉感電替箭充能，再放出震波」：上面這一箭的傷害還吃得到感電，震波在用掉之後才放
@@ -1416,7 +1501,11 @@ final class ProjectileEngine implements Listener {
     /** 分裂：從打中的地方再往左右各飛出一發（歧射輔助）。 */
     private void fork(final Shot shot, final Player owner, final Location at) {
         shot.forksLeft--;
-        final SkillProfile profile = shot.profile.scaled(0.8, "歧射");
+        // 2026-11-01 照 PoE2 Fork（歧射）：分叉出來的投射物傷害更少 30%（只有分叉出來的；原本那一發不變）；
+        // 其他來源的分叉（天賦、霜岔、傳奇）沒寫這條的照舊更少 20%。這次之前一律 0.8，歧射另外讓所有投射物更少 10%
+        final double forkedMore = owner == null ? 1.0
+                : shot.profile.effective(plugin.players().sheet(owner)).more(tw.exilecore.stats.SupportRemakeKeys.FORKED_DAMAGE, shot.profile.tags());
+        final SkillProfile profile = shot.profile.scaled(Math.abs(forkedMore - 1.0) > 1e-9 ? forkedMore : 0.8, "歧射");
         // 2026-10-26 照 PoE2 天賦樹：「投射物分裂時 x% 機率多分出一發」（正前方再一發）
         final double extraFork = owner == null ? 0
                 : profile.effective(plugin.players().sheet(owner)).flat(tw.exilecore.stats.TreeEffectKeys.FORK_EXTRA_CHANCE, profile.tags());
@@ -1430,6 +1519,13 @@ final class ProjectileEngine implements Listener {
                 // 2026-10：分裂出來的兩發從被打中的敵人身上出發，往下射時馬上插進地板爆炸，又炸到原本那隻（單體每次多吃 2 × 80%）。
                 // 照 PoE：分裂的投射物不會再打到分裂出來的那個敵人，爆炸也一樣
                 forked.struck.addAll(shot.struck);
+                if (shot.landed != null) {
+                    // 2026-11-01 照 PoE2 Kelari's Brutality：分裂出來的飛刀一樣穿透、不連鎖，飛完也鑽進地面爆出刀刃
+                    forked.landed = shot.landed;
+                    forked.chainsLeft = 0;
+                    forked.terrainChains = 0;
+                    forked.pierceLeft = Math.max(forked.pierceLeft, shot.pierceLeft);
+                }
                 if (tw.exilecore.item.unique.UniqueMechanics.pierceAfterFork(plugin.players().sheet(owner), profile.tags())) {
                     forked.pierceLeft = Math.max(forked.pierceLeft, 50); // 2026-10-26（裂穹）：分裂之後穿透所有目標
                 }
@@ -1475,6 +1571,11 @@ final class ProjectileEngine implements Listener {
             final boolean burstPoison = PoisonOnly.burst(plugin.players().sheet(owner), blastProfile);
             targets.strike(owner, blastProfile, SkillTargets.sphere(at, shot.explode), new Object()); // 2026-10-25：爆炸也打到冰晶、鐘
             for (final LivingEntity victim : targets.around(at, shot.explode, owner)) {
+                if (shot.blastStruck) {
+                    // 2026-11-01 照 PoE2 Bonestorm：骨刺打中的那隻也挨爆炸，每一支各炸各的（下面兩條去重都不用）
+                    damage.hit(owner, victim, blastProfile, null);
+                    continue;
+                }
                 if (shot.struck.contains(victim.getUniqueId())) {
                     continue;
                 }
@@ -1518,12 +1619,19 @@ final class ProjectileEngine implements Listener {
     /** 停下來的地方：散射、地面效果、漩渦、閃現。 */
     private void stopEffects(final Shot shot, final Player owner, final Location at, final boolean reached) {
         final SkillParams params = shot.build.params();
+        if (shot.landed != null && !shot.returning && owner != null) {
+            shot.landed.accept(owner, at); // 2026-11-01 照 PoE2 Kelari's Brutality：飛刀鑽進地面（launchAtGround）
+        }
         // 2026-10-27 照 PoE2 亞馬遜「元素湧動」：用掉湧動的投射物飛行結束時另外觸發一發湧動爆炸（分裂、散射出來的不算）
         if (!shot.secondary && !shot.returning && hasLocal(shot.profile, SkillResources.SURGE_BLAST) && plugin.skills() != null) {
             plugin.skills().resources().surgeBlast(owner, at);
         }
         if (!shot.secondary && params.scatter() != null && !params.scatter().onHit() && reached) {
             scatter(shot, owner, at);
+        }
+        if (!shot.returning && owner != null && plugin.skills() != null) {
+            // 2026-11-01 照 PoE2 Caltrops（撒蒺）：被輔助的技能射出的投射物（含分叉出來的）飛到終點時觸發
+            plugin.skills().procEvent(owner, shot.build.definition().id(), tw.exilecore.stats.SupportRemakeKeys.EVENT_PROJECTILE_END, at, null);
         }
         if (!shot.secondary && !shot.returning && owner != null && plugin.skills() != null) {
             plugin.skills().spears().landed(owner, shot.build, shot.profile, at, shot.direction); // 2026-10-27 照 PoE2：擲矛（怒星炸開）、炎爆矛（插地；怒星十字照飛的方向）
@@ -1573,7 +1681,7 @@ final class ProjectileEngine implements Listener {
             final int limit = baseLimit > 0 && shot.build.definition().tags().contains(SkillLimits.TAG)
                     ? baseLimit + SkillLimits.bonus(plugin.players() == null || owner == null ? null : plugin.players().sheet(owner), shot.profile) : baseLimit;
             zones.addCircle(owner, at, shot.build.scaledRadius(ground.radius()), shot.profile.scaled(ground.damage() / 100.0, "地面效果"),
-                    shot.visual(), shot.build.durationTicks(ground.duration()), ground.interval(), ground.pull(),
+                    shot.visual(), shot.build.groundDurationTicks(ground.duration()), ground.interval(), ground.pull(), // 2026-11-01 照 PoE2 Persistent Ground
                     limit > 0 ? shot.build.definition().id() : null, limit, exclusive);
         }
         final SkillConfig.LodgeSpec lodge = plugin.skills() == null ? null : plugin.skills().config().lodge(shot.build.definition().id());

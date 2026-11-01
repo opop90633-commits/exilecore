@@ -202,9 +202,17 @@ final class Signatures {
         started.interval = interval;
         // 2026-10-26 照 PoE2（爆焰矢的 GainsStages）：每一層是一次攻擊時間，吃攻擊速度
         started.speed = spec.channel().perAttack() && interval > 0 ? spec.stageTime() * 20 / interval : speed(definition, interval);
+        if (DjinnCommands.channelled(definition.id())) {
+            // 2026-11-01 照 PoE2 Kelari's Judgment（「Channel and Command Kelari to Channel alongside you」，PoB2 HandSlamSandDjinn castTime 0.5、
+            //   GainsStages）：段數是珂芮絲陪你引導疊的——每一段照珂芮絲的施法速度（召喚技能上的疾詠、你給召喚物的施法速度），不是你的
+            started.speed = service.djinnStageSpeed(player, definition);
+            service.djinnCasting(player, definition, Math.round(spec.fullStageTicks(started.speed)),
+                    preferred != null ? preferred.getLocation() : service.targets().aimPoint(Origin.of(player), SkillService.DJINN_AIM_RANGE));
+        }
         runtime.charging = started;
         final boolean channel = spec.mode() != ChargeSpec.Mode.RELEASE;
-        state.notice("<#ffd27f>" + ItemRenderer.escape(definition.name()) + (channel ? " 引導中…" : " 蓄力中…") + (SkillLoadout.mouseKey(key)
+        // 2026-11-01 照站長：引導技能（PoE2 Channel）不叫蓄力；這次之前放開型的都寫「蓄力中…」
+        state.notice("<#ffd27f>" + ItemRenderer.escape(definition.name()) + " " + (channel ? "引導" : chargeWord(definition)) + "中…" + (SkillLoadout.mouseKey(key)
                 ? (channel ? "（放開結束）" : "（放開出手）") : (channel ? "（再按一次結束）" : "（再按一次出手）")), now + 20);
         plugin.players().display(player, state);
         player.playSound(player.getLocation(), Sound.ITEM_CROSSBOW_LOADING_START, SoundCategory.PLAYERS, 0.6f, 1.2f);
@@ -228,6 +236,17 @@ final class Signatures {
         final boolean pressedAgain = charging.releaseNow;
         charging.releaseNow = false;
         boolean released = pressedAgain || mouse && now - charging.last > (left ? 3 : 7);
+        // 2026-11-01：最短引導照 ChargeSpec.minTicks（Kelari's Judgment 的 locked_start：第一段，吃珂芮絲的施法速度）；這次之前只看 min_time
+        final long minTicks = spec.minTicks(charging.speed);
+        if (spec.mode() == ChargeSpec.Mode.RELEASE && minTicks > 0) {
+            // 2026-11-01 照 PoE2（Bonestorm 的 base_minimum_channel_time_ms 300）：最短引導時間內放開照樣撐到那個時間才放出
+            if (released && held < minTicks) {
+                charging.letGo = true;
+                released = false;
+            } else if (charging.letGo && held >= minTicks) {
+                released = true;
+            }
+        }
         if (spec.mode() != ChargeSpec.Mode.RELEASE) {
             // 2026-10-26 照 PoE2：衝鋒（盾衝、蠻衝）、持續作用（凋蝕術）：按住期間一直有效，放開（過了最短引導時間）結束
             if (service.channelling().tick(player, charging, spec, released, now)) {
@@ -240,7 +259,9 @@ final class Signatures {
         if (!released && !service.channelling().drain(player, charging, spec, held)) {
             released = true; // 2026-10-26：魔力不夠撐下一秒，照現在的蓄力放出
         }
+        final int perStage = charging.build == null ? 1 : Math.max(1, charging.build.projectiles()); // 2026-11-01：累積型每段幾支
         final long limit = spec.perfect() ? charging.perfectAt + ChargeSpec.OVERHOLD
+                : spec.accumulate() ? Math.round(spec.fullTicks(charging.speed, perStage)) + ChargeSpec.OVERHOLD
                 : Math.round(spec.stageTicks(charging.speed) * spec.stages()) + ChargeSpec.OVERHOLD;
         if (held > limit) {
             released = true; // 蓄太久：自動放出
@@ -261,10 +282,13 @@ final class Signatures {
                 }
             }
             if (spec.stages() > 0) {
-                final int stage = spec.stagesAt(held, charging.speed);
+                // 2026-11-01 照 PoE2 Bonestorm：累積型顯示手上實際有幾支（最多幾支）；其他照層數。引導技能寫「引導」（這次之前一律「蓄力」）
+                // 2026-11-01 照 PoE2 Kelari's Judgment（locked_start）：第一段還沒引導完顯示 0
+                final int stage = spec.accumulate() ? spec.heldCount(held, charging.speed, perStage)
+                        : spec.lockedStart() && held < minTicks ? 0 : spec.stagesAt(held, charging.speed);
                 if (stage != charging.shownStage) {
                     charging.shownStage = stage;
-                    state.notice(String.format(Locale.ROOT, "<#ff9a4d>%s 蓄力 %d／%d", name, stage, spec.stages()), now + 20);
+                    state.notice(String.format(Locale.ROOT, "<#ff9a4d>%s %s %d／%d", name, chargeWord(definition), stage, spec.stages()), now + 20);
                     plugin.players().display(player, state);
                     player.playSound(player.getLocation(), Sound.BLOCK_FIRE_AMBIENT, SoundCategory.PLAYERS, 0.7f,
                             0.6f + 1.2f * stage / spec.stages());
@@ -275,7 +299,8 @@ final class Signatures {
             return;
         }
         runtime.charging = null;
-        final long releaseHeld = (pressedAgain ? now : Math.min(now, charging.last + 1)) - charging.start;
+        final long releaseHeld = Math.max(minTicks, // 2026-11-01：最短引導時間（上面撐到了才會走到這裡）
+                (pressedAgain || charging.letGo ? now : Math.min(now, charging.last + 1)) - charging.start);
         final StatSheet windowSheet = charging.build == null ? plugin.players().sheet(player)
                 : charging.build.profile().effective(plugin.players().sheet(player)); // 2026-10-28 照 PoE2：技能自己的（穿雲箭的品質）也算；這次之前只看角色
         final boolean perfect = spec.isPerfect(releaseHeld, charging.interval, Math.max(0.05, 1 + windowSheet
@@ -293,6 +318,17 @@ final class Signatures {
         } finally {
             runtime.releasing = null;
         }
+        if (charging.outOfMana) {
+            // 2026-11-01：魔力不夠撐下去而提早放出時說一聲（這次之前「魔力不足，引導結束」馬上被「放出」的提示蓋掉，看起來像卡在半途）
+            final String shown = state.notice(now);
+            state.notice((shown == null ? "" : shown + " ") + "<gray>（魔力不足，引導提早結束）", now + 30);
+            plugin.players().display(player, state);
+        }
+    }
+
+    /** 2026-11-01 照站長：引導技能（channelling 標籤，PoE2 的 Channel）的提示寫「引導」，不是引導的蓄力技能才寫「蓄力」。 */
+    static String chargeWord(final SkillDefinition definition) {
+        return definition == null || definition.tags().contains(tw.exilecore.stats.TreeMechanicKeys.CHANNELLING) ? "引導" : "蓄力";
     }
 
     /** 完美時機的蓄力條：▮▮▮▯▯，到了變金色的「★ 放開！」。 */
@@ -321,9 +357,11 @@ final class Signatures {
                 state.notice("<gray>" + name + "：沒抓到完美時機", now + 30);
             }
         }
-        final int stages = spec.stages() > 0 ? spec.stagesAt(release.held(), release.speed()) : 1;
+        final int stages = spec.stages() <= 0 ? 1
+                : spec.accumulate() ? spec.heldCount(release.held(), release.speed(), build.projectiles()) // 2026-11-01 照 PoE2 Bonestorm：手上有幾支
+                : spec.stagesAt(release.held(), release.speed());
         if (spec.stages() > 0) {
-            state.notice(String.format(Locale.ROOT, "<#ff9a4d>%s 放出：%d／%d 層", name, stages, spec.stages()), now + 30);
+            state.notice(String.format(Locale.ROOT, "<#ff9a4d>%s 放出：%d／%d %s", name, stages, spec.stages(), spec.accumulate() ? "支" : "層"), now + 30);
         }
         final SkillBuild result = released(build, spec, stages, release.perfect(), state.sheet(), release.held() / 20.0);
         plugin.players().display(player, state);
@@ -347,10 +385,15 @@ final class Signatures {
             result = result.withProfile(StageAttacks.perfect(result.profile(), 1 + spec.perfectMore() / 100.0, "完美時機")
                     .derive(result.profile().id() + SupportProcs.PERFECT_SUFFIX, Set.of(), Set.of()));
         }
+        if (spec.accumulate()) {
+            // 2026-11-01 照 PoE2 Bonestorm：stages 是放開時手上有幾支（heldCount），全部射出（每段的投射物數量已經算在支數裡）
+            return Burgeon.apply(result.withAreaAndProjectiles(result.areaScale(), Math.max(1, Math.min(SkillBuild.MAX_PROJECTILES, stages))),
+                    sheet, heldSeconds); // 漸熾照樣算
+        }
         if (spec.stages() > 0) {
             final double more = spec.stageMore() * (stages - 1) / 100.0;
             if (more > 0) {
-                result = result.withProfile(result.profile().withLocal(List.of(Modifier.more(StatKeys.DAMAGE, more, "蓄力"))));
+                result = result.withProfile(result.profile().withLocal(List.of(Modifier.more(StatKeys.DAMAGE, more, chargeWord(build.definition()))))); // 2026-11-01：引導技能寫「引導」
             }
             final double area = spec.stageArea() * (stages - 1) / 100.0;
             if (area > 0) {
@@ -387,6 +430,9 @@ final class Signatures {
 
     /** 放之前（SkillService 呼叫）：霆落矛、擲雷槍有怒星就消耗一顆，回傳這一次要用的技能。 */
     SkillBuild beforeCast(final Player player, final SkillDefinition definition, final SkillBuild build, final PlayerState state, final long now) {
+        if (Bonestorm.ID.equals(definition.id())) {
+            return bonestormCharges(player, definition, build, state, now); // 2026-11-01 照 PoE2 Bonestorm：用掉全部銳星換更大的爆炸
+        }
         final String signature = service.config().signature(definition.id());
         if ("whirl".equals(signature)) {
             // 2026-10-28 照 PoE2：揮矛那一圈跟這一下之後的旋風一樣大（每多一階 +0.3 格）
@@ -417,6 +463,37 @@ final class Signatures {
         state.notice("<#ffe14a>" + tw.exilecore.item.ItemRenderer.escape(definition.name()) + " 消耗怒星：分裂成 " + copies + " 支", now + 30);
         plugin.players().display(player, state);
         return build.withAreaAndProjectiles(build.areaScale(), build.projectiles() + copies - 1);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Bonestorm（碎骨飛矢）：放出時用掉身上全部的銳星（恆星、品質「機率不用掉」照樣算用掉、倍星算兩顆，
+     * 最多照身上原本的顆數用；跟驚雷劈一樣），有用掉就每一支骨刺的爆炸半徑 +0.7 格、每顆再更多 40% 範圍（{@link Bonestorm#radiusScale}）。
+     */
+    private SkillBuild bonestormCharges(final Player player, final SkillDefinition definition, final SkillBuild build, final PlayerState state,
+                                        final long now) {
+        if (plugin.combat() == null || plugin.combat().charges() == null || build.explode() <= 0) {
+            return build;
+        }
+        final StatSheet effective = build.profile().effective(state.sheet());
+        final int held = plugin.combat().charges().count(player, "power");
+        int consumed = 0;
+        int benefit = 0;
+        while (consumed < Math.min(Bonestorm.MAX_CONSUMED, held)) {
+            final int got = plugin.combat().charges().spend(player, "power", effective, build.profile().tags());
+            if (got <= 0) {
+                break;
+            }
+            consumed++;
+            benefit += got;
+        }
+        if (benefit <= 0) {
+            return build;
+        }
+        final double radius = build.explode() * Bonestorm.radiusScale(benefit);
+        final String shown = state.notice(now);
+        state.notice((shown == null ? "" : shown + " ") + String.format(Locale.ROOT, "<#c7a6ff>用掉 %d 顆銳星：爆炸半徑 %.1f 格", benefit, radius), now + 30);
+        plugin.players().display(player, state);
+        return build.withExplodeAndRange(radius, build.range());
     }
 
     /** 你的其他技能打在插著的霆落矛附近：把它提早引爆（2026-10-15，照 PoE2「被其他技能引爆」）。 */
@@ -833,7 +910,8 @@ final class Signatures {
         final SkillBuild base = SkillBuild.of(service.config(), sub, parent.level(), state.level(), false, List.of(), state.weaponTags(),
                 plugin.players().sheet(player));
         return base.withProfile(parent.profile().scaled(share, sub.name()).derive(sub.id(), sub.tags(), Set.of()))
-                .withAreaAndProjectiles(base.areaScale() * Math.max(0.5, parent.areaScale()), base.projectiles());
+                .withAreaAndProjectiles(base.areaScale() * Math.max(0.5, parent.areaScale()), base.projectiles())
+                .withGroundRatio(parent.groundDurationRatio()); // 2026-11-01 照 PoE2 Persistent Ground：霆矛的感電地面照原技能的
     }
 
     /** 登出、換角色：清掉這個人的旋風、插著的矛、火星。 */

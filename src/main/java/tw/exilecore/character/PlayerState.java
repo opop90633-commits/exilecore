@@ -338,11 +338,91 @@ public final class PlayerState {
         if (StatKeys.flag(sheet, StatKeys.FLAG_CHAOS_IMMUNE)) {
             return 1;
         }
-        // 煉獄使者的貝達特（PoE2）：每一個保留 25% 生命
+        // 2026-10：光環改保留精魂，生命不再被保留
+        // 2026-11-01 照 PoE2 煉獄使者的貝達特之手／之眼／之志（「Reserves 25% of Life」）：改成真的保留生命（innateReservedLifePercent），
+        //   最大生命不變；這次之前做成最大生命每一個更少 25%（照最大生命算的回復、守護、% 最大生命跟著變少）
+        return Math.max(1, sheet.get(StatKeys.LIFE_MAX));
+    }
+
+    /** 2026-11-01 照 PoE2（PoB2 ExtraLifeReserved「Reserves 25% of Life」）：貝達特每一個保留的生命 %。 */
+    public static final double BEIDAT_RESERVED_PERCENT = 25;
+
+    /**
+     * 2026-11-01：不是光環來的、關不掉的保留生命 %（PoB2 的 ExtraLifeReserved／uncancellable）：煉獄使者的貝達特之手／之眼／之志各 25%。
+     * 血契（光環）保留的在 {@link tw.exilecore.stats.LineageKeys#LIFE_RESERVED}；兩個加起來是 {@link #reservedLifeFraction(StatSheet)}。
+     */
+    public static double innateReservedLifePercent(final StatSheet sheet) {
         final int beidat = (StatKeys.flag(sheet, StatKeys.BEIDAT_HAND) ? 1 : 0) + (StatKeys.flag(sheet, StatKeys.BEIDAT_GAZE) ? 1 : 0)
                 + (StatKeys.flag(sheet, StatKeys.BEIDAT_WILL) ? 1 : 0);
-        // 2026-10：光環改保留精魂，生命不再被保留
-        return Math.max(1, sheet.get(StatKeys.LIFE_MAX) * (1 - 0.25 * beidat));
+        return BEIDAT_RESERVED_PERCENT * beidat;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 的保留生命（血契 Atziri's Communion）：被保留的最大生命比例（0～0.99）。
+     * 保留的生命不能回復：最大生命不變（照最大生命算的回復、守護、% 最大生命都照原本的），目前生命最多到 {@link #unreservedLife()}。
+     */
+    public static double reservedLifeFraction(final StatSheet sheet) {
+        // 2026-11-01：加上貝達特（innateReservedLifePercent）；這次之前只有血契
+        final double percent = Math.max(0, sheet.flat(tw.exilecore.stats.LineageKeys.LIFE_RESERVED, java.util.Set.of()))
+                + innateReservedLifePercent(sheet);
+        return percent <= 0 ? 0 : Math.min(0.99, percent / 100.0);
+    }
+
+    public double reservedLifeFraction() {
+        return reservedLifeFraction(sheet);
+    }
+
+    /** 沒被保留的最大生命（目前生命的上限；沒有保留就等於最大生命，至少 1）。 */
+    public static double unreservedLife(final StatSheet sheet) {
+        final double max = maxLife(sheet);
+        final double reserved = reservedLifeFraction(sheet);
+        return reserved <= 0 ? max : Math.max(1, max * (1 - reserved));
+    }
+
+    public double unreservedLife() {
+        return unreservedLife(sheet);
+    }
+
+    /** 2026-11-01：被保留的生命點數（最大生命 − 沒被保留的；沒有保留是 0）。動作列、隊伍框顯示用。 */
+    public static double reservedLife(final StatSheet sheet) {
+        return Math.max(0, maxLife(sheet) - unreservedLife(sheet));
+    }
+
+    public double reservedLife() {
+        return reservedLife(sheet);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2：「滿血」＝目前生命等於「沒被保留的最大生命」（保留生命時永遠到不了最大生命）。
+     * 全部「滿血／沒滿血／生命 x% 以上」的判斷都走這裡；低血（35%）照最大生命算，不走這裡。
+     */
+    public static boolean isFullLife(final double life, final double unreservedLife) {
+        return unreservedLife > 0 && life >= unreservedLife - FULL_LIFE_EPSILON;
+    }
+
+    /** 目前生命佔「沒被保留的最大生命」的比例（0～1；「生命 90% 以上」這類判斷用）。 */
+    public static double lifeFractionOfUnreserved(final double life, final double unreservedLife) {
+        return unreservedLife <= 0 ? 1 : Math.max(0, Math.min(1, life / unreservedLife));
+    }
+
+    /** 還差多少才滿血（沒被保留的最大生命 − 目前生命，至少 0）。 */
+    public static double missingLife(final double life, final double unreservedLife) {
+        return Math.max(0, unreservedLife - life);
+    }
+
+    /** 判斷「滿血」的浮點誤差。 */
+    public static final double FULL_LIFE_EPSILON = 1e-6;
+
+    public boolean isFullLife() {
+        return isFullLife(life(), unreservedLife());
+    }
+
+    public double lifeFractionOfUnreserved() {
+        return lifeFractionOfUnreserved(life(), unreservedLife());
+    }
+
+    public double missingLife() {
+        return missingLife(life(), unreservedLife());
     }
 
     public double mana() {
@@ -429,7 +509,7 @@ public final class PlayerState {
     }
 
     public void setLife(final double value) {
-        this.life = Math.max(0, Math.min(maxLife(), value));
+        this.life = Math.max(0, Math.min(unreservedLife(), value)); // 2026-11-01：保留的生命回不來（這次之前上限是最大生命）
     }
 
     public void setMana(final double value) {
@@ -445,7 +525,7 @@ public final class PlayerState {
 
     /** 全部回滿（登入、重生）。 */
     public void restoreAll() {
-        life = maxLife();
+        life = unreservedLife(); // 2026-11-01：保留的生命不回（這次之前回到最大生命）
         mana = maxMana();
         energyShield = maxEnergyShield();
         leech.clear();
@@ -492,7 +572,7 @@ public final class PlayerState {
         }
         final double before = life;
         setLife(life + amount);
-        if (life >= maxLife() - 1e-6) {
+        if (isFullLife()) { // 2026-11-01：沒被保留的生命滿了就算滿（PlayerState#isFullLife）
             leech.clear();
         }
         return life - before;
@@ -542,7 +622,7 @@ public final class PlayerState {
 
     /** 重算後把目前值夾在新上限內。 */
     public void clampToMax() {
-        life = Math.min(life, maxLife());
+        life = Math.min(life, unreservedLife()); // 2026-11-01：保留生命（血契）
         mana = Math.min(mana, maxMana());
         manaOverflow = Math.max(0, Math.min(manaOverflow, maxMana() * (OVERFLOW_CAP - 1)));
         energyShield = Math.min(energyShield, maxEnergyShield());

@@ -481,7 +481,6 @@ class MechanicsTest {
         assertEquals(0, quick.cooldownTicks(), "沒有冷卻");
         assertNull(quick.deploy(), "攻擊不會變成圖騰或陷阱");
         assertFalse(quick.echo());
-        assertTrue(config.support("gather_bedrock").supports(flicker), "戰星輔助掛得上");
         assertTrue(config.support("rage").supports(flicker), "怒火掛得上（近戰）");
         assertFalse(config.support("twin_chant").supports(flicker));
         assertNull(config.skill("soaring_smash").cooldownBypass(), "其他技能沒有");

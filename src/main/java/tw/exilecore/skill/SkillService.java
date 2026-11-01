@@ -462,6 +462,20 @@ public final class SkillService {
         }
     }
 
+    /** 2026-11-01 照 PoE2 Bursting Plague（瘟潰）：玩家的技能讓怪物中毒了（每秒傷害、到哪個 tick）。 */
+    public void poisonApplied(final Player player, final String skillId, final LivingEntity target, final double dps, final long untilTick) {
+        if (player != null && skillId != null && target != null) {
+            procs().poisonApplied(player, skillId, target, dps, untilTick);
+        }
+    }
+
+    /** 2026-11-01 照 PoE2 Bursting Plague（瘟潰）：怪物身上某個玩家的中毒跳了一次（每秒傷害、這一跳幾秒）。 */
+    public void poisonTicked(final LivingEntity target, final java.util.UUID source, final double dps, final double seconds) {
+        if (target != null && source != null) {
+            procs().poisonTicked(target, source, dps, seconds);
+        }
+    }
+
     /** 最後一下打這隻怪的技能（是這個玩家打的、1 秒內）；沒有就 null。 */
     public String lastSkill(final LivingEntity entity, final Player player) {
         return procs().lastSkill(entity, player);
@@ -606,8 +620,8 @@ public final class SkillService {
         final PlayerState state = plugin.players().get(player);
         // 2026-10-29 照 PoE2：技能面板上有這個技能（先祖之魂這類賦予的技能可以插輔助）就用面板上的組合（等級、輔助）；這次之前一律沒有輔助
         final SkillBuild equipped = equippedBuild(player, skillId);
-        final SkillBuild build = equipped != null ? equipped : SkillBuild.of(config, definition, config.maxLevelFor(state.level()), state.level(), false, List.of(),
-                state.weaponTags(), plugin.players().sheet(player));
+        final SkillBuild build = djinnScaled(state, equipped != null ? equipped : SkillBuild.of(config, definition, config.maxLevelFor(state.level()), state.level(), false, List.of(),
+                state.weaponTags(), plugin.players().sheet(player)), List.of());
         if (definition.mechanic() == Mechanic.SUMMON && definition.summon() != null) {
             // 2026-10-30 修正：召喚技能（先祖之魂）被觸發時在圖騰旁叫出來；這次之前交給 procCast，召喚不在那裡處理，什麼都沒發生
             if (at.getWorld() != null && player.isOnline()) {
@@ -620,6 +634,23 @@ public final class SkillService {
         procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), build, null);
     }
 
+    /**
+     * 2026-11-01 照 PoE2 Persistent Ground：同 {@link #triggerSkill(Player, String, Location)}，但這個技能是 parentId 留下的地面效果
+     * （靈影奔騰的感電地面）：照面板上 parentId 的「地面效果持續時間增加」拉長（{@link SupportProcs#withParentGround}）。
+     */
+    public void triggerGroundSkill(final Player player, final String skillId, final Location at, final String parentId) {
+        final SkillDefinition definition = config.skill(skillId);
+        if (definition == null || definition.mechanic() == Mechanic.SUMMON) {
+            triggerSkill(player, skillId, at);
+            return;
+        }
+        final PlayerState state = plugin.players().get(player);
+        final SkillBuild equipped = equippedBuild(player, skillId);
+        final SkillBuild build = equipped != null ? equipped : SkillBuild.of(config, definition, config.maxLevelFor(state.level()), state.level(), false, List.of(),
+                state.weaponTags(), plugin.players().sheet(player));
+        procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), procs().withParentGround(player, state, parentId, build), null);
+    }
+
     /** 2026-10-29：在某個位置觸發一個技能，指定等級並多加 extra（克拉里的分身照欺瞞的等級、吃連續使用的更多傷害）。不花魔力、沒有冷卻。 */
     public void triggerSkill(final Player player, final String skillId, final Location at, final int level, final List<Modifier> extra) {
         final SkillDefinition definition = config.skill(skillId);
@@ -629,8 +660,59 @@ public final class SkillService {
         final PlayerState state = plugin.players().get(player);
         // 2026-10-31 修正：extra 先疊進屬性表再算（範圍效果在這裡才算得到——靈影奔騰品質的震波半徑；這次之前算完才加，範圍不變）
         final StatSheet sheet = plugin.players().sheet(player);
+        if (DjinnCommands.gemSupported(skillId) && djinnSheet(state, definition) != null) {
+            // 2026-11-01：巨靈的招式（分身爆炸、刀刃、熔岩浪、龍捲、烙印）打中時照巨靈的屬性表結算（CombatListener），疊在你屬性表上的 extra
+            //   （珂芮絲的詭計連續使用的更多傷害…）不會跟過去：extra 放進技能自己的修飾器；範圍、持續照巨靈的（djinnScaled）。
+            //   這次之前（10-31 起）extra 只疊在你的屬性表，分身爆炸、刀刃吃不到連續使用的更多傷害
+            final SkillBuild build = SkillBuild.of(config, definition, level, state.level(), false, List.of(), state.weaponTags(), sheet,
+                    Set.of(), extra);
+            procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), djinnScaled(state, build, extra), null);
+            return;
+        }
         final SkillBuild build = SkillBuild.of(config, definition, level, state.level(), false, List.of(), state.weaponTags(),
                 extra.isEmpty() || sheet == null ? sheet : sheet.overlay(extra));
+        procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), build, null);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2（Minion Types）：巨靈的招式（{@link DjinnCommands#gemSupported}；被觸發的分身爆炸、刀刃、熔岩浪、火焰龍捲、
+     * 羅贊的烙印、狂熱斬擊）的範圍、投射物數、持續時間照巨靈的屬性表（疊上巨靈召喚技能上的輔助）算，等級、傷害表照原本的 build。
+     * 跟面板上的指令（{@link #build}）一樣；巨靈沒叫出來、不是巨靈的招式原樣回傳。這次之前照你自己的範圍、持續時間。
+     *
+     * @param extra 這一下另外加的（照樣疊在巨靈的屬性表上：龍捲照機關品質更多的持續時間）
+     */
+    SkillBuild djinnScaled(final PlayerState state, final SkillBuild build, final List<Modifier> extra) {
+        if (build == null || !DjinnCommands.gemSupported(build.definition().id())) {
+            return build;
+        }
+        final StatSheet djinn = djinnSheet(state, build.definition());
+        if (djinn == null) {
+            return build;
+        }
+        final SkillBuild scaled = SkillBuild.of(config, build.definition(), build.gemLevel(), state.level(), false, List.of(), state.weaponTags(),
+                extra.isEmpty() ? djinn : djinn.overlay(extra));
+        return build.withAreaAndProjectiles(scaled.areaScale(), scaled.projectiles()).withDurationScale(scaled.durationScale());
+    }
+
+    /**
+     * 2026-11-01 照 PoE2（Kelari's Malediction：CorpseBeetlesPlayer 的 minionSkillTypes Spell、Physical、Area、Damage）：
+     * 觸發 hostId 叫出來的召喚物的那一下（屍甲蟲爆炸），帶上面板上 hostId（克拉里的惡言）掛的輔助（拿掉 minion 標籤，跟召喚物的屬性表一樣）。
+     * hostId 不在面板上就照 {@link #triggerSkill(Player, String, Location)}。這次之前屍甲蟲一律沒有輔助。
+     */
+    public void triggerHosted(final Player player, final String hostId, final String skillId, final Location at) {
+        final SkillDefinition definition = config.skill(skillId);
+        final SkillBuild host = equippedBuild(player, hostId);
+        if (definition == null || host == null || host.supports().isEmpty() || at.getWorld() == null || !player.isOnline()) {
+            triggerSkill(player, skillId, at);
+            return;
+        }
+        final PlayerState state = plugin.players().get(player);
+        final List<Modifier> carried = new ArrayList<>();
+        for (final SupportDefinition support : host.supports()) {
+            carried.addAll(MinionSheets.stripMinion(MinionTypes.forHost(support, host.definition(), support.allModifiers())));
+        }
+        final SkillBuild build = SkillBuild.of(config, definition, config.maxLevelFor(state.level()), state.level(), false, List.of(),
+                state.weaponTags(), plugin.players().sheet(player), Set.of(), carried);
         procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), build, null);
     }
 
@@ -892,7 +974,8 @@ public final class SkillService {
         int stages = 1;
         if (spec.stages() > 0) {
             final double speed = Signatures.stageSpeed(build.definition(), spec, interval);
-            hold = (long) Math.ceil(spec.stageTicks(speed) * (spec.stages() - 1));
+            hold = (long) Math.ceil(spec.accumulate() ? spec.fullTicks(speed, build.projectiles()) // 2026-11-01 照 PoE2 Bonestorm：累積到最多幾支
+                    : spec.fullStageTicks(speed)); // 2026-11-01：locked_start（珂芮絲的裁決）是 stages 段；其他照舊 stages − 1 段
             stages = spec.stages();
         }
         if (spec.perfect()) {
@@ -2132,6 +2215,7 @@ public final class SkillService {
         if (alternating && state.peekHandIsOff()) {
             build = build.withProfile(tw.exilecore.character.DualWield.offHand(build.profile(), offHand));
         }
+        build = dualWieldSpeed(build, offHand != null); // 2026-11-01 照 PoE2 Armour Breaker：雙持時攻擊速度更多 40%
         // 英靈圖騰（2026-10 PoE2）：面板上下一格要放錘子攻擊技能，英靈用它打
         SkillBuild linked = null;
         List<SkillBuild> moreLinked = List.of();
@@ -2164,7 +2248,7 @@ public final class SkillService {
             plugin.players().display(player, state);
             return;
         }
-        // 2026-10-26（PoE2）：要榮耀才能用的技能（熔魂嘯、澤嘯）、要先移動 10 格才能用的戰吼（震嘯）
+        // 2026-10-26（PoE2）：要榮耀才能用的技能（熔魂嘯、澤嘯）、要先移動 5 格才能用的戰吼（震嘯；2026-11-01 照站長，這次之前 10 格）
         final String usage = supportMechanics().usageProblem(player, build);
         if (usage != null) {
             state.notice("<gray>" + usage, now + 10);
@@ -2248,6 +2332,14 @@ public final class SkillService {
         final SkillRuntime.Release release = chargeSpec != null && runtime.releasing != null
                 && runtime.releasing.skillId().equals(definition.id()) ? runtime.releasing : null;
         runtime.releasing = null;
+        if (chargeSpec != null && release == null && DjinnCommands.channelled(definition.id())) {
+            // 2026-11-01 照 PoE2 Kelari's Judgment：開始引導之前就要先召喚珂芮絲、在你身邊（引導的指令沒有放開之前的那次檢查）
+            final String djinnProblem = tw.exilecore.ascendancy.AscendancyEffects.cost(player, state, definition, 0).problem();
+            if (djinnProblem != null) {
+                fail(player, runtime, state, djinnProblem, now);
+                return;
+            }
+        }
         if (chargeSpec != null && release == null) {
             if (signatures.press(player, runtime, state, key, definition, build, chargeSpec, preferred, sheet, now)) {
                 // 2026-10-26 照 PoE2 的引導：開始時先扣一次（逐秒扣的先扣一秒）、衝鋒與持續作用記下技能
@@ -2386,14 +2478,28 @@ public final class SkillService {
         build = supportMechanics().lineage().prepare(player, build); // 2026-10-27 照 PoE2：血脈輔助（血滲、狂伐、傲寒、積勢、雪封）
         // 冰緩讓攻擊與施法變慢（動作速度 0.7 = 間隔 ÷ 0.7）
         final double speed = plugin.ailments() == null ? 1.0 : Math.max(0.05, plugin.ailments().actionSpeed(player));
-        final double interval = build.intervalTicks(sheet) / speed / onUse.speedMore();
+        // 2026-11-01 照 PoE2 Cadence（連拍）：最近每用過一次攻擊速度更多 8%（滿 6 次鎖 10 秒）
+        final double cadence = definition.isAttack() ? supportMechanics().extras().cadence(player, build) : 1.0;
+        // 2026-11-01 照 PoE2（PoB2 Command*Player castTime 0.4）：對巨靈下指令是你很快的一下（0.4 秒 ÷ 你的施法速度），巨靈接著用牠招式的
+        //   施法時間 ÷ 巨靈的施法速度才出手（djinnTicks：效果延後到那時候，DjinnCommands）；這次之前整個指令是你的一次施法——
+        //   用巨靈招式的施法時間（2.3 秒的清算你也要站 2.3 秒）、照你的施法速度、馬上出手
+        final StatSheet commanding = commandingDjinn(state, definition);
+        final double interval = (commanding != null ? commandTicks(build, sheet) : build.intervalTicks(sheet)) / speed / onUse.speedMore() / cadence;
+        // 2026-11-01 照 PoE2 Kelari's Judgment：引導的指令放開時珂芮絲已經陪你引導完了，刀刃馬上落下（沒有另外的施法時間）
+        final long djinnTicks = commanding != null && DjinnCommands.COMMANDS.contains(definition.id()) && !DjinnCommands.channelled(definition.id())
+                ? djinnCastTicks(commanding, definition) : 0;
+        if (djinnTicks > 0) {
+            djinnCasting(player, definition, djinnTicks, preferred != null ? preferred.getLocation() : targets.aimPoint(Origin.of(player), DJINN_AIM_RANGE));
+        }
         // 2026-10-28 照 PoE2 Furious Slam、Rolling Slam 的品質：使用這個技能的動作期間（一次攻擊時間）暈眩門檻增加 x%
         final double stunWhileUsing = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.STUN_THRESHOLD_WHILE_USING);
         if (stunWhileUsing > 0) {
             buff(player, ACTION_STUN_BUFF, definition.name(), (int) Math.max(1, Math.round(interval)),
                     List.of(tw.exilecore.stats.Modifier.increased(StatKeys.STUN_THRESHOLD, stunWhileUsing / 100.0, definition.name())));
         }
-        runtime.readyAt = SkillMath.nextReady(runtime.readyAt, now, release != null && chargeSpec.stages() <= 0 ? interval * RELEASE_RECOVERY : interval);
+        // 2026-11-01 照 PoE2 Kelari's Judgment：引導的指令放開就結束（引導本身就是你下指令的那段），不用再花一次下指令的 0.4 秒
+        runtime.readyAt = SkillMath.nextReady(runtime.readyAt, now, release != null && (chargeSpec.stages() <= 0 || DjinnCommands.channelled(definition.id()))
+                ? interval * RELEASE_RECOVERY : interval);
         // 2026-10-27 照站長「放技能減速全部移除」：放技能不再變慢（減少懲罰的效果改成平衡等效的移動速度）；
         // 這次之前（2026-10-26 照 PoE2）放技能的那段時間移動速度更少 70%（SkillMovePenalty.apply）
         if ((key != SkillLoadout.KEY_LEFT && key != SkillLoadout.KEY_SNEAK_LEFT) || runtime.fromQueue) {
@@ -2527,6 +2633,17 @@ public final class SkillService {
             plugin.players().display(player, state);
             return;
         }
+        if (definition.mechanic() == Mechanic.WARCRY && djinnTicks > 0) {
+            // 2026-11-01 照 PoE2：娜瑟菈的綠洲、泉是娜瑟菈的招式：她放完（djinnTicks）才生效；這次之前你按下去馬上生效
+            procs().onUse(player, definition, player.getLocation());
+            final SkillBuild ordered = build;
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline() && minions != null && minions.djinnLocation(player, DjinnCommands.commandedDjinn(definition.id())) != null) {
+                    warcries.shout(player, runtime, ordered);
+                }
+            }, djinnTicks);
+            return;
+        }
         if (definition.mechanic() == Mechanic.WARCRY) {
             procs().onUse(player, definition, player.getLocation()); // 2026-10：戰吼觸發的專屬技能在腳下
             final String notice = warcries.shout(player, runtime, build);
@@ -2593,10 +2710,12 @@ public final class SkillService {
             tw.exilecore.combat.KeystoneEffects.channelled(plugin, player, state, now); // 2026-10-26 天賦樹：引導 2 秒後解除一個詛咒
             final double more = channelSheet.flat(StatKeys.CHANNEL_MORE, Set.of()) * (runtime.channelStage - 1) / 100.0;
             if (more > 0) {
-                build = build.withProfile(build.profile().withLocal(List.of(tw.exilecore.stats.Modifier.more(StatKeys.DAMAGE, more, "蓄力"))));
+                build = build.withProfile(build.profile().withLocal(List.of(tw.exilecore.stats.Modifier.more(StatKeys.DAMAGE, more, Signatures.chargeWord(definition)))));
             }
             build = Burgeon.apply(build, sheet, (now - runtime.channelSince) / 20.0); // 2026-10-27 照 PoE2 Burgeon：引導越久越痛
-            state.notice(String.format(Locale.ROOT, "<#ffb070>%s 蓄力 %d／%d", ItemRenderer.escape(definition.name()), runtime.channelStage, maxStages), now + 20);
+            // 2026-11-01 照站長：引導技能（焚流…）寫「引導」；這次之前一律「蓄力」
+            state.notice(String.format(Locale.ROOT, "<#ffb070>%s %s %d／%d", ItemRenderer.escape(definition.name()), Signatures.chargeWord(definition),
+                    runtime.channelStage, maxStages), now + 20);
         }
         // 2026-10：封印：放的時候把蓄好的封印全部解開
         int sealRepeats = 0;
@@ -2680,6 +2799,11 @@ public final class SkillService {
         }
         if (release != null) {
             build = signatures.applyRelease(player, state, build, chargeSpec, release, now); // 完美時機、疊層
+            if (DjinnCommands.channelled(definition.id())) {
+                // 2026-11-01 照 PoE2 Kelari's Judgment（djinn_hand_slam_minimum／maximum_area_of_effect_+%_final −20／+20）：震波範圍 −20%～+20%
+                build = build.withAreaAndProjectiles(build.areaScale() * Math.sqrt(DjinnCommands.judgmentAreaRoll(plugin.random().nextDouble())),
+                        build.projectiles());
+            }
         }
         build = signatures.beforeCast(player, definition, build, state, now); // 2026-10-15：霆落矛、擲雷槍消耗狂怒球
         build = spears().beforeCast(player, definition, build, state, now); // 2026-10-27 照 PoE2：擲矛、炎爆矛消耗怒星
@@ -2707,6 +2831,11 @@ public final class SkillService {
                 }
                 executor.executeFrom(Origin.at(player, from, direction.normalize()), build, aim);
             }
+        } else if (djinnTicks > 0) {
+            // 2026-11-01 照 PoE2：巨靈的指令：巨靈放完招式（djinnTicks）才出手，目標照你下指令那一刻的準心；投射物從巨靈身上射出
+            //   （克拉里的殘酷：射向地面的飛刀）。這次之前你按下去馬上從你身上放出來
+            airborne = 0;
+            djinnOrder(player, build, preferred, djinnTicks);
         } else if ("ember".equals(config.signature(definition.id()))) {
             airborne = 0;
             signatures.conjureEmber(player, build, preferred, now); // 星火連珠（PoE2）：火星先懸在頭上
@@ -2741,7 +2870,18 @@ public final class SkillService {
                 dropInfusionRemnantLater(player, useLocation(player, definition, build, preferred), resourceSpec, remnantMods);
             }
         }
-        supportMechanics().afterEmpowered(player, empowering, build, preferred); // 2026-10-26：餘震、盾波、冰緩地面
+        if (djinnTicks > 0) {
+            // 2026-11-01 照 PoE2：巨靈的招式放完才有連瀑（羅贊的清算）這些放完之後的效果
+            final SkillBuild ordered = build;
+            final SupportMechanics.Empowering used = empowering;
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (player.isOnline()) {
+                    supportMechanics().afterEmpowered(player, used, ordered, preferred);
+                }
+            }, djinnTicks);
+        } else {
+            supportMechanics().afterEmpowered(player, empowering, build, preferred); // 2026-10-26：餘震、盾波、冰緩地面
+        }
         if (definition.mechanic() != Mechanic.LEAP) {
             procs().onUse(player, definition, useLocation(player, definition, build, preferred)); // 2026-10：輔助觸發的專屬技能
         }
@@ -2836,8 +2976,10 @@ public final class SkillService {
         final double echoChance = build.echo() || definition.isAttack() ? 0 : build.qualityFlat(tw.exilecore.stats.GemQualityKeys.ECHO_CHANCE);
         if (build.echo() || echoChance > 0 && plugin.random().nextDouble() * 100 < echoChance) {
             // 2026-10-26 照 PoE2 天賦樹：「回響的法術增加 x% 範圍」（只放大回響那一次；範圍倍率開根號）
-            final double echoArea = sheet.increased(tw.exilecore.stats.KeystoneKeys.ECHO_AREA, build.profile().tags());
-            final SkillBuild echoBuild = echoArea > 0 && build.areaScale() != 1.0
+            // 2026-11-01 照 PoE2 Spell Echo（雙詠）：回響的那一次範圍增加 40%（輔助寫同一個鍵）——照技能的屬性表讀（含輔助）；
+            // 這次之前只讀角色身上的，而且範圍倍率剛好 1 的（沒有其他範圍加成）不放大
+            final double echoArea = build.profile().effective(sheet).increased(tw.exilecore.stats.KeystoneKeys.ECHO_AREA, build.profile().tags());
+            final SkillBuild echoBuild = echoArea > 0 && build.areaScale() > 0
                     ? build.withAreaAndProjectiles(build.areaScale() * Math.sqrt(1 + echoArea), build.projectiles()) : build;
             runtime.echo = new SkillRuntime.Echo(now + 5, echoBuild, preferred == null ? null : preferred.getUniqueId());
             plugin.players().conditions().note(player, tw.exilecore.stats.TreeConditions.ECHOES, definition.id() + "@" + now, now); // 2026-10-27：最近回響過幾次
@@ -3181,7 +3323,7 @@ public final class SkillService {
             return "要錘子的攻擊技能";
         }
         if (definition.cooldown() > 0 || SkillExecutor.hasFlag(definition, StatKeys.CHANNEL_STAGES) || !SkillBuild.deployable(definition)) {
-            return "不能是有冷卻、蓄力、位移的技能";
+            return "不能是有冷卻、引導、位移的技能"; // 2026-11-01 照站長：引導技能不叫蓄力
         }
         return TotemRules.ancestralProblem(definition); // 2026-10-27 照 PoE2 Ancestral Warrior Totem：主要寶石、引導、有使用條件、原作不能給圖騰的也擋掉
     }
@@ -3278,7 +3420,9 @@ public final class SkillService {
         final double feast = feastScale(player, build);
         final List<tw.exilecore.stats.Modifier> granted = feast == 1.0 ? mods : scaledMods(mods, feast);
         buff(player, build.definition().weapons().isEmpty() ? "guard" : "guard." + build.definition().id(), build.definition().name(),
-                (int) Math.round(guard.duration() * build.durationScale() * 20), build.withQualityEffects(granted, 1.0, build.definition().name()));
+                // 2026-11-01 照 PoE2 Persistent Ground：聖地（Consecrate）的增益就是站在奉獻地面上的效果，照地面效果的持續時間
+                //   （groundDurationScale；其他守勢技能沒有「地面效果持續時間增加」，跟 durationScale 一樣）
+                (int) Math.round(guard.duration() * build.groundDurationScale() * 20), build.withQualityEffects(granted, 1.0, build.definition().name()));
     }
 
     /** 噬屍宴：原作一次最多吃 5 具屍體；我們固定算 3 具的量（不用屍體）。 */
@@ -3372,6 +3516,11 @@ public final class SkillService {
         }
         // 2026-10-27 效能：只讀 PDC 的基底代號（施放失敗時要看背包 36 格；這次之前每格整份解析）
         return plugin.items().base(stack);
+    }
+
+    /** 2026-11-01 照站長（原作的幻影算你的友軍）：你身邊 radius 格內有沒有虛空形態的幻影（「存在範圍內有友軍」的條件用）。 */
+    public boolean astralImageNear(final Player player, final double radius) {
+        return hollowImages.imageNear(player, radius);
     }
 
     /** 2026-10-28 照 PoE2 Hollow Form：按下去開始引導（孔裡要有能用的近戰攻擊）；引導中的每一下交給 {@link HollowImages#beat}。 */
@@ -3633,7 +3782,8 @@ public final class SkillService {
             final SkillBuild build = build(state, sheet, definition, entry);
             final AuraService.Fit fit = AuraService.fit(build, AuraService.capacity(sheet) - total, AuraService.wantedCount(state, definition.id())); // 2026-10-29：玩家設定的數量
             // 2026-10-27 照 PoE2 血契：保留生命付不起的也不開（跟 AuraService 一樣）
-            if (fit == null || !AuraService.lifeFits(build, PlayerState.maxLife(sheet), AuraService.lifeLocked(sheet), lifeTotal)) {
+            if (fit == null || !AuraService.lifeFits(build, PlayerState.maxLife(sheet), AuraService.lifeLocked(sheet),
+                    PlayerState.innateReservedLifePercent(sheet) + lifeTotal)) { // 2026-11-01：加上貝達特（關不掉的保留生命）
                 skipped.add(definition.name());
                 continue;
             }
@@ -3651,7 +3801,8 @@ public final class SkillService {
             self.add(tw.exilecore.stats.Modifier.flat(StatKeys.SPIRIT_RESERVED, total, "光環保留"));
         }
         if (lifeTotal > 0) {
-            self.add(tw.exilecore.stats.Modifier.more(StatKeys.LIFE_MAX, -Math.min(100, lifeTotal) / 100.0, "血契保留"));
+            // 2026-11-01 照 PoE2 保留生命：最大生命不變，記下保留的 %（PlayerState#unreservedLife）；這次之前最大生命更少
+            self.add(tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.LineageKeys.LIFE_RESERVED, Math.min(100, lifeTotal), "血契保留"));
         }
         return new VirtualAuras(List.copyOf(self), List.copyOf(minion), java.util.Map.copyOf(caps), List.copyOf(active), List.copyOf(skipped), total);
     }
@@ -3971,47 +4122,55 @@ public final class SkillService {
     private DpsRow handDps(final PlayerState state, final StatSheet sheet, final StatSheet fullSheet, final FullOn full,
                            final int slot, final int position, final Resolved resolved, final tw.exilecore.character.DualWield.OffHand off) {
         final SkillDefinition definition = resolved.definition();
+        // 2026-11-01 照 PoE2：巨靈的指令照巨靈的屬性表算傷害、暴擊、異常（跟打中時 CombatListener 一樣；巨靈沒叫出來照召喚技能估一份），
+        //   一輪的時間照你下指令＋巨靈施法（珂芮絲的裁決照引導滿 4 段），傷害照引導滿的那一下。這次之前照你的屬性表、巨靈招式的施法時間 ÷ 你的施法速度
+        final StatSheet djinn = DjinnCommands.COMMANDS.contains(definition.id()) ? estimatedDjinnSheet(state, sheet, definition) : null;
+        final StatSheet hitSheet = djinn != null ? djinn : sheet;
+        final StatSheet fullHitSheet = djinn != null ? djinn : fullSheet; // 你身上的戰吼增益不在巨靈身上
         // 2026-10-27：血滲、傲寒（放的時候 LineageMechanics.prepare 才加）照滿魔力估；這次之前面板、網頁沒算
-        final SkillBuild build = LineageMechanics.estimated(onHand(build(state, sheet, resolved), off),
+        final SkillBuild build = LineageMechanics.estimated(onHand(commandBuild(state, sheet, resolved, djinn), off),
                 tw.exilecore.character.PlayerState.maxMana(sheet));
-        final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, build.profile());
-        final double crit = DamageCalculator.critChance(sheet, build.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
-        final double multi = DamageCalculator.critMultiplier(build.profile().effective(sheet), build.profile().tags(), null) * 100; // 2026-10：跟戰鬥一樣算「增加／更多暴擊加成」
+        final DamagePacket expected = DamageCalculator.expectedOutgoing(hitSheet, build.profile());
+        final double crit = DamageCalculator.critChance(hitSheet, build.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
+        final double multi = DamageCalculator.critMultiplier(build.profile().effective(hitSheet), build.profile().tags(), null) * 100; // 2026-10：跟戰鬥一樣算「增加／更多暴擊加成」
         // 有冷卻的：一輪要等「施放間隔」和「冷卻」比較長的那個。
         // 2026-10：複擊的每一下都要花一次攻擊間隔（打完才能做別的），以前當成同一個間隔裡打完，面板高了好幾倍
         final SkillParams params = build.params();
         final double critFactor = 1 + crit * (multi / 100.0 - 1);
         // 2026-10-24：圖騰（弩台等）算圖騰自己射的（每根每秒幾次 × 同時幾根，吃攻速）；以前算成放圖騰的速度（被冷卻卡住），攻速、圖騰數都不會動
         final double totemRate = totemFireRate(build, sheet);
-        final double hitRate = (totemRate > 0 ? totemRate * build.totems() : hitsPerSecond(repeatGap(build, build.intervalTicks(sheet)), build.cooldownTicks(), build.repeats()))
+        final double cycle = djinnCycleTicks(build, sheet, djinn); // 2026-11-01：巨靈的指令（不是的話 -1）
+        final double hitRate = (totemRate > 0 ? totemRate * build.totems() : hitsPerSecond(repeatGap(build, cycle > 0 ? cycle : build.intervalTicks(sheet)),
+                build.cooldownTicks(), build.repeats()))
                 * castHits(params.burst() == null ? 1 : params.burst().count(), params.aftershock() != null,
                         params.aftershock() == null ? 0 : params.aftershock().more());
         // 2026-10-24：補齊以前漏算的（實測比估計高 6～20 倍的來源）：雙詠的第二發、蓄力層（平常就會有的）
-        final double[] always = alwaysMultipliers(build, sheet);
+        final double[] always = alwaysMultipliers(build, hitSheet);
         final DamagePacket expectedScaled = new DamagePacket(expected).scale(always[1]);
         final double rateScaled = hitRate * always[0];
         // 2026-10-27：「擊中傷害更少」（燎原 II、血崩、焚天之怒、環壁 II…）只乘擊中，異常照沒減的那一下算（跟 CombatListener 一樣）；這次之前面板沒乘
-        final double hitOnly = SupportMechanics.hitOnlyFactor(sheet, build.profile());
+        final double hitOnly = SupportMechanics.hitOnlyFactor(hitSheet, build.profile());
         double dps = expectedScaled.total() * critFactor * rateScaled * hitOnly;
         if (plugin.ailments() != null) {
             // 2026-10：面板以前只算擊中；點燃、流血、中毒的持續傷害與感電的增傷也算進去（對同等級一般怪物、站著不動）
-            dps = plugin.ailments().estimateDps(sheet, build.profile(), expectedScaled, critFactor, rateScaled, state.level(), dps);
+            dps = plugin.ailments().estimateDps(hitSheet, build.profile(), expectedScaled, critFactor, rateScaled, state.level(), dps);
         }
         double fullDps = dps;
         {
             // 全開：用疊上戰吼增益的屬性表重算一次（攻速、傷害都會變），再算敵人的抗性降低、受到的傷害增加、強化攻擊
             // 2026-10-24：沒有戰吼也要走這段（投射物全中、灌注、銳星連打這些「全開」才算的乘區）
-            final SkillBuild fullBuild = LineageMechanics.estimated(onHand(build(state, fullSheet, resolved), off),
+            final SkillBuild fullBuild = LineageMechanics.estimated(onHand(commandBuild(state, fullSheet, resolved, djinn), off),
                     tw.exilecore.character.PlayerState.maxMana(fullSheet)); // 2026-10-27：同上（血滲、傲寒）
             final tw.exilecore.stats.DamagePacket fullExpected = afterResist(
-                    DamageCalculator.expectedOutgoing(fullSheet, fullBuild.profile()), full.resist());
-            final double fullCrit = DamageCalculator.critChance(fullSheet, fullBuild.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
-            final double fullMulti = DamageCalculator.critMultiplier(fullBuild.profile().effective(fullSheet), fullBuild.profile().tags(), null) * 100;
+                    DamageCalculator.expectedOutgoing(fullHitSheet, fullBuild.profile()), full.resist());
+            final double fullCrit = DamageCalculator.critChance(fullHitSheet, fullBuild.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
+            final double fullMulti = DamageCalculator.critMultiplier(fullBuild.profile().effective(fullHitSheet), fullBuild.profile().tags(), null) * 100;
             final double fullCritFactor = 1 + fullCrit * (fullMulti / 100.0 - 1);
             final SkillParams fullParams = fullBuild.params();
             final double fullTotemRate = totemFireRate(fullBuild, fullSheet); // 2026-10-24：同上
+            final double fullCycle = djinnCycleTicks(fullBuild, fullSheet, djinn); // 2026-11-01：巨靈的指令
             final double casts = fullTotemRate > 0 ? fullTotemRate * fullBuild.totems()
-                    : hitsPerSecond(repeatGap(fullBuild, fullBuild.intervalTicks(fullSheet)), fullBuild.cooldownTicks(), fullBuild.repeats());
+                    : hitsPerSecond(repeatGap(fullBuild, fullCycle > 0 ? fullCycle : fullBuild.intervalTicks(fullSheet)), fullBuild.cooldownTicks(), fullBuild.repeats());
             final double fullRate = casts * castHits(fullParams.burst() == null ? 1 : fullParams.burst().count(), fullParams.aftershock() != null,
                     fullParams.aftershock() == null ? 0 : fullParams.aftershock().more());
             double exert = 1.0;
@@ -4026,23 +4185,44 @@ public final class SkillService {
                 }
             }
             // 2026-10-24：全開再加「打起來才有的」：投射物貼臉全中、灌注滿層、瞬影擊滿銳星連打
-            final double[] fullAlways = alwaysMultipliers(fullBuild, fullSheet);
-            final double[] fullOnly = fullOnlyMultipliers(fullBuild, fullSheet);
+            final double[] fullAlways = alwaysMultipliers(fullBuild, fullHitSheet);
+            final double[] fullOnly = fullOnlyMultipliers(fullBuild, fullHitSheet);
             final double fullRateScaled = fullRate * fullAlways[0] * fullOnly[0];
             final DamagePacket fullScaled = new tw.exilecore.stats.DamagePacket(fullExpected).scale(exert * fullAlways[1] * fullOnly[1]);
-            fullDps = fullScaled.total() * fullCritFactor * fullRateScaled * SupportMechanics.hitOnlyFactor(fullSheet, fullBuild.profile()); // 2026-10-27：同上（只減擊中）
+            fullDps = fullScaled.total() * fullCritFactor * fullRateScaled * SupportMechanics.hitOnlyFactor(fullHitSheet, fullBuild.profile()); // 2026-10-27：同上（只減擊中）
             if (plugin.ailments() != null) {
-                fullDps = plugin.ailments().estimateDps(fullSheet, fullBuild.profile(), fullScaled, fullCritFactor, fullRateScaled,
+                fullDps = plugin.ailments().estimateDps(fullHitSheet, fullBuild.profile(), fullScaled, fullCritFactor, fullRateScaled,
                         state.level(), fullDps);
             }
             fullDps *= 1 + full.taken();
         }
         // 2026-10-27：掠獸（只能傷害低血的敵人）：數字照能打的時候算，名字標清楚
-        final String name = StatKeys.flag(build.profile().effective(sheet), tw.exilecore.stats.LineageKeys.LOW_LIFE_ONLY)
+        final String name = StatKeys.flag(build.profile().effective(hitSheet), tw.exilecore.stats.LineageKeys.LOW_LIFE_ONLY)
                 ? definition.name() + "（掠獸：只傷害生命 35% 以下的敵人）" : definition.name();
         return new DpsRow(slot, position, definition.id(), name, dps, Math.max(dps, fullDps), 0,
                 expectedScaled.total() * critFactor * hitOnly, rateScaled, crit, multi);
     }
+
+    /**
+     * 2026-11-01 照 PoE2（active_skill_attack_speed_+%_final_while_dual_wielding；碎甲錘 40）：技能自己寫了
+     * {@link #DUAL_WIELD_ATTACK_SPEED} 的，雙持（主手、副手都拿武器）時攻擊速度更多那麼多 %。純函式（測試用）。
+     */
+    static SkillBuild dualWieldSpeed(final SkillBuild build, final boolean dualWielding) {
+        if (!dualWielding) {
+            return build;
+        }
+        double more = 0;
+        for (final tw.exilecore.stats.Modifier modifier : build.profile().local()) {
+            if (DUAL_WIELD_ATTACK_SPEED.equals(modifier.stat())) {
+                more += modifier.value();
+            }
+        }
+        return more == 0 ? build : build.withProfile(build.profile().withLocal(
+                List.of(tw.exilecore.stats.Modifier.more(StatKeys.ATTACK_SPEED, more / 100.0, "雙持"))));
+    }
+
+    /** 技能自己的「雙持時攻擊速度更多 x%」（FLAT，寫百分比）。 */
+    static final String DUAL_WIELD_ATTACK_SPEED = "attack.speed_more_dual_wield";
 
     /** 2026-10-27：雙持時改成副手出手的技能（跟施放時 DualWield.offHand 一樣）；off 是 null 照原樣。 */
     private static SkillBuild onHand(final SkillBuild build, final tw.exilecore.character.DualWield.OffHand off) {
@@ -4327,6 +4507,7 @@ public final class SkillService {
     SkillBuild build(final PlayerState state, final StatSheet sheet, final SkillDefinition definition, final SkillLoadout.Entry entry) {
         // 2026-10-29 照 PoE2：巨靈的指令是巨靈放的——範圍、持續時間、冷卻回復、暴擊、傷害照巨靈（召喚物）的屬性表；
         //   魔力消耗是你付的，照你的（施法動作的時間由呼叫的地方用你的屬性表算 intervalTicks）。巨靈沒叫出來照舊用你的
+        //   2026-11-01 照 PoE2：你的動作改成下指令的 0.4 秒（DjinnCommands.commandTicks），巨靈照自己的施法速度出手（djinnCastTicks）
         final StatSheet djinn = djinnSheet(state, definition);
         if (djinn != null && djinn != sheet) {
             final SkillBuild yours = buildCached(state, sheet, definition, entry);
@@ -4339,6 +4520,206 @@ public final class SkillService {
     StatSheet djinnSheet(final PlayerState state, final SkillDefinition definition) {
         final String djinn = definition == null ? null : DjinnCommands.djinnFor(definition.id());
         return djinn == null || state == null || minions == null ? null : minions.djinnSheet(state.uuid(), djinn);
+    }
+
+    /** 2026-11-01：巨靈指令的目標最遠幾格（跟指令技能的 impact.range 一樣 20）。 */
+    static final double DJINN_AIM_RANGE = 20;
+
+    /**
+     * 2026-11-01 照 PoE2：你對巨靈下的指令（{@link DjinnCommands#isCommand}：指令技能，或按炎刃．羅贊、終幻．娜瑟菈的鍵）用的
+     * 那位巨靈的屬性表（含巨靈召喚技能上的輔助）；不是指令、或巨靈沒叫出來回傳 null。
+     */
+    StatSheet commandingDjinn(final PlayerState state, final SkillDefinition definition) {
+        final String djinn = definition == null ? null : DjinnCommands.commandedDjinn(definition.id());
+        return djinn == null || state == null || minions == null ? null : minions.djinnSheet(state.uuid(), djinn);
+    }
+
+    /** 2026-11-01 照 PoE2：你下指令那一下要幾 tick（{@link DjinnCommands#commandTicks(SkillBuild, StatSheet)}）。 */
+    static double commandTicks(final SkillBuild build, final StatSheet sheet) {
+        return DjinnCommands.commandTicks(build, sheet);
+    }
+
+    /** 2026-11-01 照 PoE2：巨靈放這個指令的招式要幾 tick（{@link DjinnCommands#djinnCastTicks(StatSheet, SkillDefinition)}）。 */
+    static long djinnCastTicks(final StatSheet djinn, final SkillDefinition definition) {
+        return DjinnCommands.djinnCastTicks(djinn, definition);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2：巨靈放這個指令的招式要幾 tick（召喚技能上的疾詠、你給召喚物的施法速度讓牠更快）；
+     * 不是指令、或巨靈沒叫出來回傳 0（AscGranted：羅贊的烙印、娜瑟菈的擁抱、指令帶出來的分身爆炸、熔岩浪、符文照這個延後）。
+     */
+    public long djinnCastTicks(final Player player, final SkillBuild build) {
+        if (player == null || build == null) {
+            return 0;
+        }
+        final StatSheet djinn = commandingDjinn(plugin.players().get(player), build.definition());
+        return djinn == null ? 0 : djinnCastTicks(djinn, build.definition());
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Kelari's Judgment：巨靈陪你引導時一段的速度倍率（巨靈的施法速度：召喚技能上的疾詠、你給召喚物的施法速度）；
+     * 巨靈沒叫出來 1.0（Signatures.press）。
+     */
+    double djinnStageSpeed(final Player player, final SkillDefinition definition) {
+        final StatSheet djinn = player == null ? null : commandingDjinn(plugin.players().get(player), definition);
+        return DjinnCommands.djinnCastSpeed(djinn, definition);
+    }
+
+    /** 2026-11-01 照 PoE2：那位巨靈開始放招式（ticks 這麼久）的動作與粒子（MinionService.djinnCasting）。 */
+    public void djinnCasting(final Player player, final SkillDefinition definition, final long ticks, final Location toward) {
+        final String djinn = definition == null ? null : DjinnCommands.commandedDjinn(definition.id());
+        if (djinn != null && minions != null && ticks > 0) {
+            minions.djinnCasting(player, djinn, ticks, toward);
+        }
+    }
+
+    /**
+     * 2026-11-01 照 PoE2：巨靈的指令技能在巨靈放完招式（ticks）之後出手：目標照你下指令那一刻的準心（aim 存下來），範圍類照那個準心落下；
+     * 投射物（羅贊的怒焰、機關，克拉里的殘酷）從巨靈身上朝目標射出。巨靈這時候不在了（解除召喚、換世界）就沒有放出來。
+     */
+    private void djinnOrder(final Player player, final SkillBuild build, final LivingEntity preferred, final long ticks) {
+        final Location eye = player.getEyeLocation();
+        final Origin aim = new Origin(player, player.getLocation().clone(), eye.clone(), eye.getDirection().clone(), false);
+        final String djinn = DjinnCommands.commandedDjinn(build.definition().id());
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (!player.isOnline() || minions == null || !player.getWorld().equals(aim.world())) {
+                return;
+            }
+            final Location from = minions.djinnLocation(player, djinn);
+            if (from == null) {
+                return;
+            }
+            final LivingEntity target = preferred != null && preferred.isValid() && !preferred.isDead()
+                    && preferred.getWorld().equals(aim.world()) ? preferred : null;
+            if (build.definition().mechanic() != Mechanic.PROJECTILE) {
+                executor.executeFrom(aim, build, target);
+                return;
+            }
+            final LivingEntity aimed = target != null ? target : targets.aimed(aim, DJINN_AIM_RANGE, 1.0);
+            final Location point = aimed != null ? aimed.getLocation() : targets.aimPoint(aim, DJINN_AIM_RANGE);
+            final Origin shooter = Origin.at(player, from, point.toVector().subtract(from.toVector().add(new org.bukkit.util.Vector(0, 1.2, 0))));
+            if (DjinnCommands.BRUTALITY.equals(build.definition().id())) {
+                kelariKnives(player, shooter, build, point);
+            } else {
+                executor.executeFrom(shooter, build, aimed);
+            }
+        }, Math.max(1, ticks));
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Kelari's Brutality（PoB2 minion.lua KnifeThrowSandDjinn：djinn_knife_throw_number_of_knives_created 12、
+     * active_skill_base_area_of_effect_radius 30、active_skill_base_secondary_area_of_effect_radius 10、always_pierce、CannotChain、
+     * projectiles_fire_at_ground；poe2db 投射物速度每秒 25 公尺）：克拉里朝目標附近 3 公尺（吃範圍）內的地面擲出 12 把飛刀（多的投射物多擲幾把），
+     * 飛刀路上穿透打中的敵人（投射物那一段的傷害），鑽進地面、短暫延遲後各爆出 1 公尺的刀刃（{@link DjinnCommands#BRUTALITY_BLADE}，擊中癱瘓）。
+     * 投射物照克拉里的屬性表（召喚技能上的多射、歧射、疾矢有作用）；指令技能自己掛的輔助也帶到刀刃上。
+     * 這次之前是準心落點的刀刃（中間一處＋撒在周圍的 11 處），沒有投射物。
+     */
+    private void kelariKnives(final Player player, final Origin from, final SkillBuild build, final Location point) {
+        final int knives = Math.max(1, build.projectiles());
+        final double spread = tw.exilecore.core.Units.metres(DjinnCommands.KNIFE_SPREAD_METRES) * build.areaScale();
+        final List<Location> points = new ArrayList<>(knives);
+        for (final double[] offset : DjinnCommands.knifeOffsets(knives, spread, plugin.random()::nextDouble)) {
+            points.add(point.clone().add(offset[0], 0, offset[1]));
+        }
+        final int level = build.level();
+        final List<Modifier> carried = new ArrayList<>();
+        for (final SupportDefinition support : build.supports()) {
+            carried.addAll(support.allModifiers());
+        }
+        final List<Modifier> extra = List.copyOf(carried);
+        projectiles.launchAtGround(from, build, points, DjinnCommands.PIERCE_ALL, (owner, at) -> {
+            final long delay = DjinnCommands.ERUPT_TICKS + plugin.random().nextInt(DjinnCommands.ERUPT_JITTER);
+            final Location spot = at.clone();
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (owner.isOnline() && spot.getWorld() != null && spot.getWorld().equals(owner.getWorld())) {
+                    triggerSkill(owner, DjinnCommands.BRUTALITY_BLADE, spot, level, extra);
+                }
+            }, delay);
+        });
+    }
+
+    /**
+     * 2026-11-01 照 PoE2（估計用：面板、網頁的每秒傷害）：巨靈指令一輪要幾 tick（{@link DjinnCommands#cycleTicks}）——你下指令 0.4 秒
+     * （照你的施法速度，playerSheet）＋巨靈放招式（照巨靈的施法速度，djinn；沒有巨靈的屬性表照基礎施法時間）；珂芮絲的裁決照引導滿
+     * （最多段數 × 一段 0.5 秒 ÷ 珂芮絲的施法速度）。不是巨靈的指令回傳 -1。跟施放時一樣（performInner、Signatures.press）。
+     */
+    double djinnCycleTicks(final SkillBuild build, final StatSheet playerSheet, final StatSheet djinn) {
+        final SkillDefinition definition = build.definition();
+        if (!DjinnCommands.COMMANDS.contains(definition.id())) {
+            return -1;
+        }
+        final boolean channelled = DjinnCommands.channelled(definition.id());
+        final ChargeSpec spec = channelled ? ChargeSpec.withQuality(config.charge(definition.id()), build) : null;
+        final double channel = spec == null ? 0 : spec.fullStageTicks(DjinnCommands.djinnCastSpeed(djinn, definition));
+        final double order = channelled ? 0 : commandTicks(build, playerSheet);
+        final double cast = channelled ? 0 : djinn != null ? djinnCastTicks(djinn, definition)
+                : DjinnCommands.djinnCastTicks(DjinnCommands.djinnCastTime(definition.id(), definition.castTime()), 1.0);
+        return DjinnCommands.cycleTicks(channelled, order, cast, channel);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Kelari's Judgment（估計用）：引導滿（最多段數）放開的那一下（每多一段更多 125% 傷害、範圍更多 25%；
+     * 震波範圍的 −20%～+20% 平均是 0，不算）。不是引導的指令原樣回傳。sheet：算漸熾用的屬性表（巨靈的）。
+     */
+    SkillBuild djinnFullRelease(final SkillBuild build, final StatSheet djinn) {
+        if (build == null || !DjinnCommands.channelled(build.definition().id())) {
+            return build;
+        }
+        final ChargeSpec spec = ChargeSpec.withQuality(config.charge(build.definition().id()), build);
+        if (spec == null || spec.stages() <= 0) {
+            return build;
+        }
+        final double hold = spec.fullStageTicks(DjinnCommands.djinnCastSpeed(djinn, build.definition()));
+        return Signatures.released(build, spec, spec.stages(), false, djinn != null ? djinn : new StatSheet(), hold / 20.0);
+    }
+
+    /**
+     * 2026-11-01（估計用）：巨靈指令的技能數值——巨靈叫出來了照 {@link #build(PlayerState, StatSheet, Resolved)}（已經照巨靈的屬性表），
+     * 沒叫出來（網頁的虛擬角色）照估出來的巨靈屬性表（{@link #estimatedDjinnSheet}）算、魔力消耗照你的；珂芮絲的裁決照引導滿（{@link #djinnFullRelease}）。
+     * djinn 是 null（不是巨靈的指令、面板上沒有那位巨靈）照舊。
+     */
+    private SkillBuild commandBuild(final PlayerState state, final StatSheet sheet, final Resolved resolved, final StatSheet djinn) {
+        if (djinn == null) {
+            return build(state, sheet, resolved);
+        }
+        final SkillBuild yours = build(state, sheet, resolved);
+        final SkillBuild built = djinnSheet(state, resolved.definition()) != null ? yours
+                : buildFresh(state, djinn, resolved.definition(), resolved.entry()).withManaCost(yours.manaCost());
+        return djinnFullRelease(built, djinn);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2（估計用）：巨靈指令用的巨靈屬性表——叫出來了用那隻的（{@link #djinnSheet}）；沒叫出來但面板上有那位巨靈的召喚技能
+     * （網頁的虛擬角色），照召喚物的估計（同 {@link #minionDps}：PoE2 的召喚物表、你給召喚物的加成、召喚技能上的輔助、軍令）估一份；
+     * 都沒有回傳 null（照你的屬性表）。光環給召喚物的效果沒算（跟 minionDps 的 auraEffects 不同，這裡拿不到）。
+     */
+    StatSheet estimatedDjinnSheet(final PlayerState state, final StatSheet ownerSheet, final SkillDefinition definition) {
+        final StatSheet live = djinnSheet(state, definition);
+        if (live != null || state == null) {
+            return live;
+        }
+        final String djinnId = DjinnCommands.djinnFor(definition.id());
+        final SkillDefinition summon = djinnId == null ? null : config.skill(djinnId);
+        if (summon == null || summon.summon() == null || plugin.monsters() == null) {
+            return null;
+        }
+        final int position = state.skills().find(djinnId);
+        final SkillLoadout.Entry entry = position < 0 ? null : state.skills().skill(position);
+        if (entry == null) {
+            return null;
+        }
+        final SkillBuild djinnBuild = build(state, ownerSheet, summon, entry);
+        final tw.exilecore.monster.MonsterConfig monsters = plugin.monsters().config();
+        final MinionSheets.Base base = MinionSheets.base(config, summon.summon(), djinnBuild.level(), state.level(), monsters::lifeAt, monsters::damageAt,
+                monsters::accuracyAt, monsters::evasionAt, monsters::armourAt, monsters.critChance());
+        final List<Modifier> ownerModifiers = new ArrayList<>(MinionSheets.forMinion(MinionSheets.ownerModifiers(ownerSheet),
+                MinionSheets.conditions(summon, true)));
+        ownerModifiers.addAll(MinionEstimates.estimate(djinnBuild, ownerSheet,
+                MinionSheets.refFactors(config, djinnBuild.level(), state.level(), monsters::lifeAt, monsters::damageAt)[1]));
+        final StatSheet djinnSheet = MinionSheets.build(summon.summon(), base, ownerModifiers);
+        djinnSheet.addAll(Commandables.minionModifiers(djinnId, Commandables.commandment(djinnBuild.supports()))); // 同 MinionService（軍令）
+        final tw.exilecore.stats.SkillProfile profile = MinionSheets.profile(djinnBuild);
+        return profile.local().isEmpty() ? djinnSheet : djinnSheet.overlay(MinionSheets.stripMinion(profile.local()));
     }
 
     private SkillBuild buildCached(final PlayerState state, final StatSheet sheet, final SkillDefinition definition, final SkillLoadout.Entry entry) {
@@ -4982,7 +5363,8 @@ public final class SkillService {
             } else if (support.requires().contains(SkillLimits.TAG) && hostDefinition != null && hostDefinition.tags().contains(SkillLimits.TAG)
                     && inner != null && !support.supports(inner)) {
                 carried.addAll(support.modifiers()); // 2026-10-28 照 PoE2：過剩掛在星咒圖騰上（圖騰的上限），插槽法術本身沒有上限也吃得到
-            } else if (support.requires().contains(Tags.META) && support.flags(StatKeys.DAMAGE_RANDOM) && inner != null && !support.supports(inner)) {
+            } else if (support.requires().contains(Tags.META) && (support.flags(StatKeys.DAMAGE_RANDOM)
+                    || support.flags(tw.exilecore.stats.LineageKeys.RANDOM_DAMAGE)) && inner != null && !support.supports(inner)) { // 2026-11-01：骰禍改用每次觸發擲一次的 lineage.u.random_damage
                 carried.addAll(support.modifiers()); // 2026-10-26（骰運，PoE2 Fluke）：掛在主要寶石上，觸發出來的技能傷害忽高忽低
             } else {
                 list.add(support);
@@ -5784,7 +6166,30 @@ public final class SkillService {
                 final double[] range = SkillProfiles.spellDamage(config, definition, build.level());
                 lines.add(String.format(Locale.ROOT, "<gray>基礎傷害：<white>%d – %d", Math.round(range[0]), Math.round(range[1])));
             }
-            if (definition.mechanic() != Mechanic.AURA) { // 2026-10：光環、精魂召喚綁著就開著，不用施放（沒有施法時間）
+            if (DjinnCommands.channelled(definition.id()) && config.charge(definition.id()) != null) {
+                // 2026-11-01 照 PoE2 Kelari's Judgment：按住引導（你引導的那段就是指令），珂芮絲陪你引導疊段數（照珂芮絲的施法速度）
+                final ChargeSpec judgment = ChargeSpec.withQuality(config.charge(definition.id()), build);
+                final double stageSpeed = DjinnCommands.djinnCastSpeed(djinnSheet, definition);
+                final double stage = judgment.stageTicks(stageSpeed) / 20.0;
+                lines.add("<gray>下指令：<white>按住引導<gray>（放開時刀刃落下；你引導多久，珂芮絲就陪你引導多久）");
+                lines.add(Math.abs(stage - judgment.stageTime()) < 0.005
+                        ? String.format(Locale.ROOT, "<gray>珂芮絲引導：每 <white>%.2f</white> 秒一段 <dark_gray>（照巨靈的施法速度）", stage)
+                        : String.format(Locale.ROOT, "<gray>珂芮絲引導：每 <white>%.2f</white> 秒一段 <dark_gray>（基礎 %.2f 秒，照巨靈的施法速度）",
+                                stage, judgment.stageTime()));
+                lines.add(String.format(Locale.ROOT, "<gray>最多 <white>%d</white> 段（滿 <white>%.2f</white> 秒）；第一段不能取消（最短引導一段）",
+                        judgment.stages(), judgment.fullStageTicks(stageSpeed) / 20.0));
+            } else if (DjinnCommands.COMMANDS.contains(definition.id())) {
+                // 2026-11-01 照 PoE2（PoB2 Command*Player castTime 0.4）：下指令是你的一下（吃你的施法速度），巨靈接著放招式（吃巨靈的施法速度）
+                final double order = commandTicks(build, actionSheet) / 20.0;
+                lines.add(Math.abs(order - DjinnCommands.COMMAND_TIME) < 0.005
+                        ? String.format(Locale.ROOT, "<gray>下指令：<white>%.2f 秒", DjinnCommands.COMMAND_TIME)
+                        : String.format(Locale.ROOT, "<gray>下指令：<white>%.2f 秒 <dark_gray>（基礎 %.2f 秒）", order, DjinnCommands.COMMAND_TIME));
+                final double base = DjinnCommands.djinnCastTime(definition.id(), definition.castTime());
+                final double djinnTime = djinnSheet == null ? base : djinnCastTicks(djinnSheet, definition) / 20.0;
+                lines.add(Math.abs(djinnTime - base) < 0.005
+                        ? String.format(Locale.ROOT, "<gray>巨靈施法：<white>%.2f 秒 <dark_gray>（照巨靈的施法速度，放完才出手）", base)
+                        : String.format(Locale.ROOT, "<gray>巨靈施法：<white>%.2f 秒 <dark_gray>（基礎 %.2f 秒，照巨靈的施法速度，放完才出手）", djinnTime, base));
+            } else if (definition.mechanic() != Mechanic.AURA) { // 2026-10：光環、精魂召喚綁著就開著，不用施放（沒有施法時間）
                 // 2026-10-23：寫實際的施法時間（吃施法速度、捷咒這些輔助）；以前只寫基礎的，看起來像沒變
                 final double actual = build.intervalTicks(actionSheet) / 20.0;
                 lines.add(Math.abs(actual - definition.castTime()) < 0.005
@@ -5860,6 +6265,15 @@ public final class SkillService {
             lines.add(kinds > 1
                     ? String.format(Locale.ROOT, "<gray>平均每次：<white>%d <dark_gray>（%s）", Math.round(hitExpected.total()), hitExpected)
                     : String.format(Locale.ROOT, "<gray>平均每次：<white>%s", hitExpected.isEmpty() ? "0" : hitExpected));
+            if (DjinnCommands.channelled(definition.id()) && config.charge(definition.id()) != null) {
+                // 2026-11-01 照 PoE2 Kelari's Judgment：上面是引導 1 段的；引導滿的那一下另外寫（每多一段更多 125% 傷害、範圍更多 25%）
+                final SkillBuild fullChannel = djinnFullRelease(estimate, djinnSheet);
+                final ChargeSpec judgment = ChargeSpec.withQuality(config.charge(definition.id()), build);
+                final double fullHit = DamageCalculator.expectedOutgoing(sheet, fullChannel.profile()).total()
+                        * SupportMechanics.hitOnlyFactor(sheet, fullChannel.profile());
+                lines.add(String.format(Locale.ROOT, "<gray>引導滿 %d 段：平均每次 <white>%d <dark_gray>（更多 %d%% 傷害、範圍更多 %d%%）", judgment.stages(),
+                        Math.round(fullHit), Math.round(judgment.stageMore() * (judgment.stages() - 1)), Math.round(judgment.stageArea() * (judgment.stages() - 1))));
+            }
             if (StatKeys.flag(estimate.profile().effective(sheet), tw.exilecore.stats.LineageKeys.LOW_LIFE_ONLY)) {
                 lines.add("<#ff6a6a>掠獸：只能傷害生命 35% 以下的敵人（其他敵人打了沒有傷害）"); // 2026-10-27
             }
@@ -5907,7 +6321,9 @@ public final class SkillService {
                 lines.add(String.format(Locale.ROOT, "<gray>放圖騰：每秒最多 <white>%.2f<gray> 次", 20.0 / build.intervalTicks(actionSheet)));
             } else {
                 // 2026-10-22：有冷卻的照冷卻算（以前只看施放時間：掠閃寫每秒 10 次、印記 4.98 次、千鈞砸 1.12 次，實際被冷卻卡住）
-                final double interval = build.intervalTicks(actionSheet);
+                // 2026-11-01 照 PoE2：巨靈的指令一輪照你下指令＋巨靈施法（珂芮絲的裁決照引導滿）；這次之前照巨靈招式的施法時間 ÷ 你的施法速度
+                final double cycle = djinnCycleTicks(build, actionSheet, djinnSheet);
+                final double interval = cycle > 0 ? cycle : build.intervalTicks(actionSheet);
                 if (build.cooldownTicks() > interval && definition.mechanic() != Mechanic.AURA) {
                     lines.add(String.format(Locale.ROOT, "<gray>每秒 <white>%.2f<gray> 次 <dark_gray>（受冷卻限制；不算冷卻每秒 %.2f 次）",
                             hitsPerSecond(repeatGap(build, interval), build.cooldownTicks(), build.repeats()), 20.0 / interval));
@@ -6575,7 +6991,7 @@ public final class SkillService {
             case CORPSE -> {
                 if (DecomposeClouds.is(build)) {
                     // 2026-10-28 照 PoE2 Decompose：毒雲（這次之前跟骸爆一樣寫引爆屍體）
-                    final double seconds = build.durationTicks(DecomposeClouds.seconds(
+                    final double seconds = build.groundDurationTicks(DecomposeClouds.seconds( // 2026-11-01：毒雲是地面效果
                             SkillZones.localFlat(build.profile(), tw.exilecore.stats.GemQualityKeys.DURATION_FLAT))) / 20.0;
                     lines.add(String.format(Locale.ROOT, "<gray>消耗準心附近 %.0f 格內最近的屍體（怪物死後 10 秒內），在那裡留下一團易燃的毒雲："
                                     + "半徑 <white>%.1f</white> 格，每秒擴大 20%%（最多 +80%%），持續 <white>%s</white> 秒，最多 <white>%d</white> 團",
@@ -7015,7 +7431,7 @@ public final class SkillService {
 
     private static String zoneLine(final SkillBuild build, final SkillParams.Zone zone, final String prefix) {
         return String.format(Locale.ROOT, "<gray>%s半徑 <white>%.1f</white> 格的地面效果 <white>%.1f</white> 秒，每 %.1f 秒 <white>%d%%</white> 傷害",
-                prefix, build.scaledRadius(zone.radius()), zone.duration() * build.durationScale(), zone.interval(), Math.round(zone.damage()));
+                prefix, build.scaledRadius(zone.radius()), zone.duration() * build.groundDurationScale(), zone.interval(), Math.round(zone.damage())); // 2026-11-01：地面效果的持續時間
     }
 
     /**

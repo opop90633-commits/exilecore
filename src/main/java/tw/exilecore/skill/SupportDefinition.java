@@ -284,6 +284,12 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (ref != null && !unlockedBy(skill, others)) {
             return ref;
         }
+        // 2026-11-01 照 PoE2：巨靈的指令技能本身只有 CommandsMinions 這幾種類型，傷害、範圍這些輔助要掛在巨靈的召喚技能上（DjinnCommands）；
+        //   這次之前指令技能照法術的標籤，什麼法術輔助都掛得上
+        final String command = DjinnCommands.commandRefusal(id, skill.id());
+        if (command != null) {
+            return command;
+        }
         if (Unearth.ID.equals(skill.id()) && Unearth.BLOCKED.contains(id)) {
             return "掘骸不能掛"; // 2026-10-30 照 PoE2
         }
@@ -333,7 +339,7 @@ public record SupportDefinition(String id, String name, String description, Stri
         }
         // 2026-10-27 照 PoE2 Burgeon（漸熾）：只能掛在引導的技能（有 channelling 標籤：引導、蓄力、按住一直放的）
         if (flags(Burgeon.PER_SECOND) && !skill.tags().contains(tw.exilecore.stats.TreeMechanicKeys.CHANNELLING)) {
-            return "要引導或蓄力的技能";
+            return "要引導技能"; // 2026-11-01 照站長：引導不叫蓄力（這次之前「要引導或蓄力的技能」）
         }
         // 2026-10-27 照 PoE2 Efficiency（節流）：減少消耗的輔助不能掛在保留精魂的技能（光環、捷光環、常駐、精魂召喚都是 mechanic: aura）
         if (skill.mechanic() == Mechanic.AURA && reducesCost()) {
@@ -341,7 +347,7 @@ public record SupportDefinition(String id, String name, String description, Stri
         }
         // 2026-10-17 標籤整理：以前 excludes 寫 channel，但沒有技能有這個標籤（蓄力看 channel.stages），等於沒擋
         if (excludes.contains("channel") && channels(skill)) {
-            return "本身會蓄力的技能不行";
+            return "本身會引導的技能不行"; // 2026-11-01 照站長：引導不叫蓄力
         }
         // 掃擊：只有原本只打一個的打擊（strike 機制）會多打；突刺、爪擊這種衝過去打的、本來就打好幾個的沒作用只剩代價
         if (flags(StatKeys.STRIKE_TARGETS) && (skill.mechanic() != Mechanic.STRIKE || skill.params().targets() != 1)) {
@@ -352,7 +358,7 @@ public record SupportDefinition(String id, String name, String description, Stri
             return "要打擊技能（衝過去、扇形的不行）";
         }
         if (flags(StatKeys.CHANNEL_STAGES) && channels(skill)) {
-            return "本身會蓄力的技能不行"; // 2026-10：蓄勢不能疊在本來就會蓄力的技能上（熾息、蓄力射擊…）
+            return "本身會引導的技能不行"; // 2026-11-01 照站長：引導不叫蓄力 // 2026-10：蓄勢不能疊在本來就會蓄力的技能上（熾息、蓄力射擊…）
         }
         // 2026-10-28 照 PoE2 Spell Totem：圖騰照 TotemRules.spellTotemCastable（雷遁、骸爆、詛咒也行）；這次之前圖騰也只看 deployable
         if (flags(tw.exilecore.stats.StatKeys.FLAG_SPELL_TOTEM) ? !TotemRules.spellTotemCastable(skill)
@@ -418,6 +424,7 @@ public record SupportDefinition(String id, String name, String description, Stri
             StatKeys.FLAG_SPELL_TOTEM); // 2026-10-28 照 PoE2 Spell Totem：交給圖騰放不用擊中（詛咒也能交給圖騰）；這次之前只靠星咒圖騰的施法速度那條
     private static final List<String> UTILITY_PREFIXES = List.of(StatKeys.GRANT_PREFIX, "warcry.", "aura.", "herald.", "trigger.", "seal.", "meta.",
             "infusion.", "proc.use", "proc.minion_death", "charge.sup.",
+            "proc.self_stunned", "proc.curse_expired", // 2026-11-01 照 PoE2 Wind Wave（被暈眩時）、Impending Doom（詛咒結束時）不用擊中
             // 2026-10-26：照 PoE2 重做的輔助：戰吼輔助、榮耀、凍結時的增益、印記、詛咒、圖騰、召喚物、獻祭生命
             tw.exilecore.stats.SupportKeys.FLAG_BATTERSHOUT, tw.exilecore.stats.SupportKeys.FLAG_PAQUATE, "glory.",
             tw.exilecore.stats.SupportKeys.ICE_BITE, tw.exilecore.stats.SupportKeys.SHATTER_FANG,
@@ -735,12 +742,17 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (flags(StatKeys.FLAG_ECHO) || flags(tw.exilecore.stats.SupportExtraKeys.CASCADE)) {
             return "可以連瀑的範圍法術（落在目標區域、身邊一圈的，或詛咒）";
         }
+        // 2026-11-01 照 PoE2 的技能類型（地面效果、跳躍、混沌持續傷害法術；SupportGuards.parityRefusal）
+        final String parity = SupportGuards.parityText(this);
+        if (parity != null) {
+            return parity;
+        }
         final List<String> names = new ArrayList<>();
         for (final String tag : relevantExcludes(skills)) {
             names.add(ModifierText.tagName(tag));
         }
         if (flags(StatKeys.CHANNEL_STAGES) || excludes.contains("channel")) {
-            names.add("本身會蓄力的技能");
+            names.add("本身會引導的技能");
         }
         // 2026-10-17：跟 refusal 的新條件一致
         if (flags(StatKeys.STRIKE_TARGETS)) {

@@ -23,6 +23,14 @@ public interface MinionHooks {
     /** 這隻召喚物打人：主人（在線）、牠的屬性表、技能描述；不是召喚物或主人不在回傳 null。 */
     Attack attack(LivingEntity minion);
 
+    /**
+     * 2026-11-01 照 PoE2（Minion Types）：這隻召喚物替你放的技能（巨靈的指令等，SkillDamage 的 proxy）打中時要用的屬性表
+     * （疊上掛在召喚技能上的輔助）；照 {@link #attack} 的那張就好回傳 null。
+     */
+    default StatSheet commandSheet(final LivingEntity minion, final SkillProfile profile) {
+        return null;
+    }
+
     /** 這隻召喚物的主人（在線）；不是召喚物或主人不在回傳 null（競技場判斷敵我用）。 */
     Player owner(LivingEntity minion);
 

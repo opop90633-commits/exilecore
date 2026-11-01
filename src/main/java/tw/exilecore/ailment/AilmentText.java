@@ -98,6 +98,11 @@ public final class AilmentText {
             increased(parts, "持續", effective.increased(StatKeys.STUN_DURATION, context));
             add(lines, AilmentType.STUN, parts);
         }
+        // 2026-11-01 照 PoE2：定身（骸骨連鎖的物理法術暴擊、擊中必定定身、投射物攻擊）——跟 HitEffects 同一個判斷（PinKeys.source）；
+        //   這次之前面板不列，看不出骸骨連鎖有沒有作用
+        if (anyDamage) {
+            lines.addAll(pinLines(effective, profile.tags()));
+        }
         if (expected.get(DamageType.LIGHTNING) > 0) {
             final Set<String> context = profile.contextFor(DamageType.LIGHTNING);
             final List<String> parts = new ArrayList<>();
@@ -111,6 +116,33 @@ public final class AilmentText {
             }
         }
         return lines;
+    }
+
+    /** 2026-11-01：定身的顏色（不是 AilmentType：定身是禁錮，不是異常）。 */
+    static final String PIN_COLOR = "#c9a27e";
+
+    /**
+     * 2026-11-01：會造成傷害的技能的定身說明（沒有定身來源回傳空的）。effective 是你的屬性表疊上技能（骸骨連鎖這種天賦只給你自己打的）。
+     * 累積倍率跟 HitEffects 一樣：定身累積（增加、更多）× 當作傷害更多；遠釘照距離另算，不列。
+     */
+    public static List<String> pinLines(final StatSheet effective, final Set<String> tags) {
+        final tw.exilecore.stats.PinKeys.Source source = tw.exilecore.stats.PinKeys.source(
+                StatKeys.flag(effective, tw.exilecore.stats.PinKeys.FLAG_HITS_PIN),
+                StatKeys.flag(effective, tw.exilecore.stats.TreeNewMechanicKeys.FLAG_SPELL_CRIT_PIN),
+                effective.flat(StatKeys.PIN_CHANCE, tags), tags, StatKeys.flag(effective, tw.exilecore.stats.SupportExtraKeys.FLAG_CANNOT_PIN));
+        if (source == tw.exilecore.stats.PinKeys.Source.NONE) {
+            return List.of();
+        }
+        final List<String> parts = new ArrayList<>();
+        parts.add(switch (source) {
+            case SPELL_CRIT -> "暴擊時累積（物理法術；所有傷害類型都算）";
+            case EVERY_HIT -> "擊中都會累積（所有傷害類型都算）";
+            default -> "擊中時累積（只算物理）";
+        });
+        multiplier(parts, "累積", Math.max(0, effective.apply(tw.exilecore.stats.TreeKeys.PIN_BUILDUP, 1.0, tags))
+                * tw.exilecore.stats.PinKeys.asThoughMultiplier(effective.flat(tw.exilecore.stats.PinKeys.PIN_AS_THOUGH, tags)));
+        increased(parts, "持續", effective.increased(tw.exilecore.stats.SupportKeys.PIN_DURATION, tags));
+        return List.of("<" + PIN_COLOR + ">定身<gray> " + String.join("、", parts));
     }
 
     private static void add(final List<String> lines, final AilmentType type, final List<String> parts) {

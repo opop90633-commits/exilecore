@@ -335,9 +335,14 @@ public final class GemService {
             replacement = GemData.support(config().supportMergedInto(data.id()), data.resonant());
             amount = stack.getAmount();
         } else if (data.kind() == GemData.Kind.SUPPORT && config().support(data.id()) == null) {
+            if (config().deletedSupport(data.id())) {
+                stack.setAmount(0); // 2026-11-01 照站長：原作沒有的自創輔助直接刪掉，不換未切割輔助寶石
+                return extra;
+            }
             replacement = GemData.uncutSupport(config().retiredSupportTier(data.id()));
             amount = stack.getAmount();
         }
+        extra.removeIf(one -> one == null || one.isEmpty()); // 2026-11-01：刪掉的輔助沒有東西可以還
         if (replacement == null) {
             return null;
         }
@@ -408,6 +413,9 @@ public final class GemService {
         }
         if (config().supportMergedInto(supportId) != null) { // 2026-10-26：低階 I／II 換成同系列最高階
             return create(GemData.support(config().supportMergedInto(supportId)), 1);
+        }
+        if (config().deletedSupport(supportId)) {
+            return ItemStack.empty(); // 2026-11-01 照站長：刪掉的自創輔助不給未切割輔助寶石（give 會略過空的）
         }
         return create(GemData.uncutSupport(config().retiredSupportTier(supportId)), 1);
     }

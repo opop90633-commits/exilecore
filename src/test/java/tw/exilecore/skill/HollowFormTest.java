@@ -158,4 +158,22 @@ class HollowFormTest {
             }
         }
     }
+
+    @Test
+    void imagesAreAlliesAndTakeAllyInPresenceBuffs() {
+        // 2026-11-01 照站長：原作的幻影算你的友軍——「增加 x% 你存在範圍內的友軍傷害」（[minion, in_presence]）給幻影；
+        //   只給召喚物的（[minion]）、夥伴的不給
+        final StatSheet owner = new StatSheet().overlay(List.of(
+                Modifier.increased(StatKeys.DAMAGE, 0.20, "友軍").withTags(Set.of(Tags.MINION, tw.exilecore.stats.TreeMechanicKeys.IN_PRESENCE)),
+                Modifier.increased(StatKeys.DAMAGE, 0.50, "召喚物").withTags(Set.of(Tags.MINION)),
+                Modifier.increased(StatKeys.DAMAGE, 0.30, "夥伴").withTags(Set.of(Tags.MINION, tw.exilecore.stats.TreeMechanicKeys.IN_PRESENCE,
+                        tw.exilecore.stats.TreeMechanicKeys.COMPANION))));
+        final List<Modifier> buffs = HollowForm.allyBuffs(owner);
+        assertEquals(1, buffs.size());
+        assertEquals(0.20, buffs.getFirst().value(), 1e-9);
+        assertTrue(buffs.getFirst().tags().isEmpty(), "拿掉 minion、in_presence 標籤");
+        final SkillBuild attack = SkillBuild.of(config, skill("spine_crush"), 20, 90, false, List.of(), Set.of(Tags.MACE, Tags.MELEE), new StatSheet());
+        final SkillBuild image = HollowForm.imageBuild(attack, buffs);
+        assertEquals(0.20, image.profile().effective(new StatSheet()).increased(StatKeys.DAMAGE, attack.profile().tags()), 1e-9);
+    }
 }

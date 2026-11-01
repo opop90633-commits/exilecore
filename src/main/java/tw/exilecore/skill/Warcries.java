@@ -449,7 +449,7 @@ final class Warcries {
 
         // 回復（舊寫法：只有神龕祝禱這種非原作的技能有）
         final double heal = spec.heal().at(build.level());
-        if (heal > 0 && state.life() < state.maxLife()) {
+        if (heal > 0 && !state.isFullLife()) { // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
             state.setLife(state.life() + state.maxLife() * heal / 100.0);
             plugin.players().display(player, state);
         }
@@ -789,6 +789,11 @@ final class Warcries {
         final double damage = effective.flat(tw.exilecore.stats.WarcryKeys.EMPOWERED_DAMAGE, tags);
         if (damage > 0) {
             list.add(Modifier.increased(StatKeys.DAMAGE, damage / 100.0, name + "強化（裂甲熊咆插槽）"));
+        }
+        // 2026-11-01 照 PoE2 Premeditation（蓄嘯）：被這個戰吼強化的攻擊更多 x% 傷害；這次之前是增益期間你所有的攻擊
+        final double more = effective.flat(tw.exilecore.stats.SupportParityKeys.WARCRY_EMPOWERED_MORE, tags);
+        if (more > 0) {
+            list.add(Modifier.more(StatKeys.DAMAGE, more / 100.0, name + "強化（蓄嘯）"));
         }
         return List.copyOf(list);
     }

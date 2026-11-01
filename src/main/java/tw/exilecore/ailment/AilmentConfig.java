@@ -42,6 +42,8 @@ public final class AilmentConfig {
     private double chillDurationPlayer;
     private MeterSettings freeze;
     private MeterSettings pin;
+    /** 2026-11-01 照 PoE2 Daze 輔助：眩暈的累積條（物理傷害 × daze.buildup% × buildup% ÷ 暈眩門檻）。 */
+    private MeterSettings daze;
     private double shockChancePerThreshold;
     private double shockEffect;
     private double shockMaxEffect;
@@ -180,6 +182,7 @@ public final class AilmentConfig {
         chillDurationPlayer = 2;
         freeze = new MeterSettings(210, 200, 4, 2, 8, 5, 2, 50, 500, 14, 500, 14);
         pin = new MeterSettings(420, 420, 3, 2, 8, 5, 2, 50, 500, 13, 500, 13);
+        daze = new MeterSettings(100, 100, 8, 8, 8, 5, 2, 50, 0, 1, 0, 1); // 2026-11-01
         shockChancePerThreshold = 25;
         shockEffect = 20;
         shockMaxEffect = 50;
@@ -235,6 +238,7 @@ public final class AilmentConfig {
         chillDurationPlayer = positive(chill.node("duration"), "player", chillDurationPlayer);
         freeze = MeterSettings.parse(root.node("freeze"), freeze);
         pin = MeterSettings.parse(root.node("pin"), pin);
+        daze = MeterSettings.parse(root.node("daze"), daze); // 2026-11-01 照 PoE2 Daze 輔助
         final YamlNode shock = root.node("shock");
         shockChancePerThreshold = nonNegative(shock, "chance_per_threshold", shockChancePerThreshold);
         shockEffect = nonNegative(shock, "effect", shockEffect);
@@ -393,6 +397,11 @@ public final class AilmentConfig {
     /** 2026-10-26 照 PoE2 0.5：釘地的累積條。 */
     public MeterSettings pin() {
         return pin;
+    }
+
+    /** 2026-11-01 照 PoE2 Daze 輔助：眩暈的累積條（滿了眩暈；眩暈中不累積）。 */
+    public MeterSettings daze() {
+        return daze;
     }
 
     private static double nonNegative(final YamlNode node, final String key, final double def) {

@@ -284,6 +284,23 @@ public final class StatsReport {
         return defence(plugin, player, false);
     }
 
+    /**
+     * 2026-11-01：生命那行的保留生命標示（沒有保留是空字串）。純函式（測試用）。
+     * 例：最大生命 1000、保留 20% →「 <dark_gray>（保留 20%，可用 800）」。
+     */
+    static String reservedLifeText(final double maxLife, final double reservedFraction) {
+        if (reservedFraction <= 0) {
+            return "";
+        }
+        final double unreserved = Math.max(1, maxLife * (1 - reservedFraction));
+        return String.format(Locale.ROOT, " <dark_gray>（保留 %s%%，可用 %d）", trimPercent(reservedFraction * 100), Math.round(unreserved));
+    }
+
+    private static String trimPercent(final double percent) {
+        final double rounded = Math.round(percent * 10) / 10.0;
+        return rounded == Math.rint(rounded) ? Long.toString(Math.round(rounded)) : Double.toString(rounded);
+    }
+
     /** @param chat 聊天欄版本：說明放在 hover，不另外佔行 */
     private static List<String> defence(final ExileCore plugin, final Player player, final boolean chat) {
         final PlayerState state = plugin.players().get(player);
@@ -294,8 +311,10 @@ public final class StatsReport {
         // 2026-10-27：每秒再生乘上生命／魔力回復速度（跟 PlayerStateService.tick 一樣）；字樣「回復」改「再生」；這次之前沒乘
         final double lifeRegen = (sheet.get(StatKeys.LIFE_REGEN) + state.maxLife() * sheet.get(StatKeys.LIFE_REGEN_PERCENT) / 100.0)
                 * tw.exilecore.stats.TreeEffectKeys.recoveryRate(sheet, tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE);
-        lines.add(String.format(Locale.ROOT, "%s❤ 生命 <white>%d <dark_gray>再生 %.1f/秒%s%s◆ 魔力 <white>%d <dark_gray>再生 %.1f/秒",
-                LIFE, Math.round(state.maxLife()), lifeRegen, SEP, MANA, Math.round(state.maxMana()), tw.exilecore.stats.TreeEffectKeys.manaRegen(sheet)));
+        // 2026-11-01 照 PoE2 保留生命（血契）：最大生命後面標出保留了多少、可用的（沒被保留的）生命；這次之前看不到
+        lines.add(String.format(Locale.ROOT, "%s❤ 生命 <white>%d%s <dark_gray>再生 %.1f/秒%s%s◆ 魔力 <white>%d <dark_gray>再生 %.1f/秒",
+                LIFE, Math.round(state.maxLife()), reservedLifeText(state.maxLife(), state.reservedLifeFraction()), lifeRegen, SEP, MANA,
+                Math.round(state.maxMana()), tw.exilecore.stats.TreeEffectKeys.manaRegen(sheet)));
         // 精魂一律顯示（0 也顯示，才知道要去哪裡拿）
         lines.add(String.format(Locale.ROOT, "<#c9a7ff>✧ 精魂 <white>%.0f</white><gray>（已用 %.0f，剩 %.0f）%s",
                 state.maxSpirit(), state.reservedSpirit(), Math.max(0, state.maxSpirit() - state.reservedSpirit()),
@@ -631,7 +650,7 @@ public final class StatsReport {
                         + "＋點燃、流血、中毒的持續傷害，再乘感電的增傷（照同等級一般怪物的門檻算機率與覆蓋率）<newline>"
                         + "<dark_gray>召喚技能：一隻召喚物的每秒傷害 × 同時最多幾隻<newline>"
                         + "<dark_gray>全開：技能欄上的戰吼、戰旗的增益都開著、強化攻擊照冷卻平均，詛咒、印記都掛在敵人身上<newline>"
-                        + "<dark_gray>平常也算雙詠的第二發、蓄力滿層；全開再算投射物貼臉全中、灌注滿層、瞬影擊滿銳星連打<newline>"
+                        + "<dark_gray>平常也算雙詠的第二發、引導滿層；全開再算投射物貼臉全中、灌注滿層、瞬影擊滿銳星連打<newline>"
                         + "<dark_gray>沒算怪物的減免、曝露、怒氣、連擊、終式、抑星、對異常敵人更多這些打起來才有的加成、打到幾個敵人<newline>"
                         + "<dark_gray>四時更迭、穿透、痛極生力、血鋒照滿血估；雙持照主副手輪流平均<newline>"
                         + "<dark_gray>異能加持照付得起、血滲照生命消耗、傲寒照滿魔力估；「擊中傷害更少」只乘擊中<newline>"

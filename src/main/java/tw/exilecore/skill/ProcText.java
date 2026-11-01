@@ -16,7 +16,7 @@ public final class ProcText {
 
     /** 每個觸發技能都一樣的規則（寶石說明最後列一次）。 */
     public static final String RULES = "觸發的技能用被輔助技能的寶石等級、吃你身上的加成（不吃這個技能掛的其他輔助），"
-            + "不花魔力；同一種每 " + ModifierText.number(SupportProcs.COOLDOWN / 20.0) + " 秒最多觸發一次";
+            + "不花魔力；冷卻照觸發的技能自己的（上面寫的；沒寫的同一種每 " + ModifierText.number(SupportProcs.COOLDOWN / 20.0) + " 秒最多觸發一次）"; // 2026-11-01 照 PoE2
 
     private ProcText() {
     }
@@ -41,12 +41,17 @@ public final class ProcText {
         final SkillParams p = d.params();
         final List<String> parts = new ArrayList<>();
         switch (d.mechanic()) {
-            case NOVA -> parts.add("在觸發的位置炸開一圈，半徑 " + range(p.radius()) + " 格");
+            case NOVA -> parts.add(TectonicSlams.PROC.equals(d.id()) // 2026-11-01 照 PoE2 Tectonic Slams：兩側、範圍照原本那一下
+                    ? "跟原本那一下同時，在它的範圍前方左右兩側各炸開一圈（範圍照原本那一下）"
+                    : "在觸發的位置炸開一圈，半徑 " + range(p.radius()) + " 格");
             case ZONE -> {
                 final SkillParams.Zone z = p.zone();
                 parts.add("在觸發的位置留下一片地面：半徑 " + range(p.radius()) + " 格、持續 " + ModifierText.number(z.duration()) + " 秒"
                         + (z.pull() > 0 ? "，會把敵人往中心拉" : ""));
-                parts.add("地面每 " + ModifierText.number(z.interval()) + " 秒打一次，每次是下面傷害的 " + ModifierText.number(z.damage()) + "%"
+                // 2026-11-01：只給效果的地面（ground.effect：凍地的冰緩地面）不打傷害，不要寫成每次打幾 %
+                final boolean effectOnly = d.modifiers().stream().anyMatch(m -> m.stat().equals(GroundEffects.FLAG) && m.value() > 0);
+                parts.add((effectOnly ? "地面不造成傷害，每 " + ModifierText.number(z.interval()) + " 秒給範圍內的敵人效果"
+                        : "地面每 " + ModifierText.number(z.interval()) + " 秒打一次，每次是下面傷害的 " + ModifierText.number(z.damage()) + "%")
                         + (z.max() > 0 ? "；同時最多 " + z.max() + " 片" : ""));
             }
             case PROJECTILE -> parts.add("從觸發的位置往四周射出 " + range(p.projectiles()) + " 發投射物"
@@ -87,8 +92,22 @@ public final class ProcText {
                 // 寫不出說明的略過
             }
         }
+        // 2026-11-01 照 PoE2：觸發技能只有自己資料的冷卻（明寫 cooldown: 0 的沒有冷卻）；這次之前一律寫在規則裡「每 1 秒最多一次」
+        if (config.noTriggerCooldown(d.id())) {
+            parts.add("沒有觸發冷卻");
+        } else if (d.cooldown() > 0) {
+            final int low = config.cooldownUses(d.id(), 1);
+            final int high = config.cooldownUses(d.id(), SkillLoadout.MAX_LEVEL);
+            parts.add("觸發冷卻 " + seconds(d.cooldown()) + " 秒" + (high > 1 ? "（可存 " + (low == high ? String.valueOf(low)
+                    : low + "～" + high) + " 次）" : ""));
+        }
         lines.addAll(parts); // 一件事一行（遊戲裡的說明不會自動換行，擠在一行太長）
         return lines;
+    }
+
+    /** 2026-11-01：冷卻秒數寫到小數第二位（0.15 秒不要寫成 0.2）。純函式。 */
+    static String seconds(final double value) {
+        return java.math.BigDecimal.valueOf(Math.round(value * 100) / 100.0).stripTrailingZeros().toPlainString();
     }
 
     private static List<String> markEffects(final SkillParams.Mark m) {

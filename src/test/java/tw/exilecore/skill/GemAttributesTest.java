@@ -89,11 +89,11 @@ class GemAttributesTest {
             }
         }
         assertEquals(java.util.stream.Stream.of("guard_hymn", "rift_tide", "condense_break", "flame_ally", "peak_thunder", "awe_proclaim",
-                "frenzy_chop", "frost_swap", "oath_drive", "proud_frost", "fury_aim", "blazing_core",
+                "frenzy_chop", "frost_swap", "fury_aim", "blazing_core", // 2026-11-01 照站長刪掉誓驅、傲寒
                 "crush_shield", "peak_shield", "giant_ally", "illusion_split", "snow_seal", "star_law",
                 "sacred_chalice", "lone_encircle", "crystal_shatter_howl").sorted().toList(), whiteLineage.stream().sorted().toList());
         // 原作是白色（沒有屬性）的只有這幾顆
-        assertEquals(List.of("blazing_brand"), white.stream().sorted().toList()); // 2026-10-27：碎晶嘯算血脈（上面）；2026-10-28 照站長刪掉震符印、符刃
+        assertEquals(List.of(), white.stream().sorted().toList()); // 2026-11-01 照站長刪掉熾烙（原作唯一白色的一般輔助）; // 2026-10-27：碎晶嘯算血脈（上面）；2026-10-28 照站長刪掉震符印、符刃
         assertEquals(SupportColours.RED, SupportColours.colour("swift_post_iii"), "疾樁是紅（RePoE）");
         assertEquals(SupportColours.BLUE, SupportColours.colour("frost_gnaw_ii"));
         assertEquals(SupportColours.GREEN, SupportColours.colour("held_breath"));

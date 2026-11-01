@@ -63,7 +63,8 @@ public final class SupportGuards {
     }
 
     /** 2026-10-27：不寫 resource.remnant、在程式裡留殘骸的技能（Snap、SkillTriggers 的素痕湧、OriginalSkills 的燼種）。 */
-    static final Set<String> CODE_REMNANTS = Set.of("anomaly_devour_blast", "element_trace_surge", "cinder_sprout");
+    static final Set<String> CODE_REMNANTS = Set.of("anomaly_devour_blast", "element_trace_surge", "cinder_sprout",
+            "magic_spring_well"); // 2026-11-01 照 PoE2 Mana Remnants（Remnant 標籤）：魔力痕跡吃殘骸輔助
 
     /** 這個技能有沒有使用條件（Delayed Gratification）。 */
     static boolean conditional(final SkillDefinition skill) {
@@ -83,6 +84,16 @@ public final class SupportGuards {
         for (final Modifier modifier : skill.modifiers()) {
             if ((modifier.stat().equals(StatKeys.DEBUFF_CHAOS) || modifier.stat().equals(tw.exilecore.stats.SkillMechanicKeys.DEBUFF_CHAOS_BASE))
                     && modifier.value() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 2026-11-01：這顆輔助有沒有觸發 subId 這個隱藏技能（proc.事件 的修飾器，標籤是技能代號）。 */
+    private static boolean triggers(final SupportDefinition support, final String subId) {
+        for (final Modifier modifier : support.modifiers()) {
+            if (modifier.stat().startsWith(SupportProcs.PREFIX) && modifier.tags().contains(subId)) {
                 return true;
             }
         }
@@ -157,8 +168,8 @@ public final class SupportGuards {
             return "要有最後一擊的打擊（寒冰震波、原獸連擊、風暴連擊、撕咬）";
         }
         // 2026-10-27 照 PoE2（CommandableMinion）：要有指令的召喚物
-        if (support.flags(SupportExtraKeys.FLAG_COMMANDMENT)
-                && (MinionAbilities.command(skill.id()) == null || MinionAbilities.RAVENS.equals(skill.id()))) {
+        // 2026-11-01 照 PoE2：六種骷髏、掩護火力、鴉群密謀、三位巨靈（Commandables.SKILLS）；這次之前只有 MinionAbilities 的指令表（不含鴉群、巨靈）
+        if (support.flags(SupportExtraKeys.FLAG_COMMANDMENT) && !Commandables.commandable(skill.id())) {
             return "要有指令的召喚物";
         }
         if ((support.flags(SupportExtraKeys.ANCESTRAL_AID) || support.flags(SupportExtraKeys.DAUNTLESS)
@@ -200,6 +211,16 @@ public final class SupportGuards {
                 || mechanic != Mechanic.PROJECTILE)) {
             return "要弓或長矛的投射物攻擊";
         }
+        // 2026-11-01 照 PoE2 Caltrops（撒蒺）：Spear AND RangedAttack（長矛的投射物攻擊）；這次之前所有投射物攻擊
+        if (triggers(support, tw.exilecore.stats.SupportRemakeKeys.CALTROPS_PROC)
+                && (!skill.weapons().contains("spear") || !skill.isAttack() || mechanic != Mechanic.PROJECTILE)) {
+            return "要長矛的投射物攻擊";
+        }
+        // 2026-11-01 照 PoE2 Hulking Minions（巨魄）：Minion AND Persistent（叫出持續型召喚物的技能）；這次之前所有召喚技能
+        if (support.flags(tw.exilecore.stats.SupportRemakeKeys.MINIONS_GIGANTIC)
+                && (skill.summon() == null || !tags.contains(Tags.MINION) || !tags.contains(Tags.PERSISTENT))) {
+            return "要叫出持續型召喚物的技能";
+        }
         if (support.flags(SupportExtraKeys.WILDSHARDS) && (!tags.contains(Tags.SPELL) || mechanic != Mechanic.PROJECTILE)) {
             return "要射出投射物的法術";
         }
@@ -231,11 +252,11 @@ public final class SupportGuards {
         }
         if (support.flags(SupportExtraKeys.DEADLY_RESOLVE) || support.flags(SupportExtraKeys.CRACKLING) || prefixed(support, SupportExtraKeys.CHANNELLING_PREFIX)) {
             if (!SupportDefinition.channels(skill)) {
-                return "要引導或蓄力的技能";
+                return "要引導技能"; // 2026-11-01 照站長：引導不叫蓄力
             }
         }
         if ((prefixed(support, SupportExtraKeys.USING_QUARTER_PREFIX) || support.flags(SupportExtraKeys.STOICISM)) && SupportDefinition.channels(skill)) {
-            return "引導、蓄力的技能不行";
+            return "引導技能不行"; // 2026-11-01 照站長：引導不叫蓄力
         }
         if (prefixed(support, SupportExtraKeys.REMNANT_PREFIX) && !remnants.contains(skill.id())) {
             return "要會留下殘骸的技能";
@@ -254,6 +275,10 @@ public final class SupportGuards {
         if ((support.flags(SupportExtraKeys.LAST_GASP) || support.flags(SupportExtraKeys.CRAZED)) && !tags.contains("persistent")
                 && !LineageRules.persistentMinion(skill)) {
             return "要常駐的召喚物（保留精魂的）";
+        }
+        // 2026-11-01 照 PoE2 Essence Harvest（魂收：allowed Minion AND Persistent）：只能掛在叫出會復活的常駐召喚物的技能；這次之前任何召喚技能
+        if (support.flags(StatKeys.MANA_ON_MINION_DEATH) && !tags.contains("persistent") && !LineageRules.persistentMinion(skill)) {
+            return "要會復活的常駐召喚物技能";
         }
         if (support.flags(SupportExtraKeys.MARK_SIPHON) && tags.contains("curse")) {
             return "詛咒不行，要印記";
@@ -281,6 +306,114 @@ public final class SupportGuards {
         }
         if (support.flags(SupportExtraKeys.SECOND_WIND) && skill.cooldown() <= 0) {
             return "要有冷卻時間的技能";
+        }
+        return parityRefusal(support, skill);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 的技能類型 Jumping（跳躍）：跳躍類機制（mechanic: leap），再加上原作是跳躍、我們用別的機制做的
+     * （回槍躍＝Disengage、躍退射＝Escape Shot、噬咬＝Devour、奔雷踏＝Stampede、霜浪＝Wave of Frost）。
+     */
+    static final Set<String> JUMPING_SKILLS = Set.of("spear_recoil_leap", "leapback_shoot", "gnawing_bite", "rushing_thunder_stomp", "frost_billow");
+
+    /** 跳躍技能（PoE2 Jumping）。 */
+    static boolean jumping(final SkillDefinition skill) {
+        return skill.mechanic() == Mechanic.LEAP || JUMPING_SKILLS.contains(skill.id());
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 的技能類型 CreatesGroundEffect（產生地面效果）：Path of Building 0.5 匯出有這個類型的技能，對到我們的代號
+     * （刺棘身＝Briarpatch、聖地＝Consecrate、地動＝Earthquake、熾息＝Flame Breath、瘴氣榴彈＝Gas Grenade、黑油雨＝Oil Barrage、火油榴彈＝Oil Grenade、
+     * 蠻衝＝Rampage、奔雷踏＝Stampede、炎爆矛＝Explosive Spear、霜牙刺＝Fangs of Frost、蝕毒箭＝Gas Arrow、熾陽之矛＝Spear of Solaris、
+     * 霆落矛＝Storm Lance、滾雷珠＝Ball Lightning、腐屍爆＝Decompose、退步凝晶＝Frozen Locus、引霆突＝Gathering Storm、霜星爆＝Ice Nova、
+     * 焚流＝Incinerate、雷遁＝Lightning Warp、靈影奔騰＝Vivid Stampede）。
+     * 2026-11-01 照 PoE2 0.5 逐一查（PoB2 act_*.lua、poe2db）：拿掉 3 個類型還留著、但 0.5 實際上不留任何地面的——
+     * 退步凝晶＝Frozen Locus（0.4.0「No longer creates chilled ground」，只剩冰晶）、蠻衝＝Rampage（沒有任何地面的數值、也沒有持續時間類型）、
+     * 熾息＝Flame Breath（只有 2 公尺的「焚燒範圍」，沒有地面的持續時間或效果，poe2db 的點燃地面、燃燒地面清單都沒有它）；
+     * 掛上去原作也沒有東西可以拉長。這次之前這 3 個也算。
+     */
+    static final Set<String> GROUND_EFFECT_SKILLS = Set.of("thorn_body", "holy_ground", "ground_tremor", "miasma_grenade",
+            "black_oil_rain", "kerosene_grenade", "rushing_thunder_stomp", "explosive_spear", "frost_tooth_stab", "venom_etch_arrow",
+            "blazing_sun_spear", "thunderfall_spear", "rolling_thunder_orb", "rotting_corpse_blast", "thunder_lure_thrust",
+            "frost_star_blast", "burning_current", "thunder_escape", "vivid_stampede");
+
+    /** 這顆輔助有沒有觸發某個隱藏技能（proc.事件 的 tags 寫那個技能代號）。 */
+    static boolean procs(final SupportDefinition support, final String hidden) {
+        for (final Modifier modifier : support.modifiers()) {
+            if (modifier.stat().startsWith(SupportProcs.PREFIX) && modifier.value() > 0 && modifier.tags().contains(hidden)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Hinder（Contagion、Essence Drain、Soulrend、Profane Ritual）：{@link #dot} 再加上逐級寫的混沌減益
+     * （level_modifiers 的 debuff.chaos／debuff.chaos_base：汲魂彈、疫潮、輪迴禮）；這次之前只看 modifiers，這幾個被拒絕。
+     */
+    static boolean chaosDot(final SkillDefinition skill) {
+        if (dot(skill)) {
+            return true;
+        }
+        final SkillConfig config = SkillConfig.current();
+        if (config == null) {
+            return false;
+        }
+        for (final ScaledMod mod : config.levelModifiers(skill.id())) {
+            if (mod.stat().equals(StatKeys.DEBUFF_CHAOS) || mod.stat().equals(tw.exilecore.stats.SkillMechanicKeys.DEBUFF_CHAOS_BASE)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 2026-11-01 照 PoE2 Hinder：這顆輔助讓混沌持續傷害阻礙敵人（hinder.dot；這次之前是擊中時觸發 proc_hinder）。 */
+    static boolean hinders(final SupportDefinition support) {
+        if (procs(support, "proc_hinder")) {
+            return true;
+        }
+        for (final Modifier modifier : support.modifiers()) {
+            if (modifier.stat().equals(tw.exilecore.stats.SupportSystemKeys.HINDER_DOT) && modifier.value() > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 2026-11-01：{@link #parityRefusal} 那幾顆的「可以輔助：」說明（不是那幾顆回傳 null）。 */
+    static String parityText(final SupportDefinition support) {
+        if (support.flags(tw.exilecore.stats.SupportRuleKeys.GROUND_DURATION)) {
+            return "產生地面效果的技能（召喚物除外）";
+        }
+        if (procs(support, "proc_crater")) {
+            return "跳躍的近戰技能（圖騰、召喚物除外）";
+        }
+        if (procs(support, "proc_charged_ground")) {
+            return "跳躍技能（召喚物除外）";
+        }
+        if (hinders(support)) {
+            return "會造成混沌持續傷害的法術（召喚物除外）";
+        }
+        return null;
+    }
+
+    /** 2026-11-01 照 PoE2 各輔助的 allowed_types／excluded_types（推擊、久地、熔坑擊、躍電、拖滯、不退）。 */
+    private static String parityRefusal(final SupportDefinition support, final SkillDefinition skill) {
+        // Persistent Ground：只輔助產生地面效果的技能（CreatesGroundEffect）
+        if (support.flags(tw.exilecore.stats.SupportRuleKeys.GROUND_DURATION) && !GROUND_EFFECT_SKILLS.contains(skill.id())) {
+            return "要產生地面效果的技能";
+        }
+        // Crater：近戰 AND 跳躍（不是猛擊就行）；Shocking Leap：跳躍
+        if ((procs(support, "proc_crater") || procs(support, "proc_charged_ground")) && !jumping(skill)) {
+            return "要跳躍技能";
+        }
+        // Hinder：只輔助造成非異常混沌持續傷害的法術
+        if (hinders(support) && (!skill.tags().contains(Tags.SPELL) || !skill.tags().contains(Tags.CHAOS) || !chaosDot(skill))) {
+            return "要會造成混沌持續傷害的法術（混沌地面效果、混沌減益）";
+        }
+        // Unyielding：要近戰攻擊（Attack AND Melee；召喚物的近戰標籤不算）
+        if (support.flags("using_qs.life.recoup") && !skill.isAttack()) {
+            return "要近戰攻擊";
         }
         return null;
     }

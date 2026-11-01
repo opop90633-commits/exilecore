@@ -39,6 +39,11 @@ public final class LineageKeys {
     public static final String EXTRA_FISSURES = "lineage.u.extra_fissures";
     /** FLAT：光環改成保留生命：每 1 點基礎精魂保留 x/100 % 最大生命（血契）。 */
     public static final String LIFE_RESERVE = "lineage.u.life_reserve";
+    /**
+     * FLAT %：玩家身上被保留的最大生命（2026-11-01 照 PoE2 的保留生命：血契開著的光環加總，AuraService 放進屬性表）。
+     * 最大生命不變，只是目前生命最多回到「最大生命 × (1 − x%)」（PlayerState#unreservedLife）；這次之前做成最大生命更少 x%。
+     */
+    public static final String LIFE_RESERVED = "life.reserved_percent";
     /** MORE：要的榮耀（旗熾）。 */
     public static final String GLORY_REQUIRED = "lineage.u.glory_required";
     /** FLAT：封印每過施法時間的 x% 蓄一個（萬封）。 */
@@ -72,6 +77,11 @@ public final class LineageKeys {
     public static final String OFFERING_CASCADE = "lineage.u.offering_cascade";
     /** FLAT：觸發出來的技能範圍隨機在更少 40% 到更多 50% 之間（骰禍）。 */
     public static final String RANDOM_AREA = "lineage.u.random_area";
+    /**
+     * FLAT x：觸發出來的技能每次觸發擲一次傷害倍率，在更少 x% 到更多 1.5x% 之間（骰禍；2026-11-01 照 PoE2 Ixchel's Torment「randomly raised or
+     * lowered when Triggered」：一次觸發擲一次，整次的每一下同一個倍率；這次之前用 damage.random，每一下各自擲）。
+     */
+    public static final String RANDOM_DAMAGE = "lineage.u.random_damage";
     /** FLAT：放的時候獲得滿溢聖杯，每 1 秒冷卻 x 秒（聖杯）。 */
     public static final String CHALICE = "lineage.u.chalice";
     /** FLAT：魔力藥劑生效時魔力消耗效率增加 x%（聖杯）。 */

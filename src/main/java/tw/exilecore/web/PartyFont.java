@@ -58,16 +58,18 @@ public final class PartyFont {
     public static final int ES = 11;
     public static final int MANA_BG = 12;
     public static final int MANA = 13;
+    /** 2026-11-01 照 PoE2 保留生命：血條右邊被保留（鎖住、回不來）的那段，灰紅色，跟空血（LIFE_BG）分得出來。 */
+    public static final int LIFE_RESERVED = 14;
 
     /** 每一種的 y、高度（框裡，格）與顏色（r, g, b, a）。順序跟上面的編號一樣。 */
     private static final String KINDS = """
                 vec2(2.0, 18.0), vec2(2.0, 18.0), vec2(3.0, 8.0), vec2(2.0, 8.0), vec2(2.0, 8.0), vec2(2.0, 8.0), vec2(2.0, 8.0), vec2(2.0, 8.0),
-                vec2(11.0, 11.0), vec2(12.0, 5.0), vec2(12.0, 5.0), vec2(12.0, 2.0), vec2(18.0, 3.0), vec2(18.0, 3.0), vec2(0.0, 0.0), vec2(0.0, 0.0)""";
+                vec2(11.0, 11.0), vec2(12.0, 5.0), vec2(12.0, 5.0), vec2(12.0, 2.0), vec2(18.0, 3.0), vec2(18.0, 3.0), vec2(12.0, 5.0), vec2(0.0, 0.0)""";
     private static final String TINTS = """
                 vec4(1.0, 1.0, 1.0, 1.0), vec4(0.42, 0.42, 0.42, 1.0), vec4(0.0, 0.0, 0.0, 0.85), vec4(1.0, 1.0, 1.0, 1.0),
                 vec4(1.0, 0.82, 0.36, 1.0), vec4(0.70, 0.70, 0.70, 1.0), vec4(0.48, 0.48, 0.48, 1.0), vec4(1.0, 0.38, 0.38, 1.0),
                 vec4(0.0, 0.0, 0.0, 0.72), vec4(0.26, 0.05, 0.06, 0.92), vec4(0.80, 0.12, 0.15, 1.0), vec4(0.66, 0.90, 1.0, 1.0),
-                vec4(0.05, 0.09, 0.24, 0.92), vec4(0.22, 0.45, 1.0, 1.0), vec4(0.0), vec4(0.0)""";
+                vec4(0.05, 0.09, 0.24, 0.92), vec4(0.22, 0.45, 1.0, 1.0), vec4(0.40, 0.33, 0.35, 0.95), vec4(0.0)""";
 
     /** 搬字的那段（26.2、26.3 共用；Position、Color、UV0、ProjMat、Sampler0 要先宣告好）。 */
     private static final String MOVE = """

@@ -31,13 +31,15 @@ import java.util.UUID;
  *   <li>hit_ignited／hit_frozen／hit_shocked／hit_bleeding／hit_poisoned／hit_elemental：擊中身上有那種異常的敵人，用掉那個異常（hit_elemental：點燃、凍結、感電任一）</li>
  *   <li>heavy_stun：擊中暈眩中的敵人</li>
  *   <li>crit：暴擊時；vs_ignited／vs_frozen／vs_shocked／vs_chilled／vs_bleeding／vs_poisoned／vs_stunned：擊中身上有那種異常的敵人（不用掉）</li>
- *   <li>kill_ignited／kill_frozen／kill_shocked／kill_bleeding／kill_poisoned／kill_stunned：打死身上有那種異常的敵人</li>
+ *   <li>kill_ignited／kill_frozen／kill_shocked／kill_bleeding／kill_poisoned／kill_stunned：打死身上有那種異常的敵人；kill_pinned：打死被定身的敵人（2026-11-01）</li>
  *   <li>use：放這個技能時（猛擊在面前、戰吼在腳下、詛咒在準心指的地方）</li>
  *   <li>hit：擊中時</li>
  *   <li>mark_activated：被輔助的印記被觸發、用掉時，在目標腳下（2026-10-31 照 PoE2 Charged Mark）</li>
  *   <li>armour_broken：讓敵人完全破甲的那一下；stun_applied：讓敵人重暈的那一下；minion_death：被輔助的召喚技能叫出來的召喚物死掉（2026-10）</li>
+ *   <li>2026-11-01：shock：讓敵人感電的那一下；curse_applied：詛咒到每一個敵人（在牠身上，不吃冷卻）；projectile_end：每一發投射物飛到終點（不吃冷卻）</li>
  * </ul>
- * 同一個玩家的同一個隱藏技能至少間隔 {@value #COOLDOWN} tick；觸發出來的隱藏技能打中不會再觸發。
+ * 同一個玩家的同一個隱藏技能照它自己的冷卻（skills.yml 的 cooldown；沒寫的至少間隔 {@value #COOLDOWN} tick，明寫 cooldown: 0 的沒有冷卻，2026-11-01 照 PoE2）；
+ * 觸發出來的隱藏技能打中不會再觸發。
  */
 public final class SupportProcs implements Listener {
 
@@ -47,7 +49,28 @@ public final class SupportProcs implements Listener {
     static final String LUNAR_MOONBEAM = "lunar_moonbeam";
     /** 完美時機放開的那一下（技能描述的代號後面接這個；baseId 會把它去掉）。 */
     static final String PERFECT_SUFFIX = ".perfect";
-    static final long COOLDOWN = 20; // 2026-10 平衡：0.5 → 1 秒
+    /**
+     * 觸發技能沒寫 cooldown 時的預設冷卻（tick）。2026-10 平衡：0.5 → 1 秒。
+     * 2026-11-01 照 PoE2：觸發技能只有資料寫的冷卻——PoB2 沒有冷卻的寫 cooldown: 0（{@link SkillConfig#noTriggerCooldown}，沒有冷卻）；
+     * 還在吃這個預設的是 PoB2 裡沒有那個觸發技能資料的（霜渦、霜漫、眩嘯的觸發，見 skills.yml 的註解）。
+     */
+    static final long COOLDOWN = 20;
+
+    /**
+     * 2026-11-01 照 PoE2：觸發技能這一次要等幾 tick（純函式，測試用）。none（skills.yml 明寫 cooldown: 0）→ 0（沒有冷卻）；
+     * 寫了冷卻的照它（至少 1 tick）；都沒寫照預設 {@link #COOLDOWN}。這次之前 0 跟沒寫一樣吃 1 秒。
+     */
+    static long triggerCooldownTicks(final double seconds, final boolean none) {
+        if (none) {
+            return 0;
+        }
+        return seconds > 0 ? Math.max(1, Math.round(seconds * 20)) : COOLDOWN;
+    }
+
+    /** 這個觸發技能的冷卻（tick；0 = 沒有）。 */
+    private long triggerCooldownTicks(final SkillDefinition sub) {
+        return triggerCooldownTicks(sub.cooldown(), service.config().noTriggerCooldown(sub.id()));
+    }
     /** 打死的記錄留多久（tick）。 */
     private static final long KILL_WINDOW = 20;
 
@@ -58,12 +81,14 @@ public final class SupportProcs implements Listener {
     private final Map<UUID, LastHit> lastHits = new HashMap<>();
 
     /** meta：2026-10-27 這一下是主要寶石觸發的法術（或它觸發出來的）打的——打死時觸發的技能也標成觸發的。 */
-    private record LastHit(UUID player, String skillId, java.util.Set<AilmentType> ailments, long tick, boolean meta) {
+    /** pinned：2026-11-01 照 PoE2 Bone Shrapnel：打中時牠被定身了沒（kill_pinned）。 */
+    private record LastHit(UUID player, String skillId, java.util.Set<AilmentType> ailments, long tick, boolean meta, boolean pinned) {
     }
 
     SupportProcs(final ExileCore plugin, final SkillService service) {
         this.plugin = plugin;
         this.service = service;
+        this.rifts = new ShockingRifts(plugin, service.targets()); // 2026-11-01 照 PoE2 Electromagnetism
     }
 
     private long now() {
@@ -146,6 +171,26 @@ public final class SupportProcs implements Listener {
         fireAll(player, baseId(markId), "mark_activated", living.getLocation(), living, null);
     }
 
+    /**
+     * 2026-11-01 照 PoE2 Enervation（support_regenerate_mana_per_minute_on_shock：被輔助的技能讓敵人感電時，4 秒內每秒再生 x 魔力）：
+     * 每次感電都套（沒有觸發冷卻，原作沒寫）；同一個增益重新套只刷新時間、不疊加（原作沒寫可以疊）。
+     * 這次之前觸發隱藏技能 proc_enervation（觸發冷卻 1 秒）。
+     */
+    private void enervation(final Player player, final String id) {
+        final double perSecond = supportFlat(player, id, tw.exilecore.stats.SupportExtraKeys.MANA_REGEN_ON_SHOCK);
+        if (perSecond > 0) {
+            service.buff(player, ENERVATION_BUFF, "吸電", (int) tw.exilecore.stats.SupportExtraKeys.MANA_REGEN_ON_SHOCK_TICKS,
+                    enervationModifiers(perSecond));
+        }
+    }
+
+    static final String ENERVATION_BUFF = "support.enervation";
+
+    /** 吸電的增益：每秒再生 x 魔力（固定值）。純函式（測試用）。 */
+    static List<Modifier> enervationModifiers(final double perSecond) {
+        return List.of(Modifier.flat(tw.exilecore.stats.StatKeys.MANA_REGEN, perSecond, "吸電"));
+    }
+
     /** 其他模組回報的事件（SkillService.procEvent）。 */
     void event(final Player player, final String skillId, final String event, final Location at, final LivingEntity target) {
         final String id = baseId(skillId);
@@ -154,10 +199,201 @@ public final class SupportProcs implements Listener {
         final boolean previous = metaHit;
         metaHit = previous || skillId.contains(MetaGems.TRIGGERED_SUFFIX);
         try {
-            fireAll(player, id, event, where, target, null);
+            final boolean fired = fireAll(player, id, event, where, target, null);
+            if ("stun_applied".equals(event)) {
+                SupportRemakes.devastate(plugin, service, player, id, target); // 2026-11-01 照 PoE2 Devastate（崩勢）：重暈時完全破甲
+            }
+            if (SHOCK.equals(event) && target != null) {
+                if (fired) {
+                    // 2026-11-01 照 PoE2 Static Shocks：跟著那隻敵人走；每一波最多電 6 個（牠先），每一團各打各的
+                    service.zones().attachStaticShock(player.getUniqueId(), STATIC_SHOCKS, target, tw.exilecore.stats.SupportSystemKeys.STATIC_SHOCK_MAX_TARGETS);
+                }
+                shockCluster(player, id, where, target);
+                enervation(player, id);
+            }
+            // 2026-11-01 照 PoE2 Auto Reload：重暈敵人時自動裝填；這次之前是擊中暈眩中的敵人時（onHitInner）
+            if ("stun_applied".equals(event) && hasFlag(player, id, tw.exilecore.stats.StatKeys.FLAG_RELOAD_ON_STUN)) {
+                service.reloadNow(player, id);
+            }
         } finally {
             metaHit = previous;
         }
+    }
+
+    // =====================================================================
+    // 2026-11-01 照 PoE2 把幾顆近似的輔助改成跟原作一樣
+    // =====================================================================
+
+    /** 被輔助的技能讓敵人感電時（AilmentService；靜電 Static Shocks、磁暴 Electromagnetism）。 */
+    static final String SHOCK = "shock";
+    /**
+     * 磁暴：讓敵人感電、而且 {@value #SHOCK_CLUSTER_RADIUS} 格內（含牠）至少 {@value #SHOCK_CLUSTER_COUNT} 隻不在雷隙裡的感電中敵人時，
+     * 用掉 {@value #SHOCK_CLUSTER_RADIUS} 格內所有敵人的感電觸發雷隙（{@link ShockingRifts}）。
+     */
+    static final String SHOCK_CLUSTER = "shock_cluster";
+    static final double SHOCK_CLUSTER_RADIUS = tw.exilecore.stats.SupportSystemKeys.RIFT_TRIGGER_RADIUS;
+    static final int SHOCK_CLUSTER_COUNT = tw.exilecore.stats.SupportSystemKeys.RIFT_TRIGGER_COUNT;
+    static final String STATIC_SHOCKS = "proc_static_orb";
+    /** 2026-11-01 照 PoE2 Electromagnetism：雷隙的一般脈衝與最後一波（各自的傷害表）。 */
+    static final String SHOCK_RIFT = "proc_shock_rift";
+    static final String SHOCK_RIFT_FINAL = "proc_shock_rift_final";
+    /** 2026-11-01 照 PoE2 Crater：落地時裂出的裂隙。 */
+    static final String CRATER = "proc_crater";
+    /** 震風（Wind Wave）：放被輔助的技能的那段時間你被暈眩（SupportExtras.playerStunned）。 */
+    static final String SELF_STUNNED = "self_stunned";
+    /** 咒爆（Impending Doom）：被輔助的詛咒時間到結束時，在每一隻還帶著它的敵人身上。 */
+    static final String CURSE_EXPIRED = "curse_expired";
+    // 2026-11-01 照 PoE2 DoomBlastPlayer：咒殞爆冷卻 0.15 秒、可以存 3～7 次（skills.yml 的 cooldown_uses 逐級表，StoredUses）；
+    //   沒有存著的次數就不觸發。這次之前沒有可存次數，同一刻結束的好幾隻照冷卻一隻一隻排開炸（DOOM_SPACING 3 tick）
+    /** 瘟潰（Bursting Plague）：帶著瘟疫的敵人死掉時（{@link PlagueBursts}）。 */
+    static final String PLAGUE_DEATH = "plague_death";
+    static final String PLAGUE_BURST = "proc_bursting_plague";
+
+    private final PlagueBursts plague = new PlagueBursts();
+    /** 2026-11-01 照 PoE2 storedUses：有可存次數的觸發技能（cooldown_uses）用這個，不用 {@link #ready} 的單一冷卻。 */
+    private final StoredUses storedUses = new StoredUses();
+
+    /** 2026-11-01 照 PoE2 Electromagnetism：正在開的雷隙用掉了幾個感電（fireAll 開雷隙時讀）。 */
+    private int riftShocks;
+    private final ShockingRifts rifts;
+
+    /**
+     * 磁暴（2026-11-01 照 PoE2 Electromagnetism，PoB2 try_consuming_shock_to_trigger_shocking_rift_in_radius_on_shocking_enemy 40／
+     * consume_shock_of_X_enemies_to_trigger_shocking_rift 3）：讓敵人感電時，牠 4 格內（含牠）有至少 3 隻不在雷隙裡的感電中敵人，
+     * 就用掉 4 格內所有敵人的感電，在牠身上開一道雷隙（每用掉一個感電脈衝速度增加 25%）。
+     * 這次之前 40% 機率（把 40 公尺的半徑看成機率）、只用掉牠與最近另外 2 隻的感電。
+     */
+    private void shockCluster(final Player player, final String id, final Location where, final LivingEntity target) {
+        if (plugin.ailments() == null || procs(player, id, SHOCK_CLUSTER).isEmpty() || !plugin.ailments().has(target, AilmentType.SHOCK)) {
+            return;
+        }
+        final List<LivingEntity> shocked = new java.util.ArrayList<>(service.targets().around(target.getLocation(), SHOCK_CLUSTER_RADIUS, player));
+        if (shocked.stream().noneMatch(each -> each.getUniqueId().equals(target.getUniqueId()))) {
+            shocked.add(target);
+        }
+        shocked.removeIf(each -> !each.isValid() || each.isDead() || !plugin.ailments().has(each, AilmentType.SHOCK));
+        int outside = 0;
+        for (final LivingEntity each : shocked) {
+            if (!rifts.inRift(each.getLocation())) {
+                outside++;
+            }
+        }
+        if (!tw.exilecore.stats.SupportSystemKeys.riftTriggers(outside)) {
+            return;
+        }
+        final int previous = riftShocks;
+        riftShocks = shocked.size();
+        final boolean fired;
+        try {
+            fired = fireAll(player, id, SHOCK_CLUSTER, where, target, null);
+        } finally {
+            riftShocks = previous;
+        }
+        if (!fired) {
+            return;
+        }
+        for (final LivingEntity each : shocked) {
+            plugin.ailments().consume(each, AilmentType.SHOCK, player);
+        }
+    }
+
+    /**
+     * 咒爆：詛咒放上去了（SkillExecutor.applyCurseAt，每一隻敵人一次）。時間到前 1 tick 看牠身上還是不是同一個詛咒
+     * （沒被重放、換掉、淨化、死掉），是的話在牠身上炸咒殞爆。持續時間無限的詛咒不會結束，不炸。
+     */
+    void curseApplied(final Player player, final String skillId, final LivingEntity target, final List<tw.exilecore.combat.Debuffs.Debuff> placed,
+                      final long applied, final long until) {
+        if (player == null || target == null || placed.isEmpty() || until >= Long.MAX_VALUE / 8 || until - applied <= 1
+                || procs(player, baseId(skillId), CURSE_EXPIRED).isEmpty()) {
+            return;
+        }
+        final String id = baseId(skillId);
+        final boolean meta = metaHit;
+        final List<tw.exilecore.combat.Debuffs.Debuff> copy = List.copyOf(placed);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> curseEnding(player, id, target, copy, meta), Math.max(1, until - applied - 1));
+    }
+
+    private void curseEnding(final Player player, final String id, final LivingEntity target, final List<tw.exilecore.combat.Debuffs.Debuff> placed,
+                             final boolean meta) {
+        if (!player.isOnline() || !target.isValid() || target.isDead() || !target.getWorld().equals(player.getWorld())
+                || plugin.combat() == null || plugin.combat().debuffs() == null) {
+            return;
+        }
+        final long now = now();
+        if (!sameCurseStill(plugin.combat().debuffs().active(target.getUniqueId(), now), placed)) {
+            return;
+        }
+        // 2026-11-01 照 PoE2：當下就炸，次數由咒殞爆的可存次數管（fireAll → StoredUses）；這次之前照冷卻排隊
+        final boolean previous = metaHit;
+        metaHit = previous || meta;
+        try {
+            fireAll(player, id, CURSE_EXPIRED, target.getLocation(), target, null);
+        } finally {
+            metaHit = previous;
+        }
+    }
+
+    /** 身上還有放上去的那個詛咒（同一個代號、施放者、結束時間；效果被末日厄運放大過也算）。純函式（測試用）。 */
+    static boolean sameCurseStill(final List<tw.exilecore.combat.Debuffs.Debuff> current, final List<tw.exilecore.combat.Debuffs.Debuff> placed) {
+        for (final tw.exilecore.combat.Debuffs.Debuff original : placed) {
+            for (final tw.exilecore.combat.Debuffs.Debuff now : current) {
+                if (now.id().equals(original.id()) && java.util.Objects.equals(now.source(), original.source()) && now.untilTick() == original.untilTick()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** 瘟潰：被輔助的技能讓敵人中毒了（AilmentService）。 */
+    void poisonApplied(final Player player, final String skillId, final LivingEntity target, final double dps, final long untilTick) {
+        final String id = baseId(skillId);
+        if (procs(player, id, PLAGUE_DEATH).isEmpty()) {
+            return;
+        }
+        plague.poisoned(target.getUniqueId(), player.getUniqueId(), id, dps, untilTick, now());
+    }
+
+    /** 瘟潰：中毒跳了一次（AilmentService，扣血之前）。 */
+    void poisonTicked(final LivingEntity target, final UUID source, final double dps, final double seconds) {
+        if (source != null) {
+            plague.ticked(target.getUniqueId(), source, dps, seconds, now());
+        }
+    }
+
+    /** 瘟潰：帶著瘟疫的敵人死掉了，每個存了瘟疫的玩家各炸一次（照那個技能的寶石等級）。 */
+    private void plagueDeath(final LivingEntity dead) {
+        final Map<UUID, PlagueBursts.Plague> plagued = plague.died(dead.getUniqueId());
+        if (plagued == null) {
+            return;
+        }
+        final double life = monsterLife(dead);
+        if (life <= 0) {
+            return;
+        }
+        final double cap = PlagueBursts.cap(life);
+        for (final Map.Entry<UUID, PlagueBursts.Plague> entry : plagued.entrySet()) {
+            final Player owner = plugin.getServer().getPlayer(entry.getKey());
+            final double amount = Math.min(entry.getValue().amount, cap);
+            if (owner == null || !owner.isOnline() || !owner.getWorld().equals(dead.getWorld()) || amount <= 0) {
+                continue;
+            }
+            final double percent = amount / life * 100.0;
+            final double radius = PlagueBursts.radiusScale(amount, cap);
+            castAt(owner, PLAGUE_BURST, entry.getValue().skillId, dead.getLocation(), build -> {
+                final SkillBuild damaged = withLifeDamage(build, dead, percent);
+                return damaged.withAreaAndProjectiles(damaged.areaScale() * radius, damaged.projectiles());
+            });
+        }
+    }
+
+    /** 怪物的最大生命（不是怪物回傳 0）。 */
+    private double monsterLife(final LivingEntity entity) {
+        if (entity == null || plugin.monsters() == null) {
+            return 0;
+        }
+        final tw.exilecore.monster.MonsterData data = plugin.monsters().data(entity).orElse(null);
+        return data == null ? 0 : plugin.monsters().sheet(entity, data).get(tw.exilecore.stats.StatKeys.LIFE_MAX);
     }
 
     /** 最後一下打這隻怪的是不是這個玩家；是的話回傳用的技能。 */
@@ -218,7 +454,9 @@ public final class SupportProcs implements Listener {
                 }
             }
         }
-        lastHits.put(target.getUniqueId(), new LastHit(player.getUniqueId(), skillId, ailments, now(), metaHit));
+        final boolean pinned = plugin.ailments() != null && plugin.ailments().pinned(target)
+                || plugin.combat() != null && plugin.combat().debuffs() != null && plugin.combat().debuffs().has(target.getUniqueId(), "pin", now());
+        lastHits.put(target.getUniqueId(), new LastHit(player.getUniqueId(), skillId, ailments, now(), metaHit, pinned));
         if (lastHits.size() > 4096) {
             lastHits.values().removeIf(hit -> now() - hit.tick() > KILL_WINDOW);
         }
@@ -258,14 +496,18 @@ public final class SupportProcs implements Listener {
         }
         if (ailments.contains(AilmentType.STUN)) {
             fireAll(player, skillId, "heavy_stun", target.getLocation(), target, null);
-            if (hasFlag(player, skillId, tw.exilecore.stats.StatKeys.FLAG_RELOAD_ON_STUN)) {
-                service.reloadNow(player, skillId); // 震裝（2026-10）
-            }
+            // 2026-11-01 照 PoE2 Auto Reload：震裝改成重暈敵人時裝填（event 的 stun_applied）；這次之前擊中暈眩中的敵人時
+        }
+        // 2026-11-01 照 PoE2 Dazzle（穩擊）：擊中時用掉眩暈（被眩暈的敵人不能閃避：flag.always_hit 帶 vs_dazed）
+        if (hasFlag(player, skillId, tw.exilecore.stats.SupportParityKeys.FLAG_CONSUME_DAZE) && plugin.combat() != null
+                && plugin.combat().debuffs() != null) {
+            plugin.combat().debuffs().removeAll(target.getUniqueId(), "daze");
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(final EntityDeathEvent event) {
+        plagueDeath(event.getEntity()); // 2026-11-01 照 PoE2 Bursting Plague：不管是誰打死的，帶著瘟疫死掉就炸
         final LastHit hit = lastHits.remove(event.getEntity().getUniqueId());
         if (hit == null || now() - hit.tick() > KILL_WINDOW) {
             return;
@@ -282,6 +524,9 @@ public final class SupportProcs implements Listener {
             service.chargeEffects().onKill(player, hit.skillId(), event.getEntity()); // 2026-10-24：剔殘（技能自己的擊殺給戰星）
             for (final AilmentType type : hit.ailments()) {
                 fireAll(player, hit.skillId(), "kill_" + word(type), event.getEntity().getLocation(), null, event.getEntity());
+            }
+            if (hit.pinned()) {
+                fireAll(player, hit.skillId(), "kill_pinned", event.getEntity().getLocation(), null, event.getEntity()); // 2026-11-01 照 PoE2 Bone Shrapnel
             }
         } finally {
             metaHit = previous;
@@ -300,11 +545,78 @@ public final class SupportProcs implements Listener {
         metaHit = previous || triggered;
         try {
             fireAll(player, definition.id(), "use", at, null, null);
+            // 2026-11-01 照 PoE2 Crater：跳躍技能「落地時」在落點觸發——跳躍機制的這裡就是落地（SkillService.updateLeap），
+            // 其他跳躍技能（往後翻、往前撲）等玩家真的落地；這次之前熔坑擊用 proc.use，不是跳躍機制的在放的地方觸發
+            if (SupportGuards.jumping(definition)) {
+                if (definition.mechanic() == Mechanic.LEAP && !triggered) {
+                    landed(player, definition.id(), at, triggered);
+                } else {
+                    watchLanding(player, definition.id(), triggered);
+                }
+            }
         } finally {
             metaHit = previous;
         }
         service.supportMechanics().extras().onUse(player, definition, at); // 2026-10-27 照 PoE2 Holy Descent（跳躍落地）
     }
+
+    /** 2026-11-01 照 PoE2 Crater：跳躍技能落地了（at 是落點）。 */
+    private void landed(final Player player, final String skillId, final Location at, final boolean triggered) {
+        final boolean previous = metaHit;
+        metaHit = previous || triggered;
+        try {
+            fireAll(player, skillId, tw.exilecore.stats.SupportSystemKeys.LAND, at, null, null);
+        } finally {
+            metaHit = previous;
+        }
+    }
+
+    /** 2026-11-01 照 PoE2 Crater：不是跳躍機制的跳躍技能，每 tick 看玩家落地了沒（{@link tw.exilecore.stats.SupportSystemKeys#landed}），落地時在腳下觸發。 */
+    private void watchLanding(final Player player, final String skillId, final boolean triggered) {
+        if (procs(player, skillId, tw.exilecore.stats.SupportSystemKeys.LAND).isEmpty()) {
+            return;
+        }
+        final long start = now();
+        final boolean[] airborne = {false};
+        final org.bukkit.scheduler.BukkitTask[] task = new org.bukkit.scheduler.BukkitTask[1];
+        task[0] = plugin.getServer().getScheduler().runTaskTimer(plugin, () -> {
+            if (!player.isOnline() || player.isDead()) {
+                task[0].cancel();
+                return;
+            }
+            final boolean grounded = SkillService.grounded(player);
+            airborne[0] |= !grounded;
+            if (tw.exilecore.stats.SupportSystemKeys.landed(now() - start, grounded, airborne[0])) {
+                task[0].cancel();
+                landed(player, skillId, player.getLocation(), triggered);
+            }
+        }, 1L, 1L);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Crater（TriggeredCraterPlayer）：在落點往外裂出 count 道裂隙（長 1.5 格 × 範圍、6 秒、最多 9 道；
+     * 出現時打一次：武器攻擊、傷害效益 35%、80% 物理轉火焰），平均分 360 度、第一道朝面向。每一道各打各的。
+     */
+    private void craterFissures(final Player player, final SkillBuild build, final Location at, final int count) {
+        final SkillParams.Zone spec = build.params().zone();
+        if (spec == null) {
+            return;
+        }
+        final Vector facing = SkillTargets.facing(player);
+        final double radius = build.radius();
+        final tw.exilecore.stats.SkillProfile profile = build.profile().scaled(spec.damage() / 100.0, "裂隙");
+        final int ticks = build.durationTicks(spec.duration());
+        for (final double[] direction : tw.exilecore.stats.SupportSystemKeys.fissureDirections(facing.getX(), facing.getZ(), count)) {
+            final List<Location> points = new java.util.ArrayList<>();
+            for (final double along : tw.exilecore.stats.SupportSystemKeys.fissureSteps(build.length(), Math.max(0.4, radius))) {
+                points.add(at.clone().add(direction[0] * along, 0.1, direction[1] * along));
+            }
+            // 出現時打一次（間隔 = 持續時間，同炎脈裂地）
+            service.zones().addFissure(player, points, radius, profile, build.definition().visual(), ticks, Math.max(spec.interval(), ticks / 20.0 + 1),
+                    build.definition().id(), spec.max());
+        }
+    }
+
 
     /**
      * 2026-10-26 照 PoE2：把隱藏技能的基礎傷害換成「這隻敵人最大生命的 percent%」（照技能原本的傷害種類比例分；之後照樣吃增加、更多）。
@@ -347,7 +659,10 @@ public final class SupportProcs implements Listener {
         if (mine.getOrDefault(subId, 0L) > now) {
             return false;
         }
-        mine.put(subId, now + (sub.cooldown() > 0 ? Math.max(1, Math.round(sub.cooldown() * 20)) : COOLDOWN)); // 2026-10-26：照觸發技能自己的冷卻
+        final long ticks = triggerCooldownTicks(sub); // 2026-10-26：照觸發技能自己的冷卻；2026-11-01：cooldown: 0 的沒有冷卻
+        if (ticks > 0) {
+            mine.put(subId, now + ticks);
+        }
         castNow(player, sub, levelFrom, at);
         return true;
     }
@@ -364,10 +679,13 @@ public final class SupportProcs implements Listener {
         if (mine.getOrDefault(subId, 0L) > now) {
             return false;
         }
-        mine.put(subId, now + (sub.cooldown() > 0 ? Math.max(1, Math.round(sub.cooldown() * 20)) : COOLDOWN));
+        final long ticks = triggerCooldownTicks(sub); // 2026-11-01：cooldown: 0 的沒有冷卻
+        if (ticks > 0) {
+            mine.put(subId, now + ticks);
+        }
         final PlayerState state = plugin.players().get(player);
-        final SkillBuild build = adjust.apply(SkillBuild.of(service.config(), sub, gemLevelOf(player, state, levelFrom), state.level(), false, List.of(),
-                state.weaponTags(), plugin.players().sheet(player)));
+        final SkillBuild build = withParentGround(player, state, levelFrom, adjust.apply(SkillBuild.of(service.config(), sub,
+                gemLevelOf(player, state, levelFrom), state.level(), false, List.of(), state.weaponTags(), plugin.players().sheet(player))));
         service.procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), build, null);
         return true;
     }
@@ -424,9 +742,37 @@ public final class SupportProcs implements Listener {
     private void castNow(final Player player, final SkillDefinition sub, final String levelFrom, final Location at) {
         final PlayerState state = plugin.players().get(player);
         final int level = gemLevelOf(player, state, levelFrom);
-        final SkillBuild build = StageAttacks.withShield(plugin, state, SkillBuild.of(service.config(), sub, level, state.level(), false, List.of(),
-                state.weaponTags(), plugin.players().sheet(player))); // 2026-10-28 照 PoE2：熔岩噴射照盾的護甲、閃避附加火焰
+        final SkillBuild build = withParentGround(player, state, levelFrom,
+                StageAttacks.withShield(plugin, state, SkillBuild.of(service.config(), sub, level, state.level(), false, List.of(),
+                state.weaponTags(), plugin.players().sheet(player)))); // 2026-10-28 照 PoE2：熔岩噴射照盾的護甲、閃避附加火焰
         service.procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), build, null);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Persistent Ground（久地）：技能自己留下的地面效果交給隱藏技能放的（引霆突、霆落矛品質的感電地面、霜牙刺的冰緩地面、
+     * 雷遁的感電地面…），照面板上 parentId 那個技能的「地面效果持續時間增加」拉長。
+     * 同日稍後照 PoE2（技能的輔助也作用在它自己觸發的部分）：原技能輔助的所有持續時間修飾器都帶過去（{@link SkillBuild#withParentDuration}）。
+     * 那個技能沒掛持續時間的輔助（或不在面板上）原樣回傳。這次之前隱藏技能的地面效果吃不到原技能的輔助。
+     */
+    SkillBuild withParentGround(final Player player, final PlayerState state, final String parentId, final SkillBuild sub) {
+        if (sub == null || parentId == null) {
+            return sub;
+        }
+        final int position = state.skills().find(parentId);
+        final SkillDefinition parent = position < 0 ? null : service.config().skill(parentId);
+        if (parent == null) {
+            return sub;
+        }
+        final SkillLoadout.Entry entry = state.skills().skill(position);
+        // 2026-11-01 照 PoE2（技能自己的輔助也作用在它自己觸發的部分）：原技能生效的輔助的持續時間修飾器（技能效果持續時間增加、更多／更少，
+        //   地面效果持續時間增加）全部帶給隱藏技能，跟它自己吃到的同一池重算（SkillBuild.withParentDuration）；
+        //   這次之前只帶「地面效果持續時間增加」的比例（withGroundRatio），延時、短時這類輔助吃不到
+        if (SkillBuild.parentDurationModifiers(service.supportsOf(entry), parent).isEmpty()) {
+            return sub; // 沒掛持續時間的輔助：不用算原技能
+        }
+        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+        final List<Modifier> mods = SkillBuild.parentDurationModifiers(service.build(state, sheet, parent, entry).supports(), parent); // 只算真的生效的輔助
+        return sub.withParentDuration(mods, sheet);
     }
 
     /** 殘影（2026-10）：用 levelFrom 那個技能的等級叫出 subId 的分身（冷卻照 proc 的）。 */
@@ -451,6 +797,9 @@ public final class SupportProcs implements Listener {
     @EventHandler
     public void onQuit(final PlayerQuitEvent event) {
         ready.remove(event.getPlayer().getUniqueId());
+        rifts.forget(event.getPlayer().getUniqueId()); // 2026-11-01 照 PoE2 Electromagnetism
+        plague.forgetOwner(event.getPlayer().getUniqueId());
+        storedUses.forget(event.getPlayer().getUniqueId());
     }
 
     private static String word(final AilmentType type) {
@@ -512,24 +861,69 @@ public final class SupportProcs implements Listener {
         for (final Modifier modifier : list) {
             final String subId = modifier.tags().iterator().next();
             final long now = now();
-            if (mine.getOrDefault(subId, 0L) > now || plugin.random().nextDouble() * 100 >= modifier.value()) {
+            // 2026-11-01 照 PoE2：「對每個被詛咒的目標」（朽咒）、「每一發飛到終點時」（撒蒺）這種每個各觸發一次，不吃觸發冷卻
+            final boolean uncapped = tw.exilecore.stats.SupportRemakeKeys.UNCAPPED_EVENTS.contains(event);
+            // 2026-11-01 照 PoE2 storedUses：觸發的技能寫了可存次數（cooldown_uses，例如咒殞爆）就照次數，不看單一冷卻
+            final int level = GemAttributes.usableLevel(service.config(), entry, plugin.players().sheet(player)); // 2026-10-27：屬性不足降級後的等級
+            final int uses = uncapped ? 1 : service.config().cooldownUses(subId, level);
+            if (!uncapped && uses <= 1 && mine.getOrDefault(subId, 0L) > now) {
+                continue;
+            }
+            // 2026-11-01 照 PoE2 Reverberate（沉響）：有餘震機率的（餘震、連震），攻擊時間每 0.25 秒餘震機率增加 x%
+            final double chanceMore = tw.exilecore.stats.SupportRemakeKeys.AFTERSHOCK_PROCS.contains(subId)
+                    ? aftershockChanceMore(player, skillId, state, entry) : 1.0;
+            final double roll = plugin.random().nextDouble() * 100;
+            // 2026-11-01 照 PoE2 Tremors（連震）：30% 多 1 次、15% 多 2 次、10% 多 3 次餘震（擲一次）；這次之前 45% 機率一次較大的
+            final int times = tw.exilecore.stats.SupportRemakeKeys.TREMOR_PROC.equals(subId) ? SupportRemakes.tremors(roll, chanceMore)
+                    : roll < modifier.value() * chanceMore ? 1 : 0;
+            if (times <= 0) {
                 continue;
             }
             final SkillDefinition sub = service.config().skill(subId);
             if (sub == null) {
                 continue;
             }
+            // 2026-11-01 照 PoE2 Static Shocks：一隻敵人身上最多附著一團靜電（已經有的不再觸發）
+            if (STATIC_SHOCKS.equals(subId) && target != null && service.zones().attached(STATIC_SHOCKS, target.getUniqueId())) {
+                continue;
+            }
+            // 2026-11-01 照 PoE2 Coursing Current（竄電）：從感電的敵人射向附近濕透的敵人，只會碰到濕透的；附近沒有濕透的就不觸發
+            LivingEntity drenchedTarget = null;
+            java.util.Set<UUID> notDrenched = null;
+            if (tw.exilecore.stats.SupportRemakeKeys.COURSING_PROC.equals(subId)) {
+                if (target == null) {
+                    continue;
+                }
+                final double reach = Math.max(1, sub.params().range()); // 第一下（感電的敵人 → 濕透的敵人）最遠幾格
+                drenchedTarget = SupportRemakes.nearestDrenched(plugin, service.targets(), player, target, reach, now);
+                if (drenchedTarget == null) {
+                    continue;
+                }
+                notDrenched = SupportRemakes.notDrenched(plugin, service.targets(), player, target, reach + 48, now); // 連鎖 6 次 × 6 格以內都算
+            }
             // 2026-10-26（照 PoE2）：觸發的技能寫了自己的冷卻（磁流 0.2 秒、熔岩迸 0.4 秒、元素崩裂 1 秒…）就照它的；沒寫照舊 1 秒
-            mine.put(subId, now + (sub.cooldown() > 0 ? Math.max(1, Math.round(sub.cooldown() * 20)) : COOLDOWN));
+            // 2026-11-01 照 PoE2：明寫 cooldown: 0 的（PoB2 沒有冷卻：雷隙、裂隙、餘震…）沒有冷卻；這次之前一律至少 1 秒
+            final long ticks = uncapped ? 0 : triggerCooldownTicks(sub);
+            if (ticks > 0) {
+                if (uses > 1) {
+                    if (!storedUses.tryUse(player.getUniqueId(), subId, uses, now, ticks)) {
+                        continue; // 存的次數都用完了：這次不觸發（照 PoE2，不排隊）
+                    }
+                } else {
+                    mine.put(subId, now + ticks);
+                }
+            }
             plugin.players().conditions().onTriggered(player, now); // 2026-10-26：天賦樹「最近觸發過技能」
-            final int level = GemAttributes.usableLevel(service.config(), entry, plugin.players().sheet(player)); // 2026-10-27：屬性不足降級後的等級
             SkillBuild build = SkillBuild.of(service.config(), sub, level, state.level(), false, List.of(),
                     state.weaponTags(), plugin.players().sheet(player));
+            final List<Modifier> subOwnLocal = build.profile().local(); // 2026-11-01 撒蒺：鐵蒺自己的修飾器（致殘），換成原技能的傷害後再加回去
             // 2026-10（照 PoE2 的餘震）：寫了 parent_damage 的照觸發它的那一下出傷害（含輔助），不然慢又重的猛擊（千鈞砸）掛了等於沒掛
             final SkillDefinition parent = service.config().skill(skillId);
             final double share = service.config().parentShare(subId, parent, level); // 2026-10-26：parent_damage: own 照自己的表換算
+            SkillBuild parentBuilt = null; // 2026-11-01：雙震的兩側餘震照原本那一下的範圍（TectonicSlams）
             if (share > 0 && parent != null) {
                 final SkillBuild parentBuild = service.build(state, plugin.players().sheet(player), parent, entry);
+                parentBuilt = parentBuild;
                 if (service.config().parentDamage(subId) == SkillConfig.PARENT_OWN_TABLE) {
                     build = ownSubBuild(build, parentBuild, share, plugin.players().sheet(player));
                 } else {
@@ -544,6 +938,36 @@ public final class SupportProcs implements Listener {
             if (lifePercent > 0) {
                 build = withLifeDamage(build, exclude != null ? exclude : target, lifePercent);
             }
+            if (CRATER.equals(subId)) {
+                // 2026-11-01 照 PoE2 Crater：落點往外裂出 3 道裂隙（support_fissure_on_landing_create_X_fissures_on_impact）；這次之前燒出一個熔坑
+                final int count = (int) Math.round(supportFlat(player, skillId, tw.exilecore.stats.SupportSystemKeys.CRATER_FISSURES));
+                craterFissures(player, build, at, count > 0 ? count : tw.exilecore.stats.SupportSystemKeys.CRATER_DEFAULT_FISSURES);
+                fired = true;
+                continue;
+            }
+            if (SHOCK_RIFT.equals(subId) && target != null) {
+                // 2026-11-01 照 PoE2 Electromagnetism：開一道會脈衝、吸人、阻礙的雷隙（ShockingRifts）；這次之前一次炸開的新星
+                final SkillDefinition lastDefinition = service.config().skill(SHOCK_RIFT_FINAL);
+                SkillBuild last = lastDefinition == null ? build : SkillBuild.of(service.config(), lastDefinition, level, state.level(), false, List.of(),
+                        state.weaponTags(), plugin.players().sheet(player));
+                if (metaHit && lastDefinition != null) {
+                    last = last.withProfile(last.profile().derive(last.profile().id() + MetaGems.TRIGGERED_SUFFIX, java.util.Set.of(), java.util.Set.of()));
+                }
+                rifts.open(player, build, last, target.getLocation(), Math.max(0, riftShocks));
+                fired = true;
+                continue;
+            }
+            // 2026-11-01 照 PoE2 Tectonic Slams（雙震）：被輔助的技能的所有餘震更少 45% 傷害、範圍更少 30%（TectonicSlams）
+            final boolean aftershockProc = TectonicSlams.AFTERSHOCKS.contains(subId);
+            final double aftershockLess = aftershockProc ? supportFlat(player, skillId, TectonicSlams.DAMAGE_LESS) : 0;
+            final double aftershockAreaLess = aftershockProc ? supportFlat(player, skillId, TectonicSlams.AREA_LESS) : 0;
+            if (TectonicSlams.PROC.equals(subId)) {
+                fired |= sideAftershocks(player, build, parentBuilt, at, aftershockLess, aftershockAreaLess);
+                continue;
+            }
+            if (aftershockProc) {
+                build = TectonicSlams.lessened(build, aftershockLess, aftershockAreaLess);
+            }
             LivingEntity aim = target;
             if (aim == null) {
                 for (final LivingEntity candidate : service.targets().around(at, 8, player)) {
@@ -553,12 +977,77 @@ public final class SupportProcs implements Listener {
                     }
                 }
             }
+            if (drenchedTarget != null) {
+                service.executor().chainFrom(Origin.towards(player, target.getLocation(), drenchedTarget), build, drenchedTarget, notDrenched);
+                fired = true;
+                continue;
+            }
+            if (tw.exilecore.stats.SupportRemakeKeys.CALTROPS_PROC.equals(subId)) {
+                // 2026-11-01 照 PoE2 Caltrops（TriggeredCaltropsPlayer）：在投射物終點 3 格內撒一顆鐵蒺（碰到才炸、8 秒、最多 20 顆，OriginalSkills）；
+                //   這次之前在終點放一片 4 秒的鐵蒺地（zone）
+                service.originals().spearCaltrop(player, build, subOwnLocal, at, skillId);
+                fired = true;
+                continue;
+            }
+            if (tw.exilecore.stats.SupportRemakeKeys.DECAY_PROC.equals(subId) && target != null) {
+                // 2026-11-01 照 PoE2 Decaying Hex（朽咒）：直接在被詛咒的那個敵人身上掛凋朽（混沌持續傷害的減益）；這次之前在落點留一片地面
+                if (plugin.combat() != null && plugin.combat().skillDamage() != null) {
+                    plugin.combat().skillDamage().hit(player, target, build.profile(), null);
+                    fired = true;
+                }
+                continue;
+            }
             final Vector direction = aim != null ? SkillTargets.center(aim).toVector().subtract(at.toVector()) : SkillTargets.facing(player);
             final Location from = at.clone().add(0, 0.2, 0);
-            service.procCast(Origin.at(player, from, direction.lengthSquared() < 1e-6 ? SkillTargets.facing(player) : direction.normalize()),
-                    build, aim);
+            final Origin origin = Origin.at(player, from, direction.lengthSquared() < 1e-6 ? SkillTargets.facing(player) : direction.normalize());
+            service.procCast(origin, build, aim);
+            // 2026-11-01 照 PoE2 Tremors：多次餘震一次一次來（間隔 0.5 秒）
+            final SkillBuild again = build;
+            final LivingEntity againAim = aim;
+            for (int i = 1; i < times; i++) {
+                plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                    if (player.isOnline() && player.getWorld().equals(from.getWorld())) {
+                        service.procCast(origin, again, againAim != null && againAim.isValid() && !againAim.isDead() ? againAim : null);
+                    }
+                }, tw.exilecore.stats.SupportRemakeKeys.TREMOR_GAP_TICKS * i);
+            }
             fired = true;
         }
         return fired;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Tectonic Slams（雙震）：猛擊的同時，在原本那一下的範圍前方左右兩側各震一次餘震
+     * （範圍照原本那一下 {@link TectonicSlams#initialArea}，再更少 30%；傷害＝那一下的重複再更少 45%）。
+     * 這次之前是落在猛擊面前 2.5 格的一圈 2～2.5 格的側震。回傳有沒有放出去。
+     */
+    private boolean sideAftershocks(final Player player, final SkillBuild sub, final SkillBuild parent, final Location at,
+                                    final double damageLess, final double areaLess) {
+        final TectonicSlams.Area area = TectonicSlams.initialArea(parent);
+        final Vector facing = SkillTargets.facing(player);
+        final Location centre = area.atAim() ? at.clone() : player.getLocation().clone().add(facing.clone().multiply(area.forward()));
+        final SkillBuild side = TectonicSlams.sideBuild(sub, area.radius(), damageLess, areaLess);
+        final double distance = area.radius() > 0 ? area.radius() : sub.radius();
+        boolean fired = false;
+        for (final double[] offset : TectonicSlams.sideCentres(facing.getX(), facing.getZ(), distance)) {
+            final Location from = centre.clone().add(offset[0], 0.2, offset[1]);
+            service.procCast(Origin.at(player, from, facing), side, null);
+            fired = true;
+        }
+        return fired;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Reverberate（沉響）：這個技能掛的「攻擊時間每 0.25 秒餘震機率增加 x%」換成機率的倍率（照被輔助那一下的攻擊時間）。
+     * 沒掛回傳 1。
+     */
+    private double aftershockChanceMore(final Player player, final String skillId, final PlayerState state, final SkillLoadout.Entry entry) {
+        final double per = supportFlat(player, skillId, tw.exilecore.stats.SupportRemakeKeys.AFTERSHOCK_PER_QUARTER);
+        final SkillDefinition parent = per <= 0 ? null : service.config().skill(skillId);
+        if (parent == null || entry == null) {
+            return 1.0;
+        }
+        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+        return SupportRemakes.reverberate(per, service.build(state, sheet, parent, entry).intervalTicks(sheet));
     }
 }

@@ -354,7 +354,8 @@ final class AscPaths implements Listener {
                     plugin.skills().triggerSkill(player, "asc_vivid_stag", land);
                 }
                 if (n >= STAG_LEAPS) {
-                    plugin.skills().triggerSkill(player, "asc_stag_ground", land); // 跳完全程：感電地面
+                    // 跳完全程：感電地面（2026-11-01 照 PoE2 Persistent Ground：照靈影奔騰掛的地面效果持續時間增加拉長）
+                    plugin.skills().triggerGroundSkill(player, "asc_stag_ground", land, "vivid_stampede");
                 }
             }
             if (n < STAG_LEAPS) {
@@ -816,7 +817,7 @@ final class AscPaths implements Listener {
         }
         // 翱翔之地：站在你（或隊友）的翱翔之地上
         final boolean onTrail = onTrail(player);
-        final boolean full = state.life() >= state.maxLife() - 1e-6;
+        final boolean full = state.isFullLife(); // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
         if (onTrail != own.onTrail || onTrail && full != own.trailFull) {
             own.onTrail = onTrail;
             own.trailFull = full;
@@ -1151,7 +1152,7 @@ final class AscPaths implements Listener {
         // 翱翔之地：增加 30% 閃避值，生命全滿時增加 40% 傷害
         if (own.onTrail) {
             out.add(Modifier.increased(StatKeys.EVASION, 0.30, "翱翔之地"));
-            if (state.life() >= state.maxLife() - 1e-6) {
+            if (state.isFullLife()) { // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
                 out.add(Modifier.increased(StatKeys.DAMAGE, 0.40, "翱翔之地"));
             }
         }

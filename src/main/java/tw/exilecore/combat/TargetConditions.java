@@ -27,7 +27,16 @@ public final class TargetConditions {
     /** 目標這一下的狀態（純資料，方便測試）。 */
     public record Target(double distance, boolean blinded, boolean pinned, boolean dazed, boolean hindered, boolean heavyStunned,
                          boolean marked, boolean rare, double lifeFraction, boolean fullyBroken, boolean cursed, boolean frozen,
-                         boolean chilled, boolean shocked, boolean electrocuted, boolean ignited, boolean bleeding, boolean poisoned) {
+                         boolean chilled, boolean shocked, boolean electrocuted, boolean ignited, boolean bleeding, boolean poisoned,
+                         boolean fullLife) {
+
+        /** 舊的寫法：滿血照生命比例（怪物）。 */
+        public Target(double distance, boolean blinded, boolean pinned, boolean dazed, boolean hindered, boolean heavyStunned,
+                      boolean marked, boolean rare, double lifeFraction, boolean fullyBroken, boolean cursed, boolean frozen,
+                      boolean chilled, boolean shocked, boolean electrocuted, boolean ignited, boolean bleeding, boolean poisoned) {
+            this(distance, blinded, pinned, dazed, hindered, heavyStunned, marked, rare, lifeFraction, fullyBroken, cursed, frozen,
+                    chilled, shocked, electrocuted, ignited, bleeding, poisoned, tw.exilecore.character.LifeChecks.fullFraction(lifeFraction));
+        }
     }
 
     /** 目標的狀態 → 條件標籤。 */
@@ -49,7 +58,7 @@ public final class TargetConditions {
         add(tags, target.heavyStunned(), TreeConditions.VS_HEAVY_STUNNED);
         add(tags, target.marked(), TreeConditions.VS_MARKED);
         add(tags, target.rare(), TreeConditions.VS_RARE);
-        add(tags, target.lifeFraction() >= 0.999, TreeConditions.VS_FULL_LIFE);
+        add(tags, target.fullLife(), TreeConditions.VS_FULL_LIFE); // 2026-11-01：玩家目標照沒被保留的生命（LifeChecks）；低血照最大生命
         add(tags, target.lifeFraction() <= TreeConditions.LOW_FRACTION, TreeConditions.VS_LOW_LIFE);
         add(tags, target.fullyBroken(), TreeConditions.VS_BROKEN_ARMOUR);
         add(tags, target.cursed(), TreeConditions.VS_CURSED);
@@ -185,6 +194,7 @@ public final class TargetConditions {
                 hasAilments && ailments.electrocuted(defender),
                 hasAilments && ailments.has(defender, AilmentType.IGNITE),
                 hasAilments && ailments.has(defender, AilmentType.BLEED),
-                hasAilments && ailments.has(defender, AilmentType.POISON)));
+                hasAilments && ailments.has(defender, AilmentType.POISON),
+                tw.exilecore.character.LifeChecks.isFullLife(defender)));
     }
 }

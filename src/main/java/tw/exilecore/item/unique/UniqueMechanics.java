@@ -250,7 +250,7 @@ public final class UniqueMechanics implements Listener {
         final StatSheet sheet = plugin.players().sheet(player);
         final double recover = sheet.flat(UniqueStats.BLOCK_RECOVER_LIFE, Set.of());
         final PlayerState state = plugin.players().find(player.getUniqueId()).orElse(null);
-        if (recover > 0 && state != null && state.hasCharacter() && !state.isDead() && !state.ruined(now()) && state.life() < state.maxLife()) {
+        if (recover > 0 && state != null && state.hasCharacter() && !state.isDead() && !state.ruined(now()) && !state.isFullLife()) { // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
             state.setLife(Math.min(state.maxLife(), state.life() + state.maxLife() * recover / 100.0));
             plugin.players().display(player, state);
         }
@@ -567,7 +567,7 @@ public final class UniqueMechanics implements Listener {
             nextCorpse.remove(uuid);
             return;
         }
-        if (nextCorpse.getOrDefault(uuid, 0L) > now || state.life() >= state.maxLife() || state.ruined(now)) {
+        if (nextCorpse.getOrDefault(uuid, 0L) > now || state.isFullLife() || state.ruined(now)) { // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
             return;
         }
         final Location at = player.getLocation();

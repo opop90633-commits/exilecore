@@ -370,7 +370,8 @@ public final class LineageRules {
             case LineageKeys.WALL_FISSURE -> "牆改成沿著一道往前的裂縫立起來";
             case LineageKeys.WALL_LENGTH -> (value < 0 ? "減少 " : "增加 ") + n + "% 牆的長度";
             case LineageKeys.EXTRA_FISSURES -> "多裂出 " + n + " 道裂縫";
-            case LineageKeys.LIFE_RESERVE -> "不保留精魂，改成每 1 點基礎精魂保留 " + ModifierText.number(value / 100.0) + "% 最大生命";
+            case LineageKeys.LIFE_RESERVE -> "不保留精魂，改成每 1 點基礎精魂保留 " + ModifierText.number(value / 100.0) + "% 最大生命（最大生命不變，保留的那部分回不來）";
+            case LineageKeys.LIFE_RESERVED -> "保留 " + n + "% 最大生命（目前生命最多回到沒被保留的部分）"; // 2026-11-01
             case LineageKeys.GLORY_REQUIRED -> n + "% " + (value < 0 ? "更少" : "更多") + "需要的榮耀";
             case LineageKeys.SEAL_CAST_PERCENT -> "每過施法時間的 " + n + "% 蓄一個封印";
             case LineageKeys.REPEAT_LESS -> "解開封印多放的那幾次傷害更少 " + n + "%";
@@ -385,7 +386,9 @@ public final class LineageRules {
             case LineageKeys.ECHO_AREA -> (value < 0 ? "減少 " : "增加 ") + n + "% 回響的範圍";
             case LineageKeys.MIMIC -> "每放一次留下一個幻身（最多 " + n + " 個，5 秒），到上限時全部一起放（傷害更少 50%）";
             case LineageKeys.OFFERING_CASCADE -> "你的範圍法術也在祭柱那裡放一次（" + n + "% " + (value < 0 ? "更少" : "更多") + "傷害）";
-            case LineageKeys.RANDOM_AREA -> "觸發出來的技能範圍在更少 40% 到更多 50% 之間隨機";
+            case LineageKeys.RANDOM_AREA -> "觸發出來的技能範圍、投射物速度各自在更少 40% 到更多 50% 之間隨機"; // 2026-11-01：加上投射物速度
+            case LineageKeys.RANDOM_DAMAGE -> "觸發出來的技能每次觸發的傷害在更少 " + n + "% 到更多 " + ModifierText.number(Math.abs(value) * 1.5)
+                    + "% 之間隨機（同一次觸發的每一下都一樣）"; // 2026-11-01（骰禍）
             case LineageKeys.CHALICE -> "用的時候獲得滿溢聖杯（每 1 秒冷卻 " + n + " 秒：藥劑每秒 +2 次充能、回復增加 30%）";
             case LineageKeys.MANA_FLASK_EFFICIENCY -> "魔力藥劑生效時增加 " + n + "% 魔力消耗效率"; // 2026-10-27 照 PoE2 用語；這次之前「魔力消耗少 x%」
             case LineageKeys.HUBRIS -> "另外消耗 " + n + "% 最大魔力，附加這筆消耗 15% 的物理與冰冷傷害";
@@ -440,7 +443,7 @@ public final class LineageRules {
             case LineageKeys.LIFE_FLASK_MORE -> "生命藥劑生效時更多 " + n + "% 傷害";
             case LineageKeys.PHYS_TAKEN_ON_BREAK -> "完全破甲時讓敵人永久受到的物理傷害增加 " + n + "%（最多 20%）";
             case LineageKeys.CHAOS_BREAKS -> "混沌傷害也破甲，等於混沌傷害的 " + n + "%";
-            case LineageKeys.PER_COMMAND -> "最近 15 秒每用過一種不同的指令技能，更多 " + n + "% 傷害";
+            case LineageKeys.PER_COMMAND -> "最近 8 秒每用過一種不同的指令技能，更多 " + n + "% 傷害"; // 2026-11-01 照 PoE2：8 秒（這次之前 15 秒）
             case LineageKeys.VS_ISOLATED -> "對孤立的敵人（6 格內沒有其他敵人）擊中更多 " + n + "%"; // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
             default -> null;
         };

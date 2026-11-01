@@ -69,6 +69,8 @@ public final class SupportKeys {
     public static final String POISON_STACKS = "poison.stacks";
     /** MORE：對流血中的敵人造成的中毒傷害（淬毒 III）。 */
     public static final String POISON_VS_BLEEDING = "poison.magnitude_vs_bleeding";
+    /** MORE：對中毒的敵人造成的流血傷害（2026-11-01 照 PoE2 Admixture：mixed_maladies_bleed_effect_+%_final_vs_poisoned）。 */
+    public static final String BLEED_VS_POISONED = "bleed.magnitude_vs_poisoned";
     /** MORE：對凍結中的敵人造成的點燃傷害（寒焚）；FLAT 寫在 IGNITE_VS_FROZEN_UNIQUE：對凍結的傳奇再更多。 */
     public static final String IGNITE_VS_FROZEN = "ignite.magnitude_vs_frozen";
     public static final String IGNITE_VS_FROZEN_UNIQUE = "ignite.magnitude_vs_frozen_unique";
@@ -137,7 +139,7 @@ public final class SupportKeys {
     public static final String WARCRY_RAGE_BYPASS = "warcry.rage_bypass";
     /** FLAT：被強化的攻擊有 x% 機率不算進強化次數（不竭嘯）。 */
     public static final String WARCRY_TIRELESS = "warcry.endless_howl";
-    /** FLAT：戰吼回聲幾次（震嘯：2 次，每次 1.3 秒，範圍每次更多 100%；要先移動 10 格才能用）。 */
+    /** FLAT：戰吼回聲幾次（震嘯：2 次，每次 1.3 秒，範圍每次更多 100%；要先移動 5 格才能用；2026-11-01 照站長，原作 10 公尺）。 */
     public static final String WARCRY_ECHOES = "warcry.echoes";
     /** FLAT：每 5 點怪物強度給 x 點怒氣（聚怒嘯）。 */
     public static final String WARCRY_RAGE_PER_5_POWER = "warcry.rage_per_5_power";

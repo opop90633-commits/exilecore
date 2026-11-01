@@ -576,10 +576,11 @@ public final class PlayerStateService {
             state.setConditionsEvaluated(conditions);
             // 2026-10-26：法杖、長杖、權杖賦予的技能（PoE2 Grants Skill）放進技能面板；需求不符的武器不給
             // 2026-10-26（昇華）：昇華天賦賦予的技能（grant_skill.代號，等級照角色等級）
-            final Map<String, Integer> granted = new java.util.LinkedHashMap<>(grantedSkills(active));
+            final Map<String, Integer> weaponGranted = grantedSkills(active);
+            final Map<String, Integer> granted = new java.util.LinkedHashMap<>(weaponGranted);
             tw.exilecore.ascendancy.AscBuild.grantedSkills(plugin, extra, level, granted);
             // 面板跟著角色一起存檔（定期、登出）；2026-10-27：＋武器的品質；2026-10-29：脫下武器馬上拿掉賦予的技能（角色載入好了才拿）
-            state.skills().syncGranted(granted, grantedQuality(active), state.isLoaded());
+            state.skills().syncGranted(granted, ascendancyQuality(grantedQuality(active), weaponGranted.keySet(), granted.keySet()), state.isLoaded());
             // 2026-10-28 照 PoE2：賦予的技能的孔照等級；換了等級低的武器、孔變少，多出來那幾孔的寶石放回背包
             final List<tw.exilecore.character.SkillLoadout.Overflow> overflow = state.skills().drainOverflow();
             if (!overflow.isEmpty() && plugin.skills() != null) {
@@ -698,7 +699,8 @@ public final class PlayerStateService {
             sheet.add(Modifier.more(StatKeys.EVASION, -1.0, "化閃為甲"));
         }
 
-        // 煉獄使者（PoE2 昇華）：照最大生命換成護盾／魔力／精魂（各保留 25% 生命，見 PlayerState.maxLife）
+        // 煉獄使者（PoE2 昇華）：照最大生命換成護盾／魔力／精魂（各保留 25% 生命，見 PlayerState.innateReservedLifePercent；
+        //   2026-11-01 起是真的保留，最大生命不變，所以「每 x 最大生命」照完整的最大生命算，跟 PoB2 的 PerStat Life 一樣）
         final double lifeForBeidat = sheet.get(StatKeys.LIFE_MAX);
         if (StatKeys.flag(sheet, StatKeys.BEIDAT_HAND)) {
             sheet.add(Modifier.flat(StatKeys.ES_MAX, Math.floor(lifeForBeidat / 8), "魔契之手"));
@@ -867,6 +869,24 @@ public final class PlayerStateService {
             final String skill = plugin.items().repository().grantedSkill(item.data().base());
             if (skill != null) {
                 quality.merge(skill, item.data().quality(), Math::max);
+            }
+        }
+        return quality;
+    }
+
+    /** 2026-11-01 照站長：職業昇華賦予的技能品質固定 20%。 */
+    public static final int ASCENDANCY_SKILL_QUALITY = 20;
+
+    /**
+     * 2026-11-01 照站長：昇華天賦賦予的技能（不是武器給的）品質固定 {@link #ASCENDANCY_SKILL_QUALITY}；
+     * 武器給的照武器的品質。純函式（測試用）。
+     */
+    static Map<String, Integer> ascendancyQuality(final Map<String, Integer> weaponQuality, final java.util.Set<String> fromWeapons,
+                                                 final java.util.Set<String> allGranted) {
+        final Map<String, Integer> quality = new java.util.HashMap<>(weaponQuality);
+        for (final String id : allGranted) {
+            if (!fromWeapons.contains(id)) {
+                quality.put(id, ASCENDANCY_SKILL_QUALITY);
             }
         }
         return quality;
@@ -1721,7 +1741,7 @@ public final class PlayerStateService {
         // 野林堅持（儀祭者，PoE2）：每少 5% 生命，生命回復速度增加 x%
         final double perMissing = sheet.flat(StatKeys.LIFE_RECOVERY_PER_MISSING, Set.of());
         final double missingFactor = perMissing <= 0 || state.maxLife() <= 0 ? 1.0
-                : 1 + perMissing / 100.0 * Math.floor((1 - state.life() / state.maxLife()) * 100 / 5);
+                : 1 + perMissing / 100.0 * Math.floor(state.missingLife() / state.maxLife() * 100 / 5); // 2026-11-01：保留的生命不算少掉的（PlayerState#missingLife）
         // 2026-10：荒蕪（賽勒斯的黑水）——禁療：生命回復、偷取、護盾回充全部停掉；藥劑照喝（那是唯一的活路）
         final boolean ruined = state.ruined(currentTick);
         if (ruined) {
@@ -1735,7 +1755,7 @@ public final class PlayerStateService {
                 : (sheet.get(StatKeys.LIFE_REGEN) + state.maxLife() * sheet.get(StatKeys.LIFE_REGEN_PERCENT) / 100.0
                         + tw.exilecore.passive.ConquestEffects.bloodRegen(player.getUniqueId(), sheet, currentTick)) // 2026-10-26：鮮血獻祭
                         * seconds * missingFactor * lifeRate;
-        final double overflow = Math.max(0, state.life() + regen - state.maxLife());
+        final double overflow = Math.max(0, regen - state.missingLife()); // 2026-11-01：超過沒被保留的生命才算溢出（PlayerState#missingLife）
         // 2026-10-26 照 PoE2 基石：創傷信仰——能量護盾不回充、不能用再生回復
         final boolean scarred = StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_SCARRED_FAITH);
         if (scarred && StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.REGEN_TO_ES)) {
@@ -2044,7 +2064,9 @@ public final class PlayerStateService {
         if (player.isDead()) {
             return;
         }
-        final double ratio = state.life() / state.maxLife();
+        // 2026-11-01 照 PoE2 保留生命：原版愛心照「沒被保留的生命」畫（回滿沒被保留的就是滿心），保留的部分不會看起來像少掉的血；
+        //   這次之前照最大生命（保留 25% 時永遠少 5 顆心）。鎖住的部分看動作列的「（保留 x）」與隊伍框的灰色那段
+        final double ratio = vanillaHeartFraction(state.life(), state.unreservedLife());
         final double vanillaHealth = state.life() <= 0 ? 0 : Math.max(1.0, Math.round(ratio * VANILLA_MAX_HEALTH));
         // 剛上線（還沒選角、屬性還沒同步）時原版血量上限可能還是 20：先補成 40，再照實際上限夾住，不然 setHealth 會丟例外
         final AttributeInstance maxHealth = player.getAttribute(Attribute.MAX_HEALTH);
@@ -2085,6 +2107,11 @@ public final class PlayerStateService {
         final net.kyori.adventure.text.TextComponent.Builder stats = Component.text();
         final StringBuilder statsPlain = new StringBuilder();
         stat(stats, statsPlain, "", LIFE_COLOR, "❤ " + grouped(Math.round(state.life())) + " / " + grouped(Math.round(state.maxLife())));
+        // 2026-11-01 照 PoE2 保留生命（貝達特、血契）：最大生命後面標出鎖住的那部分（回不來，不算少掉的生命）；這次之前看不出來
+        final String reservedLife = reservedLifeSuffix(state.reservedLife());
+        if (!reservedLife.isEmpty()) {
+            stat(stats, statsPlain, "", RESERVED_LIFE_COLOR, reservedLife);
+        }
         final double guard = state.guard(plugin.getServer().getCurrentTick()); // 2026-10-28：守護（生命痕跡溢出、護符…）顯示在生命後面；這次之前看不到
         if (guard >= 1) {
             stat(stats, statsPlain, " ", GUARD_COLOR, "+" + grouped(Math.round(guard)) + " 守護");
@@ -2171,6 +2198,26 @@ public final class PlayerStateService {
     private static final net.kyori.adventure.text.format.TextColor ES_COLOR = net.kyori.adventure.text.format.TextColor.color(0x77ccff);
     private static final net.kyori.adventure.text.format.TextColor MANA_COLOR = net.kyori.adventure.text.format.TextColor.color(0x5599ff);
     private static final net.kyori.adventure.text.format.TextColor LEVEL_COLOR = net.kyori.adventure.text.format.TextColor.color(0xf5b942);
+
+    /** 2026-11-01：保留生命那段的顏色（暗紅灰：鎖住的生命）。 */
+    private static final net.kyori.adventure.text.format.TextColor RESERVED_LIFE_COLOR = net.kyori.adventure.text.format.TextColor.color(0x9a6a6a);
+
+    /**
+     * 2026-11-01 照 PoE2 保留生命：動作列生命後面的「（保留 200）」（沒有保留是空字串）。純函式（測試用）。
+     * 例：最大生命 1000、保留 20% → 「❤ 800 / 1,000（保留 200）」。
+     */
+    static String reservedLifeSuffix(final double reservedLife) {
+        final long reserved = Math.round(reservedLife);
+        return reserved <= 0 ? "" : "（保留 " + grouped(reserved) + "）";
+    }
+
+    /** 2026-11-01：原版愛心要畫幾成（目前生命 ÷ 沒被保留的生命，0～1）。純函式（測試用）。 */
+    static double vanillaHeartFraction(final double life, final double unreservedLife) {
+        if (unreservedLife <= 0) {
+            return 0;
+        }
+        return Math.max(0, Math.min(1, life / unreservedLife));
+    }
 
     /** 動作列的一段數字（前面的空白沒有顏色，跟以前的 MiniMessage 一樣）。 */
     private static void stat(final net.kyori.adventure.text.TextComponent.Builder out, final StringBuilder plain, final String gap,

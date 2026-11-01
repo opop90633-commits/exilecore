@@ -81,7 +81,11 @@ class TreeNewMechanicsTest {
         assertEquals(24, player.flat(StatKeys.RESIST_FIRE, Set.of()), 1e-9, "另外給的抗性也乘效果");
         final StatSheet undeath = new StatSheet().addAll(TreeMechanics.archonModifiers(TreeMechanics.Archon.UNDEATH, new StatSheet()));
         assertEquals(1.25, undeath.more(StatKeys.DAMAGE, Set.of(Tags.MINION)), 1e-9);
-        assertEquals(3.0, undeath.more(StatKeys.COOLDOWN_RECOVERY, Set.of("command")), 1e-9, "指令技能冷卻回復速度更多 200%");
+        assertEquals(3.0, undeath.more(StatKeys.COOLDOWN_RECOVERY, Set.of(Tags.MINION, "command")), 1e-9, "指令技能冷卻回復速度更多 200%");
+        // 2026-11-01：給召喚物的（標 [minion, command]）：每一種可指令召喚物的指令都吃得到，召喚物其他招式吃不到
+        final StatSheet minionSide = Commandables.ownerSide(undeath, java.util.List.of(), "raven_plot", false);
+        assertEquals(3.0, Commandables.rate(minionSide), 1e-9, "召喚物的指令冷卻回復速度更多 200%");
+        assertEquals(1.0, minionSide.more(StatKeys.COOLDOWN_RECOVERY, Set.of()), 1e-9, "指令以外不吃");
     }
 
     @Test

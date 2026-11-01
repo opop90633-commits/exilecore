@@ -401,6 +401,10 @@ public final class MinionSheets {
             tags.add(Tags.AREA); // 2026-10-29 照 PoE2（Skeletal Arsonist 的火彈是投射物、範圍）：打中時連周圍一起打的攻擊算範圍（凝聚、震域吃得到）
         }
         tags.add(Tags.MINION);
+        // 2026-11-01 照 PoE2（Bidding 的 support_command_skill_damage_+%_final 只算 Command Skills）：召喚技能自己的 command 標籤
+        //   （「可以下指令」）不帶到召喚物的招式上——只有真的是指令的那幾下（MinionService 的指令招式、巨靈的指令）才是 command 情境，
+        //   骸令、軍令這些只給指令的修飾器才不會加到召喚物的普攻、自己的技能。這次之前召喚物所有的招式都帶 command
+        tags.remove(Commandables.TAG);
         return new SkillProfile(base.id() + ".minion", tags, 1.0, null, null, base.conversion(), base.local());
     }
 

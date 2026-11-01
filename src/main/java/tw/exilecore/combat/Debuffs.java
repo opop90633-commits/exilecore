@@ -402,6 +402,31 @@ public final class Debuffs {
         return slow;
     }
 
+    /** 前綴：加速牠的「減益」（2026-11-01 照 PoE2 See Red：流血的敵人移動速度增加）；修飾器裡的「增加移動速度」照最大的那條算。 */
+    public static final String HASTE_PREFIX = "haste.";
+
+    /** 2026-11-01：移動速度加快多少（0.15 = 快 15%）：代號 haste. 開頭、還有效的減益，各自的「增加移動速度」取最大的。 */
+    public double haste(final UUID target, final long now) {
+        final List<Debuff> list = entries.get(target);
+        if (list == null) {
+            return 0;
+        }
+        double haste = 0;
+        for (final Debuff debuff : list) {
+            if (!debuff.active(now) || !debuff.id().startsWith(HASTE_PREFIX)) {
+                continue;
+            }
+            double sum = 0;
+            for (final tw.exilecore.stats.Modifier modifier : debuff.mods()) {
+                if (modifier.stat().equals(tw.exilecore.stats.StatKeys.MOVEMENT_SPEED) && modifier.type() == tw.exilecore.stats.ModType.INCREASED) {
+                    sum += modifier.value();
+                }
+            }
+            haste = Math.max(haste, sum);
+        }
+        return haste;
+    }
+
     /** 這個目標身上還有效的減益。 */
     public List<Debuff> active(final UUID target, final long now) {
         final List<Debuff> list = entries.get(target);
@@ -427,6 +452,18 @@ public final class Debuffs {
             }
         }
         return removed;
+    }
+
+    /** 2026-11-01 照 PoE2 Dazzle（穩擊用掉眩暈）：拿掉這個目標身上某種減益（不管是誰給的）；有拿掉回傳 true。 */
+    public boolean removeAll(final UUID target, final String id) {
+        final List<Debuff> list = entries.get(target);
+        if (list == null || !list.removeIf(debuff -> debuff.id().equals(id))) {
+            return false;
+        }
+        if (list.isEmpty()) {
+            entries.remove(target);
+        }
+        return true;
     }
 
     /** 2026-10-28：印記被用掉（remove 拿掉的印記都是被觸發、消耗掉的；到期、被新印記換掉不算）。 */

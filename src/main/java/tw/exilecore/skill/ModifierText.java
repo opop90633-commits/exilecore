@@ -144,6 +144,14 @@ public final class ModifierText {
         if (stat.startsWith("damage.extra.") && modifier.type() == tw.exilecore.stats.ModType.FLAT) { // 2026-10
             return "獲得 " + number(value) + "% 傷害為額外的" + tagName(stat.substring("damage.extra.".length())) + "傷害";
         }
+        final String system = SupportSystemText.describe(modifier);
+        if (system != null) {
+            return system; // 2026-11-01 照原作換成真正系統的輔助（靜電、磁暴、熔坑擊、拖滯）
+        }
+        final String remake = SupportRemakeText.describe(modifier, value, percent);
+        if (remake != null) {
+            return remake; // 2026-11-01 照原作重做的輔助（連震、沉響、歧射、闊勢、崩勢、無情、巨魄、雙詠、晶刺）
+        }
         if (stat.startsWith(SupportProcs.PREFIX)) { // 2026-10：輔助觸發的專屬技能
             final String when = switch (stat.substring(SupportProcs.PREFIX.length())) {
                 case "hit" -> "擊中時";
@@ -160,6 +168,7 @@ public final class ModifierText {
                 case "kill_bleeding" -> "打死流血中的敵人時";
                 case "kill_poisoned" -> "打死中毒的敵人時";
                 case "kill_stunned" -> "打死暈眩中的敵人時";
+                case "kill_pinned" -> "打死被定身的敵人時"; // 2026-11-01 照 PoE2 Bone Shrapnel
                 case "use" -> "放這個技能時";
                 case "crit" -> "暴擊時";
                 case "vs_ignited" -> "擊中點燃中的敵人時";
@@ -172,7 +181,18 @@ public final class ModifierText {
                 case "armour_broken" -> "讓敵人完全破甲時";
                 case "stun_applied" -> "讓敵人重暈時";
                 case "freeze" -> "讓敵人凍結時";
+                case "curse_applied" -> "詛咒每一個敵人時（在那個敵人身上）"; // 2026-11-01 照 PoE2 Decaying Hex
+                case "projectile_end" -> "每一發投射物飛到終點時"; // 2026-11-01 照 PoE2 Caltrops
                 case "minion_death" -> "被輔助的技能叫出來的召喚物死掉時（在牠倒下的地方）";
+                case SupportProcs.SHOCK -> "讓敵人感電時"; // 2026-11-01 照 PoE2 Static Shocks、Coursing Current、Enervation（合併：同一個事件）
+                case SupportProcs.SHOCK_CLUSTER -> "讓敵人感電、而且牠 " + number(SupportProcs.SHOCK_CLUSTER_RADIUS) + " 格內（含牠）有至少 "
+                        + SupportProcs.SHOCK_CLUSTER_COUNT + " 隻不在雷隙裡的感電中敵人時，用掉 " + number(SupportProcs.SHOCK_CLUSTER_RADIUS)
+                        + " 格內所有敵人的感電"; // 2026-11-01 照 PoE2 Electromagnetism（這次之前寫「用掉牠與最近另外 2 隻的感電」）
+                case tw.exilecore.stats.SupportSystemKeys.LAND -> "落地時（在落點）"; // 2026-11-01 照 PoE2 Crater
+                case SupportProcs.SELF_STUNNED -> "放這個技能的時候你被暈眩時（在你腳下）"; // 2026-11-01 照 PoE2 Wind Wave
+                case SupportProcs.CURSE_EXPIRED -> "詛咒時間到結束時，在每一隻還帶著它的敵人身上"; // 2026-11-01 照 PoE2 Impending Doom
+                case SupportProcs.PLAGUE_DEATH -> "中毒時每秒把中毒傷害的 " + number(PlagueBursts.CONVERT_PERCENT) + "% 存成敵人身上的瘟疫（最多牠最大生命的 "
+                        + number(PlagueBursts.CAP_PERCENT_OF_LIFE) + "%）；帶著瘟疫的敵人死掉時"; // 2026-11-01 照 PoE2 Bursting Plague
                 case "perfect" -> "完美時機放開時";
                 case "perfect_hit" -> "完美時機放開的那一下打中時";
                 case "perfect_hit_frozen" -> "完美時機放開的那一下直接打中凍結中的敵人時（用掉凍結，取代一般的爆炸）"; // 2026-10-28 照 PoE2 Snipe
@@ -256,6 +276,7 @@ public final class ModifierText {
         return switch (stat) {
             case StatKeys.DAMAGE -> scaled(modifier, tagPrefix(modifier) + "傷害", percent);
             case StatKeys.ATTACK_SPEED -> scaled(modifier, tagPrefix(modifier) + "攻擊速度", percent);
+            case SkillService.DUAL_WIELD_ATTACK_SPEED -> "雙持時攻擊速度更多 " + number(value) + "%"; // 2026-11-01 照 PoE2 Armour Breaker
             case StatKeys.CAST_SPEED -> scaled(modifier, tagPrefix(modifier) + "施法速度", percent);
             case StatKeys.SKILL_AREA -> scaled(modifier, "範圍效果", percent);
             case StatKeys.SKILL_PROJECTILE_SPEED -> scaled(modifier, "投射物速度", percent);
@@ -317,7 +338,8 @@ public final class ModifierText {
             case StatKeys.FLAG_SEARING_BOND -> "圖騰不施法，改成你與圖騰、圖騰與圖騰之間連起火鏈，每 0.5 秒燒碰到的敵人";
             case StatKeys.FLAG_TOTEM_DETONATE -> "圖騰放到上限時全部引爆，每根原地炸一圈火（引爆幾根，每一下更多 30%）";
             case StatKeys.ES_DELAY -> scaled(modifier, "能量護盾開始回充的等待時間", percent);
-            case StatKeys.FLAG_ALWAYS_HIT -> "攻擊必定命中";
+            case StatKeys.FLAG_ALWAYS_HIT -> modifier.tags().contains(tw.exilecore.stats.TreeConditions.VS_DAZED)
+                    ? "被眩暈的敵人閃避不了這個技能的擊中" : "攻擊必定命中"; // 2026-11-01 照 PoE2 Dazzle（穩擊）
             case StatKeys.FLAG_CULLING -> "擊中後敵人生命低於一定比例直接倒下（普通 35%、魔法 20%、稀有 10%、傳奇與 Boss 5%）";
             case StatKeys.LIFE_REGEN -> "每秒回復 " + number(value) + " 生命";
             case StatKeys.ACCURACY -> scaled(modifier, "命中", percent);
@@ -413,6 +435,10 @@ public final class ModifierText {
             case tw.exilecore.stats.PinKeys.PIN_AS_THOUGH -> "定身敵人時當作傷害更多 " + number(value) + "%"; // 2026-10-28 照 PoE2 落釘弩台
             // 2026-10-27：照實際效果（HitEffects，PoE2 Dazed）；這次之前寫「傷害更少 15%、暈眩門檻減少 30%，4 秒」
             case StatKeys.DAZE_CHANCE -> "擊中時 " + number(value) + "% 機率讓敵人眩暈（8 秒內受到的暈眩累積更多 50%）";
+            // 2026-11-01 照 PoE2 Daze、Knockback、Persistent Ground（SupportRuleKeys）
+            case tw.exilecore.stats.SupportRuleKeys.DAZE_BUILDUP -> "擊中造成的物理傷害有 " + number(value) + "% 累積眩暈，累積到敵人的暈眩門檻就讓牠眩暈（8 秒內受到的暈眩累積更多 50%）";
+            case tw.exilecore.stats.SupportRuleKeys.KNOCKBACK_ON_HIT -> "每一下擊中都把敵人擊退（技能本身不會擊退的也是）";
+            case tw.exilecore.stats.SupportRuleKeys.GROUND_DURATION -> scaled(modifier, "地面效果持續時間", percent);
             case StatKeys.RAGE_ON_HIT -> "近戰攻擊擊中時獲得 " + number(value) + " 點怒氣";
             case StatKeys.RAGE_MAX -> plus(value) + " 怒氣上限";
             case StatKeys.RAGE_EFFECT -> scaled(modifier, "怒氣效果", percent);
@@ -429,8 +455,8 @@ public final class ModifierText {
             case StatKeys.FLAG_DEBUFF_SPREAD -> "掛著的敵人死掉時，把它自己、目標身上的詛咒與其他混沌持續傷害減益傳給附近的敵人（持續時間刷新），"
                     + "每傳一手更多 100% 傷害（最多更多 300%）";
             case tw.exilecore.stats.SkillMechanicKeys.DEBUFF_SPREAD_RADIUS -> "傳染半徑 " + number(value) + " 格"; // 2026-10-28 照 PoE2 Contagion
-            case StatKeys.CHANNEL_STAGES -> "持續施放（按住）：每放一次加一層蓄力，最多 " + number(value) + " 層";
-            case StatKeys.CHANNEL_MORE -> "每層蓄力更多 " + number(value) + "% 傷害";
+            case StatKeys.CHANNEL_STAGES -> "持續施放（按住）：每放一次加一層引導，最多 " + number(value) + " 層"; // 2026-11-01 照站長：引導不叫蓄力
+            case StatKeys.CHANNEL_MORE -> "每層引導更多 " + number(value) + "% 傷害";
             case StatKeys.TRIGGER_CRIT -> "攻擊暴擊時自動施放這個法術（不花魔力，間隔至少 0.75 秒）";
             case StatKeys.TRIGGER_HIT_TAKEN -> "被敵人擊中時自動施放這個法術（不花魔力，間隔至少 0.75 秒）";
             case StatKeys.TRIGGER_KILL -> "擊殺敵人時自動施放這個法術（不花魔力，間隔至少 0.75 秒）";
@@ -452,9 +478,9 @@ public final class ModifierText {
                     ? (value >= 0 ? "冰晶要多打 " + number(value) + " 下才碎" : "冰晶少打 " + number(-value) + " 下就碎（最少一下）")
                     : scaled(modifier, "冰晶要打的下數", percent);
             case StatKeys.FLAG_HOARFROST -> "冰晶周圍一直結霜，冰傷周圍的敵人";
-            case StatKeys.FLAG_CRYSTAL_SHARDS -> "冰晶碎掉時往四周噴出冰片";
+            case StatKeys.FLAG_CRYSTAL_SHARDS -> "被輔助的技能留下的冰晶爆炸時，100% 穿刺打到的敵人（冰冷傷害也算，這一下不會抽出穿刺）"; // 2026-11-01 照 PoE2 Crystalline Shards
             case StatKeys.FLAG_VERGLAS -> "打碎冰晶時，被輔助的技能 6 秒內獲得傷害的 1% 為額外冰冷傷害（冰晶最大生命每 2000 點算 1%）";
-            case StatKeys.MANA_ON_MINION_DEATH -> "被輔助的技能叫出來的召喚物死掉時，回復 " + number(value) + "% 最大魔力";
+            case StatKeys.MANA_ON_MINION_DEATH -> "被輔助的技能叫出來的召喚物死掉時，你在 4 秒內慢慢回復 " + number(value) + "% 最大魔力"; // 2026-11-01 照 PoE2 Essence Harvest（補償）
             case StatKeys.MINION_DEATH_HEAL -> "被輔助的技能叫出來的召喚物死掉時，3 格內你的其他召喚物回復 " + number(value) + "% 最大生命並清掉異常";
             case StatKeys.FLASK_KILL_LIFE -> "被輔助的技能打死敵人時，生命藥劑拿到的充能更多 " + number(value) + "%";
             case StatKeys.FLASK_KILL_MANA -> "被輔助的技能打死敵人時，魔力藥劑拿到的充能更多 " + number(value) + "%";
@@ -485,7 +511,7 @@ public final class ModifierText {
             case StatKeys.CROSSBOW_CLIP -> (value >= 0 ? "+" : "") + number(value) + " 弩的彈匣容量";
             case StatKeys.CROSSBOW_RELOAD -> scaled(modifier, "弩的裝填速度", percent);
             case StatKeys.CROSSBOW_AMMO_SAVE -> "弩攻擊有 " + number(value) + "% 機率不消耗弩箭";
-            case StatKeys.FLAG_RELOAD_ON_STUN -> "擊中暈眩中的敵人時立刻把這個弩技能裝滿";
+            case StatKeys.FLAG_RELOAD_ON_STUN -> "讓敵人重暈時立刻把這個弩技能裝滿"; // 2026-11-01 照 PoE2 Auto Reload；這次之前「擊中暈眩中的敵人時」
             case StatKeys.FLAG_RELOAD_ALL -> "放了就把所有弩技能立刻裝滿";
             case StatKeys.TRIGGER_DODGE -> "翻滾時自動施放這個法術（不花魔力，間隔至少 0.75 秒）";
             case StatKeys.TRIGGER_MINION_DEATH -> "你的召喚物死掉時，在牠倒下的地方自動施放這個法術（不花魔力，間隔至少 0.75 秒）";
@@ -556,6 +582,13 @@ public final class ModifierText {
             case tw.exilecore.stats.SpellParityKeys.ELECTROCUTE_BUILDUP_TAKEN -> "受到的電擊累積" + (value < 0 ? "減少 " : "增加 ") + percent + "%";
             case tw.exilecore.stats.SpellParityKeys.MARK_ACTIVATION_GAIN -> "印記觸發時用掉印記，你獲得 " + number(value) + "% 傷害為額外元素傷害的增益";
             case tw.exilecore.stats.SpellParityKeys.MARK_ACTIVATION_SECONDS -> "印記觸發給的增益持續 " + number(value) + " 秒";
+            // 2026-11-01 照 PoE2：遠釘、脆晶、穩擊、蓄嘯
+            case tw.exilecore.stats.SupportParityKeys.PIN_LOCKDOWN -> "對你 " + number(tw.exilecore.stats.SupportParityKeys.LOCKDOWN_NEAR)
+                    + " 格內的敵人定身累積更多 " + number(value) + "%，越遠越少，" + number(tw.exilecore.stats.SupportParityKeys.LOCKDOWN_FAR) + " 格以外不變";
+            case tw.exilecore.stats.SupportParityKeys.CRYSTAL_LIFE -> scaled(modifier, "冰晶最大生命", percent);
+            case tw.exilecore.stats.SupportParityKeys.FLAG_CONSUME_DAZE -> "擊中時用掉敵人身上的眩暈";
+            case tw.exilecore.stats.SupportParityKeys.FLAG_CANNOT_DAZE -> "不會造成眩暈";
+            case tw.exilecore.stats.SupportParityKeys.WARCRY_EMPOWERED_MORE -> "被這個戰吼強化的攻擊更多 " + number(value) + "% 傷害";
             default -> {
                 // 2026-10：不認得的交給昇華的說明（那邊的屬性比較齊）；都不認得也不要秀出英文代號
                 final String shockchain = ShockchainArrows.describe(stat, value); // 2026-10-28 照 PoE2 Shockchain Arrow（電鍊箭矢）
@@ -601,6 +634,7 @@ public final class ModifierText {
             case tw.exilecore.stats.SupportKeys.DOT_VS_FULL_LIFE -> scaled(modifier, "施加在滿血敵人身上的非異常持續傷害", percent);
             case tw.exilecore.stats.SupportKeys.POISON_STACKS -> "敵人身上你的中毒可以多 " + number(value) + " 層同時生效";
             case tw.exilecore.stats.SupportKeys.POISON_VS_BLEEDING -> scaled(modifier, "對流血中的敵人造成的中毒傷害", percent);
+            case tw.exilecore.stats.SupportKeys.BLEED_VS_POISONED -> scaled(modifier, "對中毒的敵人造成的流血傷害", percent); // 2026-11-01（雙蝕）
             case tw.exilecore.stats.SupportKeys.IGNITE_VS_FROZEN -> scaled(modifier, "對凍結中的敵人造成的點燃傷害", percent);
             case tw.exilecore.stats.SupportKeys.IGNITE_VS_FROZEN_UNIQUE -> scaled(modifier, "對凍結中的傳奇敵人造成的點燃傷害（再乘一次）", percent);
             case tw.exilecore.stats.SupportKeys.FLAG_CONSUME_FREEZE_ON_IGNITE -> "點燃敵人時用掉牠身上的凍結";
@@ -637,11 +671,12 @@ public final class ModifierText {
             case tw.exilecore.stats.SupportKeys.WARCRY_RAGE_BYPASS -> "冷卻中可以花 " + number(value) + " 點怒氣跳過冷卻（取代磐星）";
             case tw.exilecore.stats.SupportKeys.WARCRY_TIRELESS -> "被強化的攻擊有 " + number(value) + "% 機率不算進強化次數";
             case tw.exilecore.stats.SupportKeys.WARCRY_ECHOES -> "戰吼回聲 " + number(value) + " 次（每次隔 1.3 秒，範圍每回聲一次更多 100%）；"
-                    + "範圍更少 50%；用過之後要再移動 10 格才能用";
+                    + "範圍更少 50%；用過之後要再移動 5 格才能用";
             case tw.exilecore.stats.SupportKeys.WARCRY_RAGE_PER_5_POWER -> "每 5 點怪物強度獲得 " + number(value) + " 點怒氣";
             case tw.exilecore.stats.SupportKeys.FLAG_BATTERSHOUT -> "用掉範圍內敵人的完全破甲，在牠身上炸開（破掉的護甲 40% 物理傷害，2 格，傳奇更多 50%）；這個技能不能破甲";
-            case tw.exilecore.stats.SupportKeys.FLAG_PAQUATE -> "範圍內每隻敵人觸發扭曲契約（腐化之血，最多疊 10 層）；最近 4 秒每用一次，多付出 10% 最大生命（最多 30%）";
-            case tw.exilecore.stats.SupportKeys.WARCRY_CRYSTAL_EMPOWERS -> "範圍內你的冰晶全部炸掉；炸掉至少 5 顆時多強化 " + number(value) + " 次攻擊";
+            case tw.exilecore.stats.SupportKeys.FLAG_PAQUATE -> "範圍內每隻敵人觸發扭曲契約（每次 5 層腐化之血，最多疊 10 層）；最近 4 秒每用一次，多付出 10% 最大生命（最多 30%）"; // 2026-11-01：每次 5 層
+            case tw.exilecore.stats.SupportKeys.WARCRY_CRYSTAL_EMPOWERS -> "範圍內你的冰晶全部炸掉、你的冰裂全部引爆；炸掉的冰晶與冰裂加起來至少 5 個時多強化 "
+                    + number(value) + " 次攻擊"; // 2026-11-01 照 PoE2 Vruun's Aftermath：冰裂也算
             case tw.exilecore.stats.SupportKeys.GLORY_COST -> "要 " + number(value) + " 點榮耀才能用（你花在其他技能上的生命有 5% 變成榮耀）";
             case tw.exilecore.stats.SupportKeys.SHATTER_FANG -> "凍結敵人時，你身上每 2 點怒氣讓你和身邊的隊友 " + number(value) + " 秒內獲得 1% 傷害為額外冰冷傷害";
             case tw.exilecore.stats.SupportKeys.ICE_BITE -> "凍結敵人時獲得 " + number(value) + "% 傷害為額外冰冷傷害";

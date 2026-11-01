@@ -61,6 +61,14 @@ public final class SupportExtraKeys {
     /** FLAT：每秒更多 x% 傷害，最多 {@link #STOICISM_CAP}%；翻滾、突進歸零（Stoicism）。 */
     public static final String STOICISM = "damage.stoicism";
     public static final double STOICISM_CAP = 20;
+    /**
+     * FLAT：2026-11-01 照 PoE2 Cadence（連拍）：被輔助的技能最近（4 秒內）每用過一次，攻擊速度更多 x%；
+     * 4 秒內用了 {@link #CADENCE_LIMIT} 次以上就 10 秒不能用。只算你自己按的（觸發、代放、圖騰在 support_ref.yml 擋掉）。
+     */
+    public static final String CADENCE = "attack.speed.cadence";
+    public static final long CADENCE_RECENT_TICKS = 80;
+    public static final int CADENCE_LIMIT = 6;
+    public static final long CADENCE_LOCK_TICKS = 200;
     /** FLAT：靜止 1.5 秒才能用；每靜止 0.25 秒擊中更多 x%，最多 {@link #DAUNTLESS_CAP}%（Dauntless）。 */
     public static final String DAUNTLESS = "damage.fearless_heart";
     public static final double DAUNTLESS_CAP = 45;
@@ -160,6 +168,23 @@ public final class SupportExtraKeys {
     public static final String DAZE_FULL_LIFE = "daze.vs_full_life";
     /** FLAT：物理傷害暴擊時眩暈（Concussive Spells）。 */
     public static final String DAZE_PHYSICAL_CRIT = "daze.on_physical_crit";
+    /** FLAT 秒：讓敵人完全破甲時，讓那一隻眩暈 x 秒（2026-11-01 照 PoE2 Break Posture；這次之前觸發 proc_break_daze 小範圍地面，連身旁的敵人一起眩暈）。 */
+    public static final String DAZE_ON_ARMOUR_BROKEN = "daze.on_armour_broken";
+    /** FLAT 每秒：被輔助的技能讓敵人感電時，4 秒內每秒再生 x 魔力（2026-11-01 照 PoE2 Enervation；SupportProcs.enervation，每次感電都刷新、不疊加）。 */
+    public static final String MANA_REGEN_ON_SHOCK = "mana.regen_on_shock";
+    /** 吸電增益的持續時間（4 秒）。 */
+    public static final long MANA_REGEN_ON_SHOCK_TICKS = 80;
+    /** MORE：對流血中的敵人，物理傷害更多（2026-11-01 照 PoE2 Bloodlust：只算物理傷害；這次之前用 damage.vs_bleeding，所有傷害類型都吃）。 */
+    public static final String PHYSICAL_VS_BLEEDING = "bloodlust.physical_vs_bleeding";
+    /** FLAT %：圖騰 4 公尺內你每一根其他圖騰（最多 6 根），更多 x% 傷害（2026-11-01 照 PoE2 Greatwood II）。 */
+    public static final String GREATWOOD_DAMAGE = "totem.greatwood_damage";
+    /** FLAT %：同上，增加 x% 範圍效果。 */
+    public static final String GREATWOOD_AREA = "totem.greatwood_area";
+    /** FLAT（0.01 %）：同上，每秒回復最大生命的 x/100 %（0.83% 寫 83）。 */
+    public static final String GREATWOOD_REGEN = "totem.greatwood_regen";
+    /** Greatwood II：算幾公尺內的圖騰、最多算幾根。 */
+    public static final double GREATWOOD_RADIUS_METRES = 4;
+    public static final int GREATWOOD_CAP = 6;
     /** FLAT 秒：點燃時曝露（Fire Exposure）。 */
     public static final String EXPOSURE_ON_IGNITE = "exposure.on_ignite";
     /** FLAT 秒：冰冷傷害暴擊時曝露（Cold Exposure）。 */
@@ -401,4 +426,26 @@ public final class SupportExtraKeys {
     public static final String CULMINATION_DECAY = "combo.culmination_decay";
     /** FLAT：被輔助的技能最多幾層連擊（skill_maximum_number_of_combo_stacks）。 */
     public static final String CULMINATION_MAX = "combo.culmination_max";
+
+    // ---- 2026-11-01 照 PoE2 補上輔助的代價（Pierce I、Overcharge、Overextend、See Red、Flame Pillar、Salvo、Haemocrystals、Bone Shrapnel）----
+    /** FLAT %：穿透過敵人之後投射物傷害更少 x%（Pierce I：support_pierce_projectile_damage_+%_final_if_pierced_enemy −20）。{@code ProjectileEngine}。 */
+    public static final String PIERCED_LESS = "projectile.pierced_less";
+    /** 旗標：你用被輔助的技能造成的感電也會反射到你自己身上（Overcharge：shocks_reflected_to_self）。{@code AilmentService}。 */
+    public static final String FLAG_SHOCK_REFLECT = "flag.shocks_reflected_to_self";
+    /** FLAT 秒：用被輔助的技能暴擊時你自己被眩暈 x 秒（Overextend：daze_self_on_critical_hit_for_X_ms 5000）。{@code SupportExtras}。 */
+    public static final String DAZE_SELF_ON_CRIT = "self.daze_on_crit";
+    /** FLAT %：被你用被輔助的技能造成流血的敵人攻擊速度與移動速度增加 x%，直到流血結束（See Red）。{@code AilmentService}。 */
+    public static final String BLEEDER_HASTE = "bleed.enemy_haste";
+    /** 減益代號：See Red 給流血敵人的加速（{@code Debuffs#haste} 讀它的移動速度）。 */
+    public static final String BLEEDER_HASTE_DEBUFF = "haste.see_red";
+    /** 旗標：被輔助的技能不能點燃（Flame Pillar：never_ignite）。{@code AilmentService}。 */
+    public static final String FLAG_CANNOT_IGNITE = "flag.cannot_ignite";
+    /** 旗標：被輔助的技能不能造成流血（Haemocrystals：cannot_cause_bleeding）。{@code AilmentService}。 */
+    public static final String FLAG_CANNOT_BLEED = "flag.cannot_bleed";
+    /** 旗標：被輔助的技能不能定身（Bone Shrapnel：cannot_pin）。{@code HitEffects}、{@code SupportMechanics}、{@code TreeMechanics}、{@code AscendancyEffects}。 */
+    public static final String FLAG_CANNOT_PIN = "flag.cannot_pin";
+    /** 旗標：被輔助的技能的投射物往隨機方向射出（Salvo：random_projectile_direction）。{@code ProjectileEngine}。 */
+    public static final String FLAG_RANDOM_DIRECTION = "flag.random_projectile_direction";
+    /** 隨機方向的投射物往左右各幾度內亂射：2026-11-01 照站長（原作是以角色為中心 360 度全方位隨機）180 = 一整圈；這次之前 60（只往前方）。 */
+    public static final double RANDOM_DIRECTION_HALF_ANGLE = 180;
 }

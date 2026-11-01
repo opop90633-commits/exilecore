@@ -106,13 +106,15 @@ supports:
 
   thunder_blast:          # Eonyr's Thunder
     name: 霆爆
-    description: 被輔助的技能的閃電傷害也累積電擊，但不能感電；打死電擊中的敵人時屍體炸開，造成牠最大生命 5%～19% 的閃電傷害（2.25～2.5 格，照技能等級）。
+    description: 被輔助的技能的閃電傷害也累積電擊，但不能感電；打死電擊中的敵人時屍體炸開，造成牠最大生命 5%～19% 的閃電傷害（1.5～2.5 格，照技能等級：20 級 14%、2.1 格，40 級 19%、2.5 格）。
     icon: GLOWSTONE_DUST
     tier: 3
     source: lineage
     requires: [attack, spell]
     excludes: [minion]
     # 2026-10-27 照 PoE2 0.5 Eonyr's Thunder（poe2db：Voltaic Fulmination 5%→19% 屍體最大生命、1.5→2.5 格）；這次新增
+    # 2026-11-01 照 PoE2 Eonyr's Thunder（poe2db 1–40 級的表：20 級 14% / 2.1 公尺，40 級 19% / 2.5 公尺；LineageMechanics.VOLTAIC_PERCENT／VOLTAIC_METRES）；
+    #   這次之前 1→20 級線性長到 19% / 2.5 公尺就到頂、說明「5%～19%（2.25～2.5 格，照技能等級）」
     modifiers:
       - { stat: lineage.h.lightning_electrocutes, type: FLAT, value: 1 }
       - { stat: lineage.h.voltaic, type: FLAT, value: 5 }
@@ -329,15 +331,19 @@ supports:
 
   dice_bane:         # Ixchel's Torment
     name: 骰禍
-    description: 掛在主要寶石上：它觸發出來的技能每一下的傷害在更少 40% 到更多 60% 之間隨機、範圍在更少 40% 到更多 50% 之間隨機，每次觸發回復那個技能實際付的消耗的 0～20%。
+    description: 掛在主要寶石上：它觸發出來的技能每次觸發時，傷害在更少 40% 到更多 60% 之間隨機（同一次觸發的每一下都一樣），範圍、投射物速度各自在更少 40% 到更多 50% 之間隨機，並回復那個技能實際付的消耗的 0～20%。
     icon: RABBIT_FOOT
     tier: 3
     source: lineage_rare
     requires: [meta]
     mana_multiplier: 1.2
     # 2026-10-27 照 PoE2 0.5 Ixchel's Torment（poe2db；投射物速度的隨機沒做，平均起來差不多）；這次新增
+    # 2026-11-01 照 PoE2 Ixchel's Torment（support_randomise_lower/higher_projectile_speed_+%_final -40／+50）：補上投射物速度的隨機
+    #   （lineage.u.random_area 一起擲，LineageMechanics.triggered）；這次之前沒有，說明只寫傷害、範圍
+    # 2026-11-01 照 PoE2 Ixchel's Torment（「randomly raised or lowered when Triggered」）：傷害改成每次觸發擲一次（lineage.u.random_damage，
+    #   LineageMechanics.triggered）；這次之前 stat: damage.random, type: FLAT, value: 40（DamageCalculator 每一下各自擲）
     modifiers:
-      - { stat: damage.random, type: FLAT, value: 40 }
+      - { stat: lineage.u.random_damage, type: FLAT, value: 40 }
       - { stat: trigger_cost.refund, type: FLAT, value: 20 }
       - { stat: lineage.u.random_area, type: FLAT, value: 1 }
 
@@ -432,7 +438,7 @@ supports:
 
   decree_fortune:      # Varashta's Blessing
     name: 令福
-    description: 被輔助的技能，你最近 15 秒每用過一種不同的指令技能，更多 10% 傷害。
+    description: 被輔助的技能，你最近 8 秒每用過一種不同的指令技能，更多 10% 傷害。
     icon: GLOW_INK_SAC
     tier: 3
     source: lineage_rare
@@ -440,6 +446,7 @@ supports:
     excludes: [minion]
     mana_multiplier: 1.2
     # 2026-10-27 照 PoE2 0.5 Varashta's Blessing（poe2db）；這次新增
+    # 2026-11-01 照 PoE2 Varashta's Blessing（..._per_different_command_in_last_8_seconds）：8 秒（LineageMechanics.COMMAND_WINDOW_TICKS）；這次之前 15 秒
     modifiers:
       - { stat: lineage.h.per_command, type: FLAT, value: 10 }
 
@@ -648,20 +655,6 @@ supports:
     modifiers:
       - { stat: lineage.u.block_seals, type: FLAT, value: 4 }
 
-  oath_drive:      # Olroth's Conviction
-    name: 誓驅
-    description: 被輔助的戰吼多強化 2 次攻擊，消耗多一倍。
-    icon: RAW_GOLD
-    tier: 3
-    source: lineage_rare
-    requires: [warcry]
-    mana_multiplier: 2.0
-    notes:
-      - 消耗多一倍。   # 2026-10-28 照站長拿掉說明裡的原作：原作另外花等量的符文守護，我們沒有符文守護
-    # 2026-10-27 照 PoE2 0.5 Olroth's Conviction（poe2db：符文守護消耗 = 生命與魔力消耗的 100% → 平衡等效成魔耗 200%）；這次新增
-    modifiers:
-      - { stat: warcry.exerts, type: FLAT, value: 2 }
-
   condense_break:        # Breachlord's Rift
     name: 凝破
     description: 被輔助的技能凍結或電擊敵人時，破掉牠 50% 的護甲；牠被你完全破甲時，受到的冰冷、閃電擊中傷害也一樣增加。
@@ -756,29 +749,16 @@ supports:
     modifiers:
       - { stat: lineage.u.levels_if_two, type: FLAT, value: 2 }
 
-  proud_frost:          # Olroth's Hubris
-    name: 傲寒
-    description: 被輔助的攻擊每次另外消耗你最大魔力的 20%，附加等於這筆消耗 15% 的物理與 15% 的冰冷傷害；物理傷害也累積凍結。引導的技能不能掛。
-    icon: DIAMOND
-    tier: 3
-    source: lineage_pinnacle
-    requires: [attack]
-    excludes: [minion, channelling]
-    notes:
-      - 花最大魔力的 20%，附加傷害照這筆消耗算。   # 2026-10-28 照站長拿掉說明裡的原作：原作花的是符文守護（最大守護的 20%）
-    # 2026-10-27 照 PoE2 0.5 Olroth's Hubris（poe2db：奧洛斯）；這次新增
-    modifiers:
-      - { stat: lineage.u.hubris, type: FLAT, value: 20 }
-      - { stat: lineage.h.physical_freezes, type: FLAT, value: 1 }
-
   blood_pact:       # Atziri's Communion
     name: 血契
-    description: 被輔助的常駐技能不保留精魂，改成保留最大生命：每 1 點基礎精魂保留 0.66% 最大生命。叫召喚物的不能掛。
+    description: 被輔助的常駐技能不保留精魂，改成保留生命：每 1 點基礎精魂保留 0.66% 最大生命。最大生命不變，但被保留的那部分生命回不來。叫召喚物的不能掛。
     icon: NETHER_BRICK
     tier: 3
     source: lineage_pinnacle
     requires: [persistent]
     # 2026-10-27 照 PoE2 0.5 Atziri's Communion（poe2db：阿茲里；保留生命做成最大生命更少）；這次新增
+    # 2026-11-01 照 PoE2 的保留生命：最大生命不變，目前生命最多到「最大生命 ×（1 − 保留 %）」（life.reserved_percent，PlayerState.unreservedLife；
+    #   滿血照沒保留的部分算、低血照最大生命算）；這次之前做成最大生命更少（回復、守護、% 最大生命的效果跟著變少）、說明「改成保留最大生命」
     modifiers:
       - { stat: lineage.u.life_reserve, type: FLAT, value: 66 }
 

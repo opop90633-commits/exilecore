@@ -133,7 +133,7 @@ public final class Signatures {
         final AilmentService ailments = plugin.ailments();
         double more = 1.0;
         if (has(sheet, StatKeys.SIG_BLOOD_RAGE) && state != null && state.maxLife() > 0) {
-            final double missing = Math.max(0, Math.min(1, 1 - state.life() / state.maxLife()));
+            final double missing = Math.max(0, Math.min(1, state.missingLife() / state.maxLife())); // 2026-11-01：保留的生命不算缺血（PlayerState#missingLife）
             more *= 1 + 0.5 * missing;
         }
         if (has(sheet, StatKeys.SIG_FAR_SHOT) && skill.tags().contains(Tags.PROJECTILE)
@@ -160,7 +160,7 @@ public final class Signatures {
             }
         }
         if (has(sheet, StatKeys.SIG_BLOOD_FEAST) && skill.tags().contains(Tags.SPELL) && state != null
-                && state.maxLife() > 0 && state.life() >= state.maxLife() * 0.9) {
+                && state.maxLife() > 0 && state.lifeFractionOfUnreserved() >= 0.9) { // 2026-11-01：照沒被保留的生命算
             more *= 1.15;
         }
         if (has(sheet, StatKeys.SIG_VERDICT)) {
@@ -272,7 +272,7 @@ public final class Signatures {
             state.setEnergyShield(Math.min(state.maxEnergyShield(), state.energyShield() + state.maxEnergyShield() * 0.03));
             changed = true;
         }
-        if (has(sheet, StatKeys.SIG_BLOOD_FEAST) && skill.tags().contains(Tags.SPELL) && state.life() < state.maxLife()) {
+        if (has(sheet, StatKeys.SIG_BLOOD_FEAST) && skill.tags().contains(Tags.SPELL) && !state.isFullLife()) { // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
             final double heal = Math.min(result.total() * 0.03, state.maxLife() * 0.02);
             if (heal > 0) {
                 state.setLife(Math.min(state.maxLife(), state.life() + heal));

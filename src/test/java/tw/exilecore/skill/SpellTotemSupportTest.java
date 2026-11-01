@@ -59,7 +59,7 @@ class SpellTotemSupportTest {
         // 宿主本身只吃這幾種
         assertTrue(config.support("swift_post_iii").worksOnHost()); // 2026-10-26：疾樁 I 併入疾樁 III
         assertTrue(config.support("quick_chant").worksOnHost());
-        assertTrue(config.support("enduring_terrain").worksOnHost());
+        assertFalse(config.support("enduring_terrain").worksOnHost(), "2026-11-01 照 PoE2 Persistent Ground：只加地面效果持續時間，宿主本身吃不到");
         assertFalse(config.support("added_fire").worksOnHost()); // 2026-11-01：暴烈併入銳點，改看引火
     }
 

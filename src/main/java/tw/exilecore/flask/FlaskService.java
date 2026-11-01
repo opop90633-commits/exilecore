@@ -552,7 +552,7 @@ public final class FlaskService {
             fail(player, state, "無法使用生命藥劑（生命藥劑的效果一直套用中）");
             return true;
         }
-        final boolean full = life ? state.life() >= state.maxLife() - 1e-6 : state.mana() >= state.maxMana() - 1e-6;
+        final boolean full = life ? state.isFullLife() : state.mana() >= state.maxMana() - 1e-6; // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
         if (full) {
             fail(player, state, base.kind().displayName() + "已經是滿的");
             return true;
@@ -686,7 +686,7 @@ public final class FlaskService {
                 continue;
             }
             final PlayerState state = plugin.players().get(player);
-            if (state.life() >= state.maxLife() - 1e-6 || tw.exilecore.ascendancy.AscendancyEffects.flaskNoLife(player)) {
+            if (state.isFullLife() || tw.exilecore.ascendancy.AscendancyEffects.flaskNoLife(player)) { // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
                 continue;
             }
             final FlaskMods mods = mods(item, base);
@@ -735,7 +735,7 @@ public final class FlaskService {
             }
             final boolean life = kind == FlaskKind.LIFE;
             final PlayerState state = plugin.players().get(player);
-            if (life ? state.life() >= state.maxLife() - 1e-6 || tw.exilecore.ascendancy.AscendancyEffects.flaskNoLife(player)
+            if (life ? state.isFullLife() || tw.exilecore.ascendancy.AscendancyEffects.flaskNoLife(player) /* 2026-11-01：PlayerState#isFullLife */
                     : state.mana() >= state.maxMana() - 1e-6) {
                 continue;
             }
@@ -828,7 +828,7 @@ public final class FlaskService {
             if (mana > 0) {
                 state.setMana(state.mana() + mana);
             }
-            final boolean lifeFull = state.life() >= state.maxLife() - 1e-6;
+            final boolean lifeFull = state.isFullLife(); // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
             final boolean manaFull = state.mana() >= state.maxMana() - 1e-6;
             // 2026-10-26（昇華・耐久靈藥）：生命全滿時不移除生命藥劑效果
             final boolean enduring = tw.exilecore.ascendancy.AscendancyEffects.enduringElixirs(player);

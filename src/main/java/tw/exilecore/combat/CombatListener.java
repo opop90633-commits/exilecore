@@ -371,10 +371,13 @@ public final class CombatListener implements Listener {
                 event.setCancelled(true); // 主人不在了的召喚物不打人
                 return;
             }
-            attackerBase = attack.sheet();
             // 2026-10-29 照 PoE2：召喚物替你放的指令（巨靈的指令，SkillDamage 的 proxy）：技能描述照指令的，屬性表照召喚物的
             final SkillDamage.Context context = skills.contextFor(defender);
-            skill = context != null && context.attacker() == attacker ? context.profile() : attack.profile();
+            final boolean commanded = context != null && context.attacker() == attacker;
+            skill = commanded ? context.profile() : attack.profile();
+            // 2026-11-01 照 PoE2（Minion Types）：巨靈的招式吃掛在巨靈召喚技能上的輔助（MinionHooks.commandSheet）；這次之前只用還沒疊輔助的那張
+            final StatSheet commandSheet = commanded ? minions.commandSheet(attacker, skill) : null;
+            attackerBase = commandSheet != null ? commandSheet : attack.sheet();
             credit = attack.owner();
         } else {
             final Optional<MonsterData> data = plugin.monsters().data(attacker);
@@ -461,6 +464,13 @@ public final class CombatListener implements Listener {
                 attackerDebuffs = new java.util.ArrayList<>(attackerDebuffs);
                 attackerDebuffs.add(Modifier.more(StatKeys.ACCURACY, -falloff, "距離"));
             }
+            // 2026-11-01 照 PoE2 Overreach（闊勢）：對 2 公尺內的目標命中更少 80%（量到目標身體的邊）；這次之前不分距離命中更少 30%
+            final double nearby = tw.exilecore.skill.SupportRemakes.nearbyAccuracy(skill.effective(attackerBase), skill.tags(),
+                    Math.max(0, attacker.getLocation().distance(defender.getLocation()) - defender.getWidth() / 2));
+            if (nearby < 1.0) {
+                attackerDebuffs = new java.util.ArrayList<>(attackerDebuffs);
+                attackerDebuffs.add(Modifier.more(StatKeys.ACCURACY, nearby - 1.0, "闊勢（近身）"));
+            }
         }
         final StatSheet attackerSheet = attackerDebuffs.isEmpty() ? attackerBase : attackerBase.overlay(attackerDebuffs);
         // 2026-10-23：這一下的技能屬性表（疊上輔助寶石）與標籤只算一次（以前一下要重疊十幾次，每次都新建一張表）
@@ -539,7 +549,7 @@ public final class CombatListener implements Listener {
         if (attackerIsPlayer && StatKeys.flag(attackerSheet, StatKeys.FLAG_PAIN_ATTUNEMENT)) {
             final PlayerState painState = plugin.players().get((Player) attacker);
             final double fraction = painState.maxLife() <= 0 ? 1 : painState.life() / painState.maxLife();
-            if (fraction >= 0.999) {
+            if (painState.isFullLife()) { // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）（低血照最大生命）
                 hitSheet = hitSheet.overlay(java.util.List.of(Modifier.more(StatKeys.CRIT_BONUS, -0.3, "痛極生力")));
             } else if (fraction <= 0.35) {
                 hitSheet = hitSheet.overlay(java.util.List.of(Modifier.more(StatKeys.CRIT_BONUS, 0.3, "痛極生力")));
@@ -579,7 +589,7 @@ public final class CombatListener implements Listener {
             // 2026-10：輔助寶石的條件：對滿血的敵人、魔力 90% 以上、比敵人低血（背水）
             final StatSheet supportSheet = skillSheet;
             final double defenderFraction = maxHealth == null || maxHealth.getValue() <= 0 ? 1 : defender.getHealth() / maxHealth.getValue();
-            if (defenderFraction >= 0.999) {
+            if (tw.exilecore.character.LifeChecks.isFullLife(defender)) { // 2026-11-01：玩家目標照沒被保留的生命（LifeChecks）
                 final double fullMore = supportSheet.more(StatKeys.DAMAGE_VS_FULL_LIFE, hitTagSet);
                 if (fullMore != 1) {
                     conditional.add(Modifier.more(StatKeys.DAMAGE, fullMore - 1, "對滿血的敵人"));
@@ -684,6 +694,12 @@ public final class CombatListener implements Listener {
                             conditional.add(Modifier.more(StatKeys.DAMAGE, more - 1, "對異常的敵人"));
                         }
                     }
+                }
+                // 2026-11-01 照 PoE2 Bloodlust（腥獵）：對流血中的敵人只有物理傷害更多（這次之前用 damage.vs_bleeding，所有傷害類型都更多）
+                final double bloodlust = conditionSheet.more(tw.exilecore.stats.SupportExtraKeys.PHYSICAL_VS_BLEEDING, hitTagSet);
+                if (bloodlust != 1 && ailments.has(defender, tw.exilecore.ailment.AilmentType.BLEED)) {
+                    conditional.add(new Modifier(StatKeys.DAMAGE, tw.exilecore.stats.ModType.MORE, bloodlust - 1,
+                            java.util.Set.of(Tags.PHYSICAL), "腥獵"));
                 }
             }
             // 2026-10：連擊（每層）、終式、怒鑄
@@ -790,7 +806,9 @@ public final class CombatListener implements Listener {
         // 2026-10-26 照 PoE2 天賦樹：「對致盲、被禁錮、遠處…的敵人」：照目標的狀態把條件標籤加進這一下的情境（只給傷害計算用）
         // 2026-10-27 照 PoE2 天賦樹：召喚物打的也看（「夥伴對被禁錮的敵人增加傷害」：主人的屬性表有條件修飾器就看）；這次之前只看玩家打的
         final Player tagOwner = attackerIsPlayer ? (Player) attacker : attackerIsMinion ? credit : null;
-        final SkillProfile calcSkill = tagOwner != null && plugin.players().conditions().wantsTargetTags(tagOwner.getUniqueId())
+        // 2026-11-01：技能自己（含輔助、品質）有「對某種敵人」的修飾器也要看（穩擊 Dazzle 的「被眩暈的敵人不能閃避」）；這次之前只看屬性表
+        final SkillProfile calcSkill = tagOwner != null && (plugin.players().conditions().wantsTargetTags(tagOwner.getUniqueId())
+                || skill.local().stream().anyMatch(tw.exilecore.stats.TreeConditions::hasEnemyCondition))
                 ? TargetConditions.tag(skill, TargetConditions.of(plugin, attacker, defender, defenderMonster, debuffs, ailments, hitTick)) : skill;
         if (defenderIsPlayer) {
             // 2026-10-26（昇華）：神聖儀式（當前護盾加到護甲）、保持警覺（敵人依距離的命中懲罰）
@@ -981,9 +999,11 @@ public final class CombatListener implements Listener {
             hitByRare = !attackerIsPlayer && !attackerIsMinion && plugin.monsters() != null && plugin.monsters().data(attacker)
                     .map(data -> data.rarity() == tw.exilecore.monster.MonsterRarity.RARE || data.rarity() == tw.exilecore.monster.MonsterRarity.UNIQUE)
                     .orElse(false);
+            tw.exilecore.ascendancy.AscendancyEffects.hitBy(attacker); // 2026-11-01 照 PoE2 Navira's Embrace：泡泡只擋泡泡外面的敵人
             applyToPlayer((Player) defender, defenderState, result.esDamage(), result.lifeDamage(), event,
                     describeSource(attacker), describeSkill(attacker, skill, event.getCause()), result.dealt(), result.outgoing(), thornsTarget,
                     (!attackerIsPlayer && !attackerIsMinion) || pvpAttacker != null, pvpAttacker);
+            tw.exilecore.ascendancy.AscendancyEffects.hitBy(null);
             hitByRare = false;
             if (pvpAttacker != null) {
                 pvpRewards(attackerIsPlayer, credit, attackerSheet, skill, result, defender);
@@ -1151,6 +1171,11 @@ public final class CombatListener implements Listener {
         if (signatures != null && attackerIsPlayer && !totemHit(skill)) { // 2026-10-21：圖騰、英靈打中的不觸發血宴、雷魂（照 PoE）
             signatures.dealt((Player) attacker, attackerSheet, skill, result); // 雷魂、血宴
         }
+        if (attackerIsPlayer && !totemHit(skill) && plugin.skills() != null) {
+            // 2026-11-01 照 PoE2 Briarpatch（刺棘身）：你造成的物理攻擊傷害存一部分，施放法術時長出荊棘地面
+            plugin.skills().leftovers().briarpatchStore((Player) attacker, attackerSheet, skill,
+                    result.dealt().get(tw.exilecore.stats.DamageType.PHYSICAL));
+        }
         feedback(attacker, defender, result);
     }
 
@@ -1174,7 +1199,7 @@ public final class CombatListener implements Listener {
             }
             immobilised |= ailments.isFrozen(defender) || ailments.heavyStunned(defender) || ailments.has(defender, tw.exilecore.ailment.AilmentType.ELECTROCUTE);
         }
-        return new tw.exilecore.skill.MinionTypes.Target(fraction <= 0.35, fraction >= 0.999, rare, unique, debuffs.cursed(defender.getUniqueId(), tick),
+        return new tw.exilecore.skill.MinionTypes.Target(fraction <= 0.35, tw.exilecore.character.LifeChecks.isFullLife(defender) /* 2026-11-01 */, rare, unique, debuffs.cursed(defender.getUniqueId(), tick),
                 distance <= StatKeys.CLOSE_RANGE, distance, words, immobilised);
     }
 
@@ -1311,7 +1336,7 @@ public final class CombatListener implements Listener {
         }
         if (life > 0) {
             final double now = Math.min(life * instant, state.maxLife() * INSTANT_LEECH_CAP);
-            if (now > 0 && state.life() < state.maxLife()) {
+            if (now > 0 && !state.isFullLife()) { // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
                 state.setLife(Math.min(state.maxLife(), state.life() + now));
                 changed = true;
             }
@@ -1764,7 +1789,7 @@ public final class CombatListener implements Listener {
         final LifeGain gain = pendingLifeGains.remove(event.getEntity().getUniqueId());
         if (gain != null && !event.isCancelled() && gain.player().isOnline()) {
             final PlayerState attackerState = plugin.players().get(gain.player());
-            if (attackerState.hasCharacter() && !attackerState.isDead() && attackerState.life() < attackerState.maxLife()
+            if (attackerState.hasCharacter() && !attackerState.isDead() && !attackerState.isFullLife() /* 2026-11-01：PlayerState#isFullLife */
                     && !attackerState.ruined(plugin.getServer().getCurrentTick())) { // 2026-10-18：荒蕪（黑水）禁療中不回
                 attackerState.setLife(attackerState.life() + gain.amount());
                 plugin.players().display(gain.player(), attackerState);
@@ -1828,7 +1853,11 @@ public final class CombatListener implements Listener {
             }
         }
         if (ailment != null && !event.isCancelled() && plugin.ailments() != null && event.getEntity() instanceof LivingEntity defender) {
-            plugin.ailments().onHit(ailment.attacker(), defender, ailment.skill(), ailment.attackerSheet(), ailment.defenderSheet(),
+            // 2026-11-01 照 PoE2 Overcharge：召喚物打的這一下記下是哪隻（感電反射給那隻召喚物；其他照舊算主人造成的）
+            final MinionHooks hooks = plugin.combat() == null ? null : plugin.combat().minions();
+            final LivingEntity minionSource = hooks != null && event instanceof org.bukkit.event.entity.EntityDamageByEntityEvent byEntity
+                    && byEntity.getDamager() instanceof LivingEntity damager && hooks.isMinion(damager) ? damager : null;
+            plugin.ailments().onHitBy(minionSource, ailment.attacker(), defender, ailment.skill(), ailment.attackerSheet(), ailment.defenderSheet(),
                     ailment.result(), ailment.taken(), ailment.defenderMonster(), ailment.stunScale(), ailment.typeTaken());
         }
     }
@@ -1871,7 +1900,7 @@ public final class CombatListener implements Listener {
         final double life = sheet.flat(StatKeys.LIFE_ON_BLOCK, java.util.Set.of());
         final double mana = sheet.flat(StatKeys.MANA_ON_BLOCK, java.util.Set.of());
         boolean changed = false;
-        if (life > 0 && state.life() < state.maxLife() && !state.ruined(plugin.getServer().getCurrentTick())) {
+        if (life > 0 && !state.isFullLife() && !state.ruined(plugin.getServer().getCurrentTick())) { // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
             state.setLife(Math.min(state.maxLife(), state.life() + life));
             changed = true;
         }

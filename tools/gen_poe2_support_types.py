@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """2026-10-30 照站長「未切割輔助寶石選技能後，那個技能是不是真的能裝上那顆輔助」：輔助能不能掛照 PoE2 0.5 的技能類型
 （RePoE skills.json 的 support_gem.allowed_types／excluded_types，照 PoB 的 doesTypeExpressionMatch：allowed 也看召喚物的技能類型，excluded 只看技能自己）。
-產生 src/main/resources/data/support_poe2.yml：我們的規則（requires／excludes／防呆）讓掛、原作不讓掛的組合（技能、輔助都對得到原作寶石的才算；
+產生 src/main/resources/data/support_ref.yml（2026-11-01：檔名照 RefSupportRules.FILE；這次之前寫到 support_poe2.yml）：我們的規則（requires／excludes／防呆）讓掛、原作不讓掛的組合（技能、輔助都對得到原作寶石的才算；
 宿主寶石（引星、星咒圖騰…）照孔裡的技能驗，不在這裡）。原作讓掛、我們擋掉的不動（大多是「掛了沒有效果」的防呆）。
 用法：先跑一次 SupMatrix（印出我們現在的判斷：技能 \t 輔助 \t 1/0 \t 原因 \t c/x \t h），再
   python3 tools/gen_poe2_support_types.py [RePoE poe2/data] [matrix.tsv]
-要重產時先把 support_poe2.yml 清空（blocked: {}）再印 matrix，不然已經擋掉的會被當成我們本來就不讓掛。
+要重產時先把 support_ref.yml 清空（blocked: {}）再印 matrix，不然已經擋掉的會被當成我們本來就不讓掛。
+手補的規則寫在 OVERRIDE_BLOCKED／OVERRIDE_TRIGGERED／OVERRIDE_PROXY（重產時併進去，不會不見）；不要直接改 support_ref.yml。
 技能對照照 audit_poe2_quality.gem_of；輔助對照照 apply_poe2_*supports* 的 SPEC、supports.yml／supports_lineage.yml 代號那行或註解的英文名。"""
 import json, re, sys, importlib.util, collections
 from pathlib import Path
@@ -177,6 +178,74 @@ def reason(sg, gem):
 
 # 我們的效果跟原作不同、照原作的技能類型擋會變成沒有技能掛得上的（照舊用我們的標籤規則）
 EXEMPT = {}   # 2026-10-30：堅物（durability）改成照原作（鐘、雷樁矢、龍捲風多用 2 次），不用再例外
+
+# 2026-11-01 手補的規則（之前直接改 support_ref.yml，重產會不見；改成寫在這裡，產生時併進去）：輔助 → { 原因: [技能代號] }。
+# 已經由上面算出來的組合（同一顆輔助、同一個技能）照算出來的原因，不重複。
+# - sow_fire（播火）：requires 改成 [wind]（Fan the Flames II：(Attack OR Damage) AND Wind），不會擊中的疾風技能擋掉。
+# - rend_cut_iii、initial_crack_ii、grave_wound、blood_collapse、knockback：改成攻擊、法術都能掛（原作要 Damage／Attack），
+#   跟潛鋒（Ambush）同一組擋法：只造成持續傷害、不會擊中的技能。
+# - heavy_shove（Arms Length：Attack／Damage，excluded_types DegenOnlySpellDamage）。
+# - molten_pit_strike（Crater）、vault_spark（Shocking Leap）、hinder（Hinder）、fury_cast（Unyielding）：我們的規則
+#   （SupportGuards.jumping、混沌持續傷害法術、不能引導…）改過之後 matrix 會變成「我們本來就不讓掛」，算不出來——照原本的表保留原作的原因。
+OVERRIDE_BLOCKED = {
+    'sow_fire': {
+        '要會造成傷害的技能': ['wild_whirlwind'],
+    },
+    'rend_cut_iii': {
+        '要會造成傷害的技能': ['plague_taint', 'ember_envoy', 'plague_envoy', 'magic_absorb_art', 'wild_whirlwind', 'filth_array'],
+    },
+    'initial_crack_ii': {
+        '要會造成傷害的技能': ['plague_taint', 'ember_envoy', 'plague_envoy', 'magic_absorb_art', 'wild_whirlwind', 'filth_array'],
+    },
+    'grave_wound': {
+        '要會造成傷害的技能': ['plague_taint', 'ember_envoy', 'plague_envoy', 'magic_absorb_art', 'wild_whirlwind', 'filth_array'],
+    },
+    'blood_collapse': {
+        '要會造成傷害的技能': ['plague_taint', 'ember_envoy', 'plague_envoy', 'magic_absorb_art', 'wild_whirlwind', 'filth_array'],
+    },
+    'knockback': {
+        '要會造成傷害的技能': ['plague_taint', 'ember_envoy', 'plague_envoy', 'magic_absorb_art', 'wild_whirlwind', 'filth_array'],
+    },
+    'heavy_shove': {
+        '只造成持續傷害的法術技能不行': ['plague_taint', 'wild_whirlwind', 'filth_array'],
+        '要會造成傷害的技能': ['ember_envoy', 'plague_envoy', 'magic_absorb_art'],
+    },
+    'molten_pit_strike': {
+        '要近戰且跳躍技能': ['field_quake_stomp', 'ground_tremor', 'startle_thunder_chop', 'returning_smith_hammer', 'heaven_punish_maul', 'molten_crack_stomp', 'brute_charge', 'field_quake_hammers', 'earth_spike_eruption', 'sunder', 'thousand_weight_smash', 'flame_vein_rift'],
+    },
+    'vault_spark': {
+        '要跳躍技能': ['blink', 'thunder_lure_thrust', 'blood_tear_sweep', 'brute_charge', 'iron_wall_ram', 'thunder_escape', 'spinning_staff_step'],
+    },
+    'hinder': {
+        '要法術且持續傷害且混沌技能': ['chain_thunder', 'rolling_thunder_orb', 'bone_bloom', 'bone_thorn_ring', 'shattered_bone_darts', 'erosion_star_shot', 'entwine_rot_arrow', 'falling_star', 'nether_puppet', 'rotting_corpse_blast', 'corpse_burst', 'cinder_sprout', 'starfire_bead_chain', 'fading_thunder_ring', 'blood_vein_tether', 'blazing_star_shell', 'flame_star_shot', 'flowing_flame_canopy', 'burning_current', 'flame_curtain', 'frost_crystal_fan', 'ice_shuttle', 'chill_crystal_mine', 'frost_star_blast', 'frost_drill', 'thunder_current_zone', 'ember_envoy', 'plague_envoy', 'erosion_curse_rift', 'frost_rampart', 'flame_core_detonation', 'thunder_drop', 'sky_column_thunder', 'magic_absorb_art', 'keen_star_drain', 'wild_whirlwind', 'blood_sickle', 'anomaly_devour_blast', 'roaming_thunder', 'thunder_escape', 'thunder_cloud', 'scorching_sun_pearl', 'lashing_thorns', 'gathered_thundercloud', 'corpse_flame_burst', 'volcano', 'cold_winter_gaze'],
+    },
+    'fury_cast': {
+        '代放技能不行': ['collapse_quake_totem'],
+    },
+}
+# 觸發（觸發型主要寶石孔裡的法術）不能用的輔助，手補：sweeping_gale（Morgana's Tempest：Cannot Support Triggered Skills；RePoE 的 excluded_types 沒寫 Triggered）。
+OVERRIDE_TRIGGERED = ['sweeping_gale']
+# 代放（幻影銳眼的幻影）不能用的輔助，手補（目前沒有）。
+OVERRIDE_PROXY = []
+
+
+def merge_overrides(out, overrides):
+    """把手補的擋法併進算出來的 out（輔助 → 原因 → [技能]）；同一顆輔助已經擋了的技能不重複。"""
+    for sup, reasons in overrides.items():
+        have = {k for skills in out.get(sup, {}).values() for k in skills}
+        for why, skills in reasons.items():
+            for k in skills:
+                if k not in have:
+                    out[sup][why].append(k)
+                    have.add(k)
+    return out
+
+
+def merge_list(computed, extra):
+    """算出來的名單後面接上手補的（不重複，順序照原本的）。"""
+    return computed + [x for x in extra if x not in computed]
+
+
 out = collections.defaultdict(lambda: collections.defaultdict(list))
 for (sup, kind), v in sorted(diff.items()):
     if kind != 'ours_yes' or sup in EXEMPT:
@@ -184,6 +253,7 @@ for (sup, kind), v in sorted(diff.items()):
     sg = sup_gem(sup)
     for skill, _, _ in v:
         out[sup][reason(sg, skill_gem(skill))].append(skill)
+merge_overrides(out, OVERRIDE_BLOCKED)
 lines = ['# 2026-10-30 照 PoE2 0.5 的技能類型（tools/gen_poe2_support_types.py 產生，不要手改）：我們的規則讓掛、原作不讓掛的輔助與技能。',
          '# 輔助 → { 擋掉的原因（遊戲裡「X 不能輔助這個技能（原因）」）: [技能代號] }。宿主寶石照孔裡的技能驗，不在這裡。',
          'blocked:']
@@ -199,6 +269,7 @@ for sup in sorted(ours_sup_ids):
     if sg and any('UsedByProxy' in (((sk.get(s) or {}).get('support_gem') or {}).get('excluded_types') or []) for s in sg['grants_skills']):
         proxy.append(sup)
 lines.append('# 代放（幻影銳眼的幻影）不能用的輔助：原作 excluded_types 有 UsedByProxy。')
+proxy = merge_list(proxy, OVERRIDE_PROXY)
 lines.append('proxy: [%s]' % ', '.join(proxy))
 # 2026-10-30 照 PoE2：觸發型主要寶石（暴擊引星、異變引星、翻滾引星…，SupportMeta*／*Invocation 加上 Triggered）孔裡的法術是觸發的，
 # excluded_types 擋 Triggered 的輔助（蓄詠…）掛不上。SupportDefinition.hostRefusal 讀。
@@ -208,6 +279,7 @@ for sup in sorted(ours_sup_ids):
     if sg and any(match(((sk.get(s) or {}).get('support_gem') or {}).get('excluded_types') or [], {'Triggered'}) for s in sg['grants_skills']):
         triggered.append(sup)
 lines.append('# 觸發（觸發型主要寶石孔裡的法術）不能用的輔助：原作 excluded_types 擋 Triggered。')
+triggered = merge_list(triggered, OVERRIDE_TRIGGERED)
 lines.append('triggered: [%s]' % ', '.join(triggered))
 # 2026-10-30 照 PoE2（輔助的 added_types）：同一個技能掛著別的輔助時，那顆輔助加上的技能類型讓原本被擋的輔助掛得上
 # （終式／匯極讓技能「累積連擊」→ 鐘星、流轉；鐘星讓技能「產生戰星」→ 滿星…）。輔助 → { 解開它的輔助: [技能代號] }。SupportDefinition.refusal 讀。
@@ -244,5 +316,5 @@ for sup in sorted(unlocks):
     lines.append('  %s:' % sup)
     for t in sorted(unlocks[sup]):
         lines.append('    %s: [%s]' % (t, ', '.join(sorted(unlocks[sup][t]))))
-(ROOT / 'src/main/resources/data/support_poe2.yml').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+(ROOT / 'src/main/resources/data/support_ref.yml').write_text('\n'.join(lines) + '\n', encoding='utf-8')
 print('supports', len(out), 'pairs', sum(len(x) for d in out.values() for x in d.values()))

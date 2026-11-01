@@ -68,6 +68,14 @@ public final class KeystoneOriginKeys {
         return Math.max(0, physical) * IMPALE_BASE * Math.max(0, 1 + magnitudeIncreased);
     }
 
+    /**
+     * 2026-11-01 照 PoE2（Bonestorm 的 active_skill_impale_magnitude_+%_final 200 =「穿刺效果更多 200%」）：穿刺效果的增加之外再乘更多
+     * （magnitudeMore 是連乘的倍率，1 = 沒有）。純函式（測試用）。
+     */
+    public static double impaleAmount(final double physical, final double magnitudeIncreased, final double magnitudeMore) {
+        return impaleAmount(physical, magnitudeIncreased) * Math.max(0, magnitudeMore);
+    }
+
     /** 狙擊手：飛了 metres 格的箭，暴擊率增加多少（照距離線性，7 格給滿 max）。 */
     public static double arrowCrit(final double max, final double metres) {
         if (max <= 0 || metres <= 0) {

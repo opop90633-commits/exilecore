@@ -78,7 +78,7 @@ class MinionSupportTypesTest {
         assertTrue(skill("summon_bone_frostmage").summon().minionTags().containsAll(Set.of(Tags.SPELL, Tags.PROJECTILE)));
         // 掘骸本身不是召喚技能：照骨構體的
         assertEquals(skill("unearth_construct").summon().minionTags(), MinionTypes.of(skill(Unearth.ID)));
-        // 每一個玩家拿得到、會一直打人的召喚技能都有寫（巨靈只聽指令，原作的指令是另外的寶石，不寫）
+        // 每一個玩家拿得到、會一直打人的召喚技能都有寫（只聽指令的不一定要寫；2026-11-01 三位巨靈照 PoB2 的 minionSkillTypes 寫了，見 DjinnSupportsTest）
         for (final SkillDefinition each : config.all()) {
             if (each.summon() != null && !each.hidden() && !MinionAbilities.commandOnly(each.id())) {
                 assertFalse(each.summon().minionTags().isEmpty(), each.id() + " 沒寫 minion_tags");
@@ -167,7 +167,7 @@ class MinionSupportTypesTest {
         // 飛的時間：射程 ÷ 速度（無條件進位、至少 1 tick）
         assertEquals(10, MinionProjectiles.ticks(28, 3.0));
         assertEquals(1, MinionProjectiles.ticks(0.1, 3.0));
-        assertEquals(0.8, MinionProjectiles.FORK_DAMAGE, 1e-9, "分裂出來的跟玩家的一樣更少 20%");
+        assertEquals(0.7, MinionProjectiles.FORK_DAMAGE, 1e-9, "2026-11-01 照 PoE2 Fork：分叉出來的更少 30%");
     }
 
     /** 2026-10-29 照 PoE2：召喚物的偷取跟玩家的一樣：一份最多最大生命 10%、1 秒回完、每秒最多 20%，滿血結束。 */
@@ -203,11 +203,14 @@ class MinionSupportTypesTest {
 
     @Test
     void meleeSupportsFitMeleeMinionsOnly() {
-        for (final String id : new String[] {"sinking_hammer", "gore_hunt", "knockback"}) {
+        for (final String id : new String[] {"sinking_hammer", "gore_hunt"}) {
             assertNull(support(id).refusal(skill("summon_skeletons")), id + " 照 PoE2 可以輔助骸骨戰士");
             assertNull(support(id).refusal(skill("summon_bone_berserker")), id);
             assertEquals("要近戰技能", support(id).refusal(skill("summon_bone_bowmen")), id + "：射手不是近戰");
         }
+        // 2026-11-01 照 PoE2 Knockback（Damage／Attack：任何會擊中的技能）：推擊不再只限近戰，射手的攻擊也能擊退
+        assertNull(support("knockback").refusal(skill("summon_skeletons")), "推擊照 PoE2 可以輔助骸骨戰士");
+        assertNull(support("knockback").refusal(skill("summon_bone_bowmen")), "推擊：射手的攻擊也會擊退");
         // 攻擊的（Close Combat、Brutality、Rapid Attacks、Life Leech）近戰、遠程都行
         for (final String id : new String[] {"hug_range", "savage_cruelty", "quick_strike", "life_leech", "execute", "merciless_heart"}) {
             assertNull(support(id).refusal(skill("summon_skeletons")), id);
@@ -219,7 +222,8 @@ class MinionSupportTypesTest {
         assertEquals("召喚物技能不行", support("beat_combo").refusal(skill("summon_skeletons")), "連拍是主人用技能的節奏");
         // 祭司不打人：只有施法速度、冷卻的吃得到
         assertNull(support("quick_chant").refusal(skill("summon_bone_priest")));
-        assertNull(support("quick_return").refusal(skill("summon_bone_priest")));
+        // 2026-11-01 照 PoE2 Cooldown Recovery II（Cannot modify the skills of minions）：迅返不能給召喚物；這次之前可以（祭司的冷卻）
+        assertEquals("召喚物技能不行", support("quick_return").refusal(skill("summon_bone_priest")));
         assertEquals("召喚物不會造成傷害", support("charged_chant").refusal(skill("summon_bone_priest")));
         // 範圍：只有範圍真的有接上的召喚物（重卒的碎骨、狼的躍擊、射手的毒雲）
         assertNull(support("zone_expand").refusal(skill("summon_bone_heavy")));

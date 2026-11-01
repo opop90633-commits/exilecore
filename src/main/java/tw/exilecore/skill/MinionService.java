@@ -193,11 +193,15 @@ public final class MinionService implements Listener, MinionHooks {
             // 2026-10-27 照 PoE2 Commandment：掛了號令的召喚物，指令的冷卻回復速度另外增加 100%
             // 2026-10-29 照 PoE2 的 Minion Types（Cooldown）：從召喚物這邊掛的迅返、爆發這類（skill.cooldown、cooldown.recovery）也算；
             // 這次之前只看主人給的召喚物冷卻回復速度
+            // 2026-11-01 照 PoE2（Condition: CommandableSkill）：指令的冷卻用 command 情境查——軍令（Commandables.minionModifiers 放進屬性表）、
+            //   天賦「召喚物的指令技能冷卻回復速度」（tags: [minion, command]）只算指令，跟一般的冷卻回復速度相加；召喚物自己其他招式的冷卻吃不到。
+            //   這次之前軍令在這裡另外加 100%，天賦的指令冷卻寫成一般的召喚物冷卻回復（自己的招式也吃）
             final StatSheet stats = effective != null ? effective : sheet;
-            final double recovery = (stats == null ? 0 : stats.increased(tw.exilecore.stats.StatKeys.COOLDOWN_RECOVERY, Set.of()))
-                    + (COMMAND.equals(ability) && commandment(this) ? tw.exilecore.stats.SupportExtraKeys.COMMANDMENT_RECOVERY : 0);
-            final double scale = stats == null ? 1.0 : Math.max(0.1, stats.apply(tw.exilecore.stats.StatKeys.SKILL_COOLDOWN, 1.0, Set.of()));
-            ready.put(ability, now + Math.round(seconds * scale * 20 / Math.max(0.1, 1 + recovery)));
+            final Set<String> context = COMMAND.equals(ability) ? Commandables.CONTEXT : Set.of();
+            //   2026-11-01 同時吃「更多」的冷卻回復速度（這次之前只加總「增加」）
+            final double rate = stats == null ? 1.0 : stats.apply(tw.exilecore.stats.StatKeys.COOLDOWN_RECOVERY, 1.0, context);
+            final double scale = stats == null ? 1.0 : stats.apply(tw.exilecore.stats.StatKeys.SKILL_COOLDOWN, 1.0, context);
+            ready.put(ability, now + Commandables.readyTicks(seconds, scale, rate));
         }
 
         Minion(final UUID owner, final SkillBuild build, final SummonSpec spec, final Mob mob, final String name, final long now,
@@ -231,12 +235,7 @@ public final class MinionService implements Listener, MinionHooks {
 
     /** 2026-10-27 照 PoE2 Commandment：這隻召喚物掛了號令（指令以外的技能不造成傷害、指令冷卻回復快 100%）。 */
     static boolean commandment(final Minion minion) {
-        for (final SupportDefinition support : minion.build.supports()) {
-            if (support.flags(tw.exilecore.stats.SupportExtraKeys.FLAG_COMMANDMENT)) {
-                return true;
-            }
-        }
-        return false;
+        return Commandables.commandment(minion.build.supports());
     }
 
     /** 2026-10-27：指令放出來的那幾招（震地咆哮、毒氣箭、爆裂殉身、死亡風暴、冰甲、從天而降）的技能描述代號結尾。 */
@@ -1438,6 +1437,9 @@ public final class MinionService implements Listener, MinionHooks {
         minion.builtModifiers = ownerModifiers;
         minion.sheet = MinionSheets.build(minion.spec, base, ownerModifiers);
         tw.exilecore.item.unique.UniqueDerived.mirrorResists(ownerSheet, minion.sheet); // 2026-10-26（冥河之衛）：召喚物的抗性等於你的
+        // 2026-11-01 照 PoE2 Commandment（軍令）：指令技能冷卻回復速度增加 100%（標 command：骷髏、砲手的指令冷卻、巨靈的指令技能都照這張表）；
+        //   巨靈的攻擊（指令以外的招式：羅贊的狂熱斬擊）更少 100% 傷害。這次之前只有骷髏、砲手的指令冷卻吃得到（startCooldown 另外加）
+        minion.sheet.addAll(Commandables.minionModifiers(minion.skillId(), commandment(minion)));
         minion.profile = MinionSheets.profile(minion.build);
         minion.effective = minion.profile.local().isEmpty() ? minion.sheet // 2026-10：輔助寶石給召喚物的也拿掉 minion 標籤（防禦類才讀得到）
                 : minion.sheet.overlay(MinionSheets.stripMinion(minion.profile.local()));
@@ -1750,8 +1752,9 @@ public final class MinionService implements Listener, MinionHooks {
         mob.swingMainHand();
         // 2026-10-26 照 PoE2：狂卒每點怒氣攻擊傷害更多 1%
         // 2026-10-28 照 PoE2 Skeletal Reaver 的品質：召喚物的怒氣效果增加 (0—20)%
-        final Attack raged = minion.rage > 0 && minion.profile != null ? with(minion, musterProfile(minion).withLocal(List.of(Modifier.more(
+        final Attack rageOnly = minion.rage > 0 && minion.profile != null ? with(minion, musterProfile(minion).withLocal(List.of(Modifier.more(
                 tw.exilecore.stats.StatKeys.DAMAGE, MinionAbilities.RAGE_DAMAGE * minion.rage * rageEffect(minion), "怒氣")))) : null;
+        final Attack raged = ruthless(minion, rageOnly); // 2026-11-01 照 PoE2 Ruthless（無情）：每第 5 次普攻是重擊
         // 2026-10-29 照 PoE2（Knockback 可以輔助骸骨戰士）：從召喚物這邊掛的擊退（skill.knockback）讓普攻把敵人往外推；Boss 不會被推
         final double knockback = minion.effective == null || minion.profile == null ? 0
                 : Math.max(0, minion.effective.apply(tw.exilecore.stats.StatKeys.SKILL_KNOCKBACK,
@@ -1847,8 +1850,10 @@ public final class MinionService implements Listener, MinionHooks {
                 : MinionTypes.projectiles(minion.effective, minion.profile.tags());
         final double base = MinionAbilities.projectileSpeed(minion.skillId());
         final double speed = shot.speedOf(base > 0 ? base : MinionAbilities.SHARD_SPEED);
+        // 2026-11-01 照 PoE2 Pierce I（從召喚物這邊掛）：穿透過敵人之後的投射物傷害更少 20%（MinionTypes.piercedFactor）
+        final double piercedFactor = minion.profile == null ? 1.0 : MinionTypes.piercedFactor(minion.effective, minion.profile.tags());
         projectiles.launch(minion.owner, minion.mob, SkillTargets.center(target), kind, shot, bonus, speed,
-                Math.max(6, minion.spec.ranged() * MinionAbilities.PROJECTILE_RANGE_SCALE), handler);
+                Math.max(6, minion.spec.ranged() * MinionAbilities.PROJECTILE_RANGE_SCALE), piercedFactor, handler);
     }
 
     /** 遠程召喚物的彈道：一串粒子從手邊到目標身上。 */
@@ -1884,7 +1889,7 @@ public final class MinionService implements Listener, MinionHooks {
         final Location at = healer.mob.getLocation();
         if (owner.getWorld().equals(at.getWorld()) && owner.getLocation().distanceSquared(at) <= 64) {
             final tw.exilecore.character.PlayerState state = plugin.players().get(owner);
-            if (state.life() < state.maxLife()) {
+            if (!state.isFullLife()) { // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
                 state.setLife(Math.min(state.maxLife(), state.life() + state.maxLife() * fraction));
                 plugin.players().display(owner, state);
                 tw.exilecore.skill.Fx.spawn(owner.getWorld(), org.bukkit.Particle.HEART, owner.getLocation().add(0, 2.1, 0), 1, 0.2, 0.1, 0.2, 0);
@@ -2302,6 +2307,32 @@ public final class MinionService implements Listener, MinionHooks {
         } finally {
             minion.override = previous;
         }
+        spellKnockback(minion, target, with);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Knockback（Damage／Attack：任何會擊中的技能，從召喚物這邊掛）：召喚物的法術（電弧、冰箭與炸開、死亡風暴、
+     * 冰甲的反擊…）擊中時也把敵人往外推（從召喚物的位置推開；距離照召喚物屬性表的 skill.knockback，跟普攻的 {@link #impact} 一樣；Boss 推不動）。
+     * 攻擊的擊退照舊在 impact（這裡只推法術：沒有攻擊標籤的那一下），召喚物死掉時的爆炸（召喚物不穩定）不是牠的技能、不推。
+     * 這次之前召喚物只有普攻會擊退。
+     */
+    private void spellKnockback(final Minion minion, final LivingEntity target, final Attack with) {
+        if (with == null || with.profile() == null || with.profile().tags().contains(tw.exilecore.stats.Tags.ATTACK)
+                || with.profile().id().endsWith(".minion_instability") || minion.effective == null
+                || !target.isValid() || target.isDead() || !minion.mob.isValid()) {
+            return;
+        }
+        final Set<String> tags = with.profile().tags();
+        final double knockback = Math.max(0, minion.effective.apply(tw.exilecore.stats.StatKeys.SKILL_KNOCKBACK,
+                minion.effective.flat(tw.exilecore.stats.StatKeys.SKILL_KNOCKBACK, tags), tags));
+        if (knockback <= 0 || plugin.monsters() == null || plugin.monsters().data(target).map(data -> data.boss()).orElse(false)) {
+            return;
+        }
+        final Vector push = target.getLocation().toVector().subtract(minion.mob.getLocation().toVector()).setY(0);
+        if (push.lengthSquared() < 1e-6) {
+            push.setX(1);
+        }
+        target.setVelocity(push.normalize().multiply(knockback).setY(0.3)); // 跟普攻的擊退一樣（impact）
     }
 
     /** 召喚物的攻擊技能：普攻的描述乘 factor（碎骨 180%、毒氣箭 80%…），加幾個標籤；conversion 不是 null 就換掉物理轉換。 */
@@ -2310,6 +2341,9 @@ public final class MinionService implements Listener, MinionHooks {
         final SkillProfile base = minion.profile;
         final Set<String> tags = new HashSet<>(base.tags());
         tags.addAll(extraTags);
+        if (COMMAND_PROFILES.contains(id)) {
+            tags.add(Commandables.TAG); // 2026-11-01 照 PoE2：指令放的招式（毒氣箭、從天而降…）是 command 情境（骸令只算這些）
+        }
         final List<Modifier> local = new ArrayList<>(base.local());
         local.addAll(musterModifiers(minion)); // 2026-10-30：群鋒
         if (Math.abs(factor - 1) > 1e-9) {
@@ -2334,6 +2368,9 @@ public final class MinionService implements Listener, MinionHooks {
         tags.remove(tw.exilecore.stats.Tags.PHYSICAL);
         tags.add(type.tag());
         tags.addAll(extraTags);
+        if (COMMAND_PROFILES.contains(id)) {
+            tags.add(Commandables.TAG); // 2026-11-01 照 PoE2：指令放的招式（震地咆哮的冰爆、死亡風暴、爆裂殉身…）是 command 情境（骸令只算這些）
+        }
         final double factor = minion.factors[0];
         final tw.exilecore.stats.DamagePacket min = new tw.exilecore.stats.DamagePacket().set(type, ref[0] * factor);
         final tw.exilecore.stats.DamagePacket max = new tw.exilecore.stats.DamagePacket().set(type, Math.max(ref[0], ref[1]) * factor);
@@ -2342,6 +2379,31 @@ public final class MinionService implements Listener, MinionHooks {
         local.add(Modifier.flat(tw.exilecore.stats.StatKeys.SPELL_BASE_CRIT, crit, id));
         local.addAll(extra);
         return new SkillProfile(base.id() + "." + id, tags, 1.0, min, max, Map.of(), local);
+    }
+
+    /** 2026-11-01 照 PoE2 Ruthless（無情）：召喚物 → 這一輪用了幾次普攻。 */
+    private final Map<UUID, Integer> ruthlessUses = new HashMap<>();
+
+    /**
+     * 2026-11-01 照 PoE2 Ruthless（無情，從召喚物這邊掛）：召喚物每第 5 次普攻是重擊，那一下暈眩傷害更多 x%；其他次照 base（null = 一般普攻）。
+     */
+    private Attack ruthless(final Minion minion, final Attack base) {
+        final double more = minion.effective == null || minion.profile == null ? 0
+                : minion.effective.flat(tw.exilecore.stats.SupportRemakeKeys.RUTHLESS, minion.profile.tags());
+        if (more <= 0) {
+            return base;
+        }
+        if (ruthlessUses.size() > 4096) {
+            ruthlessUses.keySet().removeIf(uuid -> !byEntity.containsKey(uuid));
+        }
+        final UUID id = minion.mob.getUniqueId();
+        if (!SupportRemakes.ruthlessBigHit(ruthlessUses.merge(id, 1, Integer::sum), tw.exilecore.stats.SupportRemakeKeys.RUTHLESS_EVERY)) {
+            return base;
+        }
+        ruthlessUses.remove(id);
+        final Modifier stun = Modifier.more(tw.exilecore.stats.StatKeys.STUN_BUILDUP, more / 100.0, "無情");
+        return base != null ? new Attack(base.owner(), base.sheet(), base.profile().withLocal(List.of(stun)))
+                : with(minion, musterProfile(minion).withLocal(List.of(stun)));
     }
 
     private Attack with(final Minion minion, final SkillProfile profile) {
@@ -3133,6 +3195,63 @@ public final class MinionService implements Listener, MinionHooks {
         return minion == null ? null : minion.mob.getLocation();
     }
 
+    /** 2026-11-01：owner 叫的那位巨靈（skillId）在哪裡：同一個世界就算（不管多遠：瞬移過去的也在），沒叫出來回傳 null。 */
+    public Location djinnLocation(final Player owner, final String skillId) {
+        final Minion minion = sameWorldDjinn(owner, skillId);
+        return minion == null ? null : minion.mob.getLocation();
+    }
+
+    private Minion sameWorldDjinn(final Player owner, final String skillId) {
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner.getUniqueId()) && minion.skillId().equals(skillId) && !minion.decoy && minion.mob.isValid()
+                    && minion.mob.getWorld().equals(owner.getWorld())) {
+                return minion;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2（Command：你下指令之後巨靈自己放招式，PoB2 minion.lua 的施法時間）：巨靈正在放招式（ticks 這麼久）：
+     * 面向目標、揮手、惱鬼張開衝刺的姿勢，身上一直冒施法的粒子（克拉里：沙塵與魔法、娜瑟菈：水泡、羅贊：火焰），放完收起姿勢。
+     * 沒有這隻（沒叫出來、不在同一個世界）回傳 false。這次之前巨靈沒有施法的動作（指令是你自己的一次施法，馬上出手）。
+     */
+    public boolean djinnCasting(final Player owner, final String skillId, final long ticks, final Location toward) {
+        final Minion minion = sameWorldDjinn(owner, skillId);
+        if (minion == null) {
+            return false;
+        }
+        final Mob mob = minion.mob;
+        if (toward != null && toward.getWorld() != null && toward.getWorld().equals(mob.getWorld())) {
+            mob.lookAt(toward);
+        }
+        mob.swingMainHand();
+        if (mob instanceof Vex vex) {
+            vex.setCharging(true);
+        }
+        final org.bukkit.Particle particle = switch (skillId) {
+            case "final_mirage_spirit" -> org.bukkit.Particle.BUBBLE_POP;
+            case "flame_blade_spirit" -> org.bukkit.Particle.FLAME;
+            default -> org.bukkit.Particle.ENCHANT;
+        };
+        final long total = Math.max(1, ticks);
+        final long steps = Math.max(1, total / 3);
+        for (long i = 0; i <= steps; i++) {
+            final boolean last = i == steps;
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (!mob.isValid()) {
+                    return;
+                }
+                final Location at = mob.getLocation().add(0, 1.0, 0);
+                Fx.as(owner.getUniqueId(), () -> Fx.spawn(at.getWorld(), particle, at, 4, 0.35, 0.45, 0.35, 0.02));
+                if (last && mob instanceof Vex vex) {
+                    vex.setCharging(false);
+                }
+            }, Math.min(total, i * 3));
+        }
+        return true;
+    }
+
     /** 2026-10-27：巨靈聽指令瞬移到 at（PoE2：克拉里的欺瞞、魯兹安的清算會瞬移過去），之後再回到你身邊。回傳有沒有這隻。 */
     public boolean relocate(final Player owner, final String skillId, final Location at) {
         final Minion minion = commandOnlyMinion(owner, skillId);
@@ -3152,14 +3271,32 @@ public final class MinionService implements Listener, MinionHooks {
         return true;
     }
 
-    /** 2026-10-29 照 PoE2：那位巨靈的屬性表（巨靈的指令照這張算；沒叫出來回傳 null）。 */
+    /**
+     * 2026-10-29 照 PoE2：那位巨靈的屬性表（巨靈的指令照這張算；沒叫出來回傳 null）。
+     * 2026-11-01 照 PoE2（Minion Types）：疊上掛在巨靈召喚技能上的輔助（effective）——巨靈的招式吃得到那些輔助（範圍、持續、冷卻、
+     *   投射物、傷害…）；這次之前回傳還沒疊輔助的 sheet，召喚技能上的輔助對指令完全沒有作用。
+     */
     public StatSheet djinnSheet(final UUID owner, final String djinn) {
         for (final Minion minion : minions) {
             if (minion.owner.equals(owner) && minion.skillId().equals(djinn) && !minion.decoy && minion.mob.isValid() && minion.sheet != null) {
-                return minion.sheet;
+                return minion.effective != null ? minion.effective : minion.sheet;
             }
         }
         return null;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2：巨靈替你放的招式（{@link DjinnCommands#gemSupported}）打中時，CombatListener 用這張屬性表結算：
+     * 巨靈的屬性表疊上巨靈召喚技能上的輔助。屍甲蟲、不是巨靈的招式回傳 null（照 {@link #attack} 的那張，不疊召喚技能的輔助）。
+     */
+    @Override
+    public StatSheet commandSheet(final LivingEntity entity, final tw.exilecore.stats.SkillProfile profile) {
+        final Minion minion = byEntity.get(entity.getUniqueId());
+        if (minion == null || profile == null || !DjinnCommands.gemSupported(profile.id())
+                || !minion.skillId().equals(DjinnCommands.djinnFor(profile.id()))) {
+            return null;
+        }
+        return minion.effective;
     }
 
     /**
@@ -4355,12 +4492,14 @@ public final class MinionService implements Listener, MinionHooks {
             skills.treeMechanics().minionDied(owner, minion.build.definition()); // 2026-10-26 照 PoE2 天賦：會復活的常駐召喚物被擊殺時獲得易爆
         }
         final double mana = skills.supportFlat(owner, skillId, tw.exilecore.stats.StatKeys.MANA_ON_MINION_DEATH);
-        if (mana > 0) {
+        if (mana > 0 && minion.untilTick <= 0) {
+            // 2026-11-01 照 PoE2 Essence Harvest（魂收）：只算會復活的常駐召喚物；補償（Recoup）：4 秒內慢慢回（吃回復速度、魔力回復速度，跟受傷的魔力補償一樣）。
+            // 這次之前任何召喚物死掉都立刻回
             final tw.exilecore.character.PlayerState state = plugin.players().get(owner);
-            if (state.mana() < state.maxMana()) {
-                state.setMana(Math.min(state.maxMana(), state.mana() + state.maxMana() * mana / 100.0));
-                plugin.players().display(owner, state);
-            }
+            final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(owner);
+            state.recoup().add(tw.exilecore.character.Recoup.MANA, state.maxMana() * mana / 100.0,
+                    tw.exilecore.stats.TreeEffectKeys.scale(sheet, tw.exilecore.stats.TreeEffectKeys.RECOUP_SPEED, java.util.Set.of(), 0.1)
+                            * tw.exilecore.stats.TreeEffectKeys.recoveryRate(sheet, tw.exilecore.stats.TreeEffectKeys.MANA_RECOVERY_RATE));
         }
         final double heal = skills.supportFlat(owner, skillId, tw.exilecore.stats.StatKeys.MINION_DEATH_HEAL);
         if (heal > 0) {

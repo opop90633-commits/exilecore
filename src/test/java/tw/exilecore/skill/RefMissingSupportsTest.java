@@ -90,7 +90,7 @@ class RefMissingSupportsTest {
         assertNull(support("linked_falls").refusal(skill("falling_star")));
         assertNotNull(support("linked_falls").refusal(skill("blazing_star_shell")));
         // 引導的增益：要引導或蓄力的技能
-        assertEquals("要引導或蓄力的技能", support("steady_guard_ii").refusal(skill("blazing_star_shell")));
+        assertEquals("要引導技能", support("steady_guard_ii").refusal(skill("blazing_star_shell")));
         // 弓的投射物攻擊
         assertNull(support("filled_shot_ii").refusal(skill("thunderclap_arrow")));
         assertNotNull(support("filled_shot_ii").refusal(skill("blazing_star_shell")));

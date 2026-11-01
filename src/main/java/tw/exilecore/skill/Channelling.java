@@ -118,12 +118,21 @@ final class Channelling {
      * 引導中每 tick（{@link Signatures} 的蓄力迴圈呼叫）：逐秒扣魔力。扣不起回傳 false（放開型的照樣放出，衝鋒、持續作用就停下）。
      */
     boolean drain(final Player player, final SkillRuntime.Charging charging, final ChargeSpec spec, final long held) {
-        if (!spec.drain() || held <= 0 || !ChargeSpec.drainDue(held) || charging.build == null) {
+        if (!spec.drain() || held <= 0 || charging.build == null) {
+            return true;
+        }
+        // 2026-11-01 照 PoE2（引導的消耗是連續扣的）：開始時先扣一秒，之後每 0.2 秒扣那一段的份（ChargeSpec.drainSlice）；
+        //   這次之前每滿一秒扣一整秒（快放開時還要先付下一整秒，碎骨飛矢常常差一點魔力就在 16、17 支提早放出）
+        final double[] owed = new double[1];
+        final int due = ChargeSpec.drainSlice(held, charging.drainCost, charging.drainOwed, owed);
+        charging.drainOwed = owed[0];
+        if (due <= 0) {
             return true;
         }
         final PlayerState state = plugin.players().get(player);
-        final String problem = service.payChannel(player, state, charging.build, charging.drainCost);
+        final String problem = service.payChannel(player, state, charging.build, due);
         if (problem != null) {
+            charging.outOfMana = true; // 2026-11-01：放出時的提示接著說為什麼結束
             state.notice("<gray>" + ItemRenderer.escape(charging.build.definition().name()) + "：" + problem + "，引導結束", plugin.getServer().getCurrentTick() + 30);
             plugin.players().display(player, state);
             return false;

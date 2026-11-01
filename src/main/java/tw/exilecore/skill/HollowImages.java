@@ -34,6 +34,34 @@ final class HollowImages {
     private final ExileCore plugin;
     private final SkillService service;
 
+    /**
+     * 2026-11-01 照站長（原作的幻影算你的友軍）：還在的幻影（主人 → 位置、到哪個 tick）。
+     * 天賦樹「你的存在範圍內有友軍時…」的條件看這個（ConditionTracker.allyNear → SkillService.astralImageNear）。
+     */
+    private record Image(Location at, long until) {
+    }
+
+    private final java.util.Map<java.util.UUID, java.util.List<Image>> images = new java.util.HashMap<>();
+    /** 一個幻影在那裡多久（出現到打完消失）：0.5 秒。 */
+    static final long IMAGE_TICKS = 10;
+
+    /** 你身邊 radius 格內有沒有還在的幻影。 */
+    boolean imageNear(final Player player, final double radius) {
+        final java.util.List<Image> list = images.get(player.getUniqueId());
+        if (list == null || list.isEmpty()) {
+            return false;
+        }
+        final long now = plugin.getServer().getCurrentTick();
+        list.removeIf(image -> now >= image.until());
+        final Location at = player.getLocation();
+        for (final Image image : list) {
+            if (image.at().getWorld() == at.getWorld() && image.at().distanceSquared(at) <= radius * radius) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     HollowImages(final ExileCore plugin, final SkillService service) {
         this.plugin = plugin;
         this.service = service;
@@ -92,7 +120,8 @@ final class HollowImages {
             return;
         }
         attack = attack.rollElement(sheet, plugin.items().random());
-        final double step = step(player, attack, sheet);
+        final SkillBuild image = HollowForm.imageBuild(attack, HollowForm.allyBuffs(sheet)); // 2026-11-01：幻影算友軍，吃「存在範圍內的友軍」加成（攻擊速度也算進間隔）
+        final double step = step(player, image, sheet);
         charging.interval = step;
         charging.nextBeat = now + Math.max(2, Math.round(step));
         final int cost = HollowForm.imageCost(attack.manaCost());
@@ -110,7 +139,6 @@ final class HollowImages {
         final int images = HollowForm.images(counted);
         state.markRecent(tw.exilecore.stats.KeystoneKeys.RECENT_ATTACK, now);
         plugin.players().grace().end(player, true);
-        final SkillBuild image = HollowForm.imageBuild(attack);
         final Location aim = clamp(player, service.targets().aimPoint(Origin.of(player), AIM_RANGE));
         appear(player, image, aim);
         int made = 1;
@@ -175,6 +203,10 @@ final class HollowImages {
         if (facing.lengthSquared() < 1e-6) {
             facing.setX(1);
         }
+        final long now = plugin.getServer().getCurrentTick();
+        final java.util.List<Image> mine = images.computeIfAbsent(player.getUniqueId(), k -> new java.util.ArrayList<>());
+        mine.removeIf(image -> now >= image.until());
+        mine.add(new Image(spot.clone(), now + IMAGE_TICKS));
         final java.util.UUID previousFx = Fx.source(player.getUniqueId());
         try {
             Fx.spawn(spot.getWorld(), Particle.REVERSE_PORTAL, spot.clone().add(0, 1, 0), 30, 0.25, 0.7, 0.25, 0.02);

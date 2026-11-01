@@ -144,7 +144,7 @@ class RefGemParityTest {
         for (final String id : List.of("flame_core_detonation", "flame_breath", "shattered_bone_darts", "burning_current", "shield_drum")) {
             assertNull(burgeon.refusal(config.skill(id)), id);
         }
-        assertEquals("要引導或蓄力的技能", burgeon.refusal(config.skill("blazing_star_shell")));
+        assertEquals("要引導技能", burgeon.refusal(config.skill("blazing_star_shell")));
         // 屬性表上讀得到（掛在技能上的修飾器）
         final SkillBuild build = SkillBuild.of(config, config.skill("flame_core_detonation"), 10, 100, false, List.of(burgeon), java.util.Set.of(),
                 new tw.exilecore.stats.StatSheet());

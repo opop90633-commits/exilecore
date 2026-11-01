@@ -330,6 +330,22 @@ final class SkillExecutor {
 
     // ---- 範圍 ----
 
+    /**
+     * 2026-11-01 照 PoE2 Ice Nova（Cold-Infused：「Explosion and Chilled Ground radius are 4.8 metres」「Chilled Ground duration is 8 seconds」）：
+     * 用掉冰灌注的這一下（profile 有 {@link GroundSkills#NOVA_CHILLED}）在爆炸的地方留下跟爆炸一樣大的冰緩地面（不打傷害，站在裡面就冰緩
+     * {@link GroundSkills#NOVA_CHILL}%，GroundEffects）；持續時間吃久地（groundDurationTicks）。這次之前做成冰緩效果更多 50%。
+     */
+    private void chilledNova(final Origin origin, final SkillBuild build, final Location center, final double radius) {
+        final double seconds = SkillZones.localFlat(build.profile(), GroundSkills.NOVA_CHILLED);
+        if (seconds <= 0 || origin.owner() == null || radius <= 0) {
+            return;
+        }
+        final SkillProfile chilled = build.profile().derive(build.definition().id() + ".chilled_ground", Set.of(), Set.of())
+                .withLocal(List.of(tw.exilecore.stats.Modifier.flat(GroundEffects.FLAG, 1, "冰緩地面"),
+                        tw.exilecore.stats.Modifier.flat(GroundEffects.CHILL, GroundSkills.NOVA_CHILL, "冰緩地面")));
+        zones.addCircle(origin.owner(), center, radius, chilled, build.definition().visual(), build.groundDurationTicks(seconds), 0.5, 0);
+    }
+
     private void nova(final Origin origin, final SkillBuild build) {
         if (EarthSpikes.ID.equals(build.definition().id())) {
             earthSpikes.cast(origin, build); // 2026-10-31 照站長：地刺崩裂照原作（裂縫、留地刺、戰吼震碎）
@@ -353,19 +369,24 @@ final class SkillExecutor {
         visuals.nova(build.definition().visual(), center, radius);
         final SkillParams.Zone ground = build.params().ground();
         if (ground != null) {
+            // 2026-11-01 照 PoE2 Persistent Ground：地面效果的持續時間照 groundDurationTicks（這次之前 durationTicks）
             zones.addCircle(origin.owner(), center, build.scaledRadius(ground.radius()), build.profile().scaled(ground.damage() / 100.0, "地面效果"),
-                    build.definition().visual(), build.durationTicks(ground.duration()), ground.interval(), ground.pull());
+                    build.definition().visual(), build.groundDurationTicks(ground.duration()), ground.interval(), ground.pull());
         }
+        chilledNova(origin, build, center, radius); // 2026-11-01 照 PoE2 Ice Nova（Cold-Infused）
         final SkillParams.Aftershock aftershock = build.params().aftershock();
         // 2026-10-28 照 PoE2 Earthquake：鋸齒地面有逐級上限（2 → 4 → 8）、不能疊在現有的上面，產生不了就沒有餘震
+        // 2026-11-01 照 PoE2 Persistent Ground（久地）：地動的鋸齒地面是地面效果，撐得越久餘震越晚（groundDurationRatio；沒掛久地是 1）
+        final long aftershockDelay = aftershock == null ? 0 : Math.round(aftershock.delay() * 20 * build.groundDurationRatio());
         if (aftershock != null && (plugin.skills() == null
-                || plugin.skills().stageAttacks().allowAftershock(origin.owner(), build, center, Math.round(aftershock.delay() * 20)))) {
+                || plugin.skills().stageAttacks().allowAftershock(origin.owner(), build, center, aftershockDelay))) {
             // 2026-10-26：餘震的半徑、傷害照等級（PoE2 地動逐級）；天賦「你親自使用的猛擊的餘震範圍增加」
             final double shockArea = origin.self() && build.definition().tags().contains(tw.exilecore.stats.Tags.SLAM)
                     ? TreeMechanics.aftershockRadius(build.profile().effective(plugin.players().sheet(origin.owner())), build.profile().tags()) : 1.0;
-            zones.addImpact(origin.owner(), center, radius * aftershock.radius(build.level()) * shockArea,
-                    build.profile().scaled(1 + aftershock.more(build.level()) / 100.0, "餘震"),
-                    build.definition().visual(), (int) Math.round(aftershock.delay() * 20));
+            // 2026-11-01 照 PoE2 Tectonic Slams（雙震）：被輔助的技能的餘震更少 45% 傷害、範圍更少 30%（TectonicSlams）
+            zones.addImpact(origin.owner(), center, radius * aftershock.radius(build.level()) * shockArea * TectonicSlams.aftershockRadius(build.profile()),
+                    TectonicSlams.aftershockProfile(build.profile().scaled(1 + aftershock.more(build.level()) / 100.0, "餘震")),
+                    build.definition().visual(), (int) aftershockDelay);
         }
         if (origin.self()) {
             uniqueAftershocks(origin.owner(), build, center, radius);
@@ -383,9 +404,10 @@ final class SkillExecutor {
         if (extra <= 0) {
             return;
         }
-        final double shockRadius = radius * TreeMechanics.aftershockRadius(build.profile().effective(plugin.players().sheet(owner)), build.profile().tags());
+        final double shockRadius = radius * TreeMechanics.aftershockRadius(build.profile().effective(plugin.players().sheet(owner)), build.profile().tags())
+                * TectonicSlams.aftershockRadius(build.profile()); // 2026-11-01 照 PoE2 Tectonic Slams：餘震範圍更少 30%
         for (int i = 1; i <= Math.min(3, extra); i++) {
-            zones.addImpact(owner, center, shockRadius, profile.scaled(1.0, "餘震"), build.definition().visual(), 10 * i);
+            zones.addImpact(owner, center, shockRadius, profile.scaled(TectonicSlams.damageFactor(SkillZones.localFlat(build.profile(), TectonicSlams.DAMAGE_LESS)), "餘震"), build.definition().visual(), 10 * i);
         }
     }
 
@@ -398,11 +420,16 @@ final class SkillExecutor {
             return 0;
         }
         final tw.exilecore.stats.StatSheet sheet = build.profile().effective(plugin.players().sheet(owner));
+        // 2026-11-01 照 PoE2 Reverberate（沉響）：有餘震機率的，攻擊時間每 0.25 秒餘震機率增加 x%（只放大機率，固定多幾次的不算）
+        final double perQuarter = sheet.flat(tw.exilecore.stats.SupportRemakeKeys.AFTERSHOCK_PER_QUARTER, build.profile().tags());
+        final double chanceMore = perQuarter <= 0 ? 1.0 : SupportRemakes.reverberate(perQuarter, build.intervalTicks(plugin.players().sheet(owner)));
         // 2026-10-26 照 PoE2 天賦：「猛擊 x% 機率多造成一次餘震」（錘、變身限定的帶標籤；兩套鍵都算）、「餘震範圍增加」
         return (int) Math.round(plugin.players().sheet(owner).flat(tw.exilecore.item.unique.UniqueStats.SLAM_AFTERSHOCK, java.util.Set.of()))
-                + TreeMechanics.extraAftershocks(sheet, build.profile().tags(), plugin.random())
+                + (chanceMore == 1.0 ? TreeMechanics.extraAftershocks(sheet, build.profile().tags(), plugin.random())
+                : tw.exilecore.stats.TreeEffectKeys.fromChance(sheet.flat(tw.exilecore.stats.TreeNewMechanicKeys.AFTERSHOCK_CHANCE,
+                        build.profile().tags()) * chanceMore, plugin.random()))
                 + tw.exilecore.stats.TreeEffectKeys.fromChance(sheet.flat(tw.exilecore.stats.TreeEffectKeys.SLAM_AFTERSHOCK_CHANCE,
-                        build.profile().tags()), plugin.random());
+                        build.profile().tags()) * chanceMore, plugin.random());
     }
 
     /** 2026-10-28 照 PoE2 炎脈裂地的品質：裂縫的餘震——整道裂縫 0.5 秒後再打一次（每隻只算一下）。 */
@@ -495,6 +522,9 @@ final class SkillExecutor {
         targets.strike(origin.owner(), build.profile(), SkillTargets.coneShape(origin, length, build.angle()), new Object()); // 2026-10-25
         visuals.cone(build.definition().visual(), origin, length, build.angle());
         coneStages(origin, build, length);
+        if (origin.owner() != null && plugin.skills() != null) {
+            plugin.skills().leftovers().coneIgnited(origin.owner(), build, origin.feet(), origin.facing(), length); // 2026-11-01 照 PoE2 Incinerate（Ignited Ground）
+        }
         final SkillParams.Aftershock aftershock = build.params().aftershock();
         if (aftershock != null) {
             final org.bukkit.util.Vector facing = origin.facing().clone().setY(0);
@@ -770,6 +800,13 @@ final class SkillExecutor {
                 chainBeam(beamOrigin(origin, directions.get(i)), build, null, false, hit);
             }
         }
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Coursing Current（竄電）：從某個位置放一道連鎖的閃電，先打 preferred，exclude 裡的（感電的那隻、沒濕透的）不會被連到。
+     */
+    void chainFrom(final Origin origin, final SkillBuild build, final LivingEntity preferred, final Set<UUID> exclude) {
+        chainBeam(origin, build, preferred, true, exclude == null ? new HashSet<>() : new HashSet<>(exclude));
     }
 
     /** 2026-10-28 照 PoE2：連鎖技能放幾道——有投射物標籤（鏈雷）的照投射物數量，其他（血脈牽、裂隙之手…原作不是投射物）一道。純函式。 */
@@ -1099,7 +1136,7 @@ final class SkillExecutor {
                 points.add(point);
             }
             zones.addPoints(player, points, build.scaledRadius(ground.radius()), build.profile().scaled(ground.damage() / 100.0, "地面效果"),
-                    visual, build.durationTicks(ground.duration()), ground.interval(), ground.pull());
+                    visual, build.groundDurationTicks(ground.duration()), ground.interval(), ground.pull()); // 2026-11-01 照 PoE2 Persistent Ground
         }
         visuals.dash(visual, from, to);
         player.setFallDistance(0);
@@ -2433,7 +2470,9 @@ final class SkillExecutor {
                 final LivingEntity aimed = targets.aimed(origin, build.range(), 1.0);
                 center = aimed != null ? aimed.getLocation() : targets.aimPoint(origin, build.range());
             }
-            zones.addCircle(origin.owner(), center, radius, profile, visual, build.durationTicks(params.duration()), params.interval(), params.pull(),
+            // 2026-11-01 照 PoE2 Persistent Ground：一片的區域（感電、冰緩地面這類隱藏技能、毒雲、穢陣…）是地面效果，照 groundDurationTicks
+            //   （沒有「地面效果持續時間增加」時跟 durationTicks 一樣；牆不是地面效果，照舊）
+            zones.addCircle(origin.owner(), center, radius, profile, visual, build.groundDurationTicks(params.duration()), params.interval(), params.pull(),
                     build.definition().id(), zoneMax(origin, build, params.max()));
             if (corpse != null) {
                 // 2026-10-29 照 PoE2 Profane Ritual：屍體被符文標住——先從屍體清單拿走（同一具屍體不會同時有兩個穢陣、別的技能也用不到），
@@ -2834,6 +2873,12 @@ final class SkillExecutor {
             visuals.mark(build.definition().visual(), target);
             if (plugin.skills() != null) {
                 plugin.skills().supportMechanics().lineage().cursePlaced(player, build, target, placed, applied, until); // 2026-10-27 照 PoE2：魅咒、寂咒
+                if (!build.definition().hidden()) {
+                    // 2026-11-01 照 PoE2 Decaying Hex（朽咒）：每一個被詛咒的敵人各觸發一次
+                    plugin.skills().procEvent(player, build.definition().id(), tw.exilecore.stats.SupportRemakeKeys.EVENT_CURSE_APPLIED,
+                            target.getLocation(), target);
+                }
+                plugin.skills().procs().curseApplied(player, build.definition().id(), target, placed, applied, until); // 2026-11-01 照 PoE2 Impending Doom：詛咒結束時
             }
         }
         visuals.nova(build.definition().visual(), center, radius);

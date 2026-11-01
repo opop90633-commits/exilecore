@@ -342,10 +342,12 @@ public final class ItemGenerator {
                 continue;
             }
             // 範圍要跟 UniqueUpgrade.CORRUPT_MIN／MAX 一樣（那邊照這個放寬，不然穿上去會被當成舊版重擲）
-            final double factor = (78 + random.nextInt(45)) / 100.0;
+            final int percent = 78 + random.nextInt(45);
+            final double factor = percent / 100.0;
             final java.util.Map<String, Integer> scaled = new java.util.LinkedHashMap<>();
             rolled.vars().forEach((key, value) -> scaled.put(key, (int) Math.round(value * factor)));
             rolled.setVars(scaled);
+            rolled.setCorrupt(percent); // 2026-11-01 照站長：固定值（資料檔寫死的數字）也照同一個倍率變；這次之前只有擲出來的數值變
         }
     }
 

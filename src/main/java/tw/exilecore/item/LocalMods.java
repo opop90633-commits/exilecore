@@ -129,7 +129,7 @@ public record LocalMods(double physical, double attackSpeed, double crit, Map<Da
                 }
                 for (final AffixMod mod : affix.mods()) {
                     if (isWeaponLocal(mod)) {
-                        Modifier modifier = mod.toModifier(rolled.vars(), affix.id());
+                        Modifier modifier = mod.toModifier(rolled.vars(), affix.id(), rolled.fixedScale()); // 2026-11-01：腐化的固定值倍率
                         if (unveiledScale != 1 && Veiled.isUnveiled(rolled.id())) {
                             modifier = new Modifier(modifier.stat(), modifier.type(), modifier.value() * unveiledScale, modifier.tags(), modifier.source());
                         }

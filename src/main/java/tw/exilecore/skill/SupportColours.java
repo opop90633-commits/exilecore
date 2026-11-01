@@ -29,9 +29,9 @@ public final class SupportColours {
                     + "long_stay rage merciless_heart firm_post blood_renown "
                     // 自己歸類（火焰、物理近戰、護甲、戰吼、圖騰、流血、磐星）
                     + "added_fire prairie_blaze_ii sacred_niche_echo "
-                    + "break_plate_iii blood_collapse colossus_butcher "
+                    + "break_plate_iii blood_collapse "
                     + "sky_scorch_wrath star_remains_resonance meteor_core realm_break_spread "
-                    + "holy_light_focus covet_chest_lock shackle_entangle blood_levy marrow_surge gather_bedrock "
+                    + "holy_light_focus covet_chest_lock shackle_entangle blood_levy marrow_surge "
                     // 2026-10-26 補齊（照 RePoE；疾樁 III、不倦是紅、冰噬 II 是藍——這次之前寫錯成藍／綠／綠）：沒列的原本都當白色
                     + "swift_post_iii endless_howl gore_hunt initial_crack_ii scorch_hunt crumbling_force blood_linger cinder_through quake_howl "
                     + "thick_post back_to_wall element_blade knockback heavy_shove enduring_terrain life_spring devour_kill "
@@ -58,7 +58,6 @@ public final class SupportColours {
                     + "point_blank star_panorama crack_corridor extra_shells "
                     + "ground_nail_iii shock_dizzy focus_mind thunder_prison_heart realm_pierce_rip "
                     + "void_crack_echo coin_flip duel_concentration pilfered_move unnamed_blade delirium_smash "
-                    + "slay_gather_fury "
                     // 2026-10-26 補齊（照 RePoE；疾樁 III、不倦是紅、冰噬 II 是藍——這次之前寫錯成藍／綠／綠）：沒列的原本都當白色
                     + "held_breath wide_stance enduring_thunder layered_miasma draw_lightning rust_plate strip_element leaping_thunder beat_combo "
                     + "swift_edge charge_impetus all_in_gamble evade_freeze slow_shell stern_proclaim "
@@ -80,7 +79,7 @@ public final class SupportColours {
                     + "minion_life bloodthirst_summon huge_soul nether_river_crossing "
                     + "void_star_army crack_outpour ritual_dais_army chasm_touch "
                     + "eternal_frost_heart ebb_flow_resonance dark_current_pull whale_exhale fog_gauze chasm_grasp extinction_focus "
-                    + "blood_oath_seal build_poise realm_return_void void_star_clone "
+                    + "blood_oath_seal realm_return_void void_star_clone "
                     + "looking_glass_copy daybreak_boon "
                     // 2026-10-26 補齊（照 RePoE；疾樁 III、不倦是紅、冰噬 II 是藍——這次之前寫錯成藍／綠／綠）：沒列的原本都當白色
                     + "frost_gnaw_ii ember_marrow frost_marrow thunder_marrow abyss_marrow iron_marrow frost_seal "
@@ -91,7 +90,7 @@ public final class SupportColours {
                     + "frost_whirl hinder thick_crystal brittle_crystal frost_etch_crystal crystal_spike frost_shell sealed_chant seal_widen rising_blaze "
                     + "frost_infuse bone_dance frozen_ground curse_blast servant_marrow keen_point "
                     + "deep_reveal frost_creep blight_touch life_donation shield_chant surge_servant "
-                    + "ember_surge volt_drain bone_command bone_command_ii soul_reap bone_mercy perish_blast dice_luck blast_peak "
+                    + "ember_surge volt_drain bone_command bone_command_ii soul_reap bone_mercy dice_luck blast_peak "
                     + "eternal_star spread_cold thunder_star rite_star surge_power_ii "
                     + "power_return power_expand "
                     + "hasten_bloom marching_gale sweeping_gale "

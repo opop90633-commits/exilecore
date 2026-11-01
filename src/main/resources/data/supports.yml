@@ -76,6 +76,9 @@
 #                   戰吼：warcry.speed、warcry.power、warcry.rage_bypass、warcry.tireless、warcry.echoes、warcry.rage_per_5_power、
 #                     flag.battershout、flag.paquate、warcry.crystal_empowers、glory.cost、freeze.shatter_fang、freeze.ice_bite(_seconds)、
 #                     flag.empowered_cull、flag.unerring_power
+#                   2026-11-01 照原作重做的輔助（說明見 tw.exilecore.stats.SupportRemakeKeys）：projectile.forked_damage、accuracy.within_2m、
+#                     armour.full_break_on_heavy_stun、slam.aftershock_chance_per_250ms、stun.ruthless_more、minion.gigantic、echo.area；
+#                     觸發事件 proc.shock（讓敵人感電時）、proc.curse_applied（詛咒到每一個敵人時）、proc.projectile_end（每一發投射物飛到終點時）
 # description     說明；寫 {charge:frenzy} 會換成「怒星」（per_charge 有寫才會接「（每顆：…）」；照 charges.yml 的名字與 per_charge，
 #                 改了 charges.yml 說明跟著變；power 銳星、endurance 磐星）
 # notes           額外的說明行（可省略）
@@ -91,6 +94,14 @@ once_per_character: false
 
 # 2026-10 PoE2 改版拿掉的輔助寶石：代號: 階級。玩家身上、面板上的這些輔助會換成同階的未切割輔助寶石（登入時自動換）。
 retired:
+  colossus_butcher: 0   # 2026-11-01 照站長刪掉屠巨（自創，原作沒有對應；寫 0 = 玩家身上的直接刪掉，不給未切割輔助寶石）
+  build_poise: 0   # 2026-11-01 照站長刪掉蓄勢（自創，原作沒有對應；寫 0 = 玩家身上的直接刪掉，不給未切割輔助寶石）
+  perish_blast: 0   # 2026-11-01 照站長刪掉殞爆（自創，原作沒有對應；寫 0 = 玩家身上的直接刪掉，不給未切割輔助寶石）
+  gather_bedrock: 0   # 2026-11-01 照站長刪掉聚磐（自創，原作沒有對應；寫 0 = 玩家身上的直接刪掉，不給未切割輔助寶石）
+  slay_gather_fury: 0   # 2026-11-01 照站長刪掉撲殺聚怒（自創，原作沒有對應；寫 0 = 玩家身上的直接刪掉，不給未切割輔助寶石）
+  blazing_brand: 3   # 2026-11-01 照站長刪掉熾烙（原作的代價是符文守護，我們沒有；玩家身上的換成第 3 階未切割輔助寶石）
+  oath_drive: 3   # 2026-11-01 照站長刪掉誓驅（血脈；原作的代價是符文守護）
+  proud_frost: 3   # 2026-11-01 照站長刪掉傲寒（血脈；原作花的是符文守護）
   magnet_bones: 2   # 2026-10-31 照站長：殘骸直接生效，只有撿取距離的磁骸拿掉（玩家身上的換成第 2 階未切割輔助寶石）
   multistrike: 3
   multiple_totems: 3
@@ -256,7 +267,8 @@ supports:
 
   pierce:
     name: 貫穿
-    description: 投射物穿過一個敵人繼續飛（會爆炸的在停下來時才爆炸）。
+    description: 投射物穿過一個敵人繼續飛（會爆炸的在停下來時才爆炸），但穿透過敵人之後傷害更少 20%（召喚物的投射物也是）。
+    # 2026-11-01 照 PoE2 Pierce I：從召喚物那邊掛時召喚物的投射物穿透之後也更少 20%（MinionProjectiles）；這次之前只有你自己的投射物有這個代價
     icon: PRISMARINE_SHARD   # 2026-10：原本 TRIDENT（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     requires: [projectile]
@@ -264,6 +276,8 @@ supports:
     # 2026-10-26 照 PoE2 Pierce I（poe2db）；這次之前 tier 1、魔耗 1.2、stat: skill.pierce, type: FLAT, value: 2；stat: damage, type: MORE, value: 10, tags: [projectile]
     modifiers:
       - { stat: skill.pierce, type: FLAT, value: 1 }
+      # 2026-11-01 照 PoE2 Pierce I（support_pierce_projectile_damage_+%_final_if_pierced_enemy −20）：穿透過敵人之後傷害更少 20%；這次之前沒有這個代價
+      - { stat: projectile.pierced_less, type: FLAT, value: 20 }
 
   quick_strike:
     name: 迅擊
@@ -353,13 +367,14 @@ supports:
 
   rend_cut_iii:
     name: 割裂 III
-    description: 被輔助的攻擊一定讓敵人流血（目標移動時加倍）。
+    description: 被輔助的技能擊中造成物理傷害時一定讓敵人流血（目標移動時加倍）；攻擊、會造成傷害的法術都能掛。
     icon: NETHERITE_SCRAP
     tier: 3
-    requires: [attack]
+    requires: [attack, spell]
+    # 2026-11-01 照 PoE2 Bleed III（allowed_types Damage／Attack／CrossbowAmmo：任何會擊中的技能，含法術）；這次之前 requires [attack]、流血機率只給攻擊（tags: [attack]）、說明「被輔助的攻擊一定讓敵人流血」
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次新增；2026-10-26 照站長「I II III 只留最高的」：割裂、割裂 II併入這顆（supports.yml 的 merged）
     modifiers:
-      - { stat: bleed.chance, type: FLAT, value: 100, tags: [attack] }
+      - { stat: bleed.chance, type: FLAT, value: 100 }
 
   poison_temper_iii:
     name: 淬毒 III
@@ -432,16 +447,17 @@ supports:
 
   split_shot:
     name: 歧射
-    description: 投射物第一次打中敵人時分裂成兩發往左右飛出去。榴彈不會直接打中敵人，掛不上。
+    description: 投射物第一次打中敵人時分叉成兩發往左右飛出去，分叉出來的投射物傷害更少 30%（原本那一發不變）。榴彈不會直接打中敵人，掛不上。
     icon: PRISMARINE_SHARD
     tier: 2
     requires: [projectile]
     excludes: [grenade]
     mana_multiplier: 1.1
     # 2026-10-26 照 PoE2 Fork（poe2db）；這次之前 tier 2、魔耗 1.3、效果不動
+    # 2026-11-01 照 PoE2 Fork（support_fork_forked_projectile_damage_+%_final −30：只有分叉出來的）；這次之前 stat: damage, type: MORE, value: -10, tags: [projectile]（所有投射物），分叉出來的另外固定更少 20%
     modifiers:
       - { stat: skill.split_shot, type: FLAT, value: 1 }
-      - { stat: damage, type: MORE, value: -10, tags: [projectile] }
+      - { stat: projectile.forked_damage, type: MORE, value: -30 }
 
   minion_life:
     name: 堅韌召喚
@@ -483,16 +499,18 @@ supports:
 
   twin_chant:
     name: 雙詠
-    description: 自己手動施放的範圍法術放完 0.25 秒後自動再放一次（不花魔力），但施法慢一點。只能輔助可以連瀑的範圍法術（落在目標區域、身邊一圈的，或詛咒）；被觸發、交給圖騰放的法術沒有作用，也掛不上暴擊引星這類主要寶石。   # 2026-10-31 照站長：寫清楚只有手動施放才有作用；2026-10-28 照 PoE2（只限 Cascadable）；這次之前「位移、印記不行」
+    description: 自己手動施放的範圍法術放完 0.25 秒後自動再放一次（不花魔力），回響的那一次範圍增加 40%，但施法慢一點。只能輔助可以連瀑的範圍法術（落在目標區域、身邊一圈的，或詛咒）；被觸發、交給圖騰放的法術沒有作用，也掛不上暴擊引星這類主要寶石。   # 2026-10-31 照站長：寫清楚只有手動施放才有作用；2026-10-28 照 PoE2（只限 Cascadable）；這次之前「位移、印記不行」
     icon: AMETHYST_SHARD
     tier: 2
     requires: [spell]
     excludes: [movement, mark, minion, aura, warcry, totem, bell, trap, persistent, herald]
     mana_multiplier: 1.5
     # 2026-10-26 照 PoE2 Spell Echo（poe2db）；這次之前 tier 3、魔耗 1.4、stat: flag.echo, type: FLAT, value: 1；stat: damage, type: MORE, value: -25
+    # 2026-11-01 照 PoE2 Spell Echo（echoed_spell_area_of_effect_+% 40）；這次之前沒有回響的範圍加成
     modifiers:
       - { stat: flag.echo, type: FLAT, value: 1 }
       - { stat: cast.speed, type: MORE, value: -30 }
+      - { stat: echo.area, type: INCREASED, value: 40 }
 
   # 2026-10：近戰的「按一次打三下」（法術那邊是雙詠）。三下照攻擊間隔一下一下打，全部打完才能做別的（中途不能換招），
   # 換來的是更快的攻擊速度與省魔力（三下只扣一次）。瞬影擊掛了是連閃三次（每次瞬移到敵人身邊打一下），閃完才進冷卻；
@@ -568,10 +586,11 @@ supports:
 
   blood_collapse:
     name: 血崩
-    description: 被輔助的技能造成的流血強度更多 100%，但擊中傷害更少 30%（流血照沒減之前的擊中算；要配會讓敵人流血的攻擊）。
+    description: 被輔助的技能造成的流血強度更多 100%，但擊中傷害更少 30%（流血照沒減之前的擊中算；持續傷害不受影響）；攻擊、會造成傷害的法術都能掛。
     icon: NETHER_BRICK
     tier: 3
-    requires: [attack]
+    requires: [attack, spell]
+    # 2026-11-01 照 PoE2 Deep Cuts II（allowed_types Attack／Damage／CrossbowAmmo，含法術；更少只算擊中）；這次之前 requires [attack]、說明最後是「要配會讓敵人流血的攻擊」
     mana_multiplier: 1.0
     # 2026-11-01 照 PoE2 Deep Cuts II（poe2db：第 5 階、消耗 100%）；這次之前是自己照原作基準改的（流血更多 50%、持續增加 30%、流血機率 +15%、擊中更少 25%）
     modifiers:
@@ -596,7 +615,7 @@ supports:
 
   shock_dizzy:
     name: 震眩
-    description: 被輔助的攻擊擊中時有 30% 機率讓敵人眩暈 8 秒：受到的暈眩累積更多 50%。   # 2026-10-27：照實際效果（HitEffects）改說明；這次之前寫「四秒、造成的傷害更少 15%、暈眩門檻減少 30%」，也沒寫增加 20% 暈眩累積
+    description: 被輔助的攻擊擊中時，造成的物理傷害累積在敵人的眩暈條上（累積到牠的暈眩門檻就滿，一陣子沒打會慢慢消退）；滿了讓敵人眩暈 8 秒：受到的暈眩累積更多 50%。   # 2026-11-01 照 PoE2 Daze 改成累積條；2026-10-27：照實際效果（HitEffects）改說明；這次之前寫「擊中時有 30% 機率讓敵人眩暈 8 秒」，更早寫「四秒、造成的傷害更少 15%、暈眩門檻減少 30%」
     icon: GOLD_NUGGET
     tier: 2
     requires: [attack]
@@ -604,8 +623,12 @@ supports:
     # 2026-10-27 照 PoE2 Daze（0.5 切不出來；poe2db／RePoE）；這次之前 魔耗 1.15
     # 2026-10-27 照 PoE2 0.5 Daze：原作只有「依造成的物理傷害累積眩暈」（眩暈＝8 秒內受到的暈眩累積更多 50%），沒有增加暈眩累積；
     #   我們沒有眩暈累積條，照機率擲，拿掉多出來的「增加 20% 暈眩累積」、機率 25% → 30% 補回強度；這次之前 daze.chance 25、stun.buildup INCREASED 20
+    # 2026-11-01 照 PoE2 Daze（Supports Attacks, causing them to build up Daze based on a portion of Physical Damage dealt）：做了眩暈累積條
+    #   （AilmentService.dazeBuildup、ailments.yml 的 daze：物理傷害 × 100% ÷ 暈眩門檻，原作沒公開比例）；這次之前 daze.chance 30（擊中 30% 機率直接眩暈）
+    # 2026-11-01 查過 Path of Building（PoE2）：SupportDazePlayer 的 stats 是空的（support_physical_damage_%_to_gain_as_daze_build_up 沒有數值），
+    #   Misc／Global 也沒有眩暈門檻；poe2db 也沒有——100%、門檻＝暈眩門檻仍是估的。眩暈本身（受到的暈眩累積更多 50%、8 秒）跟 PoB2 一樣
     modifiers:
-      - { stat: daze.chance, type: FLAT, value: 30 }
+      - { stat: daze.buildup, type: FLAT, value: 100 }
 
   rage:
     name: 怒火
@@ -618,16 +641,6 @@ supports:
     # 2026-10-26 照 PoE2 Rage I（poe2db）；這次之前 tier 1、魔耗 1.1、stat: rage.on_hit, type: FLAT, value: 2
     modifiers:
       - { stat: rage.on_hit, type: FLAT, value: 3 }
-
-  colossus_butcher:
-    name: 屠巨
-    description: 被輔助的技能對稀有、傳奇怪物與 Boss 更痛。
-    icon: NETHERITE_SCRAP
-    tier: 3
-    requires: [attack, spell]
-    mana_multiplier: 1.25
-    modifiers:
-      - { stat: damage.vs_rare, type: INCREASED, value: 40 }
 
   # ---- 2026-10 PoE2 補齊：更多輔助（效果照 PoE2，名稱是自己的）----
 
@@ -659,7 +672,9 @@ supports:
 
   blazing_volt:
     name: 熾電
-    description: 被輔助的技能感電效果更強。
+    description: 被輔助的技能感電效果更強，但你造成的感電也會反射到你自己身上（從召喚物那邊掛的，召喚物造成的感電反射到那隻召喚物身上）。
+    # 2026-11-01 照 PoE2 Overcharge（shocks_reflected_to_self：反射給用技能的那一個）：從召喚物那邊掛時反射給召喚物（AilmentService.onHitBy）；
+    #   這次之前說明「被輔助的技能感電效果更強，但你造成的感電也會反射到你自己身上。」，召喚物造成的感電反射給主人
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     requires: [attack, spell]
@@ -667,6 +682,8 @@ supports:
     # 2026-10-26 照 PoE2 Overcharge（poe2db）；這次之前 tier 2、魔耗 1.2、stat: shock.effect, type: INCREASED, value: 40；stat: electrocute.buildup, type: INCREASED, value: 40
     modifiers:
       - { stat: shock.effect, type: INCREASED, value: 50 }
+      # 2026-11-01 照 PoE2 Overcharge（shocks_reflected_to_self）：你造成的感電也反射給自己；這次之前沒有這個代價
+      - { stat: flag.shocks_reflected_to_self, type: FLAT, value: 1 }
 
   burning_will:
     name: 燃意
@@ -753,14 +770,16 @@ supports:
 
   grave_wound:
     name: 深創
-    description: 被輔助的技能造成的流血痛很多，但擊中傷害少一點。
+    description: 被輔助的技能造成的流血強度更多 75%，但擊中傷害更少 25%（流血照沒減之前的擊中算；持續傷害不受影響）；攻擊、會造成傷害的法術都能掛。
     icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
-    requires: [attack]
+    requires: [attack, spell]
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Deep Cuts I（poe2db）；這次之前 tier 2、魔耗 1.2、stat: bleed.magnitude, type: MORE, value: 30；stat: bleed.duration, type: INCREASED, value: 20
+    # 2026-11-01 照 PoE2 Deep Cuts I（support_deep_cuts_hit_damage_+%_final：只減擊中；allowed_types Attack／Damage／CrossbowAmmo，含法術）；
+    #   這次之前 requires [attack]、stat: damage, type: MORE, value: -25（連持續傷害一起減）、說明「流血痛很多，但擊中傷害少一點」
     modifiers:
-      - { stat: damage, type: MORE, value: -25 }
+      - { stat: damage.hit, type: MORE, value: -25 }
       - { stat: bleed.magnitude, type: MORE, value: 75 }
 
   potent_toxin:
@@ -790,14 +809,15 @@ supports:
 
   flesh_bulwark:
     name: 血肉之盾
-    description: 被輔助的召喚物受到的傷害更少 40%（做成生命更多 67%，一樣耐打），但造成的傷害更少 40%。
+    description: 被輔助的技能召出來的召喚物受到的傷害更少 40%，但造成的傷害更少 40%。只有召喚技能能掛。
     icon: LEATHER   # 2026-10：原本 SHIELD（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [minion]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Meat Shield II（第 3 階；poe2db／RePoE）；這次之前 魔耗 1.2、stat: life.max, type: MORE, value: 40, tags: [minion]；stat: damage, type: MORE, value: -15, tags: [minion]、說明「被輔助的召喚物更耐打、更容易擋下攻擊，但傷害少一點。」
+    # 2026-11-01 照 PoE2 Meat Shield II（召喚物受到的傷害更少 40%，跟堅韌召喚一樣用 damage.taken）；這次之前 stat: life.max, type: MORE, value: 67, tags: [minion]（用生命近似）
     modifiers:
-      - { stat: life.max, type: MORE, value: 67, tags: [minion] }
+      - { stat: damage.taken, type: FLAT, value: -40, tags: [minion] }
       - { stat: damage, type: MORE, value: -40, tags: [minion] }
 
   bloodthirst_summon:
@@ -837,10 +857,11 @@ supports:
 
   quick_return:
     name: 迅返
-    description: 被輔助的技能冷卻回復得更快。
+    description: 被輔助的技能冷卻回復得更快；不能修改召喚物的技能。
     icon: CLOCK
     tier: 3
     requires: [cooldown]
+    excludes: [minion]   # 2026-11-01 照 PoE2 Cooldown Recovery II（Cannot modify the skills of minions）；這次之前沒有 excludes（召喚技能的召喚物技能有冷卻時也能掛）
     mana_multiplier: 1.3
     # 2026-10-26 照 PoE2 Cooldown Recovery II（poe2db）；這次之前 tier 3、魔耗 1.3、stat: skill.cooldown, type: INCREASED, value: -35；stat: damage, type: MORE, value: -10
     modifiers:
@@ -881,18 +902,6 @@ supports:
       - { stat: damage.vs_low_life, type: MORE, value: 30 }
       - { stat: damage.while_low_life, type: MORE, value: 30 }   # 你自己低血時（CombatListener）
 
-  build_poise:
-    name: 蓄勢
-    description: 被輔助的技能變成可以蓄力：連續放（按住）每放一次加一層，最多 4 層，每層更多 10% 傷害。本身就會蓄力的技能不能掛。
-    icon: CLOCK
-    tier: 3
-    requires: [attack, spell]
-    excludes: [minion, aura, warcry, movement, herald]
-    mana_multiplier: 1.2
-    modifiers:
-      - { stat: channel.stages, type: FLAT, value: 4 }
-      - { stat: channel.more, type: FLAT, value: 10 }
-
   # ---- 專屬（終局、極境掉落；未切割輔助寶石切不出來）----
   # 四個終局 Boss 各一顆（maps.yml 的 drops.final_support_chance，4%；極境版本的機率更高，寫在 uber.drops.extra），
   # 另外兩顆只有極境會掉（uber.drops.extra）。比一般的輔助強：好幾種效果疊在一起，魔力消耗也比較高。
@@ -912,15 +921,15 @@ supports:
 
   merciless_heart:
     name: 無情
-    description: 被輔助的攻擊傷害更多 15%，暈眩累積更多 50%。
+    description: 被輔助的攻擊每第 5 次使用是一記重擊，那一次的暈眩傷害更多 500%。
     icon: NETHERITE_SCRAP
     tier: 2
     requires: [attack]   # 2026-10-26 照 PoE2：Ruthless 輔助所有攻擊（Attack），不限近戰；這次之前 [melee]
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
-    mana_multiplier: 1.2
+    mana_multiplier: 1.0   # 2026-11-01 照 PoE2 的消耗；這次之前 1.2
+    # 2026-11-01 照 PoE2 Ruthless（support_ruthless_big_hit_max_count 5、big_hit_stun_damage +500% final；SupportExtras.beforeUse、召喚物的 MinionService.ruthless）；這次之前 stat: damage, type: MORE, value: 15；stat: stun.buildup, type: MORE, value: 50（每一下）
     modifiers:
-      - { stat: damage, type: MORE, value: 15 }
-      - { stat: stun.buildup, type: MORE, value: 50 }
+      - { stat: stun.ruthless_more, type: FLAT, value: 500 }
 
   melt_break:
     name: 熔破
@@ -980,16 +989,19 @@ supports:
 
   huge_soul:
     name: 巨魄
-    description: 召喚物的生命更多 50%、傷害更多 25%，但移動速度減少 15%。
+    description: 被輔助的持續型召喚物變成巨型：體型大 20%、生命更多 20%、傷害更多 20%，但保留的精魂多很多（130%）。只能輔助叫出持續型召喚物的技能。
     icon: GOLD_INGOT   # 2026-10：原本 GOLDEN_APPLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 3
-    requires: [minion]
-    mana_multiplier: 1.3
+    requires: [minion]   # 2026-11-01 照 PoE2：另外要持續型召喚（Minion AND Persistent；SupportGuards）；這次之前所有召喚技能
+    mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Hulking Minions（第 4 階；poe2db／RePoE）；這次之前 tier 2
+    # 2026-11-01 照 PoE2 Hulking Minions（魔耗 100%、精魂保留倍率 130%、minions_are_gigantic：巨型照巨伴的 Gigantic 生命、傷害更多 20%、體型大 20%）；
+    #   這次之前 魔耗 1.3、stat: life.max, type: MORE, value: 50, tags: [minion]；stat: damage, type: MORE, value: 25, tags: [minion]；stat: movement.speed, type: INCREASED, value: -15, tags: [minion]
     modifiers:
-      - { stat: life.max, type: MORE, value: 50, tags: [minion] }
-      - { stat: damage, type: MORE, value: 25, tags: [minion] }
-      - { stat: movement.speed, type: INCREASED, value: -15, tags: [minion] }
+      - { stat: aura.reservation, type: MORE, value: 30 }
+      - { stat: minion.gigantic, type: FLAT, value: 1 }
+      - { stat: life.max, type: MORE, value: 20, tags: [minion] }
+      - { stat: damage, type: MORE, value: 20, tags: [minion] }
 
   star_remains_resonance:
     name: 星骸共鳴
@@ -1651,38 +1663,42 @@ supports:
       - { stat: attack.speed, type: MORE, value: -6 }
       - { stat: cast.speed, type: MORE, value: -6 }
 
-  wide_stance:               # Overreach（近身命中降低用「命中更少」近似）
+  wide_stance:               # Overreach
     name: 闊勢
-    description: 被輔助的範圍攻擊範圍大很多，但命中變差。
+    description: 被輔助的範圍攻擊範圍大很多，但對 2 格內的近身目標命中更少 80%。
     icon: GOLD_NUGGET   # 2026-10：原本 TARGET（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [area]
     excludes: [spell, minion, aura, herald, persistent]   # 2026-10：光環不算法術之後，這裡要另外擋（它是給範圍攻擊用的）
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Overreach（poe2db）；這次之前 tier 2、魔耗 1.2、效果不動
+    # 2026-11-01 照 PoE2 Overreach（support_reach_accuracy_within_2m_+%_final −80：只對 2 公尺內的目標）；這次之前 stat: accuracy, type: MORE, value: -30（不分距離）
     modifiers:
       - { stat: skill.area, type: INCREASED, value: 40 }
-      - { stat: accuracy, type: MORE, value: -30 }
+      - { stat: accuracy.within_2m, type: MORE, value: -80 }
 
   gore_hunt:               # Bloodlust
     name: 腥獵
-    description: 被輔助的近戰攻擊打流血中的敵人更痛，但自己不會造成流血。
+    description: 被輔助的近戰攻擊對流血中的敵人，物理傷害更多 30%（其他傷害類型不變），但自己不會造成流血。
     icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [melee]
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Bloodlust（poe2db）；這次之前 tier 2、魔耗 1.15、效果不動
+    # 2026-11-01 照 PoE2 Bloodlust（support_bloodlust_melee_physical_damage_+%_final_vs_bleeding_enemies：只有物理傷害）；
+    #   這次之前 stat: damage.vs_bleeding, type: MORE, value: 30（所有傷害類型都更多）、說明「打流血中的敵人更痛」
     modifiers:
-      - { stat: damage.vs_bleeding, type: MORE, value: 30 }
+      - { stat: bloodlust.physical_vs_bleeding, type: MORE, value: 30 }
       - { stat: bleed.chance, type: MORE, value: -100 }
 
   initial_crack_ii:             # Bleed II（代號沿用；原本是 First Blood → Bleed I）
     name: 初裂 II
-    description: 被輔助的攻擊有 75% 機率造成流血。
+    description: 被輔助的技能擊中造成物理傷害時有 75% 機率讓敵人流血；攻擊、會造成傷害的法術都能掛。
     icon: NETHER_BRICK   # 2026-10：原本 RED_DYE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
-    requires: [attack]
+    requires: [attack, spell]
+    # 2026-11-01 照 PoE2 Bleed II（allowed_types Damage／Attack／CrossbowAmmo：任何會擊中的技能，含法術）；這次之前 requires [attack]、說明「被輔助的攻擊有 75% 機率造成流血。」
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-27 照站長只留最高階：改成 Bleed II（PoE2 第 3 階 → 2、消耗 100%、流血機率 75%）；這次之前 Bleed I：名稱初裂、說明「被輔助的攻擊更容易造成流血。」、tier 1、魔耗 1.2、stat: bleed.chance, type: FLAT, value: 50
@@ -1763,17 +1779,6 @@ supports:
       - { stat: flag.consume_freeze_on_ignite, type: FLAT, value: 1 }
       - { stat: freeze.buildup, type: MORE, value: -100 }
 
-  blazing_brand:          # Scouring Flame（PoE2 是另外付護盾，這裡改成魔力消耗更高）
-    name: 熾烙
-    description: 被輔助的技能點燃更痛很多，但魔力消耗更高。
-    icon: BLAZE_POWDER   # 2026-10：原本 CAMPFIRE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 3
-    # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
-    mana_multiplier: 1.0
-    # 2026-10-26 照 PoE2 Scouring Flame（poe2db）；這次之前 tier 3、魔耗 1.35、效果不動
-    modifiers:
-      - { stat: ignite.magnitude, type: MORE, value: 50 }
-
   congealed_frost_blade:                # Embitter（「所有附加改成冰冷」用「物理傷害多附加冰冷」近似）
     name: 凝霜刃
     description: 被輔助的技能會獲得任何非冰冷類型的額外傷害時，改成獲得額外冰冷傷害（本身不加傷害）。
@@ -1821,17 +1826,18 @@ supports:
     modifiers:
       - { stat: armour.break_vs_frozen, type: FLAT, value: 100 }
 
-  crumbling_force:               # Devastate（重暈時完全破甲用「暈眩值、破甲加強」近似）
+  crumbling_force:               # Devastate
     name: 崩勢
-    description: 被輔助的技能更容易暈眩敵人，破甲也更強。
+    description: 被輔助的技能讓敵人重暈時，直接讓牠完全破甲。
     icon: IRON_INGOT   # 2026-10：原本 ANVIL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
     # 2026-10-27 照 PoE2 Devastate（0.5 切不出來；poe2db／RePoE）；這次之前 魔耗 1.15
+    # 2026-11-01 照 PoE2 Devastate（造成重暈時完全破甲；SupportRemakes.devastate）；這次之前 stat: stun.buildup, type: INCREASED, value: 30；stat: armour.break, type: INCREASED, value: 30
+    #   召喚物的重暈沒有輔助事件，從召喚物那邊掛不上（MinionTypes）
     modifiers:
-      - { stat: stun.buildup, type: INCREASED, value: 30 }
-      - { stat: armour.break, type: INCREASED, value: 30 }
+      - { stat: armour.full_break_on_heavy_stun, type: FLAT, value: 1 }
 
   strip_element:               # Excoriate
     name: 剝元
@@ -1849,23 +1855,26 @@ supports:
       - { stat: damage.vs_shocked, type: MORE, value: 10 }
       - { stat: flag.no_elemental_ailments, type: FLAT, value: 1 }
 
-  blood_linger:                 # See Red（流血的怪跑更快那段沒做）
+  blood_linger:                 # See Red
     name: 血綿
-    description: 被輔助的攻擊造成的流血持續更久。
+    description: 被輔助的攻擊造成的流血持續更久，但被它造成流血的敵人攻擊速度、移動速度增加 15%（流血期間；從召喚物那邊掛的，召喚物造成的流血也算）。
+    # 2026-11-01 照 PoE2 See Red：召喚物造成的流血也讓敵人加速（召喚物的異常算主人造成的，AilmentService 本來就會套；MinionTypes 改成「有接」）；說明補上召喚物
     icon: NETHER_BRICK   # 2026-10：原本 NETHER_WART（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 1
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
     requires: [attack]
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
-    mana_multiplier: 1.1
+    mana_multiplier: 1.0   # 2026-11-01 照 PoE2 的消耗；這次之前 1.1
     # 2026-10-27 照 PoE2 See Red（0.5 切不出來；poe2db／RePoE）核對過：階級、魔耗、效果跟原作一樣或已是平衡等效，不用改
     modifiers:
       - { stat: bleed.duration, type: INCREASED, value: 50 }
+      # 2026-11-01 照 PoE2 See Red：被你用被輔助的技能造成流血的敵人攻擊速度、移動速度增加 15%；這次之前沒做
+      - { stat: bleed.enemy_haste, type: FLAT, value: 15 }
 
   cinder_through:             # Flamepierce（「穿透燃燒中的敵人」改成穿透一個）
     name: 穿燼
     description: 被輔助的投射物穿透點燃中的敵人（不算穿透次數）；但不會點燃。
     icon: BLAZE_ROD
-    tier: 1
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
     requires: [projectile]
     excludes: [minion]
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 魔耗 1.1、一律多穿透 1 個
@@ -1877,7 +1886,7 @@ supports:
     name: 霜岔
     description: 被輔助的投射物打中凍結中的敵人時分裂成兩發；但不會累積凍結。
     icon: PRISMARINE_SHARD
-    tier: 1
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
     requires: [projectile]
     excludes: [minion]
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 tier 2、魔耗 1.15、第一次打中一律分裂
@@ -1889,7 +1898,7 @@ supports:
     name: 躍霆
     description: 被輔助的投射物打中感電中的敵人時一定連鎖；但不會感電。
     icon: IRON_NUGGET   # 2026-10：原本 IRON_CHAIN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 1
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
     requires: [projectile]
     excludes: [minion]
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 tier 2、魔耗 1.15、一律多連鎖 1 次
@@ -1975,15 +1984,16 @@ supports:
 
   broad_hex:       # Ritualistic Curse
     name: 廣咒
-    description: 被輔助的詛咒範圍大很多，但放得比較慢。
+    description: 被輔助的詛咒範圍大很多，但詛咒落下後要等更久才生效（延遲更多 30%）。
     icon: ECHO_SHARD   # 2026-10：原本 SOUL_LANTERN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [curse]
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Ritualistic Curse（poe2db）；這次之前 tier 1、魔耗 1.1、效果不動
+    # 2026-11-01 照 PoE2 Ritualistic Curse（壞處是詛咒生效延遲更多 30%，不是施法變慢）；這次之前 stat: cast.speed, type: MORE, value: -30
     modifiers:
       - { stat: skill.area, type: INCREASED, value: 50 }
-      - { stat: cast.speed, type: MORE, value: -30 }
+      - { stat: curse.delay, type: MORE, value: 30 }
 
   enduring_curse:             # Abiding Hex（2026-10-24：照 PoE2 改回消耗銳星；以前沒有戰星消耗，改成魔力消耗 ×1.4、持續一律更多 80%）
     name: 綿咒
@@ -2018,12 +2028,13 @@ supports:
 
   quake_howl:             # Echoing Cry（回聲兩次 → 戰吼效果更強、範圍變小）
     name: 震嘯
-    description: 被輔助的戰吼回聲 2 次（每次隔 1.3 秒，範圍每回聲一次更多 100%），但範圍更少 50%、傷害更少 40%、算到的怪物強度更少 50%；用過之後要再移動 10 格才能用。要榮耀才能用的戰吼不能掛。
+    description: 被輔助的戰吼回聲 2 次（每次隔 1.3 秒，範圍每回聲一次更多 100%），但範圍更少 50%、傷害更少 40%、算到的怪物強度更少 50%；用過之後要再移動 5 格才能用。要榮耀才能用的戰吼不能掛。
     icon: ECHO_SHARD   # 2026-10：原本 GOAT_HORN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 3
     requires: [warcry]
     mana_multiplier: 1.5
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 tier 2、魔耗 1.2、戰吼效果更多 30%、範圍更少 30%
+    # 2026-11-01 照站長：用過之後要再移動的距離改成 5 格（SupportMechanics.ECHO_TRAVEL；原作 10 公尺）；這次之前 10 格
     modifiers:
       - { stat: warcry.echoes, type: FLAT, value: 2 }
       - { stat: skill.area, type: MORE, value: -50 }
@@ -2066,14 +2077,20 @@ supports:
 
   thick_post:               # Greatwood
     name: 厚樁
-    description: 被輔助的圖騰生命更多。
+    description: 被輔助的技能同時只能有一根圖騰，圖騰生命更多 30%；圖騰 4 格內你每有一根其他圖騰（最多 6 根），這根圖騰更多 6% 傷害、增加 6% 範圍效果、每秒回復 0.83% 最大生命。
     icon: STICK   # 2026-10：原本 OAK_LOG（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 1
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
     requires: [totem]
     mana_multiplier: 1.15
     # 2026-10-27 照 PoE2 Greatwood II（0.5 切不出來；poe2db／RePoE）；這次之前 魔耗 1.1
+    # 2026-11-01 照 PoE2 Greatwood II（poe2db：只能有一根圖騰；4 公尺內每根友方圖騰（最多 6 根）更多 6% 傷害、增加 6% 範圍、每秒回 0.83% 生命）；
+    #   這次之前只有 stat: totem.life, type: MORE, value: 30、說明「被輔助的圖騰生命更多。」（程式 LineageMechanics.greatwoodCast／greatwoodRegen）
     modifiers:
       - { stat: totem.life, type: MORE, value: 30 }
+      - { stat: totem.only_one, type: FLAT, value: 1 }
+      - { stat: totem.greatwood_damage, type: FLAT, value: 6 }
+      - { stat: totem.greatwood_area, type: FLAT, value: 6 }
+      - { stat: totem.greatwood_regen, type: FLAT, value: 83 }
 
   ambush:                  # Ambush
     name: 潛鋒
@@ -2136,22 +2153,30 @@ supports:
 
   knockback:               # Knockback
     name: 推擊
-    description: 被輔助的近戰攻擊把敵人擊退。
+    description: 被輔助的技能擊中時把敵人擊退，擊退距離更多 40%；攻擊、會造成傷害的法術都能掛（召喚物的攻擊、法術也行；Boss 推不動）。
+    # 2026-11-01 照 PoE2 Knockback（Damage／Attack）：從召喚物那邊掛時召喚物的法術擊中也擊退（MinionService.spellKnockback）；
+    #   這次之前召喚物只有攻擊會擊退（法術召喚物掛不上）、說明沒寫召喚物
     icon: IRON_INGOT   # 2026-10：原本 PISTON（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
-    requires: [melee]
+    requires: [attack, spell]
+    # 2026-11-01 照 PoE2 Knockback（global_knockback、support_arms_length_knockback_distance_+%_final 40；allowed_types Damage／Attack／CrossbowAmmo）：
+    #   任何會擊中的技能都擊退（技能自己不推的在 SupportExtras.pushOnHit 推）、加上擊退距離更多 40%；這次之前 requires [melee]、只有 skill.knockback FLAT 1、說明「被輔助的近戰攻擊把敵人擊退。」
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Knockback（poe2db）；這次之前 tier 1、魔耗 1.05、效果不動
     modifiers:
       - { stat: skill.knockback, type: FLAT, value: 1 }
+      - { stat: knockback.on_hit, type: FLAT, value: 1 }
+      - { stat: skill.knockback, type: MORE, value: 40 }
 
   heavy_shove:             # Arms Length
     name: 重推
-    description: 被輔助的近戰攻擊擊退距離更多 40%。
+    description: 被輔助的技能擊中造成的擊退距離更多 40%（要技能本身會擊退，或配推擊）；攻擊、會造成傷害的法術都能掛，只造成持續傷害的法術不行。
     icon: SLIME_BALL   # 2026-10：原本 STICKY_PISTON（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
-    requires: [melee]
+    requires: [attack, spell]
+    # 2026-11-01 照 PoE2 Arms Length（allowed_types Attack／Damage／CrossbowAmmo，excluded_types DegenOnlySpellDamage；只持續傷害的法術由 support_ref.yml 擋）；
+    #   這次之前 requires [melee]、說明「被輔助的近戰攻擊擊退距離更多 40%。」
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.1
     # 2026-10-27 照 PoE2 Arms Length（0.5 切不出來；poe2db／RePoE）；這次之前 stat: skill.knockback, type: FLAT, value: 0.5；stat: skill.knockback, type: MORE, value: 40、說明「被輔助的近戰攻擊擊退得更遠。」
@@ -2160,27 +2185,36 @@ supports:
 
   enduring_terrain:       # Persistent Ground
     name: 久地
-    description: 被輔助技能的持續時間更久（留在地上的效果、印記、詛咒、戰吼的增益都算）。
+    description: 只輔助會產生地面效果的技能：被輔助的技能產生的地面效果持續時間增加 50%。
     icon: SLIME_BALL   # 2026-10：原本 MOSS_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
-    requires: [duration]
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Persistent Ground I（poe2db）；這次之前 tier 1、魔耗 1.1、效果不動
+    # 2026-11-01 照 PoE2 Persistent Ground I（ground_effect_duration_+% 50；allowed_types CreatesGroundEffect）：只能掛產生地面效果的技能
+    #   （SupportGuards.GROUND_EFFECT_SKILLS）、改成 ground.duration（加在那個技能的持續時間倍率上）；這次之前 requires [duration]、stat: skill.duration, type: INCREASED, value: 50，
+    #   說明「被輔助技能的持續時間更久（留在地上的效果、印記、詛咒、戰吼的增益都算）。」
+    # 2026-11-01 照 PoE2 Persistent Ground I（ground_effect_duration_+% 50「increased duration of Ground Surfaces created by Supported Skills」）：
+    #   只拉長地面效果（SkillBuild.groundDurationTicks：油地、毒霧、毒雲、點燃／感電／冰緩地面、鋸齒地面、聖地，連隱藏技能留的地面也照原技能的），
+    #   技能其他的持續時間（印記、增益、召喚物…）不變；這次之前（同日稍早）加在整個技能的持續時間倍率上
+    # 2026-11-01 照 PoE2 0.5 逐一查過能掛的技能：刺棘身（荊棘地面）、滾雷珠（火灌注的點燃地面）、霜星爆（冰灌注的冰緩地面）、
+    #   焚流（火灌注的點燃地面）照原作補上地面（GroundSkills）；熾息、蠻衝、退步凝晶 0.5 不留地面，從 SupportGuards.GROUND_EFFECT_SKILLS 拿掉（不能掛）。
+    #   這次之前這 7 個掛了都沒有東西可以拉長
     modifiers:
-      - { stat: skill.duration, type: INCREASED, value: 50 }
+      - { stat: ground.duration, type: INCREASED, value: 50 }
 
-  beat_combo:                 # Cadence（連續使用疊攻速，用平均值；用太頻繁會停用那段沒做，改成魔力消耗更高）
+  beat_combo:                 # Cadence
     name: 連拍
-    description: 被輔助的攻擊更快，但魔力消耗更高。
+    description: 只輔助你自己使用的攻擊：被輔助的技能最近（4 秒內）每用過一次，攻擊速度更多 8%；但 4 秒內用了 6 次以上，這個技能 10 秒不能用。
     icon: GOLD_NUGGET   # 2026-10：原本 NOTE_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]
     excludes: [minion]
-    mana_multiplier: 1.3
-    # 2026-10-27 照 PoE2 Cadence（第 2 階；poe2db／RePoE）核對過：階級、魔耗、效果跟原作一樣或已是平衡等效，不用改
+    mana_multiplier: 1.0
+    # 2026-11-01 照 PoE2 Cadence（第 2 階、消耗 100%；SupportExtras.cadence）：每用一次疊 8% 更多攻擊速度、4 秒內 6 次鎖 10 秒；
+    #   這次之前平衡等效成攻擊速度更多 20%、魔力消耗 130%
     modifiers:
-      - { stat: attack.speed, type: MORE, value: 20 }
+      - { stat: attack.speed.cadence, type: FLAT, value: 8 }
 
   swift_edge:             # Hit and Run（2026-10-29 照站長改成原作）
     name: 迅鋒
@@ -2210,17 +2244,23 @@ supports:
     modifiers:
       - { stat: charge_impetus.damage, type: FLAT, value: 40 }
 
-  all_in_gamble:              # Overextend（暴擊時自己被眩暈那段沒做，改成魔力消耗更高）
+  all_in_gamble:              # Overextend
     name: 孤注
-    description: 被輔助的技能暴擊傷害更高，但魔力消耗更高。
+    description: 只輔助你自己使用的攻擊：被輔助的攻擊暴擊傷害更多 30%，但用它暴擊時你自己會被眩暈 5 秒。
     icon: GUNPOWDER   # 2026-10：原本 TNT（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]   # 2026-10-26 照 PoE2：Overextend 只輔助攻擊（Attack）；這次之前沒寫
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
+    # 2026-11-01 照 PoE2 Overextend（Path of Building 0.5：ignoreMinionTypes、Supports Attack Skills you use yourself）：不看召喚物的技能類型，
+    #   掛不上召喚技能（暴擊時眩暈的是你自己）；這次之前沒有 excludes（常駐的召喚已經被 support_ref.yml 的「常駐技能不行」擋掉，
+    #   不常駐的召喚（喚屍、焚魂、蟲噬群…）從召喚物那邊掛得上、眩暈沒接）
+    excludes: [minion]
     mana_multiplier: 1.15
     # 2026-10-26 照 PoE2 Overextend（poe2db）；這次之前 tier 2、魔耗 1.3、效果不動
     modifiers:
       - { stat: crit.bonus, type: MORE, value: 30 }
+      # 2026-11-01 照 PoE2 Overextend（daze_self_on_critical_hit_for_X_ms 5000）：暴擊時自己被眩暈 5 秒；這次之前沒做（說明寫成魔力消耗更高）
+      - { stat: self.daze_on_crit, type: FLAT, value: 5 }
 
   # 精魂輔助：掛在精魂技能（光環、增益）上，多保留一點精魂，技能開著時你自己得到效果（不給隊友與召喚物）
   spring_mana:                 # Clarity
@@ -2335,9 +2375,9 @@ supports:
       - { stat: ignite.duration, type: INCREASED, value: 100 }
       - { stat: ignite.chance, type: MORE, value: -25 }
 
-  blood_erosion:              # Extraction（PoE2 另外扣生命，這裡改成魔力消耗更高）
+  blood_erosion:              # Extraction
     name: 血蝕
-    description: 被輔助的法術多附加大量混沌傷害，但魔力消耗更高。
+    description: 被輔助的法術放的時候獻祭 10% 最大生命，獲得 35% 傷害為額外混沌傷害。
     icon: NETHER_BRICK   # 2026-10：原本 CRIMSON_FUNGUS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [spell]
@@ -2346,6 +2386,8 @@ supports:
     # 2026-10-26 照 PoE2 Extraction（poe2db）；這次之前 tier 3、魔耗 1.4、效果不動
     modifiers:
       - { stat: damage.gain.chaos, type: FLAT, value: 35 }
+      # 2026-11-01 照 PoE2 Extraction（sacrifice_%_life_on_skill_use 10）：放的時候獻祭 10% 生命；這次之前沒有（說明寫魔力消耗更高，但魔耗是 1.0）
+      - { stat: cost.sacrifice_life, type: FLAT, value: 10 }
 
   far_pierce_ii:
     name: 遠穿 II
@@ -2470,35 +2512,39 @@ supports:
     tier: 2
     requires: [attack]   # 2026-10-26 照 PoE2：Frozen Spite 只輔助攻擊（Attack）；這次之前沒寫
     excludes: [minion, totem]   # 2026-10-26 照 PoE2：Frozen Spite 不能輔助圖騰；這次之前 [minion]
-    mana_multiplier: 1.15
+    mana_multiplier: 1.0   # 2026-11-01 照 PoE2 的消耗；這次之前 1.15
     modifiers:
       - { stat: proc.kill_frozen, type: FLAT, value: 100, tags: [proc_frozen_spite] }
 
   pest_rupture:         # Bursting Plague
     name: 瘟潰
-    description: 被輔助的技能打死中毒的敵人時，屍體爆出一圈毒，容易讓周圍的敵人中毒。
+    description: 被輔助的技能讓敵人中毒時，每秒把中毒傷害存成牠身上的瘟疫（最多牠最大生命的 20%）；帶著瘟疫的敵人死掉時炸出瘟潰爆，物理傷害等於存下的瘟疫，瘟疫越滿範圍越大。
     icon: SLIME_BALL
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.2
     # 2026-10-27 照 PoE2 Bursting Plague（第 2 階；poe2db／RePoE）；這次之前 魔耗 1.15
+    # 2026-11-01 照 PoE2 Bursting Plague（中毒每秒傷害 100% 存成瘟疫、上限最大生命 20%，死掉時以存下的瘟疫爆炸；PlagueBursts）；這次之前 stat: proc.kill_poisoned（打死中毒的敵人時炸固定傷害表 [10, 16]），說明還寫「容易讓周圍的敵人中毒」
     modifiers:
-      - { stat: proc.kill_poisoned, type: FLAT, value: 100, tags: [proc_bursting_plague] }
+      - { stat: proc.plague_death, type: FLAT, value: 100, tags: [proc_bursting_plague] }
 
-  shard_crack:           # Bone Shrapnel（打死被釘住的 → 打死暈眩中的）
+  shard_crack:           # Bone Shrapnel
     name: 骨裂
-    description: 被輔助的技能打死暈眩中的敵人時，屍體炸出一圈碎骨。
+    description: 被輔助的技能打死被定身的敵人時，屍體炸出一圈碎骨；被輔助的技能自己不會定身。
     icon: BONE
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Bone Shrapnel（第 2 階；poe2db／RePoE）；這次之前 魔耗 1.15
     modifiers:
-      - { stat: proc.kill_stunned, type: FLAT, value: 100, tags: [proc_bone_burst] }
+      # 2026-11-01 照 PoE2 Bone Shrapnel（trigger_bone_shrapnel_explosion_on_killing_pinned_enemy、cannot_pin）：打死被定身的敵人時觸發、不能定身；
+      #   這次之前 stat: proc.kill_stunned（打死暈眩中的）、可以定身
+      - { stat: proc.kill_pinned, type: FLAT, value: 100, tags: [proc_bone_burst] }
+      - { stat: flag.cannot_pin, type: FLAT, value: 1 }
 
   blaze_column:            # Flame Pillar
     name: 炎柱
-    description: 被輔助的技能擊中點燃中的敵人時，用掉點燃，在牠身上噴出一道火柱。
+    description: 被輔助的技能擊中點燃中的敵人時，用掉點燃，在牠身上噴出一道火柱；被輔助的技能自己不會點燃。
     icon: BLAZE_ROD
     tier: 2
     excludes: [minion]
@@ -2506,28 +2552,34 @@ supports:
     # 2026-10-27 照 PoE2 Flame Pillar（0.5 切不出來；poe2db／RePoE）核對過：階級、魔耗、效果跟原作一樣或已是平衡等效，不用改
     modifiers:
       - { stat: proc.hit_ignited, type: FLAT, value: 100, tags: [proc_flame_pillar] }
+      # 2026-11-01 照 PoE2 Flame Pillar（never_ignite）：被輔助的技能不能點燃；這次之前可以
+      - { stat: flag.cannot_ignite, type: FLAT, value: 1 }
 
   blood_crystallize:           # Haemocrystals
     name: 血結晶
-    description: 被輔助的技能擊中流血中的敵人時，用掉流血，在牠身上長出血晶炸開。
+    description: 被輔助的技能擊中流血中的敵人時，用掉流血，在牠身上長出血晶炸開；被輔助的技能自己不會造成流血。
     icon: NETHER_BRICK   # 2026-10：原本 REDSTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]   # 2026-10-26 照 PoE2：Haemocrystals 只輔助攻擊（Attack）；這次之前沒寫
     excludes: [minion]
-    mana_multiplier: 1.15
+    mana_multiplier: 1.0   # 2026-11-01 照 PoE2 的消耗；這次之前 1.15
     modifiers:
       - { stat: proc.hit_bleeding, type: FLAT, value: 100, tags: [proc_haemocrystal] }
+      # 2026-11-01 照 PoE2 Haemocrystals（cannot_cause_bleeding）：被輔助的技能不能造成流血；這次之前可以
+      - { stat: flag.cannot_bleed, type: FLAT, value: 1 }
 
   magnetic_storm:        # Electromagnetism
     name: 磁暴
-    description: 被輔助的技能擊中感電中的敵人時，有機率用掉感電，在牠身上撕開一道雷隙。
+    description: 被輔助的技能讓敵人感電時，如果牠 4 格內（含牠）有至少 3 隻不在雷隙裡的感電中敵人，就用掉 4 格內所有敵人的感電，在牠身上撕開一道雷隙：半徑 2 格，把 2.5 格內的敵人往中心吸；每 0.85 秒脈衝一次（每用掉一個感電，脈衝速度增加 25%），共 5 次，每一波阻礙打到的敵人 0.9 秒、傷害比上一波更多 20%，最後一波傷害特別高；同時最多 3 道。
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Electromagnetism（第 3 階；poe2db／RePoE）；這次之前 魔耗 1.15
+    # 2026-11-01 照 PoE2 Electromagnetism（讓敵人感電、附近 4 公尺有其他感電的敵人時 40% 機率，用掉 3 隻的感電；SupportProcs.shockCluster）；這次之前 stat: proc.hit_shocked（擊中感電中的敵人 40% 用掉牠一隻的感電）
+    # 2026-11-01 照 PoE2 Electromagnetism（PoB2 sup_int.lua：try_consuming_shock_to_trigger_shocking_rift_in_radius_on_shocking_enemy 40 是 4 公尺的範圍、不是機率；雷隙照 TriggeredShockingRiftPlayer 做成會脈衝、吸人、阻礙的 ShockingRifts）；這次之前 value: 40（40% 機率）、只用掉牠與最近另外 2 隻的感電、雷隙是一次炸開的新星
     modifiers:
-      - { stat: proc.hit_shocked, type: FLAT, value: 40, tags: [proc_shock_rift] }
+      - { stat: proc.shock_cluster, type: FLAT, value: 100, tags: [proc_shock_rift] }
 
   element_collapse:     # Elemental Discharge
     name: 元崩
@@ -2545,23 +2597,25 @@ supports:
     name: 荊棘震
     description: 被輔助的猛擊砸下時，在面前長出一片荊棘，一直刺傷裡面的敵人。
     icon: STICK   # 2026-10：原本 SWEET_BERRIES（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
-    tier: 2
+    tier: 3   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 2
     requires: [slam]
     excludes: [minion, totem]   # 2026-10-26 照 PoE2：Brambleslam 不能輔助圖騰；這次之前 [minion]
-    mana_multiplier: 1.15
+    mana_multiplier: 1.0   # 2026-11-01 照 PoE2 的消耗；這次之前 1.15
     modifiers:
       - { stat: proc.use, type: FLAT, value: 100, tags: [proc_bramble] }
 
   molten_pit_strike:                  # Crater
     name: 熔坑擊
-    description: 被輔助的猛擊砸下時，在面前燒出一個熔坑，一直燒裡面的敵人。
+    description: 只輔助跳躍的近戰技能：被輔助的技能落地時，從落點往外裂出 3 道裂隙（每道長 1.5 格、留 6 秒，出現時用你的武器打一下：傷害效益 35%、80% 物理轉火焰；同時最多 9 道）；不能輔助圖騰。
     icon: MAGMA_CREAM   # 2026-10：原本 MAGMA_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
-    requires: [slam]
+    requires: [melee]   # 2026-11-01 照 PoE2 Crater（Melee AND Jumping；跳躍看 SupportGuards.jumping）；這次之前 [slam]（所有猛擊）、說明「被輔助的猛擊砸下時，在面前燒出一個熔坑」
     excludes: [minion, totem]   # 2026-10-26 照 PoE2：Crater 不能輔助圖騰；這次之前 [minion]
-    mana_multiplier: 1.15
+    mana_multiplier: 1.0   # 2026-11-01 照 PoE2 的消耗；這次之前 1.15
+    # 2026-11-01 照 PoE2 Crater（PoB2 sup_str.lua：support_fissure_on_landing_create_X_fissures_on_impact 3；TriggeredCraterPlayer）：每個跳躍技能都在落地點（不是跳躍機制的等玩家真的落地，SupportProcs.watchLanding）；這次之前 stat: proc.use（不是跳躍機制的在放的地方）、燒出一個熔坑（法術，半徑 2.4～3 格、4 秒、每 0.5 秒 25%）
     modifiers:
-      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_crater] }
+      - { stat: proc.land, type: FLAT, value: 100, tags: [proc_crater] }
+      - { stat: crater.fissures, type: FLAT, value: 3 }
 
   rot_howl:          # Corrupting Cry
     name: 腐蝕嘯
@@ -2587,11 +2641,13 @@ supports:
 
   crystal_shatter_howl:
     name: 碎晶嘯
-    description: 被輔助的戰吼讓範圍內你的冰晶全部炸開；炸掉至少 5 顆時，多強化 3 次攻擊。只有會強化攻擊的戰吼能掛。
+    description: 被輔助的戰吼讓範圍內你的冰晶全部炸開、你的冰裂全部引爆；炸掉的冰晶與冰裂加起來至少 5 個時，多強化 3 次攻擊。只有會強化攻擊的戰吼能掛。
     icon: QUARTZ
-    tier: 3
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
     requires: [warcry]
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次新增
+    # 2026-11-01 照 PoE2 Vruun's Aftermath（support_warcries_detonate_your_ice_fragments：也引爆你的冰裂，冰晶＋冰裂合計至少 5 個才多強化）；
+    #   這次之前只炸冰晶、只算冰晶，說明「讓範圍內你的冰晶全部炸開；炸掉至少 5 顆時，多強化 3 次攻擊」
     modifiers:
       - { stat: warcry.crystal_empowers, type: FLAT, value: 3 }
 
@@ -2599,7 +2655,7 @@ supports:
     name: 血譽
     description: 被輔助的攻擊或戰吼要 50 點榮耀才能用（你花在其他技能上的生命有 5% 變成它的榮耀），傷害更多 50%、範圍增加 50%。本來就要榮耀才能用的技能不能掛。
     icon: NETHER_BRICK   # 2026-10-27 圖示：血的榮耀；這次之前 REDSTONE（右鍵會放紅石線）
-    tier: 3
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
     requires: [attack, warcry]
     excludes: [minion]
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次新增
@@ -2610,11 +2666,12 @@ supports:
 
   blood_oath_howl:
     name: 契血嘯
-    description: 被輔助的戰吼吼出時，範圍內每隻敵人被扭曲契約纏上（腐化之血：每秒物理傷害，最多疊 10 層，5 秒）；代價是最近 4 秒每用一次，多付出 10% 最大生命（最多 30%）。
+    description: 被輔助的戰吼吼出時，範圍內每隻敵人被扭曲契約纏上，每次 5 層腐化之血（每層每秒物理傷害，最多疊 10 層，5 秒）；代價是最近 4 秒每用一次，多付出 10% 最大生命（最多 30%）。
     icon: NETHER_BRICK
-    tier: 3
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
     requires: [warcry]
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次新增
+    # 2026-11-01 照 PoE2 Paquate's Pact（扭曲契約每次施加 5 層腐化之血）；這次之前每次 1 層（程式 SupportMechanics.PACT_STACKS）、說明沒寫層數
     modifiers:
       - { stat: flag.paquate, type: FLAT, value: 1 }
 
@@ -2622,7 +2679,7 @@ supports:
     name: 霜仇嘯
     description: 被輔助的攻擊或戰吼讓敵人凍結時，你身上每 2 點怒氣，讓你和身邊（4 格內）的隊友 15 秒內獲得 1% 傷害為額外冰冷傷害。觸發的技能、圖騰放的不算。
     icon: PRISMARINE_CRYSTALS
-    tier: 3
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
     requires: [attack, warcry]
     excludes: [minion]
     mana_multiplier: 1.1
@@ -2641,38 +2698,45 @@ supports:
     modifiers:
       - { stat: warcry.endless_howl, type: FLAT, value: 25 }
 
-  scatter_spikes:                # Caltrops（投射物飛到終點 → 擊中時有機率）
+  scatter_spikes:                # Caltrops
     name: 撒蒺
-    description: 被輔助的投射物攻擊擊中時，有機率在敵人腳下撒一片鐵蒺。
+    description: 被輔助的長矛投射物攻擊，每一發投射物飛到終點時都會在落點 3 格內撒下一顆鐵蒺（每多 1 個投射物多撒 1 顆）。鐵蒺持續 8 秒，敵人碰到（0.5 格）就炸開，造成這個技能 75% 的攻擊範圍傷害並致殘，然後消失；跟蒺藜步的鐵蒺加起來最多同時 20 顆，滿了換掉最舊的。只能輔助長矛的投射物攻擊。
+    # 2026-11-01 照 PoE2 Caltrops（PoB2 TriggeredCaltropsPlayer base_number_of_projectiles 1、Misc.lua maximum_caltrops_allowed 20）：+x 投射物多撒 x 顆、
+    #   上限跟蒺藜步共用；這次之前每次固定 1 顆、撒蒺自己另算 20 顆
     icon: IRON_NUGGET
     tier: 2
     requires: [projectile]
-    excludes: [spell, minion]
+    excludes: [spell, minion]   # 2026-11-01 照 PoE2：另外要長矛的投射物攻擊（Spear AND RangedAttack；SupportGuards）
     mana_multiplier: 1.2
     # 2026-10-27 照 PoE2 Caltrops（第 3 階；poe2db／RePoE）；這次之前 tier 1、魔耗 1.1
+    # 2026-11-01 照 PoE2 Caltrops（投射物飛到終點時一定觸發、只限長矛的投射物攻擊）；這次之前 stat: proc.hit, type: FLAT, value: 25, tags: [proc_caltrops]（任何投射物攻擊擊中時 25%）
+    # 2026-11-01 照 PoE2 TriggeredCaltropsPlayer（PoB2）：觸發的是真的鐵蒺（危險區域、碰到才炸、0.5 格、8 秒、最多 20 顆、落在終點 3 格內、原技能 75% 的攻擊傷害、致殘；
+    #   OriginalSkills.spearCaltrop）；這次之前說明「在那裡撒一片鐵蒺」＝終點一片 4 秒的鐵蒺地（法術、最多 4 片、自己的小傷害）
     modifiers:
-      - { stat: proc.hit, type: FLAT, value: 25, tags: [proc_caltrops] }
+      - { stat: proc.projectile_end, type: FLAT, value: 100, tags: [proc_caltrops] }
 
   rotting_curse:            # Decaying Hex
     name: 朽咒
-    description: 被輔助的詛咒放下時，詛咒的地方同時留下一片朽蝕，一直造成混沌傷害。
+    description: 被輔助的詛咒每詛咒到一個敵人，就在牠身上掛上凋朽，8 秒內持續受到混沌傷害。
     icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [curse]
     mana_multiplier: 1.3
     # 2026-10-27 照 PoE2 Decaying Hex（第 3 階；poe2db／RePoE）；這次之前 魔耗 1.15
+    # 2026-11-01 照 PoE2 Decaying Hex（對每個被詛咒的目標觸發 Profane Decay，掛混沌持續傷害的減益）；這次之前 stat: proc.use, type: FLAT, value: 100, tags: [proc_decaying_hex]（在詛咒落點留一片朽蝕地面）
     modifiers:
-      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_decaying_hex] }
+      - { stat: proc.curse_applied, type: FLAT, value: 100, tags: [proc_decaying_hex] }
 
   darting_volt:        # Coursing Current
     name: 竄電
-    description: 被輔助的技能打死感電中的敵人時，從屍體竄出一道會連鎖的電流。
+    description: 被輔助的技能讓敵人感電時，從那個敵人射出一道連鎖的閃電，只會連到附近濕透的敵人（附近沒有濕透的就不會觸發）。
     icon: COPPER_INGOT
-    tier: 2
+    tier: 1   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 2
     excludes: [minion]
-    mana_multiplier: 1.15
+    mana_multiplier: 1.0   # 2026-11-01 照 PoE2 的消耗；這次之前 1.15
+    # 2026-11-01 照 PoE2 Coursing Current（感電時 100% 觸發、只連到濕透的敵人；SupportProcs）；這次之前 stat: proc.kill_shocked, type: FLAT, value: 100, tags: [proc_coursing_current]（打死感電的敵人時從屍體竄出、連到任何敵人）
     modifiers:
-      - { stat: proc.kill_shocked, type: FLAT, value: 100, tags: [proc_coursing_current] }
+      - { stat: proc.shock, type: FLAT, value: 100, tags: [proc_coursing_current] }
 
   # ---- 2026-10：PoE2 輔助補齊・第 5 批（觸發專屬技能、減益）----
   magic_flame:              # Mana Flare
@@ -2682,7 +2746,7 @@ supports:
     tier: 2
     requires: [spell]   # 2026-10-26 照 PoE2：Mana Flare 只輔助會擊中的法術（Spell AND Damage）；這次之前沒寫
     excludes: [minion]
-    mana_multiplier: 1.15
+    mana_multiplier: 1.0   # 2026-11-01 照 PoE2 的消耗；這次之前 1.15
     modifiers:
       - { stat: proc.crit, type: FLAT, value: 100, tags: [proc_mana_flare] }
 
@@ -2700,25 +2764,28 @@ supports:
 
   quake_gale:               # Wind Wave
     name: 震風
-    description: 被輔助的技能擊中暈眩中的敵人時，震出一圈風浪把周圍的敵人推開。
+    description: 放被輔助的技能的時候你被暈眩，就在你腳下震出一圈風浪把周圍的敵人推開。
     icon: BREEZE_ROD   # 2026-10：原本 WIND_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
-    tier: 1
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Wind Wave（0.5 切不出來；poe2db／RePoE）；這次之前 魔耗 1.1
+    # 2026-11-01 照 PoE2 Wind Wave（support_knockback_wave_on_stunned：用技能時你被暈眩；SupportExtras.playerStunned）；這次之前 stat: proc.vs_stunned（擊中暈眩中的敵人時）
     modifiers:
-      - { stat: proc.vs_stunned, type: FLAT, value: 100, tags: [proc_wind_wave] }
+      - { stat: proc.self_stunned, type: FLAT, value: 100, tags: [proc_wind_wave] }
 
   still_charge:           # Static Shocks
     name: 靜電
-    description: 被輔助的技能擊中感電中的敵人時，在牠腳下留下一顆靜電球，一直電周圍的敵人。
+    description: 被輔助的技能讓敵人感電時，牠身上附著一團靜電，跟著牠走，4 秒內每 0.65 秒電一次牠與牠周圍 3 格內的敵人（每次最多 6 個，牠先）；一隻敵人身上最多一團、你同時最多 5 團；觸發冷卻 0.4 秒、可以存 3 次。
     icon: GLOWSTONE_DUST
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Static Shocks（第 3 階；poe2db／RePoE）；這次之前 魔耗 1.15
+    # 2026-11-01 照 PoE2 Static Shocks（grounding_shocks_chance_%_to_create_orb_on_shocking_enemy 100：讓敵人感電時，牠變成電擊的來源；SkillZones.attachFresh）；這次之前 stat: proc.vs_shocked, value: 50（擊中感電中的敵人 50% 在牠腳下留一顆不動的靜電球）
+    # 2026-11-01 照 PoE2 Static Shocks（PoB2 TriggeredStaticShocksPlayer：grounding_shocks_maximum_targets_per_aoe 6、Targets can have a maximum of one Static Shock、冷卻 0.4 秒存 3 次）；這次之前每一波打範圍內全部、同一隻敵人可以附好幾團、冷卻 0.4 秒只有一次、每一波只打 40% 傷害
     modifiers:
-      - { stat: proc.vs_shocked, type: FLAT, value: 50, tags: [proc_static_orb] }
+      - { stat: proc.shock, type: FLAT, value: 100, tags: [proc_static_orb] }
 
   frost_whirl:           # Frozen Vortex
     name: 霜渦
@@ -2767,15 +2834,17 @@ supports:
 
   chain_quake:                 # Tremors
     name: 連震
-    description: 被輔助的猛擊砸下時，有不小的機率再震出一圈更大但比較輕的餘震（原本那一下的 45%）。
+    description: 被輔助的猛擊砸下時，30% 機率多造成 1 次餘震、15% 機率多 2 次、10% 機率多 3 次（每次間隔 0.5 秒），但技能造成的傷害更少 35%。
     icon: SLIME_BALL   # 2026-10：原本 MOSSY_COBBLESTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [slam]
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Tremors（0.5 切不出來；poe2db／RePoE）；這次之前 魔耗 1.15
+    # 2026-11-01 照 PoE2 Tremors（30%／15%／10% 多 1／2／3 次餘震、傷害更少 35%；SupportProcs 擲一次分三段）；這次之前 45% 機率一次較大、較輕的餘震（原本那一下的 45%），沒有整體減傷
     modifiers:
-      - { stat: proc.use, type: FLAT, value: 45, tags: [proc_tremor] }
+      - { stat: proc.use, type: FLAT, value: 55, tags: [proc_tremor] }
+      - { stat: damage, type: MORE, value: -35 }
 
   maim:                    # Maim
     name: 殘肢
@@ -2803,21 +2872,22 @@ supports:
 
   hinder:                  # Hinder
     name: 拖滯
-    description: 被輔助的法術擊中時讓敵人行動拖滯四秒：移動與攻擊變慢。
+    description: 只輔助會造成混沌持續傷害的法術（混沌地面效果、混沌減益）：被輔助的法術造成的混沌持續傷害也會阻礙敵人（移動速度減少 30%，每一跳刷新 4 秒）。
     icon: PHANTOM_MEMBRANE   # 2026-10：原本 COBWEB（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 1
-    requires: [spell]
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
+    requires: [spell]   # 2026-11-01 照 PoE2 Hinder（只輔助造成非異常混沌持續傷害的法術；SupportGuards）；這次之前所有法術都能掛
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Hinder（0.5 切不出來；poe2db／RePoE）；這次之前 魔耗 1.1
+    # 2026-11-01 照 PoE2 Hinder（Damage over Time inflicted by Supported Skills also Hinders enemies；PoB2 0.5 沒有這顆，數字照 poe2db 的一般阻礙：30%、4 秒）：混沌減益每一跳、混沌地面每一波阻礙（AilmentService.hinderFromDots、SkillZones）；這次之前 stat: proc.hit（擊中時觸發滯縛：移動速度減少 20～30%、攻擊速度更少 10%，只打持續傷害的不會觸發）
     modifiers:
-      - { stat: proc.hit, type: FLAT, value: 100, tags: [proc_hinder] }
+      - { stat: hinder.dot, type: FLAT, value: 1 }
 
   reveal_howl:            # Exposing Cry
     name: 曝嘯
     description: 被輔助的戰吼吼出時，範圍內的敵人曝露 5 秒（火焰、冰冷、閃電抗性降低）。
     icon: GOLD_NUGGET   # 2026-10：原本 GOAT_HORN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
-    tier: 2
+    tier: 3   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 2
     requires: [warcry]
     mana_multiplier: 1.3
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 魔耗 1.15
@@ -2864,15 +2934,15 @@ supports:
 
   jolt_load:             # Auto Reload
     name: 震裝
-    description: 被輔助的弩攻擊擊中暈眩中的敵人時立刻把彈匣裝滿，也比較容易暈眩敵人。
+    description: 被輔助的弩攻擊讓敵人重暈時立刻把彈匣裝滿。
     icon: IRON_INGOT   # 2026-10：原本 PISTON（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [crossbow]
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Auto Reload（poe2db）；這次之前 tier 2、魔耗 1.1、效果不動
+    # 2026-11-01 照 PoE2 Auto Reload（crossbow_reload_on_heavy_stun：重暈敵人時裝填，沒有別的效果；SupportProcs.event 的 stun_applied）；這次之前擊中暈眩中的敵人時裝滿、另加 stat: stun.buildup, type: INCREASED, value: 20
     modifiers:
       - { stat: flag.reload_on_stun, type: FLAT, value: 1 }
-      - { stat: stun.buildup, type: INCREASED, value: 20 }
 
   quick_chamber:           # Nimble Reload
     name: 快膛
@@ -2933,7 +3003,7 @@ supports:
     name: 順勢
     description: 被輔助的打擊累積的連擊維持得久很多。
     icon: HEART_OF_THE_SEA
-    tier: 1
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
     requires: [strike]
     excludes: [minion]
     mana_multiplier: 1.0
@@ -2943,12 +3013,12 @@ supports:
 
   fury_cast:              # Rageforged
     name: 怒鑄
-    description: 被輔助的近戰技能放的時候，有 10 點怒氣就用掉，這一下更痛。
+    description: 被輔助的技能放的時候，有 10 點怒氣就用掉，這一下的擊中更痛；任何會造成傷害、你自己使用的技能都能掛（常駐技能不行）。
     icon: BLAZE_POWDER
-    tier: 2
-    requires: [melee]
-    excludes: [minion]
-    mana_multiplier: 1.1
+    tier: 3   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 2
+    requires: [attack, spell]   # 2026-11-01 照 PoE2 Rageforged II（allowed_types Damage／Attack／CrossbowAmmo／DegenOnlySpellDamage／DamageOverTime：任何傷害技能）；這次之前 [melee]
+    excludes: [minion, persistent]   # 2026-11-01 照 PoE2（excluded_types Persistent；代放見 support_ref.yml 的 proxy）；這次之前 [minion]
+    mana_multiplier: 1.0   # 2026-11-01 照 PoE2 的消耗；這次之前 1.1
     modifiers:
       - { stat: rage.forged, type: FLAT, value: 35 }
 
@@ -2966,14 +3036,15 @@ supports:
 
   brittle_crystal:                  # Icicle
     name: 脆晶
-    description: 被輔助的技能留下的冰晶很脆，打一下就碎。
+    description: 被輔助的技能留下的冰晶最大生命更少 50%，比較容易打碎（照打幾下算的冰晶：三下變兩下）。
     icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [crystal]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Icicle（第 2 階；poe2db／RePoE）；這次之前 tier 1、魔耗 1.05
+    # 2026-11-01 照 PoE2 Icicle（support_icicle_ice_crystal_maximum_life_+%_final −50；IceCrystals）；這次之前 stat: crystal.hits, type: FLAT, value: -2（三下變一下，等於少約 67%）
     modifiers:
-      - { stat: crystal.hits, type: FLAT, value: -2 }
+      - { stat: crystal.life, type: MORE, value: -50 }
 
   frost_etch_crystal:               # Hoarfrost
     name: 霜蝕晶
@@ -2988,12 +3059,13 @@ supports:
 
   crystal_spike:      # Crystalline Shards
     name: 晶刺
-    description: 被輔助的技能留下的冰晶碎掉時，還會往四周噴出冰片。
+    description: 被輔助的技能留下的冰晶爆炸時，一定會穿刺打到的敵人（冰冷傷害也算）；這一下不會抽出穿刺。
     icon: PRISMARINE_SHARD
     tier: 1
     requires: [crystal]
     mana_multiplier: 1.2
     # 2026-10-27 照 PoE2 Crystalline Shards（第 1 階；poe2db／RePoE）；這次之前 tier 2、魔耗 1.15
+    # 2026-11-01 照 PoE2 Crystalline Shards（冰晶的爆炸 100% 穿刺、不能用掉穿刺；IceCrystals）；這次之前碎掉時往四周噴 8 道冰片（proc_crystal_shards）
     modifiers:
       - { stat: flag.crystal_shards, type: FLAT, value: 1 }
 
@@ -3004,7 +3076,7 @@ supports:
     # 2026-10-30 照 PoE2 Verglas（poe2db：第 3 階、消耗 120%、輔助自己用的會擊中的技能，觸發、代放、常駐除外；
     #   打碎冰晶時被輔助的技能 6 秒內每 2000 冰晶最大生命獲得 1% 傷害為額外冰冷）；
     #   這次之前叫冰鍍、第 2 階、魔耗 ×1.1、只能掛留冰晶的技能、打碎時你 6 秒內物理傷害的 15% 附加為冰冷
-    tier: 3
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
     requires: [attack, spell]
     excludes: [minion, persistent]
     mana_multiplier: 1.2
@@ -3016,10 +3088,10 @@ supports:
     name: 封詠
     description: 被輔助的法術平常會蓄封印（最多兩個，每施法時間的兩倍蓄一個），放的時候全部解開，每個封印自動多放一次（傷害少一半）。
     icon: ENCHANTED_BOOK
-    tier: 3
+    tier: 1   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
     requires: [spell]
     excludes: [minion, aura, warcry, movement, channel, herald, cooldown]   # 2026-10-26 照 PoE2：Unleash 不能輔助有冷卻的技能；這次之前 [minion, aura, warcry, movement, channel, herald]
-    mana_multiplier: 1.3
+    mana_multiplier: 1.5   # 2026-11-01 照 PoE2 的消耗；這次之前 1.3
     modifiers:
       - { stat: seal.max, type: FLAT, value: 2 }
       - { stat: seal.repeat, type: FLAT, value: 1 }
@@ -3028,17 +3100,17 @@ supports:
     name: 封擴
     description: 被輔助的範圍法術平常會蓄封印（最多三個），放的時候全部解開，每個封印讓這一次範圍增加 30%。
     icon: SLIME_BALL   # 2026-10：原本 SLIME_BLOCK（原版右鍵有動作：放方塊…會干擾施放）
-    tier: 2
+    tier: 3   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 2
     requires: [area]
     excludes: [attack, minion, aura, warcry, herald, cooldown, persistent]   # 2026-10-26 照 PoE2：Expand 不能輔助有冷卻的技能；這次之前 [attack, minion, aura, warcry, herald]；2026-10-29：常駐增益不再一律算光環，補 persistent（照舊掛不上）
-    mana_multiplier: 1.15
+    mana_multiplier: 1.2   # 2026-11-01 照 PoE2 的消耗；這次之前 1.15
     modifiers:
       - { stat: seal.max, type: FLAT, value: 3 }
       - { stat: seal.area, type: FLAT, value: 30 }
 
   sealed_arrows:                   # Salvo
     name: 封矢
-    description: 被輔助的投射物攻擊平常每秒蓄一個封印（最多六個），放的時候全部解開，每個封印多射一發。
+    description: 被輔助的投射物攻擊平常每秒蓄一個封印（最多六個），放的時候全部解開，每個封印多射一發；投射物以你為中心往 360 度隨機方向射出。
     icon: GLOWSTONE_DUST   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     tier: 2
     requires: [projectile]
@@ -3048,23 +3120,27 @@ supports:
       - { stat: seal.max, type: FLAT, value: 6 }
       - { stat: seal.interval, type: FLAT, value: 1 }
       - { stat: seal.projectiles, type: FLAT, value: 1 }
+      # 2026-11-01 照 PoE2 Salvo（random_projectile_direction）：投射物往隨機方向射出；這次之前照一般扇形
+      - { stat: flag.random_projectile_direction, type: FLAT, value: 1 }
 
   # ---- 2026-10：PoE2 輔助補齊・草稿 A（只用現有、遊戲裡真的有讀的屬性；要寫程式的見 sup_draft_A_notes.md）----
-  twin_corrode:               # Admixture（「對流血的敵人中毒更強、對中毒的敵人流血更強」改成一律，數值調低）
+  twin_corrode:               # Admixture（對流血的敵人中毒更強、對中毒的敵人流血更強）
     name: 雙蝕
-    description: 被輔助的技能對流血中的敵人造成的中毒更多 20%；流血也更痛一點。
+    description: 被輔助的技能對流血中的敵人造成的中毒更多 20%；對中毒的敵人造成的流血更多 20%。
     icon: FERMENTED_SPIDER_EYE
     tier: 2
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
     # 2026-10-27 照 PoE2 Admixture（第 2 階；poe2db／RePoE）；這次之前 tier 1、魔耗 1.1、stat: poison.magnitude, type: MORE, value: 10；stat: bleed.magnitude, type: MORE, value: 10、說明「被輔助的技能造成的中毒與流血都更痛。」
+    # 2026-11-01 照 PoE2 Admixture（mixed_maladies_bleed_effect_+%_final_vs_poisoned 20）；這次之前 stat: bleed.magnitude, type: MORE, value: 10（不管敵人有沒有中毒）、
+    #   說明「流血也更痛一點」
     modifiers:
       - { stat: poison.magnitude_vs_bleeding, type: MORE, value: 20 }
-      - { stat: bleed.magnitude, type: MORE, value: 10 }
+      - { stat: bleed.magnitude_vs_poisoned, type: MORE, value: 20 }
 
   rising_blaze:                 # Burgeon II（2026-10-27 照 PoE2：每引導 1 秒更多 20% 傷害、最多 40%；這次之前「每層蓄力多 5%」，只有掛蓄勢才有用）
     name: 漸熾
-    description: 被輔助的引導技能每引導 1 秒傷害更多 20%，最多更多 40%（放開型的照按住多久、連續出手的照連續放了多久）。只能掛在引導或蓄力的技能上。
+    description: 被輔助的引導技能每引導 1 秒傷害更多 20%，最多更多 40%（放開型的照按住多久、連續出手的照連續放了多久）。只能掛在引導技能上。
     icon: GOLD_NUGGET   # 2026-10：原本 SUNFLOWER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     requires: [attack, spell]
@@ -3079,29 +3155,31 @@ supports:
 
   frost_infuse:         # Cold Attunement
     name: 附霜
-    description: 物理傷害的一部分額外化為冰冷（攻擊、有物理傷害的法術都適用；純元素法術沒有物理傷害）；火焰、閃電傷害少一半。
+    description: 被輔助的技能獲得等同於傷害 25% 的額外冰冷傷害，但造成的火焰、閃電傷害更少 50%。
     icon: GHAST_TEAR   # 2026-10：原本 SNOWBALL（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 1
     requires: [attack, spell]
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Cold Attunement（poe2db）；這次之前 tier 1、魔耗 1.2、stat: damage.gain.cold, type: FLAT, value: 25
+    # 2026-11-01 照 PoE2 Cold Attunement（獲得全部傷害的 25% 為額外冰冷，不只物理）；這次之前 stat: damage.gain.cold（只算物理）
     modifiers:
-      - { stat: damage.gain.cold, type: FLAT, value: 25 }
+      - { stat: damage.extra.cold, type: FLAT, value: 25 }
       - { stat: damage, type: MORE, value: -50, tags: [fire] }
       - { stat: damage, type: MORE, value: -50, tags: [lightning] }
 
   thunder_infuse:    # Lightning Attunement
     name: 附雷
-    description: 物理傷害的一部分額外化為閃電（攻擊、有物理傷害的法術都適用；純元素法術沒有物理傷害）；火焰、冰冷傷害少一半。
+    description: 被輔助的技能獲得等同於傷害 25% 的額外閃電傷害，但造成的火焰、冰冷傷害更少 50%。
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [attack, spell]
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Lightning Attunement（poe2db）；這次之前 tier 1、魔耗 1.2、stat: damage.gain.lightning, type: FLAT, value: 25
+    # 2026-11-01 照 PoE2 Lightning Attunement（獲得全部傷害的 25% 為額外閃電，不只物理）；這次之前 stat: damage.gain.lightning（只算物理）
     modifiers:
-      - { stat: damage.gain.lightning, type: FLAT, value: 25 }
+      - { stat: damage.extra.lightning, type: FLAT, value: 25 }
       - { stat: damage, type: MORE, value: -50, tags: [fire] }
       - { stat: damage, type: MORE, value: -50, tags: [cold] }
 
@@ -3109,7 +3187,7 @@ supports:
     name: 附蝕
     description: 被輔助的技能獲得等同於傷害 25% 的額外混沌傷害，但造成更少 50% 非混沌傷害。
     icon: AMETHYST_SHARD
-    tier: 3
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
     requires: [attack, spell]
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
@@ -3141,25 +3219,27 @@ supports:
     modifiers:
       - { stat: proc.use, type: FLAT, value: 100, tags: [proc_dazing_cry] }
 
-  steady_strike:                  # Dazzle（「用掉眩暈換必中」改成一律必中，傷害少一點）
+  steady_strike:                  # Dazzle
     name: 穩擊
-    description: 被輔助的攻擊必定命中，但每一下輕一點。
+    description: 被眩暈的敵人閃避不了被輔助的攻擊；擊中時用掉敵人身上的眩暈。被輔助的攻擊自己不會造成眩暈。
     icon: GLOWSTONE_DUST
     tier: 2
     requires: [attack]
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Dazzle（0.5 切不出來；poe2db／RePoE）；這次之前 魔耗 1.2
+    # 2026-11-01 照 PoE2 Dazzle（被眩暈的敵人不能閃避、擊中時用掉眩暈、不能造成眩暈）；這次之前 flag.always_hit 不帶條件（一律必中）、stat: damage, type: MORE, value: -10
     modifiers:
-      - { stat: flag.always_hit, type: FLAT, value: 1 }
-      - { stat: damage, type: MORE, value: -10 }
+      - { stat: flag.always_hit, type: FLAT, value: 1, tags: [vs_dazed] }
+      - { stat: flag.consume_daze, type: FLAT, value: 1 }
+      - { stat: flag.cannot_daze, type: FLAT, value: 1 }
 
   sow_fire:          # Fan The Flames
     name: 播火
-    description: 被輔助的攻擊擊中點燃中的敵人時，在牠身上炸出一圈火焰，很容易把點燃傳給周圍的敵人。
+    description: 只輔助疾風技能：被輔助的技能擊中點燃中的敵人時，在牠身上炸出一圈火焰，很容易把點燃傳給周圍的敵人。
     icon: BLAZE_ROD   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 3
-    requires: [attack]
+    requires: [wind]   # 2026-11-01 照 PoE2 Fan the Flames II（(Attack OR Damage) AND Wind；不會擊中的疾風技能由 support_ref.yml 擋）；這次之前 [attack]（所有攻擊）
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Fan The Flames II（第 4 階；poe2db／RePoE）；這次之前 tier 2、魔耗 1.15
@@ -3168,12 +3248,13 @@ supports:
 
   frozen_ground:             # Frost Nexus
     name: 凍地
-    description: 被輔助的技能讓敵人凍結時，在牠腳下留下一片冰霜地面，一直冰傷、冰緩周圍的敵人。
+    description: 被輔助的技能讓敵人凍結時，在牠周圍留下一片 3 格、8 秒的冰緩地面（不造成傷害），站在裡面的敵人被冰緩。
     icon: PRISMARINE_SHARD   # 2026-10：原本 ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     excludes: [minion]
     mana_multiplier: 1.2
     # 2026-10-27 照 PoE2 Frost Nexus（第 2 階；poe2db／RePoE）；這次之前 魔耗 1.15
+    # 2026-11-01 照 PoE2 Frost Nexus：冰緩地面不造成傷害（proc_frost_nexus 寫了 ground.effect，10-26 起就不打傷害了），說明照實際改；這次之前說明寫「一直冰傷、冰緩周圍的敵人」
     modifiers:
       - { stat: proc.freeze, type: FLAT, value: 100, tags: [proc_frost_nexus] }
 
@@ -3189,28 +3270,33 @@ supports:
     modifiers:
       - { stat: proc.heavy_stun, type: FLAT, value: 100, tags: [proc_impact_shockwave] }
 
-  curse_blast:          # Impending Doom（「詛咒結束時」改成「放下時」）
+  curse_blast:          # Impending Doom
     name: 咒爆
-    description: 被輔助的詛咒放下時，詛咒的地方炸出一圈混沌。
+    description: 被輔助的詛咒時間到結束時，在還帶著它的敵人身上炸出 2 格的混沌法術傷害。咒殞爆冷卻 0.15 秒，可以存 3 次（10 級起 4 次、21 級起 5 次、33 級起 6 次、40 級 7 次），次數用完時結束的詛咒不會炸。
     icon: COAL   # 2026-10：原本 WITHER_SKELETON_SKULL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 1
     requires: [curse]
     mana_multiplier: 1.3
     # 2026-10-27 照 PoE2 Impending Doom（第 1 階；poe2db／RePoE）；這次之前 tier 2、魔耗 1.15
+    # 2026-11-01 照 PoE2 Impending Doom（trigger_vicious_hex_explosion_when_curse_ends：詛咒結束時在受詛咒的敵人身上；SupportProcs.curseApplied）；這次之前 stat: proc.use（詛咒放下時在詛咒的地方炸一次）
+    # 2026-11-01 照 PoE2 DoomBlastPlayer storedUses（PoB2）：咒殞爆可存 3／4／5／6／7 次（skills.yml cooldown_uses，StoredUses）；
+    #   這次之前沒有可存次數，說明「同時結束的一隻接一隻炸」（照冷卻 0.15 秒排開，一定會炸）
     modifiers:
-      - { stat: proc.use, type: FLAT, value: 100, tags: [proc_impending_doom] }
+      - { stat: proc.curse_expired, type: FLAT, value: 100, tags: [proc_impending_doom] }
 
-  lockdown:                # Lockdown（「越遠釘住累積越多」改成一律加機率，數值調低）
+  lockdown:                # Lockdown
     name: 遠釘
-    description: 被輔助的投射物攻擊擊中時有機率把敵人釘在原地（可以跟釘地疊）。
+    description: 被輔助的技能造成的定身累積，敵人離你越近越強：2 格內更多 120%，越遠越少，12 格以外不變（技能本身要能累積定身）。
     icon: IRON_NUGGET   # 2026-10：原本 IRON_CHAIN（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 1
-    requires: [projectile]
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
+    # 2026-11-01 照 PoE2 Lockdown（allowed Attack、Damage、CrossbowAmmoSkill：任何擊中技能）；這次之前 requires: [projectile]、excludes: [spell]
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
-    excludes: [spell]
-    mana_multiplier: 1.1
+    requires: [attack, spell]
+    mana_multiplier: 1.0   # 2026-11-01 照 PoE2 的消耗；這次之前 1.1
+    # 2026-11-01 照 PoE2 Lockdown（support_lockdown_distance_based_pin_damage_+%_final 120：2 公尺內更多 120%、12 公尺時不變；SupportParityKeys.lockdownMultiplier）；
+    #   這次之前 stat: pin.chance, type: FLAT, value: 15（投射物攻擊一律有定身來源）。原作 Lockdown 本身不給定身，只放大定身累積
     modifiers:
-      - { stat: pin.chance, type: FLAT, value: 15 }
+      - { stat: pin.lockdown, type: FLAT, value: 120 }
 
   # ---- 2026-10：PoE2 輔助補齊・草稿 B（sup_yes_part01；機制照 PoE2，名稱是自己的。我們做不到的條件用近似值）----
   servant_marrow:          # Minion Mastery
@@ -3263,38 +3349,48 @@ supports:
     modifiers:
       - { stat: exposure.effect, type: INCREASED, value: 20 }
 
-  low_resound:             # Reverberate（攻擊時間越長餘震機率越高 → 猛擊變慢、固定較高的餘震機率）
+  low_resound:             # Reverberate
     name: 沉響
-    description: 被輔助的猛擊砸得慢一點，但有一半的機率在面前再震一次（原本那一下的 60%）。
+    description: 被輔助的猛擊如果本來就有機率造成餘震（餘震、連震輔助、天賦、傳奇…），攻擊時間每 0.25 秒餘震機率增加 15%；本身不會造成餘震。
     icon: GOLD_INGOT   # 2026-10：原本 BELL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [slam]
     excludes: [minion]
     mana_multiplier: 1.2
     # 2026-10-27 照 PoE2 Reverberate（0.5 切不出來；poe2db／RePoE）；這次之前 魔耗 1.15
+    # 2026-11-01 照 PoE2 Reverberate（chance_to_aftershock_+%_per_250_ms_attack_time 15：只放大既有的餘震機率）；這次之前 stat: proc.use, type: FLAT, value: 50, tags: [proc_aftershock]；stat: attack.speed, type: MORE, value: -15
     modifiers:
-      - { stat: proc.use, type: FLAT, value: 50, tags: [proc_aftershock] }
-      - { stat: attack.speed, type: MORE, value: -15 }
+      - { stat: slam.aftershock_chance_per_250ms, type: FLAT, value: 15 }
 
-  twin_quake:          # Tectonic Slams（兩側各一道餘震 → 面前一圈比較小、比較輕的側震）
+  twin_quake:          # Tectonic Slams（2026-11-01 照 PoE2：原本那一下的前方左右兩側各一道餘震）
     name: 雙震
-    description: 被輔助的猛擊砸下時，一定會再震出一圈比較小、比較輕的側震（原本那一下的 35%）。
+    description: 只輔助你自己使用的猛擊：砸下的同時，在原本範圍的前方左右兩側各再震一次餘震（範圍照原本那一下）；被輔助的技能的所有餘震傷害更少 45%、範圍更少 30%，攻擊速度更慢 15%。
+    # 2026-11-01 照 PoE2 Tectonic Slams（Path of Building 0.5 SupportSlamAftershocksPlayer：number_of_dual_cascade_aftershocks 1
+    #   「1 additional Aftershock ahead and to each side of the initial area」、aftershock 傷害 −45% final、範圍 −30% final、攻擊速度 −15% final）：
+    #   兩側各一道、範圍照原本那一下再更少 30%、傷害照那一下的重複再更少 45%（TectonicSlams；所有餘震都吃）；
+    #   這次之前說明「被輔助的猛擊砸下時，一定會再震出一圈比較小的側震（傷害更少 45%），但攻擊速度更慢 15%。」，
+    #   一圈自己半徑 2～2.5 格的側震落在猛擊面前 2.5 格、proc_side_aftershock 的 parent_damage 0.55、沒有範圍更少
     icon: BRICK   # 2026-10：原本 CRACKED_STONE_BRICKS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [slam]
     excludes: [minion, fissure]   # 2026-10-26 照 PoE2：Tectonic Slams 不能輔助裂地技能（CreatesFissure）；這次之前 [minion]
-    mana_multiplier: 1.2
+    mana_multiplier: 1.3   # 2026-11-01 照 PoE2 的消耗；這次之前 1.2
     modifiers:
       - { stat: proc.use, type: FLAT, value: 100, tags: [proc_side_aftershock] }
+      # 2026-11-01 照 PoE2 Tectonic Slams（support_dual_cascade_aftershocks_attack_speed_+%_final −15）：攻擊速度更慢 15%；這次之前沒有。
+      #   說明的「35%」照 proc_side_aftershock 的 parent_damage 0.55（2026-10-26 已改成更少 45%）改正
+      - { stat: attack.speed, type: MORE, value: -15 }
+      - { stat: aftershock.damage_less, type: FLAT, value: 45 }   # 2026-11-01 照 PoE2（這次之前寫在 proc_side_aftershock 的 parent_damage 0.55）
+      - { stat: aftershock.area_less, type: FLAT, value: 30 }     # 2026-11-01 照 PoE2（這次之前沒有）
 
   vault_spark:           # Shocking Leap（照 PoE2：落地的地方；2026-10 以前跳躍在出發點、衝刺在終點，統一成落地點）
     name: 躍電
-    description: 被輔助的突進技能暴擊時，在敵人腳下留下一片感電地面 4 秒，站在上面的敵人會感電；每次使用最多一次。
+    description: 只輔助跳躍技能：被輔助的技能暴擊時，在敵人腳下留下一片感電地面 4 秒，站在上面的敵人會感電；每次使用最多一次。
     icon: COPPER_INGOT   # 2026-10：原本 LIGHTNING_ROD（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
-    requires: [travel]
+    requires: [attack]   # 2026-11-01 照 PoE2 Shocking Leap（Jumping；跳躍看 SupportGuards.jumping，原作的跳躍技能都是攻擊）；這次之前 [travel]（所有突進）、說明「被輔助的突進技能」
     excludes: [minion]
-    mana_multiplier: 1.15
+    mana_multiplier: 1.0   # 2026-11-01 照 PoE2 的消耗；這次之前 1.15
     modifiers:
       - { stat: proc.crit, type: FLAT, value: 100, tags: [proc_charged_ground] }   # 2026-10-31 照 PoE2：暴擊時（這次之前落地時、會造成傷害的帶電地）
 
@@ -3302,7 +3398,7 @@ supports:
     name: 霜漫
     description: 被輔助的技能讓敵人凍結時，從牠身上散出一圈寒氣，冰緩周圍的敵人。
     icon: PRISMARINE_CRYSTALS   # 2026-10：原本 SNOW_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 1
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Spreading Frost（0.5 切不出來；poe2db／RePoE）；這次之前 魔耗 1.1
@@ -3334,22 +3430,23 @@ supports:
     modifiers:
       - { stat: flag.empowered_cull, type: FLAT, value: 1 }
 
-  stored_howl:           # Premeditation（強化的技能更多傷害 → 戰吼增益期間你的攻擊更多傷害）
+  stored_howl:           # Premeditation
     name: 蓄嘯
-    description: 被輔助的戰吼增益期間，你的攻擊傷害更多 15%。
+    description: 被輔助的戰吼強化的攻擊傷害更多 15%。
     icon: BOOK   # 2026-10：原本 GOAT_HORN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [warcry]
     mana_multiplier: 1.3
     # 2026-10-27 照 PoE2 Premeditation（0.5 切不出來；poe2db／RePoE）；這次之前 魔耗 1.15、stat: grant.damage, type: MORE, value: 10, tags: [attack]、說明「被輔助的戰吼增益期間，你的攻擊傷害更高。」
+    # 2026-11-01 照 PoE2 Premeditation（Skills Empowered by Supported Skills deal 15% more Damage；Warcries.empoweredExtra）；這次之前 stat: grant.damage, type: MORE, value: 15, tags: [attack]（增益期間你所有的攻擊）
     modifiers:
-      - { stat: grant.damage, type: MORE, value: 15, tags: [attack] }
+      - { stat: warcry.empowered_more, type: FLAT, value: 15 }
 
   howl_aim:          # Unerring Power（強化的技能命中更高；消耗更少那段沒做）
     name: 嘯準
     description: 被輔助的攻擊被戰吼強化時，消耗更少 30%、命中更多 30%。
     icon: GOLD_NUGGET   # 2026-10：原本 SPYGLASS（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
-    tier: 1
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
     requires: [attack]
     excludes: [minion]
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 掛在戰吼上、魔耗 1.05、增益期間攻擊命中更多 30%
@@ -3360,7 +3457,7 @@ supports:
     name: 聚怒嘯
     description: 被輔助的戰吼每算到 5 點怪物強度給你 4 點怒氣。
     icon: BLAZE_POWDER
-    tier: 1
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
     requires: [warcry]
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 名字「怒嘯」（跟怒嘯撞名）、魔耗 1.1、增益期間近戰擊中多 3 點怒氣
     modifiers:
@@ -3451,10 +3548,10 @@ supports:
     name: 爆甲
     description: 被輔助的技能把敵人的護甲完全打破時，在牠身上炸出一圈火焰。
     icon: GUNPOWDER   # 2026-10：原本 TNT（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 2
+    tier: 1   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 2
     requires: [attack, warcry]   # 2026-10-26 照 PoE2：Armour Explosion 輔助攻擊與戰吼；這次之前沒寫
     excludes: [minion]
-    mana_multiplier: 1.15
+    mana_multiplier: 1.0   # 2026-11-01 照 PoE2 的消耗；這次之前 1.15
     modifiers:
       - { stat: proc.armour_broken, type: FLAT, value: 100, tags: [proc_armour_explosion] }
 
@@ -3462,7 +3559,7 @@ supports:
     name: 磐破
     description: 被輔助的技能把敵人的護甲完全打破時，有 40% 機率給你一顆{charge:endurance}（本身不破甲，要搭配會破甲的技能或輔助）。
     icon: IRON_INGOT   # 2026-10：原本 IRON_CHESTPLATE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
-    tier: 3
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
     requires: [attack, spell]
     excludes: [minion]
     mana_multiplier: 1.0
@@ -3473,15 +3570,18 @@ supports:
 
   daze_breaker:           # Break Posture
     name: 破眩
-    description: 被輔助的攻擊把敵人的護甲完全打破時，讓牠和身旁的敵人眩暈（造成的傷害更少、更容易被暈）。
+    description: 被輔助的攻擊把敵人的護甲完全打破時，讓那隻敵人眩暈 8 秒（受到的暈眩累積更多 50%）。
     icon: BRICK   # 2026-10：原本 CRACKED_DEEPSLATE_BRICKS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Break Posture（0.5 切不出來；poe2db／RePoE）；這次之前 魔耗 1.15
+    # 2026-11-01 照 PoE2 Break Posture（poe2db：完全破甲時讓「那隻」敵人眩暈 8 秒，沒有範圍）；這次之前 stat: proc.armour_broken, type: FLAT, value: 100, tags: [proc_break_daze]
+    #   （觸發隱藏技能破眩震：0.6 格的地面，身旁的敵人一起眩暈）、說明「讓牠和身旁的敵人眩暈（造成的傷害更少、更容易被暈）」
+    # 2026-11-01：眩暈改走跟擊中時一樣的套用（HitEffects.applyDaze）：吃天賦的眩暈持續時間、眩暈效果，「不會造成眩暈」的不套；這次之前固定 8 秒、50%
     modifiers:
-      - { stat: proc.armour_broken, type: FLAT, value: 100, tags: [proc_break_daze] }
+      - { stat: daze.on_armour_broken, type: FLAT, value: 8 }
 
   bedrock_quake:         # Enduring Impact II（2026-10-24：I、II 只留最強的）
     name: 磐震
@@ -3497,22 +3597,26 @@ supports:
     name: 燼勢
     description: 被輔助的技能暴擊時，你五秒內的攻擊獲得額外火焰傷害。
     icon: BLAZE_POWDER
-    tier: 2
+    tier: 3   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 2
     requires: [attack, spell]   # 2026-10-26 照 PoE2：Blazing Critical 輔助所有會擊中的技能（Attack、Damage）；這次之前 [attack]
     excludes: [minion]
-    mana_multiplier: 1.15
+    mana_multiplier: 1.0   # 2026-11-01 照 PoE2 的消耗；這次之前 1.15
     modifiers:
       - { stat: proc.crit, type: FLAT, value: 100, tags: [proc_blazing_critical] }
 
   volt_drain:              # Enervation
     name: 吸電
-    description: 被輔助的技能擊中感電中的敵人時，你四秒內魔力回復變快。
+    description: 被輔助的技能讓敵人感電時，你 4 秒內每秒再生 0.3 點魔力（每次感電都重新計時，不疊加）。
     icon: PRISMARINE_CRYSTALS
     tier: 1
     excludes: [minion, totem, trap]   # 2026-10-26 照 PoE2：Enervation 不能輔助召喚、圖騰、陷阱；這次之前 [minion]
-    mana_multiplier: 1.1
+    mana_multiplier: 1.0   # 2026-11-01 照 PoE2 的消耗；這次之前 1.1
+    # 2026-11-01 照 PoE2 Enervation（施加感電時，4 秒內每秒再生 0.3 魔力；proc_enervation）；這次之前 stat: proc.vs_shocked, type: FLAT, value: 100, tags: [proc_enervation]（擊中已經感電的敵人時，魔力回復速度增加 30～50%）
+    # 2026-11-01 照 PoE2 Enervation（support_regenerate_mana_per_minute_on_shock；PoB2 沒有這顆、poe2db 沒寫冷卻也沒寫可疊）：改成感電時直接給增益
+    #   （SupportProcs.enervation：每次感電都套、沒有觸發冷卻；同一個增益只刷新）；魔耗 100% 跟 poe2db 一樣不用改；
+    #   這次之前 stat: proc.shock, type: FLAT, value: 100, tags: [proc_enervation]（隱藏技能吸電流，觸發冷卻 1 秒）
     modifiers:
-      - { stat: proc.vs_shocked, type: FLAT, value: 100, tags: [proc_enervation] }
+      - { stat: mana.regen_on_shock, type: FLAT, value: 0.3 }
 
   thunder_momentum:               # Innervate
     name: 霆勢
@@ -3527,36 +3631,42 @@ supports:
 
   bone_command:                 # Bidding
     name: 骸令
-    description: 被輔助的指令技能更痛、冷卻更快。
+    description: 被輔助的召喚物用指令技能時（骷髏的指令、掩護火力的從天而降、亂鴉狂舞、巨靈的指令與它帶出來的分身、刀刃、熔岩浪、龍捲、烙印）更多 20% 傷害、指令技能的冷卻回復速度增加 20%；召喚物自己其他的招式吃不到。
     icon: GOLD_INGOT   # 2026-10：原本 BELL（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [command]
     mana_multiplier: 1.3
     # 2026-10-26 照 PoE2 Bidding I（poe2db）；這次之前 tier 2、魔耗 1.15、效果不動
+    # 2026-11-01 照 PoE2 Bidding I（minion_command_skill_cooldown_speed_+% 20：冷卻回復速度增加 20%，跟骸令 II 一樣用 cooldown.recovery）；這次之前 stat: skill.cooldown, type: INCREASED, value: -17
+    # 2026-11-01 照 PoE2 Bidding I（PoB2 sup_int.lua SupportBiddingPlayer：support_command_skill_damage_+%_final 20、minion_command_skill_cooldown_speed_+% 20，
+    #   都只算 Command Skills）：兩條都標 command（Commandables.TAG），只有指令的那幾下吃得到；這次之前沒標，召喚物所有的招式（骷髏自己的技能、羅贊的狂熱斬擊）都吃
     modifiers:
-      - { stat: damage, type: MORE, value: 20 }
-      - { stat: skill.cooldown, type: INCREASED, value: -17 }
+      - { stat: damage, type: MORE, value: 20, tags: [command] }
+      - { stat: cooldown.recovery, type: INCREASED, value: 20, tags: [command] }
 
   bone_command_ii:              # Bidding II
     name: 骸令 II
-    description: 被輔助的召喚物的指令技能更痛、冷卻回復更快。
+    description: 被輔助的召喚物用指令技能時（骷髏的指令、掩護火力的從天而降、亂鴉狂舞、巨靈的指令與它帶出來的分身、刀刃、熔岩浪、龍捲、烙印）更多 30% 傷害、指令技能的冷卻回復速度增加 30%；召喚物自己其他的招式吃不到。
     icon: GOLD_BLOCK
     tier: 3   # 原作第 4 階（我們的第 3 階）
     requires: [command]
     mana_multiplier: 1.0
     # 2026-10-30 照 PoE2 Bidding II（poe2db.tw/tw/Bidding_II）：指令技能更多 30% 傷害、冷卻回復速度增加 30%；跟骸令同系列，一個技能只算一顆
+    # 2026-11-01 照 PoE2 Bidding II（PoB2 SupportBiddingPlayerTwo：support_command_skill_damage_+%_final 30、minion_command_skill_cooldown_speed_+% 30，
+    #   只算 Command Skills）：兩條都標 command；這次之前沒標（召喚物所有的招式都吃）
     modifiers:
-      - { stat: damage, type: MORE, value: 30 }
-      - { stat: cooldown.recovery, type: INCREASED, value: 30 }
+      - { stat: damage, type: MORE, value: 30, tags: [command] }
+      - { stat: cooldown.recovery, type: INCREASED, value: 30, tags: [command] }
 
   soul_reap:         # Essence Harvest
     name: 魂收
-    description: 被輔助的召喚技能叫出來的召喚物死掉時，你回復一部分魔力。
+    description: 被輔助的技能叫出來的會復活的常駐召喚物死掉時，你在 4 秒內慢慢回復 8% 最大魔力。只能掛在叫出常駐召喚物的技能。
     icon: EMERALD   # 2026-10：原本 EXPERIENCE_BOTTLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 2
     requires: [minion]
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Essence Harvest（poe2db）；這次之前 tier 1、魔耗 1.05、效果不動
+    # 2026-11-01 照 PoE2 Essence Harvest（recoup_mana_%_on_minion_death 8：補償，4 秒內回；allowed Minion AND Persistent：SupportGuards）；這次之前死掉立刻回 8%、任何召喚技能都能掛
     modifiers:
       - { stat: mana.on_minion_death, type: FLAT, value: 8 }
 
@@ -3570,16 +3680,6 @@ supports:
     # 2026-10-26 照 PoE2 Deathmarch（poe2db）；這次之前 tier 2、魔耗 1.15、效果不動
     modifiers:
       - { stat: minion.death_heal, type: FLAT, value: 25 }
-
-  perish_blast:              # 召喚物倒下時炸開（PoE2 召喚物死亡觸發類）
-    name: 殞爆
-    description: 被輔助的召喚技能叫出來的召喚物死掉時，在牠倒下的地方炸出一圈混沌。
-    icon: COAL   # 2026-10：原本 WITHER_ROSE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 2
-    requires: [minion]
-    mana_multiplier: 1.15
-    modifiers:
-      - { stat: proc.minion_death, type: FLAT, value: 100, tags: [proc_last_rites] }
 
   bounty:                  # Bounty
     name: 獵賞
@@ -3598,7 +3698,7 @@ supports:
     name: 命賞
     description: 被輔助的技能打死敵人時，生命藥劑拿到的充能變兩倍。
     icon: NETHER_BRICK   # 2026-10：原本 RED_DYE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 1
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Life Bounty（poe2db）；這次之前 tier 1、魔耗 1.05、效果不動
@@ -3609,7 +3709,7 @@ supports:
     name: 魔賞
     description: 被輔助的技能打死敵人時，魔力藥劑拿到的充能變兩倍。
     icon: LAPIS_LAZULI   # 2026-10：原本 BLUE_DYE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 1
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-26 照 PoE2 Mana Bounty（poe2db）；這次之前 tier 1、魔耗 1.05、效果不動
@@ -3620,7 +3720,7 @@ supports:
     name: 護賞
     description: 被輔助的技能打死敵人時，護符拿到的充能變兩倍。
     icon: AMETHYST_SHARD   # 2026-10：原本 AMETHYST_CLUSTER（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
-    tier: 1
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 1
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Charm Bounty（0.5 切不出來；poe2db／RePoE）；這次之前 魔耗 1.05
@@ -3666,41 +3766,19 @@ supports:
 
   # ---- 2026-10：戰星的輔助（照 PoE2：只對被輔助的技能，擊中時機率獲得一顆）----
 
-  gather_bedrock:
-    name: 聚磐
-    description: 被輔助的技能擊中敵人時，有機率獲得一顆磐星。
-    icon: IRON_INGOT
-    tier: 2
-    requires: [attack, spell]
-    excludes: [minion]
-    mana_multiplier: 1.1
-    modifiers:
-      - { stat: charge.on_hit.endurance, type: FLAT, value: 10 }
-
   # ---- 2026-10：更多戰星來源（照 PoE2 的充能滿盈、撲殺技能；名稱是自己的。重暈、破甲給磐星的是磐震、磐破）----
 
   full_stars:
     name: 滿星
     description: 被輔助的技能讓你獲得戰星時（擊中、重暈、破甲、撲殺…），有 30% 機率多獲得一顆同種的，另外 15% 機率多獲得一顆隨機種類的。
     icon: GLOWSTONE_DUST
-    tier: 2
+    tier: 3   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 2
     requires: [attack, spell]
     excludes: [minion]
-    mana_multiplier: 1.1
+    mana_multiplier: 1.2   # 2026-11-01 照 PoE2 的消耗；這次之前 1.1
     modifiers:
       - { stat: charge.extra, type: FLAT, value: 30 }          # 2026-10-15：照 PoE2 的充能滿盈 II（25 → 30）
       - { stat: charge.extra_random, type: FLAT, value: 15 }   # 2026-10-15：照 PoE2 的充能滿盈 II，多一顆隨機種類的
-
-  slay_gather_fury:
-    name: 撲殺聚怒
-    description: 被輔助的技能撲殺敵人時獲得一顆{charge:frenzy}，稀有怪多一顆、傳奇怪多兩顆（技能要能撲殺，例如掛撲殺）。
-    icon: RABBIT_FOOT
-    tier: 3
-    requires: [attack]
-    excludes: [minion]
-    mana_multiplier: 1.1
-    modifiers:
-      - { stat: charge.event.cull.frenzy, type: FLAT, value: 100 }
 
   # ---- 2026-10-24：消耗、產生戰星的輔助（照 PoE2 的數值；名稱是自己的。階級：PoE2 第 1 階 → 1、第 2–3 階 → 2、第 4–5 階與血脈 → 3）----
 
@@ -3792,7 +3870,7 @@ supports:
     name: 祭星
     description: 被輔助的祭品放的時候犧牲 25% 生命；祭柱還在的時候每 4 秒給你一顆{charge:power}；祭柱倒下後，祭柱撐了多久，你就每秒回復 5% 生命與魔力多久。
     icon: BONE
-    tier: 3   # PoE2 血脈
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
     requires: [offering]   # 2026-10-26 照 PoE2：Guatelitzi's Ablation 只輔助祭品（Offering）；這次之前 [minion]
     modifiers:
       - { stat: charge.sup.offering_sacrifice, type: FLAT, value: 25 }
@@ -3803,7 +3881,7 @@ supports:
     name: 鐘星
     description: 被輔助的技能用掉連擊時，每用掉一層有 25% 機率給你一顆{charge:power}（超過 100% 的部分必定給）。要配會用掉連擊的技能（例如掛終式）。
     icon: GOLD_NUGGET
-    tier: 3   # PoE2 血脈
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
     requires: [attack]
     excludes: [minion]
     modifiers:
@@ -3836,9 +3914,9 @@ supports:
     name: 掠嵐
     description: 被輔助的風暴技能同時存在的上限 +1，從你腳下出發、很快地移動到準心指的地方（每秒 4 格），但範圍更小 25%、傷害更少 35%。
     icon: PHANTOM_MEMBRANE
-    tier: 3   # PoE2 血脈
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
     requires: [storm]
-    excludes: [minion]
+    excludes: [minion, triggered]   # 2026-11-01 照 PoE2 Morgana's Tempest（Cannot Support Triggered Skills；主要寶石觸發的見 support_ref.yml 的 triggered）；這次之前 [minion]
     modifiers:
       - { stat: skill.limit, type: FLAT, value: 1 }
       - { stat: skill.area, type: MORE, value: -25 }
@@ -3850,7 +3928,7 @@ supports:
     name: 蟄甲
     description: 被輔助的技能讓你變身時，獲得霍嵐的沉著 2 秒：期間受到的傷害記下來，結束時獲得記下的傷害 50% 的守護（4 秒）與 3% 的怒氣。結束前變成別的形態就直接沒了。
     icon: RABBIT_HIDE
-    tier: 3   # PoE2 血脈
+    tier: 2   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 3
     requires: [shapeshift]
     excludes: [minion]
     mana_multiplier: 1.3
@@ -4107,12 +4185,15 @@ supports:
 
   army_order:             # Commandment
     name: 軍令
-    description: 被輔助的召喚物用指令以外的技能（普攻、自己的招式）不造成傷害；牠們的指令冷卻回復速度增加 100%。只能掛在有指令的召喚物上。
+    description: 被輔助的召喚物用指令以外的技能（普攻、自己的招式）不造成傷害；牠們的指令冷卻回復速度增加 100%（跟其他冷卻回復速度相加），指令本身的傷害不受影響。只能掛在有指令的召喚物上：骸骨重卒、射手、焰術士、雷術士、霜術士、狂卒、掩護火力、鴉群密謀、污沙．珂芮絲、終幻．娜瑟菈、炎刃．羅贊。
     icon: GOLD_INGOT
     tier: 2   # PoE2 第 0 階（不從未切割寶石切；我們放第 2 階）
     requires: [minion]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Commandment（第 0 階；poe2db／RePoE；照原作；2026-10-27 改成原作：召喚物自己的指令冷卻（這次之前給你的指令技能、召喚物所有傷害更少 100%））；這次之前沒有這顆
+    # 2026-11-01 照 PoE2 Commandment（PoB2 SupportCommandment：minion_command_skill_cooldown_speed_+% 100、support_minion_damage_with_non_command_skills_+%_final -100、
+    #   要 CommandableMinion）：掛得上鴉群密謀（亂鴉狂舞的冷卻、振翅熵流不打）、三位巨靈（指令技能的冷卻、娜瑟菈的擁抱的冷卻、羅贊的狂熱斬擊不打）；
+    #   這次之前只有六種骸骨召喚與掩護火力（Commandables）
     modifiers:
       - { stat: minion.army_order, type: FLAT, value: 1 }
 
@@ -5141,7 +5222,7 @@ supports:
     icon: IRON_INGOT
     tier: 2   # PoE2 第 0 階（不從未切割寶石切；我們放第 2 階）
     requires: [melee]
-    excludes: [persistent, aura]
+    excludes: [channelling, persistent, aura]   # 2026-11-01 照 PoE2 Unyielding（不能輔助引導技能；要近戰攻擊，SupportGuards）；這次之前 [persistent, aura]
     mana_multiplier: 1.2
     # 2026-10-27 照 PoE2 Unyielding（第 0 階；poe2db／RePoE；照原作）；這次之前沒有這顆
     modifiers:

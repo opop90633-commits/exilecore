@@ -151,7 +151,10 @@ public final class IceCrystals implements Listener {
         final boolean shards = StatKeys.flag(effective, StatKeys.FLAG_CRYSTAL_SHARDS);
         final boolean verglas = StatKeys.flag(effective, StatKeys.FLAG_VERGLAS);
         // 2026-10-28 照 PoE2：冰晶的生命（技能逐級表；厚晶、脆晶照要打幾下的比例）
-        final double life = StageLeftovers.scaledLife(StageAttacks.limit(build.profile(), "crystal_life", 0), hits, BASE_HITS);
+        // 2026-11-01 照 PoE2 Icicle（脆晶）：冰晶最大生命更少 50%（crystal.life）；照「打幾下」算的冰晶下數照比例無條件進位（3 下 → 2 下）
+        final double lifeMore = Math.max(0, effective.more(tw.exilecore.stats.SupportParityKeys.CRYSTAL_LIFE, tags));
+        final double life = StageLeftovers.scaledLife(StageAttacks.limit(build.profile(), "crystal_life", 0), hits, BASE_HITS) * lifeMore;
+        final int hitsLeft = tw.exilecore.stats.SupportParityKeys.crystalHits(hits, lifeMore);
         final long until = now() + build.durationTicks(BASE_SECONDS);
         final List<Crystal> mine = crystals.computeIfAbsent(owner.getUniqueId(), key -> new ArrayList<>());
         final List<Location> spots = new ArrayList<>();
@@ -167,7 +170,7 @@ public final class IceCrystals implements Listener {
                 d.setPersistent(false);
                 d.setGlowing(true);
             });
-            final Crystal crystal = new Crystal(at.clone().add(0, 0.5, 0), display, until, build.usableGemLevel(), hits, shards, verglas);
+            final Crystal crystal = new Crystal(at.clone().add(0, 0.5, 0), display, until, build.usableGemLevel(), hitsLeft, shards, verglas);
             crystal.burst = StageAttacks.CRYSTAL_BURST.getOrDefault(build.definition().id(), crystal.burst);
             crystal.life = life;
             crystal.maxLife = life;
@@ -199,6 +202,19 @@ public final class IceCrystals implements Listener {
     public void onHit(final HitEvent event) {
         if (!(event.attacker() instanceof Player player) || !event.result().hit() || event.skill() == null) {
             return;
+        }
+        if (impaling(event.skill())) {
+            // 2026-11-01 照 PoE2 Crystalline Shards：冰晶爆炸 100% 穿刺（ice_crystal_explosion_cold_damage_can_impale：冰冷傷害也算）
+            final double impaled = event.result().outgoing().get(tw.exilecore.stats.DamageType.PHYSICAL)
+                    + event.result().outgoing().get(tw.exilecore.stats.DamageType.COLD);
+            if (impaled > 0) {
+                final double magnitude = event.skill().effective(plugin.players().sheet(player))
+                        .increased(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_MAGNITUDE, event.skill().tags());
+                tw.exilecore.combat.Impales.shared().add(event.defender().getUniqueId(), player.getUniqueId(),
+                        tw.exilecore.stats.KeystoneOriginKeys.impaleAmount(impaled, magnitude));
+                event.defender().getWorld().spawnParticle(Particle.CRIT, event.defender().getLocation().add(0, event.defender().getHeight() * 0.6, 0),
+                        6, 0.2, 0.3, 0.2, 0.05);
+            }
         }
         final List<Crystal> mine = crystals.get(player.getUniqueId());
         if (mine == null || mine.isEmpty() || ignored(event.skill().id())) { // 2026-10-17：冰晶旁邊的霜蝕地面也不打冰晶（以前站著就自己碎）
@@ -246,10 +262,9 @@ public final class IceCrystals implements Listener {
     private void shatter(final Player owner, final Crystal crystal) {
         crystal.display.remove();
         crystal.at.getWorld().playSound(crystal.at, Sound.BLOCK_GLASS_BREAK, SoundCategory.PLAYERS, 1.0f, 0.9f);
-        cast(owner, crystal.burst, crystal.level, crystal.at);
-        if (crystal.shards) {
-            cast(owner, "proc_crystal_shards", crystal.level, crystal.at);
-        }
+        // 2026-11-01 照 PoE2 Crystalline Shards（晶刺）：被輔助的技能留下的冰晶爆炸 100% 穿刺打到的敵人（冰冷傷害也能穿刺、不抽出穿刺）；
+        // 這次之前另外往四周噴 8 道冰片（proc_crystal_shards）
+        cast(owner, crystal.burst, crystal.level, crystal.at, crystal.shards);
         verglas(owner, crystal.maxLife);
     }
 
@@ -276,14 +291,34 @@ public final class IceCrystals implements Listener {
     }
 
     private void cast(final Player owner, final String skillId, final int level, final Location at) {
+        cast(owner, skillId, level, at, false);
+    }
+
+    /** impale：2026-11-01 照 PoE2 Crystalline Shards：這一次爆炸打中時穿刺（技能描述帶記號，{@link #onHit} 存穿刺；這一下不抽出穿刺）。 */
+    private void cast(final Player owner, final String skillId, final int level, final Location at, final boolean impale) {
         final SkillDefinition definition = service.config().skill(skillId);
         if (definition == null) {
             return;
         }
         final PlayerState state = plugin.players().get(owner);
-        final SkillBuild build = SkillBuild.of(service.config(), definition, Math.max(1, level), state.level(), false, List.of(),
+        SkillBuild build = SkillBuild.of(service.config(), definition, Math.max(1, level), state.level(), false, List.of(),
                 state.weaponTags(), plugin.players().sheet(owner));
+        if (impale) {
+            build = build.withProfile(build.profile().withLocal(List.of(
+                    tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.SupportRemakeKeys.CRYSTAL_IMPALE_MARK, 1, "晶刺"),
+                    tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.SupportExtraKeys.FLAG_NO_EXTRACT, 1, "晶刺"))));
+        }
         service.procCast(Origin.at(owner, at.clone(), SkillTargets.facing(owner)), build, null);
+    }
+
+    /** 2026-11-01 照 PoE2 Crystalline Shards：這一下是不是帶穿刺記號的冰晶爆炸。 */
+    private static boolean impaling(final tw.exilecore.stats.SkillProfile skill) {
+        for (final tw.exilecore.stats.Modifier modifier : skill.local()) {
+            if (tw.exilecore.stats.SupportRemakeKeys.CRYSTAL_IMPALE_MARK.equals(modifier.stat()) && modifier.value() > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @EventHandler

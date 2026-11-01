@@ -103,6 +103,35 @@ public record AffixMod(String stat, ModType type, String variable, double consta
         return LocalMods.isLocal(stat);
     }
 
+    /**
+     * 2026-11-01 照 PoE2 腐化：固定值會不會跟著傳奇腐化的倍率變（寫死的數字、不是旗標 flag.＊、不是 0）。
+     */
+    public boolean scalesFixed() {
+        return variable == null && constant != 0 && !stat.startsWith("flag.") && !stat.contains(".flag");
+    }
+
+    /** 固定值乘上腐化倍率：整數照整數四捨五入（至少留 1，不會變成 0）、小數留一位。 */
+    public static double scaleFixed(final double value, final double scale) {
+        final double scaled = value * scale;
+        if (value == Math.rint(value)) {
+            final double rounded = Math.round(scaled);
+            return rounded == 0 ? Math.signum(value) : rounded;
+        }
+        return Math.round(scaled * 10) / 10.0;
+    }
+
+    /** 同 {@link #toModifier(Map, String)}，固定值再乘上腐化倍率 fixedScale（1 = 沒腐化）。 */
+    public Modifier toModifier(final Map<String, Integer> vars, final String source, final double fixedScale) {
+        if (fixedScale == 1.0 || !scalesFixed()) {
+            return toModifier(vars, source);
+        }
+        double value = scaleFixed(constant, fixedScale);
+        if (percent) {
+            value /= 100.0;
+        }
+        return new Modifier(stat, type, value, tags, source);
+    }
+
     /** 用擲出的變數值做出真正的修飾器。 */
     public Modifier toModifier(final Map<String, Integer> vars, final String source) {
         double value = constant;

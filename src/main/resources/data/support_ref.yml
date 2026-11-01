@@ -246,6 +246,7 @@ blocked:
     "要法術會造成傷害的技能": [plague_taint, magic_absorb_art, wild_whirlwind, filth_array]
   sow_fire:
     "要風攻擊或會造成傷害的技能": [plate_crush_hammer, armor_break_quarrel, nailfall_crossbow_turret, mountain_shake_claw, field_quake_stomp, flame_blast_shaft, blood_hunt, spine_crush, thorn_shaft, venom_etch_arrow, linked_lightning_arrow, mother_child_grenade, tremor_grenade, crisscross_claw, cripple_purge, gnawing_bite, spear_recoil_leap, ground_tremor, leapback_shoot, blasting_quarrel, blast_grenade, explosive_spear, startle_thunder_chop, frost_tooth_stab, flame_breath, instant_shadow_strike, returning_smith_hammer, shrapnel_shell, cold_congeal_shell, cold_spirit_palm, chill_fan_shafts, frost_billow, retreat_crystal_freeze, thunder_shard_scatter, miasma_grenade, thunder_lure_thrust, frozen_wall_shaft, ice_ridge_rift, ice_cone_toss, freezing_rain_shell, heaven_punish_maul, blood_proclaim, frost_envoy, thunder_envoy, rime_arrow, frost_shockwave, flame_scatter_fire, soul_sever_palm, soaring_smash, thunderclap_arrow, thunder_stake_shaft, thunder_lance_throw, crescent_claw, lava_splash, magnet_thunder_barrage, molten_crack_stomp, black_oil_rain, kerosene_grenade, frozen_earth_repeater, armor_punch_slug, searing_slurry_cannon, pounce, thunderclap_stab, facet_light_rift, myriad_arrow_fall, shield_brace, blood_tear_sweep, brute_charge, successive_shots, triple_stab, shield_drum, molten_ball, field_quake_hammers, earth_spike_eruption, iron_wall_ram, earth_wall_strike, electrocute_shaft, collapse_quake_totem, skyward_crossbow_turret, fortress_crumble_shell, thunder_draw_staff, cloud_pierce_arrow, spear_formation, spear_throw, helix_arrow_rain, rushing_thunder_stomp, thunder_squall_quarrels, thunderfall_spear, thunderbind_staff, thunder_surge, lurking_thunder_shell, sunder, blazing_sun_spear, thousand_weight_smash, startling_thunder_bell, gale_combo, thunder_call_shaft, thunder_bound, miasma_zone, miasma_bud_rain, charged_blow, leaping_staff_crash, toxic_blast_shaft, flame_vein_rift, thunderlight_grenade, fallen_star_bear_roar, spinning_staff_step, swift_claw, wing_blade_slash]
+    "要會造成傷害的技能": [wild_whirlwind]   # 2026-11-01 手補：播火改成 requires [wind]（Fan the Flames II：(Attack OR Damage) AND Wind）
   quick_strike:
     "沒有出手時間的技能不行": [miasma_zone]
   quick_chant:
@@ -435,11 +436,6 @@ blocked:
     "落雨技能不行": [thorn_shaft, sky_rend_arrow, miasma_bud_rain]
   element_drain:
     "要會造成傷害的技能": [ember_envoy, plague_envoy]
-  oath_drive:
-    "要會強化其他技能的技能": [armor_rend_bear_roar]
-  proud_frost:
-    "圖騰放的技能不行": [nailfall_crossbow_turret, collapse_quake_totem, skyward_crossbow_turret]
-    "持續技能不行": [thunder_stake_shaft, myriad_arrow_fall, snake_squall_thrust, spear_formation, helix_arrow_rain, thunderfall_spear, blazing_sun_spear, startling_thunder_bell, flame_vein_rift]
   first_strike:
     "要位移攻擊或會造成傷害的技能": [chain_thunder, plate_crush_hammer, armor_break_quarrel, nailfall_crossbow_turret, rolling_thunder_orb, mountain_shake_claw, field_quake_stomp, flame_blast_shaft, blood_hunt, bone_bloom, bone_thorn_ring, dig_remains, shattered_bone_darts, spine_crush, thorn_shaft, venom_etch_arrow, linked_lightning_arrow, erosion_star_shot, mother_child_grenade, entwine_rot_arrow, falling_star, tremor_grenade, plague_taint, crisscross_claw, cripple_purge, nether_puppet, nether_contract, rotting_corpse_blast, corpse_burst, gnawing_bite, ground_tremor, cinder_sprout, starfire_bead_chain, fading_thunder_ring, leapback_shoot, soul_draw_shot, blasting_quarrel, blast_grenade, explosive_spear, blood_vein_tether, startle_thunder_chop, frost_tooth_stab, blazing_star_shell, flame_star_shot, flowing_flame_canopy, flame_breath, burning_current, flame_curtain, instant_shadow_strike, returning_smith_hammer, shrapnel_shell, frost_crystal_fan, cold_congeal_shell, ice_shuttle, chill_crystal_mine, frost_star_blast, cold_spirit_palm, chill_fan_shafts, frost_billow, frost_drill, retreat_crystal_freeze, cyclone_spear, mist_staff_sweep, thunder_shard_scatter, thunder_current_zone, miasma_grenade, frozen_wall_shaft, ice_ridge_rift, ice_cone_toss, freezing_rain_shell, heaven_punish_maul, ember_envoy, blood_proclaim, frost_envoy, plague_envoy, thunder_envoy, erosion_curse_rift, rime_arrow, frost_shockwave, frost_rampart, flame_scatter_fire, flame_core_detonation, soul_sever_palm, thunderclap_arrow, thunder_drop, sky_column_thunder, thunder_stake_shaft, thunder_lance_throw, crescent_claw, lava_splash, magnet_thunder_barrage, magic_absorb_art, molten_crack_stomp, black_oil_rain, kerosene_grenade, frozen_earth_repeater, armor_punch_slug, searing_slurry_cannon, keen_star_drain, thunderclap_stab, wild_whirlwind, facet_light_rift, filth_array, myriad_arrow_fall, shield_brace, blood_tear_sweep, successive_shots, triple_stab, blood_sickle, pulse_quake_palm, shield_drum, molten_ball, field_quake_hammers, snake_squall_thrust, earth_spike_eruption, earth_wall_strike, electrocute_shaft, collapse_quake_totem, skyward_crossbow_turret, fortress_crumble_shell, thunder_draw_staff, anomaly_devour_blast, cloud_pierce_arrow, soul_split_shot, roaming_thunder, spear_formation, spear_throw, helix_arrow_rain, thunder_escape, thunder_squall_quarrels, thunderfall_spear, thunder_cloud, thunderbind_staff, thunder_surge, lurking_thunder_shell, scorching_sun_pearl, sunder, blazing_sun_spear, thousand_weight_smash, startling_thunder_bell, gale_combo, lashing_thorns, thunder_call_shaft, gathered_thundercloud, sky_rend_arrow, miasma_zone, miasma_bud_rain, charged_blow, toxic_blast_shaft, corpse_flame_burst, flame_vein_rift, volcano, thunderlight_grenade, fallen_star_bear_roar, spinning_staff_step, spinning_spear_strike, hurricane_spear, wingbeat_gust, cold_winter_gaze, swift_claw, wing_blade_slash]
   clever_break:
@@ -521,8 +517,6 @@ blocked:
     "有封印的技能不行": [chill_fan_shafts]
     "要攻擊且投射物技能": [thorn_shaft, sky_rend_arrow]
     "觸發技能不行": [leapback_shoot]
-  blazing_brand:
-    "要會造成傷害的技能": [plague_taint, ember_envoy, plague_envoy, magic_absorb_art, wild_whirlwind, filth_array]
   rise_again_iii:
     "引星技能不行": [armor_rend_bear_roar]
     "瞬發技能不行": [hasty_load]
@@ -669,10 +663,25 @@ blocked:
   blood_renown:
     "代放技能不行": [nailfall_crossbow_turret, collapse_quake_totem, skyward_crossbow_turret]
     "常駐技能不行": [blood_proclaim, frost_envoy, thunder_envoy]
+  # 2026-11-01 手補（照 PoE2：這幾顆改成攻擊、法術都能掛；原作要 Damage／Attack，跟潛鋒 Ambush 同一組擋法）
+  rend_cut_iii:
+    "要會造成傷害的技能": [plague_taint, ember_envoy, plague_envoy, magic_absorb_art, wild_whirlwind, filth_array]
+  initial_crack_ii:
+    "要會造成傷害的技能": [plague_taint, ember_envoy, plague_envoy, magic_absorb_art, wild_whirlwind, filth_array]
+  grave_wound:
+    "要會造成傷害的技能": [plague_taint, ember_envoy, plague_envoy, magic_absorb_art, wild_whirlwind, filth_array]
+  blood_collapse:
+    "要會造成傷害的技能": [plague_taint, ember_envoy, plague_envoy, magic_absorb_art, wild_whirlwind, filth_array]
+  knockback:
+    "要會造成傷害的技能": [plague_taint, ember_envoy, plague_envoy, magic_absorb_art, wild_whirlwind, filth_array]
+  # 2026-11-01 手補（Arms Length：Attack／Damage，excluded_types DegenOnlySpellDamage）
+  heavy_shove:
+    "只造成持續傷害的法術技能不行": [plague_taint, wild_whirlwind, filth_array]
+    "要會造成傷害的技能": [ember_envoy, plague_envoy, magic_absorb_art]
 # 代放（幻影銳眼的幻影）不能用的輔助：原作 excluded_types 有 UsedByProxy。
 proxy: [enduring_curse, aftershock, jade_nectar_ii, forebear_help, forebear_summon_iii, surging_chant, charm_curse, scorched_blood, frost_grudge_howl, ember_surge, rift_tide, rising_blaze, beat_combo, cleanse_rite, final_form, shared_ailment, mix_dose_ii, charged_chant, fearless_heart, decisive_kill, resist_order_ii, mad_chaos, dire_straits, stored_edge, stored_haste, seal_widen, stored_zone, mad_speed, battle_fist_iii, blaze_column, counter_stab, twin_edge, blood_crystallize, swift_edge, stored_might, frost_gnaw_ii, curse_blast, certain_fate_ii, star_suppress, thunder_momentum, frenzy_chop, servant_bond_ii, charge_impetus, clever_break, all_in_gamble, hidden_power, corpse_defile_ii, fury_aim, fury_cast, reform_ranks, ceaseless_fury, strike_back_ii, shred_blood, sealed_arrows, light_shadow, twin_chant, steady_guard_ii, iron_grit_ii, merged_orbit, split_wound, twin_quake, slay_intent_ii, chain_quake, illusion_split, snow_seal, unrest_stir, unflinching_will, never_submit, howl_aim, sealed_chant, shadowless_step, stand_fast, frost_shell, blast_energy, volatility, magma_spurt, draw_lightning, triple_loop, myriad_seal, blood_renown]
 # 觸發（觸發型主要寶石孔裡的法術）不能用的輔助：原作 excluded_types 擋 Triggered。
-triggered: [enduring_curse, aftershock, jade_nectar_ii, forebear_help, forebear_summon_iii, surging_chant, charm_curse, scorched_blood, frost_grudge_howl, ember_surge, rift_tide, rising_blaze, beat_combo, cleanse_rite, final_form, mix_dose_ii, charged_chant, fearless_heart, decisive_kill, resist_order_ii, mad_chaos, dire_straits, stored_edge, stored_haste, seal_widen, stored_zone, blood_erosion, mad_speed, battle_fist_iii, blaze_column, twin_edge, blood_crystallize, curse_light, swift_edge, stored_might, frost_gnaw_ii, curse_blast, certain_fate_ii, thunder_momentum, frenzy_chop, servant_bond_ii, charge_impetus, clever_break, all_in_gamble, hidden_power, corpse_defile_ii, fury_aim, reform_ranks, ceaseless_fury, strike_back_ii, sealed_arrows, rise_again_iii, light_shadow, twin_chant, steady_guard_ii, iron_grit_ii, merged_orbit, twin_quake, slay_intent_ii, chain_quake, illusion_split, snow_seal, unrest_stir, unflinching_will, never_submit, howl_aim, sealed_chant, shadowless_step, stand_fast, frost_shell, blast_energy, volatility, magma_spurt, draw_lightning, triple_loop, myriad_seal, blood_renown]
+triggered: [enduring_curse, aftershock, jade_nectar_ii, forebear_help, forebear_summon_iii, surging_chant, charm_curse, scorched_blood, frost_grudge_howl, ember_surge, rift_tide, rising_blaze, beat_combo, cleanse_rite, final_form, mix_dose_ii, charged_chant, fearless_heart, decisive_kill, resist_order_ii, mad_chaos, dire_straits, stored_edge, stored_haste, seal_widen, stored_zone, blood_erosion, mad_speed, battle_fist_iii, blaze_column, twin_edge, blood_crystallize, curse_light, swift_edge, stored_might, frost_gnaw_ii, curse_blast, certain_fate_ii, thunder_momentum, frenzy_chop, servant_bond_ii, charge_impetus, clever_break, all_in_gamble, hidden_power, corpse_defile_ii, fury_aim, reform_ranks, ceaseless_fury, strike_back_ii, sealed_arrows, rise_again_iii, light_shadow, twin_chant, steady_guard_ii, iron_grit_ii, merged_orbit, twin_quake, slay_intent_ii, chain_quake, illusion_split, snow_seal, unrest_stir, unflinching_will, never_submit, howl_aim, sealed_chant, shadowless_step, stand_fast, frost_shell, blast_energy, volatility, magma_spurt, draw_lightning, triple_loop, myriad_seal, blood_renown, sweeping_gale]
 # 別的輔助加上的技能類型解開的組合（原作 added_types）：輔助 → { 解開它的輔助: [技能代號] }。
 unlocks:
   grudge_corrode:
@@ -1193,10 +1202,6 @@ unlocks:
     rotting_curse: [ember_envoy, plague_envoy, magic_absorb_art]
     frost_etch_crystal: [ember_envoy, plague_envoy, magic_absorb_art]
     ember_leap: [ember_envoy, plague_envoy, magic_absorb_art]
-  blazing_brand:
-    rotting_curse: [plague_taint, ember_envoy, plague_envoy, magic_absorb_art, wild_whirlwind, filth_array]
-    frost_etch_crystal: [plague_taint, ember_envoy, plague_envoy, magic_absorb_art, wild_whirlwind, filth_array]
-    ember_leap: [plague_taint, ember_envoy, plague_envoy, magic_absorb_art, wild_whirlwind, filth_array]
   rise_again_iii:
     rift_tide: [bloodthirst_rite, bone_rite, corpse_devour_feast, armor_rend_bear_roar, pounce, soulfire_rite]
     stored_edge: [bloodthirst_rite, bone_rite, corpse_devour_feast, armor_rend_bear_roar, pounce, soulfire_rite]

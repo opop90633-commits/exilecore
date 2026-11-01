@@ -33,8 +33,11 @@ final class MinionProjectiles {
     static final int MAX_PER_OWNER = 60;
     /** 分裂往左右各偏幾度（跟玩家的一樣）。 */
     static final double FORK_ANGLE = 30;
-    /** 分裂出來的那兩發的傷害倍率（跟玩家的 ProjectileEngine.fork 一樣：更少 20%）。 */
-    static final double FORK_DAMAGE = 0.8;
+    /**
+     * 分裂出來的那兩發的傷害倍率：2026-11-01 照 PoE2 Fork（召喚物的分叉只有歧射給）：分叉出來的更少 30%；
+     * 這次之前跟玩家的一樣 0.8（歧射另外讓所有投射物更少 10%）。
+     */
+    static final double FORK_DAMAGE = 0.7;
 
     /** 打中、停下時要做的事（MinionService 給）。 */
     interface Handler {
@@ -67,6 +70,13 @@ final class MinionProjectiles {
         int pierceLeft;
         int chainsLeft;
         boolean forks;
+        /**
+         * 2026-11-01 照 PoE2 Pierce I（support_pierce_projectile_damage_+%_final_if_pierced_enemy −20，從召喚物這邊掛）：
+         * 穿透過敵人之後的傷害倍率（1 = 沒有代價；0.8 = 更少 20%）。這次之前召喚物的投射物穿透之後沒有代價。
+         */
+        double piercedFactor = 1.0;
+        /** 這一發已經穿透過敵人了（跟玩家的 ProjectileEngine.Shot.passedEnemy 一樣：分裂出來的那兩發重新算）。 */
+        boolean passedEnemy;
 
         Shot(final UUID owner, final LivingEntity shooter, final World world, final String kind, final Vector position, final Vector direction,
              final double speed, final double range, final MinionTypes.Projectiles mechanics, final Set<UUID> hit, final boolean secondary,
@@ -90,9 +100,9 @@ final class MinionProjectiles {
             this.forks = !secondary && mechanics.fork();
         }
 
-        /** 這一發的傷害倍率（分裂出來的更少 20%）。 */
+        /** 這一發的傷害倍率（分裂出來的更少 30%；2026-11-01 穿透過敵人之後再乘 {@link #piercedFactor}）。 */
         double damage() {
-            return damage;
+            return hitDamage(damage, passedEnemy, piercedFactor);
         }
     }
 
@@ -106,6 +116,13 @@ final class MinionProjectiles {
     }
 
     // ---- 純函式（測試用） ----
+
+    /**
+     * 2026-11-01 照 PoE2 Pierce I：這一下的傷害倍率＝原本的倍率（分裂的 0.7）×（穿透過敵人了就再乘 piercedFactor）。
+     */
+    static double hitDamage(final double base, final boolean passedEnemy, final double piercedFactor) {
+        return passedEnemy ? base * Math.max(0, piercedFactor) : base;
+    }
 
     /** 飛完 range 格要幾 tick（至少 1）。 */
     static int ticks(final double range, final double speed) {
@@ -131,6 +148,14 @@ final class MinionProjectiles {
      */
     void launch(final UUID owner, final LivingEntity shooter, final Location aimAt, final String kind, final MinionTypes.Projectiles mechanics,
                 final int bonus, final double speed, final double range, final Handler handler) {
+        launch(owner, shooter, aimAt, kind, mechanics, bonus, speed, range, 1.0, handler);
+    }
+
+    /**
+     * 2026-11-01：同上，piercedFactor＝穿透過敵人之後的傷害倍率（{@link MinionTypes#piercedFactor}：貫穿的更少 20% 是 0.8）。
+     */
+    void launch(final UUID owner, final LivingEntity shooter, final Location aimAt, final String kind, final MinionTypes.Projectiles mechanics,
+                final int bonus, final double speed, final double range, final double piercedFactor, final Handler handler) {
         final Location eye = shooter.getEyeLocation();
         final Vector aim = aimAt.toVector().subtract(eye.toVector());
         if (aim.lengthSquared() < 1e-6) {
@@ -140,7 +165,9 @@ final class MinionProjectiles {
         for (final double[] d : spread(aim.getX(), aim.getY(), aim.getZ(), 1 + Math.max(0, mechanics.extra()) + Math.max(0, bonus))) {
             final Vector direction = new Vector(d[0], d[1], d[2]);
             final Vector start = eye.toVector().add(direction.clone().multiply(0.4)).add(new Vector(0, -0.15, 0));
-            add(new Shot(owner, shooter, eye.getWorld(), kind, start, direction, speed, range, mechanics, volley, false, 1.0, handler));
+            final Shot shot = new Shot(owner, shooter, eye.getWorld(), kind, start, direction, speed, range, mechanics, volley, false, 1.0, handler);
+            shot.piercedFactor = piercedFactor;
+            add(shot);
         }
         if ("arrow".equals(kind)) {
             shooter.getWorld().playSound(shooter.getLocation(), org.bukkit.Sound.ENTITY_ARROW_SHOOT, 0.4f, 1.2f);
@@ -241,13 +268,16 @@ final class MinionProjectiles {
                 final Vector direction = shot.direction.clone().rotateAroundY(Math.toRadians(degrees)).normalize();
                 final Vector start = at.toVector().add(direction.clone().multiply(0.5));
                 // 分裂出來的：跟玩家的一樣共用「打過了」（不會再打分裂出來的那隻）、射程一半（至少 6 格）、穿透連鎖照原本的
-                add(new Shot(shot.owner, shot.shooter, shot.world, shot.kind, start, direction, shot.speed, Math.max(6, shot.range / 2),
+                final Shot forked = new Shot(shot.owner, shot.shooter, shot.world, shot.kind, start, direction, shot.speed, Math.max(6, shot.range / 2),
                         new MinionTypes.Projectiles(0, shot.pierceLeft, shot.chainsLeft, false, 1.0), shot.hit, true,
-                        shot.damage * FORK_DAMAGE, shot.handler));
+                        shot.damage * FORK_DAMAGE, shot.handler);
+                forked.piercedFactor = shot.piercedFactor; // 2026-11-01：穿透的代價照原本那發（分裂出來的還沒穿透過）
+                add(forked);
             }
         }
         if (shot.pierceLeft > 0) {
             shot.pierceLeft--;
+            shot.passedEnemy = true; // 2026-11-01 照 PoE2 Pierce I：之後打中的更少 20%
             return; // 穿過去，繼續飛
         }
         if (shot.chainsLeft > 0) {

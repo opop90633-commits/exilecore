@@ -324,7 +324,8 @@ public final class KeystoneEffects implements Listener {
         final double physical = result.outgoing().get(DamageType.PHYSICAL);
         if (chance > 0 && physical > 0 && random().nextDouble() * 100 < chance) {
             Impales.shared().add(defender.getUniqueId(), owner.getUniqueId(), tw.exilecore.stats.KeystoneOriginKeys.impaleAmount(physical,
-                    effective.increased(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_MAGNITUDE, tags)));
+                    effective.increased(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_MAGNITUDE, tags),
+                    effective.more(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_MAGNITUDE, tags))); // 2026-11-01 照 PoE2：穿刺效果的更多（碎骨飛矢 200%）也算
             defender.getWorld().spawnParticle(Particle.CRIT, defender.getLocation().add(0, defender.getHeight() * 0.6, 0), 6, 0.2, 0.3, 0.2, 0.05);
         }
     }

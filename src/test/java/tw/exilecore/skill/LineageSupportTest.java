@@ -183,8 +183,15 @@ class LineageSupportTest {
         assertEquals(10, LineageMechanics.bloodlettingPercent(100, 2), 1e-9, "100 生命：每 20 點 2%");
         assertEquals(40, LineageMechanics.bloodlettingPercent(10000, 2), 1e-9, "最多 40%");
         assertEquals(5, LineageMechanics.voltaicPercent(5, 1), 1e-9);
-        assertEquals(19, LineageMechanics.voltaicPercent(5, 20), 1e-9);
-        assertEquals(tw.exilecore.core.Units.metres(2.5), LineageMechanics.voltaicRadius(20), 1e-9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），期望值照原作公尺換算
+        // 2026-11-01 照 PoE2 Eonyr's Thunder 的 1–40 級表：20 級 14% / 2.1 公尺，40 級 19% / 2.5 公尺（這次之前 20 級就是 19% / 2.5 公尺）
+        assertEquals(14, LineageMechanics.voltaicPercent(5, 20), 1e-9);
+        assertEquals(19, LineageMechanics.voltaicPercent(5, 40), 1e-9);
+        assertEquals(19, LineageMechanics.voltaicPercent(5, 45), 1e-9, "超過 40 級夾在 40 級");
+        assertEquals(tw.exilecore.core.Units.metres(1.5), LineageMechanics.voltaicRadius(1), 1e-9);
+        assertEquals(tw.exilecore.core.Units.metres(2.1), LineageMechanics.voltaicRadius(20), 1e-9); // 期望值照原作公尺換算（Units）
+        assertEquals(tw.exilecore.core.Units.metres(2.5), LineageMechanics.voltaicRadius(40), 1e-9);
+        assertEquals(40, LineageMechanics.VOLTAIC_PERCENT.length);
+        assertEquals(40, LineageMechanics.VOLTAIC_METRES.length);
         assertEquals(531, LineageMechanics.natureGuard(20), 1e-9, "自然交換 20 級 531 守護（原作資料）");
         assertEquals(4, LineageMechanics.hubrisAdded(200).size());
         assertEquals(30, LineageMechanics.hubrisAdded(200).get(0).value(), 1e-9, "傲寒：消耗的 15%");

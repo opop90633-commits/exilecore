@@ -193,6 +193,8 @@ public final class AilmentState {
     private final Meter stun = new Meter();
     private final Meter electrocute = new Meter();
     private final Meter pin = new Meter();
+    /** 2026-11-01 照 PoE2 Daze 輔助：眩暈的累積條（滿了眩暈；眩暈效果本身是戰鬥模組的減益 daze）。 */
+    private final Meter daze = new Meter();
     /** 2026-10-26 照 PoE2：易燃（每層 {百分比, 結束 tick}）。 */
     private final List<double[]> flammability = new ArrayList<>();
 
@@ -556,6 +558,11 @@ public final class AilmentState {
         return pin;
     }
 
+    /** 2026-11-01 照 PoE2 Daze 輔助：眩暈的累積條（不算進 {@link #incapacitated}）。 */
+    public Meter daze() {
+        return daze;
+    }
+
     /** 凍結的累積條。 */
     public Meter freezeMeter() {
         return freeze;
@@ -814,7 +821,7 @@ public final class AilmentState {
     /** 還有沒有要追蹤的東西（沒有就可以丟掉這份狀態）。 */
     public boolean isEmpty(final long now) {
         return ignite(now) == null && bleed(now) == null && poisons(now).isEmpty() && debuffs(now).isEmpty() && chill(now) <= 0 && shock(now) <= 0
-                && freeze.idle(now) && stun.idle(now) && electrocute.idle(now) && pin.idle(now) && flammability(now) <= 0
+                && freeze.idle(now) && stun.idle(now) && electrocute.idle(now) && pin.idle(now) && daze.idle(now) && flammability(now) <= 0
                 && lightStunUntil <= now && armourBroken(now) <= 0 && !fullyBroken(now) && stunsRecently(now) == 0
                 && maimUntil <= now && hinderUntil <= now && groundSlowUntil <= now && blindUntil <= now && corruptedBloodStacks(now) == 0;
     }
@@ -870,6 +877,7 @@ public final class AilmentState {
         poisonVersion++;
         flammability.clear();
         pin.clear();
+        daze.clear();
         debuffs.clear();
         chill = 0;
         chillEnd = 0;

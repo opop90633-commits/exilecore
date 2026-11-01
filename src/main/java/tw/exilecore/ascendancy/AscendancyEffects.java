@@ -329,12 +329,26 @@ public final class AscendancyEffects implements Listener {
     }
 
     /** 翻滾時（SkillTriggers 呼叫）：虛空幻影。 */
-    /** 2026-11-01 照 PoE2 Ruzhan's Brand：按炎刃．羅贊的鍵下指令；不是羅贊（或模組沒開）回傳 null。 */
+    /**
+     * 2026-11-01 照 PoE2：按巨靈的鍵 = 那位巨靈自帶的指令（炎刃．羅贊：羅贊的烙印；終幻．娜瑟菈：娜瑟菈的擁抱）。
+     * 不是這兩位（或模組沒開）回傳 null。
+     */
     public static String djinnPress(final Player player, final SkillBuild build, final LivingEntity target) {
-        if (instance == null || build == null || !"flame_blade_spirit".equals(build.definition().id())) {
+        if (instance == null || build == null) {
             return null;
         }
-        return instance.granted.brand(player, build, target);
+        return switch (build.definition().id()) {
+            case "flame_blade_spirit" -> instance.granted.brand(player, build, target);
+            case "final_mirage_spirit" -> instance.granted.embrace(player, build);
+            default -> null;
+        };
+    }
+
+    /** 2026-11-01：正在結算的這一下是誰打的（CombatListener 在扣血前設、扣完清掉；娜瑟菈的擁抱只擋泡泡外面的敵人）。 */
+    private static LivingEntity hitBy;
+
+    public static void hitBy(final LivingEntity attacker) {
+        hitBy = attacker;
     }
 
     public static void dodge(final Player player) {
@@ -810,6 +824,14 @@ public final class AscendancyEffects implements Listener {
             life *= scale;
             total -= warded;
         }
+        // 2026-11-01 照 PoE2 Navira's Embrace：站在泡泡裡、被泡泡外面的敵人打，泡泡吃掉 70%
+        final double bubbled = total <= 0 ? 0 : granted.embraceAbsorb(player, hitBy, total);
+        if (bubbled > 0) {
+            final double scale = (total - bubbled) / total;
+            es *= scale;
+            life *= scale;
+            total -= bubbled;
+        }
         // 黑暗：承受的傷害先從黑暗保留（保留 5 秒後回來）
         final double darkMax = darknessMax(player, state, sheet);
         if (darkMax > 0) {
@@ -1236,7 +1258,7 @@ public final class AscendancyEffects implements Listener {
             if (has(sheet, AscKeys.DECIMATING) && event.result().hit() && !event.result().blocked()) {
                 final LivingEntity target = event.defender();
                 final org.bukkit.attribute.AttributeInstance max = target.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
-                if (max != null && target.getHealth() >= max.getValue() - 1e-6 && plugin.monsters() != null
+                if (max != null && tw.exilecore.character.LifeChecks.isFullLife(target) && plugin.monsters() != null /* 2026-11-01：統一的滿血判斷 */
                         && plugin.monsters().data(target).filter(data -> !data.boss()).isPresent()) {
                     final double cut = max.getValue() * (0.05 + plugin.random().nextDouble() * 0.25);
                     target.setHealth(Math.max(1, target.getHealth() - cut));
@@ -1306,8 +1328,10 @@ public final class AscendancyEffects implements Listener {
             }
         }
         // 位置正好：投射物傷害會累積釘身；被釘身的敵人無法進行動作
-        if (has(sheet, AscKeys.PROJECTILE_PIN) && tags.contains(Tags.PROJECTILE) && plugin.ailments() != null) {
-            final double multiplier = sheet.apply("pin.buildup", 1.0, tags);
+        if (has(sheet, AscKeys.PROJECTILE_PIN) && tags.contains(Tags.PROJECTILE) && plugin.ailments() != null
+                && (skill == null || !StatKeys.flag(skill.effective(sheet), tw.exilecore.stats.SupportExtraKeys.FLAG_CANNOT_PIN))) { // 2026-11-01 照 PoE2 Bone Shrapnel：不能定身
+            final double multiplier = sheet.apply("pin.buildup", 1.0, tags)
+                    * (skill == null ? 1.0 : tw.exilecore.combat.HitEffects.lockdown(event, skill.effective(sheet), tags)); // 2026-11-01 照 PoE2 Lockdown（遠釘）
             if (plugin.ailments().pinBuildup(target, data, plugin.monsters().sheet(target, data), event.result().dealt().total(), multiplier)
                     && has(sheet, AscKeys.PIN_STOPS)) {
                 plugin.ailments().holdPinned(target);

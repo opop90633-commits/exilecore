@@ -71,7 +71,7 @@ bone_rite:   # Bone Offering（2026-10-28 照 PoE2：護盾消失後 1 秒內受
 dig_remains:   # Unearth（2026-10-28 照 PoE2：骨構體持續時間 +(0—5) 秒、召喚物移動速度增加 (0—50)%；這次之前照通用規則）
   - { stat: skill.base_duration_flat, type: FLAT, per: 0.25 }   # 骨構體持續時間 +秒（Unearth → MinionService）
   - { stat: movement.speed, type: INCREASED, per: 2.5, tags: [minion] }   # 骨構體的移動速度
-shattered_bone_darts:   # Bonestorm
+shattered_bone_darts:   # Bonestorm（2026-11-01 核對 PoE2 qualityStats active_skill_cast_speed_+%_final 0.5：不變）
   - { stat: cast.speed, type: MORE, per: 0.5 }   # 施法速度（更多）
 spine_crush:   # Boneshatter（2026-10-31 照 PoE2：再加震波半徑 +(0—2) 公尺）
   - { stat: attack.speed, type: INCREASED, per: 1.0 }   # 攻擊速度
@@ -319,9 +319,9 @@ evil_thought:   # Malice（2026-10-28 照 PoE2：暴擊弱點持續時間 +(0—
   - { stat: evil_thought.weakness_seconds, type: FLAT, per: 0.05 }   # AuraService
 magic_absorb_art:   # Mana Drain（2026-10-28 照 PoE2：吸取的魔力 +(0—90)；這次之前照通用規則）
   - { stat: mana.on_hit, type: FLAT, per: 4.5 }   # 加在逐級的吸取量上
-magic_spring_well:   # Mana Remnants（2026-10-28 照 PoE2：每顆殘留物多 (0—40) 魔力——我們的魔泉湧是魔力回復＋擊殺回魔（沒有殘留物），照 20 級 281 的比例換成兩者各多 (0—14.2)%；這次之前照通用規則）
-  - { stat: effect.mana.regen, type: INCREASED, per: 0.285 }   # 增益：魔力回復（40 × 14.2%）
-  - { stat: effect.mana.on_kill, type: FLAT, per: 0.0142 }   # 增益：擊殺回魔（2 × 14.2%）
+magic_spring_well:   # Mana Remnants（2026-11-01 照 PoE2：每個痕跡多 (0—40) 魔力、增益 (0—40)% 增加魔力再生；這次之前換算成魔力回復＋擊殺回魔）
+  - { stat: remnant.mana, type: FLAT, per: 2.0 }   # AscGranted.manaRemnantValue
+  - { stat: effect.mana.regen, type: INCREASED, per: 2.0 }   # 增益：魔力再生
 magic_surge:   # Mana Tempest（2026-10-28 照 PoE2：離開之後效果再延續 (0—2) 秒（加在 2 秒上）；這次之前照通用規則）
   - { stat: mana_tempest.linger, type: FLAT, per: 0.1 }   # ManaTempest
 phantom_blade:   # Manifest Weapon（2026-10-29 照 PoE2：(0—20)% 增加召喚物攻擊速度；昇華賦予的技能，品質照 SkillLoadout 的賦予技能品質；這次之前沒寫，照通用規則每 1% 增加 1% 召喚物傷害）
@@ -670,8 +670,10 @@ final_mirage_spirit: []
 flame_blade_spirit:   # 2026-11-01 照 PoE2（Ruzhan's Brand 的品質）：烙印對燃燒中的敵人另外更多 (0—20)% 傷害
   - { stat: asc.brand_burning_more, type: FLAT, per: 1.0 }   # AscGranted.conditional
 sand_spirit_trick: []
-sand_spirit_cruelty: []
-sand_spirit_verdict: []
+sand_spirit_cruelty:   # 2026-11-01 照 PoE2 Kelari's Brutality（PoB2 KnifeThrowSandDjinn qualityStats djinn_knife_throw_number_of_knives_created 0.1）：多 (0—2) 把飛刀；這次之前 []
+  - { stat: skill.projectiles, type: FLAT, per: 0.1 }   # 飛刀數（SkillService.kelariKnives 照 build.projectiles()）
+sand_spirit_verdict:   # 2026-11-01 照 PoE2 Kelari's Judgment（PoB2 HandSlamSandDjinn qualityStats apply_X_stacks_of_critical_weakness_on_hit 0.1）：擊中時多施加 (0—2) 層暴擊弱點；這次之前 []
+  - { stat: crit_weakness.on_hit, type: FLAT, per: 0.1 }
 # 2026-11-01 照 PoE2（poe2db 寶石頁 Additional Effects From Quality）：納維拉、魯兹安的指令有品質效果；這次之前寫 []（以為原作沒有）
 mirage_spirit_haven:   # Navira's Oasis：綠洲每秒另外給 (0—0.2) 點藥劑充能
   - { stat: asc.oasis_flask_rate, type: FLAT, per: 0.01 }   # AscGranted（加在每秒 0.5 上）
@@ -853,6 +855,8 @@ advanced:
     - { stat: charge.sup.keep, type: FLAT, per: 1.0 }   # 用銳星時 x% 機率不用掉（ChargeService.SUP_KEEP，跟恆星同一條）
   startle_thunder_chop:   # Falling Thunder：(0—20)% 機率不用掉戰星（2026-10-28 照 PoE2 poe2db 寶石頁第二條；這次之前沒有）
     - { stat: charge.sup.keep, type: FLAT, per: 1.0 }   # 用銳星時 x% 機率不用掉（ChargeService.SUP_KEEP，跟恆星同一條）
+  shattered_bone_darts:   # Bonestorm：(0—20)% 機率不用掉戰星（2026-11-01 照 PoE2 altQualityStats charge_skip_consume_chance_% 1；這次之前沒寫，進階奇術把一般品質再算一次）
+    - { stat: charge.sup.keep, type: FLAT, per: 1.0 }   # 放出時用掉的每一顆銳星各自擲（ChargeService.SUP_KEEP）
   cold_night_howl:   # Arctic Howl：(0—20)% 機率不算強化次數（2026-10-28 照 PoE2：這次之前是一般品質效果）
     - { stat: warcry.endless_howl, type: FLAT, per: 1.0 }   # x% 機率不算強化次數（跟不竭嘯同一條）
   silver_moon_shelter:   # Lunar Blessing：(0—40)% 增加冷卻回復速度（2026-10-28 照 PoE2：這次之前是一般品質效果）

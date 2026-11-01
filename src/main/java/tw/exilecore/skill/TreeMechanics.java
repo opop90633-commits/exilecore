@@ -228,7 +228,9 @@ public final class TreeMechanics implements Listener {
             mods.add(new Modifier(StatKeys.SHOCK_CHANCE, ModType.MORE, 1.0 * effect, Set.of(Tags.SPELL), source));
         } else {
             mods.add(new Modifier(StatKeys.DAMAGE, ModType.MORE, 0.25 * effect, Set.of(Tags.MINION), source));
-            mods.add(new Modifier(StatKeys.COOLDOWN_RECOVERY, ModType.MORE, 2.0 * effect, Set.of("command"), source));
+            // 2026-11-01 照 PoE2 Undead Archon：召喚物的指令技能冷卻回復速度更多 200%——標 [minion, command]，
+            //   進到每一種可指令召喚物（骷髏、支援火力、巨靈、鴉群）的屬性表、只有指令吃得到；這次之前只標 command，留在你身上，召喚物的指令吃不到
+            mods.add(new Modifier(StatKeys.COOLDOWN_RECOVERY, ModType.MORE, 2.0 * effect, Set.of(Tags.MINION, Commandables.TAG), source));
         }
         final double resist = sheet.flat(TreeNewMechanicKeys.ARCHON_GRANT_RESIST, Set.of()) * effect;
         if (resist != 0) {
@@ -916,16 +918,8 @@ public final class TreeMechanics implements Listener {
         } else {
             bleedingSince.remove(defender.getUniqueId());
         }
-        // 物理法術的暴擊累積釘住
-        if (result.crit() && skill.isSpell() && StatKeys.flag(effective, TreeNewMechanicKeys.FLAG_SPELL_CRIT_PIN) && plugin.ailments() != null
-                && debuffs != null) {
-            final double physical = result.outgoing().get(DamageType.PHYSICAL);
-            if (physical > 0 && plugin.ailments().pinBuildup(defender, monster, plugin.monsters().sheet(defender, monster), physical,
-                    Math.max(0, 1 + effective.increased(tw.exilecore.stats.TreeKeys.PIN_BUILDUP, tags)))) {
-                final long ticks = Math.max(1, Math.round(plugin.ailments().config().pin().duration(false) * 20));
-                debuffs.apply(defender.getUniqueId(), new Debuffs.Debuff("pin", player.getUniqueId(), now + ticks, 0, false, null, List.of(), 1.0));
-            }
-        }
+        // 物理法術的暴擊累積釘住（骸骨連鎖）：2026-11-01 搬到 HitEffects 的定身入口（PinKeys.source），跟其他定身來源同一條累積；
+        //   這次之前在這裡另外算（只算剩下的物理、不吃更多／遠釘／定身持續時間、沒有「定身」字樣、沒帶物理標籤的法術也算）
         // 剛被釘住：破甲；記下來（解除後癱瘓）
         if (debuffs != null && !pinnedBefore.remove(defender.getUniqueId()) && debuffs.has(defender.getUniqueId(), "pin", now)) {
             final double breakPercent = owner.flat(TreeNewMechanicKeys.PIN_ARMOUR_BREAK, Set.of());

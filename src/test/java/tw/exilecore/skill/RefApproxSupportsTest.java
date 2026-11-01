@@ -144,10 +144,11 @@ class RefApproxSupportsTest {
         assertEquals(40, mods.effect(), 1e-9);
         assertEquals(3, mods.delaySeconds(), 1e-9, "撿到 3 秒後才生效");
         assertEquals(ChargeEffects.REMNANT_PICKUP * 1.35, ChargeEffects.remnantPickup(0.35), 1e-9);
-        // 會留殘骸的技能才掛得上：響指、素痕湧、燼種另外算；魔泉湧不會留殘骸
+        // 會留殘骸的技能才掛得上：響指、素痕湧、燼種、魔泉湧（2026-11-01 照 PoE2 Mana Remnants）另外算；律盾不會留殘骸
         assertNull(support("harmony_bones_ii").refusal(skill("anomaly_devour_blast")));
         assertNull(support("harmony_bones_ii").refusal(skill("thunder_cloud")));
-        assertEquals("要會留下殘骸的技能", support("harmony_bones_ii").refusal(skill("magic_spring_well")));
+        assertNull(support("harmony_bones_ii").refusal(skill("magic_spring_well")), "2026-11-01：魔泉湧照原作會留魔力痕跡");
+        assertEquals("要會留下殘骸的技能", support("harmony_bones_ii").refusal(skill("law_shield")));
     }
 
     @Test

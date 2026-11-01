@@ -28,6 +28,17 @@ final class SupportExtraText {
             case SupportExtraKeys.CRIT_VS_BLINDED -> "對致盲的敵人暴擊率與暴擊傷害加成更多 " + n(value) + "%";
             case SupportExtraKeys.FLAG_CANNOT_BLIND -> "不會致盲";
             case SupportExtraKeys.FLAG_CANNOT_MAIM -> "不會癱瘓";
+            // 2026-11-01 照 PoE2 補上的代價
+            case SupportExtraKeys.PIERCED_LESS -> "穿透過敵人之後投射物更少 " + n(value) + "% 傷害";
+            case SupportExtraKeys.FLAG_SHOCK_REFLECT -> "你造成的感電也會反射到你自己身上";
+            case SupportExtraKeys.DAZE_SELF_ON_CRIT -> "暴擊時你自己被眩暈 " + n(value) + " 秒（受到的暈眩累積更多 50%）";
+            case TectonicSlams.DAMAGE_LESS -> "被輔助的技能的餘震更少 " + n(value) + "% 傷害"; // 2026-11-01 照 PoE2 Tectonic Slams
+            case TectonicSlams.AREA_LESS -> "被輔助的技能的餘震範圍更少 " + n(value) + "%";
+            case SupportExtraKeys.BLEEDER_HASTE -> "被這個技能造成流血的敵人攻擊速度、移動速度增加 " + n(value) + "%（流血期間）";
+            case SupportExtraKeys.FLAG_CANNOT_IGNITE -> "不會點燃";
+            case SupportExtraKeys.FLAG_CANNOT_BLEED -> "不會造成流血";
+            case SupportExtraKeys.FLAG_CANNOT_PIN -> "不會定身";
+            case SupportExtraKeys.FLAG_RANDOM_DIRECTION -> "投射物以你為中心往 360 度隨機方向射出";
             case SupportExtraKeys.CONSUME_FREEZE -> "擊中凍結中的敵人時用掉凍結（留下冰緩），這一下更多 " + n(value) + "% 傷害";
             case SupportExtraKeys.CONSUME_FREEZE_UNIQUE -> "用掉凍結時對傳奇怪物與 Boss 再更多 " + n(value) + "%";
             case SupportExtraKeys.CONSUME_BROKEN -> "擊中完全破甲的敵人時用掉破甲，這一下更多 " + n(value) + "% 傷害";
@@ -77,6 +88,16 @@ final class SupportExtraText {
             case SupportExtraKeys.FINAL_STRIKE_MARK -> "這一下是連段的最後一擊";
             case SupportExtraKeys.DAZE_FULL_LIFE -> "擊中滿血的敵人時讓牠眩暈";
             case SupportExtraKeys.DAZE_PHYSICAL_CRIT -> "用物理傷害暴擊時讓敵人眩暈";
+            case SupportExtraKeys.DAZE_ON_ARMOUR_BROKEN -> "讓敵人完全破甲時，讓那隻敵人眩暈 " + n(value) + " 秒"; // 2026-11-01（破眩）
+            case SupportExtraKeys.MANA_REGEN_ON_SHOCK -> "讓敵人感電時，你 " + n(SupportExtraKeys.MANA_REGEN_ON_SHOCK_TICKS / 20.0)
+                    + " 秒內每秒再生 " + n(value) + " 點魔力"; // 2026-11-01（吸電）
+            case SupportExtraKeys.PHYSICAL_VS_BLEEDING -> percent + "% " + (value >= 0 ? "更多" : "更少") + "對流血中的敵人的物理傷害"; // 2026-11-01（腥獵）
+            case SupportExtraKeys.GREATWOOD_DAMAGE -> "圖騰 " + n(SupportExtraKeys.GREATWOOD_RADIUS_METRES) + " 格內你每有一根其他圖騰（最多 "
+                    + SupportExtraKeys.GREATWOOD_CAP + " 根），圖騰更多 " + n(value) + "% 傷害"; // 2026-11-01（厚樁）
+            case SupportExtraKeys.GREATWOOD_AREA -> "圖騰 " + n(SupportExtraKeys.GREATWOOD_RADIUS_METRES) + " 格內你每有一根其他圖騰（最多 "
+                    + SupportExtraKeys.GREATWOOD_CAP + " 根），圖騰增加 " + n(value) + "% 範圍效果";
+            case SupportExtraKeys.GREATWOOD_REGEN -> "圖騰 " + n(SupportExtraKeys.GREATWOOD_RADIUS_METRES) + " 格內你每有一根其他圖騰（最多 "
+                    + SupportExtraKeys.GREATWOOD_CAP + " 根），圖騰每秒回復 " + n(value / 100.0) + "% 最大生命";
             case SupportExtraKeys.EXPOSURE_ON_IGNITE -> "點燃敵人時讓牠火焰曝露 " + n(value) + " 秒";
             case SupportExtraKeys.EXPOSURE_ON_COLD_CRIT -> "冰冷傷害暴擊時讓敵人冰冷曝露 " + n(value) + " 秒";
             case SupportExtraKeys.EXPOSURE_ON_SHOCK -> "感電敵人時讓牠閃電曝露 " + n(value) + " 秒";
@@ -143,7 +164,9 @@ final class SupportExtraText {
             case SupportExtraKeys.FLAG_MINION_SPLASH -> "召喚物的近戰打中時，目標周圍 2 格的敵人受到這一下 60% 的傷害";
             case SupportExtraKeys.LAST_GASP -> "召喚物生命歸零後再撐 " + n(value) + " 秒才死";
             case SupportExtraKeys.CRAZED -> "召喚物最近復活過時更多 " + n(value) + "% 傷害";
-            case SupportExtraKeys.FLAG_COMMANDMENT -> "召喚物用指令以外的技能不造成傷害；牠們的指令冷卻回復速度增加 100%";
+            // 2026-11-01：寫出掛得上的召喚物（Commandables.SKILLS）
+            case SupportExtraKeys.FLAG_COMMANDMENT -> "召喚物用指令以外的技能不造成傷害；牠們的指令冷卻回復速度增加 100%"
+                    + "（骸骨重卒、射手、焰術士、雷術士、霜術士、狂卒、掩護火力、鴉群密謀、三位巨靈）";
             case SupportExtraKeys.LOYALTY -> "你受到的擊中傷害有 " + n(value) + "% 先由夥伴承受";
             case "corpse.save_chance" -> "用掉屍體時有 " + n(value) + "% 機率不毀掉屍體";
             case SupportExtraKeys.FONT_BLOOD -> "圖騰四周 4 格是血之泉：站在裡面偷取圖騰物理傷害的 " + n(value) + "% 為生命";

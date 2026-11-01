@@ -17,6 +17,11 @@ public final class RolledAffix {
     /** 2026-10-26：擲出時這條詞綴的群組與前後綴（prefix／suffix）：詞綴整條從資料拿掉時，用來找同類的換上。null = 沒記。 */
     private String group;
     private String side;
+    /**
+     * 2026-11-01 照 PoE2（站長：腐化「重骰數值 0.78～1.22 倍」連固定值也會變）：這條詞綴腐化時抽到的倍率（百分比，例如 112）；
+     * 擲出來的變數當下就乘過了，這個是給固定值（資料檔寫死的數字）用的。null = 沒腐化過（不寫進 JSON）。
+     */
+    private Integer corrupt;
 
     public RolledAffix() {
         this.vars = new LinkedHashMap<>();
@@ -57,6 +62,19 @@ public final class RolledAffix {
         this.side = newSide;
     }
 
+    /** 固定值的倍率（沒腐化過是 1）。 */
+    public double fixedScale() {
+        return corrupt == null ? 1.0 : corrupt / 100.0;
+    }
+
+    public Integer corrupt() {
+        return corrupt;
+    }
+
+    public void setCorrupt(final Integer percent) {
+        this.corrupt = percent;
+    }
+
     public String group() {
         return group;
     }
@@ -79,6 +97,7 @@ public final class RolledAffix {
         copy.ranges = copyRanges(ranges);
         copy.group = group;
         copy.side = side;
+        copy.corrupt = corrupt;
         return copy;
     }
 }
