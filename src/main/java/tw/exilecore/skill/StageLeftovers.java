@@ -113,6 +113,14 @@ public final class StageLeftovers implements Listener {
     static final double WALL_LENGTH = tw.exilecore.core.Units.metres(4.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double WALL_AROUND = tw.exilecore.core.Units.metres(1.4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double WALL_SELF_MORE = 1.0;
+    /** 2026-11-01 照 PoE2 Shield Wall：立起來前 0.5 秒（10 tick）內不是你打碎的，爆炸更少 80%。 */
+    static final long WALL_EARLY_TICKS = 10;
+    static final double WALL_EARLY_LESS = -0.8;
+
+    /** 牆立起來 age tick 時被別人打碎：算不算「前 0.5 秒」。純函式（測試用）。 */
+    static boolean wallEarly(final long age) {
+        return age >= 0 && age < WALL_EARLY_TICKS;
+    }
     static final double WALL_TOUCH = 1.2;
     /** 熾陽之矛：點燃地面跟著光矛的時間擴大到半徑更多 100%。 */
     static final double SOLARIS_GROW = 1.0;
@@ -284,6 +292,11 @@ public final class StageLeftovers implements Listener {
         service.targets().addStrikeable(this::struck);
     }
 
+    /** 2026-11-01：熔岩地裂（炎脈裂地、熔裂踏、回旋鍛錘的裂地共用一份，在 SkillExecutor；別的猛擊打到時引爆）。 */
+    MoltenFissures molten() {
+        return service.executor().moltenFissures();
+    }
+
     private long now() {
         return plugin.getServer().getCurrentTick();
     }
@@ -411,6 +424,9 @@ public final class StageLeftovers implements Listener {
     /** 穿甲重彈的裂甲：敵人 → 誰的、存多少、到哪個 tick。 */
     private final Map<UUID, Riven> riven = new HashMap<>();
 
+    /** 2026-11-01 照 PoE2 Vaulting Impact：躍棍崩擊給的破勢（{@link BrokenStance}）。 */
+    private final BrokenStance brokenStance = new BrokenStance();
+
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onHit(final HitEvent event) {
         if (!(event.attacker() instanceof Player player) || event.skill() == null || !event.result().hit() || event.result().blocked()) {
@@ -439,6 +455,12 @@ public final class StageLeftovers implements Listener {
                     });
                 }
             }
+        }
+        if (BrokenStance.ID.equals(id) && plugin.combat() != null && plugin.combat().debuffs().has(target.getUniqueId(), "daze", now)) {
+            // 2026-11-01 照 PoE2 Vaulting Impact：震波打中眩暈中的敵人給破勢（強度 = 這一下傷害的 10%，60 秒、10 下；品質多撐幾下）
+            brokenStance.apply(target.getUniqueId(), event.result().total(),
+                    skill.effective(sheet(player)).flat(BrokenStance.EXTRA_HITS, skill.tags()), now);
+            target.getWorld().spawnParticle(Particle.CRIT, target.getLocation().add(0, target.getHeight() * 0.8, 0), 10, 0.25, 0.3, 0.25, 0.1);
         }
         if (PALM.equals(id)) {
             palm(player, skill, target, now);
@@ -525,6 +547,12 @@ public final class StageLeftovers implements Listener {
                 out.add(Modifier.flat(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_EXTRACT, entry.amount(), "裂甲"));
             }
         }
+        // 2026-11-01 照 PoE2 Vaulting Impact：破勢的敵人被擊中時額外受到破勢強度的物理傷害（不吃加成），每一下扣一次
+        final double broken = brokenStance.consume(defender.getUniqueId(), now());
+        if (broken > 0) {
+            out = out.isEmpty() ? new ArrayList<>(2) : out;
+            out.add(Modifier.flat(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_EXTRACT, broken, "破勢"));
+        }
         final double per = skillSheet.flat(MORE_PER_5_SHOCK, tags);
         if (per > 0 && plugin.ailments() != null) {
             final double more = conduitMore(plugin.ailments().shockMagnitude(defender), per);
@@ -589,6 +617,8 @@ public final class StageLeftovers implements Listener {
         final double[] life;
         final Vector forward;
         final long until;
+        /** 2026-11-01：立起來的 tick（前 0.5 秒被別人打碎的爆炸更少 80%）。 */
+        long placed;
 
         Wall(final UUID owner, final SkillBuild build, final List<Location> points, final double life, final Vector forward, final long until) {
             this.owner = owner;
@@ -631,7 +661,9 @@ public final class StageLeftovers implements Listener {
         }
         final List<Location> copy = new ArrayList<>();
         points.forEach(point -> copy.add(point.clone()));
-        walls.add(new Wall(owner, build, copy, life, forward, now() + build.durationTicks(build.params().zone() == null ? 6 : build.params().zone().duration())));
+        final Wall placed = new Wall(owner, build, copy, life, forward, now() + build.durationTicks(build.params().zone() == null ? 6 : build.params().zone().duration()));
+        placed.placed = now();
+        walls.add(placed);
         startTimer();
     }
 
@@ -648,6 +680,9 @@ public final class StageLeftovers implements Listener {
         if (bySelf) {
             // 2026-10-28 照 PoE2 Shield Wall 的品質：被自己的技能打碎時再更多 (0—40)%（加在 100% 上）
             profile = profile.scaled(1 + WALL_SELF_MORE + wall.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.WALL_SELF_MORE) / 100.0, "自己打碎");
+        } else if (wallEarly(now() - wall.placed)) {
+            // 2026-11-01 照 PoE2 Shield Wall（shield_wall_damage_+%_final_for_first_500_ms_when_not_killed_by_self -80）：立起來 0.5 秒內被敵人打碎更少 80%
+            profile = profile.scaled(1 + WALL_EARLY_LESS, "剛立起就被打碎");
         }
         final double scale = wall.build.areaScale();
         final Set<UUID> hit = new HashSet<>();
@@ -1315,7 +1350,14 @@ public final class StageLeftovers implements Listener {
     private void fissures(final Player player, final ForgeMark mark) {
         final SkillBuild build = mark.build();
         final SkillStages.Stage stage = SkillStages.get(FORGE, "fissure");
-        final int count = Math.max(1, stage.count().intAt(build.level()));
+        // 2026-11-01 照 PoE2（Forge Hammer 是 CreatesFissure）：隆起、狂裂、分裂地面多的裂地加進螺旋的道數（base_number_of_fissures 加上去）
+        final StatSheet effective = build.profile().effective(sheet(player));
+        final Set<String> tags = build.profile().tags();
+        final double chance = effective.flat(tw.exilecore.stats.KeystoneOriginKeys.EXTRA_FISSURE_CHANCE, tags);
+        final int count = FissureSkills.forgeCount(stage.count().intAt(build.level()),
+                (int) Math.round(effective.flat(tw.exilecore.stats.SupportExtraKeys.FISSURE_EXTRA, tags)),
+                (int) Math.round(effective.flat(tw.exilecore.stats.LineageKeys.EXTRA_FISSURES, tags)),
+                chance > 0 && plugin.random().nextDouble() * 100 < chance);
         final double width = SkillStages.radius(build, "fissure", 1.0 * build.areaScale());
         final double length = FISSURE_LENGTH * build.areaScale(); // 2026-10-31：裂隙長度也吃範圍效果（這次之前只有寬度）
         final SkillProfile profile = SkillStages.profile(build, build.profile(), "fissure")
@@ -1323,25 +1365,28 @@ public final class StageLeftovers implements Listener {
         final Vector facing = SkillTargets.facing(player).setY(0);
         final double start = Math.atan2(facing.getZ(), facing.getX());
         final Location origin = mark.at().clone();
+        final int branches = (int) Math.round(effective.flat(tw.exilecore.stats.SupportExtraKeys.FISSURE_BRANCHES, tags));
+        final SkillProfile branchProfile = profile.scaled(Math.max(0, 1 - effective.flat(tw.exilecore.stats.SupportExtraKeys.FISSURE_BRANCH_DAMAGE, tags) / 100.0),
+                "分岔裂地");
+        final double branchScale = FissureSkills.branchLinear(effective.flat(tw.exilecore.stats.SupportExtraKeys.FISSURE_BRANCH_AREA, tags));
+        // 2026-11-01 照 PoE2（Forge Hammer 的 Fissures：base_skill_effect_duration 8000、forge_hammer_base_maximum_number_of_fissures 10）：
+        //   熔岩裂縫留在地上 8 秒（吃持續時間）、同時最多 10 道（天賦樹「裂地技能 +1 上限」也算；多的最舊的消失，分岔、隆起、狂裂多的都算進去），
+        //   你別的猛擊打到就沿著裂縫餘震（MoltenFissures）；這次之前裂開時打一下就沒了
+        final int ticks = build.durationTicks(stage.duration() > 0 ? stage.duration() : FissureSkills.FORGE_SECONDS);
+        final int max = FissureSkills.FORGE_MAX + (int) Math.round(effective.flat(tw.exilecore.stats.KeystoneKeys.SKILL_LIMIT, tags));
         for (final double[] ray : spiral(count, start)) {
             // 螺旋：前半段照一個方向，後半段往旁邊彎
             final Location mid = origin.clone().add(ray[0] * length / 2, 0, ray[1] * length / 2);
             final Location end = mid.clone().add(ray[2] * length / 2, 0, ray[3] * length / 2);
-            final Set<UUID> hit = new HashSet<>();
-            for (final LivingEntity target : service.targets().alongLine(origin, mid, width, player)) {
-                if (hit.add(target.getUniqueId())) {
-                    service.executor().hitOne(player, profile, target, origin, 0);
-                }
-            }
-            for (final LivingEntity target : service.targets().alongLine(mid, end, width, player)) {
-                if (hit.add(target.getUniqueId())) {
-                    service.executor().hitOne(player, profile, target, mid, 0);
-                }
-            }
-            for (double d = 0; d <= length; d += 0.5) {
-                final Location at = d <= length / 2 ? origin.clone().add(ray[0] * d, 0.1, ray[1] * d)
-                        : mid.clone().add(ray[2] * (d - length / 2), 0.1, ray[3] * (d - length / 2));
-                at.getWorld().spawnParticle(Particle.FLAME, at, 2, 0.15, 0.05, 0.15, 0.01);
+            molten().createPath(player, FORGE + ".fissure", List.of(origin.clone(), mid, end), width, profile, build.definition().visual(), ticks, max);
+            // 2026-11-01 照 PoE2 Branching Fissures：每一道裂地上岔出 x 道（第 i 道在 i ÷ (x＋1) 處，左右交替偏 40 度），長、寬照分岔的範圍縮小
+            for (int i = 1; i <= branches; i++) {
+                final double[] at = FissureSkills.alongSpiral(ray, length, SkillExecutor.branchPoint(i, branches));
+                final double[] dir = FissureSkills.rotate(at[2], at[3], Math.toRadians(FissureSkills.BRANCH_DEGREES) * (i % 2 == 0 ? -1 : 1));
+                final Location from = origin.clone().add(at[0], 0, at[1]);
+                final double reach = length * branchScale;
+                molten().createPath(player, FORGE + ".fissure", List.of(from, from.clone().add(dir[0] * reach, 0, dir[1] * reach)), width * branchScale,
+                        branchProfile, build.definition().visual(), ticks, max);
             }
         }
         origin.getWorld().playSound(origin, Sound.BLOCK_ANVIL_LAND, SoundCategory.PLAYERS, 1.0f, 0.6f);
@@ -1531,6 +1576,15 @@ public final class StageLeftovers implements Listener {
         return chance * dps * config.poisonDuration();
     }
 
+    /** 2026-11-01 照 PoE2 Vine Arrow：你的技能打到地上的植物：這一下預期的中毒每秒傷害（中毒機率 × 每秒，不乘持續時間）。 */
+    double expectedPoisonDps(final Player owner, final SkillProfile skill) {
+        if (plugin.ailments() == null) {
+            return 0;
+        }
+        final double duration = plugin.ailments().config().poisonDuration();
+        return duration <= 0 ? 0 : expectedPoison(owner, skill) / duration;
+    }
+
     // ---------------------------------------------------------------- 計時
 
     private void startTimer() {
@@ -1569,6 +1623,7 @@ public final class StageLeftovers implements Listener {
     }
 
     void forget(final UUID id) {
+        molten().forget(id); // 2026-11-01
         rains.values().removeIf(rain -> rain.owner.equals(id));
         bombs.removeIf(bomb -> bomb.owner.equals(id));
         ignited.removeIf(ground -> ground.owner.equals(id));

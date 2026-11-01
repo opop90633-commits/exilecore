@@ -239,6 +239,110 @@ public record SupportDefinition(String id, String name, String description, Stri
         return refusal(skill, others) == null;
     }
 
+    /**
+     * 2026-11-01 照 PoE2（PoB2 SkillGrantedBySupport：輔助送的技能也吃同一顆寶石上的其他輔助）：能不能插在這顆寶石上。
+     * 本身能輔助這個技能，或能輔助同一顆寶石上別的輔助送的技能（咒爆的咒殞爆…）就插得進去；後者效果只給那個送的技能
+     * （{@link #grantedTargets}），不給本體。這次之前只看本體（凋魂詛咒＋咒爆插不進附蝕）。
+     */
+    public String socketRefusal(final SkillDefinition skill, final java.util.Collection<String> others) {
+        final String own = refusal(skill, others);
+        if (own == null) {
+            return null;
+        }
+        return grantedTargets(skill, others).isEmpty() ? own : null;
+    }
+
+    /** 插得進去（{@link #socketRefusal} 是 null）但本體吃不到：效果只給別的輔助送的技能。 */
+    public boolean onlyGranted(final SkillDefinition skill, final java.util.Collection<String> others) {
+        return refusal(skill, others) != null && !grantedTargets(skill, others).isEmpty();
+    }
+
+    /** 這顆輔助自己會送技能（寫了 proc.…：咒爆、餘震、撒蒺…）。 */
+    public boolean grantsSkills() {
+        return !grantedSkillIds().isEmpty();
+    }
+
+    /** 這顆輔助送的技能代號（proc.… 的第一個標籤）。 */
+    public java.util.List<String> grantedSkillIds() {
+        final java.util.List<String> out = new java.util.ArrayList<>();
+        for (final Modifier modifier : modifiers) {
+            if (modifier.stat().startsWith(SupportProcs.PREFIX) && !modifier.tags().isEmpty()) {
+                final String sub = modifier.tags().iterator().next();
+                if (!out.contains(sub)) {
+                    out.add(sub);
+                }
+            }
+        }
+        return out;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2（PoB2 Data/Skills/sup_*.lua 裡 SkillType.SkillGrantedBySupport 的技能）：原作真的是「輔助送的技能」的那些。
+     * 其他用 proc 做的（凍地、躍電、電印地、碎寒、震環、殘肢、曝嘯、眩嘯、燼勢、霆勢、霜漫、霜渦…）原作只是輔助自己的效果，不算。
+     */
+    static final Set<String> GRANTED_BY_SUPPORT = Set.of(
+            "proc_impending_doom",    // Doom Blast（咒爆）
+            "proc_flame_pillar",      // Flame Pillar（炎柱）
+            "proc_haemocrystal",      // Haemocrystals（血結晶）
+            "proc_fiery_death",       // Fiery Death（焚屍）
+            "proc_coursing_current",  // Coursing Current（竄電）
+            "proc_poison_spore",      // Poison Spores（孢爆）
+            "proc_mana_flare",        // Mana Flare（魔焰）
+            "proc_shock_rift", "proc_shock_rift_final", // Electromagnetism（磁暴）
+            "proc_bursting_plague",   // Plague Burst（瘟潰）
+            "proc_wind_wave",         // Wind Wave（震風）
+            "proc_corrupting_cry",    // Corrupted Cry（腐蝕嘯）
+            "proc_decaying_hex",      // Profane Decay（朽咒）
+            "proc_bone_burst",        // Bone Shrapnel Explosion（骨裂）
+            "proc_fan_flames",        // Fan the Flames（播火）
+            "proc_static_orb",        // Static Shocks（靜電）
+            "proc_bramble");          // Brambles（荊棘震）
+
+    /**
+     * 這顆輔助能不能輔助輔助送的這個技能（照 PoE2：會送技能的輔助自己不算、原作不能用在觸發技能上的不算（support_ref.yml triggered）、
+     * 照原技能那一下出傷害的（parent_damage：餘震、撒蒺…）已經吃過原技能的輔助，不再算一次）。
+     */
+    public boolean supportsGranted(final SkillDefinition granted) {
+        final SkillConfig config = SkillConfig.current();
+        if (granted == null || !GRANTED_BY_SUPPORT.contains(granted.id()) || grantsSkills() || RefSupportRules.triggeredExcluded(id)) {
+            return false;
+        }
+        if (config != null && config.parentDamage(granted.id()) != 0) {
+            return false;
+        }
+        return refusal(granted, java.util.List.of()) == null;
+    }
+
+    /** 同一顆寶石上別的輔助（本身掛得上這個技能的）送的技能裡，這顆輔助能輔助的那些。 */
+    public java.util.List<SkillDefinition> grantedTargets(final SkillDefinition skill, final java.util.Collection<String> others) {
+        final SkillConfig config = SkillConfig.current();
+        if (config == null || others == null || others.isEmpty() || skill == null) {
+            return java.util.List.of();
+        }
+        final java.util.List<SkillDefinition> out = new java.util.ArrayList<>();
+        for (final String other : others) {
+            if (other.equals(id)) {
+                continue;
+            }
+            final SupportDefinition granter = config.support(other);
+            if (granter == null || !granter.grantsSkills()) {
+                continue;
+            }
+            final java.util.List<String> rest = new java.util.ArrayList<>(others);
+            rest.remove(id);
+            if (granter.refusal(skill, rest) != null) {
+                continue; // 送技能的那顆自己要真的掛得上
+            }
+            for (final String subId : granter.grantedSkillIds()) {
+                final SkillDefinition sub = config.skill(subId);
+                if (sub != null && !out.contains(sub) && supportsGranted(sub)) {
+                    out.add(sub);
+                }
+            }
+        }
+        return out;
+    }
+
     private boolean unlockedBy(final SkillDefinition skill, final java.util.Collection<String> others) {
         if (others == null || others.isEmpty()) {
             return false;
@@ -298,6 +402,10 @@ public record SupportDefinition(String id, String name, String description, Stri
         }
         final String own = ownRefusal(skill);
         if (own == null) {
+            return null;
+        }
+        // 2026-11-01 照 PoE2（PoB2 addSkillTypes）：同一顆寶石上別的輔助讓技能多了類型——咒地讓詛咒有「上限」（Limit），過剩掛得上
+        if (own.equals("要" + requiresText()) && matchesRequires(skill, addedTags(skill, others))) {
             return null;
         }
         // 2026-10-30 照 PoE2：掘骸也是召喚技能（CreatesMinion）：召喚物輔助掛得上，效果只給叫出來的骨構體（SkillBuild 算骨刺時略過）
@@ -633,6 +741,36 @@ public record SupportDefinition(String id, String name, String description, Stri
     public static boolean persistentBuff(final SkillDefinition skill) {
         final Set<String> tags = skill.tags();
         return tags.contains(Tags.AURA) || tags.contains(Tags.HERALD) || tags.contains(Tags.PERSISTENT) && tags.contains(Tags.BUFF);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 addSkillTypes：others 裡掛得上這個技能的輔助替它加的標籤。目前只有咒地（Cursed Ground：addSkillTypes Limit）。
+     */
+    Set<String> addedTags(final SkillDefinition skill, final java.util.Collection<String> others) {
+        final SkillConfig config = SkillConfig.current();
+        if (config == null || others == null || others.isEmpty()) {
+            return Set.of();
+        }
+        final Set<String> out = new java.util.HashSet<>();
+        for (final String other : others) {
+            final SupportDefinition support = other.equals(id) ? null : config.support(other);
+            if (support != null && support.flags(tw.exilecore.stats.SupportExtraKeys.CURSED_GROUND) && support.ownRefusal(skill) == null) {
+                out.add(SkillLimits.TAG);
+            }
+        }
+        return out;
+    }
+
+    private boolean matchesRequires(final SkillDefinition skill, final Set<String> added) {
+        if (added.isEmpty()) {
+            return false;
+        }
+        for (final String tag : requires) {
+            if (added.contains(tag)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean matchesRequires(final SkillDefinition skill) {

@@ -89,6 +89,15 @@ public final class SupportProcs implements Listener {
         this.plugin = plugin;
         this.service = service;
         this.rifts = new ShockingRifts(plugin, service.targets()); // 2026-11-01 照 PoE2 Electromagnetism
+        this.basis = new ProcBasis(plugin, service); // 2026-11-01 照 PoE2：噴炎柱、魔焰爆、播火爆、荊棘叢生、腐血嘯、刺爆針
+    }
+
+    /** 2026-11-01 照 PoE2：幾個觸發技能自己的傷害基礎與做法（{@link ProcBasis}）。 */
+    private final ProcBasis basis;
+
+    /** 2026-11-01 照 PoE2 Quill Burst：刺爆針（SupportExtras 在荊棘反彈之後的擊中呼叫）。 */
+    boolean quillBurst(final Player player, final String levelFrom, final LivingEntity struck) {
+        return basis.quillBurst(player, levelFrom, struck);
     }
 
     private long now() {
@@ -302,7 +311,7 @@ public final class SupportProcs implements Listener {
      * （沒被重放、換掉、淨化、死掉），是的話在牠身上炸咒殞爆。持續時間無限的詛咒不會結束，不炸。
      */
     void curseApplied(final Player player, final String skillId, final LivingEntity target, final List<tw.exilecore.combat.Debuffs.Debuff> placed,
-                      final long applied, final long until) {
+                      final long applied, final long until, final Object source) {
         if (player == null || target == null || placed.isEmpty() || until >= Long.MAX_VALUE / 8 || until - applied <= 1
                 || procs(player, baseId(skillId), CURSE_EXPIRED).isEmpty()) {
             return;
@@ -310,7 +319,35 @@ public final class SupportProcs implements Listener {
         final String id = baseId(skillId);
         final boolean meta = metaHit;
         final List<tw.exilecore.combat.Debuffs.Debuff> copy = List.copyOf(placed);
+        // 2026-11-01 照站長：身上的詛咒被新的同一個詛咒蓋掉（再放一次、另一塊詛咒地面）也算這個詛咒結束，當下就炸；
+        //   同一塊詛咒地面、同一個咒環自己刷新不算（source 一樣）。這次之前蓋掉的不炸（舊的那個到期檢查時已經不是同一個詛咒）
+        if (overwritten(curseSources, player.getUniqueId() + ":" + id + ":" + target.getUniqueId(), source, applied, until)) {
+            final boolean previous = metaHit;
+            metaHit = previous || meta;
+            try {
+                fireAll(player, id, CURSE_EXPIRED, target.getLocation(), target, null);
+            } finally {
+                metaHit = previous;
+            }
+        }
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> curseEnding(player, id, target, copy, meta), Math.max(1, until - applied - 1));
+    }
+
+    /** 每個（施放者、詛咒、敵人）最後一次是哪個來源放的、到哪個 tick（咒爆看「被蓋掉」）。 */
+    private final Map<String, CurseSource> curseSources = new HashMap<>();
+
+    record CurseSource(Object source, long until) {
+    }
+
+    /**
+     * 這次放上去的詛咒是不是蓋掉了身上還沒結束、別的來源放的同一個詛咒（是的話要當下炸咒殞爆）。順便記下這次的來源。純函式（測試用）。
+     */
+    static boolean overwritten(final Map<String, CurseSource> sources, final String key, final Object source, final long now, final long until) {
+        if (sources.size() > 4096) {
+            sources.values().removeIf(each -> each.until() < now);
+        }
+        final CurseSource last = sources.put(key, new CurseSource(source, until));
+        return last != null && last.until() > now && !java.util.Objects.equals(last.source(), source);
     }
 
     private void curseEnding(final Player player, final String id, final LivingEntity target, final List<tw.exilecore.combat.Debuffs.Debuff> placed,
@@ -462,11 +499,11 @@ public final class SupportProcs implements Listener {
         }
         fireAll(player, skillId, "hit", target.getLocation(), target, null);
         // 銀月庇（2026-10，PoE2 的月光賜福）：增益期間狼人形態的攻擊打中時落下月光（每秒最多一次）
+        // 2026-11-01 照 PoE2 Lunar Blessing（Werewolf Melee Attacks call down Moonbeams on Hit）：只有狼人的近戰攻擊；這次之前狼人的攻擊都算
         if (event.skill().tags().contains(tw.exilecore.stats.Tags.WEREWOLF) && event.skill().tags().contains(tw.exilecore.stats.Tags.ATTACK)
+                && event.skill().tags().contains(tw.exilecore.stats.Tags.MELEE)
                 && service.buffs().has(player.getUniqueId(), LUNAR_BLESSING)) {
-            if (castAt(player, LUNAR_MOONBEAM, LUNAR_BLESSING, target.getLocation())) {
-                moonbeamChain(player, target); // 2026-10-27 照 PoE2：另外落在 6 格內 4～8 個敵人身上
-            }
+            moonbeam(player, target);
         }
         if (event.skill().id().endsWith(PERFECT_SUFFIX)) {
             // 2026-10-28 照 PoE2 Snipe：完美時機的箭直接打中凍結中的敵人時用掉凍結，改炸寒冰爆破（perfect_hit_frozen），不另外炸一般的爆炸；
@@ -541,6 +578,7 @@ public final class SupportProcs implements Listener {
     /** 2026-10-27：triggered＝主要寶石觸發的法術放的（「放下時」觸發出來的技能也帶 .meta，不再幫主要寶石充能；這次之前沒標）。 */
     void onUse(final Player player, final SkillDefinition definition, final Location at, final boolean triggered) {
         listenMarks();
+        basis.used(player, definition.id()); // 2026-11-01 照 PoE2 Flame Pillar：每次使用最多 10 道火柱，重新算
         final boolean previous = metaHit;
         metaHit = previous || triggered;
         try {
@@ -707,26 +745,64 @@ public final class SupportProcs implements Listener {
         return level <= 15 ? 4 : level <= 20 ? 5 : level <= 25 ? 6 : level <= 30 ? 7 : 8;
     }
 
-    /** 2026-10-27 照 PoE2：月光打中那個敵人之後，再一道一道落在 6 格內最近的另外幾個敵人身上（不另外算冷卻）；這次之前只落一道。 */
-    private void moonbeamChain(final Player player, final LivingEntity first) {
+    /** 2026-11-01 照 PoE2 Moonbeam（wolf_lunar_blessing_beam_attack_delay_ms 950）：月光打中後 0.95 秒才落下（tick）。 */
+    static final long MOONBEAM_DELAY = 19;
+
+    /**
+     * 2026-11-01 照 PoE2 Moonbeam：打中時（月光冷卻 1 秒）先在那個敵人當下的位置亮起光柱，0.95 秒後落下；
+     * 同時挑 6 格內最近的另外 4～8 個敵人，之後每 0.2 秒在牠們（挑的時候）的位置各落一道（不另外算冷卻）。
+     * 這次之前打中當下就落下，另外幾道也是馬上一道一道落。
+     */
+    private void moonbeam(final Player player, final LivingEntity first) {
         final SkillDefinition sub = service.config().skill(LUNAR_MOONBEAM);
         if (sub == null) {
             return;
         }
+        final Map<String, Long> mine = ready.computeIfAbsent(player.getUniqueId(), uuid -> new HashMap<>());
+        final long now = now();
+        if (mine.getOrDefault(LUNAR_MOONBEAM, 0L) > now) {
+            return;
+        }
+        final long cooldown = triggerCooldownTicks(sub);
+        if (cooldown > 0) {
+            mine.put(LUNAR_MOONBEAM, now + cooldown);
+        }
         final PlayerState state = plugin.players().get(player);
         final int level = gemLevelOf(player, state, LUNAR_BLESSING);
         final Location center = first.getLocation();
+        final List<Location> spots = new java.util.ArrayList<>();
+        spots.add(center.clone());
         final List<LivingEntity> others = new java.util.ArrayList<>(service.targets().around(center, MOONBEAM_CHAIN_RANGE, player));
         others.removeIf(each -> each.getUniqueId().equals(first.getUniqueId()));
         others.sort(java.util.Comparator.comparingDouble(each -> each.getLocation().distanceSquared(center)));
         final int count = Math.min(others.size(), moonbeamExtraTargets(level));
         for (int i = 0; i < count; i++) {
-            final LivingEntity next = others.get(i);
+            spots.add(others.get(i).getLocation().clone());
+        }
+        for (int i = 0; i < spots.size(); i++) {
+            final Location at = spots.get(i);
+            final long delay = moonbeamLandsAfter(i);
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> telegraph(at), Math.max(0, delay - MOONBEAM_DELAY));
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                if (player.isOnline() && next.isValid() && !next.isDead() && next.getWorld().equals(player.getWorld())) {
-                    castNow(player, sub, LUNAR_BLESSING, next.getLocation());
+                if (player.isOnline() && at.getWorld() != null && at.getWorld().equals(player.getWorld())) {
+                    castNow(player, sub, LUNAR_BLESSING, at);
                 }
-            }, MOONBEAM_CHAIN_DELAY * (i + 1));
+            }, delay);
+        }
+    }
+
+    /** 2026-11-01 照 PoE2：第 index 道月光（0 = 打中的那個）打中後幾 tick 落下：0.95 秒，之後每道多 0.2 秒。 */
+    static long moonbeamLandsAfter(final int index) {
+        return MOONBEAM_DELAY + MOONBEAM_CHAIN_DELAY * Math.max(0, index);
+    }
+
+    /** 月光落下前的光柱（0.95 秒的預兆）。 */
+    private static void telegraph(final Location at) {
+        if (at.getWorld() == null) {
+            return;
+        }
+        for (int y = 0; y < 6; y++) {
+            Fx.spawn(at.getWorld(), org.bukkit.Particle.END_ROD, at.clone().add(0, 0.3 + y * 0.6, 0), 2, 0.05, 0.2, 0.05, 0);
         }
     }
 
@@ -800,6 +876,7 @@ public final class SupportProcs implements Listener {
         rifts.forget(event.getPlayer().getUniqueId()); // 2026-11-01 照 PoE2 Electromagnetism
         plague.forgetOwner(event.getPlayer().getUniqueId());
         storedUses.forget(event.getPlayer().getUniqueId());
+        basis.forget(event.getPlayer().getUniqueId());
     }
 
     private static String word(final AilmentType type) {
@@ -847,6 +924,41 @@ public final class SupportProcs implements Listener {
     }
 
     /** 事件符合的 proc 各擲一次；有放出去回傳 true。 */
+    /** 2026-11-01 照 PoE2：這個技能格上能輔助送出來的技能（sub）的輔助（{@link #grantedSupports(List, SkillDefinition, SkillDefinition)}）。 */
+    private List<SupportDefinition> grantedSupports(final SkillLoadout.Entry entry, final SkillDefinition sub) {
+        if (entry == null || sub == null) {
+            return List.of();
+        }
+        return grantedSupports(service.supportsOf(entry), service.config().skill(entry.skillId()), sub);
+    }
+
+    /**
+     * 純邏輯：掛在原技能上的輔助裡，送出來的技能吃得到的那些——輔助要插得進去（本體或別的輔助送的技能能輔助）、
+     * 自己不送技能、原作能用在觸發技能上、而且能輔助送的這個技能（{@link SupportDefinition#supportsGranted}）。
+     */
+    static List<SupportDefinition> grantedSupports(final List<SupportDefinition> socketed, final SkillDefinition parent, final SkillDefinition sub) {
+        if (socketed == null || socketed.isEmpty() || sub == null) {
+            return List.of();
+        }
+        final List<String> ids = new java.util.ArrayList<>();
+        for (final SupportDefinition support : socketed) {
+            if (support != null) {
+                ids.add(support.id());
+            }
+        }
+        final List<SupportDefinition> out = new java.util.ArrayList<>();
+        for (final SupportDefinition support : socketed) {
+            if (support == null || !support.supportsGranted(sub)) {
+                continue;
+            }
+            if (parent != null && !SupportDefinition.hostsSkill(parent) && support.socketRefusal(parent, ids) != null) {
+                continue;
+            }
+            out.add(support);
+        }
+        return out;
+    }
+
     private boolean fireAll(final Player player, final String skillId, final String event, final Location at, final LivingEntity target,
                             final LivingEntity exclude) {
         final List<Modifier> list = procs(player, skillId, event);
@@ -914,7 +1026,10 @@ public final class SupportProcs implements Listener {
                 }
             }
             plugin.players().conditions().onTriggered(player, now); // 2026-10-26：天賦樹「最近觸發過技能」
-            SkillBuild build = SkillBuild.of(service.config(), sub, level, state.level(), false, List.of(),
+            // 2026-11-01 照 PoE2（PoB2 SkillGrantedBySupport）：送出來的技能也吃同一顆寶石上能輔助它的其他輔助（咒殞爆吃附蝕、擴散…）；
+            //   這次之前送的技能一顆輔助都不吃
+            final List<SupportDefinition> inherited = grantedSupports(entry, sub);
+            SkillBuild build = SkillBuild.of(service.config(), sub, level, state.level(), false, inherited,
                     state.weaponTags(), plugin.players().sheet(player));
             final List<Modifier> subOwnLocal = build.profile().local(); // 2026-11-01 撒蒺：鐵蒺自己的修飾器（致殘），換成原技能的傷害後再加回去
             // 2026-10（照 PoE2 的餘震）：寫了 parent_damage 的照觸發它的那一下出傷害（含輔助），不然慢又重的猛擊（千鈞砸）掛了等於沒掛
@@ -930,6 +1045,14 @@ public final class SupportProcs implements Listener {
                     build = build.withProfile(parentBuild.profile().scaled(share, sub.name()).derive(sub.id(), sub.tags(), java.util.Set.of()));
                 }
             }
+            if (MaceSlams.BONESHATTER_WAVE.equals(subId) && parentBuilt != null) {
+                // 2026-11-01 照 PoE2 Boneshatter：震波由傳奇敵人（含 Boss）的重暈造成時更多 50%；雙持時照碎脊擊更少 30%（原技能那一下是重新算的，沒有雙持）
+                final tw.exilecore.monster.MonsterData data = target == null || plugin.monsters() == null ? null : plugin.monsters().data(target).orElse(null);
+                final boolean unique = data != null && (data.boss() || data.rarity() == tw.exilecore.monster.MonsterRarity.UNIQUE);
+                final double factor = MaceSlams.boneshatterWaveFactor(unique,
+                        state.offHandAttack() != null ? SkillService.dualWieldDamagePercent(parentBuilt.profile()) : 0);
+                build = build.withProfile(build.profile().scaled(factor, unique ? "傳奇的重暈" : "雙持"));
+            }
             if (metaHit) {
                 build = build.withProfile(build.profile().derive(build.profile().id() + MetaGems.TRIGGERED_SUFFIX, java.util.Set.of(), java.util.Set.of()));
             }
@@ -937,6 +1060,22 @@ public final class SupportProcs implements Listener {
             final double lifePercent = service.config().lifeDamage(subId);
             if (lifePercent > 0) {
                 build = withLifeDamage(build, exclude != null ? exclude : target, lifePercent);
+            }
+            // 2026-11-01 照 PoE2：噴炎柱（剩下點燃的 25%）、魔焰爆（目前魔力的 25%）換傷害基礎；播火爆（扇形、傳點燃）、
+            //   荊棘叢生（危險區域）、腐血嘯（腐化之血）自己放（ProcBasis）
+            if (ProcBasis.handles(subId)) {
+                final SkillBuild adjusted = basis.adjust(player, subId, skillId, build, target);
+                if (adjusted == null) {
+                    continue; // 沒有點燃、沒有魔力：不放
+                }
+                build = adjusted;
+                // 腐血嘯打的是戰吼本身的範圍：照原技能（含輔助、品質）算
+                final SkillBuild host = parentBuilt != null || !ProcBasis.CORRUPTING_CRY.equals(subId) || parent == null ? parentBuilt
+                        : service.build(state, plugin.players().sheet(player), parent, entry);
+                if (basis.custom(player, subId, skillId, build, subOwnLocal, host, at, target)) {
+                    fired = true;
+                    continue;
+                }
             }
             if (CRATER.equals(subId)) {
                 // 2026-11-01 照 PoE2 Crater：落點往外裂出 3 道裂隙（support_fissure_on_landing_create_X_fissures_on_impact）；這次之前燒出一個熔坑
@@ -948,7 +1087,8 @@ public final class SupportProcs implements Listener {
             if (SHOCK_RIFT.equals(subId) && target != null) {
                 // 2026-11-01 照 PoE2 Electromagnetism：開一道會脈衝、吸人、阻礙的雷隙（ShockingRifts）；這次之前一次炸開的新星
                 final SkillDefinition lastDefinition = service.config().skill(SHOCK_RIFT_FINAL);
-                SkillBuild last = lastDefinition == null ? build : SkillBuild.of(service.config(), lastDefinition, level, state.level(), false, List.of(),
+                SkillBuild last = lastDefinition == null ? build : SkillBuild.of(service.config(), lastDefinition, level, state.level(), false,
+                        grantedSupports(entry, lastDefinition),
                         state.weaponTags(), plugin.players().sheet(player));
                 if (metaHit && lastDefinition != null) {
                     last = last.withProfile(last.profile().derive(last.profile().id() + MetaGems.TRIGGERED_SUFFIX, java.util.Set.of(), java.util.Set.of()));

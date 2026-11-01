@@ -124,6 +124,7 @@ final class ManaTempest {
         storm.linger = LINGER_TICKS + (int) Math.round(Math.max(0, build.qualityFlat(tw.exilecore.stats.GemQualityKeys.LINGER_SECONDS)) * 20);
         storms.put(player.getUniqueId(), storm);
         runtime.startCooldown(storm.skillId, now, HELD_COOLDOWN); // 風暴還在時冷卻不回復
+        service.ownBuff(player, BUFF_ID, storm.skillId); // 2026-11-01：快捷欄畫在魔湧那一格
         service.buff(player, BUFF_ID, storm.name, storm.linger, storm.effects);
         player.getWorld().playSound(storm.center, Sound.ENTITY_ILLUSIONER_CAST_SPELL, SoundCategory.PLAYERS, 0.9f, 1.4f);
         draw(storm);

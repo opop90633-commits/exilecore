@@ -83,7 +83,6 @@ public final class OriginalSkills implements Listener {
     static final String SHRED = "swift_claw";
     static final String CROSS = "crisscross_claw";
     static final String ICE_TIPPED = "frost_arrowhead";
-    static final String ESCAPE = "leapback_shoot";
     static final String RAPID = "successive_shots";
 
     // ---- 隱藏技能 ----
@@ -96,7 +95,6 @@ public final class OriginalSkills implements Listener {
     static final String WOLF = "proc_predator_wolf";
     static final String FRAGMENT_SHRED = "proc_ice_fragment_shred";
     static final String FRAGMENT_ARROW = "proc_ice_fragment_arrow";
-    static final String FRAGMENT_ESCAPE = "proc_ice_fragment_escape";
 
     /** skills.yml 的 signature：自己整個接手（不走一般的執行）。 */
     public static final Set<String> SIGNATURES = Set.of("charged_staff", "mantra", "galvanic", "living_bomb", "calamity",
@@ -124,7 +122,6 @@ public final class OriginalSkills implements Listener {
     static final String SHARD_INTERVAL = "shard.interval";
     static final String DEVOUR_REGEN = "gnawing_bite.regen";
     static final String WOLF_LIMIT = "predator.wolves";
-    static final String ESCAPE_FRAGMENTS = "escape.fragments";
 
     /** 標記：這一下是被崩滅心咒強化的、帶著霜鏃的冰裂。 */
     static final String MANTRA_MARK = "mantra.empowered";
@@ -174,8 +171,12 @@ public final class OriginalSkills implements Listener {
     static final int CALAMITY_LARGE_EVERY = 15;
     static final double SMALL_METEOR = tw.exilecore.core.Units.metres(0.8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final double LARGE_METEOR = tw.exilecore.core.Units.metres(1.4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
-    static final double DEVOUR_LEAP = tw.exilecore.core.Units.metres(4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
-    static final int DEVOUR_EXTRA = 2;
+    static final double DEVOUR_LEAP = ShapeshiftParity.DEVOUR_DASH; // 2026-11-01：照 PoE2 base_melee_dash_range（ShapeshiftParity）
+    static final int DEVOUR_EXTRA = ShapeshiftParity.DEVOUR_EXTRA;
+    /** 2026-11-01 照 PoE2 Devour：這一下衝過去了，落點要砸（SkillExecutor.devourSlam 看這個本地修飾器）。 */
+    static final String DEVOUR_SLAM = "devour.slam";
+    /** 鎖定屍體時準心附近幾格內算指著。 */
+    static final double DEVOUR_AIM_TOLERANCE = 1.2;
     static final long OIL_WINDOW = 30;
     static final long MARK_TICKS = 160;
     static final double MARK_PER_ENEMY = 3;
@@ -221,6 +222,8 @@ public final class OriginalSkills implements Listener {
     }
 
     private static final class State {
+        /** 2026-11-01 照 PoE2 Devour：這一下鎖定要吃的（放之前挑好，放完吃掉）。 */
+        DevourTarget devour;
         int arcticStages;
         long nextArcticStage = -1;
         long arcticReady;
@@ -228,7 +231,7 @@ public final class OriginalSkills implements Listener {
         int staffCharges;
         long mantraUntil;
         int mantraLevel;
-        /** 2026-10-31：這次崩滅心咒的效果比例（1 ～ Primed.MORE，照用掉的連擊）。 */
+        /** 這次崩滅心咒的效果比例（2026-11-01 起 0 ～ 1，照用掉的連擊；這次之前 1 ～ Primed.MORE）。 */
         double mantraScale = 1.0;
         /** 雷流場的電球、燼種（2026-10-28 照 PoE2「上限 1 顆」吃 +x 上限（過剩），改成清單、最舊的在前面；這次之前各一顆的欄位）。 */
         final List<Orb> orbs = new java.util.ArrayList<>();
@@ -247,7 +250,6 @@ public final class OriginalSkills implements Listener {
         int iceTippedLeft;
         long fragmentReady;
         long shredUse = -1;
-        long escapeUse = -1;
         long oilUntil;
         final List<Caltrop> caltrops = new ArrayList<>();
         /** 2026-11-01 照 PoE2 Caltrops（撒蒺）：被輔助的長矛投射物撒的鐵蒺（跟蒺藜步的分開算上限）。 */
@@ -305,6 +307,12 @@ public final class OriginalSkills implements Listener {
 
     private State state(final Player player) {
         return states.computeIfAbsent(player.getUniqueId(), k -> new State());
+    }
+
+    /** 2026-11-01：技能格倒數（SkillService.SlotTimers）：回盾術的效果還剩幾 tick（其他技能的增益在 SkillBuffs）。 */
+    long slotTicks(final UUID player, final String skillId, final long now) {
+        final State s = states.get(player);
+        return s != null && CONVALESCENCE.equals(skillId) ? s.convalescenceUntil - now : 0;
     }
 
     private SkillDamage damage() {
@@ -444,7 +452,7 @@ public final class OriginalSkills implements Listener {
                 }
                 s.mantraUntil = now + Math.round(MANTRA_TICKS * build.durationScale());
                 s.mantraLevel = build.level();
-                s.mantraScale = MANTRA_MIN_SCALE + (Primed.MORE - MANTRA_MIN_SCALE) * have / need; // 2026-10-31：沒有連擊是基礎、滿 8 點更多 50%，中間照比例
+                s.mantraScale = (double) have / need; // 2026-11-01 照站長：效果照用掉的連擊比例（滿 8 點 100%、沒有連擊沒有額外混沌），拿掉滿 8 點更多 50%；2026-10-31 到這次之前基礎 1 倍、滿 8 點 1.5 倍
                 service.buffs().apply(player, MANTRA, build.definition().name(), (int) (s.mantraUntil - now),
                         List.of(Modifier.flat(MANTRA_MARK, 1, build.definition().name())));
                 Fx.spawn(player.getWorld(), Particle.WITCH, player.getLocation().add(0, 1, 0), 30, 0.5, 0.8, 0.5, 0.05);
@@ -527,7 +535,7 @@ public final class OriginalSkills implements Listener {
             }
         }
         if (DEVOUR.equals(definition.id())) {
-            devourLeap(player, out, preferred);
+            out = devourLeap(player, s, out, preferred); // 2026-11-01 照 PoE2 Devour：鎖定屍體或可撲殺的敵人，遠的衝過去（攻擊時間照距離）
         }
         // 2026-10-28 照 PoE2 Earthshatter 的品質：每根還在的地刺更多 x% 擊中傷害；
         //   2026-10-31：照地上真的還在的地刺算（EarthSpikes）；這次之前沒有實體的地刺，照最近 6 秒內用了幾次算
@@ -556,6 +564,13 @@ public final class OriginalSkills implements Listener {
                 player.setVelocity(player.getVelocity().multiply(0.2).add(back));
             }
             case DEVOUR -> devour(player, build);
+            case POUNCE -> {
+                // 2026-11-01 照 PoE2 Pounce：用了之後你的狼馬上可以躍擊（冷卻好、改打你撲的目標）；這次之前沒有
+                if (service.minions() != null) {
+                    service.minions().wolvesLeapNow(player, preferred != null && service.targets().valid(preferred, player) ? preferred
+                            : service.targets().aimed(Origin.of(player), build.range(), SkillExecutor.LEAP_LOCK_TOLERANCE));
+                }
+            }
             case CROSS -> pullFragments(player);
             case RAPID -> s.lastRapid = now;
             case ICE_TIPPED -> {
@@ -564,7 +579,6 @@ public final class OriginalSkills implements Listener {
                         List.of(Modifier.flat("ice_tipped.ready", 1, definition.name())));
             }
             case SHRED -> s.shredUse = now;
-            case ESCAPE -> s.escapeUse = now;
             default -> {
             }
         }
@@ -695,14 +709,17 @@ public final class OriginalSkills implements Listener {
      */
     private void palmHighlight(final Player player) {
         final boolean glow = tw.exilecore.hook.CullGlow.active();
-        if (player.isDead() || plugin.monsters() == null || gemLevel(player, KillingPalm.ID) <= 0) {
+        // 2026-11-01 照 PoE2 Cull the Weak（active_skill_show_cull_range）：剔殘也標示衝刺距離（7.5 公尺）內可以撲殺的敵人
+        final double range = Math.max(gemLevel(player, KillingPalm.ID) > 0 ? KillingPalm.DASH_RANGE : 0,
+                gemLevel(player, TargetDash.CULL_THE_WEAK) > 0 ? TargetDash.range(TargetDash.CULL_THE_WEAK) : 0);
+        if (player.isDead() || plugin.monsters() == null || range <= 0) {
             if (glow) {
                 tw.exilecore.hook.CullGlow.update(player, List.of()); // 拿掉斷魂掌、死掉：外框拿掉
             }
             return;
         }
         final List<LivingEntity> cullable = new ArrayList<>();
-        for (final LivingEntity near : player.getWorld().getNearbyLivingEntities(player.getLocation(), KillingPalm.DASH_RANGE + 1)) {
+        for (final LivingEntity near : player.getWorld().getNearbyLivingEntities(player.getLocation(), range + 1)) {
             if (near.isDead() || !monster(near)) {
                 continue;
             }
@@ -1427,57 +1444,162 @@ public final class OriginalSkills implements Listener {
 
     // ---- 噬咬 ----
 
-    private void devourLeap(final Player player, final SkillBuild build, final LivingEntity preferred) {
-        final double reach = Math.max(2, build.length());
-        LivingEntity target = preferred != null && service.targets().valid(preferred, player) ? preferred
-                : service.targets().aimed(Origin.of(player), reach + DEVOUR_LEAP, 1.2);
-        Location point = target == null ? null : target.getLocation();
-        if (point == null && plugin.combat() != null) {
-            final Location aim = service.targets().aimPoint(Origin.of(player), reach + DEVOUR_LEAP);
-            final Corpses.Corpse corpse = plugin.combat().corpses().nearest(aim.getWorld().getUID(), aim.getX(), aim.getZ(), 2.5, now());
-            point = corpse == null ? null : new Location(aim.getWorld(), corpse.x(), corpse.y(), corpse.z());
-        }
-        if (point == null || !point.getWorld().equals(player.getWorld())) {
-            return;
-        }
-        final Vector to = point.toVector().subtract(player.getLocation().toVector()).setY(0);
-        final double distance = to.length();
-        if (distance <= reach * 0.8 || distance > reach + DEVOUR_LEAP) {
-            return;
-        }
-        // 照 PoE2：目標太遠就跳過去（4 格）再咬
-        final Location land = player.getLocation().add(to.normalize().multiply(Math.min(DEVOUR_LEAP, distance - 1.5)));
-        if (land.getBlock().isPassable() && land.clone().add(0, 1, 0).getBlock().isPassable()) {
-            tw.exilecore.core.Teleports.glide(player, land); // 2026-10-29：保留視角（這次之前轉向目標、視角被拉走）
-            Fx.spawn(player.getWorld(), Particle.CLOUD, land, 10, 0.4, 0.1, 0.4, 0.02);
-        }
+    /**
+     * 2026-11-01 照 PoE2 Devour：要吃的目標——屍體，或生命低到撲殺門檻的敵人（「devour a Corpse or Cullable enemy」）。
+     * 鎖敵（站長：衝向目標的都要鎖敵）：點的目標、準心指著的（沿視線最近的那個）；都沒有就前方最近的。最遠 4 格衝刺 + 1.5 格。
+     */
+    record DevourTarget(LivingEntity enemy, Corpses.Corpse corpse, Location at) {
     }
 
+    /** 放之前的檢查：沒有能吃的回傳原因。 */
+    String devourProblem(final Player player, final LivingEntity preferred) {
+        return devourTarget(player, preferred) == null ? "附近沒有屍體或可撲殺的敵人" : null;
+    }
+
+    private DevourTarget devourTarget(final Player player, final LivingEntity preferred) {
+        final double range = ShapeshiftParity.devourLockRange();
+        final Location feet = player.getLocation();
+        if (preferred != null && service.targets().valid(preferred, player) && preferred.getWorld().equals(feet.getWorld())
+                && service.executor().cullable(preferred) && flat(feet, preferred.getLocation()) <= range) {
+            return new DevourTarget(preferred, null, preferred.getLocation());
+        }
+        final Origin origin = Origin.of(player);
+        final SkillTargets.Aimed enemy = service.targets().aimedWhere(origin, range, DEVOUR_AIM_TOLERANCE, service.executor()::cullable);
+        final List<Corpses.Corpse> corpses = plugin.combat() == null ? List.of()
+                : plugin.combat().corpses().near(feet.getWorld().getUID(), feet.getX(), feet.getZ(), range, now());
+        final Location eye = origin.eye();
+        final Vector direction = origin.direction();
+        final List<double[]> points = new ArrayList<>();
+        for (final Corpses.Corpse corpse : corpses) {
+            points.add(new double[] {corpse.x(), corpse.y() + 0.3, corpse.z()});
+        }
+        final double reach = service.targets().aimReach(origin, range) + 0.5;
+        final int picked = ShapeshiftParity.pickAlongRay(new double[] {eye.getX(), eye.getY(), eye.getZ()},
+                new double[] {direction.getX(), direction.getY(), direction.getZ()}, points, reach, DEVOUR_AIM_TOLERANCE);
+        if (picked >= 0) {
+            final Corpses.Corpse corpse = corpses.get(picked);
+            final double along = new Vector(corpse.x() - eye.getX(), corpse.y() + 0.3 - eye.getY(), corpse.z() - eye.getZ()).dot(direction);
+            if (enemy == null || along < enemy.along()) {
+                return new DevourTarget(null, corpse, new Location(feet.getWorld(), corpse.x(), corpse.y(), corpse.z()));
+            }
+        }
+        if (enemy != null) {
+            return new DevourTarget(enemy.entity(), null, enemy.entity().getLocation());
+        }
+        // 準心沒有指著：前方（120° 內）最近的屍體或可撲殺的敵人
+        final Vector facing = SkillTargets.facing(player);
+        DevourTarget best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (final Corpses.Corpse corpse : corpses) {
+            final Location at = new Location(feet.getWorld(), corpse.x(), corpse.y(), corpse.z());
+            final double d = flat(feet, at);
+            if (d < bestDistance && ahead(feet, at, facing)) {
+                bestDistance = d;
+                best = new DevourTarget(null, corpse, at);
+            }
+        }
+        for (final LivingEntity near : service.targets().around(feet, range, player)) {
+            final double d = flat(feet, near.getLocation());
+            if (d < bestDistance && d <= range && ahead(feet, near.getLocation(), facing) && service.executor().cullable(near) && player.hasLineOfSight(near)) {
+                bestDistance = d;
+                best = new DevourTarget(near, null, near.getLocation());
+            }
+        }
+        return best;
+    }
+
+    private static double flat(final Location a, final Location b) {
+        return Math.hypot(a.getX() - b.getX(), a.getZ() - b.getZ());
+    }
+
+    /** 在面向的 120° 內（貼著的也算）。 */
+    private static boolean ahead(final Location feet, final Location at, final Vector facing) {
+        final Vector to = at.toVector().subtract(feet.toVector()).setY(0);
+        return to.lengthSquared() < 1.0 || to.normalize().dot(facing) >= 0.5;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Devour（PoB2 WyvernDevourPlayer）：鎖定目標；離你超過 1.5 格就衝過去（最多 4 格，落在目標前面），
+     * 這一下攻擊速度更多 20%、總攻擊時間照衝的距離 +0.5 秒（skill_added_attack_time_by_distance_ms 500）、落點砸一圈；
+     * 近的不衝不砸、攻擊速度更多 −15%。這次之前咬前方扇形的活敵人，目標太遠才往準心跳 4 格
+     */
+    private SkillBuild devourLeap(final Player player, final State s, final SkillBuild build, final LivingEntity preferred) {
+        final DevourTarget target = devourTarget(player, preferred);
+        s.devour = target;
+        if (target == null || !target.at().getWorld().equals(player.getWorld())) {
+            return build;
+        }
+        final double[] timing = ShapeshiftParity.devourTiming(flat(player.getLocation(), target.at()));
+        final List<Modifier> mods = new ArrayList<>();
+        mods.add(Modifier.more(StatKeys.ATTACK_SPEED, timing[0] / 100.0, "噬咬"));
+        if (timing[2] > 0) {
+            final Location spot = service.executor().landingNear(player, target.at(), target.enemy() != null ? 0.8 : 0);
+            if (spot != null && tw.exilecore.core.Teleports.glide(player, spot)) { // 2026-10-29：保留視角
+                player.setFallDistance(0);
+                Fx.spawn(player.getWorld(), Particle.CLOUD, spot, 10, 0.4, 0.1, 0.4, 0.02);
+                mods.add(Modifier.flat(SkillProfiles.ADDED_TIME, timing[1], "噬咬"));
+                mods.add(Modifier.flat(DEVOUR_SLAM, 1, "噬咬"));
+            }
+        }
+        return build.withProfile(build.profile().withLocal(mods));
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Devour：吃掉鎖定的目標（屍體拿掉；可撲殺的敵人直接撲殺）＋目標旁邊（1.8 公尺乘範圍）最多 2 具屍體；
+     * 每吃一個給一顆銳星、在 1 秒內回復生命（wyvern_devour_life_restoration）、品質的機率當作擊殺獲得藥劑與護符充能。
+     * 這次之前咬死敵人才給銳星（charge.event.kill.power），面前的屍體另外吃
+     */
     private void devour(final Player player, final SkillBuild build) {
-        if (plugin.combat() == null) {
+        final State s = state(player);
+        final DevourTarget target = s.devour;
+        s.devour = null;
+        if (plugin.combat() == null || target == null) {
             return;
         }
         final Corpses corpses = plugin.combat().corpses();
-        final Location front = player.getLocation().add(SkillTargets.facing(player).multiply(1.5));
-        final List<Corpses.Corpse> near = new ArrayList<>(corpses.near(front.getWorld().getUID(), front.getX(), front.getZ(), 3.0, now()));
-        final int eaten = Math.min(near.size(), 1 + DEVOUR_EXTRA);
-        if (eaten <= 0) {
+        final Location at = target.enemy() != null ? target.enemy().getLocation() : target.at();
+        final List<MonsterRarity> eaten = new ArrayList<>();
+        if (target.enemy() != null) {
+            final LivingEntity enemy = target.enemy();
+            if (enemy.isValid() && !enemy.isDead() && service.executor().cullable(enemy)) {
+                service.executor().hitOne(player, build.profile().withLocal(List.of(Modifier.flat(StatKeys.FLAG_CULLING, 1, "噬咬"))),
+                        enemy, player.getLocation(), 0);
+            }
+            if (enemy.isDead() || !enemy.isValid() || enemy.getHealth() <= 0) {
+                eaten.add(plugin.monsters() == null ? MonsterRarity.NORMAL
+                        : plugin.monsters().data(enemy).map(MonsterData::rarity).orElse(MonsterRarity.NORMAL));
+                final Corpses.Corpse left = corpses.nearest(at.getWorld().getUID(), at.getX(), at.getZ(), 1.0, now());
+                if (left != null) {
+                    corpses.remove(left); // 吃掉了，不留屍體
+                }
+            }
+        } else if (target.corpse() != null) {
+            corpses.remove(target.corpse());
+            eaten.add(MonsterRarity.NORMAL);
+        }
+        if (eaten.isEmpty()) {
             return;
         }
-        final double regen = levelValue(DEVOUR, DEVOUR_REGEN, build.level(), 10);
-        // 2026-10-28 照 PoE2 Devour 的品質：每吃一具 (0—50)% 機率當作擊殺獲得藥劑與護符充能（屍體不知道稀有度，照普通怪）
-        final double flaskChance = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.CORPSE_FLASK_CHANCE);
-        for (int i = 0; i < eaten; i++) {
+        final List<Corpses.Corpse> near = new ArrayList<>(corpses.near(at.getWorld().getUID(), at.getX(), at.getZ(),
+                ShapeshiftParity.DEVOUR_RADIUS * build.areaScale(), now()));
+        near.sort(java.util.Comparator.comparingDouble(c -> (c.x() - at.getX()) * (c.x() - at.getX()) + (c.z() - at.getZ()) * (c.z() - at.getZ())));
+        for (int i = 0; i < near.size() && i < DEVOUR_EXTRA; i++) {
             corpses.remove(near.get(i));
+            eaten.add(MonsterRarity.NORMAL); // 屍體不知道稀有度，照普通怪
+        }
+        final double regen = levelValue(DEVOUR, DEVOUR_REGEN, build.level(), 10);
+        // 2026-10-28 照 PoE2 Devour 的品質：每吃一個 (0—50)% 機率當作擊殺獲得藥劑與護符充能
+        final double flaskChance = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.CORPSE_FLASK_CHANCE);
+        for (final MonsterRarity rarity : eaten) {
             if (plugin.combat().charges() != null) {
                 plugin.combat().charges().grant(player, "power", 1);
             }
             if (flaskChance > 0 && plugin.flasks() != null && plugin.random().nextDouble() * 100 < flaskChance) {
-                plugin.flasks().gainAsKill(player, MonsterRarity.NORMAL);
+                plugin.flasks().gainAsKill(player, rarity);
             }
         }
         // 照 PoE2：每吃一個在 1 秒內回復生命
-        final double total = regen * eaten;
+        final double total = regen * eaten.size();
         for (int step = 1; step <= 4; step++) {
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                 if (player.isOnline()) {
@@ -1487,7 +1609,7 @@ public final class OriginalSkills implements Listener {
                 }
             }, 5L * step);
         }
-        Fx.spawn(front.getWorld(), Particle.DAMAGE_INDICATOR, front.clone().add(0, 0.5, 0), 6 * eaten, 0.5, 0.3, 0.5, 0.05);
+        Fx.spawn(at.getWorld(), Particle.DAMAGE_INDICATOR, at.clone().add(0, 0.5, 0), 6 * eaten.size(), 0.5, 0.3, 0.5, 0.05);
     }
 
     // ---- 掠影撲：獵手印記與狼 ----
@@ -1615,6 +1737,33 @@ public final class OriginalSkills implements Listener {
         return detonated.size();
     }
 
+    /**
+     * 2026-11-01 照 PoE2 Freezing Salvo：center 周圍 radius 格內離 center 最近的一個你的冰裂立刻在原地引爆；回傳它的位置（沒有回傳 null）。
+     */
+    Location detonateNearestFragment(final Player player, final Location center, final double radius) {
+        if (fragments.isEmpty() || center.getWorld() == null || radius <= 0) {
+            return null;
+        }
+        Fragment best = null;
+        double bestDistance = radius * radius;
+        for (final Fragment fragment : fragments) {
+            if (!fragment.owner().equals(player.getUniqueId()) || fragment.at().getWorld() == null || !fragment.at().getWorld().equals(center.getWorld())) {
+                continue;
+            }
+            final double distance = fragment.at().distanceSquared(center);
+            if (distance <= bestDistance) {
+                bestDistance = distance;
+                best = fragment;
+            }
+        }
+        if (best == null) {
+            return null;
+        }
+        fragments.remove(best);
+        explodeFragment(best, best.at());
+        return best.at().clone();
+    }
+
     /** 交錯爪：把 7 格內自己的冰裂拉到交叉點立刻炸開。 */
     private void pullFragments(final Player player) {
         final Location point = player.getLocation().add(SkillTargets.facing(player).multiply(2.5)).add(0, 0.3, 0);
@@ -1657,6 +1806,12 @@ public final class OriginalSkills implements Listener {
                     orbs.removeFirst();
                 }
                 orbs.add(orb);
+                // 2026-11-01 照 PoE2 Eye of Winter：雷流場的電球是法球（跟著敵人走），寒冬之眼飛過拿到閃電
+                final UUID carrier = target.getUniqueId();
+                ColdSpells.markOrb(orb.last, 1.0, tw.exilecore.stats.DamageType.LIGHTNING, orb.until, () -> {
+                    final org.bukkit.entity.Entity entity = plugin.getServer().getEntity(carrier);
+                    return entity == null ? null : entity.getLocation().add(0, entity.getHeight() + 0.4, 0);
+                }, () -> orbs.contains(orb));
             }
         }
     }
@@ -1675,6 +1830,37 @@ public final class OriginalSkills implements Listener {
         if (player == null) {
             return;
         }
+        shardScavenge(player, now);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Shard Scavenger（「Consuming Freeze, Shock, Ignite, or Fully Broken Armour」）：你用掉敵人的完全破甲時也算
+     * （AilmentService#consumeFullBreak 呼叫，by 是用掉的人）；這次之前只有冰凍、感電、點燃。
+     */
+    public void fullBreakConsumed(final Player by) {
+        if (by != null) {
+            shardScavenge(by, now());
+        }
+    }
+
+    /** 同上，不知道是誰用掉的：照最後打牠的玩家（2 tick 內；跟 {@link #ailmentConsumed} 一樣）。 */
+    public void fullBreakConsumedOn(final LivingEntity entity) {
+        final Object[] hit = entity == null || entity instanceof Player ? null : lastHitter.get(entity.getUniqueId());
+        final long now = now();
+        if (hit == null || now - (long) hit[1] > 2) {
+            return;
+        }
+        final Player player = plugin.getServer().getPlayer((UUID) hit[0]);
+        if (player != null) {
+            shardScavenge(player, now);
+        }
+    }
+
+    /**
+     * 拾晶裝觸發（兩次之間至少隔 7→6.05 秒）：立刻把弩裝滿、接下來 3 秒弩的攻擊不消耗弩箭；
+     * 2026-11-01 照 PoE2（「restores one cooldown use for your Grenades」）另外每個榴彈技能各回復一次冷卻（SkillService#restoreCooldownUse）。
+     */
+    private void shardScavenge(final Player player, final long now) {
         final int level = auraLevel(player, SHARD);
         final State s = state(player);
         if (level <= 0 || now < s.shardReady) {
@@ -1682,6 +1868,7 @@ public final class OriginalSkills implements Listener {
         }
         s.shardReady = now + Math.round(levelValue(SHARD, SHARD_INTERVAL, level, 7) * 20);
         service.reloadNow(player, null); // 照 PoE2：立刻裝滿弩
+        service.restoreCooldownUse(player, definition -> definition.tags().contains(tw.exilecore.stats.Tags.GRENADE));
         service.buffs().apply(player, SHARD, "拾晶裝", (int) SHARD_BUFF,
                 List.of(new Modifier(StatKeys.CROSSBOW_AMMO_SAVE, tw.exilecore.stats.ModType.FLAT, 100, Set.of("crossbow"), "拾晶裝")));
         Fx.spawn(player.getWorld(), Particle.END_ROD, player.getLocation().add(0, 1.2, 0), 10, 0.3, 0.4, 0.3, 0.02);
@@ -1750,12 +1937,7 @@ public final class OriginalSkills implements Listener {
             mine.shredUse = -1; // 照 PoE2：每次使用一次
             spawnFragments(player, defender.getLocation(), SHRED_FRAGMENTS, proc(player, FRAGMENT_SHRED, gemLevel(player, SHRED)), FRAGMENT_RADIUS, now);
         }
-        if (ESCAPE.equals(id) && mine.escapeUse >= 0) {
-            final int level = gemLevel(player, ESCAPE);
-            mine.escapeUse = -1;
-            spawnFragments(player, defender.getLocation(), (int) Math.round(levelValue(ESCAPE, ESCAPE_FRAGMENTS, level, 8)),
-                    proc(player, FRAGMENT_ESCAPE, level), tw.exilecore.core.Units.metres(2.0), now); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
-        }
+        // 2026-11-01 照站長：躍退射（Escape Shot）刪掉，命中時落下冰裂的那段拿掉
         if (hasMark(skill, ICE_TIPPED_MARK) && now >= mine.fragmentReady) {
             mine.fragmentReady = now + 3;
             spawnFragments(player, defender.getLocation(), ICE_TIPPED_FRAGMENTS, proc(player, FRAGMENT_ARROW, gemLevel(player, ICE_TIPPED)),

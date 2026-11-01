@@ -109,10 +109,6 @@ public final class DodgeRoll implements Listener {
             return; // 不動如山：不能翻滾
         }
         final long now = now();
-        final Long last = rolledAt.get(player.getUniqueId());
-        if (last != null && now - last < ROLL_TICKS) {
-            return;
-        }
         // 方向：照按著的方向鍵（相對面向），沒按就往前
         double forward = (input.isForward() ? 1 : 0) - (input.isBackward() ? 1 : 0);
         double strafe = (input.isLeft() ? 1 : 0) - (input.isRight() ? 1 : 0);
@@ -124,6 +120,14 @@ public final class DodgeRoll implements Listener {
         final Vector left = new Vector(Math.cos(yaw), 0, Math.sin(yaw));
         final Vector direction = look.multiply(forward).add(left.multiply(strafe));
         if (direction.lengthSquared() < 1e-6) {
+            return;
+        }
+        // 2026-11-01 照 PoE2 Blink（取代翻滾）：掠閃開著、冷卻好了就改放掠閃（往翻滾的方向閃），不翻滾；冷卻中照常翻滾
+        if (plugin.skills() != null && plugin.skills().blinkDodge(player, direction.clone().normalize())) {
+            return;
+        }
+        final Long last = rolledAt.get(player.getUniqueId());
+        if (last != null && now - last < ROLL_TICKS) {
             return;
         }
         // 2026-10：翻滾距離（PoE2 鞋子的褻瀆詞綴）：衝刺的速度照比例放大，最多兩倍

@@ -152,6 +152,8 @@ final class Signatures {
         long nextShot;
         int fired;
         UUID target;
+        /** 2026-11-01 照 PoE2 Ember Fusillade：這一輪用掉了電灌注（整輪的火星炸開時都放閃電光束，{@link EmberBeams}）。 */
+        boolean beam;
     }
 
     private final Map<UUID, Whirl> whirls = new HashMap<>();
@@ -260,7 +262,31 @@ final class Signatures {
             released = true; // 2026-10-26：魔力不夠撐下一秒，照現在的蓄力放出
         }
         final int perStage = charging.build == null ? 1 : Math.max(1, charging.build.projectiles()); // 2026-11-01：累積型每段幾支
-        final long limit = spec.perfect() ? charging.perfectAt + ChargeSpec.OVERHOLD
+        final boolean fullOnly = FullCharge.required(charging.skillId); // 2026-11-01 照 PoE2 Plasma Blast：充滿才能射
+        // 放開的偵測晚 3～7 tick：照最後一次按住的時間判斷有沒有充滿（跟下面 releaseHeld 一樣），不然提早放開也射得出去
+        if (fullOnly && released && FullCharge.cancels(
+                (pressedAgain || charging.letGo ? now : Math.min(now, charging.last + 1)) - charging.start, charging.interval)) {
+            // 還沒充滿就放開：取消（不出手、不扣消耗）
+            runtime.charging = null;
+            final SkillDefinition cancelled = service.config().skill(charging.skillId);
+            final PlayerState cancelState = plugin.players().get(player);
+            cancelState.notice("<gray>" + (cancelled == null ? charging.skillId : ItemRenderer.escape(cancelled.name())) + " 還沒充滿，取消", now + 20);
+            plugin.players().display(player, cancelState);
+            return;
+        }
+        if (fullOnly && !charging.cued && held >= FullCharge.fullTicks(charging.interval)) {
+            charging.cued = true; // 充滿了：叮一聲，放開就射
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, SoundCategory.PLAYERS, 1.0f, 2.0f);
+            player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0, 1.2, 0), 18, 0.4, 0.5, 0.4, 0.05);
+        }
+        if (fullOnly && !released && held % 4 == 0) {
+            final SkillDefinition shown = service.config().skill(charging.skillId);
+            final PlayerState shownState = plugin.players().get(player);
+            shownState.notice(FullCharge.progressText(shown == null ? charging.skillId : ItemRenderer.escape(shown.name()), held, charging.interval), now + 6);
+            plugin.players().display(player, shownState);
+        }
+        final long limit = fullOnly ? FullCharge.fullTicks(charging.interval) + FullCharge.HOLD_AFTER_FULL
+                : spec.perfect() ? charging.perfectAt + ChargeSpec.OVERHOLD
                 : spec.accumulate() ? Math.round(spec.fullTicks(charging.speed, perStage)) + ChargeSpec.OVERHOLD
                 : Math.round(spec.stageTicks(charging.speed) * spec.stages()) + ChargeSpec.OVERHOLD;
         if (held > limit) {
@@ -398,6 +424,11 @@ final class Signatures {
             final double area = spec.stageArea() * (stages - 1) / 100.0;
             if (area > 0) {
                 result = result.withAreaAndProjectiles(result.areaScale() * Math.sqrt(1 + area), result.projectiles());
+            }
+            // 2026-11-01 照 PoE2 Flameblast（vaal_flameblast_radius_+_per_stage 6，沒有基礎半徑）：半徑照層數倍增（每層 0.6 公尺）
+            final double radiusScale = FireSpells.stageRadiusScale(SkillZones.localFlat(result.profile(), FireSpells.STAGE_RADIUS), stages);
+            if (radiusScale > 1) {
+                result = result.withAreaAndProjectiles(result.areaScale() * radiusScale, result.projectiles());
             }
             if (spec.stageProjectiles() > 0 && stages > 1) { // 2026-10-26：引導越久骨刺越多（Bonestorm）
                 result = result.withAreaAndProjectiles(result.areaScale(),
@@ -739,6 +770,8 @@ final class Signatures {
             mine.fired = 0; // 上一輪還在射：新的一輪重新算
         }
         final int max = emberMax(build.level());
+        // 2026-11-01 照 PoE2 Ember Fusillade：這次施放用掉電灌注的話，整輪（還在頭上的火星）都放閃電光束
+        mine.beam = EmberBeams.fusillade(mine.beam, mine.queue.isEmpty(), SkillZones.localFlat(build.profile(), EmberBeams.MARK) > 0);
         if (mine.queue.size() < max) {
             mine.queue.addLast(build);
         }
@@ -886,7 +919,11 @@ final class Signatures {
                 : player.getEyeLocation().getDirection();
         // 2026-10-28 照 PoE2 Ember Fusillade 的品質：每一顆之前射過的火星再更多 (0—2)%（加在 5% 上）
         final double perEmber = EMBER_MORE_PER + build.qualityFlat(tw.exilecore.stats.GemQualityKeys.MORE_PER_EMBER) / 100.0;
-        final SkillBuild shot = index > 0 ? build.withProfile(build.profile().scaled(1 + perEmber * index, "火星連射")) : build;
+        SkillBuild shot = index > 0 ? build.withProfile(build.profile().scaled(1 + perEmber * index, "火星連射")) : build;
+        if (ember.beam && SkillZones.localFlat(shot.profile(), EmberBeams.MARK) <= 0) {
+            // 2026-11-01 照 PoE2 Ember Fusillade：整輪的火星都放閃電光束（ProjectileEngine.emberBeam）
+            shot = shot.withProfile(shot.profile().withLocal(List.of(tw.exilecore.stats.Modifier.flat(EmberBeams.MARK, 1, "電灌注"))));
+        }
         service.procCast(Origin.at(player, from, direction.lengthSquared() < 1e-6 ? SkillTargets.facing(player) : direction.normalize()),
                 shot, target);
     }

@@ -67,9 +67,13 @@ final class AscPaths implements Listener {
     static final double WISP_METRES = 10;
     /** 靈鹿躍起幾次、每次幾格、靈鹿之間的角度、追敵的錐角（一半）、追敵距離。 */
     static final int STAG_LEAPS = 4;
-    // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前 3 格）
-    static final double STAG_LEAP = tw.exilecore.core.Units.metres(3);
+    // 2026-11-01 照 PoE2（PoB2 VividStampedePlayer vivid_stag_spacing 10、vivid_stag_cascade_number_of_damaging_areas 4）：
+    //   每頭靈鹿的 4 個落點之間隔 1 公尺；這次之前 3 公尺（沒有出處）
+    static final double STAG_LEAP = tw.exilecore.core.Units.metres(1);
     static final double STAG_SPREAD = 15;
+    /** 2026-11-01 照站長「衝向目標的要有鎖敵」：沒有打的敵人時，鎖定準心方向這個角度（一半）內、這個距離內最靠近準心的敵人（距離伺服器自己定）。 */
+    static final double STAG_LOCK_HALF_ANGLE = 30;
+    static final double STAG_LOCK_RANGE = 15;
     static final double STAG_HOME_HALF_ANGLE = 60;
     // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前 5 格）
     static final double STAG_HOME_RANGE = tw.exilecore.core.Units.metres(5);
@@ -177,6 +181,12 @@ final class AscPaths implements Listener {
         this.effects = effects;
         this.plugin = effects.plugin;
         this.minionSkillKey = new NamespacedKey(plugin, "minion_skill");
+    }
+
+    /** 2026-11-01：技能格倒數：蠻荒厚賜用掉梟羽的強化還剩幾 tick。 */
+    long slotTicks(final UUID player, final String skillId, final long now) {
+        final Own own = owns.get(player);
+        return own != null && "primal_bounty".equals(skillId) ? own.empowerUntil - now : 0;
     }
 
     Own own(final Player player) {
@@ -288,11 +298,27 @@ final class AscPaths implements Listener {
     // ---- 靈現奔竄 ----
 
     private void stampede(final Player player, final StatSheet sheet, final int count, final LivingEntity target) {
-        final Vector facing = player.getLocation().getDirection().setY(0);
+        Vector facing = player.getLocation().getDirection().setY(0);
         if (facing.lengthSquared() < 1e-6) {
             facing.setX(1);
         }
         facing.normalize();
+        // 2026-11-01 照站長「衝向目標的要有鎖敵」：靈鹿朝打的那隻敵人（沒有就找準心附近、跳完全程距離內的敵人）躍去；這次之前一律照面向
+        LivingEntity locked = target != null && target.isValid() && !target.isDead() ? target : null;
+        if (locked == null) {
+            double best = Double.MAX_VALUE;
+            for (final LivingEntity enemy : effects.enemiesNear(player, player.getLocation(), STAG_LOCK_RANGE)) {
+                final Vector to = enemy.getLocation().toVector().subtract(player.getLocation().toVector()).setY(0);
+                final double angle = to.lengthSquared() < 1e-6 ? 0 : Math.toDegrees(to.angle(facing));
+                if (angle <= STAG_LOCK_HALF_ANGLE && angle < best) {
+                    best = angle;
+                    locked = enemy;
+                }
+            }
+        }
+        if (locked != null) {
+            facing = lockDirection(player.getLocation().getX(), player.getLocation().getZ(), locked.getLocation().getX(), locked.getLocation().getZ(), facing);
+        }
         final boolean homing = AscendancyEffects.has(sheet, AscKeys.SACRED_UNITY);
         final boolean guidance = AscendancyEffects.has(sheet, AscKeys.STAG_GUIDANCE);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_HORSE_JUMP, 0.8f, 1.4f);
@@ -308,6 +334,12 @@ final class AscPaths implements Listener {
                 own.wisps = Math.min(Math.max(1, max), own.wisps + 1); // 莫里根的指引：奔竄結束時獲得 1 個靈現之靈
             });
         }
+    }
+
+    /** 從 (px, pz) 指向 (tx, tz) 的水平單位向量；幾乎重疊時照 fallback。純函式（測試用）。 */
+    static Vector lockDirection(final double px, final double pz, final double tx, final double tz, final Vector fallback) {
+        final Vector to = new Vector(tx - px, 0, tz - pz);
+        return to.lengthSquared() < 1e-4 ? fallback.clone() : to.normalize();
     }
 
     /** 靈鹿的第 n 次躍起：落地的地方放震波，第 4 次留下感電地面。 */

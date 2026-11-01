@@ -64,7 +64,7 @@ public record MetaSpec(Kind kind, double energy, Scaled energyMore, double lessD
          * 這次之前是受創引星的「被擊中時每次 30」（原作 0.5 已經沒有 Cast when Damage Taken）。
          */
         BARRIER,
-        /** 持續型召喚物死掉時：每隻 energy × 召喚物強度（2026-10-26 照 PoE2：有持續時間的不算；強度＝相對生命，等級太低打折，見 SkillTriggers.minionPower）。 */
+        /** 持續型召喚物死掉時：每隻 energy × 牠給的點數（2026-10-26 照 PoE2：有持續時間的不算；2026-11-01：每 2% 相對防禦力 1 點，見 SkillTriggers.relativeDefence）。 */
         MINION_DEATH,
         /** 近戰擊殺時：每隻 energy × 怪物強度（2026-10-26 照 PoE2 Reaper's Invocation：每點強度 30）。 */
         MELEE_KILL,
@@ -94,7 +94,7 @@ public record MetaSpec(Kind kind, double energy, Scaled energyMore, double lessD
                 case AILMENT -> "你讓敵人冰凍、感電或點燃時";
                 case DODGE -> "你翻滾時（每格）";
                 case BARRIER -> "你的能量護盾被敵人擊中扣掉時";
-                case MINION_DEATH -> "你的持續型召喚物死掉時（乘牠的強度）";
+                case MINION_DEATH -> "你的持續型召喚物死掉時（每 2% 相對防禦力 1 點）";
                 case MELEE_KILL -> "你以近戰擊殺敵人時";
                 case SPELL_CAST -> "你施放法術時（每 0.1 秒基礎施法時間）";
                 case MELEE_HIT -> "你用近戰攻擊擊中敵人時";

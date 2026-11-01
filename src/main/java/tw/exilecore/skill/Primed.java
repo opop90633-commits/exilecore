@@ -6,8 +6,8 @@ package tw.exilecore.skill;
  */
 public final class Primed {
 
-    /** 滿足原作條件時的倍率（更多 50%）。 */
-    public static final double MORE = 1.5;
+    /** 滿足原作條件時的倍率。2026-11-02 照站長：「條件達成時更多 50%」全部移除，達成跟沒達成一樣是基礎數值；這次之前 1.5。 */
+    public static final double MORE = 1.0;
 
     private Primed() {
     }

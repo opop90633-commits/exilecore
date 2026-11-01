@@ -128,14 +128,17 @@ class MetaGemTest {
         assertEquals(fireball, socket.spell(), "第一個插槽法術");
     }
 
-    /** 2026-10-26 照 PoE2：點燃照打掉異常門檻的 %、殞從引星乘召喚物強度、等級太低打折。 */
+    /** 2026-11-01 照 PoE2 Cast on Minion Death：每 2% 召喚物相對防禦力 1 點能量（相對防禦力＝生命倍率 × 牠等級的怪物生命 ÷ 區域等級的，最多 1）。 */
     @Test
-    void minionPowerPenalisesUnderlevelledMinions() {
-        assertEquals(1, SkillTriggers.minionPower(1, 70, 70), 1e-9);
-        assertEquals(0.88, SkillTriggers.minionPower(0.88, 70, 75), 1e-9, "低 10 級以內不打折");
-        assertEquals(0.5, SkillTriggers.minionPower(1, 50, 70), 1e-9, "低 20 級：多低的 10 級各少 5%");
-        assertEquals(SkillTriggers.MINION_LEVEL_FLOOR, SkillTriggers.minionPower(1, 1, 80), 1e-9, "最少剩一成");
-        assertTrue(SkillTriggers.minionPower(2, 70, 70) > SkillTriggers.minionPower(1, 70, 70), "強度高的給比較多");
+    void minionEnergyFollowsRelativeDefence() {
+        assertEquals(100, SkillTriggers.relativeDefence(1, 500, 500), 1e-9);
+        assertEquals(50, SkillTriggers.minionDeathEnergy(SkillTriggers.relativeDefence(1, 500, 500)), 1e-9, "一般的召喚物 50 點（原作的 50 base Energy）");
+        assertEquals(35, SkillTriggers.minionDeathEnergy(SkillTriggers.relativeDefence(0.7, 500, 500)), 1e-9, "生命倍率 0.7（殭屍）→ 70% → 35 點");
+        assertEquals(25, SkillTriggers.minionDeathEnergy(SkillTriggers.relativeDefence(1, 250, 500)), 1e-9, "等級太低：照生命比例打折");
+        assertEquals(50, SkillTriggers.minionDeathEnergy(SkillTriggers.relativeDefence(1, 900, 500)), 1e-9, "比區域高級不加");
+        assertEquals(50, SkillTriggers.minionDeathEnergy(SkillTriggers.relativeDefence(1, 500, 0)), 1e-9, "不知道區域等級不打折");
+        assertEquals(12, SkillTriggers.minionDeathEnergy(25.9), 1e-9, "每滿 2% 才 1 點");
+        assertEquals(1, config.meta("fallen_servant_star").energy(), 1e-9, "能量照點數給（energy 1）");
     }
 
     /** 2026-10-26 照 PoE2 Fluke：觸發出來的技能回復 0～20% 消耗；骰運掛在引星上照宿主算才吃得到。 */

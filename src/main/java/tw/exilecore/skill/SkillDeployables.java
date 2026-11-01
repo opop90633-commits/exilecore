@@ -424,6 +424,23 @@ final class SkillDeployables implements Listener {
         return taken;
     }
 
+
+    /** 2026-11-01 照 PoE2 Tempest Bell（bell_distance_limit_for_recall 90）：離鐘多遠（格）就收回。 */
+    static final double BELL_RECALL = tw.exilecore.core.Units.metres(9);
+
+    /** 跟鐘的距離平方 distanceSq：要不要收回。純函式（測試用）。 */
+    static boolean bellRecalled(final double distanceSq) {
+        return distanceSq > BELL_RECALL * BELL_RECALL;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2（base_totem_range，0.1 公尺）：圖騰可以放多遠（格；放在準心指的地上）——skills.yml 的 totem.place_range
+     * （{@link TotemPlacement}；英靈圖騰 6 公尺、崩震圖騰 8 公尺…）。沒寫的照舊放在面前 1.5 格。（totem.range 是圖騰找敵人的距離，不是這個）
+     */
+    static double placeRange(final String skillId) {
+        return TotemPlacement.range(skillId);
+    }
+
     /** 英靈圖騰（2026-10）：圖騰叫出的英靈用 linked 這個技能，每 linkedTicks 一次。 */
     void place(final Player player, final SkillBuild build, final SkillBuild linked, final long linkedTicks) {
         place(player, build, List.of(), linked, List.of(), linkedTicks);
@@ -441,7 +458,12 @@ final class SkillDeployables implements Listener {
         switch (spec.kind()) {
             case TRAP -> at = targets.aimPoint(origin, 12);
             case BELL -> at = ground(player.getLocation().add(origin.facing().multiply(2.0)));
-            default -> at = ground(player.getLocation().add(origin.facing().multiply(1.5)));
+            default -> {
+                // 2026-11-01 照 PoE2（base_totem_range）：寫了 totem.place_range 的圖騰放在準心指的地方（最遠那麼多格）；找不到地面照舊放面前
+                final double placeRange = spec.kind() == DeploySpec.Kind.TOTEM ? TotemPlacement.range(build.definition().id()) : 0;
+                final Location aimed = placeRange > 0 ? ground(targets.aimPoint(origin, placeRange)) : null;
+                at = aimed != null ? aimed : ground(player.getLocation().add(origin.facing().multiply(1.5)));
+            }
         }
         if (at == null) {
             return;
@@ -783,6 +805,11 @@ final class SkillDeployables implements Listener {
                 case TOTEM -> tickTotem(item, owner, now);
                 case TRAP -> tickTrap(item, owner, now);
                 case BELL -> {
+                    if (bellRecalled(owner.getLocation().distanceSquared(item.feet))) {
+                        // 2026-11-01 照 PoE2 Tempest Bell（bell_distance_limit_for_recall 90）：你離鐘超過 9 格，鐘收回長棍上（不爆、不響）；這次之前一直留著
+                        remove(item, true);
+                        continue;
+                    }
                     if (now % 10 == 0) {
                         visuals.deployIdle(item.build.definition().visual(), item.spec.kind(), item.feet, item.spec.range());
                     }

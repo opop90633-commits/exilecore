@@ -70,6 +70,9 @@ public final class SkillProfiles {
                 }
             }
         }
+        if (tags.contains(Tags.SPELL) && !tags.contains(tw.exilecore.stats.TreeConditions.CHANNELLING)) {
+            tags.add(Tags.NON_CHANNELLING); // 2026-11-01 照 PoE2：非引導法術（獻祭之心）
+        }
         return new SkillProfile(definition.id(), tags, definition.effectiveness().at(level), min, max, definition.conversion(), local);
     }
 
@@ -125,6 +128,13 @@ public final class SkillProfiles {
             return SkillMath.castInterval(deploy.place(), placementSpeed) + added;
         }
         if (definition.isAttack()) {
+            // 2026-11-01 照 PoE2（attackTime：盾牆 1.25 秒、共鳴之盾 0.8 秒、盾牌衝鋒 0.6 秒、千鈞砸 0.85 秒）：技能自己的攻擊時間，
+            //   不看武器的攻速（只吃攻擊速度的加成）；寫了 skill.attack_time_locked 的連加成也不吃（千鈞砸「不能被修改」，只留伺服器的基礎 ×2）
+            final double fixed = fixedAttackSeconds(effective, profile.tags());
+            if (fixed > 0) {
+                return fixedAttackInterval(fixed, effective.flat(LOCKED_ATTACK_TIME, profile.tags()) > 0 ? SkillConfig.playerSpeedScale()
+                        : effective.apply(tw.exilecore.stats.StatKeys.ATTACK_SPEED, 1.0, profile.tags())) / placement + added;
+            }
             return SkillMath.attackInterval(DamageCalculator.attacksPerSecond(effective, profile.tags()), definition.attackSpeed()) / placement + added;
         }
         if (definition.warcry() != null && definition.warcry().cry()) {
@@ -139,6 +149,21 @@ public final class SkillProfiles {
     /** 2026-10-26：戰吼速度倍率：（1 + 增加戰吼速度）× 更多。 */
     public static double warcrySpeed(final StatSheet sheet, final Set<String> context) {
         return Math.max(0.1, sheet.apply(tw.exilecore.stats.SupportKeys.WARCRY_SPEED, 1.0, context));
+    }
+
+    /** 2026-11-01 照 PoE2（attackTime）：技能自己的攻擊時間（FLAT，秒；寫了就不看武器的攻速）。 */
+    public static final String FIXED_ATTACK_TIME = "skill.attack_time";
+    /** 2026-11-01 照 PoE2（Supercharged Slam：攻擊時間不能被修改）：寫了（FLAT 1）攻擊速度的加成也不吃。 */
+    public static final String LOCKED_ATTACK_TIME = "skill.attack_time_locked";
+
+    /** 技能自己的攻擊時間（秒；沒寫是 0）。 */
+    static double fixedAttackSeconds(final StatSheet effective, final Set<String> tags) {
+        return Math.max(0, effective.flat(FIXED_ATTACK_TIME, tags));
+    }
+
+    /** 自己的攻擊時間 seconds 秒、攻擊速度倍率 speed：幾 tick。純函式（測試用）。 */
+    static double fixedAttackInterval(final double seconds, final double speed) {
+        return SkillMath.attackInterval(1.0 / seconds, Math.max(0.05, speed));
     }
 
     /** 2026-10-26：技能自己帶的「總攻擊／施法時間 +x 秒」（FLAT，秒；不吃攻擊、施法速度）。 */

@@ -48,7 +48,7 @@ final class SupportExtraText {
             case SupportExtraKeys.INEXORABLE -> "每秒增加 " + n(value) + "% 暴擊率（最多 " + n(SupportExtraKeys.INEXORABLE_CAP) + "%），暴擊時歸零";
             case SupportExtraKeys.INEXORABLE_BONUS -> "每秒暴擊傷害加成更少 " + n(value) + "%（最多 " + n(SupportExtraKeys.INEXORABLE_BONUS_CAP) + "%），暴擊時歸零";
             case SupportExtraKeys.STOICISM -> "每秒更多 " + n(value) + "% 傷害（最多 " + n(SupportExtraKeys.STOICISM_CAP) + "%），翻滾或用突進技能時歸零";
-            case SupportExtraKeys.DAUNTLESS -> "要靜止 1.5 秒才能用；每靜止 0.25 秒擊中更多 " + n(value) + "%（最多 " + n(SupportExtraKeys.DAUNTLESS_CAP) + "%）";
+            case SupportExtraKeys.DAUNTLESS -> "每靜止 0.25 秒擊中更多 " + n(value) + "%（最多 " + n(SupportExtraKeys.DAUNTLESS_CAP) + "%）";
             case SupportExtraKeys.FLAG_LUCKY_SURROUNDED -> "被包圍時攻擊的擊中傷害幸運（擲兩次取高）";
             case SupportExtraKeys.FLAG_FREE_SURROUNDED -> "被包圍時魔力不夠也能用";
             case SupportExtraKeys.DERANGE -> "放的時候扣等同你智慧的能量護盾；每 100 智慧非異常的持續傷害更多 " + n(value) + "%";

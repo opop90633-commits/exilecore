@@ -813,10 +813,27 @@ public final class MinionService implements Listener, MinionHooks {
      * 都是「隻數維持在上限、最舊的那隻重新算時間」，差別只在那隻留在原地、不是從你面前重新出來。
      */
     void summonOrRefresh(final Player player, final SkillBuild build) {
+        summonOrRefresh(player, build, null);
+    }
+
+    /**
+     * 同上；lock 不是 null：2026-11-01 照 PoE2 Raging Spirits（焚魂撲向附近的敵人）——叫出來（或補了時間）的那隻直接鎖定這個敵人
+     * （範圍法術你鎖定的、投射物打中的），之後照平常找下一個。這次之前叫出來的都照「主人剛打過的、不然最近的」自己找。
+     */
+    void summonOrRefresh(final Player player, final SkillBuild build, final LivingEntity lock) {
+        final Minion touched = summonOrRefreshOne(player, build);
+        if (touched != null && lock != null && lock.isValid() && !lock.isDead() && validTarget(lock, player, touched.mob)) {
+            touched.target = lock.getUniqueId();
+            touched.idleStopped = false;
+        }
+    }
+
+    /** 叫一隻或補最舊那隻的時間；回傳那隻（叫不出來 null）。 */
+    private Minion summonOrRefreshOne(final Player player, final SkillBuild build) {
         final SummonSpec spec = build.definition().summon();
         if (spec == null || spec.permanent() || spec.corpse()) {
             summon(player, build);
-            return;
+            return newestSpirit(player.getUniqueId(), build.definition().id());
         }
         final UUID owner = player.getUniqueId();
         final String skillId = build.definition().id();
@@ -833,7 +850,7 @@ public final class MinionService implements Listener, MinionHooks {
         }
         if (alive < limit || oldest == null || oldest.untilTick <= 0) {
             summon(player, build);
-            return;
+            return newestSpirit(owner, skillId);
         }
         final long now = now();
         oldest.untilTick = now + build.durationTicks(spec.duration() + durationFlat(build));
@@ -843,6 +860,18 @@ public final class MinionService implements Listener, MinionHooks {
         }
         healFraction(oldest.mob, 1.0);
         syncName(oldest, now);
+        return oldest;
+    }
+
+    /** 這個人這個技能最後叫出來的那隻（還活著的）。 */
+    private Minion newestSpirit(final UUID owner, final String skillId) {
+        for (int i = minions.size() - 1; i >= 0; i--) {
+            final Minion minion = minions.get(i);
+            if (minion.owner.equals(owner) && !minion.decoy && minion.skillId().equals(skillId) && minion.mob.isValid() && !minion.mob.isDead()) {
+                return minion;
+            }
+        }
+        return null;
     }
 
     /**
@@ -2208,6 +2237,26 @@ public final class MinionService implements Listener, MinionHooks {
 
     private static boolean wolf(final Minion minion) {
         return MinionAbilities.WOLVES.equals(minion.skillId()) || MinionAbilities.BEAST.equals(minion.skillId());
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Pounce（「Using this Skill allows any Wolf Minions you have to leap immediately」）：owner 的狼（灰狼隨、馴獸）
+     * 躍擊的冷卻馬上好、下一次攻擊不用等；target 不是 null 就改打牠。回傳幾隻。
+     */
+    int wolvesLeapNow(final Player owner, final LivingEntity target) {
+        int count = 0;
+        final long now = now();
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner.getUniqueId()) && !minion.decoy && minion.mob.isValid() && wolf(minion)) {
+                minion.ready.remove(LEAP);
+                minion.nextAttack = Math.min(minion.nextAttack, now);
+                if (target != null && target.isValid() && !target.isDead() && target.getWorld().equals(minion.mob.getWorld())) {
+                    minion.target = target.getUniqueId();
+                }
+                count++;
+            }
+        }
+        return count;
     }
 
     /** 焚魂、蟲群：敵人不會主動去打（PoE2）。 */
@@ -4387,6 +4436,19 @@ public final class MinionService implements Listener, MinionHooks {
         return 0;
     }
 
+    /** 2026-11-01 照 PoE2 Alchemist's Boon：只治療 center 周圍 radius 格內（存在範圍）owner 的召喚物。 */
+    public void healOwnedNear(final Player owner, final org.bukkit.Location center, final double radius, final double amount) {
+        if (amount <= 0 || center == null || center.getWorld() == null) {
+            return;
+        }
+        for (final Minion minion : List.copyOf(minions)) {
+            if (minion.owner.equals(owner.getUniqueId()) && !minion.decoy && minion.mob.isValid()
+                    && minion.mob.getWorld().equals(center.getWorld()) && minion.mob.getLocation().distanceSquared(center) <= radius * radius) {
+                heal(minion.mob, amount);
+            }
+        }
+    }
+
     public void healOwned(final Player owner, final double amount) {
         if (amount <= 0) {
             return;
@@ -4475,10 +4537,14 @@ public final class MinionService implements Listener, MinionHooks {
         }
         if (owner != null && !minion.decoy && plugin.skills() != null && plugin.skills().triggers() != null) {
             // 2026-10：召喚物死亡觸發（2026-10-26 照 PoE2：只算持續型；乘召喚物強度＝相對生命，等級比區域低太多打折）
+            // 2026-11-01 照 PoE2：每 2% 相對防禦力 1 點能量（相對防禦力＝生命倍率 × 牠等級的怪物生命 ÷ 區域等級的怪物生命，最多 1；SkillTriggers.relativeDefence）
+            final int minionLevel = MinionSheets.monsterLevel(config, minion.build.level(), plugin.players().get(owner).level());
+            final int areaLevel = plugin.monsters() == null ? 0 : plugin.monsters().levelFor(event.getEntity().getLocation());
+            final double defence = SkillTriggers.relativeDefence(minion.spec.life(),
+                    plugin.monsters() == null ? 0 : plugin.monsters().config().lifeAt(minionLevel),
+                    plugin.monsters() == null || areaLevel <= 0 ? 0 : plugin.monsters().config().lifeAt(areaLevel));
             plugin.skills().triggers().minionDeath(owner, event.getEntity().getLocation(), minion.untilTick <= 0,
-                    tw.exilecore.skill.SkillTriggers.minionPower(minion.spec.life(),
-                            MinionSheets.monsterLevel(config, minion.build.level(), plugin.players().get(owner).level()),
-                            plugin.monsters() == null ? 0 : plugin.monsters().levelFor(event.getEntity().getLocation())));
+                    SkillTriggers.minionDeathEnergy(defence));
             minionDied(owner, minion, event.getEntity().getLocation());
         }
     }

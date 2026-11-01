@@ -153,6 +153,11 @@ public final class AscendancyEffects implements Listener {
         paths.forget(player);
     }
 
+    /** 2026-11-01：技能格倒數（SkillService.SlotTimers）：昇華給的技能自己記的效果還剩幾 tick（沒有 ≤ 0）。 */
+    public long slotTicks(final java.util.UUID player, final String skillId, final long now) {
+        return Math.max(granted.slotTicks(player, skillId, now), paths.slotTicks(player, skillId, now));
+    }
+
     /** 模組沒啟用時是 null。 */
     public static AscendancyEffects get() {
         return instance;
@@ -284,13 +289,14 @@ public final class AscendancyEffects implements Listener {
             if ("mirage_spirit_haven".equals(definition.id()) && plugin(effects).skills().minions() != null) {
                 final org.bukkit.Location at = plugin(effects).skills().minions().locate(player, djinn);
                 if (at != null && tw.exilecore.skill.ElementalGround.chilledNear(plugin(effects), at, tw.exilecore.core.Units.metres(8)).isEmpty()) {
-                    return new Cost((int) Math.round(mana), 0, 0, 0, (summon == null ? "巨靈" : summon.name()) + "身邊 8 公尺內沒有冰緩地面");
+                    return new Cost((int) Math.round(mana), 0, 0, 0, (summon == null ? "巨靈" : summon.name()) + "身邊 8 格內沒有冰緩地面");
                 }
             }
         }
         // 御風的混合物：用掉魔力藥劑 5 點充能
         int flask = 0;
-        if (definition.id().endsWith("_concoction") && "ascendancy".equals(definition.source())) {
+        // 2026-11-01 修正：碎裂藥劑、雷爆藥劑改名成 *_tonic 後漏掉，沒扣也沒檢查魔力藥劑充能；兩種名字都算
+        if ((definition.id().endsWith("_concoction") || definition.id().endsWith("_tonic")) && "ascendancy".equals(definition.source())) {
             flask = CONCOCTION_CHARGES;
             if (plugin(effects).flasks() == null || plugin(effects).flasks().charges(player, tw.exilecore.flask.FlaskKind.MANA) < flask) {
                 return new Cost((int) Math.round(mana), 0, 0, 0, definition.name() + "要魔力藥劑 " + flask + " 點充能");

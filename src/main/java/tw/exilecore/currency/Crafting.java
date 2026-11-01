@@ -88,6 +88,14 @@ public final class Crafting {
     }
 
     /** 這顆通貨不能用在這件上的原因（能用回傳 null）。只管星魄、催化劑、星籤…；其他通貨回傳 null。 */
+    /** 藥劑、護符能用的通貨（PoE2 藥劑、護符最多魔法）。2026-10-23：蝕變石、凝露琉璃（品質）。 */
+    static boolean flaskOperation(final CurrencyOperation operation) {
+        return switch (operation) {
+            case IDENTIFY, UPGRADE_TO_MAGIC, ADD_AFFIX_MAGIC, REROLL_MAGIC, REMOVE_AFFIX, SCOUR, REROLL_VALUES, CORRUPT, QUALITY_FLASK, FORESEE -> true;
+            default -> false;
+        };
+    }
+
     public static String problem(final CurrencyType type, final ItemData data, final ItemGenerator generator) {
         final ItemBase base = generator.repository().base(data.base());
         if (base == null) {
@@ -105,12 +113,13 @@ public final class Crafting {
         }
         if (base.isFlaskLike()) {
             // 2026-10：藥劑、護符最多魔法（PoE2）：只有鑑定、蛻變、增幅、改造、機會→不行、抹除、神聖、祝福這幾種能用
-            switch (type.operation()) {
-                case IDENTIFY, UPGRADE_TO_MAGIC, ADD_AFFIX_MAGIC, REROLL_MAGIC, REMOVE_AFFIX, SCOUR, REROLL_VALUES, CORRUPT, QUALITY_FLASK, FORESEE -> { // 2026-10-23：蝕變石、凝露琉璃（品質）
-                }
-                default -> {
-                    return (base.isFlask() ? "藥劑" : "護符") + "最多魔法，不能用" + type.name();
-                }
+            // 2026-11-01 修正：星籤（必變籤這類）會被藥劑能用的通貨觸發的話，也能掛在藥劑、護符上；
+            //   這次之前星籤一律被擋（「藥劑最多魔法，不能用必變籤」，製作台顯示成「這個星籤不能掛在這件上」），傳奇藥劑掛不了必變籤
+            final boolean allowed = type.operation() == CurrencyOperation.OMEN
+                    ? type.omen() != null && type.omen().triggers().stream().anyMatch(Crafting::flaskOperation)
+                    : flaskOperation(type.operation());
+            if (!allowed) {
+                return (base.isFlask() ? "藥劑" : "護符") + "最多魔法，不能用" + type.name();
             }
         }
         if (type.minModLevel() > 0) {

@@ -557,15 +557,14 @@ supports:
 
   giant_ally:      # Tangmazu's Thurible
     name: 巨伴
-    description: 被輔助的夥伴變巨大（生命、傷害更多 20%，體型大 20%），你每有 10 點閃避、偏斜，牠多 4 點。
+    description: 被輔助的夥伴變巨大（生命、傷害更多 20%，體型大 20%；已經是巨型就不再疊加），你每有 10 點閃避、偏斜，牠多 4 點。
     icon: NAUTILUS_SHELL
     tier: 3
     source: lineage_rare
     requires: [companion]
     # 2026-10-27 照 PoE2 0.5 Tangmazu's Thurible（poe2db；Gigantic：生命、傷害更多 20%、體型增加 20%）；這次新增
     modifiers:
-      - { stat: life.max, type: MORE, value: 20, tags: [minion] }
-      - { stat: damage, type: MORE, value: 20, tags: [minion] }
+      # 2026-11-01 照 PoE2：巨型是開關（MinionEstimates.gigantic），生命、傷害更多 20% 不跟巨魄、巨大追隨者疊加；這次之前另外寫 life.max／damage MORE 20
       - { stat: lineage.u.gigantic, type: FLAT, value: 40 }
 
   star_law:   # Uhtred's Constellation

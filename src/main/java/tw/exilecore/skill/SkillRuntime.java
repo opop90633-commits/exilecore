@@ -258,6 +258,49 @@ final class SkillRuntime {
         return until == null ? 0 : Math.max(0, until - now);
     }
 
+    /**
+     * 2026-11-01 照 PoE2（Shard Scavenger「restores one cooldown use」）：這個技能回復一次冷卻：只有一次的直接好；好幾次的，
+     * 還沒好的裡面最早要好的那一次現在好（後面排著的不動）。沒有在冷卻回傳 false。
+     */
+    boolean restoreOneUse(final String skillId, final long now) {
+        final long[] slots = cooldownSlots.get(skillId);
+        if (slots != null) {
+            final int pick = earliestPending(slots, now);
+            if (pick < 0) {
+                return false;
+            }
+            slots[pick] = now;
+            return true;
+        }
+        final Long until = cooldowns.get(skillId);
+        if (until == null || until <= now) {
+            return false;
+        }
+        cooldowns.remove(skillId);
+        return true;
+    }
+
+    /** 純邏輯：已經好了（ready &lt;= now）的任一格；都還沒好回傳 -1。 */
+    static int earliestReady(final long[] slots, final long now) {
+        for (int i = 0; i < slots.length; i++) {
+            if (slots[i] <= now) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** 純邏輯：還沒好（ready &gt; now）的裡面最早好的那一格；都好了回傳 -1。 */
+    static int earliestPending(final long[] slots, final long now) {
+        int pick = -1;
+        for (int i = 0; i < slots.length; i++) {
+            if (slots[i] > now && (pick < 0 || slots[i] < slots[pick])) {
+                pick = i;
+            }
+        }
+        return pick;
+    }
+
     void startCooldown(final String skillId, final long now, final int ticks) {
         if (ticks <= 0) {
             return;
@@ -269,6 +312,11 @@ final class SkillRuntime {
         }
         // 用掉最早好的那一次；照順序一次充一個：這一次在「其他次裡最晚好的」之後（或現在）再過 ticks 才好
         final long[] slots = cooldownSlots.computeIfAbsent(skillId, id -> new long[uses]);
+        if (earliestReady(slots, now) < 0) {
+            // 2026-11-01 修正：每一次都還在冷卻（冷卻中花戰星／怒氣跳過冷卻放的）不再往後排；這次之前每跳過一次就多排一整段冷卻，
+            //   再起（冷卻次數加倍）的戰吼連續跳過幾十次，冷卻疊到 400 秒
+            return;
+        }
         int use = 0;
         long latest = now;
         for (int i = 0; i < slots.length; i++) {

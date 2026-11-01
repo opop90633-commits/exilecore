@@ -59,6 +59,14 @@ public final class DamageNumbers {
         spawn(viewer, target, (crit ? "<bold>" : "") + "<" + color + ">" + text, crit ? 1.45f : 1.0f);
     }
 
+    /** 2026-11-01 照站長：被怪物的護盾（能量護盾、熔岩護盾）吃掉的傷害（淡藍色、小一點）。 */
+    public void absorbed(final Player viewer, final LivingEntity target, final double amount) {
+        if (amount < 0.5 || !enabled(viewer)) {
+            return;
+        }
+        spawn(viewer, target, "<#7fc8ff>" + format(amount), 0.9f);
+    }
+
     /** 沒打中、被格擋這類的字（灰色、小一點）。 */
     public void word(final Player viewer, final LivingEntity target, final String word) {
         if (!enabled(viewer)) {

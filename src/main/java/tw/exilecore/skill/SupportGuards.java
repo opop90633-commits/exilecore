@@ -312,9 +312,10 @@ public final class SupportGuards {
 
     /**
      * 2026-11-01 照 PoE2 的技能類型 Jumping（跳躍）：跳躍類機制（mechanic: leap），再加上原作是跳躍、我們用別的機制做的
-     * （回槍躍＝Disengage、躍退射＝Escape Shot、噬咬＝Devour、奔雷踏＝Stampede、霜浪＝Wave of Frost）。
+     * （回槍躍＝Disengage、噬咬＝Devour、奔雷踏＝Stampede、霜浪＝Wave of Frost）。
+     * 2026-11-01 照站長：躍退射刪掉，拿掉。
      */
-    static final Set<String> JUMPING_SKILLS = Set.of("spear_recoil_leap", "leapback_shoot", "gnawing_bite", "rushing_thunder_stomp", "frost_billow");
+    static final Set<String> JUMPING_SKILLS = Set.of("spear_recoil_leap", "gnawing_bite", "rushing_thunder_stomp", "frost_billow");
 
     /** 跳躍技能（PoE2 Jumping）。 */
     static boolean jumping(final SkillDefinition skill) {

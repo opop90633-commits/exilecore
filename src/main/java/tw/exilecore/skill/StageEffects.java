@@ -270,6 +270,12 @@ public final class StageEffects implements Listener {
         return until == null ? 0 : Math.max(0, until - now());
     }
 
+    /** 2026-11-01：技能格倒數（SkillService.SlotTimers）：震脈掌（有 stages.projectile 的技能）的增益還剩幾 tick。 */
+    long slotTicks(final UUID player, final String skillId, final long now) {
+        final Long until = palmUntil.get(player);
+        return until == null || SkillStages.get(skillId, "projectile") == null ? 0 : until - now;
+    }
+
     /** 這個敵人身上插著幾個這個玩家的矛頭。 */
     int spearheadsOn(final UUID player, final UUID target) {
         final Map<UUID, Deque<Long>> mine = spearheads.get(player);

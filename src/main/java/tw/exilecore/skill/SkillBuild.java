@@ -90,6 +90,14 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     public static final double PROJECTILE_CHAIN_RANGE = 10;
     /** 一次最多幾發投射物。 */
     public static final int MAX_PROJECTILES = 20;
+
+    /**
+     * 2026-11-01 照 PoE2 Spiral Volley（25 支）：這個技能一次最多幾發——基礎就超過 {@link #MAX_PROJECTILES} 的（螺旋箭雨）
+     * 照自己的基礎再多 {@link #MAX_PROJECTILES} 的一半（品質、輔助的 +x 投射物才有作用）；其他照 {@link #MAX_PROJECTILES}。純函式。
+     */
+    public static int projectileCap(final int base) {
+        return base > MAX_PROJECTILES ? base + MAX_PROJECTILES / 2 : MAX_PROJECTILES;
+    }
     /**
      * 實際施放的等級最高到幾級：寶石最高 20 級，裝備的「+x 技能等級」可以再往上加（照 PoE：21 級以上只有靠裝備）。
      * 超過 20 級的數值照 1 → 20 級的趨勢往外推（{@link Scaled#at}），法術基礎傷害每級再多 skills.yml 的 extra_level_damage。
@@ -142,6 +150,11 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         if (definition.summon() != null) {
             tags.remove(Tags.MELEE);
             tags.remove(Tags.PROJECTILE);
+        }
+        // 2026-11-02 修正：指令技能（叫召喚物放的：巨靈指令、掩護火力…）是召喚物的技能，也吃「+召喚物技能等級」；
+        //   這次之前巨靈的指令技能沒有召喚物標籤，吃不到
+        if (tags.contains(Commandables.TAG)) {
+            tags.add(Tags.MINION);
         }
         // 2026-10-26（骨髓之枯：+4 遲滯詛咒技能等級）：技能自己的代號也當標籤（skill:代號），只加某一個技能的等級
         tags.add(tw.exilecore.item.unique.UniqueStats.SKILL_TAG_PREFIX + definition.id());
@@ -344,7 +357,7 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         // 2026-10-28 照 PoE2 纏蝕箭：投射物數量的修飾器改成加在分裂目標數上（ProjectileEngine.split）；這次之前照樣多射
         final int projectiles = params.blink() ? 1 : tw.exilecore.stats.GrantedSkillKeys.projectileCount(params.projectiles().intAt(level),
                 effective.flat(StatKeys.SKILL_PROJECTILES, context),
-                StatKeys.flag(effective, tw.exilecore.stats.GrantedSkillKeys.FLAG_PROJECTILES_TO_SPLIT), MAX_PROJECTILES);
+                StatKeys.flag(effective, tw.exilecore.stats.GrantedSkillKeys.FLAG_PROJECTILES_TO_SPLIT), projectileCap(params.projectiles().intAt(level)));
         double spread = params.spread();
         // 2026-10-28 照 PoE2：鏈雷（連鎖機制、投射物標籤）的閃電也是投射物，環射時一圈放出去；這次之前只有 projectile 機制吃
         if (StatKeys.flag(effective, StatKeys.FLAG_PROJECTILE_NOVA) && !params.blink() && (definition.mechanic() == Mechanic.PROJECTILE
@@ -489,6 +502,14 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             return this;
         }
         return withAreaAndProjectiles(areaScale * (base + meters) / base, projectiles);
+    }
+
+    /** 2026-11-01 照 PoE2 Gale Force（wind_dancer_knockback_+%_final_per_stage）：擊退換掉（風之舞步每層更多 25% 擊退距離）。 */
+    public SkillBuild withKnockback(final double newKnockback) {
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
+                reach, angle, targets, Math.max(0, newKnockback), projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
+                radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     /** 2026-10-22：換掉放下去的東西的設定（星咒圖騰：主要寶石上的持續時間輔助只加圖騰的持續時間）。 */

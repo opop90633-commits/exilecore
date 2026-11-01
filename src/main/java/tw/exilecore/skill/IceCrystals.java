@@ -18,6 +18,7 @@ import org.joml.Vector3f;
 import tw.exilecore.ExileCore;
 import tw.exilecore.character.PlayerState;
 import tw.exilecore.stats.HitEvent;
+import tw.exilecore.stats.SkillProfile;
 import tw.exilecore.stats.StatKeys;
 import tw.exilecore.stats.StatSheet;
 
@@ -43,7 +44,20 @@ public final class IceCrystals implements Listener {
     static final int BASE_HITS = 3;
     static final double HIT_RADIUS = 2.4;
     static final double BASE_SECONDS = 8;
-    static final int MAX_PER_PLAYER = 20;
+    static final int MAX_PER_PLAYER = 60; // 2026-11-01：霜壁整道都是冰晶（3 道 × 十幾顆）；這次之前 20
+    /**
+     * 2026-11-01 照 PoE2 Frost Wall（a wall of Ice Crystals which holds back enemies）：技能修飾器寫了這個（FLAT 1）的牆（line／環壁），
+     * 整道牆是一顆一顆的冰晶（SkillExecutor.placeWall → {@link #spawnWall}）：擋住敵人、自己不打傷害，碎掉時照放它的技能
+     * （輔助、加成照吃）炸出 2 公尺的冰（{@link ColdSpells#WALL_BURST}），用了電灌注再多一次 2.8 公尺的閃電爆炸（{@link ColdSpells#WALL_VOLT}）。
+     * 被擋住的怪物照自己的攻擊節奏打冰晶（{@link #enemyStrikes}），扣完生命就碎。推不動的（Boss）撞上去直接把冰晶推碎（原作 explode if pushed hard enough）；放下 0.5 秒內被敵人推碎的爆炸更少 80%
+     * （ice_crystals_damage_+%_final_for_first_500_ms_when_not_killed_by_self）。這次之前霜壁是一道打傷害的地面效果加 4 顆冰晶、不擋路。
+     */
+    static final String WALL = "crystal.wall";
+    /** 冰晶牆擋路的半徑（格，量到敵人的中心再加牠的半寬）。 */
+    static final double WALL_BLOCK_RADIUS = 0.7;
+    /** 放下多久內被敵人推碎算「剛放下」（0.5 秒）、那時的爆炸更少幾成。 */
+    static final int WALL_EARLY_TICKS = 10;
+    static final double WALL_EARLY_LESS = 0.8;
 
     private final ExileCore plugin;
     private final SkillService service;
@@ -63,6 +77,10 @@ public final class IceCrystals implements Listener {
         double maxLife;
         /** 2026-10-28 照 PoE2：碎掉時炸的隱藏技能（凍壁矢的冰牆有自己的表）；這次之前一律 proc_crystal_burst。 */
         String burst = "proc_crystal_burst";
+        /** 2026-11-01 照 PoE2 Frost Wall：冰晶牆的一顆（碎掉時照這個技能炸；null = 一般冰晶）、要不要再炸閃電、什麼時候放的。 */
+        SkillBuild wall;
+        boolean volt;
+        long born;
         long lastHit;
         Object lastSource;
 
@@ -142,6 +160,52 @@ public final class IceCrystals implements Listener {
         if (count <= 0 || center.getWorld() == null) {
             return;
         }
+        final Vector step = along == null || along.lengthSquared() < 1e-6 ? new Vector(1, 0, 0) : along.clone().setY(0).normalize();
+        final List<Location> points = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            final double offset = (i - (count - 1) / 2.0) * 1.6;
+            final Location at = center.clone().add(step.clone().multiply(offset));
+            at.setY(Math.floor(center.getY()));
+            points.add(at);
+        }
+        place(owner, build, points, false);
+        center.getWorld().playSound(center, Sound.BLOCK_GLASS_PLACE, SoundCategory.PLAYERS, 0.8f, 1.4f);
+    }
+
+    /** 2026-11-01（凍壁矢的兩道冰牆，CrystalWalls）：在 center 加上每個 {dx, dz} 的地方各留一顆冰晶。 */
+    void spawnAt(final Player owner, final SkillBuild build, final Location center, final List<double[]> offsets) {
+        if (offsets.isEmpty() || center.getWorld() == null) {
+            return;
+        }
+        final List<Location> points = new ArrayList<>();
+        for (final double[] offset : offsets) {
+            final Location at = center.clone().add(offset[0], 0, offset[1]);
+            at.setY(Math.floor(center.getY()));
+            points.add(at);
+        }
+        place(owner, build, points, false);
+        center.getWorld().playSound(center, Sound.BLOCK_GLASS_PLACE, SoundCategory.PLAYERS, 0.8f, 1.4f);
+    }
+
+    /** 2026-11-01 照 PoE2 Frost Wall：整道牆每一點一顆冰晶（{@link #WALL}）。 */
+    void spawnWall(final Player owner, final SkillBuild build, final List<Location> points) {
+        if (points.isEmpty() || points.getFirst().getWorld() == null) {
+            return;
+        }
+        final List<Location> spots = new ArrayList<>();
+        for (final Location point : points) {
+            final Location at = point.clone();
+            at.setY(Math.floor(point.getY() + 0.01));
+            spots.add(at);
+        }
+        place(owner, build, spots, true);
+        final Location middle = points.get(points.size() / 2);
+        middle.getWorld().playSound(middle, Sound.BLOCK_GLASS_PLACE, SoundCategory.PLAYERS, 1.0f, 1.2f);
+        ensureWallTask();
+    }
+
+    private void place(final Player owner, final SkillBuild build, final List<Location> points, final boolean wall) {
+        final int count = points.size();
         final StatSheet sheet = plugin.players().sheet(owner);
         final StatSheet effective = build.profile().effective(sheet);
         final java.util.Set<String> tags = build.profile().tags();
@@ -159,11 +223,9 @@ public final class IceCrystals implements Listener {
         final List<Crystal> mine = crystals.computeIfAbsent(owner.getUniqueId(), key -> new ArrayList<>());
         final List<Location> spots = new ArrayList<>();
         final List<java.util.function.BooleanSupplier> alive = new ArrayList<>();
-        final Vector step = along == null || along.lengthSquared() < 1e-6 ? new Vector(1, 0, 0) : along.clone().setY(0).normalize();
+        final boolean volt = wall && SkillZones.localFlat(build.profile(), ColdSpells.WALL_VOLT_FLAG) > 0;
         for (int i = 0; i < count; i++) {
-            final double offset = (i - (count - 1) / 2.0) * 1.6;
-            final Location at = center.clone().add(step.clone().multiply(offset));
-            at.setY(Math.floor(center.getY()));
+            final Location at = points.get(i).clone();
             final BlockDisplay display = at.getWorld().spawn(at.clone().add(-0.35, 0, -0.35), BlockDisplay.class, d -> {
                 d.setBlock(Material.BLUE_ICE.createBlockData());
                 d.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(0.7f, 1.1f, 0.7f), new AxisAngle4f()));
@@ -174,6 +236,11 @@ public final class IceCrystals implements Listener {
             crystal.burst = StageAttacks.CRYSTAL_BURST.getOrDefault(build.definition().id(), crystal.burst);
             crystal.life = life;
             crystal.maxLife = life;
+            if (wall) {
+                crystal.wall = build;
+                crystal.volt = volt;
+                crystal.born = now();
+            }
             mine.add(crystal);
             spots.add(at.clone());
             alive.add(display::isValid);
@@ -187,7 +254,147 @@ public final class IceCrystals implements Listener {
             final Crystal oldest = mine.removeFirst();
             oldest.display.remove();
         }
-        center.getWorld().playSound(center, Sound.BLOCK_GLASS_PLACE, SoundCategory.PLAYERS, 0.8f, 1.4f);
+    }
+
+    // ---- 2026-11-01 照 PoE2 Frost Wall：冰晶牆擋路 ----
+
+    private org.bukkit.scheduler.BukkitTask wallTask;
+
+    private void ensureWallTask() {
+        if (wallTask == null) {
+            wallTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickWalls, 1, 1);
+        }
+    }
+
+    /** 每 2 tick：走進冰晶牆的敵人放回牆邊（貼著牆滑、穿不過去）；推不動的（Boss）把那顆推碎。 */
+    private void tickWalls() {
+        final long now = now();
+        if (now % 2 != 0) {
+            return; // 每 2 tick 擋一次（怪物 2 tick 走不過 1 格多厚的冰晶）
+        }
+        boolean any = false;
+        for (final Map.Entry<UUID, List<Crystal>> entry : crystals.entrySet()) {
+            final Player owner = plugin.getServer().getPlayer(entry.getKey());
+            if (owner == null) {
+                continue;
+            }
+            final List<Crystal> pushed = new ArrayList<>();
+            for (final Crystal crystal : entry.getValue()) {
+                if (crystal.wall == null || !crystal.display.isValid()) {
+                    continue;
+                }
+                any = true;
+                for (final org.bukkit.entity.LivingEntity enemy : service.targets().around(crystal.at, WALL_BLOCK_RADIUS + 1.0, owner)) {
+                    final double reach = WALL_BLOCK_RADIUS + enemy.getWidth() / 2;
+                    if (!inside(crystal.at, enemy.getLocation(), reach)) {
+                        continue;
+                    }
+                    if (tw.exilecore.combat.Knockbacks.immune(enemy) || service.isTotem(enemy)) {
+                        if (!service.isTotem(enemy)) {
+                            pushed.add(crystal); // 原作：推得夠用力就碎（Boss 推不動、直接推碎冰晶）
+                        }
+                        break;
+                    }
+                    holdBack(enemy, crystal.at, reach);
+                    if (!pushed.contains(crystal) && enemyStrikes(enemy, crystal, now)) {
+                        pushed.add(crystal); // 2026-11-01 照 PoE2：被擋住的敵人打冰晶，生命扣完就碎
+                    }
+                }
+            }
+            for (final Crystal crystal : pushed) {
+                if (entry.getValue().remove(crystal)) {
+                    shatter(owner, crystal, now - crystal.born < WALL_EARLY_TICKS);
+                }
+            }
+        }
+        if (!any && wallTask != null) {
+            wallTask.cancel();
+            wallTask = null;
+        }
+    }
+
+    /** 被冰晶牆擋住的敵人：下一次能打冰晶的 tick。 */
+    private final Map<UUID, Long> wallSwing = new HashMap<>();
+
+    /**
+     * 2026-11-01 照 PoE2 Frost Wall（The Crystals explode if sufficiently damaged：敵人也打得壞冰晶）：被這顆冰晶擋住的怪物照自己的攻擊節奏
+     * 打冰晶（每下 1 秒 ÷ 攻擊速度，含詛咒的攻擊速度更少），每下扣「這隻怪一般攻擊的平均物理傷害」（怪物屬性表的武器傷害 × 傷害加成）；
+     * 只有被擋住的那幾隻會打，不另外掃描。回傳這顆碎了沒。
+     */
+    private boolean enemyStrikes(final org.bukkit.entity.LivingEntity enemy, final Crystal crystal, final long now) {
+        if (!(enemy instanceof org.bukkit.entity.Mob) || plugin.monsters() == null) {
+            return false;
+        }
+        final Long ready = wallSwing.get(enemy.getUniqueId());
+        if (ready != null && ready > now) {
+            return false;
+        }
+        final tw.exilecore.monster.MonsterData data = plugin.monsters().data(enemy).orElse(null);
+        if (data == null) {
+            return false;
+        }
+        StatSheet sheet = plugin.monsters().sheet(enemy, data);
+        if (plugin.combat() != null) {
+            final List<tw.exilecore.stats.Modifier> cursed = plugin.combat().debuffs().modifiers(enemy.getUniqueId(), null, now);
+            if (!cursed.isEmpty()) {
+                sheet = sheet.overlay(cursed);
+            }
+        }
+        final java.util.Set<String> tags = java.util.Set.of(tw.exilecore.stats.Tags.ATTACK, tw.exilecore.stats.Tags.MELEE, tw.exilecore.stats.Tags.PHYSICAL);
+        final double speed = plugin.ailments() == null ? 1 : plugin.ailments().actionSpeed(enemy);
+        if (speed <= 0) {
+            return false; // 凍結、暈眩中不能打
+        }
+        wallSwing.put(enemy.getUniqueId(), now + monsterSwingTicks(sheet.apply(StatKeys.ATTACK_SPEED, 1.0, tags) * speed));
+        if (wallSwing.size() > 512) {
+            wallSwing.values().removeIf(tick -> tick < now);
+        }
+        final double physical = (sheet.flat(StatKeys.WEAPON_MIN, java.util.Set.of(tw.exilecore.stats.Tags.PHYSICAL))
+                + sheet.flat(StatKeys.WEAPON_MAX, java.util.Set.of(tw.exilecore.stats.Tags.PHYSICAL))) / 2;
+        final double damage = physical * Math.max(0, sheet.apply(StatKeys.DAMAGE, 1.0, tags));
+        enemy.swingMainHand();
+        return chip(crystal, now, damage);
+    }
+
+    /** 純函式：怪物打冰晶的間隔（tick）：1 秒 ÷ 攻擊速度（夾在 0.3～3 倍，跟怪物近戰一樣）。 */
+    static long monsterSwingTicks(final double attackSpeed) {
+        return Math.max(1, Math.round(20 / Math.max(0.3, Math.min(3.0, attackSpeed))));
+    }
+
+    /** 純函式：(x, z) 水平離 center 不到 reach（高度差 2 格內）。 */
+    static boolean inside(final Location center, final Location at, final double reach) {
+        if (!center.getWorld().equals(at.getWorld()) || Math.abs(at.getY() - (center.getY() - 0.5)) > 2) {
+            return false;
+        }
+        final double dx = at.getX() - center.getX();
+        final double dz = at.getZ() - center.getZ();
+        return dx * dx + dz * dz < reach * reach;
+    }
+
+    /** 純函式：把在 (dx, dz)（離冰晶中心）的敵人放到 reach 外面的那一點（從中心往外；剛好在中心就往 +x）。 */
+    static double[] pushOut(final double dx, final double dz, final double reach) {
+        final double length = Math.sqrt(dx * dx + dz * dz);
+        if (length < 1e-4) {
+            return new double[] {reach + 0.02, 0};
+        }
+        final double scale = (reach + 0.02) / length;
+        return new double[] {dx * scale, dz * scale};
+    }
+
+    /** 走進冰晶裡的敵人放回冰晶外緣（跟 Boss 的風暴牆一樣：不彈開，只是擋住），水平速度歸零。 */
+    private static void holdBack(final org.bukkit.entity.LivingEntity enemy, final Location center, final double reach) {
+        final org.bukkit.entity.Entity mover = enemy.getVehicle() != null ? enemy.getVehicle() : enemy;
+        final Location at = mover.getLocation();
+        final double[] out = pushOut(at.getX() - center.getX(), at.getZ() - center.getZ(), reach);
+        final Location edge = at.clone();
+        edge.setX(center.getX() + out[0]);
+        edge.setZ(center.getZ() + out[1]);
+        if (!edge.getBlock().isPassable() || !edge.clone().add(0, 1, 0).getBlock().isPassable()) {
+            return; // 牆邊是方塊：不放進方塊裡
+        }
+        final Vector velocity = mover.getVelocity();
+        mover.teleport(edge, io.papermc.paper.entity.TeleportFlag.EntityState.RETAIN_PASSENGERS);
+        mover.setVelocity(new Vector(0, Math.min(0, velocity.getY()), 0));
     }
 
     private void expire(final UUID owner, final Crystal crystal) {
@@ -260,8 +467,18 @@ public final class IceCrystals implements Listener {
     }
 
     private void shatter(final Player owner, final Crystal crystal) {
+        shatter(owner, crystal, false);
+    }
+
+    /** early：2026-11-01 照 PoE2 Frost Wall：放下 0.5 秒內被敵人推碎（爆炸更少 80%）。 */
+    private void shatter(final Player owner, final Crystal crystal, final boolean early) {
         crystal.display.remove();
         crystal.at.getWorld().playSound(crystal.at, Sound.BLOCK_GLASS_BREAK, SoundCategory.PLAYERS, 1.0f, 0.9f);
+        if (crystal.wall != null) {
+            wallBurst(owner, crystal, early);
+            verglas(owner, crystal.maxLife);
+            return;
+        }
         // 2026-11-01 照 PoE2 Crystalline Shards（晶刺）：被輔助的技能留下的冰晶爆炸 100% 穿刺打到的敵人（冰冷傷害也能穿刺、不抽出穿刺）；
         // 這次之前另外往四周噴 8 道冰片（proc_crystal_shards）
         cast(owner, crystal.burst, crystal.level, crystal.at, crystal.shards);
@@ -292,6 +509,34 @@ public final class IceCrystals implements Listener {
 
     private void cast(final Player owner, final String skillId, final int level, final Location at) {
         cast(owner, skillId, level, at, false);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Frost Wall：冰晶牆的一顆碎掉——照放它的那一下（霜壁的傷害表、輔助、加成）炸出 2 公尺的冰；
+     * 用了電灌注的再炸一次 2.8 公尺的閃電（自己的閃電表、暴擊 9%）。晶刺（穿刺）照一般冰晶。
+     */
+    private void wallBurst(final Player owner, final Crystal crystal, final boolean early) {
+        final SkillBuild build = crystal.wall;
+        final SkillConfig config = service.config();
+        SkillProfile cold = build.profile().derive(ColdSpells.WALL_BURST, java.util.Set.of(), java.util.Set.of());
+        if (crystal.shards) {
+            cold = cold.withLocal(List.of(tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.SupportRemakeKeys.CRYSTAL_IMPALE_MARK, 1, "晶刺"),
+                    tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.SupportExtraKeys.FLAG_NO_EXTRACT, 1, "晶刺")));
+        }
+        if (early) {
+            cold = cold.scaled(1 - WALL_EARLY_LESS, "剛放下就被推碎");
+        }
+        final double radius = ColdSpells.tableRadius(config, ColdSpells.WALL_BURST, build.level(), 2.0) * build.areaScale();
+        service.executor().burst(owner, cold, crystal.at, radius, 0, ColdSpells.ICE_NOVA);
+        if (crystal.volt) {
+            SkillProfile volt = ColdSpells.ownTable(config, build.profile(), ColdSpells.WALL_VOLT, build.level())
+                    .withLocal(List.of(tw.exilecore.stats.Modifier.flat(StatKeys.SPELL_BASE_CRIT, -2, "閃電爆炸")));
+            if (early) {
+                volt = volt.scaled(1 - WALL_EARLY_LESS, "剛放下就被推碎");
+            }
+            final double voltRadius = ColdSpells.tableRadius(config, ColdSpells.WALL_VOLT, build.level(), 2.8) * build.areaScale();
+            service.executor().burst(owner, volt, crystal.at, voltRadius, 0, "chain_thunder");
+        }
     }
 
     /** impale：2026-11-01 照 PoE2 Crystalline Shards：這一次爆炸打中時穿刺（技能描述帶記號，{@link #onHit} 存穿刺；這一下不抽出穿刺）。 */

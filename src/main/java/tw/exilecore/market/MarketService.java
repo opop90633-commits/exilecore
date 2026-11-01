@@ -498,8 +498,7 @@ public final class MarketService {
         if (tw.exilecore.life.LifeService.isHook(current)) {
             return "星索鉤綁定帳號，不能上架"; // 2026-10-27：這次之前上架後再領一把＝複製
         }
-        if (current.hasData(io.papermc.paper.datacomponent.DataComponentTypes.BUNDLE_CONTENTS)
-                || current.hasData(io.papermc.paper.datacomponent.DataComponentTypes.CONTAINER)) {
+        if (tw.exilecore.item.ItemContainers.holdsItems(current)) { // 2026-11-01：真的有裝東西才算（腰帶的原版物品是收納袋）
             // 2026-10-21 漏洞修正（照面對面交易）：容器裡的東西估不到價，手續費變最低；裡面鎖定的東西也會被賣掉
             return "收納袋、界伏盒這類容器不能上架（把裡面的東西拿出來再上架）";
         }

@@ -510,7 +510,13 @@ public final class AilmentService {
                         selfDuration + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".ignite", Set.of()))
                         * attack.more(StatKeys.IGNITE_DURATION, context) / igniteFaster; // 2026-10-27：更多的點燃持續時間以前沒算到
                 entry = entry == null ? track(defender) : entry;
-                entry.state.addIgnite(dps, now + ticks(seconds), attacker instanceof Player ? attacker.getUniqueId() : null, chaosIgnite);
+                // 2026-11-01 照 PoE2 Incinerate、Flame Breath（Compounding Ignite）：同一次使用造成的點燃疊加（AilmentState.addCompoundingIgnite）；其他照舊
+                final double compoundUse = attacker instanceof Player ? attack.flat(AilmentState.COMPOUND_USE, Set.of()) : 0;
+                if (compoundUse > 0) {
+                    entry.state.addCompoundingIgnite(dps, now + ticks(seconds), attacker.getUniqueId(), chaosIgnite, compoundUse, now);
+                } else {
+                    entry.state.addIgnite(dps, now + ticks(seconds), attacker instanceof Player ? attacker.getUniqueId() : null, chaosIgnite);
+                }
                 if (attacker instanceof Player igniter && plugin.skills() != null && !skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) {
                     // 2026-10-26 照 PoE2 天賦樹：擊中點燃敵人時獲得怒氣
                     final double rage = attack.flat(tw.exilecore.stats.TreeEffectKeys.RAGE_ON_IGNITE, Set.of());
@@ -607,15 +613,17 @@ public final class AilmentService {
         if (shockBase > 0) {
             final Set<String> context = skill.contextFor(DamageType.LIGHTNING);
             // 2026-10-27 照 PoE2 Drenched：濕透的敵人感電機率更多 50%；Shock Conduction 擊中濕透的一定感電
+            // 2026-11-01 照 PoE2 Stormcaller Arrow（active_skill_shock_as_though_damage_+%_final 50）：感電機率照「傷害更多 x%」算
+            final double shockAsThough = tw.exilecore.skill.StormcallerArrows.asThough(attack.flat(tw.exilecore.skill.StormcallerArrows.SHOCK_AS_THOUGH, Set.of()));
             final double chance = StatKeys.flag(attack, tw.exilecore.stats.SupportExtraKeys.FLAG_SHOCK_DRENCHED)
                     && StatKeys.flag(defenderSheet, tw.exilecore.stats.SupportExtraKeys.FLAG_DRENCHED) ? 1.0
-                    : config.shockChance(shockBase, threshold, attack.flat(StatKeys.SHOCK_CHANCE, context),
+                    : config.shockChance(shockBase * shockAsThough, threshold, attack.flat(StatKeys.SHOCK_CHANCE, context),
                     attack.increased(StatKeys.SHOCK_CHANCE, context))
                     * attack.more(StatKeys.SHOCK_CHANCE, context) // 2026-10：輔助的「更多／更少機率」
                     * defenderSheet.more(tw.exilecore.stats.SupportExtraKeys.SHOCK_CHANCE_TAKEN, Set.of());
             if (chance > 0 && random.nextDouble() < chance && !avoided(defenderSheet, StatKeys.AVOID_SHOCK, random)
                     && !immuneAfter(defender, defenderSheet, "shock", now)) { // 2026-10-28（悲運之縛）
-                final double effect = config.shockEffect(attack.increased(StatKeys.SHOCK_EFFECT, context))
+                final double effect = config.shockEffect(shockEffectIncrease(attack, context))
                         * tw.exilecore.stats.TreeKeys.selfEffect(defenderSheet, tw.exilecore.stats.TreeKeys.SHOCK_EFFECT_ON_SELF); // 2026-10-26：身上的感電效果
                 final double seconds = AilmentConfig.duration(config.shockDuration(playerTarget),
                         attack.increased(StatKeys.SHOCK_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context),
@@ -625,6 +633,12 @@ public final class AilmentService {
                 // 2026-10-26（昇華・二重打擊）：感電幅度更少 25%、可以同時兩個
                 if (entry.state.applyShock(tw.exilecore.ascendancy.AscendancyEffects.stackAilment(attacker, defender, AilmentType.SHOCK, effect,
                         now + ticks(seconds)), now + ticks(seconds), now)) {
+                    if (attacker instanceof Player) {
+                        // 2026-11-01 照 PoE2 Stormcaller Arrow：記下玩家剛造成的感電（落雷的感電擴散照它）
+                        shocksApplied++;
+                        lastShockEffect = entry.state.shock(now);
+                        lastShockUntil = now + ticks(seconds);
+                    }
                     feedback(defender, AilmentType.SHOCK);
                     if (attacker instanceof Player triggerer && plugin.skills() != null) {
                         if (!skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) plugin.skills().triggers().ailment(triggerer, defender, AilmentType.SHOCK, skill.id()); // 主要寶石（2026-10）
@@ -638,13 +652,13 @@ public final class AilmentService {
                     if (reflectTo != null && reflectTo != defender && reflectTo.isValid() && !reflectTo.isDead()
                             && StatKeys.flag(attack, tw.exilecore.stats.SupportExtraKeys.FLAG_SHOCK_REFLECT)) {
                         // 2026-11-01 照 PoE2 Overcharge（從召喚物這邊掛）：召喚物造成的感電反射到那隻召喚物自己身上；這次之前反射給主人
-                        shockMinion(reflectTo, config.shockEffect(attack.increased(StatKeys.SHOCK_EFFECT, context)),
+                        shockMinion(reflectTo, config.shockEffect(shockEffectIncrease(attack, context)),
                                 attack.increased(StatKeys.SHOCK_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context),
                                 attack.more(StatKeys.SHOCK_DURATION, context));
                     } else if (reflectTo == null && attacker instanceof Player self && self != defender
                             && StatKeys.flag(attack, tw.exilecore.stats.SupportExtraKeys.FLAG_SHOCK_REFLECT)) {
                         // 2026-11-01 照 PoE2 Overcharge：你造成的感電也反射到你自己身上（照沒吃目標「身上的感電效果」的幅度，再吃你自己的）
-                        shockSelf(self, config.shockEffect(attack.increased(StatKeys.SHOCK_EFFECT, context)),
+                        shockSelf(self, config.shockEffect(shockEffectIncrease(attack, context)),
                                 attack.increased(StatKeys.SHOCK_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context),
                                 attack.more(StatKeys.SHOCK_DURATION, context));
                     }
@@ -924,10 +938,15 @@ public final class AilmentService {
         if (electrocuteBase > 0) {
             final Set<String> context = skill.contextFor(DamageType.LIGHTNING);
             // 2026-10-27 照 PoE2 霆爆（Eonyr's Thunder）：閃電傷害本身就累積電擊（等於 100% 的來源）
-            final double chance = StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.LIGHTNING_ELECTROCUTES) || attackAllElectrocute ? 1.0
+            // 2026-11-01 照 PoE2 Enervating Nova：被衰雷環打中的敵人 4 秒內受到的所有閃電傷害都能電擊（等於 100% 的來源）
+            final boolean enervated = lightning > 0 && plugin.combat() != null
+                    && plugin.combat().debuffs().has(defender.getUniqueId(), tw.exilecore.skill.EnervatingNova.DEBUFF, now);
+            final double rawChance = StatKeys.flag(attack, tw.exilecore.stats.LineageKeys.LIGHTNING_ELECTROCUTES) || attackAllElectrocute || enervated ? 1.0
                     : Math.max(0, attack.flat(StatKeys.ELECTROCUTE_CHANCE, context))
                     * Math.max(0, 1 + attack.increased(StatKeys.ELECTROCUTE_CHANCE, context))
                     * Math.max(0, attack.more(StatKeys.ELECTROCUTE_CHANCE, context)) / 100.0; // 2026-10-27：更多（風暴箭的 −100%）以前沒算到
+            // 2026-11-01 照 PoE2 Electrocuting Arrow：插著電殛棒的敵人，受到的所有閃電傷害都累積電擊（不管誰打的、有沒有來源）
+            final double chance = tw.exilecore.skill.ElectrocutingRods.electrocuteSource(rodded(defender), rawChance);
             // 2026-10-26 照 PoE2：電擊是累積條，有來源就每一擊都累積，不先擲機率；不到 100% 的「電擊機率」改成累積量乘那個比例
             //（期望值一樣）。這次之前先擲機率，擲中才累積
             // 2026-10-29：免疫電擊（免疫元素異常）的不累積（這次之前累積到滿才擋掉）
@@ -949,6 +968,7 @@ public final class AilmentService {
                                     attack.increased(StatKeys.ELECTROCUTE_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context), selfDuration);
                             entry.state.electrocute().trigger(now, ticks(seconds), 0);
                             entry.state.electrocute().raiseThreshold(config.electrocute().after(playerTarget), config.electrocute().afterTicks(playerTarget), now);
+                            removeRods(defender); // 2026-11-01 照 PoE2 Electrocuting Arrow：被電擊時電殛棒拔掉
                             refreshAt(defender, entry, entry.state.electrocute().activeUntil() - now);
                             feedback(defender, AilmentType.ELECTROCUTE);
                             if (plugin.skills() != null && !playerTarget) {
@@ -1226,6 +1246,23 @@ public final class AilmentService {
      * 這一次結算 seconds 秒份，走持續傷害那一套（不暴擊、不算擊中、吃感電；不算進目標的失血），並阻礙 hinderTicks。
      * 這次之前龍捲風是每 0.5 秒擊中一次。
      */
+    /**
+     * 2026-11-01 照 PoE2 Vine Arrow：技能自己的混沌持續傷害（不是中毒、不擊中）：dps 每秒、這一次算 seconds 秒（被下毒的荊棘矢植物）。
+     */
+    public void skillChaosDot(final LivingEntity target, final double dps, final double seconds, final UUID source) {
+        if (target == null || !target.isValid() || target.isDead() || dps <= 0 || seconds <= 0) {
+            return;
+        }
+        Tracked entry = tracked.get(target.getUniqueId());
+        entry = entry == null ? track(target) : entry;
+        skillDot = true;
+        try {
+            damageOverTime(target, entry, dps * seconds * 20.0 / TICK_INTERVAL, source, AilmentType.POISON, DamageType.CHAOS, now());
+        } finally {
+            skillDot = false;
+        }
+    }
+
     public void skillPhysicalDot(final LivingEntity target, final double dps, final double seconds, final UUID source, final long hinderTicks) {
         if (target == null || !target.isValid() || target.isDead()) {
             return;
@@ -1275,6 +1312,77 @@ public final class AilmentService {
         if (!entry.hinderDots.isEmpty()) {
             skillPhysicalDot(living, 0, 0, source, tw.exilecore.stats.SupportSystemKeys.HINDER_DOT_TICKS);
         }
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Tornado（野旋風吸收元素地面）：技能自己的元素持續傷害（dps 已含攻擊方的加成），這一次結算 seconds 秒份，
+     * 走持續傷害那一套（不暴擊、不算擊中、吃感電）。怪物照牠那種元素的抗性減（持續傷害不吃穿透）；玩家照持續傷害那一套自己算。
+     * 不是元素的不做。
+     */
+    public void skillElementalDot(final LivingEntity target, final double dps, final double seconds, final UUID source, final DamageType type) {
+        if (target == null || type == null || !type.isElemental() || dps <= 0 || seconds <= 0 || !target.isValid() || target.isDead()) {
+            return;
+        }
+        double factor = 1.0;
+        if (!(target instanceof Player) && plugin.monsters() != null && plugin.monsters().data(target).isPresent()) {
+            factor = resistFactor(plugin.monsters().sheet(target, plugin.monsters().data(target).get()), type);
+        }
+        if (factor <= 0) {
+            return;
+        }
+        Tracked entry = tracked.get(target.getUniqueId());
+        entry = entry == null ? track(target) : entry;
+        final double before = entry.bloodLoss;
+        skillDot = true;
+        try {
+            damageOverTime(target, entry, dps * factor * seconds * 20.0 / TICK_INTERVAL, source, AilmentType.BLEED, type, now());
+        } finally {
+            skillDot = false;
+        }
+        entry.bloodLoss = before;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Flame Wall、Incinerate（「Ignites as though dealing X to Y Fire damage」，不是擊中）：讓 target 點燃，
+     * 視同 source 造成 baseFire 點火焰傷害（已含這個技能的傷害加成，{@link tw.exilecore.skill.AsThough}）——不擲機率，
+     * 吃 sourceSheet（技能疊好輔助的屬性表）在 context 下的點燃幅度、持續時間加成，再照目標的火焰抗性減（跟擊中造成的點燃一樣）；
+     * times = 這一次等於點燃幾次（焚流每 0.075 秒一次：幅度乘上次數，疊加的才有意義）；compoundUse > 0 = 疊加的點燃
+     * （{@link AilmentState#COMPOUND_USE}）。避免點燃、一個傷害型異常的不會中。點燃了回傳 true。
+     * 這次之前這兩招是擊中，點燃另外乘一個倍率換算（ignite.magnitude 更多 658%／620%）。
+     */
+    public boolean igniteAsThough(final Player source, final LivingEntity target, final double baseFire, final StatSheet sourceSheet,
+                                  final Set<String> context, final double times, final long compoundUse) {
+        if (baseFire <= 0 || times <= 0 || source == null || target == null || !target.isValid() || target.isDead() || target instanceof Player) {
+            return false;
+        }
+        final java.util.Optional<tw.exilecore.monster.MonsterData> data = plugin.monsters() == null ? java.util.Optional.empty()
+                : plugin.monsters().data(target);
+        final StatSheet defenderSheet = data.isPresent() ? plugin.monsters().sheet(target, data.get()) : new StatSheet();
+        if (avoided(defenderSheet, StatKeys.AVOID_IGNITE, plugin.items().random()) || oneDamagingAilment(target, defenderSheet)) {
+            return false;
+        }
+        final double faster = tw.exilecore.stats.TreeEffectKeys.ailmentSpeed(sourceSheet, tw.exilecore.stats.TreeEffectKeys.IGNITE_SPEED, context);
+        final boolean chaos = chaosIgnite(sourceSheet);
+        final double dps = config.igniteDps(baseFire, sourceSheet.increased(StatKeys.IGNITE_MAGNITUDE, context),
+                sourceSheet.more(StatKeys.IGNITE_MAGNITUDE, context)) * igniteResist(defenderSheet, chaos ? DamageType.CHAOS : DamageType.FIRE)
+                * tw.exilecore.stats.TreeKeys.selfEffect(defenderSheet, tw.exilecore.stats.TreeKeys.IGNITE_EFFECT_ON_SELF) * faster * times;
+        if (dps <= 0) {
+            return false;
+        }
+        final double seconds = AilmentConfig.duration(config.igniteDuration(),
+                sourceSheet.increased(StatKeys.IGNITE_DURATION, context) + sourceSheet.increased(StatKeys.AILMENT_DURATION, context),
+                defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION, Set.of()) + defenderSheet.increased(StatKeys.SELF_AILMENT_DURATION + ".ignite", Set.of()))
+                * sourceSheet.more(StatKeys.IGNITE_DURATION, context) / faster;
+        final long now = now();
+        final Tracked entry = track(target);
+        if (compoundUse > 0) {
+            entry.state.addCompoundingIgnite(dps, now + ticks(seconds), source.getUniqueId(), chaos, compoundUse, now);
+        } else {
+            entry.state.addIgnite(dps, now + ticks(seconds), source.getUniqueId(), chaos);
+        }
+        igniteFeedback(target, chaos);
+        update(target, entry, now);
+        return true;
     }
 
     /** 2026-10-28：正在結算技能自己的物理持續傷害（不是流血：不算失血、不累積血獵印記的重暈）。 */
@@ -1504,7 +1612,7 @@ public final class AilmentService {
             final double seconds = AilmentConfig.duration(config.shockDuration(false),
                     attack.increased(StatKeys.SHOCK_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context), 0)
                     * attack.more(StatKeys.SHOCK_DURATION, context); // 2026-10-28：更多的感電持續時間
-            shocked += config.shockEffect(attack.increased(StatKeys.SHOCK_EFFECT, context)) * uptime(chance, hitsPerSecond, seconds);
+            shocked += config.shockEffect(shockEffectIncrease(attack, context)) * uptime(chance, hitsPerSecond, seconds);
         }
         return (hitDps + dot) * shocked;
     }
@@ -2299,6 +2407,17 @@ public final class AilmentService {
         }
     }
 
+    /**
+     * 2026-11-01 照 PoE2 Temporal Chains（遲滯詛咒：其他效果流逝慢 25%）：這隻（怪物或玩家）身上的異常與異常類減益晚 extra tick 結束
+     * （同時間泡泡的 {@link AilmentState#extendDebuffs}；戰鬥模組的減益由呼叫端自己延長，才能跳過詛咒本身）。
+     */
+    public void extendEffects(final LivingEntity entity, final long extra) {
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        if (entry != null) {
+            entry.state.extendDebuffs(extra, now());
+        }
+    }
+
     /** 2026-10-23：時間泡泡：玩家身上的減益晚 extra tick 結束（戰鬥模組的減益，例如致盲，也一起延長）。 */
     public void extendDebuffs(final Player player, final long extra) {
         final long now = now();
@@ -2439,6 +2558,48 @@ public final class AilmentService {
      * rawEffect：還沒乘牠「身上的感電效果」的幅度；持續時間照玩家的感電基礎時間（4 秒，PoE2 的基礎感電時間；召喚物是友方，不用怪物的 8 秒），
      * 攻擊方的感電／異常持續時間加成，再吃牠自己身上的異常持續時間；避免感電的照擲。
      */
+    /** 2026-11-01 照 PoE2 Stormcaller Arrow：玩家造成的感電次數（單執行緒；比較前後就知道這一下有沒有讓敵人感電）、最後一次的幅度、到哪個 tick。 */
+    private long shocksApplied;
+    private double lastShockEffect;
+    private long lastShockUntil;
+
+    public long shocksApplied() {
+        return shocksApplied;
+    }
+
+    public double lastShockEffect() {
+        return lastShockEffect;
+    }
+
+    public long lastShockUntil() {
+        return lastShockUntil;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Stormcaller Arrow（also applies Shock to all enemies near the impact）：把同樣的感電（幅度、到期）套到 target 上
+     * （怪物；免疫元素異常、免疫感電的不套；避免感電照擲）。
+     */
+    public void spreadShock(final LivingEntity target, final double effect, final long untilTick) {
+        if (target == null || target instanceof Player || effect <= 0 || !target.isValid() || target.isDead() || plugin.monsters() == null) {
+            return;
+        }
+        final MonsterData data = plugin.monsters().data(target).orElse(null);
+        if (data == null) {
+            return;
+        }
+        final StatSheet sheet = plugin.monsters().sheet(target, data);
+        final long now = now();
+        if (untilTick <= now || StatKeys.flag(sheet, StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE) || avoided(sheet, StatKeys.AVOID_SHOCK, plugin.items().random())
+                || immuneAfter(target, sheet, "shock", now)) {
+            return;
+        }
+        final Tracked entry = track(target);
+        if (entry.state.applyShock(effect, untilTick, now)) {
+            feedback(target, AilmentType.SHOCK);
+            refreshAt(target, entry, 1);
+        }
+    }
+
     public void shockMinion(final LivingEntity minion, final double rawEffect, final double durationIncreased, final double durationMore) {
         if (rawEffect <= 0 || minion instanceof Player) {
             return;
@@ -2469,6 +2630,34 @@ public final class AilmentService {
     private boolean primed(final Tracked entry, final MonsterData data, final long now) {
         entry.state.stun().decay(now, config.stun().decayDelayTicks(), config.stun().decayPerTick());
         return !entry.state.stun().active(now) && entry.state.stun().buildup() >= config.primed(data.rarity());
+    }
+
+    /**
+     * 2026-11-01 照 PoE2（雷爆藥劑 active_skill_shock_effect_+%_final 50）：感電效果的「更多」也算——折成等效的增加給 {@link AilmentConfig#shockEffect}
+     * （上限照舊）；這次之前只讀增加的，更多的感電效果（雷爆藥劑、摩瑞安的指引）沒有作用。
+     */
+    static double shockEffectIncrease(final StatSheet attack, final Set<String> context) {
+        return combinedIncrease(attack.increased(StatKeys.SHOCK_EFFECT, context), attack.more(StatKeys.SHOCK_EFFECT, context));
+    }
+
+    /** (1 + 增加) × 更多 − 1：「增加」與「更多」合成一個等效的增加（小數）。 */
+    static double combinedIncrease(final double increased, final double more) {
+        return Math.max(0, 1 + increased) * more - 1;
+    }
+
+    /** 2026-11-01 照 PoE2（乘隙之機：打中蓄勢待電的敵人）：電擊條到稀有度的門檻、還沒電擊。 */
+    public boolean isPrimedForElectrocute(final LivingEntity entity) {
+        if (entity instanceof Player) {
+            return false;
+        }
+        final Tracked entry = tracked.get(entity.getUniqueId());
+        final MonsterData data = entry == null || plugin.monsters() == null ? null : plugin.monsters().data(entity).orElse(null);
+        if (data == null) {
+            return false;
+        }
+        final long now = now();
+        entry.state.electrocute().decay(now, config.electrocute().decayDelayTicks(false), config.electrocute().decayPerTick(false));
+        return !entry.state.electrocute().active(now) && entry.state.electrocute().buildup() >= config.primed(data.rarity());
     }
 
     /** 2026-10-26 照 PoE2：蓄勢待凍（凍結條到稀有度的門檻，還沒凍住）。 */
@@ -2504,11 +2693,23 @@ public final class AilmentService {
 
     /** 2026-10-27 照 PoE2 Exploit Weakness：用掉這隻的完全破甲（護甲恢復）；本來就沒有完全破甲回傳 false。 */
     public boolean consumeFullBreak(final LivingEntity entity) {
+        return consumeFullBreak(entity, null);
+    }
+
+    /** 2026-11-01 照 PoE2 Shard Scavenger：同上，by 是用掉的玩家（拾晶裝：用掉完全破甲也觸發）；不知道是誰傳 null。 */
+    public boolean consumeFullBreak(final LivingEntity entity, final org.bukkit.entity.Player by) {
         final Tracked entry = tracked.get(entity.getUniqueId());
         if (entry == null || !entry.state.fullyBroken(now())) {
             return false;
         }
         entry.state.restoreArmour();
+        if (plugin.skills() != null && plugin.skills().originals() != null) {
+            if (by != null) {
+                plugin.skills().originals().fullBreakConsumed(by);
+            } else {
+                plugin.skills().originals().fullBreakConsumedOn(entity); // 不知道是誰：照最後打牠的玩家（跟用掉異常一樣）
+            }
+        }
         return true;
     }
 
@@ -2573,9 +2774,22 @@ public final class AilmentService {
         }
         entry.state.electrocute().trigger(now, ticks(config.electrocute().duration(false)), 0);
         entry.state.electrocute().raiseThreshold(config.electrocute().after(false), config.electrocute().afterTicks(false), now);
+        removeRods(entity); // 2026-11-01 照 PoE2 Electrocuting Arrow：被電擊時電殛棒拔掉
         refreshAt(entity, entry, entry.state.electrocute().activeUntil() - now);
         feedback(entity, AilmentType.ELECTROCUTE);
         return true;
+    }
+
+    /** 2026-11-01 照 PoE2 Electrocuting Arrow：身上插著（任何人的）電殛棒。 */
+    public boolean rodded(final LivingEntity entity) {
+        return plugin.combat() != null && plugin.combat().debuffs().has(entity.getUniqueId(), tw.exilecore.skill.ElectrocutingRods.ROD_ID, now());
+    }
+
+    /** 2026-11-01 照 PoE2 Electrocuting Arrow：電殛棒全部拔掉（牠被電擊了）。 */
+    private void removeRods(final LivingEntity entity) {
+        if (plugin.combat() != null) {
+            plugin.combat().debuffs().removeAll(entity.getUniqueId(), tw.exilecore.skill.ElectrocutingRods.ROD_ID);
+        }
     }
 
     /** 蓄勢待暈（給其他模組，例如技能說明、昇華）。 */

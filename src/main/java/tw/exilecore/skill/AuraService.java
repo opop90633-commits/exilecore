@@ -783,8 +783,67 @@ final class AuraService implements Listener {
         }
     }
 
-    /** 焚魂這類（2026-10 PoE2）：自己放了火焰法術，開著的這種精魂召喚各叫 count 隻出來。 */
-    void fireSpellCast(final Player player, final int count) {
+    /** 2026-11-01 照 PoE2 Raging Spirits：投射物火焰法術每一次施放還能叫幾隻（打中時扣）。 */
+    private final RagingSpirits.Budget spiritBudget = new RagingSpirits.Budget();
+
+    /**
+     * 2026-11-01 照 PoE2 Raging Spirits（{@link RagingSpirits}）：自己放了火焰法術——範圍法術照範圍半徑每 1.5 格叫一隻（最多 2 隻），
+     * 撲向你鎖定的敵人（沒有就落點範圍內離落點最近的）；投射物法術記下這一次施放，投射物打中時才叫（{@link #fireProjectileHit}）。
+     * 這次之前範圍法術一律兩隻、其他一律一隻。
+     */
+    void fireSpellUsed(final Player player, final SkillBuild build, final LivingEntity preferred, final Location at) {
+        final SkillDefinition definition = build.definition();
+        if (!RagingSpirits.fireSpell(definition) || !hasSpiritSummon(player)) {
+            return;
+        }
+        if (RagingSpirits.onHit(definition)) {
+            spiritBudget.arm(player.getUniqueId(), definition.id(), now());
+            return;
+        }
+        final double radius = RagingSpirits.areaRadius(build);
+        final int count = RagingSpirits.onCast(definition, radius);
+        if (count <= 0) {
+            return;
+        }
+        LivingEntity lock = preferred != null && targets.valid(preferred, player) ? preferred : null;
+        if (lock == null && at != null && at.getWorld() != null && at.getWorld().equals(player.getWorld())) {
+            double best = Double.MAX_VALUE;
+            for (final LivingEntity near : targets.around(at, radius, player)) {
+                final double d = near.getLocation().distanceSquared(at);
+                if (d < best) {
+                    best = d;
+                    lock = near;
+                }
+            }
+        }
+        fireSpellCast(player, count, lock);
+    }
+
+    /** 2026-11-01 照 PoE2 Raging Spirits：自己放的投射物火焰法術打中敵人，這一次施放還沒叫滿 2 隻就叫一隻撲向牠。 */
+    void fireProjectileHit(final Player player, final SkillBuild build, final LivingEntity target) {
+        if (build == null || !RagingSpirits.fireSpell(build.definition()) || !RagingSpirits.onHit(build.definition())
+                || !hasSpiritSummon(player) || !spiritBudget.take(player.getUniqueId(), build.definition().id(), now())) {
+            return;
+        }
+        fireSpellCast(player, 1, target);
+    }
+
+    private boolean hasSpiritSummon(final Player player) {
+        final Map<String, Active> mine = active.get(player.getUniqueId());
+        if (mine == null) {
+            return false;
+        }
+        for (final Active aura : mine.values()) {
+            if (aura.build.definition().summon() != null
+                    && SkillExecutor.hasFlag(aura.build.definition(), tw.exilecore.stats.StatKeys.FLAG_SUMMON_ON_FIRE)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 焚魂這類（2026-10 PoE2）：自己放了火焰法術，開著的這種精魂召喚各叫 count 隻出來；lock：叫出來（或補時間）的那隻鎖定的敵人（null = 照平常找）。 */
+    void fireSpellCast(final Player player, final int count, final LivingEntity lock) {
         final Map<String, Active> mine = active.get(player.getUniqueId());
         final MinionService minions = service.minions();
         if (mine == null || minions == null || !service.eligibleForCompanion(player)) {
@@ -794,7 +853,7 @@ final class AuraService implements Listener {
             if (aura.build.definition().summon() != null
                     && SkillExecutor.hasFlag(aura.build.definition(), tw.exilecore.stats.StatKeys.FLAG_SUMMON_ON_FIRE)) {
                 for (int i = 0; i < count; i++) {
-                    minions.summonOrRefresh(player, aura.build); // 2026-10：滿了補最舊那隻的時間，不刪一隻生一隻
+                    minions.summonOrRefresh(player, aura.build, lock); // 2026-10：滿了補最舊那隻的時間，不刪一隻生一隻
                 }
             }
         }
@@ -1943,6 +2002,7 @@ final class AuraService implements Listener {
     void forget(final UUID player) {
         oppressed.keySet().removeIf(key -> key.startsWith(player + ":")); // 2026-10-17：以前只增不減
         active.remove(player);
+        spiritBudget.clear(player);
         furies.remove(player);
         dropDecals(player);
         signature.remove(player);

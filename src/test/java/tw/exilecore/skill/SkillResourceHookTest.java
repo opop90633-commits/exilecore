@@ -80,7 +80,7 @@ class SkillResourceHookTest {
         assertEquals(3, SkillResources.INFUSION_BASE_MAX);
         assertEquals(400, SkillResources.INFUSION_DURATION);
         // 會用灌注的原作技能都接上了
-        for (final String id : List.of("blazing_star_shell", "rolling_thunder_orb", "starfire_bead_chain", "ice_shuttle", "frost_rampart", "frost_star_blast", "roaming_thunder", "burning_current")) {
+        for (final String id : List.of("rolling_thunder_orb", "starfire_bead_chain", "ice_shuttle", "frost_rampart", "frost_star_blast", "roaming_thunder", "burning_current")) {
             assertEquals(1, config.resource(id).infusion().size(), id);
             assertTrue(!config.resource(id).infused().isEmpty(), id);
         }
@@ -88,8 +88,14 @@ class SkillResourceHookTest {
         final ResourceSpec firestorm = config.resource("flowing_flame_canopy");
         assertTrue(firestorm.infusionEach());
         assertEquals(List.of("fire", "cold", "lightning"), firestorm.infusion());
-        assertTrue(firestorm.infusedFor("cold").stream().anyMatch(m -> m.stat().equals("damage.extra.cold")));
-        assertTrue(firestorm.infusedFor("fire").stream().anyMatch(m -> m.stat().equals(StatKeys.SKILL_AREA)));
+        // 2026-11-01 照 PoE2 Firestorm：冰灌注另外落冰彈、火灌注落得快一倍＋風暴半徑 +1.5 公尺（FireSpells）；這次之前 85% 額外冰冷、範圍增加 125%
+        assertTrue(firestorm.infusedFor("cold").stream().anyMatch(m -> m.stat().equals(FireSpells.STORM_ICE)));
+        assertTrue(firestorm.infusedFor("fire").stream().anyMatch(m -> m.stat().equals(FireSpells.STORM_FIRE)));
+        assertTrue(firestorm.infusedFor("lightning").stream().anyMatch(m -> m.stat().equals(FireSpells.STORM_LIGHTNING)));
+        // 2026-11-01 照 PoE2 Fireball：每一發爆炸各自用掉火灌注（不在施放時用；ProjectileEngine.infusedBlast）；焰幕用電灌注
+        assertTrue(config.resource("blazing_star_shell").infusion().isEmpty());
+        assertTrue(config.skill("blazing_star_shell").modifiers().stream().anyMatch(m -> m.stat().equals(FireSpells.FIREBALL_RING)));
+        assertEquals(List.of("lightning"), config.resource("flame_curtain").infusion());
         // 留下灌注殘骸的技能
         assertEquals("cold", config.resource("chill_crystal_mine").remnant());
         assertEquals(4, config.resource("chill_crystal_mine").remnantDelay(), 1e-9);

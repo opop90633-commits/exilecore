@@ -1684,8 +1684,7 @@ public final class GuildService {
         if (tw.exilecore.life.LifeService.isHook(stack)) {
             return "<red>星索鉤綁定帳號，不能放進公會倉庫"; // 2026-10-27：這次之前放進去再領一把＝複製
         }
-        if (stack.hasData(io.papermc.paper.datacomponent.DataComponentTypes.BUNDLE_CONTENTS)
-                || stack.hasData(io.papermc.paper.datacomponent.DataComponentTypes.CONTAINER)) {
+        if (tw.exilecore.item.ItemContainers.holdsItems(stack)) { // 2026-11-01：真的有裝東西才算（腰帶的原版物品是收納袋）
             return "<red>收納袋、界伏盒這類容器不能放（把裡面的東西拿出來再放）";
         }
         return null;

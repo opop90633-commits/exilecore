@@ -159,6 +159,12 @@ public final class UniqueStats {
     public static final String GRANT_SKILL = "grant_skill.";
 
     // ---- 技能 ----
+    /** 2026-11-01 照 PoE2 Rathpith Globe（獻祭之心）：非引導法術額外消耗 x% 最大生命（付不起就放不出來）。 */
+    public static final String SPELL_EXTRA_LIFE_COST = "cost.spell_life_percent";
+    /** 2026-11-01 照 PoE2 Rathpith Globe：INCREASED，每 100 最大生命增加 x 非引導法術的傷害（AttributeScalingKeys 換算）。 */
+    public static final String SPELL_DAMAGE_PER_100_LIFE = "damage.spell_per_100_life";
+    /** 2026-11-01 照 PoE2 Rathpith Globe：INCREASED，每 100 最大生命增加 x 非引導法術的暴擊率（AttributeScalingKeys 換算）。 */
+    public static final String SPELL_CRIT_PER_100_LIFE = "crit.spell_per_100_life";
     /** 技能魔力消耗的 x% 改扣生命（恍惚之矛）。 */
     public static final String COST_MANA_TO_LIFE = "cost.mana_to_life";
     /** 支付技能魔力消耗時，受到消耗量 x% 的物理傷害（寂心）。 */

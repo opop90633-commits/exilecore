@@ -140,6 +140,26 @@ public final class MonsterMechanics implements Listener {
         return entry.traits;
     }
 
+    /**
+     * 2026-11-01 照站長：Boss 血條顯示的護盾（護盾的、護盾光環、換界石的額外能量護盾，加上熔岩護盾）：{剩下, 上限}；沒有回傳 null。
+     */
+    public double[] shieldLeft(final java.util.UUID entity) {
+        final Pool pool = pools.get(entity);
+        if (pool == null || pool.shieldMax + pool.magmaMax <= 0) {
+            return null;
+        }
+        return new double[] {Math.max(0, pool.shield) + Math.max(0, pool.magma), pool.shieldMax + pool.magmaMax};
+    }
+
+    /** 純邏輯：血條上護盾那段的文字（剩下 ÷ 上限，四捨五入到 %；沒有護盾回傳空字串）。 */
+    public static String shieldText(final double[] left) {
+        if (left == null || left[1] <= 0) {
+            return "";
+        }
+        final long percent = Math.round(Math.max(0, Math.min(1, left[0] / left[1])) * 100);
+        return " <#7fc8ff>護盾 " + percent + "%";
+    }
+
     /** 護盾（護盾的、護盾光環）與熔岩護盾的剩餘量（我們的傷害單位）。 */
     private static final class Pool {
         double shieldMax;
@@ -314,6 +334,10 @@ public final class MonsterMechanics implements Listener {
             if (magmaTaken > 0 || shieldTaken > 0) {
                 after.accept(() -> {
                     pool.lastHit = now();
+                    // 2026-11-01 照站長：被護盾吃掉的傷害也跳數字（藍色），不然 Boss 血條不動看起來像沒傷害
+                    if (credit != null && plugin.combat() != null && plugin.combat().numbers() != null) {
+                        plugin.combat().numbers().absorbed(credit, defender, magmaTaken + shieldTaken);
+                    }
                     if (magmaTaken > 0 && pool.magma > 0) {
                         pool.magma = Math.max(0, pool.magma - magmaTaken);
                         if (pool.magma <= 1e-6) {

@@ -127,6 +127,30 @@ public final class ElementalGround {
         return of(plugin.monsterModule().mechanics().groundAt(at, reach, now));
     }
 
+    /**
+     * 2026-11-01 照 PoE2 Tornado（每吸收一種元素各一份）：at 附近 reach 格內碰到的所有元素地面的元素（玩家技能登記的、怪物的足跡與地圖詞綴）；
+     * 都沒有回傳空的。
+     */
+    static java.util.Set<DamageType> elementsAt(final ExileCore plugin, final Location at, final double reach) {
+        final java.util.Set<DamageType> out = java.util.EnumSet.noneOf(DamageType.class);
+        if (at == null || at.getWorld() == null) {
+            return out;
+        }
+        final long now = plugin.getServer().getCurrentTick();
+        for (final DamageType element : new DamageType[] {DamageType.FIRE, DamageType.COLD, DamageType.LIGHTNING}) {
+            if (touchesAny(SURFACES, at.getWorld().getUID(), at.getX(), at.getY(), at.getZ(), reach, element, now)) {
+                out.add(element);
+            }
+        }
+        if (plugin.monsterModule() != null && plugin.monsterModule().mechanics() != null) {
+            final DamageType monster = of(plugin.monsterModule().mechanics().groundAt(at, reach, now));
+            if (monster != null) {
+                out.add(monster);
+            }
+        }
+        return out;
+    }
+
     /** 2026-11-01：一塊冰緩地面（中心、半徑）。 */
     public record Patch(Location at, double radius) {
     }

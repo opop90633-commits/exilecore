@@ -135,7 +135,10 @@ public final class LootService {
             final boolean mirror = currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.MIRROR;
             // 共鳴石（2026-10-18）：跟映星鏡一樣不過濾、全服公告
             final boolean resonance = currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.RESONANCE;
-            if (!mirror && !resonance && (charm ? filter.hidesCharms() : filter.hides(candidate(drop, stack, rarity, currency, upgrade), viewer))) {
+            // 2026-11-01 照站長：預見鎖、血脈輔助寶石掉出來也全服公告（不過濾）
+            final boolean foresee = currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.FORESEE;
+            final String lineage = lineageName(drop);
+            if (!mirror && !resonance && !foresee && lineage == null && (charm ? filter.hidesCharms() : filter.hides(candidate(drop, stack, rarity, currency, upgrade), viewer))) {
                 final long converted = config.goldValue(drop.kind(), rarity, weight, averageGold);
                 goldTotal += converted;
                 filterGold += converted;
@@ -158,6 +161,12 @@ public final class LootService {
             }
             if (resonance) {
                 broadcastResonance(killer, currency); // 2026-10-18
+            }
+            if (foresee) {
+                broadcastRare(killer, currency.name(), "#e8c46a", "<yellow>"); // 2026-11-01 照站長
+            }
+            if (lineage != null) {
+                broadcastRare(killer, lineage + "（血脈輔助寶石）", "#ff6b6b", "<red>"); // 2026-11-01 照站長
             }
             if (!config.autoPickup()) {
                 MonsterListener.dropOwned(plugin, location, stack, killer, MonsterListener.highlight(drop));
@@ -391,6 +400,30 @@ public final class LootService {
         plugin.getSLF4JLogger().info("追逐級傳奇：{} 掉出 {}（{}）", finder.getName(), unique.name(), unique.id());
         if (plugin.discord() != null) {
             plugin.discord().achievement(tw.exilecore.item.ItemRenderer.escape(name) + " 找到了追逐級傳奇「" + tw.exilecore.item.ItemRenderer.escape(unique.name()) + "」！");
+        }
+    }
+
+    /** 2026-11-01：這個掉落是血脈輔助寶石的話回傳名字，不是回傳 null。 */
+    private String lineageName(final DropTable.Drop drop) {
+        if (drop.kind() != DropTable.Kind.SUPPORT_GEM || drop.gem() == null || plugin.skills() == null) {
+            return null;
+        }
+        final tw.exilecore.skill.SupportDefinition support = plugin.skills().config().support(drop.gem());
+        return support != null && support.lineage() ? support.name() : null;
+    }
+
+    /** 2026-11-01 照站長：預見鎖、血脈輔助寶石掉出來全服廣播、Discord 成就頻道（跟共鳴石一樣）。 */
+    public void broadcastRare(final Player finder, final String itemName, final String color, final String textColor) {
+        final String name = plugin.chat() == null ? finder.getName() : plugin.chat().display(finder);
+        final net.kyori.adventure.text.Component message = plugin.text().prefixed("<" + color + ">✦ " + tw.exilecore.item.ItemRenderer.escape(name)
+                + " " + textColor + "找到了 <" + color + "><bold>" + tw.exilecore.item.ItemRenderer.escape(itemName) + "</bold>" + textColor + "！");
+        for (final Player online : plugin.getServer().getOnlinePlayers()) {
+            online.sendMessage(message);
+            online.playSound(online.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, org.bukkit.SoundCategory.PLAYERS, 0.7f, 1.2f);
+        }
+        plugin.getSLF4JLogger().info("稀有掉落公告：{} 掉出 {}", finder.getName(), itemName);
+        if (plugin.discord() != null) {
+            plugin.discord().achievement(tw.exilecore.item.ItemRenderer.escape(name) + " 找到了「" + tw.exilecore.item.ItemRenderer.escape(itemName) + "」！");
         }
     }
 

@@ -81,7 +81,8 @@ final class ProjectileEngine implements Listener {
         SkillProfile profile;
         final World world;
         final double size;
-        final double explode;
+        /** 2026-11-01：散出去的子榴彈換成自己的爆炸半徑（子母榴彈的 stages.bomblet），所以不是 final。 */
+        double explode; // 熔漿噴濺的碎片不爆炸（scatter 的 shrapnel）
         final double wobble;
         final double gravity;
         final Arrow arrow;
@@ -155,11 +156,27 @@ final class ProjectileEngine implements Listener {
         Map<UUID, Long> hitClear;
         /** 2026-11-01 照 PoE2 Ball Lightning（Fire-Infused）：飛了幾 tick（沿路留點燃地面用，{@link GroundSkills#TRAIL_IGNITED}）。 */
         int trailAge;
+        /** 2026-11-01 照 PoE2 Flame Wall：已經穿過火牆、拿到附加傷害了（一發只一次）。 */
+        boolean throughWall;
+        /**
+         * 2026-11-01 照 PoE2 Ball Lightning（{@link BallLightning}）：雷珠本身不打人、每 0.2 秒對附近的敵人放雷（pulses）；
+         * 飛了幾 tick；用掉了火灌注（越飛越慢、消失時爆炸）；射出時的速度。
+         */
+        boolean pulses;
+        int pulseAge;
+        boolean fireInfused;
+        double startSpeed;
         /**
          * 2026-11-01 照 PoE2 Kelari's Brutality（GroundTargetedProjectile，{@link #launchAtGround}）：射向地面的投射物飛到終點（落地、
          * 撞到方塊、飛完）時要做的事（飛刀鑽進地面、之後爆出刀刃）；分裂出來的也照做。null = 一般投射物。
          */
         java.util.function.BiConsumer<Player, Location> landed;
+        /**
+         * 2026-11-01 照 PoE2 Eye of Winter（eye_of_winter_first_hit_damage_+%_final 900）：同一次施放的冰片共用「打過的敵人」，
+         * 每個敵人第一次被打中更多 firstHitMore%（null = 一般投射物）。
+         */
+        Set<UUID> firstHit;
+        double firstHitMore;
 
         Shot(final long id, final UUID owner, final SkillBuild build, final SkillProfile profile, final World world, final Vector position,
              final Vector direction, final double speed, final double range, final Arrow arrow, final Set<UUID> hit, final boolean secondary) {
@@ -191,7 +208,7 @@ final class ProjectileEngine implements Listener {
 
         /** 有引信的榴彈不直接打敵人（彈來彈去，時間到了炸）。 */
         boolean contact() {
-            return fuseLeft < 0;
+            return fuseLeft < 0 && !pulses; // 2026-11-01 照 PoE2 Ball Lightning：雷珠本身不打人
         }
     }
 
@@ -293,15 +310,101 @@ final class ProjectileEngine implements Listener {
 
     /** 發射：依數量排成水平扇形。連射的技能排後面幾波。 */
     void launch(final Origin origin, final SkillBuild build) {
+        if (plugin.skills() != null && ColdSpells.EYE.equals(build.definition().id())) {
+            plugin.skills().coldSpells().eye(origin, build); // 2026-11-01 照 PoE2 Eye of Winter：冰眼不打人，飛行中螺旋放冰片（ColdSpells）
+            return;
+        }
         if (plugin.skills() != null && Twisters.SIGNATURE.equals(plugin.skills().config().signature(build.definition().id()))) {
             plugin.skills().signatures().twister(origin, build); // 2026-10-28 照 PoE2 Twister：旋風（Twisters）；這次之前是一般的投射物
             return;
         }
-        launchVolley(origin, build);
-        final SkillParams.Burst burst = build.params().burst();
+        final SkillBuild used = spiralFrenzy(origin, build); // 2026-11-01 照 PoE2 Spiral Volley：用掉怒星（只有寫了 frenzy.consumed_more 的技能）
+        launchVolley(origin, used);
+        salvoFragment(origin, used); // 2026-11-01 照 PoE2 Freezing Salvo：正常的重複再多射一發去引爆冰裂
+        final SkillParams.Burst burst = used.params().burst();
         if (burst != null && burst.count() > 1) {
-            volleys.add(new Volley(origin.owner().getUniqueId(), origin, build, plugin.getServer().getCurrentTick() + burst.interval(), burst.count() - 1));
+            volleys.add(new Volley(origin.owner().getUniqueId(), origin, used, plugin.getServer().getCurrentTick() + burst.interval(), burst.count() - 1));
         }
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Freezing Salvo：這一下是正常的重複（{@link FreezingSalvo#REPEATING}）而且技能有 {@link FreezingSalvo#FRAGMENT_RADIUS}：
+     * 準心那麼多格（吃範圍）內最近的一個你的冰裂立刻引爆，再朝它多射一發（一樣的傷害、落地炸開）。沒有冰裂就不多射。
+     */
+    private void salvoFragment(final Origin origin, final SkillBuild build) {
+        final double radius = SkillZones.localFlat(build.profile(), FreezingSalvo.FRAGMENT_RADIUS);
+        final Player owner = origin.owner();
+        if (radius <= 0 || owner == null || SkillZones.localFlat(build.profile(), FreezingSalvo.REPEATING) <= 0
+                || plugin.skills() == null || plugin.skills().originals() == null) {
+            return;
+        }
+        final Location aim = targets.aimPoint(origin, build.range());
+        final Location fragment = plugin.skills().originals().detonateNearestFragment(owner, aim, radius * build.areaScale());
+        if (fragment == null || !fragment.getWorld().equals(origin.world())) {
+            return;
+        }
+        final Vector start = origin.eye().toVector().add(new Vector(0, -0.15, 0));
+        final Vector path = fragment.toVector().subtract(start);
+        final double distance = Math.max(0.5, path.length());
+        spawn(owner, build, build.profile(), origin.world(), start, path.multiply(1 / distance), build.speed(), distance - 1e-6,
+                new HashSet<>(), false, build.definition().visual());
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Spiral Volley：你親自用、技能有 {@link SpiralVolley#CONSUMED_MORE} 的時候用掉身上所有的怒星，
+     * 這一次的箭更多傷害、多連鎖（{@link SpiralVolley}）；沒有怒星照原本的 build。
+     */
+    private SkillBuild spiralFrenzy(final Origin origin, final SkillBuild build) {
+        final double more = SkillZones.localFlat(build.profile(), SpiralVolley.CONSUMED_MORE);
+        if (more <= 0 || !origin.self() || origin.owner() == null || plugin.combat() == null || plugin.combat().charges() == null) {
+            return build;
+        }
+        final Player player = origin.owner();
+        final tw.exilecore.stats.StatSheet effective = build.profile().effective(plugin.players().sheet(player));
+        int consumed = 0;
+        for (int guard = 0; guard < SpiralVolley.MAX_CONSUMED; guard++) {
+            final int spent = plugin.combat().charges().spend(player, "frenzy", effective, build.profile().tags());
+            if (spent <= 0) {
+                break;
+            }
+            consumed += spent;
+        }
+        if (consumed <= 0) {
+            return build;
+        }
+        final double multiplier = SpiralVolley.damageMultiplier(consumed, more, SkillZones.localFlat(build.profile(), SpiralVolley.CONSUMED_MORE_PER));
+        return build.withProfile(build.profile().scaled(multiplier, "用掉 " + consumed + " 顆怒星"))
+                .withChains(build.chains() + SpiralVolley.extraChains(consumed, SkillZones.localFlat(build.profile(), SpiralVolley.CONSUMED_CHAINS)));
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Spiral Volley（firing directly at targets if possible）：{@link SpiralVolley#TARGET_RADIUS} 格內的敵人
+     * 由近到遠一隻一支，把前面幾支箭的方向改成朝牠們；剩下的照原本的一圈。
+     */
+    private List<double[]> aimAtTargets(final Origin origin, final SkillBuild build, final List<double[]> directions) {
+        final double radius = SkillZones.localFlat(build.profile(), SpiralVolley.TARGET_RADIUS);
+        final Player owner = origin.owner();
+        if (radius <= 0 || owner == null || directions.isEmpty()) {
+            return directions;
+        }
+        final Location eye = origin.eye();
+        final List<LivingEntity> near = new ArrayList<>(targets.around(origin.feet(), radius, owner));
+        near.removeIf(entity -> entity.isDead() || !entity.isValid());
+        near.sort(java.util.Comparator.comparingDouble(entity -> entity.getLocation().distanceSquared(origin.feet())));
+        final int aimed = SpiralVolley.aimed(directions.size(), near.size());
+        if (aimed <= 0) {
+            return directions;
+        }
+        final List<double[]> result = new ArrayList<>(directions);
+        for (int i = 0; i < aimed; i++) {
+            final Vector to = SkillTargets.center(near.get(i)).toVector().subtract(eye.toVector());
+            if (to.lengthSquared() < 1e-6) {
+                continue;
+            }
+            to.normalize();
+            result.set(i, new double[] {to.getX(), to.getY(), to.getZ()});
+        }
+        return result;
     }
 
     /**
@@ -353,7 +456,8 @@ final class ProjectileEngine implements Listener {
         final boolean toSplit = owner != null && tw.exilecore.stats.StatKeys.flag(build.profile().effective(plugin.players().sheet(owner)),
                 tw.exilecore.stats.GrantedSkillKeys.FLAG_PROJECTILES_TO_SPLIT);
         int rolled = 0;
-        if (build.definition().isAttack() && (count < SkillBuild.MAX_PROJECTILES || toSplit)) {
+        final int cap = SkillBuild.projectileCap(build.params().projectiles().intAt(build.level())); // 2026-11-01 照 PoE2 Spiral Volley：基礎超過 20 支的照自己的上限
+        if (build.definition().isAttack() && (count < cap || toSplit)) {
             // 2026-10：「x% 機率多射一發」（PoE2 弓、箭袋）：超過 100% 的部分必定多射，剩下的擲機率
             final tw.exilecore.stats.StatSheet effective = build.profile().effective(plugin.players().sheet(owner));
             final double chance = effective.flat(tw.exilecore.stats.StatKeys.PROJECTILE_CHANCE, build.profile().tags()) / 100.0;
@@ -365,7 +469,7 @@ final class ProjectileEngine implements Listener {
                 rolled += extra;
             }
         }
-        if (owner != null && (count < SkillBuild.MAX_PROJECTILES || toSplit)) {
+        if (owner != null && (count < cap || toSplit)) {
             // 2026-10-26 照 PoE2 天賦樹：「法術技能 x% 機率多射 2 發投射物」（修飾器寫 spell 標籤）
             final tw.exilecore.stats.StatSheet effective = build.profile().effective(plugin.players().sheet(owner));
             final double two = effective.flat(tw.exilecore.stats.TreeEffectKeys.PROJECTILE_CHANCE_TWO, build.profile().tags());
@@ -375,7 +479,7 @@ final class ProjectileEngine implements Listener {
         }
         final int splitBonus = toSplit ? rolled : 0;
         if (!toSplit) {
-            count = Math.min(SkillBuild.MAX_PROJECTILES, count + rolled);
+            count = Math.min(cap, count + rolled);
         }
         // 2026-10-27 照 PoE2（炎爆矛）：飛到準心指的點、插在那裡（一發、投射物數量不能改）；這次之前拋物線，落在哪裡看角度
         final Location aimedAt = owner == null || plugin.skills() == null ? null : plugin.skills().spears().landingPoint(origin, build);
@@ -391,12 +495,19 @@ final class ProjectileEngine implements Listener {
         }
         final double spread = SkillMath.projectileSpread(count, build.spread()); // 2026-10-29：搬到 SkillMath（召喚物的投射物共用）
         List<double[]> directions = SkillMath.fan(look.getX(), look.getY(), look.getZ(), count, spread);
+        final NormalSpread.Spec normal = NormalSpread.get(build.definition().id());
+        if (normal != null && count > 1) {
+            // 2026-11-01 照 PoE2 Permafrost Bolts（projectiles_normal_distribution_spread_standard_deviation 14、錐形 40 度）：
+            //   每一發照常態分布擲偏角（中間密、兩邊疏）；這次之前在扇形裡平均排開
+            directions = NormalSpread.fan(look.getX(), look.getY(), look.getZ(), count, normal, spread, random::nextGaussian);
+        }
         if (owner != null && tw.exilecore.stats.StatKeys.flag(build.profile().effective(plugin.players().sheet(owner)),
                 tw.exilecore.stats.SupportExtraKeys.FLAG_RANDOM_DIRECTION)) {
             // 2026-11-01 照 PoE2 Salvo：被輔助的技能的投射物往隨機方向射出（2026-11-01 照站長：以角色為中心 360 度）；這次之前照一般的扇形
             directions = SkillMath.randomFan(look.getX(), look.getY(), look.getZ(), count,
                     tw.exilecore.stats.SupportExtraKeys.RANDOM_DIRECTION_HALF_ANGLE, random::nextDouble);
         }
+        directions = aimAtTargets(origin, build, directions); // 2026-11-01 照 PoE2 Spiral Volley：附近有敵人就直接朝牠射
         final Set<UUID> volley = new HashSet<>();
         final String visual = build.definition().visual();
         // 2026-10-26（PoE2 的 Merging）：弩的碎片彈每一片都可以打中同一個敵人（貼臉一發的碎片全部打在同一隻身上）
@@ -566,6 +677,11 @@ final class ProjectileEngine implements Listener {
                 startReturn(shot);
                 return;
             }
+            if (!shot.secondary && hasLocal(shot.profile, SHRAPNEL)) {
+                // 2026-11-01 照 PoE2 Molten Blast：熔岩飛到目標的地方就炸開、噴出碎片；這次之前飛完就消失
+                stop(shot, owner, next.toLocation(shot.world));
+                return;
+            }
             visuals.fizzle(shot.visual(), next.toLocation(shot.world));
             stopEffects(shot, owner, next.toLocation(shot.world), false);
             remove(shot);
@@ -700,6 +816,12 @@ final class ProjectileEngine implements Listener {
                 shot.sticky = false;
             }
         }
+        if (BallLightning.is(build.definition())) {
+            // 2026-11-01 照 PoE2 Ball Lightning：雷珠本身不打人、一路穿過敵人，每 0.2 秒放雷；用掉火灌注的越飛越慢、消失時爆炸
+            shot.pulses = true;
+            shot.fireInfused = hasLocal(profile, BallLightning.FIRE_INFUSED);
+            shot.startSpeed = shot.speed;
+        }
         shots.put(id, shot);
         counts.merge(owner.getUniqueId(), 1, Integer::sum);
         return shot;
@@ -740,6 +862,7 @@ final class ProjectileEngine implements Listener {
             }
             final UUID previous = Fx.source(shot.owner); // 2026-10：隱藏別人的技能特效
             try {
+                throughWall(shot); // 2026-11-01 照 PoE2 Flame Wall：穿過火牆的投射物附加傷害
                 if (shot.arrow != null) {
                     tickArrow(shot);
                 } else {
@@ -750,6 +873,9 @@ final class ProjectileEngine implements Listener {
                 }
                 if (shots.containsKey(shot.id)) {
                     refract(shot); // 2026-10-26：法術投射物碰到折光之鏡，往四周複製 7 發
+                }
+                if (shots.containsKey(shot.id) && shot.pulses && shot.arrow == null) {
+                    zapAround(shot); // 2026-11-01 照 PoE2 Ball Lightning：每 0.2 秒對附近的敵人放雷
                 }
                 if (shots.containsKey(shot.id) && shot.arrow == null) {
                     trailGround(shot); // 2026-11-01 照 PoE2 Ball Lightning（Fire-Infused）：沿路留下點燃地面
@@ -762,6 +888,99 @@ final class ProjectileEngine implements Listener {
             tornados.values().forEach(list -> list.removeIf(tornado -> tornado.untilTick() <= now));
             tornados.values().removeIf(List::isEmpty);
         }
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Ball Lightning（{@link BallLightning}）：雷珠每 0.2 秒對 1.8 公尺（吃範圍加成）內的每一個敵人放一道雷
+     * （同一隻每次都打得到）；用掉火灌注的每 tick 慢一點。這次之前雷珠是貫穿的投射物，打中時再電到附近 3 個。
+     */
+    private void zapAround(final Shot shot) {
+        if (shot.returning) {
+            return;
+        }
+        shot.pulseAge++;
+        shot.speed = BallLightning.nextSpeed(shot.speed, shot.startSpeed, shot.fireInfused);
+        if (!BallLightning.zapDue(shot.pulseAge)) {
+            return;
+        }
+        final Player owner = plugin.getServer().getPlayer(shot.owner);
+        if (owner == null || !owner.getWorld().equals(shot.world)) {
+            return;
+        }
+        final Location at = shot.position.toLocation(shot.world);
+        final double radius = tw.exilecore.core.Units.metres(BallLightning.ZAP_RADIUS_M) * shot.build.areaScale();
+        targets.strike(owner, shot.profile, SkillTargets.sphere(at, radius), new Object()); // 冰晶、鐘
+        for (final LivingEntity victim : targets.around(at, radius, owner)) {
+            if (!victim.isValid() || victim.isDead()) {
+                continue;
+            }
+            visuals.chain(List.of(at.clone(), SkillTargets.center(victim)));
+            damage.hit(owner, victim, shot.profile, null);
+            if (!shots.containsKey(shot.id)) {
+                return; // 打到一半被拿掉了（主人死了、換世界）
+            }
+        }
+    }
+
+    /** 2026-11-01：灌注記號（換成自己的傷害表時不帶過去）。 */
+    private static final Set<String> INFUSION_MARKS = Set.of(BallLightning.FIRE_INFUSED, GroundSkills.TRAIL_IGNITED, EmberBeams.MARK);
+
+    /**
+     * 2026-11-01 照 PoE2 Ball Lightning（Fire-Infused statSet）：用掉火灌注的雷珠消失時在原地爆開 2.6 公尺（吃範圍加成）的火焰，
+     * 傷害是自己的逐級表（{@value BallLightning#EXPLOSION}）、輔助照雷珠的。這次之前是獲得 50% 傷害為額外火焰、範圍增加 50%。
+     */
+    private void ballExplosion(final Shot shot, final Player owner, final Location at) {
+        final SkillProfile profile = OwnTableHits.profile(plugin, owner, shot.build, shot.profile, BallLightning.EXPLOSION, INFUSION_MARKS);
+        if (profile == null) {
+            return;
+        }
+        final double radius = tw.exilecore.core.Units.metres(BallLightning.EXPLOSION_RADIUS_M) * shot.build.areaScale();
+        targets.strike(owner, profile, SkillTargets.sphere(at, radius), new Object());
+        for (final LivingEntity victim : targets.around(at, radius, owner)) {
+            if (victim.isValid() && !victim.isDead()) {
+                damage.hit(owner, victim, profile, null);
+            }
+        }
+        visuals.explosion("blazing_star_shell", at, radius);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Ember Fusillade（Beam statSet，{@link EmberBeams}）：用掉電灌注的那一輪火星，每一顆炸開時再放一道閃電光束：
+     * 先打被火星打中的那隻（沒有就打落點 3 公尺內最近的），再連鎖 4 次（＋連鎖的加成），傷害是自己的逐級表、輔助照火星的。
+     * 這次之前是獲得 65% 傷害為額外閃電。
+     */
+    private void emberBeam(final Shot shot, final Player owner, final Location at) {
+        final SkillProfile profile = OwnTableHits.profile(plugin, owner, shot.build, shot.profile, EmberBeams.BEAM, INFUSION_MARKS);
+        if (profile == null) {
+            return;
+        }
+        LivingEntity first = null;
+        for (final UUID id : shot.struck) {
+            if (plugin.getServer().getEntity(id) instanceof LivingEntity living && living.isValid() && !living.isDead()
+                    && living.getWorld().equals(at.getWorld())) {
+                first = living;
+                break;
+            }
+        }
+        final Set<UUID> chained = new HashSet<>();
+        if (first == null) {
+            first = targets.nearest(at, tw.exilecore.core.Units.metres(EmberBeams.FIRST_RADIUS_M), chained, owner);
+        }
+        if (first == null) {
+            return;
+        }
+        final tw.exilecore.stats.StatSheet effective = profile.effective(plugin.players().sheet(owner));
+        final int chains = EmberBeams.chains(effective.flat(tw.exilecore.stats.StatKeys.SKILL_CHAINS, profile.tags()));
+        final List<Location> path = new ArrayList<>();
+        path.add(at.clone().add(0, 0.5, 0));
+        LivingEntity current = first;
+        for (int i = 0; i <= chains && current != null; i++) {
+            chained.add(current.getUniqueId());
+            path.add(SkillTargets.center(current));
+            damage.hit(owner, current, profile, null);
+            current = i < chains ? targets.nearest(current, SkillBuild.PROJECTILE_CHAIN_RANGE, chained, owner) : null;
+        }
+        visuals.chain(path);
     }
 
     /**
@@ -972,6 +1191,18 @@ final class ProjectileEngine implements Listener {
             final double reach = entity != null ? entity.getHitPosition().distance(from) : travel;
             targets.strike(owner, shot.profile, SkillTargets.segment(start, start.clone().add(shot.direction.clone().multiply(reach)), shot.size), shot);
         }
+        if (entity == null && travel > 1e-6 && !shot.contact() && !shot.secondary && CrossbowParity.burstsOnEnemy(shot.profile)) {
+            // 2026-11-01 照 PoE2 Oil Grenade（「bursts ... when the fuse expires or when it impacts an Enemy」）：碰到敵人就在那裡炸開；這次之前一律等引信
+            final RayTraceResult touched = shot.world.rayTraceEntities(start, shot.direction, travel, Math.max(0.3, shot.size),
+                    candidate -> targets.valid(candidate, owner));
+            if (touched != null && touched.getHitEntity() instanceof LivingEntity) {
+                final Vector at = touched.getHitPosition();
+                visuals.trail(shot.visual(), shot.world, from, at);
+                shot.position = at;
+                stop(shot, owner, at.toLocation(shot.world));
+                return;
+            }
+        }
         if (entity != null && entity.getHitEntity() instanceof LivingEntity target) {
             final Vector at = entity.getHitPosition();
             visuals.trail(shot.visual(), shot.world, from, at);
@@ -1010,6 +1241,9 @@ final class ProjectileEngine implements Listener {
                     }
                 }
             }
+            if (!shot.secondary && plugin.skills() != null) {
+                plugin.skills().coldSpells().terrainHit(owner, shot.build, shot.profile, at.toLocation(shot.world)); // 2026-11-01 照 PoE2 Frostbolt：撞到地形爆炸
+            }
             stop(shot, owner, at.toLocation(shot.world));
             return;
         }
@@ -1030,6 +1264,11 @@ final class ProjectileEngine implements Listener {
             if (shot.build.returning() && !shot.secondary) {
                 stopEffects(shot, owner, next.toLocation(shot.world), false);
                 startReturn(shot);
+                return;
+            }
+            if (!shot.secondary && hasLocal(shot.profile, SHRAPNEL)) {
+                // 2026-11-01 照 PoE2 Molten Blast：熔岩飛到目標的地方就炸開、噴出碎片；這次之前飛完就消失
+                stop(shot, owner, next.toLocation(shot.world));
                 return;
             }
             visuals.fizzle(shot.visual(), next.toLocation(shot.world));
@@ -1170,6 +1409,9 @@ final class ProjectileEngine implements Listener {
      */
     private Vector onEntityHit(final Shot shot, final Player owner, final LivingEntity target, final Location at) {
         shot.hit.add(target.getUniqueId());
+        if (plugin.skills() != null && RagingSpirits.fireSpell(shot.build.definition())) {
+            plugin.skills().auras().fireProjectileHit(owner, shot.build, target); // 2026-11-01 照 PoE2 Raging Spirits：火焰法術的投射物打中時叫焚魂
+        }
         if (shot.hitClear != null) { // 2026-10-28 照 PoE2 Spark：同一次施放 0.66 秒後才能再打這個目標
             shot.hitClear.put(target.getUniqueId(), (long) plugin.getServer().getCurrentTick() + shot.wander.hitCooldownTicks());
         }
@@ -1212,19 +1454,15 @@ final class ProjectileEngine implements Listener {
                     .withLocal(List.of(tw.exilecore.stats.Modifier.flat(SkillStages.IS + VS_ARMOUR_BROKEN, 1, "對破甲")));
         }
         // 2026-10-28 照 PoE2 Frostbolt、High Velocity Rounds 的品質：穿過敵人之後更多 x% 傷害
-        // 2026-10-28 照 PoE2 Electrocuting Arrow 的品質：打中插著電殛棒的目標，獲得 x% 傷害為額外閃電（電殛矢打中時插棒，牠下次被電擊時拿掉）
+        // 2026-10-28 照 PoE2 Electrocuting Arrow 的品質：打中插著電殛棒的目標，獲得 x% 傷害為額外閃電
+        // 2026-11-01 照 PoE2 Electrocuting Arrow：電殛棒是真的減益（rod.duration 秒，吃技能持續時間；AilmentService：插著的敵人受到的所有閃電傷害都累積電擊，
+        //   被電擊時拔掉）；先插再打，箭本身的閃電也算。這次之前棒子只是品質用的記號（8 秒）、被電擊中的打中時才拔掉
         final double rodGain = SkillZones.localFlat(shot.profile, tw.exilecore.stats.GemQualityKeys.ROD_GAIN_LIGHTNING);
-        if (rodGain > 0 && plugin.combat() != null) {
-            final long now = plugin.getServer().getCurrentTick();
-            final tw.exilecore.combat.Debuffs debuffs = plugin.combat().debuffs();
-            final boolean electrocuted = plugin.ailments() != null && plugin.ailments().has(target, tw.exilecore.ailment.AilmentType.ELECTROCUTE);
-            if (electrocuted) {
-                debuffs.remove(target.getUniqueId(), ROD_ID, owner.getUniqueId(), now);
-            } else if (rodded(debuffs, target, owner, now)) {
-                hitProfile = hitProfile.withLocal(List.of(tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.StatKeys.DAMAGE_GAIN + "lightning", rodGain, "電殛棒")));
-            }
-            debuffs.apply(target.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff(ROD_ID, owner.getUniqueId(), now + ROD_TICKS, 0, false, null));
+        final boolean alreadyRodded = plugin.ailments() != null && plugin.ailments().rodded(target);
+        if (rodGain > 0 && alreadyRodded) {
+            hitProfile = hitProfile.withLocal(List.of(tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.StatKeys.DAMAGE_GAIN + "lightning", rodGain, "電殛棒")));
         }
+        attachRod(shot, owner, target);
         if (shot.pelletHits != null) {
             final int pellets = shot.pelletHits.merge(target.getUniqueId(), 1, Integer::sum);
             hitProfile = hitProfile.withLocal(List.of(tw.exilecore.stats.Modifier.increased(tw.exilecore.stats.StatKeys.IGNITE_DURATION,
@@ -1239,7 +1477,20 @@ final class ProjectileEngine implements Listener {
         if (piercedLess > 0) {
             hitProfile = hitProfile.scaled(Math.max(0, 1 - piercedLess / 100.0), "穿透之後");
         }
-        damage.hit(owner, target, tw.exilecore.item.unique.UniqueMechanics.pierceProfile(hitProfile, shot.pierced, ownerSheet), null);
+        if (shot.firstHit != null && shot.firstHit.add(target.getUniqueId())) {
+            hitProfile = hitProfile.scaled(1 + shot.firstHitMore / 100.0, "第一下"); // 2026-11-01 照 PoE2 Eye of Winter
+        }
+        // 2026-11-01 照 PoE2 Frost Darts：打中「冰緩或凍結」的敵人才落冰塊（看打中之前）
+        final boolean chilledBefore = ColdSpells.DARTS.equals(shot.build.definition().id()) && plugin.ailments() != null
+                && (plugin.ailments().has(target, tw.exilecore.ailment.AilmentType.CHILL) || plugin.ailments().isFrozen(target));
+        // 2026-11-01 照 PoE2（base_knockback_distance）：寫了 hit_knockback 的技能，投射物直接打中時照飛的方向擊退（HitKnockback）；沒寫的照舊不擊退
+        final org.bukkit.util.Vector push = HitKnockback.get(shot.build.definition().id()) == null ? null
+                : HitKnockback.projectile(shot.build.definition().id(), owner.getLocation(), target, shot.direction,
+                        shot.profile.effective(ownerSheet), shot.profile.tags());
+        damage.hit(owner, target, tw.exilecore.item.unique.UniqueMechanics.pierceProfile(hitProfile, shot.pierced, ownerSheet), push);
+        if (plugin.skills() != null && ColdSpells.DARTS.equals(shot.build.definition().id())) {
+            plugin.skills().coldSpells().dartHit(owner, shot.build, shot.profile, target, chilledBefore, at); // 冰塊、插進去爆炸
+        }
         // 2026-10-28 照 PoE2 0.4.0：只有初始的箭（還沒充能）用掉感電（電擊不用掉），連鎖的次級投射物不用掉；這次之前每一下都用掉。
         // 順序照原作「用掉感電替箭充能，再放出震波」：上面這一箭的傷害還吃得到感電，震波在用掉之後才放
         if (ShockchainArrows.consumesShock(shot.consumesShock, shot.shockcharged) && shocked(target)) {
@@ -1341,7 +1592,12 @@ final class ProjectileEngine implements Listener {
             return;
         }
         final int level = shot.build.level(); // 2026-10-26：雷束的數量、傷害照等級（PoE2 雷鳴箭逐級）
-        final SkillProfile profile = shot.profile.scaled(splash.damage(level) / 100.0, "濺射");
+        // 2026-11-01 照 PoE2 Lightning Arrow 的 Beam：有 stages.beam 的照那一段（自己的效益、100% 轉閃電），每道雷束再連鎖 count 次；
+        //   這次之前雷束是箭的 splash.damage %、不連鎖
+        final SkillStages.Stage beam = SkillStages.get(shot.build.definition().id(), BEAM);
+        final SkillProfile profile = beam != null ? SkillStages.profile(shot.build, shot.profile, BEAM)
+                : shot.profile.scaled(splash.damage(level) / 100.0, "濺射");
+        final int beamChains = beam == null ? 0 : Math.max(0, beam.count().intAt(level));
         final List<Location> points = new ArrayList<>();
         points.add(SkillTargets.center(target));
         int count = 0;
@@ -1371,6 +1627,7 @@ final class ProjectileEngine implements Listener {
                     count++;
                     damage.hit(owner, enemy, profile, null);
                     points.add(SkillTargets.center(enemy));
+                    chainBeam(shot, owner, target, enemy, profile, beamChains, splash.radius());
                 }
             }
             if (points.size() > 1) {
@@ -1378,6 +1635,7 @@ final class ProjectileEngine implements Listener {
             }
             return;
         }
+        final List<LivingEntity> beamed = new ArrayList<>();
         for (final LivingEntity other : enemies) {
             if (other == target || count >= splash.targets(level)) {
                 continue;
@@ -1385,10 +1643,59 @@ final class ProjectileEngine implements Listener {
             count++;
             damage.hit(owner, other, profile, null);
             points.add(SkillTargets.center(other));
+            beamed.add(other);
         }
         if (points.size() > 1) {
             visuals.splash(shot.visual(), points);
         }
+        for (final LivingEntity other : beamed) {
+            chainBeam(shot, owner, target, other, profile, beamChains, splash.radius());
+        }
+    }
+
+    /** 2026-11-01 照 PoE2 Lightning Arrow：雷束那一段（skills.yml 的 stages.beam；count = 每道雷束連鎖幾次）。 */
+    static final String BEAM = "beam";
+
+    /**
+     * 2026-11-01 照 PoE2 Lightning Arrow（Beam：number_of_chains 2）：一道雷束打中 first 之後再連鎖 chains 次——每次跳到 range 格內
+     * 最近、這道雷束還沒打過的敵人（箭直接打中的那隻也不打）；沒有下一個就停。
+     */
+    private void chainBeam(final Shot shot, final Player owner, final LivingEntity arrowTarget, final LivingEntity first, final SkillProfile profile,
+                           final int chains, final double range) {
+        if (chains <= 0) {
+            return;
+        }
+        final Set<UUID> done = new HashSet<>();
+        done.add(arrowTarget.getUniqueId());
+        done.add(first.getUniqueId());
+        LivingEntity from = first;
+        for (int i = 0; i < chains; i++) {
+            final LivingEntity next = nearestUnhit(targets.around(from.getLocation(), range, owner), from.getLocation(), done);
+            if (next == null) {
+                return;
+            }
+            done.add(next.getUniqueId());
+            damage.hit(owner, next, profile, null);
+            visuals.splash(shot.visual(), List.of(SkillTargets.center(from), SkillTargets.center(next)));
+            from = next;
+        }
+    }
+
+    /** 離 at 最近、不在 done 裡、還活著的那隻（沒有回傳 null）。 */
+    private static LivingEntity nearestUnhit(final List<LivingEntity> candidates, final Location at, final Set<UUID> done) {
+        LivingEntity best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (final LivingEntity candidate : candidates) {
+            if (done.contains(candidate.getUniqueId()) || candidate.isDead() || !candidate.isValid()) {
+                continue;
+            }
+            final double distance = candidate.getLocation().distanceSquared(at);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = candidate;
+            }
+        }
+        return best;
     }
 
     /** 2026-10-28 照 PoE2：感電中（電鍊箭矢穿過路上沒感電的、只用掉感電）。 */
@@ -1533,19 +1840,23 @@ final class ProjectileEngine implements Listener {
         }
     }
 
-    /** 2026-10-26（熔球）：落地炸一圈（不移除、每一跳都可以再打到同一個敵人）。 */
-    /** 2026-10-28 照 PoE2 Electrocuting Arrow：電殛棒（記號；只有品質的「插著棒的目標獲得額外閃電」用到），最多插 8 秒。 */
-    static final String ROD_ID = "electrocuting_rod";
-    static final long ROD_TICKS = 160;
-
-    private static boolean rodded(final tw.exilecore.combat.Debuffs debuffs, final LivingEntity target, final Player owner, final long now) {
-        for (final tw.exilecore.combat.Debuffs.Debuff debuff : debuffs.active(target.getUniqueId(), now)) {
-            if (ROD_ID.equals(debuff.id()) && owner.getUniqueId().equals(debuff.source())) {
-                return true;
-            }
+    /**
+     * 2026-11-01 照 PoE2 Electrocuting Arrow：這一招有 rod.duration（電殛矢）就在 target 身上插電殛棒（{@link ElectrocutingRods}；
+     * 秒數吃技能持續時間，再插一次重新計時）。這次之前是品質用的 8 秒記號。
+     */
+    private void attachRod(final Shot shot, final Player owner, final LivingEntity target) {
+        final double seconds = SkillZones.localFlat(shot.profile, ElectrocutingRods.ROD_SECONDS);
+        if (seconds <= 0 || plugin.combat() == null) {
+            return;
         }
-        return false;
+        final long ticks = ElectrocutingRods.rodTicks(seconds, shot.build.durationScale());
+        final long now = plugin.getServer().getCurrentTick();
+        final tw.exilecore.combat.Debuffs debuffs = plugin.combat().debuffs();
+        debuffs.remove(target.getUniqueId(), ElectrocutingRods.ROD_ID, owner.getUniqueId(), now);
+        debuffs.apply(target.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff(ElectrocutingRods.ROD_ID, owner.getUniqueId(), now + ticks, 0, false, null));
     }
+
+    /** 2026-10-26（熔球）：落地炸一圈（不移除、每一跳都可以再打到同一個敵人）。 */
 
     private void blast(final Shot shot, final Player owner, final Location at) {
         final double radius = shot.explode > 0 ? shot.explode : 1.5;
@@ -1570,10 +1881,19 @@ final class ProjectileEngine implements Listener {
             final SkillProfile blastProfile = SkillStages.profile(shot.build, shot.hopProfile != null ? shot.hopProfile : shot.profile, EXPLOSION);
             final boolean burstPoison = PoisonOnly.burst(plugin.players().sheet(owner), blastProfile);
             targets.strike(owner, blastProfile, SkillTargets.sphere(at, shot.explode), new Object()); // 2026-10-25：爆炸也打到冰晶、鐘
+            // 2026-11-01 照 PoE2 Explosive Shot：爆炸範圍內你的榴彈也一起引爆（CrossbowParity）
+            if (!shot.secondary && CrossbowParity.detonatesGrenades(shot.profile)) {
+                detonateGrenades(owner, at, shot.explode, shot.id);
+            }
+            // 2026-11-01 照 PoE2（Explosive Shot 的 Explosion 也有 base_knockback_distance）：寫了 hit_knockback.explosion 的爆炸從中心往外推
+            final boolean blastPush = HitKnockback.get(shot.build.definition().id()) != null && HitKnockback.get(shot.build.definition().id()).explosion();
+            final tw.exilecore.stats.StatSheet blastSheet = blastPush ? blastProfile.effective(plugin.players().sheet(owner)) : null;
             for (final LivingEntity victim : targets.around(at, shot.explode, owner)) {
+                final org.bukkit.util.Vector push = blastPush
+                        ? HitKnockback.explosion(shot.build.definition().id(), at, owner.getLocation(), victim, blastSheet, blastProfile.tags()) : null;
                 if (shot.blastStruck) {
                     // 2026-11-01 照 PoE2 Bonestorm：骨刺打中的那隻也挨爆炸，每一支各炸各的（下面兩條去重都不用）
-                    damage.hit(owner, victim, blastProfile, null);
+                    damage.hit(owner, victim, blastProfile, push);
                     continue;
                 }
                 if (shot.struck.contains(victim.getUniqueId())) {
@@ -1589,7 +1909,8 @@ final class ProjectileEngine implements Listener {
                     PoisonOnly.apply(plugin, owner, victim, blastProfile); // 2026-10-26 照 PoE2（爆毒矢）：毒爆不打人、像打中一樣上毒
                     continue;
                 }
-                damage.hit(owner, victim, blastProfile, null);
+                attachRod(shot, owner, victim); // 2026-11-01 照 PoE2 Electrocuting Arrow：爆炸打中的也插電殛棒（只有 rod.duration 的技能）
+                damage.hit(owner, victim, blastProfile, push);
             }
             visuals.explosion(shot.visual(), at, shot.explode);
             // 2026-10-26 照 PoE2 天賦：榴彈 x% 機率再爆一次（0.5 秒後同一個地方）
@@ -1612,13 +1933,98 @@ final class ProjectileEngine implements Listener {
         } else {
             visuals.impact(shot.visual(), at);
         }
+        if (!shot.secondary && !shot.returning && owner != null && hasLocal(shot.profile, FireSpells.FIREBALL_RING) && infusedBlast(shot, owner)) {
+            fireballRing(shot, owner, at); // 2026-11-01 照 PoE2 Fireball（Firebolts）：爆炸用掉一層火灌注，射出一圈小火彈
+        }
+        if (owner != null && hasLocal(shot.profile, EmberBeams.MARK)) {
+            emberBeam(shot, owner, at); // 2026-11-01 照 PoE2 Ember Fusillade：用掉電灌注的那一輪火星炸開時放出連鎖的閃電光束
+        }
         stopEffects(shot, owner, at, true);
         remove(shot);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Fireball（「The explosion Consumes a Fire Infusion if possible」）：每一發的爆炸各自用掉一層火灌注（有的話）；
+     * 掛了抑星、品質／天賦的「不拿掉灌注」照 consumeOne。這次之前施放時用掉一層、只有第一發爆炸射出火彈環。
+     */
+    private boolean infusedBlast(final Shot shot, final Player owner) {
+        if (plugin.skills() == null || plugin.players() == null) {
+            return false;
+        }
+        final int element = plugin.skills().resources().consumeOne(owner, List.of("fire"), shot.profile.effective(plugin.players().sheet(owner)),
+                shot.profile.tags());
+        if (element < 0) {
+            return false;
+        }
+        final int[] used = new int[3];
+        used[element] = 1;
+        final String text = plugin.skills().resources().infusionUsed(owner, shot.build.definition().name(), used);
+        if (text != null) {
+            plugin.players().get(owner).notice(text, plugin.getServer().getCurrentTick() + 40);
+        }
+        return true;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Fireball（PoB2 FireballPlayer 的 Firebolts statset：base_number_of_projectiles 12、projectile_maximum_range_override
+     * 120 − 60、active_skill_ignite_chance_+%_final 100、number_of_projectiles_cannot_be_modified）：從爆炸的地方往四周平均射出 12 顆小火彈，
+     * 同樣的傷害、點燃機率更多 100%、飛 6 公尺、不爆炸（Firebolts 沒有範圍）；不打剛被這一發直接打中的那隻，一顆火彈打一個敵人。
+     * 這次之前火灌注做成範圍增加 100%、更多 50% 傷害、點燃機率更多 100%。
+     */
+    private void fireballRing(final Shot shot, final Player owner, final Location at) {
+        final SkillProfile profile = FireSpells.ringProfile(shot.profile);
+        final double range = tw.exilecore.core.Units.metres(FireSpells.RING_RANGE_METRES);
+        final SkillBuild bolts = shot.build.withExplodeAndRange(0, range);
+        final Set<UUID> volley = new HashSet<>(shot.struck);
+        final Vector start = at.toVector().add(new Vector(0, 0.35, 0));
+        final Vector base = shot.direction.clone().setY(0);
+        final double phase = base.lengthSquared() < 1e-6 ? 0 : Math.atan2(base.getZ(), base.getX());
+        for (final double[] d : FireSpells.ring(FireSpells.RING_BOLTS, phase)) {
+            final Vector direction = new Vector(d[0], 0, d[1]);
+            final Shot bolt = spawn(owner, bolts, profile, shot.world, start.clone().add(direction.clone().multiply(0.3)), direction,
+                    Math.max(0.5, shot.build.speed()), range, volley, true, shot.visual());
+            if (bolt != null) {
+                bolt.struck.addAll(shot.struck);
+            }
+        }
+        visuals.scatter(shot.visual(), at);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Flame Wall（PoB2 FlameWallPlayer 的 Projectile Damage statset）：你與隊友的投射物這一 tick 飛過火牆，
+     * 之後的擊中（含爆炸）附加火牆給的火焰傷害（用掉閃電灌注的火牆再加閃電）；一發只吃一次。這次之前沒有。
+     */
+    private void throughWall(final Shot shot) {
+        if (shot.throughWall || zones == null || shot.returning) {
+            return;
+        }
+        final Vector from;
+        final Vector to;
+        if (shot.arrow != null) {
+            if (!shot.arrow.isValid()) {
+                return;
+            }
+            from = shot.arrow.getLocation().toVector();
+            to = from.clone().add(shot.arrow.getVelocity());
+        } else {
+            from = shot.position;
+            to = shot.position.clone().add(shot.direction.clone().multiply(shot.speed));
+        }
+        final double[] added = zones.wallAdded(shot.world, from, to, shot.owner);
+        if (added == null) {
+            return;
+        }
+        shot.throughWall = true;
+        shot.profile = shot.profile.withLocal(FireSpells.wallMods(added));
+        visuals.impact(FireSpells.FLAME_WALL, from.toLocation(shot.world));
     }
 
     /** 停下來的地方：散射、地面效果、漩渦、閃現。 */
     private void stopEffects(final Shot shot, final Player owner, final Location at, final boolean reached) {
         final SkillParams params = shot.build.params();
+        if (shot.pulses && shot.fireInfused && !shot.returning && !shot.secondary && owner != null) {
+            ballExplosion(shot, owner, at); // 2026-11-01 照 PoE2 Ball Lightning：用掉火灌注的雷珠消失時爆開火焰
+        }
         if (shot.landed != null && !shot.returning && owner != null) {
             shot.landed.accept(owner, at); // 2026-11-01 照 PoE2 Kelari's Brutality：飛刀鑽進地面（launchAtGround）
         }
@@ -1706,15 +2112,50 @@ final class ProjectileEngine implements Listener {
             final int crystalCount = IceCrystals.count(shot.build, plugin.players().sheet(owner));
             if (crystalCount > 0) {
                 final org.bukkit.util.Vector dir = shot.direction == null ? new org.bukkit.util.Vector(1, 0, 0) : shot.direction.clone();
-                plugin.skills().crystals().spawn(owner, shot.build, at, crystalCount, new org.bukkit.util.Vector(-dir.getZ(), 0, dir.getX()));
+                final CrystalWalls.Spec walls = CrystalWalls.get(shot.build.definition().id());
+                if (walls != null) {
+                    // 2026-11-01 照 PoE2 Glacial Bolt：從落點長出兩道冰牆（CrystalWalls）；這次之前跟弩箭垂直排成一直線
+                    plugin.skills().crystals().spawnAt(owner, shot.build, at, CrystalWalls.offsets(walls, dir.getX(), dir.getZ(), crystalCount));
+                } else {
+                    plugin.skills().crystals().spawn(owner, shot.build, at, crystalCount, new org.bukkit.util.Vector(-dir.getZ(), 0, dir.getX()));
+                }
             }
         }
     }
 
+    /**
+     * 2026-11-01 照 PoE2 Eye of Winter（ColdSpells）：冰眼放出的一片冰片——次級投射物，每一片都可以打同一隻（各自的「打過了」），
+     * firstHit 是同一次施放共用的「第一次被打中」（每個敵人第一下更多 firstMore%）。
+     */
+    void shard(final Player owner, final SkillBuild build, final SkillProfile profile, final World world, final Vector start, final Vector direction,
+               final double speed, final double range, final Set<UUID> firstHit, final double firstMore) {
+        final Shot shot = spawn(owner, build, profile, world, start, direction, speed, range, new HashSet<>(), true, build.definition().visual());
+        if (shot != null) {
+            shot.firstHit = firstHit;
+            shot.firstHitMore = firstMore;
+        }
+    }
+
     /** 散射：從停下來的地方往四周飛出幾支小的（裂空箭）。 */
+    /**
+     * 2026-11-01 照 PoE2 Molten Blast 的 Shrapnel：技能寫了這個旗標，停下時散射出去的是碎片——數量不能改（不吃 +x 投射物）、
+     * 傷害效益跟投射物同一張表（scatter.damage %）但轉換換成 scatter.convert（60% ＋ 40% = 全部火焰）、碎片本身不爆炸、速度上下差 50%。
+     */
+    static final String SHRAPNEL = "flag.scatter_shrapnel";
+    static final double SHRAPNEL_SPEED_VARIATION = 0.5;
+
     private void scatter(final Shot shot, final Player owner, final Location at) {
         final SkillParams.Scatter scatter = shot.build.params().scatter();
-        final SkillProfile profile = scatter.effectiveness() > 0 ? shardProfile(shot, scatter) : shot.profile.scaled(scatter.damage() / 100.0, "散射");
+        // 2026-11-01 照 PoE2 Cluster Grenade（Mini Grenades）：寫了 stages.bomblet 的散出去的是子榴彈——自己的傷害表與轉換、固定顆數（不吃投射物數量）、
+        //   彈跳到引信時間到（after 秒）才各自炸開 radius 公尺（CrossbowParity）；這次之前照 scatter 的 damage%、跟主榴彈同樣的引信與爆炸半徑
+        final SkillStages.Stage bomblet = SkillStages.get(shot.build.definition().id(), CrossbowParity.BOMBLET);
+        if (bomblet != null) {
+            bomblets(shot, owner, at, scatter, bomblet);
+            return;
+        }
+        final boolean shrapnel = hasLocal(shot.profile, SHRAPNEL);
+        final SkillProfile profile = shrapnel ? shrapnelProfile(shot.profile, scatter)
+                : scatter.effectiveness() > 0 ? shardProfile(shot, scatter) : shot.profile.scaled(scatter.damage() / 100.0, "散射");
         final Set<UUID> volley = new HashSet<>(shot.struck); // 散射的不再打剛打中的那隻
         final Vector base = shot.direction.clone().setY(0);
         if (base.lengthSquared() < 1e-6) {
@@ -1723,19 +2164,71 @@ final class ProjectileEngine implements Listener {
         base.normalize();
         // 2026-10-28 照 PoE2（Ice Shot 的冰片是自己一組 base_number_of_projectiles）：「+x 投射物」也加在冰片數上（弓箭本身照樣多射）；
         //   這次之前冰片數固定，多的投射物只多射箭
-        final int extraProjectiles = Math.max(0, shot.build.projectiles() - shot.build.params().projectiles().intAt(shot.build.level()));
+        final int extraProjectiles = shrapnel ? 0 : Math.max(0, shot.build.projectiles() - shot.build.params().projectiles().intAt(shot.build.level()));
         final List<double[]> directions = SkillMath.fan(base.getX(), 0, base.getZ(),
                 Math.min(40, scatter.count(shot.build.level()) + extraProjectiles), scatter.spread());
         final Vector start = at.toVector().add(new Vector(0, 0.2, 0));
         for (final double[] d : directions) {
             final Vector direction = new Vector(d[0], 0.05, d[2]).normalize();
+            final double speed = Math.max(0.6, shot.build.speed() * 0.8)
+                    * (shrapnel ? 1 + SHRAPNEL_SPEED_VARIATION * (random.nextDouble() * 2 - 1) : 1);
             final Shot piece = spawn(owner, shot.build, profile, shot.world, start.clone().add(direction.clone().multiply(0.4)), direction,
-                    Math.max(0.6, shot.build.speed() * 0.8), scatter.range(), volley, true, shot.visual());
+                    Math.max(0.3, speed), scatter.range(), volley, true, shot.visual());
             if (piece != null) {
                 piece.struck.addAll(shot.struck); // 會爆炸的話也不炸剛打中的那隻（同分裂）
+                if (shrapnel) {
+                    piece.explode = 0;
+                }
             }
         }
         visuals.scatter(shot.visual(), at);
+    }
+
+    /** 2026-11-01 照 PoE2 Cluster Grenade：散出一圈子榴彈（{@link CrossbowParity#BOMBLET}）。 */
+    private void bomblets(final Shot shot, final Player owner, final Location at, final SkillParams.Scatter scatter, final SkillStages.Stage bomblet) {
+        final SkillProfile profile = SkillStages.profile(shot.build, shot.profile, CrossbowParity.BOMBLET);
+        final Set<UUID> volley = new HashSet<>(shot.struck);
+        final Vector base = shot.direction.clone().setY(0);
+        if (base.lengthSquared() < 1e-6) {
+            base.setX(1);
+        }
+        base.normalize();
+        final int count = CrossbowParity.bombletCount(bomblet, shot.build.level());
+        final List<double[]> directions = SkillMath.fan(base.getX(), 0, base.getZ(), count, scatter.spread());
+        final double radius = SkillStages.radius(shot.build, CrossbowParity.BOMBLET, shot.explode);
+        final int fuse = CrossbowParity.bombletFuseTicks(bomblet, shot.build.params().fuse());
+        final Vector start = at.toVector().add(new Vector(0, 0.3, 0));
+        for (final double[] d : directions) {
+            // 原作 projectile_distance_variance、projectile_angle_variance：每顆飛的遠近、角度各有亂數
+            final double reach = CrossbowParity.bombletRange(scatter.range(), random.nextDouble());
+            final Vector direction = new Vector(d[0], CrossbowParity.BOMBLET_LIFT, d[2]).normalize();
+            final Shot piece = spawn(owner, shot.build, profile, shot.world, start.clone().add(direction.clone().multiply(0.3)), direction,
+                    CrossbowParity.bombletSpeed(reach, shot.gravity), reach + 4, volley, true, shot.visual());
+            if (piece != null) {
+                piece.explode = radius;
+                piece.fuseLeft = fuse;
+                piece.struck.addAll(shot.struck);
+            }
+        }
+        visuals.scatter(shot.visual(), at);
+    }
+
+    /** 2026-11-01 照 PoE2 Explosive Shot：at 周圍 radius 格內你還沒炸的榴彈（有引信、帶 grenade 標籤）下一 tick 一起炸。 */
+    private void detonateGrenades(final Player owner, final Location at, final double radius, final long self) {
+        final Vector center = at.toVector();
+        for (final Shot other : shots.values()) {
+            if (other.id != self && other.owner.equals(owner.getUniqueId()) && other.world.equals(at.getWorld()) && other.fuseLeft > 1
+                    && other.profile.tags().contains(tw.exilecore.stats.Tags.GRENADE)
+                    && other.position.distanceSquared(center) <= (radius + 0.5) * (radius + 0.5)) {
+                other.fuseLeft = 1;
+            }
+        }
+    }
+
+    /** 碎片的傷害：投射物這一下的 damage%（同一張表），轉換換成 scatter.convert（沒寫照舊）。純函式（測試用）。 */
+    static SkillProfile shrapnelProfile(final SkillProfile p, final SkillParams.Scatter scatter) {
+        return new SkillProfile(p.id(), p.tags(), p.effectiveness() * scatter.damage() / 100.0, p.spellDamage(), p.spellDamageMax(),
+                scatter.convert().isEmpty() ? p.conversion() : scatter.convert(), p.local());
     }
 
     /**

@@ -255,8 +255,8 @@ final class Warcries {
         lines.add("<gray>算範圍內敵人的強度：普通 1、魔法 2、稀有 10、傳奇與 Boss 20（附近沒有敵人就不強化、不給守護）");
         final WarcrySpec.Empower empower = spec.empower();
         if (empower != null) {
-            final String when = empower.condition() == null ? "" : "freeze".equals(empower.condition())
-                    ? "有敵人被凍結（或打到凍結中的敵人）時，" : "有敵人被重暈（或打到重暈中的敵人）時，";
+            // 2026-11-02 照站長：條件（凍結、重暈）達成跟沒達成一樣（Primed.MORE = 1），說明不再寫條件
+            final String when = "";
             if (empower.whileActive()) {
                 lines.add(String.format(Locale.ROOT, "<gray>%s%.1f 秒內你的%s全部被強化：", when, spec.duration() * build.durationScale(), empower.kindText()));
             } else {
@@ -459,6 +459,9 @@ final class Warcries {
         // 2026-10：輔助加的那份（蓄嘯…）照輔助分開記：同一顆輔助掛在好幾個戰吼上只有一份（最後吼的那個刷新時間）
         for (final java.util.Map.Entry<String, List<Modifier>> grant : build.warcrySupportGrants().entrySet()) {
             buffs.apply(player, "warcry_support:" + grant.getKey(), grant.getValue().getFirst().source(), ticks, grant.getValue());
+            if (plugin.skills() != null) {
+                plugin.skills().ownBuff(player, "warcry_support:" + grant.getKey(), id); // 2026-11-01：快捷欄畫在最後吼的那一格
+            }
         }
         if (!build.warcryOwnModifiers().isEmpty()) {
             buffs.apply(player, id, name, ticks, build.warcryOwnModifiers());

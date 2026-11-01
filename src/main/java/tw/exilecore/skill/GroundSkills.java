@@ -127,7 +127,11 @@ public final class GroundSkills {
             case NOVA_CHILLED -> "爆炸的地方留下跟爆炸一樣大的冰緩地面 " + number + " 秒（冰緩 " + (long) NOVA_CHILL + "%）";
             case BRIAR_STORE -> "儲存你造成的物理攻擊傷害的 " + number + "%；施放法術時用掉，在你腳下長出荊棘地面";
             case BRIAR_CAP -> "最多儲存 " + number + " 點傷害";
-            default -> null;
+            // 2026-11-01 照 PoE2：滾雷珠的火灌注、星火連珠的電灌注（換成自己傷害表的那一段，OwnTableHits）
+            case BallLightning.FIRE_INFUSED -> "雷珠越飛越慢（每秒更少 25% 速度），消失時爆開 2.6 格的火焰（自己的傷害，20 級 570–856，暴擊率 7%）";
+            case StormStrikes.WET_MAX_LEVEL -> value > 0 ? "濕透套不到等級高於 " + number + " 的敵人" : "濕透可以套在任何等級的敵人";
+            case EmberBeams.MARK -> "這一輪的火星炸開時都再放一道閃電光束，連鎖 4 次（自己的傷害，20 級 16–309）";
+            default -> ColdSpells.describe(stat, value); // 2026-11-01 照 PoE2：冰系法術補上的機制
         };
     }
 }

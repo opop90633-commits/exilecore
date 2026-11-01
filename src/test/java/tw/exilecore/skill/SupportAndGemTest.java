@@ -402,7 +402,8 @@ class SupportAndGemTest {
         //   armour_piercing_bolt, frostbolt, essence_drain, bear_maul, wolf_shred, lunar_assault, wyvern_rend, disengage, parry, frozen_locus,
         //   lightning_rod, fragmentation_rounds）
         //   2026-10-30 照 PoE2：架盾、招架變成盾牌、圓盾賦予（沒有寶石），從第 1 階拿掉
-        assertEquals(List.of("ground_tremor", "spine_crush", "thunderclap_arrow", "leapback_shoot", "frozen_earth_repeater", "blast_grenade",
+        //   2026-11-01 照站長：躍退射（Escape Shot）刪掉，從第 1 階拿掉
+        assertEquals(List.of("ground_tremor", "spine_crush", "thunderclap_arrow", "frozen_earth_repeater", "blast_grenade",
                 "soul_sever_palm", "spinning_spear_strike", "frost_star_blast", "roaming_thunder", "flame_curtain", "armor_break_quarrel", "field_quake_hammers", "summon_bone_bowmen",
                 "toxic_blast_shaft", "cyclone_spear", "chill_crystal_mine", "dig_remains", "startle_thunder_chop", "ice_ridge_rift", "explosive_spear", "plague_taint",
                 "mountain_shake_claw", "field_quake_stomp", "swift_claw", "crescent_claw", "wing_blade_slash", "volcano", "root_bind", "spear_recoil_leap", "retreat_crystal_freeze",

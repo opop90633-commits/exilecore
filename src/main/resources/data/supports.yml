@@ -989,7 +989,7 @@ supports:
 
   huge_soul:
     name: 巨魄
-    description: 被輔助的持續型召喚物變成巨型：體型大 20%、生命更多 20%、傷害更多 20%，但保留的精魂多很多（130%）。只能輔助叫出持續型召喚物的技能。
+    description: 被輔助的持續型召喚物變成巨型：體型大 20%、生命更多 20%、傷害更多 20%（已經是巨型就不再疊加），但保留的精魂多很多（130%）。只能輔助叫出持續型召喚物的技能。
     icon: GOLD_INGOT   # 2026-10：原本 GOLDEN_APPLE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 3
     requires: [minion]   # 2026-11-01 照 PoE2：另外要持續型召喚（Minion AND Persistent；SupportGuards）；這次之前所有召喚技能
@@ -999,9 +999,7 @@ supports:
     #   這次之前 魔耗 1.3、stat: life.max, type: MORE, value: 50, tags: [minion]；stat: damage, type: MORE, value: 25, tags: [minion]；stat: movement.speed, type: INCREASED, value: -15, tags: [minion]
     modifiers:
       - { stat: aura.reservation, type: MORE, value: 30 }
-      - { stat: minion.gigantic, type: FLAT, value: 1 }
-      - { stat: life.max, type: MORE, value: 20, tags: [minion] }
-      - { stat: damage, type: MORE, value: 20, tags: [minion] }
+      - { stat: minion.gigantic, type: FLAT, value: 1 }   # 2026-11-01 照 PoE2：巨型是開關（MinionEstimates.gigantic：生命、傷害更多 20%、體型大 20%，跟巨伴、巨大追隨者不疊加）；這次之前另外寫生命、傷害更多 20%
 
   star_remains_resonance:
     name: 星骸共鳴
@@ -1763,7 +1761,7 @@ supports:
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 魔耗 1.2、物理的 10% 附加為火焰、對點燃中的敵人更多 25%
     modifiers:
       - { stat: damage.extra_fire_vs_ignited, type: FLAT, value: 30 }
-      - { stat: ignite.chance, type: MORE, value: -100 }
+      - { stat: flag.cannot_ignite, type: FLAT, value: 1 }   # 2026-11-01 照站長：真的不會點燃（目標身上已有易燃也不會）；這次之前用點燃機率更多 -100%，會被繞過
 
   cold_burn:               # Frostfire（「對凍結的敵人」改成一律，數值調低）
     name: 寒焚
@@ -1880,7 +1878,7 @@ supports:
     # 2026-10-26 照 PoE2 0.5（RePoE／poe2db）；這次之前 魔耗 1.1、一律多穿透 1 個
     modifiers:
       - { stat: projectile.pierce_ignited, type: FLAT, value: 1 }
-      - { stat: ignite.chance, type: MORE, value: -100 }
+      - { stat: flag.cannot_ignite, type: FLAT, value: 1 }   # 2026-11-01 照站長：真的不會點燃（目標身上已有易燃也不會）；這次之前用點燃機率更多 -100%，會被繞過
 
   frost_branch:              # Freezefork（「從凍結的敵人分裂」改成一律分裂）
     name: 霜岔
@@ -2028,7 +2026,7 @@ supports:
 
   quake_howl:             # Echoing Cry（回聲兩次 → 戰吼效果更強、範圍變小）
     name: 震嘯
-    description: 被輔助的戰吼回聲 2 次（每次隔 1.3 秒，範圍每回聲一次更多 100%），但範圍更少 50%、傷害更少 40%、算到的怪物強度更少 50%；用過之後要再移動 5 格才能用。要榮耀才能用的戰吼不能掛。
+    description: 被輔助的戰吼回聲 2 次（每次隔 1.3 秒，範圍每回聲一次更多 100%），但範圍更少 50%、傷害更少 40%、算到的怪物強度更少 50%。要榮耀才能用的戰吼不能掛。
     icon: ECHO_SHARD   # 2026-10：原本 GOAT_HORN（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 3
     requires: [warcry]
@@ -2205,7 +2203,7 @@ supports:
 
   beat_combo:                 # Cadence
     name: 連拍
-    description: 只輔助你自己使用的攻擊：被輔助的技能最近（4 秒內）每用過一次，攻擊速度更多 8%；但 4 秒內用了 6 次以上，這個技能 10 秒不能用。
+    description: 只輔助你自己使用的攻擊：被輔助的技能最近（4 秒內）每用過一次，攻擊速度更多 8%；但 4 秒內用了 6 次以上，這個技能 10 秒內傷害更少 50%。
     icon: GOLD_NUGGET   # 2026-10：原本 NOTE_BLOCK（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [attack]
@@ -2218,7 +2216,7 @@ supports:
 
   swift_edge:             # Hit and Run（2026-10-29 照站長改成原作）
     name: 迅鋒
-    description: 被輔助的攻擊要在你移動 5 格後才能使用，用了之後又要再移動才能用；技能速度更多 40%。只能輔助原本沒有使用條件、沒有冷卻時間的攻擊。
+    description: 被輔助的攻擊用了之後，還沒再移動 5 格時傷害更少 50%（移動滿 5 格就恢復）；技能速度更多 40%。只能輔助原本沒有使用條件、沒有冷卻時間的攻擊。
     icon: RABBIT_FOOT
     tier: 3   # PoE2 是第 4 階，我們最高第 3 階
     requires: [attack]
@@ -2544,7 +2542,7 @@ supports:
 
   blaze_column:            # Flame Pillar
     name: 炎柱
-    description: 被輔助的技能擊中點燃中的敵人時，用掉點燃，在牠身上噴出一道火柱；被輔助的技能自己不會點燃。
+    description: 被輔助的技能擊中點燃中的敵人時，用掉點燃，在牠身上噴出一道火柱（1.5 格，傷害＝那個點燃剩下傷害的 25%）；被輔助的技能自己不會點燃。   # 2026-11-01 照 PoE2 Flame Pillar 補上傷害基礎
     icon: BLAZE_ROD
     tier: 2
     excludes: [minion]
@@ -2595,7 +2593,7 @@ supports:
 
   thorn_quake:             # Brambleslam
     name: 荊棘震
-    description: 被輔助的猛擊砸下時，在面前長出一片荊棘，一直刺傷裡面的敵人。
+    description: 被輔助的猛擊砸下時，在範圍內長出 3 叢荊棘（0.4 秒後生效、留 8 秒、最多 20 叢），敵人碰到就刺一下（原技能 35% 的攻擊傷害、致殘）然後消失。   # 2026-11-01 照 PoE2 Brambleslam；這次之前「面前一片荊棘一直刺傷」
     icon: STICK   # 2026-10：原本 SWEET_BERRIES（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 3   # 2026-11-01 照 PoE2 的階級（原作 1→1、2–3→2、4–5→3、0→2）；這次之前 2
     requires: [slam]
@@ -2619,7 +2617,7 @@ supports:
 
   rot_howl:          # Corrupting Cry
     name: 腐蝕嘯
-    description: 被輔助的戰吼吼出時，震出一圈腐血，很容易讓周圍的敵人流血。
+    description: 被輔助的戰吼吼出時，範圍內的敵人各上 1 層腐化之血（物理持續傷害，5 秒，最多 10 層）。   # 2026-11-01 照 PoE2 Corrupting Cry；這次之前「震出一圈腐血、容易流血」
     icon: NETHER_BRICK   # 2026-10：原本 CRIMSON_FUNGUS（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     requires: [warcry]
@@ -2741,7 +2739,7 @@ supports:
   # ---- 2026-10：PoE2 輔助補齊・第 5 批（觸發專屬技能、減益）----
   magic_flame:              # Mana Flare
     name: 魔焰
-    description: 被輔助的技能暴擊時，在目標身上炸出一圈魔焰。
+    description: 被輔助的技能暴擊時，用掉你目前魔力的 25%，在目標身上炸出一圈魔焰（2 格），造成等量的火焰傷害（冷卻 1 秒）。   # 2026-11-01 照 PoE2 Mana Flare 補上傷害基礎
     icon: BLAZE_POWDER
     tier: 2
     requires: [spell]   # 2026-10-26 照 PoE2：Mana Flare 只輔助會擊中的法術（Spell AND Damage）；這次之前沒寫
@@ -3236,7 +3234,7 @@ supports:
 
   sow_fire:          # Fan The Flames
     name: 播火
-    description: 只輔助疾風技能：被輔助的技能擊中點燃中的敵人時，在牠身上炸出一圈火焰，很容易把點燃傳給周圍的敵人。
+    description: 只輔助疾風技能：被輔助的技能擊中點燃中的敵人時，在牠身上炸開 3.5 格的火焰（不用武器的攻擊），把牠的點燃傳給被炸到的敵人。   # 2026-11-01 照 PoE2 Fan the Flames II（補上傳點燃；攻擊）
     icon: BLAZE_ROD   # 2026-10：原本 FIRE_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     tier: 3
     requires: [wind]   # 2026-11-01 照 PoE2 Fan the Flames II（(Attack OR Damage) AND Wind；不會擊中的疾風技能由 support_ref.yml 擋）；這次之前 [attack]（所有攻擊）
@@ -4288,7 +4286,7 @@ supports:
 
   fearless_heart:               # Dauntless
     name: 無懼
-    description: 要先靜止 1.5 秒才能用被輔助的技能；每靜止 0.25 秒擊中更多 3%（最多 45%），一移動就重來。
+    description: 被輔助的技能每靜止 0.25 秒擊中更多 3%（最多 45%），一移動就重來。
     icon: IRON_INGOT
     tier: 2   # PoE2 第 0 階（不從未切割寶石切；我們放第 2 階）
     requires: [attack, spell]
@@ -4333,7 +4331,7 @@ supports:
 
   late_blast:        # Delayed Reaction
     name: 遲爆
-    description: 被輔助的危險物件（寒凝彈的冰晶、蒺藜步的鐵蒺、矛陣的矛）持續時間更少 70%，敵人碰到不會觸發，只在放下的那一刻（那時就有敵人）或時間到時觸發，更多 15% 傷害。
+    description: 被輔助的危險物件（寒凝彈的冰晶、蒺藜步的鐵蒺、矛陣的矛、荊棘叢生的荊棘）持續時間更少 70%，敵人碰到不會觸發，只在放下的那一刻（那時就有敵人）或時間到時觸發，更多 15% 傷害。
     icon: GUNPOWDER
     tier: 3
     requires: [hazard]
@@ -4813,7 +4811,7 @@ supports:
 
   thorn_blast:             # Quill Burst
     name: 刺爆
-    description: 你用荊棘反彈之後，被輔助的近戰攻擊接下來 3 次擊中各觸發刺爆（往四周噴出尖刺，物理傷害）。
+    description: 你用荊棘反彈之後，被輔助的近戰攻擊接下來 3 次擊中各觸發刺爆（在被打的敵人周圍 1.5 格造成你的荊棘傷害，打不到被打的那隻）。   # 2026-11-01 照 PoE2 Quill Burst；這次之前「往四周噴出尖刺，物理傷害」
     icon: PRISMARINE_SHARD
     tier: 2
     requires: [melee]
@@ -4836,7 +4834,7 @@ supports:
 
   redeploy_ii:                # Rearm II
     name: 再布 II
-    description: 被輔助的危險物件（寒凝彈的冰晶、蒺藜步的鐵蒺、矛陣的矛）觸發後 30% 機率過 1 秒在原地重新布置。
+    description: 被輔助的危險物件（寒凝彈的冰晶、蒺藜步的鐵蒺、矛陣的矛、荊棘叢生的荊棘）觸發後 30% 機率過 1 秒在原地重新布置。
     icon: STICK
     tier: 3
     requires: [hazard]

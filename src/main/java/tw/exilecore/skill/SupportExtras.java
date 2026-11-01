@@ -110,6 +110,8 @@ public final class SupportExtras implements Listener {
     /** 2026-11-01 Cadence：玩家/技能 → 最近用的 tick；玩家/技能 → 到哪個 tick 前不能用。 */
     private final Map<String, java.util.ArrayDeque<Long>> cadenceUses = new HashMap<>();
     private final Map<String, Long> cadenceLocked = new HashMap<>();
+    /** 2026-11-02 照站長：連拍用太頻繁時傷害更少這麼多（10 秒）。 */
+    static final double CADENCE_PENALTY = 0.5;
     /** Dauntless：最後一次移動在哪個 tick。 */
     private final Map<UUID, Long> lastMoved = new HashMap<>();
     /** Stoicism：從哪個 tick 開始算（翻滾、突進之後重來）。 */
@@ -255,22 +257,12 @@ public final class SupportExtras implements Listener {
         final Set<String> tags = build.profile().tags();
         final String name = build.definition().name();
         final long now = now();
-        if (flat(effective, SupportExtraKeys.CADENCE, tags) > 0) {
-            final long locked = cadenceLocked.getOrDefault(key(player, build.definition().id()), 0L);
-            if (locked > now) {
-                return String.format(Locale.ROOT, "%s 用太頻繁，%.1f 秒後才能再用（連拍）", name, (locked - now) / 20.0);
-            }
-        }
+        // 2026-11-02 照站長：連拍用太頻繁不再鎖住技能，改成 10 秒內傷害更少 50%（beforeUse）
         final int needBlocks = (int) Math.round(flat(effective, SupportExtraKeys.ANCESTRAL_AID, tags));
         if (needBlocks > 0 && blocks.getOrDefault(player.getUniqueId(), 0) < needBlocks) {
             return String.format(Locale.ROOT, "%s 要先格擋 %d 次（現在 %d）", name, needBlocks, blocks.getOrDefault(player.getUniqueId(), 0));
         }
-        if (flat(effective, SupportExtraKeys.DAUNTLESS, tags) > 0) {
-            final long still = now - lastMoved.getOrDefault(player.getUniqueId(), now - SupportExtraKeys.DAUNTLESS_TICKS);
-            if (still < SupportExtraKeys.DAUNTLESS_TICKS) {
-                return String.format(Locale.ROOT, "%s 要先靜止 %.1f 秒", name, SupportExtraKeys.DAUNTLESS_TICKS / 20.0);
-            }
-        }
+        // 2026-11-01 照站長：無畏拿掉「要先靜止 1.5 秒」的限制（靜止越久傷害越高照舊）
         final int volatility = (int) Math.round(flat(effective, SupportExtraKeys.CATHARSIS, tags));
         if (volatility > 0 && service.treeMechanics() != null && service.treeMechanics().volatility(player) < volatility) {
             return String.format(Locale.ROOT, "%s 要有 %d 層易爆（現在 %d）", name, volatility, service.treeMechanics().volatility(player));
@@ -595,6 +587,11 @@ public final class SupportExtras implements Listener {
             if (flat(effective, SupportExtraKeys.CRESCENDO, tags) > 0 || flat(effective, SupportExtraKeys.RENDING_APEX, tags) > 0) {
                 player.getWorld().spawnParticle(Particle.SWEEP_ATTACK, player.getEyeLocation().add(SkillTargets.facing(player).multiply(1.5)), 1, 0, 0, 0, 0);
             }
+        }
+        // 2026-11-02 照站長：連拍 4 秒內用了 6 次以上，10 秒內傷害更少 50%（這次之前 10 秒不能用）
+        if (flat(effective, SupportExtraKeys.CADENCE, tags) > 0
+                && cadenceLocked.getOrDefault(key(player, build.definition().id()), 0L) > now) {
+            local.add(Modifier.more(StatKeys.DAMAGE, -CADENCE_PENALTY, "連拍（用太頻繁）"));
         }
         // Dauntless：每靜止 0.25 秒擊中更多 x%
         final double dauntless = flat(effective, SupportExtraKeys.DAUNTLESS, tags);
@@ -928,10 +925,12 @@ public final class SupportExtras implements Listener {
      */
     boolean cursedGround(final Player player, final SkillBuild build, final Location center, final SkillParams.Mark spec) {
         final StatSheet effective = effective(player, build);
-        final int max = (int) Math.round(flat(effective, SupportExtraKeys.CURSED_GROUND, build.profile().tags()));
+        int max = (int) Math.round(flat(effective, SupportExtraKeys.CURSED_GROUND, build.profile().tags()));
         if (max <= 0 || build.definition().hidden()) {
             return false;
         }
+        // 2026-11-01 照 PoE2（Cursed Ground addSkillTypes Limit）：過剩（+1 上限）也加在詛咒地面的數量上；這次之前固定 2 塊
+        max += SkillLimits.bonus(effective, build.profile().tags());
         final long now = now();
         final List<Ground> mine = new ArrayList<>();
         for (final Ground ground : grounds) {
@@ -944,8 +943,9 @@ public final class SupportExtras implements Listener {
         }
         final double radius = spec.radius(build.level()) * build.areaScale();
         final long ticks = Math.max(20, build.groundDurationTicks(spec.duration(build.level()))); // 2026-11-01：詛咒地面是地面效果（Persistent Ground）
-        grounds.add(new Ground(player.getUniqueId(), 1, center.clone(), radius, now + ticks, build, spec));
-        service.executor().applyCurseAt(player, build, center, spec, now + 15);
+        final Ground placed = new Ground(player.getUniqueId(), 1, center.clone(), radius, now + ticks, build, spec);
+        grounds.add(placed);
+        service.executor().applyCurseAt(player, build, center, spec, now + 15, placed);
         return true;
     }
 
@@ -1424,7 +1424,7 @@ public final class SupportExtras implements Listener {
             plugin.ailments().groundStatusOnMonster(defender, 0.3, 0, 80);
         }
         if ((flags & CONSUME_BROKEN_FLAG) != 0 && ailments) {
-            plugin.ailments().consumeFullBreak(defender);
+            plugin.ailments().consumeFullBreak(defender, player); // 2026-11-01 照 PoE2 Shard Scavenger：帶上用掉的人
         }
         if ((flags & FULL_LIFE_FLAG) != 0 && debuffs != null) {
             daze(player, defender, now, effective, tags); // Opening Move
@@ -1598,7 +1598,8 @@ public final class SupportExtras implements Listener {
                 }
                 if (retaliated[2] > 1) {
                     retaliated[2]--;
-                    service.procs().castAt(player, "proc_quill_burst", SupportProcs.baseId(skill.id()), defender.getLocation());
+                    // 2026-11-01 照 PoE2 TriggeredQuillburstPlayer：造成你的荊棘傷害、打不到被打的那隻（ProcBasis.quillBurst）；這次之前法術傷害 [5, 9]
+                    service.procs().quillBurst(player, SupportProcs.baseId(skill.id()), defender);
                 }
             }
         }
@@ -2179,7 +2180,7 @@ public final class SupportExtras implements Listener {
             } else if (ground.curse != null && ground.spec != null) {
                 // 詛咒地面（2026-10-27 照 PoE2 Cursed Ground）：站在裡面的敵人被詛咒，出去 0.75 秒內就沒了（跟血脈的蟾咒地面一樣）；
                 // 這次之前每秒在中心重放一次詛咒，出去之後詛咒還留整段持續時間
-                service.executor().applyCurseAt(owner, ground.curse, ground.at, ground.spec, now + 15);
+                service.executor().applyCurseAt(owner, ground.curse, ground.at, ground.spec, now + 15, ground); // 2026-11-01：同一塊地面刷新不算蓋掉（咒爆）
                 ring(ground, Particle.WITCH);
             }
         }

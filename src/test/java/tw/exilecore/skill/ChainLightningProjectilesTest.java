@@ -44,7 +44,9 @@ class ChainLightningProjectilesTest {
     @Test
     void nonProjectileChainSkillsStayOneBeam() {
         // 原作血脈牽、裂隙之手不是投射物：投射物數量不影響
-        assertEquals(1, SkillExecutor.chainBeams(config.skill("blood_vein_tether"), 3));
+        // 2026-11-01 照 PoE2 Exsanguinate：血脈牽自己是 3 道（blood_tendrils_beam_count），投射物數量照樣不影響
+        assertEquals(3, SkillExecutor.chainBeams(config.skill("blood_vein_tether"), 3));
+        assertEquals(3, SkillExecutor.chainBeams(config.skill("blood_vein_tether"), 1));
         assertEquals(1, SkillExecutor.chainBeams(config.skill("fissure_hand"), 3));
         assertEquals(3, SkillExecutor.chainBeams(config.skill("chain_thunder"), 3));
     }

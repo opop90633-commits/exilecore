@@ -8,6 +8,11 @@ public final class Tags {
 
     public static final String ATTACK = "attack";
     public static final String SPELL = "spell";
+    /**
+     * 2026-11-01 照 PoE2（Rathpith Globe「非引導法術」）：不是引導的法術——技能的情境標籤（SkillProfiles 加，寶石上看不到），
+     * 只對非引導法術有效的修飾器寫 tags: [spell, non_channelling]。
+     */
+    public static final String NON_CHANNELLING = "non_channelling";
     public static final String MELEE = "melee";
     public static final String PROJECTILE = "projectile";
     public static final String AREA = "area";

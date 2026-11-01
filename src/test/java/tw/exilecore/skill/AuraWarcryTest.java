@@ -59,22 +59,23 @@ class AuraWarcryTest {
         // 2026-10-26 照 PoE2：凜冬之殼改成原作的冰甲疊層（OriginalSkills），沒有光環效果了；數值的部分改用魔湧驗（這次之前驗凜冬之殼的護甲、火抗）
         assertTrue(aegis.aura().effects().isEmpty());
         // 2026-10-26：魔湧照 PoE2 Mana Tempest 改成風暴（不是光環了），數值改用拾鱗驗
+        // 2026-11-01 照 PoE2 Scavenged Plating：拾鱗改成甲片層數（每層的護甲、荊棘寫在 effects，PersistentBuffs 照層數乘）；數值改用荊棘驗
         final SkillDefinition plating = config.skill("gathered_scales");
-        assertEquals(2, plating.aura().effects().size());
-        final ScaledMod armour = plating.aura().effects().getFirst();
-        assertEquals(StatKeys.ARMOUR, armour.stat());
-        assertEquals(20, armour.value().at(1), 1e-9);
+        assertEquals(3, plating.aura().effects().size());
+        final ScaledMod armour = plating.aura().effects().get(2);
+        assertEquals(PersistentBuffs.PLATING_THORNS_MAX, armour.stat());
+        assertEquals(2, armour.value().at(1), 1e-9);
         final double armour20 = armour.value().at(20);
-        assertTrue(armour20 > 20 && armour20 <= 40, "隨等級成長");
+        assertTrue(armour20 > 2 && armour20 <= 64, "隨等級成長");
 
         final StatSheet owner = new StatSheet();
         final SkillBuild low = build("gathered_scales", 1, owner);
         final SkillBuild high = build("gathered_scales", 20, owner);
         assertEquals(30, low.reserve(), 1e-9);
         assertEquals(1.0, low.auraEffect(), 1e-9);
-        assertEquals(0.20, low.auraModifiers().getFirst().value(), 1e-9, "增加 20% 護甲（百分比換成小數）");
-        assertEquals(armour20 / 100.0, high.auraModifiers().getFirst().value(), 1e-9);
-        assertEquals("armour.break", high.auraModifiers().get(1).stat());
+        assertEquals(2, low.auraModifiers().get(2).value(), 1e-9, "每層荊棘最多 2（FLAT 照原值）");
+        assertEquals(armour20, high.auraModifiers().get(2).value(), 1e-9);
+        assertEquals(PersistentBuffs.PLATING_ARMOUR, high.auraModifiers().getFirst().stat());
         assertFalse(low.generosity());
         assertEquals(0, low.exerts());
         assertNull(low.deploy());
@@ -323,9 +324,9 @@ class AuraWarcryTest {
         assertTrue(staff.usableWith(Set.of(Tags.QUARTERSTAFF, Tags.TWO_HAND)));
         assertFalse(staff.usableWith(Set.of(Tags.MACE)), "權杖、錘開不起來");
         assertFalse(staff.usableWith(Set.of(Tags.BOW)));
-        // 2026-10-26 照 PoE2：拾晶裝不限武器（效果本來就只對弩有用）
+        // 2026-11-01 照 PoE2（Shard Scavenger weaponTypes Crossbow）：拾晶裝要拿弩（這次之前不限武器）
         assertTrue(config.skill("crystal_pickup_load").usableWith(Set.of(Tags.CROSSBOW)));
-        assertTrue(config.skill("crystal_pickup_load").usableWith(Set.of(Tags.BOW)));
+        assertFalse(config.skill("crystal_pickup_load").usableWith(Set.of(Tags.BOW)));
         assertTrue(config.skill("battle_spirit_rise").usableWith(Set.of(Tags.BOW)), "沒寫 weapons 的什麼武器都行");
         // 崩滅心咒要長棍、銀月庇要獸魂符（PoE2 的原型都是那種武器的技能）
         assertTrue(config.skill("collapse_heart_chant").usableWith(Set.of(Tags.QUARTERSTAFF)));

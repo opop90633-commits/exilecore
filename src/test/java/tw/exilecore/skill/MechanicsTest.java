@@ -373,7 +373,7 @@ class MechanicsTest {
         final SkillDefinition bell = config.skill("startling_thunder_bell");
         assertEquals(DeploySpec.Kind.BELL, bell.deploy().kind());
         assertEquals(10, bell.deploy().rings(), "2026-10-26 照 PoE2：鐘打 10 下才碎");
-        assertTrue(bell.tags().contains(Tags.TOTEM), "鐘歸在圖騰那一類");
+        assertFalse(bell.tags().contains(Tags.TOTEM), "2026-11-01 照 PoE2（Tempest Bell 沒有 Totem）：鐘不算圖騰");
         assertTrue(bell.tags().contains(Tags.BELL));
         // 2026-10-28 照 PoE2：鐘也是「上限」（Limit 1 Bell），過剩 II 掛得上；這次之前繁置（Overabundance I）只能掛圖騰、鐘掛不上
         assertTrue(config.support("brim_over_ii").supports(bell), "鐘的上限吃過剩");

@@ -60,7 +60,7 @@ final class MeleeStep {
     /** 公尺檢查（0 到 10 公尺）後換成格。 */
     private static double metres(final double metres) {
         if (!(metres > 0) || metres > 10) {
-            throw new IllegalArgumentException("step.distance：要在 0 到 10 公尺之間，卻是 " + metres);
+            throw new IllegalArgumentException("step.distance：要在 0 到 10 格之間，卻是 " + metres);
         }
         return tw.exilecore.core.Units.metres(metres);
     }

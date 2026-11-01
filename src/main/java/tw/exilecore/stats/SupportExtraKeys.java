@@ -63,7 +63,7 @@ public final class SupportExtraKeys {
     public static final double STOICISM_CAP = 20;
     /**
      * FLAT：2026-11-01 照 PoE2 Cadence（連拍）：被輔助的技能最近（4 秒內）每用過一次，攻擊速度更多 x%；
-     * 4 秒內用了 {@link #CADENCE_LIMIT} 次以上就 10 秒不能用。只算你自己按的（觸發、代放、圖騰在 support_ref.yml 擋掉）。
+     * 4 秒內用了 {@link #CADENCE_LIMIT} 次以上就 10 秒內傷害更少 50%（2026-11-02 照站長；這次之前 10 秒不能用）。只算你自己按的（觸發、代放、圖騰在 support_ref.yml 擋掉）。
      */
     public static final String CADENCE = "attack.speed.cadence";
     public static final long CADENCE_RECENT_TICKS = 80;

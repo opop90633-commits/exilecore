@@ -27,7 +27,7 @@ final class SupportRemakeText {
             case SupportRemakeKeys.FULL_BREAK_ON_HEAVY_STUN -> "造成重暈時讓敵人完全破甲";
             case SupportRemakeKeys.AFTERSHOCK_PER_QUARTER -> "有餘震機率的話，攻擊時間每 0.25 秒餘震機率增加 " + n(value) + "%";
             case SupportRemakeKeys.RUTHLESS -> "每第 " + SupportRemakeKeys.RUTHLESS_EVERY + " 次使用是重擊，那一次暈眩傷害更多 " + n(value) + "%";
-            case SupportRemakeKeys.MINIONS_GIGANTIC -> "召喚物變成巨型（體型大 20%）";
+            case SupportRemakeKeys.MINIONS_GIGANTIC -> "召喚物變成巨型（體型大 20%、生命更多 20%、傷害更多 20%；不跟其他巨型來源疊加）";
             case tw.exilecore.stats.KeystoneKeys.ECHO_AREA -> "回響的那一次範圍" + (value < 0 ? "減少 " : "增加 ") + percent + "%";
             default -> null;
         };

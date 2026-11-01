@@ -59,6 +59,33 @@ public final class SkillResources implements Listener {
         final java.util.ArrayDeque<MeleeHit> meleeHits = new java.util.ArrayDeque<>();
         /** 2026-10-28 照 PoE2 頂點：被輔助的技能上一次用掉連擊的 tick（技能代號 → tick）。 */
         final Map<String, Long> culminated = new HashMap<>();
+        /** 2026-11-01：有自己連擊規則的技能（{@link #COMBO_RULES}）各自的連擊：技能代號 → {層數, 最後累積的 tick, 持續 tick}。 */
+        final Map<String, long[]> ruledCombo = new HashMap<>();
+    }
+
+    /**
+     * 2026-11-01 照 PoE2：要連擊的技能各自的連擊規則（PoB2 TempestBellPlayer：base_combo_stacks_decay_delay_ms 8000、
+     * combo_only_stacks_from_hits_with_weapon_restriction）。連擊還是同一份資源（其他技能照舊看共用的 4 秒那份），
+     * 寫在這裡的技能另外記一份自己的：只有拿 weapon 打中才累積（null = 什麼武器都行）、decay tick 沒累積才歸零；
+     * 用掉時兩份一起扣，別的技能用掉共用的連擊時這份也一起扣。
+     *
+     * @param decay  幾 tick 沒累積就歸零（吃連擊持續時間的加成）
+     * @param weapon 打中時主手要拿的武器標籤
+     */
+    record ComboRule(long decay, String weapon) {
+    }
+
+    static final Map<String, ComboRule> COMBO_RULES = Map.of(
+            "startling_thunder_bell", new ComboRule(160, Tags.QUARTERSTAFF)); // 驚雷之鐘：8 秒、只算長棍打中的
+
+    /** 這一下打中能不能累積這條規則的連擊（主手的武器標籤 weaponTags）。純函式（測試用）。 */
+    static boolean ruleCounts(final ComboRule rule, final Set<String> weaponTags) {
+        return rule.weapon() == null || weaponTags != null && weaponTags.contains(rule.weapon());
+    }
+
+    /** 規則的連擊現在幾層（entry 是 {層數, tick, 持續}，過了持續就是 0）。純函式（測試用）。 */
+    static int ruledNow(final long[] entry, final long now) {
+        return entry == null || entry[0] <= 0 || now - entry[1] > entry[2] ? 0 : (int) entry[0];
     }
 
     /** 2026-10-28：一次近戰攻擊擊中（同一下打中好幾個只記一筆）。 */
@@ -311,6 +338,45 @@ public final class SkillResources implements Listener {
     static final int COMBO_MAX = 10;
     static final long COMBO_DECAY = 80;
 
+    /**
+     * 2026-11-01：技能看的連擊——有自己規則的（{@link #COMBO_RULES}，驚雷之鐘）看自己那份，其他照共用的。
+     */
+    public int combo(final Player player, final String skillId) {
+        final ComboRule rule = skillId == null ? null : COMBO_RULES.get(skillId);
+        if (rule == null) {
+            return combo(player);
+        }
+        final State s = states.get(player.getUniqueId());
+        return s == null ? 0 : ruledNow(s.ruledCombo.get(skillId), now());
+    }
+
+    /** 2026-11-01：技能用掉連擊（有規則的扣自己那份，共用的也扣一樣多；沒規則的照 {@link #spendCombo(Player, int)}）。 */
+    public int spendCombo(final Player player, final int amount, final String skillId) {
+        final ComboRule rule = skillId == null ? null : COMBO_RULES.get(skillId);
+        if (rule == null) {
+            return spendCombo(player, amount);
+        }
+        final int have = combo(player, skillId);
+        final State s = states.get(player.getUniqueId());
+        if (s == null || amount <= 0 || have <= 0) {
+            return 0;
+        }
+        final int spent = Math.min(have, amount);
+        s.ruledCombo.get(skillId)[0] -= spent;
+        if (combo(player) > 0) {
+            s.combo = Math.max(0, s.combo - spent);
+        }
+        tw.exilecore.ascendancy.AscendancyEffects.comboSpent(player, spent); // 2026-10-27 照 PoE2（昇華・武術精通）
+        return spent;
+    }
+
+    /** 共用的連擊被用掉 amount 層（Integer.MAX_VALUE = 全部）：有規則的那幾份也一起扣。 */
+    private static void spendRuled(final State s, final int amount) {
+        for (final long[] entry : s.ruledCombo.values()) {
+            entry[0] = amount == Integer.MAX_VALUE ? 0 : Math.max(0, entry[0] - amount);
+        }
+    }
+
     /** 現在幾層連擊（超過持續時間沒累積就歸零）。 */
     public int combo(final Player player) {
         final State s = states.get(player.getUniqueId());
@@ -332,6 +398,7 @@ public final class SkillResources implements Listener {
         }
         final int spent = Math.min(have, amount);
         s.combo -= spent;
+        spendRuled(s, spent); // 2026-11-01：同一份資源，有自己規則的那幾份也扣
         tw.exilecore.ascendancy.AscendancyEffects.comboSpent(player, spent); // 2026-10-27 照 PoE2（昇華・武術精通）
         return spent;
     }
@@ -390,7 +457,19 @@ public final class SkillResources implements Listener {
         }
         s.combo = Math.min(COMBO_MAX, s.combo + gain);
         s.comboTick = now;
-        s.comboDecay = Math.round(COMBO_DECAY * Math.max(0.2, 1 + effective.increased(StatKeys.COMBO_DURATION, event.skill().tags())));
+        final double durationScale = Math.max(0.2, 1 + effective.increased(StatKeys.COMBO_DURATION, event.skill().tags()));
+        s.comboDecay = Math.round(COMBO_DECAY * durationScale);
+        // 2026-11-01 照 PoE2（驚雷之鐘：連擊 8 秒才消失、只算長棍打中的）：有自己規則的技能另外記一份
+        final Set<String> weapon = plugin.players() == null ? Set.of() : plugin.players().get(player).weaponTags();
+        for (final Map.Entry<String, ComboRule> rule : COMBO_RULES.entrySet()) {
+            if (!ruleCounts(rule.getValue(), weapon)) {
+                continue;
+            }
+            final long[] entry = s.ruledCombo.computeIfAbsent(rule.getKey(), id -> new long[3]);
+            entry[0] = Math.min(COMBO_MAX, ruledNow(entry, now) + gain);
+            entry[1] = now;
+            entry[2] = Math.round(rule.getValue().decay() * durationScale);
+        }
     }
 
     /**
@@ -403,6 +482,7 @@ public final class SkillResources implements Listener {
             final State s = state(player.getUniqueId());
             s.finisherCombo = s.combo;
             s.combo = 0;
+            spendRuled(s, Integer.MAX_VALUE); // 2026-11-01：同一份資源
             tw.exilecore.ascendancy.AscendancyEffects.comboSpent(player, s.finisherCombo); // 2026-10-27 照 PoE2（昇華・武術精通）
             s.finisherUntil = now + 12;
             // 2026-10-24（鐘星，PoE2 Ailith's Chimes）：每用掉一層連擊 25% 機率（超過 100% 的部分每 100% 必給一顆）給銳星

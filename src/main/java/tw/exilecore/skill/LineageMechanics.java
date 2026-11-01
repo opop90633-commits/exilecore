@@ -1261,9 +1261,8 @@ public final class LineageMechanics implements Listener {
     List<Modifier> minionModifiers(final MinionService.Minion minion, final StatSheet ownerSheet) {
         final List<Modifier> list = new ArrayList<>();
         final long now = now();
-        final double gigantic = LineageRules.total(minion.build.supports(), LineageKeys.GIGANTIC);
-        // 2026-11-01 照 PoE2 Hulking Minions（巨魄）：被輔助的召喚物是巨型（跟巨伴一樣體型大 20%）
-        if (gigantic > 0 || hulking(minion.build.supports())) {
+        // 2026-11-01 照 PoE2 Hulking Minions（巨魄）：被輔助的召喚物是巨型（跟巨伴一樣體型大 20%）；巨大追隨者（天賦）也是
+        if (MinionEstimates.gigantic(minion.build, ownerSheet)) {
             // 2026-10-27：閃避、偏斜改在 MinionEstimates.ownerDerived（跟召喚物說明、每秒傷害共用），這裡只管體型
             final org.bukkit.attribute.AttributeInstance scale = minion.mob.getAttribute(org.bukkit.attribute.Attribute.SCALE);
             if (scale != null && Math.abs(scale.getBaseValue() - GIGANTIC_SCALE) > 1e-6) {
@@ -1645,7 +1644,7 @@ public final class LineageMechanics implements Listener {
                 continue;
             }
             if (now % 10 == 0) {
-                service.executor().applyCurseAt(owner, ground.build, ground.center, ground.spec, now + 15); // 站在裡面才被詛咒
+                service.executor().applyCurseAt(owner, ground.build, ground.center, ground.spec, now + 15, ground); // 站在裡面才被詛咒（同一塊刷新不算蓋掉）
                 for (int i = 0; i < 16; i++) {
                     final double a = Math.PI * 2 * i / 16 + now * 0.03;
                     Fx.spawn(ground.center.getWorld(), Particle.WITCH, ground.center.clone().add(Math.cos(a) * ground.radius, 0.15,

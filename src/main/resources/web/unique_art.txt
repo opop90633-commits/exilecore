@@ -10890,3 +10890,34 @@ item devotee_maul
   egkk........l...
   ei..............
   ................
+
+# ---- 2026-10 自動產生（tools/gen_unique_art.py）----（2026-11-01）
+
+item rathpith_globe
+  a=2e1a1a
+  b=3a2525
+  c=241313
+  d=e0bdbd
+  e=120808
+  f=ff3c3a
+  g=a3100e
+  Z=fd1b18
+  Y=fdb3b2
+  X=f8201e
+  W=fcb5b4
+  ................
+  ..aaaaaaaaaaaa..
+  .abbbcbbbbcbbba.
+  .abdbcbbbbcbdbe.
+  .abbbcbWbbcbbbe.
+  .abbbfbXXfcbbbe.
+  .abbfcfbfbfbbbe.
+  .abbbcgfgbgfbbe.
+  ..adbcbbbbcbde..
+  ..abbcbbbbcbbe..
+  ...abcbbbbcbe...
+  ....acbbbbce....
+  .....ebddbe.....
+  ......abbe......
+  .......ae.......
+  ................

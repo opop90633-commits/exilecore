@@ -67,6 +67,7 @@ public final class SkillModule implements Module {
         plugin.players().addBuffSource(created.persistentBuffs()::modifiers); // 2026-10-26：木甲的護甲
         manager.registerEvents(created.chargeEffects(), plugin); // 2026-10-24：戰星輔助
         manager.registerEvents(created.crystals(), plugin); // 冰晶（2026-10）
+        manager.registerEvents(created.coldSpells(), plugin); // 2026-11-01 照 PoE2：冰系法術的原作機制（ColdSpells）
         manager.registerEvents(created.mounts(), plugin); // 坐騎（2026-10）
         manager.registerEvents(created.warcries().taunts(), plugin); // 嘲諷：持續時間內只打嘲諷的人
         manager.registerEvents(created.bossSkills(), plugin); // 放招時暫停、沒來得及恢復的原版 AI：載入時恢復

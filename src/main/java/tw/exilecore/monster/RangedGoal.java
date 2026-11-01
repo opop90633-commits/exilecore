@@ -107,7 +107,16 @@ final class RangedGoal implements Goal<Mob> {
         if (plugin instanceof tw.exilecore.ExileCore core && core.monsters() != null) {
             final MonsterData data = core.monsters().data(mob).orElse(null);
             if (data != null) {
-                final double speed = core.monsters().sheet(mob, data).apply(tw.exilecore.stats.StatKeys.ATTACK_SPEED, 1.0,
+                tw.exilecore.stats.StatSheet sheet = core.monsters().sheet(mob, data);
+                if (core.combat() != null) {
+                    // 2026-11-01 照 PoE2 Temporal Chains：身上的減益（遲滯詛咒的攻擊速度更少）也讓射箭變慢；這次之前只看怪物自己的屬性
+                    final java.util.List<tw.exilecore.stats.Modifier> cursed = core.combat().debuffs().modifiers(mob.getUniqueId(), null,
+                            core.getServer().getCurrentTick());
+                    if (!cursed.isEmpty()) {
+                        sheet = sheet.overlay(cursed);
+                    }
+                }
+                final double speed = sheet.apply(tw.exilecore.stats.StatKeys.ATTACK_SPEED, 1.0,
                         java.util.Set.of(tw.exilecore.stats.Tags.ATTACK));
                 interval = (int) Math.max(10, Math.round(baseInterval / Math.max(0.3, speed)));
             }

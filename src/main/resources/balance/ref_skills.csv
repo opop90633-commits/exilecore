@@ -40,7 +40,6 @@ miasma_arrow,Poisonburst Arrow,274,未套用；low confidence; burst L20 100%
 corpse_burst,Detonate Dead,181.5,已套用；+5% (L1) / 10.7% (L20) of corpse max life
 flame_core_detonation,Flameblast,305.5,已套用；75% more dmg per stage; 10 stages
 startle_thunder_chop,Falling Thunder,437,已套用；slam; power-charge projectiles (L1 100%; L20 unlabeled)
-leapback_shoot,Escape Shot,265,已套用
 chain_thunder,Arc,203,已套用
 thorn_shaft,Vine Arrow,218,已套用；vines 271.3 chaos DoT/s at L20
 helix_arrow_rain,Spiral Volley,206,已套用

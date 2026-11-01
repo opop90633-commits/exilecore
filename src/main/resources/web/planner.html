@@ -1994,6 +1994,7 @@
     }
     hover = null;
     setHover(node);
+    updatePanel(); // 2026-11-01 修正：配／退之後更新上面的「已用 x / 142 點」、總表與網址（2026-10-31 改成只重畫碰到的節點後漏了這步）
     showTip(node, e.clientX, e.clientY);
   }
 

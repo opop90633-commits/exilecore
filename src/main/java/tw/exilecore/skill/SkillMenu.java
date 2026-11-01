@@ -631,7 +631,7 @@ public final class SkillMenu extends Menu {
                 return why;
             }
         } else {
-            final String refusal = support.refusal(definition, entry == null ? java.util.List.of() : entry.supports()); // 2026-10-30：別的輔助解開的組合
+            final String refusal = support.socketRefusal(definition, entry == null ? java.util.List.of() : entry.supports()); // 2026-10-30：別的輔助解開的組合；2026-11-01：輔助送的技能
             if (refusal != null) {
                 return support.name() + "不能輔助這個技能（" + refusal + "）";
             }
@@ -851,6 +851,13 @@ public final class SkillMenu extends Menu {
             } else if (support.requires().contains(tw.exilecore.stats.Tags.TOTEM)) {
                 lore.add("<gray>套在圖騰本身，也套到放進去的技能上");
             }
+        } else if (definition != null && support.onlyGranted(definition, entry.supports())) {
+            // 2026-11-01 照 PoE2：本體吃不到，只作用在別的輔助送的技能上（凋魂詛咒＋咒爆＋附蝕 → 咒殞爆）
+            final List<String> names = new ArrayList<>();
+            for (final SkillDefinition granted : support.grantedTargets(definition, entry.supports())) {
+                names.add(granted.name());
+            }
+            lore.add("<gray>只作用在" + ItemRenderer.escape(String.join("、", names)) + "（別的輔助送的技能）");
         } else if (definition != null && !support.supports(definition, entry.supports())) {
             lore.add("<red>不能輔助這個技能（" + ItemRenderer.escape(support.refusal(definition, entry.supports())) + "，不會生效）");
         }

@@ -23,6 +23,19 @@ public final class UniqueCosts {
     private UniqueCosts() {
     }
 
+    /**
+     * 2026-11-01 照 PoE2 Rathpith Globe（獻祭之心）：非引導法術額外消耗 x% 最大生命（跟其他生命消耗加在一起，付不起就放不出來）。
+     *
+     * @param skillTags 技能的情境標籤（{@link Tags#NON_CHANNELLING} 由 SkillProfiles 加）
+     */
+    public static double extraLifeCost(final StatSheet sheet, final Set<String> skillTags, final double maxLife) {
+        if (sheet == null || maxLife <= 0 || !skillTags.contains(Tags.SPELL) || !skillTags.contains(Tags.NON_CHANNELLING)) {
+            return 0;
+        }
+        final double percent = Math.max(0, sheet.flat(UniqueStats.SPELL_EXTRA_LIFE_COST, Set.of()));
+        return maxLife * percent / 100.0;
+    }
+
     /** 這次的魔力消耗有多少改扣生命。 */
     public static double lifeShare(final StatSheet sheet, final double cost) {
         final double percent = Math.max(0, Math.min(100, sheet.flat(UniqueStats.COST_MANA_TO_LIFE, Set.of())));

@@ -57,8 +57,8 @@ final class Mounts implements Listener {
         if (!definition.isAttack()) {
             return false;
         }
-        if (definition.weapons().contains(Tags.BOW) || definition.tags().contains(Tags.BOW)) {
-            return true;
+        if ((definition.weapons().contains(Tags.BOW) || definition.tags().contains(Tags.BOW)) && !definition.tags().contains(Tags.MELEE)) {
+            return true; // 2026-11-01：弓也能用的近戰技能（崩震圖騰）騎著照樣不能放
         }
         return (definition.weapons().contains(Tags.SPEAR) || definition.tags().contains(Tags.SPEAR))
                 && definition.tags().contains(Tags.PROJECTILE) && !definition.tags().contains(Tags.MELEE);

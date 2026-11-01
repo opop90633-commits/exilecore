@@ -46,8 +46,13 @@ final class Channelling {
     /** 衝鋒時撞到敵人的偵測：前方幾格、多寬。 */
     static final double CRASH_AHEAD = 1.2;
     static final double CRASH_WIDTH = 1.0;
-    /** 撞上的那隻被擊退（PoE2 盾衝 9 格；換成原版的擊退速度）。 */
-    static final double CRASH_KNOCKBACK = 1.6;
+    /**
+     * 撞上的那隻被擊退：2026-11-01 照 PoE2 Shield Charge 的 Collision（base_knockback_distance 900，0.01 公尺一單位 = 9 公尺）。
+     * 我們的擊退是設給敵人的水平速度（往上 0.3，SkillExecutor.knockback），照共用的換算（{@link KnockbackMath#velocityFor}，原版摩擦的模擬）
+     * 換算成推 9 格要的速度；這次之前寫死 1.6（模擬起來推約 11 格）。
+     */
+    static final double CRASH_KNOCKBACK_M = 9;
+    static final double CRASH_KNOCKBACK = KnockbackMath.velocityFor(CRASH_KNOCKBACK_M);
     /** 卡在牆上幾 tick 沒前進就停下。 */
     static final int STUCK_TICKS = 6;
     /** 蠻衝的踏地餘震晚幾 tick（PoE2 aftershock_delay_ms = 300）。 */
@@ -58,6 +63,18 @@ final class Channelling {
 
     private final ExileCore plugin;
     private final SkillService service;
+    /** 2026-11-01 照站長「要衝向目標的都要有鎖敵」：盾衝開始時鎖定的敵人（玩家 → 敵人）。 */
+    private final java.util.Map<java.util.UUID, java.util.UUID> rushLocks = new java.util.HashMap<>();
+    /** 盾衝鎖敵找多遠（格；PoE2 沒有目標距離，衝鋒本身不限距離，取盾衝 8 公尺加速距離再多一些）。 */
+    static final double RUSH_LOCK_RANGE = 15;
+    /** 鎖定的敵人跑到多遠以外就放掉、改照準心的方向。 */
+    static final double RUSH_LOCK_LEASH = 20;
+    /**
+     * 2026-11-01 照 PoE2 Shield Charge（shield_charge_hit_damage_stun_multiplier_when_fully_charged_+%_final 400）：完全蓄力（衝滿拿到全部距離加成）時
+     * 暈眩累積更多 400%；撞上的那一下另外更多 50%（Collision 的 active_skill_hit_damage_stun_multiplier_+%_final 50）。這次之前兩下都固定更多 50%。
+     */
+    static final double FULL_CHARGE_STUN = 4.0;
+    static final double COLLISION_STUN = 0.5;
 
     Channelling(final ExileCore plugin, final SkillService service) {
         this.plugin = plugin;
@@ -77,6 +94,11 @@ final class Channelling {
         charging.build = build;
         charging.lastAt = player.getLocation();
         charging.nextBeat = now;
+        if (spec.mode() == ChargeSpec.Mode.STREAM) {
+            // 2026-11-01 照 PoE2 Flame Breath（start_animation_duration_as_%_of_attack_time 400）：起飛動畫 4 次攻擊時間後才噴第一下；這次之前一按就噴
+            charging.nextBeat = now + ShapeshiftParity.startDelayTicks(
+                    ShapeshiftParity.flat(build.definition().modifiers(), ShapeshiftParity.START_ATTACKS, 0), charging.interval);
+        }
         final ChargeSpec.Channel channel = spec.channel();
         if (spec.drain()) {
             charging.drainCost = spec.drainCost(build, state.sheet()); // 2026-10-28 照 PoE2 Snipe：攻擊速度也影響每秒消耗；這次之前 build.manaCost()
@@ -92,6 +114,15 @@ final class Channelling {
         }
         if (spec.mode() == ChargeSpec.Mode.PULSE) {
             charging.focus = service.targets().aimPoint(Origin.of(player), build.range() > 0 ? build.range() : 22);
+        }
+        if (spec.mode() == ChargeSpec.Mode.RUSH && channel.collision() > 0) {
+            // 2026-11-01 照站長：盾衝鎖定準心上（或準心附近）的敵人，一路朝牠衝；沒有敵人照準心的方向
+            final LivingEntity lock = TargetLock.lock(service.targets(), Origin.of(player), RUSH_LOCK_RANGE);
+            if (lock != null) {
+                rushLocks.put(player.getUniqueId(), lock.getUniqueId());
+            } else {
+                rushLocks.remove(player.getUniqueId());
+            }
         }
         if (spec.mode() == ChargeSpec.Mode.STREAM || spec.mode() == ChargeSpec.Mode.RECHARGE) {
             // 2026-10-26 照 PoE2（熾息：冷卻在用的時候就開始算，引導結束不再重算）；2026-10-27 冥想也是
@@ -260,6 +291,12 @@ final class Channelling {
     /** 2026-10-26：按住期間每一次攻擊／施法間隔放一次技能本身（不另外扣消耗、不重算冷卻）。回傳 true = 引導結束。 */
     private boolean stream(final Player player, final SkillRuntime.Charging charging, final ChargeSpec.Channel channel, final long now) {
         // 2026-10-27 照站長「放技能減速全部移除」：引導中不再變慢（channel.slow 不用了）；這次之前熾息移動更少 40%
+        if (charging.build != null && SkillGear.requiresShield(charging.build.definition()) && (now - charging.start) % BUFF_REFRESH == 0) {
+            // 2026-11-01 照 PoE2 Resonating Shield（ActiveBlock）：引導擂盾的時候盾舉著，擋下所有可格擋的擊中；這次之前沒有
+            service.ownBuff(player, "channel_block", charging.build.definition().id());
+            service.buff(player, "channel_block", "舉盾", BUFF_TICKS, List.of(
+                    Modifier.flat(StatKeys.BLOCK_CHANCE, 100, "舉盾"), Modifier.flat(StatKeys.BLOCK_MAX, 50, "舉盾")));
+        }
         if (now < charging.nextBeat) {
             return false;
         }
@@ -291,7 +328,13 @@ final class Channelling {
     private boolean rush(final Player player, final SkillRuntime.Charging charging, final ChargeSpec.Channel channel, final SkillBuild build,
                          final long now) {
         final Location at = player.getLocation();
-        final Vector facing = SkillTargets.facing(player);
+        Vector facing = SkillTargets.facing(player);
+        if (channel.collision() > 0) {
+            final LivingEntity lock = rushLock(player, at);
+            final double[] dir = TargetLock.steer(facing.getX(), facing.getZ(), lock == null ? 0 : lock.getLocation().getX() - at.getX(),
+                    lock == null ? 0 : lock.getLocation().getZ() - at.getZ(), lock != null);
+            facing = new Vector(dir[0], 0, dir[1]);
+        }
         if (charging.lastAt != null && charging.lastAt.getWorld() == at.getWorld()) {
             final double moved = Math.hypot(at.getX() - charging.lastAt.getX(), at.getZ() - charging.lastAt.getZ());
             charging.travelled += moved;
@@ -311,6 +354,7 @@ final class Channelling {
         if (channel.collision() > 0) {
             // 盾衝：盾舉著（擋下所有可格擋的擊中），撞上敵人就停下
             if ((now - charging.start) % BUFF_REFRESH == 0) {
+                service.ownBuff(player, "channel_block", build.definition().id()); // 2026-11-01：快捷欄畫在這一格
                 service.buff(player, "channel_block", "舉盾衝鋒", BUFF_TICKS, List.of(
                         Modifier.flat(StatKeys.BLOCK_CHANCE, 100, "舉盾衝鋒"), Modifier.flat(StatKeys.BLOCK_MAX, 50, "舉盾衝鋒")));
             }
@@ -343,11 +387,18 @@ final class Channelling {
     /** 盾衝撞上敵人：一圈撞擊（衝越遠更多傷害），撞上的另外挨一下（Collision）並被擊退。 */
     private void crash(final Player player, final SkillBuild build, final ChargeSpec.Channel channel, final List<LivingEntity> collided,
                        final Location at, final double radius) {
-        final double more = channel.distanceFactor(charging(player) == null ? 0 : charging(player).travelled);
-        final tw.exilecore.stats.SkillProfile area = more > 1 ? build.profile().scaled(more, "衝鋒距離") : build.profile();
+        rushLocks.remove(player.getUniqueId());
+        final double travelled = charging(player) == null ? 0 : charging(player).travelled;
+        final double more = channel.distanceFactor(travelled);
+        tw.exilecore.stats.SkillProfile area = more > 1 ? build.profile().scaled(more, "衝鋒距離") : build.profile();
+        final double fullStun = fullyCharged(channel, travelled) ? FULL_CHARGE_STUN : 0;
+        if (fullStun > 0) {
+            area = area.withLocal(List.of(Modifier.more(StatKeys.STUN_BUILDUP, fullStun, "完全蓄力")));
+        }
         service.executor().burst(player, area, at, radius, build.knockback(), build.definition().visual());
         // 2026-10-28 照 PoE2 Shield Charge 的 Collision：自己的逐級表（2.33 → 2.70 → 3.71 倍）、盾護甲每 15 點 6～8；這次之前固定 2.7 倍
-        final tw.exilecore.stats.SkillProfile collision = StageAttacks.collision(area, channel.collision());
+        final tw.exilecore.stats.SkillProfile collision = StageAttacks.collision(area, channel.collision())
+                .withLocal(List.of(Modifier.more(StatKeys.STUN_BUILDUP, COLLISION_STUN, "撞擊")));
         for (final LivingEntity target : collided) {
             if (target.isValid()) {
                 service.executor().hitOne(player, collision, target, at, CRASH_KNOCKBACK);
@@ -360,6 +411,25 @@ final class Channelling {
                 ItemRenderer.escape(build.definition().name()), charging(player) == null ? 0 : charging(player).travelled, (more - 1) * 100),
                 plugin.getServer().getCurrentTick() + 30);
         plugin.players().display(player, state);
+    }
+
+    /** 盾衝衝滿了（拿到全部的距離加成）＝完全蓄力。純函式（測試用）。 */
+    static boolean fullyCharged(final ChargeSpec.Channel channel, final double travelled) {
+        return channel.fullDistance() > 0 && travelled >= channel.fullDistance() - 1e-6;
+    }
+
+    /** 盾衝鎖定的敵人（死了、換世界、跑太遠就放掉）。 */
+    private LivingEntity rushLock(final Player player, final Location at) {
+        final java.util.UUID id = rushLocks.get(player.getUniqueId());
+        if (id == null) {
+            return null;
+        }
+        if (plugin.getServer().getEntity(id) instanceof LivingEntity living && living.isValid() && !living.isDead()
+                && living.getWorld() == at.getWorld() && living.getLocation().distanceSquared(at) <= RUSH_LOCK_LEASH * RUSH_LOCK_LEASH) {
+            return living;
+        }
+        rushLocks.remove(player.getUniqueId());
+        return null;
     }
 
     private SkillRuntime.Charging charging(final Player player) {
@@ -383,6 +453,9 @@ final class Channelling {
             return parryHold(player, charging, now);
         }
         if ((now - charging.start) % BUFF_REFRESH == 0) {
+            if (charging.build != null) {
+                service.ownBuff(player, "channel_block", charging.build.definition().id()); // 2026-11-01：快捷欄畫在這一格
+            }
             service.buff(player, "channel_block", "架盾", BUFF_TICKS, List.of(
                     Modifier.flat(StatKeys.BLOCK_CHANCE, 100, "架盾"), Modifier.flat(StatKeys.BLOCK_MAX, 50, "架盾")));
         }
@@ -401,6 +474,7 @@ final class Channelling {
             return true; // 擋下了：招架只擋一下
         }
         if ((now - charging.start) % BUFF_REFRESH == 0) {
+            service.ownBuff(player, "guard", charging.build.definition().id()); // 2026-11-01：快捷欄畫在這一格
             service.buff(player, "guard", charging.build.definition().name(), BUFF_TICKS, List.of(
                     Modifier.flat(StatKeys.FLAG_PARRY, 1, "招架"), Modifier.more(StatKeys.STUN_THRESHOLD, -0.4, "招架")));
         }

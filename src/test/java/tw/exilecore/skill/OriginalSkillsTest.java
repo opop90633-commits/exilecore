@@ -45,8 +45,7 @@ class OriginalSkillsTest {
         assertEquals("living_bomb", config.signature(OriginalSkills.SEED));
         assertEquals("calamity", config.signature(OriginalSkills.CALAMITY));
         for (final String id : List.of(OriginalSkills.ARCTIC_BURST, OriginalSkills.STAFF_WAVE, OriginalSkills.GALVANIC_BOLT, OriginalSkills.CALTROP,
-                OriginalSkills.METEOR, OriginalSkills.WING_WAVE, OriginalSkills.WOLF, OriginalSkills.FRAGMENT_SHRED, OriginalSkills.FRAGMENT_ARROW,
-                OriginalSkills.FRAGMENT_ESCAPE)) {
+                OriginalSkills.METEOR, OriginalSkills.WING_WAVE, OriginalSkills.WOLF, OriginalSkills.FRAGMENT_SHRED, OriginalSkills.FRAGMENT_ARROW)) { // 2026-11-01 照站長：躍退射刪掉（連同它的冰裂）
             assertNotNull(config.skill(id), id);
             assertTrue(config.skill(id).hidden(), id);
         }
@@ -72,7 +71,6 @@ class OriginalSkillsTest {
         assertEquals(6.05, level(OriginalSkills.SHARD, OriginalSkills.SHARD_INTERVAL, 20), 1e-9);
         assertEquals(337, level(OriginalSkills.DEVOUR, OriginalSkills.DEVOUR_REGEN, 20), 1e-9);
         assertEquals(6, level(OriginalSkills.POUNCE, OriginalSkills.WOLF_LIMIT, 20), 1e-9);
-        assertEquals(11, level(OriginalSkills.ESCAPE, OriginalSkills.ESCAPE_FRAGMENTS, 20), 1e-9);
     }
 
     @Test

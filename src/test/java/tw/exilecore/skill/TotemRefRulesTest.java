@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 2026-10-26 照 PoE2 0.5 的圖騰規則：放置時間、英靈圖騰固定上限、先祖魂約、弩台抗性。 */
@@ -118,7 +119,10 @@ class TotemRefRulesTest {
         final StatSheet fast = new StatSheet().add(Modifier.increased(StatKeys.ATTACK_SPEED, 0.6, "測試"));
         fast.setBase(StatKeys.WEAPON_APS, 1.6);
         assertEquals(16, SkillDeployables.totemTicks(build("collapse_quake_totem", fast), fast, 0), "攻速 +60%");
-        assertTrue(config.skill("collapse_quake_totem").usableWith(Set.of(Tags.MELEE)), "任何近戰武器");
+        // 2026-11-01 照 PoE2（PoB2 weaponTypes）：照原作的武器清單（含弓、弩），徒手不行；這次之前 usableWith(Set.of(MELEE))
+        assertTrue(config.skill("collapse_quake_totem").usableWith(Set.of(Tags.MACE, Tags.MELEE)), "錘");
+        assertTrue(config.skill("collapse_quake_totem").usableWith(Set.of(Tags.BOW, Tags.RANGED)), "弓");
+        assertFalse(config.skill("collapse_quake_totem").usableWith(Set.of()), "徒手不行");
         assertEquals(3, config.skill("collapse_quake_totem").tier());
     }
 

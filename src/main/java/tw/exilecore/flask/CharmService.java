@@ -439,6 +439,11 @@ public final class CharmService implements Listener {
         if (base == null) {
             return "這不是護符";
         }
+        // 2026-11-01 照站長：未鑑定的護符不能裝（先到鑑定師那裡鑑定）；這次之前未鑑定的也裝得上
+        final ItemData item = plugin.items().read(stack).orElse(null);
+        if (item != null && !item.identified()) {
+            return "未鑑定的護符不能裝：先鑑定";
+        }
         final int open = activeCount(player);
         if (open <= 0) {
             return "沒有開著的護符欄（護符欄由腰帶給：先裝一條腰帶）"; // 2026-10-26 照 PoE2

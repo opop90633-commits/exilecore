@@ -1387,7 +1387,7 @@ public final class GemService {
             if (why != null) {
                 return Change.fail(why);
             }
-        } else if (!support.supports(definition, entry.supports())) { // 2026-10-30：別的輔助解開的組合（終式 → 鐘星）
+        } else if (support.socketRefusal(definition, entry.supports()) != null) { // 2026-10-30：別的輔助解開的組合（終式 → 鐘星）；2026-11-01 照 PoE2：能輔助別的輔助送的技能也插得進去
             return Change.fail(support.name() + "不能輔助" + definition.name() + "（" + support.refusal(definition, entry.supports()) + "）");
         }
         if (host && index == SkillLoadout.Entry.INNER_SOCKET) {

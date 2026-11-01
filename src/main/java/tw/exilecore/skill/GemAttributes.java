@@ -109,7 +109,7 @@ public final class GemAttributes {
                     + "crimson_wrath awe_suppress gathered_scales unquenched_fury iron_rampart_guard earth_wall_strike magma_barrier "
                     // 自創／專屬：近戰猛擊、戰吼（架盾是盾牌賦予的，原作沒有需求，照效果算力量）
                     + "molten_soul_shriek altar_niche_blessing shackle_chain_sweep bone_crack_leyline "),
-            entry("D", "venom_etch_arrow myriad_arrow_fall thunderclap_arrow leapback_shoot rime_arrow sky_rend_arrow thunder_lance_throw spinning_spear_strike "
+            entry("D", "venom_etch_arrow myriad_arrow_fall thunderclap_arrow rime_arrow sky_rend_arrow thunder_lance_throw spinning_spear_strike "
                     + "hurricane_spear prey_kill_mark wild_beast_taming thunder_envoy thunder_call_shaft chill_fan_shafts thunderfall_spear "
                     + "spear_formation triple_stab electrocute_shaft thorn_shaft toxic_blast_shaft helix_arrow_rain flame_blast_shaft linked_lightning_arrow "
                     + "cyclone_spear snake_squall_thrust facet_light_rift thunder_bound blood_hunt blazing_sun_spear explosive_spear frost_tooth_stab "

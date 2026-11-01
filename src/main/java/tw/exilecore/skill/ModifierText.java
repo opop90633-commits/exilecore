@@ -49,6 +49,15 @@ public final class ModifierText {
             case "chain" -> "連鎖";
             case "nova" -> "新星";
             case "wind" -> "疾風"; // 2026-10-28 照 PoE2 的 Wind 標籤（裂空箭）
+            case "plant" -> "植物"; // 2026-11-01 照 PoE2 的 Plant 寶石標籤（這次之前沒有名字，技能上不顯示）
+            case "storm" -> "風暴"; // 2026-11-01 照 PoE2 的 Storm 寶石標籤（這次之前沒有名字，技能上不顯示）
+            // 2026-11-01 照站長「照原作補上顯示」：PoE2 寶石標籤 Hazard、Channelling、Companion、Detonator、Orb、Merging（這次之前沒有名字，技能上不顯示）
+            case "hazard" -> "危險區域";
+            case "channelling" -> "引導";
+            case "companion" -> "夥伴";
+            case "detonator" -> "引爆";
+            case "orb" -> "法球";
+            case "merging" -> "融合";
             case Tags.MOVEMENT -> "移動";
             case Tags.TRAVEL -> "突進";
             case Tags.DURATION -> "持續";
@@ -276,7 +285,8 @@ public final class ModifierText {
         return switch (stat) {
             case StatKeys.DAMAGE -> scaled(modifier, tagPrefix(modifier) + "傷害", percent);
             case StatKeys.ATTACK_SPEED -> scaled(modifier, tagPrefix(modifier) + "攻擊速度", percent);
-            case SkillService.DUAL_WIELD_ATTACK_SPEED -> "雙持時攻擊速度更多 " + number(value) + "%"; // 2026-11-01 照 PoE2 Armour Breaker
+            case SkillService.DUAL_WIELD_ATTACK_SPEED -> "雙持時攻擊速度" + (value < 0 ? "更少 " + number(-value) : "更多 " + number(value)) + "%"; // 2026-11-01 照 PoE2 Armour Breaker、Volcanic Fissure
+            case SkillService.DUAL_WIELD_DAMAGE -> "雙持時傷害" + (value < 0 ? "更少 " + number(-value) : "更多 " + number(value)) + "%"; // 2026-11-01 照 PoE2（錘的猛擊）
             case StatKeys.CAST_SPEED -> scaled(modifier, tagPrefix(modifier) + "施法速度", percent);
             case StatKeys.SKILL_AREA -> scaled(modifier, "範圍效果", percent);
             case StatKeys.SKILL_PROJECTILE_SPEED -> scaled(modifier, "投射物速度", percent);
@@ -399,9 +409,16 @@ public final class ModifierText {
             case StatKeys.SKILL_RECOIL -> "放完往後跳開";
             case SkillProfiles.ADDED_TIME -> "總時間 +" + number(value) + " 秒（不吃攻擊、施法速度）"; // 2026-10-26 照 PoE2
             case SkillProfiles.BASE_CAST_TIME -> "施法時間 +" + number(value) + " 秒"; // 2026-10-28 照 PoE2（游雷冰灌注）
+            case SkillProfiles.FIXED_ATTACK_TIME -> "攻擊時間 " + number(value) + " 秒（不看武器攻速）"; // 2026-11-01 照 PoE2
+            case SkillProfiles.LOCKED_ATTACK_TIME -> "攻擊時間不受攻擊速度影響"; // 2026-11-01 照 PoE2（千鈞砸）
+            case SkillGear.NO_DUAL_WIELD -> "雙持時不能使用"; // 2026-11-01 照 PoE2
+            case SkillGear.TWO_HAND_ONLY -> "只能用雙手武器"; // 2026-11-01 照 PoE2（千鈞砸）
+            case SkillService.UNSTUNNABLE_WHILE_USING -> "使用時不會被暈眩"; // 2026-11-01 照 PoE2（驚雷之鐘）
+            case SkillGear.DUAL_WIELD_PROJECTILES -> "雙持時投射物數量加倍"; // 2026-11-01 照 PoE2（熔漿噴濺）
+            case ProjectileEngine.SHRAPNEL -> "爆炸後往後方噴出碎片（數量不能改）"; // 2026-11-01 照 PoE2（熔漿噴濺）
             case StatKeys.FLAG_POWER_RAISE -> "附近沒有屍體時改吃一顆銳星：叫出一隻強化殭屍（生命更多 40%、傷害更多 100%、移動更快 25%）再加兩隻一般的";
             case StatKeys.FLAG_TOTEM_LINKED -> "圖騰每隔一段時間在附近的敵人身邊叫出一個英靈，用技能面板上下一格的錘子攻擊技能打一次";
-            case StatKeys.FLAG_SUMMON_ON_FIRE -> "你自己放火焰法術時叫出焚魂（範圍法術兩隻）";
+            case StatKeys.FLAG_SUMMON_ON_FIRE -> "你自己放火焰法術時叫出焚魂（範圍法術每 1.5 格半徑一隻、投射物打中時一隻，一次最多兩隻）"; // 2026-11-01 照 PoE2；這次之前「（範圍法術兩隻）」
             case StatKeys.FLAG_NOVA_FROM_FROSTBOLT -> "你的霜鑽還在飛的時候，從霜鑽的位置爆開";
             case StatKeys.FLAG_MARK_CRIT -> "你對被標記的敵人打出暴擊時印記用掉，給你一顆怒星";
             case StatKeys.FLAG_NO_AILMENTS -> "不能造成元素異常（點燃、冰緩、凍結、感電）";
@@ -560,10 +577,17 @@ public final class ModifierText {
             case Burgeon.CAP -> "引導越久的傷害加成最多更多 " + number(value) + "%";
             case StoredReleases.FLAG_IRON_WARD -> "被擊中時護甲與減傷擋下的物理傷害存起來（比例與上限隨技能等級），按技能鍵放出鐵刺"; // 2026-10-27 照 PoE2 Iron Ward
             case StoredReleases.FLAG_PLAGUE_BEARER -> "你的擊中造成的中毒傷害存 4% 進毒囊（上限隨技能等級），按技能鍵放出毒爆"; // 2026-10-27 照 PoE2 Plague Bearer
-            case "blessing.life" -> "祝福：回復 " + number(value) + " 生命，並解除身上的元素異常";
+            case "blessing.life" -> "祝福：回復 " + number(value) + " 生命，並解除身上的詛咒與元素異常"; // 2026-11-01 照 PoE2：也解詛咒
             case "blessing.interval" -> "每 " + number(value) + " 秒一次祝福（冷卻回復速度也會加快）";
             case "shroud.interval" -> "每 " + number(value) + " 秒獲得一層幽魂護罩（最多 3 層，冷卻回復速度也會加快）；被擊中時失去一層";
             case "shroud.es_regen" -> "最近失去過幽魂護罩：每秒再生閃避值 " + number(value) + "% 的能量護盾";
+            // 2026-11-01 照 PoE2 Scavenged Plating、Wind Dancer、Alchemist's Boon（PersistentBuffs、FlaskService）
+            case "plating.armour" -> "讓敵人完全破甲時獲得甲片（普通 1、魔法 2、稀有 5、傳奇 10 層，最多 10 層，8 秒）：每層更多 " + number(value) + "% 護甲";
+            case "plating.thorns_min" -> "每層甲片：荊棘至少 " + number(value) + " 物理傷害";
+            case "plating.thorns_max" -> "每層甲片：荊棘最多 " + number(value) + " 物理傷害";
+            case "wind_dancer.interval" -> "每 " + number(value) + " 秒獲得一階風之舞步（最多 3 階）；帶著階數被敵人擊中時用掉全部階數放出疾風";
+            case "wind_dancer.evasion" -> "每階風之舞步：閃避值更多 " + number(value) + "%";
+            case "flask.ally_share" -> "你的藥劑回復的生命與魔力有 " + number(value) + "% 也回復給存在範圍內的友軍";
             // 2026-10-28 照 PoE2：法杖、長杖、權杖賦予的技能（寒心、屍焰爆、血鐮、銳星虹吸）
             case tw.exilecore.stats.GrantedSkillKeys.LIFE_ON_CULL_FLAT -> "撲殺時獲得 " + number(value) + " 生命";
             // 2026-10-28 照 PoE2（纏蝕箭、血鐮）
@@ -595,9 +619,17 @@ public final class ModifierText {
                 if (shockchain != null) {
                     yield shockchain;
                 }
+                final String fire = FireSpells.describe(stat, value); // 2026-11-01 照 PoE2：熾星彈、焰幕、流焰天幕、炎核爆、焚流
+                if (fire != null) {
+                    yield fire;
+                }
                 final String leftover = StageLeftovers.describe(stat, value); // 2026-10-28 照 PoE2：冰晶生命、鐘的門檻、冰片門檻…
                 if (leftover != null) {
                     yield leftover;
+                }
+                final String shapeshift = ShapeshiftParity.describe(stat, value); // 2026-11-01 照 PoE2：擊退隨距離、跳躍鎖敵、點燃疊加…
+                if (shapeshift != null) {
+                    yield shapeshift;
                 }
                 if (tw.exilecore.ascendancy.StatLines.knows(stat)) {
                     yield tw.exilecore.ascendancy.StatLines.describe(modifier);
@@ -619,7 +651,7 @@ public final class ModifierText {
                     + number(value) + "% 元素傷害";
             case tw.exilecore.stats.SupportKeys.VOLT -> "每移動 1 格累積 2 點電荷（最多 " + number(value) + " 點），放的時候全部用掉，每點獲得 1% 傷害為額外閃電傷害";
             case tw.exilecore.stats.SupportKeys.MOMENTUM -> "單次使用被輔助的技能期間至少移動 " + number(SupportMechanics.MOMENTUM_TRAVEL) + " 格後，這次使用後續造成更多 " + number(value) + "% 傷害（傳送不算，技能本身的瞬移算）";
-            case tw.exilecore.stats.SupportKeys.HIT_AND_RUN -> "在你移動 " + number(value * tw.exilecore.stats.SupportKeys.HIT_AND_RUN_BLOCKS_PER_METRE) + " 格後，才可以使用被輔助的技能；用了之後要再移動才能用";
+            case tw.exilecore.stats.SupportKeys.HIT_AND_RUN -> "用了之後還沒再移動 " + number(value * tw.exilecore.stats.SupportKeys.HIT_AND_RUN_BLOCKS_PER_METRE) + " 格時，被輔助的技能傷害更少 50%"; // 2026-11-01 照站長：不擋施放
             case tw.exilecore.stats.SupportKeys.CRIT_VS_IMMOBILISED -> scaled(modifier, "對被定住（凍結、重暈、定身、電擊）的敵人的暴擊率", percent);
             case tw.exilecore.stats.SupportKeys.FLAG_CULLING_RARE -> "對稀有、傳奇怪物與 Boss 有撲殺（生命掉到稀有 10%、傳奇與 Boss 5% 以下直接倒下）";
             case tw.exilecore.stats.SupportKeys.CULL_THRESHOLD_ON_CULL -> "撲殺打死敵人後 20 秒內，撲殺門檻增加 " + number(value) + "%";
@@ -671,7 +703,7 @@ public final class ModifierText {
             case tw.exilecore.stats.SupportKeys.WARCRY_RAGE_BYPASS -> "冷卻中可以花 " + number(value) + " 點怒氣跳過冷卻（取代磐星）";
             case tw.exilecore.stats.SupportKeys.WARCRY_TIRELESS -> "被強化的攻擊有 " + number(value) + "% 機率不算進強化次數";
             case tw.exilecore.stats.SupportKeys.WARCRY_ECHOES -> "戰吼回聲 " + number(value) + " 次（每次隔 1.3 秒，範圍每回聲一次更多 100%）；"
-                    + "範圍更少 50%；用過之後要再移動 5 格才能用";
+                    + "範圍更少 50%"; // 2026-11-01 照站長：拿掉要先移動 5 格
             case tw.exilecore.stats.SupportKeys.WARCRY_RAGE_PER_5_POWER -> "每 5 點怪物強度獲得 " + number(value) + " 點怒氣";
             case tw.exilecore.stats.SupportKeys.FLAG_BATTERSHOUT -> "用掉範圍內敵人的完全破甲，在牠身上炸開（破掉的護甲 40% 物理傷害，2 格，傳奇更多 50%）；這個技能不能破甲";
             case tw.exilecore.stats.SupportKeys.FLAG_PAQUATE -> "範圍內每隻敵人觸發扭曲契約（每次 5 層腐化之血，最多疊 10 層）；最近 4 秒每用一次，多付出 10% 最大生命（最多 30%）"; // 2026-11-01：每次 5 層

@@ -170,6 +170,24 @@ public final class ChargeEffects implements Listener {
         return erupted;
     }
 
+    /**
+     * 2026-11-01 照 PoE2（地動 Earthquake、震野踏的狂怒猛擊 Furious Slam）：技能自己留下的鋸齒地面——跟碎地同一套（減速、天賦的碎地效果與
+     * 「碎地上的敵人受到的傷害增加」、崩震圖騰引爆、「站在碎地上的敵人」都算）；effect：技能自己的碎地效果增加（小數，地動 1.0 = 100%）。
+     */
+    void skillJagged(final Player owner, final Location at, final double radius, final long ticks, final double effect, final SkillBuild build) {
+        if (owner == null || at == null || at.getWorld() == null || ticks <= 0) {
+            return;
+        }
+        final StatSheet effective = build.profile().effective(plugin.players().sheet(owner));
+        final Set<String> tags = build.profile().tags();
+        final JaggedPatch patch = new JaggedPatch(owner.getUniqueId(), at.clone(), radius, now() + ticks, new boolean[] {true});
+        jaggedPatches.removeIf(old -> !old.alive()[0] || old.end() <= now());
+        jaggedPatches.add(patch);
+        ground(owner, at.clone(), () -> patch.alive()[0], elapsed -> radius,
+                jaggedSlow(effect + effective.increased(tw.exilecore.stats.TreeMechanicKeys.JAGGED_EFFECT, tags)), 0, ticks, Particle.CRIT,
+                effective.flat(tw.exilecore.stats.TreeNewMechanicKeys.JAGGED_TAKEN, tags) / 100.0);
+    }
+
     /** 2026-10-26：碎地的減速（基礎 20%，乘 (1 + 碎地效果)，最多 90%）。 */
     static double jaggedSlow(final double increased) {
         return Math.min(0.9, JAGGED_SLOW * Math.max(0, 1 + increased));

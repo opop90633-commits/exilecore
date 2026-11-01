@@ -215,6 +215,68 @@ public final class AilmentState {
         }
     }
 
+    /**
+     * 2026-11-01 照 PoE2 Incinerate（active_skill_compounding_ignites：「Ignites from a single use of this Skill Compound」）：
+     * 技能的 profile 上帶這個 FLAT（值 = 這一次使用的代號，例如引導開始的 tick ＋ 1）時，同一次使用造成的點燃疊加成一個——
+     * 每一次點燃各自照自己的時間結束，這個點燃的每秒傷害是還沒結束的全部加總。這次之前每次點燃各算各的、只有最強的那個在燒。
+     */
+    public static final String COMPOUND_USE = "ignite.compound_use";
+    /** 一次使用最多記幾次點燃（保險）。 */
+    static final int MAX_COMPOUND_PARTS = 64;
+
+    /** 同一次使用疊加的點燃：來源、是不是混沌點燃、每一次的 {每秒傷害, 結束 tick}。 */
+    private static final class Compound {
+        final UUID source;
+        final boolean chaos;
+        final List<double[]> parts = new ArrayList<>();
+
+        Compound(final UUID source, final boolean chaos) {
+            this.source = source;
+            this.chaos = chaos;
+        }
+    }
+
+    private final java.util.Map<String, Compound> compounds = new java.util.HashMap<>();
+
+    /** 疊加的點燃（同一次使用的 use 加在一起；見 {@link #COMPOUND_USE}）。 */
+    public void addCompoundingIgnite(final double dps, final long endTick, final UUID source, final boolean chaos, final long use) {
+        addCompoundingIgnite(dps, endTick, source, chaos, use, Long.MIN_VALUE);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Compounding Ignite（Incinerate、Flame Breath 共用）：同一次使用（use）造成的點燃加在一起，每一次照自己的時間結束；
+     * 先丟掉到 now 已經結束的那幾次。回傳這次使用現在疊了幾次（換了一次使用、或之前的都結束了，就從 1 重新算）。
+     * source 是 null 或 use ≤ 0 的照一般點燃（回傳 1）。
+     */
+    public int addCompoundingIgnite(final double dps, final long endTick, final UUID source, final boolean chaos, final double use, final long now) {
+        if (dps <= 0) {
+            return 0;
+        }
+        if (source == null || use <= 0) {
+            addIgnite(dps, endTick, source, chaos);
+            return 1;
+        }
+        final Compound compound = compounds.computeIfAbsent(source + ":" + (long) use, key -> new Compound(source, chaos)); // 不同人同一 tick 開始的不混在一起
+        compound.parts.removeIf(part -> part[1] <= now);
+        compound.parts.add(new double[] {dps, endTick});
+        if (compound.parts.size() > MAX_COMPOUND_PARTS) {
+            compound.parts.remove(compound.parts.stream().min(Comparator.comparingDouble(part -> part[1])).orElseThrow());
+        }
+        return compound.parts.size();
+    }
+
+    /** 疊加的點燃現在的樣子（還沒結束的每秒傷害加總、最晚的結束 tick；全部結束了回傳 null）。純函式（會丟掉結束的）。 */
+    private static Ignite compounded(final Compound compound, final long now) {
+        compound.parts.removeIf(part -> part[1] <= now);
+        double dps = 0;
+        long end = 0;
+        for (final double[] part : compound.parts) {
+            dps += part[0];
+            end = Math.max(end, (long) part[1]);
+        }
+        return dps > 0 ? new Ignite(dps, end, compound.source, false, 0, compound.chaos) : null;
+    }
+
     /** 現在在燒的點燃（最強的那個；沒有回傳 null）。順便丟掉結束的。 */
     public Ignite ignite(final long now) {
         ignites.removeIf(ignite -> ignite.endTick() <= now);
@@ -222,6 +284,16 @@ public final class AilmentState {
         for (final Ignite ignite : ignites) {
             if (strongest == null || ignite.dps() > strongest.dps()) {
                 strongest = ignite;
+            }
+        }
+        if (!compounds.isEmpty()) {
+            for (final java.util.Iterator<Compound> it = compounds.values().iterator(); it.hasNext(); ) {
+                final Ignite merged = compounded(it.next(), now);
+                if (merged == null) {
+                    it.remove();
+                } else if (strongest == null || merged.dps() > strongest.dps()) {
+                    strongest = merged;
+                }
             }
         }
         return strongest;
@@ -766,6 +838,7 @@ public final class AilmentState {
             return false;
         }
         boolean changed = ignites.removeIf(dot -> source.equals(dot.source()));
+        changed |= compounds.values().removeIf(compound -> source.equals(compound.source));
         changed |= bleeds.removeIf(dot -> source.equals(dot.source()));
         changed |= poisons.removeIf(dot -> source.equals(dot.source()));
         poisonVersion++;
@@ -784,6 +857,13 @@ public final class AilmentState {
         poisonVersion++;
         for (final List<Ignite> list : List.of(ignites, bleeds, poisons)) {
             list.replaceAll(dot -> dot.endTick() > now ? new Ignite(dot.dps(), dot.endTick() + extra, dot.source(), dot.aggravated(), dot.limit(), dot.chaos()) : dot);
+        }
+        for (final Compound compound : compounds.values()) {
+            for (final double[] part : compound.parts) {
+                if (part[1] > now) {
+                    part[1] += extra;
+                }
+            }
         }
         debuffs.replaceAll((key, debuff) -> debuff.endTick() > now
                 ? new Debuff(debuff.dps(), debuff.endTick() + extra, debuff.source(), debuff.spread(), debuff.spreads(), debuff.base(), debuff.length(),
@@ -841,6 +921,7 @@ public final class AilmentState {
         switch (type) {
             case IGNITE -> {
                 ignites.clear();
+                compounds.clear();
                 flammability.clear();
             }
             case BLEED -> {
@@ -872,6 +953,7 @@ public final class AilmentState {
     /** 清掉全部（死亡、登出、換角色）。 */
     public void clear() {
         ignites.clear();
+        compounds.clear();
         bleeds.clear();
         poisons.clear();
         poisonVersion++;

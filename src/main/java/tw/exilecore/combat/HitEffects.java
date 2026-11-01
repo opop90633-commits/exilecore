@@ -46,6 +46,8 @@ public final class HitEffects implements Listener {
 
     public static final double EXPOSURE = 20;
     static final long EXPOSURE_TICKS = 80;
+    /** 2026-11-01（碎裂藥劑）：FLAT 開關：曝露給火焰、冰冷、閃電三種（不管這一下打出什麼元素）。 */
+    public static final String ALL_EXPOSURE = "asc.all_exposure";
     /** 2026-10-26 照 PoE2：眩暈 8 秒（這次之前 4 秒）。 */
     public static final long DAZE_TICKS = 160; // 2026-11-01：public（SupportExtras 的開門招、震法也照這個基礎時間走 applyDaze）
     /** 2026-10-26 照 PoE2：眩暈的敵人受到的暈眩累積更多 50%。 */
@@ -153,8 +155,10 @@ public final class HitEffects implements Listener {
                     * Math.max(0, 1 + effective.increased(StatKeys.EXPOSURE_EFFECT, tags))
                     * Math.max(0, defenderSheet.apply(tw.exilecore.ailment.AilmentKeys.EXPOSURE_EFFECT_ON_SELF, 1.0, Set.of()));
             boolean any = false;
+            // 2026-11-01 照 PoE2 Shattering Concoction（inflict_all_exposure_on_hit）：寫了 asc.all_exposure 的技能三種元素都曝露，不只打出的元素
+            final boolean all = effective.flat(ALL_EXPOSURE, tags) > 0;
             for (final DamageType type : new DamageType[] {DamageType.FIRE, DamageType.COLD, DamageType.LIGHTNING}) {
-                if (result.dealt().get(type) > 0) {
+                if (all || result.dealt().get(type) > 0) {
                     any |= !debuffs.has(target, "exposure." + type.tag(), now); // 2026-10-28：已經曝露的不再冒字（這次之前每一下都冒）
                     debuffs.apply(target, new Debuffs.Debuff("exposure." + type.tag(), source, now + EXPOSURE_TICKS, 0, false, null,
                             List.of(Modifier.flat(type.mitigationStat(), -amount * tw.exilecore.passive.ConquestEffects.exposureScale(effective, type),

@@ -78,6 +78,20 @@ public final class Debuffs {
                 debuff.selfOnly(), debuff.tag(), debuff.mods(), debuff.slow()) : debuff);
     }
 
+    /**
+     * 2026-11-01 照 PoE2 Temporal Chains（其他效果流逝慢 25%）：同 {@link #extend}，但代號以 exceptPrefix 開頭的（遲滯詛咒自己）不延長。
+     */
+    public void extendExcept(final UUID target, final long extra, final long now, final String exceptPrefix) {
+        final List<Debuff> list = entries.get(target);
+        if (list == null || extra <= 0) {
+            return;
+        }
+        list.replaceAll(debuff -> debuff.active(now) && debuff.untilTick() < Long.MAX_VALUE / 8
+                && (exceptPrefix == null || !debuff.id().startsWith(exceptPrefix))
+                ? new Debuff(debuff.id(), debuff.source(), debuff.untilTick() + extra, debuff.taken(),
+                debuff.selfOnly(), debuff.tag(), debuff.mods(), debuff.slow()) : debuff);
+    }
+
     public void apply(final UUID target, final Debuff debuff) {
         final List<Debuff> list = entries.computeIfAbsent(target, uuid -> new ArrayList<>());
         list.removeIf(existing -> existing.id().equals(debuff.id())

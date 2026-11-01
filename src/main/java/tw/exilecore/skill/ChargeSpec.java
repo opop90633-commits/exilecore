@@ -334,8 +334,8 @@ public record ChargeSpec(double perfectAt, double perfectMore, int stages, doubl
         if (perfectAt < 0 || perfectAt > 400 || stages < 0 || stages > 20 || stageTime <= 0 || stageTime > 3 || perfectMore < 0) {
             throw new IllegalArgumentException(node.path() + "：perfect_at 0–400、stages 0–20、stage_time 0–3 秒");
         }
-        if (perfectAt <= 0 && stages <= 0) {
-            throw new IllegalArgumentException(node.path() + "：要寫 perfect_at（完美時機）或 stages（疊層）");
+        if (perfectAt <= 0 && stages <= 0 && !node.bool("full_only", false)) { // 2026-11-01 照 PoE2 Plasma Blast：充滿才射的（FullCharge）不用
+            throw new IllegalArgumentException(node.path() + "：要寫 perfect_at（完美時機）、stages（疊層）或 full_only（充滿才射）");
         }
         return new ChargeSpec(perfectAt, perfectMore, stages, stageTime, stageMore, stageArea, stageProjectiles, channel, accumulate, lockedStart);
     }

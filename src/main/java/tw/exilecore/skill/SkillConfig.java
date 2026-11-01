@@ -308,6 +308,11 @@ public final class SkillConfig {
         final Map<String, RodSpec> parsedRods = new HashMap<>();
         final Map<String, CascadeSpec> parsedCascades = new HashMap<>();
         final Map<String, Map<String, SkillStages.Stage>> parsedStages = new HashMap<>(); // 2026-10-28 照 PoE2：分段傷害（stages）
+        final Map<String, HitKnockback.Spec> parsedKnockbacks = new HashMap<>(); // 2026-11-01 照 PoE2：投射物擊中擊退（hit_knockback）
+        final Map<String, Double> parsedPlacements = new HashMap<>(); // 2026-11-01 照 PoE2：圖騰放置距離（totem.place_range）
+        final Set<String> parsedFullCharge = new java.util.HashSet<>(); // 2026-11-01 照 PoE2 Plasma Blast：充滿才能射（charge.full_only）
+        final Map<String, NormalSpread.Spec> parsedNormalSpreads = new HashMap<>(); // 2026-11-01 照 PoE2 Permafrost Bolts：常態分布的扇形（spread_normal）
+        final Map<String, CrystalWalls.Spec> parsedCrystalWalls = new HashMap<>(); // 2026-11-01 照 PoE2 Glacial Bolt：冰牆排法（crystal_walls）
         final Map<String, ChargeCost> parsedChargeCosts = new HashMap<>();
         final Map<String, Integer> parsedUses = new HashMap<>();
         final Map<String, Scaled> parsedUsesTable = new HashMap<>(); // 2026-11-01 照 PoE2 storedUses 逐級表
@@ -390,6 +395,25 @@ public final class SkillConfig {
             final Map<String, SkillStages.Stage> stageMap = SkillStages.parse(node); // 2026-10-28 照 PoE2：每一段自己的逐級傷害
             if (!stageMap.isEmpty()) {
                 parsedStages.put(id, stageMap);
+            }
+            final HitKnockback.Spec hitKnockback = HitKnockback.parse(node); // 2026-11-01 照 PoE2 base_knockback_distance
+            if (hitKnockback != null) {
+                parsedKnockbacks.put(id, hitKnockback);
+            }
+            final double placeRange = TotemPlacement.parse(node); // 2026-11-01 照 PoE2 base_totem_range
+            if (placeRange > 0) {
+                parsedPlacements.put(id, placeRange);
+            }
+            if (FullCharge.parse(node)) { // 2026-11-01 照 PoE2 Plasma Blast
+                parsedFullCharge.add(id);
+            }
+            final NormalSpread.Spec normalSpread = NormalSpread.parse(node); // 2026-11-01 照 PoE2 Permafrost Bolts
+            if (normalSpread != null) {
+                parsedNormalSpreads.put(id, normalSpread);
+            }
+            final CrystalWalls.Spec crystalWalls = CrystalWalls.parse(node); // 2026-11-01 照 PoE2 Glacial Bolt
+            if (crystalWalls != null) {
+                parsedCrystalWalls.put(id, crystalWalls);
             }
             if (node.has("cascade")) { // 2026-10-28 照 PoE2 Siege Ballista
                 final YamlNode c = node.node("cascade");
@@ -635,6 +659,11 @@ public final class SkillConfig {
         this.rods = Map.copyOf(parsedRods);
         this.cascades = Map.copyOf(parsedCascades);
         SkillStages.install(parsedStages);
+        HitKnockback.install(parsedKnockbacks);
+        TotemPlacement.install(parsedPlacements);
+        FullCharge.install(parsedFullCharge);
+        NormalSpread.install(parsedNormalSpreads);
+        CrystalWalls.install(parsedCrystalWalls);
         this.chargeCosts = Map.copyOf(parsedChargeCosts);
         this.cooldownUses = parsedUses;
         this.cooldownUsesTable = Map.copyOf(parsedUsesTable);

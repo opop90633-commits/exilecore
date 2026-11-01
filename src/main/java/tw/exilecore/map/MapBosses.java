@@ -380,7 +380,11 @@ final class MapBosses {
         }
         final net.kyori.adventure.text.Component name = locked
                 ? plugin.text().parse(lockedPrefix(instance)).append(title(instance, instance.bossPhase())) : title(instance, instance.bossPhase());
-        bar.name(ailments.isEmpty() ? name : name.append(plugin.text().parse(ailments)));
+        // 2026-11-01 照站長：Boss 有護盾（能量護盾、熔岩護盾）時血條後面寫「護盾 x%」——傷害先扣護盾，血條才不動
+        final String shield = plugin.monsterModule() == null || plugin.monsterModule().mechanics() == null ? ""
+                : tw.exilecore.monster.MonsterMechanics.shieldText(plugin.monsterModule().mechanics().shieldLeft(boss.getUniqueId()));
+        final String suffix = shield + ailments;
+        bar.name(suffix.isEmpty() ? name : name.append(plugin.text().parse(suffix)));
         // 2026-10：血條常駐——在 Boss 附近（64 格）或 Boss 房裡就一直顯示，不管剛復活的保護時間、死掉觀戰、離開戰鬥範圍
         final Location center = center(instance);
         for (final UUID uuid : instance.inside()) {

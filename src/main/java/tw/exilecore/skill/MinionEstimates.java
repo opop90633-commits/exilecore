@@ -17,6 +17,18 @@ final class MinionEstimates {
     private MinionEstimates() {
     }
 
+    /** 2026-11-01 照 PoE2（Data/Misc.lua GiganticMagnitude 20）：巨型的召喚物生命、傷害各更多 20%。 */
+    static final double GIGANTIC_MORE = 0.20;
+
+    /** 這隻召喚物是不是巨型：掛了巨魄、巨伴，或主人點了「你的召喚物為巨型」（巨大追隨者）。 */
+    static boolean gigantic(final SkillBuild build, final StatSheet ownerSheet) {
+        if (build != null && (LineageMechanics.hulking(build.supports()) || LineageRules.total(build.supports(), LineageKeys.GIGANTIC) > 0)) {
+            return true;
+        }
+        return ownerSheet != null && ownerSheet.flat(tw.exilecore.stats.SupportRemakeKeys.MINIONS_GIGANTIC,
+                java.util.Set.of(tw.exilecore.stats.Tags.MINION)) > 0;
+    }
+
     /**
      * 巨伴（Tangmazu's Thurible：召喚物獲得你 x% 的閃避值與偏斜值）、夥伴獲得你的力量（天賦：力量給的生命，每點 2，換成召喚物的單位）、
      * 幻化武器的力量、敏捷加成（2026-10-29）。純函式（測試用）。
@@ -30,6 +42,12 @@ final class MinionEstimates {
             return out;
         }
         final double gigantic = LineageRules.total(build.supports(), LineageKeys.GIGANTIC);
+        // 2026-11-01 照 PoE2（PoB2 CalcPerform：Gigantic 是開關，生命、傷害各更多 20%）：巨魄、巨伴、巨大追隨者哪個來源都只算一次；
+        //   這次之前各自寫生命、傷害更多 20%，兩個一起用會算兩次
+        if (gigantic(build, ownerSheet)) {
+            out.add(Modifier.more(StatKeys.LIFE_MAX, GIGANTIC_MORE, "巨型"));
+            out.add(Modifier.more(StatKeys.DAMAGE, GIGANTIC_MORE, "巨型"));
+        }
         if (gigantic > 0) {
             out.add(Modifier.flat(StatKeys.EVASION, Math.max(0, ownerSheet.get(StatKeys.EVASION)) * gigantic / 100.0, "巨伴"));
             out.add(Modifier.flat(StatKeys.DEFLECTION, Math.max(0, ownerSheet.get(StatKeys.DEFLECTION)) * gigantic / 100.0, "巨伴"));

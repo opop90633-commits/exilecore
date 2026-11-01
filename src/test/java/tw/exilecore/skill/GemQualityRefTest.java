@@ -179,8 +179,9 @@ class GemQualityRefTest {
         assertEquals("品質 +20%：撲殺需要的層數少 5", SkillService.qualityText(config.skill("grinding_will"), 20));
         assertEquals("品質 +20%：需要的連擊少 1", SkillService.qualityText(config.skill("collapse_heart_chant"), 20));
         assertEquals("品質 +10%：需要的連擊少 0", SkillService.qualityText(config.skill("collapse_heart_chant"), 10));
-        assertTrue(SkillService.qualityText(config.skill("breeze_dance_step"), 20).contains("沒有效果"));
-        assertTrue(SkillService.qualityModifiers(config.skill("breeze_dance_step"), 20).isEmpty());
+        // 2026-11-01 照 PoE2 Wind Dancer：疾風做出來了，品質是疾風的爆炸半徑 +(0—0.4) 公尺（這次之前沒有效果）
+        assertEquals("品質 +20%：疾風的爆炸半徑 +0.4 格", SkillService.qualityText(config.skill("breeze_dance_step"), 20));
+        assertEquals("品質 +20%：甲片持續時間 +2 秒", SkillService.qualityText(config.skill("gathered_scales"), 20));
     }
 
     @Test
@@ -241,10 +242,11 @@ class GemQualityRefTest {
         // 元祈引星：最大能量 +100（固定值，再乘擴能）
         final MetaSpec meta = config.meta("element_prayer_star");
         assertEquals((meta.maxEnergy() + 100) * 1.8, MetaGems.invocationMax(meta, new double[] {0, 80, 0}, new double[] {1, 1, 0}, 100), 1e-9);
-        // 血脈牽：+1 道（20% 品質；19% 還沒有）
+        // 血脈牽：+1 道血觸手（20% 品質；19% 還沒有）（2026-11-01 照 PoE2 blood_tendrils_beam_count；這次之前寫成連鎖 +1 次）
         final SkillDefinition blood = config.skill("blood_vein_tether");
-        assertEquals(build(blood, 0).chains() + 1, build(blood, 20).chains());
-        assertEquals(build(blood, 0).chains(), build(blood, 19).chains());
+        assertEquals(SkillExecutor.chainBeams(build(blood, 0)) + 1, SkillExecutor.chainBeams(build(blood, 20)));
+        assertEquals(SkillExecutor.chainBeams(build(blood, 0)), SkillExecutor.chainBeams(build(blood, 19)));
+        assertEquals(build(blood, 0).chains(), build(blood, 20).chains(), "連鎖次數不變");
         // 霜使：碎裂半徑 +0.4 公尺（加在基礎上）
         final SkillBuild shatter = build(config.skill("herald_ice_shatter"), 0);
         assertEquals(shatter.radius() + 0.4, shatter.withBaseRadius(0.4).radius(), 1e-9);

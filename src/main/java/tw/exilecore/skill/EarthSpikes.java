@@ -43,6 +43,8 @@ final class EarthSpikes {
     static final double FISSURE_LENGTH = Units.metres(5);
     static final double FISSURE_RADIUS = Units.metres(1);
     static final double BLAST_RADIUS = Units.metres(2);
+    /** 2026-11-01 照 PoE2（active_skill_base_area_of_effect_radius 10）：地刺冒出來那一圈多大。 */
+    static final double SPIKE_RADIUS = Units.metres(1);
 
     private static final class Spike {
         final Player owner;
@@ -108,9 +110,21 @@ final class EarthSpikes {
         to.setY(groundY(to, from.getY()));
         final double width = FISSURE_RADIUS * scale;
         if (owner != null) {
-            targets.strike(owner, build.profile(), point -> distanceToSegment(point, from, to) <= width, new Object());
+            // 2026-11-01 照 PoE2 Earthshatter（poe2db：Deals damage along the fissure's path and in a 1 metre radius around the emerging spike）：
+            //   裂縫上的、地刺冒出來那一圈 1 公尺內的都吃一下（同一隻只吃一次）；這次之前只打裂縫上的
+            final double around = SPIKE_RADIUS * scale;
+            targets.strike(owner, build.profile(), point -> distanceToSegment(point, from, to) <= width
+                    || point.getWorld() == to.getWorld() && point.distanceSquared(to) <= around * around, new Object());
+            final java.util.Set<UUID> struck = new java.util.HashSet<>();
             for (final LivingEntity target : targets.alongLine(from, to, width, owner)) {
-                damage.hit(owner, target, build.profile(), null);
+                if (struck.add(target.getUniqueId())) {
+                    damage.hit(owner, target, build.profile(), null);
+                }
+            }
+            for (final LivingEntity target : targets.around(to, around, owner)) {
+                if (struck.add(target.getUniqueId())) {
+                    damage.hit(owner, target, build.profile(), null);
+                }
             }
         }
         final int steps = Math.max(2, (int) Math.round(from.distance(to) / 1.2));

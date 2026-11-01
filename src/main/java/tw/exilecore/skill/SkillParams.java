@@ -304,7 +304,7 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 }
             }
             case PROJECTILE -> {
-                projectiles = scaled(where, node, "count", 1, 1, 20);
+                projectiles = scaled(where, node, "count", 1, 1, 25); // 2026-11-01 照 PoE2 Spiral Volley（25 支）：20 → 25（SkillBuild.projectileCap）
                 spread = check(where, "spread", node.decimal("spread", projectiles.last() > 1 ? 30 : 0), 0, 360);
                 speed = check(where, "speed", node.decimal("speed", speed), 0.2, 4);
                 range = check(where, "range", node.decimal("range", range), 2, 64);
@@ -409,6 +409,9 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                 range = check(where, "range", node.decimal("range", 12), 2, 32);
                 chains = scaled(where, node, "chains", 2, 0, 10);
                 chainRange = m(f, check(where, "chain_range", node.decimal("chain_range", chainRange), 1, 16));
+                // 2026-11-01 照 PoE2 Exsanguinate（blood_tendrils_beam_count 3）：一次往前方扇形放幾道（不是投射物的連鎖技能用；沒寫是 1 道）、扇形張角
+                projectiles = scaled(where, node, "count", 1, 1, 10);
+                spread = check(where, "spread", node.decimal("spread", 0), 0, 360);
             }
             case DASH -> {
                 // 2026-10-28 照 PoE2（掠閃 4 → 4.9 → 5.5 米）：range 可以寫逐級表；這次之前只能寫一個數字

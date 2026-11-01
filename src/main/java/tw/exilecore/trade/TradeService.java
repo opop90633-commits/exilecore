@@ -262,7 +262,7 @@ public final class TradeService {
             tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<red>星索鉤綁定帳號，不能交易"));
             return;
         }
-        if (stack.hasData(DataComponentTypes.BUNDLE_CONTENTS) || stack.hasData(DataComponentTypes.CONTAINER)) {
+        if (tw.exilecore.item.ItemContainers.holdsItems(stack)) { // 2026-11-01：真的有裝東西才算（腰帶的原版物品是收納袋，以前每條腰帶都被擋）
             // 裝在裡面的東西估不到價（手續費會變成最低），也看不清楚
             tw.exilecore.gui.ActionBar.send(side.player, plugin.text().parse("<red>收納袋、界伏盒這類容器不能交易（把裡面的東西拿出來再放）"));
             return;

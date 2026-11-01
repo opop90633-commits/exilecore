@@ -68,6 +68,10 @@ final class SkillZones implements SkillTargets.Strikeable {
         SkillProfile profile;
         /** 2026-10-30 照 PoE2：這一灘植物繁茂了（{@link Overgrowth}）。 */
         boolean overgrown;
+        /** 2026-11-01 照 PoE2 Vine Arrow：植物被下毒存下的中毒每秒傷害、存到哪個 tick、上一次是哪一下（同一下只算一次）（{@link VinePlants}）。 */
+        double storedPoisonDps;
+        long storedPoisonUntil;
+        Object storedPoisonSource;
         final String visual;
         final long untilTick;
         final int intervalTicks;
@@ -110,6 +114,38 @@ final class SkillZones implements SkillTargets.Strikeable {
         boolean independent;
         /** 2026-11-01 照 PoE2：算上限用的技能代號（{@link SkillZones#capKey}）。 */
         String capKey;
+        /** 2026-11-01 照 PoE2 Flame Wall：穿過這道火牆的投射物附加多少 {火最小, 火最大, 電最小, 電最大}（null = 不是火牆）。 */
+        double[] wallAdded;
+        /** 2026-11-01 照 PoE2 Firestorm：隨機落下的火彈（冰彈、閃電；null = 照舊每一波整片打）。 */
+        FireSpells.Storm storm;
+        /** 2026-11-01 照 PoE2 Flame Wall：燃燒持續傷害＋「當作造成」點燃的那一招（null = 照舊擊中；{@link FireSpells#BURN_PER_MINUTE}）。 */
+        SkillProfile burn;
+        /** 2026-11-01 照 PoE2 Thunderstorm（{@link StormStrikes}）：每一波在隨機一點劈一道這麼大的雷（0 = 不是這種）、每個敵人上次被劈的 tick。 */
+        double strikeRadius;
+        java.util.Map<UUID, Long> struck;
+        /**
+         * 2026-11-01 照 PoE2 Thrashing Vines（{@link ThrashingVines}）：每隔幾 tick 長一條藤（0 = 不是這種）、藤長、藤的半寬、
+         * 生長區的半徑（不跟著繁茂變大：繁茂變大的是藤）、每個敵人上次被藤瞄的 tick。
+         */
+        int vineTicks;
+        double vineLength;
+        double vineHalfWidth;
+        double vineArea;
+        java.util.Map<UUID, Long> vineAimed;
+        /**
+         * 2026-11-01 照 PoE2 Tornado（{@link PrimalTornado}）：吸收元素地面的基礎元素每秒傷害（每一種各一份，加成前；0 = 不是這種）、
+         * 吸到的元素 → 加成後的每秒傷害、邊緣緩速、每 50 毫秒吸引（拉不動的到哪個 tick 才再拉、上一次拉時離中心多遠）、
+         * 追敵人（每 tick 幾格、找多遠）、現在的移動是不是在追敵人。
+         */
+        double elementBase;
+        final java.util.Map<tw.exilecore.stats.DamageType, Double> absorbed = new java.util.EnumMap<>(tw.exilecore.stats.DamageType.class);
+        boolean edgeSlow;
+        boolean tornadoPull;
+        java.util.Map<UUID, Long> pullFailed;
+        java.util.Map<UUID, Double> pullLast;
+        double chasePerTick;
+        double chaseRange;
+        boolean chasing;
 
         Zone(final UUID owner, final String skill, final World world, final List<Location> points, final double radius, final SkillProfile profile,
              final String visual, final long untilTick, final int intervalTicks, final double pull, final long now, final String exclusive) {
@@ -515,6 +551,11 @@ final class SkillZones implements SkillTargets.Strikeable {
         zone.growPerSecond = localFlat(profile, tw.exilecore.stats.SupportExtraKeys.ENCROACH) / 100.0;
         zone.growMax = localFlat(profile, tw.exilecore.stats.SupportExtraKeys.ENCROACH_MAX_KEY) / 100.0;
         zones.add(zone);
+        if (ColdSpells.isOrb(zoneProfile.id(), zoneProfile.tags())) {
+            // 2026-11-01 照 PoE2 Eye of Winter：法球（雷雲、熾陽珠、元素風暴）登記給寒冬之眼（ColdSpells.markOrb）
+            ColdSpells.markOrb(points.getFirst(), radius, ColdSpells.elementOf(zoneProfile.tags()), zone.untilTick,
+                    () -> zone.points.getFirst(), () -> !zone.gone && zones.contains(zone));
+        }
         // 2026-10-30 照 PoE2：植物（荊棘矢的荊棘、荊棘叢生）造出來時擲「立即繁茂」，或一出來就在積雷雲裡
         if (Overgrowth.effect(zoneProfile.id()) != null) {
             final double chance = Overgrowth.chance(plugin.players().sheet(owner), zoneProfile);
@@ -572,6 +613,404 @@ final class SkillZones implements SkillTargets.Strikeable {
         newest.boltsLeft = chains >= 0 ? Math.max(1, maxBolts) : -1; // 2026-10-29：品質多放幾道
         newest.shards = Math.max(0, shards);
         newest.shardRadius = shardRadius;
+    }
+
+    /** 這個玩家剛放下的這個技能的地面效果（清單照放的順序，最後一個是剛放的；沒有回傳 null）。 */
+    private Zone newest(final UUID owner, final String skill) {
+        Zone newest = null;
+        for (final Zone zone : zones) {
+            if (!zone.gone && zone.owner.equals(owner) && skill.equals(zone.skill)) {
+                newest = zone;
+            }
+        }
+        return newest;
+    }
+
+    /** 2026-11-01 照 PoE2 Flame Wall：owner 剛放下的這道火牆給穿過的投射物附加 added（{@link FireSpells#wallAdded}）。 */
+    void flameWall(final Player owner, final String skill, final double[] added) {
+        final Zone zone = newest(owner.getUniqueId(), skill);
+        if (zone != null) {
+            zone.wallAdded = added.clone();
+        }
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Flame Wall（Wall deals X Fire Damage per second、Ignites as though dealing X to Y）：owner 剛放下的這道火牆不擊中，
+     * 每一波給裡面的敵人一個間隔份的燃燒持續傷害、照 profile（還沒打折的技能本身）的基礎傷害當作造成來點燃。
+     */
+    void burn(final Player owner, final String skill, final SkillProfile profile) {
+        final Zone zone = newest(owner.getUniqueId(), skill);
+        if (zone != null) {
+            zone.burn = profile;
+        }
+    }
+
+    /** 2026-11-01 照 PoE2：燃燒的地面效果這一波對 target：一個間隔份的燃燒持續傷害、當作造成來點燃（{@link #burn}）。 */
+    private void burnPulse(final Player owner, final tw.exilecore.stats.StatSheet ownerSheet, final Zone zone, final LivingEntity target) {
+        if (plugin.ailments() == null || ownerSheet == null) {
+            return;
+        }
+        final SkillProfile profile = zone.burn;
+        final tw.exilecore.stats.StatSheet effective = profile.effective(ownerSheet);
+        final double full = SupportMechanics.fullLife(target) ? effective.more(tw.exilecore.stats.SupportKeys.DOT_VS_FULL_LIFE, profile.tags()) : 1.0;
+        final double dps = FireSpells.burnDps(effective, profile, localFlat(profile, FireSpells.BURN_PER_MINUTE), full);
+        plugin.ailments().skillElementalDot(target, dps, zone.intervalTicks / 20.0, zone.owner, tw.exilecore.stats.DamageType.FIRE);
+        plugin.ailments().igniteAsThough(owner, target, AsThough.amount(ownerSheet, profile, tw.exilecore.stats.DamageType.FIRE), effective,
+                profile.contextFor(tw.exilecore.stats.DamageType.FIRE), 1, 0);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Flame Wall（「你與隊友的投射物」）：shooter 的投射物這一 tick 從 from 飛到 to，穿過的第一道（自己的或同隊玩家的）
+     * 火牆給的附加傷害；沒穿過回傳 null。
+     */
+    double[] wallAdded(final World world, final Vector from, final Vector to, final UUID shooter) {
+        final double[] a = {from.getX(), from.getY(), from.getZ()};
+        final double[] b = {to.getX(), to.getY(), to.getZ()};
+        for (final Zone zone : zones) {
+            if (zone.gone || zone.wallAdded == null || !zone.world.equals(world)) {
+                continue;
+            }
+            if (!zone.owner.equals(shooter) && (plugin.party() == null || !plugin.party().sameGroup(zone.owner, shooter))) {
+                continue;
+            }
+            final List<double[]> points = new ArrayList<>(zone.points.size());
+            for (final Location point : zone.points) {
+                points.add(new double[] {point.getX(), point.getY(), point.getZ()});
+            }
+            if (FireSpells.crosses(a, b, points, zone.radius)) {
+                return zone.wallAdded.clone();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Firestorm：owner 剛放下的這陣風暴改成隨機落下的火彈（冰彈、閃電），風暴半徑換成 radius（格，已含範圍加成）。
+     * 這次之前每 0.4 秒整片打 60%。
+     */
+    void firestorm(final Player owner, final String skill, final FireSpells.Storm storm, final double radius) {
+        final Zone zone = newest(owner.getUniqueId(), skill);
+        if (zone != null && zone.points.size() == 1) {
+            zone.storm = storm;
+            zone.radius = radius;
+            zone.baseRadius = radius;
+        }
+    }
+
+    /** 2026-11-01 照 PoE2 Firestorm：到時間了就各種落彈各落一顆（落點隨機，0.5 秒後落地炸開）。 */
+    private void stormTick(final Player owner, final Zone zone, final long now) {
+        final FireSpells.Storm storm = zone.storm;
+        if (now < storm.nextBolt || now + FireSpells.FALL_TICKS > zone.untilTick) {
+            return; // 落不到結束之前的就不落了
+        }
+        storm.nextBolt = now + storm.periodTicks;
+        final Location center = zone.points.getFirst();
+        for (int i = 0; i < storm.bolts.size(); i++) {
+            final FireSpells.Bolt bolt = storm.bolts.get(i);
+            final java.util.Map<UUID, Long> last = storm.lastHit.get(i);
+            final double[] offset = ZonePulses.showerPoints(1, zone.radius, plugin.random()).getFirst();
+            final Location at = center.clone().add(offset[0], 0, offset[1]);
+            final Location top = at.clone().add(0, 6, 0);
+            Fx.as(zone.owner, () -> visuals.trail(bolt.visual(), at.getWorld(), top.toVector(), at.toVector().add(new Vector(0, 3, 0))));
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (!owner.isOnline() || !owner.getWorld().equals(at.getWorld())) {
+                    return;
+                }
+                final long hitAt = plugin.getServer().getCurrentTick();
+                for (final LivingEntity target : targets.around(at, bolt.radius(), owner)) {
+                    if (target.isValid() && !target.isDead() && FireSpells.gate(last, target.getUniqueId(), hitAt)) {
+                        damage.hit(owner, target, bolt.profile(), null);
+                    }
+                }
+                Fx.as(zone.owner, () -> {
+                    if (bolt.kind() == 2) {
+                        visuals.chain(List.of(top, at));
+                    } else {
+                        visuals.explosion(bolt.kind() == 1 ? "rime_arrow" : bolt.visual(), at, bolt.radius());
+                    }
+                });
+            }, FireSpells.FALL_TICKS);
+        }
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Solar Orb（「Flameblast can target a Solar Orb」）：準心（eye 往 dir）指著的 owner 自己的這個技能的地面效果中心
+     * （離射線 {@link FireSpells#ORB_AIM} 格內、{@link FireSpells#ORB_RANGE} 格內最近的）；沒有回傳 null。
+     */
+    Location aimedZone(final UUID owner, final String skill, final Location eye, final Vector dir) {
+        final double[] e = {eye.getX(), eye.getY(), eye.getZ()};
+        final Vector unit = dir.clone().normalize();
+        final double[] d = {unit.getX(), unit.getY(), unit.getZ()};
+        Location best = null;
+        double bestAlong = Double.MAX_VALUE;
+        for (final Zone zone : zones) {
+            if (zone.gone || !zone.owner.equals(owner) || !skill.equals(zone.skill) || !zone.world.equals(eye.getWorld()) || zone.points.size() != 1) {
+                continue;
+            }
+            final Location center = zone.points.getFirst();
+            final double[] hit = FireSpells.rayDistance(e, d, new double[] {center.getX(), center.getY() + 1.0, center.getZ()});
+            if (hit != null && hit[0] <= FireSpells.ORB_RANGE && hit[1] <= FireSpells.ORB_AIM && hit[0] < bestAlong) {
+                bestAlong = hit[0];
+                best = center.clone();
+            }
+        }
+        return best;
+    }
+
+    /** 2026-11-01：owner 剛放下的這個技能的地面效果（清單照放的順序，最後一個是剛放的）；沒有回傳 null。 */
+    private Zone newestOf(final UUID owner, final String skill) {
+        Zone newest = null;
+        for (final Zone zone : zones) {
+            if (!zone.gone && zone.owner.equals(owner) && skill.equals(zone.skill)) {
+                newest = zone;
+            }
+        }
+        return newest;
+    }
+
+    /** 2026-11-01 照 PoE2 Thunderstorm（{@link StormStrikes}）：owner 剛放下的雷雨改成每 0.35±0.15 秒在隨機一點劈一道 strikeRadius 格的雷。 */
+    void strikes(final Player owner, final String skill, final double strikeRadius) {
+        final Zone newest = owner == null ? null : newestOf(owner.getUniqueId(), skill);
+        if (newest != null && strikeRadius > 0) {
+            newest.strikeRadius = strikeRadius;
+            newest.struck = new java.util.HashMap<>();
+        }
+    }
+
+    /** 2026-11-01 照 PoE2 Thrashing Vines（{@link ThrashingVines}）：owner 剛放下的生長區改成每 ticks tick 長一條 length 長、半寬 halfWidth 的藤。 */
+    void vines(final Player owner, final String skill, final int ticks, final double length, final double halfWidth) {
+        final Zone newest = owner == null ? null : newestOf(owner.getUniqueId(), skill);
+        if (newest != null && ticks > 0 && length > 0) {
+            newest.vineTicks = ticks;
+            newest.vineLength = length;
+            newest.vineHalfWidth = Math.max(0.1, halfWidth);
+            newest.vineArea = newest.radius;
+            newest.vineAimed = new java.util.HashMap<>();
+            newest.nextPulse = Math.min(newest.nextPulse, now() + ticks);
+        }
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Tornado（{@link PrimalTornado}）：owner 剛放下的龍捲風會吸收元素地面（基礎元素每秒傷害 elementBase，加成前）、
+     * 邊緣緩速、每 tick 往附近的敵人移 chasePerTick 格（找 chaseRange 格內的）。
+     */
+    void tornado(final Player owner, final String skill, final double elementBase, final double chasePerTick, final double chaseRange) {
+        final Zone newest = owner == null ? null : newestOf(owner.getUniqueId(), skill);
+        if (newest != null) {
+            newest.elementBase = Math.max(0, elementBase);
+            newest.edgeSlow = true;
+            newest.tornadoPull = true;
+            newest.pullFailed = new java.util.HashMap<>();
+            newest.pullLast = new java.util.HashMap<>();
+            newest.chasePerTick = Math.max(0, chasePerTick);
+            newest.chaseRange = Math.max(0, chaseRange);
+        }
+    }
+
+    /** 2026-11-01 照 PoE2 Tornado：往附近最近的敵人移動（行嵐、掠嵐的移動優先：那段走完才開始追）；附近沒有敵人就停下。 */
+    private void chase(final Player owner, final Zone zone) {
+        final Location center = zone.points.getFirst();
+        final LivingEntity target = targets.nearest(center, zone.chaseRange, java.util.Set.of(), owner);
+        if (target == null || !target.isValid() || target.isDead()) {
+            if (zone.chasing) {
+                zone.driftTo = null;
+            }
+            return;
+        }
+        final Location to = target.getLocation();
+        final double dx = to.getX() - center.getX();
+        final double dz = to.getZ() - center.getZ();
+        if (dx * dx + dz * dz < 0.36) {
+            if (zone.chasing) {
+                zone.driftTo = null;
+            }
+            return;
+        }
+        final Location ground = groundOf(to);
+        zone.driftTo = new Location(center.getWorld(), to.getX(), ground == null ? center.getY() : ground.getY(), to.getZ());
+        zone.driftPerTick = zone.chasePerTick;
+        zone.chasing = true;
+    }
+
+    /** 2026-11-01 照 PoE2 Tornado：龍捲風蓋到元素地面就吸收那一種（之後一直帶著；每一種各一份元素持續傷害）。 */
+    private void absorbGround(final Player owner, final Zone zone) {
+        final Location center = zone.points.getFirst();
+        for (final tw.exilecore.stats.DamageType found : ElementalGround.elementsAt(plugin, center, zone.radius)) {
+            if (!found.isElemental() || zone.absorbed.containsKey(found)) {
+                continue;
+            }
+            final tw.exilecore.stats.StatSheet effective = zone.profile.effective(plugin.players().sheet(owner));
+            zone.absorbed.put(found, PrimalTornado.scaledDps(effective, zone.profile, found, zone.elementBase,
+                    localMore(zone.profile, tw.exilecore.stats.SupportKeys.DAMAGE_SKILL_DOT)));
+            final String look = switch (found) {
+                case FIRE -> "blazing_star_shell";
+                case COLD -> "frost_star_blast";
+                default -> "roaming_thunder";
+            };
+            Fx.as(zone.owner, () -> visuals.blast(look, center, zone.radius));
+        }
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Tornado（tornado_pull_interval_ms 50、tornado_pull_strength_% 12、tornado_failled_pull_cooldown_ms 1000、
+     * tornado_pushiness 45）：每 tick 把範圍內的敵人往中心拉剩下距離的 12%（中心 0.45 公尺內不拉）；拉不動的（擊退抗性滿的、
+     * 上一次拉了之後沒有更靠近中心的）1 秒內不再拉。不拉玩家。
+     */
+    private void tornadoPull(final Player owner, final Zone zone, final long now) {
+        final Location center = zone.points.getFirst();
+        final double deadZone = tw.exilecore.core.Units.metres(PrimalTornado.PUSHINESS_M);
+        final java.util.Set<UUID> seen = new java.util.HashSet<>();
+        for (final LivingEntity target : targets.around(center, zone.radius, owner)) {
+            if (target instanceof Player || !target.isValid() || target.isDead()) {
+                continue;
+            }
+            final UUID id = target.getUniqueId();
+            seen.add(id);
+            if (zone.pullFailed.getOrDefault(id, 0L) > now) {
+                continue;
+            }
+            final Vector to = center.toVector().subtract(target.getLocation().toVector()).setY(0);
+            final double distance = to.length();
+            final Double before = zone.pullLast.get(id);
+            if (before != null && before > deadZone && PrimalTornado.pullFailed(before, distance)) {
+                zone.pullFailed.put(id, now + PrimalTornado.PULL_FAILED_TICKS);
+                zone.pullLast.remove(id);
+                continue;
+            }
+            final org.bukkit.attribute.AttributeInstance resistance = target.getAttribute(org.bukkit.attribute.Attribute.KNOCKBACK_RESISTANCE);
+            final double scale = 1 - Math.max(0, Math.min(1, resistance == null ? 0 : resistance.getValue()));
+            final double step = PrimalTornado.pullStep(distance, deadZone) * scale;
+            if (step <= 1e-6) {
+                if (scale <= 0) {
+                    zone.pullFailed.put(id, now + PrimalTornado.PULL_FAILED_TICKS); // 拉不動
+                }
+                zone.pullLast.remove(id);
+                continue;
+            }
+            final Vector velocity = to.multiply(step / distance);
+            velocity.setY(Math.max(target.getVelocity().getY(), 0));
+            target.setVelocity(velocity);
+            zone.pullLast.put(id, distance);
+        }
+        zone.pullLast.keySet().retainAll(seen);
+        if (zone.pullFailed.size() > 64) {
+            zone.pullFailed.values().removeIf(tick -> tick <= now);
+        }
+    }
+
+    /** 2026-11-01 照 PoE2 Tornado：吸收了元素地面的龍捲風把那種地面的減益套給裡面的敵人。 */
+    private void tornadoDebuff(final Player owner, final Zone zone, final LivingEntity target, final tw.exilecore.stats.DamageType element,
+                               final double dps) {
+        if (plugin.ailments() == null || target instanceof Player) {
+            return;
+        }
+        final long ticks = zone.intervalTicks + 5;
+        switch (element) {
+            case FIRE -> plugin.ailments().groundIgnite(owner, target, dps, zone.profile.effective(plugin.players().sheet(owner)));
+            case COLD -> plugin.ailments().groundStatusOnMonster(target, PrimalTornado.GROUND_STATUS / 100.0, 0, ticks);
+            case LIGHTNING -> plugin.ailments().groundStatusOnMonster(target, 0, PrimalTornado.GROUND_STATUS / 100.0, ticks);
+            default -> {
+            }
+        }
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Thunderstorm（{@link StormStrikes}）：雷雨裡的敵人都濕透；在隨機一點劈一道雷，打中的敵人（0.5 秒內被劈過的不算）全額傷害。
+     */
+    private void stormStrike(final Player owner, final Zone zone, final long now) {
+        final Location center = zone.points.getFirst();
+        final double freeze = localFlat(zone.profile, tw.exilecore.stats.GemQualityKeys.DRENCHED_FREEZE_MORE);
+        final double shock = localFlat(zone.profile, tw.exilecore.stats.GemQualityKeys.DRENCHED_SHOCK_MORE);
+        final double wetCap = localFlat(zone.profile, StormStrikes.WET_MAX_LEVEL);
+        for (final LivingEntity target : targets.around(center, zone.radius, owner)) {
+            if (!target.isValid() || target.isDead()) {
+                continue;
+            }
+            // 2026-11-01 照 PoE2（thunderstorm_wet_debuff_cannot_apply_to_targets_above_level）：低等級的寶石濕不了高等級的敵人
+            final int level = wetCap <= 0 || plugin.monsters() == null ? 0
+                    : plugin.monsters().data(target).map(tw.exilecore.monster.MonsterData::level).orElse(0);
+            if (!StormStrikes.aboveWetLevel(wetCap, level)) {
+                SupportExtras.drench(plugin, owner, target, zone.skill, StormStrikes.HIT_GAP_TICKS, now, freeze, shock);
+            }
+        }
+        final double[] offset = StormStrikes.point(zone.radius, plugin.random().nextDouble(), plugin.random().nextDouble());
+        final Location spot = center.clone().add(offset[0], 0, offset[1]);
+        final Location ground = groundOf(spot);
+        final Location at = ground == null ? spot : ground;
+        for (final LivingEntity target : targets.around(at, zone.strikeRadius, owner)) {
+            if (zone.gone) {
+                break;
+            }
+            if (!target.isValid() || target.isDead() || !StormStrikes.canHit(zone.struck.get(target.getUniqueId()), now)) {
+                continue;
+            }
+            zone.struck.put(target.getUniqueId(), now);
+            damage.hit(owner, target, zone.profile, null);
+        }
+        if (zone.struck.size() > 64) {
+            zone.struck.values().removeIf(tick -> now - tick > StormStrikes.HIT_GAP_TICKS);
+        }
+        Fx.as(zone.owner, () -> visuals.chain(List.of(at.clone().add(0, 7, 0), at.clone().add(0, 3.5, 0), at.clone().add(0, 0.1, 0))));
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Thrashing Vines（{@link ThrashingVines}）：生長區裡長出一條藤砸下：區域裡有敵人（0.5 秒內沒被瞄過的）就朝隨機一隻長
+     * （藤穿過牠），沒有就隨機一點、隨機方向；打到藤上的每一個敵人。繁茂的藤大 50%（傷害更多 50% 已經在繁茂時加上）。
+     */
+    private void growVine(final Player owner, final Zone zone, final long now) {
+        final Location center = zone.points.getFirst();
+        final double grow = zone.overgrown ? Overgrowth.radiusScale(Overgrowth.effect(ThrashingVines.ID)) : 1.0;
+        final double length = zone.vineLength * grow;
+        final double half = zone.vineHalfWidth * grow;
+        final List<LivingEntity> near = new ArrayList<>();
+        for (final LivingEntity candidate : targets.around(center, zone.vineArea, owner)) {
+            if (candidate.isValid() && !candidate.isDead() && StormStrikes.canHit(zone.vineAimed.get(candidate.getUniqueId()), now)) {
+                near.add(candidate);
+            }
+        }
+        final double angle = plugin.random().nextDouble() * 2 * Math.PI;
+        final Location root;
+        final Location tip;
+        if (!near.isEmpty()) {
+            final LivingEntity aim = near.get(plugin.random().nextInt(near.size()));
+            zone.vineAimed.put(aim.getUniqueId(), now);
+            final Location at = aim.getLocation();
+            final double[] back = ThrashingVines.rootBehind(length, angle);
+            root = at.clone().add(back[0], 0, back[1]);
+            tip = at.clone().subtract(back[0], 0, back[1]);
+        } else {
+            final double[] offset = StormStrikes.point(zone.vineArea, plugin.random().nextDouble(), plugin.random().nextDouble());
+            root = center.clone().add(offset[0], 0, offset[1]);
+            tip = root.clone().add(Math.cos(angle) * length, 0, Math.sin(angle) * length);
+        }
+        final Location mid = root.clone().add(tip).multiply(0.5);
+        for (final LivingEntity victim : targets.around(mid, length / 2 + half + 1, owner)) {
+            if (zone.gone) {
+                break;
+            }
+            if (!victim.isValid() || victim.isDead()) {
+                continue;
+            }
+            final Location where = victim.getLocation();
+            final double slack = victim.getBoundingBox().getWidthX() / 2;
+            if (Math.abs(where.getY() - mid.getY()) <= 3 && ThrashingVines.distanceToSegment(where.getX(), where.getZ(),
+                    root.getX(), root.getZ(), tip.getX(), tip.getZ()) <= half + slack) {
+                damage.hit(owner, victim, zone.profile, null);
+            }
+        }
+        if (zone.vineAimed.size() > 64) {
+            zone.vineAimed.values().removeIf(tick -> now - tick > ThrashingVines.RETARGET_TICKS);
+        }
+        final World world = center.getWorld();
+        Fx.as(zone.owner, () -> {
+            final Vector step = tip.toVector().subtract(root.toVector());
+            final int count = Math.max(2, (int) Math.round(step.length() / 0.4));
+            for (int i = 0; i <= count; i++) {
+                final Location point = root.clone().add(step.clone().multiply(i / (double) count)).add(0, 0.4, 0);
+                Fx.spawn(world, org.bukkit.Particle.HAPPY_VILLAGER, point, 2, 0.1, 0.2, 0.1, 0);
+            }
+            visuals.impact(zone.visual, tip);
+        });
     }
 
     /**
@@ -1094,6 +1533,7 @@ final class SkillZones implements SkillTargets.Strikeable {
     /** 被打到的時候（SkillTargets.strike）：你別的技能打到伏霆彈就引爆（同一個技能自己不會）。 */
     @Override
     public void struck(final Player owner, final SkillProfile skill, final java.util.function.Predicate<Location> inside, final Object source) {
+        poisonPlants(owner, skill, inside, source); // 2026-11-01 照 PoE2 Vine Arrow：荊棘矢的植物被你的擊中下毒
         if (owner == null || lodged.isEmpty()) {
             return;
         }
@@ -1126,6 +1566,38 @@ final class SkillZones implements SkillTargets.Strikeable {
         }
         for (final Lodged bolt : hit) {
             detonate(owner, bolt, now(), !bolt.parent().equals(by)); // 2026-10-31：被別的技能引爆更多 50%，自己的下一發是基礎數值
+        }
+    }
+
+    /** 2026-11-01 照 PoE2 Vine Arrow（0.3.1：plants can now only take poison damage from allies）：放植物的人自己、或同一隊的隊友。 */
+    private boolean plantAlly(final UUID plantOwner, final UUID striker) {
+        return plantOwner.equals(striker) || plugin.party() != null && plugin.party().sameGroup(plantOwner, striker);
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Vine Arrow（Poisoning the plant causes it to deal additional Chaos Damage）：你（或隊友）的擊中打到植物
+     * （有 {@link VinePlants#STORED} 的地面效果，荊棘矢）——範圍擊中蓋到植物，或單體的投射物飛過植物（ProjectileEngine 每 tick 對飛過的路
+     * 呼叫 strike，跟打冰晶、鐘一樣；投射物不會因此停下），植物存下這一下預期的中毒每秒傷害（中毒機率 × 每秒），照中毒持續時間。
+     */
+    private void poisonPlants(final Player owner, final SkillProfile skill, final java.util.function.Predicate<Location> inside, final Object source) {
+        if (owner == null || skill == null || plugin.skills() == null || plugin.ailments() == null || skill.id().endsWith(".zone")) {
+            return;
+        }
+        double dps = -1;
+        final long now = now();
+        for (final Zone zone : zones) {
+            if (zone.gone || !plantAlly(zone.owner, owner.getUniqueId()) || zone.profile == null || localFlat(zone.profile, VinePlants.STORED) <= 0
+                    || zone.storedPoisonSource == source || !inside.test(zone.points.getFirst())) {
+                continue;
+            }
+            if (dps < 0) {
+                dps = plugin.skills().leftovers().expectedPoisonDps(owner, skill);
+            }
+            zone.storedPoisonSource = source;
+            final double[] stored = VinePlants.store(zone.storedPoisonDps, zone.storedPoisonUntil, dps, now,
+                    Math.round(plugin.ailments().config().poisonDuration() * 20));
+            zone.storedPoisonDps = stored[0];
+            zone.storedPoisonUntil = (long) stored[1];
         }
     }
 
@@ -1394,8 +1866,16 @@ final class SkillZones implements SkillTargets.Strikeable {
                 }
             }
             final Impact impact = grown;
+            final double shockSpread = localFlat(impact.profile(), StormcallerArrows.SPREAD_SCALED);
+            final long shocksBefore = plugin.ailments() == null ? 0 : plugin.ailments().shocksApplied();
             for (final LivingEntity target : targets.around(impact.center(), impact.radius(), owner)) {
                 damage.hit(owner, target, impact.profile(), null);
+            }
+            if (shockSpread > 0 && plugin.ailments() != null && plugin.ailments().shocksApplied() != shocksBefore) {
+                // 2026-11-01 照 PoE2 Stormcaller Arrow：落雷讓任何一個敵人感電，落點附近的敵人全部套上同樣的感電
+                for (final LivingEntity near : targets.around(impact.center(), shockSpread, owner)) {
+                    plugin.ailments().spreadShock(near, plugin.ailments().lastShockEffect(), plugin.ailments().lastShockUntil());
+                }
             }
             targets.strike(owner, impact.profile(), SkillTargets.sphere(impact.center(), impact.radius()), impact); // 2026-10-25：落下的一擊打到鐘、冰晶
             Fx.as(impact.owner(), () -> visuals.blast(impact.visual(), impact.center(), impact.radius()));
@@ -1445,6 +1925,12 @@ final class SkillZones implements SkillTargets.Strikeable {
             if (zone.follow != null) {
                 follow(zone); // 2026-11-01 照 PoE2 Static Shocks：附在敵人身上
             }
+            if (zone.chasePerTick > 0 && (now - zone.born) % 10 == 0 && (zone.driftTo == null || zone.chasing) && zone.points.size() == 1) {
+                chase(owner, zone); // 2026-11-01 照 PoE2 Tornado：往附近的敵人移動
+            }
+            if (zone.tornadoPull && zone.points.size() == 1) {
+                tornadoPull(owner, zone, now); // 2026-11-01 照 PoE2 Tornado：每 50 毫秒往中心拉
+            }
             if (!zone.overgrown && (now - zone.born) % 10 == 0 && Overgrowth.effect(zone.profile.id()) != null
                     && inThunderstorm(zone.owner, zone.points.getFirst())) {
                 overgrow(owner, zone); // 2026-10-30 照 PoE2：積雷雲範圍內的植物繁茂
@@ -1458,10 +1944,25 @@ final class SkillZones implements SkillTargets.Strikeable {
                 drawDecals(zone, now);
                 Fx.as(zone.owner, () -> Fx.withoutPack(() -> visuals.zoneAmbient(zone.visual, zone.points, zone.radius, now)));
             }
+            if (SolarOrbs.is(zone.skill) && SolarOrbs.due(now - zone.born) && zone.points.size() == 1) {
+                // 2026-11-01 照 PoE2 Solar Orb：珠子 1 公尺內的敵人直接被點燃（這次之前用 15% 點燃機率代替）
+                SolarOrbs.ignite(plugin, targets, owner, zone.points.getFirst(), zone.radius, zone.profile);
+            }
+            if (zone.storm != null) {
+                stormTick(owner, zone, now); // 2026-11-01 照 PoE2 Firestorm：隨機落下的火彈（自己的節奏，不照 interval 整片打）
+                continue;
+            }
             if (now < zone.nextPulse) {
                 continue;
             }
             zone.nextPulse = now + zone.intervalTicks;
+            if (detonatorGas(zone) && ignitedInside(zone, owner)) {
+                // 2026-11-01 照 PoE2 Gas Arrow：被點燃的敵人碰到毒霧就炸開（滿足原作條件，更多 50%）
+                zone.gone = true;
+                expired = true;
+                burstGas(owner, zone, true);
+                continue;
+            }
             // 2026-10-26 照 PoE2：毒霧不打人、只上毒（蝕毒箭、瘴氣榴彈）；火油要被點燃才燒（火油榴彈），點燃之前只緩速
             final tw.exilecore.stats.StatSheet ownerSheet = zone.profile == null ? null : plugin.players().sheet(owner);
             final boolean poisonOnly = ownerSheet != null && PoisonOnly.ground(ownerSheet, zone.profile);
@@ -1472,6 +1973,10 @@ final class SkillZones implements SkillTargets.Strikeable {
                 Fx.as(zone.owner, () -> visuals.blast("blazing_star_shell", litAt, zone.radius));
             }
             final boolean unlit = ownerSheet != null && !zone.lit && PoisonOnly.dormant(ownerSheet, zone.profile);
+            // 2026-11-01 照 PoE2 Oil Grenade（OilIgnite）：寫了 oil.ignite_from_attack 的火油點燃之後，裡面的敵人被點燃（這次攻擊火焰傷害的 150%，不可調整），
+            //   不再一波一下擊中；這次之前每 0.5 秒打 30%
+            final double oilIgnite = !unlit && ownerSheet != null && plugin.ailments() != null ? OilIgnite.base(zone.profile, ownerSheet) : 0;
+            final tw.exilecore.stats.StatSheet oilSheet = oilIgnite > 0 ? zone.profile.effective(ownerSheet) : null;
             // 2026-10-27 照 PoE2 天賦樹（「站在感電／冰緩／點燃地面上時」）：這一波站在裡面的玩家記一下
             final String groundEvent = TreeLeftovers.groundEvent(zone.profile, poisonOnly || unlit);
             TreeLeftovers.groundPulse(plugin, zone.points, zone.radius, groundEvent, now);
@@ -1486,6 +1991,19 @@ final class SkillZones implements SkillTargets.Strikeable {
             if (zone.shards > 0 && zone.points.size() == 1) {
                 shower(owner, zone); // 2026-10-28 照 PoE2 Volcano：隨機落下的火山彈
                 continue;
+            }
+            if (zone.strikeRadius > 0 && zone.points.size() == 1) {
+                stormStrike(owner, zone, now); // 2026-11-01 照 PoE2 Thunderstorm：隨機一點劈一道雷
+                zone.nextPulse = now + StormStrikes.nextGapTicks(plugin.random().nextDouble());
+                continue;
+            }
+            if (zone.vineTicks > 0 && zone.points.size() == 1) {
+                growVine(owner, zone, now); // 2026-11-01 照 PoE2 Thrashing Vines：長一條藤砸下
+                zone.nextPulse = now + zone.vineTicks;
+                continue;
+            }
+            if (zone.elementBase > 0 && zone.absorbed.size() < 3 && zone.points.size() == 1) {
+                absorbGround(owner, zone); // 2026-11-01 照 PoE2 Tornado：蓋到元素地面就吸收（每一種各一份）
             }
             // 一波裡每隻只打一次：線的幾個圓一次掃完（2026-10，以前每個圓各掃一次）
             for (final LivingEntity target : pulseTargets(zone, owner)) { // 2026-11-01 照 PoE2 Static Shocks：有每波上限的照上限
@@ -1507,11 +2025,27 @@ final class SkillZones implements SkillTargets.Strikeable {
                     // 吸引不拉玩家（2026-10，PvP：虛空裂隙、颶風槍的漩渦只拉怪物與召喚物，打到玩家照樣有傷害）
                     pull(target, zone.points.getFirst(), zone.pull);
                 }
+                if (zone.burn != null) {
+                    burnPulse(owner, ownerSheet, zone, target); // 2026-11-01 照 PoE2 Flame Wall：燃燒持續傷害＋當作造成的點燃，不擊中
+                    continue;
+                }
                 if (zone.physicalDps > 0 || zone.hinderTicks > 0) {
                     // 2026-10-28 照 PoE2 龍捲射擊：物理持續傷害（不擊中）＋阻礙；速蝕的「對滿血敵人更多」照乘
                     if (plugin.ailments() != null) {
                         final double full = SupportMechanics.fullLife(target) ? localMore(zone.profile, tw.exilecore.stats.SupportKeys.DOT_VS_FULL_LIFE) : 1.0;
                         plugin.ailments().skillPhysicalDot(target, zone.physicalDps * full, zone.intervalTicks / 20.0, zone.owner, zone.hinderTicks);
+                        for (final java.util.Map.Entry<tw.exilecore.stats.DamageType, Double> absorbed : zone.absorbed.entrySet()) {
+                            // 2026-11-01 照 PoE2 Tornado：吸收了元素地面的另外造成那種元素的持續傷害（每一種各一份）、套上那種地面的減益
+                            plugin.ailments().skillElementalDot(target, absorbed.getValue() * full, zone.intervalTicks / 20.0, zone.owner, absorbed.getKey());
+                            tornadoDebuff(owner, zone, target, absorbed.getKey(), absorbed.getValue());
+                        }
+                        if (zone.edgeSlow && !(target instanceof Player)) {
+                            // 2026-11-01 照 PoE2 Tornado（tornado_slow_%_at_max_range 30）：越靠邊緣緩速越多
+                            final Location c = zone.points.getFirst();
+                            final Location t = target.getLocation();
+                            final double distance = Math.hypot(t.getX() - c.getX(), t.getZ() - c.getZ());
+                            plugin.ailments().groundOnMonster(target, PrimalTornado.edgeSlow(distance, zone.radius), 0, zone.intervalTicks + 5);
+                        }
                     }
                     continue;
                 }
@@ -1532,6 +2066,10 @@ final class SkillZones implements SkillTargets.Strikeable {
                     }
                     continue;
                 }
+                if (oilIgnite > 0) {
+                    plugin.ailments().igniteFrom(owner, target, oilIgnite, oilSheet);
+                    continue;
+                }
                 // 2026-11-01 照 PoE2 Hinder（拖滯）：被輔助的技能的混沌持續傷害也阻礙敵人（每一波刷新 4 秒）
                 if (plugin.ailments() != null && localFlat(zone.profile, tw.exilecore.stats.SupportSystemKeys.HINDER_DOT) > 0) {
                     plugin.ailments().skillPhysicalDot(target, 0, 0, zone.owner, tw.exilecore.stats.SupportSystemKeys.HINDER_DOT_TICKS);
@@ -1539,6 +2077,11 @@ final class SkillZones implements SkillTargets.Strikeable {
                 // 2026-10-26（速蝕，PoE2 Intense Agony）：滿血的敵人受到的非異常持續傷害更多
                 final double fullLife = SupportMechanics.fullLife(target) ? localMore(zone.profile, tw.exilecore.stats.SupportKeys.DOT_VS_FULL_LIFE) : 1.0;
                 damage.hit(owner, target, fullLife == 1.0 ? zone.profile : zone.profile.scaled(fullLife, "對滿血的敵人"), null);
+                if (zone.storedPoisonDps > 0 && now < zone.storedPoisonUntil && plugin.ailments() != null) {
+                    // 2026-11-01 照 PoE2 Vine Arrow：被下毒的植物，藤蔓另外造成存下的中毒每秒傷害 × 50%（品質更多）的混沌持續傷害
+                    plugin.ailments().skillChaosDot(target, VinePlants.extraDps(zone.storedPoisonDps, localFlat(zone.profile, VinePlants.STORED),
+                            localMore(zone.profile, VinePlants.STORED)) * fullLife, zone.intervalTicks / 20.0, zone.owner);
+                }
             }
             // 2026-10-31：打一波的粒子也只送給沒套資源包的人（套了的看地上的圖）
             Fx.as(zone.owner, () -> Fx.withoutPack(() -> visuals.zonePulse(zone.visual, zone.points, zone.radius)));
@@ -1653,7 +2196,8 @@ final class SkillZones implements SkillTargets.Strikeable {
         final List<Zone> burst = new ArrayList<>();
         while (iterator.hasNext()) {
             final Zone zone = iterator.next();
-            if (!zone.owner.equals(owner.getUniqueId()) || !GAS.contains(zone.visual) || !zone.world.equals(at.getWorld())) {
+            if (!zone.owner.equals(owner.getUniqueId()) || !GAS.contains(zone.visual) || !zone.world.equals(at.getWorld())
+                    || detonatorGas(zone)) { // 2026-11-01 照 PoE2 Gas Arrow：蝕毒箭的毒霧不被一般的火焰引爆（見 detonateGasByDetonator）
                 continue;
             }
             for (final Location point : zone.points) {
@@ -1672,10 +2216,65 @@ final class SkillZones implements SkillTargets.Strikeable {
         return count;
     }
 
-    /** 一團毒霧炸開（半徑 ×1.3）。 */
+    /** 2026-11-01：毒霧炸開的半徑倍率（瘴氣榴彈 1、其他 1.3）。純函式。 */
+    static double gasBurstScale(final String skill) {
+        return "miasma_grenade".equals(skill) ? 1.0 : 1.3;
+    }
+
+    /** 2026-11-01 照 PoE2 Gas Arrow：毒霧照原作的條件引爆的技能（被引爆類技能打到、被點燃的敵人碰到；爆炸半徑是爆炸自己的 1.8 公尺）。 */
+    static final String DETONATOR_GAS = "venom_etch_arrow";
+
+    /** 這一團是照原作條件引爆的毒霧（蝕毒箭）。 */
+    static boolean detonatorGas(final Zone zone) {
+        return zone.profile != null && (DETONATOR_GAS + ".zone").equals(zone.profile.id());
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Gas Arrow（The cloud will detonate if hit by a Detonator skill）：你的引爆類技能（detonator 標籤）打中 at 附近的敵人，
+     * 蓋到那裡的蝕毒箭毒霧炸開（滿足原作條件，更多 {@link Primed#MORE}）。
+     *
+     * @return 炸了幾團
+     */
+    int detonateGasByDetonator(final Player owner, final Location at) {
+        final List<Zone> burst = new ArrayList<>();
+        for (final Iterator<Zone> iterator = zones.iterator(); iterator.hasNext(); ) {
+            final Zone zone = iterator.next();
+            if (zone.gone || !zone.owner.equals(owner.getUniqueId()) || !detonatorGas(zone) || !zone.world.equals(at.getWorld())) {
+                continue;
+            }
+            final Location point = zone.points.getFirst();
+            if (point.distanceSquared(at) <= (zone.radius + 0.5) * (zone.radius + 0.5)) {
+                zone.gone = true;
+                iterator.remove();
+                burst.add(zone);
+            }
+        }
+        for (final Zone zone : burst) {
+            burstGas(owner, zone, true);
+        }
+        return burst.size();
+    }
+
+    /** 2026-11-01 照 PoE2 Gas Arrow（if an Ignited enemy touches it）：毒霧裡有被點燃的敵人。 */
+    private boolean ignitedInside(final Zone zone, final Player owner) {
+        if (plugin.ailments() == null) {
+            return false;
+        }
+        for (final LivingEntity target : targets.around(zone.points.getFirst(), zone.radius, owner)) {
+            if (plugin.ailments().has(target, tw.exilecore.ailment.AilmentType.IGNITE)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 一團毒霧炸開（半徑 ×{@link #gasBurstScale}；2026-11-01 照 PoE2 Gas Arrow：蝕毒箭照爆炸自己的半徑＝毒霧一開始的半徑，不吃毒霧變大）。 */
     private void burstGas(final Player owner, final Zone zone, final boolean enhanced) {
         final Location center = zone.points.getFirst();
-        final double radius = zone.radius * 1.3;
+        // 2026-11-01 照 PoE2 Gas Grenade（Explosion 的半徑跟 Poison Cloud 同一條 1.4→2.0→2.7）：瘴氣榴彈炸開的範圍就是毒氣現在（擴大後）的範圍；
+        //   其他毒霧照舊 ×1.3
+        //   蝕毒箭照爆炸自己的半徑（毒霧一開始的半徑，Gas Arrow）；其他毒霧照舊 ×1.3
+        final double radius = detonatorGas(zone) ? zone.baseRadius : zone.radius * gasBurstScale(zone.skill != null ? zone.skill : zone.profile.id());
         // 2026-10-28 照 PoE2：有爆炸自己的表（stage.explosion：蝕毒箭 90% → 281% → 745%、瘴氣榴彈 150% → 612% → 2715%）就照它、全部轉火焰；
         // 這次之前毒霧一跳 × 6
         final SkillProfile gas = StageAttacks.gasBlast(zone.profile, GAS_BURST, "毒霧引爆");

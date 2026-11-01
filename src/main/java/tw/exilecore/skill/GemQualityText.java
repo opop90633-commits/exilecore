@@ -48,7 +48,9 @@ final class GemQualityText {
             Map.entry("starfire_bead_chain", "每一顆之前射過的火星再更多 {ember.more_per_previous}% 傷害"),
             Map.entry("root_bind", "{skill.additional_fissure_chance}% 機率多一道裂隙、同時上限 +{i:skill.limit} 道"),
             Map.entry("unquenched_fury", "每秒另外回復 {effect.rage.regen} 點怒氣"),
-            Map.entry("blood_vein_tether", "多 {i:skill.chains} 道血脈（多一個目標）"),
+            Map.entry("blood_vein_tether", "多放 {i:chain.beams} 道血觸手"), // 2026-11-01 照 PoE2 blood_tendrils_beam_count；這次之前連鎖 +1
+            Map.entry("might_seal", "法印半徑 +{m:sigil.radius} 格"), // 2026-11-01 照 PoE2：力印是地上的法印了（SacredGrounds）
+            Map.entry("rebirth_ceremony", "法印半徑 +{m:sigil.radius} 格"), // 2026-11-01 照 PoE2
             Map.entry("frost_tooth_stab", "{parried.keep_chance}% 機率不用掉被招架的減益"),
             Map.entry("corpse_devour_feast", "多吃 {i:corpses.flat} 具屍體（身邊超過 5 具時）"),
             Map.entry("flame_breath", "引導的前 {charge.rage_free_seconds} 秒另外不耗怒氣"),
@@ -56,8 +58,10 @@ final class GemQualityText {
             Map.entry("winter_shell", "最大層數 +{i:arctic.stages}"),
             Map.entry("chill_crystal_mine", "曝露疊加的上限 +{exposure.cap_flat}%"),
             Map.entry("frost_drill", "穿透過敵人之後投射物更多 {projectile.pierced_more}% 傷害"),
+            Map.entry("leaping_staff_crash", "破勢多撐 {i:broken_stance.hits} 下擊中"), // 2026-11-01 照 PoE2 Vaulting Impact（這次之前列在 NO_EFFECT）
+            Map.entry("thunder_surge", "裂隙半寬 +{m:storm_wave.width} 格"), // 2026-11-01 照 PoE2 Storm Wave
             Map.entry("thunder_resonance", "額外擊中的「更少」少 {-thunder_resonance.less} 個百分點"),
-            Map.entry("mist_staff_sweep", "1.5 公尺內的敵人更多 {damage.close_more}% 傷害（到 4 公尺遞減到沒有）"),
+            Map.entry("mist_staff_sweep", "1.5 格內的敵人更多 {damage.close_more}% 傷害（到 4 格遞減到沒有）"),
             Map.entry("remains_banquet", "殘骸另外存召喚物最大生命的 {grim.share}%"),
             Map.entry("ember_envoy", "另外 {herald.ash_overkill}% 過量擊殺傷害算進點燃（每秒）"),
             Map.entry("blood_proclaim", "爆炸另外多打失血的 {herald.blood_share}%"),
@@ -98,11 +102,12 @@ final class GemQualityText {
             Map.entry("collapse_heart_chant", "需要的連擊少 {-i:mantra.combo}"),
             Map.entry("servant_corpse_swap", "召喚物復活另外快 {servant_corpse_swap.slower}%"), // 2026-10-31：最大生命那條 10-30 移到額外的品質效果（高階奇術那行會寫），這裡拿掉，不然一直顯示 0%
             Map.entry("beast_blood_boil", "狂暴另外更多 {effect.damage}% 傷害"),
-            Map.entry("gathered_scales", "增益另外增加 {effect.armour}% 護甲、{effect.armour.break}% 破甲"),
+            Map.entry("gathered_scales", "甲片持續時間 +{plating.duration} 秒"), // 2026-11-01 照 PoE2；這次之前「增益另外增加護甲、破甲」
             Map.entry("snake_squall_thrust", "擊退距離更多 {skill.knockback}%"),
             Map.entry("earth_spike_eruption", "每根還在的地刺更多 {spike.more_per_spike}% 擊中傷害"),
             Map.entry("iron_wall_ram", "照衝刺距離更多傷害的上限另外 +{charge.distance_more}%"),
             Map.entry("earth_wall_strike", "被自己的技能打碎時再更多 {wall.self_more}% 傷害"),
+            Map.entry("thorn_shaft", "荊棘被下毒時存下的中毒傷害更多 {vine.stored_poison}%"), // 2026-11-01 照 PoE2 Vine Arrow（這次之前列在 NO_EFFECT）
             Map.entry("electrocute_shaft", "打中插著電殛棒的目標，獲得 {rod.gain_lightning}% 傷害為額外閃電傷害"),
             Map.entry("element_trace_surge", "凍結、點燃、感電時產生灌注殘骸的機率另外 +{effect.infusion.remnant_on_ailment}%"),
             Map.entry("summon_bone_priest", "召喚物：復活的骷髏 {cleric.revive_immune} 秒不會受到傷害"),
@@ -163,15 +168,19 @@ final class GemQualityText {
             Map.entry("mirage_spirit_spring", "增益另外增加 {asc.well_es_recharge}% 能量護盾回充速度"),
             Map.entry("blade_spirit_settle", "傷害半徑 +{asc.reckoning_radius} 格"), // 站長：直接 +格，不換算公尺
             Map.entry("blade_spirit_device", "符文、龍捲持續時間各 +{asc.rune_duration} 秒"),
-            Map.entry("flame_blade_spirit", "羅贊的烙印對燃燒中的敵人另外更多 {asc.brand_burning_more}% 傷害"));
+            Map.entry("flame_blade_spirit", "羅贊的烙印對燃燒中的敵人另外更多 {asc.brand_burning_more}% 傷害"),
+            // 2026-11-01 照 PoE2（PoB2／poe2db 的 qualityStats）
+            Map.entry("final_mirage_spirit", "娜瑟菈的寧靜另外增加 {asc.calming_regen}% 魔力再生"),
+            Map.entry("sand_spirit_trick", "連續使用每次另外更多 {asc.deception_more}% 傷害"),
+            Map.entry("gap_opportunity", "時間殘影的傷害另外 {asc.rip_share}% 也打在本體上"),
+            Map.entry("breeze_dance_step", "疾風的爆炸半徑 +{m:gale.radius} 格")); // 2026-11-01 照 PoE2 Wind Dancer；這次之前沒有疾風，品質沒有效果
 
     /** 原作的品質效果我們沒有對應機制（品質寫 []）的：技能代號 → {原因樣板, 每 1% 品質的原作數值}；{v} 換成這個品質的數值。 */
-    static final Map<String, Object[]> NO_EFFECT = Map.ofEntries(
-            Map.entry("thorn_shaft", new Object[] {"這個技能的品質沒有效果", 0.5}),
-            Map.entry("might_seal", new Object[] {"這個技能的品質沒有效果", 0.04}),
-            Map.entry("leaping_staff_crash", new Object[] {"這個技能的品質沒有效果", 0.1}),
-            Map.entry("breeze_dance_step", new Object[] {"這個技能的品質沒有效果", 0.02}),
-            Map.entry("gap_opportunity", new Object[] {"這個技能的品質沒有效果", 1.0})); // 2026-10-30：原作打殘影的傷害給本體，我們沒有時空殘影
+    static final Map<String, Object[]> NO_EFFECT = Map.ofEntries();
+    // 2026-11-01：蔓刺箭（thorn_shaft）照 PoE2 Vine Arrow 品質生效；這次之前在這裡（沒有效果）
+    // 2026-11-01：乘隙之機（gap_opportunity）的時間殘影做出來了，品質照 PoE2 生效（QUALITY）；這次之前在這裡（沒有效果）
+    // 2026-11-01：疾風之舞（breeze_dance_step）照 PoE2 Wind Dancer 有疾風了，品質生效；這次之前在這裡（沒有效果）
+    // 2026-11-01：金剛杖砸（leaping_staff_crash）照 PoE2 Vaulting Impact 品質生效；這次之前在這裡（沒有效果）
 
     /** 這個技能 quality% 的說明本體（不含「品質 +x%：」）；不是這次接上的回傳 null。 */
     static String body(final String skillId, final List<Modifier> mods, final int quality) {

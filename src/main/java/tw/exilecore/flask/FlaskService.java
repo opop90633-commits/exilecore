@@ -606,6 +606,11 @@ public final class FlaskService {
                 list.add(new Recovery(FlaskKind.MANA, gradual / manaTicks, manaTicks));
             }
         }
+        // 2026-11-01 照 PoE2 Alchemist's Boon（recovery_from_flasks_applies_to_allies_in_presence_%）：回復量的 x% 也套在存在範圍內的友軍身上
+        final double allyShare = allyShare(sheet);
+        if (allyShare > 0) {
+            shareWithAllies(player, sheet, (life || both) && !noLife, !life || both, instant * allyShare, gradual * allyShare, lifeTicks, manaTicks);
+        }
         // 「生命藥劑的回復也消耗魔力」／「魔力藥劑的回復也消耗生命」：喝的時候一次扣另一種資源
         if (mods.costOther() > 0) {
             final double cost = recovery * mods.costOther();
@@ -633,6 +638,58 @@ public final class FlaskService {
         player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1.2, 0), 10, 0.3, 0.4, 0.3, 0,
                 new Particle.DustOptions(base.kind() == FlaskKind.LIFE ? Color.fromRGB(0xFF4D5E) : Color.fromRGB(0x5C8DFF), 1.1f));
         return true;
+    }
+
+    /** 2026-11-01 照 PoE2 Alchemist's Boon：藥劑回復分給存在範圍內友軍的比例（調藥心得的光環效果，FLAT 百分比）。 */
+    public static final String STAT_ALLY_SHARE = "flask.ally_share";
+
+    /** 同上，換成 0–1 的比例（純函式）。 */
+    static double allyShare(final tw.exilecore.stats.StatSheet sheet) {
+        return sheet == null ? 0 : Math.max(0, Math.min(100, sheet.flat(STAT_ALLY_SHARE, java.util.Set.of()))) / 100.0;
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Alchemist's Boon：這一瓶回復的一份（已經乘好比例）給喝的人存在範圍內的友軍：隊友照同樣的時間慢慢回（立即的部分立即回），
+     * 存在範圍內你的召喚物的生命一次回。喝的時候在範圍內的才算。
+     */
+    private void shareWithAllies(final Player drinker, final tw.exilecore.stats.StatSheet sheet, final boolean lifeShare, final boolean manaShare,
+                                 final double instant, final double gradual, final int lifeTicks, final int manaTicks) {
+        final double radius = tw.exilecore.combat.Presence.radius(sheet);
+        if (plugin.party() != null) {
+            for (final UUID member : plugin.party().groupMembers(drinker.getUniqueId())) {
+                final Player ally = member.equals(drinker.getUniqueId()) ? null : plugin.getServer().getPlayer(member);
+                if (ally == null || !ally.getWorld().equals(drinker.getWorld()) || !eligible(ally)
+                        || ally.getLocation().distanceSquared(drinker.getLocation()) > radius * radius) {
+                    continue;
+                }
+                final PlayerState allyState = plugin.players().get(ally);
+                if (allyState.isDead()) {
+                    continue;
+                }
+                if (instant > 0) {
+                    if (lifeShare) {
+                        allyState.setLife(allyState.life() + instant);
+                    }
+                    if (manaShare) {
+                        allyState.setMana(allyState.mana() + instant);
+                    }
+                }
+                if (gradual > 0) {
+                    final List<Recovery> list = active.computeIfAbsent(member, uuid -> new ArrayList<>());
+                    if (lifeShare) {
+                        list.add(new Recovery(FlaskKind.LIFE, gradual / lifeTicks, lifeTicks));
+                    }
+                    if (manaShare) {
+                        list.add(new Recovery(FlaskKind.MANA, gradual / manaTicks, manaTicks));
+                    }
+                }
+                plugin.players().display(ally, allyState);
+                ally.getWorld().spawnParticle(Particle.HEART, ally.getLocation().add(0, 2.0, 0), 1, 0.2, 0.1, 0.2, 0);
+            }
+        }
+        if (lifeShare && plugin.skills() != null && plugin.skills().minions() != null) {
+            plugin.skills().minions().healOwnedNear(drinker, drinker.getLocation(), radius, instant + gradual);
+        }
     }
 
     /**

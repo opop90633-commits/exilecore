@@ -135,22 +135,32 @@ public final class CraftBenchMenu extends Menu {
         return id == null ? null : currencies().repository().get(id);
     }
 
-    /** 有的星籤（照 currencies.yml 的順序）。 */
+    /**
+     * 有的星籤（照 currencies.yml 的順序）。
+     * 2026-11-01 照站長：右邊選了通貨的話，只列會被那顆通貨觸發的星籤（不能用的藏起來）；這次之前一律全列。
+     */
     private List<CurrencyType> omens() {
         final List<CurrencyType> list = new ArrayList<>();
+        final CurrencyType currency = type(currencyId);
         for (final CurrencyType type : currencies().repository().all()) {
-            if (type.operation() == CurrencyOperation.OMEN && have(type.id()) > 0) {
+            if (type.operation() == CurrencyOperation.OMEN && have(type.id()) > 0
+                    && (currency == null || Crafting.triggers(type, currency))) {
                 list.add(type);
             }
         }
         return list;
     }
 
-    /** 有的、洗裝台收的通貨。 */
+    /**
+     * 有的、洗裝台收的通貨。
+     * 2026-11-01 照站長：左邊選了星籤的話，只列會觸發那個星籤的通貨（例如必變籤只剩蝕變石）；這次之前一律全列。
+     */
     private List<CurrencyType> benchCurrencies() {
         final List<CurrencyType> list = new ArrayList<>();
+        final CurrencyType omen = type(omenId);
         for (final CurrencyType type : currencies().repository().all()) {
-            if (BENCH.contains(type.operation()) && !type.isSkillCurrency() && have(type.id()) > 0) {
+            if (BENCH.contains(type.operation()) && !type.isSkillCurrency() && have(type.id()) > 0
+                    && (omen == null || Crafting.triggers(omen, type))) {
                 list.add(type);
             }
         }
@@ -255,7 +265,9 @@ public final class CraftBenchMenu extends Menu {
             set(OMEN_SLOTS[i], index < omens.size() ? choice(omens.get(index), omens.get(index).id().equals(omenId)) : null);
         }
         if (omens.isEmpty()) {
-            set(OMEN_SLOTS[0], icon(Material.GRAY_DYE, "<gray>沒有星籤", "<dark_gray>流寇、祭壇會給"));
+            set(OMEN_SLOTS[0], type(currencyId) != null
+                    ? icon(Material.GRAY_DYE, "<gray>沒有" + type(currencyId).name() + "能用的星籤", "<dark_gray>點右邊選的通貨取消，看全部星籤")
+                    : icon(Material.GRAY_DYE, "<gray>沒有星籤", "<dark_gray>流寇、祭壇會給"));
         } else if (page * OMEN_SLOTS.length >= omens.size()) {
             set(OMEN_SLOTS[0], icon(Material.GRAY_DYE, "<gray>星籤只有 " + pagesOf(omens.size()) + " 頁", "<dark_gray>往前翻看星籤"));
         }
@@ -264,7 +276,9 @@ public final class CraftBenchMenu extends Menu {
             set(CURRENCY_SLOTS[i], index < list.size() ? choice(list.get(index), list.get(index).id().equals(currencyId)) : null);
         }
         if (list.isEmpty()) {
-            set(CURRENCY_SLOTS[0], icon(Material.GRAY_DYE, "<gray>沒有能用的通貨"));
+            set(CURRENCY_SLOTS[0], type(omenId) != null
+                    ? icon(Material.GRAY_DYE, "<gray>沒有能觸發" + type(omenId).name() + "的通貨", "<dark_gray>點左邊選的星籤取消，看全部通貨")
+                    : icon(Material.GRAY_DYE, "<gray>沒有能用的通貨"));
         } else if (page * CURRENCY_SLOTS.length >= list.size()) {
             set(CURRENCY_SLOTS[0], icon(Material.GRAY_DYE, "<gray>通貨只有 " + pagesOf(list.size()) + " 頁", "<dark_gray>往前翻看通貨"));
         }
@@ -475,6 +489,7 @@ public final class CraftBenchMenu extends Menu {
                 final int index = page * OMEN_SLOTS.length + i;
                 if (index < omens.size()) {
                     omenId = omens.get(index).id().equals(omenId) ? null : omens.get(index).id();
+                    page = 0; // 2026-11-01：右邊的通貨跟著篩過，從第一頁看
                     redraw();
                 }
                 return;
@@ -486,6 +501,7 @@ public final class CraftBenchMenu extends Menu {
                 final int index = page * CURRENCY_SLOTS.length + i;
                 if (index < list.size()) {
                     currencyId = list.get(index).id().equals(currencyId) ? null : list.get(index).id();
+                    page = 0; // 2026-11-01：左邊的星籤跟著篩過，從第一頁看
                     redraw();
                 }
                 return;
@@ -568,6 +584,9 @@ public final class CraftBenchMenu extends Menu {
         if (currency != null) {
             if (currency.operation() == CurrencyOperation.OMEN) {
                 omenId = currency.id();
+                if (type(currencyId) != null && !Crafting.triggers(currency, type(currencyId))) {
+                    currencyId = null; // 2026-11-01：選的通貨不會觸發這個星籤，換掉
+                }
                 final List<CurrencyType> omens = omens();
                 for (int i = 0; i < omens.size(); i++) {
                     if (omens.get(i).id().equals(omenId)) {
@@ -576,6 +595,9 @@ public final class CraftBenchMenu extends Menu {
                 }
             } else if (BENCH.contains(currency.operation()) && !currency.isSkillCurrency()) {
                 currencyId = currency.id();
+                if (type(omenId) != null && !Crafting.triggers(type(omenId), currency)) {
+                    omenId = null; // 2026-11-01：這顆通貨不會觸發選的星籤，拿掉星籤
+                }
                 final List<CurrencyType> list = benchCurrencies();
                 for (int i = 0; i < list.size(); i++) {
                     if (list.get(i).id().equals(currencyId)) {

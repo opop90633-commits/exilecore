@@ -202,7 +202,7 @@ final class Snap {
         if (bolt != null && (target == null || bolt.distanceSquared(origin.eye()) < target.getLocation().distanceSquared(origin.eye()))) {
             frostbolt(origin, build, true); // 用掉那顆霜鑽
             final double[] cold = range(build, DamageType.COLD);
-            blast(owner, bolt, build.radius() * FROSTBOLT_RADIUS, elementProfile(build.profile(), DamageType.COLD, cold[0] * Primed.MORE, cold[1] * Primed.MORE, false), DamageType.COLD); // 2026-10-31：滿足條件更多 50%
+            blast(owner, bolt, build.radius() * FROSTBOLT_RADIUS, elementProfile(build.profile(), DamageType.COLD, cold[0] * Primed.MORE, cold[1] * Primed.MORE, false), DamageType.COLD); // 2026-10-31：滿足條件更多 50%（2026-11-02 照站長恢復）
             remnants(owner, build, bolt, DamageType.COLD);
             return;
         }
@@ -246,7 +246,7 @@ final class Snap {
         }
         plugin.ailments().cure(source, type); // 用掉異常
         final double[] range = range(build, element);
-        blast(owner, at, radius, elementProfile(build.profile(), element, range[0] * Primed.MORE, range[1] * Primed.MORE, unique), element); // 2026-10-31：用掉異常更多 50%
+        blast(owner, at, radius, elementProfile(build.profile(), element, range[0] * Primed.MORE, range[1] * Primed.MORE, unique), element); // 2026-10-31：用掉異常更多 50%（2026-11-02 照站長恢復）
         return same;
     }
 

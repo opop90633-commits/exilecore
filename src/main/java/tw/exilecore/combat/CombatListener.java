@@ -888,6 +888,7 @@ public final class CombatListener implements Listener {
                     if (plugin.skills().treeLeftovers() != null) {
                         plugin.skills().treeLeftovers().onFullBreak((Player) attacker, defender); // 2026-10-27 照 PoE2 天賦樹：完全破甲的敵人被癱瘓
                     }
+                    plugin.skills().armourFullyBroken((Player) attacker, defender); // 2026-11-01 照 PoE2 Scavenged Plating：拾鱗的甲片
                     if (charges != null && !totemHit(skill)) { // 2026-10-21：圖騰、英靈造成的完全破甲不給你戰星
                         charges.onEvent((Player) attacker, "armour_broken", breakSheet, skill.tags(), defender); // 戰星：完全破甲時（2026-10）
                     }

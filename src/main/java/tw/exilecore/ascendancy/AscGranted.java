@@ -511,6 +511,27 @@ final class AscGranted implements Listener {
     AscGranted(final AscendancyEffects effects) {
         this.effects = effects;
         this.plugin = effects.plugin;
+        this.rips = new TimeRips(effects);
+    }
+
+    /** 2026-11-01：乘隙之機的時間殘影。 */
+    private final TimeRips rips;
+
+    /** 2026-11-01：技能格倒數：霞瑤之主、天災降臨、珂芮絲的分身、幻影、霞瑤之炎（紫）、命途同調的強化窗口還剩幾 tick。 */
+    long slotTicks(final UUID player, final String skillId, final long now) {
+        final Own own = owns.get(player);
+        if (own == null) {
+            return 0;
+        }
+        return switch (skillId) {
+            case "rose_jade_lord" -> own.archonUntil - now;
+            case "calamity_descent" -> own.apocalypseUntil - now;
+            case "sand_spirit_trick" -> own.clone == null ? 0 : own.cloneUntil - now;
+            case DeadeyeMetas.MIRAGE -> own.mirageUntil - now;
+            case "rift_dive" -> own.purple > 0 ? own.purpleUntil - now : 0;
+            case "destiny_attune" -> own.alignSkill != null ? own.alignUntil - now : 0;
+            default -> 0;
+        };
     }
 
     private Own own(final Player player) {
@@ -595,7 +616,8 @@ final class AscGranted implements Listener {
             // 這次之前孔裡不能放技能：幻影重複你接下來的投射物攻擊，冷卻固定 10 秒、持續時間不吃加成
             if (on(player, DeadeyeMetas.MIRAGE) && build.profile().tags().contains(Tags.ATTACK) && build.profile().tags().contains(Tags.PROJECTILE)
                     && !build.profile().tags().contains(Tags.MELEE) && now >= own.mirageReady && own.mirageUntil <= now
-                    && plugin.skills() != null && !plugin.skills().deadeyeSocketed(player, DeadeyeMetas.MIRAGE).isEmpty()) {
+                    && plugin.skills() != null && mirageWeapon(player, state)
+                    && !plugin.skills().deadeyeSocketed(player, DeadeyeMetas.MIRAGE).isEmpty()) {
                 final SkillBuild host = plugin.skills().deadeyeHost(player, DeadeyeMetas.MIRAGE);
                 final StatSheet effective = host == null ? null : host.profile().effective(state.sheet());
                 final Set<String> context = host == null ? Set.of() : host.profile().tags();
@@ -706,8 +728,10 @@ final class AscGranted implements Listener {
                 // 連續使用每次更多 50%（最多 300%）；分身還在時再用，分身也爆炸
                 own.deceptions = now - own.deceptionLast <= 120 ? Math.min(6, own.deceptions + 1) : 0;
                 own.deceptionLast = now;
-                if (own.deceptions > 0) {
-                    local.add(Modifier.more(StatKeys.DAMAGE, 0.5 * own.deceptions, "珂芮絲的詭計"));
+                // 2026-11-01 照 PoE2（djinn_damage_+%_final_per_teleport_in_sequence 50，品質每 1% +0.5）：每次 50%＋品質，最多 300%
+                final double deceptionMore = deceptionMore(own.deceptions, level(player, id, "asc.deception_more"));
+                if (deceptionMore > 0) {
+                    local.add(Modifier.more(StatKeys.DAMAGE, deceptionMore, "珂芮絲的詭計"));
                 }
                 // 2026-11-01 照 PoE2（Command：克拉里放完 Kelari's Deception 的施法時間 0.8 秒 ÷ 他的施法速度才瞬移、炸開、留下分身，
                 //   上一個還在的分身也在那時候爆炸）；這次之前按下去馬上
@@ -743,7 +767,9 @@ final class AscGranted implements Listener {
                 // 2026-11-01 照 PoE2（Command：羅贊放完 Ruzhan's Reckoning 的施法時間 2.3 秒 ÷ 他的施法速度才落地出手）：熔岩浪、引爆烙印跟著往後；
                 //   這次之前按下去 0.4 秒就落地
                 final long cast = djinnCast(player, build);
-                effects.later(cast + 18, () -> plugin.skills().triggerSkill(player, "asc_ruzhan_wave", at));
+                // 2026-11-01 照 PoE2 Ruzhan's Reckoning 的 Fire Wave（同一顆寶石的第二段）：熔岩浪跟清算同一級；這次之前用角色能用的最高級
+                final int waveLevel = build.level();
+                effects.later(cast + 18, () -> plugin.skills().triggerSkill(player, "asc_ruzhan_wave", at, waveLevel, List.of()));
                 // 2026-11-01 照 PoE2（Ruzhan's Reckoning 是 Detonator）：落地時引爆你全部的羅贊的烙印
                 effects.later(cast + 8, () -> tickBrands(now(), player.getUniqueId()));
             }
@@ -915,7 +941,7 @@ final class AscGranted implements Listener {
     }
 
     private double navira_calming(final Player player) {
-        // 原作 1 級 10% → 20 級 67%（skills.yml 的 level_modifiers）
+        // 原作 1 級 10% → 20 級 67% → 40 級 127%（skills.yml 的 level_modifiers），品質另外 +(0—20)%（gem_quality.yml；level() 加上）
         return Math.max(10, level(player, "final_mirage_spirit", "asc.calming_regen"));
     }
 
@@ -1065,8 +1091,9 @@ final class AscGranted implements Listener {
         if (id.startsWith("asc_ruzhan_brand") && plugin.ailments() != null && plugin.ailments().has(defender, AilmentType.IGNITE)) {
             out.add(Modifier.more(StatKeys.DAMAGE, 0.50 + level(attacker, "flame_blade_spirit", "asc.brand_burning_more") / 100.0, "羅贊的烙印"));
         }
-        if (id.startsWith("blade_spirit_wrath_fire") && plugin.ailments() != null
-                && (plugin.ailments().isIncapacitated(defender) || plugin.ailments().pinned(defender))) {
+        // 2026-11-01 照 PoE2 Ruzhan's Fury（active_skill_damage_+%_final_vs_immobilised_enemies 60）：禁錮＝定身、凍結、重暈、電擊；
+        //   這次之前用 isIncapacitated（輕暈也算）
+        if (id.startsWith("blade_spirit_wrath_fire") && plugin.ailments() != null && immobilised(defender)) {
             out.add(Modifier.more(StatKeys.DAMAGE, 0.60, "羅贊的怒焰"));
         }
         // 2026-11-01 照 PoE2 Navira's Fracturing（fracture all nearby areas of Chilled Ground that have enemies standing on them）：
@@ -1075,6 +1102,20 @@ final class AscGranted implements Listener {
             out.add(Modifier.more(StatKeys.DAMAGE, -1.0, "只碎裂敵人腳下的冰緩地面"));
         }
         return out;
+    }
+
+    /** 2026-11-01 照 PoE2 Immobilised：定身、凍結、重暈、電擊（輕暈不算）。 */
+    private boolean immobilised(final LivingEntity defender) {
+        final tw.exilecore.ailment.AilmentService ailments = plugin.ailments();
+        return ailments != null && (ailments.pinned(defender) || ailments.isFrozen(defender) || ailments.heavyStunned(defender)
+                || ailments.electrocuted(defender));
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Kelari's Deception：連續第 sequence 次（0 = 第一次）更多 (50 + 品質)% × 次數，最多 300%（小數）。
+     */
+    static double deceptionMore(final int sequence, final double qualityPercent) {
+        return Math.min(3.0, Math.max(0, sequence) * (0.5 + Math.max(0, qualityPercent) / 100.0));
     }
 
     boolean boiling(final LivingEntity defender) {
@@ -1137,6 +1178,12 @@ final class AscGranted implements Listener {
             own.lifeRemnantReady = now + 60;
             spawnRemnant(player, target.getLocation(), "life", level(player, "vital_residue", "asc.remnant_life"), 160);
         }
+        // 2026-11-01 照 PoE2 Shattering Concoction（has_freeze_cull：Freeze enemies that are Primed for Freeze）：擊中蓄勢待凍的敵人直接凍結
+        if (plugin.ailments() != null && has(skill, "asc.freeze_primed") && !rips.isVisage(target)) {
+            plugin.ailments().freezeIfPrimed(target);
+        }
+        // 2026-11-01 照 PoE2 Moment of Vulnerability：打中蓄勢待暈／待電／待凍的敵人拉出時間殘影；打殘影的傷害分一部分給本體（TimeRips）
+        rips.hit(player, event, data, "gap_opportunity".equals(skill.id()) ? level(player, "gap_opportunity", "asc.rip_share") : -1);
         // 流血混合物：加劇流血；酸性靈藥：消耗中毒爆裂
         if (plugin.ailments() != null) {
             if (has(skill, "asc.aggravate_on_hit") || AscendancyEffects.has(sheet, AscKeys.CURSE_AGGRAVATE) && plugin.combat() != null
@@ -1321,11 +1368,12 @@ final class AscGranted implements Listener {
 
     /**
      * 2026-10-31 照站長：夏烏拉之炎改成直接生效（不用走過去撿）後效果調低：紫炎每層 7% → 4% 額外混沌、紅藍炎偷取 20% → 10%。
+     * 2026-11-01 照站長：改回原作的紫炎每層 7%、紅藍炎偷取 20%（還是直接生效）。
      */
-    static final double FLAME_PURPLE = 4;
-    static final double FLAME_LEECH = 0.10;
-    /** 2026-10-31 照站長：夏烏拉之炎產生的間隔乘幾倍。 */
-    static final double FLAME_INTERVAL_SCALE = 2.0;
+    static final double FLAME_PURPLE = 7;
+    static final double FLAME_LEECH = 0.20;
+    /** 2026-10-31 照站長：夏烏拉之炎產生的間隔乘幾倍；2026-11-01 照站長改回 1（原作 1.4～1.21 秒一個），這次之前 2。 */
+    static final double FLAME_INTERVAL_SCALE = 1.0;
 
     /** 2026-10-31：自動吃掉時「再出現」只給一次（再出現的那個不會再出現）。 */
     private boolean reappearAllowed = true;
@@ -1595,7 +1643,7 @@ final class AscGranted implements Listener {
         }
         // 遁入裂痕：夏烏拉之炎
         if (on(player, "rift_dive") && now >= o.flameNext) {
-            // 2026-10-31 照站長：直接生效之後間隔拉長兩倍（1.4～1.21 秒 → 2.8～2.42 秒）
+            // 2026-10-31 照站長：直接生效之後間隔拉長兩倍（1.4～1.21 秒 → 2.8～2.42 秒）；2026-11-01 照站長改回 1.4～1.21 秒（FLAME_INTERVAL_SCALE 1）
             o.flameNext = now + Math.round(Math.max(1.2, level(player, "rift_dive", "asc.flame_interval")) * FLAME_INTERVAL_SCALE * 20);
             final int colour = (int) AscendancyEffects.flat(sheet, AscKeys.FLAME_COLOUR);
             final String kind = switch (colour) {
@@ -1881,7 +1929,7 @@ final class AscGranted implements Listener {
         }
         final long now = now();
         if (!player.isOnline() || o.mirageUntil <= now || o.mirageAt == null || o.mirageAt.getWorld() != player.getWorld()
-                || !on(player, DeadeyeMetas.MIRAGE)) {
+                || !on(player, DeadeyeMetas.MIRAGE) || !mirageWeapon(player, plugin.players().get(player))) {
             o.mirageUntil = Math.min(o.mirageUntil, now);
             return;
         }
@@ -1930,6 +1978,15 @@ final class AscGranted implements Listener {
             mirageFire(player, generation, fired);
             effects.later(gap, () -> mirageStep(player, generation));
         }
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Mirage Deadeye（weaponTypes：Bow、Crossbow、Spear）：拿著弓、弩或矛才會留下幻影，換成別的武器幻影就散掉
+     * （skills.yml 的 weapons；開技能時 SkillService 也擋）。這次之前什麼武器都行。
+     */
+    private boolean mirageWeapon(final Player player, final PlayerState state) {
+        final SkillDefinition mirage = plugin.skills() == null ? null : plugin.skills().config().skill(DeadeyeMetas.MIRAGE);
+        return mirage == null || state == null || mirage.usableWith(state.weaponTags());
     }
 
     /** 幻影放出那一下（朝幻影最近的敵人）；幻影已經消失就不放。 */

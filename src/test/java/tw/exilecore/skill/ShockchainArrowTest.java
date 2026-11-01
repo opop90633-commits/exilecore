@@ -60,7 +60,7 @@ class ShockchainArrowTest {
         assertEquals(3, modifier(arrow, ShockchainArrows.CHAINS_ON_AILMENT), 1e-9);
         assertEquals(1, modifier(arrow, ShockchainArrows.FLAG_HOMING), 1e-9);
         assertEquals(1, modifier(arrow, ShockchainArrows.FLAG_CONSUME_SHOCK), 1e-9);
-        assertEquals(-1.0, modifier(arrow, StatKeys.SHOCK_CHANCE), 1e-9); // 更多 -100%（MORE 存成比例）
+        assertTrue(Double.isNaN(modifier(arrow, StatKeys.SHOCK_CHANCE))); // 2026-11-01 照站長：技能本身的異常限制拿掉，可以感電（這次之前更多 -100%）
         assertTrue(Double.isNaN(modifier(arrow, "proc.hit")), "震波不再是每一下都觸發的隱藏技能");
         assertNull(config.skill("proc_shockchain_wave"));
         assertTrue(arrow.description().contains("雷霆之杖"));

@@ -22,6 +22,11 @@ public final class DamageCalculator {
     /** 帶這個標籤的擊中不能被格擋或招架（= DodgeRoll.UNDODGEABLE_TAG，Boss 全場大招）。 */
     static final String UNBLOCKABLE_TAG = "undodgeable";
 
+    /** 2026-11-01 照 PoE2 Parry：這一擊招架擋得到（攻擊、不是 Boss 全場大招、防守方正在招架且在距離內）。純函式。 */
+    public static boolean parryable(final SkillProfile skill, final StatSheet defender) {
+        return skill.isAttack() && !skill.tags().contains(UNBLOCKABLE_TAG) && StatKeys.flag(defender, StatKeys.FLAG_PARRY);
+    }
+
     /** 法術沒有武器時的基礎暴擊率（百分比點數）。 */
     public static final double BASE_SPELL_CRIT = 5.0;
     /** 2026-10-27 照 PoE2：不用武器的攻擊（血爆、嗅血爆：crit_chance 500）的基礎暴擊率（%）。 */
@@ -97,7 +102,9 @@ public final class DamageCalculator {
         final StatSheet attacker = chargeScaling(skill.effective(attackerSheet), skill.tags());
         // 1. 命中與格擋（基石「必中」跳過命中擲骰）
         // 2026-10-26 照 PoE2 天賦樹：「必中」可以帶標籤（「你的擊中不會被釘住的敵人閃避」＝ vs_immobilised）；這次之前只看無標籤的
-        if (evadable && !(attacker.flat(StatKeys.FLAG_ALWAYS_HIT, skill.tags()) > 0)) {
+        // 2026-11-01 照 PoE2 Parry（You cannot Evade a Hit you could parry）：招架擋得到的那一擊不擲閃避，直接招架；
+        //   閃避改成避開招架的重暈累積（AilmentService.blockedHit）。這次之前先擲閃避，閃掉了就不算招架
+        if (evadable && !(attacker.flat(StatKeys.FLAG_ALWAYS_HIT, skill.tags()) > 0) && !parryable(skill, defender)) {
             // 2026-10-26 照 PoE2 天賦樹：命中帶這一下的情境（技能標籤＋目標狀態：對稀有、傳奇，對流血的，近距離）；這次之前只看無標籤的
             // 2026-10-27 照 PoE2：怪物打玩家用怪物的命中公式（hitChanceAgainst）
             double chance = hitChanceAgainst(defender, attacker.get(StatKeys.ACCURACY, skill.tags()), defender.get(StatKeys.EVASION));
@@ -368,6 +375,16 @@ public final class DamageCalculator {
         return lowest;
     }
 
+    /** 2026-11-01 照 PoE2 穿透的下限（PoB2 PenetrationMinimum，我們沒有改下限的來源）：0。 */
+    static final double PENETRATION_MINIMUM = 0;
+
+    /**
+     * 2026-11-01 照 PoE2（PoB2 CalcOffence calcPenResist）：抗性高於下限時扣掉穿透、最低到下限（0）；抗性本來就 ≤ 下限（負抗性、被曝露）時穿透沒作用。
+     */
+    static double penetrated(final double resist, final double penetration) {
+        return resist > PENETRATION_MINIMUM ? Math.max(resist - penetration, PENETRATION_MINIMUM) : resist;
+    }
+
     /** 同上，攻擊方的穿透（penetration，tags 限定類型）在抗性上限之後扣。 */
     public static DamagePacket mitigate(final DamagePacket raw, final StatSheet defender, final StatSheet attacker, final Set<String> skillTags) {
         final DamagePacket dealt = new DamagePacket();
@@ -395,7 +412,9 @@ public final class DamageCalculator {
             if (attacker != null && type != DamageType.PHYSICAL) {
                 final Set<String> context = new HashSet<>(skillTags);
                 context.addAll(type.tags());
-                resist -= Math.max(0, attacker.flat(StatKeys.PENETRATION, context));
+                // 2026-11-01 照 PoE2（PoB2 CalcOffence calcPenResist）：穿透只能把抗性降到 0，本來就 ≤ 0 的不再降；
+                //   這次之前直接相減，可以穿到負的
+                resist = penetrated(resist, Math.max(0, attacker.flat(StatKeys.PENETRATION, context)));
             }
             double taken = amount;
             if (type == DamageType.PHYSICAL) {
@@ -706,7 +725,8 @@ public final class DamageCalculator {
         double baseCrit = weaponless(skill) ? WEAPONLESS_BASE_CRIT // 2026-10-27 照 PoE2：不用武器的攻擊不看武器的暴擊率
                 : skill.isAttack() ? tw.exilecore.item.unique.UniqueHits.weaponCrit(attacker, attacker.flat(StatKeys.WEAPON_CRIT, skill.tags())) // 2026-10-27（北爪護腕）
                 : BASE_SPELL_CRIT;
-        if (!skill.isAttack()) {
+        // 2026-11-01 照 PoE2（碎裂藥劑 11%、雷爆藥劑 8%）：不用武器的攻擊寫了自己的基礎暴擊率（skills.yml 的 spell.base_crit）就照那個；沒寫照舊 5%
+        if (!skill.isAttack() || weaponless(skill)) {
             final double own = attacker.flat(StatKeys.SPELL_BASE_CRIT, skill.tags()); // 2026-10-15：照 PoE2，每個法術自己的基礎暴擊率
             if (own > 0) {
                 baseCrit = own;

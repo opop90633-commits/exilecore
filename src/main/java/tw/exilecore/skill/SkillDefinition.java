@@ -185,6 +185,10 @@ public record SkillDefinition(String id, String name, String description, String
             if (weaponTags.contains(weapon) || (Tags.MELEE.equals(weapon) && weaponTags.isEmpty())) {
                 return true;
             }
+            // 2026-11-01 照 PoE2（RequiresShield）：盾技能不限主手武器，副手的盾另外檢查（SkillGear.problem）
+            if (SkillGear.SHIELD.equals(weapon)) {
+                return true;
+            }
         }
         return false;
     }
@@ -211,6 +215,7 @@ public record SkillDefinition(String id, String name, String description, String
                 case Tags.DAGGER -> "匕首";
                 case Tags.CLAW -> "爪";
                 case "flail" -> "鏈錘"; // 2026-10-29
+                case SkillGear.SHIELD -> "副手盾"; // 2026-11-01 照 PoE2 RequiresShield（PoB2：圓盾也是盾）
                 case Tags.ONE_HAND -> "單手武器";
                 case Tags.TWO_HAND -> "雙手武器";
                 case Tags.RANGED -> "遠程武器";
@@ -299,10 +304,9 @@ public record SkillDefinition(String id, String name, String description, String
                     || mechanic == Mechanic.RALLY || mechanic == Mechanic.DESECRATE || mechanic == Mechanic.GUARD || mechanic == Mechanic.META) {
                 throw new IllegalArgumentException(where + "：位移、跳躍、瞬影、印記、骸爆、召喚、光環、戰吼不能交給圖騰、陷阱或鐘放");
             }
-            tags.add(deploy.kind() == DeploySpec.Kind.TRAP ? Tags.TRAP : Tags.TOTEM);
-            if (deploy.kind() == DeploySpec.Kind.BELL) {
-                tags.add(Tags.BELL);
-            }
+            // 2026-11-01 照 PoE2（Tempest Bell 的 skillTypes 沒有 Totem）：鐘只加 bell，不再加 totem（圖騰的輔助、圖騰傷害的加成不套在鐘上）；
+            //   這次之前鐘也算圖騰
+            tags.add(deploy.kind() == DeploySpec.Kind.TRAP ? Tags.TRAP : deploy.kind() == DeploySpec.Kind.BELL ? Tags.BELL : Tags.TOTEM);
             tags.add(Tags.DURATION);
         }
         final SummonSpec summon = SummonSpec.parse(node, node.string("name", id));

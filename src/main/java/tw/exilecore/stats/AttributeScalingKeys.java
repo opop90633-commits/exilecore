@@ -33,6 +33,10 @@ public final class AttributeScalingKeys {
     public static final String DAMAGE_PER_5_LOWEST = "damage.per_5_lowest_attr";
     /** INCREASED：每 100 最大魔力增加 x 法術傷害。 */
     public static final String SPELL_DAMAGE_PER_100_MANA = "damage.spell_per_100_mana";
+    /** 2026-11-01 照 PoE2 Rathpith Globe：INCREASED，每 100 最大生命增加 x 非引導法術的傷害。 */
+    public static final String SPELL_DAMAGE_PER_100_LIFE = tw.exilecore.item.unique.UniqueStats.SPELL_DAMAGE_PER_100_LIFE;
+    /** 2026-11-01 照 PoE2 Rathpith Globe：INCREASED，每 100 最大生命增加 x 非引導法術的暴擊率。 */
+    public static final String SPELL_CRIT_PER_100_LIFE = tw.exilecore.item.unique.UniqueStats.SPELL_CRIT_PER_100_LIFE;
     /** INCREASED：每 1% 格擋率增加 x 傷害（格擋率照上限算）。 */
     public static final String DAMAGE_PER_BLOCK = "damage.per_block";
     /** INCREASED：每 400 命中增加 x 攻擊速度（最多 {@link #ATTACK_SPEED_PER_ACCURACY_CAP}）。 */
@@ -195,6 +199,10 @@ public final class AttributeScalingKeys {
         perIncrease(sheet, DAMAGE_PER_5_LOWEST, Math.min(str, Math.min(dex, intelligence)), 5, StatKeys.DAMAGE, Set.of(), "最低屬性");
         // 4. 魔力、格擋
         perIncrease(sheet, SPELL_DAMAGE_PER_100_MANA, Math.max(0, sheet.get(StatKeys.MANA_MAX)), 100, StatKeys.DAMAGE, Set.of(Tags.SPELL), "最大魔力");
+        // 2026-11-01 照 PoE2 Rathpith Globe（獻祭之心）：每 100 最大生命，非引導法術的傷害、暴擊率
+        final double life = Math.max(0, sheet.get(StatKeys.LIFE_MAX));
+        perIncrease(sheet, SPELL_DAMAGE_PER_100_LIFE, life, 100, StatKeys.DAMAGE, Set.of(Tags.SPELL, Tags.NON_CHANNELLING), "最大生命");
+        perIncrease(sheet, SPELL_CRIT_PER_100_LIFE, life, 100, StatKeys.CRIT_CHANCE, Set.of(Tags.SPELL, Tags.NON_CHANNELLING), "最大生命");
         final double blockCap = DamageCalculator.blockCap(sheet); // 2026-10-27：最多 90%（PoE2）
         perIncrease(sheet, DAMAGE_PER_BLOCK, Math.max(0, Math.min(blockCap, sheet.get(StatKeys.BLOCK_CHANCE))), 1, StatKeys.DAMAGE, Set.of(), "格擋率");
     }

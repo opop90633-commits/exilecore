@@ -336,25 +336,23 @@ public final class SupportMechanics implements Listener {
                     (int) Math.floor(glory(player, build.definition().id())));
         }
         final StatSheet effective = build.profile().effective(sheet);
-        if (effective.flat(SupportKeys.WARCRY_ECHOES, build.profile().tags()) > 0) {
-            final Double mark = echoMark.get(key(player, build.definition().id()));
-            final double moved = mark == null ? Double.MAX_VALUE : travelled(player) - mark;
-            if (moved < ECHO_TRAVEL) {
-                return String.format(Locale.ROOT, "%s 要先移動 %.0f 格（還差 %.1f）", build.definition().name(), ECHO_TRAVEL, ECHO_TRAVEL - moved);
-            }
-        }
-        // 2026-10-29 照 PoE2 Hit and Run（迅鋒）：用過之後要再移動 10 公尺（15 格）才能再用
-        final double hitRun = effective.flat(SupportKeys.HIT_AND_RUN, build.profile().tags());
-        if (hitRun > 0) {
-            final Double mark = hitRunMark.get(key(player, build.definition().id()));
-            final double need = hitRun * SupportKeys.HIT_AND_RUN_BLOCKS_PER_METRE; // 2026-10-29 照站長：1 公尺 = 0.5 格（只有迅鋒）
-            final double moved = mark == null ? Double.MAX_VALUE : travelled(player) - mark;
-            if (moved + 1e-9 < need) {
-                return String.format(Locale.ROOT, "%s 要先移動 %s 格（還差 %.1f）", build.definition().name(),
-                        ModifierText.number(need), need - moved);
-            }
-        }
+        // 2026-11-01 照站長：震嘯拿掉「要先移動 5 格」的限制（這次之前用過要再移動 5 格才能用）
+        // 2026-11-01 照站長：迅鋒不擋施放，還沒移動 5 格時傷害更少 50%（hitRunShort，beforeUse）；這次之前要先移動才能用
         return extras.usageProblem(player, build, effective); // 2026-10-27：先祖援助、無畏、淨化…
+    }
+
+    /** 2026-11-01 照站長：迅鋒用過之後還沒移動夠（5 格）時，傷害更少這麼多。 */
+    static final double HIT_AND_RUN_LESS = 0.5;
+
+    /** 2026-11-01 照站長：迅鋒用過之後還沒再移動 5 格（第一次用不算）。 */
+    boolean hitRunShort(final Player player, final SkillBuild build, final StatSheet effective) {
+        final double hitRun = effective.flat(SupportKeys.HIT_AND_RUN, build.profile().tags());
+        if (hitRun <= 0) {
+            return false;
+        }
+        final Double mark = hitRunMark.get(key(player, build.definition().id()));
+        final double need = hitRun * SupportKeys.HIT_AND_RUN_BLOCKS_PER_METRE; // 1 公尺 = 0.5 格（只有迅鋒）：10 → 5 格
+        return mark != null && travelled(player) - mark + 1e-9 < need;
     }
 
     /** 震嘯：用過之後要再移動幾格才能用。 */
@@ -460,6 +458,9 @@ public final class SupportMechanics implements Listener {
             if (tags.contains(ELEMENTS[i].tag())) {
                 used[i] = now;
             }
+        }
+        if (hitRunShort(player, build, effective)) {
+            extra.add(Modifier.more(StatKeys.DAMAGE, -HIT_AND_RUN_LESS, "迅鋒（還沒移動 5 格）")); // 2026-11-01 照站長
         }
         return extras.beforeUse(player, extra.isEmpty() ? build : build.withProfile(build.profile().withLocal(extra))); // 2026-10-27：先祖強化、投射物輔助…
     }
@@ -801,13 +802,24 @@ public final class SupportMechanics implements Listener {
         final PlayerState state = plugin.players().get(player);
         final StatSheet sheet = plugin.players().sheet(player);
         final SkillBuild build = SkillBuild.of(service.config(), pact, level, state.level(), false, List.of(), state.weaponTags(), sheet);
-        final double perStack = tw.exilecore.stats.DamageCalculator.expectedOutgoing(sheet, build.profile()).total();
-        if (perStack <= 0) {
+        // 2026-11-01 照 PoE2（PoB2 TriggeredCorruptingCryThreePlayer base_physical_damage_to_deal_per_minute 421→20348→433905）：
+        //   每層每秒＝技能表的每分鐘傷害 ÷ 60，吃戰吼、物理的加成，不吃附加傷害、法術、範圍的（ProcBasis.dotProfile）；
+        //   這次之前用法術傷害 [4, 6] × 法術成長當每秒傷害
+        final double perStack = ProcBasis.perSecond(tw.exilecore.stats.DamageCalculator.expectedOutgoing(sheet, ProcBasis.dotProfile(build.profile())).total());
+        corruptedBlood(player, target, perStack, PACT_STACKS); // 2026-11-01 照 PoE2：每次 5 層（這次之前 + 1）
+    }
+
+    /**
+     * 2026-11-01 照 PoE2 Corrupted Blood（扭曲契約、腐血嘯共用）：在牠身上加 stacks 層腐化之血（最多 10 層，每層一樣重，重新計時 5 秒）；
+     * 每層每秒 perStack 物理傷害（取目前與新的較高者）。
+     */
+    void corruptedBlood(final Player player, final LivingEntity target, final double perStack, final int stacks) {
+        if (perStack <= 0 || target == null || !target.isValid() || target.isDead()) {
             return;
         }
         final Corrupted entry = corrupted.computeIfAbsent(target.getUniqueId(), uuid -> new Corrupted(player.getUniqueId()));
         entry.dps = Math.max(entry.dps, perStack);
-        entry.stacks = Math.min(CORRUPTED_MAX, entry.stacks + PACT_STACKS); // 2026-11-01 照 PoE2：每次 5 層（這次之前 + 1）
+        entry.stacks = Math.min(CORRUPTED_MAX, entry.stacks + Math.max(1, stacks));
         entry.untilTick = now() + CORRUPTED_TICKS;
         target.getWorld().spawnParticle(Particle.DUST, target.getLocation().add(0, target.getHeight() * 0.6, 0), 10, 0.3, 0.4, 0.3, 0,
                 new Particle.DustOptions(org.bukkit.Color.fromRGB(0x7A0F1F), 1.4f));
