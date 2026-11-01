@@ -154,7 +154,12 @@ final class GemQualityText {
             Map.entry("free_incarnation", "無縛持續時間 +{asc.buff_seconds} 秒"),
             Map.entry("righteous_shield", "每顆智慧寶珠另外增加 {asc.mote_regen}% 生命與魔力再生"),
             Map.entry("vivid_stampede", "震波半徑 +{m:asc.stag_radius} 格"),
-            Map.entry("null_phantom", "爆炸半徑 +{m:asc.void_radius} 格"));
+            Map.entry("null_phantom", "爆炸半徑 +{m:asc.void_radius} 格"),
+            // 2026-11-01 照 PoE2：納維拉、魯兹安的指令的品質
+            Map.entry("mirage_spirit_haven", "綠洲每秒另外給 {asc.oasis_flask_rate} 點藥劑充能"),
+            Map.entry("mirage_spirit_spring", "增益另外增加 {asc.well_es_recharge}% 能量護盾回充速度"),
+            Map.entry("blade_spirit_settle", "傷害半徑 +{asc.reckoning_radius} 格"), // 站長：直接 +格，不換算公尺
+            Map.entry("blade_spirit_device", "符文、龍捲持續時間各 +{asc.rune_duration} 秒"));
 
     /** 原作的品質效果我們沒有對應機制（品質寫 []）的：技能代號 → {原因樣板, 每 1% 品質的原作數值}；{v} 換成這個品質的數值。 */
     static final Map<String, Object[]> NO_EFFECT = Map.ofEntries(
