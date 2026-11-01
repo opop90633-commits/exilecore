@@ -329,6 +329,14 @@ public final class AscendancyEffects implements Listener {
     }
 
     /** 翻滾時（SkillTriggers 呼叫）：虛空幻影。 */
+    /** 2026-11-01 照 PoE2 Ruzhan's Brand：按炎刃．羅贊的鍵下指令；不是羅贊（或模組沒開）回傳 null。 */
+    public static String djinnPress(final Player player, final SkillBuild build, final LivingEntity target) {
+        if (instance == null || build == null || !"flame_blade_spirit".equals(build.definition().id())) {
+            return null;
+        }
+        return instance.granted.brand(player, build, target);
+    }
+
     public static void dodge(final Player player) {
         final AscendancyEffects effects = instance;
         if (effects != null) {

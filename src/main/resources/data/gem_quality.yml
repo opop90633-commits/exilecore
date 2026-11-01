@@ -667,7 +667,8 @@ empress_march: []   # Queen's Procession：原作品質沒有效果
 chasm_phantom: []   # Abyssal Apparition：原作品質沒有效果
 foul_sand_spirit: []   # 巨靈與指令：原作品質沒有效果
 final_mirage_spirit: []
-flame_blade_spirit: []
+flame_blade_spirit:   # 2026-11-01 照 PoE2（Ruzhan's Brand 的品質）：烙印對燃燒中的敵人另外更多 (0—20)% 傷害
+  - { stat: asc.brand_burning_more, type: FLAT, per: 1.0 }   # AscGranted.conditional
 sand_spirit_trick: []
 sand_spirit_cruelty: []
 sand_spirit_verdict: []

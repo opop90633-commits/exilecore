@@ -34,6 +34,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.ListIterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -92,6 +93,7 @@ final class AscGranted implements Listener {
         Location clone;
         long cloneUntil;
         long zealotryReady;
+        long brandReady;
         final ArrayDeque<Long> damaging = new ArrayDeque<>();
         final ArrayDeque<double[]> rift = new ArrayDeque<>();
         Location[] riftAt = new Location[0];
@@ -144,6 +146,128 @@ final class AscGranted implements Listener {
     }
 
     private final List<Rune> runes = new ArrayList<>();
+
+    /**
+     * 2026-11-01 照 PoE2 Ruzhan's Brand（炎刃．羅贊自帶的指令：按羅贊的鍵）：羅贊在一個敵人身上放火焰烙印，3 秒後（或被引爆時）炸開，
+     * 2 公尺內的敵人受到火焰法術傷害、對燃燒中的敵人更多 50%；同時最多 3 個（再放的時候最舊的那個提早炸掉；2026-11-01 照站長）。施法 0.6 秒、魔力 2～29。
+     * 羅贊的清算（原作是 Detonator）落地時引爆你全部的烙印。這次之前沒有這個指令（按羅贊的鍵只說「一直開著」）。
+     */
+    record Brand(UUID owner, LivingEntity target, long explodeAt, int level, Location last) {
+    }
+
+    private final List<Brand> brands = new ArrayList<>();
+    static final int BRAND_LIMIT = 3;
+    static final long BRAND_TICKS = 60;
+    static final long BRAND_CAST_TICKS = 12;
+
+    /** 羅贊的烙印的魔力（原作 2～29：1 級 2、20 級 29，中間照等比；超過 20 級照同樣的比例往上）。 */
+    static int brandMana(final int level) {
+        return (int) Math.round(2 * Math.pow(29.0 / 2.0, (Math.max(1, level) - 1) / 19.0));
+    }
+
+    /** 按炎刃．羅贊的鍵：下「羅贊的烙印」指令。回傳要顯示的訊息。 */
+    String brand(final Player player, final SkillBuild build, final LivingEntity preferred) {
+        final PlayerState state = plugin.players().get(player);
+        final Own own = own(player);
+        final long now = now();
+        if (djinnAt(player, "flame_blade_spirit") == null) {
+            return "<red>羅贊的烙印：羅贊要在你身邊 20 格內";
+        }
+        if (now < own.brandReady) {
+            return "<gray>羅贊的烙印：施放中";
+        }
+        final Location aimed = aim(player, preferred, 20);
+        LivingEntity target = preferred != null && preferred.isValid() && !preferred.isDead() ? preferred : null;
+        if (target == null) {
+            double best = Double.MAX_VALUE;
+            for (final LivingEntity enemy : effects.enemiesNear(player, aimed, 2.5)) {
+                final double distance = enemy.getLocation().distanceSquared(aimed);
+                if (distance < best) {
+                    best = distance;
+                    target = enemy;
+                }
+            }
+        }
+        if (target == null) {
+            return "<gray>羅贊的烙印：準心附近沒有敵人";
+        }
+        final int mana = brandMana(build.level());
+        if (state.mana() + 1e-9 < mana) {
+            return "<red>魔力不足（羅贊的烙印要 " + mana + "）";
+        }
+        state.setMana(state.mana() - mana);
+        own.brandReady = now + BRAND_CAST_TICKS;
+        moveDjinn(player, "flame_blade_spirit", target.getLocation());
+        brands.add(new Brand(player.getUniqueId(), target, now + BRAND_TICKS, build.level(), target.getLocation()));
+        for (final Brand old : trimBrands(brands, player.getUniqueId(), BRAND_LIMIT)) {
+            explodeBrand(player, old); // 2026-11-01 照站長：超過上限的最舊那個提早炸掉（這次之前直接消失）
+        }
+        tw.exilecore.skill.Fx.spawn(target.getWorld(), Particle.FLAME, target.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, 0.02);
+        return "<#ff9a3c>羅贊的烙印";
+    }
+
+    /** 純邏輯：owner 的烙印超過 limit 個時，最舊的先拿掉；回傳拿掉的（要提早炸掉的）。 */
+    static List<Brand> trimBrands(final List<Brand> list, final UUID owner, final int limit) {
+        int count = 0;
+        for (final Brand brand : list) {
+            if (brand.owner().equals(owner)) {
+                count++;
+            }
+        }
+        final List<Brand> removed = new ArrayList<>();
+        for (final Iterator<Brand> it = list.iterator(); it.hasNext() && count > limit; ) {
+            final Brand brand = it.next();
+            if (brand.owner().equals(owner)) {
+                it.remove();
+                removed.add(brand);
+                count--;
+            }
+        }
+        return removed;
+    }
+
+    /** 烙印炸開（目標還活著在牠身上炸，死了在最後的位置）。 */
+    private void explodeBrand(final Player owner, final Brand brand) {
+        final boolean alive = brand.target() != null && brand.target().isValid() && !brand.target().isDead();
+        final Location at = alive ? brand.target().getLocation() : brand.last();
+        if (at != null && at.getWorld() == owner.getWorld() && plugin.skills() != null) {
+            plugin.skills().triggerSkill(owner, "asc_ruzhan_brand", at, brand.level(), List.of());
+        }
+    }
+
+    /** 烙印時間到（或被引爆）就炸；目標死了在牠最後的位置炸。detonateOwner 不是 null 時把那個玩家的全部引爆。 */
+    private void tickBrands(final long now, final UUID detonateOwner) {
+        if (brands.isEmpty()) {
+            return;
+        }
+        final List<Brand> blow = new ArrayList<>();
+        for (final ListIterator<Brand> it = brands.listIterator(); it.hasNext(); ) {
+            final Brand brand = it.next();
+            final Player owner = plugin.getServer().getPlayer(brand.owner());
+            if (owner == null || !owner.isOnline()) {
+                it.remove();
+                continue;
+            }
+            final boolean alive = brand.target().isValid() && !brand.target().isDead();
+            final Location at = alive ? brand.target().getLocation() : brand.last();
+            if (at.getWorld() != owner.getWorld()) {
+                it.remove();
+                continue;
+            }
+            if (now >= brand.explodeAt() || brand.owner().equals(detonateOwner)) {
+                it.remove();
+                blow.add(new Brand(brand.owner(), brand.target(), brand.explodeAt(), brand.level(), at));
+            } else if (alive) {
+                it.set(new Brand(brand.owner(), brand.target(), brand.explodeAt(), brand.level(), at));
+            }
+        }
+        for (final Brand brand : blow) {
+            final Player owner = plugin.getServer().getPlayer(brand.owner());
+            if (owner != null && plugin.skills() != null) {
+                plugin.skills().triggerSkill(owner, "asc_ruzhan_brand", brand.last(), brand.level(), List.of());
+            }
+        }
+    }
     /** 原作的符文數量（Creates 8 Runes、Limit 21 Runes）。 */
     static final int RUNES_PER_CAST = 8;
     static final int RUNE_LIMIT = 21;
@@ -396,6 +520,8 @@ final class AscGranted implements Listener {
                 final Location at = aim(player, target, 20);
                 moveDjinn(player, "flame_blade_spirit", at); // 2026-10-27 照 PoE2：魯兹安瞬移到目標的地方
                 effects.later(18, () -> plugin.skills().triggerSkill(player, "asc_ruzhan_wave", at));
+                // 2026-11-01 照 PoE2（Ruzhan's Reckoning 是 Detonator）：落地時引爆你全部的羅贊的烙印
+                effects.later(8, () -> tickBrands(now(), player.getUniqueId()));
             }
             case "blade_spirit_device" -> {
                 // 2026-10-27：魯兹安把巨劍擲過去；2026-11-01 照 PoE2 Ruzhan's Trap：落地撒下 8 個火焰符文（投射物本身是技能的那一下）
@@ -676,7 +802,7 @@ final class AscGranted implements Listener {
         if (own != null) {
             // 赤炎利劍：魯兹安最近每用過一個造成傷害的技能更多 10%
             if (id.startsWith("ruzhan_") || id.startsWith("blade_spirit_") || id.equals("asc_ruzhan_zealotry") || id.equals("asc_ruzhan_wave")
-                    || id.equals("asc_ruzhan_tornado")) {
+                    || id.equals("asc_ruzhan_tornado") || id.equals("asc_ruzhan_brand")) {
                 if (!own.damaging.isEmpty()) {
                     out.add(Modifier.more(StatKeys.DAMAGE, 0.10 * own.damaging.size(), "赤炎利劍"));
                 }
@@ -689,6 +815,10 @@ final class AscGranted implements Listener {
             if (id.equals("asc_swarm") && own.swarm > 0) {
                 out.add(Modifier.more(StatKeys.DAMAGE, 0.02 * own.swarm, "蟲群前進"));
             }
+        }
+        // 2026-11-01 照 PoE2 Ruzhan's Brand：對燃燒中的敵人更多 50% 擊中傷害；品質（炎刃．羅贊）另外更多 (0—20)%
+        if (id.startsWith("asc_ruzhan_brand") && plugin.ailments() != null && plugin.ailments().has(defender, AilmentType.IGNITE)) {
+            out.add(Modifier.more(StatKeys.DAMAGE, 0.50 + level(attacker, "flame_blade_spirit", "asc.brand_burning_more") / 100.0, "羅贊的烙印"));
         }
         if (id.startsWith("blade_spirit_wrath_fire") && plugin.ailments() != null
                 && (plugin.ailments().isIncapacitated(defender) || plugin.ailments().pinned(defender))) {
@@ -1086,6 +1216,7 @@ final class AscGranted implements Listener {
         }
         tickRemnants(now);
         tickRunes(now); // 2026-11-01 照 PoE2 Ruzhan's Trap
+        tickBrands(now, null); // 2026-11-01 照 PoE2 Ruzhan's Brand
         // 命定苦痛：時間到（或足以處決）時一次失去記下的生命
         final Iterator<Map.Entry<UUID, double[]>> iterator = agony.entrySet().iterator();
         while (iterator.hasNext()) {

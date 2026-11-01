@@ -2456,6 +2456,13 @@ public final class SkillService {
                 plugin.players().display(player, state);
                 return;
             }
+            // 2026-11-01 照 PoE2 Ruzhan's Brand：炎刃．羅贊的鍵 = 羅贊自帶的指令（羅贊的烙印）
+            final String djinnSaid = tw.exilecore.ascendancy.AscendancyEffects.djinnPress(player, build, preferred);
+            if (djinnSaid != null) {
+                state.notice(djinnSaid, now + 40);
+                plugin.players().display(player, state);
+                return;
+            }
             final String said = minionPress(player, build, preferred); // 2026-10-26：精魂召喚的鍵 = 下指令
             if (said != null) {
                 state.notice(said, now + 40);

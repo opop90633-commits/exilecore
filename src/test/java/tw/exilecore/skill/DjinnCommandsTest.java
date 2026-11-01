@@ -17,6 +17,7 @@ class DjinnCommandsTest {
         assertEquals("flame_blade_spirit", DjinnCommands.djinnFor("blade_spirit_device.tornado"));
         assertEquals("flame_blade_spirit", DjinnCommands.djinnFor("asc_ruzhan_wave"));
         assertEquals("flame_blade_spirit", DjinnCommands.djinnFor("asc_ruzhan_tornado"), "2026-11-01：羅贊的機關的火焰龍捲");
+        assertEquals("flame_blade_spirit", DjinnCommands.djinnFor("asc_ruzhan_brand"), "2026-11-01：羅贊的烙印（吃羅贊的召喚物加成）");
     }
 
     @Test
