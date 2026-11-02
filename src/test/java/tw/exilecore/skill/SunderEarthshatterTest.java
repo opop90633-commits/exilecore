@@ -22,7 +22,6 @@ class SunderEarthshatterTest {
     void earthSpikesFollowTheOriginal() {
         assertEquals(6, EarthSpikes.LIMIT);
         assertEquals(120, EarthSpikes.SPIKE_TICKS);
-        assertEquals(0.5, EarthSpikes.WARCRY_MORE, 1e-9);
         assertEquals(Units.metres(2), EarthSpikes.BLAST_RADIUS, 1e-9);
     }
 }

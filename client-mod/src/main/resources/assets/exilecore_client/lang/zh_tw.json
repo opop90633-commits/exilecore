@@ -31,5 +31,6 @@
   "key.exilecore_client.settings": "打開星骸輔助模組設定",
   "key.exilecore_client.big_map": "切換大地圖",
   "key.exilecore_client.death_recap": "再看一次死亡回顧",
-  "message.exilecore_client.no_answer": "星骸輔助模組：伺服器一直沒回應模組的招呼，HUD、天賦樹（K）先不能用。請把伺服器的 latest.log 給站長看（找「星骸輔助模組」那幾行）"
+  "message.exilecore_client.no_answer": "星骸輔助模組：伺服器一直沒回應模組的招呼，HUD、天賦樹（K）先不能用。請把伺服器的 latest.log 給站長看（找「星骸輔助模組」那幾行）",
+  "key.exilecore_client.open_exchange": "打開通貨交易所（營地）"
 }

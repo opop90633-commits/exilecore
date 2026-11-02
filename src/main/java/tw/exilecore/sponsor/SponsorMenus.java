@@ -769,7 +769,9 @@ final class SponsorMenus {
             for (final SponsorConfig.Cosmetic cosmetic : service.config().cosmetics().values()) {
                 // 2026-10：限定（絕版）的時裝沒有的人看不到（商城不放）
                 // 2026-10-16：節慶活動（萬燈夜）的限定時裝活動期間也列出來（只能試穿，去活動兌換）
-                if (!cosmetic.isEmote() && (!cosmetic.isLimited() || service.festivalPreview(cosmetic)) && !service.ownsCosmetic(player, cosmetic.id())) {
+                // 2026-11-02 照站長：拉霸機限定的粒子特效（營地拉霸機抽得到）沒有的人也列出來、可以試穿；這次之前沒有就看不到
+                if (!cosmetic.isEmote() && (!cosmetic.isLimited() || service.festivalPreview(cosmetic) || SponsorService.slotsPrize(cosmetic))
+                        && !service.ownsCosmetic(player, cosmetic.id())) {
                     ordered.add(cosmetic);
                 }
             }
@@ -829,7 +831,7 @@ final class SponsorMenus {
                 lore.add("<yellow>右鍵：試穿 " + SponsorService.TRY_ON_TICKS / 20 + " 秒");
             } else {
                 lore.add("<dark_gray>還沒有");
-                if (!cosmetic.isLimited()) {
+                if (!cosmetic.isLimited() || SponsorService.slotsPrize(cosmetic)) {
                     lore.add("");
                     lore.add("<yellow>右鍵：試穿 " + SponsorService.TRY_ON_TICKS / 20 + " 秒");
                 }
@@ -852,7 +854,8 @@ final class SponsorMenus {
             if (slot == SLOT_PREV || slot == SLOT_NEXT) {
                 page += slot == SLOT_NEXT ? 1 : -1;
                 final int count = (int) service.config().cosmetics().values().stream()
-                        .filter(c -> !c.isEmote() && (!c.isLimited() || service.festivalPreview(c) || service.ownsCosmetic(player, c.id()))).count();
+                        .filter(c -> !c.isEmote() && (!c.isLimited() || service.festivalPreview(c) || SponsorService.slotsPrize(c)
+                                || service.ownsCosmetic(player, c.id()))).count();
                 final int pages = Math.max(1, (count + PER_PAGE - 1) / PER_PAGE);
                 page = Math.floorMod(page, pages);
                 redraw();
@@ -1075,6 +1078,8 @@ final class SponsorMenus {
         private static final int FIRST = 10;
         /** 箭袋的幻化要不要拿在手上的開關（最下面一排中間）。 */
         private static final int SLOT_QUIVER = 31;
+        /** 2026-11-02：粒子特效（背飾、寵物那一排的右邊）。 */
+        private static final int SLOT_PARTICLE = 25;
 
         /** 第 i 個外觀的格子：裝備 8 格一排，背飾、寵物在下一排中間。 */
         private static int slotOf(final int i) {
@@ -1149,6 +1154,18 @@ final class SponsorMenus {
                     "<gray>（沒套幻化的箭袋一律不顯示；盾、法器不受影響）",
                     "",
                     "<yellow>左鍵：" + (quiverShown ? "改成不顯示" : "改成顯示")));
+            // 2026-11-02 照站長：粒子特效也放在這裡（點進 3D 時裝選，拉霸機的新特效也在裡面）；這次之前只在 3D 時裝
+            final SponsorConfig.Cosmetic worn = service.worn(player);
+            int particles = 0;
+            for (final SponsorConfig.Cosmetic cosmetic : service.config().cosmetics().values()) {
+                if (!cosmetic.skin() && !cosmetic.isEmote() && service.ownsCosmetic(player, cosmetic.id())) {
+                    particles++;
+                }
+            }
+            set(SLOT_PARTICLE, icon(worn == null ? Material.GUNPOWDER : Material.BLAZE_POWDER, FASHION_COLOR + "粒子特效",
+                    worn == null ? "<gray>現在：沒戴" : "<gray>現在：" + SponsorService.rarityTag(worn),
+                    "<gray>擁有 " + particles + " 種（拉霸機的金幣光環、幸運四葉、金幣足跡、頭獎彩旋也在裡面）",
+                    "", "<yellow>左鍵：選特效（沒有的可以右鍵試穿）"));
             set(27, backButton("贊助"));
             set(35, closeButton());
         }
@@ -1157,6 +1174,10 @@ final class SponsorMenus {
         protected void onClick(final int slot, final ClickType click, final InventoryClickEvent event) {
             if (slot == 27) {
                 back();
+                return;
+            }
+            if (slot == SLOT_PARTICLE) {
+                new Cosmetics(plugin, player, service).open();
                 return;
             }
             if (slot == 35) {

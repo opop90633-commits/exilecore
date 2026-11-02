@@ -29,7 +29,7 @@ import java.util.UUID;
  * <ul>
  *   <li>錘子砸出一條裂縫，裂縫上 {@link #FISSURE_RADIUS} 格內的敵人吃一下（技能本身的傷害）；</li>
  *   <li>裂縫盡頭冒出一根地刺，留在地上 {@link #SPIKE_TICKS} tick，最多 {@link #LIMIT} 根；</li>
- *   <li>超過 {@link #LIMIT} 根時最舊的那根自己震碎爆炸；在地刺附近放戰吼也會把地刺震碎，戰吼震碎的爆炸更多 50% 傷害；</li>
+ *   <li>超過 {@link #LIMIT} 根時最舊的那根自己震碎爆炸；在地刺附近放戰吼也會把地刺震碎（2026-11-02 照站長拿掉「戰吼震碎更多 50%」：原作沒有）；</li>
  *   <li>爆炸半徑 {@link #BLAST_RADIUS} 格，傷害照 skills.yml 的 aftershock.more（140%→507% ÷ 45%→140%）；時間到自己消失的不爆。</li>
  * </ul>
  */
@@ -38,13 +38,14 @@ final class EarthSpikes {
     static final String ID = "earth_spike_eruption";
     static final long SPIKE_TICKS = 120;
     static final int LIMIT = 6;
-    /** 戰吼震碎的爆炸更多幾成。 */
-    static final double WARCRY_MORE = 0.5;
     static final double FISSURE_LENGTH = Units.metres(5);
     static final double FISSURE_RADIUS = Units.metres(1);
     static final double BLAST_RADIUS = Units.metres(2);
     /** 2026-11-01 照 PoE2（active_skill_base_area_of_effect_radius 10）：地刺冒出來那一圈多大。 */
     static final double SPIKE_RADIUS = Units.metres(1);
+    /** 2026-11-02：地刺的模型大小（格）。 */
+    static final float SPIKE_WIDTH = 1.4f;
+    static final float SPIKE_HEIGHT = 2.8f;
 
     private static final class Spike {
         final Player owner;
@@ -96,8 +97,8 @@ final class EarthSpikes {
         return alive;
     }
 
-    /** 砸一下：裂縫打一條、盡頭留一根地刺。 */
-    void cast(final Origin origin, final SkillBuild build) {
+    /** 砸一下：裂縫打一條、盡頭留一根地刺。回傳裂縫上的點（含盡頭；2026-11-02：餘震照這些點再打一次）。 */
+    List<Location> cast(final Origin origin, final SkillBuild build) {
         final Player owner = origin.owner();
         final Vector facing = origin.facing().clone().setY(0);
         if (facing.lengthSquared() < 1e-6) {
@@ -128,13 +129,17 @@ final class EarthSpikes {
             }
         }
         final int steps = Math.max(2, (int) Math.round(from.distance(to) / 1.2));
+        final List<Location> points = new java.util.ArrayList<>();
         for (int i = 1; i <= steps; i++) {
-            visuals.impact(build.definition().visual(), from.clone().add(to.clone().subtract(from).toVector().multiply(i / (double) steps)));
+            final Location point = from.clone().add(to.clone().subtract(from).toVector().multiply(i / (double) steps));
+            points.add(point);
+            visuals.impact(build.definition().visual(), point);
         }
         from.getWorld().playSound(from, Sound.BLOCK_DEEPSLATE_BREAK, SoundCategory.PLAYERS, 1f, 0.7f);
         if (owner != null) {
             raise(owner, to, build);
         }
+        return points;
     }
 
     private static double groundY(final Location at, final double fallback) {
@@ -157,26 +162,31 @@ final class EarthSpikes {
     }
 
     private void raise(final Player owner, final Location at, final SkillBuild build) {
-        final BlockDisplay display = at.getWorld().spawn(at.clone().add(-0.45, 0, -0.45), BlockDisplay.class, d -> {
+        // 2026-11-02 照站長：地刺更明顯——放大（1.4×2.8，這次之前 0.9×1.8）、全亮、橘色外框（看得到還剩幾根、在哪）
+        final BlockDisplay display = at.getWorld().spawn(at.clone().add(-SPIKE_WIDTH / 2, 0, -SPIKE_WIDTH / 2), BlockDisplay.class, d -> {
             final PointedDripstone data = (PointedDripstone) Material.POINTED_DRIPSTONE.createBlockData();
             data.setThickness(PointedDripstone.Thickness.TIP);
             data.setVerticalDirection(org.bukkit.block.BlockFace.UP);
             d.setBlock(data);
             d.setPersistent(false);
-            d.setTransformation(new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(0.9f, 1.8f, 0.9f), new Quaternionf()));
+            d.setTransformation(new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(SPIKE_WIDTH, SPIKE_HEIGHT, SPIKE_WIDTH), new Quaternionf()));
+            d.setBrightness(new org.bukkit.entity.Display.Brightness(15, 15));
+            d.setGlowing(true);
+            d.setGlowColorOverride(org.bukkit.Color.fromRGB(0xFF, 0xA0, 0x40));
         });
+        at.getWorld().spawnParticle(org.bukkit.Particle.BLOCK, at.clone().add(0, 0.3, 0), 30, 0.5, 0.3, 0.5, 0.1, Material.DRIPSTONE_BLOCK.createBlockData());
         at.getWorld().playSound(at, Sound.BLOCK_POINTED_DRIPSTONE_LAND, SoundCategory.PLAYERS, 1f, 0.8f);
         final ArrayDeque<Spike> mine = spikes.computeIfAbsent(owner.getUniqueId(), id -> new ArrayDeque<>());
         mine.addLast(new Spike(owner, at.clone(), build, now() + SPIKE_TICKS, display));
         while (mine.size() > LIMIT) {
-            shatter(mine.pollFirst(), 1.0); // 超過上限：最舊的那根自己震碎爆炸
+            shatter(mine.pollFirst(), false); // 超過上限：最舊的那根自己震碎爆炸
         }
         if (task == null) {
             task = plugin.repeat("skill.earth_spikes", this::tick, 10, 10);
         }
     }
 
-    /** 放戰吼：中心 radius 格內自己的地刺全部震碎（爆炸更多 50%）。 */
+    /** 放戰吼：中心 radius 格內自己的地刺全部震碎（2026-11-02 照 PoE2：跟自己碎開的一樣大；這次之前更多 50%）。 */
     void warcry(final Player player, final Location center, final double radius) {
         final ArrayDeque<Spike> mine = spikes.get(player.getUniqueId());
         if (mine == null || mine.isEmpty()) {
@@ -191,11 +201,11 @@ final class EarthSpikes {
             }
         }
         for (final Spike spike : hit) {
-            shatter(spike, 1.0 + WARCRY_MORE);
+            shatter(spike, true);
         }
     }
 
-    private void shatter(final Spike spike, final double more) {
+    private void shatter(final Spike spike, final boolean warcry) {
         if (spike == null) {
             return;
         }
@@ -208,7 +218,7 @@ final class EarthSpikes {
         final SkillBuild build = spike.build;
         final SkillParams.Aftershock aftershock = build.params().aftershock();
         final double blast = aftershock == null ? 1.0 : 1 + aftershock.more(build.level()) / 100.0;
-        final SkillProfile profile = build.profile().scaled(blast * more, more > 1 ? "地刺碎裂（戰吼）" : "地刺碎裂");
+        final SkillProfile profile = build.profile().scaled(blast, warcry ? "地刺碎裂（戰吼）" : "地刺碎裂");
         final double radius = BLAST_RADIUS * build.areaScale();
         final Location center = spike.at.clone().add(0, 0.5, 0);
         targets.strike(spike.owner, profile, SkillTargets.sphere(center, radius), new Object());

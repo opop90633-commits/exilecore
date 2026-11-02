@@ -500,7 +500,11 @@ public final class CombatListener implements Listener {
                     }
                 }
                 if (Double.isInfinite(broken) && "sunder".equals(skill.id())) {
-                    sundered.put(defender.getUniqueId(), plugin.getServer().getCurrentTick() + SUNDERED_TICKS);
+                    // 2026-11-02 照 PoE2（skill_effect_duration_is_sundered_armour_duration）：碎甲時間 = 技能持續時間（6 秒，吃「技能持續時間」）；這次之前固定 6 秒
+                    final StatSheet sunderSheet = skill.effective(attackerSheet);
+                    final double durationScale = Math.max(0.1, (1 + sunderSheet.increased(StatKeys.SKILL_DURATION, skill.tags()))
+                            * sunderSheet.more(StatKeys.SKILL_DURATION, skill.tags()));
+                    sundered.put(defender.getUniqueId(), plugin.getServer().getCurrentTick() + Math.round(SUNDERED_TICKS * durationScale));
                     if (sundered.size() > 512) {
                         final long tickNow = plugin.getServer().getCurrentTick();
                         sundered.values().removeIf(until -> until <= tickNow);

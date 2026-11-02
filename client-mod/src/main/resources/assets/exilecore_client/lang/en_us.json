@@ -31,5 +31,6 @@
   "key.exilecore_client.settings": "Open ExileCore client settings",
   "key.exilecore_client.big_map": "Toggle big map",
   "key.exilecore_client.death_recap": "Show death recap again",
-  "message.exilecore_client.no_answer": "ExileCore helper: the server never answered the mod's hello, so the HUD and passive tree (K) are off. Please send the server's latest.log to the admin"
+  "message.exilecore_client.no_answer": "ExileCore helper: the server never answered the mod's hello, so the HUD and passive tree (K) are off. Please send the server's latest.log to the admin",
+  "key.exilecore_client.open_exchange": "Open currency exchange (in town)"
 }

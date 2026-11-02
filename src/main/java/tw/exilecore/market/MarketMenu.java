@@ -225,7 +225,11 @@ public final class MarketMenu extends Menu {
                 redraw();
             }
             case SLOT_SHOP -> new ShopMenu(plugin, player, service, state).open();
-            case SLOT_EXCHANGE -> new ExchangeMenu(plugin, player, service, state).open();
+            case SLOT_EXCHANGE -> {
+                if (!ExchangeFeed.openNativeFrom(plugin, player)) { // 2026-11-02：裝了模組開原生畫面
+                    new ExchangeMenu(plugin, player, service, state).open();
+                }
+            }
             case SLOT_PROCEEDS -> {
                 if (!acceptAction(click)) {
                     return;

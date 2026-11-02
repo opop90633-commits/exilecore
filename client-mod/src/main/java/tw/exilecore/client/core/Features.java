@@ -66,4 +66,21 @@ public final class Features {
             return hello;
         }
     }
+
+    /**
+     * 2026-11-02 照站長：通貨交易所的原生畫面旗標 {@code exchangeui}（插件 tw.exilecore.market.ExchangeFeed：有這個旗標就開原生畫面，
+     * 沒有照舊開箱子選單）。只多欄位、協定不升；關掉的話原封不動。
+     */
+    public static byte[] withExchange(final byte[] hello, final boolean exchangeui) {
+        if (!exchangeui) {
+            return hello;
+        }
+        try {
+            final JsonObject root = JsonParser.parseString(new String(hello, StandardCharsets.UTF_8)).getAsJsonObject();
+            root.addProperty("exchangeui", true);
+            return root.toString().getBytes(StandardCharsets.UTF_8);
+        } catch (final RuntimeException e) {
+            return hello;
+        }
+    }
 }

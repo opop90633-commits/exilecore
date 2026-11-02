@@ -36,6 +36,8 @@ final class UiNet {
 
     static KeyMapping openTree;
     static KeyMapping openAtlas;
+    /** 2026-11-02 照站長：通貨交易所（預設 Y；L 是原版的進度）。 */
+    static KeyMapping openExchange;
     private static final UiWire.Assembler ASSEMBLER = new UiWire.Assembler();
     private static TreeCache cache = new TreeCache(null);
     /** 等靜態資料的狀態（種類 → 狀態 JSON）。 */
@@ -55,11 +57,13 @@ final class UiNet {
                 GLFW.GLFW_KEY_K, category));
         openAtlas = KeyMappingHelper.registerKeyMapping(new KeyMapping("key." + ExileCoreClient.MOD_ID + ".open_atlas", InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_N, category));
+        openExchange = KeyMappingHelper.registerKeyMapping(new KeyMapping("key." + ExileCoreClient.MOD_ID + ".open_exchange", InputConstants.Type.KEYSYM,
+                GLFW.GLFW_KEY_Y, category));
     }
 
     /** 招呼多寫我們的旗標（{@link Features#withUi}；只多欄位，舊插件忽略）。 */
     static byte[] extendHello(final byte[] hello) {
-        return Features.withUi(hello, true, true);
+        return Features.withExchange(Features.withUi(hello, true, true), true); // 2026-11-02：＋通貨交易所
     }
 
     static void reset() {
@@ -108,6 +112,11 @@ final class UiNet {
                 requestOpen("atlas");
             }
         }
+        while (openExchange.consumeClick()) {
+            if (mc.player != null && mc.gui.screen() == null) {
+                requestOpen("exchange");
+            }
+        }
     }
 
     private static void onFrame(final byte[] message) {
@@ -153,6 +162,16 @@ final class UiNet {
     private static void onState(final String kind, final JsonObject state) {
         final Minecraft mc = Minecraft.getInstance();
         final boolean open = state.has("open") && state.get("open").getAsBoolean();
+        if ("exchange".equals(kind)) {
+            // 2026-11-02 照站長：通貨交易所的原生畫面
+            final tw.exilecore.client.core.ExchangeModel model = new tw.exilecore.client.core.ExchangeModel(state);
+            if (mc.gui.screen() instanceof ExchangeScreen screen) {
+                screen.update(model);
+            } else if (open) {
+                mc.gui.setScreen(new ExchangeScreen(model));
+            }
+            return;
+        }
         if ("atlas".equals(kind)) {
             final AtlasModel model = new AtlasModel(state);
             if (mc.gui.screen() instanceof AtlasScreen screen) {

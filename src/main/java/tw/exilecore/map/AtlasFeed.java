@@ -419,8 +419,14 @@ public final class AtlasFeed implements UiFeed.Source {
             return service.atlasAllocated(player).hashCode() + ":" + service.atlasUnspent(player) + ":" + service.faithKind(player)
                     + ":" + AtlasSetMenu.activeSet(service.atlasData(player)) + ":" + (plugin.sponsors() != null && plugin.sponsors().cardActive(player));
         }
-        final java.util.Map<String, String> data = service.atlasData(player);
-        return data.hashCode() + ":" + service.atlasUnspent(player);
+        // 2026-11-02 照站長（星圖打開會卡）：只看星圖的進度（帳號進度裡還有委託、稱號…，那些變了不用重送整張星圖）；這次之前整份帳號進度算雜湊
+        int hash = 0;
+        for (final java.util.Map.Entry<String, String> entry : service.atlasData(player).entrySet()) {
+            if (MapService.isAtlasKey(entry.getKey())) {
+                hash += entry.hashCode();
+            }
+        }
+        return hash + ":" + service.atlasUnspent(player);
     }
 
     // ---- 動作 ----

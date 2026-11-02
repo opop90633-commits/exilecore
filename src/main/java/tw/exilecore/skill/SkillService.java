@@ -5615,6 +5615,7 @@ public final class SkillService {
             case "effect.cast.speed@" + tw.exilecore.stats.Recently.MANA_FLASK -> "魔力藥劑效果中施法速度增加 " + trimNumber(value * 100) + "%";
             case tw.exilecore.stats.GemQualityKeys.ORB_EXTRA_BOLTS -> "雷雲多放 " + (int) Math.floor(value + 1e-9) + " 道雷才消失";
             case TornadoSpec.LIMIT -> "龍捲風上限 +" + (int) Math.floor(value + 1e-9);
+            case tw.exilecore.stats.TreeEffectKeys.SLAM_AFTERSHOCK_CHANCE -> trimNumber(value) + "% 機率多一次餘震"; // 2026-11-02：地刺崩裂的額外品質效果
             case tw.exilecore.stats.WarcryKeys.GUARD_MORE -> "守護更多 " + trimNumber(value) + "%";
             case tw.exilecore.stats.WarcryKeys.SOCKETED_COOLDOWN_RECOVERY -> "插槽戰吼的冷卻回復速度增加 " + trimNumber(value * 100) + "%";
             case EMERGENCY_MORE -> "增益強化的弩矢更多 " + trimNumber(value) + "% 傷害";
@@ -7186,12 +7187,30 @@ public final class SkillService {
                     lines.add(zoneLine(build, params.ground(), "炸完留下"));
                     lines.add("<dark_gray>　同一招的地面效果疊在一起只算一灘（不疊加）");
                 }
-                if (params.aftershock() != null) {
+                if (params.aftershock() != null && EarthSpikes.ID.equals(build.definition().id())) {
+                    // 2026-11-02 照站長：地刺崩裂的 aftershock 是地刺碎裂的爆炸（借用欄位），不是 1 秒後再炸；這次之前照一般餘震寫，會誤導
+                    lines.add(String.format(Locale.ROOT, "<gray>地刺碎裂：半徑 <white>%.1f</white> 格、更多 <white>%d%%</white> 傷害（被戰吼震碎、超過 %d 根時最舊的那根）",
+                            EarthSpikes.BLAST_RADIUS * build.areaScale(), Math.round(params.aftershock().more(build.level())), EarthSpikes.LIMIT));
+                } else if (params.aftershock() != null) {
                     lines.add(String.format(Locale.ROOT, "<gray>餘震：<white>%.1f</white> 秒後再炸一次，半徑 ×%.1f、更多 <white>%d%%</white> 傷害",
                             params.aftershock().delay(), params.aftershock().radius(build.level()), Math.round(params.aftershock().more(build.level()))));
                 }
             }
             case CONE -> {
+                if ("sunder".equals(build.definition().id())) {
+                    // 2026-11-02 照站長：裂地斬照實際寫（5 段圓、震波）；這次之前照一般扇形寫「前方 11 格扇形」「0.4 秒後第二擊」，會誤導
+                    final double scale = build.areaScale();
+                    lines.add(String.format(Locale.ROOT, "<gray>前方 <white>%d</white> 段區域同時打：半徑 <white>%.1f</white>～<white>%.1f</white> 格，共約 <white>%.1f</white> 格長",
+                            SkillExecutor.SUNDER_AREAS, SkillExecutor.sunderRadius(0) * scale, SkillExecutor.sunderRadius(SkillExecutor.SUNDER_AREAS - 1) * scale,
+                            (SkillExecutor.sunderCenter(SkillExecutor.SUNDER_AREAS - 1) + SkillExecutor.sunderRadius(SkillExecutor.SUNDER_AREAS - 1)) * scale));
+                    if (params.aftershock() != null) {
+                        lines.add(String.format(Locale.ROOT, "<gray>震波：最多 <white>%d</white> 隻被打到的敵人各放一圈（半徑 <white>%.1f</white> 格），主波的 <white>%d%%</white> 傷害",
+                                SkillExecutor.SUNDER_SHOCKWAVES, tw.exilecore.core.Units.metres(SkillExecutor.SUNDER_SHOCK_M) * scale,
+                                Math.round(100 + params.aftershock().more(build.level()))));
+                    }
+                    lines.add(String.format(Locale.ROOT, "<gray>碎甲：<white>%.1f</white> 秒，物理受到的傷害再增加 20%%", 6.0 * build.durationScale()));
+                    break;
+                }
                 lines.add(String.format(Locale.ROOT, "<gray>前方 <white>%.1f</white> 格、%d° 的扇形",
                         build.length(), Math.round(build.angle())));
                 if (params.aftershock() != null) {

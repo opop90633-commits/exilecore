@@ -126,7 +126,9 @@ public final class MarketModule implements Module {
                 })))
                 .then(Commands.literal("exchange").executes(context -> run(plugin, context, (service, player) -> {
                     if (service.canUseHere(player)) {
-                        new ExchangeMenu(plugin, player, service, new MarketMenu.State()).open();
+                        if (!ExchangeFeed.openNativeFrom(plugin, player)) { // 2026-11-02：裝了模組開原生畫面
+                            new ExchangeMenu(plugin, player, service, new MarketMenu.State()).open();
+                        }
                     } else {
                         player.sendMessage(plugin.text().prefixed("<red>通貨交易所只能在營地打開"));
                     }

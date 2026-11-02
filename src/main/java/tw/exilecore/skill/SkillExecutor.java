@@ -372,7 +372,11 @@ final class SkillExecutor {
 
     private void nova(final Origin origin, final SkillBuild build) {
         if (EarthSpikes.ID.equals(build.definition().id())) {
-            earthSpikes.cast(origin, build); // 2026-10-31 照站長：地刺崩裂照原作（裂縫、留地刺、戰吼震碎）
+            final List<Location> fissure = earthSpikes.cast(origin, build); // 2026-10-31 照站長：地刺崩裂照原作（裂縫、留地刺、戰吼震碎）
+            // 2026-11-02 照站長：地刺崩裂也吃「多一次餘震」（額外品質效果、天賦樹、鑄父之錘）：整道裂縫 0.5 秒後再打一次；這次之前沒有
+            if (origin.owner() != null) {
+                lineAftershocks(origin.owner(), build, build.profile(), fissure, EarthSpikes.FISSURE_RADIUS * build.areaScale());
+            }
             extraFissure(origin, build); // 2026-11-01 照 PoE2（Earthshatter 是 CreatesFissure）：岔裂、地裂這類輔助、分裂地面也作用在它的裂縫
             return;
         }

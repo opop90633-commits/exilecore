@@ -128,6 +128,7 @@ public final class UiFeed implements Listener, PluginMessageListener {
         register(new tw.exilecore.map.AtlasFeed(plugin, false));
         register(new tw.exilecore.map.AtlasFeed(plugin, true));
         register(tw.exilecore.ascendancy.AscFeed.create(plugin));
+        register(new tw.exilecore.market.ExchangeFeed(plugin)); // 2026-11-02 照站長：通貨交易所的原生畫面（PoE2 的樣子）
     }
 
     public void disable() {
@@ -151,7 +152,7 @@ public final class UiFeed implements Listener, PluginMessageListener {
             return;
         }
         final Set<String> flags = new java.util.HashSet<>();
-        for (final String flag : new String[] {FLAG_TREE, FLAG_ATLAS}) {
+        for (final String flag : new String[] {FLAG_TREE, FLAG_ATLAS, tw.exilecore.market.ExchangeFeed.FLAG}) { // 2026-11-02：＋通貨交易所
             if (UiWire.helloFlag(raw, flag)) {
                 flags.add(flag);
             }
@@ -218,8 +219,14 @@ public final class UiFeed implements Listener, PluginMessageListener {
 
     private void push(final Player player, final Client client, final Source source, final boolean open, final String message) {
         final JsonObject state;
+        final long started = System.nanoTime();
         try {
             state = source.state(player, client.args == null ? new JsonObject() : client.args);
+            // 2026-11-02 照站長（星圖打開會卡）：算一次狀態超過 20 毫秒記在主控台，看得出是哪個畫面、多久
+            final long ms = (System.nanoTime() - started) / 1_000_000;
+            if (ms >= 20) {
+                plugin.getSLF4JLogger().warn("原生畫面：{} 的 {} 狀態算了 {} 毫秒（{}）", player.getName(), source.kind(), ms, open ? "打開" : "更新");
+            }
         } catch (final RuntimeException e) {
             plugin.getSLF4JLogger().warn("原生畫面：算 {} 的 {} 狀態出錯", player.getName(), source.kind(), e);
             return;

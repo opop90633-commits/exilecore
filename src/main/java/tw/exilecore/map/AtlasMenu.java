@@ -148,13 +148,11 @@ public final class AtlasMenu extends Menu {
 
     /** 2026-10-24：塔的範圍（完成的與看得到還沒打的塔）：0 不在、1 在範圍內、2 被插了石板的塔罩到。 */
     private int towerCoverage(final AtlasProgress atlas, final int q, final int r) {
-        final int radius = service.atlasConfig().tower().radius() + service.atlasBonus(player).count("atlas.tower.radius");
+        final int radius = towerRadius();
         int best = 0;
-        final List<AtlasGrid.Cell> towers = new ArrayList<>(atlas.completedTowers());
-        towers.addAll(atlas.openTowers());
-        for (final AtlasGrid.Cell tower : towers) {
+        for (final AtlasGrid.Cell tower : rangeTowerList(atlas)) {
             if ((tower.q() != q || tower.r() != r) && AtlasGrid.distance(tower.q(), tower.r(), q, r) <= radius) {
-                if (atlas.isCompleted(tower.q(), tower.r()) && service.tabletAt(player, tower.q(), tower.r()) != null) {
+                if (atlas.isCompleted(tower.q(), tower.r()) && tabletOf(tower) != null) {
                     return 2;
                 }
                 best = 1;
@@ -166,15 +164,13 @@ public final class AtlasMenu extends Menu {
     /** 2026-10-24：罩到這格、還沒插石板的塔（說明用）。 */
     private List<String> towerRangeLines(final AtlasProgress atlas, final int q, final int r) {
         final List<String> lines = new ArrayList<>();
-        final int radius = service.atlasConfig().tower().radius() + service.atlasBonus(player).count("atlas.tower.radius");
-        final List<AtlasGrid.Cell> towers = new ArrayList<>(atlas.completedTowers());
-        towers.addAll(atlas.openTowers());
-        for (final AtlasGrid.Cell tower : towers) {
+        final int radius = towerRadius();
+        for (final AtlasGrid.Cell tower : rangeTowerList(atlas)) {
             if (AtlasGrid.distance(tower.q(), tower.r(), q, r) > radius) {
                 continue;
             }
             final boolean done = atlas.isCompleted(tower.q(), tower.r());
-            if (done && service.tabletAt(player, tower.q(), tower.r()) != null) {
+            if (done && tabletOf(tower) != null) {
                 continue; // 有石板的另外列（tabletLines）
             }
             lines.add("<#a89870>⬢ 在塔「" + where(tower.q(), tower.r()) + "」的範圍內<dark_gray>（" + (done ? "插一片先驅石板就會罩到這格" : "塔還沒打完") + "）");
@@ -185,12 +181,12 @@ public final class AtlasMenu extends Menu {
     /** 2026-10-22：罩到這格的每片石板一行：「⬢ 神龕石板：…（塔 (q, r)，還能用 2 次）」。 */
     private List<String> tabletLines(final AtlasProgress atlas, final int q, final int r) {
         final List<String> lines = new ArrayList<>();
-        final int radius = service.atlasConfig().tower().radius() + service.atlasBonus(player).count("atlas.tower.radius");
+        final int radius = towerRadius();
         for (final AtlasGrid.Cell tower : atlas.completedTowers()) {
             if (AtlasGrid.distance(tower.q(), tower.r(), q, r) > radius) {
                 continue;
             }
-            final AtlasTablets.Kind kind = service.tabletAt(player, tower.q(), tower.r());
+            final AtlasTablets.Kind kind = tabletOf(tower);
             if (kind != null) {
                 lines.add("<#d8c8a0>⬢ " + kind.displayName() + "<gray>：" + kind.description() + "<dark_gray>（塔「" + AtlasMenu.where(tower.q(), tower.r()) + "」"
                         + "，還能用 " + service.tabletUses(player, tower.q(), tower.r()) + " 次）");
@@ -624,7 +620,40 @@ public final class AtlasMenu extends Menu {
     AtlasGrid.Cell prepareNative(final AtlasProgress atlas) {
         rangeTowers = null;
         allCorrupt = service.atlasBonus(player).get("atlas.all_corrupt") > 0;
+        // 2026-11-02 照站長（星圖打開會卡）：塔範圍、塔、石板這次畫面只算一次（這次之前每一格都重算：星圖天賦加成、塔清單、石板）
+        cachedRadius = service.atlasConfig().tower().radius() + service.atlasBonus(player).count("atlas.tower.radius");
+        cachedTowers = new ArrayList<>(atlas.completedTowers());
+        cachedTowers.addAll(atlas.openTowers());
+        cachedTablets = new java.util.HashMap<>();
+        for (final AtlasGrid.Cell tower : atlas.completedTowers()) {
+            final AtlasTablets.Kind kind = service.tabletAt(player, tower.q(), tower.r());
+            if (kind != null) {
+                cachedTablets.put(AtlasGrid.key(tower.q(), tower.r()), kind);
+            }
+        }
         return chosenCell(atlas);
+    }
+
+    /** 2026-11-02：原生畫面這次算好的塔範圍半徑、塔、石板（null = 箱子選單，照舊每次算）。 */
+    private int cachedRadius = -1;
+    private List<AtlasGrid.Cell> cachedTowers;
+    private java.util.Map<Long, AtlasTablets.Kind> cachedTablets;
+
+    private int towerRadius() {
+        return cachedRadius >= 0 ? cachedRadius : service.atlasConfig().tower().radius() + service.atlasBonus(player).count("atlas.tower.radius");
+    }
+
+    private List<AtlasGrid.Cell> rangeTowerList(final AtlasProgress atlas) {
+        if (cachedTowers != null) {
+            return cachedTowers;
+        }
+        final List<AtlasGrid.Cell> towers = new ArrayList<>(atlas.completedTowers());
+        towers.addAll(atlas.openTowers());
+        return towers;
+    }
+
+    private AtlasTablets.Kind tabletOf(final AtlasGrid.Cell tower) {
+        return cachedTablets != null ? cachedTablets.get(AtlasGrid.key(tower.q(), tower.r())) : service.tabletAt(player, tower.q(), tower.r());
     }
 
     NativeCell nativeCell(final AtlasProgress atlas, final AtlasGrid.Cell chosen, final int q, final int r) {

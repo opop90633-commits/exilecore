@@ -2101,17 +2101,18 @@ supports:
     modifiers:
       - { stat: crit.vs_full_life, type: MORE, value: 100 }
 
-  brim_mana:                  # Zenith
-    name: 盈魔
-    description: 魔力在 90% 以上時，被輔助的法術更痛。
+  brim_mana:                  # Zenith II（2026-11-02 照站長：升成 II，代號不變）
+    name: 盈魔 II
+    description: 魔力在 90% 以上時，被輔助的法術造成的傷害更多 30%；被輔助的技能增加 25% 魔力消耗效率。
     icon: LAPIS_LAZULI
-    tier: 1
+    tier: 3   # 2026-11-02 照 PoE2 Zenith II（poe2db：第 3 階）；這次之前 1（Zenith I）
     requires: [spell]
     excludes: [minion]
-    mana_multiplier: 1.2
+    mana_multiplier: 1.0   # 2026-11-02 照 PoE2 Zenith II（0.4.0b 起魔耗 100%）；這次之前 1.2
     # 2026-10-26 照 PoE2 Zenith I（poe2db）；這次之前 tier 2、魔耗 1.15、效果不動
     modifiers:
       - { stat: damage.high_mana, type: MORE, value: 30 }
+      - { stat: skill.mana_cost_efficiency, type: INCREASED, value: 25 }   # 2026-11-02 照 PoE2 Zenith II；這次之前沒有
 
   back_to_wall:                   # Clash
     name: 背水

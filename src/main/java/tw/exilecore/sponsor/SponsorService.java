@@ -2334,6 +2334,11 @@ public final class SponsorService {
         return cosmetic.isLimited() && festival != null && festival.visible() && festival.config().name().equals(cosmetic.limited());
     }
 
+    /** 2026-11-02 照站長：拉霸機限定的時裝（營地拉霸機抽得到，不是絕版）：沒有的人也列出來、可以試穿。 */
+    public static boolean slotsPrize(final SponsorConfig.Cosmetic cosmetic) {
+        return cosmetic != null && tw.exilecore.slots.SlotsConfig.LIMITED_TAG.equals(cosmetic.limited());
+    }
+
     String tryOn(final Player player, final String id) {
         if (!loaded(player)) {
             return "帳號資料載入中，請稍等";
@@ -2345,8 +2350,8 @@ public final class SponsorService {
         if (cosmetic.isEmote()) {
             return "動作不能試穿";
         }
-        if (cosmetic.isLimited() && !ownsCosmetic(player, id) && !festivalPreview(cosmetic)) {
-            return "限定的時裝不能試穿";
+        if (cosmetic.isLimited() && !ownsCosmetic(player, id) && !festivalPreview(cosmetic) && !slotsPrize(cosmetic)) {
+            return "限定的時裝不能試穿"; // 2026-11-02：拉霸機抽得到的不算絕版，可以試穿
         }
         if (cosmetic.skin() && !packSent()) {
             return "伺服器沒有送介面資源包，3D 時裝畫不出來";
