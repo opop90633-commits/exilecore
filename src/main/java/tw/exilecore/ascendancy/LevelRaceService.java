@@ -328,9 +328,10 @@ public final class LevelRaceService {
     static final int REACH_BONUS = 5;
 
     static List<tw.exilecore.stats.Modifier> reachBonus(final String source) {
+        // 2026-11-02 修正：修飾器的增加是小數（0.05 = 5%）；這次之前直接寫 5，變成增加 500%
         return List.of(
-                new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.DROP_QUANTITY, tw.exilecore.stats.ModType.INCREASED, REACH_BONUS, Set.of(), source),
-                new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.DROP_RARITY, tw.exilecore.stats.ModType.INCREASED, REACH_BONUS, Set.of(), source));
+                new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.DROP_QUANTITY, tw.exilecore.stats.ModType.INCREASED, REACH_BONUS / 100.0, Set.of(), source),
+                new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.DROP_RARITY, tw.exilecore.stats.ModType.INCREASED, REACH_BONUS / 100.0, Set.of(), source));
     }
 
     private String reachBonusText() {

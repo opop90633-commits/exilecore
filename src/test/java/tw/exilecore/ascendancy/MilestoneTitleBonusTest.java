@@ -19,7 +19,8 @@ class MilestoneTitleBonusTest {
         assertEquals(StatKeys.DROP_RARITY, stats.get(1).stat());
         for (final Modifier modifier : stats) {
             assertEquals(ModType.INCREASED, modifier.type());
-            assertEquals(5, modifier.value(), 1e-9);
+            assertEquals(0.05, modifier.value(), 1e-9, "修飾器的增加是小數（2026-11-02 修正：這次之前寫 5 = 500%）");
         }
+        assertEquals("增加 5% 物品掉落數量", StatLines.describeAll(stats).get(0));
     }
 }
