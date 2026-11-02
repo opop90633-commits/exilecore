@@ -113,7 +113,7 @@ final class SlotsMenu extends Menu {
                 "結果在按下去的那一刻就決定了，滾輪只是動畫；",
                 "中途關掉選單、斷線也照常結算。",
                 "",
-                "自動連拉：一次拉 " + config.autoSpins() + " 把，中途可以停。")));
+                "自動連拉：一次拉幾把自己選（右鍵換），中途可以停。")));
         // 2026-11-02 照站長：拿掉冷卻與「記在全服的經濟報表」那幾行；這次之前說明裡有寫
         drawAuto();
         drawSpeed();
@@ -206,10 +206,13 @@ final class SlotsMenu extends Menu {
             return;
         }
         final long wait = service.autoWaitSeconds(player);
-        set(SLOT_AUTO, icon(Material.REPEATER, "<white>自動連拉 " + config.autoSpins() + " 把",
-                "<gray>每把押 " + GoldService.format(bet) + " 金幣（最多 " + GoldService.format(bet * config.autoSpins()) + "）",
+        final int count = service.autoCount(player); // 2026-11-02 照站長：把數玩家自己選
+        set(SLOT_AUTO, icon(Material.REPEATER, "<white>自動連拉 <yellow>" + count + "</yellow> 把",
+                "<gray>每把押 " + GoldService.format(bet) + " 金幣（最多 " + GoldService.format(bet * count) + "）",
                 "<gray>金幣不夠、關掉選單就停", "",
-                wait > 0 ? "<dark_gray>冷卻中：" + wait + " 秒後可以再開" : "<yellow>左鍵：開始"));
+                wait > 0 ? "<dark_gray>冷卻中：" + wait + " 秒後可以再開" : "<yellow>左鍵：開始",
+                "<yellow>右鍵：多一點　Shift＋右鍵：少一點",
+                "<dark_gray>（5、10、20、50、100、200、500 把）"));
     }
 
     /** 加速鈕：現在幾倍、按了換下一段。 */
@@ -324,6 +327,13 @@ final class SlotsMenu extends Menu {
             if (!acceptAction(click)) {
                 return;
             }
+            if (!auto && (click == ClickType.RIGHT || click == ClickType.SHIFT_RIGHT)) {
+                // 2026-11-02 照站長：右鍵換把數（Shift＋右鍵往回）
+                service.cycleAutoCount(player, click == ClickType.SHIFT_RIGHT ? -1 : 1);
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.6f, 1.4f);
+                drawAuto();
+                return;
+            }
             if (auto) {
                 autoLeft = 0; // 這一把轉完就停
                 if (spinning == null) {
@@ -341,7 +351,7 @@ final class SlotsMenu extends Menu {
                 return;
             }
             auto = true;
-            autoLeft = config.autoSpins();
+            autoLeft = service.autoCount(player);
             drawAuto();
             pull();
         }

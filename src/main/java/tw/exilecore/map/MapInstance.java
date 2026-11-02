@@ -319,6 +319,24 @@ public final class MapInstance {
         kills++;
     }
 
+    /** 2026-11-02 照站長：還活著的地圖怪（路上的怪群＋多刷的；不含 Boss），模組的地圖標怪用。 */
+    public List<LivingEntity> livingMonsters() {
+        final List<LivingEntity> out = new ArrayList<>();
+        for (final List<LivingEntity> pack : packs) {
+            for (final LivingEntity entity : pack) {
+                if (entity.isValid() && !entity.isDead()) {
+                    out.add(entity);
+                }
+            }
+        }
+        for (final LivingEntity entity : extras) {
+            if (entity.isValid() && !entity.isDead() && entity != boss()) {
+                out.add(entity);
+            }
+        }
+        return out;
+    }
+
     /** 還活著的地圖怪（不含 Boss）。 */
     public int aliveMonsters() {
         int count = 0;

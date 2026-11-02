@@ -37,6 +37,8 @@ final class MinimapFeed {
         FeedProtocol.Boss boss;
         int round;
         String party = "";
+        /** 2026-11-02：上次送的怪（位置、稀有度一樣就不重送）。 */
+        String mobs = "";
     }
 
     private final ExileCore plugin;
@@ -97,6 +99,7 @@ final class MinimapFeed {
             state.markers = markers;
             state.boss = boss;
             state.party = "";
+            state.mobs = "";
             feeds.send(player, FeedProtocol.MINIMAP, FeedProtocol.minimapInit(instance.id(), instance.originX(), instance.originZ(),
                     instance.layout(), boss, markers));
         } else {
@@ -111,6 +114,7 @@ final class MinimapFeed {
             }
         }
         if (++state.round % PARTY_EVERY == 0) {
+            sendMobs(player, instance, state);
             final List<FeedProtocol.Mate> mates = new ArrayList<>();
             final StringBuilder signature = new StringBuilder();
             for (final UUID other : instance.inside()) {
@@ -126,6 +130,29 @@ final class MinimapFeed {
                 state.party = signature.toString();
                 feeds.send(player, FeedProtocol.MINIMAP, FeedProtocol.minimapParty(mates));
             }
+        }
+    }
+
+    /** 2026-11-02 照站長：模組地圖標怪最多幾隻（太多的不送）。 */
+    static final int MAX_MOBS = 400;
+
+    /** 2026-11-02 照站長：地圖上的怪（普通白、魔法藍、稀有黃、傳奇橘），跟隊友一樣每 {@value #PARTY_EVERY} 次看一次，變了才送。 */
+    private void sendMobs(final Player player, final MapInstance instance, final Seen state) {
+        final List<FeedProtocol.Mob> mobs = new ArrayList<>();
+        final StringBuilder signature = new StringBuilder();
+        for (final LivingEntity entity : instance.livingMonsters()) {
+            if (mobs.size() >= MAX_MOBS || !entity.getWorld().equals(player.getWorld())) {
+                break;
+            }
+            final int rarity = plugin.monsters() == null ? 0 : plugin.monsters().data(entity)
+                    .map(data -> data.rarity().ordinal()).orElse(0);
+            final Location at = entity.getLocation();
+            mobs.add(new FeedProtocol.Mob(at.getBlockX(), at.getBlockZ(), Math.min(3, rarity)));
+            signature.append(at.getBlockX()).append(',').append(at.getBlockZ()).append(',').append(rarity).append(';');
+        }
+        if (!signature.toString().equals(state.mobs)) {
+            state.mobs = signature.toString();
+            feeds.send(player, FeedProtocol.MINIMAP, FeedProtocol.minimapMobs(mobs));
         }
     }
 

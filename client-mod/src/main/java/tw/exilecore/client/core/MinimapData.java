@@ -42,6 +42,20 @@ public final class MinimapData {
     public record Mate(String name, double x, double z) {
     }
 
+    /** 2026-11-02 照站長：地圖上的怪（世界座標；rarity 0 普通、1 魔法、2 稀有、3 傳奇）。 */
+    public record Mob(int x, int z, int rarity) {
+
+        /** 標示的顏色（RGB）：普通白、魔法藍、稀有黃、傳奇橘（跟怪物名字的顏色一樣）。 */
+        public int color() {
+            return switch (rarity) {
+                case 1 -> 0x8888FF;
+                case 2 -> 0xFFFF77;
+                case 3 -> 0xAF6025;
+                default -> 0xFFFFFF;
+            };
+        }
+    }
+
     private final int mapId;
     private final int originX;
     private final int originZ;
@@ -53,6 +67,7 @@ public final class MinimapData {
     private final Map<Integer, Event> events = new LinkedHashMap<>();
     private Boss boss;
     private List<Mate> party = List.of();
+    private List<Mob> mobs = List.of();
     private final BitSet seen;
     /** 看過的地方有變（畫小地圖的圖要重畫）。 */
     private int revision;
@@ -71,7 +86,11 @@ public final class MinimapData {
     }
 
     /** 一個封包：op 是 init、events、boss、party、clear；init 的 data 是新的整張。 */
-    public record Packet(String op, MinimapData data, List<Event> events, Boss boss, List<Mate> party) {
+    public record Packet(String op, MinimapData data, List<Event> events, Boss boss, List<Mate> party, List<Mob> mobs) {
+
+        Packet(final String op, final MinimapData data, final List<Event> events, final Boss boss, final List<Mate> party) {
+            this(op, data, events, boss, party, List.of());
+        }
     }
 
     public static Packet parse(final byte[] bytes) {
@@ -110,6 +129,15 @@ public final class MinimapData {
                     }
                     yield new Packet(op, null, List.of(), null, mates);
                 }
+                case "mobs" -> {
+                    // 2026-11-02 照站長：怪的位置 [x,z,r, x,z,r, …]
+                    final List<Mob> list = new ArrayList<>();
+                    final JsonArray flat = array(root, "m");
+                    for (int i = 0; i + 2 < flat.size(); i += 3) {
+                        list.add(new Mob(flat.get(i).getAsInt(), flat.get(i + 1).getAsInt(), flat.get(i + 2).getAsInt()));
+                    }
+                    yield new Packet(op, null, List.of(), null, List.of(), list);
+                }
                 case "clear" -> new Packet(op, null, List.of(), null, List.of());
                 default -> null;
             };
@@ -131,6 +159,7 @@ public final class MinimapData {
             }
             case "boss" -> boss = packet.boss();
             case "party" -> party = List.copyOf(packet.party());
+            case "mobs" -> mobs = List.copyOf(packet.mobs());
             default -> {
             }
         }
@@ -215,8 +244,23 @@ public final class MinimapData {
 
     /** 這一格畫什麼顏色（ARGB）：沒看過的是透明（迷霧）。 */
     public int color(final int cx, final int cz) {
+        return color(cx, cz, false);
+    }
+
+    /**
+     * 2026-11-02 照站長：showAll = 沒走過的房間也畫（預設），只是暗一點、淡一點（看得出哪裡走過）；這次之前沒走過的是透明（迷霧）。
+     */
+    public int color(final int cx, final int cz, final boolean showAll) {
         if (!seen(cx, cz)) {
-            return 0;
+            if (!showAll) {
+                return 0;
+            }
+            return switch (tile(cx, cz)) {
+                case FLOOR -> 0x90202430;
+                case WALL -> 0xA0686258;
+                case LIQUID -> 0x90203A60;
+                default -> 0;
+            };
         }
         return switch (tile(cx, cz)) {
             case FLOOR -> 0xD0383C48;
@@ -228,10 +272,14 @@ public final class MinimapData {
 
     /** 整張的顏色（每格一個 ARGB，z 一排一排）：畫成小地圖的圖。 */
     public int[] pixels() {
+        return pixels(false);
+    }
+
+    public int[] pixels(final boolean showAll) {
         final int[] out = new int[width * height];
         for (int z = 0; z < height; z++) {
             for (int x = 0; x < width; x++) {
-                out[z * width + x] = color(x, z);
+                out[z * width + x] = color(x, z, showAll);
             }
         }
         return out;
@@ -275,6 +323,10 @@ public final class MinimapData {
 
     public List<Mate> party() {
         return party;
+    }
+
+    public List<Mob> mobs() {
+        return mobs;
     }
 
     public int revision() {

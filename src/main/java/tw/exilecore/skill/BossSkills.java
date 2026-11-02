@@ -126,6 +126,15 @@ public final class BossSkills implements Listener {
             return false;
         }
 
+        /**
+         * 2026-11-02 照站長：鎖血機制（破盾、站位圈、倒數大招）進行中：完全停手——正在放的招、還在飛的、追人的光球、點名、
+         * 還沒落下的、地上的地面效果全部收掉，原版 AI 也停（不追人、不普攻）；場地收縮停在現在的大小（不縮、圈外不扣血），機制結束再接著縮。
+         * 這次之前只是不出新招，已經放出去的照打。
+         */
+        default boolean locked() {
+            return false;
+        }
+
         /** 2026-10-17：場地收縮（萬界崩解）的中心——地圖 Boss 是 Boss 房正中間；null = 照 Boss 當時的位置。 */
         default Location arenaCenter() {
             return null;
@@ -205,6 +214,8 @@ public final class BossSkills implements Listener {
         final List<Marked> marks = new ArrayList<>();
         /** 最近一次點名的 tick（剛點名也算這一招還沒完，跟光球一樣先讓人看清楚）。 */
         long lastMark = BossPacing.NEVER;
+        /** 2026-11-02：鎖血機制停手中（{@link Host#locked}）。 */
+        boolean quiet;
         /** 場地收縮（2026-10）：放過之後維持到這場打完，重置才消失。 */
         Arena arena;
         /** 跟場地收縮一起放的招（with:）：收縮期間 at: arena 的地面效果照各自的 cooldown 一直落（2026-10）。 */
@@ -415,7 +426,7 @@ public final class BossSkills implements Listener {
     private static final class Arena {
         final BossSkill skill;
         final Location center;
-        final long startTick;
+        long startTick; // 2026-11-02：鎖血機制時停住收縮（每 tick 往後推）
         final long shrinkTicks;
         long nextPulse;
         final String mark;
@@ -704,6 +715,14 @@ public final class BossSkills implements Listener {
     }
 
     private void tickBrain(final Brain brain, final long now) {
+        if (brain.host.boss() && brain.host.locked()) {
+            quiet(brain, now); // 2026-11-02 照站長：鎖血機制進行中完全停手
+            return;
+        }
+        if (brain.quiet) {
+            brain.quiet = false;
+            release(brain); // 機制結束：原版 AI 恢復
+        }
         syncAi(brain, now);
         tickBolts(brain, now);
         tickZones(brain, now);
@@ -3194,6 +3213,49 @@ public final class BossSkills implements Listener {
         final Location center = ground(fixed != null ? fixed : cast.anchor != null ? cast.anchor : brain.boss.getLocation());
         clearField(brain); // 2026-10-15：收縮一開始先清場（還留在地上的風暴、荒蕪、還沒落下的、追人的光球都收掉）
         brain.arena = new Arena(cast.skill, center, now, brain.boss.getUniqueId() + ":arena:" + now);
+    }
+
+    /**
+     * 2026-11-02 照站長：鎖血機制進行中（{@link Host#locked}）。第一次：正在放的招、飛的彈、擴散環、追人的光球、點名、還沒落下的、
+     * 地上的地面效果全部收掉（地上的標示一起拿掉），原版 AI 停住；之後每 tick 把場地收縮往後推（不縮、不扣血、跟著收縮落的也不落），
+     * 出招的空檔也往後推（機制結束後至少隔一個空檔才出招）。
+     */
+    private void quiet(final Brain brain, final long now) {
+        if (!brain.quiet) {
+            brain.quiet = true;
+            final String prefix = brain.boss.getUniqueId() + ":";
+            danger.hidePrefix(prefix);
+            brain.cast = null;
+            clearField(brain);
+            brain.bolts.clear();
+            brain.rings.clear();
+            brain.marks.clear();
+            if (brain.arena != null) {
+                brain.arena.shown = -1; // 場地的圈上面一起收掉了：下面重標
+            }
+            if (brain.boss instanceof Mob mob && !brain.aiPaused) {
+                mob.setAware(false);
+                mob.getPersistentDataContainer().set(pausedKey, PersistentDataType.BYTE, (byte) 1);
+                brain.aiPaused = true;
+            }
+            if (!brain.anchored) {
+                brain.anchored = true;
+                anchor(brain.boss, true);
+            }
+        }
+        final Arena arena = brain.arena;
+        if (arena != null) {
+            arena.startTick++;
+            arena.nextPulse++;
+            arena.nextExtra.replaceAll((id, tick) -> tick + 1);
+            if (arena.shown < 0) {
+                final double radius = arena.radius(now);
+                arena.shown = radius;
+                danger.show(arena.mark, arena.center, DangerZones.ring(arena.center, radius), DangerZones.FLASH);
+            }
+        }
+        brain.globalReadyAt = Math.max(brain.globalReadyAt,
+                now + Math.round(settings().gapFor(brain.host.boss()) * 20 * cooldownFactor(brain.boss) * tempo(brain)));
     }
 
     /** 清場（2026-10-15，萬界崩解開始時）：地上的地面效果、還沒落下的延遲落下、追人的光球全部收掉，地上的標示一起拿掉。 */

@@ -377,7 +377,7 @@ final class FxRenderer {
 
     /** 地上的圖形（相對 anchor 的座標；高度已經照地形量好）。不會再改，畫的時候直接用。 */
     private record Ground(double ax, double ay, double az, float[] fill, List<Edge> edges, FxCodec.Style style, boolean important,
-                          long measured) {
+                          long measured, boolean safe) {
     }
 
     /** 一條外框：點（x,y,z）＋每點的水平法線（nx,nz），帶寬在畫的時候算（重要的會閃）。 */
@@ -433,13 +433,13 @@ final class FxRenderer {
         final float oy = (float) (g.ay() - camera.y);
         final float oz = (float) (g.az() - camera.z);
         if (g.fill() != null) {
-            final int color = FxLook.fillColor(g.style(), g.important(), t);
+            final int color = g.safe() ? FxLook.safeFillColor(g.style(), t) : FxLook.fillColor(g.style(), g.important(), t);
             final float[] f = g.fill();
             for (int i = 0; i + 2 < f.length; i += 3) {
                 consumer.addVertex(pose, ox + f[i], oy + f[i + 1] + FILL_LIFT, oz + f[i + 2]).setColor(color);
             }
         }
-        final int color = FxLook.edgeColor(g.style(), g.important(), t);
+        final int color = g.safe() ? FxLook.safeEdgeColor(g.style(), t) : FxLook.edgeColor(g.style(), g.important(), t);
         final float half = FxLook.edgeWidth(g.important(), t) / 2;
         for (final Edge edge : g.edges()) {
             final float[] p = edge.points();
@@ -535,8 +535,8 @@ final class FxRenderer {
                 fill = disc(level, pos, e, Math.min(n, 64));
             }
         }
-        // 2026-11-02 照站長：能踩的機制圈（站位圈、安全區）照原本的顏色畫、不染紅不閃；這次之前重要的一律染紅
-        return new Ground(ax, ay, az, fill, edges, e.style(), e.important() && !e.safe(), ticks);
+        // 2026-11-02 照站長：能踩的機制圈（站位圈、安全區）照原本的顏色畫、不染紅（一樣粗、一樣閃，看得清楚）；這次之前重要的一律染紅
+        return new Ground(ax, ay, az, fill, edges, e.style(), e.important(), ticks, e.safe());
     }
 
     /** 線的一頭：從左邊到右邊一小段外框。 */

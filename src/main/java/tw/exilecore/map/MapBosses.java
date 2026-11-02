@@ -1439,6 +1439,12 @@ final class MapBosses {
             }
 
             @Override
+            public boolean locked() {
+                // 2026-11-02 照站長：鎖血機制（結晶、站位圈、倒數大招）進行中完全停手（已經放出去的也收掉、原版 AI 停）
+                return instance.boss() == boss && !instance.bossKilled() && instance.lockInvulnerable();
+            }
+
+            @Override
             public Location arenaCenter() {
                 return center(instance); // 2026-10-17：萬界崩解固定在 Boss 房正中間
             }

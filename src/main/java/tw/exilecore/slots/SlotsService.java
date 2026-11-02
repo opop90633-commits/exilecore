@@ -188,6 +188,28 @@ public final class SlotsService {
         return speeds.getOrDefault(player.getUniqueId(), 1);
     }
 
+    /** 2026-11-02 照站長：自動連拉一次拉幾把（玩家自己選；記到下線）。這次之前固定 slots.yml 的 auto.spins。 */
+    static final int[] AUTO_CHOICES = {5, 10, 20, 50, 100, 200, 500};
+    private final Map<UUID, Integer> autoCounts = new HashMap<>();
+
+    int autoCount(final Player player) {
+        return autoCounts.getOrDefault(player.getUniqueId(), config.autoSpins());
+    }
+
+    /** 換下一個（step 1）或上一個（step -1）把數，到頭繞回去。 */
+    int cycleAutoCount(final Player player, final int step) {
+        final int current = autoCount(player);
+        int index = 0;
+        for (int i = 0; i < AUTO_CHOICES.length; i++) {
+            if (AUTO_CHOICES[i] <= current) {
+                index = i;
+            }
+        }
+        final int next = AUTO_CHOICES[Math.floorMod(index + step, AUTO_CHOICES.length)];
+        autoCounts.put(player.getUniqueId(), next);
+        return next;
+    }
+
     /** 換下一段速度：1 → 2 → 4 → 1。 */
     int cycleSpeed(final Player player) {
         final int next = switch (speed(player)) {
@@ -528,6 +550,7 @@ public final class SlotsService {
         lastSpin.remove(uuid);
         chosen.remove(uuid);
         speeds.remove(uuid);
+        autoCounts.remove(uuid);
     }
 
     /** 關服、重讀插件：每個人還在轉的那一把都結算。 */

@@ -306,6 +306,25 @@ public final class FeedProtocol {
         return bytes(root);
     }
 
+    /** 2026-11-02 照站長：地圖上的怪（x、z 世界座標取整；r：0 普通、1 魔法、2 稀有、3 傳奇）。 */
+    public record Mob(int x, int z, int rarity) {
+    }
+
+    /** 怪的位置：{"op":"mobs","m":[x,z,r, x,z,r, …]}（攤平成一串數字，封包小一點）。舊模組不認得這個 op，直接略過。 */
+    public static byte[] minimapMobs(final List<Mob> mobs) {
+        final JsonObject root = new JsonObject();
+        root.addProperty("v", VERSION);
+        root.addProperty("op", "mobs");
+        final JsonArray array = new JsonArray();
+        for (final Mob mob : mobs) {
+            array.add(mob.x());
+            array.add(mob.z());
+            array.add(mob.rarity());
+        }
+        root.add("m", array);
+        return bytes(root);
+    }
+
     public static byte[] minimapClear() {
         final JsonObject root = new JsonObject();
         root.addProperty("v", VERSION);

@@ -324,7 +324,7 @@ public final class PhaseLocks {
             // 外框照充能變色（黃 → 藍 → 綠），裡面一圈照充能長大；圈心一道光柱，越滿越高
             final double charge = lock.charges[i];
             final Particle.DustOptions color = charge >= 1 ? ZONE_FULL : charge > 0 ? ZONE_CHARGING : ZONE_EMPTY;
-            Fx.safeZone(lock.key(i), at, zones.radius(), Fx.Look.edge(Particle.DUST, color), (int) Math.max(0, lock.untilTick - now)); // 2026-11-02 照站長：能踩的，模組不染紅
+            Fx.safeZone(lock.key(i), at, zones.radius(), Fx.Look.filled(Particle.DUST, color), (int) Math.max(0, lock.untilTick - now)); // 2026-11-02 照站長：能踩的，模組不染紅；裡面也撒點（沒裝模組的也看得清楚），這次之前只有外框
             if (charge > 0.05 && charge < 1 && pulse) {
                 Fx.ring(at.getWorld(), at, zones.radius() * charge, Particle.DUST, ZONE_FULL, null, true);
             }

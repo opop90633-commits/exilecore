@@ -934,7 +934,9 @@ public final class Fx {
     private static boolean moved(final FxEffect before, final FxEffect now) {
         final double dx = before.x() - now.x();
         final double dz = before.z() - now.z();
-        return Math.abs(before.radius() - now.radius()) > 0.1 || dx * dx + dz * dz > 0.25 || Math.abs(before.y() - now.y()) > 0.5;
+        // 2026-11-02 照站長：顏色換了也送 UPDATE（站位圈充能黃 → 藍 → 綠，模組才跟著變）；這次之前只看半徑、位置
+        return Math.abs(before.radius() - now.radius()) > 0.1 || dx * dx + dz * dz > 0.25 || Math.abs(before.y() - now.y()) > 0.5
+                || before.particle() != now.particle() || !java.util.Objects.equals(before.data(), now.data());
     }
 
     /** DUST 的點大一點（存在久一點；持續範圍重畫變成 0.5 秒一次，看起來一樣連續）。 */

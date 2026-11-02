@@ -44,6 +44,8 @@ final class SettingsScreen extends Screen {
             new Toggle("怪物頭上血條", c -> c.mobBars, (c, v) -> c.mobBars = v),
             new Toggle("Boss 預警", c -> c.showAlerts, (c, v) -> c.showAlerts = v),
             new Toggle("小地圖", c -> c.showMinimap, (c, v) -> c.showMinimap = v),
+            new Toggle("地圖顯示沒走過的房間", c -> c.mapShowAll, (c, v) -> c.mapShowAll = v), // 2026-11-02 照站長
+            new Toggle("地圖標示怪物", c -> c.mapMonsters, (c, v) -> c.mapMonsters = v),
             new Toggle("死亡回顧面板", c -> c.showDeathPanel, (c, v) -> c.showDeathPanel = v),
             new Toggle("精簡的裝備說明", c -> c.compactTooltips, (c, v) -> c.compactTooltips = v),
             new Toggle("自動更新", c -> c.autoUpdate, (c, v) -> c.autoUpdate = v),
@@ -108,15 +110,20 @@ final class SettingsScreen extends Screen {
             ExileCoreClient.saveConfig();
         }, v -> Math.round(v) + ""));
         y += 24;
+        // 2026-11-02 照站長：大地圖的不透明度；這一排跟「拖動」並排、「重設」跟「完成」並排（開關多了，GUI 縮放 3 也放得下）
+        addRenderableWidget(new Slider(left, y, 150, "大地圖不透明度", 20, 100, 5, config.bigMapOpacity, v -> {
+            ExileCoreClient.config.bigMapOpacity = (int) Math.round(v);
+            ExileCoreClient.saveConfig();
+        }, v -> Math.round(v) + "%"));
         addRenderableWidget(Button.builder(Component.literal("拖動 HUD 位置…"), b -> this.minecraft.gui.setScreen(new HudEditScreen(this)))
-                .bounds(left, y, 150, 20).build());
+                .bounds(right, y, 150, 20).build());
+        y += 24;
         addRenderableWidget(Button.builder(Component.literal("重設預設值"), b -> {
             ExileCoreClient.config.resetDisplay();
             changed();
             rebuildWidgets();
-        }).bounds(right, y, 150, 20).build());
-        y += 24;
-        addRenderableWidget(Button.builder(Component.literal("完成"), b -> onClose()).bounds(this.width / 2 - 100, Math.min(y, this.height - 26), 200, 20)
+        }).bounds(left, Math.min(y, this.height - 24), 150, 20).build());
+        addRenderableWidget(Button.builder(Component.literal("完成"), b -> onClose()).bounds(right, Math.min(y, this.height - 24), 150, 20)
                 .build());
     }
 

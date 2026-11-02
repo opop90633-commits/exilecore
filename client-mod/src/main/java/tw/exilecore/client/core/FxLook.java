@@ -22,6 +22,17 @@ public final class FxLook {
     static final int IMPORTANT_RED = 0xFF3030;
     /** 重要的閃一次幾 tick。 */
     public static final double PULSE_TICKS = 20;
+    /** 2026-11-02 照站長：能踩的機制圈（站位圈、安全區）外框：照原本的顏色（跟沒裝模組看到的一樣），閃的時候往白色亮，不染紅。 */
+    public static int safeEdgeColor(final FxCodec.Style style, final double t) {
+        final double p = pulse(t);
+        return argb(mix(baseColor(style), 0xFFFFFF, 0.3 * p), 0.75 + 0.25 * p);
+    }
+
+    /** 能踩的機制圈裡面：照原本的顏色，半透明。 */
+    public static int safeFillColor(final FxCodec.Style style, final double t) {
+        return argb(baseColor(style), 0.18 + 0.1 * pulse(t));
+    }
+
     /** 外框寬度（格）。 */
     public static final float EDGE_WIDTH = 0.09f;
     public static final float IMPORTANT_EDGE_WIDTH = 0.13f;

@@ -1032,6 +1032,11 @@ final class LifeExtras {
                 }
 
                 @Override
+                public boolean locked() {
+                    return fight.locks.invulnerable(); // 2026-11-02 照站長：鎖血機制進行中完全停手
+                }
+
+                @Override
                 public boolean alerts() {
                     return true;
                 }
@@ -1156,6 +1161,9 @@ final class LifeExtras {
                 if (plugin.maps() != null) {
                     plugin.maps().locks().update(kingArena(king), king.locks);
                 }
+            }
+            if (king.locks.invulnerable()) {
+                continue; // 2026-11-02 照站長：鎖血機制進行中不追人（停在原地）；這次之前照追
             }
             // 在筏上追最近的人（跳不出筏）
             Player target = null;

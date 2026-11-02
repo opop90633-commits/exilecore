@@ -38,6 +38,7 @@ final class MinimapRenderer {
     private static Identifier textureId;
     private static MinimapData painted;
     private static int paintedRevision = -1;
+    private static boolean paintedAll;
 
     static boolean shown() {
         final Minecraft mc = Minecraft.getInstance();
@@ -70,12 +71,14 @@ final class MinimapRenderer {
             Minecraft.getInstance().getTextureManager().register(textureId, texture);
             paintedRevision = -1;
         }
-        if (painted != data || paintedRevision != data.revision()) {
+        final boolean all = ExileCoreClient.config.mapShowAll;
+        if (painted != data || paintedRevision != data.revision() || paintedAll != all) {
             painted = data;
             paintedRevision = data.revision();
+            paintedAll = all;
             final NativeImage image = texture.getPixels();
             if (image != null) {
-                final int[] pixels = data.pixels();
+                final int[] pixels = data.pixels(all); // 2026-11-02 照站長：沒走過的房間也畫（暗一點）
                 for (int z = 0; z < data.height(); z++) {
                     for (int x = 0; x < data.width(); x++) {
                         image.setPixel(x, z, pixels[z * data.width() + x]);
@@ -123,6 +126,9 @@ final class MinimapRenderer {
         g.enableScissor(x0, y0, x0 + size, y0 + size);
         g.blit(RenderPipelines.GUI_TEXTURED, texture(data), texX, texY, 0, 0, (int) Math.round(data.width() * perCell),
                 (int) Math.round(data.height() * perCell), data.width(), data.height(), data.width(), data.height());
+        if (ExileCoreClient.config.mapMonsters) {
+            mobs(g, data, texX, texY, perCell, 1, 1f); // 2026-11-02 照站長：小地圖也標怪
+        }
         icons(g, font, data, texX, texY, perCell, false);
         FeedText.arrow(g, font, cx, cy, player.getYRot() + 180, 0xFFFFE070, 0.9f); // yaw 0 是朝南（往下）
         g.disableScissor();
@@ -130,27 +136,46 @@ final class MinimapRenderer {
         FeedText.text(g, font, Component.literal(label).withStyle(s -> s.withColor(0xA0A0A0)), x0, y0 + size + 1.5f, 0.5f);
     }
 
-    /** 大地圖：畫面中間、整張放得下，事件寫名字。 */
+    /**
+     * 大地圖：疊在畫面上（照 PoE2 的地圖疊加）。2026-11-02 照站長：以你為中心（地圖跟著你動）、不畫底框，
+     * 不透明度照設定（bigMapOpacity）、沒走過的房間也畫（mapShowAll）、標怪；比例照舊（整張的長邊 ≈ 畫面高）。
+     * 這次之前是畫面中間一個黑框、整張圖固定不動。
+     */
     private static void drawBig(final GuiGraphicsExtractor g, final Font font, final MinimapData data) {
         final LocalPlayer player = Minecraft.getInstance().player;
-        // 下面留 80 格給快捷欄、球、提示列（說明那一行不會被蓋到）
         final int size = Math.max(60, Math.min(g.guiWidth() - 40, g.guiHeight() - 80));
         final double perCell = size / (double) Math.max(data.width(), data.height());
-        final int x0 = g.guiWidth() / 2 - size / 2;
-        final int y0 = 16;
-        g.fill(x0 - 4, y0 - 14, x0 + size + 4, y0 + size + 12, 0xD0000000);
-        g.outline(x0 - 4, y0 - 14, size + 8, size + 26, 0xFF5A5040);
-        g.text(font, Component.literal("地圖").withStyle(s -> s.withColor(0xF5B942)), x0, y0 - 11, 0xFFFFFFFF, true);
-        final String explored = "探索 " + Math.round(data.explored() * 100) + "%";
-        g.text(font, explored, x0 + size - font.width(explored), y0 - 11, 0xFFC0C0C0, true);
-        g.blit(RenderPipelines.GUI_TEXTURED, texture(data), x0, y0, 0, 0, (int) Math.round(data.width() * perCell),
-                (int) Math.round(data.height() * perCell), data.width(), data.height(), data.width(), data.height());
-        icons(g, font, data, x0, y0, perCell, true);
-        final float px = (float) (x0 + data.cellX(player.getX()) * perCell);
-        final float py = (float) (y0 + data.cellZ(player.getZ()) * perCell);
-        FeedText.arrow(g, font, px, py, player.getYRot() + 180, 0xFFFFE070, 1.1f);
-        final String hint = "◆ 事件　☠ Boss　● 隊友　▲ 你　[" + FeedsClient.mapKeyName() + "] 收起";
-        FeedText.text(g, font, Component.literal(hint).withStyle(s -> s.withColor(0x909090)), x0, y0 + size + 3, 0.6f);
+        final float opacity = Math.max(0.2f, Math.min(1f, ExileCoreClient.config.bigMapOpacity / 100f));
+        final float cx = g.guiWidth() / 2f;
+        final float cy = g.guiHeight() / 2f;
+        final int left = Math.round((float) (cx - data.cellX(player.getX()) * perCell));
+        final int top = Math.round((float) (cy - data.cellZ(player.getZ()) * perCell));
+        final int alpha = Math.round(opacity * 255) << 24;
+        g.blit(RenderPipelines.GUI_TEXTURED, texture(data), left, top, 0, 0, (int) Math.round(data.width() * perCell),
+                (int) Math.round(data.height() * perCell), data.width(), data.height(), data.width(), data.height(), alpha | 0xFFFFFF);
+        if (ExileCoreClient.config.mapMonsters) {
+            mobs(g, data, left, top, perCell, 2, opacity);
+        }
+        icons(g, font, data, left, top, perCell, true);
+        FeedText.arrow(g, font, cx, cy, player.getYRot() + 180, 0xFFFFE070, 1.1f);
+        // 左上角：標題與說明（不擋中間）
+        final String explored = "地圖　探索 " + Math.round(data.explored() * 100) + "%";
+        FeedText.text(g, font, Component.literal(explored).withStyle(s -> s.withColor(0xF5B942)), 8, 8, 0.75f);
+        final String hint = "◆ 事件　☠ Boss　● 隊友　▲ 你　▪ 怪（白 普通、藍 魔法、黃 稀有）　[" + FeedsClient.mapKeyName() + "] 收起";
+        FeedText.text(g, font, Component.literal(hint).withStyle(s -> s.withColor(0xB0B0B0)), 8, 16, 0.55f);
+    }
+
+    /** 2026-11-02 照站長：怪（普通白、魔法藍、稀有黃、傳奇橘）畫成小方塊；稀有、傳奇大一點、外面一圈黑邊。 */
+    private static void mobs(final GuiGraphicsExtractor g, final MinimapData data, final int left, final int top, final double perCell,
+                             final int dot, final float opacity) {
+        final int alpha = Math.round(Math.max(0.6f, opacity) * 255) << 24;
+        for (final MinimapData.Mob mob : data.mobs()) {
+            final int x = (int) Math.round(left + data.cellX(mob.x() + 0.5) * perCell);
+            final int y = (int) Math.round(top + data.cellZ(mob.z() + 0.5) * perCell);
+            final int half = mob.rarity() >= 2 ? dot : Math.max(1, dot - 1);
+            g.fill(x - half - 1, y - half - 1, x + half + 1, y + half + 1, alpha);
+            g.fill(x - half, y - half, x + half, y + half, alpha | mob.color());
+        }
     }
 
     /** 事件、Boss、隊友（世界座標換成畫面座標：left、top 是格子原點在畫面上的位置）。 */

@@ -73,6 +73,12 @@ public final class ModConfig {
     public int alertsY = 44;
     /** 小地圖（右上角最上面；B 組的地圖資訊框接在它下面，HudDrag.bottomOf("minimap")）。 */
     public boolean showMinimap = true;
+    /** 2026-11-02 照站長：地圖（小地圖、大地圖）沒走過的房間也畫（暗一點）；關掉 = 只畫走過的（迷霧）。這次之前只畫走過的。 */
+    public boolean mapShowAll = true;
+    /** 2026-11-02 照站長：地圖上標怪（普通白、魔法藍、稀有黃、傳奇橘）。 */
+    public boolean mapMonsters = true;
+    /** 2026-11-02 照站長：大地圖的不透明度（%，20–100）。 */
+    public int bigMapOpacity = 70;
     /** 小地圖的邊長（GUI 像素）。 */
     public int minimapSize = 72;
     /** 小地圖離右上角幾格（右邊、上面）。 */

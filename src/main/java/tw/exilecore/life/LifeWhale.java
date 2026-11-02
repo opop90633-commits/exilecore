@@ -512,6 +512,11 @@ final class LifeWhale {
                 // 2026-11-02 照站長：鎖血機制（站圈、倒數大招）進行中也不出招；這次之前只有護盾中不出招
                 return fight.shieldUntil > 0 || fight.locks.invulnerable() || onArena(fight).isEmpty();
             }
+
+            @Override
+            public boolean locked() {
+                return fight.shieldUntil > 0 || fight.locks.invulnerable(); // 2026-11-02 照站長：潮核護盾、鎖血機制進行中完全停手
+            }
         });
     }
 
