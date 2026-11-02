@@ -514,10 +514,10 @@ final class ColdSpells implements Listener {
             service.projectiles().shard(eye.owner, eye.build, shard, eye.world, eye.position.clone().add(dir.clone().multiply(0.3)), dir,
                     eye.shardSpeed, SHARD_RANGE, eye.firstHit, FIRST_HIT_MORE);
         }
-        eye.world.spawnParticle(Particle.SNOWFLAKE, here, 3, 0.15, 0.15, 0.15, 0.01);
-        eye.world.spawnParticle(Particle.END_ROD, here, 1, 0.05, 0.05, 0.05, 0);
+        tw.exilecore.skill.Fx.spawn(eye.world, Particle.SNOWFLAKE, here, 3, 0.15, 0.15, 0.15, 0.01);
+        tw.exilecore.skill.Fx.spawn(eye.world, Particle.END_ROD, here, 1, 0.05, 0.05, 0.05, 0);
         if (block != null) {
-            eye.world.spawnParticle(Particle.ITEM_SNOWBALL, here, 10, 0.3, 0.3, 0.3, 0.05);
+            tw.exilecore.skill.Fx.spawn(eye.world, Particle.ITEM_SNOWBALL, here, 10, 0.3, 0.3, 0.3, 0.05);
             return false; // 撞到牆：冰眼消失
         }
         eye.position = eye.position.clone().add(eye.direction.clone().multiply(eye.speed));

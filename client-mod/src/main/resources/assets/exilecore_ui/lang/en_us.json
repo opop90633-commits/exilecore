@@ -1,0 +1,5 @@
+{
+  "key.exilecore_client.open_tree": "Open passive tree (native screen)",
+  "key.exilecore_client.open_atlas": "Open atlas (native screen)",
+  "message.exilecore_client.ui_unavailable": "This server does not support the native passive tree / atlas screens yet; use the menus"
+}

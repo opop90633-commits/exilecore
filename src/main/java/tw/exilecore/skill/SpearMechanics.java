@@ -203,7 +203,7 @@ public final class SpearMechanics implements Listener {
             // 2026-10-27 照 PoE2（Limit：超過上限時最舊的消失）：最舊的那支消失、不炸；這次之前最舊的提早炸開
             final Lodged gone = mine.pollFirst();
             if (gone != null) {
-                Fx.as(owner.getUniqueId(), () -> gone.at().getWorld().spawnParticle(Particle.SMOKE, gone.at().clone().add(0, 0.3, 0), 6, 0.1, 0.2, 0.1, 0.01));
+                Fx.as(owner.getUniqueId(), () -> tw.exilecore.skill.Fx.spawn(gone.at().getWorld(), Particle.SMOKE, gone.at().clone().add(0, 0.3, 0), 6, 0.1, 0.2, 0.1, 0.01));
             }
         }
         mine.addLast(new Lodged(at.clone(), build, plugin.getServer().getCurrentTick() + DETONATION_TICKS));
@@ -245,7 +245,7 @@ public final class SpearMechanics implements Listener {
                     it.remove();
                     boom.add(spear);
                 } else if (now % 10 == 0) {
-                    Fx.as(player.getUniqueId(), () -> spear.at().getWorld().spawnParticle(Particle.FLAME, spear.at().clone().add(0, 0.3, 0),
+                    Fx.as(player.getUniqueId(), () -> tw.exilecore.skill.Fx.spawn(spear.at().getWorld(), Particle.FLAME, spear.at().clone().add(0, 0.3, 0),
                             3, 0.1, 0.2, 0.1, 0.01));
                 }
             }
@@ -301,8 +301,8 @@ public final class SpearMechanics implements Listener {
         final Vector side = new Vector(-unit.getZ(), 0, unit.getX());
         Fx.as(player.getUniqueId(), () -> {
             for (double d = -length; d <= length; d += 0.5) {
-                at.getWorld().spawnParticle(Particle.FLAME, at.clone().add(unit.clone().multiply(d)).add(0, 0.3, 0), 2, 0.1, 0.1, 0.1, 0.02);
-                at.getWorld().spawnParticle(Particle.FLAME, at.clone().add(side.clone().multiply(d)).add(0, 0.3, 0), 2, 0.1, 0.1, 0.1, 0.02);
+                tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.FLAME, at.clone().add(unit.clone().multiply(d)).add(0, 0.3, 0), 2, 0.1, 0.1, 0.1, 0.02);
+                tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.FLAME, at.clone().add(side.clone().multiply(d)).add(0, 0.3, 0), 2, 0.1, 0.1, 0.1, 0.02);
             }
             Fx.spawn(at.getWorld(), Particle.EXPLOSION, at.clone().add(0, 0.5, 0), 1); // 2026-10-31：走 Fx（貼地的爆炸）
         });
@@ -343,7 +343,7 @@ public final class SpearMechanics implements Listener {
             return;
         }
         for (final Ground ground : mine) {
-            Fx.as(player.getUniqueId(), () -> ground.at().getWorld().spawnParticle(Particle.FLAME, ground.at().clone().add(0, 0.1, 0),
+            Fx.as(player.getUniqueId(), () -> tw.exilecore.skill.Fx.spawn(ground.at().getWorld(), Particle.FLAME, ground.at().clone().add(0, 0.1, 0),
                     6, ground.radius() / 2, 0.02, ground.radius() / 2, 0.0));
             if (plugin.ailments() == null) {
                 continue;

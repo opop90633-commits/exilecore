@@ -138,7 +138,7 @@ final class Warcries {
                     new org.joml.Vector3f(0.4f, 2.2f, 0.4f), new org.joml.Quaternionf()));
         });
         at.getWorld().playSound(at, org.bukkit.Sound.BLOCK_BONE_BLOCK_PLACE, 1f, 0.6f);
-        at.getWorld().spawnParticle(org.bukkit.Particle.SOUL, at.clone().add(0, 1, 0), 20, 0.3, 0.8, 0.3, 0.03);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), org.bukkit.Particle.SOUL, at.clone().add(0, 1, 0), 20, 0.3, 0.8, 0.3, 0.03);
         // 2026-10-30 照 PoE2 Offering Spike：骨柱本身是召喚物（骸骨祭生命 0.35 倍、其他 0.18 倍），骸骨祭的護盾也給它自己
         final MinionService minionsNow = minionService();
         final java.util.UUID spikeMob = minionsNow == null ? null : minionsNow.spike(player, build, at, ROLE_BONE.equals(skillId)
@@ -165,7 +165,7 @@ final class Warcries {
                     buffs.remove(player, skillId); // 2026-10-30 照 PoE2 Soul Offering：骨柱被打死，增益馬上結束
                 }
                 if (display.isValid()) {
-                    at.getWorld().spawnParticle(org.bukkit.Particle.SMOKE, at.clone().add(0, 1, 0), 10, 0.2, 0.6, 0.2, 0.02);
+                    tw.exilecore.skill.Fx.spawn(at.getWorld(), org.bukkit.Particle.SMOKE, at.clone().add(0, 1, 0), 10, 0.2, 0.6, 0.2, 0.02);
                     display.remove();
                 }
                 // 2026-10-24（祭星）：祭柱倒了，祭柱活了多久就回復多久
@@ -518,7 +518,7 @@ final class Warcries {
                     return "<red>附近沒有屍體、召喚物，也沒有撲殺範圍內的敵人";
                 }
                 buffs.apply(player, id + ".unwilling", name, ticks, minionMods);
-                at.getWorld().spawnParticle(org.bukkit.Particle.SCULK_SOUL, at.clone().add(0, 1, 0), 20, 0.4, 0.8, 0.4, 0.02);
+                tw.exilecore.skill.Fx.spawn(at.getWorld(), org.bukkit.Particle.SCULK_SOUL, at.clone().add(0, 1, 0), 20, 0.4, 0.8, 0.4, 0.02);
                 notice.append(String.format(Locale.ROOT, "<gray>：祭品的增益給你（%.0f 秒）", ticks / 20.0));
                 if (power > 0) {
                     notice.append(String.format(Locale.ROOT, "<gray>，撲殺的敵人強度 %.0f：效果增加 %.0f%%", power, power));

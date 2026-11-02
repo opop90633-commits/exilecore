@@ -522,6 +522,12 @@ final class DangerZones {
         return zones.containsKey(id);
     }
 
+    /** 2026-11-02（C 組）：這塊範圍的中心（模組的預警箭頭用）；沒有 null。 */
+    Location center(final String id) {
+        final Zone zone = zones.get(id);
+        return zone == null ? null : zone.center;
+    }
+
     /** 這個玩家站在這塊範圍裡嗎（腳下或腳邊那格是範圍裡的地板）。 */
     boolean inside(final String id, final Player player) {
         final Zone zone = zones.get(id);

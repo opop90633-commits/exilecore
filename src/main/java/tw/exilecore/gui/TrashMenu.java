@@ -237,7 +237,7 @@ public final class TrashMenu extends Menu {
             final String uuid = plugin.items().read(mark.snapshot()).map(ItemData::uuid).orElse(null);
             final String name = Wallet.describe(mark.snapshot());
             plugin.currencies().read(mark.snapshot()).ifPresent(type ->
-                    plugin.economy().ledger().consumed(type.id(), tw.exilecore.economy.EconomyLedger.TRASH, amount));
+                    plugin.economy().ledger().of(player).consumed(type.id(), tw.exilecore.economy.EconomyLedger.TRASH, amount));
             names.add(name);
             log.add(new TradeLogRepository.Entry(opId, TradeLogRepository.TRASH, uuid, name, amount,
                     player.getUniqueId(), player.getName(), null, "垃圾桶"));

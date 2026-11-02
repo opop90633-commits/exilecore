@@ -8689,8 +8689,8 @@ gravedark_sceptre:        # 2026-10-27 照 PoE2 0.5 的「The Dark Defiler」（
         - { stat: damage.extra.chaos@minions11, type: FLAT, value: 5 }
         - { stat: damage.extra.chaos@minions12, type: FLAT, value: 5 }
 
-rathpith_globe:        # 2026-11-01 照 PoE2 0.5 的「Rathpith Globe」（poe2db：獻祭之心；原作有、我們以前沒有的）
-  name: 獻祭之心
+rathpith_globe:        # 2026-11-01 照 PoE2 0.5 的「Rathpith Globe」（原作有、我們以前沒有的）
+  name: 拉絲琵之球      # 2026-11-02 照站長換名（不用原作的譯名）；這次之前「獻祭之心」
   base: focus_23        # 原作基底 Sacred Focus（神聖法器）
   stat_base: focus_22          # 原作基底那一階的數值（能量護盾 81，需求 75 級、107 智慧）
   drop_level: 75

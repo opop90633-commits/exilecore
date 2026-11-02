@@ -1789,7 +1789,7 @@ public final class CharacterService {
         }).whenComplete((pouch, error) -> sync(() -> {
             if (error == null && pouch != null) {
                 for (final Map.Entry<String, Integer> entry : pouch.entrySet()) {
-                    plugin.economy().ledger().consumed(entry.getKey(), tw.exilecore.economy.EconomyLedger.DELETE, entry.getValue());
+                    plugin.economy().ledger().of(player).consumed(entry.getKey(), tw.exilecore.economy.EconomyLedger.DELETE, entry.getValue());
                 }
             }
             if (!stillOnline(player)) {

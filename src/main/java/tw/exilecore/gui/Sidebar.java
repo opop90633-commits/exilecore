@@ -21,6 +21,9 @@ import java.util.UUID;
  * 畫面右邊的側欄（計分板的側欄，每個玩家自己一張）：打怪時最上面是戰鬥數據（戰鬥模組給內容，停手就收起來），
  * 再來是任務追蹤（任務模組給內容），下面接「最近撿到」（掉落模組給內容，{@link #LOOT_TICKS} 後收起來）。
  * 排版在 {@link SidebarLayout}；內容沒變就不重畫，只改有變的那幾行。
+ * <p>
+ * 2026-11-02 照站長（模組 1.4）：星骸輔助模組畫側邊面板的人（招呼寫了 panels）不建記分板，每一段分開送給模組
+ * （{@link tw.exilecore.clientmod.HudPanels}），模組畫成右邊各自獨立、可以收起的小面板；這次之前大家都是同一張記分板（最多 15 行）。
  */
 public final class Sidebar implements Listener {
 
@@ -126,6 +129,17 @@ public final class Sidebar implements Listener {
                 (int) Math.ceil(tw.exilecore.web.HudFont.estimateVanilla(plain)), faded);
     }
 
+    /** 2026-11-02（模組 1.4）：照現在的內容重畫（模組的招呼換了：記分板 ↔ 模組的面板）。 */
+    public void refresh(final Player player) {
+        if (!player.isOnline()) {
+            return;
+        }
+        final View view = views.get(player.getUniqueId());
+        if (view != null) {
+            render(player, view);
+        }
+    }
+
     /** 每 {@link #TICK_PERIOD} tick：到期的「最近撿到」拿掉、快到期的變暗（render 沒變就不重送）。 */
     public void tick() {
         final long now = plugin.getServer().getCurrentTick();
@@ -160,6 +174,16 @@ public final class Sidebar implements Listener {
     }
 
     private void render(final Player player, final View view) {
+        if (plugin.clientMod() != null && plugin.clientMod().drawsPanels(player)) {
+            // 2026-11-02 照站長（模組 1.4）：模組畫面板：不建記分板（已經有的換回主計分板），各段分開送（文字版的「最近撿到」）
+            if (view.board != null && player.getScoreboard() == view.board) {
+                player.setScoreboard(plugin.getServer().getScoreboardManager().getMainScoreboard());
+            }
+            view.shown = List.of();
+            plugin.clientMod().panels(player, tw.exilecore.clientmod.HudPanels.of(view.combat, view.status, SidebarLayout.STATUS_TITLE,
+                    view.guide, view.quest, view.loot.rows(plugin.getServer().getCurrentTick(), null), SidebarLayout.LOOT_TITLE));
+            return;
+        }
         // 2026-10：「最近撿到」畫成卡片（套了資源包）；舊的在上、新的在下，快消失時變暗
         final boolean cards = plugin.web() != null && plugin.web().hasPack(player);
         final List<String> lootRows = view.loot.rows(plugin.getServer().getCurrentTick(), cards ? Sidebar::card : null);

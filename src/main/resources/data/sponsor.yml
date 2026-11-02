@@ -284,6 +284,17 @@ cosmetics:
   hw_pet_skull: { type: skin, slot: pet, art: hw_pet_skull, name: 骷髏小頭, rarity: rare, fashion_price: 0, limited: "萬燈夜",
                   description: "下巴會一開一合的小骷髏頭" }
 
+  # 2026-11-02 照站長：拉霸機限定（營地的拉霸機中了「煙火」抽一件還沒有的，data/slots.yml 的 cosmetics；這次之前沒有）。
+  #   粒子特效（不用模型），在「贊助 → 3D 時裝」戴上；limited 寫來源，沒有的人在商城看不到。
+  slots_coin_halo: { type: particle, style: halo, particle: DUST, color: "#ffd24a", name: 金幣光環, rarity: rare, limited: "拉霸機",
+                     description: "頭上一圈閃著的金幣光" }
+  slots_clover_ring: { type: particle, style: ring, particle: HAPPY_VILLAGER, name: 幸運四葉, rarity: rare, limited: "拉霸機",
+                       description: "腳下繞著轉的綠色幸運光點" }
+  slots_coin_trail: { type: particle, style: trail, particle: DUST, color: "#f5b942", name: 金幣足跡, rarity: epic, limited: "拉霸機",
+                      description: "走過的地方留下一串金色的腳印" }
+  slots_jackpot_spiral: { type: particle, style: spiral, particle: DUST, rainbow: true, name: 頭獎彩旋, rarity: legendary, limited: "拉霸機",
+                          description: "七彩的光從腳邊盤旋往上" }
+
 # 限定稱號（2026-10）：只有管理網頁「發放 → 時裝」或 /ec sponsor give <玩家> cosmetic title:<代號> 發得出來（抽不到、換不到）；
 #   limited 寫來源，稱號選單上顯示「…限定」，沒有的人看不到。顏色可以是 "#rrggbb" 或 "gradient:#rrggbb:#rrggbb"（漸層）。stats：擁有就有的加成（寫法同登入天數稱號）。
 limited_titles:

@@ -196,6 +196,13 @@ combat:
     DROWNING:  { type: physical, multiplier: 0.5, periodic: true, ignore_mitigation: true }
     VOID:      { type: chaos, multiplier: 100, ignore_mitigation: true }
 
+# 粒子特效（2026-11-02）：所有特效一個人一個人送，只送給這個距離內（水平、上下各幾格）、同一個世界的玩家。
+# 重要的（Boss／怪物招式的預警、地圖機制的危險區）送到 important-range 格，而且客戶端設成「粒子：最少」也看得到。
+# 每個人在「設定 → 特效等級」選高／中／低（別人的特效打薄；預警一律全部顯示）。
+particles:
+  view-range: 24
+  important-range: 48
+
 # 聊天與 Discord 同步（2026-10）。設定步驟：
 #   1. Discord 頻道設定 → 整合 → Webhook → 新 Webhook，複製網址貼到 webhook-url（遊戲 → Discord：名字是角色名稱、頭像是玩家的頭）。
 #   2. https://discord.com/developers/applications 建一個應用程式 → Bot：重設 Token 貼到 bot-token；
@@ -218,7 +225,8 @@ discord:
     chat: true          # 雙向聊天
     join-leave: true    # 上線、下線
     world-events: true  # 開天者、星潮入侵的預告、開始、結束
-    achievements: true  # 昇華、極境 Boss／金庫之主打倒、追逐級傳奇、滿級、每月挑戰全部完成
+    achievements: true  # 追逐級傳奇、超稀有通貨（映星鏡、共鳴石、預見鎖）掉落（2026-11-02 照站長：不再發 Boss 擊殺）
+    milestones: false   # 昇華、滿級、衝等、每月挑戰全部完成、星諭卡集滿（2026-11-02 照站長：預設不發）
     server: true        # 伺服器開啟、關閉
   # Discord 帳號連結與伺服器加成（2026-10）：在遊戲裡打 /discord panel 頻道ID 把「連結遊戲帳號」面板發到 Discord，
   # 玩家按按鈕拿代碼、遊戲裡 /discord link 代碼。連結的 Discord 帳號在這個 Discord 伺服器加成（Server Boost）期間，

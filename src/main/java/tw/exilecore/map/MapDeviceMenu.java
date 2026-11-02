@@ -611,8 +611,17 @@ public final class MapDeviceMenu extends Menu {
                 }
                 player.closeInventory();
             }
-            case SLOT_ATLAS -> new AtlasMenu(plugin, player, service).open();
-            case SLOT_TREE -> new AtlasTreeMenu(plugin, player, service).open();
+            // 2026-11-02 照站長（D 組）：裝了模組的玩家開原生畫面；這次之前一律開箱子選單
+            case SLOT_ATLAS -> {
+                if (!AtlasFeed.openNative(plugin, player, false, null)) {
+                    new AtlasMenu(plugin, player, service).open();
+                }
+            }
+            case SLOT_TREE -> {
+                if (!AtlasFeed.openNative(plugin, player, true, null)) {
+                    new AtlasTreeMenu(plugin, player, service).open();
+                }
+            }
             case SLOT_SITES -> {
                 if (Atlas.isGrid(service.completed(player))) {
                     new AtlasSitesMenu(plugin, player, service).open(); // 2026-10-21

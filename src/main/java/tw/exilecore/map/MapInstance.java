@@ -85,6 +85,8 @@ public final class MapInstance {
     /** 2026-10-21：第一次完成的腐化區（Boss 有機率掉蝕變石）／淨化區（有機率掉定星石）。 */
     private boolean firstCorrupted;
     private boolean firstPurified;
+    /** 2026-11-02 照 PoE2 腐化怪物：這張圖是腐化區（星圖的腐化格、腐化之心）：稀有怪各多一條腐化詞綴。 */
+    private boolean corruptedArea;
     /** Boss 實際的定義（Uber 合併過的）；null = 地圖原本的。 */
     private MapConfig.Boss bossOverride;
     /** Uber：走進來過的人（每個人只能進一次）。 */
@@ -99,6 +101,8 @@ public final class MapInstance {
     private final Set<UUID> shieldCrystals = new LinkedHashSet<>();
     private long shieldUntilTick;
     private MapConfig.Shield shield;
+    /** 2026-11-02 照站長：結晶以外的鎖血機制（站位圈、倒數大招、元素弱點）、之後的虛弱、站位圈的易傷（{@link PhaseLocks}）。這次之前只有結晶。 */
+    private final PhaseLocks.State lockState = new PhaseLocks.State();
     /** 這一場從哪個 tick 開打（狂暴計時用；-1 = 還沒有人跟 Boss 打）。 */
     private long fightStartTick = -1;
     private boolean enraged;
@@ -556,6 +560,21 @@ public final class MapInstance {
         return shield != null;
     }
 
+    /** 2026-11-02：結晶以外的鎖血機制的狀態。 */
+    PhaseLocks.State lockState() {
+        return lockState;
+    }
+
+    /** 2026-11-02：有鎖血機制在進行（結晶或其他的）：下一個階段等它結束才換。 */
+    public boolean locked() {
+        return shield != null || lockState.active();
+    }
+
+    /** 2026-11-02：鎖血機制讓 Boss 打不動（結晶、站位圈、倒數大招；元素弱點不是）。 */
+    boolean lockInvulnerable() {
+        return shield != null || lockState.invulnerable();
+    }
+
     /** 有「殘血才進來沒有掉落」的規則：終局（特別的實例除外）、極境、巔峰。 */
     public boolean lateEntryRule() {
         return map.isFinal() && special == null || isUber() || isPinnacle();
@@ -636,6 +655,15 @@ public final class MapInstance {
         this.firstCorrupted = value;
     }
 
+    /** 2026-11-02：這張圖是腐化區（稀有怪各多一條腐化詞綴）。 */
+    public boolean corruptedArea() {
+        return corruptedArea;
+    }
+
+    void setCorruptedArea(final boolean value) {
+        this.corruptedArea = value;
+    }
+
     public boolean firstPurified() {
         return firstPurified;
     }
@@ -654,6 +682,41 @@ public final class MapInstance {
 
     void setSpecial(final MapService.Special special) {
         this.special = special;
+    }
+
+    /** 2026-11-02 照站長（模組 1.4 B 組）：地圖詞綴的文字（MiniMessage，開圖時從地圖物品抄下來，地圖資訊框用）；這次之前只寫在物品說明裡。 */
+    private List<String> affixTexts = List.of();
+
+    public List<String> affixTexts() {
+        return affixTexts;
+    }
+
+    void setAffixTexts(final List<String> texts) {
+        this.affixTexts = texts == null ? List.of() : List.copyOf(texts);
+    }
+
+    /** 2026-11-02：清掉的怪物群比例（0–1；刷過、而且已經沒有活著的怪）。{@link #explored} 是刷過的比例。 */
+    public double cleared() {
+        if (packSpawned.length == 0) {
+            return 1;
+        }
+        int cleared = 0;
+        for (int i = 0; i < packSpawned.length; i++) {
+            if (!packSpawned[i]) {
+                continue;
+            }
+            boolean alive = false;
+            for (final LivingEntity entity : packs.get(i)) {
+                if (entity.isValid() && !entity.isDead()) {
+                    alive = true;
+                    break;
+                }
+            }
+            if (!alive) {
+                cleared++;
+            }
+        }
+        return (double) cleared / packSpawned.length;
     }
 
     /** 顯示用的名稱：「沉船灣 T7」「天穹熔爐 T12」「天穹熔爐・極境」「回響：潮濕海岸」。 */

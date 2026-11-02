@@ -328,7 +328,7 @@ final class ProcBasis {
                 Fx.spawn(point.getWorld(), Particle.HAPPY_VILLAGER, point.clone().add(0, 0.5, 0), 8, 0.5, 0.3, 0.5, 0);
             }
             final Bramble bramble = new Bramble(player.getUniqueId(), point, now, now + BRAMBLE_ARM_TICKS, now + lifetime, radius, each, delayed > 0, rearm);
-            point.getWorld().spawnParticle(Particle.BLOCK, point.clone().add(0, 0.3, 0), 8, 0.3, 0.1, 0.3, 0, Material.SWEET_BERRY_BUSH.createBlockData());
+            tw.exilecore.skill.Fx.spawn(point.getWorld(), Particle.BLOCK, point.clone().add(0, 0.3, 0), 8, 0.3, 0.1, 0.3, 0, Material.SWEET_BERRY_BUSH.createBlockData());
             if (delayed > 0 && !service.targets().around(point, radius, player).isEmpty()) {
                 stab(player, mine, bramble, now); // 遲爆：長出來那一刻就有敵人，立刻刺
                 continue;
@@ -367,7 +367,7 @@ final class ProcBasis {
                     continue;
                 }
                 if (now % 10 == 0 && now >= bramble.born()) {
-                    bramble.at().getWorld().spawnParticle(Particle.BLOCK, bramble.at().clone().add(0, 0.2, 0), 2, 0.25, 0.05, 0.25, 0,
+                    tw.exilecore.skill.Fx.spawn(bramble.at().getWorld(), Particle.BLOCK, bramble.at().clone().add(0, 0.2, 0), 2, 0.25, 0.05, 0.25, 0,
                             Material.SWEET_BERRY_BUSH.createBlockData());
                 }
                 if (bramble.delayed() || now < bramble.armedAt() || service.targets().around(bramble.at(), bramble.radius(), owner).isEmpty()) {
@@ -395,7 +395,7 @@ final class ProcBasis {
                 plugin.combat().skillDamage().hit(owner, each, profile, null);
             }
         }
-        bramble.at().getWorld().spawnParticle(Particle.BLOCK, bramble.at().clone().add(0, 0.5, 0), 14, 0.4, 0.3, 0.4, 0,
+        tw.exilecore.skill.Fx.spawn(bramble.at().getWorld(), Particle.BLOCK, bramble.at().clone().add(0, 0.5, 0), 14, 0.4, 0.3, 0.4, 0,
                 Material.SWEET_BERRY_BUSH.createBlockData());
         bramble.at().getWorld().playSound(bramble.at(), org.bukkit.Sound.BLOCK_SWEET_BERRY_BUSH_BREAK, 0.8f, 1.2f);
         if (bramble.rearm() > 0 && plugin.random().nextDouble() * 100 < bramble.rearm() && mine.size() < BRAMBLE_MAX) {

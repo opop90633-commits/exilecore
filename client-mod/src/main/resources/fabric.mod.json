@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "exilecore_client",
+  "version": "${version}",
+  "name": "星骸輔助模組",
+  "description": "星骸伺服器的選用輔助模組：技能鍵、技能列與冷卻、增益倒數、目標框、生命球與魔力球（PoE 1 風格：能量護盾罩層、混沌免疫、心靈昇華；可切回原本的生命條）、特效改由模組繪製（地上的範圍畫成圈、預警閃紅，伺服器少送粒子），1.4 起：伺服器的提示疊成會淡出的提示列、右邊的側邊面板（取代記分板，可以收起）、生命球旁的異常圖示與守護環、魔力球旁的戰鬥資源、經驗條上的百分比與每小時經驗、目標框避開 Boss 血條；以及自動更新。連到別的伺服器時什麼都不做。",
+  "authors": ["星骸伺服器"],
+  "license": "All-Rights-Reserved",
+  "environment": "client",
+  "mixins": [
+    {"config": "exilecore_client.mixins.json", "environment": "client"}
+  ],
+  "entrypoints": {
+    "client": ["tw.exilecore.client.ExileCoreClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

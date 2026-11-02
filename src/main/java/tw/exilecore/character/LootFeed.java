@@ -28,6 +28,22 @@ public final class LootFeed {
 
     private final Map<UUID, Deque<Entry>> feeds = new HashMap<>();
 
+    /** 2026-11-02：每加一樣叫一次（玩家、這次加的數量、合併後的那一行）。 */
+    @FunctionalInterface
+    public interface Listener {
+        void added(UUID player, int count, Entry entry);
+    }
+
+    private Listener listener;
+
+    /**
+     * 2026-11-02 照站長：資源包版的「撿到東西」改進右邊記分板的「最近撿到」（GUI 縮放 4 時快捷欄右邊放不下，卡片被擠出畫面）：
+     * PlayerStateService 接到 Sidebar.loot。這次之前只畫在快捷欄右邊。
+     */
+    public void listen(final Listener value) {
+        listener = value;
+    }
+
     /** 加一樣東西：同名同圖示的合併成一行（數量加起來、時間重算、移到最新）。 */
     public void add(final UUID player, final String name, final int count, final String icon, final String color, final long now) {
         if (name == null || name.isBlank() || count <= 0) {
@@ -43,9 +59,13 @@ public final class LootFeed {
                 break;
             }
         }
-        feed.addLast(new Entry(name, total, icon, color == null ? "#c8c8c8" : color, now + SHOW_TICKS));
+        final Entry added = new Entry(name, total, icon, color == null ? "#c8c8c8" : color, now + SHOW_TICKS);
+        feed.addLast(added);
         while (feed.size() > MAX) {
             feed.removeFirst();
+        }
+        if (listener != null) {
+            listener.added(player, count, added);
         }
     }
 

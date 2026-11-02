@@ -87,6 +87,8 @@ final class LifeWhale {
         /** 2026-10-29：上次換階段的時間（毫秒；0 = 還沒換過），換階段的 2.5 秒內打不動。 */
         long phaseMillis;
         LifeConfig.WhalePhase shield;
+        /** 2026-11-02 照站長：潮核以外的鎖血機制（站位圈、倒數大招、元素弱點；跟地圖 Boss 同一套 {@link tw.exilecore.map.PhaseLocks}）。 */
+        final tw.exilecore.map.PhaseLocks.State locks = new tw.exilecore.map.PhaseLocks.State();
         int level;
         boolean done;
 
@@ -442,7 +444,7 @@ final class LifeWhale {
             }
         }
         world().playSound(fight.center(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 1.2f, 0.5f);
-        world().spawnParticle(Particle.SPLASH, fight.center().add(0, 4, 0), 300, 6, 2, 6, 0.4);
+        tw.exilecore.skill.Fx.spawn(world(), Particle.SPLASH, fight.center().add(0, 4, 0), 300, 6, 2, 6, 0.4);
         plugin.getSLF4JLogger().info("[Boss 紀錄] {}：{} Lv.{} 出現（{}）", config().name(), def.name(), fight.level, player.getName());
         return null;
     }
@@ -633,7 +635,8 @@ final class LifeWhale {
         // 換階段
         final AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
         final double fraction = Math.max(0, Math.min(1, boss.getHealth() / Math.max(1, max == null ? 1 : max.getValue())));
-        if (fight.shieldUntil == 0 && fight.phase < def.phases().size() && fraction <= def.phases().get(fight.phase).at()) {
+        // 2026-11-02：潮核以外的鎖血機制還在時也不換（這次之前只看潮核）
+        if (fight.shieldUntil == 0 && !fight.locks.active() && fight.phase < def.phases().size() && fraction <= def.phases().get(fight.phase).at()) {
             final LifeConfig.WhalePhase next = def.phases().get(fight.phase);
             fight.phase++;
             fight.phaseMillis = now; // 2026-10-29 照站長：換階段 2.5 秒打不動
@@ -643,20 +646,106 @@ final class LifeWhale {
                         plugin.text().parse("<gray>" + ItemRenderer.escape(next.message())),
                         Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(2000), Duration.ofMillis(400))));
             }
-            if (next.shieldCount() > 0) {
+            // 2026-11-02 照站長：這個階段配到的鎖血機制（潮核、站位圈、倒數大招、元素弱點；沒寫的輪流配）；這次之前只有潮核
+            final tw.exilecore.map.PhaseMechanic.Spec mechanic = mechanic(def, fight.phase - 1);
+            if (mechanic != null && mechanic.kind() == tw.exilecore.map.PhaseMechanic.Kind.CRYSTAL && next.shieldCount() > 0) {
                 raiseShield(fight, next);
+            } else if (mechanic != null && plugin.maps() != null) {
+                plugin.maps().locks().start(arena(fight), fight.locks, mechanic, tw.exilecore.map.PhaseMechanic.requiredFraction(
+                        LifeConfig.whaleLockPhases(def.phases()), fight.phase - 1, mechanic.element() == null ? 0 : mechanic.element().share()));
             }
         }
         updateShield(fight);
+        if (plugin.maps() != null) {
+            plugin.maps().locks().update(arena(fight), fight.locks);
+        }
+        final String lockText = plugin.maps() == null ? null : plugin.maps().locks().barPrefix(fight.locks, boss);
         fight.bar.progress((float) fraction);
         final long left = Math.max(0, (fight.startMillis + def.minutes() * 60_000L - now) / 1000);
-        fight.bar.name(plugin.text().parse("<#5fd3ff>" + ItemRenderer.escape(def.name()) + " <gray>Lv." + fight.level
+        fight.bar.name(plugin.text().parse((lockText == null ? "" : lockText) + "<#5fd3ff>" + ItemRenderer.escape(def.name()) + " <gray>Lv." + fight.level
                 + (fight.shieldUntil > 0 ? " <#ffd27f>⛨" : "") + (fight.enraged ? " <red>狂暴" : "")
                 + " <dark_gray>｜ <white>" + String.format(Locale.ROOT, "%d:%02d", left / 60, left % 60)
                 + " <dark_gray>｜ <gray>第 " + fight.door + "／" + def.attempts() + " 門"));
         if (random.nextInt(4) == 0) {
-            world().spawnParticle(Particle.DRIPPING_WATER, boss.getLocation().add(0, 1, 0), 30, 2, 1, 2, 0);
+            tw.exilecore.skill.Fx.spawn(world(), Particle.DRIPPING_WATER, boss.getLocation().add(0, 1, 0), 30, 2, 1, 2, 0);
         }
+    }
+
+    /** 2026-11-02 照站長：淵鯨第 index 個階段（0 起）的鎖血機制（life.yml 的 mechanic；沒寫的輪流配，跟巔峰一樣）；不鎖 null。 */
+    static tw.exilecore.map.PhaseMechanic.Spec mechanic(final LifeConfig.Whale def, final int index) {
+        final List<tw.exilecore.map.PhaseMechanic.Spec> all = mechanics(def);
+        return index < 0 || index >= all.size() ? null : all.get(index);
+    }
+
+    /** 2026-11-02：淵鯨每個階段的鎖血機制（輪流的鍵是 whale；比照巔峰，倒數大招打得比較痛）。 */
+    static List<tw.exilecore.map.PhaseMechanic.Spec> mechanics(final LifeConfig.Whale def) {
+        return tw.exilecore.map.PhaseMechanic.resolve("whale", LifeConfig.whaleLockPhases(def.phases()), true, true);
+    }
+
+    private void clearLocks(final Fight fight) {
+        if (plugin.maps() != null) {
+            plugin.maps().locks().clear(fight.locks, fight.boss);
+        }
+    }
+
+    /** 2026-11-02：這是哪一場的淵鯨的鎖血狀態（MapService 的 Boss 傷害修正：元素弱點、虛弱）；不是淵鯨 null。 */
+    tw.exilecore.map.PhaseLocks.State lockState(final Entity entity) {
+        for (final Fight fight : fights.values()) {
+            if (fight.boss != null && fight.boss.getUniqueId().equals(entity.getUniqueId())) {
+                return fight.locks;
+            }
+        }
+        return null;
+    }
+
+    /** 2026-11-02：淵鯨的場地（給 PhaseLocks）：場地中心、場地上的地面、場地上沒倒下的人。 */
+    private tw.exilecore.map.PhaseLocks.Arena arena(final Fight fight) {
+        return new tw.exilecore.map.PhaseLocks.Arena() {
+            @Override
+            public LivingEntity boss() {
+                return fight.boss;
+            }
+
+            @Override
+            public String bossName() {
+                return config().whale().name();
+            }
+
+            @Override
+            public Location center() {
+                return fight.center();
+            }
+
+            @Override
+            public boolean floor(final double x, final double z) {
+                return Math.abs(x - (fight.cx + 0.5)) <= RADIUS - 1 && Math.abs(z - (fight.cz + 0.5)) <= RADIUS - 1;
+            }
+
+            @Override
+            public double[] bounds() {
+                return null;
+            }
+
+            @Override
+            public double ring() {
+                return 8; // 跟潮核一樣遠
+            }
+
+            @Override
+            public List<Player> fighters() {
+                return tw.exilecore.map.PhaseLocks.hittable(onArena(fight));
+            }
+
+            @Override
+            public java.util.Collection<Player> audience() {
+                return LifeWhale.this.audience(fight);
+            }
+
+            @Override
+            public int players() {
+                return Math.max(1, onArena(fight).size());
+            }
+        };
     }
 
     private void raiseShield(final Fight fight, final LifeConfig.WhalePhase phase) {
@@ -685,7 +774,7 @@ final class LifeWhale {
             core.setSilent(true);
             tagMinion(core, fight);
             fight.cores.add(core.getUniqueId());
-            world().spawnParticle(Particle.BUBBLE_COLUMN_UP, spot.clone().add(0, 1, 0), 30, 0.3, 0.6, 0.3, 0.05);
+            tw.exilecore.skill.Fx.spawn(world(), Particle.BUBBLE_COLUMN_UP, spot.clone().add(0, 1, 0), 30, 0.3, 0.6, 0.3, 0.05);
         }
         if (fight.cores.isEmpty()) {
             fight.shieldUntil = 0;
@@ -797,6 +886,7 @@ final class LifeWhale {
             // 下一門：回滿、回到第一個階段、護盾收掉
             removeCores(fight);
             fight.shieldUntil = 0;
+            clearLocks(fight); // 2026-11-02：站位圈、倒數大招、元素弱點、虛弱、易傷也收掉
             fight.boss.setInvulnerable(false);
             fight.phase = 0; // 狂暴不重來（開打的時間照算）
             plugin.monsters().invalidate(fight.boss.getUniqueId());
@@ -879,6 +969,7 @@ final class LifeWhale {
             fight.cores.remove(entity.getUniqueId());
             if (fight.boss != null && fight.boss.getUniqueId().equals(entity.getUniqueId()) && !fight.done) {
                 fight.done = true;
+                clearLocks(fight); // 2026-11-02
                 if (plugin.skills() != null) {
                     plugin.skills().bossSkills().detach(entity.getUniqueId());
                 }
@@ -1058,6 +1149,7 @@ final class LifeWhale {
             return;
         }
         fights.remove(fight.owner);
+        clearLocks(fight); // 2026-11-02
         if (fight.boss != null) {
             if (plugin.skills() != null) {
                 plugin.skills().bossSkills().detach(fight.boss.getUniqueId());

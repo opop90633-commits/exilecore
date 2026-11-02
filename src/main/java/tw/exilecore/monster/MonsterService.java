@@ -194,6 +194,29 @@ public final class MonsterService {
         sheets.remove(uuid);
     }
 
+    /**
+     * 2026-11-02（PoE2 死掉時爆炸、爆晶）：死掉的怪物原地留一個看不見的分身（標記用的盔甲架：等級、稀有度、倍率照抄，詞綴清掉、標記成召喚的），
+     * 死後的爆炸用它出手（原本那隻已經不能出手）。用完由呼叫的一方移除；不存檔。
+     */
+    public LivingEntity spawnGhost(final LivingEntity dead) {
+        final Location at = dead.getLocation();
+        if (at.getWorld() == null) {
+            return null;
+        }
+        return at.getWorld().spawn(at, org.bukkit.entity.ArmorStand.class, stand -> {
+            stand.setInvisible(true);
+            stand.setMarker(true);
+            stand.setGravity(false);
+            stand.setInvulnerable(true);
+            stand.setSilent(true);
+            stand.setPersistent(false);
+            stand.setSmall(true);
+            dead.getPersistentDataContainer().copyTo(stand.getPersistentDataContainer(), true);
+            stand.getPersistentDataContainer().set(modsKey, PersistentDataType.STRING, "");
+            stand.getPersistentDataContainer().set(summonedKey, PersistentDataType.BYTE, (byte) 1);
+        });
+    }
+
     /** 標記成召喚出來的（不掉東西、不給經驗）。 */
     public void markSummoned(final LivingEntity entity) {
         entity.getPersistentDataContainer().set(summonedKey, PersistentDataType.BYTE, (byte) 1);
@@ -485,15 +508,29 @@ public final class MonsterService {
 
     /** 依詞綴數量範圍從詞綴池隨機抽（不重複），只抽這個等級能出現的（光環、召喚要夠高等）。魔法怪群用它抽一組共用的詞綴。 */
     public List<String> rollMods(final int min, final int max, final int level) {
+        final int count = max <= min ? min : min + random.nextInt(max - min + 1);
+        return pick(config.mods(), count, level, random, mod -> true, List.of());
+    }
+
+    /**
+     * 2026-11-02 抽成純函式（測試用；這次之前寫在 rollMods 裡）：從 mods 裡抽 count 條這個等級能出現的（不重複、不抽 existing 已有的），
+     * 帶招式的（連 existing 裡的一起算）最多 {@link #MAX_SKILL_MODS} 條，allow 不收的不抽；池子不夠就少抽。
+     */
+    public static List<String> pick(final List<MonsterConfig.MonsterMod> mods, final int count, final int level, final RandomGenerator random,
+                                    final java.util.function.Predicate<MonsterConfig.MonsterMod> allow,
+                                    final java.util.Collection<String> existing) {
         final List<MonsterConfig.MonsterMod> pool = new ArrayList<>();
-        for (final MonsterConfig.MonsterMod mod : config.mods()) {
-            if (mod.minLevel() <= level) {
+        int withSkills = 0;
+        for (final MonsterConfig.MonsterMod mod : mods) {
+            if (existing.contains(mod.id())) {
+                if (mod.hasSkills()) {
+                    withSkills++;
+                }
+            } else if (mod.minLevel() <= level && allow.test(mod)) {
                 pool.add(mod);
             }
         }
         final List<String> chosen = new ArrayList<>();
-        final int count = max <= min ? min : min + random.nextInt(max - min + 1);
-        int withSkills = 0;
         for (int i = 0; i < count && !pool.isEmpty(); i++) {
             final MonsterConfig.MonsterMod mod = pool.remove(random.nextInt(pool.size()));
             if (mod.hasSkills()) {
@@ -517,21 +554,111 @@ public final class MonsterService {
     }
 
     /**
-     * 2026-10-26（PoE2 換界石「稀有怪的詞綴機率更多 x%」）：詞綴數照 min～max 擲，但偏向多的那邊：
-     * 每多一條的機率乘 1 + more（more = 0.25 → 機率更多 25%），最多 max 條。
+     * 2026-10-26（PoE2 換界石「稀有怪的詞綴機率更多 x%」）：詞綴數照 min～max 擲，但偏向多的那邊（{@link #rollCount}）。
      */
     public List<String> rollModsBoosted(final MonsterRarity rarity, final int level, final double more) {
         final MonsterConfig.RaritySettings settings = config.rarity(rarity);
-        if (more <= 0 || settings.maxMods() <= settings.minMods()) {
-            return rollMods(settings.minMods(), settings.maxMods(), level);
+        return pick(config.mods(), rollCount(settings.minMods(), settings.maxMods(), more, random), level, random, mod -> true, List.of());
+    }
+
+    /**
+     * 詞綴數照 min～max 擲：more ≤ 0 平均分布（跟以前一樣）；more > 0（2026-10-26 換界石「稀有怪的詞綴機率更多 x%」、2026-11-02 星圖天賦
+     * 「詞綴機率增加 x%」）：min 以上的每一條各自擲，機會 min(1, 0.5 ×（1 + more）)——more 越高平均越多，平均一定不少於 more = 0。
+     * 2026-11-02 抽成純函式（測試用）；這次之前是「連續擲、擲輸就停」，上限變高（天賦 +1、+2）之後加了機率平均反而比沒加少。
+     */
+    public static int rollCount(final int min, final int max, final double more, final RandomGenerator random) {
+        if (max <= min) {
+            return min;
         }
-        final int range = settings.maxMods() - settings.minMods();
-        final double step = Math.min(1.0, 0.5 * (1 + more)); // 平常每多一條大約一半的機會
-        int count = settings.minMods();
-        for (int i = 0; i < range && random.nextDouble() < step; i++) {
-            count++;
+        if (more <= 0) {
+            return min + random.nextInt(max - min + 1);
         }
-        return rollMods(count, count, level);
+        final double chance = Math.min(1.0, 0.5 * (1 + more)); // 平常每多一條一半的機會
+        int count = min;
+        for (int i = 0; i < max - min; i++) {
+            if (random.nextDouble() < chance) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 2026-11-02 照 PoE2 星圖天賦（Adaptive Biology、Mutating Monsters：+1 to maximum Monster Modifiers on Rare Monsters；
+     * No Simple Battles：Rare Monsters have at least 3 Monster Modifiers）：稀有怪的詞綴數範圍 {下限, 上限}。
+     * 上限加 extraMax、下限至少 atLeast，上限不會比下限低。這次之前固定 monsters.yml 的 [2, 4]。
+     */
+    public static int[] rareRange(final int min, final int max, final int extraMax, final int atLeast) {
+        final int low = Math.max(min, atLeast);
+        final int high = Math.max(low, max + Math.max(0, extraMax));
+        return new int[] {low, high};
+    }
+
+    /**
+     * 2026-11-02：地圖裡的稀有怪（MapSpawner）：換界石「詞綴機率更多 mapMore」（小數，相乘）、星圖天賦「詞綴機率增加 atlasIncreased」
+     * （小數；PoE2 Rare Monsters have 10% increased chance of Monster Modifiers）、「詞綴上限 +extraMax」、「至少 atLeast 條」。
+     * 兩種機率相乘：（1 + 換界石）×（1 + 天賦）− 1。全部是 0 時跟一般的稀有怪一樣（平均分布）。
+     */
+    public List<String> rollRareMods(final int level, final double mapMore, final double atlasIncreased, final int extraMax, final int atLeast) {
+        final MonsterConfig.RaritySettings settings = config.rarity(MonsterRarity.RARE);
+        final int[] range = rareRange(settings.minMods(), settings.maxMods(), extraMax, atLeast);
+        return pick(config.mods(), rollCount(range[0], range[1], combinedMore(mapMore, atlasIncreased), random), level, random,
+                mod -> true, List.of());
+    }
+
+    /** 換界石的「更多」跟星圖天賦的「增加」相乘（小數）。 */
+    public static double combinedMore(final double mapMore, final double atlasIncreased) {
+        return (1 + Math.max(0, mapMore)) * (1 + Math.max(0, atlasIncreased)) - 1;
+    }
+
+    /**
+     * 2026-11-02 照 PoE2（Cruel Hegemony 石板「Map Bosses have 1 additional Modifiers」、Concentrated Liquid Suffering
+     * 「Unique Monsters have 1 additional Rare modifier」）：Boss 能不能多抽這條。不收：
+     * 帶招式的（Boss 的招式組由地圖那邊掛，詞綴的招式掛不上；閃現、撲擊會打亂 Boss 的走位與前搖）、召喚的（小怪塞滿 Boss 場地）、
+     * {@link #BOSS_EXCLUDED_STATS}、{@link #BOSS_EXCLUDED}（Boss、事件固定加的抗性：resistant、pinnacle_resist）與隱藏的（min_level ≥ 1000）。
+     */
+    public static boolean bossSafe(final MonsterConfig.MonsterMod mod) {
+        if (mod == null || mod.hasSkills() || mod.summon() != null || mod.minLevel() >= HIDDEN_LEVEL || BOSS_EXCLUDED.contains(mod.id())) {
+            return false;
+        }
+        for (final tw.exilecore.item.AffixMod stat : mod.mods()) {
+            if (BOSS_EXCLUDED_STATS.contains(stat.stat())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** min_level 這麼高的詞綴是隱藏的（不會自然抽到：督軍的鐵甲、受統御的、腐化詞綴）。 */
+    public static final int HIDDEN_LEVEL = 1000;
+    /** Boss 不多抽的詞綴：Boss、事件自己固定加的抗性（再抽到就重複了）。 */
+    public static final java.util.Set<String> BOSS_EXCLUDED = java.util.Set.of("resistant", "pinnacle_resist");
+    /**
+     * Boss 不多抽的特殊行為：只有近身打得到（遠程打不到 Boss）、小怪相關（叫屍體起來、小怪扛傷害、庇護小怪：Boss 場地沒有怪物群）、
+     * 引爆屍體（Boss 場地沒有屍體）、死掉爬起來（打死 Boss 才算完成）、變大（Boss 的體型由地圖設定）。
+     */
+    public static final java.util.Set<String> BOSS_EXCLUDED_STATS = java.util.Set.of(StatKeys.MONSTER_PROXIMAL, StatKeys.MONSTER_REVIVE,
+            StatKeys.MONSTER_REVIVE_EMPOWERED, StatKeys.MONSTER_POWERFUL_MINIONS, StatKeys.MONSTER_MINION_SHIELD,
+            StatKeys.MONSTER_INVULNERABILITY_AURA, StatKeys.MONSTER_RAISE_AFTER_DEATH, StatKeys.MONSTER_GIGANTIC,
+            StatKeys.MONSTER_CORPSE_EXPLODE);
+
+    /** 2026-11-02：Boss 多抽 count 條（{@link #bossSafe}，不跟 existing 重複）。 */
+    public List<String> rollBossMods(final int count, final int level, final java.util.Collection<String> existing) {
+        return pick(config.mods(), count, level, random, MonsterService::bossSafe, existing);
+    }
+
+    /** 腐化詞綴的代號前綴（monsters.yml 的 corrupted_*）。 */
+    public static final String CORRUPTED_PREFIX = "corrupted_";
+
+    /** 2026-11-02 照 PoE2 的腐化怪物：腐化詞綴（代號 corrupted_ 開頭）裡抽一條；沒有回傳 null。 */
+    public String rollCorruptedMod() {
+        final List<String> ids = new ArrayList<>();
+        for (final MonsterConfig.MonsterMod mod : config.mods()) {
+            if (mod.id().startsWith(CORRUPTED_PREFIX)) {
+                ids.add(mod.id());
+            }
+        }
+        return ids.isEmpty() ? null : ids.get(random.nextInt(ids.size()));
     }
 
     /** 依稀有度的詞綴數量抽一組這個等級能出現的詞綴。 */

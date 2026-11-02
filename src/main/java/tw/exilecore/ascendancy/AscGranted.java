@@ -629,7 +629,7 @@ final class AscGranted implements Listener {
                 own.mirageCooldowns.clear();
                 final int generation = ++own.mirageGeneration;
                 effects.later(6, () -> mirageStep(player, generation));
-                player.getWorld().spawnParticle(Particle.CLOUD, own.mirageAt.clone().add(0, 1, 0), 20, 0.3, 0.8, 0.3, 0.01);
+                tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.CLOUD, own.mirageAt.clone().add(0, 1, 0), 20, 0.3, 0.8, 0.3, 0.01);
             }
         }
         switch (id) {
@@ -868,7 +868,7 @@ final class AscGranted implements Listener {
                 continue;
             }
             if (AscendancyEffects.every(now, 20)) {
-                rune.at().getWorld().spawnParticle(Particle.SMALL_FLAME, rune.at().clone().add(0, 0.1, 0), 3, 0.15, 0.02, 0.15, 0.005);
+                tw.exilecore.skill.Fx.spawn(rune.at().getWorld(), Particle.SMALL_FLAME, rune.at().clone().add(0, 0.1, 0), 3, 0.15, 0.02, 0.15, 0.005);
             }
         }
     }
@@ -976,7 +976,7 @@ final class AscGranted implements Listener {
             if (plugin.ailments() != null) {
                 plugin.ailments().holdStill(enemy, ticks);
             }
-            enemy.getWorld().spawnParticle(Particle.SNOWFLAKE, enemy.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.01);
+            tw.exilecore.skill.Fx.spawn(enemy.getWorld(), Particle.SNOWFLAKE, enemy.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.01);
         }
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 1f, 0.6f);
     }
@@ -997,7 +997,7 @@ final class AscGranted implements Listener {
         own.rift.clear();
         own.riftLocations.clear();
         plugin.players().display(player, state);
-        player.getWorld().spawnParticle(Particle.REVERSE_PORTAL, player.getLocation().add(0, 1, 0), 40, 0.4, 0.8, 0.4, 0.05);
+        tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.REVERSE_PORTAL, player.getLocation().add(0, 1, 0), 40, 0.4, 0.8, 0.4, 0.05);
     }
 
     /** 儀式獻祭：附近有稀有怪物的屍體就拿牠的詞綴；沒有就割自己 20% 生命，拿一個隨機的怪物詞綴（取代上一個）。 */
@@ -1176,7 +1176,7 @@ final class AscGranted implements Listener {
         // 生命痕跡：擊中時（最多每 3 秒一次）產生痕跡
         if (on(player, "vital_residue") && now >= own.lifeRemnantReady) {
             own.lifeRemnantReady = now + 60;
-            spawnRemnant(player, target.getLocation(), "life", level(player, "vital_residue", "asc.remnant_life"), 160);
+            spawnLifeRemnant(player, target.getLocation()); // 2026-11-02：殘骸輔助
         }
         // 2026-11-01 照 PoE2 Shattering Concoction（has_freeze_cull：Freeze enemies that are Primed for Freeze）：擊中蓄勢待凍的敵人直接凍結
         if (plugin.ailments() != null && has(skill, "asc.freeze_primed") && !rips.isVisage(target)) {
@@ -1196,7 +1196,7 @@ final class AscGranted implements Listener {
                 plugin.ailments().cure(target, AilmentType.POISON);
                 if (burst > 0) {
                     plugin.ailments().dealFlatPhysical(target, burst, player.getUniqueId());
-                    target.getWorld().spawnParticle(Particle.ITEM_SLIME, target.getLocation().add(0, 1, 0), 20, 0.4, 0.5, 0.4, 0.05);
+                    tw.exilecore.skill.Fx.spawn(target.getWorld(), Particle.ITEM_SLIME, target.getLocation().add(0, 1, 0), 20, 0.4, 0.5, 0.4, 0.05);
                 }
             }
         }
@@ -1287,7 +1287,7 @@ final class AscGranted implements Listener {
         // 生命痕跡：擊殺 25% 機率
         if (killer != null && on(killer, "vital_residue")
                 && plugin.random().nextDouble() < 0.25 + level(killer, "vital_residue", "asc.remnant_kill_chance") / 100.0) { // 2026-10-30 照 PoE2：品質 +(0—10)%
-            spawnRemnant(killer, dead.getLocation(), "life", level(killer, "vital_residue", "asc.remnant_life"), 160);
+            spawnLifeRemnant(killer, dead.getLocation()); // 2026-11-02：殘骸輔助
         }
     }
 
@@ -1377,6 +1377,37 @@ final class AscGranted implements Listener {
 
     /** 2026-10-31：自動吃掉時「再出現」只給一次（再出現的那個不會再出現）。 */
     private boolean reappearAllowed = true;
+
+    /**
+     * 2026-11-02 照站長（PoE2 Life Remnants 有 Remnant 標籤）：生命殘息的生命痕跡吃殘骸輔助——和骸（多產生一個的機率）、
+     * 骸效（效果增加、產生幾秒後才生效）。輔助照生命殘息那一格插的；這次之前插得上去也沒作用（輔助顯示「要會留下殘骸的技能」）。
+     */
+    private void spawnLifeRemnant(final Player owner, final Location at) {
+        final double value = level(owner, "vital_residue", "asc.remnant_life");
+        final SkillBuild build = plugin.skills() == null ? null : plugin.skills().equippedBuild(owner, "vital_residue");
+        final tw.exilecore.skill.ChargeEffects.RemnantMods mods = build == null ? tw.exilecore.skill.ChargeEffects.RemnantMods.NONE
+                : tw.exilecore.skill.ChargeEffects.RemnantMods.of(build.profile().effective(plugin.players().sheet(owner)), build.profile().tags());
+        final int count = lifeRemnantCount(mods.extra(), plugin.random().nextDouble());
+        final double each = value * (1 + Math.max(0, mods.effect()) / 100.0);
+        final long delay = Math.round(Math.max(0, mods.delaySeconds()) * 20);
+        for (int i = 0; i < count; i++) {
+            final Location spot = at.clone().add(i > 0 ? 0.8 : 0, 0, 0);
+            if (delay > 0) {
+                effects.later(delay, () -> {
+                    if (owner.isOnline()) {
+                        spawnRemnant(owner, spot, "life", each, 160);
+                    }
+                });
+            } else {
+                spawnRemnant(owner, spot, "life", each, 160);
+            }
+        }
+    }
+
+    /** 2026-11-02：和骸 extra% 機率多一個（純函式）。 */
+    static int lifeRemnantCount(final double extraPercent, final double roll) {
+        return 1 + (extraPercent > 0 && roll * 100 < extraPercent ? 1 : 0);
+    }
 
     private void spawnRemnant(final Player owner, final Location base, final String kind, final double value, final long ticks) {
         if (base.getWorld() == null) {
@@ -1547,7 +1578,7 @@ final class AscGranted implements Listener {
                 final Player owner = plugin.getServer().getPlayer(agonyOwner.getOrDefault(entry.getKey(), new UUID(0, 0)));
                 agonyOwner.remove(entry.getKey());
                 if (tracked > 0) {
-                    living.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, living.getLocation().add(0, 1, 0), 10, 0.3, 0.4, 0.3, 0.1);
+                    tw.exilecore.skill.Fx.spawn(living.getWorld(), Particle.DAMAGE_INDICATOR, living.getLocation().add(0, 1, 0), 10, 0.3, 0.4, 0.3, 0.1);
                     if (living.getHealth() - tracked <= cull && owner != null) {
                         living.damage(living.getHealth() + 1, owner); // 處決
                     } else {
@@ -1636,7 +1667,7 @@ final class AscGranted implements Listener {
                 final MonsterData data = plugin.monsters().data(enemy).orElse(null);
                 if (data != null && !data.boss() && data.rarity() != MonsterRarity.UNIQUE) {
                     boils.put(enemy.getUniqueId(), addBoil(boils.getOrDefault(enemy.getUniqueId(), 0)));
-                    enemy.getWorld().spawnParticle(Particle.DUST, enemy.getLocation().add(0, enemy.getHeight(), 0), 3, 0.2, 0.1, 0.2, 0,
+                    tw.exilecore.skill.Fx.spawn(enemy.getWorld(), Particle.DUST, enemy.getLocation().add(0, enemy.getHeight(), 0), 3, 0.2, 0.1, 0.2, 0,
                             new Particle.DustOptions(org.bukkit.Color.fromRGB(0xb00000), 1f));
                 }
             }
@@ -1686,7 +1717,7 @@ final class AscGranted implements Listener {
                     plugin.skills().castForFree(player, spell, near.get(plugin.random().nextInt(near.size())), 1.0, "命途同調");
                     o.alignSkill = spell;
                     o.alignUntil = o.alignNext;
-                    player.getWorld().spawnParticle(Particle.ENCHANT, player.getLocation().add(0, 1.5, 0), 25, 0.6, 0.6, 0.6, 0.6);
+                    tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.ENCHANT, player.getLocation().add(0, 1.5, 0), 25, 0.6, 0.6, 0.6, 0.6);
                 }
             }
         }
@@ -1709,7 +1740,7 @@ final class AscGranted implements Listener {
                                 target.getLocation()));
                     }
                 }
-                at.getWorld().spawnParticle(Particle.FALLING_DUST, at.clone().add(0, 0.5, 0), 20, 0.4, 0.3, 0.4, 0,
+                tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.FALLING_DUST, at.clone().add(0, 0.5, 0), 20, 0.4, 0.3, 0.4, 0,
                         org.bukkit.Material.SAND.createBlockData());
             }
         }
@@ -1738,7 +1769,7 @@ final class AscGranted implements Listener {
                     for (final LivingEntity enemy : effects.enemiesNear(player, wolf.getLocation(), tw.exilecore.core.Units.metres(2.5))) {
                         plugin.ailments().igniteFrom(player, enemy, houndLife * 0.20, sheet);
                     }
-                    wolf.getWorld().spawnParticle(Particle.FLAME, wolf.getLocation().add(0, 0.5, 0), 6, 1.2, 0.2, 1.2, 0.01);
+                    tw.exilecore.skill.Fx.spawn(wolf.getWorld(), Particle.FLAME, wolf.getLocation().add(0, 0.5, 0), 6, 1.2, 0.2, 1.2, 0.01);
                 }
             }
         }
@@ -1789,7 +1820,7 @@ final class AscGranted implements Listener {
                     plugin.flasks().addCharges(player, whole, tw.exilecore.flask.FlaskKind.MANA);
                 }
                 if (AscendancyEffects.every(now, 20)) {
-                    oasis.at().getWorld().spawnParticle(Particle.DRIPPING_WATER, oasis.at().clone().add(0, 1, 0), 20, oasis.radius() / 2, 0.4,
+                    tw.exilecore.skill.Fx.spawn(oasis.at().getWorld(), Particle.DRIPPING_WATER, oasis.at().clone().add(0, 1, 0), 20, oasis.radius() / 2, 0.4,
                             oasis.radius() / 2, 0);
                 }
                 break; // 2026-11-01：好幾片綠洲重疊時只算一片（藥劑充能不重複給）
@@ -1807,7 +1838,7 @@ final class AscGranted implements Listener {
         }
         // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（蝗蟲群 3 公尺；這次之前 3 格）
         final List<LivingEntity> near = effects.enemiesNear(player, player.getLocation(), tw.exilecore.core.Units.metres(3) * areaScale(player)); // 2026-10-31：吃範圍效果
-        player.getWorld().spawnParticle(Particle.ASH, player.getLocation().add(0, 1, 0), 30, 1.5, 0.8, 1.5, 0);
+        tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.ASH, player.getLocation().add(0, 1, 0), 30, 1.5, 0.8, 1.5, 0);
         if (near.isEmpty()) {
             return;
         }
@@ -1968,7 +1999,7 @@ final class AscGranted implements Listener {
             for (long t = 0; t < release.holdTicks(); t += 5) {
                 effects.later(t, () -> {
                     if (o.mirageGeneration == generation && o.mirageUntil > now()) {
-                        at.getWorld().spawnParticle(Particle.ENCHANT, at, 6, 0.3, 0.4, 0.3, 0.3);
+                        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.ENCHANT, at, 6, 0.3, 0.4, 0.3, 0.3);
                     }
                 });
             }
@@ -2011,7 +2042,7 @@ final class AscGranted implements Listener {
         plugin.skills().recast(player, fired, from, target.getLocation().toVector().subtract(from.toVector()).normalize(), target);
         // 2026-10-31：霆落矛改成投射物，幻影擲的矛停下來時自己插地（SkillService.lanceLanded）；
         // 這次之前（2026-10-30）這裡呼叫 proxyLanded 插在目標腳下
-        from.getWorld().spawnParticle(Particle.END_ROD, from.clone().add(0, 1, 0), 8, 0.2, 0.5, 0.2, 0.01);
+        tw.exilecore.skill.Fx.spawn(from.getWorld(), Particle.END_ROD, from.clone().add(0, 1, 0), 8, 0.2, 0.5, 0.2, 0.01);
     }
 
     private List<String> alignSpells(final PlayerState state) {

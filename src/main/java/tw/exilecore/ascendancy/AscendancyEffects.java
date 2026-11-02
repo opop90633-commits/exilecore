@@ -510,7 +510,7 @@ public final class AscendancyEffects implements Listener {
             final Location at = new Location(player.getWorld(), corpse.x(), corpse.y(), corpse.z());
             final SkillProfile profile = new SkillProfile("asc_corpse_burst", Set.of(Tags.AREA, Tags.PHYSICAL, Tags.WARCRY), 0,
                     new DamagePacket().set(DamageType.PHYSICAL, corpse.maxLife() * percent / 100.0));
-            player.getWorld().spawnParticle(Particle.BLOCK, at.clone().add(0, 0.5, 0), 20, 0.4, 0.4, 0.4, 0,
+            tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.BLOCK, at.clone().add(0, 0.5, 0), 20, 0.4, 0.4, 0.4, 0,
                     org.bukkit.Material.BONE_BLOCK.createBlockData());
             // 2026-10-31：吃範圍效果（這次之前固定 2.5 格）
             final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
@@ -577,7 +577,7 @@ public final class AscendancyEffects implements Listener {
                 plugin.skills().treeMechanics().endArchon(player);
             }
             selfHit(player, state, new DamagePacket().set(DamageType.FIRE, state.maxLife() + state.maxEnergyShield()), "煉獄之炎");
-            player.getWorld().spawnParticle(Particle.FLAME, player.getLocation().add(0, 1, 0), 60, 0.5, 0.8, 0.5, 0.1);
+            tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.FLAME, player.getLocation().add(0, 1, 0), 60, 0.5, 0.8, 0.5, 0.1);
             player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BLAZE_DEATH, 0.8f, 0.7f);
             plugin.players().markDirty(player);
         }
@@ -590,7 +590,7 @@ public final class AscendancyEffects implements Listener {
         // 2026-10-26：跟天賦樹同一個元素統治者（TreeMechanics：持續、恢復期、效果都照那邊）
         if (plugin.skills() != null && plugin.skills().treeMechanics() != null
                 && plugin.skills().treeMechanics().gainArchon(player, tw.exilecore.skill.TreeMechanics.Archon.ELEMENTAL)) {
-            player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.05);
+            tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.END_ROD, player.getLocation().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.05);
         }
     }
 
@@ -1065,7 +1065,7 @@ public final class AscendancyEffects implements Listener {
             segments[i] = new double[] {starts[i], starts[i] + each};
         }
         e.weakness = segments;
-        defender.getWorld().spawnParticle(Particle.CRIT, defender.getLocation().add(0, defender.getHeight(), 0), 12, 0.3, 0.2, 0.3, 0.05);
+        tw.exilecore.skill.Fx.spawn(defender.getWorld(), Particle.CRIT, defender.getLocation().add(0, defender.getHeight(), 0), 12, 0.3, 0.2, 0.3, 0.05);
     }
 
     // =====================================================================
@@ -1268,7 +1268,7 @@ public final class AscendancyEffects implements Listener {
                         && plugin.monsters().data(target).filter(data -> !data.boss()).isPresent()) {
                     final double cut = max.getValue() * (0.05 + plugin.random().nextDouble() * 0.25);
                     target.setHealth(Math.max(1, target.getHealth() - cut));
-                    target.getWorld().spawnParticle(Particle.SWEEP_ATTACK, target.getLocation().add(0, 1, 0), 2, 0.2, 0.2, 0.2, 0);
+                    tw.exilecore.skill.Fx.spawn(target.getWorld(), Particle.SWEEP_ATTACK, target.getLocation().add(0, 1, 0), 2, 0.2, 0.2, 0.2, 0);
                 }
             }
         }
@@ -1426,7 +1426,7 @@ public final class AscendancyEffects implements Listener {
         }
         final SkillProfile profile = new SkillProfile("asc_rupture_soul", Set.of(Tags.AREA, Tags.CHAOS), 0, new DamagePacket().set(DamageType.CHAOS, amount));
         final Location at = dead.getLocation();
-        dead.getWorld().spawnParticle(Particle.SCULK_SOUL, at.clone().add(0, 1, 0), 30, 0.6, 0.6, 0.6, 0.05);
+        tw.exilecore.skill.Fx.spawn(dead.getWorld(), Particle.SCULK_SOUL, at.clone().add(0, 1, 0), 30, 0.6, 0.6, 0.6, 0.05);
         dead.getWorld().playSound(at, Sound.ENTITY_WITHER_BREAK_BLOCK, 0.6f, 1.4f);
         for (final LivingEntity target : enemiesNear(lich, at, 2.5)) {
             plugin.combat().skillDamage().hit(lich, target, profile, null);

@@ -142,10 +142,10 @@ class MapEventConfigTest {
 
         final MapEventConfig.Delirium delirium = config.delirium();
         assertEquals(0.3, delirium.chance(), 1e-9);
-        assertEquals(45, delirium.duration(), 1e-9, "2026-10：75 → 30 秒；2026-10-29：30 → 45 秒");
+        assertEquals(22.5, delirium.duration(), 1e-9, "2026-10：75 → 30 秒；2026-10-29：30 → 45 秒；2026-11-02 時間加快兩倍：22.5 秒");
         assertEquals(1.0, delirium.maxDifficulty(), 1e-9, "100% 寫成小數（2026-10-29：60 → 100）");
         assertEquals(0.0, delirium.difficultyAt(0), 1e-9);
-        assertEquals(0.5, delirium.difficultyAt(20), 1e-9, "40 秒升到最高（2026-10-29：25 → 40）：20 秒時一半");
+        assertEquals(0.5, delirium.difficultyAt(10), 1e-9, "20 秒升到最高（2026-10-29：25 → 40；2026-11-02：40 → 20）：10 秒時一半");
         assertEquals(1.0, delirium.difficultyAt(999), 1e-9);
         assertEquals(List.of(20, 50, 100, 170, 260, 380, 520), delirium.thresholds());
         assertEquals(0, delirium.sharesFor(19));

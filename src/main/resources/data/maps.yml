@@ -197,6 +197,24 @@ first_kill:                      # 首殺獎勵（存在角色資料裡）：天
 #             → 進入這個階段時 Boss 無敵，Boss 房裡出現 count 顆結晶（type 原版生物、不會動不會打人，生命是同等級普通怪的 life 倍，
 #               2026-10：再乘一部分的階級倍率——見 settings.shield_tier_share），
 #               duration 秒內全部打掉護盾就破；來不及的話 Boss 回 heal% 最大生命、剩下的結晶消失
+#     2026-11-02 照站長：phases 的階段也可以寫 mechanic（鎖血機制；這次之前只有上面的結晶）：
+#       mechanic: crystal     → 結晶（數值照同一個階段的 shield）
+#       mechanic: { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 25, heal: 30, vuln: 6, vuln_max: 60, vuln_decay: 4 }
+#             → 站位圈：Boss 無敵，地上出現光圈：圈數 = 在場的人數（最少 1 個、最多 6 個，打到一半有人進出也跟著變），半徑 radius 格；
+#               有人站在圈裡就充能（charge 秒充滿），沒人站時慢慢退（速度是充能的 drain 倍，0.25 = 四分之一），
+#               duration 秒內全部同時充滿才破盾，不然 Boss 回 heal% 最大生命；
+#               （2026-11-02 照站長第二次改：這次之前每人 count 個、至少 2 個最多 8 個，沒人站時充能不動）
+#               站在圈裡受到的傷害每秒增加 vuln%（最多 vuln_max%），離開後每秒消退 vuln_decay%
+#       mechanic: { type: countdown, name: 全場重擊, delay: 8, safe: 2, safe_radius: 3, damage: 0.6 }
+#             → 倒數大招：Boss 無敵、倒數 delay 秒，地上 safe 個安全區（1～2；一個人時只放 1 個），半徑 safe_radius 格；
+#               倒數結束時安全區外的人受到（最大生命＋最大能量護盾）× damage 的傷害（最多 0.95，滿血不會直接秒殺），
+#               之後破盾；可選 weak、weak_taken：放完 Boss 虛弱 weak 秒、受到的傷害更多 weak_taken（0.5 = 50%）。2026-11-02 照站長：預設 0（不虛弱）；這次之前預設 6 秒、50%
+#       mechanic: { type: element, duration: 25, heal: 30, share: 0.3, rotate: 12, warn: 3, other: 0.1 }
+#             → 元素弱點：Boss 不無敵，只吃火、冰、電其中一種（排除 Boss 抗性最高的那種），其他傷害只打 other 成；
+#               每 rotate 秒換一種（換之前 warn 秒提示）；duration 秒內打掉這個階段（這個門檻到下一個門檻）share 成的血就破盾，不然回 heal%
+#       mechanic: none        → 這個階段不鎖血
+#       沒寫 mechanic：有 shield 是結晶；終局、極境、巔峰、金庫之主（heist.yml）、星骸之海的淵鯨與鯊王（life.yml）其他沒寫的階段照預設輪流配站位圈、倒數大招其中一種（2026-11-02 照站長：元素弱點不再輪到——不是每個人都有元素傷害；寫死 type: element 還是可以用）
+#         （同一隻 Boss 盡量不重複，起點照終局代號的雜湊；限時、回血照這隻 Boss 第一個 shield；倒數大招在極境、巔峰打 85%，其他 60%）
 #     enrage: { after: 300, damage: 100, speed: 0.3, message: "…" }
 #             → 開打 after 秒還沒打倒就狂暴：傷害更多 damage%、移動快 speed（一場一次；血條上有倒數）
 #     hazards: [ { skill: hazard_star_meteor, every: 10, phase: 1 } ]
@@ -631,20 +649,23 @@ final:
       - { id: meteor_apocalypse, phase: 2 }
       - { id: emperor_curse, phase: 2 }
       - { id: emperor_gravity_well, phase: 2 }
-      - { id: emperor_judgement, phase: 2 }
+      - { id: emperor_judgement, phase: 3 }   # 2026-11-02：終局多了 25% 的第三階段，全場大招移到第三階段（這次之前 phase: 2；極境也跟著）
     phases:
-      - at: 0.66
+      - at: 0.75   # 2026-11-02 照站長：終局每 25% 鎖一次血（這次之前 0.66）
         name: 星骸甦醒
         message: "「朕的碎片，回到朕身邊！」"
         summon: { type: BLAZE, count: 4 }
         shield: { count: 3, type: BLAZE, name: 星骸結晶, life: 4, duration: 25, heal: 25 }
-      - at: 0.33
+      - at: 0.5   # 2026-11-02（這次之前 0.33）
         name: 天穹墜落
         message: "「那就再墜落一次吧！」"
         speed: 0.3
         stats:
           - { stat: damage, type: MORE, value: 50 }
         summon: { type: WITHER_SKELETON, count: 3 }
+      - at: 0.25   # 2026-11-02 照站長：多一個階段，只鎖血（機制沒寫，照預設輪流；名字、台詞照極境的第三階段）
+        name: 熔爐崩塌
+        message: "「三百年的火，全部給你！」"
     hazards:
       - { skill: hazard_star_meteor, every: 10, phase: 1 }
     enrage: { after: 300, damage: 100, speed: 0.3, message: "「夠了。朕不再陪你玩。」" }
@@ -698,7 +719,7 @@ final:
         speed: 0.15
         stats:
           - { stat: damage, type: MORE, value: 30 }
-        shield: { count: 3, type: BLAZE, name: 熔爐之心, life: 6, duration: 25, heal: 40 }
+        mechanic: { type: countdown, name: 熔爐爆燃, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }   # 2026-11-02 照站長：換成倒數大招；這次之前 shield: { count: 3, type: BLAZE, name: 熔爐之心, life: 6, duration: 25, heal: 40 }
     hazards:
       - { skill: hazard_star_orbs, every: 14, phase: 1 }
     enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。熔爐要吞掉你。」" }
@@ -762,20 +783,23 @@ finals:
         - { id: queen_frost_beam, phase: 1 }
         - { id: queen_absolute_zero, phase: 2 }
         - { id: queen_shatter, phase: 2 }
-        - { id: queen_whiteout, phase: 2 }
+        - { id: queen_whiteout, phase: 3 }   # 2026-11-02：終局多了 25% 的第三階段，全場大招移到第三階段（這次之前 phase: 2；極境也跟著）
       phases:
-        - at: 0.66
+        - at: 0.75   # 2026-11-02 照站長：終局每 25% 鎖一次血（這次之前 0.66）
           name: 寒冬降臨
           message: "「風雪，起。」"
           speed: 0.15
           summon: { type: STRAY, count: 4 }
           shield: { count: 3, type: STRAY, name: 霜心冰像, life: 4, duration: 25, heal: 25 }
-        - at: 0.33
+        - at: 0.5   # 2026-11-02（這次之前 0.33）
           name: 絕對零度
           message: "「全部，停下來。」"
           stats:
             - { stat: damage, type: MORE, value: 40 }
           summon: { type: POLAR_BEAR, count: 2 }
+        - at: 0.25   # 2026-11-02 照站長：多一個階段，只鎖血（機制沒寫，照預設輪流；名字、台詞照極境的第三階段）
+          name: 永凍
+          message: "「這裡的冬天，不會再結束。」"
       hazards:
         - { skill: hazard_frost_spike, every: 8, phase: 1 }
       enrage: { after: 300, damage: 100, speed: 0.3, message: "「我累了。讓冬天結束這一切。」" }
@@ -815,7 +839,7 @@ finals:
           speed: 0.15
           stats:
             - { stat: damage, type: MORE, value: 30 }
-          shield: { count: 3, type: STRAY, name: 永凍冰像, life: 6, duration: 25, heal: 40 }
+          mechanic: { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 25, heal: 40, vuln: 6, vuln_max: 60, vuln_decay: 4 }   # 2026-11-02 照站長：換成站位圈；這次之前 shield: { count: 3, type: STRAY, name: 永凍冰像, life: 6, duration: 25, heal: 40 }
       hazards:
         - { skill: hazard_ice_orbs, every: 12, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。永遠留在這裡吧。」" }
@@ -874,13 +898,13 @@ finals:
         - { id: king_soul_vortex, phase: 1 }
         - { id: king_soul_harvest, phase: 2 }
         - { id: king_summon_wither, phase: 2 }
-        - { id: king_last_ferry, phase: 2 }
+        - { id: king_last_ferry, phase: 3 }   # 2026-11-02：終局多了 25% 的第三階段，全場大招移到第三階段（這次之前 phase: 2；極境也跟著）
       phases:
-        - at: 0.66
+        - at: 0.75   # 2026-11-02 照站長：終局每 25% 鎖一次血（這次之前 0.66）
           name: 亡者起身
           message: "「起來，再死一次。」"
           summon: { type: ZOMBIE, count: 5 }
-        - at: 0.33
+        - at: 0.5   # 2026-11-02（這次之前 0.33）
           name: 冥河倒灌
           message: "「河水，淹過來！」"
           speed: 0.25
@@ -888,6 +912,9 @@ finals:
             - { stat: damage, type: MORE, value: 45 }
           summon: { type: WITHER_SKELETON, count: 2 }
           shield: { count: 3, type: SKELETON, name: 渡魂骨燈, life: 4, duration: 25, heal: 30 }
+        - at: 0.25   # 2026-11-02 照站長：多一個階段，只鎖血（機制沒寫，照預設輪流；名字、台詞照極境的第三階段）
+          name: 萬魂渡河
+          message: "「三百年份的魂，全都還給你。」"
       hazards:
         - { skill: hazard_grave_hands, every: 9, phase: 1 }
       enrage: { after: 300, damage: 100, speed: 0.3, message: "「渡船不等人。」" }
@@ -927,7 +954,7 @@ finals:
           speed: 0.15
           stats:
             - { stat: damage, type: MORE, value: 30 }
-          shield: { count: 3, type: SKELETON, name: 冥河骨燈, life: 6, duration: 25, heal: 40 }
+          mechanic: { type: zones, duration: 25, heal: 40 }   # 2026-11-02 照站長：元素弱點拿掉（不是每個人都有元素傷害）→ 站位圈；先前換成元素弱點；這次之前 shield: { count: 3, type: SKELETON, name: 冥河骨燈, life: 6, duration: 25, heal: 40 }
       hazards:
         - { skill: hazard_grave_hands, every: 6, phase: 0 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。河底很安靜。」" }
@@ -986,13 +1013,13 @@ finals:
         - { id: general_ember_orbs, phase: 1 }
         - { id: general_inferno, phase: 2 }
         - { id: general_meteor_shower, phase: 2 }
-        - { id: general_burning_sky, phase: 2 }
+        - { id: general_burning_sky, phase: 3 }   # 2026-11-02：終局多了 25% 的第三階段，全場大招移到第三階段（這次之前 phase: 2；極境也跟著）
       phases:
-        - at: 0.66
+        - at: 0.75   # 2026-11-02 照站長：終局每 25% 鎖一次血（這次之前 0.66）
           name: 餘燼復燃
           message: "「燒起來！」"
           summon: { type: MAGMA_CUBE, count: 4 }
-        - at: 0.33
+        - at: 0.5   # 2026-11-02（這次之前 0.33）
           name: 焚天
           message: "「天也燒給你看。」"
           speed: 0.3
@@ -1000,6 +1027,9 @@ finals:
             - { stat: damage, type: MORE, value: 50 }
           summon: { type: BLAZE, count: 3 }
           shield: { count: 3, type: BLAZE, name: 餘燼核心, life: 4, duration: 25, heal: 30 }
+        - at: 0.25   # 2026-11-02 照站長：多一個階段，只鎖血（機制沒寫，照預設輪流；名字、台詞照極境的第三階段）
+          name: 焚城
+          message: "「陛下的命令：曜京，再燒一次。」"
       hazards:
         - { skill: hazard_ember_fall, every: 9, phase: 1 }
       enrage: { after: 300, damage: 100, speed: 0.3, message: "「命令就是命令。全部燒掉。」" }
@@ -1039,7 +1069,7 @@ finals:
           speed: 0.15
           stats:
             - { stat: damage, type: MORE, value: 30 }
-          shield: { count: 3, type: BLAZE, name: 焚城核心, life: 6, duration: 25, heal: 40 }
+          mechanic: { type: countdown, name: 焚城烈焰, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }   # 2026-11-02 照站長：換成倒數大招；這次之前 shield: { count: 3, type: BLAZE, name: 焚城核心, life: 6, duration: 25, heal: 40 }
       hazards:
         - { skill: hazard_ember_orbs, every: 12, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。命令就是命令。」" }
@@ -1136,7 +1166,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 40 }
-          shield: { count: 3, type: ENDERMAN, name: 終末之核, life: 6, duration: 25, heal: 35 }
+          mechanic: { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 25, heal: 35, vuln: 6, vuln_max: 60, vuln_decay: 4 }   # 2026-11-02 照站長：換成站位圈；這次之前 shield: { count: 3, type: ENDERMAN, name: 終末之核, life: 6, duration: 25, heal: 35 }
       hazards:
         - { skill: hazard_awakener_storm, every: 9, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。這個世界，不需要你。」" }   # 本體約 3 分半＋換階段、護盾
@@ -1244,7 +1274,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          shield: { count: 3, type: VINDICATOR, name: 晨曦結晶, life: 6, duration: 20, heal: 45 }
+          mechanic: { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 20, heal: 45, vuln: 6, vuln_max: 60, vuln_decay: 4 }   # 2026-11-02 照站長：換成站位圈；這次之前 shield: { count: 3, type: VINDICATOR, name: 晨曦結晶, life: 6, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_shrine_ray, every: 7, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「夠了。全部，燒乾淨。」" }
@@ -1326,7 +1356,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          shield: { count: 3, type: SILVERFISH, name: 千鎖之核, life: 6, duration: 20, heal: 45 }
+          mechanic: { type: countdown, name: 寶庫崩落, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }   # 2026-11-02 照站長：換成倒數大招；這次之前 shield: { count: 3, type: SILVERFISH, name: 千鎖之核, life: 6, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_box_coins, every: 7, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到。這座寶庫，連你一起鎖起來。」" }
@@ -1408,7 +1438,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          shield: { count: 3, type: ENDERMITE, name: 界縫之核, life: 6, duration: 20, heal: 45 }
+          mechanic: { type: zones, duration: 20, heal: 45 }   # 2026-11-02 照站長：元素弱點拿掉（不是每個人都有元素傷害）→ 站位圈；先前換成元素弱點；這次之前 shield: { count: 3, type: ENDERMITE, name: 界縫之核, life: 6, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_breach_rift, every: 6, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「夠久了。整片空間，一起撕開。」" }
@@ -1490,7 +1520,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          shield: { count: 3, type: PILLAGER, name: 無名之誓, life: 6, duration: 20, heal: 45 }
+          mechanic: { type: countdown, name: 無名一擊, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }   # 2026-11-02 照站長：換成倒數大招；這次之前 shield: { count: 3, type: PILLAGER, name: 無名之誓, life: 6, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_exile_knives, every: 6, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「拖太久了。結束吧。」" }
@@ -1572,7 +1602,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          shield: { count: 3, type: HUSK, name: 血契之核, life: 6, duration: 20, heal: 45 }
+          mechanic: { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 20, heal: 45, vuln: 6, vuln_max: 60, vuln_decay: 4 }   # 2026-11-02 照站長：換成站位圈；這次之前 shield: { count: 3, type: HUSK, name: 血契之核, life: 6, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_ritual_blood, every: 6, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「祭壇等不下去了。全部，燒。」" }
@@ -1654,7 +1684,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          shield: { count: 3, type: VEX, name: 妄念之核, life: 6, duration: 20, heal: 45 }
+          mechanic: { type: zones, duration: 20, heal: 45 }   # 2026-11-02 照站長：元素弱點拿掉（不是每個人都有元素傷害）→ 站位圈；先前換成元素弱點；這次之前 shield: { count: 3, type: VEX, name: 妄念之核, life: 6, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_mist_orb, every: 7, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「霧要散了。在那之前，你得留下來。」" }
@@ -1736,7 +1766,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          shield: { count: 3, type: SKELETON, name: 淵底之核, life: 6, duration: 20, heal: 45 }
+          mechanic: { type: zones, duration: 20, heal: 45 }   # 2026-11-02 照站長：元素弱點拿掉（不是每個人都有元素傷害）→ 站位圈；先前換成元素弱點；這次之前 shield: { count: 3, type: SKELETON, name: 淵底之核, life: 6, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_abyssal_spike, every: 6, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「夠了。骨潮，滅頂。」" }

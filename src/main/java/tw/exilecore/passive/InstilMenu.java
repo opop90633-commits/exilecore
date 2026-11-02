@@ -281,7 +281,7 @@ public final class InstilMenu extends Menu {
             }
             final int extra = entry.getValue() - (first ? 1 : 0);
             if (extra > 0) {
-                plugin.economy().ledger().consumed(entry.getKey(), tw.exilecore.economy.EconomyLedger.CRAFT, extra);
+                plugin.economy().ledger().of(player).consumed(entry.getKey(), tw.exilecore.economy.EconomyLedger.CRAFT, extra);
             }
             first = false;
         }

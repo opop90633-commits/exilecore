@@ -24,6 +24,7 @@ import java.util.Map;
  * /ec economy players [天數]        賺最多的帳號（金幣＋通貨折合金幣），跟中位數比（找機器人、複製）
  * /ec economy values                參考價值：設定值、現在的值、用到幾筆成交
  * /ec economy update                馬上做每天的工作（存量、重算參考價值）
+ * /ec economy reset-report [confirm] 清掉市場報告的產出消耗與存量，馬上重讀大家的通貨袋與倉庫（管理員的不算）；參考價值不動
  * </pre>
  */
 public final class EconomyCommand {
@@ -62,7 +63,11 @@ public final class EconomyCommand {
                         .then(Commands.argument("days", IntegerArgumentType.integer(1, 90))
                                 .executes(context -> players(plugin, context.getSource().getSender(), IntegerArgumentType.getInteger(context, "days")))))
                 .then(Commands.literal("values").executes(context -> values(plugin, context.getSource().getSender())))
-                .then(Commands.literal("update").executes(context -> update(plugin, context.getSource().getSender())));
+                .then(Commands.literal("update").executes(context -> update(plugin, context.getSource().getSender())))
+                // 2026-11-02 照站長：清掉市場報告、馬上重讀大家的通貨袋與倉庫
+                .then(Commands.literal("reset-report")
+                        .executes(context -> resetReport(plugin, context.getSource().getSender(), false))
+                        .then(Commands.literal("confirm").executes(context -> resetReport(plugin, context.getSource().getSender(), true))));
     }
 
     // ---- /ec economy [天數] ----
@@ -253,6 +258,29 @@ public final class EconomyCommand {
     }
 
     // ---- /ec economy update ----
+
+    private static int resetReport(final ExileCore plugin, final CommandSender sender, final boolean confirmed) {
+        if (!confirmed) {
+            sender.sendMessage(plugin.text().prefixed("<yellow>會清掉市場報告至今的產出、消耗與每天的存量（所有人的，分不出是誰），"
+                    + "然後馬上重讀大家的通貨袋與倉庫當今天的存量（管理員的不算）。參考價值、每個帳號的收入不動。"));
+            sender.sendMessage(plugin.text().parse("<gray>確定的話打 <white>/ec economy reset-report confirm"));
+            return Command.SINGLE_SUCCESS;
+        }
+        if (plugin.economy().reports().running()) {
+            sender.sendMessage(plugin.text().prefixed("<gray>每天的工作正在算，等一下再清"));
+            return Command.SINGLE_SUCCESS;
+        }
+        sender.sendMessage(plugin.text().prefixed("<gray>清掉市場報告中…"));
+        plugin.economy().reports().resetReport().whenComplete((rows, error) -> sync(plugin, () -> {
+            if (error != null) {
+                sender.sendMessage(plugin.text().prefixed("<red>失敗：" + error.getMessage()));
+                return;
+            }
+            plugin.getSLF4JLogger().info("經濟：{} 清掉了市場報告（{} 列），重算了存量", sender.getName(), rows);
+            sender.sendMessage(plugin.text().prefixed("<green>清好了<gray>（" + rows + " 列）；大家的通貨袋與倉庫已經重讀，網頁跟著更新"));
+        }));
+        return Command.SINGLE_SUCCESS;
+    }
 
     private static int update(final ExileCore plugin, final CommandSender sender) {
         if (plugin.economy().reports().running()) {

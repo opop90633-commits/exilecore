@@ -928,7 +928,7 @@ public final class BountyService {
         if (leftover > 0) {
             wallet().dropFor(player, plugin.currencies().create(fragment, leftover));
         }
-        plugin.economy().ledger().produced(fragment.id(), EconomyLedger.MERITS, 1);
+        plugin.economy().ledger().of(player).produced(fragment.id(), EconomyLedger.MERITS, 1);
         final String value = MeritShop.fragmentValue(week(), bought + 1);
         account.progress.put(MeritShop.FRAGMENTS, value);
         commit(player, account, Map.of(MeritShop.FRAGMENTS, value),
@@ -977,7 +977,7 @@ public final class BountyService {
         if (leftover > 0) {
             wallet().dropFor(player, plugin.currencies().create(type, leftover));
         }
-        plugin.economy().ledger().produced(type.id(), EconomyLedger.MERITS, 1);
+        plugin.economy().ledger().of(player).produced(type.id(), EconomyLedger.MERITS, 1);
         final String value = MeritShop.fragmentValue(week(), bought + 1);
         account.progress.put(shopKeyProgress(key), value);
         commit(player, account, Map.of(shopKeyProgress(key), value),

@@ -371,8 +371,10 @@ public final class StatsReport {
             hits.add("<" + DamageNumbers.color(type) + ">" + shortName(type) + " <white>" + maxHitText(state, sheet, type));
         }
         final String maxHit = "<gray>最大承受一擊 " + String.join("<dark_gray>・", hits);
-        final String maxHitHelp = "多大的一下會直接把你打死（生命＋能量護盾，混沌不過護盾）<newline>"
-                + "已經扣掉抗性與護甲；沒算格擋、閃避、受到傷害增加或減少<newline><dark_gray>越高越不容易被 Boss 的大招秒掉";
+        // 2026-11-02 照站長（PoB2 CalcDefence 的 Maximum Hit Taken）：跟網頁的 EHP 同一套（EffectiveHitPool），心靈昇華的魔力、跳過護盾也算；
+        //   這次之前只算生命＋能量護盾（混沌把護盾當一半）
+        final String maxHitHelp = "多大的一下會直接把你打死（從滿的生命、能量護盾、心靈昇華的魔力開始；混沌對護盾兩倍）<newline>"
+                + "已經扣掉抗性、護甲與受到的傷害增減；沒算格擋、閃避、敵人的暴擊<newline><dark_gray>越高越不容易被 Boss 的大招秒掉";
         lines.add(chat ? hover(maxHit, maxHitHelp) : maxHit);
         lines.addAll(ailmentDefence(sheet));
         lines.addAll(BuffImpact.situationLines(plugin, player)); // 2026-10-27：身上的減益（數字已含）
@@ -481,34 +483,19 @@ public final class StatsReport {
     }
 
     /**
-     * 這一種傷害最大能吃多大的一下（減免前；生命＋能量護盾，混沌不過護盾）。免疫回傳 NaN，大到算不完回傳無限大。
+     * 這一種傷害最大能吃多大的一下（減免前；從滿的生命、能量護盾、心靈昇華的魔力開始）。免疫回傳 NaN，大到算不完回傳無限大。
      * 只看屬性表（2026-10：網頁計算器的虛擬角色也用）。
+     * 2026-11-02 照站長（PoB2 CalcDefence 的 Maximum Hit Taken）：改用 EffectiveHitPool（遊戲扣護盾、守護、心靈昇華的同一套純函式）；
+     * 這次之前是「減免後 ≤ 最大生命＋能量護盾（混沌把護盾當一半）」，沒算心靈昇華、跳過能量護盾，生命用沒被保留之前的。
      */
     public static double maxHit(final StatSheet sheet, final DamageType type) {
-        if (type == DamageType.CHAOS && StatKeys.flag(sheet, StatKeys.FLAG_CHAOS_IMMUNE)) {
-            return Double.NaN;
-        }
-        final double life = PlayerState.maxLife(sheet);
-        final double es = PlayerState.maxEnergyShield(sheet);
-        final double pool = Math.max(1, life + (type == DamageType.CHAOS ? es / tw.exilecore.stats.DamageCalculator.CHAOS_ES_MULTIPLIER : es));
-        double low = 0;
-        double high = pool;
-        final double limit = pool * 1000;
-        while (taken(sheet, type, high) <= pool) {
-            high *= 2;
-            if (high > limit) {
-                return Double.POSITIVE_INFINITY;
-            }
-        }
-        for (int i = 0; i < 40; i++) {
-            final double mid = (low + high) / 2;
-            if (taken(sheet, type, mid) <= pool) {
-                low = mid;
-            } else {
-                high = mid;
-            }
-        }
-        return low;
+        return tw.exilecore.stats.EffectiveHitPool.maxHit(sheet, type, pools(sheet), null);
+    }
+
+    /** 2026-11-02：滿資源（EHP、最多吃得下一下用）：沒被保留的生命、最大能量護盾、最大魔力；守護只在護符效果期間有，算 0。 */
+    public static tw.exilecore.stats.EffectiveHitPool.Pools pools(final StatSheet sheet) {
+        return new tw.exilecore.stats.EffectiveHitPool.Pools(PlayerState.unreservedLife(sheet), PlayerState.maxEnergyShield(sheet),
+                PlayerState.maxMana(sheet), 0);
     }
 
     /**
@@ -557,12 +544,6 @@ public final class StatsReport {
 
     private static String shortKey(final DamageType type) {
         return type.name().toLowerCase(Locale.ROOT);
-    }
-
-    private static double taken(final StatSheet sheet, final DamageType type, final double raw) {
-        final DamagePacket packet = new DamagePacket();
-        packet.set(type, raw);
-        return DamageCalculator.mitigate(packet, sheet).total();
     }
 
     private static String shortName(final DamageType type) {

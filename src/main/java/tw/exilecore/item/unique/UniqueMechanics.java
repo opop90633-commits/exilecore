@@ -284,7 +284,7 @@ public final class UniqueMechanics implements Listener {
         }
         bloodStacks.merge(id, 1, Integer::sum);
         final UUID owner = source.getUniqueId();
-        target.getWorld().spawnParticle(org.bukkit.Particle.DUST, target.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0,
+        tw.exilecore.skill.Fx.spawn(target.getWorld(), org.bukkit.Particle.DUST, target.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0,
                 new org.bukkit.Particle.DustOptions(org.bukkit.Color.fromRGB(0x8a0303), 1.2f));
         for (int i = 1; i <= UniqueStats.BLOCK_CORRUPTED_BLOOD_SECONDS; i++) {
             final boolean last = i == UniqueStats.BLOCK_CORRUPTED_BLOOD_SECONDS;
@@ -343,7 +343,7 @@ public final class UniqueMechanics implements Listener {
                 || StatKeys.flag(sheet, UniqueStats.SHATTER_CHILLED) && ailments.has(victim, AilmentType.CHILL));
         if (shatter && corpses != null) {
             final Location at = victim.getLocation();
-            at.getWorld().spawnParticle(Particle.BLOCK, at.clone().add(0, 0.8, 0), 20, 0.3, 0.4, 0.3, 0.1,
+            tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.BLOCK, at.clone().add(0, 0.8, 0), 20, 0.3, 0.4, 0.3, 0.1,
                     org.bukkit.Material.ICE.createBlockData());
             // 屍體在死亡處理裡才放：等兩 tick 再拿掉
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
@@ -496,7 +496,7 @@ public final class UniqueMechanics implements Listener {
         final AilmentService ailments = plugin.ailments();
         final double base = state.maxLife() * Math.max(0, percent) / 100.0;
         for (final Patch patch : list) {
-            patch.at().getWorld().spawnParticle(Particle.FLAME, patch.at().clone().add(0, 0.1, 0), 2, 0.4, 0.02, 0.4, 0.0);
+            tw.exilecore.skill.Fx.spawn(patch.at().getWorld(), Particle.FLAME, patch.at().clone().add(0, 0.1, 0), 2, 0.4, 0.02, 0.4, 0.0);
             if (ailments == null || base <= 0) {
                 continue;
             }
@@ -579,7 +579,7 @@ public final class UniqueMechanics implements Listener {
         nextCorpse.put(uuid, now + UniqueStats.CORPSE_CONSUME_TICKS);
         state.setLife(Math.min(state.maxLife(), state.life() + state.maxLife() * percent / 100.0));
         state.markRecent(tw.exilecore.stats.Recently.CORPSE, now);
-        at.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, at.clone().add(0, 1, 0), 6, 0.3, 0.3, 0.3, 0.0);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.DAMAGE_INDICATOR, at.clone().add(0, 1, 0), 6, 0.3, 0.3, 0.3, 0.0);
         plugin.players().display(player, state);
     }
 

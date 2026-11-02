@@ -114,6 +114,9 @@ public final class SkillService {
         // 2026-10：設定「別人的技能特效」關掉的人不送別人的技能粒子（Fx）
         Fx.hidesOthers(viewer -> !tw.exilecore.character.PlayerSettings.enabled(plugin.players().get(viewer),
                 tw.exilecore.character.PlayerSettings.OTHERS_FX));
+        // 2026-11-02：設定「特效等級」高／中／低；粒子只送給 particles.view-range 格內的人（重要的 particles.important-range）
+        Fx.quality(viewer -> tw.exilecore.character.PlayerSettings.fxQuality(plugin.players().get(viewer)));
+        Fx.ranges(plugin.getConfig().getDouble("particles.view-range", 24), plugin.getConfig().getDouble("particles.important-range", 48));
         // 2026-10：設定「技能音效」關掉的人，自己的技能也不出聲
         Fx.mutesOwn(viewer -> !tw.exilecore.character.PlayerSettings.enabled(plugin.players().get(viewer),
                 tw.exilecore.character.PlayerSettings.SKILL_SOUNDS));
@@ -555,8 +558,15 @@ public final class SkillService {
     // 裝填時間是弩基底自己的（bases/weapons.yml 的 reload，0.7～1.1 秒），技能的「更多／更少裝填速度」寫在技能的 modifiers。
     // 這次之前：所有弩技能共用 5 發、裝填 0.35 秒
     static final double DEFAULT_RELOAD_SECONDS = 0.8; // 弩基底沒寫裝填時間的時候（舊物品）
+    /** 2026-11-02 照站長：弩的裝填時間減半（基底的 0.7～1.1 秒 → 0.35～0.55 秒，再吃裝填速度）。 */
+    static final double RELOAD_SCALE = 0.5;
     /** 指令型召喚物技能一次最多幾隻聽命（2026-10）。 */
     static final int COMMAND_MAX = 8;
+
+    /** 2026-11-02 照站長：背景裝填——彈匣有用過（還沒空）、這招上次射出後已過一次裝填時間。純函式（測試用）。 */
+    static boolean backgroundReloaded(final Integer left, final Long usedAt, final int reloadTicks, final long now) {
+        return left != null && left > 0 && usedAt != null && now - usedAt >= reloadTicks;
+    }
 
     /** 要用彈匣的技能：弩的攻擊（沒有冷卻的）。 */
     static boolean ammoSkill(final SkillDefinition definition) {
@@ -573,7 +583,7 @@ public final class SkillService {
         final tw.exilecore.stats.StatSheet effective = build.profile().effective(sheet);
         final double speed = Math.max(0.1, effective.apply(StatKeys.CROSSBOW_RELOAD, 1.0, build.profile().tags()));
         final double weapon = sheet.flat(StatKeys.WEAPON_RELOAD, java.util.Set.of());
-        final double seconds = weapon > 0 ? weapon : DEFAULT_RELOAD_SECONDS;
+        final double seconds = (weapon > 0 ? weapon : DEFAULT_RELOAD_SECONDS) * RELOAD_SCALE;
         return (int) Math.max(2, Math.round(seconds * 20 / speed));
     }
 
@@ -581,6 +591,7 @@ public final class SkillService {
                          final SkillBuild build, final tw.exilecore.stats.StatSheet sheet, final long now) {
         final int clip = clipSize(config, build, sheet);
         int left = Math.min(clip, runtime.ammo.getOrDefault(definition.id(), clip));
+        runtime.ammoUsedAt.put(definition.id(), now); // 2026-11-02 照站長：背景裝填看這個
         plugin.players().conditions().note(player, tw.exilecore.stats.TreeConditions.AMMO_TYPES, definition.id(), now); // 2026-10-27：過去 10 秒射過幾種彈藥
         final double save = build.profile().effective(sheet).flat(StatKeys.CROSSBOW_AMMO_SAVE, build.profile().tags())
                 + (state.recently(tw.exilecore.item.unique.UniqueStats.RECENT_RELOAD, now) // 2026-10-26（破城機弩）：最近裝填過
@@ -1380,7 +1391,16 @@ public final class SkillService {
     }
 
     /** 快捷欄上的增益倒數（2026-10-20）：沒綁在技能格上的增益（神龕、護符、擊殺後、滑鼠鍵的戰吼……）。 */
-    public record BuffTimer(String name, long ticks) {
+    public record BuffTimer(String name, long ticks, boolean important) {
+
+        public BuffTimer(final String name, final long ticks) {
+            this(name, ticks, false);
+        }
+    }
+
+    /** 2026-11-02 照站長（模組 1.4）：重要的增益（護符、神龕）：模組的增益列排前面，放不下時先藏別的。純函式（測試用）。 */
+    public static boolean importantBuff(final String id) {
+        return id != null && (id.startsWith("charm.") || id.startsWith("shrine.") || id.contains(".shrine."));
     }
 
     /** 技能格上方的倒數：hotbarSlot 是快捷列第幾格（0 起算）；missing = 增益沒了（戰鬥中提醒補放）。 */
@@ -1535,7 +1555,7 @@ public final class SkillService {
         final List<BuffTimer> others = new ArrayList<>();
         for (final SkillBuffs.Buff buff : active.values()) {
             if (!onSlot.contains(buff.id())) {
-                others.add(new BuffTimer(buff.name(), buff.untilTick() - now));
+                others.add(new BuffTimer(buff.name(), buff.untilTick() - now, importantBuff(buff.id())));
             }
         }
         if (barrage != null && !barrageOnSlot) {
@@ -2448,6 +2468,13 @@ public final class SkillService {
                 runtime.ammo.remove(definition.id());
                 supportMechanics().extras().boltsReloaded(player, definition.id(), clipSize(config, build, sheet), done); // 2026-10-27 照 PoE2 Fresh Clip
                 state.markRecent(tw.exilecore.item.unique.UniqueStats.RECENT_RELOAD, done); // 2026-10-26：「最近裝填過」（破城機弩）
+            } else if (backgroundReloaded(runtime.ammo.get(definition.id()), runtime.ammoUsedAt.get(definition.id()), reloadTicks(build, sheet), now)
+                    && !StatKeys.flag(build.profile().effective(sheet), tw.exilecore.stats.LineageKeys.NO_RELOAD)) {
+                // 2026-11-02 照站長（背景裝填）：彈匣沒空、但這招超過一次裝填時間沒射，就自己補滿（連膛照舊要翻滾）
+                final long refilled = runtime.ammoUsedAt.get(definition.id()) + reloadTicks(build, sheet);
+                runtime.ammo.remove(definition.id());
+                supportMechanics().extras().boltsReloaded(player, definition.id(), clipSize(config, build, sheet), refilled);
+                state.markRecent(tw.exilecore.item.unique.UniqueStats.RECENT_RELOAD, refilled);
             }
         }
         // 2026-10-28 照 PoE2 Hollow Form：空無型態按住引導，照孔裡近戰攻擊的攻擊時間 ÷ 0.7 一直顯現幻影（HollowImages）；
@@ -3127,7 +3154,7 @@ public final class SkillService {
                         return; // 又射了一次：這一輪的延續作廢
                     }
                     if (player.isOnline() && player.getWorld().equals(from.getWorld())) {
-                        from.getWorld().spawnParticle(org.bukkit.Particle.END_ROD, from.clone().add(0, 1, 0), 12, 0.2, 0.5, 0.2, 0.01);
+                        tw.exilecore.skill.Fx.spawn(from.getWorld(), org.bukkit.Particle.END_ROD, from.clone().add(0, 1, 0), 12, 0.2, 0.5, 0.2, 0.01);
                         final org.bukkit.entity.LivingEntity mirageTarget = aim == null ? null : living(player, aim);
                         // 有鎖定的敵人就朝牠（牠可能動了），沒有就朝放的時候準心指的點
                         final Origin origin = mirageTarget != null && mirageTarget.isValid()
@@ -3295,6 +3322,110 @@ public final class SkillService {
     public double cooldownLeftSeconds(final Player player, final String skillId) {
         final SkillRuntime runtime = runtimes.get(player.getUniqueId());
         return runtime == null ? 0 : runtime.cooldownLeft(skillId, now()) / 20.0;
+    }
+
+    /**
+     * 2026-11-02（星骸輔助模組）：一個按鍵格現在的樣子（模組畫技能列用）。
+     *
+     * @param bind          按鍵格（0 左鍵、1 右鍵、2 潛行＋左鍵、3 潛行＋右鍵、4～9 數字鍵格）
+     * @param definition    這一格會放的技能（沒綁是普攻）
+     * @param bound         這一格有沒有綁技能（false = 普攻）
+     * @param cooldownLeft  冷卻還剩幾 tick（可以存好幾次的：最早好的那一次）
+     * @param cooldownTotal 冷卻總長（tick；畫進度用）
+     * @param usesLeft      可以存好幾次的技能現在有幾次（maxUses ≤ 1 時沒意義）
+     * @param manaCost      魔力消耗（這次會放出的數值）
+     * @param problem       現在放不了的簡短原因（可以放是 null）
+     */
+    public record SlotView(int bind, SkillDefinition definition, boolean bound, long cooldownLeft, long cooldownTotal,
+                           int usesLeft, int maxUses, int manaCost, String problem, int[] glory) {
+
+        public SlotView(final int bind, final SkillDefinition definition, final boolean bound, final long cooldownLeft, final long cooldownTotal,
+                        final int usesLeft, final int maxUses, final int manaCost, final String problem) {
+            this(bind, definition, bound, cooldownLeft, cooldownTotal, usesLeft, maxUses, manaCost, problem, null);
+        }
+    }
+
+    /** 2026-11-02（星骸輔助模組）：全部 {@link SkillLoadout#BIND_SLOTS} 個按鍵格現在的樣子；沒有角色回傳空的。 */
+    public List<SlotView> slotViews(final Player player) {
+        final PlayerState state = plugin.players().get(player);
+        if (!state.isLoaded() || !state.hasCharacter()) {
+            return List.of();
+        }
+        final long now = now();
+        final SkillRuntime runtime = runtimes.get(player.getUniqueId());
+        final StatSheet sheet = plugin.players().sheet(player);
+        final boolean town = inTown(player);
+        final List<SlotView> views = new ArrayList<>(SkillLoadout.BIND_SLOTS);
+        for (int bind = 0; bind < SkillLoadout.BIND_SLOTS; bind++) {
+            final Resolved resolved = resolve(state, bind);
+            final SkillDefinition definition = resolved.definition();
+            if (definition == null) {
+                continue;
+            }
+            final String id = definition.id();
+            long left = 0;
+            int usesLeft = 0;
+            int maxUses = 1;
+            long total = 0;
+            if (runtime != null) {
+                left = runtime.cooldownLeft(id, now);
+                maxUses = Math.max(1, runtime.cooldownUses.applyAsInt(id));
+                final long[] slots = runtime.cooldownSlots.get(id);
+                if (maxUses > 1) {
+                    usesLeft = maxUses;
+                    if (slots != null) {
+                        usesLeft = 0;
+                        for (final long ready : slots) {
+                            if (ready <= now) {
+                                usesLeft++;
+                            }
+                        }
+                    }
+                }
+                total = Math.max(left, runtime.cooldownTotals.getOrDefault(id, 0));
+            }
+            int cost = 0;
+            try {
+                cost = Math.max(0, build(state, sheet, resolved).manaCost());
+            } catch (final RuntimeException e) {
+                // 算不出數值（設定寫壞了）：當成不要魔力，照樣畫出來
+            }
+            String problem = null;
+            if (town && definition.mechanic() != Mechanic.AURA) {
+                problem = "營地";
+            } else if (left > 0 && (maxUses <= 1 || usesLeft <= 0)) {
+                problem = "冷卻";
+            } else if (cost > 0 && state.mana() + 1e-9 < cost) {
+                problem = "魔力不足";
+            } else if (!resolved.isDefault() && !definition.weapons().isEmpty() && !definition.usableWith(state.weaponTags())) {
+                problem = "武器不符";
+            }
+            // 2026-11-02 照站長（模組 1.4）：要榮耀的技能 {現在, 要幾點}（模組的技能列畫在格子裡；資源包版寫在快捷欄那一格上方）
+            int[] glory = null;
+            if (!resolved.isDefault()) {
+                try {
+                    glory = gloryOnSlot(player, state, definition, resolved.entry());
+                } catch (final RuntimeException e) {
+                    // 算不出來：不畫
+                }
+            }
+            views.add(new SlotView(bind, definition, !resolved.isDefault(), left, total, usesLeft, maxUses, cost, problem, glory));
+        }
+        return views;
+    }
+
+    /**
+     * 2026-11-02（星骸輔助模組的技能鍵）：按了一個按鍵格，跟原本按滑鼠、數字鍵走同一條路（{@link #trigger}）。
+     * 營地裡只有光環能開關（跟滑鼠鍵一樣）；沒有角色、創造模式、死掉照原本的規則不放。
+     */
+    public void pressBind(final Player player, final int bind) {
+        if (bind < 0 || bind >= SkillLoadout.BIND_SLOTS || !eligible(player)) {
+            return;
+        }
+        if (inTown(player) && !auraBound(player, bind)) {
+            return;
+        }
+        trigger(player, bind, null);
     }
 
     /**

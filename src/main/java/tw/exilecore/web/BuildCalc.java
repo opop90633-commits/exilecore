@@ -20,6 +20,8 @@ import tw.exilecore.skill.SkillConfig;
 import tw.exilecore.skill.SkillDefinition;
 import tw.exilecore.skill.SkillService;
 import tw.exilecore.skill.SupportDefinition;
+import tw.exilecore.stats.DamageType;
+import tw.exilecore.stats.EffectiveHitPool;
 import tw.exilecore.stats.ModType;
 import tw.exilecore.stats.Modifier;
 import tw.exilecore.stats.StatSheet;
@@ -66,7 +68,33 @@ public final class BuildCalc {
     /** 讀進來的角色。 */
     public record Build(CharacterClass characterClass, int level, Set<String> passives, Map<String, String> progress,
                         List<ItemData> gear, Map<String, ItemData> jewels, SkillLoadout skills, List<Modifier> extra,
-                        Integer supportsFor, Integer instilFor) {
+                        Integer supportsFor, Integer instilFor, EnemySettings enemy) {
+        public Build {
+            enemy = enemy == null ? EnemySettings.DEFAULT : enemy;
+        }
+
+        /** 2026-11-02：沒指定敵人（EHP 用 PoB2 的預設敵人）。 */
+        public Build(final CharacterClass characterClass, final int level, final Set<String> passives, final Map<String, String> progress,
+                     final List<ItemData> gear, final Map<String, ItemData> jewels, final SkillLoadout skills, final List<Modifier> extra,
+                     final Integer supportsFor, final Integer instilFor) {
+            this(characterClass, level, passives, progress, gear, jewels, skills, extra, supportsFor, instilFor, EnemySettings.DEFAULT);
+        }
+    }
+
+    /**
+     * 2026-11-02 照站長（PoB2 ConfigOptions 的 Enemy Stats）：EHP 對什麼樣的敵人算。
+     *
+     * @param level 敵人等級（0 ＝ 自動：一般怪、Boss 照角色等級，巔峰以上 T16）
+     * @param tier  一般怪／Boss／巔峰 Boss／超級巔峰 Boss（PoB2 的預設是巔峰 Boss）
+     * @param mix   物理、火焰、冰冷、閃電、混沌的比例（null ＝ PoB2 的預設分配）
+     */
+    public record EnemySettings(int level, EffectiveHitPool.Tier tier, double[] mix) {
+        public static final EnemySettings DEFAULT = new EnemySettings(0, EffectiveHitPool.Tier.PINNACLE, null);
+
+        public EnemySettings {
+            tier = tier == null ? EffectiveHitPool.Tier.PINNACLE : tier;
+            mix = mix == null ? null : mix.clone();
+        }
     }
 
     /** 讀不懂送來的東西。 */
@@ -240,7 +268,44 @@ public final class BuildCalc {
             instilFor = index >= 0 && index < positions.size() && positions.get(index) >= 0 ? positions.get(index) : -1;
         }
         return new Build(characterClass, level, new LinkedHashSet<>(decoded.nodes()), progress, gear, jewels, loadout, extra, supportsFor,
-                instilFor);
+                instilFor, parseEnemy(json));
+    }
+
+    /**
+     * 2026-11-02 照站長：讀 "enemy": { "level": 0（自動）～200, "tier": 0 一般怪／1 Boss／2 巔峰 Boss／3 超級巔峰 Boss,
+     * "mix": [物理, 火焰, 冰冷, 閃電, 混沌]（比例，不用加起來 100）}。沒有、讀不懂的照 PoB2 的預設（巔峰 Boss、自動等級、預設分配）。純函式。
+     */
+    static EnemySettings parseEnemy(final JsonObject json) {
+        if (json == null || !json.has("enemy") || !json.get("enemy").isJsonObject()) {
+            return EnemySettings.DEFAULT;
+        }
+        final JsonObject o = json.getAsJsonObject("enemy");
+        int level = 0;
+        EffectiveHitPool.Tier tier = EffectiveHitPool.Tier.PINNACLE;
+        double[] mix = null;
+        try {
+            if (o.has("level") && o.get("level").isJsonPrimitive()) {
+                level = clamp(o.get("level").getAsInt(), 0, VirtualCharacter.MAX_LEVEL);
+            }
+            if (o.has("tier") && o.get("tier").isJsonPrimitive()) {
+                final EffectiveHitPool.Tier picked = EffectiveHitPool.Tier.of(o.get("tier").getAsInt());
+                tier = picked == null ? tier : picked;
+            }
+            if (o.has("mix") && o.get("mix").isJsonArray() && o.getAsJsonArray("mix").size() == DamageType.values().length) {
+                final JsonArray array = o.getAsJsonArray("mix");
+                final double[] values = new double[array.size()];
+                double sum = 0;
+                for (int i = 0; i < values.length; i++) {
+                    final double v = array.get(i).isJsonPrimitive() ? array.get(i).getAsDouble() : 0;
+                    values[i] = Double.isFinite(v) ? Math.max(0, Math.min(1000, v)) : 0;
+                    sum += values[i];
+                }
+                mix = sum > 0 ? values : null;
+            }
+        } catch (final RuntimeException e) {
+            return EnemySettings.DEFAULT; // 型別不對：照預設
+        }
+        return new EnemySettings(level, tier, mix);
     }
 
     static boolean allowedProgress(final String key) {
@@ -395,6 +460,10 @@ public final class BuildCalc {
         final JsonObject numbers = new JsonObject();
         StatsReport.numbers(plugin, result.sheet(), build.level()).forEach(numbers::addProperty);
         root.add("numbers", numbers);
+        final JsonObject ehp = ehp(build, result.sheet()); // 2026-11-02 照站長（PoB2 的 EHP）
+        if (ehp != null) {
+            root.add("ehp", ehp);
+        }
         final JsonArray inactive = new JsonArray();
         result.inactive().forEach(inactive::add);
         root.add("inactive", inactive);
@@ -820,7 +889,7 @@ public final class BuildCalc {
         final List<ItemData> gear = new ArrayList<>(build.gear());
         gear.set(index, amulet);
         final Build trial = new Build(build.characterClass(), build.level(), build.passives(), build.progress(), gear, build.jewels(),
-                build.skills(), build.extra(), null, null);
+                build.skills(), build.extra(), null, null, build.enemy());
         final Result result = evaluate(trial, trial.skills());
         return plugin.skills().skillDpsAt(result.state(), result.sheet(), auraView(result), position);
     }
@@ -926,6 +995,11 @@ public final class BuildCalc {
 
         /** 這個 IP 現在能不能再算一次（能的話扣掉一次）。 */
         boolean allow(final String ip, final long nowMillis) {
+            return allow(ip, nowMillis, 1);
+        }
+
+        /** 2026-11-02：一次扣 cost 次（批次算差異：每一組配點算一次）；不夠就整筆不扣。 */
+        boolean allow(final String ip, final long nowMillis, final double cost) {
             if (buckets.size() > 10_000) {
                 buckets.clear(); // 太多 IP：全部重來（不會一直長大）
             }
@@ -934,11 +1008,299 @@ public final class BuildCalc {
                 final double elapsed = Math.max(0, nowMillis - bucket[1]) / 1000.0;
                 bucket[0] = Math.min(burst, bucket[0] + elapsed * perSecond);
                 bucket[1] = nowMillis;
-                if (bucket[0] < 1) {
+                if (bucket[0] < Math.min(cost, burst)) {
                     return false;
                 }
-                bucket[0] -= 1;
+                bucket[0] -= Math.min(cost, burst);
                 return true;
+            }
+        }
+
+        /** 2026-11-02：要等幾秒才夠扣 cost 次（給 429 的 Retry-After；至少 1 秒）。 */
+        int retryAfter(final String ip, final long nowMillis, final double cost) {
+            final double[] bucket = buckets.get(ip == null ? "?" : ip);
+            if (bucket == null) {
+                return 1;
+            }
+            synchronized (bucket) {
+                final double have = Math.min(burst, bucket[0] + Math.max(0, nowMillis - bucket[1]) / 1000.0 * perSecond);
+                return (int) Math.max(1, Math.ceil((Math.min(cost, burst) - have) / perSecond));
+            }
+        }
+    }
+
+    // ---- 批次算差異（2026-11-02 照站長：網頁滑到節點看「配了會變多少」、節點強度熱圖）----
+    // 這次之前網頁要比較只能整份送 /tree/calc 兩次（每次都含輔助比較之類的、回傳整份結果）。
+    // 這裡送一份角色（跟 /tree/calc 同格式）＋好幾組「多配／少配哪些節點」，每組只回傳要比較的幾個數字與每個技能的每秒傷害。
+
+    /** 一次最多幾組配點。 */
+    static final int MAX_VARIANTS = 48;
+    /** 一組最多多配／少配幾個節點。 */
+    static final int MAX_VARIANT_NODES = 160;
+    /** 一次請求最多算多久（毫秒）：超過就先回傳算好的（done），網頁把剩下的再送一次。 */
+    static final long BATCH_BUDGET_MS = 2500;
+    /** 回傳的數字（滑到節點時的差異只列這些）。 */
+    static final List<String> LIGHT_KEYS = List.of("life", "es", "mana", "spirit", "armour", "evasion",
+            "resist.fire", "resist.cold", "resist.lightning", "resist.chaos", "movement");
+
+    /** 一組配點：照送來的角色多配 add、少配 remove。 */
+    public record Variant(Set<String> add, Set<String> remove) {
+    }
+
+    /** 讀 variants（純函式）：不認得的節點、起點略過；超過上限的丟掉。 */
+    static List<Variant> parseVariants(final JsonObject json, final PassiveTree tree) throws BadRequest {
+        final List<Variant> list = new ArrayList<>();
+        if (!json.has("variants")) {
+            return list;
+        }
+        if (!json.get("variants").isJsonArray()) {
+            throw new BadRequest("variants 要是陣列");
+        }
+        final JsonArray array = json.getAsJsonArray("variants");
+        if (array.size() > MAX_VARIANTS) {
+            throw new BadRequest("一次最多 " + MAX_VARIANTS + " 組");
+        }
+        for (final JsonElement element : array) {
+            if (!element.isJsonObject()) {
+                throw new BadRequest("每一組要是物件");
+            }
+            final JsonObject o = element.getAsJsonObject();
+            list.add(new Variant(nodeSet(o, "add", tree), nodeSet(o, "remove", tree)));
+        }
+        return list;
+    }
+
+    private static Set<String> nodeSet(final JsonObject o, final String key, final PassiveTree tree) {
+        final Set<String> out = new LinkedHashSet<>();
+        for (final String id : strings(o, key, MAX_VARIANT_NODES)) {
+            final tw.exilecore.passive.PassiveNode node = tree.node(id);
+            if (node != null && !node.isStart()) {
+                out.add(node.id());
+            }
+        }
+        return out;
+    }
+
+    /** 照一組配點改角色（純函式）：退掉的屬性點選擇、退掉的孔位裡的珠寶一起拿掉；多配的屬性點照職業主屬性（跟網頁、遊戲一樣）。 */
+    static Build withVariant(final Build base, final Variant variant) {
+        final Set<String> passives = new LinkedHashSet<>(base.passives());
+        passives.removeAll(variant.remove());
+        passives.addAll(variant.add());
+        final Map<String, String> progress = new LinkedHashMap<>(base.progress());
+        final Map<String, ItemData> jewels = new LinkedHashMap<>(base.jewels());
+        for (final String id : variant.remove()) {
+            if (!variant.add().contains(id)) {
+                progress.remove("attr." + id);
+                jewels.remove(id);
+            }
+        }
+        return new Build(base.characterClass(), base.level(), passives, progress, base.gear(), jewels, base.skills(), base.extra(), null, null,
+                base.enemy());
+    }
+
+    /**
+     * 要比較的數字（純函式）：LIGHT_KEYS 的，加上 ehp（有效生命池，{@link #ehpJson} 的 value；打不死、沒算的不放）。
+     * 2026-11-02 照站長（PoB2 CalcDefence 的 TotalEHP）；這次之前 ehp 是五種傷害「最多吃得下一下」的平均（免疫、無限大的不算）。
+     */
+    static JsonObject lightNumbers(final Map<String, Double> numbers, final Double ehp) {
+        final JsonObject o = new JsonObject();
+        for (final String key : LIGHT_KEYS) {
+            final Double v = numbers.get(key);
+            if (v != null && Double.isFinite(v)) {
+                o.addProperty(key, Math.round(v * 100) / 100.0);
+            }
+        }
+        if (ehp != null && Double.isFinite(ehp) && ehp >= 0) {
+            o.addProperty("ehp", Math.round(ehp));
+        }
+        return o;
+    }
+
+    // ---- EHP（2026-11-02 照站長，PoB2 CalcDefence 的 Effective Hit Pool、Maximum Hit Taken、Number of Hits）----
+
+    /** JSON 的數字：無限大寫 -2、免疫（NaN）寫 -1（跟 numbers 的 maxhit.* 一樣）。 */
+    static double jsonNumber(final double v, final int digits) {
+        if (Double.isNaN(v)) {
+            return -1;
+        }
+        if (Double.isInfinite(v)) {
+            return -2;
+        }
+        final double scale = Math.pow(10, digits);
+        return Math.round(v * scale) / scale;
+    }
+
+    /**
+     * 照設定做出敵人（純函式）：等級（{@link EffectiveHitPool#enemyLevel}）、一下的平均傷害（monsters.yml 的傷害表，跟 PoB2 的 monsterDamageTable 同一份）、
+     * 命中（monsters.yml 的命中表）。
+     */
+    static EffectiveHitPool.Enemy enemy(final EnemySettings settings, final int characterLevel, final tw.exilecore.monster.MonsterConfig monsters,
+                                        final int t16Level) {
+        final int level = enemyLevelOf(settings, characterLevel, t16Level);
+        final double[] range = monsters.damageAt(level);
+        return EffectiveHitPool.pob2Enemy(settings.tier(), (range[0] + range[1]) / 2, monsters.accuracyAt(level), settings.mix());
+    }
+
+    static int enemyLevelOf(final EnemySettings settings, final int characterLevel, final int t16Level) {
+        return EffectiveHitPool.enemyLevel(settings.tier(), settings.level(), characterLevel, t16Level, ENEMY_MAX_LEVEL);
+    }
+
+    /** 敵人等級最多幾級（monsters.yml 的表寫到 100 級）。 */
+    static final int ENEMY_MAX_LEVEL = 100;
+
+    /**
+     * 回傳的 ehp（純函式）：
+     * <pre>
+     * { "value": EHP, "hits": 平均幾下死, "damagingHits": 打中幾下死, "hitChance": 被打中的機率, "damageChance": 打中的平均受到幾成,
+     *   "critEffect": 敵人的暴擊期望, "maxhit": { "physical"… }, "taken": { 一下減免後每種受到多少 },
+     *   "enemy": { "level", "tier", "tierName", "penetration", "accuracy", "total": 一下的原始傷害, "damage": { "physical"… } } }
+     * </pre>
+     * 打不死寫 -2、免疫寫 -1。
+     */
+    static JsonObject ehpJson(final StatSheet sheet, final EffectiveHitPool.Pools pools, final EffectiveHitPool.Enemy enemy,
+                              final EnemySettings settings, final int enemyLevel) {
+        final EffectiveHitPool.Result r = EffectiveHitPool.compute(sheet, pools, enemy);
+        final JsonObject o = new JsonObject();
+        o.addProperty("value", jsonNumber(r.ehp(), 0));
+        o.addProperty("hits", jsonNumber(r.hits(), 2));
+        o.addProperty("damagingHits", jsonNumber(r.damagingHits(), 2));
+        o.addProperty("hitChance", jsonNumber(r.hitChance(), 4));
+        o.addProperty("damageChance", jsonNumber(r.damageChance(), 4));
+        o.addProperty("critEffect", jsonNumber(r.critEffect(), 4));
+        final JsonObject maxHit = new JsonObject();
+        final JsonObject taken = new JsonObject();
+        final JsonObject damage = new JsonObject();
+        for (final DamageType type : DamageType.values()) {
+            final String key = type.name().toLowerCase(java.util.Locale.ROOT);
+            maxHit.addProperty(key, jsonNumber(r.maxHit().get(type), 0));
+            taken.addProperty(key, jsonNumber(r.takenPerHit().get(type), 1));
+            damage.addProperty(key, jsonNumber(enemy.damage().get(type), 1));
+        }
+        o.add("maxhit", maxHit);
+        o.add("taken", taken);
+        final JsonObject e = new JsonObject();
+        e.addProperty("level", enemyLevel);
+        e.addProperty("tier", settings.tier().ordinal());
+        e.addProperty("tierName", settings.tier().displayName());
+        e.addProperty("penetration", settings.tier().penetration());
+        e.addProperty("accuracy", Math.round(enemy.accuracy()));
+        e.addProperty("total", jsonNumber(enemy.total(), 1));
+        e.add("damage", damage);
+        o.add("enemy", e);
+        return o;
+    }
+
+    /** 只要 EHP 的數字（批次用：不算每一種的最多吃得下一下）；伺服器沒有怪物設定時 null。 */
+    private Double ehpValue(final Build build, final StatSheet sheet) {
+        if (plugin.monsters() == null) {
+            return null;
+        }
+        final int t16 = tw.exilecore.map.MapStats.tiers().level(tw.exilecore.map.MapStats.tiers().max());
+        return EffectiveHitPool.compute(sheet, StatsReport.pools(sheet), enemy(build.enemy(), build.level(), plugin.monsters().config(), t16), false).ehp();
+    }
+
+    /** 這個角色的 ehp（伺服器沒有怪物設定時 null）。 */
+    private JsonObject ehp(final Build build, final StatSheet sheet) {
+        if (plugin.monsters() == null) {
+            return null;
+        }
+        final int t16 = tw.exilecore.map.MapStats.tiers().level(tw.exilecore.map.MapStats.tiers().max());
+        final EffectiveHitPool.Enemy enemy = enemy(build.enemy(), build.level(), plugin.monsters().config(), t16);
+        return ehpJson(sheet, StatsReport.pools(sheet), enemy, build.enemy(), enemyLevelOf(build.enemy(), build.level(), t16));
+    }
+
+    /** 算一組：數字（n）與每個技能的每秒傷害（s：位置 p、代號、名稱、每秒傷害 d）。 */
+    private JsonObject light(final Build build, final boolean withSkills) {
+        final Result result = evaluate(build, build.skills());
+        final JsonObject o = new JsonObject();
+        // plugin 給 null：不算護甲擋幾 %、閃避率（要怪物等級的估計，比較慢；差異只看護甲、閃避值）
+        o.add("n", lightNumbers(StatsReport.numbers(null, result.sheet(), build.level()), ehpValue(build, result.sheet())));
+        final JsonArray rows = new JsonArray();
+        final SkillService skills = plugin.skills();
+        if (withSkills && skills != null) {
+            for (final SkillService.DpsRow row : skills.skillDps(result.state(), result.sheet(), auraView(result))) {
+                final JsonObject r = new JsonObject();
+                r.addProperty("p", row.position());
+                r.addProperty("id", row.skillId());
+                r.addProperty("name", row.name());
+                r.addProperty("d", row.dps());
+                rows.add(r);
+            }
+        }
+        o.add("s", rows);
+        return o;
+    }
+
+    /** 每個 IP：平常每秒算 40 組，一下子最多 160 組（熱圖一次約幾百組，幾秒內算完；滑到節點一次 1–2 組）。 */
+    private final Limiter batchLimiter = new Limiter(40, 160);
+    /** 批次的同時最多幾個（跟 /tree/calc 的分開，熱圖不會把一般計算擠掉）。 */
+    private final java.util.concurrent.Semaphore batchRunning = new java.util.concurrent.Semaphore(2);
+
+    /**
+     * POST /tree/calc-batch 的處理：角色（同 /tree/calc）＋ "base": true（也算原本的）＋ "dps": false（不算技能的每秒傷害；"skills" 是技能面板）
+     * ＋ "variants": [{ "add": [節點…], "remove": [節點…] } × 最多 48]。
+     * 回傳 { base?, results: [{ n, s }…], done: 算完幾組, ms }；超過時間就只算前面 done 組。
+     */
+    WebServer.Response handleBatch(final WebServer.Request request) {
+        final PassiveTree tree = plugin.passives() == null ? null : plugin.passives().tree();
+        final Build build;
+        final List<Variant> variants;
+        final boolean withBase;
+        final boolean withSkills;
+        try {
+            build = parse(request.text(), tree, plugin.skills() == null ? null : plugin.skills().config());
+            final JsonObject json = JsonParser.parseString(request.text()).getAsJsonObject();
+            variants = parseVariants(json, tree);
+            withBase = json.has("base") && json.get("base").isJsonPrimitive() && json.get("base").getAsBoolean();
+            withSkills = !json.has("dps") || !json.get("dps").isJsonPrimitive() || json.get("dps").getAsBoolean();
+        } catch (final BadRequest e) {
+            return WebServer.Response.text(400, e.getMessage());
+        } catch (final RuntimeException e) {
+            return WebServer.Response.text(400, "讀不懂送來的資料");
+        }
+        final int cost = variants.size() + (withBase ? 1 : 0);
+        if (cost == 0) {
+            return WebServer.Response.text(400, "沒有要算的");
+        }
+        final String ip = clientIp.apply(request);
+        final long now = System.currentTimeMillis();
+        if (!batchLimiter.allow(ip, now, cost)) {
+            return new WebServer.Response(429, "text/plain; charset=utf-8", "算太快了，等一下再試".getBytes(StandardCharsets.UTF_8),
+                    Map.of("Retry-After", String.valueOf(batchLimiter.retryAfter(ip, now, cost)), "Cache-Control", "no-store"));
+        }
+        boolean acquired = false;
+        try {
+            acquired = batchRunning.tryAcquire(3, java.util.concurrent.TimeUnit.SECONDS);
+            if (!acquired) {
+                return new WebServer.Response(503, "text/plain; charset=utf-8", "計算的人太多，等一下再試".getBytes(StandardCharsets.UTF_8),
+                        Map.of("Retry-After", "2", "Cache-Control", "no-store"));
+            }
+            final long started = System.nanoTime();
+            final JsonObject root = new JsonObject();
+            if (withBase) {
+                root.add("base", light(build, withSkills));
+            }
+            final JsonArray results = new JsonArray();
+            for (final Variant variant : variants) {
+                if (results.size() > 0 && (System.nanoTime() - started) / 1_000_000 > BATCH_BUDGET_MS) {
+                    break; // 算太久：先回傳這些
+                }
+                results.add(light(withVariant(build, variant), withSkills));
+            }
+            root.add("results", results);
+            root.addProperty("done", results.size());
+            root.addProperty("ms", Math.round((System.nanoTime() - started) / 100_000.0) / 10.0);
+            return new WebServer.Response(200, "application/json; charset=utf-8", GSON.toJson(root).getBytes(StandardCharsets.UTF_8),
+                    Map.of("Cache-Control", "no-store"));
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return WebServer.Response.text(503, "伺服器忙碌中");
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().warn("網頁計算器（批次）算不出來：{}", e.toString());
+            return WebServer.Response.text(500, "算不出來（" + e.getClass().getSimpleName() + "）");
+        } finally {
+            if (acquired) {
+                batchRunning.release();
             }
         }
     }

@@ -47,6 +47,10 @@ import java.util.random.RandomGenerator;
  *   <li>竊瓶的：附近玩家的藥劑一直被吸走充能。抑生的：附近玩家生命回復不能超過 50%。</li>
  *   <li>幻雷的：被打中時有機率放出追人的閃電幻影。噬魔的：周圍一圈吸魔力、閃電傷害（中間安全）。</li>
  *   <li>近身的：只有近身的攻擊打得到牠。噬魂的：附近的怪物死掉時吞魂（招式更快、受到的傷害更少）。</li>
+ *   <li>2026-11-02 照 PoE2 0.5：狂躁的（每 10 秒狂暴 5 秒）、庇護光環的（每 12 秒讓附近的友軍 5 秒內不會受傷）、
+ *       殉焰／殉霜／殉雷的（死掉時爆炸）、焦土／凍土／雷土的（腳下留地面、死掉時一大塊）、晶爆的（被打長晶體、死掉時炸開）、
+ *       爆花的（追人的光球）、爆岩的（走近就炸的岩塊）、替身的（受到的傷害先由小怪扛）、復甦的（叫起來的小怪更強）、
+ *       腐化詞綴：蝕朽的（打牠的擊中有撲殺，CombatListener）、蝕巨的（變大）、蝕生的（死掉後爬起來一次）。</li>
  * </ul>
  * 每 2 tick 跑一次（幻影、屍爆、抑生要準），其他每 0.5／1 秒。
  */
@@ -65,6 +69,100 @@ public final class MonsterMechanics implements Listener {
     static final double MIRAGE_SPEED = 0.3;
     static final double SIPHON_INNER = 3;
     static final double SIPHON_OUTER = 7;
+    // 2026-11-02 照 PoE2 0.5（poe2db 有寫的照寫，沒寫的推估，寫在 monsters.yml）
+    /** Periodically Enrages：每 10 秒狂暴 5 秒。 */
+    static final long ENRAGE_EVERY = 200;
+    static final long ENRAGE_FOR = 100;
+    /** Periodic Invulnerability Aura：每 12 秒、5 秒。 */
+    static final long INVULN_EVERY = 240;
+    static final long INVULN_FOR = 100;
+    /**
+     * 2026-11-02 照 PoE2 的怪物技能資料（repoe-fork/poe2 skills.json）：怪物技能寫的是 1 級的基礎傷害，跟著怪物等級長，
+     * 所以「是這隻普通一下的幾倍」= 技能的平均傷害 ÷ 1 級怪物普通一下的平均（default_monster_stats.json 的 1 級 physical_damage 9.16）。
+     */
+    static final double POE2_LEVEL1_HIT = 9.16;
+
+    /** 1 級的平均傷害 min～max 換成「普通一下的幾倍」。 */
+    static double effectiveness(final double min, final double max) {
+        return (min + max) / 2 / POE2_LEVEL1_HIT;
+    }
+
+    /**
+     * 死掉時爆炸：2026-11-02 照 PoE2 GSMonsterModsOnDeathFire／Cold／LightningExplosion（火、冰 28–42、閃電 17–52 → 3.82／3.82／3.77 倍）；
+     * 這次之前推估 2 倍。1 秒後、3 格還是推估（範圍、延遲在技能的幾何資料裡，RePoE、PoB2、poe2db 都查不到）。
+     */
+    static final long DEATH_BLAST_FUSE = 20;
+    static final double DEATH_BLAST_RADIUS = 3;
+
+    static double deathBlastDamage(final DamageType type) {
+        return type == DamageType.LIGHTNING ? effectiveness(17, 52) : effectiveness(28, 42);
+    }
+
+    /**
+     * 焦土／凍土／雷土的：2026-11-02 照 PoE2 GSMonsterModBurning／Chill／ShockedGroundNova(OnDeath)：放的時候先一圈新星
+     * （火 13–20、冰 12–18、雷 8–25 → 1.80／1.64／1.80 倍），地面留 6 秒（base_skill_effect_duration 6000）、感電地面 30%
+     * （shocked_ground_base_magnitude_override）；活著時跟死掉時是同一招。這次之前沒有新星、死掉 6 秒／活著 3 秒、感電 20%。
+     * 範圍 2.5 格、活著時每 5 秒一次還是推估（查不到）。
+     */
+    static final double DEATH_GROUND_RADIUS = 2.5;
+    static final long DEATH_GROUND_FOR = 120;
+    static final long GROUND_EVERY = 100;
+    static final double GROUND_RADIUS = DEATH_GROUND_RADIUS;
+    static final long GROUND_FOR = DEATH_GROUND_FOR;
+    /** 新星的前搖（看得到紅圈再炸；推估）。 */
+    static final long GROUND_NOVA_FUSE = 12;
+
+    static double groundNovaDamage(final AilmentType type) {
+        return switch (type) {
+            case IGNITE -> effectiveness(13, 20);
+            case CHILL -> effectiveness(12, 18);
+            default -> effectiveness(8, 25);
+        };
+    }
+
+    static DamageType groundType(final AilmentType type) {
+        return switch (type) {
+            case IGNITE -> DamageType.FIRE;
+            case CHILL -> DamageType.COLD;
+            default -> DamageType.LIGHTNING;
+        };
+    }
+
+    /**
+     * 晶爆的：被打中每 1.5 秒最多長一顆、最多 6 顆（推估）；死掉時各炸 2.5 格（推估）。
+     * 2026-11-02 照 PoE2 MonsterLivingCrystal：混沌 19–28（2.57 倍）、施放 1.2 秒（cast_time 1200）；這次之前推估 1 倍、1 秒。
+     */
+    static final long CRYSTAL_EVERY = 30;
+    static final int CRYSTAL_MAX = 6;
+    static final double CRYSTAL_RADIUS = 2.5;
+    static final long CRYSTAL_FUSE = 24;
+    static final double CRYSTAL_DAMAGE = effectiveness(19, 28);
+    /**
+     * 爆岩的：2026-11-02 照 PoE2 GSMonsterModVolatileRockExplode（強化的 ...Explode2 一樣）：火焰 19–28（2.57 倍）；
+     * 這次之前推估 1.2 倍、強化的 1.8 倍。強化的一次兩塊、每 10 秒、引信與範圍還是推估。
+     */
+    static final double CRAG_DAMAGE = effectiveness(19, 28);
+    /**
+     * 爆花的：每 8 秒長一朵（強化的兩朵），1.5 秒後放出光球追人（每 tick 0.2 格，比跑步慢），6 秒或碰到就炸 2.5 格（推估）。
+     * 傷害 2026-11-02 照 PoE2 MonsterModPlantVolatile／MonsterModPlantVolatile2：混沌 12–18／15–22（1.64／2.02 倍，monsters.yml 寫 164／202）；
+     * 這次之前推估 1 倍／1.5 倍。
+     */
+    static final long PLANT_EVERY = 160;
+    static final long PLANT_GROW = 30;
+    static final double ORB_SPEED = 0.2;
+    static final long ORB_LIFE = 120;
+    /** 爆岩的：每 10 秒在目標腳邊落一塊（強化的兩塊），1 秒後有人走進 2 格就 0.6 秒後炸 2.5 格、1.2 倍火焰，8 秒沒人來也會炸（推估）。 */
+    static final long CRAG_EVERY = 200;
+    static final long CRAG_ARM = 20;
+    static final long CRAG_FUSE = 12;
+    static final long CRAG_LIFE = 160;
+    static final double CRAG_TRIGGER = 2;
+    /** 替身的：10 格內的小怪扛傷害。 */
+    static final double GUARD_RADIUS = 10;
+    /** 蝕生的：死掉 2 秒後爬起來。 */
+    static final long RAISE_DELAY = 40;
+    /** 蝕巨的：體型倍率。2026-11-02 照 PoE2 的 Gigantic（keywords.json：20% increased size；生命、傷害各更多 20% 寫在 monsters.yml）；這次之前推估 1.5。 */
+    static final double GIGANTIC_SCALE = 1.2;
 
     private final ExileCore plugin;
     private final MonsterService monsters;
@@ -88,6 +186,18 @@ public final class MonsterMechanics implements Listener {
     private final Map<UUID, Double> lastMana = new HashMap<>();
     private final Map<UUID, Long> farWord = new HashMap<>();
     private final Map<String, SkillProfile> profiles = new HashMap<>();
+    /** 2026-11-02：狂躁的：狂暴到哪個 tick。 */
+    private final Map<UUID, Long> enraged = new HashMap<>();
+    /** 2026-11-02：庇護光環的：受庇護的怪物 → {光環主人, 到哪個 tick}。 */
+    private final Map<UUID, Protect> protectedBy = new HashMap<>();
+    /** 2026-11-02：晶爆的：長在身邊的晶體。 */
+    private final Map<UUID, List<Location>> crystals = new HashMap<>();
+    /** 2026-11-02：爆花（長出來、還沒放光球的）、光球、爆岩。 */
+    private final List<Plant> plants = new ArrayList<>();
+    private final List<Orb> orbs = new ArrayList<>();
+    private final List<Crag> crags = new ArrayList<>();
+    /** 2026-11-02：死後爆炸用的分身（盔甲架）→ 最晚什麼時候移除。 */
+    private final Map<UUID, Long> ghosts = new HashMap<>();
     private long ticks;
 
     /**
@@ -95,9 +205,9 @@ public final class MonsterMechanics implements Listener {
      */
     record Traits(double regen, double hinder, double bubble, boolean trailFire, boolean trailCold, boolean trailLightning,
                   boolean siphon, double heal, boolean corpse, boolean revive, boolean flaskSiphon, double recoveryCap,
-                  boolean soulEater, boolean pool) {
+                  boolean soulEater, boolean pool, Extra extra) {
 
-        static final Traits NONE = new Traits(0, 0, 0, false, false, false, false, 0, false, false, false, 0, false, false);
+        static final Traits NONE = new Traits(0, 0, 0, false, false, false, false, 0, false, false, false, 0, false, false, Extra.NONE);
 
         static Traits of(final StatSheet sheet) {
             final Set<String> none = Set.of();
@@ -108,11 +218,96 @@ public final class MonsterMechanics implements Listener {
                     sheet.flat(StatKeys.MONSTER_CORPSE_EXPLODE, none) > 0, sheet.flat(StatKeys.MONSTER_REVIVE, none) > 0,
                     sheet.flat(StatKeys.MONSTER_FLASK_SIPHON, none) > 0, sheet.flat(StatKeys.MONSTER_RECOVERY_CAP, none),
                     sheet.flat(StatKeys.MONSTER_SOUL_EATER, none) > 0,
-                    sheet.flat(StatKeys.MONSTER_SHIELD, none) > 0 || sheet.flat(StatKeys.MONSTER_MAGMA, none) > 0);
+                    sheet.flat(StatKeys.MONSTER_SHIELD, none) > 0 || sheet.flat(StatKeys.MONSTER_MAGMA, none) > 0, Extra.of(sheet));
         }
 
         boolean trails() {
             return trailFire || trailCold || trailLightning;
+        }
+    }
+
+    /**
+     * 2026-11-02 照 PoE2 0.5 補的詞綴（分開一個紀錄，Traits 才不會太長）：狂躁、庇護光環的半徑、死掉時爆炸／地面的種類、
+     * 晶爆、爆花與爆岩的強度（100 = 一般）、替身的比例、復甦、蝕生。
+     */
+    record Extra(boolean enrage, double invuln, List<DamageType> deathBlasts, List<AilmentType> grounds, boolean crystals, double plants,
+                 double crag, double guard, boolean reviveEmpowered, boolean raise) {
+
+        static final Extra NONE = new Extra(false, 0, List.of(), List.of(), false, 0, 0, 0, false, false);
+
+        static Extra of(final StatSheet sheet) {
+            final Set<String> none = Set.of();
+            final List<DamageType> blasts = new ArrayList<>(3);
+            if (sheet.flat(StatKeys.MONSTER_DEATH_BLAST_FIRE, none) > 0) {
+                blasts.add(DamageType.FIRE);
+            }
+            if (sheet.flat(StatKeys.MONSTER_DEATH_BLAST_COLD, none) > 0) {
+                blasts.add(DamageType.COLD);
+            }
+            if (sheet.flat(StatKeys.MONSTER_DEATH_BLAST_LIGHTNING, none) > 0) {
+                blasts.add(DamageType.LIGHTNING);
+            }
+            final List<AilmentType> grounds = new ArrayList<>(3);
+            if (sheet.flat(StatKeys.MONSTER_DEATH_GROUND_FIRE, none) > 0) {
+                grounds.add(AilmentType.IGNITE);
+            }
+            if (sheet.flat(StatKeys.MONSTER_DEATH_GROUND_COLD, none) > 0) {
+                grounds.add(AilmentType.CHILL);
+            }
+            if (sheet.flat(StatKeys.MONSTER_DEATH_GROUND_LIGHTNING, none) > 0) {
+                grounds.add(AilmentType.SHOCK);
+            }
+            return new Extra(sheet.flat(StatKeys.MONSTER_PERIODIC_ENRAGE, none) > 0, sheet.flat(StatKeys.MONSTER_INVULNERABILITY_AURA, none),
+                    List.copyOf(blasts), List.copyOf(grounds), sheet.flat(StatKeys.MONSTER_VOLATILE_CRYSTALS, none) > 0,
+                    sheet.flat(StatKeys.MONSTER_VOLATILE_PLANTS, none), sheet.flat(StatKeys.MONSTER_VOLATILE_CRAG, none),
+                    sheet.flat(StatKeys.MONSTER_MINION_SHIELD, none), sheet.flat(StatKeys.MONSTER_REVIVE_EMPOWERED, none) > 0,
+                    sheet.flat(StatKeys.MONSTER_RAISE_AFTER_DEATH, none) > 0);
+        }
+
+        /** 死掉的時候有沒有事要做。 */
+        boolean onDeath() {
+            return !deathBlasts.isEmpty() || !grounds.isEmpty() || crystals || raise;
+        }
+    }
+
+    /** 庇護光環：受庇護到哪個 tick、誰給的（主人死了就沒了）。 */
+    private record Protect(UUID owner, long until) {
+    }
+
+    /** 爆花：長在地上，時間到放出光球。 */
+    private record Plant(UUID source, Location at, long bloom, double power) {
+    }
+
+    /** 爆花放出的光球：追最近的玩家，碰到或時間到就炸。 */
+    private static final class Orb {
+        final UUID source;
+        Location at;
+        final long until;
+        final double power;
+
+        Orb(final UUID source, final Location at, final long until, final double power) {
+            this.source = source;
+            this.at = at;
+            this.until = until;
+            this.power = power;
+        }
+    }
+
+    /** 爆岩：armed 之後有人走近就點燃引信，fuse 到了炸開；until 到了沒人來也炸。 */
+    private static final class Crag {
+        final UUID source;
+        final Location at;
+        final long armed;
+        final long until;
+        final double power;
+        long fuse = -1;
+
+        Crag(final UUID source, final Location at, final long armed, final long until, final double power) {
+            this.source = source;
+            this.at = at;
+            this.armed = armed;
+            this.until = until;
+            this.power = power;
         }
     }
 
@@ -149,6 +344,19 @@ public final class MonsterMechanics implements Listener {
             return null;
         }
         return new double[] {Math.max(0, pool.shield) + Math.max(0, pool.magma), pool.shieldMax + pool.magmaMax};
+    }
+
+    /** 2026-11-02 照站長（模組 1.4 頭上血條）：現在受庇護光環保護（5 秒內不會受傷；給的那隻還活著）。 */
+    public boolean sanctuaryProtected(final java.util.UUID entity) {
+        final Protect protect = protectedBy.get(entity);
+        return protect != null && protect.until() > now() && plugin.getServer().getEntity(protect.owner()) instanceof LivingEntity owner
+                && owner.isValid();
+    }
+
+    /** 2026-11-02（模組 1.4 頭上血條）：狂躁的現在在狂暴（「暴怒的」一直狂暴，看詞綴）。 */
+    public boolean enragedNow(final java.util.UUID entity) {
+        final Long until = enraged.get(entity);
+        return until != null && until > now();
     }
 
     /** 純邏輯：血條上護盾那段的文字（剩下 ÷ 上限，四捨五入到 %；沒有護盾回傳空字串）。 */
@@ -233,7 +441,10 @@ public final class MonsterMechanics implements Listener {
     }
 
     /** 屍爆：標好位置，時間到炸開。 */
-    private record Blast(UUID source, Location at, long fuse, double radius, double damage) {
+    private record Blast(UUID source, Location at, long fuse, double radius, double damage, DamageType type) {
+        Blast(final UUID source, final Location at, final long fuse, final double radius, final double damage) {
+            this(source, at, fuse, radius, damage, DamageType.PHYSICAL);
+        }
     }
 
     MonsterMechanics(final ExileCore plugin, final MonsterService monsters, final MonsterEffects effects) {
@@ -252,6 +463,15 @@ public final class MonsterMechanics implements Listener {
                 continue;
             }
             for (final AffixMod stat : mod.mods()) {
+                if (StatKeys.MONSTER_GIGANTIC.equals(stat.stat()) && !data.boss()) {
+                    // 2026-11-02 照 PoE2 腐化詞綴 Is Gigantic：體型變大（Boss 的體型由地圖設定，不改）
+                    final AttributeInstance size = entity.getAttribute(Attribute.SCALE);
+                    if (size != null && size.getBaseValue() < GIGANTIC_SCALE) {
+                        size.setBaseValue(GIGANTIC_SCALE);
+                    }
+                }
+            }
+            for (final AffixMod stat : mod.mods()) {
                 if (stat.stat().startsWith(StatKeys.MONSTER_PREFIX)) {
                     tracked.put(entity.getUniqueId(), new Tracked(entity));
                     return;
@@ -268,6 +488,9 @@ public final class MonsterMechanics implements Listener {
         lastTrail.remove(uuid);
         nextAction.remove(uuid);
         mirageReady.remove(uuid);
+        enraged.remove(uuid);
+        protectedBy.remove(uuid);
+        crystals.remove(uuid);
     }
 
     /** 噬魂的：吞了幾層，招式就快幾 %。 */
@@ -276,6 +499,22 @@ public final class MonsterMechanics implements Listener {
         if (stacks != null && stacks > 0) {
             sheet.add(Modifier.increased(StatKeys.SKILL_COOLDOWN, -0.01 * stacks, "吞魂"));
         }
+        final Long until = enraged.get(entity.getUniqueId());
+        if (until != null && until > now()) {
+            enrageModifiers(sheet, "狂暴");
+        }
+    }
+
+    /**
+     * 2026-11-02 照 PoE2 Periodically Enrages（MonsterPeriodicEnrage1）的狂暴：傷害增加 30%、技能與移動速度 +25%、受到的傷害少 33%
+     * （技能速度：冷卻 ÷1.25、攻擊速度 +25%）。跟 monsters.yml 的「暴怒的」同一組數值。
+     */
+    static void enrageModifiers(final StatSheet sheet, final String source) {
+        sheet.add(Modifier.increased(StatKeys.DAMAGE, 0.30, source));
+        sheet.add(Modifier.increased(StatKeys.MOVEMENT_SPEED, 0.25, source));
+        sheet.add(Modifier.increased(StatKeys.SKILL_COOLDOWN, -0.20, source));
+        sheet.add(Modifier.increased(StatKeys.ATTACK_SPEED, 0.25, source));
+        sheet.add(Modifier.flat(StatKeys.DAMAGE_TAKEN, -33, source));
     }
 
     private long now() {
@@ -309,6 +548,19 @@ public final class MonsterMechanics implements Listener {
         }
         final StatSheet sheet = monsters.sheet(defender, data);
         final long now = now();
+        // 2026-11-02 照 PoE2 Periodic Invulnerability Aura：受庇護的這段時間不會受傷（給的那隻死了就沒了）
+        final Protect protect = protectedBy.get(defender.getUniqueId());
+        if (protect != null) {
+            if (protect.until() > now && plugin.getServer().getEntity(protect.owner()) instanceof LivingEntity owner && owner.isValid()) {
+                if (credit != null && farWord.getOrDefault(credit.getUniqueId(), 0L) <= now && plugin.combat() != null
+                        && plugin.combat().numbers() != null) {
+                    plugin.combat().numbers().word(credit, defender, "庇護");
+                    farWord.put(credit.getUniqueId(), now + 20);
+                }
+                return 0;
+            }
+            protectedBy.remove(defender.getUniqueId());
+        }
         final double proximal = sheet.flat(StatKeys.MONSTER_PROXIMAL, Set.of());
         if (proximal > 0 && attacker != null && attacker.getWorld().equals(defender.getWorld())
                 && attacker.getLocation().distanceSquared(defender.getLocation()) > proximal * proximal) {
@@ -323,6 +575,15 @@ public final class MonsterMechanics implements Listener {
         final Integer stacks = souls.get(defender.getUniqueId());
         if (stacks != null && stacks > 0) {
             rest *= Math.max(0, 1 - 0.01 * stacks);
+        }
+        // 2026-11-02 照 PoE2 Damage Taken From Minions First（50%）：先由附近的小怪扛
+        final double guardShare = sheet.flat(StatKeys.MONSTER_MINION_SHIELD, Set.of());
+        if (guardShare > 0 && rest > 0) {
+            rest -= guard(defender, credit, rest * Math.min(100, guardShare) / 100.0, after);
+        }
+        // 2026-11-02 照 PoE2 Volatile Crystals：被打中時長出晶體
+        if (hit && sheet.flat(StatKeys.MONSTER_VOLATILE_CRYSTALS, Set.of()) > 0) {
+            after.accept(() -> growCrystal(defender));
         }
         final Pool pool = pool(defender, sheet);
         if (pool != null) {
@@ -349,7 +610,7 @@ public final class MonsterMechanics implements Listener {
                     if (shieldTaken > 0) {
                         pool.shield = Math.max(0, pool.shield - shieldTaken);
                         if (defender.isValid()) {
-                            defender.getWorld().spawnParticle(Particle.ENCHANTED_HIT, defender.getLocation().add(0, defender.getHeight() * 0.6, 0),
+                            tw.exilecore.skill.Fx.spawn(defender.getWorld(), Particle.ENCHANTED_HIT, defender.getLocation().add(0, defender.getHeight() * 0.6, 0),
                                     4, 0.3, 0.3, 0.3, 0.05);
                         }
                     }
@@ -369,6 +630,79 @@ public final class MonsterMechanics implements Listener {
             });
         }
         return rest;
+    }
+
+    /**
+     * 替身的：找 10 格內最近的小怪（普通、魔法怪，不是 Boss），讓牠扛 want（我們的單位，最多扛到牠的生命）；回傳扛了多少。
+     * 真的扣小怪的血等事件確定沒被取消（after）；打的人照扛的量算傷害（掉落分份）。
+     */
+    private double guard(final LivingEntity defender, final Player credit, final double want, final java.util.function.Consumer<Runnable> after) {
+        LivingEntity best = null;
+        double bestDistance = Double.MAX_VALUE;
+        MonsterData bestData = null;
+        for (final Entity near : defender.getNearbyEntities(GUARD_RADIUS, GUARD_RADIUS / 2, GUARD_RADIUS)) {
+            if (!(near instanceof LivingEntity minion) || near instanceof Player || !minion.isValid() || minion.isDead() || !monsters.isMonster(minion)) {
+                continue;
+            }
+            final MonsterData minionData = monsters.data(minion).orElse(null);
+            if (minionData == null || minionData.boss() || minionData.rarity() == MonsterRarity.RARE || minionData.rarity() == MonsterRarity.UNIQUE) {
+                continue;
+            }
+            final double distance = near.getLocation().distanceSquared(defender.getLocation());
+            if (distance < bestDistance) {
+                best = minion;
+                bestDistance = distance;
+                bestData = minionData;
+            }
+        }
+        if (best == null) {
+            return 0;
+        }
+        final double scale = Math.max(1e-9, monsters.healthScale(best, bestData));
+        final double taken = Math.max(0, Math.min(want, best.getHealth() / scale));
+        if (taken <= 0) {
+            return 0;
+        }
+        final LivingEntity minion = best;
+        after.accept(() -> {
+            if (!minion.isValid() || minion.isDead()) {
+                return;
+            }
+            if (credit != null) {
+                monsters.ledger().record(minion.getUniqueId(), credit.getUniqueId(), taken);
+            }
+            final double left = minion.getHealth() - taken * scale;
+            minion.setHealth(left <= 0.01 ? 0 : left);
+            final Location from = defender.getLocation().add(0, defender.getHeight() * 0.6, 0);
+            final Location to = minion.getLocation().add(0, minion.getHeight() * 0.6, 0);
+            for (int i = 1; i <= 4; i++) {
+                tw.exilecore.skill.Fx.spawn(from.getWorld(), Particle.DUST, from.clone().add(to.clone().subtract(from).toVector().multiply(i / 5.0)), 1,
+                        0, 0, 0, 0, GUARD_DUST);
+            }
+        });
+        return taken;
+    }
+
+    private static final Particle.DustOptions GUARD_DUST = new Particle.DustOptions(Color.fromRGB(0xb0b0ff), 0.9f);
+    private static final Particle.DustOptions CRYSTAL_DUST = new Particle.DustOptions(Color.fromRGB(0x9b30ff), 1.3f);
+    private static final Particle.DustOptions PLANT_DUST = new Particle.DustOptions(Color.fromRGB(0x5fbf3f), 1.3f);
+    private static final Particle.DustOptions CRAG_DUST = new Particle.DustOptions(Color.fromRGB(0xff7a1a), 1.4f);
+
+    /** 晶爆的：身邊長一顆晶體（每 1.5 秒最多一顆、最多 6 顆，落在牠身邊 1.5～3 格）。 */
+    private void growCrystal(final LivingEntity defender) {
+        if (!defender.isValid() || defender.isDead() || !ready(defender, "crystal", now(), CRYSTAL_EVERY)) {
+            return;
+        }
+        final List<Location> list = crystals.computeIfAbsent(defender.getUniqueId(), key -> new ArrayList<>(CRYSTAL_MAX));
+        if (list.size() >= CRYSTAL_MAX) {
+            return;
+        }
+        final double angle = random.nextDouble() * Math.PI * 2;
+        final double distance = 1.5 + random.nextDouble() * 1.5;
+        final Location at = defender.getLocation().add(Math.cos(angle) * distance, 0.1, Math.sin(angle) * distance);
+        list.add(at);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.DUST, at.clone().add(0, 0.5, 0), 8, 0.15, 0.4, 0.15, 0, CRYSTAL_DUST);
+        at.getWorld().playSound(at, Sound.BLOCK_AMETHYST_CLUSTER_PLACE, 0.7f, 1.2f);
     }
 
     /** 這隻的護盾、熔岩護盾（沒有回傳 null）；第一次用時照最大生命建好。 */
@@ -394,8 +728,8 @@ public final class MonsterMechanics implements Listener {
 
     private void magmaBurst(final LivingEntity source) {
         final Location at = source.getLocation();
-        at.getWorld().spawnParticle(Particle.LAVA, at.clone().add(0, 0.5, 0), 30, MAGMA_RADIUS / 2, 0.5, MAGMA_RADIUS / 2, 0.1);
-        at.getWorld().spawnParticle(Particle.FLAME, at.clone().add(0, 0.5, 0), 40, MAGMA_RADIUS / 2, 0.3, MAGMA_RADIUS / 2, 0.05);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.LAVA, at.clone().add(0, 0.5, 0), 30, MAGMA_RADIUS / 2, 0.5, MAGMA_RADIUS / 2, 0.1);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.FLAME, at.clone().add(0, 0.5, 0), 40, MAGMA_RADIUS / 2, 0.3, MAGMA_RADIUS / 2, 0.05);
         at.getWorld().playSound(at, Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 1.2f);
         for (final Player player : at.getNearbyPlayers(MAGMA_RADIUS)) {
             hit(source, player, "magma_burst", DamageType.FIRE, 2.0);
@@ -408,11 +742,20 @@ public final class MonsterMechanics implements Listener {
     public void onDeath(final EntityDeathEvent event) {
         final LivingEntity dead = event.getEntity();
         final UUID id = dead.getUniqueId();
+        final boolean wasTracked = tracked.containsKey(id);
+        final List<Location> grown = crystals.get(id);
         forget(id);
         if (dead instanceof Player || !monsters.isMonster(dead)) {
             return;
         }
         final long tick = now();
+        if (wasTracked) {
+            try {
+                deathEffects(dead, grown, tick);
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().warn("怪物詞綴的死亡效果出錯（{}）", id, e);
+            }
+        }
         for (final Tracked entry : tracked.values()) {
             final LivingEntity eater = entry.entity;
             if (!entry.traits.soulEater() && entry.readAt != Long.MIN_VALUE) {
@@ -432,8 +775,107 @@ public final class MonsterMechanics implements Listener {
             } else {
                 soulDirty.add(eater.getUniqueId()); // 招式速度跟著變（下一次 tick 一起重算）
             }
-            eater.getWorld().spawnParticle(Particle.SOUL, dead.getLocation().add(0, 0.8, 0), 6, 0.2, 0.3, 0.2, 0.03);
+            tw.exilecore.skill.Fx.spawn(eater.getWorld(), Particle.SOUL, dead.getLocation().add(0, 0.8, 0), 6, 0.2, 0.3, 0.2, 0.03);
         }
+    }
+
+    /**
+     * 2026-11-02 照 PoE2：死掉時的詞綴效果——殉焰／殉霜／殉雷的（畫圈 1 秒後炸）、焦土／凍土／雷土的（一大塊地面）、
+     * 晶爆的（長出來的晶體全部炸開）、蝕生的（2 秒後原地爬起來一次）。爆炸用死掉那隻的分身出手（MonsterService.spawnGhost）。
+     * 這時怪物資料的快取已經被 MonsterListener 清掉，這裡讀完再清一次。
+     */
+    private void deathEffects(final LivingEntity dead, final List<Location> grown, final long now) {
+        final MonsterData data = monsters.data(dead).orElse(null);
+        if (data == null) {
+            return;
+        }
+        final StatSheet sheet = monsters.sheet(dead, data);
+        final Extra extra = Extra.of(sheet);
+        final double hit = averageHit(sheet);
+        monsters.forget(dead.getUniqueId());
+        if (!extra.onDeath()) {
+            return;
+        }
+        final Location at = dead.getLocation();
+        final UUID world = at.getWorld().getUID();
+        for (final AilmentType type : extra.grounds()) {
+            patches.add(new Patch(world, at.getX(), at.getY(), at.getZ(), type, groundValue(type, hit), now + DEATH_GROUND_FOR,
+                    DEATH_GROUND_RADIUS, null));
+        }
+        final boolean crystalsLeft = extra.crystals() && grown != null && !grown.isEmpty();
+        if (!extra.deathBlasts().isEmpty() || crystalsLeft || !extra.grounds().isEmpty()) {
+            final LivingEntity ghost = monsters.spawnGhost(dead);
+            if (ghost != null) {
+                ghosts.put(ghost.getUniqueId(), now + CRYSTAL_FUSE + 60);
+                for (final DamageType type : extra.deathBlasts()) {
+                    blasts.add(new Blast(ghost.getUniqueId(), at.clone(), now + DEATH_BLAST_FUSE, DEATH_BLAST_RADIUS, deathBlastDamage(type), type));
+                }
+                for (final AilmentType type : extra.grounds()) { // 2026-11-02 照 PoE2：地面先一圈新星
+                    blasts.add(new Blast(ghost.getUniqueId(), at.clone(), now + GROUND_NOVA_FUSE, DEATH_GROUND_RADIUS, groundNovaDamage(type),
+                            groundType(type)));
+                }
+                if (crystalsLeft) {
+                    int i = 0;
+                    for (final Location crystal : grown) {
+                        blasts.add(new Blast(ghost.getUniqueId(), crystal, now + CRYSTAL_FUSE + 3L * i++, CRYSTAL_RADIUS, CRYSTAL_DAMAGE,
+                                DamageType.CHAOS));
+                    }
+                }
+            }
+        }
+        if (extra.raise() && !data.boss() && !monsters.isSummoned(dead)) {
+            final String type = dead.getType().name();
+            final List<String> mods = new ArrayList<>(data.mods());
+            mods.removeIf(mod -> monsters.config().mod(mod) != null && monsters.config().mod(mod).mods().stream()
+                    .anyMatch(stat -> StatKeys.MONSTER_RAISE_AFTER_DEATH.equals(stat.stat())));
+            final MonsterData risen = new MonsterData(data.level(), data.rarity(), List.copyOf(mods), "復生的" + data.name(),
+                    data.lifeMultiplier(), data.damageMultiplier(), false);
+            final LivingEntity source = dead;
+            tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SOUL, at.clone().add(0, 0.5, 0), 12, 0.4, 0.3, 0.4, 0.02);
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> raise(source, type, at, risen), RAISE_DELAY);
+        }
+    }
+
+    /** 蝕生的：原地爬起來（標記成召喚的：不掉東西、不給經驗；帶著原本那隻的地圖標記）。 */
+    private void raise(final LivingEntity dead, final String typeName, final Location at, final MonsterData risen) {
+        if (at.getWorld() == null || !at.isChunkLoaded()) {
+            return;
+        }
+        final org.bukkit.entity.EntityType type;
+        try {
+            type = org.bukkit.entity.EntityType.valueOf(typeName);
+        } catch (final IllegalArgumentException e) {
+            return;
+        }
+        if (type.getEntityClass() == null || !LivingEntity.class.isAssignableFrom(type.getEntityClass())) {
+            return;
+        }
+        final Entity spawned = at.getWorld().spawnEntity(at, type, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.CUSTOM, created -> {
+            monsters.inheritTags(dead, created);
+            if (created instanceof LivingEntity living) {
+                monsters.markSummoned(living);
+            }
+        });
+        if (!(spawned instanceof LivingEntity living) || !spawned.isValid()) {
+            spawned.remove();
+            return;
+        }
+        monsters.decorateData(living, risen);
+        living.setPersistent(false);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SOUL, at.clone().add(0, 0.8, 0), 16, 0.4, 0.6, 0.4, 0.03);
+        at.getWorld().playSound(at, Sound.ENTITY_ZOMBIE_VILLAGER_CURE, 0.7f, 0.7f);
+    }
+
+    /**
+     * 地面的數值：點燃 = 這隻普通一下的火焰（跟焚跡的一樣），冰緩 30%（跟冰跡一樣，原作的冰緩幅度查不到）、
+     * 感電 30%（2026-11-02 照 PoE2 shocked_ground_base_magnitude_override 30；這次之前 20%）。
+     */
+    static double groundValue(final AilmentType type, final double hit) {
+        return switch (type) {
+            case IGNITE -> hit;
+            case CHILL -> 0.3;
+            default -> 0.3;
+        };
     }
 
     @EventHandler
@@ -458,6 +900,10 @@ public final class MonsterMechanics implements Listener {
         tickMirages(now);
         tickBlasts(now);
         tickCaps(now);
+        tickVolatiles(now); // 2026-11-02：爆花、光球、爆岩
+        if (ticks % 5 == 0) {
+            tickStatus(now); // 2026-11-02：狂躁、庇護、晶體、分身
+        }
         if (ticks % 5 == 0) {
             tickPatches(now);
             for (final Iterator<Tracked> iterator = tracked.values().iterator(); iterator.hasNext(); ) {
@@ -520,7 +966,7 @@ public final class MonsterMechanics implements Listener {
         // 熔岩護盾：在的時候身上滴岩漿
         final Pool pool = traits.pool() ? pools.get(monster.getUniqueId()) : null;
         if (pool != null && pool.magma > 0) {
-            world.spawnParticle(Particle.DRIPPING_LAVA, at.clone().add(0, monster.getHeight() * 0.7, 0), 3, 0.35, 0.4, 0.35, 0);
+            tw.exilecore.skill.Fx.spawn(world, Particle.DRIPPING_LAVA, at.clone().add(0, monster.getHeight() * 0.7, 0), 3, 0.35, 0.4, 0.35, 0);
         }
         // 阻礙光環
         if (traits.hinder() > 0 && plugin.ailments() != null) {
@@ -536,24 +982,54 @@ public final class MonsterMechanics implements Listener {
                 if (last != null && now - last < 10) {
                     continue; // 這半秒已經被別的泡泡套過了
                 }
-                plugin.ailments().hinder(player, 25);
-                plugin.ailments().groundAilment(player, AilmentType.CHILL, 0.2, 1.0);
-                // 2026-10-23（PoE2）：冷卻回復慢一半、身上的減益消退慢一半（每 0.5 秒都往後推 5 tick）
-                plugin.ailments().extendDebuffs(player, 5);
+                // 2026-11-02 照 PoE2 Temporal Bubble（action_speed_-% 25、debuff_time_passed_+% −40、base_cooldown_speed_+% −60）：
+                //   動作慢 25%（冰緩 25%）、身上的減益消退慢 40%、冷卻回復慢 60%（每 0.5 秒往後推 4、6 tick）。
+                //   這次之前另外被阻礙、冰緩 20%、減益與冷卻各慢一半
+                plugin.ailments().groundAilment(player, AilmentType.CHILL, 0.25, 1.0);
+                plugin.ailments().extendDebuffs(player, 4);
                 if (plugin.skills() != null) {
-                    plugin.skills().delayCooldowns(player, 5);
+                    plugin.skills().delayCooldowns(player, 6);
                 }
             }
-            ring(world, at, bubble, Particle.REVERSE_PORTAL, 16);
+            // 2026-11-02：怪物的範圍光環走 Fx.zone（重要的：每 0.5 秒重畫、點數照周長）
+            tw.exilecore.skill.Fx.zone(new tw.exilecore.skill.Fx.Part(monster.getUniqueId(), 0), at.clone().add(0, 0.15, 0), bubble,
+                    tw.exilecore.skill.Fx.Look.edge(Particle.REVERSE_PORTAL, null), -1, null, true);
         }
         // 足跡：走了一段就留一塊
         if (traits.trails()) {
             trails(monster, traits, at, now);
         }
+        final Extra extra = traits.extra();
+        // 2026-11-02 照 PoE2 Burning／Chilled／Shocked Ground on Death（「Releases X at intervals」）：活著時每 5 秒一圈新星並留下地面
+        //   （跟死掉時同一招，見 deathEffects）；這次之前只留 1.5 格、3 秒的地面，沒有新星
+        if (!extra.grounds().isEmpty() && ready(monster, "ground", now, GROUND_EVERY)) {
+            final StatSheet sheet = extra.grounds().contains(AilmentType.IGNITE) ? sheetOf(monster) : null;
+            final double hit = sheet == null ? 0 : averageHit(sheet);
+            for (final AilmentType type : extra.grounds()) {
+                patches.add(new Patch(world.getUID(), at.getX(), at.getY(), at.getZ(), type, groundValue(type, hit), now + GROUND_FOR,
+                        GROUND_RADIUS, null));
+                blasts.add(new Blast(monster.getUniqueId(), at.clone(), now + GROUND_NOVA_FUSE, GROUND_RADIUS, groundNovaDamage(type), groundType(type)));
+            }
+        }
+        // 晶爆的：身邊的晶體閃一下
+        final List<Location> grown = extra.crystals() ? crystals.get(monster.getUniqueId()) : null;
+        if (grown != null) {
+            for (final Location crystal : grown) {
+                tw.exilecore.skill.Fx.spawn(world, Particle.DUST, crystal.clone().add(0, 0.4, 0), 2, 0.1, 0.25, 0.1, 0, CRYSTAL_DUST);
+                tw.exilecore.skill.Fx.spawn(world, Particle.END_ROD, crystal.clone().add(0, 0.7, 0), 1, 0.05, 0.05, 0.05, 0);
+            }
+        }
+        // 狂躁的：狂暴的時候頭上冒火
+        final Long rage = enraged.get(monster.getUniqueId());
+        if (rage != null && rage > now) {
+            tw.exilecore.skill.Fx.spawn(world, Particle.ANGRY_VILLAGER, at.clone().add(0, monster.getHeight() + 0.2, 0), 1, 0.3, 0.1, 0.3, 0);
+        }
         // 噬魔的：內圈安全，外圈吸魔力、不能回魔，每秒一下閃電
         if (traits.siphon() && !held) {
-            ring(world, at, SIPHON_INNER, Particle.ELECTRIC_SPARK, 14);
-            ring(world, at, SIPHON_OUTER, Particle.ELECTRIC_SPARK, 28);
+            tw.exilecore.skill.Fx.zone(new tw.exilecore.skill.Fx.Part(monster.getUniqueId(), 1), at.clone().add(0, 0.15, 0), SIPHON_INNER,
+                    tw.exilecore.skill.Fx.Look.edge(Particle.ELECTRIC_SPARK, null), -1, null, true);
+            tw.exilecore.skill.Fx.zone(new tw.exilecore.skill.Fx.Part(monster.getUniqueId(), 2), at.clone().add(0, 0.15, 0), SIPHON_OUTER,
+                    tw.exilecore.skill.Fx.Look.edge(Particle.ELECTRIC_SPARK, null), -1, null, true);
             for (final Player player : at.getNearbyPlayers(SIPHON_OUTER)) {
                 if (player.getLocation().distanceSquared(at) < SIPHON_INNER * SIPHON_INNER) {
                     continue;
@@ -572,6 +1048,48 @@ public final class MonsterMechanics implements Listener {
         }
         final Player target = monster instanceof Mob mob && mob.getTarget() instanceof Player p && p.getWorld().equals(world)
                 && p.getLocation().distanceSquared(at) <= 16 * 16 ? p : null;
+        // 2026-11-02 照 PoE2 Periodically Enrages：每 10 秒狂暴 5 秒（看到玩家才開始算）
+        if (extra.enrage() && target != null && ready(monster, "enrage", now, ENRAGE_EVERY)) {
+            enraged.put(monster.getUniqueId(), now + ENRAGE_FOR);
+            monsters.refreshVanilla(monster); // 屬性表重算（傷害、速度、受到的傷害），原版的移動速度跟著變
+            world.playSound(at, Sound.ENTITY_RAVAGER_ROAR, 0.6f, 1.3f);
+        }
+        // 2026-11-02 照 PoE2 Periodic Invulnerability Aura：每 12 秒一圈，5 格內的友軍（不含自己）5 秒內不會受傷
+        if (extra.invuln() > 0 && target != null && ready(monster, "invuln", now, INVULN_EVERY)) {
+            final double radius = extra.invuln();
+            int count = 0;
+            for (final Entity near : monster.getNearbyEntities(radius, radius / 2, radius)) {
+                if (near instanceof LivingEntity ally && !(near instanceof Player) && monsters.isMonster(ally)
+                        && near.getLocation().distanceSquared(at) <= radius * radius) {
+                    protectedBy.put(ally.getUniqueId(), new Protect(monster.getUniqueId(), now + INVULN_FOR));
+                    count++;
+                }
+            }
+            tw.exilecore.skill.Fx.ring(world, at.clone().add(0, 0.2, 0), radius, Particle.END_ROD, null);
+            if (count > 0) {
+                world.playSound(at, Sound.BLOCK_BEACON_POWER_SELECT, 0.6f, 1.6f);
+            }
+        }
+        // 2026-11-02 照 PoE2 Volatile Plants：在目標附近長爆花（強化的兩朵）
+        if (extra.plants() > 0 && target != null && ready(monster, "plant", now, PLANT_EVERY) && plants.size() < 64) {
+            final int count = extra.plants() >= 200 ? 2 : 1; // 強化的（202）兩朵：推估
+            for (int i = 0; i < count; i++) {
+                final Location spot = near(target.getLocation(), 3, 5);
+                plants.add(new Plant(monster.getUniqueId(), spot, now + PLANT_GROW, extra.plants() / 100.0));
+                tw.exilecore.skill.Fx.spawn(world, Particle.SPORE_BLOSSOM_AIR, spot.clone().add(0, 0.3, 0), 6, 0.3, 0.2, 0.3, 0);
+            }
+            world.playSound(at, Sound.BLOCK_BIG_DRIPLEAF_TILT_DOWN, 0.7f, 0.8f);
+        }
+        // 2026-11-02 照 PoE2 Volatile Crag：在目標腳邊落爆岩（強化的兩塊）
+        if (extra.crag() > 0 && target != null && ready(monster, "crag", now, CRAG_EVERY) && crags.size() < 64) {
+            final int count = extra.crag() >= 150 ? 2 : 1;
+            for (int i = 0; i < count; i++) {
+                final Location spot = near(target.getLocation(), 0.5, 2.5);
+                crags.add(new Crag(monster.getUniqueId(), spot, now + CRAG_ARM, now + CRAG_LIFE, CRAG_DAMAGE));
+                tw.exilecore.skill.Fx.spawn(world, Particle.LAVA, spot.clone().add(0, 0.3, 0), 6, 0.3, 0.1, 0.3, 0);
+            }
+            world.playSound(target.getLocation(), Sound.BLOCK_BASALT_PLACE, 0.8f, 0.7f);
+        }
         // 癒療的：每 6 秒治療附近怪物
         if (traits.heal() > 0 && target != null && ready(monster, "heal", now, 120)) {
             for (final Entity near : monster.getNearbyEntities(10, 5, 10)) {
@@ -580,8 +1098,8 @@ public final class MonsterMechanics implements Listener {
                 }
             }
             healPercent(monster, traits.heal());
-            world.spawnParticle(Particle.HEART, at.clone().add(0, monster.getHeight() + 0.3, 0), 5, 0.6, 0.3, 0.6, 0);
-            ring(world, at, 10, Particle.HAPPY_VILLAGER, 30);
+            tw.exilecore.skill.Fx.spawn(world, Particle.HEART, at.clone().add(0, monster.getHeight() + 0.3, 0), 5, 0.6, 0.3, 0.6, 0);
+            tw.exilecore.skill.Fx.ring(world, at.clone().add(0, 0.15, 0), 10, Particle.HAPPY_VILLAGER, null);
         }
         // 爆屍的：目標附近的屍體 1 秒後炸開
         if (traits.corpse() && target != null && plugin.combat() != null && ready(monster, "corpse", now, 120)) {
@@ -604,25 +1122,25 @@ public final class MonsterMechanics implements Listener {
                     continue;
                 }
                 final Location spot = new Location(world, corpse.x(), corpse.y() + 0.1, corpse.z());
-                final LivingEntity minion = effects.spawnMinion(monster, data, corpse.type(), spot);
+                final LivingEntity minion = effects.spawnMinion(monster, data, corpse.type(), spot, extra.reviveEmpowered()); // 2026-11-02 復甦的
                 corpses.remove(corpse);
                 if (minion != null) {
                     raised++;
                     if (minion instanceof Mob minionMob) {
                         minionMob.setTarget(target);
                     }
-                    world.spawnParticle(Particle.SOUL, spot.clone().add(0, 0.5, 0), 12, 0.3, 0.5, 0.3, 0.03);
+                    tw.exilecore.skill.Fx.spawn(world, Particle.SOUL, spot.clone().add(0, 0.5, 0), 12, 0.3, 0.5, 0.3, 0.03);
                 }
             }
             if (raised > 0) {
                 world.playSound(at, Sound.ENTITY_ZOMBIE_VILLAGER_CURE, 0.6f, 0.8f);
             }
         }
-        // 竊瓶的：每 5 秒附近玩家的藥劑各少 1 點充能
-        if (traits.flaskSiphon() && plugin.flasks() != null && ready(monster, "flask", now, 100)) {
+        // 竊瓶的：每 20 秒附近玩家的藥劑各少 1 點充能（2026-11-02 照 PoE2 每分鐘 −3 充能；這次之前每 5 秒）
+        if (traits.flaskSiphon() && plugin.flasks() != null && ready(monster, "flask", now, 400)) {
             for (final Player player : at.getNearbyPlayers(12)) {
                 plugin.flasks().drainCharges(player, 1);
-                player.getWorld().spawnParticle(Particle.WITCH, player.getLocation().add(0, 1, 0), 6, 0.3, 0.4, 0.3, 0);
+                tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.WITCH, player.getLocation().add(0, 1, 0), 6, 0.3, 0.4, 0.3, 0);
             }
         }
     }
@@ -721,17 +1239,23 @@ public final class MonsterMechanics implements Listener {
             }
             if (seen) {
                 final World world = here.getFirst().getWorld();
-                world.spawnParticle(switch (patch.type()) {
-                    case IGNITE -> Particle.FLAME;
-                    case CHILL -> Particle.SNOWFLAKE;
-                    default -> Particle.ELECTRIC_SPARK;
-                }, patch.x(), patch.y() + 0.1, patch.z(), patch.owner() == null ? 3 : 2 + (int) Math.round(patch.radius() * 2),
-                        patch.radius() * 0.4, 0.05, patch.radius() * 0.4, 0.01);
-                if (patch.type() == AilmentType.IGNITE) {
-                    // 2026-10-27 照站長「怪物放的燃燒地板太不明顯」：畫一圈外框（玩家自己的燃燒地面不畫）
-                    tw.exilecore.skill.Fx.groundOutline(new Location(world, patch.x(), patch.y(), patch.z()), patch.radius(),
-                            tw.exilecore.skill.Fx.BURNING_EDGE);
-                }
+                // 2026-11-02 照站長（粒子太多）：每 0.5 秒畫一次（以前每 5 tick），一次多畫一點；地圖的地面效果是危險區（重要的，每個人都看得到）
+                tw.exilecore.skill.Fx.with(null, patch.owner() != null, () -> {
+                    if (tw.exilecore.skill.Fx.redrawDue(patch)) {
+                        tw.exilecore.skill.Fx.spawn(world, switch (patch.type()) {
+                            case IGNITE -> Particle.FLAME;
+                            case CHILL -> Particle.SNOWFLAKE;
+                            default -> Particle.ELECTRIC_SPARK;
+                        }, patch.x(), patch.y() + 0.1, patch.z(), patch.owner() == null ? 5 : 3 + (int) Math.round(patch.radius() * 3),
+                                patch.radius() * 0.4, 0.05, patch.radius() * 0.4, 0.01);
+                    }
+                    if (patch.type() == AilmentType.IGNITE) {
+                        // 2026-10-27 照站長「怪物放的燃燒地板太不明顯」：畫一圈外框（玩家自己的燃燒地面不畫）
+                        tw.exilecore.skill.Fx.zone(patch, new Location(world, patch.x(), patch.y() + 0.08, patch.z()), patch.radius(),
+                                tw.exilecore.skill.Fx.Look.edge(Particle.DUST, tw.exilecore.skill.Fx.BURNING_EDGE), (int) (patch.until() - now),
+                                null, patch.owner() != null);
+                    }
+                });
             }
         }
         for (final Map.Entry<Player, Map<AilmentType, Double>> entry : standing.entrySet()) {
@@ -846,19 +1370,21 @@ public final class MonsterMechanics implements Listener {
                 continue;
             }
             mirage.at = mirage.at.add(step.multiply(Math.min(MIRAGE_SPEED * 2, distance) / distance)); // 每 2 tick 走兩步
-            mirage.at.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, mirage.at, 6, 0.15, 0.3, 0.15, 0.02);
-            mirage.at.getWorld().spawnParticle(Particle.DUST, mirage.at, 3, 0.15, 0.4, 0.15, 0,
+            tw.exilecore.skill.Fx.spawn(mirage.at.getWorld(), Particle.ELECTRIC_SPARK, mirage.at, 6, 0.15, 0.3, 0.15, 0.02);
+            tw.exilecore.skill.Fx.spawn(mirage.at.getWorld(), Particle.DUST, mirage.at, 3, 0.15, 0.4, 0.15, 0,
                     new Particle.DustOptions(Color.fromRGB(0x9fd3ff), 1.2f));
         }
     }
 
     private void explodeMirage(final LivingEntity source, final Location at) {
-        at.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, at, 30, 1, 0.6, 1, 0.1);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.ELECTRIC_SPARK, at, 30, 1, 0.6, 1, 0.1);
         at.getWorld().playSound(at, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 0.6f, 1.6f);
         for (final Player player : at.getNearbyPlayers(2.5)) {
             hit(source, player, "lightning_mirage", DamageType.LIGHTNING, 0.8);
         }
     }
+
+    private static final Particle.DustOptions BLAST_WARNING = new Particle.DustOptions(Color.fromRGB(0xc03030), 1.1f);
 
     private void tickBlasts(final long now) {
         final Iterator<Blast> iterator = blasts.iterator();
@@ -870,23 +1396,185 @@ public final class MonsterMechanics implements Listener {
                 continue;
             }
             if (now < blast.fuse()) {
-                ring(world, blast.at(), blast.radius(), Particle.DUST, 18,
-                        new Particle.DustOptions(Color.fromRGB(0xc03030), 1.1f));
+                // 2026-11-02：預警的圈走 Fx.zone（重要的：每個人都看得到；每 0.5 秒重畫，點大一點存在久一點）
+                tw.exilecore.skill.Fx.zone(blast, blast.at().clone().add(0, 0.15, 0), blast.radius(), tw.exilecore.skill.Fx.Look.edge(Particle.DUST, BLAST_WARNING),
+                        (int) (blast.fuse() - now), null, true);
                 continue;
             }
             iterator.remove();
-            world.spawnParticle(Particle.EXPLOSION, blast.at().clone().add(0, 0.5, 0), 2, 0.4, 0.2, 0.4, 0);
-            world.spawnParticle(Particle.DUST, blast.at().clone().add(0, 0.5, 0), 30, 1.2, 0.4, 1.2, 0,
+            tw.exilecore.skill.Fx.zoneStop(blast);
+            tw.exilecore.skill.Fx.spawn(world, Particle.EXPLOSION, blast.at().clone().add(0, 0.5, 0), 2, 0.4, 0.2, 0.4, 0);
+            tw.exilecore.skill.Fx.spawn(world, Particle.DUST, blast.at().clone().add(0, 0.5, 0), 30, 1.2, 0.4, 1.2, 0,
                     new Particle.DustOptions(Color.fromRGB(0x8a0e0e), 1.4f));
             world.playSound(blast.at(), Sound.ENTITY_GENERIC_EXPLODE, 0.7f, 1.4f);
             final Entity source = plugin.getServer().getEntity(blast.source());
             if (!(source instanceof LivingEntity living) || !living.isValid()) {
                 continue;
             }
+            if (blast.type() != DamageType.PHYSICAL) {
+                // 2026-11-02：死後爆炸、爆晶的顏色照傷害類型
+                tw.exilecore.skill.Fx.spawn(world, switch (blast.type()) {
+                    case FIRE -> Particle.FLAME;
+                    case COLD -> Particle.SNOWFLAKE;
+                    case LIGHTNING -> Particle.ELECTRIC_SPARK;
+                    default -> Particle.WITCH;
+                }, blast.at().clone().add(0, 0.5, 0), 30, blast.radius() / 2, 0.4, blast.radius() / 2, 0.05);
+            }
             for (final Player player : blast.at().getNearbyPlayers(blast.radius())) {
-                hit(living, player, "corpse_blast", DamageType.PHYSICAL, blast.damage());
+                hit(living, player, blast.type() == DamageType.PHYSICAL ? "corpse_blast" : "death_blast", blast.type(), blast.damage());
             }
         }
+    }
+
+    // ---- 2026-11-02：狂躁、庇護、晶體、分身（每 0.5 秒） ----
+
+    private void tickStatus(final long now) {
+        for (final Iterator<Map.Entry<UUID, Long>> iterator = enraged.entrySet().iterator(); iterator.hasNext(); ) {
+            final Map.Entry<UUID, Long> entry = iterator.next();
+            if (entry.getValue() <= now) {
+                iterator.remove();
+                if (plugin.getServer().getEntity(entry.getKey()) instanceof LivingEntity living && living.isValid() && !living.isDead()) {
+                    monsters.refreshVanilla(living); // 狂暴結束：屬性表、原版移動速度回來
+                } else {
+                    monsters.invalidate(entry.getKey());
+                }
+            }
+        }
+        for (final Iterator<Map.Entry<UUID, Protect>> iterator = protectedBy.entrySet().iterator(); iterator.hasNext(); ) {
+            final Map.Entry<UUID, Protect> entry = iterator.next();
+            final Entity ally = plugin.getServer().getEntity(entry.getKey());
+            if (entry.getValue().until() <= now || !(plugin.getServer().getEntity(entry.getValue().owner()) instanceof LivingEntity owner)
+                    || !owner.isValid() || !(ally instanceof LivingEntity living) || !living.isValid()) {
+                iterator.remove();
+                continue;
+            }
+            tw.exilecore.skill.Fx.spawn(ally.getWorld(), Particle.END_ROD, ally.getLocation().add(0, living.getHeight() * 0.6, 0), 2,
+                    0.3, 0.4, 0.3, 0.01);
+        }
+        for (final Iterator<Map.Entry<UUID, Long>> iterator = ghosts.entrySet().iterator(); iterator.hasNext(); ) {
+            final Map.Entry<UUID, Long> entry = iterator.next();
+            if (entry.getValue() > now && hasBlast(entry.getKey())) {
+                continue;
+            }
+            iterator.remove();
+            final Entity ghost = plugin.getServer().getEntity(entry.getKey());
+            if (ghost != null) {
+                ghost.remove();
+            }
+        }
+    }
+
+    private boolean hasBlast(final UUID source) {
+        for (final Blast blast : blasts) {
+            if (blast.source().equals(source)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // ---- 2026-11-02：爆花、光球、爆岩（每 2 tick） ----
+
+    private void tickVolatiles(final long now) {
+        if (plants.isEmpty() && orbs.isEmpty() && crags.isEmpty()) {
+            return;
+        }
+        for (final Iterator<Plant> iterator = plants.iterator(); iterator.hasNext(); ) {
+            final Plant plant = iterator.next();
+            if (plant.at().getWorld() == null || !(plugin.getServer().getEntity(plant.source()) instanceof LivingEntity source) || !source.isValid()) {
+                iterator.remove();
+                continue;
+            }
+            if (now < plant.bloom()) {
+                if (ticks % 5 == 0) {
+                    tw.exilecore.skill.Fx.spawn(plant.at().getWorld(), Particle.DUST, plant.at().clone().add(0, 0.3, 0), 3, 0.15, 0.2, 0.15, 0, PLANT_DUST);
+                }
+                continue;
+            }
+            iterator.remove();
+            orbs.add(new Orb(plant.source(), plant.at().clone().add(0, 1, 0), now + ORB_LIFE, plant.power()));
+            plant.at().getWorld().playSound(plant.at(), Sound.BLOCK_AZALEA_LEAVES_BREAK, 0.8f, 1.4f);
+        }
+        for (final Iterator<Orb> iterator = orbs.iterator(); iterator.hasNext(); ) {
+            final Orb orb = iterator.next();
+            final World world = orb.at.getWorld();
+            if (world == null || !(plugin.getServer().getEntity(orb.source) instanceof LivingEntity source) || !source.isValid()) {
+                iterator.remove();
+                continue;
+            }
+            Player nearest = null;
+            double best = 12 * 12;
+            for (final Player player : orb.at.getNearbyPlayers(12)) {
+                final double distance = player.getLocation().add(0, 1, 0).distanceSquared(orb.at);
+                if (distance < best && !player.isDead()) {
+                    nearest = player;
+                    best = distance;
+                }
+            }
+            if (now >= orb.until || nearest != null && best <= 1.2 * 1.2) {
+                iterator.remove();
+                volatileBurst(source, orb.at, DamageType.CHAOS, orb.power, PLANT_DUST, "volatile_plant");
+                continue;
+            }
+            if (nearest != null) {
+                final org.bukkit.util.Vector step = nearest.getLocation().add(0, 1, 0).toVector().subtract(orb.at.toVector());
+                final double length = step.length();
+                if (length > 1e-6) {
+                    orb.at = orb.at.add(step.multiply(Math.min(ORB_SPEED * 2, length) / length)); // 每 2 tick 走兩步
+                }
+            }
+            tw.exilecore.skill.Fx.spawn(world, Particle.DUST, orb.at, 3, 0.12, 0.12, 0.12, 0, PLANT_DUST);
+            tw.exilecore.skill.Fx.spawn(world, Particle.SNEEZE, orb.at, 1, 0.05, 0.05, 0.05, 0.01);
+        }
+        for (final Iterator<Crag> iterator = crags.iterator(); iterator.hasNext(); ) {
+            final Crag crag = iterator.next();
+            final World world = crag.at.getWorld();
+            if (world == null || !(plugin.getServer().getEntity(crag.source) instanceof LivingEntity source) || !source.isValid()) {
+                if (crag.fuse >= 0) {
+                    tw.exilecore.skill.Fx.zoneStop(crag);
+                }
+                iterator.remove();
+                continue;
+            }
+            if (crag.fuse < 0 && (now >= crag.until || now >= crag.armed && !crag.at.getNearbyPlayers(CRAG_TRIGGER).isEmpty())) {
+                crag.fuse = now + CRAG_FUSE; // 有人走近（或放太久）：點燃引信，地上畫出爆炸的範圍
+                world.playSound(crag.at, Sound.ENTITY_TNT_PRIMED, 0.7f, 1.3f);
+            }
+            if (crag.fuse >= 0) {
+                if (now >= crag.fuse) {
+                    iterator.remove();
+                    tw.exilecore.skill.Fx.zoneStop(crag);
+                    volatileBurst(source, crag.at, DamageType.FIRE, crag.power, CRAG_DUST, "volatile_crag");
+                    continue;
+                }
+                tw.exilecore.skill.Fx.zone(crag, crag.at.clone().add(0, 0.15, 0), CRYSTAL_RADIUS,
+                        tw.exilecore.skill.Fx.Look.edge(Particle.DUST, BLAST_WARNING), (int) (crag.fuse - now), null, true);
+            } else if (ticks % 5 == 0) {
+                tw.exilecore.skill.Fx.spawn(world, Particle.DUST, crag.at.clone().add(0, 0.3, 0), 4, 0.25, 0.15, 0.25, 0, CRAG_DUST);
+                if (now >= crag.armed) {
+                    tw.exilecore.skill.Fx.spawn(world, Particle.SMALL_FLAME, crag.at.clone().add(0, 0.4, 0), 1, 0.1, 0.05, 0.1, 0);
+                }
+            }
+        }
+    }
+
+    /** 爆花的光球、爆岩炸開：2.5 格內的玩家各挨一下（牠普通一下的 effectiveness 倍）。 */
+    private void volatileBurst(final LivingEntity source, final Location at, final DamageType type, final double effectiveness,
+                               final Particle.DustOptions dust, final String id) {
+        final World world = at.getWorld();
+        tw.exilecore.skill.Fx.spawn(world, Particle.EXPLOSION, at, 1, 0.2, 0.2, 0.2, 0);
+        tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 24, CRYSTAL_RADIUS / 2, 0.4, CRYSTAL_RADIUS / 2, 0, dust);
+        world.playSound(at, Sound.ENTITY_GENERIC_EXPLODE, 0.6f, 1.5f);
+        for (final Player player : at.getNearbyPlayers(CRYSTAL_RADIUS)) {
+            hit(source, player, id, type, effectiveness);
+        }
+    }
+
+    /** center 周圍 min～max 格的一個隨機點（同一個高度）。 */
+    private Location near(final Location center, final double min, final double max) {
+        final double angle = random.nextDouble() * Math.PI * 2;
+        final double distance = min + random.nextDouble() * Math.max(0, max - min);
+        return center.clone().add(Math.cos(angle) * distance, 0.05, Math.sin(angle) * distance);
     }
 
     // ---- 工具 ----
@@ -906,23 +1594,5 @@ public final class MonsterMechanics implements Listener {
     static double averageHit(final StatSheet sheet) {
         final Set<String> physical = Set.of(Tags.PHYSICAL);
         return (sheet.flat(StatKeys.WEAPON_MIN, physical) + sheet.flat(StatKeys.WEAPON_MAX, physical)) / 2;
-    }
-
-    private static void ring(final World world, final Location center, final double radius, final Particle particle, final int points) {
-        ring(world, center, radius, particle, points, null);
-    }
-
-    private static <T> void ring(final World world, final Location center, final double radius, final Particle particle, final int points,
-                                 final T data) {
-        for (int i = 0; i < points; i++) {
-            final double angle = Math.PI * 2 * i / points;
-            final Location at = new Location(world, center.getX() + Math.cos(angle) * radius, center.getY() + 0.15,
-                    center.getZ() + Math.sin(angle) * radius);
-            if (data == null) {
-                world.spawnParticle(particle, at, 1, 0, 0, 0, 0);
-            } else {
-                world.spawnParticle(particle, at, 1, 0, 0, 0, 0, data);
-            }
-        }
     }
 }

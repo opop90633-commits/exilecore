@@ -70,6 +70,13 @@ public final class EconomySources {
     public static final String CARDS = "cards";
     /** 賭卡：花掉的金幣、賭掉與賭到的卡。 */
     public static final String CARD_GAMBLE = "card_gamble";
+    // 2026-11-02 照站長：營地的拉霸機（用金幣下注）；這次之前沒有。押注與派彩分兩個來源（同一個來源正負會在同一列抵掉，看不出回收了多少）
+    /** 拉霸機的押注（金幣的消耗）。 */
+    public static final String SLOTS_BET = "slots_bet";
+    /** 拉霸機派出去的獎（金幣、通貨的產出）。 */
+    public static final String SLOTS = "slots";
+    /** 2026-11-02 照站長：傳奇兌換（追逐級傳奇的換進、換出；市場報告的追逐級那一段）。 */
+    public static final String UNIQUE_RECIPE = "unique_recipe";
 
     /** 來源給人看的名字。 */
     public static String sourceName(final String source) {
@@ -102,6 +109,9 @@ public final class EconomySources {
             case SALVAGE_COST -> "拆解用掉";
             case CARDS -> "星諭卡兌換";
             case CARD_GAMBLE -> "賭卡";
+            case SLOTS_BET -> "拉霸機押注";
+            case SLOTS -> "拉霸機派彩";
+            case UNIQUE_RECIPE -> "傳奇兌換";
             default -> source;
         };
     }
@@ -110,7 +120,9 @@ public final class EconomySources {
     public static final List<String> ALL = List.of(DROP, FILTER, SALVAGE, NPC, ADMIN, MERITS, EVENT, CRAFT, SKILL, MAP_DEVICE, HEIST, TRASH, DELETE, VENDOR, VENDOR_REFRESH,
             GAMBLE, SHOP, RESPEC, FEE_TRADE, FEE_LIST, FEE_BUY, FEE_EXCHANGE, GUILD,
             EVENT_SHOP, ADMIN_TAKE, SALVAGE_COST, // 2026-10-18：加上活動兌換、管理員扣除、拆解用掉
-            CARDS, CARD_GAMBLE); // 2026-10-19 星諭卡
+            CARDS, CARD_GAMBLE, // 2026-10-19 星諭卡
+            SLOTS_BET, SLOTS, // 2026-11-02 拉霸機
+            UNIQUE_RECIPE); // 2026-11-02 傳奇兌換
 
     private EconomySources() {
     }

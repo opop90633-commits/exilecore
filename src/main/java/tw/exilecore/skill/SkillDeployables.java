@@ -811,7 +811,7 @@ final class SkillDeployables implements Listener {
                         continue;
                     }
                     if (now % 10 == 0) {
-                        visuals.deployIdle(item.build.definition().visual(), item.spec.kind(), item.feet, item.spec.range());
+                        visuals.deployIdle(item, item.build.definition().visual(), item.spec.kind(), item.feet, item.spec.range());
                     }
                 }
             }
@@ -1037,7 +1037,7 @@ final class SkillDeployables implements Listener {
 
     private void tickTotemInner(final Deployed item, final Player owner, final long now) {
         if (now % 10 == 0) {
-            visuals.deployIdle(item.build.definition().visual(), item.spec.kind(), item.feet, item.spec.range());
+            visuals.deployIdle(item, item.build.definition().visual(), item.spec.kind(), item.feet, item.spec.range());
         }
         if (item.taunt) {
             taunt(item, owner, now);
@@ -1782,7 +1782,7 @@ final class SkillDeployables implements Listener {
             return;
         }
         if (now % 10 == 0) {
-            visuals.deployIdle(item.build.definition().visual(), item.spec.kind(), item.feet, item.spec.trigger());
+            visuals.deployIdle(item, item.build.definition().visual(), item.spec.kind(), item.feet, item.spec.trigger());
         }
         final List<LivingEntity> near = targets.around(item.feet, item.spec.trigger(), owner);
         if (near.isEmpty()) {
@@ -1913,6 +1913,7 @@ final class SkillDeployables implements Listener {
     }
 
     private void remove(final Deployed item, final boolean expired) {
+        Fx.zoneStop(item); // 2026-11-02：腳下的圈收掉（模組那邊收到 STOP）
         if (deployed.remove(item) && !expired && item.spec.kind() == DeploySpec.Kind.TOTEM && item.life <= 0 && plugin.skills() != null) {
             // 2026-10-27 照 PoE2 樁爆（Tawhoa's Tending）：圖騰被打倒時炸開
             plugin.skills().supportMechanics().lineage().totemDied(plugin.getServer().getPlayer(item.owner), item.build, item.feet, item.maxLife);

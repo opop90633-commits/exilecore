@@ -475,7 +475,7 @@ public final class TreeMechanics implements Listener {
         ps.notice("<#c7a6ff>✦ " + archon.displayName() + " <gray>" + Math.round(ticks / 20.0) + " 秒", now + 40);
         plugin.players().display(player, ps);
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, SoundCategory.PLAYERS, 0.7f, 1.4f);
-        player.getWorld().spawnParticle(archon == Archon.ELEMENTAL ? Particle.ELECTRIC_SPARK : Particle.SOUL, player.getLocation().add(0, 1, 0),
+        tw.exilecore.skill.Fx.spawn(player.getWorld(), archon == Archon.ELEMENTAL ? Particle.ELECTRIC_SPARK : Particle.SOUL, player.getLocation().add(0, 1, 0),
                 24, 0.5, 0.8, 0.5, 0.05);
         return true;
     }
@@ -590,7 +590,7 @@ public final class TreeMechanics implements Listener {
         ps.notice("<#b06cff>✸ 易爆爆炸：" + stacks + " 層 <gray>（易爆之力 10 秒）", now + 40);
         plugin.players().display(player, ps);
         final Location at = player.getLocation().add(0, 1, 0);
-        player.getWorld().spawnParticle(Particle.WITCH, at, 30, 0.6, 0.6, 0.6, 0.1);
+        tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.WITCH, at, 30, 0.6, 0.6, 0.6, 0.1);
         player.getWorld().playSound(at, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.4f, 1.6f);
         if (roll(sheet.flat(TreeNewMechanicKeys.VOLATILITY_REFRESH, Set.of()))) {
             state.volatility = Math.min(volatilityMax(sheet), stacks);

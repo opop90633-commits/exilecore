@@ -59,6 +59,8 @@ final class SkillRuntime {
     /** 2026-10：弩技能彈匣裡還有幾發（沒記 = 滿的）、裝填到什麼時候。 */
     final java.util.Map<String, Integer> ammo = new java.util.HashMap<>();
     final java.util.Map<String, Long> reloadDone = new java.util.HashMap<>();
+    /** 2026-11-02 照站長（背景裝填）：每個弩技能上次射出的 tick；沒在射這招超過裝填時間，彈匣自己補滿。 */
+    final java.util.Map<String, Long> ammoUsedAt = new java.util.HashMap<>();
     /** 2026-10：封印從什麼時候開始蓄（上次解開的 tick）。 */
     final java.util.Map<String, Long> sealSince = new java.util.HashMap<>();
     long channelTick = -1_000;
@@ -163,7 +165,10 @@ final class SkillRuntime {
     }
 
     /** 放開的那一下（performInner 用）：蓄了幾 tick、是不是完美時機。 */
-    record Release(String skillId, long held, boolean perfect, double speed) {
+    record Release(String skillId, long held, boolean perfect, double speed, double fullRatio) {
+        Release(final String skillId, final long held, final boolean perfect, final double speed) {
+            this(skillId, held, perfect, speed, 1.0);
+        }
     }
 
     Charging charging;
@@ -301,10 +306,14 @@ final class SkillRuntime {
         return pick;
     }
 
+    /** 2026-11-02（星骸輔助模組的技能列）：每個技能上一次開始冷卻的總長（tick）；只給畫冷卻進度用。 */
+    final Map<String, Integer> cooldownTotals = new HashMap<>();
+
     void startCooldown(final String skillId, final long now, final int ticks) {
         if (ticks <= 0) {
             return;
         }
+        cooldownTotals.put(skillId, ticks);
         final int uses = Math.max(1, cooldownUses.applyAsInt(skillId));
         if (uses <= 1) {
             cooldowns.put(skillId, now + ticks);
@@ -364,6 +373,7 @@ final class SkillRuntime {
         leap = null;
         cooldowns.clear();
         cooldownSlots.clear();
+        cooldownTotals.clear();
         echo = null;
         repeat = null;
         exert = null;

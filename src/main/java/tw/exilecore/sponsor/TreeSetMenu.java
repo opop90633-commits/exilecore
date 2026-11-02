@@ -165,15 +165,35 @@ public final class TreeSetMenu extends Menu {
             clearSet(state, set);
             return;
         }
-        if (!card() && set != 0) {
-            fail("要有月卡才能換成第 " + (set + 1) + " 組（沒有月卡可以切回第 1 組）");
+        final String problem = switchTo(set);
+        if (problem != null) {
+            fail(problem);
             return;
+        }
+        redraw();
+    }
+
+    /**
+     * 2026-11-02 照站長：換成第 set 組（箱子選單與原生天賦樹右上的組別鈕共用）；成功回傳 null，不然是原因。
+     * 這次之前寫在選單的點擊裡。
+     */
+    public String switchTo(final int set) {
+        final PlayerState state = plugin.players().get(player);
+        final CharacterRecord character = state.character();
+        if (character == null || set < 0 || set >= PlayerState.GEAR_SETS) {
+            return "沒有這一組";
+        }
+        final int active = state.activeTreeSet();
+        if (set == active) {
+            return null;
+        }
+        if (!card() && set != 0) {
+            return "要有月卡才能換成第 " + (set + 1) + " 組（沒有月卡可以切回第 1 組）";
         }
         // 要換上的那一組：讀得出來、是這個職業的、點數夠、連得到起點
         final PassiveNode start = tree.start(character.characterClass().id());
         if (start == null) {
-            fail("天賦樹沒有這個職業的起點");
-            return;
+            return "天賦樹沒有這個職業的起點";
         }
         final String code = stored(state, set);
         Set<String> nodes = new HashSet<>();
@@ -181,23 +201,19 @@ public final class TreeSetMenu extends Menu {
             try {
                 final TreeCode.Decoded decoded = TreeCode.decode(tree, code);
                 if (!decoded.classId().equals(character.characterClass().id())) {
-                    fail("第 " + (set + 1) + " 組是別的職業的配點");
-                    return;
+                    return "第 " + (set + 1) + " 組是別的職業的配點";
                 }
                 nodes = new HashSet<>(decoded.nodes());
             } catch (final TreeCode.InvalidCode e) {
-                fail("第 " + (set + 1) + " 組的配點讀不出來（天賦樹改版？）");
-                return;
+                return "第 " + (set + 1) + " 組的配點讀不出來（天賦樹改版？）";
             }
         }
         final int total = plugin.players().availablePoints(state) + state.passives().size();
         if (nodes.size() > total) {
-            fail("第 " + (set + 1) + " 組配了 " + nodes.size() + " 點，你現在只有 " + total + " 點");
-            return;
+            return "第 " + (set + 1) + " 組配了 " + nodes.size() + " 點，你現在只有 " + total + " 點";
         }
         if (tree.reachable(nodes, start, tw.exilecore.passive.PassiveState.rules(plugin, state)).size() != nodes.size()) {
-            fail("第 " + (set + 1) + " 組的配點連不到起點（天賦樹改版？）");
-            return;
+            return "第 " + (set + 1) + " 組的配點連不到起點（天賦樹改版？）";
         }
         // 現在的收進原本那一組
         store(state, active, TreeCode.encode(tree, character.characterClass().id(), state.passives()));
@@ -221,7 +237,7 @@ public final class TreeSetMenu extends Menu {
         plugin.characters().save(player);
         player.sendMessage(plugin.text().prefixed("<green>換成第 " + (set + 1) + " 組天賦（配了 " + nodes.size() + " 點）"));
         player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 0.7f, 1.2f);
-        redraw();
+        return null;
     }
 
     private int decodedSize(final String code) {

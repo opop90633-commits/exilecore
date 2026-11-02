@@ -144,6 +144,8 @@ public final class MapService {
     private int nextId = 1;
     private long ticks;
     private final BossDamageLog bossLog;
+    /** 2026-11-02 照站長：鎖血機制（站位圈、倒數大招、元素弱點），地圖 Boss 與星骸之海的 Boss 共用。 */
+    private PhaseLocks locks;
     /** 極境、金庫之主死掉後的觀戰（2026-10）。 */
     private final MapSpectators spectators;
 
@@ -162,6 +164,14 @@ public final class MapService {
         this.events = new MapEvents(plugin, this, eventConfig);
         this.bossLog = new BossDamageLog(plugin);
         this.spectators = new MapSpectators(plugin, this);
+    }
+
+    /** 2026-11-02：鎖血機制（星骸之海的淵鯨、鯊王也用這一套）。 */
+    public PhaseLocks locks() {
+        if (locks == null) {
+            locks = new PhaseLocks(plugin, random());
+        }
+        return locks;
     }
 
     /** 終局 Boss 開打一分鐘的傷害紀錄（給模組註冊監聽）。 */
@@ -705,6 +715,7 @@ public final class MapService {
     /** 腐化區的加成（atlas.yml 的 corruption；星圖天賦 atlas.corrupt.bonus 加強；核心「腐化之心」的代價怪物更痛）。 */
     private void applyCorruption(final MapInstance instance) {
         final AtlasConfig.Corruption corruption = atlasConfig.corruption();
+        instance.setCorruptedArea(true); // 2026-11-02 照 PoE2 腐化怪物：稀有怪各多一條腐化詞綴（MapSpawner）
         final double more = 1 + instance.atlas().increased("atlas.corrupt.bonus");
         instance.twist().monsterPower += 0.08 * corruption.monsterLevel();
         instance.twist().packSize += corruption.pack() / 100.0 * more;
@@ -852,7 +863,7 @@ public final class MapService {
             return;
         }
         final ItemStack stack = plugin.currencies().create(type, 1);
-        plugin.economy().ledger().produced(type.id(), "tower", 1);
+        plugin.economy().ledger().of(player).produced(type.id(), "tower", 1);
         plugin.economy().wallet().dropFor(player, plugin.economy().wallet().give(player, stack));
         player.sendMessage(plugin.text().prefixed("<#d8c8a0>✦ 掉落：<white>" + ItemRenderer.escape(type.name()) + "<gray>（插進完成的塔：地圖裝置的「塔與城塞」）"));
     }
@@ -910,8 +921,8 @@ public final class MapService {
             final Player owner = plugin.getServer().getPlayer(instance.owner());
             final AtlasGrid.Cell cell = instance.atlasCell();
             if (owner != null && cell != null && plugin.players().get(owner).hasCharacter() && completeCell(owner, cell)) {
-                final AtlasTablets.Kind[] kinds = AtlasTablets.Kind.values();
-                giveTablet(owner, kinds[random().nextInt(kinds.length)]);
+                final List<AtlasTablets.Kind> kinds = AtlasTablets.towerKinds(); // 2026-11-02：傳奇石板（殘酷霸權）塔不掉
+                giveTablet(owner, kinds.get(random().nextInt(kinds.size())));
             }
         });
         // 2026-10-21 漏洞修正：重開的塔只有起點跟塔守那一間（以前前兩次可以只清怪不打塔守，等於免費多刷兩張圖）
@@ -1266,6 +1277,11 @@ public final class MapService {
         return instances.get(id);
     }
 
+    /** 2026-11-02（C 組小地圖）：這張圖的事件標記（{@link MapEvents#markers}）。 */
+    public List<tw.exilecore.clientmod.FeedProtocol.Marker> markers(final MapInstance instance) {
+        return events == null || instance == null ? List.of() : events.markers(instance);
+    }
+
     /** 這個位置在哪個開著的實例裡。 */
     public MapInstance instanceAt(final Location location) {
         if (location == null || location.getWorld() == null || !location.getWorld().equals(world())) {
@@ -1363,6 +1379,47 @@ public final class MapService {
      */
     /** 開天者、南瓜王、潮汐統帥開場無敵幾 tick（2026-10-26 晚：10 秒）。 */
     public static final int OPENING_INVULNERABLE_TICKS = 200;
+
+    /**
+     * 2026-11-02 照站長：同 {@link #capBossDamage(LivingEntity, UUID, double)}，先乘鎖血機制的倍率——元素弱點（只吃一種元素，其他的打一成）、
+     * 倒數大招之後的虛弱（受到的傷害更多）。dealt 是這一下每種傷害多少（擊中的 {@code HitResult.dealt()}；持續傷害就是那一種）。
+     * 這次之前這裡只有每秒傷害遞減（已經關掉了）。
+     */
+    public double capBossDamage(final LivingEntity defender, final UUID source, final double amount,
+                                final java.util.Map<tw.exilecore.stats.DamageType, Double> dealt) {
+        return capBossDamage(defender, source, amount * lockDamageFactor(defender, dealt));
+    }
+
+    /** 2026-11-02：持續傷害（一種傷害）的寫法。 */
+    public double capBossDamage(final LivingEntity defender, final UUID source, final double amount, final tw.exilecore.stats.DamageType type) {
+        return capBossDamage(defender, source, amount, type == null ? null : java.util.Map.of(type, amount));
+    }
+
+    /** 2026-11-02：鎖血機制打進地圖 Boss 的倍率（不是地圖 Boss 回傳 1）。 */
+    public double lockDamageFactor(final LivingEntity defender, final java.util.Map<tw.exilecore.stats.DamageType, Double> dealt) {
+        if (amountless(dealt)) {
+            return 1;
+        }
+        if (!defender.getPersistentDataContainer().has(bossKey())) {
+            // 2026-11-02 照站長：星骸之海的淵鯨、鯊王也有鎖血機制（世界 Boss、節慶的不算：它們沒有這一份狀態）
+            final PhaseLocks.State state = plugin.life() == null ? null : plugin.life().lockState(defender);
+            return state == null ? 1 : locks().damageFactor(state, dealt);
+        }
+        return bosses.damageFactor(instanceOf(defender), defender, dealt);
+    }
+
+    private static boolean amountless(final java.util.Map<tw.exilecore.stats.DamageType, Double> dealt) {
+        return dealt == null || dealt.isEmpty();
+    }
+
+    /** 2026-11-02 照站長（模組 1.4 頭上血條）：開天者、南瓜王、潮汐統帥開場的無敵（{@link #capBossDamage} 同一個規則）。 */
+    public boolean openingInvulnerable(final LivingEntity entity) {
+        if (entity.getTicksLived() >= OPENING_INVULNERABLE_TICKS) {
+            return false;
+        }
+        final String role = plugin.worldEvents() == null ? null : plugin.worldEvents().role(entity);
+        return "boss".equals(role) || "commander".equals(role) || plugin.festival() != null && plugin.festival().isKing(entity);
+    }
 
     public double capBossDamage(final LivingEntity defender, final UUID source, final double amount) {
         final String worldRole = plugin.worldEvents() == null ? null : plugin.worldEvents().role(defender);
@@ -1548,12 +1605,12 @@ public final class MapService {
     /** 同上，再寫每秒傷害從多少開始遞減（2026-10-21 晚；cap ≤ 0 = 不遞減，不寫）。 */
     public static String recommendedText(final double dps, final double cap) {
         return dps <= 0 ? "" : "<gray>建議打 Boss 每秒 <gold>" + BossDpsCommand.wan(dps) + "</gold><dark_gray>（技能面板的每秒傷害；單人約 3 分半打完，已算 Boss 的元素抗性；組隊血量照人數加"
-                + (cap > 0 ? "；實際打進 Boss 每秒超過 " + BossDpsCommand.wan(cap) + " 的部分會遞減" : "") + "）";
+                + (cap > 0 && !DpsCap.OFF ? "；實際打進 Boss 每秒超過 " + BossDpsCommand.wan(cap) + " 的部分會遞減" : "") + "）";
     }
 
     /** 終局、極境、巔峰的列表底下那一行：建議每秒是什麼意思、從多少開始遞減（2026-10-21 晚）。 */
     public static String recommendedNote(final double cap) {
-        return "<dark_gray>建議每秒＝技能面板的每秒傷害，單人約 3 分半打完（已算 Boss 的元素抗性）" + (cap > 0 ? "；實際打進 Boss 每秒超過 " + BossDpsCommand.wan(cap) + " 的部分會遞減" : "");
+        return "<dark_gray>建議每秒＝技能面板的每秒傷害，單人約 3 分半打完（已算 Boss 的元素抗性）" + (cap > 0 && !DpsCap.OFF ? "；實際打進 Boss 每秒超過 " + BossDpsCommand.wan(cap) + " 的部分會遞減" : "");
     }
 
     public int finalLevel(final int tier) {
@@ -1914,6 +1971,7 @@ public final class MapService {
         final MapStats stats = MapStats.of(plugin.items().repository(), data.get(), config.tiers());
         try {
             final MapInstance opened = open(player, map, stats);
+            opened.setAffixTexts(MapHudFeed.affixTexts(plugin, data.get())); // 2026-11-02（模組 1.4）：地圖資訊框寫詞綴
             final UUID ownerId = player.getUniqueId();
             opened.paidRefund(() -> giveBackLater(ownerId, one, "地圖"));
             if (cell != null) {
@@ -3520,21 +3578,7 @@ public final class MapService {
         if (boss != null) {
             players.removeIf(uuid -> !atBoss(plugin.getServer().getPlayer(uuid), boss));
         }
-        if ((instance.singleEntry() || instance.isUber() || instance.isPinnacle()) && plugin.discord() != null && !players.isEmpty()) {
-            // 2026-10：極境 Boss、金庫之主打倒了：同步到 Discord
-            final List<String> names = new ArrayList<>();
-            for (final UUID uuid : players) {
-                final Player player = plugin.getServer().getPlayer(uuid);
-                if (player != null) {
-                    names.add(plugin.chat() == null ? player.getName() : plugin.chat().display(player));
-                }
-            }
-            if (!names.isEmpty()) {
-                plugin.discord().achievement(tw.exilecore.item.ItemRenderer.escape(String.join("、", names)) + " 打倒了 "
-                        + tw.exilecore.item.ItemRenderer.escape(instance.bossDef() == null ? instance.label() : instance.bossDef().name())
-                        + "（" + tw.exilecore.item.ItemRenderer.escape(instance.label()) + "）！");
-            }
-        }
+        // 2026-11-02 照站長：Discord 不再公告 Boss 擊殺（這次之前極境 Boss、金庫之主打倒了會發到成就頻道）
         if (instance.special() != null) {
             // 特別的實例（回響、試煉）：不點亮星圖，交給開它的模組
             final List<Player> online = new ArrayList<>();
@@ -4030,7 +4074,7 @@ public final class MapService {
             left -= take;
         }
         if (source != null) { // 2026-10-18：null＝呼叫的地方已經記過（星盤刻刀在 currencies().apply 記了做裝備、地圖）
-            plugin.economy().ledger().consumed(type.id(), source, amount);
+            plugin.economy().ledger().of(player).consumed(type.id(), source, amount);
         }
         plugin.characters().save(player);
     }

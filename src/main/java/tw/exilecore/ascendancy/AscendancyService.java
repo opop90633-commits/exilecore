@@ -93,13 +93,8 @@ public final class AscendancyService {
 
     /** 2026-10-26 照 PoE2：昇華改變天賦樹配點規則的（{@link tw.exilecore.passive.PassiveTree#RULES}）；這次之前沒有。 */
     public java.util.Set<String> treeRules(final java.util.Map<String, String> progress, final String classId, final int level) {
-        final java.util.Set<String> rules = new java.util.HashSet<>();
-        for (final Modifier mod : new Ascension(config, progress, classId, level).modifiers()) {
-            if (mod.value() > 0 && tw.exilecore.passive.PassiveTree.RULES.contains(mod.stat())) {
-                rules.add(mod.stat());
-            }
-        }
-        return rules;
+        // 2026-11-02：判斷改到 PassiveTree.rulesOf（網頁規劃器的資料用同一份）；這次之前寫在這裡
+        return tw.exilecore.passive.PassiveTree.rulesOf(new Ascension(config, progress, classId, level).modifiers());
     }
 
     public java.util.Set<String> treeRules(final PlayerState state) {
@@ -516,7 +511,7 @@ public final class AscendancyService {
             }
             // 金幣與配點寫在同一筆資料庫交易裡（當機時不會只寫進去一半）
             state.setGold(state.gold() - cost);
-            plugin.economy().ledger().gold(EconomyLedger.RESPEC, -cost);
+            plugin.economy().ledger().of(player).gold(EconomyLedger.RESPEC, -cost);
             if (value == null) {
                 state.progress().remove(Ascension.NODES);
             } else {
@@ -633,7 +628,9 @@ public final class AscendancyService {
         }
         final Ascension ascension = ascension(player);
         if (ascension.chosen() != null) {
-            new AscendancyTreeMenu(plugin, player, this).open();
+            if (!AscFeed.openNative(plugin, player)) { // 2026-11-02 照站長（D 組）：裝了模組的玩家開原生畫面；這次之前一律開箱子選單
+                new AscendancyTreeMenu(plugin, player, this).open();
+            }
         } else if (ascension.canChoose()) {
             new AscendancyChoiceMenu(plugin, player, this).open();
         } else if (ascension.options().isEmpty()) {

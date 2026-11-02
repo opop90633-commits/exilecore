@@ -614,6 +614,32 @@ public final class AtlasMenu extends Menu {
         redraw();
     }
 
+    // ---- 2026-11-02 照站長（D 組）：原生畫面（AtlasFeed）借用箱子選單的說明與畫法；這次之前只有箱子選單 ----
+
+    /** 原生畫面要畫的一格：物品（名稱、說明照箱子選單）、塔的範圍（0 不在、1 在、2 被插了石板的塔罩到）、算不算腐化。 */
+    record NativeCell(ItemStack icon, int coverage, boolean corrupt) {
+    }
+
+    /** 原生畫面：先算好這次要用的（腐化之心、塔的範圍），之後一格一格叫 {@link #nativeCell}。 */
+    AtlasGrid.Cell prepareNative(final AtlasProgress atlas) {
+        rangeTowers = null;
+        allCorrupt = service.atlasBonus(player).get("atlas.all_corrupt") > 0;
+        return chosenCell(atlas);
+    }
+
+    NativeCell nativeCell(final AtlasProgress atlas, final AtlasGrid.Cell chosen, final int q, final int r) {
+        final AtlasGrid.Cell cell = atlas.grid().cell(q, r);
+        final ItemStack icon = tile(atlas, atlas.grid(), atlas.unlocked(), chosen, q, r);
+        final boolean done = atlas.isCompleted(q, r);
+        final boolean corrupt = done ? allCorrupt && !cell.purified() && cell.isMap() : corrupted(cell);
+        return new NativeCell(icon, cell.isMap() ? towerCoverage(atlas, q, r) : 0, corrupt);
+    }
+
+    /** 原生畫面：右上角的進度說明（跟箱子選單的「星圖進度」同一份）。 */
+    ItemStack nativeInfo(final AtlasProgress atlas, final AtlasGrid.Cell chosen) {
+        return info(atlas, chosen);
+    }
+
     /** 這格開圖時算不算腐化區：本來就是，或點了「腐化之心」（淨化區、塔、城塞除外）。 */
     private boolean corrupted(final AtlasGrid.Cell cell) {
         return cell.corrupted() || allCorrupt && !cell.purified() && cell.isMap();

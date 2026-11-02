@@ -484,6 +484,9 @@ public final class UiPack {
         files.put("assets/minecraft/sounds.json", json(mutedSoundsJson(muted)));
         music(files);
         bossBars(files); // 2026-10：Boss 血條的樣式與換階段的刻度
+        // 2026-11-02 照站長：生命球、魔力球（快捷欄兩側）取代原版的愛心與飢餓條，愛心（含吸收愛心，坐騎的除外）、飢餓條換成透明的；
+        //   能量護盾改看生命球的外環。這次之前吸收愛心換成藍色（shieldHearts；先留著，要改回愛心時換回這一行）
+        OrbFont.build(files);
         menuFont(files);
         lootFont(files);
         rarityFrameModel(files);
@@ -3117,6 +3120,61 @@ public final class UiPack {
         files.put(dir + "purple_progress.png", png(barImage(0xd07aff, 0x6a28b0, true)));
         files.put(dir + "notched_12_background.png", png(barNotches(0xff0a0204)));
         files.put(dir + "notched_12_progress.png", png(barNotches(0xffffe08a)));
+    }
+
+    /** 2026-11-02：原版的吸收愛心貼圖（9×9）：一般、極限模式各四張（滿、半、閃爍的滿、閃爍的半）。 */
+    static final List<String> SHIELD_HEART_SPRITES = List.of(
+            "absorbing_full", "absorbing_half", "absorbing_full_blinking", "absorbing_half_blinking",
+            "absorbing_hardcore_full", "absorbing_hardcore_half", "absorbing_hardcore_full_blinking", "absorbing_hardcore_half_blinking");
+
+    /** 心的形狀（9×9，畫在原版愛心框 container 的裡面；# = 塗色）。 */
+    private static final String[] HEART_MASK = {
+            ".........",
+            ".###.###.",
+            ".#######.",
+            ".#######.",
+            "..#####..",
+            "...###...",
+            "....#....",
+            ".........",
+            "........."};
+
+    /**
+     * 2026-11-02 照站長：能量護盾用原版的吸收愛心顯示（PlayerStateService.esAbsorption），金色換成能量護盾的藍色。
+     * 自己畫（不是改原版的圖）：亮藍、上面一排高光、左上一點白、下面暗一點；閃爍的亮一點；極限模式中間多一條暗線。
+     */
+    static void shieldHearts(final Map<String, byte[]> files) throws IOException {
+        final String dir = "assets/minecraft/textures/gui/sprites/hud/heart/";
+        for (final String sprite : SHIELD_HEART_SPRITES) {
+            files.put(dir + sprite + ".png", png(shieldHeart(sprite.contains("half"), sprite.contains("blinking"), sprite.contains("hardcore"))));
+        }
+    }
+
+    /** 一顆藍色的心（9×9）；half = 只有左半顆。 */
+    static BufferedImage shieldHeart(final boolean half, final boolean blinking, final boolean hardcore) {
+        final BufferedImage image = new BufferedImage(9, 9, BufferedImage.TYPE_INT_ARGB);
+        final int base = blinking ? 0x9fdcff : 0x4aa8ff;
+        for (int y = 0; y < 9; y++) {
+            for (int x = 0; x < 9; x++) {
+                if (HEART_MASK[y].charAt(x) != '#' || half && x > 4) {
+                    continue;
+                }
+                int rgb = base;
+                if (y == 1) {
+                    rgb = mix(base, 0xffffff, 0.35);
+                } else if (y >= 4) {
+                    rgb = mix(base, 0x0a2a6a, 0.18 * (y - 3));
+                }
+                if (x == 2 && y == 2) {
+                    rgb = 0xffffff;
+                }
+                if (hardcore && y == 3 && x >= 2 && x <= 6) {
+                    rgb = mix(rgb, 0x0a2a6a, 0.5);
+                }
+                image.setRGB(x, y, 0xff000000 | rgb);
+            }
+        }
+        return image;
     }
 
     /** 一條 182×5：progress = 血量（左亮右深的漸層＋上面一排高光）；不是的話是底（暗色＋外框）。 */

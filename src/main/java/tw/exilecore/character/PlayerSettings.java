@@ -43,6 +43,17 @@ public final class PlayerSettings {
      */
     public static final String HIDE_SYSTEM = "setting.hide_system";
 
+    /**
+     * 特效等級（2026-11-02）：高／中／低，值是 "high"／"mid"／"low"（沒設定過算高）。規則在 {@link tw.exilecore.skill.FxPolicy#density}：
+     * 中 = 別人的技能特效四成；低 = 自己的六成、別人的持續範圍只剩稀疏的外框、別人的一次性打擊不顯示。Boss 與怪物的招式預警、地圖的危險區一律全部顯示。
+     */
+    public static final String FX_QUALITY = "setting.fx_quality";
+
+    /** 這個人的特效等級。 */
+    public static tw.exilecore.skill.FxPolicy.Quality fxQuality(final PlayerState state) {
+        return tw.exilecore.skill.FxPolicy.Quality.parse(state == null ? null : state.progress().get(FX_QUALITY));
+    }
+
     private PlayerSettings() {
     }
 

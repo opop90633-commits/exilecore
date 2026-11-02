@@ -29,48 +29,89 @@ public final class ResourceBar {
         this.plugin = plugin;
     }
 
+    /**
+     * 2026-11-02 照站長（模組 1.4）：這條血條的資料來源（ResourceBar 與星骸輔助模組共用）。
+     * others = 連擊、灌注、湧動、獸性、主要寶石的能量、熱度、三相（MiniMessage，照血條上的順序；不含怒氣、充能）；
+     * charges = 充能那一段（血條上的文字，空的 = 沒有）。這次之前全部寫在 {@link #update} 裡面。
+     */
+    public record Sources(int rage, int rageMax, boolean decaying, List<String> others, String charges, String trinity) {
+
+        /** 血條上的幾段（跟這次之前一樣的順序：怒氣、其他、充能、三相）。 */
+        List<String> barParts() {
+            final List<String> parts = new ArrayList<>();
+            if (rage > 0) {
+                parts.add(String.format(Locale.ROOT, "<#ff6a3d>怒氣 <white>%d<gray>/%d%s", rage, rageMax,
+                        rage >= rageMax ? " <#ff3b1f>MAX" : decaying ? " <gray>消退中" : ""));
+            }
+            parts.addAll(others);
+            if (!charges.isEmpty()) {
+                parts.add(charges);
+            }
+            if (!trinity.isEmpty()) {
+                parts.add(trinity);
+            }
+            return parts;
+        }
+
+        /** 模組畫的「其他」那段（不含怒氣、充能；三相接在最後）。 */
+        public List<String> moddedOthers() {
+            final List<String> parts = new ArrayList<>(others);
+            if (!trinity.isEmpty()) {
+                parts.add(trinity);
+            }
+            return parts;
+        }
+    }
+
+    /** 2026-11-02：讀這個人現在的戰鬥資源（{@link Sources}）。 */
+    public static Sources read(final ExileCore plugin, final Player player) {
+        int rage = 0;
+        int rageMax = 1;
+        boolean decaying = false;
+        final List<String> others = new ArrayList<>();
+        if (plugin.skills() != null) {
+            final tw.exilecore.skill.SkillResources resources = plugin.skills().resources();
+            rage = resources.rage(player);
+            rageMax = Math.max(1, resources.rageMax(plugin.players().sheet(player)));
+            decaying = rage > 0 && resources.rageDecaying(player);
+            others.addAll(resources.otherParts(player));
+            final String metaEnergy = plugin.skills().metaEnergyHud(player); // 2026-10-28 照站長：主要寶石（擊中時火焰術、元祈…）的能量
+            if (!metaEnergy.isEmpty()) {
+                others.add(metaEnergy);
+            }
+            final String heat = plugin.skills().originals().heatHud(player); // 2026-10-28：弩的熱度（連射）
+            if (!heat.isEmpty()) {
+                others.add(heat);
+            }
+        }
+        String charges = "";
+        if (plugin.combat() != null && plugin.combat().charges() != null) {
+            charges = plugin.combat().charges().hudText(player);
+        }
+        String trinity = "";
+        if (plugin.combat() != null && plugin.combat().trinity() != null) {
+            // 2026-10-22：三相（鼎元訣等）的火、冰、電共鳴
+            trinity = plugin.combat().trinity().hudText(player.getUniqueId(), plugin.getServer().getCurrentTick());
+        }
+        return new Sources(rage, rageMax, decaying, others, charges, trinity);
+    }
+
     /** 照現在的資源更新（{@link PlayerStateService#display} 每次都呼叫）。 */
     void update(final Player player, final PlayerState state) {
         if (!state.hasCharacter() || player.isDead()) {
             hide(player);
             return;
         }
-        final List<String> parts = new ArrayList<>();
-        int rage = 0;
-        int rageMax = 1;
-        boolean decaying = false;
-        if (plugin.skills() != null) {
-            final tw.exilecore.skill.SkillResources resources = plugin.skills().resources();
-            rage = resources.rage(player);
-            rageMax = Math.max(1, resources.rageMax(plugin.players().sheet(player)));
-            decaying = rage > 0 && resources.rageDecaying(player);
-            if (rage > 0) {
-                parts.add(String.format(Locale.ROOT, "<#ff6a3d>怒氣 <white>%d<gray>/%d%s", rage, rageMax,
-                        rage >= rageMax ? " <#ff3b1f>MAX" : decaying ? " <gray>消退中" : ""));
-            }
-            parts.addAll(resources.otherParts(player));
-            final String metaEnergy = plugin.skills().metaEnergyHud(player); // 2026-10-28 照站長：主要寶石（擊中時火焰術、元祈…）的能量
-            if (!metaEnergy.isEmpty()) {
-                parts.add(metaEnergy);
-            }
-            final String heat = plugin.skills().originals().heatHud(player); // 2026-10-28：弩的熱度（連射）
-            if (!heat.isEmpty()) {
-                parts.add(heat);
-            }
+        // 2026-11-02 照站長（模組 1.4）：星骸輔助模組自己在魔力球旁邊畫戰鬥資源的人（招呼寫了 res）不掛這條血條；這次之前大家都掛
+        if (plugin.clientMod() != null && plugin.clientMod().drawsResources(player)) {
+            hide(player);
+            return;
         }
-        if (plugin.combat() != null && plugin.combat().charges() != null) {
-            final String charges = plugin.combat().charges().hudText(player);
-            if (!charges.isEmpty()) {
-                parts.add(charges);
-            }
-        }
-        if (plugin.combat() != null && plugin.combat().trinity() != null) {
-            // 2026-10-22：三相（鼎元訣等）的火、冰、電共鳴
-            final String trinity = plugin.combat().trinity().hudText(player.getUniqueId(), plugin.getServer().getCurrentTick());
-            if (!trinity.isEmpty()) {
-                parts.add(trinity);
-            }
-        }
+        final Sources sources = read(plugin, player);
+        final int rage = sources.rage();
+        final int rageMax = sources.rageMax();
+        final boolean decaying = sources.decaying();
+        final List<String> parts = sources.barParts();
         if (parts.isEmpty()) {
             hide(player);
             return;

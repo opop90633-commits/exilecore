@@ -28,7 +28,60 @@ public final class JewelPickMenu extends Menu {
     private static final int LIST_SIZE = (ROWS - 1) * 9;
 
     /** 一顆候選的珠寶：在背包的第幾格（page 為 -1），或隨身背包第幾頁第幾格。 */
-    private record Candidate(ItemStack stack, int slot, int page) {
+    record Candidate(ItemStack stack, int slot, int page) {
+
+        /** 2026-11-02（原生天賦樹直接放珠寶）：這顆在哪的代號（"inv:格" 或 "bag:頁:格"）。 */
+        String key() {
+            return page < 0 ? "inv:" + slot : "bag:" + page + ":" + slot;
+        }
+    }
+
+    /** 2026-11-02 照站長：背包（前 36 格）與隨身背包裡的珠寶；這次之前只有這個選單自己找。 */
+    static List<Candidate> candidates(final ExileCore plugin, final Player player) {
+        final List<Candidate> out = new ArrayList<>();
+        final ItemStack[] contents = player.getInventory().getContents();
+        for (int slot = 0; slot < Math.min(36, contents.length); slot++) {
+            if (JewelSockets.isJewel(plugin, contents[slot])) {
+                out.add(new Candidate(contents[slot], slot, -1));
+            }
+        }
+        final Bag bag = plugin.players().get(player).bag();
+        if (bag.usable()) {
+            for (int page = 0; page < bag.pages(); page++) {
+                final ItemStack[] items = bag.page(page);
+                for (int slot = 0; slot < items.length; slot++) {
+                    if (JewelSockets.isJewel(plugin, items[slot])) {
+                        out.add(new Candidate(items[slot], slot, page));
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    /**
+     * 2026-11-02 照站長：把 candidate 那一顆放進 node（來源格子要還是同一顆）；成功就從來源拿掉、存檔。回傳 null = 成功，不然是原因。
+     * 箱子選單與原生天賦樹共用；這次之前寫在選單的點擊裡。
+     */
+    static String socketFrom(final ExileCore plugin, final Player player, final PassiveNode node, final Candidate candidate) {
+        final ItemStack current = candidate.page() < 0 ? player.getInventory().getItem(candidate.slot())
+                : plugin.players().get(player).bag().page(candidate.page())[candidate.slot()];
+        if (current == null || !current.equals(candidate.stack())) {
+            return "那顆珠寶已經不在原來的位置了，重新選一次";
+        }
+        final PassiveState.Result result = JewelSockets.socket(plugin, player, node, current);
+        if (!result.ok()) {
+            return result.message();
+        }
+        if (candidate.page() < 0) {
+            player.getInventory().setItem(candidate.slot(), null);
+        } else {
+            plugin.players().get(player).bag().page(candidate.page())[candidate.slot()] = null;
+            plugin.players().get(player).markDirty();
+        }
+        plugin.characters().save(player);
+        player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_PLACE, 0.9f, 1.2f);
+        return null;
     }
 
     private final PassiveTree tree;
@@ -46,24 +99,7 @@ public final class JewelPickMenu extends Menu {
     @Override
     protected void draw() {
         candidates.clear();
-        final ItemStack[] contents = player.getInventory().getContents();
-        for (int slot = 0; slot < Math.min(36, contents.length); slot++) {
-            if (JewelSockets.isJewel(plugin, contents[slot])) {
-                candidates.add(new Candidate(contents[slot], slot, -1));
-            }
-        }
-        final PlayerState state = plugin.players().get(player);
-        final Bag bag = state.bag();
-        if (bag.usable()) {
-            for (int page = 0; page < bag.pages(); page++) {
-                final ItemStack[] items = bag.page(page);
-                for (int slot = 0; slot < items.length; slot++) {
-                    if (JewelSockets.isJewel(plugin, items[slot])) {
-                        candidates.add(new Candidate(items[slot], slot, page));
-                    }
-                }
-            }
-        }
+        candidates.addAll(candidates(plugin, player));
         for (int i = 0; i < Math.min(LIST_SIZE, candidates.size()); i++) {
             final Candidate candidate = candidates.get(i);
             final ItemStack shown = candidate.stack().clone();
@@ -99,28 +135,13 @@ public final class JewelPickMenu extends Menu {
         if (slot >= LIST_SIZE || slot >= candidates.size() || !acceptAction(click)) {
             return;
         }
-        final Candidate candidate = candidates.get(slot);
         // 畫面畫好之後東西可能動過了（別的視窗、掉落）：來源格子要還是同一顆
-        final ItemStack current = candidate.page() < 0 ? player.getInventory().getItem(candidate.slot())
-                : plugin.players().get(player).bag().page(candidate.page())[candidate.slot()];
-        if (current == null || !current.equals(candidate.stack())) {
-            fail("那顆珠寶已經不在原來的位置了，重新選一次");
+        final String problem = socketFrom(plugin, player, node, candidates.get(slot));
+        if (problem != null) {
+            fail(problem);
             redraw();
             return;
         }
-        final PassiveState.Result result = JewelSockets.socket(plugin, player, node, current);
-        if (!result.ok()) {
-            fail(result.message());
-            return;
-        }
-        if (candidate.page() < 0) {
-            player.getInventory().setItem(candidate.slot(), null);
-        } else {
-            plugin.players().get(player).bag().page(candidate.page())[candidate.slot()] = null;
-            plugin.players().get(player).markDirty();
-        }
-        plugin.characters().save(player);
-        player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_PLACE, 0.9f, 1.2f);
         tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<green>珠寶放進去了，詞綴已加在角色身上"));
         back();
     }
@@ -131,6 +152,9 @@ public final class JewelPickMenu extends Menu {
     }
 
     private void back() {
+        if (TreeFeed.openNative(plugin, player, null)) {
+            return; // 2026-11-02 照站長（D 組）：從原生畫面來的回原生畫面；這次之前一律回箱子選單
+        }
         new PassiveMenu(plugin, player, tree, highlights, node).open();
     }
 }

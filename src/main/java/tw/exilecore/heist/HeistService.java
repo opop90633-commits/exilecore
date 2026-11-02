@@ -256,7 +256,7 @@ public final class HeistService implements Listener {
             }
             // 還沒開的金庫箱冒光（看得出來在哪）
             for (final Location chest : run.chests.values()) {
-                chest.getWorld().spawnParticle(Particle.WAX_ON, chest.getX() + 0.5, chest.getY() + 1.2, chest.getZ() + 0.5, 3, 0.3, 0.3, 0.3, 0);
+                tw.exilecore.skill.Fx.spawn(chest.getWorld(), Particle.WAX_ON, chest.getX() + 0.5, chest.getY() + 1.2, chest.getZ() + 0.5, 3, 0.3, 0.3, 0.3, 0);
             }
         }
     }
@@ -472,7 +472,7 @@ public final class HeistService implements Listener {
                     quantity(player), random()) * Math.max(1, settings.chestRolls()));
             takers++;
         }
-        center.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, center, 30, 0.5, 0.5, 0.5, 0.15);
+        tw.exilecore.skill.Fx.spawn(center.getWorld(), Particle.TOTEM_OF_UNDYING, center, 30, 0.5, 0.5, 0.5, 0.15);
         center.getWorld().playSound(center, Sound.BLOCK_VAULT_OPEN_SHUTTER, 1.0f, 1.0f);
         plugin.getSLF4JLogger().debug("劫盜 #{}：金庫箱開了，{} 人拿到東西", run.instance.id(), takers);
     }

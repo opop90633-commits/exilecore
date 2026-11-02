@@ -263,21 +263,10 @@ final class Signatures {
         }
         final int perStage = charging.build == null ? 1 : Math.max(1, charging.build.projectiles()); // 2026-11-01：累積型每段幾支
         final boolean fullOnly = FullCharge.required(charging.skillId); // 2026-11-01 照 PoE2 Plasma Blast：充滿才能射
-        // 放開的偵測晚 3～7 tick：照最後一次按住的時間判斷有沒有充滿（跟下面 releaseHeld 一樣），不然提早放開也射得出去
-        if (fullOnly && released && FullCharge.cancels(
-                (pressedAgain || charging.letGo ? now : Math.min(now, charging.last + 1)) - charging.start, charging.interval)) {
-            // 還沒充滿就放開：取消（不出手、不扣消耗）
-            runtime.charging = null;
-            final SkillDefinition cancelled = service.config().skill(charging.skillId);
-            final PlayerState cancelState = plugin.players().get(player);
-            cancelState.notice("<gray>" + (cancelled == null ? charging.skillId : ItemRenderer.escape(cancelled.name())) + " 還沒充滿，取消", now + 20);
-            plugin.players().display(player, cancelState);
-            return;
-        }
         if (fullOnly && !charging.cued && held >= FullCharge.fullTicks(charging.interval)) {
             charging.cued = true; // 充滿了：叮一聲，放開就射
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, SoundCategory.PLAYERS, 1.0f, 2.0f);
-            player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0, 1.2, 0), 18, 0.4, 0.5, 0.4, 0.05);
+            tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.END_ROD, player.getLocation().add(0, 1.2, 0), 18, 0.4, 0.5, 0.4, 0.05);
         }
         if (fullOnly && !released && held % 4 == 0) {
             final SkillDefinition shown = service.config().skill(charging.skillId);
@@ -300,7 +289,7 @@ final class Signatures {
                 if (!charging.cued && held >= charging.perfectAt) {
                     charging.cued = true;
                     player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, SoundCategory.PLAYERS, 1.0f, 2.0f);
-                    player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0, 1.2, 0), 18, 0.4, 0.5, 0.4, 0.05);
+                    tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.END_ROD, player.getLocation().add(0, 1.2, 0), 18, 0.4, 0.5, 0.4, 0.05);
                 }
                 if (held % 2 == 0) {
                     state.notice(perfectBar(name, held, charging.perfectAt), now + 6);
@@ -320,7 +309,7 @@ final class Signatures {
                             0.6f + 1.2f * stage / spec.stages());
                 }
                 final Location eye = player.getEyeLocation();
-                player.getWorld().spawnParticle(Particle.FLAME, eye.add(eye.getDirection().multiply(1.2)), 2 + charging.shownStage, 0.15, 0.15, 0.15, 0.01);
+                tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.FLAME, eye.add(eye.getDirection().multiply(1.2)), 2 + charging.shownStage, 0.15, 0.15, 0.15, 0.01);
             }
             return;
         }
@@ -336,7 +325,9 @@ final class Signatures {
         if (spec.perfect()) {
             service.supportMechanics().lineage().perfectResult(player, charging.skillId, perfect); // 2026-10-27 照 PoE2 律勁：成功疊一層、失敗全部失去
         }
-        runtime.releasing = new SkillRuntime.Release(charging.skillId, releaseHeld, perfect, charging.speed);
+        // 2026-11-02 照站長：熾漿砲沒充滿也射，傷害照充能比例（這次之前沒充滿就放開＝取消）
+        final double fullRatio = fullOnly ? FullCharge.chargeRatio(releaseHeld, charging.interval) : 1.0;
+        runtime.releasing = new SkillRuntime.Release(charging.skillId, releaseHeld, perfect, charging.speed, fullRatio);
         final LivingEntity target = charging.target == null ? null
                 : plugin.getServer().getEntity(charging.target) instanceof LivingEntity living && living.isValid() ? living : null;
         try {
@@ -389,7 +380,12 @@ final class Signatures {
         if (spec.stages() > 0) {
             state.notice(String.format(Locale.ROOT, "<#ff9a4d>%s 放出：%d／%d %s", name, stages, spec.stages(), spec.accumulate() ? "支" : "層"), now + 30);
         }
-        final SkillBuild result = released(build, spec, stages, release.perfect(), state.sheet(), release.held() / 20.0);
+        SkillBuild result = released(build, spec, stages, release.perfect(), state.sheet(), release.held() / 20.0);
+        if (release.fullRatio() < 1.0) {
+            // 2026-11-02 照站長：熾漿砲沒充滿也射，傷害照充能比例
+            result = result.withProfile(result.profile().scaled(release.fullRatio(), "未充滿"));
+            state.notice(String.format(Locale.ROOT, "<#ffd27f>%s 未充滿：<white>%d%%<gray> 傷害", name, Math.round(release.fullRatio() * 100)), now + 30);
+        }
         plugin.players().display(player, state);
         return result;
     }
@@ -632,7 +628,7 @@ final class Signatures {
             return null;
         }
         whirls.remove(owner);
-        whirl.center.getWorld().spawnParticle(Particle.CLOUD, whirl.center.clone().add(0, 0.8, 0), 8 + 4 * whirl.stage, whirl.radius() * 0.4, 0.4,
+        tw.exilecore.skill.Fx.spawn(whirl.center.getWorld(), Particle.CLOUD, whirl.center.clone().add(0, 0.8, 0), 8 + 4 * whirl.stage, whirl.radius() * 0.4, 0.4,
                 whirl.radius() * 0.4, 0.05);
         return new ConsumedWhirl(whirl.stage, whirl.element);
     }

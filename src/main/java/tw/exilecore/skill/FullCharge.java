@@ -43,11 +43,16 @@ public final class FullCharge {
         return held < fullTicks(intervalTicks);
     }
 
+    /** 2026-11-02 照站長：放開時充能比例（0～1，沒充滿也射、傷害照這個比例）。純函式。 */
+    static double chargeRatio(final long held, final double intervalTicks) {
+        return Math.max(0.01, Math.min(1.0, held / (double) fullTicks(intervalTicks)));
+    }
+
     /** 充能進度的提示（name 已經跳脫過）：還沒滿寫百分比，滿了寫「放開射出」。純函式。 */
     static String progressText(final String name, final long held, final double intervalTicks) {
         final long full = fullTicks(intervalTicks);
         if (held >= full) {
-            return "<#7fe3ff>" + name + " 充能完成<gray>（放開射出）";
+            return "<#7fe3ff>" + name + " 充能完成<gray>（放開射出，全額傷害）";
         }
         return "<#ffd27f>" + name + " 充能 <white>" + Math.min(99, held * 100 / full) + "%";
     }

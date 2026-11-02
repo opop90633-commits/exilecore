@@ -174,7 +174,7 @@ final class Mounts implements Listener {
         horse.addPassenger(player);
         at.getWorld().playSound(at, Sound.ENTITY_HORSE_ARMOR, 0.8f, 1f);
         at.getWorld().playSound(at, Sound.ENTITY_HORSE_AMBIENT, 0.6f, 1.1f);
-        at.getWorld().spawnParticle(Particle.CLOUD, at.clone().add(0, 0.6, 0), 16, 0.6, 0.3, 0.6, 0.02);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.CLOUD, at.clone().add(0, 0.6, 0), 16, 0.6, 0.3, 0.6, 0.02);
         horse.getPersistentDataContainer().set(new NamespacedKey(plugin, "mount_speed"), PersistentDataType.DOUBLE, spec.speed());
         return "<#e0b070>" + tw.exilecore.item.ItemRenderer.escape(definition.name()) + "<gray>：騎上去了（再放一次或按潛行鍵下馬）";
     }
@@ -194,7 +194,7 @@ final class Mounts implements Listener {
         final AbstractHorse horse = mounts.remove(player.getUniqueId());
         if (horse != null && horse.isValid()) {
             horse.eject();
-            horse.getWorld().spawnParticle(Particle.CLOUD, horse.getLocation().add(0, 0.8, 0), 12, 0.5, 0.4, 0.5, 0.02);
+            tw.exilecore.skill.Fx.spawn(horse.getWorld(), Particle.CLOUD, horse.getLocation().add(0, 0.8, 0), 12, 0.5, 0.4, 0.5, 0.02);
             horse.remove();
         }
     }

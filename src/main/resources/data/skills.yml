@@ -5017,7 +5017,7 @@ skills:
 
   searing_slurry_cannon:
     name: 熾漿砲
-    description: 按住引導充能，充滿一次攻擊時間（多 2 秒，這 2 秒不吃攻擊速度）才射得出去，沒充滿就放開會取消；電漿彈貫穿沿路所有的敵人並擊退 4 格，撞到地形時大爆炸。多的投射物扇形射出。   # 2026-11-01 照 PoE2 Plasma Blast（引導充滿才射、總攻擊時間 +2 秒、擊退）；這次之前「蓄力很久才發射」是攻擊速度 24%
+    description: 按住引導充能，充滿一次攻擊時間（多 2 秒，這 2 秒不吃攻擊速度）打出全額傷害，沒充滿就放開照樣射出，但傷害照充能比例打折；電漿彈貫穿沿路所有的敵人並擊退 4 格，撞到地形時大爆炸。多的投射物扇形射出。   # 2026-11-01 照 PoE2 Plasma Blast（引導充滿才射、總攻擊時間 +2 秒、擊退）；這次之前「蓄力很久才發射」是攻擊速度 24%
     icon: NETHER_STAR   # 2026-10：原本 BEACON（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     type: attack
     tier: 13
@@ -5027,7 +5027,7 @@ skills:
     projectile: { speed: 2.2, range: 34, size: 0.6, pierce: 20, explode: 3.2 }   # 2026-10-28 照 PoE2（poe2db Plasma Blast：爆炸 3.2 公尺，不隨等級）；這次之前 [3.0, 3.8]
     convert: { lightning: 0.8 }   # 2026-10-26 弩照 PoE2（Plasma Blast 80% 轉閃電）；這次之前 { lightning: 0.7 }
     attack_speed: 1   # 2026-11-01 照 PoE2 Plasma Blast（攻擊速度 100%，另外總攻擊時間 +2 秒見 skill.added_time）；這次之前 0.24（把 +2 秒折成倍率，吃攻速）
-    # 2026-11-01 照 PoE2（Channel、cannot be fired at all unless fully charged）：按住引導，充滿一次攻擊時間才能射，沒滿就放開＝取消（FullCharge）；這次之前一按就射
+    # 2026-11-01 照 PoE2（Channel、cannot be fired at all unless fully charged）：按住引導，充滿一次攻擊時間才能射，沒滿就放開＝取消（FullCharge）；這次之前一按就射。2026-11-02 照站長：沒滿也射，傷害照充能比例
     charge: { full_only: true }
     hit_knockback: 4   # 2026-11-01 照 PoE2（Projectile 那一段 base_knockback_distance 400 → 4 公尺；爆炸那一段沒有；HitKnockback）；這次之前不擊退
     effectiveness: [8.3, 9.15, 10.11, 11.08, 12.04, 13.04, 14.08, 15.08, 16.02, 17.04, 18.15, 19.36, 20.67, 22.1, 23.65, 25.35, 27.21, 29.24, 31.46, 33.89, 36.51, 39.33, 42.37, 45.64, 49.17, 52.97, 57.07, 61.48, 66.23, 71.35, 76.86, 82.8, 89.2, 96.1, 103.53, 111.53, 120.15, 129.43, 139.44, 150.22]   # 2026-10-26 照 PoE2（poe2db Plasma Blast 1–40 級）；這次之前 [5.07, 11.36]

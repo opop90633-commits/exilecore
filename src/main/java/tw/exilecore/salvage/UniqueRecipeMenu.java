@@ -583,6 +583,12 @@ public final class UniqueRecipeMenu extends Menu {
             result.setIdentified(true);
             final ItemStack item = plugin.items().toStack(result);
             for (final Input input : group) {
+                // 2026-11-02 照站長：換掉的追逐級傳奇記成消耗（市場報告的追逐級那一段：產出扣掉換掉的）
+                final UniqueItem used = input.data().unique() == null ? null : plugin.items().repository().unique(input.data().unique());
+                if (used != null && used.chase() && plugin.economy() != null) {
+                    plugin.economy().ledger().of(player).consumed(tw.exilecore.loot.LootService.CHASE_KIND + used.id(),
+                            tw.exilecore.economy.EconomySources.UNIQUE_RECIPE, 1);
+                }
                 final String name = Wallet.describe(input.stack());
                 names.add(name);
                 inventory.setItem(input.slot(), null);
@@ -597,6 +603,10 @@ public final class UniqueRecipeMenu extends Menu {
             inventory.setItem(group.getFirst().slot(), item);
             if (pick.chase() && !chaseMode) {
                 chaseResults.add(result);
+            } else if (pick.chase() && plugin.economy() != null) {
+                // 2026-11-02 照站長：追逐級換追逐級也算新產出（不廣播）；這次之前不記
+                plugin.economy().ledger().of(player).produced(tw.exilecore.loot.LootService.CHASE_KIND + pick.id(),
+                        tw.exilecore.economy.EconomySources.UNIQUE_RECIPE, 1);
             }
         }
         selected.clear();
@@ -624,7 +634,7 @@ public final class UniqueRecipeMenu extends Menu {
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.4f);
         if (plugin.loot() != null) {
             for (final ItemData result : chaseResults) {
-                plugin.loot().broadcastChase(player, result); // 一般傳奇換到追逐級：全服廣播（追逐級換追逐級不廣播）
+                plugin.loot().broadcastChase(player, result, tw.exilecore.economy.EconomySources.UNIQUE_RECIPE); // 一般傳奇換到追逐級：全服廣播（追逐級換追逐級不廣播）
             }
         }
     }

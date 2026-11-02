@@ -148,7 +148,7 @@ public final class PassiveState {
             character.setRefundPoints(character.refundPoints() - 1);
         } else {
             state.setGold(state.gold() - cost);
-            plugin.economy().ledger().gold(tw.exilecore.economy.EconomyLedger.RESPEC, -cost);
+            plugin.economy().ledger().of(player).gold(tw.exilecore.economy.EconomyLedger.RESPEC, -cost);
         }
         JewelSockets.reclaim(plugin, player, state, tree, "退掉了珠寶孔");
         state.markDirty();
@@ -237,7 +237,7 @@ public final class PassiveState {
         lockAttributes();
         character.setRefundPoints(character.refundPoints() - free);
         state.setGold(state.gold() - cost);
-        plugin.economy().ledger().gold(tw.exilecore.economy.EconomyLedger.RESPEC, -cost);
+        plugin.economy().ledger().of(player).gold(tw.exilecore.economy.EconomyLedger.RESPEC, -cost);
         JewelSockets.reclaim(plugin, player, state, tree, "匯入的規劃沒有配那個珠寶孔");
         state.markDirty();
         plugin.players().sheet(player);

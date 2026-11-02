@@ -64,7 +64,8 @@ public final class SupportGuards {
 
     /** 2026-10-27：不寫 resource.remnant、在程式裡留殘骸的技能（Snap、SkillTriggers 的素痕湧、OriginalSkills 的燼種）。 */
     static final Set<String> CODE_REMNANTS = Set.of("anomaly_devour_blast", "element_trace_surge", "cinder_sprout",
-            "magic_spring_well"); // 2026-11-01 照 PoE2 Mana Remnants（Remnant 標籤）：魔力痕跡吃殘骸輔助
+            "magic_spring_well", // 2026-11-01 照 PoE2 Mana Remnants（Remnant 標籤）：魔力痕跡吃殘骸輔助
+            "vital_residue"); // 2026-11-02 照 PoE2 Life Remnants（Remnant 標籤）：生命痕跡吃殘骸輔助（AscGranted.spawnLifeRemnant）
 
     /** 這個技能有沒有使用條件（Delayed Gratification）。 */
     static boolean conditional(final SkillDefinition skill) {

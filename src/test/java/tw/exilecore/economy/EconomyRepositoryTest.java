@@ -172,6 +172,13 @@ class EconomyRepositoryTest {
         assertEquals(33, stock.get("bounty_orb"), "通貨袋 3 ＋ 掛單還沒成交的 30");
         assertEquals(2, stock.get("zenith_orb"), "市集待領");
         assertTrue(stock.get(EconomyRepository.GOLD) >= 777);
+        // 2026-11-02 照站長：管理員的通貨袋、倉庫、待領、掛單、金幣不算（名字或帳號）
+        final Map<String, Long> byName = database.sync(c -> repository.computeStock(c, java.util.Set.of(), java.util.Set.of("stock")));
+        assertEquals(112, stock.get("glimmer_orb") - byName.getOrDefault("glimmer_orb", 0L), "排除的帳號：通貨袋＋倉庫都不算");
+        assertEquals(33, stock.get("bounty_orb") - byName.getOrDefault("bounty_orb", 0L), "掛單也不算");
+        assertEquals(777, stock.get(EconomyRepository.GOLD) - byName.get(EconomyRepository.GOLD), "金幣也不算");
+        final Map<String, Long> byUuid = database.sync(c -> repository.computeStock(c, java.util.Set.of(account.toString()), java.util.Set.of()));
+        assertEquals(byName, byUuid, "用帳號排除一樣");
         database.sync(c -> {
             repository.saveStock(c, "2026-07-01", stock);
             repository.saveStock(c, "2026-07-01", Map.of("glimmer_orb", 1L));
@@ -179,5 +186,17 @@ class EconomyRepositoryTest {
         });
         final List<EconomyRepository.DayValue> saved = database.sync(c -> repository.stockSince(c, "2026-07-01"));
         assertEquals(List.of(new EconomyRepository.DayValue("2026-07-01", "glimmer_orb", 1)), saved, "同一天重算整天換掉");
+    }
+
+    @Test
+    void resetReportClearsFlowsAndStockOnly() throws Exception {
+        database.sync(c -> {
+            repository.addAll(c, List.of(new EconomyRepository.Flow("2026-11-01", "reset_orb", "drop", 3)), List.of());
+            repository.saveStock(c, "2026-11-01", Map.of("reset_orb", 9L));
+            return null;
+        });
+        assertTrue(database.sync(repository::resetReport) >= 2);
+        assertEquals(0, database.sync(c -> repository.flowsSince(c, "2000-01-01")).size(), "產出消耗清掉");
+        assertEquals(0, database.sync(c -> repository.stockSince(c, "2000-01-01")).size(), "存量清掉");
     }
 }

@@ -105,7 +105,7 @@ public final class EntryGrace implements Listener {
         }
         for (int i = 0; i < 8; i++) {
             final double angle = Math.PI * 2 * i / 8;
-            here.getWorld().spawnParticle(Particle.DUST, here.getX() + Math.cos(angle) * 0.7, here.getY() + 0.1, here.getZ() + Math.sin(angle) * 0.7,
+            tw.exilecore.skill.Fx.spawn(here.getWorld(), Particle.DUST, here.getX() + Math.cos(angle) * 0.7, here.getY() + 0.1, here.getZ() + Math.sin(angle) * 0.7,
                     1, 0, 0, 0, 0, RING);
         }
     }

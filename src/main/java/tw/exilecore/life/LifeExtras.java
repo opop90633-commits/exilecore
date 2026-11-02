@@ -820,6 +820,8 @@ final class LifeExtras {
         /** 2026-10-29：上次換階段的時間（毫秒；0 = 還沒換過），換階段的 2.5 秒內打不動。 */
         long phaseMillis;
         boolean enraged;
+        /** 2026-11-02 照站長：鎖血機制（站位圈、倒數大招、元素弱點；跟地圖 Boss 同一套 {@link tw.exilecore.map.PhaseLocks}）。這次之前鯊王換階段不鎖。 */
+        final tw.exilecore.map.PhaseLocks.State locks = new tw.exilecore.map.PhaseLocks.State();
         final java.util.Set<UUID> adds = new java.util.HashSet<>();
         /** 2026-10-24：Boss 血條（跟淵鯨一樣掛在畫面上）；筏上的人都看得到。 */
         final net.kyori.adventure.bossbar.BossBar bar = net.kyori.adventure.bossbar.BossBar.bossBar(net.kyori.adventure.text.Component.empty(), 1f,
@@ -1053,7 +1055,7 @@ final class LifeExtras {
         stack.setAmount(stack.getAmount() - 1);
         service.markCombat(plot, true);
         service.world().playSound(at, Sound.ENTITY_PLAYER_SPLASH_HIGH_SPEED, 1.5f, 0.6f);
-        service.world().spawnParticle(Particle.SPLASH, at, 80, 1.5, 0.5, 1.5, 0.2);
+        tw.exilecore.skill.Fx.spawn(service.world(), Particle.SPLASH, at, 80, 1.5, 0.5, 1.5, 0.2);
         for (final Player member : crew) {
             member.showTitle(net.kyori.adventure.title.Title.title(plugin.text().parse("<#ff6b6b>" + ItemRenderer.escape(def.name()) + "跳上筏了！"),
                     plugin.text().parse("<gray>極境的強度——" + def.fleeSeconds() + " 秒內打倒牠"),
@@ -1131,7 +1133,8 @@ final class LifeExtras {
                 // 換階段（生命低於 at）
                 final org.bukkit.attribute.AttributeInstance max = king.entity.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
                 final double ratio = max == null || max.getValue() <= 0 ? 1 : king.entity.getHealth() / max.getValue();
-                while (king.phase < def.phases().size() && ratio <= def.phases().get(king.phase).at()) {
+                // 2026-11-02：鎖血機制還在時不換（一次只換一個、等機制結束）
+                while (!king.locks.active() && king.phase < def.phases().size() && ratio <= def.phases().get(king.phase).at()) {
                     final LifeConfig.KingPhase phase = def.phases().get(king.phase);
                     king.phase++;
                     king.phaseMillis = System.currentTimeMillis(); // 2026-10-29 照站長：換階段 2.5 秒打不動
@@ -1142,6 +1145,15 @@ final class LifeExtras {
                                 + (phase.damage() > 0 ? "<red>（傷害更多 " + Math.round(phase.damage()) + "%）" : "")));
                         member.playSound(member.getLocation(), Sound.ENTITY_RAVAGER_ROAR, 0.8f, 0.8f);
                     }
+                    // 2026-11-02 照站長：這個階段的鎖血機制（life.yml 的 mechanic；沒寫的輪流配，跟極境一樣）
+                    final tw.exilecore.map.PhaseMechanic.Spec mechanic = kingMechanic(def, king.phase - 1);
+                    if (mechanic != null && plugin.maps() != null) {
+                        plugin.maps().locks().start(kingArena(king), king.locks, mechanic, tw.exilecore.map.PhaseMechanic.requiredFraction(
+                                LifeConfig.kingLockPhases(def.phases()), king.phase - 1, mechanic.element() == null ? 0 : mechanic.element().share()));
+                    }
+                }
+                if (plugin.maps() != null) {
+                    plugin.maps().locks().update(kingArena(king), king.locks);
                 }
             }
             // 在筏上追最近的人（跳不出筏）
@@ -1171,7 +1183,7 @@ final class LifeExtras {
                 king.entity.teleport(next);
             }
             if (king.age % 10 == 0) {
-                service.world().spawnParticle(Particle.FALLING_WATER, at.clone().add(0, 1, 0), 8, 0.8, 0.4, 0.8, 0);
+                tw.exilecore.skill.Fx.spawn(service.world(), Particle.FALLING_WATER, at.clone().add(0, 1, 0), 8, 0.8, 0.4, 0.8, 0);
             }
             king.adds.removeIf(id -> {
                 final Entity add = plugin.getServer().getEntity(id);
@@ -1188,7 +1200,8 @@ final class LifeExtras {
         final long left = Math.max(0, def.fleeSeconds() - king.age / 10L);
         final String phase = king.phase <= 0 || king.phase > def.phases().size() ? "" : " <#ff6b6b>"
                 + ItemRenderer.escape(def.phases().get(king.phase - 1).name().isEmpty() ? "第 " + (king.phase + 1) + " 階段" : def.phases().get(king.phase - 1).name());
-        king.bar.name(plugin.text().parse("<#ff6b6b>" + ItemRenderer.escape(def.name()) + " <white>" + Math.round(ratio * 100) + "%" + phase
+        final String lockText = plugin.maps() == null ? null : plugin.maps().locks().barPrefix(king.locks, king.entity); // 2026-11-02
+        king.bar.name(plugin.text().parse((lockText == null ? "" : lockText) + "<#ff6b6b>" + ItemRenderer.escape(def.name()) + " <white>" + Math.round(ratio * 100) + "%" + phase
                 + (king.enraged ? " <red>狂暴" : "") + " <dark_gray>｜ <gray>" + String.format(Locale.ROOT, "%d:%02d", left / 60, left % 60) + " 後跳回海裡"));
         final java.util.Set<UUID> now = new java.util.HashSet<>();
         for (final Player member : crew) {
@@ -1209,7 +1222,84 @@ final class LifeExtras {
         }
     }
 
+    /** 2026-11-02 照站長：鯊王第 index 個階段（0 起）的鎖血機制；不鎖 null。 */
+    static tw.exilecore.map.PhaseMechanic.Spec kingMechanic(final LifeConfig.SharkKing def, final int index) {
+        final List<tw.exilecore.map.PhaseMechanic.Spec> all = kingMechanics(def);
+        return index < 0 || index >= all.size() ? null : all.get(index);
+    }
+
+    /** 2026-11-02：鯊王每個階段的鎖血機制（輪流的鍵是 shark_king；比照極境，倒數大招打得比較痛）。 */
+    static List<tw.exilecore.map.PhaseMechanic.Spec> kingMechanics(final LifeConfig.SharkKing def) {
+        return tw.exilecore.map.PhaseMechanic.resolve("shark_king", LifeConfig.kingLockPhases(def.phases()), true, true);
+    }
+
+    /** 2026-11-02：鯊王的鎖血狀態（MapService 的 Boss 傷害修正）；不是鯊王 null。 */
+    tw.exilecore.map.PhaseLocks.State lockState(final Entity entity) {
+        final King king = kingOf(entity);
+        return king == null ? null : king.locks;
+    }
+
+    /** 2026-11-02：鯊王的場地是那塊筏（給 PhaseLocks）：筏的中心、筏上的地板、筏上的人。 */
+    private tw.exilecore.map.PhaseLocks.Arena kingArena(final King king) {
+        final int[] center = service.plotCenter(king.plot);
+        final int[] range = LifeService.extent(service.raftSize(king.plot));
+        final double minX = center[0] + range[0];
+        final double maxX = center[0] + range[1] + 1;
+        final double minZ = center[1] + range[0];
+        final double maxZ = center[1] + range[1] + 1;
+        return new tw.exilecore.map.PhaseLocks.Arena() {
+            @Override
+            public LivingEntity boss() {
+                return king.entity;
+            }
+
+            @Override
+            public String bossName() {
+                return config().sharkKing() == null ? "鯊王" : config().sharkKing().name();
+            }
+
+            @Override
+            public Location center() {
+                return new Location(service.world(), (minX + maxX) / 2, deckY(), (minZ + maxZ) / 2);
+            }
+
+            @Override
+            public boolean floor(final double x, final double z) {
+                return x >= minX && x < maxX && z >= minZ && z < maxZ;
+            }
+
+            @Override
+            public double[] bounds() {
+                return null;
+            }
+
+            @Override
+            public double ring() {
+                // 筏不大：圈放在筏的一半寬度以內
+                return Math.max(1, Math.min(5, (maxX - minX) / 2 - 1.5));
+            }
+
+            @Override
+            public List<Player> fighters() {
+                return tw.exilecore.map.PhaseLocks.hittable(service.crewOn(king.plot));
+            }
+
+            @Override
+            public java.util.Collection<Player> audience() {
+                return service.crewOn(king.plot);
+            }
+
+            @Override
+            public int players() {
+                return Math.max(1, service.crewOn(king.plot).size());
+            }
+        };
+    }
+
     private void removeKing(final King king) {
+        if (plugin.maps() != null) {
+            plugin.maps().locks().clear(king.locks, king.entity); // 2026-11-02
+        }
         for (final UUID id : king.watching) {
             final Player watcher = plugin.getServer().getPlayer(id);
             if (watcher != null) {
@@ -1265,6 +1355,9 @@ final class LifeExtras {
             }
         }
         service.markCombat(dead.plot, false);
+        if (plugin.maps() != null) {
+            plugin.maps().locks().clear(dead.locks, entity); // 2026-11-02
+        }
         // 筏上的每個人各拿一份
         final List<Player> crew = service.crewOn(dead.plot);
         final Player owner = plugin.getServer().getPlayer(dead.owner);

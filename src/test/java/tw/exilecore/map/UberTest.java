@@ -285,7 +285,10 @@ class UberTest {
                 assertTrue(use.fromPhase() <= merged.phases().size(), map.id() + "：極境的 " + use.id() + " 要等第 " + use.fromPhase()
                         + " 階段，但只有 " + merged.phases().size() + " 個階段（永遠用不到）");
             }
-            assertTrue(merged.phases().stream().filter(phase -> phase.shield() != null).count() >= 2, map.id() + "：極境張兩次護盾");
+            // 2026-11-02 照站長：極境的第三個護盾換成別的鎖血機制（站位圈、倒數大招、元素弱點）；這次之前要張兩次結晶護盾
+            assertTrue(merged.phases().stream().anyMatch(phase -> phase.shield() != null), map.id() + "：極境還有結晶護盾");
+            final List<PhaseMechanic.Spec> locks = PhaseMechanic.resolve(PhaseMechanic.key(map.id(), true), merged.phases(), true, true);
+            assertTrue(locks.stream().filter(java.util.Objects::nonNull).count() >= 2, map.id() + "：極境至少鎖兩次血");
             assertTrue(merged.enrage().after() <= boss.enrage().after(), map.id() + "：極境的狂暴不會比較晚（2026-10-21：都是 5 分鐘）");
             final CurrencyType key = currencies.get(uber.key());
             assertNotNull(key, map.id() + "：開門的通貨要存在");

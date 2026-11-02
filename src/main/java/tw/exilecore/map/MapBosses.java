@@ -39,6 +39,7 @@ import java.util.UUID;
  * 終局開到夠高的階有機率掉開極境的鑰匙，極境有自己的掉落（{@link MapConfig.UberDrops}）。
  * <p>
  * 特殊機制：階段的護盾（Boss 無敵、限時打掉結晶，不然回血）、狂暴（開打太久傷害變高）；場地危害由招式引擎照 {@code hazards} 落下。
+ * 2026-11-02 照站長：換階段的鎖血機制多了站位圈、倒數大招、元素弱點（{@link PhaseMechanic}；這次之前只有結晶）。
  */
 final class MapBosses {
 
@@ -127,6 +128,7 @@ final class MapBosses {
                 continue;
             }
             updateShield(instance, boss, now);
+            updateLock(instance, boss, now); // 2026-11-02：站位圈、倒數大招、元素弱點（易傷的消退也在裡面）
             checkEnrage(instance, boss, now);
             // 跑太遠又沒人在打才拉回 Boss 房；盯著最近的玩家（北極熊、伏守者這種不會主動打人的也會打）
             if (boss.getLocation().distanceSquared(center) > LEASH * LEASH && nearbyPlayers(instance, boss.getLocation(), ENGAGED).isEmpty()) {
@@ -291,7 +293,7 @@ final class MapBosses {
                 * (parity ? service.config().parityDamage(parityTier) : 1.0);
         instance.setBossPhase(0);
         final String bossName = variant == MapTwists.BossVariant.EMPOWERED ? "強化的" + definition.name() : definition.name();
-        plugin.monsters().decorateBoss(entity, instance.level(), bossName, definition.mods(), life, damage, definition.scale());
+        plugin.monsters().decorateBoss(entity, instance.level(), bossName, bossMods(instance, definition), life, damage, definition.scale());
         MapSpawner.prepare(entity);
         service.hats().dress(entity, instance.map() == null ? null : instance.map().theme(), true); // 2026-10-31：Boss 戴加大的頭飾
         final AttributeInstance follow = entity.getAttribute(Attribute.FOLLOW_RANGE);
@@ -319,14 +321,16 @@ final class MapBosses {
         }
         if (alerts(instance)) {
             // 終局與試煉 Boss：開打前先在聊天室說明機制（幾 % 血換階段、護盾、狂暴、場地危害）
-            final String overview = BossMechanicText.overview(definition, skillNames(definition.hazards().stream()
+            // 2026-11-02：每個階段寫出配到的鎖血機制（這次之前只標有沒有護盾）
+            final String overview = BossMechanicText.overview(definition, mechanics(instance), skillNames(definition.hazards().stream()
                     .map(tw.exilecore.skill.BossHazard::skill).toList()));
             if (overview != null) {
                 broadcast(instance, overview);
             }
         }
         center.getWorld().playSound(center, definition.named() ? Sound.ENTITY_WITHER_SPAWN : Sound.ENTITY_EVOKER_PREPARE_WOLOLO, 0.8f, 0.8f);
-        center.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, center, 60, 1.5, 1.5, 1.5, 0.05);
+        tw.exilecore.skill.Fx.important(() -> // 2026-11-02：Boss 登場是重要的（每個人都看得到）
+                tw.exilecore.skill.Fx.spawn(center.getWorld(), Particle.SOUL_FIRE_FLAME, center, 60, 1.5, 1.5, 1.5, 0.05));
     }
 
     private net.kyori.adventure.text.Component title(final MapInstance instance, final int phase) {
@@ -350,9 +354,15 @@ final class MapBosses {
     private final java.util.Map<MapInstance, BossBar.Color> normalColors = new java.util.WeakHashMap<>();
 
     /** 2026-10-31：無敵時血條名稱前面的字（為什麼打不動）。 */
-    private static String lockedPrefix(final MapInstance instance) {
+    private String lockedPrefix(final MapInstance instance) {
         if (instance.shielded()) {
             return "<white>🔒 無敵：打掉 " + instance.shieldCrystals().size() + " 顆結晶 <dark_gray>｜ ";
+        }
+        // 2026-11-02 照站長：站位圈、倒數大招也寫出要做什麼
+        final String lock = instance.lockState().invulnerable() && instance.boss() != null
+                ? service.locks().barPrefix(instance.lockState(), instance.boss()) : null;
+        if (lock != null) {
+            return lock;
         }
         if (instance.phaseHold() && instance.bossPhase() == 0) {
             return "<white>🔒 開場中，暫時打不動 <dark_gray>｜ "; // 2026-10-31 照站長：開場的 2.5 秒也寫出來（這次之前寫成「換階段中」）
@@ -378,8 +388,11 @@ final class MapBosses {
         } else if (!locked && normalColors.containsKey(instance)) {
             bar.color(normalColors.remove(instance));
         }
+        // 2026-11-02：打得動但有元素弱點、虛弱時，名稱前面也寫出來
+        final String open = locked ? null : openPrefix(instance);
         final net.kyori.adventure.text.Component name = locked
-                ? plugin.text().parse(lockedPrefix(instance)).append(title(instance, instance.bossPhase())) : title(instance, instance.bossPhase());
+                ? plugin.text().parse(lockedPrefix(instance)).append(title(instance, instance.bossPhase()))
+                : open != null ? plugin.text().parse(open).append(title(instance, instance.bossPhase())) : title(instance, instance.bossPhase());
         // 2026-11-01 照站長：Boss 有護盾（能量護盾、熔岩護盾）時血條後面寫「護盾 x%」——傷害先扣護盾，血條才不動
         final String shield = plugin.monsterModule() == null || plugin.monsterModule().mechanics() == null ? ""
                 : tw.exilecore.monster.MonsterMechanics.shieldText(plugin.monsterModule().mechanics().shieldLeft(boss.getUniqueId()));
@@ -421,7 +434,8 @@ final class MapBosses {
         }
         final double fraction = boss.getHealth() / Math.max(1, max.getValue());
         final MapConfig.Phase phase = phases.get(instance.bossPhase());
-        final PhaseStep.Step step = PhaseStep.step(phase.at(), fraction, now, instance.phaseTick(), instance.shielded());
+        // 2026-11-02：結晶以外的鎖血機制還在時也不換（這次之前只看結晶）
+        final PhaseStep.Step step = PhaseStep.step(phase.at(), fraction, now, instance.phaseTick(), instance.locked());
         // 2026-10-29 照站長：剛進新階段的 2.5 秒也打不動（PhaseStep.TRANSITION_TICKS）
         holdPhase(instance, boss, step == PhaseStep.Step.WAIT || PhaseStep.transitioning(now, instance.phaseTick()));
         if (step != PhaseStep.Step.ENTER) {
@@ -491,7 +505,7 @@ final class MapBosses {
             broadcastActionBar(instance, "<gray>" + ItemRenderer.escape(instance.bossDef().name()) + " 正在換階段，暫時打不動");
         }
         instance.setPhaseHold(hold);
-        final boolean invulnerable = hold || instance.shielded();
+        final boolean invulnerable = hold || instance.lockInvulnerable(); // 2026-11-02：站位圈、倒數大招也無敵（元素弱點不是）
         if (boss.isValid() && boss.isInvulnerable() != invulnerable) {
             boss.setInvulnerable(invulnerable);
         }
@@ -500,17 +514,27 @@ final class MapBosses {
     private void enterPhase(final MapInstance instance, final LivingEntity boss, final MapConfig.Phase phase) {
         final Location at = boss.getLocation();
         at.getWorld().playSound(at, Sound.ENTITY_ENDER_DRAGON_GROWL, 0.7f, 1.2f);
-        at.getWorld().spawnParticle(Particle.EXPLOSION, at, 3, 1, 1, 1, 0);
+        tw.exilecore.skill.Fx.important(() -> tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.EXPLOSION, at, 3, 1, 1, 1, 0)); // 2026-11-02：換階段是警告
         if (phase.message() != null && !phase.message().isBlank()) {
             talk(instance, Zone.loreLine(instance.bossDef().name(), phase.message()));
         }
         // 畫面中間大字「第 N 階段・名稱」＋最要緊的一件事（護盾優先），聊天室列出這個階段的全部變化
         final int number = instance.bossPhase();
-        final List<String> notes = BossMechanicText.phaseNotes(phase, newSkills(boss, instance.bossDef(), number));
-        broadcastAlert(instance, new String[] {BossMechanicText.phaseTitle(number, phase), BossMechanicText.phaseSubtitle(notes)});
+        // 2026-11-02 照站長：這個階段配到的鎖血機制（寫的 mechanic、shield 的結晶，或終局以上沒寫的輪流配）；這次之前只有 shield 的結晶
+        final PhaseMechanic.Spec mechanic = mechanic(instance, number - 1);
+        final List<String> notes = BossMechanicText.phaseNotes(phase, mechanic, newSkills(boss, instance.bossDef(), number));
+        // 2026-11-02 照站長（C 組）：裝了模組的人改成側邊的機制清單（這個階段要做什麼＋鎖血機制的倒數）＋上面那排一則，不送大標題
+        final String[] phaseLines = {BossMechanicText.phaseTitle(number, phase), BossMechanicText.phaseSubtitle(notes)};
+        final List<String> escaped = new java.util.ArrayList<>();
+        for (final String note : notes) {
+            escaped.add("<white>" + ItemRenderer.escape(note));
+        }
+        final int lockTicks = (int) Math.round(BossMechanicText.mechanicSeconds(mechanic) * 20);
+        broadcastAlert(instance, phaseLines, player -> tw.exilecore.clientmod.AlertFeed.phase(plugin, player, "phase:" + instance.id(),
+                phaseLines, escaped, lockTicks));
         broadcast(instance, BossMechanicText.phaseChat(number, phase, notes));
-        if (phase.shield() != null && !instance.shielded()) {
-            startShield(instance, boss, phase.shield());
+        if (mechanic != null && !instance.locked()) {
+            startMechanic(instance, boss, mechanic, number - 1);
         }
         if (phase.summonType() != null && phase.summonCount() > 0) {
             for (int i = 0; i < phase.summonCount(); i++) {
@@ -527,7 +551,7 @@ final class MapBosses {
                 if (minion != null) {
                     plugin.monsters().decorate(minion, instance.level(), MonsterRarity.NORMAL, List.of());
                     MapSpawner.prepare(minion);
-                    at.getWorld().spawnParticle(Particle.SOUL, spot, 10, 0.3, 0.6, 0.3, 0.02);
+                    tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SOUL, spot, 10, 0.3, 0.6, 0.3, 0.02);
                 }
             }
         }
@@ -581,7 +605,7 @@ final class MapBosses {
     /** 進入有護盾的階段：Boss 無敵，Boss 房裡出現幾顆結晶（不會動、不會打人），限時打掉。 */
     /** 地圖變化的守護之柱：開打時張一次護盾（已經有護盾就不疊）。 */
     void raiseShield(final MapInstance instance, final LivingEntity boss, final MapConfig.Shield shield) {
-        if (!instance.shielded() && boss.isValid() && !instance.bossKilled()) {
+        if (!instance.locked() && boss.isValid() && !instance.bossKilled()) { // 2026-11-02：別的鎖血機制在進行時也不疊
             startShield(instance, boss, shield);
         }
     }
@@ -638,7 +662,8 @@ final class MapBosses {
                 knockback.setBaseValue(1.0);
             }
             instance.shieldCrystals().add(crystal.getUniqueId());
-            spot.getWorld().spawnParticle(Particle.END_ROD, spot.clone().add(0, 1, 0), 20, 0.3, 0.6, 0.3, 0.05);
+            tw.exilecore.skill.Fx.important(() -> // 2026-11-02：護盾水晶出現是機制提示（重要的）
+                    tw.exilecore.skill.Fx.spawn(spot.getWorld(), Particle.END_ROD, spot.clone().add(0, 1, 0), 20, 0.3, 0.6, 0.3, 0.05));
         }
         if (instance.shieldCrystals().isEmpty()) {
             // 結晶一顆都生不出來（type 寫錯）：不要讓 Boss 永遠無敵
@@ -679,7 +704,7 @@ final class MapBosses {
             for (final UUID uuid : instance.shieldCrystals()) {
                 final org.bukkit.entity.Entity entity = plugin.getServer().getEntity(uuid);
                 if (entity != null) {
-                    entity.getWorld().spawnParticle(Particle.HEART, entity.getLocation().add(0, 1, 0), 6, 0.3, 0.4, 0.3, 0);
+                    tw.exilecore.skill.Fx.spawn(entity.getWorld(), Particle.HEART, entity.getLocation().add(0, 1, 0), 6, 0.3, 0.4, 0.3, 0);
                     entity.remove();
                 }
             }
@@ -711,7 +736,7 @@ final class MapBosses {
         }
     }
 
-    /** 收掉還在的結晶（Boss 重置、死掉、實例關掉）。 */
+    /** 收掉還在的結晶（Boss 重置、死掉、實例關掉）。2026-11-02：其他鎖血機制、虛弱、站位圈的易傷也收掉。 */
     private void clearShield(final MapInstance instance, final LivingEntity boss) {
         for (final UUID uuid : instance.shieldCrystals()) {
             final org.bukkit.entity.Entity entity = plugin.getServer().getEntity(uuid);
@@ -720,6 +745,121 @@ final class MapBosses {
             }
         }
         endShield(instance, boss);
+        endLock(instance, boss); // 也清掉虛弱、站位圈的易傷
+    }
+
+    // ---- 2026-11-02 照站長：其他鎖血機制（站位圈、倒數大招、元素弱點；跑起來的部分在 PhaseLocks，跟淵鯨、鯊王共用）；這次之前只有結晶 ----
+
+    /** 站位圈、安全區離 Boss 房中心最遠幾格（跟結晶差不多）。 */
+    private static final double ZONE_RING = 6.5;
+
+    /** 這隻 Boss 每個階段的鎖血機制（null = 不鎖；見 {@link PhaseMechanic#resolve}）。 */
+    static List<PhaseMechanic.Spec> mechanics(final MapInstance instance) {
+        final boolean hasMap = instance.map() != null;
+        // 2026-11-02 照站長：金庫之主（劫盜終局）也輪流配（這次之前只有終局、極境、巔峰）
+        final boolean heist = instance.isHeistFinale();
+        final String key = heist ? "heist_finale" : hasMap ? PhaseMechanic.key(instance.map().id(), instance.isUber()) : "";
+        return PhaseMechanic.resolve(key, instance.bossDef().phases(),
+                heist || hasMap && PhaseMechanic.autoFill(instance.map().isFinal(), instance.special() != null),
+                heist || instance.isUber() || instance.isPinnacle());
+    }
+
+    /** 第 index 個階段（0 起）的鎖血機制；沒有 null。 */
+    private static PhaseMechanic.Spec mechanic(final MapInstance instance, final int index) {
+        final List<PhaseMechanic.Spec> all = mechanics(instance);
+        return index < 0 || index >= all.size() ? null : all.get(index);
+    }
+
+    private void startMechanic(final MapInstance instance, final LivingEntity boss, final PhaseMechanic.Spec spec, final int index) {
+        if (spec.kind() == PhaseMechanic.Kind.CRYSTAL) {
+            startShield(instance, boss, spec.crystal());
+            return;
+        }
+        service.locks().start(arena(instance, boss), instance.lockState(), spec,
+                PhaseMechanic.requiredFraction(instance.bossDef().phases(), index, spec.element() == null ? 0 : spec.element().share()));
+    }
+
+    /** 每 10 tick：站位圈、倒數大招、元素弱點、易傷的消退。 */
+    private void updateLock(final MapInstance instance, final LivingEntity boss, final long now) {
+        final PhaseMechanic.Kind kind = instance.lockState().kind();
+        final PhaseLocks.Outcome outcome = service.locks().update(arena(instance, boss), instance.lockState());
+        if (outcome != PhaseLocks.Outcome.NONE && kind != null) {
+            service.bossLog().note(boss, kind.label() + (outcome == PhaseLocks.Outcome.PASSED ? "完成" : "沒完成，回血"));
+        }
+    }
+
+    private void endLock(final MapInstance instance, final LivingEntity boss) {
+        service.locks().clear(instance.lockState(), boss);
+    }
+
+    /** 這個實例的 Boss 房（給 PhaseLocks）。 */
+    private PhaseLocks.Arena arena(final MapInstance instance, final LivingEntity boss) {
+        return new PhaseLocks.Arena() {
+            @Override
+            public LivingEntity boss() {
+                return boss;
+            }
+
+            @Override
+            public String bossName() {
+                return instance.bossDef().name();
+            }
+
+            @Override
+            public Location center() {
+                return MapBosses.center(instance);
+            }
+
+            @Override
+            public boolean floor(final double x, final double z) {
+                return instance.layout().isFloor((int) Math.floor(x) - instance.originX(), (int) Math.floor(z) - instance.originZ());
+            }
+
+            @Override
+            public double[] bounds() {
+                return plugin.skills() == null ? null : plugin.skills().bossSkills().arenaBounds(boss.getUniqueId());
+            }
+
+            @Override
+            public double ring() {
+                return ZONE_RING;
+            }
+
+            @Override
+            public List<Player> fighters() {
+                return PhaseLocks.hittable(nearbyPlayers(instance, MapBosses.center(instance), 64));
+            }
+
+            @Override
+            public java.util.Collection<Player> audience() {
+                final List<Player> list = new ArrayList<>();
+                for (final UUID uuid : instance.inside()) {
+                    final Player player = plugin.getServer().getPlayer(uuid);
+                    if (player != null) {
+                        list.add(player);
+                    }
+                }
+                return list;
+            }
+
+            @Override
+            public int players() {
+                return service.playersIn(boss).orElse(1);
+            }
+        };
+    }
+
+    /** 打得動的時候血條名稱前面的字（元素弱點、虛弱）；沒有 null。 */
+    private String openPrefix(final MapInstance instance) {
+        return instance.boss() == null ? null : service.locks().barPrefix(instance.lockState(), instance.boss());
+    }
+
+    /** 打進這隻 Boss 的傷害倍率（元素弱點、虛弱；{@link PhaseLocks#damageFactor}）。不是這個實例的 Boss 回傳 1。 */
+    double damageFactor(final MapInstance instance, final LivingEntity entity, final Map<tw.exilecore.stats.DamageType, Double> dealt) {
+        if (instance == null || instance.boss() == null || !entity.getUniqueId().equals(instance.boss().getUniqueId())) {
+            return 1;
+        }
+        return service.locks().damageFactor(instance.lockState(), dealt);
     }
 
     // ---- 狂暴 ----
@@ -837,7 +977,9 @@ final class MapBosses {
         final int mapCount = wholeMaps;
         if (cell != null && !instance.map().isFinal() && instance.special() == null && plugin.currencies() != null
                 && random.nextDouble() < AtlasTablets.BOSS_DROP_CHANCE * (1 + atlas.increased("atlas.tablet.drop"))) {
-            final tw.exilecore.currency.CurrencyType tablet = plugin.currencies().repository().get(AtlasTablets.Kind.BOSS.currencyId());
+            // 2026-11-02：十分之一換成傳奇石板「殘酷霸權」（PoE2 Cruel Hegemony；這次之前只有首領石板）
+            final AtlasTablets.Kind kind = random.nextDouble() < AtlasTablets.HEGEMONY_SHARE ? AtlasTablets.Kind.HEGEMONY : AtlasTablets.Kind.BOSS;
+            final tw.exilecore.currency.CurrencyType tablet = plugin.currencies().repository().get(kind.currencyId());
             if (tablet != null) {
                 drops.add(DropTable.Drop.currency(tablet)); // 首領石板
             }
@@ -1174,6 +1316,9 @@ final class MapBosses {
             return;
         }
         instance.setBossKilled(true);
+        for (final UUID uuid : instance.inside()) { // 2026-11-02（C 組）：模組側邊的機制清單收掉
+            tw.exilecore.clientmod.AlertFeed.clear(plugin, plugin.getServer().getPlayer(uuid), "phase:" + instance.id());
+        }
         service.recordFight(instance); // 2026-10-21：/ec bossdps 的統計
         if (instance.usesAttempts()) {
             instance.closePortals(); // 2026-10：通關了，門全部關起來（裡面的人照樣可以撿完再出來）
@@ -1404,11 +1549,17 @@ final class MapBosses {
      * @param lines 大字、副標題（MiniMessage）
      */
     private void broadcastAlert(final MapInstance instance, final String[] lines) {
+        // 2026-11-02（C 組）：裝了模組的人改送預警（上面那排、留 3 秒），不送大標題
+        broadcastAlert(instance, lines, player -> tw.exilecore.clientmod.AlertFeed.banner(plugin, player, "boss:" + instance.id(), lines, 60));
+    }
+
+    /** 2026-11-02（C 組）：modded 回傳 true 的人（模組會畫）不送大標題。 */
+    private void broadcastAlert(final MapInstance instance, final String[] lines, final java.util.function.Predicate<Player> modded) {
         final Title title = Title.title(plugin.text().parse(lines[0]), plugin.text().parse(lines.length > 1 ? lines[1] : ""),
                 Title.Times.times(Duration.ofMillis(150), Duration.ofMillis(2600), Duration.ofMillis(400)));
         for (final UUID uuid : instance.inside()) {
             final Player player = plugin.getServer().getPlayer(uuid);
-            if (player != null) {
+            if (player != null && !modded.test(player)) {
                 tw.exilecore.gui.Titles.show(player, title); // 2026-10-26：沒有副標題時不送空的（會留空框）
             }
         }
@@ -1421,5 +1572,21 @@ final class MapBosses {
                 tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(miniMessage));
             }
         }
+    }
+
+    /**
+     * 2026-11-02 照 PoE2：地圖 Boss 的詞綴 = maps.yml 寫的（抗性這些固定的）+ 多抽的：
+     * 先驅石板「殘酷霸權」（Cruel Hegemony：Map Bosses have 1 additional Modifiers，atlas.boss_extra_mods）、
+     * 「傳奇怪多 x 條稀有詞綴」（Concentrated Liquid Suffering：Unique Monsters have 1 additional Rare modifier，atlas.unique_rare_mods）。
+     * 多抽的只抽 Boss 用了不會壞的（MonsterService.bossSafe：不抽招式、召喚、近身才打得到、小怪相關的）。這次之前 Boss 只有 maps.yml 寫的。
+     */
+    private List<String> bossMods(final MapInstance instance, final MapConfig.Boss definition) {
+        final int extra = instance.atlas().count("atlas.boss_extra_mods") + instance.atlas().count("atlas.unique_rare_mods");
+        if (extra <= 0) {
+            return definition.mods();
+        }
+        final List<String> mods = new java.util.ArrayList<>(definition.mods());
+        mods.addAll(plugin.monsters().rollBossMods(extra, instance.level(), mods));
+        return mods;
     }
 }

@@ -512,6 +512,7 @@ final class SkillZones implements SkillTargets.Strikeable {
         if (same >= cap && oldestSame != null) {
             oldestSame.gone = true;
             zones.remove(oldestSame);
+            visuals.zoneGone(oldestSame, oldestSame.points.size());
             release(oldestSame); // 2026-10-29 照 PoE2 Profane Ritual：被擠掉的穢陣沒完成，屍體放回去
             oldestSame.onExpire = null; // 2026-10-29 照站長：雷雲被新的擠掉不留殘骸（放完雷、時間到才給）；同日稍早擠掉也給，連放就一直給
         }
@@ -528,6 +529,7 @@ final class SkillZones implements SkillTargets.Strikeable {
         if (mine >= MAX_PER_PLAYER && oldest != null) { // 2026-11-01：只剩效能的保險（見 MAX_PER_PLAYER）
             oldest.gone = true;
             zones.remove(oldest);
+            visuals.zoneGone(oldest, oldest.points.size());
             release(oldest); // 2026-10-29：同上
         }
         final int interval = (int) Math.max(1, Math.round(intervalSeconds * 20));
@@ -1094,6 +1096,7 @@ final class SkillZones implements SkillTargets.Strikeable {
             fired++;
             if (zone.gone) {
                 zones.remove(zone);
+                visuals.zoneGone(zone, zone.points.size());
                 expired(zone); // 2026-10-29：放完雷留下殘骸
             }
         }
@@ -1191,6 +1194,7 @@ final class SkillZones implements SkillTargets.Strikeable {
             if (point.toVector().distanceSquared(center) < 0.01) {
                 zone.gone = true;
                 zones.remove(zone);
+                visuals.zoneGone(zone, zone.points.size());
             }
         }
     }
@@ -1432,7 +1436,7 @@ final class SkillZones implements SkillTargets.Strikeable {
         }
         final Location at = rodLocation(rod);
         if (at != null) {
-            Fx.as(rod.owner, () -> at.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK, rodTop(at), 10, 0.15, 0.3, 0.15, 0.05));
+            Fx.as(rod.owner, () -> tw.exilecore.skill.Fx.spawn(at.getWorld(), org.bukkit.Particle.ELECTRIC_SPARK, rodTop(at), 10, 0.15, 0.3, 0.15, 0.05));
         }
         return true;
     }
@@ -1463,7 +1467,7 @@ final class SkillZones implements SkillTargets.Strikeable {
             if (charging ? now % 2 == 0 : (now - rod.placed) % 10 == 0) {
                 final Location at = rodLocation(rod);
                 if (at != null) {
-                    Fx.as(rod.owner, () -> at.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK, rodTop(at),
+                    Fx.as(rod.owner, () -> tw.exilecore.skill.Fx.spawn(at.getWorld(), org.bukkit.Particle.ELECTRIC_SPARK, rodTop(at),
                             charging ? 6 : 2, 0.1, charging ? 0.4 : 0.1, 0.1, charging ? 0.08 : 0));
                 }
             }
@@ -1686,7 +1690,7 @@ final class SkillZones implements SkillTargets.Strikeable {
             if ((now - bolt.placed()) % 10 == 0 && now >= bolt.placed()) {
                 final org.bukkit.Particle particle = bolt.spec().proximity() ? (armed ? org.bukkit.Particle.SNOWFLAKE : org.bukkit.Particle.WHITE_ASH)
                         : org.bukkit.Particle.ELECTRIC_SPARK;
-                Fx.as(bolt.owner(), () -> bolt.at().getWorld().spawnParticle(particle, bolt.at().clone().add(0, 0.2, 0), 3, 0.1, 0.1, 0.1, 0));
+                Fx.as(bolt.owner(), () -> tw.exilecore.skill.Fx.spawn(bolt.at().getWorld(), particle, bolt.at().clone().add(0, 0.2, 0), 3, 0.1, 0.1, 0.1, 0));
             }
         }
         for (final Lodged bolt : boom) {
@@ -1942,7 +1946,8 @@ final class SkillZones implements SkillTargets.Strikeable {
             if (now % 2 == 0 && watched(zone)) {
                 // 2026-10-31 照站長：套了資源包的人看平貼在地上的圖（技能的顏色、清楚的外框）；粒子只送給沒套的人
                 drawDecals(zone, now);
-                Fx.as(zone.owner, () -> Fx.withoutPack(() -> visuals.zoneAmbient(zone.visual, zone.points, zone.radius, now)));
+                Fx.as(zone.owner, () -> Fx.withoutPack(() -> visuals.zoneAmbient(zone, zone.visual, zone.points, zone.radius, now,
+                        (int) Math.max(0, zone.untilTick - now))));
             }
             if (SolarOrbs.is(zone.skill) && SolarOrbs.due(now - zone.born) && zone.points.size() == 1) {
                 // 2026-11-01 照 PoE2 Solar Orb：珠子 1 公尺內的敵人直接被點燃（這次之前用 15% 點燃機率代替）
@@ -2087,7 +2092,12 @@ final class SkillZones implements SkillTargets.Strikeable {
             Fx.as(zone.owner, () -> Fx.withoutPack(() -> visuals.zonePulse(zone.visual, zone.points, zone.radius)));
         }
         if (expired) {
-            zones.removeIf(zone -> zone.gone);
+            zones.removeIf(zone -> {
+                if (zone.gone) {
+                    visuals.zoneGone(zone, zone.points.size()); // 2026-11-02：模組那邊收到 STOP
+                }
+                return zone.gone;
+            });
         }
     }
 

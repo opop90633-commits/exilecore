@@ -1,0 +1,13 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "tw.exilecore.client.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "BossHealthOverlayAccessor",
+    "EntityRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

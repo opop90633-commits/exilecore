@@ -89,11 +89,18 @@ public final class MapConfig {
      * @param stats       加在 Boss 身上的修飾器
      * @param speed       原版移動速度加成（0.25 = 快 25%）
      * @param shield      進入這個階段時的護盾（null = 沒有）
+     * @param mechanic    2026-11-02：這個階段寫的鎖血機制（maps.yml 的 mechanic；null = 沒寫：有 shield 是結晶，終局以上輪流配，見 {@link PhaseMechanic#resolve}）
      */
     public record Phase(double at, String name, String message, String summonType, int summonCount,
-                        List<AffixMod> stats, double speed, Shield shield) {
+                        List<AffixMod> stats, double speed, Shield shield, PhaseMechanic.Spec mechanic) {
         public Phase {
             stats = List.copyOf(stats);
+        }
+
+        /** 2026-11-02：沒寫 mechanic 的階段（這次之前的寫法）。 */
+        public Phase(final double at, final String name, final String message, final String summonType, final int summonCount,
+                     final List<AffixMod> stats, final double speed, final Shield shield) {
+            this(at, name, message, summonType, summonCount, stats, speed, shield, null);
         }
 
         /** 沒有護盾的階段。 */
@@ -898,7 +905,7 @@ public final class MapConfig {
 
     /**
      * 地圖 Boss 的寫法（name、type、mythic、named、life、damage、scale、mods、intro、defeat、phases、skills、enrage、hazards；
-     * 試煉也用這個寫法）。phases 的每一個可以多寫 shield（護盾）。
+     * 試煉也用這個寫法）。phases 的每一個可以多寫 shield（護盾）；2026-11-02 起也可以寫 mechanic（鎖血機制，見 {@link PhaseMechanic}）。
      */
     public static Boss parseBoss(final YamlNode node) {
         final List<Phase> phases = new ArrayList<>();
@@ -908,10 +915,11 @@ public final class MapConfig {
                 stats.add(AffixMod.parse(stat));
             }
             final YamlNode summon = phase.node("summon");
+            final Shield shield = phase.has("shield") ? parseShield(phase.node("shield")) : null;
             phases.add(new Phase(clamp01(phase.decimal("at", 0.5)), phase.string("name", "第二階段"), phase.string("message", null),
                     summon.has("type") ? summon.requireString("type").trim().toUpperCase(Locale.ROOT) : null,
                     Math.max(0, summon.integer("count", 0)), stats, Math.max(-0.9, phase.decimal("speed", 0)),
-                    phase.has("shield") ? parseShield(phase.node("shield")) : null));
+                    shield, PhaseMechanic.parse(phase, shield))); // 2026-11-02 照站長：可以寫 mechanic（這次之前只有 shield 的結晶）
         }
         phases.sort((a, b) -> Double.compare(b.at(), a.at()));
         return new Boss(node.requireString("name"), node.string("type", "ZOMBIE").trim().toUpperCase(Locale.ROOT),

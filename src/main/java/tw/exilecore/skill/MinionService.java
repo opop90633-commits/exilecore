@@ -437,7 +437,7 @@ public final class MinionService implements Listener, MinionHooks {
             if (!minion.owner.equals(owner.getUniqueId()) || minion.decoy || !minion.mob.isValid() || !minion.mob.getWorld().equals(owner.getWorld())) {
                 continue;
             }
-            minion.mob.getWorld().spawnParticle(org.bukkit.Particle.PORTAL, minion.mob.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.05);
+            tw.exilecore.skill.Fx.spawn(minion.mob.getWorld(), org.bukkit.Particle.PORTAL, minion.mob.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.05);
             teleportToOwner(minion, owner);
             count++;
         }
@@ -462,7 +462,7 @@ public final class MinionService implements Listener, MinionHooks {
             minion.offering = List.copyOf(mods);
             minion.offeringUntil = now + ticks;
             rebuild(minion, plugin.players().sheet(player), false);
-            minion.mob.getWorld().spawnParticle(org.bukkit.Particle.SOUL, minion.mob.getLocation().add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0.02);
+            tw.exilecore.skill.Fx.spawn(minion.mob.getWorld(), org.bukkit.Particle.SOUL, minion.mob.getLocation().add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0.02);
             count++;
         }
         return count;
@@ -521,7 +521,7 @@ public final class MinionService implements Listener, MinionHooks {
             if (fresh) {
                 minion.shieldLostAt = -1; // 2026-10-28：新的一輪祭品，護盾重新有
                 rebuild(minion, plugin.players().sheet(owner), false);
-                minion.mob.getWorld().spawnParticle(org.bukkit.Particle.SOUL, minion.mob.getLocation().add(0, 1, 0), 6, 0.3, 0.5, 0.3, 0.02);
+                tw.exilecore.skill.Fx.spawn(minion.mob.getWorld(), org.bukkit.Particle.SOUL, minion.mob.getLocation().add(0, 1, 0), 6, 0.3, 0.5, 0.3, 0.02);
             }
             count++;
         }
@@ -559,7 +559,7 @@ public final class MinionService implements Listener, MinionHooks {
         if (pick == null) {
             return false;
         }
-        pick.mob.getWorld().spawnParticle(org.bukkit.Particle.SOUL, pick.mob.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.03);
+        tw.exilecore.skill.Fx.spawn(pick.mob.getWorld(), org.bukkit.Particle.SOUL, pick.mob.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.03);
         remove(pick, Gone.EXPIRED);
         return true;
     }
@@ -1100,7 +1100,7 @@ public final class MinionService implements Listener, MinionHooks {
         }
         final Location at = pick.mob.getLocation();
         if (take) {
-            pick.mob.getWorld().spawnParticle(org.bukkit.Particle.SOUL, at.clone().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.03);
+            tw.exilecore.skill.Fx.spawn(pick.mob.getWorld(), org.bukkit.Particle.SOUL, at.clone().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.03);
             remove(pick, Gone.EXPIRED);
         }
         return at;
@@ -2979,6 +2979,9 @@ public final class MinionService implements Listener, MinionHooks {
 
     // ---- 毒雲 ----
 
+    private static final org.bukkit.Particle.DustTransition MINION_CLOUD = new org.bukkit.Particle.DustTransition(
+            org.bukkit.Color.fromRGB(0x6a, 0xb0, 0x3c), org.bukkit.Color.fromRGB(0x3c, 0x5a, 0x20), 1.6f);
+
     /** 每 tick：毒雲變大、每秒讓裡面的敵人中毒；碰到點燃中的敵人就炸開；時間到消失。 */
     private void tickClouds(final long now) {
         if (clouds.isEmpty()) {
@@ -2988,12 +2991,14 @@ public final class MinionService implements Listener, MinionHooks {
             final Player owner = plugin.getServer().getPlayer(cloud.owner);
             if (now >= cloud.until || owner == null || !owner.isOnline() || !clouds.contains(cloud)) {
                 clouds.remove(cloud);
+                Fx.zoneStop(cloud);
                 continue;
             }
             final double radius = cloud.radius(now);
             if (now % 4 == 0) {
-                final double angle = (now * 0.4) % (Math.PI * 2);
-                Fx.as(cloud.owner, () -> tw.exilecore.skill.Fx.disk(cloud.at.getWorld(), org.bukkit.Particle.DUST_COLOR_TRANSITION, cloud.at.clone().add(Math.cos(angle) * radius * 0.6, 0.4, Math.sin(angle) * radius * 0.6), 3, radius, 0.2, 0, new org.bukkit.Particle.DustTransition(org.bukkit.Color.fromRGB(0x6a, 0xb0, 0x3c), org.bukkit.Color.fromRGB(0x3c, 0x5a, 0x20), 1.4f)));
+                // 2026-11-02：走 Fx.zone（每 0.5 秒重畫：外框照周長＋裡面稀疏撒；雲變大時模組那邊收到 UPDATE）
+                Fx.zone(cloud, cloud.at.clone().add(0, 0.3, 0), radius, new Fx.Look(org.bukkit.Particle.DUST_COLOR_TRANSITION, MINION_CLOUD,
+                        org.bukkit.Particle.DUST_COLOR_TRANSITION, MINION_CLOUD, 0.6, 0), (int) Math.max(0, cloud.until - now), cloud.owner, false);
             }
             if ((now - cloud.born) % 20 != 0) {
                 continue;
@@ -4291,7 +4296,7 @@ public final class MinionService implements Listener, MinionHooks {
             minion.offering = withoutShield(minion.offering);
         }
         final Location at = entity.getLocation().add(0, 1, 0);
-        entity.getWorld().spawnParticle(org.bukkit.Particle.BLOCK, at, 30, 0.4, 0.5, 0.4, 0.1, org.bukkit.Material.BONE_BLOCK.createBlockData());
+        tw.exilecore.skill.Fx.spawn(entity.getWorld(), org.bukkit.Particle.BLOCK, at, 30, 0.4, 0.5, 0.4, 0.1, org.bukkit.Material.BONE_BLOCK.createBlockData());
         entity.getWorld().playSound(at, org.bukkit.Sound.ENTITY_SKELETON_HURT, 0.8f, 0.6f);
         final Player owner = plugin.getServer().getPlayer(minion.owner);
         if (owner != null) {
@@ -4580,7 +4585,7 @@ public final class MinionService implements Listener, MinionHooks {
                 if (plugin.ailments() != null) {
                     plugin.ailments().clear(other.mob);
                 }
-                other.mob.getWorld().spawnParticle(org.bukkit.Particle.HEART, other.mob.getLocation().add(0, other.mob.getHeight() + 0.2, 0), 2, 0.2, 0.1, 0.2, 0);
+                tw.exilecore.skill.Fx.spawn(other.mob.getWorld(), org.bukkit.Particle.HEART, other.mob.getLocation().add(0, other.mob.getHeight() + 0.2, 0), 2, 0.2, 0.1, 0.2, 0);
             }
         }
     }

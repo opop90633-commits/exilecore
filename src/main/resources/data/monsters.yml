@@ -1048,11 +1048,12 @@ mods:
     name: 督軍光環的
     min_level: 30
     stats: []
-    aura:                     # PoE2 Extra Physical Damage Aura：物理傷害增加 20%
-      radius: 10
+    aura:                     # PoE2 Extra Physical Damage Aura：物理傷害增加 40%
+      # 2026-11-02 照 PoE2 Extra Physical Damage Aura（MonsterPhysicalDamageAura1：physical_damage_+% 40、半徑 5 公尺）；這次之前 20%、半徑 10 格
+      radius: 5
       color: "e04040"
       stats:
-        - { stat: damage, type: INCREASED, value: 20, tags: [physical] }
+        - { stat: damage, type: INCREASED, value: 40, tags: [physical] }
   anger_aura:
     name: 熾焰光環的
     min_level: 35
@@ -1067,19 +1068,21 @@ mods:
     min_level: 40
     stats: []
     aura:
-      radius: 10
+      # 2026-11-02 照 PoE2 Elemental Resistance Aura（MonsterResistanceAura1：base_resist_all_elements_% 35、半徑 5 公尺）；這次之前三抗 +20%、半徑 10 格
+      radius: 5
       color: "c0c0c0"
-      stats:                  # PoE2 Elemental Resistance Aura：三抗 +20%（這裡另外留著護甲）
+      stats:                  # PoE2 Elemental Resistance Aura：三抗 +35%（這裡另外留著護甲）
         - { stat: armour, type: INCREASED, value: 100 }
-        - { stat: resist.fire, type: FLAT, value: 20 }
-        - { stat: resist.cold, type: FLAT, value: 20 }
-        - { stat: resist.lightning, type: FLAT, value: 20 }
+        - { stat: resist.fire, type: FLAT, value: 35 }
+        - { stat: resist.cold, type: FLAT, value: 35 }
+        - { stat: resist.lightning, type: FLAT, value: 35 }
   haste_aura:
     name: 疾風光環的
     min_level: 30
     stats: []
     aura:                     # PoE2 Haste Aura：攻擊、施法、移動速度 +25%
-      radius: 10
+      # 2026-11-02 照 PoE2 Haste Aura（MonsterIncreasedSpeedAura1：半徑 5 公尺）；這次之前半徑 10 格
+      radius: 5
       color: "7fe0ff"
       stats:
         - { stat: movement.speed, type: INCREASED, value: 25 }
@@ -1089,11 +1092,12 @@ mods:
     name: 護盾光環的
     min_level: 35
     stats: []
-    aura:                     # PoE2 Energy Shield Aura：多一層 12% 生命的護盾
-      radius: 10
+    aura:                     # PoE2 Energy Shield Aura：多一層 20% 生命的護盾
+      # 2026-11-02 照 PoE2 Energy Shield Aura（poe2db：友軍獲得最大生命 20% 的能量護盾、半徑 5 公尺）；這次之前 12%、半徑 10 格
+      radius: 5
       color: "8fd3ff"
       stats:
-        - { stat: monster.shield_percent, type: FLAT, value: 12 }
+        - { stat: monster.shield_percent, type: FLAT, value: 20 }
   summoner:
     name: 召喚的
     min_level: 25
@@ -1168,8 +1172,9 @@ mods:
   hindering:
     name: 阻礙的
     min_level: 20
-    stats:                    # PoE2 Hinder Aura：8 格內的玩家一直被阻礙（移動速度慢 30%，跟癱瘓、冰緩相乘）
-      - { stat: monster.hinder_aura, type: FLAT, value: 8 }
+    stats:                    # PoE2 Hinder Aura：3.6 格內的玩家一直被阻礙（移動速度慢 30%，跟癱瘓、冰緩相乘）
+      # 2026-11-02 照 PoE2 Hinder Aura（MonsterHinderAura1：半徑 3.6 公尺）；這次之前 8 格
+      - { stat: monster.hinder_aura, type: FLAT, value: 3.6 }
     hand: COBWEB
   blinding:
     name: 致盲的
@@ -1310,7 +1315,8 @@ mods:
     name: 竊瓶的
     min_level: 20
     stats:
-      - { stat: monster.flask_siphon, type: FLAT, value: 1 }      # 12 格內的玩家每 5 秒每瓶藥劑少 1 點充能
+      # 2026-11-02 照 PoE2 Siphons Flask Charges（MonsterFlaskRemovalAura1：generate_x_charges_for_any_flask_per_minute −3）：每 20 秒少 1 點；這次之前每 5 秒 1 點
+      - { stat: monster.flask_siphon, type: FLAT, value: 1 }      # 12 格內的玩家每 20 秒每瓶藥劑少 1 點充能
   recovery_cap:
     name: 抑生的
     min_level: 30
@@ -1346,7 +1352,9 @@ mods:
     name: 時滯的
     min_level: 35
     stats:
-      - { stat: monster.temporal_bubble, type: FLAT, value: 6 }   # 6 格的時間泡泡：裡面移動、攻擊、施法都變慢，冷卻回復、身上的減益消退慢一半
+      # 2026-11-02 照 PoE2 Temporal Bubble（MonsterTemporalAura1：半徑 3.2 公尺、action_speed_-% 25、debuff_time_passed_+% −40、
+      #   base_cooldown_speed_+% −60）；這次之前 6 格、移動另外被阻礙、冷卻回復與減益消退慢一半
+      - { stat: monster.temporal_bubble, type: FLAT, value: 3.2 }   # 3.2 格的時間泡泡：裡面動作慢 25%，冷卻回復慢 60%、身上的減益消退慢 40%
   proximal:
     name: 近身的
     min_level: 35
@@ -1357,6 +1365,147 @@ mods:
     min_level: 30
     stats:
       - { stat: monster.soul_eater, type: FLAT, value: 1 }        # 15 格內的怪物死掉時吞魂：每層招式快 1%、受到的傷害少 1%（最多 50 層）
+
+  # ---- 2026-11-02 照 PoE2 0.5 補齊的稀有怪詞綴（poe2db Monster_Modifiers；RePoE poe2 mods.json 的代號寫在每條後面）----
+  # 數值 poe2db 沒寫的（爆炸、地面、爆花、爆岩、晶體的傷害與時間）照同類的詞綴推，寫「推估」。
+  unstunnable:
+    name: 磐固的
+    min_level: 10
+    stats:                    # Increased Stun Threshold（MonsterImmuneToStun1：base_cannot_be_stunned）：不會被暈眩
+      - { stat: flag.immune.stun, type: FLAT, value: 1 }
+  periodic_enrage:
+    name: 狂躁的
+    min_level: 20
+    stats:                    # Periodically Enrages（MonsterPeriodicEnrage1）：每 10 秒狂暴 5 秒（傷害增加 30%、技能與移動速度 +25%、受到的傷害少 33%）
+      - { stat: monster.periodic_enrage, type: FLAT, value: 1 }
+  enraged:
+    name: 暴怒的
+    min_level: 45
+    vanilla_speed: 0.25       # Enraged（MonsterPeriodicEnrage2）：一直是狂暴的（數值同上）
+    stats:
+      - { stat: damage, type: INCREASED, value: 30 }
+      - { stat: skill.cooldown, type: INCREASED, value: -20 }   # 技能速度 +25%（冷卻 ÷1.25）
+      - { stat: attack.speed, type: INCREASED, value: 25 }
+      - { stat: damage.taken, type: FLAT, value: -33 }
+  invulnerability_aura:
+    name: 庇護光環的
+    min_level: 25
+    stats:                    # Periodic Invulnerability Aura（MonsterImmuneAura1）：每 12 秒一圈，5 格內的友軍（不含自己）5 秒內不會受傷（牠死了就沒了）
+      - { stat: monster.invulnerability_aura, type: FLAT, value: 5 }
+  empowered_invulnerability_aura:
+    name: 聖護光環的
+    min_level: 45
+    stats:                    # Empowered Periodic Invulnerability Aura（MonsterImmuneAura2）：同上，而且身邊的小怪生命增加 50%（MonsterImmuneAuraMinion2）
+      - { stat: monster.invulnerability_aura, type: FLAT, value: 5 }
+    aura:
+      radius: 5
+      color: "f0e68c"
+      stats:
+        - { stat: life.max, type: INCREASED, value: 50 }
+  fire_death_blast:
+    name: 殉焰的
+    min_level: 15
+    # 2026-11-02 照 PoE2 GSMonsterModsOnDeathFireExplosion：火焰 28–42（1 級）= 普通一下的 3.82 倍（冰同、雷 17–52 是 3.77 倍）；這次之前推估 2 倍。
+    #   1 秒後、3 格仍是推估（RePoE、PoB2、poe2db 都查不到範圍與延遲）
+    stats:                    # Fire Explosion on Death：死掉時地上先畫圈，1 秒後炸開（3 格、牠普通一下的 3.82 倍火焰傷害）
+      - { stat: monster.death_blast_fire, type: FLAT, value: 1 }
+  cold_death_blast:
+    name: 殉霜的
+    min_level: 15
+    stats:                    # Cold Explosion on Death（同上，冰冷）
+      - { stat: monster.death_blast_cold, type: FLAT, value: 1 }
+  lightning_death_blast:
+    name: 殉雷的
+    min_level: 15
+    stats:                    # Lightning Explosion on Death（同上，閃電）
+      - { stat: monster.death_blast_lightning, type: FLAT, value: 1 }
+  burning_ground:
+    name: 焦土的
+    min_level: 8
+    # 2026-11-02 照 PoE2 GSMonsterModBurningGroundNova(OnDeath)：先一圈新星（火 13–20 = 1.80 倍；冰 12–18 = 1.64 倍；雷 8–25 = 1.80 倍）、
+    #   地面 6 秒、感電地面 30%；活著時跟死掉時同一招。這次之前活著 1.5 格 3 秒、死掉 2.5 格 6 秒、沒有新星、感電 20%。範圍、間隔仍是推估
+    stats:                    # Burning Ground on Death（MonsterBurningGroundOnDeath1「Heated」）：每 5 秒放一圈火焰新星、留下點燃的地面（2.5 格、6 秒），死掉時也一次
+      - { stat: monster.death_ground_fire, type: FLAT, value: 1 }
+  chilled_ground:
+    name: 凍土的
+    min_level: 8
+    stats:                    # Chilled Ground on Death（MonsterChilledGroundOnDeath1「Frosted」）：同上，冰緩的地面
+      - { stat: monster.death_ground_cold, type: FLAT, value: 1 }
+  shocked_ground:
+    name: 雷土的
+    min_level: 8
+    stats:                    # Shocked Ground on Death（MonsterShockedGroundOnDeath1「Electrocuting」）：同上，感電的地面
+      - { stat: monster.death_ground_lightning, type: FLAT, value: 1 }
+  elemental_hazards:
+    name: 危地的
+    min_level: 28
+    stats: []
+    skills:                   # Conjures Elemental Hazards（MonsterElementalWaller1）：在你附近輪流放火、冰、雷的危險地面
+      - { id: mod_hazard_fire, cooldown: 15 }
+      - { id: mod_hazard_cold, cooldown: 17 }
+      - { id: mod_hazard_lightning, cooldown: 19 }
+  volatile_crystals:
+    name: 晶爆的
+    min_level: 25
+    # 2026-11-02 照 PoE2 MonsterLivingCrystal：每顆混沌 19–28（2.57 倍）、1.2 秒後炸；這次之前推估 1 倍、1 秒。顆數、範圍仍是推估
+    stats:                    # Volatile Crystals（MonsterLivingCrystals1）：被打中時長出晶體（最多 6 顆），牠死掉時晶體全部炸開（混沌）
+      - { stat: monster.volatile_crystals, type: FLAT, value: 1 }
+  volatile_plants:
+    name: 爆花的
+    min_level: 25
+    stats:                    # Volatile Plants（MonsterVolatilePlants1）：每 8 秒在你附近長一朵爆花，放出追人的光球，靠近就炸（混沌）
+      # 2026-11-02 照 PoE2 MonsterModPlantVolatile：混沌 12–18（1.64 倍，數值 = 倍數 ×100）；這次之前推估 100
+      - { stat: monster.volatile_plants, type: FLAT, value: 164 }
+  empowering_volatile_plants:
+    name: 狂花的
+    min_level: 45
+    stats:                    # Empowering Volatile Plants（MonsterVolatilePlants2）：強化的爆花，一次兩朵（推估）
+      # 2026-11-02 照 PoE2 MonsterModPlantVolatile2：混沌 15–22（2.02 倍）；這次之前推估 150（1.5 倍）
+      - { stat: monster.volatile_plants, type: FLAT, value: 202 }
+  volatile_crag:
+    name: 爆岩的
+    min_level: 25
+    # 2026-11-02 照 PoE2 GSMonsterModVolatileRockExplode：火焰 19–28（2.57 倍）；這次之前推估 1.2 倍
+    stats:                    # Volatile Crag（MonsterVolatileRocks1）：每 10 秒在你腳邊落一塊爆岩，有人走近就炸（火焰）
+      - { stat: monster.volatile_crag, type: FLAT, value: 100 }
+  empowering_volatile_crag:
+    name: 熾岩的
+    min_level: 45
+    # 2026-11-02 照 PoE2 GSMonsterModVolatileRockExplode2：傷害跟一般的一樣（19–28）；這次之前推估 1.5 倍。一次兩塊仍是推估
+    stats:                    # Empowering Volatile Crag（MonsterVolatileRocks2）：強化的爆岩，一次兩塊（150 只是「強化」的記號）
+      - { stat: monster.volatile_crag, type: FLAT, value: 150 }
+  minion_shield:
+    name: 替身的
+    min_level: 25
+    stats:                    # Damage Taken From Minions First（MonsterMinionsTakeLifeInstead1：damage_removed_from_pack_minions_before_life_or_es_% 50）：
+      - { stat: monster.minion_shield, type: FLAT, value: 50 }   # 受到的傷害 50% 先由 10 格內的小怪（普通、魔法怪）扛
+  empowered_reviver:
+    name: 復甦的
+    min_level: 45
+    stats:                    # Empowered Reviving Minions（MonsterRevivesMinions2）：跟喚靈的一樣讓屍體爬起來，爬起來的更強（傷害增加 25%、生命更多 50%，同統御的）
+      - { stat: monster.revive_minions, type: FLAT, value: 1 }
+      - { stat: monster.revive_empowered, type: FLAT, value: 1 }
+
+  # ---- 2026-11-02 照 PoE2 的 Corrupted 怪物詞綴（generation_type corrupted）：不會自然抽到，只有腐化區（星圖的腐化格）的稀有怪各多一條 ----
+  corrupted_culling:
+    name: 蝕朽的
+    min_level: 1000
+    stats:                    # MonsterCorruptionModHitsOnMonsterHaveCullingStrike：打牠的擊中都有撲殺（生命 10% 以下直接倒）
+      - { stat: monster.cullable, type: FLAT, value: 1 }
+  corrupted_gigantic:
+    name: 蝕巨的
+    min_level: 1000
+    # 2026-11-02 照 PoE2 的 Gigantic（RePoE keywords.json：20% more Maximum Life、20% more Damage、20% increased size）；
+    #   這次之前推估體型 1.5 倍、生命更多 50%、傷害不變
+    stats:                    # MonsterCorruptionModGigantic（is_gigantic）：體型 1.2 倍、生命與傷害各更多 20%
+      - { stat: monster.gigantic, type: FLAT, value: 1 }
+      - { stat: life.max, type: MORE, value: 20 }
+      - { stat: damage, type: MORE, value: 20 }
+  corrupted_raise:
+    name: 蝕生的
+    min_level: 1000
+    stats:                    # MonsterCorruptionModReviveOnDeath（monster_raises_after_death）：死掉 2 秒後原地爬起來一次（爬起來的不掉東西、不給經驗）
+      - { stat: monster.raise_after_death, type: FLAT, value: 1 }
 
   # 隱藏（2026-10-23）：劇情 Boss 廢城督軍用的「鐵甲的」（照改版前的 +300% 護甲）。鐵甲的照 PoE2 降成 +100% 以後，
   #   督軍的護甲少一半，打起來快了三四成；Boss 照舊。名字一樣，min_level 很高，不會自然抽到。

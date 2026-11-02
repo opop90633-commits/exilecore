@@ -147,7 +147,7 @@ public final class LootService {
             }
             if (asCurrency != null) {
                 // 流水帳：撿到的（或掉在地上、只有他撿得到的）通貨都算產出
-                ledger.produced(asCurrency.id(), tw.exilecore.economy.EconomyLedger.DROP, stack.getAmount());
+                ledger.of(killer).produced(asCurrency.id(), tw.exilecore.economy.EconomyLedger.DROP, stack.getAmount());
                 currencyValue += plugin.economy().config().value(asCurrency.id()) * stack.getAmount();
             }
             final boolean worthNoting = map || drop.isSpecificGem() || config.notable(drop.kind(), rarity, weight,
@@ -166,7 +166,7 @@ public final class LootService {
                 broadcastRare(killer, currency.name(), "#e8c46a", "<yellow>"); // 2026-11-01 照站長
             }
             if (lineage != null) {
-                broadcastRare(killer, lineage + "（血脈輔助寶石）", "#ff6b6b", "<red>"); // 2026-11-01 照站長
+                broadcastRare(killer, lineage + "（血脈輔助寶石）", "#ff6b6b", "<red>", false); // 2026-11-01 照站長
             }
             if (!config.autoPickup()) {
                 MonsterListener.dropOwned(plugin, location, stack, killer, MonsterListener.highlight(drop));
@@ -213,8 +213,8 @@ public final class LootService {
             if (config.autoPickup()) {
                 if (plugin.gold().add(killer, goldTotal)) {
                     // 流水帳分開記：怪物的金幣、過濾器換的金幣
-                    ledger.gold(tw.exilecore.economy.EconomyLedger.DROP, goldTotal - filterGold);
-                    ledger.gold(tw.exilecore.economy.EconomyLedger.FILTER, filterGold);
+                    ledger.of(killer).gold(tw.exilecore.economy.EconomyLedger.DROP, goldTotal - filterGold);
+                    ledger.of(killer).gold(tw.exilecore.economy.EconomyLedger.FILTER, filterGold);
                 } else {
                     goldDelivered = false; // 2026-10-22：沒入帳就不算進過濾的統計（以前統計照加、金幣沒拿到）
                 }
@@ -326,7 +326,7 @@ public final class LootService {
             addToday(player, filtered, gold);
         }
         if (gold > 0 && paid) {
-            plugin.economy().ledger().gold(tw.exilecore.economy.EconomyLedger.FILTER, gold);
+            plugin.economy().ledger().of(player).gold(tw.exilecore.economy.EconomyLedger.FILTER, gold);
             player.sendMessage(plugin.text().prefixed(String.format(Locale.ROOT, "<gray>掉落過濾：%d 件換成 <#f5b942>%,d 金幣", filtered, gold)));
         }
         return kept;
@@ -386,9 +386,23 @@ public final class LootService {
 
     /** 追逐級傳奇掉出來：全服都看得到是誰、掉了什麼（PoE 的伺服器習慣；極稀有才值得吵大家）。 */
     public void broadcastChase(final Player finder, final tw.exilecore.item.ItemData item) {
+        broadcastChase(finder, item, tw.exilecore.economy.EconomyLedger.DROP);
+    }
+
+    /** 帳本裡追逐級傳奇的種類代號前綴（{@code chase:<傳奇代號>}；市場報告的「追逐級傳奇」那一段）。 */
+    public static final String CHASE_KIND = "chase:";
+
+    /**
+     * 同上；source 是從哪裡來的（掉落、賭博、星諭卡、傳奇兌換…）。2026-11-02 照站長：追逐級傳奇每出一件記一筆產出
+     * （帳本的 chase:<傳奇代號>），市場報告列每種出了幾件、從哪裡來；這次之前只廣播、沒記。
+     */
+    public void broadcastChase(final Player finder, final tw.exilecore.item.ItemData item, final String source) {
         final tw.exilecore.item.UniqueItem unique = plugin.items().repository().unique(item.unique());
         if (unique == null || !unique.chase()) {
             return;
+        }
+        if (plugin.economy() != null) {
+            plugin.economy().ledger().of(finder).produced(CHASE_KIND + unique.id(), source, 1);
         }
         final String name = plugin.chat() == null ? finder.getName() : plugin.chat().display(finder);
         final net.kyori.adventure.text.Component message = plugin.text().prefixed("<#ffb347>✦ " + tw.exilecore.item.ItemRenderer.escape(name)
@@ -399,7 +413,7 @@ public final class LootService {
         }
         plugin.getSLF4JLogger().info("追逐級傳奇：{} 掉出 {}（{}）", finder.getName(), unique.name(), unique.id());
         if (plugin.discord() != null) {
-            plugin.discord().achievement(tw.exilecore.item.ItemRenderer.escape(name) + " 找到了追逐級傳奇「" + tw.exilecore.item.ItemRenderer.escape(unique.name()) + "」！");
+            plugin.discord().rareDrop(tw.exilecore.item.ItemRenderer.escape(name) + " 找到了追逐級傳奇「" + tw.exilecore.item.ItemRenderer.escape(unique.name()) + "」！");
         }
     }
 
@@ -414,6 +428,11 @@ public final class LootService {
 
     /** 2026-11-01 照站長：預見鎖、血脈輔助寶石掉出來全服廣播、Discord 成就頻道（跟共鳴石一樣）。 */
     public void broadcastRare(final Player finder, final String itemName, final String color, final String textColor) {
+        broadcastRare(finder, itemName, color, textColor, true);
+    }
+
+    /** 2026-11-02：discord = 要不要發到 Discord（超稀有通貨才發）。 */
+    public void broadcastRare(final Player finder, final String itemName, final String color, final String textColor, final boolean discord) {
         final String name = plugin.chat() == null ? finder.getName() : plugin.chat().display(finder);
         final net.kyori.adventure.text.Component message = plugin.text().prefixed("<" + color + ">✦ " + tw.exilecore.item.ItemRenderer.escape(name)
                 + " " + textColor + "找到了 <" + color + "><bold>" + tw.exilecore.item.ItemRenderer.escape(itemName) + "</bold>" + textColor + "！");
@@ -422,8 +441,8 @@ public final class LootService {
             online.playSound(online.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, org.bukkit.SoundCategory.PLAYERS, 0.7f, 1.2f);
         }
         plugin.getSLF4JLogger().info("稀有掉落公告：{} 掉出 {}", finder.getName(), itemName);
-        if (plugin.discord() != null) {
-            plugin.discord().achievement(tw.exilecore.item.ItemRenderer.escape(name) + " 找到了「" + tw.exilecore.item.ItemRenderer.escape(itemName) + "」！");
+        if (plugin.discord() != null && discord) { // 2026-11-02 照站長：Discord 只發超稀有通貨（血脈輔助寶石不發）
+            plugin.discord().rareDrop(tw.exilecore.item.ItemRenderer.escape(name) + " 找到了「" + tw.exilecore.item.ItemRenderer.escape(itemName) + "」！");
         }
     }
 
@@ -438,7 +457,7 @@ public final class LootService {
         }
         plugin.getSLF4JLogger().info("映星鏡：{} 掉出 {}（{}）", finder.getName(), mirror.name(), mirror.id());
         if (plugin.discord() != null) {
-            plugin.discord().achievement(tw.exilecore.item.ItemRenderer.escape(name) + " 找到了「" + tw.exilecore.item.ItemRenderer.escape(mirror.name()) + "」！");
+            plugin.discord().rareDrop(tw.exilecore.item.ItemRenderer.escape(name) + " 找到了「" + tw.exilecore.item.ItemRenderer.escape(mirror.name()) + "」！");
         }
     }
 
@@ -453,7 +472,7 @@ public final class LootService {
         }
         plugin.getSLF4JLogger().info("共鳴石：{} 掉出 {}（{}）", finder.getName(), orb.name(), orb.id());
         if (plugin.discord() != null) {
-            plugin.discord().achievement(tw.exilecore.item.ItemRenderer.escape(name) + " 找到了「" + tw.exilecore.item.ItemRenderer.escape(orb.name()) + "」！");
+            plugin.discord().rareDrop(tw.exilecore.item.ItemRenderer.escape(name) + " 找到了「" + tw.exilecore.item.ItemRenderer.escape(orb.name()) + "」！");
         }
     }
 

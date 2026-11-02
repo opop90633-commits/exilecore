@@ -4525,6 +4525,51 @@ skills:
     stagger: 0.4
     scatter: 2.5
     at: target
+  # 2026-11-02 照 PoE2 Conjures Elemental Hazards（MonsterElementalWaller1）：火、冰、雷三種危險地面輪流放在你附近
+  #   （poe2db 沒寫數值：照焰牆的寫法推估，三塊、各 1.6 格、留 6 秒）
+  mod_hazard_fire:
+    name: 火焰危地
+    kind: zone
+    damage: 0.4
+    type: fire
+    cooldown: 15
+    range: 14
+    telegraph: 0.8
+    radius: 1.6
+    duration: 6
+    interval: 0.5
+    count: 3
+    scatter: 4
+    at: target
+  mod_hazard_cold:
+    name: 冰霜危地
+    kind: zone
+    damage: 0.4
+    type: cold
+    cooldown: 17
+    range: 14
+    telegraph: 0.8
+    radius: 1.6
+    duration: 6
+    interval: 0.5
+    count: 3
+    scatter: 4
+    at: target
+    slow: 1
+  mod_hazard_lightning:
+    name: 雷電危地
+    kind: zone
+    damage: 0.4
+    type: lightning
+    cooldown: 19
+    range: 14
+    telegraph: 0.8
+    radius: 1.6
+    duration: 6
+    interval: 0.5
+    count: 3
+    scatter: 4
+    at: target
 
 defaults:
   default: [slam, charge]

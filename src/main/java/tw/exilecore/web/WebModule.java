@@ -314,6 +314,8 @@ public final class WebModule implements Module, Listener {
         // 2026-10-18：次數限制看真實 IP（代理後面不會全服共用一個桶）
         final BuildCalc calc = new BuildCalc(plugin, request -> ClientIp.of(request, trustProxy, cloudflareProxy));
         server.endpoint("/tree/calc", calc::handle, "POST");
+        // 2026-11-02 照站長：批次算差異（滑到節點看配了會變多少、節點強度熱圖）；每個 IP 照組數限制、同時最多 2 個
+        server.endpoint("/tree/calc-batch", calc::handleBatch, "POST");
         // 2026-10-26：永恆珠寶征服的節點（網頁天賦樹即時換名稱與說明；種子的雜湊在伺服器算）
         server.endpoint("/tree/timeless", calc::handleTimeless, "POST");
         // 市場報告：全服通貨與金幣的產出、消耗、存量、參考價值（只有加總，沒有個人資料）；關掉時整頁 404
@@ -488,7 +490,8 @@ public final class WebModule implements Module, Listener {
                         }
                     }
                     branches.get(cell.row()).add(new PlannerData.AscendancyNode(node.name(), node.cost(), node.display(), node.shownNote(), node.id(),
-                            node.requires(), cell.depth(), cell.row(), node.optionOf(), node.choice(), node.notable(), skills));
+                            node.requires(), cell.depth(), cell.row(), node.optionOf(), node.choice(), node.notable(), skills,
+                            List.copyOf(PassiveTree.rulesOf(node.stats())))); // 2026-11-02：給的天賦樹配點規則（網頁判斷跳點、不見之途）
                 }
                 final String color = ascendancy.color() != null && ascendancy.color().startsWith("#") ? ascendancy.color() : "#f5c04a";
                 ascendancies.add(new PlannerData.AscendancyInfo(ascendancy.id(), ascendancy.classId(), ascendancy.name(), color,

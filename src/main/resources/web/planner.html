@@ -210,6 +210,15 @@
   .nums span:first-child { color: var(--quiet); }
   .nums b { font-weight: 600; font-variant-numeric: tabular-nums; }
   .nums .wide { grid-column: 1 / -1; }
+  /* 2026-11-02：EHP 對什麼樣的敵人算（計算器的設定）與結果 */
+  .enemybox { margin-top: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: rgba(255, 255, 255, 0.02); }
+  .enemybox .mixrow label { gap: 2px; }
+  .enemybox .mixrow[hidden] { display: none; }
+  .enemybox .mixrow input[type=number] { width: 56px; }
+  .nums .ehp b { color: var(--gold); }
+  .nums .ehpnote { display: block; color: var(--quiet); font-size: 11.5px; line-height: 1.45; border-bottom: none; padding-top: 0; }
+  .nums .maxhit b { font-weight: 500; }
+  .nums .quiet { color: var(--quiet); font-size: 12px; margin-left: 2px; }
   .warn { color: #ffb347; font-size: 12px; margin-top: 6px; line-height: 1.5; }
   .skillrow { display: grid; grid-template-columns: 96px 1fr auto; gap: 6px; align-items: center; padding: 5px 0; border-bottom: 1px dashed #1f2440; }
   .skillrow select { font: inherit; font-size: 12px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px; width: 100%; }
@@ -237,6 +246,27 @@
   .asc .card.pickable { cursor: pointer; }
   .asc .card.on { border-color: var(--c, var(--gold)); box-shadow: inset 0 0 0 1px var(--c, var(--gold)); }
   .asc .card.locked { opacity: 0.55; }
+  /* 2026-11-02 照站長：復原／重做、滑到節點的差異、節點強度熱圖、上次的規劃 */
+  .heatprog[hidden], .heatlegend[hidden], #restoreBar[hidden] { display: none; }
+  .tools button:disabled { opacity: 0.4; cursor: default; border-color: var(--line); }
+  .tools .sep { width: 6px; }
+  #tip .diff { margin-top: 6px; padding-top: 5px; border-top: 1px dashed var(--line); font-size: 12.5px; }
+  #tip .diff .ttl { color: var(--quiet); font-size: 12px; }
+  #tip .diff .row { display: flex; justify-content: space-between; gap: 10px; font-variant-numeric: tabular-nums; }
+  #tip .diff .row span:first-child { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  #tip .diff .row span:last-child { white-space: nowrap; }
+  #tip .diff .up { color: #5bd65b; } #tip .diff .down { color: var(--red); }
+  #tip .heat { margin-top: 6px; font-size: 12.5px; color: #ffb36b; }
+  #tip .heat .q { color: var(--quiet); }
+  .heatprog { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .heatprog .bar { flex: 1; height: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .heatprog .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #ebdc5a, #ff9632, #ff3c3c); transition: width 0.15s; }
+  .heatlegend { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 11px; color: var(--quiet); }
+  .heatlegend i { flex: 1; height: 6px; border-radius: 3px; background: linear-gradient(90deg, #6e7082, #ebdc5a, #ff9632, #ff3c3c); }
+  #heatStatus.stale { color: var(--gold); }
+  #heat.stale { opacity: 0.3; }
+  #restoreBar { padding: 4px 16px; font-size: 12px; color: var(--quiet); background: var(--panel-2); border-bottom: 1px solid var(--line); }
+  #restoreBar button { border: 0; background: none; color: var(--gold); cursor: pointer; font: inherit; padding: 0 2px; text-decoration: underline; }
   @media (max-width: 720px) {
     main { flex-direction: column; }
     aside { width: 100%; max-width: none; border-left: 0; border-top: 1px solid var(--line); max-height: 42vh; }
@@ -250,6 +280,7 @@
   <div class="classes" id="classes"></div>
   <div class="points" id="points">載入中…</div>
 </header>
+<div id="restoreBar" hidden>已載入上次的規劃・<button type="button" id="restoreClear">清除</button></div>
 <main>
   <div id="canvas">
     <svg id="svg" xmlns="http://www.w3.org/2000/svg">
@@ -268,12 +299,16 @@
         <g id="stars"></g>
         <g id="edges"></g>
         <g id="glows"></g>
+        <g id="heat" pointer-events="none"></g>
         <g id="rings"></g>
         <g id="nodes"></g>
         <g id="labels"></g>
       </g>
     </svg>
     <div class="tools">
+      <button id="undo" title="復原（Ctrl+Z）" disabled>↶ 復原</button>
+      <button id="redo" title="重做（Ctrl+Y／Ctrl+Shift+Z）" disabled>↷ 重做</button>
+      <span class="sep"></span>
       <button id="fit" title="整棵樹放進畫面">全部</button>
       <button id="home" title="回到職業起點">起點</button>
       <button id="zoomIn" title="放大">＋</button>
@@ -294,10 +329,50 @@
         <button type="button" id="calcBaseline" title="記下現在的數字，之後的改動都跟它比">設為比較基準</button>
         <button type="button" id="calcApply" title="照現在的天賦、裝備、技能重新算一次">套用數值</button>
       </div>
+      <!-- 2026-11-02 照站長（PoB2 ConfigOptions 的 Enemy Stats）：EHP 對什麼樣的敵人算 -->
+      <div class="enemybox" id="enemyBox">
+        <div class="calcrow" style="margin-top:0">
+          <label title="EHP、最多吃得下一下照這個敵人算（PoB2 的預設是巔峰 Boss）">敵人
+            <select id="enemyTier" aria-label="敵人是哪一種">
+              <option value="0">一般怪</option>
+              <option value="1">Boss（傷害 ×4）</option>
+              <option value="2">巔峰 Boss（×8）</option>
+              <option value="3">超級巔峰 Boss（×10）</option>
+            </select></label>
+          <label title="空白＝自動：一般怪、Boss 照角色等級；巔峰以上用 T16 地圖的等級（也是最低）">等級 <input type="number" id="enemyLevel" min="1" max="100" placeholder="自動"></label>
+          <label>傷害
+            <select id="enemyMix" aria-label="敵人的傷害類型">
+              <option value="avg">均衡（PoB2）</option>
+              <option value="phys">全物理</option>
+              <option value="ele">全元素</option>
+              <option value="chaos">混沌</option>
+              <option value="custom">自訂比例</option>
+            </select></label>
+        </div>
+        <div class="calcrow mixrow" id="enemyMixRow" hidden></div>
+      </div>
       <div class="calcstatus" id="calcStatus">配天賦、裝備、技能，右邊會算出每秒傷害與防禦</div>
       <table class="dps" id="calcDps"></table>
       <div class="nums" id="calcNums"></div>
       <div id="calcWarn"></div>
+    </section>
+    <section id="heatSection">
+      <h2>節點強度</h2>
+      <div class="calcrow" style="margin-top:0">
+        <select id="heatMetric" aria-label="要看的數字"></select>
+        <select id="heatRange" aria-label="算多遠">
+          <option value="3">能配的往外 3 步</option>
+          <option value="6" selected>能配的往外 6 步</option>
+          <option value="999">整棵樹（比較久）</option>
+        </select>
+      </div>
+      <div class="calcrow">
+        <button type="button" class="calcbtn primary" id="heatRun">算節點強度</button>
+        <button type="button" class="calcbtn" id="heatClear" hidden>關掉熱圖</button>
+      </div>
+      <div class="heatprog" id="heatProg" hidden><div class="bar"><i id="heatBar"></i></div><button type="button" class="calcbtn" id="heatCancel">取消</button></div>
+      <div class="heatlegend" id="heatLegend" hidden><span>沒變</span><i></i><span id="heatMax">最多</span></div>
+      <div class="hint" id="heatStatus">每個沒配的節點各自配上去，看選的數字變多少，照多寡把節點染色（紅最多、灰沒變）。滑到節點看數值。</div>
     </section>
     <section>
       <h2>技能與輔助寶石</h2>
@@ -329,7 +404,9 @@
         點已配的屬性點可以改屬性或退掉。沒選的照職業的主屬性，選好的會跟著代碼帶進遊戲。<br>
         <span style="color:#c77dff">六角形</span>是珠寶孔：配了之後<b>點它放珠寶</b>（挑基底、詞綴，或載入角色時帶進來遊戲裡的珠寶），珠寶的效果會算進天賦加總與計算器。
         滑到珠寶孔會畫出<b>珠寶的範圍</b>（小 1000、中 1150、大 1300、非常大 1500＝恆時珠寶；放了範圍珠寶就畫它實際的範圍），並列出範圍裡有幾個小點、核心。<br>
-        複製代碼後，遊戲裡打 <b>/tree import</b> 貼上，或在天賦總覽按「匯入規劃代碼」。</div>
+        複製代碼後，遊戲裡打 <b>/tree import</b> 貼上，或在天賦總覽按「匯入規劃代碼」。<br>
+        滑到節點會列出<b>配上後（或退掉後）</b>生命、抗性、每秒傷害變多少（伺服器算，跟遊戲一樣）。<b>Ctrl+Z</b> 復原、<b>Ctrl+Y</b> 重做（左下角也有按鈕）。
+        規劃會自動存在這個瀏覽器，下次打開接著用。</div>
     </section>
     <section>
       <h2>珠寶孔的範圍</h2>
@@ -343,9 +420,10 @@
       <div class="hint">遺時星晶放在珠寶孔裡，範圍內<b>已配置</b>的每個小點都多給一次它的詞綴；放了之後範圍一直畫著，滑到範圍內的節點會寫它多給什麼。</div>
     </section>
     <section id="ascSection" hidden>
-      <h2>昇華預覽</h2>
+      <h2>昇華</h2>
       <div class="ascbtns" id="ascButtons"></div>
-      <div class="hint">看這個職業能走的昇華職業與每個昇華天賦的效果（只能看；昇華在遊戲裡完成試煉後才選，不在規劃代碼裡）。</div>
+      <div class="hint">打開後可以選這個職業的昇華、直接點昇華天賦（跟計算器的昇華同一份，存在「複製連結」的網址裡；遊戲裡的 /tree import 只看天賦）。
+        觀星配了「不見之途」，紫色星框的專屬天賦才能配；配了「虛實交織」，已配基石紫色虛線圈裡的天賦不用相連就能配。</div>
     </section>
     <section>
       <h2>搜尋</h2>
@@ -385,6 +463,191 @@
 <script>
 "use strict";
 (function () {
+  // <planner-pure> 2026-11-02 照站長：復原／重做的堆疊、滑到節點的差異、存在瀏覽器的規劃、熱圖的顏色。
+  // 純函式（不碰畫面、不碰全域），tools/planner_pure_test.mjs 把這一段拿出來測。這次之前沒有這些功能
+  const PlannerPure = (() => {
+    /** 復原／重做：list[index] 是現在的狀態；最多記 limit 步（最舊的丟掉）。 */
+    class UndoStack {
+      constructor(limit) { this.limit = limit; this.list = []; this.index = -1; }
+      current() { return this.index >= 0 ? this.list[this.index] : null; }
+      reset(state) { this.list = [state]; this.index = 0; }
+      /** 不是玩家做的變化（資料晚到、載入）：改掉現在這一步，不多一步。 */
+      replace(state) { if (this.index < 0) this.reset(state); else this.list[this.index] = state; }
+      push(state) {
+        this.list = this.list.slice(0, this.index + 1);
+        this.list.push(state);
+        if (this.list.length > this.limit + 1) this.list.splice(0, this.list.length - this.limit - 1);
+        this.index = this.list.length - 1;
+      }
+      canUndo() { return this.index > 0; }
+      canRedo() { return this.index >= 0 && this.index < this.list.length - 1; }
+      undo() { return this.canUndo() ? this.list[--this.index] : null; }
+      redo() { return this.canRedo() ? this.list[++this.index] : null; }
+      undoCount() { return Math.max(0, this.index); }
+      redoCount() { return Math.max(0, this.list.length - 1 - this.index); }
+    }
+    /** 最近用過的留著（超過 max 丟最久沒用的）。 */
+    class Lru {
+      constructor(max) { this.max = max; this.map = new Map(); }
+      get(key) { if (!this.map.has(key)) return undefined; const v = this.map.get(key); this.map.delete(key); this.map.set(key, v); return v; }
+      has(key) { return this.map.has(key); }
+      set(key, value) {
+        this.map.delete(key); this.map.set(key, value);
+        while (this.map.size > this.max) this.map.delete(this.map.keys().next().value);
+      }
+      get size() { return this.map.size; }
+    }
+    /** 字串的雜湊（快取的鍵用；兩個 32 位元合起來）。 */
+    function hashString(text) {
+      let a = 0x811c9dc5, b = 0x9e3779b9;
+      for (let i = 0; i < text.length; i++) {
+        const c = text.charCodeAt(i);
+        a = Math.imul(a ^ c, 16777619) >>> 0;
+        b = Math.imul(b ^ c, 2246822519) >>> 0;
+      }
+      return a.toString(36) + b.toString(36) + ":" + text.length;
+    }
+    // 存在瀏覽器的規劃：{ v: 版本, hash: 跟分享連結 # 後面同一份, t: 存的時間 }
+    const SAVE_VERSION = 1;
+    function packSave(hash, now) { return JSON.stringify({ v: SAVE_VERSION, hash, t: now || 0 }); }
+    /** 讀存的：壞掉、版本不認得、內容不像規劃的回傳 null。 */
+    function unpackSave(text) {
+      if (typeof text !== "string" || !text) return null;
+      let o;
+      try { o = JSON.parse(text); } catch (e) { return null; }
+      if (!o || typeof o !== "object" || o.v !== SAVE_VERSION || typeof o.hash !== "string") return null;
+      const hash = o.hash.replace(/^#/, "");
+      if (!hash || hash.length > 200000 || !/^[A-Za-z0-9._~!%-]+$/.test(hash)) return null;
+      return hash;
+    }
+    /**
+     * 兩次計算（批次端點的 { n: 數字, s: [{ p, name, d }] }）的差異：只列有變的。
+     * stats：[[鍵, 名稱, 單位]…]；技能照位置 p 對（同一份技能面板），名稱照現在的。
+     */
+    function diffRows(before, after, stats) {
+      const rows = [];
+      const bn = (before && before.n) || {}, an = (after && after.n) || {};
+      for (const [key, label, unit] of stats) {
+        const b = bn[key], a = an[key];
+        if (typeof b !== "number" && typeof a !== "number") continue;
+        const x = typeof b === "number" ? b : 0, y = typeof a === "number" ? a : 0;
+        if (Math.abs(y - x) < 0.005) continue;
+        rows.push({ kind: "stat", key, label, unit: unit || "", before: x, after: y, diff: y - x, pct: x ? (y - x) / Math.abs(x) * 100 : null });
+      }
+      const bs = new Map(((before && before.s) || []).map(r => [r.p, r]));
+      const as = new Map(((after && after.s) || []).map(r => [r.p, r]));
+      for (const p of new Set([...bs.keys(), ...as.keys()])) {
+        const b = bs.get(p), a = as.get(p);
+        const x = b ? b.d : 0, y = a ? a.d : 0;
+        if (Math.abs(y - x) < Math.max(0.01, Math.abs(x) * 1e-4)) continue;
+        rows.push({ kind: "dps", key: "dps:" + p, label: (a || b).name, before: x, after: y, diff: y - x, pct: x ? (y - x) / Math.abs(x) * 100 : null });
+      }
+      return rows;
+    }
+    function fmtNum(v) {
+      if (!isFinite(v)) return "—";
+      const a = Math.abs(v);
+      if (a >= 1e7) return (v / 1e6).toFixed(1) + "M";
+      return v.toLocaleString("en-US", { maximumFractionDigits: a < 10 ? 2 : a < 100 ? 1 : 0 });
+    }
+    function signed(text, v) { return (v > 0 ? "+" : v < 0 ? "−" : "") + text; }
+    /** 一行差異的文字：每秒傷害「+6.3%（12,345 → 13,120）」；其他「+45（1,200 → 1,245）」、抗性「+8%（67% → 75%）」。 */
+    function fmtDiff(row) {
+      if (row.kind === "dps") {
+        const head = row.pct === null ? signed(fmtNum(Math.abs(row.diff)), row.diff) : signed(Math.abs(row.pct).toFixed(1) + "%", row.diff);
+        return head + "（" + fmtNum(row.before) + " → " + fmtNum(row.after) + "）";
+      }
+      const u = row.unit;
+      return signed(fmtNum(Math.abs(row.diff)) + u, row.diff) + "（" + fmtNum(row.before) + u + " → " + fmtNum(row.after) + u + "）";
+    }
+    /** 熱圖的顏色：t = 這一點 ÷ 最大的（0–1）：灰 → 黃 → 橙 → 紅；變少的是暗藍紫。 */
+    function heatColor(value, max) {
+      if (!(value > 0) || !(max > 0)) return value < 0 ? "#5b5f9a" : "#55586e";
+      const t = Math.min(1, value / max);
+      const stops = [[0, [110, 112, 130]], [0.25, [235, 220, 90]], [0.6, [255, 150, 50]], [1, [255, 60, 60]]];
+      let k = 1;
+      while (k < stops.length - 1 && t > stops[k][0]) k++;
+      const [t0, c0] = stops[k - 1], [t1, c1] = stops[k];
+      const f = (t - t0) / (t1 - t0 || 1);
+      const c = c0.map((v, i) => Math.round(v + (c1[i] - v) * f));
+      return "rgb(" + c.join(",") + ")";
+    }
+    /** 熱圖要算的節點：從能配的（第 1 步）往外走，只走沒配的；maxSteps 步內的（照 order）。 */
+    function heatCandidates(order, canAllocate, neighbours, skip, maxSteps) {
+      const dist = new Map();
+      const queue = [];
+      for (const n of order) if (canAllocate(n)) { dist.set(n.id, 1); queue.push(n); }
+      for (let i = 0; i < queue.length; i++) {
+        const cur = queue[i], d = dist.get(cur.id);
+        if (d >= maxSteps) continue;
+        for (const n of neighbours(cur)) {
+          if (dist.has(n.id) || skip(n)) continue;
+          dist.set(n.id, d + 1);
+          queue.push(n);
+        }
+      }
+      return order.filter(n => dist.has(n.id)).map(n => ({ node: n, steps: dist.get(n.id) }));
+    }
+    // 2026-11-02 照站長（PoB2 ConfigOptions 的 Enemy Stats）：EHP 的敵人設定。tier 0 一般怪、1 Boss、2 巔峰 Boss、3 超級巔峰 Boss
+    // （PoB2 的預設是巔峰 Boss）；level 0 ＝自動；mix 是預設的名字或 [物理, 火焰, 冰冷, 閃電, 混沌] 的比例
+    const ENEMY_MIXES = { avg: null, phys: [1, 0, 0, 0, 0], ele: [0, 1, 1, 1, 0], chaos: [0, 0, 0, 0, 1] };
+    const ENEMY_DEFAULT = Object.freeze({ tier: 2, level: 0, mix: "avg" });
+    /** 整理敵人設定：認不得的照預設；比例全 0、不是 5 個數字的照「均衡」；跟預設一樣的比例換成預設的名字。 */
+    function normEnemy(e) {
+      const o = e && typeof e === "object" ? e : {};
+      const tier = Number.isInteger(o.tier) && o.tier >= 0 && o.tier <= 3 ? o.tier : ENEMY_DEFAULT.tier;
+      const lv = Math.round(Number(o.level));
+      const level = isFinite(lv) && lv > 0 ? Math.min(200, lv) : 0;
+      let mix = "avg";
+      if (typeof o.mix === "string" && Object.prototype.hasOwnProperty.call(ENEMY_MIXES, o.mix)) mix = o.mix;
+      else if (Array.isArray(o.mix) && o.mix.length === 5) {
+        const v = o.mix.map(x => { const n = Number(x); return isFinite(n) && n > 0 ? Math.min(1000, Math.round(n * 100) / 100) : 0; });
+        if (v.some(x => x > 0)) {
+          const named = Object.keys(ENEMY_MIXES).find(k => ENEMY_MIXES[k] && sameRatio(ENEMY_MIXES[k], v));
+          mix = named || v;
+        }
+      }
+      return { tier, level, mix };
+    }
+    function sameRatio(a, b) {
+      const sa = a.reduce((x, y) => x + y, 0), sb = b.reduce((x, y) => x + y, 0);
+      return sa > 0 && sb > 0 && a.every((x, i) => Math.abs(x / sa - b[i] / sb) < 1e-9);
+    }
+    function isDefaultEnemy(e) { const n = normEnemy(e); return n.tier === ENEMY_DEFAULT.tier && n.level === 0 && n.mix === "avg"; }
+    /** 寫進分享連結（計算器那一段的第 7 個）：跟預設一樣回傳 null（不寫，舊的連結也是這樣）。 */
+    function packEnemy(e) {
+      if (isDefaultEnemy(e)) return null;
+      const n = normEnemy(e);
+      return [n.tier, n.level, n.mix];
+    }
+    /** 讀分享連結的：沒有（舊連結）、壞掉的照預設。 */
+    function unpackEnemy(p) {
+      return Array.isArray(p) ? normEnemy({ tier: Math.round(Number(p[0])), level: p[1], mix: p[2] }) : normEnemy(null);
+    }
+    /** 送去伺服器的（BuildCalc.parseEnemy）：{ tier, level, mix? }；均衡不送 mix（伺服器照 PoB2 那一種敵人的預設分配）。 */
+    function enemyJson(e) {
+      const n = normEnemy(e);
+      const out = { tier: n.tier, level: n.level };
+      const mix = typeof n.mix === "string" ? ENEMY_MIXES[n.mix] : n.mix;
+      if (mix) out.mix = mix.slice();
+      return out;
+    }
+    return { UndoStack, Lru, hashString, packSave, unpackSave, diffRows, fmtDiff, heatColor, heatCandidates, SAVE_VERSION,
+      ENEMY_MIXES, ENEMY_DEFAULT, normEnemy, isDefaultEnemy, packEnemy, unpackEnemy, enemyJson };
+  })();
+  // </planner-pure>
+
+  // 2026-11-02 照站長：關掉再打開記得上次的規劃（存在瀏覽器，跟分享連結同一份編碼）。網址有帶規劃（分享連結）就照網址、不蓋掉；
+  // 沒有才拿存的放進網址，後面照原本讀網址的流程載入。這次之前完全沒有存，關掉就沒了
+  const SAVE_KEY = "exilecore.planner";
+  let restoredFromSave = false;
+  try {
+    if (!location.hash.replace(/^#/, "") && !new URLSearchParams(location.search).get("load")) {
+      const saved = PlannerPure.unpackSave(localStorage.getItem(SAVE_KEY));
+      if (saved) { history.replaceState(null, "", location.pathname + location.search + "#" + saved); restoredFromSave = true; }
+    }
+  } catch (e) { /* 隱私模式、被擋：照沒存過 */ }
+
   const SPACING = 56;
   const svg = document.getElementById("svg");
   const world = document.getElementById("world");
@@ -453,6 +716,7 @@
     setGlossary(data.glossary); // 2026-10-27：名詞表（虛線底線、滑上去看解釋）
     order = data.nodes;
     for (const node of order) { byId.set(node.id, node); byPos.set(node.x + "," + node.y, node); }
+    order.forEach((node, i) => { node.ord = i; }); // 2026-11-02：配點的雜湊（虛實交織的快取）用
     // 2026-10-28：照原作座標畫（px／py ÷ 160 格）。這次之前畫在四捨五入過的格子上（每點最多偏半格），
     //   珠寶的範圍圈跟點對不上（圈邊上的點看起來在圈內、其實在圈外）。格子座標留在 gx／gy（舊的樹沒有 links 時找鄰居、情緒珠寶的圈數用）
     for (const node of order) {
@@ -950,15 +1214,16 @@
         if (ng.rarity === "unique" && Object.entries(jewels).some(([id, x]) => id !== socketId && x && x.rarity === "unique" && allocated.has(id))) {
           flash("傳奇珠寶只能配一顆（天賦樹上已經有一顆了）"); return;
         }
-        jewels[socketId] = ng; closeEditor(); render();
+        userEdit(); jewels[socketId] = ng; closeEditor(); render();
       };
       const jbtns = node("div", { cls: "btns" },
         node("button", { type: "button", text: cascade > 1 ? "退掉這個孔（連帶 " + (cascade - 1) + " 點）" : "退掉這個孔", onclick: () => {
           closeEditor();
+          userEdit();
           if (socketNode) { for (const id of removal(socketNode)) allocated.delete(id); pruneAttrs(); }
           hover = null; preview = { add: new Set(), remove: new Set() }; render();
         } }),
-        jewels[socketId] ? node("button", { type: "button", text: "拿掉珠寶", onclick: () => { delete jewels[socketId]; closeEditor(); render(); } }) : null,
+        jewels[socketId] ? node("button", { type: "button", text: "拿掉珠寶", onclick: () => { userEdit(); delete jewels[socketId]; closeEditor(); render(); } }) : null,
         node("button", { type: "button", text: "取消", onclick: closeEditor }),
         node("button", { type: "button", cls: "primary", text: "放進去", onclick: saveJewel }));
       dlg.replaceChildren(node("h3", { text: "珠寶孔：" + (socketNode ? socketNode.name : "") }), seg, body, previewBox, jbtns);
@@ -1070,21 +1335,154 @@
     try { asc = calc.asc || ""; } catch (e) { asc = ""; }
     return node.unlock.ascendancy !== asc;
   }
-  /** 要先配某幾個核心其中一個才能配的節點（unlock.nodes），還沒配前置的時候。 */
+  /** 被解鎖條件擋住（跟遊戲的 PassiveTree.locked 一樣：沒有不見之途、還沒配前置核心）。 */
   function lockedNode(node) {
-    return !!(node.unlock && node.unlock.nodes && node.unlock.nodes.length && !node.unlock.nodes.some(id => allocated.has(id)));
+    return TreeRules.locked(node, allocated, activeRules());
+  }
+
+  // <tree-rules> 2026-11-02 照站長：天賦樹的配點規則（跟遊戲的 PassiveTree 一樣：canAllocate、canRefund／reachable、pathTo、
+  // 虛實交織的跳點、不見之途）。純函式（不碰畫面、不碰全域），tools/planner_rules_test.mjs 把這一段拿出來測。
+  // 這次之前網頁只看連線：虛實交織不能跳點、沒配不見之途也能配觀星專屬的節點。
+  // ctx：{ byId, neighbours(node), rules: Set, cfg: { unseenPath, entwined, entwinedRadius }, hidden(node) }
+  const TreeRules = (() => {
+    const px = n => n.px !== undefined ? n.px : n.x * 160;
+    const py = n => n.py !== undefined ? n.py : n.y * 160;
+    /** 被解鎖條件擋住：要某個昇華規則（不見之途）卻沒有、要先配某幾個核心卻都沒配。 */
+    function locked(node, set, rules) {
+      const u = node.unlock;
+      if (!u) return false;
+      if (u.stat) return !rules.has(u.stat);
+      return !(u.nodes || []).some(id => set.has(id));
+    }
+    /** 不見之途專屬（unlock.stat 是不見之途的規則）。 */
+    function unseen(node, cfg) {
+      return !!(node.unlock && node.unlock.stat && node.unlock.stat === cfg.unseenPath);
+    }
+    /** 虛實交織：不是基石、不是起點，在 inSet 裡某個基石的中半徑內。 */
+    function entwined(node, inSet, ctx) {
+      if (!ctx.rules.has(ctx.cfg.entwined) || node.type === "keystone" || node.type === "start") return false;
+      const r = ctx.cfg.entwinedRadius;
+      for (const id of inSet) {
+        const k = ctx.byId.get(id);
+        if (k && k.type === "keystone" && Math.hypot(px(k) - px(node), py(k) - py(node)) <= r) return true;
+      }
+      return false;
+    }
+    /** 從出發點只走 set 裡的（沒被擋住的）走得到的；虛實交織再加上連得到的基石範圍內的，再從它們往外走。 */
+    function reachable(set, seeds, ctx) {
+      const seen = new Set();
+      const queue = seeds.slice();
+      for (;;) {
+        while (queue.length) {
+          const cur = queue.shift();
+          for (const n of ctx.neighbours(cur)) {
+            if (set.has(n.id) && !seen.has(n.id) && !locked(n, set, ctx.rules)) { seen.add(n.id); queue.push(n); }
+          }
+        }
+        if (!ctx.rules.has(ctx.cfg.entwined)) return seen;
+        for (const id of set) {
+          const n = ctx.byId.get(id);
+          if (n && !seen.has(id) && !locked(n, set, ctx.rules) && entwined(n, seen, ctx)) { seen.add(id); queue.push(n); }
+        }
+        if (!queue.length) return seen;
+      }
+    }
+    function linked(node, set, seeds, ctx) {
+      return ctx.neighbours(node).some(n => set.has(n.id) || seeds.some(s => s.id === n.id));
+    }
+    /** 能不能配：reach 是 reachable(set) 的結果（可以先算好傳進來；沒給就現算）。 */
+    function canAllocate(node, set, seeds, ctx, reach) {
+      if (node.type === "start" || set.has(node.id) || ctx.hidden(node) || locked(node, set, ctx.rules)) return false;
+      if (linked(node, set, seeds, ctx)) return true;
+      return ctx.rules.has(ctx.cfg.entwined) && entwined(node, reach || reachable(set, seeds, ctx), ctx);
+    }
+    /** 能直接配但沒相連的（跳點），照 order 的順序。 */
+    function jumps(order, set, seeds, ctx, reach) {
+      if (!ctx.rules.has(ctx.cfg.entwined)) return [];
+      const r = reach || reachable(set, seeds, ctx);
+      return order.filter(n => n.type !== "start" && !set.has(n.id) && !ctx.hidden(n) && !locked(n, set, ctx.rules)
+        && !linked(n, set, seeds, ctx) && entwined(n, r, ctx));
+    }
+    /** 虛實交織的錨點：連得到的已配基石。 */
+    function anchors(order, set, seeds, ctx, reach) {
+      if (!ctx.rules.has(ctx.cfg.entwined)) return [];
+      const r = reach || reachable(set, seeds, ctx);
+      return order.filter(n => n.type === "keystone" && r.has(n.id));
+    }
+    /** 自動配路（跟遊戲的 pathTo 一樣）：能直接配的只配目標；不然從出發點、已配的（距離 0）與跳點（距離 1）往外找最短的路。 */
+    function pathTo(target, order, set, seeds, ctx) {
+      if (target.type === "start" || set.has(target.id) || ctx.hidden(target) || locked(target, set, ctx.rules)) return [];
+      const reach = ctx.rules.has(ctx.cfg.entwined) ? reachable(set, seeds, ctx) : null;
+      if (canAllocate(target, set, seeds, ctx, reach)) return [target];
+      const parent = new Map();
+      const seen = new Set([...seeds.map(n => n.id), ...set]);
+      const queue = [...seeds, ...[...set].map(id => ctx.byId.get(id)).filter(Boolean)];
+      for (const n of jumps(order, set, seeds, ctx, reach)) if (!seen.has(n.id)) { seen.add(n.id); queue.push(n); }
+      while (queue.length) {
+        const cur = queue.shift();
+        for (const n of ctx.neighbours(cur)) {
+          if (n.type === "start" || seen.has(n.id) || ctx.hidden(n) || locked(n, set, ctx.rules)) continue;
+          seen.add(n.id);
+          parent.set(n.id, cur);
+          if (n.id === target.id) {
+            const path = [];
+            let step = n;
+            while (step && !set.has(step.id) && step.type !== "start") { path.push(step); step = parent.get(step.id); }
+            return path.reverse();
+          }
+          queue.push(n);
+        }
+      }
+      return [];
+    }
+    /** 退掉 node：連帶斷掉的（連不到出發點、也不在連得到的基石範圍內）一起退，含 node。 */
+    function removal(node, set, seeds, ctx) {
+      if (!set.has(node.id)) return new Set();
+      const rest = new Set(set);
+      rest.delete(node.id);
+      const keep = reachable(rest, seeds, ctx);
+      const removed = new Set([node.id]);
+      for (const id of rest) if (!keep.has(id)) removed.add(id);
+      return removed;
+    }
+    /** 昇華天賦給的規則（rules；舊的資料沒有就照代號）。 */
+    function rulesOf(ascNodes, picked, fallback) {
+      const out = new Set();
+      for (const n of ascNodes) if (picked.includes(n.id)) for (const r of (n.rules || fallback[n.id] || [])) out.add(r);
+      return out;
+    }
+    return { locked, unseen, entwined, reachable, canAllocate, jumps, anchors, pathTo, removal, rulesOf };
+  })();
+  // </tree-rules>
+
+  /** 規則參數：插件帶的（/tree/data.json 的 treeRules，跟遊戲的 PassiveTree 同一份）；舊的資料沒有才用後面的預設。 */
+  function ruleCfg() {
+    const r = (data && data.treeRules) || {};
+    return { unseenPath: r.unseenPath || "asc.unseen_path", entwined: r.entwined || "asc.entwined",
+      entwinedRadius: r.entwinedRadius || 1150, pathStarts: r.pathStarts || { "asc.path_sorceress": "sorceress", "asc.path_warrior": "marauder" } };
+  }
+  // 舊的資料（昇華天賦沒有 rules）照代號
+  const RULE_FALLBACK = { unseen_path: ["asc.unseen_path"], entwined_realities: ["asc.entwined"],
+    path_sorceress: ["asc.path_sorceress"], path_warrior: ["asc.path_warrior"] };
+  /** 2026-11-02：計算器（或天賦樹頁的昇華視窗）配的昇華天賦給的配點規則。calc 在後面才宣告，太早呼叫（載入時）是空的。 */
+  function activeRules() {
+    let asc = null, picked = [];
+    try { asc = calc.asc ? (data.ascendancies || []).find(a => a.id === calc.asc) : null; picked = calc.ascNodes; } catch (e) { asc = null; }
+    if (!asc) return new Set();
+    return TreeRules.rulesOf(asc.branches.flat(), picked, RULE_FALLBACK);
+  }
+  function ruleCtx() {
+    return { byId, neighbours, rules: activeRules(), cfg: ruleCfg(), hidden: hiddenNode };
   }
   /**
-   * 2026-10-28 照站長：出發點（跟遊戲的 PassiveTree.seeds 一樣）——自己的起點；御風者配了「女術者之道」「戰士之道」再加元素法師、重甲鬥士的起點。
-   * calc 在後面才宣告，太早呼叫（載入時）就只有自己的起點。
+   * 2026-10-28 照站長：出發點（跟遊戲的 PassiveTree.seeds 一樣）——自己的起點；開路者配了「女術者之道」「戰士之道」再加元素法師、重甲鬥士的起點。
+   * 2026-11-02：哪個規則加哪個職業的起點照插件帶的 treeRules.pathStarts（這次之前網頁寫死一份）。
    */
-  const PATH_STARTS = { path_sorceress: "sorceress", path_warrior: "marauder" };
   function seeds() {
     const list = [start];
-    let nodes = [];
-    try { nodes = calc.asc ? calc.ascNodes : []; } catch (e) { nodes = []; }
-    for (const [ascNode, cls] of Object.entries(PATH_STARTS)) {
-      if (!nodes.includes(ascNode)) continue;
+    const rules = activeRules();
+    for (const [rule, cls] of Object.entries(ruleCfg().pathStarts)) {
+      if (!rules.has(rule)) continue;
       const info = data.classes.find(c => c.id === cls);
       const extra = info && byId.get(info.start);
       if (extra && !list.includes(extra)) list.push(extra);
@@ -1093,54 +1491,40 @@
   }
   const isSeed = node => seeds().some(s => s.id === node.id);
   const owned = node => isSeed(node) || allocated.has(node.id);
+  // 虛實交織要「已配的連得到哪些」：同一份配點只算一次（畫整棵樹時每個節點都會問）
+  let reachMemo = { key: "", set: null };
+  function setKey(set) {
+    let a = set.size, b = 0;
+    for (const id of set) { const n = byId.get(id); const k = (n ? n.ord : 0) + 1; a = (a + Math.imul(k, 2654435761)) >>> 0; b ^= Math.imul(k, 40503); }
+    return a + ":" + b;
+  }
+  function currentReach(ctx) {
+    const key = [...ctx.rules].sort().join(",") + "|" + (calcAscKey()) + "|" + (start ? start.id : "") + "|" + setKey(allocated);
+    if (reachMemo.key !== key) reachMemo = { key, set: TreeRules.reachable(allocated, seeds(), ctx) };
+    return reachMemo.set;
+  }
+  function calcAscKey() { try { return calc.asc || ""; } catch (e) { return ""; } }
   function canAllocate(node) {
-    if (node.type === "start" || allocated.has(node.id)) return false;
-    return neighbours(node).some(owned);
+    const ctx = ruleCtx();
+    return TreeRules.canAllocate(node, allocated, seeds(), ctx, ctx.rules.has(ctx.cfg.entwined) ? currentReach(ctx) : null);
   }
+  /** 2026-11-02：虛實交織的跳點（能配、但沒跟已配的相連）。 */
+  function isJump(node) {
+    const ctx = ruleCtx();
+    if (!ctx.rules.has(ctx.cfg.entwined) || !canAllocate(node)) return false;
+    return !neighbours(node).some(n => allocated.has(n.id) || isSeed(n));
+  }
+  const unseenNode = node => TreeRules.unseen(node, ruleCfg());
   function reachable(set) {
-    const seen = new Set();
-    const queue = seeds(); // 2026-10-28：含女術者之道／戰士之道的起點
-    while (queue.length) {
-      const cur = queue.shift();
-      for (const n of neighbours(cur)) {
-        if (set.has(n.id) && !seen.has(n.id)) { seen.add(n.id); queue.push(n); }
-      }
-    }
-    return seen;
+    return TreeRules.reachable(set, seeds(), ruleCtx()); // 2026-10-28：含女術者之道／戰士之道的起點；2026-11-02：含虛實交織的跳點
   }
-  /** 跟遊戲一樣：從起點與已配置的節點出發，只走沒配的、不是起點的，找到目標的最短路徑（含目標）。 */
+  /** 跟遊戲一樣：從起點與已配置的節點出發（2026-11-02：還有虛實交織的跳點），只走沒配的、不是起點的，找到目標的最短路徑（含目標）。 */
   function pathTo(target) {
-    if (target.type === "start" || allocated.has(target.id)) return [];
-    const parent = new Map();
-    const starts = seeds(); // 2026-10-28：含女術者之道／戰士之道的起點
-    const seen = new Set([...starts.map(s => s.id), ...allocated]);
-    const queue = [...starts, ...[...allocated].map(id => byId.get(id))];
-    while (queue.length) {
-      const cur = queue.shift();
-      for (const n of neighbours(cur)) {
-        if (n.type === "start" || seen.has(n.id) || hiddenNode(n) || lockedNode(n)) continue;
-        seen.add(n.id);
-        parent.set(n.id, cur);
-        if (n.id === target.id) {
-          const path = [];
-          let step = n;
-          while (step && !allocated.has(step.id) && step.type !== "start") { path.push(step); step = parent.get(step.id); }
-          return path.reverse();
-        }
-        queue.push(n);
-      }
-    }
-    return [];
+    return TreeRules.pathTo(target, order, allocated, seeds(), ruleCtx());
   }
-  /** 退掉一個節點：連帶退掉因此連不到起點的。 */
+  /** 退掉一個節點：連帶退掉因此連不到起點的（2026-11-02：跳點配的不靠連線，照虛實交織的範圍算，跟遊戲的 canRefund 一樣）。 */
   function removal(node) {
-    if (!allocated.has(node.id)) return new Set();
-    const rest = new Set(allocated);
-    rest.delete(node.id);
-    const keep = reachable(rest);
-    const removed = new Set([node.id]);
-    for (const id of rest) if (!keep.has(id)) removed.add(id);
-    return removed;
+    return TreeRules.removal(node, allocated, seeds(), ruleCtx());
   }
 
   // ---- 代碼（跟遊戲的 TreeCode 一樣）----
@@ -1410,40 +1794,76 @@
     box.appendChild(all);
   }
   const ascDialog = document.getElementById("ascDialog");
+  // 2026-11-02 照站長：同一個視窗兩種內容——天賦樹頁的昇華（tree：看全部職業、自己職業的可以點）、計算器的昇華天賦（picker）
+  let ascMode = "tree";
   function openAscendancy(id) {
+    ascMode = "tree";
     renderAscendancy(id);
     if (!ascDialog.open) { if (typeof ascDialog.showModal === "function") ascDialog.showModal(); else ascDialog.setAttribute("open", ""); }
   }
   function closeAscendancy() { if (typeof ascDialog.close === "function") ascDialog.close(); else ascDialog.removeAttribute("open"); }
   ascDialog.addEventListener("click", e => { if (e.target === ascDialog) closeAscendancy(); }); // 點外面關掉
+  /**
+   * 天賦樹頁的昇華視窗。2026-11-02 照站長：自己職業的昇華可以直接選、直接點昇華天賦（跟計算器的 calc.ascNodes 同一份，
+   * 點數上限、前置照 toggleAscNode），點了天賦樹馬上跟著變（不見之途的專屬天賦、虛實交織的跳點）；別的職業的只能看。
+   * 這次之前整個視窗只能看。
+   */
   function renderAscendancy(id) {
     const a = data.ascendancies.find(x => x.id === id) || data.ascendancies[0];
     const box = document.getElementById("asc");
     let count = 0, cost = 0;
     for (const branch of a.branches) for (const n of branch) { count++; cost += n.cost; }
+    const mine = a["class"] === classId;
+    const chosen = mine && calc.asc === a.id;
+    const used = chosen ? ascPointsUsed() : 0;
     const classes = data.classes.filter(c => ascendanciesOf(c.id).length);
     let html = "<div class='pick'><div class='lbl'>職業</div><div class='ascbtns'>" + classes.map(c =>
       "<button type='button' data-class='" + escapeHtml(c.id) + "' style='--c:" + escapeHtml(c.color) + "' class='" + (c.id === a["class"] ? "on" : "") + "'>"
       + escapeHtml(c.name) + "</button>").join("") + "</div></div>";
-    html += "<div class='pick'><div class='lbl'>" + escapeHtml(className(a["class"])) + "的昇華職業</div><div class='ascbtns'>" + ascendanciesOf(a["class"]).map(x =>
+    html += "<div class='pick'><div class='lbl'>" + escapeHtml(className(a["class"])) + "的昇華職業" + (mine ? "（點一下就選這個，跟計算器同步）" : "（不是你現在的職業，只能看）")
+      + "</div><div class='ascbtns'>" + ascendanciesOf(a["class"]).map(x =>
       "<button type='button' data-asc='" + escapeHtml(x.id) + "' style='--c:" + escapeHtml(x.color) + "' class='" + (x.id === a.id ? "on" : "") + "'>"
-      + escapeHtml(x.name) + "</button>").join("") + "</div></div>";
-    html += "<h3 style='color:" + escapeHtml(a.color) + "'>" + escapeHtml(a.name) + "</h3>";
+      + (mine && calc.asc === x.id ? "✔ " : "") + escapeHtml(x.name) + "</button>").join("")
+      + (mine && calc.asc ? "<button type='button' data-noasc='1' class='other'>不選昇華</button>" : "") + "</div></div>";
+    html += "<h3 style='color:" + escapeHtml(a.color) + "'>" + escapeHtml(a.name) + (chosen ? "　<span style='font-size:12px;color:var(--quiet)'>已選</span>" : "") + "</h3>";
     html += "<div class='sub'>" + escapeHtml(className(a["class"])) + "　全部 " + count + " 個天賦、" + cost + " 點"
-      + (data.ascendancyPoints ? "；昇華點最多 " + data.ascendancyPoints + " 點" : "") + "　每條分支要從第一個配起</div>";
+      + (data.ascendancyPoints ? "；昇華點最多 " + data.ascendancyPoints + " 點" : "") + "　每條分支要從第一個配起"
+      + (chosen ? "　已用 " + used + (data.ascendancyPoints ? " / " + data.ascendancyPoints : "") + " 點" : "") + "</div>";
     if (a.summary) html += "<p class='summary'>" + escapeHtml(a.summary) + "</p>";
-    for (const branch of a.branches) {
-      html += "<div class='branch'>" + branch.map((n, i) => (i ? "<div class='link'></div>" : "") + "<div class='card'><div class='nm' style='color:"
-        + escapeHtml(a.color) + "'>" + escapeHtml(n.name) + " <span class='cost'>" + n.cost + " 點</span></div>"
-        + ((glossSeen = new Set()), n.lines.map(l => "<div class='ln'>" + gloss(l) + "</div>").join(""))
-        + (n.note ? "<div class='note'>" + gloss(n.note) + "</div>" : "") + ascSkillsHtml(n) + "</div>").join("") + "</div>";
-    }
-    html += "<div class='foot'><span>只能看：昇華在遊戲裡完成試煉後才選，選了不能換。</span><button type='button' id='ascClose'>關閉</button></div>";
+    a.branches.forEach((branch, b) => {
+      html += "<div class='branch'>" + branch.map((n, i) => {
+        const on = chosen && calc.ascNodes.includes(n.id);
+        const open = i === 0 || (chosen && calc.ascNodes.includes(branch[i - 1].id));
+        const cls = mine ? "card pickable" + (on ? " on" : open ? "" : " locked") : "card";
+        return (i ? "<div class='link'></div>" : "") + "<div class='" + cls + "' style='--c:" + escapeHtml(a.color) + "'"
+          + (mine ? " role='button' tabindex='0' data-b='" + b + "' data-k='" + i + "'" : "") + "><div class='nm' style='color:"
+          + escapeHtml(a.color) + "'>" + (on ? "✔ " : "") + escapeHtml(n.name) + " <span class='cost'>" + n.cost + " 點</span></div>"
+          + ((glossSeen = new Set()), n.lines.map(l => "<div class='ln'>" + gloss(l) + "</div>").join(""))
+          + (n.note ? "<div class='note'>" + gloss(n.note) + "</div>" : "") + ascSkillsHtml(n) + "</div>";
+      }).join("") + "</div>";
+    });
+    html += "<div class='foot'><span>" + (mine ? "點卡片配／退昇華天賦（跟計算器同一份，存在「複製連結」的網址裡）；遊戲裡要完成試煉才選，選了不能換。"
+      : "這是別的職業的昇華，只能看；要配請先切換到" + escapeHtml(className(a["class"])) + "。") + "</span><button type='button' id='ascClose'>關閉</button></div>";
+    const scroll = box.scrollTop;
     box.innerHTML = html;
-    for (const b of box.querySelectorAll("button[data-class]")) b.addEventListener("click", () => renderAscendancy(ascendanciesOf(b.dataset["class"])[0].id));
-    for (const b of box.querySelectorAll("button[data-asc]")) b.addEventListener("click", () => renderAscendancy(b.dataset.asc));
+    for (const btn of box.querySelectorAll("button[data-class]")) btn.addEventListener("click", () => renderAscendancy(ascendanciesOf(btn.dataset["class"])[0].id));
+    for (const btn of box.querySelectorAll("button[data-asc]")) btn.addEventListener("click", () => {
+      if (mine) selectAsc(btn.dataset.asc);
+      renderAscendancy(btn.dataset.asc);
+    });
+    for (const btn of box.querySelectorAll("button[data-noasc]")) btn.addEventListener("click", () => { selectAsc(""); renderAscendancy(a.id); });
+    for (const card of box.querySelectorAll(".card[data-b]")) {
+      const pick = () => {
+        if (calc.asc !== a.id) selectAsc(a.id); // 點了別的昇華的天賦：先換成這個昇華（跟計算器換昇華一樣，原本配的昇華天賦清掉）
+        ascMode = "tree";
+        toggleAscNode(a, a.branches[Number(card.dataset.b)], Number(card.dataset.k));
+      };
+      card.addEventListener("click", e => { if (!e.target.closest(".kw, a, button")) pick(); });
+      card.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+    }
     document.getElementById("ascClose").addEventListener("click", closeAscendancy);
-    box.scrollTop = 0;
+    box.scrollTop = id === a.id && box.dataset.shown === a.id ? scroll : 0;
+    box.dataset.shown = a.id;
   }
 
   /** 2026-10-27：昇華天賦賦予的技能預覽（說明、效果、施放時間、冷卻），名詞一樣有底線。 */
@@ -1623,6 +2043,14 @@
   function drawRings() {
     layers.rings.replaceChildren();
     if (!data) return;
+    // 2026-11-02 照站長：虛實交織的範圍圈（連得到的已配基石的中半徑；圈裡的非基石不用相連就能配）
+    const ctx = ruleCtx();
+    if (ctx.rules.has(ctx.cfg.entwined)) {
+      for (const k of TreeRules.anchors(order, allocated, seeds(), ctx, currentReach(ctx))) {
+        el("circle", { cx: k.x * SPACING, cy: k.y * SPACING, r: ctx.cfg.entwinedRadius / UNIT * SPACING, fill: "rgba(138,92,255,0.05)",
+          stroke: "#b48cff", "stroke-width": 2, "stroke-dasharray": "3 6", opacity: 0.9, "pointer-events": "none" }, layers.rings);
+      }
+    }
     for (const [id, g] of placedJewels()) if (isRadiusJewel(g)) drawJewelRing(byId.get(id), hover && hover.id === id);
     if (ringMode > 0) {
       const index = Math.max(0, jewelRadii().indexOf(ringMode));
@@ -1641,6 +2069,10 @@
     return "locked";
   }
   const NODE_FILL = { owned: "#f5c04a", path: "#6fa8ff", available: "#e8e8f2", locked: "#5e5e74", remove: "#ff6a6a" };
+  // 2026-11-02 照站長：觀星「不見之途」專屬的節點：深紫（還不能配）／亮紫（能配）加星光外框；已配、路徑、要退的照舊（外框留著）。
+  // 跟遊戲的箱子選單、模組畫面同一組顏色；這次之前看起來跟一般天賦一樣
+  const UNSEEN_FILL = { available: "#8a5cff", locked: "#4b1d8f" };
+  const UNSEEN_STAR = "#e9deff";
   function edgeColor(a, b) {
     const sa = nodeState(a), sb = nodeState(b);
     if (sa === "remove" || sb === "remove") return (sa === "remove" || sa === "owned") && (sb === "remove" || sb === "owned") ? "#c04848" : "#33354a";
@@ -1694,7 +2126,17 @@
     }
   }
   function drawNodeBody(node, g, state, attr) {
-    shape(node, g, attr ? ATTR_COLOR[attr] : NODE_FILL[state]);
+    const unseen = unseenNode(node);
+    shape(node, g, attr ? ATTR_COLOR[attr] : unseen && UNSEEN_FILL[state] || NODE_FILL[state]);
+    if (unseen) { // 2026-11-02：不見之途專屬的星光外框（細圈＋四個小星點）
+      const x = node.x * SPACING, y = node.y * SPACING, r = node.type === "small" ? 13 : node.type === "keystone" ? 26 : 20;
+      el("circle", { cx: x, cy: y, r, fill: "none", stroke: UNSEEN_STAR, "stroke-width": 1.6, opacity: 0.9, "pointer-events": "none" }, g);
+      for (let k = 0; k < 4; k++) {
+        const a = Math.PI / 4 + k * Math.PI / 2, cx = x + Math.cos(a) * (r + 4), cy = y + Math.sin(a) * (r + 4), d = node.type === "small" ? 2.2 : 3;
+        el("polygon", { points: [[cx, cy - d], [cx + d * 0.5, cy], [cx, cy + d], [cx - d * 0.5, cy]].map(p => p[0].toFixed(1) + "," + p[1].toFixed(1)).join(" "),
+          fill: UNSEEN_STAR, "pointer-events": "none" }, g);
+      }
+    }
     if (attr) {
       const mark = el("text", { x: node.x * SPACING, y: node.y * SPACING + 3.6, "text-anchor": "middle", class: "attrmark" }, g);
       mark.textContent = ATTR_MARK[attr];
@@ -1753,9 +2195,11 @@
         if (node.type === "keystone") t.setAttribute("style", "fill:#ff99ff");
         if (conqueredOf(node) && !conqueredOf(node).add) t.setAttribute("style", "fill:#ffb36b");
         if (node.type === "socket") t.setAttribute("style", "fill:#c77dff");
+        if (unseenNode(node)) t.setAttribute("style", "fill:#d9c8ff"); // 2026-11-02：不見之途專屬
       }
     }
     drawRings();
+    drawHeat(); // 2026-11-02：節點強度熱圖
     updatePanel();
   }
 
@@ -1771,6 +2215,7 @@
       "需要 Lv." + Math.min(levelNoBonus, 999) + (data.bonusPoints ? "（算上 " + data.bonusPoints + " 點首殺獎勵 Lv." + levelBonus + "）" : "");
     renderTotals();
     try { history.replaceState(null, "", "#" + encodeCode() + fullSuffix()); } catch (e) { /* file:// 之類的不能改 */ }
+    afterChange(); // 2026-11-02：復原的歷史、存在瀏覽器、熱圖過期
     refreshConquest();
     if (!quietRender) scheduleCalc();
   }
@@ -1984,6 +2429,7 @@
       openJewelEditor(node); // 已配的珠寶孔：放、換、拿掉珠寶，或退掉這個孔
       return;
     }
+    userEdit();
     if (allocated.has(node.id)) {
       for (const id of removal(node)) allocated.delete(id);
       pruneAttrs();
@@ -1993,8 +2439,11 @@
       for (const n of path) allocated.add(n.id);
     }
     hover = null;
+    preview = { add: new Set(), remove: new Set() };
+    // 2026-11-02：配／退之後整棵重畫（含 updatePanel）：新接上的旁邊節點、虛實交織的跳點與範圍圈都在別的地方，只重畫碰到的會漏；
+    // 2026-11-01 之前這裡是 setHover＋updatePanel（只重畫路線上的，旁邊新變成能配的還是暗的）。滑過去的預覽照舊只重畫碰到的
+    render();
     setHover(node);
-    updatePanel(); // 2026-11-01 修正：配／退之後更新上面的「已用 x / 142 點」、總表與網址（2026-10-31 改成只重畫碰到的節點後漏了這步）
     showTip(node, e.clientX, e.clientY);
   }
 
@@ -2032,6 +2481,7 @@
       const node = attrMenuNode;
       if (!node || !allocated.has(node.id)) { closeAttrMenu(); return; }
       if (WISDOM_KEYS.includes(b.dataset.attr) && !wisdomOn()) { closeAttrMenu(); flash("要先在計算器配開路者的「行者之智」"); return; }
+      userEdit();
       attrs.set(node.id, b.dataset.attr);
       closeAttrMenu();
       hover = null;
@@ -2044,6 +2494,7 @@
     const node = attrMenuNode;
     closeAttrMenu();
     if (!node || !allocated.has(node.id)) return;
+    userEdit();
     for (const id of removal(node)) allocated.delete(id);
     pruneAttrs();
     hover = null;
@@ -2060,6 +2511,7 @@
       if (WISDOM_KEYS.includes(b.dataset.attr) && !wisdomOn()) { flash("要先在計算器配開路者的「行者之智」"); return; }
       for (const node of order) if (node.attr && allocated.has(node.id)) { attrs.set(node.id, b.dataset.attr); count++; }
       if (!count) { flash("還沒有配屬性點"); return; }
+      userEdit();
       closeAttrMenu();
       render();
       flash(count + " 個屬性點全部改成" + ATTR_SHORT[b.dataset.attr]);
@@ -2083,7 +2535,11 @@
     } else {
       const path = [...preview.add].map(id => byId.get(id));
       action = path.length ? "<span style='color:var(--blue)'>" + verb + "配上（" + path.length + " 點）</span>"
+        : lockedNode(node) && unseenNode(node) ? "<span style='color:var(--red)'>要在計算器（或左邊的昇華）配觀星的「不見之途」才能配</span>"
+        : lockedNode(node) ? "<span style='color:var(--red)'>要先配說明寫的核心才能配</span>"
         : "<span style='color:var(--quiet)'>從起點連不過來</span>";
+      if (isJump(node)) action += "<div style='margin-top:4px;color:#c9b3ff'>虛實交織：在已配基石的範圍內，不用相連就能配</div>";
+      else if (path.length > 1 && isJump(path[0])) action += "<div style='margin-top:4px;color:#c9b3ff'>虛實交織：從範圍內的跳點接過去</div>";
       if (path.length > 1) {
         action += "<div style='margin-top:4px;color:var(--quiet)'>整條路加起來：</div>" +
           summarize(path).slice(0, 8).map(l => "<div class='line'>" + gloss(l) + "</div>").join("");
@@ -2097,15 +2553,19 @@
     tip.innerHTML = "<div class='name' style='color:" + color + "'>" + escapeHtml(nodeName(node)) + "</div>" +
       "<div class='type'>" + typeName + "</div>" +
       (cq ? "<div style='color:#ffb36b;font-size:12px'>受" + escapeHtml(conquest.legionName) + "征服" + (cq.add ? "（原本的效果保留）" : "（原本：" + escapeHtml(node.name) + "）") + "</div>" : "") +
+      (unseenNode(node) ? "<div style='color:#b48cff;font-size:12px'>✧ 不見之途專屬天賦（觀星）</div>" : "") +
       tipLines(node).map(l => "<div class='line'>" + gloss(l) + "</div>").join("") +
       (node.type === "socket" ? socketJewelHtml(node) + socketRangeHtml(node) : coveredHtml(node)) +
-      "<div class='action'>" + action + "</div>";
+      "<div class='action'>" + action + "</div>" + heatHtml(node) +
+      "<div class='diff' id='tipDiff' hidden></div>"; // 2026-11-02：配上後／退掉後的變化（伺服器算好才填）
     tipFor = "node";
     tip.classList.toggle("live", !!tip.querySelector(".kw"));
     tip.style.display = "block";
     const w = tip.offsetWidth, h = tip.offsetHeight;
     tip.style.left = Math.min(window.innerWidth - w - 8, x + 12) + "px"; // 2026-10-27：靠近一點，滑鼠比較容易移進去
     tip.style.top = Math.min(window.innerHeight - h - 8, y + 12) + "px";
+    tipAt = { x, y };
+    requestDiff(node);
   }
   /** 孔位裡的珠寶：名稱、詞綴，與實際加在角色身上的效果（伺服器算的）。 */
   function socketJewelHtml(node) {
@@ -2155,6 +2615,7 @@
     return html + "<div style='color:var(--quiet);font-size:12px'>範圍內已配的小點／核心照詞綴各多給一次</div>";
   }
   function hideTip() {
+    cancelDiff();
     tip.style.display = "none";
     tip.classList.remove("live");
     tipHold = false;
@@ -2284,12 +2745,14 @@
     if (!text) return;
     const decoded = decodeCode(text.trim());
     if (!decoded) { flash("看不懂這個代碼"); return; }
+    userEdit();
     load(decoded);
     render();
     centerOn(start, view.scale);
   });
   document.getElementById("reset").addEventListener("click", () => {
     if (allocated.size && !confirm("清掉目前的規劃？")) return;
+    userEdit(); // 2026-11-02：可以復原；存在瀏覽器的跟著變成重設後的（全空就整個刪掉）
     allocated = new Set();
     attrs = new Map();
     closeAttrMenu();
@@ -2315,6 +2778,7 @@
     const sameAttrs = decoded && decoded.attrs.size === attrs.size && [...decoded.attrs].every(([id, v]) => attrs.get(id) === v);
     if (decoded && (decoded.classId !== classId || decoded.nodes.size !== allocated.size || [...decoded.nodes].some(id => !allocated.has(id)) || !sameAttrs)) {
       closeAttrMenu();
+      userEdit();
       load(decoded);
       render();
     }
@@ -2324,7 +2788,8 @@
   // 天賦、裝備、昇華、技能面板送到伺服器（POST tree/calc），伺服器用遊戲裡同一套算法（跟 /stats、技能說明一樣）算出屬性與每秒傷害。
   // 打開一個技能可以看每一顆輔助寶石掛上去大約多幾 %。
   const calc = { level: 0, asc: "", ascNodes: [], skills: [], binds: new Array(10).fill(-1),
-    progress: {}, extra: [], jewels: {}, loaded: null, baseline: null, wantBaseline: false, last: null, lastMap: [] };
+    progress: {}, extra: [], jewels: {}, loaded: null, baseline: null, wantBaseline: false, last: null, lastMap: [],
+    enemy: PlannerPure.normEnemy(null) }; // 2026-11-02：EHP 的敵人（PoB2 的預設：巔峰 Boss、自動等級、均衡）
   let skillData = null;
   let calcTimer = 0;
   let calcAbort = null;
@@ -2380,11 +2845,69 @@
     updatePanel();
   });
 
+  // ---- EHP 的敵人（2026-11-02 照站長，PoB2 ConfigOptions 的 Enemy Stats）----
+  // 改了要按「套用數值」重算；存在瀏覽器、分享連結（計算器那一段的第 7 個，跟預設一樣不寫）
+  const enemyTierSel = document.getElementById("enemyTier"), enemyLevelInput = document.getElementById("enemyLevel");
+  const enemyMixSel = document.getElementById("enemyMix"), enemyMixRow = document.getElementById("enemyMixRow");
+  const MIX_NAMES = ["物理", "火焰", "冰冷", "閃電", "混沌"];
+  function showEnemy() {
+    const e = calc.enemy;
+    enemyTierSel.value = String(e.tier);
+    enemyLevelInput.value = e.level ? String(e.level) : "";
+    const custom = typeof e.mix !== "string";
+    enemyMixSel.value = custom ? "custom" : e.mix;
+    enemyMixRow.hidden = !custom;
+    if (custom && enemyMixRow.childElementCount !== MIX_NAMES.length) {
+      enemyMixRow.replaceChildren(...MIX_NAMES.map((name, i) => node("label", null, name,
+        node("input", { type: "number", min: "0", max: "1000", step: "1", "data-mix": String(i), "aria-label": name + "的比例" }))));
+    }
+    if (custom) enemyMixRow.querySelectorAll("input").forEach((input, i) => {
+      if (document.activeElement !== input) input.value = String(e.mix[i]);
+    });
+  }
+  function enemyChanged(next) {
+    calc.enemy = PlannerPure.normEnemy(next);
+    showEnemy();
+    if (data) updatePanel();
+  }
+  enemyTierSel.addEventListener("change", () => enemyChanged(Object.assign({}, calc.enemy, { tier: Number(enemyTierSel.value) })));
+  enemyLevelInput.addEventListener("input", () => {
+    const v = Math.round(Number(enemyLevelInput.value));
+    calc.enemy = PlannerPure.normEnemy(Object.assign({}, calc.enemy, { level: enemyLevelInput.value === "" || !isFinite(v) ? 0 : clamp(v, 1, 100) }));
+    if (data) updatePanel(); // 打字中不改輸入框
+  });
+  enemyMixSel.addEventListener("change", () => {
+    if (enemyMixSel.value === "custom") {
+      // 從現在的比例開始改（均衡＝PoB2 的 1：1：1：1：0.4）
+      const cur = typeof calc.enemy.mix === "string" ? (PlannerPure.ENEMY_MIXES[calc.enemy.mix] || [100, 100, 100, 100, 40]) : calc.enemy.mix;
+      calc.enemy = { tier: calc.enemy.tier, level: calc.enemy.level, mix: cur.map(x => x * (cur.every(y => y <= 1) ? 100 : 1)) };
+      enemyMixRow.hidden = false;
+      enemyMixRow.replaceChildren();
+      showEnemy();
+      enemyMixSel.value = "custom";
+      enemyMixRow.hidden = false;
+      if (data) updatePanel();
+      return;
+    }
+    enemyChanged(Object.assign({}, calc.enemy, { mix: enemyMixSel.value }));
+  });
+  enemyMixRow.addEventListener("input", () => {
+    const v = [...enemyMixRow.querySelectorAll("input")].map(i => Number(i.value) || 0);
+    if (!v.some(x => x > 0)) return; // 全 0 不算（照上一次的）
+    calc.enemy = PlannerPure.normEnemy(Object.assign({}, calc.enemy, { mix: v }));
+    if (typeof calc.enemy.mix === "string") calc.enemy = { tier: calc.enemy.tier, level: calc.enemy.level, mix: v }; // 自訂中：剛好等於預設也留在自訂
+    if (data) updatePanel();
+  });
+  showEnemy();
+
   // ---- 網址：#天賦代碼~裝備!計算器 ----
   function calcHash() {
     const skills = calc.skills.map(s => [s.id, s.level, s.sockets, s.supports]);
-    if (!skills.length && !calc.level && !calc.asc && !calc.loaded) return "";
-    return b64urlEncode(JSON.stringify([calc.level, calc.asc, calc.ascNodes, skills, calc.binds, calc.loaded ? calc.loaded.name : ""]));
+    const enemy = PlannerPure.packEnemy(calc.enemy); // 2026-11-02：EHP 的敵人（跟預設一樣不寫；這次之前只有前 6 個）
+    if (!skills.length && !calc.level && !calc.asc && !calc.loaded && !enemy) return "";
+    const parts = [calc.level, calc.asc, calc.ascNodes, skills, calc.binds, calc.loaded ? calc.loaded.name : ""];
+    if (enemy) parts.push(enemy);
+    return b64urlEncode(JSON.stringify(parts));
   }
   const initialGearText = gearText(hashText());
   function fullSuffix() {
@@ -2424,6 +2947,8 @@
       calc.loaded = { name, key: "" };
       loadCharacter(name, "", false);
     }
+    calc.enemy = PlannerPure.unpackEnemy(p[6]); // 2026-11-02：舊的連結沒有第 7 個＝預設的敵人
+    showEnemy();
     levelInput.value = calc.level ? String(calc.level) : "";
     renderSkills();
     scheduleCalc();
@@ -2525,7 +3050,8 @@
     const json = {
       tree: encodeCode(), level: calcLevel(), asc, ascNodes: asc ? calc.ascNodes : [], progress: calc.progress,
       gear: gear.map(toItemData), jewels: Object.fromEntries(placedJewels().map(([id, g]) => [id, toItemData(g)])), skills,
-      binds: calc.binds.map(i => indexOf.has(i) ? indexOf.get(i) : -1), extra: calc.extra
+      binds: calc.binds.map(i => indexOf.has(i) ? indexOf.get(i) : -1), extra: calc.extra,
+      enemy: PlannerPure.enemyJson(calc.enemy) // 2026-11-02：EHP 的敵人（BuildCalc.parseEnemy）
     };
     if (supportsFor !== null && supportsFor !== undefined && indexOf.has(supportsFor)) json.supportsFor = indexOf.get(supportsFor);
     return { json, map };
@@ -2571,6 +3097,7 @@
       setJewelFx(res.jewels);
       if (calc.wantBaseline) { calc.baseline = snapshot(res); calc.wantBaseline = false; }
       renderCalc();
+      refreshHeatMetrics(); // 2026-11-02：熱圖的選單列出算出來的技能
       if (skillEditing !== null) requestSupports();
     }).catch(err => {
       if (err.name === "AbortError") return;
@@ -2581,7 +3108,7 @@
   function snapshot(res) {
     const rows = new Map();
     for (const row of res.skills || []) if (!rows.has(row.id)) rows.set(row.id, row);
-    return { rows, numbers: Object.assign({}, res.numbers || {}) };
+    return { rows, numbers: Object.assign({}, res.numbers || {}, ehpNumbers(res.ehp)) };
   }
   document.getElementById("calcBaseline").addEventListener("click", () => {
     if (!calc.last) { flash("還沒有算出結果"); return; }
@@ -2600,6 +3127,60 @@
     return node("span", { cls: "delta " + (diff > 0 ? "up" : "down"), text });
   }
   const DAMAGE_NAME = { physical: "物理", fire: "火焰", cold: "冰冷", lightning: "閃電", chaos: "混沌" };
+  // ---- EHP（2026-11-02 照站長，PoB2 CalcDefence 的 Effective Hit Pool、Maximum Hit Taken、Number of Hits）----
+  // 伺服器（BuildCalc.ehpJson）用遊戲同一套減傷、扣護盾、心靈昇華算；這次之前這裡只有「最多吃得下一下」（生命＋護盾）
+  /** 攤平成 numbers 的鍵（比較基準、差異用）：ehp、ehp.hits、ehp.maxhit.*。 */
+  function ehpNumbers(e) {
+    if (!e || typeof e !== "object") return {};
+    const out = { "ehp": e.value, "ehp.hits": e.hits };
+    for (const k of Object.keys(DAMAGE_NAME)) if (e.maxhit && e.maxhit[k] !== undefined) out["ehp.maxhit." + k] = e.maxhit[k];
+    return out;
+  }
+  /** -2 打不死、-1 免疫。 */
+  function ehpText(v, digits) {
+    if (v === -2) return "∞";
+    if (v === -1) return "免疫";
+    return digits !== undefined ? Number(v).toFixed(digits) : fmtNum(v);
+  }
+  function enemyText(e) {
+    if (!e || !e.enemy) return "";
+    const x = e.enemy, d = x.damage || {};
+    const parts = Object.keys(DAMAGE_NAME).filter(k => d[k] > 0).map(k => DAMAGE_NAME[k] + " " + fmtNum(d[k]));
+    return x.level + " 級" + x.tierName + "，一下 " + fmtNum(x.total) + (parts.length > 1 ? "（" + parts.join("、") + "）" : parts.length ? "（" + parts[0].split(" ")[0] + "）" : "")
+      + (x.penetration > 0 ? "，元素穿透 " + x.penetration + "%" : "") + "，命中 " + fmtNum(x.accuracy);
+  }
+  function renderEhp(box, e, n, b) {
+    if (!e) {
+      // 舊的伺服器：沒有 EHP，照舊列最多吃得下一下
+      const hits = Object.keys(DAMAGE_NAME).filter(k => n["maxhit." + k] !== undefined).map(k => DAMAGE_NAME[k] + " " + ehpText(n["maxhit." + k]));
+      if (hits.length) box.append(node("div", { cls: "wide" }, node("span", { text: "最多吃得下一下" }), node("b", { text: hits.join("　") })));
+      return;
+    }
+    const usable = (key, v) => b && v >= 0 && b[key] !== undefined && b[key] >= 0 ? deltaEl(v, b[key]) : null;
+    box.append(node("div", { cls: "wide ehp", title: "PoB2 的 Effective Hit Pool：從滿的生命、能量護盾、心靈昇華的魔力開始，被這個敵人一直打到死，"
+      + "總共吃下的原始傷害（暴擊前）。閃避、格擋、偏斜照機率折算成平均要多打幾下" },
+      node("span", { text: "EHP（有效生命池）" }), node("span", null, node("b", { id: "ehpValue", text: ehpText(e.value) }), usable("ehp", e.value))));
+    box.append(node("div", { cls: "wide", title: "平均要被打幾下才死（含閃避）；括號是真的打中的下數（格擋、偏斜已經算進每一下少受多少）" },
+      node("span", { text: "被打幾下死" }), node("span", null, node("b", { id: "ehpHits", text: ehpText(e.hits, 2) + " 下" }),
+        node("span", { cls: "quiet", text: "（打中 " + ehpText(e.damagingHits, 2) + " 下）" }), usable("ehp.hits", e.hits))));
+    const kinds = Object.keys(DAMAGE_NAME).filter(k => e.maxhit && e.maxhit[k] !== undefined);
+    if (kinds.length) {
+      const help = "PoB2 的 Maximum Hit Taken：每一種傷害從滿資源最多吃得下多大的一下（原始傷害、暴擊前；"
+        + "已經算護甲照這一下的大小、抗性、敵人的穿透、心靈昇華；沒算閃避、格擋）";
+      const list = node("div", { cls: "wide maxhit", id: "ehpMaxHit", title: help, "aria-label": kinds.map(k => DAMAGE_NAME[k] + " " + ehpText(e.maxhit[k])).join("　") });
+      list.append(node("span", { text: "最多吃得下一下" }));
+      box.append(list);
+      for (const k of kinds) {
+        box.append(node("div", { cls: "maxhit", title: help }, node("span", { text: DAMAGE_NAME[k] }),
+          node("span", null, node("b", { text: ehpText(e.maxhit[k]) }), usable("ehp.maxhit." + k, e.maxhit[k]))));
+      }
+    }
+    const avoid = [];
+    if (e.hitChance < 0.9999) avoid.push("被打中 " + (e.hitChance * 100).toFixed(1) + "%");
+    if (e.damageChance < 0.9999) avoid.push("打中的平均受到 " + (e.damageChance * 100).toFixed(1) + "%（格擋、偏斜）");
+    box.append(node("div", { cls: "wide ehpnote", id: "ehpEnemy", text: "對 " + enemyText(e) + "；一半攻擊、一半法術，暴擊 5%"
+      + (avoid.length ? "。" + avoid.join("、") : "") + "。" }));
+  }
   function renderCalc() {
     const res = calc.last;
     if (!res) return;
@@ -2632,7 +3213,7 @@
       }
     }
     // 屬性與防禦
-    const n = res.numbers || {};
+    const n = Object.assign({}, res.numbers || {}, ehpNumbers(res.ehp));
     const b = base ? base.numbers : null;
     const box = document.getElementById("calcNums");
     box.replaceChildren();
@@ -2661,11 +3242,7 @@
       if (v === undefined) continue;
       add(DAMAGE_NAME[k] + "抗性", "resist." + k, v.toFixed(0) + "%" + (raw > v + 0.5 ? "（堆到 " + raw.toFixed(0) + "%）" : ""), false, 0);
     }
-    const hits = Object.keys(DAMAGE_NAME).filter(k => n["maxhit." + k] !== undefined).map(k => {
-      const v = n["maxhit." + k];
-      return DAMAGE_NAME[k] + " " + (v === -1 ? "免疫" : v === -2 ? "∞" : fmtNum(v));
-    });
-    if (hits.length) box.append(node("div", { cls: "wide" }, node("span", { text: "最多吃得下一下" }), node("b", { text: hits.join("　") })));
+    renderEhp(box, res.ehp, n, b);
     // 提醒
     const warn = document.getElementById("calcWarn");
     warn.replaceChildren();
@@ -2708,6 +3285,7 @@
           const decoded = decodeCode(d.tree || "");
           if (!decoded) throw new Error("天賦代碼對不上（天賦樹改版過，請本人上線一次）");
           closeAttrMenu();
+          userEdit();
           // 2026-10-28：昇華先設好再載天賦（女術者之道／戰士之道的起點連著的天賦才不會被當成斷掉丟掉）
           calc.asc = d.asc || "";
           calc.ascNodes = Array.isArray(d.ascNodes) ? d.ascNodes.slice() : [];
@@ -2772,7 +3350,17 @@
     btn.hidden = !calc.asc;
     btn.textContent = "昇華天賦（" + ascPointsUsed() + (data.ascendancyPoints ? "/" + data.ascendancyPoints : "") + "）";
   }
-  ascSelect.addEventListener("change", () => { calc.asc = ascSelect.value; calc.ascNodes = []; pruneTree(); renderGear(); if (calc.asc) openAscPicker(); }); // 2026-10-26：重畫（觀星專屬節點跟著顯示／隱藏）
+  ascSelect.addEventListener("change", () => { selectAsc(ascSelect.value); if (calc.asc) openAscPicker(); }); // 2026-10-26：重畫（觀星專屬節點跟著顯示／隱藏）
+  /** 2026-11-02：選昇華（計算器的選單、天賦樹頁的昇華視窗都走這裡）：換了就清掉原本配的昇華天賦，天賦樹重畫（斷掉的退掉）。 */
+  function selectAsc(id) {
+    if (calc.asc === id) return;
+    userEdit();
+    calc.asc = id;
+    calc.ascNodes = [];
+    pruneTree();
+    renderGear();
+    renderAscControls();
+  }
   function ascInfo() { return (data.ascendancies || []).find(a => a.id === calc.asc); }
   function ascPointsUsed() {
     const a = calc.asc && data ? ascInfo() : null;
@@ -2783,11 +3371,13 @@
   }
   document.getElementById("calcAscNodes").addEventListener("click", openAscPicker);
   function openAscPicker() {
+    ascMode = "picker";
     renderAscPicker();
     if (!ascDialog.open) { if (typeof ascDialog.showModal === "function") ascDialog.showModal(); else ascDialog.setAttribute("open", ""); }
   }
   function toggleAscNode(a, branch, k) {
     const id = branch[k].id;
+    userEdit();
     if (calc.ascNodes.includes(id)) {
       const drop = new Set(branch.slice(k).map(n => n.id)); // 後面接著的一起退
       calc.ascNodes = calc.ascNodes.filter(x => !drop.has(x));
@@ -2797,8 +3387,8 @@
       if (data.ascendancyPoints && ascPointsUsed() + cost > data.ascendancyPoints) { flash("昇華點不夠（最多 " + data.ascendancyPoints + " 點）"); return; }
       calc.ascNodes = calc.ascNodes.concat(need.map(n => n.id));
     }
-    pruneTree(); // 2026-10-28：退掉女術者之道／戰士之道時，只靠那個起點連著的天賦一起退
-    renderAscPicker();
+    pruneTree(); // 2026-10-28：退掉女術者之道／戰士之道時，只靠那個起點連著的天賦一起退；2026-11-02：退掉不見之途、虛實交織時也是
+    if (ascMode === "tree") renderAscendancy(a.id); else renderAscPicker(); // 2026-11-02：天賦樹頁的昇華視窗點的就重畫那個視窗
     renderGear(); // 2026-10-26：舒展之指配上、退掉時第三個戒指欄跟著顯示／隱藏
     updatePanel();
   }
@@ -3045,6 +3635,340 @@
     if (!rows.length && supportResult && supportResult.add) table.append(node("tr", null, node("td", { cls: "hint", text: "沒有能掛的輔助" })));
     box.replaceChildren(table);
   }
+
+  // ---- 復原／重做（2026-11-02 照站長）----
+  // 範圍：配點、退點、屬性點的選擇、珠寶放上拿下、昇華與昇華天賦、整個重設（裝備、技能不算：照 PoB2，那些不在天賦樹的復原裡）。
+  // 每次畫面更新（updatePanel）比對一次狀態：玩家做的（userEdit 標記）多一步；資料晚到之類的不是玩家做的，改掉現在這一步。換職業清空。
+  const undoStack = new PlannerPure.UndoStack(100);
+  let userEditPending = false;
+  function userEdit() {
+    userEditPending = true;
+    Promise.resolve().then(() => { userEditPending = false; }); // 同一段程式裡的變化才算（沒改成的不會留到下一次）
+  }
+  function treeState() {
+    const jewelList = Object.entries(jewels).filter(([, g]) => g);
+    const st = { classId, allocated: [...allocated], attrs: [...attrs], jewels: Object.fromEntries(jewelList), asc: calc.asc, ascNodes: calc.ascNodes.slice() };
+    st.key = JSON.stringify([classId, st.allocated.slice().sort(), st.attrs.slice().sort(), jewelList.map(([id, g]) => [id, packItem(g)]).sort(),
+      st.asc, st.ascNodes.slice().sort()]);
+    return st;
+  }
+  function recordHistory() {
+    if (!data || !classId) return;
+    const st = treeState(), cur = undoStack.current();
+    if (!cur || cur.classId !== st.classId) undoStack.reset(st);
+    else if (cur.key !== st.key) { if (userEditPending) undoStack.push(st); else undoStack.replace(st); }
+    userEditPending = false;
+    updateUndoButtons();
+  }
+  const undoBtn = document.getElementById("undo"), redoBtn = document.getElementById("redo");
+  function updateUndoButtons() {
+    undoBtn.disabled = !undoStack.canUndo();
+    redoBtn.disabled = !undoStack.canRedo();
+    undoBtn.title = "復原（Ctrl+Z）" + (undoStack.canUndo() ? "：還可以復原 " + undoStack.undoCount() + " 步" : "");
+    redoBtn.title = "重做（Ctrl+Y／Ctrl+Shift+Z）" + (undoStack.canRedo() ? "：還可以重做 " + undoStack.redoCount() + " 步" : "");
+  }
+  function applyTreeState(st) {
+    closeAttrMenu();
+    hideTip();
+    calc.asc = st.asc;
+    calc.ascNodes = st.ascNodes.slice();
+    allocated = new Set(st.allocated);
+    attrs = new Map(st.attrs);
+    jewels = Object.assign({}, st.jewels);
+    hover = null;
+    preview = { add: new Set(), remove: new Set() };
+    renderGear();
+    renderAscControls();
+    render(); // updatePanel 會改網址（分享連結、存在瀏覽器的跟著變）；狀態跟歷史裡這一步一樣，不會多一步
+  }
+  function doUndo() { const st = undoStack.undo(); if (st) applyTreeState(st); else flash("沒有可以復原的"); updateUndoButtons(); }
+  function doRedo() { const st = undoStack.redo(); if (st) applyTreeState(st); else flash("沒有可以重做的"); updateUndoButtons(); }
+  undoBtn.addEventListener("click", doUndo);
+  redoBtn.addEventListener("click", doRedo);
+  document.addEventListener("keydown", e => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const t = e.target;
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return; // 文字框裡的 Ctrl+Z 是文字的復原
+    if (document.querySelector("dialog[open]")) return; // 裝備、技能、昇華視窗開著時不動天賦樹
+    const k = e.key.toLowerCase();
+    if (k === "z" && !e.shiftKey) { e.preventDefault(); doUndo(); }
+    else if (k === "y" || (k === "z" && e.shiftKey)) { e.preventDefault(); doRedo(); }
+  });
+
+  // ---- 存在瀏覽器（2026-11-02 照站長）：每次變更後 0.5 秒存一次，跟分享連結同一份；全空就刪掉 ----
+  let saveTimer = 0, saveOff = false;
+  function saveNow() {
+    clearTimeout(saveTimer);
+    saveTimer = 0;
+    if (saveOff || !data) return;
+    try {
+      const suffix = fullSuffix();
+      if (!allocated.size && !suffix) localStorage.removeItem(SAVE_KEY);
+      else localStorage.setItem(SAVE_KEY, PlannerPure.packSave(encodeCode() + suffix, Date.now()));
+    } catch (e) { /* 隱私模式、空間滿了：不存 */ }
+  }
+  function saveLater() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 500); }
+  window.addEventListener("pagehide", () => { if (saveTimer) saveNow(); });
+  const restoreBar = document.getElementById("restoreBar");
+  if (restoredFromSave) restoreBar.hidden = false;
+  document.getElementById("restoreClear").addEventListener("click", () => {
+    saveOff = true;
+    clearTimeout(saveTimer);
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* 被擋 */ }
+    location.replace(location.pathname + location.search); // 不帶 # 重新打開＝空白的規劃
+  });
+
+  function afterChange() {
+    recordHistory();
+    saveLater();
+    checkHeatStale();
+  }
+
+  // ---- 滑到節點：配上後／退掉後會變多少（2026-11-02 照站長，PoB2 最重要的功能）----
+  // 伺服器用遊戲同一套算法（POST tree/calc-batch）：「現在」與「加上這條路／拿掉連帶斷掉的」各算一次比較。
+  // 「現在」那次照送去的資料（天賦、裝備、技能…）的雜湊快取，變了才重算；每條路的結果放在 LRU 裡。停 0.18 秒才送，移開就取消。
+  const DIFF_DELAY = 180;
+  const DIFF_STATS = [["life", "生命"], ["es", "能量護盾"], ["mana", "魔力"], ["spirit", "精魂"], ["armour", "護甲"], ["evasion", "閃避"],
+    ["resist.fire", "火焰抗性", "%"], ["resist.cold", "冰冷抗性", "%"], ["resist.lightning", "閃電抗性", "%"], ["resist.chaos", "混沌抗性", "%"],
+    ["movement", "移動速度", "%"], ["ehp", "EHP"]]; // 2026-11-02：EHP（PoB2 的有效生命池，對計算器設定的敵人）
+  const diffCache = new PlannerPure.Lru(120);
+  let diffBase = { key: "", res: null };
+  let diffTimer = 0, diffAbort = null, diffOff = false, tipAt = { x: 0, y: 0 };
+  /** 送去算的角色（跟計算器同一份，不含輔助比較）與它的雜湊。 */
+  function batchBase() {
+    const json = calcBody(null).json;
+    return { json, key: PlannerPure.hashString(JSON.stringify(json)) };
+  }
+  function postBatch(json, signal) {
+    return fetch("tree/calc-batch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(json), signal })
+      .then(async r => {
+        if (r.status === 404 || r.status === 405) { const e = new Error("伺服器還沒有批次計算（要更新外掛）"); e.missing = true; throw e; }
+        if (r.status === 429 || r.status === 503) { const e = new Error("伺服器忙，稍等"); e.retry = Math.max(1, Number(r.headers.get("Retry-After")) || 1); throw e; }
+        if (!r.ok) throw new Error((await r.text().catch(() => "")) || "伺服器錯誤 " + r.status);
+        return r.json();
+      });
+  }
+  /** 這個節點的變化：沒配的＝配上整條路；已配的＝退掉（含連帶斷掉的；屬性點、珠寶孔也一樣）。 */
+  function diffVariant(node) {
+    if (!node || node.type === "start" || !data) return null;
+    if (allocated.has(node.id)) {
+      const gone = preview.remove.size ? preview.remove : removal(node);
+      return gone.size ? { remove: [...gone], count: gone.size, kind: "remove" } : null;
+    }
+    const path = preview.add.size ? [...preview.add] : pathTo(node).map(n => n.id);
+    return path.length ? { add: path, count: path.length, kind: "add" } : null;
+  }
+  function cancelDiff() {
+    clearTimeout(diffTimer);
+    diffTimer = 0;
+    if (diffAbort) { diffAbort.abort(); diffAbort = null; }
+  }
+  function requestDiff(node) {
+    cancelDiff();
+    if (diffOff || !skillData && !calc.last) return; // 伺服器沒有計算器：安靜地不顯示
+    const v = diffVariant(node);
+    if (!v) return;
+    const base = batchBase();
+    const key = base.key + "|" + (v.add ? "+" + v.add.slice().sort().join(",") : "-" + v.remove.slice().sort().join(","));
+    const cached = diffCache.get(key);
+    if (cached && diffBase.key === base.key) { showDiff(node, v, diffBase.res, cached); return; }
+    diffTimer = setTimeout(() => {
+      diffTimer = 0;
+      const ctl = new AbortController();
+      diffAbort = ctl;
+      const needBase = diffBase.key !== base.key;
+      const body = Object.assign({}, base.json, { base: needBase, variants: [v.add ? { add: v.add } : { remove: v.remove }] });
+      postBatch(body, ctl.signal).then(res => {
+        if (diffAbort === ctl) diffAbort = null;
+        if (needBase && res.base) diffBase = { key: base.key, res: res.base };
+        const one = res.results && res.results[0];
+        if (!one || diffBase.key !== base.key) return;
+        diffCache.set(key, one);
+        if (hover === node && tipFor === "node" && tip.style.display === "block") showDiff(node, v, diffBase.res, one);
+      }).catch(err => {
+        if (diffAbort === ctl) diffAbort = null;
+        if (err && err.missing) diffOff = true; // 舊的伺服器：之後都不送
+      });
+    }, cached ? 0 : DIFF_DELAY);
+  }
+  function showDiff(node, v, before, after) {
+    const box = document.getElementById("tipDiff");
+    if (!box || hover !== node) return;
+    const rows = PlannerPure.diffRows(before, after, DIFF_STATS);
+    const head = (v.kind === "add" ? "配上後" : "退掉後") + (v.count > 1 ? "（" + v.count + " 點）" : "") + "：";
+    const line = r => "<div class='row'><span>" + escapeHtml(r.label) + "</span><span class='" + (r.diff > 0 ? "up" : "down") + "'>"
+      + escapeHtml(PlannerPure.fmtDiff(r)) + "</span></div>";
+    const stats = rows.filter(r => r.kind === "stat"), dps = rows.filter(r => r.kind === "dps");
+    box.innerHTML = "<div class='ttl'>" + head + (rows.length ? "" : "這些數字都沒變") + "</div>" + stats.map(line).join("")
+      + (dps.length ? "<div class='ttl'>每秒傷害</div>" + dps.map(line).join("") : "");
+    box.hidden = false;
+    moveTip(tipAt.x, tipAt.y);
+  }
+
+  // ---- 節點強度熱圖（2026-11-02 照站長，PoB2 的 Node Power）----
+  // 每個沒配的節點「自己配上去」（不算路上的）算一次，看選的數字變多少，照多寡染色；整條路的是路上每一點加起來（大約）。
+  // 用批次端點一次送 48 組，一次只送一個請求；伺服器說太快（429）就照 Retry-After 等。按了才算，天賦、裝備、技能改了標示過期。
+  const HEAT_CHUNK = 48;
+  const heatMetricSel = document.getElementById("heatMetric"), heatRangeSel = document.getElementById("heatRange");
+  const heatStatusEl = document.getElementById("heatStatus"), heatLayer = document.getElementById("heat");
+  let heat = null; // { metric, label, key, base, values: Map(id → 變多少), max, min, stale, total, ms }
+  let heatJob = null;
+  function heatMetricLabel(metric) {
+    const opt = [...heatMetricSel.options].find(o => o.value === metric);
+    return opt ? opt.textContent : metric;
+  }
+  function refreshHeatMetrics() {
+    const keep = heatMetricSel.value;
+    const rows = (diffBase.res && diffBase.res.s && diffBase.res.s.length ? diffBase.res.s.map(r => ({ p: r.p, name: r.name }))
+      : ((calc.last && calc.last.skills) || []).map(r => ({ p: r.position, name: r.name })));
+    const opts = rows.map(r => node("option", { value: "dps:" + r.p, text: "每秒傷害：" + r.name }));
+    opts.push(node("option", { value: "life", text: "生命" }), node("option", { value: "es", text: "能量護盾" }),
+      node("option", { value: "ehp", text: "EHP（有效生命池，對計算器設定的敵人）",
+        title: "PoB2 的 Effective Hit Pool：被計算器「敵人」設定的那種敵人一直打到死，總共吃下的原始傷害（含閃避、格擋、偏斜的折算）" }));
+    heatMetricSel.replaceChildren(...opts);
+    if ([...heatMetricSel.options].some(o => o.value === keep)) heatMetricSel.value = keep;
+  }
+  refreshHeatMetrics();
+  function metricOf(res, metric) {
+    if (!res) return 0;
+    if (metric.startsWith("dps:")) { const p = Number(metric.slice(4)); const r = (res.s || []).find(x => x.p === p); return r ? r.d : 0; }
+    return (res.n && res.n[metric]) || 0;
+  }
+  function heatSkip(n) { return n.type === "start" || allocated.has(n.id) || hiddenNode(n) || lockedNode(n); }
+  function heatProgress(done, total) {
+    document.getElementById("heatProg").hidden = !heatJob;
+    document.getElementById("heatBar").style.width = (total ? Math.round(done / total * 100) : 0) + "%";
+  }
+  function setHeatStatus(text, stale) { heatStatusEl.textContent = text; heatStatusEl.classList.toggle("stale", !!stale); }
+  function sleep(ms, job) { return new Promise(res => { const t = setTimeout(res, ms); job.wake = () => { clearTimeout(t); res(); }; }); }
+  async function runHeat() {
+    if (!data) return;
+    if (heatJob) cancelHeat();
+    const metric = heatMetricSel.value || "life";
+    const steps = Number(heatRangeSel.value) || 6;
+    const list = PlannerPure.heatCandidates(order, n => canAllocate(n), neighbours, heatSkip, steps).map(c => c.node.id);
+    if (!list.length) { setHeatStatus("沒有可以配的節點"); return; }
+    const base = batchBase();
+    const withSkills = metric.startsWith("dps:");
+    const job = { ctl: null, cancelled: false, wake: null };
+    heatJob = job;
+    const values = new Map();
+    let baseRes = null, done = 0, ms = 0, requests = 0;
+    const started = performance.now();
+    document.getElementById("heatRun").disabled = true;
+    heatProgress(0, list.length);
+    setHeatStatus("計算中… 0／" + list.length + " 個節點");
+    try {
+      while (done < list.length && !job.cancelled) {
+        let size = HEAT_CHUNK, body;
+        for (;;) { // 內容最多 64 KB（伺服器的上限）：裝備很多時一次送少一點
+          const ids = list.slice(done, done + size);
+          body = Object.assign({}, base.json, { base: !baseRes, dps: withSkills, variants: ids.map(id => ({ add: [id] })) });
+          if (JSON.stringify(body).length < 60000 || size <= 4) break;
+          size = Math.max(4, size >> 1);
+        }
+        job.ctl = new AbortController();
+        let res;
+        try { res = await postBatch(body, job.ctl.signal); }
+        catch (err) {
+          if (job.cancelled || (err && err.name === "AbortError")) break;
+          if (err && err.retry) { setHeatStatus("伺服器說太快了，" + err.retry + " 秒後繼續…（" + done + "／" + list.length + "）"); await sleep(err.retry * 1000, job); continue; }
+          throw err;
+        }
+        requests++;
+        ms += res.ms || 0;
+        if (res.base) baseRes = res.base;
+        const ids = list.slice(done, done + (res.done || 0));
+        ids.forEach((id, k) => values.set(id, metricOf(res.results[k], metric) - metricOf(baseRes, metric)));
+        done += ids.length;
+        if (!ids.length) throw new Error("伺服器沒有算");
+        heatProgress(done, list.length);
+        setHeatStatus("計算中… " + done + "／" + list.length + " 個節點");
+      }
+    } catch (err) {
+      if (!job.cancelled) setHeatStatus("算不出來：" + (err.message || err), true);
+      heatJob = null; heatProgress(0, 0); document.getElementById("heatRun").disabled = false;
+      return;
+    }
+    heatJob = null;
+    heatProgress(0, 0);
+    document.getElementById("heatRun").disabled = false;
+    if (job.cancelled) { setHeatStatus("取消了" + (heat ? "（還是顯示上一次的熱圖）" : "")); return; }
+    let max = 0, min = 0;
+    for (const v of values.values()) { max = Math.max(max, v); min = Math.min(min, v); }
+    heat = { metric, label: heatMetricLabel(metric), key: base.key, base: metricOf(baseRes, metric), values, max, min, stale: false,
+      total: list.length, ms, requests, seconds: (performance.now() - started) / 1000 };
+    if (baseRes && withSkills) { diffBase = { key: base.key, res: baseRes }; }
+    drawHeat();
+    describeHeat();
+  }
+  function describeHeat() {
+    if (!heat) return;
+    const legend = document.getElementById("heatLegend");
+    legend.hidden = false;
+    document.getElementById("heatMax").textContent = "最多 " + heatValueText(heat.max);
+    document.getElementById("heatRun").disabled = false;
+    document.getElementById("heatClear").hidden = false;
+    document.getElementById("heatRun").textContent = heat.stale ? "重算節點強度" : "算節點強度";
+    if (heat.stale) setHeatStatus("熱圖已過期：天賦、裝備或技能改了，再按一次重算", true);
+    else setHeatStatus(heat.label + "：算了 " + heat.total + " 個節點（" + heat.requests + " 次請求、伺服器 " + (heat.ms / 1000).toFixed(1)
+      + " 秒，共 " + heat.seconds.toFixed(1) + " 秒）。滑到節點看數值。");
+  }
+  /** 熱圖的一個數值：每秒傷害寫百分比（「+1.2% 傷害」），其他寫數值加百分比（「+35 生命（+2.1%）」）。 */
+  function heatValueText(v) {
+    if (!heat) return "";
+    const sign = v > 0 ? "+" : v < 0 ? "−" : "±";
+    const pct = heat.base ? sign + Math.abs(v / heat.base * 100).toFixed(1) + "%" : null;
+    if (heat.metric.startsWith("dps:")) return (pct || sign + fmtNum(Math.abs(v))) + " 傷害";
+    return sign + fmtNum(Math.abs(v)) + " " + heat.label.replace(/（.*$/, "") + (pct ? "（" + pct + "）" : "");
+  }
+  function cancelHeat() {
+    if (!heatJob) return;
+    heatJob.cancelled = true;
+    if (heatJob.ctl) heatJob.ctl.abort();
+    if (heatJob.wake) heatJob.wake();
+  }
+  function drawHeat() {
+    heatLayer.replaceChildren();
+    heatLayer.classList.toggle("stale", !!(heat && heat.stale));
+    if (!heat) return;
+    for (const [id, v] of heat.values) {
+      const n = byId.get(id);
+      if (!n || allocated.has(id) || hiddenNode(n)) continue;
+      const r = n.type === "small" ? 15 : n.type === "keystone" ? 30 : 24;
+      el("circle", { cx: n.x * SPACING, cy: n.y * SPACING, r, fill: PlannerPure.heatColor(v, heat.max),
+        opacity: v > 0 ? 0.35 + 0.5 * Math.min(1, v / heat.max) : 0.35 }, heatLayer);
+    }
+  }
+  function checkHeatStale() {
+    if (!heat || heat.stale || heatJob) return;
+    if (batchBase().key === heat.key) return;
+    heat.stale = true;
+    heatLayer.classList.add("stale");
+    describeHeat();
+  }
+  /** 說明框裡的節點強度：這一點自己、整條路（路上每一點加起來，大約）與每點平均。 */
+  function heatHtml(node) {
+    if (!heat || allocated.has(node.id) || !heat.values.has(node.id)) return "";
+    let html = "<div class='heat'>節點強度" + (heat.stale ? "（已過期）" : "") + "：這一點 " + escapeHtml(heatValueText(heat.values.get(node.id)));
+    const path = [...preview.add];
+    if (path.length > 1 && path.every(id => heat.values.has(id))) {
+      const sum = path.reduce((a, id) => a + heat.values.get(id), 0);
+      html += "<div class='q'>整條路 " + path.length + " 點約 " + escapeHtml(heatValueText(sum)) + "，每點 " + escapeHtml(heatValueText(sum / path.length)) + "</div>";
+    }
+    return html + "</div>";
+  }
+  document.getElementById("heatRun").addEventListener("click", runHeat);
+  document.getElementById("heatCancel").addEventListener("click", cancelHeat);
+  document.getElementById("heatClear").addEventListener("click", () => {
+    cancelHeat();
+    heat = null;
+    drawHeat();
+    document.getElementById("heatLegend").hidden = true;
+    document.getElementById("heatClear").hidden = true;
+    document.getElementById("heatRun").textContent = "算節點強度";
+    setHeatStatus("熱圖關掉了。");
+  });
 })();
 </script>
 </body>

@@ -99,14 +99,18 @@ final class MapHazards {
             final Zone zone = it.next();
             if (!alive.contains(zone.instance())) {
                 it.remove();
+                tw.exilecore.skill.Fx.zoneStop(zone);
                 continue;
             }
             if (now < zone.fireAt()) {
-                ring(zone.center(), Particle.WITCH);
+                // 2026-11-02：地圖的詛咒區是危險區（重要的：每個人都看得到）；每 0.5 秒重畫、點數照周長
+                tw.exilecore.skill.Fx.zone(zone, zone.center().clone().add(0, 0.1, 0), CURSE_RADIUS,
+                        tw.exilecore.skill.Fx.Look.edge(Particle.WITCH, null), (int) (zone.fireAt() - now), null, true);
                 continue;
             }
             it.remove();
-            ring(zone.center(), Particle.SOUL);
+            tw.exilecore.skill.Fx.zoneStop(zone);
+            tw.exilecore.skill.Fx.ring(zone.center().getWorld(), zone.center().clone().add(0, 0.1, 0), CURSE_RADIUS, Particle.SOUL, null, null, true);
             for (final Player player : zone.center().getNearbyPlayers(CURSE_RADIUS, 2)) {
                 curse(player, zone.curse(), now);
             }
@@ -155,14 +159,6 @@ final class MapHazards {
             case "temporal_chains" -> "遲滯詛咒";
             default -> "三元詛咒";
         } + "纏上了（" + Math.round(seconds) + " 秒）"));
-    }
-
-    private static void ring(final Location center, final Particle particle) {
-        for (int i = 0; i < 16; i++) {
-            final double angle = Math.PI * 2 * i / 16;
-            center.getWorld().spawnParticle(particle, center.getX() + Math.cos(angle) * CURSE_RADIUS, center.getY() + 0.1,
-                    center.getZ() + Math.sin(angle) * CURSE_RADIUS, 1, 0, 0, 0, 0);
-        }
     }
 
     static String owner(final int instanceId) {

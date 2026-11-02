@@ -896,7 +896,7 @@ public final class SkillResources implements Listener {
             }
             parts.add(INFUSION_COLORS[i] + INFUSION_NAMES[i] + " ×" + used[i]);
             final int rgb = Integer.parseInt(INFUSION_COLORS[i].substring(2, 8), 16);
-            player.getWorld().spawnParticle(org.bukkit.Particle.DUST, at, 10, 0.35, 0.5, 0.35, 0,
+            tw.exilecore.skill.Fx.spawn(player.getWorld(), org.bukkit.Particle.DUST, at, 10, 0.35, 0.5, 0.35, 0,
                     new org.bukkit.Particle.DustOptions(org.bukkit.Color.fromRGB(rgb), 1.3f));
         }
         if (parts.isEmpty()) {

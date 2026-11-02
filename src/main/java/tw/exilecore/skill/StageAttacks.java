@@ -434,7 +434,7 @@ public final class StageAttacks implements Listener {
         if (service.resources().rage(player) < ENRAGED_RAGE || service.resources().spendRage(player, ENRAGED_RAGE) < ENRAGED_RAGE) {
             return build;
         }
-        player.getWorld().spawnParticle(Particle.ANGRY_VILLAGER, player.getLocation().add(0, 1.5, 0), 4, 0.4, 0.3, 0.4, 0);
+        tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.ANGRY_VILLAGER, player.getLocation().add(0, 1.5, 0), 4, 0.4, 0.3, 0.4, 0);
         return reshape(build.withProfile(stage(build.profile(), "enraged", List.of())), 0, ENRAGED_AREA);
     }
 
@@ -691,7 +691,7 @@ public final class StageAttacks implements Listener {
                 }
                 for (double d = 0; d <= length; d += 1.0) {
                     final Location at = from.clone().add(forward.clone().multiply(d)).add(0, 0.8, 0);
-                    at.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, at, 2, 0.2, 0.2, 0.2, 0);
+                    tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.ELECTRIC_SPARK, at, 2, 0.2, 0.2, 0.2, 0);
                 }
             }
             start.getWorld().playSound(start, Sound.ENTITY_HORSE_GALLOP, SoundCategory.PLAYERS, 1f, 1.3f);
@@ -730,7 +730,7 @@ public final class StageAttacks implements Listener {
             return;
         }
         pustules.put(target.getUniqueId(), new Pustule(player.getUniqueId(), target, now() + PUSTULE_TICKS, domain.level()));
-        target.getWorld().spawnParticle(Particle.SNEEZE, target.getLocation().add(0, 1, 0), 6, 0.3, 0.3, 0.3, 0.01);
+        tw.exilecore.skill.Fx.spawn(target.getWorld(), Particle.SNEEZE, target.getLocation().add(0, 1, 0), 6, 0.3, 0.3, 0.3, 0.01);
         startTimer();
     }
 

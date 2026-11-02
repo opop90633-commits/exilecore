@@ -51,6 +51,8 @@ public final class EconomyLedger {
     public static final String SALVAGE_COST = EconomySources.SALVAGE_COST;
     public static final String CARDS = EconomySources.CARDS; // 2026-10-19 星諭卡
     public static final String CARD_GAMBLE = EconomySources.CARD_GAMBLE;
+    public static final String SLOTS_BET = EconomySources.SLOTS_BET; // 2026-11-02 拉霸機
+    public static final String SLOTS = EconomySources.SLOTS;
 
     /** 來源給人看的名字。 */
     public static String sourceName(final String source) {
@@ -94,6 +96,60 @@ public final class EconomyLedger {
     public ZoneId zone() {
         return zone;
     }
+
+    /**
+     * 2026-11-02 照站長：管理員（op、exilecore.admin、economy.yml 的 report.exclude_players）的取得與消耗不記進市場報告。
+     * 用法：{@code ledger.of(player).produced(...)}；player 是 null（不知道是誰）照記。這次之前每個人都記。
+     */
+    public Scope of(final org.bukkit.entity.Player player) {
+        return player != null && excluded(player) ? Scope.SKIP : all;
+    }
+
+    /** 同上，只知道名字（用掉通貨的紀錄）。 */
+    public Scope ofName(final String name) {
+        return name != null && plugin.economy() != null && plugin.economy().config().reportExcluded(name) ? Scope.SKIP : all;
+    }
+
+    /** 這個玩家的進出不記進市場報告。 */
+    public boolean excluded(final org.bukkit.entity.Player player) {
+        if (player == null) {
+            return false;
+        }
+        if (player.isOp() || player.hasPermission("exilecore.admin")) {
+            return true;
+        }
+        return plugin.economy() != null && plugin.economy().config().reportExcluded(player.getName());
+    }
+
+    /** 記帳的對象：照記（{@link #of} 一般玩家）或不記（管理員）。 */
+    public static class Scope {
+        static final Scope SKIP = new Scope(null);
+        private final EconomyLedger ledger;
+
+        Scope(final EconomyLedger ledger) {
+            this.ledger = ledger;
+        }
+
+        public void produced(final String kind, final String source, final long amount) {
+            if (ledger != null) {
+                ledger.produced(kind, source, amount);
+            }
+        }
+
+        public void consumed(final String kind, final String source, final long amount) {
+            if (ledger != null) {
+                ledger.consumed(kind, source, amount);
+            }
+        }
+
+        public void gold(final String source, final long delta) {
+            if (ledger != null) {
+                ledger.gold(source, delta);
+            }
+        }
+    }
+
+    private final Scope all = new Scope(this);
 
     /** 記一筆進出：delta 正的是產出、負的是消耗。 */
     public void record(final String kind, final String source, final long delta) {
@@ -140,6 +196,11 @@ public final class EconomyLedger {
     }
 
     /** 寫進資料庫（背景執行緒）；失敗整批放回去，下次再寫。 */
+    /** 2026-11-02：清掉市場報告時，記憶體裡還沒寫進去的產出消耗也丟掉（收入照留）。 */
+    public void discardPending() {
+        pending = new HashMap<>();
+    }
+
     public void flush() {
         if (pending.isEmpty() && income.isEmpty()) {
             return;

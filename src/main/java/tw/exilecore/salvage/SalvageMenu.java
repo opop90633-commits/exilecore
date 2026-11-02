@@ -864,7 +864,7 @@ public final class SalvageMenu extends Menu {
                 // 未切割寶石算通貨（2026-10）：拆掉的記進流水帳的消耗
                 // 2026-10-18：消耗記在 SALVAGE_COST，不跟拆解產出同一列互相抵掉
                 plugin.currencies().read(stack).ifPresent(type ->
-                        plugin.economy().ledger().consumed(type.id(), tw.exilecore.economy.EconomyLedger.SALVAGE_COST, stack.getAmount()));
+                        plugin.economy().ledger().of(player).consumed(type.id(), tw.exilecore.economy.EconomyLedger.SALVAGE_COST, stack.getAmount()));
                 inventory.setItem(entry.getKey(), null);
                 count++;
                 continue;
@@ -893,7 +893,7 @@ public final class SalvageMenu extends Menu {
                 continue;
             }
             give(type, entry.getValue());
-            plugin.economy().ledger().produced(type.id(), tw.exilecore.economy.EconomyLedger.SALVAGE, entry.getValue());
+            plugin.economy().ledger().of(player).produced(type.id(), tw.exilecore.economy.EconomyLedger.SALVAGE, entry.getValue());
             parts.add(ItemRenderer.escape(type.name()) + " ×" + entry.getValue());
         }
         player.sendMessage(plugin.text().prefixed("<gray>拆解了 <white>" + count + "</white> 件：" + String.join("<gray>、", parts)));

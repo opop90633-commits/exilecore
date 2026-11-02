@@ -29,6 +29,8 @@ public final class AtlasSitesMenu extends Menu {
     private static final int SLOT_BACK = 45;
     private static final int SLOT_HIDDEN = 47; // 2026-10-23：看移除的塔
     private static final int SLOT_HELP = 49;
+    private static final int SLOT_PREV = 48; // 2026-11-02 照站長：塔、城塞超過 45 個時換頁
+    private static final int SLOT_NEXT = 50;
     private static final int SLOT_CLOSE = 53;
 
     private final MapService service;
@@ -39,9 +41,12 @@ public final class AtlasSitesMenu extends Menu {
     private final Map<Integer, AtlasTablets.Kind> pickShown = new HashMap<>();
     /** 2026-10-23：正在看移除了的塔（可以放回來）。 */
     private boolean showHidden;
+    /** 2026-11-02：第幾頁（每頁 45 個；這次之前只列前 45 個，後面的看不到）。 */
+    private int page;
+    private int pages = 1;
 
     public AtlasSitesMenu(final ExileCore plugin, final Player player, final MapService service) {
-        super(plugin, player, 6, "<#d8c8a0>塔與城塞");
+        super(plugin, player, 6, "<dark_gray>塔與城塞"); // 2026-11-02 照站長：標題改深灰（這次之前淡黃色，在灰底上看不清楚）
         this.service = service;
     }
 
@@ -153,7 +158,7 @@ public final class AtlasSitesMenu extends Menu {
                     hiddenCount > 0 ? "<yellow>點一下看（可以放回來）" : ""));
         }
         if (items.isEmpty()) {
-            set(22, icon(Material.GRAY_STAINED_GLASS_PANE, "<gray>還沒看到塔或城塞",
+            set(22, icon(Material.BARRIER, "<red>還沒看到塔或城塞", // 2026-11-02 照站長：改屏障（這次之前灰色玻璃片，跟空格分不出來）
                     "<gray>塔在距離 " + rules.tower().minDistance() + " 格以外、城塞在 " + rules.citadels().minDistance() + " 格以外",
                     "<gray>完成格子往外走就會看到（/atlas）"));
         }
@@ -169,9 +174,17 @@ public final class AtlasSitesMenu extends Menu {
     }
 
     private void drawList(final List<ItemStack> items, final List<AtlasGrid.Cell> cells) {
-        for (int i = 0; i < Math.min(LIST_SIZE, items.size()); i++) {
-            set(i, appendLore(items.get(i), "<aqua>右鍵：在星圖上看這一格")); // 2026-10-23
-            shown.put(i, cells.get(i));
+        // 2026-11-02 照站長：超過一頁（45 個）時換頁；這次之前只列前 45 個
+        pages = Math.max(1, (items.size() + LIST_SIZE - 1) / LIST_SIZE);
+        page = Math.max(0, Math.min(page, pages - 1));
+        final int from = page * LIST_SIZE;
+        for (int i = 0; i < LIST_SIZE && from + i < items.size(); i++) {
+            set(i, appendLore(items.get(from + i), "<aqua>右鍵：在星圖上看這一格")); // 2026-10-23
+            shown.put(i, cells.get(from + i));
+        }
+        if (pages > 1) {
+            set(SLOT_PREV, pageButton(false, page, pages));
+            set(SLOT_NEXT, pageButton(true, page, pages));
         }
     }
 
@@ -201,12 +214,19 @@ public final class AtlasSitesMenu extends Menu {
             goBack();
             return;
         }
+        if ((slot == SLOT_PREV || slot == SLOT_NEXT) && picking == null && pages > 1) {
+            page = Math.floorMod(page + (slot == SLOT_NEXT ? 1 : -1), pages); // 2026-11-02：換頁（頭尾相接）
+            player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, 1.2f);
+            redraw();
+            return;
+        }
         if (slot == SLOT_BACK) {
             if (picking != null) {
                 picking = null;
                 redraw();
             } else if (showHidden) {
                 showHidden = false;
+                page = 0;
                 redraw();
             } else {
                 new AtlasMenu(plugin, player, service).open();
@@ -218,6 +238,7 @@ public final class AtlasSitesMenu extends Menu {
         }
         if (slot == SLOT_HIDDEN && picking == null && !showHidden) {
             showHidden = true;
+            page = 0;
             redraw();
             return;
         }

@@ -614,7 +614,7 @@ final class MapTwists implements Listener {
         state.twin = twin.getUniqueId();
         plugin.getSLF4JLogger().info("[雙生] 地圖 #{}（{}）生出分身 {}", instance.id(), instance.label(), twin.getUniqueId());
         instance.extras().add(twin);
-        at.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, at, 40, 1.0, 1.0, 1.0, 0.05);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SOUL_FIRE_FLAME, at, 40, 1.0, 1.0, 1.0, 0.05);
     }
 
     // ---- 每 10 tick ----
@@ -938,7 +938,7 @@ final class MapTwists implements Listener {
         final Block sample = state.hiddenWall.get(state.hiddenWall.size() / 2);
         final Location wall = sample.getLocation().add(0.5, 0.5, 0.5);
         if ((now / 10) % 4 == 0) {
-            wall.getWorld().spawnParticle(Particle.ASH, wall, 12, 1.2, 1.0, 1.2, 0);
+            tw.exilecore.skill.Fx.spawn(wall.getWorld(), Particle.ASH, wall, 12, 1.2, 1.0, 1.2, 0);
         }
         for (final Player player : players) {
             if (player.getLocation().distanceSquared(wall) <= 36 && state.hiddenHinted.add(player.getUniqueId())) {
@@ -965,7 +965,7 @@ final class MapTwists implements Listener {
             }
         }
         final Location at = state.hiddenWall.get(state.hiddenWall.size() / 2).getLocation().add(0.5, 0.5, 0.5);
-        at.getWorld().spawnParticle(Particle.BLOCK, at, 80, 1.5, 1.2, 1.5, 0, Material.STONE_BRICKS.createBlockData());
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.BLOCK, at, 80, 1.5, 1.2, 1.5, 0, Material.STONE_BRICKS.createBlockData());
         at.getWorld().playSound(at, Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR, 1.0f, 0.7f);
         state.hiddenWall.clear();
         broadcast(state.instance, "<#f5b942>" + ItemRenderer.escape(who.getName()) + " 打破了一面裂開的牆：裡面是一間隱藏房（精英與寶箱）");
@@ -1009,7 +1009,7 @@ final class MapTwists implements Listener {
                 plugin.monsters().markSummoned(monster); // 2026-10-18：援軍跟 Boss 階段叫出來的小怪一樣不掉東西，免得不打 Boss 一直刷
                 state.reinforcements.add(monster);
                 instance.extras().add(monster);
-                at.getWorld().spawnParticle(Particle.PORTAL, at.clone().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.2);
+                tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.PORTAL, at.clone().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.2);
             }
         }
     }
@@ -1095,9 +1095,9 @@ final class MapTwists implements Listener {
         final Location chosen = blood ? state.forkBlood : state.forkKing;
         final Location other = blood ? state.forkKing : state.forkBlood;
         closeFork(state);
-        chosen.getWorld().spawnParticle(Particle.DUST, chosen.clone().add(0.5, 1, 0.5), 40, 0.4, 0.8, 0.4, 0,
+        tw.exilecore.skill.Fx.spawn(chosen.getWorld(), Particle.DUST, chosen.clone().add(0.5, 1, 0.5), 40, 0.4, 0.8, 0.4, 0,
                 new Particle.DustOptions(blood ? org.bukkit.Color.fromRGB(255, 70, 70) : org.bukkit.Color.fromRGB(245, 185, 66), 1.4f));
-        other.getWorld().spawnParticle(Particle.SMOKE, other.clone().add(0.5, 1, 0.5), 30, 0.3, 0.6, 0.3, 0.02);
+        tw.exilecore.skill.Fx.spawn(other.getWorld(), Particle.SMOKE, other.clone().add(0.5, 1, 0.5), 30, 0.3, 0.6, 0.3, 0.02);
         chosen.getWorld().playSound(chosen, Sound.BLOCK_BEACON_POWER_SELECT, 1.0f, blood ? 0.7f : 1.3f);
         broadcast(state.instance, ItemRenderer.escape(who.getName()) + " 選了" + (blood
                 ? "<#ff5c5c>血路</#ff5c5c><gray>：之後刷的怪物群 +50%、物品數量 +30%"
@@ -1204,7 +1204,7 @@ final class MapTwists implements Listener {
             event.setCancelled(true);
             state.hiddenHits++;
             block.getWorld().playSound(block.getLocation(), Sound.BLOCK_STONE_HIT, 1.0f, 0.7f);
-            block.getWorld().spawnParticle(Particle.BLOCK, block.getLocation().add(0.5, 0.5, 0.5), 10, 0.3, 0.3, 0.3, 0,
+            tw.exilecore.skill.Fx.spawn(block.getWorld(), Particle.BLOCK, block.getLocation().add(0.5, 0.5, 0.5), 10, 0.3, 0.3, 0.3, 0,
                     Material.CRACKED_STONE_BRICKS.createBlockData());
             if (state.hiddenHits >= HIDDEN_HITS) {
                 openHidden(state, player);
@@ -1314,7 +1314,7 @@ final class MapTwists implements Listener {
             final long gold = drops.rollGold(level, MonsterRarity.RARE, quantity, random) * Math.max(1, rolls);
             MapRewards.deliver(plugin, player, at, data, rolled, gold);
         }
-        at.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, at.clone().add(0, 1, 0), 40, 0.6, 0.6, 0.6, 0.15);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.TOTEM_OF_UNDYING, at.clone().add(0, 1, 0), 40, 0.6, 0.6, 0.6, 0.15);
         at.getWorld().playSound(at, Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.2f);
     }
 

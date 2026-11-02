@@ -140,7 +140,7 @@ final class Channelling {
         if (channel.backflip() > 0) {
             final Vector back = SkillTargets.facing(player).multiply(-channel.backflip() * 0.25).setY(0.35);
             player.setVelocity(back); // 引霆突：往後翻
-            player.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, player.getLocation().add(0, 1, 0), 16, 0.4, 0.6, 0.4, 0.05);
+            tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.ELECTRIC_SPARK, player.getLocation().add(0, 1, 0), 16, 0.4, 0.6, 0.4, 0.05);
         }
         return null;
     }
@@ -262,7 +262,7 @@ final class Channelling {
             state.addGuard(charging.overflow, now + OVERFLOW_TICKS);
         }
         if (now % 5 == 0) {
-            player.getWorld().spawnParticle(Particle.ENCHANT, player.getLocation().add(0, 1.2, 0), 6, 0.4, 0.5, 0.4, 0.4);
+            tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.ENCHANT, player.getLocation().add(0, 1.2, 0), 6, 0.4, 0.5, 0.4, 0.4);
         }
         plugin.players().display(player, state);
         if (charging.overflow >= max * OVERFLOW_MAX - 1e-6) {
@@ -365,7 +365,7 @@ final class Channelling {
                 return true;
             }
             if (now % 2 == 0) {
-                player.getWorld().spawnParticle(Particle.CLOUD, at.clone().add(0, 0.2, 0), 3, 0.3, 0.1, 0.3, 0.02);
+                tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.CLOUD, at.clone().add(0, 0.2, 0), 3, 0.3, 0.1, 0.3, 0.02);
             }
             return false;
         }

@@ -16,6 +16,7 @@
 #     星橋 → 稀有度 2＋怪物群 2、豐饒主幹 → 稀有度／怪物群、核心「孤注一擲」數量 30 → 稀有度 30＋怪物群 15（代價不變）。
 #     map.quantity 這個鍵還認得（石板、別的地方可以用），只是星圖天賦裡沒有了。
 #   atlas.monster_effectiveness（2026-10-26 PoE2 怪物效能：受到的傷害 ÷ 倍率，經驗、物品數量多一半）
+#   2026-11-02 照 PoE2：atlas.rare_mod_chance 稀有怪有詞綴的機率增加 x%、atlas.rare_mod_max 稀有怪的詞綴上限 +x、atlas.rare_mod_min 稀有怪至少 x 條
 #   atlas.experience / atlas.map_drop / atlas.tier_up / atlas.boss_maps / atlas.boss_quantity / atlas.boss_rarity / atlas.boss_unique / atlas.uber_key
 #   atlas.<事件>.weight / .extra / .unique，atlas.shrine.duration、atlas.strongbox.quantity、atlas.breach.duration、atlas.exile.drops、
 #   atlas.ritual.chance / .tribute、atlas.delirium.chance / .progress
@@ -102,6 +103,11 @@ nodes:
   - { id: packs_4, name: 梟雄, x: 2, y: -7, trunk: packs, cost: 1, mods: [{ stat: map.rare_packs, value: 15 }] }
   - { id: packs_5, name: 歷練, x: 2, y: -8, trunk: packs, cost: 1, mods: [{ stat: atlas.experience, value: 6 }] }
   - { id: packs_6, name: 萬物歸巢, x: 2, y: -9, trunk: packs, cost: 2, notable: true, icon: WITHER_SKELETON_SKULL, mods: [{ stat: map.pack_size, value: 8 }, { stat: map.rare_packs, value: 15 }, { stat: atlas.experience, value: 5 }] }
+  # 2026-11-02 照 PoE2 群聚的三個大天賦（Adaptive Biology、Mutating Monsters、No Simple Battles）：從歷練（packs_5）往右的支線；
+  #   原作另外有「每條詞綴至少增加 100% 物品稀有度」，這裡沒做（我們的怪物詞綴不分條加稀有度）
+  - { id: packs_m1, name: 適應生態, x: 3, y: -8, trunk: packs, cost: 2, notable: true, icon: SLIME_BALL, mods: [{ stat: atlas.rare_mod_chance, value: 10 }, { stat: atlas.rare_mod_max, value: 1 }] }   # Adaptive Biology
+  - { id: packs_m2, name: 突變怪物, x: 4, y: -8, trunk: packs, cost: 2, notable: true, icon: FERMENTED_SPIDER_EYE, mods: [{ stat: atlas.rare_mod_chance, value: 10 }, { stat: atlas.rare_mod_max, value: 1 }] }   # Mutating Monsters
+  - { id: packs_m3, name: 沒有輕鬆的仗, x: 5, y: -8, trunk: packs, cost: 2, notable: true, icon: BLAZE_POWDER, mods: [{ stat: atlas.rare_mod_min, value: 3 }] }   # No Simple Battles
   - { id: packs_7, name: 無人之地, x: 2, y: -10, trunk: packs, cost: 3, keystone: true, icon: CREEPER_HEAD, mods: [{ stat: atlas.rare_only, value: 1 }, { stat: map.rare_packs, value: 100 }], drawbacks: [{ stat: atlas.experience_less, value: 30 }] }
   - { id: bosses_1, name: 討伐, x: 4, y: -2, trunk: bosses, cost: 1, mods: [{ stat: atlas.boss_quantity, value: 15 }] }
   - { id: bosses_2, name: 戰利品, x: 5, y: -2, trunk: bosses, cost: 1, mods: [{ stat: atlas.boss_unique, value: 20 }] }

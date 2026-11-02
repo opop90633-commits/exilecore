@@ -129,4 +129,25 @@ class PlannerDataTest {
         assertEquals("implanted", motoric.get("optionOf").getAsString());
         assertFalse(quality.has("optionOf"));
     }
+
+    /** 2026-11-02 照站長：網頁的配點規則參數跟遊戲同一份（虛實交織的半徑、規則字串、開路者的起點），昇華天賦帶它給的規則。 */
+    @Test
+    void treeRulesComeFromThePlugin() throws IOException {
+        final PassiveTree tree = PassiveTree.load(Path.of("src/main/resources/data/passives/tree.json"));
+        final PlannerData.AscendancyInfo info = new PlannerData.AscendancyInfo("starseer", "monk", "觀星", "#9fb4ff", "星",
+                List.of(List.of(new PlannerData.AscendancyNode("虛實交織", 1, List.of("x"), null, "entwined_realities", List.of(), 0, 0,
+                                null, false, true, List.of(), List.of(PassiveTree.RULE_ENTWINED)),
+                        new PlannerData.AscendancyNode("天賦點", 1, List.of("y"), null, "passive_point", List.of(), 1, 0, null, false, false))));
+        final byte[] bytes = PlannerData.json(tree, List.of(new PlannerData.ClassInfo("monk", "武僧", "#ffffff")), 100, 1, 24, List.of(info), 8);
+        final JsonObject root = JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8)).getAsJsonObject();
+        final JsonObject rules = root.getAsJsonObject("treeRules");
+        assertEquals(PassiveTree.ENTWINED_RADIUS, rules.get("entwinedRadius").getAsDouble());
+        assertEquals(PassiveTree.RULE_ENTWINED, rules.get("entwined").getAsString());
+        assertEquals(PassiveTree.RULE_UNSEEN_PATH, rules.get("unseenPath").getAsString());
+        assertEquals("sorceress", rules.getAsJsonObject("pathStarts").get(PassiveTree.RULE_PATH_SORCERESS).getAsString());
+        assertEquals("marauder", rules.getAsJsonObject("pathStarts").get(PassiveTree.RULE_PATH_WARRIOR).getAsString());
+        final JsonArray branch = root.getAsJsonArray("ascendancies").get(0).getAsJsonObject().getAsJsonArray("branches").get(0).getAsJsonArray();
+        assertEquals(PassiveTree.RULE_ENTWINED, branch.get(0).getAsJsonObject().getAsJsonArray("rules").get(0).getAsString());
+        assertFalse(branch.get(1).getAsJsonObject().has("rules"), "沒有規則的不寫");
+    }
 }

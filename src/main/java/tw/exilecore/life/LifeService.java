@@ -300,6 +300,15 @@ public final class LifeService {
         return whaleFloor > 0 ? whaleFloor : extras.phaseFloor(entity);
     }
 
+    /** 2026-11-02 照站長：淵鯨、鯊王的鎖血狀態（MapService 的 Boss 傷害修正：元素弱點、虛弱）；其他 null。 */
+    public tw.exilecore.map.PhaseLocks.State lockState(final org.bukkit.entity.Entity entity) {
+        if (world == null || !world.equals(entity.getWorld())) {
+            return null;
+        }
+        final tw.exilecore.map.PhaseLocks.State state = whale.lockState(entity);
+        return state != null ? state : extras.lockState(entity);
+    }
+
     public boolean isWhale(final org.bukkit.entity.Entity entity) {
         return world != null && world.equals(entity.getWorld()) && whale.isWhale(entity);
     }
@@ -1941,7 +1950,7 @@ public final class LifeService {
             return problem;
         }
         final Location at = block.getLocation().add(0.5, 0.5, 0.5);
-        block.getWorld().spawnParticle(org.bukkit.Particle.BLOCK, at, 16, 0.3, 0.3, 0.3, 0, block.getBlockData());
+        tw.exilecore.skill.Fx.spawn(block.getWorld(), org.bukkit.Particle.BLOCK, at, 16, 0.3, 0.3, 0.3, 0, block.getBlockData());
         block.getWorld().playSound(at, block.getBlockData().getSoundGroup().getBreakSound(), 1f, 1f);
         block.setType(Material.AIR, false);
         return null;
@@ -2179,7 +2188,7 @@ public final class LifeService {
                 final Location to = player.getLocation().add(0, 1.0, 0);
                 final Location now = drift.pullFrom.clone().add(to.toVector().subtract(drift.pullFrom.toVector()).multiply(t));
                 drift.display.teleport(now);
-                world.spawnParticle(Particle.SPLASH, now, 3, 0.1, 0.1, 0.1, 0);
+                tw.exilecore.skill.Fx.spawn(world, Particle.SPLASH, now, 3, 0.1, 0.1, 0.1, 0);
                 if (t >= 1) {
                     drift.display.remove();
                     it.remove();
@@ -2387,7 +2396,7 @@ public final class LifeService {
                     continue;
                 }
                 held.add(drift.type.id());
-                world.spawnParticle(Particle.BUBBLE_POP, drift.display.getLocation(), 6, 0.2, 0.1, 0.2, 0.01);
+                tw.exilecore.skill.Fx.spawn(world, Particle.BUBBLE_POP, drift.display.getLocation(), 6, 0.2, 0.1, 0.2, 0.01);
                 if (held.size() == config.netCapacity()) {
                     bar(player, ("<yellow>有一張攔截網滿了（右鍵收）"));
                 }
@@ -2726,7 +2735,7 @@ public final class LifeService {
         purifierReady.put(at, now + def.cooldownSeconds() * 1000L);
         addMaterial(profile, config.freshWater(), def.water());
         addXp(player, profile, def.xp());
-        world.spawnParticle(Particle.CLOUD, block.getLocation().add(0.5, 1, 0.5), 8, 0.2, 0.2, 0.2, 0.01);
+        tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, block.getLocation().add(0.5, 1, 0.5), 8, 0.2, 0.2, 0.2, 0.01);
         player.playSound(block.getLocation(), Sound.BLOCK_BREWING_STAND_BREW, 0.8f, 1.2f);
         bar(player, ("<#7fd4ff>" + ItemRenderer.escape(materialName(config.freshWater())) + " +" + def.water()
                 + " <dark_gray>｜ <gray>" + def.cooldownSeconds() + " 秒後再煮一次"));
@@ -2914,7 +2923,7 @@ public final class LifeService {
             view.setTransformation(new Transformation(new Vector3f(), new AxisAngle4f(), new Vector3f(scale, scale, scale), new AxisAngle4f()));
             view.setGlowing(ripe);
             if (ripe && tickCount % 40 == 0) {
-                world.spawnParticle(Particle.HAPPY_VILLAGER, block.getLocation().add(0.5, height + 0.3, 0.5), 3, 0.2, 0.2, 0.2, 0);
+                tw.exilecore.skill.Fx.spawn(world, Particle.HAPPY_VILLAGER, block.getLocation().add(0.5, height + 0.3, 0.5), 3, 0.2, 0.2, 0.2, 0);
             }
         }
         for (final Iterator<Map.Entry<String, ItemDisplay>> it = session.cropViews.entrySet().iterator(); it.hasNext(); ) {
@@ -3209,12 +3218,12 @@ public final class LifeService {
             if (floor != null) {
                 floor.setType(Material.WATER, false);
                 world.playSound(floor.getLocation(), Sound.ENTITY_ZOMBIE_BREAK_WOODEN_DOOR, 1f, 0.8f);
-                world.spawnParticle(Particle.BLOCK, floor.getLocation().add(0.5, 0.5, 0.5), 30, 0.4, 0.3, 0.4, floorBlock().createBlockData());
+                tw.exilecore.skill.Fx.spawn(world, Particle.BLOCK, floor.getLocation().add(0.5, 0.5, 0.5), 30, 0.4, 0.3, 0.4, floorBlock().createBlockData());
                 bar(player, ("<red>渦齒鯊咬掉了一塊筏！"));
             }
             session.sharkTarget = null;
         } else if (session.sharkBite % 5 == 0) {
-            world.spawnParticle(Particle.BUBBLE_POP, at, 10, 0.4, 0.3, 0.4, 0.02);
+            tw.exilecore.skill.Fx.spawn(world, Particle.BUBBLE_POP, at, 10, 0.4, 0.3, 0.4, 0.02);
             world.playSound(at, Sound.ENTITY_DOLPHIN_ATTACK, 0.7f, 0.6f);
         }
     }
@@ -3484,7 +3493,7 @@ public final class LifeService {
             return;
         }
         if (plugin.economy() != null) {
-            plugin.economy().ledger().produced(type.id(), tw.exilecore.economy.EconomyLedger.EVENT, amount);
+            plugin.economy().ledger().of(player).produced(type.id(), tw.exilecore.economy.EconomyLedger.EVENT, amount);
         }
         final ItemStack item = plugin.currencies().create(type, amount);
         final ItemStack rest = plugin.loot() != null ? plugin.loot().stowCurrency(player, plugin.players().get(player), type, item)

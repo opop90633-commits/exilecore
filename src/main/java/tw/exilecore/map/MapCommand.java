@@ -100,6 +100,8 @@ public final class MapCommand {
             player.sendMessage(plugin.text().prefixed("<red>地圖模組沒有啟用（看主控台的錯誤訊息）"));
         } else if (!plugin.players().get(player).hasCharacter()) {
             player.sendMessage(plugin.text().prefixed("<red>先建立角色（/char）"));
+        } else if (AtlasFeed.openNative(plugin, player, tree, null)) {
+            // 2026-11-02 照站長（D 組）：裝了模組的玩家開原生畫面；這次之前一律開箱子選單
         } else if (tree) {
             new AtlasTreeMenu(plugin, player, plugin.maps()).open();
         } else {

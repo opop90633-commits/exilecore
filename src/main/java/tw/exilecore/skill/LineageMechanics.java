@@ -1641,15 +1641,14 @@ public final class LineageMechanics implements Listener {
             final Player owner = plugin.getServer().getPlayer(ground.owner);
             if (owner == null || !owner.isOnline() || now >= ground.until || !owner.getWorld().equals(ground.center.getWorld())) {
                 it.remove();
+                Fx.zoneStop(ground);
                 continue;
             }
             if (now % 10 == 0) {
                 service.executor().applyCurseAt(owner, ground.build, ground.center, ground.spec, now + 15, ground); // 站在裡面才被詛咒（同一塊刷新不算蓋掉）
-                for (int i = 0; i < 16; i++) {
-                    final double a = Math.PI * 2 * i / 16 + now * 0.03;
-                    Fx.spawn(ground.center.getWorld(), Particle.WITCH, ground.center.clone().add(Math.cos(a) * ground.radius, 0.15,
-                            Math.sin(a) * ground.radius), 1, 0, 0, 0, 0);
-                }
+                // 2026-11-02：外框走 Fx.zone（點數照周長、照特效等級；同一個人疊在一起的只畫一個；以前固定 16 點）
+                Fx.zone(ground, ground.center.clone().add(0, 0.15, 0), ground.radius, Fx.Look.edge(Particle.WITCH, null),
+                        (int) Math.max(0, ground.until - now), ground.owner, false);
             }
             if (ground.maxToads > 0) {
                 tickToads(owner, ground, now);

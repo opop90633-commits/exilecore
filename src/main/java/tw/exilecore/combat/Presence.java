@@ -144,7 +144,8 @@ public final class Presence {
                 for (final LivingEntity target : burning) {
                     if (target.isValid() && !target.isDead()) {
                         damage.hit(player, target, profile, null);
-                        tw.exilecore.skill.Fx.spawn(world, Particle.FLAME, target.getLocation().add(0, 1, 0), 4, 0.3, 0.4, 0.3, 0.01);
+                        tw.exilecore.skill.Fx.as(player.getUniqueId(), () -> // 2026-11-02：記得是誰的（特效等級）
+                                tw.exilecore.skill.Fx.spawn(world, Particle.FLAME, target.getLocation().add(0, 1, 0), 4, 0.3, 0.4, 0.3, 0.01));
                     }
                 }
             }

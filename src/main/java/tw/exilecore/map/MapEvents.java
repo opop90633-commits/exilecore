@@ -615,6 +615,91 @@ final class MapEvents implements Listener {
         }
     }
 
+    /**
+     * 2026-11-02 照站長（模組 1.4 B 組）：地圖資訊框的事件清單（這張圖的事件照放的順序，再加祭壇、幻霧）。
+     * 這次之前事件的狀態只寫在事件上方的字、血條、動作列。
+     */
+    List<tw.exilecore.clientmod.WorldHudProtocol.EventLine> hudLines(final MapInstance instance, final UUID viewer, final long now) {
+        final List<tw.exilecore.clientmod.WorldHudProtocol.EventLine> lines = new ArrayList<>();
+        for (final Event event : byInstance.getOrDefault(instance.id(), List.of())) {
+            final tw.exilecore.clientmod.WorldHudProtocol.EventLine line = hudLine(event, now);
+            if (line != null) {
+                lines.add(line);
+            }
+        }
+        final tw.exilecore.clientmod.WorldHudProtocol.EventLine ritual = rituals.hudLine(instance, viewer);
+        if (ritual != null) {
+            lines.add(ritual);
+        }
+        final tw.exilecore.clientmod.WorldHudProtocol.EventLine fog = delirium.hudLine(instance, viewer, now);
+        if (fog != null) {
+            lines.add(fog);
+        }
+        return lines;
+    }
+
+    private tw.exilecore.clientmod.WorldHudProtocol.EventLine hudLine(final Event event, final long now) {
+        final int idle = tw.exilecore.clientmod.WorldHudProtocol.EVENT_IDLE;
+        final int active = tw.exilecore.clientmod.WorldHudProtocol.EVENT_ACTIVE;
+        final int done = tw.exilecore.clientmod.WorldHudProtocol.EVENT_DONE;
+        final int failed = tw.exilecore.clientmod.WorldHudProtocol.EVENT_FAILED;
+        return switch (event.kind) {
+            case SHRINE -> line(event.shrine.name(), MapHudFeed.color(event.shrine.color(), 0x9FE8C8),
+                    event.started || event.done ? "已使用" : "右鍵石柱", -1, event.started || event.done ? done : idle);
+            case STRONGBOX -> event.done ? line(event.box.name(), 0xF5B942, "已開", -1, done)
+                    : event.started ? line(event.box.name(), 0xF5B942, "殺光跳出來的怪（剩 " + event.monsters.size() + " 隻）", -1, active)
+                    : line(event.box.name(), 0xF5B942, "點開寶箱", -1, idle);
+            case BREACH -> {
+                if (event.done) {
+                    yield line("裂隙", 0xC48BFF, "已關閉", -1, done);
+                }
+                if (!event.started) {
+                    yield line("裂隙", 0xC48BFF, "走進去打開", -1, idle);
+                }
+                final double duration = breachDuration(event);
+                final double elapsed = (now - event.startTick) / 20.0;
+                yield line("裂隙", 0xC48BFF, "還有 " + Math.max(0, Math.round(duration - elapsed)) + " 秒", percent(elapsed / duration), active);
+            }
+            case EXILE -> event.done ? line("流寇", 0xFF7B3D, "已擊敗", -1, done)
+                    : event.started || event.revealed ? line("流寇", 0xFF7B3D, event.exileName == null ? "還在" : event.exileName, -1, active)
+                    : line("流寇", 0xFF7B3D, "還沒遇到", -1, idle);
+            case ABYSS -> {
+                if (event.done) {
+                    yield line("深淵裂縫", 0x8A5CFF, "已結束", -1, done);
+                }
+                if (!event.started) {
+                    yield line("深淵裂縫", 0x8A5CFF, "還沒發現", -1, idle);
+                }
+                if (event.riftCarved >= event.rift.size()) {
+                    yield line("深淵裂縫", 0x8A5CFF, "打倒縫裡爬出來的那隻", 100, active);
+                }
+                yield line("深淵裂縫", 0x8A5CFF, "跟著縫走（還有 " + (event.rift.size() - event.riftCarved) + " 格）",
+                        event.rift.isEmpty() ? -1 : percent((double) event.riftCarved / event.rift.size()), active);
+            }
+            case SAFE -> {
+                final MapEventConfig.Safe settings = config.safe();
+                if (event.done) {
+                    yield event.wavesSpawned < 0 ? line("保險箱", 0xC8D0D8, "開鎖失敗", -1, failed) : line("保險箱", 0xC8D0D8, "已開", -1, done);
+                }
+                if (!event.started) {
+                    yield line("保險箱", 0xC8D0D8, "要一張劫盜合約", -1, idle);
+                }
+                final String status = event.pausedTicks > 0 ? "沒人守著，進度暫停" : "開鎖中 " + Math.round(event.progressTicks / 20.0) + "／"
+                        + Math.round(settings.unlockSeconds()) + " 秒";
+                yield line("保險箱", 0xC8D0D8, status, percent(event.progressTicks / (settings.unlockSeconds() * 20)), active);
+            }
+        };
+    }
+
+    private static tw.exilecore.clientmod.WorldHudProtocol.EventLine line(final String name, final int color, final String status, final int progress,
+                                                                         final int state) {
+        return new tw.exilecore.clientmod.WorldHudProtocol.EventLine(name, color, status, progress, state);
+    }
+
+    static int percent(final double fraction) {
+        return (int) Math.round(Math.max(0, Math.min(1, fraction)) * 100);
+    }
+
     private List<Player> players(final MapInstance instance) {
         final List<Player> list = new ArrayList<>();
         for (final UUID uuid : instance.inside()) {
@@ -650,7 +735,7 @@ final class MapEvents implements Listener {
         switch (event.kind) {
             case SHRINE -> {
                 if (!event.started) { // 2026-10-24：改成右鍵石柱才用（onInteract）
-                    center.getWorld().spawnParticle(Particle.DUST, center.getX(), center.getY() + 1.5, center.getZ(), 6, 0.4, 0.6, 0.4, 0, SHRINE_DUST);
+                    tw.exilecore.skill.Fx.spawn(center.getWorld(), Particle.DUST, center.getX(), center.getY() + 1.5, center.getZ(), 6, 0.4, 0.6, 0.4, 0, SHRINE_DUST);
                 }
             }
             case STRONGBOX -> {
@@ -755,7 +840,7 @@ final class MapEvents implements Listener {
             }
             rollTicket(MapEventConfig.Kind.SHRINE, player, event.center, event.bonus ? BONUS_TICKET : 1.0); // 2026-10-18：入場券
         }
-        event.center.getWorld().spawnParticle(Particle.END_ROD, event.center.getX(), event.center.getY() + 1.5, event.center.getZ(), 40, 0.8, 1.0, 0.8, 0.05);
+        tw.exilecore.skill.Fx.spawn(event.center.getWorld(), Particle.END_ROD, event.center.getX(), event.center.getY() + 1.5, event.center.getZ(), 40, 0.8, 1.0, 0.8, 0.05);
         if (event.label != null && event.label.isValid()) {
             event.label.text(plugin.text().parse("<dark_gray>" + ItemRenderer.escape(shrine.name()) + "（已使用）"));
         }
@@ -851,7 +936,7 @@ final class MapEvents implements Listener {
                 }
             }
         }
-        box.center.getWorld().spawnParticle(Particle.CLOUD, box.center.getX(), box.center.getY() + 1, box.center.getZ(), 30, 1.5, 0.5, 1.5, 0.02);
+        tw.exilecore.skill.Fx.spawn(box.center.getWorld(), Particle.CLOUD, box.center.getX(), box.center.getY() + 1, box.center.getZ(), 30, 1.5, 0.5, 1.5, 0.02);
         box.center.getWorld().playSound(box.center, Sound.BLOCK_CHEST_OPEN, 1.0f, 0.6f);
         box.center.getWorld().playSound(box.center, Sound.ENTITY_EVOKER_PREPARE_SUMMON, 1.0f, 0.8f);
         for (final Player near : players(box.instance)) {
@@ -928,7 +1013,7 @@ final class MapEvents implements Listener {
             rollTicket(MapEventConfig.Kind.STRONGBOX, player, event.center, event.bonus ? BONUS_TICKET : 1.0); // 2026-10-18：入場券
             takers++;
         }
-        event.center.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, event.center.getX(), event.center.getY() + 1, event.center.getZ(), 40, 0.6, 0.6, 0.6, 0.15);
+        tw.exilecore.skill.Fx.spawn(event.center.getWorld(), Particle.TOTEM_OF_UNDYING, event.center.getX(), event.center.getY() + 1, event.center.getZ(), 40, 0.6, 0.6, 0.6, 0.15);
         event.center.getWorld().playSound(event.center, Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.2f);
         if (event.label != null && event.label.isValid()) {
             event.label.text(plugin.text().parse("<dark_gray>" + ItemRenderer.escape(box.name()) + "（已開）"));
@@ -959,7 +1044,7 @@ final class MapEvents implements Listener {
                 }
             } else {
                 ring(center, config.breachStart(), 16);
-                center.getWorld().spawnParticle(Particle.REVERSE_PORTAL, center.getX(), center.getY() + 0.5, center.getZ(), 8, 0.6, 0.4, 0.6, 0.02);
+                tw.exilecore.skill.Fx.spawn(center.getWorld(), Particle.REVERSE_PORTAL, center.getX(), center.getY() + 0.5, center.getZ(), 8, 0.6, 0.4, 0.6, 0.02);
             }
             return;
         }
@@ -1015,7 +1100,7 @@ final class MapEvents implements Listener {
                 if (monster != null) {
                     monster.getPersistentDataContainer().set(quantityKey, PersistentDataType.DOUBLE, config.breachQuantity());
                     event.monsters.add(monster);
-                    monster.getWorld().spawnParticle(Particle.REVERSE_PORTAL, monster.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.05);
+                    tw.exilecore.skill.Fx.spawn(monster.getWorld(), Particle.REVERSE_PORTAL, monster.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.05);
                 }
             }
             center.getWorld().playSound(center, Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 0.6f);
@@ -1091,7 +1176,7 @@ final class MapEvents implements Listener {
         event.monsters.add(exile);
         exiles.put(exile.getUniqueId(), event);
         exile.getWorld().playSound(exile.getLocation(), Sound.ENTITY_ZOMBIE_VILLAGER_CURE, 1.0f, 0.5f);
-        exile.getWorld().spawnParticle(Particle.SOUL, exile.getLocation().add(0, 1, 0), 30, 0.6, 0.8, 0.6, 0.03);
+        tw.exilecore.skill.Fx.spawn(exile.getWorld(), Particle.SOUL, exile.getLocation().add(0, 1, 0), 30, 0.6, 0.8, 0.6, 0.03);
         for (final Player player : players(instance)) {
             if (player.getLocation().distanceSquared(event.center) <= 32 * 32 && !plugin.players().hidesMonsterTalk(player)) { // 2026-10-22：隱藏怪物對話
                 player.sendMessage(plugin.text().prefixed("<#ffff77>流寇·" + ItemRenderer.escape(event.exileName) + "<gray>：「這張圖是我的。」"));
@@ -1345,7 +1430,7 @@ final class MapEvents implements Listener {
         if (!event.started || event.done) {
             if (!event.started) {
                 final Location center = event.center;
-                center.getWorld().spawnParticle(Particle.DUST, center.getX(), center.getY() + 0.3, center.getZ(), 4, 0.5, 0.1, 0.5, 0, ABYSS_DUST);
+                tw.exilecore.skill.Fx.spawn(center.getWorld(), Particle.DUST, center.getX(), center.getY() + 0.3, center.getZ(), 4, 0.5, 0.1, 0.5, 0, ABYSS_DUST);
             }
             return;
         }
@@ -1360,8 +1445,8 @@ final class MapEvents implements Listener {
             }
             return;
         }
-        head.getWorld().spawnParticle(Particle.DUST, head.getX(), head.getY() + 0.3, head.getZ(), 6, 0.8, 0.2, 0.8, 0, ABYSS_DUST);
-        head.getWorld().spawnParticle(Particle.REVERSE_PORTAL, head.getX(), head.getY() + 0.4, head.getZ(), 6, 0.5, 0.3, 0.5, 0.02);
+        tw.exilecore.skill.Fx.spawn(head.getWorld(), Particle.DUST, head.getX(), head.getY() + 0.3, head.getZ(), 6, 0.8, 0.2, 0.8, 0, ABYSS_DUST);
+        tw.exilecore.skill.Fx.spawn(head.getWorld(), Particle.REVERSE_PORTAL, head.getX(), head.getY() + 0.4, head.getZ(), 6, 0.5, 0.3, 0.5, 0.02);
         // 有人在縫尾端 follow 格內才繼續延伸；沒人超過 stall_seconds 就合上（怪留著、沒獎勵）
         Player follower = null;
         double nearest = Double.MAX_VALUE;
@@ -1419,8 +1504,8 @@ final class MapEvents implements Listener {
             }
             fresh.add(spot);
             final Location at = new Location(instance.world(), instance.originX() + spot.x() + 0.5, MapLayout.FLOOR_Y + 1, instance.originZ() + spot.z() + 0.5);
-            at.getWorld().spawnParticle(Particle.SOUL, at, 6, 0.4, 0.3, 0.4, 0.02);
-            at.getWorld().spawnParticle(Particle.BLOCK, at, 12, 0.5, 0.2, 0.5, 0, Material.OBSIDIAN.createBlockData());
+            tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SOUL, at, 6, 0.4, 0.3, 0.4, 0.02);
+            tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.BLOCK, at, 12, 0.5, 0.2, 0.5, 0, Material.OBSIDIAN.createBlockData());
         }
         event.riftCarved = end;
         event.riftSegments++;
@@ -1448,7 +1533,7 @@ final class MapEvents implements Listener {
                         if (target != null && monster instanceof Mob mob) {
                             mob.setTarget(target);
                         }
-                        monster.getWorld().spawnParticle(Particle.SCULK_SOUL, monster.getLocation().add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0.03);
+                        tw.exilecore.skill.Fx.spawn(monster.getWorld(), Particle.SCULK_SOUL, monster.getLocation().add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0.03);
                     }
                 }
             }
@@ -1499,7 +1584,7 @@ final class MapEvents implements Listener {
         event.miniBoss = boss;
         event.monsters.add(boss);
         head.getWorld().playSound(head, Sound.ENTITY_WARDEN_EMERGE, 1.0f, 0.8f);
-        head.getWorld().spawnParticle(Particle.SCULK_SOUL, boss.getLocation().add(0, 1, 0), 40, 0.8, 1.0, 0.8, 0.05);
+        tw.exilecore.skill.Fx.spawn(head.getWorld(), Particle.SCULK_SOUL, boss.getLocation().add(0, 1, 0), 40, 0.8, 1.0, 0.8, 0.05);
         for (final Player player : players(instance)) {
             if (player.getLocation().distanceSquared(head) <= 32 * 32) {
                 tw.exilecore.gui.Titles.show(player, plugin.text().parse(ABYSS_COLOR + "縫的盡頭爬出了什麼"),
@@ -1569,7 +1654,7 @@ final class MapEvents implements Listener {
             rollTicket(MapEventConfig.Kind.ABYSS, player, at, event.bonus ? BONUS_TICKET : 1.0); // 2026-10-18：入場券
             takers++;
         }
-        at.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, at.getX(), at.getY() + 1, at.getZ(), 40, 0.6, 0.6, 0.6, 0.15);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.TOTEM_OF_UNDYING, at.getX(), at.getY() + 1, at.getZ(), 40, 0.6, 0.6, 0.6, 0.15);
         at.getWorld().playSound(at, Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 0.8f);
         if (event.label != null && event.label.isValid()) {
             event.label.text(plugin.text().parse("<dark_gray>深淵裂縫（已開）"));
@@ -1800,7 +1885,7 @@ final class MapEvents implements Listener {
             event.label.text(plugin.text().parse(SAFE_COLOR + "保險箱<newline><gray>開鎖中 " + Math.round(event.progressTicks / 20.0) + "／"
                     + Math.round(settings.unlockSeconds()) + " 秒（還有 " + event.monsters.size() + " 隻）"));
         }
-        event.center.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, event.center.getX(), event.center.getY() + 1.2, event.center.getZ(), 3, 0.3, 0.3, 0.3, 0.02);
+        tw.exilecore.skill.Fx.spawn(event.center.getWorld(), Particle.ELECTRIC_SPARK, event.center.getX(), event.center.getY() + 1.2, event.center.getZ(), 3, 0.3, 0.3, 0.3, 0.02);
         // 每 wave_seconds 一波（照進度算，暫停時不湧）
         final int waves = Math.max(1, (int) Math.ceil(settings.unlockSeconds() / settings.waveSeconds()));
         if (event.wavesSpawned < waves && event.progressTicks >= event.wavesSpawned * settings.waveSeconds() * 20) {
@@ -1837,7 +1922,7 @@ final class MapEvents implements Listener {
                 if (target != null && monster instanceof Mob mob) {
                     mob.setTarget(target);
                 }
-                monster.getWorld().spawnParticle(Particle.CLOUD, monster.getLocation().add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0.02);
+                tw.exilecore.skill.Fx.spawn(monster.getWorld(), Particle.CLOUD, monster.getLocation().add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0.02);
             }
         }
         event.center.getWorld().playSound(event.center, Sound.ENTITY_PILLAGER_CELEBRATE, 1.0f, 0.7f);
@@ -1886,7 +1971,7 @@ final class MapEvents implements Listener {
             deliver(player, event.center, data, rolled, gold);
             takers++;
         }
-        event.center.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, event.center.getX(), event.center.getY() + 1, event.center.getZ(), 40, 0.6, 0.6, 0.6, 0.15);
+        tw.exilecore.skill.Fx.spawn(event.center.getWorld(), Particle.TOTEM_OF_UNDYING, event.center.getX(), event.center.getY() + 1, event.center.getZ(), 40, 0.6, 0.6, 0.6, 0.15);
         event.center.getWorld().playSound(event.center, Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.2f);
         if (event.label != null && event.label.isValid()) {
             event.label.text(plugin.text().parse("<dark_gray>保險箱（已開）"));
@@ -1995,6 +2080,39 @@ final class MapEvents implements Listener {
         boxes.clear();
         exiles.clear();
         blocks.clear();
+    }
+
+    /**
+     * 2026-11-02 照站長（C 組小地圖）：這張圖的事件標記（位置、種類、名稱、狀態），給模組的小地圖畫圖示；這次之前只有 {@link #summary} 的文字。
+     * 祭壇、幻霧不在這裡（它們自己管位置）。
+     */
+    List<tw.exilecore.clientmod.FeedProtocol.Marker> markers(final MapInstance instance) {
+        final List<tw.exilecore.clientmod.FeedProtocol.Marker> out = new ArrayList<>();
+        final List<Event> events = byInstance.get(instance.id());
+        if (events == null) {
+            return out;
+        }
+        for (int i = 0; i < events.size(); i++) {
+            final Event event = events.get(i);
+            if (event.center == null) {
+                continue;
+            }
+            out.add(new tw.exilecore.clientmod.FeedProtocol.Marker(i, event.center.getX(), event.center.getZ(),
+                    event.kind.name().toLowerCase(Locale.ROOT), event.title(), markerColor(event.kind), event.done ? 2 : event.started ? 1 : 0));
+        }
+        return out;
+    }
+
+    /** 小地圖上事件圖示的顏色（跟各事件的粒子、字同一個顏色）。 */
+    static int markerColor(final MapEventConfig.Kind kind) {
+        return switch (kind) {
+            case SHRINE -> 0x9FE8C8;
+            case STRONGBOX -> 0xF5B942;
+            case BREACH -> 0xC48BFF;
+            case EXILE -> 0xFF7070;
+            case ABYSS -> 0x8A5CFF;
+            case SAFE -> 0xC8D0D8;
+        };
     }
 
     /** 這張圖有幾個事件、幾個還沒處理（/ec map 的狀態）。 */

@@ -376,7 +376,7 @@ public final class MonsterEffects implements Listener {
             if (minion instanceof Mob minionMob) {
                 minionMob.setTarget(target);
             }
-            base.getWorld().spawnParticle(Particle.SOUL, spot, 8, 0.3, 0.5, 0.3, 0.02);
+            tw.exilecore.skill.Fx.spawn(base.getWorld(), Particle.SOUL, spot, 8, 0.3, 0.5, 0.3, 0.02);
             alive.add(minion);
         }
     }
@@ -386,6 +386,11 @@ public final class MonsterEffects implements Listener {
      * 生物代號不認得或生不出來回傳 null。
      */
     LivingEntity spawnMinion(final LivingEntity source, final MonsterData data, final String entityType, final Location at) {
+        return spawnMinion(source, data, entityType, at, false);
+    }
+
+    /** 同上；empowered = true 一定帶「受統御的」（2026-11-02 照 PoE2 Empowered Reviving Minions：復甦的叫起來的小怪）。 */
+    LivingEntity spawnMinion(final LivingEntity source, final MonsterData data, final String entityType, final Location at, final boolean empowered) {
         final org.bukkit.entity.EntityType type;
         try {
             type = org.bukkit.entity.EntityType.valueOf(entityType.toUpperCase(java.util.Locale.ROOT));
@@ -410,9 +415,9 @@ public final class MonsterEffects implements Listener {
         }
         minion.clearActivePotionEffects();
         // 2026-10-23：詞綴「統御的」：叫出來的小怪更強（隱藏詞綴 empowered_minion）
-        final boolean empowered = monsters.config().mod(MonsterMechanics.EMPOWERED_MINION) != null
-                && monsters.sheet(source, data).flat(tw.exilecore.stats.StatKeys.MONSTER_POWERFUL_MINIONS, Set.of()) > 0;
-        monsters.decorate(minion, data.level(), MonsterRarity.NORMAL, empowered ? List.of(MonsterMechanics.EMPOWERED_MINION) : List.of());
+        final boolean strong = monsters.config().mod(MonsterMechanics.EMPOWERED_MINION) != null
+                && (empowered || monsters.sheet(source, data).flat(tw.exilecore.stats.StatKeys.MONSTER_POWERFUL_MINIONS, Set.of()) > 0);
+        monsters.decorate(minion, data.level(), MonsterRarity.NORMAL, strong ? List.of(MonsterMechanics.EMPOWERED_MINION) : List.of());
         minion.setPersistent(false);
         return minion;
     }

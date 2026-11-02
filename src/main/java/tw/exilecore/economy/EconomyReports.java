@@ -91,7 +91,32 @@ public final class EconomyReports {
             }
             tick();
             refreshWeb();
+            census(); // 2026-11-02：啟動時也數一次全服現有的追逐級傳奇
         }));
+    }
+
+    /** 2026-11-02 照站長：全服現在有的追逐級傳奇（傳奇代號 → 件數；管理員的不算）；還沒數過是空的。 */
+    private volatile Map<String, Long> chaseHeld = Map.of();
+    private boolean censusRunning;
+
+    /** 數一次全服現有的追逐級傳奇（主執行緒），數完更新網頁。 */
+    public void census() {
+        if (censusRunning || plugin.items() == null) {
+            return;
+        }
+        censusRunning = true;
+        try {
+            new ChaseCensus(plugin, counts -> {
+                censusRunning = false;
+                chaseHeld = counts;
+                plugin.getSLF4JLogger().info("經濟：全服現有追逐級傳奇 {} 件（{} 種）",
+                        counts.values().stream().mapToLong(Long::longValue).sum(), counts.size());
+                refreshWeb();
+            }).start();
+        } catch (final RuntimeException e) {
+            censusRunning = false;
+            plugin.getSLF4JLogger().warn("追逐級傳奇統計失敗：{}", e.toString());
+        }
     }
 
     /** 每天的工作是不是正在跑。 */
@@ -119,12 +144,18 @@ public final class EconomyReports {
         final ReferenceValues.Settings settings = config.reference();
         final Map<String, Long> configured = new LinkedHashMap<>(config.values());
         final Instant since = Instant.now().minus(settings.days(), ChronoUnit.DAYS);
+        // 2026-11-02 照站長：管理員（op、economy.yml 的 report.exclude_players）的通貨袋、倉庫不算進全服存量
+        final java.util.Set<String> opAccounts = new java.util.HashSet<>();
+        for (final org.bukkit.OfflinePlayer op : plugin.getServer().getOperators()) {
+            opAccounts.add(op.getUniqueId().toString());
+        }
+        final java.util.Set<String> excludedNames = config.reportExcludedNames();
         final CompletableFuture<Daily> result = new CompletableFuture<>();
         plugin.database().async(connection -> {
             if (plugin.characters().writesPaused()) {
                 return null; // 還原備份中：不寫（還原完要重開伺服器）
             }
-            final Map<String, Long> stock = repository.computeStock(connection);
+            final Map<String, Long> stock = repository.computeStock(connection, opAccounts, excludedNames);
             repository.saveStock(connection, day, stock);
             final List<ReferenceValues.Trade> trades = new ArrayList<>();
             for (final EconomyRepository.Trade trade : repository.tradesSince(connection, since)) {
@@ -153,6 +184,7 @@ public final class EconomyReports {
                 config().setMarketValues(Map.of());
             }
             plugin.getSLF4JLogger().info("經濟：{} 的存量與參考價值算好了（{} 種通貨）", daily.day(), daily.values().values().size());
+            census(); // 2026-11-02：順便數全服現有的追逐級傳奇（數完會更新網頁）
             refreshWeb();
             result.complete(daily);
         }));
@@ -208,6 +240,29 @@ public final class EconomyReports {
 
     // ---- 網頁 ----
 
+    /**
+     * 2026-11-02 照站長：清掉市場報告（產出消耗、存量，連記憶體裡還沒寫進去的），再馬上重算一次大家的通貨袋與倉庫（每天的工作），
+     * 網頁跟著更新。參考價值與每個帳號的收入不動。回傳清掉幾列。
+     */
+    public CompletableFuture<Integer> resetReport() {
+        ledger.discardPending();
+        final CompletableFuture<Integer> done = new CompletableFuture<>();
+        plugin.database().async(repository::resetReport).whenComplete((rows, error) -> sync(() -> {
+            if (error != null) {
+                done.completeExceptionally(error);
+                return;
+            }
+            runDaily().whenComplete((daily, again) -> {
+                if (again != null) {
+                    done.completeExceptionally(again);
+                } else {
+                    done.complete(rows);
+                }
+            });
+        }));
+        return done;
+    }
+
     /** 網頁的資料（JSON）。 */
     public byte[] webJson() {
         return webJson;
@@ -216,6 +271,14 @@ public final class EconomyReports {
     /** 重做網頁的資料（資料庫執行緒）。 */
     public void refreshWeb() {
         final List<EconomyReportJson.CurrencyMeta> currencies = currencyMeta();
+        // 2026-11-02 照站長：追逐級傳奇（市場報告列每種出了幾件）
+        final Map<String, String> chaseNames = new java.util.LinkedHashMap<>();
+        for (final tw.exilecore.item.UniqueItem unique : plugin.items().repository().uniques()) {
+            if (unique.chase()) {
+                chaseNames.put(unique.id(), unique.name());
+            }
+        }
+        final Map<String, Long> held = chaseHeld;
         final EconomyConfig config = config();
         final boolean follow = config.followsMarket();
         final String anchor = config.reference().anchor();
@@ -231,7 +294,7 @@ public final class EconomyReports {
             final List<EconomyRepository.DayValue> stock = repository.stockSince(connection, from);
             final List<EconomyRepository.DayValue> values = repository.valuesSince(connection, from);
             final Map<String, Integer> active = repository.activeAccountsSince(connection, from);
-            return EconomyReportJson.build(days, currencies, flows, stock, values, active, follow, anchor, STAMP.format(now));
+            return EconomyReportJson.build(days, currencies, flows, stock, values, active, follow, anchor, STAMP.format(now), chaseNames, held);
         }).whenComplete((json, error) -> {
             if (error != null) {
                 plugin.getSLF4JLogger().warn("市場報告的資料做不出來：{}", error.getMessage());

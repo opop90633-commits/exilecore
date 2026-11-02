@@ -306,12 +306,12 @@ public final class MonsterListener implements Listener {
                 continue; // 技能或藥劑模組沒啟用
             }
             if (drop.isCurrency()) {
-                plugin.economy().ledger().produced(drop.currency().id(), tw.exilecore.economy.EconomyLedger.DROP, stack.getAmount());
+                plugin.economy().ledger().of(owner).produced(drop.currency().id(), tw.exilecore.economy.EconomyLedger.DROP, stack.getAmount());
             } else if ((drop.kind() == DropTable.Kind.SKILL_GEM || drop.kind() == DropTable.Kind.SUPPORT_GEM) && !drop.isSpecificGem()
                     && plugin.currencies() != null) {
                 // 未切割寶石算通貨（2026-10）：掉在地上的也記產出（跟自動撿的一樣）
                 plugin.currencies().read(stack).ifPresent(type ->
-                        plugin.economy().ledger().produced(type.id(), tw.exilecore.economy.EconomyLedger.DROP, stack.getAmount()));
+                        plugin.economy().ledger().of(owner).produced(type.id(), tw.exilecore.economy.EconomyLedger.DROP, stack.getAmount()));
             }
             dropOwned(plugin, location, stack, owner, highlight(drop));
         }

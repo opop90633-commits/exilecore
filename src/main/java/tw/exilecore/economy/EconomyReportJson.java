@@ -40,6 +40,20 @@ public final class EconomyReportJson {
     static byte[] build(final List<String> days, final List<CurrencyMeta> currencies, final List<EconomyRepository.Flow> flows,
                         final List<EconomyRepository.DayValue> stock, final List<EconomyRepository.DayValue> values,
                         final Map<String, Integer> active, final boolean follow, final String anchor, final String generated) {
+        return build(days, currencies, flows, stock, values, active, follow, anchor, generated, Map.of(), Map.of());
+    }
+
+    /** 帳本裡追逐級傳奇的種類前綴（LootService.CHASE_KIND）。 */
+    static final String CHASE = "chase:";
+
+    /**
+     * 同上；chaseNames：追逐級傳奇代號 → 名稱（2026-11-02 照站長：市場報告多一段「追逐級傳奇」，每種出了幾件、從哪裡來；
+     * 名單裡的就算還沒出過也列，才看得出還沒出現過）。
+     */
+    static byte[] build(final List<String> days, final List<CurrencyMeta> currencies, final List<EconomyRepository.Flow> flows,
+                        final List<EconomyRepository.DayValue> stock, final List<EconomyRepository.DayValue> values,
+                        final Map<String, Integer> active, final boolean follow, final String anchor, final String generated,
+                        final Map<String, String> chaseNames, final Map<String, Long> chaseHeld) {
         final Map<String, Integer> index = new HashMap<>();
         for (int i = 0; i < days.size(); i++) {
             index.put(days.get(i), i);
@@ -106,6 +120,26 @@ public final class EconomyReportJson {
         gold.add("sources", periods(sources, EconomyRepository.GOLD));
         gold.add("sinks", periods(sinks, EconomyRepository.GOLD));
         root.add("gold", gold);
+        final JsonArray chase = new JsonArray();
+        final java.util.Set<String> chaseIds = new java.util.LinkedHashSet<>(chaseNames.keySet());
+        for (final String kind : java.util.stream.Stream.concat(produced.keySet().stream(), consumed.keySet().stream()).toList()) {
+            if (kind.startsWith(CHASE)) {
+                chaseIds.add(kind.substring(CHASE.length()));
+            }
+        }
+        chaseIds.addAll(chaseHeld.keySet());
+        for (final String id : chaseIds) {
+            final JsonObject object = new JsonObject();
+            object.addProperty("held", chaseHeld.getOrDefault(id, 0L)); // 2026-11-02：全服現有（管理員的不算）
+            object.addProperty("id", id);
+            object.addProperty("name", chaseNames.getOrDefault(id, id));
+            object.add("produced", longs(produced.get(CHASE + id), days.size()));
+            object.add("sources", periods(sources, CHASE + id));
+            object.add("consumed", longs(consumed.get(CHASE + id), days.size())); // 2026-11-02：傳奇兌換換掉的
+            object.add("sinks", periods(sinks, CHASE + id));
+            chase.add(object);
+        }
+        root.add("chase", chase);
         final JsonArray activeArray = new JsonArray();
         for (final String day : days) {
             activeArray.add(active.getOrDefault(day, 0));

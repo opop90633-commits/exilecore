@@ -1042,8 +1042,9 @@ public final class CombatListener implements Listener {
             }
         } else {
             // 巔峰 Boss 的每秒傷害上限（2026-10，maps.yml 的 pinnacle.dps_cap）：玩家與他的召喚物打的才算
+            // 2026-11-02 照站長：帶這一下每種傷害多少（地圖 Boss 的元素弱點、虛弱）；這次之前只傳總數
             double total = credit != null && plugin.maps() != null
-                    ? plugin.maps().capBossDamage(defender, credit.getUniqueId(), result.total()) : result.total();
+                    ? plugin.maps().capBossDamage(defender, credit.getUniqueId(), result.total(), result.dealt().asMap()) : result.total();
             if (credit != null && plugin.monsterModule() != null && plugin.monsterModule().mechanics() != null) {
                 // 2026-10-23：怪物詞綴（近身的、噬魂的、熔盾的、護盾的、幻雷的）
                 // 扣護盾、熔岩爆炸、幻雷等事件確定沒被取消才做
@@ -1070,6 +1071,9 @@ public final class CombatListener implements Listener {
                     || tw.exilecore.stats.AttributeScalingKeys.culls(skillSheet, calcSkill.tags())
                     || tw.exilecore.skill.SupportMechanics.cullsRare(skillSheet, defenderMonster)
                     || tw.exilecore.skill.OriginalSkills.culls(attacker, defender) // 2026-10-26 照 PoE2：磨蝕之志
+                    // 2026-11-02 照 PoE2 腐化詞綴（MonsterCorruptionModHitsOnMonsterHaveCullingStrike）：蝕朽的怪物，打牠的擊中都有撲殺
+                    || defenderMonster != null && plugin.monsters().sheet(defender, defenderMonster)
+                            .flat(StatKeys.MONSTER_CULLABLE, java.util.Set.of()) > 0
                     // 2026-10-26 照 PoE2 天賦「讓敵人重暈的擊中有撲殺」：擊中重暈中的敵人有撲殺
                     || ailments != null && StatKeys.flag(skillSheet, tw.exilecore.stats.TreeNewMechanicKeys.FLAG_HEAVY_STUN_CULL)
                     && ailments.heavyStunned(defender))
@@ -1606,9 +1610,10 @@ public final class CombatListener implements Listener {
             final long now = plugin.getServer().getCurrentTick();
             // 2026-10-18：這裡只算會吃掉多少（跟 absorbGuard 同樣的算法），真的扣守護等 MONITOR 確定事件沒被取消
             final double available = state.guard(now);
-            final double fromEs = esTaken > 0 ? Math.min(available, esTaken) : 0;
+            final double[] guarded = IncomingDamage.guardAbsorb(esTaken, lifeTaken, available); // 2026-11-02：抽成純函式（EHP 共用）；算法沒變
+            final double fromEs = guarded[0];
             esTaken -= fromEs;
-            final double fromLife = lifeTaken > 0 ? Math.min(available - fromEs, lifeTaken) : 0;
+            final double fromLife = guarded[1];
             lifeTaken -= fromLife;
             if (fromEs + fromLife > 0) {
                 defer(player, () -> state.absorbGuard(fromEs + fromLife, now));
@@ -1752,6 +1757,20 @@ public final class CombatListener implements Listener {
             case STARVATION -> "飢餓";
             default -> cause.name().toLowerCase(Locale.ROOT);
         };
+    }
+
+    /**
+     * 2026-11-02：玩家身上的原版吸收（金色愛心）只是能量護盾的顯示（PlayerStateService.display），不能真的擋傷害：
+     * 原版扣血前先扣吸收，致死的那一下（LETHAL）、照原版的原因（/kill）都會被吃掉一段。這裡把吸收那段改成 0，
+     * 原版的血量照我們算好的扣，吸收量也不會被扣掉。放在 MONITOR：別的插件之後再改傷害也不會把吸收算回來。
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @SuppressWarnings("deprecation") // DamageModifier 標成過時，但還是唯一改得到吸收那段的方法
+    public void onAbsorption(final EntityDamageEvent event) {
+        if (event.getEntity() instanceof Player && event.isApplicable(EntityDamageEvent.DamageModifier.ABSORPTION)
+                && event.getDamage(EntityDamageEvent.DamageModifier.ABSORPTION) != 0) {
+            event.setDamage(EntityDamageEvent.DamageModifier.ABSORPTION, 0);
+        }
     }
 
     /** 事件塵埃落定後才把算好的傷害寫進狀態，再算元素異常。 */

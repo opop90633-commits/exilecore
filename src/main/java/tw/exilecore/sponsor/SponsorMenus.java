@@ -800,6 +800,9 @@ final class SponsorMenus {
             final boolean festival = service.festivalPreview(cosmetic);
             if (festival) {
                 lore.add("<#ff8a1e>★ " + ItemRenderer.escape(cosmetic.limitedTag()) + " <gray>活動兌換商店用糖果、燈芯換（/festival）");
+            } else if (tw.exilecore.slots.SlotsConfig.LIMITED_TAG.equals(cosmetic.limited())) {
+                // 2026-11-02：拉霸機限定的不是絕版，營地的拉霸機抽得到（這次之前沒有拉霸機）
+                lore.add("<#ffd24a>★ 拉霸機限定 <gray>營地的拉霸機抽得到（/slots）");
             } else if (cosmetic.isLimited()) {
                 lore.add("<#ffd24a>★ " + ItemRenderer.escape(cosmetic.limitedTag()) + " <dark_gray>絕版：抽不到、也不能兌換");
             }

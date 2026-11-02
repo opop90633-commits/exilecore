@@ -233,7 +233,7 @@ public final class MapRewards {
                     ? java.util.Optional.empty() : plugin.currencies().read(item);
             // 流水帳（2026-10）：祭壇、幻霧挑的通貨也算產出（以前沒記，星籤這類主要從這裡來的就變成「消耗比產出多」）
             if (plugin.economy() != null) {
-                currency.ifPresent(type -> plugin.economy().ledger().produced(type.id(),
+                currency.ifPresent(type -> plugin.economy().ledger().of(player).produced(type.id(),
                         tw.exilecore.economy.EconomyLedger.EVENT, item.getAmount()));
             }
             ItemStack rest = item;

@@ -66,6 +66,12 @@ public final class PassiveMenu extends Menu {
     private static final Color WHITE = Color.fromRGB(0xFFFFFF);
     /** 珠寶孔的顏色（紫，跟昇華、星籤同一系）。 */
     private static final String SOCKET_COLOR = "#c77dff";
+    // 2026-11-02 照站長：觀星「不見之途」專屬的節點用深紫加星光外框（跟已配金色、能配亮白、連不到暗灰、屬性點紅綠藍、珠寶孔淡紫分得出來）；
+    // 這次之前看起來跟一般天賦一樣。模組（TreePainter）、網頁規劃器同一組顏色
+    private static final Color UNSEEN_DEEP = Color.fromRGB(0x4B1D8F);
+    private static final Color UNSEEN_LIT = Color.fromRGB(0x8A5CFF);
+    private static final Color UNSEEN_STAR = Color.fromRGB(0xE9DEFF);
+    private static final String UNSEEN_TEXT = "<#e9deff>✧ ";
 
     private final PassiveTree tree;
     private final PassiveState passive;
@@ -304,7 +310,26 @@ public final class PassiveMenu extends Menu {
             final String jewelColor = tile.state() == TreeView.NodeState.OWNED ? "<" + SOCKET_COLOR + ">" : color;
             return (tile.highlight() ? "<#55ffff>★ " : "") + jewelColor + "◇ " + ItemRenderer.escape(shown) + (jewel == null && tile.state() == TreeView.NodeState.OWNED ? " <dark_gray>（空的）" : "");
         }
-        return (tile.highlight() ? "<#55ffff>★ " : "") + color + ItemRenderer.escape(shown);
+        return (tile.highlight() ? "<#55ffff>★ " : "") + (tree.unseen(tile.node()) ? UNSEEN_TEXT : "") + color + ItemRenderer.escape(shown);
+    }
+
+    /** 2026-11-02 照站長：虛實交織的跳點——現在能配、但旁邊沒有已配置的（或出發點）。 */
+    private boolean jump(final TreeView.Tile tile) {
+        if (tile.state() != TreeView.NodeState.AVAILABLE) {
+            return false;
+        }
+        final PlayerState state = plugin.players().get(player);
+        final PassiveNode start = passive.start();
+        if (start == null) {
+            return false;
+        }
+        final List<PassiveNode> seeds = tree.seeds(start, PassiveState.rules(plugin, state));
+        for (final PassiveNode neighbour : tree.neighbours(tile.node())) {
+            if (seeds.contains(neighbour) || state.passives().contains(neighbour.id())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** 玩家的職業代號（節點的職業變體用；沒有角色為 null）。 */
@@ -330,6 +355,9 @@ public final class PassiveMenu extends Menu {
         };
         final List<String> lore = new ArrayList<>();
         lore.add(typeColor + node.type().displayName() + (tile.highlight() ? " <#55ffff>★ 搜尋結果" : ""));
+        if (tree.unseen(tile.node())) {
+            lore.add("<#b48cff>✧ 不見之途專屬天賦（觀星）");
+        }
         final ItemStack jewel = jewelIn(node);
         if (jewel != null) {
             // 孔裡有珠寶：寫珠寶的詞綴，不寫孔的說明
@@ -397,6 +425,9 @@ public final class PassiveMenu extends Menu {
             lore.add("<#77aaff>路徑上的第 " + (previewPath.indexOf(node) + 1) + " 點");
         } else if (tile.state() == TreeView.NodeState.AVAILABLE) {
             lore.add(points > 0 ? "<yellow>左鍵配置（剩 " + points + " 點）" : "<red>天賦點不夠");
+            if (jump(tile)) {
+                lore.add("<#c9b3ff>虛實交織：在已配基石的範圍內，不用相連就能配");
+            }
             if (node.isSocket()) {
                 lore.add("<dark_gray>配了之後才能放珠寶");
             }
@@ -448,7 +479,9 @@ public final class PassiveMenu extends Menu {
             } else if (tile.state() == TreeView.NodeState.PATH) {
                 material = Material.LIGHT_BLUE_STAINED_GLASS_PANE;
             } else if (tile.state() == TreeView.NodeState.AVAILABLE) {
-                material = Material.YELLOW_STAINED_GLASS_PANE;
+                material = tree.unseen(node) ? Material.MAGENTA_STAINED_GLASS_PANE : Material.YELLOW_STAINED_GLASS_PANE;
+            } else if (tree.unseen(node)) {
+                material = Material.PURPLE_STAINED_GLASS_PANE; // 2026-11-02：不見之途專屬（還不能配）
             } else {
                 material = Material.GRAY_STAINED_GLASS_PANE;
             }
@@ -499,11 +532,12 @@ public final class PassiveMenu extends Menu {
                     case SOCKET -> jewel == null ? "socket" : "jewel";
                 });
                 final Color attrColor = tile.state() == TreeView.NodeState.OWNED && isAttributeChoice(node) ? attributeColor(chosen(node)) : null;
+                final boolean unseen = tree.unseen(node);
                 colors.set(UiPack.Cell.COLOR_NODE, jewelColor != null ? jewelColor : attrColor != null ? attrColor : switch (tile.state()) {
                     case OWNED -> GOLD;
                     case PATH -> BLUE;
-                    case AVAILABLE -> BRIGHT;
-                    case LOCKED -> DIM;
+                    case AVAILABLE -> unseen ? UNSEEN_LIT : BRIGHT;
+                    case LOCKED -> unseen ? UNSEEN_DEEP : DIM;
                 });
                 if (tile.state() == TreeView.NodeState.OWNED) {
                     strings.set(UiPack.Cell.STRING_GLOW, "glow");
@@ -514,6 +548,9 @@ public final class PassiveMenu extends Menu {
                 }
                 if (tile.highlight()) {
                     strings.set(UiPack.Cell.STRING_RING, "ring");
+                } else if (unseen) {
+                    strings.set(UiPack.Cell.STRING_RING, "ring"); // 2026-11-02：不見之途專屬的星光外框（搜尋結果的青色圈優先）
+                    colors.set(UiPack.Cell.COLOR_RING, UNSEEN_STAR);
                 }
             }
             data.setStrings(strings);

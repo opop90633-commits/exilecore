@@ -71,6 +71,100 @@ public final class PartyFont {
                 vec4(0.0, 0.0, 0.0, 0.72), vec4(0.26, 0.05, 0.06, 0.92), vec4(0.80, 0.12, 0.15, 1.0), vec4(0.66, 0.90, 1.0, 1.0),
                 vec4(0.05, 0.09, 0.24, 0.92), vec4(0.22, 0.45, 1.0, 1.0), vec4(0.40, 0.33, 0.35, 0.95), vec4(0.0)""";
 
+    // ---- 2026-11-02 照站長：光環那一行搬到畫面左下角（資源包版；HotbarSides.auraLine） ----
+
+    /** 光環那一行（著色器沒作用時）的右緣：畫面中間往左幾格（生命球外側再空 4 格）。 */
+    public static final int AURA_EDGE = OrbFont.OUTER + 4;
+    /** 光環那一行的顏色記號：G = {@value #AURA_MARK}、B = 種類。 */
+    public static final int AURA_MARK = 209; // 不用 211：原本光環的青色 #8fd3ff 的 G 就是 211
+    public static final int AURA_MORE = 253;
+    public static final int AURA_ICON = 254;
+    public static final int AURA_NAME = 255;
+    /** 搬過去以後的左緣（離畫面左邊幾格）。 */
+    public static final int AURA_LEFT = 3;
+
+    // ---- 2026-11-02 照站長（第三版）：增益、召喚物搬到畫面右下角（資源包版；HotbarSides.cornerBlock） ----
+
+    /**
+     * 右下角那一塊先往右推多遠（相對畫面中間）：著色器只動畫面中間往右 {@value #CORNER_SEEN} 格以外的字
+     * （隊伍框推 {@value #PRE_SHIFT} 格，最多再往右幾百格，分得開）。著色器沒作用時在畫面外面，看不到（看備用那份）。
+     */
+    public static final int CORNER_SHIFT = 12000;
+    static final int CORNER_SEEN = 10000;
+    /** 搬過去以後整塊的右緣離畫面右邊幾格。 */
+    public static final int CORNER_RIGHT = 3;
+    /** 備用那份（生命球左邊的增益、魔力球右邊的召喚物）只在畫面最下面這麼多格裡面才藏（比聊天欄更少誤認）。 */
+    static final int FALLBACK_BAND = 140;
+    /** 備用那份的影子顏色（HotbarSides.FALLBACK_SHADOW：#010203）。 */
+    static final int FALLBACK_SHADOW = 0x010203;
+    /** 備用那份的顏色 = 真正的顏色 XOR 這個（差一點點，看不出來）。 */
+    static final int FALLBACK_XOR = 0x010301;
+    /** 增益、召喚物用到的顏色（HotbarSides：增益、快結束、沒了、重要的、白、灰、召喚物的青色、召喚物滿了）。 */
+    static final int[] FALLBACK_COLORS = {0xf5b942, 0xff9a3c, 0xff4a4a, 0xffe08a, 0xffffff, 0xaaaaaa, 0x8fd3ff, 0xffd27f};
+
+    /** 備用那份的顏色（真正的顏色差一點點）。純函式（測試用）。 */
+    public static int fallbackColor(final int rgb) {
+        return (rgb ^ FALLBACK_XOR) & 0xffffff;
+    }
+
+    /**
+     * 著色器做的事（Java 版，測試、示意圖用；GLSL 在 {@link #MOVE} 的 ecBuffMove）：
+     * 畫面中間往右 {@value #CORNER_SEEN} 格以外的字搬到右下角（整塊的右緣離畫面右邊 {@value #CORNER_RIGHT} 格）；
+     * 畫面最下面 {@value #FALLBACK_BAND} 格裡、顏色是備用那份的字（或備用的影子）藏起來。
+     *
+     * @return {新的 x, 1 = 藏起來}；不是這兩種字回傳 null
+     */
+    static double[] cornerMove(final int color, final double x, final double y, final int guiWidth, final int guiHeight) {
+        if (x > guiWidth / 2.0 + CORNER_SEEN) {
+            return new double[] {x + guiWidth / 2.0 - CORNER_SHIFT - CORNER_RIGHT, 0};
+        }
+        if (y < guiHeight - FALLBACK_BAND) {
+            return null;
+        }
+        final int rgb = color & 0xffffff;
+        if (rgb == FALLBACK_SHADOW) {
+            return new double[] {x, 1};
+        }
+        for (final int real : FALLBACK_COLORS) {
+            if (rgb == fallbackColor(real)) {
+                return new double[] {x, 1};
+            }
+        }
+        return null;
+    }
+
+    private static String fallbackMarks() {
+        final StringBuilder out = new StringBuilder();
+        for (final int real : FALLBACK_COLORS) {
+            out.append(out.isEmpty() ? "" : ", ").append(fallbackColor(real));
+        }
+        return out.append(", ").append(FALLBACK_SHADOW).toString();
+    }
+
+    /** 寬度記在 R（÷ 2，最多 510）。純函式（測試用）。 */
+    public static int auraWidthCode(final int width) {
+        return Math.max(0, Math.min(255, (width + 1) / 2));
+    }
+
+    /**
+     * 著色器做的事（Java 版，測試、示意圖用；GLSL 在 {@link #MOVE} 的 ecAuraMove）：顏色帶光環記號的字，往左搬到從畫面左邊
+     * {@value #AURA_LEFT} 格開始（放不下就不搬：最多搬到原本的位置），顏色換回真正的顏色。
+     *
+     * @return {新的 x, 真正的顏色 0xRRGGBB}；不是光環的字回傳 null
+     */
+    static double[] auraMove(final int color, final double x, final int guiWidth) {
+        final int r = color >> 16 & 0xff;
+        final int g = color >> 8 & 0xff;
+        final int b = color & 0xff;
+        if (g != AURA_MARK || b < AURA_MORE) {
+            return null;
+        }
+        final double start = guiWidth / 2.0 - AURA_EDGE - r * 2;
+        final double dx = Math.min(0, AURA_LEFT - start);
+        final int real = b == AURA_ICON ? 0x8fd3ff : b == AURA_NAME ? 0xffffff : 0xaaaaaa;
+        return new double[] {x + dx, real};
+    }
+
     /** 搬字的那段（26.2、26.3 共用；Position、Color、UV0、ProjMat、Sampler0 要先宣告好）。 */
     private static final String MOVE = """
             // ExileCore 隊伍框（2026-10-18）：見 tw.exilecore.web.PartyFont
@@ -85,7 +179,8 @@ public final class PartyFont {
                 float guiW = 2.0 / ProjMat[0][0];
                 float guiH = -2.0 / ProjMat[1][1];
                 float lineTop = guiH - 72.0;
-                if (guiW <= 0.0 || guiH <= 0.0 || Position.x < guiW + 2000.0 || Position.y < lineTop - 4.0 || Position.y > lineTop + 13.0) {
+                if (guiW <= 0.0 || guiH <= 0.0 || Position.x < guiW + 2000.0 || Position.x > guiW * 0.5 + %d.0
+                        || Position.y < lineTop - 4.0 || Position.y > lineTop + 13.0) {
                     return false;
                 }
                 ivec3 c = ivec3(round(Color.rgb * 255.0));
@@ -119,7 +214,55 @@ public final class PartyFont {
                 color = vec4(tint.rgb, tint.a * Color.a);
                 return true;
             }
-            """.formatted(KINDS, TINTS, HEAD_DIM, LEFT, TOP, STEP);
+
+            // ExileCore 光環那一行（2026-11-02）：見 tw.exilecore.web.PartyFont.auraMove
+            void ecAuraMove(inout vec3 position, inout vec4 color) {
+                float guiW = 2.0 / ProjMat[0][0];
+                float guiH = -2.0 / ProjMat[1][1];
+                if (guiW <= 0.0 || guiH <= 0.0 || Position.x > guiW * 0.5 || Position.y < guiH - %d.5 || Position.y > guiH - 1.5) {
+                    return;
+                }
+                ivec3 c = ivec3(round(Color.rgb * 255.0));
+                if (c.g == %d && c.b >= %d) {
+                    float start = guiW * 0.5 - %d.0 - float(c.r) * 2.0;
+                    position.x += min(0.0, %d.0 - start);
+                    vec3 real = c.b == %d ? vec3(0.561, 0.827, 1.0) : (c.b == %d ? vec3(1.0) : vec3(0.667));
+                    color = vec4(real, Color.a);
+                } else if (c.g == %d && c.b == %d) {
+                    // 字的影子（顏色 × 0.25）：寬度讀不準，不畫
+                    color = vec4(0.0);
+                }
+            }
+
+            // ExileCore 增益、召喚物（2026-11-02）：見 tw.exilecore.web.PartyFont.cornerMove
+            const int EC_FALLBACK[%d] = int[%d](%s);
+
+            bool ecBuffMove(inout vec3 position, inout vec4 color) {
+                float guiW = 2.0 / ProjMat[0][0];
+                float guiH = -2.0 / ProjMat[1][1];
+                if (guiW <= 0.0 || guiH <= 0.0) {
+                    return false;
+                }
+                if (Position.x > guiW * 0.5 + %d.0) {
+                    position.x = Position.x + guiW * 0.5 - %d.0;
+                    return true;
+                }
+                if (Position.y < guiH - %d.0) {
+                    return false;
+                }
+                ivec3 c = ivec3(round(Color.rgb * 255.0));
+                int rgb = (c.r << 16) | (c.g << 8) | c.b;
+                for (int i = 0; i < %d; i++) {
+                    if (rgb == EC_FALLBACK[i]) {
+                        color = vec4(0.0);
+                        return true;
+                    }
+                }
+                return false;
+            }
+            """.formatted(KINDS, TINTS, CORNER_SEEN, HEAD_DIM, LEFT, TOP, STEP, HudFont.AURA_TOP + 1, AURA_MARK, AURA_MORE, AURA_EDGE, AURA_LEFT,
+                    AURA_ICON, AURA_NAME, AURA_MARK / 4, AURA_NAME / 4, FALLBACK_COLORS.length + 1, FALLBACK_COLORS.length + 1, fallbackMarks(),
+                    CORNER_SEEN, CORNER_SHIFT + CORNER_RIGHT, FALLBACK_BAND, FALLBACK_COLORS.length + 1);
 
     /** 26.2（資源包格式 88～96）：原版 core/text.vsh 加上搬字。 */
     static final String VSH_88 = """
@@ -161,7 +304,9 @@ public final class PartyFont {
                 vec3 position = Position;
                 vec4 color = Color;
             #ifdef IS_GUI
-                ecPartyMove(position, color);
+                if (!ecPartyMove(position, color) && !ecBuffMove(position, color)) {
+                    ecAuraMove(position, color);
+                }
             #endif
                 gl_Position = ProjMat * ModelViewMat * vec4(position, 1.0);
 
@@ -217,7 +362,9 @@ public final class PartyFont {
                 vec3 position = Position;
                 vec4 color = Color;
             #ifdef IS_GUI
-                ecPartyMove(position, color);
+                if (!ecPartyMove(position, color) && !ecBuffMove(position, color)) {
+                    ecAuraMove(position, color);
+                }
             #endif
                 gl_Position = ProjMat * ModelViewMat * vec4(position, 1.0);
 

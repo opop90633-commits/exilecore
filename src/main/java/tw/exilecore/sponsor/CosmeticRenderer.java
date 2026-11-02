@@ -124,7 +124,7 @@ final class CosmeticRenderer {
             case TRAIL -> {
                 final Location previous = last.put(player.getUniqueId(), at.clone());
                 if (previous != null && previous.getWorld() == world && previous.distanceSquared(at) > 0.004 && player.isOnGround()) {
-                    world.spawnParticle(particle, at.getX(), at.getY() + 0.05, at.getZ(), 2, 0.15, 0.02, 0.15, 0, data);
+                    tw.exilecore.skill.Fx.spawn(world, particle, at.getX(), at.getY() + 0.05, at.getZ(), 2, 0.15, 0.02, 0.15, 0, data);
                 }
             }
             case ORBIT -> {
@@ -147,7 +147,7 @@ final class CosmeticRenderer {
             }
             case AURA -> {
                 if (tick % 2 == 0) {
-                    world.spawnParticle(particle, at.getX(), at.getY() + 1.0, at.getZ(), 1, 0.45, 0.6, 0.45, 0, data);
+                    tw.exilecore.skill.Fx.spawn(world, particle, at.getX(), at.getY() + 1.0, at.getZ(), 1, 0.45, 0.6, 0.45, 0, data);
                 }
             }
             default -> {
@@ -156,7 +156,7 @@ final class CosmeticRenderer {
     }
 
     private static void spawn(final World world, final Particle particle, final Object data, final double x, final double y, final double z) {
-        world.spawnParticle(particle, x, y, z, 1, 0, 0, 0, 0, data);
+        tw.exilecore.skill.Fx.spawn(world, particle, x, y, z, 1, 0, 0, 0, 0, data);
     }
 
     private Particle.DustOptions dust(final SponsorConfig.Cosmetic cosmetic) {

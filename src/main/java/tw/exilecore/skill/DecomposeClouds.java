@@ -162,6 +162,9 @@ final class DecomposeClouds implements SkillTargets.Strikeable {
 
     // ---- 每 tick（SkillService，每個玩家）----
 
+    private static final Particle.DustTransition CLOUD_DUST = new Particle.DustTransition(Color.fromRGB(0x7a, 0xa8, 0x3a),
+            Color.fromRGB(0x4a, 0x5c, 0x22), 1.6f);
+
     void tick(final Player player, final long now) {
         final Deque<Cloud> mine = clouds.get(player.getUniqueId());
         if (mine == null) {
@@ -173,6 +176,7 @@ final class DecomposeClouds implements SkillTargets.Strikeable {
             final Cloud cloud = it.next();
             if (now >= cloud.until || !cloud.at.getWorld().equals(player.getWorld())) {
                 it.remove();
+                Fx.zoneStop(cloud);
                 if (now >= cloud.until && cloud.at.getWorld().equals(player.getWorld())) {
                     faded.add(cloud); // 2026-10-31 照站長（A＋B 統整成只要 A）：時間到自己炸開（原作要被點燃或引爆）
                 }
@@ -181,10 +185,9 @@ final class DecomposeClouds implements SkillTargets.Strikeable {
             final long age = now - cloud.born;
             final double radius = cloud.radius(now);
             if (now % 3 == 0) {
-                final double angle = (now * 0.4) % (Math.PI * 2);
-                Fx.spawn(cloud.at.getWorld(), Particle.DUST_COLOR_TRANSITION,
-                        cloud.at.clone().add(Math.cos(angle) * radius * 0.5, 0.5, Math.sin(angle) * radius * 0.5), 4, radius * 0.45, 0.3, radius * 0.45, 0,
-                        new Particle.DustTransition(Color.fromRGB(0x7a, 0xa8, 0x3a), Color.fromRGB(0x4a, 0x5c, 0x22), 1.4f));
+                // 2026-11-02：走 Fx.zone（每 0.5 秒重畫：外框照周長＋裡面稀疏撒；雲越來越大時模組那邊收到 UPDATE）
+                Fx.zone(cloud, cloud.at.clone().add(0, 0.3, 0), radius, new Fx.Look(Particle.DUST_COLOR_TRANSITION, CLOUD_DUST,
+                        Particle.DUST_COLOR_TRANSITION, CLOUD_DUST, 0.8, 0), (int) Math.max(0, cloud.until - now), player.getUniqueId(), false);
             }
             final boolean poison = poisonDue(age) && cloud.poisonBase > 0 && plugin.ailments() != null;
             final boolean check = age % IGNITE_CHECK_EVERY == 0 && plugin.ailments() != null;

@@ -23,6 +23,9 @@ final class DpsCap {
     static final double WARMUP_SECONDS = 4;
 
     /** 每個人：[最近的累積傷害（會衰減）, 上次更新的 tick, 開打的 tick, 這場原本的總傷害, 這場遞減後的總傷害]。 */
+    /** 2026-11-02 照站長：Boss 傷害遞減全部移除（maps.yml、life.yml 的 dps_cap 不再生效，只記 /ec bossdps 的統計）。 */
+    public static final boolean OFF = true;
+
     private final Map<String, double[]> recent = new HashMap<>();
 
     /**
@@ -35,8 +38,9 @@ final class DpsCap {
      * @param tick      現在的伺服器 tick
      * @param recordDps 這個人打假人的紀錄（沒有寫 0）
      */
-    double apply(final String key, final double amount, final double cap, final List<MapConfig.DpsTier> over, final long tick,
+    double apply(final String key, final double amount, final double capSetting, final List<MapConfig.DpsTier> over, final long tick,
                  final double recordDps) {
+        final double cap = OFF ? 0 : capSetting; // 2026-11-02 照站長：Boss 的每秒傷害遞減全部拿掉
         if (amount <= 0) {
             return amount;
         }

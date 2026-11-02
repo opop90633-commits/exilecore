@@ -219,7 +219,7 @@ public final class Emotes implements Listener {
                         afterimage(at);
                         world.playSound(at, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.7f, 1.5f);
                         world.playSound(at, Sound.ENTITY_ENDER_DRAGON_FLAP, 0.4f, 1.8f);
-                        world.spawnParticle(Particle.CLOUD, at.clone().add(0, 0.2, 0), 6, 0.3, 0.05, 0.3, 0.02);
+                        tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, at.clone().add(0, 0.2, 0), 6, 0.3, 0.05, 0.3, 0.02);
                         if (move) {
                             player.setVelocity(side.clone().multiply(0.4).setY(0.06)); // 小幅滑一步（大約半格）
                         } else {
@@ -229,8 +229,8 @@ public final class Emotes implements Listener {
                     for (long t = step[0] + 1; t < step[0] + 6; t++) {
                         later(player, t, at -> {
                             final Location body = at.clone().add(0, 0.9, 0);
-                            world.spawnParticle(Particle.CLOUD, body, 2, 0.15, 0.4, 0.15, 0.01);
-                            world.spawnParticle(Particle.DUST, body, 4, 0.2, 0.5, 0.2, 0, new Particle.DustOptions(Color.fromRGB(0xbfe8ff), 0.8f));
+                            tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, body, 2, 0.15, 0.4, 0.15, 0.01);
+                            tw.exilecore.skill.Fx.spawn(world, Particle.DUST, body, 4, 0.2, 0.5, 0.2, 0, new Particle.DustOptions(Color.fromRGB(0xbfe8ff), 0.8f));
                         });
                     }
                     later(player, step[0] + 19, at -> {
@@ -246,7 +246,7 @@ public final class Emotes implements Listener {
                 for (final long tick : new long[] {28, 49}) {                                              // 勾腳、交叉
                     later(player, tick, at -> {
                         world.playSound(at, Sound.ENTITY_PLAYER_ATTACK_KNOCKBACK, 0.5f, 1.5f);
-                        world.spawnParticle(Particle.CLOUD, at.clone().add(0, 0.3, 0), 4, 0.2, 0.05, 0.2, 0.02);
+                        tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, at.clone().add(0, 0.3, 0), 4, 0.2, 0.05, 0.2, 0.02);
                     });
                 }
             }
@@ -255,7 +255,7 @@ public final class Emotes implements Listener {
                 bearSteps(player, BEAR_STEPS);
                 // 2026-10 重抓：每跨一步、換一個大姿勢甩一點水（時間對 gen_emotes.py 的 bear_steps）
                 for (final long tick : new long[] {3, 9, 14, 20, 26, 31, 36, 40, 44, 80}) {
-                    later(player, tick, at -> world.spawnParticle(Particle.SPLASH, at.clone().add(0, 1.0, 0), 12, 0.4, 0.4, 0.4, 0.1));
+                    later(player, tick, at -> tw.exilecore.skill.Fx.spawn(world, Particle.SPLASH, at.clone().add(0, 1.0, 0), 12, 0.4, 0.4, 0.4, 0.1));
                 }
                 for (final long tick : new long[] {9, 26, 36, 40}) { // 跨步、小跳落地
                     later(player, tick, at -> world.playSound(at, Sound.ENTITY_POLAR_BEAR_STEP, 0.5f, 1.2f));
@@ -265,8 +265,8 @@ public final class Emotes implements Listener {
                 for (long tick = 48; tick <= 72; tick += 2) {
                     later(player, tick, at -> {
                         final Location body = at.clone().add(0, 1.0, 0);
-                        world.spawnParticle(Particle.SPLASH, body, 8, 0.4, 0.4, 0.4, 0.12);
-                        world.spawnParticle(Particle.ITEM, body, 2, 0.25, 0.35, 0.25, 0.12, fur);
+                        tw.exilecore.skill.Fx.spawn(world, Particle.SPLASH, body, 8, 0.4, 0.4, 0.4, 0.12);
+                        tw.exilecore.skill.Fx.spawn(world, Particle.ITEM, body, 2, 0.25, 0.35, 0.25, 0.12, fur);
                     });
                 }
             }
@@ -341,7 +341,7 @@ public final class Emotes implements Listener {
                         new org.joml.Quaternionf()));
             }));
         }
-        world.spawnParticle(Particle.CLOUD, at.clone().add(0, 0.4, 0), 12, 0.5, 0.2, 0.5, 0.02);
+        tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, at.clone().add(0, 0.4, 0), 12, 0.5, 0.2, 0.5, 0.02);
         final UUID owner = player.getUniqueId();
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (sofas.get(owner) != parts) {
@@ -349,7 +349,7 @@ public final class Emotes implements Listener {
             }
             removeSofa(owner);
             if (at.isWorldLoaded()) {
-                world.spawnParticle(Particle.CLOUD, at.clone().add(0, 0.4, 0), 10, 0.5, 0.2, 0.5, 0.02);
+                tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, at.clone().add(0, 0.4, 0), 10, 0.5, 0.2, 0.5, 0.02);
             }
         }, ticks);
     }
@@ -480,8 +480,8 @@ public final class Emotes implements Listener {
             }
             if (tick % 2 == 0 && (tick < 8 || tick >= 18 && tick < 26)) {
                 final Location at = player.getLocation().add(0, 0.9, 0);
-                world.spawnParticle(Particle.CLOUD, at, 2, 0.15, 0.4, 0.15, 0.01);
-                world.spawnParticle(Particle.DUST, at, 4, 0.2, 0.5, 0.2, 0, new Particle.DustOptions(Color.fromRGB(0xbfe8ff), 0.8f));
+                tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, at, 2, 0.15, 0.4, 0.15, 0.01);
+                tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 4, 0.2, 0.5, 0.2, 0, new Particle.DustOptions(Color.fromRGB(0xbfe8ff), 0.8f));
             }
         });
     }
@@ -522,10 +522,10 @@ public final class Emotes implements Listener {
             final float size = 1.1f - age[0] * 0.1f;
             final Color colour = Color.fromRGB(0xa8dcff);
             for (final Vector point : points) {
-                world.spawnParticle(Particle.DUST, at.clone().add(point), 1, 0.01, 0.01, 0.01, 0, new Particle.DustOptions(colour, size));
+                tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at.clone().add(point), 1, 0.01, 0.01, 0.01, 0, new Particle.DustOptions(colour, size));
             }
             if (age[0] == 0) {
-                world.spawnParticle(Particle.SWEEP_ATTACK, at.clone().add(0, 1, 0), 1);
+                tw.exilecore.skill.Fx.spawn(world, Particle.SWEEP_ATTACK, at.clone().add(0, 1, 0), 1);
             }
             age[0] += 2;
         });
@@ -572,8 +572,8 @@ public final class Emotes implements Listener {
                     tw.exilecore.skill.ServerSwing.mainHand(player);
                 }
                 final Location foot = player.getLocation().subtract(player.getLocation().getDirection().setY(0).normalize().multiply(0.5)).add(0, 0.4, 0);
-                world.spawnParticle(Particle.CLOUD, foot, 4, 0.12, 0.08, 0.12, 0.02);
-                world.spawnParticle(Particle.CRIT, foot, 6, 0.15, 0.15, 0.15, 0.15);
+                tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, foot, 4, 0.12, 0.08, 0.12, 0.02);
+                tw.exilecore.skill.Fx.spawn(world, Particle.CRIT, foot, 6, 0.15, 0.15, 0.15, 0.15);
                 world.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_KNOCKBACK, 0.6f, 1.5f);
             }
             if (tick == 8 || tick == 20) {
@@ -582,7 +582,7 @@ public final class Emotes implements Listener {
             if (tick == 12) {
                 // 交叉步
                 tw.exilecore.skill.ServerSwing.mainHand(player);
-                world.spawnParticle(Particle.POOF, player.getLocation().add(0, 0.1, 0), 4, 0.25, 0.02, 0.25, 0.01);
+                tw.exilecore.skill.Fx.spawn(world, Particle.POOF, player.getLocation().add(0, 0.1, 0), 4, 0.25, 0.02, 0.25, 0.01);
                 world.playSound(player.getLocation(), Sound.BLOCK_WOOL_STEP, 0.6f, 1.2f);
             }
             if (tick == 26) {
@@ -599,7 +599,7 @@ public final class Emotes implements Listener {
 
     private void remove(final ItemDisplay ball, final World world) {
         if (ball.isValid()) {
-            world.spawnParticle(Particle.POOF, ball.getLocation(), 5, 0.1, 0.1, 0.1, 0.02);
+            tw.exilecore.skill.Fx.spawn(world, Particle.POOF, ball.getLocation(), 5, 0.1, 0.1, 0.1, 0.02);
             ball.remove();
         }
         balls.remove(ball);
@@ -633,7 +633,7 @@ public final class Emotes implements Listener {
             later(player, (long) step[0], at -> {
                 player.setVelocity(right.clone().multiply(step[1] * 0.04).add(forward.clone().multiply(step[2] * 0.04))
                         .setY(step[3] > 0 ? step[3] : 0.04));
-                at.getWorld().spawnParticle(Particle.CLOUD, at.clone().add(0, 0.15, 0), 3, 0.2, 0.03, 0.2, 0.01);
+                tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.CLOUD, at.clone().add(0, 0.15, 0), 3, 0.2, 0.03, 0.2, 0.01);
             });
         }
     }
@@ -685,11 +685,11 @@ public final class Emotes implements Listener {
                 for (int i = 0; i < 3; i++) {
                     final double a = angle + i * Math.PI * 2 / 3;
                     final Location at = body.clone().add(Math.cos(a) * 0.45, (i - 1) * 0.35, Math.sin(a) * 0.45);
-                    world.spawnParticle(Particle.SPLASH, at, 4, 0.05, 0.05, 0.05, 0.1);
+                    tw.exilecore.skill.Fx.spawn(world, Particle.SPLASH, at, 4, 0.05, 0.05, 0.05, 0.1);
                 }
-                world.spawnParticle(Particle.FALLING_WATER, body, 2, 0.35, 0.5, 0.35, 0);
+                tw.exilecore.skill.Fx.spawn(world, Particle.FALLING_WATER, body, 2, 0.35, 0.5, 0.35, 0);
                 if (tick % 3 == 0) {
-                    world.spawnParticle(Particle.ITEM, body, 2, 0.25, 0.35, 0.25, 0.12, fur);
+                    tw.exilecore.skill.Fx.spawn(world, Particle.ITEM, body, 2, 0.25, 0.35, 0.25, 0.12, fur);
                 }
             } else if (tick == 32) {
                 // 兩手高舉
@@ -698,7 +698,7 @@ public final class Emotes implements Listener {
                 player.setSneaking(false);
                 tw.exilecore.skill.ServerSwing.mainHand(player);
                 tw.exilecore.skill.ServerSwing.offHand(player);
-                world.spawnParticle(Particle.SPLASH, player.getLocation().add(0, 2.1, 0), 12, 0.4, 0.1, 0.4, 0.2);
+                tw.exilecore.skill.Fx.spawn(world, Particle.SPLASH, player.getLocation().add(0, 2.1, 0), 12, 0.4, 0.1, 0.4, 0.2);
                 world.playSound(player.getLocation(), Sound.ENTITY_POLAR_BEAR_WARNING, 0.5f, 1.3f);
             }
         });
@@ -750,7 +750,7 @@ public final class Emotes implements Listener {
                 applied[1] = pitch;
                 if ((tick - 4) % 3 == 0) {
                     final Location head = player.getLocation().add(0, 1.55, 0);
-                    world.spawnParticle(Particle.CLOUD, head, 1, 0.15, 0.05, 0.15, 0.01);
+                    tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, head, 1, 0.15, 0.05, 0.15, 0.01);
                     world.playSound(head, Sound.ENTITY_PLAYER_ATTACK_WEAK, 0.25f, 1.9f);
                 }
                 if (tick % 10 == 0) {
@@ -928,18 +928,20 @@ public final class Emotes implements Listener {
                 orb(world, lerp(rightHand, front, f), blue, 0.3 * (1 - f) + 0.05, tick);
                 orb(world, lerp(leftHand, front, f), red, 0.3 * (1 - f) + 0.05, tick);
                 orb(world, front, purple, 0.2 + 0.45 * f, tick);
-                world.spawnParticle(Particle.WITCH, front, 3, 0.25, 0.25, 0.25, 0);
+                tw.exilecore.skill.Fx.spawn(world, Particle.WITCH, front, 3, 0.25, 0.25, 0.25, 0);
                 if (tick % 3 == 0) {
-                    world.spawnParticle(Particle.END_ROD, front, 2, 0.3, 0.3, 0.3, 0.02);
+                    tw.exilecore.skill.Fx.spawn(world, Particle.END_ROD, front, 2, 0.3, 0.3, 0.3, 0.02);
                 }
             }
             if (tick == 55) {
-                world.spawnParticle(Particle.FLASH, front, 1);
-                world.spawnParticle(Particle.EXPLOSION, front, 1);
+                tw.exilecore.skill.Fx.exact(() -> { // 2026-11-02：外觀特效照原樣（不換成貼地的小爆炸）
+                    tw.exilecore.skill.Fx.spawn(world, Particle.FLASH, front, 1);
+                    tw.exilecore.skill.Fx.spawn(world, Particle.EXPLOSION, front, 1);
+                });
                 world.playSound(front, Sound.ENTITY_WARDEN_SONIC_BOOM, 1f, 1.3f);
                 world.playSound(front, Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 0.8f);
                 world.playSound(front, Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 0.6f, 1.4f);
-                world.spawnParticle(Particle.CLOUD, player.getLocation().add(0, 0.2, 0), 10, 0.5, 0.05, 0.5, 0.05);
+                tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, player.getLocation().add(0, 0.2, 0), 10, 0.5, 0.05, 0.5, 0.05);
             }
             if (tick > 55 && tick <= 75 && !hit[0]) {
                 // 光束一 tick 往前 1.5 格：一圈圈紫色的環，碰到方塊就炸開停下
@@ -951,8 +953,8 @@ public final class Emotes implements Listener {
                     final Location at = origin.clone().add(forward.clone().multiply(1.3 + d));
                     if (!at.getBlock().isPassable()) {
                         hit[0] = true;
-                        world.spawnParticle(Particle.EXPLOSION_EMITTER, at, 1);
-                        world.spawnParticle(Particle.DUST, at, 40, 1.2, 1.2, 1.2, 0, new Particle.DustOptions(purple, 1.6f));
+                        tw.exilecore.skill.Fx.exact(() -> tw.exilecore.skill.Fx.spawn(world, Particle.EXPLOSION_EMITTER, at, 1));
+                        tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 40, 1.2, 1.2, 1.2, 0, new Particle.DustOptions(purple, 1.6f));
                         world.playSound(at, Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.7f);
                         break;
                     }
@@ -960,16 +962,16 @@ public final class Emotes implements Listener {
                     for (int i = 0; i < 10; i++) {
                         final double angle = Math.PI * 2 * i / 10 + tick * 0.4;
                         final Vector offset = right.clone().multiply(Math.cos(angle) * radius).add(up.clone().multiply(Math.sin(angle) * radius));
-                        world.spawnParticle(Particle.DUST, at.clone().add(offset), 1, 0.02, 0.02, 0.02, 0, new Particle.DustOptions(purple, 1.5f));
+                        tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at.clone().add(offset), 1, 0.02, 0.02, 0.02, 0, new Particle.DustOptions(purple, 1.5f));
                     }
-                    world.spawnParticle(Particle.DUST, at, 2, 0.3, 0.3, 0.3, 0, new Particle.DustOptions(Color.fromRGB(0xe6c8ff), 1.2f));
+                    tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 2, 0.3, 0.3, 0.3, 0, new Particle.DustOptions(Color.fromRGB(0xe6c8ff), 1.2f));
                     if (tick % 2 == 0) {
-                        world.spawnParticle(Particle.DRAGON_BREATH, at, 1, 0.2, 0.2, 0.2, 0.01);
+                        tw.exilecore.skill.Fx.spawn(world, Particle.DRAGON_BREATH, at, 1, 0.2, 0.2, 0.2, 0.01);
                     }
                 }
                 beam[0] = to;
                 if (tick % 4 == 0 && !hit[0]) {
-                    world.spawnParticle(Particle.SONIC_BOOM, origin.clone().add(forward.clone().multiply(1.3 + to)), 1);
+                    tw.exilecore.skill.Fx.spawn(world, Particle.SONIC_BOOM, origin.clone().add(forward.clone().multiply(1.3 + to)), 1);
                 }
             }
         });
@@ -977,11 +979,11 @@ public final class Emotes implements Listener {
 
     /** 一顆會轉的光球：中間一點大的、外面一圈小的繞著轉。 */
     private static void orb(final World world, final Location centre, final Color colour, final double radius, final int tick) {
-        world.spawnParticle(Particle.DUST, centre, 1, 0.03, 0.03, 0.03, 0, new Particle.DustOptions(colour, (float) (1.2 + radius * 2)));
+        tw.exilecore.skill.Fx.spawn(world, Particle.DUST, centre, 1, 0.03, 0.03, 0.03, 0, new Particle.DustOptions(colour, (float) (1.2 + radius * 2)));
         for (int i = 0; i < 6; i++) {
             final double angle = Math.PI * 2 * i / 6 + tick * 0.5;
             final double tilt = Math.sin(tick * 0.3 + i) * radius * 0.6;
-            world.spawnParticle(Particle.DUST, centre.clone().add(Math.cos(angle) * radius, tilt, Math.sin(angle) * radius), 1, 0, 0, 0, 0,
+            tw.exilecore.skill.Fx.spawn(world, Particle.DUST, centre.clone().add(Math.cos(angle) * radius, tilt, Math.sin(angle) * radius), 1, 0, 0, 0, 0,
                     new Particle.DustOptions(colour, 0.8f));
         }
     }
@@ -1031,11 +1033,11 @@ public final class Emotes implements Listener {
         final Vector[] axis = {null};
         later(player, 41, at -> {
             world.playSound(at, Sound.ENTITY_GENERIC_BIG_FALL, 0.7f, 0.8f);
-            world.spawnParticle(Particle.CLOUD, at.clone().add(0, 0.1, 0), 8, 0.6, 0.05, 0.6, 0.02);
+            tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, at.clone().add(0, 0.1, 0), 8, 0.6, 0.05, 0.6, 0.02);
         });
         later(player, 58, at -> {
             world.playSound(at, Sound.ENTITY_GENERIC_SMALL_FALL, 0.6f, 0.9f);
-            world.spawnParticle(Particle.CLOUD, at.clone().add(0, 0.1, 0), 5, 0.4, 0.05, 0.4, 0.02);
+            tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, at.clone().add(0, 0.1, 0), 5, 0.4, 0.05, 0.4, 0.02);
         });
         later(player, 98, at -> world.playSound(at, Sound.ENTITY_PLAYER_BREATH, 0.6f, 0.8f));
         final int[] age = {0};
@@ -1052,7 +1054,7 @@ public final class Emotes implements Listener {
                 world.playSound(waist, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, 0.5f);
                 world.playSound(waist, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 0.5f, 1.7f);
                 world.playSound(waist, Sound.BLOCK_GLASS_BREAK, 0.7f, 0.5f);
-                world.spawnParticle(Particle.SWEEP_ATTACK, waist, 1);
+                tw.exilecore.skill.Fx.spawn(world, Particle.SWEEP_ATTACK, waist, 1);
             }
             if (cut[0] == null) {
                 return;
@@ -1064,21 +1066,21 @@ public final class Emotes implements Listener {
                 final double to = from + 28 / 3.0;
                 for (double d = from; d < to; d += 0.3) {
                     final Location at = cut[0].clone().add(axis[0].clone().multiply(d));
-                    world.spawnParticle(Particle.DUST, at, 1, 0, 0, 0, 0, new Particle.DustOptions(white, 1.6f));
+                    tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 1, 0, 0, 0, 0, new Particle.DustOptions(white, 1.6f));
                 }
             } else if (since < 20) {
                 // 線留著慢慢淡掉
                 final float size = 1.4f - since * 0.06f;
                 for (double d = -14; d <= 14; d += 0.6) {
                     final Location at = cut[0].clone().add(axis[0].clone().multiply(d));
-                    world.spawnParticle(Particle.DUST, at, 1, 0.02, 0.02, 0.02, 0, new Particle.DustOptions(white, size));
+                    tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 1, 0.02, 0.02, 0.02, 0, new Particle.DustOptions(white, size));
                 }
             }
             if (since >= 1 && since < 45 && tick % 2 == 0) {
                 // 腰冒血（人倒了就跟著人）
                 final Location waist = player.getLocation().add(0, since < 18 ? 1.0 : 0.4, 0);
-                world.spawnParticle(Particle.DUST, waist, 4, 0.3, 0.1, 0.3, 0, new Particle.DustOptions(blood, 1.1f));
-                world.spawnParticle(Particle.BLOCK, waist, 3, 0.25, 0.1, 0.25, 0.05, redstone);
+                tw.exilecore.skill.Fx.spawn(world, Particle.DUST, waist, 4, 0.3, 0.1, 0.3, 0, new Particle.DustOptions(blood, 1.1f));
+                tw.exilecore.skill.Fx.spawn(world, Particle.BLOCK, waist, 3, 0.25, 0.1, 0.25, 0.05, redstone);
             }
         });
     }

@@ -106,15 +106,8 @@ public final class DamageCalculator {
         //   閃避改成避開招架的重暈累積（AilmentService.blockedHit）。這次之前先擲閃避，閃掉了就不算招架
         if (evadable && !(attacker.flat(StatKeys.FLAG_ALWAYS_HIT, skill.tags()) > 0) && !parryable(skill, defender)) {
             // 2026-10-26 照 PoE2 天賦樹：命中帶這一下的情境（技能標籤＋目標狀態：對稀有、傳奇，對流血的，近距離）；這次之前只看無標籤的
-            // 2026-10-27 照 PoE2：怪物打玩家用怪物的命中公式（hitChanceAgainst）
-            double chance = hitChanceAgainst(defender, attacker.get(StatKeys.ACCURACY, skill.tags()), defender.get(StatKeys.EVASION));
-            if (StatKeys.flag(defender, StatKeys.FLAG_STAY_LIGHT)) {
-                chance = Math.max(chance, 0.5); // 戰術家：最多閃 50%
-            }
-            chance = tw.exilecore.item.unique.UniqueHits.evadeCap(defender, chance); // 2026-10-27（警望指環）：閃避率最多 x%
-            if (StatKeys.flag(defender, KeystoneKeys.FLAG_GLANCING)) {
-                chance = KeystoneKeys.unluckyEvadeHitChance(chance); // 2026-10-26 側身之擊（PoE2 Glancing Blows）：閃避機率為不幸
-            }
+            // 2026-11-02 照站長（PoB2 CalcDefence 的 EHP 要用同一套）：命中率抽成 chanceToBeHit；算法沒變
+            final double chance = chanceToBeHit(defender, attacker.get(StatKeys.ACCURACY, skill.tags()));
             final boolean hit = chance >= 1.0 || (roll != null ? roll.hits(chance) : random.nextDouble() < chance);
             if (!hit) {
                 return HitResult.miss();
@@ -127,28 +120,20 @@ public final class DamageCalculator {
             return HitResult.block(); // 2026-10-24（招架，PoE2 Parry）：舉盾中的那一擊一定擋下（不吃格擋上限、龜殼護符）
         }
         if (blockable) {
-            final double cap = blockCap(defender); // 2026-10-27：最多 90%（PoE2 硬上限）
-            final double block = Math.min(cap, defender.get(StatKeys.BLOCK_CHANCE)) / 100.0; // 上限 50%（PoE2），昇華可以提高
+            final double block = blockChance(defender); // 2026-11-02：抽成 blockChance／blockedTaken（EHP 共用）；算法沒變
             if (block > 0 && random.nextDouble() < block) {
-                final double taken = defender.flat(StatKeys.BLOCK_TAKEN, Set.of());
+                final double taken = blockedTaken(defender);
                 if (taken <= 0) {
                     return HitResult.block();
                 }
-                blockedScale = Math.min(1.0, taken / 100.0); // 龜殼護符：被格擋的擊中仍受到一部分傷害
+                blockedScale = taken; // 龜殼護符：被格擋的擊中仍受到一部分傷害
             }
         }
 
         // 偏斜（2026-10 PoE2）：沒閃掉的擊中再照命中對偏斜值擲一次，偏斜的傷害更少 40%
         boolean deflected = false;
-        if (evadable) {
-            final double deflection = deflectionRating(defender);
-            if (deflection > 0) {
-                double deflectChance = deflectChance(attacker.get(StatKeys.ACCURACY, skill.tags()), deflection); // 2026-10-26：同上，帶情境
-                if (StatKeys.flag(defender, KeystoneKeys.FLAG_GLANCING)) {
-                    deflectChance = KeystoneKeys.luckyChance(deflectChance); // 2026-10-26 側身之擊：偏斜機率為幸運
-                }
-                deflected = random.nextDouble() < deflectChance;
-            }
+        if (evadable && deflectionRating(defender) > 0) {
+            deflected = random.nextDouble() < deflectChanceAgainst(defender, attacker.get(StatKeys.ACCURACY, skill.tags())); // 2026-10-26：同上，帶情境
         }
 
         // 2 + 3. 各類型基礎傷害（含轉換）與增加／更多
@@ -169,14 +154,7 @@ public final class DamageCalculator {
         // 4. 暴擊
         final Set<String> critContext = skill.tags();
         double critChance = withAmazonCrit(attacker, skill, critChanceOn(attacker, skill), defender.get(StatKeys.EVASION));
-        if (critChance > 0) { // 2026-10-26：暴擊弱點（PoE2 Critical Weakness）：擊中牠的暴擊率 +x 個百分點
-            critChance = Math.min(1.0, critChance + Math.max(0, defender.flat(StatKeys.CRIT_CHANCE_TAKEN, Set.of())) / 100.0);
-            // 2026-10-26 照 PoE2：「擊中你的暴擊率減少 x%」（INCREASED，負的；這次之前只讀暴擊弱點的加法）
-            critChance *= Math.max(0, 1 + defender.increased(StatKeys.CRIT_CHANCE_TAKEN, Set.of()));
-            if (StatKeys.flag(defender, TreeLastKeys.FLAG_NO_CRIT_TAKEN)) {
-                critChance = 0; // 2026-10-27 照 PoE2 天賦樹：招架中不會被暴擊
-            }
-        }
+        critChance = critChanceTaken(critChance, defender); // 2026-11-02：抽成 critChanceTaken（EHP 共用）；算法沒變
         // 2026-10-27 照 PoE2 雙鋒（Garukhan's Resolve）：暴擊率有上限，暴擊擲兩次（任一成功就暴擊，兩次都成功暴擊加成算兩次）
         final double critCap = attacker.flat(LineageKeys.CRIT_CAP, skill.tags());
         if (critCap > 0) {
@@ -251,20 +229,15 @@ public final class DamageCalculator {
                 }
             }
         }
-        final double doubleArmour = defender.flat(KeystoneKeys.DOUBLE_ARMOUR, Set.of()) / 100.0;
-        if (doubleArmour > 0 && random.nextDouble() < doubleArmour) {
-            keystone.add(Modifier.more(StatKeys.ARMOUR, 1.0, "雙倍護甲"));
-        }
+        final double doubleArmour = doubleArmourChance(defender);
+        final boolean doubled = doubleArmour > 0 && random.nextDouble() < doubleArmour;
         // 2026-10-27 照 PoE2 天賦樹：「用 x% 護甲防禦」（對暴擊、對投射物攻擊、不在低能量護盾時、6 格外的）
         final Set<String> defendContext = crit ? withTag(skill.tags(), TreeLastKeys.CRIT_TAKEN) : skill.tags();
-        final double defend = TreeLastKeys.armourDefend(defender, defendContext);
-        if (defend > 1) {
-            keystone.add(Modifier.more(StatKeys.ARMOUR, defend - 1, "護甲防禦"));
-        }
+        keystone.addAll(armourDefence(defender, doubled, defendContext)); // 2026-11-02：抽成 armourDefence（EHP 共用）；算法沒變
         if (!keystone.isEmpty()) {
             mitigator = mitigator.overlay(keystone);
         }
-        final double physAsRandom = Math.min(100, defender.flat(KeystoneKeys.PHYS_TAKEN_AS_RANDOM, Set.of())) / 100.0;
+        final double physAsRandom = physTakenAsElement(defender);
         if (physAsRandom > 0 && outgoing.get(DamageType.PHYSICAL) > 0) {
             final DamageType[] elements = {DamageType.FIRE, DamageType.COLD, DamageType.LIGHTNING};
             final double moved = outgoing.get(DamageType.PHYSICAL) * physAsRandom;
@@ -278,15 +251,108 @@ public final class DamageCalculator {
         if (deflected) {
             // 2026-10-26 照 PoE2 天賦樹：「被偏斜的擊中多擋 x%」（加在基礎 40% 上）
             // 2026-10-27 照 PoE2 天賦樹：「被偏斜的暴擊多擋 x%」（標籤 crit_taken）
-            dealt.scale(Math.max(0, 1 - Math.min(1, StatKeys.DEFLECT_LESS + defender.flat(TreeEffectKeys.DEFLECT_PREVENT,
-                    crit ? Set.of(TreeLastKeys.CRIT_TAKEN) : Set.of()) / 100.0)));
+            dealt.scale(Math.max(0, 1 - deflectPrevented(defender, crit))); // 2026-11-02：抽成 deflectPrevented（EHP 共用）；算法沒變
         }
         if (damageTakenMultiplier != 1.0) {
             dealt.scale(Math.max(0, damageTakenMultiplier));
         }
 
-        // 6. 護盾與生命
-        double es = Math.max(0, defenderCurrentEs);
+        // 6. 護盾與生命（2026-11-02：抽成 shieldSplit（EHP 共用）；算法沒變）
+        final double[] split = shieldSplit(dealt, defender, defenderCurrentEs);
+        return new HitResult(true, false, crit, outgoing, dealt, split[0], split[1], deflected);
+    }
+
+    // ---- 2026-11-02 照站長（PoB2 CalcDefence 的 EHP、Maximum Hit Taken）：從上面抽出來的純函式，遊戲的擊中與網頁的 EHP 共用 ----
+    // 這次之前這些都寫在 calculate 裡面；抽出來之後擲骰的次數與順序不變，玩家實際受到的傷害一樣。
+
+    /**
+     * 怪物（命中 accuracy）打這個防禦方的命中率（0～1）：防禦方是玩家這一邊用怪物的公式（hitChanceAgainst）；
+     * 戰術家最多閃 50%、警望指環的閃避率上限、側身之擊（閃避為不幸）。
+     */
+    public static double chanceToBeHit(final StatSheet defender, final double accuracy) {
+        // 2026-10-27 照 PoE2：怪物打玩家用怪物的命中公式（hitChanceAgainst）
+        double chance = hitChanceAgainst(defender, accuracy, defender.get(StatKeys.EVASION));
+        if (StatKeys.flag(defender, StatKeys.FLAG_STAY_LIGHT)) {
+            chance = Math.max(chance, 0.5); // 戰術家：最多閃 50%
+        }
+        chance = tw.exilecore.item.unique.UniqueHits.evadeCap(defender, chance); // 2026-10-27（警望指環）：閃避率最多 x%
+        if (StatKeys.flag(defender, KeystoneKeys.FLAG_GLANCING)) {
+            chance = KeystoneKeys.unluckyEvadeHitChance(chance); // 2026-10-26 側身之擊（PoE2 Glancing Blows）：閃避機率為不幸
+        }
+        return chance;
+    }
+
+    /** 格擋率（0～1）：格擋上限最多 90%（2026-10-27 PoE2 硬上限），基礎上限 50%，昇華可以提高。只擋攻擊。 */
+    public static double blockChance(final StatSheet defender) {
+        return Math.min(blockCap(defender), defender.get(StatKeys.BLOCK_CHANCE)) / 100.0;
+    }
+
+    /** 被格擋的擊中還受到幾成（龜殼護符）；0 = 整下擋掉。 */
+    public static double blockedTaken(final StatSheet defender) {
+        final double taken = defender.flat(StatKeys.BLOCK_TAKEN, Set.of());
+        return taken <= 0 ? 0 : Math.min(1.0, taken / 100.0);
+    }
+
+    /** 偏斜率（0～1）：沒有偏斜值是 0；側身之擊（偏斜為幸運）。 */
+    public static double deflectChanceAgainst(final StatSheet defender, final double accuracy) {
+        final double deflection = deflectionRating(defender);
+        if (deflection <= 0) {
+            return 0;
+        }
+        final double chance = deflectChance(accuracy, deflection);
+        return StatKeys.flag(defender, KeystoneKeys.FLAG_GLANCING) ? KeystoneKeys.luckyChance(chance) : chance; // 2026-10-26 側身之擊：偏斜機率為幸運
+    }
+
+    /** 被偏斜的擊中少受幾成（0～1）：基礎 40% 加上「被偏斜的擊中／暴擊多擋 x%」。 */
+    public static double deflectPrevented(final StatSheet defender, final boolean crit) {
+        return Math.min(1, StatKeys.DEFLECT_LESS + defender.flat(TreeEffectKeys.DEFLECT_PREVENT,
+                crit ? Set.of(TreeLastKeys.CRIT_TAKEN) : Set.of()) / 100.0);
+    }
+
+    /** 防禦方改過的暴擊率（0～1）：暴擊弱點「+x 個百分點」、「擊中你的暴擊率減少 x%」、招架中不會被暴擊。chance ≤ 0 不變。 */
+    public static double critChanceTaken(final double chance, final StatSheet defender) {
+        if (chance <= 0) {
+            return chance;
+        }
+        // 2026-10-26：暴擊弱點（PoE2 Critical Weakness）：擊中牠的暴擊率 +x 個百分點
+        double out = Math.min(1.0, chance + Math.max(0, defender.flat(StatKeys.CRIT_CHANCE_TAKEN, Set.of())) / 100.0);
+        // 2026-10-26 照 PoE2：「擊中你的暴擊率減少 x%」（INCREASED，負的；這次之前只讀暴擊弱點的加法）
+        out *= Math.max(0, 1 + defender.increased(StatKeys.CRIT_CHANCE_TAKEN, Set.of()));
+        if (StatKeys.flag(defender, TreeLastKeys.FLAG_NO_CRIT_TAKEN)) {
+            out = 0; // 2026-10-27 照 PoE2 天賦樹：招架中不會被暴擊
+        }
+        return out;
+    }
+
+    /** 「x% 機率用 200% 護甲防禦」的機率（0～1 以上照擲骰）。 */
+    public static double doubleArmourChance(final StatSheet defender) {
+        return defender.flat(KeystoneKeys.DOUBLE_ARMOUR, Set.of()) / 100.0;
+    }
+
+    /** 這一下防禦時多的護甲：doubled（擲中雙倍護甲）、「用 x% 護甲防禦」（照情境標籤）。沒有回傳空的。 */
+    public static java.util.List<Modifier> armourDefence(final StatSheet defender, final boolean doubled, final Set<String> defendContext) {
+        final java.util.List<Modifier> out = new java.util.ArrayList<>(2);
+        if (doubled) {
+            out.add(Modifier.more(StatKeys.ARMOUR, 1.0, "雙倍護甲"));
+        }
+        final double defend = TreeLastKeys.armourDefend(defender, defendContext);
+        if (defend > 1) {
+            out.add(Modifier.more(StatKeys.ARMOUR, defend - 1, "護甲防禦"));
+        }
+        return out;
+    }
+
+    /** 受到的擊中物理傷害有幾成改成隨機一種元素（0～1）。 */
+    public static double physTakenAsElement(final StatSheet defender) {
+        return Math.min(100, defender.flat(KeystoneKeys.PHYS_TAKEN_AS_RANDOM, Set.of())) / 100.0;
+    }
+
+    /**
+     * 減免後的傷害怎麼扣護盾、生命（純函式）：每一種傷害照 DamageType 的順序，先照「x% 跳過能量護盾」分一部分直接扣生命，
+     * 剩下的扣護盾（混沌對護盾兩倍，PoE2），護盾不夠的照原值扣生命。回傳 {扣護盾, 扣生命}。
+     */
+    public static double[] shieldSplit(final DamagePacket dealt, final StatSheet defender, final double currentEs) {
+        double es = Math.max(0, currentEs);
         double esDamage = 0;
         double lifeDamage = 0;
         // 2026-10-26 照 PoE2 天賦樹：受到的傷害有 x% 跳過能量護盾
@@ -310,7 +376,7 @@ public final class DamageCalculator {
             }
             lifeDamage += amount;
         }
-        return new HitResult(true, false, crit, outgoing, dealt, esDamage, lifeDamage, deflected);
+        return new double[] {esDamage, lifeDamage};
     }
 
     /** 2026-10-27：多一個情境標籤的集合。 */
@@ -507,7 +573,11 @@ public final class DamageCalculator {
             return 0;
         }
         final double mana = Math.max(0, sheet.get(StatKeys.MANA_MAX));
-        return StatKeys.flag(sheet, StatKeys.FLAG_ELDRITCH_BATTERY) ? mana + Math.max(0, sheet.get(StatKeys.ES_MAX)) : mana;
+        // 2026-11-02：跟 PlayerState.maxMana 一致——「最大能量護盾等於力量」（吉爾菲的聖殿）時護盾不換成魔力；這次之前這裡照換
+        // 2026-11-02 照 PoB2：換過去的是護盾基礎、吃魔力的加成（PlayerState.eldritchMana）；這次之前加的是算完護盾 % 的最大護盾
+        return StatKeys.flag(sheet, StatKeys.FLAG_ELDRITCH_BATTERY)
+                && sheet.flat(tw.exilecore.item.unique.UniqueStats.ES_EQUAL_TO_STR, java.util.Set.of()) <= 0
+                ? mana + tw.exilecore.character.PlayerState.eldritchMana(sheet) : mana;
     }
 
     /**

@@ -143,7 +143,7 @@ public final class StageEffects implements Listener {
             final long cap = now + Math.round(Math.max(palm.duration(), PALM_MAX_SECONDS) * 20);
             final long until = Math.max(now, palmUntil.getOrDefault(player.getUniqueId(), now)) + add;
             palmUntil.put(player.getUniqueId(), Math.min(cap, until));
-            player.getWorld().spawnParticle(Particle.CRIT, player.getLocation().add(0, 1, 0), 10, 0.4, 0.5, 0.4, 0.05);
+            tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.CRIT, player.getLocation().add(0, 1, 0), 10, 0.4, 0.5, 0.4, 0.05);
         }
     }
 

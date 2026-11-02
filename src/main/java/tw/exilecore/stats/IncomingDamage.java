@@ -36,6 +36,16 @@ public record IncomingDamage(double es, double life, double mana, double recoup)
         return new IncomingDamage(es, life, mana, recoup);
     }
 
+    /**
+     * 守護（護符詞綴，效果期間先替你吃掉傷害）吃掉多少：先吃扣護盾的那份、再吃扣生命的那份，最多 available。回傳 {從護盾那份, 從生命那份}。
+     * 2026-11-02 照站長（PoB2 CalcDefence 的 EHP 共用）：從 CombatListener.applyToPlayer 抽出來；算法沒變。
+     */
+    public static double[] guardAbsorb(final double esDamage, final double lifeDamage, final double available) {
+        final double fromEs = esDamage > 0 ? Math.min(available, esDamage) : 0;
+        final double fromLife = lifeDamage > 0 ? Math.min(available - fromEs, lifeDamage) : 0;
+        return new double[] {fromEs, fromLife};
+    }
+
     private static double clampPercent(final double percent) {
         return Math.max(0, Math.min(100, percent)) / 100.0;
     }

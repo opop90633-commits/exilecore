@@ -104,6 +104,8 @@ public final class PlayerState {
     private long sessionStartMillis = System.currentTimeMillis();
     private String notice;
     private long noticeExpiresTick;
+    /** 2026-11-02 照站長（模組 1.4）：第幾則提示（每次 {@link #notice(String, long)} 加一；模組的提示列用它看有沒有新的）。 */
+    private long noticeSerial;
     /** 守護（2026-10，PoE2）：護符觸發時拿到的一層額外血，效果期間先替你吃掉傷害，到期就消失。 */
     private double guard;
     private long guardExpiresTick;
@@ -464,7 +466,17 @@ public final class PlayerState {
         final double mana = Math.max(0, sheet.get(StatKeys.MANA_MAX)); // 2026-10：光環改保留精魂，魔力只給技能用
         // 靈能電池：能量護盾全部變成最大魔力（2026-10-28 照 PoE2 吉爾菲的聖殿：「最大能量護盾無法被轉換」的不換）
         return StatKeys.flag(sheet, StatKeys.FLAG_ELDRITCH_BATTERY) && esEqualToStr(sheet) <= 0
-                ? mana + Math.max(0, sheet.get(StatKeys.ES_MAX)) : mana;
+                ? mana + eldritchMana(sheet) : mana;
+    }
+
+    /**
+     * 2026-11-02 照站長（照 PoB2 CalcDefence 的 EnergyShieldConvertToMana）：靈能電池換的是能量護盾的「基礎」
+     * （裝備上的護盾，已含裝備自己的局部加成，加上固定值），換過去以後只吃最大魔力的增加／更多，「增加能量護盾 %」不算。
+     * 這次之前是把算完增加的最大能量護盾整筆加進最大魔力（護盾 % 吃得到、魔力 % 吃不到，跟原作相反）。
+     */
+    public static double eldritchMana(final StatSheet sheet) {
+        final double base = Math.max(0, sheet.flat(StatKeys.ES_MAX, java.util.Set.of()));
+        return Math.max(0, sheet.apply(StatKeys.MANA_MAX, base, java.util.Set.of()));
     }
 
     /** 被光環保留的最大魔力比例：2026-10 改成精魂之後一律 0（留著給舊的呼叫）。 */
@@ -778,6 +790,24 @@ public final class PlayerState {
     public void notice(final String miniMessage, final long expiresTick) {
         this.notice = miniMessage;
         this.noticeExpiresTick = expiresTick;
+        this.noticeSerial++;
+    }
+
+    /**
+     * 2026-11-02 照站長（模組 1.4）：第幾則提示（星骸輔助模組的提示列：變了就把 {@link #lastNotice()} 送過去，可以疊好幾則；
+     * 這次之前只能存一則，新的蓋掉舊的）。
+     */
+    public long noticeSerial() {
+        return noticeSerial;
+    }
+
+    /** 2026-11-02：最後一則提示的內容與到期的 tick（不看有沒有過期；沒有過提示是 null）。 */
+    public String lastNotice() {
+        return notice;
+    }
+
+    public long noticeExpiresTick() {
+        return noticeExpiresTick;
     }
 
     public String notice(final long currentTick) {

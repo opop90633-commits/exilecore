@@ -768,7 +768,7 @@ public final class SupportMechanics implements Listener {
             plugin.combat().skillDamage().hit(player, target, unique ? profile.scaled(1.5, "對傳奇") : profile, null);
         }
         Fx.spawn(at.getWorld(), Particle.EXPLOSION, at.clone().add(0, 1, 0), 2, 0.3, 0.3, 0.3, 0); // 2026-10-31：走 Fx（貼地的爆炸）
-        at.getWorld().spawnParticle(Particle.BLOCK, at.clone().add(0, 1, 0), 20, 0.6, 0.6, 0.6, 0, org.bukkit.Material.IRON_BLOCK.createBlockData());
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.BLOCK, at.clone().add(0, 1, 0), 20, 0.6, 0.6, 0.6, 0, org.bukkit.Material.IRON_BLOCK.createBlockData());
         at.getWorld().playSound(at, org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 0.7f, 1.3f);
         if (data == null) {
             consumedBreak.remove(center.getUniqueId());
@@ -821,7 +821,7 @@ public final class SupportMechanics implements Listener {
         entry.dps = Math.max(entry.dps, perStack);
         entry.stacks = Math.min(CORRUPTED_MAX, entry.stacks + Math.max(1, stacks));
         entry.untilTick = now() + CORRUPTED_TICKS;
-        target.getWorld().spawnParticle(Particle.DUST, target.getLocation().add(0, target.getHeight() * 0.6, 0), 10, 0.3, 0.4, 0.3, 0,
+        tw.exilecore.skill.Fx.spawn(target.getWorld(), Particle.DUST, target.getLocation().add(0, target.getHeight() * 0.6, 0), 10, 0.3, 0.4, 0.3, 0,
                 new Particle.DustOptions(org.bukkit.Color.fromRGB(0x7A0F1F), 1.4f));
     }
 
@@ -1274,7 +1274,7 @@ public final class SupportMechanics implements Listener {
         plugin.combat().debuffs().apply(target.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff("pin", player.getUniqueId(), now + ticks,
                 0, false, null, List.of(), 1.0));
         pinImmune.put(target.getUniqueId(), now + ticks + PIN_IMMUNE_TICKS);
-        target.getWorld().spawnParticle(Particle.CRIT, target.getLocation().add(0, target.getHeight() * 0.7, 0), 8, 0.3, 0.3, 0.3, 0.05);
+        tw.exilecore.skill.Fx.spawn(target.getWorld(), Particle.CRIT, target.getLocation().add(0, target.getHeight() * 0.7, 0), 8, 0.3, 0.3, 0.3, 0.05);
         if (plugin.combat().numbers() != null) {
             plugin.combat().numbers().word(player, target, "定身");
         }
@@ -1314,9 +1314,9 @@ public final class SupportMechanics implements Listener {
             plugin.combat().skillDamage().hit(player, target, profile, null);
         }
         Fx.spawn(at.getWorld(), Particle.FLASH, at.clone().add(0, 1, 0), 1, 0, 0, 0, 0, org.bukkit.Color.WHITE); // 2026-10-31：走 Fx（不送閃光）
-        at.getWorld().spawnParticle(Particle.FLAME, at.clone().add(0, 1, 0), fire ? 12 : 0, 0.8, 0.5, 0.8, 0.02);
-        at.getWorld().spawnParticle(Particle.SNOWFLAKE, at.clone().add(0, 1, 0), cold ? 12 : 0, 0.8, 0.5, 0.8, 0.02);
-        at.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, at.clone().add(0, 1, 0), lightning ? 12 : 0, 0.8, 0.5, 0.8, 0.05);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.FLAME, at.clone().add(0, 1, 0), fire ? 12 : 0, 0.8, 0.5, 0.8, 0.02);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SNOWFLAKE, at.clone().add(0, 1, 0), cold ? 12 : 0, 0.8, 0.5, 0.8, 0.02);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.ELECTRIC_SPARK, at.clone().add(0, 1, 0), lightning ? 12 : 0, 0.8, 0.5, 0.8, 0.05);
         at.getWorld().playSound(at, org.bukkit.Sound.ENTITY_GENERIC_EXPLODE, 0.6f, 1.6f);
     }
 
@@ -1453,7 +1453,7 @@ public final class SupportMechanics implements Listener {
                     continue;
                 }
             }
-            minion.mob.getWorld().spawnParticle(Particle.FLAME, minion.mob.getLocation().add(0, minion.mob.getHeight() * 0.5, 0), 4, 0.3, 0.4, 0.3, 0.01);
+            tw.exilecore.skill.Fx.spawn(minion.mob.getWorld(), Particle.FLAME, minion.mob.getLocation().add(0, minion.mob.getHeight() * 0.5, 0), 4, 0.3, 0.4, 0.3, 0.01);
             if (plugin.ailments() == null) {
                 continue;
             }

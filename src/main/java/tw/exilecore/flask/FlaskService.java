@@ -635,7 +635,7 @@ public final class FlaskService {
         state.markDirty(); // 藥劑效果中的條件（lifeflask／manaflask）
         plugin.players().display(player, state);
         player.playSound(player.getLocation(), Sound.ENTITY_GENERIC_DRINK, SoundCategory.PLAYERS, 0.7f, 1.2f);
-        player.getWorld().spawnParticle(Particle.DUST, player.getLocation().add(0, 1.2, 0), 10, 0.3, 0.4, 0.3, 0,
+        tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.DUST, player.getLocation().add(0, 1.2, 0), 10, 0.3, 0.4, 0.3, 0,
                 new Particle.DustOptions(base.kind() == FlaskKind.LIFE ? Color.fromRGB(0xFF4D5E) : Color.fromRGB(0x5C8DFF), 1.1f));
         return true;
     }
@@ -684,7 +684,7 @@ public final class FlaskService {
                     }
                 }
                 plugin.players().display(ally, allyState);
-                ally.getWorld().spawnParticle(Particle.HEART, ally.getLocation().add(0, 2.0, 0), 1, 0.2, 0.1, 0.2, 0);
+                tw.exilecore.skill.Fx.spawn(ally.getWorld(), Particle.HEART, ally.getLocation().add(0, 2.0, 0), 1, 0.2, 0.1, 0.2, 0);
             }
         }
         if (lifeShare && plugin.skills() != null && plugin.skills().minions() != null) {

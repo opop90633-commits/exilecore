@@ -75,7 +75,7 @@ final class TimeRips {
             final double amount = sharedDamage(event.result().total(), visage.share);
             if (amount > 0 && original.isValid() && !original.isDead() && plugin.ailments() != null) {
                 plugin.ailments().dealFlatPhysical(original, amount, player.getUniqueId());
-                original.getWorld().spawnParticle(Particle.REVERSE_PORTAL, original.getLocation().add(0, 1, 0), 8, 0.3, 0.5, 0.3, 0.02);
+                tw.exilecore.skill.Fx.spawn(original.getWorld(), Particle.REVERSE_PORTAL, original.getLocation().add(0, 1, 0), 8, 0.3, 0.5, 0.3, 0.02);
             }
             return;
         }
@@ -150,7 +150,7 @@ final class TimeRips {
             entity.setHealth(max.getValue());
         }
         visages.put(entity.getUniqueId(), new Visage(entity, original, now + ticks, share));
-        at.getWorld().spawnParticle(form == Form.FREEZE ? Particle.SNOWFLAKE : form == Form.ELECTROCUTE ? Particle.ELECTRIC_SPARK : Particle.CRIT,
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), form == Form.FREEZE ? Particle.SNOWFLAKE : form == Form.ELECTROCUTE ? Particle.ELECTRIC_SPARK : Particle.CRIT,
                 at.clone().add(0, 1, 0), 24, 0.4, 0.7, 0.4, 0.05);
         at.getWorld().playSound(at, Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 0.8f, 0.6f);
         effects.later(ticks, () -> expire(entity.getUniqueId()));
@@ -159,7 +159,7 @@ final class TimeRips {
     private void expire(final UUID id) {
         final Visage visage = visages.remove(id);
         if (visage != null && visage.entity().isValid()) {
-            visage.entity().getWorld().spawnParticle(Particle.REVERSE_PORTAL, visage.entity().getLocation().add(0, 1, 0), 20, 0.3, 0.6, 0.3, 0.05);
+            tw.exilecore.skill.Fx.spawn(visage.entity().getWorld(), Particle.REVERSE_PORTAL, visage.entity().getLocation().add(0, 1, 0), 20, 0.3, 0.6, 0.3, 0.05);
             if (plugin.monsters() != null) {
                 plugin.monsters().forget(id);
             }

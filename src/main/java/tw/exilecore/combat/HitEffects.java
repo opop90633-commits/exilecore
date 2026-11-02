@@ -454,7 +454,7 @@ public final class HitEffects implements Listener {
         if (viewer != null && plugin.combat() != null && plugin.combat().numbers() != null) {
             plugin.combat().numbers().word(viewer, target, word);
         }
-        target.getWorld().spawnParticle(particle, target.getLocation().add(0, target.getHeight() * 0.7, 0), 8, 0.3, 0.3, 0.3, 0.05);
+        tw.exilecore.skill.Fx.spawn(target.getWorld(), particle, target.getLocation().add(0, target.getHeight() * 0.7, 0), 8, 0.3, 0.3, 0.3, 0.05);
     }
 
     /** 每 2 tick：減益的移動變慢（詛咒、定身）套到原版移動速度；沒了就拿掉。 */

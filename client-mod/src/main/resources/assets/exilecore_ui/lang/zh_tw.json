@@ -1,0 +1,5 @@
+{
+  "key.exilecore_client.open_tree": "打開天賦樹（原生畫面）",
+  "key.exilecore_client.open_atlas": "打開星圖（原生畫面）",
+  "message.exilecore_client.ui_unavailable": "這個伺服器還不支援原生的天賦樹、星圖畫面，請照舊用選單"
+}

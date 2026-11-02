@@ -175,7 +175,7 @@ final class SkillVisuals {
 
     private static void dust(final List<Player> viewers, final Location at, final Particle.DustOptions dust) {
         for (final Player player : viewers) {
-            player.spawnParticle(Particle.DUST, at, 1, 0, 0, 0, 0, dust);
+            player.spawnParticle(Particle.DUST, at.getX(), at.getY(), at.getZ(), 1, 0, 0, 0, 0, dust, true); // 2026-11-02：預警是重要的，強制顯示
         }
     }
 
@@ -756,40 +756,78 @@ final class SkillVisuals {
         }
     }
 
-    /** 地面效果平常的樣子（每 2 tick 一次，稀疏一點）。 */
-    void zoneAmbient(final String visual, final List<Location> points, final double radius, final long now) {
+    /**
+     * 地面效果平常的樣子（呼叫的人每 2 tick 叫一次）。2026-11-02 照站長（粒子太多）：外框與裡面的點最多每 0.5 秒畫一次
+     * （{@link Fx#zone}：外框照周長、裡面稀疏撒、DUST 大一點存在久一點；同一個人疊在一起的同一種只畫一個）；
+     * 很多點的（一排的牆、裂隙）每一點只撒裡面、不畫外框；龍捲風的螺旋每 4 tick 一次（以前每 2 tick）。
+     *
+     * @param key       這個地面效果（同一個每次都一樣；模組那邊的編號跟著它）
+     * @param remaining 還剩幾 tick（不知道 -1）
+     */
+    void zoneAmbient(final Object key, final String visual, final List<Location> points, final double radius, final long now,
+                     final int remaining) {
         final World world = points.getFirst().getWorld();
         if ("sky_rend_arrow".equals(visual) && points.size() == 1) {
             // 2026-10：龍捲風（裂空箭）：一根往上轉、越上面越寬的螺旋
             final Location base = points.getFirst();
-            final int count = allow(base, 10, 2);
-            for (int i = 0; i < count; i++) {
-                final double height = i * 0.35;
-                final double angle = now * 0.6 + i * 0.9;
-                final double r = radius * (0.25 + 0.75 * i / Math.max(1.0, count - 1));
-                final Location at = base.clone().add(Math.cos(angle) * r, 0.1 + height, Math.sin(angle) * r);
-                tw.exilecore.skill.Fx.spawn(world, i % 2 == 0 ? Particle.CLOUD : Particle.WHITE_ASH, at, 1, 0, 0, 0, 0.01);
-            }
+            Fx.track(key, base, radius, FxEffect.Shape.AREA, Particle.CLOUD, null, remaining, 4, () -> {
+                final int count = allow(base, 10, 2);
+                for (int i = 0; i < count; i++) {
+                    final double height = i * 0.35;
+                    final double angle = now * 0.6 + i * 0.9;
+                    final double r = radius * (0.25 + 0.75 * i / Math.max(1.0, count - 1));
+                    final Location at = base.clone().add(Math.cos(angle) * r, 0.1 + height, Math.sin(angle) * r);
+                    Fx.spawn(world, i % 2 == 0 ? Particle.CLOUD : Particle.WHITE_ASH, at, 1, 0, 0, 0, 0.01);
+                }
+            });
             return;
         }
         final Style style = style(visual);
         final Particle.DustOptions dust = style == null ? GOLD : style.dust();
         final Particle particle = style == null ? Particle.CRIT : style.particle();
-        for (final Location point : points) {
-            final int count = allow(point, Math.max(2, Math.min(10, (int) Math.round(radius * 1.6))), 2);
-            for (int i = 0; i < count; i++) {
-                final double angle = random.nextDouble() * Math.PI * 2;
-                final double distance = Math.sqrt(random.nextDouble()) * radius;
-                final Location at = point.clone().add(Math.cos(angle) * distance, 0.15 + random.nextDouble() * 0.6, Math.sin(angle) * distance);
-                if ((i + now) % 3 == 0) {
-                    tw.exilecore.skill.Fx.spawn(world, particle, at, 1, 0, 0, 0, visual.equals("void_rift") ? 0.3 : 0.01);
-                } else {
-                    tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 1, 0, 0, 0, 0, dust);
-                }
-            }
+        final double speed = visual.equals("void_rift") ? 0.3 : 0.01;
+        final java.util.UUID owner = Fx.owner();
+        final boolean important = Fx.isImportant();
+        if (points.size() == 1) {
+            Fx.zone(key, points.getFirst().clone().add(0, 0.3, 0), radius,
+                    new Fx.Look(Particle.DUST, dust, particle, null, 0.6, speed), remaining, owner, important);
+            return;
         }
-        if (points.size() == 1 && now % 8 == 0) {
-            ring(world, points.getFirst(), radius, Particle.DUST, dust);
+        // 很多點：每一點各自是一塊（模組那邊各自一個編號），只撒裡面
+        for (int k = 0; k < points.size(); k++) {
+            final Location point = points.get(k);
+            Fx.track(new Fx.Part(key, k), point, radius, FxEffect.Shape.AREA, Particle.DUST, dust, remaining, FxPolicy.REDRAW_TICKS, () -> {
+                final int count = allow(point, Math.max(2, Math.min(12, (int) Math.round(radius * 3))), 2);
+                for (int i = 0; i < count; i++) {
+                    final double angle = random.nextDouble() * Math.PI * 2;
+                    final double distance = Math.sqrt(random.nextDouble()) * radius;
+                    final Location at = point.clone().add(Math.cos(angle) * distance, 0.15 + random.nextDouble() * 0.6, Math.sin(angle) * distance);
+                    if (i % 3 == 0) {
+                        Fx.spawn(world, particle, at, 1, 0, 0, 0, speed);
+                    } else {
+                        Fx.spawn(world, Particle.DUST, at, 1, 0, 0, 0, 0, LONG_DUST.computeIfAbsent(dust,
+                                d -> new Particle.DustOptions(d.getColor(), FxPolicy.longerSize(d.getSize()))));
+                    }
+                }
+            });
+        }
+    }
+
+    /** 2026-11-02：重畫變慢時用大一點（存在久一點）的 DUST。 */
+    private static final java.util.Map<Particle.DustOptions, Particle.DustOptions> LONG_DUST = new java.util.IdentityHashMap<>();
+
+    /** 2026-11-02：地面效果消散的一點粒子（一次性，不出聲）。 */
+    void zoneFade(final String visual, final Location at) {
+        final Style style = style(visual);
+        Fx.spawn(at.getWorld(), style == null ? Particle.CRIT : style.particle(), at.clone().add(0, 0.3, 0), 3, 0.3, 0.2, 0.3, 0.01);
+        Fx.spawn(at.getWorld(), Particle.DUST, at.clone().add(0, 0.3, 0), 3, 0.3, 0.2, 0.3, 0, style == null ? GOLD : style.dust());
+    }
+
+    /** 2026-11-02：地面效果結束（模組那邊收到 STOP）；points 是它有幾個點。 */
+    void zoneGone(final Object key, final int points) {
+        Fx.zoneStop(key);
+        for (int k = 0; k < points; k++) {
+            Fx.zoneStop(new Fx.Part(key, k));
         }
     }
 
@@ -876,17 +914,18 @@ final class SkillVisuals {
     }
 
     /** 平常的樣子（每 10 tick）：圖騰腳邊一圈、陷阱一閃、鐘一圈。 */
-    void deployIdle(final String visual, final DeploySpec.Kind kind, final Location feet, final double range) {
+    void deployIdle(final Object key, final String visual, final DeploySpec.Kind kind, final Location feet, final double range) {
         final World world = feet.getWorld();
         final Style style = style(visual);
         final Particle.DustOptions dust = style == null ? GOLD : style.dust();
+        // 2026-11-02：圖騰、鐘腳下的圈走 Fx.zone（模組那邊有 START／STOP；照特效等級；點數照周長）
         switch (kind) {
             case TOTEM -> {
-                ring(world, feet, 0.8, Particle.DUST, dust);
-                tw.exilecore.skill.Fx.spawn(world, style == null ? Particle.ENCHANT : style.particle(), feet.clone().add(0, 1.6, 0), 2, 0.2, 0.3, 0.2, 0.02);
+                Fx.zone(key, feet.clone().add(0, 0.3, 0), 0.8, Fx.Look.edge(Particle.DUST, dust), -1, Fx.owner(), false);
+                Fx.ambient(() -> Fx.spawn(world, style == null ? Particle.ENCHANT : style.particle(), feet.clone().add(0, 1.6, 0), 2, 0.2, 0.3, 0.2, 0.02));
             }
-            case TRAP -> tw.exilecore.skill.Fx.spawn(world, Particle.DUST, feet.clone().add(0, 0.3, 0), 2, 0.3, 0.05, 0.3, 0, dust);
-            case BELL -> ring(world, feet, range, Particle.DUST, GOLD);
+            case TRAP -> Fx.ambient(() -> Fx.spawn(world, Particle.DUST, feet.clone().add(0, 0.3, 0), 2, 0.3, 0.05, 0.3, 0, dust));
+            case BELL -> Fx.zone(key, feet.clone().add(0, 0.3, 0), range, Fx.Look.edge(Particle.DUST, GOLD), -1, Fx.owner(), false);
         }
     }
 
@@ -1094,18 +1133,25 @@ final class SkillVisuals {
         if (viewers.isEmpty()) {
             return;
         }
+        // 2026-11-02：每個光環一圈走 Fx.zone（只送給沒套資源包的人；點數照周長、照每個人的特效等級；模組那邊是跟著人走的 RING）
         final Location at = player.getLocation().add(0, 0.1, 0);
-        int index = 0;
-        for (final String visual : visuals) {
-            final Style style = style(visual);
-            final double radius = auraRingRadius(index++);
-            final int points = 8; // 2026-10-31：10 → 8（只給沒套資源包的人）
-            final double offset = (at.getWorld().getFullTime() % 20) / 20.0 * Math.PI * 2 / points;
-            for (int i = 0; i < points; i++) {
-                final double angle = offset + Math.PI * 2 * i / points;
-                GroundDecals.particle(viewers, Particle.DUST, new Location(at.getWorld(), at.getX() + Math.cos(angle) * radius, at.getY(),
-                        at.getZ() + Math.sin(angle) * radius), 1, 0, 0, 0, 0, style == null ? GOLD : style.dust());
+        final java.util.UUID owner = player.getUniqueId();
+        Fx.withoutPack(() -> {
+            int index = 0;
+            for (final String visual : visuals) {
+                final Style style = style(visual);
+                final double radius = auraRingRadius(index);
+                Fx.zone(new Fx.Part("aura:" + owner, index), at, radius, Fx.Look.edge(Particle.DUST, style == null ? GOLD : style.dust()), -1,
+                        owner, false);
+                index++;
             }
+        });
+    }
+
+    /** 2026-11-02：光環收掉（模組那邊收到 STOP）。 */
+    static void auraGone(final java.util.UUID owner, final int count) {
+        for (int i = 0; i < count; i++) {
+            Fx.zoneStop(new Fx.Part("aura:" + owner, i));
         }
     }
 
@@ -1164,19 +1210,10 @@ final class SkillVisuals {
 
     // ---- 小工具 ----
 
-    /** 地上一圈（間距大約 0.9 格，最多 72 點；照預算打薄）。 */
+    /** 地上一圈（2026-11-02：走 {@link Fx#ring}，點數照周長每 0.85 格一點、6–48 點；以前 0.9 格、最多 72 點）。 */
     private void ring(final World world, final Location center, final double radius, final Particle particle,
                       final Particle.DustOptions dust) {
-        final int points = allow(center, Math.max(8, Math.min(72, (int) Math.round(Math.PI * 2 * radius / 0.9))), 8);
-        for (int i = 0; i < points; i++) {
-            final double angle = Math.PI * 2 * i / points;
-            final Location at = center.clone().add(Math.cos(angle) * radius, 0.3, Math.sin(angle) * radius);
-            if (dust != null) {
-                tw.exilecore.skill.Fx.spawn(world, particle, at, 1, 0, 0, 0, 0, dust);
-            } else {
-                tw.exilecore.skill.Fx.spawn(world, particle, at, 1, 0.05, 0.05, 0.05, 0.01);
-            }
-        }
+        Fx.ring(world, center.clone().add(0, 0.3, 0), radius, particle, dust);
     }
 
     // ---- Boss 招式 ----

@@ -138,11 +138,13 @@ public final class ExileCore extends JavaPlugin {
     private tw.exilecore.worldevent.WorldEventModule worldEventModule;
     private tw.exilecore.festival.FestivalModule festivalModule;
     private tw.exilecore.card.CardModule cardModule; // 2026-10-19 星諭卡
+    private tw.exilecore.slots.SlotsModule slotsModule; // 2026-11-02 拉霸機
     private tw.exilecore.life.LifeModule lifeModule;
     private tw.exilecore.ascendancy.AscendancyModule ascendancyModule;
     private final Perf perf = new Perf();
     private tw.exilecore.admin.AdminOverrides overrides;
     private tw.exilecore.admin.AdminModule adminModule;
+    private tw.exilecore.clientmod.ClientModService clientModService; // 2026-11-02 星骸輔助模組（選用的客戶端模組）
 
     @Override
     public void onEnable() {
@@ -246,6 +248,9 @@ public final class ExileCore extends JavaPlugin {
             for (final LiteralCommandNode<CommandSourceStack> node : tw.exilecore.festival.FestivalModule.commands(this)) {
                 event.registrar().register(node, "ExileCore 節慶活動（萬燈夜）");
             }
+            for (final LiteralCommandNode<CommandSourceStack> node : tw.exilecore.slots.SlotsModule.commands(this)) {
+                event.registrar().register(node, "ExileCore 拉霸機（營地，用金幣下注）"); // 2026-11-02
+            }
             for (final LiteralCommandNode<CommandSourceStack> node : tw.exilecore.ascendancy.AscendancyCommand.build(this)) {
                 event.registrar().register(node, "ExileCore 昇華與試煉");
             }
@@ -321,8 +326,10 @@ public final class ExileCore extends JavaPlugin {
         this.pvpModule = new tw.exilecore.pvp.PvpModule(this);
         this.heistModule = new tw.exilecore.heist.HeistModule(this);
         this.cardModule = new tw.exilecore.card.CardModule(this);
+        this.slotsModule = new tw.exilecore.slots.SlotsModule(this);
         this.antiCheatModule = new tw.exilecore.anticheat.AntiCheatModule(this);
         this.adminModule = new tw.exilecore.admin.AdminModule(this);
+        this.clientModService = new tw.exilecore.clientmod.ClientModService(this);
 
         modules.register(new CoreModule(this, database));
         modules.register(itemModule);                       // 裝備：基底、詞綴、稀有度、生成、鑑定、品質
@@ -356,6 +363,7 @@ public final class ExileCore extends JavaPlugin {
         modules.register(worldEventModule);                 // 不定時活動（開服活動）：世界 Boss、入侵怪潮、素材兌換（委託模組之後：稱號）
         modules.register(lifeModule);                       // 生活玩法「星骸之海」（2026-10）：海域、木筏、撈取、精力、生活等級（委託模組之後：帳號進度）
         modules.register(festivalModule);                   // 節慶活動（2026-10 萬燈夜）：幽燈墓園、點燈、南瓜王、糖果、兌換（委託、贊助之後：稱號、時裝）
+        modules.register(slotsModule);                      // 2026-11-02 營地的拉霸機：金幣下注（經濟、NPC、委託、贊助之後：帳號進度、稱號、時裝）
         modules.register(chatModule);                       // 角色名稱（TAB、聊天）、私訊、聊天裡的物品連結（要在昇華、委託之後：TAB 的稱號）
         modules.register(ladderModule);                     // 排行榜（等級、地圖、不死）
         modules.register(guideModule);                      // 新手引導（側欄最上面；要在任務、技能、藥劑之後）
@@ -365,6 +373,7 @@ public final class ExileCore extends JavaPlugin {
         modules.register(antiCheatModule);                  // 防作弊：移動速度、飛行、懸空、瞬移（只管改遊戲數值那一類）
         modules.register(opsModule);                        // 維運：效能、備份、物品追查
         modules.register(webModule);                        // 內建網頁伺服器：介面資源包、網頁天賦規劃器
+        modules.register(clientModService);                 // 2026-11-02 星骸輔助模組：技能鍵、技能列、目標框、自動更新（網頁伺服器之後：/mod/）
         modules.register(adminModule);                      // 管理網頁：發放物資、改遊戲設定、公告、維護模式（網頁伺服器之後）
         modules.register(discordModule);                    // 聊天與 Discord 同步（最後啟用、最先停用：開服、關服公告）
     }
@@ -523,6 +532,11 @@ public final class ExileCore extends JavaPlugin {
     /** 商人與賭博；模組沒啟用時為 null。 */
     public VendorService vendor() {
         return vendorModule == null ? null : vendorModule.service();
+    }
+
+    /** 2026-11-02：星骸輔助模組（客戶端模組）的伺服器那一邊；模組沒啟用時是 null。 */
+    public tw.exilecore.clientmod.ClientModService clientMod() {
+        return modules != null && modules.isEnabled("clientmod") ? clientModService : null;
     }
 
     /** 內建網頁伺服器（介面資源包、天賦規劃器）；模組沒啟用時為 null。 */
@@ -691,6 +705,11 @@ public final class ExileCore extends JavaPlugin {
     /** 星諭卡（2026-10-19）；模組沒啟用時為 null。 */
     public tw.exilecore.card.CardService cards() {
         return cardModule == null ? null : cardModule.service();
+    }
+
+    /** 拉霸機（2026-11-02）；模組沒啟用時為 null。 */
+    public tw.exilecore.slots.SlotsService slots() {
+        return slotsModule == null ? null : slotsModule.service();
     }
 
     public tw.exilecore.festival.FestivalService festival() {

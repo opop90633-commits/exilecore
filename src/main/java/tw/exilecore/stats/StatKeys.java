@@ -807,6 +807,44 @@ public final class StatKeys {
     public static final String MONSTER_PROXIMAL = "monster.proximal";
     /** FLAT 1：附近的怪物死掉時吞魂（每層招式快 1%、受到的傷害少 1%，最多 50 層）。 */
     public static final String MONSTER_SOUL_EATER = "monster.soul_eater";
+    // ---- 2026-11-02 照 PoE2 0.5 補齊的稀有怪詞綴（見 MonsterMechanics）----
+    /** FLAT 1：每 10 秒狂暴 5 秒（傷害增加 30%、技能與移動速度 +25%、受到的傷害少 33%；PoE2 Periodically Enrages）。 */
+    public static final String MONSTER_PERIODIC_ENRAGE = "monster.periodic_enrage";
+    /** FLAT：每 12 秒一圈，這麼多格內的友軍（不含自己）5 秒內不會受傷（PoE2 Periodic Invulnerability Aura）。 */
+    public static final String MONSTER_INVULNERABILITY_AURA = "monster.invulnerability_aura";
+    /** FLAT 1：死掉時地上畫圈，1 秒後炸開（火焰／冰冷／閃電；PoE2 X Explosion on Death）。 */
+    public static final String MONSTER_DEATH_BLAST_FIRE = "monster.death_blast_fire";
+    public static final String MONSTER_DEATH_BLAST_COLD = "monster.death_blast_cold";
+    public static final String MONSTER_DEATH_BLAST_LIGHTNING = "monster.death_blast_lightning";
+    /** FLAT 1：每 5 秒腳下一小塊、死掉時一大塊點燃／冰緩／感電的地面（PoE2 X Ground on Death）。 */
+    public static final String MONSTER_DEATH_GROUND_FIRE = "monster.death_ground_fire";
+    public static final String MONSTER_DEATH_GROUND_COLD = "monster.death_ground_cold";
+    public static final String MONSTER_DEATH_GROUND_LIGHTNING = "monster.death_ground_lightning";
+    /** FLAT 1：被打中時長出晶體，死掉時晶體全部炸開（混沌；PoE2 Volatile Crystals）。 */
+    public static final String MONSTER_VOLATILE_CRYSTALS = "monster.volatile_crystals";
+    /** FLAT：爆花光球的傷害（普通一下的幾倍 ×100；2026-11-02 照 PoE2：一般 164、強化 202，強化的一次兩朵；PoE2 Volatile Plants）。 */
+    public static final String MONSTER_VOLATILE_PLANTS = "monster.volatile_plants";
+    /** FLAT：爆岩（100 = 一般、150 = 強化：一次兩塊；傷害都是 PoE2 的 2.57 倍；PoE2 Volatile Crag）。 */
+    public static final String MONSTER_VOLATILE_CRAG = "monster.volatile_crag";
+    /** FLAT：受到的傷害 x% 先由附近的小怪扛（PoE2 Damage Taken From Minions First）。 */
+    public static final String MONSTER_MINION_SHIELD = "monster.minion_shield";
+    /** FLAT 1：喚靈的叫起來的小怪更強（PoE2 Empowered Reviving Minions）。 */
+    public static final String MONSTER_REVIVE_EMPOWERED = "monster.revive_empowered";
+    /** FLAT 1：打牠的擊中都有撲殺（PoE2 腐化詞綴 Hits on Monster have Culling Strike）。 */
+    public static final String MONSTER_CULLABLE = "monster.cullable";
+    /** FLAT 1：體型變大（PoE2 腐化詞綴 Is Gigantic）。 */
+    public static final String MONSTER_GIGANTIC = "monster.gigantic";
+    /** FLAT 1：死掉後原地爬起來一次（PoE2 腐化詞綴 Monster Raises After Death）。 */
+    public static final String MONSTER_RAISE_AFTER_DEATH = "monster.raise_after_death";
+    /** 2026-11-02：所有 monster.* 的特殊行為鍵（資料測試用：monsters.yml 寫的 monster.* 都要在這裡、都有實作）。 */
+    public static final java.util.Set<String> MONSTER_KEYS = java.util.Set.of(MONSTER_REGEN, MONSTER_SHIELD, MONSTER_MAGMA,
+            MONSTER_HINDER_AURA, MONSTER_TRAIL_FIRE, MONSTER_TRAIL_COLD, MONSTER_TRAIL_LIGHTNING, MONSTER_HEAL_ALLIES,
+            MONSTER_CORPSE_EXPLODE, MONSTER_FLASK_SIPHON, MONSTER_RECOVERY_CAP, MONSTER_POWERFUL_MINIONS, MONSTER_REVIVE,
+            MONSTER_MIRAGE, MONSTER_MANA_SIPHON, MONSTER_TEMPORAL_BUBBLE, MONSTER_PROXIMAL, MONSTER_SOUL_EATER,
+            MONSTER_PERIODIC_ENRAGE, MONSTER_INVULNERABILITY_AURA, MONSTER_DEATH_BLAST_FIRE, MONSTER_DEATH_BLAST_COLD,
+            MONSTER_DEATH_BLAST_LIGHTNING, MONSTER_DEATH_GROUND_FIRE, MONSTER_DEATH_GROUND_COLD, MONSTER_DEATH_GROUND_LIGHTNING,
+            MONSTER_VOLATILE_CRYSTALS, MONSTER_VOLATILE_PLANTS, MONSTER_VOLATILE_CRAG, MONSTER_MINION_SHIELD,
+            MONSTER_REVIVE_EMPOWERED, MONSTER_CULLABLE, MONSTER_GIGANTIC, MONSTER_RAISE_AFTER_DEATH);
     /** FLAT：投射物射出時 x% 機率多穿透一個敵人（PoE2 箭袋的「x% 機率穿透」；超過 100% 的部分必定再多一個）。 */
     public static final String PIERCE_CHANCE = "skill.pierce_chance";
     /** FLAT：投射物碰到地形 x% 機率再連鎖一次（彈向最近的敵人）。 */

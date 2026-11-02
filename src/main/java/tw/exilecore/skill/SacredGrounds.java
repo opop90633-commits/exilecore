@@ -376,16 +376,15 @@ final class SacredGrounds {
         return list;
     }
 
+    /** 2026-11-02：外框走 {@link Fx#zone}（每 0.5 秒重畫、點數照周長；同一個人疊在一起的只畫一個）。 */
     private void draw(final Ground ground, final long now) {
         final boolean sigil = sigil(ground.skillId);
-        final int points = Math.max(12, (int) Math.round(ground.radius * 5));
         final Particle particle = sigil ? (POWER.equals(ground.skillId) ? Particle.ENCHANT : Particle.HAPPY_VILLAGER) : Particle.END_ROD;
-        for (int i = 0; i < points; i++) {
-            final double angle = Math.PI * 2 * i / points + now * 0.02;
-            Fx.spawn(ground.world, particle, ground.center.clone().add(Math.cos(angle) * ground.radius, 0.15, Math.sin(angle) * ground.radius), 1, 0, 0, 0, 0);
-        }
+        Fx.zone(ground, ground.center.clone().add(0, 0.15, 0), ground.radius, Fx.Look.edge(particle, null), (int) Math.max(0, ground.until - now),
+                ground.owner, false);
         if (sigil && ground.stages.stages > 0) {
-            Fx.spawn(ground.world, Particle.ENCHANT, ground.center.clone().add(0, 0.8, 0), 4 * ground.stages.stages, ground.radius / 3, 0.4, ground.radius / 3, 0.3);
+            Fx.as(ground.owner, () -> Fx.ambient(() -> Fx.spawn(ground.world, Particle.ENCHANT, ground.center.clone().add(0, 0.8, 0),
+                    4 * ground.stages.stages, ground.radius / 3, 0.4, ground.radius / 3, 0.3)));
         }
     }
 

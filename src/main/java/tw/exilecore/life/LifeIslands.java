@@ -338,7 +338,7 @@ final class LifeIslands {
                     tw.exilecore.gui.ActionBar.send(member, plugin.text().parse("<" + config().color() + ">⛵ 航向" + ItemRenderer.escape(voyage.def().name())
                             + " <white>" + Math.max(0, left) + " 秒"));
                 }
-                world().spawnParticle(Particle.SPLASH, player.getLocation().add(2, -0.5, 0), 20, 2, 0.1, 2, 0.1);
+                tw.exilecore.skill.Fx.spawn(world(), Particle.SPLASH, player.getLocation().add(2, -0.5, 0), 20, 2, 0.1, 2, 0.1);
             }
             if (tick >= voyage.arriveTick()) {
                 voyages.remove(id);
@@ -564,7 +564,7 @@ final class LifeIslands {
             final Location chest = new Location(world(), island.cx, config().seaLevel() + 2, island.cz);
             place(chest.getBlock(), Material.CHEST.createBlockData());
             island.chests.add(LifeService.key(chest.getBlockX(), chest.getBlockY(), chest.getBlockZ()));
-            world().spawnParticle(Particle.TOTEM_OF_UNDYING, chest.clone().add(0.5, 1, 0.5), 40, 0.5, 0.5, 0.5, 0.2);
+            tw.exilecore.skill.Fx.spawn(world(), Particle.TOTEM_OF_UNDYING, chest.clone().add(0.5, 1, 0.5), 40, 0.5, 0.5, 0.5, 0.2);
             player.sendMessage(plugin.text().prefixed("<" + config().color() + ">礁石守衛倒下了，環礁中央浮出一個寶箱"));
         }
     }
@@ -743,7 +743,7 @@ final class LifeIslands {
             island.lit++;
             place(block, Material.SEA_LANTERN.createBlockData());
             world().playSound(block.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.4f);
-            world().spawnParticle(Particle.END_ROD, block.getLocation().add(0.5, 1, 0.5), 30, 0.3, 1, 0.3, 0.05);
+            tw.exilecore.skill.Fx.spawn(world(), Particle.END_ROD, block.getLocation().add(0.5, 1, 0.5), 30, 0.3, 1, 0.3, 0.05);
             tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#bfe6ff>星柱亮了 " + island.lit + "／4"));
             spawnWave(island, islandLevel(player));
             return true;

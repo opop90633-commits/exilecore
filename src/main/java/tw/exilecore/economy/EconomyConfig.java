@@ -94,6 +94,8 @@ public final class EconomyConfig {
     private double gambleBossUnique;
     /** 2026-10-17：只能賭、但照 boss_unique 的機率出的傳奇（gamble.boss_rate_uniques）。 */
     private final java.util.Set<String> gambleBossRate = new java.util.HashSet<>();
+    /** 2026-11-02 照站長：市場報告不記的玩家（名字，小寫；economy.yml 的 report.exclude_players）；管理員（op、exilecore.admin）一律不記。 */
+    private java.util.Set<String> reportExcluded = java.util.Set.of("black_yyds", "ning1128");
     /**
      * 等級 → 同等級普通怪平均掉的金幣（drops.yml；經濟模組啟用時接上）。拿不到（0）時，價格退回 base + per_level 的舊算法。
      * 不跟著 /ec reload 換（不是設定檔的內容）。
@@ -248,6 +250,16 @@ public final class EconomyConfig {
         final YamlNode rarityNode = price.node("rarity");
         for (final Rarity rarity : Rarity.values()) {
             vendorRarity.put(rarity, Math.max(0, rarityNode.decimal(key(rarity), vendorRarity.get(rarity))));
+        }
+        final YamlNode report = root.node("report");
+        if (report.has("exclude_players")) {
+            final java.util.Set<String> names = new java.util.HashSet<>();
+            for (final String name : report.strings("exclude_players")) {
+                if (!name.isBlank()) {
+                    names.add(name.trim().toLowerCase(java.util.Locale.ROOT));
+                }
+            }
+            reportExcluded = java.util.Set.copyOf(names);
         }
         final YamlNode gamble = root.node("gamble");
         final YamlNode gamblePrice = gamble.node("price");
@@ -592,6 +604,15 @@ public final class EconomyConfig {
      * 沒有能賭的傳奇 → 0（那份權重算成稀有，見 {@link #rollGamble(RandomGenerator, double)}）。
      */
     /** 這件只能賭的傳奇照 boss_unique 的機率出（gamble.boss_rate_uniques）。 */
+    /** 市場報告不記這個名字的玩家（economy.yml 的 report.exclude_players；沒寫用預設的兩位站長）。 */
+    public java.util.Set<String> reportExcludedNames() {
+        return reportExcluded;
+    }
+
+    public boolean reportExcluded(final String name) {
+        return name != null && reportExcluded.contains(name.toLowerCase(java.util.Locale.ROOT));
+    }
+
     public boolean gambleBossRate(final String uniqueId) {
         return uniqueId != null && gambleBossRate.contains(uniqueId);
     }

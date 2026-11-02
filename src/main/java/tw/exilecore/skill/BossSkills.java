@@ -1281,7 +1281,7 @@ public final class BossSkills implements Listener {
             mob.getPathfinder().stopPathfinding();
         }
         markGround(brain, cast);
-        visuals.bossCharge(skill.visual(), boss, true, brain.host.boss());
+        Fx.important(() -> visuals.bossCharge(skill.visual(), boss, true, brain.host.boss())); // 2026-11-02：招式的預警是重要的
         if (brain.host.boss()) {
             // 附近的玩家：喊話（一般怪物只有地上的警告）。動作列不寫招式（2026-10 照使用者的意思拿掉：
             // 特殊招式有畫面中間的大字與聊天室，其他的看地板的顏色）
@@ -1566,11 +1566,13 @@ public final class BossSkills implements Listener {
                 // 警告的粒子 Boss 每 2 tick、小怪每 3 tick 畫一次（地板變色才是主要的警告；粒子一點一個封包，
                 // 每 tick 畫的話幾招疊在一起時客戶端處理不完，畫面會卡一下）
                 final boolean draw = drawTick(brain, now, 0);
-                if (draw) {
-                    visuals.bossCharge(skill.visual(), boss, false, brain.host.boss());
-                }
                 final double progress = (now - cast.start) / (double) Math.max(1, cast.telegraphEnd - cast.start);
-                warn(brain, cast, progress, now, draw);
+                Fx.important(() -> { // 2026-11-02：招式的預警是重要的（每個人都看得到、特效等級低也照常）
+                    if (draw) {
+                        visuals.bossCharge(skill.visual(), boss, false, brain.host.boss());
+                    }
+                    warn(brain, cast, progress, now, draw);
+                });
                 if (skill.kind() != BossSkill.Kind.SLAM && skill.kind() != BossSkill.Kind.ZONE && skill.kind() != BossSkill.Kind.BEAM
                         && skill.kind() != BossSkill.Kind.SANCTUARY && skill.kind() != BossSkill.Kind.RING) {
                     flash(cast.mark, skill, progress, now);
@@ -2068,10 +2070,16 @@ public final class BossSkills implements Listener {
         }
         // 2026-10-26：沒有招式名稱時大標題放「⚠」（不留空：文字背景開「所有地方」的人會看到一個空框）
         final Component main = plugin.text().parse(brain.host.alerts() ? "<red><bold>⚠ " + ItemRenderer.escape(skill.name()) : "<red><bold>⚠");
+        // 2026-11-02 照站長（C 組）：裝了模組的改送預警（畫面上半部那一排，可以同時好幾則；箭頭指往外逃的方向），不送大標題
+        final Location center = danger.center(mark);
+        final tw.exilecore.clientmod.FeedProtocol.Alert alert = tw.exilecore.clientmod.FeedProtocol.Alert.top("inside:" + mark, 2,
+                brain.host.alerts() ? "<red><bold>⚠ " + ItemRenderer.escape(skill.name()) : "<red><bold>⚠", "<red><bold>離開紅色區域", 11);
         for (final Player player : playersNear(brain.boss.getLocation(), 48)) {
             if (danger.inside(mark, player)) {
-                player.showTitle(Title.title(main, plugin.text().parse("<red><bold>離開紅色區域"),
-                        Title.Times.times(Duration.ZERO, Duration.ofMillis(400), Duration.ofMillis(150))));
+                if (!tw.exilecore.clientmod.AlertFeed.show(plugin, player, center == null ? alert : alert.at(center.getX(), center.getY(), center.getZ(), false))) {
+                    player.showTitle(Title.title(main, plugin.text().parse("<red><bold>離開紅色區域"),
+                            Title.Times.times(Duration.ZERO, Duration.ofMillis(400), Duration.ofMillis(150))));
+                }
             }
         }
     }
@@ -2202,13 +2210,16 @@ public final class BossSkills implements Listener {
             if (now >= zone.untilTick) {
                 danger.hide(zone.mark);
                 iterator.remove();
+                visuals.zoneGone(zone, 1);
                 continue;
             }
+            // 2026-11-02：Boss 留在地上的範圍是危險區（重要的）；外框走 Fx.zone（每 0.5 秒重畫），裡面的點也最多每 0.5 秒
             if (now % (zone.skill.solid() ? 8 : 2) == 0) { // 2026-10-17：牆的粒子少一點（牆一塊接一塊，每塊都畫太密）
-                visuals.zoneAmbient(zone.skill.visual(), List.of(zone.center), zone.skill.radius(), now);
+                Fx.important(() -> visuals.zoneAmbient(zone, zone.skill.visual(), List.of(zone.center), zone.skill.radius(), now,
+                        (int) (zone.untilTick - now)));
             }
             if (zone.skill.solid() && now % 12 == 0) {
-                wallPillar(zone.center, zone.skill.radius()); // 2026-10-17：牆畫成一圈直立的淡紫光柱，跟地上會痛的區域分得出來
+                Fx.important(() -> wallPillar(zone.center, zone.skill.radius())); // 2026-10-17：牆畫成一圈直立的淡紫光柱，跟地上會痛的區域分得出來
             }
             if (zone.skill.solid()) {
                 // 2026-10（賽勒斯的風暴牆）：這塊是牆——站進來的人每 tick 往外推（從中心往外），穿不過去，只能找缺口
@@ -2245,7 +2256,7 @@ public final class BossSkills implements Listener {
         final double turn = Math.floorMod((long) (center.getX() * 7 + center.getZ() * 13), 4) * Math.PI / 8; // 相鄰幾塊錯開，不要排成直線
         for (int i = 0; i < 4; i++) {
             final double angle = turn + Math.PI * 2 * i / 4;
-            world.spawnParticle(org.bukkit.Particle.DUST, center.getX() + Math.cos(angle) * radius, center.getY() + 1.2,
+            tw.exilecore.skill.Fx.spawn(world, org.bukkit.Particle.DUST, center.getX() + Math.cos(angle) * radius, center.getY() + 1.2,
                     center.getZ() + Math.sin(angle) * radius, 1, 0.05, 0.4, 0.05, 0, WALL_DUST);
         }
     }
@@ -2563,6 +2574,8 @@ public final class BossSkills implements Listener {
                 }
                 if (!chased.getUniqueId().equals(orb.told)) {
                     orb.told = chased.getUniqueId();
+                    if (!tw.exilecore.clientmod.AlertFeed.show(plugin, chased, tw.exilecore.clientmod.FeedProtocol.Alert.top("orb:" + orb.mark, 2, "<red><bold>⚠", "<red><bold>光球在追你", 23)
+                            .at(orb.position.getX(), orb.position.getY(), orb.position.getZ(), false))) // 2026-11-02（C 組）
                     chased.showTitle(Title.title(plugin.text().parse("<red><bold>⚠"), plugin.text().parse("<red><bold>光球在追你"), // 2026-10-26：大標題不留空
                             Title.Times.times(Duration.ZERO, Duration.ofMillis(900), Duration.ofMillis(250))));
                 }
@@ -2725,8 +2738,18 @@ public final class BossSkills implements Listener {
         for (final Player player : playersNear(brain.boss.getLocation(), cast.skill.radius())) {
             final Location at = player.getLocation();
             if (!BossGeometry.insideAny(at.getX(), at.getZ(), centers, cast.skill.safe() + SAFE_SLACK)) {
-                player.showTitle(Title.title(main, plugin.text().parse("<#45ff6a><bold>躲進綠色安全區"),
-                        Title.Times.times(Duration.ZERO, Duration.ofMillis(400), Duration.ofMillis(150))));
+                // 2026-11-02（C 組）：模組的預警：倒數到大招落下、綠色箭頭指最近的安全區
+                final double[] near = tw.exilecore.clientmod.AlertFeed.nearest(at.getX(), at.getZ(), centers);
+                tw.exilecore.clientmod.FeedProtocol.Alert alert = tw.exilecore.clientmod.FeedProtocol.Alert.top("safe:" + brain.boss.getUniqueId() + ":" + cast.skill.id(), 3,
+                        brain.host.alerts() ? "<#ff5555><bold>⚠ " + ItemRenderer.escape(cast.skill.name()) : "<#45ff6a><bold>⚠",
+                        "<#45ff6a><bold>躲進綠色安全區", 11).countdown((int) Math.max(0, cast.telegraphEnd - now));
+                if (near != null) {
+                    alert = alert.at(near[0], at.getY(), near[1], true);
+                }
+                if (!tw.exilecore.clientmod.AlertFeed.show(plugin, player, alert)) {
+                    player.showTitle(Title.title(main, plugin.text().parse("<#45ff6a><bold>躲進綠色安全區"),
+                            Title.Times.times(Duration.ZERO, Duration.ofMillis(400), Duration.ofMillis(150))));
+                }
             }
         }
     }
@@ -2748,8 +2771,12 @@ public final class BossSkills implements Listener {
         }
         final Component line = chat ? plugin.text().parse(color + "⚠ <#af6025>" + ItemRenderer.escape(brain.host.name())
                 + "<dark_gray>・" + color + ItemRenderer.escape(skill.name()) + "<gray>：" + hint) : null;
+        final tw.exilecore.clientmod.FeedProtocol.Alert modAlert = tw.exilecore.clientmod.FeedProtocol.Alert.top("skill:" + brain.boss.getUniqueId() + ":" + skill.id(), BossAlerts.deadly(skill) ? 2 : 1,
+                color + "<bold>⚠ " + ItemRenderer.escape(skill.name()), "<white>" + hint, BossAlerts.titleTicks(skill));
         for (final Player player : playersNear(brain.boss.getLocation(), settings().warnRange())) {
-            player.showTitle(title);
+            if (!tw.exilecore.clientmod.AlertFeed.show(plugin, player, modAlert)) { // 2026-11-02（C 組）
+                player.showTitle(title);
+            }
             if (line != null) {
                 player.sendMessage(line);
             }
@@ -2763,8 +2790,12 @@ public final class BossSkills implements Listener {
                 plugin.text().parse("<white>" + hint),
                 Title.Times.times(Duration.ZERO, Duration.ofMillis(2500), Duration.ofMillis(250)));
         final Component line = plugin.text().parse("<#ffb347>⚠ 場地危害「" + ItemRenderer.escape(skill.name()) + "」<gray>：" + hint);
+        final tw.exilecore.clientmod.FeedProtocol.Alert modAlert = tw.exilecore.clientmod.FeedProtocol.Alert.top("hazard:" + brain.boss.getUniqueId() + ":" + skill.id(), 1,
+                "<#ffb347><bold>⚠ 場地危害：" + ItemRenderer.escape(skill.name()), "<white>" + hint, 50);
         for (final Player player : playersNear(brain.boss.getLocation(), SEARCH)) {
-            player.showTitle(title);
+            if (!tw.exilecore.clientmod.AlertFeed.show(plugin, player, modAlert)) { // 2026-11-02（C 組）
+                player.showTitle(title);
+            }
             player.sendMessage(line);
         }
     }
@@ -2903,7 +2934,10 @@ public final class BossSkills implements Listener {
             final Player chosen = players.remove(random.nextInt(players.size()));
             final String mark = brain.boss.getUniqueId() + ":mark:" + skill.id() + ":" + now + "#" + i;
             brain.marks.add(new Marked(skill, chosen.getUniqueId(), chosen.getLocation(), now, now + fuse, mark));
-            chosen.showTitle(title);
+            if (!tw.exilecore.clientmod.AlertFeed.show(plugin, chosen, tw.exilecore.clientmod.FeedProtocol.Alert.top("mark:" + mark, 3, "<#ff5555><bold>⚠ " + ItemRenderer.escape(skill.name()),
+                    "<white>標記在你身上：離開隊友", 30).countdown((int) fuse))) { // 2026-11-02（C 組）
+                chosen.showTitle(title);
+            }
             visuals.bossTether(brain.boss.getEyeLocation(), SkillTargets.center(chosen), chosen.getEyeLocation());
         }
         brain.lastMark = now;
@@ -2931,6 +2965,10 @@ public final class BossSkills implements Listener {
                 marked.locked = true;
                 marked.shownAt = null; // 重標一次：換成快落下的顏色
                 if (player != null) {
+                    final Location stop = marked.last;
+                    if (!tw.exilecore.clientmod.AlertFeed.show(plugin, player, tw.exilecore.clientmod.FeedProtocol.Alert.top("mark:" + marked.mark, 3, "<#ff5555><bold>⚠ 快走出圈！",
+                            "<white>標記停住了，馬上就要爆炸", 14).countdown((int) Math.max(0, marked.fireTick - now))
+                            .at(stop.getX(), stop.getY(), stop.getZ(), false))) // 2026-11-02（C 組）
                     player.showTitle(Title.title(plugin.text().parse("<#ff5555><bold>⚠ 快走出圈！"),
                             plugin.text().parse("<white>標記停住了，馬上就要爆炸"),
                             Title.Times.times(Duration.ZERO, Duration.ofMillis(700), Duration.ofMillis(150))));
@@ -2962,7 +3000,18 @@ public final class BossSkills implements Listener {
             if (now % 5 == 0 && !marked.locked) {
                 final long seconds = Math.max(1, (marked.fireTick - now + 19) / 20);
                 for (final Player near : playersNear(under, skill.explode() + 2)) {
-                    if (near.getUniqueId().equals(marked.target)) {
+                    // 2026-11-02（C 組）：裝了模組的改送預警（倒數、箭頭指標記中心：往外走）
+                    final boolean self = near.getUniqueId().equals(marked.target);
+                    if (self || danger.inside(marked.mark, near)) {
+                        final tw.exilecore.clientmod.FeedProtocol.Alert modAlert = (self ? tw.exilecore.clientmod.FeedProtocol.Alert.top("mark:" + marked.mark, 3, "<#ff5555><bold>⚠ " + ItemRenderer.escape(skill.name()),
+                                "<white>標記在你身上：離開隊友", 11) : tw.exilecore.clientmod.FeedProtocol.Alert.top("mark-near:" + marked.mark, 2, "<red><bold>⚠",
+                                "<red><bold>離開隊友身上的標記", 11)).countdown((int) Math.max(0, marked.fireTick - now))
+                                .at(under.getX(), under.getY(), under.getZ(), false);
+                        if (tw.exilecore.clientmod.AlertFeed.show(plugin, near, modAlert)) {
+                            continue;
+                        }
+                    }
+                    if (self) {
                         near.showTitle(Title.title(plugin.text().parse("<#ff5555><bold>⚠ " + ItemRenderer.escape(skill.name()) + " " + seconds),
                                 plugin.text().parse("<white>標記在你身上：離開隊友"),
                                 Title.Times.times(Duration.ZERO, Duration.ofMillis(400), Duration.ofMillis(150))));
@@ -3151,7 +3200,8 @@ public final class BossSkills implements Listener {
     private void clearField(final Brain brain) {
         for (final ZoneArea zone : brain.zones) {
             danger.hide(zone.mark);
-            visuals.zoneAmbient(zone.skill.visual(), List.of(zone.center), 0.5, now()); // 消散的一點粒子
+            visuals.zoneGone(zone, 1); // 2026-11-02：模組那邊收到 STOP
+            visuals.zoneFade(zone.skill.visual(), zone.center); // 消散的一點粒子（2026-11-02：以前借平常的樣子畫）
         }
         brain.zones.clear();
         for (final Pending pending : brain.pendings) {
@@ -3222,7 +3272,9 @@ public final class BossSkills implements Listener {
                 continue;
             }
             hurt(brain, skill, victim, Tags.AREA);
-            if (victim instanceof Player player) {
+            if (victim instanceof Player player && !tw.exilecore.clientmod.AlertFeed.show(plugin, player, tw.exilecore.clientmod.FeedProtocol.Alert.top("arena:" + brain.boss.getUniqueId(), 2,
+                    "<red><bold>⚠", "<red><bold>回到圈內（靠近 Boss）", 15)
+                    .at(arena.center.getX(), arena.center.getY(), arena.center.getZ(), true))) { // 2026-11-02（C 組）
                 player.showTitle(title);
             }
         }

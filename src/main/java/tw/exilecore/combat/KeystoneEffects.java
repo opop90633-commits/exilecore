@@ -326,7 +326,7 @@ public final class KeystoneEffects implements Listener {
             Impales.shared().add(defender.getUniqueId(), owner.getUniqueId(), tw.exilecore.stats.KeystoneOriginKeys.impaleAmount(physical,
                     effective.increased(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_MAGNITUDE, tags),
                     effective.more(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_MAGNITUDE, tags))); // 2026-11-01 照 PoE2：穿刺效果的更多（碎骨飛矢 200%）也算
-            defender.getWorld().spawnParticle(Particle.CRIT, defender.getLocation().add(0, defender.getHeight() * 0.6, 0), 6, 0.2, 0.3, 0.2, 0.05);
+            tw.exilecore.skill.Fx.spawn(defender.getWorld(), Particle.CRIT, defender.getLocation().add(0, defender.getHeight() * 0.6, 0), 6, 0.2, 0.3, 0.2, 0.05);
         }
     }
 
@@ -445,7 +445,7 @@ public final class KeystoneEffects implements Listener {
             if (near instanceof LivingEntity other && other != owner && !(other instanceof Player) && plugin.monsters() != null
                     && plugin.monsters().data(other).isPresent()) {
                 plugin.ailments().groundStatusOnMonster(other, 0, effect, 80);
-                other.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, other.getLocation().add(0, 1, 0), 6, 0.3, 0.4, 0.3, 0);
+                tw.exilecore.skill.Fx.spawn(other.getWorld(), Particle.ELECTRIC_SPARK, other.getLocation().add(0, 1, 0), 6, 0.3, 0.4, 0.3, 0);
             }
         }
     }

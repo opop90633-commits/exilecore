@@ -693,7 +693,7 @@ final class AscPaths implements Listener {
         final SkillProfile profile = new SkillProfile("asc_rupture_flesh", Set.of(Tags.AREA, Tags.PHYSICAL), 0,
                 new DamagePacket().set(DamageType.PHYSICAL, amount));
         final Location at = dead.getLocation();
-        dead.getWorld().spawnParticle(Particle.BLOCK, at.clone().add(0, 1, 0), 30, 0.6, 0.6, 0.6, 0.05, Material.REDSTONE_BLOCK.createBlockData());
+        tw.exilecore.skill.Fx.spawn(dead.getWorld(), Particle.BLOCK, at.clone().add(0, 1, 0), 30, 0.6, 0.6, 0.6, 0.05, Material.REDSTONE_BLOCK.createBlockData());
         dead.getWorld().playSound(at, Sound.ENTITY_SLIME_SQUISH, 0.8f, 0.6f);
         for (final LivingEntity target : effects.enemiesNear(lich, at, 2.5)) {
             plugin.combat().skillDamage().hit(lich, target, profile, null);
@@ -764,7 +764,7 @@ final class AscPaths implements Listener {
     /** 撲殺祭品的目標：回傳牠的強度（祭品每點強度效果增加 1%）。 */
     double cull(final Player player, final LivingEntity victim) {
         final double power = effects.power(victim);
-        victim.getWorld().spawnParticle(Particle.SCULK_SOUL, victim.getLocation().add(0, 1, 0), 20, 0.4, 0.6, 0.4, 0.03);
+        tw.exilecore.skill.Fx.spawn(victim.getWorld(), Particle.SCULK_SOUL, victim.getLocation().add(0, 1, 0), 20, 0.4, 0.6, 0.4, 0.03);
         victim.setKiller(player);
         victim.setHealth(0);
         return power;

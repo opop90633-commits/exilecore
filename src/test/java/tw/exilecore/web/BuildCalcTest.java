@@ -238,6 +238,149 @@ class BuildCalcTest {
         assertTrue(limiter.allow("a", 600), "每秒補 2 次");
     }
 
+    /** 2026-11-02 照站長：批次算差異的次數照組數扣（熱圖一次送幾十組）。 */
+    @Test
+    void limiterChargesByCost() {
+        final BuildCalc.Limiter limiter = new BuildCalc.Limiter(10, 20);
+        assertTrue(limiter.allow("a", 0, 15));
+        assertFalse(limiter.allow("a", 0, 6), "只剩 5 次：要 6 次整筆不扣");
+        assertTrue(limiter.allow("a", 0, 5));
+        assertEquals(2, limiter.retryAfter("a", 0, 15), "每秒補 10 次：要 15 次等 2 秒");
+        assertTrue(limiter.allow("a", 1500, 15));
+        assertTrue(limiter.allow("b", 0, 999), "超過一下子的上限：當成上限（不會永遠不能算）");
+    }
+
+    @Test
+    void variantsAddAndRemoveNodes() throws Exception {
+        final Set<String> nodes = walk("witch", 14);
+        final String[] list = nodes.toArray(new String[0]);
+        final String last = list[list.length - 1];
+        final JsonObject json = request(TreeCode.encode(tree, "witch", nodes));
+        final BuildCalc.Build build = BuildCalc.parse(json.toString(), tree, skills);
+        final PassiveNode extra = tree.ordered().stream().filter(n -> !n.isStart() && !nodes.contains(n.id())).findFirst().orElseThrow();
+        final JsonArray variants = new JsonArray();
+        final JsonObject v = new JsonObject();
+        final JsonArray add = new JsonArray();
+        add.add(extra.id());
+        add.add("沒有這個節點");
+        add.add(tree.start("witch").id());
+        v.add("add", add);
+        final JsonArray remove = new JsonArray();
+        remove.add(last);
+        v.add("remove", remove);
+        variants.add(v);
+        variants.add(new JsonObject());
+        json.add("variants", variants);
+        final List<BuildCalc.Variant> parsed = BuildCalc.parseVariants(json, tree);
+        assertEquals(2, parsed.size());
+        assertEquals(Set.of(extra.id()), parsed.get(0).add(), "不認得的、起點都略過");
+        final BuildCalc.Build changed = BuildCalc.withVariant(build, parsed.get(0));
+        assertTrue(changed.passives().contains(extra.id()));
+        assertFalse(changed.passives().contains(last));
+        assertEquals(nodes.size(), changed.passives().size());
+        assertEquals(nodes, build.passives(), "原本的角色不變");
+        assertEquals(build.passives(), BuildCalc.withVariant(build, parsed.get(1)).passives(), "空的一組＝原本的");
+        assertNull(changed.supportsFor());
+        final JsonArray tooMany = new JsonArray();
+        for (int i = 0; i <= BuildCalc.MAX_VARIANTS; i++) {
+            tooMany.add(new JsonObject());
+        }
+        json.add("variants", tooMany);
+        assertThrows(BuildCalc.BadRequest.class, () -> BuildCalc.parseVariants(json, tree));
+    }
+
+    @Test
+    void variantDropsAttributeChoiceAndJewelOfRefundedNodes() throws Exception {
+        final BuildCalc.Build base = new BuildCalc.Build(CharacterClass.WITCH, 10, Set.of("a", "s"), Map.of("attr.a", "dex", "q.x", "1"),
+                List.of(), Map.of("s", new ItemData()), new SkillLoadout(), List.of(), null, null);
+        final BuildCalc.Build changed = BuildCalc.withVariant(base, new BuildCalc.Variant(Set.of(), Set.of("a", "s")));
+        assertEquals(Map.of("q.x", "1"), changed.progress());
+        assertTrue(changed.jewels().isEmpty());
+        assertTrue(changed.passives().isEmpty());
+    }
+
+    @Test
+    void lightNumbersKeepComparedKeysAndEhp() {
+        final Map<String, Double> numbers = new java.util.LinkedHashMap<>();
+        numbers.put("life", 1234.567);
+        numbers.put("str", 50.0);
+        numbers.put("resist.fire", 75.0);
+        numbers.put("maxhit.physical", 1000.0);
+        final JsonObject o = BuildCalc.lightNumbers(numbers, 5432.6);
+        assertEquals(1234.57, o.get("life").getAsDouble(), 1e-9);
+        assertEquals(75, o.get("resist.fire").getAsDouble(), 1e-9);
+        assertFalse(o.has("str"), "只回傳要比較的");
+        // 2026-11-02 照站長：ehp 是 PoB2 的 EHP（這次之前是 maxhit.* 的平均）
+        assertEquals(5433, o.get("ehp").getAsDouble(), 1e-9);
+        assertFalse(BuildCalc.lightNumbers(numbers, Double.POSITIVE_INFINITY).has("ehp"), "打不死的不放");
+        assertFalse(BuildCalc.lightNumbers(numbers, null).has("ehp"), "沒算的不放");
+    }
+
+    @Test
+    void enemySettingsAreReadWithPob2Defaults() throws Exception {
+        assertEquals(BuildCalc.EnemySettings.DEFAULT, BuildCalc.parseEnemy(new JsonObject()));
+        assertEquals(tw.exilecore.stats.EffectiveHitPool.Tier.PINNACLE, BuildCalc.EnemySettings.DEFAULT.tier(), "PoB2 的預設是巔峰 Boss");
+        final JsonObject json = JsonParser.parseString("{\"enemy\":{\"level\":70,\"tier\":1,\"mix\":[1,0,0,0,0]}}").getAsJsonObject();
+        final BuildCalc.EnemySettings e = BuildCalc.parseEnemy(json);
+        assertEquals(70, e.level());
+        assertEquals(tw.exilecore.stats.EffectiveHitPool.Tier.BOSS, e.tier());
+        assertEquals(1, e.mix()[0], 1e-9);
+        // 壞掉的：不認得的種類照預設、全 0 的比例＝預設分配、等級夾住
+        final BuildCalc.EnemySettings bad = BuildCalc.parseEnemy(JsonParser.parseString(
+                "{\"enemy\":{\"level\":9999,\"tier\":9,\"mix\":[0,0,0,0,0]}}").getAsJsonObject());
+        assertEquals(VirtualCharacter.MAX_LEVEL, bad.level());
+        assertEquals(tw.exilecore.stats.EffectiveHitPool.Tier.PINNACLE, bad.tier());
+        assertNull(bad.mix());
+        assertEquals(BuildCalc.EnemySettings.DEFAULT, BuildCalc.parseEnemy(JsonParser.parseString("{\"enemy\":{\"tier\":\"x\"}}").getAsJsonObject()));
+        // 計算器送來的整份也讀得到
+        final JsonObject body = request(TreeCode.encode(tree, "witch", walk("witch", 3), Map.of()));
+        body.add("enemy", json.get("enemy"));
+        assertEquals(tw.exilecore.stats.EffectiveHitPool.Tier.BOSS, BuildCalc.parse(body.toString(), tree, skills).enemy().tier());
+        assertEquals(BuildCalc.EnemySettings.DEFAULT, BuildCalc.parse(request(TreeCode.encode(tree, "witch", walk("witch", 3), Map.of())).toString(),
+                tree, skills).enemy(), "舊的計算器沒送 enemy：預設");
+        // 一組配點保留敵人設定
+        final BuildCalc.Build build = BuildCalc.parse(body.toString(), tree, skills);
+        assertEquals(build.enemy(), BuildCalc.withVariant(build, new BuildCalc.Variant(Set.of(), Set.of())).enemy());
+    }
+
+    @Test
+    void ehpJsonHasPob2Fields() throws IOException {
+        final tw.exilecore.monster.MonsterConfig monsters = new tw.exilecore.monster.MonsterConfig();
+        monsters.load(DATA);
+        final tw.exilecore.stats.StatSheet sheet = new tw.exilecore.stats.StatSheet()
+                .setBase(tw.exilecore.stats.StatKeys.RESIST_MAX, 75).setBase(tw.exilecore.stats.DamageCalculator.FLAG_PLAYER_SIDE, 1)
+                .setBase(tw.exilecore.stats.StatKeys.LIFE_MAX, 3000).setBase(tw.exilecore.stats.StatKeys.ES_MAX, 1000)
+                .setBase(tw.exilecore.stats.StatKeys.MANA_MAX, 500).setBase(tw.exilecore.stats.StatKeys.ARMOUR, 5000)
+                .setBase(tw.exilecore.stats.StatKeys.RESIST_FIRE, 75).setBase(tw.exilecore.stats.StatKeys.RESIST_COLD, 75)
+                .setBase(tw.exilecore.stats.StatKeys.RESIST_LIGHTNING, 75);
+        final BuildCalc.EnemySettings settings = BuildCalc.EnemySettings.DEFAULT;
+        assertEquals(84, BuildCalc.enemyLevelOf(settings, 40, 84), "巔峰 Boss 至少 T16");
+        final tw.exilecore.stats.EffectiveHitPool.Enemy enemy = BuildCalc.enemy(settings, 40, monsters, 84);
+        final double[] range = monsters.damageAt(84);
+        assertEquals((range[0] + range[1]) / 2 * 12, enemy.total(), 1e-6, "巔峰 Boss：傷害表 × 12");
+        final JsonObject o = BuildCalc.ehpJson(sheet, tw.exilecore.character.StatsReport.pools(sheet), enemy, settings, 84);
+        for (final String key : List.of("value", "hits", "damagingHits", "hitChance", "damageChance", "critEffect", "maxhit", "taken", "enemy")) {
+            assertTrue(o.has(key), key);
+        }
+        assertTrue(o.get("value").getAsDouble() > 0);
+        assertEquals(o.get("value").getAsDouble(), o.get("hits").getAsDouble() * enemy.total(), enemy.total() * 0.01 + 1);
+        assertEquals(84, o.getAsJsonObject("enemy").get("level").getAsInt());
+        assertEquals("巔峰 Boss", o.getAsJsonObject("enemy").get("tierName").getAsString());
+        assertEquals(3, o.getAsJsonObject("enemy").get("penetration").getAsDouble(), 1e-9);
+        final JsonObject maxHit = o.getAsJsonObject("maxhit");
+        // 火焰：75% 抗性 − 3% 穿透 ＝ 72%：生命 3000 ＋ 護盾 1000 → 4000 ÷ 0.28 ≈ 14286
+        assertEquals(4000 / 0.28, maxHit.get("fire").getAsDouble(), 1.01);
+        // 混沌：0 抗性、護盾兩倍：500 ＋ 3000
+        assertEquals(3500, maxHit.get("chaos").getAsDouble(), 1.01);
+        assertEquals(5, maxHit.size());
+        // 全混沌、混沌免疫：EHP 無限大寫 -2、最多吃得下的混沌寫 -1（免疫）
+        final tw.exilecore.stats.StatSheet ci = sheet.overlay(List.of(Modifier.flat(tw.exilecore.stats.StatKeys.FLAG_CHAOS_IMMUNE, 1, "測")));
+        final BuildCalc.EnemySettings chaos = new BuildCalc.EnemySettings(0, tw.exilecore.stats.EffectiveHitPool.Tier.NORMAL, new double[] {0, 0, 0, 0, 1});
+        final JsonObject ciJson = BuildCalc.ehpJson(ci, tw.exilecore.character.StatsReport.pools(ci), BuildCalc.enemy(chaos, 40, monsters, 84), chaos, 40);
+        assertEquals(-2, ciJson.get("value").getAsDouble(), 1e-9);
+        assertEquals(-1, ciJson.getAsJsonObject("maxhit").get("chaos").getAsDouble(), 1e-9);
+    }
+
     @Test
     void virtualCharacterCarriesClassLevelAndLoadout() {
         final SkillLoadout loadout = new SkillLoadout();

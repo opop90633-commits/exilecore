@@ -149,7 +149,7 @@ public final class DodgeRoll implements Listener {
             plugin.guide().milestone(player, tw.exilecore.guide.GuideService.DODGE); // 2026-10-30 新手教學
         }
         final Location at = player.getLocation().add(0, 0.3, 0);
-        player.getWorld().spawnParticle(Particle.CLOUD, at, 8, 0.3, 0.1, 0.3, 0.02);
+        tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.CLOUD, at, 8, 0.3, 0.1, 0.3, 0.02);
         player.getWorld().playSound(at, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.5f, 1.6f);
         if (plugin.skills() != null && plugin.skills().triggers() != null) {
             plugin.skills().triggers().dodge(player, BASE_METRES * distance); // 2026-10：翻滾觸發（2026-10-26：帶翻滾距離，翻滾引星照格給能量）

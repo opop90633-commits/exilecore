@@ -537,7 +537,7 @@ public final class ZoneService {
                     markers.put(key, spawnMarker(location, zone, checkpoint, key));
                 }
                 if (!world.getNearbyPlayers(location, 24).isEmpty()) {
-                    world.spawnParticle(Particle.END_ROD, location.getX(), location.getY() + 0.6, location.getZ(),
+                    tw.exilecore.skill.Fx.spawn(world, Particle.END_ROD, location.getX(), location.getY() + 0.6, location.getZ(),
                             6, 0.35, 0.7, 0.35, 0.01);
                 }
             }

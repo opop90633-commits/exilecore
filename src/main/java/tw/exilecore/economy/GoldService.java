@@ -94,7 +94,7 @@ public final class GoldService {
         if (!add(player, amount)) {
             return false;
         }
-        ledger.gold(source, amount);
+        ledger.of(player).gold(source, amount);
         return true;
     }
 
@@ -105,7 +105,7 @@ public final class GoldService {
             return false;
         }
         state.setGold(state.gold() - amount);
-        ledger.gold(sink, -amount);
+        ledger.of(player).gold(sink, -amount);
         return true;
     }
 
@@ -114,7 +114,7 @@ public final class GoldService {
         final PlayerState state = plugin.players().get(player);
         if (amount > 0 && state.isLoaded() && state.hasCharacter()) {
             state.setGold(state.gold() + amount);
-            ledger.gold(sink, amount);
+            ledger.of(player).gold(sink, amount);
         }
     }
 

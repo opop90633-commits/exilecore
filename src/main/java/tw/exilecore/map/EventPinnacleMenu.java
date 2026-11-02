@@ -92,7 +92,7 @@ final class EventPinnacleMenu extends Menu {
             lore.add("<red>先打贏 " + ItemRenderer.escape(missing));
         }
         lore.add("");
-        lore.addAll(mechanics(boss));
+        lore.addAll(mechanics(map.id(), boss));
         lore.add("");
         if (ready) {
             lore.add("<green>點一下打開傳送門（會用掉 1 張" + ItemRenderer.escape(ticketName) + "）");
@@ -117,13 +117,15 @@ final class EventPinnacleMenu extends Menu {
     }
 
     /** Boss 的階段與機制摘要（{@link BossMechanicText} 的寫法）：每個階段一行、狂暴、場地危害。 */
-    private List<String> mechanics(final MapConfig.Boss boss) {
+    private List<String> mechanics(final String mapId, final MapConfig.Boss boss) {
         final List<String> lines = new ArrayList<>();
         final List<MapConfig.Phase> phases = boss.phases();
         if (phases.isEmpty() && boss.enrage() == null && boss.hazards().isEmpty()) {
             return lines;
         }
         lines.add("<#f5b942>【機制】");
+        // 2026-11-02 照站長：每個階段的鎖血機制照實際配到的寫（沒寫的輪流配）；這次之前只寫 shield 的結晶
+        final List<PhaseMechanic.Spec> locks = PhaseMechanic.resolve(PhaseMechanic.key(mapId, false), phases, true, true);
         for (int i = 0; i < phases.size(); i++) {
             final MapConfig.Phase phase = phases.get(i);
             // 這個階段才開始用的招式
@@ -136,7 +138,7 @@ final class EventPinnacleMenu extends Menu {
                     }
                 }
             }
-            final List<String> notes = BossMechanicText.phaseNotes(phase, newSkills);
+            final List<String> notes = BossMechanicText.phaseNotes(phase, locks.get(i), newSkills);
             lines.add("<gray>血量 " + Math.round(phase.at() * 100) + "% 第 " + (i + 1) + " 階段「<white>" + ItemRenderer.escape(phase.name()) + "<gray>」："
                     + ItemRenderer.escape(String.join("；", notes)));
         }

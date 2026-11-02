@@ -95,6 +95,40 @@ public final class PassiveTree {
     public static final Set<String> RULES = Set.of(RULE_UNSEEN_PATH, RULE_PATH_SORCERESS, RULE_PATH_WARRIOR, RULE_ENTWINED);
     /** 虛實交織的半徑（原作中半徑）。 */
     public static final double ENTWINED_RADIUS = 1150;
+    /**
+     * 2026-11-02 照站長：開路者的「女術者之道」「戰士之道」→ 多一個出發點的職業（照 {@link #seeds} 的順序）。
+     * 網頁規劃器吃 /tree/data.json 的 treeRules.pathStarts（同一份）；這次之前 seeds 裡寫死、網頁也另外寫死一份。
+     */
+    public static final Map<String, String> PATH_STARTS;
+    static {
+        final Map<String, String> paths = new LinkedHashMap<>();
+        paths.put(RULE_PATH_SORCERESS, "sorceress");
+        paths.put(RULE_PATH_WARRIOR, "marauder");
+        PATH_STARTS = java.util.Collections.unmodifiableMap(paths);
+    }
+
+    /**
+     * 2026-11-02 照站長：這些修飾器給了哪些配點規則（{@link #RULES}，數值大於 0 才算）。昇華的 treeRules 與網頁規劃器的資料都用這個；
+     * 這次之前只有 AscendancyService.treeRules 自己算。
+     */
+    public static Set<String> rulesOf(final Iterable<Modifier> modifiers) {
+        final Set<String> rules = new HashSet<>();
+        for (final Modifier mod : modifiers) {
+            if (mod.value() > 0 && RULES.contains(mod.stat())) {
+                rules.add(mod.stat());
+            }
+        }
+        return rules;
+    }
+
+    /**
+     * 2026-11-02 照站長：觀星「不見之途」專屬的節點（解鎖條件要 {@link #RULE_UNSEEN_PATH}）。看得到時遊戲內天賦樹、模組畫面、
+     * 網頁規劃器都用深紫加星光外框畫，跟一般天賦分得出來；這次之前看起來跟一般天賦一樣。
+     */
+    public boolean unseen(final PassiveNode node) {
+        final Unlock unlock = unlocks.get(node.id());
+        return unlock != null && RULE_UNSEEN_PATH.equals(unlock.stat());
+    }
     public static final double DEFAULT_UNIT = 160;
     private int minX;
     private int maxX;
@@ -586,8 +620,9 @@ public final class PassiveTree {
     public List<PassiveNode> seeds(final PassiveNode start, final Set<String> rules) {
         final List<PassiveNode> list = new ArrayList<>();
         list.add(start);
-        addSeed(list, rules, RULE_PATH_SORCERESS, "sorceress");
-        addSeed(list, rules, RULE_PATH_WARRIOR, "marauder");
+        for (final Map.Entry<String, String> path : PATH_STARTS.entrySet()) {
+            addSeed(list, rules, path.getKey(), path.getValue());
+        }
         return list;
     }
 
@@ -610,6 +645,50 @@ public final class PassiveTree {
             }
         }
         return false;
+    }
+
+    /**
+     * 2026-11-02 照站長：虛實交織現在能直接配、但沒跟已配置（或出發點）相連的節點（跳點），照檔案順序。沒有虛實交織是空的。
+     * 模組畫面、網頁規劃器的「跳點」跟這個一樣。
+     */
+    public List<PassiveNode> jumps(final Set<String> allocated, final PassiveNode start, final Set<String> rules) {
+        if (!rules.contains(RULE_ENTWINED)) {
+            return List.of();
+        }
+        final Set<String> reach = reachable(allocated, start, rules);
+        final List<PassiveNode> seeds = seeds(start, rules);
+        final List<PassiveNode> out = new ArrayList<>();
+        for (final PassiveNode node : ordered) {
+            if (node.isStart() || allocated.contains(node.id()) || locked(allocated, node, rules) || !entwined(reach, node, rules)) {
+                continue;
+            }
+            boolean linked = false;
+            for (final PassiveNode neighbour : neighbours(node)) {
+                if (seeds.contains(neighbour) || allocated.contains(neighbour.id())) {
+                    linked = true;
+                    break;
+                }
+            }
+            if (!linked) {
+                out.add(node);
+            }
+        }
+        return out;
+    }
+
+    /** 2026-11-02：虛實交織的錨點：連得到起點的已配置基石（半徑 {@link #ENTWINED_RADIUS} 內的非基石可以跳點）；沒有虛實交織是空的。 */
+    public List<PassiveNode> entwinedAnchors(final Set<String> allocated, final PassiveNode start, final Set<String> rules) {
+        if (!rules.contains(RULE_ENTWINED)) {
+            return List.of();
+        }
+        final Set<String> reach = reachable(allocated, start, rules);
+        final List<PassiveNode> out = new ArrayList<>();
+        for (final PassiveNode node : ordered) {
+            if (node.type() == PassiveNode.Type.KEYSTONE && reach.contains(node.id())) {
+                out.add(node);
+            }
+        }
+        return out;
     }
 
     /** 這個節點現在能不能配：還沒配、不是起點、與某個已配置節點（或起點）相鄰。 */
@@ -691,7 +770,11 @@ public final class PassiveTree {
         return pathTo(allocated, start, target, Set.of());
     }
 
-    /** 同上，加上昇華的配點規則（被解鎖條件擋住的節點不走；虛實交織能直接配的就只配目標）。 */
+    /**
+     * 同上，加上昇華的配點規則（被解鎖條件擋住的節點不走；虛實交織能直接配的就只配目標）。
+     * 2026-11-02 照站長：虛實交織能直接配（跳點）的節點也是出發點（距離 1，要配它），走得到它旁邊的就從它接過去；
+     * 這次之前只從已配置的往外走，跳點旁邊的節點會繞一大圈。
+     */
     public List<PassiveNode> pathTo(final Set<String> allocated, final PassiveNode start, final PassiveNode target, final Set<String> rules) {
         if (target.isStart() || allocated.contains(target.id()) || locked(allocated, target, rules)) {
             return List.of();
@@ -710,6 +793,12 @@ public final class PassiveTree {
         for (final String id : allocated) {
             final PassiveNode node = nodes.get(id);
             if (node != null && seen.add(id)) {
+                queue.add(node);
+            }
+        }
+        // 跳點：距離 1（排在距離 0 的後面，BFS 的順序才對）；沒有 parent，路徑從它開始
+        for (final PassiveNode node : jumps(allocated, start, rules)) {
+            if (seen.add(node.id())) {
                 queue.add(node);
             }
         }

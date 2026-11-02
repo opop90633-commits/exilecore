@@ -236,7 +236,7 @@ public final class CurrencyListener implements Listener {
         } else {
             event.setCurrentItem(marked);
         }
-        plugin.economy().ledger().consumed(orb.id(), tw.exilecore.economy.EconomyLedger.CRAFT, 1);
+        plugin.economy().ledger().of(player).consumed(orb.id(), tw.exilecore.economy.EconomyLedger.CRAFT, 1);
         player.sendMessage(plugin.text().prefixed("<#c48bff>共鳴：").append(marked.effectiveName())
                 .append(plugin.text().parse("<gray>（不佔一個技能的專屬輔助名額）")));
         player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9f, 1.1f);

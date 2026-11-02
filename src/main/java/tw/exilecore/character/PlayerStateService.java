@@ -129,6 +129,36 @@ public final class PlayerStateService {
         this.resourceBar = new ResourceBar(plugin);
         this.partyHud = new tw.exilecore.party.PartyHud(plugin);
         this.conditionTracker = new ConditionTracker(plugin);
+        lootFeed.listen(this::lootToSidebar);
+    }
+
+    /**
+     * 2026-11-02 照站長：資源包版（沒裝模組）撿到的東西也進右邊記分板的「最近撿到」（套了資源包畫成卡片，{@link tw.exilecore.gui.Sidebar#loot}）。
+     * 快捷欄右邊那塊改放增益與召喚物（著色器搬到右下角），GUI 縮放 4 時卡片原本就被擠出畫面；記分板在 GUI 縮放 2、3、4 都看得到。
+     * 模組畫「撿到」面板的人（招呼寫了 sides）不送（不重複）；沒套資源包的人照舊不顯示（2026-10 拿掉的側欄「最近撿到」不放回來）。
+     * 這次之前 Sidebar.loot 沒有人呼叫，撿到東西只畫在快捷欄右邊。
+     */
+    private void lootToSidebar(final java.util.UUID id, final int count, final LootFeed.Entry entry) {
+        if (plugin.sidebar() == null || plugin.web() == null) {
+            return;
+        }
+        final Player player = plugin.getServer().getPlayer(id);
+        if (player == null || !player.isOnline() || !sidebarLoot(plugin.web().hasPack(player),
+                plugin.clientMod() != null && plugin.clientMod().drawsSides(player))) {
+            return;
+        }
+        plugin.sidebar().loot(player, List.of(sidebarItem(entry.name(), count, entry.icon(), entry.color())));
+    }
+
+    /** 2026-11-02：撿到的東西要不要進記分板的「最近撿到」：套了資源包、模組不畫「撿到」面板。純函式（測試用）。 */
+    static boolean sidebarLoot(final boolean pack, final boolean modSides) {
+        return pack && !modSides;
+    }
+
+    /** 2026-11-02：LootFeed 的一行換成記分板「最近撿到」的一樣（名稱照框的顏色上色）。純函式（測試用）。 */
+    static tw.exilecore.gui.SidebarLayout.Item sidebarItem(final String name, final int count, final String icon, final String color) {
+        final String hex = color != null && color.matches("#[0-9a-fA-F]{6}") ? color : "#c8c8c8";
+        return new tw.exilecore.gui.SidebarLayout.Item("<" + hex + ">" + tw.exilecore.item.ItemRenderer.escape(name), count, icon, hex);
     }
 
     /** 2026-10-26：天賦樹條件（靜止、被包圍、低血…）的狀態；變身、夥伴系統在這裡接上條件。 */
@@ -2077,14 +2107,31 @@ public final class PlayerStateService {
         if (vanillaHealth > 0 && Math.abs(player.getHealth() - Math.min(cap, vanillaHealth)) >= 0.5) {
             player.setHealth(Math.min(cap, vanillaHealth));
         }
-        final double maxEs = state.maxEnergyShield();
-        final double absorption = maxEs <= 0 ? 0 : Math.round(20.0 * state.energyShield() / maxEs);
-        if (Math.abs(player.getAbsorptionAmount() - absorption) >= 0.5) {
-            player.setAbsorptionAmount(absorption);
+        // 2026-11-02 照站長：能量護盾畫成原版的吸收愛心（資源包把金色的換成藍色），照護盾跟生命的比例（同一個尺：40 點 = 沒被保留的生命），
+        //   最多兩排。這次之前寫的是「滿護盾 = 10 顆」，但原版的吸收上限屬性預設是 0，設下去都被夾成 0，一直沒顯示過。
+        //   原版的吸收不會真的擋傷害（CombatListener.onAbsorption 把吸收那段改成 0）。裝了星骸輔助模組、模組自己畫護盾的人不用這個
+        final boolean modHearts = plugin.clientMod() != null && plugin.clientMod().drawsHearts(player);
+        // 2026-11-02 照站長：套了資源包的人改看生命球的外環（資源包把愛心都換成透明的），也不用吸收愛心；這次之前套了資源包也用吸收愛心
+        final double absorption = modHearts || orbs(player) ? 0 : esAbsorption(state.energyShield(), state.maxEnergyShield(), state.unreservedLife());
+        final AttributeInstance maxAbsorption = player.getAttribute(Attribute.MAX_ABSORPTION);
+        if (maxAbsorption != null && maxAbsorption.getBaseValue() != VANILLA_MAX_HEALTH) {
+            maxAbsorption.setBaseValue(VANILLA_MAX_HEALTH);
         }
-        final double maxMana = state.maxMana();
-        player.setLevel((int) Math.round(state.mana()));
-        player.setExp(maxMana <= 0 ? 0f : (float) Math.max(0, Math.min(0.999, state.mana() / maxMana)));
+        if (Math.abs(player.getAbsorptionAmount() - absorption) >= 0.5) {
+            player.setAbsorptionAmount(maxAbsorption == null ? 0 : Math.min(maxAbsorption.getValue(), absorption));
+        }
+        // 2026-11-02 照站長：有球（資源包的球、或模組畫的球）時魔力已經在魔力球上，原版經驗條改回角色經驗（等級數字＝角色等級、
+        //   條＝到下一級的百分比；動作列不再寫「Lv.31 42.0%」）。沒有球照舊：等級數字＝魔力、條＝魔力比例。
+        //   經驗條只有這裡在寫（蓄力、引導沒有借用它；原版的經驗球、附魔都關掉了）
+        if (orbLayout(player)) {
+            player.setLevel(state.hasCharacter() ? state.level() : 0);
+            player.setExp((float) xpBar(state.hasCharacter() && state.level() < config.levelCap(),
+                    state.hasCharacter() ? experienceProgress(state) : 0));
+        } else {
+            final double maxMana = state.maxMana();
+            player.setLevel((int) Math.round(state.mana()));
+            player.setExp(maxMana <= 0 ? 0f : (float) Math.max(0, Math.min(0.999, state.mana() / maxMana)));
+        }
         player.sendActionBar(actionBar(player, state));
         resourceBar.update(player, state);
     }
@@ -2094,11 +2141,65 @@ public final class PlayerStateService {
      * 別的動作列提示（{@link tw.exilecore.gui.ActionBar#send}）也接上，提示出現時隊伍框才不會不見。
      */
     public Component partyFrames(final Player player) {
+        return partyFrames(player, "");
+    }
+
+    /**
+     * 2026-11-02：接在別的動作列提示後面的那段（淨寬 0）：生命球、魔力球（{@link OrbHud}）＋隊伍框；這次之前只有隊伍框
+     * （提示一來球就不見，要等下一次血量那一行）。
+     *
+     * @param messagePlain 提示的純文字（球的位置照它的寬度往回推；動作列是置中的）
+     */
+    public Component partyFrames(final Player player, final String messagePlain) {
         if (plugin.web() == null || !plugin.web().hasPack(player)) {
             return null;
         }
         final PlayerState state = states.get(player.getUniqueId());
-        return state == null ? null : partyHud.render(player, state);
+        if (state == null) {
+            return null;
+        }
+        final Component orbs = orbs(player) ? orbComponent(state, messagePlain) : null;
+        final Component frames = partyHud.render(player, state);
+        if (orbs == null) {
+            return frames;
+        }
+        return frames == null ? orbs : Component.text().append(orbs).append(frames).build();
+    }
+
+    /**
+     * 2026-11-02：有球時原版經驗條要畫多少（0～0.999；原版 1 會跳下一級）：還沒滿級是到下一級的進度、滿級是整條。純函式（測試用）。
+     */
+    static double xpBar(final boolean levelling, final double progress) {
+        if (!levelling) {
+            return 0.999;
+        }
+        return Double.isNaN(progress) ? 0 : Math.max(0, Math.min(0.999, progress));
+    }
+
+    /**
+     * 2026-11-02 照站長（第二版）：這個人畫面上有生命球、魔力球——資源包的（{@link #orbs}）或星骸輔助模組 1.3 畫的。
+     * 有球時動作列不寫生命、能量護盾、魔力的數字與等級，經驗條改顯示角色經驗，快捷欄兩側的字從球的外側開始。
+     */
+    boolean orbLayout(final Player player) {
+        return orbs(player) || plugin.clientMod() != null && plugin.clientMod().drawsOrbs(player);
+    }
+
+    /**
+     * 2026-11-02 照站長：畫不畫生命球、魔力球（{@link OrbHud}）：套了資源包、資源包裡有球的字型，
+     * 而且不是星骸輔助模組自己畫生命（模組畫的人、按 F7 關掉模組 HUD 的人照這裡）。
+     */
+    boolean orbs(final Player player) {
+        return tw.exilecore.web.OrbFont.ready() && plugin.web() != null && plugin.web().hasPack(player)
+                && !(plugin.clientMod() != null && plugin.clientMod().drawsHearts(player));
+    }
+
+    /** 球那一段：接在寬度是 plain 的置中文字後面。 */
+    private static Component orbComponent(final PlayerState state, final String plain) {
+        final OrbHud.Vitals vitals = new OrbHud.Vitals(state.life(), state.maxLife(), state.reservedLife(), state.energyShield(),
+                state.maxEnergyShield(), state.mana(), state.maxMana(), tw.exilecore.clientmod.ClientModService.manaShare(state),
+                state.reservedFraction() * state.maxMana());
+        final int half = (int) Math.round(tw.exilecore.web.HudFont.estimateVanilla(plain) / 2.0);
+        return OrbHud.render(OrbHud.layout(vitals), half);
     }
 
     private Component actionBar(final Player player, final PlayerState state) {
@@ -2106,22 +2207,33 @@ public final class PlayerStateService {
         // 快取一直落空——改成直接組元件（不經過 MiniMessage、不用 String.format）；後面那段（異常、光環、通知…）才解析，而且很少變
         final net.kyori.adventure.text.TextComponent.Builder stats = Component.text();
         final StringBuilder statsPlain = new StringBuilder();
-        stat(stats, statsPlain, "", LIFE_COLOR, "❤ " + grouped(Math.round(state.life())) + " / " + grouped(Math.round(state.maxLife())));
-        // 2026-11-01 照 PoE2 保留生命（貝達特、血契）：最大生命後面標出鎖住的那部分（回不來，不算少掉的生命）；這次之前看不出來
-        final String reservedLife = reservedLifeSuffix(state.reservedLife());
-        if (!reservedLife.isEmpty()) {
-            stat(stats, statsPlain, "", RESERVED_LIFE_COLOR, reservedLife);
+        // 2026-11-02 照站長：有畫生命球、魔力球的人，動作列不再寫生命、保留、能量護盾、魔力的數字（寫在球上）；守護照舊。
+        //   第二版：模組畫的球也算（這次之前只有資源包的球）；等級改看原版經驗條，「Lv.31 42.0%」也不寫
+        final boolean orbs = orbLayout(player);
+        // 2026-11-02 照站長（模組 1.4）：模組在生命球旁邊畫異常、守護、入場保護（招呼寫了 status、有球）時動作列不寫這些；
+        //   模組畫提示列（notice）時提示也不寫。這次之前都寫在動作列
+        final boolean modStatus = plugin.clientMod() != null && plugin.clientMod().drawsStatus(player);
+        final boolean modNotice = plugin.clientMod() != null && plugin.clientMod().drawsNotices(player);
+        if (!orbs) {
+            stat(stats, statsPlain, "", LIFE_COLOR, "❤ " + grouped(Math.round(state.life())) + " / " + grouped(Math.round(state.maxLife())));
+            // 2026-11-01 照 PoE2 保留生命（貝達特、血契）：最大生命後面標出鎖住的那部分（回不來，不算少掉的生命）；這次之前看不出來
+            final String reservedLife = reservedLifeSuffix(state.reservedLife());
+            if (!reservedLife.isEmpty()) {
+                stat(stats, statsPlain, "", RESERVED_LIFE_COLOR, reservedLife);
+            }
         }
         final double guard = state.guard(plugin.getServer().getCurrentTick()); // 2026-10-28：守護（生命痕跡溢出、護符…）顯示在生命後面；這次之前看不到
-        if (guard >= 1) {
-            stat(stats, statsPlain, " ", GUARD_COLOR, "+" + grouped(Math.round(guard)) + " 守護");
+        if (guard >= 1 && !modStatus) {
+            stat(stats, statsPlain, statsPlain.isEmpty() ? "" : " ", GUARD_COLOR, "+" + grouped(Math.round(guard)) + " 守護");
         }
-        if (state.maxEnergyShield() > 0) {
+        if (!orbs && state.maxEnergyShield() > 0) {
             stat(stats, statsPlain, "  ", ES_COLOR, "⛨ " + grouped(Math.round(state.energyShield())) + " / " + grouped(Math.round(state.maxEnergyShield())));
         }
-        stat(stats, statsPlain, "  ", MANA_COLOR, "◆ " + grouped(Math.round(state.mana())) + " / " + grouped(Math.round(state.maxMana())));
-        if (state.hasCharacter()) {
-            stat(stats, statsPlain, "  ", LEVEL_COLOR, "Lv." + state.level() + " ");
+        if (!orbs) {
+            stat(stats, statsPlain, "  ", MANA_COLOR, "◆ " + grouped(Math.round(state.mana())) + " / " + grouped(Math.round(state.maxMana())));
+        }
+        if (!orbs && state.hasCharacter()) {
+            stat(stats, statsPlain, statsPlain.isEmpty() ? "" : "  ", LEVEL_COLOR, "Lv." + state.level() + " ");
             final String progress;
             if (state.level() >= config.levelCap()) {
                 progress = "滿級";
@@ -2134,17 +2246,23 @@ public final class PlayerStateService {
         }
         // 後面那段接在數字後面：以前整行一起解析時沒寫顏色的字會沿用前面的顏色（有角色是灰色，沒有是魔力的藍色）
         final StringBuilder text = new StringBuilder(state.hasCharacter() ? "<gray>" : "<#5599ff>");
-        if (plugin.ailments() != null) {
+        if (plugin.ailments() != null && !modStatus) {
             final String ailments = plugin.ailments().statusText(player);
             if (!ailments.isEmpty()) {
                 text.append("  ").append(ailments); // 點燃、冰緩、凍結、感電
             }
         }
         // 2026-10：開著的光環（快捷欄左邊）、召喚物數量（快捷欄右邊）；沒套資源包的人照舊寫在這一行
-        final List<String> auraNames = plugin.skills() == null ? List.of() : plugin.skills().auraNames(player);
-        final List<tw.exilecore.skill.MinionService.HudCount> pets = plugin.skills() == null ? List.of() : plugin.skills().minionCounts(player);
+        // 2026-11-02 照站長（模組 1.4）：模組畫光環（併進增益列）、召喚物與撿到的東西（面板）的人（招呼寫了 sides），這裡不寫；
+        //   這次之前接在動作列後面（球的外側），跟模組的異常、資源擠在一起
+        final boolean modSides = plugin.clientMod() != null && plugin.clientMod().drawsSides(player);
+        final List<String> auraNames = plugin.skills() == null || modSides ? List.of() : plugin.skills().auraNames(player);
+        final List<tw.exilecore.skill.MinionService.HudCount> pets = plugin.skills() == null || modSides ? List.of()
+                : plugin.skills().minionCounts(player);
         // 2026-10-20：增益倒數（技能格上方、快捷欄左邊）
+        // 2026-11-02：裝了星骸輔助模組、模組自己畫技能列與增益的人，動作列不再寫增益倒數（不重複）；生命、魔力那段照舊
         final tw.exilecore.skill.SkillService.HudBuffs hudBuffs = plugin.skills() == null
+                || plugin.clientMod() != null && plugin.clientMod().drawsBuffs(player)
                 ? tw.exilecore.skill.SkillService.HudBuffs.EMPTY
                 : plugin.skills().hudBuffs(player, plugin.combat() != null && plugin.combat().hud() != null
                         && plugin.combat().hud().fighting(player.getUniqueId()));
@@ -2157,37 +2275,35 @@ public final class PlayerStateService {
             }
         }
         // 2026-10：怒氣、連擊、灌注、獸性與戰星搬到畫面上方的戰鬥資源血條（ResourceBar），動作列不再寫
-        if (state.isSafe()) {
+        if (state.isSafe() && !modStatus) {
             text.append("  ").append(EntryGrace.HUD); // 入場保護
         }
         final String notice = state.notice(plugin.getServer().getCurrentTick());
-        if (notice != null) {
+        if (notice != null && !modNotice) {
             text.append("  ").append(notice);
+        }
+        // 2026-11-02：有球時前面那段可能整個沒有（沒有守護）：後面那段開頭的空白拿掉，不然整行往右偏
+        final String head = state.hasCharacter() ? "<gray>" : "<#5599ff>";
+        if (statsPlain.isEmpty() && text.length() >= head.length() + 2 && text.substring(head.length(), head.length() + 2).equals("  ")) {
+            text.delete(head.length(), head.length() + 2);
         }
         final String mainPlain = statsPlain + cachedPlain(player, text.toString());
         if (sides) {
-            final String side = HotbarSides.render(auraNames, pets, hudBuffs, mainPlain);
+            final String side = HotbarSides.render(auraNames, pets, hudBuffs, mainPlain, orbs); // 2026-11-02：有球時從球的外側開始
             if (side != null) {
                 text.append(side);
             } else {
                 text.append("  ").append(HotbarSides.inline(auraNames, pets, hudBuffs)); // 有字沒收進字型（新加的技能名稱）：照舊
             }
         }
-        // 2026-10：撿到東西的角落提示（快捷欄右邊往上疊；2026-10-23：有召喚物時放在召喚物那一欄的右邊）
-        if (tw.exilecore.web.LootHud.ready() && plugin.web() != null && plugin.web().hasPack(player)) {
-            final long now = plugin.getServer().getCurrentTick();
-            final List<LootFeed.Entry> loot = lootFeed.active(player.getUniqueId(), now);
-            if (!loot.isEmpty()) {
-                text.append(HotbarSides.renderLoot(loot, HotbarSides.lootStart(pets, sides), mainPlain, now));
-            }
-        }
+        // 2026-11-02 照站長：撿到東西不再畫在快捷欄右邊（那塊改放增益、召喚物，著色器搬到右下角），改進右邊記分板的「最近撿到」
+        //   （lootToSidebar）。這次之前（2026-10）是快捷欄右邊往上疊的卡片，GUI 縮放 4 時被擠出畫面
         final Component main = stats.append(cachedParse(player, text.toString())).build();
         // 2026-10-22：畫面左上角的隊伍框（PartyHud，2026-10-18 做好了但一直沒接上動作列）：接在最後面，淨寬 0
-        if (plugin.web() != null && plugin.web().hasPack(player)) {
-            final Component frames = partyHud.render(player, state);
-            if (frames != null) {
-                return Component.text().append(main).append(frames).build();
-            }
+        // 2026-11-02：生命球、魔力球（OrbHud）也接在這裡（同樣淨寬 0，位置照主要那段的寬度往回推）
+        final Component overlay = partyFrames(player, mainPlain);
+        if (overlay != null) {
+            return Component.text().append(main).append(overlay).build();
         }
         return main;
     }
@@ -2209,6 +2325,19 @@ public final class PlayerStateService {
     static String reservedLifeSuffix(final double reservedLife) {
         final long reserved = Math.round(reservedLife);
         return reserved <= 0 ? "" : "（保留 " + grouped(reserved) + "）";
+    }
+
+    /**
+     * 2026-11-02：能量護盾畫成幾點原版吸收（半顆心 = 1 點）。純函式（測試用）。
+     * 跟愛心同一個尺（{@value #VANILLA_MAX_HEALTH} 點 = 沒被保留的生命）：護盾等於生命時兩排金（藍）心，最多兩排；
+     * 有護盾就至少半顆，沒有護盾或上限是 0 時是 0。
+     */
+    static double esAbsorption(final double energyShield, final double maxEnergyShield, final double unreservedLife) {
+        if (energyShield <= 0 || maxEnergyShield <= 0) {
+            return 0;
+        }
+        final double points = Math.round(VANILLA_MAX_HEALTH * energyShield / Math.max(1, unreservedLife));
+        return Math.max(1, Math.min(VANILLA_MAX_HEALTH, points));
     }
 
     /** 2026-11-01：原版愛心要畫幾成（目前生命 ÷ 沒被保留的生命，0～1）。純函式（測試用）。 */

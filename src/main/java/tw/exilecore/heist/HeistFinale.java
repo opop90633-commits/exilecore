@@ -231,7 +231,7 @@ final class HeistFinale implements Listener {
             block.setType(Material.CHEST, false);
             run.chests.put(key(block), i);
             run.chestBlocks.add(block);
-            instance.world().spawnParticle(Particle.END_ROD, block.getLocation().add(0.5, 1.15, 0.5), 20, 0.3, 0.4, 0.3, 0.02);
+            tw.exilecore.skill.Fx.spawn(instance.world(), Particle.END_ROD, block.getLocation().add(0.5, 1.15, 0.5), 20, 0.3, 0.4, 0.3, 0.02);
         }
     }
 
@@ -415,7 +415,7 @@ final class HeistFinale implements Listener {
             spawned += spawnPack(run, center, target, MonsterRarity.RARE, config.rare());
             spawned += spawnPack(run, center, target, MonsterRarity.MAGIC, config.magic());
             spawned += spawnPack(run, center, target, MonsterRarity.NORMAL, config.normal());
-            center.getWorld().spawnParticle(Particle.LARGE_SMOKE, center.clone().add(0, 1, 0), 30, 1.2, 0.6, 1.2, 0.02);
+            tw.exilecore.skill.Fx.spawn(center.getWorld(), Particle.LARGE_SMOKE, center.clone().add(0, 1, 0), 30, 1.2, 0.6, 1.2, 0.02);
         }
         for (final Player player : inside) {
             player.showTitle(Title.title(plugin.text().parse("<red>警報響起！"),
@@ -482,7 +482,7 @@ final class HeistFinale implements Listener {
             run.alarmBlocks.remove(key(block));
             label.remove();
             block.setType(Material.AIR, false);
-            block.getWorld().spawnParticle(Particle.SMOKE, block.getLocation().add(0.5, 0.5, 0.5), 15, 0.3, 0.3, 0.3, 0.02);
+            tw.exilecore.skill.Fx.spawn(block.getWorld(), Particle.SMOKE, block.getLocation().add(0.5, 0.5, 0.5), 15, 0.3, 0.3, 0.3, 0.02);
             player.playSound(player.getLocation(), Sound.BLOCK_IRON_TRAPDOOR_CLOSE, 1.0f, 1.4f);
             if (run.alarms.isEmpty()) {
                 run.alarmDeadline = -1;
@@ -564,7 +564,7 @@ final class HeistFinale implements Listener {
         player.sendMessage(plugin.text().prefixed("<#8b0000>金庫之主的收藏：<gray>你拿走了 " + choice.label() + "<gray>，其他的寶箱封鎖了。"));
         player.playSound(player.getLocation(), Sound.BLOCK_CHEST_OPEN, 1.0f, 0.9f);
         player.playSound(player.getLocation(), Sound.BLOCK_IRON_DOOR_CLOSE, 0.8f, 0.6f);
-        block.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING, block.getLocation().add(0.5, 1.2, 0.5), 30, 0.3, 0.5, 0.3, 0.2);
+        tw.exilecore.skill.Fx.spawn(block.getWorld(), Particle.TOTEM_OF_UNDYING, block.getLocation().add(0.5, 1.2, 0.5), 30, 0.3, 0.5, 0.3, 0.2);
     }
 
     private DropTable.Drop toDrop(final Run run, final Choice choice) {

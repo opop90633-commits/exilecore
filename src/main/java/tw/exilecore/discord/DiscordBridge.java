@@ -59,6 +59,7 @@ public final class DiscordBridge {
     boolean syncJoinLeave;
     boolean syncWorldEvents;
     boolean syncAchievements;
+    boolean syncMilestones;
     boolean syncServer;
 
 
@@ -95,6 +96,7 @@ public final class DiscordBridge {
         syncJoinLeave = section.getBoolean("sync.join-leave", true);
         syncWorldEvents = section.getBoolean("sync.world-events", true);
         syncAchievements = section.getBoolean("sync.achievements", true);
+        syncMilestones = section.getBoolean("sync.milestones", false); // 2026-11-02 照站長：預設只發追逐級、超稀有通貨掉落
         syncServer = section.getBoolean("sync.server", true);
         rest.token(token);
         tickets.configure(section);
@@ -266,8 +268,18 @@ public final class DiscordBridge {
         }
     }
 
-    /** 重大成就的公告（設定可以關）。 */
+    /**
+     * 重大成就的公告（昇華、滿級、衝等、每月挑戰、星諭卡）。2026-11-02 照站長：預設不發（sync.milestones: false），
+     * Discord 只留追逐級傳奇、超稀有通貨的掉落（rareDrop）；這次之前一律發。
+     */
     public void achievement(final String miniMessage) {
+        if (syncAchievements && syncMilestones) {
+            announce("🏆", miniMessage);
+        }
+    }
+
+    /** 2026-11-02：追逐級傳奇、超稀有通貨（映星鏡、共鳴石、預見鎖）掉落的公告（sync.achievements 可以關）。 */
+    public void rareDrop(final String miniMessage) {
         if (syncAchievements) {
             announce("🏆", miniMessage);
         }

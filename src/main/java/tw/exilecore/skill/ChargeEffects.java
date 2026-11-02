@@ -295,6 +295,7 @@ public final class ChargeEffects implements Listener {
             ground.next()[0] += 10;
             if (!groundStep(ground, now)) {
                 grounds.remove(ground);
+                Fx.zoneStop(ground);
             }
         }
         if (grounds.isEmpty() && groundTask != null) {
@@ -326,11 +327,9 @@ public final class ChargeEffects implements Listener {
                     }
                 }
             }
-            final int points = (int) Math.max(8, Math.min(32, r * 6));
-            for (int i = 0; i < points; i++) {
-                final double a = Math.PI * 2 * i / points + elapsed * 0.03;
-                Fx.spawn(at.getWorld(), particle, at.clone().add(Math.cos(a) * r, 0.15, Math.sin(a) * r), 1, 0, 0, 0, 0);
-            }
+            // 2026-11-02：外框走 Fx.zone（點數照周長、照特效等級；範圍變了模組那邊收到 UPDATE）
+            Fx.zone(ground, at.clone().add(0, 0.15, 0), r, Fx.Look.edge(particle, null), (int) Math.max(0, ground.ticks() - elapsed),
+                    owner.getUniqueId(), false);
         }
         return true;
     }
@@ -486,7 +485,7 @@ public final class ChargeEffects implements Listener {
                 // 2026-10-26 照 PoE2：天賦的「被招架」效果、持續時間（以前固定 50%、2 秒）
                 plugin.combat().debuffs().apply(attacker.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff(PARRIED, player.getUniqueId(),
                         now + parriedTicks(sheet), parriedTaken(sheet), false, Tags.ATTACK));
-                attacker.getWorld().spawnParticle(Particle.CRIT, attacker.getLocation().add(0, 1, 0), 12, 0.3, 0.4, 0.3, 0.1);
+                tw.exilecore.skill.Fx.spawn(attacker.getWorld(), Particle.CRIT, attacker.getLocation().add(0, 1, 0), 12, 0.3, 0.4, 0.3, 0.1);
             }
             player.getWorld().playSound(player.getLocation(), Sound.ITEM_SHIELD_BLOCK, SoundCategory.PLAYERS, 1f, 1.3f);
             // 2026-10-30 照 PoE2 Parry（replace_off_hand_unarmed_attack_stats_with_shield_type、每 5 點圓盾閃避 3～4 點物理）：
@@ -502,7 +501,7 @@ public final class ChargeEffects implements Listener {
                 magmaSpent.put(player.getUniqueId(), now);
                 service.procs().castAt(player, MAGMA_SPRAY, "magma_barrier", player.getLocation());
                 player.getWorld().playSound(player.getLocation(), Sound.ITEM_BUCKET_EMPTY_LAVA, SoundCategory.PLAYERS, 1f, 1f);
-                player.getWorld().spawnParticle(Particle.LAVA, player.getLocation().add(0, 1, 0), 16, 1.2, 0.3, 1.2, 0);
+                tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.LAVA, player.getLocation().add(0, 1, 0), 16, 1.2, 0.3, 1.2, 0);
                 final ChargeService charges = charges();
                 if (charges != null) {
                     charges.grant(player, "endurance", 1);

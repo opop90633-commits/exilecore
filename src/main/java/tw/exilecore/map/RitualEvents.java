@@ -128,6 +128,26 @@ final class RitualEvents implements Listener {
     }
 
     private final ExileCore plugin;
+    /** 2026-11-02 照站長（模組 1.4 B 組）：地圖資訊框的祭壇那一行（沒有祭壇回傳 null）。 */
+    tw.exilecore.clientmod.WorldHudProtocol.EventLine hudLine(final MapInstance instance, final UUID viewer) {
+        final Ritual ritual = byInstance.get(instance.id());
+        if (ritual == null || ritual.altars.isEmpty()) {
+            return null;
+        }
+        final int total = ritual.altars.size();
+        final int done = ritual.done();
+        final int tribute = ritual.tribute.getOrDefault(viewer, 0);
+        final Altar active = ritual.active;
+        if (active != null && active.started && !active.done) {
+            return new tw.exilecore.clientmod.WorldHudProtocol.EventLine("祭壇", 0xFF5C6A, "祭壇 " + (active.index + 1) + "/" + total + "・第 "
+                    + active.wave + "/" + ritual.waves + " 波・剩 " + active.monsters.size() + " 隻・貢品 " + tribute,
+                    MapEvents.percent((double) done / total), tw.exilecore.clientmod.WorldHudProtocol.EVENT_ACTIVE);
+        }
+        return new tw.exilecore.clientmod.WorldHudProtocol.EventLine("祭壇", 0xFF5C6A, "完成 " + done + "/" + total + "・貢品 " + tribute,
+                MapEvents.percent((double) done / total), done >= total ? tw.exilecore.clientmod.WorldHudProtocol.EVENT_DONE
+                : done > 0 ? tw.exilecore.clientmod.WorldHudProtocol.EVENT_ACTIVE : tw.exilecore.clientmod.WorldHudProtocol.EVENT_IDLE);
+    }
+
     private final MapService service;
     private final MapEventConfig config;
     private final Map<Integer, Ritual> byInstance = new HashMap<>();
@@ -261,7 +281,7 @@ final class RitualEvents implements Listener {
                 altar.label = label(ritual, altar);
             }
             if (!altar.started) {
-                center.getWorld().spawnParticle(Particle.DUST, center.getX(), center.getY() + 1.6, center.getZ(), 3, 0.25, 0.3, 0.25, 0, BLOOD);
+                tw.exilecore.skill.Fx.spawn(center.getWorld(), Particle.DUST, center.getX(), center.getY() + 1.6, center.getZ(), 3, 0.25, 0.3, 0.25, 0, BLOOD);
             }
         }
         final Altar active = ritual.active;
@@ -294,6 +314,9 @@ final class RitualEvents implements Listener {
         final List<Player> players = players(ritual.instance);
         final Set<UUID> seen = new HashSet<>();
         for (final Player player : players) {
+            if (MapHudFeed.drawn(plugin, player)) {
+                continue; // 2026-11-02 照站長：模組的地圖資訊框已經寫了進度，不再疊血條（這次之前一律顯示）
+            }
             seen.add(player.getUniqueId());
             if (ritual.watching.add(player.getUniqueId())) {
                 player.showBossBar(ritual.bar);
@@ -380,7 +403,7 @@ final class RitualEvents implements Listener {
         final Location center = altar.center;
         center.getWorld().playSound(center, Sound.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, 1.0f, 0.5f);
         center.getWorld().playSound(center, Sound.ENTITY_WITHER_AMBIENT, 0.6f, 0.5f);
-        center.getWorld().spawnParticle(Particle.DUST, center.getX(), center.getY() + 1, center.getZ(), 60, 2.5, 0.8, 2.5, 0, BLOOD);
+        tw.exilecore.skill.Fx.spawn(center.getWorld(), Particle.DUST, center.getX(), center.getY() + 1, center.getZ(), 60, 2.5, 0.8, 2.5, 0, BLOOD);
         for (final Player near : players(ritual.instance)) {
             if (near.getLocation().distanceSquared(center) <= 40 * 40) {
                 near.showTitle(Title.title(plugin.text().parse("<#ff5c6a>儀式開始"),
@@ -422,7 +445,7 @@ final class RitualEvents implements Listener {
             }
             monster.getPersistentDataContainer().set(ritualKey, PersistentDataType.INTEGER, instance.id());
             altar.monsters.add(monster);
-            monster.getWorld().spawnParticle(Particle.DUST, monster.getLocation().add(0, 1, 0), 20, 0.4, 0.6, 0.4, 0, BLOOD);
+            tw.exilecore.skill.Fx.spawn(monster.getWorld(), Particle.DUST, monster.getLocation().add(0, 1, 0), 20, 0.4, 0.6, 0.4, 0, BLOOD);
             if (monster instanceof Mob mob && !players.isEmpty()) {
                 Player nearest = null;
                 double best = Double.MAX_VALUE;
@@ -470,7 +493,7 @@ final class RitualEvents implements Listener {
         altar.monsters.clear();
         final Location center = altar.center;
         center.getWorld().playSound(center, Sound.BLOCK_BEACON_DEACTIVATE, 1.0f, 0.7f);
-        center.getWorld().spawnParticle(Particle.SOUL, center.getX(), center.getY() + 1, center.getZ(), 30, 0.8, 0.8, 0.8, 0.03);
+        tw.exilecore.skill.Fx.spawn(center.getWorld(), Particle.SOUL, center.getX(), center.getY() + 1, center.getZ(), 30, 0.8, 0.8, 0.8, 0.03);
         final boolean all = ritual.allDone();
         for (final Player player : players(ritual.instance)) {
             final int tribute = ritual.tributeOf(player);
@@ -537,7 +560,9 @@ final class RitualEvents implements Listener {
             }
             final int total = ritual.tribute.merge(player.getUniqueId(), amount, Integer::sum);
             ritual.earned.merge(player.getUniqueId(), amount, Integer::sum);
-            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ff5c6a>貢品 +" + amount + " <gray>（共 " + total + "）"));
+            if (!MapHudFeed.drawn(plugin, player)) { // 2026-11-02：模組的地圖資訊框寫了貢品
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ff5c6a>貢品 +" + amount + " <gray>（共 " + total + "）"));
+            }
         }
     }
 

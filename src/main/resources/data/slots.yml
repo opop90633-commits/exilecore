@@ -1,0 +1,96 @@
+# 拉霸機（2026-11-02 照站長：營地放一台用金幣下注的拉霸機，目的之一是回收金幣；這次之前沒有）。改完在遊戲內 /ec reload。
+#
+# 怎麼玩：營地的「拉霸機」NPC 右鍵，或在營地輸入 /slots。選押注額、拉一次（或自動連拉），中間那一排三個（或五個）一樣就中獎。
+# 結果在按下去的那一刻就決定了（伺服器的亂數）；滾輪只是動畫。中途關掉選單、斷線、關伺服器都照常結算。
+#
+# 期望回報率（每押 1 金幣平均拿回多少）＝ Σ（權重 × 倍數）÷ 總權重。照下面的權重（總權重 10,000）：
+#
+#   結果            倍數     權重    機率        貢獻
+#   沒中             0      7,069   70.69%     0
+#   莓果  ×2         2      1,800   18%        0.360
+#   西瓜  ×3         3        800    8%        0.240
+#   金粒  ×5         5        250    2.5%      0.125
+#   金錠  ×10       10         50    0.5%      0.050
+#   綠寶石 ×20      20         15    0.15%     0.030
+#   鑽石  ×50       50          4    0.04%     0.020
+#   星骸 頭獎 ×100  100         2    0.02%     0.020
+#   限定時裝          10        10    0.1%      0.010（時裝都有了改給 10 倍金幣；還有沒拿到的時裝算 0）
+#   ---------------------------------------------------------
+#   期望回報率 ≈ 0.855（最多）。押多少都一樣，每押 100 萬金幣平均回收約 14.5 萬金幣。
+#   2026-11-02 照站長：只有金幣上的浮動，不出通貨（星晶、古遺、頭獎附送的高價通貨拿掉：金幣不能交易、通貨可以，
+#     押注拉高後會變成用金幣大量換通貨的管道）；押注加到 100 萬、莓果權重 2000 → 1800（期望回報 0.929 → 0.855）。
+#   權重、倍數改了這裡的表也要跟著改；單元測試（SlotsConfigTest）會擋期望回報率 ≥ 1。
+#
+# 押注與派彩都記在經濟流水帳：押注是金幣的「拉霸機押注」（slots_bet，消耗），派出去的金幣與通貨是「拉霸機派彩」（slots，產出）。
+# /ec economy 與網頁的市場報告看得到兩邊各多少，相減就是回收的金幣。
+
+settings:
+  enabled: true
+  reels: 3                  # 滾輪數：3 或 5（中間那一排全部一樣才中）
+  spin_ticks: 30            # 轉多久（tick；30 = 1.5 秒）：滾輪從左到右依序停下
+  town_only: true           # /slots 只能在營地用（跟倉庫一樣；管理員不限）
+  auto:
+    spins: 10               # 自動連拉一次拉幾把（中途可以停）
+    gap_ticks: 10           # 每把之間停多久（tick）
+  announce_multiplier: 50   # 金幣倍數到這個以上全服公告（遊戲內）；頭獎一定全服公告，Discord 只發頭獎
+
+# 營地的拉霸機（NPC）：第一次啟動時自動放在每條線的營地（劇情世界的座標；放過一次就不再放，刪掉了不會自己長回來）。
+# 要換位置：/ec npc remove 移掉、站到想放的地方 /ec npc spawn slots。y 不寫 = 營地地面。
+machine:
+  auto_place: true
+  x: 12.5
+  z: 14.5
+  yaw: 135
+
+# 押注額（金幣）：選單上一個一個列出來
+bets: [1000, 10000, 100000, 500000, 1000000]   # 2026-11-02 照站長（金幣產出：每個活躍帳號每天約 260～480 萬）：這次之前 [100, 1000, 10000]
+
+# 中獎的結果：kind 是 gold（金幣倍數）、currency（通貨：從 pool 抽一種，數量 = 倍數 × 押注 ÷ 這種通貨的參考價值，無條件捨去；
+#   押注太小、一顆都換不到的通貨不抽，全部換不到就改給同樣倍數的金幣）、cosmetic（拉霸限定時裝：從 cosmetics 抽一件還沒有的；
+#   都有了改給 multiplier 倍金幣）、jackpot（頭獎：multiplier 倍金幣，bonus 另外送通貨，還送這個押注額的稱號：見最下面的 titles）。
+# symbol 是滾輪上的圖案（原版物品），name 是圖案的名字。沒中的時候中間那一排從這些圖案隨機擺（不會全部一樣）。
+lose_weight: 7069
+outcomes:
+  berry:    { kind: gold, multiplier: 2, weight: 1800, symbol: SWEET_BERRIES, name: 莓果 }
+  melon:    { kind: gold, multiplier: 3, weight: 800, symbol: MELON_SLICE, name: 西瓜 }
+  nugget:   { kind: gold, multiplier: 5, weight: 250, symbol: GOLD_NUGGET, name: 金粒 }
+  ingot:    { kind: gold, multiplier: 10, weight: 50, symbol: GOLD_INGOT, name: 金錠 }
+  emerald:  { kind: gold, multiplier: 20, weight: 15, symbol: EMERALD, name: 綠寶石 }
+  diamond:  { kind: gold, multiplier: 50, weight: 4, symbol: DIAMOND, name: 鑽石 }
+  fashion:  { kind: cosmetic, multiplier: 10, weight: 10, symbol: FIREWORK_STAR, name: 煙火 }
+  jackpot:  { kind: jackpot, multiplier: 100, weight: 2, symbol: NETHER_STAR, name: 星骸 }   # 2026-11-02：不再附送通貨
+
+# 2026-11-02 照站長：現在沒有任何結果出通貨（留著獎池，之後要開回來只要在 outcomes 加 kind: currency）。
+# 通貨獎池：中了通貨照 weight 抽一種（只從押注夠換到至少一顆的裡面抽）。價值照 economy.yml 的參考價值（跟著市價走）。
+currency_pools:
+  common:
+    - { id: zenith_orb, weight: 40 }     # 至臻石（崇高石）
+    - { id: turmoil_orb, weight: 30 }    # 亂流石（混沌石）
+    - { id: bounty_orb, weight: 10 }     # 豐饒石
+    - { id: spark_orb, weight: 10 }      # 星火石
+    - { id: chance_orb, weight: 5 }      # 僥倖石
+    - { id: annul_orb, weight: 5 }       # 湮滅石
+  rare:
+    - { id: annul_orb, weight: 30 }          # 湮滅石
+    - { id: oracle_orb, weight: 25 }         # 天啟石（神聖石）
+    - { id: greater_socket_orb, weight: 15 } # 大鑿星石
+    - { id: perfect_zenith_orb, weight: 10 } # 完美至臻石
+    - { id: fracture_orb, weight: 10 }       # 定星石
+    - { id: hinekora_lock, weight: 10 }      # 預見鎖
+
+# 拉霸限定時裝（sponsor.yml 的 cosmetics 代號；limited: 拉霸機）。中了「煙火」從還沒有的裡面抽一件。
+cosmetics: [slots_coin_halo, slots_clover_ring, slots_coin_trail, slots_jackpot_spiral]
+
+# 拉霸限定稱號：每個押注額一個（2026-11-02 照站長；這次之前只有一個「金運亨通」+5%，押 1,000 以上中頭獎或保底 3,000 把就拿到）。
+#   拿法只有一種：用那個押注額中頭獎，就拿到那個押注額的稱號。押更大的中頭獎不會順便給比較低押注的稱號（要一個一個押）。
+#   已經有的、被管理員收回的不會再給。
+#   擁有就有加成（帳號共用，不用戴），五個都有就全部疊加：怪物掉落金幣 +1% +2% +3% +4% +5% = +15%。
+#   bets 的每個押注額剛好一個稱號、代號不能重複（重讀時檢查，對不上的會在主控台警告）。
+#   2026-11-02：保底拿掉（這次之前押 1,000 以上累積 3,000 把給稱號）。帳號裡記的保底把數（slots.pity）不刪也不再讀。
+#   相容：100 萬那一階沿用舊稱號的代號 slots_fortune（名字、顏色、+5% 都沒變），以前拿到「金運亨通」的人直接算擁有最高那一階，加成不變。
+titles:
+  - { bet: 1000,    id: slots_t1,      name: 小賭怡情, color: "#e6dcc0",                   stats: [ { stat: gold.find, type: INCREASED, value: 1 } ] }   # 怪物掉落金幣 +1%
+  - { bet: 10000,   id: slots_t2,      name: 手氣正旺, color: "#f2d98c",                   stats: [ { stat: gold.find, type: INCREASED, value: 2 } ] }   # +2%
+  - { bet: 100000,  id: slots_t3,      name: 一擲千金, color: "#ffd24a",                   stats: [ { stat: gold.find, type: INCREASED, value: 3 } ] }   # +3%
+  - { bet: 500000,  id: slots_t4,      name: 豪賭之王, color: "gradient:#ffe9a8:#ffb733",  stats: [ { stat: gold.find, type: INCREASED, value: 4 } ] }   # +4%
+  - { bet: 1000000, id: slots_fortune, name: 賭神, color: "gradient:#ffe066:#ff9f1c",  stats: [ { stat: gold.find, type: INCREASED, value: 5 } ] }   # +5%（舊稱號的代號；2026-11-02 照站長稱號改成跟賭有關的名字，這次之前「金運亨通」）

@@ -114,12 +114,7 @@ final class MapSpawner {
             // 精英巢穴：兩隻（30% 三隻）稀有怪，沒有小怪
             final int count = 2 + (random.nextDouble() < 0.3 ? 1 : 0);
             for (int i = 0; i < count; i++) {
-                List<String> rareMods = plugin.events() == null ? null : plugin.events().rareMods(instance.level(), random);
-            final double modChance = instance.stats().extra("map.rare_mod_chance");
-            if (rareMods == null && modChance > 0) {
-                rareMods = plugin.monsters().rollModsBoosted(MonsterRarity.RARE, instance.level(), modChance / 100.0); // 2026-10-26（PoE2）
-            }
-                add(pack, spawn(instance, entry, around(instance, spot, i == 0, random), MonsterRarity.RARE, rareMods));
+                add(pack, spawn(instance, entry, around(instance, spot, i == 0, random), MonsterRarity.RARE, rareMods(instance, random)));
             }
             return;
         }
@@ -144,19 +139,36 @@ final class MapSpawner {
                 add(pack, spawn(instance, entry, around(instance, spot, i == 0, random), MonsterRarity.MAGIC, mods));
             }
         } else {
-            // 每月活動的主題：稀有怪一定帶那一條詞綴（沒有活動照一般抽）
-            List<String> rareMods = plugin.events() == null ? null : plugin.events().rareMods(instance.level(), random);
-            final double modChance = instance.stats().extra("map.rare_mod_chance");
-            if (rareMods == null && modChance > 0) {
-                rareMods = plugin.monsters().rollModsBoosted(MonsterRarity.RARE, instance.level(), modChance / 100.0); // 2026-10-26（PoE2）
-            }
-            add(pack, spawn(instance, entry, around(instance, spot, true, random), MonsterRarity.RARE, rareMods));
+            add(pack, spawn(instance, entry, around(instance, spot, true, random), MonsterRarity.RARE, rareMods(instance, random)));
             // 2026-10-21 修正：無人之地「只有稀有怪與 Boss」：稀有怪不帶普通怪小弟
             final int minions = rareOnly ? 0 : size(settings.rare(), sizeFactor, random);
             for (int i = 0; i < minions; i++) {
                 add(pack, spawn(instance, entry, around(instance, spot, false, random), MonsterRarity.NORMAL, List.of()));
             }
         }
+    }
+
+    /**
+     * 一隻稀有怪的詞綴。每月活動的主題：稀有怪一定帶那一條詞綴（沒有活動照一般抽）；
+     * 2026-10-26（PoE2）換界石「稀有怪的詞綴機率更多 x%」；2026-11-02 照 PoE2 星圖天賦：Adaptive Biology、Mutating Monsters
+     * （atlas.rare_mod_chance 機率增加 10%、atlas.rare_mod_max 上限 +1）、No Simple Battles（atlas.rare_mod_min 至少 3 條）；
+     * 2026-11-02 照 PoE2 腐化怪物：腐化區（星圖的腐化格）的稀有怪各多一條腐化詞綴。這次之前只有前兩種。
+     */
+    private List<String> rareMods(final MapInstance instance, final RandomGenerator random) {
+        List<String> mods = plugin.events() == null ? null : plugin.events().rareMods(instance.level(), random);
+        if (mods == null) {
+            final AtlasBonus atlas = instance.atlas();
+            mods = plugin.monsters().rollRareMods(instance.level(), instance.stats().extra("map.rare_mod_chance") / 100.0,
+                    atlas.increased("atlas.rare_mod_chance"), atlas.count("atlas.rare_mod_max"), atlas.count("atlas.rare_mod_min"));
+        }
+        if (instance.corruptedArea()) {
+            final String corrupted = plugin.monsters().rollCorruptedMod();
+            if (corrupted != null && !mods.contains(corrupted)) {
+                mods = new java.util.ArrayList<>(mods);
+                mods.add(corrupted);
+            }
+        }
+        return mods;
     }
 
     private static void add(final List<LivingEntity> pack, final LivingEntity entity) {

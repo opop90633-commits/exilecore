@@ -67,7 +67,24 @@ public abstract class Menu implements InventoryHolder {
     protected Menu(final ExileCore plugin, final Player player, final int rows, final String title) {
         this.plugin = plugin;
         this.player = player;
-        this.inventory = Bukkit.createInventory(this, rows * 9, plugin.text().parse(title));
+        this.inventory = Bukkit.createInventory(this, rows * 9, uniformTitle(plugin.text().parse(title), false));
+    }
+
+    /** 2026-11-02 照站長：所有箱子選單的標題統一一個顏色（深、在灰底上看得清楚）；這次之前各選單自己的顏色（深灰、淡黃、淡藍…）。 */
+    public static final net.kyori.adventure.text.format.TextColor TITLE_COLOR = net.kyori.adventure.text.format.TextColor.color(0x2A2A2A);
+
+    /** 把標題的字換成 {@link #TITLE_COLOR}；介面資源包的背景圖（有指定字型的那段）照原本的顏色，不然背景會被染色。 */
+    static Component uniformTitle(final Component title, final boolean inFont) {
+        final boolean font = inFont || title.font() != null;
+        Component out = font ? title : title.color(TITLE_COLOR);
+        if (!title.children().isEmpty()) {
+            final List<Component> children = new ArrayList<>(title.children().size());
+            for (final Component child : title.children()) {
+                children.add(uniformTitle(child, font));
+            }
+            out = out.children(children);
+        }
+        return out;
     }
 
     @Override

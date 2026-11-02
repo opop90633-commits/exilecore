@@ -1265,7 +1265,8 @@ final class AuraService implements Listener {
             if (mine == null || mine.values().stream().allMatch(aura -> aura.build.definition().reservesSpiritOnly())
                     || plugin.getServer().getPlayer(uuid) == null) { // 2026-10-28：只剩只保留精魂的主動技能也收掉
                 decals.removePrefix("aura:" + uuid + ":");
-                decalSignature.remove(uuid);
+                final String old = decalSignature.remove(uuid);
+                SkillVisuals.auraGone(uuid, old == null ? 0 : old.split(",").length); // 2026-11-02：模組那邊收到 STOP
             }
         }
     }

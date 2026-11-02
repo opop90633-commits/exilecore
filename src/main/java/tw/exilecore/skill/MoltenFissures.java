@@ -456,19 +456,25 @@ final class MoltenFissures {
                 damage.hit(owner, target, fissure.profile, null);
             }
         }
-        for (int i = from; i <= to; i++) {
-            final Location point = fissure.points.get(i);
-            Fx.spawn(point.getWorld(), Particle.LAVA, point.clone().add(0, 0.1, 0), 1, 0.15, 0, 0.15, 0);
-            Fx.spawn(point.getWorld(), Particle.FLAME, point.clone().add(0, 0.15, 0), 2, fissure.radius * 0.4, 0.05, fissure.radius * 0.4, 0.01);
-        }
+        Fx.as(owner.getUniqueId(), () -> { // 2026-11-02：記得是誰的（特效等級）
+            for (int i = from; i <= to; i++) {
+                final Location point = fissure.points.get(i);
+                Fx.spawn(point.getWorld(), Particle.LAVA, point.clone().add(0, 0.1, 0), 1, 0.15, 0, 0.15, 0);
+                Fx.spawn(point.getWorld(), Particle.FLAME, point.clone().add(0, 0.15, 0), 2, fissure.radius * 0.4, 0.05, fissure.radius * 0.4, 0.01);
+            }
+        });
     }
 
     /** 留在地上的地裂：每 0.5 秒冒一點煙火（不打傷害）。 */
     private void idle(final Fissure fissure) {
-        for (int i = 0; i < fissure.points.size(); i += 2) {
-            final Location point = fissure.points.get(i);
-            Fx.spawn(point.getWorld(), Particle.SMALL_FLAME, point.clone().add(0, 0.1, 0), 1, 0.12, 0, 0.12, 0);
-        }
+        // 2026-11-02：持續的地裂（模組那邊是一條 LINE，START／STOP 跟著它）；粒子照常每 0.5 秒（別人的低特效等級不送）
+        Fx.as(fissure.group.owner.getUniqueId(), () -> Fx.track(fissure, fissure.points.getFirst(), fissure.points.getLast(), fissure.radius,
+                FxEffect.Shape.LINE, Particle.SMALL_FLAME, null, (int) Math.max(0, fissure.until - now()), FxPolicy.REDRAW_TICKS, () -> {
+                    for (int i = 0; i < fissure.points.size(); i += 2) {
+                        final Location point = fissure.points.get(i);
+                        Fx.spawn(point.getWorld(), Particle.SMALL_FLAME, point.clone().add(0, 0.1, 0), 1, 0.12, 0, 0.12, 0);
+                    }
+                }));
     }
 
     /** 餘震從 start 往兩邊擴散 before → after：打新蓋到的取樣點附近的敵人（這道餘震每隻一下）。 */
@@ -497,9 +503,11 @@ final class MoltenFissures {
                 damage.hit(owner, target, profile, null);
             }
         }
-        for (int i = from; i <= to; i++) {
-            final Location point = fissure.points.get(i);
-            Fx.spawn(point.getWorld(), Particle.LAVA, point.clone().add(0, 0.2, 0), 2, 0.2, 0.1, 0.2, 0);
-        }
+        Fx.as(owner.getUniqueId(), () -> { // 2026-11-02：記得是誰的（特效等級）
+            for (int i = from; i <= to; i++) {
+                final Location point = fissure.points.get(i);
+                Fx.spawn(point.getWorld(), Particle.LAVA, point.clone().add(0, 0.2, 0), 2, 0.2, 0.1, 0.2, 0);
+            }
+        });
     }
 }

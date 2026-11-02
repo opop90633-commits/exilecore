@@ -48,7 +48,8 @@ public final class CharacterMenus {
 
     public void openTree(final Player player) {
         final PassiveTree tree = treeOrNull(player);
-        if (tree != null) {
+        if (tree != null && !tw.exilecore.passive.TreeFeed.openNative(plugin, player, null)) {
+            // 2026-11-02 照站長（D 組）：裝了模組的玩家開原生畫面；這次之前一律開箱子選單
             new PassiveMenu(plugin, player, tree, Set.of(), null).open();
         }
     }
@@ -58,6 +59,9 @@ public final class CharacterMenus {
         final PassiveTree tree = treeOrNull(player);
         if (tree == null) {
             return;
+        }
+        if (tw.exilecore.passive.TreeFeed.openNative(plugin, player, text)) {
+            return; // 2026-11-02 照站長（D 組）：原生畫面自己搜尋、標出符合的節點
         }
         final List<PassiveNode> matches = tree.search(text);
         if (matches.isEmpty()) {

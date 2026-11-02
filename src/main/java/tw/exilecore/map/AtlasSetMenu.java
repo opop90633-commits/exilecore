@@ -136,22 +136,33 @@ public final class AtlasSetMenu extends Menu {
         if (set < 0 || set >= PlayerState.GEAR_SETS || click != ClickType.LEFT) {
             return;
         }
+        final String problem = switchTo(set);
+        if (problem != null) {
+            fail(problem);
+            return;
+        }
+        redraw();
+    }
+
+    /** 2026-11-02 照站長：換成第 set 組（箱子選單與原生星圖天賦右上的組別鈕共用）；成功 null，不然是原因。這次之前寫在點擊裡。 */
+    public String switchTo(final int set) {
+        if (set < 0 || set >= PlayerState.GEAR_SETS) {
+            return "沒有這一組";
+        }
         final PlayerState state = plugin.players().get(player);
         if (!state.hasCharacter()) {
-            return;
+            return "你還沒有角色";
         }
         final String wait = service.atlasWaitProblem(player); // 2026-10-27：帳號還沒載入好
         if (wait != null) {
-            fail(wait);
-            return;
+            return wait;
         }
         final int active = activeSet(service.atlasData(player));
         if (set == active) {
-            return;
+            return null;
         }
         if (!card() && set != 0) {
-            fail("要有月卡才能換成第 " + (set + 1) + " 組（沒有月卡可以切回第 1 組）");
-            return;
+            return "要有月卡才能換成第 " + (set + 1) + " 組（沒有月卡可以切回第 1 組）";
         }
         final List<String> target = stored(state, set);
         final List<String> effective = service.tree().effective(target, service.atlasEarned(player).total());
@@ -162,7 +173,7 @@ public final class AtlasSetMenu extends Menu {
         player.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 0.6f, 1.4f);
         player.sendMessage(plugin.text().prefixed("<#bcd4ff>星圖天賦換成第 " + (set + 1) + " 組<gray>（" + effective.size() + " 個天賦"
                 + (effective.size() < target.size() ? "；有 " + (target.size() - effective.size()) + " 個點數不夠或樹改了，沒算" : "") + "）"));
-        redraw();
+        return null;
     }
 
     private void fail(final String message) {

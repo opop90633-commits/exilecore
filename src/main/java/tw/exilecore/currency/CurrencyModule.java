@@ -26,7 +26,7 @@ public final class CurrencyModule implements Module {
         service = new CurrencyService(plugin, plugin.getSLF4JLogger(), repository, plugin.items(), resourcePack);
         service.setUsageLog((characterId, playerName, itemUuid, currencyId, before, after) -> {
             // 每用掉一顆（僥倖石碎掉也算）記一筆：經濟報表的「做裝備、地圖」消耗
-            plugin.economy().ledger().consumed(currencyId, tw.exilecore.economy.EconomyLedger.CRAFT, 1);
+            plugin.economy().ledger().ofName(playerName).consumed(currencyId, tw.exilecore.economy.EconomyLedger.CRAFT, 1);
             plugin.database().async(connection -> {
                 plugin.characters().repository().logCurrency(connection, characterId, playerName, itemUuid, currencyId, before, after);
                 return null;

@@ -107,7 +107,9 @@ public final class AtlasMapPickMenu extends Menu {
     @Override
     protected void onClick(final int slot, final ClickType click, final InventoryClickEvent event) {
         if (slot == SLOT_BACK) {
-            new AtlasMenu(plugin, player, service).open();
+            if (!AtlasFeed.openNative(plugin, player, false, null)) { // 2026-11-02（D 組）：從原生畫面來的回原生畫面
+                new AtlasMenu(plugin, player, service).open();
+            }
             return;
         }
         if (slot == SLOT_CLOSE) {

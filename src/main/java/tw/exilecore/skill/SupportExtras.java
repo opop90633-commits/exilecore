@@ -510,7 +510,7 @@ public final class SupportExtras implements Listener {
         }
         final double loss = amount * best.healthScale;
         best.mob.setHealth(Math.max(0, best.mob.getHealth() - loss));
-        best.mob.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, best.mob.getLocation().add(0, 1, 0), 6, 0.3, 0.3, 0.3, 0);
+        tw.exilecore.skill.Fx.spawn(best.mob.getWorld(), Particle.DAMAGE_INDICATOR, best.mob.getLocation().add(0, 1, 0), 6, 0.3, 0.3, 0.3, 0);
         return true;
     }
 
@@ -526,7 +526,7 @@ public final class SupportExtras implements Listener {
                 break;
             }
             corpses.remove(corpse);
-            at.getWorld().spawnParticle(Particle.SOUL, new Location(at.getWorld(), corpse.x(), corpse.y() + 0.5, corpse.z()), 6, 0.3, 0.3, 0.3, 0.02);
+            tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SOUL, new Location(at.getWorld(), corpse.x(), corpse.y() + 0.5, corpse.z()), 6, 0.3, 0.3, 0.3, 0.02);
             consumed++;
         }
         return consumed;
@@ -585,7 +585,7 @@ public final class SupportExtras implements Listener {
                 boost = true;
             }
             if (flat(effective, SupportExtraKeys.CRESCENDO, tags) > 0 || flat(effective, SupportExtraKeys.RENDING_APEX, tags) > 0) {
-                player.getWorld().spawnParticle(Particle.SWEEP_ATTACK, player.getEyeLocation().add(SkillTargets.facing(player).multiply(1.5)), 1, 0, 0, 0, 0);
+                tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.SWEEP_ATTACK, player.getEyeLocation().add(SkillTargets.facing(player).multiply(1.5)), 1, 0, 0, 0, 0);
             }
         }
         // 2026-11-02 照站長：連拍 4 秒內用了 6 次以上，10 秒內傷害更少 50%（這次之前 10 秒不能用）
@@ -618,7 +618,7 @@ public final class SupportExtras implements Listener {
             if (count >= SupportExtraKeys.CHARGED_SHOTS_EVERY) {
                 uses.remove(key + "#charged");
                 local.add(Modifier.flat(StatKeys.damageExtra(DamageType.LIGHTNING), charged, "充能射擊"));
-                player.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, player.getEyeLocation(), 10, 0.3, 0.3, 0.3, 0.05);
+                tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.ELECTRIC_SPARK, player.getEyeLocation(), 10, 0.3, 0.3, 0.3, 0.05);
             }
         }
         // 2026-11-01 照 PoE2 Ruthless（無情）：每第 5 次使用是重擊，那一次暈眩傷害更多 x%；這次之前每一下傷害更多 15%、暈眩累積更多 50%
@@ -628,7 +628,7 @@ public final class SupportExtras implements Listener {
             if (SupportRemakes.ruthlessBigHit(count, tw.exilecore.stats.SupportRemakeKeys.RUTHLESS_EVERY)) {
                 uses.remove(key + "#ruthless");
                 local.add(Modifier.more(StatKeys.STUN_BUILDUP, ruthless / 100.0, "無情重擊"));
-                player.getWorld().spawnParticle(Particle.CRIT, player.getEyeLocation(), 12, 0.3, 0.3, 0.3, 0.1);
+                tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.CRIT, player.getEyeLocation(), 12, 0.3, 0.3, 0.3, 0.1);
             }
         }
         // Fresh Clip：這個技能過去 8 秒每裝填一顆弩矢更多 x%（2026-10-27 照 PoE2；這次之前照所有弩技能「射出幾發」算）
@@ -662,7 +662,7 @@ public final class SupportExtras implements Listener {
                 build = TreeMechanics.ancestralBoost(build, sheet);
             }
             plugin.players().get(player).markRecent(tw.exilecore.stats.TreeLastKeys.EVENT_EMPOWERED, now);
-            player.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, player.getLocation().add(0, 1, 0), 12, 0.4, 0.5, 0.4, 0.02);
+            tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.SOUL_FIRE_FLAME, player.getLocation().add(0, 1, 0), 12, 0.4, 0.5, 0.4, 0.02);
         }
         // 投射物：Alignment、Gambleshot、Ricochet、Wildshards、Spectral Volley
         if (build.definition().mechanic() == Mechanic.PROJECTILE) {
@@ -836,7 +836,7 @@ public final class SupportExtras implements Listener {
                 }
             }
             if (center != null) {
-                center.getWorld().spawnParticle(Particle.ENCHANT, center.add(0, 1, 0), 20, 1, 0.3, 1, 0.2);
+                tw.exilecore.skill.Fx.spawn(center.getWorld(), Particle.ENCHANT, center.add(0, 1, 0), 20, 1, 0.3, 1, 0.2);
             }
         }
         // Perfection、Window of Opportunity：完美時機
@@ -939,7 +939,9 @@ public final class SupportExtras implements Listener {
             }
         }
         while (mine.size() >= max) {
-            grounds.remove(mine.removeFirst());
+            final Ground replaced = mine.removeFirst();
+            grounds.remove(replaced);
+            Fx.zoneStop(replaced); // 2026-11-02
         }
         final double radius = spec.radius(build.level()) * build.areaScale();
         final long ticks = Math.max(20, build.groundDurationTicks(spec.duration(build.level()))); // 2026-11-01：詛咒地面是地面效果（Persistent Ground）
@@ -963,7 +965,7 @@ public final class SupportExtras implements Listener {
         if (seconds > 0) {
             // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（常數在 SupportExtraKeys，照公尺，在這裡乘）
             grounds.add(new Ground(player.getUniqueId(), 0, at.clone(), tw.exilecore.core.Units.metres(SupportExtraKeys.CONSECRATED_RADIUS), now() + Math.round(seconds * 20), null, null));
-            at.getWorld().spawnParticle(Particle.END_ROD, at.clone().add(0, 0.3, 0), 20, 1, 0.1, 1, 0.01);
+            tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.END_ROD, at.clone().add(0, 0.3, 0), 20, 1, 0.1, 1, 0.01);
         }
     }
 
@@ -978,7 +980,7 @@ public final class SupportExtras implements Listener {
         final Location at = aimed != null ? aimed.getLocation() : service.targets().aimPoint(origin, range);
         final Vector direction = SkillTargets.facing(player);
         service.executor().executeFrom(Origin.at(player, at, direction), build, aimed);
-        at.getWorld().spawnParticle(Particle.PORTAL, at.clone().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.2);
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.PORTAL, at.clone().add(0, 1, 0), 20, 0.5, 0.5, 0.5, 0.2);
         return true;
     }
 
@@ -1307,7 +1309,7 @@ public final class SupportExtras implements Listener {
                 final long now = now();
                 if (tw.exilecore.combat.HitEffects.applyDaze(debuffs(), target.getUniqueId(), player.getUniqueId(), now, Math.round(seconds * 20),
                         plugin.players().sheet(player), dazeTags)) {
-                    target.getWorld().spawnParticle(Particle.WAX_OFF, target.getLocation().add(0, target.getHeight(), 0), 6, 0.3, 0.2, 0.3, 0);
+                    tw.exilecore.skill.Fx.spawn(target.getWorld(), Particle.WAX_OFF, target.getLocation().add(0, target.getHeight(), 0), 6, 0.3, 0.2, 0.3, 0);
                 }
             }
         }
@@ -1486,7 +1488,7 @@ public final class SupportExtras implements Listener {
             tw.exilecore.combat.Impales.shared().add(target, player.getUniqueId(), tw.exilecore.stats.KeystoneOriginKeys.impaleAmount(
                     result.outgoing().get(DamageType.PHYSICAL), effective.increased(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_MAGNITUDE, tags),
                     effective.more(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_MAGNITUDE, tags))); // 2026-11-01 照 PoE2：穿刺效果的更多也算
-            defender.getWorld().spawnParticle(Particle.CRIT, defender.getLocation().add(0, defender.getHeight() * 0.6, 0), 6, 0.2, 0.3, 0.2, 0.05);
+            tw.exilecore.skill.Fx.spawn(defender.getWorld(), Particle.CRIT, defender.getLocation().add(0, defender.getHeight() * 0.6, 0), 6, 0.2, 0.3, 0.2, 0.05);
         }
         // Incision：記下這一下之前身上的切割，下一 tick 被流血用掉就算「最近用掉」
         if (effective.flat(SupportExtraKeys.INCISION_BLEED, tags) > 0 && debuffs != null && ailments && !plugin.ailments().has(defender, AilmentType.BLEED)) {
@@ -1649,7 +1651,7 @@ public final class SupportExtras implements Listener {
         final boolean was = debuffs().has(defender.getUniqueId(), "daze", now);
         if (tw.exilecore.combat.HitEffects.applyDaze(debuffs(), defender.getUniqueId(), player.getUniqueId(), now,
                 tw.exilecore.combat.HitEffects.DAZE_TICKS, effective, tags) && !was) {
-            defender.getWorld().spawnParticle(Particle.WAX_OFF, defender.getLocation().add(0, defender.getHeight(), 0), 6, 0.3, 0.2, 0.3, 0);
+            tw.exilecore.skill.Fx.spawn(defender.getWorld(), Particle.WAX_OFF, defender.getLocation().add(0, defender.getHeight(), 0), 6, 0.3, 0.2, 0.3, 0);
         }
     }
 
@@ -1663,7 +1665,7 @@ public final class SupportExtras implements Listener {
         debuffs.apply(player.getUniqueId(), new Debuffs.Debuff("daze", player.getUniqueId(), now + Math.max(1, Math.round(seconds * 20)), 0, false, null,
                 List.of(Modifier.more(tw.exilecore.ailment.AilmentKeys.STUN_BUILDUP_TAKEN, tw.exilecore.combat.HitEffects.DAZE_STUN_BUILDUP, "眩暈")), 0));
         if (!was) {
-            player.getWorld().spawnParticle(Particle.WAX_OFF, player.getLocation().add(0, player.getHeight(), 0), 6, 0.3, 0.2, 0.3, 0);
+            tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.WAX_OFF, player.getLocation().add(0, player.getHeight(), 0), 6, 0.3, 0.2, 0.3, 0);
             if (plugin.combat() != null && plugin.combat().numbers() != null) {
                 plugin.combat().numbers().word(player, player, "眩暈");
             }
@@ -1683,7 +1685,7 @@ public final class SupportExtras implements Listener {
                 * Math.max(0, defenderSheet.apply(tw.exilecore.ailment.AilmentKeys.EXPOSURE_EFFECT_ON_SELF, 1.0, Set.of()));
         debuffs.apply(defender.getUniqueId(), new Debuffs.Debuff("exposure." + type.tag(), player.getUniqueId(), now() + Math.round(seconds * 20), 0, false, null,
                 List.of(Modifier.flat(type.mitigationStat(), -amount, "曝露")), 0));
-        defender.getWorld().spawnParticle(Particle.ENCHANTED_HIT, defender.getLocation().add(0, defender.getHeight() * 0.7, 0), 8, 0.3, 0.3, 0.3, 0.05);
+        tw.exilecore.skill.Fx.spawn(defender.getWorld(), Particle.ENCHANTED_HIT, defender.getLocation().add(0, defender.getHeight() * 0.7, 0), 8, 0.3, 0.3, 0.3, 0.05);
     }
 
     /**
@@ -1694,7 +1696,7 @@ public final class SupportExtras implements Listener {
         for (final LivingEntity near : service.targets().around(source.getLocation(), tw.exilecore.core.Units.metres(SupportExtraKeys.SHOCK_NEARBY_RADIUS), player)) { // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（常數在 SupportExtraKeys，照公尺，在這裡乘）
             if (near != source) {
                 plugin.ailments().groundStatusOnMonster(near, 0, magnitude, 80);
-                near.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, near.getLocation().add(0, 1, 0), 8, 0.3, 0.4, 0.3, 0.05);
+                tw.exilecore.skill.Fx.spawn(near.getWorld(), Particle.ELECTRIC_SPARK, near.getLocation().add(0, 1, 0), 8, 0.3, 0.4, 0.3, 0.05);
             }
         }
     }
@@ -1997,7 +1999,7 @@ public final class SupportExtras implements Listener {
                 mob.setHealth(Math.max(0.5, Math.min(mob.getHealth(), 1)));
                 final long ends = now() + Math.round(seconds * 20);
                 lastGasp.put(mob.getUniqueId(), ends);
-                mob.getWorld().spawnParticle(Particle.SOUL, mob.getLocation().add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0.02);
+                tw.exilecore.skill.Fx.spawn(mob.getWorld(), Particle.SOUL, mob.getLocation().add(0, 1, 0), 10, 0.3, 0.5, 0.3, 0.02);
                 plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                     lastGasp.remove(mob.getUniqueId());
                     if (mob.isValid() && !mob.isDead()) {
@@ -2156,6 +2158,7 @@ public final class SupportExtras implements Listener {
             final Player owner = plugin.getServer().getPlayer(ground.owner);
             if (owner == null || now > ground.untilTick || !owner.getWorld().equals(ground.at.getWorld())) {
                 it.remove();
+                Fx.zoneStop(ground);
                 continue;
             }
             if (ground.kind == 0) {
@@ -2176,21 +2179,20 @@ public final class SupportExtras implements Listener {
                                 Modifier.increased(StatKeys.CURSE_EFFECT_ON_SELF, -0.5, "聖化地面")));
                     }
                 }
-                ring(ground, Particle.END_ROD);
+                ring(ground, Particle.END_ROD, now);
             } else if (ground.curse != null && ground.spec != null) {
                 // 詛咒地面（2026-10-27 照 PoE2 Cursed Ground）：站在裡面的敵人被詛咒，出去 0.75 秒內就沒了（跟血脈的蟾咒地面一樣）；
                 // 這次之前每秒在中心重放一次詛咒，出去之後詛咒還留整段持續時間
                 service.executor().applyCurseAt(owner, ground.curse, ground.at, ground.spec, now + 15, ground); // 2026-11-01：同一塊地面刷新不算蓋掉（咒爆）
-                ring(ground, Particle.WITCH);
+                ring(ground, Particle.WITCH, now);
             }
         }
     }
 
-    private static void ring(final Ground ground, final Particle particle) {
-        for (int i = 0; i < 8; i++) {
-            final double a = Math.PI * 2 * i / 8;
-            Fx.spawn(ground.at.getWorld(), particle, ground.at.clone().add(Math.cos(a) * ground.radius, 0.15, Math.sin(a) * ground.radius), 1, 0, 0, 0, 0);
-        }
+    /** 2026-11-02：走 {@link Fx#zone}（每 0.5 秒重畫、點數照周長；以前固定 8 點）；同一個人疊在一起的只畫一個。 */
+    private static void ring(final Ground ground, final Particle particle, final long now) {
+        Fx.zone(ground, ground.at.clone().add(0, 0.15, 0), ground.radius, Fx.Look.edge(particle, null), (int) Math.max(0, ground.untilTick - now),
+                ground.owner, false);
     }
 
     /** Spectral Volley：3 秒沒有再存，全部射出去。 */
@@ -2216,7 +2218,7 @@ public final class SupportExtras implements Listener {
                     final Location from = player.getEyeLocation().add(0, 0.6, 0);
                     final Origin origin = target != null ? Origin.towards(player, from.clone().subtract(0, 1.2, 0), target) : Origin.of(player);
                     service.executor().executeFrom(origin, stored.build, target);
-                    from.getWorld().spawnParticle(Particle.END_ROD, from, 4, 0.2, 0.2, 0.2, 0.01);
+                    tw.exilecore.skill.Fx.spawn(from.getWorld(), Particle.END_ROD, from, 4, 0.2, 0.2, 0.2, 0.01);
                 }, 2L * (i + 1));
             }
         }

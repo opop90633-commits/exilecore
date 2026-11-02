@@ -518,8 +518,8 @@ public final class FestivalService {
         }
         final World world = lamp.getWorld();
         sendLantern(player, world, lanternSpots().get(lantern), true);
-        world.spawnParticle(Particle.FLAME, lamp, 30, 0.3, 0.5, 0.3, 0.04);
-        world.spawnParticle(Particle.SOUL_FIRE_FLAME, lamp, 16, 0.4, 0.6, 0.4, 0.03);
+        tw.exilecore.skill.Fx.spawn(world, Particle.FLAME, lamp, 30, 0.3, 0.5, 0.3, 0.04);
+        tw.exilecore.skill.Fx.spawn(world, Particle.SOUL_FIRE_FLAME, lamp, 16, 0.4, 0.6, 0.4, 0.03);
         player.playSound(lamp, Sound.ITEM_FIRECHARGE_USE, 0.8f, 1.2f);
         player.playSound(lamp, Sound.ENTITY_VEX_CHARGE, 0.8f, 0.7f);
         tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<" + config.color() + ">🎃 點亮了！<gray>今天 " + Integer.bitCount(after) + "／"
@@ -581,7 +581,7 @@ public final class FestivalService {
             if (entity == null || !entity.isValid() || entity.isDead()) {
                 it.remove();
             } else if (now >= entry.getValue()) {
-                entity.getWorld().spawnParticle(Particle.SOUL, entity.getLocation(), 8, 0.3, 0.4, 0.3, 0.02);
+                tw.exilecore.skill.Fx.spawn(entity.getWorld(), Particle.SOUL, entity.getLocation(), 8, 0.3, 0.4, 0.3, 0.02);
                 entity.remove();
                 it.remove();
             }
@@ -847,7 +847,7 @@ public final class FestivalService {
             final AttributeInstance max = boss.getAttribute(Attribute.MAX_HEALTH);
             event.bar.progress((float) Math.max(0, Math.min(1, boss.getHealth() / Math.max(1, max == null ? 1 : max.getValue()))));
             if (tickCount % 2 == 0) {
-                boss.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, boss.getLocation().add(0, 2.4, 0), 6, 0.4, 0.3, 0.4, 0.02);
+                tw.exilecore.skill.Fx.spawn(boss.getWorld(), Particle.SOUL_FIRE_FLAME, boss.getLocation().add(0, 2.4, 0), 6, 0.4, 0.3, 0.4, 0.02);
             }
         }
         final long left = Math.max(0, (event.endMillis - now) / 1000);
@@ -1015,7 +1015,7 @@ public final class FestivalService {
             pumpkin.parts.add(part.getUniqueId());
         }
         pumpkins.put(hitbox.getUniqueId(), pumpkin);
-        world.spawnParticle(Particle.SOUL, at.clone().add(0, 0.6, 0), 12, 0.4, 0.4, 0.4, 0.02);
+        tw.exilecore.skill.Fx.spawn(world, Particle.SOUL, at.clone().add(0, 0.6, 0), 12, 0.4, 0.4, 0.4, 0.02);
         world.playSound(at, Sound.ENTITY_WITCH_CELEBRATE, 0.8f, 1.1f);
         for (final Player player : world.getPlayers()) {
             if (player.getLocation().distanceSquared(at) < 40 * 40) {
@@ -1086,13 +1086,13 @@ public final class FestivalService {
             }
             tricks.put(trickId, trick);
             at.getWorld().playSound(at, Sound.ENTITY_WITCH_CELEBRATE, 1f, 0.6f);
-            at.getWorld().spawnParticle(Particle.WITCH, at.clone().add(0, 0.8, 0), 40, 0.6, 0.6, 0.6, 0.05);
+            tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.WITCH, at.clone().add(0, 0.8, 0), 40, 0.6, 0.6, 0.6, 0.05);
             player.showTitle(Title.title(plugin.text().parse("<#b8a7ff>不給糖就搗蛋！"),
                     plugin.text().parse("<gray>" + candy.trickSeconds() + " 秒內打倒幽魂，拿雙倍糖果"),
                     Title.Times.times(Duration.ofMillis(200), Duration.ofMillis(1600), Duration.ofMillis(400))));
         } else {
             treat(player);
-            at.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, at.clone().add(0, 0.8, 0), 14, 0.5, 0.5, 0.5, 0);
+            tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.HAPPY_VILLAGER, at.clone().add(0, 0.8, 0), 14, 0.5, 0.5, 0.5, 0);
         }
         checkChallenges(player);
         return true;
@@ -1131,7 +1131,7 @@ public final class FestivalService {
                 for (final UUID id : trick.mobs) {
                     final Entity entity = plugin.getServer().getEntity(id);
                     if (entity != null) {
-                        entity.getWorld().spawnParticle(Particle.SOUL, entity.getLocation(), 8, 0.3, 0.4, 0.3, 0.02);
+                        tw.exilecore.skill.Fx.spawn(entity.getWorld(), Particle.SOUL, entity.getLocation(), 8, 0.3, 0.4, 0.3, 0.02);
                         entity.remove();
                     }
                 }
@@ -1352,7 +1352,7 @@ public final class FestivalService {
         }
         // 2026-10-18：兌換成功才記素材消耗（wallet.take 不記流水帳；用 EVENT_SHOP，記 EVENT 會跟活動產出抵掉）
         for (final Map.Entry<String, Integer> cost : taken.entrySet()) {
-            plugin.economy().ledger().consumed(cost.getKey(), tw.exilecore.economy.EconomyLedger.EVENT_SHOP, cost.getValue());
+            plugin.economy().ledger().of(player).consumed(cost.getKey(), tw.exilecore.economy.EconomyLedger.EVENT_SHOP, cost.getValue());
         }
         plugin.players().markDirty(player);
         plugin.characters().save(player);
@@ -1412,7 +1412,7 @@ public final class FestivalService {
             final int accepted = plugin.loot().depositOrDiscard(player, plugin.players().get(player), type, amount);
             if (accepted >= 0) {
                 if (accepted > 0 && plugin.economy() != null) {
-                    plugin.economy().ledger().produced(type.id(), tw.exilecore.economy.EconomyLedger.EVENT, accepted);
+                    plugin.economy().ledger().of(player).produced(type.id(), tw.exilecore.economy.EconomyLedger.EVENT, accepted);
                 }
                 tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(accepted >= amount
                         ? "<" + config.color() + ">+" + amount + " " + ItemRenderer.escape(type.name())
@@ -1422,7 +1422,7 @@ public final class FestivalService {
             }
         }
         if (plugin.economy() != null) {
-            plugin.economy().ledger().produced(type.id(), tw.exilecore.economy.EconomyLedger.EVENT, amount);
+            plugin.economy().ledger().of(player).produced(type.id(), tw.exilecore.economy.EconomyLedger.EVENT, amount);
         }
         int left = amount;
         while (left > 0) {

@@ -221,7 +221,7 @@ public final class CardService {
 
     /** 交出 sets 套卡（已經扣掉了），給獎勵、記流水帳、稀有以上全服公告。 */
     private void reward(final Player player, final CurrencyType type, final CardConfig.Card card, final int sets) {
-        ledger().consumed(type.id(), EconomyLedger.CARDS, (long) sets * card.set());
+        ledger().of(player).consumed(type.id(), EconomyLedger.CARDS, (long) sets * card.set());
         final List<String> got = new ArrayList<>();
         for (int i = 0; i < sets; i++) {
             final String one = giveReward(player, card.reward());
@@ -325,7 +325,7 @@ public final class CardService {
     }
 
     private void giveCurrency(final Player player, final CurrencyType type, final int amount) {
-        ledger().produced(type.id(), EconomyLedger.CARDS, amount);
+        ledger().of(player).produced(type.id(), EconomyLedger.CARDS, amount);
         int remaining = amount;
         while (remaining > 0) {
             final int batch = Math.min(remaining, type.stack());
@@ -346,7 +346,7 @@ public final class CardService {
         final ItemStack stack = plugin.items().toStack(data);
         plugin.economy().wallet().dropFor(player, plugin.economy().wallet().give(player, stack));
         if (plugin.loot() != null) {
-            plugin.loot().broadcastChase(player, data); // 追逐級傳奇：全服廣播（不是追逐級的不廣播）
+            plugin.loot().broadcastChase(player, data, tw.exilecore.economy.EconomyLedger.CARDS); // 追逐級傳奇：全服廣播（不是追逐級的不廣播）
         }
         return unique.name();
     }
@@ -361,7 +361,7 @@ public final class CardService {
         if (count <= 0) {
             return got;
         }
-        ledger().consumed(CardConfig.DECK, EconomyLedger.CARDS, count);
+        ledger().of(player).consumed(CardConfig.DECK, EconomyLedger.CARDS, count);
         final Map<String, Integer> byId = new LinkedHashMap<>();
         final double rareBonus = plugin.maps() == null ? 0 : plugin.maps().atlasBonus(player).increased("atlas.card.deck"); // 2026-10-21 星圖天賦
         for (int i = 0; i < count; i++) {
@@ -375,7 +375,7 @@ public final class CardService {
             if (type == null) {
                 continue;
             }
-            ledger().produced(type.id(), EconomyLedger.CARDS, entry.getValue());
+            ledger().of(player).produced(type.id(), EconomyLedger.CARDS, entry.getValue());
             deposit(player, type, entry.getValue());
             got.put(type.name(), entry.getValue());
         }
@@ -451,8 +451,8 @@ public final class CardService {
             return Optional.empty();
         }
         final int result = CardConfig.gamble(have, random());
-        ledger().consumed(type.id(), EconomyLedger.CARD_GAMBLE, have);
-        ledger().produced(type.id(), EconomyLedger.CARD_GAMBLE, result);
+        ledger().of(player).consumed(type.id(), EconomyLedger.CARD_GAMBLE, have);
+        ledger().of(player).produced(type.id(), EconomyLedger.CARD_GAMBLE, result);
         stash.setCurrency(type.id(), all - have);
         final int overflow = result - stash.depositCurrency(type.id(), result);
         if (overflow > 0) {

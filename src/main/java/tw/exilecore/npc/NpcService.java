@@ -445,6 +445,7 @@ public final class NpcService {
                 }
             }
             case MARKET -> MarketModule.open(plugin, player);
+            case SLOTS -> tw.exilecore.slots.SlotsModule.open(plugin, player, true); // 2026-11-02 拉霸機
             case HEIST -> {
                 if (!plugin.players().get(player).hasCharacter()) {
                     player.sendMessage(plugin.text().prefixed("<red>先建立角色（/char）"));
@@ -634,7 +635,7 @@ public final class NpcService {
             notGiven += rest.getAmount();
         }
         final int given = want - notGiven;
-        plugin.economy().ledger().produced(scroll.get().id(), tw.exilecore.economy.EconomyLedger.NPC, given);
+        plugin.economy().ledger().of(player).produced(scroll.get().id(), tw.exilecore.economy.EconomyLedger.NPC, given);
         if (given <= 0) {
             tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>背包滿了，放不下" + scroll.get().name()));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);

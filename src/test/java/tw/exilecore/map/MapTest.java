@@ -91,7 +91,7 @@ class MapTest {
         assertNotNull(end);
         assertTrue(end.isFinal());
         assertTrue(end.boss().named());
-        assertEquals(2, end.boss().phases().size());
+        assertEquals(3, end.boss().phases().size(), "2026-11-02 照站長：終局每 25% 一個階段（這次之前 2 個）");
         assertTrue(end.boss().phases().get(0).at() > end.boss().phases().get(1).at(), "階段依血量門檻由高到低");
         assertEquals(1, config.byBase("map_wreck_bay").ring());
         assertNull(config.byBase("short_sword"));
@@ -449,7 +449,7 @@ class MapTest {
         for (final MapConfig.MapDef map : config.finals()) {
             assertTrue(map.isFinal());
             assertTrue(map.boss().named());
-            assertEquals(config.pinnacle(map.id()) == null ? 2 : 3, map.boss().phases().size(), map.id());
+            assertEquals(3, map.boss().phases().size(), map.id()); // 2026-11-02 照站長：終局也每 25% 一個階段（這次之前終局 2 個、巔峰 3 個）
             assertTrue(ids.add(map.id()));
             assertEquals(3, config.finalLevelBonus(map.id()));
             assertEquals(map, config.find(map.id()));
@@ -708,7 +708,7 @@ class MapTest {
         assertTrue(summoner.minLevel() > 1);
         final MonsterConfig.MonsterMod warlord = monsters.mod("warlord_aura");
         assertNotNull(warlord.aura());
-        assertEquals(10, warlord.aura().radius(), 1e-9);
+        assertEquals(5, warlord.aura().radius(), 1e-9); // 2026-11-02 照 PoE2 Extra Physical Damage Aura 5 公尺；這次之前 10
         assertFalse(warlord.aura().stats().isEmpty());
         assertEquals(1, monsters.mod("swift").minLevel());
         assertNull(monsters.mod("swift").aura());
@@ -807,6 +807,12 @@ class MapTest {
         assertEquals(264300, DpsCap.effective(20000000, 150000, over), 1e-6);
         assertEquals(150000, DpsCap.effective(1000000, 150000, List.of()), 1e-6, "沒寫分段：超過的全部不算");
         final DpsCap cap = new DpsCap();
+        if (DpsCap.OFF) {
+            // 2026-11-02 照站長：Boss 傷害遞減全部移除：連打一千萬也照算
+            assertEquals(10_000_000, cap.apply("off", 10_000_000, 150000, over, 0, 0), 1e-6);
+            assertEquals(10_000_000, cap.apply("off", 10_000_000, 150000, over, 2, 0), 1e-6, "下一下也不遞減");
+            return;
+        }
         // 2026-10-29 照站長：遞減看這一下之前的平均（不含這一下、不看假人紀錄）——單發大傷害照算，下一下才遞減
         assertEquals(10_000_000, cap.apply("a", 10_000_000, 150000, over, 0, 300000), 1e-6, "第一下一千萬照算");
         final double next = cap.apply("a", 10_000_000, 150000, over, 2, 300000);

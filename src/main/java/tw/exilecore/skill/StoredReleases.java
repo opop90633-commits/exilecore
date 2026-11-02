@@ -180,7 +180,7 @@ final class StoredReleases implements Listener {
         values[ward ? 0 : 1] = 0;
         service.procCast(Origin.of(player), sized, null);
         final LivingEntity self = player;
-        self.getWorld().spawnParticle(ward ? Particle.CRIT : Particle.ITEM_SLIME, self.getLocation().add(0, 1, 0), 20, 0.6, 0.6, 0.6, 0.05);
+        tw.exilecore.skill.Fx.spawn(self.getWorld(), ward ? Particle.CRIT : Particle.ITEM_SLIME, self.getLocation().add(0, 1, 0), 20, 0.6, 0.6, 0.6, 0.05);
         return String.format(Locale.ROOT, "<#8fd3ff>%s：放出 %,d 傷害", ward ? "鐵壁守" : "瘟囊爆", Math.round(amount));
     }
 

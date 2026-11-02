@@ -1164,7 +1164,7 @@ public final class SkillMenu extends Menu {
     private GemService.Change levelUp(final int position, final GemData uncut) {
         final String error = gems.levelUp(player, position, uncut.level());
         if (error == null) {
-            gems.used(uncut); // 游標上的那顆接著由 apply 扣掉：記進經濟流水帳
+            gems.used(player, uncut); // 游標上的那顆接著由 apply 扣掉：記進經濟流水帳
         }
         return error == null ? GemService.Change.ok(null) : GemService.Change.fail(error);
     }

@@ -64,6 +64,12 @@ public final class CraftBenchMenu extends Menu {
     /** 選的裝備：背包第幾格、那件的 uuid（換了格子或換了一件就不算）。 */
     private int itemSlot = -1;
     private String itemUuid;
+    /** 2026-11-02 照站長：預見鎖在洗裝台也要先看結果：看過的那一次（物品代號＋通貨代號＋時間）。 */
+    private String foreseenItem;
+    private String foreseenCurrency;
+    private long foreseenAt;
+    /** 看過預見結果之後幾毫秒內再按一次才算確認（跟拿在游標上點一樣 20 秒）。 */
+    private static final long FORESEE_CONFIRM_MS = 20_000;
     /** 2026-10-28：左邊星籤、右邊通貨一起翻頁（同一個頁碼）；這次之前只有通貨翻頁，星籤超過 12 種後面的選不到。 */
     private int page;
     /** 從哪裡打開的（左下角「← 返回」）；null＝直接打 /craft，沒有返回鍵。 */
@@ -635,6 +641,48 @@ public final class CraftBenchMenu extends Menu {
         return currency != null && type(omenId) == null && currency.operation().name().startsWith("QUALITY_");
     }
 
+    /**
+     * 2026-11-02：預見鎖（PoE2 的 Hinekora's Lock）：上了預見鎖的裝備，第一次按只把結果寫在聊天欄（不用掉通貨），
+     * 20 秒內同一顆通貨再按一次才真的用（結果跟看到的一樣，CurrencyService 照物品記的種子擲）。沒上預見鎖回傳 true。
+     */
+    private boolean confirmForesight(final ItemStack stack, final CurrencyType currency) {
+        final CurrencyService.Preview preview = currencies().foresee(currencies().create(currency, 1), stack);
+        if (preview == null) {
+            return true;
+        }
+        final long now = System.currentTimeMillis();
+        final String uuid = preview.after().uuid();
+        if (uuid.equals(foreseenItem) && currency.id().equals(foreseenCurrency) && now - foreseenAt <= FORESEE_CONFIRM_MS) {
+            foreseenItem = null;
+            foreseenCurrency = null;
+            return true;
+        }
+        foreseenItem = uuid;
+        foreseenCurrency = currency.id();
+        foreseenAt = now;
+        player.sendMessage(plugin.text().prefixed("<#e0c070>預見：用" + ItemRenderer.escape(currency.name()) + "之後——"));
+        if (preview.destroyed()) {
+            player.sendMessage(plugin.text().parse("<red>  物品會碎掉"));
+        } else {
+            final ItemData after = preview.after();
+            final tw.exilecore.item.UniqueItem unique = after.unique() == null ? null : plugin.items().repository().unique(after.unique());
+            player.sendMessage(plugin.text().parse("<gray>  " + after.rarity().displayName()
+                    + (unique != null ? "：<#af6025>" + ItemRenderer.escape(unique.name()) : "")
+                    + (after.quality() > 0 ? "<gray>・品質 " + after.quality() + "%" : "")
+                    + (after.corrupted() ? "<#d20000>・已腐化" : "") + (after.sanctified() ? "<#ffe08a>・已聖化" : "")));
+            for (final tw.exilecore.item.RolledAffix rolled : after.affixes()) {
+                final tw.exilecore.item.Affix affix = plugin.items().repository().affix(rolled.id());
+                if (affix != null) {
+                    player.sendMessage(plugin.text().parse("<#8888ff>  " + ItemRenderer.escape(affix.render(rolled.vars()))));
+                }
+            }
+        }
+        player.sendMessage(plugin.text().parse("<yellow>  20 秒內再按一次「使用」才會用（預見鎖會用掉）"));
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#e0c070>預見結果寫在聊天欄<gray>：20 秒內再按一次才會用"));
+        player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8f, 1.4f);
+        return false;
+    }
+
     /** 用一次；成功（通貨用上去了）回傳 true。 */
     private boolean use() {
         final ItemStack stack = item();
@@ -668,6 +716,10 @@ public final class CraftBenchMenu extends Menu {
                 redraw();
                 return false;
             }
+        }
+        // 2026-11-02 照站長：上了預見鎖的裝備，洗裝台也先把結果寫出來，20 秒內再按一次才真的用（這次之前洗裝台直接用掉，看不到結果）
+        if (!confirmForesight(stack, currency)) {
+            return false;
         }
         // 2. 通貨
         if (!wallet.take(player, currency.id(), 1)) {

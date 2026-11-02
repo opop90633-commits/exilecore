@@ -77,6 +77,27 @@ final class DeliriumEvents implements Listener {
     /** 幻霧怪（額外刷的）。 */
     private final NamespacedKey deliriumKey;
 
+    /** 2026-11-02 照站長（模組 1.4 B 組）：地圖資訊框的幻霧那一行（沒有幻霧回傳 null）。進度是這個人自己的。 */
+    tw.exilecore.clientmod.WorldHudProtocol.EventLine hudLine(final MapInstance instance, final UUID viewer, final long now) {
+        final Fog fog = byInstance.get(instance.id());
+        if (fog == null) {
+            return null;
+        }
+        if (fog.done) {
+            return new tw.exilecore.clientmod.WorldHudProtocol.EventLine("幻霧", 0xFFFFFF, "已散去・獎勵進度 " + fog.progress.getOrDefault(viewer, 0), -1,
+                    tw.exilecore.clientmod.WorldHudProtocol.EVENT_DONE);
+        }
+        if (!fog.started) {
+            return new tw.exilecore.clientmod.WorldHudProtocol.EventLine("幻霧", 0xFFFFFF, "右鍵鏡子開始", -1, tw.exilecore.clientmod.WorldHudProtocol.EVENT_IDLE);
+        }
+        final MapEventConfig.Delirium settings = config.delirium();
+        final double elapsed = (now - fog.startTick) / 20.0;
+        final int points = fog.progress.getOrDefault(viewer, 0);
+        return new tw.exilecore.clientmod.WorldHudProtocol.EventLine("幻霧", 0xFFFFFF, "剩 " + Math.max(0, Math.round(settings.duration() - elapsed))
+                + " 秒・怪物 +" + Math.round(settings.difficultyAt(elapsed) * 100) + "%・獎勵進度 " + points + "（" + settings.sharesFor(points) + " 份）",
+                MapEvents.percent(1 - elapsed / settings.duration()), tw.exilecore.clientmod.WorldHudProtocol.EVENT_ACTIVE);
+    }
+
     DeliriumEvents(final ExileCore plugin, final MapService service, final MapEventConfig config) {
         this.plugin = plugin;
         this.service = service;
@@ -168,7 +189,7 @@ final class DeliriumEvents implements Listener {
             if (fog.label == null || !fog.label.isValid()) {
                 fog.label = label(fog);
             }
-            mirror.getWorld().spawnParticle(Particle.WHITE_ASH, mirror.getX(), mirror.getY() + 1, mirror.getZ(), 6, 0.6, 0.8, 0.6, 0.01);
+            tw.exilecore.skill.Fx.spawn(mirror.getWorld(), Particle.WHITE_ASH, mirror.getX(), mirror.getY() + 1, mirror.getZ(), 6, 0.6, 0.8, 0.6, 0.01);
             return; // 2026-10-24：改成右鍵鏡子才開始（onInteract；以前走過去就開始，路過就誤觸）
         }
         final double elapsed = (now - fog.startTick) / 20.0;
@@ -182,8 +203,8 @@ final class DeliriumEvents implements Listener {
         // 霧跟著每個人
         for (final Player player : players) {
             final Location at = player.getLocation();
-            at.getWorld().spawnParticle(Particle.ASH, at.getX(), at.getY() + 1, at.getZ(), 40, 4, 1.5, 4, 0.02);
-            at.getWorld().spawnParticle(Particle.WHITE_ASH, at.getX(), at.getY() + 1.2, at.getZ(), 10, 3, 1, 3, 0.01);
+            tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.ASH, at.getX(), at.getY() + 1, at.getZ(), 40, 4, 1.5, 4, 0.02);
+            tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.WHITE_ASH, at.getX(), at.getY() + 1.2, at.getZ(), 10, 3, 1, 3, 0.01);
         }
         // 幻霧怪
         if (now >= fog.nextSpawnTick) {
@@ -199,6 +220,9 @@ final class DeliriumEvents implements Listener {
         fog.bar.progress((float) Math.max(0, Math.min(1, 1 - elapsed / settings.duration())));
         final Set<UUID> seen = new HashSet<>();
         for (final Player player : players) {
+            if (MapHudFeed.drawn(plugin, player)) {
+                continue; // 2026-11-02 照站長：模組的地圖資訊框已經寫了進度，不再疊血條（這次之前一律顯示）
+            }
             seen.add(player.getUniqueId());
             if (fog.watching.add(player.getUniqueId())) {
                 player.showBossBar(fog.bar);
@@ -252,7 +276,7 @@ final class DeliriumEvents implements Listener {
         }
         fog.mirror.getWorld().playSound(fog.mirror, Sound.BLOCK_GLASS_BREAK, 1.0f, 0.5f);
         fog.mirror.getWorld().playSound(fog.mirror, Sound.AMBIENT_SOUL_SAND_VALLEY_MOOD, 1.0f, 0.6f);
-        fog.mirror.getWorld().spawnParticle(Particle.WHITE_ASH, fog.mirror.getX(), fog.mirror.getY() + 1, fog.mirror.getZ(), 200, 3, 1.5, 3, 0.05);
+        tw.exilecore.skill.Fx.spawn(fog.mirror.getWorld(), Particle.WHITE_ASH, fog.mirror.getX(), fog.mirror.getY() + 1, fog.mirror.getZ(), 200, 3, 1.5, 3, 0.05);
         final String tracks = String.join("、", fog.tracks.stream().map(MapEventConfig.Reward::displayName).toList());
         for (final Player player : players(fog.instance)) {
             player.showTitle(Title.title(plugin.text().parse("<white>幻霧"),
@@ -298,7 +322,7 @@ final class DeliriumEvents implements Listener {
             plugin.monsters().data(monster).ifPresent(data -> plugin.monsters().decorateData(monster,
                     new MonsterData(data.level(), data.rarity(), data.mods(), "幻霧・" + data.name(), data.lifeMultiplier(), data.damageMultiplier(), false)));
             fog.monsters.add(monster);
-            monster.getWorld().spawnParticle(Particle.WHITE_ASH, monster.getLocation().add(0, 1, 0), 25, 0.4, 0.6, 0.4, 0.03);
+            tw.exilecore.skill.Fx.spawn(monster.getWorld(), Particle.WHITE_ASH, monster.getLocation().add(0, 1, 0), 25, 0.4, 0.6, 0.4, 0.03);
             if (monster instanceof Mob mob) {
                 mob.setTarget(player);
             }
@@ -402,7 +426,9 @@ final class DeliriumEvents implements Listener {
             final int shares = config.delirium().sharesFor(total);
             final List<Integer> thresholds = config.delirium().thresholds();
             final String next = shares < thresholds.size() ? "，下一份 " + thresholds.get(shares) : "，滿了";
-            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<white>幻霧進度 +" + points + " <gray>（" + total + "，" + shares + " 份" + next + "）"));
+            if (!MapHudFeed.drawn(plugin, player)) { // 2026-11-02：模組的地圖資訊框寫了進度
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<white>幻霧進度 +" + points + " <gray>（" + total + "，" + shares + " 份" + next + "）"));
+            }
         }
     }
 

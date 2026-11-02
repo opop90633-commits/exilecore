@@ -22,6 +22,19 @@ public final class AtlasTablets {
     public static final String USES_PREFIX = "tabletuses.";
     /** 地圖 Boss 掉 Boss 石板的機率。 */
     public static final double BOSS_DROP_CHANCE = 0.02;
+    /** 2026-11-02：地圖 Boss 掉首領石板時，換成傳奇石板「殘酷霸權」的機率（原作的掉率 poe2db 沒寫，推估十分之一：每隻 Boss 0.2%）。 */
+    public static final double HEGEMONY_SHARE = 0.1;
+
+    /** 塔隨機掉的石板（不含傳奇石板）。 */
+    public static List<Kind> towerKinds() {
+        final List<Kind> list = new java.util.ArrayList<>();
+        for (final Kind kind : Kind.values()) {
+            if (!kind.unique()) {
+                list.add(kind);
+            }
+        }
+        return list;
+    }
 
     /** 石板的種類。 */
     public enum Kind {
@@ -33,7 +46,9 @@ public final class AtlasTablets {
         RITUAL("ritual", "祭壇石板", "罩到的地圖祭壇出現的機率 +100%、貢品 +25%"),
         DELIRIUM("delirium", "幻霧石板", "罩到的地圖幻霧出現的機率 +100%、獎勵進度 +25%"),
         BOSS("boss", "首領石板", "罩到的一般格子當作 Boss 格（Boss 更強、掉得更多）"),
-        BOUNTY("bounty", "豐饒石板", "罩到的地圖物品數量 +15%、稀有度 +15%");
+        BOUNTY("bounty", "豐饒石板", "罩到的地圖物品數量 +15%、稀有度 +15%"),
+        /** 2026-11-02 照 PoE2 傳奇先驅石板 Cruel Hegemony（Empowers the Map Boss of a Map；Map Bosses have 1 additional Modifiers）。 */
+        HEGEMONY("hegemony", "殘酷霸權", "罩到的一般格子當作 Boss 格（Boss 更強、掉得更多），地圖 Boss 多 1 條詞綴");
 
         private final String source;
         private final String displayName;
@@ -77,10 +92,15 @@ public final class AtlasTablets {
             return null;
         }
 
+        /** 2026-11-02：傳奇石板（殘酷霸權）：塔不會隨機掉，只有地圖 Boss 掉首領石板時有機會換成它。 */
+        public boolean unique() {
+            return this == HEGEMONY;
+        }
+
         /** 事件來源代號 → 掉的石板；沒有這種事件的石板回傳 null。 */
         public static Kind ofSource(final String source) {
             for (final Kind kind : values()) {
-                if (kind.source.equals(source) && kind != BOSS && kind != BOUNTY) {
+                if (kind.source.equals(source) && kind != BOSS && kind != BOUNTY && kind != HEGEMONY) {
                     return kind;
                 }
             }
@@ -141,6 +161,10 @@ public final class AtlasTablets {
                     bonus = bonus.plus("atlas.delirium.progress", 25 * effect);
                 }
                 case BOSS -> boss++;
+                case HEGEMONY -> {
+                    boss++; // 2026-11-02 照 PoE2 Cruel Hegemony：Empowers the Map Boss（同首領石板）＋ Boss 多 1 條詞綴（MapBosses.bossMods）
+                    bonus = bonus.plus("atlas.boss_extra_mods", 1);
+                }
                 case BOUNTY -> {
                     quantity += 15 * effect;
                     rarity += 15 * effect;

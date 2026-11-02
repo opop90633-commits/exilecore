@@ -189,8 +189,10 @@ class BossBurstTest {
         final List<BossSkillConfig.Entry> kit = bosses.kitFor(king.type(), king.skills());
         assertEquals(List.of("king_reap", "king_shadow_step", "king_bone_storm", "king_soul_vortex"),
                 BossSkillConfig.unlockedBetween(kit, 0, 1));
-        assertEquals(List.of("king_soul_harvest", "king_summon_wither", "king_last_ferry"), BossSkillConfig.unlockedBetween(kit, 1, 2));
-        assertEquals(7, BossSkillConfig.unlockedBetween(kit, 0, 2).size(), "一次跨兩個階段：兩個階段的招都晚一點");
+        // 2026-11-02 照站長：終局多了 25% 的第三階段，全場大招（最後的渡口）移到第三階段；這次之前三招都在第二階段、跨兩階段是 7 招
+        assertEquals(List.of("king_soul_harvest", "king_summon_wither"), BossSkillConfig.unlockedBetween(kit, 1, 2));
+        assertEquals(List.of("king_last_ferry"), BossSkillConfig.unlockedBetween(kit, 2, 3));
+        assertEquals(6, BossSkillConfig.unlockedBetween(kit, 0, 2).size(), "一次跨兩個階段：兩個階段的招都晚一點");
         assertEquals(List.of(), BossSkillConfig.unlockedBetween(kit, 2, 2));
         assertEquals(List.of(), BossSkillConfig.unlockedBetween(kit, 2, 0), "重置回第一階段");
         // 設定

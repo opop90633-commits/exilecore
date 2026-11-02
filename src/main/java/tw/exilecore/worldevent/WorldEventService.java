@@ -1076,7 +1076,7 @@ public final class WorldEventService {
             return;
         }
         if (plugin.economy() != null) {
-            plugin.economy().ledger().produced(type.id(), tw.exilecore.economy.EconomyLedger.EVENT, amount); // 2026-10：活動素材也算產出
+            plugin.economy().ledger().of(player).produced(type.id(), tw.exilecore.economy.EconomyLedger.EVENT, amount); // 2026-10：活動素材也算產出
         }
         int left = amount;
         while (left > 0) {
@@ -1180,7 +1180,7 @@ public final class WorldEventService {
         }
         // 2026-10-18：兌換成功才記素材消耗（wallet.take 不記流水帳；用 EVENT_SHOP，記 EVENT 會跟活動產出抵掉）
         for (final Map.Entry<String, Integer> cost : taken.entrySet()) {
-            plugin.economy().ledger().consumed(cost.getKey(), tw.exilecore.economy.EconomyLedger.EVENT_SHOP, cost.getValue());
+            plugin.economy().ledger().of(player).consumed(cost.getKey(), tw.exilecore.economy.EconomyLedger.EVENT_SHOP, cost.getValue());
         }
         plugin.players().markDirty(player);
         plugin.characters().save(player);

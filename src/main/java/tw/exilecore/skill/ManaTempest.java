@@ -127,7 +127,7 @@ final class ManaTempest {
         service.ownBuff(player, BUFF_ID, storm.skillId); // 2026-11-01：快捷欄畫在魔湧那一格
         service.buff(player, BUFF_ID, storm.name, storm.linger, storm.effects);
         player.getWorld().playSound(storm.center, Sound.ENTITY_ILLUSIONER_CAST_SPELL, SoundCategory.PLAYERS, 0.9f, 1.4f);
-        draw(storm);
+        draw(storm, player.getUniqueId());
         final PlayerState state = plugin.players().get(player);
         state.notice("<#8fb8ff>✦ " + ItemRenderer.escape(storm.name) + "：站在風暴裡法術被強化（每秒消耗 "
                 + Math.round(costPerSecond(state.maxMana(), 0)) + " 魔力，越花越快）", now + 40);
@@ -172,12 +172,13 @@ final class ManaTempest {
             }
             if (ended != null) {
                 it.remove();
+                Fx.zoneStop(storm);
                 end(player, storm, ended, now);
                 continue;
             }
             service.buff(player, BUFF_ID, storm.name, storm.linger, storm.effects);
             if (now % 10 < PERIOD) {
-                draw(storm);
+                draw(storm, player.getUniqueId());
             }
         }
         if (storms.isEmpty() && task != null) {
@@ -201,15 +202,13 @@ final class ManaTempest {
         storms.remove(player);
     }
 
-    private void draw(final Storm storm) {
+    private void draw(final Storm storm, final java.util.UUID owner) {
         if (storm.world == null) {
             return;
         }
-        for (int i = 0; i < 16; i++) {
-            final double angle = Math.PI * 2 * i / 16;
-            final Location at = storm.center.clone().add(Math.cos(angle) * RADIUS, 0.2, Math.sin(angle) * RADIUS);
-            Fx.spawn(storm.world, Particle.ELECTRIC_SPARK, at, 1, 0.05, 0.3, 0.05, 0.01);
-        }
-        Fx.spawn(storm.world, Particle.ENCHANT, storm.center.clone().add(0, 1.2, 0), 10, RADIUS / 2, 0.8, RADIUS / 2, 0.2);
+        // 2026-11-02：外框走 Fx.zone（點數照周長、照特效等級；以前固定 16 點）；裡面的符文照常（別人的低特效等級不送）
+        Fx.zone(storm, storm.center.clone().add(0, 0.2, 0), RADIUS, Fx.Look.edge(Particle.ELECTRIC_SPARK, null), -1, owner, false);
+        Fx.as(owner, () -> Fx.ambient(() -> Fx.spawn(storm.world, Particle.ENCHANT, storm.center.clone().add(0, 1.2, 0), 10, RADIUS / 2, 0.8,
+                RADIUS / 2, 0.2)));
     }
 }

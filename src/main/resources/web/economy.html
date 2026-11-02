@@ -156,6 +156,11 @@
       <p class="note">消耗不到產出一半的標「累積中」：會越來越多、越來越不值錢。參考價值跟著交易所的成交價走，走勢以設定值＝100。</p>
       <div class="scroll"><table id="currencies"></table></div>
     </section>
+    <section class="card">
+      <h2>追逐級傳奇</h2>
+      <p class="note" id="chase-note">全服這段期間出了幾件、從哪裡來（掉落、賭博、星諭卡、傳奇兌換）。沒出過的也列，才看得出哪些還沒出現。</p>
+      <div class="scroll"><table id="chase"></table></div>
+    </section>
     <section class="card two">
       <div><h2>通貨從哪裡來</h2><p class="note">這段期間，照現在的參考價值折合金幣</p><div class="bars" id="currency-sources"></div></div>
       <div><h2>通貨到哪裡去</h2><p class="note">這段期間，照現在的參考價值折合金幣</p><div class="bars" id="currency-sinks"></div></div>
@@ -571,6 +576,42 @@
     }
   }
 
+  // 2026-11-02 照站長：追逐級傳奇的產量
+  function renderChaseTable() {
+    const table = document.getElementById('chase');
+    table.replaceChildren();
+    const list = data.chase || [];
+    const r = range();
+    const head = table.createTHead().insertRow();
+    for (const name of ['傳奇', '全服現有', '出了', '換掉', '淨增', '前一段（出了）', '從哪裡來']) head.appendChild(html('th', name));
+    const body = table.createTBody();
+    const rows = list.map((c) => ({ c, n: sum(c.produced, r.from, r.to), used: sum(c.consumed || [], r.from, r.to), prev: sum(c.produced, r.prevFrom, r.prevTo) }));
+    rows.sort((a, b) => (b.c.held || 0) - (a.c.held || 0) || b.n - a.n || b.prev - a.prev || a.c.name.localeCompare(b.c.name));
+    let total = 0, totalUsed = 0, totalHeld = 0;
+    for (const row of rows) {
+      total += row.n;
+      totalUsed += row.used;
+      totalHeld += row.c.held || 0;
+      const tr = body.insertRow();
+      tr.appendChild(html('td', row.c.name));
+      tr.appendChild(html('td', fmt(row.c.held || 0)));
+      tr.appendChild(html('td', fmt(row.n)));
+      tr.appendChild(html('td', row.used ? fmt(row.used) : '—'));
+      tr.appendChild(html('td', (row.n - row.used > 0 ? '+' : '') + fmt(row.n - row.used)));
+      tr.appendChild(html('td', r.prevTo > r.prevFrom ? fmt(row.prev) : '—'));
+      const from = Object.entries(((row.c.sources || {})[String(days)]) || {})
+        .sort((a, b) => b[1] - a[1])
+        .map(([k, v]) => ((data.sourceNames && data.sourceNames[k]) || k) + ' ' + fmt(v));
+      tr.appendChild(html('td', from.length ? from.join('、') : '—'));
+    }
+    if (!rows.length) {
+      const cell = html('td', '還沒有追逐級傳奇的資料', 'empty');
+      cell.colSpan = 7;
+      body.insertRow().appendChild(cell);
+    }
+    document.getElementById('chase-note').textContent = '全服現有 ' + fmt(totalHeld) + ' 件（玩家身上、倉庫、市集、公會倉庫；每天更新）。這段期間共出了 ' + fmt(total) + ' 件、傳奇兌換換掉 ' + fmt(totalUsed) + ' 件，淨增 ' + fmt(total - totalUsed) + ' 件（掉落、賭博、星諭卡、傳奇兌換）。管理員的不算。沒出過的也列。';
+  }
+
   // ---- 全部畫一次 ----
 
   function sourceEntries(totalsByKind) {
@@ -609,6 +650,7 @@
     renderLines(document.getElementById('chart-currency'), document.getElementById('legend-currency'), currencySeries, labels, '折合金幣');
     renderDayTable(document.getElementById('table-currency'), labels, currencySeries);
     renderCurrencyTable();
+    renderChaseTable();
     renderBars(document.getElementById('currency-sources'), sourceEntries(flowsInRange('currency', 'sources')), '--series-1');
     renderBars(document.getElementById('currency-sinks'), sourceEntries(flowsInRange('currency', 'sinks')), '--series-2');
     const goldSeries = [

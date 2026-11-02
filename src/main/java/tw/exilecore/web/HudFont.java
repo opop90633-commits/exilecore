@@ -66,8 +66,66 @@ public final class HudFont {
     static final int SLOT_LIFT = 13;
     /** 增益沒了的記號。 */
     public static final char SLOT_MISSING = '●';
-    /** 快捷欄左邊的增益用幾排（第 0 排是光環那一排；2026-10-20 只佔光環上面那一排）。 */
-    public static final int BUFF_ROWS = 1;
+    /**
+     * 快捷欄左邊的增益用幾排（第 0 排是光環那一排；2026-10-20 只佔光環上面那一排）。
+     * 2026-11-02 照站長：增益全部寫出來，從生命球左邊往上排一欄（第 1～9 排），放不下往左再開一欄（{@link tw.exilecore.character.HotbarSides}）。
+     */
+    public static final int BUFF_ROWS = 9;
+
+    /**
+     * 2026-11-02 照站長：增益塞不下時用的小一號的字（顯示 6 格高、寬約 3/4），第 k 排（0～{@value #SMALL_ROWS} − 1）字頂在畫面高 − 23 − 9k。
+     */
+    public static final int SMALL_ROWS = 11;
+    public static final int SMALL_STEP = 9;
+    /** 小字第 0 排字頂離畫面底幾格。 */
+    static final int SMALL_TOP = 23;
+
+    public static String smallFont(final int row) {
+        return FONT + "_s" + Math.max(0, Math.min(SMALL_ROWS - 1, row));
+    }
+
+    /**
+     * 2026-11-02 照站長：固定的光環那一行（畫面最底下，字頂在畫面高 − 11）。著色器（{@link PartyFont}）把它整行搬到畫面左下角；
+     * 著色器沒作用（光影模組）時就待在原本的位置（生命球左邊、最底下）。
+     */
+    public static final String AURA_FONT = "exilecore:hud_aura";
+    /** 光環那一行的字頂離畫面底幾格。 */
+    public static final int AURA_TOP = 11;
+
+    /**
+     * 2026-11-02 照站長：技能格上方的榮耀（小點陣數字，跟球上的數字同一套），字頂在畫面高 − 36（經驗條上面、原本愛心那一排）；
+     * 正中間那格（經驗等級的數字在那裡）用 {@link #GLORY_UP_FONT} 再往上 8 格。
+     */
+    public static final String GLORY_FONT = "exilecore:hud_glory";
+    public static final String GLORY_UP_FONT = "exilecore:hud_glory_up";
+    static final int GLORY_TOP = 36;
+    static final int GLORY_UP = 8;
+
+    /** 小字的寬度（GUI 像素）；有字沒收進字型回傳 -1。空白算 4（位移字元）。 */
+    public static int smallWidth(final String text) {
+        final Map<Character, Glyph> map = glyphs;
+        int width = 0;
+        for (int i = 0; i < text.length(); i++) {
+            final char c = text.charAt(i);
+            if (c == ' ') {
+                width += 4;
+            } else if (c == STAR || c == SKULL || map.containsKey(c)) {
+                width += smallAdvance(c);
+            } else {
+                return -1;
+            }
+        }
+        return width;
+    }
+
+    /** 小字一個字往前走幾格：原版照「最右邊不透明那一欄 × 縮放」四捨五入再加 1（中文 16 → 6 → 7、其他 10 → 3.75 → 5）。 */
+    static int smallAdvance(final char c) {
+        final int texels = c == STAR || c == SKULL || c >= 0x2E80 ? CELL : 10;
+        return (int) (0.5 + texels * SMALL_HEIGHT / (double) CELL) + 1;
+    }
+
+    /** 小字顯示幾格高。 */
+    static final int SMALL_HEIGHT = 6;
 
     /** 快捷欄左邊第 row 排的增益用的字型（0 = 光環那一排）。 */
     public static String buffFont(final int row) {
@@ -422,9 +480,17 @@ public final class HudFont {
             }
         }
         liftedFont(files, space, sheet, list, map, slotChars, "hud_slot", SLOT_LIFT);
+        // 2026-11-02 照站長：增益改成生命球左邊往上排一欄（第 1～{@value #BUFF_ROWS} 排）、塞不下時的小一號的字、光環那一行、
+        //   技能格上方的榮耀。這次之前增益只有第 1 排（hud_b1，liftedFont 補滿 lift 的空間）；現在只補 ascent 超過 height 的那段，貼圖小很多
         for (int r = 1; r <= BUFF_ROWS; r++) {
-            liftedFont(files, space, sheet, list, map, list, "hud_b" + r, r * ROW_HEIGHT);
+            rowFont(files, space, sheet, list, map, "hud_b" + r, 15 + r * ROW_HEIGHT, 8);
         }
+        for (int k = 0; k < SMALL_ROWS; k++) {
+            rowFont(files, space, sheet, list, map, "hud_s" + k, SMALL_TOP + k * SMALL_STEP, SMALL_HEIGHT);
+        }
+        auraFont(files, space, sheet, list, map);
+        gloryFont(files, GLORY_FONT.substring("exilecore:".length()), 7 - GLORY_TOP);
+        gloryFont(files, GLORY_UP_FONT.substring("exilecore:".length()), 7 - GLORY_TOP - GLORY_UP);
         glyphs = Map.copyOf(map);
         unifontGlyphs = null; // 只有產生資源包時用：放掉（約 1 MB）
     }
@@ -475,6 +541,128 @@ public final class HudFont {
             bitmap.add("chars", lines);
             providers.add(bitmap);
         }
+        final JsonObject root = new JsonObject();
+        root.add("providers", providers);
+        files.put("assets/exilecore/font/" + name + ".json", root.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** 把 chars 這些字（在 sheet 裡的位置照 list）抄到一張每格 cellH 高的圖，回傳 {圖, 每列的字}。 */
+    private static Object[] copyCells(final BufferedImage sheet, final java.util.List<Character> list, final Map<Character, Glyph> map,
+                                      final java.util.List<Character> chars, final int cellH) {
+        final int columns = 16;
+        final int rows = Math.max(1, (chars.size() + columns - 1) / columns);
+        final BufferedImage padded = new BufferedImage(columns * CELL, rows * cellH, BufferedImage.TYPE_INT_ARGB);
+        final Graphics2D g = padded.createGraphics();
+        final JsonArray lines = new JsonArray();
+        StringBuilder line = new StringBuilder();
+        for (int i = 0; i < chars.size(); i++) {
+            final int index = list.indexOf(chars.get(i));
+            final int sx = (index % 16) * CELL;
+            final int sy = (index / 16) * CELL;
+            final int dx = (i % columns) * CELL;
+            final int dy = (i / columns) * cellH;
+            g.drawImage(sheet, dx, dy, dx + CELL, dy + CELL, sx, sy, sx + CELL, sy + CELL, null);
+            line.append(map.get(chars.get(i)).code);
+            if (line.length() == columns) {
+                lines.add(line.toString());
+                line = new StringBuilder();
+            }
+        }
+        g.dispose();
+        if (!line.isEmpty()) {
+            while (line.length() < columns) {
+                line.append('\u0000');
+            }
+            lines.add(line.toString());
+        }
+        return new Object[] {padded, lines};
+    }
+
+    /**
+     * 2026-11-02：一排字的字型：字頂在畫面高 − top、顯示 glyphHeight 格高（8 = 原本的大小、6 = 小一號）。字型規定 ascent 不能比 height 大，
+     * 超過的那段在格子下面補透明的空間（補的格數湊成貼圖像素是整數）。
+     */
+    private static void rowFont(final Map<String, byte[]> files, final JsonObject space, final BufferedImage sheet,
+                                final java.util.List<Character> list, final Map<Character, Glyph> map, final String name, final int top,
+                                final int glyphHeight) throws IOException {
+        final int ascent = rowAscent(top);
+        int pad = Math.max(0, ascent - glyphHeight);
+        while (pad * CELL % glyphHeight != 0) {
+            pad++;
+        }
+        final int padTexels = pad * CELL / glyphHeight;
+        final int height = glyphHeight + pad;
+        final JsonArray providers = new JsonArray();
+        providers.add(space.deepCopy());
+        final BufferedImage icons = new BufferedImage(CELL * 2, CELL + padTexels, BufferedImage.TYPE_INT_ARGB);
+        icons.getGraphics().drawImage(icons(), 0, 0, null);
+        files.put("assets/exilecore/textures/font/" + name + "_icons.png", png(icons));
+        providers.add(scaledBitmap("exilecore:font/" + name + "_icons.png", String.valueOf(STAR) + SKULL, ascent, height));
+        if (!list.isEmpty()) {
+            final Object[] cells = copyCells(sheet, list, map, list, CELL + padTexels);
+            files.put("assets/exilecore/textures/font/" + name + ".png", png((BufferedImage) cells[0]));
+            final JsonObject bitmap = new JsonObject();
+            bitmap.addProperty("type", "bitmap");
+            bitmap.addProperty("file", "exilecore:font/" + name + ".png");
+            bitmap.addProperty("ascent", ascent);
+            bitmap.addProperty("height", height);
+            bitmap.add("chars", (JsonArray) cells[1]);
+            providers.add(bitmap);
+        }
+        final JsonObject root = new JsonObject();
+        root.add("providers", providers);
+        files.put("assets/exilecore/font/" + name + ".json", root.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** 字頂在畫面高 − top 的 ascent：動作列的字頂在畫面高 − 72（ascent 7），ascent 每少 1 往下 1 格。純函式（測試用）。 */
+    static int rowAscent(final int top) {
+        return 7 - (72 - top);
+    }
+
+    private static JsonObject scaledBitmap(final String file, final String row, final int ascent, final int height) {
+        final JsonObject bitmap = new JsonObject();
+        bitmap.addProperty("type", "bitmap");
+        bitmap.addProperty("file", file);
+        bitmap.addProperty("ascent", ascent);
+        bitmap.addProperty("height", height);
+        final JsonArray chars = new JsonArray();
+        chars.add(row);
+        bitmap.add("chars", chars);
+        return bitmap;
+    }
+
+    /** 2026-11-02：光環那一行的字型（往下 {@code 15 − 11 = 4} 格；往下移不用補空間）。 */
+    private static void auraFont(final Map<String, byte[]> files, final JsonObject space, final BufferedImage sheet,
+                                 final java.util.List<Character> list, final Map<Character, Glyph> map) throws IOException {
+        final int ascent = rowAscent(AURA_TOP);
+        final JsonArray providers = new JsonArray();
+        providers.add(space.deepCopy());
+        providers.add(scaledBitmap("exilecore:font/hud_icons.png", String.valueOf(STAR) + SKULL, ascent, 8));
+        if (!list.isEmpty()) {
+            final JsonObject bitmap = new JsonObject();
+            bitmap.addProperty("type", "bitmap");
+            bitmap.addProperty("file", "exilecore:font/hud_text.png");
+            bitmap.addProperty("ascent", ascent);
+            bitmap.addProperty("height", 8);
+            final Object[] cells = copyCells(sheet, list, map, list, CELL);
+            bitmap.add("chars", (JsonArray) cells[1]);
+            providers.add(bitmap);
+        }
+        final JsonObject root = new JsonObject();
+        root.add("providers", providers);
+        files.put("assets/exilecore/font/hud_aura.json", root.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** 2026-11-02：榮耀的小點陣數字（0～9 與「/」，就用原本的字碼；圖跟球上的數字同一張 orb_digits.png）。 */
+    private static void gloryFont(final Map<String, byte[]> files, final String name, final int ascent) throws IOException {
+        files.put("assets/exilecore/textures/font/hud_glory_digits.png", png(OrbFont.digitSheet()));
+        final StringBuilder chars = new StringBuilder();
+        for (int i = 0; i < OrbFont.DIGIT_SET.length(); i++) {
+            final char c = OrbFont.DIGIT_SET.charAt(i);
+            chars.append(Character.isDigit(c) || c == '/' ? c : (char) (0xE000 + i)); // 其他的（, . k m %）用不到：放私用區
+        }
+        final JsonArray providers = new JsonArray();
+        providers.add(scaledBitmap("exilecore:font/hud_glory_digits.png", chars.toString(), ascent, 7));
         final JsonObject root = new JsonObject();
         root.add("providers", providers);
         files.put("assets/exilecore/font/" + name + ".json", root.toString().getBytes(StandardCharsets.UTF_8));

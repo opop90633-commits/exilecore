@@ -129,6 +129,12 @@ public final class AtlasTree {
         stats.put("atlas.experience", "地圖裡的怪給的經驗 +{v}%");
         stats.put("atlas.map_drop", "地圖怪掉地圖的機率增加 {v}%");
         stats.put("atlas.monster_effectiveness", "地圖裡的怪物效能增加 {v}%（更耐打；經驗、物品數量各多一半）"); // 2026-10-26 PoE2 The Journey Ahead
+        // 2026-11-02 照 PoE2 Adaptive Biology、Mutating Monsters、No Simple Battles；先驅石板 Cruel Hegemony；Concentrated Liquid Suffering
+        stats.put("atlas.rare_mod_chance", "稀有怪有詞綴的機率增加 {v}%");
+        stats.put("atlas.rare_mod_max", "稀有怪的詞綴上限 +{v}");
+        stats.put("atlas.rare_mod_min", "稀有怪至少有 {v} 條詞綴");
+        stats.put("atlas.boss_extra_mods", "地圖 Boss 多 {v} 條詞綴");
+        stats.put("atlas.unique_rare_mods", "傳奇怪多 {v} 條稀有詞綴");
         stats.put("atlas.tier_up", "掉落的地圖高一階的機率 +{v}%");
         stats.put("atlas.boss_maps", "地圖 Boss 多掉 {v} 張地圖");
         stats.put("atlas.boss_quantity", "地圖 Boss 的物品數量 +{v}%");

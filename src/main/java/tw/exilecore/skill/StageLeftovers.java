@@ -460,7 +460,7 @@ public final class StageLeftovers implements Listener {
             // 2026-11-01 照 PoE2 Vaulting Impact：震波打中眩暈中的敵人給破勢（強度 = 這一下傷害的 10%，60 秒、10 下；品質多撐幾下）
             brokenStance.apply(target.getUniqueId(), event.result().total(),
                     skill.effective(sheet(player)).flat(BrokenStance.EXTRA_HITS, skill.tags()), now);
-            target.getWorld().spawnParticle(Particle.CRIT, target.getLocation().add(0, target.getHeight() * 0.8, 0), 10, 0.25, 0.3, 0.25, 0.1);
+            tw.exilecore.skill.Fx.spawn(target.getWorld(), Particle.CRIT, target.getLocation().add(0, target.getHeight() * 0.8, 0), 10, 0.25, 0.3, 0.25, 0.1);
         }
         if (PALM.equals(id)) {
             palm(player, skill, target, now);
@@ -471,7 +471,7 @@ public final class StageLeftovers implements Listener {
             final double amount = rivenAmount(event.result().outgoing().get(DamageType.PHYSICAL));
             if (amount > 0) {
                 riven.put(target.getUniqueId(), new Riven(player.getUniqueId(), amount, now + RIVEN_TICKS));
-                target.getWorld().spawnParticle(Particle.CRIT, target.getLocation().add(0, target.getHeight() * 0.6, 0), 8, 0.2, 0.3, 0.2, 0.05);
+                tw.exilecore.skill.Fx.spawn(target.getWorld(), Particle.CRIT, target.getLocation().add(0, target.getHeight() * 0.6, 0), 8, 0.2, 0.3, 0.2, 0.05);
             }
         }
     }
@@ -490,7 +490,7 @@ public final class StageLeftovers implements Listener {
         for (final LivingEntity enemy : service.targets().around(target.getLocation(), PALM_RADIUS * area, player)) {
             shards.put(enemy.getUniqueId(), new Shard(player.getUniqueId(), now + PALM_TICKS, threshold, build.level()));
             shardDamage.remove(enemy.getUniqueId());
-            enemy.getWorld().spawnParticle(Particle.SNOWFLAKE, enemy.getLocation().add(0, enemy.getHeight() * 0.6, 0), 6, 0.3, 0.4, 0.3, 0.01);
+            tw.exilecore.skill.Fx.spawn(enemy.getWorld(), Particle.SNOWFLAKE, enemy.getLocation().add(0, enemy.getHeight() * 0.6, 0), 6, 0.3, 0.4, 0.3, 0.01);
         }
         startTimer();
     }
@@ -695,7 +695,7 @@ public final class StageLeftovers implements Listener {
                     service.executor().hitOne(owner, profile, target, point, 0);
                 }
             }
-            point.getWorld().spawnParticle(Particle.BLOCK, point.clone().add(0, 0.6, 0), 12, 0.4, 0.4, 0.4, 0,
+            tw.exilecore.skill.Fx.spawn(point.getWorld(), Particle.BLOCK, point.clone().add(0, 0.6, 0), 12, 0.4, 0.4, 0.4, 0,
                     org.bukkit.Material.DIRT.createBlockData());
         }
         points.getFirst().getWorld().playSound(points.getFirst(), Sound.BLOCK_ROOTED_DIRT_BREAK, SoundCategory.PLAYERS, 1.2f, 0.7f);
@@ -825,8 +825,8 @@ public final class StageLeftovers implements Listener {
                     }
                 }
                 service.targets().strike(owner, rain.profile, SkillTargets.sphere(at, rain.radius), new Object()); // 每一支箭各算一下（鐘、冰晶）
-                at.getWorld().spawnParticle(Particle.CRIT, at.clone().add(0, 2.5, 0), 4, 0.05, 1.0, 0.05, 0);
-                at.getWorld().spawnParticle(Particle.SWEEP_ATTACK, at.clone().add(0, 0.2, 0), 1, 0, 0, 0, 0);
+                tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.CRIT, at.clone().add(0, 2.5, 0), 4, 0.05, 1.0, 0.05, 0);
+                tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SWEEP_ATTACK, at.clone().add(0, 0.2, 0), 1, 0, 0, 0, 0);
                 if (rain.fired % 6 == 1) {
                     at.getWorld().playSound(at, Sound.ENTITY_ARROW_HIT, SoundCategory.PLAYERS, 0.6f, 1.2f);
                 }
@@ -904,7 +904,7 @@ public final class StageLeftovers implements Listener {
                             now + BOMB_EXPOSURE_TICKS, 0, false, null, List.of(Modifier.flat(type.mitigationStat(), -base * scale, "曝露")), 0));
                 }
             }
-            bomb.center.getWorld().spawnParticle(Particle.SNOWFLAKE, bomb.center.clone().add(0, 0.5, 0), 6, bomb.radius * 0.4, 0.2, bomb.radius * 0.4, 0.01);
+            tw.exilecore.skill.Fx.spawn(bomb.center.getWorld(), Particle.SNOWFLAKE, bomb.center.clone().add(0, 0.5, 0), 6, bomb.radius * 0.4, 0.2, bomb.radius * 0.4, 0.01);
         }
     }
 
@@ -942,7 +942,7 @@ public final class StageLeftovers implements Listener {
             for (final LivingEntity target : service.targets().around(at, shardRadius, owner)) {
                 service.executor().hitOne(owner, shard, target, at, 0);
             }
-            at.getWorld().spawnParticle(Particle.LAVA, at.clone().add(0, 0.3, 0), 3, 0.2, 0.1, 0.2, 0);
+            tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.LAVA, at.clone().add(0, 0.3, 0), 3, 0.2, 0.1, 0.2, 0);
         }
         tw.exilecore.skill.Fx.disk(center.getWorld(), Particle.FLAME, center.clone().add(0, 0.6, 0), 30 + 10 * stages, radius, 0.6, 0.05);
         center.getWorld().playSound(center, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.8f + 0.1f * stages, 0.8f);
@@ -1113,6 +1113,7 @@ public final class StageLeftovers implements Listener {
             if (owner == null || now >= ground.end || !owner.getWorld().equals(ground.center.getWorld())) {
                 it.remove();
                 service.decals().remove(ground.decal); // 2026-10-31
+                tw.exilecore.skill.Fx.zoneStop(ground);
                 continue;
             }
             if (now < ground.start || (now - ground.start) % 10 != 0) {
@@ -1136,8 +1137,9 @@ public final class StageLeftovers implements Listener {
                     plugin.ailments().groundIgnite(owner, target, ground.fire, ground.effective);
                 }
             }
-            tw.exilecore.skill.Fx.withoutPack(() -> tw.exilecore.skill.Fx.disk(ground.center.getWorld(), Particle.FLAME,
-                    ground.center.clone().add(0, 0.1, 0), (int) Math.round(6 * radius), radius, 0.05, 0.01));
+            // 2026-11-02：走 Fx.zone（外框照周長＋裡面稀疏撒、照特效等級；地面擴大時模組那邊收到 UPDATE）
+            tw.exilecore.skill.Fx.withoutPack(() -> tw.exilecore.skill.Fx.zone(ground, ground.center.clone().add(0, 0.1, 0), radius,
+                    new tw.exilecore.skill.Fx.Look(Particle.FLAME, null, Particle.FLAME, null, 0.1, 0.01), (int) (ground.end - now), ground.owner, false));
         }
     }
 
@@ -1246,13 +1248,15 @@ public final class StageLeftovers implements Listener {
             if (owner == null || now >= patch.until() || !owner.getWorld().equals(patch.center().getWorld())) {
                 thorny.remove(patch);
                 service.decals().remove(patch.decal());
+                tw.exilecore.skill.Fx.zoneStop(patch);
                 continue;
             }
             service.decals().area(patch.decal(), patch.owner(), patch.center(), patch.radius(), GroundDecals.soft(THORNY_RGB),
                     patch.until() - now <= SkillZones.DECAL_ENDING_TICKS);
             if (now % 10 == 0) {
-                tw.exilecore.skill.Fx.withoutPack(() -> tw.exilecore.skill.Fx.disk(patch.center().getWorld(), Particle.CRIT,
-                        patch.center().clone().add(0, 0.1, 0), (int) Math.round(3 * patch.radius()), patch.radius(), 0.05, 0.01));
+                tw.exilecore.skill.Fx.withoutPack(() -> tw.exilecore.skill.Fx.zone(patch, patch.center().clone().add(0, 0.1, 0), patch.radius(),
+                        new tw.exilecore.skill.Fx.Look(Particle.CRIT, null, Particle.CRIT, null, 0.1, 0.01), (int) (patch.until() - now), patch.owner(),
+                        false)); // 2026-11-02：走 Fx.zone
             }
             for (final LivingEntity target : service.targets().around(patch.center(), patch.radius(), owner)) {
                 final Vector here = target.getLocation().toVector();
@@ -1306,7 +1310,7 @@ public final class StageLeftovers implements Listener {
             for (final LivingEntity target : service.targets().around(patch.at(), patch.radius(), player)) {
                 service.executor().hitOne(player, blast, target, patch.at(), 0);
             }
-            patch.at().getWorld().spawnParticle(Particle.BLOCK, patch.at().clone().add(0, 0.3, 0), 10, patch.radius() * 0.4, 0.2, patch.radius() * 0.4, 0,
+            tw.exilecore.skill.Fx.spawn(patch.at().getWorld(), Particle.BLOCK, patch.at().clone().add(0, 0.3, 0), 10, patch.radius() * 0.4, 0.2, patch.radius() * 0.4, 0,
                     org.bukkit.Material.STONE.createBlockData());
         }
         startTimer();
@@ -1328,7 +1332,7 @@ public final class StageLeftovers implements Listener {
                             List.of(), JAGGED_SLOW));
                 }
             }
-            patch.at().getWorld().spawnParticle(Particle.CRIT, patch.at().clone().add(0, 0.1, 0), 2, patch.radius() * 0.4, 0.02, patch.radius() * 0.4, 0);
+            tw.exilecore.skill.Fx.spawn(patch.at().getWorld(), Particle.CRIT, patch.at().clone().add(0, 0.1, 0), 2, patch.radius() * 0.4, 0.02, patch.radius() * 0.4, 0);
         }
     }
 
@@ -1481,7 +1485,7 @@ public final class StageLeftovers implements Listener {
             if (whirl.owner.equals(owner) && whirl.center.getWorld().equals(at.getWorld())
                     && whirl.center.distanceSquared(at) <= (whirl.radius() + reach) * (whirl.radius() + reach)) {
                 it.remove();
-                whirl.center.getWorld().spawnParticle(Particle.CLOUD, whirl.center.clone().add(0, 0.8, 0), 8 + 4 * whirl.stage,
+                tw.exilecore.skill.Fx.spawn(whirl.center.getWorld(), Particle.CLOUD, whirl.center.clone().add(0, 0.8, 0), 8 + 4 * whirl.stage,
                         whirl.radius() * 0.4, 0.4, whirl.radius() * 0.4, 0.05);
                 return whirl.stage;
             }

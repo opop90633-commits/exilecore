@@ -137,7 +137,7 @@ public final class IceCrystals implements Listener {
     /** 冰晶被打一下（damage：那一下減免前的傷害，有生命的冰晶照這個扣）；碎了回傳 true。 */
     private static boolean chip(final Crystal crystal, final long now, final double damage) {
         crystal.lastHit = now; // 同一下打中好幾個敵人只算一下
-        crystal.at.getWorld().spawnParticle(Particle.ITEM_SNOWBALL, crystal.at, 6, 0.2, 0.3, 0.2, 0.05);
+        tw.exilecore.skill.Fx.spawn(crystal.at.getWorld(), Particle.ITEM_SNOWBALL, crystal.at, 6, 0.2, 0.3, 0.2, 0.05);
         if (crystal.life > 0) {
             crystal.life -= Math.max(0, damage);
             return crystal.life <= 0;
@@ -401,7 +401,7 @@ public final class IceCrystals implements Listener {
         final List<Crystal> mine = crystals.get(owner);
         if (mine != null && mine.remove(crystal)) {
             crystal.display.remove();
-            crystal.at.getWorld().spawnParticle(Particle.SNOWFLAKE, crystal.at, 8, 0.3, 0.4, 0.3, 0.01);
+            tw.exilecore.skill.Fx.spawn(crystal.at.getWorld(), Particle.SNOWFLAKE, crystal.at, 8, 0.3, 0.4, 0.3, 0.01);
         }
     }
 
@@ -419,7 +419,7 @@ public final class IceCrystals implements Listener {
                         .increased(tw.exilecore.stats.KeystoneOriginKeys.IMPALE_MAGNITUDE, event.skill().tags());
                 tw.exilecore.combat.Impales.shared().add(event.defender().getUniqueId(), player.getUniqueId(),
                         tw.exilecore.stats.KeystoneOriginKeys.impaleAmount(impaled, magnitude));
-                event.defender().getWorld().spawnParticle(Particle.CRIT, event.defender().getLocation().add(0, event.defender().getHeight() * 0.6, 0),
+                tw.exilecore.skill.Fx.spawn(event.defender().getWorld(), Particle.CRIT, event.defender().getLocation().add(0, event.defender().getHeight() * 0.6, 0),
                         6, 0.2, 0.3, 0.2, 0.05);
             }
         }

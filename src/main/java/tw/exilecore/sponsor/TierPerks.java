@@ -209,10 +209,10 @@ final class TierPerks {
             final double angle = (12 - left[0]) * Math.PI / 6;
             for (int i = 0; i < 12; i++) {
                 final double a = angle + i * Math.PI / 6;
-                at.getWorld().spawnParticle(org.bukkit.Particle.DUST, at.getX() + Math.cos(a) * 1.2, at.getY() + 0.1, at.getZ() + Math.sin(a) * 1.2,
+                tw.exilecore.skill.Fx.spawn(at.getWorld(), org.bukkit.Particle.DUST, at.getX() + Math.cos(a) * 1.2, at.getY() + 0.1, at.getZ() + Math.sin(a) * 1.2,
                         1, 0, 0, 0, 0, new org.bukkit.Particle.DustOptions(org.bukkit.Color.fromRGB(0xffd24a), 1.2f));
             }
-                at.getWorld().spawnParticle(org.bukkit.Particle.END_ROD, at.getX(), at.getY() + 1, at.getZ(), 2, 0.3, 0.5, 0.3, 0.01);
+                tw.exilecore.skill.Fx.spawn(at.getWorld(), org.bukkit.Particle.END_ROD, at.getX(), at.getY() + 1, at.getZ(), 2, 0.3, 0.5, 0.3, 0.01);
             }
         }.runTaskTimer(plugin, 1, 5);
     }

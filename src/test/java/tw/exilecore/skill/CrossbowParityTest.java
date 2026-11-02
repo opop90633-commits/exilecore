@@ -93,6 +93,9 @@ class CrossbowParityTest {
         assertEquals(1, config.skill("searing_slurry_cannon").attackSpeed(), 1e-9);
         assertTrue(FullCharge.cancels(45, 46));
         assertFalse(FullCharge.cancels(46, 46));
+        assertEquals(0.5, FullCharge.chargeRatio(23, 46), 1e-9);
+        assertEquals(1.0, FullCharge.chargeRatio(80, 46), 1e-9);
+        assertTrue(FullCharge.chargeRatio(0, 46) > 0);
         assertTrue(FullCharge.progressText("熾漿砲", 23, 46).contains("50%"));
         assertTrue(FullCharge.progressText("熾漿砲", 46, 46).contains("充能完成"));
         // 總攻擊時間 +2 秒不吃攻擊速度：攻速再快，間隔也至少 40 tick

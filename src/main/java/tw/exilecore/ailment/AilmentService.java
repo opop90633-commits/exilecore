@@ -767,13 +767,13 @@ public final class AilmentService {
                             attacker.getUniqueId(), hexEnd, 0, false, null,
                             List.of(tw.exilecore.stats.Modifier.increased(StatKeys.EVASION, -tw.exilecore.combat.HitEffects.MAIM_EVASION, "癱瘓")), 0));
                 }
-                defender.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, defender.getLocation().add(0, 0.3, 0), 4, 0.3, 0.1, 0.3, 0);
+                tw.exilecore.skill.Fx.spawn(defender.getWorld(), Particle.DAMAGE_INDICATOR, defender.getLocation().add(0, 0.3, 0), 4, 0.3, 0.1, 0.3, 0);
                 changed = true;
             }
             if (!unslowable && !StatKeys.flag(defenderSheet, StatKeys.FLAG_HINDER_IMMUNE) && rollPercent(attack.flat(StatKeys.HINDER_CHANCE, hexTags), random)) {
                 entry = entry == null ? track(defender) : entry;
                 entry.state.hinder(hexEnd);
-                defender.getWorld().spawnParticle(Particle.SQUID_INK, defender.getLocation().add(0, 0.2, 0), 5, 0.3, 0.05, 0.3, 0.01);
+                tw.exilecore.skill.Fx.spawn(defender.getWorld(), Particle.SQUID_INK, defender.getLocation().add(0, 0.2, 0), 5, 0.3, 0.05, 0.3, 0.01);
                 changed = true;
             }
             if (!StatKeys.flag(defenderSheet, StatKeys.FLAG_BLIND_IMMUNE) && rollPercent(attack.flat(StatKeys.BLIND_CHANCE, hexTags), random)) {
@@ -786,14 +786,14 @@ public final class AilmentService {
                             List.of(tw.exilecore.stats.Modifier.more(StatKeys.ACCURACY, -tw.exilecore.combat.HitEffects.BLIND_LESS, "致盲"),
                                     tw.exilecore.stats.Modifier.more(StatKeys.EVASION, -tw.exilecore.combat.HitEffects.BLIND_LESS, "致盲")), 0));
                 }
-                defender.getWorld().spawnParticle(Particle.SMOKE, defender.getLocation().add(0, defender.getHeight() * 0.8, 0), 8, 0.25, 0.2, 0.25, 0.02);
+                tw.exilecore.skill.Fx.spawn(defender.getWorld(), Particle.SMOKE, defender.getLocation().add(0, defender.getHeight() * 0.8, 0), 8, 0.25, 0.2, 0.25, 0.02);
                 changed = true;
             }
             if (!StatKeys.flag(defenderSheet, StatKeys.FLAG_CORRUPTED_BLOOD_IMMUNE) && allDamage > 0
                     && rollPercent(attack.flat(StatKeys.CORRUPTED_BLOOD_CHANCE, hexTags), random)) {
                 entry = entry == null ? track(defender) : entry;
                 entry.state.addCorruptedBlood(allDamage * CORRUPTED_BLOOD_PER_STACK, now + ticks(CORRUPTED_BLOOD_SECONDS), now);
-                defender.getWorld().spawnParticle(Particle.DUST, defender.getLocation().add(0, defender.getHeight() * 0.5, 0), 6, 0.25, 0.3, 0.25, 0, CORRUPTED);
+                tw.exilecore.skill.Fx.spawn(defender.getWorld(), Particle.DUST, defender.getLocation().add(0, defender.getHeight() * 0.5, 0), 6, 0.25, 0.3, 0.25, 0, CORRUPTED);
                 changed = true;
             }
         }
@@ -1867,7 +1867,7 @@ public final class AilmentService {
         }
         final Location at = entity.getLocation().add(0, entity.getHeight() * 0.5, 0);
         entity.getWorld().playSound(at, Sound.ITEM_FIRECHARGE_USE, 0.5f, 0.8f);
-        entity.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, at, 8, 0.3, 0.4, 0.3, 0.02);
+        tw.exilecore.skill.Fx.spawn(entity.getWorld(), Particle.SOUL_FIRE_FLAME, at, 8, 0.3, 0.4, 0.3, 0.02);
     }
 
     private static void feedback(final LivingEntity entity, final AilmentType type) {
@@ -1875,31 +1875,31 @@ public final class AilmentService {
         switch (type) {
             case IGNITE -> {
                 entity.getWorld().playSound(at, Sound.ITEM_FIRECHARGE_USE, 0.5f, 1.3f);
-                entity.getWorld().spawnParticle(Particle.FLAME, at, 8, 0.3, 0.4, 0.3, 0.02);
+                tw.exilecore.skill.Fx.spawn(entity.getWorld(), Particle.FLAME, at, 8, 0.3, 0.4, 0.3, 0.02);
             }
             case FREEZE -> {
                 entity.getWorld().playSound(at, Sound.BLOCK_GLASS_BREAK, 0.7f, 1.6f);
-                entity.getWorld().spawnParticle(Particle.SNOWFLAKE, at, 20, 0.4, 0.6, 0.4, 0.02);
+                tw.exilecore.skill.Fx.spawn(entity.getWorld(), Particle.SNOWFLAKE, at, 20, 0.4, 0.6, 0.4, 0.02);
             }
             case SHOCK -> {
                 entity.getWorld().playSound(at, Sound.ENTITY_FIREWORK_ROCKET_TWINKLE, 0.6f, 1.6f);
-                entity.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, at, 12, 0.35, 0.6, 0.35, 0.08);
+                tw.exilecore.skill.Fx.spawn(entity.getWorld(), Particle.ELECTRIC_SPARK, at, 12, 0.35, 0.6, 0.35, 0.08);
             }
             case BLEED -> {
                 entity.getWorld().playSound(at, Sound.ENTITY_PLAYER_HURT_SWEET_BERRY_BUSH, 0.6f, 0.7f);
-                entity.getWorld().spawnParticle(Particle.DUST, at, 14, 0.3, 0.5, 0.3, 0, BLOOD);
+                tw.exilecore.skill.Fx.spawn(entity.getWorld(), Particle.DUST, at, 14, 0.3, 0.5, 0.3, 0, BLOOD);
             }
             case POISON -> {
                 entity.getWorld().playSound(at, Sound.ENTITY_SPIDER_HURT, 0.5f, 1.5f);
-                entity.getWorld().spawnParticle(Particle.DUST, at, 12, 0.3, 0.5, 0.3, 0, VENOM);
+                tw.exilecore.skill.Fx.spawn(entity.getWorld(), Particle.DUST, at, 12, 0.3, 0.5, 0.3, 0, VENOM);
             }
             case STUN -> {
                 entity.getWorld().playSound(at, Sound.ENTITY_PLAYER_ATTACK_CRIT, 0.8f, 0.6f);
-                entity.getWorld().spawnParticle(Particle.CRIT, at.clone().add(0, entity.getHeight() * 0.4, 0), 16, 0.35, 0.2, 0.35, 0.1);
+                tw.exilecore.skill.Fx.spawn(entity.getWorld(), Particle.CRIT, at.clone().add(0, entity.getHeight() * 0.4, 0), 16, 0.35, 0.2, 0.35, 0.1);
             }
             case ELECTROCUTE -> {
                 entity.getWorld().playSound(at, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 0.5f, 1.8f);
-                entity.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, at, 30, 0.4, 0.7, 0.4, 0.15);
+                tw.exilecore.skill.Fx.spawn(entity.getWorld(), Particle.ELECTRIC_SPARK, at, 30, 0.4, 0.7, 0.4, 0.15);
             }
             default -> {
             }
@@ -2036,7 +2036,7 @@ public final class AilmentService {
         damageOverTime(living, entry, dps, ignite.source(), AilmentType.IGNITE, ignite.damageType(), now);
         if (ignite.chaos() && !(living instanceof Player)) {
             // 2026-10-28：黯炎的點燃是暗紫色的火（靈魂火焰）
-            living.getWorld().spawnParticle(Particle.SOUL_FIRE_FLAME, living.getLocation().add(0, living.getHeight() * 0.5, 0), 3, 0.3, 0.4, 0.3, 0.01);
+            tw.exilecore.skill.Fx.spawn(living.getWorld(), Particle.SOUL_FIRE_FLAME, living.getLocation().add(0, living.getHeight() * 0.5, 0), 3, 0.3, 0.4, 0.3, 0.01);
         }
     }
 
@@ -2110,7 +2110,8 @@ public final class AilmentService {
             return;
         }
         // 巔峰 Boss 的每秒傷害上限（2026-10）：持續傷害算造成的那個人的
-        double capped = plugin.maps() == null ? amount : plugin.maps().capBossDamage(living, source, amount);
+        // 2026-11-02 照站長：帶這個持續傷害是哪一種（地圖 Boss 的元素弱點、虛弱）；這次之前只傳總數
+        double capped = plugin.maps() == null ? amount : plugin.maps().capBossDamage(living, source, amount, damageType);
         if (capped <= 0) {
             return;
         }
@@ -2266,31 +2267,31 @@ public final class AilmentService {
         }
         final Location at = living.getLocation().add(0, living.getHeight() * 0.5, 0);
         if (frozen) {
-            living.getWorld().spawnParticle(Particle.SNOWFLAKE, at, 5, 0.3, 0.5, 0.3, 0.0);
+            tw.exilecore.skill.Fx.spawn(living.getWorld(), Particle.SNOWFLAKE, at, 5, 0.3, 0.5, 0.3, 0.0);
         } else if (chill > 0) {
-            living.getWorld().spawnParticle(Particle.SNOWFLAKE, at, 2, 0.3, 0.5, 0.3, 0.0);
+            tw.exilecore.skill.Fx.spawn(living.getWorld(), Particle.SNOWFLAKE, at, 2, 0.3, 0.5, 0.3, 0.0);
         }
         if (shock > 0) {
-            living.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, at, 3, 0.35, 0.6, 0.35, 0.05);
+            tw.exilecore.skill.Fx.spawn(living.getWorld(), Particle.ELECTRIC_SPARK, at, 3, 0.35, 0.6, 0.35, 0.05);
         }
         if (bleeding) {
-            living.getWorld().spawnParticle(Particle.DUST, at.clone().subtract(0, living.getHeight() * 0.3, 0), 4, 0.25, 0.3, 0.25, 0, BLOOD);
+            tw.exilecore.skill.Fx.spawn(living.getWorld(), Particle.DUST, at.clone().subtract(0, living.getHeight() * 0.3, 0), 4, 0.25, 0.3, 0.25, 0, BLOOD);
         }
         if (poisoned) {
-            living.getWorld().spawnParticle(Particle.DUST, at, 3, 0.3, 0.5, 0.3, 0, VENOM);
+            tw.exilecore.skill.Fx.spawn(living.getWorld(), Particle.DUST, at, 3, 0.3, 0.5, 0.3, 0, VENOM);
         }
         if (stunned) {
-            living.getWorld().spawnParticle(Particle.CRIT, at.clone().add(0, living.getHeight() * 0.45, 0), 4, 0.3, 0.1, 0.3, 0.02);
+            tw.exilecore.skill.Fx.spawn(living.getWorld(), Particle.CRIT, at.clone().add(0, living.getHeight() * 0.45, 0), 4, 0.3, 0.1, 0.3, 0.02);
         }
         if (electrocuted) {
-            living.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, at, 10, 0.35, 0.6, 0.35, 0.1);
+            tw.exilecore.skill.Fx.spawn(living.getWorld(), Particle.ELECTRIC_SPARK, at, 10, 0.35, 0.6, 0.35, 0.1);
         }
         if (!entry.player) {
             updateMarks(living, entry, burning, frozen, chill > 0, shock > 0, bleeding, poisoned ? entry.state.poisons(now).size() : 0,
                     stunned, electrocuted);
         }
         if (entry.state.lightStunned(now) && !stunned) {
-            living.getWorld().spawnParticle(Particle.CRIT, at.clone().add(0, living.getHeight() * 0.45, 0), 2, 0.25, 0.1, 0.25, 0.01);
+            tw.exilecore.skill.Fx.spawn(living.getWorld(), Particle.CRIT, at.clone().add(0, living.getHeight() * 0.45, 0), 2, 0.25, 0.1, 0.25, 0.01);
         }
     }
 
@@ -2858,7 +2859,7 @@ public final class AilmentService {
                 Math.max(1, Math.round(ticks(config.armourBreakDuration()) * Math.max(0.1, durationScale))));
         if (full) {
             defender.getWorld().playSound(defender.getLocation(), org.bukkit.Sound.ENTITY_ITEM_BREAK, 0.9f, 0.7f);
-            defender.getWorld().spawnParticle(Particle.BLOCK, defender.getLocation().add(0, defender.getHeight() * 0.6, 0), 18, 0.3, 0.4, 0.3, 0,
+            tw.exilecore.skill.Fx.spawn(defender.getWorld(), Particle.BLOCK, defender.getLocation().add(0, defender.getHeight() * 0.6, 0), 18, 0.3, 0.4, 0.3, 0,
                     org.bukkit.Material.IRON_BLOCK.createBlockData());
         }
         update(defender, entry, now);
@@ -3100,7 +3101,7 @@ public final class AilmentService {
                 if (plugin.skills() != null) {
                     plugin.skills().originals().ailmentConsumed(entity, type); // 用掉的那一下照常算（拾晶裝）
                 }
-                entity.getWorld().spawnParticle(org.bukkit.Particle.ELECTRIC_SPARK, entity.getLocation().add(0, entity.getHeight() * 0.6, 0),
+                tw.exilecore.skill.Fx.spawn(entity.getWorld(), org.bukkit.Particle.ELECTRIC_SPARK, entity.getLocation().add(0, entity.getHeight() * 0.6, 0),
                         8, 0.3, 0.4, 0.3, 0.05);
                 return false;
             }

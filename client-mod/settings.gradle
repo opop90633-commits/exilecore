@@ -1,0 +1,12 @@
+pluginManagement {
+	repositories {
+		maven {
+			name = 'Fabric'
+			url = 'https://maven.fabricmc.net/'
+		}
+		mavenCentral()
+		// gradlePluginPortal() 在建置環境連不到；Loom 都在 Fabric 的 Maven 上
+	}
+}
+
+rootProject.name = 'exilecore_client'

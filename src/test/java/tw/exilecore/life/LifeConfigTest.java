@@ -192,7 +192,7 @@ class LifeConfigTest {
         final LifeConfig.Whale whale = config.whale();
         assertTrue(whale != null);
         assertEquals("awakener", whale.like());
-        assertEquals(2, whale.phases().size());
+        assertEquals(3, whale.phases().size(), "2026-11-02 照站長：每 25% 一個階段（這次之前 2 個）");
         assertTrue(whale.phases().get(0).at() > whale.phases().get(1).at());
         assertTrue(whale.hornCost().containsKey("horn_shard"));
         assertTrue(whale.skills().stream().anyMatch(use -> use.fromPhase() == 2), "第二階段才有的招");

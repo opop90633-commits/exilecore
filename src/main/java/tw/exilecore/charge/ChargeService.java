@@ -704,6 +704,36 @@ public final class ChargeService implements Listener {
         return text.toString();
     }
 
+    /**
+     * 2026-11-02 照站長（模組 1.4）：每種有的球（名稱、符號、顏色、幾顆、上限），模組畫成魔力球旁邊的點點；
+     * 跟 {@link #hudText} 同樣只列有的（0 顆不列）。
+     */
+    public List<tw.exilecore.clientmod.HudSnapshot.Charge> hudCharges(final Player player) {
+        final Map<String, ChargeBag> own = bags.get(player.getUniqueId());
+        if (own == null || own.isEmpty()) {
+            return List.of();
+        }
+        final long now = plugin.getServer().getCurrentTick();
+        final StatSheet sheet = plugin.players().sheet(player);
+        final List<tw.exilecore.clientmod.HudSnapshot.Charge> out = new ArrayList<>();
+        for (final ChargeType type : config.types()) {
+            final ChargeBag bag = own.get(type.id());
+            final int count = bag == null ? 0 : bag.count(now);
+            if (count <= 0) {
+                continue;
+            }
+            int color = 0xFFFFFF;
+            try {
+                color = Integer.parseInt(type.color().replace("#", ""), 16);
+            } catch (final RuntimeException ignored) {
+                // 顏色寫成名稱（gold…）：白色
+            }
+            out.add(new tw.exilecore.clientmod.HudSnapshot.Charge(type.name(), type.symbol(), color, count,
+                    sheet == null ? count : Math.max(count, maxOf(type, sheet))));
+        }
+        return out;
+    }
+
     /** /stats 的「效果」區：每種有的球一行（顆數、效果、還撐多久）。 */
     public List<String> lines(final Player player) {
         final Map<String, ChargeBag> own = bags.get(player.getUniqueId());

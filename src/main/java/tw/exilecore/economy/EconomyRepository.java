@@ -358,43 +358,90 @@ public final class EconomyRepository {
      * 在線玩家以最後一次存檔為準。
      */
     public Map<String, Long> computeStock(final Connection connection) throws SQLException {
+        return computeStock(connection, java.util.Set.of(), java.util.Set.of());
+    }
+
+    /**
+     * 同上，不算這些帳號（2026-11-02 照站長：管理員的通貨袋、倉庫、市集待領、掛單、金幣不算進全服存量；這次之前全部算）。
+     * excludedAccounts：帳號 UUID（op）；excludedNames：名字（小寫，economy.yml 的 report.exclude_players），照 accounts 的名字找帳號。
+     */
+    public Map<String, Long> computeStock(final Connection connection, final java.util.Set<String> excludedAccounts,
+                                          final java.util.Set<String> excludedNames) throws SQLException {
+        final java.util.Set<String> skip = new java.util.HashSet<>(excludedAccounts);
+        if (!excludedNames.isEmpty()) {
+            try (PreparedStatement statement = connection.prepareStatement("SELECT uuid, name FROM accounts");
+                 ResultSet result = statement.executeQuery()) {
+                while (result.next()) {
+                    final String name = result.getString(2);
+                    if (name != null && excludedNames.contains(name.toLowerCase(java.util.Locale.ROOT))) {
+                        skip.add(result.getString(1));
+                    }
+                }
+            }
+        }
         final Map<String, Long> stock = new HashMap<>();
         try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT ci.bag_currency FROM character_inventory ci JOIN characters c ON c.id = ci.character_id "
+                "SELECT c.account_uuid, ci.bag_currency FROM character_inventory ci JOIN characters c ON c.id = ci.character_id "
                         + "WHERE c.deleted_at IS NULL AND ci.bag_currency IS NOT NULL");
              ResultSet result = statement.executeQuery()) {
             while (result.next()) {
-                for (final Map.Entry<String, Integer> entry : CurrencyPouch.decode(result.getString(1)).all().entrySet()) {
+                if (skip.contains(result.getString(1))) {
+                    continue;
+                }
+                for (final Map.Entry<String, Integer> entry : CurrencyPouch.decode(result.getString(2)).all().entrySet()) {
                     stock.merge(entry.getKey(), (long) entry.getValue(), Long::sum);
                 }
             }
         }
-        sumInto(connection, "SELECT currency_id, SUM(amount) FROM stash_currency GROUP BY currency_id", stock);
-        sumInto(connection, "SELECT currency_id, SUM(amount) FROM market_proceeds GROUP BY currency_id", stock);
-        sumInto(connection, "SELECT o.give_currency, SUM(o.give_amount - COALESCE(f.taken, 0)) FROM exchange_orders o "
-                + "LEFT JOIN (SELECT order_id, SUM(give_taken) AS taken FROM exchange_fills GROUP BY order_id) f ON f.order_id = o.order_id "
-                + "GROUP BY o.give_currency", stock);
-        try (PreparedStatement statement = connection.prepareStatement("SELECT COALESCE(SUM(gold), 0) FROM accounts");
+        sumInto(connection, "SELECT account_uuid, currency_id, amount FROM stash_currency", stock, skip);
+        sumInto(connection, "SELECT account_uuid, currency_id, amount FROM market_proceeds", stock, skip);
+        sumInto(connection, "SELECT o.account_uuid, o.give_currency, o.give_amount - COALESCE(f.taken, 0) FROM exchange_orders o "
+                + "LEFT JOIN (SELECT order_id, SUM(give_taken) AS taken FROM exchange_fills GROUP BY order_id) f ON f.order_id = o.order_id", stock, skip);
+        long gold = 0;
+        try (PreparedStatement statement = connection.prepareStatement("SELECT uuid, gold FROM accounts");
              ResultSet result = statement.executeQuery()) {
-            if (result.next()) {
-                stock.put(GOLD, result.getLong(1));
+            while (result.next()) {
+                if (!skip.contains(result.getString(1))) {
+                    gold += result.getLong(2);
+                }
             }
         }
+        stock.put(GOLD, gold);
         stock.values().removeIf(amount -> amount == null);
         return stock;
     }
 
-    private static void sumInto(final Connection connection, final String sql, final Map<String, Long> stock) throws SQLException {
+    /** 每一列（帳號, 種類, 數量）加進 stock；skip 裡的帳號不算、數量 ≤ 0 的不算。 */
+    private static void sumInto(final Connection connection, final String sql, final Map<String, Long> stock, final java.util.Set<String> skip)
+            throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(sql);
              ResultSet result = statement.executeQuery()) {
             while (result.next()) {
-                final String id = result.getString(1);
-                final long amount = result.getLong(2);
+                if (skip.contains(result.getString(1))) {
+                    continue;
+                }
+                final String id = result.getString(2);
+                final long amount = result.getLong(3);
                 if (id != null && amount > 0) {
                     stock.merge(id, amount, Long::sum);
                 }
             }
         }
+    }
+
+    /**
+     * 2026-11-02 照站長：清掉市場報告（每天的產出消耗 economy_flow、存量 economy_stock）；參考價值、每個帳號的收入不動。
+     * 回傳清掉幾列。
+     */
+    public int resetReport(final Connection connection) throws SQLException {
+        final int[] rows = new int[1];
+        inTransaction(connection, () -> {
+            try (java.sql.Statement statement = connection.createStatement()) {
+                rows[0] += statement.executeUpdate("DELETE FROM economy_flow");
+                rows[0] += statement.executeUpdate("DELETE FROM economy_stock");
+            }
+        });
+        return rows[0];
     }
 
     // ---- 小工具 ----

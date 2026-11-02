@@ -836,14 +836,14 @@ public final class GemService {
         } else {
             consume(player, source.slot());
         }
-        used(uncut);
+        used(player, uncut);
     }
 
     /** 用掉一顆未切割寶石：記進經濟流水帳的消耗（2026-10 未切割寶石算通貨，跟其他通貨一樣記）。 */
-    void used(final GemData uncut) {
+    void used(final Player player, final GemData uncut) {
         final CurrencyType currency = currencyOf(uncut);
         if (currency != null) {
-            plugin.economy().ledger().consumed(currency.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1);
+            plugin.economy().ledger().of(player).consumed(currency.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1); // 2026-11-02：管理員的不記
         }
     }
 
@@ -1447,7 +1447,7 @@ public final class GemService {
             return Change.fail(support.name() + "已經共鳴了");
         }
         loadout.set(position, entry.withResonant(index, true));
-        plugin.economy().ledger().consumed(orb.id(), tw.exilecore.economy.EconomyLedger.CRAFT, 1); // 技能面板會把游標上的那顆用掉
+        plugin.economy().ledger().of(player).consumed(orb.id(), tw.exilecore.economy.EconomyLedger.CRAFT, 1); // 技能面板會把游標上的那顆用掉
         return Change.ok(null);
     }
 
@@ -1491,7 +1491,7 @@ public final class GemService {
                     + socketOrbName(entry.sockets() + 1) + "）");
         }
         loadout.set(position, entry.withSockets(orb.sockets()));
-        plugin.economy().ledger().consumed(orb.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1); // 技能面板會把游標上的那顆用掉
+        plugin.economy().ledger().of(player).consumed(orb.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1); // 技能面板會把游標上的那顆用掉
         return Change.ok(null);
     }
 
@@ -1552,7 +1552,7 @@ public final class GemService {
             default -> result = "沒有變化";
         }
         loadout.set(position, updated);
-        plugin.economy().ledger().consumed(orb.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1);
+        plugin.economy().ledger().of(player).consumed(orb.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1);
         player.sendMessage(plugin.text().prefixed("<#d20000>腐化 " + ItemRenderer.escape(skillName(entry)) + "：<white>" + result
                 + (returned != null ? "<gray>（那一孔的寶石還給你）" : "")));
         return Change.ok(returned);
@@ -1583,7 +1583,7 @@ public final class GemService {
         final int count = Math.max(1, uses);
         final int next = Math.min(SkillLoadout.Entry.QUALITY_MAX, entry.quality() + QUALITY_STEP * count);
         loadout.set(position, entry.withQuality(next));
-        plugin.economy().ledger().consumed(prism.id(), tw.exilecore.economy.EconomyLedger.SKILL, count);
+        plugin.economy().ledger().of(player).consumed(prism.id(), tw.exilecore.economy.EconomyLedger.SKILL, count);
         final String text = SkillService.qualityText(config().skill(entry.skillId()), next);
         player.sendMessage(plugin.text().prefixed("<#8888ff>" + ItemRenderer.escape(skillName(entry)) + " 品質 " + next + "%"
                 + (text == null ? "" : "<gray>（" + ItemRenderer.escape(text) + "）")));

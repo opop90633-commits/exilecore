@@ -29,11 +29,22 @@ public final class PlannerData {
      * choice = 「選一個」的天賦，notable = 核心天賦。
      */
     public record AscendancyNode(String name, int cost, List<String> lines, String note, String id, List<String> requires, int depth,
-                                 int row, String optionOf, boolean choice, boolean notable, List<JsonObject> skills) {
+                                 int row, String optionOf, boolean choice, boolean notable, List<JsonObject> skills, List<String> rules) {
         public AscendancyNode {
             lines = List.copyOf(lines);
             requires = requires == null ? List.of() : List.copyOf(requires);
             skills = skills == null ? List.of() : List.copyOf(skills);
+            rules = rules == null ? List.of() : rules.stream().sorted().toList();
+        }
+
+        /**
+         * 2026-11-02 以前的寫法（沒有 rules）。rules 是這個昇華天賦給的天賦樹配點規則（{@link PassiveTree#RULES}：
+         * 不見之途、虛實交織、女術者之道、戰士之道），網頁規劃器照這個判斷能不能配。
+         */
+        public AscendancyNode(final String name, final int cost, final List<String> lines, final String note, final String id,
+                              final List<String> requires, final int depth, final int row, final String optionOf, final boolean choice,
+                              final boolean notable, final List<JsonObject> skills) {
+            this(name, cost, lines, note, id, requires, depth, row, optionOf, choice, notable, skills, List.of());
         }
 
         /** 2026-10-27 以前的寫法（沒有賦予技能的預覽）。 */
@@ -78,6 +89,22 @@ public final class PlannerData {
             }
         }
         return "str";
+    }
+
+    /**
+     * 2026-11-02 照站長：天賦樹的昇華配點規則參數（跟遊戲的 {@link PassiveTree} 同一份，網頁不另外寫死）：
+     * unseenPath（不見之途的規則字串，節點 unlock.stat 是它的就是觀星專屬）、entwined（虛實交織的規則字串）、
+     * entwinedRadius（原作單位，跟 px／py 同一套）、pathStarts（規則 → 多一個出發點的職業）。
+     */
+    static JsonObject treeRulesJson() {
+        final JsonObject rules = new JsonObject();
+        rules.addProperty("unseenPath", PassiveTree.RULE_UNSEEN_PATH);
+        rules.addProperty("entwined", PassiveTree.RULE_ENTWINED);
+        rules.addProperty("entwinedRadius", PassiveTree.ENTWINED_RADIUS);
+        final JsonObject starts = new JsonObject();
+        PassiveTree.PATH_STARTS.forEach(starts::addProperty);
+        rules.add("pathStarts", starts);
+        return rules;
     }
 
     /** 2026-10-27：名詞 → 說明（{@link tw.exilecore.stats.Glossary}，照表的順序）。 */
@@ -249,6 +276,7 @@ public final class PlannerData {
         }
         timeless.add("legions", legions);
         root.add("timeless", timeless);
+        root.add("treeRules", treeRulesJson());
         root.addProperty("ascendancyPoints", ascendancyPoints);
         final JsonArray ascendancyArray = new JsonArray();
         for (final AscendancyInfo info : ascendancies) {
@@ -308,6 +336,12 @@ public final class PlannerData {
                         final JsonArray skills = new JsonArray();
                         node.skills().forEach(skills::add);
                         nodeObject.add("skills", skills);
+                    }
+                    // 2026-11-02 照站長：這個昇華天賦給的天賦樹配點規則（網頁照這個開不見之途的節點、虛實交織的跳點、開路者別的起點）
+                    if (!node.rules().isEmpty()) {
+                        final JsonArray rules = new JsonArray();
+                        node.rules().forEach(rules::add);
+                        nodeObject.add("rules", rules);
                     }
                     branchArray.add(nodeObject);
                 }

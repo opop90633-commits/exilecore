@@ -214,6 +214,10 @@ public final class DeathRecap implements Listener {
             return;
         }
         lastRecap.put(player.getUniqueId(), lines);
+        // 2026-11-02 照站長（C 組）：裝了模組（招呼說 death:true）的人畫成死亡畫面旁邊的面板，聊天欄就不印；這次之前一律印在聊天欄
+        if (tw.exilecore.clientmod.DeathFeed.send(plugin, player, lines)) {
+            return;
+        }
         for (final String line : lines) {
             player.sendMessage(plugin.text().parse(line));
         }

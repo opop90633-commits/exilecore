@@ -30,6 +30,10 @@ import java.util.random.RandomGenerator;
  * 死亡回顧（/deaths）用同一套名稱。
  * 用文字顯示實體（不存檔、別人看不到）；每個人同時最多 {@link #MAX_PER_VIEWER} 個，打太快時多的不顯示。
  * 選單的「設定」可以分別關掉（打出的、受到的）。
+ * <p>2026-11-02 照站長（模組 1.4 B 組）：裝了星骸輔助模組、招呼說 dmgnum:true 的人改由模組畫（exilecore:fx 的 NUMBER，
+ * {@link tw.exilecore.clientmod.FxRouter#number}）：沒有數量上限、平滑往上飄、可以合併同一個目標；伺服器就不為他生文字顯示實體。
+ * 這次之前一律生實體（每人最多 16 個）。實體本來就只給打的人看（{@code setVisibleByDefault(false)} ＋ {@code showEntity}），
+ * 所以沒裝模組的人照舊、別人也看不到。
  */
 public final class DamageNumbers {
 
@@ -55,6 +59,9 @@ public final class DamageNumbers {
             return;
         }
         final String color = color(dominant(dealt));
+        if (toMod(viewer, top(target), Math.round(amount), color, crit, false, false, null, target.getEntityId())) {
+            return;
+        }
         final String text = format(amount) + (crit ? "!" : "");
         spawn(viewer, target, (crit ? "<bold>" : "") + "<" + color + ">" + text, crit ? 1.45f : 1.0f);
     }
@@ -64,12 +71,18 @@ public final class DamageNumbers {
         if (amount < 0.5 || !enabled(viewer)) {
             return;
         }
+        if (toMod(viewer, top(target), Math.round(amount), "#7fc8ff", false, false, true, null, target.getEntityId())) {
+            return;
+        }
         spawn(viewer, target, "<#7fc8ff>" + format(amount), 0.9f);
     }
 
     /** 沒打中、被格擋這類的字（灰色、小一點）。 */
     public void word(final Player viewer, final LivingEntity target, final String word) {
         if (!enabled(viewer)) {
+            return;
+        }
+        if (toMod(viewer, top(target), -1, "#aaaaaa", false, false, false, word, target.getEntityId())) {
             return;
         }
         spawn(viewer, target, "<gray>" + word, 0.8f);
@@ -93,6 +106,9 @@ public final class DamageNumbers {
         final DamageType main = dominant(dealt);
         final String label = typeLabel(dealt);
         final boolean big = maxLife > 0 && amount >= maxLife * 0.1;
+        if (toMod(viewer, viewer.getEyeLocation(), Math.round(amount), color(main), big, true, false, label.isEmpty() ? null : label, -1)) {
+            return;
+        }
         spawnInFront(viewer, (big ? "<bold>" : "") + "<" + color(main) + ">-" + format(amount) + (label.isEmpty() ? "" : " <gray>" + label),
                 big ? 1.3f : 0.95f);
     }
@@ -102,7 +118,35 @@ public final class DamageNumbers {
         if (!takenEnabled(viewer)) {
             return;
         }
+        if (toMod(viewer, viewer.getEyeLocation(), -1, "#aaaaaa", false, true, false, word, -1)) {
+            return;
+        }
         spawnInFront(viewer, "<gray>" + word, 0.8f);
+    }
+
+    /** 2026-11-02：數字從哪裡冒（目標頭頂中間；模組自己加一點亂數）。 */
+    private static Location top(final LivingEntity target) {
+        return target.getLocation().add(0, target.getHeight() + 0.2, 0);
+    }
+
+    /** 2026-11-02：交給模組畫（true = 模組會畫，不用生實體）；沒裝、沒說 dmgnum、這一 tick 超過上限都是 false。 */
+    private boolean toMod(final Player viewer, final Location at, final long value, final String color, final boolean emphasis,
+                          final boolean self, final boolean absorbed, final String text, final int target) {
+        final tw.exilecore.clientmod.ClientModService mod = plugin.clientMod();
+        if (mod == null || !viewer.getWorld().equals(at.getWorld())) {
+            return false;
+        }
+        return mod.routeNumber(viewer, new tw.exilecore.clientmod.FxProtocol.Number(at.getX(), at.getY(), at.getZ(), value, rgb(color),
+                emphasis, self, absorbed, text, target));
+    }
+
+    /** 「#rrggbb」→ 0xRRGGBB（寫壞了白色）。 */
+    static int rgb(final String hex) {
+        try {
+            return Integer.parseInt(hex.startsWith("#") ? hex.substring(1) : hex, 16) & 0xFFFFFF;
+        } catch (final RuntimeException e) {
+            return 0xFFFFFF;
+        }
     }
 
     /** 傷害類型的名稱：單一類型寫它，混合的寫「物理+火焰」（最多兩種，照多到少）。 */

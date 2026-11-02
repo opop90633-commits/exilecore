@@ -140,7 +140,8 @@ public final class LevelRaceService {
                 milestoneTitles.put(milestone.firstId(), milestone);
             }
             if (!milestone.reach().isEmpty()) {
-                titles.put(milestone.reachId(), new BountyConfig.Title(milestone.reachId(), milestone.reach(), REACH_COLOR, 0, List.of()));
+                titles.put(milestone.reachId(), new BountyConfig.Title(milestone.reachId(), milestone.reach(), REACH_COLOR, 0,
+                        reachBonus(milestone.reach()))); // 2026-11-02 照站長：物品數量、稀有度各增加 5%；這次之前沒有加成
                 milestoneTitles.put(milestone.reachId(), milestone);
             }
         }
@@ -156,7 +157,8 @@ public final class LevelRaceService {
                 final AscendancyConfig.LevelRace.Milestone milestone = milestoneTitles.get(id);
                 if (milestone != null) {
                     if (id.equals(milestone.reachId())) {
-                        return List.of("<gray>任何角色升到 <white>" + milestone.level() + "</white> 級就拿到（不限量，帳號共用）", "<dark_gray>沒有加成");
+                        return List.of("<gray>任何角色升到 <white>" + milestone.level() + "</white> 級就拿到（不限量，帳號共用）",
+                                "<gray>加成：物品數量、物品稀有度各增加 " + REACH_BONUS + "%"); // 2026-11-02；這次之前「沒有加成」
                     }
                     final Claim claim = claims.get(milestone.firstKey());
                     if (claim != null) {
@@ -321,6 +323,15 @@ public final class LevelRaceService {
 
     private static final String FIRST_COLOR = "#ffd27f";
     private static final String REACH_COLOR = "#ff8a3d";
+
+    /** 2026-11-02 照站長：110、120 級「到了就有」的稱號（不是全服第一個的那個）：物品數量、稀有度各增加 5%。 */
+    static final int REACH_BONUS = 5;
+
+    static List<tw.exilecore.stats.Modifier> reachBonus(final String source) {
+        return List.of(
+                new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.DROP_QUANTITY, tw.exilecore.stats.ModType.INCREASED, REACH_BONUS, Set.of(), source),
+                new tw.exilecore.stats.Modifier(tw.exilecore.stats.StatKeys.DROP_RARITY, tw.exilecore.stats.ModType.INCREASED, REACH_BONUS, Set.of(), source));
+    }
 
     private String reachBonusText() {
         return race().reachExperience() > 0 ? "<#5bd65b>擁有就有效（不用戴）：每一隻 " + race().level() + " 級的角色經驗 +" + number(race().reachExperience())

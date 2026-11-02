@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * 個人設定（選單的「設定」）。2026-10 改成統一版面：【畫面】傷害數字、受傷數字、戰鬥數據、任務追蹤、技能音效、背景音樂（2026-10-23）；
- * 【其他】交易邀請。開著的名字前面「✔」（套用資源包的人看到綠框），關著的「✘」（紅框）。存在角色進度裡。
+ * 【其他】交易邀請；【特效】特效等級 高／中／低（2026-11-02）。開著的名字前面「✔」（套用資源包的人看到綠框），關著的「✘」（紅框）。存在角色進度裡。
  */
 public final class SettingsMenu extends Menu {
 
@@ -49,6 +49,9 @@ public final class SettingsMenu extends Menu {
     private static final int SLOT_LIFE_FLASK = 28;
     private static final int SLOT_MANA_FLASK = 29;
     private static final int SLOT_LAYOUT_RESET = 30;
+    /** 特效（2026-11-02）：特效等級 高／中／低。 */
+    private static final int ROW_FX = 4;
+    private static final int SLOT_FX_QUALITY = 37;
     private static final int SLOT_CLOSE = SLOT_CLOSE_BAR;
 
     public SettingsMenu(final ExileCore plugin, final Player player) {
@@ -115,6 +118,8 @@ public final class SettingsMenu extends Menu {
                 set(SLOT_LAYOUT_RESET, icon(Material.BARRIER, "<gray>恢復預設", "<gray>藥劑放 1、2，技能鍵 3–8", "", "<yellow>左鍵：恢復"));
             }
         }
+        set(slot(ROW_FX, 0), rowLabel(Material.FIREWORK_STAR, "特效", "技能與怪物的粒子特效"));
+        set(SLOT_FX_QUALITY, fxQuality(PlayerSettings.fxQuality(state)));
         // 2026-10：左下角的「回選單」跟右下角的「← 返回選單」重複，拿掉
         set(SLOT_HELP, helpButton(List.of("每個角色自己的設定，點一下切換", "<dark_gray>開著：名字前面 ✔　關著：名字前面 ✘")));
         set(SLOT_CLOSE, closeButton());
@@ -124,6 +129,26 @@ public final class SettingsMenu extends Menu {
         final ItemStack icon = icon(material, (on ? "<green>✔ " : "<red>✘ ") + name + "：" + (on ? "開" : "關"),
                 "<gray>" + description, "", "<yellow>左鍵：" + (on ? "關掉" : "打開"));
         return on ? onMark(icon) : offMark(icon);
+    }
+
+    /** 特效等級的按鈕（2026-11-02）：高 → 中 → 低 輪流換，說明三個等級各是什麼。 */
+    private ItemStack fxQuality(final tw.exilecore.skill.FxPolicy.Quality quality) {
+        final String now = quality.label();
+        final ItemStack icon = icon(Material.FIREWORK_ROCKET, "<#f5b942>特效等級：" + now,
+                "<gray>人多、畫面太亂或電腦比較吃力時調低",
+                "",
+                line(quality, tw.exilecore.skill.FxPolicy.Quality.HIGH, "高：全部特效（預設）"),
+                line(quality, tw.exilecore.skill.FxPolicy.Quality.MID, "中：別人的技能特效只剩四成，自己的與怪物的照常"),
+                line(quality, tw.exilecore.skill.FxPolicy.Quality.LOW, "低：自己的特效六成；別人的地面效果、光環只剩稀疏的外框，別人的打擊不顯示"),
+                "",
+                "<dark_gray>Boss 與怪物的招式預警、地圖的危險區一律全部顯示",
+                "", "<yellow>左鍵：換成「" + quality.next().label() + "」");
+        return quality == tw.exilecore.skill.FxPolicy.Quality.HIGH ? onMark(icon) : icon;
+    }
+
+    private static String line(final tw.exilecore.skill.FxPolicy.Quality current, final tw.exilecore.skill.FxPolicy.Quality quality,
+                               final String text) {
+        return (current == quality ? "<green>▶ " : "<gray>　") + text;
     }
 
     @Override
@@ -163,6 +188,7 @@ public final class SettingsMenu extends Menu {
                     plugin.quests().updateTracker(player);
                 }
             }
+            case SLOT_FX_QUALITY -> cycleFxQuality();
             case SLOT_LIFE_FLASK -> moveFlask(0, click);
             case SLOT_MANA_FLASK -> moveFlask(1, click);
             case SLOT_LAYOUT_RESET -> switchLayout(tw.exilecore.character.HotbarLayout.CLASSIC);
@@ -170,6 +196,20 @@ public final class SettingsMenu extends Menu {
             default -> {
             }
         }
+    }
+
+    /** 特效等級換下一個（高 → 中 → 低 → 高）。 */
+    private void cycleFxQuality() {
+        final PlayerState state = plugin.players().get(player);
+        if (!state.hasCharacter()) {
+            player.sendMessage(plugin.text().prefixed("<red>先選一個角色（/char）"));
+            return;
+        }
+        final tw.exilecore.skill.FxPolicy.Quality next = PlayerSettings.fxQuality(state).next();
+        plugin.characters().setProgress(player, PlayerSettings.FX_QUALITY, next.key());
+        tw.exilecore.skill.Fx.settingsChanged();
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, next == tw.exilecore.skill.FxPolicy.Quality.LOW ? 0.8f : 1.2f);
+        redraw();
     }
 
     /** 預設關的設定：沒設定過算關。 */

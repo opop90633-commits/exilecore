@@ -559,9 +559,11 @@ public final class OriginalSkills implements Listener {
         final PlayerState state = plugin.players().get(player);
         switch (definition.id()) {
             case WING -> {
-                // 照 PoE2：把自己往後推
-                final Vector back = SkillTargets.facing(player).multiply(-1.1).setY(0.35);
-                player.setVelocity(player.getVelocity().multiply(0.2).add(back));
+                // 照 PoE2：把自己往後推（只推水平）。2026-11-02 照站長：不再往上抬（這次之前 Y +0.35，連放會一直飛起來）
+                final Vector flat = SkillTargets.facing(player).setY(0);
+                final Vector back = flat.lengthSquared() < 1e-6 ? new Vector() : flat.normalize().multiply(-1.1);
+                final Vector vel = player.getVelocity();
+                player.setVelocity(new Vector(vel.getX() * 0.2 + back.getX(), Math.min(0, vel.getY()), vel.getZ() * 0.2 + back.getZ()));
             }
             case DEVOUR -> devour(player, build);
             case POUNCE -> {

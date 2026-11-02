@@ -182,8 +182,32 @@ public final class LifeConfig {
                             Map<String, Integer> guaranteed) {
     }
 
-    /** 2026-10-23：鯊王的階段：生命低於 at 進下一個階段，傷害更多 damage%。 */
-    public record KingPhase(double at, String name, String message, double damage) {
+    /**
+     * 2026-10-23：鯊王的階段：生命低於 at 進下一個階段，傷害更多 damage%。
+     * 2026-11-02 照站長：mechanic 是這個階段的鎖血機制（寫法同 maps.yml 的 phases.mechanic；null = 沒寫，照預設輪流）。
+     */
+    public record KingPhase(double at, String name, String message, double damage, tw.exilecore.map.PhaseMechanic.Spec mechanic) {
+    }
+
+    /** 2026-11-02：鯊王的階段換成地圖 Boss 階段的寫法（鎖血機制的輪流照這個算）。 */
+    public static List<tw.exilecore.map.MapConfig.Phase> kingLockPhases(final List<KingPhase> phases) {
+        final List<tw.exilecore.map.MapConfig.Phase> list = new ArrayList<>();
+        for (final KingPhase phase : phases) {
+            list.add(new tw.exilecore.map.MapConfig.Phase(phase.at(), phase.name(), phase.message(), null, 0, List.of(), 0, null, phase.mechanic()));
+        }
+        return list;
+    }
+
+    /** 2026-11-02：淵鯨的階段換成地圖 Boss 階段的寫法：有潮核的是結晶（shield），mechanic 照寫的。 */
+    public static List<tw.exilecore.map.MapConfig.Phase> whaleLockPhases(final List<WhalePhase> phases) {
+        final List<tw.exilecore.map.MapConfig.Phase> list = new ArrayList<>();
+        for (final WhalePhase phase : phases) {
+            final tw.exilecore.map.MapConfig.Shield shield = phase.shieldCount() > 0
+                    ? new tw.exilecore.map.MapConfig.Shield(phase.shieldCount(), "SHULKER", phase.shieldName(), phase.shieldLife(), phase.shieldSeconds(),
+                    phase.shieldHeal()) : null;
+            list.add(new tw.exilecore.map.MapConfig.Phase(phase.at(), phase.name(), phase.message(), null, 0, List.of(), 0, shield, phase.mechanic()));
+        }
+        return list;
     }
 
     public record Title(String id, String name, String color, List<tw.exilecore.stats.Modifier> stats) {
@@ -191,7 +215,7 @@ public final class LifeConfig {
 
     /** 淵鯨的一個階段：生命低於 at 進入（傷害更多 damage%；shieldCount &gt; 0 叫出潮核）。 */
     public record WhalePhase(double at, String name, String message, double damage, int shieldCount, String shieldName, double shieldLife,
-                             int shieldSeconds, double shieldHeal) {
+                             int shieldSeconds, double shieldHeal, tw.exilecore.map.PhaseMechanic.Spec mechanic) {
     }
 
     /** 淵鯨的掉落：kind 是 unique／skill／support／currency／material／pool。 */
@@ -740,10 +764,15 @@ public final class LifeConfig {
             final List<WhalePhase> phases = new ArrayList<>();
             for (final YamlNode ph : wh.list("phases")) {
                 final YamlNode sh = ph.node("shield");
+                final int shieldCount = Math.max(0, sh.integer("count", 0));
+                final int shieldSeconds = Math.max(5, sh.integer("duration", 30));
+                final double shieldHeal = Math.max(0, sh.decimal("heal", 25));
+                // 2026-11-02 照站長：也可以寫 mechanic（站位圈、倒數大招、元素弱點；限時、回血沒寫照這個階段的潮核）；這次之前只有潮核
+                final tw.exilecore.map.PhaseMechanic.Spec mechanic = tw.exilecore.map.PhaseMechanic.parse(ph, shieldCount > 0
+                        ? new tw.exilecore.map.MapConfig.Shield(shieldCount, "SHULKER", sh.string("name", "潮核").trim(), 5, shieldSeconds, shieldHeal) : null);
                 phases.add(new WhalePhase(Math.max(0.01, Math.min(0.99, ph.decimal("at", 0.5))), ph.string("name", "").trim(),
-                        ph.string("message", "").trim(), Math.max(0, ph.decimal("damage", 0)), Math.max(0, sh.integer("count", 0)),
-                        sh.string("name", "潮核").trim(), Math.max(0.1, sh.decimal("life", 5)), Math.max(5, sh.integer("duration", 30)),
-                        Math.max(0, sh.decimal("heal", 25))));
+                        ph.string("message", "").trim(), Math.max(0, ph.decimal("damage", 0)), shieldCount,
+                        sh.string("name", "潮核").trim(), Math.max(0.1, sh.decimal("life", 5)), shieldSeconds, shieldHeal, mechanic));
             }
             phases.sort((a, b) -> Double.compare(b.at(), a.at()));
             final List<WhaleDrop> drops = new ArrayList<>();
@@ -869,7 +898,8 @@ public final class LifeConfig {
             final List<KingPhase> kingPhases = new ArrayList<>();
             for (final YamlNode ph : k.list("phases")) {
                 kingPhases.add(new KingPhase(Math.max(0.01, Math.min(0.99, ph.decimal("at", 0.5))), ph.string("name", "").trim(),
-                        ph.string("message", "").trim(), Math.max(0, ph.decimal("damage", 0))));
+                        ph.string("message", "").trim(), Math.max(0, ph.decimal("damage", 0)),
+                        tw.exilecore.map.PhaseMechanic.parse(ph, null))); // 2026-11-02 照站長：鎖血機制
             }
             kingPhases.sort((a, b) -> Double.compare(b.at(), a.at()));
             final YamlNode enrage = k.node("enrage");

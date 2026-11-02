@@ -366,7 +366,7 @@ public final class VendorService {
             log(player, item, "賭博", price);
         }
         if (chaseHit && plugin.loot() != null) {
-            plugin.loot().broadcastChase(player, data); // 追逐級：全服廣播
+            plugin.loot().broadcastChase(player, data, EconomyLedger.GAMBLE); // 追逐級：全服廣播（2026-11-02：市場報告記成賭博）
         }
         return null;
     }
@@ -527,7 +527,7 @@ public final class VendorService {
         plugin.gold().take(player, total, EconomyLedger.SHOP);
         if (plugin.currencies() != null) {
             // 未切割寶石算通貨（2026-10）：商人賣出的也記進流水帳的產出
-            plugin.currencies().read(item).ifPresent(type -> plugin.economy().ledger().produced(type.id(), EconomyLedger.SHOP, count));
+            plugin.currencies().read(item).ifPresent(type -> plugin.economy().ledger().of(player).produced(type.id(), EconomyLedger.SHOP, count));
         }
         if (toFlaskSlot && plugin.flasks().equipIfEmpty(player, item)) {
             log(player, item, "補給", total);
