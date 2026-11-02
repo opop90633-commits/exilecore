@@ -129,4 +129,41 @@ class EconomyReportJsonTest {
         assertFalse(card.getAsJsonObject("sources").getAsJsonObject("7").has(EconomySources.ADMIN));
         assertFalse(card.getAsJsonObject("sinks").getAsJsonObject("7").has(EconomySources.ADMIN_TAKE));
     }
+
+    /** 2026-11-02 照站長：從 2026-11-02 起管理員發放、扣除也列出來（之前的照舊不列：那時候混著管理員發給自己的）。 */
+    @Test
+    void adminFlowsAreShownFromNov2() {
+        final List<String> days = List.of("2026-11-01", "2026-11-02");
+        final List<EconomyReportJson.CurrencyMeta> currencies = List.of(new EconomyReportJson.CurrencyMeta("zenith_orb", "崇高石", 0, false));
+        final List<EconomyRepository.Flow> flows = List.of(
+                new EconomyRepository.Flow("2026-11-01", "zenith_orb", EconomySources.ADMIN, 100),
+                new EconomyRepository.Flow("2026-11-02", "zenith_orb", EconomySources.ADMIN, 7),
+                new EconomyRepository.Flow("2026-11-02", "zenith_orb", EconomySources.ADMIN_TAKE, -2));
+        final byte[] bytes = EconomyReportJson.build(days, currencies, flows, List.of(), List.of(), Map.of(), false, "zenith_orb", "2026-11-02 23:00");
+        final JsonObject orb = JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8)).getAsJsonObject()
+                .getAsJsonArray("currencies").get(0).getAsJsonObject();
+        assertEquals(0, orb.getAsJsonArray("produced").get(0).getAsLong(), "11/1 的管理員發放照舊不列");
+        assertEquals(7, orb.getAsJsonArray("produced").get(1).getAsLong(), "11/2 起列出來");
+        assertEquals(2, orb.getAsJsonArray("consumed").get(1).getAsLong());
+        assertTrue(orb.getAsJsonObject("sources").getAsJsonObject("7").has(EconomySources.ADMIN));
+        assertEquals("管理員發放", EconomySources.sourceName(EconomySources.ADMIN));
+    }
+
+    /** 2026-11-02 照站長：退還（開孔、地圖裝置、劫盜、做裝備的正數）把消耗扣回去，不算產出。 */
+    @Test
+    void refundsReduceConsumption() {
+        final List<String> days = List.of("2026-11-02", "2026-11-03");
+        final List<EconomyReportJson.CurrencyMeta> currencies = List.of(new EconomyReportJson.CurrencyMeta("abyss_core", "深淵核心", 0, false));
+        final List<EconomyRepository.Flow> flows = List.of(
+                new EconomyRepository.Flow("2026-11-02", "abyss_core", EconomySources.MAP_DEVICE, -3),
+                new EconomyRepository.Flow("2026-11-02", "abyss_core", EconomySources.MAP_DEVICE, 1),
+                new EconomyRepository.Flow("2026-11-03", "abyss_core", EconomySources.MAP_DEVICE, 2));
+        final byte[] bytes = EconomyReportJson.build(days, currencies, flows, List.of(), List.of(), Map.of(), false, "zenith_orb", "2026-11-03 04:00");
+        final JsonObject core = JsonParser.parseString(new String(bytes, StandardCharsets.UTF_8)).getAsJsonObject()
+                .getAsJsonArray("currencies").get(0).getAsJsonObject();
+        assertEquals(2, core.getAsJsonArray("consumed").get(0).getAsLong(), "用掉 3、退 1");
+        assertEquals(0, core.getAsJsonArray("consumed").get(1).getAsLong(), "隔天退的不算成負的");
+        assertEquals(0, core.getAsJsonArray("produced").get(1).getAsLong(), "退還不算產出");
+        assertFalse(core.getAsJsonObject("sources").getAsJsonObject("7").has(EconomySources.MAP_DEVICE));
+    }
 }

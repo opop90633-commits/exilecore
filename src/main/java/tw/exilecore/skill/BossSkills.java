@@ -3258,6 +3258,16 @@ public final class BossSkills implements Listener {
                 now + Math.round(settings().gapFor(brain.host.boss()) * 20 * cooldownFactor(brain.boss) * tempo(brain)));
     }
 
+    /** 2026-11-03 照站長：能踩的機制圈的地面圖（{@link DangerZones#showSafe}；PhaseLocks 用）。color：YELLOW／LIGHT_BLUE／LIME_CONCRETE。 */
+    public void showSafeMark(final String id, final Location center, final double radius, final org.bukkit.Material color) {
+        danger.showSafe(id, center, radius, color);
+    }
+
+    /** 收掉一塊地面圖。 */
+    public void hideMark(final String id) {
+        danger.hide(id);
+    }
+
     /** 清場（2026-10-15，萬界崩解開始時）：地上的地面效果、還沒落下的延遲落下、追人的光球全部收掉，地上的標示一起拿掉。 */
     private void clearField(final Brain brain) {
         for (final ZoneArea zone : brain.zones) {

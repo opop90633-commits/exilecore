@@ -147,6 +147,13 @@ public final class EconomyLedger {
                 ledger.gold(source, delta);
             }
         }
+
+        /** 2026-11-02 照站長：退還（把同一個用途的消耗扣回去）。 */
+        public void refunded(final String kind, final String source, final long amount) {
+            if (ledger != null) {
+                ledger.refunded(kind, source, amount);
+            }
+        }
     }
 
     private final Scope all = new Scope(this);
@@ -170,6 +177,17 @@ public final class EconomyLedger {
     public void consumed(final String kind, final String source, final long amount) {
         if (amount > 0) {
             record(kind, source, -amount);
+        }
+    }
+
+    /**
+     * 2026-11-02 照站長：退還 amount 個（開技能孔、地圖裝置、劫盜、做裝備用掉又還回來的）：把那筆消耗扣回去，不算產出
+     * （記成同一個用途的正數；市場報告把「只會消耗的用途」的正數當成消耗變少，{@link EconomyReportJson#REFUNDABLE}）。
+     * 這次之前退還沒記，用掉一次、退回來再用一次，報告上就消耗兩次。
+     */
+    public void refunded(final String kind, final String source, final long amount) {
+        if (amount > 0) {
+            record(kind, source, amount);
         }
     }
 

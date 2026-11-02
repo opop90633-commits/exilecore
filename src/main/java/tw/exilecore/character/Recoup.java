@@ -4,14 +4,14 @@ import java.util.ArrayDeque;
 import java.util.Iterator;
 
 /**
- * 2026-10-26 照 PoE2 的回復（Recoup）：受到的傷害有 x% 在之後 4 秒內平均回來（生命、魔力、能量護盾各一條），
- * 「增加回復的速度」讓這 4 秒變短。這次之前生命的回復存進偷取（每秒最多回 10% 最大生命），魔力的存進魔力偷取。
+ * 2026-10-26 照 PoE2 的回復（Recoup）：受到的傷害有 x% 在之後 8 秒內平均回來（2026-11-03 照站長＋poe2db／PoB2：原作 8 秒；這次之前 4 秒）（生命、魔力、能量護盾各一條），
+ * 「增加回復的速度」讓這 8 秒變短。這次之前生命的回復存進偷取（每秒最多回 10% 最大生命），魔力的存進魔力偷取。
  * 純邏輯，不依賴 Bukkit。
  */
 public final class Recoup {
 
-    /** 基礎：4 秒回完。 */
-    public static final long BASE_TICKS = 80;
+    /** 基礎：8 秒回完（2026-11-03 照 PoE2；這次之前 80 = 4 秒，每秒回的是原作的兩倍）。 */
+    public static final long BASE_TICKS = 160;
 
     public static final int LIFE = 0;
     public static final int MANA = 1;
@@ -37,7 +37,7 @@ public final class Recoup {
 
     private final ArrayDeque<Entry> entries = new ArrayDeque<>();
 
-    /** 加一筆：amount 在 4 秒 ÷ speed 內平均回來（speed＝1 ＋ 增加回復速度）。 */
+    /** 加一筆：amount 在 8 秒 ÷ speed 內平均回來（speed＝1 ＋ 增加回復速度）。 */
     public void add(final int kind, final double amount, final double speed) {
         if (amount <= 0) {
             return;

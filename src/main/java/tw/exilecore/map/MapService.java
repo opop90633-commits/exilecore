@@ -863,7 +863,7 @@ public final class MapService {
             return;
         }
         final ItemStack stack = plugin.currencies().create(type, 1);
-        plugin.economy().ledger().of(player).produced(type.id(), "tower", 1);
+        plugin.economy().ledger().of(player).produced(type.id(), tw.exilecore.economy.EconomySources.TOWER, 1);
         plugin.economy().wallet().dropFor(player, plugin.economy().wallet().give(player, stack));
         player.sendMessage(plugin.text().prefixed("<#d8c8a0>✦ 掉落：<white>" + ItemRenderer.escape(type.name()) + "<gray>（插進完成的塔：地圖裝置的「塔與城塞」）"));
     }
@@ -3768,11 +3768,16 @@ public final class MapService {
     /** 記下這個實例開門花掉的通貨（劫盜終局用）：蓋圖失敗、重開伺服器時沒打完就退。 */
     public void refundIfUnfinished(final MapInstance instance, final Player owner, final CurrencyType type, final int amount) {
         final UUID ownerId = owner.getUniqueId();
-        instance.paidRefund(() -> refundLater(ownerId, type, amount));
+        instance.paidRefund(() -> refundLater(ownerId, type, amount, tw.exilecore.economy.EconomySources.HEIST)); // 劫盜終局的鑰匙
     }
 
     /** 退通貨給某個人（2026-10-17）：在線就退，不在線記在主控台（方便手動補）。 */
     void refundLater(final UUID ownerId, final CurrencyType type, final int amount) { // 2026-10-18：MapEvents 退保險箱的合約也用這個
+        refundLater(ownerId, type, amount, tw.exilecore.economy.EconomySources.MAP_DEVICE);
+    }
+
+    /** 同上，source 是扣的時候的用途（劫盜的鑰匙、合約是 HEIST）。 */
+    void refundLater(final UUID ownerId, final CurrencyType type, final int amount, final String source) {
         final Player owner = plugin.getServer().getPlayer(ownerId);
         if (type == null || amount <= 0) {
             return;
@@ -3781,7 +3786,7 @@ public final class MapService {
             plugin.getSLF4JLogger().warn("要退 {} 個 {} 給 {}，但他不在線上：請手動補", amount, type.id(), ownerId);
             return;
         }
-        refundCurrency(owner, type, plugin.currencies().create(type, amount));
+        refundCurrency(owner, type, plugin.currencies().create(type, amount), source);
         owner.sendMessage(plugin.text().prefixed("<gray>開門用掉的 " + amount + " 個" + ItemRenderer.escape(type.name()) + "退還給你了"));
     }
 
@@ -3797,6 +3802,12 @@ public final class MapService {
     }
 
     private void refundCurrency(final Player owner, final CurrencyType type, final ItemStack stack) {
+        refundCurrency(owner, type, stack, tw.exilecore.economy.EconomySources.MAP_DEVICE);
+    }
+
+    /** 2026-11-02 照站長：退還記進市場報告（把開門那筆消耗扣回去；source 跟扣的時候一樣）。這次之前退了沒記。 */
+    private void refundCurrency(final Player owner, final CurrencyType type, final ItemStack stack, final String source) {
+        plugin.economy().ledger().of(owner).refunded(type.id(), source, stack.getAmount());
         ItemStack rest = plugin.loot() != null ? plugin.loot().stowCurrency(owner, plugin.players().get(owner), type, stack)
                 : plugin.economy().wallet().give(owner, stack);
         if (rest != null && !rest.isEmpty()) {

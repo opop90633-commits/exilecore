@@ -77,6 +77,8 @@ public final class EconomySources {
     public static final String SLOTS = "slots";
     /** 2026-11-02 照站長：傳奇兌換（追逐級傳奇的換進、換出；市場報告的追逐級那一段）。 */
     public static final String UNIQUE_RECIPE = "unique_recipe";
+    /** 2026-11-02：塔完成掉的先驅石板。 */
+    public static final String TOWER = "tower";
 
     /** 來源給人看的名字。 */
     public static String sourceName(final String source) {
@@ -85,7 +87,7 @@ public final class EconomySources {
             case FILTER -> "過濾換金幣";
             case SALVAGE -> "拆解";
             case NPC -> "NPC 給的";
-            case ADMIN -> "管理員";
+            case ADMIN -> "管理員發放"; // 2026-11-02 照站長：市場報告也列出來（這次之前不列）
             case MERITS -> "功勳兌換";
             case EVENT -> "地圖事件、活動獎勵";
             case CRAFT -> "做裝備、地圖";
@@ -112,6 +114,7 @@ public final class EconomySources {
             case SLOTS_BET -> "拉霸機押注";
             case SLOTS -> "拉霸機派彩";
             case UNIQUE_RECIPE -> "傳奇兌換";
+            case TOWER -> "塔完成（先驅石板）";
             default -> source;
         };
     }
@@ -122,7 +125,8 @@ public final class EconomySources {
             EVENT_SHOP, ADMIN_TAKE, SALVAGE_COST, // 2026-10-18：加上活動兌換、管理員扣除、拆解用掉
             CARDS, CARD_GAMBLE, // 2026-10-19 星諭卡
             SLOTS_BET, SLOTS, // 2026-11-02 拉霸機
-            UNIQUE_RECIPE); // 2026-11-02 傳奇兌換
+            UNIQUE_RECIPE, // 2026-11-02 傳奇兌換
+            TOWER); // 2026-11-02 塔完成掉的石板（之前直接寫 "tower"，名稱表沒有）
 
     private EconomySources() {
     }

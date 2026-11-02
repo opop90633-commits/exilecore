@@ -26,6 +26,21 @@ public final class OrbLayout {
         return Math.max(16, Math.min(CHAT_LINE - 2, wanted));
     }
 
+    /** 2026-11-02 照站長：球再放大時最大幾格（GUI 像素）。 */
+    public static final int MAX = 72;
+
+    /**
+     * 2026-11-02 照站長：球的大小，多乘設定的「球的大小」orbScale（1 = 舊的大小）。orbScale 超過 1 時可以超過聊天欄最下面那行
+     * （聊天打開時最下面一兩行會疊到球的一角），最大 {@link #MAX}。這次之前球最大 {@value #CHAT_LINE} − 2 格。
+     */
+    public static int size(final float scale, final float orbScale) {
+        final int base = size(scale);
+        if (orbScale <= 1) {
+            return Math.max(16, Math.round(base * Math.max(0.5f, orbScale)));
+        }
+        return Math.min(MAX, Math.round(OrbArt.BOX * (scale > 0 ? scale : 1) * orbScale));
+    }
+
     /** 左球的左緣（GUI 像素）。 */
     public static int leftX(final int guiWidth, final int size) {
         return guiWidth / 2 - INNER - size;

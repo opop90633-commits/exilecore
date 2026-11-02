@@ -398,6 +398,24 @@ public final class AscendancyEffects implements Listener {
         }
     }
 
+    /**
+     * 2026-11-03 照站長：引導的猛擊（蠻衝）每踏地一下算親自用了一次猛擊（開山裂石的每第三次、天崩地裂的餘震機率），餘震以踏地的地方為中心。
+     * 這次之前引導型的猛擊不走 beforeCast，猛擊次數不會加，開山裂石、天崩地裂都沒有餘震。
+     */
+    public static void channelledSlam(final Player player, final PlayerState state, final SkillBuild build, final Location at) {
+        final AscendancyEffects effects = instance;
+        if (effects == null || build == null || state == null || !build.profile().tags().contains(Tags.SLAM)) {
+            return;
+        }
+        try {
+            final AscState s = effects.state(player);
+            s.slams++;
+            effects.slamAftershocks(player, state.sheet(), s, build, null, at);
+        } catch (final RuntimeException e) {
+            effects.plugin.getSLF4JLogger().error("昇華效果（引導猛擊）出錯", e);
+        }
+    }
+
     private SkillBuild cast(final Player player, final PlayerState state, final SkillBuild original, final LivingEntity target) {
         SkillBuild build = original;
         final StatSheet sheet = state.sheet();
@@ -469,6 +487,12 @@ public final class AscendancyEffects implements Listener {
 
     /** 天崩地裂、劈山碎石：猛擊的餘震（照原本那一下的傷害、同一個範圍）。 */
     private void slamAftershocks(final Player player, final StatSheet sheet, final AscState s, final SkillBuild build, final LivingEntity target) {
+        slamAftershocks(player, sheet, s, build, target, null);
+    }
+
+    /** at：餘震的中心（null = 照目標或面前 2.5 格）。 */
+    private void slamAftershocks(final Player player, final StatSheet sheet, final AscState s, final SkillBuild build, final LivingEntity target,
+                                 final Location at) {
         if (plugin.skills() == null) {
             return;
         }
@@ -477,7 +501,7 @@ public final class AscendancyEffects implements Listener {
             facing.setX(1);
         }
         facing.normalize();
-        final Location center = target != null && target.getWorld() == player.getWorld()
+        final Location center = at != null ? at.clone() : target != null && target.getWorld() == player.getWorld()
                 && target.getLocation().distanceSquared(player.getLocation()) < 64 ? target.getLocation()
                 : player.getLocation().add(facing.clone().multiply(2.5));
         final double chance = flat(sheet, AscKeys.SLAM_AFTERSHOCK);

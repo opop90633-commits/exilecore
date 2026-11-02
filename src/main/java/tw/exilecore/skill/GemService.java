@@ -181,6 +181,22 @@ public final class GemService {
     }
 
     /**
+     * 2026-11-02 照站長：退還的開孔石、琢星稜鏡記進市場報告（把開孔、加品質那筆消耗扣回去）；其他東西不管。這次之前退了沒記。
+     */
+    public void recordRefund(final Player player, final java.util.Collection<ItemStack> items) {
+        if (player == null || items == null || plugin.currencies() == null || plugin.economy() == null) {
+            return;
+        }
+        for (final ItemStack stack : items) {
+            final java.util.Optional<tw.exilecore.currency.CurrencyType> type = stack == null ? java.util.Optional.empty() : plugin.currencies().read(stack);
+            if (type.isPresent() && (type.get().operation() == tw.exilecore.currency.CurrencyOperation.SKILL_SOCKET
+                    || type.get().operation() == tw.exilecore.currency.CurrencyOperation.SKILL_QUALITY)) {
+                plugin.economy().ledger().of(player).refunded(type.get().id(), tw.exilecore.economy.EconomySources.SKILL, stack.getAmount());
+            }
+        }
+    }
+
+    /**
      * 2026-10-26：拿掉的宿主寶石（引星…）第 1 孔裡的技能寶石還給玩家：還在的原樣（等級、品質、孔），併入別的技能的換成那個，
      * 也被拿掉的換成同等級的未切割技能寶石。
      */
@@ -1169,6 +1185,7 @@ public final class GemService {
                 supports.add(create(GemData.skill(spell), 1)); // 2026-10-26：咒擲孔裡的技能寶石也還（這次之前跟著不見）
             }
             supports.addAll(investedRefund(entry)); // 2026-10-28：這次之前付費開的孔還沒退的，一起退（照等級開的不退）
+            recordRefund(player, supports); // 2026-11-02
             giveAll(player, supports);
             return Change.ok(null);
         }

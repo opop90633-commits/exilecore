@@ -431,7 +431,7 @@ public final class ExileCoreCommand {
             giveOrDrop(plugin, player, plugin.currencies().create(type, batch));
             remaining -= batch;
         }
-        plugin.economy().ledger().produced(type.id(), tw.exilecore.economy.EconomyLedger.ADMIN, amount);
+        plugin.economy().ledger().of(player).produced(type.id(), tw.exilecore.economy.EconomyLedger.ADMIN, amount);
         player.sendMessage(plugin.text().prefixed("<gray>給你 <white>" + amount + " 個 " + type.name() + "</white>"));
         return Command.SINGLE_SUCCESS;
     }
@@ -775,7 +775,7 @@ public final class ExileCoreCommand {
         // 2026-10-18：流水帳記實際變動量（扣到 0 被夾住時不是 amount）
         // 2026-10-18：扣的記在 ADMIN_TAKE，不跟給的同一列互相抵掉
         final long delta = state.gold() - before;
-        plugin.economy().ledger().gold(delta >= 0 ? tw.exilecore.economy.EconomyLedger.ADMIN : tw.exilecore.economy.EconomyLedger.ADMIN_TAKE, delta);
+        plugin.economy().ledger().of(player).gold(delta >= 0 ? tw.exilecore.economy.EconomyLedger.ADMIN : tw.exilecore.economy.EconomyLedger.ADMIN_TAKE, delta);
         player.sendMessage(plugin.text().prefixed(String.format(Locale.ROOT, "<gray>金幣 %s%,d，現在 <#f5b942>%,d<gray>（帳號共用）",
                 amount >= 0 ? "+" : "", amount, state.gold())));
         return Command.SINGLE_SUCCESS;

@@ -132,7 +132,7 @@ public final class SkillCommands {
         final String currency = data.currencyId();
         if (currency != null && plugin.currencies() != null && plugin.currencies().repository().get(currency) != null) {
             // 未切割寶石算通貨（2026-10）：管理員給的記進流水帳的產出
-            plugin.economy().ledger().produced(currency, tw.exilecore.economy.EconomyLedger.ADMIN, amount);
+            plugin.economy().ledger().of(player).produced(currency, tw.exilecore.economy.EconomyLedger.ADMIN, amount);
         }
         player.sendMessage(plugin.text().prefixed("<green>給了 " + amount + " 顆寶石"));
     }

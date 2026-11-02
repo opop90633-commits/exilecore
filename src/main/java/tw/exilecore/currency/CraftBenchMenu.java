@@ -476,7 +476,8 @@ public final class CraftBenchMenu extends Menu {
                     player.getInventory().setItem(slot, now);
                     currencies().returnRune(player, plugin.economy().wallet(), id);
                     final PlayerState state = plugin.players().get(player);
-                    currencies().recordUse(state.hasCharacter() ? state.character().id() : null, player.getName(), current.uuid(),
+                    // 2026-11-02：取出符文只記查帳，不算用掉（returnRune 已經把鑲進去的消耗扣回去）；這次之前記成用掉一顆
+                    currencies().recordAudit(state.hasCharacter() ? state.character().id() : null, player.getName(), current.uuid(),
                             currencies().runeType(id).id(), before, plugin.items().toJson(current));
                     plugin.players().markDirty(player);
                     player.playSound(player.getLocation(), Sound.BLOCK_GRINDSTONE_USE, 0.7f, 1.3f);

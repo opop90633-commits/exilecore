@@ -31,6 +31,7 @@ final class SettingsScreen extends Screen {
             new Toggle("目標框", c -> c.showTarget, (c, v) -> c.showTarget = v),
             new Toggle("取代原版愛心", c -> c.replaceHearts, (c, v) -> c.replaceHearts = v),
             new Toggle("生命球、魔力球", c -> c.orbs, (c, v) -> c.orbs = v),
+            new Toggle("球裡的字粗體", c -> c.orbBold, (c, v) -> c.orbBold = v), // 2026-11-02 照站長
             new Toggle("技能格寫按鍵", c -> c.showKeyLabels, (c, v) -> c.showKeyLabels = v),
             new Toggle("特效改由模組繪製", c -> c.drawEffects, (c, v) -> c.drawEffects = v),
             new Toggle("提示列", c -> c.showNotices, (c, v) -> c.showNotices = v),
@@ -110,21 +111,25 @@ final class SettingsScreen extends Screen {
             ExileCoreClient.saveConfig();
         }, v -> Math.round(v) + ""));
         y += 24;
-        // 2026-11-02 照站長：大地圖的不透明度；這一排跟「拖動」並排、「重設」跟「完成」並排（開關多了，GUI 縮放 3 也放得下）
+        // 2026-11-02 照站長：大地圖不透明度、球的大小一排；拖動、重設、完成三個並排（開關多了，GUI 縮放 3 也放得下）
         addRenderableWidget(new Slider(left, y, 150, "大地圖不透明度", 20, 100, 5, config.bigMapOpacity, v -> {
             ExileCoreClient.config.bigMapOpacity = (int) Math.round(v);
             ExileCoreClient.saveConfig();
         }, v -> Math.round(v) + "%"));
-        addRenderableWidget(Button.builder(Component.literal("拖動 HUD 位置…"), b -> this.minecraft.gui.setScreen(new HudEditScreen(this)))
-                .bounds(right, y, 150, 20).build());
+        addRenderableWidget(new Slider(right, y, 150, "血魔球大小", 0.8, 1.9, 0.1, config.orbScale, v -> {
+            ExileCoreClient.config.orbScale = v.floatValue();
+            ExileCoreClient.saveConfig();
+        }, v -> String.format(java.util.Locale.ROOT, "%.1f×", v)));
         y += 24;
+        final int buttonY = Math.min(y, this.height - 24);
+        addRenderableWidget(Button.builder(Component.literal("拖動 HUD 位置…"), b -> this.minecraft.gui.setScreen(new HudEditScreen(this)))
+                .bounds(left, buttonY, 100, 20).build());
         addRenderableWidget(Button.builder(Component.literal("重設預設值"), b -> {
             ExileCoreClient.config.resetDisplay();
             changed();
             rebuildWidgets();
-        }).bounds(left, Math.min(y, this.height - 24), 150, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("完成"), b -> onClose()).bounds(right, Math.min(y, this.height - 24), 150, 20)
-                .build());
+        }).bounds(left + 104, buttonY, 100, 20).build());
+        addRenderableWidget(Button.builder(Component.literal("完成"), b -> onClose()).bounds(left + 208, buttonY, 100, 20).build());
     }
 
     private static void changed() {

@@ -566,5 +566,10 @@ public final class PhaseMechanic {
         Object key(final int index) {
             return new tw.exilecore.skill.Fx.Part(this, index);
         }
+
+        /** 2026-11-03：第幾個圈的地面圖代號（不用 Boss 的 UUID 開頭：Boss 停手清場時不會被一起收掉）。 */
+        String markId(final int index) {
+            return "phaselock:" + System.identityHashCode(this) + ":" + index;
+        }
     }
 }

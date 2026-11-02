@@ -94,7 +94,7 @@ final class OrbRenderer {
 
     /** 球多大（GUI 像素），HudRenderer 用來把技能列、增益列推到球的外側。 */
     static int size() {
-        return OrbLayout.size(ExileCoreClient.config.scale);
+        return OrbLayout.size(ExileCoreClient.config.scale, ExileCoreClient.config.orbScale); // 2026-11-02 照站長：可以再放大
     }
 
     static void extract(final GuiGraphicsExtractor g, final HudData.Vitals v) {
@@ -166,12 +166,18 @@ final class OrbRenderer {
     /** 置中的一行小字（太寬就再縮小，最多 maxWidth 寬）。 */
     private static void line(final GuiGraphicsExtractor g, final Font font, final String text, final float cx, final float y, final int color,
                              final float scale, final float maxWidth) {
-        final int width = font.width(text);
+        final int width = ExileCoreClient.config.orbBold
+                ? font.width(net.minecraft.network.chat.Component.literal(text).withStyle(net.minecraft.ChatFormatting.BOLD)) : font.width(text);
         final float s = width <= 0 ? scale : Math.min(scale, maxWidth / width);
         g.pose().pushMatrix();
         g.pose().translate(cx, y);
         g.pose().scale(s, s);
-        g.text(font, text, -width / 2, 0, color, true);
+        if (ExileCoreClient.config.orbBold) {
+            // 2026-11-02 照站長：字粗一點（原版的粗體：同一行往右多畫一次）
+            g.text(font, net.minecraft.network.chat.Component.literal(text).withStyle(net.minecraft.ChatFormatting.BOLD), -width / 2, 0, color, true);
+        } else {
+            g.text(font, text, -width / 2, 0, color, true);
+        }
         g.pose().popMatrix();
     }
 

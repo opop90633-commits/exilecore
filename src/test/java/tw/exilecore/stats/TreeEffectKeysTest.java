@@ -83,14 +83,15 @@ class TreeEffectKeysTest {
     }
 
     @Test
-    void recoupComesBackOverFourSecondsAndSpeedShortensIt() {
+    void recoupComesBackOverEightSecondsAndSpeedShortensIt() {
+        // 2026-11-03 照 PoE2：8 秒回完（這次之前 4 秒）
         final Recoup recoup = new Recoup();
         recoup.add(Recoup.LIFE, 80, 1.0);
-        assertEquals(40, recoup.tick(40)[Recoup.LIFE], 1e-9, "4 秒回完：2 秒回一半");
-        assertEquals(40, recoup.tick(100)[Recoup.LIFE], 1e-9);
+        assertEquals(40, recoup.tick(80)[Recoup.LIFE], 1e-9, "8 秒回完：4 秒回一半");
+        assertEquals(40, recoup.tick(200)[Recoup.LIFE], 1e-9);
         assertEquals(0, recoup.pending(Recoup.LIFE), 1e-9);
-        recoup.add(Recoup.ES, 80, 2.0); // 回復速度加倍：2 秒回完
-        assertEquals(80, recoup.tick(40)[Recoup.ES], 1e-9);
+        recoup.add(Recoup.ES, 80, 2.0); // 回復速度加倍：4 秒回完
+        assertEquals(80, recoup.tick(80)[Recoup.ES], 1e-9);
     }
 
     @Test

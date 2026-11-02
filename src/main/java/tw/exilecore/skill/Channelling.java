@@ -374,6 +374,8 @@ final class Channelling {
             charging.nextBeat = now + Math.max(4, Math.round(charging.interval));
             final Location slam = at.clone();
             service.executor().burst(player, build.profile(), slam, radius, build.knockback(), build.definition().visual());
+            // 2026-11-03 照站長：每踏地一下算親自用一次猛擊（開山裂石每第三次的餘震、天崩地裂）；這次之前引導的猛擊不算
+            tw.exilecore.ascendancy.AscendancyEffects.channelledSlam(player, plugin.players().get(player), build, slam);
             player.getWorld().playSound(slam, Sound.ENTITY_RAVAGER_STEP, SoundCategory.PLAYERS, 0.9f, 0.8f);
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
                 if (player.isOnline() && player.getWorld() == slam.getWorld()) {

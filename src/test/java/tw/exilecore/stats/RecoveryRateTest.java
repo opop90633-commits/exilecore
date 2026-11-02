@@ -56,10 +56,10 @@ class RecoveryRateTest {
         final double before = normal.tick(0.5, 1000, 1.0);
         final double after = fast.tick(0.5 * rate, 1000, 1.0);
         assertTrue(after > before + 1e-6, "偷取變快：" + before + " → " + after);
-        // 回復（Recoup）：基礎 4 秒回完；快 50% 的話 2 秒回 75%
+        // 回復（Recoup）：基礎 8 秒回完（2026-11-03 照 PoE2）；快 50% 的話 4 秒回 75%
         final Recoup recoup = new Recoup();
         recoup.add(Recoup.MANA, 80, 1.0 * rate);
-        assertEquals(60, recoup.tick(40)[Recoup.MANA], 1.0); // 回完的時間取整數刻
+        assertEquals(60, recoup.tick(80)[Recoup.MANA], 1.0); // 回完的時間取整數刻
         // 魔力藥劑：同樣的量、時間除以 1.5
         assertEquals(1.5, FlaskService.flaskRate(sheet, false), 1e-9);
         assertEquals(1.0, FlaskService.flaskRate(sheet, true), 1e-9, "魔力回復速度不影響生命藥劑");

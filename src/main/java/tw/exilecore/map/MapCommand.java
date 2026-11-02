@@ -256,7 +256,7 @@ public final class MapCommand {
             return Command.SINGLE_SUCCESS;
         }
         final org.bukkit.inventory.ItemStack stack = plugin.currencies().create(type, amount);
-        plugin.economy().ledger().produced(type.id(), tw.exilecore.economy.EconomyLedger.ADMIN, stack.getAmount());
+        plugin.economy().ledger().of(player).produced(type.id(), tw.exilecore.economy.EconomyLedger.ADMIN, stack.getAmount());
         player.getInventory().addItem(stack).values()
                 .forEach(rest -> plugin.personalDrops().dropForever(player, rest));
         player.sendMessage(plugin.text().prefixed("<gray>給了 " + amount + " 個" + ItemRenderer.escape(type.name())));
@@ -496,7 +496,7 @@ public final class MapCommand {
             return Command.SINGLE_SUCCESS;
         }
         final org.bukkit.inventory.ItemStack stack = plugin.currencies().create(type, amount);
-        plugin.economy().ledger().produced(type.id(), tw.exilecore.economy.EconomyLedger.ADMIN, stack.getAmount());
+        plugin.economy().ledger().of(player).produced(type.id(), tw.exilecore.economy.EconomyLedger.ADMIN, stack.getAmount());
         player.getInventory().addItem(stack).values()
                 .forEach(rest -> plugin.personalDrops().dropForever(player, rest));
         player.sendMessage(plugin.text().prefixed("<gray>給了 " + amount + " 片" + ItemRenderer.escape(type.name())));

@@ -34,8 +34,32 @@ public final class EconomyReportJson {
     }
 
     /** 組網頁的 JSON。 */
-    /** 2026-10-19：市場報告不列的來源（管理員發放、管理員扣除）：不算進產出、消耗，也不列在來源、用途。 */
-    static final java.util.Set<String> HIDDEN_SOURCES = java.util.Set.of(EconomySources.ADMIN, EconomySources.ADMIN_TAKE);
+    /**
+     * 市場報告不列的來源。2026-11-02 照站長：管理員發放、管理員扣除也列出來（算進產出、消耗，來源寫「管理員發放」）；
+     * 這次之前（2026-10-19 起）不列，管理員補償的通貨被玩家用掉時只看得到消耗、看不到來源。
+     */
+    static final java.util.Set<String> HIDDEN_SOURCES = java.util.Set.of();
+
+    /**
+     * 2026-11-02 照站長：只會消耗的用途（開技能孔、地圖裝置、劫盜、做裝備）：這些的正數是退還（{@link EconomyLedger#refunded}），
+     * 算成那一天的消耗變少（最少 0），不算產出、不列在來源。
+     */
+    static final java.util.Set<String> REFUNDABLE = java.util.Set.of(EconomySources.SKILL, EconomySources.MAP_DEVICE, EconomySources.HEIST,
+            EconomySources.CRAFT);
+
+    /**
+     * 2026-11-02：管理員發放、扣除從這天起才列。之前的那幾列混著管理員發給自己測試用的（那時候還沒排除管理員），列出來會灌水。
+     */
+    static final String ADMIN_SHOWN_FROM = "2026-11-02";
+
+    /** 這一列不列在報告上（純函式，測試用）。 */
+    static boolean hidden(final EconomyRepository.Flow flow) {
+        if (HIDDEN_SOURCES.contains(flow.source())) {
+            return true;
+        }
+        final boolean admin = EconomySources.ADMIN.equals(flow.source()) || EconomySources.ADMIN_TAKE.equals(flow.source());
+        return admin && flow.day().compareTo(ADMIN_SHOWN_FROM) < 0;
+    }
 
     static byte[] build(final List<String> days, final List<CurrencyMeta> currencies, final List<EconomyRepository.Flow> flows,
                         final List<EconomyRepository.DayValue> stock, final List<EconomyRepository.DayValue> values,
@@ -72,19 +96,33 @@ public final class EconomyReportJson {
             if (i == null || flow.amount() == 0) {
                 continue;
             }
-            if (HIDDEN_SOURCES.contains(flow.source())) {
+            if (hidden(flow)) {
                 continue; // 2026-10-19：管理員發放、扣除不列在公開的市場報告（資料庫裡照記，存量照實際）
             }
-            if (flow.amount() > 0) {
+            final boolean refund = flow.amount() > 0 && REFUNDABLE.contains(flow.source()); // 2026-11-02：退還＝消耗變少
+            if (refund) {
+                consumed.computeIfAbsent(flow.kind(), kind -> new long[days.size()])[i] -= flow.amount();
+            } else if (flow.amount() > 0) {
                 produced.computeIfAbsent(flow.kind(), kind -> new long[days.size()])[i] += flow.amount();
             } else {
                 consumed.computeIfAbsent(flow.kind(), kind -> new long[days.size()])[i] += -flow.amount();
             }
             for (final int period : PERIODS) {
                 if (i >= days.size() - period) {
-                    (flow.amount() > 0 ? sources : sinks).get(period).computeIfAbsent(flow.kind(), kind -> new TreeMap<>())
-                            .merge(flow.source(), Math.abs(flow.amount()), Long::sum);
+                    (flow.amount() > 0 && !refund ? sources : sinks).get(period).computeIfAbsent(flow.kind(), kind -> new TreeMap<>())
+                            .merge(flow.source(), refund ? -flow.amount() : Math.abs(flow.amount()), Long::sum);
                 }
+            }
+        }
+        // 2026-11-02：退還比那天的消耗多（前一天用掉、今天退回來）的不算成負的
+        for (final long[] perDay : consumed.values()) {
+            for (int d = 0; d < perDay.length; d++) {
+                perDay[d] = Math.max(0, perDay[d]);
+            }
+        }
+        for (final int period : PERIODS) {
+            for (final Map<String, Long> bySource : sinks.get(period).values()) {
+                bySource.values().removeIf(amount -> amount <= 0);
             }
         }
         final Map<String, Long[]> stockByKind = byDay(stock, index, days.size());

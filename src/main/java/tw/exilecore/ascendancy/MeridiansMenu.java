@@ -171,6 +171,7 @@ final class MeridiansMenu extends Menu {
             redraw();
             return;
         }
+        plugin.economy().ledger().of(player).consumed(type.id(), tw.exilecore.economy.EconomySources.CRAFT, 1); // 2026-11-02：紋上去算用掉（這次之前沒記）
         final String[] tattoos = AscBuild.meridianRunes(state);
         final Runes.Rune old = tattoos[selected].isEmpty() ? null : plugin.items().repository().rune(tattoos[selected]);
         if (old != null && plugin.currencies() != null) {

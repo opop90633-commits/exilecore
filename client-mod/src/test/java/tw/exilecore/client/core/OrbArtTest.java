@@ -105,4 +105,12 @@ class OrbArtTest {
         assertTrue(OrbLayout.rightX(w) >= w / 2 + 91 + 29, "右球在（左手慣用時的）副手格外側");
         assertTrue(OrbLayout.leftX(w, size) + size <= w / 2 - 91 - 6 - 18, "左球在（左手慣用時的）攻擊冷卻指示外側");
     }
+
+    @org.junit.jupiter.api.Test
+    void orbScaleMakesOrbsBigger() {
+        // 2026-11-02 照站長：球可以再放大（設定的 orbScale），最大 MAX
+        org.junit.jupiter.api.Assertions.assertEquals(OrbLayout.size(1f), OrbLayout.size(1f, 1f));
+        org.junit.jupiter.api.Assertions.assertTrue(OrbLayout.size(1f, 1.3f) > OrbLayout.size(1f));
+        org.junit.jupiter.api.Assertions.assertTrue(OrbLayout.size(3f, 1.9f) <= OrbLayout.MAX);
+    }
 }

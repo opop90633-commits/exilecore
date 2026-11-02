@@ -1837,7 +1837,7 @@ final class MapEvents implements Listener {
         final UUID opener = event.safeOpener;
         event.safeOpener = null;
         final tw.exilecore.currency.CurrencyType contract = plugin.currencies().repository().get(tw.exilecore.heist.HeistService.CONTRACT);
-        service.refundLater(opener, contract, 1);
+        service.refundLater(opener, contract, 1, tw.exilecore.economy.EconomySources.HEIST); // 2026-11-02：合約扣的時候記 HEIST
         plugin.getSLF4JLogger().info("地圖 #{}：保險箱開鎖中被中斷，合約退給 {}", event.instance.id(), opener);
     }
 

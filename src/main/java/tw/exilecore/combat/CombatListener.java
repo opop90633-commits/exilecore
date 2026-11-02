@@ -1519,8 +1519,11 @@ public final class CombatListener implements Listener {
             esDamage = Math.min(es, lifeDamage * rate);
             lifeDamage -= esDamage / rate;
         }
-        applyToPlayer(player, state, esDamage, lifeDamage, event, "環境", causeName(event.getCause()), dealt, outgoing, null, false, null);
+        applyToPlayer(player, state, esDamage, lifeDamage, event, ENVIRONMENT, causeName(event.getCause()), dealt, outgoing, null, false, null);
     }
+
+    /** 環境傷害的來源名稱（2026-11-03：回復不算環境傷害）。 */
+    static final String ENVIRONMENT = "環境";
 
     /**
      * 準備扣玩家的護盾與生命：原版傷害改成 0，致死時改成致死值讓原版處理死亡。
@@ -1639,10 +1642,12 @@ public final class CombatListener implements Listener {
                 ? new IncomingDamage(rawSplit.es(), rawSplit.life(), rawSplit.mana() + ascMana, rawSplit.recoup()) : rawSplit;
         final boolean lethal = state.life() - split.life() <= 0;
         event.setDamage(lethal ? LETHAL : 0);
-        final double manaRecoup = (split.es() + split.life() + split.mana())
+        // 2026-11-03 照站長＋PoE2：回復只算擊中（摔落、火、岩漿這些環境傷害不回）；這次之前環境傷害也回
+        final boolean hit = !ENVIRONMENT.equals(source);
+        final double manaRecoup = !hit ? 0 : (split.es() + split.life() + split.mana())
                 * Math.max(0, Math.min(100, sheet.flat(StatKeys.MANA_RECOUP, java.util.Set.of()))) / 100.0; // 2026-10-21：腐化「受到的傷害回復為魔力」
-        pending.put(player.getUniqueId(), new Pending(split.es(), split.life(), split.mana(), split.recoup(), manaRecoup, source, skillName, dealt, outgoing,
-                thornsTarget, byEnemy, pvpAttacker));
+        pending.put(player.getUniqueId(), new Pending(split.es(), split.life(), split.mana(), hit ? split.recoup() : 0, manaRecoup, source, skillName,
+                dealt, outgoing, thornsTarget, byEnemy, pvpAttacker));
     }
 
     /**
@@ -1845,7 +1850,7 @@ public final class CombatListener implements Listener {
                     hud.taken(player, damage.dealt().asMap(), lost); // 戰鬥數據：受到的
                 }
                 if (!state.isDead()) {
-                    // 2026-10-26 照 PoE2：回復 4 秒內平均回來（吃回復速度、生命回復速度）；這次之前存進偷取（每秒最多 10%）
+                    // 2026-10-26 照 PoE2：回復 8 秒內平均回來（2026-11-03 改成 8 秒）（吃回復速度、生命回復速度）；這次之前存進偷取（每秒最多 10%）
                     final StatSheet recoupSheet = plugin.players().sheet(player);
                     final double recoupSpeed = tw.exilecore.stats.TreeEffectKeys.scale(recoupSheet, tw.exilecore.stats.TreeEffectKeys.RECOUP_SPEED,
                             java.util.Set.of(), 0.1);
@@ -1860,7 +1865,7 @@ public final class CombatListener implements Listener {
                     // 2026-10-26 照 PoE2 天賦樹：受到的元素傷害有 x% 回復為能量護盾
                     final double esRecoup = Math.min(100, recoupSheet.flat(tw.exilecore.stats.TreeEffectKeys.ES_RECOUP_ELEMENTAL, java.util.Set.of()));
                     final double dealtTotal = damage.dealt().total();
-                    if (esRecoup > 0 && dealtTotal > 0) {
+                    if (esRecoup > 0 && dealtTotal > 0 && !ENVIRONMENT.equals(damage.source())) { // 2026-11-03：只算擊中
                         final double elemental = (damage.dealt().get(DamageType.FIRE) + damage.dealt().get(DamageType.COLD)
                                 + damage.dealt().get(DamageType.LIGHTNING)) / dealtTotal;
                         state.recoup().add(tw.exilecore.character.Recoup.ES,

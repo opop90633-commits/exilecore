@@ -308,7 +308,18 @@ final class DangerZones {
      * 平面標示轉過去、移過去；以前是整塊收掉再整塊重送，客戶端每次都要重畫一大片地板。
      */
     void show(final String id, final Location center, final Shape shape, final Material element) {
-        final Material color = shown(element); // 2026-10-31：一律紅色（傷害類型改成中間的小字）
+        show(id, center, shape, shown(element), hintText(element)); // 2026-10-31：一律紅色（傷害類型改成中間的小字）
+    }
+
+    /**
+     * 2026-11-03 照站長：能踩的機制圈（鎖血的站位圈、倒數大招的安全區）也用這套地面圖：照給的顏色（黃、藍、綠），不換成紅色、
+     * 不寫傷害類型；範圍就是圈本身（站進去的判定看腳的位置，不加身體半寬）。這次之前這兩種圈只有粒子。
+     */
+    void showSafe(final String id, final Location center, final double radius, final Material color) {
+        show(id, center, discOf(center, radius), color, null);
+    }
+
+    private void show(final String id, final Location center, final Shape shape, final Material color, final String hint) {
         final Zone old = zones.get(id);
         if (old != null && old.world.equals(center.getWorld())) {
             move(id, old, center, shape, color);
@@ -318,7 +329,6 @@ final class DangerZones {
         final Zone zone = new Zone(center.getWorld(), shape, center.clone(), color, 0.02 + (serial++ % 5) * 0.004);
         zones.put(id, zone);
         send(zone);
-        final String hint = hintText(element);
         if (hint != null) {
             zone.hint = spawnHint(zone, hint);
         }

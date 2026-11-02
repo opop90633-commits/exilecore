@@ -46,8 +46,8 @@ public final class KeystoneEffects implements Listener {
     /** 衰弱（poe2db Debilitate）：造成的傷害減少 10%、移動速度減少 20%。 */
     public static final double DEBILITATE_LESS = 0.1;
     public static final double DEBILITATE_SLOW = 0.2;
-    /** 補償（recoup）分幾秒回（PoE2：4 秒）。 */
-    static final int RECOUP_SECONDS = 4;
+    /** 補償（recoup）分幾秒回（PoE2：8 秒；2026-11-03 跟 {@link tw.exilecore.character.Recoup#BASE_TICKS} 一致，這次之前寫 4）。 */
+    static final int RECOUP_SECONDS = (int) (tw.exilecore.character.Recoup.BASE_TICKS / 20);
     /** 感電擴散的半徑（PoE2 1.5 公尺）。 */
     // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前 1.5 格）
     static final double SHOCK_SPREAD_RADIUS = tw.exilecore.core.Units.metres(1.5);
@@ -373,7 +373,11 @@ public final class KeystoneEffects implements Listener {
             life += dealt * deflected / 100.0;
         }
         if (life > 0 && !state.ruined(now)) {
-            state.addLeech(life); // 跟其他補償一樣存進偷取慢慢回
+            // 2026-11-03 照站長＋PoE2：元素傷害、抵銷的物理、偏斜補償為生命是回復（8 秒平均回來、吃回復速度與生命回復速度），
+            // 這次之前存進偷取（受偷取每秒上限，跟原作不同）
+            state.recoup().add(tw.exilecore.character.Recoup.LIFE, life,
+                    tw.exilecore.stats.TreeEffectKeys.scale(sheet, tw.exilecore.stats.TreeEffectKeys.RECOUP_SPEED, Set.of(), 0.1)
+                            * tw.exilecore.stats.TreeEffectKeys.recoveryRate(sheet, tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE));
         }
         double es = dealt * Math.max(0, sheet.flat(KeystoneKeys.ES_RECOUP, Set.of())) / 100.0;
         final double scarred = sheet.flat(KeystoneKeys.SCARRED_RECOUP, Set.of());

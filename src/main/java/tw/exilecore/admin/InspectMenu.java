@@ -39,7 +39,9 @@ public final class InspectMenu extends Menu {
         INVENTORY("背包", Material.CHEST),
         GEAR("裝備", Material.IRON_CHESTPLATE),
         BAG("隨身背包", Material.BUNDLE),
-        STASH("倉庫", Material.ENDER_CHEST);
+        STASH("倉庫", Material.ENDER_CHEST),
+        /** 2026-11-03 照站長：天賦樹（與命匣）上的珠寶。 */
+        JEWELS("天賦珠寶", Material.EMERALD);
 
         private final String title;
         private final Material icon;
@@ -51,12 +53,18 @@ public final class InspectMenu extends Menu {
     }
 
     private static final int SLOT_HEAD = 0;
-    private static final int[] VIEW_SLOTS = {3, 4, 5, 6};
+    private static final int[] VIEW_SLOTS = {2, 3, 4, 5, 6}; // 2026-11-03：多一個「天賦珠寶」
+    /** 2026-11-03 照站長：搜尋（名稱、說明的一部分；背包、裝備、隨身背包、倉庫、珠寶都能搜）。 */
+    private static final int SLOT_SEARCH = 8;
+    private String query = "";
     /** 一個畫面放幾格（第 2–5 排）：隨身背包、倉庫一頁 45 格，攤平之後一個畫面看 36 格。 */
     private static final int SHOWN = 36;
 
     /** 畫面上這一格是哪裡的東西（拿的時候用）。 */
-    private record Source(View view, int page, int index, ItemStack snapshot) {
+    private record Source(View view, int page, int index, ItemStack snapshot, String key) {
+        Source(final View view, final int page, final int index, final ItemStack snapshot) {
+            this(view, page, index, snapshot, null);
+        }
     }
 
     private final Map<Integer, Source> sources = new HashMap<>();
@@ -118,10 +126,15 @@ public final class InspectMenu extends Menu {
         }
         set(SLOT_REFRESH, icon(Material.CLOCK, "<white>重新整理", "<gray>看最新的狀態", "", "<yellow>左鍵：重新整理"));
         set(SLOT_CLOSE_BAR, closeButton());
+        set(SLOT_SEARCH, searchButton(query, "物品"));
+        set(7, icon(Material.HOPPER, "<white>放進去", "<gray>在自己的背包按 <white>Shift＋左鍵</white><gray>：",
+                "<gray>把那件放進對方的" + (view == View.GEAR || view == View.JEWELS ? "背包" : view.title),
+                "<dark_gray>（裝備、天賦珠寶頁放進對方的背包）"));
         switch (view) {
             case INVENTORY -> drawInventory(target);
             case GEAR -> drawGear(state);
             case BAG, STASH -> drawStorageView(target, state);
+            case JEWELS -> drawJewels(state);
         }
     }
 
@@ -129,10 +142,14 @@ public final class InspectMenu extends Menu {
     private void drawInventory(final Player target) {
         final ItemStack[] contents = target.getInventory().getStorageContents();
         for (int i = 0; i < 9 && i < contents.length; i++) {
-            show(9 + i, contents[i], new Source(View.INVENTORY, 0, i, contents[i])); // 快捷列放在最上面一排
+            if (matchesQuery(contents[i])) {
+                show(9 + i, contents[i], new Source(View.INVENTORY, 0, i, contents[i])); // 快捷列放在最上面一排
+            }
         }
         for (int i = 9; i < 36 && i < contents.length; i++) {
-            show(18 + (i - 9), contents[i], new Source(View.INVENTORY, 0, i, contents[i]));
+            if (matchesQuery(contents[i])) {
+                show(18 + (i - 9), contents[i], new Source(View.INVENTORY, 0, i, contents[i]));
+            }
         }
     }
 
@@ -153,7 +170,7 @@ public final class InspectMenu extends Menu {
                 }
                 set(at, uiIcon(tw.exilecore.character.menu.CharacterPanelMenu.slotShape(PlayerState.GEAR_SLOTS[i]),
                         Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<dark_gray>" + PlayerState.GEAR_SLOTS[i].displayName() + "：空"));
-            } else {
+            } else if (matchesQuery(stack)) {
                 show(at, stack, null);
             }
         }
@@ -261,6 +278,10 @@ public final class InspectMenu extends Menu {
 
     /** 隨身背包、倉庫：所有頁攤平，一個畫面看 36 格（一頁 45 格的後面 9 格在下一個畫面）。 */
     private void drawStorage(final List<ItemStack[]> pages, final View which) {
+        if (!query.isBlank()) {
+            drawFound(pages, which);
+            return;
+        }
         final int size = pages.isEmpty() ? 0 : pages.getFirst().length;
         final int total = pages.size() * size;
         final int screens = Math.max(1, (total + SHOWN - 1) / SHOWN);
@@ -285,6 +306,76 @@ public final class InspectMenu extends Menu {
         }
     }
 
+    /** 2026-11-03 照站長：搜尋中：隨身背包、倉庫所有頁裡符合的排在一起（說明寫在第幾頁第幾格）。 */
+    private void drawFound(final List<ItemStack[]> pages, final View which) {
+        final List<Source> found = new ArrayList<>();
+        for (int p = 0; p < pages.size(); p++) {
+            final ItemStack[] items = pages.get(p);
+            for (int i = 0; i < items.length; i++) {
+                if (items[i] != null && !items[i].isEmpty() && matchesQuery(items[i])) {
+                    found.add(new Source(which, p, i, items[i]));
+                }
+            }
+        }
+        final int screens = Math.max(1, (found.size() + SHOWN - 1) / SHOWN);
+        page = Math.max(0, Math.min(page, screens - 1));
+        if (found.isEmpty()) {
+            set(22, icon(Material.BARRIER, "<gray>" + which.title + "裡沒有符合「" + ItemRenderer.escape(query) + "」的東西"));
+            return;
+        }
+        for (int k = 0; k < SHOWN && page * SHOWN + k < found.size(); k++) {
+            final Source source = found.get(page * SHOWN + k);
+            show(9 + k, source.snapshot(), source);
+        }
+        set(SLOT_REFRESH - 1, icon(Material.PAPER, "<gray>找到 " + found.size() + " 件", "<dark_gray>（物品說明最後寫在第幾頁第幾格）"));
+        if (screens > 1) {
+            set(SLOT_PREV, pageButton(false, page, screens));
+            set(SLOT_NEXT, pageButton(true, page, screens));
+        }
+    }
+
+    /** 2026-11-03 照站長：天賦樹（與命匣）上的珠寶：一個孔一格（說明寫孔位）。 */
+    private void drawJewels(final PlayerState state) {
+        final List<Map.Entry<String, ItemStack>> list = new ArrayList<>(state.jewels().entrySet());
+        list.removeIf(e -> e.getValue() == null || e.getValue().isEmpty() || !matchesQuery(e.getValue()));
+        list.sort(Map.Entry.comparingByKey());
+        final int screens = Math.max(1, (list.size() + SHOWN - 1) / SHOWN);
+        page = Math.max(0, Math.min(page, screens - 1));
+        if (list.isEmpty()) {
+            set(22, icon(Material.BARRIER, query.isBlank() ? "<gray>天賦樹上沒有珠寶" : "<gray>沒有符合的珠寶"));
+            return;
+        }
+        for (int k = 0; k < SHOWN && page * SHOWN + k < list.size(); k++) {
+            final Map.Entry<String, ItemStack> entry = list.get(page * SHOWN + k);
+            show(9 + k, entry.getValue(), new Source(View.JEWELS, 0, k, entry.getValue(), entry.getKey()));
+        }
+        if (screens > 1) {
+            set(SLOT_PREV, pageButton(false, page, screens));
+            set(SLOT_NEXT, pageButton(true, page, screens));
+        }
+    }
+
+    /** 搜尋：名稱或說明有沒有包含關鍵字（沒有關鍵字一律算有）。 */
+    private boolean matchesQuery(final ItemStack stack) {
+        if (query.isBlank()) {
+            return true;
+        }
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        final net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer plain =
+                net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText();
+        final StringBuilder text = new StringBuilder(plain.serialize(stack.effectiveName()));
+        final List<Component> lore = stack.lore();
+        if (lore != null) {
+            for (final Component line : lore) {
+                text.append('\n').append(plain.serialize(line));
+            }
+        }
+        plugin.items().read(stack).map(ItemData::uuid).ifPresent(id -> text.append('\n').append(id));
+        return matches(query, text.toString());
+    }
+
     /** 放一件物品的複本（說明最後加上物品 UUID；source 不是 null 的可以拿走）。 */
     private void show(final int slot, final ItemStack stack, final Source source) {
         if (stack == null || stack.isEmpty()) {
@@ -297,6 +388,11 @@ public final class InspectMenu extends Menu {
             final List<Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
             lore.add(ItemRenderer.line(""));
             lore.add(ItemRenderer.line(id == null ? "<dark_gray>（沒有物品 UUID：不是裝備）" : "<gray>物品 UUID：<white>" + id));
+            if (source != null && source.key() != null) {
+                lore.add(ItemRenderer.line("<gray>孔位：<white>" + ItemRenderer.escape(source.key())));
+            } else if (source != null && (source.view() == View.BAG || source.view() == View.STASH) && !query.isBlank()) {
+                lore.add(ItemRenderer.line("<gray>在第 " + (source.page() + 1) + " 頁第 " + (source.index() + 1) + " 格"));
+            }
             if (id != null) {
                 lore.add(ItemRenderer.line("<yellow>左鍵：在聊天欄送出 UUID（點那行複製）"));
             }
@@ -377,8 +473,17 @@ public final class InspectMenu extends Menu {
             redraw();
             return;
         }
+        if (slot == SLOT_SEARCH) {
+            searchClick(click, "物品", query, q -> {
+                query = q == null ? "" : q;
+                page = 0;
+                mode = Mode.ITEMS;
+            });
+            return;
+        }
         if (view != View.INVENTORY && mode != Mode.TABS && (slot == SLOT_PREV || slot == SLOT_NEXT)) {
-            final int pages = view == View.GEAR ? PlayerState.GEAR_SETS : mode == Mode.CURRENCY ? currencyScreens() : storageScreens();
+            final int pages = view == View.GEAR ? PlayerState.GEAR_SETS : view == View.JEWELS ? 1000 : mode == Mode.CURRENCY ? currencyScreens()
+                    : !query.isBlank() ? 1000 : storageScreens(); // 珠寶、搜尋結果：draw 會夾回範圍內
             page = Math.floorMod(page + (slot == SLOT_NEXT ? 1 : -1), Math.max(1, pages));
             confirmSlot = -1;
             redraw();
@@ -517,6 +622,10 @@ public final class InspectMenu extends Menu {
         if (!target.equals(player)) {
             target.closeInventory(); // 對方開著的介面先關掉（介面裡的東西寫回去），畫面跟資料才一致
         }
+        if (source.view() == View.JEWELS) {
+            takeJewel(target, state, source, delete);
+            return;
+        }
         final ItemStack[] place;
         switch (source.view()) {
             case INVENTORY -> place = null;
@@ -576,6 +685,102 @@ public final class InspectMenu extends Menu {
         }).whenComplete((ignored, error) -> {
             if (error != null) {
                 plugin.getSLF4JLogger().warn("管理員回收物品的紀錄寫不進去：{}", error.toString());
+            }
+        });
+    }
+
+    /** 2026-11-03 照站長：拿走（或刪掉）天賦樹上的一顆珠寶（拿掉之後重算對方的屬性）。 */
+    private void takeJewel(final Player target, final PlayerState state, final Source source, final boolean delete) {
+        final ItemStack current = state.jewel(source.key());
+        if (current == null || current.isEmpty() || !current.equals(source.snapshot())) {
+            player.sendMessage(plugin.text().prefixed("<red>那個孔的珠寶已經變了（對方剛動過），重新整理再試"));
+            return;
+        }
+        final ItemStack stack = current.clone();
+        state.setJewel(source.key(), null);
+        plugin.players().sheet(target);
+        state.markDirty();
+        plugin.characters().save(target);
+        if (!delete) {
+            final tw.exilecore.economy.Wallet wallet = plugin.economy().wallet();
+            final ItemStack rest = wallet.give(player, stack);
+            if (rest != null && !rest.isEmpty()) {
+                wallet.dropFor(player, rest);
+            }
+        }
+        adminLog(target, delete ? "刪除物品" : "收回物品", "天賦珠寶 " + source.key(), stack, delete ? "刪除" : "收回");
+    }
+
+    /**
+     * 2026-11-03 照站長：管理員把自己背包的東西放進對方那裡（自己的背包按 Shift＋左鍵）：背包、隨身背包、倉庫放進看著的那裡，
+     * 裝備、天賦珠寶頁放進對方的背包。放不下就不放。記管理紀錄；通貨算「管理員發放」。
+     */
+    @Override
+    protected void onBottomClick(final int slot, final ClickType click, final InventoryClickEvent event) {
+        if (click != ClickType.SHIFT_LEFT || !acceptAction(click)) {
+            return;
+        }
+        final ItemStack stack = event.getCurrentItem();
+        final Player target = target();
+        if (stack == null || stack.isEmpty() || target == null) {
+            return;
+        }
+        if (target.equals(player)) {
+            player.sendMessage(plugin.text().prefixed("<red>這是你自己"));
+            return;
+        }
+        final PlayerState state = plugin.players().get(target);
+        if (!state.isLoaded() || !state.hasCharacter()) {
+            player.sendMessage(plugin.text().prefixed("<red>對方的角色還沒載入"));
+            return;
+        }
+        target.closeInventory(); // 對方開著的介面先關掉（隨身背包、倉庫開著時放不進去）
+        final ItemStack copy = stack.clone();
+        final View where = view == View.GEAR || view == View.JEWELS ? View.INVENTORY : view;
+        final boolean placed = switch (where) {
+            case BAG -> state.bag().add(copy);
+            case STASH -> plugin.stash() != null && plugin.stash().deposit(target, copy);
+            default -> target.getInventory().addItem(copy).isEmpty();
+        };
+        if (!placed) {
+            player.sendMessage(plugin.text().prefixed("<red>對方的" + where.title + "放不下（或還沒載入）"));
+            return;
+        }
+        event.getClickedInventory().setItem(slot, null);
+        state.markDirty();
+        plugin.characters().save(target);
+        plugin.characters().save(player);
+        if (plugin.currencies() != null && plugin.economy() != null) {
+            plugin.currencies().read(copy).ifPresent(type ->
+                    plugin.economy().ledger().of(target).produced(type.id(), tw.exilecore.economy.EconomyLedger.ADMIN, copy.getAmount()));
+        }
+        player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.6f, 0.8f);
+        adminLog(target, "放入物品", where.title, copy, "放入");
+        redraw();
+    }
+
+    /** 管理紀錄、交易紀錄（拿走、刪掉、放入共用）。 */
+    private void adminLog(final Player target, final String action, final String where, final ItemStack stack, final String verb) {
+        final String what = tw.exilecore.economy.Wallet.describe(stack);
+        final String uuid = plugin.items().read(stack).map(ItemData::uuid).orElse(null);
+        player.sendMessage(plugin.text().prefixed("<green>" + verb + "了 " + target.getName() + " " + where + " 的 <white>"
+                + ItemRenderer.escape(what) + (stack.getAmount() > 1 ? " ×" + stack.getAmount() : "")));
+        plugin.getSLF4JLogger().info("[管理] {} {} {} 的 {}（{}）×{}，物品 UUID {}", player.getName(), verb, target.getName(), what, where,
+                stack.getAmount(), uuid);
+        final String opId = UUID.randomUUID().toString();
+        final tw.exilecore.economy.TradeLogRepository.Entry entry = new tw.exilecore.economy.TradeLogRepository.Entry(opId,
+                tw.exilecore.economy.TradeLogRepository.ADMIN, uuid, verb + what, Math.max(1, stack.getAmount()), null,
+                player.getName(), target.getUniqueId(), target.getName());
+        final String detail = target.getName() + " " + where + "：" + what + " ×" + stack.getAmount() + (uuid == null ? "" : "（" + uuid + "）");
+        plugin.database().async(connection -> {
+            plugin.economy().tradeLog().insert(connection, List.of(entry));
+            if (plugin.admin() != null && plugin.admin().repository() != null) {
+                plugin.admin().repository().log(connection, player.getName(), action, detail);
+            }
+            return null;
+        }).whenComplete((ignored, error) -> {
+            if (error != null) {
+                plugin.getSLF4JLogger().warn("管理員{}的紀錄寫不進去：{}", verb, error.toString());
             }
         });
     }

@@ -31,6 +31,10 @@ public final class ModConfig {
     /** 技能格下面寫綁的按鍵。 */
     public boolean showKeyLabels = true;
     public float scale = 1.0f;
+    /** 2026-11-02 照站長：生命球、魔力球的大小（1 = 舊的大小；預設 1.3）。 */
+    public float orbScale = 1.3f;
+    /** 2026-11-02 照站長：球裡的數字用粗體。 */
+    public boolean orbBold = true;
     /** 特效改由模組繪製（1.1）：伺服器不送技能／範圍的粒子，模組自己畫（地上的圈、預警閃紅）。關掉 = 照舊收伺服器的粒子。 */
     public boolean drawEffects = true;
 

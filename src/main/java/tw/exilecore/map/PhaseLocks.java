@@ -110,6 +110,8 @@ public final class PhaseLocks {
     private static final long TITLE_TICKS = 50;
 
     private final ExileCore plugin;
+    /** 2026-11-03：地面圖現在標的顏色（代號 → 顏色；顏色變了才重標）。 */
+    private final Map<String, org.bukkit.Material> marked = new HashMap<>();
     private final java.util.random.RandomGenerator random;
 
     public PhaseLocks(final ExileCore plugin, final java.util.random.RandomGenerator random) {
@@ -251,6 +253,27 @@ public final class PhaseLocks {
         state.vulnRules = null;
     }
 
+    /** 2026-11-03 照站長：能踩的圈也標地面圖（跟 Boss 預警同一套材質包；沒套的人看到地板變色），顏色變了才重標。 */
+    private void mark(final PhaseMechanic.Active lock, final int index, final Location at, final double radius, final org.bukkit.Material color) {
+        if (plugin.skills() == null) {
+            return;
+        }
+        final String id = lock.markId(index);
+        if (marked.get(id) != color) {
+            marked.put(id, color);
+            plugin.skills().bossSkills().showSafeMark(id, at, radius, color);
+        }
+    }
+
+    private void unmark(final PhaseMechanic.Active lock, final int count) {
+        for (int i = 0; i < count; i++) {
+            final String id = lock.markId(i);
+            if (marked.remove(id) != null && plugin.skills() != null) {
+                plugin.skills().bossSkills().hideMark(id);
+            }
+        }
+    }
+
     private void end(final State state, final LivingEntity boss) {
         final PhaseMechanic.Active lock = state.lock;
         if (lock == null) {
@@ -259,6 +282,7 @@ public final class PhaseLocks {
         for (int i = 0; i < lock.spots.size(); i++) {
             Fx.zoneStop(lock.key(i));
         }
+        unmark(lock, lock.spots.size()); // 2026-11-03
         state.lock = null;
         if (boss != null && boss.isValid() && lock.spec.invulnerable()) {
             boss.setInvulnerable(false);
@@ -324,7 +348,9 @@ public final class PhaseLocks {
             // 外框照充能變色（黃 → 藍 → 綠），裡面一圈照充能長大；圈心一道光柱，越滿越高
             final double charge = lock.charges[i];
             final Particle.DustOptions color = charge >= 1 ? ZONE_FULL : charge > 0 ? ZONE_CHARGING : ZONE_EMPTY;
-            Fx.safeZone(lock.key(i), at, zones.radius(), Fx.Look.filled(Particle.DUST, color), (int) Math.max(0, lock.untilTick - now)); // 2026-11-02 照站長：能踩的，模組不染紅；裡面也撒點（沒裝模組的也看得清楚），這次之前只有外框
+            Fx.safeZone(lock.key(i), at, zones.radius(), Fx.Look.filled(Particle.DUST, color), (int) Math.max(0, lock.untilTick - now));
+            mark(lock, i, at, zones.radius(), charge >= 1 ? org.bukkit.Material.LIME_CONCRETE : charge > 0 ? org.bukkit.Material.LIGHT_BLUE_CONCRETE
+                    : org.bukkit.Material.YELLOW_CONCRETE); // 2026-11-03 照站長：地面圖黃 → 藍 → 綠 // 2026-11-02 照站長：能踩的，模組不染紅；裡面也撒點（沒裝模組的也看得清楚），這次之前只有外框
             if (charge > 0.05 && charge < 1 && pulse) {
                 Fx.ring(at.getWorld(), at, zones.radius() * charge, Particle.DUST, ZONE_FULL, null, true);
             }
@@ -408,6 +434,7 @@ public final class PhaseLocks {
         for (int i = 0; i < have; i++) {
             Fx.zoneStop(lock.key(i)); // 圈的編號會變：先全部收掉，下面重畫
         }
+        unmark(lock, have); // 2026-11-03：地面圖也收掉，下面重標
         final List<double[]> spots = new ArrayList<>(lock.spots);
         final List<Double> charges = new ArrayList<>();
         for (final double value : lock.charges) {
@@ -461,6 +488,7 @@ public final class PhaseLocks {
         for (int i = 0; i < lock.spots.size(); i++) {
             Fx.safeZone(lock.key(i), spot(arena, lock.spots.get(i), 0.1), countdown.safeRadius(), // 2026-11-02 照站長：安全區，模組不染紅
                     Fx.Look.of(Particle.DUST, SAFE_GREEN, Particle.HAPPY_VILLAGER, null), (int) Math.max(0, lock.untilTick - now));
+            mark(lock, i, spot(arena, lock.spots.get(i), 0.1), countdown.safeRadius(), org.bukkit.Material.LIME_CONCRETE); // 2026-11-03：綠色地面圖
         }
         if (now - lock.lastPulse >= 10) {
             lock.lastPulse = now;

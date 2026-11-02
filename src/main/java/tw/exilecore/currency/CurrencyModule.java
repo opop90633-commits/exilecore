@@ -26,7 +26,12 @@ public final class CurrencyModule implements Module {
         service = new CurrencyService(plugin, plugin.getSLF4JLogger(), repository, plugin.items(), resourcePack);
         service.setUsageLog((characterId, playerName, itemUuid, currencyId, before, after) -> {
             // 每用掉一顆（僥倖石碎掉也算）記一筆：經濟報表的「做裝備、地圖」消耗
-            plugin.economy().ledger().ofName(playerName).consumed(currencyId, tw.exilecore.economy.EconomyLedger.CRAFT, 1);
+            // 2026-11-02：在線的照 of(player)（op、exilecore.admin 也排除，跟取得一樣）；這次之前只看名單，op 做裝備的消耗會算進去
+            if (!service.auditOnly()) { // 2026-11-02：取出符文之類的只記查帳（下面的資料庫紀錄照寫），不算用掉
+                final org.bukkit.entity.Player online = playerName == null ? null : plugin.getServer().getPlayerExact(playerName);
+                (online != null ? plugin.economy().ledger().of(online) : plugin.economy().ledger().ofName(playerName))
+                        .consumed(currencyId, tw.exilecore.economy.EconomyLedger.CRAFT, 1);
+            }
             plugin.database().async(connection -> {
                 plugin.characters().repository().logCurrency(connection, characterId, playerName, itemUuid, currencyId, before, after);
                 return null;

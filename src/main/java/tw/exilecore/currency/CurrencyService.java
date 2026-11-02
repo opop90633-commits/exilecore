@@ -464,6 +464,10 @@ public final class CurrencyService {
             return false;
         }
         wallet.dropFor(player, wallet.give(player, create(type, 1)));
+        if (plugin instanceof tw.exilecore.ExileCore core && core.economy() != null) {
+            // 2026-11-02 照站長：拿回來的符文把鑲進去那筆消耗扣回去（市場報告）；這次之前沒記
+            core.economy().ledger().of(player).refunded(type.id(), tw.exilecore.economy.EconomySources.CRAFT, 1);
+        }
         return true;
     }
 
@@ -501,6 +505,25 @@ public final class CurrencyService {
     public void recordUse(final Long characterId, final String playerName, final String itemUuid, final String currencyId,
                           final String before, final String after) {
         usageLog.record(characterId, playerName, itemUuid, currencyId, before, after);
+        log.info("[currency] {} 對 {} 使用 {}", playerName, itemUuid, currencyId);
+    }
+
+    /** 2026-11-02：這一次記錄不算進市場報告的消耗（{@link #recordAudit}）。 */
+    private boolean auditOnly;
+
+    public boolean auditOnly() {
+        return auditOnly;
+    }
+
+    /** 2026-11-02：只記通貨紀錄（查帳用），不算市場報告的消耗：取出符文（符文是還回來，不是用掉）。 */
+    public void recordAudit(final Long characterId, final String playerName, final String itemUuid, final String currencyId,
+                            final String before, final String after) {
+        auditOnly = true;
+        try {
+            usageLog.record(characterId, playerName, itemUuid, currencyId, before, after);
+        } finally {
+            auditOnly = false;
+        }
         log.info("[currency] {} 對 {} 使用 {}", playerName, itemUuid, currencyId);
     }
 

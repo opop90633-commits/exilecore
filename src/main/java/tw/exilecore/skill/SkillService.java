@@ -5979,6 +5979,7 @@ public final class SkillService {
         if (give.isEmpty()) {
             return;
         }
+        gems.recordRefund(player, give); // 2026-11-02 照站長：退的開孔石、稜鏡把那筆消耗扣回去
         gems.giveAll(player, give);
         plugin.players().markDirty(player);
         plugin.characters().save(player);
