@@ -128,23 +128,24 @@ final class OrbRenderer {
                 rightX, top, 0, 0, size, size, pixels, pixels, pixels, pixels);
 
         // 數字：能量護盾（青）、目前（白）、最大（灰）
+        // 2026-11-02 照站長：字放大（目前 0.62 → 0.8、最大與護盾 0.5 → 0.65，可用寬度也放寬）；這次之前字太小
         final float k = size / (float) OrbArt.BOX;
         final float cxLeft = leftX + size / 2f;
         if (ci) {
-            line(g, font, HudRenderer.grouped(v.energyShield()), cxLeft, top + 12.5f * k, 0xFFFFFFFF, 0.62f * k, 24 * k);
-            line(g, font, "/" + HudRenderer.grouped(v.maxEnergyShield()), cxLeft, top + 19f * k, 0xFFC0C0C8, 0.5f * k, 22 * k);
+            line(g, font, HudRenderer.grouped(v.energyShield()), cxLeft, top + 11.5f * k, 0xFFFFFFFF, BIG * k, 29 * k);
+            line(g, font, "/" + HudRenderer.grouped(v.maxEnergyShield()), cxLeft, top + 19.5f * k, 0xFFC0C0C8, SMALL * k, 27 * k);
         } else if (v.maxEnergyShield() > 0) {
-            line(g, font, HudRenderer.grouped(v.energyShield()) + "/" + HudRenderer.grouped(v.maxEnergyShield()), cxLeft, top + 9.5f * k,
-                    SHIELD_TEXT, 0.5f * k, 22 * k);
-            line(g, font, HudRenderer.grouped(v.life()), cxLeft, top + 15f * k, 0xFFFFFFFF, 0.62f * k, 24 * k);
-            line(g, font, "/" + HudRenderer.grouped(v.maxLife()), cxLeft, top + 21.5f * k, 0xFFC0C0C8, 0.5f * k, 22 * k);
+            line(g, font, HudRenderer.grouped(v.energyShield()) + "/" + HudRenderer.grouped(v.maxEnergyShield()), cxLeft, top + 7.5f * k,
+                    SHIELD_TEXT, SMALL * k, 24 * k); // 最上面那行球比較窄
+            line(g, font, HudRenderer.grouped(v.life()), cxLeft, top + 14f * k, 0xFFFFFFFF, BIG * k, 29 * k);
+            line(g, font, "/" + HudRenderer.grouped(v.maxLife()), cxLeft, top + 21.5f * k, 0xFFC0C0C8, SMALL * k, 27 * k);
         } else {
-            line(g, font, HudRenderer.grouped(v.life()), cxLeft, top + 12.5f * k, 0xFFFFFFFF, 0.62f * k, 24 * k);
-            line(g, font, "/" + HudRenderer.grouped(v.maxLife()), cxLeft, top + 19f * k, 0xFFC0C0C8, 0.5f * k, 22 * k);
+            line(g, font, HudRenderer.grouped(v.life()), cxLeft, top + 11.5f * k, 0xFFFFFFFF, BIG * k, 29 * k);
+            line(g, font, "/" + HudRenderer.grouped(v.maxLife()), cxLeft, top + 19.5f * k, 0xFFC0C0C8, SMALL * k, 27 * k);
         }
         final float cxRight = rightX + size / 2f;
-        line(g, font, HudRenderer.grouped(v.mana()), cxRight, top + 12.5f * k, 0xFFFFFFFF, 0.62f * k, 24 * k);
-        line(g, font, "/" + HudRenderer.grouped(v.maxMana()), cxRight, top + 19f * k, 0xFFC0C0C8, 0.5f * k, 22 * k);
+        line(g, font, HudRenderer.grouped(v.mana()), cxRight, top + 11.5f * k, 0xFFFFFFFF, BIG * k, 29 * k);
+        line(g, font, "/" + HudRenderer.grouped(v.maxMana()), cxRight, top + 19.5f * k, 0xFFC0C0C8, SMALL * k, 27 * k);
         if (mom > 0) {
             // 心靈昇華：魔力球框下緣寫比例；生命球框的右下點一個紫紅色的小點（傷害有一部分不扣生命）
             line(g, font, Math.max(1, Math.round(mom * 100)) + "%", cxRight, top + 29.5f * k, MOM_TEXT, 0.5f * k, 18 * k);
@@ -157,6 +158,9 @@ final class OrbRenderer {
     }
 
     private static final int SHIELD_TEXT = 0xFFA8E4FF;
+    /** 2026-11-02：球裡的字：目前的數字、最大值與護盾那一行（乘球的縮放 k）。 */
+    private static final float BIG = 0.8f;
+    private static final float SMALL = 0.65f;
     private static final int MOM_TEXT = 0xFFFFC8F4;
 
     /** 置中的一行小字（太寬就再縮小，最多 maxWidth 寬）。 */

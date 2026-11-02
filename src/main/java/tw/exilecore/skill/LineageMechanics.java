@@ -1408,7 +1408,9 @@ public final class LineageMechanics implements Listener {
             }
         }
         while (mine.size() >= MAX_GROUNDS) {
-            grounds.remove(mine.remove(0)); // 最舊的那塊拿掉
+            final CurseGround replaced = mine.remove(0);
+            grounds.remove(replaced); // 最舊的那塊拿掉
+            Fx.zoneStop(replaced); // 2026-11-02 照站長：模組畫的範圍也收掉（這次之前拿掉的那塊在模組上照畫到時間到，看起來超過 2 塊）
         }
         grounds.add(new CurseGround(player.getUniqueId(), build, spec, center.clone(), radius, now, until, toads, annihilate));
         center.getWorld().playSound(center, Sound.ENTITY_WITCH_CELEBRATE, 0.6f, 0.7f);
