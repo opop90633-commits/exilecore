@@ -15,7 +15,7 @@ import java.util.Map;
 public final class ProcText {
 
     /** 每個觸發技能都一樣的規則（寶石說明最後列一次）。 */
-    public static final String RULES = "觸發的技能用被輔助技能的寶石等級、吃你身上的加成（不吃這個技能掛的其他輔助），"
+    public static final String RULES = "觸發的技能用被輔助技能的實際等級（含裝備加的等級）、吃你身上的加成（不吃這個技能掛的其他輔助），"
             + "不花魔力；冷卻照觸發的技能自己的（上面寫的；沒寫的同一種每 " + ModifierText.number(SupportProcs.COOLDOWN / 20.0) + " 秒最多觸發一次）"; // 2026-11-01 照 PoE2
 
     private ProcText() {

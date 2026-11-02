@@ -27,7 +27,7 @@ final class StartupGate implements Listener {
     /** 一個一個錯開幾毫秒放行。 */
     static final long STAGGER_MILLIS = 100;
     /** 登入最多先等多久（毫秒）；排得更後面的等滿這麼久就直接放行（不踢）。 */
-    static final long MAX_HOLD_MILLIS = 20_000;
+    static final long MAX_HOLD_MILLIS = 8_000; // 2026-11-03：20 → 8 秒（排在後面的人總共等超過 20 秒會連線錯誤）
 
     /** 擋到哪個時間（毫秒；0 = 不擋）。 */
     private volatile long openAt;
@@ -45,7 +45,7 @@ final class StartupGate implements Listener {
         return left <= 0 ? 0 : (left + 999) / 1000;
     }
 
-    /** 設定的秒數（沒寫預設 5，夾在 0～300；0 = 不擋）。 */
+    /** 設定的秒數（沒寫預設 0＝不擋，2026-11-03 之前預設 5；夾在 0～300）。 */
     static int clampDelay(final int seconds) {
         return Math.max(0, Math.min(300, seconds));
     }
@@ -65,7 +65,7 @@ final class StartupGate implements Listener {
         if (event.getType() != ServerLoadEvent.LoadType.STARTUP) {
             return;
         }
-        final int delay = clampDelay(plugin.getConfig().getInt("startup.login-delay-seconds", 5));
+        final int delay = clampDelay(plugin.getConfig().getInt("startup.login-delay-seconds", 0));
         if (delay > 0) {
             openAt = System.currentTimeMillis() + delay * 1000L;
             nextSlot.set(0);

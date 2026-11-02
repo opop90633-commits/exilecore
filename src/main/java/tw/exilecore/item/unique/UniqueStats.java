@@ -366,6 +366,10 @@ public final class UniqueStats {
     public static final String PRESENCE_ALLY_REGEN = "presence.ally_regen";
     /** FLAT %：存在範圍內的盟友獲得 x% 傷害為額外火焰傷害（神聖烈焰，AuraService 給隊友）。 */
     public static final String PRESENCE_ALLY_EXTRA_FIRE = "presence.ally_extra_fire";
+    /** 2026-11-03 FLAT %：存在範圍內的盟友獲得 x% 傷害為額外混沌傷害（攫命之環，PoE2 Evergrasping Ring；AuraService 給隊友）。 */
+    public static final String PRESENCE_ALLY_EXTRA_CHAOS = "presence.ally_extra_chaos";
+    /** 2026-11-03 FLAT %：存在範圍內的敵人獲得 x% 傷害為額外混沌傷害（攫命之環的代價；combat.Presence）。 */
+    public static final String PRESENCE_ENEMY_EXTRA_CHAOS = "presence.enemy_extra_chaos";
     /** FLAT 1：存在範圍內的敵人照牠最低的元素抗性抵抗元素傷害（神聖烈焰，combat.Presence）。 */
     public static final String PRESENCE_LOWEST_RESIST = "flag.presence_lowest_resist";
     /** FLAT：1 = 裝備沒有屬性需求、2 = 技能寶石沒有屬性需求（謎容的兩種，掉落時決定；TreeEffectKeys、GemAttributes）。 */

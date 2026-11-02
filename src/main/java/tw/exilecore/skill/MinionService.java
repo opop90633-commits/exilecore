@@ -1402,6 +1402,10 @@ public final class MinionService implements Listener, MinionHooks {
             ownerModifiers.addAll(auras.effectsFor(minion.owner)); // 光環給召喚物的是完整效果（PoE 的規矩）
         }
         ownerModifiers.addAll(minion.empowered);
+        if (inPresence) {
+            // 2026-11-03 照站長＋PoE2（友方包含召喚物）：「你存在範圍內的友方…」也給自己的召喚物（攫命之環的額外混沌、神聖烈焰的回血與額外火焰）
+            ownerModifiers.addAll(AuraService.presenceAllyEffects(ownerSheet));
+        }
         ownerModifiers.addAll(minion.tamed); // 2026-10-30 照 PoE2 Tame Beast：收服的野獸保留的怪物詞綴
         if (tw.exilecore.ascendancy.AscendancyEffects.get() != null) {
             ownerModifiers.addAll(tw.exilecore.ascendancy.AscendancyEffects.get().minionWeapon(minion.owner, minion.mob.getLocation())); // 2026-10-27 照 PoE2：看看我怎麼辦事的（友軍含召喚物）

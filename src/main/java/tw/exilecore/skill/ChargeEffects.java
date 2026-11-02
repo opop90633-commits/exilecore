@@ -95,6 +95,27 @@ public final class ChargeEffects implements Listener {
         return plugin.combat() == null ? null : plugin.combat().charges();
     }
 
+    /**
+     * 2026-11-03 照站長：引星（主要寶石）觸發的技能也照輔助用掉戰星——只算觸發的技能用得到的：久咒（銳星換詛咒持續時間）。
+     * 狂速（怒星換速度）對觸發的不影響出手速度、碎地是猛擊（引星只放法術），不扣。這次之前觸發的一律不扣、也沒有加成。
+     */
+    SkillBuild onTriggered(final Player player, final SkillBuild build, final StatSheet sheet) {
+        final ChargeService charges = charges();
+        if (charges == null) {
+            return build;
+        }
+        final StatSheet effective = build.profile().effective(sheet);
+        final Set<String> tags = build.profile().tags();
+        final double abiding = effective.flat(ChargeService.SUP_ABIDING_HEX, tags);
+        if (abiding > 0 && tags.contains("curse")) {
+            final int benefit = charges.spend(player, "power", effective, tags);
+            if (benefit > 0) {
+                return build.withDurationScale(build.durationScale() * (1 + abiding / 100.0 * benefit));
+            }
+        }
+        return build;
+    }
+
     /** 放技能的時候（已經付完消耗）：照輔助消耗戰星。 */
     OnUse onUse(final Player player, final SkillBuild build, final StatSheet sheet) {
         final ChargeService charges = charges();

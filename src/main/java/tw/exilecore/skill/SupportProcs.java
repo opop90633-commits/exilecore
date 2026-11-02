@@ -15,6 +15,7 @@ import tw.exilecore.character.PlayerState;
 import tw.exilecore.character.SkillLoadout;
 import tw.exilecore.stats.HitEvent;
 import tw.exilecore.stats.Modifier;
+import tw.exilecore.stats.StatSheet;
 
 import java.util.HashMap;
 import java.util.List;
@@ -722,8 +723,8 @@ public final class SupportProcs implements Listener {
             mine.put(subId, now + ticks);
         }
         final PlayerState state = plugin.players().get(player);
-        final SkillBuild build = withParentGround(player, state, levelFrom, adjust.apply(SkillBuild.of(service.config(), sub,
-                gemLevelOf(player, state, levelFrom), state.level(), false, List.of(), state.weaponTags(), plugin.players().sheet(player))));
+        final SkillBuild build = withParentGround(player, state, levelFrom, adjust.apply(procBuild(sub,
+                gemLevelOf(player, state, levelFrom), state, List.of(), plugin.players().sheet(player))));
         service.procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), build, null);
         return true;
     }
@@ -812,15 +813,51 @@ public final class SupportProcs implements Listener {
      */
     private int gemLevelOf(final Player player, final PlayerState state, final String skillId) {
         final int position = state.skills().find(skillId);
-        return position < 0 ? 1 : GemAttributes.usableLevel(service.config(), state.skills().skill(position), plugin.players().sheet(player));
+        return position < 0 ? 1 : effectiveLevel(player, state, state.skills().skill(position));
+    }
+
+    /**
+     * 2026-11-03 照站長＋PoE2（輔助送的技能用被輔助技能的等級）：被輔助技能實際施放的等級——寶石等級（屬性不足會降）＋裝備的「+技能等級」＋輔助加的等級。
+     * 這次之前只看寶石本身的等級（最多 21），32 級的詛咒（寶石 20＋裝備 12）觸發的咒殞爆照 20 級算。
+     */
+    private int effectiveLevel(final Player player, final PlayerState state, final SkillLoadout.Entry entry) {
+        if (entry == null) {
+            return 1;
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        final SkillDefinition parent = service.config().skill(entry.skillId());
+        if (parent == null) {
+            return GemAttributes.usableLevel(service.config(), entry, sheet);
+        }
+        try {
+            final SkillBuild built = service.build(state, sheet, parent, entry);
+            return built == null ? GemAttributes.usableLevel(service.config(), entry, sheet) : built.level();
+        } catch (final RuntimeException e) {
+            return GemAttributes.usableLevel(service.config(), entry, sheet);
+        }
+    }
+
+    /** 2026-11-03：照指定的等級做觸發技能的 build（不再被角色等級的上限壓、不再另外加「+技能等級」：等級已經是被輔助技能的實際等級）。 */
+    private SkillBuild procBuild(final SkillDefinition sub, final int level, final PlayerState state, final List<SupportDefinition> inherited,
+                                 final StatSheet sheet) {
+        final Integer before = SkillBuild.PREVIEW_LEVEL.get();
+        SkillBuild.PREVIEW_LEVEL.set(level);
+        try {
+            return SkillBuild.of(service.config(), sub, level, state.level(), false, inherited, state.weaponTags(), sheet);
+        } finally {
+            if (before == null) {
+                SkillBuild.PREVIEW_LEVEL.remove();
+            } else {
+                SkillBuild.PREVIEW_LEVEL.set(before);
+            }
+        }
     }
 
     private void castNow(final Player player, final SkillDefinition sub, final String levelFrom, final Location at) {
         final PlayerState state = plugin.players().get(player);
         final int level = gemLevelOf(player, state, levelFrom);
         final SkillBuild build = withParentGround(player, state, levelFrom,
-                StageAttacks.withShield(plugin, state, SkillBuild.of(service.config(), sub, level, state.level(), false, List.of(),
-                state.weaponTags(), plugin.players().sheet(player)))); // 2026-10-28 照 PoE2：熔岩噴射照盾的護甲、閃避附加火焰
+                StageAttacks.withShield(plugin, state, procBuild(sub, level, state, List.of(), plugin.players().sheet(player)))); // 2026-10-28 照 PoE2：熔岩噴射照盾的護甲、閃避附加火焰
         service.procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), build, null);
     }
 
@@ -865,8 +902,7 @@ public final class SupportProcs implements Listener {
         mine.put(subId, now + Math.max(COOLDOWN, Math.round(sub.cooldown() * 20)));
         final PlayerState state = plugin.players().get(player);
         final int level = gemLevelOf(player, state, levelFrom);
-        final SkillBuild build = SkillBuild.of(service.config(), sub, level, state.level(), false, List.of(), state.weaponTags(),
-                plugin.players().sheet(player));
+        final SkillBuild build = procBuild(sub, level, state, List.of(), plugin.players().sheet(player));
         service.minions().decoy(player, build, at);
     }
 
@@ -976,7 +1012,7 @@ public final class SupportProcs implements Listener {
             // 2026-11-01 照 PoE2：「對每個被詛咒的目標」（朽咒）、「每一發飛到終點時」（撒蒺）這種每個各觸發一次，不吃觸發冷卻
             final boolean uncapped = tw.exilecore.stats.SupportRemakeKeys.UNCAPPED_EVENTS.contains(event);
             // 2026-11-01 照 PoE2 storedUses：觸發的技能寫了可存次數（cooldown_uses，例如咒殞爆）就照次數，不看單一冷卻
-            final int level = GemAttributes.usableLevel(service.config(), entry, plugin.players().sheet(player)); // 2026-10-27：屬性不足降級後的等級
+            final int level = effectiveLevel(player, state, entry); // 2026-11-03：被輔助技能的實際等級（含裝備＋等級）；2026-10-27：屬性不足降級後的等級
             final int uses = uncapped ? 1 : service.config().cooldownUses(subId, level);
             if (!uncapped && uses <= 1 && mine.getOrDefault(subId, 0L) > now) {
                 continue;
@@ -1029,8 +1065,7 @@ public final class SupportProcs implements Listener {
             // 2026-11-01 照 PoE2（PoB2 SkillGrantedBySupport）：送出來的技能也吃同一顆寶石上能輔助它的其他輔助（咒殞爆吃附蝕、擴散…）；
             //   這次之前送的技能一顆輔助都不吃
             final List<SupportDefinition> inherited = grantedSupports(entry, sub);
-            SkillBuild build = SkillBuild.of(service.config(), sub, level, state.level(), false, inherited,
-                    state.weaponTags(), plugin.players().sheet(player));
+            SkillBuild build = procBuild(sub, level, state, inherited, plugin.players().sheet(player));
             final List<Modifier> subOwnLocal = build.profile().local(); // 2026-11-01 撒蒺：鐵蒺自己的修飾器（致殘），換成原技能的傷害後再加回去
             // 2026-10（照 PoE2 的餘震）：寫了 parent_damage 的照觸發它的那一下出傷害（含輔助），不然慢又重的猛擊（千鈞砸）掛了等於沒掛
             final SkillDefinition parent = service.config().skill(skillId);
@@ -1087,9 +1122,8 @@ public final class SupportProcs implements Listener {
             if (SHOCK_RIFT.equals(subId) && target != null) {
                 // 2026-11-01 照 PoE2 Electromagnetism：開一道會脈衝、吸人、阻礙的雷隙（ShockingRifts）；這次之前一次炸開的新星
                 final SkillDefinition lastDefinition = service.config().skill(SHOCK_RIFT_FINAL);
-                SkillBuild last = lastDefinition == null ? build : SkillBuild.of(service.config(), lastDefinition, level, state.level(), false,
-                        grantedSupports(entry, lastDefinition),
-                        state.weaponTags(), plugin.players().sheet(player));
+                SkillBuild last = lastDefinition == null ? build : procBuild(lastDefinition, level, state, grantedSupports(entry, lastDefinition),
+                        plugin.players().sheet(player));
                 if (metaHit && lastDefinition != null) {
                     last = last.withProfile(last.profile().derive(last.profile().id() + MetaGems.TRIGGERED_SUFFIX, java.util.Set.of(), java.util.Set.of()));
                 }

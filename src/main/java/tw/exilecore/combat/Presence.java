@@ -98,6 +98,11 @@ public final class Presence {
                     mods.add(Modifier.flat(type.mitigationStat(), -exposure * tw.exilecore.passive.ConquestEffects.exposureScale(sheet, type), "曝露"));
                 }
             }
+            // 2026-11-03 照 PoE2 Evergrasping Ring（攫命之環）：存在範圍內的敵人獲得 x% 傷害為額外混沌傷害（代價）
+            final double enemyChaos = sheet.flat(tw.exilecore.item.unique.UniqueStats.PRESENCE_ENEMY_EXTRA_CHAOS, Set.of());
+            if (enemyChaos > 0) {
+                mods.add(Modifier.flat(StatKeys.damageExtra(DamageType.CHAOS), enemyChaos, "攫命之環"));
+            }
             final double weaken = sheet.flat(StatKeys.PRESENCE_WEAKEN, Set.of());
             if (weaken > 0) {
                 mods.add(Modifier.more(StatKeys.DAMAGE, -Math.min(90, weaken) / 100.0, "臨在"));

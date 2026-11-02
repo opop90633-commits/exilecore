@@ -1543,6 +1543,10 @@ final class AuraService implements Listener {
         if (fire > 0) {
             list.add(Modifier.flat(StatKeys.damageExtra(tw.exilecore.stats.DamageType.FIRE), fire, "盟友的存在"));
         }
+        final double chaos = sheet.flat(tw.exilecore.item.unique.UniqueStats.PRESENCE_ALLY_EXTRA_CHAOS, Set.of()); // 2026-11-03 攫命之環
+        if (chaos > 0) {
+            list.add(Modifier.flat(StatKeys.damageExtra(tw.exilecore.stats.DamageType.CHAOS), chaos, "盟友的存在"));
+        }
         return list;
     }
 

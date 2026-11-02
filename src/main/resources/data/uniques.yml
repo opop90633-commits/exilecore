@@ -6022,6 +6022,28 @@ hallowed_fire:            # 2026-10-28 照 PoE2 0.5 的「Sacred Flame」（poe2
       stats:
         - { stat: flag.presence_lowest_resist, type: FLAT, value: 1 }
 
+grasp_ring:              # 2026-11-03 照站長＋PoE2 0.5 的「Evergrasping Ring」（poe2db：永恆之握戒指；原作有、我們以前沒有的），名字自己取
+  name: 攫命之環
+  base: jring_08        # 原作基底 Pearl Ring（詠珠指環：增加 7–10% 施放速度，需求等級 32）
+  drop_level: 32
+  sources: [map_boss, chance, gamble]
+  rarity: uncommon
+  flavour:
+    - "「伸手要力量的，總會握到點什麼——只是未必是自己的。」"
+  mods:
+    - text: "+{value} 最大魔力"
+      value: [60, 100]
+      stats:
+        - { stat: mana.max, type: FLAT, value: "{value}" }
+    - text: "在你存在範圍內的友方獲得 {value}% 傷害為額外混沌傷害"   # 同隊、在存在範圍內的隊友（AuraService）
+      value: [15, 25]
+      stats:
+        - { stat: presence.ally_extra_chaos, type: FLAT, value: "{value}" }
+    - text: "在你存在範圍內的敵人獲得 {value}% 傷害為額外混沌傷害"   # combat.Presence
+      value: [6, 12]
+      stats:
+        - { stat: presence.enemy_extra_chaos, type: FLAT, value: "{value}" }
+
 tamer_ring:              # 2026-10-28 照 PoE2 0.5 的「The Taming」（poe2db：元素之章；原作有、我們以前沒有的）
   name: 元素馴服
   base: jring_09        # 原作基底 Prismatic Ring（三相戒指：+7–10% 全部元素抗性）

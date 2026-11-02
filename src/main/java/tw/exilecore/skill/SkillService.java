@@ -1173,6 +1173,27 @@ public final class SkillService {
         if (infusionText != null) {
             state.notice(infusionText, now + 40);
         }
+        build = chargeEffects().onTriggered(player, build, sheet); // 2026-11-03 照站長：觸發的詛咒掛久咒也用掉銳星
+        // 2026-11-03 照站長＋PoE2：引星觸發的技能也用技能自己的灌注（skills.yml 的 resource.infusion：鏈雷的電灌注、隕星的火灌注…），
+        //   跟手動施放一樣；這次之前只有輔助的 infusion.consume 有用，技能自己寫的灌注在引星裡完全不吃
+        final ResourceSpec triggeredSpec = config.resource(definition.id());
+        if (triggeredSpec != null && !triggeredSpec.infusion().isEmpty()) {
+            final int[] used = new int[3];
+            final List<List<String>> rounds = triggeredSpec.infusionEach()
+                    ? triggeredSpec.infusion().stream().map(List::of).toList() : List.of(triggeredSpec.infusion());
+            for (final List<String> round : rounds) {
+                final int element = resources.consumeOne(player, round, build.profile().effective(sheet), build.profile().tags());
+                if (element >= 0) {
+                    build = applyInfusedSet(applyInfused(build, triggeredSpec.infusedFor(SkillResources.INFUSION_ELEMENTS[element])),
+                            triggeredSpec.infusedSet());
+                    used[element]++;
+                }
+            }
+            final String text = resources.infusionUsed(player, ItemRenderer.escape(definition.name()), used);
+            if (text != null) {
+                state.notice(text, now + 40);
+            }
+        }
         final java.util.UUID previousFx = Fx.source(player.getUniqueId());
         try {
             executor.execute(player, runtime, build, target, now);
