@@ -46,7 +46,26 @@ final class SettingsScreen extends Screen {
             new Toggle("小地圖", c -> c.showMinimap, (c, v) -> c.showMinimap = v),
             new Toggle("死亡回顧面板", c -> c.showDeathPanel, (c, v) -> c.showDeathPanel = v),
             new Toggle("精簡的裝備說明", c -> c.compactTooltips, (c, v) -> c.compactTooltips = v),
-            new Toggle("自動更新", c -> c.autoUpdate, (c, v) -> c.autoUpdate = v));
+            new Toggle("自動更新", c -> c.autoUpdate, (c, v) -> c.autoUpdate = v),
+            // 2026-11-02 照站長：側邊面板一個一個關（關掉的整個不畫）；這次之前只能點標題收起
+            panel("quest", "面板：任務"),
+            panel("guide", "面板：新手引導"),
+            panel("combat", "面板：戰鬥數據"),
+            panel("status", "面板：狀態"),
+            panel("minions", "面板：召喚物"),
+            panel("drops", "面板：撿到東西"));
+
+    private static Toggle panel(final String id, final String label) {
+        return new Toggle(label, c -> c.hiddenPanels == null || !c.hiddenPanels.contains(id), (c, v) -> {
+            if (c.hiddenPanels == null) {
+                c.hiddenPanels = new java.util.ArrayList<>();
+            }
+            c.hiddenPanels.remove(id);
+            if (!v) {
+                c.hiddenPanels.add(id);
+            }
+        });
+    }
 
     SettingsScreen(final Screen parent) {
         super(Component.literal("星骸輔助模組設定"));

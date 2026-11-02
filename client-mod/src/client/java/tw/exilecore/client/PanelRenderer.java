@@ -112,6 +112,11 @@ final class PanelRenderer {
         if (net.minecraft.client.Minecraft.getInstance().gui.screen() instanceof HudEditScreen) {
             panels = Panels.placeholders(panels);
         }
+        final var hidden = ExileCoreClient.config.hiddenPanels;
+        if (hidden != null && !hidden.isEmpty()) {
+            // 2026-11-02 照站長：設定裡關掉的面板整個不畫（拖動畫面也不畫）
+            panels = panels.stream().filter(panel -> !hidden.contains(panel.id())).toList();
+        }
         if (panels.isEmpty()) {
             return;
         }

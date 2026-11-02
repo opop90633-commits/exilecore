@@ -55,6 +55,8 @@ public final class FxCodec {
 
     static final int HEAD_IMPORTANT = 1 << 5;
     static final int HEAD_FAR = 1 << 6;
+    /** 2026-11-02 照站長：能踩的機制圈（站位圈、安全區）：重要（一定畫）但不染紅。這次之前沒有這個位元。 */
+    static final int HEAD_SAFE = 1 << 7;
     static final int OPT_OFFSET = 1;
     static final int OPT_EXTRA = 1 << 1;
     static final int OPT_EXTRA_ONE = 1 << 2;
@@ -79,7 +81,15 @@ public final class FxCodec {
      * density：持續範圍的密度（0–1）；duration：剩餘 tick（-1 不知道）；style：STOP 是 null。
      */
     public record Effect(int shape, int phase, long id, boolean important, Style style, double x, double y, double z, double ex, double ey,
-                         double ez, double radius, int count, double density, int duration, double dx, double dy, double dz, double extra) {
+                         double ez, double radius, int count, double density, int duration, double dx, double dy, double dz, double extra,
+                         boolean safe) {
+
+        /** 不是能踩的（舊的寫法）。 */
+        public Effect(final int shape, final int phase, final long id, final boolean important, final Style style, final double x,
+                      final double y, final double z, final double ex, final double ey, final double ez, final double radius, final int count,
+                      final double density, final int duration, final double dx, final double dy, final double dz, final double extra) {
+            this(shape, phase, id, important, style, x, y, z, ex, ey, ez, radius, count, density, duration, dx, dy, dz, extra, false);
+        }
 
         public boolean persistent() {
             return phase != PHASE_ONCE;
@@ -167,6 +177,7 @@ public final class FxCodec {
                 final int phase = head >> 3 & 3;
                 final boolean important = (head & HEAD_IMPORTANT) != 0;
                 final boolean far = (head & HEAD_FAR) != 0;
+                final boolean safe = (head & HEAD_SAFE) != 0;
                 if (shape == SHAPE_NUMBER) {
                     final int flags = in.u8();
                     final double[] c = in.position(far, ox, oy, oz);
@@ -210,7 +221,7 @@ public final class FxCodec {
                     return null;
                 }
                 out.add(new Effect(shape, phase, id, important, style, c[0], c[1], c[2], e[0], e[1], e[2], radius, count, density, duration, dx,
-                        dy, dz, extra));
+                        dy, dz, extra, safe));
             }
             return out;
         } catch (final RuntimeException e) {

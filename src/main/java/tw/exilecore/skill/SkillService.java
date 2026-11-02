@@ -7203,6 +7203,8 @@ public final class SkillService {
                     lines.add(String.format(Locale.ROOT, "<gray>前方 <white>%d</white> 段區域同時打：半徑 <white>%.1f</white>～<white>%.1f</white> 格，共約 <white>%.1f</white> 格長",
                             SkillExecutor.SUNDER_AREAS, SkillExecutor.sunderRadius(0) * scale, SkillExecutor.sunderRadius(SkillExecutor.SUNDER_AREAS - 1) * scale,
                             (SkillExecutor.sunderCenter(SkillExecutor.SUNDER_AREAS - 1) + SkillExecutor.sunderRadius(SkillExecutor.SUNDER_AREAS - 1)) * scale));
+                    lines.add(String.format(Locale.ROOT, "<gray>每段接在前一段後面，方向在面向左右 <white>%d°</white> 裡隨機偏（共 %d° 的扇形）", // 2026-11-02
+                            Math.round(SkillExecutor.SUNDER_ANGLE_DEG / 2), Math.round(SkillExecutor.SUNDER_ANGLE_DEG)));
                     if (params.aftershock() != null) {
                         lines.add(String.format(Locale.ROOT, "<gray>震波：最多 <white>%d</white> 隻被打到的敵人各放一圈（半徑 <white>%.1f</white> 格），主波的 <white>%d%%</white> 傷害",
                                 SkillExecutor.SUNDER_SHOCKWAVES, tw.exilecore.core.Units.metres(SkillExecutor.SUNDER_SHOCK_M) * scale,

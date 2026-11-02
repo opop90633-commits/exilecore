@@ -535,7 +535,8 @@ final class FxRenderer {
                 fill = disc(level, pos, e, Math.min(n, 64));
             }
         }
-        return new Ground(ax, ay, az, fill, edges, e.style(), e.important(), ticks);
+        // 2026-11-02 照站長：能踩的機制圈（站位圈、安全區）照原本的顏色畫、不染紅不閃；這次之前重要的一律染紅
+        return new Ground(ax, ay, az, fill, edges, e.style(), e.important() && !e.safe(), ticks);
     }
 
     /** 線的一頭：從左邊到右邊一小段外框。 */

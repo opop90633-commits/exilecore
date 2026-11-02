@@ -324,7 +324,7 @@ public final class PhaseLocks {
             // 外框照充能變色（黃 → 藍 → 綠），裡面一圈照充能長大；圈心一道光柱，越滿越高
             final double charge = lock.charges[i];
             final Particle.DustOptions color = charge >= 1 ? ZONE_FULL : charge > 0 ? ZONE_CHARGING : ZONE_EMPTY;
-            Fx.zone(lock.key(i), at, zones.radius(), Fx.Look.edge(Particle.DUST, color), (int) Math.max(0, lock.untilTick - now), null, true);
+            Fx.safeZone(lock.key(i), at, zones.radius(), Fx.Look.edge(Particle.DUST, color), (int) Math.max(0, lock.untilTick - now)); // 2026-11-02 照站長：能踩的，模組不染紅
             if (charge > 0.05 && charge < 1 && pulse) {
                 Fx.ring(at.getWorld(), at, zones.radius() * charge, Particle.DUST, ZONE_FULL, null, true);
             }
@@ -459,8 +459,8 @@ public final class PhaseLocks {
         final LivingEntity boss = arena.boss();
         // 安全區：綠色的外框＋裡面撒點；Boss 身上蓄力的火；場地一圈紅色的外框（整個場地都會被打到）
         for (int i = 0; i < lock.spots.size(); i++) {
-            Fx.zone(lock.key(i), spot(arena, lock.spots.get(i), 0.1), countdown.safeRadius(),
-                    Fx.Look.of(Particle.DUST, SAFE_GREEN, Particle.HAPPY_VILLAGER, null), (int) Math.max(0, lock.untilTick - now), null, true);
+            Fx.safeZone(lock.key(i), spot(arena, lock.spots.get(i), 0.1), countdown.safeRadius(), // 2026-11-02 照站長：安全區，模組不染紅
+                    Fx.Look.of(Particle.DUST, SAFE_GREEN, Particle.HAPPY_VILLAGER, null), (int) Math.max(0, lock.untilTick - now));
         }
         if (now - lock.lastPulse >= 10) {
             lock.lastPulse = now;

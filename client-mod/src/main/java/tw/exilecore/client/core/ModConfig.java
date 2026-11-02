@@ -59,6 +59,8 @@ public final class ModConfig {
     public boolean panelsCollapsed = false;
     /** 這些面板收起來（combat、status、minions、guide、quest、drops…；收起的只剩標題）。 */
     public java.util.List<String> collapsedPanels = new java.util.ArrayList<>();
+    /** 2026-11-02 照站長：這些面板整個不畫（設定畫面「面板：任務」那些開關；標題也不畫）。這次之前只能收起、留著標題。 */
+    public java.util.List<String> hiddenPanels = new java.util.ArrayList<>();
     /** 側邊面板群的位置：x 是往左移幾格（畫面右邊為準）、y 是往下移幾格。 */
     public int panelsX = 0;
     public int panelsY = 0;

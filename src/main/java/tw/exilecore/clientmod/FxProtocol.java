@@ -76,6 +76,8 @@ public final class FxProtocol {
 
     static final int HEAD_IMPORTANT = 1 << 5;
     static final int HEAD_FAR = 1 << 6;
+    /** 2026-11-02 照站長：能踩的機制圈（{@link tw.exilecore.skill.Fx#safeZone}）：模組不染成危險的紅色。舊模組不看這個位元。 */
+    static final int HEAD_SAFE = 1 << 7;
     static final int OPT_OFFSET = 1;
     static final int OPT_EXTRA = 1 << 1;
     static final int OPT_EXTRA_ONE = 1 << 2;
@@ -363,7 +365,8 @@ public final class FxProtocol {
         private void writeEntry(final Buf out, final Entry e, final int styleIndex) {
             final boolean far = e.phase() != PHASE_STOP && (!near(e.x() - ox, e.y() - oy, e.z() - oz)
                     || hasEnd(e.shape()) && !near(e.ex() - ox, e.ey() - oy, e.ez() - oz));
-            out.u8((e.shape() & 7) | (e.phase() & 3) << 3 | (e.important() ? HEAD_IMPORTANT : 0) | (far ? HEAD_FAR : 0));
+            out.u8((e.shape() & 7) | (e.phase() & 3) << 3 | (e.important() ? HEAD_IMPORTANT : 0) | (far ? HEAD_FAR : 0)
+                    | (e.phase() != PHASE_STOP && tw.exilecore.skill.Fx.isSafeZone(e.id()) ? HEAD_SAFE : 0));
             if (e.phase() != PHASE_ONCE) {
                 out.varlong(e.id());
             }

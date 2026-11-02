@@ -1434,7 +1434,8 @@ final class MapBosses {
 
             @Override
             public boolean dormant() {
-                return instance.boss() == boss && !instance.bossKilled() && instance.fightStartTick() < 0;
+                // 2026-11-02 照站長：破盾、站圈、倒數大招這些鎖血機制進行中也不出招（只剩機制本身）；這次之前鎖血時照樣放技能
+                return instance.boss() == boss && !instance.bossKilled() && (instance.fightStartTick() < 0 || instance.lockInvulnerable());
             }
 
             @Override

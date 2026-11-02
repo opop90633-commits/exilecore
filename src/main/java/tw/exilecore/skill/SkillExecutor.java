@@ -912,6 +912,18 @@ final class SkillExecutor {
     static final double SUNDER_SPACING = 0.9;
 
     /**
+     * 2026-11-02 照站長＋PoB2（cascade_aftershock_angle_offset_override 60）：後面每一段接在前一段後面，但方向在你面向的左右 30°（共 60°）裡隨機偏，
+     * 整串排成一道彎彎曲曲的扇形裂縫；這次之前 5 段排成一直線。
+     */
+    static final double SUNDER_ANGLE_DEG = 60;
+
+    /** 第 i 段（i ≥ 1）往哪個方向接（面向轉 offset 度；offset 在 ±{@link #SUNDER_ANGLE_DEG}/2 裡）。純函式（測試用）。 */
+    static org.bukkit.util.Vector sunderStep(final org.bukkit.util.Vector facing, final double offsetDegrees) {
+        final double clamped = Math.max(-SUNDER_ANGLE_DEG / 2, Math.min(SUNDER_ANGLE_DEG / 2, offsetDegrees));
+        return facing.clone().rotateAroundY(Math.toRadians(clamped));
+    }
+
+    /**
      * 第 i 段（0 起算）的半徑（格，未乘範圍）。2026-11-01 照 PoE2（active_skill_base_area_of_effect_radius 9、sunder_wave_radius_+_per_step 2）：
      * 0.9 公尺是半徑；這次之前（2026-10-31）當成直徑，5 段加起來只有 6.5 公尺長。
      */
@@ -949,15 +961,25 @@ final class SkillExecutor {
         final Object strikeSource = new Object();
         // 2026-11-01 照 PoE2（sunder_shockwave_limit_per_cascade 7）：整串最多 7 隻放震波；這次之前每段 7 隻（最多 35 隻）
         int released = 0;
+        final java.util.concurrent.ThreadLocalRandom random = java.util.concurrent.ThreadLocalRandom.current();
+        Location center = null;
         for (int i = 0; i < SUNDER_AREAS; i++) {
             final double radius = sunderRadius(i) * scale;
-            final Location center = origin.feet().clone().add(facing.clone().multiply(sunderCenter(i) * scale));
-            visuals.nova(build.definition().visual(), center, radius);
+            if (center == null) {
+                center = origin.feet().clone().add(facing.clone().multiply(sunderCenter(0) * scale));
+            } else {
+                // 2026-11-02：接在前一段後面、方向在面向左右 30° 裡隨機偏（扇形）
+                final double gap = SUNDER_SPACING * (sunderRadius(i - 1) + sunderRadius(i)) * scale;
+                final double offset = (random.nextDouble() - 0.5) * SUNDER_ANGLE_DEG;
+                center = center.clone().add(sunderStep(facing, offset).multiply(gap));
+            }
+            final Location at = center;
+            visuals.nova(build.definition().visual(), at, radius);
             if (owner == null) {
                 continue;
             }
-            targets.strike(owner, build.profile(), SkillTargets.sphere(center, radius), strikeSource);
-            for (final LivingEntity target : targets.around(center, radius, owner)) {
+            targets.strike(owner, build.profile(), SkillTargets.sphere(at, radius), strikeSource);
+            for (final LivingEntity target : targets.around(at, radius, owner)) {
                 if (!struck.add(target.getUniqueId())) {
                     continue;
                 }

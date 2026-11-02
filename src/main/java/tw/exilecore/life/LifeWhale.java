@@ -509,7 +509,8 @@ final class LifeWhale {
             @Override
             public boolean dormant() {
                 // 護盾中、挑戰的人不在場地上（回到筏上不能放技能）：不找人、不出招
-                return fight.shieldUntil > 0 || onArena(fight).isEmpty();
+                // 2026-11-02 照站長：鎖血機制（站圈、倒數大招）進行中也不出招；這次之前只有護盾中不出招
+                return fight.shieldUntil > 0 || fight.locks.invulnerable() || onArena(fight).isEmpty();
             }
         });
     }

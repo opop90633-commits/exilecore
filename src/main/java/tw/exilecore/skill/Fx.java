@@ -690,6 +690,26 @@ public final class Fx {
      */
     public static void zone(final Object key, final Location center, final double radius, final Look look, final int remainingTicks,
                             final UUID owner, final boolean isImportant) {
+        zone(key, center, radius, look, remainingTicks, owner, isImportant, false);
+    }
+
+    /**
+     * 2026-11-02 照站長：能踩的機制圈（鎖血的站位圈、倒數大招的安全區）：一樣當重要的（一定看得到、遠也畫），
+     * 但跟模組說「這是安全的」（{@link #isSafeZone}），模組不把它染成危險的紅色、照原本的顏色畫。這次之前模組一律染紅。
+     */
+    public static void safeZone(final Object key, final Location center, final double radius, final Look look, final int remainingTicks) {
+        zone(key, center, radius, look, remainingTicks, null, true, true);
+    }
+
+    /** 這個持續範圍（模組的編號）是不是能踩的（{@link #safeZone}）。 */
+    public static boolean isSafeZone(final long id) {
+        return id != 0 && SAFE_IDS.contains(id);
+    }
+
+    private static final java.util.Set<Long> SAFE_IDS = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    private static void zone(final Object key, final Location center, final double radius, final Look look, final int remainingTicks,
+                             final UUID owner, final boolean isImportant, final boolean isSafe) {
         final World world = center == null ? null : center.getWorld();
         if (key == null || world == null || radius <= 0 || look == null || look.edge() == null) {
             return;
@@ -699,6 +719,9 @@ public final class Fx {
         final FxEffect start = describe(look.fill() == null ? FxEffect.Shape.RING : FxEffect.Shape.AREA, world, center, radius, look.edge(),
                 look.edgeData(), look.fillHeight(), look.fillExtra(), FxPolicy.ringPoints(radius, 1), remainingTicks, owner, isImportant);
         final ZoneState state = lifecycle(key, start, remainingTicks);
+        if (isSafe) {
+            SAFE_IDS.add(state.id);
+        }
         if (!THROTTLE.due(state.lastDrawn, now)) {
             return;
         }
@@ -875,6 +898,7 @@ public final class Fx {
     private static final Map<Object, long[]> redraws = new HashMap<>();
 
     private static void stop(final ZoneState state) {
+        SAFE_IDS.remove(state.id);
         if (state.routedTo.isEmpty() || state.start == null) {
             return;
         }

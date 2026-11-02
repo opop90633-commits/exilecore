@@ -1027,7 +1027,8 @@ final class LifeExtras {
 
                 @Override
                 public boolean dormant() {
-                    return service.crewOn(fight.plot).isEmpty();
+                    // 2026-11-02 照站長：鎖血機制（站圈、倒數大招）進行中不出招；這次之前照樣放技能
+                    return fight.locks.invulnerable() || service.crewOn(fight.plot).isEmpty();
                 }
 
                 @Override
