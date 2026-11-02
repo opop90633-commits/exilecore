@@ -88,6 +88,7 @@ settings:
 | Velocity 主控台說 LimboAPI 載入失敗、版本不合 | 兩個都換成最新的 dev-build；Velocity 版本要 4.x |
 | 重開時玩家直接斷線 | 看踢人訊息是不是 `Server closed`（用了強制停止就不是）；或 `useLimbo` 被改成 false |
 | 進遊戲變成新玩家 | Paper 沒開 Velocity 轉發，或密鑰不一樣：檢查 `paper-global.yml` |
+| 等待室「送你回去」之後斷線、寫「連線逾時」（2026-11-03） | 主伺服器剛開好、還很忙，5 秒內接不起連線：`velocity.toml` 的 `connection-timeout` 改 20000、`limboreconnect/config.yml` 的 `join-delay` 改 15000（這個資料夾的已經改好，上傳覆蓋後 `velocity reload`、`limboreconnect reload`） |
 | 連線顯示 `Unable to connect you to xinghai` | 主伺服器還沒開好，或 `velocity.toml` 的 `xinghai` 填錯位址／port（要 `node0.tj:XINGHAI_PORT`） |
 | 全服 PING 都很高（`/spark ping` 中位數好幾百 ms），但伺服器列表的 ms 正常 | `xinghai` 寫成了 `proxy.tjservice.org`：改回 `node0.tj`，`velocity reload` |
 | 人多時 PING 一起飆高 | `/ec skill fx` 看過去 10 秒誰的技能特效送最多封包 |

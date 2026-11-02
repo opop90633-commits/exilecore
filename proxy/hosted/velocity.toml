@@ -126,7 +126,9 @@ compression-level = -1
 login-ratelimit = 3000
 
 # Specify a custom timeout for connection timeouts here. The default is five seconds.
-connection-timeout = 5000
+# 2026-11-03 星骸：5 秒 → 20 秒。主伺服器剛開好時（主機商的 CPU 有上限，載世界、JIT 都在搶）
+# 5 秒內常常接不起連線，等待室送人回去時就「連線逾時」斷線
+connection-timeout = 20000
 
 # Specify a read timeout for connections here. The default is 30 seconds.
 read-timeout = 30000

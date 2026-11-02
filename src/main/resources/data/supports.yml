@@ -482,7 +482,7 @@ supports:
       - { stat: warcry.rage_bypass, type: FLAT, value: 15 }
 
   minion_speed:
-    name: 迅捷召喚
+    name: 迅捷   # 2026-11-03 照站長改名（這次之前「迅捷召喚」，但它加的是攻擊速度，不是召喚物）
     description: 被輔助的攻擊打得更快（攻擊速度增加 25%）。
     icon: SUGAR
     tier: 3
@@ -2821,15 +2821,17 @@ supports:
 
   aftershock:              # Aftershock
     name: 回震
-    description: 被輔助的猛擊砸下時，有 35% 機率在面前再震一次（傷害是原本那一下的 60%，吃同樣的加成）。
+    description: 被輔助的猛擊砸下時，有 35% 機率造成一次餘震：0.5 秒後在同樣的範圍再打一次，傷害跟原本那一下一樣。
     icon: FLINT   # 2026-10：原本 COBBLESTONE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 3
     requires: [slam]
     excludes: [minion]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Aftershock II（第 4 階；poe2db／RePoE）；這次之前 tier 1、魔耗 1.1、stat: proc.use, type: FLAT, value: 25, tags: [proc_aftershock]、說明「被輔助的猛擊砸下時，有機率在面前再震一次（傷害是原本那一下的 60%，吃同樣的加成）。」
+    # 2026-11-03 照站長＋PoE2 Aftershock II：餘震是原本那一下的重複（同樣的範圍、同樣的傷害，照技能自己的餘震規則：新星、扇形、裂縫、裂地斬的 5 段）；
+    #   這次之前觸發另一個技能 proc_aftershock（固定在面前 2.6～3.2 格、傷害 60%）
     modifiers:
-      - { stat: proc.use, type: FLAT, value: 35, tags: [proc_aftershock] }
+      - { stat: slam.aftershock_chance, type: FLAT, value: 35 }
 
   chain_quake:                 # Tremors
     name: 連震

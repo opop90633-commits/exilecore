@@ -82,6 +82,7 @@ class OwnNamesTest {
                 "ascendancy.yml：迅捷", "ascendancy.yml：放血", "skills.yml：餘震"));
         // 2026-10-26：昇華天賦照使用者的要求換成 PoE2 原作的台服名稱（煉獄術士「召喚物生命」、戰術家「召喚物傷害」兩個小天賦跟輔助寶石同名）
         clashes.removeAll(List.of("ascendancy.yml：召喚物生命", "ascendancy.yml：召喚物傷害"));
+        clashes.remove("supports.yml：迅捷"); // 2026-11-03 照站長：「迅捷召喚」改名「迅捷」
         assertTrue(clashes.isEmpty(), "名稱跟別的遊戲一模一樣：\n" + String.join("\n", clashes));
     }
 

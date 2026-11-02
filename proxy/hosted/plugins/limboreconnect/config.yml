@@ -9,7 +9,8 @@ trigger-message: "((?i)^(server closed|server is restarting|server shutting down
 check-interval: 2000
 ping-timeout: 1000
 # 主伺服器開好之後再等幾毫秒才送人回去（讓 ExileCore 把資料、世界載好）
-join-delay: 6000
+# 2026-11-03：6 秒 → 15 秒（剛開好就送，主伺服器還在忙，常常連線逾時）
+join-delay: 15000
 # 用虛擬等待室（false 會停在原本的世界畫面，看起來像卡住）
 use-limbo: true
 require-permission: false

@@ -640,10 +640,42 @@ public final class AscendancyEffects implements Listener {
         amount -= fromEs;
         state.setLife(state.life() - amount);
         state.setLastDamageTick(now());
+        recoupSelf(player, state, dealt, fromEs + amount);
         if (state.life() <= 0) {
             player.setHealth(0);
         } else {
             plugin.players().display(player, state);
+        }
+    }
+
+    /**
+     * 2026-11-03 照站長＋PoE2（論壇實測：獄火師靠回復撐住煉獄之炎爆掉的那一下）：自己受到的這一下也算回復——
+     * 受到的傷害回復為生命／魔力、元素傷害回復為生命／護盾，照一般受到擊中的規則（8 秒、吃回復速度、禁療中不回生命）。
+     * 這次之前直接扣血，不回復。
+     */
+    private void recoupSelf(final Player player, final PlayerState state, final DamagePacket dealt, final double taken) {
+        if (taken <= 0 || state.isDead()) {
+            return;
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        final Set<String> none = Set.of();
+        final double speed = tw.exilecore.stats.TreeEffectKeys.scale(sheet, tw.exilecore.stats.TreeEffectKeys.RECOUP_SPEED, none, 0.1);
+        final double lifeRate = speed * tw.exilecore.stats.TreeEffectKeys.recoveryRate(sheet, tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE);
+        final double elemental = dealt.get(DamageType.FIRE) + dealt.get(DamageType.COLD) + dealt.get(DamageType.LIGHTNING);
+        final double share = dealt.total() <= 0 ? 0 : elemental / dealt.total();
+        double life = taken * Math.max(0, Math.min(100, sheet.flat(StatKeys.LIFE_RECOUP, none))) / 100.0;
+        life += elemental * Math.max(0, sheet.flat(tw.exilecore.stats.KeystoneKeys.RECOUP_ELEMENTAL, none)) / 100.0;
+        if (life > 0 && !state.ruined(now())) {
+            state.recoup().add(tw.exilecore.character.Recoup.LIFE, life, lifeRate);
+        }
+        final double mana = taken * Math.max(0, Math.min(100, sheet.flat(StatKeys.MANA_RECOUP, none))) / 100.0;
+        if (mana > 0) {
+            state.recoup().add(tw.exilecore.character.Recoup.MANA, mana,
+                    speed * tw.exilecore.stats.TreeEffectKeys.recoveryRate(sheet, tw.exilecore.stats.TreeEffectKeys.MANA_RECOVERY_RATE));
+        }
+        final double es = taken * share * Math.max(0, Math.min(100, sheet.flat(tw.exilecore.stats.TreeEffectKeys.ES_RECOUP_ELEMENTAL, none))) / 100.0;
+        if (es > 0 && state.maxEnergyShield() > 0) {
+            state.recoup().add(tw.exilecore.character.Recoup.ES, es, speed);
         }
     }
 

@@ -677,6 +677,14 @@ final class SkillExecutor {
                     build.profile().scaled(1 + aftershock.more(build.level()) / 100.0, "第二擊"),
                     build.definition().visual(), (int) Math.round(aftershock.delay() * 20));
         }
+        if (origin.self() && origin.owner() != null && build.definition().tags().contains(tw.exilecore.stats.Tags.SLAM)) {
+            // 2026-11-03 照站長＋PoE2 Aftershock：扇形的猛擊也吃「x% 機率多一次餘震」（回震、天賦、鑄父之錘）：在扇形中間、扇形一半長的範圍再打一次
+            final org.bukkit.util.Vector facing = origin.facing().clone().setY(0);
+            if (facing.lengthSquared() > 1.0E-6) {
+                facing.normalize();
+            }
+            uniqueAftershocks(origin.owner(), build, origin.feet().clone().add(facing.multiply(length * 0.5)), length * 0.5);
+        }
     }
 
     /**
@@ -962,6 +970,8 @@ final class SkillExecutor {
         // 2026-11-01 照 PoE2（sunder_shockwave_limit_per_cascade 7）：整串最多 7 隻放震波；這次之前每段 7 隻（最多 35 隻）
         int released = 0;
         final java.util.concurrent.ThreadLocalRandom random = java.util.concurrent.ThreadLocalRandom.current();
+        final List<Location> areaCenters = new ArrayList<>();
+        final List<Double> areaRadii = new ArrayList<>();
         Location center = null;
         for (int i = 0; i < SUNDER_AREAS; i++) {
             final double radius = sunderRadius(i) * scale;
@@ -974,6 +984,8 @@ final class SkillExecutor {
                 center = center.clone().add(sunderStep(facing, offset).multiply(gap));
             }
             final Location at = center;
+            areaCenters.add(at.clone());
+            areaRadii.add(radius);
             visuals.nova(build.definition().visual(), at, radius);
             if (owner == null) {
                 continue;
@@ -993,6 +1005,9 @@ final class SkillExecutor {
         if (owner == null) {
             return;
         }
+        if (origin.self()) {
+            sunderAftershocks(owner, build, areaCenters, areaRadii); // 2026-11-03
+        }
         for (final LivingEntity source : sources) {
             final Location at = source.getLocation();
             visuals.nova(build.definition().visual(), at, shockRadius);
@@ -1001,6 +1016,33 @@ final class SkillExecutor {
                     damage.hit(owner, target, shock, null);
                 }
             }
+        }
+    }
+
+    /**
+     * 2026-11-03 照站長＋PoE2 Aftershock：裂地斬的餘震（回震、天賦、鑄父之錘的「x% 機率多一次餘震」）：同樣的 5 段區域 0.5 秒後再打一次
+     * （每隻只吃一下，原本那一下的傷害；不再放震波）。
+     */
+    private void sunderAftershocks(final Player owner, final SkillBuild build, final List<Location> centers, final List<Double> radii) {
+        final int extra = Math.min(3, extraAftershocks(owner, build));
+        for (int i = 1; i <= extra; i++) {
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (!owner.isOnline()) {
+                    return;
+                }
+                final java.util.Set<LivingEntity> hit = new java.util.LinkedHashSet<>();
+                for (int k = 0; k < centers.size(); k++) {
+                    final Location at = centers.get(k);
+                    if (at.getWorld() != null && at.getWorld().equals(owner.getWorld())) {
+                        hit.addAll(targets.around(at, radii.get(k), owner));
+                        visuals.nova(build.definition().visual(), at, radii.get(k));
+                    }
+                }
+                final SkillProfile shock = build.profile().scaled(1.0, "餘震");
+                for (final LivingEntity target : hit) {
+                    damage.hit(owner, target, shock, null);
+                }
+            }, 10L * i);
         }
     }
 
@@ -3457,7 +3499,8 @@ final class SkillExecutor {
                     .withAreaAndProjectiles(build.areaScale() * Math.sqrt(Math.max(0.1, 1 - smaller)), build.projectiles());
             // 2026-10-27 照 PoE2：分岔從主裂縫上岔出去（第 i 道在主裂縫的 i ÷ (x＋1) 處，左右交替偏 40 度）；這次之前從起點往兩旁各裂一道。
             // 扇形的裂縫往前長（沿著面向）；地面的一道（炎脈裂地）是面前橫的一條（沿著左右）
-            final Vector along = origin.direction().clone().setY(0);
+            // 2026-11-03 修正：用水平的面向（往下看砸地時 direction 幾乎垂直，水平分量是 0，分岔全疊在主裂縫上，看起來像沒分岔）
+            final Vector along = origin.facing().clone().setY(0);
             final boolean spikes = EarthSpikes.ID.equals(build.definition().id()); // 2026-11-01：地刺崩裂的裂縫也是往前長
             // 2026-11-01 照 PoE2：雷浪（前方 8 公尺的閃電裂隙，扇形）、熔裂踏（往前竄的熔岩裂縫）的分岔也從往前的主裂縫上岔出去
             // 2026-11-01 照 PoE2：炎脈裂地的地裂也是往前長的（MoltenFissures）
@@ -3488,10 +3531,11 @@ final class SkillExecutor {
 
     /** 往旁邊偏 angle（弧度）再裂一道。 */
     private void turnedFissure(final Origin origin, final SkillBuild build, final double angle) {
-        final Vector dir = origin.direction().clone();
+        // 2026-11-03 修正：照水平的面向轉（這次之前用 direction，往下看時轉了也是同一個方向，多的裂縫全疊在一起）
+        final Vector dir = origin.facing().clone().setY(0);
         final double x = dir.getX() * Math.cos(angle) - dir.getZ() * Math.sin(angle);
         final double z = dir.getX() * Math.sin(angle) + dir.getZ() * Math.cos(angle);
-        final Origin turned = new Origin(origin.owner(), origin.feet(), origin.eye(), new Vector(x, dir.getY(), z), origin.self());
+        final Origin turned = new Origin(origin.owner(), origin.feet(), origin.eye(), new Vector(x, 0, z), origin.self());
         if (EarthSpikes.ID.equals(build.definition().id())) {
             earthSpikes.cast(turned, build); // 2026-11-01 照 PoE2：多的裂縫盡頭也冒地刺（照地刺的上限，多的最舊那根碎開）
         } else if (FissureSkills.wave(build)) {
