@@ -256,6 +256,9 @@ public final class SummerService {
         tickAmbience(running);
         tickBottles(now);
         tickGuards(now);
+        if (!running && tickCount % 10 == 0) {
+            collectShovels(); // 2026-11-03：活動結束收回挖寶鏟
+        }
         if (kraken != null) {
             if (!running) {
                 stopKraken("活動結束了，" + config.boss().name() + "沉回海裡");
@@ -421,8 +424,111 @@ public final class SummerService {
         if (plugin.zones() == null || !plugin.zones().teleport(player, to, config.name())) {
             return "現在不能傳送";
         }
-        player.sendMessage(plugin.text().prefixed("<" + config.color() + ">星潮海灘<gray>：拿鏟子右鍵沙子挖寶（動作條會說熱不熱）；回營地：<white>/town"));
+        giveShovel(player, false); // 2026-11-03 照站長：身上沒有挖寶鏟就發一把（這次之前要自己帶鏟子）
+        player.sendMessage(plugin.text().prefixed("<" + config.color() + ">星潮海灘<gray>：拿挖寶鏟右鍵沙子挖寶（動作條會說熱不熱）；回營地：<white>/town"));
         return null;
+    }
+
+    // ---- 2026-11-03 照站長：星潮挖寶鏟（到海灘發一把；綁定帳號；活動結束收回） ----
+
+    private NamespacedKey shovelKey() {
+        return new NamespacedKey(plugin, "summer_shovel");
+    }
+
+    /** 星潮挖寶鏟。 */
+    ItemStack shovelItem() {
+        final ItemStack stack = new ItemStack(Material.GOLDEN_SHOVEL);
+        stack.editMeta(meta -> {
+            meta.displayName(ItemRenderer.line("<" + config.color() + ">星潮挖寶鏟"));
+            meta.lore(List.of(
+                    ItemRenderer.line("<gray>在星潮海灘：拿著右鍵沙子挖寶，動作條會說熱（4 格內）、溫（8 格內）還是冷"),
+                    ItemRenderer.line("<gray>每天每個人 " + config.dig().spotsPerDay() + " 個藏寶點"),
+                    ItemRenderer.line("<dark_gray>" + ItemRenderer.escape(config.name()) + "活動道具：活動結束後收回"),
+                    ItemRenderer.line("<dark_gray>綁定帳號：弄丟了在選單「" + ItemRenderer.escape(config.name()) + " → 沙灘挖寶」再拿")));
+            meta.setUnbreakable(true);
+            meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES, org.bukkit.inventory.ItemFlag.HIDE_UNBREAKABLE);
+            tw.exilecore.item.AccountBound.mark(meta);
+            meta.getPersistentDataContainer().set(shovelKey(), PersistentDataType.BYTE, (byte) 1);
+        });
+        return stack;
+    }
+
+    boolean isShovel(final ItemStack stack) {
+        return stack != null && !stack.isEmpty() && stack.hasItemMeta()
+                && stack.getItemMeta().getPersistentDataContainer().has(shovelKey(), PersistentDataType.BYTE);
+    }
+
+    /** 身上（游標、背包、隨身背包、倉庫）有沒有挖寶鏟。 */
+    private boolean hasShovel(final Player player) {
+        if (isShovel(player.getItemOnCursor())) {
+            return true;
+        }
+        for (final ItemStack stack : player.getInventory().getContents()) {
+            if (isShovel(stack)) {
+                return true;
+            }
+        }
+        final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+        if (state != null && state.bag() != null && state.bag().usable()) {
+            for (int page = 0; page < state.bag().pages(); page++) {
+                for (final ItemStack stack : state.bag().page(page)) {
+                    if (isShovel(stack)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        final tw.exilecore.stash.Stash stash = plugin.stash() == null ? null : plugin.stash().stash(player).orElse(null);
+        if (stash != null) {
+            for (int page = 0; page < stash.pageCount(); page++) {
+                for (final ItemStack stack : stash.page(page)) {
+                    if (isShovel(stack)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /** 給挖寶鏟（身上沒有才給）；回傳問題，給了 null。tell = 已經有的時候要不要說。 */
+    public String giveShovel(final Player player, final boolean tell) {
+        if (!running()) {
+            return config.name() + "沒有在進行";
+        }
+        if (hasShovel(player)) {
+            return tell ? "你已經有星潮挖寶鏟了（背包、隨身背包或倉庫裡）" : null;
+        }
+        plugin.economy().wallet().dropFor(player, plugin.economy().wallet().give(player, shovelItem()));
+        player.sendMessage(plugin.text().prefixed("<" + config.color() + ">拿到星潮挖寶鏟<gray>：在星潮海灘拿著右鍵沙子挖寶"));
+        return null;
+    }
+
+    /** 活動結束：收回在線玩家背包、游標、隨身背包裡的挖寶鏟。 */
+    private void collectShovels() {
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            if (isShovel(player.getItemOnCursor())) {
+                player.setItemOnCursor(null);
+            }
+            final ItemStack[] contents = player.getInventory().getContents();
+            for (int i = 0; i < contents.length; i++) {
+                if (isShovel(contents[i])) {
+                    player.getInventory().setItem(i, null);
+                }
+            }
+            final tw.exilecore.character.PlayerState state = plugin.players().get(player);
+            if (state != null && state.bag() != null && state.bag().usable()) {
+                for (int page = 0; page < state.bag().pages(); page++) {
+                    final ItemStack[] items = state.bag().page(page);
+                    for (int i = 0; i < items.length; i++) {
+                        if (isShovel(items[i])) {
+                            items[i] = null;
+                            state.markDirty();
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // ---- 傍晚與海風 ----

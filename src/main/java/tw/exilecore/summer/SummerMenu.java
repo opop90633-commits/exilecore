@@ -117,7 +117,7 @@ public final class SummerMenu extends Menu {
         }
         final List<String> dig = new ArrayList<>();
         dig.add("<gray>今天：<white>" + Integer.bitCount(mask) + "／" + count + " 個　" + dots);
-        dig.add("<gray>拿任何鏟子右鍵沙灘的沙子：很熱（4 格內）、溫（8 格內）、冷");
+        dig.add("<gray>拿星潮挖寶鏟（傳送到海灘時發，任何鏟子也行）右鍵沙灘的沙子：很熱（4 格內）、溫（8 格內）、冷");
         dig.add("<gray>挖到：<" + color() + ">貝殼 ×" + config.dig().shells() + "<gray>；" + trim(config.dig().chestChance() * 100)
                 + "% 是海盜寶箱（" + config.dig().guardSeconds() + " 秒內清掉守衛拿雙倍、" + trim(config.dig().pearlChance() * 100) + "% 多一顆珍珠）");
         dig.add("<gray>一天挖滿全部：<#ffe9c9>珍珠 ×" + config.dig().dailyPearl());
@@ -126,6 +126,8 @@ public final class SummerMenu extends Menu {
             dig.add("");
             dig.add("<#ffd166>🗺 手上有一張藏寶圖：<gray>下一張地圖的 Boss 多掉 " + config.bottle().mapExtra() + " 件東西");
         }
+        dig.add("");
+        dig.add("<yellow>左鍵：領星潮挖寶鏟<dark_gray>（身上沒有才給）");
         set(SLOT_DIG, icon(Integer.bitCount(mask) == count ? Material.GOLDEN_SHOVEL : Material.IRON_SHOVEL, "<#f5d79a>沙灘挖寶", dig));
 
         // 大亂鬥
@@ -296,6 +298,13 @@ public final class SummerMenu extends Menu {
             return;
         }
         if (!acceptAction(click)) {
+            return;
+        }
+        if (slot == SLOT_DIG) { // 2026-11-03 照站長：補領挖寶鏟
+            final String problem = service.giveShovel(player, true);
+            if (problem != null) {
+                player.sendMessage(plugin.text().prefixed("<gray>" + ItemRenderer.escape(problem)));
+            }
             return;
         }
         if (slot == SLOT_TRAVEL) {
