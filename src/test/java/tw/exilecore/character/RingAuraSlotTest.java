@@ -16,8 +16,10 @@ class RingAuraSlotTest {
         loadout.set(SkillLoadout.RING_AURA, aura);
         assertEquals(aura, loadout.skill(SkillLoadout.RING_AURA));
         assertFalse(loadout.entriesInKeyOrder().contains(aura), "沒戴空座指環：不開");
+        assertEquals(-1, loadout.find("some_aura"), "沒戴：找不到（光環不開）");
         loadout.setRingAuraNow(true);
         assertTrue(loadout.entriesInKeyOrder().contains(aura), "戴著：開著");
+        assertEquals(SkillLoadout.RING_AURA, loadout.find("some_aura"), "戴著：光環檢查找得到它（不會開了又被關）");
         assertFalse(loadout.bind(0, SkillLoadout.RING_AURA), "光環格不綁按鍵");
         final SkillLoadout copy = loadout.copy();
         assertEquals(aura, copy.skill(SkillLoadout.RING_AURA), "存檔快照也有");

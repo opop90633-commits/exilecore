@@ -590,6 +590,14 @@ public final class SkillLoadout {
                 return i;
             }
         }
+        // 2026-11-04 照站長「光環格裡的光環確定有作用嗎」：開著的光環格也找（光環每 10 tick 檢查一次還在不在面板上，
+        //   這次之前找不到光環格裡的，開了馬上又被關掉）；沒戴空座指環的那格不算
+        for (int i = 0; i < ringAuraSlots; i++) {
+            final Entry ring = skills[RING_AURA + i];
+            if (ring != null && ring.skillId().equals(skillId)) {
+                return RING_AURA + i;
+            }
+        }
         return -1;
     }
 

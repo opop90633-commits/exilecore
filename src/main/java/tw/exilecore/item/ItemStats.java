@@ -552,7 +552,7 @@ public final class ItemStats {
                     repository.chipsOf(affix), // 2026-10：詞綴標籤（資料檔寫了 chips 的照寫的）
                     affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG) ? AffixLine.ENCHANT
                             : data.isFractured(rolled) ? AffixLine.FRACTURED : null, // 2026-10-21
-                    rolled.corrupt() == null ? 0 : rolled.corrupt()); // 2026-11-03 照站長：蝕變石的倍數
+                    rolled.corrupt() == null || affix.mods().stream().noneMatch(AffixMod::corruptScales) ? 0 : rolled.corrupt()); // 2026-11-03 照站長：蝕變石的倍數；2026-11-04：數值不會變的（你沒有元素抗性）不標
             if (affix.type() == AffixType.PREFIX) {
                 prefixes.add(line);
             } else {

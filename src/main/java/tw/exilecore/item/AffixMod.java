@@ -107,7 +107,14 @@ public record AffixMod(String stat, ModType type, String variable, double consta
      * 2026-11-01 照 PoE2 腐化：固定值會不會跟著傳奇腐化的倍率變（寫死的數字、不是旗標 flag.＊、不是 0）。
      */
     public boolean scalesFixed() {
-        return variable == null && constant != 0 && !stat.startsWith("flag.") && !stat.contains(".flag");
+        // 2026-11-04 照站長（夜幕之冠「你沒有元素抗性」腐化成 ×0.78 變成只少 78%）：「更少 100%」這種整個沒有的也不縮放
+        return variable == null && constant != 0 && !stat.startsWith("flag.") && !stat.contains(".flag")
+                && !(type == ModType.MORE && constant <= -100);
+    }
+
+    /** 2026-11-04：這條修飾器的數值會不會跟著腐化的倍率變（擲出來的變數，或能縮放的固定值）。 */
+    public boolean corruptScales() {
+        return variable != null || scalesFixed();
     }
 
     /** 固定值乘上腐化倍率：整數照整數四捨五入（至少留 1，不會變成 0）、小數留一位。 */

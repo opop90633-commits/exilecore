@@ -877,6 +877,11 @@ final class AuraService implements Listener {
         if (position < 0) {
             return false;
         }
+        if (tw.exilecore.character.SkillLoadout.ringAuraIndex(position) >= 0) {
+            // 2026-11-04 照站長「光環格裡的光環確定有作用嗎」：空座指環的光環格不用綁鍵就開著（find 只找得到開著的光環格）；
+            //   這次之前這裡只看綁鍵格，光環格裡的光環永遠不開
+            return true;
+        }
         for (int slot = 0; slot < tw.exilecore.character.SkillLoadout.BIND_SLOTS; slot++) {
             if (loadout.bound(slot) == position) {
                 return true;

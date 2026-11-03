@@ -93,7 +93,8 @@ public enum Catalyst {
             case LIGHTNING -> !minion && (element(stat, mod, "lightning", "shock.") || stat.startsWith("electrocute."));
             case CHAOS -> !minion && (damage(mod) && tags.contains("chaos") || stat.equals("resist.chaos")
                     || stat.equals(StatKeys.DAMAGE_GAIN + "chaos") || stat.equals("damage.extra.chaos")
-                    || stat.equals(StatKeys.PENETRATION) && tags.contains("chaos") || stat.startsWith("poison."));
+                    || stat.equals(StatKeys.PENETRATION) && tags.contains("chaos") || stat.startsWith("poison.")
+                    || presenceExtra(stat, "chaos")); // 2026-11-04 照站長（攫命之環）
             case MINION -> minion || stat.equals(StatKeys.SKILL_MINIONS) || stat.equals(StatKeys.SKILL_LEVEL) && tags.contains("minion");
             case RESIST -> stat.startsWith("resist.");
             // 2026-10：受到的傷害回復為生命（life.recoup）、擊中／擊殺回復生命也算生命詞綴
@@ -136,7 +137,16 @@ public enum Catalyst {
     private static boolean element(final String stat, final Modifier mod, final String element, final String ailment) {
         return damage(mod) && mod.tags().contains(element) || stat.equals("resist." + element)
                 || stat.equals(StatKeys.DAMAGE_GAIN + element) || stat.equals("damage.extra." + element)
-                || stat.equals(StatKeys.PENETRATION) && mod.tags().contains(element) || stat.startsWith(ailment);
+                || stat.equals(StatKeys.PENETRATION) && mod.tags().contains(element) || stat.startsWith(ailment)
+                || presenceExtra(stat, element); // 2026-11-04 照站長（聖火的友方額外火焰）
+    }
+
+    /**
+     * 2026-11-04 照站長「混沌能吃得到品質效果嗎」（攫命之環）：存在範圍內「獲得 x% 傷害為額外 ○○ 傷害」（友方、敵人）
+     * 照 PoE2 的標籤（chaos_damage、chaos／elemental、fire）也吃那種催化劑；這次之前不認得這個屬性名稱，品質沒有效果。
+     */
+    private static boolean presenceExtra(final String stat, final String element) {
+        return stat.equals("presence.ally_extra_" + element) || stat.equals("presence.enemy_extra_" + element);
     }
 
     /** prefix 後面接火焰、冰冷、閃電（damage.gain.fire、damage.extra.cold…）。 */
