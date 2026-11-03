@@ -117,7 +117,8 @@ public final class SummerMenu extends Menu {
         }
         final List<String> dig = new ArrayList<>();
         dig.add("<gray>今天：<white>" + Integer.bitCount(mask) + "／" + count + " 個　" + dots);
-        dig.add("<gray>拿星潮挖寶鏟（傳送到海灘時發，任何鏟子也行）右鍵沙灘的沙子：很熱（4 格內）、溫（8 格內）、冷");
+        dig.add("<gray>按星潮挖寶鏟那一格的數字鍵拿出來（傳送到海灘時發），右鍵沙灘的沙子：很熱（4 格內）、溫（8 格內）、冷");
+        dig.add("<gray>按 9 換回武器（拿著鏟子時數字鍵照樣放技能）");
         dig.add("<gray>挖到：<" + color() + ">貝殼 ×" + config.dig().shells() + "<gray>；" + trim(config.dig().chestChance() * 100)
                 + "% 是海盜寶箱（" + config.dig().guardSeconds() + " 秒內清掉守衛拿雙倍、" + trim(config.dig().pearlChance() * 100) + "% 多一顆珍珠）");
         dig.add("<gray>一天挖滿全部：<#ffe9c9>珍珠 ×" + config.dig().dailyPearl());

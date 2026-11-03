@@ -333,6 +333,9 @@ final class SkillInputListener implements Listener {
         if (newSlot == HoldToCast.COMBAT_HOTBAR_SLOT) {
             return;
         }
+        if (plugin.summer() != null && plugin.summer().canHoldShovel(player, player.getInventory().getItem(newSlot))) {
+            return; // 2026-11-03 照站長：星潮海灘上可以換成星潮挖寶鏟（按 9 換回武器）；這次之前戰鬥區域一律鎖在第 9 格
+        }
         event.setCancelled(true); // 戰鬥中手上一直是第 9 格的武器
         final int bind = tw.exilecore.character.HotbarLayout.of(plugin.players().get(player)).bindForSlot(newSlot); // 2026-10：照玩家選的排法
         if (bind >= 0) {

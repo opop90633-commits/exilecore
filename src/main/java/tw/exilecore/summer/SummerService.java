@@ -425,7 +425,7 @@ public final class SummerService {
             return "現在不能傳送";
         }
         giveShovel(player, false); // 2026-11-03 照站長：身上沒有挖寶鏟就發一把（這次之前要自己帶鏟子）
-        player.sendMessage(plugin.text().prefixed("<" + config.color() + ">星潮海灘<gray>：拿挖寶鏟右鍵沙子挖寶（動作條會說熱不熱）；回營地：<white>/town"));
+        player.sendMessage(plugin.text().prefixed("<" + config.color() + ">星潮海灘<gray>：按挖寶鏟那一格的數字鍵拿出來、右鍵沙子挖寶（動作條會說熱不熱），按 9 換回武器；回營地：<white>/town"));
         return null;
     }
 
@@ -453,7 +453,12 @@ public final class SummerService {
         return stack;
     }
 
-    boolean isShovel(final ItemStack stack) {
+    /** 2026-11-03：在星潮海灘上，這一格是挖寶鏟就讓玩家換過去拿（戰鬥區域本來鎖在第 9 格的武器）。 */
+    public boolean canHoldShovel(final Player player, final ItemStack stack) {
+        return isShovel(stack) && running() && inArena(player.getLocation());
+    }
+
+    public boolean isShovel(final ItemStack stack) {
         return stack != null && !stack.isEmpty() && stack.hasItemMeta()
                 && stack.getItemMeta().getPersistentDataContainer().has(shovelKey(), PersistentDataType.BYTE);
     }
@@ -499,8 +504,23 @@ public final class SummerService {
         if (hasShovel(player)) {
             return tell ? "你已經有星潮挖寶鏟了（背包、隨身背包或倉庫裡）" : null;
         }
-        plugin.economy().wallet().dropFor(player, plugin.economy().wallet().give(player, shovelItem()));
-        player.sendMessage(plugin.text().prefixed("<" + config.color() + ">拿到星潮挖寶鏟<gray>：在星潮海灘拿著右鍵沙子挖寶"));
+        // 2026-11-03：先放進快捷欄的空格（第 1～8 格），放不下才照一般的順序放（背包 → 隨身背包 → 腳下只有自己撿得到）
+        int hotbar = -1;
+        for (int i = 0; i < 8; i++) {
+            final ItemStack there = player.getInventory().getItem(i);
+            if ((there == null || there.isEmpty()) && !(plugin.flasks() != null && plugin.flasks().isFlaskSlot(player, i))) { // 藥劑那幾格不放
+                hotbar = i;
+                break;
+            }
+        }
+        if (hotbar >= 0) {
+            player.getInventory().setItem(hotbar, shovelItem());
+            player.sendMessage(plugin.text().prefixed("<" + config.color() + ">拿到星潮挖寶鏟<gray>（快捷欄第 " + (hotbar + 1) + " 格）：在星潮海灘按 <white>"
+                    + (hotbar + 1) + "</white> 拿出來、右鍵沙子挖寶，按 <white>9</white> 換回武器"));
+        } else {
+            plugin.economy().wallet().dropFor(player, plugin.economy().wallet().give(player, shovelItem()));
+            player.sendMessage(plugin.text().prefixed("<" + config.color() + ">拿到星潮挖寶鏟<gray>：放到快捷欄第 1～8 格，在星潮海灘按那一格的數字鍵拿出來、右鍵沙子挖寶，按 <white>9</white> 換回武器"));
+        }
         return null;
     }
 

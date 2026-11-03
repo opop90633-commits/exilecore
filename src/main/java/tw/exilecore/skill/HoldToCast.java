@@ -65,7 +65,8 @@ final class HoldToCast {
         set(player.getAttribute(Attribute.BLOCK_INTERACTION_RANGE), reachKey, want, SkillMath.HOLD_CAST_REACH - SkillMath.VANILLA_BLOCK_REACH,
                 AttributeModifier.Operation.ADD_NUMBER);
         set(player.getAttribute(Attribute.BLOCK_BREAK_SPEED), miningKey, want, -1.0, AttributeModifier.Operation.MULTIPLY_SCALAR_1);
-        if (service.eligible(player) && !service.inTown(player) && player.getInventory().getHeldItemSlot() != COMBAT_HOTBAR_SLOT) {
+        if (service.eligible(player) && !service.inTown(player) && player.getInventory().getHeldItemSlot() != COMBAT_HOTBAR_SLOT
+                && !(plugin.summer() != null && plugin.summer().canHoldShovel(player, player.getInventory().getItemInMainHand()))) { // 2026-11-03：星潮海灘上拿著挖寶鏟不換回去
             player.getInventory().setHeldItemSlot(COMBAT_HOTBAR_SLOT); // 進到可以戰鬥的地方：手上自動換成第 9 格
         }
         if (plugin.items() != null && service.eligible(player)) {
