@@ -166,6 +166,13 @@ public final class CharacterPanelMenu extends Menu {
                         "<dark_gray>點下方自己背包裡的" + slot.displayName() + "裝上"));
             } else {
                 final ItemStack shown = equipped.clone();
+                // 2026-11-04 照站長：戒指、項鍊的數值照穿的人的加成（祕法同調、巧匠束帶的左右手戒指加成）直接畫在說明上
+                final int index = i;
+                final double boost = jewelleryBoost(slot, index);
+                if (Math.abs(boost - 1) > 1e-9) {
+                    plugin.items().read(equipped).ifPresent(data -> tw.exilecore.item.ItemStats.withViewBoost(boost,
+                            () -> plugin.items().renderer().render(shown, data)));
+                }
                 // 2026-10（PoE2）：注入的核心天賦樹上已經點了：不重複生效，寫出來
                 final boolean instilDuplicate = plugin.items().read(equipped)
                         .map(data -> tw.exilecore.character.PlayerStateService.instilAllocated(state, data)).orElse(false);
@@ -174,6 +181,9 @@ public final class CharacterPanelMenu extends Menu {
                     lore.add(ItemRenderer.line(""));
                     if (instilDuplicate) {
                         lore.add(ItemRenderer.line("<gray>注入的核心天賦樹上已經配置，不會重複生效"));
+                    }
+                    if (Math.abs(boost - 1) > 1e-9) {
+                        lore.add(ItemRenderer.line("<#7fd4ff>✦ 上面的數值已含你的加成：" + jewelleryBoostText(slot, index)));
                     }
                     lore.add(ItemRenderer.line("<yellow>左鍵：卸下回背包"));
                     meta.lore(lore);
@@ -193,6 +203,42 @@ public final class CharacterPanelMenu extends Menu {
         set(SLOT_CLOSE, closeButton());
         drawnSignature = signature();
         lastDrawTick = plugin.getServer().getCurrentTick();
+    }
+
+    /**
+     * 2026-11-04：這一格戒指／項鍊的數值倍率：1 ＋ 祕法同調（戒指、項鍊 +25%）＋ 巧匠束帶「增加 x% 左手／右手戒指的加成」
+     * （第 1 格是左手、第 2 格是右手，跟 UniqueDerived 一樣；第三個戒指欄只算祕法同調）。
+     */
+    private double jewelleryBoost(final ItemSlot slot, final int index) {
+        if (slot != ItemSlot.RING && slot != ItemSlot.AMULET) {
+            return 1;
+        }
+        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+        double boost = 1;
+        if (tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.stats.StatKeys.FLAG_MYSTIC_ATTUNEMENT)) {
+            boost += 0.25;
+        }
+        if (slot == ItemSlot.RING && (index == 0 || index == 1)) {
+            boost += sheet.increased(index == 0 ? tw.exilecore.item.unique.UniqueStats.RING_EFFECT_LEFT
+                    : tw.exilecore.item.unique.UniqueStats.RING_EFFECT_RIGHT, java.util.Set.of());
+        }
+        return boost;
+    }
+
+    private String jewelleryBoostText(final ItemSlot slot, final int index) {
+        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+        final List<String> parts = new ArrayList<>();
+        if (tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.stats.StatKeys.FLAG_MYSTIC_ATTUNEMENT)) {
+            parts.add("祕法同調 +25%");
+        }
+        if (slot == ItemSlot.RING && (index == 0 || index == 1)) {
+            final double inc = sheet.increased(index == 0 ? tw.exilecore.item.unique.UniqueStats.RING_EFFECT_LEFT
+                    : tw.exilecore.item.unique.UniqueStats.RING_EFFECT_RIGHT, java.util.Set.of());
+            if (Math.abs(inc) > 1e-9) {
+                parts.add((index == 0 ? "左手" : "右手") + "戒指的加成 " + (inc > 0 ? "+" : "") + Math.round(inc * 100) + "%");
+            }
+        }
+        return String.join("、", parts);
     }
 
     /**

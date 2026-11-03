@@ -501,6 +501,33 @@ public final class ItemStats {
         }
     }
 
+    /**
+     * 2026-11-04 照站長「祕法同調、巧匠束帶的戒指加成能直接顯示在戒指與項鍊上嗎」：角色面板畫身上的戒指、項鍊時，
+     * 數值照穿的人的加成放大顯示（{@link #withViewBoost}；1 = 不放大）。只影響畫出來的說明，不改物品資料。
+     */
+    private static final ThreadLocal<Double> VIEW_BOOST = ThreadLocal.withInitial(() -> 1.0);
+
+    /** 在 factor 倍的顯示底下做一件事（畫說明）。 */
+    public static void withViewBoost(final double factor, final Runnable action) {
+        final double previous = VIEW_BOOST.get();
+        VIEW_BOOST.set(factor <= 0 ? 1.0 : factor);
+        try {
+            action.run();
+        } finally {
+            VIEW_BOOST.set(previous);
+        }
+    }
+
+    /** 現在的顯示倍率（固定詞綴那一行也用）。 */
+    public static double viewBoost() {
+        return VIEW_BOOST.get();
+    }
+
+    /** 數值乘上倍率（四捨五入）；倍率 1 原樣回傳。 */
+    public static Map<String, Integer> boosted(final Map<String, Integer> vars, final double factor) {
+        return Math.abs(factor - 1) < 1e-9 ? vars : scaled(vars, factor);
+    }
+
     public static List<AffixLine> affixLines(final ItemRepository repository, final ItemData data) {
         final List<AffixLine> prefixes = new ArrayList<>();
         final List<AffixLine> suffixes = new ArrayList<>();
@@ -517,7 +544,7 @@ public final class ItemStats {
             }
             final boolean boosted = catalyst != null && catalysed(affix, rolled.vars(), catalyst);
             final boolean veiledBoost = unveiled > 1e-9 && Veiled.isUnveiled(rolled.id());
-            final double scale = (boosted ? factor : 1) * (veiledBoost ? 1 + unveiled : 1);
+            final double scale = (boosted ? factor : 1) * (veiledBoost ? 1 + unveiled : 1) * VIEW_BOOST.get(); // 2026-11-04：角色面板的戒指、項鍊加成
             final Map<String, Integer> vars = scale != 1 ? scaled(rolled.vars(), scale) : rolled.vars();
             final Map<String, int[]> ranges = scale != 1 ? scaledRanges(affix.ranges(rolled.tier()), scale) : affix.ranges(rolled.tier());
             final AffixLine line = new AffixLine(affix.render(vars, rolled.fixedScale()), affix.rank(rolled.tier()), affix.type(), // 2026-11-01：腐化的固定值也照倍率顯示

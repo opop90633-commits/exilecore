@@ -31,8 +31,17 @@ public final class SkillLoadout {
      * （不在任何一頁裡、不能綁按鍵；只能放光環；戴著的時候光環開著）。跟其他技能一起存檔（character_skills 的 slot_index）。
      */
     public static final int RING_AURA = MAX_SKILLS;
+    /** 2026-11-04 照站長「空座指環僅限 1 取消，技能那邊再加一格光環格」：第二格光環格（戴兩個空座指環才能用）。 */
+    public static final int RING_AURA2 = MAX_SKILLS + 1;
+    /** 光環格有幾格（每戴一個空座指環開一格，最多這麼多）。 */
+    public static final int RING_AURA_SLOTS = 2;
     /** 2026-11-04：存檔、讀檔的位置數（面板 ＋ 空座指環的光環格）。 */
-    public static final int TOTAL_POSITIONS = MAX_SKILLS + 1;
+    public static final int TOTAL_POSITIONS = MAX_SKILLS + RING_AURA_SLOTS;
+
+    /** 2026-11-04：這個位置是第幾格光環格（0 起算）；不是光環格回傳 -1。 */
+    public static int ringAuraIndex(final int position) {
+        return position >= RING_AURA && position < RING_AURA + RING_AURA_SLOTS ? position - RING_AURA : -1;
+    }
     /** 技能等級上限。 */
     public static final int MAX_LEVEL = 20;
     /** 2026-10：技能寶石最高 Lv.21（只有 Lv.21 的未切割技能寶石做得到：劫盜大金庫、金庫之主掉）。 */
@@ -491,8 +500,8 @@ public final class SkillLoadout {
     }
 
     private final Entry[] skills = new Entry[TOTAL_POSITIONS]; // 2026-11-04：＋空座指環的光環格（RING_AURA）
-    /** 2026-11-04：現在有沒有戴著空座指環（不存檔，屬性表算完時重算；沒戴時光環格裡的技能不開）。 */
-    private boolean ringAuraNow;
+    /** 2026-11-04：現在戴著幾個空座指環＝開了幾格光環格（不存檔，屬性表算完時重算；沒開的那格裡的技能不開）。 */
+    private int ringAuraSlots;
     private final int[] binds = new int[BIND_SLOTS];
     /**
      * 2026-10-26：身上的武器現在賦予哪些技能（技能代號 → 等級；不存檔，換裝備時由屬性表重算）。
@@ -550,13 +559,28 @@ public final class SkillLoadout {
         return position >= 0 && position < TOTAL_POSITIONS ? skills[position] : null; // 2026-11-04：含空座指環的光環格
     }
 
-    /** 2026-11-04：有沒有戴著空座指環（光環格能不能用）。 */
+    /** 2026-11-04：有沒有戴著空座指環（第一格光環格能不能用）。 */
     public boolean ringAuraNow() {
-        return ringAuraNow;
+        return ringAuraSlots > 0;
+    }
+
+    /** 2026-11-04：開了幾格光環格（戴著幾個空座指環，最多 {@link #RING_AURA_SLOTS}）。 */
+    public int ringAuraSlots() {
+        return ringAuraSlots;
+    }
+
+    /** 這一格光環格（位置）現在開著嗎。 */
+    public boolean ringAuraOpen(final int position) {
+        final int index = ringAuraIndex(position);
+        return index >= 0 && index < ringAuraSlots;
     }
 
     public void setRingAuraNow(final boolean on) {
-        this.ringAuraNow = on;
+        setRingAuraSlots(on ? 1 : 0);
+    }
+
+    public void setRingAuraSlots(final int count) {
+        this.ringAuraSlots = Math.max(0, Math.min(RING_AURA_SLOTS, count));
     }
 
     /** 技能在面板上的位置；沒有回傳 -1。 */
@@ -872,8 +896,11 @@ public final class SkillLoadout {
             }
         }
         // 2026-11-04：空座指環的光環格（戴著才算，排在最後：精魂不夠時最後開）
-        if (ringAuraNow && skills[RING_AURA] != null && !dormant(skills[RING_AURA])) {
-            list.add(skills[RING_AURA]);
+        for (int i = 0; i < ringAuraSlots; i++) {
+            final Entry ring = skills[RING_AURA + i];
+            if (ring != null && !dormant(ring)) {
+                list.add(ring);
+            }
         }
         return list;
     }
@@ -893,7 +920,7 @@ public final class SkillLoadout {
     public SkillLoadout copy() {
         final SkillLoadout copy = new SkillLoadout();
         System.arraycopy(skills, 0, copy.skills, 0, TOTAL_POSITIONS);
-        copy.ringAuraNow = ringAuraNow;
+        copy.ringAuraSlots = ringAuraSlots;
         System.arraycopy(binds, 0, copy.binds, 0, BIND_SLOTS);
         copy.grantedNow = grantedNow;
         return copy;

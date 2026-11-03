@@ -128,7 +128,18 @@ public final class Gear {
      */
     public static String soloRingProblem(final ExileCore plugin, final PlayerState state, final ItemStack incoming, final int target) {
         final boolean incomingSolo = onlyRing(plugin, incoming);
-        final boolean incomingAuraRing = auraSlotRing(plugin, incoming);
+        // 2026-11-04 照站長「改成僅限配戴兩個」：空座指環最多戴兩個（光環格最多兩格；第三個戒指欄不能再戴第三個）
+        if (auraSlotRing(plugin, incoming)) {
+            int others = 0;
+            for (final int slot : RING_SLOTS) {
+                if (slot != target && auraSlotRing(plugin, state.jewellery(slot))) {
+                    others++;
+                }
+            }
+            if (others >= tw.exilecore.character.SkillLoadout.RING_AURA_SLOTS) {
+                return "空座指環僅限配戴兩個";
+            }
+        }
         for (final int slot : RING_SLOTS) {
             if (slot == target) {
                 continue;
@@ -136,9 +147,6 @@ public final class Gear {
             final ItemStack other = state.jewellery(slot);
             if (other == null || other.isEmpty()) {
                 continue;
-            }
-            if (incomingAuraRing && auraSlotRing(plugin, other)) {
-                return "空座指環僅限配戴一個"; // 2026-11-04 照站長
             }
             if (onlyRing(plugin, other)) {
                 return "戴著" + itemName(plugin, other) + "（不能使用其他戒指）：另一個戒指欄不能放戒指";

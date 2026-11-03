@@ -39,7 +39,7 @@ public final class Hints {
             Map.entry(CURRENCY, "撿到<white>通貨</white>：會自動進通貨袋（/bag）；拿在游標上點裝備可以改造它，洗裝台 /craft 更方便"),
             Map.entry(ESSENCE, "撿到<white>星魄</white>：用在裝備上，保證加上它寫的那一條詞綴"),
             Map.entry(OMEN, "撿到<white>星籤</white>：先掛在裝備上，下一顆通貨會照籤的規則做（洗裝台 /craft 左邊放籤）"),
-            Map.entry(CATALYST, "撿到<white>催化劑</white>：用在戒指、項鍊、護身符上加品質，強化那一類的詞綴"),
+            Map.entry(CATALYST, "撿到<white>催化劑</white>：用在戒指、項鍊上加品質，強化那一類的詞綴"), // 2026-11-04：拿掉「護身符」（催化劑只能打在戒指、項鍊）
             Map.entry(CARD, "撿到<white>星諭卡</white>：集滿一套就能兌換獎勵；在通貨袋或倉庫裡 Shift＋右鍵"),
             Map.entry(MAP, "撿到<white>地圖</white>：主線打完後，放進營地的地圖裝置就能開一張星痕，裡面的怪掉得更好"),
             Map.entry(FLASK, "撿到<white>藥劑</white>：等級比身上的高就換到藥劑欄，回復量更多"),

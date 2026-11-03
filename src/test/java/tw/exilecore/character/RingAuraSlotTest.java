@@ -22,6 +22,14 @@ class RingAuraSlotTest {
         final SkillLoadout copy = loadout.copy();
         assertEquals(aura, copy.skill(SkillLoadout.RING_AURA), "存檔快照也有");
         assertTrue(copy.entriesInKeyOrder().contains(aura));
+        // 2026-11-04 照站長：戴兩個空座指環開第二格
+        final SkillLoadout.Entry second = new SkillLoadout.Entry("other_aura", 8);
+        loadout.set(SkillLoadout.RING_AURA2, second);
+        assertFalse(loadout.entriesInKeyOrder().contains(second), "只戴一個：第二格不開");
+        loadout.setRingAuraSlots(2);
+        assertTrue(loadout.entriesInKeyOrder().contains(second), "戴兩個：第二格也開");
+        assertTrue(loadout.ringAuraOpen(SkillLoadout.RING_AURA2));
+        assertEquals(1, SkillLoadout.ringAuraIndex(SkillLoadout.RING_AURA2));
         assertTrue(loadout.remove(SkillLoadout.RING_AURA));
         assertEquals(null, loadout.skill(SkillLoadout.RING_AURA));
     }

@@ -386,7 +386,7 @@ public final class ItemRenderer {
         }
         if (hasImplicit) {
             final Implicit implicit = ItemStats.implicit(repository, base, data);
-            lore.add(line("<#a0a0ff>" + implicit.renderWithRanges(data.implicitVars()) + " <dark_gray>(固定)"
+            lore.add(line("<#a0a0ff>" + implicit.renderWithRanges(ItemStats.boosted(data.implicitVars(), ItemStats.viewBoost())) + " <dark_gray>(固定)" // 2026-11-04：角色面板的戒指、項鍊加成
                     + AffixChips.miniMessage(AffixChips.of(implicit.mods())))); // 2026-10：固定詞綴也有標籤
         }
         if (data.instilled() != null) {

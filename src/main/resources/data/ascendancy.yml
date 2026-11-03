@@ -1570,7 +1570,7 @@ ascendancies:
         notable: true
         icon: NETHER_STAR
         lines:
-          - 增加 25% 已裝備戒指與護身符提供的加成
+          - 增加 25% 已裝備戒指與項鍊提供的加成   # 2026-11-04 照站長：我們叫項鍊（這次之前寫護身符）
         stats:
           - { stat: flag.mystic_attunement, type: FLAT, value: 1 }
       reduced_resistances:

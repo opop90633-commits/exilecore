@@ -91,13 +91,19 @@ public final class AffixChips {
         } else if (lower.startsWith("radius_notable:")) {
             lower = lower.substring("radius_notable:".length()); // 2026-10-26：「範圍內的核心天賦也各給」一樣
         }
+        if (lower.startsWith("damage.convert")) {
+            // 2026-11-04 照站長（選 1，照 PoE2）：傷害轉換（元素轉混沌、冰轉電…）原作沒有標籤（PoB2 的 modTags 是空的），我們也不標；
+            //   這次之前照屬性名稱標了來源的元素（濁源指環標成傷害、元素、火焰、冰冷、閃電）。要標的在資料檔寫 chips
+            return;
+        }
         if (lower.equals("local.physical")) {
             chips.addAll(List.of(Chip.DAMAGE, Chip.PHYSICAL, Chip.ATTACK));
             return;
         }
         if (lower.startsWith("local.")) {
             // 武器自己的攻速、暴擊。2026-10-17：「這件物品上揭露詞綴的幅度」不是武器屬性，不標攻擊
-            if (!lower.startsWith("local.unveiled")) {
+            // 2026-11-04 照站長（A）：需求（local.requirement*）、符文效果（local.rune_*）也不是武器屬性，不標攻擊（照 PoE2：沒有標籤）
+            if (!lower.startsWith("local.unveiled") && !lower.startsWith("local.requirement") && !lower.startsWith("local.rune")) {
                 chips.add(Chip.ATTACK);
             }
             lower = lower.substring("local.".length()).replace("attack_speed", "attack.speed").replace("crit_base", "crit");
@@ -105,7 +111,8 @@ public final class AffixChips {
         if (lower.startsWith("daze") || lower.startsWith("physical.reduction")) {
             chips.add(lower.startsWith("daze") ? Chip.AILMENT : Chip.PHYSICAL);
         }
-        final String stat = lower;
+        // 2026-11-04（A）：條件寫在 @ 後面的（resist.fire@lowlife、evasion@dodge）照 @ 前面的屬性判斷；這次之前低血火抗只標抗性
+        final String stat = lower.contains("@") ? lower.substring(0, lower.indexOf('@')) : lower;
         for (final String tag : tags) {
             switch (tag) {
                 case "fire" -> chips.addAll(List.of(Chip.ELEMENTAL, Chip.FIRE));
@@ -134,6 +141,20 @@ public final class AffixChips {
                 case "bear" -> chips.addAll(List.of(Chip.SHAPESHIFT, Chip.BEAR));
                 case "werewolf" -> chips.addAll(List.of(Chip.SHAPESHIFT, Chip.WEREWOLF));
                 case "wyvern" -> chips.addAll(List.of(Chip.SHAPESHIFT, Chip.WYVERN));
+                default -> {
+                }
+            }
+        }
+        // 2026-11-04 照站長（攫命之環，PoE2 的 modTags：chaos_damage、damage、chaos）：存在範圍內「獲得 x% 傷害為額外 ○○ 傷害」
+        //   （presence.ally_extra_chaos、presence.enemy_extra_chaos、presence.ally_extra_fire）標傷害＋那種元素；這次之前整條沒有標籤
+        if (stat.startsWith("presence.") && stat.contains("_extra_")) {
+            chips.add(Chip.DAMAGE);
+            final String kind = stat.substring(stat.lastIndexOf('_') + 1);
+            switch (kind) {
+                case "chaos" -> chips.add(Chip.CHAOS);
+                case "fire" -> chips.addAll(List.of(Chip.ELEMENTAL, Chip.FIRE));
+                case "cold" -> chips.addAll(List.of(Chip.ELEMENTAL, Chip.COLD));
+                case "lightning" -> chips.addAll(List.of(Chip.ELEMENTAL, Chip.LIGHTNING));
                 default -> {
                 }
             }
@@ -226,6 +247,58 @@ public final class AffixChips {
                 || stat.startsWith("bleed") || stat.startsWith("poison") || stat.startsWith("stun") || stat.startsWith("ailment")
                 || stat.startsWith("electrocute") || stat.startsWith("avoid.")) {
             chips.add(Chip.AILMENT);
+        }
+        adjustToPoe2(chips, stat);
+    }
+
+    /**
+     * 2026-11-04 照站長「傳奇標籤跟原作不一樣的，先改判斷規則（A）」：照 PoB2 的 modTags 修正共通的規則。
+     * 這次之前：暴擊傷害加成只標暴擊、增加元素傷害沒標三元素、點燃／感電／凍結只標異常、荊棘沒標物理、
+     * 暈眩門檻與暈眩累積標了異常、「先從魔力扣除」「回復為魔力」只標魔力、藥劑的生命／魔力回復速度只標藥劑、
+     * 藥劑自動充能標成生命／魔力、被格擋的擊中仍受到傷害與格擋撲殺標了格擋。
+     */
+    private static void adjustToPoe2(final Set<Chip> chips, final String stat) {
+        if (stat.startsWith("crit.bonus")) {
+            chips.add(Chip.DAMAGE); // Critical Damage Bonus：critical、damage
+        }
+        if (stat.startsWith("damage") && chips.contains(Chip.ELEMENTAL) && !chips.contains(Chip.FIRE) && !chips.contains(Chip.COLD)
+                && !chips.contains(Chip.LIGHTNING)) {
+            chips.addAll(List.of(Chip.FIRE, Chip.COLD, Chip.LIGHTNING)); // increased Elemental Damage：damage、elemental、fire、cold、lightning
+        }
+        if (stat.startsWith("ignite")) {
+            chips.addAll(List.of(Chip.ELEMENTAL, Chip.FIRE));
+            if (stat.startsWith("ignite.magnitude") || stat.startsWith("ignite.damage")) {
+                chips.add(Chip.DAMAGE);
+            }
+        } else if (stat.startsWith("shock")) {
+            chips.addAll(List.of(Chip.ELEMENTAL, Chip.LIGHTNING));
+        } else if (stat.startsWith("freeze") || stat.startsWith("chill")) {
+            chips.addAll(List.of(Chip.ELEMENTAL, Chip.COLD));
+        }
+        if (stat.equals("thorns.min") || stat.equals("thorns.max") || stat.equals("thorns.physical")) {
+            chips.add(Chip.PHYSICAL); // Physical Thorns damage：damage、physical
+        }
+        if (stat.startsWith("stun") || stat.startsWith("ailment.threshold")) {
+            chips.remove(Chip.AILMENT); // Stun Threshold、Stun Buildup、Ailment Threshold：沒有標籤
+        }
+        if (stat.startsWith("damage.from_mana") || stat.equals("mana.recoup")) {
+            chips.addAll(List.of(Chip.LIFE, Chip.MANA)); // taken from Mana before Life、Recouped as Mana：life、mana
+        }
+        if (stat.startsWith("flask.")) {
+            chips.add(Chip.FLASK);
+            chips.remove(Chip.LIFE);
+            chips.remove(Chip.MANA);
+            if (stat.equals("flask.life_rate")) {
+                chips.add(Chip.LIFE); // Flask Life Recovery rate：flask、life
+            } else if (stat.equals("flask.mana_rate")) {
+                chips.add(Chip.MANA);
+            }
+            if (stat.startsWith("flask.charges_per_minute")) {
+                chips.remove(Chip.FLASK); // Life Flasks gain charges per Second：沒有標籤
+            }
+        }
+        if (stat.equals("block.taken") || stat.equals("block.cull")) {
+            chips.remove(Chip.BLOCK); // damage from Blocked Hits、Culled on Block：沒有標籤
         }
     }
 

@@ -237,6 +237,23 @@ public final class ItemRepository {
                         uniqueDropChance.put(id, Math.min(100, chance) / 100.0);
                     }
                 }
+                // 2026-11-04 照站長（聖火：原作每條都有標籤）：傳奇詞綴也能寫 chips（跟 affixes 一樣；寫 chips: [] 是沒有標籤）
+                int modIndex = 0;
+                for (final YamlNode modNode : root.node(id).list("mods")) {
+                    modIndex++;
+                    if (!modNode.has("chips")) {
+                        continue;
+                    }
+                    final java.util.Set<AffixChips.Chip> chips = java.util.EnumSet.noneOf(AffixChips.Chip.class);
+                    for (final String chipId : modNode.strings("chips")) {
+                        final AffixChips.Chip chip = AffixChips.byId(chipId);
+                        if (chip == null) {
+                            throw new IllegalArgumentException("uniques.yml：" + id + " 第 " + modIndex + " 條詞綴的 chips 不認得的標籤 " + chipId);
+                        }
+                        chips.add(chip);
+                    }
+                    affixChips.put(UniqueItem.AFFIX_PREFIX + id + "." + modIndex, java.util.Collections.unmodifiableSet(chips));
+                }
                 final UniqueRarity rarity = UniqueRarity.parse(root.node(id).string("rarity", null));
                 if (rarity != null) {
                     uniqueRarity.put(id, rarity);

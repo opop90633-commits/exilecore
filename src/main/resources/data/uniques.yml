@@ -6014,13 +6014,16 @@ hallowed_fire:            # 2026-10-28 照 PoE2 0.5 的「Sacred Flame」（poe2
       value: [2, 3]
       stats:
         - { stat: presence.ally_regen, type: FLAT, value: "{value}" }
+      chips: [life, aura]   # 2026-11-04 照站長：照 PoE2 的標籤（modTags）
     - text: "在你存在範圍內的友方獲得 {value}% 傷害為額外火焰傷害"
       value: [20, 30]
       stats:
         - { stat: presence.ally_extra_fire, type: FLAT, value: "{value}" }
+      chips: [elemental, fire, aura]   # 2026-11-04 照站長：照 PoE2 的標籤（modTags）
     - text: "敵人身處你的存在範圍時，照牠最低的元素抗性抵抗元素傷害"   # combat.Presence
       stats:
         - { stat: flag.presence_lowest_resist, type: FLAT, value: 1 }
+      chips: [elemental, aura]   # 2026-11-04 照站長：照 PoE2 的標籤（modTags）
 
 sacred_vow_mantle:       # 2026-11-03 照站長＋PoE2 0.5 的「Sacrosanctum」（poe2db：神聖殿堂；原作有、我們以前沒有的），名字自己取
   name: 明誓聖幕
@@ -7017,6 +7020,7 @@ shadowdance_jacket:        # 2026-10-27 照 PoE2 0.5 的「The Dancing Mirage」
         - { stat: debuff.taken.cold@nohit, type: FLAT, value: -20 }
         - { stat: debuff.taken.lightning@nohit, type: FLAT, value: -20 }
         - { stat: debuff.taken.chaos@nohit, type: FLAT, value: -20 }
+      chips: []   # 2026-11-04 照 PoE2 的標籤：沒被擊中過受到的傷害減少，沒有標籤
     - text: "最近被擊中過，則增加 100% 閃避"
       stats:
         - { stat: evasion@hit, type: INCREASED, value: 100 }
@@ -9505,6 +9509,7 @@ captive_manacles:        # 2026-10-28 照 PoE2 0.5 的「The Prisoner's Manacles
         - { stat: stun.buildup, type: MORE, value: -100 }
         - { stat: freeze.buildup, type: MORE, value: -100 }
         - { stat: electrocute.buildup, type: MORE, value: -100 }
+      chips: []   # 2026-11-04 照 PoE2 的標籤：Cannot Immobilise enemies 沒有標籤
 
 stormfist:        # 2026-10-28 照 PoE2 0.5 的「Thunderfist」（原作有、我們以前沒有的；深淵的崛起新增）
   name: 雷霆之拳

@@ -305,7 +305,7 @@ jring_unset:
   name: 空座指環
   aura_slot: true
   implicit:
-    text: "技能面板多 1 個光環格（放進去的光環開著）；僅限配戴一個"   # 2026-11-04 照站長：僅限配戴一個（Gear.soloRingProblem 擋第二個）
+    text: "技能面板多 1 個光環格（放進去的光環開著）；僅限配戴兩個"   # 2026-11-04 照站長：僅限配戴兩個（Gear.soloRingProblem 擋第三個；同日稍早一度是僅限一個）
   family: jring_special
   drop_weight: 4
   material: QUARTZ

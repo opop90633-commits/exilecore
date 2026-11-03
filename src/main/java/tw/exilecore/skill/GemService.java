@@ -1679,11 +1679,12 @@ public final class GemService {
 
     /** 2026-11-04 照站長：空座指環的光環格只能放光環類的技能，而且要戴著空座指環；不是那一格回傳 null。 */
     static String ringAuraProblem(final SkillLoadout loadout, final int target, final SkillDefinition definition) {
-        if (target != SkillLoadout.RING_AURA) {
+        final int ring = SkillLoadout.ringAuraIndex(target);
+        if (ring < 0) {
             return null;
         }
-        if (!loadout.ringAuraNow()) {
-            return "要戴著空座指環才能用這一格";
+        if (!loadout.ringAuraOpen(target)) {
+            return ring == 0 ? "要戴著空座指環才能用這一格" : "要戴著兩個空座指環才能用第二格光環格";
         }
         if (definition == null || definition.mechanic() != Mechanic.AURA || definition.aura() == null) {
             return "這一格只能放光環類的技能";

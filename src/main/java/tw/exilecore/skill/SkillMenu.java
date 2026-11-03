@@ -53,8 +53,11 @@ public final class SkillMenu extends Menu {
     private static final int SLOT_TAKE_OUT = 17;
     /** 2026-11-04 照站長：空座指環的光環格（滑鼠按鍵格右邊；位置是 SkillLoadout.RING_AURA）。 */
     private static final int SLOT_RING_AURA = 14;
+    /** 2026-11-04 照站長「技能那邊再加一格光環格」：第二格光環格（數字鍵那排右邊；戴兩個空座指環才開）。 */
+    private static final int SLOT_RING_AURA2 = 25;
+    private static final int[] RING_AURA_SLOTS = {SLOT_RING_AURA, SLOT_RING_AURA2};
     /** 2026-10-29 照站長（PoE2 的 Set Minion Count）：選起來的是精魂召喚時，設定要帶幾隻。 */
-    private static final int SLOT_MINION_COUNT = 25;
+    private static final int SLOT_MINION_COUNT = 6; // 2026-11-04：25 → 6（25 給第二格光環格）
     /** 換頁（技能三頁）。 */
     private static final int SLOT_PAGE = 26;
     /** 技能上面那一排：沒套用資源包時，用綠色玻璃片指著選起來的、可以放的技能。 */
@@ -205,33 +208,55 @@ public final class SkillMenu extends Menu {
      * 沒戴、格子是空的：灰色說明；沒戴、裡面有光環：照常畫，標「沒戴空座指環，沒開」。
      */
     private void drawRingAura(final PlayerState state, final SkillLoadout loadout, final Holding holding, final ItemStack cursor) {
-        final SkillLoadout.Entry entry = loadout.skill(SkillLoadout.RING_AURA);
+        for (int i = 0; i < RING_AURA_SLOTS.length; i++) {
+            drawRingAura(state, loadout, holding, cursor, i);
+        }
+    }
+
+    /** 2026-11-04：第 index 格光環格（0 起算；第 index＋1 個空座指環開這格）。 */
+    private void drawRingAura(final PlayerState state, final SkillLoadout loadout, final Holding holding, final ItemStack cursor, final int index) {
+        final int position = SkillLoadout.RING_AURA + index;
+        final int slot = RING_AURA_SLOTS[index];
+        final boolean open = loadout.ringAuraOpen(position);
+        final String title = index == 0 ? "光環格（空座指環）" : "第二格光環格（兩個空座指環）";
+        final SkillLoadout.Entry entry = loadout.skill(position);
         if (entry == null) {
-            if (!loadout.ringAuraNow()) {
-                set(SLOT_RING_AURA, icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>空座指環的光環格",
-                        "<gray>戴著空座指環時，這一格可以放一個光環類的技能", "<gray>放進去的光環不用綁按鍵，一直開著"));
+            if (!open) {
+                set(slot, icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>" + title,
+                        index == 0 ? "<gray>戴著空座指環時，這一格可以放一個光環類的技能" : "<gray>戴著兩個空座指環時，這一格也可以放一個光環",
+                        "<gray>放進去的光環不用綁按鍵，一直開著"));
                 return;
             }
             if (holding == Holding.SKILL_GEM) {
                 final GemData gem = gems.read(cursor).orElse(null);
                 final SkillDefinition definition = gem == null || gem.entry() == null ? null : service.config().skill(gem.entry().skillId());
-                final String problem = GemService.ringAuraProblem(loadout, SkillLoadout.RING_AURA, definition);
-                set(SLOT_RING_AURA, problem == null
-                        ? targetHighlight(icon(Material.LIME_STAINED_GLASS_PANE, "<green>▶ 光環格（空座指環）", "<green>放這裡：這個光環一直開著"))
-                        : icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>光環格（空座指環）", "<red>" + ItemRenderer.escape(problem)));
+                final String problem = GemService.ringAuraProblem(loadout, position, definition);
+                set(slot, problem == null
+                        ? targetHighlight(icon(Material.LIME_STAINED_GLASS_PANE, "<green>▶ " + title, "<green>放這裡：這個光環一直開著"))
+                        : icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>" + title, "<red>" + ItemRenderer.escape(problem)));
                 return;
             }
-            set(SLOT_RING_AURA, icon(Material.LIGHT_BLUE_STAINED_GLASS_PANE, "<#8fd3ff>光環格（空座指環）",
-                    "<gray>拿光環類的技能寶石點這裡放進來", "<gray>不用綁按鍵，一直開著"));
+            set(slot, icon(Material.LIGHT_BLUE_STAINED_GLASS_PANE, "<#8fd3ff>" + title,
+                    "<gray>拿光環類的技能寶石點這裡放進來", "<gray>或先點面板上的光環選取，再點這裡搬進來", "<gray>不用綁按鍵，一直開著"));
             return;
         }
-        final Drawn drawn = skillIcon(state, loadout, SkillLoadout.RING_AURA, holding, cursor);
+        final Drawn drawn = skillIcon(state, loadout, position, holding, cursor);
         ItemStack stack = drawn.icon();
-        if (!loadout.ringAuraNow()) {
-            stack = icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>光環格：" + ItemRenderer.escape(skillName(entry)),
-                    "<red>沒戴空座指環：這個光環沒開", "<yellow>Shift＋點一下：取出成技能寶石");
+        if (!open) {
+            stack = icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>" + title + "：" + ItemRenderer.escape(skillName(entry)),
+                    index == 0 ? "<red>沒戴空座指環：這個光環沒開" : "<red>沒戴兩個空座指環：這個光環沒開", "<yellow>Shift＋點一下：取出成技能寶石");
         }
-        set(SLOT_RING_AURA, stack);
+        set(slot, stack);
+    }
+
+    /** 2026-11-04：選單格子是第幾格光環格；不是回傳 -1。 */
+    private static int ringIndexOf(final int slot) {
+        for (int i = 0; i < RING_AURA_SLOTS.length; i++) {
+            if (RING_AURA_SLOTS[i] == slot) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private String skillName(final SkillLoadout.Entry entry) {
@@ -1057,21 +1082,42 @@ public final class SkillMenu extends Menu {
         }
         final ClickType click = event.getClick();
         final SkillLoadout loadout = plugin.players().get(player).skills();
-        if (slot == SLOT_RING_AURA) {
+        final int ringIndex = ringIndexOf(slot);
+        if (ringIndex >= 0) {
             // 2026-11-04：空座指環的光環格：點一下選取（看輔助孔、升級），Shift＋點一下取出；不能綁按鍵
+            final int ringPosition = SkillLoadout.RING_AURA + ringIndex;
             pendingKey = -1;
-            if (loadout.skill(SkillLoadout.RING_AURA) == null) {
+            if (loadout.skill(ringPosition) == null) {
+                // 2026-11-04 照站長「光環類的好像放不進光環格（沒有任何提示）」：選取中的光環直接搬進來；
+                //   這次之前只能拿寶石點，選了面板上的光環再點這格什麼都不會發生
+                final SkillLoadout.Entry chosen = selected >= 0 ? loadout.skill(selected) : null;
+                if (chosen == null) {
+                    fail("先點面板上的一個光環選取，再點這格搬進來（或拿光環寶石點這格）");
+                    return;
+                }
+                final SkillDefinition definition = service.config().skill(chosen.skillId());
+                final String problem = chosen.granted() ? "武器、昇華賦予的技能不能搬進光環格"
+                        : GemService.ringAuraProblem(loadout, ringPosition, definition);
+                if (problem != null) {
+                    fail(problem);
+                    return;
+                }
+                loadout.remove(selected); // 綁著它的按鍵改回普攻（光環格不用綁按鍵）；從另一格光環格搬也可以
+                loadout.set(ringPosition, chosen);
+                selected = ringPosition;
+                click(1.4f);
+                changed();
                 return;
             }
             if (click.isShiftClick()) {
-                takeOut(SkillLoadout.RING_AURA);
+                takeOut(ringPosition);
                 return;
             }
             if (click == ClickType.NUMBER_KEY) {
                 fail("光環格不用綁按鍵（戴著空座指環就開著）");
                 return;
             }
-            selected = selected == SkillLoadout.RING_AURA ? -1 : SkillLoadout.RING_AURA;
+            selected = selected == ringPosition ? -1 : ringPosition;
             click(1.4f);
             redraw();
             return;
@@ -1190,10 +1236,10 @@ public final class SkillMenu extends Menu {
     private void onCursorClick(final int slot, final ItemStack cursor, final InventoryClickEvent event) {
         final GemData gem = gems.read(cursor).orElse(null);
         final CurrencyType currency = plugin.currencies().read(cursor).orElse(null);
-        final boolean ringSlot = slot == SLOT_RING_AURA; // 2026-11-04：空座指環的光環格當一個技能格
+        final boolean ringSlot = ringIndexOf(slot) >= 0; // 2026-11-04：空座指環的光環格當一個技能格
         final boolean skillSlot = slot >= SKILL_START && slot < SKILL_START + SkillLoadout.PAGE_SIZE || ringSlot;
         final boolean socketSlot = slot >= SUPPORT_START && slot < SUPPORT_START + SkillLoadout.MAX_SOCKETS;
-        final int position = ringSlot ? SkillLoadout.RING_AURA : skillSlot ? page * SkillLoadout.PAGE_SIZE + slot - SKILL_START : selected;
+        final int position = ringSlot ? SkillLoadout.RING_AURA + ringIndexOf(slot) : skillSlot ? page * SkillLoadout.PAGE_SIZE + slot - SKILL_START : selected;
         if (!skillSlot && !socketSlot) {
             fail("拿著東西只能點技能或輔助孔");
             return;
