@@ -210,9 +210,36 @@ final class UniquesMenu extends Menu {
             lore.add("");
             lore.add("<yellow>點一下：" + (hide ? "改成會撿" : "隱藏"));
         }
+        // 2026-11-04 照站長「這邊能顯示傳奇資訊嗎」：用圖鑑那種預覽（照掉落等級擲一件、詞綴帶範圍），後面接撿不撿；
+        //   做不出預覽時照舊只有名稱。這次之前只有名稱、基底、掉落等級
+        final ItemStack preview = preview(unique);
+        if (preview != null) {
+            final List<String> tail = new ArrayList<>();
+            tail.add("");
+            tail.add("<#f5b942>━━ 掉落過濾 ━━ " + (hide ? "<red>✘ 隱藏" : "<green>✔ 會撿"));
+            tail.addAll(lore);
+            final ItemStack stack = appendLore(preview.clone(), tail);
+            return hide ? offMark(stack) : stack;
+        }
         final Material material = base == null ? Material.PAPER : Menu.material(base.iconMaterial(), Material.PAPER);
         final ItemStack stack = icon(material, (hide ? "<red>✘ " : "<green>✔ ") + "<#af6025>" + ItemRenderer.escape(unique.name()), lore);
         return hide ? offMark(stack) : stack;
+    }
+
+    /** 預覽（每種傳奇做一次就留著；做不出來是 null）。 */
+    private final Map<String, ItemStack> previews = new HashMap<>();
+
+    private ItemStack preview(final UniqueItem unique) {
+        return previews.computeIfAbsent(unique.id(), id -> {
+            try {
+                final tw.exilecore.item.ItemData data = plugin.items().generator()
+                        .generateUnique(unique, Math.max(1, unique.dropLevel()), new java.util.Random(unique.id().hashCode()));
+                data.setIdentified(true);
+                return plugin.items().renderer().create(data); // 只畫外觀，不寫物品資料
+            } catch (final RuntimeException e) {
+                return null;
+            }
+        });
     }
 
     @Override

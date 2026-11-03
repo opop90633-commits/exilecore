@@ -208,9 +208,9 @@ final class BasesMenu extends Menu {
 
     private ItemStack entry(final ItemBase base) {
         final LootFilter.BaseRule rule = filter.baseRule(base.id());
-        final boolean heist = plugin.items().repository().heistOnlyBase(base.id());
+        final String only = onlySource(base); // 2026-11-04 照站長：裂隙指環、精煉裂隙指環、淵印指環寫實際掉的地方（這次之前一律寫只在劫盜掉）
         final List<String> lore = new ArrayList<>();
-        lore.add("<gray>" + base.slot().displayName() + (base.isMap() ? "" : "・掉落等級 " + base.dropLevel()) + (heist ? "<dark_gray>・只在劫盜掉" : ""));
+        lore.add("<gray>" + base.slot().displayName() + (base.isMap() ? "" : "・掉落等級 " + base.dropLevel()) + (only == null ? "" : "<dark_gray>・只在" + only + "掉"));
         lore.add(switch (rule) {
             case SHOW -> "<white>顯示<gray>：照過濾器其他的規則撿";
             case HIDE -> "<red>隱藏<gray>：絕對不撿（有好詞綴也不撿）";
@@ -231,6 +231,50 @@ final class BasesMenu extends Menu {
             case HIDE -> offMark(stack);
             case ALWAYS -> highlight(stack);
         };
+    }
+
+    /**
+     * 2026-11-04：這種基底只在哪裡掉（一般掉落沒有的才寫）：地圖事件（map_events.yml 的 ring）→「裂隙」「深淵裂縫」，
+     * 事件巔峰的指定基底（maps.yml 的 extra base）→ 那張巔峰的名字，其他劫盜專屬的 →「劫盜」；一般掉落的回傳 null。
+     */
+    private String onlySource(final ItemBase base) {
+        final var repository = plugin.items().repository();
+        if (!repository.heistOnlyBase(base.id())) {
+            return null;
+        }
+        final List<String> where = new ArrayList<>();
+        if (plugin.maps() != null) {
+            final tw.exilecore.map.MapEventConfig events = plugin.maps().eventConfig();
+            for (final tw.exilecore.map.MapEventConfig.Kind kind : tw.exilecore.map.MapEventConfig.Kind.values()) {
+                final tw.exilecore.map.MapEventConfig.EventBase setting = events.eventBase(kind);
+                if (setting != null && setting.base().equals(base.id())) {
+                    where.add(switch (kind) {
+                        case BREACH -> "裂隙";
+                        case ABYSS -> "深淵裂縫";
+                        case SHRINE -> "神龕";
+                        case STRONGBOX -> "寶箱";
+                        case EXILE -> "流寇";
+                        case SAFE -> "保險箱";
+                    });
+                }
+            }
+            final tw.exilecore.map.MapConfig maps = plugin.maps().config();
+            for (final tw.exilecore.map.MapConfig.MapDef map : maps.pinnacles()) {
+                final tw.exilecore.map.MapConfig.Pinnacle pinnacle = maps.pinnacle(map.id());
+                if (pinnacle == null || pinnacle.drops() == null) {
+                    continue;
+                }
+                for (final tw.exilecore.map.MapConfig.ExtraDrop extra : pinnacle.drops().extra()) {
+                    if ("base".equals(extra.kind()) && extra.id().equals(base.id())) {
+                        where.add(map.name() + "的 Boss");
+                    }
+                }
+            }
+        }
+        if (base.dropWeight() > 0 || where.isEmpty()) {
+            where.add("劫盜");
+        }
+        return String.join("、", where);
     }
 
     @Override
