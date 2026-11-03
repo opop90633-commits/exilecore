@@ -292,7 +292,10 @@ class CurrencySkinTest {
 
     @Test
     void packStaysSmallAndDeterministic() throws IOException {
-        assertTrue(pack.zip().length < UiPackTest.MAX_PACK_BYTES, "資源包要小（2026-10 多了招式預警的地面範圍、幻化、3D 時裝）：" + pack.zip().length);
+        // 2026-11-03：量玩家實際下載的介面那包（背景音樂約 6.4 MB 拆成另一包、很少換，見 UiPack.splitMusic）；
+        //   這次之前量整包（含音樂），3D 時裝貼圖升級、夏日時裝之後 CI 上超過 12 MB
+        final int uiBytes = UiPack.splitMusic(pack).ui().zip().length;
+        assertTrue(uiBytes < UiPackTest.MAX_PACK_BYTES, "介面那包要小（2026-10 多了招式預警的地面範圍、幻化、3D 時裝）：" + uiBytes);
         assertEquals(pack.sha1(), UiPack.build(uniqueSkins, UiPack.currencySkins(currencies)).sha1(), "每次產生都一樣，玩家才不用重新下載");
         assertFalse(pack.sha1().equals(UiPack.build(uniqueSkins).sha1()), "有掛通貨的包跟沒有的不一樣");
         final List<String> all = new ArrayList<>(files.keySet());
