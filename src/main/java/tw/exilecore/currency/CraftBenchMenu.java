@@ -232,7 +232,7 @@ public final class CraftBenchMenu extends Menu {
             return currency.name() + (why == null ? "不能用在這件上" : "：" + why);
         }
         final CurrencyType fires = type(after.omen());
-        if (Crafting.triggers(fires, currency)) {
+        if (Crafting.triggers(fires, currency, plugin.items().repository().base(after.base()))) {
             final String why = Crafting.omenProblem(fires, currency, after, plugin.items().generator());
             if (why != null) {
                 return why;
@@ -317,7 +317,8 @@ public final class CraftBenchMenu extends Menu {
         }
         final ItemData data = stack == null ? null : plugin.items().read(stack).orElse(null);
         final CurrencyType hanging = data == null ? null : type(data.omen());
-        if (hanging != null && omen == null && currency != null && Crafting.triggers(hanging, currency)) {
+        final tw.exilecore.item.ItemBase hangingBase = data == null ? null : plugin.items().repository().base(data.base());
+        if (hanging != null && omen == null && currency != null && Crafting.triggers(hanging, currency, hangingBase)) {
             lore.add("<#c48bff>裝備上掛著的" + ItemRenderer.escape(hanging.name()) + "這次會生效");
         }
         if (omen != null) {
@@ -328,7 +329,7 @@ public final class CraftBenchMenu extends Menu {
         }
         // 2026-10-29 照站長：用去劣籤時先寫出會移除哪一條（一樣差的寫「其中一條」）
         final CurrencyType firing = omen != null ? omen
-                : hanging != null && currency != null && Crafting.triggers(hanging, currency) ? hanging : null;
+                : hanging != null && currency != null && Crafting.triggers(hanging, currency, hangingBase) ? hanging : null;
         if (firing != null && firing.omen() != null && firing.omen().effect() == CurrencyType.Omen.Effect.REMOVE_LOWEST
                 && data != null && data.identified() && !data.affixes().isEmpty()) {
             final List<tw.exilecore.item.RolledAffix> worst = Crafting.lowestAffixes(data, plugin.items().repository());

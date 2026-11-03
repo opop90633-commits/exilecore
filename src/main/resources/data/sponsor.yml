@@ -201,6 +201,51 @@ cosmetics:
   m3d_pet_jelly: { type: skin, slot: pet, art: pet_jelly, name: 星海水母, rarity: epic, fashion_price: 20 }
   m3d_rune_shield: { type: skin, slot: offhand, art: rune_shield, name: 符文木盾, rarity: rare, fashion_price: 12 }
   m3d_pet_bat: { type: skin, slot: pet, art: pet_bat, name: 小蝙蝠, rarity: rare, fashion_price: 12 }
+
+  # 2026-11-03 照站長：夏日系列（抽獎箱：時裝抽獎箱、星曜時裝箱都抽得到；也能用時裝幣直接換）。
+  #   海藍、沙金、椰綠、西瓜紅、珊瑚粉、日落橘；tools/gen_models3d.py 的 summer_*、戰甲 armor3d_tide／armor3d_beach（2D 貼圖是 gen_skin_art.py 的 tide／beach）
+  m3d_summer_surfboard: { type: skin, slot: weapon, art: summer_surfboard, name: 浪板巨劍, rarity: legendary, fashion_price: 40,
+                          description: "一整塊彩色條紋的衝浪板，板尾三片鰭（近戰武器、法杖都能套）" }
+  m3d_summer_watermelon_hammer: { type: skin, slot: weapon, art: summer_watermelon_hammer, name: 西瓜大鎚, rarity: epic, fashion_price: 20,
+                                  description: "深綠條紋的大西瓜鎚頭，一端切開露出紅瓤黑籽（近戰武器、法杖都能套）" }
+  m3d_summer_coconut_staff: { type: skin, slot: weapon, art: summer_coconut_staff, name: 椰影長杖, rarity: epic, fashion_price: 20,
+                              description: "棕色長杖頂著一顆椰子、四片葉子，葉心透著海藍的光（近戰武器、法杖都能套）" }
+  m3d_summer_popsicle_blade: { type: skin, slot: weapon, art: summer_popsicle_blade, name: 雙色冰棒劍, rarity: rare, fashion_price: 12,
+                               description: "木棍握把、紅藍雙色的冰棒，上面被咬了一口（近戰武器、法杖都能套）" }
+  m3d_summer_parasol_shield: { type: skin, slot: offhand, art: summer_parasol_shield, name: 遮陽傘盾, rarity: epic, fashion_price: 20,
+                               description: "紅白輻射條紋的圓傘面、木柄彎勾（盾、箭袋都能套）" }
+  m3d_summer_lifebuoy: { type: skin, slot: offhand, art: summer_lifebuoy, name: 救生圈盾, rarity: rare, fashion_price: 12,
+                         description: "橘白相間的救生圈，外面繞一圈繩子（盾、箭袋都能套）" }
+  m3d_summer_straw_hat: { type: skin, slot: headgear, art: summer_straw_hat, name: 海風草帽, rarity: epic, fashion_price: 20,
+                          description: "寬簷草帽、海藍帽帶，帽帶上別一朵珊瑚粉的小花" }
+  m3d_summer_goggles: { type: skin, slot: headgear, art: summer_goggles, name: 潛水鏡, rarity: rare, fashion_price: 12,
+                        description: "藍框雙鏡片的潛水鏡，橘色呼吸管繞到頭頂" }
+  m3d_summer_shades: { type: skin, slot: headgear, art: summer_shades, name: 墨鏡, rarity: rare, fashion_price: 12,
+                       description: "黑框墨鏡，鏡片上一道反光" }
+  m3d_summer_wave_wings: { type: skin, slot: back, art: summer_wave_wings, name: 浪花之翼, rarity: legendary, fashion_price: 40,
+                           description: "兩道從肩膀捲起來的浪，深藍到淺藍、浪尖的白沫會發光、水珠飛在旁邊" }
+  m3d_summer_seagull_wings: { type: skin, slot: back, art: summer_seagull_wings, name: 海鷗之翼, rarity: epic, fashion_price: 20,
+                              description: "白羽灰尖的一對海鷗長翼" }
+  m3d_summer_sun_halo: { type: skin, slot: back, art: summer_sun_halo, name: 烈日光輪, rarity: epic, fashion_price: 20,
+                         description: "背後一輪發光的太陽，十六道橘金的光芒" }
+  m3d_summer_pet_turtle: { type: skin, slot: pet, art: summer_pet_turtle, name: 小海龜, rarity: epic, fashion_price: 20,
+                           description: "綠殼沙肚的小海龜，會吐泡泡" }
+  m3d_summer_pet_crab: { type: skin, slot: pet, art: summer_pet_crab, name: 小螃蟹, rarity: rare, fashion_price: 12,
+                         description: "舉著大螯橫著走的紅螃蟹" }
+  m3d_summer_pet_dolphin: { type: skin, slot: pet, art: summer_pet_dolphin, name: 小海豚, rarity: legendary, fashion_price: 40,
+                            description: "藍背白肚的小海豚，身邊飛著發光的水花" }
+  m3d_summer_pet_parrot: { type: skin, slot: pet, art: summer_pet_parrot, name: 彩羽鸚鵡, rarity: epic, fashion_price: 20,
+                           description: "紅身黃翅藍尾的鸚鵡，站在小木棲上" }
+  m3d_summer_pet_icecream: { type: skin, slot: pet, art: summer_pet_icecream, name: 冰淇淋精靈, rarity: rare, fashion_price: 12,
+                             description: "草莓加薄荷雙球甜筒，下面那球有一張小臉、頂上一顆櫻桃" }
+  m3d_summer_coral_bow: { type: skin, slot: bow, art: summer_coral_bow, name: 珊瑚弓, rarity: epic, fashion_price: 20,
+                          description: "珊瑚粉的弓臂長著橘色珊瑚枝、鑲著發光的珍珠" }
+  m3d_summer_water_crossbow: { type: skin, slot: crossbow, art: summer_water_crossbow, name: 水槍弩, rarity: epic, fashion_price: 20,
+                               description: "藍色槍身、橘色幫浦，下面掛著看得到水位的水箱" }
+  m3d_armor_tide: { type: skin, slot: armor, art: armor3d_tide, name: 浪潮潛水裝, rarity: legendary, fashion_price: 40,
+                    description: "海藍潛水裝、白色滾邊、珊瑚粉點綴；圓窗潛水頭盔，肩上捲著發光白沫的小浪（頭、身、腿、腳可以分開套）" }
+  m3d_armor_beach: { type: skin, slot: armor, art: armor3d_beach, name: 沙灘衛士裝, rarity: epic, fashion_price: 20,
+                     description: "沙金綁帶背心、椰綠繩腰帶；寬簷草帽盔、繞著麻繩結的肩甲（頭、身、腿、腳可以分開套）" }
   # 2026-10 新增：動作（贊助 → 動作 裡設定按鍵；營地以外只有特效、不會移動）
   emote_sidestep: { type: emote, emote: sidestep, name: 閃身步, rarity: rare, fashion_price: 10, description: "左跨一步、收回、右跨一步，留下殘影" }
   emote_kick_ball: { type: emote, emote: kick_ball, name: 浪子踢球, rarity: epic, fashion_price: 15, description: "張開雙手，小跳往後勾腳、交叉步" }
@@ -284,6 +329,40 @@ cosmetics:
   hw_pet_skull: { type: skin, slot: pet, art: hw_pet_skull, name: 骷髏小頭, rarity: rare, fashion_price: 0, limited: "萬燈夜",
                   description: "下巴會一開一合的小骷髏頭" }
 
+  # 2026-11-03 照站長：星潮祭（夏日活動）限定：活動的兌換商店用貝殼、珍珠換；這次之前夏日只有抽獎箱的 m3d_summer_*。
+  #   limited 寫來源，選單上顯示「星潮祭限定」；沒有的人在商城、裝備幻化都看不到。模型在 tools/gen_models3d.py 的 sf_*，
+  #   翅膀、寵物的骨架動畫在 cosmetics_bm/sf_*.bbmodel（gen_cosmetic_bbmodels.py）。
+  sf_kraken_wings: { type: skin, slot: back, art: sf_kraken_wings, name: 海妖觸鬚之翼, rarity: legendary, fashion_price: 0, limited: "星潮祭",
+                     description: "兩側各四條深藍紫的海妖觸手當翅膀，一排淺青的吸盤、尖端發光，會一段一段地擺" }
+  sf_pearl_crown: { type: skin, slot: headgear, art: sf_pearl_crown, name: 珍珠貝冠, rarity: legendary, fashion_price: 0, limited: "星潮祭",
+                    description: "額前一片粉白的扇貝殼，頂上托著一顆發光的大珍珠，兩側垂著小珍珠串" }
+  sf_tide_trident: { type: skin, slot: weapon, art: sf_tide_trident, name: 潮汐三叉戟, rarity: legendary, fashion_price: 0, limited: "星潮祭",
+                     description: "青金色的三叉戟，叉尖水藍發光、叉間有流動的水，柄上纏著海草、掛著一枚粉貝（近戰武器、法杖都能套）" }
+  sf_pet_kraken: { type: skin, slot: pet, art: sf_pet_kraken, name: 小海妖, rarity: legendary, fashion_price: 0, limited: "星潮祭",
+                   description: "圓頭大眼的小章魚，深藍紫帶螢光青斑點，八條短觸手會輪流擺、身體上下浮" }
+  sf_shell_shield: { type: skin, slot: offhand, art: sf_shell_shield, name: 貝殼盾, rarity: epic, fashion_price: 0, limited: "星潮祭",
+                     description: "一大片扇貝殼，放射狀的稜從粉橘漸層到奶白、外緣鑲一排珍珠（盾、箭袋都能套）" }
+  sf_pet_jellyfish: { type: skin, slot: pet, art: sf_pet_jellyfish, name: 小水母, rarity: epic, fashion_price: 0, limited: "星潮祭",
+                      description: "半透明淡藍的傘裡亮著粉紅的光，傘緣一縮一放、幾條飄帶觸手跟著飄" }
+  # 2026-11-03 照站長（兌換再多一點特殊的東西）：星潮祭限定粒子特效（不用模型，在「贊助 → 3D 時裝」戴上）
+  sf_bubble_halo: { type: particle, style: halo, particle: BUBBLE_POP, name: 泡泡光環, rarity: rare, limited: "星潮祭",
+                    description: "頭上一圈一直破掉又冒出來的小泡泡" }
+  sf_splash_trail: { type: particle, style: trail, particle: SPLASH, name: 浪花足跡, rarity: epic, limited: "星潮祭",
+                     description: "走過的地方濺起一串小浪花" }
+  sf_pearl_orbit: { type: particle, style: orbit, particle: DUST, color: "#f3eefe", name: 珍珠環繞, rarity: epic, limited: "星潮祭",
+                    description: "兩顆珠光白的小珍珠繞著身體轉" }
+  sf_glow_aura: { type: particle, style: aura, particle: GLOW, name: 水母螢光, rarity: rare, limited: "星潮祭",
+                  description: "身邊飄著像水母一樣的青綠螢光" }
+  sf_tide_spiral: { type: particle, style: spiral, particle: DUST, color: "#2ec4ff", name: 潮汐漩光, rarity: legendary, limited: "星潮祭",
+                    description: "海水藍的光從腳邊盤旋往上，像漲潮一樣" }
+  # 2026-11-03 照站長（兌換再加兩件特殊的）：星潮祭限定的動作與 3D 戰甲；這次之前星潮祭的兌換只有背飾、頭飾、武器、寵物、粒子特效。
+  #   衝浪：板子是展示用的方塊（Emotes.java，跟王之坐姿的沙發一樣，沒裝 mod 也看得到），有 BetterModel 時人用骨架動畫演（gen_emotes.py 的 surf）。
+  #   珊瑚海妖鎧：頭盔、肩甲是 gen_models3d.py 的 armor3d_coral，身、腿、腳是 gen_skin_art.py 的 coral 主題（跟 m3d_armor_tide 一樣）。
+  sf_emote_surf: { type: emote, emote: surf, name: 衝浪, rarity: legendary, fashion_price: 0, limited: "星潮祭",
+                   description: "腳下變出一塊藍白條紋的衝浪板，跳上去壓低身子、兩手張開左右壓重心，浪花一直濺（只有特效、不會移動）" }
+  sf_armor_coral: { type: skin, slot: armor, art: armor3d_coral, name: 珊瑚海妖鎧, rarity: legendary, fashion_price: 0, limited: "星潮祭",
+                    description: "深海藍紫的鱗片鎧，肩上長著橘粉的珊瑚枝、胸口一顆發光的大珍珠、腰間掛著海草與貝殼、背後垂兩條短觸手；珊瑚枝頭盔（頭、身、腿、腳可以分開套）" }
+
   # 2026-11-02 照站長：拉霸機限定（營地的拉霸機中了「煙火」抽一件還沒有的，data/slots.yml 的 cosmetics；這次之前沒有）。
   #   粒子特效（不用模型），在「贊助 → 3D 時裝」戴上；limited 寫來源，沒有的人在商城看不到。
   slots_coin_halo: { type: particle, style: halo, particle: DUST, color: "#ffd24a", name: 金幣光環, rarity: rare, limited: "拉霸機",
@@ -320,7 +399,7 @@ boxes:
     star_price: 0
     pity: 30
     weights:
-      # 稀有（合計 48%，10 件）
+      # 稀有（每件 4.8；原本 10 件 48%，2026-11-03 夏日系列加 6 件後：16 件約 49.7%）
       m3d_verdant_staff: 4.8
       m3d_verdant_wreath: 4.8
       m3d_pet_wisp: 4.8
@@ -331,7 +410,14 @@ boxes:
       m3d_armor_ironguard: 4.8
       m3d_rune_shield: 4.8
       m3d_pet_bat: 4.8
-      # 史詩（合計 45%，22 件）
+      # 2026-11-03 照站長：夏日系列（稀有）
+      m3d_summer_popsicle_blade: 4.8
+      m3d_summer_lifebuoy: 4.8
+      m3d_summer_goggles: 4.8
+      m3d_summer_shades: 4.8
+      m3d_summer_pet_crab: 4.8
+      m3d_summer_pet_icecream: 4.8
+      # 史詩（每件 2.0455；原本 22 件 45%，夏日系列加 11 件後：33 件約 43.7%）
       m3d_inferno_axe: 2.0455
       m3d_frost_halberd: 2.0455
       m3d_blood_katana: 2.0455
@@ -354,7 +440,19 @@ boxes:
       m3d_butterfly_wings: 2.0455
       m3d_pet_jelly: 2.0455
       m3d_fire_spear: 2.0455
-      # 傳說（合計 7%，9 件）
+      # 2026-11-03 照站長：夏日系列（史詩）
+      m3d_summer_watermelon_hammer: 2.0455
+      m3d_summer_coconut_staff: 2.0455
+      m3d_summer_parasol_shield: 2.0455
+      m3d_summer_straw_hat: 2.0455
+      m3d_summer_seagull_wings: 2.0455
+      m3d_summer_sun_halo: 2.0455
+      m3d_summer_pet_turtle: 2.0455
+      m3d_summer_pet_parrot: 2.0455
+      m3d_summer_coral_bow: 2.0455
+      m3d_summer_water_crossbow: 2.0455
+      m3d_armor_beach: 2.0455
+      # 傳說（每件 0.7778；原本 9 件 7%，夏日系列加 4 件後：13 件約 6.5%）
       m3d_star_greatsword: 0.7778
       m3d_star_crown: 0.7778
       m3d_seraph_wings: 0.7778
@@ -364,6 +462,11 @@ boxes:
       m3d_armor_starlight: 0.7778
       m3d_abyss_trident: 0.7778
       m3d_sun_bow: 0.7778
+      # 2026-11-03 照站長：夏日系列（傳說）
+      m3d_summer_surfboard: 0.7778
+      m3d_summer_wave_wings: 0.7778
+      m3d_summer_pet_dolphin: 0.7778
+      m3d_armor_tide: 0.7778
   starlight:
     name: 星曜時裝箱
     icon: ENDER_CHEST
@@ -376,7 +479,7 @@ boxes:
       m3d_void_scythe: 4
       m3d_crystal_wings: 4
       m3d_armor_void: 4
-      # 傳說（其他 9 件合計 13%）
+      # 傳說（其他每件 1.4444；原本 9 件 13%，2026-11-03 夏日系列加 4 件後：13 件約 12.9%、限定 3 件約 8.2%）
       m3d_star_greatsword: 1.4444
       m3d_star_crown: 1.4444
       m3d_seraph_wings: 1.4444
@@ -386,7 +489,12 @@ boxes:
       m3d_armor_starlight: 1.4444
       m3d_abyss_trident: 1.4444
       m3d_sun_bow: 1.4444
-      # 史詩（合計 49.5%，22 件）
+      # 2026-11-03 照站長：夏日系列（傳說）
+      m3d_summer_surfboard: 1.4444
+      m3d_summer_wave_wings: 1.4444
+      m3d_summer_pet_dolphin: 1.4444
+      m3d_armor_tide: 1.4444
+      # 史詩（每件 2.25；原本 22 件 49.5%，夏日系列加 11 件後：33 件約 50.9%）
       m3d_inferno_axe: 2.25
       m3d_frost_halberd: 2.25
       m3d_blood_katana: 2.25
@@ -409,7 +517,19 @@ boxes:
       m3d_butterfly_wings: 2.25
       m3d_pet_jelly: 2.25
       m3d_fire_spear: 2.25
-      # 稀有（合計 25.5%）
+      # 2026-11-03 照站長：夏日系列（史詩）
+      m3d_summer_watermelon_hammer: 2.25
+      m3d_summer_coconut_staff: 2.25
+      m3d_summer_parasol_shield: 2.25
+      m3d_summer_straw_hat: 2.25
+      m3d_summer_seagull_wings: 2.25
+      m3d_summer_sun_halo: 2.25
+      m3d_summer_pet_turtle: 2.25
+      m3d_summer_pet_parrot: 2.25
+      m3d_summer_coral_bow: 2.25
+      m3d_summer_water_crossbow: 2.25
+      m3d_armor_beach: 2.25
+      # 稀有（每件 2.55；原本 10 件 25.5%，夏日系列加 6 件後：16 件約 28%）
       m3d_verdant_staff: 2.55
       m3d_verdant_wreath: 2.55
       m3d_pet_wisp: 2.55
@@ -420,6 +540,13 @@ boxes:
       m3d_armor_ironguard: 2.55
       m3d_rune_shield: 2.55
       m3d_pet_bat: 2.55
+      # 2026-11-03 照站長：夏日系列（稀有）
+      m3d_summer_popsicle_blade: 2.55
+      m3d_summer_lifebuoy: 2.55
+      m3d_summer_goggles: 2.55
+      m3d_summer_shades: 2.55
+      m3d_summer_pet_crab: 2.55
+      m3d_summer_pet_icecream: 2.55
 
 # 月卡幣兌換（只放不影響戰鬥的東西）。kind：title 稱號、cosmetic 外觀特效、fashion_coins 時裝幣、character_slot 角色欄位、
 #   rename_card 改名卡（amount 張）。hidden: true = 下架（商店不顯示，換過的人照樣擁有）。月卡一個月 30 月卡幣：一次性的東西要持續加（每 2～3 個月一件限定時裝、每季一個稱號）。

@@ -109,8 +109,12 @@ public final class SupportRemakes {
      * 完全破甲了照樣送 armour_broken 事件（熔甲、凝破、輔助的「完全破甲時」）。
      */
     static void devastate(final ExileCore plugin, final SkillService service, final Player player, final String skillId, final LivingEntity target) {
-        if (target == null || plugin.ailments() == null || plugin.monsters() == null
-                || service.supportFlat(player, skillId, SupportRemakeKeys.FULL_BREAK_ON_HEAVY_STUN) <= 0) {
+        if (target == null || plugin.ailments() == null || plugin.monsters() == null) {
+            return;
+        }
+        // 2026-11-03 照站長＋PoB2（揭露詞綴：Shield Skills fully Break Armour when they Heavy Stun targets）：盾牌技能也會；這次之前只有崩勢輔助
+        final boolean support = service.supportFlat(player, skillId, SupportRemakeKeys.FULL_BREAK_ON_HEAVY_STUN) > 0;
+        if (!support && !shieldSkillBreaks(plugin, service, player, skillId)) {
             return;
         }
         final tw.exilecore.monster.MonsterData monster = plugin.monsters().data(target).orElse(null);
@@ -122,5 +126,14 @@ public final class SupportRemakes {
         if (armour > 0 && plugin.ailments().breakArmour(target, monster, armour * 1000, 100, armour)) {
             service.procEvent(player, skillId, "armour_broken", null, target);
         }
+    }
+
+    /** 2026-11-03：身上有「盾牌技能重暈時完全破甲」、而且這是盾牌技能（SupportGuards.shieldSkill：要盾的攻擊）。 */
+    private static boolean shieldSkillBreaks(final ExileCore plugin, final SkillService service, final Player player, final String skillId) {
+        if (plugin.players().sheet(player).flat(tw.exilecore.stats.TreeNewMechanicKeys.SHIELD_SKILL_FULL_BREAK, java.util.Set.of()) <= 0) {
+            return false;
+        }
+        final SkillDefinition skill = service.config().skill(skillId);
+        return skill != null && SupportGuards.shieldSkill(skill);
     }
 }

@@ -186,7 +186,7 @@ public final class Crafting {
                 if (type.id().equals(data.omen())) {
                     return "這件已經掛著同一個星籤了";
                 }
-                return null;
+                return omenFitsBase(type, base); // 2026-11-03 照站長：催化至臻籤不能掛在戒指、項鍊以外（這次之前什麼都能掛）
             }
             case ADD_SOCKET -> {
                 if (data.unique() != null) {
@@ -509,6 +509,30 @@ public final class Crafting {
     /** 這件掛著的星籤會不會被這顆通貨觸發。 */
     public static boolean triggers(final CurrencyType omen, final CurrencyType used) {
         return omen != null && omen.omen() != null && omen.omen().firesOn(used);
+    }
+
+    /**
+     * 同上，再看星籤合不合這種基底（2026-11-03 照站長）：以前掛上去、其實用不上的（例如護腿上的催化至臻籤）當成沒掛，
+     * 不會擋住至臻石；這次之前會一直顯示「這件沒有催化劑品質」用不了至臻石。
+     */
+    public static boolean triggers(final CurrencyType omen, final CurrencyType used, final ItemBase base) {
+        return triggers(omen, used) && (base == null || omenFitsBase(omen, base) == null);
+    }
+
+    /**
+     * 2026-11-03 照站長：這種星籤能不能掛在這種基底上（不看物品現在的狀態，只看基底永遠用不上的）；可以回傳 null。
+     * 催化至臻籤只有戒指、項鍊（只有它們能有催化劑品質）；天佑籤（只重骰固定詞綴）要基底有固定詞綴。
+     */
+    public static String omenFitsBase(final CurrencyType omen, final ItemBase base) {
+        if (omen == null || omen.omen() == null || base == null) {
+            return null;
+        }
+        return switch (omen.omen().effect()) {
+            case CATALYSING -> catalystTarget(base) ? null : omen.name() + "只能掛在戒指、項鍊上（只有它們能打催化劑）";
+            case IMPLICIT_ONLY -> base.implicit() != null && !base.implicit().vars().isEmpty() ? null
+                    : omen.name() + "只能掛在有固定詞綴的裝備上";
+            default -> null;
+        };
     }
 
     /**

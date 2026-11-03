@@ -45,6 +45,9 @@ import java.util.UUID;
  *   <li>搖頭晃腦（head_bob）：馬步、一手伸出去，頭左右快速甩動。</li>
  *   <li>虛式「茈」（hollow_purple，2026-10-24）：舉手凝出蒼（藍）、赫（紅），合成茈（紫）往前射出一道光束（只有粒子，不會傷人）。</li>
  *   <li>被「世界斬」腰斬（world_slash，2026-10-24）：抱胸站著，一道斬線掃過腰，上半身往後仰倒到地上、腳也往後倒平，躺一陣子再爬起來。</li>
+ *   <li>衝浪（surf，2026-11-03 照站長：星潮祭限定）：腳下變出一塊藍白條紋的衝浪板，跳上去壓低身子、兩手張開左右壓重心，
+ *       板子跟著一邊一邊壓下去、浪花濺起來，最後跳起來板子消失。板子是展示用的方塊（跟王之坐姿的沙發一樣，沒裝 mod 也看得到），
+ *       玩家的位置不動。</li>
  * </ul>
  * 每個人 3 秒冷卻；Q 在背包介面裡丟東西的那一下不算。
  */
@@ -66,6 +69,8 @@ public final class Emotes implements Listener {
     private final Map<UUID, List<org.bukkit.entity.BlockDisplay>> sofas = new HashMap<>();
     /** 沙發擺多久（刻）：人可以先走開，沙發留著。 */
     private static final long SOFA_TICKS = 1200;
+    /** 每個人腳下的衝浪板（2026-11-03 星潮祭：演完、走開、下線、關服都收掉；一個人同時只有一塊）。 */
+    private final Map<UUID, List<org.bukkit.entity.BlockDisplay>> boards = new HashMap<>();
 
     /** 有裝 BetterModel 時用玩家自己的皮膚演（整個伺服器只接一次：/ec reload 重建這個類別也不重接）。 */
     private static BetterModelEmotes betterModel;
@@ -170,6 +175,7 @@ public final class Emotes implements Listener {
             case "six_seven" -> sixSevenVanilla(player);
             case "hollow_purple" -> hollowPurpleVanilla(player);
             case "world_slash" -> worldSlashVanilla(player);
+            case "surf" -> surfVanilla(player); // 2026-11-03 星潮祭
             default -> {
             }
         }
@@ -187,6 +193,7 @@ public final class Emotes implements Listener {
             case "six_seven" -> 3550;
             case "hollow_purple" -> 5050;
             case "world_slash" -> 6100;
+            case "surf" -> 4900; // 2026-11-03 星潮祭（4.88 秒）
             default -> COOLDOWN_MILLIS;
         };
     }
@@ -294,6 +301,7 @@ public final class Emotes implements Listener {
             }
             case "hollow_purple" -> hollowPurpleEffects(player);
             case "world_slash" -> worldSlashEffects(player);
+            case "surf" -> surfEffects(player); // 2026-11-03 星潮祭：板子、浪花、音效（人由模型演）
             case "head_bob" -> {
                 // 2026-10 重抓：0.58 秒起每 0.1～0.11 秒甩一次頭（gen_emotes.py 的 bob_steps），手每甩出去一次掃一聲
                 double t = 0.58;
@@ -1124,6 +1132,228 @@ public final class Emotes implements Listener {
         });
     }
 
+    // ---- 衝浪（2026-11-03 照站長：星潮祭限定） ----
+
+    /**
+     * 衝浪板的方塊（顯示座標：+x 是玩家的左邊、+z 是前面；板子的長邊在玩家的左右，板面高 0.12 格 ≈ 模型抬高的 2 像素）：
+     * {材質, x 從, x 到, 半寬}。藍白一段一段相間，兩頭收窄。
+     */
+    private static final Object[][] BOARD = {
+            {Material.BLUE_CONCRETE, -1.3, -1.12, 0.1}, {Material.WHITE_CONCRETE, -1.12, -0.9, 0.2},
+            {Material.BLUE_CONCRETE, -0.9, -0.55, 0.3}, {Material.WHITE_CONCRETE, -0.55, -0.42, 0.3},
+            {Material.BLUE_CONCRETE, -0.42, -0.1, 0.3}, {Material.WHITE_CONCRETE, -0.1, 0.1, 0.3},
+            {Material.BLUE_CONCRETE, 0.1, 0.42, 0.3}, {Material.WHITE_CONCRETE, 0.42, 0.55, 0.3},
+            {Material.BLUE_CONCRETE, 0.55, 0.9, 0.3}, {Material.WHITE_CONCRETE, 0.9, 1.12, 0.2},
+            {Material.BLUE_CONCRETE, 1.12, 1.3, 0.1}};
+    private static final float BOARD_THICK = 0.12f;
+    /** 壓重心的拍子（tick，對著 gen_emotes.py 的 surf：0.93 秒起每 0.45 秒換一邊，先往左）；之後 73 tick 回到中間。 */
+    private static final int[] SURF_LEANS = {19, 28, 37, 46, 55, 64};
+    private static final int SURF_LEVEL = 73;
+    /** 跳起來板子消失、落地。 */
+    private static final int SURF_OFF = 85;
+    private static final int SURF_LAND = 89;
+    /** 板子壓下去幾度。 */
+    private static final float SURF_TILT = (float) Math.toRadians(6);
+
+    /** 這一塊板子在 tilt（繞玩家前後的軸轉；正的 = 右邊往下）、heave（往上浮多少格）的時候的樣子。 */
+    private static Transformation boardPart(final Object[] part, final float tilt, final float heave) {
+        final float x0 = ((Double) part[1]).floatValue();
+        final float x1 = ((Double) part[2]).floatValue();
+        final float half = ((Double) part[3]).floatValue();
+        final Quaternionf turn = new Quaternionf().rotateZ(tilt);
+        final Vector3f corner = turn.transform(new Vector3f(x0, 0, -half)).add(0, heave, 0);
+        return new Transformation(corner, turn, new Vector3f(x1 - x0, BOARD_THICK, half * 2), new Quaternionf());
+    }
+
+    /** 在腳下擺一塊衝浪板（同一個人再做一次：舊的那塊收掉）。 */
+    private List<org.bukkit.entity.BlockDisplay> spawnBoard(final Player player) {
+        final Location at = player.getLocation();
+        at.setPitch(0);
+        at.setYaw(player.getBodyYaw());
+        final World world = at.getWorld();
+        removeBoard(player.getUniqueId());
+        final List<org.bukkit.entity.BlockDisplay> parts = new ArrayList<>();
+        for (final Object[] piece : BOARD) {
+            parts.add(world.spawn(at, org.bukkit.entity.BlockDisplay.class, display -> {
+                display.setBlock(((Material) piece[0]).createBlockData());
+                display.setPersistent(false);
+                display.setTransformation(boardPart(piece, 0, 0));
+            }));
+        }
+        boards.put(player.getUniqueId(), parts);
+        return parts;
+    }
+
+    /** 板子慢慢轉到這個角度（ticks 補間）。 */
+    private static void tiltBoard(final List<org.bukkit.entity.BlockDisplay> parts, final float tilt, final float heave, final int ticks) {
+        for (int i = 0; i < parts.size() && i < BOARD.length; i++) {
+            final org.bukkit.entity.BlockDisplay part = parts.get(i);
+            if (!part.isValid()) {
+                continue;
+            }
+            part.setInterpolationDelay(0);
+            part.setInterpolationDuration(ticks);
+            part.setTransformation(boardPart(BOARD[i], tilt, heave));
+        }
+    }
+
+    private void removeBoard(final UUID owner) {
+        final List<org.bukkit.entity.BlockDisplay> parts = boards.remove(owner);
+        if (parts == null) {
+            return;
+        }
+        for (final org.bukkit.entity.BlockDisplay part : parts) {
+            if (part.isValid()) {
+                part.remove();
+            }
+        }
+    }
+
+    /** 板子上離中心 along 格（+ = 玩家的左邊）那一點的世界座標。 */
+    private static Location onBoard(final Location centre, final Vector left, final double along, final double up) {
+        return centre.clone().add(left.clone().multiply(along)).add(0, up, 0);
+    }
+
+    /** 一圈浪花：板子兩頭、兩邊濺水花、冒泡泡。 */
+    private static void splash(final World world, final Location centre, final Vector left, final Vector forward, final int amount) {
+        for (final double along : new double[] {-1.2, -0.5, 0.5, 1.2}) {
+            final Location at = onBoard(centre, left, along, 0.1);
+            tw.exilecore.skill.Fx.spawn(world, Particle.SPLASH, at.clone().add(forward.clone().multiply(0.4)), amount, 0.15, 0.05, 0.15, 0.1);
+            tw.exilecore.skill.Fx.spawn(world, Particle.SPLASH, at.clone().add(forward.clone().multiply(-0.4)), amount, 0.15, 0.05, 0.15, 0.1);
+        }
+        tw.exilecore.skill.Fx.spawn(world, Particle.BUBBLE_POP, centre.clone().add(0, 0.15, 0), amount * 2, 0.9, 0.05, 0.4, 0.02);
+    }
+
+    /**
+     * 衝浪的板子、浪花、音效（2026-11-03，時間對著 gen_emotes.py 的 surf）：0 tick 腳下變出板子、7 起跳、16 落到板上，
+     * 19 起每 9 tick 板子往一邊壓下去（先左邊；那一頭濺大浪花），73 回到中間，85 跳起來板子消失（一大片浪花），89 落地。
+     * 板子固定在變出來的地方；人走開（半格以上）、換世界、死掉、下線就提早收掉（有 BetterModel 的話動畫也停）。
+     */
+    private void surfEffects(final Player player) {
+        final World world = player.getWorld();
+        final List<org.bukkit.entity.BlockDisplay> board = spawnBoard(player);
+        final Location centre = player.getLocation();
+        final Vector forward = flatForward(player);
+        final Vector left = rightOf(forward).multiply(-1);
+        final UUID id = player.getUniqueId();
+        world.playSound(centre, Sound.ITEM_BUCKET_EMPTY, 0.8f, 1.2f);
+        world.playSound(centre, Sound.ENTITY_PLAYER_SPLASH, 0.5f, 1.4f);
+        splash(world, centre, left, forward, 6);
+        final int[] age = {0};
+        final int[] lean = {0}; // 現在壓哪一邊（1 = 左、-1 = 右、0 = 中間）
+        repeat(task -> {
+            final int tick = age[0]++;
+            final boolean gone = !player.isOnline() || player.isDead() || boards.get(id) != board;
+            final Location now = gone ? null : player.getLocation();
+            final boolean left_ = now != null && tick >= 8 && tick < SURF_OFF && (now.getWorld() != centre.getWorld()
+                    || square(now.getX() - centre.getX()) + square(now.getZ() - centre.getZ()) > 0.36);
+            if (gone || left_ || tick >= SURF_OFF) {
+                if (boards.get(id) == board) {
+                    removeBoard(id);
+                    if (centre.isWorldLoaded()) {
+                        splash(world, centre, left, forward, 10);
+                        tw.exilecore.skill.Fx.spawn(world, Particle.CLOUD, centre.clone().add(0, 0.2, 0), 8, 0.8, 0.1, 0.4, 0.02);
+                        world.playSound(centre, Sound.ENTITY_PLAYER_SPLASH_HIGH_SPEED, 0.6f, 1.3f);
+                    }
+                }
+                if (left_ && betterModel != null) {
+                    betterModel.stop(player); // 走開了：跳下板子、動畫收掉
+                    lastUse.put(id, System.currentTimeMillis());
+                }
+                if (tick >= SURF_OFF && !gone && !left_) {
+                    later(player, SURF_LAND - SURF_OFF, at -> {
+                        world.playSound(at, Sound.ENTITY_GENERIC_SMALL_FALL, 0.5f, 1.2f);
+                        tw.exilecore.skill.Fx.spawn(world, Particle.SPLASH, at.clone().add(0, 0.1, 0), 10, 0.4, 0.05, 0.4, 0.1);
+                    });
+                }
+                task.cancel();
+                return;
+            }
+            if (tick == 7) {
+                world.playSound(centre, Sound.ENTITY_DOLPHIN_JUMP, 0.6f, 1.2f); // 起跳
+            }
+            if (tick == 16) {
+                world.playSound(centre, Sound.ENTITY_PLAYER_SPLASH, 0.8f, 1.1f); // 落到板上
+                tiltBoard(board, 0, -0.03f, 3);
+                splash(world, centre, left, forward, 8);
+            }
+            for (int i = 0; i < SURF_LEANS.length; i++) {
+                if (tick == SURF_LEANS[i]) {
+                    lean[0] = i % 2 == 0 ? 1 : -1;
+                    tiltBoard(board, -lean[0] * SURF_TILT, i % 2 == 0 ? 0.02f : 0.0f, 8);
+                    world.playSound(centre, Sound.ENTITY_GENERIC_SPLASH, 0.35f, 1.3f + 0.1f * (i % 3));
+                }
+                if (tick == SURF_LEANS[i] + 7) { // 壓到底：那一頭濺大浪花
+                    final Location end = onBoard(centre, left, 1.2 * lean[0], 0.15);
+                    tw.exilecore.skill.Fx.spawn(world, Particle.SPLASH, end, 18, 0.3, 0.1, 0.35, 0.15);
+                    tw.exilecore.skill.Fx.spawn(world, Particle.BUBBLE_POP, end, 6, 0.3, 0.05, 0.3, 0.02);
+                }
+            }
+            if (tick == SURF_LEVEL) {
+                lean[0] = 0;
+                tiltBoard(board, 0, 0, 6);
+            }
+            if (tick > 16 && tick % 3 == 0) { // 一直有小浪花、泡泡
+                tw.exilecore.skill.Fx.spawn(world, Particle.SPLASH, onBoard(centre, left, (tick % 2 == 0 ? 1 : -1) * 1.25, 0.08), 3, 0.1, 0.02, 0.3, 0.05);
+                tw.exilecore.skill.Fx.spawn(world, Particle.BUBBLE_POP, onBoard(centre, left, 0, 0.12), 2, 0.9, 0.02, 0.35, 0.01);
+            }
+            if (tick == SURF_OFF - 4) {
+                world.playSound(centre, Sound.ENTITY_DOLPHIN_JUMP, 0.6f, 1.4f); // 跳下
+            }
+        });
+    }
+
+    /** 衝浪（沒有 BetterModel）：板子、浪花一樣；蹲低、照拍子左右揮手、頭跟著歪，最後站起來兩手一揮。位置不動。 */
+    private void surfVanilla(final Player player) {
+        final UUID id = player.getUniqueId();
+        busy.add(id);
+        final boolean wasSneaking = player.isSneaking();
+        surfEffects(player);
+        final float[] applied = {0};
+        final int[] age = {0};
+        repeat(task -> {
+            final int tick = age[0]++;
+            if (!player.isOnline() || player.isDead() || tick > SURF_LAND + 2 || boards.get(id) == null && tick > 1 && tick < SURF_OFF) {
+                if (player.isOnline()) {
+                    turnHead(player, -applied[0], 0);
+                    player.setSneaking(wasSneaking);
+                }
+                busy.remove(id);
+                task.cancel();
+                return;
+            }
+            if (tick == 7) {
+                tw.exilecore.skill.ServerSwing.mainHand(player);
+                tw.exilecore.skill.ServerSwing.offHand(player);
+            }
+            if (tick == 16) {
+                player.setSneaking(true); // 壓低身子
+            }
+            for (int i = 0; i < SURF_LEANS.length; i++) {
+                if (tick == SURF_LEANS[i]) {
+                    final boolean toLeft = i % 2 == 0;
+                    if (toLeft) {
+                        tw.exilecore.skill.ServerSwing.offHand(player);
+                    } else {
+                        tw.exilecore.skill.ServerSwing.mainHand(player);
+                    }
+                    final float yaw = toLeft ? -10 : 10;
+                    turnHead(player, yaw - applied[0], 0);
+                    applied[0] = yaw;
+                }
+            }
+            if (tick == SURF_LEVEL) {
+                turnHead(player, -applied[0], 0);
+                applied[0] = 0;
+            }
+            if (tick == SURF_OFF - 4) {
+                player.setSneaking(false); // 站起來、兩手一揮（跳下）
+                tw.exilecore.skill.ServerSwing.mainHand(player);
+                tw.exilecore.skill.ServerSwing.offHand(player);
+            }
+        });
+    }
+
     /** 關服、重讀：還在跑的動作停掉、球收掉。 */
     void stop() {
         for (final BukkitTask task : new ArrayList<>(running)) {
@@ -1144,6 +1374,9 @@ public final class Emotes implements Listener {
         sixSevenLabels.clear();
         for (final UUID owner : new ArrayList<>(sofas.keySet())) {
             removeSofa(owner);
+        }
+        for (final UUID owner : new ArrayList<>(boards.keySet())) {
+            removeBoard(owner);
         }
         busy.clear();
     }

@@ -1210,7 +1210,14 @@ public final class UiPack {
             equipment.add("layers", layers);
             files.put("assets/exilecore/equipment/skin_" + theme + ".json", json(equipment));
         }
+        // 2026-11-03 照站長：空的裝備資產（沒有圖層）——原版盔甲不畫在身上（SponsorService.hideArmour）
+        final JsonObject none = new JsonObject();
+        none.add("layers", new JsonObject());
+        files.put("assets/exilecore/equipment/" + EMPTY_EQUIPMENT + ".json", json(none));
     }
+
+    /** 2026-11-03：空的裝備資產代號（exilecore:none）：穿戴元件指到它就什麼都不畫。 */
+    public static final String EMPTY_EQUIPMENT = "none";
 
     /** 貼圖 + 模型（parent 決定拿在手上的樣子）。 */
     private static void uniqueModel(final Map<String, byte[]> files, final String name, final UniqueArt.Sprite sprite, final String parent) throws IOException {

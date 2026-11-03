@@ -54,7 +54,10 @@ class StonefistTest {
     /** 腿甲擲得到、但原作沒有磐石之拳對應的詞綴（照原本的生效）：我們自己的揭露詞綴。 */
     static final Set<String> KEPT = Set.of("unveiled_d_armour_attack", "unveiled_d_armour_spell", "unveiled_d_armour_minion",
             "unveiled_d_armour_thorns", "unveiled_d_curse_area", "unveiled_d_bleed_chance", "unveiled_d_poison_chance",
-            "unveiled_d_ailment_effect", "unveiled_d_gloves_extra_frenzy");
+            "unveiled_d_ailment_effect", "unveiled_d_gloves_extra_frenzy",
+            // 2026-11-03 照站長＋PoB2：補的手套→護腿褻瀆詞綴
+            "unveiled_d_leggings_immobilise", "unveiled_d_leggings_cast_full_life", "unveiled_d_leggings_incision",
+            "unveiled_d_leggings_arcane_surge_crit");
 
     static ItemRepository repository;
 

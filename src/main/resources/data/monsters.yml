@@ -972,6 +972,11 @@ mods:
       - { stat: resist.fire, type: FLAT, value: 20 }
       - { stat: resist.cold, type: FLAT, value: 20 }
       - { stat: resist.lightning, type: FLAT, value: 20 }
+  unstoppable:
+    name: 不可動搖的          # 2026-11-03 照站長：星潮祭世界 Boss（深潮海妖）免疫所有控場——暈眩、凍結、冰緩、電擊、釘地、眩暈、癱瘓、阻礙、致盲、
+    min_level: 1000           #   緩速、嘲諷、擊退、詛咒裡的控場部分（純傷害的感電、點燃、流血、中毒照常）。隱藏（只給 Boss／事件寫死用，不自然抽）
+    stats:
+      - { stat: flag.cc_immune, type: FLAT, value: 1 }
   resistant:
     name: 抗性的              # 這裡自己的（PoE2 拆成上面三條）：Boss、事件還在用
     stats:

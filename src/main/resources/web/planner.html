@@ -117,6 +117,10 @@
   #attrMenu .row3.wisdom { margin-top: 6px; }
   #attrMenu .wisdomTtl, .attrbulk .wisdomTtl { grid-column: 1 / -1; font-size: 11px; color: var(--quiet); margin: 2px 2px -2px; }
   .node { cursor: pointer; }
+  /* 2026-11-03：樹上的圖形不做瀏覽器的滑鼠判定（幾千個 SVG 圖形，每動一下都要判一次，很卡）；改成自己照座標找節點（nodeAt） */
+  #world { pointer-events: none; }
+  #hitpad.overnode { cursor: pointer; }
+  #canvas.dragging #hitpad { cursor: grabbing; }
   /* 裝備（2026-10） */
   .gear { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
   .gear button { position: relative; height: 46px; border: 1px solid var(--line); background: var(--bg); color: var(--quiet); border-radius: 6px;
@@ -304,6 +308,8 @@
         <g id="nodes"></g>
         <g id="labels"></g>
       </g>
+      <!-- 2026-11-03：蓋在最上面的透明板：瀏覽器的滑鼠判定碰到它就停，不用一路檢查底下幾千個圖形（節點照座標找，nodeAt） -->
+      <rect id="hitpad" x="0" y="0" width="100%" height="100%" fill="transparent" style="pointer-events: all"></rect>
     </svg>
     <div class="tools">
       <button id="undo" title="復原（Ctrl+Z）" disabled>↶ 復原</button>
@@ -332,17 +338,20 @@
       <!-- 2026-11-02 照站長（PoB2 ConfigOptions 的 Enemy Stats）：EHP 對什麼樣的敵人算 -->
       <div class="enemybox" id="enemyBox">
         <div class="calcrow" style="margin-top:0">
-          <label title="EHP、最多吃得下一下照這個敵人算（PoB2 的預設是巔峰 Boss）">敵人
+          <!-- 2026-11-03 照站長：照遊戲裡有的難度（這次之前是 PoB2 的一般怪、Boss ×4、巔峰 Boss ×8、超級巔峰 Boss ×10）；
+               值 0～3 跟以前一樣（分享連結不變），巔峰 Boss 是新加的 4 -->
+          <label title="EHP、最多吃得下一下照這個敵人算（預設是終局 Boss）">敵人
             <select id="enemyTier" aria-label="敵人是哪一種">
               <option value="0">一般怪</option>
-              <option value="1">Boss（傷害 ×4）</option>
-              <option value="2">巔峰 Boss（×8）</option>
-              <option value="3">超級巔峰 Boss（×10）</option>
+              <option value="1">地圖 Boss</option>
+              <option value="2">終局 Boss</option>
+              <option value="3">極境 Boss</option>
+              <option value="4">巔峰 Boss</option>
             </select></label>
-          <label title="空白＝自動：一般怪、Boss 照角色等級；巔峰以上用 T16 地圖的等級（也是最低）">等級 <input type="number" id="enemyLevel" min="1" max="100" placeholder="自動"></label>
+          <label title="空白＝自動：一般怪、地圖 Boss 照角色等級；終局 Boss 是最高階地圖＋3 級、極境＋7、巔峰＋8（遊戲開的等級）">等級 <input type="number" id="enemyLevel" min="1" max="100" placeholder="自動"></label>
           <label>傷害
             <select id="enemyMix" aria-label="敵人的傷害類型">
-              <option value="avg">均衡（PoB2）</option>
+              <option value="avg">均衡</option>
               <option value="phys">全物理</option>
               <option value="ele">全元素</option>
               <option value="chaos">混沌</option>
@@ -588,14 +597,14 @@
       }
       return order.filter(n => dist.has(n.id)).map(n => ({ node: n, steps: dist.get(n.id) }));
     }
-    // 2026-11-02 照站長（PoB2 ConfigOptions 的 Enemy Stats）：EHP 的敵人設定。tier 0 一般怪、1 Boss、2 巔峰 Boss、3 超級巔峰 Boss
-    // （PoB2 的預設是巔峰 Boss）；level 0 ＝自動；mix 是預設的名字或 [物理, 火焰, 冰冷, 閃電, 混沌] 的比例
+    // 2026-11-02 照站長（PoB2 ConfigOptions 的 Enemy Stats）：EHP 的敵人設定。2026-11-03 照站長改成遊戲裡的難度：
+    // tier 0 一般怪、1 地圖 Boss、2 終局 Boss（預設）、3 極境 Boss、4 巔峰 Boss（這次之前 0～3 是 PoB2 的一般怪、Boss、巔峰、超級巔峰）；level 0 ＝自動；mix 是預設的名字或 [物理, 火焰, 冰冷, 閃電, 混沌] 的比例
     const ENEMY_MIXES = { avg: null, phys: [1, 0, 0, 0, 0], ele: [0, 1, 1, 1, 0], chaos: [0, 0, 0, 0, 1] };
     const ENEMY_DEFAULT = Object.freeze({ tier: 2, level: 0, mix: "avg" });
     /** 整理敵人設定：認不得的照預設；比例全 0、不是 5 個數字的照「均衡」；跟預設一樣的比例換成預設的名字。 */
     function normEnemy(e) {
       const o = e && typeof e === "object" ? e : {};
-      const tier = Number.isInteger(o.tier) && o.tier >= 0 && o.tier <= 3 ? o.tier : ENEMY_DEFAULT.tier;
+      const tier = Number.isInteger(o.tier) && o.tier >= 0 && o.tier <= 4 ? o.tier : ENEMY_DEFAULT.tier;
       const lv = Math.round(Number(o.level));
       const level = isFinite(lv) && lv > 0 ? Math.min(200, lv) : 0;
       let mix = "avg";
@@ -2198,6 +2207,7 @@
         if (unseenNode(node)) t.setAttribute("style", "fill:#d9c8ff"); // 2026-11-02：不見之途專屬
       }
     }
+    buildHitGrid(); // 2026-11-03：滑鼠找節點用的格子
     drawRings();
     drawHeat(); // 2026-11-02：節點強度熱圖
     updatePanel();
@@ -2336,15 +2346,53 @@
     setHover(null); hideTip();
   });
 
+  /**
+   * 2026-11-03：照座標找節點（格子索引，render 時建好）。這次之前用 document.elementFromPoint，
+   * 瀏覽器要對幾千個 SVG 圖形做判定，滑到小點上一頓一頓的。提示框蓋住的地方不算（滑鼠在提示框上）。
+   */
+  const HIT_CELL = 64;
+  const hitpad = document.getElementById("hitpad");
+  let hitGrid = new Map();
+  function hitRadius(n) {
+    return n.type === "small" ? 14 : n.type === "keystone" ? 28 : n.type === "notable" || n.type === "start" ? 23 : 18;
+  }
+  function buildHitGrid() {
+    hitGrid = new Map();
+    for (const n of order) {
+      if (hiddenNode(n)) continue;
+      const key = Math.floor(n.x * SPACING / HIT_CELL) + "," + Math.floor(n.y * SPACING / HIT_CELL);
+      let list = hitGrid.get(key);
+      if (!list) hitGrid.set(key, list = []);
+      list.push(n);
+    }
+  }
   function nodeAt(e) {
-    const hit = document.elementFromPoint(e.clientX, e.clientY);
-    const g = hit && hit.closest ? hit.closest(".node") : null;
-    return g ? byId.get(g.dataset.id) : null;
+    if (tip.style.display === "block") { // 滑鼠在提示框上（不用 elementFromPoint：那也要對整棵樹做判定）
+      const t = tip.getBoundingClientRect();
+      if (e.clientX >= t.left && e.clientX <= t.right && e.clientY >= t.top && e.clientY <= t.bottom) return null;
+    }
+    const rect = svg.getBoundingClientRect();
+    const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+    if (sx < 0 || sy < 0 || sx > rect.width || sy > rect.height) return null;
+    const wx = (sx - view.x) / view.scale, wy = (sy - view.y) / view.scale;
+    const cx = Math.floor(wx / HIT_CELL), cy = Math.floor(wy / HIT_CELL);
+    const pad = 3 / view.scale; // 縮得很小時多留 3 個畫面像素，比較好點
+    let best = null, bestD = Infinity;
+    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+      const list = hitGrid.get((cx + dx) + "," + (cy + dy));
+      if (!list) continue;
+      for (const n of list) {
+        const d = Math.hypot(n.x * SPACING - wx, n.y * SPACING - wy);
+        if (d <= hitRadius(n) + pad && d < bestD) { best = n; bestD = d; }
+      }
+    }
+    return best;
   }
   let tipSwitchTimer = 0, tipLastX = 0, tipLastY = 0, tipLastNode = null;
   function hoverAt(e) {
     if (tipHold) return; // 滑鼠在提示框裡（看名詞）
     const node = nodeAt(e);
+    if (hitpad.classList.contains("overnode") !== !!node) hitpad.classList.toggle("overnode", !!node); // 2026-11-03：指到節點時游標變手指（只動最上面那塊透明板，不會重算整棵樹的樣式）
     tipLastX = e.clientX; tipLastY = e.clientY; tipLastNode = node;
     const tipLive = e.pointerType === "mouse" && tipFor === "node" && tip.classList.contains("live") && tip.style.display === "block";
     if (!node && tipLive) {
@@ -3157,7 +3205,7 @@
       return;
     }
     const usable = (key, v) => b && v >= 0 && b[key] !== undefined && b[key] >= 0 ? deltaEl(v, b[key]) : null;
-    box.append(node("div", { cls: "wide ehp", title: "PoB2 的 Effective Hit Pool：從滿的生命、能量護盾、心靈昇華的魔力開始，被這個敵人一直打到死，"
+    box.append(node("div", { cls: "wide ehp", title: "有效生命池：從滿的生命、能量護盾、心靈昇華的魔力開始，被這個敵人一直打到死，"
       + "總共吃下的原始傷害（暴擊前）。閃避、格擋、偏斜照機率折算成平均要多打幾下" },
       node("span", { text: "EHP（有效生命池）" }), node("span", null, node("b", { id: "ehpValue", text: ehpText(e.value) }), usable("ehp", e.value))));
     box.append(node("div", { cls: "wide", title: "平均要被打幾下才死（含閃避）；括號是真的打中的下數（格擋、偏斜已經算進每一下少受多少）" },
@@ -3165,7 +3213,7 @@
         node("span", { cls: "quiet", text: "（打中 " + ehpText(e.damagingHits, 2) + " 下）" }), usable("ehp.hits", e.hits))));
     const kinds = Object.keys(DAMAGE_NAME).filter(k => e.maxhit && e.maxhit[k] !== undefined);
     if (kinds.length) {
-      const help = "PoB2 的 Maximum Hit Taken：每一種傷害從滿資源最多吃得下多大的一下（原始傷害、暴擊前；"
+      const help = "每一種傷害從滿資源最多吃得下多大的一下（原始傷害、暴擊前；"
         + "已經算護甲照這一下的大小、抗性、敵人的穿透、心靈昇華；沒算閃避、格擋）";
       const list = node("div", { cls: "wide maxhit", id: "ehpMaxHit", title: help, "aria-label": kinds.map(k => DAMAGE_NAME[k] + " " + ehpText(e.maxhit[k])).join("　") });
       list.append(node("span", { text: "最多吃得下一下" }));
@@ -3824,7 +3872,7 @@
     const opts = rows.map(r => node("option", { value: "dps:" + r.p, text: "每秒傷害：" + r.name }));
     opts.push(node("option", { value: "life", text: "生命" }), node("option", { value: "es", text: "能量護盾" }),
       node("option", { value: "ehp", text: "EHP（有效生命池，對計算器設定的敵人）",
-        title: "PoB2 的 Effective Hit Pool：被計算器「敵人」設定的那種敵人一直打到死，總共吃下的原始傷害（含閃避、格擋、偏斜的折算）" }));
+        title: "有效生命池：被計算器「敵人」設定的那種敵人一直打到死，總共吃下的原始傷害（含閃避、格擋、偏斜的折算）" }));
     heatMetricSel.replaceChildren(...opts);
     if ([...heatMetricSel.options].some(o => o.value === keep)) heatMetricSel.value = keep;
   }

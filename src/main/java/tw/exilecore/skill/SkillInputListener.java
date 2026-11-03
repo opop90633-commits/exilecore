@@ -75,6 +75,10 @@ final class SkillInputListener implements Listener {
             return; // 2026-10-30：拿著拆筏錘點方塊是拆東西（LifeModule），不放技能
         }
         final Player player = event.getPlayer();
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && plugin.summer() != null
+                && plugin.summer().isDigging(player, event.getItem(), event.getClickedBlock())) {
+            return; // 2026-11-03 星潮祭：拿鏟子右鍵海灘的沙子是挖寶（SummerModule），不放技能
+        }
         final boolean right = event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK;
         if (right && event.getItem() != null && plugin.currencies() != null && plugin.currencies().isCurrency(event.getItem())
                 && player.getGameMode() != GameMode.CREATIVE) {
@@ -195,6 +199,9 @@ final class SkillInputListener implements Listener {
         if (!service.eligible(player) || service.inTown(player)) {
             return;
         }
+        if (plugin.summer() != null && plugin.summer().isMelon(event.getAttacked())) {
+            return; // 2026-11-03 星潮祭：左鍵打西瓜是打破西瓜（SummerModule），不放技能
+        }
         event.setCancelled(true);
         final SkillRuntime runtime = service.runtime(player);
         final long now = now();
@@ -269,6 +276,9 @@ final class SkillInputListener implements Listener {
         }
         if (plugin.festival() != null && plugin.festival().isPumpkin(entity)) {
             return true; // 2026-10 萬燈夜：搗蛋南瓜（拿著武器時準星停不到它，照視線找）
+        }
+        if (plugin.summer() != null && (plugin.summer().isBottle(entity) || plugin.summer().isMelon(entity))) {
+            return true; // 2026-11-03 星潮祭：漂流瓶、大亂鬥的西瓜也一樣
         }
         return entity instanceof Player && player.isSneaking() && service.inTown(player);
     }

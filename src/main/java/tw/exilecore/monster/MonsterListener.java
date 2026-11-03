@@ -230,10 +230,16 @@ public final class MonsterListener implements Listener {
                 if (plugin.festival() != null) {
                     plugin.festival().onKill(player, entity, data); // 萬燈夜（2026-10）：地圖裡的怪掉糖果
                 }
+                if (plugin.summer() != null) {
+                    plugin.summer().onKill(player, entity, data); // 星潮祭（2026-11-03）：地圖裡的怪掉貝殼（跟萬燈夜各自擲）
+                }
             }
         }
         if (plugin.festival() != null) {
             plugin.festival().onMonsterDeath(entity, data); // 萬燈夜：稀有怪、地圖 Boss 有機會留下搗蛋南瓜
+        }
+        if (plugin.summer() != null) {
+            plugin.summer().onMonsterDeath(entity, data); // 星潮祭：稀有怪、地圖 Boss 有機會留下漂流瓶
         }
         if (plugin.maps() != null) {
             // 殺怪數；地圖 Boss：完成（星圖、首殺）——每個人的那份已經擲完了
@@ -276,6 +282,9 @@ public final class MonsterListener implements Listener {
         rollMirror(owner, rolled, fatigue);
         if (plugin.cards() != null) {
             plugin.cards().rollKill(owner, entity, data, rolled); // 2026-10-19 星諭卡（地圖怪）
+        }
+        if (plugin.summer() != null) {
+            plugin.summer().rollKill(owner, entity, data, rolled, rarityBonus); // 2026-11-03 星潮祭的藏寶圖：地圖 Boss 多掉幾件
         }
         // 2026-10：累積贊助的金幣加成（只算掉給這個人的那份）
         // 個人金幣加倍藥：跟全服加倍加起來（全服 ×2、個人 ×2 → ×3）

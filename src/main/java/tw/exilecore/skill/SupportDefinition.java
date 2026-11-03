@@ -408,6 +408,12 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (own.equals("要" + requiresText()) && matchesRequires(skill, addedTags(skill, others))) {
             return null;
         }
+        // 2026-11-03 照站長（祕法之心插不進霆髓）＋照 PoE2（PoB2：Archmage 是 Lightning 類型，Lightning Mastery 只要 Lightning）：
+        //   只加技能等級的輔助（焰髓、霜髓、霆髓、淵髓、礪髓…）照「吃技能等級的標籤」驗（寶石上看得到的標籤也算，跟裝備的 +閃電技能等級一樣）。
+        //   這次之前不造成傷害的技能拿掉了傷害類型的標籤，裝備的 +閃電技能等級吃得到、霆髓卻插不進去
+        if (own.equals("要" + requiresText()) && levelOnly() && matchesRequires(skill, SkillBuild.levelTags(skill))) {
+            return null;
+        }
         // 2026-10-30 照 PoE2：掘骸也是召喚技能（CreatesMinion）：召喚物輔助掛得上，效果只給叫出來的骨構體（SkillBuild 算骨刺時略過）
         if (unearthMinionSupport(skill)) {
             return null;
@@ -759,6 +765,19 @@ public record SupportDefinition(String id, String name, String description, Stri
             }
         }
         return out;
+    }
+
+    /** 2026-11-03：這顆輔助只加技能等級（skill.level），沒有別的效果。 */
+    private boolean levelOnly() {
+        if (modifiers.isEmpty()) {
+            return false;
+        }
+        for (final Modifier modifier : modifiers) {
+            if (!tw.exilecore.stats.StatKeys.SKILL_LEVEL.equals(modifier.stat())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean matchesRequires(final SkillDefinition skill, final Set<String> added) {

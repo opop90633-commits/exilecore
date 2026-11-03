@@ -1110,6 +1110,27 @@ event_lamp_wick:
   description: "萬燈夜：一天點滿幽燈墓園的燈、打倒南瓜王、完成活動挑戰拿得到；在選單的「萬燈夜」兌換"
   flavor: "從燈裡抽出來的芯，綠色的火還沒熄。"
 
+# ---- 星潮祭（2026-11-03 照站長，夏日活動，data/summer_festival.yml）：活動素材，到選單的「星潮祭」兌換限定時裝、稱號 ----
+event_shell:
+  name: 貝殼
+  material: NAUTILUS_SHELL
+  model: exilecore:currency/event_shell
+  stack: 1000
+  operation: NONE
+  drop_weight: 0
+  description: "星潮祭期間地圖裡的怪掉落、沙灘挖寶、西瓜大亂鬥、瓶中信給的；在選單的「星潮祭」兌換"
+  flavor: "貼在耳邊還聽得到浪聲，殼裡有一點沒倒乾淨的沙。"
+
+event_pearl:
+  name: 珍珠
+  material: HEART_OF_THE_SEA
+  model: exilecore:currency/event_pearl
+  stack: 100
+  operation: NONE
+  drop_weight: 0
+  description: "星潮祭：一天挖滿藏寶點、大亂鬥前三名、打倒深潮海妖、完成活動挑戰拿得到；在選單的「星潮祭」兌換"
+  flavor: "海妖喉裡含了很久的一顆，映著夕陽是淡淡的金色。"
+
 # ---- 傳奇兌換券（2026-10 PoE2 改版）：舊的傳奇全部退役，玩家手上的登入時換成這個；拿在主手右鍵，選一件新的傳奇 ----
 unique_voucher:
   name: 傳奇兌換券

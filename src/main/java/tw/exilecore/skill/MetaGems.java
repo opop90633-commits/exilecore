@@ -437,10 +437,16 @@ public final class MetaGems {
         final double[] mods = energyModifiers(entry);
         final double[] own = sheetEnergy(plugin.players().sheet(player), metaTags);
         final double refundChance = mods[2] + own[2];
+        // 2026-11-03 照站長＋PoB2（揭露詞綴：Invocated Spells have x% chance to consume half as much Energy）：祈喚觸發時只花一半；
+        //   跟返能各擲各的（兩個都中也只會花一半，不會倒賺）
+        final double halfChance = metaTags.contains(tw.exilecore.stats.TreeMechanicKeys.INVOCATION) || spec.invocation()
+                ? plugin.players().sheet(player).flat(tw.exilecore.stats.TreeNewMechanicKeys.INVOCATION_HALF_ENERGY, metaTags) : 0;
         double left = stored - times * cost;
         for (int i = 0; i < times; i++) {
-            if (refundChance > 0 && plugin.items().random().nextDouble() * 100 < refundChance) {
-                left += cost / 2; // 返能：退還這一次花的一半
+            final boolean refund = refundChance > 0 && plugin.items().random().nextDouble() * 100 < refundChance;
+            final boolean half = halfChance > 0 && plugin.items().random().nextDouble() * 100 < halfChance;
+            if (refund || half) {
+                left += cost / 2; // 返能：退還這一次花的一半；祈喚的一半能量：這一次只花一半
             }
         }
         mine.put(key, Math.max(0, Math.min(left, invocationMax(spec, mods, own, service.qualityFlat(player, entry.skillId(), tw.exilecore.stats.GemQualityKeys.META_MAX_ENERGY)))));

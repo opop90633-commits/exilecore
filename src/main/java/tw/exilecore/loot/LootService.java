@@ -62,13 +62,55 @@ public final class LootService {
     /** 這個角色目前的過濾器（沒設定過用預設組合）。 */
     public LootFilter filter(final PlayerState state) {
         final CharacterRecord character = state.character();
-        return LootFilter.decode(character == null ? null : character.lootFilter(), config).withBaseTags(this::baseTags);
+        final LootFilter filter = LootFilter.decode(character == null ? null : character.lootFilter(), config);
+        if (filter.needsMigration() && plugin.items() != null) {
+            // 2026-11-03：舊格式（只撿的基底、珠寶、遺時星晶、劫盜特殊基底、傳奇一格）換算成基底規則與傳奇分組，馬上寫回角色
+            filter.migrate(baseInfos());
+            if (character != null) {
+                character.setLootFilter(filter.encode());
+            }
+        }
+        return filter;
     }
 
-    /** 基底代號的標籤（「只撿的基底」看有挑的是哪幾類；不認得的基底回傳空的）。 */
-    private java.util.Set<String> baseTags(final String baseId) {
-        final tw.exilecore.item.ItemBase base = plugin.items() == null ? null : plugin.items().repository().base(baseId);
-        return base == null ? java.util.Set.of() : base.tags();
+    /** 全部的基底（舊存檔轉換用）。 */
+    private List<LootFilter.BaseInfo> baseInfos() {
+        final List<LootFilter.BaseInfo> list = new ArrayList<>();
+        for (final tw.exilecore.item.ItemBase base : plugin.items().repository().bases()) {
+            list.add(new LootFilter.BaseInfo(base.id(), base.tags(), plugin.items().repository().heistOnlyBase(base.id())));
+        }
+        return list;
+    }
+
+    /**
+     * 2026-11-03 照站長：一件傳奇是過濾器的哪一組（追逐級、一般、事件、巔峰、終局・極境、劫盜）；終局與巔峰的代號照地圖設定檔。
+     * 不認得的傳奇當一般傳奇。
+     */
+    public LootFilter.UniqueGroup uniqueGroup(final tw.exilecore.item.UniqueItem unique) {
+        if (unique == null) {
+            return LootFilter.UniqueGroup.COMMON;
+        }
+        final java.util.Set<String> finals = new java.util.HashSet<>();
+        final java.util.Set<String> pinnacles = new java.util.HashSet<>();
+        if (plugin.maps() != null) {
+            for (final tw.exilecore.map.MapConfig.MapDef map : plugin.maps().config().pinnacles()) {
+                pinnacles.add(map.id());
+            }
+            for (final tw.exilecore.map.MapConfig.MapDef map : plugin.maps().config().finals()) {
+                if (!pinnacles.contains(map.id())) {
+                    finals.add(map.id());
+                }
+            }
+        }
+        return LootFilter.UniqueGroup.of(unique.chase(), unique.sources(), finals, pinnacles);
+    }
+
+    /** 同上，照傳奇代號（不是傳奇回傳 null）。 */
+    private LootFilter.UniqueGroup uniqueGroup(final tw.exilecore.item.ItemData item) {
+        if (item.unique() == null) {
+            return null;
+        }
+        return uniqueGroup(plugin.items().repository().unique(item.unique()));
     }
 
     public LootFilter filter(final Player player) {
@@ -127,7 +169,7 @@ public final class LootService {
             final CurrencyType asCurrency = currency != null ? currency : gemCurrency(drop, stack);
             final int weight = currency == null ? 0 : currency.dropWeight();
             final boolean upgrade = drop.kind() == DropTable.Kind.FLASK && isFlaskUpgrade(killer, stack);
-            // 傳奇裝備看稀有度那一格（追逐級、頂級專屬永遠撿）、傳奇珠寶與地圖永遠撿；地圖只看「地圖依稀有度隱藏」（LootFilter 自己判斷）。地圖與珠寶都值得提示
+            // 傳奇照分組（追逐級永遠撿）、基底隱藏絕對不撿、地圖只看「地圖依稀有度隱藏」（LootFilter 自己判斷，2026-11-03）。地圖與珠寶都值得提示
             final boolean map = drop.isEquipment() && (isMap(drop.item()) || isJewel(drop.item()));
             final boolean charm = drop.kind() == DropTable.Kind.FLASK && plugin.flasks() != null && plugin.flasks().charms() != null
                     && plugin.flasks().charms().isCharm(stack);
@@ -306,8 +348,8 @@ public final class LootService {
                 final tw.exilecore.item.ItemBase base = item == null ? null : plugin.items().repository().base(item.base());
                 if (item != null && base != null) {
                     final LootFilter.Candidate candidate = new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, item.rarity(), null, false,
-                            item.ilvl(), withChase(base.tags(), item), base.isMap() ? tw.exilecore.item.ItemStats.mapTier(base, item) : 0, 0,
-                            bestAffixRank(item), item.base());
+                            item.ilvl(), base.tags(), base.isMap() ? tw.exilecore.item.ItemStats.mapTier(base, item) : 0, 0,
+                            bestAffixRank(item), item.base(), uniqueGroup(item));
                     if (filter.hides(candidate, viewer)) {
                         gold += config.goldValue(DropTable.Kind.EQUIPMENT, item.rarity(), 0, averageGold);
                         filtered++;
@@ -340,40 +382,8 @@ public final class LootService {
         return plugin.currencies() == null ? null : plugin.currencies().read(stack).orElse(null);
     }
 
-    /** 動作列摘要、右邊側欄的「最近撿到」列出值得注意的東西、音效。 */
-    /**
-     * 2026-10-22：永遠撿的傳奇在過濾用的標籤裡加上記號（傳奇被勾成隱藏時照樣撿）：追逐級，
-     * 以及頂級專屬（巔峰、極境、覺醒者、世界 Boss 這些：掉落等級 {@value #PROTECTED_UNIQUE_LEVEL} 以上、賭博與機會石都拿不到的）。
-     */
-    private java.util.Set<String> withChase(final java.util.Set<String> tags, final tw.exilecore.item.ItemData item) {
-        if (item.base() != null && plugin.items().repository().heistOnlyBase(item.base())) {
-            // 2026-10-30 照站長：劫盜專屬基底（特殊項鍊）另外照「劫盜特殊基底」那條過濾規則（預設一定撿）
-            final java.util.Set<String> marked = new java.util.HashSet<>(tags);
-            marked.add(LootFilter.HEIST_BASE_TAG);
-            return marked;
-        }
-        if (item.unique() == null) {
-            return tags;
-        }
-        final tw.exilecore.item.UniqueItem unique = plugin.items().repository().unique(item.unique());
-        if (unique == null || !protectedUnique(unique)) {
-            return tags;
-        }
-        final java.util.Set<String> marked = new java.util.HashSet<>(tags);
-        marked.add(LootFilter.ALWAYS_KEEP_TAG);
-        return marked;
-    }
-
-    /** 頂級專屬傳奇的掉落等級門檻（巔峰、覺醒者 85，極境、世界 Boss 80）。 */
-    static final int PROTECTED_UNIQUE_LEVEL = 80;
-
-    /** 傳奇被勾成隱藏時還是要撿的：追逐級、頂級專屬（做不出來、賭不到）。 */
-    static boolean protectedUnique(final tw.exilecore.item.UniqueItem unique) {
-        if (unique.chase()) {
-            return true;
-        }
-        return unique.dropLevel() >= PROTECTED_UNIQUE_LEVEL && !unique.sources().contains("gamble") && !unique.sources().contains("chance");
-    }
+    // 2026-11-03：withChase、protectedUnique（傳奇永遠撿的記號、頂級專屬的門檻）拿掉了，改成 uniqueGroup（傳奇分組）；
+    //   劫盜特殊基底改成基底規則的「必撿」（舊存檔轉換時補上）
 
     /** 這個掉落是不是追逐級傳奇。 */
     private boolean chase(final DropTable.Drop drop) {
@@ -1053,7 +1063,7 @@ public final class LootService {
             final tw.exilecore.item.ItemBase base = plugin.items().repository().base(item.base());
             itemLevel = item.ilvl();
             bestAffixRank = bestAffixRank(item);
-            tags = withChase(base == null ? java.util.Set.of() : base.tags(), item); // 2026-10-22：基底查不到也要保護追逐級
+            tags = base == null ? java.util.Set.of() : base.tags();
             if (base != null) {
                 mapTier = base.isMap() ? tw.exilecore.item.ItemStats.mapTier(base, item) : 0;
             }
@@ -1061,7 +1071,7 @@ public final class LootService {
             gemLevel = plugin.skills().gems().read(stack).map(tw.exilecore.skill.GemData::level).orElse(0);
         }
         return new LootFilter.Candidate(drop.kind(), rarity, currency == null ? null : currency.id(), upgrade, itemLevel, tags, mapTier, gemLevel,
-                bestAffixRank, drop.isEquipment() ? drop.item().base() : null);
+                bestAffixRank, drop.isEquipment() ? drop.item().base() : null, drop.isEquipment() ? uniqueGroup(drop.item()) : null);
     }
 
     /** 這件裝備最好的詞綴是 T 幾（1 = T1；沒有詞綴 0）：掉落過濾的「保留有 T 幾以上詞綴的裝備」看這個（未鑑定的也算）。 */

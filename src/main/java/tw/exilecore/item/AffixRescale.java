@@ -44,8 +44,8 @@ public final class AffixRescale {
         final List<RolledAffix> affixes = data.affixes();
         for (int i = 0; i < affixes.size(); i++) {
             final RolledAffix rolled = affixes.get(i);
-            if (rolled == null || rolled.id() == null || Veiled.isSpecial(rolled.id())) {
-                continue; // 隱匿、揭露詞綴另外處理（Veiled）
+            if (rolled == null || rolled.id() == null || Veiled.isVeiled(rolled.id())) {
+                continue; // 隱匿詞綴沒有數值（Veiled）。2026-11-03 照站長：揭露詞綴也照新資料換算、停用的換成同類的揭露詞綴；這次之前揭露詞綴整個跳過
             }
             final Affix affix = repository.affix(rolled.id());
             final boolean uniqueAffix = rolled.id().startsWith(UniqueItem.AFFIX_PREFIX);
@@ -245,8 +245,14 @@ public final class AffixRescale {
 
     // ---- 拿掉的詞綴 ----
 
+    /** 揭露詞綴的類別（只換成揭露詞綴）。 */
+    private static final String UNVEILED_CATEGORY = "unveiled";
+
     /** 詞綴的類別：腐化、星魄、藥劑護符、一般（換的時候只在同一類裡找）。 */
     private static String category(final Affix affix) {
+        if (Veiled.isUnveiled(affix.id())) {
+            return UNVEILED_CATEGORY; // 2026-11-03：揭露詞綴只換成揭露詞綴
+        }
         if (affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG)) {
             return ItemRepository.CORRUPTION_TAG;
         }
@@ -280,6 +286,7 @@ public final class AffixRescale {
             return null;
         }
         final Set<String> oldStats = old == null ? Set.of() : stats(old);
+        final boolean unveiled = Veiled.isUnveiled(rolled.id()); // 2026-11-03：揭露詞綴只在揭露詞綴裡找，一般的不會換成揭露詞綴
         final String oldCategory = old == null ? null : category(old);
         final Set<String> used = usedGroups(repository, data, index);
         Affix best = null;
@@ -287,7 +294,8 @@ public final class AffixRescale {
         final List<Affix> candidates = new ArrayList<>(repository.affixes());
         candidates.sort(Comparator.comparing(Affix::id));
         for (final Affix candidate : candidates) {
-            if (retired(candidate) || candidate.spawnTags().contains(UniqueItem.SPAWN_TAG) || Veiled.isSpecial(candidate.id())
+            if (retired(candidate) || candidate.spawnTags().contains(UniqueItem.SPAWN_TAG) || Veiled.isVeiled(candidate.id())
+                    || Veiled.isUnveiled(candidate.id()) != unveiled
                     || candidate.id().equals(rolled.id()) || side != null && candidate.type() != side
                     || used.contains(candidate.group()) || !fits(candidate, base)) {
                 continue;
@@ -376,6 +384,14 @@ public final class AffixRescale {
         try {
             if (old != null && ItemRepository.CORRUPTION_TAG.equals(category(old))) {
                 added = generator.addCorruptionEnchant(data, random);
+            } else if (Veiled.isUnveiled(rolled.id())) {
+                // 2026-11-03：停用的揭露詞綴找不到同類的：從同一種（前綴／後綴）的揭露詞綴裡照權重擲一條（跟揭露時一樣）
+                AffixType side = old != null ? old.type() : parseSide(rolled.side());
+                if (side == null) {
+                    side = AffixType.SUFFIX;
+                }
+                final List<RolledAffix> options = Veiled.options(data, side, null, generator, random, 1);
+                added = !options.isEmpty() && data.affixes().add(options.getFirst());
             } else {
                 AffixType side = old != null ? old.type() : parseSide(rolled.side());
                 if (side == null) {

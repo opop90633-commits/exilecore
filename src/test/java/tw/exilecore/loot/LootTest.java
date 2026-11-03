@@ -55,7 +55,7 @@ class LootTest {
         assertThrows(IllegalArgumentException.class, () -> live.load(dir), "拼錯的預設組合要報錯");
         assertEquals("standard", live.defaultPresetId(), "寫錯時還是用原本的設定");
         assertEquals(3, live.presets().size());
-        assertEquals("p=standard", live.defaultFilter().encode());
+        assertEquals("p=standard;v=2", live.defaultFilter().encode());
         Files.writeString(dir.resolve(LootConfig.FILE), "filter:\n  presets:\n    strict: { flasks: sometimes }\n");
         assertThrows(IllegalArgumentException.class, () -> live.load(dir));
         assertEquals(3, live.presets().size(), "後面的組合寫錯也不會換掉一半");
@@ -86,7 +86,7 @@ class LootTest {
 
     @Test
     void presetFiltersFollowConfigAndCustomKeepsItems() {
-        assertEquals("p=standard", config.defaultFilter().encode());
+        assertEquals("p=standard;v=2", config.defaultFilter().encode()); // 2026-11-03：存檔格式 v=2
         assertEquals(config.defaultFilter(), LootFilter.decode("p=standard", config));
         assertEquals(config.defaultFilter(), LootFilter.decode(null, config), "沒設定過用預設");
         assertEquals(config.defaultFilter(), LootFilter.decode("p=gone", config), "組合被刪掉用預設");
@@ -100,47 +100,88 @@ class LootTest {
         custom.cycleFlasks(); // better → none
         assertEquals(LootFilter.CUSTOM, custom.preset());
         final String text = custom.encode();
-        assertEquals("p=custom;eq=normal,magic;cur=armour_scrap,glimmer_orb;sg=0;ug=1;fl=none;wl=0;al=0;lg=20;gl=0;gt=0;mr=0", text,
+        assertEquals("p=custom;v=2;eq=normal,magic;cur=armour_scrap,glimmer_orb;sg=0;ug=1;fl=none;wl=0;al=0;lg=20;gl=0;gt=0;mr=0", text,
                 "標準有等級差 20 的進階規則，自訂時一起記下來");
         final LootFilter back = LootFilter.decode(text, config);
         assertEquals(custom, back);
         assertTrue(back.hides(DropTable.Kind.SUPPORT_GEM, null, null, false));
         assertTrue(back.hides(DropTable.Kind.FLASK, null, null, true), "none：好的藥劑也隱藏");
         assertFalse(back.hidesCurrency("whetstone"));
-        assertFalse(back.hidesEquipment(Rarity.UNIQUE));
+        assertTrue(back.hiddenUniques().isEmpty());
         assertTrue(text.length() < 1024, "要放得進資料庫欄位");
     }
 
+    /** 2026-11-03 照站長：傳奇照來源分組（追逐級、一般、事件、巔峰、終局・極境、劫盜）。 */
     @Test
-    void topExclusiveUniquesAreProtected() {
-        final java.util.function.BiFunction<Integer, Set<String>, tw.exilecore.item.UniqueItem> unique = (level, sources) ->
-                new tw.exilecore.item.UniqueItem("u", "測試", "b", java.util.List.of(), java.util.List.of(), level, 100, sources);
-        assertTrue(LootService.protectedUnique(unique.apply(85, Set.of("shrine_warden"))), "巔峰專屬");
-        assertTrue(LootService.protectedUnique(unique.apply(80, Set.of("uber_frost_throne"))), "極境專屬");
-        assertFalse(LootService.protectedUnique(unique.apply(60, Set.of("map_boss", "chance", "gamble"))), "共通傳奇可以藏");
-        assertFalse(LootService.protectedUnique(unique.apply(60, Set.of("shrine"))), "一般事件傳奇可以藏");
-        assertFalse(LootService.protectedUnique(unique.apply(85, Set.of("gamble"))), "賭得到的不算專屬");
+    void uniqueGroupsFollowSources() {
+        final Set<String> finals = Set.of("sky_crucible", "frost_throne", "bone_throne", "ember_citadel");
+        final Set<String> pinnacles = Set.of("awakener", "shrine_warden", "strongbox_mimic", "breach_lord", "exile_king", "ritual_priest",
+                "delirium_mirror", "abyss_lich");
+        final java.util.function.Function<Set<String>, LootFilter.UniqueGroup> of = sources -> LootFilter.UniqueGroup.of(false, sources, finals, pinnacles);
+        assertEquals(LootFilter.UniqueGroup.CHASE, LootFilter.UniqueGroup.of(true, Set.of("map_boss"), finals, pinnacles), "追逐級先看");
+        assertEquals(LootFilter.UniqueGroup.COMMON, of.apply(Set.of("map_boss", "chance", "gamble")));
+        assertEquals(LootFilter.UniqueGroup.COMMON, of.apply(Set.of("royal_tomb")), "某張地圖的 Boss");
+        assertEquals(LootFilter.UniqueGroup.COMMON, of.apply(Set.of()), "禁止掉落的當一般");
+        assertEquals(LootFilter.UniqueGroup.EVENT, of.apply(Set.of("shrine")));
+        assertEquals(LootFilter.UniqueGroup.EVENT, of.apply(Set.of("delirium", "gamble")), "事件的優先於一般");
+        assertEquals(LootFilter.UniqueGroup.PINNACLE, of.apply(Set.of("shrine_warden")));
+        assertEquals(LootFilter.UniqueGroup.PINNACLE, of.apply(Set.of("awakener")));
+        assertEquals(LootFilter.UniqueGroup.PINNACLE, of.apply(Set.of("abyss_whale")), "淵鯨也算巔峰");
+        assertEquals(LootFilter.UniqueGroup.PINNACLE, of.apply(Set.of("world_boss")));
+        assertEquals(LootFilter.UniqueGroup.ENDGAME, of.apply(Set.of("final")));
+        assertEquals(LootFilter.UniqueGroup.ENDGAME, of.apply(Set.of("frost_throne")));
+        assertEquals(LootFilter.UniqueGroup.ENDGAME, of.apply(Set.of("uber_frost_throne")));
+        assertEquals(LootFilter.UniqueGroup.HEIST, of.apply(Set.of("heist")));
+        assertEquals(LootFilter.UniqueGroup.ENDGAME, LootFilter.UniqueGroup.of(false, Set.of("final"), null, null), "沒給地圖代號也認得 final、uber_");
     }
 
+    /** 2026-11-03：傳奇六組各自撿不撿；追逐級永遠撿；傳奇不看稀有度、基底、等級差；另外記，換預設組合也留著。 */
     @Test
-    void uniquesCanBeHiddenButChaseUniquesAlwaysKept() {
+    void uniqueGroupsCanBeHiddenButChaseAlwaysKept() {
         final LootFilter filter = config.defaultFilter();
         final LootFilter.Viewer viewer = new LootFilter.Viewer(70, Set.of(), Set.of());
-        assertFalse(filter.hides(equipment(Rarity.UNIQUE, 68, "armour", "body"), viewer), "預設傳奇會撿");
+        assertFalse(filter.hides(unique(LootFilter.UniqueGroup.COMMON, "armour", "body"), viewer), "預設傳奇會撿");
         final String presetBefore = filter.preset();
-        filter.toggleEquipment(Rarity.UNIQUE);
-        assertTrue(filter.hidesEquipment(Rarity.UNIQUE));
-        assertEquals(presetBefore, filter.preset(), "傳奇是另外記的：預設組合不會變成自訂");
-        assertTrue(filter.hides(equipment(Rarity.UNIQUE, 68, "armour", "body"), viewer), "勾成隱藏：一般傳奇換成金幣");
-        assertFalse(filter.hides(equipment(Rarity.UNIQUE, 68, "armour", "body", LootFilter.ALWAYS_KEEP_TAG), viewer), "追逐級、頂級專屬永遠撿");
-        assertFalse(filter.hides(equipment(Rarity.UNIQUE, 68, "jewel", "ruby"), viewer), "傳奇珠寶照珠寶那一格（永遠撿）");
-        assertFalse(filter.hides(map(Rarity.UNIQUE, 1), viewer), "傳奇地圖永遠撿");
+        filter.toggleUniques(LootFilter.UniqueGroup.COMMON);
+        filter.toggleUniques(LootFilter.UniqueGroup.CHASE);
+        assertTrue(filter.hidesUniques(LootFilter.UniqueGroup.COMMON));
+        assertFalse(filter.hidesUniques(LootFilter.UniqueGroup.CHASE), "追逐級點了沒反應");
+        assertEquals(presetBefore, filter.preset(), "傳奇分組是另外記的：預設組合不會變成自訂");
+        assertTrue(filter.hides(unique(LootFilter.UniqueGroup.COMMON, "armour", "body"), viewer), "一般傳奇換成金幣");
+        assertFalse(filter.hides(unique(LootFilter.UniqueGroup.CHASE, "armour", "body"), viewer), "追逐級永遠撿");
+        assertFalse(filter.hides(unique(LootFilter.UniqueGroup.PINNACLE, "armour", "body"), viewer), "沒勾的組照撿");
+        assertFalse(filter.hides(equipment(Rarity.UNIQUE, 68, "armour", "body", LootFilter.ALWAYS_KEEP_TAG), viewer), "舊記號當追逐級");
+        assertTrue(filter.hides(equipment(Rarity.UNIQUE, 68, "armour", "body"), viewer), "不知道分組的當一般傳奇");
+        // 傳奇不看基底、等級差、同類同系
+        filter.setBaseRule("body_a", LootFilter.BaseRule.HIDE);
+        filter.toggleWeaponsLikeMine();
+        final LootFilter.Viewer archer = new LootFilter.Viewer(90, Set.of("weapon", "two_hand", "bow", "ranged"), Set.of());
+        assertFalse(filter.hides(new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, Rarity.UNIQUE, null, false, 10, Set.of("weapon", "one_hand", "sword"),
+                0, 0, 0, "body_a", LootFilter.UniqueGroup.PINNACLE), archer), "傳奇只看分組");
         final LootFilter back = LootFilter.decode(filter.encode(), config);
-        assertTrue(back.hidesEquipment(Rarity.UNIQUE), "存檔讀回來還是隱藏");
-        // 換成預設組合：傳奇隱藏帶過去，只記代號的存檔也記得
+        assertTrue(back.hidesUniques(LootFilter.UniqueGroup.COMMON), "存檔讀回來還是隱藏");
+        assertTrue(filter.encode().contains(";hu=common"), filter.encode());
+        // 換成預設組合：傳奇分組、基底帶過去，只記代號的存檔也記得
         final LootFilter preset = LootFilter.of(config.preset("strict")).withExtras(filter);
-        assertTrue(preset.hidesEquipment(Rarity.UNIQUE));
-        assertTrue(LootFilter.decode(preset.encode(), config).hidesEquipment(Rarity.UNIQUE), preset.encode());
+        assertTrue(preset.hidesUniques(LootFilter.UniqueGroup.COMMON));
+        assertEquals(LootFilter.BaseRule.HIDE, preset.baseRule("body_a"));
+        assertTrue(LootFilter.decode(preset.encode(), config).hidesUniques(LootFilter.UniqueGroup.COMMON), preset.encode());
+        // 舊存檔的「傳奇隱藏」（eq 裡的 unique、hu=1）：換算成一般、事件、劫盜不撿（巔峰、終局以前就是永遠撿的）
+        final LootFilter old = LootFilter.decode("p=standard;hu=1", config);
+        assertTrue(old.needsMigration());
+        old.migrate(List.of());
+        assertFalse(old.needsMigration());
+        assertEquals(Set.of(LootFilter.UniqueGroup.COMMON, LootFilter.UniqueGroup.EVENT, LootFilter.UniqueGroup.HEIST), old.hiddenUniques());
+        final LootFilter oldCustom = LootFilter.decode("p=custom;eq=normal,unique;cur=;sg=0;ug=0;fl=all", config);
+        oldCustom.migrate(List.of());
+        assertTrue(oldCustom.hidesUniques(LootFilter.UniqueGroup.COMMON));
+        assertTrue(oldCustom.hidesEquipment(Rarity.NORMAL));
+        assertFalse(oldCustom.hidesEquipment(Rarity.UNIQUE), "傳奇不在稀有度那一組裡了");
+        assertFalse(LootFilter.decode(oldCustom.encode(), config).needsMigration(), "存回去就是新格式");
+    }
+
+    private static LootFilter.Candidate unique(final LootFilter.UniqueGroup group, final String... tags) {
+        return new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, Rarity.UNIQUE, null, false, 68, Set.of(tags), 0, 0, 0, null, group);
     }
 
     @Test
@@ -163,7 +204,8 @@ class LootTest {
         // 等級差 10：70 級的人，物品等級 59 以下的稀有不撿、60 撿；珠寶與地圖不看等級差
         assertTrue(filter.hides(equipment(Rarity.RARE, 59, "armour", "body", "dex_armour"), archer));
         assertFalse(filter.hides(equipment(Rarity.RARE, 60, "armour", "body", "dex_armour"), archer));
-        assertFalse(filter.hides(equipment(Rarity.MAGIC, 20, "jewel", "ruby"), archer), "珠寶永遠撿");
+        assertTrue(filter.hides(equipment(Rarity.MAGIC, 20, "jewel", "ruby"), archer), "2026-11-03：珠寶併進基底，照稀有度（嚴格藏魔法）；這次之前珠寶永遠撿");
+        assertFalse(filter.hides(equipment(Rarity.RARE, 20, "jewel", "ruby"), archer), "珠寶不看等級差");
         assertFalse(filter.hides(new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, Rarity.NORMAL, null, false, 61, Set.of("map", "map_t1"), 1, 0), archer),
                 "地圖本來不藏");
         // 同系防具：嚴格沒開；自己開了之後智慧系的頭盔不撿、混系（含敏捷）撿
@@ -218,17 +260,14 @@ class LootTest {
         mine.showEverything();
         assertEquals(0, mine.activeRuleCount());
         assertFalse(mine.hides(equipment(Rarity.NORMAL, 1, "weapon", "one_hand", "sword", "melee"), archer));
-        assertEquals("p=custom;eq=;cur=;sg=0;ug=0;fl=all", mine.encode(), "沒有規則就不多記");
-        // 2026-10：全部顯示也清掉只撿的基底、珠寶、遺時星晶
-        final LootFilter extra = LootFilter.decode("p=custom;eq=;cur=;sg=0;ug=0;fl=all;kb=some_base;jr=3;tr=1", config);
-        assertFalse(extra.keepBases().isEmpty());
+        assertEquals("p=custom;v=2;eq=;cur=;sg=0;ug=0;fl=all", mine.encode(), "沒有規則就不多記");
+        // 全部顯示也清掉基底、傳奇分組（2026-11-03）
+        final LootFilter extra = LootFilter.decode("p=custom;v=2;eq=;cur=;sg=0;ug=0;fl=all;xb=some_base;ab=other_base;hu=common", config);
+        assertEquals(2, extra.baseRules().size());
+        assertEquals(1, extra.hiddenUniques().size());
         extra.showEverything();
-        assertTrue(extra.keepBases().isEmpty());
-        assertEquals(0, extra.jewelRarity());
-        assertFalse(extra.filtersTimeLost());
-        // 珠寶「隱藏普通」拿掉了（珠寶至少是魔法）：舊存檔的 jr=1 讀成全部撿
-        assertEquals(0, LootFilter.decode("p=custom;eq=;cur=;sg=0;ug=0;fl=all;jr=1", config).jewelRarity());
-        assertEquals(2, LootFilter.decode("p=custom;eq=;cur=;sg=0;ug=0;fl=all;jr=2", config).jewelRarity());
+        assertTrue(extra.baseRules().isEmpty());
+        assertTrue(extra.hiddenUniques().isEmpty());
         // 2026-10：稀有掉落音效預設開；關掉的存檔來回、換預設組合都留著
         assertTrue(LootFilter.decode("p=standard", config).dropSounds());
         final LootFilter quiet = LootFilter.decode("p=standard;ds=0", config);
@@ -282,72 +321,145 @@ class LootTest {
                 "舊存檔沒有 kt：關");
     }
 
-    /** 遺時星晶（2026-10）：自己的過濾設定（種類、稀有度），跟一般珠寶分開；存檔讀得回來。 */
+    /** 2026-11-03：舊存檔（只撿的基底、珠寶、遺時星晶、劫盜特殊基底）換算成基底規則；新角色劫盜特殊項鍊預設必撿。 */
     @Test
-    void timeLostJewelsHaveTheirOwnFilter() {
-        final LootFilter.Viewer viewer = new LootFilter.Viewer(80, Set.of(), Set.of());
-        final LootFilter.Candidate ruby = equipment(Rarity.MAGIC, 70, "jewel", "radius", "r_ruby");
-        final LootFilter.Candidate rareRuby = equipment(Rarity.RARE, 70, "jewel", "radius", "r_ruby");
-        final LootFilter.Candidate diamond = equipment(Rarity.RARE, 75, "jewel", "radius", "r_ruby", "r_emerald", "r_sapphire");
-        final LootFilter.Candidate plain = equipment(Rarity.MAGIC, 70, "jewel", "ruby");
-        assertEquals(LootFilter.TimeLost.RUBY, LootFilter.TimeLost.of(Set.of("jewel", "radius", "r_ruby")));
-        assertEquals(LootFilter.TimeLost.EMERALD, LootFilter.TimeLost.of(Set.of("jewel", "radius", "r_emerald")));
-        assertEquals(LootFilter.TimeLost.SAPPHIRE, LootFilter.TimeLost.of(Set.of("jewel", "radius", "r_sapphire")));
+    void oldSavesMigrateIntoBaseRules() {
+        final List<LootFilter.BaseInfo> all = List.of(
+                new LootFilter.BaseInfo("long_bow", Set.of("weapon", "two_hand", "bow", "ranged"), false),
+                new LootFilter.BaseInfo("short_bow", Set.of("weapon", "two_hand", "bow", "ranged"), false),
+                new LootFilter.BaseInfo("iron_sword", Set.of("weapon", "one_hand", "sword", "melee"), false),
+                new LootFilter.BaseInfo("leather_hood", Set.of("armour", "helmet", "dex_armour"), false),
+                new LootFilter.BaseInfo("iron_ring", Set.of("jewellery", "ring"), false),
+                new LootFilter.BaseInfo("heist_amulet", Set.of("jewellery", "amulet"), true),
+                new LootFilter.BaseInfo("ruby_jewel", Set.of("jewel", "ruby"), false),
+                new LootFilter.BaseInfo("diamond_jewel", Set.of("jewel", "ruby", "emerald", "sapphire"), false),
+                new LootFilter.BaseInfo("tl_ruby", Set.of("jewel", "radius", "r_ruby"), false),
+                new LootFilter.BaseInfo("tl_diamond", Set.of("jewel", "radius", "r_ruby", "r_emerald", "r_sapphire"), false),
+                new LootFilter.BaseInfo("map_a", Set.of("map", "map_t1"), false));
         assertEquals(LootFilter.TimeLost.DIAMOND, LootFilter.TimeLost.of(Set.of("jewel", "radius", "r_ruby", "r_emerald", "r_sapphire")));
         assertNull(LootFilter.TimeLost.of(Set.of("jewel", "ruby")));
-
-        final LootFilter filter = config.defaultFilter().copy();
-        assertFalse(filter.hides(ruby, viewer));
-        assertFalse(filter.hides(diamond, viewer));
-        // 一般珠寶全部不撿：遺時星晶不受影響
-        filter.withJewelRarity(3);
-        assertTrue(filter.hides(plain, viewer));
-        assertFalse(filter.hides(ruby, viewer), "遺時星晶不看一般珠寶的設定");
-        // 只撿稀有的
-        filter.cycleTimeLostRarity(false);
-        assertEquals(1, filter.timeLostRarity());
-        assertTrue(filter.hides(ruby, viewer));
-        assertFalse(filter.hides(rareRuby, viewer));
-        assertFalse(filter.hides(diamond, viewer));
-        // 不撿赤的：稀有的赤也不撿，白的照撿
-        filter.toggleTimeLost(LootFilter.TimeLost.RUBY);
-        assertTrue(filter.hides(rareRuby, viewer));
-        assertFalse(filter.hides(diamond, viewer));
-        assertFalse(filter.hides(equipment(Rarity.UNIQUE, 70, "jewel", "radius", "r_ruby"), viewer), "傳奇永遠撿");
-        // 存檔
-        final LootFilter back = LootFilter.decode(filter.encode(), config);
-        assertEquals(filter, back);
-        assertEquals(1, back.timeLostRarity());
-        assertTrue(back.hidesTimeLost(LootFilter.TimeLost.RUBY));
-        assertFalse(back.hidesTimeLost(LootFilter.TimeLost.DIAMOND));
-        // 全部不撿
-        filter.cycleTimeLostRarity(false);
-        assertTrue(filter.hides(diamond, viewer));
-        assertEquals(config.defaultFilter(), LootFilter.decode("p=standard", config), "沒設定的照舊");
+        // 只撿的基底（白名單）：有挑的那一類（武器）其他基底隱藏；防具、飾品、珠寶、地圖不動
+        final LootFilter kept = LootFilter.decode("p=custom;eq=;cur=;sg=0;ug=0;fl=all;kb=long_bow", config);
+        assertTrue(kept.needsMigration());
+        kept.migrate(all);
+        assertFalse(kept.needsMigration());
+        assertEquals(LootFilter.BaseRule.SHOW, kept.baseRule("long_bow"));
+        assertEquals(LootFilter.BaseRule.HIDE, kept.baseRule("short_bow"), "同一類沒挑的隱藏");
+        assertEquals(LootFilter.BaseRule.HIDE, kept.baseRule("iron_sword"));
+        assertEquals(LootFilter.BaseRule.SHOW, kept.baseRule("leather_hood"), "沒挑的類別不動");
+        assertEquals(LootFilter.BaseRule.SHOW, kept.baseRule("iron_ring"));
+        assertEquals(LootFilter.BaseRule.SHOW, kept.baseRule("ruby_jewel"));
+        assertEquals(LootFilter.BaseRule.ALWAYS, kept.baseRule("heist_amulet"), "劫盜特殊基底沒寫 = 一定撿 → 必撿");
+        assertEquals(LootFilter.BaseRule.SHOW, kept.baseRule("map_a"));
+        assertTrue(kept.encode().contains(";xb=iron_sword,short_bow;ab=heist_amulet"), kept.encode());
+        assertFalse(LootFilter.decode(kept.encode(), config).needsMigration());
+        assertEquals(kept, LootFilter.decode(kept.encode(), config));
+        // 珠寶全部不撿 + 遺時星晶全部不撿 + 劫盜特殊基底不撿
+        final LootFilter jewels = LootFilter.decode("p=standard;jr=3;tr=2;hb=hide", config);
+        jewels.migrate(all);
+        assertEquals("standard", jewels.preset());
+        assertEquals(LootFilter.BaseRule.HIDE, jewels.baseRule("ruby_jewel"));
+        assertEquals(LootFilter.BaseRule.HIDE, jewels.baseRule("diamond_jewel"));
+        assertEquals(LootFilter.BaseRule.HIDE, jewels.baseRule("tl_ruby"));
+        assertEquals(LootFilter.BaseRule.HIDE, jewels.baseRule("tl_diamond"));
+        assertEquals(LootFilter.BaseRule.HIDE, jewels.baseRule("heist_amulet"));
+        assertEquals(LootFilter.BaseRule.SHOW, jewels.baseRule("long_bow"));
+        // 只撿稀有珠寶（沒有對應的：顯示、照稀有度）；不撿赤的遺時星晶；劫盜特殊基底照一般規則
+        final LootFilter some = LootFilter.decode("p=standard;jr=2;th=ruby;hb=normal", config);
+        some.migrate(all);
+        assertEquals(LootFilter.BaseRule.SHOW, some.baseRule("ruby_jewel"));
+        assertEquals(LootFilter.BaseRule.HIDE, some.baseRule("tl_ruby"));
+        assertEquals(LootFilter.BaseRule.SHOW, some.baseRule("tl_diamond"));
+        assertEquals(LootFilter.BaseRule.SHOW, some.baseRule("heist_amulet"));
+        // 新角色（沒存過）：劫盜特殊項鍊預設必撿，其他顯示
+        final LootFilter fresh = LootFilter.decode(null, config);
+        assertTrue(fresh.needsMigration());
+        fresh.migrate(all);
+        assertEquals(LootFilter.BaseRule.ALWAYS, fresh.baseRule("heist_amulet"));
+        assertEquals(1, fresh.baseRules().size());
+        assertEquals("standard", fresh.preset());
+        // 新格式不會再換算；新格式裡已經設定的基底不會被舊鍵蓋掉
+        final LootFilter mixed = LootFilter.decode("p=standard;v=2;xb=long_bow;kb=long_bow", config);
+        assertFalse(mixed.needsMigration());
+        mixed.migrate(all);
+        assertEquals(LootFilter.BaseRule.HIDE, mixed.baseRule("long_bow"));
+        assertEquals(LootFilter.BaseRule.SHOW, mixed.baseRule("heist_amulet"), "新格式：沒設定就是顯示");
+        // 換預設組合時還沒換算的部分也帶過去
+        final LootFilter pending = LootFilter.decode("p=standard;kb=long_bow", config);
+        final LootFilter switched = LootFilter.of(config.preset("strict")).withExtras(pending);
+        assertTrue(switched.needsMigration());
+        switched.migrate(all);
+        assertEquals(LootFilter.BaseRule.HIDE, switched.baseRule("short_bow"));
     }
 
-    /** 2026-10：只撿的基底只管有挑的那一類；權杖與錘分開；護符與好詞綴同類換預設組合也留著。 */
+    /** 2026-11-03 照站長：隱藏的基底絕對不撿（T1 也不撿）、必撿的不看其他規則、顯示的照其他規則；權杖與錘分開；護符與好詞綴同類換預設組合也留著。 */
     @Test
-    void keepBasesOnlyLimitListedCategoriesAndExtrasSurvivePresets() {
-        final java.util.Map<String, Set<String>> bases = java.util.Map.of(
-                "long_bow", Set.of("weapon", "two_hand", "bow", "ranged"),
-                "short_bow", Set.of("weapon", "two_hand", "bow", "ranged"),
-                "iron_ring", Set.of("jewellery", "ring"));
-        final LootFilter filter = new LootFilter().withBaseTags(id -> bases.getOrDefault(id, Set.of()));
-        filter.toggleKeepBase("long_bow");
+    void baseRulesComeFirstAndExtrasSurvivePresets() {
+        final LootFilter filter = new LootFilter();
+        filter.cycleKeepAffixTier(false); // T1
+        filter.toggleEquipment(Rarity.RARE);
+        filter.setBaseRule("short_bow", LootFilter.BaseRule.HIDE);
+        filter.setBaseRule("gold_ring", LootFilter.BaseRule.ALWAYS);
         final LootFilter.Viewer nobody = LootFilter.Viewer.NONE;
-        assertFalse(filter.hides(base(Rarity.RARE, "long_bow", "weapon", "two_hand", "bow", "ranged"), nobody));
-        assertTrue(filter.hides(base(Rarity.RARE, "short_bow", "weapon", "two_hand", "bow", "ranged"), nobody), "同一類沒挑的基底不撿");
-        assertFalse(filter.hides(base(Rarity.RARE, "leather_hood", "armour", "helmet", "dex_armour"), nobody), "防具沒挑：照原本規則");
-        assertFalse(filter.hides(base(Rarity.RARE, "iron_ring", "jewellery", "ring"), nobody), "飾品沒挑：照原本規則");
-        assertFalse(filter.hides(base(Rarity.RARE, "quiver_a", "quiver"), nobody), "箭袋沒挑：照原本規則");
-        filter.toggleKeepBase("iron_ring");
-        assertTrue(filter.hides(base(Rarity.RARE, "gold_ring", "jewellery", "ring"), nobody), "飾品有挑了：其他戒指不撿");
-        assertTrue(filter.copy().hides(base(Rarity.RARE, "gold_ring", "jewellery", "ring"), nobody), "複本也知道基底的標籤");
-        // 不知道基底標籤（舊呼叫、測試）：照舊全部都管
-        final LootFilter plain = new LootFilter();
-        plain.toggleKeepBase("long_bow");
-        assertTrue(plain.hides(base(Rarity.RARE, "leather_hood", "armour", "helmet", "dex_armour"), nobody));
+        final String[] bow = {"weapon", "two_hand", "bow", "ranged"};
+        assertTrue(filter.hides(ranked(Rarity.RARE, "short_bow", 1, bow), nobody), "隱藏的基底：有 T1 也不撿");
+        assertTrue(filter.hides(ranked(Rarity.NORMAL, "short_bow", 0, bow), nobody));
+        assertTrue(filter.hides(ranked(Rarity.RARE, "long_bow", 3, bow), nobody), "顯示的基底：照稀有度（稀有藏、只有 T3 不救）");
+        assertFalse(filter.hides(ranked(Rarity.RARE, "long_bow", 1, bow), nobody), "顯示的基底：有 T1 救回來");
+        assertFalse(filter.hides(ranked(Rarity.NORMAL, "long_bow", 0, bow), nobody), "普通沒藏：撿");
+        assertTrue(filter.hides(ranked(Rarity.RARE, "gold_ring", 5, "jewellery", "ring"), nobody), "必撿：門檻 T1、只有 T5 不撿");
+        assertTrue(filter.hides(ranked(Rarity.NORMAL, "gold_ring", 0, "jewellery", "ring"), nobody), "必撿：門檻開著、沒有詞綴不撿");
+        assertFalse(filter.hides(ranked(Rarity.RARE, "gold_ring", 1, "jewellery", "ring"), nobody), "必撿：有 T1 一律撿（稀有藏了也撿）");
+        final LootFilter noTier = filter.copy();
+        noTier.cycleKeepAffixTier(true); // T1 → 關
+        assertFalse(noTier.hides(ranked(Rarity.RARE, "gold_ring", 5, "jewellery", "ring"), nobody), "必撿：門檻關就全部撿");
+        assertFalse(noTier.hides(ranked(Rarity.NORMAL, "gold_ring", 0, "jewellery", "ring"), nobody));
+        filter.setBaseRule("map_c", LootFilter.BaseRule.ALWAYS);
+        assertFalse(filter.hides(new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, Rarity.NORMAL, null, false, 70, Set.of("map", "map_t5"), 5, 0, 0, "map_c"),
+                nobody), "必撿的地圖不看詞綴");
+        // 必撿也不看等級差、同類同系；隱藏的基底跟珠寶、地圖一樣適用
+        filter.toggleWeaponsLikeMine();
+        filter.cycleLevelGap(false);
+        filter.setBaseRule("iron_sword", LootFilter.BaseRule.ALWAYS);
+        filter.setBaseRule("ruby_jewel", LootFilter.BaseRule.HIDE);
+        filter.setBaseRule("map_a", LootFilter.BaseRule.HIDE);
+        final LootFilter.Viewer archer = new LootFilter.Viewer(90, Set.of("weapon", "two_hand", "bow", "ranged"), Set.of());
+        assertFalse(filter.hides(new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, Rarity.NORMAL, null, false, 10, Set.of("weapon", "one_hand", "sword"),
+                0, 0, 1, "iron_sword"), archer), "必撿：有 T1 的話不同類、等級差太多也撿");
+        assertTrue(filter.hides(new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, Rarity.NORMAL, null, false, 10, Set.of("weapon", "one_hand", "sword"),
+                0, 0, 2, "iron_sword"), archer), "必撿：只有 T2 不撿");
+        assertTrue(filter.hides(new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, Rarity.NORMAL, null, false, 10, Set.of("weapon", "one_hand", "sword"),
+                0, 0, 0, "other_sword"), archer), "顯示：不同類不撿");
+        assertTrue(filter.hides(ranked(Rarity.RARE, "ruby_jewel", 1, "jewel", "ruby"), nobody), "隱藏的珠寶：T1 也不撿");
+        assertFalse(filter.hides(ranked(Rarity.MAGIC, "emerald_jewel", 1, "jewel", "emerald"), nobody), "顯示的珠寶：照稀有度（魔法沒藏）");
+        assertTrue(filter.hides(ranked(Rarity.RARE, "emerald_jewel", 3, "jewel", "emerald"), nobody), "顯示的珠寶：稀有藏了、T3 不救");
+        assertFalse(filter.hides(ranked(Rarity.MAGIC, "emerald_jewel", 1, "jewel", "emerald"), archer), "珠寶不看等級差、同類");
+        assertTrue(filter.hides(new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, Rarity.RARE, null, false, 70, Set.of("map", "map_t5"), 5, 0, 0, "map_a"),
+                nobody), "隱藏的地圖整張不撿");
+        assertFalse(filter.hides(new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, Rarity.RARE, null, false, 70, Set.of("map", "map_t5"), 5, 0, 0, "map_b"),
+                nobody), "顯示的地圖照地圖的稀有度規則（關著）");
+        // 基底是另外記的：改了不會變成自訂；存檔來回；全部清掉
+        final LootFilter std = LootFilter.decode("p=standard;v=2", config);
+        std.toggleBaseHidden("short_bow");
+        std.toggleBaseAlways("gold_ring");
+        assertEquals("standard", std.preset());
+        assertEquals(LootFilter.BaseRule.HIDE, std.baseRule("short_bow"));
+        assertEquals(LootFilter.BaseRule.ALWAYS, std.baseRule("gold_ring"));
+        std.toggleBaseAlways("short_bow");
+        assertEquals(LootFilter.BaseRule.ALWAYS, std.baseRule("short_bow"), "隱藏的右鍵變必撿");
+        std.toggleBaseHidden("short_bow");
+        assertEquals(LootFilter.BaseRule.HIDE, std.baseRule("short_bow"), "必撿的左鍵變隱藏");
+        std.toggleBaseHidden("short_bow");
+        assertEquals(LootFilter.BaseRule.SHOW, std.baseRule("short_bow"));
+        assertEquals(Set.of(), std.hiddenBases());
+        assertEquals(Set.of("gold_ring"), std.alwaysBases());
+        assertEquals("p=standard;v=2;ab=gold_ring", std.encode());
+        assertEquals(std, LootFilter.decode(std.encode(), config));
+        std.clearBaseRules();
+        assertTrue(std.baseRules().isEmpty());
+        assertEquals("jewel", LootFilter.gearCategory(Set.of("jewel", "radius")));
+        assertEquals("map", LootFilter.gearCategory(Set.of("map")));
+        assertEquals("offhand", LootFilter.gearCategory(Set.of("quiver")));
 
         // 權杖也有錘的標籤：拿權杖不撿單手錘、拿單手錘不撿權杖
         final LootFilter.Viewer sceptre = new LootFilter.Viewer(70, Set.of("weapon", "one_hand", "mace", "sceptre", "melee"), Set.of());
@@ -373,60 +485,8 @@ class LootTest {
         final LootFilter custom = LootFilter.decode("p=custom;eq=;cur=;sg=0;ch=1;kl=1;ug=0;fl=all", config);
         assertTrue(custom.hidesCharms(), "舊的自訂存檔照樣讀得到");
         assertEquals(custom, LootFilter.decode(custom.encode(), config));
-    }
-
-    /** 2026-10-26：「只撿的基底也要好詞綴」：只撿的基底跟保留好詞綴一起算。 */
-    @Test
-    void keepBasesCanRequireGoodAffix() {
-        final java.util.Map<String, Set<String>> bases = java.util.Map.of(
-                "long_bow", Set.of("weapon", "two_hand", "bow", "ranged"),
-                "short_bow", Set.of("weapon", "two_hand", "bow", "ranged"));
-        final LootFilter filter = new LootFilter().withBaseTags(id -> bases.getOrDefault(id, Set.of()));
-        filter.toggleKeepBase("long_bow");
-        filter.toggleKeepBase("short_bow");
-        filter.cycleKeepAffixTier(false); // T1
-        assertEquals(1, filter.rules().keepAffixTier());
-        final LootFilter.Viewer nobody = LootFilter.Viewer.NONE;
-        final String[] bow = {"weapon", "two_hand", "bow", "ranged"};
-        final String[] helmet = {"armour", "helmet", "dex_armour"};
-        // 關著：照舊，清單內沒有 T1 也撿
-        assertFalse(filter.keepBasesNeedAffix());
-        assertFalse(filter.hides(ranked(Rarity.RARE, "long_bow", 3, bow), nobody));
-        assertTrue(filter.hides(ranked(Rarity.RARE, "crude_bow", 1, bow), nobody));
-        assertFalse(filter.hides(ranked(Rarity.MAGIC, "leather_hood", 0, helmet), nobody));
-        // 開了：清單內也要有 T1
-        filter.toggleKeepBasesNeedAffix();
-        assertTrue(filter.keepBasesNeedAffixActive());
-        assertTrue(filter.hides(ranked(Rarity.RARE, "long_bow", 3, bow), nobody), "清單內沒有 T1 不撿");
-        assertTrue(filter.hides(ranked(Rarity.NORMAL, "long_bow", 0, bow), nobody), "清單內沒有詞綴不撿");
-        assertFalse(filter.hides(ranked(Rarity.RARE, "long_bow", 1, bow), nobody), "清單內有 T1 撿");
-        assertFalse(filter.hides(ranked(Rarity.MAGIC, "short_bow", 1, bow), nobody), "清單內有 T1 撿");
-        assertTrue(filter.hides(ranked(Rarity.RARE, "crude_bow", 1, bow), nobody), "清單外有 T1 也不撿");
-        assertFalse(filter.hides(ranked(Rarity.MAGIC, "leather_hood", 0, helmet), nobody), "沒挑的類別照原本的規則");
-        filter.toggleEquipment(Rarity.MAGIC);
-        assertTrue(filter.hides(ranked(Rarity.MAGIC, "leather_hood", 0, helmet), nobody), "沒挑的類別照稀有度");
-        assertFalse(filter.hides(ranked(Rarity.MAGIC, "leather_hood", 1, helmet), nobody), "沒挑的類別照舊有好詞綴救回");
-        assertFalse(filter.hides(ranked(Rarity.MAGIC, "long_bow", 1, bow), nobody), "清單內有 T1 的不管稀有度都撿");
-        assertFalse(filter.hides(ranked(Rarity.UNIQUE, "long_bow", 0, bow), nobody), "傳奇不管");
-        // 門檻是關：組合不生效（照舊只看清單）
-        final LootFilter noTier = filter.copy();
-        noTier.cycleKeepAffixTier(true); // T1 → 關
-        assertEquals(0, noTier.rules().keepAffixTier());
-        assertTrue(noTier.keepBasesNeedAffix());
-        assertFalse(noTier.keepBasesNeedAffixActive());
-        assertFalse(noTier.hides(ranked(Rarity.RARE, "long_bow", 3, bow), nobody));
-        // 存檔：來回一樣；舊存檔沒有這欄是關；換預設組合也留著
-        final LootFilter back = LootFilter.decode(filter.encode(), config);
-        assertTrue(back.keepBasesNeedAffix());
-        assertEquals(filter, back);
-        assertFalse(LootFilter.decode("p=custom;eq=;cur=;sg=0;ug=0;fl=all;kb=long_bow", config).keepBasesNeedAffix(), "舊存檔讀進來是關");
-        final LootFilter standard = LootFilter.decode("p=standard", config);
-        standard.toggleKeepBasesNeedAffix();
-        assertEquals("standard", standard.preset());
-        assertTrue(LootFilter.decode(standard.encode(), config).keepBasesNeedAffix());
-        assertTrue(LootFilter.of(config.preset("strict")).withExtras(standard).keepBasesNeedAffix());
-        standard.showEverything();
-        assertFalse(standard.keepBasesNeedAffix());
+        assertTrue(custom.needsMigration(), "舊格式讀進來要換算");
+        assertFalse(LootFilter.decode(custom.encode(), config).needsMigration(), "存回去就是新格式");
     }
 
     private static LootFilter.Candidate ranked(final Rarity rarity, final String baseId, final int bestRank, final String... tags) {
@@ -538,22 +598,4 @@ class LootTest {
         assertEquals(0, big.deposit("zenith_orb", 1), "已經超過上限就不再收");
     }
 
-    /** 2026-10-30 照站長：劫盜特殊基底預設一定撿（稀有度藏起來也撿），可以改成照一般規則或不撿，存檔讀得回來。 */
-    @Test
-    void heistBasesAreKeptByDefault() {
-        final LootFilter filter = LootFilter.decode("p=custom;eq=normal,magic,rare", config);
-        final LootFilter.Candidate heist = new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, Rarity.RARE, null, false, 1,
-                Set.of("amulet", LootFilter.HEIST_BASE_TAG), 0, 0, 0, "jamulet_special");
-        final LootFilter.Candidate plain = new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, Rarity.RARE, null, false, 1,
-                Set.of("amulet"), 0, 0, 0, "jamulet_01");
-        assertTrue(filter.hides(plain, LootFilter.Viewer.NONE));
-        assertFalse(filter.hides(heist, LootFilter.Viewer.NONE), "預設一定撿");
-        filter.cycleHeistBases(false);
-        assertEquals(LootFilter.HeistBaseRule.NORMAL, filter.heistBases());
-        assertTrue(filter.hides(heist, LootFilter.Viewer.NONE), "照一般規則：稀有被藏");
-        filter.cycleHeistBases(false);
-        assertEquals(LootFilter.HeistBaseRule.HIDE, filter.heistBases());
-        assertEquals(LootFilter.HeistBaseRule.HIDE, LootFilter.decode(filter.encode(), config).heistBases(), "存檔讀得回來");
-        assertEquals(LootFilter.HeistBaseRule.ALWAYS, LootFilter.decode("p=standard", config).heistBases(), "舊存檔一定撿");
-    }
 }

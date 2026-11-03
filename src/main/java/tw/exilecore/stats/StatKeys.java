@@ -769,6 +769,13 @@ public final class StatKeys {
     public static final String FLAG_HINDER_IMMUNE = "flag.hinder_immune";
     public static final String FLAG_BLIND_IMMUNE = "flag.blind_immune";
     public static final String FLAG_CORRUPTED_BLOOD_IMMUNE = "flag.corrupted_blood_immune";
+    /**
+     * 2026-11-03 照站長（星潮祭世界 Boss「深潮海妖」要免疫所有控場）：開關 FLAT 1：免疫所有控場——暈眩（輕暈、重暈、蓄勢待暈）、
+     * 凍結、冰緩、電擊、癱瘓、阻礙、致盲、緩速、擊退／拉扯（setVelocity 推動）、嘲諷、原版藥水 SLOWNESS／LEVITATION／BLINDNESS／WEAKNESS，
+     * 以及詛咒裡的控場效果。只擋控場、不擋傷害類（感電、點燃、流血、中毒、傷害詛咒照常）。怪物詞綴 unstoppable（monsters.yml）給；
+     * 統一走 {@link tw.exilecore.ailment.AilmentService#ccImmune} 讀。這次之前沒有「全控場免疫」的開關，只有各別的免疫旗標。
+     */
+    public static final String FLAG_CC_IMMUNE = "flag.cc_immune";
 
     // ---- 2026-10-23：怪物詞綴的特殊行為（PoE2 稀有怪詞綴；只有怪物的屬性表會有，見 tw.exilecore.monster.MonsterMechanics）----
     /** 前綴：怪物特殊行為的屬性都以這個開頭（有就要追蹤）。 */

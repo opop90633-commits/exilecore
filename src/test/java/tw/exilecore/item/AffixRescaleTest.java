@@ -175,6 +175,7 @@ class AffixRescaleTest {
         // 腐化詞綴（蝕變石）一樣照比例
         final Affix enchant = repository.affixes().stream()
                 .filter(one -> one.spawnTags().contains(ItemRepository.CORRUPTION_TAG))
+                .filter(one -> !AffixRescale.retired(one)) // 2026-11-03：停用的腐化詞綴會被換掉，不拿來測照比例
                 .filter(one -> one.tiers().getFirst().vars().values().stream().anyMatch(r -> r[0] != r[1]))
                 .findFirst().orElseThrow();
         final String key = enchant.tiers().getFirst().vars().entrySet().stream().filter(e -> e.getValue()[0] != e.getValue()[1])
@@ -290,5 +291,30 @@ class AffixRescaleTest {
         final RolledAffix plain = gson.fromJson("{\"id\":\"life_flat\",\"tier\":1,\"vars\":{\"value\":130}}", RolledAffix.class);
         assertNull(plain.ranges(), "舊物品沒記");
         assertNotEquals(0, repository.affixRevision());
+    }
+
+    /** 2026-11-03 照站長：揭露詞綴也照新資料換算；停用的換成揭露詞綴（不會變成一般詞綴），隱匿詞綴不動。 */
+    @Test
+    void unveiledAffixesRescaleAndRetiredOnesStayUnveiled() {
+        final Affix leech = repository.affix("unveiled_d_ring_mana_leech");
+        final int[] now = leech.ranges(1).get("value");
+        final ItemData scaled = rare(leech, 1, 50, range(0, 100)); // 舊範圍的一半
+        assertTrue(AffixRescale.apply(repository, scaled));
+        assertEquals((int) Math.round(now[0] + 0.5 * (now[1] - now[0])), scaled.affixes().getFirst().vars().get("value"), "揭露詞綴照比例換算");
+
+        final Affix retired = repository.affix("unveiled_d_ring_ignite");
+        assertTrue(AffixRescale.retired(retired));
+        final ItemData data = new ItemData("iron_ring", Rarity.RARE, 84);
+        data.affixes().add(new RolledAffix(retired.id(), 1, Map.of("value", 28)));
+        assertTrue(AffixRescale.apply(repository, data));
+        assertEquals(1, data.affixes().size());
+        final String now2 = data.affixes().getFirst().id();
+        assertTrue(Veiled.isUnveiled(now2), "停用的揭露詞綴換成揭露詞綴：" + now2);
+        assertFalse(AffixRescale.retired(repository.affix(now2)));
+
+        final ItemData veiled = new ItemData("iron_ring", Rarity.RARE, 84);
+        veiled.affixes().add(new RolledAffix(Veiled.VEILED_SUFFIX, 1, Map.of("value", 0)));
+        AffixRescale.apply(repository, veiled);
+        assertEquals(Veiled.VEILED_SUFFIX, veiled.affixes().getFirst().id(), "隱匿詞綴不動");
     }
 }

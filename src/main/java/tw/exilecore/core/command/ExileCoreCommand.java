@@ -251,6 +251,19 @@ public final class ExileCoreCommand {
                         .then(Commands.literal("build").executes(context -> festival(plugin, context, "build")))
                         .then(Commands.literal("bonus").executes(context -> festival(plugin, context, "bonus")))
                         .then(Commands.literal("pumpkin").executes(context -> festival(plugin, context, "pumpkin"))))
+                // 2026-11-03 星潮祭：/ec summer status|build|boss start|boss stop|round start|round stop|bonus|bottle
+                .then(Commands.literal("summer")
+                        .executes(context -> summer(plugin, context, "status"))
+                        .then(Commands.literal("status").executes(context -> summer(plugin, context, "status")))
+                        .then(Commands.literal("build").executes(context -> summer(plugin, context, "build")))
+                        .then(Commands.literal("boss")
+                                .then(Commands.literal("start").executes(context -> summer(plugin, context, "boss start")))
+                                .then(Commands.literal("stop").executes(context -> summer(plugin, context, "boss stop"))))
+                        .then(Commands.literal("round")
+                                .then(Commands.literal("start").executes(context -> summer(plugin, context, "round start")))
+                                .then(Commands.literal("stop").executes(context -> summer(plugin, context, "round stop"))))
+                        .then(Commands.literal("bonus").executes(context -> summer(plugin, context, "bonus")))
+                        .then(Commands.literal("bottle").executes(context -> summer(plugin, context, "bottle"))))
                 .then(Commands.literal("inv")
                         .then(Commands.argument("player", StringArgumentType.greedyString())
                                 .suggests(tw.exilecore.chat.ChatModule.targets(plugin))
@@ -978,6 +991,53 @@ public final class ExileCoreCommand {
             }
             default -> sender.sendMessage(plugin.text().prefixed("<gray>" + tw.exilecore.item.ItemRenderer.escape(festival.status())
                     + "。指令：king、stop、build、bonus、pumpkin"));
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
+    /** /ec summer（2026-11-03 星潮祭）：狀態、重蓋海灘、叫出／收掉海妖、開／收一局大亂鬥、滿潮、放一個漂流瓶。 */
+    private static int summer(final ExileCore plugin, final CommandContext<CommandSourceStack> context, final String action) {
+        final CommandSender sender = context.getSource().getSender();
+        final tw.exilecore.summer.SummerService summer = plugin.summer();
+        if (summer == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>夏日活動模組沒有啟用（看主控台）"));
+            return Command.SINGLE_SUCCESS;
+        }
+        switch (action) {
+            case "boss start" -> {
+                final String problem = summer.startKraken();
+                sender.sendMessage(plugin.text().prefixed(problem == null ? "<green>海妖出來了" : "<red>" + problem));
+            }
+            case "boss stop" -> {
+                summer.stopKraken("管理員收掉了海妖");
+                sender.sendMessage(plugin.text().prefixed("<green>收掉了"));
+            }
+            case "round start" -> {
+                final String problem = summer.startRound();
+                sender.sendMessage(plugin.text().prefixed(problem == null ? "<green>西瓜大亂鬥開了" : "<red>" + problem));
+            }
+            case "round stop" -> {
+                summer.endRound(false);
+                sender.sendMessage(plugin.text().prefixed("<green>收掉了（不算分）"));
+            }
+            case "build" -> {
+                final String problem = summer.buildArena(sender);
+                if (problem != null) {
+                    sender.sendMessage(plugin.text().prefixed("<red>" + problem));
+                }
+            }
+            case "bonus" -> {
+                summer.triggerBonus();
+                sender.sendMessage(plugin.text().prefixed("<green>滿潮開了"));
+            }
+            case "bottle" -> {
+                final Player player = playerOrNull(plugin, context);
+                if (player != null) {
+                    summer.spawnBottle(player.getLocation());
+                }
+            }
+            default -> sender.sendMessage(plugin.text().prefixed("<gray>" + tw.exilecore.item.ItemRenderer.escape(summer.status())
+                    + "。指令：build、boss start、boss stop、round start、round stop、bonus、bottle"));
         }
         return Command.SINGLE_SUCCESS;
     }

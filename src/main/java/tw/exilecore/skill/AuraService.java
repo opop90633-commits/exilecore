@@ -1256,7 +1256,8 @@ final class AuraService implements Listener {
                     decals.follow(prefix + "rune:" + i, player, "rune_" + SkillVisuals.auraRune(styles.get(i)), SIGIL_SIZE,
                             SkillVisuals.auraColor(styles.get(i)), Math.PI * 2 * i / styles.size(), true);
                 }
-                visuals.auraPulse(decals.viewers(player.getLocation()), player, styles);
+                // 2026-11-03 照站長：不再畫「每個光環一圈」的彩色環（有資源包的人跟腳下法陣疊在一起很亂，沒套資源包的人也不用）；
+                //   這次之前 visuals.auraPulse 每半秒畫一次（模組那邊是跟著人走的 RING）
             }
         }
         // 光環全關了、下線的：圈收掉

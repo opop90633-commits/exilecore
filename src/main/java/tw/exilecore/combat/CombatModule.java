@@ -73,6 +73,8 @@ public final class CombatModule implements Module {
     @Override
     public void enable() throws Exception {
         environment.load(plugin.getConfig().getConfigurationSection("combat.environment"));
+        // 2026-11-03 照站長：不可動搖（flag.cc_immune，星潮祭世界 Boss）的目標，減益裡的控場部分（緩速、定身、眩暈…）不放（Debuffs.apply）
+        debuffs.setCcImmunity(id -> plugin.ailments() != null && plugin.ailments().ccImmune(id));
         try {
             chargeConfig.load(plugin.dataFolder().resolve("data"));
         } catch (final java.io.IOException | RuntimeException e) {

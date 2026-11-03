@@ -137,6 +137,7 @@ public final class ExileCore extends JavaPlugin {
     private tw.exilecore.event.EventModule eventModule;
     private tw.exilecore.worldevent.WorldEventModule worldEventModule;
     private tw.exilecore.festival.FestivalModule festivalModule;
+    private tw.exilecore.summer.SummerModule summerModule; // 2026-11-03 夏日活動「星潮祭」（跟萬燈夜獨立，可同時存在）
     private tw.exilecore.card.CardModule cardModule; // 2026-10-19 星諭卡
     private tw.exilecore.slots.SlotsModule slotsModule; // 2026-11-02 拉霸機
     private tw.exilecore.life.LifeModule lifeModule;
@@ -248,6 +249,9 @@ public final class ExileCore extends JavaPlugin {
             for (final LiteralCommandNode<CommandSourceStack> node : tw.exilecore.festival.FestivalModule.commands(this)) {
                 event.registrar().register(node, "ExileCore 節慶活動（萬燈夜）");
             }
+            for (final LiteralCommandNode<CommandSourceStack> node : tw.exilecore.summer.SummerModule.commands(this)) {
+                event.registrar().register(node, "ExileCore 夏日活動（星潮祭）"); // 2026-11-03
+            }
             for (final LiteralCommandNode<CommandSourceStack> node : tw.exilecore.slots.SlotsModule.commands(this)) {
                 event.registrar().register(node, "ExileCore 拉霸機（營地，用金幣下注）"); // 2026-11-02
             }
@@ -317,6 +321,7 @@ public final class ExileCore extends JavaPlugin {
         this.eventModule = new tw.exilecore.event.EventModule(this);
         this.worldEventModule = new tw.exilecore.worldevent.WorldEventModule(this);
         this.festivalModule = new tw.exilecore.festival.FestivalModule(this);
+        this.summerModule = new tw.exilecore.summer.SummerModule(this);
         this.lifeModule = new tw.exilecore.life.LifeModule(this);
         this.chatModule = new tw.exilecore.chat.ChatModule(this);
         this.trainingModule = new tw.exilecore.training.TrainingModule(this);
@@ -363,6 +368,7 @@ public final class ExileCore extends JavaPlugin {
         modules.register(worldEventModule);                 // 不定時活動（開服活動）：世界 Boss、入侵怪潮、素材兌換（委託模組之後：稱號）
         modules.register(lifeModule);                       // 生活玩法「星骸之海」（2026-10）：海域、木筏、撈取、精力、生活等級（委託模組之後：帳號進度）
         modules.register(festivalModule);                   // 節慶活動（2026-10 萬燈夜）：幽燈墓園、點燈、南瓜王、糖果、兌換（委託、贊助之後：稱號、時裝）
+        modules.register(summerModule);                     // 夏日活動（2026-11-03 星潮祭）：星潮海灘、挖寶、大亂鬥、海妖、漂流瓶、兌換（跟萬燈夜獨立；一樣要在委託、贊助之後）
         modules.register(slotsModule);                      // 2026-11-02 營地的拉霸機：金幣下注（經濟、NPC、委託、贊助之後：帳號進度、稱號、時裝）
         modules.register(chatModule);                       // 角色名稱（TAB、聊天）、私訊、聊天裡的物品連結（要在昇華、委託之後：TAB 的稱號）
         modules.register(ladderModule);                     // 排行榜（等級、地圖、不死）
@@ -714,6 +720,11 @@ public final class ExileCore extends JavaPlugin {
 
     public tw.exilecore.festival.FestivalService festival() {
         return festivalModule == null ? null : festivalModule.service();
+    }
+
+    /** 夏日活動「星潮祭」（2026-11-03）；模組沒啟用時為 null。 */
+    public tw.exilecore.summer.SummerService summer() {
+        return summerModule == null ? null : summerModule.service();
     }
 
     /** 每月活動；模組沒啟用時為 null。 */

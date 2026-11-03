@@ -27,6 +27,8 @@ public final class WorldLore {
     private int campaignChannels = 1;
     /** 2026-10-22：角色等級到這裡的玩家派到第 2 線起（第 1 線留給低等級）；0 = 關掉。 */
     private int campaignHighLevel = 70;
+    /** 2026-11-03 照站長：開放幾條線（0 = 全部）；其他的隱藏、不能進（世界照樣載入，存在那裡的人登入不會掉進虛空）。 */
+    private int campaignOpenChannels;
     /** 2026-10-22：每次啟動都從劇情世界重新複製分流世界的營地。 */
     private boolean campaignRefreshOnStart = true;
     private long mapTime = 6000;
@@ -52,6 +54,7 @@ public final class WorldLore {
         campaignTime = 4000;
         campaignChannels = 1;
         campaignHighLevel = 70;
+        campaignOpenChannels = 0;
         campaignRefreshOnStart = true;
         mapTime = 6000;
         viewDistance = DEFAULT_VIEW_DISTANCE;
@@ -72,6 +75,7 @@ public final class WorldLore {
         campaignTime = campaign.integer("time", 4000);
         campaignChannels = Math.max(1, Math.min(TownChannels.MAX_CHANNELS, campaign.integer("channels", 1)));
         campaignHighLevel = Math.max(0, campaign.integer("high_level", 70));
+        campaignOpenChannels = Math.max(0, Math.min(TownChannels.MAX_CHANNELS, campaign.integer("open_channels", 0)));
         campaignRefreshOnStart = campaign.bool("refresh_on_start", true);
         mapTime = root.node("maps").integer("time", 6000);
         final YamlNode performance = root.node("performance");
@@ -115,6 +119,11 @@ public final class WorldLore {
     }
 
     /** 2026-10-22：角色等級到這裡的玩家派到第 2 線起（第 1 線留給低等級）；0 = 關掉。 */
+    /** 2026-11-03：開放幾條線（0 = 全部）。 */
+    public int campaignOpenChannels() {
+        return campaignOpenChannels;
+    }
+
     public int campaignHighLevel() {
         return campaignHighLevel;
     }

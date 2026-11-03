@@ -3,7 +3,8 @@
 # 一般的掉落、通貨都擲不到，只能靠盜賊首領揭露隱匿詞綴（三選一），或用揭露石（只在劫盜掉）。
 # 第一階（物品等級 60）＝PoE2 褻瀆詞綴的數值；第二階（物品等級 1）低一點。PoE2 的手套詞綴放到護腿上。
 # 有條件的（「最近」「低血時」之類）拿掉條件時數值有往下調；引擎沒有的機制（灌注、執政官、同伴、餘燼……）不收。
-# 舊的 33 條（unveiled_life_mana 等）在檔案最後，spawn_tags 改成 [retired]：已經有的物品照常生效，不會再揭露出來。
+# 舊的 33 條（unveiled_life_mana 等）在檔案最後，spawn_tags 改成 [retired]：不會再揭露出來；2026-11-03 照站長起，已經有的物品換成同類的揭露詞綴（AffixRescale，同群組優先，其次同前後綴、同屬性；找不到就照權重擲一條同前後綴的）。這次之前舊物品照常生效。
+# 2026-11-03 照站長：揭露詞綴的數值範圍改了，舊物品也照比例換算（跟一般詞綴一樣）。
 # 2026-10-27 照 PoE2 原始資料：每一階權重一樣（1000）；poe2db 寫「Modifier weight information cannot be obtained from game files」，遊戲資料每階都是 1。
 #   這次之前（2026-10-22）：高階更難出——每高一階的權重相對再 ×0.875（跟裝備詞綴的「×0.8 → ×0.7」同一個比例）；每條詞綴的權重總和不變（出現哪一條的機率不變，只改出哪一階）。
 #   這次之前（2026-10-22）：只有一階的揭露詞綴（全部技能等級、多連鎖、全部抗性上限）權重減半（150 → 75）。
@@ -50,12 +51,25 @@ unveiled_d_crossbow_grenade:
 unveiled_d_close_projectile:
   type: prefix
   group: unveiled_d_close_projectile
-  spawn_tags: [crossbow, quiver]
+  spawn_tags: [crossbow]   # 2026-11-03 照站長＋PoB2：箭袋拆成 unveiled_d_quiver_close_projectile（原作箭袋 20–30）；這次之前 [crossbow, quiver]
   names: [貼喉的, 抵心的]
   text: "近身時增加 {value}% 投射物傷害"
   tiers:
     - { tier: 1, ilvl: 60, weight: 500, value: [95, 109] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
     - { tier: 2, ilvl: 1, weight: 700, value: [85, 94] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
+  mods:
+    - { stat: damage.close, type: INCREASED, value: "{value}", tags: [projectile] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModQuiverAmanamuPrefixProjectileDamageCloseRange）：箭袋版從 unveiled_d_close_projectile 拆出來（那條是十字弓的 85–109）
+unveiled_d_quiver_close_projectile:
+  type: prefix
+  group: unveiled_d_quiver_close_projectile
+  spawn_tags: [quiver]
+  names: [抵喉的, 近淵的]
+  text: "近身時增加 {value}% 投射物傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [20, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [14, 21] }
   mods:
     - { stat: damage.close, type: INCREASED, value: "{value}", tags: [projectile] }
 
@@ -137,7 +151,7 @@ unveiled_d_weapon_lightning_pen:
 unveiled_d_mace_crush:
   type: prefix
   group: unveiled_d_mace_crush
-  spawn_tags: [mace, talisman]   # 2026-10-17：獸符也能揭露出來
+  spawn_tags: [mace]   # 2026-11-03 照站長＋PoB2：原作只有錘（AbyssModAllMacesKurgalPrefix…）；這次之前 [mace, talisman]（2026-10-17 加了獸符）
   exclude_tags: [sceptre]
   names: [碾骨的, 沉淵的]
   text: "增加 {value}% 物理傷害、減少 15% 攻擊速度"
@@ -252,7 +266,7 @@ unveiled_d_attack_area:
 unveiled_d_ring_ignite:
   type: prefix
   group: unveiled_d_ring_ignite
-  spawn_tags: [ring]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2：拿掉條件的重複（有 unveiled_d_ring_ignite_endurance），停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））；這次之前 [ring]
   names: [燃誓的, 灼契的]
   text: "增加 {value}% 點燃傷害"
   tiers:
@@ -264,7 +278,7 @@ unveiled_d_ring_ignite:
 unveiled_d_ring_freeze:
   type: prefix
   group: unveiled_d_ring_freeze
-  spawn_tags: [ring]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2：拿掉條件的重複（有 unveiled_d_ring_freeze_power），停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））；這次之前 [ring]
   names: [凝誓的, 冰契的]
   text: "增加 {value}% 凍結累積"
   tiers:
@@ -276,7 +290,7 @@ unveiled_d_ring_freeze:
 unveiled_d_ring_shock:
   type: prefix
   group: unveiled_d_ring_shock
-  spawn_tags: [ring]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2：拿掉條件的重複（有 unveiled_d_ring_shock_frenzy），停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））；這次之前 [ring]
   names: [震誓的, 雷契的]
   text: "增加 {value}% 感電效果"
   tiers:
@@ -288,7 +302,7 @@ unveiled_d_ring_shock:
 unveiled_d_belt_regen:
   type: prefix
   group: unveiled_d_belt_regen
-  spawn_tags: [belt]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2：拿掉條件的重複（有 unveiled_d_belt_regen_flask），停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））；這次之前 [belt]
   names: [淵息的, 續命的]
   text: "增加 {value}% 生命再生速度"   # 2026-10-27 照 PoE2 Life Regeneration rate 用語「生命再生速度」；這次之前寫「生命回復速度」
   tiers:
@@ -300,7 +314,7 @@ unveiled_d_belt_regen:
 unveiled_d_armour_attack:
   type: prefix
   group: unveiled_d_armour_attack
-  spawn_tags: [armour, shield]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2：原作只有珠寶有（AbyssModJewelPrefix…），停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））；這次之前 [armour, shield]
   names: [淵鋒的, 蝕刃的]
   text: "增加 {value}% 護甲、閃避值與最大能量護盾、增加 {dmg}% 攻擊傷害"
   tiers:
@@ -315,7 +329,7 @@ unveiled_d_armour_attack:
 unveiled_d_armour_spell:
   type: prefix
   group: unveiled_d_armour_spell
-  spawn_tags: [armour, shield]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2：原作只有珠寶有，停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））；這次之前 [armour, shield]
   names: [淵咒的, 蝕言的]
   text: "增加 {value}% 護甲、閃避值與最大能量護盾、增加 {dmg}% 法術傷害"
   tiers:
@@ -330,7 +344,7 @@ unveiled_d_armour_spell:
 unveiled_d_armour_minion:
   type: prefix
   group: unveiled_d_armour_minion
-  spawn_tags: [armour, shield]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2：原作只有珠寶有，停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））；這次之前 [armour, shield]
   names: [淵僕的, 蝕役的]
   text: "增加 {value}% 護甲、閃避值與最大能量護盾、增加 {dmg}% 召喚物傷害"
   tiers:
@@ -345,7 +359,7 @@ unveiled_d_armour_minion:
 unveiled_d_armour_thorns:
   type: prefix
   group: unveiled_d_armour_thorns
-  spawn_tags: [armour, shield]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2：原作只有珠寶有，停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））；這次之前 [armour, shield]
   names: [淵棘的, 蝕刺的]
   text: "增加 {value}% 護甲、閃避值與最大能量護盾、增加 {dmg}% 荊棘傷害"
   tiers:
@@ -360,7 +374,7 @@ unveiled_d_armour_thorns:
 unveiled_d_far_projectile:
   type: prefix
   group: unveiled_d_far_projectile
-  spawn_tags: [bow, quiver, spear]
+  spawn_tags: [bow, spear]   # 2026-11-03 照站長＋PoB2：箭袋拆成 unveiled_d_quiver_far_projectile（原作箭袋 20–30）；這次之前 [bow, quiver, spear]
   names: [遠襲的, 淵眺的]
   text: "增加 {value}% 投射物傷害"
   tiers:
@@ -369,10 +383,23 @@ unveiled_d_far_projectile:
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
 
+# 2026-11-03 照站長＋PoB2（AbyssModQuiverKurgalPrefixProjectileDamageFar）：箭袋版從 unveiled_d_far_projectile 拆出來；條件「6 公尺外」用 vs_far，照原值
+unveiled_d_quiver_far_projectile:
+  type: prefix
+  group: unveiled_d_quiver_far_projectile
+  spawn_tags: [quiver]
+  names: [遙矢的, 淵遠的]
+  text: "對 6 公尺外的敵人增加 {value}% 投射物傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [20, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [14, 21] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile, vs_far] }
+
 unveiled_d_minion_damage:
   type: prefix
   group: unveiled_d_minion_damage
-  spawn_tags: [amulet, ring, talisman]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2：原作戒指、項鍊沒有召喚物詞綴；獸符是 unveiled_d_talisman_minion_hit 拿掉條件的重複，停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））；這次之前 [amulet, ring, talisman]
   names: [驅淵的, 役蝕的]
   text: "增加 {value}% 召喚物傷害"
   tiers:
@@ -645,7 +672,7 @@ unveiled_d_focus_minion_level:
 unveiled_d_cost:
   type: suffix
   group: unveiled_d_cost
-  spawn_tags: [focus, wand, helmet, leggings, quiver]
+  spawn_tags: [focus, helmet, leggings, quiver]   # 2026-11-03 照站長＋PoB2：原作是頭盔、手套、法器、箭袋（AbyssModFourCatKurgalSuffixManaCostEfficiency）；這次之前多了魔杖
   names: [之省淵, 之節蝕]
   text: "增加 {value}% 魔力消耗效率"   # 2026-10-27 照 PoE2 Mana Cost Efficiency（消耗 ÷ (1 + 效率)）；這次之前「技能的魔力消耗減少」（skill.cost）
   tiers:
@@ -669,8 +696,7 @@ unveiled_d_wand_spell_area:
 unveiled_d_armour_break:
   type: suffix
   group: unveiled_d_armour_break
-  spawn_tags: [wand, mace]
-  exclude_tags: [sceptre]
+  spawn_tags: [wand]   # 2026-11-03 照站長＋PoB2：原作只有魔杖（AbyssModWandUlamanSuffixArmourBreakAmount）；這次之前 [wand, mace]、exclude [sceptre]
   names: [之碎甲, 之剖淵]
   text: "增加 {value}% 破甲"
   tiers:
@@ -731,12 +757,26 @@ unveiled_d_warcry_cooldown:
   type: suffix
   group: unveiled_d_warcry_cooldown
   spawn_tags: [mace, talisman]
-  exclude_tags: [sceptre]
+  exclude_tags: [sceptre, one_hand]   # 2026-11-03 照站長＋PoB2：單手錘（原作 17–25）拆成 unveiled_d_mace1h_warcry_cooldown；這次之前單手錘也出 28–31
   names: [之吼淵, 之嘯蝕]
   text: "戰吼的冷卻時間減少 {value}%"
   tiers:
     - { tier: 1, ilvl: 60, weight: 500, value: [28, 31] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
     - { tier: 2, ilvl: 1, weight: 700, value: [25, 27] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
+  mods:
+    - { stat: skill.cooldown, type: INCREASED, value: "-{value}", tags: [warcry] }
+
+# 2026-11-03 照站長＋PoB2（AbyssMod1HMaceKurgalSuffixWarcryCooldownRecoveryRate）：單手錘版從 unveiled_d_warcry_cooldown 拆出來（那條是雙手錘／獸符的 25–31）
+unveiled_d_mace1h_warcry_cooldown:
+  type: suffix
+  group: unveiled_d_warcry_cooldown
+  spawn_tags: [mace]
+  exclude_tags: [two_hand, sceptre]
+  names: [之吼錘, 之嘯淵]
+  text: "戰吼的冷卻時間減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [17, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [12, 17] }
   mods:
     - { stat: skill.cooldown, type: INCREASED, value: "-{value}", tags: [warcry] }
 
@@ -747,8 +787,8 @@ unveiled_d_talisman_rage:
   names: [之狂淵, 之怒蝕]
   text: "近戰攻擊擊中時獲得 {value} 點怒氣"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 500, value: [3, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
-    - { tier: 2, ilvl: 1, weight: 700, value: [2, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
+    - { tier: 1, ilvl: 60, weight: 500, value: [3, 6] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）   # 2026-11-03 照站長＋PoB2（AbyssModTalismanUlamanSuffixGainXRageOnMeleeHit 3–6）；這次之前 value: [3, 3]
+    - { tier: 2, ilvl: 1, weight: 700, value: [2, 4] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）   # 2026-11-03 照站長＋PoB2：約第 1 階七成；這次之前 value: [2, 2]
   mods:
     - { stat: rage.on_hit, type: FLAT, value: "{value}", tags: [melee] }
 
@@ -768,12 +808,25 @@ unveiled_d_attack_cost:
 unveiled_d_spirit_efficiency:
   type: suffix
   group: unveiled_d_spirit_efficiency
-  spawn_tags: [body, helmet, weapon]
+  spawn_tags: [body, weapon]   # 2026-11-03 照站長＋PoB2：頭盔（原作 4–8）拆成 unveiled_d_helmet_spirit_efficiency；這次之前 [body, helmet, weapon]
   names: [之魂契, 之淵寄]
   text: "精魂的保留效率增加 {value}%"
   tiers:
     - { tier: 1, ilvl: 60, weight: 500, value: [8, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
     - { tier: 2, ilvl: 1, weight: 700, value: [5, 7] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
+  mods:
+    - { stat: aura.reservation, type: INCREASED, value: "-{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModHelmAmanamuSuffixSpiritReservationEfficiency）：頭盔版從 unveiled_d_spirit_efficiency 拆出來（胸甲 6–12、武器 5–10）
+unveiled_d_helmet_spirit_efficiency:
+  type: suffix
+  group: unveiled_d_helmet_spirit_efficiency
+  spawn_tags: [helmet]
+  names: [之魂冠, 之淵寄冠]
+  text: "精魂的保留效率增加 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5] }
   mods:
     - { stat: aura.reservation, type: INCREASED, value: "-{value}" }
 
@@ -844,12 +897,26 @@ unveiled_d_daze:
 unveiled_d_immobilise:
   type: suffix
   group: unveiled_d_immobilise
-  spawn_tags: [bow, spear, leggings]
+  spawn_tags: [bow, spear]   # 2026-11-03 照站長＋PoB2：護腿（原作手套 10–20）拆成 unveiled_d_leggings_immobilise；這次之前 [bow, spear, leggings]
   names: [之縛淵, 之滯蝕]
   text: "增加 {value}% 暈眩累積與凍結累積"
   tiers:
     - { tier: 1, ilvl: 60, weight: 500, value: [30, 34] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
     - { tier: 2, ilvl: 1, weight: 700, value: [25, 29] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
+  mods:
+    - { stat: stun.buildup, type: INCREASED, value: "{value}" }
+    - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModGlovesAmanamuSuffixImmobilisationBuildUp）：手套→護腿；從 unveiled_d_immobilise 拆出來（那條是弓／矛的 25–34）
+unveiled_d_leggings_immobilise:
+  type: suffix
+  group: unveiled_d_leggings_immobilise
+  spawn_tags: [leggings]
+  names: [之絆淵, 之滯腿]
+  text: "增加 {value}% 暈眩累積與凍結累積"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [10, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [7, 14] }
   mods:
     - { stat: stun.buildup, type: INCREASED, value: "{value}" }
     - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
@@ -870,6 +937,7 @@ unveiled_d_shield_max_res:
   type: suffix
   group: unveiled_d_shield_max_res
   spawn_tags: [shield]
+  exclude_tags: [focus]   # 2026-11-03 照站長＋PoB2：法器也有 shield 標籤，原作法器沒有這條
   names: [之淵壁]
   text: "+{value}% 全部抗性上限"
   tiers:
@@ -884,6 +952,7 @@ unveiled_d_shield_max_block:
   type: suffix
   group: unveiled_d_shield_max_block
   spawn_tags: [shield]
+  exclude_tags: [focus]   # 2026-11-03 照站長＋PoB2：法器也有 shield 標籤，原作法器沒有這條
   names: [之淵擋, 之蝕盾]
   text: "+{value}% 格擋上限"
   tiers:
@@ -1066,7 +1135,7 @@ unveiled_d_recoup_str:
   spawn_tags: [str_only, str_dex_armour, str_int_armour]
   exclude_tags: [body, boots, leggings]
   names: [之淵癒, 之黯癒]
-  text: "受到的傷害有 {value}% 在 4 秒內回復為生命"
+  text: "受到的傷害有 {value}% 在 8 秒內回復為生命"
   tiers:
     - { tier: 1, ilvl: 60, weight: 500, value: [10, 20] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
     - { tier: 2, ilvl: 1, weight: 700, value: [7, 14] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
@@ -1202,7 +1271,7 @@ unveiled_j_minion_area_life:
 unveiled_life_mana:
   type: prefix
   group: unveiled_life_mana
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [密盟的, 暗契的, 盜約的]
   text: "+{life} 最大生命、+{mana} 最大魔力"
   tiers:
@@ -1216,7 +1285,7 @@ unveiled_life_mana:
 unveiled_life_regen:
   type: prefix
   group: unveiled_life_regen
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [不眠者的, 守夜人的, 巡更人的]
   text: "增加 {value}% 最大生命、每秒回復 {regen/10}% 最大生命"
   tiers:
@@ -1230,7 +1299,7 @@ unveiled_life_regen:
 unveiled_phys_crit:
   type: prefix
   group: unveiled_phys_crit
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [刺客首領的, 割喉者的, 扒手的]
   text: "增加 {value}% 物理傷害、增加 {crit}% 暴擊率"
   tiers:
@@ -1244,7 +1313,7 @@ unveiled_phys_crit:
 unveiled_spell_mana:
   type: prefix
   group: unveiled_spell_mana
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [禁書竊賊的, 符文盜的, 抄經人的]
   text: "增加 {value}% 法術傷害、+{mana} 最大魔力"
   tiers:
@@ -1258,7 +1327,7 @@ unveiled_spell_mana:
 unveiled_elemental_crit:
   type: prefix
   group: unveiled_elemental_crit
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [銷贓人的, 黑市的, 走私者的]
   text: "增加 {value}% 元素傷害、增加 {multi}% 暴擊傷害加成"
   tiers:
@@ -1272,7 +1341,7 @@ unveiled_elemental_crit:
 unveiled_defences:
   type: prefix
   group: unveiled_defences
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [金庫守衛的, 鐵門的, 門閂的]
   text: "增加 {value}% 護甲、增加 {value}% 閃避、增加 {value}% 能量護盾"
   tiers:
@@ -1289,7 +1358,7 @@ unveiled_defences:
 unveiled_str_dex:
   type: suffix
   group: unveiled_attributes
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之劫掠, 之強取, 之順手]
   text: "+{value} 力量、+{value} 敏捷"
   tiers:
@@ -1303,7 +1372,7 @@ unveiled_str_dex:
 unveiled_str_int:
   type: suffix
   group: unveiled_attributes
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之破門, 之撬鎖, 之試探]
   text: "+{value} 力量、+{value} 智慧"
   tiers:
@@ -1317,7 +1386,7 @@ unveiled_str_int:
 unveiled_dex_int:
   type: suffix
   group: unveiled_attributes
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之潛行, 之暗影, 之躡足]
   text: "+{value} 敏捷、+{value} 智慧"
   tiers:
@@ -1331,7 +1400,7 @@ unveiled_dex_int:
 unveiled_fire_cold:
   type: suffix
   group: unveiled_resists
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之冰火賊, 之霜焰, 之溫差]
   text: "+{value}% 火焰抗性、+{value}% 冰冷抗性"
   tiers:
@@ -1345,7 +1414,7 @@ unveiled_fire_cold:
 unveiled_fire_lightning:
   type: suffix
   group: unveiled_resists
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之雷火賊, 之焰電, 之燎原]
   text: "+{value}% 火焰抗性、+{value}% 閃電抗性"
   tiers:
@@ -1359,7 +1428,7 @@ unveiled_fire_lightning:
 unveiled_cold_lightning:
   type: suffix
   group: unveiled_resists
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之霜雷賊, 之凍電, 之寒風]
   text: "+{value}% 冰冷抗性、+{value}% 閃電抗性"
   tiers:
@@ -1373,7 +1442,7 @@ unveiled_cold_lightning:
 unveiled_speed:
   type: suffix
   group: unveiled_speed
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之飛賊, 之快手, 之扒竊]
   text: "增加 {value}% 攻擊速度、增加 {value}% 施法速度"
   tiers:
@@ -1387,7 +1456,7 @@ unveiled_speed:
 unveiled_escape:
   type: suffix
   group: unveiled_escape
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之脫逃, 之溜走, 之跑路]
   text: "增加 {value}% 移動速度、+{res}% 混沌抗性"
   tiers:
@@ -1401,7 +1470,7 @@ unveiled_escape:
 unveiled_loot:
   type: suffix
   group: unveiled_loot
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之贓物, 之橫財, 之順手牽羊]
   text: "增加 {value}% 物品稀有度、增加 {quantity}% 物品數量"
   tiers:
@@ -1415,7 +1484,7 @@ unveiled_loot:
 unveiled_strike:
   type: suffix
   group: unveiled_strike
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之群毆, 之混戰, 之亂鬥]
   text: "打擊技能多打 {value} 個附近的敵人、增加 {speed}% 攻擊速度"
   tiers:
@@ -1430,7 +1499,7 @@ unveiled_strike:
 unveiled_phys_bleed:
   type: prefix
   group: unveiled_phys_bleed
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [被選召的, 割肉者的, 放血人的]
   text: "增加 {value}% 物理傷害、攻擊擊中時 {bleed}% 機率造成流血"
   tiers:
@@ -1444,7 +1513,7 @@ unveiled_phys_bleed:
 unveiled_phys_poison:
   type: prefix
   group: unveiled_phys_poison
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [被選召的, 毒牙的, 藥師的]
   text: "增加 {value}% 物理傷害、擊中時 {poison}% 機率造成中毒"
   tiers:
@@ -1458,7 +1527,7 @@ unveiled_phys_poison:
 unveiled_ele_ailment:
   type: prefix
   group: unveiled_ele_ailment
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [被選召的, 祕術士的, 元素師的]
   text: "增加 {value}% 元素傷害、增加 {duration}% 異常狀態持續時間"
   tiers:
@@ -1472,7 +1541,7 @@ unveiled_ele_ailment:
 unveiled_minion:
   type: prefix
   group: unveiled_minion
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [被選召的, 牧屍人的, 驅靈者的]
   text: "增加 {value}% 召喚物傷害、增加 {life}% 召喚物最大生命"
   tiers:
@@ -1486,7 +1555,7 @@ unveiled_minion:
 unveiled_armour_stun:
   type: prefix
   group: unveiled_armour_stun
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [被選召的, 盾衛的, 鐵壁的]
   text: "增加 {value}% 護甲、+{life} 最大生命、+{stun}% 機率避免暈眩"
   tiers:
@@ -1501,7 +1570,7 @@ unveiled_armour_stun:
 unveiled_evasion_move:
   type: prefix
   group: unveiled_evasion_move
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [被選召的, 影行者的, 夜行者的]
   text: "增加 {value}% 閃避、+{life} 最大生命"
   tiers:
@@ -1515,7 +1584,7 @@ unveiled_evasion_move:
 unveiled_es_recharge:
   type: prefix
   group: unveiled_es_recharge
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [被選召的, 咒縛者的, 秘儀師的]
   text: "增加 {value}% 能量護盾、增加 {recharge}% 能量護盾回充速度"
   tiers:
@@ -1529,7 +1598,7 @@ unveiled_es_recharge:
 unveiled_area_projectile:
   type: prefix
   group: unveiled_area_projectile
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [被選召的, 爆破手的, 神射手的]
   text: "增加 {value}% 範圍傷害、增加 {value}% 投射物傷害"
   tiers:
@@ -1543,7 +1612,7 @@ unveiled_area_projectile:
 unveiled_quiver:
   type: prefix
   group: unveiled_quiver
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [被選召的, 箭匠的, 獵首者的]
   text: "攻擊附加 {min} 到 {max} 物理傷害、增加 {speed}% 投射物速度"
   tiers:
@@ -1558,7 +1627,7 @@ unveiled_quiver:
 unveiled_attack_crit:
   type: suffix
   group: unveiled_attack_crit
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之教團, 之刺殺, 之奪命]
   text: "增加 {value}% 攻擊速度、增加 {crit}% 暴擊率"
   tiers:
@@ -1572,7 +1641,7 @@ unveiled_attack_crit:
 unveiled_cast_crit:
   type: suffix
   group: unveiled_cast_crit
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之教團, 之密咒, 之禁語]
   text: "增加 {value}% 施法速度、增加 {crit}% 法術暴擊率"
   tiers:
@@ -1586,7 +1655,7 @@ unveiled_cast_crit:
 unveiled_double:
   type: suffix
   group: unveiled_double
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之教團, 之重擊, 之雙殺]
   text: "擊中時 {value}% 機率造成雙倍傷害"
   tiers:
@@ -1599,7 +1668,7 @@ unveiled_double:
 unveiled_attr_res:
   type: suffix
   group: unveiled_attr_res
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之教團, 之同盟, 之誓約]
   text: "+{attr} 全部屬性、+{res}% 全部元素抗性"
   tiers:
@@ -1617,7 +1686,7 @@ unveiled_attr_res:
 unveiled_chaos_regen:
   type: suffix
   group: unveiled_chaos_regen
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之教團, 之解毒, 之不朽]
   text: "+{res}% 混沌抗性、每秒回復 {regen/10}% 最大生命"
   tiers:
@@ -1631,7 +1700,7 @@ unveiled_chaos_regen:
 unveiled_avoid_elemental:
   type: suffix
   group: unveiled_avoid_elemental
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之教團, 之定心, 之不動]
   text: "+{value}% 機率避免被點燃、冰緩與凍結、感電"
   tiers:
@@ -1646,7 +1715,7 @@ unveiled_avoid_elemental:
 unveiled_cooldown_duration:
   type: suffix
   group: unveiled_cooldown_duration
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之教團, 之專注, 之冥想]
   text: "冷卻時間減少 {value}%、增加 {duration}% 技能持續時間"
   tiers:
@@ -1660,7 +1729,7 @@ unveiled_cooldown_duration:
 unveiled_frenzy:
   type: suffix
   group: unveiled_frenzy
-  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品照常生效）
+  spawn_tags: [retired]   # 2026-10 改版：停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））
   names: [之教團, 之狂熱, 之殺意]
   text: "+1 怒星上限、擊殺時 {value}% 機率獲得一顆怒星"
   tiers:
@@ -1705,8 +1774,8 @@ unveiled_j_chaos:
   names: [淵蝕的, 黯蝕的]
   text: "增加 {value}% 混沌傷害"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 500, value: [6, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
-    - { tier: 2, ilvl: 1, weight: 700, value: [4, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
+    - { tier: 1, ilvl: 60, weight: 500, value: [4, 8] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）   # 2026-11-03 照站長＋PoB2（AbyssModJewelPrefixChaosDamageWitherEffect 4–8）；這次之前 value: [6, 10]
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）   # 2026-11-03 照站長＋PoB2：約第 1 階七成；這次之前 value: [4, 5]
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
 
@@ -1717,8 +1786,8 @@ unveiled_j_cold:
   names: [淵霜的, 黯霜的]
   text: "增加 {value}% 冰冷傷害、穿透 {b}% 冰冷抗性"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 500, value: [5, 8], b: [3, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4], b: [2, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
+    - { tier: 1, ilvl: 60, weight: 500, value: [5, 8], b: [4, 7] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）   # 2026-11-03 照站長＋PoB2（AbyssModJewelPrefixColdDamageAndPen：穿透 4–7）；這次之前 value: [5, 8], b: [3, 5]
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4], b: [3, 4] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）   # 2026-11-03 照站長＋PoB2：穿透約第 1 階七成；這次之前 value: [3, 4], b: [2, 2]
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
     - { stat: penetration, type: FLAT, value: "{b}", tags: [cold] }
@@ -1730,8 +1799,8 @@ unveiled_j_fire:
   names: [淵焰的, 黯焰的]
   text: "增加 {value}% 火焰傷害、穿透 {b}% 火焰抗性"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 500, value: [5, 8], b: [3, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4], b: [2, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
+    - { tier: 1, ilvl: 60, weight: 500, value: [5, 8], b: [4, 7] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）   # 2026-11-03 照站長＋PoB2（AbyssModJewelPrefixFireDamageAndPen：穿透 4–7）；這次之前 value: [5, 8], b: [3, 5]
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4], b: [3, 4] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）   # 2026-11-03 照站長＋PoB2：穿透約第 1 階七成；這次之前 value: [3, 4], b: [2, 2]
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
     - { stat: penetration, type: FLAT, value: "{b}", tags: [fire] }
@@ -1743,23 +1812,28 @@ unveiled_j_lightning:
   names: [淵霆的, 黯霆的]
   text: "增加 {value}% 閃電傷害、穿透 {b}% 閃電抗性"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 500, value: [5, 8], b: [3, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
-    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4], b: [2, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
+    - { tier: 1, ilvl: 60, weight: 500, value: [5, 8], b: [4, 7] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）   # 2026-11-03 照站長＋PoB2（AbyssModJewelPrefixLightningDamageAndPen：穿透 4–7）；這次之前 value: [5, 8], b: [3, 5]
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4], b: [3, 4] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）   # 2026-11-03 照站長＋PoB2：穿透約第 1 階七成；這次之前 value: [3, 4], b: [2, 2]
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
     - { stat: penetration, type: FLAT, value: "{b}", tags: [lightning] }
 
-unveiled_j_elemental:
+unveiled_j_elemental:   # 2026-11-03 照站長＋PoB2（AbyssModJewelPrefixElementalDamageAilmentMagnitude）：4–8% 元素傷害＋4–8% 異常效果；這次之前只有元素傷害 6–10
   type: prefix
   group: unveiled_j_elemental
   spawn_tags: [ruby, emerald, sapphire]
   names: [淵素的, 黯素的]
-  text: "增加 {value}% 元素傷害"
+  text: "增加 {value}% 元素傷害、增加 {value}% 異常狀態效果"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 500, value: [6, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
-    - { tier: 2, ilvl: 1, weight: 700, value: [4, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
+    - { tier: 1, ilvl: 60, weight: 500, value: [6, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [4, 5] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [elemental] }
+    - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: poison.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: shock.effect, type: INCREASED, value: "{value}" }
+    - { stat: chill.effect, type: INCREASED, value: "{value}" }
 
 unveiled_j_evasion_attack:
   type: prefix
@@ -1904,15 +1978,15 @@ unveiled_j_poison:
     - { stat: poison.chance, type: FLAT, value: "{value}" }
     - { stat: poison.magnitude, type: INCREASED, value: "{b}" }
 
-unveiled_j_minion_life:
+unveiled_j_minion_life:   # 2026-11-03 照站長＋PoB2（AbyssModJewelPrefixMinionAreaAndLife）：4–8%；這次之前 6–10
   type: prefix
   group: unveiled_j_minion_life
   spawn_tags: [ruby, emerald, sapphire]
   names: [淵骸的, 黯骸的]
   text: "增加 {value}% 召喚物最大生命"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 500, value: [6, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
-    - { tier: 2, ilvl: 1, weight: 700, value: [4, 5] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
+    - { tier: 1, ilvl: 60, weight: 500, value: [6, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [4, 5] }
   mods:
     - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion] }
 
@@ -1948,8 +2022,8 @@ unveiled_j_attr_str:
   names: [淵力之, 黯力之]
   text: "增加 {value}% 力量"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 500, value: [2, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
-    - { tier: 2, ilvl: 1, weight: 700, value: [1, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
+    - { tier: 1, ilvl: 60, weight: 500, value: [1, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）   # 2026-11-03 照站長＋PoB2（AbyssModJewelSuffixIncreased… 1–2）；這次之前 value: [2, 3]
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）   # 2026-11-03 照站長＋PoB2；這次之前 value: [1, 2]
   mods:
     - { stat: attr.str, type: INCREASED, value: "{value}" }
 
@@ -1960,8 +2034,8 @@ unveiled_j_attr_dex:
   names: [淵捷之, 黯捷之]
   text: "增加 {value}% 敏捷"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 500, value: [2, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
-    - { tier: 2, ilvl: 1, weight: 700, value: [1, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
+    - { tier: 1, ilvl: 60, weight: 500, value: [1, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）   # 2026-11-03 照站長＋PoB2（AbyssModJewelSuffixIncreased… 1–2）；這次之前 value: [2, 3]
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）   # 2026-11-03 照站長＋PoB2；這次之前 value: [1, 2]
   mods:
     - { stat: attr.dex, type: INCREASED, value: "{value}" }
 
@@ -1972,8 +2046,8 @@ unveiled_j_attr_int:
   names: [淵智之, 黯智之]
   text: "增加 {value}% 智慧"
   tiers:
-    - { tier: 1, ilvl: 60, weight: 500, value: [2, 3] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
-    - { tier: 2, ilvl: 1, weight: 700, value: [1, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
+    - { tier: 1, ilvl: 60, weight: 500, value: [1, 2] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）   # 2026-11-03 照站長＋PoB2（AbyssModJewelSuffixIncreased… 1–2）；這次之前 value: [2, 3]
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）   # 2026-11-03 照站長＋PoB2；這次之前 value: [1, 2]
   mods:
     - { stat: attr.int, type: INCREASED, value: "{value}" }
 
@@ -2056,6 +2130,7 @@ unveiled_d_shield_recharge_block:
   type: suffix
   group: unveiled_d_shield_recharge_block
   spawn_tags: [shield]
+  exclude_tags: [focus]   # 2026-11-03 照站長＋PoB2：法器也有 shield 標籤，原作法器沒有這條
   names: [淵壁之, 黯壁之]
   text: "最近格擋過，則增加 {value}% 能量護盾回充速度"
   tiers:
@@ -2127,7 +2202,7 @@ unveiled_d_boots_cost_dodge:
 unveiled_d_jewellery_minion_hit:
   type: prefix
   group: unveiled_d_jewellery_minion_hit
-  spawn_tags: [ring, amulet]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2：原作戒指、項鍊沒有召喚物詞綴，停用（舊物品換成同類的揭露詞綴（2026-11-03 起，AffixRescale））；這次之前 [ring, amulet]
   names: [淵僕的, 黯僕的]
   text: "最近擊中過敵人，則增加 {value}% 召喚物傷害"
   tiers:
@@ -2168,7 +2243,7 @@ unveiled_d_gloves_speed_frenzy:
 unveiled_d_helmet_extra_power:
   type: suffix
   group: unveiled_d_helmet_extra_power
-  spawn_tags: [helmet]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2（ModVeiled 沒有這條：戰星來源是 10 月參考魂核、符文自己加的）：停用，舊物品換成同類的揭露詞綴；這次之前 [helmet]
   names: [淵銳之, 黯芒之]
   text: "獲得一顆銳星時 {value}% 機率多獲得一顆"
   tiers:
@@ -2180,7 +2255,7 @@ unveiled_d_helmet_extra_power:
 unveiled_d_gloves_extra_frenzy:
   type: suffix
   group: unveiled_d_gloves_extra_frenzy
-  spawn_tags: [leggings]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2（ModVeiled 沒有這條：戰星來源是 10 月參考魂核、符文自己加的）：停用，舊物品換成同類的揭露詞綴；這次之前 [leggings]
   names: [淵怒之, 黯潮之]
   text: "獲得一顆怒星時 {value}% 機率多獲得一顆"
   tiers:
@@ -2192,7 +2267,7 @@ unveiled_d_gloves_extra_frenzy:
 unveiled_d_boots_extra_endurance:
   type: suffix
   group: unveiled_d_boots_extra_endurance
-  spawn_tags: [boots]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2（ModVeiled 沒有這條：戰星來源是 10 月參考魂核、符文自己加的）：停用，舊物品換成同類的揭露詞綴；這次之前 [boots]
   names: [淵磐之, 黯壁之]
   text: "獲得一顆磐星時 {value}% 機率多獲得一顆"
   tiers:
@@ -2204,7 +2279,7 @@ unveiled_d_boots_extra_endurance:
 unveiled_d_amulet_rare_kill_charge:
   type: suffix
   group: unveiled_d_amulet_rare_kill_charge
-  spawn_tags: [amulet]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2（ModVeiled 沒有這條：戰星來源是 10 月參考魂核、符文自己加的）：停用，舊物品換成同類的揭露詞綴；這次之前 [amulet]
   names: [淵獵之, 黯首之]
   text: "擊殺稀有或傳奇怪物時 {value}% 機率各獲得一顆銳星、怒星與磐星"
   tiers:
@@ -2218,7 +2293,7 @@ unveiled_d_amulet_rare_kill_charge:
 unveiled_d_boots_dodge_frenzy:
   type: suffix
   group: unveiled_d_boots_dodge_frenzy
-  spawn_tags: [boots]
+  spawn_tags: [retired]   # 2026-11-03 照站長＋PoB2（ModVeiled 沒有這條：戰星來源是 10 月參考魂核、符文自己加的）：停用，舊物品換成同類的揭露詞綴；這次之前 [boots]
   names: [淵影之, 黯步之]
   text: "翻滾時 {value}% 機率獲得一顆怒星"
   tiers:
@@ -2226,3 +2301,1265 @@ unveiled_d_boots_dodge_frenzy:
     - { tier: 2, ilvl: 1, weight: 700, value: [8, 14] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: charge.event.dodge.frenzy, type: FLAT, value: "{value}" }
+
+# ---- 2026-11-03 照站長＋PoB2（ModVeiled.lua，2026-10-01）補的褻瀆詞綴：引擎做得到的；條件有對應的就照原作 ----
+
+# 2026-11-03 照站長＋PoB2（AbyssModHelmUlamanSuffixMarkedEnemyTakeIncreasedDamage）：條件「你標記的敵人」用 vs_marked；跟天賦樹 Marked for Sickness 一樣寫成更多
+unveiled_d_helmet_mark_damage:
+  type: suffix
+  group: unveiled_d_helmet_mark_damage
+  spawn_tags: [helmet]
+  names: [之印淵, 之蝕記]
+  text: "你標記的敵人受到的傷害更多 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [4, 8] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 5] }
+  mods:
+    - { stat: damage, type: MORE, value: "{value}", tags: [vs_marked] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModHelmUlamanSuffixLifeCostEfficiency）
+unveiled_d_helmet_life_cost:
+  type: suffix
+  group: unveiled_d_helmet_life_cost
+  spawn_tags: [helmet]
+  names: [之血省, 之淵償]
+  text: "增加 {value}% 生命消耗效率"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [8, 12] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 8] }
+  mods:
+    - { stat: skill.life_cost_efficiency, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModHelmAmanamuSuffixGloryGeneration）：榮耀產生照天賦樹（Knight of Tarcus）與珠寶 j2_banner_glory 的寫法：旗幟的冷卻回復
+unveiled_d_helmet_glory:
+  type: suffix
+  group: unveiled_d_helmet_glory
+  spawn_tags: [helmet]
+  names: [之耀淵, 之輝蝕]
+  text: "增加 {value}% 榮耀產生"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [10, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [7, 14] }
+  mods:
+    - { stat: cooldown.recovery, type: INCREASED, value: "{value}", tags: [banner] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModHelmKurgalSuffixArcaneSurgeEffect）
+unveiled_d_helmet_arcane_surge:
+  type: suffix
+  group: unveiled_d_helmet_arcane_surge
+  spawn_tags: [helmet]
+  names: [之秘淵, 之術湧]
+  text: "增加 {value}% 你身上的秘術增強效果"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [20, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [14, 21] }
+  mods:
+    - { stat: surging_chant.effect, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBodyShieldKurgalSuffixElementalEnergyShieldRecoup）：原作權重是頭盔、盾
+unveiled_d_es_recoup_elemental:
+  type: suffix
+  group: unveiled_d_es_recoup_elemental
+  spawn_tags: [helmet, shield]
+  exclude_tags: [focus]
+  names: [之淵補, 之蝕盾補]
+  text: "承受的元素傷害有 {value}% 補償為能量護盾"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [10, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [7, 14] }
+  mods:
+    - { stat: es.recoup_elemental, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBodyShieldKurgalSuffixArmourAppliesToChaosDamage）：原作權重是頭盔、盾
+unveiled_d_chaos_armour:
+  type: suffix
+  group: unveiled_d_chaos_armour
+  spawn_tags: [helmet, shield]
+  exclude_tags: [focus]
+  names: [之淵甲, 之蝕鎧]
+  text: "+{value}% 的護甲也套用於混沌傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [23, 31] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [16, 22] }
+  mods:
+    - { stat: asc.chaos_armour, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModGlovesKurgalSuffixCastSpeedWhileOnFullMana）：手套→護腿；PoB2 的文字是「when on Full Life」（代號寫 FullMana），照文字
+unveiled_d_leggings_cast_full_life:
+  type: suffix
+  group: unveiled_d_leggings_cast_full_life
+  spawn_tags: [leggings]
+  names: [之滿淵, 之盈蝕]
+  text: "滿血時增加 {value}% 施放速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [8, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 10] }
+  mods:
+    - { stat: cast.speed@fulllife, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModGlovesUlamanSuffixIncisionChance）：手套→護腿
+unveiled_d_leggings_incision:
+  type: suffix
+  group: unveiled_d_leggings_incision
+  spawn_tags: [leggings]
+  names: [之割淵, 之剖腿]
+  text: "攻擊擊中有 {value}% 機率施加切割"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [15, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [11, 17] }
+  mods:
+    - { stat: cut_wound.chance, type: FLAT, value: "{value}", tags: [attack] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModGlovesKurgalSuffixArcaneSurgeOnCriticalHit）：手套→護腿
+unveiled_d_leggings_arcane_surge_crit:
+  type: suffix
+  group: unveiled_d_leggings_arcane_surge_crit
+  spawn_tags: [leggings]
+  names: [之秘湧, 之術淵]
+  text: "暴擊時有 {value}% 機率獲得秘術增強"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [10, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [7, 10] }
+  mods:
+    - { stat: surging_chant.on_crit, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBootsUlamanSuffixCorruptedBloodImmunity）：開關，只有一階
+unveiled_d_boots_corrupted_blood:
+  type: suffix
+  group: unveiled_d_boots_corrupted_blood
+  spawn_tags: [boots]
+  names: [之淨血, 之淵凝]
+  text: "免疫腐化之血"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [1, 1] }   # 只有一階
+  mods:
+    - { stat: flag.corrupted_blood_immune, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBootsAmanamuSuffixReducedPotencyOfSlows）
+unveiled_d_boots_slow_taken:
+  type: suffix
+  group: unveiled_d_boots_slow_taken
+  spawn_tags: [boots]
+  names: [之淵疾, 之蝕迅]
+  text: "你身上減益的緩速幅度減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [12, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 14] }
+  mods:
+    - { stat: slow.taken, type: INCREASED, value: "-{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBootsKurgalSuffixManaRegenerationStationary）
+unveiled_d_boots_mana_regen_stationary:
+  type: suffix
+  group: unveiled_d_boots_mana_regen_stationary
+  spawn_tags: [boots]
+  names: [之靜淵, 之止蝕]
+  text: "靜止時增加 {value}% 魔力再生速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [40, 50] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [28, 35] }
+  mods:
+    - { stat: mana.regen@stationary, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBootsUlamanSuffixLifeRegenMoving）
+unveiled_d_boots_life_regen_moving:
+  type: suffix
+  group: unveiled_d_boots_life_regen_moving
+  spawn_tags: [boots]
+  names: [之行淵, 之奔蝕]
+  text: "移動時增加 {value}% 生命再生速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [40, 50] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [28, 35] }
+  mods:
+    - { stat: life.regen@moving, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBeltUlamanSuffixReducedSlowPotencySelfIfCharmedRecently）
+unveiled_d_belt_slow_taken_charm:
+  type: suffix
+  group: unveiled_d_belt_slow_taken_charm
+  spawn_tags: [belt]
+  names: [之符疾, 之淵緩]
+  text: "最近用過護符，則你身上減益的緩速幅度減少 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [17, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [12, 17] }
+  mods:
+    - { stat: slow.taken@charm, type: INCREASED, value: "-{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBeltAmanamuSuffixThornsBaseCriticalStrikeChance）
+unveiled_d_belt_thorns_crit:
+  type: suffix
+  group: unveiled_d_belt_thorns_crit
+  spawn_tags: [belt]
+  names: [之棘淵, 之刺蝕]
+  text: "+{value}% 荊棘暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [2, 4] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 2] }
+  mods:
+    - { stat: thorns.crit, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBodyShieldUlamanSuffixHitsAgainstYouReducedCriticalDamage）
+unveiled_d_crit_taken:
+  type: suffix
+  group: unveiled_d_crit_taken
+  spawn_tags: [body, shield]
+  exclude_tags: [focus]
+  names: [之淵護, 之蝕擋]
+  text: "減少 {value}% 擊中對你的暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [17, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [12, 17] }
+  mods:
+    - { stat: crit.chance_taken, type: INCREASED, value: "-{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBodyShieldAmanamuSuffixReducedCursedEffectSelf）
+unveiled_d_curse_self:
+  type: suffix
+  group: unveiled_d_curse_self
+  spawn_tags: [body, shield]
+  exclude_tags: [focus]
+  names: [之淵淨, 之蝕避]
+  text: "減少 {value}% 你身上的詛咒效果"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [25, 35] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [18, 24] }
+  mods:
+    - { stat: curse.effect_on_self, type: INCREASED, value: "-{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBodyShieldKurgalSuffixManaRecoup）
+unveiled_d_mana_recoup:
+  type: suffix
+  group: unveiled_d_mana_recoup
+  spawn_tags: [body, shield]
+  exclude_tags: [focus]
+  names: [之淵流, 之蝕潮]
+  text: "受到的傷害有 {value}% 在 8 秒內回復為魔力"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [10, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [7, 14] }
+  mods:
+    - { stat: mana.recoup, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBodyArmourUlamanSuffixDeflectDamagePrevented）
+unveiled_d_body_deflect_prevent:
+  type: suffix
+  group: unveiled_d_body_deflect_prevent
+  spawn_tags: [body]
+  names: [之偏淵, 之斜蝕]
+  text: "抵銷被偏斜擊中 +{value}% 的傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [3, 5] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [2, 3] }
+  mods:
+    - { stat: deflection.prevent, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBodyArmourUlamanSuffixCompanionReservationEfficiency）：同伴：引擎有了（companion 標籤）
+unveiled_d_body_companion_reservation:
+  type: suffix
+  group: unveiled_d_body_companion_reservation
+  spawn_tags: [body]
+  names: [之伴淵, 之隨蝕]
+  text: "同伴技能的保留效率增加 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [12, 18] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 12] }
+  mods:
+    - { stat: aura.reservation, type: INCREASED, value: "-{value}", tags: [companion] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModShieldUlamanSuffixParryDebuffMagnitude）
+unveiled_d_shield_parried_effect:
+  type: suffix
+  group: unveiled_d_shield_parried_effect
+  spawn_tags: [shield]
+  exclude_tags: [focus]
+  names: [之架淵, 之格蝕]
+  text: "增加 {value}% 被招架減益幅度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [20, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [14, 21] }
+  mods:
+    - { stat: parry.parried_effect, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModShieldUlamanSuffixParryDebuffDuration）
+unveiled_d_shield_parried_duration:
+  type: suffix
+  group: unveiled_d_shield_parried_duration
+  spawn_tags: [shield]
+  exclude_tags: [focus]
+  names: [之架久, 之淵滯]
+  text: "增加 {value}% 被招架減益持續時間"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [25, 35] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [18, 24] }
+  mods:
+    - { stat: parry.parried_duration, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModShieldAmanamuSuffixHeavyStunDecaySelf）
+unveiled_d_shield_stun_decay:
+  type: suffix
+  group: unveiled_d_shield_stun_decay
+  spawn_tags: [shield]
+  exclude_tags: [focus]
+  names: [之淵穩, 之蝕定]
+  text: "你的沉重暈眩累積清空速度加快 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [30, 40] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [21, 28] }
+  mods:
+    - { stat: stun.decay_rate, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModShieldKurgalSuffixFlatManaGainedOnBlock）
+unveiled_d_shield_mana_on_block:
+  type: suffix
+  group: unveiled_d_shield_mana_on_block
+  spawn_tags: [shield]
+  exclude_tags: [focus]
+  names: [之擋淵, 之盾蝕]
+  text: "格擋時回復 {value} 魔力"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [6, 12] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [4, 8] }
+  mods:
+    - { stat: mana.on_block, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModFocusUlamanPrefixMaximumSpellTotems）：只有一階
+unveiled_d_focus_spell_totem:
+  type: prefix
+  group: unveiled_d_focus_spell_totem
+  spawn_tags: [focus]
+  names: [騰淵的, 黯騰的]
+  text: "法術技能同時最多多 {value} 個圖騰"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [1, 1] }   # 只有一階
+  mods:
+    - { stat: skill.totems, type: FLAT, value: "{value}", tags: [spell] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModFocusUlamanPrefixSpellDamageWhileWieldingMeleeWeapon）：條件用 @meleeweapon，照原值
+unveiled_d_focus_spell_melee:
+  type: prefix
+  group: unveiled_d_focus_spell_melee
+  spawn_tags: [focus]
+  names: [刃咒的, 淵鋒的]
+  text: "持用近戰武器時，增加 {value}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [61, 79] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [43, 55] }
+  mods:
+    - { stat: damage@meleeweapon, type: INCREASED, value: "{value}", tags: [spell] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModFocusAmanamuPrefixOfferingBuffEffect）：祭品：照天賦樹 Offering Effect 的寫法
+unveiled_d_focus_offering:
+  type: prefix
+  group: unveiled_d_focus_offering
+  spawn_tags: [focus]
+  names: [祭淵的, 黯祭的]
+  text: "增加 {value}% 祭品技能的增益效果"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [12, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 14] }
+  mods:
+    - { stat: warcry.effect, type: INCREASED, value: "{value}", tags: [offering] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModFocusKurgalPrefixInvocationSpellDamage）：祈喚：照天賦樹 Invocation Spell Damage 的寫法
+unveiled_d_focus_invocation:
+  type: prefix
+  group: unveiled_d_focus_invocation
+  spawn_tags: [focus]
+  names: [祈淵的, 黯祈的]
+  text: "增加 {value}% 祈喚法術的傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [61, 79] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [43, 55] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [invocation] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModFocusUlamanSuffixSpellManaCostConvertedToLifeCost）
+unveiled_d_focus_life_cost:
+  type: suffix
+  group: unveiled_d_focus_life_cost
+  spawn_tags: [focus]
+  names: [之血咒, 之淵償咒]
+  text: "{value}% 的法術魔力消耗轉換為生命消耗"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [10, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [7, 14] }
+  mods:
+    - { stat: skill.life_cost_percent, type: FLAT, value: "{value}", tags: [spell] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModFocusUlamanSuffixChanceForTwoAdditionalSpellProjectiles）
+unveiled_d_focus_spell_projectiles:
+  type: suffix
+  group: unveiled_d_focus_spell_projectiles
+  spawn_tags: [focus]
+  names: [之雙淵, 之叉蝕]
+  text: "法術技能有 {value}% 機率多射 2 發投射物"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [10, 16] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [7, 11] }
+  mods:
+    - { stat: skill.projectile_chance_two, type: FLAT, value: "{value}", tags: [spell] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModFocusAmanamuSuffixFasterCurseActivation）
+unveiled_d_focus_curse_delay:
+  type: suffix
+  group: unveiled_d_focus_curse_delay
+  spawn_tags: [focus]
+  names: [之速咒, 之淵詛]
+  text: "詛咒生效速度加快 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [10, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [7, 14] }
+  mods:
+    - { stat: curse.delay, type: INCREASED, value: "-{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModFocusKurgalSuffixChanceForAdditionalInfusion）：灌注：引擎有了
+unveiled_d_focus_infusion:
+  type: suffix
+  group: unveiled_d_focus_infusion
+  spawn_tags: [focus]
+  names: [之灌淵, 之注蝕]
+  text: "拾取元素灌注時有 {value}% 機率額外獲得一個同類型的元素灌注"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [15, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [11, 17] }
+  mods:
+    - { stat: infusion.extra_chance, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModQuiverUlamanPrefixIncreasesToProjectileSpeedApplyToDamage）：開關，只有一階
+unveiled_d_quiver_speed_damage:
+  type: prefix
+  group: unveiled_d_quiver_speed_damage
+  spawn_tags: [quiver]
+  names: [疾矢的, 淵迅的]
+  text: "投射物速度的增加與減少也套用於弓的傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [1, 1] }   # 只有一階
+  mods:
+    - { stat: flag.projectile_speed_bow_damage, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModQuiverUlamanSuffixChanceForExtraProjectilesWhileMoving）：條件用 @moving，照原值
+unveiled_d_quiver_moving_projectiles:
+  type: suffix
+  group: unveiled_d_quiver_moving_projectiles
+  spawn_tags: [quiver]
+  names: [之行矢, 之淵散]
+  text: "移動時，投射物攻擊有 {value}% 機率多射 2 發投射物"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [8, 12] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 8] }
+  mods:
+    - { stat: skill.projectile_chance_two@moving, type: FLAT, value: "{value}", tags: [attack, projectile] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModQuiverUlamanSuffixAttackCostConvertedToLifeCost）
+unveiled_d_quiver_life_cost:
+  type: suffix
+  group: unveiled_d_quiver_life_cost
+  spawn_tags: [quiver]
+  names: [之血矢, 之淵償矢]
+  text: "{value}% 的攻擊魔力消耗轉換為生命消耗"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [10, 14] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [7, 10] }
+  mods:
+    - { stat: skill.life_cost_percent, type: FLAT, value: "{value}", tags: [attack] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModQuiverAmanamuSuffixProjectileCriticalHitDamageCloseRange）：條件「2 公尺內」用 vs_close，照原值
+unveiled_d_quiver_close_crit:
+  type: suffix
+  group: unveiled_d_quiver_close_crit
+  spawn_tags: [quiver]
+  names: [之近淵, 之貼蝕]
+  text: "近身時投射物增加 {value}% 暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [18, 26] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [13, 18] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [projectile, vs_close] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModRingAmuletUlamanPrefixAttackDamageWhileLowLife）：條件用 @lowlife，照原值
+unveiled_d_jewellery_attack_low_life:
+  type: prefix
+  group: unveiled_d_jewellery_attack_low_life
+  spawn_tags: [ring, amulet]
+  names: [危淵的, 黯危的]
+  text: "低血時，增加 {value}% 攻擊傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [15, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [11, 17] }
+  mods:
+    - { stat: damage@lowlife, type: INCREASED, value: "{value}", tags: [attack] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModRingAmuletKurgalPrefixSpellDamageWhileEnergyShieldFull）：條件用 @fulles，照原值
+unveiled_d_jewellery_spell_full_es:
+  type: prefix
+  group: unveiled_d_jewellery_spell_full_es
+  spawn_tags: [ring, amulet]
+  names: [盈盾的, 淵盈的]
+  text: "能量護盾全滿時，增加 {value}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [15, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [11, 17] }
+  mods:
+    - { stat: damage@fulles, type: INCREASED, value: "{value}", tags: [spell] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModRingAmuletAmanamuPrefixRemnantEffect）：痕跡：引擎有了
+unveiled_d_jewellery_remnant_effect:
+  type: prefix
+  group: unveiled_d_jewellery_remnant_effect
+  spawn_tags: [ring, amulet]
+  names: [痕淵的, 黯痕戒的]
+  text: "增加 {value}% 你產生的痕跡效果"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [8, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 10] }
+  mods:
+    - { stat: remnant.effect, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModRingAmuletAmanamuSuffixRemnantCollectionRange）：痕跡：引擎有了
+unveiled_d_jewellery_remnant_range:
+  type: suffix
+  group: unveiled_d_jewellery_remnant_range
+  spawn_tags: [ring, amulet]
+  names: [之拾淵, 之痕遠]
+  text: "增加 {value}% 拾取痕跡的距離"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [20, 30] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [14, 21] }
+  mods:
+    - { stat: remnant.pickup_range, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModRingKurgalSuffixManaLeechAmount）
+unveiled_d_ring_mana_leech:
+  type: suffix
+  group: unveiled_d_ring_mana_leech
+  spawn_tags: [ring]
+  names: [之汲淵, 之吸蝕]
+  text: "增加 {value}% 魔力偷取量"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [12, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 14] }
+  mods:
+    - { stat: leech.mana_effect, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModAmuletAmanamuSuffixReducedRequirementEquipmentAndSkill）
+unveiled_d_amulet_attr_requirement:
+  type: suffix
+  group: unveiled_d_amulet_attr_requirement
+  spawn_tags: [amulet]
+  names: [之輕淵, 之減蝕]
+  text: "減少 {value}% 裝備與技能寶石的屬性需求"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [10, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [7, 10] }
+  mods:
+    - { stat: item.attr_requirement, type: INCREASED, value: "-{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModAmuletKurgalSuffixCooldownRecoveryRateCommandSkills）：照天賦樹「召喚物的冷卻回復速度」的寫法
+unveiled_d_amulet_minion_cooldown:
+  type: suffix
+  group: unveiled_d_amulet_minion_cooldown
+  spawn_tags: [amulet]
+  names: [之役淵, 之僕蝕]
+  text: "增加 {value}% 召喚物的冷卻回復速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [12, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 14] }
+  mods:
+    - { stat: cooldown.recovery, type: INCREASED, value: "{value}", tags: [minion] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModAmuletKurgalSuffixQualityofAllSkills）
+unveiled_d_amulet_skill_quality:
+  type: suffix
+  group: unveiled_d_amulet_skill_quality
+  spawn_tags: [amulet]
+  names: [之琢淵, 之磨蝕]
+  text: "+{value}% 全部技能品質"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [3, 5] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [2, 3] }
+  mods:
+    - { stat: skill.quality, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModAmuletUlamanPrefixChanceToNotConsumeGlory）：原作是 20–30% 機率保留 40% 榮耀；引擎只有「不消耗」，數值 ×0.4
+unveiled_d_amulet_glory_keep:
+  type: prefix
+  group: unveiled_d_amulet_glory_keep
+  spawn_tags: [amulet]
+  names: [存耀的, 淵耀的]
+  text: "需要榮耀的技能有 {value}% 機率不消耗榮耀"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [8, 12] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 8] }
+  mods:
+    - { stat: glory.keep_chance, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModStaffUlamanPrefixSpellDamagePer100MaximumLife）：引擎這個屬性只算非引導法術
+unveiled_d_staff_spell_per_life:
+  type: prefix
+  group: unveiled_d_staff_spell_per_life
+  spawn_tags: [staff]
+  names: [命咒的, 淵命的]
+  text: "每 100 最大生命，增加 {value}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [4, 5] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 3] }
+  mods:
+    - { stat: damage.spell_per_100_life, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModStaffKurgalPrefixSpellDamagePer100MaximumMana）
+unveiled_d_staff_spell_per_mana:
+  type: prefix
+  group: unveiled_d_staff_spell_per_mana
+  spawn_tags: [staff]
+  names: [魔咒的, 淵魔的]
+  text: "每 100 最大魔力，增加 {value}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [4, 5] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 3] }
+  mods:
+    - { stat: damage.spell_per_100_mana, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModStaffAmanamuPrefixSpellDamageWithSpellsThatCostLife）
+unveiled_d_staff_life_cost_damage:
+  type: prefix
+  group: unveiled_d_staff_life_cost_damage
+  spawn_tags: [staff]
+  names: [血咒的, 淵血的]
+  text: "消耗生命的法術，增加 {value}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [148, 178] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [104, 124] }
+  mods:
+    - { stat: damage.spell_costing_life, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModStaffKurgalPrefixMaximumInfusions）：灌注：引擎有了
+unveiled_d_staff_max_infusions:
+  type: prefix
+  group: unveiled_d_staff_max_infusions
+  spawn_tags: [staff]
+  names: [灌淵杖的, 黯注的]
+  text: "+{value} 元素灌注數量上限"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [1, 2] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [1, 1] }
+  mods:
+    - { stat: infusion.max, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModStaffUlamanSuffixChanceForSpellsToFireTwoAdditionalProjectiles）
+unveiled_d_staff_spell_projectiles:
+  type: suffix
+  group: unveiled_d_staff_spell_projectiles
+  spawn_tags: [staff]
+  names: [之雙杖, 之淵叉]
+  text: "法術技能有 {value}% 機率多射 2 發投射物"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [25, 35] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [18, 24] }
+  mods:
+    - { stat: skill.projectile_chance_two, type: FLAT, value: "{value}", tags: [spell] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModStaffAmanamuSuffixSpellManaCostConvertedToLifeCost）
+unveiled_d_staff_life_cost:
+  type: suffix
+  group: unveiled_d_staff_life_cost
+  spawn_tags: [staff]
+  names: [之血杖, 之淵償杖]
+  text: "{value}% 的法術魔力消耗轉換為生命消耗"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [25, 35] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [18, 24] }
+  mods:
+    - { stat: skill.life_cost_percent, type: FLAT, value: "{value}", tags: [spell] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModStaffAmanamuSuffixArchonDuration）：統治者（執政官）：引擎有了
+unveiled_d_staff_archon_duration:
+  type: suffix
+  group: unveiled_d_staff_archon_duration
+  spawn_tags: [staff]
+  names: [之統淵, 之御蝕]
+  text: "增加 {value}% 統治者增益持續時間"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [25, 35] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [18, 24] }
+  mods:
+    - { stat: archon.duration, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModStaffKurgalSuffixArchonCooldownRecovery）：統治者（執政官）：引擎有了
+unveiled_d_staff_archon_recovery:
+  type: suffix
+  group: unveiled_d_staff_archon_recovery
+  spawn_tags: [staff]
+  names: [之統復, 之淵御]
+  text: "統治者恢復期結束速度加快 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [25, 35] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [18, 24] }
+  mods:
+    - { stat: archon.recovery_speed, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModStaffKurgalSuffixPuppetMasterStacks）：傀儡大師：引擎有了
+unveiled_d_staff_puppet_master:
+  type: suffix
+  group: unveiled_d_staff_puppet_master
+  spawn_tags: [staff]
+  names: [之傀淵, 之偶蝕]
+  text: "+{value} 傀儡大師最大層數"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [3, 4] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [2, 3] }
+  mods:
+    - { stat: puppet.max, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModStaffKurgalSuffixCastSpeedWhileFullMana）：PoB2 的權重在魔杖上（代號寫 Staff），照權重放魔杖；條件用 @fullmana
+unveiled_d_wand_cast_full_mana:
+  type: suffix
+  group: unveiled_d_wand_cast_full_mana
+  spawn_tags: [wand]
+  names: [之盈魔, 之淵滿]
+  text: "滿魔力時增加 {value}% 施放速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [26, 36] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [18, 25] }
+  mods:
+    - { stat: cast.speed@fullmana, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModWandUlamanPrefixDamageAsExtraPhysical）
+unveiled_d_wand_extra_physical:
+  type: prefix
+  group: unveiled_d_wand_extra_physical
+  spawn_tags: [wand]
+  names: [骨淵的, 黯骨的]
+  text: "獲得 {value}% 傷害為額外物理傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [21, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [15, 17] }
+  mods:
+    - { stat: damage.extra.physical, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModWandAmanamuPrefixSpellDamageWithSpellsThatCostLife）
+unveiled_d_wand_life_cost_damage:
+  type: prefix
+  group: unveiled_d_wand_life_cost_damage
+  spawn_tags: [wand]
+  names: [血杖的, 淵血杖的]
+  text: "消耗生命的法術，增加 {value}% 法術傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [74, 89] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [52, 62] }
+  mods:
+    - { stat: damage.spell_costing_life, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModWandKurgalPrefixInvocatedSpellDamage）：祈喚：引擎有了
+unveiled_d_wand_invocation:
+  type: prefix
+  group: unveiled_d_wand_invocation
+  spawn_tags: [wand]
+  names: [祈杖的, 淵祈的]
+  text: "增加 {value}% 祈喚法術的傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [75, 89] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [53, 62] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [invocation] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModWandUlamanSuffixBreakArmourSpellCrits）：照天賦樹 Cut to the Bone 的寫法
+unveiled_d_wand_spell_crit_break:
+  type: suffix
+  group: unveiled_d_wand_spell_crit_break
+  spawn_tags: [wand]
+  names: [之裂咒, 之淵剖]
+  text: "法術暴擊時破甲，破甲量等同造成物理傷害的 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [11, 18] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 12] }
+  mods:
+    - { stat: armour.break, type: FLAT, value: "{value}", tags: [spell, crit_hit] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModWandUlamanSuffixHinderedEnemiesTakeIncreasedPhysical）：條件「被你阻礙的敵人」用 vs_hindered；寫成你造成的傷害更多
+unveiled_d_wand_hindered_physical:
+  type: suffix
+  group: unveiled_d_wand_hindered
+  spawn_tags: [wand]
+  names: [之淵縛, 之滯骨]
+  text: "被你阻礙的敵人受到的物理傷害更多 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [4, 7] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4] }
+  mods:
+    - { stat: damage, type: MORE, value: "{value}", tags: [vs_hindered, physical] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModWandAmanamuSuffixHinderedEnemiesTakeIncreasedElemental）：條件「被你阻礙的敵人」用 vs_hindered；寫成你造成的傷害更多
+unveiled_d_wand_hindered_elemental:
+  type: suffix
+  group: unveiled_d_wand_hindered
+  spawn_tags: [wand]
+  names: [之淵滯, 之阻元]
+  text: "被你阻礙的敵人受到的元素傷害更多 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [4, 7] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4] }
+  mods:
+    - { stat: damage, type: MORE, value: "{value}", tags: [vs_hindered, elemental] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModWandKurgalSuffixHinderedEnemiesTakeIncreasedChaos）：條件「被你阻礙的敵人」用 vs_hindered；寫成你造成的傷害更多
+unveiled_d_wand_hindered_chaos:
+  type: suffix
+  group: unveiled_d_wand_hindered
+  spawn_tags: [wand]
+  names: [之淵礙, 之阻蝕]
+  text: "被你阻礙的敵人受到的混沌傷害更多 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [4, 7] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [3, 4] }
+  mods:
+    - { stat: damage, type: MORE, value: "{value}", tags: [vs_hindered, chaos] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModWandKurgalSuffixCastSpeedPerDifferentSpellCastRecently）：條件用 @slowspelltypes1～5（最近放過的不同非瞬發法術種數），原作沒上限，這裡算到 5 種
+unveiled_d_wand_cast_per_spell:
+  type: suffix
+  group: unveiled_d_wand_cast_per_spell
+  spawn_tags: [wand]
+  names: [之變咒, 之淵換]
+  text: "最近每放過一種不同的非瞬發法術，增加 {value}% 施放速度（最多 5 種）"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [3, 5] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [2, 3] }
+  mods:
+    - { stat: cast.speed@slowspelltypes1, type: INCREASED, value: "{value}" }
+    - { stat: cast.speed@slowspelltypes2, type: INCREASED, value: "{value}" }
+    - { stat: cast.speed@slowspelltypes3, type: INCREASED, value: "{value}" }
+    - { stat: cast.speed@slowspelltypes4, type: INCREASED, value: "{value}" }
+    - { stat: cast.speed@slowspelltypes5, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModGenWeaponUlamanSuffixSkillCostConvertedToLife）
+unveiled_d_weapon_life_cost:
+  type: suffix
+  group: unveiled_d_weapon_life_cost
+  spawn_tags: [weapon]
+  names: [之血刃, 之淵償刃]
+  text: "{value}% 的技能魔力消耗轉換為生命消耗"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [15, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [11, 14] }
+  mods:
+    - { stat: skill.life_cost_percent, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModAllMacesUlamanPrefixMaximumMeleeAttackTotems）：只有一階
+unveiled_d_mace_melee_totem:
+  type: prefix
+  group: unveiled_d_mace_melee_totem
+  spawn_tags: [mace, talisman]
+  exclude_tags: [sceptre]
+  names: [樁淵的, 黯樁的]
+  text: "近戰攻擊技能同時最多多 {value} 個圖騰"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [1, 1] }   # 只有一階
+  mods:
+    - { stat: skill.totems, type: FLAT, value: "{value}", tags: [melee] }
+
+# 2026-11-03 照站長＋PoB2（AbyssMod1HMaceUlamanPrefixDamageWhileActiveTotem）：單手錘；條件用 @totem
+unveiled_d_mace_totem_damage:
+  type: prefix
+  group: unveiled_d_mace_totem_damage
+  spawn_tags: [mace]
+  exclude_tags: [two_hand, sceptre]
+  names: [樁威的, 淵樁的]
+  text: "有圖騰時增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [41, 59] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [29, 41] }
+  mods:
+    - { stat: damage@totem, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssMod2HMaceUlamanPrefixDamageWhileActiveTotem）：雙手錘、獸符；條件用 @totem
+unveiled_d_mace2h_totem_damage:
+  type: prefix
+  group: unveiled_d_mace_totem_damage
+  spawn_tags: [mace, talisman]
+  exclude_tags: [one_hand]
+  names: [樁威的, 淵樁的]
+  text: "有圖騰時增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [86, 99] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [60, 69] }
+  mods:
+    - { stat: damage@totem, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssMod1HMaceUlamanSuffixTotemPlacementSpeed）：單手錘
+unveiled_d_mace_totem_placement:
+  type: suffix
+  group: unveiled_d_mace_totem_placement
+  spawn_tags: [mace]
+  exclude_tags: [two_hand, sceptre]
+  names: [之立淵, 之樁速]
+  text: "增加 {value}% 圖騰放置速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [17, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [12, 17] }
+  mods:
+    - { stat: totem.placement_speed, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssMod2HMaceUlamanSuffixTotemPlacementSpeed）：雙手錘、獸符
+unveiled_d_mace2h_totem_placement:
+  type: suffix
+  group: unveiled_d_mace_totem_placement
+  spawn_tags: [mace, talisman]
+  exclude_tags: [one_hand]
+  names: [之立淵, 之樁速]
+  text: "增加 {value}% 圖騰放置速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [25, 31] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [18, 22] }
+  mods:
+    - { stat: totem.placement_speed, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssMod1HMaceAmanamuPrefixDamageAgainstFullyArmourBrokenEnemies）：單手錘
+unveiled_d_mace_vs_broken:
+  type: prefix
+  group: unveiled_d_mace_vs_broken
+  spawn_tags: [mace]
+  exclude_tags: [two_hand, sceptre]
+  names: [碎淵的, 黯碎的]
+  text: "對完全破甲的敵人增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [41, 59] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [29, 41] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [vs_brokenarmour] }
+
+# 2026-11-03 照站長＋PoB2（AbyssMod2HMaceAmanamuPrefixDamageAgainstFullyArmourBrokenEnemies）：雙手錘
+unveiled_d_mace2h_vs_broken:
+  type: prefix
+  group: unveiled_d_mace_vs_broken
+  spawn_tags: [mace]
+  exclude_tags: [one_hand]
+  names: [碎淵的, 黯碎的]
+  text: "對完全破甲的敵人增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [86, 99] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [60, 69] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [vs_brokenarmour] }
+
+# 2026-11-03 照站長＋PoB2（AbyssMod1HMaceAmanamuSuffixAdditionalFissureChance）：單手錘
+unveiled_d_mace_fissure:
+  type: suffix
+  group: unveiled_d_mace_fissure
+  spawn_tags: [mace]
+  exclude_tags: [two_hand, sceptre]
+  names: [之裂淵, 之地蝕]
+  text: "產生裂縫的技能有 {value}% 機率額外產生 1 道裂縫"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [15, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [11, 17] }
+  mods:
+    - { stat: skill.additional_fissure_chance, type: FLAT, value: "{value}", tags: [fissure] }
+
+# 2026-11-03 照站長＋PoB2（AbyssMod2HMaceAmanamuSuffixAdditionalFissureChance）：雙手錘、獸符
+unveiled_d_mace2h_fissure:
+  type: suffix
+  group: unveiled_d_mace_fissure
+  spawn_tags: [mace, talisman]
+  exclude_tags: [one_hand]
+  names: [之裂淵, 之地蝕]
+  text: "產生裂縫的技能有 {value}% 機率額外產生 1 道裂縫"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [25, 31] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [18, 22] }
+  mods:
+    - { stat: skill.additional_fissure_chance, type: FLAT, value: "{value}", tags: [fissure] }
+
+# 2026-11-03 照站長＋PoB2（AbyssMod1HMaceAmanamuSuffixChanceSlamSkillsCauseAftershocks）：單手錘；照天賦樹 Mace Aftershock Chance 的寫法
+unveiled_d_mace_aftershock:
+  type: suffix
+  group: unveiled_d_mace_aftershock
+  spawn_tags: [mace]
+  exclude_tags: [two_hand, sceptre]
+  names: [之震淵, 之撼蝕]
+  text: "你親自使用的錘類猛擊技能有 {value}% 機率額外造成 1 次餘震"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [10, 16] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [7, 11] }
+  mods:
+    - { stat: aftershock.chance, type: FLAT, value: "{value}", tags: [mace] }
+
+# 2026-11-03 照站長＋PoB2（AbyssMod2HMaceAmanamuSuffixChanceSlamSkillsCauseAftershocks）：雙手錘
+unveiled_d_mace2h_aftershock:
+  type: suffix
+  group: unveiled_d_mace_aftershock
+  spawn_tags: [mace]
+  exclude_tags: [one_hand]
+  names: [之震淵, 之撼蝕]
+  text: "你親自使用的錘類猛擊技能有 {value}% 機率額外造成 1 次餘震"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [16, 23] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [11, 16] }
+  mods:
+    - { stat: aftershock.chance, type: FLAT, value: "{value}", tags: [mace] }
+
+# 2026-11-03 照站長＋PoB2（AbyssMod1HMaceKurgalPrefixEmpoweredAttackDamage）：單手錘
+unveiled_d_mace_empowered:
+  type: prefix
+  group: unveiled_d_mace_empowered
+  spawn_tags: [mace]
+  exclude_tags: [two_hand, sceptre]
+  names: [強淵的, 黯強的]
+  text: "增加 {value}% 強化攻擊的傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [41, 59] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [29, 41] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [attack, empowered] }
+
+# 2026-11-03 照站長＋PoB2（AbyssMod2HMaceKurgalPrefixEmpoweredAttackDamage）：雙手錘、獸符
+unveiled_d_mace2h_empowered:
+  type: prefix
+  group: unveiled_d_mace_empowered
+  spawn_tags: [mace, talisman]
+  exclude_tags: [one_hand]
+  names: [強淵的, 黯強的]
+  text: "增加 {value}% 強化攻擊的傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [86, 99] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [60, 69] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [attack, empowered] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModCrossbowUlamanPrefixMaximumRangedAttackTotems）：只有一階
+unveiled_d_crossbow_ballista:
+  type: prefix
+  group: unveiled_d_crossbow_ballista
+  spawn_tags: [crossbow]
+  names: [弩淵的, 黯弩的]
+  text: "弩台同時最多多 {value} 個"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [1, 1] }   # 只有一階
+  mods:
+    - { stat: skill.totems, type: FLAT, value: "{value}", tags: [ballista] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModCrossbowAmanamuPrefixGrenadeAdditionalCooldown）：只有一階
+unveiled_d_crossbow_grenade_cooldown:
+  type: prefix
+  group: unveiled_d_crossbow_grenade_cooldown
+  spawn_tags: [crossbow]
+  names: [匣淵的, 黯匣的]
+  text: "榴彈技能 +{value} 次冷卻使用次數"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [1, 1] }   # 只有一階
+  mods:
+    - { stat: grenade.cooldown_uses, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModCrossbowUlamanSuffixProjectileCriticalHitDamageCloseRange）：條件「2 公尺內」用 vs_close，照原值
+unveiled_d_crossbow_close_crit:
+  type: suffix
+  group: unveiled_d_crossbow_close_crit
+  spawn_tags: [crossbow]
+  names: [之抵淵, 之貼弩]
+  text: "近身時投射物增加 {value}% 暴擊傷害加成"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [27, 38] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [19, 27] }
+  mods:
+    - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [projectile, vs_close] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModCrossbowAmanamuSuffixAdditionalGrenadeTriggerChance）
+unveiled_d_crossbow_grenade_twice:
+  type: suffix
+  group: unveiled_d_crossbow_grenade_twice
+  spawn_tags: [crossbow]
+  names: [之復淵, 之二爆]
+  text: "榴彈有 {value}% 機率啟動第二次"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [15, 25] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [11, 17] }
+  mods:
+    - { stat: grenade.twice_chance, type: FLAT, value: "{value}", tags: [grenade] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBowSpearUlamanSuffixChanceForExtraProjectilesWhileMoving）：條件用 @moving，照原值
+unveiled_d_ranged_moving_projectiles:
+  type: suffix
+  group: unveiled_d_ranged_moving_projectiles
+  spawn_tags: [bow, spear]
+  names: [之奔矢, 之淵散射]
+  text: "移動時，投射物攻擊有 {value}% 機率多射 2 發投射物"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [10, 18] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [7, 13] }
+  mods:
+    - { stat: skill.projectile_chance_two@moving, type: FLAT, value: "{value}", tags: [attack, projectile] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBowSpearAmanamuSuffixChancePierceAdditionalTime）
+unveiled_d_ranged_pierce:
+  type: suffix
+  group: unveiled_d_ranged_pierce
+  spawn_tags: [bow, spear]
+  names: [之穿淵, 之透蝕]
+  text: "投射物有 {value}% 機率穿透敵人"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [40, 60] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [28, 42] }
+  mods:
+    - { stat: skill.pierce_chance, type: FLAT, value: "{value}", tags: [projectile] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBowSpearKurgalPrefixChanceChainFromTerrain）
+unveiled_d_ranged_chain_terrain:
+  type: prefix
+  group: unveiled_d_ranged_chain_terrain
+  spawn_tags: [bow, spear]
+  names: [彈淵的, 黯彈的]
+  text: "投射物有 {value}% 機率從地形額外連鎖一次"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [25, 35] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [18, 24] }
+  mods:
+    - { stat: skill.chain_terrain, type: FLAT, value: "{value}", tags: [projectile] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBowKurgalPrefixIncreasedQuiverStats）
+unveiled_d_bow_quiver_effect:
+  type: prefix
+  group: unveiled_d_bow_quiver_effect
+  spawn_tags: [bow]
+  names: [囊淵的, 黯囊的]
+  text: "增加 {value}% 已裝備箭袋提供的加成"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [30, 40] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [21, 28] }
+  mods:
+    - { stat: quiver.effect, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBowSpearAmanamuPrefixCompanionDamageAndDamageWithCompanion）：同伴：引擎有了；「同伴在存在範圍內」用 @companion
+unveiled_d_companion_damage:
+  type: prefix
+  group: unveiled_d_companion_damage
+  spawn_tags: [bow, spear, talisman]
+  names: [伴淵的, 黯伴的]
+  text: "同伴增加 {value}% 傷害、同伴在你的存在範圍內時增加 {value}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [40, 59] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [28, 41] }
+  mods:
+    - { stat: damage, type: INCREASED, value: "{value}", tags: [minion, companion] }
+    - { stat: damage@companion, type: INCREASED, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBowSpearAmanamuSuffixCompanionAndLocalAttackSpeed）：同伴：引擎有了
+unveiled_d_companion_attack_speed:
+  type: suffix
+  group: unveiled_d_companion_attack_speed
+  spawn_tags: [bow, spear, talisman]
+  names: [之伴迅, 之淵隨]
+  text: "增加 {value}% 攻擊速度、同伴增加 {value}% 攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [12, 18] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [8, 12] }
+  mods:
+    - { stat: local.attack_speed, type: INCREASED, value: "{value}" }
+    - { stat: attack.speed, type: INCREASED, value: "{value}", tags: [minion, companion] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModTalismanKurgalPrefixWarcriesEmpowerXAdditionalAttacks）：只有一階
+unveiled_d_talisman_warcry_empower:
+  type: prefix
+  group: unveiled_d_talisman_warcry_empower
+  spawn_tags: [talisman]
+  names: [嘯淵的, 黯嘯的]
+  text: "戰吼多強化 {value} 次攻擊"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [1, 1] }   # 只有一階
+  mods:
+    - { stat: warcry.exerts, type: FLAT, value: "{value}", tags: [warcry] }
+
+# 2026-11-03 照站長＋PoB2（AbyssModTalismanKurgalSuffixCriticalHitChanceAgainstMarkedTargets）
+unveiled_d_talisman_marked_crit:
+  type: suffix
+  group: unveiled_d_talisman_marked_crit
+  spawn_tags: [talisman]
+  names: [之獵印, 之淵標]
+  text: "對被標記的敵人增加 {value}% 暴擊率"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [39, 51] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [27, 35] }
+  mods:
+    - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [vs_marked] }
+
+# ---- 2026-11-03 照站長：上一批「引擎沒有」的 6 條，這次補了機制 ----
+
+# 2026-11-03 照站長＋PoB2（AbyssModAmuletKurgalPrefixChanceInvocatedSpellsConsumeHalfEnergy）
+unveiled_d_amulet_invocation_half_energy:
+  type: prefix
+  group: unveiled_d_amulet_invocation_half_energy
+  spawn_tags: [amulet]
+  names: [省祈的, 淵蓄的]
+  text: "祈喚觸發法術時有 {value}% 機率只消耗一半能量"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [15, 20] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [10, 14] }
+  mods:
+    - { stat: invocation.half_energy_chance, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModQuarterstaffUlamanSuffixRecoverLifeWhenExpendingTenCombo）
+unveiled_d_quarterstaff_combo_life:
+  type: suffix
+  group: unveiled_d_quarterstaff_combo_life
+  spawn_tags: [quarterstaff]
+  names: [之連癒, 之淵續]
+  text: "一次用掉至少 10 層連擊時回復 {value}% 最大生命"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [9, 12] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 8] }
+  mods:
+    - { stat: combo.expend10_life, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModQuarterstaffKurgalSuffixRecoverManaWhenExpendingTenCombo）
+unveiled_d_quarterstaff_combo_mana:
+  type: suffix
+  group: unveiled_d_quarterstaff_combo_mana
+  spawn_tags: [quarterstaff]
+  names: [之連息, 之淵湧]
+  text: "一次用掉至少 10 層連擊時回復 {value}% 最大魔力"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [5, 6] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [4, 4] }
+  mods:
+    - { stat: combo.expend10_mana, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModBeltKurgalPrefixGainArmourPercentOfMana）：照魔力的基礎值，再吃護甲的增加（PoB2 ManaGainAsArmour）
+unveiled_d_belt_mana_armour:
+  type: prefix
+  group: unveiled_d_belt_mana_armour
+  spawn_tags: [belt]
+  names: [魔甲的, 淵鑄的]
+  text: "獲得等同最大魔力 {value}% 的護甲"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [9, 12] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [6, 8] }
+  mods:
+    - { stat: armour.from_mana, type: FLAT, value: "{value}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModShieldUlamanSuffixLightningTakenAsPhysAndGlancingWhileActiveBlocking）：舉盾中物理傷害視為閃電、被格擋的擊中照樣受到一部分
+unveiled_d_shield_raised_lightning:
+  type: suffix
+  group: unveiled_d_shield_raised_lightning
+  spawn_tags: [shield]
+  exclude_tags: [focus]
+  names: [之雷盾, 之淵擋]
+  text: "舉盾時承受的物理傷害有 {value}% 視為閃電；舉盾格擋下來的擊中你仍受到 {g}% 傷害"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [35, 40], g: [8, 15] }
+    - { tier: 2, ilvl: 1, weight: 700, value: [30, 34], g: [8, 15] }
+  mods:
+    - { stat: asc.taken.physical.lightning@raisingshield, type: FLAT, value: "{value}" }
+    - { stat: block.taken@raisingshield, type: FLAT, value: "{g}" }
+
+# 2026-11-03 照站長＋PoB2（AbyssModShieldAmanamuSuffixShieldSkillsFullyBreakArmourOnHeavyStun）
+unveiled_d_shield_skill_full_break:
+  type: suffix
+  group: unveiled_d_shield_skill_full_break
+  spawn_tags: [shield]
+  exclude_tags: [focus]
+  names: [之碎壁, 之淵摧]
+  text: "盾牌技能造成重暈時讓敵人完全破甲"
+  tiers:
+    - { tier: 1, ilvl: 60, weight: 500, value: [1, 1] }
+  mods:
+    - { stat: armour.shield_skill_full_break, type: FLAT, value: "{value}" }

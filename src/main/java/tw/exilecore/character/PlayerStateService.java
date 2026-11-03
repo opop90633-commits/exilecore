@@ -1804,7 +1804,7 @@ public final class PlayerStateService {
         if (!ruined) {
             state.recoverLeech(seconds * lifeRate, leechRate); // 2026-10-27：回復速度讓每份偷取回得更快（上限也一起）；這次之前只放大每秒上限
         }
-        // 2026-10-26 照 PoE2：回復（Recoup）4 秒內平均回來；禁療中生命、護盾那份不回（魔力照回）
+        // 2026-10-26 照 PoE2：回復（Recoup）8 秒內平均回來（2026-11-03 註解更正：Recoup.BASE_TICKS 是 8 秒）；禁療中生命、護盾那份不回（魔力照回）
         final double[] recouped = state.recoup().tick(ticksSinceLast);
         if (!ruined) {
             state.setLife(state.life() + recouped[tw.exilecore.character.Recoup.LIFE]);

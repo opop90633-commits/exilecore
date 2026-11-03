@@ -1857,6 +1857,10 @@ public final class CombatListener implements Listener {
                     if (damage.recoup() > 0 && !state.ruined(plugin.getServer().getCurrentTick())) { // 2026-10-18：禁療中不存
                         state.recoup().add(tw.exilecore.character.Recoup.LIFE, damage.recoup(), recoupSpeed
                                 * tw.exilecore.stats.TreeEffectKeys.recoveryRate(recoupSheet, tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE));
+                        if (StatKeys.flag(recoupSheet, tw.exilecore.item.unique.UniqueStats.LIFE_RECOUP_ALSO_ES)) {
+                            // 2026-11-03 照 PoE2 Sacrosanctum：回復成生命的承受傷害也回復成能量護盾（同樣的量，吃回復速度）
+                            state.recoup().add(tw.exilecore.character.Recoup.ES, damage.recoup(), recoupSpeed);
+                        }
                     }
                     if (damage.manaRecoup() > 0) { // 2026-10-27 照 PoE2：魔力回復也吃魔力回復速度（這次之前只吃回復速度）
                         state.recoup().add(tw.exilecore.character.Recoup.MANA, damage.manaRecoup(), recoupSpeed

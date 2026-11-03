@@ -345,7 +345,7 @@ ess_hys_recoup:
   group: damage_taken_gained_as_life
   spawn_tags: [essence, amulet]
   names: [之狂亂]
-  text: "受到的傷害有 {value}% 在 4 秒內回復為生命"
+  text: "受到的傷害有 {value}% 在 8 秒內回復為生命"
   tiers:
     - { tier: 1, ilvl: 65, weight: 1, value: [19, 21] }
   mods:

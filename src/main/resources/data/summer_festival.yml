@@ -1,0 +1,169 @@
+# 夏日活動（2026-11-03 照站長）：「星潮祭」。改完 /ec reload。
+# 跟萬燈夜（data/festival.yml）是兩個獨立的活動：各自的場地、素材（貝殼、珍珠）、商店、挑戰，可以同時進行。
+#
+# 活動期間（start ～ end，照 timezone）：
+#   ・星潮海灘：活動世界（虛空）裡的夏日場地（跟幽燈墓園的 z 分開），永遠是傍晚。沙灘、棕櫚樹、淺海（1～2 格深）、
+#     珊瑚與海草、木棧道；中央一塊圓形的競技沙地給海妖。選單 → 星潮祭 傳送過去，/town 回營地。
+#     第一次啟動自動蓋好；/ec summer build 可以重蓋。
+#   ・沙灘挖寶：每天（timezone）每個人各自有 dig.spots_per_day 個藏寶點（種子是玩家＋日期，不用存）。拿任何鏟子右鍵沙灘的沙子：
+#     離藏寶點 1 格內就挖到，否則動作條提示「很熱（4 格內）／溫（8 格內）／冷」。挖到給 dig.shells 顆貝殼；
+#     dig.chest_chance 機率是海盜寶箱：竄出 dig.guards 隻衛道士，dig.guard_seconds 內清完給雙倍，再 dig.pearl_chance 機率 1 顆珍珠。
+#     一天挖滿全部給 dig.daily_pearl 顆珍珠。
+#   ・西瓜大亂鬥：每天 melee.hours 的整點在海灘開一局（/ec summer round start 也可以），melee.warn_minutes 前廣播，
+#     打 melee.seconds 秒。每 melee.spawn_every 秒在沙地冒出 melee.spawn_count 顆西瓜（踩到、右鍵、左鍵都算打破），每顆 1 分；
+#     melee.golden_chance 是金西瓜（發光，10 分）。結束前三名各給 melee.top_pearls 顆珍珠，每一分給 melee.shells_per_point 貝殼。
+#     全服每打破 melee.global_target 顆（跨局累計）觸發「滿潮」：全服物品數量 +melee.global_quantity%，持續 melee.global_minutes 分鐘。
+#   ・深潮海妖：每天 boss.hours 的整點浮上海灘中央（世界 Boss 等級；招式在 boss_skills.yml 的 tide_*，共 17 招，
+#     生命掉到 boss.phases 的比例以下換階段、解鎖大招；mods 的 unstoppable 讓牠免疫所有控場——暈眩、凍結、冰緩、電擊、
+#     釘地、眩暈、癱瘓、阻礙、致盲、緩速、嘲諷、擊退都無效，純傷害的感電、點燃、流血、中毒照常）。
+#   ・漂流瓶：地圖裡的怪掉貝殼（bottle.normal／magic／rare_shells／boss_shells）；稀有怪、地圖 Boss 倒下 bottle.rare／bottle.boss 機率
+#     留下「漂流瓶」（bottle.seconds 秒消失），右鍵：bottle.letter_chance 是瓶中信（貝殼＋一句話），否則是藏寶圖
+#     （帳號狀態：下一張地圖的 Boss 倒下多掉 bottle.map_extra 件東西＋bottle.map_pearls 顆珍珠，用掉就沒了）。
+#   ・挑戰（帳號共用）與兌換商店（限定時裝、限定稱號；2026-11-03 起不換通貨）。
+#   ・海灘在活動世界裡：死在這裡不扣經驗（CharacterListener.onDeath：整個活動世界都不扣）。
+# 活動結束後兌換商店再開到 shop_until。時裝、稱號拿到就是永久的。
+
+settings:
+  enabled: true
+  name: 星潮祭
+  color: "#2ec4ff"
+  timezone: Asia/Taipei
+  start: "2026-11-03 00:00"      # 2026-11-03 照站長：提早到今天（這次之前 11-04）
+  end: "2026-11-25 23:59"        # 2026-11-03 站長：拉長成三週（原本 11-18）
+  shop_until: "2026-12-02 23:59" # 兌換再開一週
+
+# 星潮海灘（活動世界裡；萬燈夜的墓園在 z 400，這裡 z -400）
+arena:
+  x: 0
+  z: -400
+  radius: 40
+
+# 沙灘挖寶
+dig:
+  spots_per_day: 6          # 每人每天幾個藏寶點（最多 30）
+  shells: 20                # 挖到：貝殼
+  chest_chance: 0.25        # 是海盜寶箱的機率
+  guards: [3, 5]            # 寶箱竄出幾隻守衛
+  guard_type: VINDICATOR    # 2026-11-03 照站長：衛道士（這次之前溺屍）
+  guard_seconds: 45         # 幾秒內清完才算（雙倍貝殼）
+  pearl_chance: 0.35        # 清完再擲：多 1 顆珍珠
+  daily_pearl: 5            # 一天挖滿全部：珍珠
+
+# 西瓜大亂鬥
+melee:
+  hours: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]   # 每個整點一局（跟海妖同一個整點時海妖先，海妖走了再開）
+  warn_minutes: 2
+  seconds: 120              # 一局幾秒
+  spawn_every: 4            # 每幾秒冒一批西瓜
+  spawn_count: 6            # 一批幾顆
+  golden_chance: 0.08       # 金西瓜（10 分）的機率
+  top_pearls: [3, 2, 1]     # 前三名的珍珠
+  shells_per_point: 3       # 每一分幾顆貝殼
+  global_target: 3000       # 全服打破幾顆觸發滿潮
+  global_quantity: 30       # 滿潮：全服物品數量 +%
+  global_minutes: 60
+
+# 深潮海妖（世界 Boss）
+boss:
+  name: 深潮海妖・珊瑚之喉
+  type: DROWNED
+  hours: [12, 19, 22]
+  warn_minutes: 2
+  duration_minutes: 15
+  empty_close_seconds: 180
+  level: 88
+  life: 86.79   # 2026-11-03 照站長：數值比照巔峰（maps.yml finals.awakener 的 life），一個人的份；這次之前 44.36（比照極境）
+  life_per_player: 1.0
+  count_level: 80
+  max_counted_players: 0
+  damage: 4.078   # 2026-11-03 照站長：比照巔峰（這次之前 4.5）
+  scale: 1.8
+  mods: [swift, pinnacle_resist, unstoppable]   # 2026-11-03 照站長：比照巔峰（迅捷、巔峰抗性）＋免疫所有控場（這次之前 armoured）
+  intro: "「潮水退了……你們就是留在沙上的東西。」"
+  defeat: "珊瑚之喉嘶的一聲沉回海裡，浪把一地的珍珠與貝殼推上了沙灘。"
+  # 階段（2026-11-03 照站長「招式要更多」）：生命掉到這幾個比例以下就進下一個階段（第 1 個 = 第 1 階段…；最多 10 個）；
+  #   換階段時廣播、先停一下再出新招（boss_skills.yml 的 settings.phase_pause／phase_unlock）。這次之前海妖沒有階段
+  phases: [0.66, 0.33]
+  # 招式（boss_skills.yml 的 tide_*；寫 { id, phase: n } 的那一招第 n 階段起才用；舊 5 招＋2026-11-03 新加的 12 招）
+  skills:
+    - tide_wave
+    - tide_whirlpool
+    - tide_tentacle_slam
+    - tide_ink_cloud
+    - tide_lightning
+    - tide_drowned_call
+    - tide_coral_volley
+    - tide_water_jet
+    - tide_bubble_orbs
+    - tide_spray
+    - tide_undertow_mark
+    - tide_ram
+    - tide_wave_nova
+    - tide_storm_zone
+    - { id: tide_echoes, phase: 1 }        # 66% 以下：潮影
+    - { id: tide_rising_sea, phase: 1 }    # 66% 以下：漲潮（場地收縮，能放就先放）
+    - { id: tide_tsunami, phase: 2 }       # 33% 以下：海嘯（全場大招）
+  rewards:
+    pearl: [3, 5]
+    shells: 50
+    cosmetic_chance: 0.02   # 掉一件還沒有的星潮祭時裝（每個人各擲；吃物品稀有度）
+
+# 漂流瓶與地圖裡的貝殼
+bottle:
+  normal: 0.05              # 地圖裡的普通怪：掉 1 顆貝殼的機率（吃物品數量）
+  magic: 0.15
+  rare_shells: 3            # 稀有怪：幾顆貝殼
+  boss_shells: 10           # 地圖 Boss：幾顆
+  rare: 0.04                # 稀有怪倒下留下漂流瓶的機率
+  boss: 0.3                 # 地圖 Boss
+  seconds: 90               # 漂流瓶放多久
+  letter_chance: 0.6        # 瓶中信的機率（其餘是藏寶圖；手上已經有圖的一定是信）
+  shells: [15, 30]          # 瓶中信給的貝殼
+  map_extra: 3              # 藏寶圖：下一張地圖的 Boss 多掉幾件（掉落表 rollOne）
+  map_pearls: 2             # 再給幾顆珍珠
+  letters:
+    - "潮水退到最遠的那天，我在沙上寫了你的名字。回來看看它還在不在。"
+    - "船長說星星掉進海裡就變成珍珠。我不信，但我每晚都在數。"
+    - "這瓶子漂了多久我不知道，只知道撿到它的人今天運氣不錯。"
+    - "海風把帽子吹走了，就讓它去吧——我換到了一整個下午的浪聲。"
+    - "沙灘上第三棵棕櫚樹底下，什麼都沒有。但那裡的影子最涼。"
+    - "如果你讀到這封信，代表潮水還記得往岸上走。"
+    - "我把今天的夕陽裝進瓶子裡了。打開的時候小心，會燙。"
+    - "別急著回營地。浪還沒退，椰子還沒掉。"
+
+# 挑戰（帳號共用，達成自動發）；全部完成再給稱號
+challenges:
+  kraken: { count: 5, pearl: 10 }       # 打倒海妖 5 次
+  dig: { days: 7, pearl: 15 }           # 7 天挖滿全部的藏寶點
+  melee: { count: 10, shells: 300 }     # 參加 10 局大亂鬥（至少打破一顆）
+  bottle: { count: 30, shells: 300 }    # 打開 30 個漂流瓶
+  title: summer_surfer
+
+titles:
+  summer_surfer: { name: 星潮衝浪手, color: "gradient:#2ec4ff:#ffd166",
+                   stats: [ { stat: drop.rarity, type: INCREASED, value: 3 } ] }
+  summer_hunter: { name: 海妖獵人, color: "#1ec8a5",
+                   stats: [ { stat: movement.speed, type: INCREASED, value: 2 } ] }
+  summer_tide_child: { name: 潮汐之子, color: "gradient:#7fe8ff:#ffffff",     # 2026-11-03 照站長：兌換多一點特殊的東西
+                       stats: [ { stat: drop.quantity, type: INCREASED, value: 2 } ] }
+
+# 兌換：kind: cosmetic（sponsor.yml 的時裝代號 sf_*，另外建）、title（上面 titles 的代號）、currency
+shop:
+  - { id: cos_kraken_wings,    kind: cosmetic, cosmetic: sf_kraken_wings,   cost: { event_shell: 2500, event_pearl: 25 } }
+  - { id: cos_pearl_crown,     kind: cosmetic, cosmetic: sf_pearl_crown,    cost: { event_shell: 2500, event_pearl: 25 } }
+  - { id: cos_tide_trident,    kind: cosmetic, cosmetic: sf_tide_trident,   cost: { event_shell: 2500, event_pearl: 25 } }
+  - { id: cos_pet_kraken,      kind: cosmetic, cosmetic: sf_pet_kraken,     cost: { event_shell: 2500, event_pearl: 25 } }
+  - { id: cos_shell_shield,    kind: cosmetic, cosmetic: sf_shell_shield,   cost: { event_shell: 1200, event_pearl: 10 } }
+  - { id: cos_pet_jellyfish,   kind: cosmetic, cosmetic: sf_pet_jellyfish,  cost: { event_shell: 1200, event_pearl: 10 } }
+  - { id: t_hunter,            kind: title,    title: summer_hunter,        cost: { event_shell: 2000 } }
+  - { id: t_tide_child,        kind: title,    title: summer_tide_child,    cost: { event_shell: 3000, event_pearl: 20 } }
+  # 2026-11-03 照站長：限定粒子特效
+  - { id: fx_tide_spiral,      kind: cosmetic, cosmetic: sf_tide_spiral,    cost: { event_shell: 2500, event_pearl: 25 } }
+  - { id: fx_pearl_orbit,      kind: cosmetic, cosmetic: sf_pearl_orbit,    cost: { event_shell: 1500, event_pearl: 12 } }
+  - { id: fx_splash_trail,     kind: cosmetic, cosmetic: sf_splash_trail,   cost: { event_shell: 1500, event_pearl: 12 } }
+  - { id: fx_bubble_halo,      kind: cosmetic, cosmetic: sf_bubble_halo,    cost: { event_shell: 800, event_pearl: 5 } }
+  - { id: fx_glow_aura,        kind: cosmetic, cosmetic: sf_glow_aura,      cost: { event_shell: 800, event_pearl: 5 } }
+  # 2026-11-03 照站長：再加兩件特殊的——限定動作「衝浪」、限定 3D 戰甲「珊瑚海妖鎧」；這次之前兌換沒有動作、戰甲
+  - { id: emote_surf,          kind: cosmetic, cosmetic: sf_emote_surf,     cost: { event_shell: 3000, event_pearl: 30 } }
+  - { id: cos_armor_coral,     kind: cosmetic, cosmetic: sf_armor_coral,    cost: { event_shell: 4000, event_pearl: 40 } }
+  # 2026-11-03 照站長：拿掉通貨兌換（劫盜合約、天空碎片、至臻石、深淵核心）；這次之前照萬燈夜有這四樣

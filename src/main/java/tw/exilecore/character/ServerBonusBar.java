@@ -59,8 +59,14 @@ public final class ServerBonusBar {
         // 2026-10-23：萬燈夜全服點燈點滿的物品數量加成（掉落本來就吃得到，只是血條上沒寫）
         final var festival = plugin.festival();
         final long festivalMinutes = festival == null ? 0 : festival.bonusMinutesLeft();
-        final String festivalText = festivalMinutes <= 0 || festival.quantityBonus() <= 1e-9 ? ""
+        final String hallowText = festivalMinutes <= 0 || festival.quantityBonus() <= 1e-9 ? ""
                 : " <#ff9a3c>（🎃 萬燈齊亮：物品數量 +" + Math.round(festival.quantityBonus() * 100) + "%，剩 " + festivalMinutes + " 分）";
+        // 2026-11-03：星潮祭的滿潮（全服打破夠多西瓜）也寫上去；兩個活動的加成各自算、並列
+        final var summer = plugin.summer();
+        final long summerMinutes = summer == null ? 0 : summer.bonusMinutesLeft();
+        final String summerText = summerMinutes <= 0 || summer.quantityBonus() <= 1e-9 ? ""
+                : " <#2ec4ff>（🌊 滿潮：物品數量 +" + Math.round(summer.quantityBonus() * 100) + "%，剩 " + summerMinutes + " 分）";
+        final String festivalText = hallowText + summerText;
         if (parts.isEmpty()) {
             if (festivalText.isEmpty()) {
                 return null;

@@ -292,9 +292,9 @@ final class SponsorMenus {
                     "", "<yellow>左鍵：複製指令"));
 
             final SponsorConfig.Cosmetic worn = service.worn(player);
-            set(SLOT_COSMETICS, icon(Material.BLAZE_POWDER, FASHION_COLOR + "3D 時裝",
-                    "<gray>立體的武器、副手、頭飾、翅膀、寵物（只有好看）",
-                    "<gray>看全部、用時裝幣兌換；擁有的去「裝備幻化」套上", "", "<yellow>左鍵：打開"));
+            set(SLOT_COSMETICS, icon(Material.BLAZE_POWDER, FASHION_COLOR + "3D 時裝櫃",
+                    "<gray>立體的武器、副手、頭飾、翅膀、寵物、戰甲、特效（只有好看）",
+                    "<gray>分類看全部、右鍵試穿、用時裝幣兌換；擁有的去「裝備幻化」套上", "", "<yellow>左鍵：打開"));
             set(SLOT_TRANSMOG, icon(Material.NETHERITE_CHESTPLATE, FASHION_COLOR + "裝備幻化",
                     "<gray>套上 3D 時裝：武器、副手、頭飾、背飾、寵物（別人也看得到）", "<gray>只改外觀，數值不變；換裝備也會留著",
                     "<gray>幻化外觀：時裝幣兌換、抽獎箱抽", "", "<yellow>左鍵：打開"));
@@ -737,17 +737,91 @@ final class SponsorMenus {
 
     // ---- 外觀特效 ----
 
+    /**
+     * 3D 時裝櫃。2026-11-03 照站長重做：最上面一排分類分頁（全部、武器、弓弩、副手、頭飾、背飾、寵物、戰甲、特效），
+     * 所有的時裝（含限定、絕版的）都列出來，沒擁有的畫上鎖頭、格子變灰（資源包的物品定義看 custom_model_data 的旗標），
+     * 右鍵都能試穿；左下角可以只看擁有的。這次之前沒有分類，限定的沒有就看不到、也不能試穿。
+     */
     static final class Cosmetics extends Base {
+        private static final int SLOT_OWNED = 46;
         private static final int SLOT_OFF = 49;
         private static final int SLOT_PREV = 47;
         private static final int SLOT_NEXT = 51;
         private static final int PER_PAGE = 36;
+
+        /** 分類分頁（最上面一排）。 */
+        enum Tab {
+            ALL("全部", Material.CHEST, "所有的 3D 時裝與粒子特效"),
+            WEAPON("武器", Material.IRON_SWORD, "近戰武器、法杖的幻化"),
+            RANGED("弓弩", Material.BOW, "弓、弩的幻化（拉弓、上弦都有動作）"),
+            OFFHAND("副手", Material.SHIELD, "盾、箭袋的幻化"),
+            HEAD("頭飾", Material.GOLDEN_HELMET, "3D 頭飾（沒戴頭盔也看得到）"),
+            BACK("背飾", Material.ELYTRA, "翅膀、光輪（跟在背後）"),
+            PET("寵物", Material.ALLAY_SPAWN_EGG, "3D 寵物（跟在身邊飄）"),
+            ARMOR("戰甲", Material.IRON_CHESTPLATE, "頭、身、腿、腳一整套（可以分開套）"),
+            FX("特效", Material.BLAZE_POWDER, "粒子特效（光環、足跡、彩旋…）");
+
+            final String title;
+            final Material icon;
+            final String about;
+
+            Tab(final String title, final Material icon, final String about) {
+                this.title = title;
+                this.icon = icon;
+                this.about = about;
+            }
+
+            boolean matches(final SponsorConfig.Cosmetic cosmetic) {
+                if (cosmetic.isEmote()) {
+                    return false;
+                }
+                if (!cosmetic.skin()) {
+                    return this == ALL || this == FX;
+                }
+                return switch (this) {
+                    case ALL -> true;
+                    case WEAPON -> "weapon".equals(cosmetic.skinSlot());
+                    case RANGED -> "bow".equals(cosmetic.skinSlot()) || "crossbow".equals(cosmetic.skinSlot());
+                    case OFFHAND -> "offhand".equals(cosmetic.skinSlot());
+                    case HEAD -> "headgear".equals(cosmetic.skinSlot());
+                    case BACK -> "back".equals(cosmetic.skinSlot());
+                    case PET -> "pet".equals(cosmetic.skinSlot());
+                    case ARMOR -> "armor".equals(cosmetic.skinSlot());
+                    case FX -> false;
+                };
+            }
+        }
+
         private final Map<Integer, SponsorConfig.Cosmetic> shown = new HashMap<>();
+        private final int[] tabSlots = tabSlots(Tab.values().length);
+        private Tab tab = Tab.ALL;
+        /** 只看擁有的。 */
+        private boolean ownedOnly;
         /** 第幾頁（2026-10：外觀超過 36 個）。 */
         private int page;
 
         Cosmetics(final ExileCore plugin, final Player player, final SponsorService service) {
-            super(plugin, player, service, 6, "<dark_gray>3D 時裝");
+            super(plugin, player, service, 6, "<dark_gray>3D 時裝櫃");
+        }
+
+        /** 這一頁列的：擁有的在前（照設定檔順序），再來沒擁有的（可以兌換的在前、限定的在後）。 */
+        private List<SponsorConfig.Cosmetic> ordered() {
+            final List<SponsorConfig.Cosmetic> owned = new ArrayList<>();
+            final List<SponsorConfig.Cosmetic> buyable = new ArrayList<>();
+            final List<SponsorConfig.Cosmetic> limited = new ArrayList<>();
+            for (final SponsorConfig.Cosmetic cosmetic : service.config().cosmetics().values()) {
+                if (!tab.matches(cosmetic)) {
+                    continue;
+                }
+                if (service.ownsCosmetic(player, cosmetic.id())) {
+                    owned.add(cosmetic);
+                } else if (!ownedOnly) {
+                    (cosmetic.isLimited() ? limited : buyable).add(cosmetic);
+                }
+            }
+            owned.addAll(buyable);
+            owned.addAll(limited);
+            return owned;
         }
 
         @Override
@@ -757,24 +831,34 @@ final class SponsorMenus {
             }
             shown.clear();
             final SponsorConfig.Cosmetic worn = service.worn(player);
-            set(4, icon(Material.BLAZE_POWDER, FASHION_COLOR + "3D 時裝", "<gray>" + balances(),
-                    worn == null ? "<gray>現在：沒戴" : "<gray>現在：" + SponsorService.rarityTag(worn),
-                    "<gray>只有好看，不影響戰鬥；擁有的點一下戴上"));
-            final List<SponsorConfig.Cosmetic> ordered = new ArrayList<>();
+            int ownedCount = 0;
             for (final SponsorConfig.Cosmetic cosmetic : service.config().cosmetics().values()) {
                 if (!cosmetic.isEmote() && service.ownsCosmetic(player, cosmetic.id())) {
-                    ordered.add(cosmetic);
+                    ownedCount++;
                 }
             }
-            for (final SponsorConfig.Cosmetic cosmetic : service.config().cosmetics().values()) {
-                // 2026-10：限定（絕版）的時裝沒有的人看不到（商城不放）
-                // 2026-10-16：節慶活動（萬燈夜）的限定時裝活動期間也列出來（只能試穿，去活動兌換）
-                // 2026-11-02 照站長：拉霸機限定的粒子特效（營地拉霸機抽得到）沒有的人也列出來、可以試穿；這次之前沒有就看不到
-                if (!cosmetic.isEmote() && (!cosmetic.isLimited() || service.festivalPreview(cosmetic) || SponsorService.slotsPrize(cosmetic))
-                        && !service.ownsCosmetic(player, cosmetic.id())) {
-                    ordered.add(cosmetic);
+            for (int i = 0; i < Tab.values().length; i++) {
+                final Tab each = Tab.values()[i];
+                int total = 0;
+                int mine = 0;
+                for (final SponsorConfig.Cosmetic cosmetic : service.config().cosmetics().values()) {
+                    if (each.matches(cosmetic)) {
+                        total++;
+                        mine += service.ownsCosmetic(player, cosmetic.id()) ? 1 : 0;
+                    }
                 }
+                final List<String> about = new ArrayList<>();
+                about.add("<gray>" + each.about);
+                about.add("<gray>擁有 <white>" + mine + "</white><gray>／" + total);
+                if (each == Tab.ALL) {
+                    about.add("");
+                    about.add("<gray>" + balances());
+                    about.add(worn == null ? "<gray>特效：沒戴" : "<gray>特效：" + SponsorService.rarityTag(worn));
+                    about.add("<dark_gray>只有好看，不影響戰鬥；沒擁有的（⚿）右鍵可以試穿");
+                }
+                set(tabSlots[i], tab(each.icon, each.title, each == tab, about));
             }
+            final List<SponsorConfig.Cosmetic> ordered = ordered();
             final int pages = Math.max(1, (ordered.size() + PER_PAGE - 1) / PER_PAGE);
             page = Math.max(0, Math.min(page, pages - 1));
             if (pages > 1) {
@@ -788,9 +872,15 @@ final class SponsorMenus {
                 set(slot, confirmable(slot, entry(cosmetic, worn != null && worn.id().equals(cosmetic.id()))));
                 slot++;
             }
+            if (ordered.isEmpty()) {
+                set(22, icon(Material.GRAY_DYE, "<gray>這一類還沒有", ownedOnly ? "<dark_gray>關掉「只看擁有的」看全部" : "<dark_gray>換個分頁看看"));
+            }
             set(45, backButton("贊助"));
+            final ItemStack ownedIcon = icon(ownedOnly ? Material.LIME_DYE : Material.GRAY_DYE, "<white>只看擁有的：" + (ownedOnly ? "<green>開" : "<gray>關"),
+                    "<gray>你擁有 <white>" + ownedCount + "</white><gray> 件", "", "<yellow>左鍵：" + (ownedOnly ? "看全部" : "只看擁有的"));
+            set(SLOT_OWNED, ownedOnly ? highlight(ownedIcon) : ownedIcon);
             if (worn != null) {
-                set(SLOT_OFF, icon(Material.SHEARS, "<white>拿下特效", "", "<yellow>左鍵：拿下"));
+                set(SLOT_OFF, icon(Material.SHEARS, "<white>拿下特效", "<gray>現在：" + SponsorService.rarityTag(worn), "", "<yellow>左鍵：拿下"));
             }
             set(53, closeButton());
         }
@@ -799,9 +889,13 @@ final class SponsorMenus {
             final boolean owned = service.ownsCosmetic(player, cosmetic.id());
             final List<String> lore = new ArrayList<>();
             lore.add("<gray>" + cosmetic.rarity().displayName() + "・" + kindText(cosmetic));
-            final boolean festival = service.festivalPreview(cosmetic);
-            if (festival) {
+            final boolean hallow = service.festivalPreview(cosmetic);
+            final boolean summer = service.summerPreview(cosmetic); // 2026-11-03 星潮祭：跟萬燈夜並列，各自的來源說明
+            final boolean festival = hallow || summer;
+            if (hallow) {
                 lore.add("<#ff8a1e>★ " + ItemRenderer.escape(cosmetic.limitedTag()) + " <gray>活動兌換商店用糖果、燈芯換（/festival）");
+            } else if (summer) {
+                lore.add("<#2ec4ff>★ " + ItemRenderer.escape(cosmetic.limitedTag()) + " <gray>活動兌換商店用貝殼、珍珠換（/summer）");
             } else if (tw.exilecore.slots.SlotsConfig.LIMITED_TAG.equals(cosmetic.limited())) {
                 // 2026-11-02：拉霸機限定的不是絕版，營地的拉霸機抽得到（這次之前沒有拉霸機）
                 lore.add("<#ffd24a>★ 拉霸機限定 <gray>營地的拉霸機抽得到（/slots）");
@@ -811,33 +905,39 @@ final class SponsorMenus {
             if (!cosmetic.description().isEmpty()) {
                 lore.add("<gray>" + ItemRenderer.escape(cosmetic.description()));
             }
-            if (!owned && festival) {
-                lore.add("<dark_gray>還沒有（這裡不能買）");
-                lore.add("");
-                lore.add("<yellow>右鍵：試穿 " + SponsorService.TRY_ON_TICKS / 20 + " 秒");
-            } else if (owned && cosmetic.skin()) {
-                lore.add("<gray>擁有");
+            if (owned && cosmetic.skin()) {
+                lore.add("<green>擁有");
                 lore.add("");
                 lore.add("<yellow>左鍵：去裝備幻化套上");
+                lore.add("<yellow>右鍵：試穿 " + SponsorService.TRY_ON_TICKS / 20 + " 秒看看");
             } else if (owned) {
-                lore.add(worn ? "<green>戴著" : "<gray>擁有");
+                lore.add(worn ? "<green>戴著" : "<green>擁有");
                 lore.add("");
                 lore.add(worn ? "<yellow>左鍵：拿下" : "<yellow>左鍵：戴上");
-            } else if (cosmetic.fashionPrice() > 0) {
-                lore.add("<gray>時裝幣兌換：" + FASHION_COLOR + cosmetic.fashionPrice() + " 時裝幣</#ff9ad5><gray>（你有 " + service.fashionCoins(player) + "）");
-                lore.add("<gray>抽獎箱也抽得到");
-                lore.add("");
-                lore.add("<yellow>左鍵：兌換");
-                lore.add("<yellow>右鍵：試穿 " + SponsorService.TRY_ON_TICKS / 20 + " 秒");
             } else {
-                lore.add("<dark_gray>還沒有");
-                if (!cosmetic.isLimited() || SponsorService.slotsPrize(cosmetic)) {
+                if (cosmetic.fashionPrice() > 0) {
+                    lore.add("<dark_gray>⚿ 還沒擁有　<gray>時裝幣兌換：" + FASHION_COLOR + cosmetic.fashionPrice() + " 時裝幣</#ff9ad5><gray>（你有 "
+                            + service.fashionCoins(player) + "）");
+                    lore.add("<gray>抽獎箱也抽得到");
                     lore.add("");
-                    lore.add("<yellow>右鍵：試穿 " + SponsorService.TRY_ON_TICKS / 20 + " 秒");
+                    lore.add("<yellow>左鍵：兌換");
+                } else if (festival) {
+                    lore.add("<dark_gray>⚿ 還沒擁有（這裡不能買，去活動兌換）");
+                    lore.add("");
+                } else {
+                    lore.add("<dark_gray>⚿ 還沒擁有" + (cosmetic.isLimited() ? "" : "（抽獎箱、月卡幣兌換拿得到）"));
+                    lore.add("");
                 }
+                lore.add("<yellow>右鍵：試穿 " + SponsorService.TRY_ON_TICKS / 20 + " 秒");
             }
-            final ItemStack stack = cosmetic.skin() ? skinStack(service, cosmetic, SponsorService.rarityTag(cosmetic), lore)
-                    : icon(owned ? Material.BLAZE_POWDER : Material.GUNPOWDER, SponsorService.rarityTag(cosmetic), lore);
+            // 沒擁有的：名字前面一個鎖頭、灰字；3D 的模型整個變灰一點（資源包的物品定義看 custom_model_data 的旗標）
+            final String name = owned ? SponsorService.rarityTag(cosmetic) : "<gray>⚿ " + SponsorService.rarityTag(cosmetic);
+            final ItemStack stack = cosmetic.skin() ? skinStack(service, cosmetic, name, lore)
+                    : icon(owned ? Material.BLAZE_POWDER : Material.GUNPOWDER, name, lore);
+            if (!owned && cosmetic.skin() && service.packSent()) {
+                stack.setData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA,
+                        io.papermc.paper.datacomponent.item.CustomModelData.customModelData().addFlag(true).build());
+            }
             return worn ? highlight(stack) : stack;
         }
 
@@ -851,17 +951,31 @@ final class SponsorMenus {
                 goBack();
                 return;
             }
+            for (int i = 0; i < tabSlots.length; i++) {
+                if (tabSlots[i] == slot) {
+                    if (tab != Tab.values()[i]) {
+                        tab = Tab.values()[i];
+                        page = 0;
+                        player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 0.6f, 1.0f);
+                        redraw();
+                    }
+                    return;
+                }
+            }
             if (slot == SLOT_PREV || slot == SLOT_NEXT) {
                 page += slot == SLOT_NEXT ? 1 : -1;
-                final int count = (int) service.config().cosmetics().values().stream()
-                        .filter(c -> !c.isEmote() && (!c.isLimited() || service.festivalPreview(c) || SponsorService.slotsPrize(c)
-                                || service.ownsCosmetic(player, c.id()))).count();
-                final int pages = Math.max(1, (count + PER_PAGE - 1) / PER_PAGE);
+                final int pages = Math.max(1, (ordered().size() + PER_PAGE - 1) / PER_PAGE);
                 page = Math.floorMod(page, pages);
                 redraw();
                 return;
             }
             if (!acceptAction(click)) {
+                return;
+            }
+            if (slot == SLOT_OWNED) {
+                ownedOnly = !ownedOnly;
+                page = 0;
+                redraw();
                 return;
             }
             if (slot == SLOT_OFF && service.worn(player) != null) {
@@ -876,8 +990,9 @@ final class SponsorMenus {
             if (cosmetic == null) {
                 return;
             }
-            if (!service.ownsCosmetic(player, cosmetic.id()) && click.isRightClick()) {
-                // 試穿（2026-10）：關掉選單才看得到自己（F5）
+            final boolean owned = service.ownsCosmetic(player, cosmetic.id());
+            if (click.isRightClick() && (!owned || cosmetic.skin())) {
+                // 試穿（2026-10）：關掉選單才看得到自己（F5）。2026-11-03：限定的也能試穿；擁有的 3D 時裝右鍵也能試穿看看
                 final String problem = service.tryOn(player, cosmetic.id());
                 if (problem != null) {
                     result(problem);
@@ -889,9 +1004,9 @@ final class SponsorMenus {
                         + SponsorService.TRY_ON_TICKS / 20 + " 秒（" + SponsorService.tryOnHint(cosmetic) + "；按 F5 看自己）"));
                 return;
             }
-            if (service.ownsCosmetic(player, cosmetic.id()) && cosmetic.skin()) {
+            if (owned && cosmetic.skin()) {
                 new Transmog(plugin, player, service).open();
-            } else if (service.ownsCosmetic(player, cosmetic.id())) {
+            } else if (owned) {
                 final SponsorConfig.Cosmetic worn = service.worn(player);
                 result(service.wear(player, worn != null && worn.id().equals(cosmetic.id()) ? null : cosmetic.id()));
             } else if (cosmetic.fashionPrice() > 0 && click.isLeftClick() && confirm(slot)) {
@@ -900,7 +1015,6 @@ final class SponsorMenus {
         }
     }
 
-    /** 「粒子・頭上的光環」「幻化・弓」。 */
     static String kindText(final SponsorConfig.Cosmetic cosmetic) {
         if (cosmetic.isEmote()) {
             return "動作";
@@ -950,6 +1064,24 @@ final class SponsorMenus {
     }
 
     // ---- 動作（2026-10）----
+
+    /**
+     * 動作的圖示（2026-11-03 照站長：抽成共用的，活動兌換頁也用同一個；這次之前寫在動作選單裡、兌換頁的動作是馬鎧）。
+     */
+    static Material emoteMaterial(final String emote) {
+        return switch (emote) {
+            case "kick_ball" -> Material.SNOWBALL;
+            case "bear_shake" -> Material.BROWN_WOOL;
+            case "head_bob" -> Material.NOTE_BLOCK;
+            case "king_sit" -> Material.GRAY_WOOL;
+            case "love_you" -> Material.PINK_PETALS;
+            case "six_seven" -> Material.CLOCK;
+            case "hollow_purple" -> Material.AMETHYST_SHARD; // 2026-10-24
+            case "world_slash" -> Material.IRON_SWORD;
+            case "surf" -> Material.HEART_OF_THE_SEA; // 2026-11-03 星潮祭
+            default -> Material.PHANTOM_MEMBRANE;
+        };
+    }
 
     static final class EmoteMenu extends Base {
         private final Map<Integer, SponsorConfig.Cosmetic> shown = new HashMap<>();
@@ -1008,20 +1140,13 @@ final class SponsorMenus {
                 lore.add("<gray>時裝幣兌換：" + FASHION_COLOR + cosmetic.fashionPrice() + " 時裝幣</#ff9ad5><gray>（你有 " + service.fashionCoins(player) + "）");
                 lore.add("");
                 lore.add("<yellow>左鍵：兌換");
+            } else if (cosmetic.isLimited()) {
+                // 2026-11-03 照站長：限定的動作（星潮祭的衝浪）寫出從哪裡拿；這次之前只寫「還沒有」
+                lore.add("<#ffd24a>★ " + ItemRenderer.escape(cosmetic.limitedTag()) + "<gray>（活動兌換才拿得到）");
             } else {
                 lore.add("<dark_gray>還沒有");
             }
-            final Material material = switch (cosmetic.emote()) {
-                case "kick_ball" -> Material.SNOWBALL;
-                case "bear_shake" -> Material.BROWN_WOOL;
-                case "head_bob" -> Material.NOTE_BLOCK;
-                case "king_sit" -> Material.GRAY_WOOL;
-                case "love_you" -> Material.PINK_PETALS;
-                case "six_seven" -> Material.CLOCK;
-                case "hollow_purple" -> Material.AMETHYST_SHARD; // 2026-10-24
-                case "world_slash" -> Material.IRON_SWORD;
-                default -> Material.PHANTOM_MEMBRANE;
-            };
+            final Material material = emoteMaterial(cosmetic.emote());
             final ItemStack stack = icon(owned ? material : Material.GRAY_DYE, SponsorService.rarityTag(cosmetic), lore);
             return key != null ? highlight(stack) : stack;
         }

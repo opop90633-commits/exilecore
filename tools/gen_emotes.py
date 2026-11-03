@@ -16,7 +16,10 @@ ROOT = Path(__file__).resolve().parent.parent
 BASE = ROOT / 'tools/steve_base.bbmodel'
 OUT = ROOT / 'src/main/resources/emotes/exile_emotes.bbmodel'
 
-model = json.loads(BASE.read_text(encoding='utf-8'))
+# 2026-11-03 照站長（星潮祭的「衝浪」）：tools/steve_base.bbmodel 不在的時候，拿上次產生的 exile_emotes.bbmodel 當骨架
+#   （它就是 steve_base 加上動畫，動畫整個重寫，骨架、方塊、貼圖照舊）；這次之前一定要有 steve_base.bbmodel
+model = json.loads((BASE if BASE.exists() else OUT).read_text(encoding='utf-8'))
+model['animations'] = []
 bones = {g['name']: g['uuid'] for g in model['groups']}
 NS = uuid.UUID('6f6a2b1e-2c55-4e1d-9a7f-31c2f8d0e001')
 
@@ -291,7 +294,34 @@ world_slash = held('world_slash', [
     (ws_situp, 0.4, 0.2), (ws_kneel, 0.35, 0.15), (ZERO, 0.4, 0)])
 # 1.13 秒斬線、2.03 秒上半身往後落地、2.93 秒腳也往後倒平（Emotes.java：23、41、58 tick）
 
-model['animations'] = [sidestep, kick_ball, bear_shake, head_bob, king_sit, love_you, six_seven, hollow_purple, world_slash]
+# ---- 衝浪（2026-11-03 照站長：星潮祭限定）：蹲一下 → 跳上腳下變出來的衝浪板（板子是 Emotes.java 擺的方塊，藍白條紋、
+#      長邊在角色的左右，板面高 2 像素）→ 兩腳張開、膝蓋彎、壓低身子，兩手往兩邊張開，頭跟上身轉向角色的左邊（板頭）→
+#      左右壓重心六下（整個人往一邊歪、那一邊的手放低另一邊的手抬高，板子在 Emotes.java 跟著同一邊壓下去）→ 站回中間 →
+#      往上跳（兩手高舉、板子在最高點消失）→ 落地蹲一下 → 站好。只是動畫，玩家的位置不動。
+#      root 的 z 正 = 上身往角色的左邊歪（跟垂下的手腳相反：root 的方塊在轉軸上面）。
+surf_prep = P(root_pos=(0, -2, 0), prl=(25, 0, 0), prfl=(-35, 0, 0), pll=(25, 0, 0), plfl=(-35, 0, 0),
+              pra=(-30, 0, 10), pla=(-30, 0, -10), chest=(-10, 0, 0), head=(-6, 0, 0))
+surf_hop = P(root_pos=(0, 5, 0), prl=(35, 0, 8), prfl=(-60, 0, 0), pll=(35, 0, -8), plfl=(-60, 0, 0),
+             pra=(0, 0, 60), pla=(0, 0, -60), head=(4, 0, 0))
+surf_stance = P(root_pos=(0, 0, 0), prl=(28, 0, 22), prfl=(-45, 0, 0), pll=(28, 0, -22), plfl=(-45, 0, 0),
+                chest=(-10, 18, 0), head=(5, 30, 0), pra=(-5, 0, 82), prfa=(0, 0, 10), pla=(-5, 0, -82), plfa=(0, 0, -10))
+def surf_lean(side):
+    """side 1：往角色的左邊壓（右手抬高、左手放低）；-1 反過來。"""
+    return merge(surf_stance, P(root_pos=(0, 0.3, 0), root=(0, 0, 7 * side), chest=(-12, 18 - 6 * side, 4 * side),
+                                head=(5, 30, -6 * side), pra=(-5, 0, 82 + 18 * side), pla=(-5, 0, -82 + 18 * side)))
+surf_off = P(root_pos=(0, 6, 0), prl=(40, 0, 6), prfl=(-70, 0, 0), pll=(40, 0, -6), plfl=(-70, 0, 0),
+             pra=(0, 0, 140), pla=(0, 0, -140), head=(8, 0, 0))
+surf_land = P(root_pos=(0, -2.5, 0), prl=(30, 0, 6), prfl=(-45, 0, 0), pll=(30, 0, -6), plfl=(-45, 0, 0),
+              pra=(-10, 0, 40), pla=(-10, 0, -40), chest=(-8, 0, 0))
+surf_steps = [(surf_prep, 0.25, 0.1), (surf_hop, 0.2, 0.05), (surf_stance, 0.18, 0.15)]
+for i in range(6):
+    surf_steps.append((surf_lean(1 if i % 2 == 0 else -1), 0.4, 0.05))
+surf_steps += [(surf_stance, 0.3, 0.1), (surf_off, 0.2, 0.05), (surf_land, 0.15, 0.1), (ZERO, 0.3, 0)]
+surf = held('surf', surf_steps)
+# 0.35 秒起跳、0.78 秒落到板上、0.93 秒起每 0.45 秒壓一邊（先左）、3.63 秒回中間、4.23 秒跳到最高（板子消失）、4.43 秒落地
+# （Emotes.java：7、16、19／28／37／46／55／64、73、85、89 tick；長度 4.88 秒）
+
+model['animations'] = [sidestep, kick_ball, bear_shake, head_bob, king_sit, love_you, six_seven, hollow_purple, world_slash, surf]
 model['name'] = 'exile_emotes'
 OUT.parent.mkdir(parents=True, exist_ok=True)
 OUT.write_text(json.dumps(model, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')

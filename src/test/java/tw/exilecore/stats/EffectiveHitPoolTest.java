@@ -146,7 +146,9 @@ class EffectiveHitPoolTest {
         assertEquals(0, phys.damage().get(DamageType.FIRE), 1e-9);
         // 等級：一般照角色等級，巔峰以上至少 T16
         assertEquals(40, EffectiveHitPool.enemyLevel(EffectiveHitPool.Tier.BOSS, 0, 40, 84, 100));
-        assertEquals(84, EffectiveHitPool.enemyLevel(EffectiveHitPool.Tier.PINNACLE, 0, 40, 84, 100));
+        assertEquals(87, EffectiveHitPool.enemyLevel(EffectiveHitPool.Tier.PINNACLE, 0, 40, 84, 100), "終局 Boss：最高階＋3");
+        assertEquals(91, EffectiveHitPool.enemyLevel(EffectiveHitPool.Tier.UBER, 0, 40, 84, 100), "極境：最高階＋7");
+        assertEquals(92, EffectiveHitPool.enemyLevel(EffectiveHitPool.Tier.APEX, 0, 40, 84, 100), "巔峰：最高階＋3＋5");
         assertEquals(84, EffectiveHitPool.enemyLevel(EffectiveHitPool.Tier.PINNACLE, 60, 40, 84, 100));
         assertEquals(90, EffectiveHitPool.enemyLevel(EffectiveHitPool.Tier.UBER, 90, 40, 84, 100));
         assertEquals(100, EffectiveHitPool.enemyLevel(EffectiveHitPool.Tier.NORMAL, 150, 40, 84, 100));

@@ -283,6 +283,11 @@ public final class ItemRenderer {
         return lore;
     }
 
+    /** 2026-11-03：倍數的顏色：變強綠、變弱紅、差不多灰。 */
+    private static String corruptColor(final int percent) {
+        return percent > 100 ? "<#7dff8a>" : percent < 100 ? "<#ff7070>" : "<gray>";
+    }
+
     private List<Component> buildLore(final ItemBase base, final ItemData data, final ItemStats.Snapshot snapshot) {
         if (base.isFlaskLike()) {
             return buildFlaskLore(data);
@@ -428,7 +433,9 @@ public final class ItemRenderer {
                     final boolean fractured = ItemStats.AffixLine.FRACTURED.equals(affixLine.mark()); // 2026-10-21：定星石
                     final String catalysedMark = (affixLine.catalysed() ? " <#7fd4ff>✦催化" : "")
                             + (affixLine.unveiled() ? " <#d69bff>✦揭露 +" + affixLine.unveiledBoost() + "%" : "")
-                            + (fractured ? " <#c9a66b>✦破裂" : "");
+                            + (fractured ? " <#c9a66b>✦破裂" : "")
+                            // 2026-11-03 照站長：蝕變石（傳奇重骰再乘倍率）／聖化變動了數值的詞綴，標這條的倍數；這次之前看不出來
+                            + (affixLine.corrupt() > 0 ? " " + corruptColor(affixLine.corrupt()) + "✦" + affixLine.corruptMark() : "");
                     final String boostColor = affixLine.unveiled() ? "#d69bff" : affixLine.catalysed() ? "#7fd4ff" : fractured ? "#c9a66b" : null;
                     final String chips = AffixChips.miniMessage(affixLine.chips()); // 2026-10：詞綴標籤（傷害、火焰、攻擊…）
                     lore.add(line(unique ? "<" + (boostColor != null ? boostColor : "#8888ff") + ">" + affixLine.ranged() + catalysedMark + chips
@@ -473,7 +480,14 @@ public final class ItemRenderer {
         }
         if (data.omen() != null) {
             final tw.exilecore.currency.CurrencyType omen = omens == null ? null : omens.apply(data.omen());
-            lore.add(line("<#c48bff>星籤：" + (omen == null ? escape(data.omen()) : escape(omen.name()) + " <dark_gray>— " + escape(omen.description()))));
+            final ItemBase omenBase = repository.base(data.base());
+            final String misfit = omen == null ? null : tw.exilecore.currency.Crafting.omenFitsBase(omen, omenBase);
+            if (misfit != null) {
+                // 2026-11-03 照站長：以前掛錯地方的（護腿上的催化至臻籤）：灰掉、寫不會生效
+                lore.add(line("<dark_gray><st>星籤：" + escape(omen.name()) + "</st> （不會生效：" + escape(misfit) + "）"));
+            } else {
+                lore.add(line("<#c48bff>星籤：" + (omen == null ? escape(data.omen()) : escape(omen.name()) + " <dark_gray>— " + escape(omen.description()))));
+            }
             // 2026-10-27 照站長：「去裂」星籤直接寫會移除哪一條（一樣差的寫「其中一條」）
             if (omen != null && omen.omen() != null && omen.omen().effect() == tw.exilecore.currency.CurrencyType.Omen.Effect.REMOVE_LOWEST
                     && data.identified() && !data.affixes().isEmpty()) {

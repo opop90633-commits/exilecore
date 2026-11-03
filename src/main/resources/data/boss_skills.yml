@@ -2596,6 +2596,270 @@ skills:
     telegraph: 1.0
     shout: "「燈裡的孩子們，出來玩。」"
 
+  # ---- 2026-11-03 星潮祭：深潮海妖「珊瑚之喉」（data/summer_festival.yml）----
+  #   只用現成的 kind：潮浪 = ring（擴散的水牆，留缺口）、漩渦 = pull、觸手拍擊 = slam、墨霧 = zone＋slow（沒有失明類的 kind）、夏雷 = slam（閃電）
+  tide_wave:
+    name: 潮浪
+    hint: "一道水牆從海妖腳下往外推：鑽進綠色的缺口"
+    kind: ring
+    damage: 1.9
+    type: cold
+    cooldown: 16
+    range: 18
+    telegraph: 1.2
+    radius: 1.5
+    reach: 26
+    speed: 0.35
+    width: 1.0
+    count: 2
+    stagger: 1.4
+    gaps: 2
+    gap_angle: 45
+    slow: 1.5
+    shout: "「浪，來。」"
+  tide_whirlpool:
+    name: 漩渦
+    hint: "漩渦把你往海妖拉，最後會炸：一直往外跑"
+    kind: pull
+    damage: 2.4
+    type: cold
+    cooldown: 22
+    range: 12
+    telegraph: 1.2
+    radius: 14
+    speed: 0.1
+    duration: 3
+    explode: 5
+    shout: "「沉下來。」"
+  tide_tentacle_slam:
+    name: 觸手拍擊
+    hint: "觸手從沙裡拍下來：看到紅圈就離開"
+    kind: slam
+    damage: 1.8
+    type: physical
+    cooldown: 12
+    range: 24
+    telegraph: 0.9
+    delay: 1.0
+    radius: 2.6
+    count: 8
+    stagger: 0.12
+    scatter: 5
+    at: target
+    shout: "「拍扁。」"
+  tide_ink_cloud:
+    name: 墨霧
+    hint: "腳下噴出一團墨：站在裡面又慢又痛，走出去"
+    kind: zone
+    damage: 1.0
+    type: chaos
+    cooldown: 18
+    range: 20
+    telegraph: 0.9
+    radius: 3.5
+    duration: 7
+    interval: 0.8
+    count: 3
+    scatter: 4
+    at: target
+    slow: 3
+    visual: boss_chaos
+    shout: "「看不見了吧。」"
+  tide_lightning:
+    name: 夏雷
+    hint: "夏天的雷隨機落下：看到紅圈就離開"
+    kind: slam
+    damage: 2.0
+    type: lightning
+    cooldown: 14
+    range: 24
+    telegraph: 0.8
+    delay: 1.0
+    radius: 2.2
+    count: 7
+    stagger: 0.25
+    scatter: 7
+    at: random
+    visual: boss_lightning
+    shout: "「天也站在海這邊。」"
+  # 2026-11-03 照站長「招式要更多」：再加 12 招（全部現成的 kind），傷害、冷卻比照巔峰（awakener_*），冷、電、物理混搭。
+  #   大招（海嘯 sanctuary、漲潮 arena、分身 echoes）在 summer_festival.yml 的 boss.skills 寫 phase: 1／2（海妖生命 66%、33% 以下才用）。
+  #   溺屍（tide_drowned_call）的等級照海妖（SummerService 的 Host.summon 用 boss.level 裝飾）；這次之前只有上面 5 招
+  tide_drowned_call:
+    name: 溺者之召
+    hint: "海裡爬出一群溺屍：先清小的，別被圍住"
+    kind: summon
+    summon: DROWNED
+    count: 5
+    summon_max: 6
+    cooldown: 28
+    range: 30
+    telegraph: 1.0
+    shout: "「沉在海底的……都起來。」"
+  tide_coral_volley:
+    name: 珊瑚刺雨
+    hint: "扇形的珊瑚刺彈幕：往側邊走、別正對海妖"
+    kind: volley
+    damage: 1.3
+    type: physical
+    cooldown: 9
+    range: 26
+    telegraph: 0.9
+    count: 9
+    spread: 70
+    speed: 1.4
+    reach: 30
+    size: 0.6
+    shout: "「刺穿。」"
+  tide_water_jet:
+    name: 旋流水柱
+    hint: "兩道水柱繞著海妖轉：待在兩道之間、跟著轉"
+    kind: beam
+    damage: 1.3
+    type: cold
+    cooldown: 14
+    range: 18
+    telegraph: 1.5
+    count: 2
+    angle: 120
+    length: 30
+    width: 0.8
+    duration: 4.5
+    interval: 0.3
+    shout: "「轉——到你暈為止。」"
+  tide_bubble_orbs:
+    name: 追魂水泡
+    hint: "水泡會慢慢追著你：帶著跑，別讓它碰到"
+    kind: orbs
+    damage: 1.2
+    type: cold
+    cooldown: 20
+    range: 26
+    telegraph: 1.2
+    count: 4
+    speed: 0.16
+    duration: 8
+    size: 0.8
+    explode: 2.5
+    shout: "「別回頭。」"
+  tide_tsunami:
+    name: 海嘯
+    hint: "全場海嘯、翻滾躲不掉：躲進綠色的安全區"
+    kind: sanctuary
+    damage: 4.5
+    type: cold
+    cooldown: 45
+    range: 30
+    telegraph: 3.2
+    radius: 32   # 全場（上限 32）
+    count: 2
+    safe: 2.5
+    scatter: 12
+    shout: "「整片海……壓下來。」"
+  tide_spray:
+    name: 寒潮吐息
+    hint: "正面一道水柱吐息：繞到海妖側邊"
+    kind: cone
+    damage: 1.5
+    type: cold
+    cooldown: 8
+    range: 9
+    telegraph: 1.0
+    angle: 80
+    length: 9
+    count: 2
+    stagger: 0.4
+    slow: 2
+    shout: "「呼——」"
+  tide_undertow_mark:
+    name: 暗流點名
+    hint: "被點名的人腳下會噴水柱：離開隊友再等它炸"
+    kind: mark
+    damage: 2.2
+    type: cold
+    cooldown: 15
+    range: 30
+    telegraph: 0.8
+    count: 1
+    duration: 4
+    explode: 3.5
+    shout: "「就是你。」"
+  tide_ram:
+    name: 潮衝
+    hint: "海妖朝你衝撞：往路線的側邊閃"
+    kind: charge
+    damage: 1.6
+    type: physical
+    cooldown: 12
+    range: 20
+    telegraph: 1.0
+    speed: 1.1
+    reach: 18
+    width: 1.8
+    slow: 1
+    shout: "「撞沉你。」"
+  tide_wave_nova:
+    name: 環浪
+    hint: "以海妖為中心的一圈浪：往外跑出圈"
+    kind: nova
+    damage: 1.6
+    type: cold
+    cooldown: 13
+    range: 9
+    telegraph: 1.6   # 新星的前搖 ≥ (radius − 2) ÷ 5.6 + 0.5（半徑 7 → 1.4 秒）
+    radius: 7
+    count: 2
+    stagger: 0.4
+    slow: 1.5
+    shout: "「退，潮。」"
+  tide_rising_sea:
+    name: 漲潮
+    hint: "潮水把外圈吃掉：往中間靠，留在圈裡"
+    kind: arena
+    damage: 1.0
+    type: cold
+    cooldown: 300
+    range: 30
+    telegraph: 1.5
+    reach: 20
+    radius: 8
+    duration: 20
+    interval: 0.5
+    shout: "「漲潮了。沙灘……是我的。」"
+  tide_echoes:
+    name: 潮影
+    hint: "三個水影各射一條水柱：看紅線往旁邊走"
+    kind: echoes
+    damage: 1.5
+    type: cold
+    cooldown: 29
+    range: 20
+    telegraph: 1.4
+    count: 3
+    scatter: 9
+    stagger: 0.8
+    delay: 1.0
+    reach: 28
+    width: 1.0
+    shout: "「哪一個……是我？」"
+  tide_storm_zone:
+    name: 海上雷雨
+    hint: "落雷的雨區會留在地上：走出去、別再踩回去"
+    kind: zone
+    damage: 0.8
+    type: lightning
+    cooldown: 16
+    range: 26
+    telegraph: 1.0
+    radius: 4
+    duration: 8
+    interval: 0.6
+    count: 3
+    scatter: 6
+    at: random
+    visual: boss_lightning
+    shout: "「雷，落下來。」"
+
   # ---- 2026-10-23 晚：渦齒鯊王（星骸之海，在筏上打；難度比照極境）----
   shark_tide_ring:
     name: 螺旋潮環

@@ -372,7 +372,7 @@ public final class CurrencyService {
     private Outcome run(final CurrencyType type, final ItemData data, final java.util.random.RandomGenerator random) {
         // 掛著的星籤：這顆通貨觸發的話照星籤的規則做，星籤用掉
         final CurrencyType omen = data.omen() == null ? null : repository.get(data.omen());
-        final boolean omenFires = Crafting.triggers(omen, type);
+        final boolean omenFires = Crafting.triggers(omen, type, items.repository().base(data.base())); // 2026-11-03：用不上的星籤當成沒掛
         if (omenFires && Crafting.omenProblem(omen, type, data, items.generator()) != null) {
             return new Outcome(Result.NOT_APPLICABLE, null);
         }
@@ -602,7 +602,8 @@ public final class CurrencyService {
         }
         final List<String> out = new ArrayList<>();
         for (final tw.exilecore.item.ItemStats.AffixLine line : tw.exilecore.item.ItemStats.affixLines(items.repository(), data)) {
-            out.add(line.text() + (line.tier() > 0 ? "（T" + line.tier() + "）" : ""));
+            out.add(line.text() + (line.tier() > 0 ? "（T" + line.tier() + "）" : "")
+                    + (line.corrupt() > 0 ? " " + line.corruptMark() : "")); // 2026-11-03 照站長：腐化訊息也寫每條的倍數
         }
         return out;
     }
@@ -647,7 +648,7 @@ public final class CurrencyService {
             return problem;
         }
         final CurrencyType omen = data.get().omen() == null ? null : repository.get(data.get().omen());
-        if (Crafting.triggers(omen, type.get())) {
+        if (Crafting.triggers(omen, type.get(), items.repository().base(data.get().base()))) {
             return Crafting.omenProblem(omen, type.get(), data.get(), items.generator());
         }
         return null;

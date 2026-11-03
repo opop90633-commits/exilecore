@@ -461,6 +461,8 @@ public final class AilmentService {
         final long now = now();
         Tracked entry = tracked.get(defender.getUniqueId());
         boolean changed = false;
+        // 2026-11-03 照站長：不可動搖（flag.cc_immune，星潮祭世界 Boss）：冰緩、凍結、暈眩、電擊、癱瘓、阻礙、致盲都不吃，連累積條都不累積
+        final boolean ccImmune = ccImmune(defenderSheet);
 
         // PoE2 昇華：所有傷害都算進點燃／冰緩／感電（燃燒使者、冬之塑造者、風暴塑造者）
         final double allDamage = fire + cold + lightning + physical + chaos;
@@ -548,7 +550,7 @@ public final class AilmentService {
             final double slowTaken = Math.max(0, defenderSheet.apply(StatKeys.SLOW_TAKEN, 1.0, Set.of()));
             final double magnitude = config.chillMagnitude(chillBase, threshold, attack.apply(StatKeys.CHILL_EFFECT, 1.0, context) * slowScale
                     * tw.exilecore.stats.TreeKeys.selfEffect(defenderSheet, tw.exilecore.stats.TreeKeys.CHILL_EFFECT_ON_SELF) - 1) * slowTaken; // 2026-10-26：身上的冰緩效果
-            if (magnitude > 0 && !StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE) && !avoided(defenderSheet, StatKeys.AVOID_CHILL, random)
+            if (magnitude > 0 && !ccImmune && !StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE) && !avoided(defenderSheet, StatKeys.AVOID_CHILL, random)
                     && !immuneAfter(defender, defenderSheet, "chill", now)) { // 2026-10-28（悲運之縛）
                 final double seconds = AilmentConfig.duration(config.chillDuration(playerTarget),
                         attack.increased(StatKeys.CHILL_DURATION, context) + attack.increased(StatKeys.AILMENT_DURATION, context),
@@ -569,7 +571,7 @@ public final class AilmentService {
             final boolean allFreeze = StatKeys.flag(attack, tw.exilecore.item.unique.UniqueStats.ALL_DAMAGE_FREEZES);
             // 2026-10-29：免疫凍結（疾影之靴這類免疫元素異常、免疫凍結）的不累積凍結值：這次之前照樣累積到滿才擋掉，
             //   畫面上一直跳「凍結 xx%」，看起來像會被凍住
-            final boolean freezeImmune = StatKeys.flag(defenderSheet, StatKeys.FLAG_FREEZE_IMMUNE)
+            final boolean freezeImmune = ccImmune || StatKeys.flag(defenderSheet, StatKeys.FLAG_FREEZE_IMMUNE)
                     || StatKeys.flag(defenderSheet, StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE) || StatKeys.flag(defenderSheet, "flag.immune.freeze");
             final double buildup = noElemental || freezeImmune ? 0 : allFreeze ? freezeSettings.buildupFor(allDamage,
                     tw.exilecore.stats.TreeKeys.freezeThreshold(freezePoise, defenderSheet) * entry.state.freezeMeter().thresholdMultiplier(now),
@@ -755,7 +757,7 @@ public final class AilmentService {
         if (playerTarget && !(attacker instanceof Player)) {
             final Set<String> hexTags = skill.tags() == null ? Set.of() : skill.tags();
             final long hexEnd = now + ticks(HEX_SECONDS);
-            final boolean unslowable = StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE);
+            final boolean unslowable = ccImmune || StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE); // 2026-11-03：不可動搖也不吃
             if (!unslowable && !StatKeys.flag(defenderSheet, StatKeys.FLAG_MAIM_IMMUNE) && rollPercent(attack.flat(StatKeys.MAIM_CHANCE, hexTags), random)
                     // 2026-10-27 照 PoE2 天賦樹：被偏斜的擊中不會讓你癱瘓（這次之前旗標沒有人讀）
                     && !(result.deflected() && StatKeys.flag(defenderSheet, tw.exilecore.stats.TreeNewMechanicKeys.FLAG_DEFLECT_NO_MAIM))) {
@@ -776,7 +778,7 @@ public final class AilmentService {
                 tw.exilecore.skill.Fx.spawn(defender.getWorld(), Particle.SQUID_INK, defender.getLocation().add(0, 0.2, 0), 5, 0.3, 0.05, 0.3, 0.01);
                 changed = true;
             }
-            if (!StatKeys.flag(defenderSheet, StatKeys.FLAG_BLIND_IMMUNE) && rollPercent(attack.flat(StatKeys.BLIND_CHANCE, hexTags), random)) {
+            if (!ccImmune && !StatKeys.flag(defenderSheet, StatKeys.FLAG_BLIND_IMMUNE) && rollPercent(attack.flat(StatKeys.BLIND_CHANCE, hexTags), random)) {
                 entry = entry == null ? track(defender) : entry;
                 entry.state.blind(hexEnd);
                 if (plugin.combat() != null) {
@@ -825,7 +827,7 @@ public final class AilmentService {
         final double meleeStun = melee ? (playerAttacker ? 1.5 : 1.33) : 1.0;
         final double stunDamage = (physicalStun + (fire + cold + lightning + chaos) * config.stunElementalMultiplier()) * meleeStun
                 * Math.max(0, Math.min(1.0, stunScale)); // 2026-10-18：Boss 照遞減後的傷害算暈眩
-        if (stunDamage > 0) {
+        if (stunDamage > 0 && !ccImmune) { // 2026-11-03：不可動搖：輕暈、重暈、蓄勢待暈都不累積
             final Set<String> context = skill.contextFor(DamageType.PHYSICAL);
             // 暈眩門檻 = 暈眩門檻（poise）＋「+x 暈眩門檻」，再乘（1 ＋ 增加暈眩門檻）：元素異常門檻不影響暈眩
             // 2026-10-26 照 PoE2：怪物的基礎改用 poise 等級表 × 稀有度（這次之前用最大生命 × 稀有度倍率）
@@ -950,7 +952,7 @@ public final class AilmentService {
             // 2026-10-26 照 PoE2：電擊是累積條，有來源就每一擊都累積，不先擲機率；不到 100% 的「電擊機率」改成累積量乘那個比例
             //（期望值一樣）。這次之前先擲機率，擲中才累積
             // 2026-10-29：免疫電擊（免疫元素異常）的不累積（這次之前累積到滿才擋掉）
-            if (chance > 0 && !StatKeys.flag(defenderSheet, StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE)
+            if (chance > 0 && !ccImmune && !StatKeys.flag(defenderSheet, StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE) // 2026-11-03：不可動搖也不累積
                     && !StatKeys.flag(defenderSheet, "flag.immune.electrocute")) {
                 // 2026-10-26 照 PoE2：閃電 × 1.7 ÷ 暈眩門檻（這次之前 150% × 閃電 ÷ 異常門檻，傳奇怪 50%）
                 entry = entry == null ? track(defender) : entry;
@@ -1273,7 +1275,7 @@ public final class AilmentService {
             }
         } else if (hinderTicks > 0 && plugin.monsters() != null && plugin.monsters().data(target).isPresent()) {
             final StatSheet sheet = plugin.monsters().sheet(target, plugin.monsters().data(target).get());
-            if (!StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) && !StatKeys.flag(sheet, StatKeys.FLAG_HINDER_IMMUNE)) {
+            if (!StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) && !StatKeys.flag(sheet, StatKeys.FLAG_HINDER_IMMUNE) && !ccImmune(sheet)) { // 2026-11-03：不可動搖不吃
                 final Tracked hindered = track(target);
                 hindered.state.hinder(now() + hinderTicks);
                 update(target, hindered, now());
@@ -1462,7 +1464,7 @@ public final class AilmentService {
             other = other == null ? track(living) : other;
             other.state.addPoison(strongest.dps(), now + left, source == null ? strongest.source() : source,
                     strongest.limit()); // 2026-10-27：傳過去的帶著原本那層毒的層數上限；這次之前用 20 層，把來源整個的上限拉高、1 層上限的毒全部生效
-            if (hinderChance > 0 && plugin.random().nextDouble() * 100 < hinderChance) {
+            if (hinderChance > 0 && plugin.random().nextDouble() * 100 < hinderChance && !ccImmune(living)) { // 2026-11-03：不可動搖不吃
                 other.state.hinder(now + ticks(hinderSeconds));
             }
             spread++;
@@ -1714,7 +1716,7 @@ public final class AilmentService {
      * （呼叫端照 {@link AilmentConfig#pin()} 的秒數讓牠不能移動）。
      */
     public boolean pinBuildup(final LivingEntity defender, final MonsterData data, final StatSheet sheet, final double physical, final double multiplier) {
-        if (physical <= 0 || data == null || defender instanceof Player) {
+        if (physical <= 0 || data == null || defender instanceof Player || ccImmune(sheet)) { // 2026-11-03：不可動搖不會被釘住
             return false;
         }
         final long now = now();
@@ -1740,7 +1742,7 @@ public final class AilmentService {
      * 滿了回傳 true，呼叫端套上眩暈（{@code HitEffects}），條在 dazeTicks 內不再累積（眩暈不疊加）。
      */
     public boolean dazeBuildup(final LivingEntity defender, final MonsterData data, final StatSheet sheet, final double physical, final long dazeTicks) {
-        if (physical <= 0 || data == null || defender instanceof Player) {
+        if (physical <= 0 || data == null || defender instanceof Player || ccImmune(sheet)) { // 2026-11-03：不可動搖不會眩暈
             return false;
         }
         final long now = now();
@@ -1765,14 +1767,14 @@ public final class AilmentService {
     /** 2026-10-26（昇華・位置正好）：被釘身的敵人無法進行動作：釘住期間一直輕暈。 */
     public void holdPinned(final LivingEntity target) {
         final Tracked entry = tracked.get(target.getUniqueId());
-        if (entry != null) {
+        if (entry != null && !ccImmune(target)) { // 2026-11-03：不可動搖不吃
             entry.state.lightStun(now() + ticks(config.pin().duration(false)));
         }
     }
 
     /** 2026-10-26（昇華・時間凍結）：讓牠停住 ticks 個 tick（不能動也不能攻擊）。 */
     public void holdStill(final LivingEntity target, final long ticks) {
-        if (target instanceof Player || ticks <= 0) {
+        if (target instanceof Player || ticks <= 0 || ccImmune(target)) { // 2026-11-03：不可動搖不吃
             return;
         }
         track(target).state.lightStun(now() + ticks);
@@ -1817,10 +1819,49 @@ public final class AilmentService {
         return tw.exilecore.stats.KeystoneKeys.heartstopper(now - streak[0]);
     }
 
+    /**
+     * 2026-11-03 照站長（星潮祭的世界 Boss 要免疫所有控場）：這張屬性表有沒有「不可動搖」開關（{@link StatKeys#FLAG_CC_IMMUNE}；
+     * monsters.yml 的 unstoppable 詞綴）。有的話暈眩（輕暈、重暈、蓄勢待暈）、凍結、冰緩、電擊、釘地、眩暈、癱瘓、阻礙、致盲、
+     * 緩速、嘲諷、擊退都不吃；感電、點燃、流血、中毒這些純傷害的照常。所有施加控場的地方都走這裡判斷（純函式，測試用）。
+     */
+    public static boolean ccImmune(final StatSheet sheet) {
+        return sheet != null && StatKeys.flag(sheet, StatKeys.FLAG_CC_IMMUNE);
+    }
+
+    /** 2026-11-03：同上，照這隻（玩家照玩家的屬性表、怪物照怪物的）讀；不是我們的怪物、沒有屬性表的一律不免疫。 */
+    public boolean ccImmune(final LivingEntity entity) {
+        if (entity == null) {
+            return false;
+        }
+        if (entity instanceof Player player) {
+            return plugin.players() != null && ccImmune(plugin.players().sheet(player));
+        }
+        if (plugin.monsters() == null) {
+            return false;
+        }
+        final MonsterData data = plugin.monsters().data(entity).orElse(null);
+        return data != null && ccImmune(plugin.monsters().sheet(entity, data));
+    }
+
+    /** 2026-11-03：同上，照 UUID（戰鬥模組的減益表只有 UUID）；找不到實體就不免疫。 */
+    public boolean ccImmune(final UUID uuid) {
+        if (uuid == null || plugin.getServer() == null) {
+            return false;
+        }
+        final Entity entity = plugin.getServer().getEntity(uuid);
+        return entity instanceof LivingEntity living && ccImmune(living);
+    }
+
+    /** 2026-11-03：不可動搖擋掉的「避免」類別（avoid.stun／freeze／chill／electrocute）：擲避免時一律當避開。 */
+    private static final Set<String> CC_AVOIDS = Set.of(StatKeys.AVOID_STUN, StatKeys.AVOID_FREEZE, StatKeys.AVOID_CHILL, StatKeys.AVOID_ELECTROCUTE);
+
     /** 擲避免：最多 {@link StatKeys#AVOID_CAP}%（堆再多也一樣；要免疫用開關）。 */
     static boolean avoided(final StatSheet defender, final String stat, final RandomGenerator random) { // 2026-10-29：測試用（套件內）
         if (stat.startsWith("avoid.") && StatKeys.flag(defender, "flag.immune." + stat.substring("avoid.".length()))) {
             return true; // 2026-10-26：免疫（PoE2 護符的 Grants Immunity to X：flag.immune.ignite／shock／bleed／poison／stun…，不受 75% 上限）
+        }
+        if (CC_AVOIDS.contains(stat) && ccImmune(defender)) {
+            return true; // 2026-11-03：不可動搖（flag.cc_immune）：暈眩、凍結、冰緩、電擊一律避開
         }
         if ((stat.equals(StatKeys.AVOID_IGNITE) || stat.equals(StatKeys.AVOID_CHILL) || stat.equals(StatKeys.AVOID_FREEZE)
                 || stat.equals(StatKeys.AVOID_SHOCK) || stat.equals(StatKeys.AVOID_ELECTROCUTE)) && StatKeys.flag(defender, StatKeys.FLAG_ELEMENTAL_AILMENT_IMMUNE)) {
@@ -2303,7 +2344,7 @@ public final class AilmentService {
             return;
         }
         final StatSheet sheet = plugin.players().sheet(player);
-        if (StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) || StatKeys.flag(sheet, StatKeys.FLAG_HINDER_IMMUNE)) {
+        if (ccImmune(sheet) || StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) || StatKeys.flag(sheet, StatKeys.FLAG_HINDER_IMMUNE)) {
             return;
         }
         final Tracked entry = track(player);
@@ -2324,7 +2365,7 @@ public final class AilmentService {
             return;
         }
         final StatSheet sheet = plugin.monsters().sheet(target, data.get());
-        if (StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE)) {
+        if (StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) || ccImmune(sheet)) { // 2026-11-03：不可動搖也不吃地面減速、冰緩
             return;
         }
         final long now = now();
@@ -2354,7 +2395,7 @@ public final class AilmentService {
         final StatSheet sheet = plugin.monsters().sheet(target, plugin.monsters().data(target).get());
         final long now = now();
         final Tracked entry = track(target);
-        if (chill > 0 && !StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE)) {
+        if (chill > 0 && !StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) && !ccImmune(sheet)) { // 2026-11-03：不可動搖不吃冰緩（感電照常）
             entry.state.applyChill(chill, now + ticks, now);
         }
         if (shock > 0) {
@@ -2378,8 +2419,8 @@ public final class AilmentService {
             return false;
         }
         final StatSheet defenderSheet = plugin.monsters().sheet(target, data.get());
-        if (StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE) || avoided(defenderSheet, StatKeys.AVOID_CHILL, plugin.items().random())) {
-            return false;
+        if (ccImmune(defenderSheet) || StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE) || avoided(defenderSheet, StatKeys.AVOID_CHILL, plugin.items().random())) {
+            return false; // 2026-11-03：不可動搖不吃
         }
         final double threshold = AilmentConfig.threshold(baseThreshold(target, data.get(), defenderSheet)
                         + Math.max(0, defenderSheet.flat(StatKeys.AILMENT_THRESHOLD, Set.of())),
@@ -2471,8 +2512,8 @@ public final class AilmentService {
                 entry.state.addIgnite(dps, now + ticks(duration), null);
             }
             case CHILL -> {
-                if (StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) || StatKeys.flag(sheet, "flag.immune.chill")) {
-                    return; // 2026-10-28：免疫冰緩（護符）也擋地面；這次之前只看免疫元素異常
+                if (StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) || StatKeys.flag(sheet, "flag.immune.chill") || ccImmune(sheet)) {
+                    return; // 2026-10-28：免疫冰緩（護符）也擋地面；這次之前只看免疫元素異常。2026-11-03：不可動搖也擋
                 }
                 entry.state.applyChill(value * Math.max(0, sheet.apply(StatKeys.SLOW_TAKEN, 1.0, Set.of())), now + ticks(seconds), now);
             }
@@ -2677,7 +2718,7 @@ public final class AilmentService {
      * 回傳有沒有凍住。
      */
     public boolean freezeIfPrimed(final LivingEntity entity) {
-        if (entity instanceof org.bukkit.entity.Player || !isPrimedForFreeze(entity)) {
+        if (entity instanceof org.bukkit.entity.Player || !isPrimedForFreeze(entity) || ccImmune(entity)) { // 2026-11-03：不可動搖不吃
             return false;
         }
         final Tracked entry = tracked.get(entity.getUniqueId());
@@ -2723,7 +2764,7 @@ public final class AilmentService {
             return 0;
         }
         final MonsterData monster = plugin.monsters().data(defender).orElse(null);
-        if (monster == null) {
+        if (monster == null || ccImmune(plugin.monsters().sheet(defender, monster))) { // 2026-11-03：不可動搖不累積重暈
             return 0;
         }
         final long now = now();
@@ -2770,7 +2811,8 @@ public final class AilmentService {
         }
         final long now = now();
         entry.state.electrocute().decay(now, config.electrocute().decayDelayTicks(false), config.electrocute().decayPerTick(false));
-        if (entry.state.electrocute().active(now) || entry.state.electrocute().buildup() < config.primed(data.rarity())) {
+        if (entry.state.electrocute().active(now) || entry.state.electrocute().buildup() < config.primed(data.rarity())
+                || ccImmune(plugin.monsters().sheet(entity, data))) { // 2026-11-03：不可動搖不吃
             return false;
         }
         entry.state.electrocute().trigger(now, ticks(config.electrocute().duration(false)), 0);

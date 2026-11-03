@@ -57,6 +57,7 @@ data/heist.yml
 data/sponsor.yml
 data/world_events.yml
 data/festival.yml
+data/summer_festival.yml
 data/life.yml
 data/guilds.yml
 data/anticheat.yml

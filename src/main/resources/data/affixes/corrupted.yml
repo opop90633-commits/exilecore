@@ -10,7 +10,7 @@
 corrupt_es_delay:
   type: suffix
   group: corrupt_enchant
-  spawn_tags: [corruption, armour, focus]
+  spawn_tags: [retired, corruption, armour, focus]   # 2026-11-03 照站長＋PoB2（ModCorrupted 這條每個部位權重都是 0，原作擲不出來）：停用，舊物品換成同類的腐化詞綴
   names: [蝕變的]
   text: "能量護盾提前 {value}% 開始充能"
   tiers:
@@ -21,7 +21,7 @@ corrupt_es_delay:
 corrupt_trap_level:
   type: suffix
   group: corrupt_enchant
-  spawn_tags: [corruption, armour, jewellery, weapon]
+  spawn_tags: [retired, corruption, armour, jewellery, weapon]   # 2026-11-03 照站長＋PoB2（ModCorrupted 這條每個部位權重都是 0，原作擲不出來）：停用，舊物品換成同類的腐化詞綴
   names: [蝕變的]
   text: "+{value} 全部陷阱技能等級"
   tiers:
@@ -32,7 +32,7 @@ corrupt_trap_level:
 corrupt_life_regen_percent:
   type: suffix
   group: corrupt_enchant
-  spawn_tags: [corruption, armour, jewellery]
+  spawn_tags: [retired, corruption, armour, jewellery]   # 2026-11-03 照站長＋PoB2（ModCorrupted 這條每個部位權重都是 0，原作擲不出來）：停用，舊物品換成同類的腐化詞綴
   names: [蝕變的]
   text: "每秒回復 {value/10}% 最大生命"   # PoE2：每分鐘 60–120%
   tiers:
@@ -45,9 +45,9 @@ corrupt_amulet_charm_charges:
   group: corrupt_enchant
   spawn_tags: [corruption, amulet]
   names: [蝕變的]
-  text: "護符每分鐘自動拿到 {value} 點充能"   # PoE2：每秒 5–10
+  text: "護符每分鐘自動拿到 {value} 點充能"   # PoE2：每秒 0.08–0.17 點（2026-11-03 更正；這次之前寫每秒 5–10）
   tiers:
-    - { tier: 1, ilvl: 1, weight: 100, value: [300, 600] }
+    - { tier: 1, ilvl: 1, weight: 100, value: [5, 10] }   # 2026-11-03 照 PoB2（每秒 0.08–0.17 ≈ 每分鐘 5–10）；這次之前 [300, 600]（每秒 5–10，多了 60 倍）
   mods:
     - { stat: charm.charges_per_minute, type: FLAT, value: "{value}" }
 
@@ -69,7 +69,7 @@ corrupt_amulet_life_flask_charges:
   names: [蝕變的]
   text: "生命藥劑每分鐘自動拿到 {value} 點充能"
   tiers:
-    - { tier: 1, ilvl: 1, weight: 100, value: [300, 600] }
+    - { tier: 1, ilvl: 1, weight: 100, value: [5, 10] }   # 2026-11-03 照 PoB2（每秒 0.08–0.17 ≈ 每分鐘 5–10）；這次之前 [300, 600]（每秒 5–10，多了 60 倍）
   mods:
     - { stat: flask.charges_per_minute.life, type: FLAT, value: "{value}" }
 
@@ -80,7 +80,7 @@ corrupt_amulet_mana_flask_charges:
   names: [蝕變的]
   text: "魔力藥劑每分鐘自動拿到 {value} 點充能"
   tiers:
-    - { tier: 1, ilvl: 1, weight: 100, value: [300, 600] }
+    - { tier: 1, ilvl: 1, weight: 100, value: [5, 10] }   # 2026-11-03 照 PoB2（每秒 0.08–0.17 ≈ 每分鐘 5–10）；這次之前 [300, 600]（每秒 5–10，多了 60 倍）
   mods:
     - { stat: flask.charges_per_minute.mana, type: FLAT, value: "{value}" }
 
@@ -210,7 +210,7 @@ corrupt_body_recoup_life:
   group: corrupt_enchant
   spawn_tags: [corruption, body]
   names: [蝕變的]
-  text: "受到的傷害有 {value}% 在 4 秒內回復為生命"
+  text: "受到的傷害有 {value}% 在 8 秒內回復為生命"
   tiers:
     - { tier: 1, ilvl: 1, weight: 100, value: [10, 20] }
   mods:
@@ -267,11 +267,11 @@ corrupt_boots_freeze_threshold:
   group: corrupt_enchant
   spawn_tags: [corruption, boots]
   names: [蝕變的]
-  text: "增加 {value}% 元素異常門檻"   # PoE2：凍結門檻；這裡沒有單獨的凍結門檻
+  text: "增加 {value}% 凍結門檻"   # PoE2 Freeze Threshold；2026-11-03 照站長改用凍結門檻（freeze.threshold），這次之前是全部元素異常門檻
   tiers:
     - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
   mods:
-    - { stat: ailment.threshold, type: INCREASED, value: "{value}" }
+    - { stat: freeze.threshold, type: INCREASED, value: "{value}" }
 
 corrupt_boots_stun_threshold:
   type: suffix
@@ -964,11 +964,11 @@ corrupt_caster_ignite:
   group: corrupt_enchant
   spawn_tags: [corruption, wand, staff]
   names: [蝕變的]
-  text: "增加 {value}% 點燃強度"   # PoE2：易燃強度
+  text: "增加 {value}% 點燃機率"   # PoE2 Flammability Magnitude（易燃強度＝點燃機率）；2026-11-03 照站長改成點燃機率，這次之前是點燃強度（ignite.magnitude）
   tiers:
     - { tier: 1, ilvl: 1, weight: 100, value: [20, 30] }
   mods:
-    - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
+    - { stat: ignite.chance, type: INCREASED, value: "{value}" }
 
 corrupt_caster_cast_speed:
   type: suffix
@@ -1048,17 +1048,17 @@ corrupt_weapon_attack_speed:
   mods:
     - { stat: local.attack_speed, type: INCREASED, value: "{value}" }
 
-corrupt_weapon_no_physical:
+corrupt_weapon_no_physical:   # 2026-11-03 照站長＋PoB2（CorruptionLocalIncreasedPhysicalDamagePercent1）：增加 15–25% 物理傷害；這次之前「這把武器沒有物理傷害」（原作沒有）。代號沒改（物品上存的是代號），舊的照新範圍換算
   type: suffix
   group: corrupt_enchant
   spawn_tags: [corruption, weapon]
   exclude_tags: [caster]
   names: [蝕變的]
-  text: "這把武器沒有物理傷害"
+  text: "增加 {value}% 物理傷害"
   tiers:
-    - { tier: 1, ilvl: 1, weight: 100, value: [100, 100] }
+    - { tier: 1, ilvl: 1, weight: 100, value: [15, 25] }
   mods:
-    - { stat: local.physical, type: INCREASED, value: "-{value}" }
+    - { stat: local.physical, type: INCREASED, value: "{value}" }
 
 # ---- 2026-10-21 補齊：原本沒有對應屬性的那幾條（引擎加了 slow.taken、local.requirements、mana.recoup、blind.chance、maim.chance、skill.chain_terrain、life/mana.on_block、melee.range）----
 
@@ -1089,7 +1089,7 @@ corrupt_body_recoup_mana:
   group: corrupt_enchant
   spawn_tags: [corruption, body]
   names: [蝕變的]
-  text: "受到的傷害有 {value}% 回復為魔力"
+  text: "受到的傷害有 {value}% 在 8 秒內回復為魔力"   # 2026-11-03：寫上秒數
   tiers:
     - { tier: 1, ilvl: 1, weight: 100, value: [10, 20] }
   mods:

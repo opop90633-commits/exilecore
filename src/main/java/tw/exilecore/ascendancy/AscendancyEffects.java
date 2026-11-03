@@ -1156,16 +1156,34 @@ public final class AscendancyEffects implements Listener {
         return effects != null && has(effects.sheet(player), AscKeys.COMBO_ANY_ATTACK);
     }
 
-    /** 武術精通：用掉 spent 層連擊，目前的能量護盾回充延遲每層 -0.2 秒（SkillResources 呼叫）。 */
+    /**
+     * 武術精通：用掉 spent 層連擊，目前的能量護盾回充延遲每層 -0.2 秒（SkillResources 呼叫）。
+     * 2026-11-03 照站長＋PoB2（揭露詞綴：Recover x% of Maximum Life／Mana when you expend at least 10 Combo）：一次用掉至少 10 層時回復生命、魔力。
+     */
     public static void comboSpent(final Player player, final int spent) {
         final AscendancyEffects effects = instance;
         if (effects == null || spent <= 0) {
             return;
         }
-        final double seconds = flat(effects.sheet(player), AscKeys.COMBO_ES_DELAY);
+        final StatSheet sheet = effects.sheet(player);
+        final double seconds = flat(sheet, AscKeys.COMBO_ES_DELAY);
         if (seconds > 0) {
             final PlayerState state = effects.plugin.players().get(player);
             state.setLastDamageTick(state.lastDamageTick() - Math.round(seconds * 20 * spent));
+        }
+        if (spent >= tw.exilecore.stats.TreeNewMechanicKeys.COMBO_EXPEND_AT_LEAST) {
+            final double life = flat(sheet, tw.exilecore.stats.TreeNewMechanicKeys.COMBO_EXPEND_LIFE);
+            final double mana = flat(sheet, tw.exilecore.stats.TreeNewMechanicKeys.COMBO_EXPEND_MANA);
+            if (life > 0 || mana > 0) {
+                final PlayerState state = effects.plugin.players().get(player);
+                if (life > 0 && !state.ruined(effects.plugin.getServer().getCurrentTick())) { // 荒蕪禁療中不回生命（跟撲殺回復一樣）
+                    state.setLife(Math.min(state.maxLife(), state.life() + state.maxLife() * life / 100.0));
+                }
+                if (mana > 0) {
+                    state.setMana(Math.min(state.maxMana(), state.mana() + state.maxMana() * mana / 100.0));
+                }
+                effects.plugin.players().display(player, state);
+            }
         }
     }
 

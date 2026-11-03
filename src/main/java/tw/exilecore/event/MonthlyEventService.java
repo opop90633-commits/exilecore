@@ -91,7 +91,9 @@ public final class MonthlyEventService {
         final EventConfig.Theme theme = theme();
         // 2026-10 萬燈夜：全服點燈點滿的物品數量加成也是全域的，加在這裡（掉落、地圖、劫盜都吃得到）
         final double festival = plugin.festival() == null ? 0 : plugin.festival().quantityBonus();
-        return (theme == null ? 0 : theme.quantity() / 100.0) + festival;
+        // 2026-11-03 星潮祭的滿潮：跟萬燈夜的加成相加（兩個活動可以同時開）
+        final double summer = plugin.summer() == null ? 0 : plugin.summer().quantityBonus();
+        return (theme == null ? 0 : theme.quantity() / 100.0) + festival + summer;
     }
 
     public double rarityBonus() {

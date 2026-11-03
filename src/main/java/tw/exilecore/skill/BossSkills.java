@@ -3370,7 +3370,7 @@ public final class BossSkills implements Listener {
         if (skill.ruin() > 0 && victim instanceof Player player && player.isOnline()) {
             plugin.players().get(player).ruin(now() + Math.round(skill.ruin() * 20)); // 2026-10：荒蕪（黑水）——禁療
         }
-        if (skill.slow() > 0 && victim.isValid()) {
+        if (skill.slow() > 0 && victim.isValid() && !(plugin.ailments() != null && plugin.ailments().ccImmune(victim))) { // 2026-11-03：不可動搖（被招式波及的怪）不吃減速
             // 2026-10-21：玩家身上的減速幅度（slow.taken，腐化鞋子）：減速 II（30%）照幅度換算成 I 或 II
             final double taken = victim instanceof Player slowed ? plugin.players().sheet(slowed).increased(tw.exilecore.stats.StatKeys.SLOW_TAKEN, java.util.Set.of()) : 0;
             victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, (int) Math.round(skill.slow() * 20), slowAmplifier(taken), false, true, true));

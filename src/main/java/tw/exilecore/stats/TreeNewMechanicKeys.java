@@ -217,4 +217,18 @@ public final class TreeNewMechanicKeys {
     public static final String FLAG_EXPOSURE_IMMUNE = "flag.exposure_immune";
     public static final String FLAG_DEFLECT_NO_MAIM = "flag.deflect_no_maim";
     public static final String WITHERED_SELF_EFFECT = "withered.self_effect";
+
+    // ---- 2026-11-03 照站長＋PoB2（揭露詞綴補的機制）----
+    /** FLAT %：祈喚法術觸發時只消耗一半能量的機率（MetaGems.invoke；PoE2 Invocated Spells have x% chance to consume half as much Energy）。 */
+    public static final String INVOCATION_HALF_ENERGY = "invocation.half_energy_chance";
+    /** FLAT %：一次用掉至少 10 層連擊時回復 x% 最大生命（AscendancyEffects.comboSpent；PoE2 Recover x% of Maximum Life when you expend at least 10 Combo）。 */
+    public static final String COMBO_EXPEND_LIFE = "combo.expend10_life";
+    /** FLAT %：一次用掉至少 10 層連擊時回復 x% 最大魔力。 */
+    public static final String COMBO_EXPEND_MANA = "combo.expend10_mana";
+    /** 一次用掉至少幾層連擊才回復（PoE2 是 10）。 */
+    public static final int COMBO_EXPEND_AT_LEAST = 10;
+    /** FLAT %：獲得等同基礎最大魔力 x% 的護甲（TreeEffectKeys.applyDerived；PoE2 Gain x% of Maximum Mana as Armour，PoB2 ManaGainAsArmour：照魔力的基礎值，再吃護甲的增加）。 */
+    public static final String MANA_AS_ARMOUR = "armour.from_mana";
+    /** FLAT（開關）：盾牌技能造成重暈時讓敵人完全破甲（SupportRemakes.devastate；PoE2 Shield Skills fully Break Armour when they Heavy Stun targets）。 */
+    public static final String SHIELD_SKILL_FULL_BREAK = "armour.shield_skill_full_break";
 }

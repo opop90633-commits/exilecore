@@ -13,6 +13,10 @@ public final class CosmeticPreview {
     /** 沒有這個時裝 null。 */
     public static ItemStack of(final SponsorService service, final String id, final String name, final List<String> lore) {
         final SponsorConfig.Cosmetic cosmetic = service.config().cosmetics().get(id);
+        if (cosmetic != null && cosmetic.isEmote()) {
+            // 2026-11-03 照站長：動作用動作選單的圖示（星潮祭的衝浪是海洋之心）；這次之前動作回 null、兌換頁畫成馬鎧
+            return tw.exilecore.gui.Menu.icon(SponsorMenus.emoteMaterial(cosmetic.emote()), name, lore);
+        }
         if (cosmetic == null || !cosmetic.skin()) {
             return null;
         }
@@ -31,6 +35,16 @@ public final class CosmeticPreview {
      */
     public static String tryOn(final tw.exilecore.ExileCore plugin, final SponsorService service, final org.bukkit.entity.Player player,
                                final String id) {
+        final SponsorConfig.Cosmetic emote = service.config().cosmetics().get(id);
+        if (emote != null && emote.isEmote()) {
+            // 2026-11-03 照站長：動作不能試穿，改成「做一次看看」（沒擁有也能看，冷卻照算）；這次之前回「動作不能試穿」
+            if (service.emotes == null) {
+                return "動作還沒準備好";
+            }
+            plugin.getServer().getScheduler().runTask(plugin, () -> service.emotes.play(player, emote, false)); // 選單關掉之後才做
+            player.sendMessage(plugin.text().prefixed("<#ff9ad5>做一次看看 " + SponsorService.rarityTag(emote) + "<gray>（按 F5 看自己）"));
+            return null;
+        }
         final String problem = service.tryOn(player, id);
         if (problem != null) {
             return problem;
@@ -39,6 +53,12 @@ public final class CosmeticPreview {
         player.sendMessage(plugin.text().prefixed("<#ff9ad5>試穿 " + SponsorService.rarityTag(cosmetic) + "<gray> "
                 + SponsorService.TRY_ON_TICKS / 20 + " 秒（" + SponsorService.tryOnHint(cosmetic) + "；按 F5 看自己）"));
         return null;
+    }
+
+    /** 這個時裝是不是動作（2026-11-03：兌換頁的右鍵寫「做一次看看」而不是「試穿」）。 */
+    public static boolean isEmote(final SponsorService service, final String id) {
+        final SponsorConfig.Cosmetic cosmetic = service.config().cosmetics().get(id);
+        return cosmetic != null && cosmetic.isEmote();
     }
 
     /** 試穿幾秒。 */

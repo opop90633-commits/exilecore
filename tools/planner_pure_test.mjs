@@ -121,7 +121,7 @@ test("敵人設定：預設是 PoB2 的巔峰 Boss、自動等級、均衡；跟
 });
 
 test("敵人設定：寫進連結再讀回來一樣", () => {
-  for (const e of [{ tier: 0, level: 0, mix: "phys" }, { tier: 3, level: 90, mix: "chaos" }, { tier: 1, level: 70, mix: [50, 20, 20, 10, 0] }]) {
+  for (const e of [{ tier: 0, level: 0, mix: "phys" }, { tier: 3, level: 90, mix: "chaos" }, { tier: 4, level: 0, mix: "avg" }, { tier: 1, level: 70, mix: [50, 20, 20, 10, 0] }]) {
     const packed = P.packEnemy(e);
     const text = JSON.stringify([0, "", [], [], [], "", packed]); // 計算器那一段的格式
     assert.deepEqual(P.unpackEnemy(JSON.parse(text)[6]), P.normEnemy(e));

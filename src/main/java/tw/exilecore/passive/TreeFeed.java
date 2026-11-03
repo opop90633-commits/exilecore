@@ -564,12 +564,14 @@ public final class TreeFeed implements UiFeed.Source {
                 if (set == state.activeTreeSet()) {
                     return null;
                 }
-                final String problem = new tw.exilecore.sponsor.TreeSetMenu(plugin, player, tree, () -> { }).switchTo(set);
+                // 2026-11-03 照站長：先跳確認框，按「套用」才換（這次之前按了就換）；套用後天賦樹重送
+                final java.util.UUID id = player.getUniqueId();
+                final String problem = new tw.exilecore.sponsor.TreeSetMenu(plugin, player, tree, () -> { })
+                        .askSwitch(set, () -> changed.add(id), () -> { });
                 if (problem != null) {
                     return fail(player, problem);
                 }
-                changed.add(player.getUniqueId());
-                return "<green>換成第 " + (set + 1) + " 組天賦";
+                return null;
             }
             case "alloc" -> {
                 final List<String> ids = new ArrayList<>();

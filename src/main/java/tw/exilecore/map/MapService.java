@@ -1418,12 +1418,14 @@ public final class MapService {
             return false;
         }
         final String role = plugin.worldEvents() == null ? null : plugin.worldEvents().role(entity);
-        return "boss".equals(role) || "commander".equals(role) || plugin.festival() != null && plugin.festival().isKing(entity);
+        return "boss".equals(role) || "commander".equals(role) || plugin.festival() != null && plugin.festival().isKing(entity)
+                || plugin.summer() != null && plugin.summer().isKraken(entity); // 2026-11-03 星潮祭的海妖也算世界 Boss
     }
 
     public double capBossDamage(final LivingEntity defender, final UUID source, final double amount) {
         final String worldRole = plugin.worldEvents() == null ? null : plugin.worldEvents().role(defender);
-        if ("boss".equals(worldRole) || "commander".equals(worldRole) || plugin.festival() != null && plugin.festival().isKing(defender)) {
+        if ("boss".equals(worldRole) || "commander".equals(worldRole) || plugin.festival() != null && plugin.festival().isKing(defender)
+                || plugin.summer() != null && plugin.summer().isKraken(defender)) { // 2026-11-03 星潮祭的海妖同一個規則
             // 2026-10-26 晚：開天者、南瓜王、潮汐統帥開場 10 秒無敵（管理員決定）；三隻都不遞減
             if (defender.getTicksLived() < OPENING_INVULNERABLE_TICKS) {
                 return 0;
@@ -1477,6 +1479,9 @@ public final class MapService {
         }
         if (plugin.festival() != null && plugin.festival().isKing(entity)) {
             return true;
+        }
+        if (plugin.summer() != null && plugin.summer().isKraken(entity)) {
+            return true; // 2026-11-03 星潮祭的海妖：也不普攻，只用招式
         }
         if (!entity.getPersistentDataContainer().has(bossKey())) {
             return false;

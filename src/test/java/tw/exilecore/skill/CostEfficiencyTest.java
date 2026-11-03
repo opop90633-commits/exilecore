@@ -147,7 +147,8 @@ class CostEfficiencyTest {
         assertEquals(CostKeys.MANA_COST_EFFICIENCY, repository.affix("unveiled_d_cost").mods().getFirst().stat());
         assertEquals(CostKeys.COST_EFFICIENCY, repository.affix("unveiled_d_attack_cost").mods().getFirst().stat());
         assertEquals(CostKeys.MANA_COST_EFFICIENCY + "@dodge", repository.affix("unveiled_d_boots_cost_dodge").mods().getFirst().stat());
-        assertEquals(StatKeys.RADIUS_PREFIX + CostKeys.MANA_COST_EFFICIENCY, repository.affix("unveiled_jr_mana_cost_efficiency").mods().getFirst().stat());
+        // 2026-11-03 照站長＋PoB2：揭露半徑珠寶詞綴是核心天賦（radius_notable:）；這次之前是小天賦（radius:）
+        assertEquals(tw.exilecore.passive.JewelSockets.RADIUS_NOTABLE_PREFIX + CostKeys.MANA_COST_EFFICIENCY, repository.affix("unveiled_jr_mana_cost_efficiency").mods().getFirst().stat());
         // 旅者的智慧：屬性點改給消耗效率
         final List<Modifier> wisdom = PlayerStateService.choiceModifiers("cost", 5, Set.of(), "測試");
         assertEquals(CostKeys.COST_EFFICIENCY, wisdom.getFirst().stat());

@@ -48,7 +48,9 @@ public final class MainMenu extends Menu {
     private static final int SLOT_EVENT = 32;
     /** 不定時活動（2026-10，開服活動）。 */
     private static final int SLOT_WORLD_EVENT = 34;
-    private static final int SLOT_FESTIVAL = 35; // 2026-10 節慶活動（萬燈夜）：活動到兌換結束才出現
+    // 2026-11-03 照站長：萬燈夜的按鈕拿掉（「突發」裡面還有）；這次之前 SLOT_FESTIVAL = 35
+    /** 2026-11-03 夏日活動「星潮祭」：跟萬燈夜各一顆按鈕（冒險那一排的左邊空格）；「圖示＋中文」版面放在原本「萬聖」那格（43，背景字改「夏日」）。 */
+    private static final int SLOT_SUMMER = 27;
     private static final int SLOT_SEA = 24; // 2026-10 生活玩法「星骸之海」
     private static final int SLOT_PVP = 33;
     private static final int SLOT_PARTY = 39;
@@ -79,7 +81,8 @@ public final class MainMenu extends Menu {
             java.util.Map.entry(SLOT_DISCORD, 25), java.util.Map.entry(SLOT_STORE, 26),
             java.util.Map.entry(SLOT_TOWN, 36), java.util.Map.entry(SLOT_WAYPOINTS, 37), java.util.Map.entry(SLOT_QUESTS, 38),
             java.util.Map.entry(SLOT_BOUNTY, 39), java.util.Map.entry(SLOT_EVENT, 40), java.util.Map.entry(SLOT_PVP, 41),
-            java.util.Map.entry(SLOT_WORLD_EVENT, 42), java.util.Map.entry(SLOT_FESTIVAL, 43), java.util.Map.entry(SLOT_SEA, 44));
+            // 2026-11-03 照站長：「萬聖」那格（43）給星潮祭、背景字改「夏日」；萬燈夜不放主選單（突發裡面有）。這次之前萬燈夜 43
+            java.util.Map.entry(SLOT_WORLD_EVENT, 42), java.util.Map.entry(SLOT_SUMMER, 43), java.util.Map.entry(SLOT_SEA, 44));
     /** 反過來：「圖示＋中文」版面的格子 → 按鈕代號。 */
     private static final java.util.Map<Integer, Integer> LABELLED_BACK = invert(LABELLED);
 
@@ -182,8 +185,8 @@ public final class MainMenu extends Menu {
         put(SLOT_EVENT, button(Material.CLOCK, "每月固定活動", "/event", eventSummary()));
         put(SLOT_PVP, button(Material.DIAMOND_SWORD, "競技場", "/pvp", pvpSummary()));
         put(SLOT_WORLD_EVENT, worldEventButton());
-        if (plugin.festival() != null && plugin.festival().visible()) {
-            put(SLOT_FESTIVAL, festivalButton());
+        if (plugin.summer() != null && plugin.summer().visible()) {
+            put(SLOT_SUMMER, summerButton()); // 2026-11-03 星潮祭（萬燈夜在「突發」裡）
         }
         if (plugin.life() != null && plugin.life().config().enabled() && plugin.life().canEnter(player)) { // 2026-10：先只開給管理員與名單
             put(SLOT_SEA, button(Material.OAK_BOAT, plugin.life().config().name(), "/sea", "生活玩法：漂在海上撈東西、蓋自己的木筏"));
@@ -256,21 +259,23 @@ public final class MainMenu extends Menu {
                 "", "<yellow>左鍵：打開");
     }
 
-    /** 節慶活動（2026-10 萬燈夜）：南瓜王在場時發光。 */
-    private org.bukkit.inventory.ItemStack festivalButton() {
-        final tw.exilecore.festival.FestivalService festival = plugin.festival();
-        final tw.exilecore.festival.FestivalConfig config = festival.config();
-        final String name = "<" + config.color() + ">🎃 " + ItemRenderer.escape(config.name());
-        if (!festival.running()) {
-            return icon(Material.CARVED_PUMPKIN, name, "<gray>活動結束了；兌換開到 " + config.format(config.shopUntil()), "",
-                    "<yellow>左鍵：打開<dark_gray>（/festival）");
+    /** 夏日活動（2026-11-03 星潮祭）：海妖、大亂鬥在場時發光。 */
+    private org.bukkit.inventory.ItemStack summerButton() {
+        final tw.exilecore.summer.SummerService summer = plugin.summer();
+        final tw.exilecore.summer.SummerConfig config = summer.config();
+        final String name = "<" + config.color() + ">🌊 " + ItemRenderer.escape(config.name());
+        if (!summer.running()) {
+            return icon(Material.NAUTILUS_SHELL, name, "<gray>活動結束了；兌換開到 " + config.format(config.shopUntil()), "",
+                    "<yellow>左鍵：打開<dark_gray>（/summer）");
         }
-        final String king = festival.kingRunning() ? "<green>南瓜王在幽燈墓園！"
-                : festival.nextKingClock() == null ? "<gray>南瓜王：每天固定時段" : "<gray>南瓜王：下一次 <white>" + festival.nextKingClock();
-        final org.bukkit.inventory.ItemStack stack = icon(Material.JACK_O_LANTERN, name,
-                "<gray>活動到 " + config.format(config.end()) + "：點燈、南瓜王、不給糖就搗蛋", king,
-                "<gray>糖果、燈芯兌換限定時裝與稱號", "", "<yellow>左鍵：打開<dark_gray>（/festival）");
-        return festival.kingRunning() ? glowing(stack) : stack;
+        final String kraken = summer.krakenRunning() ? "<green>海妖浮上星潮海灘了！"
+                : summer.nextKrakenClock() == null ? "<gray>海妖：每天固定時段" : "<gray>海妖：下一次 <white>" + summer.nextKrakenClock();
+        final String round = summer.roundRunning() ? "<green>西瓜大亂鬥進行中！"
+                : summer.nextRoundClock() == null ? "<gray>西瓜大亂鬥：每個整點" : "<gray>西瓜大亂鬥：下一局 <white>" + summer.nextRoundClock();
+        final org.bukkit.inventory.ItemStack stack = icon(Material.NAUTILUS_SHELL, name,
+                "<gray>活動到 " + config.format(config.end()) + "：沙灘挖寶、西瓜大亂鬥、深潮海妖、漂流瓶", kraken, round,
+                "<gray>貝殼、珍珠兌換限定時裝與稱號", "", "<yellow>左鍵：打開<dark_gray>（/summer）");
+        return summer.krakenRunning() || summer.roundRunning() ? glowing(stack) : stack;
     }
 
     /** 2026-10-22：分流按鈕的說明：現在第幾線、幾個人。 */
@@ -389,9 +394,9 @@ public final class MainMenu extends Menu {
                     tw.exilecore.life.LifeModule.open(plugin, player);
                 }
             }
-            case SLOT_FESTIVAL -> {
-                if (plugin.festival() != null && plugin.festival().visible()) {
-                    tw.exilecore.festival.FestivalModule.open(plugin, player);
+            case SLOT_SUMMER -> {
+                if (plugin.summer() != null && plugin.summer().visible()) {
+                    tw.exilecore.summer.SummerModule.open(plugin, player);
                 }
             }
             case SLOT_WORLD_EVENT -> {

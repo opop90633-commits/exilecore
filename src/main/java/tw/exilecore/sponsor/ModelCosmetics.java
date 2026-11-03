@@ -32,6 +32,10 @@ import java.util.UUID;
  * </ul>
  * 展示實體不存檔（重開就沒了，啟用時也會把留下來的清掉）、不擋路、沒有碰撞。旁觀、隱形、死掉的時候收起來。
  * 只有好看：不影響戰鬥。沒送介面資源包時不出現（畫不出模型）。
+ * <p>
+ * 2026-11-03 照站長：有裝 BetterModel（{@link BetterModelCosmetics}，config.yml 的 cosmetics.bettermodel）時，背飾與寵物改成
+ * BetterModel 的骨架模型掛在玩家身上演動畫（翅膀拍、寵物浮動＋尾巴翅膀自己動），不再生展示實體；掛不上（沒重讀完、版本不合）
+ * 就照舊用這裡的展示實體。肩甲照舊（本來就關著）。這次之前：一律展示實體。
  */
 final class ModelCosmetics {
 
@@ -78,6 +82,12 @@ final class ModelCosmetics {
         final List<ItemDisplay> backOwn = new ArrayList<>();
         /** 上一 tick 玩家在哪（背飾往移動方向多推一點用）。 */
         Location lastAt;
+        /** 2026-11-03：用 BetterModel 掛著的背飾、寵物代號（null = 沒用 BetterModel）。 */
+        String bmBack;
+        String bmPet;
+        /** 2026-11-03：停下來幾 tick 了（移動的動畫停下 10 tick 才切回 idle，不然走走停停會一直切）。 */
+        int stillTicks;
+        boolean bmMoving;
         /** 3D 戰甲的肩甲（右、左）。 */
         String shoulderArt;
         final List<ItemDisplay> shoulders = new ArrayList<>();
@@ -108,11 +118,20 @@ final class ModelCosmetics {
     private final SponsorService service;
     private final Map<UUID, Worn> worn = new HashMap<>();
     private long tick;
+    /** 2026-11-03：有裝 BetterModel 時背飾與寵物走這裡（null = 沒裝或關著）。 */
+    private final BetterModelCosmetics betterModel;
 
     ModelCosmetics(final ExileCore plugin, final SponsorService service) {
         this.plugin = plugin;
         this.service = service;
         this.ride = plugin.getConfig().getBoolean("cosmetics.ride", true);
+        BetterModelCosmetics bm = null;
+        try {
+            bm = BetterModelCosmetics.create(plugin);
+        } catch (final RuntimeException | LinkageError e) {
+            plugin.getSLF4JLogger().warn("3D 時裝：BetterModel 接不上（照舊用展示實體）：{}", e.toString());
+        }
+        this.betterModel = bm;
     }
 
     /** 傳送之前（SponsorModule 的 PlayerTeleportEvent，最早跑）：先把騎在身上的背飾放下來（有乘客的玩家 Bukkit 不給傳送），下一 tick 再騎回去。 */
@@ -140,23 +159,35 @@ final class ModelCosmetics {
     }
 
     void stop() {
-        for (final Worn entry : worn.values()) {
-            clear(entry);
+        for (final Map.Entry<UUID, Worn> entry : worn.entrySet()) {
+            clear(entry.getKey(), entry.getValue());
         }
         worn.clear();
+        if (betterModel != null) {
+            betterModel.stop();
+        }
     }
 
     void forget(final UUID player) {
         final Worn entry = worn.remove(player);
         if (entry != null) {
-            clear(entry);
+            clear(player, entry);
         }
     }
 
-    private static void clear(final Worn entry) {
+    private void clear(final UUID player, final Worn entry) {
         clearBack(entry);
         clearPet(entry);
         clearShoulders(entry);
+        if (betterModel != null && (entry.bmBack != null || entry.bmPet != null)) {
+            try {
+                betterModel.forget(player);
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().warn("3D 時裝：BetterModel 收不掉：{}", e.toString());
+            }
+            entry.bmBack = null;
+            entry.bmPet = null;
+        }
     }
 
     private static void clearShoulders(final Worn entry) {
@@ -205,7 +236,7 @@ final class ModelCosmetics {
             final Map.Entry<UUID, Worn> entry = it.next();
             final Player player = plugin.getServer().getPlayer(entry.getKey());
             if (player == null || !player.isOnline()) {
-                clear(entry.getValue());
+                clear(entry.getKey(), entry.getValue());
                 it.remove();
             }
         }
@@ -225,15 +256,19 @@ final class ModelCosmetics {
                 entry = new Worn();
                 worn.put(player.getUniqueId(), entry);
             }
+            if (betterModel != null) { // 2026-11-03：move／idle 的切換加一點遲滯
+                entry.stillTicks = moving(player) ? 0 : Math.min(entry.stillTicks + 1, 1000);
+                entry.bmMoving = entry.stillTicks < 10;
+            }
             try {
                 updateBack(player, entry, back);
                 updatePet(player, entry, pet);
                 updateShoulders(player, entry, chest);
             } catch (final RuntimeException e) {
                 plugin.getSLF4JLogger().warn("3D 時裝更新出錯（{}）：{}", player.getName(), e.toString());
-                clear(entry);
+                clear(player.getUniqueId(), entry);
             }
-            if (entry.back.isEmpty() && entry.pet == null && entry.shoulders.isEmpty()) {
+            if (entry.back.isEmpty() && entry.pet == null && entry.shoulders.isEmpty() && entry.bmBack == null && entry.bmPet == null) {
                 worn.remove(player.getUniqueId());
             }
         }
@@ -246,13 +281,31 @@ final class ModelCosmetics {
 
     // ---- 背飾 ----
 
+    /** 2026-11-03：移動中（有水平速度或衝刺）翅膀拍快一點（BetterModel 的 move 動畫；展示實體版是拍的速度）。 */
+    private static boolean moving(final Player player) {
+        return player.getVelocity().setY(0).lengthSquared() > 0.003 || player.isSprinting();
+    }
+
     private void updateBack(final Player player, final Worn entry, final SponsorConfig.Cosmetic skin) {
         final String art = skin == null ? null : skin.art();
         if (art == null) {
             if (!entry.back.isEmpty()) {
                 clearBack(entry);
             }
+            bmHideBack(player, entry);
             return;
+        }
+        // 2026-11-03：有 BetterModel 就掛在玩家身上演；掛不上才往下生展示實體
+        if (betterModel != null) {
+            if (betterModel.show(player, art, entry.bmMoving)) {
+                if (!entry.back.isEmpty()) {
+                    clearBack(entry);
+                }
+                entry.backArt = art;
+                entry.bmBack = art;
+                return;
+            }
+            bmHideBack(player, entry);
         }
         final boolean paired = SponsorService.pairedBack(skin);
         if (!art.equals(entry.backArt) || entry.back.isEmpty() || !entry.back.getFirst().isValid()
@@ -313,6 +366,22 @@ final class ModelCosmetics {
             if (!entry.backOwn.isEmpty()) {
                 set(entry.backOwn.getFirst(), new Vector3f(0, height + 0.15f, BACK_BEHIND - 0.08f), rotation, HALO_SCALE);
             }
+        }
+    }
+
+    private void bmHideBack(final Player player, final Worn entry) {
+        if (entry.bmBack != null) {
+            betterModel.hide(player, entry.bmBack);
+            entry.bmBack = null;
+            entry.backArt = null;
+        }
+    }
+
+    private void bmHidePet(final Player player, final Worn entry) {
+        if (entry.bmPet != null) {
+            betterModel.hide(player, entry.bmPet);
+            entry.bmPet = null;
+            entry.petArt = null;
         }
     }
 
@@ -447,7 +516,19 @@ final class ModelCosmetics {
             if (entry.pet != null) {
                 clearPet(entry);
             }
+            bmHidePet(player, entry);
             return;
+        }
+        if (betterModel != null) { // 2026-11-03：BetterModel 掛在玩家身上（左後上方的位置寫在 bbmodel 裡，跟著身體的方向轉）
+            if (betterModel.show(player, art, entry.bmMoving)) {
+                if (entry.pet != null) {
+                    clearPet(entry);
+                }
+                entry.petArt = art;
+                entry.bmPet = art;
+                return;
+            }
+            bmHidePet(player, entry);
         }
         final Location target = petTarget(player);
         if (!art.equals(entry.petArt) || entry.pet == null || !entry.pet.isValid() || entry.pet.getWorld() != player.getWorld()) {
@@ -522,7 +603,7 @@ final class ModelCosmetics {
         display.setTransformation(new Transformation(translation, rotation, new Vector3f(scale, scale, scale), new Quaternionf()));
     }
 
-    /** 給 /ec 之類查看：現在有幾個玩家戴著 3D 背飾或寵物。 */
+    /** 給 /ec 之類查看：現在有幾個玩家戴著 3D 背飾或寵物（含用 BetterModel 掛的）。 */
     int active() {
         return worn.size();
     }

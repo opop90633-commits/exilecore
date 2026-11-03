@@ -112,11 +112,24 @@ class AffixCatalogueTest {
                 tw.exilecore.stats.TreeKeys.class, tw.exilecore.stats.TreeMechanicKeys.class, tw.exilecore.stats.TreeNewMechanicKeys.class)) {
             stats.addAll(constants(keys));
         }
+        // 2026-11-03 照站長＋PoB2（揭露詞綴）：別的類別宣告、引擎有在讀的屬性（DamageCalculator、Thorns、AilmentService、
+        //   KeystoneKeys、AttributeScalingKeys、SkillExecutor）
+        stats.addAll(List.of(tw.exilecore.ascendancy.AscKeys.CHAOS_ARMOUR, tw.exilecore.stats.KeystoneKeys.THORNS_CRIT,
+                tw.exilecore.passive.ConquestEffects.STUN_DECAY, tw.exilecore.stats.KeystoneKeys.PROJ_SPEED_BOW_DAMAGE,
+                tw.exilecore.item.unique.UniqueStats.SPELL_DAMAGE_PER_100_LIFE, tw.exilecore.stats.AttributeScalingKeys.SPELL_DAMAGE_PER_100_MANA,
+                tw.exilecore.stats.KeystoneKeys.LIFE_COST_SPELL_DAMAGE, tw.exilecore.stats.KeystoneOriginKeys.EXTRA_FISSURE_CHANCE,
+                tw.exilecore.ascendancy.AscKeys.TAKEN_AS + "physical.lightning")); // 2026-11-03：舉盾時物理視為閃電（AscendancyEffects.reroute）
         tags = constants(Tags.class);
         // 2026-10-30：天賦樹也用的標籤（暴擊造成的、對完全破甲、強化攻擊、祭品、觸發、招架、夥伴、危害、旗幟、植物）
         tags.addAll(List.of("crit_hit", tw.exilecore.stats.TreeConditions.VS_BROKEN_ARMOUR, "empowered", "offering", "triggered", "parry",
                 "companion", "hazard", "banner", "plant"));
         tags.add("curse"); // 2026-10：詛咒技能的標籤（SkillDefinition 給範圍印記加的，Tags 沒有常數）
+        // 2026-11-03 照站長＋PoB2（揭露詞綴）：天賦樹也用的技能標籤（祈喚、弩台、裂縫）
+        tags.addAll(List.of(tw.exilecore.stats.TreeMechanicKeys.INVOCATION, tw.exilecore.stats.TreeMechanicKeys.BALLISTA,
+                tw.exilecore.stats.KeystoneKeys.FISSURE));
+        // 敵人狀態的條件標籤（TargetConditions 擊中時加進情境：6 公尺外、2 公尺內、被標記、被阻礙）
+        tags.addAll(List.of(tw.exilecore.stats.TreeConditions.VS_FAR, tw.exilecore.stats.TreeConditions.VS_CLOSE,
+                tw.exilecore.stats.TreeConditions.VS_MARKED, tw.exilecore.stats.TreeConditions.VS_HINDERED));
     }
 
     private static Set<String> constants(final Class<?> type) throws IllegalAccessException {

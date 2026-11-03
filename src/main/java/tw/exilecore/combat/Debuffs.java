@@ -92,11 +92,65 @@ public final class Debuffs {
                 debuff.selfOnly(), debuff.tag(), debuff.mods(), debuff.slow()) : debuff);
     }
 
-    public void apply(final UUID target, final Debuff debuff) {
+    public void apply(final UUID target, final Debuff applied) {
+        // 2026-11-03 照站長：不可動搖（flag.cc_immune，星潮祭世界 Boss）的目標只吃減益裡的傷害部分，控場部分（減速、定身、眩暈、
+        //   致盲、癱瘓、阻礙、降暈眩門檻這類）拿掉；整條都是控場的就不放。詛咒、印記、輔助的減益都走這裡，所以一次擋完
+        final Debuff debuff = ccImmunity.test(target) ? withoutCc(applied) : applied;
+        if (debuff == null) {
+            return;
+        }
         final List<Debuff> list = entries.computeIfAbsent(target, uuid -> new ArrayList<>());
         list.removeIf(existing -> existing.id().equals(debuff.id())
                 && (!debuff.selfOnly() || !existing.selfOnly() || existing.source().equals(debuff.source())));
         list.add(debuff);
+    }
+
+    /** 2026-11-03：整條都是控場的減益代號（眩暈、釘地、致盲、阻礙、癱瘓、怪物詞綴的癱瘓／致盲）：不可動搖的目標整條不放。 */
+    static final java.util.Set<String> CC_IDS = java.util.Set.of("daze", "pin", "blind", "hinder", "maim", "monster_maim", "monster_blind");
+
+    /**
+     * 2026-11-03：修飾器算不算控場：減少移動／攻擊／施放速度（緩速）、降暈眩門檻／異常門檻（更容易被暈、被凍）、
+     * 提高受到的暈眩／凍結／電擊累積、提高受到的緩速幅度；其他（受到的傷害增加、抗性曝露、傷害變少…）不算。純函式（測試用）。
+     */
+    public static boolean ccModifier(final tw.exilecore.stats.Modifier mod) {
+        final String stat = mod.stat();
+        if (stat.equals(tw.exilecore.stats.StatKeys.MOVEMENT_SPEED) || stat.equals(tw.exilecore.stats.StatKeys.ATTACK_SPEED)
+                || stat.equals(tw.exilecore.stats.StatKeys.CAST_SPEED) || stat.equals(tw.exilecore.stats.StatKeys.STUN_THRESHOLD)
+                || stat.equals(tw.exilecore.stats.StatKeys.AILMENT_THRESHOLD)) {
+            return mod.value() < 0;
+        }
+        if (stat.equals(tw.exilecore.ailment.AilmentKeys.STUN_BUILDUP_TAKEN) || stat.equals(tw.exilecore.stats.SupportExtraKeys.FREEZE_BUILDUP_TAKEN)
+                || stat.equals(tw.exilecore.stats.SpellParityKeys.ELECTROCUTE_BUILDUP_TAKEN) || stat.equals(tw.exilecore.stats.StatKeys.SLOW_TAKEN)) {
+            return mod.value() > 0;
+        }
+        return false;
+    }
+
+    /** 2026-11-03：拿掉控場部分的減益；整條都是控場（代號在 {@link #CC_IDS}，或拿掉後什麼都不剩）回傳 null。純函式（測試用）。 */
+    public static Debuff withoutCc(final Debuff debuff) {
+        if (CC_IDS.contains(debuff.id())) {
+            return null;
+        }
+        final List<tw.exilecore.stats.Modifier> kept = new ArrayList<>();
+        for (final tw.exilecore.stats.Modifier mod : debuff.mods()) {
+            if (!ccModifier(mod)) {
+                kept.add(mod);
+            }
+        }
+        if (kept.size() == debuff.mods().size() && debuff.slow() <= 0) {
+            return debuff;
+        }
+        if (kept.isEmpty() && debuff.taken() == 0) {
+            return null;
+        }
+        return new Debuff(debuff.id(), debuff.source(), debuff.untilTick(), debuff.taken(), debuff.selfOnly(), debuff.tag(), kept, 0);
+    }
+
+    /** 2026-11-03：誰免疫控場（異常模組的不可動搖掛上來；預設沒有人）。 */
+    private java.util.function.Predicate<UUID> ccImmunity = target -> false;
+
+    public void setCcImmunity(final java.util.function.Predicate<UUID> immunity) {
+        this.ccImmunity = immunity == null ? target -> false : immunity;
     }
 
     /** 放過的印記代號（2026-10-22：同一個玩家同時只能有一個印記）。 */

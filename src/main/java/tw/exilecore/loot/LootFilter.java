@@ -4,26 +4,43 @@ import tw.exilecore.item.Rarity;
 import tw.exilecore.monster.DropTable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
  * 一個角色的掉落過濾器（PoE 的 loot filter）：哪些東西不要掉（換成金幣）。
- * 稀有度、每種通貨、寶石、藥劑，加上進階規則 {@link Rules}（只撿跟手上同類的武器、同系的防具、等級差、寶石等級、地圖稀有度）。
  * 存在角色列（characters.loot_filter），用 {@link #encode()} 的短字串。純資料，不依賴 Bukkit。
  * <p>
+ * 2026-11-03 照站長整個整理過一遍，裝備的判斷順序固定是：
+ * <ol>
+ *   <li><b>基底</b>（{@link BaseRule}）：每一種基底（武器、防具、盾、箭袋、飾品、珠寶、遺時星晶、劫盜特殊項鍊、地圖）各自是
+ *       顯示／隱藏／必撿。<b>隱藏的基底絕對不撿</b>（有 T1 詞綴也不撿）；必撿的看「保留好詞綴」的門檻：有 T 門檻以上詞綴的一律撿
+ *       （不看稀有度、等級差、同類同系；門檻是關就全部撿）；顯示的才往下看。</li>
+ *   <li><b>傳奇</b>（{@link UniqueGroup}）：照來源分六組各自撿不撿；追逐級永遠撿。傳奇只看這個，不看稀有度、等級差、同類同系。</li>
+ *   <li>地圖只看「地圖依稀有度」。</li>
+ *   <li>等級差、不同類的武器、不同系的防具：不撿（好詞綴救不回來）。</li>
+ *   <li>稀有度被勾成隱藏：不撿，但有好詞綴（保留好詞綴）的撿回來。</li>
+ * </ol>
+ * 這次之前有「只撿的基底」（白名單，只管有挑的那幾類）、「只撿的基底也要好詞綴」、珠寶依稀有度、遺時星晶依稀有度與種類、
+ * 劫盜特殊基底三選一、傳奇一格；全部併進基底與傳奇分組，舊存檔讀進來照 {@link #migrate} 換算。
+ * <p>
  * 選了預設組合（寬鬆、標準、嚴格）的角色只記組合代號，讀出來時照 loot.yml 目前的設定；
- * 在選單上自己改過就變成「自訂」，記下每一項。
+ * 在選單上自己改過就變成「自訂」，記下每一項。基底、傳奇分組、護符、音效這些是另外記的，換預設組合也留著。
  */
 public final class LootFilter {
 
     /** 在選單上自己改過的過濾器。 */
     public static final String CUSTOM = "custom";
+    /** 存檔格式的版本（2026-11-03 起 2；沒寫的是舊格式，讀進來要 {@link #migrate}）。 */
+    static final int VERSION = 2;
 
     /** 藥劑的過濾規則。 */
     public enum FlaskRule {
@@ -59,6 +76,126 @@ public final class LootFilter {
         }
     }
 
+    /**
+     * 一種基底撿不撿（2026-11-03 照站長）。沒設定的是顯示。
+     */
+    public enum BaseRule {
+        /** 照其他規則（稀有度、等級差、同類同系、好詞綴）決定。 */
+        SHOW("顯示", "show"),
+        /** 絕對不撿（有 T1 詞綴也不撿），換成金幣。傳奇不受影響（傳奇照分組）。 */
+        HIDE("隱藏", "hide"),
+        /**
+         * 有「保留好詞綴」門檻以上的詞綴就一律撿（不看稀有度、等級差、同類同系）；門檻是關的話全部撿。地圖不看詞綴（全部撿）。
+         * 2026-11-03 照站長（這次之前同一天的版本是不看詞綴、全部撿）。劫盜特殊項鍊預設是這個。
+         */
+        ALWAYS("必撿", "always");
+
+        private final String displayName;
+        private final String id;
+
+        BaseRule(final String displayName, final String id) {
+            this.displayName = displayName;
+            this.id = id;
+        }
+
+        public String displayName() {
+            return displayName;
+        }
+
+        public String id() {
+            return id;
+        }
+    }
+
+    /**
+     * 傳奇照來源分組（2026-11-03 照站長：分別過濾不同的傳奇）。分法看 {@link #of}。
+     */
+    public enum UniqueGroup {
+        /** 追逐級：永遠撿，不能隱藏。 */
+        CHASE("追逐級", "chase", "地圖 Boss 極少掉的那幾件（全服公告）；永遠會撿，不能隱藏"),
+        /** 一般傳奇：地圖 Boss、賭博、機會石拿得到的。 */
+        COMMON("一般傳奇", "common", "地圖 Boss 會掉、商人賭得到、機會石做得出來的"),
+        /** 地圖事件（神龕、寶箱、保險箱、裂隙、流寇、深淵裂縫、祭壇、幻霧）掉的。 */
+        EVENT("事件傳奇", "event", "地圖事件（神龕、寶箱、保險箱、裂隙、流寇、深淵裂縫、祭壇、幻霧）掉的"),
+        /** 巔峰 Boss 專屬（覺醒之主・虛星、七隻事件巔峰 Boss、淵鯨、世界 Boss）。 */
+        PINNACLE("巔峰 Boss 專屬", "pinnacle", "覺醒之主・虛星、七隻事件巔峰 Boss、淵鯨、世界 Boss 才掉的"),
+        /** 終局 Boss、極境專屬。 */
+        ENDGAME("終局・極境專屬", "endgame", "四個終局 Boss 與極境才掉的"),
+        /** 劫盜的大金庫掉的。 */
+        HEIST("劫盜傳奇", "heist", "劫盜的大金庫才掉的");
+
+        /** 事件傳奇的來源（uniques.yml 的 sources；map_events.yml 的事件代號）。 */
+        static final Set<String> EVENT_SOURCES = Set.of("strongbox", "safe", "shrine", "breach", "exile", "abyss", "ritual", "delirium");
+        /** 不在地圖設定檔的巔峰裡、但也算巔峰 Boss 專屬的來源。 */
+        static final Set<String> EXTRA_PINNACLE_SOURCES = Set.of("abyss_whale", "world_boss");
+
+        private final String displayName;
+        private final String id;
+        private final String about;
+
+        UniqueGroup(final String displayName, final String id, final String about) {
+            this.displayName = displayName;
+            this.id = id;
+            this.about = about;
+        }
+
+        public String displayName() {
+            return displayName;
+        }
+
+        public String id() {
+            return id;
+        }
+
+        public String about() {
+            return about;
+        }
+
+        static UniqueGroup byId(final String id) {
+            for (final UniqueGroup group : values()) {
+                if (group.id.equalsIgnoreCase(id)) {
+                    return group;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * 一件傳奇是哪一組：追逐級 → 巔峰（來源在 pinnacleIds、淵鯨、世界 Boss）→ 終局・極境（來源在 finalIds 或 uber_ 開頭）
+         * → 劫盜 → 事件（來源在 {@link #EVENT_SOURCES}）→ 其他都是一般（map_boss、gamble、chance、某張地圖的 Boss、禁止掉落的）。
+         *
+         * @param chase       uniques.yml 的 chase
+         * @param sources     uniques.yml 的 sources
+         * @param finalIds    終局的代號（maps.yml 的 finals，不含巔峰）
+         * @param pinnacleIds 巔峰的代號（maps.yml 的 finals 裡有 pinnacle 的）
+         */
+        public static UniqueGroup of(final boolean chase, final Set<String> sources, final Set<String> finalIds, final Set<String> pinnacleIds) {
+            if (chase) {
+                return CHASE;
+            }
+            final Set<String> from = sources == null ? Set.of() : sources;
+            for (final String source : from) {
+                if (pinnacleIds != null && pinnacleIds.contains(source) || EXTRA_PINNACLE_SOURCES.contains(source)) {
+                    return PINNACLE;
+                }
+            }
+            for (final String source : from) {
+                if (source.startsWith("uber_") || "final".equals(source) || finalIds != null && finalIds.contains(source)) {
+                    return ENDGAME;
+                }
+            }
+            if (from.contains("heist")) {
+                return HEIST;
+            }
+            for (final String source : from) {
+                if (EVENT_SOURCES.contains(source)) {
+                    return EVENT;
+                }
+            }
+            return COMMON;
+        }
+    }
+
     /** 武器的種類標籤（「只撿跟手上同類的武器」看這些）。 */
     public static final Set<String> WEAPON_CLASSES = Set.of("sword", "axe", "mace", "dagger", "claw", "wand", "staff", "bow",
             "sceptre", "crossbow", "quarterstaff", "spear", "talisman"); // 2026-10：漏了獸魂符（拿巨錘也撿得到）
@@ -70,7 +207,7 @@ public final class LootFilter {
     public static final int[] GEM_LEVELS = {0, 5, 10, 15};
     /** 「未切割輔助寶石至少第幾階」的選項（0 = 關）。 */
     public static final int[] SUPPORT_TIERS = {0, 2, 3};
-    /** 「地圖依稀有度隱藏」的選項：0 = 全部顯示、1 = 隱藏普通（白）地圖、2 = 只撿稀有（黃）地圖（普通、魔法都隱藏）、3 = 全部隱藏（2026-10-24；傳奇地圖照撿）。 */
+    /** 「地圖依稀有度隱藏」的選項：0 = 全部顯示、1 = 隱藏普通（白）地圖、2 = 只撿稀有（黃）地圖、3 = 全部隱藏（傳奇地圖照分組）。 */
     public static final int[] MAP_RARITIES = {0, 1, 2, 3};
     /** 「保留有 T 幾以上詞綴的裝備」的選項（0 = 關；1 = 有 T1 詞綴才保留，數字越大越寬）。 */
     public static final int[] AFFIX_TIERS = {0, 1, 2, 3, 4, 5};
@@ -93,9 +230,9 @@ public final class LootFilter {
      * @param levelGap         物品等級比角色低超過這麼多級的裝備隱藏（0 = 關；傳奇、珠寶、地圖不管）
      * @param minSkillGemLevel 未切割技能寶石低於這個等級隱藏（0 = 關）
      * @param minSupportTier   未切割輔助寶石低於這一階隱藏（0 = 關）
-     * @param mapRarity        地圖依稀有度隱藏：0 = 關（地圖本來永遠顯示）、1 = 隱藏普通（白）地圖、2 = 普通與魔法（藍）都隱藏，只撿稀有（黃）
-     * @param keepAffixTier    保留有 T 幾以上詞綴的裝備（2026-10）：身上有一條詞綴的階級是 T1～T這個數字，被稀有度藏起來的照樣撿
-     *                         （等級差、不同類、不在只撿的基底裡的不救；0 = 關；未鑑定的也看得到，過濾器知道它的詞綴）
+     * @param mapRarity        地圖依稀有度隱藏：0 = 關、1 = 隱藏普通（白）地圖、2 = 普通與魔法（藍）都隱藏、3 = 全部隱藏
+     * @param keepAffixTier    保留有 T 幾以上詞綴的裝備：身上有一條詞綴的階級是 T1～T這個數字，被稀有度藏起來的照樣撿
+     *                         （基底隱藏、等級差、不同類的不救；0 = 關；未鑑定的也看得到，過濾器知道它的詞綴）
      */
     public record Rules(boolean weaponsLikeMine, boolean armourLikeMine, int levelGap, int minSkillGemLevel, int minSupportTier,
                         int mapRarity, int keepAffixTier) {
@@ -137,63 +274,35 @@ public final class LootFilter {
         }
     }
 
+    /** 2026-10-22 的舊記號：候選物的標籤裡有這個 = 追逐級（舊呼叫法；現在請用 {@link Candidate#uniqueGroup()}）。 */
+    public static final String ALWAYS_KEEP_TAG = "exilecore:keep_unique";
+
     /**
      * 一件要判斷的掉落（純資料，撿取模組從掉落與做好的物品組出來）。
      *
-     * @param kind         掉落種類
-     * @param rarity       裝備的稀有度（其他種類 null）
-     * @param currencyId   通貨代號（其他種類 null）
-     * @param flaskUpgrade 藥劑比藥劑欄裡同一種的好
-     * @param itemLevel    裝備的物品等級（不知道 0）
-     * @param tags         裝備基底的標籤（weapon、sword、shield、armour、str_armour、map、jewel…）
-     * @param mapTier      地圖的階級（不是地圖 0）
-     * @param gemLevel     未切割技能寶石的等級／輔助寶石的階級（不知道 0）
+     * @param kind          掉落種類
+     * @param rarity        裝備的稀有度（其他種類 null）
+     * @param currencyId    通貨代號（其他種類 null）
+     * @param flaskUpgrade  藥劑比藥劑欄裡同一種的好
+     * @param itemLevel     裝備的物品等級（不知道 0）
+     * @param tags          裝備基底的標籤（weapon、sword、shield、armour、str_armour、map、jewel…）
+     * @param mapTier       地圖的階級（不是地圖 0）
+     * @param gemLevel      未切割技能寶石的等級／輔助寶石的階級（不知道 0）
      * @param bestAffixRank 裝備身上最好的詞綴是 T 幾（1 = T1；沒有詞綴或不知道 0）
+     * @param baseId        基底代號（不知道 null）
+     * @param uniqueGroup   傳奇是哪一組（不是傳奇或不知道 null；不知道的傳奇當一般傳奇，標籤有 {@link #ALWAYS_KEEP_TAG} 的當追逐級）
      */
-    /** 2026-10-22：候選物的標籤裡有這個 = 永遠撿的傳奇（追逐級、頂級專屬；就算傳奇被勾成隱藏也一定撿）。 */
-    public static final String ALWAYS_KEEP_TAG = "exilecore:keep_unique";
-    /** 2026-10-30：劫盜專屬基底（特殊項鍊）的記號：照 {@link HeistBaseRule} 過濾，不看其他規則。 */
-    public static final String HEIST_BASE_TAG = "exilecore:heist_base";
-
-    /** 2026-10-30 照站長：劫盜特殊基底的過濾（預設一定撿）。 */
-    public enum HeistBaseRule {
-        /** 一定撿（不管稀有度、等級差、同類同系、只撿的基底）。 */
-        ALWAYS("一定撿", "always"),
-        /** 照一般裝備的規則。 */
-        NORMAL("照一般規則", "normal"),
-        /** 一律不撿（換成金幣）。 */
-        HIDE("不撿", "hide");
-
-        private final String display;
-        private final String id;
-
-        HeistBaseRule(final String display, final String id) {
-            this.display = display;
-            this.id = id;
-        }
-
-        public String display() {
-            return display;
-        }
-
-        public String id() {
-            return id;
-        }
-
-        static HeistBaseRule parse(final String value) {
-            for (final HeistBaseRule rule : values()) {
-                if (rule.id.equalsIgnoreCase(value)) {
-                    return rule;
-                }
-            }
-            return ALWAYS;
-        }
-    }
-
     public record Candidate(DropTable.Kind kind, Rarity rarity, String currencyId, boolean flaskUpgrade, int itemLevel,
-                            Set<String> tags, int mapTier, int gemLevel, int bestAffixRank, String baseId) {
+                            Set<String> tags, int mapTier, int gemLevel, int bestAffixRank, String baseId, UniqueGroup uniqueGroup) {
         public Candidate {
             tags = tags == null ? Set.of() : Set.copyOf(tags);
+        }
+
+        /** 不知道傳奇分組的（舊的呼叫法）。 */
+        public Candidate(final DropTable.Kind kind, final Rarity rarity, final String currencyId, final boolean flaskUpgrade,
+                         final int itemLevel, final Set<String> tags, final int mapTier, final int gemLevel, final int bestAffixRank,
+                         final String baseId) {
+            this(kind, rarity, currencyId, flaskUpgrade, itemLevel, tags, mapTier, gemLevel, bestAffixRank, baseId, null);
         }
 
         /** 不知道基底的（舊的呼叫法）。 */
@@ -221,14 +330,18 @@ public final class LootFilter {
             return tags.contains("jewel");
         }
 
-        /** 遺時星晶（半徑珠寶）是哪一種；不是遺時星晶回傳 null。 */
-        TimeLost timeLost() {
-            return TimeLost.of(tags);
+        /** 傳奇是哪一組（不知道的：標籤有舊記號的追逐級，其他一般傳奇）。 */
+        UniqueGroup groupOrDefault() {
+            if (uniqueGroup != null) {
+                return uniqueGroup;
+            }
+            return tags.contains(ALWAYS_KEEP_TAG) ? UniqueGroup.CHASE : UniqueGroup.COMMON;
         }
     }
 
     /**
-     * 遺時星晶（半徑珠寶，2026-10）的四種：照基底的標籤分（bases/jewels.yml：radius ＋ r_ruby／r_emerald／r_sapphire，三種都有的是白的）。
+     * 遺時星晶（半徑珠寶）的四種：照基底的標籤分（bases/jewels.yml：radius ＋ r_ruby／r_emerald／r_sapphire，三種都有的是白的）。
+     * 2026-11-03 起只有舊存檔轉換用（th= 記的是這個的代號）。
      */
     public enum TimeLost {
         RUBY("ruby", "遺時赤星晶"), EMERALD("emerald", "遺時翠星晶"), SAPPHIRE("sapphire", "遺時蒼星晶"), DIAMOND("diamond", "遺時白星晶");
@@ -289,6 +402,33 @@ public final class LootFilter {
         }
     }
 
+    /**
+     * 舊存檔轉換要用的一種基底（{@link #migrate}）。
+     *
+     * @param id        基底代號
+     * @param tags      基底標籤
+     * @param heistOnly 只在劫盜掉的特殊基底
+     */
+    public record BaseInfo(String id, Set<String> tags, boolean heistOnly) {
+        public BaseInfo {
+            tags = tags == null ? Set.of() : Set.copyOf(tags);
+        }
+    }
+
+    /**
+     * 舊存檔（2026-11-03 之前的格式）裡還沒換算的設定；讀進來後由撿取模組拿基底清單呼叫 {@link #migrate}。
+     *
+     * @param keepBases      只撿的基底（白名單）
+     * @param jewelRarity    珠寶依稀有度（0 全部撿、2 只撿稀有、3 全部不撿）
+     * @param timeLostRarity 遺時星晶依稀有度（0、1 只撿稀有、2 全部不撿）
+     * @param hiddenTimeLost 不撿的遺時星晶種類
+     * @param heistRule      劫盜特殊基底（always／normal／hide；null = 沒寫 = always）
+     * @param hideUniques    傳奇那一格勾成隱藏
+     */
+    record Legacy(Set<String> keepBases, int jewelRarity, int timeLostRarity, Set<TimeLost> hiddenTimeLost, String heistRule, boolean hideUniques) {
+        static final Legacy EMPTY = new Legacy(Set.of(), 0, 0, Set.of(), null, false);
+    }
+
     private final EnumSet<Rarity> hiddenEquipment = EnumSet.noneOf(Rarity.class);
     private final TreeSet<String> hiddenCurrencies = new TreeSet<>();
     private boolean hideSkillGems;
@@ -296,132 +436,18 @@ public final class LootFilter {
     private boolean hideCharms;
     /** 2026-10：「保留好詞綴」也只撿跟我同類的（武器種類、防具系別）。 */
     private boolean keepAffixLikeMine;
-    /** 2026-10-30：劫盜特殊基底（預設一定撿）。 */
-    private HeistBaseRule heistBases = HeistBaseRule.ALWAYS;
-    /**
-     * 2026-10-26：「只撿的基底」也要符合「保留好詞綴」的門檻（兩個一起算）。開著且門檻不是「關」時，
-     * 有挑基底的那幾類只撿「在清單內、而且有一條詞綴是 T1～T門檻」的普通、魔法、稀有裝備；這次之前兩條各算各的。
-     */
-    private boolean keepBasesNeedAffix;
     private boolean hideSupportGems;
     private FlaskRule flasks = FlaskRule.ALL;
     private Rules rules = Rules.NONE;
     private String preset = CUSTOM;
-    /** 只撿的基底（2026-10，基底代號，可以一直加）：有設定就只撿這些基底的裝備，稀有度照「依稀有度」的設定。 */
-    private final TreeSet<String> keepBases = new TreeSet<>();
-    /**
-     * 基底代號 → 基底標籤（撿取模組給，2026-10）：「只撿的基底」只限制有挑基底的那幾類（武器、防具、盾與箭袋、飾品），
-     * 沒挑的類別照原本的規則。沒給（測試、舊呼叫）就照舊：不在清單裡的全部不撿。不存檔、不算進 equals。
-     */
-    private java.util.function.Function<String, Set<String>> baseTags;
-    /**
-     * 珠寶依稀有度（2026-10）：0 全部撿、2 只撿稀有、3 全部不撿。
-     * （1「隱藏普通」拿掉了：珠寶掉出來至少是魔法，那一格藏不到任何東西；舊存檔的 1 讀成 0）
-     */
-    private int jewelRarity;
-    public static final int[] JEWEL_RARITIES = {0, 2, 3};
+    /** 2026-11-03：每一種基底的規則（只存隱藏與必撿；沒有的是顯示）。 */
+    private final TreeMap<String, BaseRule> bases = new TreeMap<>();
+    /** 2026-11-03：不撿的傳奇分組（追逐級不會在裡面）。 */
+    private final EnumSet<UniqueGroup> hiddenUniques = EnumSet.noneOf(UniqueGroup.class);
     /** 稀有掉落的音效（2026-10）：傳奇、追逐級、映星鏡、Boss 入場材料、大鑿星石、Lv.21 寶石、終局以上 Boss 的掉落。預設開。 */
     private boolean dropSounds = true;
-
-    public boolean dropSounds() {
-        return dropSounds;
-    }
-
-    public void toggleDropSounds() {
-        dropSounds = !dropSounds;
-    }
-
-    public LootFilter withDropSounds(final boolean on) {
-        dropSounds = on;
-        return this;
-    }
-
-    public static String jewelRarityName(final int value) {
-        return switch (value) {
-            case 1 -> "隱藏普通珠寶";
-            case 2 -> "只撿稀有珠寶";
-            case 3 -> "全部不撿";
-            default -> "全部撿";
-        };
-    }
-
-    public int jewelRarity() {
-        return jewelRarity;
-    }
-
-    public void cycleJewelRarity(final boolean backwards) {
-        jewelRarity = next(JEWEL_RARITIES, jewelRarity, backwards);
-    }
-
-    /** 遺時星晶依稀有度（2026-10）：0 全部撿、1 只撿稀有、2 全部不撿。跟一般珠寶分開設定。 */
-    private int timeLostRarity;
-    /** 不撿的遺時星晶種類（2026-10）。 */
-    private final EnumSet<TimeLost> hiddenTimeLost = EnumSet.noneOf(TimeLost.class);
-    public static final int[] TIME_LOST_RARITIES = {0, 1, 2};
-
-    public static String timeLostRarityName(final int value) {
-        return switch (value) {
-            case 1 -> "只撿稀有的";
-            case 2 -> "全部不撿";
-            default -> "全部撿";
-        };
-    }
-
-    public int timeLostRarity() {
-        return timeLostRarity;
-    }
-
-    public void cycleTimeLostRarity(final boolean backwards) {
-        timeLostRarity = next(TIME_LOST_RARITIES, timeLostRarity, backwards);
-    }
-
-    /** 這一種遺時星晶撿不撿。 */
-    public boolean hidesTimeLost(final TimeLost kind) {
-        return hiddenTimeLost.contains(kind);
-    }
-
-    public void toggleTimeLost(final TimeLost kind) {
-        if (!hiddenTimeLost.remove(kind)) {
-            hiddenTimeLost.add(kind);
-        }
-    }
-
-    /** 遺時星晶有沒有設定過濾（給總覽的說明）。 */
-    public boolean filtersTimeLost() {
-        return timeLostRarity > 0 || !hiddenTimeLost.isEmpty();
-    }
-
-    /** 換預設組合時把遺時星晶的設定帶過去。 */
-    public LootFilter withTimeLost(final LootFilter from) {
-        timeLostRarity = from.timeLostRarity;
-        hiddenTimeLost.clear();
-        hiddenTimeLost.addAll(from.hiddenTimeLost);
-        return this;
-    }
-
-    /** 遺時星晶：先看種類、再看稀有度（傳奇永遠撿）；不看一般珠寶的設定。 */
-    private boolean hidesTimeLost(final TimeLost kind, final Rarity rarity) {
-        if (rarity == Rarity.UNIQUE) {
-            return false;
-        }
-        if (hiddenTimeLost.contains(kind)) {
-            return true;
-        }
-        return switch (timeLostRarity) {
-            case 1 -> rarity != Rarity.RARE;
-            case 2 -> true;
-            default -> false;
-        };
-    }
-
-    private boolean hidesJewel(final Rarity rarity) {
-        return switch (jewelRarity) {
-            case 1 -> rarity == Rarity.NORMAL;
-            case 2 -> rarity == Rarity.NORMAL || rarity == Rarity.MAGIC;
-            case 3 -> rarity != Rarity.UNIQUE;
-            default -> false;
-        };
-    }
+    /** 舊存檔還沒換算的部分（null = 不用換算）。不存檔、不算進 equals。 */
+    private Legacy legacy;
 
     /** 全部顯示的過濾器（自訂）。 */
     public LootFilter() {
@@ -446,7 +472,7 @@ public final class LootFilter {
 
     // ---- 查詢 ----
 
-    /** 這個稀有度的裝備要不要隱藏（2026-10-22：傳奇也能藏，追逐級傳奇另外永遠撿）。 */
+    /** 這個稀有度的普通、魔法、稀有裝備要不要隱藏（傳奇照 {@link #hidesUniques}）。 */
     public boolean hidesEquipment(final Rarity rarity) {
         return hiddenEquipment.contains(rarity);
     }
@@ -484,82 +510,115 @@ public final class LootFilter {
         return rules;
     }
 
-    /** 一定要撿的基底。 */
-    public Set<String> keepBases() {
-        return Collections.unmodifiableSet(keepBases);
+    public boolean dropSounds() {
+        return dropSounds;
     }
 
-    public boolean keepsBase(final String baseId) {
-        return keepBases.contains(baseId);
+    public boolean hidesCharms() {
+        return hideCharms;
     }
 
-    /** 給基底標籤的查法（撿取模組讀過濾器時給）。 */
-    public LootFilter withBaseTags(final java.util.function.Function<String, Set<String>> lookup) {
-        baseTags = lookup;
-        return this;
+    public boolean keepAffixLikeMine() {
+        return keepAffixLikeMine;
     }
 
-    /**
-     * 裝備的大類（跟「只撿的基底」選單的分頁一樣）：weapon 武器、offhand 盾與箭袋、armour 防具、jewellery 飾品；其他 null。
-     */
-    public static String gearCategory(final Set<String> tags) {
-        if (tags == null) {
-            return null;
-        }
-        if (tags.contains("weapon")) {
-            return "weapon";
-        }
-        if (tags.contains("shield") || tags.contains("quiver")) {
-            return "offhand";
-        }
-        if (tags.contains("armour")) {
-            return "armour";
-        }
-        return tags.contains("jewellery") ? "jewellery" : null;
+    /** 舊存檔還沒換算（撿取模組要拿基底清單呼叫 {@link #migrate}）。 */
+    public boolean needsMigration() {
+        return legacy != null;
     }
 
-    /** 「只撿的基底」有沒有管到這一類（這一類至少挑了一種基底；不知道基底標籤時當成全部都管）。 */
-    public boolean keepBasesCover(final Set<String> tags) {
-        if (keepBases.isEmpty()) {
-            return false;
+    // ---- 基底（2026-11-03）----
+
+    /** 這種基底的規則（沒設定的是顯示）。 */
+    public BaseRule baseRule(final String baseId) {
+        return baseId == null ? BaseRule.SHOW : bases.getOrDefault(baseId, BaseRule.SHOW);
+    }
+
+    /** 設定一種基底（顯示 = 拿掉設定）。跟護符一樣另外記：不會讓預設組合變成自訂，換預設組合也留著。 */
+    public void setBaseRule(final String baseId, final BaseRule rule) {
+        if (rule == null || rule == BaseRule.SHOW) {
+            bases.remove(baseId);
+        } else {
+            bases.put(baseId, rule);
         }
-        if (baseTags == null) {
-            return true;
-        }
-        final String category = gearCategory(tags);
-        if (category == null) {
-            return false;
-        }
-        for (final String id : keepBases) {
-            if (category.equals(gearCategory(baseTags.apply(id)))) {
-                return true;
+    }
+
+    /** 顯示 ↔ 隱藏（必撿的點了變隱藏）。 */
+    public void toggleBaseHidden(final String baseId) {
+        setBaseRule(baseId, baseRule(baseId) == BaseRule.HIDE ? BaseRule.SHOW : BaseRule.HIDE);
+    }
+
+    /** 顯示 ↔ 必撿（隱藏的點了變必撿）。 */
+    public void toggleBaseAlways(final String baseId) {
+        setBaseRule(baseId, baseRule(baseId) == BaseRule.ALWAYS ? BaseRule.SHOW : BaseRule.ALWAYS);
+    }
+
+    /** 隱藏的基底。 */
+    public Set<String> hiddenBases() {
+        return basesWith(BaseRule.HIDE);
+    }
+
+    /** 必撿的基底。 */
+    public Set<String> alwaysBases() {
+        return basesWith(BaseRule.ALWAYS);
+    }
+
+    private Set<String> basesWith(final BaseRule rule) {
+        final TreeSet<String> out = new TreeSet<>();
+        for (final Map.Entry<String, BaseRule> entry : bases.entrySet()) {
+            if (entry.getValue() == rule) {
+                out.add(entry.getKey());
             }
         }
-        return false;
+        return out;
     }
 
-    /** 加入或拿掉一個一定要撿的基底（不會讓預設組合變成自訂：存檔時另外記）。 */
-    public void toggleKeepBase(final String baseId) {
-        if (!keepBases.remove(baseId)) {
-            keepBases.add(baseId);
+    /** 有設定的基底（代號 → 規則）。 */
+    public Map<String, BaseRule> baseRules() {
+        return Collections.unmodifiableMap(bases);
+    }
+
+    public void clearBaseRules() {
+        bases.clear();
+    }
+
+    /** 換預設組合時把基底的設定帶過去。 */
+    public LootFilter withBaseRules(final Map<String, BaseRule> rules) {
+        bases.clear();
+        for (final Map.Entry<String, BaseRule> entry : rules.entrySet()) {
+            setBaseRule(entry.getKey(), entry.getValue());
+        }
+        return this;
+    }
+
+    // ---- 傳奇分組（2026-11-03）----
+
+    /** 這一組傳奇撿不撿（追逐級永遠撿）。 */
+    public boolean hidesUniques(final UniqueGroup group) {
+        return group != UniqueGroup.CHASE && hiddenUniques.contains(group);
+    }
+
+    public Set<UniqueGroup> hiddenUniques() {
+        return Collections.unmodifiableSet(hiddenUniques);
+    }
+
+    /** 跟護符一樣另外記：不會讓預設組合變成自訂，換預設組合也留著。追逐級點了沒反應。 */
+    public void toggleUniques(final UniqueGroup group) {
+        if (group == UniqueGroup.CHASE) {
+            return;
+        }
+        if (!hiddenUniques.remove(group)) {
+            hiddenUniques.add(group);
         }
     }
 
-    public void clearKeepBases() {
-        keepBases.clear();
-    }
-
-    /** 換預設組合時把珠寶的設定帶過去。 */
-    public LootFilter withJewelRarity(final int value) {
-        jewelRarity = normalizeJewelRarity(value);
+    public LootFilter withDropSounds(final boolean on) {
+        dropSounds = on;
         return this;
     }
 
-    /** 換預設組合時把一定要撿的基底帶過去。 */
-    public LootFilter withKeepBases(final Set<String> bases) {
-        keepBases.clear();
-        keepBases.addAll(bases);
-        return this;
+    public void toggleDropSounds() {
+        dropSounds = !dropSounds;
     }
 
     /**
@@ -575,8 +634,7 @@ public final class LootFilter {
     }
 
     /**
-     * 一件掉落要不要隱藏（含進階規則）。傳奇裝備只看稀有度那一格（追逐級、頂級專屬永遠撿）；傳奇珠寶、傳奇地圖永遠撿；
-     * 地圖只看「地圖依稀有度隱藏」。
+     * 一件掉落要不要隱藏（含進階規則）。裝備的順序見類別說明。
      *
      * @param viewer 看掉落的角色（進階規則用；不知道就 {@link Viewer#NONE}）
      */
@@ -599,44 +657,32 @@ public final class LootFilter {
     }
 
     private boolean hidesEquipment(final Candidate candidate, final Viewer who) {
+        // 2026-11-03 照站長：順序固定——傳奇照分組 → 基底隱藏絕對不撿、必撿看好詞綴門檻 → 地圖只看稀有度 → 等級差、不同類 → 稀有度（好詞綴救回）
+        if (candidate.rarity() == Rarity.UNIQUE) {
+            return hidesUniques(candidate.groupOrDefault());
+        }
+        final BaseRule base = baseRule(candidate.baseId());
+        if (base == BaseRule.HIDE) {
+            return true; // 有 T1 詞綴也不撿
+        }
+        if (base == BaseRule.ALWAYS) {
+            // 必撿：門檻開著就要有 T 門檻以上的詞綴（未鑑定的也算；不看稀有度、等級差、同類同系、好詞綴也只撿同類）；門檻關、地圖全部撿
+            return rules.keepAffixTier() > 0 && !candidate.map() && !keptByAffixTier(candidate);
+        }
         if (candidate.map()) {
             return hidesMap(candidate.rarity());
         }
-        if (candidate.jewel()) {
-            final TimeLost timeLost = candidate.timeLost();
-            if (timeLost != null) {
-                return hidesTimeLost(timeLost, candidate.rarity()); // 2026-10：遺時星晶有自己的設定（種類、稀有度）
+        if (!candidate.jewel()) { // 珠寶沒有等級差、同類同系的問題
+            if (unlikeMine(candidate.tags(), who, rules.weaponsLikeMine(), rules.armourLikeMine())
+                    || rules.levelGap() > 0 && candidate.itemLevel() > 0 && who.level() > 0 && candidate.itemLevel() < who.level() - rules.levelGap()) {
+                return true;
             }
-            // 2026-10：珠寶也能過濾（傳奇珠寶永遠撿）；被藏起來的珠寶有夠好的詞綴（保留好詞綴）照樣撿
-            return hidesJewel(candidate.rarity()) && !keptByAffixTier(candidate);
-        }
-        if (candidate.tags().contains(HEIST_BASE_TAG) && heistBases != HeistBaseRule.NORMAL) {
-            return heistBases == HeistBaseRule.HIDE; // 2026-10-30 照站長：劫盜特殊基底照自己那條規則（預設一定撿）
-        }
-        if (candidate.rarity() == Rarity.UNIQUE) {
-            // 2026-10-22：傳奇裝備也能勾成隱藏（換成金幣）；追逐級、頂級專屬例外，永遠撿。只看稀有度，其他進階規則不管傳奇
-            return hiddenEquipment.contains(Rarity.UNIQUE) && !candidate.tags().contains(ALWAYS_KEEP_TAG);
-        }
-        // 2026-10：優先順序（由上往下，先符合的算數；以前各條規則互相蓋掉，開了「保留好詞綴」或「只撿的基底」幾乎什麼都不藏）
-        //   1. 傳奇：永遠撿（上面）
-        //   2. 不同類的武器／不同系的防具、等級差太多、不在「只撿的基底」裡（只看有挑基底的那幾類）：不撿，好詞綴也救不回來
-        //   2.5 2026-10-26：開了「只撿的基底也要好詞綴」：有挑基底的那幾類，清單內的還要有好詞綴才撿（不看稀有度）
-        //   3. 稀有度被勾成隱藏：不撿，但有好詞綴（保留好詞綴）的撿回來
-        final boolean coveredByBases = keepBasesCover(candidate.tags());
-        if (unlikeMine(candidate.tags(), who, rules.weaponsLikeMine(), rules.armourLikeMine())
-                || rules.levelGap() > 0 && candidate.itemLevel() > 0 && who.level() > 0 && candidate.itemLevel() < who.level() - rules.levelGap()
-                || coveredByBases && (candidate.baseId() == null || !keepBases.contains(candidate.baseId()))) {
-            return true;
-        }
-        // 2026-10-26：「只撿的基底也要好詞綴」：清單內的基底還要有夠好的詞綴才撿（未鑑定的也算，跟保留好詞綴一樣）；這次之前清單內的照稀有度撿
-        if (coveredByBases && keepBasesNeedAffixActive()) {
-            return !keptByAffixTier(candidate, who);
         }
         final boolean hidden = candidate.rarity() != null && hiddenEquipment.contains(candidate.rarity());
         return hidden && !keptByAffixTier(candidate, who);
     }
 
-    /** 有夠好的詞綴（T1～T「保留詞綴階級」）：被稀有度藏起來的照樣撿（等級差、不同類、只撿的基底先判斷，救不回來）。 */
+    /** 有夠好的詞綴（T1～T「保留詞綴階級」）：被稀有度藏起來的照樣撿（基底隱藏、等級差、不同類先判斷，救不回來）。 */
     public boolean keptByAffixTier(final Candidate candidate) {
         return rules.keepAffixTier() > 0 && candidate.bestAffixRank() > 0 && candidate.bestAffixRank() <= rules.keepAffixTier();
     }
@@ -646,7 +692,7 @@ public final class LootFilter {
         return keptByAffixTier(candidate) && !(keepAffixLikeMine && unlikeMine(candidate.tags(), who, true, true));
     }
 
-    /** 這個稀有度的地圖要不要隱藏（「地圖依稀有度隱藏」；傳奇地圖、不知道稀有度的永遠顯示）。 */
+    /** 這個稀有度的地圖要不要隱藏（「地圖依稀有度隱藏」；傳奇地圖照分組、不知道稀有度的永遠顯示）。 */
     public boolean hidesMap(final Rarity rarity) {
         if (rarity == null || rarity == Rarity.UNIQUE || rules.mapRarity() <= 0) {
             return false;
@@ -662,12 +708,6 @@ public final class LootFilter {
     /** 武器是單手還是雙手（基底標籤 one_hand／two_hand；都沒寫回傳 null）。 */
     private static String handedness(final Set<String> tags) {
         return tags.contains("two_hand") ? "two_hand" : tags.contains("one_hand") ? "one_hand" : null;
-    }
-
-    /** 珠寶依稀有度只剩 0、2、3（1 跟 0 一樣，讀成 0）。 */
-    private static int normalizeJewelRarity(final int value) {
-        final int clamped = Math.max(0, Math.min(3, value));
-        return clamped == 1 ? 0 : clamped;
     }
 
     /**
@@ -755,6 +795,31 @@ public final class LootFilter {
         };
     }
 
+    /**
+     * 裝備的大類（基底清單的分頁）：weapon 武器、offhand 盾與箭袋、armour 防具、jewellery 飾品、jewel 珠寶、map 地圖；其他 null。
+     */
+    public static String gearCategory(final Set<String> tags) {
+        if (tags == null) {
+            return null;
+        }
+        if (tags.contains("map")) {
+            return "map";
+        }
+        if (tags.contains("jewel")) {
+            return "jewel";
+        }
+        if (tags.contains("weapon")) {
+            return "weapon";
+        }
+        if (tags.contains("shield") || tags.contains("quiver")) {
+            return "offhand";
+        }
+        if (tags.contains("armour")) {
+            return "armour";
+        }
+        return tags.contains("jewellery") ? "jewellery" : null;
+    }
+
     /** 這個規則有沒有任何一項開著（選單上顯示「進階規則：N 項」）。 */
     public int activeRuleCount() {
         int count = 0;
@@ -770,13 +835,15 @@ public final class LootFilter {
 
     // ---- 修改（選單上點一下，變成自訂）----
 
+    /** 普通、魔法、稀有：撿或不撿（傳奇請用 {@link #toggleUniques}）。 */
     public void toggleEquipment(final Rarity rarity) {
+        if (rarity == Rarity.UNIQUE) {
+            return;
+        }
         if (!hiddenEquipment.remove(rarity)) {
             hiddenEquipment.add(rarity);
         }
-        if (rarity != Rarity.UNIQUE) {
-            preset = CUSTOM; // 2026-10-22：傳奇是另外記的項目（跟護符一樣），不會讓預設組合變成自訂
-        }
+        preset = CUSTOM;
     }
 
     public void toggleCurrency(final String id) {
@@ -784,39 +851,6 @@ public final class LootFilter {
             hiddenCurrencies.add(id);
         }
         preset = CUSTOM;
-    }
-
-    public boolean hidesCharms() {
-        return hideCharms;
-    }
-
-    public boolean keepAffixLikeMine() {
-        return keepAffixLikeMine;
-    }
-
-    /** 「只撿的基底也要符合好詞綴門檻」有沒有打開（不管門檻是不是關）。 */
-    public boolean keepBasesNeedAffix() {
-        return keepBasesNeedAffix;
-    }
-
-    /** 真的有在算：打開了、保留好詞綴不是「關」、也有挑基底。 */
-    public boolean keepBasesNeedAffixActive() {
-        return keepBasesNeedAffix && rules.keepAffixTier() > 0 && !keepBases.isEmpty();
-    }
-
-    public HeistBaseRule heistBases() {
-        return heistBases;
-    }
-
-    /** 2026-10-30：劫盜特殊基底換下一種（一定撿 → 照一般規則 → 不撿）；跟護符一樣另外記，換預設組合也留著。 */
-    public void cycleHeistBases(final boolean backwards) {
-        final HeistBaseRule[] all = HeistBaseRule.values();
-        heistBases = all[Math.floorMod(heistBases.ordinal() + (backwards ? -1 : 1), all.length)];
-    }
-
-    /** 跟好詞綴也只撿同類一樣另外記：不會讓預設組合變成自訂，換預設組合也留著。 */
-    public void toggleKeepBasesNeedAffix() {
-        keepBasesNeedAffix = !keepBasesNeedAffix;
     }
 
     /** 跟珠寶、遺時星晶一樣另外記：不會讓預設組合變成自訂，換預設組合也留著。 */
@@ -829,16 +863,14 @@ public final class LootFilter {
         hideCharms = !hideCharms;
     }
 
-    /** 換預設組合時把護符、「好詞綴也只撿同類」帶過去（2026-10：以前套用預設組合會悄悄重設這兩項）。 */
+    /** 換預設組合時把另外記的帶過去：護符、好詞綴也只撿同類、基底、傳奇分組（音效另外 {@link #withDropSounds}）。 */
     public LootFilter withExtras(final LootFilter from) {
         hideCharms = from.hideCharms;
         keepAffixLikeMine = from.keepAffixLikeMine;
-        keepBasesNeedAffix = from.keepBasesNeedAffix; // 2026-10-26
-        heistBases = from.heistBases; // 2026-10-30
-        // 2026-10-22：傳奇隱藏也帶過去（預設組合不會藏傳奇，換組合不能把玩家自己勾的重設）
-        if (from.hiddenEquipment.contains(Rarity.UNIQUE)) {
-            hiddenEquipment.add(Rarity.UNIQUE);
-        }
+        withBaseRules(from.bases);
+        hiddenUniques.clear();
+        hiddenUniques.addAll(from.hiddenUniques);
+        legacy = from.legacy;
         return this;
     }
 
@@ -895,28 +927,24 @@ public final class LootFilter {
         preset = CUSTOM;
     }
 
-    /** 全部顯示（清掉所有隱藏與規則）。 */
+    /** 全部顯示（清掉所有隱藏與規則；必撿的基底也清掉）。 */
     public void showEverything() {
         hiddenEquipment.clear();
         hiddenCurrencies.clear();
         hideSkillGems = false;
         hideCharms = false;
         keepAffixLikeMine = false;
-        keepBasesNeedAffix = false;
-        heistBases = HeistBaseRule.ALWAYS; // 2026-10-30
         hideSupportGems = false;
         flasks = FlaskRule.ALL;
         rules = Rules.NONE;
         preset = CUSTOM;
-        // 2026-10：以前漏了這幾項（只撿的基底、珠寶、遺時星晶），按了「全部顯示」還是會藏東西
-        keepBases.clear();
-        jewelRarity = 0;
-        timeLostRarity = 0;
-        hiddenTimeLost.clear();
+        bases.clear();
+        hiddenUniques.clear();
+        legacy = null;
     }
 
     /** 一次設定好幾種通貨（選單上「這一級全部隱藏／顯示」）。 */
-    public void setCurrenciesHidden(final java.util.Collection<String> ids, final boolean hidden) {
+    public void setCurrenciesHidden(final Collection<String> ids, final boolean hidden) {
         if (hidden) {
             hiddenCurrencies.addAll(ids);
         } else {
@@ -940,31 +968,99 @@ public final class LootFilter {
         return options[((index + step) % options.length + options.length) % options.length];
     }
 
+    // ---- 舊存檔轉換（2026-11-03）----
+
+    /**
+     * 把舊格式的設定換算成基底規則與傳奇分組（撿取模組讀過濾器時給全部的基底）。換算完 {@link #needsMigration} 變 false，
+     * 下次存檔就是新格式。沒有舊設定的也要叫（劫盜特殊基底預設必撿要在這裡補上）。
+     * <ul>
+     *   <li>只撿的基底（白名單）：有挑的那幾類裡，不在清單的基底全部隱藏；清單內的顯示</li>
+     *   <li>珠寶全部不撿 → 四種一般珠寶隱藏（「只撿稀有珠寶」沒有對應的，改成顯示、照稀有度）</li>
+     *   <li>遺時星晶全部不撿 → 四種遺時星晶隱藏；不撿的那幾種 → 那幾種隱藏（「只撿稀有的」沒有對應的）</li>
+     *   <li>劫盜特殊基底：一定撿（沒寫也是）→ 必撿；不撿 → 隱藏；照一般規則 → 顯示</li>
+     *   <li>傳奇勾成隱藏 → 一般、事件、劫盜傳奇不撿（巔峰、終局・極境以前就是永遠撿的，留著）</li>
+     * </ul>
+     */
+    public void migrate(final Collection<BaseInfo> all) {
+        if (legacy == null) {
+            return;
+        }
+        final Legacy old = legacy;
+        legacy = null;
+        final Set<String> coveredCategories = new TreeSet<>();
+        final Map<String, BaseInfo> byId = new TreeMap<>();
+        for (final BaseInfo base : all) {
+            byId.put(base.id(), base);
+        }
+        for (final String kept : old.keepBases()) {
+            final BaseInfo base = byId.get(kept);
+            final String category = base == null ? null : gearCategory(base.tags());
+            if (category != null) {
+                coveredCategories.add(category);
+            }
+        }
+        for (final BaseInfo base : all) {
+            if (bases.containsKey(base.id())) {
+                continue; // 新格式已經有的不動
+            }
+            final Set<String> tags = base.tags();
+            if (base.heistOnly()) {
+                final String rule = old.heistRule() == null ? "always" : old.heistRule().toLowerCase(Locale.ROOT);
+                if ("hide".equals(rule)) {
+                    bases.put(base.id(), BaseRule.HIDE);
+                } else if (!"normal".equals(rule)) {
+                    bases.put(base.id(), BaseRule.ALWAYS);
+                }
+                continue;
+            }
+            if (tags.contains("jewel")) {
+                final TimeLost timeLost = TimeLost.of(tags);
+                if (timeLost != null) {
+                    if (old.timeLostRarity() >= 2 || old.hiddenTimeLost().contains(timeLost)) {
+                        bases.put(base.id(), BaseRule.HIDE);
+                    }
+                } else if (old.jewelRarity() >= 3) {
+                    bases.put(base.id(), BaseRule.HIDE);
+                }
+                continue;
+            }
+            final String category = gearCategory(tags);
+            if (category != null && coveredCategories.contains(category) && !old.keepBases().contains(base.id())) {
+                bases.put(base.id(), BaseRule.HIDE);
+            }
+        }
+        if (old.hideUniques()) {
+            hiddenUniques.add(UniqueGroup.COMMON);
+            hiddenUniques.add(UniqueGroup.EVENT);
+            hiddenUniques.add(UniqueGroup.HEIST);
+        }
+    }
+
     // ---- 存檔 ----
 
     /**
-     * 存檔用的短字串。預設組合只記代號（{@code p=standard}），自訂記每一項：
-     * {@code p=custom;eq=normal,magic;cur=armour_scrap,whetstone;sg=0;ug=1;fl=better}。
-     * 進階規則的地圖是 {@code mr}（稀有度）；舊版的 {@code mt}（地圖階級）已經不用，讀到就略過。
+     * 存檔用的短字串（v=2）。預設組合只記代號加另外記的那幾項（{@code p=standard;v=2;xb=…}），自訂記每一項：
+     * {@code p=custom;v=2;eq=normal,magic;cur=armour_scrap,whetstone;sg=0;ug=1;fl=better;…;xb=隱藏的基底;ab=必撿的基底;hu=不撿的傳奇組}。
+     * 舊鍵（kb、jr、tr、th、hb、hu=1）讀得到、寫不出來。
      */
     public String encode() {
-        final List<String> timeLostHidden = new ArrayList<>();
-        for (final TimeLost kind : hiddenTimeLost) {
-            timeLostHidden.add(kind.id());
+        final List<String> hiddenGroups = new ArrayList<>();
+        for (final UniqueGroup group : hiddenUniques) {
+            hiddenGroups.add(group.id());
         }
-        final String kept = (keepBases.isEmpty() ? "" : ";kb=" + String.join(",", keepBases)) + (jewelRarity > 0 ? ";jr=" + jewelRarity : "")
-                + (timeLostRarity > 0 ? ";tr=" + timeLostRarity : "") + (timeLostHidden.isEmpty() ? "" : ";th=" + String.join(",", timeLostHidden))
-                + (dropSounds ? "" : ";ds=0") + (hideCharms ? ";ch=1" : "") + (keepAffixLikeMine ? ";kl=1" : "") + (keepBasesNeedAffix ? ";kn=1" : "")
-                + (heistBases == HeistBaseRule.ALWAYS ? "" : ";hb=" + heistBases.id())
-                + (!CUSTOM.equals(preset) && hiddenEquipment.contains(Rarity.UNIQUE) ? ";hu=1" : ""); // 預設組合只記代號：傳奇隱藏另外記
+        final Set<String> hidden = hiddenBases();
+        final Set<String> always = alwaysBases();
+        final String extras = (hidden.isEmpty() ? "" : ";xb=" + String.join(",", hidden)) + (always.isEmpty() ? "" : ";ab=" + String.join(",", always))
+                + (hiddenGroups.isEmpty() ? "" : ";hu=" + String.join(",", hiddenGroups))
+                + (dropSounds ? "" : ";ds=0") + (hideCharms ? ";ch=1" : "") + (keepAffixLikeMine ? ";kl=1" : "");
         if (!CUSTOM.equals(preset)) {
-            return "p=" + preset + kept;
+            return "p=" + preset + ";v=" + VERSION + extras;
         }
         final List<String> rarities = new ArrayList<>();
         for (final Rarity rarity : hiddenEquipment) {
             rarities.add(rarity.name().toLowerCase(Locale.ROOT));
         }
-        return "p=" + CUSTOM
+        return "p=" + CUSTOM + ";v=" + VERSION
                 + ";eq=" + String.join(",", rarities)
                 + ";cur=" + String.join(",", hiddenCurrencies)
                 + ";sg=" + (hideSkillGems ? 1 : 0)
@@ -973,19 +1069,29 @@ public final class LootFilter {
                 + (rules.equals(Rules.NONE) ? "" : ";wl=" + (rules.weaponsLikeMine() ? 1 : 0) + ";al=" + (rules.armourLikeMine() ? 1 : 0)
                 + ";lg=" + rules.levelGap() + ";gl=" + rules.minSkillGemLevel() + ";gt=" + rules.minSupportTier() + ";mr=" + rules.mapRarity()
                 + (rules.keepAffixTier() > 0 ? ";kt=" + rules.keepAffixTier() : ""))
-                + kept;
+                + extras;
     }
 
     /**
      * 讀存檔。沒存過（null）或讀不懂的用 loot.yml 的預設組合；
      * 記的是預設組合代號就照目前的設定（loot.yml 改了會跟著變），組合被刪掉了也改用預設。
+     * 舊格式（沒有 v=2）讀進來會帶著 {@link #needsMigration}，撿取模組要叫 {@link #migrate}。
      */
     public static LootFilter decode(final String text, final LootConfig config) {
         if (text == null || text.isBlank()) {
-            return config.defaultFilter();
+            final LootFilter fresh = config.defaultFilter().copy();
+            fresh.legacy = Legacy.EMPTY; // 新角色：劫盜特殊基底預設必撿要補上
+            return fresh;
         }
         String presetId = null;
+        int version = 0;
         final LootFilter filter = new LootFilter();
+        final Set<String> keepBases = new TreeSet<>();
+        int jewelRarity = 0;
+        int timeLostRarity = 0;
+        final EnumSet<TimeLost> hiddenTimeLost = EnumSet.noneOf(TimeLost.class);
+        String heistRule = null;
+        boolean hideUniques = false;
         for (final String part : text.split(";")) {
             final int equals = part.indexOf('=');
             if (equals <= 0) {
@@ -995,11 +1101,16 @@ public final class LootFilter {
             final String value = part.substring(equals + 1).trim();
             switch (key) {
                 case "p" -> presetId = value;
+                case "v" -> version = integer(value);
                 case "eq" -> {
                     for (final String name : list(value)) {
                         for (final Rarity rarity : Rarity.values()) {
-                            if (rarity.name().equalsIgnoreCase(name)) { // 2026-10-22：傳奇也能藏
-                                filter.hiddenEquipment.add(rarity);
+                            if (rarity.name().equalsIgnoreCase(name)) {
+                                if (rarity == Rarity.UNIQUE) {
+                                    hideUniques = true; // 舊格式：傳奇那一格
+                                } else {
+                                    filter.hiddenEquipment.add(rarity);
+                                }
                             }
                         }
                     }
@@ -1008,13 +1119,18 @@ public final class LootFilter {
                 case "sg" -> filter.hideSkillGems = "1".equals(value);
                 case "hu" -> {
                     if ("1".equals(value)) {
-                        filter.hiddenEquipment.add(Rarity.UNIQUE); // 2026-10-22：預設組合＋傳奇隱藏
+                        hideUniques = true; // 舊格式：預設組合＋傳奇隱藏
+                    } else {
+                        for (final String name : list(value)) {
+                            final UniqueGroup group = UniqueGroup.byId(name);
+                            if (group != null && group != UniqueGroup.CHASE) {
+                                filter.hiddenUniques.add(group);
+                            }
+                        }
                     }
                 }
                 case "ch" -> filter.hideCharms = "1".equals(value);
                 case "kl" -> filter.keepAffixLikeMine = "1".equals(value);
-                case "kn" -> filter.keepBasesNeedAffix = "1".equals(value); // 2026-10-26：舊存檔沒有這欄 = 關
-                case "hb" -> filter.heistBases = HeistBaseRule.parse(value); // 2026-10-30：舊存檔沒有這欄 = 一定撿
                 case "ug" -> filter.hideSupportGems = "1".equals(value);
                 case "fl" -> filter.flasks = FlaskRule.parse(value, FlaskRule.ALL);
                 case "wl" -> filter.rules = filter.rules.withWeaponsLikeMine("1".equals(value));
@@ -1024,31 +1140,44 @@ public final class LootFilter {
                 case "gt" -> filter.rules = filter.rules.withMinSupportTier(integer(value));
                 case "mr" -> filter.rules = filter.rules.withMapRarity(integer(value));
                 case "kt" -> filter.rules = filter.rules.withKeepAffixTier(integer(value));
-                case "kb" -> filter.keepBases.addAll(list(value));
-                case "jr" -> filter.jewelRarity = normalizeJewelRarity(integer(value));
                 case "ds" -> filter.dropSounds = !"0".equals(value);
-                case "tr" -> filter.timeLostRarity = Math.max(0, Math.min(2, integer(value)));
+                case "xb" -> {
+                    for (final String id : list(value)) {
+                        filter.bases.put(id, BaseRule.HIDE);
+                    }
+                }
+                case "ab" -> {
+                    for (final String id : list(value)) {
+                        filter.bases.put(id, BaseRule.ALWAYS);
+                    }
+                }
+                // ---- 舊格式（2026-11-03 之前）----
+                case "kb" -> keepBases.addAll(list(value));
+                case "jr" -> jewelRarity = integer(value);
+                case "tr" -> timeLostRarity = integer(value);
                 case "th" -> {
                     for (final String name : list(value)) {
                         final TimeLost kind = TimeLost.byId(name);
                         if (kind != null) {
-                            filter.hiddenTimeLost.add(kind);
+                            hiddenTimeLost.add(kind);
                         }
                     }
                 }
+                case "hb" -> heistRule = value;
                 default -> {
-                    // 之後版本加的欄位：略過
+                    // 之後版本加的欄位（kn 這種拿掉的也在這）：略過
                 }
             }
         }
+        if (version < VERSION) {
+            filter.legacy = new Legacy(keepBases, jewelRarity, timeLostRarity, hiddenTimeLost, heistRule, hideUniques);
+        }
         if (presetId == null) {
-            return config.defaultFilter().copy().withKeepBases(filter.keepBases).withJewelRarity(filter.jewelRarity).withTimeLost(filter)
-                    .withDropSounds(filter.dropSounds).withExtras(filter);
+            return config.defaultFilter().copy().withDropSounds(filter.dropSounds).withExtras(filter);
         }
         if (!CUSTOM.equals(presetId)) {
             final LootConfig.Preset preset = config.preset(presetId);
-            return (preset == null ? config.defaultFilter().copy() : of(preset)).withKeepBases(filter.keepBases)
-                    .withJewelRarity(filter.jewelRarity).withTimeLost(filter).withDropSounds(filter.dropSounds).withExtras(filter);
+            return (preset == null ? config.defaultFilter().copy() : of(preset)).withDropSounds(filter.dropSounds).withExtras(filter);
         }
         filter.preset = CUSTOM;
         return filter;
@@ -1080,18 +1209,14 @@ public final class LootFilter {
         copy.hideSkillGems = hideSkillGems;
         copy.hideCharms = hideCharms;
         copy.keepAffixLikeMine = keepAffixLikeMine;
-        copy.keepBasesNeedAffix = keepBasesNeedAffix;
-        copy.heistBases = heistBases; // 2026-10-30
         copy.hideSupportGems = hideSupportGems;
         copy.flasks = flasks;
         copy.rules = rules;
         copy.preset = preset;
-        copy.keepBases.addAll(keepBases);
-        copy.jewelRarity = jewelRarity;
-        copy.timeLostRarity = timeLostRarity;
-        copy.hiddenTimeLost.addAll(hiddenTimeLost);
+        copy.bases.putAll(bases);
+        copy.hiddenUniques.addAll(hiddenUniques);
         copy.dropSounds = dropSounds;
-        copy.baseTags = baseTags;
+        copy.legacy = legacy;
         return copy;
     }
 
@@ -1101,15 +1226,15 @@ public final class LootFilter {
             return false;
         }
         return hiddenEquipment.equals(that.hiddenEquipment) && hiddenCurrencies.equals(that.hiddenCurrencies)
-                && hideSkillGems == that.hideSkillGems && hideSupportGems == that.hideSupportGems && hideCharms == that.hideCharms && keepAffixLikeMine == that.keepAffixLikeMine
-                && keepBasesNeedAffix == that.keepBasesNeedAffix && heistBases == that.heistBases
-                && flasks == that.flasks && rules.equals(that.rules) && preset.equals(that.preset) && keepBases.equals(that.keepBases) && jewelRarity == that.jewelRarity
-                && timeLostRarity == that.timeLostRarity && hiddenTimeLost.equals(that.hiddenTimeLost) && dropSounds == that.dropSounds;
+                && hideSkillGems == that.hideSkillGems && hideSupportGems == that.hideSupportGems && hideCharms == that.hideCharms
+                && keepAffixLikeMine == that.keepAffixLikeMine && flasks == that.flasks && rules.equals(that.rules) && preset.equals(that.preset)
+                && bases.equals(that.bases) && hiddenUniques.equals(that.hiddenUniques) && dropSounds == that.dropSounds;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(hiddenEquipment, hiddenCurrencies, hideSkillGems, hideSupportGems, hideCharms, keepAffixLikeMine, keepBasesNeedAffix, heistBases, flasks, rules, preset, keepBases, jewelRarity, timeLostRarity, hiddenTimeLost, dropSounds);
+        return Objects.hash(hiddenEquipment, hiddenCurrencies, hideSkillGems, hideSupportGems, hideCharms, keepAffixLikeMine, flasks, rules, preset,
+                bases, hiddenUniques, dropSounds);
     }
 
     @Override

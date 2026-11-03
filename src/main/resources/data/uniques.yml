@@ -2163,7 +2163,7 @@ ascetic_sash:
         - { stat: resist.fire, type: FLAT, value: "{value}" }
         - { stat: resist.cold, type: FLAT, value: "{value}" }
         - { stat: resist.lightning, type: FLAT, value: "{value}" }
-    - text: "受到的傷害有 50% 在 4 秒內回復為魔力"
+    - text: "受到的傷害有 50% 在 8 秒內回復為魔力"
       stats:
         - { stat: mana.recoup, type: FLAT, value: 50 }
 
@@ -6022,6 +6022,41 @@ hallowed_fire:            # 2026-10-28 照 PoE2 0.5 的「Sacred Flame」（poe2
       stats:
         - { stat: flag.presence_lowest_resist, type: FLAT, value: 1 }
 
+sacred_vow_mantle:       # 2026-11-03 照站長＋PoE2 0.5 的「Sacrosanctum」（poe2db：神聖殿堂；原作有、我們以前沒有的），名字自己取
+  name: 明誓聖幕
+  base: body_str_int_20        # 原作基底 Corvus Mantle（隕鐵聖鎧，併進曜石聖鎧）
+  stat_base: body_str_int_19   # 原作基底那一階的數值（隕鐵聖鎧＝Corvus Mantle：護甲 273、能量護盾 76、+20–30 精魂、需求 68 級 67 力 67 智）
+  drop_level: 68
+  sources: [map_boss, chance, gamble]   # poe2db 沒有掉落限制＝全域掉落
+  rarity: rare        # poe2db 沒寫稀有度：回復型的中後期胸甲，照 t2 算
+  flavour:
+    - "「不向神起誓的人，只能向彼此起誓——而那更難背棄。」"
+  mods:
+    - text: "增加 {value}% 護甲與能量護盾"
+      value: [80, 120]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value} 力量"
+      value: [20, 30]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+    - text: "+{value} 智慧"
+      value: [20, 30]
+      stats:
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "+{value}% 混沌抗性"
+      value: [17, 23]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "受到的傷害有 {value}% 在 8 秒內回復為生命"
+      value: [10, 20]
+      stats:
+        - { stat: life.recoup, type: FLAT, value: "{value}" }
+    - text: "回復為生命的承受傷害也會回復為能量護盾"   # CombatListener（Recoup.ES）
+      stats:
+        - { stat: flag.life_recoup_also_es, type: FLAT, value: 1 }
+
 grasp_ring:              # 2026-11-03 照站長＋PoE2 0.5 的「Evergrasping Ring」（poe2db：永恆之握戒指；原作有、我們以前沒有的），名字自己取
   name: 攫命之環
   base: jring_08        # 原作基底 Pearl Ring（詠珠指環：增加 7–10% 施放速度，需求等級 32）
@@ -6252,11 +6287,11 @@ hourglass_robe:        # 2026-10-27 照 PoE2 0.5 的「Temporalis」（原作有
         - { stat: resist.fire, type: FLAT, value: "{value}" }
         - { stat: resist.cold, type: FLAT, value: "{value}" }
         - { stat: resist.lightning, type: FLAT, value: "{value}" }
-    - text: "受到的傷害有 {value}% 在 4 秒內回復為生命"
+    - text: "受到的傷害有 {value}% 在 8 秒內回復為生命"
       value: [5, 30]
       stats:
         - { stat: life.recoup, type: FLAT, value: "{value}" }
-    - text: "受到的傷害有 {value}% 在 4 秒內回復為魔力"
+    - text: "受到的傷害有 {value}% 在 8 秒內回復為魔力"
       value: [5, 30]
       stats:
         - { stat: mana.recoup, type: FLAT, value: "{value}" }
@@ -6745,7 +6780,7 @@ roaming_reliquary:        # 2026-10-27 照 PoE2 0.5 的「Wandering Reliquary」
       value: [60, 80]
       stats:
         - { stat: stun.threshold, type: FLAT, value: "{value}" }
-    - text: "擋下的物理傷害有 50% 在 4 秒內回復為生命"
+    - text: "擋下的物理傷害有 50% 在 8 秒內回復為生命"
       stats:
         - { stat: life.recoup_prevented_physical, type: FLAT, value: 50 }
 

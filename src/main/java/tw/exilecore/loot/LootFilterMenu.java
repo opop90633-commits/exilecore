@@ -32,7 +32,7 @@ public final class LootFilterMenu extends Menu {
     /** 分頁。 */
     private enum Tab {
         OVERVIEW("總覽", Material.BOOK, "預設組合、目前會藏什麼、全部顯示"),
-        EQUIPMENT("裝備", Material.IRON_CHESTPLATE, "依稀有度、等級差、同類武器、同系防具、詞綴階級、地圖"),
+        EQUIPMENT("裝備", Material.IRON_CHESTPLATE, "依稀有度、好詞綴、等級差、同類武器、同系防具、地圖、傳奇分組、基底清單"),
         GEMS("寶石與藥劑", Material.AMETHYST_SHARD, "未切割技能寶石、輔助寶石、藥劑"),
         CURRENCY("通貨", Material.SUNFLOWER, "照價值分三組，每一種都可以單獨切換");
 
@@ -54,27 +54,23 @@ public final class LootFilterMenu extends Menu {
     private static final int SLOT_SHOW_ALL = slot(ROW_TOOLS, 1);
     private static final int SLOT_STATS = slot(ROW_TOOLS, 2);
     private static final int SLOT_SOUNDS = slot(ROW_TOOLS, 3);
-    // ---- 裝備 ----
-    private static final Map<Integer, Rarity> RARITY_SLOTS = Map.of(slot(1, 1), Rarity.NORMAL, slot(1, 2), Rarity.MAGIC,
-            slot(1, 3), Rarity.RARE, slot(1, 4), Rarity.UNIQUE);
+    // ---- 裝備（2026-11-03 照站長重排：稀有度與好詞綴一排、進階規則一排、傳奇分組一排、基底一排）----
+    private static final Map<Integer, Rarity> RARITY_SLOTS = Map.of(slot(1, 1), Rarity.NORMAL, slot(1, 2), Rarity.MAGIC, slot(1, 3), Rarity.RARE);
+    private static final int SLOT_KEEP_AFFIX_TIER = slot(1, 5);
+    /** 好詞綴也只撿同類（2026-10）。 */
+    private static final int SLOT_KEEP_AFFIX_LIKE = slot(1, 6);
     private static final int SLOT_LEVEL_GAP = slot(2, 1);
     private static final int SLOT_WEAPONS_LIKE_MINE = slot(2, 2);
     private static final int SLOT_ARMOUR_LIKE_MINE = slot(2, 3);
-    private static final int SLOT_KEEP_AFFIX_TIER = slot(2, 4);
-    /** 好詞綴也只撿同類（2026-10）。 */
-    private static final int SLOT_KEEP_AFFIX_LIKE = slot(2, 5);
-    private static final int SLOT_MAPS = slot(3, 1);
-    /** 珠寶依稀有度（2026-10）。 */
-    private static final int SLOT_JEWELS = slot(3, 3);
-    /** 遺時星晶（2026-10）：依稀有度一格，後面四格是四種撿不撿。 */
-    private static final int SLOT_TIME_LOST = slot(3, 4);
-    private static final int SLOT_TIME_LOST_KINDS = slot(3, 5);
-    /** 只撿的基底（2026-10）。 */
-    private static final int SLOT_KEEP_BASES = slot(4, 1);
-    /** 只撿的基底也要符合好詞綴門檻（2026-10-26：兩條一起算）。 */
-    private static final int SLOT_KEEP_BASES_AFFIX = slot(4, 2);
-    /** 2026-10-30 照站長：劫盜特殊基底（預設一定撿）。 */
-    private static final int SLOT_HEIST_BASES = slot(4, 3);
+    private static final int SLOT_MAPS = slot(2, 5);
+    /** 傳奇分組（2026-11-03）：六格，照 UniqueGroup 的順序。 */
+    private static final int SLOT_UNIQUE_GROUPS = slot(3, 1);
+    /** 基底清單（2026-11-03：取代只撿的基底、珠寶、遺時星晶、劫盜特殊基底）。 */
+    private static final int SLOT_BASES = slot(4, 1);
+    /** 基底清單的捷徑：直接打開某一類。 */
+    private static final int SLOT_BASES_JEWELS = slot(4, 3);
+    private static final int SLOT_BASES_MAPS = slot(4, 4);
+    private static final int SLOT_BASES_HIDDEN = slot(4, 5);
     // ---- 寶石與藥劑 ----
     private static final int SLOT_SKILL_GEMS = slot(1, 1);
     private static final int SLOT_SKILL_GEM_LEVEL = slot(1, 2);
@@ -171,7 +167,8 @@ public final class LootFilterMenu extends Menu {
                 "你殺的怪物掉的東西：",
                 "<green>✔ 會撿<gray>：直接收進背包（通貨進通貨袋）",
                 "<red>✘ 隱藏<gray>：不會掉，自動換成一點金幣",
-                "追逐級、頂級專屬傳奇永遠會撿（傳奇地圖、珠寶也是）；怪物的金幣直接加進角色",
+                "裝備的判斷順序：傳奇照分組（追逐級永遠撿）→ 隱藏的基底絕對不撿、必撿的有好詞綴門檻以上就撿",
+                "→ 地圖看稀有度 → 等級差、不同類 → 稀有度（有好詞綴的救回來）；怪物的金幣直接加進角色",
                 "",
                 "上面的分頁切換要看的東西；點一下馬上生效",
                 "有好幾個選項的：左鍵下一個、右鍵上一個",
@@ -205,8 +202,9 @@ public final class LootFilterMenu extends Menu {
                 lore.add("<dark_gray>　　好詞綴也只撿跟你同類的武器、同系的防具");
             }
         }
-        if (filter.keepBasesNeedAffixActive()) {
-            lore.add("<dark_gray>　　只撿的基底也要有 T" + filter.rules().keepAffixTier() + " 以上詞綴才撿");
+        if (!filter.alwaysBases().isEmpty()) {
+            lore.add("<green>　✔ <gray>必撿的基底 " + filter.alwaysBases().size() + " 種" + (filter.rules().keepAffixTier() > 0
+                    ? "<dark_gray>（有 T" + filter.rules().keepAffixTier() + " 以上詞綴的一律撿）" : "<dark_gray>（全部撿）")); // 2026-11-03
         }
         set(slot(ROW_SUMMARY, 0), icon(Material.WRITABLE_BOOK, "<#f5b942>【目前的設定】", lore));
         set(slot(ROW_SUMMARY, 1), icon(Material.PAPER, "<white>目前：" + ItemRenderer.escape(presetName),
@@ -234,40 +232,30 @@ public final class LootFilterMenu extends Menu {
     private List<String> summary() {
         final List<String> lines = new ArrayList<>();
         final List<String> rarities = new ArrayList<>();
-        for (final Rarity rarity : new Rarity[] {Rarity.NORMAL, Rarity.MAGIC, Rarity.RARE, Rarity.UNIQUE}) {
+        for (final Rarity rarity : new Rarity[] {Rarity.NORMAL, Rarity.MAGIC, Rarity.RARE}) {
             if (filter.hidesEquipment(rarity)) {
-                rarities.add(rarity == Rarity.UNIQUE ? "傳奇（追逐級、頂級專屬、珠寶、地圖照撿）" : rarity.displayName());
+                rarities.add(rarity.displayName());
             }
         }
         if (!rarities.isEmpty()) {
-            lines.add(String.join("、", rarities) + "裝備");
+            lines.add(String.join("、", rarities) + "裝備（珠寶也算）");
         }
-        if (filter.heistBases() == LootFilter.HeistBaseRule.HIDE) {
-            lines.add("劫盜特殊基底（特殊項鍊）"); // 2026-10-30
-        }
-        if (!filter.keepBases().isEmpty()) {
-            lines.add("只撿 " + filter.keepBases().size() + " 種基底：有挑的那幾類裡，其他基底的普通、魔法、稀有裝備"); // 2026-10：以前總覽沒列
-            if (filter.keepBasesNeedAffixActive()) {
-                lines.add("只撿的基底裡沒有 T" + filter.rules().keepAffixTier() + " 以上詞綴的普通、魔法、稀有裝備"); // 2026-10-26
+        final List<String> groups = new ArrayList<>();
+        for (final LootFilter.UniqueGroup group : LootFilter.UniqueGroup.values()) {
+            if (filter.hidesUniques(group)) {
+                groups.add(group.displayName());
             }
+        }
+        if (!groups.isEmpty()) {
+            lines.add("傳奇：" + String.join("、", groups) + "（追逐級永遠撿）"); // 2026-11-03
+        }
+        if (!filter.hiddenBases().isEmpty()) {
+            lines.add("隱藏的基底 " + filter.hiddenBases().size() + " 種（絕對不撿，有好詞綴也不撿）"); // 2026-11-03
         }
         if (filter.hidesCharms()) {
             lines.add("護符");
         }
         final LootFilter.Rules rules = filter.rules();
-        if (filter.jewelRarity() > 0) {
-            lines.add("珠寶：" + LootFilter.jewelRarityName(filter.jewelRarity()));
-        }
-        if (filter.filtersTimeLost()) {
-            final List<String> kinds = new ArrayList<>();
-            for (final LootFilter.TimeLost kind : LootFilter.TimeLost.values()) {
-                if (filter.hidesTimeLost(kind)) {
-                    kinds.add(kind.displayName());
-                }
-            }
-            lines.add("遺時星晶：" + (filter.timeLostRarity() > 0 ? LootFilter.timeLostRarityName(filter.timeLostRarity()) : "")
-                    + (filter.timeLostRarity() > 0 && !kinds.isEmpty() ? "；" : "") + (kinds.isEmpty() ? "" : "不撿" + String.join("、", kinds)));
-        }
         if (rules.levelGap() > 0) {
             lines.add("物品等級比你低超過 " + rules.levelGap() + " 級的裝備");
         }
@@ -342,8 +330,8 @@ public final class LootFilterMenu extends Menu {
                 hides.add("進階規則 " + sample.activeRuleCount() + " 項");
             }
             lore.add(hides.isEmpty() ? "<dark_gray>什麼都不藏" : "<dark_gray>隱藏：" + String.join("、", hides));
-            if (filter.hidesEquipment(Rarity.UNIQUE)) {
-                lore.add("<gray>你另外隱藏了傳奇，套用後會保留"); // 2026-10-22：傳奇隱藏換組合會帶過去
+            if (!filter.hiddenUniques().isEmpty() || !filter.baseRules().isEmpty()) {
+                lore.add("<gray>你另外設定的傳奇分組、基底，套用後會保留"); // 2026-11-03
             }
             lore.add("");
             lore.add(current ? "<green>目前使用中" : "<yellow>左鍵：套用");
@@ -358,24 +346,38 @@ public final class LootFilterMenu extends Menu {
     // ---- 裝備 ----
 
     private void drawEquipment() {
-        set(slot(1, 0), rowLabel(Material.IRON_CHESTPLATE, "依稀有度", "整個稀有度的裝備撿或不撿", "追逐級、頂級專屬傳奇永遠會撿"));
+        set(slot(1, 0), rowLabel(Material.IRON_CHESTPLATE, "依稀有度", "普通、魔法、稀有裝備（珠寶也算）撿或不撿", "傳奇照下面「傳奇」那一排"));
         for (final Map.Entry<Integer, Rarity> entry : RARITY_SLOTS.entrySet()) {
             final Rarity rarity = entry.getValue();
             final boolean hidden = filter.hidesEquipment(rarity);
             final Material material = switch (rarity) {
                 case NORMAL -> Material.IRON_SWORD;
                 case MAGIC -> Material.DIAMOND_SWORD;
-                case UNIQUE -> Material.NETHERITE_SWORD;
                 default -> Material.GOLDEN_SWORD;
             };
             set(entry.getKey(), toggle(material, "<" + rarity.color() + ">" + rarity.displayName() + "裝備", hidden,
                     service.goldEstimate(player, DropTable.Kind.EQUIPMENT, rarity, 0),
-                    rarity == Rarity.RARE ? "<dark_gray>稀有掉出來未鑑定，隱藏前想清楚"
-                            : rarity == Rarity.UNIQUE ? "<#ffb347>追逐級、頂級專屬（巔峰、極境、覺醒者、世界 Boss 的）不管這格，永遠會撿\n<dark_gray>這格是另外記的：換預設組合也會保留" : null));
+                    rarity == Rarity.RARE ? "<dark_gray>稀有掉出來未鑑定，隱藏前想清楚\n<dark_gray>藏起來的有好詞綴（右邊）會救回來" : "<dark_gray>藏起來的有好詞綴（右邊）會救回來"));
         }
-        set(slot(2, 0), rowLabel(Material.COMPARATOR, "進階規則", "照你的等級、手上的武器、身上的防具藏東西",
-                "優先順序：傳奇只看稀有度（追逐級、頂級專屬一定撿）→ 等級差、不同類、不在只撿的基底裡一定不撿", "→ 剩下的看稀有度；被稀有度藏起來的，有好詞綴就撿回來"));
         final LootFilter.Rules rules = filter.rules();
+        final int keep = rules.keepAffixTier();
+        set(SLOT_KEEP_AFFIX_TIER, option(Material.ENCHANTED_BOOK, "保留好詞綴的裝備", keep == 0 ? "關" : "有 T" + keep + " 以上就撿", keep > 0,
+                List.of("<gray>裝備身上只要有一條詞綴是 T1～T" + (keep == 0 ? "幾" : keep) + "（T1 最好），",
+                        "<gray>被<white>稀有度</white><gray>藏起來的照樣撿",
+                        "<red>救不回來的：<gray>隱藏的基底、等級差、不同類不同系",
+                        "<#f5b942>必撿的基底：<gray>有這個門檻以上的詞綴一律撿，沒有的不撿",
+                        "<dark_gray>未鑑定的也算；珠寶也算；地圖不管",
+                        "<dark_gray>只有一兩階的詞綴（例如 +1 技能等級）不算",
+                        keep == 0 ? "<dark_gray>例：開 T2、隱藏魔法裝備 → 有 T1、T2 詞綴的魔法裝備還是會撿" : ""),
+                options(LootFilter.AFFIX_TIERS, keep, value -> value == 0 ? "關" : "T" + value + " 以上")));
+        final boolean keepLike = filter.keepAffixLikeMine();
+        set(SLOT_KEEP_AFFIX_LIKE, option(Material.WRITABLE_BOOK, "好詞綴也只撿同類", keepLike ? "開" : "關", keepLike,
+                List.of("<gray>開了之後，「保留好詞綴的裝備」只保留跟你同類的：",
+                        "<gray>武器跟手上同種類、防具與盾跟身上同系",
+                        keep == 0 ? "<dark_gray>（「保留好詞綴的裝備」關著，這條沒差）" : "<dark_gray>不同類的照稀有度的規則藏起來"),
+                List.of("<yellow>左鍵：" + (keepLike ? "關" : "開"))));
+        set(slot(2, 0), rowLabel(Material.COMPARATOR, "進階規則", "照你的等級、手上的武器、身上的防具藏東西",
+                "這三條藏起來的，好詞綴也救不回來；傳奇、珠寶、必撿的基底不管"));
         final int gap = rules.levelGap();
         set(SLOT_LEVEL_GAP, option(Material.EXPERIENCE_BOTTLE, "等級差", gap == 0 ? "關" : "低超過 " + gap + " 級就隱藏", gap > 0,
                 List.of("<gray>物品等級比你低太多的裝備（詞綴階級低、賣不掉）不撿",
@@ -397,109 +399,60 @@ public final class LootFilterMenu extends Menu {
                         "<gray>只撿跟你身上穿的同系的防具與盾；傳奇不管",
                         families.isEmpty() ? "<dark_gray>你現在沒穿防具：這條先不會藏東西" : "<dark_gray>你身上：<white>" + String.join("、", families)),
                 List.of("<yellow>左鍵：" + (rules.armourLikeMine() ? "關" : "開"))));
-        final int keep = rules.keepAffixTier();
-        set(SLOT_KEEP_AFFIX_TIER, option(Material.ENCHANTED_BOOK, "保留好詞綴的裝備", keep == 0 ? "關" : "有 T" + keep + " 以上就撿", keep > 0,
-                List.of("<gray>裝備身上只要有一條詞綴是 T1～T" + (keep == 0 ? "幾" : keep) + "（T1 最好），",
-                        "<gray>被<white>稀有度</white><gray>藏起來的照樣撿（等級差、不同類、不在只撿的基底裡的不救）",
-                        filter.keepBasesNeedAffix() ? "<#f5b942>「只撿的基底也要好詞綴」開著：有挑基底的那幾類，清單內的也要有這個門檻的詞綴才撿"
-                                : "<dark_gray>想要「只撿這幾種基底、而且要有好詞綴」：開下面「只撿的基底也要好詞綴」",
-                        "<dark_gray>未鑑定的也算；珠寶也算（被珠寶的稀有度藏起來的照樣撿）；地圖、遺時星晶不管",
-                        "<dark_gray>只有一兩階的詞綴（例如 +1 技能等級）不算",
-                        keep == 0 ? "<dark_gray>例：開 T2、隱藏魔法裝備 → 有 T1、T2 詞綴的魔法裝備還是會撿" : ""),
-                options(LootFilter.AFFIX_TIERS, keep, value -> value == 0 ? "關" : "T" + value + " 以上")));
-        final boolean keepLike = filter.keepAffixLikeMine();
-        set(SLOT_KEEP_AFFIX_LIKE, option(Material.WRITABLE_BOOK, "好詞綴也只撿同類", keepLike ? "開" : "關", keepLike,
-                List.of("<gray>開了之後，「保留好詞綴的裝備」只保留跟你同類的：",
-                        "<gray>武器跟手上同種類、防具與盾跟身上同系",
-                        keep == 0 ? "<dark_gray>（「保留好詞綴的裝備」關著，這條沒差）" : "<dark_gray>不同類的照稀有度的規則藏起來"),
-                List.of("<yellow>左鍵：" + (keepLike ? "關" : "開"))));
-        set(slot(3, 0), rowLabel(Material.FILLED_MAP, "地圖與珠寶", "本來永遠會撿；太多的時候可以照稀有度不撿"));
         final int mapRarity = rules.mapRarity();
         set(SLOT_MAPS, option(Material.FILLED_MAP, "地圖", LootFilter.mapRarityName(mapRarity), mapRarity > 0,
                 List.of("<gray>依地圖的稀有度：<white>普通（白）<gray>、<#8888ff>魔法（藍）<gray>、<#ffff77>稀有（黃）",
-                        "<dark_gray>隱藏的地圖一樣換成金幣；傳奇地圖永遠會撿"),
+                        "<dark_gray>隱藏的地圖一樣換成金幣；傳奇地圖照傳奇分組",
+                        "<dark_gray>某幾張地圖整張不撿：到基底清單的「地圖」分頁隱藏那幾種"),
                 options(LootFilter.MAP_RARITIES, mapRarity, LootFilter::mapRarityName)));
-        final int jewels = filter.jewelRarity();
-        set(SLOT_JEWELS, option(Material.AMETHYST_CLUSTER, "珠寶", LootFilter.jewelRarityName(jewels), jewels > 0,
-                List.of("<gray>依珠寶的稀有度：<white>普通<gray>、<#8888ff>魔法<gray>、<#ffff77>稀有",
-                        "<dark_gray>隱藏的珠寶一樣換成金幣；傳奇珠寶永遠會撿"),
-                options(LootFilter.JEWEL_RARITIES, jewels, LootFilter::jewelRarityName)));
-        // 2026-10：遺時星晶（範圍珠寶，只在劫盜掉）另外設定：依稀有度，再加四種各自撿不撿
-        final int timeLost = filter.timeLostRarity();
-        set(SLOT_TIME_LOST, option(Material.ECHO_SHARD, "遺時星晶", LootFilter.timeLostRarityName(timeLost), timeLost > 0,
-                List.of("<gray>遺時星晶（範圍珠寶，只在劫盜掉）依稀有度：<#8888ff>魔法<gray>、<#ffff77>稀有",
-                        "<gray>跟左邊「珠寶」分開算：珠寶全部不撿，遺時星晶照這裡",
-                        "<dark_gray>隱藏的一樣換成金幣；右邊四格可以挑哪幾種要撿"),
-                options(LootFilter.TIME_LOST_RARITIES, timeLost, LootFilter::timeLostRarityName)));
-        for (final LootFilter.TimeLost kind : LootFilter.TimeLost.values()) {
-            final boolean hidden = filter.hidesTimeLost(kind);
-            final Material material = switch (kind) {
-                case RUBY -> Material.REDSTONE;
-                case EMERALD -> Material.EMERALD;
-                case SAPPHIRE -> Material.LAPIS_LAZULI;
-                case DIAMOND -> Material.DIAMOND;
+        // 2026-11-03 照站長：傳奇分組，各自撿不撿（追逐級永遠撿）；這次之前傳奇只有一格、追逐級與頂級專屬永遠撿
+        set(slot(3, 0), rowLabel(Material.NETHERITE_SWORD, "傳奇", "照掉落來源分六組，各自撿不撿", "追逐級永遠會撿；傳奇不看稀有度、等級差、同類同系、基底"));
+        for (final LootFilter.UniqueGroup group : LootFilter.UniqueGroup.values()) {
+            final boolean hidden = filter.hidesUniques(group);
+            final Material material = switch (group) {
+                case CHASE -> Material.NETHER_STAR;
+                case COMMON -> Material.NETHERITE_SWORD;
+                case EVENT -> Material.CHEST;
+                case PINNACLE -> Material.DRAGON_HEAD;
+                case ENDGAME -> Material.WITHER_SKELETON_SKULL;
+                case HEIST -> Material.ECHO_SHARD;
             };
-            final ItemStack kindIcon = icon(material, (hidden ? "<red>✘ " : "<green>✔ ") + kind.displayName() + "：<white>" + (hidden ? "不撿" : "撿"),
-                    hidden ? "<gray>這一種掉了換成金幣" : "<gray>這一種照左邊「遺時星晶」的稀有度設定撿",
-                    "", "<yellow>左鍵：" + (hidden ? "改成撿" : "改成不撿"));
-            set(SLOT_TIME_LOST_KINDS + kind.ordinal(), hidden ? offMark(kindIcon) : kindIcon);
-        }
-        set(slot(4, 0), rowLabel(Material.EMERALD, "只撿的基底", "有挑的話：裝備只撿這些基底", "稀有度照第一排；可以一直加"));
-        final List<String> keptLore = new ArrayList<>();
-        keptLore.add("<gray>挑了之後，<white>有挑的那幾類</white><gray>（武器／防具／盾與箭袋／飾品）");
-        keptLore.add("<gray>普通、魔法、稀有裝備只撿這些基底；沒挑的類別照原本的規則");
-        keptLore.add("<gray>要撿哪幾種稀有度照第一排（三格都開＝三種都撿）");
-        keptLore.add("<dark_gray>例：只挑了兩種弓 → 其他武器不撿，防具、飾品照常");
-        keptLore.add("<dark_gray>有挑的類別裡不在清單的一律不撿（好詞綴也不救）；等級差、同類同系照樣看");
-        if (filter.keepBasesNeedAffixActive()) {
-            keptLore.add("<#f5b942>右邊「也要好詞綴」開著：清單內的還要有 T" + filter.rules().keepAffixTier() + " 以上詞綴才撿（不看稀有度）");
-        } else {
-            keptLore.add("<dark_gray>想要清單內的也要有好詞綴才撿：開右邊「只撿的基底也要好詞綴」");
-        }
-        keptLore.add("<dark_gray>傳奇、珠寶、地圖不受影響；全部拿掉就恢復原本的規則");
-        keptLore.add("");
-        int listed = 0;
-        for (final String id : filter.keepBases()) {
-            if (listed++ >= 8) {
-                keptLore.add("<dark_gray>…還有 " + (filter.keepBases().size() - 8) + " 種");
-                break;
+            final List<String> lore = new ArrayList<>();
+            lore.add("<gray>" + group.about());
+            if (group == LootFilter.UniqueGroup.CHASE) {
+                lore.add("<#ffb347>永遠會撿，不能隱藏");
+                set(SLOT_UNIQUE_GROUPS + group.ordinal(), onMark(icon(material, "<green>✔ <#af6025>" + group.displayName() + "傳奇", lore)));
+                continue;
             }
-            final tw.exilecore.item.ItemBase base = plugin.items().repository().base(id);
-            keptLore.add("<green>✔ <white>" + ItemRenderer.escape(base == null ? id : base.name()));
+            lore.add(hidden ? "<red>隱藏<gray>：這一組的傳奇不會掉，換成金幣" : "<green>會撿<gray>：自動撿進背包");
+            lore.add("");
+            lore.add("<yellow>左鍵：" + (hidden ? "改成會撿" : "改成隱藏"));
+            final ItemStack groupIcon = icon(material, (hidden ? "<red>✘ " : "<green>✔ ") + "<#af6025>" + group.displayName(), lore);
+            set(SLOT_UNIQUE_GROUPS + group.ordinal(), hidden ? offMark(groupIcon) : onMark(groupIcon));
         }
-        if (filter.keepBases().isEmpty()) {
-            keptLore.add("<dark_gray>還沒有（照上面的規則撿）");
-        }
-        keptLore.add("");
-        keptLore.add("<yellow>左鍵：挑選基底");
-        final ItemStack keepIcon = icon(Material.EMERALD, (filter.keepBases().isEmpty() ? "<white>" : "<green>")
-                + "只撿的基底（" + filter.keepBases().size() + " 種）", keptLore);
-        set(SLOT_KEEP_BASES, filter.keepBases().isEmpty() ? keepIcon : highlight(keepIcon));
-        // 2026-10-26：只撿的基底跟保留好詞綴一起算（站長要的「只撿這兩種基底、而且要有 T1」）；這次之前兩條各算各的
-        final boolean needAffix = filter.keepBasesNeedAffix();
-        final String state = !needAffix ? "關" : keep == 0 ? "開（還沒設門檻，先不生效）" : filter.keepBases().isEmpty() ? "開（還沒挑基底）" : "開";
-        set(SLOT_KEEP_BASES_AFFIX, option(Material.KNOWLEDGE_BOOK, "只撿的基底也要好詞綴", state, filter.keepBasesNeedAffixActive(),
-                List.of("<gray>開了之後，<white>有挑基底的那幾類</white><gray>只撿：",
-                        "<gray>在「只撿的基底」清單內，<white>而且</white><gray>身上有一條詞綴達到「保留好詞綴」的門檻",
-                        "<gray>（普通、魔法、稀有都一樣；有好詞綴的不管第一排稀有度都撿）",
-                        "<dark_gray>例：挑兩種弓、保留好詞綴 T1 → 只撿有 T1 詞綴的那兩種弓",
-                        "<dark_gray>清單外的照樣不撿；沒挑基底的類別照原本的規則；未鑑定的也算",
-                        keep == 0 ? "<red>「保留好詞綴的裝備」是關：先在上面設定詞綴門檻，這條才會生效" : "<dark_gray>目前門檻：T" + keep + " 以上"),
-                List.of("<yellow>左鍵：" + (needAffix ? "關" : "開"))));
-        // 2026-10-30 照站長：劫盜特殊基底（只在劫盜掉的特殊項鍊）預設一定撿，可以改成照一般規則或不撿
-        final LootFilter.HeistBaseRule heist = filter.heistBases();
-        final List<String> heistChoices = new ArrayList<>();
-        for (final LootFilter.HeistBaseRule rule : LootFilter.HeistBaseRule.values()) {
-            heistChoices.add((rule == heist ? "<green>▶ " : "<dark_gray>　 ") + rule.display());
-        }
-        heistChoices.add("");
-        heistChoices.add("<yellow>左鍵：下一種　右鍵：上一種");
-        set(SLOT_HEIST_BASES, option(Material.ECHO_SHARD, "劫盜特殊基底", heist.display(), heist != LootFilter.HeistBaseRule.HIDE,
-                List.of("<gray>只在劫盜掉的特殊基底（特殊項鍊）",
-                        "<white>一定撿</white><gray>：不管稀有度、等級差、同類同系、只撿的基底，一律撿（預設）",
-                        "<white>照一般規則</white><gray>：跟其他裝備一樣過濾",
-                        "<white>不撿</white><gray>：一律不撿（換成金幣）"),
-                heistChoices));
+        // 2026-11-03 照站長：基底清單（每一種基底顯示／隱藏／必撿）取代只撿的基底、珠寶、遺時星晶、劫盜特殊基底
+        set(slot(4, 0), rowLabel(Material.EMERALD, "基底", "每一種基底各自：顯示、隱藏、必撿", "隱藏的絕對不撿（有 T1 詞綴也不撿）", "必撿的有好詞綴門檻以上就一律撿（門檻關＝全部撿）"));
+        final int hiddenBases = filter.hiddenBases().size();
+        final int alwaysBases = filter.alwaysBases().size();
+        final List<String> basesLore = new ArrayList<>();
+        basesLore.add("<gray>武器、防具、盾與箭袋、飾品、珠寶、遺時星晶、劫盜特殊項鍊、地圖，每一種基底：");
+        basesLore.add("<white>顯示</white><gray>：照上面的規則（稀有度、好詞綴、等級差、同類同系）");
+        basesLore.add("<red>隱藏</red><gray>：絕對不撿，有好詞綴也不撿（傳奇不受影響）");
+        basesLore.add("<#f5b942>必撿</#f5b942><gray>：有「保留好詞綴」門檻以上詞綴的一律撿（不看稀有度、等級差、同類同系）");
+        basesLore.add(filter.rules().keepAffixTier() > 0 ? "<dark_gray>　現在門檻 T" + filter.rules().keepAffixTier() + "：必撿的基底要有 T1～T" + filter.rules().keepAffixTier() + " 詞綴才撿"
+                : "<dark_gray>　現在門檻是關：必撿的基底全部撿（地圖一律全部撿）");
+        basesLore.add("");
+        basesLore.add("<gray>現在：<red>隱藏 " + hiddenBases + " 種<gray>、<#f5b942>必撿 " + alwaysBases + " 種");
+        basesLore.add("");
+        basesLore.add("<yellow>左鍵：打開清單");
+        final ItemStack basesIcon = icon(Material.EMERALD, (hiddenBases + alwaysBases == 0 ? "<white>" : "<green>") + "基底清單", basesLore);
+        set(SLOT_BASES, hiddenBases + alwaysBases == 0 ? basesIcon : highlight(basesIcon));
+        set(SLOT_BASES_JEWELS, icon(Material.AMETHYST_CLUSTER, "<white>珠寶、遺時星晶", "<gray>直接打開基底清單的「珠寶」分頁",
+                "<dark_gray>四種珠寶、四種遺時星晶各自顯示、隱藏、必撿", "", "<yellow>左鍵：打開"));
+        set(SLOT_BASES_MAPS, icon(Material.FILLED_MAP, "<white>地圖", "<gray>直接打開基底清單的「地圖」分頁",
+                "<dark_gray>某幾張地圖整張不撿（不管稀有度）", "", "<yellow>左鍵：打開"));
+        set(SLOT_BASES_HIDDEN, icon(Material.BARRIER, "<white>已隱藏、必撿的", "<gray>直接打開基底清單的「已隱藏」分頁",
+                "", "<yellow>左鍵：打開"));
     }
 
     // ---- 寶石與藥劑 ----
@@ -806,9 +759,8 @@ public final class LootFilterMenu extends Menu {
                 if (presetAt.containsKey(slot)) {
                     final LootConfig.Preset preset = service.config().preset(presetAt.get(slot));
                     if (preset != null) {
-                        // 只撿的基底、珠寶、遺時星晶、音效、護符、好詞綴也只撿同類的設定留著（2026-10：以前護符與好詞綴同類會被悄悄重設）
-                        apply(LootFilter.of(preset).withKeepBases(filter.keepBases()).withJewelRarity(filter.jewelRarity()).withTimeLost(filter)
-                                .withDropSounds(filter.dropSounds()).withExtras(filter));
+                        // 基底、傳奇分組、音效、護符、好詞綴也只撿同類的設定留著（2026-10：以前護符與好詞綴同類會被悄悄重設）
+                        apply(LootFilter.of(preset).withDropSounds(filter.dropSounds()).withExtras(filter));
                     }
                     return;
                 }
@@ -843,27 +795,17 @@ public final class LootFilterMenu extends Menu {
                     next.toggleKeepAffixLikeMine();
                 } else if (slot == SLOT_KEEP_AFFIX_TIER) {
                     next.cycleKeepAffixTier(backwards);
-                } else if (slot == SLOT_KEEP_BASES_AFFIX) {
-                    next.toggleKeepBasesNeedAffix();
-                    if (next.keepBasesNeedAffix() && next.rules().keepAffixTier() == 0) {
-                        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>先在「保留好詞綴的裝備」設定詞綴門檻（例如 T1），這條才會生效"));
-                    }
-                } else if (slot == SLOT_HEIST_BASES) {
-                    next.cycleHeistBases(backwards); // 2026-10-30
                 } else if (slot == SLOT_MAPS) {
                     next.cycleMapRarity(backwards);
-                } else if (slot == SLOT_JEWELS) {
-                    next.cycleJewelRarity(backwards);
-                } else if (slot == SLOT_TIME_LOST) {
-                    next.cycleTimeLostRarity(backwards);
-                } else if (slot >= SLOT_TIME_LOST_KINDS && slot < SLOT_TIME_LOST_KINDS + LootFilter.TimeLost.values().length) {
-                    next.toggleTimeLost(LootFilter.TimeLost.values()[slot - SLOT_TIME_LOST_KINDS]);
-                } else if (slot == SLOT_KEEP_BASES) {
+                } else if (slot >= SLOT_UNIQUE_GROUPS && slot < SLOT_UNIQUE_GROUPS + LootFilter.UniqueGroup.values().length) {
+                    next.toggleUniques(LootFilter.UniqueGroup.values()[slot - SLOT_UNIQUE_GROUPS]); // 2026-11-03（追逐級沒反應）
+                } else if (slot == SLOT_BASES || slot == SLOT_BASES_JEWELS || slot == SLOT_BASES_MAPS || slot == SLOT_BASES_HIDDEN) {
                     if (changed && !stale()) {
                         plugin.characters().save(player);
                         changed = false;
                     }
-                    new KeepBasesMenu(plugin, player, service, () -> new LootFilterMenu(plugin, player, service).openOn("EQUIPMENT")).open();
+                    final String category = slot == SLOT_BASES_JEWELS ? "JEWEL" : slot == SLOT_BASES_MAPS ? "MAP" : slot == SLOT_BASES_HIDDEN ? "SET" : "ALL";
+                    new BasesMenu(plugin, player, service, category, () -> new LootFilterMenu(plugin, player, service).openOn("EQUIPMENT")).open();
                     return;
                 } else {
                     return;

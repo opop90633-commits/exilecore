@@ -331,27 +331,39 @@ public final class EffectiveHitPool {
      * 元素穿透 penetration；巔峰以上等級至少 T16。
      */
     public enum Tier {
+        // 2026-11-03 照站長：名字照遊戲裡有的難度（一般怪、地圖 Boss、終局 Boss、極境 Boss），等級照遊戲開的等級；
+        //   這次之前照 PoB2 叫一般怪、Boss、巔峰 Boss、超級巔峰 Boss，巔峰以上都是 T16 的等級。傷害倍率、穿透還是 PoB2 那四級的。
         /** 一般怪（normalEnemyDPSMult 1 / 4.4：五種加起來＝傷害表 × 1.5）。 */
-        NORMAL("一般怪", 1 / 4.40, 2.5, 0, false),
-        /** Boss（stdBossDPSMult 4 / 4.4：加起來 × 6）。 */
-        BOSS("Boss", 4 / 4.40, 2.5, 0, false),
-        /** 巔峰 Boss（pinnacleBossDPSMult 8 / 4.4：加起來 × 12、元素穿透 3%）——PoB2 的預設。 */
-        PINNACLE("巔峰 Boss", 8 / 4.40, 2.5, 15 / 5.0, true),
-        /** 超級巔峰 Boss（uberBossDPSMult 10 / 4.25：加起來 × 15、混沌 ÷ 4、元素穿透 8%）。 */
-        UBER("超級巔峰 Boss", 10 / 4.25, 4, 40 / 5.0, true);
+        NORMAL("一般怪", 1 / 4.40, 2.5, 0, false, 0),
+        /** 地圖 Boss（PoB2 stdBossDPSMult 4 / 4.4：加起來 × 6）。 */
+        BOSS("地圖 Boss", 4 / 4.40, 2.5, 0, false, 0),
+        /** 終局 Boss（PoB2 pinnacleBossDPSMult 8 / 4.4：加起來 × 12、元素穿透 3%）；等級＝最高階＋3（maps.yml final 的 level_bonus）——預設。 */
+        PINNACLE("終局 Boss", 8 / 4.40, 2.5, 15 / 5.0, true, 3),
+        /** 極境 Boss（PoB2 uberBossDPSMult 10 / 4.25：加起來 × 15、混沌 ÷ 4、元素穿透 8%）；等級＝最高階＋3＋4（再加 uber 的 level_bonus）。 */
+        UBER("極境 Boss", 10 / 4.25, 4, 40 / 5.0, true, 7),
+        /** 巔峰 Boss（覺醒之主・虛星、事件巔峰；遊戲裡傷害 450%，跟極境差不多 → 一樣用 PoB2 超級巔峰的倍率）；等級＝最高階＋3＋5。 */
+        APEX("巔峰 Boss", 10 / 4.25, 4, 40 / 5.0, true, 8);
 
         private final String displayName;
         private final double perType;
         private final double chaosDivisor;
         private final double penetration;
         private final boolean endgameLevel;
+        private final int levelBonus;
 
-        Tier(final String displayName, final double perType, final double chaosDivisor, final double penetration, final boolean endgameLevel) {
+        Tier(final String displayName, final double perType, final double chaosDivisor, final double penetration, final boolean endgameLevel,
+             final int levelBonus) {
             this.displayName = displayName;
             this.perType = perType;
             this.chaosDivisor = chaosDivisor;
             this.penetration = penetration;
             this.endgameLevel = endgameLevel;
+            this.levelBonus = levelBonus;
+        }
+
+        /** 自動等級比最高階的地圖多幾級（終局 3、極境 7、巔峰 8；一般怪、地圖 Boss 照角色等級不用）。 */
+        public int levelBonus() {
+            return levelBonus;
         }
 
         public String displayName() {
@@ -362,7 +374,7 @@ public final class EffectiveHitPool {
             return penetration;
         }
 
-        /** 等級至少到 T16（PoB2 巔峰、超級巔峰最低 82 級；我們的 T16）。 */
+        /** 終局以上：自動等級＝最高階＋levelBonus，而且最低到最高階的等級。 */
         public boolean endgameLevel() {
             return endgameLevel;
         }
@@ -377,17 +389,18 @@ public final class EffectiveHitPool {
             return new double[] {1, 1, 1, 1, 1 / chaosDivisor};
         }
 
-        /** 0 一般、1 Boss、2 巔峰、3 超級巔峰；不認得的回傳 null。 */
+        /** 0 一般怪、1 地圖 Boss、2 終局 Boss、3 極境 Boss、4 巔峰 Boss（2026-11-03 加的，放最後讓舊的分享連結不變）；不認得的回傳 null。 */
         public static Tier of(final int index) {
             return index >= 0 && index < values().length ? values()[index] : null;
         }
     }
 
     /**
-     * 敵人的等級（PoB2）：沒指定（≤ 0）時一般怪、Boss 照角色等級，巔峰以上用 T16；巔峰以上最低 T16。夾在 1～maxLevel。
+     * 敵人的等級：沒指定（≤ 0）時一般怪、地圖 Boss 照角色等級，終局 Boss 用最高階＋3、極境＋7、巔峰＋8（遊戲開的等級）；終局以上最低最高階。
+     * 夾在 1～maxLevel。2026-11-03（這次之前終局以上自動都是 T16 的等級）
      */
     public static int enemyLevel(final Tier tier, final int requested, final int characterLevel, final int t16Level, final int maxLevel) {
-        int level = requested > 0 ? requested : tier.endgameLevel() ? t16Level : characterLevel;
+        int level = requested > 0 ? requested : tier.endgameLevel() ? t16Level + tier.levelBonus() : characterLevel;
         if (tier.endgameLevel()) {
             level = Math.max(level, t16Level);
         }

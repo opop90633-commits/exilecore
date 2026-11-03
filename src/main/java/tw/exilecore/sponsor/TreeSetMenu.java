@@ -162,15 +162,85 @@ public final class TreeSetMenu extends Menu {
         // 2026-10-27 照站長：天賦樹改版讀不出來（或不能換上）的那一組，左鍵清掉並拿回珠寶；任何放著的一組 Shift＋右鍵也可以清
         final String storedCode = stored(state, set);
         if (click == ClickType.SHIFT_RIGHT || (click == ClickType.LEFT && storedCode != null && broken(state, storedCode))) {
-            clearSet(state, set);
+            askClear(state, set);
             return;
         }
-        final String problem = switchTo(set);
+        // 2026-11-03 照站長：先跳確認框（要不要套用、會退回哪幾點），按「套用」才換；這次之前點了就換
+        final String problem = askSwitch(set, this::open, this::open);
         if (problem != null) {
             fail(problem);
-            return;
         }
-        redraw();
+    }
+
+    /** 換組前要檢查的結果：problem 不是 null 就換不了；unreachable 是套用時會退回的節點。 */
+    private record Plan(String problem, Set<String> nodes, Set<String> unreachable) {
+        static Plan fail(final String problem) {
+            return new Plan(problem, Set.of(), Set.of());
+        }
+    }
+
+    /**
+     * 2026-11-03 照站長（要不要套用要有提示，不是選了就換）：檢查第 set 組換不換得上，換得上就跳確認框
+     * （配幾點、幾顆珠寶、接不上會退回哪幾點），按「套用」才 {@link #switchTo}。
+     * 箱子選單與原生天賦樹右上的組別鈕共用。
+     *
+     * @param onDone   套用成功之後（例如重新打開選單、讓天賦樹重送）
+     * @param onCancel 按「取消」或套用失敗之後
+     * @return 換不了的原因（不會跳確認框）；null = 已經跳出確認框（或本來就是這一組）
+     */
+    public String askSwitch(final int set, final Runnable onDone, final Runnable onCancel) {
+        final PlayerState state = plugin.players().get(player);
+        if (state.character() != null && set == state.activeTreeSet()) {
+            return null;
+        }
+        final Plan plan = plan(set);
+        if (plan.problem() != null) {
+            return plan.problem();
+        }
+        final int active = state.activeTreeSet();
+        final int jewels = state.treeJewels(set).size();
+        final List<String> body = new ArrayList<>();
+        body.add("<white>換成第 " + (set + 1) + " 組天賦？");
+        body.add("");
+        body.add(plan.nodes().isEmpty() ? "<gray>這一組還沒配點（換上去是空的天賦樹）"
+                : "<gray>這一組配了 <white>" + plan.nodes().size() + "</white> 點" + (jewels > 0 ? "、珠寶 <#c77dff>" + jewels + "</#c77dff> 顆" : ""));
+        body.add("<gray>現在的配點與珠寶收回第 " + (active + 1) + " 組（不會不見，之後可以換回來）");
+        if (!plan.unreachable().isEmpty()) {
+            body.add("");
+            body.add("<yellow>有 " + plan.unreachable().size() + " 點接不上起點（存那一組之後昇華規則或天賦樹變了），套用後會退回：");
+            body.add("<yellow>" + names(plan.unreachable()));
+        }
+        plugin.dialogs().confirm(player, "<dark_gray>天賦組", body, "套用", () -> {
+            final String problem = switchTo(set);
+            if (problem != null) {
+                fail(problem);
+                onCancel.run();
+                return;
+            }
+            onDone.run();
+        }, onCancel);
+        return null;
+    }
+
+    /** 2026-11-03：清除放著的那一組之前也先確認（配點刪掉、珠寶拿回來）；這次之前點了就清。 */
+    private void askClear(final PlayerState state, final int set) {
+        final int jewels = state.treeJewels(set).size();
+        final String code = stored(state, set);
+        final int nodes = code == null ? 0 : decodedSize(code);
+        final List<String> body = new ArrayList<>();
+        body.add("<white>清除第 " + (set + 1) + " 組天賦？");
+        body.add("");
+        body.add(nodes < 0 ? "<gray>這一組存的配點讀不出來" : "<gray>配了 <white>" + nodes + "</white> 點的規劃會刪掉（不能復原）");
+        if (jewels > 0) {
+            body.add("<gray>孔裡的 <#c77dff>" + jewels + "</#c77dff> 顆珠寶拿回來（背包 → 隨身背包 → 倉庫）");
+        }
+        plugin.dialogs().confirm(player, "<dark_gray>天賦組", body, "清除", () -> {
+            final PlayerState now = plugin.players().get(player);
+            if (now.character() != null && set != now.activeTreeSet()) {
+                clearSet(now, set);
+            }
+            open();
+        }, this::open);
     }
 
     /**
@@ -180,41 +250,16 @@ public final class TreeSetMenu extends Menu {
     public String switchTo(final int set) {
         final PlayerState state = plugin.players().get(player);
         final CharacterRecord character = state.character();
-        if (character == null || set < 0 || set >= PlayerState.GEAR_SETS) {
-            return "沒有這一組";
-        }
-        final int active = state.activeTreeSet();
-        if (set == active) {
+        if (character != null && set == state.activeTreeSet()) {
             return null;
         }
-        if (!card() && set != 0) {
-            return "要有月卡才能換成第 " + (set + 1) + " 組（沒有月卡可以切回第 1 組）";
+        final Plan plan = plan(set);
+        if (plan.problem() != null) {
+            return plan.problem();
         }
-        // 要換上的那一組：讀得出來、是這個職業的、點數夠、連得到起點
-        final PassiveNode start = tree.start(character.characterClass().id());
-        if (start == null) {
-            return "天賦樹沒有這個職業的起點";
-        }
-        final String code = stored(state, set);
-        Set<String> nodes = new HashSet<>();
-        if (code != null) {
-            try {
-                final TreeCode.Decoded decoded = TreeCode.decode(tree, code);
-                if (!decoded.classId().equals(character.characterClass().id())) {
-                    return "第 " + (set + 1) + " 組是別的職業的配點";
-                }
-                nodes = new HashSet<>(decoded.nodes());
-            } catch (final TreeCode.InvalidCode e) {
-                return "第 " + (set + 1) + " 組的配點讀不出來（天賦樹改版？）";
-            }
-        }
-        final int total = plugin.players().availablePoints(state) + state.passives().size();
-        if (nodes.size() > total) {
-            return "第 " + (set + 1) + " 組配了 " + nodes.size() + " 點，你現在只有 " + total + " 點";
-        }
-        if (tree.reachable(nodes, start, tw.exilecore.passive.PassiveState.rules(plugin, state)).size() != nodes.size()) {
-            return "第 " + (set + 1) + " 組的配點連不到起點（天賦樹改版？）";
-        }
+        final int active = state.activeTreeSet();
+        final Set<String> nodes = plan.nodes();
+        final Set<String> unreachable = plan.unreachable();
         // 現在的收進原本那一組
         store(state, active, TreeCode.encode(tree, character.characterClass().id(), state.passives()));
         final Map<String, ItemStack> current = new LinkedHashMap<>(state.jewels());
@@ -236,8 +281,62 @@ public final class TreeSetMenu extends Menu {
         plugin.players().sheet(player);
         plugin.characters().save(player);
         player.sendMessage(plugin.text().prefixed("<green>換成第 " + (set + 1) + " 組天賦（配了 " + nodes.size() + " 點）"));
+        if (!unreachable.isEmpty()) {
+            player.sendMessage(plugin.text().prefixed("<yellow>第 " + (set + 1) + " 組有 " + unreachable.size()
+                    + " 點接不上起點（存那一組之後昇華規則或天賦樹變了），已退回：" + names(unreachable)));
+        }
         player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 0.7f, 1.2f);
         return null;
+    }
+
+    /** 第 set 組換不換得上（讀得出來、是這個職業的、點數夠）；接不上起點的算出來（套用時退掉）。 */
+    private Plan plan(final int set) {
+        final PlayerState state = plugin.players().get(player);
+        final CharacterRecord character = state.character();
+        if (character == null || set < 0 || set >= PlayerState.GEAR_SETS) {
+            return Plan.fail("沒有這一組");
+        }
+        if (!card() && set != 0) {
+            return Plan.fail("要有月卡才能換成第 " + (set + 1) + " 組（沒有月卡可以切回第 1 組）");
+        }
+        final PassiveNode start = tree.start(character.characterClass().id());
+        if (start == null) {
+            return Plan.fail("天賦樹沒有這個職業的起點");
+        }
+        final String code = stored(state, set);
+        final Set<String> nodes = new HashSet<>();
+        if (code != null) {
+            try {
+                final TreeCode.Decoded decoded = TreeCode.decode(tree, code);
+                if (!decoded.classId().equals(character.characterClass().id())) {
+                    return Plan.fail("第 " + (set + 1) + " 組是別的職業的配點");
+                }
+                nodes.addAll(decoded.nodes());
+            } catch (final TreeCode.InvalidCode e) {
+                return Plan.fail("第 " + (set + 1) + " 組的配點讀不出來（天賦樹改版？）");
+            }
+        }
+        // 2026-11-03 照站長（換組被「連不到起點」擋住）：接不上的節點退掉（跟登入時 prune 一樣），其他的照換；
+        //   這次之前整組換不上去，只能清掉。會接不上通常是存那一組時的昇華規則（開路者的兩條路、虛實交織、不見之途…）後來變了
+        final Set<String> unreachable = tree.prune(nodes, start, tw.exilecore.passive.PassiveState.rules(plugin, state));
+        final int total = plugin.players().availablePoints(state) + state.passives().size();
+        if (nodes.size() > total) {
+            return Plan.fail("第 " + (set + 1) + " 組配了 " + nodes.size() + " 點，你現在只有 " + total + " 點");
+        }
+        return new Plan(null, nodes, unreachable);
+    }
+
+    /** 退掉的節點名稱（最多列 5 個）。 */
+    private String names(final Set<String> ids) {
+        final List<String> list = new ArrayList<>();
+        for (final String id : ids) {
+            final PassiveNode node = tree.node(id);
+            list.add(node == null ? id : node.name());
+            if (list.size() == 5) {
+                break;
+            }
+        }
+        return String.join("、", list) + (ids.size() > 5 ? "…" : "");
     }
 
     private int decodedSize(final String code) {
@@ -248,7 +347,7 @@ public final class TreeSetMenu extends Menu {
         }
     }
 
-    /** 存著的配點讀不出來、是別的職業的、或連不到起點（天賦樹改版）：換不上去，只能清掉。 */
+    /** 存著的配點讀不出來、是別的職業的：換不上去，只能清掉（2026-11-03：連不到起點的改成換上去時退掉接不上的）。 */
     private boolean broken(final PlayerState state, final String code) {
         final CharacterRecord character = state.character();
         if (character == null) {
@@ -259,9 +358,7 @@ public final class TreeSetMenu extends Menu {
             if (!decoded.classId().equals(character.characterClass().id())) {
                 return true;
             }
-            final PassiveNode start = tree.start(character.characterClass().id());
-            final Set<String> nodes = new HashSet<>(decoded.nodes());
-            return start != null && tree.reachable(nodes, start, tw.exilecore.passive.PassiveState.rules(plugin, state)).size() != nodes.size();
+            return false; // 2026-11-03：連不到起點的不算壞掉了（換上去時會把接不上的退掉）
         } catch (final TreeCode.InvalidCode | RuntimeException e) {
             return true;
         }

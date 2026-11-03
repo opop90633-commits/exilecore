@@ -1438,7 +1438,7 @@ j2_life_recoup:
   group: j2_life_recoup
   spawn_tags: [sapphire]
   names: [之星骸, 之精煉, 之雕琢]
-  text: "受到的傷害有 {value}% 在 4 秒內回復為生命"
+  text: "受到的傷害有 {value}% 在 8 秒內回復為生命"
   tiers:
     # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [3, 3]；T1 物品等級 50 權重 370 value: [2, 3]；T2 物品等級 1 權重 1058 value: [2, 2]
     - { tier: 3, ilvl: 1, weight: 1000, value: [2, 3] }

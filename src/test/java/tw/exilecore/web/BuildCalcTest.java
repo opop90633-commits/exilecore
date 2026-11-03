@@ -319,7 +319,7 @@ class BuildCalcTest {
     @Test
     void enemySettingsAreReadWithPob2Defaults() throws Exception {
         assertEquals(BuildCalc.EnemySettings.DEFAULT, BuildCalc.parseEnemy(new JsonObject()));
-        assertEquals(tw.exilecore.stats.EffectiveHitPool.Tier.PINNACLE, BuildCalc.EnemySettings.DEFAULT.tier(), "PoB2 的預設是巔峰 Boss");
+        assertEquals(tw.exilecore.stats.EffectiveHitPool.Tier.PINNACLE, BuildCalc.EnemySettings.DEFAULT.tier(), "預設是終局 Boss");
         final JsonObject json = JsonParser.parseString("{\"enemy\":{\"level\":70,\"tier\":1,\"mix\":[1,0,0,0,0]}}").getAsJsonObject();
         final BuildCalc.EnemySettings e = BuildCalc.parseEnemy(json);
         assertEquals(70, e.level());
@@ -354,10 +354,10 @@ class BuildCalcTest {
                 .setBase(tw.exilecore.stats.StatKeys.RESIST_FIRE, 75).setBase(tw.exilecore.stats.StatKeys.RESIST_COLD, 75)
                 .setBase(tw.exilecore.stats.StatKeys.RESIST_LIGHTNING, 75);
         final BuildCalc.EnemySettings settings = BuildCalc.EnemySettings.DEFAULT;
-        assertEquals(84, BuildCalc.enemyLevelOf(settings, 40, 84), "巔峰 Boss 至少 T16");
+        assertEquals(87, BuildCalc.enemyLevelOf(settings, 40, 84), "終局 Boss：最高階＋3（2026-11-03；這次之前 T16）");
         final tw.exilecore.stats.EffectiveHitPool.Enemy enemy = BuildCalc.enemy(settings, 40, monsters, 84);
-        final double[] range = monsters.damageAt(84);
-        assertEquals((range[0] + range[1]) / 2 * 12, enemy.total(), 1e-6, "巔峰 Boss：傷害表 × 12");
+        final double[] range = monsters.damageAt(87);
+        assertEquals((range[0] + range[1]) / 2 * 12, enemy.total(), 1e-6, "終局 Boss：傷害表 × 12");
         final JsonObject o = BuildCalc.ehpJson(sheet, tw.exilecore.character.StatsReport.pools(sheet), enemy, settings, 84);
         for (final String key : List.of("value", "hits", "damagingHits", "hitChance", "damageChance", "critEffect", "maxhit", "taken", "enemy")) {
             assertTrue(o.has(key), key);
@@ -365,7 +365,7 @@ class BuildCalcTest {
         assertTrue(o.get("value").getAsDouble() > 0);
         assertEquals(o.get("value").getAsDouble(), o.get("hits").getAsDouble() * enemy.total(), enemy.total() * 0.01 + 1);
         assertEquals(84, o.getAsJsonObject("enemy").get("level").getAsInt());
-        assertEquals("巔峰 Boss", o.getAsJsonObject("enemy").get("tierName").getAsString());
+        assertEquals("終局 Boss", o.getAsJsonObject("enemy").get("tierName").getAsString());
         assertEquals(3, o.getAsJsonObject("enemy").get("penetration").getAsDouble(), 1e-9);
         final JsonObject maxHit = o.getAsJsonObject("maxhit");
         // 火焰：75% 抗性 − 3% 穿透 ＝ 72%：生命 3000 ＋ 護盾 1000 → 4000 ÷ 0.28 ≈ 14286

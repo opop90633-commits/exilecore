@@ -10,6 +10,8 @@
   <套>_shield、<套>_quiver                     副手（盾、箭袋）
   <套>_helmet、<套>_chestplate、<套>_leggings、<套>_boots      防具在格子裡的圖示
   <套>_humanoid、<套>_humanoid_leggings        穿在身上（原版 64×32 的盔甲貼圖格式）
+2026-11-03 星潮祭：另外畫 6 張 3D 時裝的 2D 預覽（COSMETIC_ICONS → web/skins/sf_*.png，不列進 index.txt）；
+像素沒變的圖不重寫（save_if_changed）。
 
 用法：python3 tools/gen_skin_art.py [--preview preview.png]
 """
@@ -38,6 +40,13 @@ THEMES = {
     "shadow":    ("暗影", ("101014", "2a2a34", "4a4a5a"), ("24242c", "4a4a58", "8a8a9a"), ("9a6aff", "e0d0ff"), "b47aff", "eye"),
     # 2026-10 S1 贊助禮包限定（絕版）：創世——深宇宙藍的衣料、金色滾邊、極光青的刺繡
     "genesis":   ("創世", ("0b1230", "1b2a5c", "2a3a7a"), ("9a7420", "f2c14e", "ffe8a8"), ("39e7ff", "c8f6ff"), "ff5fd2", "star"),
+    # 2026-11-03 照站長：夏日系列。浪潮：海藍的潛水布料、白色滾邊、泡沫白的光、珊瑚粉的寶石，紋章用新月（當浪）；
+    #   沙灘衛士：沙金的布料、椰綠的滾邊、日落橘的光、海藍的寶石，紋章用葉子（棕櫚）
+    "tide":      ("浪潮", ("0d5c8a", "1ea7d8", "7fe0ff"), ("8aa0b0", "d8e8f0", "ffffff"), ("d8fbff", "ffffff"), "ff7f9f", "moon"),
+    "beach":     ("沙灘衛士", ("8a6a30", "c8a050", "f0d888"), ("1e6a30", "3aa655", "8fd86a"), ("ff8c2a", "ffe08a"), "1ea7d8", "leaf"),
+    # 2026-11-03 照站長：星潮祭限定「珊瑚海妖鎧」（3D 戰甲 armor3d_coral 的身、腿、腳）：深海藍紫的布料、橘粉的珊瑚當滾邊、
+    #   珍珠白的光、珊瑚粉的寶石；這次之前星潮祭沒有戰甲
+    "coral":     ("珊瑚海妖", ("1c1450", "33228a", "6a4ac0"), ("c8504a", "ff7a4a", "ffb09a"), ("f4ecff", "ffffff"), "ff9ab0", "moon"),
 }
 
 
@@ -550,8 +559,37 @@ OUTFIT = {
     "storm":     dict(collar="high", front="trim", belt="belt", motif="bolt", hem="zigzag", legs="stripe", boot="lace"),
     "shadow":    dict(collar="cross", front="none", belt="obi", motif="none", hem="none", legs="wrap", boot="wrap"),
     "genesis":   dict(collar="high", front="trim", belt="sash", motif="star", hem="trim", legs="stripe", boot="cuff"),
+    # 2026-11-03 照站長：夏日系列。浪潮 = 潛水裝（V 領、沒前襟、腰帶、鋸齒下襬當浪、綁腿、綁腳）；沙灘衛士 = 綁帶背心＋繩腰帶、葉子刺繡、綁腿、綁帶涼鞋
+    "tide":      dict(collar="v", front="none", belt="belt", motif="bolt", hem="zigzag", legs="wrap", boot="wrap"),
+    "beach":     dict(collar="v", front="laces", belt="sash", motif="leaf", hem="trim", legs="wrap", boot="lace"),
+    # 2026-11-03 照站長：星潮祭「珊瑚海妖鎧」——V 領、胸口一顆發光的大珍珠（pearl）、腰間一圈海草掛著貝殼（belt="kelp"）、
+    #   肩上長珊瑚枝（shoulder="coral"）、背後兩條短觸手披風（cape="tentacle"）、護腿鱗片紋（legs="scale"）、綁腳。
+    #   這次之前沒有 pearl／shoulder／cape 這幾項、也沒有 kelp、scale（只有 coral 用，其他套不變）
+    "coral":     dict(collar="v", front="none", belt="kelp", motif="none", hem="trim", legs="scale", boot="wrap",
+                      pearl=True, shoulder="coral", cape="tentacle"),
 }
 FUR = ((236, 232, 222, 255), (206, 198, 186, 255))
+# 2026-11-03 星潮祭「珊瑚海妖鎧」的海草、貝殼、觸手吸盤、鱗片亮面
+KELP = ((30, 96, 62, 255), (46, 138, 90, 255), (110, 200, 120, 255))
+SHELL = ((255, 170, 150, 255), (255, 216, 200, 255), (255, 244, 236, 255))
+SUCKER = (127, 232, 224, 255)
+SCALE_HI = (120, 210, 230, 255)
+
+
+def pearl_pixels(px, x0, y0, cx, cy, pal):
+    """胸口的大珍珠（2026-11-03 星潮祭）：4×3 圓角，左上白色高光、下緣帶一點底色，上下各一點珊瑚托。"""
+    for dy in range(3):
+        for dx in range(4):
+            if dy in (0, 2) and dx in (0, 3):
+                continue
+            c = pal.g[0]
+            if dy == 2:
+                c = mix(pal.g[0], pal.b[2], 0.3)
+            if (dx, dy) in ((1, 0), (0, 1)):
+                c = pal.g[1]
+            px[x0 + cx + dx, y0 + cy + dy] = c
+    px[x0 + cx + 1, y0 + cy - 1] = pal.m[1]
+    px[x0 + cx + 2, y0 + cy + 3] = pal.m[1]
 
 
 def cloth(pal, x, y, h, dark=0.0):
@@ -660,6 +698,19 @@ def coat_face(px, x0, y0, w, h, pal, st, kind):
             for x in range(w):
                 if abs((x if kind == "front" else w - 1 - x) - (y - 2) * 0.8) < 0.9 and 1 < y < h - 2:
                     px[x0 + x, y0 + y] = pal.m[1] if (x + y) % 3 else pal.m[2]
+    elif st["belt"] == "kelp":
+        # 2026-11-03 星潮祭（珊瑚海妖鎧）：一圈海草當腰帶，往下垂幾條彎彎的海草，正面掛一枚貝殼
+        belt_rows = [7]
+        for x in range(w):
+            px[x0 + x, y0 + 7] = KELP[(x + (1 if kind == "back" else 0)) % 2]
+        for i, sx in enumerate(range(1, w, 3)):
+            for k, y in enumerate(range(8, min(h - 1, 11))):
+                x = sx + (1 if (k + i) % 2 else 0)
+                if x < w:
+                    px[x0 + x, y0 + y] = KELP[1] if k < 2 else KELP[2]
+        if kind == "front" and w >= 6:
+            for (dx, dy, k) in ((3, 8, 1), (4, 8, 1), (3, 9, 0), (4, 9, 2), (2, 8, 0), (5, 8, 0)):
+                px[x0 + dx, y0 + dy] = SHELL[k]                            # 貝殼（扇形：中間亮、兩邊暗）
     # 刺繡
     if st["motif"] != "none":
         if kind == "front" and w >= 6:
@@ -682,6 +733,25 @@ def coat_face(px, x0, y0, w, h, pal, st, kind):
             top = h - 2 - (x % 2 if st["hem"] == "zigzag" else (1 if x % 3 == 1 else 0))
             for y in range(top, h):
                 px[x0 + x, y0 + y] = pal.g[0] if y == top else pal.m[1]
+    # 2026-11-03 星潮祭（珊瑚海妖鎧）：胸口的大珍珠、背後兩條短觸手披風
+    if st.get("pearl") and kind == "front" and w >= 6:
+        pearl_pixels(px, x0, y0, int(mid) - 1, 3, pal)
+    if st.get("cape") == "tentacle" and kind == "back" and w >= 6:
+        body = mix(pal.b[2], (170, 130, 240, 255), 0.45)   # 觸手比布料亮一階，背後看得出來
+        dark = pal.b[0]
+        for side, sx in ((0, 1), (1, w - 3)):
+            for y in range(1, h):
+                sway = (1 if (y // 3) % 2 else 0) * (1 if side == 0 else -1)
+                width = 2 if y < h - 3 else 1
+                x = sx + sway + (0 if width == 2 or side == 0 else 1)
+                for dx in range(width):
+                    if 0 <= x + dx < w:
+                        px[x0 + x + dx, y0 + y] = body if dx == 0 else dark
+                inner = x + (width - 1 if side == 0 else 0)
+                if y % 2 == 0 and y < h - 2 and 0 <= inner < w:
+                    px[x0 + inner, y0 + y] = SUCKER                        # 內側的吸盤
+            tip = sx + (1 if side == 0 else 0)
+            px[x0 + tip, y0 + h - 1] = mix(pal.g[0], SUCKER, 0.5)          # 尖端的光
 
 
 def sleeve_face(px, x0, y0, w, h, pal, st, kind):
@@ -691,9 +761,21 @@ def sleeve_face(px, x0, y0, w, h, pal, st, kind):
     if kind in ("top", "bottom"):
         for x in range(w):
             px[x0 + x, y0] = pal.m[1] if kind == "top" else mix(pal.b[0], pal.m[0], 0.5)
+        if kind == "top" and st.get("shoulder") == "coral":
+            # 2026-11-03 星潮祭（珊瑚海妖鎧）：肩頂一叢珊瑚（橘、粉、枝頭淺色）
+            for (x, y, c) in ((0, 1, pal.m[1]), (1, 1, pal.m[2]), (2, 2, pal.m[1]), (3, 1, pal.gem), (1, 3, pal.gem),
+                              (2, 0, SHELL[2]), (1, 2, pal.m[0]), (3, 3, pal.m[1])):
+                if x < w and y < h:
+                    px[x0 + x, y0 + y] = c
         return
     for x in range(w):
         px[x0 + x, y0] = pal.m[1]                                          # 肩線
+    if st.get("shoulder") == "coral" and h >= 4:
+        # 2026-11-03 星潮祭（珊瑚海妖鎧）：肩上的珊瑚枝從肩線往下分岔（橘、粉，枝頭淺色）
+        for (x, y, c) in ((0, 0, pal.m[2]), (1, 0, pal.m[1]), (2, 0, pal.gem), (3, 0, pal.m[1]), (1, 1, pal.m[1]),
+                          (3, 1, pal.gem), (0, 2, pal.m[1]), (2, 2, pal.m[0]), (0, 3, SHELL[2])):
+            if x < w:
+                px[x0 + x, y0 + y] = c
     # 袖口
     if st["hem"] == "fur" or st["collar"] == "fur":
         for y in (h - 2, h - 1):
@@ -730,6 +812,18 @@ def trouser_face(px, x0, y0, w, h, pal, st, kind, rows):
                 for x in range(w):
                     if (x + y) % 3 == 0:
                         px[x0 + x, y0 + y] = mix(pal.m[1], pal.b[2], 0.3)
+    elif st["legs"] == "scale":
+        # 2026-11-03 星潮祭（珊瑚海妖鎧）：護腿的鱗片紋——一排錯開半片，每片上緣亮（帶一點海青）、下緣暗
+        for y in rows:
+            for x in range(w):
+                base = cloth(pal, x, y, h, 0.25)
+                if y % 2 == 1:
+                    c = mix(base, pal.b[0], 0.45)
+                elif (x + (y // 2) % 2) % 2 == 0:
+                    c = mix(mix(base, pal.b[2], 0.45), SCALE_HI, 0.25)
+                else:
+                    c = base
+                px[x0 + x, y0 + y] = c
     elif kind == "front" and 5 in rows:
         for x in range(w):
             px[x0 + x, y0 + 5] = mix(cloth(pal, x, 5, h, 0.35), pal.b[0], 0.3)    # 膝蓋的縫線
@@ -853,6 +947,25 @@ def garment_icon(pal, theme):
     for (mx, my) in ((10, 23), (19, 11)):
         for (dx, dy), k in motif_pixels(st["motif"]):
             put(px, S, mx + dx, my + dy, pal.g[k])
+    # 2026-11-03 星潮祭（珊瑚海妖鎧）：腰間的海草與貝殼、胸口的大珍珠、肩上的珊瑚枝
+    if st["belt"] == "kelp":
+        for x in range(9, 24):
+            put(px, S, x, 19, KELP[x % 2])
+        for i, sx in enumerate((10, 14, 19, 22)):
+            for k, y in enumerate(range(20, 25)):
+                put(px, S, sx + ((k + i) % 2), y, KELP[1] if k < 3 else KELP[2])
+        for (dx, dy, k) in ((0, 0, 0), (1, 0, 1), (2, 0, 1), (3, 0, 0), (1, 1, 1), (2, 1, 2), (1, 2, 0), (2, 2, 1)):
+            put(px, S, 16 + dx, 20 + dy, SHELL[k])
+    if st.get("pearl"):
+        disc(px, S, 16.5, 13.5, 2.6, pal.g[1], mix(pal.g[0], pal.b[2], 0.35))
+        put(px, S, 15, 12, (255, 255, 255, 255))
+        put(px, S, 16, 10, pal.m[1])
+        put(px, S, 17, 10, pal.m[1])
+    if st.get("shoulder") == "coral":
+        for side in (-1, 1):
+            for (dx, dy, c) in ((10, 6, pal.m[1]), (11, 5, pal.m[1]), (11, 4, pal.m[2]), (12, 6, pal.gem), (13, 5, pal.gem),
+                                (13, 4, SHELL[2]), (9, 5, pal.m[0]), (9, 4, pal.m[1]), (8, 3, SHELL[2]), (12, 3, pal.m[1])):
+                put(px, S, 16 + dx if side > 0 else 15 - dx, dy, c)
     outline(img, pal.out)
     return img
 
@@ -878,6 +991,11 @@ def trouser_icon(pal, theme):
                 c = mix(c, pal.b[0], 0.35)
             elif st["legs"] == "wrap" and y > 17 and (x + y) % 3 == 0:
                 c = mix(pal.m[1], pal.b[2], 0.3)
+            elif st["legs"] == "scale" and y > 7:   # 2026-11-03 星潮祭（珊瑚海妖鎧）：鱗片紋
+                if y % 2 == 1:
+                    c = mix(c, pal.b[0], 0.45)
+                elif (x + (y // 2) % 2) % 2 == 0:
+                    c = mix(mix(c, pal.b[2], 0.45), SCALE_HI, 0.25)
             px[x, y] = c
     outline(img, pal.out)
     return img
@@ -937,6 +1055,189 @@ def build(theme):
     return images
 
 
+# ======================================================================
+# 2026-11-03 照站長：星潮祭限定 3D 時裝的 2D 預覽圖（32×32，給網頁、時裝櫃當圖示；3D 模型在 gen_models3d.py 的 sf_*）。
+# 這次之前 web/skins 只有戰甲主題（THEMES）那幾套、3D 時裝沒有 2D 圖。檔名同 sponsor.yml 的 art（sf_<代號>.png）。
+# 不列進 index.txt：index.txt 列的圖 UiPack 會當幻化的物品圖放進資源包，沒有物品定義用到它 UiPackTest（everyReferenceResolves）會擋；
+# 這幾張只是網頁、時裝櫃的預覽，3D 的樣子在 pack3d.zip 裡。
+# ======================================================================
+
+SF = {"ink": (26, 16, 64, 255), "ink_mid": (46, 26, 106, 255), "ink_light": (74, 42, 154, 255), "sucker": (127, 232, 224, 255),
+      "tip": (184, 255, 248, 255), "pearl": (255, 255, 255, 255), "pearl_glow": (232, 244, 255, 255), "pink": (255, 192, 208, 255),
+      "pink_light": (255, 228, 236, 255), "pink_dark": (216, 138, 168, 255), "teal": (31, 138, 138, 255), "teal_dark": (14, 58, 64, 255),
+      "gold": (201, 164, 58, 255), "gold_light": (255, 224, 138, 255), "aqua": (127, 232, 255, 255), "water": (95, 216, 255, 200),
+      "weed": (46, 138, 74, 255), "shell": (255, 154, 106, 255), "shell_mid": (255, 200, 168, 255), "shell_light": (255, 242, 228, 255),
+      "shell_dark": (216, 106, 74, 255), "bell": (159, 224, 255, 150), "bell_rim": (216, 246, 255, 170), "core": (255, 154, 213, 255),
+      "eye": (26, 26, 36, 255), "white": (255, 255, 255, 255), "out": (12, 8, 30, 255)}
+
+
+def _sf_canvas():
+    img = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    return img, ImageDraw.Draw(img), img.load()
+
+
+def _dot(px, x, y, c, r=1):
+    for dy in range(-r + 1, r):
+        for dx in range(-r + 1, r):
+            put(px, 32, x + dx, y + dy, c)
+
+
+def sf_kraken_wings_icon():
+    """海妖觸鬚之翼：中間一塊深紫的身，左右各四條彎出去的觸手，吸盤淺青、尖端亮。"""
+    img, d, px = _sf_canvas()
+    d.rectangle([13, 11, 18, 21], fill=SF["ink_mid"])
+    for sign in (1, -1):
+        for i, (dy, curl) in enumerate(((-7, -6), (-3, -3), (2, 3), (6, 6))):
+            a = (16 + sign * 3, 14 + i * 2)
+            c = (16 + sign * 10, 15 + dy)
+            b = (16 + sign * 14, 16 + dy + curl)
+            pts = [bezier(a, c, b, t / 14) for t in range(15)]
+            for j, (x, y) in enumerate(pts):
+                col = SF["ink_mid"] if j < 7 else SF["ink_light"]
+                put(px, 32, int(x), int(y), col)
+                if j < 12:
+                    put(px, 32, int(x), int(y) + 1, SF["ink"])
+                if j % 3 == 1 and j < 12:
+                    put(px, 32, int(x), int(y) - 1, SF["sucker"])
+            put(px, 32, int(pts[-1][0]), int(pts[-1][1]), SF["tip"])
+    outline(img, SF["out"])
+    return img
+
+
+def sf_pearl_crown_icon():
+    """珍珠貝冠：粉色頭環，額前一片扇貝（粉白相間的稜）、頂上一顆大珍珠、兩側垂珍珠。"""
+    img, d, px = _sf_canvas()
+    heights = (3, 5, 7, 9, 10, 9, 7, 5, 3)
+    for i, h in enumerate(heights):
+        x = 7 + i * 2
+        d.rectangle([x, 22 - h, x + 1, 22], fill=SF["pink"] if i % 2 == 0 else SF["pink_light"])
+        put(px, 32, x, 22 - h, SF["shell_light"])
+    d.rectangle([5, 22, 26, 25], fill=SF["pink"])
+    d.line([5, 25, 26, 25], fill=SF["pink_dark"])
+    d.ellipse([13, 7, 18, 12], fill=SF["pearl"])
+    put(px, 32, 14, 8, SF["white"]); put(px, 32, 17, 11, SF["pearl_glow"])
+    for (x, ys) in ((4, (26, 28)), (27, (26, 28))):
+        for y in ys:
+            put(px, 32, x, y, SF["pearl"])
+            put(px, 32, x, y - 1, SF["gold"])
+    sparkle_pts = [(10, 9), (21, 9)]
+    for (x, y) in sparkle_pts:
+        put(px, 32, x, y, SF["pearl_glow"])
+    outline(img, SF["out"])
+    return img
+
+
+def sf_tide_trident_icon():
+    """潮汐三叉戟：斜拿的青柄、金橫樑、三根叉尖水藍發光、叉間一片水，柄上綠海草與粉貝。"""
+    img, d, px = _sf_canvas()
+    line(px, 32, (4, 28), (18, 14), SF["teal"])
+    line(px, 32, (5, 29), (19, 15), SF["teal_dark"])
+    for (x, y) in ((7, 25), (10, 22), (13, 19)):
+        put(px, 32, x, y - 1, SF["weed"]); put(px, 32, x + 1, y, SF["weed"])
+    _dot(px, 9, 24, SF["pink"], 2)
+    line(px, 32, (15, 11), (22, 18), SF["gold"], 0)
+    line(px, 32, (16, 10), (23, 17), SF["gold_light"], 0)
+    line(px, 32, (18, 14), (26, 6), SF["teal"])            # 中叉
+    line(px, 32, (15, 11), (20, 3), SF["teal"])            # 左叉
+    line(px, 32, (22, 18), (29, 11), SF["teal"])           # 右叉
+    for (x, y) in ((26, 6), (20, 3), (29, 11)):
+        put(px, 32, x, y, SF["aqua"]); put(px, 32, x + 1, y - 1, SF["tip"])
+    for (x, y) in ((19, 8), (20, 9), (21, 10), (23, 12), (24, 13), (25, 14), (22, 7), (26, 11)):
+        put(px, 32, x, y, SF["water"])
+    outline(img, SF["out"])
+    return img
+
+
+def sf_pet_kraken_icon():
+    """小海妖：圓頭大眼的小章魚，螢光青斑點，底下八條短觸手往外捲。"""
+    img, d, px = _sf_canvas()
+    d.ellipse([8, 5, 23, 20], fill=SF["ink_mid"])
+    d.ellipse([10, 5, 21, 12], fill=SF["ink_light"])
+    for (x, y) in ((11, 7), (19, 6), (15, 4), (9, 12), (22, 12)):
+        put(px, 32, x, y, SF["sucker"])
+    for x in (11, 18):
+        d.rectangle([x, 11, x + 3, 15], fill=SF["white"])
+        d.rectangle([x + 1, 12, x + 2, 14], fill=SF["eye"])
+        put(px, 32, x + 1, 12, SF["white"])
+    put(px, 32, 15, 17, SF["eye"]); put(px, 32, 16, 17, SF["eye"])
+    for i, (x0, dx) in enumerate(((8, -2), (10, -1), (13, 0), (15, 0), (17, 0), (19, 1), (22, 2), (24, 3))):
+        a = (x0, 19)
+        c = (x0 + dx, 24)
+        b = (x0 + dx * 2, 27 + (i % 2))
+        for t in range(10):
+            x, y = bezier(a, c, b, t / 9)
+            put(px, 32, int(x), int(y), SF["ink_mid"] if t < 5 else SF["ink_light"])
+        put(px, 32, int(b[0]), int(b[1]), SF["tip"])
+    outline(img, SF["out"])
+    return img
+
+
+def sf_shell_shield_icon():
+    """貝殼盾：扇貝——從底下的鉸合放射出去的稜、粉橘到奶白、外緣一排珍珠。"""
+    img, d, px = _sf_canvas()
+    hx, hy = 16.0, 27.0
+    for y in range(4, 28):
+        for x in range(2, 30):
+            ddx, ddy = x + 0.5 - hx, hy - (y + 0.5)
+            r = math.hypot(ddx, ddy)
+            ang = math.degrees(math.atan2(ddy, ddx))
+            if ddy < -0.5 or r > 21 or ang < 28 or ang > 152:
+                continue
+            t = r / 21
+            ridge = int((ang - 28) / (124 / 11))
+            base = mix(SF["shell"], SF["shell_light"], t)
+            px[x, y] = mix(base, SF["shell_dark"], 0.35) if ridge % 2 == 1 else base
+    for j in range(7):
+        ang = math.radians(32 + j * 19.3)
+        x, y = int(hx + 20.5 * math.cos(ang)), int(hy - 20.5 * math.sin(ang))
+        put(px, 32, x, y, SF["pearl"]); put(px, 32, x + 1, y, SF["pearl_glow"])
+    d.rectangle([12, 26, 15, 29], fill=SF["shell_dark"])
+    d.rectangle([17, 26, 20, 29], fill=SF["shell_dark"])
+    d.rectangle([15, 25, 17, 29], fill=SF["shell"])
+    outline(img, SF["out"])
+    return img
+
+
+def sf_pet_jellyfish_icon():
+    """小水母：半透明淡藍的傘、裡面粉紅的光、一對小眼睛，傘下幾條飄帶觸手。"""
+    img, d, px = _sf_canvas()
+    for i, (x0, sway) in enumerate(((9, -2), (12, 1), (16, -1), (19, 2), (22, -1), (14, 2))):
+        a = (x0, 17); c = (x0 + sway, 22); b = (x0 - sway, 29 - (i % 3))
+        for t in range(12):
+            x, y = bezier(a, c, b, t / 11)
+            put(px, 32, int(x), int(y), SF["bell_rim"] if t < 7 else SF["aqua"])
+        put(px, 32, int(b[0]), int(b[1]), SF["tip"])
+    d.ellipse([12, 9, 19, 16], fill=SF["core"])
+    d.ellipse([14, 11, 17, 14], fill=SF["white"])
+    d.ellipse([6, 4, 25, 17], fill=SF["bell"])
+    d.rectangle([5, 15, 26, 18], fill=SF["bell_rim"])
+    for x in (5, 9, 13, 17, 21, 25):
+        put(px, 32, x, 19, SF["bell_rim"])
+    for (x, y) in ((9, 7), (20, 6), (15, 5)):
+        put(px, 32, x, y, SF["aqua"])
+    for x in (12, 18):
+        put(px, 32, x, 14, SF["eye"]); put(px, 32, x, 13, SF["eye"]); put(px, 32, x + 1, 13, SF["white"])
+    outline(img, SF["out"])
+    return img
+
+
+COSMETIC_ICONS = {
+    "sf_kraken_wings": sf_kraken_wings_icon, "sf_pearl_crown": sf_pearl_crown_icon, "sf_tide_trident": sf_tide_trident_icon,
+    "sf_pet_kraken": sf_pet_kraken_icon, "sf_shell_shield": sf_shell_shield_icon, "sf_pet_jellyfish": sf_pet_jellyfish_icon,
+}
+
+
+def save_if_changed(image, path):
+    """2026-11-03：像素一樣就不重寫（不同版本的 Pillow 壓出來的 PNG 位元組不一樣，整批重寫會讓 266 張圖在 git 裡全變）。"""
+    if os.path.exists(path):
+        try:
+            if Image.open(path).convert("RGBA").tobytes() == image.convert("RGBA").tobytes():
+                return
+        except OSError:
+            pass
+    image.save(path)
+
+
 def main():
     random.seed(7)
     os.makedirs(OUT, exist_ok=True)
@@ -944,9 +1245,15 @@ def main():
     all_images = {}
     for theme in THEMES:
         for name, image in build(theme).items():
-            image.save(os.path.join(OUT, name + ".png"))
+            save_if_changed(image, os.path.join(OUT, name + ".png"))
             names.append(name)
             all_images[name] = image
+    previews = []
+    for name, draw in COSMETIC_ICONS.items():   # 2026-11-03 星潮祭限定 3D 時裝的 2D 預覽（不列進 index.txt，見上面）
+        image = draw()
+        save_if_changed(image, os.path.join(OUT, name + ".png"))
+        previews.append(name)
+        all_images[name] = image
     with open(os.path.join(OUT, "index.txt"), "w", encoding="utf-8") as f:
         f.write("# 裝備幻化的美術（tools/gen_skin_art.py 產生）：介面資源包產生時讀這裡列的檔案\n")
         for name in names:
@@ -967,7 +1274,7 @@ def main():
             im = all_images[n].resize((64 * 4, 32 * 4), Image.NEAREST)
             sheet2.paste(im, ((i % 2) * (64 * 4 + 4), (i // 2) * (32 * 4 + 4)), im)
         sheet2.save(path.replace(".png", "_layers.png"))
-    print(len(names), "images")
+    print(len(names), "images,", len(previews), "cosmetic previews")
 
 
 if __name__ == "__main__":

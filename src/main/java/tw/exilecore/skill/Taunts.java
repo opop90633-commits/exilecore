@@ -68,6 +68,9 @@ final class Taunts implements Listener {
         if (taunter(mob) != null) {
             return false;
         }
+        if (mob instanceof LivingEntity living && plugin.ailments() != null && plugin.ailments().ccImmune(living)) {
+            return false; // 2026-11-03 照站長：不可動搖（flag.cc_immune）不會被嘲諷
+        }
         final Long until = cooldown.get(mob.getUniqueId());
         return until == null || now() >= until;
     }

@@ -71,8 +71,11 @@ class CurrencyGroupsTest {
         assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.of(currencies.get("tablet_shrine")), "2026-10-21：星圖石板跟門票同一組");
         // 2026-10-26：活動素材 4 種、劫盜合約與藍圖、揭露石、傳奇兌換券也放這組（一般通貨那組加了高階／完美通貨）
         // 2026-11-02：多一片傳奇石板（殘酷霸權，PoE2 Cruel Hegemony）
-        assertEquals(7 + 4 + 3 + 9 + 4 + 4 + 1, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.KEYS).size());
+        // 2026-11-03：星潮祭的貝殼、珍珠（event_ 開頭，自動分進這組）
+        assertEquals(7 + 4 + 3 + 9 + 4 + 4 + 1 + 2, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.KEYS).size());
         assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.of(currencies.get("event_candy")));
+        assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.of(currencies.get("event_shell")));
+        assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.of(currencies.get("event_pearl")));
         // 一打開先看有東西的那組；都沒有看一般通貨
         final Map<String, Integer> held = Map.of("distilled_guilt", 3);
         assertEquals(CurrencyGroups.Group.MECHANIC, CurrencyGroups.first(currencies.all(), type -> held.getOrDefault(type.id(), 0)));

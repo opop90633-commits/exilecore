@@ -436,6 +436,13 @@ public final class MonsterService {
 
         final StatSheet sheet = sheet(entity, data);
         applyVanilla(entity, data, sheet);
+        if (!data.boss() && StatKeys.flag(sheet, StatKeys.FLAG_CC_IMMUNE)) {
+            // 2026-11-03 照站長：不可動搖（unstoppable 詞綴）的怪也推不動：擊退抗性 100%（各處的擊退、拉扯看 Knockbacks.immune／擊退抗性）；Boss 本來就 100%
+            final AttributeInstance knockback = entity.getAttribute(Attribute.KNOCKBACK_RESISTANCE);
+            if (knockback != null) {
+                knockback.setBaseValue(1.0);
+            }
+        }
         enforceVanillaHealthLater(entity);
         entity.customName(displayName(data));
         entity.setCustomNameVisible(true);

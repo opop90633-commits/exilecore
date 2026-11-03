@@ -43,7 +43,7 @@ public final class TreeEffectKeys {
 
     // ---- 回復 ----
 
-    /** INCREASED：回復（Recoup）的速度（基礎 4 秒回完）。{@link tw.exilecore.character.Recoup} 用。 */
+    /** INCREASED：回復（Recoup）的速度（基礎 8 秒回完；2026-11-03 註解更正，這次之前寫 4 秒）。{@link tw.exilecore.character.Recoup} 用。 */
     public static final String RECOUP_SPEED = "recoup.speed";
     /** FLAT %：受到的元素傷害有 x% 之後回復為能量護盾。CombatListener 用。 */
     public static final String ES_RECOUP_ELEMENTAL = "es.recoup_elemental";
@@ -223,6 +223,13 @@ public final class TreeEffectKeys {
             final double life = sheet.get(StatKeys.LIFE_MAX);
             sheet.add(Modifier.more(StatKeys.LIFE_MAX, -convert / 100.0, "生命轉換"));
             sheet.add(Modifier.flat(StatKeys.ES_MAX, Math.floor(life * convert / 100.0), "生命轉換"));
+        }
+        // 2026-11-03 照站長＋PoB2（揭露詞綴：Gain x% of Maximum Mana as Armour；PoB2 CalcDefence 的 ManaGainAsArmour）：
+        //   照魔力的基礎值（固定值加總，不含魔力的增加）換成護甲的固定值，之後再吃護甲的增加
+        final double manaAsArmour = sheet.flat(TreeNewMechanicKeys.MANA_AS_ARMOUR, Set.of());
+        if (manaAsArmour > 0) {
+            final double manaBase = sheet.base(StatKeys.MANA_MAX) + sheet.flat(StatKeys.MANA_MAX, Set.of());
+            sheet.add(Modifier.flat(StatKeys.ARMOUR, Math.round(manaBase * manaAsArmour / 100.0), "魔力換成護甲"));
         }
     }
 

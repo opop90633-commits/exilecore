@@ -324,7 +324,7 @@ mana_recoup:
   group: damage_taken_gained_as_mana
   spawn_tags: [amulet]
   names: [之星骸, 之禪定, 之寧靜, 之安詳, 之慰藉]
-  text: "受到的傷害有 {value}% 在 4 秒內回復為魔力"
+  text: "受到的傷害有 {value}% 在 8 秒內回復為魔力"
   tiers:
     # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（5 階 → 5 階）
     - { tier: 1, ilvl: 80, weight: 250, value: [22, 24] }   # 2026-10-28 站長：前三階權重 ×0.5（500 → 250）
@@ -374,7 +374,7 @@ life_recoup:
   group: damage_taken_gained_as_life
   spawn_tags: [amulet]
   names: [之星骸, 之永生, 之再生, 之復甦, 之癒合]
-  text: "受到的傷害有 {value}% 在 4 秒內回復為生命"
+  text: "受到的傷害有 {value}% 在 8 秒內回復為生命"
   tiers:
     # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（5 階 → 5 階）
     - { tier: 1, ilvl: 79, weight: 250, value: [22, 24] }   # 2026-10-28 站長：前三階權重 ×0.5（500 → 250）

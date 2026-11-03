@@ -25,6 +25,7 @@ public final class WorldEventMenu extends Menu {
     private static final int SLOT_STATUS = 4;
     private static final int SLOT_TRAVEL = 13;
     private static final int SLOT_FESTIVAL = 15; // 2026-10 萬燈夜
+    private static final int SLOT_SUMMER = 16; // 2026-11-03 星潮祭（跟萬燈夜各一顆，並列）
     private static final int FIRST_ITEM = 18;
 
     private final WorldEventService service;
@@ -97,6 +98,17 @@ public final class WorldEventMenu extends Menu {
                     festival.kingRunning() ? "<green>南瓜王在幽燈墓園！" : festival.nextKingClock() == null ? ""
                             : "<gray>南瓜王：下一次 <white>" + festival.nextKingClock(), "", "<yellow>左鍵：打開<dark_gray>（/festival）");
             set(SLOT_FESTIVAL, festival.kingRunning() ? glowing(pumpkin) : pumpkin);
+        }
+        final tw.exilecore.summer.SummerService summer = plugin.summer();
+        if (summer != null && summer.visible()) {
+            // 2026-11-03 星潮祭：跟萬燈夜並列
+            final ItemStack shell = icon(Material.NAUTILUS_SHELL, "<" + summer.config().color() + ">🌊 " + ItemRenderer.escape(summer.config().name()),
+                    summer.running() ? "<gray>夏日活動：沙灘挖寶、西瓜大亂鬥、深潮海妖、漂流瓶" : "<gray>活動結束了，兌換還開著",
+                    summer.krakenRunning() ? "<green>海妖浮上星潮海灘了！" : summer.nextKrakenClock() == null ? ""
+                            : "<gray>海妖：下一次 <white>" + summer.nextKrakenClock(),
+                    summer.roundRunning() ? "<green>西瓜大亂鬥進行中！" : summer.nextRoundClock() == null ? ""
+                            : "<gray>西瓜大亂鬥：下一局 <white>" + summer.nextRoundClock(), "", "<yellow>左鍵：打開<dark_gray>（/summer）");
+            set(SLOT_SUMMER, summer.krakenRunning() || summer.roundRunning() ? glowing(shell) : shell);
         }
 
         int slot = FIRST_ITEM;
@@ -198,6 +210,10 @@ public final class WorldEventMenu extends Menu {
         }
         if (slot == SLOT_FESTIVAL && plugin.festival() != null && plugin.festival().visible()) {
             tw.exilecore.festival.FestivalModule.open(plugin, player);
+            return;
+        }
+        if (slot == SLOT_SUMMER && plugin.summer() != null && plugin.summer().visible()) {
+            tw.exilecore.summer.SummerModule.open(plugin, player);
             return;
         }
         if (slot == SLOT_TRAVEL && service.canTravel()) {

@@ -115,6 +115,7 @@ public final class SponsorService {
         this.plugin = plugin;
         this.config = config;
         this.perks = new TierPerks(plugin, this);
+        this.hideVanillaArmour = plugin.getConfig().getBoolean("cosmetics.hide_vanilla_armor", true); // 2026-11-03 照站長
         loadBoosts();
         recompute();
     }
@@ -2334,6 +2335,12 @@ public final class SponsorService {
         return cosmetic.isLimited() && festival != null && festival.visible() && festival.config().name().equals(cosmetic.limited());
     }
 
+    /** 2026-11-03：夏日活動「星潮祭」的限定時裝，規則跟萬燈夜一樣（各自掛各自的來源，兩個活動可以同時開）。 */
+    boolean summerPreview(final SponsorConfig.Cosmetic cosmetic) {
+        final tw.exilecore.summer.SummerService summer = plugin.summer();
+        return cosmetic.isLimited() && summer != null && summer.visible() && summer.config().name().equals(cosmetic.limited());
+    }
+
     /** 2026-11-02 照站長：拉霸機限定的時裝（營地拉霸機抽得到，不是絕版）：沒有的人也列出來、可以試穿。 */
     public static boolean slotsPrize(final SponsorConfig.Cosmetic cosmetic) {
         return cosmetic != null && tw.exilecore.slots.SlotsConfig.LIMITED_TAG.equals(cosmetic.limited());
@@ -2350,9 +2357,7 @@ public final class SponsorService {
         if (cosmetic.isEmote()) {
             return "動作不能試穿";
         }
-        if (cosmetic.isLimited() && !ownsCosmetic(player, id) && !festivalPreview(cosmetic) && !slotsPrize(cosmetic)) {
-            return "限定的時裝不能試穿"; // 2026-11-02：拉霸機抽得到的不算絕版，可以試穿
-        }
+        // 2026-11-03 照站長：限定、絕版的也能試穿（時裝櫃全部列出來，沒擁有的上鎖變灰）；這次之前限定的沒有就不能試穿
         if (cosmetic.skin() && !packSent()) {
             return "伺服器沒有送介面資源包，3D 時裝畫不出來";
         }
@@ -2427,7 +2432,40 @@ public final class SponsorService {
         final SponsorConfig.Cosmetic skin = transmog(player, look);
         if (skin != null) {
             applySkin(skin, look, display);
+        } else if (hideVanillaArmour && look.itemSlot() != null && look.itemSlot() != tw.exilecore.item.ItemSlot.MAIN_HAND
+                && look.itemSlot() != tw.exilecore.item.ItemSlot.OFF_HAND) {
+            hideArmour(display, look);
         }
+    }
+
+    /** 2026-11-03 照站長：沒套幻化時，玩家身上的原版盔甲全部隱藏（config.yml 的 cosmetics.hide_vanilla_armor；預設開）。 */
+    private final boolean hideVanillaArmour;
+
+    /**
+     * 2026-11-03 照站長：原版盔甲不畫在身上——穿戴元件指到資源包裡空的裝備資產（{@value tw.exilecore.web.UiPack#EMPTY_EQUIPMENT}，沒有任何圖層），
+     * 格子裡的圖示照舊。不能只拿掉資產代號：頭盔沒有資產時客戶端會把物品模型當頭上的東西畫出來（3D 頭飾就是這樣做的）。
+     * 只給顯示用的複本用（角色面板的裝備在虛擬欄位裡，身上四格本來就是複本）。
+     */
+    static void hideArmour(final ItemStack display, final Look look) {
+        final org.bukkit.inventory.EquipmentSlot equipment = switch (look) {
+            case HEAD -> org.bukkit.inventory.EquipmentSlot.HEAD;
+            case CHEST -> org.bukkit.inventory.EquipmentSlot.CHEST;
+            case LEGS -> org.bukkit.inventory.EquipmentSlot.LEGS;
+            case FEET -> org.bukkit.inventory.EquipmentSlot.FEET;
+            default -> null;
+        };
+        if (equipment == null) {
+            return;
+        }
+        display.setData(io.papermc.paper.datacomponent.DataComponentTypes.EQUIPPABLE,
+                io.papermc.paper.datacomponent.item.Equippable.equippable(equipment)
+                        .assetId(net.kyori.adventure.key.Key.key("exilecore", tw.exilecore.web.UiPack.EMPTY_EQUIPMENT)).build());
+        display.unsetData(io.papermc.paper.datacomponent.DataComponentTypes.DYED_COLOR);
+        display.editMeta(meta -> {
+            if (meta instanceof org.bukkit.inventory.meta.ArmorMeta armor) {
+                armor.setTrim(null);
+            }
+        });
     }
 
     /** 玩家選了要把箭袋的幻化顯示在手上（預設是；沒套幻化時箭袋本來就不顯示）。 */

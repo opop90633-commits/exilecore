@@ -1386,8 +1386,8 @@ final class SkillDeployables implements Listener {
                 continue;
             }
             final java.util.Optional<tw.exilecore.monster.MonsterData> data = plugin.monsters().data(candidate);
-            if (data.isEmpty()) {
-                continue;
+            if (data.isEmpty() || plugin.ailments() != null && plugin.ailments().ccImmune(candidate)) {
+                continue; // 2026-11-03：不可動搖不會被圖騰引走
             }
             final boolean boss = data.get().boss();
             if (boss) {
@@ -1790,7 +1790,7 @@ final class SkillDeployables implements Listener {
         }
         final LivingEntity trigger = near.getFirst();
         visuals.deployTrigger(item.build.definition().visual(), item.feet);
-        if (item.spec.root() > 0) {
+        if (item.spec.root() > 0 && !(plugin.ailments() != null && plugin.ailments().ccImmune(trigger))) { // 2026-11-03：不可動搖不會被定身
             trigger.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, (int) Math.round(item.spec.root() * 20), 9, false, true, true));
             visuals.root(trigger);
         }

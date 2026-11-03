@@ -406,9 +406,23 @@ public final class TownChannels implements Listener {
         return List.copyOf(towns);
     }
 
-    /** 有分流（兩條線以上）。 */
+    /**
+     * 有分流（開放的線兩條以上）。2026-11-03 照站長：只看開放的線（world.yml 的 open_channels）——只開第 1 線時
+     * 選單、/channel、回營地、從地圖出來全部當成沒有分線（大家都在第 1 線）；這次之前看載入了幾條線。
+     */
     public boolean enabled() {
-        return towns.size() > 1;
+        return openCount() > 1;
+    }
+
+    /** 2026-11-03：開放幾條線（world.yml 的 open_channels；0 或超過載入的線 = 全部）。 */
+    public int openCount() {
+        final int open = plugin.world() == null ? 0 : plugin.world().lore().campaignOpenChannels();
+        return open <= 0 ? towns.size() : Math.min(open, towns.size());
+    }
+
+    /** 2026-11-03：這個世界是關掉的線（隱藏、不能進）。 */
+    public boolean closed(final World world) {
+        return isChannel(world) && channelOf(world) > openCount();
     }
 
     /** 這個世界是營地的一條線（含劇情世界）。 */
@@ -516,6 +530,9 @@ public final class TownChannels implements Listener {
 
     /** 2026-10-22：這個玩家能不能換到這條線；可以回傳 null，不行回傳原因。 */
     public String switchProblem(final Player player, final World target) {
+        if (closed(target)) {
+            return "第 " + channelOf(target) + " 線暫時關閉（大家都在第 1 線）"; // 2026-11-03 照站長
+        }
         if (channelOf(target) > 1 && lockedToFirst(player)) {
             final int threshold = plugin.world() == null ? 0 : plugin.world().lore().campaignHighLevel();
             return "第 2 線起是給 " + threshold + " 級以上的角色用的（第 1 線留給 " + threshold + " 級以下）";
@@ -537,7 +554,7 @@ public final class TownChannels implements Listener {
     public World leastCrowdedFrom(final int from) {
         World best = null;
         int bestCount = Integer.MAX_VALUE;
-        for (int i = Math.max(0, from - 1); i < towns.size(); i++) {
+        for (int i = Math.max(0, from - 1); i < openCount(); i++) { // 2026-11-03：關掉的線不算
             final int count = population(towns.get(i));
             if (count < bestCount) {
                 best = towns.get(i);
@@ -583,6 +600,7 @@ public final class TownChannels implements Listener {
      * 每 10 tick 由區域模組呼叫：不管是怎麼進來的（組隊傳送、/tp、舊紀錄）都會被送走。管理員、創造、旁觀、還沒選角色的不動。
      */
     public void enforceLevel(final Player player) {
+        evictClosed(player); // 2026-11-03 照站長：關掉的線（open_channels 以外）有人就送回第 1 線
         if (!isChannel(player.getWorld()) || !lockedToFirst(player) || evicting.contains(player.getUniqueId())
                 || player.getGameMode() == org.bukkit.GameMode.CREATIVE || player.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
             return;
@@ -601,6 +619,29 @@ public final class TownChannels implements Listener {
             if (Boolean.TRUE.equals(done)) {
                 remember(player, first);
                 player.sendMessage(plugin.text().prefixed("<yellow>第 2 線起是給 " + threshold + " 級以上的角色用的，送你回營地第 <white>1</white> 線"));
+            }
+        });
+    }
+
+    /**
+     * 2026-11-03 照站長（分流先固定第 1 線，2、3 隱藏不能進）：人在關掉的線 → 送回第 1 線（同一個座標；營地外的送到出生點）。
+     * 管理員、創造、旁觀不動。
+     */
+    private void evictClosed(final Player player) {
+        if (!closed(player.getWorld()) || evicting.contains(player.getUniqueId()) || player.hasPermission(ExileCore.PERMISSION_ADMIN)
+                || player.getGameMode() == org.bukkit.GameMode.CREATIVE || player.getGameMode() == org.bukkit.GameMode.SPECTATOR) {
+            return;
+        }
+        final World first = towns.getFirst();
+        final Location target = inCampBox(player.getLocation()) ? mapTo(player.getLocation(), first) : first.getSpawnLocation();
+        final int channel = channelOf(player.getWorld());
+        evicting.add(player.getUniqueId());
+        player.setFallDistance(0);
+        tw.exilecore.core.Teleports.async(player, target).whenComplete((done, error) -> {
+            evicting.remove(player.getUniqueId());
+            if (Boolean.TRUE.equals(done)) {
+                remember(player, first);
+                player.sendMessage(plugin.text().prefixed("<gray>第 " + channel + " 線暫時關閉，送你回營地第 <white>1</white> 線"));
             }
         });
     }

@@ -1854,7 +1854,8 @@ public final class MinionService implements Listener, MinionHooks {
                     hit.damage(1.0, mob); // 數字由 CombatListener 換掉（MinionHooks），這裡的 1 只是觸發
                 }
                 if (knockback > 0 && hit.isValid() && !hit.isDead() && plugin.monsters() != null
-                        && !plugin.monsters().data(hit).map(data -> data.boss()).orElse(false)) {
+                        && !plugin.monsters().data(hit).map(data -> data.boss()).orElse(false)
+                        && !tw.exilecore.combat.Knockbacks.immune(hit)) { // 2026-11-03：不可動搖（擊退抗性 100%）也推不動
                     final Vector push = hit.getLocation().toVector().subtract(mob.getLocation().toVector()).setY(0);
                     if (push.lengthSquared() < 1e-6) {
                         push.setX(1);
@@ -2378,7 +2379,8 @@ public final class MinionService implements Listener, MinionHooks {
         final Set<String> tags = with.profile().tags();
         final double knockback = Math.max(0, minion.effective.apply(tw.exilecore.stats.StatKeys.SKILL_KNOCKBACK,
                 minion.effective.flat(tw.exilecore.stats.StatKeys.SKILL_KNOCKBACK, tags), tags));
-        if (knockback <= 0 || plugin.monsters() == null || plugin.monsters().data(target).map(data -> data.boss()).orElse(false)) {
+        if (knockback <= 0 || plugin.monsters() == null || plugin.monsters().data(target).map(data -> data.boss()).orElse(false)
+                || tw.exilecore.combat.Knockbacks.immune(target)) { // 2026-11-03：不可動搖也推不動
             return;
         }
         final Vector push = target.getLocation().toVector().subtract(minion.mob.getLocation().toVector()).setY(0);
@@ -2607,7 +2609,8 @@ public final class MinionService implements Listener, MinionHooks {
         final Attack bash = with(minion, musterProfile(minion).withLocal(List.of(Modifier.more(tw.exilecore.stats.StatKeys.STUN_BUILDUP,
                 AncestralForms.CHARGE_STUN_MORE, "圓盾衝鋒"))));
         strike(minion, target, bash);
-        final boolean boss = plugin.monsters().data(target).map(tw.exilecore.monster.MonsterData::boss).orElse(false);
+        final boolean boss = plugin.monsters().data(target).map(tw.exilecore.monster.MonsterData::boss).orElse(false)
+                || tw.exilecore.combat.Knockbacks.immune(target); // 2026-11-03：不可動搖也推不動
         if (target.isValid() && !target.isDead() && !boss && direction.lengthSquared() > 1e-4) {
             target.setVelocity(direction.multiply(0.8).setY(0.3));
         }
@@ -2917,7 +2920,8 @@ public final class MinionService implements Listener, MinionHooks {
         for (final LivingEntity near : hits) {
             strike(minion, near, slam);
             if (near.isValid() && !near.isDead() && plugin.monsters() != null
-                    && !plugin.monsters().data(near).map(data -> data.boss()).orElse(false)) {
+                    && !plugin.monsters().data(near).map(data -> data.boss()).orElse(false)
+                    && !tw.exilecore.combat.Knockbacks.immune(near)) { // 2026-11-03：不可動搖也推不動
                 final Vector push = near.getLocation().toVector().subtract(at.toVector()).setY(0);
                 if (push.lengthSquared() > 1e-4) {
                     near.setVelocity(push.normalize().multiply(0.5).setY(0.2)); // 擊退、推出落點

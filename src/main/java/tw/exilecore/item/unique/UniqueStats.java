@@ -107,6 +107,8 @@ public final class UniqueStats {
     public static final double UNHOLY_MIGHT_PERCENT = 30;
     /** 生命回復改成回復能量護盾（空殼護符）。 */
     public static final String REGEN_TO_ES = "flag.regen_to_es";
+    /** 2026-11-03 照 PoE2 Sacrosanctum（明誓聖幕）：回復成生命的承受傷害也回復成能量護盾（CombatListener 存回復時加一份到 Recoup.ES）。 */
+    public static final String LIFE_RECOUP_ALSO_ES = "flag.life_recoup_also_es";
     /** 不能使用其他戒指（計數之戒）。 */
     public static final String ONLY_RING = "flag.only_ring";
     /** 你身上的詛咒持續時間增加 x%（負的 = 減少；計數之戒）。 */
