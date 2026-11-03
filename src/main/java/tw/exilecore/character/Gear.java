@@ -128,6 +128,7 @@ public final class Gear {
      */
     public static String soloRingProblem(final ExileCore plugin, final PlayerState state, final ItemStack incoming, final int target) {
         final boolean incomingSolo = onlyRing(plugin, incoming);
+        final boolean incomingAuraRing = auraSlotRing(plugin, incoming);
         for (final int slot : RING_SLOTS) {
             if (slot == target) {
                 continue;
@@ -135,6 +136,9 @@ public final class Gear {
             final ItemStack other = state.jewellery(slot);
             if (other == null || other.isEmpty()) {
                 continue;
+            }
+            if (incomingAuraRing && auraSlotRing(plugin, other)) {
+                return "空座指環僅限配戴一個"; // 2026-11-04 照站長
             }
             if (onlyRing(plugin, other)) {
                 return "戴著" + itemName(plugin, other) + "（不能使用其他戒指）：另一個戒指欄不能放戒指";
@@ -144,6 +148,15 @@ public final class Gear {
             }
         }
         return null;
+    }
+
+    /** 2026-11-04 照站長「空座指環僅限配戴一個」：這件是不是空座指環（bases 的 aura_slot）。 */
+    static boolean auraSlotRing(final ExileCore plugin, final ItemStack stack) {
+        if (stack == null || stack.isEmpty() || plugin.items() == null) {
+            return false;
+        }
+        final ItemData data = plugin.items().read(stack).orElse(null);
+        return data != null && plugin.items().repository().auraSlotBase(data.base());
     }
 
     private static String itemName(final ExileCore plugin, final ItemStack stack) {

@@ -449,17 +449,19 @@ public final class ItemRenderer {
         final int runeSlots = Runes.slots(repository, base, data);
         if (runeSlots > 0 && (!data.runes().isEmpty() || data.identified())) {
             lore.add(line(SEPARATOR));
+            // 2026-11-04 照站長（淵座束帶）：符文那一行寫乘上符文效果增加之後的數字（照 PoE2）；這次之前寫符文原本的數字（+75），實際算的是 ×1.92
+            final double effect = Runes.effect(repository, data);
             for (final String id : data.runes()) {
                 final Runes.Rune rune = repository.rune(id);
                 if (rune == null) {
                     continue;
                 }
                 for (final Runes.Line runeLine : rune.on(base)) {
-                    lore.add(line("<#7fe0c8>◈ " + escape(runeLine.text()) + " <dark_gray>(" + escape(rune.name()) + ")"));
+                    lore.add(line("<#7fe0c8>◈ " + escape(Runes.scaledText(runeLine.text(), effect)) + " <dark_gray>(" + escape(rune.name()) + ")"));
                 }
                 for (final Runes.Line bonded : rune.bondedOn(base)) {
                     // 2026-10-27 照 PoE2：羈絆詞綴（只有昇華・聖賢智慧才有效果，灰字）
-                    lore.add(line("<dark_gray>  羈絆：" + escape(bonded.text())));
+                    lore.add(line("<dark_gray>  羈絆：" + escape(Runes.scaledText(bonded.text(), effect))));
                 }
             }
             final double runeEffect = repository.uniqueRuneEffect(data.unique());

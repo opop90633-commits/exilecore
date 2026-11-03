@@ -86,6 +86,10 @@ public final class MapModule implements Module {
                     if (plugin.skills() != null && plugin.skills().config().skill(extra.id()) == null) {
                         problems.add("maps.yml：巔峰 " + map.id() + " 的掉落寫了 skills.yml 沒有的技能寶石 " + extra.id() + "（不會掉）");
                     }
+                } else if ("base".equals(extra.kind())) {
+                    if (plugin.items().repository().base(extra.id()) == null) { // 2026-11-04
+                        problems.add("maps.yml：巔峰 " + map.id() + " 的掉落寫了沒有的基底 " + extra.id() + "（不會掉）");
+                    }
                 } else if (plugin.currencies().repository().get(extra.id()) == null) {
                     problems.add("maps.yml：巔峰 " + map.id() + " 的掉落寫了 currencies.yml 沒有的通貨 " + extra.id() + "（不會掉）");
                 }
@@ -108,6 +112,10 @@ public final class MapModule implements Module {
                 } else if ("skill".equals(extra.kind())) {
                     if (plugin.skills() != null && plugin.skills().config().skill(extra.id()) == null) {
                         problems.add("maps.yml：" + map.id() + " 的極境掉落寫了 skills.yml 沒有的技能寶石 " + extra.id() + "（不會掉）");
+                    }
+                } else if ("base".equals(extra.kind())) {
+                    if (plugin.items().repository().base(extra.id()) == null) { // 2026-11-04
+                        problems.add("maps.yml：" + map.id() + " 的極境掉落寫了沒有的基底 " + extra.id() + "（不會掉）");
                     }
                 } else if (plugin.currencies().repository().get(extra.id()) == null) {
                     problems.add("maps.yml：" + map.id() + " 的極境掉落寫了 currencies.yml 沒有的 " + extra.id() + "（不會掉）");

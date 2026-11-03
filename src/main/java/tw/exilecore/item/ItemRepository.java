@@ -71,6 +71,12 @@ public final class ItemRepository {
      * 一般掉落、地圖獎勵、商人、賭博都拿不到；這次之前跟一般基底一樣到處掉、商人也賭得到。舊物品照常能用。
      */
     private final java.util.Set<String> heistOnlyBases = new java.util.HashSet<>();
+    /** 2026-11-04 照 PoE2 的裂隙指環（+20%／+25% 品質上限）：bases 的 max_quality_bonus（基底代號 → 多幾 %）。 */
+    private final java.util.Map<String, Integer> maxQualityBonus = new java.util.HashMap<>();
+    /** 2026-11-04 照站長「攫握指環／日冕墜飾開符文孔」：飾品基底的符文孔（bases 的 rune_sockets；其他基底照 Runes.slots(base)）。 */
+    private final java.util.Map<String, Integer> baseRuneSockets = new java.util.HashMap<>();
+    /** 2026-11-04 照站長：戴著就多一格光環格的基底（bases 的 aura_slot: true；空座指環）。 */
+    private final java.util.Set<String> auraSlotBases = new java.util.HashSet<>();
     /** 載入時發現、但不擋啟動的問題（例如傳奇的基底被改名了）；物品模組啟動時印到主控台。 */
     private final List<String> warnings = new ArrayList<>();
     private List<String> rareNamePrefixes = List.of();
@@ -127,6 +133,9 @@ public final class ItemRepository {
         deletedUniques.clear();
         retiredBases.clear();
         heistOnlyBases.clear();
+        maxQualityBonus.clear();
+        baseRuneSockets.clear();
+        auraSlotBases.clear();
         reloadTimes.clear();
         grantedSkills.clear();
         warnings.clear();
@@ -153,6 +162,17 @@ public final class ItemRepository {
                 }
                 if (root.node(id).bool("heist_only", false)) {
                     heistOnlyBases.add(id); // 2026-10-28 照站長：劫盜專屬（特殊項鍊）；這次之前到處掉、商人賭得到
+                }
+                final int qualityBonus = root.node(id).integer("max_quality_bonus", 0);
+                if (qualityBonus > 0) {
+                    maxQualityBonus.put(id, qualityBonus); // 2026-11-04：裂隙指環
+                }
+                if (root.node(id).bool("aura_slot", false)) {
+                    auraSlotBases.add(id); // 2026-11-04：空座指環
+                }
+                final int runeSockets = root.node(id).integer("rune_sockets", 0);
+                if (runeSockets > 0) {
+                    baseRuneSockets.put(id, Math.min(6, runeSockets)); // 2026-11-04：攫握指環、日冕墜飾
                 }
             }
         }
@@ -464,6 +484,21 @@ public final class ItemRepository {
     /** 拿掉的基底嗎。 */
     public boolean retiredBase(final String id) {
         return id != null && retiredBases.contains(id);
+    }
+
+    /** 2026-11-04：戴著會多一格光環格的基底嗎（空座指環）。 */
+    public boolean auraSlotBase(final String id) {
+        return id != null && auraSlotBases.contains(id);
+    }
+
+    /** 2026-11-04：飾品基底自己寫的符文孔（bases 的 rune_sockets；沒寫 0）。 */
+    public int baseRuneSockets(final String id) {
+        return id == null ? 0 : baseRuneSockets.getOrDefault(id, 0);
+    }
+
+    /** 2026-11-04：這種基底的品質上限多幾 %（bases 的 max_quality_bonus；裂隙指環 20、精煉裂隙指環 25）。 */
+    public int maxQualityBonus(final String id) {
+        return id == null ? 0 : maxQualityBonus.getOrDefault(id, 0);
     }
 
     /** 2026-10-28：劫盜專屬的基底嗎（bases 的 heist_only: true）。 */

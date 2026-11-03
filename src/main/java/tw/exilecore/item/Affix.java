@@ -262,6 +262,17 @@ public record Affix(String id, AffixType type, String group, Set<String> spawnTa
      * 「附加 5(3–6) 到 12(10–14) 物理傷害」。上下限一樣（固定值）的不接。變數寫成 {名字/10} 的是小數（見 {@link AffixMod}）。
      */
     public static String substituteWithRanges(final String rawTemplate, final Map<String, Integer> vars, final Map<String, int[]> ranges) {
+        return substituteWithRanges(rawTemplate, vars, ranges, 1);
+    }
+
+    /**
+     * 2026-11-04 照站長「蝕變石變動詞綴要顯示骰出的數值 × 額外倍率」：corrupt 不是 1 時（蝕變石／聖化的倍率），
+     * 每個數值後面改寫「(骰出的數值×倍率)」，例如 48(39×1.22)；原本的範圍不寫（乘完會超出範圍）。
+     * 骰出的數值 = 現在的數值 ÷ 倍率（存檔裡只有乘完的數值）。這次之前跟一般詞綴一樣寫範圍，只在最後標 ✦×1.22。
+     */
+    public static String substituteWithRanges(final String rawTemplate, final Map<String, Integer> vars, final Map<String, int[]> ranges,
+                                              final double corrupt) {
+        final boolean corrupted = Math.abs(corrupt - 1) > 1e-9 && corrupt > 0;
         final String template = choices(rawTemplate, vars); // 2026-10-26
         final StringBuilder out = new StringBuilder();
         final java.util.regex.Matcher matcher = AffixMod.VARIABLE.matcher(template);
@@ -275,7 +286,14 @@ public record Affix(String id, AffixType type, String group, Set<String> spawnTa
                 final int divisor = AffixMod.divisorOf(matcher.group(2), template);
                 out.append(number(value, divisor));
                 final int[] range = ranges.get(matcher.group(1));
-                if (range != null && range.length == 2 && range[0] != range[1]) {
+                if (corrupted) {
+                    final int rolled = (int) Math.round(value / corrupt);
+                    if (rolled != value) {
+                        out.append('<').append(RANGE_COLOR).append(">(").append(number(rolled, divisor))
+                                .append(String.format(java.util.Locale.ROOT, "×%.2f", corrupt))
+                                .append(")</").append(RANGE_COLOR).append('>');
+                    }
+                } else if (range != null && range.length == 2 && range[0] != range[1]) {
                     // 2026-10-22：模板寫「-{value}%」的（石衛鎧的 -x% 抗性上限）範圍也帶負號：-1(-1～-5)%，以前寫成 -1(1–5)% 像是正的
                     final boolean negative = matcher.start() > 0 && template.charAt(matcher.start() - 1) == '-';
                     final String low = number(Math.min(range[0], range[1]), divisor);

@@ -113,7 +113,8 @@ class LineageSupportTest {
     void lineageRefusals() {
         assertNull(support("counter_current").refusal(config.skill("blazing_star_shell")));
         assertNull(support("split_rampart").refusal(config.skill("flame_curtain")));
-        assertEquals("要立牆的技能（焰幕、霜壁）", support("split_rampart").refusal(config.skill("blazing_star_shell")));
+        assertEquals("要立牆的技能（焰幕、霜壁、土壁擊、凍壁矢）", support("split_rampart").refusal(config.skill("blazing_star_shell")));
+        assertNull(support("split_rampart").refusal(config.skill("frozen_wall_shaft")), "2026-11-03 照 PoE2：凍壁矢也是立牆的技能");
         assertNull(support("frenzied_rift").refusal(config.skill("flame_vein_rift")));
         assertNotNull(support("frenzied_rift").refusal(config.skill("blazing_star_shell")));
         assertNull(support("ember_leap").refusal(config.skill("soaring_smash")));

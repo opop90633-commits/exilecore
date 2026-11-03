@@ -399,7 +399,7 @@ public final class CurrencyService {
                         data.setOmen(null);
                     }
                 }
-                case CATALYST -> Crafting.applyCatalyst(type, data);
+                case CATALYST -> Crafting.applyCatalyst(type, data, Crafting.catalystMax(items.repository(), data)); // 2026-11-04：裂隙指環品質上限
                 case RUNE -> Crafting.applyRune(type, data);
                 case OMEN -> Crafting.attachOmen(type, data);
                 default -> {

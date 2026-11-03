@@ -118,7 +118,9 @@ public final class Runes {
             }
         }
         // 2026-10-26：工匠石拿掉了，符文孔照基底全開（中間那段時間做出來、記著 0 孔的也一樣全開）
-        return slots(base) + extra;
+        // 2026-11-04 照站長：攫握指環、日冕墜飾（bases 的 rune_sockets）有自己的符文孔；嵌的符文照防具那一套（手套、頭盔都是防具）
+        final int own = repository == null || base == null ? 0 : repository.baseRuneSockets(base.id());
+        return Math.max(slots(base), own) + extra;
     }
 
     static Map<String, Rune> load(final Path dataFolder) throws IOException {
@@ -182,6 +184,27 @@ public final class Runes {
             }
         }
         return Math.max(0, effect);
+    }
+
+    /**
+     * 2026-11-04：符文說明裡的數字乘上符文效果（effect 是 {@link #effect} 的倍率）：整數照四捨五入，有小數的留一位。
+     * 倍率 1 原樣回傳。說明裡的數字都是那條符文的數值（修飾器也是整條乘 effect），所以全部一起乘。
+     */
+    public static String scaledText(final String text, final double effect) {
+        if (text == null || Math.abs(effect - 1) < 1e-9) {
+            return text;
+        }
+        final java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\d+(?:\\.\\d+)?").matcher(text);
+        final StringBuilder out = new StringBuilder();
+        while (matcher.find()) {
+            final String number = matcher.group();
+            final double value = Double.parseDouble(number) * effect;
+            final String scaled = number.contains(".") || Math.abs(value - Math.round(value)) >= 0.05 && value < 10
+                    ? String.format(java.util.Locale.ROOT, "%.1f", value) : Long.toString(Math.round(value));
+            matcher.appendReplacement(out, java.util.regex.Matcher.quoteReplacement(scaled));
+        }
+        matcher.appendTail(out);
+        return out.toString();
     }
 
     /** 嵌在武器上、改武器自己數值的符文修飾器（2026-10-17，LocalMods 用；已乘上傳奇的符文效果增加）。 */
@@ -286,6 +309,24 @@ public final class Runes {
             }
         }
         return total;
+    }
+
+    /**
+     * 2026-11-04 照站長「增加 % 護甲／閃避可以防止插進日冕墜飾跟攫握指環嗎」：嵌在飾品（沒有護甲、閃避、能量護盾）上
+     * 完全沒有效果的符文（防具那一套只有「增加 x% 護甲／閃避／能量護盾」這類本地的）回傳 true。原作嵌了也沒效果，我們直接擋下來。
+     */
+    public static boolean uselessOn(final ItemBase base, final Rune rune) {
+        if (base == null || rune == null || !base.isJewellery()) {
+            return false;
+        }
+        for (final Line line : rune.on(base)) {
+            for (final AffixMod mod : line.mods()) {
+                if (!isDefenceIncrease(mod) && !ItemStats.isArmourLocal(base, mod)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /** 「增加 x% 護甲／閃避／能量護盾」（沒有標籤的 INCREASED）：嵌在防具上是本地的。 */

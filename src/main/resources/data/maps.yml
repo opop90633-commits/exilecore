@@ -1468,6 +1468,7 @@ finals:
           - { support: realm_pierce_rip, chance: 0.01 }
           - { skill: fissure_hand, chance: 0.01 }
           - { skill: fissure_spread, chance: 0.01 }
+          - { base: jring_breach_refined, chance: 0.01 }   # 2026-11-04 照站長「裂痕王新增 1% 掉落的精煉裂隙指環」（魔法或稀有、未鑑定；這次之前精煉裂隙指環在劫盜掉）
 
   exile_king:
     name: 無名者競技場

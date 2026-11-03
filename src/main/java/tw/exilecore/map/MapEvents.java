@@ -1073,6 +1073,11 @@ final class MapEvents implements Listener {
                         deliver(player, center, new MonsterData(event.instance.level(), MonsterRarity.MAGIC, List.of(), "裂隙"), uniques, 0);
                     }
                     rollTicket(MapEventConfig.Kind.BREACH, player, center, event.bonus ? BONUS_TICKET : 1.0); // 2026-10-18：入場券
+                    // 2026-11-04 照站長「裂隙指環放進裂痕掉落」：各擲一次（吃物品稀有度），魔法或稀有、未鑑定；這次之前裂隙指環在劫盜掉
+                    final DropTable.Drop ring = eventBase(MapEventConfig.Kind.BREACH, event.instance, player, random);
+                    if (ring != null) {
+                        deliver(player, center, new MonsterData(event.instance.level(), MonsterRarity.MAGIC, List.of(), "裂隙"), List.of(ring), 0);
+                    }
                 }
             }
             return;
@@ -1200,6 +1205,21 @@ final class MapEvents implements Listener {
             }
         }
         return drops;
+    }
+
+    /** 2026-11-04：事件的特殊基底（map_events.yml 的 breach.ring 裂隙指環、abyss.ring 淵印指環）；沒中、沒設定或這張圖等級不夠回傳 null。 */
+    private DropTable.Drop eventBase(final MapEventConfig.Kind kind, final MapInstance instance, final Player player, final RandomGenerator random) {
+        final MapEventConfig.EventBase setting = config.eventBase(kind);
+        final tw.exilecore.item.ItemBase base = setting == null ? null : plugin.items().repository().base(setting.base());
+        if (base == null || base.dropLevel() > instance.level()) {
+            return null;
+        }
+        final tw.exilecore.loot.LootBonus.Bonus bonus = tw.exilecore.loot.LootBonus.of(plugin, player)
+                .plus(instance.stats().quantity() / 100.0, instance.stats().rarity() / 100.0);
+        if (random.nextDouble() >= Math.min(1, bonus.rare(setting.chance()))) {
+            return null;
+        }
+        return DropTable.Drop.equipment(MapRewards.specialBase(plugin, base, instance.level(), random));
     }
 
     /** 隨機一種這類操作的通貨（掉落等級夠的）；沒有回傳 null。 */
@@ -1649,6 +1669,11 @@ final class MapEvents implements Listener {
             }
             // 深淵裂縫的專屬傳奇（有份的人各擲一次）
             rolled.addAll(eventUniques(MapEventConfig.Kind.ABYSS, instance, player, random));
+            // 2026-11-04 照站長「淵印指環放進深淵」：有份的人各擲一次（魔法或稀有、未鑑定）
+            final DropTable.Drop signet = eventBase(MapEventConfig.Kind.ABYSS, instance, player, random);
+            if (signet != null) {
+                rolled.add(signet);
+            }
             final long gold = drops.rollGold(level, MonsterRarity.RARE, quantity, random) * Math.max(1, settings.rolls());
             deliver(player, at, data, rolled, gold);
             rollTicket(MapEventConfig.Kind.ABYSS, player, at, event.bonus ? BONUS_TICKET : 1.0); // 2026-10-18：入場券

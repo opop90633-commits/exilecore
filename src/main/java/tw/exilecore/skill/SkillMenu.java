@@ -51,6 +51,8 @@ public final class SkillMenu extends Menu {
     private static final int SLOT_SELECTED = 15;
     private static final int SLOT_LEVEL_UP = 16;
     private static final int SLOT_TAKE_OUT = 17;
+    /** 2026-11-04 照站長：空座指環的光環格（滑鼠按鍵格右邊；位置是 SkillLoadout.RING_AURA）。 */
+    private static final int SLOT_RING_AURA = 14;
     /** 2026-10-29 照站長（PoE2 的 Set Minion Count）：選起來的是精魂召喚時，設定要帶幾隻。 */
     private static final int SLOT_MINION_COUNT = 25;
     /** 換頁（技能三頁）。 */
@@ -76,7 +78,7 @@ public final class SkillMenu extends Menu {
     private boolean changed;
 
     /** 游標上拿著什麼（決定哪些格子要亮、哪些要變暗）。 */
-    private enum Holding { NONE, SKILL_GEM, SUPPORT_GEM, UNCUT_SKILL, SOCKET_ORB, RESONANCE_ORB, CORRUPT_ORB, OTHER } // 2026-10-18：共鳴石
+    private enum Holding { NONE, SKILL_GEM, SUPPORT_GEM, UNCUT_SKILL, SOCKET_ORB, RESONANCE_ORB, CORRUPT_ORB, CORRUPT_OMEN, OTHER } // 2026-10-18：共鳴石；2026-11-04：必變籤
 
     /** 拿著的東西放在某一格：BEST＝放這裡（亮起來）、SWAP＝可以放，但會換下原本的、NO＝不能放（變暗）。 */
     private enum Fit { BEST, SWAP, NO }
@@ -96,6 +98,12 @@ public final class SkillMenu extends Menu {
             return new Hint(Fit.NO, "<red>" + ItemRenderer.escape(problem));
         }
     }
+
+    /**
+     * 2026-11-04 照站長「讓技能介面那格也能放必變籤」：拿必變籤點技能就掛上（先從游標扣一張），下一次在這個面板用蝕變石腐化技能寶石一定有變化；
+     * 關掉面板還沒用到的話還給玩家。這次之前技能面板放不進星籤。
+     */
+    private CurrencyType armedOmen;
 
     public SkillMenu(final ExileCore plugin, final Player player, final SkillService service) {
         super(plugin, player, 6, "<dark_gray>技能");
@@ -188,7 +196,47 @@ public final class SkillMenu extends Menu {
                 set(RAIL_START + i, drawn.rail());
             }
         }
+        drawRingAura(state, loadout, holding, cursor);
         drawSockets(loadout, holding, cursor);
+    }
+
+    /**
+     * 2026-11-04 照站長「空座指環新增一個可放光環類的格子（效果算開啟）」：戴著空座指環時能放一個光環（不用綁按鍵就開著）。
+     * 沒戴、格子是空的：灰色說明；沒戴、裡面有光環：照常畫，標「沒戴空座指環，沒開」。
+     */
+    private void drawRingAura(final PlayerState state, final SkillLoadout loadout, final Holding holding, final ItemStack cursor) {
+        final SkillLoadout.Entry entry = loadout.skill(SkillLoadout.RING_AURA);
+        if (entry == null) {
+            if (!loadout.ringAuraNow()) {
+                set(SLOT_RING_AURA, icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>空座指環的光環格",
+                        "<gray>戴著空座指環時，這一格可以放一個光環類的技能", "<gray>放進去的光環不用綁按鍵，一直開著"));
+                return;
+            }
+            if (holding == Holding.SKILL_GEM) {
+                final GemData gem = gems.read(cursor).orElse(null);
+                final SkillDefinition definition = gem == null || gem.entry() == null ? null : service.config().skill(gem.entry().skillId());
+                final String problem = GemService.ringAuraProblem(loadout, SkillLoadout.RING_AURA, definition);
+                set(SLOT_RING_AURA, problem == null
+                        ? targetHighlight(icon(Material.LIME_STAINED_GLASS_PANE, "<green>▶ 光環格（空座指環）", "<green>放這裡：這個光環一直開著"))
+                        : icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>光環格（空座指環）", "<red>" + ItemRenderer.escape(problem)));
+                return;
+            }
+            set(SLOT_RING_AURA, icon(Material.LIGHT_BLUE_STAINED_GLASS_PANE, "<#8fd3ff>光環格（空座指環）",
+                    "<gray>拿光環類的技能寶石點這裡放進來", "<gray>不用綁按鍵，一直開著"));
+            return;
+        }
+        final Drawn drawn = skillIcon(state, loadout, SkillLoadout.RING_AURA, holding, cursor);
+        ItemStack stack = drawn.icon();
+        if (!loadout.ringAuraNow()) {
+            stack = icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>光環格：" + ItemRenderer.escape(skillName(entry)),
+                    "<red>沒戴空座指環：這個光環沒開", "<yellow>Shift＋點一下：取出成技能寶石");
+        }
+        set(SLOT_RING_AURA, stack);
+    }
+
+    private String skillName(final SkillLoadout.Entry entry) {
+        final SkillDefinition definition = service.config().skill(entry.skillId());
+        return definition == null ? entry.skillId() : definition.name();
     }
 
     /** 右邊的「選起來的技能」、⬆ 升級、取出成寶石。 */
@@ -360,6 +408,9 @@ public final class SkillMenu extends Menu {
         }
         if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.CORRUPT) {
             return Holding.CORRUPT_ORB; // 2026-10-23：蝕變石腐化技能寶石
+        }
+        if (corruptOmen(currency)) {
+            return Holding.CORRUPT_OMEN; // 2026-11-04：必變籤
         }
         return currency != null && currency.isSkillCurrency() ? Holding.SOCKET_ORB : Holding.OTHER;
     }
@@ -556,7 +607,15 @@ public final class SkillMenu extends Menu {
             }
             case CORRUPT_ORB -> {
                 return entry.corrupted() ? Hint.no("這顆技能寶石已經腐化過了")
+                        : armedOmen != null ? Hint.best("放這裡：腐化，掛著" + ItemRenderer.escape(armedOmen.name()) + "一定有變化（等級 ±1／輔助孔 ±1／品質變動）")
                         : Hint.best("放這裡：腐化（沒變化／等級 ±1／輔助孔 ±1／品質變動，之後不能再升級、開孔、加品質）");
+            }
+            case CORRUPT_OMEN -> {
+                // 2026-11-04：必變籤掛在面板上（不是掛在某一顆），所以點哪一格都可以
+                final String problem = GemService.corruptProblem(entry);
+                return armedOmen != null ? Hint.no("已經掛著一張" + armedOmen.name() + "了")
+                        : problem != null ? Hint.no(problem)
+                        : Hint.best("放這裡：掛上必變籤（下一次用蝕變石腐化技能一定有變化）");
             }
             case OTHER -> {
                 return Hint.no("這個東西不能放在技能面板");
@@ -998,6 +1057,25 @@ public final class SkillMenu extends Menu {
         }
         final ClickType click = event.getClick();
         final SkillLoadout loadout = plugin.players().get(player).skills();
+        if (slot == SLOT_RING_AURA) {
+            // 2026-11-04：空座指環的光環格：點一下選取（看輔助孔、升級），Shift＋點一下取出；不能綁按鍵
+            pendingKey = -1;
+            if (loadout.skill(SkillLoadout.RING_AURA) == null) {
+                return;
+            }
+            if (click.isShiftClick()) {
+                takeOut(SkillLoadout.RING_AURA);
+                return;
+            }
+            if (click == ClickType.NUMBER_KEY) {
+                fail("光環格不用綁按鍵（戴著空座指環就開著）");
+                return;
+            }
+            selected = selected == SkillLoadout.RING_AURA ? -1 : SkillLoadout.RING_AURA;
+            click(1.4f);
+            redraw();
+            return;
+        }
         if (slot == SLOT_SELECTED) {
             if (click == ClickType.SHIFT_RIGHT && selected >= 0) {
                 final SkillLoadout.Entry entry = loadout.skill(selected);
@@ -1112,9 +1190,10 @@ public final class SkillMenu extends Menu {
     private void onCursorClick(final int slot, final ItemStack cursor, final InventoryClickEvent event) {
         final GemData gem = gems.read(cursor).orElse(null);
         final CurrencyType currency = plugin.currencies().read(cursor).orElse(null);
-        final boolean skillSlot = slot >= SKILL_START && slot < SKILL_START + SkillLoadout.PAGE_SIZE;
+        final boolean ringSlot = slot == SLOT_RING_AURA; // 2026-11-04：空座指環的光環格當一個技能格
+        final boolean skillSlot = slot >= SKILL_START && slot < SKILL_START + SkillLoadout.PAGE_SIZE || ringSlot;
         final boolean socketSlot = slot >= SUPPORT_START && slot < SUPPORT_START + SkillLoadout.MAX_SOCKETS;
-        final int position = skillSlot ? page * SkillLoadout.PAGE_SIZE + slot - SKILL_START : selected;
+        final int position = ringSlot ? SkillLoadout.RING_AURA : skillSlot ? page * SkillLoadout.PAGE_SIZE + slot - SKILL_START : selected;
         if (!skillSlot && !socketSlot) {
             fail("拿著東西只能點技能或輔助孔");
             return;
@@ -1132,7 +1211,29 @@ public final class SkillMenu extends Menu {
         }
         if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.CORRUPT) {
             // 2026-10-23：蝕變石點技能：腐化那顆技能寶石（照 PoE2）
-            apply(event, cursor, position < 0 ? GemService.Change.fail("先點一個技能") : gems.corrupt(player, position, currency));
+            final GemService.Change change = position < 0 ? GemService.Change.fail("先點一個技能") : gems.corrupt(player, position, currency, armedOmen);
+            if (!change.failed()) {
+                armedOmen = null; // 2026-11-04：必變籤用掉了（GemService 記消耗）
+            }
+            apply(event, cursor, change);
+            return;
+        }
+        if (corruptOmen(currency)) {
+            // 2026-11-04 照站長（PoE2 的 Omen of Corruption 對技能寶石也有用）：拿必變籤點技能＝掛上，游標扣一張
+            final SkillLoadout.Entry target = position < 0 ? null : plugin.players().get(player).skills().skill(position);
+            final String problem = armedOmen != null ? "已經掛著一張" + armedOmen.name() + "了" : GemService.corruptProblem(target);
+            if (problem != null) {
+                fail(position < 0 ? "先點一個技能" : problem);
+                return;
+            }
+            armedOmen = currency;
+            player.sendMessage(plugin.text().prefixed("<#d20000>掛上" + ItemRenderer.escape(currency.name())
+                    + "<gray>：下一次用蝕變石腐化技能寶石一定有變化（關掉面板沒用到會還給你）"));
+            apply(event, cursor, GemService.Change.ok(null));
+            return;
+        }
+        if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.OMEN) {
+            fail("技能寶石只能用必變籤（其他星籤要在工作台用在裝備上）"); // 2026-11-04
             return;
         }
         if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.RESONANCE) {
@@ -1142,7 +1243,7 @@ public final class SkillMenu extends Menu {
             return;
         }
         if (gem == null) {
-            fail("這裡只能放寶石、鑿星石、共鳴石與蝕變石");
+            fail("這裡只能放寶石、鑿星石、共鳴石、蝕變石與必變籤"); // 2026-11-04：加必變籤
             return;
         }
         final GemService.Change change = switch (gem.kind()) {
@@ -1294,12 +1395,24 @@ public final class SkillMenu extends Menu {
         plugin.players().display(player, state);
     }
 
+    /** 2026-11-04：腐化時一定有變化的星籤（必變籤；照 omen 的 effect，不寫死代號）。 */
+    private static boolean corruptOmen(final CurrencyType currency) {
+        return currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.OMEN && currency.omen() != null
+                && currency.omen().effect() == CurrencyType.Omen.Effect.ALWAYS_CHANGE
+                && currency.omen().triggers().contains(tw.exilecore.currency.CurrencyOperation.CORRUPT);
+    }
+
     private void click(final float pitch) {
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, SoundCategory.PLAYERS, 0.5f, pitch);
     }
 
     @Override
     protected void onClose() {
+        if (armedOmen != null) {
+            // 2026-11-04：掛著沒用到的必變籤還給玩家
+            gems.give(player, plugin.currencies().create(armedOmen, 1));
+            armedOmen = null;
+        }
         if (changed) {
             plugin.players().markDirty(player);
             plugin.characters().save(player);

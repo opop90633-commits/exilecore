@@ -172,6 +172,9 @@ public final class SponsorModule implements Module, Listener {
             return;
         }
         final Player player = event.getPlayer();
+        if (models != null) { // 2026-11-03：BetterModel 重登長回來的試穿、換掉的時裝殘留：上線 2 秒後清（等 BetterModel 載入完）
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> models.purgeLeftovers(player), 40);
+        }
         if (service.loaded(player)) {
             announceJoin(player, event.joinMessage());
             event.joinMessage(null);

@@ -611,6 +611,12 @@ public final class PlayerStateService {
             tw.exilecore.ascendancy.AscBuild.grantedSkills(plugin, extra, level, granted);
             // 面板跟著角色一起存檔（定期、登出）；2026-10-27：＋武器的品質；2026-10-29：脫下武器馬上拿掉賦予的技能（角色載入好了才拿）
             state.skills().syncGranted(granted, ascendancyQuality(grantedQuality(active), weaponGranted.keySet(), granted.keySet()), state.isLoaded());
+            // 2026-11-04 照站長：戴著空座指環（bases 的 aura_slot）時技能面板多一格光環格
+            boolean ringAura = false;
+            for (final EquippedItem item : active) {
+                ringAura |= item.base() != null && plugin.items().repository().auraSlotBase(item.base().id());
+            }
+            state.skills().setRingAuraNow(ringAura);
             // 2026-10-28 照 PoE2：賦予的技能的孔照等級；換了等級低的武器、孔變少，多出來那幾孔的寶石放回背包
             final List<tw.exilecore.character.SkillLoadout.Overflow> overflow = state.skills().drainOverflow();
             if (!overflow.isEmpty() && plugin.skills() != null) {

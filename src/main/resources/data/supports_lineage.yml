@@ -93,7 +93,7 @@ supports:
 
   split_rampart:            # Ahn's Citadel
     name: 裂垣
-    description: 被輔助的牆（焰幕、霜壁）改成沿著一道往前的裂縫立起來（從你腳下往準心延伸），牆的長度增加 65%。
+    description: 被輔助的牆（焰幕、霜壁、土壁擊）改成沿著一道往前的裂縫立起來（從你腳下往準心延伸）；凍壁矢落點的兩道冰牆改成沿著飛行方向往前一道。牆的長度增加 65%。   # 2026-11-03 照站長：凍壁矢也能掛
     icon: BRICK
     tier: 3
     source: lineage

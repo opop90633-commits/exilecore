@@ -2112,7 +2112,16 @@ final class ProjectileEngine implements Listener {
             final int crystalCount = IceCrystals.count(shot.build, plugin.players().sheet(owner));
             if (crystalCount > 0) {
                 final org.bukkit.util.Vector dir = shot.direction == null ? new org.bukkit.util.Vector(1, 0, 0) : shot.direction.clone();
-                final CrystalWalls.Spec walls = CrystalWalls.get(shot.build.definition().id());
+                CrystalWalls.Spec walls = CrystalWalls.get(shot.build.definition().id());
+                if (walls != null && owner != null) {
+                    // 2026-11-03 照站長＋PoE2（Ahn's Citadel 也能輔助 Glacial Bolt：Wall 類型）：掛了裂垣——兩道 V 形改成從落點沿著飛行方向往前一道，
+                    //   長度增加 65%（冰晶總數不變，全部排在這一道）；這次之前裂垣掛不上凍壁矢
+                    final tw.exilecore.stats.StatSheet effective = shot.build.profile().effective(plugin.players().sheet(owner));
+                    if (effective.flat(tw.exilecore.stats.LineageKeys.WALL_FISSURE, shot.build.profile().tags()) > 0) {
+                        final double longer = Math.max(0.1, 1 + effective.increased(tw.exilecore.stats.LineageKeys.WALL_LENGTH, shot.build.profile().tags()));
+                        walls = new CrystalWalls.Spec(1, walls.length() * longer, walls.spacing(), 0, true);
+                    }
+                }
                 if (walls != null) {
                     // 2026-11-01 照 PoE2 Glacial Bolt：從落點長出兩道冰牆（CrystalWalls）；這次之前跟弩箭垂直排成一直線
                     plugin.skills().crystals().spawnAt(owner, shot.build, at, CrystalWalls.offsets(walls, dir.getX(), dir.getZ(), crystalCount));

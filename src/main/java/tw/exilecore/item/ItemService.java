@@ -242,7 +242,8 @@ public final class ItemService {
         }
         // 2026-10-17：舊 bug 揭露出兩條同一種的：第二條換回隱匿詞綴（重新揭露）
         try {
-            if (Veiled.dedupe(data.get(), repository, random())) {
+            // 2026-11-04：隱匿傳奇的隱匿前綴／後綴數量改了的也一起補正（Veiled.syncUniqueVeiled）
+            if (Veiled.dedupe(data.get(), repository, random()) | Veiled.syncUniqueVeiled(data.get(), repository, random())) {
                 codec.write(stack, data.get());
                 renderer.render(stack, data.get());
                 return true;

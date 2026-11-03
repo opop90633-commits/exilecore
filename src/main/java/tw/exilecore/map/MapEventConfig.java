@@ -226,6 +226,14 @@ public final class MapEventConfig {
     private double breachQuantity = 50;
     /** 裂隙怪死掉時掉催化劑的機率。 */
     private double catalystChance = 0.06;
+    /**
+     * 2026-11-04 照站長「裂隙指環放進裂痕掉落」「淵印指環放進深淵」：事件完成時有份的人各擲一次，掉一個這種基底
+     * （breach.ring、abyss.ring：{ base, chance }；沒寫不掉）。
+     */
+    public record EventBase(String base, double chance) {
+    }
+
+    private final Map<Kind, EventBase> eventBases = new java.util.EnumMap<>(Kind.class);
     /** 寶箱的每一顆星魄留下來的機率（2026-10-24，map_events.yml 的 strongbox.essence_chance）。 */
     private double essenceChance = 1;
     // 流寇
@@ -372,6 +380,7 @@ public final class MapEventConfig {
         breachEnd = 14;
         breachQuantity = 50;
         catalystChance = 0.06;
+        eventBases.clear();
         essenceChance = 1;
         exileLife = 4.0;
         exileDamage = 1.3;
@@ -440,6 +449,8 @@ public final class MapEventConfig {
         breachEnd = other.breachEnd;
         breachQuantity = other.breachQuantity;
         catalystChance = other.catalystChance;
+        eventBases.clear();
+        eventBases.putAll(other.eventBases);
         essenceChance = other.essenceChance;
         exileLife = other.exileLife;
         exileDamage = other.exileDamage;
@@ -562,6 +573,7 @@ public final class MapEventConfig {
         }
         breachQuantity = clamp(breach.decimal("quantity_bonus", breachQuantity), 0, 1000);
         catalystChance = clamp(breach.decimal("catalyst_chance", catalystChance), 0, 1);
+        readEventBase(Kind.BREACH, breach); // 2026-11-04：裂隙指環
         uniqueChance.put(Kind.BREACH, clamp(breach.decimal("unique_chance", uniqueChance.get(Kind.BREACH)), 0, 1));
 
         final YamlNode exile = root.node("exile");
@@ -583,6 +595,7 @@ public final class MapEventConfig {
 
         // 2026-10-18：深淵裂縫
         final YamlNode abyssNode = root.node("abyss");
+        readEventBase(Kind.ABYSS, abyssNode); // 2026-11-04：淵印指環
         {
             final Abyss base = abyss;
             final int[] length = abyssNode.has("length") ? abyssNode.range("length") : new int[] {base.minLength(), base.maxLength()};
@@ -931,6 +944,22 @@ public final class MapEventConfig {
 
     public double catalystChance() {
         return catalystChance;
+    }
+
+    /** 2026-11-04：這種事件完成時掉的基底（裂隙指環、淵印指環；沒有 null）。 */
+    public EventBase eventBase(final Kind kind) {
+        return eventBases.get(kind);
+    }
+
+    private void readEventBase(final Kind kind, final YamlNode node) {
+        if (node == null || !node.has("ring")) {
+            return;
+        }
+        final YamlNode ring = node.node("ring");
+        final String base = ring.string("base", null);
+        if (base != null && !base.isBlank()) {
+            eventBases.put(kind, new EventBase(base.trim(), clamp(ring.decimal("chance", 0), 0, 1)));
+        }
     }
 
     public double essenceChance() {

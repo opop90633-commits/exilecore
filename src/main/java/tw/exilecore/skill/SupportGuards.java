@@ -384,6 +384,10 @@ public final class SupportGuards {
 
     /** 2026-11-01：{@link #parityRefusal} 那幾顆的「可以輔助：」說明（不是那幾顆回傳 null）。 */
     static String parityText(final SupportDefinition support) {
+        if ("split_rampart".equals(support.id())) {
+            // 2026-11-03 照站長（裂垣看起來像什麼範圍技能都能掛）：實際只掛得上一字排開的牆（LineageRules.refusal）；這次之前寫「範圍技能（召喚物除外）」
+            return "立牆的技能（焰幕、霜壁、土壁擊、凍壁矢）";
+        }
         if (support.flags(tw.exilecore.stats.SupportRuleKeys.GROUND_DURATION)) {
             return "產生地面效果的技能（召喚物除外）";
         }

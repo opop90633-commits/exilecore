@@ -155,7 +155,8 @@ public final class LineageRules {
         final Set<String> tags = skill.tags();
         return switch (support.id()) {
             case "split_rampart" -> skill.params() != null && skill.params().zone() != null && skill.params().zone().line()
-                    ? null : "要立牆的技能（焰幕、霜壁）";
+                    || CrystalWalls.get(skill.id()) != null // 2026-11-03 照 PoE2：凍壁矢（落點長冰牆）也是立牆的技能
+                    ? null : "要立牆的技能（焰幕、霜壁、土壁擊、凍壁矢）";
             case "abyss_gift", "wounded_fight" -> persistentMinion(skill) ? null : "要常駐的召喚物技能";
             case "dull_spirit" -> skill.summon() != null ? null : "要叫召喚物的技能";
             case "ember_judgment" -> tags.contains(Tags.FIRE) ? null : "要火焰法術";

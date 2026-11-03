@@ -83,6 +83,48 @@ public final class Veiled {
     }
 
     /**
+     * 2026-11-04 照站長（選 1）：隱匿傳奇的隱匿前綴／後綴數量改了（淵瞳面具、淵堞巨盾、淵覆法衣、淵踏護腿拿掉隱匿前綴：
+     * 防具沒有揭露前綴，揭露不了），已經掉出來的照現在的 uniques.yml 補正：還沒揭露的多出來就拿掉、少了就補隱匿詞綴。
+     * 已經揭露的不動（算在數量裡）。不是隱匿傳奇、身上也沒有隱匿／揭露詞綴的不動（那種照 {@link #addUniqueVeiled}）。回傳有沒有改。
+     */
+    public static boolean syncUniqueVeiled(final ItemData data, final ItemRepository repository, final RandomGenerator random) {
+        if (data.unique() == null || !hasSpecial(data)) {
+            return false;
+        }
+        final List<AffixType> wanted = repository.uniqueVeiled(data.unique());
+        boolean changed = false;
+        for (final AffixType type : List.of(AffixType.PREFIX, AffixType.SUFFIX)) {
+            final String veiledId = type == AffixType.PREFIX ? VEILED_PREFIX : VEILED_SUFFIX;
+            int want = 0;
+            for (final AffixType each : wanted) {
+                if (each == type) {
+                    want++;
+                }
+            }
+            int have = 0;
+            for (final RolledAffix rolled : data.affixes()) {
+                final Affix affix = repository.affix(rolled.id());
+                if (rolled.id().equals(veiledId) || isUnveiled(rolled.id()) && affix != null && affix.type() == type) {
+                    have++;
+                }
+            }
+            for (int i = data.affixes().size() - 1; i >= 0 && have > want; i--) {
+                if (data.affixes().get(i).id().equals(veiledId)) {
+                    data.affixes().remove(i);
+                    have--;
+                    changed = true;
+                }
+            }
+            final Affix veiled = repository.affix(veiledId);
+            for (; have < want && veiled != null; have++) {
+                data.affixes().add(fresh(veiledId, veiled.tiers().getFirst(), random));
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    /**
      * 2026-10-17：修正舊的 bug 留下來的重複揭露詞綴——同一個群組出現第二條時，第二條（含之後的）換回隱匿詞綴（同一種前綴／後綴），
      * 讓玩家重新揭露。回傳有沒有改。
      */

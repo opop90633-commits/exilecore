@@ -112,6 +112,11 @@ public final class ItemData {
         this.quality = Math.max(0, Math.min(20, quality));
     }
 
+    /** 2026-11-04：品質上限另外給（裂隙指環的催化劑可以到 40%／45%；{@code Crafting.catalystMax}）。 */
+    public void setQualityUpTo(final int quality, final int max) {
+        this.quality = Math.max(0, Math.min(Math.max(20, max), quality));
+    }
+
     /** 腐化給的品質上限（2026-10-23，照 PoE2：蝕變石讓法杖、長杖的品質最多到 23%）。 */
     public static final int CORRUPTED_QUALITY_MAX = 23;
 

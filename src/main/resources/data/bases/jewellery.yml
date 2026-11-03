@@ -299,9 +299,13 @@ jring_biostatic:
       - { stat: resist.max.chaos, type: FLAT, value: 1 }
 
 jring_unset:
-  # PoE2 Unset Ring：「多 1 個技能欄位」先略過（還沒有這個機制）
+  # PoE2 Unset Ring：多 1 個技能欄位
+  # 2026-11-04 照站長「空座指環新增一個可放光環類的格子（效果算開啟），全域掉落」：戴著時技能面板多一格光環格（aura_slot），
+  #   一般掉落、商人都有（拿掉 heist_only）；這次之前沒有固定效果、只在劫盜掉（同日稍早一度停用）
   name: 空座指環
-  heist_only: true     # 2026-10-28 照站長：特殊戒指也只在劫盜掉（跟特殊項鍊一樣）；這次之前一般掉落、賭裝商人都拿得到
+  aura_slot: true
+  implicit:
+    text: "技能面板多 1 個光環格（放進去的光環開著）；僅限配戴一個"   # 2026-11-04 照站長：僅限配戴一個（Gear.soloRingProblem 擋第二個）
   family: jring_special
   drop_weight: 4
   material: QUARTZ
@@ -312,11 +316,14 @@ jring_unset:
   requirements: { level: 44 }
 
 jring_breach:
-  # PoE2 Breach Ring：「+20% 品質上限」先略過（還沒有這個機制）
+  # PoE2 Breach Ring：+20% 品質上限（2026-11-04 照站長補上：催化劑能打到 40%；這次之前略過，沒有固定效果）
   name: 裂隙指環
+  max_quality_bonus: 20
+  implicit:
+    text: "+20% 品質上限"
   heist_only: true     # 2026-10-28 照站長：特殊戒指也只在劫盜掉（跟特殊項鍊一樣）；這次之前一般掉落、賭裝商人都拿得到
   family: jring_special
-  drop_weight: 4
+  drop_weight: 0        # 2026-11-04 照站長：只在裂隙掉（map_events.yml 的 breach.ring）（劫盜不再掉；這次之前 4）
   material: FERMENTED_SPIDER_EYE
   model: exilecore:jewellery/iron_ring
   slot: RING
@@ -325,11 +332,14 @@ jring_breach:
   requirements: { level: 40 }
 
 jring_breach_refined:
-  # PoE2 Refined Breach Ring：「+25% 品質上限」先略過（還沒有這個機制）
+  # PoE2 Refined Breach Ring：+25% 品質上限（2026-11-04 照站長補上：催化劑能打到 45%；這次之前略過，沒有固定效果）
   name: 精煉裂隙指環
+  max_quality_bonus: 25
+  implicit:
+    text: "+25% 品質上限"
   heist_only: true     # 2026-10-28 照站長：特殊戒指也只在劫盜掉（跟特殊項鍊一樣）；這次之前一般掉落、賭裝商人都拿得到
   family: jring_special
-  drop_weight: 4
+  drop_weight: 0        # 2026-11-04 照站長：只在裂隙之主（事件巔峰穿界裂隙）掉 1%（maps.yml）（劫盜不再掉；這次之前 4）
   material: BLAZE_POWDER
   model: exilecore:jewellery/iron_ring
   slot: RING
@@ -338,11 +348,16 @@ jring_breach_refined:
   requirements: { level: 40 }
 
 jring_abyssal:
-  # PoE2 Abyssal Signet：「擊中時造成深淵消蝕」先略過（還沒有這個機制）
+  # PoE2 Abyssal Signet：擊中時施加深淵消耗（2026-11-04 照站長補上，跟傳奇用的同一個機制；這次之前略過，沒有固定效果）
+  # 2026-11-04 照站長「淵印指環加回來，放進深淵」：只在深淵裂縫掉（map_events.yml 的 abyss.ring），劫盜不再掉（drop_weight 0）；同日稍早一度停用
   name: 淵印指環
+  implicit:
+    text: "擊中時施加深淵消耗（6 秒內生命回復速度減少 50%）"
+    mods:
+      - { stat: abyssal_wasting.on_hit, type: FLAT, value: 1 }
   heist_only: true     # 2026-10-28 照站長：特殊戒指也只在劫盜掉（跟特殊項鍊一樣）；這次之前一般掉落、賭裝商人都拿得到
   family: jring_special
-  drop_weight: 4
+  drop_weight: 0        # 2026-11-04：只在深淵裂縫掉（這次之前 4，劫盜會掉）
   material: INK_SAC
   model: exilecore:jewellery/iron_ring
   slot: RING
@@ -364,8 +379,13 @@ jring_plain:
   requirements: { level: 1 }
 
 jring_grasping:
-  # PoE2 Grasping Ring：「嵌入物的加成當作手套」先略過（戒指沒有符文孔）
+  # PoE2 Grasping Ring：嵌在上面的符文照手套的效果算
+  # 2026-11-04 照站長「攫握指環開符文孔，一樣在劫盜」：1 個符文孔（rune_sockets），劫盜專屬；這次之前沒有符文孔、沒有固定效果，一般掉落也會掉
   name: 攫握指環
+  rune_sockets: 1
+  heist_only: true
+  implicit:
+    text: "嵌在這件物品上的符文照手套的效果算"
   family: jring_special
   drop_weight: 4
   material: TURTLE_EGG
@@ -609,8 +629,12 @@ jamulet_absent:
       - { stat: local.max_suffixes, type: FLAT, value: -1 }
 
 jamulet_corona:
-  # PoE2 Corona Amulet：「嵌入物的加成當作頭盔」先略過（項鍊沒有符文孔）
+  # PoE2 Corona Amulet：嵌在上面的符文照頭盔的效果算
+  # 2026-11-04 照站長「日冕墜飾開符文孔，一樣在劫盜」：1 個符文孔（rune_sockets）；這次之前沒有符文孔、沒有固定效果
   name: 日冕墜飾
+  rune_sockets: 1
+  implicit:
+    text: "嵌在這件物品上的符文照頭盔的效果算"
   family: jamulet_special
   heist_only: true     # 2026-10-28 照站長：特殊項鍊只在劫盜掉（heist.yml 的 special_amulet_chance、金庫之主的收藏）；這次之前一般掉落、賭裝商人都拿得到
   drop_weight: 2

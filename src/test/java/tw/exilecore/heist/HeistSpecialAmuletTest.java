@@ -28,10 +28,12 @@ class HeistSpecialAmuletTest {
     static final Path DATA = Path.of("src/main/resources/data");
     static final Set<String> SPECIAL = Set.of("jamulet_twisted", "jamulet_distorted", "jamulet_dusk", "jamulet_gloam", "jamulet_penumbra",
             "jamulet_tenebrous", "jamulet_corona",
-            // 2026-10-28 照站長：特殊戒指也只在劫盜掉
-            "jring_biostatic", "jring_unset", "jring_breach", "jring_breach_refined", "jring_abyssal", "jring_dusk", "jring_gloam",
+            // 2026-10-28 照站長：特殊戒指也只在劫盜掉；2026-11-04：攫握指環也是
+            "jring_biostatic", "jring_grasping", "jring_dusk", "jring_gloam",
             "jring_penumbra", "jring_tenebrous");
     static final Set<String> RETIRED_SPECIAL = Set.of("jamulet_lament", "jamulet_portent", "jamulet_absent");
+    /** 2026-11-04 照站長：裂隙指環在裂隙、精煉裂隙指環在裂隙之主、淵印指環在深淵裂縫掉；一般掉落、商人、劫盜都不掉。 */
+    static final Set<String> EVENT_ONLY = Set.of("jring_breach", "jring_breach_refined", "jring_abyssal");
     static ItemRepository repository;
     static HeistConfig heist;
 
@@ -51,6 +53,10 @@ class HeistSpecialAmuletTest {
         }
         for (final String id : RETIRED_SPECIAL) {
             assertTrue(repository.heistOnlyBase(id) && repository.retiredBase(id), id + "：還停用著，打開之後一樣劫盜專屬");
+        }
+        for (final String id : EVENT_ONLY) {
+            assertTrue(repository.heistOnlyBase(id) && !repository.retiredBase(id), id);
+            assertTrue(repository.heistOnlyBasesAt(100).stream().noneMatch(base -> base.id().equals(id)), id + "：劫盜不掉");
         }
         int ordinary = 0;
         for (final ItemBase base : repository.bases()) {
@@ -91,9 +97,9 @@ class HeistSpecialAmuletTest {
             pool.add(base.id());
         }
         assertEquals(new TreeSet<>(SPECIAL), pool);
-        // 日冕墜飾要 40 級
-        assertFalse(repository.heistOnlyBasesAt(39).stream().anyMatch(base -> base.id().equals("jamulet_corona")));
-        assertTrue(repository.heistOnlyBasesAt(40).stream().anyMatch(base -> base.id().equals("jamulet_corona")));
+        // 恆息指環要 52 級（2026-11-04：日冕墜飾停用，改看這個）
+        assertFalse(repository.heistOnlyBasesAt(51).stream().anyMatch(base -> base.id().equals("jring_biostatic")));
+        assertTrue(repository.heistOnlyBasesAt(52).stream().anyMatch(base -> base.id().equals("jring_biostatic")));
         final Random random = new Random(3);
         final Set<String> seen = new TreeSet<>();
         for (int i = 0; i < 2000; i++) {

@@ -1059,6 +1059,7 @@ public final class CodexMenu extends Menu {
                 lore.add("<gray>一般掉落、通貨擲不到：用<white>蝕變石</white>腐化時 25% 加上一條");
                 lore.add("<gray>一件只會有一條，不佔前綴、後綴的位子");
             }
+            lore.addAll(essenceLines(affix)); // 2026-11-03 照站長：星魄限定的詞綴寫出來；這次之前看起來跟一般詞綴一樣
             if (unveiled) {
                 lore.add("<gray>一般掉落、通貨擲不到：裝備上的<white>隱匿" + (prefix ? "前綴" : "後綴") + "</white>帶去營地找盜賊首領，");
                 lore.add("<gray>三個選項選一個（隱匿詞綴從劫盜來，揭露石也能加一條）");
@@ -1080,17 +1081,58 @@ public final class CodexMenu extends Menu {
         return stacks;
     }
 
-    /** 詞綴種類的標題（腐化、揭露、前綴、後綴）。 */
+    /** 星魄才給得了的詞綴（affixes/essences.yml，spawn_tags 有 essence）。 */
+    static boolean essenceAffix(final Affix affix) {
+        return affix.spawnTags().contains(ItemRepository.ESSENCE_TAG);
+    }
+
+    /**
+     * 2026-11-03 照站長「圖鑑星魄限定的詞綴幫我敘述出來」：寫明一般掉落、通貨擲不到，以及哪幾種星魄給這條；
+     * 這次之前星魄詞綴跟一般詞綴寫法一樣（還寫「擲得到的裝備」），看起來像亂流石也點得出來。
+     */
+    private List<String> essenceLines(final Affix affix) {
+        if (!essenceAffix(affix)) {
+            return List.of();
+        }
+        final List<String> names = new ArrayList<>();
+        if (plugin.currencies() != null) {
+            for (final tw.exilecore.currency.CurrencyType type : plugin.currencies().repository().all()) {
+                if (type.affix() == null) {
+                    continue;
+                }
+                for (final String each : type.affix().split(",")) {
+                    if (each.strip().equals(affix.id())) {
+                        names.add(type.name());
+                        break;
+                    }
+                }
+            }
+        }
+        final List<String> lore = new ArrayList<>();
+        lore.add("<gray>一般掉落、亂流石、崇高石都擲不到：只有對裝備用<white>星魄</white>才會加上");
+        if (!names.isEmpty()) {
+            lore.add("<gray>給這條的星魄：<white>" + ItemRenderer.escape(String.join("、", names)));
+        }
+        lore.add("<gray>跟同一群組的一般詞綴互斥（一件只會有其中一條）");
+        return lore;
+    }
+
+    /** 詞綴種類的標題（腐化、揭露、星魄限定、前綴、後綴）。 */
     private static String kindLabel(final Affix affix) {
         final boolean prefix = affix.type() == AffixType.PREFIX;
         if (corruptionAffix(affix)) {
             return "<#d20000>腐化詞綴（蝕變石）";
+        }
+        if (essenceAffix(affix)) {
+            // 2026-11-03 照站長：星魄限定的詞綴標題另外標；這次之前只寫前綴／後綴
+            return "<#5fd7c8>星魄限定" + (prefix ? "前綴" : "後綴");
         }
         return Veiled.isUnveiled(affix.id()) ? "<#c48bff>揭露" + (prefix ? "前綴" : "後綴") : prefix ? "<#8888ff>前綴" : "<#ffd27f>後綴";
     }
 
     private static String kindColor(final Affix affix) {
         return corruptionAffix(affix) ? "<#d20000>" : Veiled.isUnveiled(affix.id()) ? "<#c48bff>"
+                : essenceAffix(affix) ? "<#5fd7c8>" // 2026-11-03：星魄限定（這次之前跟一般前後綴同色）
                 : affix.type() == AffixType.PREFIX ? "<#8888ff>" : "<#ffd27f>";
     }
 
@@ -1128,13 +1170,15 @@ public final class CodexMenu extends Menu {
             lore.add(kindLabel(affix));
             lore.add("<gray>最高 T1：<white>" + affix.rangeText(tiers.getFirst().tier()));
             lore.add("<gray>最低：<white>" + affix.rangeText(tiers.getLast().tier()));
+            lore.addAll(essenceLines(affix)); // 2026-11-03 照站長：星魄限定的詞綴寫出來
             lore.add("");
             // 擲得到的基底：照部位整理
             final java.util.Map<String, List<String>> bySlot = new java.util.LinkedHashMap<>();
             for (final ItemBase each : where.getOrDefault(affix.id(), List.of())) {
                 bySlot.computeIfAbsent(slotName(each.slot()), name -> new ArrayList<>()).add(each.name());
             }
-            lore.add("<gray>擲得到的裝備（" + where.getOrDefault(affix.id(), List.of()).size() + " 種基底）：");
+            // 2026-11-03：星魄限定的改字；這次之前一律「擲得到」
+            lore.add("<gray>" + (essenceAffix(affix) ? "星魄用得上的裝備（" : "擲得到的裝備（") + where.getOrDefault(affix.id(), List.of()).size() + " 種基底）：");
             int lines = 0;
             for (final java.util.Map.Entry<String, List<String>> entry : bySlot.entrySet()) {
                 if (lines++ >= 10) {

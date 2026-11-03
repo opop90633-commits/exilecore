@@ -507,7 +507,7 @@ public final class MapConfig {
         final YamlNode drops = node.node("drops");
         final List<ExtraDrop> extra = new ArrayList<>();
         for (final YamlNode item : drops.list("extra")) {
-            final String kind = item.has("support") ? "support" : item.has("skill") ? "skill" : "currency";
+            final String kind = item.has("support") ? "support" : item.has("skill") ? "skill" : item.has("base") ? "base" : "currency"; // 2026-11-04：base（指定基底）
             final String id = item.requireString(kind).trim();
             extra.add(new ExtraDrop(kind, id, Math.max(1, item.integer("amount", 1)), clamp01(item.decimal("chance", 1))));
         }
@@ -553,9 +553,10 @@ public final class MapConfig {
 
     /**
      * 一項額外掉落：currency: 通貨代號（currencies.yml）、support: 輔助寶石代號（supports.yml；掉一顆切好的，通常是專屬的），
-     * 或 skill: 技能寶石代號（skills.yml；掉一顆 20 級的，通常是專屬的）。
+     * skill: 技能寶石代號（skills.yml；掉一顆 20 級的，通常是專屬的），
+     * 或 base: 基底代號（bases；2026-11-04 照站長「裂痕王 1% 精煉裂隙指環」：魔法或稀有、未鑑定）。
      *
-     * @param kind   currency、support 或 skill
+     * @param kind   currency、support、skill 或 base
      * @param id     代號
      * @param amount 幾個
      * @param chance 機率（0–1）
@@ -948,7 +949,7 @@ public final class MapConfig {
         final YamlNode drops = node.node("drops");
         final List<ExtraDrop> extra = new ArrayList<>();
         for (final YamlNode item : drops.list("extra")) {
-            final String kind = item.has("support") ? "support" : item.has("skill") ? "skill" : "currency";
+            final String kind = item.has("support") ? "support" : item.has("skill") ? "skill" : item.has("base") ? "base" : "currency"; // 2026-11-04：base（指定基底）
             final String id = item.requireString(kind).trim();
             extra.add(new ExtraDrop(kind, id, Math.max(1, item.integer("amount", 1)), clamp01(item.decimal("chance", 1))));
         }

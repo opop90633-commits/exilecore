@@ -529,7 +529,8 @@ final class Warcries {
                         effective.flat(tw.exilecore.charge.ChargeService.SUP_OFFERING_POWER, tags),
                         effective.flat(tw.exilecore.charge.ChargeService.SUP_OFFERING_REGEN, tags),
                         1 + (build.definition().tags().contains(SkillLimits.TAG) ? SkillLimits.bonus(effective, tags) : 0)); // 2026-10-28：過剩
-                notice.append(String.format(Locale.ROOT, "<gray>：立起祭柱（%.0f 秒，半徑 %.0f 格）", ticks / 20.0, radius));
+                // 2026-11-03 照站長：半徑寫到小數一位（含範圍效果）；這次之前 %.0f
+                notice.append(String.format(Locale.ROOT, "<gray>：立起祭柱（%.0f 秒，半徑 %s 格）", ticks / 20.0, ModifierText.number(radius)));
                 if (extraEffect > 0) {
                     notice.append("<gray>，多獻上一隻骷髏");
                 }

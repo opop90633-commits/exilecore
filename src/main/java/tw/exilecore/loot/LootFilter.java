@@ -293,16 +293,24 @@ public final class LootFilter {
      * @param uniqueGroup   傳奇是哪一組（不是傳奇或不知道 null；不知道的傳奇當一般傳奇，標籤有 {@link #ALWAYS_KEEP_TAG} 的當追逐級）
      */
     public record Candidate(DropTable.Kind kind, Rarity rarity, String currencyId, boolean flaskUpgrade, int itemLevel,
-                            Set<String> tags, int mapTier, int gemLevel, int bestAffixRank, String baseId, UniqueGroup uniqueGroup) {
+                            Set<String> tags, int mapTier, int gemLevel, int bestAffixRank, String baseId, UniqueGroup uniqueGroup,
+                            String uniqueId) {
         public Candidate {
             tags = tags == null ? Set.of() : Set.copyOf(tags);
+        }
+
+        /** 2026-11-04：不知道是哪一件傳奇的（uniqueId 是傳奇代號，每種傳奇各自隱藏用；舊的呼叫法）。 */
+        public Candidate(final DropTable.Kind kind, final Rarity rarity, final String currencyId, final boolean flaskUpgrade,
+                         final int itemLevel, final Set<String> tags, final int mapTier, final int gemLevel, final int bestAffixRank,
+                         final String baseId, final UniqueGroup uniqueGroup) {
+            this(kind, rarity, currencyId, flaskUpgrade, itemLevel, tags, mapTier, gemLevel, bestAffixRank, baseId, uniqueGroup, null);
         }
 
         /** 不知道傳奇分組的（舊的呼叫法）。 */
         public Candidate(final DropTable.Kind kind, final Rarity rarity, final String currencyId, final boolean flaskUpgrade,
                          final int itemLevel, final Set<String> tags, final int mapTier, final int gemLevel, final int bestAffixRank,
                          final String baseId) {
-            this(kind, rarity, currencyId, flaskUpgrade, itemLevel, tags, mapTier, gemLevel, bestAffixRank, baseId, null);
+            this(kind, rarity, currencyId, flaskUpgrade, itemLevel, tags, mapTier, gemLevel, bestAffixRank, baseId, null, null);
         }
 
         /** 不知道基底的（舊的呼叫法）。 */
@@ -444,6 +452,11 @@ public final class LootFilter {
     private final TreeMap<String, BaseRule> bases = new TreeMap<>();
     /** 2026-11-03：不撿的傳奇分組（追逐級不會在裡面）。 */
     private final EnumSet<UniqueGroup> hiddenUniques = EnumSet.noneOf(UniqueGroup.class);
+    /**
+     * 2026-11-04 照站長「傳奇要能手動選擇每種傳奇那些要隱藏」：每一種傳奇的規則（只存隱藏與必撿；沒有的照分組）。
+     * 隱藏＝這一種不撿（分組會撿也不撿）、必撿＝這一種一定撿（分組隱藏也撿）。追逐級永遠撿，不能隱藏。
+     */
+    private final TreeMap<String, UniqueRule> uniques = new TreeMap<>();
     /** 稀有掉落的音效（2026-10）：傳奇、追逐級、映星鏡、Boss 入場材料、大鑿星石、Lv.21 寶石、終局以上 Boss 的掉落。預設開。 */
     private boolean dropSounds = true;
     /** 舊存檔還沒換算的部分（null = 不用換算）。不存檔、不算進 equals。 */
@@ -602,6 +615,54 @@ public final class LootFilter {
         return Collections.unmodifiableSet(hiddenUniques);
     }
 
+    /** 2026-11-04：一種傳奇自己的規則：照分組、隱藏、必撿。 */
+    public enum UniqueRule { FOLLOW, HIDE, ALWAYS }
+
+    /** 這一種傳奇的規則（沒設定或不知道是哪一件：照分組）。 */
+    public UniqueRule uniqueRule(final String uniqueId) {
+        return uniqueId == null ? UniqueRule.FOLLOW : uniques.getOrDefault(uniqueId, UniqueRule.FOLLOW);
+    }
+
+    public void setUniqueRule(final String uniqueId, final UniqueRule rule) {
+        if (uniqueId == null || uniqueId.isBlank()) {
+            return;
+        }
+        if (rule == null || rule == UniqueRule.FOLLOW) {
+            uniques.remove(uniqueId);
+        } else {
+            uniques.put(uniqueId, rule);
+        }
+    }
+
+    /** 照分組 ↔ 隱藏（必撿的點了變隱藏）。 */
+    public void toggleUniqueHidden(final String uniqueId) {
+        setUniqueRule(uniqueId, uniqueRule(uniqueId) == UniqueRule.HIDE ? UniqueRule.FOLLOW : UniqueRule.HIDE);
+    }
+
+    /** 照分組 ↔ 必撿（隱藏的點了變必撿）。 */
+    public void toggleUniqueAlways(final String uniqueId) {
+        setUniqueRule(uniqueId, uniqueRule(uniqueId) == UniqueRule.ALWAYS ? UniqueRule.FOLLOW : UniqueRule.ALWAYS);
+    }
+
+    /** 有設定的傳奇（代號 → 規則）。 */
+    public Map<String, UniqueRule> uniqueRules() {
+        return Collections.unmodifiableMap(uniques);
+    }
+
+    public void clearUniqueRules() {
+        uniques.clear();
+    }
+
+    private Set<String> uniquesWith(final UniqueRule rule) {
+        final TreeSet<String> out = new TreeSet<>();
+        for (final Map.Entry<String, UniqueRule> entry : uniques.entrySet()) {
+            if (entry.getValue() == rule) {
+                out.add(entry.getKey());
+            }
+        }
+        return out;
+    }
+
     /** 跟護符一樣另外記：不會讓預設組合變成自訂，換預設組合也留著。追逐級點了沒反應。 */
     public void toggleUniques(final UniqueGroup group) {
         if (group == UniqueGroup.CHASE) {
@@ -659,7 +720,10 @@ public final class LootFilter {
     private boolean hidesEquipment(final Candidate candidate, final Viewer who) {
         // 2026-11-03 照站長：順序固定——傳奇照分組 → 基底隱藏絕對不撿、必撿看好詞綴門檻 → 地圖只看稀有度 → 等級差、不同類 → 稀有度（好詞綴救回）
         if (candidate.rarity() == Rarity.UNIQUE) {
-            return hidesUniques(candidate.groupOrDefault());
+            // 2026-11-04：先看這一種傳奇自己的規則（隱藏／必撿），沒設定的照分組；追逐級永遠撿
+            final UniqueGroup group = candidate.groupOrDefault();
+            final UniqueRule own = group == UniqueGroup.CHASE ? UniqueRule.FOLLOW : uniqueRule(candidate.uniqueId());
+            return own == UniqueRule.FOLLOW ? hidesUniques(group) : own == UniqueRule.HIDE;
         }
         final BaseRule base = baseRule(candidate.baseId());
         if (base == BaseRule.HIDE) {
@@ -870,6 +934,8 @@ public final class LootFilter {
         withBaseRules(from.bases);
         hiddenUniques.clear();
         hiddenUniques.addAll(from.hiddenUniques);
+        uniques.clear();
+        uniques.putAll(from.uniques); // 2026-11-04：每種傳奇的規則也帶過去
         legacy = from.legacy;
         return this;
     }
@@ -940,6 +1006,7 @@ public final class LootFilter {
         preset = CUSTOM;
         bases.clear();
         hiddenUniques.clear();
+        uniques.clear();
         legacy = null;
     }
 
@@ -1052,6 +1119,8 @@ public final class LootFilter {
         final Set<String> always = alwaysBases();
         final String extras = (hidden.isEmpty() ? "" : ";xb=" + String.join(",", hidden)) + (always.isEmpty() ? "" : ";ab=" + String.join(",", always))
                 + (hiddenGroups.isEmpty() ? "" : ";hu=" + String.join(",", hiddenGroups))
+                + (uniquesWith(UniqueRule.HIDE).isEmpty() ? "" : ";xu=" + String.join(",", uniquesWith(UniqueRule.HIDE))) // 2026-11-04
+                + (uniquesWith(UniqueRule.ALWAYS).isEmpty() ? "" : ";au=" + String.join(",", uniquesWith(UniqueRule.ALWAYS)))
                 + (dropSounds ? "" : ";ds=0") + (hideCharms ? ";ch=1" : "") + (keepAffixLikeMine ? ";kl=1" : "");
         if (!CUSTOM.equals(preset)) {
             return "p=" + preset + ";v=" + VERSION + extras;
@@ -1130,6 +1199,8 @@ public final class LootFilter {
                     }
                 }
                 case "ch" -> filter.hideCharms = "1".equals(value);
+                case "xu" -> list(value).forEach(id -> filter.setUniqueRule(id, UniqueRule.HIDE)); // 2026-11-04：每種傳奇隱藏
+                case "au" -> list(value).forEach(id -> filter.setUniqueRule(id, UniqueRule.ALWAYS)); // 2026-11-04：每種傳奇必撿
                 case "kl" -> filter.keepAffixLikeMine = "1".equals(value);
                 case "ug" -> filter.hideSupportGems = "1".equals(value);
                 case "fl" -> filter.flasks = FlaskRule.parse(value, FlaskRule.ALL);
@@ -1215,6 +1286,7 @@ public final class LootFilter {
         copy.preset = preset;
         copy.bases.putAll(bases);
         copy.hiddenUniques.addAll(hiddenUniques);
+        copy.uniques.putAll(uniques);
         copy.dropSounds = dropSounds;
         copy.legacy = legacy;
         return copy;
@@ -1228,13 +1300,13 @@ public final class LootFilter {
         return hiddenEquipment.equals(that.hiddenEquipment) && hiddenCurrencies.equals(that.hiddenCurrencies)
                 && hideSkillGems == that.hideSkillGems && hideSupportGems == that.hideSupportGems && hideCharms == that.hideCharms
                 && keepAffixLikeMine == that.keepAffixLikeMine && flasks == that.flasks && rules.equals(that.rules) && preset.equals(that.preset)
-                && bases.equals(that.bases) && hiddenUniques.equals(that.hiddenUniques) && dropSounds == that.dropSounds;
+                && bases.equals(that.bases) && hiddenUniques.equals(that.hiddenUniques) && uniques.equals(that.uniques) && dropSounds == that.dropSounds;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(hiddenEquipment, hiddenCurrencies, hideSkillGems, hideSupportGems, hideCharms, keepAffixLikeMine, flasks, rules, preset,
-                bases, hiddenUniques, dropSounds);
+                bases, hiddenUniques, uniques, dropSounds);
     }
 
     @Override

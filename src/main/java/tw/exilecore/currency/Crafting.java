@@ -168,14 +168,19 @@ public final class Crafting {
                 if (data.runes().size() >= slots) {
                     return "符文孔都滿了（" + slots + " 個）";
                 }
+                if (tw.exilecore.item.Runes.uselessOn(base, generator.repository().rune(type.affix()))) {
+                    // 2026-11-04 照站長：攫握指環、日冕墜飾沒有護甲、閃避、能量護盾，只加這些的符文嵌了沒效果
+                    return "這個符文只加那件裝備的護甲、閃避、能量護盾，戒指、項鍊沒有這些，嵌了沒效果";
+                }
                 return null;
             }
             case CATALYST -> {
                 if (!catalystTarget(base)) {
                     return "催化劑只能打在戒指、項鍊上"; // 2026-10-26 照 PoE2：腰帶不行
                 }
-                if (data.quality() >= CATALYST_MAX && type.catalyst() == Catalyst.parse(data.catalyst())) {
-                    return "品質已經到 " + CATALYST_MAX + "% 了";
+                final int max = catalystMax(generator.repository(), data); // 2026-11-04：裂隙指環的品質上限比較高
+                if (data.quality() >= max && type.catalyst() == Catalyst.parse(data.catalyst())) {
+                    return "品質已經到 " + max + "% 了";
                 }
                 return null;
             }
@@ -489,14 +494,24 @@ public final class Crafting {
      * 2026-10-27 照 PoE2（催化劑跟其他品質通貨一樣照稀有度）；這次之前不分稀有度每顆 +{@link #CATALYST_STEP}。
      */
     public static void applyCatalyst(final CurrencyType type, final ItemData data) {
+        applyCatalyst(type, data, CATALYST_MAX);
+    }
+
+    /** 2026-11-04：品質上限照基底（{@link #catalystMax}；裂隙指環 40%、精煉裂隙指環 45%）。這次之前一律 20%。 */
+    public static void applyCatalyst(final CurrencyType type, final ItemData data, final int max) {
         final Catalyst current = Catalyst.parse(data.catalyst());
         final int step = CurrencyOperation.qualityByRarity(data);
         if (current != type.catalyst()) {
             data.setCatalyst(type.catalyst().id());
-            data.setQuality(Math.min(CATALYST_MAX, step));
+            data.setQualityUpTo(Math.min(max, step), max);
         } else {
-            data.setQuality(Math.min(CATALYST_MAX, data.quality() + step));
+            data.setQualityUpTo(Math.min(max, data.quality() + step), max);
         }
+    }
+
+    /** 2026-11-04 照 PoE2 的裂隙指環：這件飾品的品質上限（20 + 基底的 max_quality_bonus）。 */
+    public static int catalystMax(final tw.exilecore.item.ItemRepository repository, final ItemData data) {
+        return CATALYST_MAX + (repository == null || data == null ? 0 : repository.maxQualityBonus(data.base()));
     }
 
     // ---- 星籤 ----

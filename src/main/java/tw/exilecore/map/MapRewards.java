@@ -41,6 +41,17 @@ public final class MapRewards {
     private MapRewards() {
     }
 
+    /**
+     * 2026-11-04：特殊基底（裂隙指環、精煉裂隙指環）的掉落：魔法或稀有（稀有 30%，跟劫盜的特殊項鍊一樣）、未鑑定。
+     */
+    public static tw.exilecore.item.ItemData specialBase(final ExileCore plugin, final tw.exilecore.item.ItemBase base, final int level,
+                                                        final RandomGenerator random) {
+        final tw.exilecore.item.Rarity rarity = random.nextDouble() < 0.3 ? tw.exilecore.item.Rarity.RARE : tw.exilecore.item.Rarity.MAGIC;
+        final tw.exilecore.item.ItemData item = plugin.items().generator().generate(base, rarity, level, random);
+        item.setIdentified(false);
+        return item;
+    }
+
     /** 依權重抽一種獎勵；權重都是 0 回傳 null。 */
     static MapEventConfig.Reward pick(final Map<MapEventConfig.Reward, Integer> weights, final RandomGenerator random) {
         int total = 0;

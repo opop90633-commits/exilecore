@@ -62,6 +62,8 @@ final class BetterModelCosmetics {
     private Method modelOf, adaptPlayer, getOrCreate, getOrCreateSimple, hideOption, animate, stopAnimation, close, isClosed;
     /** 2026-11-03：EntityTracker.registry()、EntityTrackerRegistry.spawnIfNotSpawned(PlatformPlayer)（本人也看得到；沒有就 null）。 */
     private Method trackerRegistry, spawnIfNotSpawned;
+    /** 2026-11-03：EntityTrackerRegistry.registry(UUID)、trackers()、entity()、Tracker.name()、BaseEntity.modelData(String)（清殘留用；沒有就 null）。 */
+    private Method registryOf, registryTrackers, registryEntity, trackerName, setModelData;
     private Object trackerModifier, loopModifier, hideFalse;
 
     /** 正在掛著的：玩家 → 部位（back／pet）→ 掛了什麼。 */
@@ -295,6 +297,18 @@ final class BetterModelCosmetics {
             trackerRegistry = null;
             spawnIfNotSpawned = null;
         }
+        // 2026-11-03 照站長（試穿完還殘留）：BetterModel 會把掛在實體上的模型存進實體資料（重登時重新長出來），
+        //   而且最後一個拿掉時不會把存的清掉——試穿、換掉的翅膀重登後又出現、我們也不知道它在。清殘留要用的方法
+        try {
+            final Class<?> registryType = type("kr.toxicity.model.api.tracker.EntityTrackerRegistry");
+            registryOf = methodOrNull(registryType, "registry", UUID.class);
+            registryTrackers = methodOrNull(registryType, "trackers");
+            registryEntity = methodOrNull(registryType, "entity");
+            trackerName = methodOrNull(type("kr.toxicity.model.api.tracker.Tracker"), "name");
+            setModelData = methodOrNull(type("kr.toxicity.model.api.entity.BaseEntity"), "modelData", String.class);
+        } catch (final ReflectiveOperationException | RuntimeException e) {
+            registryOf = null;
+        }
         // 不隱藏本體：EntityHideOption.FALSE（沒有就整個不接，照舊用展示實體）
         try {
             final Class<?> hideType = type("kr.toxicity.model.api.tracker.EntityHideOption");
@@ -372,6 +386,8 @@ final class BetterModelCosmetics {
             if (current != null) {
                 slots.remove(slot);
                 closeQuietly(current.tracker);
+            } else {
+                purge(player.getUniqueId()); // 2026-11-03：這個部位第一次掛（剛上線）：先清掉存在實體資料裡、重登長回來的舊模型
             }
             final Optional<?> renderer = (Optional<?>) modelOf.invoke(null, PREFIX + art);
             if (renderer.isEmpty()) {
@@ -428,6 +444,43 @@ final class BetterModelCosmetics {
         }
     }
 
+    /**
+     * 2026-11-03：清掉玩家身上我們的模型（ec_ 開頭）裡、不是現在掛著的那幾個（試穿、換掉、重登從實體資料長回來的）；
+     * 我們的都拿掉之後，存在實體資料裡的也清掉（BetterModel 最後一個拿掉時不會清，重登會再長出來）。動作（exile_emotes）不動。
+     */
+    void purge(final UUID player) {
+        if (registryOf == null || registryTrackers == null || trackerName == null) {
+            return;
+        }
+        try {
+            final Object registry = registryOf.invoke(null, player);
+            if (registry == null) {
+                return;
+            }
+            final Set<Object> keep = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+            final Map<String, Shown> slots = shown.get(player);
+            if (slots != null) {
+                for (final Shown each : slots.values()) {
+                    keep.add(each.tracker);
+                }
+            }
+            boolean others = false;
+            for (final Object tracker : new java.util.ArrayList<>((java.util.Collection<?>) registryTrackers.invoke(registry))) {
+                final String name = String.valueOf(trackerName.invoke(tracker));
+                if (name.startsWith(PREFIX) && !keep.contains(tracker)) {
+                    closeQuietly(tracker);
+                } else {
+                    others = true;
+                }
+            }
+            if (!others && registryEntity != null && setModelData != null) {
+                setModelData.invoke(registryEntity.invoke(registry), (Object) null);
+            }
+        } catch (final ReflectiveOperationException | RuntimeException | LinkageError e) {
+            warnOnce("purge", "3D 時裝：清不掉 BetterModel 殘留的模型：{}", e.toString());
+        }
+    }
+
     /** 收掉這個玩家身上的 art（沒掛著就什麼都不做）。 */
     void hide(final Player player, final String art) {
         final Map<String, Shown> slots = shown.get(player.getUniqueId());
@@ -443,6 +496,7 @@ final class BetterModelCosmetics {
         if (slots.isEmpty()) {
             shown.remove(player.getUniqueId());
         }
+        purge(player.getUniqueId()); // 2026-11-03：拿掉最後一個時把存在實體資料裡的也清掉
     }
 
     /** 這個玩家身上的全部收掉（離線、模組停掉）。 */
@@ -453,6 +507,7 @@ final class BetterModelCosmetics {
                 closeQuietly(each.tracker);
             }
         }
+        purge(player); // 2026-11-03：下線前把存在實體資料裡的也清掉（不然重登會長回來）
     }
 
     void stop() {

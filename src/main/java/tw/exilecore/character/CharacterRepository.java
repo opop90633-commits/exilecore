@@ -487,7 +487,7 @@ public final class CharacterRepository {
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
                     final int position = result.getInt(1);
-                    if (position >= 0 && position < SkillLoadout.MAX_SKILLS) {
+                    if (position >= 0 && position < SkillLoadout.TOTAL_POSITIONS) { // 2026-11-04：含空座指環的光環格
                         loadout.set(position, SkillLoadout.Entry.decode(result.getString(2), result.getInt(3), result.getString(4)));
                     }
                 }
@@ -516,7 +516,7 @@ public final class CharacterRepository {
         try (PreparedStatement insert = connection.prepareStatement(
                 "INSERT INTO character_skills (character_id, slot_index, skill_id, skill_level, supports) VALUES (?, ?, ?, ?, ?)")) {
             boolean any = false;
-            for (int i = 0; i < SkillLoadout.MAX_SKILLS; i++) {
+            for (int i = 0; i < SkillLoadout.TOTAL_POSITIONS; i++) { // 2026-11-04：含空座指環的光環格
                 final SkillLoadout.Entry entry = loadout.skill(i);
                 if (entry == null) {
                     continue;

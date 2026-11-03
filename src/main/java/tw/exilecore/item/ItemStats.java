@@ -521,7 +521,7 @@ public final class ItemStats {
             final Map<String, Integer> vars = scale != 1 ? scaled(rolled.vars(), scale) : rolled.vars();
             final Map<String, int[]> ranges = scale != 1 ? scaledRanges(affix.ranges(rolled.tier()), scale) : affix.ranges(rolled.tier());
             final AffixLine line = new AffixLine(affix.render(vars, rolled.fixedScale()), affix.rank(rolled.tier()), affix.type(), // 2026-11-01：腐化的固定值也照倍率顯示
-                    Affix.substituteWithRanges(affix.scaledText(rolled.fixedScale()), vars, ranges), boosted, veiledBoost ? (int) Math.round(unveiled * 100) : 0,
+                    Affix.substituteWithRanges(affix.scaledText(rolled.fixedScale()), vars, ranges, rolled.fixedScale()), boosted, veiledBoost ? (int) Math.round(unveiled * 100) : 0, // 2026-11-04：腐化的寫骰出的數值×倍率
                     repository.chipsOf(affix), // 2026-10：詞綴標籤（資料檔寫了 chips 的照寫的）
                     affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG) ? AffixLine.ENCHANT
                             : data.isFractured(rolled) ? AffixLine.FRACTURED : null, // 2026-10-21

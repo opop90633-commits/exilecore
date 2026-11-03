@@ -2587,7 +2587,7 @@ abyss_gaze_mask:
   stat_base: helm_dex_int_07          # 2026-10：基底合併了，傷害／防禦／需求還是照原本那一階（鋼脊兜帽）的數值
   drop_level: 45
   sources: [heist]
-  veiled: [prefix, prefix]
+  veiled: [suffix]   # 2026-11-04 照站長（選 1）：防具沒有揭露前綴，隱匿前綴揭露不了，拿掉；這次之前 [prefix, prefix]（舊物品 Veiled.syncUniqueVeiled 補正）
   weight: 100
   flavour:
     - "「面具的眼洞裡是黑的，從裡面看出去卻很亮。」"
@@ -2628,7 +2628,7 @@ abyss_bulwark:
   stat_base: tshield_12          # 2026-10：基底合併了，傷害／防禦／需求還是照原本那一階（熔鋼塔盾）的數值
   drop_level: 50
   sources: [heist]
-  veiled: [prefix, suffix, suffix]
+  veiled: [suffix, suffix]   # 2026-11-04 照站長（選 1）：防具沒有揭露前綴，隱匿前綴揭露不了，拿掉；這次之前 [prefix, suffix, suffix]（舊物品 Veiled.syncUniqueVeiled 補正）
   weight: 90
   flavour:
     - "「舉盾的時候，盾後面好像多了一雙手。」"
@@ -2707,7 +2707,7 @@ abyss_shroud_robe:
   stat_base: body_int_17          # 2026-10：基底合併了，傷害／防禦／需求還是照原本那一階（暗鋼法袍）的數值
   drop_level: 60
   sources: [heist]
-  veiled: [prefix, prefix, suffix]
+  veiled: [suffix]   # 2026-11-04 照站長（選 1）：防具沒有揭露前綴，隱匿前綴揭露不了，拿掉；這次之前 [prefix, prefix, suffix]（舊物品 Veiled.syncUniqueVeiled 補正）
   weight: 80
   flavour:
     - "「法衣的下襬永遠是濕的，摸起來像井水。」"
@@ -2727,7 +2727,7 @@ abyss_tread_greaves:
   stat_base: legs_str_dex_07          # 2026-10：基底合併了，傷害／防禦／需求還是照原本那一階（鋼脊鱗護腿）的數值
   drop_level: 55
   sources: [heist]
-  veiled: [prefix, suffix]
+  veiled: [suffix]   # 2026-11-04 照站長（選 1）：防具沒有揭露前綴，隱匿前綴揭露不了，拿掉；這次之前 [prefix, suffix]（舊物品 Veiled.syncUniqueVeiled 補正）
   weight: 100
   flavour:
     - "「每一步都踩得比地面低一點。」"

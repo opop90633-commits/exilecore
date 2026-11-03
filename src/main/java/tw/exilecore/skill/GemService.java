@@ -1131,6 +1131,10 @@ public final class GemService {
         if (target < 0) {
             return Change.fail("技能面板滿了（最多 " + SkillLoadout.MAX_SKILLS + " 個），先取出一個");
         }
+        final String ring = ringAuraProblem(loadout, target, definition); // 2026-11-04：空座指環的光環格只放光環
+        if (ring != null) {
+            return Change.fail(ring);
+        }
         // 2026-10-28 照 PoE2：同一個技能可以放好幾顆（面板上、主要寶石孔裡都可以），各自的輔助；只擋一個角色一顆的常駐、宿主。
         //   這次之前面板上、宿主孔裡已經有就不能放
         final String copies = GemCopies.placeProblem(config(), loadout, entry, target);
@@ -1518,30 +1522,70 @@ public final class GemService {
      * 少一孔時那一孔的輔助寶石還給玩家。
      */
     Change corrupt(final Player player, final int position, final CurrencyType orb) {
+        return corrupt(player, position, orb, null);
+    }
+
+    /**
+     * 2026-11-04 照站長「讓技能介面那格也能放必變籤」：omen 不是 null 時（技能面板掛著的必變籤，PoE2 的 Omen of Corruption）
+     * 一定有變化——擲到「沒有變化」就重擲（最多 50 次），跟裝備上的必變籤一樣；成功才記一張星籤的消耗。
+     * 這次之前技能寶石的腐化不看星籤（面板也放不進星籤）。
+     */
+    Change corrupt(final Player player, final int position, final CurrencyType orb, final CurrencyType omen) {
         final SkillLoadout loadout = plugin.players().get(player).skills();
         final SkillLoadout.Entry entry = loadout.skill(position);
-        if (entry == null) {
-            return Change.fail("那一格沒有技能");
+        final String problem = corruptProblem(entry);
+        if (problem != null) {
+            return Change.fail(problem);
         }
         if (orb.operation() != CurrencyOperation.CORRUPT) {
             return Change.fail(orb.name() + "不能用在技能上");
         }
+        final java.util.random.RandomGenerator random = plugin.items().random();
+        CorruptRoll roll = rollCorrupt(entry, random);
+        for (int attempt = 1; omen != null && !roll.changed() && attempt < 50; attempt++) {
+            roll = rollCorrupt(entry, random);
+        }
+        loadout.set(position, roll.updated());
+        plugin.economy().ledger().of(player).consumed(orb.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1);
+        if (omen != null) {
+            plugin.economy().ledger().of(player).consumed(omen.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1);
+        }
+        final ItemStack returned = roll.returnedGem() == null ? null : create(roll.returnedGem(), 1);
+        player.sendMessage(plugin.text().prefixed("<#d20000>腐化 " + ItemRenderer.escape(skillName(entry)) + "：<white>" + roll.result()
+                + (omen != null ? "<gray>（用了" + ItemRenderer.escape(omen.name()) + "）" : "")
+                + (returned != null ? "<gray>（那一孔的寶石還給你）" : "")));
+        return Change.ok(returned);
+    }
+
+    /** 2026-11-04：這顆技能寶石不能腐化的原因；可以回傳 null（技能面板掛必變籤前也先檢查）。 */
+    static String corruptProblem(final SkillLoadout.Entry entry) {
+        if (entry == null) {
+            return "那一格沒有技能";
+        }
         if (entry.granted()) {
-            return Change.fail("武器賦予的技能不是寶石，不能腐化"); // 2026-10-26
+            return "武器賦予的技能不是寶石，不能腐化"; // 2026-10-26
         }
         if (entry.corrupted()) {
-            return Change.fail("這顆技能寶石已經腐化過了");
+            return "這顆技能寶石已經腐化過了";
         }
-        final java.util.random.RandomGenerator random = plugin.items().random();
+        return null;
+    }
+
+    /** 2026-11-04：擲一次腐化的結果（還沒寫回去；returnedGem 是少一孔時要還的寶石）。 */
+    record CorruptRoll(SkillLoadout.Entry updated, GemData returnedGem, String result, boolean changed) {
+    }
+
+    /** 2026-11-04 從 corrupt 拆出來（必變籤要能重擲）；規則照舊。 */
+    static CorruptRoll rollCorrupt(final SkillLoadout.Entry entry, final java.util.random.RandomGenerator random) {
         SkillLoadout.Entry updated = entry.withCorrupted(true);
-        ItemStack returned = null;
-        final String result;
+        GemData returned = null;
         switch (random.nextInt(4)) {
             case 1 -> {
                 // 2026-10-30 照站長：Lv.21 腐化可以變 Lv.22（這次之前最高 21，21 級 +1 等於沒變化）
                 final int next = Math.max(1, Math.min(SkillLoadout.CORRUPT_CAP, entry.level() + (random.nextBoolean() ? 1 : -1)));
                 updated = updated.withLevel(next);
-                result = next == entry.level() ? "沒有變化" : next > entry.level() ? "等級 +1（Lv." + next + "）" : "等級 −1（Lv." + next + "）";
+                return next == entry.level() ? new CorruptRoll(updated, null, "沒有變化", false)
+                        : new CorruptRoll(updated, null, next > entry.level() ? "等級 +1（Lv." + next + "）" : "等級 −1（Lv." + next + "）", true);
             }
             case 2 -> {
                 final boolean add = random.nextBoolean();
@@ -1549,30 +1593,29 @@ public final class GemService {
                 if (next < entry.sockets()) {
                     final int last = entry.sockets() - 1;
                     if (entry.spellSocket(last)) { // 2026-10-26：第 2～5 孔的技能寶石也一樣還
-                        returned = create(GemData.skill(entry.spellAt(last)), 1);
+                        returned = GemData.skill(entry.spellAt(last));
                         updated = updated.withSpell(last, null);
                     } else if (!entry.support(last).isEmpty()) {
-                        returned = create(GemData.support(entry.support(last), entry.resonant(last)), 1);
+                        returned = GemData.support(entry.support(last), entry.resonant(last));
                         updated = updated.withSupport(last, "", false);
                     }
                 }
                 updated = updated.withSockets(next);
-                result = next == entry.sockets() ? "沒有變化" : next > entry.sockets() ? "輔助孔 +1（" + next + " 孔）" : "輔助孔 −1（" + next + " 孔）";
+                return next == entry.sockets() ? new CorruptRoll(updated, null, "沒有變化", false)
+                        : new CorruptRoll(updated, returned, next > entry.sockets() ? "輔助孔 +1（" + next + " 孔）" : "輔助孔 −1（" + next + " 孔）", true);
             }
             case 3 -> {
                 // 2026-10-23（PoE2）：品質變動 −7%～+3%（最多 23%）
                 final int next = Math.max(0, Math.min(SkillLoadout.Entry.QUALITY_CORRUPTED_MAX, entry.quality() - 7 + random.nextInt(11)));
                 updated = updated.withQuality(next);
-                result = next == entry.quality() ? "沒有變化" : "品質 " + (next > entry.quality() ? "+" : "−") + Math.abs(next - entry.quality())
-                        + "%（" + next + "%）";
+                return next == entry.quality() ? new CorruptRoll(updated, null, "沒有變化", false)
+                        : new CorruptRoll(updated, null, "品質 " + (next > entry.quality() ? "+" : "−") + Math.abs(next - entry.quality())
+                        + "%（" + next + "%）", true);
             }
-            default -> result = "沒有變化";
+            default -> {
+                return new CorruptRoll(updated, null, "沒有變化", false);
+            }
         }
-        loadout.set(position, updated);
-        plugin.economy().ledger().of(player).consumed(orb.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1);
-        player.sendMessage(plugin.text().prefixed("<#d20000>腐化 " + ItemRenderer.escape(skillName(entry)) + "：<white>" + result
-                + (returned != null ? "<gray>（那一孔的寶石還給你）" : "")));
-        return Change.ok(returned);
     }
 
     /** 2026-10-23：琢星稜鏡：技能寶石品質 +5%（最多 20%；腐化的不能用）。 */
@@ -1632,6 +1675,20 @@ public final class GemService {
             }
         }
         return "鑿星石";
+    }
+
+    /** 2026-11-04 照站長：空座指環的光環格只能放光環類的技能，而且要戴著空座指環；不是那一格回傳 null。 */
+    static String ringAuraProblem(final SkillLoadout loadout, final int target, final SkillDefinition definition) {
+        if (target != SkillLoadout.RING_AURA) {
+            return null;
+        }
+        if (!loadout.ringAuraNow()) {
+            return "要戴著空座指環才能用這一格";
+        }
+        if (definition == null || definition.mechanic() != Mechanic.AURA || definition.aura() == null) {
+            return "這一格只能放光環類的技能";
+        }
+        return null;
     }
 
     private static int firstEmpty(final SkillLoadout loadout) {

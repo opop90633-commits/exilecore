@@ -1240,7 +1240,7 @@ final class MapBosses {
     private void extraDrops(final List<DropTable.Drop> drops, final List<MapConfig.ExtraDrop> extras, final int itemLevel,
                             final java.util.random.RandomGenerator random, final tw.exilecore.loot.LootBonus.Bonus bonus) {
         for (final MapConfig.ExtraDrop extra : extras) {
-            final boolean gem = "support".equals(extra.kind()) || "skill".equals(extra.kind());
+            final boolean gem = "support".equals(extra.kind()) || "skill".equals(extra.kind()) || "base".equals(extra.kind()); // 2026-11-04：基底也照物品稀有度
             // 2026-10：寶石照物品稀有度、通貨照物品數量
             if (random.nextDouble() >= (gem ? bonus.rare(extra.chance()) : bonus.more(extra.chance()))) {
                 continue;
@@ -1254,6 +1254,13 @@ final class MapBosses {
             if ("skill".equals(extra.kind())) {
                 for (int i = 0; i < extra.amount(); i++) {
                     addSkillId(drops, extra.id());
+                }
+                continue;
+            }
+            if ("base".equals(extra.kind())) { // 2026-11-04：指定基底（精煉裂隙指環）
+                final tw.exilecore.item.ItemBase base = plugin.items().repository().base(extra.id());
+                for (int i = 0; base != null && i < extra.amount(); i++) {
+                    drops.add(DropTable.Drop.equipment(MapRewards.specialBase(plugin, base, itemLevel, random)));
                 }
                 continue;
             }

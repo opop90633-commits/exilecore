@@ -65,12 +65,12 @@ public final class LootFilterMenu extends Menu {
     private static final int SLOT_MAPS = slot(2, 5);
     /** 傳奇分組（2026-11-03）：六格，照 UniqueGroup 的順序。 */
     private static final int SLOT_UNIQUE_GROUPS = slot(3, 1);
+    /** 2026-11-04 照站長：傳奇清單（每一種傳奇各自隱藏／必撿），接在六組後面。 */
+    private static final int SLOT_UNIQUES = slot(3, 7);
     /** 基底清單（2026-11-03：取代只撿的基底、珠寶、遺時星晶、劫盜特殊基底）。 */
     private static final int SLOT_BASES = slot(4, 1);
-    /** 基底清單的捷徑：直接打開某一類。 */
-    private static final int SLOT_BASES_JEWELS = slot(4, 3);
-    private static final int SLOT_BASES_MAPS = slot(4, 4);
-    private static final int SLOT_BASES_HIDDEN = slot(4, 5);
+    /** 基底清單的捷徑：直接打開「已隱藏、必撿的」。2026-11-04：珠寶、地圖的捷徑拿掉，這格從 (4, 5) 移到基底清單旁邊。 */
+    private static final int SLOT_BASES_HIDDEN = slot(4, 2);
     // ---- 寶石與藥劑 ----
     private static final int SLOT_SKILL_GEMS = slot(1, 1);
     private static final int SLOT_SKILL_GEM_LEVEL = slot(1, 2);
@@ -406,7 +406,7 @@ public final class LootFilterMenu extends Menu {
                         "<dark_gray>某幾張地圖整張不撿：到基底清單的「地圖」分頁隱藏那幾種"),
                 options(LootFilter.MAP_RARITIES, mapRarity, LootFilter::mapRarityName)));
         // 2026-11-03 照站長：傳奇分組，各自撿不撿（追逐級永遠撿）；這次之前傳奇只有一格、追逐級與頂級專屬永遠撿
-        set(slot(3, 0), rowLabel(Material.NETHERITE_SWORD, "傳奇", "照掉落來源分六組，各自撿不撿", "追逐級永遠會撿；傳奇不看稀有度、等級差、同類同系、基底"));
+        set(slot(3, 0), rowLabel(Material.NETHERITE_SWORD, "傳奇", "照掉落來源分六組，各自撿不撿；右邊的傳奇清單可以一種一種設定", "追逐級永遠會撿；傳奇不看稀有度、等級差、同類同系、基底"));
         for (final LootFilter.UniqueGroup group : LootFilter.UniqueGroup.values()) {
             final boolean hidden = filter.hidesUniques(group);
             final Material material = switch (group) {
@@ -430,6 +430,16 @@ public final class LootFilterMenu extends Menu {
             final ItemStack groupIcon = icon(material, (hidden ? "<red>✘ " : "<green>✔ ") + "<#af6025>" + group.displayName(), lore);
             set(SLOT_UNIQUE_GROUPS + group.ordinal(), hidden ? offMark(groupIcon) : onMark(groupIcon));
         }
+        // 2026-11-04 照站長「傳奇要能手動選擇每種傳奇那些要隱藏」：傳奇清單的入口
+        final int ownRules = filter.uniqueRules().size();
+        final ItemStack uniquesIcon = icon(Material.WRITABLE_BOOK, (ownRules == 0 ? "<white>" : "<green>") + "傳奇清單",
+                "<gray>每一種傳奇都列出來，一種一種選要不要隱藏",
+                "<dark_gray>一開始照左邊的分組；追逐級永遠會撿",
+                "",
+                ownRules == 0 ? "<gray>現在全部照分組" : "<gray>現在有 " + ownRules + " 種跟分組不一樣",
+                "",
+                "<yellow>左鍵：打開清單");
+        set(SLOT_UNIQUES, ownRules == 0 ? uniquesIcon : highlight(uniquesIcon));
         // 2026-11-03 照站長：基底清單（每一種基底顯示／隱藏／必撿）取代只撿的基底、珠寶、遺時星晶、劫盜特殊基底
         set(slot(4, 0), rowLabel(Material.EMERALD, "基底", "每一種基底各自：顯示、隱藏、必撿", "隱藏的絕對不撿（有 T1 詞綴也不撿）", "必撿的有好詞綴門檻以上就一律撿（門檻關＝全部撿）"));
         final int hiddenBases = filter.hiddenBases().size();
@@ -447,10 +457,7 @@ public final class LootFilterMenu extends Menu {
         basesLore.add("<yellow>左鍵：打開清單");
         final ItemStack basesIcon = icon(Material.EMERALD, (hiddenBases + alwaysBases == 0 ? "<white>" : "<green>") + "基底清單", basesLore);
         set(SLOT_BASES, hiddenBases + alwaysBases == 0 ? basesIcon : highlight(basesIcon));
-        set(SLOT_BASES_JEWELS, icon(Material.AMETHYST_CLUSTER, "<white>珠寶、遺時星晶", "<gray>直接打開基底清單的「珠寶」分頁",
-                "<dark_gray>四種珠寶、四種遺時星晶各自顯示、隱藏、必撿", "", "<yellow>左鍵：打開"));
-        set(SLOT_BASES_MAPS, icon(Material.FILLED_MAP, "<white>地圖", "<gray>直接打開基底清單的「地圖」分頁",
-                "<dark_gray>某幾張地圖整張不撿（不管稀有度）", "", "<yellow>左鍵：打開"));
+        // 2026-11-04 照站長「這兩個有點多餘」：拿掉直接開「珠寶」「地圖」分頁的捷徑（基底清單裡就有分頁）；這次之前在基底清單右邊兩格
         set(SLOT_BASES_HIDDEN, icon(Material.BARRIER, "<white>已隱藏、必撿的", "<gray>直接打開基底清單的「已隱藏」分頁",
                 "", "<yellow>左鍵：打開"));
     }
@@ -799,12 +806,19 @@ public final class LootFilterMenu extends Menu {
                     next.cycleMapRarity(backwards);
                 } else if (slot >= SLOT_UNIQUE_GROUPS && slot < SLOT_UNIQUE_GROUPS + LootFilter.UniqueGroup.values().length) {
                     next.toggleUniques(LootFilter.UniqueGroup.values()[slot - SLOT_UNIQUE_GROUPS]); // 2026-11-03（追逐級沒反應）
-                } else if (slot == SLOT_BASES || slot == SLOT_BASES_JEWELS || slot == SLOT_BASES_MAPS || slot == SLOT_BASES_HIDDEN) {
+                } else if (slot == SLOT_UNIQUES) {
                     if (changed && !stale()) {
                         plugin.characters().save(player);
                         changed = false;
                     }
-                    final String category = slot == SLOT_BASES_JEWELS ? "JEWEL" : slot == SLOT_BASES_MAPS ? "MAP" : slot == SLOT_BASES_HIDDEN ? "SET" : "ALL";
+                    new UniquesMenu(plugin, player, service, () -> new LootFilterMenu(plugin, player, service).openOn("EQUIPMENT")).open();
+                    return;
+                } else if (slot == SLOT_BASES || slot == SLOT_BASES_HIDDEN) {
+                    if (changed && !stale()) {
+                        plugin.characters().save(player);
+                        changed = false;
+                    }
+                    final String category = slot == SLOT_BASES_HIDDEN ? "SET" : "ALL";
                     new BasesMenu(plugin, player, service, category, () -> new LootFilterMenu(plugin, player, service).openOn("EQUIPMENT")).open();
                     return;
                 } else {

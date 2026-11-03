@@ -172,6 +172,15 @@ final class ModelCosmetics {
         final Worn entry = worn.remove(player);
         if (entry != null) {
             clear(player, entry);
+        } else if (betterModel != null) {
+            betterModel.forget(player); // 2026-11-03：沒戴 3D 時裝的人也清一次殘留
+        }
+    }
+
+    /** 2026-11-03 照站長（試穿完還殘留）：上線後清掉 BetterModel 存在玩家身上、重登長回來的我們的模型。 */
+    void purgeLeftovers(final org.bukkit.entity.Player player) {
+        if (betterModel != null && player.isOnline()) {
+            betterModel.purge(player.getUniqueId());
         }
     }
 
@@ -179,7 +188,7 @@ final class ModelCosmetics {
         clearBack(entry);
         clearPet(entry);
         clearShoulders(entry);
-        if (betterModel != null && (entry.bmBack != null || entry.bmPet != null)) {
+        if (betterModel != null) { // 2026-11-03：沒掛著也清一次（重登長回來的殘留）
             try {
                 betterModel.forget(player);
             } catch (final RuntimeException e) {

@@ -20,6 +20,8 @@ public enum OmenRarity {
     /**
      * 2026-10-29 照站長：最貴的 8 種星籤權重調高（×12），掉落變多，但稀有度標示照原本的（照 poe2db 市價）：
      * 這幾個不照權重算。這次之前（同日稍早 ×4 時）是把門檻改成 20／50。
+     * 2026-11-03 照站長「最稀有的那幾種機率再高 5 倍」：金橘這 6 種權重再 ×6.67（36 → 240、48 → 320），標示照舊；
+     * 這次之前 36／48。
      */
     static final java.util.Map<String, OmenRarity> FIXED = java.util.Map.of(
             "omen_whittling", EXALTED, "omen_sinistral_guard", EXALTED, "omen_dextral_guard", EXALTED,

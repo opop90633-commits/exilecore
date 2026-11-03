@@ -6514,7 +6514,9 @@ public final class SkillService {
         final List<String> lines = new ArrayList<>();
         lines.add(headlineChips(definition)); // 2026-10：標籤改成小方塊
         if (!definition.description().isBlank()) {
-            lines.add("<gray>" + ItemRenderer.escape(definition.description()));
+            // 2026-11-03 照站長：說明文字裡技能本身的範圍數字（半徑、長度）照實際施放乘範圍效果（AreaText，跟 build.areaScale() 同一個倍率）；
+            //   這次之前一律寫 skills.yml 的原始數字，掛了範圍輔助、範圍效果的天賦也不會變
+            lines.add("<gray>" + AreaText.description(definition.id(), ItemRenderer.escape(definition.description()), build.areaScale()));
         }
         lines.add("");
         if (config.meta(definition.id()) != null) {
@@ -6597,7 +6599,7 @@ public final class SkillService {
             lines.addAll(auraLines(player, build));
         }
         if (definition.warcry() != null) {
-            lines.addAll(warcryLines(build));
+            lines.addAll(warcryLines(build, sheet));
         }
         mechanicLines(build, lines);
         barrageLines(player, build, lines);
@@ -7113,7 +7115,7 @@ public final class SkillService {
             lines.addAll(deployLines(build, sheet, 0));
         }
         if (build.definition().warcry() != null) {
-            lines.addAll(warcryLines(build));
+            lines.addAll(warcryLines(build, sheet));
         }
         mechanicLines(build, lines);
         return lines;
@@ -7317,7 +7319,8 @@ public final class SkillService {
                             tw.exilecore.core.Units.metres(EntangleRoots.VINE_LENGTH_METRES) * build.areaScale()));
                     break;
                 }
-                final String where = zone.line() ? String.format(Locale.ROOT, "面前一道 <white>%.0f</white> 格長的", build.length())
+                // 2026-11-03 照站長：長度寫到小數一位（範圍效果小幅增加時也看得出變長）；這次之前 %.0f，1.6→2.3 格都寫「2 格」
+                final String where = zone.line() ? String.format(Locale.ROOT, "面前一道 <white>%s</white> 格長的", ModifierText.number(build.length()))
                         : build.range() <= 0 ? "腳下" : String.format(Locale.ROOT, "準心指的地方（最遠 %.0f 格）半徑 <white>%.1f</white> 格的", build.range(), build.radius());
                 lines.add(String.format(Locale.ROOT, "<gray>在%s區域留 <white>%.1f</white> 秒，每 %.1f 秒對裡面的敵人造成 <white>%d%%</white> 傷害%s",
                         where, zone.duration() * build.durationScale(), zone.interval(), Math.round(zone.damage()),
@@ -7659,8 +7662,9 @@ public final class SkillService {
         }
         final List<Modifier> effects = build.auraModifiers();
         if (!effects.isEmpty()) {
-            final String who = build.generosity() ? String.format(Locale.ROOT, "%.0f 格內的隊友（要組隊；效果 ×%.1f）與你的召喚物", spec.radius() * build.areaScale(), AuraService.GENEROSITY_ALLY_BONUS)
-                    : spec.allies() ? String.format(Locale.ROOT, "你、%.0f 格內的隊友（要組隊）與你的召喚物", spec.radius() * build.areaScale()) : "你"; // 2026-10：只給自己的增益不再給召喚物
+            // 2026-11-03 照站長：半徑寫到小數一位（含範圍效果，小幅增加時也看得出來）；這次之前 %.0f，8→8.4 格都寫「8 格」
+            final String who = build.generosity() ? String.format(Locale.ROOT, "%s 格內的隊友（要組隊；效果 ×%.1f）與你的召喚物", ModifierText.number(spec.radius() * build.areaScale()), AuraService.GENEROSITY_ALLY_BONUS)
+                    : spec.allies() ? String.format(Locale.ROOT, "你、%s 格內的隊友（要組隊）與你的召喚物", ModifierText.number(spec.radius() * build.areaScale())) : "你"; // 2026-10：只給自己的增益不再給召喚物
             lines.add("<gray>開著的時候" + who + "：");
             for (final String line : ModifierText.describeAll(effects)) {
                 lines.add("<#8fd3ff>　" + ItemRenderer.escape(line));
@@ -7693,7 +7697,7 @@ public final class SkillService {
                 default -> "";
             };
             final double scale = build.auraEffect();
-            lines.add(String.format(Locale.ROOT, "<gray>開著的時候 %.0f 格內的敵人：", spec.radius() * build.areaScale()));
+            lines.add(String.format(Locale.ROOT, "<gray>開著的時候 %s 格內的敵人：", ModifierText.number(spec.radius() * build.areaScale()))); // 2026-11-03：同上，這次之前 %.0f
             if (enemy.taken().at(build.level()) > 0) { // 2026-10-26：只有凋零、修飾器的（凋息、鎮懾）不寫「增加 0%」
                 lines.add(String.format(Locale.ROOT, "<#8fd3ff>　受到的%s傷害增加 <white>%.0f%%</white>", kind, enemy.taken().at(build.level()) * scale));
             }
@@ -7784,14 +7788,19 @@ public final class SkillService {
     }
 
     /** 戰吼的說明。2026-10-29：祭柱找屍體的距離改成讀 {@link Warcries#SPIKE_SEARCH}（這次之前寫死「12 格」）。 */
-    private static List<String> warcryLines(final SkillBuild build) {
+    private static List<String> warcryLines(final SkillBuild build, final StatSheet sheet) {
         final WarcrySpec spec = build.definition().warcry();
+        // 2026-11-03 照站長：半徑跟施放一樣（Warcries：基礎半徑＋品質、裝備的「+x 公尺戰吼半徑」，再乘範圍效果）；這次之前沒算加的公尺
+        final double radius = Warcries.baseRadius(spec, build.profile().effective(sheet == null ? new StatSheet() : sheet), build.profile().tags())
+                * build.areaScale();
         final List<String> lines = new ArrayList<>();
         final double duration = spec.duration() * build.durationScale();
         // 2026-10-30 照 PoE2：串骷髏、骨柱是有生命的召喚物（這次之前用屍體，沒有就獻祭任何召喚物；骨柱打不掉）
-        lines.add(String.format(Locale.ROOT, spec.spike() ? "<#c9a0ff>祭柱<gray>：串一隻 " + Math.round(Warcries.SPIKE_SEARCH) + " 格內你的骷髏立骨柱，柱子半徑 <white>%.0f</white> 格"
-                : spec.cry() ? "<#f5b942>戰吼<gray>：半徑 <white>%.1f</white> 格" // 2026-10-26 照 PoE2：使用時間 0.8 秒（只吃戰吼速度），不是瞬間
-                : spec.minionBuff().isEmpty() ? "<#f5b942>戰吼<gray>：半徑 <white>%.0f</white> 格，瞬間發動" : "<#c9a0ff>祭品<gray>：半徑 <white>%.0f</white> 格，瞬間發動", spec.radius() * build.areaScale()));
+        // 2026-11-03 照站長：祭柱、祭品的半徑寫到小數一位（含範圍效果）；這次之前 %.0f，小幅增加範圍效果看不出來
+        lines.add(String.format(Locale.ROOT, spec.spike() ? "<#c9a0ff>祭柱<gray>：串一隻 " + Math.round(Warcries.SPIKE_SEARCH) + " 格內你的骷髏立骨柱，柱子半徑 <white>%s</white> 格"
+                : spec.cry() ? "<#f5b942>戰吼<gray>：半徑 <white>%s</white> 格" // 2026-10-26 照 PoE2：使用時間 0.8 秒（只吃戰吼速度），不是瞬間
+                : spec.minionBuff().isEmpty() ? "<#f5b942>戰吼<gray>：半徑 <white>%s</white> 格，瞬間發動" : "<#c9a0ff>祭品<gray>：半徑 <white>%s</white> 格，瞬間發動",
+                ModifierText.number(radius)));
         if (spec.spike()) {
             lines.add(String.format(Locale.ROOT, "<gray>骨柱是召喚物：生命是同等級召喚物的 <white>%s</white> 倍（吃召喚物生命與「祭品的最大生命」的加成），會被敵人打；被打死效果就結束",
                     Warcries.ROLE_BONE.equals(build.definition().id()) ? "0.35" : "0.18"));

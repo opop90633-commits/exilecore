@@ -349,7 +349,7 @@ public final class LootService {
                 if (item != null && base != null) {
                     final LootFilter.Candidate candidate = new LootFilter.Candidate(DropTable.Kind.EQUIPMENT, item.rarity(), null, false,
                             item.ilvl(), base.tags(), base.isMap() ? tw.exilecore.item.ItemStats.mapTier(base, item) : 0, 0,
-                            bestAffixRank(item), item.base(), uniqueGroup(item));
+                            bestAffixRank(item), item.base(), uniqueGroup(item), item.unique()); // 2026-11-04：帶傳奇代號（每種傳奇各自隱藏）
                     if (filter.hides(candidate, viewer)) {
                         gold += config.goldValue(DropTable.Kind.EQUIPMENT, item.rarity(), 0, averageGold);
                         filtered++;
@@ -1071,7 +1071,8 @@ public final class LootService {
             gemLevel = plugin.skills().gems().read(stack).map(tw.exilecore.skill.GemData::level).orElse(0);
         }
         return new LootFilter.Candidate(drop.kind(), rarity, currency == null ? null : currency.id(), upgrade, itemLevel, tags, mapTier, gemLevel,
-                bestAffixRank, drop.isEquipment() ? drop.item().base() : null, drop.isEquipment() ? uniqueGroup(drop.item()) : null);
+                bestAffixRank, drop.isEquipment() ? drop.item().base() : null, drop.isEquipment() ? uniqueGroup(drop.item()) : null,
+                drop.isEquipment() ? drop.item().unique() : null); // 2026-11-04：帶傳奇代號
     }
 
     /** 這件裝備最好的詞綴是 T 幾（1 = T1；沒有詞綴 0）：掉落過濾的「保留有 T 幾以上詞綴的裝備」看這個（未鑑定的也算）。 */

@@ -2541,7 +2541,7 @@ omen_whittling:
   material: FLINT   # 2026-10-27 圖示改得更直觀：燧石：削掉最差的那條；這次之前所有星籤都是書
   stack: 10
   operation: OMEN
-  omen: { triggers: [REMOVE_AND_ADD], effect: REMOVE_LOWEST, weight: 48 }   # 2026-10-29 照站長：再 ×3（這次之前 16）；2026-10-29 照站長：稀有的星籤權重 ×4（這次之前 4）； 2026-10-26 照 PoE2 的 Omen of Whittling：只有亂流石觸發、比詞綴的需求等級；這次之前湮滅石也觸發、先比階級。權重：2026-10-19 25 → 12。星籤權重 2026-10-26 照 poe2db 市價（約 13 Divine）：12 → 4
+  omen: { triggers: [REMOVE_AND_ADD], effect: REMOVE_LOWEST, weight: 320 }   # 2026-11-03 照站長「最稀有的那幾種機率再高 5 倍」：極稀有 6 種權重 ×6.67（總權重跟著變大，T80 實際機率約 ×5；這次之前 48）；2026-10-29 照站長：再 ×3（這次之前 16）；2026-10-29 照站長：稀有的星籤權重 ×4（這次之前 4）； 2026-10-26 照 PoE2 的 Omen of Whittling：只有亂流石觸發、比詞綴的需求等級；這次之前湮滅石也觸發、先比階級。權重：2026-10-19 25 → 12。星籤權重 2026-10-26 照 poe2db 市價（約 13 Divine）：12 → 4
   applies_to: { rarity: [RARE] }
   drop_weight: 0
   drop_level: 75
@@ -2552,7 +2552,7 @@ omen_sinistral_guard:
   material: POPPED_CHORUS_FRUIT   # 2026-10-27 圖示改得更直觀：爆裂紫頌果：湮滅石一家（終界）；這次之前所有星籤都是書
   stack: 10
   operation: OMEN
-  omen: { triggers: [REMOVE_AFFIX], effect: KEEP_PREFIXES, weight: 48 }   # 2026-10-29 照站長：再 ×3（這次之前 16）；2026-10-29 照站長：稀有的星籤權重 ×4（這次之前 4）； 2026-10-26 照 PoE2 的 Omen of Dextral Annulment：只有湮滅石（亂流石另外一種）；這次之前叫保前綴籤，湮滅、亂流都觸發。權重：2026-10-23 25 → 35。星籤權重 2026-10-26 照 poe2db 市價（約 13.5 Divine）：35 → 4
+  omen: { triggers: [REMOVE_AFFIX], effect: KEEP_PREFIXES, weight: 320 }   # 2026-11-03 照站長「最稀有的那幾種機率再高 5 倍」：極稀有 6 種權重 ×6.67（總權重跟著變大，T80 實際機率約 ×5；這次之前 48）；2026-10-29 照站長：再 ×3（這次之前 16）；2026-10-29 照站長：稀有的星籤權重 ×4（這次之前 4）； 2026-10-26 照 PoE2 的 Omen of Dextral Annulment：只有湮滅石（亂流石另外一種）；這次之前叫保前綴籤，湮滅、亂流都觸發。權重：2026-10-23 25 → 35。星籤權重 2026-10-26 照 poe2db 市價（約 13.5 Divine）：35 → 4
   applies_to: { rarity: [MAGIC, RARE] }
   drop_weight: 0
   drop_level: 80
@@ -2563,7 +2563,7 @@ omen_dextral_guard:
   material: POPPED_CHORUS_FRUIT   # 2026-10-27 圖示改得更直觀：爆裂紫頌果：湮滅石一家（終界）；這次之前所有星籤都是書
   stack: 10
   operation: OMEN
-  omen: { triggers: [REMOVE_AFFIX], effect: KEEP_SUFFIXES, weight: 36 }   # 2026-10-29 照站長：再 ×3（這次之前 12）；2026-10-29 照站長：稀有的星籤權重 ×4（這次之前 3）； 2026-10-26 照 PoE2 的 Omen of Sinistral Annulment；這次之前叫保後綴籤，湮滅、亂流都觸發。星籤權重 2026-10-26 照 poe2db 市價（約 19.5 Divine）：35 → 3
+  omen: { triggers: [REMOVE_AFFIX], effect: KEEP_SUFFIXES, weight: 240 }   # 2026-11-03 照站長「最稀有的那幾種機率再高 5 倍」：極稀有 6 種權重 ×6.67（總權重跟著變大，T80 實際機率約 ×5；這次之前 36）；2026-10-29 照站長：再 ×3（這次之前 12）；2026-10-29 照站長：稀有的星籤權重 ×4（這次之前 3）； 2026-10-26 照 PoE2 的 Omen of Sinistral Annulment；這次之前叫保後綴籤，湮滅、亂流都觸發。星籤權重 2026-10-26 照 poe2db 市價（約 19.5 Divine）：35 → 3
   applies_to: { rarity: [MAGIC, RARE] }
   drop_weight: 0
   drop_level: 80
@@ -2574,7 +2574,7 @@ omen_dextral_erasure:
   material: PHANTOM_MEMBRANE   # 2026-10-27 圖示改得更直觀：夜魅膜：亂流石一家；這次之前所有星籤都是書
   stack: 10
   operation: OMEN
-  omen: { triggers: [REMOVE_AND_ADD], effect: KEEP_PREFIXES, weight: 36 }   # 2026-10-29 照站長：再 ×3（這次之前 12）；2026-10-29 照站長：稀有的星籤權重 ×4（這次之前 3）； 2026-10-26 新增（PoE2 的 Omen of Dextral Erasure）。星籤權重 2026-10-26 照 poe2db 市價（約 15.6 Divine）：25 → 3
+  omen: { triggers: [REMOVE_AND_ADD], effect: KEEP_PREFIXES, weight: 240 }   # 2026-11-03 照站長「最稀有的那幾種機率再高 5 倍」：極稀有 6 種權重 ×6.67（總權重跟著變大，T80 實際機率約 ×5；這次之前 36）；2026-10-29 照站長：再 ×3（這次之前 12）；2026-10-29 照站長：稀有的星籤權重 ×4（這次之前 3）； 2026-10-26 新增（PoE2 的 Omen of Dextral Erasure）。星籤權重 2026-10-26 照 poe2db 市價（約 15.6 Divine）：25 → 3
   applies_to: { rarity: [RARE] }
   drop_weight: 0
   drop_level: 80
@@ -2585,7 +2585,7 @@ omen_sinistral_erasure:
   material: PHANTOM_MEMBRANE   # 2026-10-27 圖示改得更直觀：夜魅膜：亂流石一家；這次之前所有星籤都是書
   stack: 10
   operation: OMEN
-  omen: { triggers: [REMOVE_AND_ADD], effect: KEEP_SUFFIXES, weight: 36 }   # 2026-10-29 照站長：再 ×3（這次之前 12）；2026-10-29 照站長：稀有的星籤權重 ×4（這次之前 3）； 2026-10-26 新增（PoE2 的 Omen of Sinistral Erasure）。星籤權重 2026-10-26 照 poe2db 市價（約 20 Divine）：25 → 3
+  omen: { triggers: [REMOVE_AND_ADD], effect: KEEP_SUFFIXES, weight: 240 }   # 2026-11-03 照站長「最稀有的那幾種機率再高 5 倍」：極稀有 6 種權重 ×6.67（總權重跟著變大，T80 實際機率約 ×5；這次之前 36）；2026-10-29 照站長：再 ×3（這次之前 12）；2026-10-29 照站長：稀有的星籤權重 ×4（這次之前 3）； 2026-10-26 新增（PoE2 的 Omen of Sinistral Erasure）。星籤權重 2026-10-26 照 poe2db 市價（約 20 Divine）：25 → 3
   applies_to: { rarity: [RARE] }
   drop_weight: 0
   drop_level: 80
@@ -2669,7 +2669,7 @@ omen_chance:
   material: NAUTILUS_SHELL   # 2026-10-27 圖示改得更直觀：鸚鵡螺殼：護住裝備不碎（僥倖石一家）；這次之前所有星籤都是書
   stack: 10
   operation: OMEN
-  omen: { triggers: [CHANCE], effect: NO_DESTROY, weight: 36 }   # 2026-10-29 照站長：再 ×3（這次之前 12）；2026-10-29 照站長：稀有的星籤權重 ×4（這次之前 3）； 2026-10-26 新增（PoE2 的 Omen of Chance）。星籤權重 2026-10-26 照 poe2db 市價（約 17 Divine）：30 → 3
+  omen: { triggers: [CHANCE], effect: NO_DESTROY, weight: 240 }   # 2026-11-03 照站長「最稀有的那幾種機率再高 5 倍」：極稀有 6 種權重 ×6.67（總權重跟著變大，T80 實際機率約 ×5；這次之前 36）；2026-10-29 照站長：再 ×3（這次之前 12）；2026-10-29 照站長：稀有的星籤權重 ×4（這次之前 3）； 2026-10-26 新增（PoE2 的 Omen of Chance）。星籤權重 2026-10-26 照 poe2db 市價（約 17 Divine）：30 → 3
   applies_to: { rarity: [NORMAL] }
   drop_weight: 0
   drop_level: 75
