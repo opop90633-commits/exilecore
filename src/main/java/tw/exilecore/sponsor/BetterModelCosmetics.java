@@ -60,6 +60,8 @@ final class BetterModelCosmetics {
 
     // 反射拿到的方法（hook 時一次解析，之後每 tick 直接用）
     private Method modelOf, adaptPlayer, getOrCreate, getOrCreateSimple, hideOption, animate, stopAnimation, close, isClosed;
+    /** 2026-11-03：EntityTracker.registry()、EntityTrackerRegistry.spawnIfNotSpawned(PlatformPlayer)（本人也看得到；沒有就 null）。 */
+    private Method trackerRegistry, spawnIfNotSpawned;
     private Object trackerModifier, loopModifier, hideFalse;
 
     /** 正在掛著的：玩家 → 部位（back／pet）→ 掛了什麼。 */
@@ -67,6 +69,8 @@ final class BetterModelCosmetics {
         final String art;
         final Object tracker;
         String animation;
+        /** 2026-11-03：上次補送給本人的時間（tick 計數）。 */
+        long selfAt = Long.MIN_VALUE;
 
         Shown(final String art, final Object tracker, final String animation) {
             this.art = art;
@@ -278,6 +282,16 @@ final class BetterModelCosmetics {
         } catch (final ReflectiveOperationException | RuntimeException e) {
             loopModifier = animationModifier.getField("DEFAULT").get(null);
         }
+        // 2026-11-03 照站長（自己第三人稱看不到翅膀）：BetterModel 只送給「追蹤著這個實體」的人，玩家不會追蹤自己，
+        //   所以本人看不到掛在自己身上的模型。用 registry().spawnIfNotSpawned(本人) 補送一份給本人（沒有這兩個方法就算了，別人照樣看得到）
+        try {
+            final Class<?> registryType = type("kr.toxicity.model.api.tracker.EntityTrackerRegistry");
+            trackerRegistry = methodOrNull(type("kr.toxicity.model.api.tracker.EntityTracker"), "registry");
+            spawnIfNotSpawned = methodOrNull(registryType, "spawnIfNotSpawned", type("kr.toxicity.model.api.platform.PlatformPlayer"));
+        } catch (final ReflectiveOperationException | RuntimeException e) {
+            trackerRegistry = null;
+            spawnIfNotSpawned = null;
+        }
         // 不隱藏本體：EntityHideOption.FALSE（沒有就整個不接，照舊用展示實體）
         try {
             final Class<?> hideType = type("kr.toxicity.model.api.tracker.EntityHideOption");
@@ -342,6 +356,7 @@ final class BetterModelCosmetics {
         final String animation = moving && hasMove.contains(art) ? "move" : "idle";
         try {
             if (current != null && current.art.equals(art) && !closed(current.tracker)) {
+                showSelf(player, current); // 換世界、重生之後本人那份會不見：隔一陣子補一次
                 if (!animation.equals(current.animation)) {
                     if (stopAnimation != null) {
                         stopAnimation.invoke(current.tracker, current.animation);
@@ -379,12 +394,34 @@ final class BetterModelCosmetics {
                 closeQuietly(tracker);
                 return false;
             }
-            slots.put(slot, new Shown(art, tracker, animation));
+            final Shown fresh = new Shown(art, tracker, animation);
+            slots.put(slot, fresh);
+            showSelf(player, fresh);
             return true;
         } catch (final ReflectiveOperationException | RuntimeException | LinkageError e) {
             warnOnce("show:" + art, "3D 時裝：BetterModel 掛不上 {}（照舊用展示實體）：{}", art, e.toString());
             slots.remove(slot);
             return false;
+        }
+    }
+
+    private long calls;
+
+    /** 2026-11-03：把掛在玩家身上的模型也送給本人（第三人稱看得到自己的翅膀、寵物）；同一個最多每 20 次呼叫補一次。 */
+    private void showSelf(final Player player, final Shown shown) {
+        calls++;
+        if (trackerRegistry == null || spawnIfNotSpawned == null || calls - shown.selfAt < 20) {
+            return;
+        }
+        shown.selfAt = calls;
+        try {
+            final Object registry = trackerRegistry.invoke(shown.tracker);
+            if (registry != null) {
+                spawnIfNotSpawned.invoke(registry, adaptPlayer.invoke(null, player));
+            }
+        } catch (final ReflectiveOperationException | RuntimeException | LinkageError e) {
+            warnOnce("self", "3D 時裝：BetterModel 的模型送不到本人（自己看不到，別人照樣看得到）：{}", e.toString());
+            spawnIfNotSpawned = null;
         }
     }
 
