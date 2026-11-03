@@ -293,7 +293,20 @@ public final class AffixRescale {
         int bestScore = 0;
         final List<Affix> candidates = new ArrayList<>(repository.affixes());
         candidates.sort(Comparator.comparing(Affix::id));
-        for (final Affix candidate : candidates) {
+        // 2026-11-03 照站長（拾取痕跡的距離 → 痕跡效果）：停用的詞綴寫了另一邊（前綴／後綴）的群組時，另一邊還有空位就換成那一條；
+        //   這次之前只找同一邊的，後綴的痕跡距離會被換成不相干的後綴（冷卻）
+        if (old != null && group != null) {
+            for (final Affix candidate : candidates) {
+                if (candidate.type() != side && group.equals(candidate.group()) && !retired(candidate)
+                        && Veiled.isUnveiled(candidate.id()) == unveiled && !used.contains(candidate.group()) && fits(candidate, base)
+                        && hasRoom(repository, data, base, index, candidate.type())) {
+                    best = candidate;
+                    bestScore = 1000;
+                    break;
+                }
+            }
+        }
+        for (final Affix candidate : best != null ? List.<Affix>of() : candidates) {
             if (retired(candidate) || candidate.spawnTags().contains(UniqueItem.SPAWN_TAG) || Veiled.isVeiled(candidate.id())
                     || Veiled.isUnveiled(candidate.id()) != unveiled
                     || candidate.id().equals(rolled.id()) || side != null && candidate.type() != side
@@ -412,6 +425,26 @@ public final class AffixRescale {
         }
         data.affixes().add(Math.min(index, data.affixes().size()), fresh);
         return true;
+    }
+
+    /** 2026-11-03：這件物品（不算第 except 條）的 type 那一邊還有沒有空位（腐化詞綴不算位子）。 */
+    private static boolean hasRoom(final ItemRepository repository, final ItemData data, final ItemBase base, final int except, final AffixType type) {
+        int count = 0;
+        for (int i = 0; i < data.affixes().size(); i++) {
+            if (i == except) {
+                continue;
+            }
+            final RolledAffix other = data.affixes().get(i);
+            final Affix affix = other == null || other.id() == null ? null : repository.affix(other.id());
+            if (affix != null && affix.type() == type && !affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG)) {
+                count++;
+            }
+        }
+        int max = (type == AffixType.PREFIX ? data.rarity().maxPrefixes() : data.rarity().maxSuffixes()) + ItemGenerator.allowedDelta(base, type);
+        if (base.isJewel()) {
+            max = Math.min(max, ItemBase.JEWEL_AFFIXES_PER_TYPE);
+        }
+        return count < max;
     }
 
     private static Set<String> usedGroups(final ItemRepository repository, final ItemData data, final int except) {

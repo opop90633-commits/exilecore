@@ -139,7 +139,8 @@ public final class TrashMenu extends Menu {
             tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffd27f>🔒 這件鎖定了，不會丟進垃圾桶（/lock 解除）"));
             return;
         }
-        if (tw.exilecore.item.AccountBound.isBound(stack)) {
+        if (tw.exilecore.item.AccountBound.isBound(stack) && !(plugin.summer() != null && plugin.summer().isShovel(stack))) {
+            // 2026-11-03 照站長：星潮挖寶鏟可以丟（隨時在選單再領）
             // 2026-10-28：職業轉職卷這種綁定帳號、拿不到第二張的東西不收（免得手滑）
             tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + tw.exilecore.item.AccountBound.problem(stack,
                     tw.exilecore.item.AccountBound.Channel.TRASH)));

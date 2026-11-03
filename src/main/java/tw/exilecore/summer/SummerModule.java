@@ -124,7 +124,7 @@ public final class SummerModule implements Module, Listener {
         }
     }
 
-    /** 拿鏟子右鍵海灘的沙子：挖寶（SkillInputListener 看 isDigging 先讓路）。 */
+    /** 拿著武器右鍵海灘的沙子：挖寶（SkillInputListener 看 isDigging 先讓路；2026-11-03 晚起不用鏟子）。 */
     @EventHandler(priority = EventPriority.HIGH)
     public void onDig(final PlayerInteractEvent event) {
         if (service == null || event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getHand() != EquipmentSlot.HAND
@@ -133,6 +133,12 @@ public final class SummerModule implements Module, Listener {
         }
         if (service.dig(event.getPlayer(), event.getClickedBlock())) {
             event.setCancelled(true);
+            // 2026-11-03 照站長（要有挖的動作）：揮一下手、沙子噴起來、挖沙的聲音
+            final org.bukkit.block.Block block = event.getClickedBlock();
+            event.getPlayer().swingMainHand();
+            block.getWorld().playSound(block.getLocation(), org.bukkit.Sound.BLOCK_SAND_BREAK, 0.8f, 1f);
+            tw.exilecore.skill.Fx.spawn(block.getWorld(), org.bukkit.Particle.BLOCK, block.getLocation().add(0.5, 1.05, 0.5), 10, 0.3, 0.1, 0.3, 0,
+                    block.getBlockData());
         }
     }
 

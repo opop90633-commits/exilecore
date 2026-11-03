@@ -317,4 +317,21 @@ class AffixRescaleTest {
         AffixRescale.apply(repository, veiled);
         assertEquals(Veiled.VEILED_SUFFIX, veiled.affixes().getFirst().id(), "隱匿詞綴不動");
     }
+
+    @Test
+    void remnantRangeBecomesRemnantEffect() {
+        // 2026-11-03 照站長：我們的痕跡沒有撿取距離，「拾取痕跡的距離」停用，身上的換成同一個排名的「你產生的痕跡效果」
+        final Affix range = repository.affix("unveiled_d_jewellery_remnant_range");
+        assertTrue(AffixRescale.retired(range));
+        final ItemData data = new ItemData("iron_ring", Rarity.RARE, 84);
+        final RolledAffix rolled = new RolledAffix(range.id(), 1, Map.of("value", 30));
+        rolled.record(1, Map.of("value", new int[] {20, 30}), range.group(), "suffix");
+        data.affixes().add(rolled);
+        assertTrue(AffixRescale.apply(repository, data));
+        assertEquals(1, data.affixes().size());
+        final RolledAffix now = data.affixes().getFirst();
+        assertEquals("unveiled_d_jewellery_remnant_effect", now.id());
+        assertEquals(1, now.tier());
+        assertEquals(repository.affix(now.id()).ranges(1).get("value")[1], now.vars().get("value"), "範圍最高換成新範圍最高");
+    }
 }

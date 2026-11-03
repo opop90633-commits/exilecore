@@ -256,8 +256,8 @@ public final class SummerService {
         tickAmbience(running);
         tickBottles(now);
         tickGuards(now);
-        if (!running && tickCount % 10 == 0) {
-            collectShovels(); // 2026-11-03：活動結束收回挖寶鏟
+        if (tickCount % 10 == 0) {
+            collectShovels(); // 2026-11-03 晚 照站長：挖寶鏟拿掉了（改成拿武器右鍵沙子），發出去的收回
         }
         if (kraken != null) {
             if (!running) {
@@ -424,8 +424,7 @@ public final class SummerService {
         if (plugin.zones() == null || !plugin.zones().teleport(player, to, config.name())) {
             return "現在不能傳送";
         }
-        giveShovel(player, false); // 2026-11-03 照站長：身上沒有挖寶鏟就發一把（這次之前要自己帶鏟子）
-        player.sendMessage(plugin.text().prefixed("<" + config.color() + ">星潮海灘<gray>：按挖寶鏟那一格的數字鍵拿出來、右鍵沙子挖寶（動作條會說熱不熱），按 9 換回武器；回營地：<white>/town"));
+        player.sendMessage(plugin.text().prefixed("<" + config.color() + ">星潮海灘<gray>：拿著武器<white>右鍵沙子</white>挖寶（動作條會說熱不熱；海妖、大亂鬥進行中右鍵照常放技能）；回營地：<white>/town"));
         return null;
     }
 
@@ -441,10 +440,10 @@ public final class SummerService {
         stack.editMeta(meta -> {
             meta.displayName(ItemRenderer.line("<" + config.color() + ">星潮挖寶鏟"));
             meta.lore(List.of(
-                    ItemRenderer.line("<gray>在星潮海灘：拿著右鍵沙子挖寶，動作條會說熱（4 格內）、溫（8 格內）還是冷"),
+                    ItemRenderer.line("<gray>帶在身上，站在星潮海灘的沙子上蹲下 1 秒就挖寶；動作條會說熱（4 格內）、溫（8 格內）還是冷"),
                     ItemRenderer.line("<gray>每天每個人 " + config.dig().spotsPerDay() + " 個藏寶點"),
                     ItemRenderer.line("<dark_gray>" + ItemRenderer.escape(config.name()) + "活動道具：活動結束後收回"),
-                    ItemRenderer.line("<dark_gray>綁定帳號：弄丟了在選單「" + ItemRenderer.escape(config.name()) + " → 沙灘挖寶」再拿")));
+                    ItemRenderer.line("<dark_gray>綁定帳號（可以丟進垃圾桶）：弄丟了在選單「" + ItemRenderer.escape(config.name()) + " → 沙灘挖寶」再拿")));
             meta.setUnbreakable(true);
             meta.addItemFlags(org.bukkit.inventory.ItemFlag.HIDE_ATTRIBUTES, org.bukkit.inventory.ItemFlag.HIDE_UNBREAKABLE);
             tw.exilecore.item.AccountBound.mark(meta);
@@ -515,11 +514,10 @@ public final class SummerService {
         }
         if (hotbar >= 0) {
             player.getInventory().setItem(hotbar, shovelItem());
-            player.sendMessage(plugin.text().prefixed("<" + config.color() + ">拿到星潮挖寶鏟<gray>（快捷欄第 " + (hotbar + 1) + " 格）：在星潮海灘按 <white>"
-                    + (hotbar + 1) + "</white> 拿出來、右鍵沙子挖寶，按 <white>9</white> 換回武器"));
+            player.sendMessage(plugin.text().prefixed("<" + config.color() + ">拿到星潮挖寶鏟<gray>（快捷欄第 " + (hotbar + 1) + " 格）：帶在身上，站在海灘的沙子上蹲下 1 秒就挖"));
         } else {
             plugin.economy().wallet().dropFor(player, plugin.economy().wallet().give(player, shovelItem()));
-            player.sendMessage(plugin.text().prefixed("<" + config.color() + ">拿到星潮挖寶鏟<gray>：放到快捷欄第 1～8 格，在星潮海灘按那一格的數字鍵拿出來、右鍵沙子挖寶，按 <white>9</white> 換回武器"));
+            player.sendMessage(plugin.text().prefixed("<" + config.color() + ">拿到星潮挖寶鏟<gray>（在背包裡）：帶在身上，站在海灘的沙子上蹲下 1 秒就挖"));
         }
         return null;
     }
@@ -634,7 +632,9 @@ public final class SummerService {
 
     /** 這一下是不是在海灘上拿鏟子挖沙（SkillInputListener：不當成放技能）。 */
     public boolean isDigging(final Player player, final ItemStack item, final Block block) {
-        return item != null && item.getType().name().endsWith("_SHOVEL") && block != null && isBeachSand(block);
+        // 2026-11-03 晚 照站長：不用鏟子，拿著武器（手上任何東西）右鍵沙子就挖；海妖在場、大亂鬥進行中右鍵照常放技能
+        //   （這次之前要拿鏟子，戰鬥區域手上鎖在武器、快捷欄是技能格，拿不出來）
+        return block != null && kraken == null && round == null && isBeachSand(block);
     }
 
     private boolean isBeachSand(final Block block) {

@@ -69,8 +69,11 @@ final class BetterModelCosmetics {
         final String art;
         final Object tracker;
         String animation;
-        /** 2026-11-03：上次補送給本人的時間（tick 計數）。 */
-        long selfAt = Long.MIN_VALUE;
+        /**
+         * 2026-11-03：上次補送給本人的時間（呼叫次數）。-1000 = 還沒送過（第一次馬上送）；
+         * 這次之前寫 Long.MIN_VALUE，calls − MIN_VALUE 溢位變負數，永遠不送——本人一直看不到自己的翅膀、寵物
+         */
+        long selfAt = -1000;
 
         Shown(final String art, final Object tracker, final String animation) {
             this.art = art;

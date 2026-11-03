@@ -2818,10 +2818,13 @@ unveiled_d_jewellery_remnant_effect:
     - { stat: remnant.effect, type: INCREASED, value: "{value}" }
 
 # 2026-11-03 照站長＋PoB2（AbyssModRingAmuletAmanamuSuffixRemnantCollectionRange）：痕跡：引擎有了
+# 2026-11-03 晚 照站長：停用——我們的痕跡產生時直接生效、沒有撿取距離（11/01 起），這條沒作用。
+#   group 改成痕跡效果那條的群組：身上已經有的照原本的排名換成「增加 x% 你產生的痕跡效果」（AffixRescale 同群組優先）；
+#   這次之前 group: unveiled_d_jewellery_remnant_range、spawn_tags: [ring, amulet]
 unveiled_d_jewellery_remnant_range:
   type: suffix
-  group: unveiled_d_jewellery_remnant_range
-  spawn_tags: [ring, amulet]
+  group: unveiled_d_jewellery_remnant_effect
+  spawn_tags: [retired]
   names: [之拾淵, 之痕遠]
   text: "增加 {value}% 拾取痕跡的距離"
   tiers:

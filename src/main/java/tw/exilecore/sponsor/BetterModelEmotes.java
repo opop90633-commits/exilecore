@@ -161,6 +161,16 @@ final class BetterModelEmotes {
                     .invoke(tracker, animation, once, done);
             if (!started) {
                 done.run();
+            } else {
+                // 2026-11-03 照站長（第三人稱看不到自己的動作）：BetterModel 只送給追蹤這個玩家的別人；
+                //   照 BetterModel 自己的 LimbCommand 的做法，tracker.registry().spawnIfNotSpawned(本人) 補送給本人
+                try {
+                    final Object registry = method(type("kr.toxicity.model.api.tracker.EntityTracker"), "registry").invoke(tracker);
+                    method(type("kr.toxicity.model.api.tracker.EntityTrackerRegistry"), "spawnIfNotSpawned",
+                            type("kr.toxicity.model.api.platform.PlatformPlayer")).invoke(registry, platformPlayer);
+                } catch (final ReflectiveOperationException | RuntimeException | LinkageError e) {
+                    plugin.getSLF4JLogger().warn("動作：BetterModel 的動作送不到本人（自己看不到，別人照樣看得到）：{}", e.toString());
+                }
             }
             return started;
         } catch (final ReflectiveOperationException | RuntimeException | LinkageError e) {
