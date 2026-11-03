@@ -64,7 +64,7 @@ class MapEventConfigTest {
         final MapEventConfig config = new MapEventConfig();
         config.load(DATA);
         final MapEventConfig.Abyss abyss = config.abyss();
-        assertEquals(1.5, abyss.advanceSeconds(), 1e-9);
+        assertEquals(0.75, abyss.advanceSeconds(), 1e-9); // 2026-11-04 照站長「深淵速度加倍」：1.5 → 0.75
         assertEquals(3, abyss.advance());
         assertEquals(30, abyss.minLength());
         assertEquals(45, abyss.maxLength());

@@ -348,6 +348,7 @@ public final class CraftBenchMenu extends Menu {
         lore.add(problem == null ? (fillsQuality() ? "<yellow>左鍵：一次用到品質滿" : "<yellow>左鍵：使用（可以一直按）") : "<red>" + ItemRenderer.escape(problem));
         final ItemStack use = icon(problem == null ? Material.SMITHING_TABLE : Material.BARRIER, problem == null ? "<#f5b942>使用" : "<gray>使用", lore);
         set(SLOT_USE, problem == null ? glowing(use) : use);
+        drawPools(data, currency, firing); // 2026-11-04 照站長：這顆通貨可能出哪些詞綴、T 幾以上（前後綴分開）
 
         set(SLOT_CLEAR, icon(Material.WATER_BUCKET, "<white>全部清掉", "<gray>星籤、通貨、裝備都不選", "<yellow>左鍵：清掉"));
         set(SLOT_HELP, helpButton(List.of(
@@ -364,6 +365,119 @@ public final class CraftBenchMenu extends Menu {
             set(SLOT_BACK, backButton(backName));
         }
         set(SLOT_CLOSE_BAR, closeButton());
+    }
+
+    /** 2026-11-04：通貨下面左右兩格：這次可能出的前綴、後綴。 */
+    private static final int SLOT_PREFIX_POOL = slot(3, 3);
+    private static final int SLOT_SUFFIX_POOL = slot(3, 5);
+    /** 一格最多列幾條（照機率高的先列）。 */
+    private static final int POOL_LINES = 22;
+
+    /**
+     * 2026-11-04 照站長「洗裝台新增：這個通貨用下去可能會出現哪些詞綴、T 幾以上，前後綴分開」：
+     * 會加詞綴的通貨（蛻變、增幅、富豪、崇高、混沌、重鑄類）選好裝備後，左下列可能的前綴、右下列後綴：
+     * 每條寫最好那一階的數值、能出的階級（T 幾～T 幾：照物品等級與高階／完美通貨的最低詞綴等級）、這一邊裡抽到它的機率。
+     * 重擲全部詞綴的（重鑄、蛻變成稀有）照清空之後算；只加一條的照現在身上的群組算。星籤限定前綴／後綴的，另一邊寫不會出。
+     */
+    private void drawPools(final ItemData data, final CurrencyType currency, final CurrencyType omen) {
+        if (data == null || currency == null || !data.identified()) {
+            return;
+        }
+        final CurrencyOperation op = currency.operation();
+        final boolean rerollAll = op == CurrencyOperation.REROLL_MAGIC || op == CurrencyOperation.REROLL_RARE || op == CurrencyOperation.UPGRADE_TO_RARE;
+        final boolean addOne = op == CurrencyOperation.UPGRADE_TO_MAGIC || op == CurrencyOperation.ADD_AFFIX_MAGIC || op == CurrencyOperation.MAGIC_TO_RARE
+                || op == CurrencyOperation.ADD_AFFIX_RARE || op == CurrencyOperation.REMOVE_AND_ADD;
+        if (!rerollAll && !addOne) {
+            return;
+        }
+        final tw.exilecore.item.ItemGenerator generator = plugin.items().generator();
+        final ItemData target = data.copy();
+        if (rerollAll) {
+            target.affixes().removeIf(rolled -> !target.isFractured(rolled)); // 破裂的留著（重擲不會動它）
+        }
+        if (op == CurrencyOperation.UPGRADE_TO_MAGIC) {
+            target.setRarity(tw.exilecore.item.Rarity.MAGIC); // 照用完之後的稀有度算空位
+        } else if (op == CurrencyOperation.MAGIC_TO_RARE || op == CurrencyOperation.UPGRADE_TO_RARE) {
+            target.setRarity(tw.exilecore.item.Rarity.RARE);
+        }
+        final CurrencyType.Omen.Effect effect = omen == null || omen.omen() == null ? null : omen.omen().effect();
+        for (final tw.exilecore.item.AffixType type : List.of(tw.exilecore.item.AffixType.PREFIX, tw.exilecore.item.AffixType.SUFFIX)) {
+            final boolean prefix = type == tw.exilecore.item.AffixType.PREFIX;
+            final int slot = prefix ? SLOT_PREFIX_POOL : SLOT_SUFFIX_POOL;
+            final String side = prefix ? "前綴" : "後綴";
+            final String color = prefix ? "<#8888ff>" : "<#ffd27f>";
+            final boolean blockedByOmen = effect == CurrencyType.Omen.Effect.FORCE_PREFIX && !prefix
+                    || effect == CurrencyType.Omen.Effect.FORCE_SUFFIX && prefix;
+            if (blockedByOmen) {
+                set(slot, icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>這次不會出" + side, "<gray>" + ItemRenderer.escape(omen.name()) + "只加另一種"));
+                continue;
+            }
+            if (addOne && op != CurrencyOperation.REMOVE_AND_ADD && !generator.canAddAffix(target, type)) {
+                set(slot, icon(Material.GRAY_STAINED_GLASS_PANE, "<dark_gray>" + side + "滿了", "<gray>這次只會加另一種"));
+                continue;
+            }
+            final List<String> lore = poolLines(generator, target, type, currency.minModLevel());
+            set(slot, icon(prefix ? Material.MAP : Material.PAPER, color + "可能出的" + side + "（" + Math.max(0, lore.size() - 2) + " 種）", lore));
+        }
+    }
+
+    /** 一邊（前綴或後綴）的清單：最上面一行說明，之後每條一行，照機率高到低。 */
+    private List<String> poolLines(final tw.exilecore.item.ItemGenerator generator, final ItemData target, final tw.exilecore.item.AffixType type,
+                                   final int minModLevel) {
+        record Row(tw.exilecore.item.Affix affix, int best, int worst, int weight) {
+        }
+        final List<Row> rows = new ArrayList<>();
+        final int[] total = {0};
+        tw.exilecore.item.ItemGenerator.withMinModLevel(minModLevel, () -> {
+            for (final tw.exilecore.item.Affix affix : generator.eligible(target, type)) {
+                final List<tw.exilecore.item.AffixTier> tiers = tw.exilecore.item.ItemGenerator.rollableTiers(affix, target.ilvl());
+                if (tiers.isEmpty()) {
+                    continue;
+                }
+                int weight = 0;
+                int best = Integer.MAX_VALUE;
+                int worst = 0;
+                for (final tw.exilecore.item.AffixTier tier : tiers) {
+                    weight += tier.weight();
+                    best = Math.min(best, affix.rank(tier.tier()));
+                    worst = Math.max(worst, affix.rank(tier.tier()));
+                }
+                if (weight > 0) {
+                    rows.add(new Row(affix, best, worst, weight));
+                    total[0] += weight;
+                }
+            }
+        });
+        rows.sort((a, b) -> Integer.compare(b.weight(), a.weight()));
+        final List<String> lore = new ArrayList<>();
+        lore.add(minModLevel > 0 ? "<gray>這顆只出需求等級 " + minModLevel + " 以上的階級；機率是這一邊裡抽到它的機率"
+                : "<gray>照物品等級 " + target.ilvl() + " 能出的階級；機率是這一邊裡抽到它的機率");
+        int shown = 0;
+        for (final Row row : rows) {
+            if (shown++ >= POOL_LINES) {
+                lore.add("<dark_gray>…還有 " + (rows.size() - POOL_LINES) + " 種");
+                break;
+            }
+            final int bestTierId = bestTierId(row.affix(), row.best());
+            final String tiers = row.best() == row.worst() ? "T" + row.best() : "T" + row.best() + "～T" + row.worst();
+            lore.add("<white>" + row.affix().rangeText(bestTierId) + " <#f5b942>" + tiers + " <dark_gray>"
+                    + String.format(java.util.Locale.ROOT, "%.1f%%", total[0] <= 0 ? 0 : row.weight() * 100.0 / total[0]));
+        }
+        if (rows.isEmpty()) {
+            lore.add("<dark_gray>沒有能出的" + (type == tw.exilecore.item.AffixType.PREFIX ? "前綴" : "後綴"));
+        }
+        lore.add("<dark_gray>數值寫的是能出的最好那一階");
+        return lore;
+    }
+
+    /** 排名 rank（1＝最好）的那一階的代號。 */
+    private static int bestTierId(final tw.exilecore.item.Affix affix, final int rank) {
+        for (final tw.exilecore.item.AffixTier tier : affix.tiers()) {
+            if (affix.rank(tier.tier()) == rank) {
+                return tier.tier();
+            }
+        }
+        return affix.tiers().getFirst().tier();
     }
 
     private static int pagesOf(final int count) {

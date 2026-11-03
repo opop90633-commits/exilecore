@@ -118,7 +118,7 @@ exile:
 # （掉落表 chest.rolls 次＋shards 顆 shard_currency 的通貨）、各擲 unique_chance 的專屬傳奇（uniques.yml 的 sources 寫 abyss）。
 # 事件結束（或地圖關閉）linger 秒後把縫的方塊還原。
 abyss:
-  advance_seconds: 1.5
+  advance_seconds: 0.75          # 2026-11-04 照站長「深淵速度加倍」：1.5 → 0.75（每段長度、每段怪數、總長不變：怪物總數一樣、時間減半）
   advance: 3
   length: [30, 45]
   wave: [2, 3]

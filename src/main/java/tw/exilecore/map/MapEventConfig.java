@@ -166,7 +166,7 @@ public final class MapEventConfig {
         }
 
         static Abyss defaults() {
-            return new Abyss(1.5, 3, 30, 45, 2, 3, 0.4, 8, 6, 3.0, List.of("slammer", "swift"), 3, 0.6, 0.8, "turmoil_orb", 1, 1, 20, 20); // 2026-10-18：先給 1 顆
+            return new Abyss(0.75, 3, 30, 45, 2, 3, 0.4, 8, 6, 3.0, List.of("slammer", "swift"), 3, 0.6, 0.8, "turmoil_orb", 1, 1, 20, 20); // 2026-10-18：先給 1 顆；2026-11-04 照站長「深淵速度加倍」：每段 1.5 → 0.75 秒
         }
     }
 
