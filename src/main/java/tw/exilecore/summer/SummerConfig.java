@@ -195,6 +195,7 @@ public final class SummerConfig {
                 clamp01(d.decimal("pearl_chance", 0.35)), Math.max(0, d.integer("daily_pearl", 5)));
 
         final YamlNode m = root.node("melee");
+        meleeMinute = Math.max(0, Math.min(59, m.integer("minute", 0))); // 2026-11-03 照站長：錯開整點（不定時活動在整點）
         final SortedSet<Integer> meleeHours = hours(m, List.of(9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23));
         melee = new Melee(meleeHours, Math.max(0, m.integer("warn_minutes", 2)), Math.max(30, m.integer("seconds", 120)),
                 Math.max(1, m.integer("spawn_every", 4)), Math.max(1, Math.min(40, m.integer("spawn_count", 6))),
@@ -203,6 +204,7 @@ public final class SummerConfig {
                 Math.max(1, m.integer("global_minutes", 60)));
 
         final YamlNode b = root.node("boss");
+        bossMinute = Math.max(0, Math.min(59, b.integer("minute", 0)));
         final SortedSet<Integer> bossHours = hours(b, List.of(12, 19, 22));
         final YamlNode br = b.node("rewards");
         boss = new Boss(b.string("name", "深潮海妖・珊瑚之喉").trim(), b.string("type", "DROWNED").trim().toUpperCase(Locale.ROOT),
@@ -455,6 +457,18 @@ public final class SummerConfig {
 
     public Melee melee() {
         return melee;
+    }
+
+    /** 2026-11-03 照站長（時間錯開）：大亂鬥、海妖在 hours 那幾點的第幾分開始（0 = 整點）。 */
+    private int meleeMinute;
+    private int bossMinute;
+
+    public int meleeMinute() {
+        return meleeMinute;
+    }
+
+    public int bossMinute() {
+        return bossMinute;
     }
 
     public Boss boss() {

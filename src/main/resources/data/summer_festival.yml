@@ -9,11 +9,11 @@
 #     離藏寶點 1 格內就挖到，否則動作條提示「很熱（4 格內）／溫（8 格內）／冷」。挖到給 dig.shells 顆貝殼；
 #     dig.chest_chance 機率是海盜寶箱：竄出 dig.guards 隻衛道士，dig.guard_seconds 內清完給雙倍，再 dig.pearl_chance 機率 1 顆珍珠。
 #     一天挖滿全部給 dig.daily_pearl 顆珍珠。
-#   ・西瓜大亂鬥：每天 melee.hours 的整點在海灘開一局（/ec summer round start 也可以），melee.warn_minutes 前廣播，
+#   ・西瓜大亂鬥：每天 melee.hours 那幾點的第 melee.minute 分在海灘開一局（/ec summer round start 也可以），melee.warn_minutes 前廣播，
 #     打 melee.seconds 秒。每 melee.spawn_every 秒在沙地冒出 melee.spawn_count 顆西瓜（踩到、右鍵、左鍵都算打破），每顆 1 分；
 #     melee.golden_chance 是金西瓜（發光，10 分）。結束前三名各給 melee.top_pearls 顆珍珠，每一分給 melee.shells_per_point 貝殼。
 #     全服每打破 melee.global_target 顆（跨局累計）觸發「滿潮」：全服物品數量 +melee.global_quantity%，持續 melee.global_minutes 分鐘。
-#   ・深潮海妖：每天 boss.hours 的整點浮上海灘中央（世界 Boss 等級；招式在 boss_skills.yml 的 tide_*，共 17 招，
+#   ・深潮海妖：每天 boss.hours 那幾點的第 boss.minute 分浮上海灘中央（世界 Boss 等級；招式在 boss_skills.yml 的 tide_*，共 17 招，
 #     生命掉到 boss.phases 的比例以下換階段、解鎖大招；mods 的 unstoppable 讓牠免疫所有控場——暈眩、凍結、冰緩、電擊、
 #     釘地、眩暈、癱瘓、阻礙、致盲、緩速、嘲諷、擊退都無效，純傷害的感電、點燃、流血、中毒照常）。
 #   ・漂流瓶：地圖裡的怪掉貝殼（bottle.normal／magic／rare_shells／boss_shells）；稀有怪、地圖 Boss 倒下 bottle.rare／bottle.boss 機率
@@ -51,7 +51,9 @@ dig:
 
 # 西瓜大亂鬥
 melee:
-  hours: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]   # 每個整點一局（跟海妖同一個整點時海妖先，海妖走了再開）
+  # 2026-11-03 照站長：整點、錯開——不定時活動在偶數整點，星潮祭用奇數整點（海妖 13、19、23 點，大亂鬥其他奇數點）；這次之前 9～23 每個整點
+  hours: [9, 11, 15, 17, 21]
+  minute: 0                 # 第幾分開始（0 = 整點）
   warn_minutes: 2
   seconds: 120              # 一局幾秒
   spawn_every: 4            # 每幾秒冒一批西瓜
@@ -67,7 +69,8 @@ melee:
 boss:
   name: 深潮海妖・珊瑚之喉
   type: DROWNED
-  hours: [12, 19, 22]
+  hours: [13, 19, 23]       # 2026-11-03 照站長：奇數整點（不定時活動在偶數整點）；這次之前 12、19、22
+  minute: 0                 # 第幾分開始（0 = 整點）
   warn_minutes: 2
   duration_minutes: 15
   empty_close_seconds: 180

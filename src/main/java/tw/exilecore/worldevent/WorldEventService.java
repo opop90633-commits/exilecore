@@ -252,9 +252,10 @@ public final class WorldEventService {
         }
         final int total = config.bossWeight() + config.invasionWeight();
         if (config.onTheHour() && config.alternate()) {
-            // 2026-10：輪流，2 小時一整輪——雙數點世界 Boss、單數點入侵怪潮
+            // 2026-10：輪流——hours 列的第 1、3、5… 個整點世界 Boss，第 2、4、6… 個入侵怪潮
+            // 2026-11-03 照站長（只開偶數整點，奇數讓給星潮祭）：照 hours 裡的第幾個輪流；這次之前看整點的單雙數，只開偶數點就只剩世界 Boss
             final int hour = java.time.Instant.ofEpochMilli(nextMillis).atZone(config.timezone()).getHour();
-            nextKind = hour % 2 == 0 ? Kind.BOSS : Kind.INVASION;
+            nextKind = config.hours().headSet(hour).size() % 2 == 0 ? Kind.BOSS : Kind.INVASION;
         } else {
             nextKind = total <= 0 || random.nextInt(Math.max(1, total)) < config.invasionWeight() ? Kind.INVASION : Kind.BOSS;
         }

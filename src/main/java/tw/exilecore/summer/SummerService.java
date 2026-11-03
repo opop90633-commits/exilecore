@@ -730,9 +730,13 @@ public final class SummerService {
                 + at.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm", Locale.ROOT));
     }
 
-    private long nextHourAfter(final long now, final java.util.SortedSet<Integer> hours) {
-        java.time.ZonedDateTime at = java.time.Instant.ofEpochMilli(now).atZone(config.timezone())
-                .truncatedTo(java.time.temporal.ChronoUnit.HOURS).plusHours(1);
+    /** 2026-11-03 照站長（時間錯開）：hours 那幾點的第 minute 分，now 之後的下一次；這次之前一律整點。 */
+    private long nextHourAfter(final long now, final java.util.SortedSet<Integer> hours, final int minute) {
+        final java.time.ZonedDateTime current = java.time.Instant.ofEpochMilli(now).atZone(config.timezone());
+        java.time.ZonedDateTime at = current.truncatedTo(java.time.temporal.ChronoUnit.HOURS).plusMinutes(minute);
+        if (!at.isAfter(current)) {
+            at = at.plusHours(1);
+        }
         for (int i = 0; i < 48 && !hours.contains(at.getHour()); i++) {
             at = at.plusHours(1);
         }
@@ -741,7 +745,7 @@ public final class SummerService {
 
     private void scheduleRound(final long now) {
         if (nextRoundMillis < 0) {
-            nextRoundMillis = nextHourAfter(now, config.melee().hours());
+            nextRoundMillis = nextHourAfter(now, config.melee().hours(), config.meleeMinute());
             roundWarned = false;
             return;
         }
@@ -753,7 +757,7 @@ public final class SummerService {
         }
         if (now >= nextRoundMillis) {
             if (kraken != null) {
-                return; // 海妖在場上：等牠走了再開（同一個整點兩個都排到時，海妖先）
+                return; // 海妖在場上：等牠走了再開（排到同一個時間時，海妖先）
             }
             if (round == null && config.running(nextRoundMillis)) {
                 final String problem = startRound();
@@ -761,7 +765,7 @@ public final class SummerService {
                     plugin.getSLF4JLogger().warn("{}：大亂鬥沒開成：{}", config.name(), problem);
                 }
             }
-            nextRoundMillis = nextHourAfter(now, config.melee().hours());
+            nextRoundMillis = nextHourAfter(now, config.melee().hours(), config.meleeMinute());
             roundWarned = false;
         }
     }
@@ -1001,7 +1005,7 @@ public final class SummerService {
 
     private void scheduleKraken(final long now) {
         if (nextKrakenMillis < 0) {
-            nextKrakenMillis = nextHourAfter(now, config.boss().hours());
+            nextKrakenMillis = nextHourAfter(now, config.boss().hours(), config.bossMinute());
             krakenWarned = false;
             return;
         }
@@ -1018,7 +1022,7 @@ public final class SummerService {
                     plugin.getSLF4JLogger().warn("{}：海妖沒出來：{}", config.name(), problem);
                 }
             }
-            nextKrakenMillis = nextHourAfter(now, config.boss().hours());
+            nextKrakenMillis = nextHourAfter(now, config.boss().hours(), config.bossMinute());
             krakenWarned = false;
         }
     }

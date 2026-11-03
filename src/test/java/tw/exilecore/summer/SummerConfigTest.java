@@ -47,10 +47,14 @@ class SummerConfigTest {
         // 跟萬燈夜（z 400）分開的場地
         assertEquals(-400, config.arena().z());
         // 海妖固定三個時段、大亂鬥每個整點 9～23
-        assertEquals(List.of(12, 19, 22), List.copyOf(config.boss().hours()));
-        assertEquals(15, config.melee().hours().size());
-        assertEquals(9, config.melee().hours().first());
-        assertEquals(23, config.melee().hours().last());
+        // 2026-11-03 照站長：整點、錯開——不定時活動在偶數整點，星潮祭用奇數整點，海妖跟大亂鬥也不撞
+        assertEquals(List.of(13, 19, 23), List.copyOf(config.boss().hours()));
+        assertEquals(List.of(9, 11, 15, 17, 21), List.copyOf(config.melee().hours()));
+        for (final int hour : config.melee().hours()) {
+            assertTrue(hour % 2 == 1 && !config.boss().hours().contains(hour), "大亂鬥 " + hour + " 點");
+        }
+        assertEquals(0, config.meleeMinute());
+        assertEquals(0, config.bossMinute());
         assertEquals(88, config.boss().level());
         assertEquals(86.79, config.boss().life(), 1e-9); // 2026-11-03 站長：比照巔峰
         assertEquals(List.of("swift", "pinnacle_resist", "unstoppable"), config.boss().mods()); // 2026-11-03：比照巔峰＋免疫所有控場

@@ -59,8 +59,8 @@ public final class SummerMenu extends Menu {
                 : "<gray>活動結束了；兌換開到 <white>" + config.format(config.shopUntil()));
         info.add("");
         info.add("<gray>・<white>沙灘挖寶<gray>：拿鏟子右鍵海灘的沙子，每天 " + config.dig().spotsPerDay() + " 個藏寶點（動作條說熱不熱）");
-        info.add("<gray>・<white>西瓜大亂鬥<gray>：每天 " + hours(config.melee().hours()) + " 在海灘開一局，踩破、打破西瓜計分");
-        info.add("<gray>・<white>" + ItemRenderer.escape(config.boss().name()) + "<gray>：每天 " + hours(config.boss().hours()) + " 浮上海灘中央");
+        info.add("<gray>・<white>西瓜大亂鬥<gray>：每天 " + hours(config.melee().hours(), config.meleeMinute()) + " 在海灘開一局，踩破、打破西瓜計分");
+        info.add("<gray>・<white>" + ItemRenderer.escape(config.boss().name()) + "<gray>：每天 " + hours(config.boss().hours(), config.bossMinute()) + " 浮上海灘中央");
         info.add("<gray>・<white>漂流瓶<gray>：地圖裡的怪掉貝殼；稀有怪、地圖 Boss 有機會留下漂流瓶（瓶中信或藏寶圖）");
         info.add("<gray>・挑戰、兌換限定時裝與稱號（時裝、稱號拿到是永久的）");
         info.add("");
@@ -98,7 +98,7 @@ public final class SummerMenu extends Menu {
         } else {
             kraken.add("<gray>下一次：<white>" + (service.nextKrakenClock() == null ? "等待排程" : service.nextKrakenClock()) + "<gray>（台灣時間）");
         }
-        kraken.add("<gray>每天 " + hours(boss.hours()) + "，打 " + boss.durationMinutes() + " 分鐘");
+        kraken.add("<gray>每天 " + hours(boss.hours(), config.bossMinute()) + "，打 " + boss.durationMinutes() + " 分鐘");
         kraken.add("<gray>世界 Boss 等級（Lv." + boss.level() + "），生命照在場 " + boss.countLevel() + " 等以上的人數");
         kraken.add("");
         kraken.add("<gray>每個有份的人：");
@@ -139,7 +139,7 @@ public final class SummerMenu extends Menu {
         } else {
             round.add("<gray>下一局：<white>" + (service.nextRoundClock() == null ? "等待排程" : service.nextRoundClock()) + "<gray>（台灣時間）");
         }
-        round.add("<gray>每天 " + hours(melee.hours()) + "，一局 " + melee.seconds() + " 秒");
+        round.add("<gray>每天 " + hours(melee.hours(), config.meleeMinute()) + "，一局 " + melee.seconds() + " 秒");
         round.add("<gray>海灘上每 " + melee.spawnEvery() + " 秒冒出 " + melee.spawnCount() + " 顆西瓜：踩破、打破 1 分；金西瓜 10 分");
         round.add("<gray>前三名：<#ffe9c9>珍珠 " + tops(melee.topPearls()) + "<gray>；每一分 <" + color() + ">貝殼 ×" + melee.shellsPerPoint());
         round.add("<gray>全服每打破 " + melee.globalTarget() + " 顆：滿潮（全服物品數量 +" + melee.globalQuantity() + "%）");
@@ -178,14 +178,14 @@ public final class SummerMenu extends Menu {
         set(SLOT_CLOSE_BAR, closeButton());
     }
 
-    /** 整點的列表；連續的整點縮成「09:00～23:00」。 */
-    private static String hours(final java.util.SortedSet<Integer> hours) {
+    /** 時間的列表；連續的縮成「09:45～23:45 每小時」（2026-11-03：照 minute 錯開，這次之前一律整點）。 */
+    private static String hours(final java.util.SortedSet<Integer> hours, final int minute) {
         if (hours.size() >= 4 && hours.last() - hours.first() + 1 == hours.size()) {
-            return String.format(Locale.ROOT, "%02d:00～%02d:00 每個整點", hours.first(), hours.last());
+            return String.format(Locale.ROOT, "%02d:%02d～%02d:%02d 每小時", hours.first(), minute, hours.last(), minute);
         }
         final StringBuilder text = new StringBuilder();
         for (final int hour : hours) {
-            text.append(text.isEmpty() ? "" : "、").append(String.format(Locale.ROOT, "%02d:00", hour));
+            text.append(text.isEmpty() ? "" : "、").append(String.format(Locale.ROOT, "%02d:%02d", hour, minute));
         }
         return text.toString();
     }

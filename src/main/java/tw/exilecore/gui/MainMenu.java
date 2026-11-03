@@ -271,7 +271,7 @@ public final class MainMenu extends Menu {
         final String kraken = summer.krakenRunning() ? "<green>海妖浮上星潮海灘了！"
                 : summer.nextKrakenClock() == null ? "<gray>海妖：每天固定時段" : "<gray>海妖：下一次 <white>" + summer.nextKrakenClock();
         final String round = summer.roundRunning() ? "<green>西瓜大亂鬥進行中！"
-                : summer.nextRoundClock() == null ? "<gray>西瓜大亂鬥：每個整點" : "<gray>西瓜大亂鬥：下一局 <white>" + summer.nextRoundClock();
+                : summer.nextRoundClock() == null ? "<gray>西瓜大亂鬥：每小時一局" : "<gray>西瓜大亂鬥：下一局 <white>" + summer.nextRoundClock();
         final org.bukkit.inventory.ItemStack stack = icon(Material.NAUTILUS_SHELL, name,
                 "<gray>活動到 " + config.format(config.end()) + "：沙灘挖寶、西瓜大亂鬥、深潮海妖、漂流瓶", kraken, round,
                 "<gray>貝殼、珍珠兌換限定時裝與稱號", "", "<yellow>左鍵：打開<dark_gray>（/summer）");
