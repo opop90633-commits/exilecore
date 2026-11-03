@@ -1461,14 +1461,16 @@ public final class SummerService {
     public void rollKill(final Player owner, final LivingEntity entity, final MonsterData data, final List<DropTable.Drop> rolled,
                          final double rarityBonus) {
         if (owner == null || !running() || !data.boss() || plugin.maps() == null || plugin.bounties() == null
-                || !plugin.bounties().accountLoaded(owner) || progress(owner, MAP) == null) {
+                || !plugin.bounties().accountLoaded(owner) || !hasMap(owner)) {
             return;
         }
         final tw.exilecore.map.MapInstance instance = plugin.maps().instanceOf(entity);
         if (instance == null || instance.boss() != entity) {
             return;
         }
-        if (!plugin.bounties().commitAccount(owner, Map.of(MAP, ""), config.name() + "藏寶圖")) {
+        // 2026-11-03 修正：用掉時把這筆刪掉（null）；這次之前寫成空字串 ""，「有沒有藏寶圖」看的是 != null，
+        //   用過一次之後每隻地圖 Boss 都當成有、一直跳「藏寶圖用掉了」，漂流瓶也永遠只開出瓶中信
+        if (!plugin.bounties().commitAccount(owner, java.util.Collections.singletonMap(MAP, null), config.name() + "藏寶圖")) {
             return;
         }
         final DropTable drops = plugin.monsterModule().drops();
@@ -1489,7 +1491,13 @@ public final class SummerService {
 
     /** 手上有沒有藏寶圖（選單用）。 */
     public boolean holdsMap(final Player player) {
-        return progress(player, MAP) != null;
+        return hasMap(player);
+    }
+
+    /** 2026-11-03：手上有藏寶圖（值是 "1"；舊版用掉時寫成 "" 的當成沒有）。 */
+    private boolean hasMap(final Player player) {
+        final String value = progress(player, MAP);
+        return value != null && !value.isBlank();
     }
 
     /** 放一個漂流瓶（管理員測試也用）。 */
@@ -1566,7 +1574,7 @@ public final class SummerService {
         final SummerConfig.Bottle def = config.bottle();
         at.getWorld().playSound(at, Sound.BLOCK_GLASS_BREAK, 0.7f, 1.3f);
         tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.BUBBLE_POP, at.clone().add(0, 0.8, 0), 20, 0.5, 0.5, 0.5, 0.03);
-        final boolean hasMap = plugin.bounties() != null && plugin.bounties().accountLoaded(player) && progress(player, MAP) != null;
+        final boolean hasMap = plugin.bounties() != null && plugin.bounties().accountLoaded(player) && hasMap(player);
         if (hasMap || random.nextDouble() < def.letterChance()) {
             // 瓶中信：貝殼＋一句話（手上已經有藏寶圖的，瓶子裡一定是信）
             final int[] range = def.shells();
